@@ -18,6 +18,10 @@ CREATE OR REPLACE PACKAGE PROGRID.PRGD0001 IS
   --                    19/10/2016 - Incluido chamada da pc_informa_acesso_progrid na
   --                                 procedure pc_redir_acao_prgd para registro de LOG 
   --                                 em qualquer acesso as rotinas (Jean Michel)
+  --
+  --                    29/11/2016 - P341 - Automatização BACENJUD - Alterado para validar 
+  --                                 o departamento à partir do código e não mais pela 
+  --                                 descrição (Renato Darosci - Supero)
   ---------------------------------------------------------------------------------------------------------------
 
   -- Procedure que será a interface entre o Oracle e sistema Web
@@ -175,6 +179,10 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
   --                    19/10/2016 - Incluido chamada da pc_informa_acesso_progrid na
   --                                 procedure pc_redir_acao_prgd para registro de LOG 
   --                                 em qualquer acesso as rotinas (Jean Michel)
+  --
+  --                    29/11/2016 - P341 - Automatização BACENJUD - Alterado para validar 
+  --                                 o departamento à partir do código e não mais pela 
+  --                                 descrição (Renato Darosci - Supero)
   ---------------------------------------------------------------------------------------------------------------
 
   -- Procedure para validar ID do cookie da sessao
@@ -271,7 +279,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
                                          ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Código do operador
                                          ,pr_idsistem IN craptel.idsistem%TYPE  --> Identificador do sistema
                                          ,pr_nmdatela IN craptel.nmdatela%TYPE  --> Nome da tela
-                                         ,pr_dsdepart OUT crapope.dsdepart%TYPE --> Descrição do departamento
+                                         ,pr_cddepart OUT crapope.cddepart%TYPE --> Descrição do departamento
                                          ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Código de retorno
                                          ,pr_dscritic OUT VARCHAR2) IS          --> Descrição do retorno
     -- ..........................................................................
@@ -280,14 +288,14 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
     --  Sistema  : Rotinas de tratamento e interface para intercambio de dados com sistema Web
     --  Sigla    : GENE
     --  Autor    : Petter R. Villa Real  - Supero
-    --  Data     : Maio/2014.                   Ultima atualizacao:
+    --  Data     : Maio/2014.                   Ultima atualizacao: 06/12/2016
     --
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Valida permissão para os objetos envolvidos na execução.
     --
-    --   Alteracoes:
+    --   Alteracoes: 06/12/2016 - Retirado controle de arquivo do processo batch, Prj. 229 (Jean Michel)
     -- .............................................................................
   BEGIN
     DECLARE
@@ -308,7 +316,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
       CURSOR cr_crapope(pr_cdcooper IN crapope.cdcooper%TYPE --> Código da cooperativa
                        ,
                         pr_cdoperad IN crapope.cdoperad%TYPE) IS --> Código do operador
-        SELECT pe.dsdepart
+        SELECT pe.cddepart
           FROM crapope pe
          WHERE pe.cdcooper = pr_cdcooper
            AND upper(pe.cdoperad) = upper(pr_cdoperad);
@@ -362,7 +370,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
         RAISE vr_exc_saida;
       ELSE
-        pr_dsdepart := rw_crapope.dsdepart;
+        pr_cddepart := rw_crapope.cddepart;
         CLOSE cr_crapope;
       END IF;
     
@@ -395,50 +403,10 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
         CLOSE cr_crapprg;
       END IF;
     
-       /* Pega o caminho absoluto */
-      vr_dsdircop:= gene0001.fn_diretorio (pr_tpdireto => 'C' --> Usr/Coop
-                                          ,pr_cdcooper => rw_crapcop.cdcooper);
-                             
-      -- Verifica se encontrou o caminho
-      IF vr_dsdircop IS NULL THEN
-        pr_dscritic := 'Caminho invalido.';
-        RAISE vr_exc_saida;
-      END IF;
-                     
-      -- Monta caminho para localizar restrição de uso
-      gene0001.pc_lista_arquivos(pr_path => vr_dsdircop || '/arquivos'
-                                ,pr_pesq => 'cred_bloq'
-                                ,pr_listarq => vr_arquivo
-                                ,pr_des_erro => pr_dscritic);
-    
-      -- Verifica se ocorreram erros ao pesquisar por arquivo
-      IF pr_dscritic IS NOT NULL THEN
-        pr_cdcritic := 999;
-        RAISE vr_exc_saida;
-      END IF;
-    
-      -- Pesquisar pasta por arquivo de liberação
-      gene0001.pc_lista_arquivos(pr_path     => vr_dsdircop || '/arquivos'
-                                ,pr_pesq     => 'so_consulta'
-                                ,pr_listarq  => vr_arquivo_so
-                                ,pr_des_erro => pr_dscritic);
-    
-      -- Verifica se ocorreram erros ao pesquisar por arquivo
-      IF pr_dscritic IS NOT NULL THEN
-        pr_cdcritic := 999;
-        RAISE vr_exc_saida;
-      END IF;
-    
-      -- Verifica se existe arquivo para controle de bloqueio
-      IF vr_arquivo IS NOT NULL THEN
-        pr_cdcritic := 999;
-        pr_dscritic := 'Sistema Bloqueado. Tente mais tarde!!!';
-        RAISE vr_exc_saida;
-      END IF;
-    
       -- Se não gerar consistência limpa críticas
       pr_dscritic := NULL;
       pr_cdcritic := 0;
+
     EXCEPTION
       WHEN vr_exc_saida THEN
         pr_dscritic := 'Erro em PRGD0001.PC_VALIDA_ACESSO_SISTEMA_PRGD. Erro: ' || pr_dscritic;
@@ -473,7 +441,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
   BEGIN
     DECLARE
       vr_exc_saida EXCEPTION; --> Controle de erros
-      vr_dsdepart crapope.dsdepart%TYPE; --> Descrição do departamento
+      vr_cddepart crapope.cddepart%TYPE; --> Descrição do departamento
       vr_dscritic VARCHAR2(4000);
       vr_cdcritic crapcri.cdcritic%TYPE;
     
@@ -485,9 +453,10 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
         SELECT ce.nmdatela
           FROM crapace ce
          WHERE ce.cdcooper = pr_cdcooper
-           AND upper(ce.cdoperad) = upper(pr_cdoperad)
-           AND upper(ce.nmdatela) = upper(pr_nmdatela)
-           AND ce.cddopcao = pr_cddopcao
+           AND UPPER(ce.cdoperad) = UPPER(pr_cdoperad)
+           AND UPPER(ce.nmdatela) = UPPER(pr_nmdatela)
+           AND UPPER(ce.cddopcao) = UPPER(pr_cddopcao)
+           AND UPPER(ce.nmrotina) IN('PROGRID','ASSEMBLEIA')
            AND ce.idambace = 3;
     
       vr_nmdatela crapace.nmdatela%TYPE;
@@ -499,7 +468,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
                                    ,pr_cdoperad => pr_cdoperad
                                    ,pr_idsistem => pr_idsistem
                                    ,pr_nmdatela => pr_nmdatela
-                                   ,pr_dsdepart => vr_dsdepart
+                                   ,pr_cddepart => vr_cddepart
                                    ,pr_cdcritic => vr_cdcritic
                                    ,pr_dscritic => vr_dscritic);
     
@@ -509,7 +478,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
       END IF;
     
       -- Verifica qual é o departamento de operação
-      IF vr_dsdepart <> 'TI' THEN
+      IF vr_cddepart <> 20 THEN
         -- Verifica as permissões de execução no cadastro
         OPEN cr_crapace(pr_cdcooper, pr_cdoperad, pr_nmdatela, pr_cddopcao);
         FETCH cr_crapace
@@ -1319,8 +1288,6 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
 
   END pc_lista_eixo;
 
-
-
   /* Procedure para listar os temas do sistema */
   PROCEDURE pc_lista_tema(pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo da Cooperativa
                          ,pr_cdeixtem IN gnapetp.cdeixtem%TYPE --> Codigo do Eixo
@@ -1384,8 +1351,6 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
 
   END pc_lista_tema;
 
-
-
   /* Procedure para listar os eventos do sistema */
   PROCEDURE pc_lista_evento(pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo da Cooperativa
                            ,pr_cdagenci IN VARCHAR2            	 --> Codigo da Agencia (PA)    
@@ -1428,7 +1393,6 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
         
       rw_crapedp cr_crapedp%ROWTYPE;
       
-      
       -- Cursor sobre os eventos da agenda 
       CURSOR cr_crapedp_age IS
       SELECT DISTINCT edp.cdevento, edp.nmevento
@@ -1455,7 +1419,6 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
        ORDER BY edp.nmevento;
         
       rw_crapedp_coop_age cr_crapedp_coop_age%ROWTYPE;   
-      
       
       -- Variaveis locais
       vr_contador INTEGER := 0;
@@ -1522,7 +1485,6 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
 
   END pc_lista_evento;
   
-                       
   /* Procedure para retornar data base da agenda da cooperativa */
   PROCEDURE pc_retanoage(pr_cdcooper IN VARCHAR2     --> Codigo da Cooperativa
                         ,pr_idevento IN VARCHAR2     --> Ide do evento
@@ -1548,9 +1510,6 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
     --
     --  Alteracoes: 
     --              
-    --
-    --              
-    --              
     -- .............................................................................
     
     -- Cursores
@@ -1565,8 +1524,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
          AND ( pr_dtanoage IS NULL OR
               (pr_dtanoage IS NOT NULL AND 
                gnpapgd.dtanonov = pr_dtanoage)
-             )
-             ;
+             );
     
     rw_gnpapgd cr_gnpapgd%ROWTYPE;    
       
@@ -1617,9 +1575,6 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
     --  Objetivo  : Procedure envio de email de eventos sem local de realização
     --
     --  Alteracoes: 
-    --              
-    --
-    --              
     --              
     -- .............................................................................
 

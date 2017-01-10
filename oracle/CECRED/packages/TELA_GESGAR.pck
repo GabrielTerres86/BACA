@@ -55,13 +55,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GESGAR AS
     Objetivo  : Rotina para buscar dados de Gestao de Garantias
     
     Alteracoes: 
+                25/11/2016 - Alteração para que o fonte realize a avaliação do departamento
+                             pelo campo CDDEPART ao invés do DSDEPART. (Renato Darosci - Supero)
     ............................................................................. */
     
     --- CURSORES ---   
     -- Cursor do Operador
     CURSOR cr_crapope(pr_cdcooper IN crapope.cdcooper%TYPE
                      ,pr_cdoperad IN crapope.cdoperad%TYPE) IS
-      SELECT dsdepart
+      SELECT cddepart
         FROM crapope
        WHERE crapope.cdcooper        = pr_cdcooper
          AND UPPER(crapope.cdoperad) = UPPER(pr_cdoperad);
@@ -127,7 +129,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GESGAR AS
     END IF;
         
     -- Somente o departamento credito irá ter acesso para alterar as informacoes
-    IF (UPPER(rw_crapope.dsdepart) <> 'PRODUTOS' AND UPPER(rw_crapope.dsdepart) <> 'TI') THEN
+    IF rw_crapope.cddepart NOT IN (14,20) THEN
       vr_dscritic := 'Operador nao tem permissao de acesso.';
       RAISE vr_exc_erro;
     END IF; 

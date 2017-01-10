@@ -9,6 +9,9 @@
  *				  
  *			      16/06/2011 - Adicionado verificacao de tag xml ALERTAS (Jorge).
  *
+ *                02/12/2016 - P341-Automatização BACENJUD - Removido passagem do departamento como parametros
+ *                             pois a BO não utiliza o mesmo (Renato Darosci)
+ *
  */	
 ?>
 <?	
@@ -57,7 +60,6 @@
 	$xml .= "		<cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
 	$xml .= "		<nmdatela>".$glbvars["nmdatela"]."</nmdatela>";	
 	$xml .= "		<idorigem>".$glbvars["idorigem"]."</idorigem>";	
-	$xml .= "		<dsdepart>".$glbvars["dsdepart"]."</dsdepart>";	
 	$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
 	$xml .= "		<idseqttl>".$idseqttl."</idseqttl>";
 	$xml .= "	</Dados>";
@@ -92,7 +94,6 @@
 		$xmlEA .= "		<cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
 		$xmlEA .= "		<nmdatela>".$glbvars["nmdatela"]."</nmdatela>";	
 		$xmlEA .= "		<idorigem>".$glbvars["idorigem"]."</idorigem>";	
-		$xmlEA .= "		<dsdepart>".$glbvars["dsdepart"]."</dsdepart>";	
 		$xmlEA .= "		<nrdconta>".$nrdconta."</nrdconta>";
 		$xmlEA .= "		<idseqttl>".$idseqttl."</idseqttl>";
 		$xmlEA .= "	</Dados>";

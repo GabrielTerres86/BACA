@@ -12,7 +12,8 @@
 	                                                                   
 	  Objetivo  : Carregar os dados da tela TAB094.              
 	                                                                 
-	  Alterações: 										   			  
+	  Alterações: 05/12/2016 - P341-Automatização BACENJUD - Alterar a passagem da descrição do 
+                               departamento como parametros e passar o o código (Renato Darosci)										   			  
 	                                                                  
 	***********************************************************************/
 
@@ -48,7 +49,7 @@
 	$xmlCarregaDados .= "	 <cdagenci>".$glbvars["cdagenci"]."</cdagenci>";
 	$xmlCarregaDados .= "	 <nrdcaixa>".$glbvars["nrdcaixa"]."</nrdcaixa>";
 	$xmlCarregaDados .= "	 <cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
-	$xmlCarregaDados .= "	 <dsdepart>".$glbvars["dsdepart"]."</dsdepart>";
+	$xmlCarregaDados .= "	 <cddepart>".$glbvars["cddepart"]."</cddepart>";
 	$xmlCarregaDados .= "	 <cddopcao>".$cddopcao."</cddopcao>";
 	$xmlCarregaDados .= " </Dados>";
 	$xmlCarregaDados .= "</Root>";

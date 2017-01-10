@@ -132,10 +132,13 @@
                              
                03/12/2015 - Ajuste de homologacao referente a conversao
                             realizada pela DB1
-                            (Adriano).         
+                            (Adriano).              
                             
                18/07/2016 - Incluido campo tel_nrtelvoz.
-                            PRJ229 - Melhorias OQS (Odirlei - AMcom)             
+                            PRJ229 - Melhorias OQS (Odirlei - AMcom)   
+							
+			   08/12/2016 - P341-Automatização BACENJUD - Realizar a validação 
+			                do departamento pelo código do mesmo (Renato Darosci)          
 ............................................................................. */
                
 IF tel_cdagenci = 0  THEN
@@ -487,8 +490,8 @@ DO TRANSACTION ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
                       tel_hhenvelo:HELP = "Informe a hora limite" + 
                                               " (00:00 a 23:00).".
 
-               IF  glb_dsdepart = "TI"     OR
-                   glb_dsdepart = "COMPE"  THEN
+               IF  glb_cddepart = 20   OR  /* TI */
+                   glb_cddepart = 4  THEN  /* COMPE */
                    DO:
                        DO WHILE TRUE ON ENDKEY UNDO, LEAVE:          
                           
@@ -1311,8 +1314,8 @@ DO TRANSACTION ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
                         IF KEYFUNCTION(LASTKEY) = "END-ERROR"  THEN
                            LEAVE.
 
-                        IF  glb_dsdepart = "TI"     OR
-                            glb_dsdepart = "COMPE"  THEN
+                        IF  glb_cddepart = 20   OR  /* TI */
+                            glb_cddepart = 4  THEN  /* COMPE */
                             DO:
                                 DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                                    UPDATE tel_nrtelvoz WITH FRAME f_pac03.
@@ -1388,8 +1391,8 @@ DO TRANSACTION ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
                   END. /* Fim PAC 90,91 */
              ELSE
                 DO:
-                    IF  glb_dsdepart = "TI"     OR
-                        glb_dsdepart = "COMPE"  THEN
+                    IF  glb_cddepart = 20   OR  /* TI */
+                        glb_cddepart = 4  THEN  /* COMPE */
                         DO:
                             DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                                UPDATE tel_nrtelvoz WITH FRAME f_pac03.

@@ -25,6 +25,9 @@
                             opcoes A,I,E.   (Fernando).
                             
                25/05/2009 - Alteracao CDOPERAD (Kbase).
+
+			   08/12/2016 - P341-Automatização BACENJUD - Realizar a validação 
+			                do departamento pelo código do mesmo (Renato Darosci)
 ............................................................................. */
 
 { includes/var_online.i }
@@ -230,8 +233,8 @@ DO WHILE TRUE:
       UPDATE glb_cddopcao tel_flgtpseg tel_tpplaseg WITH FRAME f_opcao.
 
       IF   CAN-DO ("A,I,E",glb_cddopcao)      THEN
-           IF   glb_dsdepart <> "TI"       AND
-                glb_dsdepart <> "PRODUTOS" THEN
+           IF   glb_cddepart <> 20   AND  /* TI */
+                glb_cddepart <> 14  THEN  /* PRODUTOS */
                 DO:
                    glb_cdcritic = 36.
                    NEXT.

@@ -134,7 +134,7 @@
                 12/11/2015 - Na chamada da procedure obtem-log-cecred, incluir
                              novo parametro inestcri projeto Estado de Crise
                              (Jorge/Andrino)             
-
+                        
                 27/09/2016 - M211 - Envio do parado cdifconv na chamada da 
                             obtem-log-cecred pela pi_sr_ted_f (Jonata-RKAM)        
                         
@@ -142,10 +142,13 @@
 
 				29/11/2016 - Ajuste para gravar corretamente os movimentos de
 						     entrada referente as TED - SICREDI (Adriano - M211).   
-                        
-				14/12/2016 - Ajuste para gravar corretamente os movimentos de
+
+		        06/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
+                             departamento passando a considerar o código (Renato Darosci)
+
+		        14/12/2016 - Ajuste para gravar corretamente os movimentos de
 						     saida referente as TED - SICREDI 
-							 (Adriano - SD 577067).   
+							 (Adriano - SD 577067). 
                         
 ............................................................................*/
 
@@ -290,7 +293,7 @@ PROCEDURE Busca_Dados:
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtopr AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_dsdepart AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cddepart AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cddopcao AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolx AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_cdagencx AS INTE                           NO-UNDO.
@@ -607,11 +610,10 @@ PROCEDURE Busca_Dados:
             WHEN "F" THEN DO:
 
                 /* Oscar - Será controlada pela PERMISS segundo Fernanda Pera
+                /*20 - TI, 18 - SUPORTE, 8 - COORD.ADM/FINANCEIRO, 9 - COORD.PRODUTOS, 4 - COMPE, 11 - FINANCEIRO */
+                ASSIGN aux_dsdepart = "20,18,8,9,4,11".
                 
-                ASSIGN aux_dsdepart = "TI,SUPORTE,COORD.ADM/FINANCEIRO," +
-                                      "COORD.PRODUTOS,COMPE,FINANCEIRO".
-
-                IF  NOT CAN-DO(aux_dsdepart,par_dsdepart) THEN
+                IF  NOT CAN-DO(aux_dsdepart,STRING(par_cddepart)) THEN
                     DO:
                         ASSIGN aux_cdcritic = 36.
                         LEAVE Busca.
@@ -745,11 +747,10 @@ PROCEDURE Busca_Dados:
             END. /* par_cddopcao = "F" */   
 
             WHEN "L" THEN DO:
+			    /*20 - TI, 18 - SUPORTE, 8 - COORD.ADM/FINANCEIRO, 9 - COORD.PRODUTOS, 4 - COMPE, 11 - FINANCEIRO */
+                ASSIGN aux_dsdepart = "20,18,8,9,4,11".
 
-                ASSIGN aux_dsdepart = "TI,SUPORTE,COORD.ADM/FINANCEIRO," +
-                                      "COORD.PRODUTOS,COMPE,FINANCEIRO".
-
-                IF  NOT CAN-DO(aux_dsdepart,par_dsdepart) THEN
+				IF  NOT CAN-DO(aux_dsdepart,STRING(par_cddepart)) THEN
                     DO:
                         ASSIGN aux_cdcritic = 36.
                         LEAVE Busca.
@@ -2595,7 +2596,7 @@ PROCEDURE pi_sr_ted_f:
     RUN atualiza_tabela_erros (INPUT par_cdcooper,
                                INPUT FALSE).
 
-	RUN obtem-log-cecred IN h-b1wgen0050 (INPUT par_cdcoopex,
+    RUN obtem-log-cecred IN h-b1wgen0050 (INPUT par_cdcoopex,
                                           INPUT par_cdagenci,
                                           INPUT 0,
                                           INPUT par_cdoperad,
@@ -2609,15 +2610,14 @@ PROCEDURE pi_sr_ted_f:
                                           INPUT 0,
                                           INPUT 1,
                                           INPUT 99999,
-                                          INPUT 0, /* inestcri, 0 Nao, 1 Sim */                                          
-                                          INPUT 0,  /* IF da TED - Somente CECRED */
-										  INPUT 0, /* par_vlrdated */
+                                          INPUT 0, /* par_vlrdated */
+                                          INPUT 0, /* inestcri, 0 Nao, 1 Sim */
                                           OUTPUT TABLE tt-logspb,
                                           OUTPUT TABLE tt-logspb-detalhe,
                                           OUTPUT TABLE tt-logspb-totais,
                                           OUTPUT TABLE tt-erro).
 
-	EMPTY TEMP-TABLE tt-erro.
+    EMPTY TEMP-TABLE tt-erro.
 
     FIND FIRST tt-logspb-totais NO-LOCK NO-ERROR.
 
@@ -2626,7 +2626,7 @@ PROCEDURE pi_sr_ted_f:
     ELSE
        ASSIGN aux_vlrtedsr = 0.
 
-	RUN atualiza_tabela_erros (INPUT par_cdcooper,
+    RUN atualiza_tabela_erros (INPUT par_cdcooper,
                                INPUT TRUE).
 
     DO aux_contador = 1 TO NUM-ENTRIES(aux_cdbccxlt,","):

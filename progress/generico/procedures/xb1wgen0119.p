@@ -22,13 +22,16 @@
                30/10/2012 - Criados relatórios de Limite de Cheque Especial e 
    						    Informações Cadastrais para a opção "R" (Lucas)
 
+			   06/12/2016 - P341-Automatização BACENJUD - Alterar a passagem 
+			                da descrição do departamento como parametro e 
+							passar o código (Renato Darosci)
 ............................................................................ */
 
 DEF VAR aux_cdcooper  AS INTE                                           NO-UNDO.
 DEF VAR aux_cdcopalt  AS INTE                                           NO-UNDO.
 DEF VAR aux_cdagenci  AS INTE                                           NO-UNDO.
 DEF VAR aux_nrdcaixa  AS INTE                                           NO-UNDO.
-DEF VAR aux_dsdepart  AS CHAR                                           NO-UNDO.
+DEF VAR aux_cddepart  AS INTE                                           NO-UNDO.
 DEF VAR aux_cdoperad  AS CHAR                                           NO-UNDO.
 DEF VAR aux_vllimpam  AS DECI                                           NO-UNDO.
 DEF VAR aux_vlpamuti  AS DECI                                           NO-UNDO.
@@ -72,7 +75,7 @@ PROCEDURE valores_entrada:
             WHEN "cdcopalt"  THEN aux_cdcopalt  = INTE(tt-param.valorCampo).
             WHEN "cdagenci"  THEN aux_cdagenci =  INTE(tt-param.valorCampo).
             WHEN "nrdcaixa"  THEN aux_nrdcaixa =  INTE(tt-param.valorCampo).
-            WHEN "dsdepart"  THEN aux_dsdepart =  tt-param.valorCampo.
+            WHEN "cddepart"  THEN aux_cddepart =  INTE(tt-param.valorCampo).
             WHEN "cdoperad"  THEN aux_cdoperad =  tt-param.valorCampo.
             WHEN "vllimpam"  THEN aux_vllimpam =  DECI(tt-param.valorCampo).
             WHEN "dthabpam"  THEN aux_dthabpam =  DATE(tt-param.valorCampo).
@@ -99,7 +102,7 @@ PROCEDURE verifica_permissao:
     RUN verifica_permissao IN hBO (INPUT aux_cdcooper,
                                    INPUT aux_cdagenci,
                                    INPUT aux_nrdcaixa,
-                                   INPUT aux_dsdepart,
+                                   INPUT aux_cddepart,
                                   OUTPUT TABLE tt-erro).
 
     IF RETURN-VALUE = "NOK" THEN

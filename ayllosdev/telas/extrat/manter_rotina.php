@@ -7,7 +7,12 @@
  * --------------
  * ALTERAÇÕES   : 24/07/2013 - Alterado rotina de exibicao mensagem de
  *							   erro (Daniel). 								    			
- * -------------- 19/09/2013 - Implementada opcao AC da tela EXTRAT (Tiago).
+ *                19/09/2013 - Implementada opcao AC da tela EXTRAT (Tiago).
+ *
+ *                02/12/2016 - P341-Automatização BACENJUD - Alterar a passagem da descrição do 
+ *                             departamento como parametros e passar o o código (Renato Darosci)
+ *
+ * --------------
  */
 ?> 
 
@@ -74,7 +79,7 @@
 	$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';	
  	$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';	
 	$xml .= '		<dtmvtolt>'.$glbvars['dtmvtolt'].'</dtmvtolt>';
-	$xml .= '		<dsdepart>'.$glbvars['dsdepart'].'</dsdepart>';
+	$xml .= '		<cddepart>'.$glbvars['cddepart'].'</cddepart>';
 	$xml .= '		<nrdconta>'.$nrdconta.'</nrdconta>';
 	$xml .= '		<dtinimov>'.$dtinimov.'</dtinimov>';
 	$xml .= '		<dtfimmov>'.$dtfimmov.'</dtfimmov>';

@@ -53,6 +53,9 @@
 
                   18/08/2016  - Adicionado função controlaFoco.(Evandro - RKAM).
 
+                  29/11/2016 - P341-Automatização BACENJUD - Realizar as validações pelo código
+				               do departamento ao invés da descrição (Renato Darosci - Supero)
+
  ***********************************************************************/
 
 var dsdregis = "";  // Variavel para armazenar os valores dos titulares 
@@ -61,7 +64,8 @@ var mensagem = "Deseja efetuar impress&atilde;o do termo de ades&atilde;o ?"; //
 var callafterCobranca = '';
 
 function habilitaSetor(setorLogado) {
-    if ((setorLogado != "CANAIS") && (setorLogado != "TI") && (setorLogado != "SUPORTE")) {
+    // Se o setor logado não for 1-CANAIS, 18-SUPORTE ou 20-TI
+    if ((setorLogado != 1) && (setorLogado != 18) && (setorLogado != 20)) {
         $('#flgcebhm', '#frmConsulta').desabilitaCampo();
     }
 }

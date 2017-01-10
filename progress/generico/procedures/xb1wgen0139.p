@@ -11,7 +11,9 @@
    Alteracoes: 02/02/2012 - Corrigdo a passagem dos parametros na procedure
                             busca_dados, grava_dados (Adriano).
                             
-
+               06/12/2016 - P341-Automatização BACENJUD - Alterar a passagem 
+			                da descrição do departamento como parametro e 
+							passar o código (Renato Darosci)
 ............................................................................ */
 
 DEF VAR aux_cdcooper AS INTE                                           NO-UNDO.
@@ -34,7 +36,7 @@ DEF VAR aux_mrgitgcr AS DECI                                           NO-UNDO.
 DEF VAR aux_mrgitgdb AS DECI                                           NO-UNDO.
 DEF VAR aux_horabloq AS CHAR                                           NO-UNDO.
 DEF VAR aux_cddopcao AS CHAR                                           NO-UNDO.
-DEF VAR aux_dsdepart AS CHAR                                           NO-UNDO.
+DEF VAR aux_cddepart AS INTE                                           NO-UNDO.
 
 { sistema/generico/includes/b1wgen0139tt.i }
 { sistema/generico/includes/var_internet.i }
@@ -69,7 +71,7 @@ PROCEDURE valores_entrada:
             WHEN "mrgitgdb" THEN aux_mrgitgdb = DECI(tt-param.valorCampo).
             WHEN "cddopcao" THEN aux_cddopcao = tt-param.valorCampo.
             WHEN "horabloq" THEN aux_horabloq = tt-param.valorCampo.
-            WHEN "dsdepart" THEN aux_dsdepart = tt-param.valorCampo.
+            WHEN "cddepart" THEN aux_cddepart = INTE(tt-param.valorCampo).
         END CASE.
 
     END. /** Fim do FOR EACH tt-param **/
@@ -117,7 +119,7 @@ PROCEDURE grava_dados:
                            INPUT  aux_nrdcaixa,
                            INPUT  aux_cdoperad,
                            INPUT  aux_nmdatela,
-                           INPUT  aux_dsdepart,
+                           INPUT  aux_cddepart,
                            INPUT  aux_idorigem,
                            INPUT  aux_dtmvtolt,
                            INPUT  aux_mrgsrdoc,
@@ -158,7 +160,7 @@ PROCEDURE acesso_opcao:
 
     RUN acesso_opcao IN hBO(INPUT  aux_cdcooper,
                             INPUT  aux_cdagenci,
-                            INPUT  aux_dsdepart,
+                            INPUT  aux_cddepart,
                             INPUT  aux_cddopcao,
                             OUTPUT TABLE tt-erro).
 

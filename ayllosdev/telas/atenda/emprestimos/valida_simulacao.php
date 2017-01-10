@@ -7,6 +7,9 @@
  *
  * ALTERACAO: 19/07/2016 - Correcao da passagem incorreta da variavel idseqttl para xb1wgen0097. SD 479874. (Carlos R.)
  *
+ *            30/11/2016 - P341-Automatização BACENJUD - Alterado para passar como parametro o código do departamento
+ *                         ao invés da descrição (Renato Darosci - Supero)
+ *
  */
 	session_start();
 	require_once('../../../includes/config.php');
@@ -38,7 +41,7 @@
 	$xml .= "		<idseqttl>".$idseqttl."</idseqttl>";
 	$xml .= "		<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
 	$xml .= "		<flgerlog>FALSE</flgerlog>";
-	$xml .= "		<dsdepart>".$glbvars["dsdepart"]."</dsdepart>";	
+	$xml .= "		<cddepart>".$glbvars["cddepart"]."</cddepart>";	
 	$xml .= "	</Dados>";
 	$xml .= "</Root>";
 	

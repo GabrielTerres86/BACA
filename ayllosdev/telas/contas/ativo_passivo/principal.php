@@ -6,6 +6,9 @@
  * OBJETIVO     : Mostrar opcao Principal da rotina de Ativo/Passivo da tela de CONTAS
  * ALTERACOES   : 20/12/2010 - Adicionado chamada validaPermissao (Gabriel - DB1).
  *                05/08/2015 - Gabriel (RKAM) : Reformulacao cadastral.
+ *                01/12/2016 - Renato (Supero): P341-Automatização BACENJUD - Retirado o envio do
+ *                                              parametro do departamento ao invés pois não é 
+ *                                              utilizado na BO.
  */	
 ?>
 <?	
@@ -54,7 +57,6 @@
 	$xml .= "		<cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
 	$xml .= "		<nmdatela>".$glbvars["nmdatela"]."</nmdatela>";	
 	$xml .= "		<idorigem>".$glbvars["idorigem"]."</idorigem>";	
-	$xml .= "		<dsdepart>".$glbvars["dsdepart"]."</dsdepart>";	
 	$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
 	$xml .= "		<idseqttl>".$idseqttl."</idseqttl>";
 	$xml .= "	</Dados>";

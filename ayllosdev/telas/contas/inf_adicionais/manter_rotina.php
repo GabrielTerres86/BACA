@@ -9,6 +9,8 @@
 				  16/11/2011 - Tratamento para cdcooper = 3 na funcao validaDados(). (Fabricio)
 				  06/08/2015 - Reformulacao Cadastral (Gabriel-RKAM)
 				  14/07/2016 - Correcao na forma de uso do retorno XML. SD 479874. Carlos R.
+				  01/12/2016 - P341-Automatização BACENJUD - Removido passagem do departamento como parametros
+                               pois a BO não utiliza o mesmo (Renato Darosci)
  */
     session_start();
 	require_once('../../../includes/config.php');
@@ -23,7 +25,6 @@
 	$cdoperad = $glbvars['cdoperad'];
 	$nmdatela = $glbvars['nmdatela'];
 	$idorigem = $glbvars['idorigem'];
-	$dsdepart = $glbvars['dsdepart'];
 	
 	// Guardo os parâmetos do POST em variáveis
 	$operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '' ;		
@@ -64,7 +65,6 @@
 	$xml .= '		<cdoperad>'.$cdoperad.'</cdoperad>';
 	$xml .= '		<nmdatela>'.$nmdatela.'</nmdatela>';
 	$xml .= '		<idorigem>'.$idorigem.'</idorigem>';
-	$xml .= '		<dsdepart>'.$dsdepart.'</dsdepart>';
 	$xml .= '		<nrdconta>'.$nrdconta.'</nrdconta>';
 	$xml .= '		<idseqttl>'.$idseqttl.'</idseqttl>';
 	$xml .= '		<nrinfcad>'.$nrinfcad.'</nrinfcad>';

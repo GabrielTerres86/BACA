@@ -300,14 +300,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
 
      Objetivo  : Valida o operador.
 
-     Alteracoes: 
+     Alteracoes: 29/11/2016 - P341 - Automatização BACENJUD - Alterado para validar o departamento à partir
+                              do código e não mais pela descrição (Renato Darosci - Supero)
 
      ..............................................................................*/ 
     DECLARE
       -- Busca o operador
       CURSOR cr_crapope(pr_cdcooper IN crapope.cdcooper%TYPE
                        ,pr_cdoperad IN crapope.cdoperad%TYPE) IS
-        SELECT dsdepart
+        SELECT cddepart
           FROM crapope
          WHERE crapope.cdcooper = pr_cdcooper
            AND UPPER(crapope.cdoperad) = UPPER(pr_cdoperad);
@@ -339,7 +340,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
       END IF;
 
       -- Somente o departamento credito irá ter acesso para alterar as informacoes
-      IF rw_crapope.dsdepart <> 'PRODUTOS' AND rw_crapope.dsdepart <> 'TI'  THEN
+      IF rw_crapope.cddepart NOT IN (14,20) THEN
         vr_cdcritic := 36;
         vr_dscritic := NULL;
         RAISE vr_exc_saida;
@@ -2748,7 +2749,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
       FETCH cr_crappre INTO vr_qtmesblq;
       CLOSE cr_crappre;
       
-        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Dados>' || vr_qtmesblq || '</Dados></Root>');
       
     EXCEPTION

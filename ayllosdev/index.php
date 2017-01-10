@@ -14,14 +14,17 @@
  * 005: [19/09/2011] - David G. Kistner (Cecred): Ajuste no controle para verificar se existe um login em andamento
  * 006: [19/01/2012] - Tiago (Cecred)           : Incluido campo PAC trabalho
  * 007: [30/03/2012] - David G. Kistner (Cecred): Incluir novas cooperativas (Credimilsul e Viacredi Alto Vale)
- * 008: [08/02/2013] - Lucas R. (Cecred): Incluir campo flgperac e nvoperad em glbvars.
+ * 008: [08/02/2013] - Lucas R. (Cecred)        : Incluir campo flgperac e nvoperad em glbvars.
  * 009: [09/08/2013] - Carlos (Cecred)          : Alteração da sigla PAC para PA.
  * 010: [22/01/2014] - David G. Kistner (Cecred): Incluir nova cooperativa transulcred
  * 011: [17/03/2016] - Lombardi (Cecred)        : Incluir campo idparame_reciproci e desretorno em glbvars
  * 012: [17/06/2016] - Rafael Maciel (Cecred)   : Ajuste na CDAGENCI para receber o CDPACTRA
  * 013: [27/06/2016] - Oscar (Cecred)           : Incluir o cdoperad na tt-login para e setar a variavel de sessao com valor que esta retornando 
-  do cadastro do operador. Quando o operador digita o codigo do operador em maisculo na variavel de sessao gravava o cdoperad digitado enquanto no cadastro
-  estava em minusculo, isto gerava problemas no oracle ao consultar um nome de operador usando a variavel cdoperad da sessao que estava em maisculo. 
+ *                                                do cadastro do operador. Quando o operador digita o codigo do operador em maisculo na variavel
+ *                                                de sessao gravava o cdoperad digitado enquanto no cadastro estava em minusculo, isto gerava
+ *                                                problemas no oracle ao consultar um nome de operador usando a variavel cdoperad da sessao que
+ *                                                estava em maisculo.
+ * 014: [21/11/2016] - Guilherme/SUPERO         : P341 - Validacao Departamento - Inclusao da variavel CDDEPART
  */
 ?> 
 <?php	
@@ -55,20 +58,20 @@
 			// Monta o xml de requisição
 			$xmlLogin  = "";
 			$xmlLogin .= "<Root>";
-			$xmlLogin .= "	<Cabecalho>";
-			$xmlLogin .= "		<Bo>b1wgen0000.p</Bo>";
-			$xmlLogin .= "		<Proc>efetua_login</Proc>";
-			$xmlLogin .= "	</Cabecalho>";
-			$xmlLogin .= "	<Dados>";
-			$xmlLogin .= "		<cdcooper>".$cdcooper."</cdcooper>";
-			$xmlLogin .= "		<cdagenci>".$cdpactra."</cdagenci>";
-			$xmlLogin .= "		<nrdcaixa>0</nrdcaixa>";
-			$xmlLogin .= "		<cdoperad>".$cdoperad."</cdoperad>";
-			$xmlLogin .= "		<idorigem>5</idorigem>";
-			$xmlLogin .= "		<vldsenha>yes</vldsenha>";
-			$xmlLogin .= "		<cddsenha>".$cddsenha."</cddsenha>";
-			$xmlLogin .= "		<cdpactra>".$cdpactra."</cdpactra>";
-			$xmlLogin .= "	</Dados>";
+            $xmlLogin .= "  <Cabecalho>";
+            $xmlLogin .= "      <Bo>b1wgen0000.p</Bo>";
+            $xmlLogin .= "      <Proc>efetua_login</Proc>";
+            $xmlLogin .= "  </Cabecalho>";
+            $xmlLogin .= "  <Dados>";
+            $xmlLogin .= "      <cdcooper>".$cdcooper."</cdcooper>";
+            $xmlLogin .= "      <cdagenci>".$cdpactra."</cdagenci>";
+            $xmlLogin .= "      <nrdcaixa>0</nrdcaixa>";
+            $xmlLogin .= "      <cdoperad>".$cdoperad."</cdoperad>";
+            $xmlLogin .= "      <idorigem>5</idorigem>";
+            $xmlLogin .= "      <vldsenha>yes</vldsenha>";
+            $xmlLogin .= "      <cddsenha>".$cddsenha."</cddsenha>";
+            $xmlLogin .= "      <cdpactra>".$cdpactra."</cdpactra>";
+            $xmlLogin .= "  </Dados>";
 			$xmlLogin .= "</Root>";
 			
 			// Classe para leitura do xml de retorno
@@ -134,6 +137,7 @@
 					$glbvars["cdpactra"] = $xmlObjLogin->roottag->tags[0]->tags[0]->tags[10]->cdata;
 					$glbvars["flgperac"] = $xmlObjLogin->roottag->tags[0]->tags[0]->tags[11]->cdata;
 					$glbvars["nvoperad"] = $xmlObjLogin->roottag->tags[0]->tags[0]->tags[12]->cdata;
+                    $glbvars["cddepart"] = $xmlObjLogin->roottag->tags[0]->tags[0]->tags[14]->cdata;
 					$glbvars["idparame_reciproci"] = 0;
 					$glbvars["desretorno"] = "NOK";
 					

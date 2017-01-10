@@ -23,6 +23,10 @@
                             
                18/04/2016 - Incluir procedure para validar senha do cartao 
                             magnetico e também atualizar o indicador na crapatr (Lucas Ranghetti #436229)
+
+	           06/12/2016 - P341-Automatização BACENJUD - Alterar a passagem 
+			                da descrição do departamento como parametro e 
+							passar o código (Renato Darosci)
 ............................................................................ */
 
 DEF VAR aux_cdcooper AS INTE                                           NO-UNDO.
@@ -42,7 +46,7 @@ DEF VAR aux_dtdiatab AS INTE                                           NO-UNDO.
 DEF VAR aux_dtlimite AS DATE                                           NO-UNDO.
 DEF VAR aux_cdsitdtl AS INTE                                           NO-UNDO.
 DEF VAR aux_dshistor AS CHAR                                           NO-UNDO.
-DEF VAR aux_dsdepart AS CHAR                                           NO-UNDO.
+DEF VAR aux_cddepart AS INTE                                           NO-UNDO.
 DEF VAR aux_cddddtel AS INTE                                           NO-UNDO.
 DEF VAR aux_dtiniatr AS DATE                                           NO-UNDO.
 DEF VAR aux_dtfimatr AS DATE                                           NO-UNDO.
@@ -103,7 +107,7 @@ PROCEDURE valores_entrada:
             WHEN "cdhistor" THEN aux_cdhistor = tt-param.valorCampo.
             WHEN "cdrefere" THEN aux_cdrefere = DECI(tt-param.valorCampo).
             WHEN "cdsitdtl" THEN aux_cdsitdtl = INTE(tt-param.valorCampo).  
-            WHEN "dsdepart" THEN aux_dsdepart = tt-param.valorCampo.        
+            WHEN "cddepart" THEN aux_cddepart = INTE(tt-param.valorCampo).  
             WHEN "cddddtel" THEN aux_cddddtel = INTE(tt-param.valorCampo).  
             WHEN "dtiniatr" THEN aux_dtiniatr = DATE(tt-param.valorCampo).  
             WHEN "dtfimatr" THEN aux_dtfimatr = DATE(tt-param.valorCampo).  
@@ -318,7 +322,7 @@ END PROCEDURE.
                               INPUT aux_nrdconta,
                               INPUT aux_idseqttl,
                               INPUT TRUE, /* LOG */
-                              INPUT aux_dsdepart,
+                              INPUT aux_cddepart,
                              OUTPUT TABLE tt-erro ).
 
      IF  RETURN-VALUE = "NOK"  THEN

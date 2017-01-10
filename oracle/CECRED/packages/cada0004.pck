@@ -21,7 +21,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
   --                            fn_situacao_senha. (Jorge/David)
   --
   --               12/04/2016 - Incluido rotina PC_GERA_LOG_OPE_CARTAO (Andrino - Projeto 290
-  --                            Caixa OnLine) 
+  --                            Caixa OnLine)
   --
   --               14/11/2016 - M172 - Atualização Telefone no Auto Atendimento (Guilherme/SUPERO)
   --
@@ -661,8 +661,8 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
   PROCEDURE pc_atualiz_data_manut_fone(pr_cdcooper IN crapttl.cdcooper%TYPE  --> Codigo da cooperativa
                                       ,pr_nrdconta IN crapttl.nrdconta%TYPE  --> Numero da Conta
                                       ,pr_cdcritic OUT INTEGER
-                                      ,pr_dscritic OUT VARCHAR2);      
-									  
+                                      ,pr_dscritic OUT VARCHAR2);
+
   PROCEDURE pc_verifica_atualiz_fone(pr_cdcooper IN crapttl.cdcooper%TYPE  --> Codigo da cooperativa
                                     ,pr_nrdconta IN crapttl.nrdconta%TYPE  --> Numero da Conta
                                     ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> Sequencia do Titular
@@ -679,8 +679,8 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                                     ,pr_inpessoa IN crapttl.inpessoa%TYPE  --> Indicador PF/PJ
                                     ,pr_cdcritic OUT INTEGER
                                     ,pr_dscritic OUT VARCHAR2
-                                    );									                     
-                                     
+                                    );
+
 END CADA0004;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
@@ -721,7 +721,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   --                            desta package.(Carlos Rafael Tanholi).    
   --
   --               14/07/2016 - Correcao na procedure pc_envia_email_alerta sobre o cursor da 
-  --                            craptab que estava com a logica errada. (Carlos Rafael Tanholi).             
+  --                            craptab que estava com a logica errada. (Carlos Rafael Tanholi).
   --
   --               14/11/2016 - M172 - Atualização Telefone no Auto Atendimento (Guilherme/SUPERO)
   --
@@ -1081,7 +1081,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --
     --  Alteração : 11/09/2015 - Conversão Progress -> Oracle (Odirlei)
     --
-    --
+    --              08/12/2016 - P341-Automatização BACENJUD - Realizar a validação 
+		--                           do departamento pelo código do mesmo (Renato Darosci)
     -- ..........................................................................*/
     
     ---------------> CURSORES <----------------- 
@@ -1103,7 +1104,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     
     -- buscar operador     
     CURSOR cr_crapope IS
-      SELECT dsdepart
+      SELECT cddepart
         FROM crapope
        WHERE crapope.cdcooper = pr_cdcooper
          AND UPPER(crapope.cdoperad) = UPPER(pr_cdoperad);
@@ -1161,7 +1162,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       
       /** Mostra todos os cartoes somente para SUPER-USUARIO **/
       /** Despreza cancelados e vencidos ha mais de 180 dias **/
-      IF rw_crapope.dsdepart <> 'TI'   AND
+      IF rw_crapope.cddepart <> 20  AND  -- TI
          ((rw_crapcrm.cdsitcar = 3 AND 
           rw_crapcrm.dtcancel < (pr_dtmvtolt - 180))   OR
           (rw_crapcrm.cdsitcar = 2  AND 
@@ -8453,7 +8454,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     WHEN OTHERS THEN
       pr_dscritic := 'Não foi possivel buscar dados pc_busca_qtd_entrega_talao: '||SQLERRM;
   END pc_busca_qtd_entrega_talao;
-  
+
   PROCEDURE pc_inserir_cnae_bloqueado(pr_cdcnae     IN tbcc_cnae_bloqueado.cdcnae%TYPE         --> Codigo do CNAE 
                                      ,pr_dsmotivo   IN tbcc_cnae_bloqueado.dsmotivo%TYPE       --> Motivo da inclusao
                                      ,pr_dtarquivo  IN tbcc_cnae_bloqueado.dtarquivo%TYPE      --> Data do arquivo
@@ -10848,7 +10849,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
   END pc_verifica_cnpj_blq;  
-
+  
   PROCEDURE pc_atualiz_data_manut_fone
                         ( pr_cdcooper IN crapttl.cdcooper%TYPE  --> Codigo da cooperativa
                          ,pr_nrdconta IN crapttl.nrdconta%TYPE  --> Numero da Conta

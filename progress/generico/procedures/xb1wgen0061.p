@@ -6,7 +6,9 @@
 
     Objetivo  : BO de Comunicacao XML x BO - CLIENTE FINANCEIRO
 
-    Alteracoes: 
+    Alteracoes: 06/12/2016 - P341-Automatização BACENJUD - Alterar a passagem 
+			                 da descrição do departamento como parametro e 
+						 	 passar o código (Renato Darosci)
    
 .............................................................................*/
 
@@ -38,7 +40,7 @@ DEF VAR aux_dgdconta AS CHAR                                           NO-UNDO.
 DEF VAR aux_nminsfin AS CHAR                                           NO-UNDO.
 DEF VAR aux_dtmvtosf AS DATE                                           NO-UNDO.
 DEF VAR aux_dtdenvio AS DATE                                           NO-UNDO.
-DEF VAR aux_dsdepart AS CHAR                                           NO-UNDO.
+DEF VAR aux_cddepart AS INTE                                           NO-UNDO.
 
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/supermetodos.i }
@@ -73,7 +75,7 @@ PROCEDURE valores_entrada:
             WHEN "nminsfin" THEN aux_nminsfin = tt-param.valorCampo.
             WHEN "dtmvtosf" THEN aux_dtmvtosf = DATE(tt-param.valorCampo).
             WHEN "dtdenvio" THEN aux_dtdenvio = DATE(tt-param.valorCampo).
-            WHEN "dsdepart" THEN aux_dsdepart = tt-param.valorCampo.
+            WHEN "cddepart" THEN aux_cddepart = INTE(tt-param.valorCampo).
 
         END CASE.
 
@@ -97,7 +99,7 @@ PROCEDURE busca_dados:
                             INPUT aux_dtmvtolt,
                             INPUT aux_tpregist,
                             INPUT aux_nrseqdig,
-                            INPUT aux_dsdepart,
+                            INPUT aux_cddepart,
                            OUTPUT TABLE tt-dadoscf,
                            OUTPUT TABLE tt-crapsfn,
                            OUTPUT TABLE tt-erro) NO-ERROR.
@@ -167,7 +169,7 @@ PROCEDURE Valida_Dados:
                              INPUT aux_nminsfin,
                              INPUT aux_dtmvtosf,
                              INPUT aux_dtmvtolt,
-                             INPUT aux_dsdepart,
+                             INPUT aux_cddepart,
                              INPUT aux_dtdenvio,
                             OUTPUT TABLE tt-erro) NO-ERROR.
 

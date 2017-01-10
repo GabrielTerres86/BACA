@@ -12,11 +12,14 @@
                 
     Auteracoes: 20/01/2014 - Adicionado parametro aux_valdtudo. 
                            - Adotado padronizacao CECRED. (Jorge)
+
+				06/12/2016 - P341-Automatização BACENJUD - Alterar a passagem da descrição do 
+                             departamento como parametro e passar o o código (Renato Darosci)
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
 
-DEF VAR aux_dsdepart AS CHAR                NO-UNDO.
+DEF VAR aux_cddepart AS INTE                NO-UNDO.
 DEF VAR aux_nmsegura AS CHAR                NO-UNDO.
 DEF VAR aux_dsasauto AS CHAR                NO-UNDO.
 DEF VAR aux_cdoperad AS CHAR                NO-UNDO.
@@ -87,8 +90,8 @@ PROCEDURE valores_entrada:
                  ASSIGN aux_cdagenci = INT(tt-param.valorCampo).
             WHEN "cdbccxlt" THEN 
                  ASSIGN aux_cdbccxlt = INT(tt-param.valorCampo).
-            WHEN "dsdepart" THEN 
-                 ASSIGN aux_dsdepart = tt-param.valorCampo.
+            WHEN "cddepart" THEN 
+                 ASSIGN aux_cddepart = INT(tt-param.valorCampo).
             WHEN "nmsegura" THEN 
                  ASSIGN aux_nmsegura = tt-param.valorCampo.
             WHEN "flgativo" THEN 

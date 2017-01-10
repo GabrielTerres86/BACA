@@ -26,6 +26,10 @@ Alteracoes: ??/??/???? - Inclusao de widget-pool (Martin - SQWorks)
 						 buscando da craptab com cdacesso = "PGOPERADOR".
 						 (Fabricio)
 			
+			06/12/2016 - P341-Automatização BACENJUD - Alterada a validação 
+			             do departamento para que a mesma seja feita através
+						 do código e não da descrição (Renato Darosci)
+
 ............................................................................. */
 &ANALYZE-SUSPEND _VERSION-NUMBER WDT_v2r12 Web-Object
 /* Maps: wpgd0001.htm */
@@ -311,7 +315,7 @@ IF REQUEST_METHOD = "POST" THEN
 			IF  v-tipo = "USU"  THEN
             DO:
 				IF   AVAIL crapope  AND crapope.flgdopgd = FALSE  AND
-                     crapope.dsdepart <> "TI" THEN
+                     crapope.cddepart <> 20 THEN    /* TI */
                 DO:
 					RUN output-header.
                     RUN dispatch IN THIS-PROCEDURE ('enable-fields':U).
@@ -332,7 +336,7 @@ IF REQUEST_METHOD = "POST" THEN
                 ELSE IF crapope.cddsenha = INPUT senha THEN 
                 DO:
                     /* tratamento para a conta super */
-                    IF  crapope.dsdepart = "TI" THEN 
+                    IF  crapope.cddepart = 20 THEN    /* TI */
                         aux_nvoperad  = 0.
                     ELSE
                     DO:

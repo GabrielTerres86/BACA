@@ -6,7 +6,10 @@
  * OBJETIVO     : Rotina para validar/alterar/incluir/excluir os dados das TELEFONES da tela de CONTAS
  *
  * ALTERACOES   : 04/08/2015 - Reformulacao Cadastral (Gabriel-RKAM).
- *						      14/07/2016 - Correcao da forma de recuperacao da dados do XML.SD 479874. Carlos R.
+ *                14/07/2016 - Correcao da forma de recuperacao da dados do XML.SD 479874. Carlos R.
+ *
+ *                02/12/2016 - P341-Automatização BACENJUD - Removido passagem do departamento como parametros
+ *                             pois a BO não utiliza o mesmo (Renato Darosci)
  */
  
     session_start();
@@ -65,7 +68,6 @@
 	$xml .= '		<cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
 	$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';
 	$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';
-	$xml .= '		<dsdepart>'.$glbvars['dsdepart'].'</dsdepart>';		
 	$xml .= '		<nrdconta>'.$nrdconta.'</nrdconta>';
 	$xml .= '		<idseqttl>'.$idseqttl.'</idseqttl>';
 	$xml .= '		<nrdrowid>'.$nrdrowid.'</nrdrowid>';

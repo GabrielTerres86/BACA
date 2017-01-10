@@ -9,7 +9,8 @@
   
     Objetivo  : Include com Temp-Tables para a BO b1wgen0184.
   
-    Alteracoes: 
+    Alteracoes: 07/12/2016 - P341-Automatização BACENJUD - Alterar o campo 
+	                         DSDEPART para CDDEPART (Renato Darosci)
 .............................................................................*/
 
 DEF TEMP-TABLE tt-lislot NO-UNDO
@@ -19,7 +20,7 @@ DEF TEMP-TABLE tt-lislot NO-UNDO
     FIELD cdoperad AS CHAR
     FIELD nmdatela AS CHAR
     FIELD idorigem AS INTE
-    FIELD dsdepart AS CHAR
+    FIELD cddepart AS INTE
     FIELD dtmvtolt AS DATE
     FIELD cddopcao AS CHAR
     FIELD tpdopcao AS CHAR

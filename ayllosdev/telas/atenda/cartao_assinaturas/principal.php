@@ -10,6 +10,8 @@
  *				  02/09/2015 - Projeto Reformulacao cadastral		  
  *						  	   (Tiago Castro - RKAM)
  * 
+ *                29/11/2016 - P341-Automatização BACENJUD - Removido DSDEPART do XML pois 
+ *                             o mesmo não é utilizado na BO (Renato Darosci)
  */
  ?>
  
@@ -50,7 +52,6 @@
 	$xml .= "		<cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
 	$xml .= "		<nmdatela>".$glbvars["nmdatela"]."</nmdatela>";	
 	$xml .= "		<idorigem>".$glbvars["idorigem"]."</idorigem>";	
-	$xml .= "		<dsdepart>".$glbvars["dsdepart"]."</dsdepart>";	
 	$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
 	$xml .= "		<idseqttl>".$idseqttl."</idseqttl>";
 	$xml .= "	</Dados>";

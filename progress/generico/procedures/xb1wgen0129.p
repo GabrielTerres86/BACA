@@ -14,6 +14,9 @@
                22/04/2013 - Ajuste para a inclusao do parametro "Dias atraso
                             para inadimplencia" ( Adriano ).            
                             
+			   06/12/2016 - P341-Automatização BACENJUD - Alterar a passagem 
+			                da descrição do departamento como parametro e 
+							passar o código (Renato Darosci)          
 .............................................................................*/
 
 DEF VAR aux_cdcooper AS INTE                                       NO-UNDO.
@@ -24,7 +27,7 @@ DEF VAR aux_nmdatela AS CHAR                                       NO-UNDO.
 DEF VAR aux_idorigem AS INTE                                       NO-UNDO.
 DEF VAR aux_flgerlog AS LOGI                                       NO-UNDO.
 DEF VAR aux_dstextab AS CHAR                                       NO-UNDO.
-DEF VAR aux_dsdepart AS CHAR                                       NO-UNDO.
+DEF VAR aux_cddepart AS INTE                                       NO-UNDO.
  
 DEF VAR aux_vllimite AS DEC                                        NO-UNDO.
 DEF VAR aux_vlsalmin AS DEC                                        NO-UNDO.
@@ -55,7 +58,7 @@ PROCEDURE valores_entrada:
             WHEN "dtmvtolt" THEN aux_dtmvtolt = DATE(tt-param.valorCampo).
             WHEN "flgerlog" THEN aux_flgerlog = LOGICAL(tt-param.valorCampo).
             WHEN "dstextab" THEN aux_dstextab = tt-param.valorCampo.
-            WHEN "dsdepart" THEN aux_dsdepart = tt-param.valorCampo.
+            WHEN "cddepart" THEN aux_cddepart = INTE(tt-param.valorCampo).
 
             WHEN "vllimite" THEN aux_vllimite = DEC(tt-param.valorCampo).
             WHEN "vlsalmin" THEN aux_vlsalmin = DEC(tt-param.valorCampo).
@@ -127,7 +130,7 @@ PROCEDURE altera_tab030:
                               INPUT aux_dtmvtolt,
                               INPUT TRUE,
                               INPUT aux_dstextab,
-                              INPUT aux_dsdepart,
+                              INPUT aux_cddepart,
                               INPUT aux_vllimite,
                               INPUT aux_vlsalmin,
                               INPUT aux_diasatrs,

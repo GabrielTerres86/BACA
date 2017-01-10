@@ -7,6 +7,8 @@
 	 Objetivo  : Tratar as requisicoes da tela Tab002.                                  
 	                                                                  
 	 Alterações: 				
+	      05/12/2016 - P341-Automatização BACENJUD - Alterar a passagem da descrição do 
+                       departamento como parametros e passar o o código (Renato Darosci)		
 	**********************************************************************/
 	
 	session_start();
@@ -64,7 +66,7 @@
 	$xml .= "    <idorigem>".$glbvars["idorigem"]."</idorigem>";
 	$xml .= "    <dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
 	$xml .= "    <dstextab>".$dstextab."</dstextab>"; 
-	$xml .= "    <dsdepart>".$glbvars["dsdepart"]."</dsdepart>";
+	$xml .= "    <cddepart>".$glbvars["cddepart"]."</cddepart>";
 	$xml .= "    <qtfolind>".$qtfolind."</qtfolind>";
 	$xml .= "    <qtfolcjt>".$qtfolcjt."</qtfolcjt>";
 	$xml .= "  </Dados>";

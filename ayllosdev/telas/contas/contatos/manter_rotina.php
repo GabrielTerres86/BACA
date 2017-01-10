@@ -6,6 +6,9 @@
  * OBJETIVO     : Rotina para validar/alterar/incluir/excluir os dados das CONTATOS da tela de CONTAS
  *
  * ALTERACOES   : 02/09/2015 - Reformulacao cadastral (Gabriel-RKAM).
+ *
+ *                01/12/2016 - P341-Automatização BACENJUD - Removido passagem do departamento como parametros
+ *                             pois a BO não utiliza o mesmo (Renato Darosci)
  */
 ?>
 <?	
@@ -70,7 +73,6 @@
 	$xml .= '		<cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
 	$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';
 	$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';
-	$xml .= '		<dsdepart>'.$glbvars['dsdepart'].'</dsdepart>';		
 	$xml .= '		<nrdrowid>'.$nrdrowid.'</nrdrowid>';		
 	$xml .= '		<nrdconta>'.$nrdconta.'</nrdconta>';
 	$xml .= '		<idseqttl>'.$idseqttl.'</idseqttl>';	

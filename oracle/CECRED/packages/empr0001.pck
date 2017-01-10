@@ -805,6 +805,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
   --             16/11/2016 - Realizado ajuste para corrigir o problema ao abrir o detalhamento
   --                          do emprestimo na tela prestações, conforme solicitado no chamado
   --                          553330. (Kelvin)
+  --
+  --             28/11/2016 - P341 - Automatização BACENJUD - Alterado para validar o departamento à partir
+  --                          do código e não mais pela descrição (Renato Darosci - Supero)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tratamento de erro */
@@ -8999,7 +9002,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         END IF;
         --Fechar Cursor
         CLOSE cr_crappep;
-
+      
         --SD#545719 inicio
         IF rw_crappep.inliquid = 1 THEN
           -- Atribui críticas
@@ -9917,7 +9920,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                    16/10/2015 - Zerar o campo vlsdvsji quando liquidar a parcela PP (Oscar)             
     
                    17/03/2016 - Limpar campos de saldo ai liquidar crappep SD366229 (Odirlei-AMcom)
-
+    
                    31/10/2016 - Validação dentro para identificar
                                 parcelas ja liquidadas (AJFink - SD#545719)
 
@@ -10757,7 +10760,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         END IF;
         --Fechar Cursor
         CLOSE cr_crappep;
-
+      
         --SD#545719 inicio
         IF rw_crappep.inliquid = 1 THEN
           -- Atribui críticas
@@ -11815,7 +11818,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     -- Cursor do Operador
     CURSOR cr_crapope(pr_cdcooper IN crapope.cdcooper%TYPE
                      ,pr_cdoperad IN crapope.cdoperad%TYPE) IS
-      SELECT dsdepart
+      SELECT cddepart
         FROM crapope
        WHERE crapope.cdcooper        = pr_cdcooper
          AND UPPER(crapope.cdoperad) = UPPER(pr_cdoperad);
@@ -11909,7 +11912,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         END IF;
         
         -- Somente o departamento credito irá ter acesso para alterar as informacoes
-        IF rw_crapope.dsdepart = 'PRODUTOS' OR rw_crapope.dsdepart = 'TI' THEN
+        IF rw_crapope.cddepart IN (14,20) THEN
           RAISE vr_exc_saida;
         END IF;
         
@@ -11949,7 +11952,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         END IF;
         
         -- Somente o departamento credito irá ter acesso para alterar as informacoes
-        IF rw_crapope.dsdepart = 'PRODUTOS' OR rw_crapope.dsdepart = 'TI' THEN
+        IF rw_crapope.cddepart IN (14,20) THEN
           RAISE vr_exc_saida;
         END IF;  
       

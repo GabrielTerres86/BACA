@@ -24,6 +24,9 @@
                22/09/2014 - Alteração da mensagem com critica 77 substituindo pela 
                            b1wgen9999.p procedure acha-lock, que identifica qual 
                            é o usuario que esta prendendo a transaçao. (Vanessa)
+
+			   08/12/2016 - P341-Automatização BACENJUD - Realizar a validação 
+			                do departamento pelo código do mesmo (Renato Darosci)
 ............................................................................. */
 
 aux_indpostp = 1.
@@ -119,7 +122,7 @@ DO TRANSACTION ON ENDKEY UNDO, LEAVE:
                 aux_contador = 0.
 
                 IF   (craptrd.incalcul > 1)   AND  
-                      glb_dsdepart <> "TI"  THEN
+                      glb_cddepart <> 20     THEN   /* "TI" */
                      glb_cdcritic = 424.
 
                 ASSIGN  tel_dtfimper = craptrd.dtfimper

@@ -14,6 +14,8 @@
 	                                                                 
 	  Alterações: 27/06/2013 - Adicionados dois novos campos: mrgitgcr e mrgitgdb (Reinert).
 				  04/07/2013 - Alterado para receber o novo layout padrão do Ayllos Web (Reinert).
+				  05/12/2016 - P341-Automatização BACENJUD - Alterar a passagem da descrição do 
+                               departamento como parametros e passar o o código (Renato Darosci).
 	                                                                  
 	***********************************************************************/
 
@@ -66,7 +68,7 @@
 	$xmlCarregaDados .= "   <mrgitgcr>".$mrgitgcr."</mrgitgcr>";
 	$xmlCarregaDados .= "   <mrgitgdb>".$mrgitgdb."</mrgitgdb>";
 	$xmlCarregaDados .= "   <horabloq>".$horabloq.":".$horabloq2."</horabloq>";
-	$xmlCarregaDados .= "   <dsdepart>".$glbvars["dsdepart"]."</dsdepart>";
+	$xmlCarregaDados .= "   <cddepart>".$glbvars["cddepart"]."</cddepart>";
 	$xmlCarregaDados .= "   <cdcoopex>".$cdcoopex."</cdcoopex>";
 	$xmlCarregaDados .= " </Dados>";
 	$xmlCarregaDados .= "</Root>";

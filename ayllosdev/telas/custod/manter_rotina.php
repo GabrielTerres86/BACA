@@ -6,7 +6,8 @@
  * DATA CRIAÇÃO : 30/01/2012 
  * OBJETIVO     : Rotina para manter as operações da tela CUSTOD
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 02/12/2016 - P341-Automatização BACENJUD - Removido passagem do departamento como parametros
+ *                             pois a BO não utiliza o mesmo (Renato Darosci)
  * -------------- 
  */
 
@@ -82,7 +83,6 @@ $xml .= "		<cdoperad>" . $glbvars['cdoperad'] . "</cdoperad>";
 $xml .= "		<nmdatela>" . $glbvars['nmdatela'] . "</nmdatela>";
 $xml .= "		<idorigem>" . $glbvars['idorigem'] . "</idorigem>";
 $xml .= "		<dtmvtolt>" . $glbvars['dtmvtolt'] . "</dtmvtolt>";
-$xml .= "		<dsdepart>" . $glbvars['dsdepart'] . "</dsdepart>";
 $xml .= "		<cddopcao>" . $cddopcao . "</cddopcao>";
 $xml .= "		<nrdconta>" . $nrdconta . "</nrdconta>";
 $xml .= "		<nrcpfcgc>" . $nrcpfcgc . "</nrcpfcgc>";

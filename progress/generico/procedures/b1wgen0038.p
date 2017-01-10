@@ -94,6 +94,9 @@
 				23/06/2016 - Ajustes na procedure grava-importacao para qdo
 				             houver algum erro na importacao devolver uma
 							 mensagem amigavel (Tiago SD427693).             
+							 
+			    07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
+                             departamento passando a considerar o código (Renato Darosci)      
 .............................................................................*/
 
 
@@ -2386,7 +2389,7 @@ PROCEDURE valida-endereco-cep:
                                    crapope.cdoperad = par_cdoperad 
                                    NO-LOCK NO-ERROR.
         
-                IF  NOT CAN-DO("TI,SUPORTE",crapope.dsdepart)  THEN
+                IF  NOT CAN-DO("20,18",STRING(crapope.cddepart))  THEN
                     DO:
                         ASSIGN aux_cdcritic = 036 
                                par_nmdcampo = "nrceplog".
@@ -3114,7 +3117,7 @@ PROCEDURE exclui-endereco-ayllos:
         FIND crapope WHERE crapope.cdcooper = par_cdcooper AND
                            crapope.cdoperad = par_cdoperad NO-LOCK NO-ERROR.
 
-        IF  NOT CAN-DO("TI,SUPORTE",crapope.dsdepart)  THEN
+        IF  NOT CAN-DO("20,18",STRING(crapope.cddepart))  THEN
             DO:
                 ASSIGN aux_cdcritic = 036 
                        aux_dscritic = "".
@@ -3236,7 +3239,7 @@ PROCEDURE copia_arquivos_correios:
     FIND crapope WHERE crapope.cdcooper = par_cdcooper AND
                        crapope.cdoperad = par_cdoperad NO-LOCK NO-ERROR.
 
-    IF  NOT CAN-DO("TI,SUPORTE",crapope.dsdepart)  THEN
+    IF  NOT CAN-DO("20,18",STRING(crapope.cddepart))  THEN
         DO:
             ASSIGN aux_cdcritic = 036
                    aux_dscritic = "".

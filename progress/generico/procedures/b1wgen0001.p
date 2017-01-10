@@ -362,8 +362,8 @@
                              Remover procedure obtem-saldo-dia (rev. 10034)
                              (Douglas - Chamado 285228)
                 
-                10/12/2015 - Ajustes na gera_extrato_tarifas (Dionathan)              
-
+                10/12/2015 - Ajustes na gera_extrato_tarifas (Dionathan)   
+				
                 13/05/2016 - Ajuste na carrega_medias para leitura da crapsda utilizando a 
                              chave primaria, pois devida mah interpretacao da query pelo 
                              DataServer a leitura esta sendo feita sem o filtro de data 
@@ -397,10 +397,12 @@
                 03/10/2016 - Correcao no carregamento da TEMP TABLE da procedure obtem-saldo
 							 com formato invalido. (Carlos Rafael Tanholi - SD 531031)
 
+                07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
+                             departamento passando a considerar o código (Renato Darosci)
+ 
                 20/12/2016 - obtem-cheques-deposito - Exibir cheque no extrato somente quando
                              cheque da própria cooperativa estiver com agencia destino e
 							 conta destino igual a zero (AJFink) (SD#572650)
-							 
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -840,7 +842,7 @@ PROCEDURE obtem-cheques-deposito:
                            crapchd.nrdocmto >  0            AND
 						   crapchd.cdagedst  = 0            AND
 						   crapchd.nrctadst  = 0            
-						   NO-LOCK BREAK BY crapchd.dtmvtolt
+                           NO-LOCK BREAK BY crapchd.dtmvtolt
                                             BY crapchd.nrdocmto
                                                BY crapchd.cdbanchq
                                                   BY crapchd.cdagechq
@@ -1338,7 +1340,7 @@ PROCEDURE gera-tarifa-extrato:
     DEF VAR aux_tipotari    AS INTE                                 NO-UNDO.
     DEF VAR aux_fliseope    AS INTE                                 NO-UNDO.
     DEF VAR aux_qtacobra    AS INTEGER                              NO-UNDO.
-     
+
     EMPTY TEMP-TABLE tt-msg-confirma.
     EMPTY TEMP-TABLE tt-erro.
     
@@ -1450,47 +1452,47 @@ PROCEDURE gera-tarifa-extrato:
     IF  aux_inisenta = 0 AND par_inproces < 3  THEN
         DO:
             IF par_dtrefere < ( crapdat.dtmvtocd - 30 ) THEN /* Periodo */
-            DO:
-                IF par_nrterfin <> 0 THEN /* TAA */ 
-                    DO:
+              DO:
+                  IF par_nrterfin <> 0 THEN /* TAA */ 
+                      DO:
 						  ASSIGN aux_tipotari = 9.
 
-                        IF crapass.inpessoa = 1 THEN /* Fisica */
-                            ASSIGN aux_cdbattar = "EXTPETAAPF".
-                        ELSE
-                            ASSIGN aux_cdbattar = "EXTPETAAPJ".
-                    END.
-                ELSE
-                    DO:
+                          IF crapass.inpessoa = 1 THEN /* Fisica */
+                              ASSIGN aux_cdbattar = "EXTPETAAPF".
+                          ELSE
+                              ASSIGN aux_cdbattar = "EXTPETAAPJ".
+                      END.
+                  ELSE
+                      DO:
 						  ASSIGN aux_tipotari = 8.
 
-                        IF crapass.inpessoa = 1 THEN /* Fisica */
-                            ASSIGN aux_cdbattar = "EXTPEPREPF".
-                        ELSE
-                            ASSIGN aux_cdbattar = "EXTPEPREPJ".
-                    END. 
-            END.
+						  IF crapass.inpessoa = 1 THEN /* Fisica */
+                              ASSIGN aux_cdbattar = "EXTPEPREPF".
+                          ELSE
+                              ASSIGN aux_cdbattar = "EXTPEPREPJ".
+                      END. 
+              END.
             ELSE
-            DO:
-                IF par_nrterfin <> 0 THEN /* TAA */ 
-                    DO:
+              DO:
+                  IF par_nrterfin <> 0 THEN /* TAA */ 
+                      DO:
 						  ASSIGN aux_tipotari = 7.
 
-                        IF crapass.inpessoa = 1 THEN /* Fisica */
-                            ASSIGN aux_cdbattar = "EXTMETAAPF".
-                        ELSE
-                            ASSIGN aux_cdbattar = "EXTMETAAPJ".
-                    END.
-                ELSE
-                    DO:
+                          IF crapass.inpessoa = 1 THEN /* Fisica */
+                              ASSIGN aux_cdbattar = "EXTMETAAPF".
+                          ELSE
+                              ASSIGN aux_cdbattar = "EXTMETAAPJ".
+                      END.
+                  ELSE
+                      DO:
 						  ASSIGN aux_tipotari = 6.
 
-                        IF crapass.inpessoa = 1 THEN /* Fisica */
-                            ASSIGN aux_cdbattar = "EXTMEPREPF".
-                        ELSE
-                            ASSIGN aux_cdbattar = "EXTMEPREPJ".
-                    END.
-            END.
+                          IF crapass.inpessoa = 1 THEN /* Fisica */
+                              ASSIGN aux_cdbattar = "EXTMEPREPF".
+                          ELSE
+                              ASSIGN aux_cdbattar = "EXTMEPREPJ".
+                      END.
+              END.
             
                 
             IF  NOT VALID-HANDLE(h-b1wgen0153) THEN 
@@ -1570,7 +1572,7 @@ PROCEDURE gera-tarifa-extrato:
                           ASSIGN aux_cdbattar = "EXTMETAAPF".
                       ELSE
                           ASSIGN aux_cdbattar = "EXTMETAAPJ".
-        END.
+                  END.
               ELSE
                   DO:
 					  ASSIGN aux_tipotari = 6. 
@@ -1702,7 +1704,7 @@ PROCEDURE gera-tarifa-extrato:
             /*FIM VERIFICACAO TARIFAS DE OPERACAO*/
 
             DO TRANSACTION ON ERROR UNDO, LEAVE:
-    
+                
                             
                 CREATE crapext.
                 ASSIGN crapext.cdcooper = par_cdcooper
@@ -1971,9 +1973,9 @@ PROCEDURE valida-impressao-extrato:
     IF aux_cdcritic <> 0   OR
        aux_dscritic <> ""  THEN
          DO:
-            RETURN "NOK".
-        END.
-    
+             RETURN "NOK".
+         END.
+                                               
     ASSIGN /* retorna qtd. de extratos isentos que ainda possui disponivel no pacote de tarifas */
            aux_qtopdisp = pc_verifica_pacote_tarifas.pr_qtopdisp
            /* retorna pr_flservic = 1 quando existir o servico "extrato" no pacote */
@@ -2151,7 +2153,7 @@ PROCEDURE obtem-impressao-extrato:
                 
                 IF  CAN-DO("11,50",STRING(aux_cdempres))  AND 
                     crapope.nmoperad <> crapass.nmprimtl  AND
-                    crapope.dsdepart <> "TI"              THEN
+                    crapope.cddepart <> 20               THEN   /* TI */
                     DO:              
                         IF  par_idorigem = 1  THEN
                             DO:
@@ -2742,12 +2744,12 @@ PROCEDURE obtem-saldo:
         ASSIGN tt-erro.dscritic = aux_dscritic.
             
             RETURN "NOK".
-        END.
+        END. 
     ELSE
         DO:
 
       CREATE tt-saldos.
-   
+
       EMPTY TEMP-TABLE tt-saldos.
 
       /*Leitura do XML de retorno da proc e criacao dos registros na tt-extrato_conta
@@ -2768,27 +2770,27 @@ PROCEDURE obtem-saldo:
       CREATE X-NODEREF  xText.   /* Vai conter o texto que existe dentro da tag xField */ 
 
       IF ponteiro_xml <> ? THEN
-        DO: 
+        DO:
               xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE). 
               xDoc:GET-DOCUMENT-ELEMENT(xRoot).
             
               DO aux_cont_raiz = 1 TO xRoot:NUM-CHILDREN: 
 
                   xRoot:GET-CHILD(xRoot2,aux_cont_raiz).
-        
+
                   IF xRoot2:SUBTYPE <> "ELEMENT" THEN 
                       NEXT. 
-
+   
                   IF xRoot2:NUM-CHILDREN > 0 THEN
                       CREATE tt-saldos.
 
                   DO aux_cont = 1 TO xRoot2:NUM-CHILDREN:
-
+            
                       xRoot2:GET-CHILD(xField,aux_cont).
 
                       IF xField:SUBTYPE <> "ELEMENT" THEN 
                           NEXT. 
-
+        
                       xField:GET-CHILD(xText,1).
         
                       ASSIGN tt-saldos.nrdconta = INT(xText:NODE-VALUE) WHEN xField:NAME 	= "nrdconta".

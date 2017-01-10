@@ -32,12 +32,16 @@
     
     25/11/2015 - Reordenado a ordem de exibição das telas no menu (Jean Michel).
     
-	  27/04/2016 - Correcao na forma de filtro das telas validando a flag
-                 flgtelbl igual a TRUE para apresentar os itens do menu
+	27/04/2016 - Correcao na forma de filtro das telas validando a flag
+				 flgtelbl igual a TRUE para apresentar os itens do menu
                  Lombardi, Vanessa, Carlos R.)
-                 
+
     20/06/2016 - Inclusao do ano agenda para passar por parametro para as
                  telas PHP (Jean Michel).
+
+    06/12/2016 - P341-Automatização BACENJUD - Alterada a validação 
+			     do departamento para que a mesma seja feita através
+				 do código e não da descrição (Renato Darosci)
 
  ******************************************************************************/
 
@@ -60,7 +64,7 @@
 
   {&out} "<script language='JavaScript'>" SKIP.
   {&out} "foldersTree = gFld('<B>&nbsp;&nbsp;&nbsp;&nbsp;</B>', '')" SKIP.   
-
+   
   IF v-identificacao <> "" AND
     AVAIL gnapses THEN 
         DO:
@@ -103,7 +107,7 @@
                             END.
 
                 /* verifica super usuário */
-      IF crapope.dsdepart = "TI" THEN
+      IF crapope.cddepart = 20 THEN    /*  "TI"  */
                      ASSIGN v-permissoes = YES.
                
       IF v-permissoes THEN 

@@ -4,6 +4,9 @@
  * CRIAÇÃO      : Gabriel Capoia - DB1 Informatica
  * DATA CRIAÇÃO : 14/05/2010 
  * OBJETIVO     : Mostra tabela de titulares para exclusão dos mesmos na rotina CONTA-CORRENTE na tela de Contas
+ *
+ * ALTERAÇÕES    : 01/12/2016 - P341-Automatização BACENJUD - Removido passagem do departamento como parametros
+ *                              pois a BO não utiliza o mesmo (Renato Darosci)
  */	
 ?>
  
@@ -32,7 +35,6 @@
 	$xml .= '		<cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
 	$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';	
 	$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';	
-	$xml .= '		<dsdepart>'.$glbvars['dsdepart'].'</dsdepart>';	
 	$xml .= '		<nrdconta>'.$nrdconta.'</nrdconta>';
 	$xml .= '		<idseqttl>'.$idseqttl.'</idseqttl>';
 	$xml .= '	</Dados>';

@@ -24,6 +24,10 @@
                20/10/2009 - No valida-supervisor o Siscaixa pode cadastrar
                             sem ser supervisor. Como supervisor permitia
                             outras operacoes no caixa (Magui).
+
+			   06/12/2016 - P341-Automatização BACENJUD - Alterada a validação 
+			                do departamento para que a mesma seja feita através
+							do código e não da descrição (Renato Darosci)
 ............................................................................ */
 
 
@@ -70,8 +74,8 @@ PROCEDURE valida-operador:
          END.
     ELSE   
          DO:
-             IF   crapope.dsdepart = "SISCAIXA"  OR 
-                  crapope.dsdepart = "TI"  THEN 
+             IF   crapope.cddepart = 17  OR    /* SISCAIXA */ 
+                  crapope.cddepart = 20  THEN  /* TI */
                   DO:
                       ASSIGN i-cod-erro  = 67
                              c-desc-erro = " ".
@@ -218,7 +222,7 @@ PROCEDURE valida-supervisor:
                            INPUT YES).
         END.
 
-    IF  crapope.dsdepart <> "SISCAIXA" AND
+    IF  crapope.cddepart <> 17 AND   /* SISCAIXA */
        (crapope.nvoperad <> 2  /* Nivel Operador - 2 = Supervisor */ AND
         crapope.nvoperad <> 3)  /*                - 3 = Gerente    */ THEN 
         DO: 

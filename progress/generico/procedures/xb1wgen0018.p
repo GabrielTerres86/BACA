@@ -8,7 +8,9 @@
 
    Objetivo  : BO - Comunicacao XML com b1wgen0018.p
 
-   Alteracoes:
+   Alteracoes: 06/12/2016 - P341-Automatização BACENJUD - Alterar a passagem 
+			                da descrição do departamento como parametro e 
+							passar o código (Renato Darosci)
 
 ............................................................................ */
 
@@ -23,7 +25,7 @@ DEF VAR aux_nrdconta AS INTE                                        NO-UNDO.
 DEF VAR aux_idseqttl AS INTE                                        NO-UNDO.
 DEF VAR aux_cddopcao AS CHAR                                        NO-UNDO.
 DEF VAR aux_nmendter AS CHAR                                        NO-UNDO.
-DEF VAR aux_dsdepart AS CHAR                                        NO-UNDO.
+DEF VAR aux_cddepart AS INTE                                        NO-UNDO.
 DEF VAR aux_cdprogra AS CHAR                                        NO-UNDO.
 
 DEF VAR aux_nrpacori AS INTE                                        NO-UNDO.
@@ -109,7 +111,7 @@ PROCEDURE valores_entrada:
             WHEN "nrdconta" THEN aux_nrdconta = INTE(tt-param.valorCampo).
             WHEN "idseqttl" THEN aux_idseqttl = INTE(tt-param.valorCampo).
             WHEN "cddopcao" THEN aux_cddopcao = tt-param.valorCampo.
-            WHEN "dsdepart" THEN aux_dsdepart = tt-param.valorCampo.
+            WHEN "cddepart" THEN aux_cddepart = INTE(tt-param.valorCampo).
             WHEN "cdprogra" THEN aux_cdprogra = tt-param.valorCampo.
             WHEN "dtmvtolx" THEN aux_dtmvtolx = DATE(tt-param.valorCampo).    
 
@@ -402,7 +404,7 @@ PROCEDURE verifica_permissao:
                          ( INPUT aux_cdcooper,
                            INPUT aux_cdagenci,
                            INPUT aux_nrdcaixa,
-                           INPUT aux_dsdepart,
+                           INPUT aux_cddepart,
                            INPUT aux_cddopcao,
                           OUTPUT aux_nmdcampo,
                           OUTPUT TABLE tt-erro).
@@ -482,7 +484,7 @@ PROCEDURE alterar_cheques_descontados:
                                   ( INPUT aux_cdcooper,
                                     INPUT aux_cdagenci,
                                     INPUT aux_nrdcaixa,
-                                    INPUT aux_dsdepart,
+                                    INPUT aux_cddepart,
                                     INPUT aux_nrdconta,
                                     INPUT aux_nrborder,
                                     INPUT aux_cdcmpchq,

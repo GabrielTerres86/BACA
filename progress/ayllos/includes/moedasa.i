@@ -40,6 +40,8 @@
                            b1wgen9999.p procedure acha-lock, que identifica qual 
                            é o usuario que esta prendendo a transaçao. (Vanessa)
 
+               08/12/2016 - P341-Automatização BACENJUD - Realizar a validação 
+			                do departamento pelo código do mesmo (Renato Darosci)
 .................................................................................... */
 DEF        VAR aux_dadosusr AS CHAR                                  NO-UNDO.
 DEF        VAR par_loginusr AS CHAR                                  NO-UNDO.
@@ -149,7 +151,7 @@ DO TRANSACTION ON ENDKEY UNDO, LEAVE:
         .
    ELSE
         IF   tel_dtmvtolt < glb_dtmvtolt THEN
-             IF   glb_dsdepart <> "TI" THEN
+             IF   glb_cddepart <> 20 THEN   /* TI */
                   DO:
                       glb_cdcritic = 212.
                       RUN fontes/critic.p.

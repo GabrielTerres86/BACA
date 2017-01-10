@@ -9,6 +9,7 @@
  * --------------
  * 001 [07/07/2011] David (CECRED)        : Ajuste na funcao validaPermissao() para utilizar opcao @.
  * 002 [14/06/2016] Kelvin (CECRED) 	  : Removendo validação de permissão para corrigir problema no chamado 468177.
+ * 003 [01/12/2016] Renato Darosci(Supero): Alterado para passar como parametro o código do departamento ao invés da descrição.
  */
  
     session_start();
@@ -73,7 +74,7 @@
 	$xml .= '		<cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';           
 	$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';           
 	$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';           
-	$xml .= '		<dsdepart>'.$glbvars['dsdepart'].'</dsdepart>';           
+	$xml .= '		<cddepart>'.$glbvars['cddepart'].'</cddepart>';
 	$xml .= '		<nrdconta>'.$nrdconta.'</nrdconta>';                       
 	$xml .= '		<idseqttl>'.$idseqttl.'</idseqttl>';	                   
 	$xml .= '       <nrcpfcgc>'.$nrcpfcgc.'</nrcpfcgc>';                       

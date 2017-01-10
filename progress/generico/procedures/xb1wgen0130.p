@@ -8,7 +8,8 @@
 
    Objetivo  : BO de Comunicacao XML VS BO130 (b1wgen0130.p) [TAB002]
 
-   Alteracoes: 
+   Alteracoes: 06/12/2016 - P341-Automatização BACENJUD - Alterar a passagem da descrição do 
+                            departamento como parametro e passar o código (Renato Darosci)
 
 ..............................................................................*/
 
@@ -20,7 +21,7 @@ DEF VAR aux_nmdatela AS CHAR                                       NO-UNDO.
 DEF VAR aux_idorigem AS INTE                                       NO-UNDO.
 DEF VAR aux_flgerlog AS LOGI                                       NO-UNDO.
 DEF VAR aux_dstextab AS CHAR                                       NO-UNDO.
-DEF VAR aux_dsdepart AS CHAR                                       NO-UNDO.
+DEF VAR aux_cddepart AS INTE                                       NO-UNDO.
 DEF VAR aux_cddopcao AS CHAR                                       NO-UNDO.
 
 DEF VAR aux_qtfolind AS INT                                        NO-UNDO.
@@ -48,7 +49,7 @@ PROCEDURE valores_entrada:
             WHEN "dtmvtolt" THEN aux_dtmvtolt = DATE(tt-param.valorCampo).
             WHEN "flgerlog" THEN aux_flgerlog = LOGICAL(tt-param.valorCampo).
             WHEN "dstextab" THEN aux_dstextab = tt-param.valorCampo.
-            WHEN "dsdepart" THEN aux_dsdepart = tt-param.valorCampo.
+            WHEN "cddepart" THEN aux_cddepart = INTE(tt-param.valorCampo).
             WHEN "cddopcao" THEN aux_cddopcao = tt-param.valorCampo.
             WHEN "qtfolind" THEN aux_qtfolind = INT(tt-param.valorCampo).
             WHEN "qtfolcjt" THEN aux_qtfolcjt = INT(tt-param.valorCampo).
@@ -112,7 +113,7 @@ PROCEDURE altera_tab002:
                               INPUT aux_idorigem,
                               INPUT aux_dtmvtolt,
                               INPUT TRUE,
-                              INPUT aux_dsdepart,
+                              INPUT aux_cddepart,
                               INPUT aux_qtfolind,
                               INPUT aux_qtfolcjt,
                               OUTPUT TABLE tt-erro).
@@ -153,7 +154,7 @@ PROCEDURE deleta_tab002:
                               INPUT aux_idorigem,
                               INPUT aux_dtmvtolt,
                               INPUT TRUE,
-                              INPUT aux_dsdepart,
+                              INPUT aux_cddepart,
                               OUTPUT TABLE tt-erro).
                               
     IF  RETURN-VALUE = "NOK"  THEN
@@ -192,7 +193,7 @@ PROCEDURE cria_tab002:
                               INPUT aux_idorigem,
                               INPUT aux_dtmvtolt,
                               INPUT TRUE,
-                              INPUT aux_dsdepart,
+                              INPUT aux_cddepart,
                               INPUT aux_qtfolind,
                               INPUT aux_qtfolcjt,
                               OUTPUT TABLE tt-erro).

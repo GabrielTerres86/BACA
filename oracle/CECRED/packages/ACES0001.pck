@@ -53,6 +53,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ACES0001 AS
   --
   -- Alteracoes: 28/03/2016 - Criacao da procedure pc_exclui_permis_ope (Tiago SD414193)
   --             
+  --             28/11/2016 - P341 - Automatização BACENJUD - Alterado para buscar o nome do departamento
+  --                          na tabela CRAPDPO, e não mais diretamente da CRAPOPE (Renato Darosci - Supero)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Procedure que gera uma lista de operadores em determinada pasta */
@@ -75,7 +77,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ACES0001 AS
       SELECT * FROM crapcop;
   
     CURSOR cr_crapope(pr_cdcooper crapcop.cdcooper%TYPE) IS
-      SELECT * FROM crapope WHERE crapope.cdcooper = pr_cdcooper;
+      SELECT crapope.cdoperad
+           , crapope.nmoperad
+           , crapope.nvoperad
+           , crapope.flgperac
+           , crapope.tpoperad
+           , crapope.cdagenci
+           , crapope.cdpactra
+           , crapope.flgdonet
+           , crapope.flgdopgd
+           , crapope.flgacres
+           , crapope.cdsitope
+           , crapope.vlpagchq
+           , crapope.vllimted
+           , crapope.cdcomite
+           , crapope.vlapvcre
+           , crapope.vlapvcap
+           , crapdpo.dsdepart
+        FROM crapdpo
+           , crapope 
+       WHERE crapdpo.cddepart(+) = crapope.cddepart
+         AND crapdpo.cdcooper(+) = crapope.cdcooper
+         AND crapope.cdcooper = pr_cdcooper;
   
     vr_linha    VARCHAR2(4000);
     vr_arq_path VARCHAR2(1000); --> Diretorio que sera criado o relatorio

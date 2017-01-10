@@ -39,6 +39,9 @@ Alteracoes: 25/05/2012 - Incluido campo diasatrs(dias atraso para relatorio)
             22/04/2013 - Ajuste para a inclusao do parametro "Dias atraso
                          para inadimplencia" ( Adriano ).             
                           
+	        06/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
+                         departamento passando a considerar o código (Renato Darosci)      
+                          
 .............................................................................*/
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/gera_erro.i }
@@ -128,7 +131,7 @@ PROCEDURE altera_tab030:
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
     DEF  INPUT PARAM par_dstextab AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_dsdepart AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cddepart AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_vllimite AS DEC                            NO-UNDO.
     DEF  INPUT PARAM par_vlsalmin AS DEC                            NO-UNDO.
     DEF  INPUT PARAM par_diasatrs AS INT                            NO-UNDO.
@@ -148,7 +151,7 @@ PROCEDURE altera_tab030:
                        crapope.cdoperad = par_cdoperad    
                        NO-LOCK NO-ERROR.
 
-    IF  NOT CAN-DO("TI,PRODUTOS",par_dsdepart)  THEN
+    IF  NOT CAN-DO("20,14",STRING(par_cddepart))  THEN
         DO:
             ASSIGN aux_cdcritic = 36.
 

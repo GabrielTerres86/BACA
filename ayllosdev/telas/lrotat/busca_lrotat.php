@@ -6,7 +6,11 @@
  * OBJETIVO     : Busca as linhas de crédito rotativo
  * --------------
  * ALTERAÇÕES   :  12/07/2016 - Ajustes para finzaliZação da conversáo 
-                                (Andrei - RKAM)
+ *                              (Andrei - RKAM)
+ *
+ *                 05/12/2016 - P341-Automatização BACENJUD - Alterar a passagem da descrição do 
+ *                              departamento como parametros e passar o o código e alterar a validação
+ *                              do deparetamento para tratar pelo código do mesmo (Renato Darosci)
  * --------------
  */
 
@@ -30,9 +34,9 @@
     
     if($cddopcao != 'A' && $cddopcao != 'C'){
     
-		    if($glbvars["dsdepart"] != "PRODUTOS" &&
-		       $glbvars["dsdepart"] != "COORD.ADM/FINANCEIRO" &&
-		       $glbvars["dsdepart"] != "TI"){ 
+		    if($glbvars["cddepart"] != 8  &&  /* COORD.ADM/FINANCEIRO */
+		       $glbvars["cddepart"] != 14 &&  /* PRODUTOS */
+		       $glbvars["cddepart"] != 20) {  /* TI */
           
           exibirErro('error','Sistema liberado apenas para Consulta e Altera&ccedil;&atilde;o!','Alerta - Ayllos','formataFormularioFiltro();focaCampoErro(\'cddlinha\',\'frmFiltro\');',false);
         }
@@ -47,7 +51,7 @@
     $xml       .= " <Dados>";
     $xml       .= "     <cddopcao>".$cddopcao."</cddopcao>";    
     $xml       .= "     <cddlinha>".$cddlinha."</cddlinha>";   
-    $xml       .= "     <dsdepart>".$glbvars['dsdepart']."</dsdepart>"; 
+    $xml       .= "     <cddepart>".$glbvars['cddepart']."</cddepart>"; 
     $xml       .= " </Dados>";
     $xml       .= "</Root>";
     

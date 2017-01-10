@@ -7,9 +7,11 @@
 
  Alterações: 17/11/2016 - M172 Atualizacao Telefone - Novo campo (Guilherme/SUPERO)
 
+             30/11/2016 - P341-Automatização BACENJUD - Incluir a variável cddepart no fonte
+                          e utilizar a mesma para validação no lugar da DSDEPART (Renato Darosci - Supero)
 
 ************************************************************************/
-var dsdepart = '';
+var cddepart;
 
 $(document).ready(function() {
 
@@ -77,15 +79,15 @@ function formataCabecalho() {
         } else if ($('#cddopcao', '#frmCab').val() == 'A') {
 
             /* critica para permitir somente os seguintes operadores  */
-            if(dsdepart != "TI"                    &&
-               dsdepart != "COORD.ADM/FINANCEIRO"  &&
-               dsdepart != "COMPE"                 &&
-               dsdepart != "SUPORTE"               &&
-               dsdepart != "COORD.PRODUTOS"        &&
-               dsdepart != "CONTABILIDADE"         &&
-               dsdepart != "CONTROLE"              &&
-               dsdepart != "PRODUTOS"              &&
-               dsdepart != "CANAIS"                ){
+            if(cddepart != 1   &&   // CANAIS
+               cddepart != 4   &&   // COMPE
+               cddepart != 6   &&   // CONTABILIDADE
+               cddepart != 7   &&   // CONTROLE
+               cddepart != 8   &&   // COORD.ADM/FINANCEIRO
+               cddepart != 9   &&   // COORD.PRODUTOS
+               cddepart != 14  &&   // PRODUTOS
+               cddepart != 18  &&   // SUPORTE
+               cddepart != 20 ) {   // TI
 
                 showError("error", "Opera&ccedil;&atilde;o n&atilde;o autorizada.", "Alerta - Ayllos", "estadoInicial();");
 
@@ -143,7 +145,7 @@ function formataFormularioIncluir() {
 
             return false;
 
-}
+        }
 
     });
 
@@ -2884,7 +2886,7 @@ function formataFormularioConsulta() {
             $(this).nextAll('.campo:first').focus();
 
             return false;
-}
+        }
 
     });
 
@@ -2901,14 +2903,14 @@ function formataFormularioConsulta() {
             $('#btConcluir','#divBotoesConsulta').click();
 
             return false;
-    }
+        }
 
     });
 
 
     if ($('#cddopcao','#frmCab').val() == 'A'){
 
-        if(dsdepart != "TI") {
+        if(cddepart != 20) {
 
             $("#qttmpsgr", "#frmConsulta5").desabilitaCampo();
 
@@ -3198,7 +3200,7 @@ function controlaVoltar(ope,tpconsul) {
 
             } else {
                 $('#nrgravam', '#frmFiltro').focus();
-}
+            }
 
             fechaRotina($('#divRotina'));
             $('#divRotina').html('');
@@ -3252,7 +3254,7 @@ function consultaCooperativa() {
                     showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "estadoInicial();");
                 }
             }
-}
+        }
 
     });
 
@@ -3665,7 +3667,7 @@ function excluirMunicipios(cdcidade, tpoperac) {
             } catch (error) {
                 showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', '$("#btVoltar","#divBotoesMunicipios").focus();');
             }
-}
+        }
 
     });
 
@@ -3701,7 +3703,7 @@ function formataTabelaMunicipios() {
 
             selecionaMunicipio($(this));
 
-}
+        }
 
     });
 

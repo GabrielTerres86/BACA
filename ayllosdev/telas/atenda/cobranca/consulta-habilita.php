@@ -40,6 +40,9 @@
 
 				04/08/2016 - Adicionado campo de forma de envio de arquivo de cobrança. (Reinert)
 
+				29/11/2016 - P341-Automatização BACENJUD - Realizar as validações pelo código
+				             do departamento ao invés da descrição (Renato Darosci - Supero)
+
 *************************************************************************/
 
 session_start();
@@ -325,7 +328,7 @@ $qtapurac  = getByTagName($xmlDados->tags,"QTAPURAC");
                     
                     <div id="divCnvHomol" style="display:<?php echo $dsorgarq == 'IMPRESSO PELO SOFTWARE' ? 'block' : 'none'; ?>;">
                         <script>
-                            habilitaSetor('<?php echo $glbvars['dsdepart'] ?>');
+                            habilitaSetor('<?php echo $glbvars['cddepart'] ?>');
                         </script>
                         <br />
                         <label for="flgcebhm"><? echo utf8ToHtml('Convênio Homologado:') ?></label>

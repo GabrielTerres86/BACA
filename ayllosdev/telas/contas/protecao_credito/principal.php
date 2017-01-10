@@ -5,7 +5,8 @@
  * DATA CRIAÇÃO : Agosto/2014 
  * OBJETIVO     : Mostrar opcao Principal da rotina de Protecao ao Credito da tela de CONTAS
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : 02/12/2016 - P341-Automatização BACENJUD - Removido passagem do departamento como parametros
+ *                             pois a BO não utiliza o mesmo (Renato Darosci)
  * --------------
 
  */	
@@ -58,7 +59,6 @@
 	$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';
 	$xml .= '		<dtmvtolt>'.$glbvars['dtmvtolt'].'</dtmvtolt>';
 	$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';	
-	$xml .= '		<dsdepart>'.$glbvars['dsdepart'].'</dsdepart>';	
 	$xml .= '		<nrdconta>'.$nrdconta.'</nrdconta>';
 	$xml .= '		<idseqttl>'.$idseqttl.'</idseqttl>';
 	$xml .= '	</Dados>';

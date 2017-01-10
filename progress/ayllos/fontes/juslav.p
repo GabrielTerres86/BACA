@@ -106,8 +106,8 @@ DO WHILE TRUE:
 
         IF  (glb_cddopcao =  "A"   OR
              glb_cddopcao =  "I")  AND
-            glb_dsdepart <> 20     AND    /* TI            */
-            glb_dsdepart <>  6     THEN   /* CONTABILIDADE */
+            glb_cddepart <> 20     AND    /* TI            */
+            glb_cddepart <>  6     THEN   /* CONTABILIDADE */
             DO:
                 MESSAGE "Acesso nao permitido.".
                 NEXT.    

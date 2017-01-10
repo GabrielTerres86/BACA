@@ -162,6 +162,9 @@
               27/10/2016 - Incluir novo tratamento na procedure grava-dados para nao permitir
                            a inclusao de faturas caso a empresa e segmento estiverem zerados
                            (Lucas Ranghetti #542571)
+
+			  07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
+                           departamento passando a considerar o código (Renato Darosci)
 .............................................................................*/
 
 /*............................... DEFINICOES ................................*/
@@ -905,7 +908,7 @@ PROCEDURE valida-oper:
     DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
-    DEF  INPUT PARAM par_dsdepart AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cddepart AS INTE                           NO-UNDO.
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
@@ -916,11 +919,11 @@ PROCEDURE valida-oper:
            aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = "Validar departamento".
 
-    IF  par_dsdepart <> "TI"                   AND
-        par_dsdepart <> "SUPORTE"              AND
-        par_dsdepart <> "COORD.ADM/FINANCEIRO" AND   
-        par_dsdepart <> "COORD.PRODUTOS"       AND
-        par_dsdepart <> "COMPE"                THEN
+    IF  par_cddepart <> 20 AND   /* TI */
+        par_cddepart <> 18 AND   /* SUPORTE */
+        par_cddepart <> 8  AND   /* COORD.ADM/FINANCEIRO */
+        par_cddepart <> 9  AND   /* COORD.PRODUTOS */
+        par_cddepart <> 4  THEN  /* COMPE */
         DO:
             ASSIGN aux_cdcritic = 0. /* retirado valdacao de departamento */
         END.
@@ -1065,7 +1068,7 @@ PROCEDURE valida-dados:
            par_nmdcampo = "".
     
     Valida: DO WHILE TRUE:
-    
+
         FIND FIRST crapdat WHERE crapdat.cdcooper = par_cdcooper 
                        NO-LOCK NO-ERROR.
               
@@ -1453,7 +1456,7 @@ PROCEDURE valida-dados:
                                        par_nmdcampo = "".
                                 LEAVE Valida.
                             END.
-                            
+
                          /* Permitir a exclusao do debito somente no proximo dia util apos 
                             o cancelamento */
                          IF  crapatr.dtfimatr = par_dtmvtolt THEN
@@ -1465,6 +1468,9 @@ PROCEDURE valida-dados:
 
                         LEAVE Valida.
                     END.                
+
+                        LEAVE Valida.
+            END.
             END.
         /*ELSE
         IF  par_cddopcao = "R" THEN
@@ -2164,7 +2170,7 @@ PROCEDURE grava-dados:
                                 BUFFER-COPY crapatr TO tt-autori-atl.
                             END.
                         ELSE
-                            DO:     
+                            DO:
                                 CREATE tt-autori-atl.
                                 ASSIGN tt-autori-atl.cdcooper = par_cdcooper
                                        tt-autori-atl.nrdconta = par_nrdconta.
@@ -2273,7 +2279,7 @@ PROCEDURE busca_convenios_codbarras:
                     ASSIGN aux_nmempcon = crapscn.dsnomcnv.
             END.
         ELSE
-            DO:      
+            DO:                
                 /* Iremos buscar tambem o convenio aguas de schroeder(87) pois possui dois codigos e a 
                    buasca anterior nao funciona */
                 FIND FIRST gnconve WHERE 
@@ -2292,7 +2298,7 @@ PROCEDURE busca_convenios_codbarras:
                     NEXT.
                 ELSE 
                     IF gnconve.cdconven <> 87 THEN
-                       ASSIGN aux_nmempcon = gnconve.nmempres.
+                    ASSIGN aux_nmempcon = gnconve.nmempres.
             END.
 
         IF (INDEX(aux_nmempcon, "FEBR") > 0) THEN 
@@ -5941,8 +5947,8 @@ PROCEDURE atualiza_inassele:
    DEF VAR aux_cdcritic AS INT                                     NO-UNDO.
    DEF VAR aux_dscritic AS CHAR                                    NO-UNDO.
    DEF VAR aux_vlrantes AS INTEGER                                 NO-UNDO.
-   DEF VAR aux_vldepois AS INTEGER                                 NO-UNDO.
-   
+   DEF VAR aux_vldepois AS INTEGER                                 NO-UNDO.        
+  
    DEF VAR aux_dsdantes AS CHAR                                    NO-UNDO.
    DEF VAR aux_dsdepois AS CHAR                                    NO-UNDO.        
   
@@ -5978,22 +5984,22 @@ PROCEDURE atualiza_inassele:
           ELSE 
               ASSIGN aux_dsdepois = "NAO"
                      aux_dsdantes = "SIM".
-
+            
           IF  aux_vlrantes <> aux_vldepois THEN          
-              UNIX SILENT VALUE("echo " + STRING(par_dtmvtolt,"99/99/9999") + " " +
-                              STRING(TIME,"HH:MM:SS") + "' --> '"  +
-                              " Operador " + par_cdoperad +
+          UNIX SILENT VALUE("echo " + STRING(par_dtmvtolt,"99/99/9999") + " " +
+                          STRING(TIME,"HH:MM:SS") + "' --> '"  +
+                          " Operador " + par_cdoperad +
                               " Incluir/Alterou a Fatura " + STRING(par_cdrefere) +
-                              " - " + "Conta " +
-                              STRING(par_nrdconta,"zzzz,zzz,9") + 
+                          " - " + "Conta " +
+                          STRING(par_nrdconta,"zzzz,zzz,9") + 
                               "' --> '" + "Assinatura Eletronica" +
                               " de " + aux_dsdantes +
                               " para " + aux_dsdepois +
-                              " >> /usr/coop/" + TRIM(crapcop.dsdircop) +
-                              "/log/autori.log").
+                          " >> /usr/coop/" + TRIM(crapcop.dsdircop) +
+                          "/log/autori.log").
           
        END.
-   ELSE 
+   ELSE
        DO:
             RUN gera_erro ( INPUT par_cdcooper,
                             INPUT par_cdagenci,

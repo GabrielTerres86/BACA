@@ -5,7 +5,8 @@
  * DATA CRIAÇÃO : 11/11/2011
  * OBJETIVO     : Capturar dados para tela CASH
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 30/11/2016 - P341-Automatização BACENJUD - Alterado para passar como parametro o  
+ *                             código do departamento ao invés da descrição (Renato Darosci - Supero)
  * -------------- 
  */ 
 ?>
@@ -47,7 +48,7 @@
 	$xml .= '		<dtmvtolt>'.$glbvars['dtmvtolt'].'</dtmvtolt>';	
 	$xml .= '		<dtmvtopr>'.$glbvars['dtmvtopr'].'</dtmvtopr>';	
 	$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';	
-	$xml .= '		<dsdepart>'.$glbvars['dsdepart'].'</dsdepart>';	
+	$xml .= '		<cddepart>'.$glbvars['cddepart'].'</cddepart>';	
 	$xml .= '		<cddopcao>'.$cddopcao.'</cddopcao>';
 	$xml .= '		<nrterfin>'.$nrterfin.'</nrterfin>';
 	$xml .= '	</Dados>';

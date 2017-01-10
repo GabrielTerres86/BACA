@@ -5,7 +5,8 @@
  * DATA CRIAÇÃO : Julho/2016 
  * OBJETIVO     : Monta o form de filtro correspondente a opção selecionada
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 05/12/2016 - P341-Automatização BACENJUD - Realizar a validação de acesso pelo 
+ *                             código do departamento e não mais pela descrição (Renato Darosci)
  */
 
     session_start();
@@ -24,10 +25,10 @@
    /* Cooperativas singulares podem somente consultar */
    if(($cddopcao != 'C' && $cddopcao != 'F')){
 
-        if( $glbvars['dsdepart'] != "TI"                    &&
-            $glbvars['dsdepart'] != "PRODUTOS"              &&
-            $glbvars['dsdepart'] != "COORD.ADM/FINANCEIRO"  &&
-           ($glbvars['dsdepart'] ==  "FINANCEIRO"           && 
+        if( $glbvars['cddepart'] != 8   &&  /* COORD.ADM/FINANCEIRO */
+            $glbvars['cddepart'] != 14  &&  /* PRODUTOS             */
+            $glbvars['cddepart'] != 20  &&  /* TI                   */
+           ($glbvars['cddepart'] ==  11  && /* FINANCEIRO           */
             $glbvars['cdcooper'] != 3)){                      
               
 			exibirErro('error','Sistema liberado apenas para Consulta!','Alerta - Ayllos','formataFormularioFiltro();focaCampoErro(\'cddlinha\',\'frmFiltro\');',false);

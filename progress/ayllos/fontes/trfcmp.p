@@ -25,6 +25,8 @@
                              b1wgen9999.p procedure acha-lock, que identifica qual 
                              é o usuario que esta prendendo a transaçao. (Vanessa)
               
+			    08/12/2016 - P341-Automatização BACENJUD - Realizar a validação 
+			                 do departamento pelo código do mesmo (Renato Darosci)
 ..............................................................................*/
 
 { includes/var_online.i }
@@ -141,12 +143,12 @@ DO WHILE TRUE:
         END.
         
         /* Somente estes departamentos da CECRED podem alterar os dados */
-        IF  glb_cddopcao = "A" AND
-            glb_cdcooper = 3   AND
-            glb_dsdepart <> "COMPE"                AND
-            glb_dsdepart <> "TI"                   AND
-            glb_dsdepart <> "COORD.ADM/FINANCEIRO" AND
-            glb_dsdepart <> "COORD.PRODUTOS"       THEN        
+        IF  glb_cddopcao  = "A" AND
+            glb_cdcooper  = 3   AND
+            glb_cddepart <> 4   AND   /* COMPE                */
+            glb_cddepart <> 20  AND   /* TI                   */
+            glb_cddepart <> 8   AND   /* COORD.ADM/FINANCEIRO */
+            glb_cddepart <> 9  THEN   /* COORD.PRODUTOS       */
         DO:
             ASSIGN glb_cdcritic = 36.
             RUN fontes/critic.p.

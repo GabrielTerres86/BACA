@@ -7,6 +7,9 @@ Alterações: 06/07/2009 - Alteração CDOPERAD (Diego).
 
             15/12/2015 - Reordenação de cooperativas por nome (Jean Michel).
 
+			06/12/2016 - P341-Automatização BACENJUD - Alterada a validação 
+			             do departamento para que a mesma seja feita através
+				         do código e não da descrição (Renato Darosci)
 ................................................................................ */
 IF   AVAILABLE gnapses   THEN
      DO:
@@ -18,7 +21,7 @@ IF   AVAILABLE gnapses   THEN
             /* Implementa a segurança por Cooperativa */
             IF   gnapses.nvoperad <> 0                  AND
                  gnapses.cdcooper <> crapcop.cdcooper   AND
-				(AVAIL crapope AND crapope.dsdepart <> "TI")  THEN 
+				(AVAIL crapope AND crapope.cddepart <> 20 )  THEN    /*  TI  */
                  NEXT.
         
             ASSIGN aux_crapcop = aux_crapcop + crapcop.nmrescop + "," + 

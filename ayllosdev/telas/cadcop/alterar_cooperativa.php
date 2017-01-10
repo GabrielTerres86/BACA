@@ -160,7 +160,7 @@
     $xml       .= "<Root>";
     $xml       .= "  <Dados>";
     $xml     .="       <cddopcao>".$cddopcao."</cddopcao>";
-    $xml     .="       <dsdepart>".$glbvars['dsdepart']."</dsdepart>";
+    $xml     .="       <cddepart>".$glbvars['cddepart']."</cddepart>";
     $xml     .="       <dtmvtolt>".$glbvars['dtmvtolt']."</dtmvtolt>";
     $xml     .="       <nmrescop>".$nmrescop."</nmrescop>";
     $xml     .="       <nrdocnpj>".$nrdocnpj."</nrdocnpj>";

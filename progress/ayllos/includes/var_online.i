@@ -73,8 +73,12 @@
                07/02/2012 - Incluir variavel "glb_flgresta" para controle de 
                             restart dos programas batch (David).
                
-               28/02/2014 - Removido trecho das variaveis para tratamento de                                 erro ao executar Store Procedure Oracle 
+               28/02/2014 - Removido trecho das variaveis para tratamento de                                 
+			                erro ao executar Store Procedure Oracle 
                             (Andre Euzebio / Supero). 
+
+			   07/12/2016 - P341-Automatização BACENJUD - Inclusão da variável 
+			                global glb_cddepart (Renato Darosci)
 ............................................................................. */
 
 DEF {1} SHARED VAR glb_dtmvtolt AS DATE    FORMAT "99/99/99"         NO-UNDO.
@@ -95,6 +99,7 @@ DEF {1} SHARED VAR glb_dscritic AS CHAR    FORMAT "x(40)"            NO-UNDO.
 DEF {1} SHARED VAR glb_dscricpl AS CHAR    FORMAT "x(40)"            NO-UNDO.
 DEF {1} SHARED VAR glb_cddopcao AS CHAR    FORMAT "!(1)"             NO-UNDO.
 DEF {1} SHARED VAR glb_cdoperad AS CHAR    FORMAT "x(10)"            NO-UNDO.
+DEF {1} SHARED VAR glb_cddepart AS INTE    FORMAT "zzzz9"            NO-UNDO.
 DEF {1} SHARED VAR glb_dsdepart AS CHAR    FORMAT "x(30)"            NO-UNDO.
 DEF {1} SHARED VAR glb_nmoperad AS CHAR    FORMAT "x(25)"            NO-UNDO.
 DEF {1} SHARED VAR glb_cdprogra AS CHAR    FORMAT "x(10)"            NO-UNDO.

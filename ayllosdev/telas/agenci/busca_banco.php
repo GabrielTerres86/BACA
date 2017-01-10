@@ -6,6 +6,10 @@
  * OBJETIVO     : Rotina para busca de bancos da tela AGENCI
  * --------------
  * ALTERAÇÕES   : 08/01/2014 - Ajustes para homolgação (Adriano).
+ *
+ *                29/11/2016 - P341-Automatização BACENJUD - Alterado para que 
+ *                             seja enviado o cddepart, ao invés do dsdepart para 
+ *                             a rotina b1wgen0149. (Renato Darosci - Supero)
  * -------------- 
  */
 ?> 
@@ -41,7 +45,7 @@
 	$xml .= '		<cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
 	$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';
 	$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';	
-	$xml .= '		<dsdepart>'.$glbvars['dsdepart'].'</dsdepart>';	
+	$xml .= '		<cddepart>'.$glbvars['cddepart'].'</cddepart>';
 	$xml .= '		<cddopcao>'.$cddopcao.'</cddopcao>';	
 	$xml .= '		<cddbanco>'.$cddbanco.'</cddbanco>';	
 	$xml .= '		<dtmvtolt>'.$glbvars['dtmvtolt'].'</dtmvtolt>';	

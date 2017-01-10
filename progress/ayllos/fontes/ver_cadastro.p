@@ -19,6 +19,9 @@
                25/01/2006 - Unificacao dos Bancos - SQLWorks - Luciane.
                
                25/05/2009 - Alteracao CDOPERAD (Kbase).
+
+			   08/12/2016 - P341-Automatização BACENJUD - Realizar a validação 
+			                do departamento pelo código do mesmo (Renato Darosci)
 ..............................................................................*/
 
 DEF INPUT  PARAMETER par_nrdconta AS INTEGER                         NO-UNDO.
@@ -31,7 +34,7 @@ DEF BUFFER  crabass FOR crapass.
 
 par_cdcritic = 0.
 
-IF   glb_dsdepart = "TI" THEN
+IF   glb_cddepart = 20 THEN  /* TI */ 
      RETURN.
 
 FIND craptab WHERE craptab.cdcooper = glb_cdcooper   AND 

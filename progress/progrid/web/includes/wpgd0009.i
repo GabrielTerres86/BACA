@@ -11,6 +11,9 @@ Alterações: 09/12/2008 - Reestruturação para melhoria de performance (Evandro).
 			05/06/2012 - Adaptação dos fontes para projeto Oracle. Alterado
 						 busca na gnapses de CONTAINS para MATCHES (Guilherme Maba).
 
+			06/12/2016 - P341-Automatização BACENJUD - Alterada a validação 
+			             do departamento para que a mesma seja feita através
+						 do código e não da descrição (Renato Darosci).
 *******************************************************************************/
 
 /* Parâmetros  */
@@ -61,7 +64,7 @@ ELSE
 								  v-auxiliar   = NO.					   
 					   
 					       /* Operador 1-Super Usuario */
-						   IF   crapope.dsdepart = "TI"   THEN
+						   IF   crapope.cddepart = 20   THEN    /*  TI  */
 						        ASSIGN v-consulta   = YES
   									   v-inclusao   = YES
 									   v-alteracao  = YES
