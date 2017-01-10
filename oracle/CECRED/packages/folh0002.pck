@@ -459,7 +459,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
    Sistema : Cred
    Sigla   : CRED
    Autor   : Andre Santos - SUPERO
-   Data    : Maio/2015                      Ultima atualizacao: 23/11/2015
+   Data    : Maio/2015                      Ultima atualizacao: 08/12/2016
 
    Dados referentes ao programa:
 
@@ -473,6 +473,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                18/12/2015 - Criado proc. pc_hrlimite, para listar horario limite de
                             Folha Pagamento. (Jorge/David) Proj. 131 Asinatura Multipla.
 
+               08/12/2016 - Ajuste realizado para solucionar o problema que estava 
+                            impedindo que continuasse a operação pois o cooperado
+                            havia feito uma solicitacao de estouro, conforme relatado
+                            no chamado 499370. (Kelvin)
 ..............................................................................*/
    -- Arrays
    -- Campos da tela
@@ -6327,14 +6331,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
      -- Busca o valor total de registros aprovados
      CURSOR cr_totaprv(pr_cdcooper crappfp.cdcooper%TYPE
                       ,pr_cdempres crappfp.cdempres%TYPE
-                      ,pr_dtdebito crappfp.dtdebito%TYPE) IS
+                      ,pr_dtdebito crappfp.dtdebito%TYPE
+                      ,pr_nrseqpag VARCHAR2) IS
         SELECT nvl(SUM(pfp.vllctpag*decode(flsitdeb,1,0,1)),0)  -- Desconsiderando os debitados
               ,nvl(SUM(pfp.vllctpag),0)                         -- Todos os aprovados do dia
           FROM crappfp pfp
          WHERE pfp.cdcooper = pr_cdcooper
            AND pfp.cdempres = pr_cdempres
            AND pfp.dtdebito = pr_dtdebito
-           AND pfp.idsitapr IN (2,4,5); -- 2-Em estouro / 4-Aprv.Estouro / 5-Aprovado
+           AND pfp.idsitapr IN (2,4,5) -- 2-Em estouro / 4-Aprv.Estouro / 5-Aprovado
+           AND pfp.nrseqpag NOT IN (pr_nrseqpag);
 
      -- Busca os lancamentos da folha
      CURSOR cr_craplfp(pr_cdcooper craplfp.cdcooper%TYPE
@@ -6402,6 +6408,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
      vr_hrlimite crapprm.dsvlrprm%TYPE;
      vr_nmprimtl crapass.nmprimtl%TYPE;
      vr_vlsddisp crapsda.vlsddisp%TYPE;
+     vr_nrseqpag VARCHAR2(1500);
 
      -- Variaveis de Erro
      vr_dscritic VARCHAR2(4000);
@@ -6423,6 +6430,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
        vr_vlsddisp := 0;
        vr_vlrtotal := 0;
        vr_tab_craplfp.DELETE;
+       vr_nrseqpag := NULL;
 
        -- Quebra a string contendo o rowid separado por virgula
        vr_indrowid := gene0002.fn_quebra_string(pr_string => pr_indrowid, pr_delimit => ',');
@@ -6437,6 +6445,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
          FETCH cr_crappfp INTO rw_crappfp;
          CLOSE cr_crappfp;
 
+         IF vr_nrseqpag IS NULL THEN
+           vr_nrseqpag := rw_crappfp.nrseqpag;
+         ELSE
+           vr_nrseqpag := vr_nrseqpag || ',' || rw_crappfp.nrseqpag;  
+         END IF;
+          
          -- Caso NAO esteja como Pendente(1), Reprovado(3)
          -- Se for Solicitacao De Estouro(2), devemos deixar processeguir
          -- pois usuario pode ter ajustado o saldo da conta e desaja tentar
@@ -6566,7 +6580,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
        -- Busca o valor total pendente de debito e o total aprovado da empresa para o dia
        OPEN  cr_totaprv(pr_cdcooper => pr_cdcooper
                        ,pr_cdempres => rw_crapemp.cdempres
-                       ,pr_dtdebito => vr_dtdebpfp);
+                       ,pr_dtdebito => vr_dtdebpfp
+                       ,pr_nrseqpag => vr_nrseqpag);
        FETCH cr_totaprv INTO vr_vltotpen,vr_vltotapr;
        CLOSE cr_totaprv;
 
