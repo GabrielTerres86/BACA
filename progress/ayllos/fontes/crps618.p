@@ -74,6 +74,11 @@
                                                                         
                18/08/2015 - Ajuste na data limite de pagto para boletos do 
                             convenio "EMPRESTIMO" - Projeto 210 (Rafael).
+               
+               01/12/2016 - Alterado para enviar como texto informativo o conteudo do campo
+                            dsinform, ao inves do campo dsdinstr
+                            Heitor (Mouts) - Chamado 564818
+
  ........................................................................... */
 
 { includes/var_batch.i "NEW" }
@@ -898,7 +903,7 @@ PROCEDURE p_cria_titulo:
                        ELSE ?)
            tt-remessa-dda.cdddesct = (IF crapcob.vldescto > 0 THEN "1" ELSE "0")
            tt-remessa-dda.vlrdesct = (IF crapcob.vldescto > 0 THEN crapcob.vldescto ELSE 0)
-           tt-remessa-dda.dsinstru = crapcob.dsdinstr
+           tt-remessa-dda.dsinstru = crapcob.dsinform
            tt-remessa-dda.tpmodcal = "01"
            tt-remessa-dda.flavvenc = "N". /* Indicador se o valor do boleto pode ser alterado */
 

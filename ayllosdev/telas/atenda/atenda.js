@@ -68,6 +68,9 @@
 				  02/09/2016 - Incluido parametro name na div com id #divSemCartaoAss - necessario para navegação no IE
                              - Adicionado função ControlaFocoAnotacoes.
                              - Adicionado parametro labelRot na rotina acessaRotina - (Evandro - RKAM)	   
+                  14/12/2016 - Correcao referente aos chamados 568566, erro ao redirecioar da tela contas para produtos
+                               telas atenda. (Gil - MOUTS)
+
 ***************************************************************************/
 
 var flgAcessoRotina = false; // Flag para validar acesso as rotinas da tela ATENDA
@@ -502,7 +505,7 @@ function obtemCabecalho() {
                     if (executandoProdutos) {
                         sequenciaProdutos();
                     } else {
-                        acessaRotina('PRODUTOS', 'Produtos', 'produtos', 1);
+                        acessaRotina('', 'PRODUTOS', 'Produtos', 'produtos', 1);
                     }
                     flgProdutos = false;
                 }
