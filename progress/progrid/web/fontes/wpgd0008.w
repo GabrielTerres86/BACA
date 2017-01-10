@@ -32,8 +32,16 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
             09/06/2016 - Ajustado para exibir na lista de recursos apenas os 
                          recursos que possuem tipo definido(gnaprdp.cdtiprec <> 0).
                          PRJ229 - Melhorias OQS (Odirlei-AMcom)
-						 
+
+            27/06/2018 - Ajustes para RF05/RF06, inclusao de novas abas, 
+                         PRJ229 - Melhorias OQS (Jean Michel).
+			
+            02/08/2016 - Inclusao insitage 3-Temporariamente Indisponivel.
+                         (Jaison/Anderson)
+
 ...............................................................................*/
+
+{ sistema/generico/includes/var_log_progrid.i }
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
 &ANALYZE-RESUME
@@ -66,7 +74,7 @@ DEFINE TEMP-TABLE ab_unmap
        FIELD aux_nrdrowid AS CHARACTER FORMAT "X(256)":U 
        FIELD aux_nrdrowid_rp AS CHARACTER FORMAT "X(256)":U 
        FIELD aux_nrseqdig AS CHARACTER FORMAT "X(256)":U 
-       FIELD nrseqdig AS CHARACTER FORMAT "X(256)":U 
+       FIELD nrseqdig     AS CHARACTER FORMAT "X(256)":U 
        FIELD aux_stdopcao AS CHARACTER FORMAT "X(256)":U 
        FIELD aux_abaopcao AS CHARACTER FORMAT "X(256)":U 
        FIELD aux_tpevento AS CHARACTER 
@@ -75,8 +83,11 @@ DEFINE TEMP-TABLE ab_unmap
        FIELD aux_qtrecage AS CHARACTER
        FIELD aux_qtgrppar AS CHARACTER
        FIELD aux_idrespub AS CHARACTER
+       FIELD aux_nrseqpdp AS CHARACTER
+       FIELD aux_nrseqpap AS CHARACTER
        FIELD aux_cdcopope AS CHARACTER FORMAT "X(256)":U 
-       FIELD cdagenci AS CHARACTER FORMAT "X(256)":U.
+       FIELD cdagenci AS CHARACTER FORMAT "X(256)":U
+       FIELD aux_dsurlphp AS CHARACTER FORMAT "X(256)":U.
 
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS w-html 
@@ -148,7 +159,8 @@ DEFINE VARIABLE aux_tpevento          AS CHARACTER                      NO-UNDO.
 DEFINE VARIABLE aux_tppartic          AS CHARACTER                      NO-UNDO.
 
 DEFINE VARIABLE vetorrecurso          AS CHARACTER FORMAT "X(2000)"     NO-UNDO.
-
+DEFINE VARIABLE vetorpublico          AS CHARACTER NO-UNDO.
+DEFINE VARIABLE vetorproduto          AS CHARACTER NO-UNDO.
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
 
@@ -185,13 +197,13 @@ ab_unmap.aux_stdopcao ab_unmap.aux_nrseqdig ab_unmap.cdagenci ~
 ab_unmap.nrseqdig ab_unmap.aux_qtrecage ab_unmap.aux_qtgrppar ~
 ab_unmap.aux_idrespub ab_unmap.aux_cdcopope ab_unmap.aux_abaopcao ~
 ab_unmap.aux_cdoperad ab_unmap.aux_nrdrowid_rp ab_unmap.aux_idrecpor ~
-ab_unmap.aux_cdtiprec
-
+ab_unmap.aux_cdtiprec ab_unmap.aux_dsurlphp ab_unmap.aux_nrseqpdp ~
+ab_unmap.aux_nrseqpap
 &Scoped-Define DISPLAYED-FIELDS crapedp.flgativo crapedp.flgcerti ~
 crapedp.flgcompr crapedp.flgrestr crapedp.flgsorte crapedp.flgtdpac ~
 crapedp.nmevento crapedp.nridamin crapedp.prfreque crapedp.qtmaxtur ~
 crapedp.qtmintur crapedp.qtparcta crapedp.nrseqtem crapedp.qtdiaeve ~
-
+ab_unmap.aux_nrseqpdp ab_unmap.aux_nrseqpap
 &Scoped-define DISPLAYED-TABLES ab_unmap crapedp
 &Scoped-define FIRST-DISPLAYED-TABLE ab_unmap
 &Scoped-define SECOND-DISPLAYED-TABLE crapedp
@@ -206,7 +218,8 @@ ab_unmap.aux_stdopcao ab_unmap.aux_nrseqdig  ab_unmap.cdagenci ~
 ab_unmap.nrseqdig ab_unmap.aux_qtrecage ab_unmap.aux_qtgrppar ~
 ab_unmap.aux_idrespub ab_unmap.aux_cdcopope ab_unmap.aux_abaopcao ~
 ab_unmap.aux_cdoperad ab_unmap.aux_nrdrowid_rp ab_unmap.aux_idrecpor ~
-ab_unmap.aux_cdtiprec
+ab_unmap.aux_cdtiprec ab_unmap.aux_dsurlphp ab_unmap.aux_nrseqpdp ~
+ab_unmap.aux_nrseqpap
 
 /* Custom List Definitions                                              */
 /* List-1,List-2,List-3,List-4,List-5,List-6                            */
@@ -214,13 +227,8 @@ ab_unmap.aux_cdtiprec
 /* _UIB-PREPROCESSOR-BLOCK-END */
 &ANALYZE-RESUME
 
-
-
 /* ***********************  Control Definitions  ********************** */
-
-
 /* Definitions of the field level widgets                               */
-
 /* ************************  Frame Definitions  *********************** */
 
 DEFINE FRAME Web-Frame
@@ -396,6 +404,16 @@ DEFINE FRAME Web-Frame
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN 
           SIZE 20 BY 1     
+     ab_unmap.aux_dsurlphp AT ROW 1 COL 1 HELP
+          "" NO-LABEL FORMAT "X(256)":U
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 1
+     ab_unmap.aux_nrseqpdp AT ROW 1 COL 1 HELP
+          "" NO-LABEL VIEW-AS FILL-IN 
+          SIZE 20 BY 1
+     ab_unmap.aux_nrseqpap AT ROW 1 COL 1 HELP
+          "" NO-LABEL VIEW-AS FILL-IN 
+          SIZE 20 BY 1     
     WITH 1 DOWN KEEP-TAB-ORDER OVERLAY 
          SIDE-LABELS 
          AT COL 1 ROW 1
@@ -568,11 +586,7 @@ DEFINE FRAME Web-Frame
 /* _RUN-TIME-ATTRIBUTES-END */
 &ANALYZE-RESUME
 
- 
-
-
-&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK w-html 
-
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK w-html
 
 /* ************************  Main Code Block  ************************* */
 
@@ -588,6 +602,79 @@ DEFINE FRAME Web-Frame
 
 
 /* **********************  Internal Procedures  *********************** */
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE CriaListaPublicoAlvo w-html 
+PROCEDURE CriaListaPublicoAlvo:
+
+  DEF VAR aux_contador AS INTEGER NO-UNDO.
+  
+  RUN RodaJavaScript("var mpublico = new Array();").
+  
+  ASSIGN vetorpublico = ""
+         aux_contador = 0.
+  
+  FOR EACH crappae NO-LOCK WHERE crappae.idevento = INTEGER(ab_unmap.aux_idevento)
+                     AND crappae.cdcooper = 0
+                     AND crappae.dtanoage = 0
+                     AND crappae.cdevento = INTEGER(ab_unmap.aux_cdevento),
+      EACH crappap NO-LOCK WHERE crappap.nrseqpap = crappae.nrseqpap BY crappap.dspubalv:
+
+    ASSIGN aux_contador = aux_contador + 1.
+    
+    IF vetorpublico <> "" THEN
+      ASSIGN vetorpublico = vetorpublico + ",".
+              
+    ASSIGN vetorpublico = vetorpublico + "~{nrseqpap:" + "'" + STRING(crappap.nrseqpap)
+                                       + "',dspubalv:" + "'" + crappap.dspubalv + "'~}".
+         
+     IF aux_contador = 50 THEN
+       DO:
+         RUN RodaJavaScript("mpublico.push(" + vetorpublico + ");").
+         ASSIGN aux_contador = 0
+                vetorpublico = "".
+       END.
+  END.
+
+  IF vetorpublico <> "" THEN
+    RUN RodaJavaScript("mpublico.push(" + vetorpublico + ");").
+
+END PROCEDURE.
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE CriaListaProdutoSugerido w-html 
+PROCEDURE CriaListaProdutoSugerido:
+
+  DEF VAR aux_contador AS INTEGER NO-UNDO.
+  
+  RUN RodaJavaScript("var mproduto = new Array();").
+  
+  ASSIGN vetorproduto = ""
+         aux_contador = 0.
+  
+  FOR EACH crappde NO-LOCK WHERE crappde.idevento = INTEGER(ab_unmap.aux_idevento)
+                     AND crappde.cdcooper = 0
+                     AND crappde.dtanoage = 0
+                     AND crappde.cdevento = INTEGER(ab_unmap.aux_cdevento),
+      EACH crappdp NO-LOCK WHERE crappdp.nrseqpdp = crappde.nrseqpdp BY crappdp.dsprodut:
+
+    ASSIGN aux_contador = aux_contador + 1.
+    
+    IF vetorproduto <> "" THEN
+      ASSIGN vetorproduto = vetorproduto + ",".
+              
+    ASSIGN vetorproduto = vetorproduto + "~{nrseqpdp:" + "'" + STRING(crappdp.nrseqpdp)
+                                       + "',dsprodut:" + "'" + crappdp.dsprodut + "'~}".
+         
+     IF aux_contador = 50 THEN
+       DO:
+         RUN RodaJavaScript("mproduto.push(" + vetorproduto + ");").
+         ASSIGN aux_contador = 0
+                vetorproduto = "".
+       END.
+  END.
+
+  IF vetorproduto <> "" THEN
+    RUN RodaJavaScript("mproduto.push(" + vetorproduto + ");").
+
+END PROCEDURE.
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE CriaLista w-html 
 PROCEDURE CriaLista :
@@ -740,8 +827,8 @@ PROCEDURE CriaListaRecursos :
     
     FOR EACH gnaprdp WHERE gnaprdp.idevento = INTEGER(ab_unmap.aux_idevento) AND
                            gnaprdp.cdcooper = 0                              AND   
-                           gnaprdp.idsitrec = 1                              AND
-                           gnaprdp.cdtiprec <> 0
+                           gnaprdp.idsitrec = 1                             /* AND
+                           gnaprdp.cdtiprec <> 0 */
                            NO-LOCK BY gnaprdp.dsrecurs :  
 
        FIND craprep WHERE craprep.idevento = gnaprdp.idevento 
@@ -795,7 +882,8 @@ PROCEDURE CriaListaPac :
                DO:
                   aux_cdagenci = ",-2".
                   FOR EACH crapage WHERE crapage.cdcooper = aux_cdcooper   AND
-                                         crapage.insitage = 1 /* Ativo */  AND
+                                        (crapage.insitage = 1  OR   /* Ativo */
+                                         crapage.insitage = 3) AND  /* Temporariamente Indisponivel */
                                          crapage.flgdopgd = TRUE /* Habilitado no Progrid*/ NO-LOCK
                                          BY crapage.nmresage:
 
@@ -816,7 +904,8 @@ PROCEDURE CriaListaPac :
                       FIND crapage WHERE crapage.cdcooper = aux_cdcooper     AND
                                          crapage.cdagenci = gnapses.cdagenci AND
                                          crapage.flgdopgd = TRUE /* Habilitado no Progrid*/ AND
-                                         crapage.insitage = 1 /* Ativo */                    
+                                        (crapage.insitage = 1 OR  /* Ativo */
+                                         crapage.insitage = 3)    /* Temporariamente Indisponivel */
                                          NO-LOCK NO-ERROR.
                       IF   AVAILABLE crapage   THEN                                   
                            ASSIGN aux_cdagenci = crapage.nmresage + "," + TRIM(STRING(crapage.cdagenci)).
@@ -905,6 +994,36 @@ PROCEDURE ExcluiRecursoPorPa :
     
 END PROCEDURE.
 
+PROCEDURE ExcluiPublicoAlvo:
+
+  FIND FIRST crappae WHERE crappae.idevento = INTEGER(ab_unmap.aux_idevento)
+                       AND crappae.cdcooper = 0
+                       AND crappae.dtanoage = 0
+                       AND crappae.cdevento = INTEGER(ab_unmap.aux_cdevento)
+                       AND crappae.nrseqpap = INTEGER(ab_unmap.aux_nrseqpap) EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+                       
+  IF AVAILABLE crappae THEN                     
+    DELETE crappae.
+    
+  RETURN "OK".
+    
+END PROCEDURE.
+
+PROCEDURE ExcluiProdutoSugerido:
+
+  FIND FIRST crappde WHERE crappde.idevento = INTEGER(ab_unmap.aux_idevento)
+                       AND crappde.cdcooper = 0
+                       AND crappde.dtanoage = 0
+                       AND crappde.cdevento = INTEGER(ab_unmap.aux_cdevento)
+                       AND crappde.nrseqpdp = INTEGER(ab_unmap.aux_nrseqpdp) EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+      
+  IF AVAILABLE crappde THEN
+    DELETE crappde.
+    
+  RETURN "OK".
+    
+END PROCEDURE.
+
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
 
@@ -917,6 +1036,7 @@ PROCEDURE htmOffsets :
   Notes:       
 ------------------------------------------------------------------------------*/
   RUN readOffsets ("{&WEB-FILE}":U).
+
   RUN htmAssociate
     ("aux_cddopcao":U,"ab_unmap.aux_cddopcao":U,ab_unmap.aux_cddopcao:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
@@ -1009,6 +1129,12 @@ PROCEDURE htmOffsets :
     ("nrseqdig":U,"ab_unmap.nrseqdig":U,ab_unmap.nrseqdig:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
     ("aux_cdcopope":U,"ab_unmap.aux_cdcopope":U,ab_unmap.aux_cdcopope:HANDLE IN FRAME {&FRAME-NAME}).
+  RUN htmAssociate
+    ("aux_dsurlphp":U,"ab_unmap.aux_dsurlphp":U,ab_unmap.aux_dsurlphp:HANDLE IN FRAME {&FRAME-NAME}). 
+  RUN htmAssociate
+    ("aux_nrseqpdp":U,"ab_unmap.aux_nrseqpdp":U,ab_unmap.aux_nrseqpdp:HANDLE IN FRAME {&FRAME-NAME}).   
+  RUN htmAssociate
+    ("aux_nrseqpap":U,"ab_unmap.aux_nrseqpap":U,ab_unmap.aux_nrseqpap:HANDLE IN FRAME {&FRAME-NAME}).
 END PROCEDURE.
 
 /* _UIB-CODE-BLOCK-END */
@@ -1413,16 +1539,16 @@ ASSIGN opcao                 = GET-FIELD("aux_cddopcao")
        ab_unmap.aux_cdagenci = GET-VALUE("aux_cdagenci")
        ab_unmap.aux_qtrecage = GET-VALUE("aux_qtrecage")
        ab_unmap.aux_qtgrppar = GET-VALUE("aux_qtgrppar")
-       ab_unmap.aux_cdoperad = gnapses.cdoperad.
-
-
+       ab_unmap.aux_cdoperad = gnapses.cdoperad
+       ab_unmap.aux_dsurlphp    = aux_srvprogrid + "-" + v-identificacao
+       ab_unmap.aux_nrseqpdp = GET-VALUE("aux_nrseqpdp")
+       ab_unmap.aux_nrseqpap = GET-VALUE("aux_nrseqpap").
 	     
-FIND crapope WHERE crapope.cdcooper = gnapses.cdcooper   AND
-                   crapope.cdoperad = gnapses.cdoperad
-                   NO-LOCK NO-ERROR.
+FIND crapope WHERE crapope.cdcooper = gnapses.cdcooper
+               AND crapope.cdoperad = gnapses.cdoperad NO-LOCK NO-ERROR.
 
-IF   AVAIL crapope THEN
-     ab_unmap.tel_cdoperad = gnapses.cdoperad + " - " + crapope.nmoperad.
+IF AVAILABLE crapope THEN
+  ASSIGN ab_unmap.tel_cdoperad = gnapses.cdoperad + " - " + crapope.nmoperad.
     
 RUN outputHeader.
 
@@ -1470,10 +1596,13 @@ ELSE
    ASSIGN ab_unmap.aux_dtanoage = "". 
 /**********************/
  
+RUN insere_log_progrid("WPGD0008.w",STRING(ab_unmap.aux_idevento) + "|" + STRING(ab_unmap.aux_cdcooper) + "|" +
+					  STRING(ab_unmap.aux_dtanoage) + "|" + STRING(ab_unmap.aux_cdevento)).
+ 
 /* método POST */
 IF   REQUEST_METHOD = "POST":U   THEN 
      DO:
-               
+
         RUN inputFields.
         
         CASE opcao:
@@ -1699,15 +1828,19 @@ IF   REQUEST_METHOD = "POST":U   THEN
         
              WHEN "se" THEN /* seguinte */
                   RUN PosicionaNoSeguinte.
+          WHEN "expa" THEN /* seguinte */
+            RUN ExcluiPublicoAlvo.        
+          WHEN "exps" THEN /* seguinte */
+            RUN ExcluiProdutoSugerido.     
       
         END CASE.
         
         ASSIGN ab_unmap.aux_idrespub = IF STRING(GET-VALUE("aux_idrespub")) <> "S" THEN "N" ELSE "S".
         
-        RUN CriaLista.        
-        
-        RUN CriaListaRecursos.
-        
+        RUN CriaLista.                
+        RUN CriaListaRecursos.        
+        RUN CriaListaPublicoAlvo.        
+        RUN CriaListaProdutoSugerido.
         
         IF   INT(GET-VALUE("aux_cdcooper")) <> 0   THEN
              RUN CriaListaPac(INT(GET-VALUE("aux_cdcooper"))).
@@ -1891,6 +2024,8 @@ ELSE /* Método GET */
                      
                      RUN CriaLista.     
                      RUN CriaListaRecursos.
+                     RUN CriaListaPublicoAlvo.
+                     RUN CriaListaProdutoSugerido.
                      RUN displayFields.
                      RUN enableFields.
                      RUN outputFields.
