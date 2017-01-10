@@ -55,6 +55,8 @@ BEGIN
 	               21/06/2016 - Correcao para o uso correto do indice da CRAPTAB nesta rotina.
                               (Carlos Rafael Tanholi).
                               
+				 05/01/2017 - Mostrar mensagem apenas se efetivamente houve exclusao de 
+				              lotes (Rodrigo - 587076)
   ............................................................................. */
 
   DECLARE
@@ -187,8 +189,7 @@ BEGIN
 			-- Gera log no proc_batch
 			btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
 															  ,pr_ind_tipo_log => 2 -- Erro tratato
-																,pr_des_log      => to_char(SYSDATE,
-																														'hh24:mi:ss') ||
+									  ,pr_des_log      => to_char(SYSDATE, 'hh24:mi:ss') ||
 																										' - ' || vr_cdprogra  ||
 																										' --> ' || vr_dscritic);
 			RAISE vr_exc_saida;
@@ -219,16 +220,17 @@ BEGIN
 
     -- Imprime no log do processo os totais das exclusoes
     vr_cdcritic := 661;
+
+	IF vr_qtlotdel > 0 THEN
     -- Imprime o total de registros deletados na CRAPLOT
     btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
 		                          ,pr_ind_tipo_log => 2 -- Erro tratato
-                              ,pr_des_log      => to_char(SYSDATE,
-                                                          'hh24:mi:ss')  ||
-                                                  ' - ' || vr_cdprogra   ||
-                                                  ' --> ' || vr_dscritic ||
-                                                  ' LOT = '              ||
-                                                  gene0002.fn_mask(vr_qtlotdel,
-                                                                   'z.zzz.zz9'));
+                                 ,pr_des_log      => to_char(SYSDATE, 'hh24:mi:ss')  ||
+                                                     ' - '   || vr_cdprogra          ||
+                                                     ' --> ' || vr_dscritic          ||
+                                                     ' Lotes excluidos = '           ||
+                                                     gene0002.fn_mask(vr_qtlotdel, 'z.zzz.zz9'));
+	END IF;
 
     ----------------- ENCERRAMENTO DO PROGRAMA -------------------
 

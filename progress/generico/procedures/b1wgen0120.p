@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0120.p
     Autor   : Gabriel Capoia dos Santos (DB1)
-    Data    : Outubro/2011                     Ultima atualizacao: 17/11/2016 
+    Data    : Outubro/2011                     Ultima atualizacao: 10/01/2017
 
     Objetivo  : Tranformacao BO tela BCAIXA
 
@@ -101,9 +101,11 @@
                              (Guilherme/SUPERO)
 
 			    17/11/2016 - #549653 Ajustes de formats das quantidades para rotinas do bcaixa (Carlos)
-
-				06/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
+				
+                06/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
                              departamento passando a considerar o código (Renato Darosci)
+                             
+                10/01/2016 - #587076 aumento de formats para o boletim de caixa (Carlos)
 
 ............................................................................*/
 
@@ -244,7 +246,7 @@ PROCEDURE Busca_Dados:
         IF  ( par_cdagencx  = 90      OR  /** Internet **/
               par_cdagencx  = 91 )    AND /** TAA **/
               par_nrdcaixx  = 900     AND
-            ( AVAIL crapope AND crapope.cddepart = 18)  AND  /* 18 - SUPORTE */
+            ( AVAIL crapope AND crapope.dsdepart = "SUPORTE")  AND
               par_cddopcao <> "C"      AND
               par_cddopcao <> "S"     THEN
             DO:
@@ -841,11 +843,11 @@ PROCEDURE Gera_Boletim:
     /*Variavel para o formulario de arrecadacao*/
     DEF VAR aux_dsarecad AS CHAR                                    NO-UNDO.
     DEF VAR aux_vlarecad AS DECI                                    NO-UNDO.
-
+    
     /*Arrecadacoes*/
     DEF VAR aux_vlarctot AS DECI                                    NO-UNDO.
-    DEF VAR aux_dsarctot AS CHAR                                    NO-UNDO.
-    DEF VAR aux_arcconta AS INTE                                    NO-UNDO.
+    DEF VAR aux_dsarctot AS CHAR                                    NO-UNDO.        
+    DEF VAR aux_arcconta AS INTE                                    NO-UNDO.   
     DEF VAR aux_vlarccon AS DECI                                    NO-UNDO.
     DEF VAR aux_vlarcdar AS DECI                                    NO-UNDO.
     DEF VAR aux_vlarcgps AS DECI                                    NO-UNDO.
@@ -854,27 +856,27 @@ PROCEDURE Gera_Boletim:
     DEF VAR aux_qtarcdar AS INTE                                    NO-UNDO.
     DEF VAR aux_qtarcgps AS INTE                                    NO-UNDO.
     DEF VAR aux_qtarcnac AS INTE                                    NO-UNDO.
-
+    
     /*Titulos*/
-    DEF VAR aux_vltittot AS DECI                                    NO-UNDO.
-    DEF VAR aux_qttittot AS INTE                                    NO-UNDO.
+    DEF VAR aux_vltittot AS DECI                                    NO-UNDO. 
+    DEF VAR aux_qttittot AS INTE                                    NO-UNDO. 
     DEF VAR aux_flg713ti AS LOGI                                    NO-UNDO.
-
+    
     /*Deposito a vista*/
-    DEF VAR aux_vldepsup AS DECI                                    NO-UNDO.
-    DEF VAR aux_qtdepsup AS INTE                                    NO-UNDO.
-    DEF VAR aux_vldepinf AS DECI                                    NO-UNDO.
-    DEF VAR aux_qtdepinf AS INTE                                    NO-UNDO.
-    DEF VAR aux_vldepcop AS DECI                                    NO-UNDO.
-    DEF VAR aux_qtdepcop AS INTE                                    NO-UNDO.
-    DEF VAR aux_vldepout AS DECI                                    NO-UNDO.
-    DEF VAR aux_qtdepout AS INTE                                    NO-UNDO.
-
+    DEF VAR aux_vldepsup AS DECI                                    NO-UNDO. 
+    DEF VAR aux_qtdepsup AS INTE                                    NO-UNDO. 
+    DEF VAR aux_vldepinf AS DECI                                    NO-UNDO. 
+    DEF VAR aux_qtdepinf AS INTE                                    NO-UNDO. 
+    DEF VAR aux_vldepcop AS DECI                                    NO-UNDO. 
+    DEF VAR aux_qtdepcop AS INTE                                    NO-UNDO. 
+    DEF VAR aux_vldepout AS DECI                                    NO-UNDO. 
+    DEF VAR aux_qtdepout AS INTE                                    NO-UNDO. 
+    
     /*Auxiliares para impressao*/
     DEF VAR aux_nrdevias AS INTE                                    NO-UNDO.
     DEF VAR aux_dscomand AS CHAR                                    NO-UNDO.
     DEF VAR aux_nmdafila AS CHAR                                    NO-UNDO.
-
+    
     DEF VAR aux_vlrtotal AS DECI                                    NO-UNDO.
 
     DEF VAR tot_qtgerfin AS INTE                                    NO-UNDO.
@@ -932,9 +934,9 @@ PROCEDURE Gera_Boletim:
     
     FORM aux_dsarecad FORMAT "x(43)"
          ":"
-         aux_vlarecad FORMAT "zzz,zzz,zz9.99"
+         aux_vlarecad FORMAT "zzz,zzz,zz9.99" 
          WITH NO-BOX COLUMN aux_nrcoluna NO-LABELS WIDTH 76 FRAME f_tot_arc_boletim.
-
+    
     FORM HEADER
          SKIP(1)
          "TOTAL DE CREDITOS" 
@@ -967,12 +969,12 @@ PROCEDURE Gera_Boletim:
          WITH NO-BOX COLUMN aux_nrcoluna NO-LABELS WIDTH 76 FRAME f_ini_estornos.
 
     FORM SPACE(2)
-         crapaut.nrsequen COLUMN-LABEL "Aut"
+         crapaut.nrsequen COLUMN-LABEL "Aut"       FORMAT "zzz,zz9"
          aux_dshistor     COLUMN-LABEL "Historico" FORMAT "x(23)"
          crapaut.nrdocmto
          crapaut.vldocmto COLUMN-LABEL "Valor" FORMAT "zzzz,zz9.99"
          crapaut.tpoperac COLUMN-LABEL "PG/RC"
-         crapaut.nrseqaut COLUMN-LABEL "Aut.Est"
+         crapaut.nrseqaut COLUMN-LABEL "Aut.Est"   FORMAT "zzz,zz9"
          WITH NO-BOX COLUMN aux_nrcoluna DOWN WIDTH 76 FRAME f_estornos.
     
     FORM crapaut.nrsequen COLUMN-LABEL "Aut"
@@ -1036,24 +1038,24 @@ PROCEDURE Gera_Boletim:
             END.
 
         IF par_idorigem = 2 THEN
-           DO:
-              ASSIGN aux_nmendter = "/usr/coop/sistema/siscaixa/web/spool/" + STRING(crapcop.dsdircop) +
-                                                                              STRING(par_cdagenci) +
+           DO:               
+              ASSIGN aux_nmendter = "/usr/coop/sistema/siscaixa/web/spool/" + STRING(crapcop.dsdircop) + 
+                                                                              STRING(par_cdagenci) + 
                                                                               STRING(par_nrdcaixa) + "b2013".
 
               IF aux_nmendter <> "" AND
-                       NOT par_tipconsu THEN
-                       DO:
-                          UNIX SILENT VALUE("rm " + aux_nmendter + "*").
+			           NOT par_tipconsu THEN
+			           DO:				 
+			              UNIX SILENT VALUE("rm " + aux_nmendter + "*").
                  END.
-
+		
               ASSIGN aux_nmarqimp = aux_nmendter + string(random(1,99999)) + ".txt".
 
            END.
         ELSE
            DO:
               ASSIGN aux_nmendter = "/usr/coop/" + crapcop.dsdircop + "/rl/" + par_dsiduser.
-
+              
         UNIX SILENT VALUE("rm " + aux_nmendter + "* 2>/dev/null").
         
         ASSIGN aux_nmendter = aux_nmendter + STRING(TIME)
@@ -1066,7 +1068,7 @@ PROCEDURE Gera_Boletim:
                 OUTPUT STREAM str_1 TO VALUE(aux_nmarqimp) PAGED PAGE-SIZE 84.
 
                 /* Cdempres = 11 , Relatorio 258 em 80 colunas */
-                { sistema/generico/includes/b1cabrel080.i "11" "258" "80" }
+                { sistema/generico/includes/b1cabrel080.i "11" "258" "80" } 
                 
                 
             END.
@@ -1120,23 +1122,23 @@ PROCEDURE Gera_Boletim:
         
         VIEW STREAM str_1 FRAME f_inicio_boletim.
 
-
+        
         /*Loop feito para acumular os valores do gps separadamente*/
         FOR EACH craphis WHERE craphis.cdcooper = par_cdcooper AND
                                ((craphis.tplotmov = 30) OR  /* GPS */
-                               (craphis.tplotmov = 0   AND /* GPS SICREDI */
-                               craphis.cdhistor = 1414)) NO-LOCK:
-
+                               (craphis.tplotmov = 0   AND /* GPS SICREDI */            
+                               craphis.cdhistor = 1414)) NO-LOCK: 
+        
            IF  craphis.nmestrut = "craplgp" THEN
                 DO:
                     /* Verifica qual historico deve rodar conforme cadastro
-                     da COOP. Se tem Credenciamento, deve ser historico
+                     da COOP. Se tem Credenciamento, deve ser historico 
                      582 senao 458 */
                     IF (   (crapcop.cdcrdarr = 0 AND
                             craphis.cdhistor = 458)
                        OR  (crapcop.cdcrdarr <> 0 AND
                             craphis.cdhistor = 582)) THEN DO:
-
+                        
                         RUN gera_craplgp
                             ( INPUT par_cdcooper,
                               INPUT-OUTPUT aux_vlarcgps,
@@ -1145,7 +1147,7 @@ PROCEDURE Gera_Boletim:
                     ELSE DO:
                         IF (crapcop.cdcrdins <> 0  AND /* GPS SICREDI NOVO */
                             craphis.cdhistor = 1414) THEN DO:
-
+                            
                             RUN gera_craplgp_gps
                                ( INPUT par_cdcooper,
                                  INPUT-OUTPUT aux_vlarcgps,
@@ -1154,7 +1156,7 @@ PROCEDURE Gera_Boletim:
                     END.
                 END.
         END.
-
+          
         FOR EACH craphis WHERE 
                  craphis.cdcooper = par_cdcooper AND
                ((craphis.tplotmov = 22  OR
@@ -1189,7 +1191,7 @@ PROCEDURE Gera_Boletim:
                    aux_vldepcop = 0
                    aux_qtdepcop = 0
                    aux_vldepout = 0
-                   aux_qtdepout = 0.
+                   aux_qtdepout = 0.                   
 
             EMPTY TEMP-TABLE tt-histor.
             
@@ -1265,7 +1267,7 @@ PROCEDURE Gera_Boletim:
                                   INPUT-OUTPUT aux_qtdepcop,
                                   INPUT-OUTPUT aux_vldepout,
                                   INPUT-OUTPUT aux_qtdepout,
-                                  INPUT pr_tpcartao).
+								  INPUT pr_tpcartao).
 
                         END. /* FOR EACH craplcm */
 
@@ -1887,7 +1889,7 @@ PROCEDURE Gera_Boletim:
                                    aux_qtroti14 = 0.
                         END.
 
-
+                    
                     ASSIGN aux_descrctb = TRIM(SUBSTRING(craphis.dshistor,1,24))
                            SUBSTR(aux_descrctb,LENGTH(aux_descrctb) + 2,
                                      (24 - LENGTH(aux_descrctb) - 1)) =
@@ -2033,14 +2035,14 @@ PROCEDURE Gera_Boletim:
                                             PAGE STREAM str_1.
                              
                                  /*OUTROS*/
-                                 ASSIGN aux_deschist = "OUTROS" +
-                                        FILL(" ",17) +
-                                        "(" + STRING(aux_qtdepout,"z,zz9") + ")  " +
-                                        FILL(".",9)
+                                 ASSIGN aux_deschist = "OUTROS" + 
+                                        FILL(" ",17) + 
+                                        "(" + STRING(aux_qtdepout,"zz,zz9") + ")  " +
+                                        FILL(".",9)   
                                         aux_vlrtthis = aux_vldepout.
 
                                  DISPLAY STREAM str_1
-                                    aux_deschist aux_vlrtthis
+                                    aux_deschist aux_vlrtthis 
                                     WITH FRAME f_his_boletim.
                                  DOWN STREAM str_1 WITH FRAME f_his_boletim.
 
@@ -2070,48 +2072,48 @@ PROCEDURE Gera_Boletim:
 										DOWN STREAM str_1 WITH FRAME f_his_boletim.
 
                         IF  NOT par_tipconsu AND
-                                        LINE-COUNTER(str_1) = 80 THEN
+											LINE-COUNTER(str_1) = 80 THEN
                             PAGE STREAM str_1.
 
-                                    IF tt-histor.qtlanmto-recibo > 0 THEN
-                                    DO:
-                                        ASSIGN aux_deschist = ""
-                                           aux_vlrtthis = tt-histor.vllanmto-recibo.
-                                        
-                                        ASSIGN aux_deschist = 
-                                           "   RECIBO              "  + "(" +
-                                           STRING(tt-histor.qtlanmto-recibo, "z,zz9") + ") " +
-                                           " .........".
-                                        DISPLAY STREAM str_1
-                                            aux_deschist aux_vlrtthis 
-                                            WITH FRAME f_his_boletim.
-                                            DOWN STREAM str_1 WITH FRAME f_his_boletim.
+										IF tt-histor.qtlanmto-recibo > 0 THEN
+										DO:
+											ASSIGN aux_deschist = ""
+											   aux_vlrtthis = tt-histor.vllanmto-recibo.
 
-                                        IF  tt-histor.qtlanmto-recibo > 0 AND
-                                                LINE-COUNTER(str_1) = 80 THEN
-                                                PAGE STREAM str_1.
-                                    END.
-                                    IF tt-histor.qtlanmto-cartao > 0 THEN
-                                    DO:
-                                        ASSIGN aux_deschist = ""
-                                           aux_vlrtthis = tt-histor.vllanmto-cartao.
+											ASSIGN aux_deschist = 
+											   "   RECIBO              "  + "(" +
+											   STRING(tt-histor.qtlanmto-recibo, "zz,zz9") + ") " +
+											   " .........".
+                        DISPLAY STREAM str_1 
+												aux_deschist aux_vlrtthis 
+												WITH FRAME f_his_boletim.
+												DOWN STREAM str_1 WITH FRAME f_his_boletim.
                         
-                                        ASSIGN aux_deschist = 
-                                           "   CARTAO              "  + "(" +
-                                           STRING(tt-histor.qtlanmto-cartao, "z,zz9") + ") " +
-                                           " .........".
+											IF  tt-histor.qtlanmto-recibo > 0 AND
+													LINE-COUNTER(str_1) = 80 THEN
+													PAGE STREAM str_1.
+										END.
+										IF tt-histor.qtlanmto-cartao > 0 THEN
+										DO:
+											ASSIGN aux_deschist = ""
+											   aux_vlrtthis = tt-histor.vllanmto-cartao.
 
-                                        DISPLAY STREAM str_1
-                                            aux_deschist aux_vlrtthis 
-                                            WITH FRAME f_his_boletim.
-                                            DOWN STREAM str_1 WITH FRAME f_his_boletim.
+											ASSIGN aux_deschist = 
+											   "   CARTAO              "  + "(" +
+											   STRING(tt-histor.qtlanmto-cartao, "zz,zz9") + ") " +
+											   " .........".
+
+											DISPLAY STREAM str_1
+												aux_deschist aux_vlrtthis 
+												WITH FRAME f_his_boletim.
+												DOWN STREAM str_1 WITH FRAME f_his_boletim.
                             
-                                        IF  tt-histor.qtlanmto-cartao > 0 AND
-                                                LINE-COUNTER(str_1) = 80 THEN
-                                                PAGE STREAM str_1.
-                                    END.
-                                END.
-                                ELSE DO:
+											IF  tt-histor.qtlanmto-cartao > 0 AND
+													LINE-COUNTER(str_1) = 80 THEN
+													PAGE STREAM str_1.
+										END.
+									END.
+									ELSE DO:
 
                                         ASSIGN aux_deschist = 
                                             SUBSTR(tt-histor.dsdcompl,1,40) 
@@ -2127,10 +2129,10 @@ PROCEDURE Gera_Boletim:
                                         IF  NOT par_tipconsu AND
                                 LINE-COUNTER(str_1) = 80 THEN
                                 PAGE STREAM str_1.
-                                 END.
+                                    END.
 
                         END. /* FOR EACH tt-histor */
-                              END.
+						      END.	
                         END. /* IF  aux_flgouthi */
 
                 END. /* FIM tratamento para os outros tipos de historicos */
@@ -2461,32 +2463,32 @@ PROCEDURE Gera_Boletim:
                 IF  RETURN-VALUE <> "OK" THEN
                     RETURN "NOK".
             END.
-        ELSE
+        ELSE 
             DO:
-               IF  NOT par_tipconsu     AND
+               IF  NOT par_tipconsu     AND  
                        par_idorigem = 2 AND /*Caixa online*/
                        (par_nmdatela = "CRAP012" OR
-                        par_nmdatela = "CRAP013") /*Fechamento do caixa*/ THEN
+					    par_nmdatela = "CRAP013") /*Fechamento do caixa*/ THEN 
                   DO:
                      IF crapope.dsimpres = "" THEN
-                        DO:
+                        DO:                          
                            ASSIGN aux_dscritic = "Registro de impressora nao encontrado para o Operador".
-                           LEAVE Imprime.
+                           LEAVE Imprime.            
                         END.
-
-
-
+                     
+                     
+                     
                      ASSIGN aux_nrdevias   = 1
-                            aux_nmdafila = LC(crapope.dsimpres).
+                            aux_nmdafila = LC(crapope.dsimpres). 
                             aux_dscomand = "lp -d " + aux_nmdafila +
-                                           " -n " + STRING(aux_nrdevias) +
-                                           " -oMTl88 " + aux_nmarqimp +
+                                           " -n " + STRING(aux_nrdevias) +   
+                                           " -oMTl88 " + aux_nmarqimp + 
                                            " 2> /dev/null".
-
+                     
                      UNIX SILENT VALUE(aux_dscomand).
-
+                    
                   END.
-            END.
+            END.    
 
 
         ASSIGN aux_returnvl = "OK".
@@ -5470,7 +5472,7 @@ PROCEDURE gera_tt-histor:
     DEF INPUT-OUTPUT PARAM par_vlarcgps AS DECI                     NO-UNDO.
     DEF INPUT-OUTPUT PARAM par_qtarcgps AS INTE                     NO-UNDO.
     DEF INPUT-OUTPUT PARAM par_vlarcnac AS DECI                     NO-UNDO.
-    DEF INPUT-OUTPUT PARAM par_qtarcnac AS INTE                     NO-UNDO.
+    DEF INPUT-OUTPUT PARAM par_qtarcnac AS INTE                     NO-UNDO.    
     DEF INPUT-OUTPUT PARAM par_vldepsup AS DECI                     NO-UNDO.
     DEF INPUT-OUTPUT PARAM par_qtdepsup AS INTE                     NO-UNDO.
     DEF INPUT-OUTPUT PARAM par_vldepinf AS DECI                     NO-UNDO.
@@ -5480,7 +5482,7 @@ PROCEDURE gera_tt-histor:
     DEF INPUT-OUTPUT PARAM par_vldepout AS DECI                     NO-UNDO.
     DEF INPUT-OUTPUT PARAM par_qtdepout AS INTE                     NO-UNDO.
     DEF INPUT PARAM pr_tpcartao AS INTE.  /* tpcartao */
-
+    
     /* Vriavel da prcodeure gera_tt-hist -> b1wgen0120.p*/
     DEF VAR qtlanmto-recibo AS INTE.
     DEF VAR vllanmto-recibo LIKE craplcm.vllanmto.
@@ -5530,10 +5532,10 @@ PROCEDURE gera_tt-histor:
 
     /*Arrecadacoes*/
     IF crabhis.tplotmov   = 0    AND
-       crabhis.cdhistor   = 1154 AND
+       crabhis.cdhistor   = 1154 AND 
        par_tpfatura       = 2    THEN
        DO:
-
+        
           ASSIGN par_vlarcdar = par_vlarcdar + par_vllanmto
                  par_qtarcdar = par_qtarcdar + 1.
        END.
@@ -5543,19 +5545,19 @@ PROCEDURE gera_tt-histor:
             IF CAN-DO("40,380,458,540,582,585,1414",STRING(crabhis.cdhistor)) THEN
                DO:
                   ASSIGN par_vlarcgps = par_vlarcgps + par_vllanmto
-                         par_qtarcgps = par_qtarcgps + 1.
+                         par_qtarcgps = par_qtarcgps + 1.         
                END.
             ELSE
                DO:
                   /*Simples Nacional*/
                   IF crabhis.tplotmov   = 0    AND
-                     crabhis.cdhistor   = 1154 AND
+                     crabhis.cdhistor   = 1154 AND 
                      par_tpfatura       = 1   THEN
                      DO:
                         ASSIGN par_vlarcnac = par_vlarcnac + par_vllanmto
                                par_qtarcnac = par_qtarcnac + 1.
                      END.
-
+                    
                   /*Convenios*/
                   ELSE
                      DO:
@@ -5567,9 +5569,9 @@ PROCEDURE gera_tt-histor:
                      END.
                END.
          END.
-    /*Deposito a vista*/
-    /*EP. CHQ. SUPERIOR: cheques depositados que nao pertencem
-      A COOPERATIVA QUE RECEBEU O CHEQUE e sao igual ou superior
+    /*Deposito a vista*/       
+    /*EP. CHQ. SUPERIOR: cheques depositados que nao pertencem 
+      A COOPERATIVA QUE RECEBEU O CHEQUE e sao igual ou superior 
       a R$300,00.*/
     IF CAN-DO("3,4,372",STRING(crabhis.cdhistor)) AND
        par_vllanmto >= 300 THEN
@@ -5579,19 +5581,19 @@ PROCEDURE gera_tt-histor:
        END.
     ELSE
        DO:
-          /*DEP. CHQ. INFERIOR: cheques depositados que nao
-           pertencem A COOPERATIVA QUE RECEBEU O CHEQUE e sao
+          /*DEP. CHQ. INFERIOR: cheques depositados que nao 
+           pertencem A COOPERATIVA QUE RECEBEU O CHEQUE e sao 
            igual ou inferior a R$299,99.*/
           IF CAN-DO("3,4,372",STRING(crabhis.cdhistor)) AND
              par_vllanmto < 300 THEN
              DO:
                 ASSIGN par_vldepinf = par_vldepinf + par_vllanmto
                        par_qtdepinf = par_qtdepinf + 1.
-
+             
              END.
           ELSE
              DO:
-                /*DEP. CHQ. COOP.: equivale ao total de cheques depositados
+                /*DEP. CHQ. COOP.: equivale ao total de cheques depositados 
                   que pertencem EXCLUSIVAMENTE A COOPERATIVA.*/
                 IF CAN-DO("21,386",STRING(crabhis.cdhistor)) THEN
                    DO:
@@ -5605,7 +5607,7 @@ PROCEDURE gera_tt-histor:
                              par_qtdepout = par_qtdepout + 1.
                    END.
              END.
-
+       
        END.
 END PROCEDURE. /* gera_tt-histor */
 
@@ -5766,8 +5768,8 @@ PROCEDURE gera_craplgp:
                                craplgp.cdbccxlt = craplot.cdbccxlt  AND
                                craplgp.nrdolote = craplot.nrdolote  NO-LOCK:
 
-
-
+            
+            
             ASSIGN par_vlarcgps = par_vlarcgps + craplgp.vlrtotal
                    par_qtarcgps = par_qtarcgps + 1.
         END.    
