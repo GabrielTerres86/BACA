@@ -798,9 +798,9 @@ IF VALID-HANDLE(h-b1wpgd0016) THEN
                     gnatfep.nrdddfon[2] = INPUT gnapfep.nrdddfon[2]
                     gnatfep.nrdddfon[3] = INPUT gnapfep.nrdddfon[3]
 
-                    gnatfep.nrtelefo[1] = INPUT gnapfep.nrtelefo[1]
-                    gnatfep.nrtelefo[2] = INPUT gnapfep.nrtelefo[2]
-                    gnatfep.nrtelefo[3] = INPUT gnapfep.nrtelefo[3]
+                    gnatfep.nrtelefo[1] = dec(string(INPUT gnapfep.nrtelefo[1],'999999999'))
+                    gnatfep.nrtelefo[2] = dec(string(INPUT gnapfep.nrtelefo[2],'999999999'))
+                    gnatfep.nrtelefo[3] = dec(string(INPUT gnapfep.nrtelefo[3],'999999999'))
                     gnatfep.cdcidade    = DECIMAL(ab_unmap.aux_cdcidade).
 
                 RUN inclui-registro IN h-b1wpgd0016(INPUT TABLE gnatfep, OUTPUT msg-erro, OUTPUT ab_unmap.aux_nrdrowid).
