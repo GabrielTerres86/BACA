@@ -29,6 +29,8 @@
 	$dtlibini = (isset($dtlibini)) ? $dtlibini : '';
 	$dtlibfim = (isset($dtlibfim)) ? $dtlibfim : '';
 	$dsdocmc7 = (isset($dsdocmc7)) ? $dsdocmc7 : '';
+	$nriniseq = (isset($nriniseq)) ? $nriniseq : 1;
+	$nrregist = (isset($nrregist)) ? $nrregist : 50;
 ?>
 
 <form id="frmOpcao" class="formulario" onSubmit="return false;">
@@ -81,79 +83,124 @@
 			
 	</fieldset>		
 
-
 	<fieldset>
 	<legend> Cheques </legend>
-
-	<div class="divRegistros">	
-		<table class="tituloRegistros">
-			<thead>
-				<tr>
-					<th>Liberar</th>
-					<th>Banco</th>
-					<th>Ag&ecirc;ncia</th>
-					<th>Conta</th>
-					<th>Cheque</th>
-					<th>Valor</th>
-					<th>Data</th>
-					<th>Tipo Cheque</th>
-					<th>PA</th>
-					<th>Lote</th>
-					<th>Data Cust&oacute;dia</th>
-					<th>Operador</th>
-				</tr>
-			</thead>
-			<tbody>
-				<?php
-				foreach ( $registro as $r ) { 
-				?>
+		<div class="divRegistros">	
+			<table class="tituloRegistros">
+				<thead>
 					<tr>
-						<td><span><? echo dataParaTimestamp(getByTagName($r->tags,'dtlibera')); ?></span>
-							      <? echo getByTagName($r->tags,'dtlibera'); ?>
-						</td>
-						<td><span><? echo getByTagName($r->tags,'cdbanchq'); ?></span>
-							      <? echo getByTagName($r->tags,'cdbanchq'); ?>
-						</td>
-						<td><span><? echo getByTagName($r->tags,'cdagechq'); ?></span>
-							      <? echo getByTagName($r->tags,'cdagechq'); ?>
-						</td>
-						<td><span><? echo getByTagName($r->tags,'nrctachq'); ?></span>
-							      <? echo mascara(getByTagName($r->tags,'nrctachq'), '###.###.###.#'); ?>
-						</td>
-						<td><span><? echo getByTagName($r->tags,'nrcheque'); ?></span>
-							      <? echo getByTagName($r->tags,'nrcheque'); ?>
-						</td>
-						<td><span><? echo getByTagName($r->tags,'vlcheque'); ?></span>
-							      <? echo formataMoeda(getByTagName($r->tags,'vlcheque')); ?>
-						</td>
-						<td><span><? echo dataParaTimestamp(getByTagName($r->tags,'dtdevolu')); ?></span>
-							      <? echo getByTagName($r->tags,'dtdevolu'); ?>
-						</td>
-						<td><span><? echo getByTagName($r->tags,'tpdevolu'); ?></span>
-							      <? echo getByTagName($r->tags,'tpdevolu'); ?>
-						</td>
-						<td><span><? echo getByTagName($r->tags,'cdagenci'); ?></span>
-							      <? echo getByTagName($r->tags,'cdagenci'); ?>
-						</td>
-						<td><span><? echo getByTagName($r->tags,'nrdolote'); ?></span>
-							      <? echo getByTagName($r->tags,'nrdolote'); ?>
-						</td>
-						<td><span><? echo getByTagName($r->tags,'dtmvtolt'); ?></span>
-							      <? echo getByTagName($r->tags,'dtmvtolt'); ?>
-						</td>
-						<td><span><? echo getByTagName($r->tags,'cdopedev'); ?></span>
-							      <? echo getByTagName($r->tags,'cdopedev'); ?>
-						</td>
+						<th>Liberar</th>
+						<th>Banco</th>
+						<th>Ag&ecirc;ncia</th>
+						<th>Conta</th>
+						<th>Cheque</th>
+						<th>Valor</th>
+						<th>Tipo Cheque</th>
+						<th>PA</th>
+						<th>Lote</th>
+						<th>Data Cust&oacute;dia</th>
+						<th>Data Resgate</th>						
+						<th>Operador Resgate</th>
 					</tr>
-			<? } ?>	
-			</tbody>
-		</table>
-	</div>
+				</thead>
+				<tbody>
+					<?php
+					foreach ( $registro as $r ) { 
+					?>
+						<tr>
+							<td><span><? echo dataParaTimestamp(getByTagName($r->tags,'dtlibera')); ?></span>
+									  <? echo getByTagName($r->tags,'dtlibera'); ?>
+							</td>
+							<td><span><? echo getByTagName($r->tags,'cdbanchq'); ?></span>
+									  <? echo getByTagName($r->tags,'cdbanchq'); ?>
+							</td>
+							<td><span><? echo getByTagName($r->tags,'cdagechq'); ?></span>
+									  <? echo getByTagName($r->tags,'cdagechq'); ?>
+							</td>
+							<td><span><? echo getByTagName($r->tags,'nrctachq'); ?></span>
+									  <? echo mascara(getByTagName($r->tags,'nrctachq'), '###.###.###.#'); ?>
+							</td>
+							<td><span><? echo getByTagName($r->tags,'nrcheque'); ?></span>
+									  <? echo getByTagName($r->tags,'nrcheque'); ?>
+							</td>
+							<td><span><? echo getByTagName($r->tags,'vlcheque'); ?></span>
+									  <? echo formataMoeda(getByTagName($r->tags,'vlcheque')); ?>
+							</td>
+							<td><span><? echo getByTagName($r->tags,'tpdevolu'); ?></span>
+									  <? echo getByTagName($r->tags,'tpdevolu'); ?>
+							</td>
+							<td><span><? echo getByTagName($r->tags,'cdagenci'); ?></span>
+									  <? echo getByTagName($r->tags,'cdagenci'); ?>
+							</td>
+							<td><span><? echo getByTagName($r->tags,'nrdolote'); ?></span>
+									  <? echo getByTagName($r->tags,'nrdolote'); ?>
+							</td>
+							<td><span><? echo getByTagName($r->tags,'dtmvtolt'); ?></span>
+									  <? echo getByTagName($r->tags,'dtmvtolt'); ?>
+							</td>
+							<td><span><? echo dataParaTimestamp(getByTagName($r->tags,'dtdevolu')); ?></span>
+									  <? echo getByTagName($r->tags,'dtdevolu'); ?>
+							</td>
+							<td><span><? echo getByTagName($r->tags,'cdopedev'); ?></span>
+									  <? echo getByTagName($r->tags,'cdopedev'); ?>
+							</td>
+						</tr>
+				<? } ?>	
+				</tbody>
+			</table>
+		</div>
+		<div id="divPesquisaRodape" class="divPesquisaRodape">
+			<table>	
+				<tr>
+					<td>
+						<?
+							//
+							if (isset($qtregist) and $qtregist == 0) $nriniseq = 0;
+							
+							// Se a paginação não está na primeira, exibe botão voltar
+							if ($nriniseq > 1) { 
+								?> <a class='paginacaoAnt'><<< Anterior</a> <? 
+							} else {
+								?> &nbsp; <?
+							}
+						?>
+					</td>
+					<td>
+						<?
+							if (isset($nriniseq)) { 
+								?> Exibindo <? echo $nriniseq; ?> at&eacute; <? if (($nriniseq + $nrregist) > $qtregist) { echo $qtregist; } else { echo ($nriniseq + $nrregist - 1); } ?> de <? echo $qtregist; ?><?
+							}
+						?>
+					</td>
+					<td>
+						<?
+							// Se a paginação não está na &uacute;ltima página, exibe botão proximo
+							if ($qtregist > ($nriniseq + $nrregist - 1)) {
+								?> <a class='paginacaoProx'>Pr&oacute;ximo >>></a> <?
+							} else {
+								?> &nbsp; <?
+							}
+						?>			
+					</td>
+				</tr>
+			</table>
+		</div>
 	</fieldset>
-
-</form>
-
+</form>		
 <div id="divBotoes" style="padding-bottom:10px">
 	<a href="#" class="botao" id="btVoltar" onclick="btnVoltar(); return false;">Voltar</a>
 	<a href="#" class="botao" onclick="btnContinuar(); return false;" >Prosseguir</a>
 </div>
+
+
+<script type="text/javascript">
+
+    $('a.paginacaoAnt').unbind('click').bind('click', function() {
+        controlaOperacao('CCC', <?php echo "'" . ($nriniseq - $nrregist) . "','" . $nrregist . "'"; ?>);
+    });
+
+    $('a.paginacaoProx').unbind('click').bind('click', function() {
+        controlaOperacao('CCC', <?php echo "'" . ($nriniseq + $nrregist) . "','" . $nrregist . "'"; ?>);
+    });
+	
+</script>

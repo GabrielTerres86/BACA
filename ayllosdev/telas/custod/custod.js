@@ -51,7 +51,7 @@ function estadoInicial() {
 
     $('#' + frmOpcao).remove();
     $('#divBotoes', '#divTela').remove();
-    // $('#divPesquisaRodape', '#divTela').remove();
+    //$('#divPesquisaRodape', '#divTela').remove();
 
     cCddopcao.val(cddopcao);
     cCddopcao.focus();
@@ -301,7 +301,7 @@ function buscaOpcao() {
                 cTodosOpcao.limpaFormulario().removeClass('campoErro');
             }
 
-            // $('#divPesquisaRodape', '#divTela').remove();
+            //$('#divPesquisaRodape', '#divTela').remove();
 
             formataOpcao();
 
@@ -322,7 +322,7 @@ function formataOpcao() {
     if (cddopcao == 'C') {
         formataOpcaoC();
 
-        $('#' + frmOpcao + ' fieldset:eq(1)').css({'display': 'none'});
+        $('#divTela fieldset:eq(1)').css({'display': 'none'});
         cNrdconta.habilitaCampo().focus();
 
     } else if (cddopcao == 'F') {
@@ -758,7 +758,7 @@ function formataOpcaoC() {
     cTodosOpcao.desabilitaCampo();
 
     // tabela
-    var divRegistro = $('div.divRegistros', '#' + frmOpcao);
+    var divRegistro = $('div.divRegistros', '#divTela');
     var tabela = $('table', divRegistro);
 
     $('#' + frmOpcao).css({'margin-top': '5px'});
@@ -773,12 +773,12 @@ function formataOpcaoC() {
     arrayLargura[3] = '79px';
     arrayLargura[4] = '59px';
     arrayLargura[5] = '73px';
-    arrayLargura[6] = '73px';
-    arrayLargura[7] = '77px';
+    arrayLargura[6] = '77px';
+    arrayLargura[7] = '47px';
     arrayLargura[8] = '47px';
-    arrayLargura[9] = '47px';
+    arrayLargura[9] = '73px';
     arrayLargura[10] = '73px';
-
+	
     var arrayAlinha = new Array();
     arrayAlinha[0] = 'center';
     arrayAlinha[1] = 'right';
@@ -787,10 +787,10 @@ function formataOpcaoC() {
     arrayAlinha[4] = 'right';
     arrayAlinha[5] = 'right';
     arrayAlinha[6] = 'center';
-    arrayAlinha[7] = 'center';
+    arrayAlinha[7] = 'right';
     arrayAlinha[8] = 'right';
-    arrayAlinha[9] = 'right';
-    arrayAlinha[10] = 'center';
+    arrayAlinha[9] = 'center';
+    arrayAlinha[10] = 'center';	
     arrayAlinha[11] = 'left';
 
     tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, '');
@@ -930,7 +930,7 @@ function formataOpcaoC() {
 
 		}
 	});	
-	
+	$('#divPesquisaRodape', '#divTela').formataRodapePesquisa();
     layoutPadrao();
     controlaPesquisas();
     return false;
@@ -2157,7 +2157,7 @@ function btnVoltar() {
         cNrdconta.habilitaCampo().val(auxconta).select();
 
     } else if (cddopcao == 'C' && cNrdconta.hasClass('campoTelaSemBorda') && cTpcheque.hasClass('campoTelaSemBorda')) {
-        $('#' + frmOpcao + ' fieldset:eq(1)').css({'display': 'none'});
+        $('#divTela fieldset:eq(1)').css({'display': 'none'});
         $('#divPesquisaRodape', '#divTela').css({'display': 'none'});
 		cTodosOpcao.habilitaCampo();
 		cNrdconta.desabilitaCampo();
@@ -4534,7 +4534,7 @@ function validaCustodiaCheque(){
 
 	if( dscheque == "" ){
 		unblockBackground();
-		showError('error','Nenhum cheque foi informado para custodiar.','Alerta - Ayllos','novoCheque();');
+		showError('error','Nenhum cheque foi informado para custodiar.','Alerta - Ayllos','hideMsgAguardo(); novoCheque();');
 		return false;
 	}
 	

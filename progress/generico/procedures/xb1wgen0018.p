@@ -903,6 +903,9 @@ PROCEDURE consulta_cheques_custodia:
                                   INPUT aux_dtlibini,
                                   INPUT aux_dtlibfim,
                                   INPUT aux_dsdocmc7,
+                                  INPUT aux_nriniseq,
+                                  INPUT aux_nrregist,
+                                 OUTPUT aux_qtregist,
                                  OUTPUT TABLE tt-erro,
                                  OUTPUT TABLE tt-crapcst).
 
@@ -928,6 +931,7 @@ PROCEDURE consulta_cheques_custodia:
             RUN piXmlNew.
             RUN piXmlExport (INPUT TEMP-TABLE tt-crapcst:HANDLE,
                              INPUT "Cheques").
+            RUN piXmlAtributo (INPUT "qtregist",INPUT aux_qtregist).                             
             RUN piXmlSave.
         END.
 

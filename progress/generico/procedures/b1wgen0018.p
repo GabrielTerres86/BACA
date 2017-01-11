@@ -1734,10 +1734,16 @@ PROCEDURE consulta_cheques_custodia:
     DEFINE INPUT  PARAMETER par_dtlibini AS DATE        NO-UNDO.
     DEFINE INPUT  PARAMETER par_dtlibfim AS DATE        NO-UNDO.
     DEFINE INPUT  PARAMETER par_dsdocmc7 AS CHAR        NO-UNDO.
+    DEFINE INPUT  PARAMETER par_nriniseq AS INTE        NO-UNDO.
+    DEFINE INPUT  PARAMETER par_nrregist AS INTE        NO-UNDO.
+
+    DEFINE OUTPUT PARAMETER par_qtregist AS INTE        NO-UNDO.
+
     DEFINE OUTPUT PARAMETER TABLE FOR tt-erro.
     DEFINE OUTPUT PARAMETER TABLE FOR tt-crapcst.
 
     DEF VAR aux_query AS CHAR                           NO-UNDO.
+    DEF VAR aux_nrregist AS INTEGER                     NO-UNDO.
     DEF QUERY q_crapcst FOR crapcst.
 
     EMPTY TEMP-TABLE tt-erro.
@@ -1809,76 +1815,96 @@ PROCEDURE consulta_cheques_custodia:
     REPEAT:
     
       IF QUERY q_crapcst:QUERY-OFF-END THEN LEAVE.
-
-        IF   par_tpcheque = 1 THEN
-             DO:
-
-                 IF   crapcst.dtdevolu <> ?  AND
-                      crapcst.insitchq  = 1  THEN
-                      DO:
-                          CREATE tt-crapcst.
-                          BUFFER-COPY crapcst TO tt-crapcst.
-                          ASSIGN tt-crapcst.tpdevolu = "Resgat".
-                      END.
-                 ELSE
-                   DO:                          
-                     QUERY q_crapcst:GET-NEXT().
-                      NEXT.
-             END.
-           END.
-       ELSE
-             IF    par_tpcheque = 2 THEN
-                   DO:
-                       IF crapcst.dtdevolu <> ? AND
-                          crapcst.insitchq <> 1 THEN
-                           DO:
-                               CREATE tt-crapcst.
-                               BUFFER-COPY crapcst TO tt-crapcst.
-                               ASSIGN tt-crapcst.tpdevolu = "Descon".
-                           END.
-                       ELSE
-                         DO:                          
-                           QUERY q_crapcst:GET-NEXT().
-                           NEXT.
-                   END.
-                 END.
-       ELSE
-             IF    par_tpcheque = 3 THEN
-                   DO:
-                       IF crapcst.dtdevolu = ? THEN
-                           DO:
-                               CREATE tt-crapcst.
-                               BUFFER-COPY crapcst TO tt-crapcst.
-                               ASSIGN tt-crapcst.tpdevolu = "Custod".
-                           END.
-                       ELSE
-                        DO:                          
-                          QUERY q_crapcst:GET-NEXT().
-                           NEXT.
-                   END.
-                 END.
-       ELSE 
-             IF    par_tpcheque = 4 THEN
-                   DO:
-                      CREATE tt-crapcst.
-                      BUFFER-COPY crapcst TO tt-crapcst.
+      
+      IF par_tpcheque = 1 THEN
+         DO:
+           IF crapcst.dtdevolu <> ?  AND
+              crapcst.insitchq  = 1  THEN
+              DO:
+                CREATE tt-crapcst.
+                BUFFER-COPY crapcst TO tt-crapcst.
+                ASSIGN tt-crapcst.tpdevolu = "Resgat".
+              END.
+           ELSE
+              DO:                          
+                QUERY q_crapcst:GET-NEXT().
+                NEXT.
+              END.
+         END.
+      ELSE IF par_tpcheque = 2 THEN
+         DO:
+           IF crapcst.dtdevolu  = ? AND
+              crapcst.insitchq <> 1 AND 
+              crapcst.nrborder  > 0 THEN
+              DO:
+                CREATE tt-crapcst.
+                BUFFER-COPY crapcst TO tt-crapcst.
+                ASSIGN tt-crapcst.tpdevolu = "Descon".
+              END.
+           ELSE
+              DO:                          
+                QUERY q_crapcst:GET-NEXT().
+                NEXT.
+              END.
+         END.
+      ELSE IF par_tpcheque = 3 THEN
+         DO:
+           IF crapcst.dtdevolu = ? THEN
+              DO:
+                CREATE tt-crapcst.
+                BUFFER-COPY crapcst TO tt-crapcst.
+                ASSIGN tt-crapcst.tpdevolu = "Custod".
+              END.
+           ELSE
+              DO:                          
+                QUERY q_crapcst:GET-NEXT().
+                NEXT.
+              END.
+         END.
+      ELSE IF par_tpcheque = 4 THEN
+         DO:
+           CREATE tt-crapcst.
+           BUFFER-COPY crapcst TO tt-crapcst.
                   
-                      IF   crapcst.dtdevolu <> ?   THEN                   
-                           DO:                                            
-                               IF crapcst.insitchq = 1 THEN                   
-                                    ASSIGN tt-crapcst.tpdevolu = "Resgat".
-                               ELSE                                       
-                                    ASSIGN tt-crapcst.tpdevolu = "Descon".
-                           END.                                           
-                      ELSE                                                
-                           ASSIGN tt-crapcst.tpdevolu = "Custod".
-                   END.
-
+           IF crapcst.dtdevolu <> ?   THEN                   
+              DO:                                            
+                IF crapcst.insitchq = 1 THEN                   
+                   ASSIGN tt-crapcst.tpdevolu = "Resgat".
+                ELSE                                       
+                   ASSIGN tt-crapcst.tpdevolu = "Descon".
+              END.                                           
+           ELSE                                                
+              ASSIGN tt-crapcst.tpdevolu = "Custod".
+         END.
+         
       QUERY q_crapcst:GET-NEXT().
 
     END.  /*  Fim da query crapcst */
     
     QUERY q_crapcst:QUERY-CLOSE().
+
+    ASSIGN aux_nrregist = par_nrregist.
+    
+    FOR EACH tt-crapcst:
+    
+      ASSIGN par_qtregist = par_qtregist + 1.
+
+      IF  par_qtregist < par_nriniseq                    OR
+          par_qtregist > (par_nriniseq + par_nrregist)  THEN
+          DO:
+            DELETE tt-crapcst.
+            NEXT.
+          END.
+          
+      IF aux_nrregist <= 0 THEN
+         DO:
+           DELETE tt-crapcst.
+           NEXT.        
+         END.
+        
+      ASSIGN aux_nrregist = aux_nrregist - 1.                   
+      
+    END.
 
     IF   NOT CAN-FIND(FIRST tt-crapcst)   THEN
          DO:
@@ -1895,7 +1921,7 @@ PROCEDURE consulta_cheques_custodia:
             
              RETURN "NOK".
          END.
-    
+             
     RETURN "OK".
 
 END PROCEDURE. /* consulta_cheques_custodia */
