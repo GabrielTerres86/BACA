@@ -173,6 +173,10 @@ CREATE OR REPLACE PACKAGE CECRED.gene0005 IS
                          ,pr_inpessoa IN crapass.inpessoa%TYPE      --> Tipo de Pessoa(1 - Fisica / 2 - Juridica / 3 - Conta Administrativa)
                          ,pr_des_erro  OUT VARCHAR2) RETURN BOOLEAN;--> Mensagem de erro / (Retorno TRUE -> OK, FALSE -> NOK)
 
+  /* Retorna a data por extenso em portugues */
+  FUNCTION fn_data_extenso (pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE) --> Data do movimento
+                   RETURN VARCHAR2;
+							 
   /* Procedimento para busca de motivos */												 
   PROCEDURE pc_busca_motivos (pr_cdproduto  IN tbgen_motivo.cdproduto%TYPE --> Cod. Produto
 		                     ,pr_clobxmlc  OUT CLOB                        --XML com informações de LOG
@@ -1790,9 +1794,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
       vr_nrposica:= 0;
       vr_vlcalcul:= 0;
 
-      vr_nrcalcul:= pr_nrcalcul + vr_nrdigit1;
+      vr_nrcalcul:= TO_NUMBER(TO_CHAR(pr_nrcalcul) || TO_CHAR(vr_nrdigit1));
+			
       --Calcular digito
-      FOR vr_nrposica IN REVERSE 1..LENGTH(vr_nrcalcul) - 1 LOOP
+      FOR vr_nrposica IN REVERSE 1..LENGTH(vr_nrcalcul) LOOP
         vr_vlcalcul:= vr_vlcalcul + (TO_NUMBER(SUBSTR(vr_nrcalcul,vr_nrposica,1)) * vr_vlrdpeso);
         --Incrementar peso
         vr_vlrdpeso:= vr_vlrdpeso+1;
@@ -1811,7 +1816,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
         vr_nrdigit2:= 11 - vr_vldresto;
       END IF;
       --retornar digitos
-      RETURN(vr_nrdigit1 + vr_nrdigit2);
+      RETURN(TO_NUMBER(TO_CHAR(vr_nrdigit1) || TO_CHAR(vr_nrdigit2)));
 
     EXCEPTION
       WHEN OTHERS THEN
@@ -2340,6 +2345,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
     END;
 
   END fn_valida_nome;   
+
+  /* Retorna a data por extenso em portugues */
+  FUNCTION fn_data_extenso (pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE) --> Data do movimento
+                   RETURN VARCHAR2 IS
+                             
+    -- ..........................................................................
+    --
+    --  Programa : fn_data_extenso
+    --   Sistema : Conta-Corrente - Cooperativa de Credito
+    --   Sigla   : CRED
+    --   Autor   : Odirlei Busana(AMcom)
+    --   Data    : Julho/2016                          Ultima Atualizacao: 
+    --
+    --   Dados referentes ao programa:
+    --   Frequencia: Sempre que chamado por outros programas.
+    --   Objetivo  : Retorna a data por extenso em portugues
+    --               Exemplo: 26 de Julho de 2016
+    --               
+    --   
+    --
+    --   Alteracoes  : 
+    -- .............................................................................
+  
+    vr_dsdatext VARCHAR2(500);
+  BEGIN
+  
+    vr_dsdatext := to_char(pr_dtmvtolt,'DD') ||' de '|| 
+                   INITCAP(gene0001.vr_vet_nmmesano(to_char(pr_dtmvtolt,'MM')))|| ' de ' ||
+                   to_char(SYSDATE,'RRRR');
+    
+    RETURN vr_dsdatext;
+                               
+  END fn_data_extenso;  
 
   PROCEDURE pc_busca_motivos (pr_cdproduto  IN tbgen_motivo.cdproduto%TYPE --> Cod. Produto
 		                     ,pr_clobxmlc  OUT CLOB                        --XML com informações de LOG
