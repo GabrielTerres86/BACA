@@ -198,8 +198,8 @@ function FormataTelefone(campo) {
             campo.value = campo.value.substring(0, i);
    }
 
-   if (campo.value.length >= 4)
-        campo.value = campo.value.substring(0, 4) + '.' + campo.value.substring(4, campo.value.length);
+   if (campo.value.length >= 5)
+        campo.value = campo.value.substring(0, 5) + '.' + campo.value.substring(5, campo.value.length);
 }	
 
 /*!
