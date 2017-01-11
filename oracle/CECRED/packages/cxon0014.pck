@@ -10453,23 +10453,6 @@ END pc_gera_titulos_iptu_prog;
                      
   END pc_calcula_vlr_titulo_vencido;  
   
-   /* ..........................................................................
-	
-	  Programa : pc_retorna_vlr_tit_vencto
-	  Sistema  : Conta-Corrente - Cooperativa de Credito
-	  Sigla    : CRED
-	  Autor    : Kelvin Souza Ott 
-	  Data     : Setembro/2016.                   Ultima atualizacao: 02/12/2016
-	
-	  Dados referentes ao programa:
-	
-	  Frequencia: Sempre que for chamado
-	  Objetivo  : Procedure para retornar o valor do titulo vencido
-	
-	  Alteração : 02/12/2016 - Correcao do paramentro pr_des_erro para ser VARCHAR2
-                             - Corrigido tratamento de erro para quando existir apenas 
-                               o cdcritic preenchido (Douglas - Chamado 563281)
-	...........................................................................*/
   PROCEDURE pc_retorna_vlr_tit_vencto (pr_cdcooper      IN INTEGER    -- Cooperativa
                                       ,pr_nrdconta      IN INTEGER    -- Conta
                                       ,pr_idseqttl      IN INTEGER    -- Titular
@@ -10487,7 +10470,30 @@ END pc_gera_titulos_iptu_prog;
                                       ,pr_fltitven      OUT NUMBER    -- Indicador Vencido 
                                       ,pr_des_erro      OUT VARCHAR2  -- Indicador erro OK/NOK   
                                       ,pr_dscritic      OUT VARCHAR2) IS --Descricao do erro
-      
+    /* ..........................................................................
+	
+	  Programa : pc_retorna_vlr_tit_vencto
+	  Sistema  : Conta-Corrente - Cooperativa de Credito
+	  Sigla    : CRED
+	  Autor    : Kelvin Souza Ott 
+	  Data     : Setembro/2016.                   Ultima atualizacao: 10/01/2017
+	
+	  Dados referentes ao programa:
+	
+	  Frequencia: Sempre que for chamado
+	  Objetivo  : Procedure para retornar o valor do titulo vencido
+	
+	  Alteração : 02/12/2016 - Correcao do paramentro pr_des_erro para ser VARCHAR2
+                             - Corrigido tratamento de erro para quando existir apenas 
+                               o cdcritic preenchido (Douglas - Chamado 563281)
+
+                  10/01/2017 - Correcao para que não seja criado o titulo quando informar o 
+                               codigo de barras. A criacao de um titulo deve ser feita apenas
+                               quando confirmar o pagamento do titulo. Essa procedure deve devolver
+                               o valor do titulo, caso já exista no Ayllos, devolve o valor, caso
+                               contrário deverá devolver o valor que está no código de barras
+                               (Douglas - Chamado 575078)
+    ...........................................................................*/      
      CURSOR cr_crapcco2 (pr_cdcooper IN crapcco.cdcooper%type
                         ,pr_nrconven IN crapcco.nrconven%type
                         ,pr_cddbanco IN crapcco.cddbanco%TYPE) IS
@@ -10536,15 +10542,12 @@ END pc_gera_titulos_iptu_prog;
     vr_retorno        BOOLEAN;
     vr_flg_cdbarerr   BOOLEAN;
     vr_nrdconta_cob   crapcob.nrdconta%TYPE;
-    vr_insittit       craptdb.insittit%TYPE;
     vr_intitcop       NUMBER;
     vr_convenio       INTEGER;
     vr_bloqueto       NUMBER;
     vr_nrdctabb       INTEGER;
     vr_vldescto       NUMBER; 
     vr_vlabatim       NUMBER; 
-    vr_vloutdeb       NUMBER; 
-    vr_vloutcre       NUMBER; 
     vr_de_p_titulo5   NUMBER;
     vr_critica_data   BOOLEAN:= FALSE;
     vr_codigo_barras  VARCHAR2(100);
@@ -10557,10 +10560,6 @@ END pc_gera_titulos_iptu_prog;
     vr_vlrjuros       NUMBER;
     vr_vlrmulta       NUMBER;
     vr_fltitven       NUMBER;
-    vr_cobregis       NUMBER;
-    
-    --XML de retorno
-    vr_xml_temp VARCHAR2(32767);
     
     --Variaveis de erro
     vr_exc_erro EXCEPTION;
@@ -10730,211 +10729,138 @@ END pc_gera_titulos_iptu_prog;
       END LOOP; --For idx 1..3
     END IF;
 
-    --Identificar titulo Cooperativa
-    pc_identifica_titulo_coop2 (pr_cooper     => pr_cdcooper     --Codigo Cooperativa
-                               ,pr_nro_conta   => pr_nrdconta      --Numero Conta
-                               ,pr_idseqttl    => pr_idseqttl      --Sequencial do Titular
-                               ,pr_cod_agencia => pr_cdagenci      --Codigo da Agencia
-                               ,pr_nro_caixa   => pr_nrdcaixa      --Numero Caixa
-                               ,pr_codbarras   => vr_codigo_barras --Codigo Barras
-                               ,pr_flgcritica  => TRUE             --Flag Critica
-                               ,pr_nrdconta    => vr_nrdconta_cob  --Numero da Conta OUT
-                               ,pr_insittit    => vr_insittit      --Situacao Titulo
-                               ,pr_intitcop    => vr_intitcop      --Indicador titulo cooperativa
-                               ,pr_convenio    => vr_convenio      --Numero Convenio
-                               ,pr_bloqueto    => vr_bloqueto      --Numero Boleto
-                               ,pr_contaconve  => vr_nrdctabb      --Conta do Convenio
-                               ,pr_cdcritic    => vr_cdcritic      --Codigo do erro
-                               ,pr_dscritic    => vr_dscritic);    --Descricao erro
-    --Se Ocorreu erro
-    IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-      
-      IF vr_cdcritic IS NOT NULL AND
-         TRIM(vr_dscritic) IS NULL THEN
-        
-        OPEN cr_crapcri(vr_cdcritic);
-          FETCH cr_crapcri
-           INTO rw_crapcri;
-        CLOSE cr_crapcri;
-        
-        vr_dscritic := rw_crapcri.dscritic;
-      END IF;
-      
-      --Levantar Excecao
-      RAISE vr_exc_erro;
-    END IF;
+    /* Verifica se conv boleto eh de cobranca 085 */
+    --Selecionar informacoes convenio cobranca
+    OPEN cr_crapcco2 (pr_cdcooper => rw_crapcop.cdcooper
+                     ,pr_nrconven => to_number(vr_convenio)
+                     ,pr_cddbanco => rw_crapcop.cdbcoctl);
+    --Posicionar no proximo registro
+    FETCH cr_crapcco2 INTO rw_crapcco;
+    --Se encontrar
+    IF cr_crapcco2%FOUND THEN
+      -- Se for cobranca registrada, calcular o valor do titulo conforme instru¿¿o
 
+      --Selecionar informacoes cobranca
+      OPEN cr_crapcob (pr_cdcooper => rw_crapcop.cdcooper
+                      ,pr_nrcnvcob => to_number(vr_convenio)
+                      ,pr_nrdconta => vr_nrdconta_cob
+                      ,pr_nrdocmto => vr_bloqueto
+                      ,pr_nrdctabb => vr_nrdctabb);
+                        
+      --Posicionar no proximo registro
+      FETCH cr_crapcob INTO rw_crapcob;
+      --Se nao encontrar
+      IF cr_crapcob%NOTFOUND THEN
+        --Titulo Encontrado
+        vr_intitcop := 1;
+      ELSE
+        -- Titulo nao Encontrado
+        vr_intitcop := 0;
+        
+      END IF;
+      --Fechar Cursor
+      CLOSE cr_crapcob;
+    END IF;
+    
+    -- fechar o cursor
+    CLOSE cr_crapcco2;
+    
     /********************************************************/
     /***********FAZER CALCULO DO VALOR DO TITULO*************/
     IF vr_intitcop = 1 THEN /* Se for titulo da cooperativa */
-      /* Verifica se conv boleto eh de cobranca 085 */
-      --Selecionar informacoes convenio cobranca
-      OPEN cr_crapcco2 (pr_cdcooper => rw_crapcop.cdcooper
-                       ,pr_nrconven => to_number(vr_convenio)
-                       ,pr_cddbanco => rw_crapcop.cdbcoctl);
-      --Posicionar no proximo registro
-      FETCH cr_crapcco2 INTO rw_crapcco;
-      --Se encontrar
-      IF cr_crapcco2%FOUND THEN
-        -- Se for cobranca registrada, calcular o valor do titulo conforme instru¿¿o
+      /* Parametros de saida da cobranca registrada */
+      vr_vlrjuros := 0;
+      vr_vlrmulta := 0;
+      vr_vldescto := 0;
+      vr_vlabatim := 0;
+      vr_vlfatura := rw_crapcob.vltitulo; 
 
-        --Selecionar informacoes cobranca
-        OPEN cr_crapcob (pr_cdcooper => rw_crapcop.cdcooper
-                        ,pr_nrcnvcob => to_number(vr_convenio)
-                        ,pr_nrdconta => vr_nrdconta_cob
-                        ,pr_nrdocmto => vr_bloqueto
-                        ,pr_nrdctabb => vr_nrdctabb);
-                        
-        --Posicionar no proximo registro
-        FETCH cr_crapcob INTO rw_crapcob;
-        --Se nao encontrar
-        IF cr_crapcob%NOTFOUND THEN
-          --Fechar Cursores
-          CLOSE cr_crapcob;
-          CLOSE cr_crapcco2;       
-       
+      /* trata o desconto */
+      /* se concede apos o vencimento */
+      IF rw_crapcob.cdmensag = 2 THEN
+        --Valor Desconto
+        vr_vldescto:= rw_crapcob.vldescto;
+        --Diminuir valor desconto do Valor Fatura
+        vr_vlfatura:= Nvl(vr_vlfatura,0) - vr_vldescto;
+      END IF;
+      /* utilizar o abatimento antes do calculo de juros/multa */
+      IF rw_crapcob.vlabatim > 0 THEN
+        --Valor Abatimento
+        vr_vlabatim:= rw_crapcob.vlabatim;
+        --Diminuir valor abatimento do Valor Fatura
+        vr_vlfatura:= Nvl(vr_vlfatura,0) - vr_vlabatim;
+      END IF;
+
+      --Verificar vencimento do titulo
+      pc_verifica_vencimento_titulo (pr_cod_cooper      => rw_crapcop.cdcooper  --Codigo Cooperativa
+                                    ,pr_cod_agencia     => pr_cdagenci          --Codigo da Agencia
+                                    ,pr_dt_agendamento  => NULL                 --Data Agendamento
+                                    ,pr_dt_vencto       => rw_crapcob.dtvencto  --Data Vencimento
+                                    ,pr_critica_data    => vr_critica_data      --Critica na validacao
+                                    ,pr_cdcritic        => vr_cdcritic          --Codigo da Critica
+                                    ,pr_dscritic        => vr_dscritic          --Descricao da Critica
+                                    ,pr_tab_erro        => vr_tab_erro);        --Tabela retorno erro
+      --Se ocorreu erro
+      IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+        IF vr_tab_erro.Count > 0 THEN
+
           --Se ocorreu erro
           IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+              
             IF vr_cdcritic IS NOT NULL AND
                TRIM(vr_dscritic) IS NULL THEN
-              
+                
               OPEN cr_crapcri(vr_cdcritic);
                 FETCH cr_crapcri
                  INTO rw_crapcri;
               CLOSE cr_crapcri;
-              
+                
               vr_dscritic := rw_crapcri.dscritic;
             END IF;
             --Levantar Excecao
             RAISE vr_exc_erro;
-          ELSE
-            vr_cdcritic:= 11;
-            vr_dscritic:= NULL;
-            
-            IF vr_cdcritic IS NOT NULL AND
-               TRIM(vr_dscritic) IS NULL THEN
-              
-              OPEN cr_crapcri(vr_cdcritic);
-                FETCH cr_crapcri
-                 INTO rw_crapcri;
-              CLOSE cr_crapcri;
-              
-              vr_dscritic := rw_crapcri.dscritic;
-            END IF;
-            
-            --Levantar Excecao
-            RAISE vr_exc_erro;
-          END IF;
-        END IF;
-        --Fechar Cursor
-        CLOSE cr_crapcob;
-
-        /* Parametros de saida da cobranca registrada */
-        vr_vlrjuros := 0;
-        vr_vlrmulta := 0;
-        vr_vldescto := 0;
-        vr_vlabatim := 0;
-        vr_vloutdeb := 0;
-        vr_vloutcre := 0;        
-        vr_vlfatura := rw_crapcob.vltitulo; 
-
-        /* trata o desconto */
-        /* se concede apos o vencimento */
-        IF rw_crapcob.cdmensag = 2 THEN
-          --Valor Desconto
-          vr_vldescto:= rw_crapcob.vldescto;
-          --Diminuir valor desconto do Valor Fatura
-          vr_vlfatura:= Nvl(vr_vlfatura,0) - vr_vldescto;
-        END IF;
-        /* utilizar o abatimento antes do calculo de juros/multa */
-        IF rw_crapcob.vlabatim > 0 THEN
-          --Valor Abatimento
-          vr_vlabatim:= rw_crapcob.vlabatim;
-          --Diminuir valor abatimento do Valor Fatura
-          vr_vlfatura:= Nvl(vr_vlfatura,0) - vr_vlabatim;
-        END IF;
-
-        --Limpar tabela erro
-        --vr_tab_erro.DELETE;
-        
-        --Verificar vencimento do titulo
-        pc_verifica_vencimento_titulo (pr_cod_cooper      => rw_crapcop.cdcooper  --Codigo Cooperativa
-                                      ,pr_cod_agencia     => pr_cdagenci          --Codigo da Agencia
-                                      ,pr_dt_agendamento  => rw_crapdat.dtmvtolt  --Data Agendamento
-                                      ,pr_dt_vencto       => rw_crapcob.dtvencto  --Data Vencimento
-                                      ,pr_critica_data    => vr_critica_data      --Critica na validacao
-                                      ,pr_cdcritic        => vr_cdcritic          --Codigo da Critica
-                                      ,pr_dscritic        => vr_dscritic          --Descricao da Critica
-                                      ,pr_tab_erro        => vr_tab_erro);        --Tabela retorno erro
-        --Se ocorreu erro
-        IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-          IF vr_tab_erro.Count > 0 THEN
-
-            --Se ocorreu erro
-            IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-              
-              IF vr_cdcritic IS NOT NULL AND
-                 TRIM(vr_dscritic) IS NULL THEN
-                
-                OPEN cr_crapcri(vr_cdcritic);
-                  FETCH cr_crapcri
-                   INTO rw_crapcri;
-                CLOSE cr_crapcri;
-                
-                vr_dscritic := rw_crapcri.dscritic;
-              END IF;
-              --Levantar Excecao
-              RAISE vr_exc_erro;
-            ELSE
-              vr_cdcritic:= 0;
-              vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-              --Levantar Excecao
-              RAISE vr_exc_erro;
-            END IF;
           ELSE
             vr_cdcritic:= 0;
-            vr_dscritic:= 'Nao foi possivel realizar o pagamento.';
+            vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+            --Levantar Excecao
             RAISE vr_exc_erro;
           END IF;
-        END IF;
-        
-        --Retorna se está vencido ou não        
-        IF vr_critica_data = TRUE THEN
-          vr_fltitven := 1;   
         ELSE
-          vr_fltitven := 2;        
+          vr_cdcritic:= 0;
+          vr_dscritic:= 'Nao foi possivel realizar o pagamento.';
+          RAISE vr_exc_erro;
         END IF;
+      END IF;
+        
+      --Retorna se está vencido ou não        
+      IF vr_critica_data = TRUE THEN
+        vr_fltitven := 1;   
+      ELSE
+        vr_fltitven := 2;        
+      END IF;
 
-        /* verifica se o titulo esta vencido */
-        IF vr_critica_data THEN
+      /* verifica se o titulo esta vencido */
+      IF vr_critica_data THEN
 
-          CXON0014.pc_calcula_vlr_titulo_vencido(pr_vltitulo => vr_vlfatura
-                                                ,pr_tpdmulta => rw_crapcob.tpdmulta
-                                                ,pr_vlrmulta => rw_crapcob.vlrmulta
-                                                ,pr_tpjurmor => rw_crapcob.tpjurmor
-                                                ,pr_vljurdia => rw_crapcob.vljurdia
-                                                ,pr_qtdiavenc => (rw_crapdat.dtmvtocd - rw_crapcob.dtvencto)
-                                                ,pr_vlfatura => vr_vlfatura
-                                                ,pr_vlrmulta_calc => vr_vlrmulta
-                                                ,pr_vlrjuros_calc => vr_vlrjuros
-                                                ,pr_dscritic =>  vr_dscritic);
+        CXON0014.pc_calcula_vlr_titulo_vencido(pr_vltitulo => vr_vlfatura
+                                              ,pr_tpdmulta => rw_crapcob.tpdmulta
+                                              ,pr_vlrmulta => rw_crapcob.vlrmulta
+                                              ,pr_tpjurmor => rw_crapcob.tpjurmor
+                                              ,pr_vljurdia => rw_crapcob.vljurdia
+                                              ,pr_qtdiavenc => (rw_crapdat.dtmvtocd - rw_crapcob.dtvencto)
+                                              ,pr_vlfatura => vr_vlfatura
+                                              ,pr_vlrmulta_calc => vr_vlrmulta
+                                              ,pr_vlrjuros_calc => vr_vlrjuros
+                                              ,pr_dscritic =>  vr_dscritic);
 
             
-        END IF;
+      END IF;
           
-        /* Parametro para informar que titulo eh de cobranca registrada */
-        vr_cobregis := 1;
-      END IF;
-      --Fechar Cursor
-      IF cr_crapcco2%ISOPEN THEN
-        CLOSE cr_crapcco2;
-      END IF;
     ELSE
       -- Se não está vencido devolver o valor do titulo que está no boleto
       vr_de_p_titulo5:= TO_NUMBER(SUBSTR(gene0002.fn_mask(vr_titulo5,'99999999999999'),5,10));
       --Retornar valor fatura
       vr_vlfatura:= vr_de_p_titulo5 / 100;
-      
     END IF;
     
     --Retorna os valores calculados
@@ -10974,5 +10900,6 @@ END pc_gera_titulos_iptu_prog;
       pr_dscritic := vr_dscritic;
      
   END pc_retorna_vlr_tit_vencto;
+  
 END CXON0014;
 /
