@@ -1641,84 +1641,84 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           
         END IF;  
        
-        vr_index:= pr_idseqttl;
+          vr_index:= pr_idseqttl;
         
-        --Se existir valor limite web
-        IF  pr_tab_internet.EXISTS(vr_index) AND pr_tab_internet(vr_index).vllimweb > 0  THEN
-          --Valor utilizado WEB
-          pr_tab_internet(vr_index).vlutlweb:= vr_vlutlweb;
-          --Valor disponivel WEB recebe limite menos utilizado web
-          pr_tab_internet(vr_index).vldspweb:= pr_tab_internet(vr_index).vllimweb - vr_vlutlweb;
-        END IF;
+          --Se existir valor limite web
+          IF  pr_tab_internet.EXISTS(vr_index) AND pr_tab_internet(vr_index).vllimweb > 0  THEN
+            --Valor utilizado WEB
+            pr_tab_internet(vr_index).vlutlweb:= vr_vlutlweb;
+            --Valor disponivel WEB recebe limite menos utilizado web
+            pr_tab_internet(vr_index).vldspweb:= pr_tab_internet(vr_index).vllimweb - vr_vlutlweb;
+          END IF;
         
-        --Se existir valor limite transferencia
-        IF  pr_tab_internet.EXISTS(vr_index) AND pr_tab_internet(vr_index).vllimtrf > 0  THEN
-          --Valor utilizado transferencia
-          pr_tab_internet(vr_index).vlutltrf:= vr_vlutltrf;
-          --Valor disponivel transf. recebe limite menos utilizado transf
-          pr_tab_internet(vr_index).vldsptrf:= pr_tab_internet(vr_index).vllimtrf - vr_vlutltrf;
-        END IF;
+          --Se existir valor limite transferencia
+          IF  pr_tab_internet.EXISTS(vr_index) AND pr_tab_internet(vr_index).vllimtrf > 0  THEN
+            --Valor utilizado transferencia
+            pr_tab_internet(vr_index).vlutltrf:= vr_vlutltrf;
+            --Valor disponivel transf. recebe limite menos utilizado transf
+            pr_tab_internet(vr_index).vldsptrf:= pr_tab_internet(vr_index).vllimtrf - vr_vlutltrf;
+          END IF;
         
-        --Se existir valor limite pagto
-        IF  pr_tab_internet.EXISTS(vr_index) AND pr_tab_internet(vr_index).vllimpgo > 0  THEN
-          --Valor utilizado pagto
-          pr_tab_internet(vr_index).vlutlpgo:= vr_vlutlpgo;
-          --Valor disponivel pagto. recebe limite menos utilizado pagto
-          pr_tab_internet(vr_index).vldsppgo:= pr_tab_internet(vr_index).vllimpgo - vr_vlutlpgo;
-        END IF;
+          --Se existir valor limite pagto
+          IF  pr_tab_internet.EXISTS(vr_index) AND pr_tab_internet(vr_index).vllimpgo > 0  THEN
+            --Valor utilizado pagto
+            pr_tab_internet(vr_index).vlutlpgo:= vr_vlutlpgo;
+            --Valor disponivel pagto. recebe limite menos utilizado pagto
+            pr_tab_internet(vr_index).vldsppgo:= pr_tab_internet(vr_index).vllimpgo - vr_vlutlpgo;
+          END IF;
         
-        --Se existir valor limite ted
-        IF  pr_tab_internet.EXISTS(vr_index) AND pr_tab_internet(vr_index).vllimted > 0  THEN
-          --Valor utilizado ted
-          pr_tab_internet(vr_index).vlutlted:= vr_vlutlted;
-          --Valor disponivel ted. recebe limite menos utilizado ted
-          pr_tab_internet(vr_index).vldspted:= pr_tab_internet(vr_index).vllimted - vr_vlutlted;
-        END IF;
+          --Se existir valor limite ted
+          IF  pr_tab_internet.EXISTS(vr_index) AND pr_tab_internet(vr_index).vllimted > 0  THEN
+            --Valor utilizado ted
+            pr_tab_internet(vr_index).vlutlted:= vr_vlutlted;
+            --Valor disponivel ted. recebe limite menos utilizado ted
+            pr_tab_internet(vr_index).vldspted:= pr_tab_internet(vr_index).vllimted - vr_vlutlted;
+          END IF;
         
-        --Se for pessoa fisica e sequencial titular > 1
-        IF rw_crapass.inpessoa = 1 AND pr_idseqttl > 1 THEN
-          --Zerar variaveis valor utilizado
-          vr_vlutlweb:= 0;
-          vr_vlutltrf:= 0;
-          vr_vlutlpgo:= 0;
-          vr_vlutlted:= 0;
+          --Se for pessoa fisica e sequencial titular > 1
+          IF rw_crapass.inpessoa = 1 AND pr_idseqttl > 1 THEN
+            --Zerar variaveis valor utilizado
+            vr_vlutlweb:= 0;
+            vr_vlutltrf:= 0;
+            vr_vlutlpgo:= 0;
+            vr_vlutlted:= 0;
           
-          /** Acumula valores movimentados por todos os titulares **/
-          FOR rw_crapmvi IN cr_crapmvi (pr_cdcooper => pr_cdcooper
-                                       ,pr_nrdconta => pr_nrdconta
-                                       ,pr_idseqttl => -1
-                                       ,pr_dtmvtolt => pr_dtmvtopg) LOOP
-            --Acumular valor utilizado web
-            vr_vlutlweb:= vr_vlutlweb + Nvl(rw_crapmvi.vlmovweb,0);
-            --Acumular valor utilizado transferencia
-            vr_vlutltrf:= vr_vlutltrf + Nvl(rw_crapmvi.vlmovtrf,0);
-            --Acumular valor utilizado pagamentos
-            vr_vlutlpgo:= vr_vlutlpgo + Nvl(rw_crapmvi.vlmovpgo,0);
-            --Acumular valor utilizado ted
-            vr_vlutlted:= vr_vlutlted + Nvl(rw_crapmvi.vlmovted,0);
-          END LOOP;
-          
-          /** Acumular valor de agendamentos para todos os titulares **/
-          IF pr_flgctrag THEN
-            
-            --Percorrer todos os lancamentos
-            FOR rw_craplau IN cr_craplau (pr_cdcooper => pr_cdcooper
+            /** Acumula valores movimentados por todos os titulares **/
+            FOR rw_crapmvi IN cr_crapmvi (pr_cdcooper => pr_cdcooper
                                          ,pr_nrdconta => pr_nrdconta
                                          ,pr_idseqttl => -1
-                                         ,pr_dtmvtopg => pr_dtmvtopg
-                                         ,pr_insitlau => 1
-                                         ,pr_dsorigem => pr_dsorigem) LOOP
-              --Se for pessoa fisica
-              IF rw_crapass.inpessoa = 1  THEN
-                --Acumular valor utilizado web
-                vr_vlutlweb:= vr_vlutlweb + Nvl(rw_craplau.vllanaut,0);
-              ELSIF rw_craplau.cdtiptra IN (1,3,5)  THEN
-                --Acumular valor utilizado transferencia
-                vr_vlutltrf:= vr_vlutltrf + Nvl(rw_craplau.vllanaut,0);
-              ELSIF rw_craplau.cdtiptra IN (2,10)  THEN
-                --Acumular valor utilizado pagamentos
-                vr_vlutlpgo:= vr_vlutlpgo + Nvl(rw_craplau.vllanaut,0);
-              END IF;
+                                         ,pr_dtmvtolt => pr_dtmvtopg) LOOP
+              --Acumular valor utilizado web
+              vr_vlutlweb:= vr_vlutlweb + Nvl(rw_crapmvi.vlmovweb,0);
+              --Acumular valor utilizado transferencia
+              vr_vlutltrf:= vr_vlutltrf + Nvl(rw_crapmvi.vlmovtrf,0);
+              --Acumular valor utilizado pagamentos
+              vr_vlutlpgo:= vr_vlutlpgo + Nvl(rw_crapmvi.vlmovpgo,0);
+              --Acumular valor utilizado ted
+              vr_vlutlted:= vr_vlutlted + Nvl(rw_crapmvi.vlmovted,0);
+            END LOOP;
+          
+            /** Acumular valor de agendamentos para todos os titulares **/
+            IF pr_flgctrag THEN
+            
+              --Percorrer todos os lancamentos
+              FOR rw_craplau IN cr_craplau (pr_cdcooper => pr_cdcooper
+                                           ,pr_nrdconta => pr_nrdconta
+                                           ,pr_idseqttl => -1
+                                           ,pr_dtmvtopg => pr_dtmvtopg
+                                           ,pr_insitlau => 1
+                                           ,pr_dsorigem => pr_dsorigem) LOOP
+                --Se for pessoa fisica
+                IF rw_crapass.inpessoa = 1  THEN
+                  --Acumular valor utilizado web
+                  vr_vlutlweb:= vr_vlutlweb + Nvl(rw_craplau.vllanaut,0);
+                ELSIF rw_craplau.cdtiptra IN (1,3,5)  THEN
+                  --Acumular valor utilizado transferencia
+                  vr_vlutltrf:= vr_vlutltrf + Nvl(rw_craplau.vllanaut,0);
+                ELSIF rw_craplau.cdtiptra IN (2,10)  THEN
+                  --Acumular valor utilizado pagamentos
+                  vr_vlutlpgo:= vr_vlutlpgo + Nvl(rw_craplau.vllanaut,0);
+                END IF;
                 
               --Acumula valor de TED já agendadas
               IF rw_craplau.cdtiptra = 4 THEN
@@ -1727,69 +1727,69 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                     
               END IF;
             
-            END LOOP;
+              END LOOP;
 
-            vr_index:= 1;
+              vr_index:= 1;
             
-            --Se existir valor limite web
-            IF  pr_tab_internet.EXISTS(vr_index) AND pr_tab_internet(vr_index).vllimweb > 0  THEN
-              --Valor utilizado WEB
-              pr_tab_internet(vr_index).vlutlweb:= vr_vlutlweb;
-              --Valor disponivel WEB recebe limite menos utilizado web
-              pr_tab_internet(vr_index).vldspweb:= pr_tab_internet(vr_index).vllimweb - vr_vlutlweb;
-            END IF;
+              --Se existir valor limite web
+              IF  pr_tab_internet.EXISTS(vr_index) AND pr_tab_internet(vr_index).vllimweb > 0  THEN
+                --Valor utilizado WEB
+                pr_tab_internet(vr_index).vlutlweb:= vr_vlutlweb;
+                --Valor disponivel WEB recebe limite menos utilizado web
+                pr_tab_internet(vr_index).vldspweb:= pr_tab_internet(vr_index).vllimweb - vr_vlutlweb;
+              END IF;
             
-            --Se existir valor limite transferencia
-            IF  pr_tab_internet.EXISTS(vr_index) AND pr_tab_internet(vr_index).vllimtrf > 0  THEN
-              --Valor utilizado transferencia
-              pr_tab_internet(vr_index).vlutltrf:= vr_vlutltrf;
-              --Valor disponivel transf. recebe limite menos utilizado transf
-              pr_tab_internet(vr_index).vldsptrf:= pr_tab_internet(vr_index).vllimtrf - vr_vlutltrf;
-            END IF;
+              --Se existir valor limite transferencia
+              IF  pr_tab_internet.EXISTS(vr_index) AND pr_tab_internet(vr_index).vllimtrf > 0  THEN
+                --Valor utilizado transferencia
+                pr_tab_internet(vr_index).vlutltrf:= vr_vlutltrf;
+                --Valor disponivel transf. recebe limite menos utilizado transf
+                pr_tab_internet(vr_index).vldsptrf:= pr_tab_internet(vr_index).vllimtrf - vr_vlutltrf;
+              END IF;
             
-            --Se existir valor limite pagto
-            IF  pr_tab_internet.EXISTS(vr_index) AND pr_tab_internet(vr_index).vllimpgo > 0  THEN
-              --Valor utilizado pagto
-              pr_tab_internet(vr_index).vlutlpgo:= vr_vlutlpgo;
-              --Valor disponivel pagto. recebe limite menos utilizado pagto
-              pr_tab_internet(vr_index).vldsppgo:= pr_tab_internet(vr_index).vllimpgo - vr_vlutlpgo;
-            END IF;
+              --Se existir valor limite pagto
+              IF  pr_tab_internet.EXISTS(vr_index) AND pr_tab_internet(vr_index).vllimpgo > 0  THEN
+                --Valor utilizado pagto
+                pr_tab_internet(vr_index).vlutlpgo:= vr_vlutlpgo;
+                --Valor disponivel pagto. recebe limite menos utilizado pagto
+                pr_tab_internet(vr_index).vldsppgo:= pr_tab_internet(vr_index).vllimpgo - vr_vlutlpgo;
+              END IF;
             
-            --Se existir valor limite ted
-            IF  pr_tab_internet.EXISTS(vr_index) AND pr_tab_internet(vr_index).vllimted > 0  THEN
-              --Valor utilizado ted
-              pr_tab_internet(vr_index).vlutlted:= vr_vlutlted;
-              --Valor disponivel ted. recebe limite menos utilizado ted
-              pr_tab_internet(vr_index).vldspted:= pr_tab_internet(vr_index).vllimted - vr_vlutlted;
-            END IF;
+              --Se existir valor limite ted
+              IF  pr_tab_internet.EXISTS(vr_index) AND pr_tab_internet(vr_index).vllimted > 0  THEN
+                --Valor utilizado ted
+                pr_tab_internet(vr_index).vlutlted:= vr_vlutlted;
+                --Valor disponivel ted. recebe limite menos utilizado ted
+                pr_tab_internet(vr_index).vldspted:= pr_tab_internet(vr_index).vllimted - vr_vlutlted;
+              END IF;
             
-            --Verificar os limites disponiveis web
-            IF pr_tab_internet(pr_idseqttl).vldspweb > pr_tab_internet(1).vldspweb THEN
-               --Atualizar valor disponivel web
-               pr_tab_internet(pr_idseqttl).vldspweb:= pr_tab_internet(1).vldspweb;
-            END IF;
+              --Verificar os limites disponiveis web
+              IF pr_tab_internet(pr_idseqttl).vldspweb > pr_tab_internet(1).vldspweb THEN
+                 --Atualizar valor disponivel web
+                 pr_tab_internet(pr_idseqttl).vldspweb:= pr_tab_internet(1).vldspweb;
+              END IF;
             
-            --Verificar os limites disponiveis transferencia
-            IF pr_tab_internet(pr_idseqttl).vldsptrf > pr_tab_internet(1).vldsptrf THEN
-               --Atualizar valor disponivel transferencia
-               pr_tab_internet(pr_idseqttl).vldsptrf:= pr_tab_internet(1).vldsptrf;
-            END IF;
+              --Verificar os limites disponiveis transferencia
+              IF pr_tab_internet(pr_idseqttl).vldsptrf > pr_tab_internet(1).vldsptrf THEN
+                 --Atualizar valor disponivel transferencia
+                 pr_tab_internet(pr_idseqttl).vldsptrf:= pr_tab_internet(1).vldsptrf;
+              END IF;
             
-            --Verificar os limites disponiveis pagamento
-            IF pr_tab_internet(pr_idseqttl).vldsppgo > pr_tab_internet(1).vldsppgo THEN
-               --Atualizar valor disponivel pagamento
-               pr_tab_internet(pr_idseqttl).vldsppgo:= pr_tab_internet(1).vldsppgo;
-            END IF;
+              --Verificar os limites disponiveis pagamento
+              IF pr_tab_internet(pr_idseqttl).vldsppgo > pr_tab_internet(1).vldsppgo THEN
+                 --Atualizar valor disponivel pagamento
+                 pr_tab_internet(pr_idseqttl).vldsppgo:= pr_tab_internet(1).vldsppgo;
+              END IF;
             
-            --Verificar os limites disponiveis ted
-            IF pr_tab_internet(pr_idseqttl).vldspted > pr_tab_internet(1).vldspted THEN
-               --Atualizar valor disponivel ted
-               pr_tab_internet(pr_idseqttl).vldspted:= pr_tab_internet(1).vldspted;
+              --Verificar os limites disponiveis ted
+              IF pr_tab_internet(pr_idseqttl).vldspted > pr_tab_internet(1).vldspted THEN
+                 --Atualizar valor disponivel ted
+                 pr_tab_internet(pr_idseqttl).vldspted:= pr_tab_internet(1).vldspted;
             END IF;
 
           END IF;
-          
-        END IF;
+
+          END IF;
        
       END IF;
     EXCEPTION
@@ -2080,7 +2080,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
 
               17/05/2016 - Ajuste na mensagem de retorno ao validar o saldo limite
                            (Adriano - M117).    
-						   
 						   
 			  31/05/2016 - Ajuste para colocar a validação de saldo disponível (Adriano).
 						            
@@ -2458,7 +2457,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           RAISE vr_exc_erro;
         END IF;
         /** Bloquear agendamentos para conta migrada **/
-        IF vr_datdodia >= to_date(vr_dsblqage,'DD/MM/YYYY') AND rw_craptco.cdcopant NOT IN (4,15) THEN
+        IF vr_datdodia >= to_date(vr_dsblqage,'DD/MM/YYYY') AND rw_craptco.cdcopant NOT IN (4,15,17) THEN
           vr_cdcritic:= 0;
           vr_dscritic:= 'Operacao de agendamento bloqueada. Entre em contato com seu PA.';
           --Fechar Cursor
@@ -2596,6 +2595,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                  RAISE vr_exc_erro;
                END IF;
 
+            END IF;
+      
+		  -- Nao permitir transf. intercooperativa para contas da Transulcred, durante e apos a migracao
+          IF pr_tpoperac IN (5) AND vr_datdodia >= to_date('31/12/2016','dd/mm/RRRR') AND
+             vr_cdcopctl = 17 THEN						  
+              vr_cdcritic := 0;
+              vr_dscritic := 'Conta destino nao habilitada para receber valores da transferencia.';
+              --Levantar Excecao
+              RAISE vr_exc_erro;
             END IF;
       
           /** Verifica se a conta que ira receber o valor esta   **/
