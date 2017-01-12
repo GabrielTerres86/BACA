@@ -2,7 +2,7 @@
 
    Programa: xb1wgen0095.p
    Autor   : André - DB1
-   Data    : Junho/2011                     Ultima atualizacao: 03/06/2016
+   Data    : Junho/2011                     Ultima atualizacao: 12/01/2017
 
    Dados referentes ao programa:
 
@@ -11,6 +11,8 @@
    Alteracoes: 03/06/2016 - Incluir procedures valida-conta-migrada e valida-agencia
                             para validar se conta e migrada e agencia informada e 
                             valida (Lucas Ranghetti #449707)
+                            
+      			  12/01/2017 - Incluir flprovis na TEMP-TABLE da custodia/desconto (Lucas Ranghetti #571653)
 
 ............................................................................ */
 
@@ -197,6 +199,8 @@ PROCEDURE valores_entrada:
                         tt-custdesc.flgcusto = LOGICAL(tt-param-i.valorCampo).
                     WHEN "flgdesco" THEN
                         tt-custdesc.flgdesco = LOGICAL(tt-param-i.valorCampo).
+                    WHEN "flprovis" THEN
+                        tt-custdesc.flprovis = LOGICAL(tt-param-i.valorCampo).
                 END CASE.
             END.
             WHEN "Cheques" THEN DO:
