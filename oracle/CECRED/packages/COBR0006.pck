@@ -461,6 +461,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                             
                22/12/2016 - Ajuste para utilizar a sequence na geração do registro na craprtc 
                             (Douglas - Chamado 547357)
+
+			   06/01/2017 - Ajuste na forma como sao feitas as atribuicoes dos campos de protesto e serasa, estava
+			                gerando problemas com protesto e negativacao automaticos e exibicao na COBRAN.
+							Heitor (Mouts) - Chamado 574161
   ---------------------------------------------------------------------------------------------------------------*/
   
   ------------------------------- CURSORES ---------------------------------    
@@ -5025,7 +5029,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     --Negativar Serasa e possui convenio serasa
     IF pr_rec_cobranca.cdprotes = 2 AND  
       pr_rec_header.flserasa    = 1   THEN  
-      pr_rec_cobranca.qtdiaprt := pr_tab_linhas('QTDIAPRT').numero;
+      pr_rec_cobranca.qtdianeg := pr_tab_linhas('QTDIAPRT').numero;
+      pr_rec_cobranca.qtdiaprt := 0;
     END IF;
     
     pr_des_reto := 'OK';
@@ -5240,8 +5245,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       ELSE
         
         pr_rec_cobranca.flserasa := 1;
-        pr_rec_cobranca.qtdianeg := pr_rec_cobranca.qtdiaprt;
-        pr_rec_cobranca.inserasa := 0;
           
       END IF;
       

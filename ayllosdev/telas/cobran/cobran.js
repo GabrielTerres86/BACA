@@ -18,6 +18,7 @@
  * 30/12/2015 - Alterações Referente Projeto Negativação Serasa (Daniel)	
  * 09/05/2016 - Adicionar o filtro numero da conta para os tipos: 2 - Numero do Boleto, 3 - Data de Emissao, 4 - Data de Pagamento
  *              5 - Data de Vencimento, 6 - Nome do Pagador (Douglas - Chamado 441759)
+ * 08/01/2017 - Adicionar o campo flgdprot para definir label e informacao a mostrar (Protesto x Negativacao (Heitor - Mouts) - Chamado 574161
  */
 
 //Formulários e Tabela
@@ -43,7 +44,7 @@ var registro;
 
 var cdcooper, nrinssac, nrnosnum, dsdoccop, nmdsacad, flgcbdda, flgreaux, dsendsac, complend, nmbaisac, nmcidsac, cdufsaca, nrcepsac,
 	dscjuros, dscmulta, dscdscto, dtdocmto, dsdespec, flgaceit, dsstacom, dtvencto, vltitulo, vldesabt, qtdiaprt, dtdpagto, vldpagto,
-	vljurmul, cdbandoc, nrdcoaux, nrcnvcob, cdsituac, dssituac, cdtpinsc, nrdocmto, dsemiten, inserasa, flserasa, qtdianeg;
+	vljurmul, cdbandoc, nrdcoaux, nrcnvcob, cdsituac, dssituac, cdtpinsc, nrdocmto, dsemiten, inserasa, flserasa, qtdianeg, flgdprot;
 
 $(document).ready(function () {
     estadoInicial();
@@ -1169,7 +1170,7 @@ function selecionaTabela(tr) {
         inserasa = $('#inserasa', tr).val();
         flserasa = $('#flserasa', tr).val();
         qtdianeg = $('#qtdianeg', tr).val();
-
+        flgdprot = $('#flgdprot', tr).val();
     }
 
     return false;
@@ -1199,6 +1200,7 @@ function buscaConsulta(operacao) {
             cdbandoc: cdbandoc,
             flserasa: flserasa,
             qtdianeg: qtdianeg,
+			flgdprot: flgdprot,
             redirect: 'script_ajax'
         },
         error: function (objAjax, responseError, objExcept) {
