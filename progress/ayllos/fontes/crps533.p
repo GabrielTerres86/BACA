@@ -27,7 +27,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Dezembro/2009                   Ultima atualizacao:  07/06/2013
+   Data    : Dezembro/2009                   Ultima atualizacao:  11/01/2017
 
    Dados referentes ao programa:
 
@@ -151,7 +151,12 @@
                             
                07/06/2013 - Migracao PROGRESS/ORACLE - Incluido chamada de
                             procedure (Andre Santos - SUPERO)
-                                
+                        
+			   11/01/2017 - Adicionado verificação necessária para garantir 
+			                que a Viacredi processe os cheques de contas migradas 
+                            para da Alto Vale antes de ser gerado o saldo dos 
+							cooperados no processo da Alto Vale 
+							(Tiago/Elton SD584796).
 ............................................................................. */
 
 { includes/var_batch.i }
@@ -232,6 +237,43 @@ UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS")    +
                   "Stored Procedure rodou em "         + 
                   STRING(INT(ETIME / 1000),"HH:MM:SS") + 
                   " >> log/proc_batch.log").
+
+/**** Verificação necessária para garantir que a Viacredi processe os cheques de contas migradas 
+         para da Alto Vale antes de ser gerado o saldo dos cooperados no processo da Alto Vale ****/
+ IF glb_cdcooper = 16 THEN
+    DO:
+        IF  glb_nmtelant <> "COMPEFORA" THEN
+            DO:
+
+                UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS")                 + 
+                                  " - "   + glb_cdprogra + "' --> '"                +
+                                  "Aguardando finalização do CRPS533 da Viacredi... "  + 
+                                  " >> log/proc_batch.log").
+
+                DO WHILE TRUE:
+                    FIND crapprg WHERE crapprg.cdcooper = 1         
+                                   AND crapprg.cdprogra = "CRPS533" 
+                                   AND crapprg.nmsistem = "CRED"
+                                   AND crapprg.inctrprg = 2 NO-LOCK NO-ERROR.
+
+                    IF  AVAIL crapprg THEN
+                        DO:
+                            UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS")      + 
+                                              " - "   + glb_cdprogra + "' --> '"     +
+                                              "Execucao do CRPS533 da Viacredi... OK "  + 
+                                              " >> log/proc_batch.log").
+
+                            LEAVE.
+                         END.
+                    ELSE
+                        DO:
+                            PAUSE(60) NO-MESSAGE.
+                            NEXT.
+                        END.
+                END. /** WHILE***/
+            END.
+    END.
+
                   
 RUN fontes/fimprg.p.
 
