@@ -4325,26 +4325,27 @@ create or replace package body cecred.INSS0001 as
       rw_crapass cr_crapass%ROWTYPE;
       
       --Selecionar Contas Migradas
-      CURSOR cr_craptco (pr_cdcopant IN craptco.cdcopant%TYPE
+      CURSOR cr_craptco (pr_cdcooper IN craptco.cdcopant%TYPE
+                        ,pr_cdcopant IN craptco.cdcopant%TYPE
                         ,pr_nrctaant IN craptco.nrctaant%TYPE) IS
         SELECT craptco.cdcooper
              , craptco.cdagenci
              , craptco.nrdconta
           FROM craptco craptco
-         WHERE craptco.cdcopant = 4  
+         WHERE craptco.cdcopant = pr_cdcopant  
            AND craptco.nrctaant = pr_nrctaant
            AND  craptco.tpctatrf = 1                  
-           AND  craptco.cdcooper = 1                  
+           AND  craptco.cdcooper = pr_cdcooper                  
            AND  craptco.flgativo = 1 -- TRUE 
         UNION
         SELECT craptco.cdcooper
              , craptco.cdagenci
              , craptco.nrdconta
           FROM craptco craptco
-         WHERE craptco.cdcopant = 4  
+         WHERE craptco.cdcopant = pr_cdcopant  
            AND  craptco.nrdconta = pr_nrctaant
            AND  craptco.tpctatrf = 1 
-           AND  craptco.cdcooper = 1                  
+           AND  craptco.cdcooper = pr_cdcooper                  
            AND  craptco.flgativo = 1; -- TRUE    
       rw_craptco cr_craptco%ROWTYPE;
 
@@ -4354,6 +4355,7 @@ create or replace package body cecred.INSS0001 as
       vr_crapass   BOOLEAN:= FALSE;
       vr_craptco   BOOLEAN:= FALSE;
       vr_cdcooper  INTEGER;
+      vr_cdcooper_aux INTEGER;
       vr_cdagenci  NUMBER;
       vr_nrdconta  crapass.nrdconta%TYPE;
       vr_cdorgins  crapage.cdorgins%TYPE;
