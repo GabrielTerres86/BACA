@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Guilherme/Supero
-    Data    : Fevereiro/2010                   Ultima atualizacao: 06/12/2016
+    Data    : Fevereiro/2010                   Ultima atualizacao: 13/01/2017
 
     Dados referentes ao programa:
 
@@ -164,6 +164,8 @@
 
                06/12/2016 - Alterado campo dsdepart para cddepart.
                             PRJ341 - BANCENJUD (Odirlei-AMcom)
+
+			   13/01/2017 - Tratamento incorporacao Transposul (Diego).
 
 ..............................................................................*/
 
@@ -3019,6 +3021,38 @@ PROCEDURE carrega_tabela_envio.
                     /*SCRCRED CREDIMILSUL*/
                     FOR EACH crabcop WHERE crabcop.cdcooper = 13 OR
                                            crabcop.cdcooper = 15 NO-LOCK:                
+                        /*** Procura arquivos DOCs ***/
+                        ASSIGN aux_nmarquiv = "/micros/"   + crapcop.dsdircop + 
+                                              "/abbc/3" + STRING(crabcop.cdagectl,"9999") +
+                                              "*.*"
+                               aux_tparquiv = "DOCTOS".
+                           
+                        RUN verifica_arquivos.
+                           
+                        /*** Procura arquivos DEVOLU ***/
+                        ASSIGN aux_nmarquiv = "/micros/"   + crapcop.dsdircop + 
+                                              "/abbc/1" + STRING(crabcop.cdagectl,"9999") +
+                                              "*.DV*"
+                               aux_tparquiv = "DEVOLU".
+                           
+                        RUN verifica_arquivos.                    
+        
+                        /*** Procura arquivos DEVOLU ***/
+                        ASSIGN aux_nmarquiv = "/micros/"   + crapcop.dsdircop + 
+                                              "/abbc/5" + STRING(crabcop.cdagectl,"9999") +
+                                              "*.DVS"
+                               aux_tparquiv = "DEVOLU".
+                           
+                        RUN verifica_arquivos.
+    
+                    END.
+    
+                END.
+		ELSE IF  crapcop.cdcooper = 9 THEN
+                DO:
+                    /*TRANSPOCRED TRANSULCRED*/
+                    FOR EACH crabcop WHERE crabcop.cdcooper = 9 OR
+                                           crabcop.cdcooper = 17 NO-LOCK:                
                         /*** Procura arquivos DOCs ***/
                         ASSIGN aux_nmarquiv = "/micros/"   + crapcop.dsdircop + 
                                               "/abbc/3" + STRING(crabcop.cdagectl,"9999") +
