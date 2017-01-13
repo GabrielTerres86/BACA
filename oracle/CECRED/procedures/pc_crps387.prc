@@ -368,6 +368,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                             a situacao de Agencia Invalida. (Chamados 564779/565655) - (Fabricio)
                             
                28/12/2016 - Ajustes para incorporação da Credimilsul (SD585459 Tiago/Elton)             
+			   
+			   05/01/2016 - Incluido NVL para tratar agencia e conta do arquivo
+			                pois recebia NULL e as tratativas subsequentes nao
+              	      		funcionavam da forma esperada, incluido tbem tratamentos
+							de critica qdo usa agencia NAO nos convenios
+							que tem um padrao de layout diferente (Tiago/Fabricio SD571189).            
 ............................................................................ */
 
 
@@ -804,7 +810,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
       vr_tot_vlfatint NUMBER(17,2):= 0;                               --> Valor total de faturas integradas
       vr_tot_vlfatrej NUMBER(17,2):= 0;                               --> Valor total de faturas rejeitadas
 
-
+      --Variaveis de controle usa agencia NAO
+      vr_cdagestr      VARCHAR2(4);
+      vr_nrctastr      VARCHAR2(10);
+      vr_nro_cta_str   VARCHAR2(15);
+      vr_cdageinv      NUMBER(10);      
+      vr_nrctainv      NUMBER(10);
 
       --------------------------- SUBROTINAS INTERNAS --------------------------
       FUNCTION fn_verifica_ult_dia(pr_cdcooper crapcop.cdcooper%TYPE, pr_dtrefere  IN DATE) RETURN DATE IS
@@ -2188,13 +2199,56 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                                     
                   -- Validar caracteres especiais
                   BEGIN
-                    vr_nro_conta_dec := SUBSTR(vr_setlinha,31,14);
+                    vr_nro_conta_dec := NVL(trim(SUBSTR(vr_setlinha,31,14)),0);
                   EXCEPTION
                     WHEN OTHERS THEN
+                      --Irei verificar se usa agencia ou nao pois o tratamento muda
+                      IF rw_gnconve.flgagenc = 0 THEN
+                         
+                         vr_cdagestr := NULL;
+                         vr_nrctastr := NULL;
+                         vr_nro_cta_str := ' ';
+                      
+                         BEGIN 
+                           vr_cdageinv := RPAD(trim(SUBSTR(vr_setlinha,31,4)),4,'x');
+                         EXCEPTION
+                           WHEN OTHERS THEN
+                             IF pr_cdcooper <> 3 THEN
+                                CONTINUE;
+                             END IF;
+                                
+                             vr_cdagestr := '9000';
+                         END;
+                         
+                         IF vr_cdagestr IS NULL THEN
+                            vr_nro_cta_str := vr_nro_cta_str||trim(SUBSTR(vr_setlinha,31,4));
+                         ELSE
+                            vr_nro_cta_str := vr_nro_cta_str||vr_cdagestr;
+                         END IF;      
+
+                         BEGIN
+                           vr_nrctainv := NVL(trim(SUBSTR(vr_setlinha,35,10)),0);
+                         EXCEPTION
+                           WHEN OTHERS THEN
+                             IF pr_cdcooper = 3 THEN
+                                CONTINUE;
+                             END IF;
+                             
+                             vr_nrctastr := '0000000000';
+                         END;                      
+                         
+                         IF vr_nrctastr IS NULL THEN
+                            vr_nro_cta_str := vr_nro_cta_str||trim(SUBSTR(vr_setlinha,35,10));
+                         ELSE
+                            vr_nro_cta_str := vr_nro_cta_str||vr_nrctastr;
+                         END IF;                               
+                      
+                         vr_nro_conta_dec := NVL(trim(vr_nro_cta_str),0);
+                      ELSE
                       /* se esta rodando na Cecred e deu erro pra conta, ignora o registro pois nao
                          sera possivel validar a agencia */
                       IF pr_cdcooper = 3 THEN
-                        continue;
+                             CONTINUE;
                       END IF;
                             
                       vr_cdcritic := 564; -- Conta nao cadastrada.
@@ -2248,7 +2302,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                       vr_flgrejei     := TRUE;                          
                       
                       continue;                      
-                  END;
+                      END IF;  
+                  END; --fim WHEN OTHERS
                   
                   vr_nro_conta_tam := TRIM(vr_nro_conta_dec);
                   vr_nro_conta_tam := ltrim(vr_nro_conta_tam, '0');                  
@@ -2265,7 +2320,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                     
                   -- Validar caracteres especiais
                   BEGIN
-                      vr_cdagedeb := trim(SUBSTR(vr_setlinha,27,4));
+                      vr_cdagedeb := NVL(trim(SUBSTR(vr_setlinha,27,4)),0);
                   EXCEPTION
                       WHEN OTHERS THEN
                         -- apenas Cecred pode gerar critica de agencia invalida
