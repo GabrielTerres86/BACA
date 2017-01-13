@@ -465,6 +465,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                             
                22/12/2016 - Ajuste para utilizar a sequence na geração do registro na craprtc 
                             (Douglas - Chamado 547357)
+
+			   06/01/2017 - Ajuste na forma como sao feitas as atribuicoes dos campos de protesto e serasa, estava
+			                gerando problemas com protesto e negativacao automaticos e exibicao na COBRAN.
+							Heitor (Mouts) - Chamado 574161
   ---------------------------------------------------------------------------------------------------------------*/
   
   ------------------------------- CURSORES ---------------------------------    
@@ -4569,7 +4573,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana - AMcom
-       Data    : Novembro/2015.                   Ultima atualizacao: 07/11/2015
+       Data    : Novembro/2015.                   Ultima atualizacao: 28/12/2016
 
        Dados referentes ao programa:
 
@@ -4584,6 +4588,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
                    23/12/2016 - Validar nulo na data de vencimento, emissão e valor do
                                 título. (AJFink - SD#581070)
+
+                   28/12/2016 - Quando nosso número bem com zeros a esquerda completando
+                                20 caracteres, deve gravar na cob somente 17.
+                                (AJFink - SD#580867)
 
     ............................................................................ */   
     
@@ -4658,12 +4666,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                            pr_rec_header   => pr_rec_header,    --> Dados do Header do Arquivo
                            pr_rec_cobranca => pr_rec_cobranca); --> Cobranca
     
+    --SD#580867
+    if nvl(length(TRIM(pr_tab_linhas('DSNOSNUM').texto)),0) > 17 then
+      if substr(TRIM(pr_tab_linhas('DSNOSNUM').texto),1,3) <> '000' then
+        -- Nosso Numero Invalido
+        pr_rec_cobranca.dsnosnum := TRIM(pr_tab_linhas('DSNOSNUM').texto);
+        vr_rej_cdmotivo := '08';
+        RAISE vr_exc_reje;
+      end if;
+    end if;
+
     -- Formatar nosso numero com 17 posicoes para separa o numero da conta e o numero do boleto
     pr_rec_cobranca.dsnosnum := to_char(TRIM(pr_tab_linhas('DSNOSNUM').texto),'fm00000000000000000');
     pr_rec_cobranca.nrdconta := to_number(SUBSTR(pr_rec_cobranca.dsnosnum,1,8));
     pr_rec_cobranca.nrbloque := to_number(SUBSTR(pr_rec_cobranca.dsnosnum,9,9));  
     -- Inicializar os valores do registro
-    pr_rec_cobranca.dsnosnum := TRIM(pr_tab_linhas('DSNOSNUM').texto);
     pr_rec_cobranca.dsdoccop := TRIM(pr_tab_linhas('NRDOCMTO').texto);
     pr_rec_cobranca.dsusoemp := pr_tab_linhas('DSUSOEMP').texto;
     pr_rec_cobranca.flserasa := 0;
@@ -4914,8 +4931,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       END IF;
     END IF;
 
-    
-
     -- 13.3P Validacao Nosso Numero
     -- Verifica se conta do cooperado confere com conta do nosso numero
     IF pr_nrdconta <> pr_rec_cobranca.nrdconta THEN
@@ -5018,7 +5033,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     --Negativar Serasa e possui convenio serasa
     IF pr_rec_cobranca.cdprotes = 2 AND  
       pr_rec_header.flserasa    = 1   THEN  
-      pr_rec_cobranca.qtdiaprt := pr_tab_linhas('QTDIAPRT').numero;
+      pr_rec_cobranca.qtdianeg := pr_tab_linhas('QTDIAPRT').numero;
+      pr_rec_cobranca.qtdiaprt := 0;
     END IF;
     
     pr_des_reto := 'OK';
@@ -5032,7 +5048,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     WHEN vr_exc_reje THEN
       -- Rejeitou a cobranca e nao deve continuar o processamento
       pc_valida_grava_rejeitado(pr_cdcooper      => pr_rec_cobranca.cdcooper --> Codigo da Cooperativa
-                               ,pr_nrdconta      => pr_rec_cobranca.nrdconta --> Numero da Conta
+                               ,pr_nrdconta      => pr_nrdconta --SD#580867 Enviar o pr_nrdconta ao inves do pr_rec_cobranca.nrdconta, pois quando o motivo eh 08 o campo pr_rec_cobranca.nrdconta eh gerado com valor errado
                                ,pr_nrcnvcob      => pr_rec_cobranca.nrcnvcob --> Numero do Convenio
                                ,pr_vltitulo      => pr_rec_cobranca.vltitulo --> Valor do Titulo
                                ,pr_cdbcoctl      => pr_rec_header.cdbcoctl   --> Codigo do banco na central
@@ -5055,7 +5071,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       vr_rej_cdmotivo:= '99';
       -- Erro geral do processamento do segmento "P"
       pc_valida_grava_rejeitado(pr_cdcooper      => pr_rec_cobranca.cdcooper --> Codigo da Cooperativa
-                               ,pr_nrdconta      => pr_rec_cobranca.nrdconta --> Numero da Conta
+                               ,pr_nrdconta      => pr_nrdconta --SD#580867 Enviar o pr_nrdconta ao inves do pr_rec_cobranca.nrdconta, pois quando o motivo eh 08 o campo pr_rec_cobranca.nrdconta eh gerado com valor errado
                                ,pr_nrcnvcob      => pr_rec_cobranca.nrcnvcob --> Numero do Convenio
                                ,pr_vltitulo      => pr_rec_cobranca.vltitulo --> Valor do Titulo
                                ,pr_cdbcoctl      => pr_rec_header.cdbcoctl   --> Codigo do banco na central
@@ -5233,8 +5249,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       ELSE
         
         pr_rec_cobranca.flserasa := 1;
-        pr_rec_cobranca.qtdianeg := pr_rec_cobranca.qtdiaprt;
-        pr_rec_cobranca.inserasa := 0;
           
       END IF;
       
