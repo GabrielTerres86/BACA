@@ -271,9 +271,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
     Frequencia: Sempre que for chamado
     Objetivo  : Rotina para geração de arquivos de GRAVAMES  
 
-    Alteracoes: 19/12/2016 - Inclusao da validacao dos bens e caso esteja invalido
-                             gera um alerta na tela, conforme solicitado no chamado 
-                             533529 (Kelvin).                            
+    Alteracoes:                            
     ............................................................................. */
     -- Variaveis de locais
     vr_cdcooper crapcop.cdcooper%TYPE;
@@ -287,13 +285,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
     --Variaveis de Criticas
     vr_cdcritic INTEGER;
     vr_dscritic VARCHAR2(4000);
-    vr_dsbemerr VARCHAR2(5000);
            
     --Variaveis de Excecoes
     vr_exc_erro  EXCEPTION; 
-    
-    vr_clob     CLOB;   
-    vr_xml_temp VARCHAR2(32726) := '';   
     
     --Tipo de Dados para cursor data
     rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
@@ -347,62 +341,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
       RAISE vr_exc_erro;
       
     END IF;
-    
-    --Abro a variavel de retorno
-    dbms_lob.createtemporary(vr_clob, TRUE);
-    dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
-    
-    
             
     /* Geração dos arquivos do GRAVAMES */
     GRVM0001.pc_gravames_geracao_arquivo(pr_cdcooper  => vr_cdcooper -- Cooperativa conectada
                                         ,pr_cdcoptel  => pr_cdcoptel -- Opção selecionada na tela
                                         ,pr_tparquiv  => pr_tparquiv -- Tipo do arquivo selecionado na tela
-                                        ,pr_dtmvtolt  => rw_crapdat.dtmvtolt   -- Data atual                                        
-                                        ,pr_dsbemerr  => vr_dsbemerr -- Informacões das linhas que contém erros no arquivo
-                                        ,pr_cdcritic  => vr_cdcritic -- Cod Critica de erro
+                                        ,pr_dtmvtolt  => rw_crapdat.dtmvtolt   -- Data atual
+                                        ,pr_cdcritic  => vr_cdcritic   -- Cod Critica de erro
                                         ,pr_dscritic  => vr_dscritic); -- Des Critica de erro
-
+                                        
     --Se ocorreu um erro
     IF nvl(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+			      
+      -- Se foi retornado apenas código
+      IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
+        -- Buscar a descrição
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+      END IF;
+                                                  
+      RAISE vr_exc_erro;
+            
+    END IF;       
     
-        -- Se foi retornado apenas código
-        IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-          -- Buscar a descrição
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-        END IF;
-        
-        vr_dscritic := vr_dscritic || ';' ||vr_dsbemerr;
-
-        RAISE vr_exc_erro;  
-        
-    END IF; 
-          
-    /*Se retornou erro nos bens, porém não gerou erro na rotina
-    cria xml de retorno com os bens que geraram problema para
-    que no php possa ser mostrado junto com a mensagem de sucesso*/      
-    -- Criar cabeçalho do XML
-    gene0002.pc_escreve_xml(pr_xml            => vr_clob
-                           ,pr_texto_completo => vr_xml_temp
-                           ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><Root><Dados>');     
       
-    gene0002.pc_escreve_xml(pr_xml            => vr_clob
-                           ,pr_texto_completo => vr_xml_temp
-                           ,pr_texto_novo     => '<dsbemerr>' || vr_dsbemerr ||'</dsbemerr>');
-                             
-    -- Encerrar a tag raiz
-    gene0002.pc_escreve_xml(pr_xml            => vr_clob
-                           ,pr_texto_completo => vr_xml_temp
-                           ,pr_texto_novo     => '</Dados></Root>'
-                           ,pr_fecha_xml      => TRUE);
-     
-    -- Atualiza o XML de retorno
-    pr_retxml := xmltype(vr_clob);
-         
-    -- Libera a memoria do CLOB
-    dbms_lob.close(vr_clob);  
-
-
   EXCEPTION
     WHEN vr_exc_erro THEN 
                      
@@ -411,11 +372,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
       pr_dscritic := vr_dscritic;
       pr_nmdcampo := 'cdcooper';
       pr_des_erro := 'NOK'; 
-
+                
       -- Existe para satisfazer exigência da interface. 
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');    
-
+                                     
       -- Gera log
       btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                                 ,pr_ind_tipo_log => 2 -- Erro tratato
@@ -430,7 +391,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
       pr_cdcritic:= 0;
       pr_dscritic:= 'Erro na pc_gera_arquivo --> '|| SQLERRM;
       pr_des_erro:= 'NOK';
-      
+          
       -- Existe para satisfazer exigência da interface. 
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');   
