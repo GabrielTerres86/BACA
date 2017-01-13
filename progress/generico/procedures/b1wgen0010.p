@@ -396,6 +396,10 @@
          
                06/01/2017 - Incluida atribuicao do campo flgdprot na rotina cria_tt-consulta-blt
                             Heitor (Mouts) - Chamado 574161
+
+			   13/01/2017 - Retirado create da tt-consulta-blt na procedure consulta-boleto-2via
+			                pois ja estava criando no procedure proc_nosso_num
+							(Tiago/Ademir SD593608)
 ........................................................................... */
 
 { sistema/generico/includes/var_internet.i }
@@ -834,25 +838,28 @@ PROCEDURE consulta-boleto-2via.
                    tt-consulta-blt.cdmensag = aux_cdmensut.
 
     END.
-    CREATE tt-consulta-blt.                                         
-    ASSIGN tt-consulta-blt.dtvencto            = aux_dtvencut
-           tt-consulta-blt.vltitulo            = aux_vltituut
-           tt-consulta-blt.vlmormul            = aux_vlmormut
 
-           tt-consulta-blt.dtvencto_atualizado = aux_dtvencut_atualizado
-           tt-consulta-blt.vltitulo_atualizado = aux_vltituut_atualizado
-           tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
-           tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0
-		   tt-consulta-blt.nmprimtl 	       = aux_nmdobnfc
+	IF AVAIL(tt-consulta-blt) THEN
+	   DO:
+			ASSIGN tt-consulta-blt.dtvencto            = aux_dtvencut
+				   tt-consulta-blt.vltitulo            = aux_vltituut
+				   tt-consulta-blt.vlmormul            = aux_vlmormut
 
-           tt-consulta-blt.nrdconta = crapcob.nrdconta
-           tt-consulta-blt.vldocmto = crapcob.vltitulo
-           tt-consulta-blt.dtvctori = aux_dtvencut
-           tt-consulta-blt.flgaceit = "N".
+				   tt-consulta-blt.dtvencto_atualizado = aux_dtvencut_atualizado
+				   tt-consulta-blt.vltitulo_atualizado = aux_vltituut_atualizado
+				   tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
+				   tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0
+				   tt-consulta-blt.nmprimtl 	       = aux_nmdobnfc
 
-    VALIDATE tt-consulta-blt.
-    RETURN "OK".
-        
+				   tt-consulta-blt.nrdconta = crapcob.nrdconta
+				   tt-consulta-blt.vldocmto = crapcob.vltitulo
+				   tt-consulta-blt.dtvctori = aux_dtvencut
+				   tt-consulta-blt.flgaceit = "N".
+
+			VALIDATE tt-consulta-blt.
+	   END.
+
+    RETURN "OK".        
 END PROCEDURE.  /* consulta-boleto-2via */
 
 PROCEDURE consulta-bloqueto.
