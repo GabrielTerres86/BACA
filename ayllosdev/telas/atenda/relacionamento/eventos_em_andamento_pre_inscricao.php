@@ -9,6 +9,7 @@
 
 	 Alterações: 25/10/2010 - Adicionar validação de permissão (David).                                                      
 				 14/07/2011 - Alterado para layout padrão (Rogerius - DB1). 	
+				 13/01/2017 - Alterado mascara do telefone para 9 digitos (Jean Michel). 
 
 	 ************************************************************************/
 	session_start();
@@ -280,7 +281,7 @@ $("#nmextttl","#frmPreInscricao").trigger("change");
 
 for (var i = 1; i <= qtTTL; i++){
 	$("#nrdddins"+i,"#frmPreInscricao").setMask("INTEGER","999","","");
-	$("#nrtelefo"+i,"#frmPreInscricao").setMask("INTEGER","99999999","","");
+	$("#nrtelefo"+i,"#frmPreInscricao").setMask("INTEGER","999999999","","");
 }
 
 hideMsgAguardo();
