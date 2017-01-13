@@ -325,6 +325,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rcip0001 AS
   -- Objetivo  : Esta função receberá os dados do cooperado, e qual o indicador desejado, 
   --             além de qual ocorrência desejamos visualizar ou o prazo inicial e final que
   --             iremos consultar, para então retornar o valor realizado naquele período
+  --
+  -- Alteracoes: 23/12/2016 - Indicador 3 deve considerar a quantidade de liquidações
+  --                          realizadas no período. (AJFink - SD#578135)
+  --
   ---------------------------------------------------------------------------------------------------------------
 
     -- Variáveis genéricas
@@ -371,16 +375,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rcip0001 AS
        
     -- Quantidade de pagamentos
     CURSOR cr_indica03 IS
-      SELECT AVG(COUNT(1))
+      SELECT COUNT(1)
         FROM crapcob 
        WHERE cdcooper = pr_cdcooper
          AND nrdconta = pr_nrdconta
          AND DTDPAGTO BETWEEN vr_dat_ini 
                           AND vr_dat_fim
          AND INCOBRAN = 5 
-         AND cdbandoc IN(85,1) -- SR[Sua remessa] e NR[Nossa remessa]         
-       GROUP BY TRUNC(dtmvtolt,'mm');
-
+         AND cdbandoc IN(85,1); -- SR[Sua remessa] e NR[Nossa remessa]
        
     -- Saldo Médio Mensal:
     CURSOR cr_indica04 IS

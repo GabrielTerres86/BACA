@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2007                        Ultima atualizacao: 03/10/2016
+   Data    : Marco/2007                        Ultima atualizacao: 02/01/2017
 
    Dados referentes ao programa:
 
@@ -51,6 +51,10 @@
 							(Kelvin)
 
 			   03/10/2016 - Ajustes referente a melhoria M271. (Kelvin)
+
+               02/01/2017 - Melhorias referentes a performance no IB na parte 
+			                de cobrança, incluido flprotes no xml de retorno
+							(Tiago/Ademir SD573538).  			   
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -404,6 +408,7 @@ FOR EACH tt-consulta-blt NO-LOCK:
                                     "<vltitulo_atualizado>" + STRING(tt-consulta-blt.vltitulo_atualizado,"zzzzzzzzz9.99") + "</vltitulo_atualizado>" +
                                     "<vlmormul_atualizado>" + STRING(tt-consulta-blt.vlmormul_atualizado,"zzzzzzzzz9.99") + "</vlmormul_atualizado>" +
                                     "<flg2viab>" + STRING(tt-consulta-blt.flg2viab) + "</flg2viab>" +
+									"<flprotes>" + STRING(tt-consulta-blt.flprotes) + "</flprotes>" +
                                     
                                    "</BOLETO>".
 

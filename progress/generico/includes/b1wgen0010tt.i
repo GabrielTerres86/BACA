@@ -2,7 +2,7 @@
 
    Programa: b1wgen0010tt.i                  
    Autor   : David
-   Data    : Marco/2008                        Ultima atualizacao: 29/08/2016
+   Data    : Marco/2008                        Ultima atualizacao: 02/01/2017
      
    Dados referentes ao programa:
 
@@ -90,8 +90,11 @@
                05/01/2016 - Incluso os campos inserasa ,dsserasa, qtdianeg na
                             tt-consulta-blt (Projeto Negativacao Serasa - Daniel)
   
-			        29/08/2016 - Adicionado novos campos referente a M271. (Kelvin).
-  
+			   29/08/2016 - Adicionado novos campos referente a M271. (Kelvin).
+
+			   02/01/2017 - Melhorias referentes a performance no IB na parte
+			                de cobrança, adicionado campo flprotes na temptable
+							tt-consulta-blt (Tiago/Ademir SD573538).  
 .............................................................................*/
 
 DEF TEMP-TABLE tt-consulta-blt
@@ -201,8 +204,9 @@ DEF TEMP-TABLE tt-consulta-blt
     FIELD qtdianeg AS INTE
    	FIELD dtvencto_atualizado AS DATE
     FIELD vltitulo_atualizado AS DECI
-	  FIELD vlmormul_atualizado AS DECI
-    FIELD flg2viab AS INTE.
+	FIELD vlmormul_atualizado AS DECI
+	FIELD flg2viab AS INTE
+	FIELD flprotes AS INTE.
 
 DEF TEMP-TABLE tt-arq-cobranca  
     FIELD cdseqlin AS INTEGER
