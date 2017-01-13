@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Tiago     
-   Data    : Fevereiro/2014.                    Ultima atualizacao: 03/01/2017
+   Data    : Fevereiro/2014.                    Ultima atualizacao: 13/01/2017
 
    Dados referentes ao programa:
 
@@ -73,6 +73,8 @@
                              DEBSIC, DEBCNS, DEBNET - Melhoria349 (Tiago/Elton).
                              
                 03/01/2017 - Ajuste incorporacao no envio de arquivos (Diego).
+                
+				13/01/2017 - Transposul - Incluido envio DEVDOC (Diego). 
                 
 .............................................................................*/
 
@@ -2883,6 +2885,14 @@ PROCEDURE carrega_tabela_envio.
                 FOR EACH b-crapcop WHERE b-crapcop.cdcooper = 9 OR
                                          b-crapcop.cdcooper = 17 NO-LOCK:
             
+                    /*** Procura arquivos DOCs ***/
+                    ASSIGN aux_nmarquiv = "/micros/"   + crabcop.dsdircop + 
+                                          "/abbc/3" + STRING(b-crapcop.cdagectl,"9999") +
+                                          "*.*"
+                           aux_tparquiv = "DOCTOS".
+                       
+                    RUN verifica_arquivos.
+					
                     /*** Procura arquivos DEVOLU ***/
                     ASSIGN aux_nmarquiv = "/micros/"   + crabcop.dsdircop + 
                                           "/abbc/1" + STRING(b-crapcop.cdagectl,"9999") +
