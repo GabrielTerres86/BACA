@@ -3,7 +3,7 @@
    Programa: fontes/crps545.p
    Sigla   : CRED
    Autor   : Guilherme
-   Data    : Dezembro/2009.                     Ultima atualizacao: 17/11/2016
+   Data    : Dezembro/2009.                     Ultima atualizacao: 26/12/2016
                                                                           
    Dados referentes ao programa:
 
@@ -79,10 +79,8 @@
                             migradas VIACREDI >> VIACREDI ALTO VALE
                             (Douglas - Chamado 406267)
 
-               17/11/2016 - Na mensagem STR0010R2 originada pelo sistema MATERA
-                            foi colocado para nao criar registro na tabela 
-                            gnmvspb. (Jaison/Diego - SD: 556800)
-
+			   26/12/2016 - Tratamento incorporação Transposul (Diego).
+			    	
 ............................................................................. */
 
 { includes/var_batch.i } 
@@ -283,14 +281,8 @@ FOR EACH crawarq NO-LOCK:
                     TRIM(SUBSTR(aux_setlinha,71,11)) = "PAG0111R2" OR
                     TRIM(SUBSTR(aux_setlinha,71,11)) = "STR0010"   OR
                     TRIM(SUBSTR(aux_setlinha,71,11)) = "PAG0111"   THEN
-                    DO:
-                        /* Se veio do MATERA ignora e vai para o proximo */
-                        IF  SUBSTRING(aux_setlinha,21,6) = "MATERA"  THEN
-                            NEXT.
-
-                        /* Codigo da Agencia(debito ou credito) nas mensagens de devolucao */
-                        ASSIGN aux_cdagectl = INT(SUBSTR(aux_setlinha,21,4)).
-                    END.
+                    /* Codigo da Agencia(debito ou credito) nas mensagens de devolucao */
+                    ASSIGN aux_cdagectl = INT(SUBSTR(aux_setlinha,21,4)).
                 ELSE
                 IF  TRIM(SUBSTR(aux_setlinha,71,11)) = "STR0026R2" THEN
                     DO:
@@ -364,13 +356,12 @@ FOR EACH crawarq NO-LOCK:
                         IF  AVAIL crapass  THEN
                             DO:
                                 ASSIGN aux_cdagenci = crapass.cdagenci.
-
-                                IF   SUBSTR(aux_setlinha,20,1) = "C"  THEN
-                                     RUN verifica_conta_transferida.
-
                             END.
                         ELSE
                             ASSIGN aux_cdagenci = 0.
+
+                        IF  SUBSTR(aux_setlinha,20,1) = "C"  THEN
+						    RUN verifica_conta_transferida.
                     END.
 
                            
@@ -575,8 +566,8 @@ PROCEDURE verifica_conta_transferida.
         END.
 
    IF   aux_ctavalid = TRUE /*** OR Tratamento incorporadas
-        aux_cdcooper = 4    OR
-        aux_cdcooper = 15 ***/ THEN
+        aux_cdcooper = 4 OR aux_cdcooper = 15 ***/  OR
+		aux_cdcooper = 9 OR aux_cdcooper = 17 THEN
         DO:
             /* De-Para das incorporadas foi desativado em 25/08/2015.
                Os registros continuarao sendo criados na gnmvspb para
@@ -585,14 +576,39 @@ PROCEDURE verifica_conta_transferida.
                 .
             ELSE
                 DO:
-                   /* Verifica se eh conta transferida */ 
+				   /* - Verifica se eh conta transferida */ 
+				   
+				   /* - Mensagem recebida para Agencia Antiga e conta Antiga.
+					  - Neste caso ocorre DE-PARA do credito para coop NOVA, e a 
+					    centralizacao deve ocorrer na conta da coop. NOVA  */  
                    FIND craptco WHERE craptco.cdcopant = aux_cdcooper AND
                                       craptco.nrctaant = aux_nrdconta AND
                                       craptco.flgativo = TRUE         AND
                                       craptco.tpctatrf = 1
                                       NO-LOCK NO-ERROR.
              
-                   IF  AVAIL craptco THEN
+                   IF  NOT AVAIL craptco  THEN DO:
+				       /* - Mensagem recebida para Agencia Antiga e conta Nova.
+						  - Neste caso ocorre DE-PARA do credito para coop. NOVA, e a 
+							centralizacao deve ocorrer na conta da coop. NOVA */ 
+					   FIND craptco WHERE craptco.cdcopant = aux_cdcooper AND
+                                          craptco.nrdconta = aux_nrdconta AND
+                                          craptco.flgativo = TRUE         AND
+                                          craptco.tpctatrf = 1
+                                          NO-LOCK NO-ERROR. 
+
+		               IF  NOT AVAIL craptco  THEN
+					       /* - Mensagem recebida para Agencia Nova e conta Antiga.
+							  - Neste caso ocorre DEVOLUCAO da mensagem na coop. NOVA, e a 
+							    centralizacao deve ocorrer na conta da coop. NOVA */ 
+					       FIND craptco WHERE craptco.cdcooper = aux_cdcooper AND
+                                              craptco.nrctaant = aux_nrdconta AND
+                                              craptco.flgativo = TRUE         AND
+                                              craptco.tpctatrf = 1
+                                              NO-LOCK NO-ERROR. 
+                   END.
+				   
+				   IF  AVAIL craptco THEN
                        DO:
                            /* Verificar se a conta migrada ACREDI >> VIACREDI */
                            IF  craptco.cdcooper = 1 AND craptco.cdcopant = 2 THEN 
@@ -600,7 +616,9 @@ PROCEDURE verifica_conta_transferida.
                            /* Verificar se a conta migrada VIACREDI >> ALTO VALE*/
                            ELSE IF craptco.cdcooper = 16 AND craptco.cdcopant = 1 THEN 
                                .
-                           ELSE
+                           ELSE IF craptco.cdcopant = 17 AND glb_dtmvtolt > 03/20/2017  THEN
+						       .
+						   ELSE
                                DO:
                                    FIND b-crapcop WHERE 
                                         b-crapcop.cdcooper = craptco.cdcooper
