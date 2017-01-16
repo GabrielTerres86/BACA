@@ -246,7 +246,7 @@ PROCEDURE Busca_Dados:
         IF  ( par_cdagencx  = 90      OR  /** Internet **/
               par_cdagencx  = 91 )    AND /** TAA **/
               par_nrdcaixx  = 900     AND
-            ( AVAIL crapope AND crapope.dsdepart = "SUPORTE")  AND
+            ( AVAIL crapope AND crapope.cddepart = 18)  AND  /** "SUPORTE" **/
               par_cddopcao <> "C"      AND
               par_cddopcao <> "S"     THEN
             DO:
