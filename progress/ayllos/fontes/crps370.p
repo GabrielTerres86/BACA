@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah 
-   Data    : Novembro/2003                     Ultima atualizacao: 24/04/2014
+   Data    : Novembro/2003                     Ultima atualizacao: 13/01/2017
 
    Dados referentes ao programa:
 
@@ -55,6 +55,9 @@
                
                24/04/2014 - Efetuada correcao na exclusao dos avisos de debito
                             em duplicidade (Diego).
+                            
+               13/01/2017 - #495471 Desconsiderar colaboradores que mudaram de 
+                            empresa, exceto os colaboradores da CECRISA (Carlos)
                             
 ............................................................................. */
 
@@ -208,8 +211,13 @@ FOR EACH crapsol WHERE crapsol.cdcooper = glb_cdcooper  AND
                            crapttl.idseqttl = 1 NO-LOCK NO-ERROR.
         
         IF AVAIL crapttl THEN
-            /* Desconsiderar colaboradores que mudaram de empresa */
-            IF crapttl.cdempres <> crappla.cdempres THEN
+            /* Desconsiderar colaboradores que mudaram de empresa,
+            exceto os colaboradores da CECRISA */
+            IF  crapttl.cdempres <> crappla.cdempres AND 
+                NOT (glb_cdcooper = 5 AND 
+                     CAN-DO("1,2,3,5,6,8", STRING(crapttl.cdempres)) AND 
+                     CAN-DO("1,2,3,5,6,8", STRING(crappla.cdempres))
+                     ) THEN
                 NEXT.
 
         PUT STREAM str_1
