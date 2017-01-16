@@ -5,7 +5,8 @@
  * DATA CRIAÇÃO : Janeiro/2015
  * OBJETIVO     : Mostrar rotina de Convenio CDC da tela CONTAS
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : 11/08/2016 - Inclusao de campos para apresentacao no site da cooperativa.
+ *                             (Jaison/Anderson)
  * --------------
  * 25/07/2016 - Adicionado classe (SetWindow) - necessaria para navegação com teclado - (Evandro - RKAM).
  */	
@@ -18,12 +19,9 @@
 	require_once("../../../class/xmlfile.php");
 	isPostMethod();	
 	
-	// Se par&acirc;metros necess&aacute;rios n&atilde;o foram informados
-	if (!isset($_POST["nmdatela"]) || !isset($_POST["nmrotina"])) {
-		echo 'hideMsgAguardo();';
-		echo 'showError("error","Par&acirc;metros incorretos.","Alerta - Ayllos","");';
-		exit();
-	}
+    // Se parâmetros necessários nao foram informados
+    if (!isset($_POST["nmdatela"]) || !isset($_POST["nmrotina"]))
+       exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','');
 	
     $labelRot = $_POST['labelRot'];	
 	
@@ -31,6 +29,15 @@
 	include("../../../includes/carrega_permissoes.php");	
 
 	setVarSession("opcoesTela",$opcoesTela);
+	
+	// Carregas as opções da Rotina de Ativo/Passivo
+	$flgAcesso   = (in_array("@", $glbvars["opcoesTela"]));
+	$flgAlterar  = (in_array("A", $glbvars["opcoesTela"]));
+	$flgIncluir  = (in_array("I", $glbvars["opcoesTela"]));
+	$flgExcluir  = (in_array("E", $glbvars["opcoesTela"]));
+	
+	if ($flgAcesso == "") 
+		exibirErro('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de acesso a esta tela.','Alerta - Ayllos','');
 ?>
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 	<tr>
@@ -78,6 +85,9 @@
 	</tr>
 </table>
 <script type="text/javascript">	
+	var flgAlterar = "<?php echo $flgAlterar; ?>";
+    var flgIncluir = "<?php echo $flgIncluir; ?>";
+    var flgExcluir = "<?php echo $flgExcluir; ?>";
 	exibeRotina(divRotina);
 	// Esconde mensagem de aguardo
 	hideMsgAguardo();
