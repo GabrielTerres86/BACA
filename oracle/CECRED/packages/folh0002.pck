@@ -4156,7 +4156,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
      --  Sistema  : AyllosWeb
      --  Sigla    : CRED
      --  Autor    : Renato Darosci - SUPERO
-     --  Data     : Junho/2015.                   Ultima atualizacao: 16/02/2016
+     --  Data     : Junho/2015.                   Ultima atualizacao: 17/08/2016
      --
      -- Dados referentes ao programa:
      --
@@ -4170,6 +4170,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
      --
      --             16/02/2016 - Inclusao do parametro conta na chamada da
      --                          FOLH0001.fn_valor_tarifa_folha. (Jaison/Marcos)
+     --
+     --             17/08/2016 - Ajuste feito para não permitir continuar a operação
+     --                          na tela pagfol caso a empresa não tenha convenio de
+     --                          folha ativo, conforme solicitado no chamado 485808. 
+     --                          (Kelvin).
      --
      ---------------------------------------------------------------------------------------------------------------
 
@@ -4313,6 +4318,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
      FETCH cr_crapcop INTO rw_crapcop;
      CLOSE cr_crapcop;
 
+     IF rw_crapcop.nrdconta = '0' OR 
+        TRIM(rw_crapcop.nrdconta) IS NULL THEN
+     
+        pr_des_erro := 'Empresa ' || pr_cdempres  || ' nao possui convenio de folha ativo!';
+        RAISE vr_excerror;
+     END IF;
+     
      -- Converte a STRING data para DATE
      vr_dtmvtolt := TO_DATE(pr_dtmvtolt,'DD/MM/RRRR');
 
@@ -10052,7 +10064,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
     Frequencia: Sempre que Chamado
     Objetivo  : Rotina para buscar a quantidade de pagamentos pendentes
 
-    Alteracoes:
+    Alteracoes: 18/11/2016 - SD542975 - Ajuste no teste para considerar 
+	                                    pendente ou não - Marcos-Supero
     ............................................................................. */
 
      -- Busca a quantidade de pagamentos pendentes
@@ -10062,7 +10075,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
           FROM crappfp pfp
          WHERE pfp.cdcooper = pr_cdcooper
            AND pfp.cdempres = pr_cdempres
-           AND pfp.idsitapr IN (2,4,5); -- 2-Em estouro / 4-Aprv.Estouro / 5-Aprovado
+           AND pfp.idsitapr IN (2,4,5) -- 2-Em estouro / 4-Aprv.Estouro / 5-Aprovado
+		   AND pfp.flsitcre = 0;
 
   BEGIN
 
