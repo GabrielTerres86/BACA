@@ -1,0 +1,84 @@
+<!--
+	Alteracoes: 01/07/2016 - Criaçao da tela, Prj. 229 (Jean Michel).
+-->
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+		<meta name="wsoptions" content="no-output">
+		<title>Cadastro de Produto Sugerido</title>
+		<link href="/cecred/estilos/progrid.css" rel="stylesheet" type="text/css">
+	</head>
+	<body style="margin-left: 3px; overflow:hidden;">
+		<form action="#." method="POST" name="form">
+			<input name="aux_idevento" type="hidden" value="">
+			<input name="aux_cdevento"     type="hidden" value="">
+			<input name="aux_lspermis" type="hidden" id="aux_lspermis"  value="">
+			<input name="aux_nrdrowid" type="hidden" id="aux_nrdrowid"  value="">    
+			<input name="aux_dsretorn" type="hidden" id="aux_dsretorn"  value="">    
+			<input name="aux_dsendurl" type="hidden" id="aux_dsendurl"  value=""> 
+      <input name="aux_cdcopope" type="hidden" value="">
+      <input name="aux_cdoperad" type="hidden" value="">
+			<script SRC="/cecred/js/funcoes.js"></script>
+			<script language="JavaScript">
+				NomeDoProgramaPrincipal  = '/wpgd0008c.w';
+				NomeDoProgramaDeZoom     = '';
+			</script>	 
+			<table border="0" cellpadding="0" cellspacing="0">
+				<tr valign="botton">
+					<td>
+						<table border="0" cellpadding="0" cellspacing="0" background="/cecred/images/geral/guia_fundo.gif">
+							<tr>
+								<td width="11"><img src="/cecred/images/geral/guia_esquerda.gif" width="11" height="21"></td>
+                                <td align="center" nowrap width="200px" class="linkGuia">Adicionar Produto Sugerido</td>
+								<td width="11" align="right"><img src="/cecred/images/geral/guia_direita.gif" width="8" height="21"></td>
+							</tr>
+						</table>
+					</td>
+				<tr>
+				<tr>
+					<td style="background-color: white;">
+						<div style="border: 1px solid gray; padding-top: 25px;">
+							<table  border="0" cellpadding="0" cellspacing="0" align="center" style="background-color: white;">
+								<tr>
+									<td align="right" class="NomeCampo">Produto Sugerido:</td>
+									<td>
+										<select name="aux_nrseqpdp" id="aux_nrseqpdp" class="Campo" style="width: 450px"></select>
+									</td>
+								</tr>
+								<tr>
+									<td colspan="2">
+										&nbsp;
+									</td>
+								</tr>
+								<tr>
+									<td colspan="2" align="center">
+										<img style="cursor:hand;" src="/cecred/images/botoes/btn_salvar.gif" width="60" height="20" onClick="return Salvar()">
+									</td>
+								</tr>
+							</table>
+						</div>
+					</td>
+				</tr>
+			</table>
+		</form>
+	</body>
+	<script language="JavaScript">
+    NomeDoProgramaPrincipal  = '/wpgd0008c.w';
+       
+    NomeDoProgramaPrincipal = document.form.aux_dsendurl.value + NomeDoProgramaPrincipal;
+    document.form.action = NomeDoProgramaPrincipal;
+		 
+    function Salvar(){
+      var nrseqpdp = document.form.aux_nrseqpdp.value;
+      
+      if(nrseqpdp == 0 || nrseqpdp == "" || nrseqpdp == undefined || nrseqpdp == '0'){
+        alert("Selecione um Produto.");
+        return false;
+      }
+      
+      document.form.submit(); 
+      return true;				
+    }  			
+    document.getElementById("aux_nrseqpdp").disabled = false;
+	</script>
+</html>
