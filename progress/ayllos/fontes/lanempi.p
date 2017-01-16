@@ -851,28 +851,33 @@ DO WHILE TRUE:
                         
                                 /* 3o Valor em Prejuizo */
                               IF aux_vlrsaldo > 0 THEN
-								 DO:
-									IF crapepr.vlsdprej < 0 THEN
-										DO:
-											ASSIGN crapepr.vlsdprej = (crapepr.vlsdprej * -1) -
-															   aux_vlrsaldo.
-								 END.
-									ELSE
-										DO:
-											ASSIGN crapepr.vlsdprej = crapepr.vlsdprej -
-																	  aux_vlrsaldo.
-									END.
-								 END.
-                
-                         END. /* END crapepr.tpemprst = 1  */
-                      ELSE  
-                         DO:
-                             ASSIGN crapepr.vlsdprej = crapepr.vlsdprej -
-                                                       tel_vllanmto.
-                         END.
-                         END.
-
-                  END. /* END IF aux_indebcre = "C"   THEN */
+								                DO:
+									                IF crapepr.vlsdprej < 0 THEN
+										                DO:
+											                ASSIGN crapepr.vlsdprej = (crapepr.vlsdprej * -1) -
+															                                   aux_vlrsaldo.
+								                    END.
+									                ELSE
+										                DO:
+											                ASSIGN crapepr.vlsdprej = crapepr.vlsdprej -
+																	                              aux_vlrsaldo.
+									                  END.
+								                  END.
+                                END. /* END crapepr.tpemprst = 1  */
+                              ELSE  
+                                DO:
+							                    IF crapepr.vlsdprej < 0 THEN
+								                    DO:
+									                    ASSIGN crapepr.vlsdprej = (crapepr.vlsdprej * -1) -
+                                                                tel_vllanmto.
+								                    END.
+							                    ELSE
+								                    DO:
+									                    ASSIGN crapepr.vlsdprej = crapepr.vlsdprej -
+															                                  tel_vllanmto.
+                                    END.
+                                  END.
+                              END. /* END IF aux_indebcre = "C"   THEN */
 
                /* Setar a data de liquidaçao do prejuízo (Renato Darosci - 15/08/2016) */
                IF ant_vlsdprej > 0 AND crapepr.vlsdprej = 0 THEN
