@@ -41,6 +41,12 @@
  *
  *				  31/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
  *
+ *				  24/10/2016 - Ajustar mensagem de critica no cancelamento da operacao, sem efetuar a operacao (Lucas Ranghetti #537829)
+ *
+ *                31/10/2016 - Incluir validação para passar histórico 1019 caso for Sicredi e não for 
+ *							   operação de consulta (Lucas Ranghetti #547448)
+ *
+ *
  */
 
 // Definição de algumas variáveis globais 
@@ -60,7 +66,7 @@ var valida = 0; // 0 = Segue com operacao/ 1 = Barra operacao
 
 $(document).ready(function() {	
 	
-	controlaOperacao();
+	controlaOperacao();			
 });
 
 function controlaOperacao( novaOp ) {
@@ -104,8 +110,12 @@ function controlaOperacao( novaOp ) {
 
 	}
 
-	showMsgAguardo( mensagem );
+	if ((flgsicre == 'S') && (operacao != 'C2') ) {
+		cdhistor = 1019;
+	}	
 	
+	showMsgAguardo( mensagem );	
+
 	// Carrega dados da conta através de ajax
 	$.ajax({		
 		type	: 'POST',
@@ -1460,8 +1470,12 @@ function mensagem(tipo){
 		showConfirmacao("Deseja realmente cancelar a senha?","Confirma&ccedil;&atilde;o - Ayllos","mensagem('2');","mostraSenha();","sim.gif","nao.gif");
 	}else if(tipo == 2){
 		showConfirmacao("Deseja continuar com a autoriza&ccedil;&atilde;o assinada?","Confirma&ccedil;&atilde;o - Ayllos","mensagem('3');","mensagem('4');","sim.gif","nao.gif");
-	}else if(tipo == 4){
-		showError('inform','Autoriza&ccedil;&atilde;o cancelada.','Alerta - Ayllos','controlaOperacao("");');
+	} else if (tipo == 4) {
+	    if (operacao == 'E5') {
+	        showError('inform', 'Cancelamento/exclus&atilde;o n&atilde;o realizado!', 'Alerta - Ayllos', 'controlaOperacao("");');
+	    } else {
+	        showError('inform', 'Opera&ccedil;&atilde;o cancelada!', 'Alerta - Ayllos', 'controlaOperacao("");');
+	    }		
 	}else if(tipo == 3){
 		flginassele == 2; // atualizar o campo inassele para 2
 		showError('inform','Requisite a assinatura do cooperado.','Alerta - Ayllos','controlaOperacao("' + operacao_aux + '");');
