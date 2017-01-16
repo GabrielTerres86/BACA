@@ -147,9 +147,9 @@
                            na oferta de debito automatico na procedure busca_convenios_codbarras
                            (Lucas Ranghetti #488846)
 
-			        27/09/2016 - Ajuste na busca da autorizacao quando houver duas ou
-			                     mais referencias iguais para a mesma conta (busca-autori).
-						              (Chamado 528246) - (Fabricio)
+                                27/09/2016 - Ajuste na busca da autorizacao quando houver duas ou
+                                             mais referencias iguais para a mesma conta (busca-autori).
+                                                              (Chamado 528246) - (Fabricio)
                           
               13/10/2016 - Tratamento para permitir a exclusao da autorizacao do debito
                            automatico somente no proximo dia util apos o cancelamento 
@@ -163,7 +163,7 @@
                            a inclusao de faturas caso a empresa e segmento estiverem zerados
                            (Lucas Ranghetti #542571)
 
-			  07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
+                          07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
                            departamento passando a considerar o código (Renato Darosci)
 .............................................................................*/
 
@@ -247,7 +247,7 @@ PROCEDURE busca-autori:
                 FIND crapatr WHERE crapatr.cdcooper = par_cdcooper  AND
                                    crapatr.nrdconta = par_nrdconta  AND
                                    crapatr.cdrefere = par_cdrefere  AND
-								   crapatr.cdhistor = INT(par_cdhistor)
+                                                                   crapatr.cdhistor = INT(par_cdhistor)
                                    USE-INDEX crapatr1
                                    NO-LOCK NO-ERROR NO-WAIT.
               
@@ -648,7 +648,7 @@ PROCEDURE valida-conta:
     
     ASSIGN aux_dscritic = ""
            aux_cdcritic = 0.
-    	
+            
     Busca: DO WHILE TRUE:
 
         IF  NOT VALID-HANDLE(h-b1wgen9999) THEN
@@ -1471,8 +1471,8 @@ PROCEDURE valida-dados:
 
                         LEAVE Valida.
             END.
-            END.
-        /*ELSE
+  /*          END.
+         ELSE
         IF  par_cddopcao = "R" THEN
             DO:     
                 IF  par_dtfimatr <> ? OR
@@ -1483,7 +1483,7 @@ PROCEDURE valida-dados:
                                par_nmdcampo = "dtautori". 
                         LEAVE Valida.
                     END.
-            END.*/
+            END. */
 
         LEAVE Valida.
 
@@ -1911,7 +1911,7 @@ PROCEDURE grava-dados:
                 IF par_cdagenci = 0 THEN
                    ASSIGN par_cdagenci = glb_cdagenci.
                 /* Fim - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
-				
+                                
                 /* Achou a crapatr, reativa o registro */
                 IF  aux_flgachtr = TRUE  THEN
                     DO:
@@ -1927,11 +1927,11 @@ PROCEDURE grava-dados:
                                        crapatr.flgmaxdb = aux_flgmaxdb
                                        crapatr.vlrmaxdb = par_vlrmaxdb
                                        crapatr.tpautori = aux_tpautori
-										/* Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
+                                                                                /* Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
                                        crapatr.cdopeori = par_cdoperad
                                        crapatr.cdageori = par_cdagenci
                                        crapatr.dtinsori = TODAY
-                						/* Fim - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
+                                                                /* Fim - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
                                        crapatr.dshisext = par_nmfatura.
                                        
                                 VALIDATE crapatr.                               
@@ -2580,7 +2580,7 @@ PROCEDURE altera_autorizacao:
                                               crapscn.dsoparre = 'E'                       AND
                                              (crapscn.cddmoden = 'A'                       OR
                                               crapscn.cddmoden = 'C') 
-                                              NO-LOCK NO-ERROR NO-WAIT.							  
+                                              NO-LOCK NO-ERROR NO-WAIT.                                                          
                 IF  NOT AVAIL gnconve AND
                     NOT AVAIL crapscn THEN
                 DO:
