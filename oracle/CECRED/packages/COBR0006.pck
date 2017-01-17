@@ -454,10 +454,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                              cdacesso = "QTD_DIAS_EMISSAO_RETR" para armazenar o valor.
                              Sera alterado de 90 para 365 dias. (Douglas - Chamado 523329)
 
-				01/12/2016 - Inserir texto informativo no campo dsinform e nao mais no campo dsdinstr
-				             Por estar utilizando o campo indevido, nao estava enviando a info para a PG
-							 Heitor (Mouts) - Chamado 564818
-
                02/12/2016 - Ajustes efetuados:
 						                 > Levantar exception (NOK) quando for encontrado registro de rejeição;
                              > Tratar nome da cidade, nome do bairro e uf nulos ; 
@@ -1922,7 +1918,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                 nmdavali,
                 nrinsava,
                 cdtpinav,
-                dsinform, --dsdinstr --> Conforme chamado 564818, deve gravar a informacao no campo dsinform para correto envio a PG
+                dsdinstr,
                 dsusoemp,
                 nrremass,
                 flgregis,
@@ -2894,7 +2890,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                   ,pr_dsdchave => vr_rejeitado.cdcooper || ';' || 
                                                   vr_rejeitado.nrdconta || ';' || 
                                                   vr_rejeitado.nrcnvcob || ';2');
-                        
+        
         -- Insere registro
         INSERT INTO craprtc(cdcooper
                            ,nrdconta
@@ -6654,7 +6650,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       IF cr_craprtc%NOTFOUND THEN
         --Fechar Cursor
         CLOSE cr_craprtc;
-
+        
         -- Utilizar a SEQUENCE para gerar o numero de remessa do cooperado
         vr_nrremrtc := fn_sequence(pr_nmtabela => 'CRAPRTC'
                                   ,pr_nmdcampo => 'NRREMRET'
