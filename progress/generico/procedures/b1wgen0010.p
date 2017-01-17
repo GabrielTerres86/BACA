@@ -376,7 +376,7 @@
 
 			   25/11/2016 - Correção no calculo de multa e juros da Melhoria 271
 			                (Douglas Quisinski - Chamado 562804)
-			       				
+							
 			   02/12/2016 - Ajuste realizado para nao gerar em branco o relatorio		
 							da tela COBRAN, incluido tambem logs para identificar
 							erros futuros dessa mesma rotina, conforme solicitado
@@ -384,7 +384,7 @@
 							
 			   12/12/2016 - Correcao do relatorio da tela cobran que estavam sendo
 							gerado em branco, onde no chamado 563327 incluimos logs
-							para que futuramente podessemos identifcar o problema (Kelvin)
+							para que futuramente podessemos identifcar o problema (Kelvin)	
 							
 			   23/12/2016 - Realizado ajustes na rotina consulta-bloqueto e consulta-boleto-2via
 							para aumentar o desempenho na tela de manutencao do internet bank,
@@ -563,7 +563,7 @@ PROCEDURE consulta-boleto-2via.
 
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-consulta-blt. 
-
+	
     /* verificar se conta nao eh migracao/incorporada */
     IF  p-nrdconta > 0 AND p-nrcpfcgc > 0 THEN DO:                  
         FOR FIRST craptco FIELDS (nrdconta) WHERE 
@@ -751,7 +751,7 @@ PROCEDURE consulta-boleto-2via.
                                       "dados do pagador.".
             RETURN "NOK".
         END.
-
+	
     /*Busca nome impresso no boleto*/
     RUN busca-nome-imp-blt(INPUT  crapcob.cdcooper
                           ,INPUT  crapcob.nrdconta
@@ -841,25 +841,25 @@ PROCEDURE consulta-boleto-2via.
 
 	IF AVAIL(tt-consulta-blt) THEN
 	   DO:
-			ASSIGN tt-consulta-blt.dtvencto            = aux_dtvencut
-				   tt-consulta-blt.vltitulo            = aux_vltituut
-				   tt-consulta-blt.vlmormul            = aux_vlmormut
+    ASSIGN tt-consulta-blt.dtvencto            = aux_dtvencut
+           tt-consulta-blt.vltitulo            = aux_vltituut
+           tt-consulta-blt.vlmormul            = aux_vlmormut
 
-				   tt-consulta-blt.dtvencto_atualizado = aux_dtvencut_atualizado
-				   tt-consulta-blt.vltitulo_atualizado = aux_vltituut_atualizado
-				   tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
-				   tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0
-				   tt-consulta-blt.nmprimtl 	       = aux_nmdobnfc
+           tt-consulta-blt.dtvencto_atualizado = aux_dtvencut_atualizado
+           tt-consulta-blt.vltitulo_atualizado = aux_vltituut_atualizado
+           tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
+           tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0
+		   tt-consulta-blt.nmprimtl 	       = aux_nmdobnfc
+		   
+           tt-consulta-blt.nrdconta = crapcob.nrdconta
+           tt-consulta-blt.vldocmto = crapcob.vltitulo
+           tt-consulta-blt.dtvctori = aux_dtvencut
+           tt-consulta-blt.flgaceit = "N".
 
-				   tt-consulta-blt.nrdconta = crapcob.nrdconta
-				   tt-consulta-blt.vldocmto = crapcob.vltitulo
-				   tt-consulta-blt.dtvctori = aux_dtvencut
-				   tt-consulta-blt.flgaceit = "N".
-
-			VALIDATE tt-consulta-blt.
+    VALIDATE tt-consulta-blt.
 	   END.
 
-    RETURN "OK".        
+    RETURN "OK".
 END PROCEDURE.  /* consulta-boleto-2via */
 
 PROCEDURE consulta-bloqueto.
@@ -911,7 +911,7 @@ PROCEDURE consulta-bloqueto.
 	DEF VAR aux_nmdobnfc			   AS CHAR			   NO-UNDO.
 	DEF VAR aux_des_erro			   AS CHAR			   NO-UNDO.
     DEF VAR aux_contaant             LIKE crapass.nrdconta NO-UNDO.
-
+	
  /******************************** CONSULTAS *********************************/
  /*                                                                          */
  /* p-tipo-consulta > 1-NAO COBRADOS/2-COBRADOS/3-TODOS                      */
@@ -1007,8 +1007,8 @@ PROCEDURE consulta-bloqueto.
         
             IF  crapass.inpessoa > 1  THEN
                 ASSIGN aux_nmprimtl = REPLACE(crapass.nmprimtl,"&","%26").
-        END.
-    
+        END.    
+
     /*Busca nome impresso no boleto*/
     RUN busca-nome-imp-blt(INPUT  p-cdcooper
                           ,INPUT  p-nro-conta
@@ -1098,8 +1098,8 @@ PROCEDURE consulta-bloqueto.
                                              INPUT p-ini-sequencia,
                                              INPUT-OUTPUT aux_nmdobnfc,
                                              INPUT-OUTPUT aux_contaant,
-                                      INPUT-OUTPUT par_qtregist,
-                                            OUTPUT TABLE tt-consulta-blt).
+                                             INPUT-OUTPUT par_qtregist,
+                                             OUTPUT TABLE tt-consulta-blt).
                     END.
                 END.
          WHEN 2 THEN
@@ -1215,7 +1215,7 @@ PROCEDURE consulta-bloqueto.
                                  ASSIGN tt-consulta-blt.dtvencto_atualizado = aux_dtvencut_atualizado
                                         tt-consulta-blt.vltitulo_atualizado = aux_vltituut_atualizado
                                         tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
-                                        tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0.                               
+                                        tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0. 
 										tt-consulta-blt.nmprimtl 			= aux_nmdobnfc.	    								
                                  END.
                                           
@@ -1285,7 +1285,7 @@ PROCEDURE consulta-bloqueto.
                                       aux_dsorgarq = crapcco.dsorgarq.
                                  ELSE
                                       aux_dsorgarq = "".
-                             
+
                                  RUN p_grava_bloqueto(INPUT p-cdcooper, 
                                                       INPUT p-cod-agencia, 
                                                       INPUT p-nro-caixa,
@@ -1294,7 +1294,7 @@ PROCEDURE consulta-bloqueto.
                                                       INPUT p-ini-sequencia,
                                                       INPUT-OUTPUT aux_nmdobnfc,
                                                       INPUT-OUTPUT aux_contaant,
-                                               INPUT-OUTPUT par_qtregist,
+                                                      INPUT-OUTPUT par_qtregist,
                                                      OUTPUT TABLE tt-consulta-blt).
                              END.    
                          END.    
@@ -1413,7 +1413,7 @@ PROCEDURE consulta-bloqueto.
 									tt-consulta-blt.nmprimtl 			= aux_nmdobnfc.
                                  END.
                              END.    
-
+								
                              FIND LAST tt-consulta-blt EXCLUSIVE-LOCK NO-ERROR.
             
                              IF   AVAILABLE tt-consulta-blt  THEN
@@ -1484,7 +1484,7 @@ PROCEDURE consulta-bloqueto.
                                                       INPUT p-ini-sequencia,
                                                       INPUT-OUTPUT aux_nmdobnfc,
                                                       INPUT-OUTPUT aux_contaant,
-                                               INPUT-OUTPUT par_qtregist,
+                                                      INPUT-OUTPUT par_qtregist,
                                                      OUTPUT TABLE tt-consulta-blt).
                                  
                              END.    
@@ -1679,7 +1679,7 @@ PROCEDURE consulta-bloqueto.
                                                           INPUT p-ini-sequencia,
                                                           INPUT-OUTPUT aux_nmdobnfc,
                                                           INPUT-OUTPUT aux_contaant,
-                                                   INPUT-OUTPUT par_qtregist,
+                                                          INPUT-OUTPUT par_qtregist,
                                                          OUTPUT TABLE tt-consulta-blt).
                                    END.
                                END.
@@ -1874,7 +1874,7 @@ PROCEDURE consulta-bloqueto.
                                                       INPUT p-ini-sequencia,
                                                       INPUT-OUTPUT aux_nmdobnfc,
                                                       INPUT-OUTPUT aux_contaant,
-                                               INPUT-OUTPUT par_qtregist,
+                                                      INPUT-OUTPUT par_qtregist,
                                                      OUTPUT TABLE tt-consulta-blt).
                                 END.
                                 END.
@@ -1949,7 +1949,7 @@ PROCEDURE consulta-bloqueto.
                                                  INPUT p-ini-sequencia,
                                                  INPUT-OUTPUT aux_nmdobnfc,
                                                  INPUT-OUTPUT aux_contaant,
-                                          INPUT-OUTPUT par_qtregist,
+                                                 INPUT-OUTPUT par_qtregist,
                                                 OUTPUT TABLE tt-consulta-blt).
                     END.
                 END.
@@ -2087,7 +2087,7 @@ PROCEDURE consulta-bloqueto.
                                                  INPUT p-ini-sequencia,
                                                  INPUT-OUTPUT aux_nmdobnfc,
                                                  INPUT-OUTPUT aux_contaant,
-                                          INPUT-OUTPUT par_qtregist,
+                                                 INPUT-OUTPUT par_qtregist,
                                                 OUTPUT TABLE tt-consulta-blt).
 
                        END.
@@ -2257,7 +2257,7 @@ PROCEDURE consulta-bloqueto.
                                              INPUT p-ini-sequencia,
                                              INPUT-OUTPUT aux_nmdobnfc,
                                              INPUT-OUTPUT aux_contaant,
-                                      INPUT-OUTPUT par_qtregist,
+                                             INPUT-OUTPUT par_qtregist,
                                             OUTPUT TABLE tt-consulta-blt).
                     END.
          END.
@@ -2312,7 +2312,7 @@ PROCEDURE consulta-bloqueto.
                                              INPUT p-ini-sequencia,
                                              INPUT-OUTPUT aux_nmdobnfc,
                                              INPUT-OUTPUT aux_contaant,
-                                      INPUT-OUTPUT par_qtregist,
+                                             INPUT-OUTPUT par_qtregist,
                                             OUTPUT TABLE tt-consulta-blt).
 
                         ASSIGN aux_nrregist = aux_nrregist + 1.
@@ -2374,7 +2374,7 @@ PROCEDURE consulta-bloqueto.
                                              INPUT p-ini-sequencia,
                                              INPUT-OUTPUT aux_nmdobnfc,
                                              INPUT-OUTPUT aux_contaant,
-                                      INPUT-OUTPUT par_qtregist,
+                                             INPUT-OUTPUT par_qtregist,
                                             OUTPUT TABLE tt-consulta-blt).
 
                         ASSIGN aux_nrregist = aux_nrregist + 1.
@@ -2435,7 +2435,7 @@ PROCEDURE consulta-bloqueto.
                                                  INPUT p-ini-sequencia,
                                                  INPUT-OUTPUT aux_nmdobnfc,
                                                  INPUT-OUTPUT aux_contaant,
-                                          INPUT-OUTPUT par_qtregist,
+                                                 INPUT-OUTPUT par_qtregist,
                                                 OUTPUT TABLE tt-consulta-blt).
                             ASSIGN aux_nrregist = aux_nrregist + 1.
                         END.
@@ -2497,7 +2497,7 @@ PROCEDURE consulta-bloqueto.
                                              INPUT p-ini-sequencia,
                                              INPUT-OUTPUT aux_nmdobnfc,
                                              INPUT-OUTPUT aux_contaant,
-                                      INPUT-OUTPUT par_qtregist,
+                                             INPUT-OUTPUT par_qtregist,
                                             OUTPUT TABLE tt-consulta-blt).
 
                         ASSIGN aux_nrregist = aux_nrregist + 1.
@@ -2556,7 +2556,7 @@ PROCEDURE consulta-bloqueto.
                                              INPUT p-ini-sequencia,
                                              INPUT-OUTPUT aux_nmdobnfc,
                                              INPUT-OUTPUT aux_contaant,
-                                      INPUT-OUTPUT par_qtregist,
+                                             INPUT-OUTPUT par_qtregist,
                                             OUTPUT TABLE tt-consulta-blt).
                         ASSIGN aux_nrregist = aux_nrregist + 1.
                     END.
@@ -2618,17 +2618,17 @@ PROCEDURE consulta-bloqueto.
                             IF  NOT AVAIL crapoco THEN NEXT.
                             
                             IF  crapret.nrdocmto <> 0 THEN
-								DO:
-                                RUN p_grava_bloqueto(INPUT p-cdcooper,
-                                                     INPUT p-cod-agencia,
-                                                     INPUT p-nro-caixa,
-                                                     INPUT crapdat.dtmvtoan,
-                                                     INPUT p-num-registros,
-                                                     INPUT p-ini-sequencia,
+								DO:              
+                                    RUN p_grava_bloqueto(INPUT p-cdcooper,
+                                                         INPUT p-cod-agencia,
+                                                         INPUT p-nro-caixa,
+                                                         INPUT crapdat.dtmvtoan,
+                                                         INPUT p-num-registros,
+                                                         INPUT p-ini-sequencia,
                                                          INPUT-OUTPUT aux_nmdobnfc,
                                                          INPUT-OUTPUT aux_contaant,
-                                              INPUT-OUTPUT par_qtregist,
-                                                    OUTPUT TABLE tt-consulta-blt).
+                                                         INPUT-OUTPUT par_qtregist,
+                                                        OUTPUT TABLE tt-consulta-blt).
 									
 									IF RETURN-VALUE = "NOK" THEN
 									    DO:
@@ -2640,17 +2640,17 @@ PROCEDURE consulta-bloqueto.
 									
 								END.
                             ELSE
-								DO:
-                                RUN p_grava_bloqueto_rej (INPUT p-cdcooper,
-                                                     INPUT p-cod-agencia,
-                                                     INPUT p-nro-caixa,
-                                                     INPUT crapdat.dtmvtoan,
-                                                     INPUT p-num-registros,
-                                                     INPUT p-ini-sequencia,
+								DO:                         
+                                    RUN p_grava_bloqueto_rej (INPUT p-cdcooper,
+                                                              INPUT p-cod-agencia,
+                                                              INPUT p-nro-caixa,
+                                                              INPUT crapdat.dtmvtoan,
+                                                              INPUT p-num-registros,
+                                                              INPUT p-ini-sequencia,
                                                               INPUT-OUTPUT aux_nmdobnfc,     
                                                               INPUT-OUTPUT aux_contaant,
-                                              INPUT-OUTPUT par_qtregist,
-                                                    OUTPUT TABLE tt-consulta-blt).
+                                                              INPUT-OUTPUT par_qtregist,
+                                                              OUTPUT TABLE tt-consulta-blt).
     
 									IF RETURN-VALUE = "NOK" THEN
 									    DO:
@@ -2770,7 +2770,7 @@ PROCEDURE consulta-bloqueto.
                                                      INPUT p-ini-sequencia,
                                                      INPUT-OUTPUT aux_nmdobnfc,
                                                      INPUT-OUTPUT aux_contaant,
-                                              INPUT-OUTPUT par_qtregist,
+                                                     INPUT-OUTPUT par_qtregist,
                                                     OUTPUT TABLE tt-consulta-blt).
 
                             END.
@@ -2808,8 +2808,8 @@ PROCEDURE consulta-bloqueto.
                                              INPUT p-ini-sequencia,
                                              INPUT-OUTPUT aux_nmdobnfc,
                                              INPUT-OUTPUT aux_contaant,
-                                      INPUT-OUTPUT par_qtregist,
-                                            OUTPUT TABLE tt-consulta-blt).
+                                             INPUT-OUTPUT par_qtregist,
+                                             OUTPUT TABLE tt-consulta-blt).
                     END.
                     
                     /* Copia o BKP para a TT de retorno */
@@ -3702,21 +3702,21 @@ PROCEDURE cria_tt-consulta-blt.
    DO TRANSACTION:
 
      CREATE tt-consulta-blt.
-
+     
      FIND crabceb WHERE crabceb.cdcooper = crapcob.cdcooper
                     AND crabceb.nrconven = crapcob.nrcnvcob
                     AND crabceb.nrdconta = crapcob.nrdconta
                     NO-LOCK NO-ERROR.
-       
+
      IF AVAIL(crabceb) THEN
      DO:
         ASSIGN tt-consulta-blt.flprotes = INTE(crabceb.flprotes).
-       END.
+     END.
      ELSE
      DO:
          ASSIGN tt-consulta-blt.flprotes = 0.
-   END.
-   
+     END.
+
      /*  Verifica no Cadastro de Sacados Cobranca */
      FOR FIRST crapass FIELDS(nmprimtl)
          WHERE crapass.cdcooper = crapcob.cdcooper AND
@@ -3738,7 +3738,7 @@ PROCEDURE cria_tt-consulta-blt.
                 tt-consulta-blt.nmbaisac = crapsab.nmbaisac
                 tt-consulta-blt.nmcidsac = crapsab.nmcidsac
                 tt-consulta-blt.cdufsaca = crapsab.cdufsaca
-                    tt-consulta-blt.nrcepsac = crapsab.nrcepsac.
+                tt-consulta-blt.nrcepsac = crapsab.nrcepsac.
                     
              { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
 
@@ -3805,15 +3805,15 @@ PROCEDURE cria_tt-consulta-blt.
               ASSIGN tt-consulta-blt.dsdemail = aux_dsdemail
                      tt-consulta-blt.flgemail = (IF TRIM(aux_dsdemail) <> "" THEN TRUE ELSE FALSE).
          END.
-                                            ELSE 
+     ELSE 
          ASSIGN tt-consulta-blt.nmdsacad = REPLACE(crapcob.nmdsacad,"&","%26")
                 tt-consulta-blt.flgemail = FALSE.
 
-      ASSIGN tt-consulta-blt.nmdavali = REPLACE(crapcob.nmdavali,"&","%26")
-             tt-consulta-blt.cdtpinav = crapcob.cdtpinav
-             tt-consulta-blt.nrinsava = crapcob.nrinsava
-             tt-consulta-blt.vlrjuros = crapcob.vljurpag
-             tt-consulta-blt.vlrmulta = crapcob.vlmulpag.
+     ASSIGN tt-consulta-blt.nmdavali = REPLACE(crapcob.nmdavali,"&","%26")
+            tt-consulta-blt.cdtpinav = crapcob.cdtpinav
+            tt-consulta-blt.nrinsava = crapcob.nrinsava
+            tt-consulta-blt.vlrjuros = crapcob.vljurpag
+            tt-consulta-blt.vlrmulta = crapcob.vlmulpag.
 
 	 ASSIGN tt-consulta-blt.inserasa = STRING(crapcob.inserasa)
             tt-consulta-blt.flserasa = crapcob.flserasa
@@ -4301,7 +4301,7 @@ PROCEDURE cria_tt-consulta-blt_rej.
     ELSE
         ASSIGN aux_nossonro = STRING(crapret.nrnosnum,"99999999999999999").
     
-
+   
    DO TRANSACTION:
 
      CREATE tt-consulta-blt.
@@ -4512,7 +4512,7 @@ PROCEDURE cria_tt-consulta-blt_tdb.
               tt-consulta-blt.nmbaisac = crapsab.nmbaisac
               tt-consulta-blt.nmcidsac = crapsab.nmcidsac
               tt-consulta-blt.cdufsaca = crapsab.cdufsaca
-                    tt-consulta-blt.nrcepsac = crapsab.nrcepsac.
+              tt-consulta-blt.nrcepsac = crapsab.nrcepsac.
 
              { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
 
@@ -4814,7 +4814,7 @@ PROCEDURE proc_nosso_numero.
        (aux_nrregist <  aux_iniseque  OR 
         aux_nrregist >= aux_fimseque) THEN
         RETURN.
-
+    
     DO TRANSACTION:
 
         IF NOT AVAIL crapsab THEN
@@ -5095,7 +5095,7 @@ PROCEDURE proc_nosso_numero.
                tt-consulta-blt.flgregis = IF  crapcob.flgregis = TRUE  THEN
                                           " S"
                                           ELSE
-                                          " N". 
+                                          " N".    
 
 	    IF AVAIL(crapceb) THEN
 		   DO:

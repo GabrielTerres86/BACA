@@ -2894,7 +2894,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                   ,pr_dsdchave => vr_rejeitado.cdcooper || ';' || 
                                                   vr_rejeitado.nrdconta || ';' || 
                                                   vr_rejeitado.nrcnvcob || ';2');
-                        
+        
         -- Insere registro
         INSERT INTO craprtc(cdcooper
                            ,nrdconta
@@ -6654,7 +6654,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       IF cr_craprtc%NOTFOUND THEN
         --Fechar Cursor
         CLOSE cr_craprtc;
-
+        
         -- Utilizar a SEQUENCE para gerar o numero de remessa do cooperado
         vr_nrremrtc := fn_sequence(pr_nmtabela => 'CRAPRTC'
                                   ,pr_nmdcampo => 'NRREMRET'

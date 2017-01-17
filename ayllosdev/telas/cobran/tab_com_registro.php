@@ -12,6 +12,7 @@
  * [04/05/2015] Lucas Reinert (CECRED) : Incluido campo dsemiten - Projeto DP 219 - Cooperativa Emite e Expede.
  *
  *			    30/12/2015 - Alterações Referente Projeto Negativação Serasa (Daniel)	
+*               08/01/2017 - Inclusao do campo flgdprot (Heitor - Mouts) - Chamado 574161 
  */	
 ?>
 
@@ -79,6 +80,7 @@
 								  <input type="hidden" id="inserasa" name="inserasa" value="<? echo getByTagName($r->tags,'inserasa') ?>" />	
 								  <input type="hidden" id="flserasa" name="flserasa" value="<? echo getByTagName($r->tags,'flserasa') ?>" />
 								  <input type="hidden" id="qtdianeg" name="qtdianeg" value="<? echo getByTagName($r->tags,'qtdianeg') ?>" />
+								  <input type="hidden" id="flgdprot" name="flgdprot" value="<? echo getByTagName($r->tags,'flgdprot') ?>" />
 								  
 						</td>
 						<td><span><? echo getByTagName($r->tags,'nrdocmto') ?></span>

@@ -15,6 +15,8 @@
  *
  * 30/12/2015 - Alterações Referente Projeto Negativação Serasa (Daniel)	
  * 
+ * 17/01/2017 - Recebimento do flag flgdprot para definicao de layout da tela (Heitor - Mouts)
+ *
  */
  
 ?>
@@ -40,6 +42,7 @@
     $cdbandoc	= $_POST['cdbandoc']; 
 	$flserasa	= $_POST['flserasa'];
 	$qtdianeg   = $_POST['qtdianeg'];
+	$flgdprot   = $_POST['flgdprot'];
 
 	switch( $operacao ) {
 		case 'log':			$procedure = 'buca_log';			break;	
@@ -195,7 +198,12 @@
 												<input type="text" id="vldesabt" name="vldesabt" value="<?php echo $vldesabt ?>"/>
 
 												<?php
-													if (strtoupper($flserasa) == 'YES') {
+													if (strtoupper($flgdprot) == 'YES') {
+														?>
+														<label for="qtdiaprt">Prot:</label>
+														<input type="text" id="qtdiaprt" name="qtdiaprt" value="<?php echo $qtdiaprt; ?>"/>
+														<?php
+													} elseif (strtoupper($flserasa) == 'YES') {
 														?>
 														<label for="qtdianeg">Serasa:</label>
 														<input type="text" id="qtdianeg" name="qtdianeg" value="<?php echo $qtdianeg; ?>"/>
@@ -203,7 +211,7 @@
 													} else {
 														?>
 														<label for="qtdiaprt">Prot:</label>
-														<input type="text" id="qtdiaprt" name="qtdiaprt" value="<?php echo $qtdiaprt; ?>"/>
+														<input type="text" id="qtdiaprt" name="qtdiaprt" value="<?php echo 0; ?>"/>
 														<?php
 													}
 												?>

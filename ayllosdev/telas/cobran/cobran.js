@@ -19,6 +19,7 @@
  * 03/05/2016 - Ajustes para inclusao da opcao S. PRJ318 - Nova Plataforma de cobranca (Odirlei-AMcom)
  * 09/05/2016 - Adicionar o filtro numero da conta para os tipos: 2 - Numero do Boleto, 3 - Data de Emissao, 4 - Data de Pagamento
  *              5 - Data de Vencimento, 6 - Nome do Pagador (Douglas - Chamado 441759)
+ * 08/01/2017 - Adicionar o campo flgdprot para definir label e informacao a mostrar (Protesto x Negativacao (Heitor - Mouts) - Chamado 574161
  */
 
 //Formulários e Tabela
@@ -45,7 +46,7 @@ var registro;
 
 var cdcooper, nrinssac, nrnosnum, dsdoccop, nmdsacad, flgcbdda, flgreaux, dsendsac, complend, nmbaisac, nmcidsac, cdufsaca, nrcepsac,
 	dscjuros, dscmulta, dscdscto, dtdocmto, dsdespec, flgaceit, dsstacom, dtvencto, vltitulo, vldesabt, qtdiaprt, dtdpagto, vldpagto,
-	vljurmul, cdbandoc, nrdcoaux, nrcnvcob, cdsituac, dssituac, cdtpinsc, nrdocmto, dsemiten, inserasa, flserasa, qtdianeg;
+	vljurmul, cdbandoc, nrdcoaux, nrcnvcob, cdsituac, dssituac, cdtpinsc, nrdocmto, dsemiten, inserasa, flserasa, qtdianeg, flgdprot;
 
 $(document).ready(function () {
     estadoInicial();
@@ -104,8 +105,8 @@ function controlaOperacao(operacao, nriniseq, nrregist) {
     var inestcri = $('#inestcri', '#' + frmOpcao).val();
 
     cTodosOpcao.removeClass('campoErro');
-
-    var mensagem = 'Aguarde, buscando dados ...';
+	
+	var mensagem = 'Aguarde, buscando dados ...';
     showMsgAguardo(mensagem);
 
     // Carrega dados da conta através de ajax
@@ -606,7 +607,7 @@ function controlaLayoutC() {
             formataTipo3();
 			// Foco no campo Numero da Conta
 			$('#nrdconta', '#' + frmOpcao).focus();
-
+            
 
         } else if (consulta == '4') {
 			// Mostrar o campo de numero da conta para "4 - data de pagamento"
@@ -625,7 +626,7 @@ function controlaLayoutC() {
             formataTipo5();
 			// Foco no campo Numero da Conta
 			$('#nrdconta', '#' + frmOpcao).focus();
-
+			
         } else if (consulta == '6') {
 			// Mostrar o campo de numero da conta para "6 - Nome do Pagador"
 			$('#' + frmOpcao + ' fieldset:eq(1)').css({ 'display': 'block' });
@@ -674,14 +675,14 @@ function formataTipo1() {
 
         var auxconta = normalizaNumero(cNrdconta.val());
 		var consulta = $('#consulta', '#' + frmOpcao).val();
-
+		
         // Se é a tecla TAB, 
         if (e.keyCode == 9 || e.keyCode == 13) {
 			if( auxconta != 0 ){
 				if (validaCampo('nrdconta', auxconta)){
-            manterRotina('BA');
-            return false;
-        }
+					manterRotina('BA');
+					return false;
+				}
 			}
 			
 			if ( consulta == 2 ) { // 2 - Numero do Boleto
@@ -695,11 +696,11 @@ function formataTipo1() {
 			} else if ( consulta == 6 ) { // 6 - Nome do Pagador
 				$('#nmprimtl','#' + frmOpcao).focus();
 			}
-            return false;
-        }
+			return false;
+		}			
 
     });
-
+	
 	cNrdconta.habilitaCampo();
 
     return false;
@@ -755,7 +756,7 @@ function formataTipo2() {
         }
 
     });
-
+	
 	cIninrdoc.habilitaCampo();
 
     return false;
@@ -798,7 +799,7 @@ function formataTipo3() {
         }
 
     });
-
+	
 	cInidtmvt.habilitaCampo();
 	cFimdtmvt.habilitaCampo();
 
@@ -820,7 +821,7 @@ function formataTipo4() {
 
     cInidtdpa.css({ 'width': '83px' }).addClass('data');
     cFimdtdpa.css({ 'width': '84px' }).addClass('data');
-
+    
     // de
     cInidtdpa.unbind('keydown').bind('keydown', function (e) {
         // Se é a tecla TAB ou ENTER, 
@@ -831,7 +832,7 @@ function formataTipo4() {
 
     });
 	
-    // ate
+	// ate
     cFimdtdpa.unbind('keydown').bind('keydown', function (e) {
         if (divError.css('display') == 'block') { return false; }
 
@@ -842,7 +843,7 @@ function formataTipo4() {
         }
 
     });
-
+	
 	cInidtdpa.habilitaCampo();
 	cFimdtdpa.habilitaCampo();
 
@@ -887,7 +888,7 @@ function formataTipo5() {
         }
 
     });
-
+	
 	cInidtven.habilitaCampo();
 	cFimdtven.habilitaCampo();
 	
@@ -1161,7 +1162,7 @@ function selecionaTabela(tr) {
         inserasa = $('#inserasa', tr).val();
         flserasa = $('#flserasa', tr).val();
         qtdianeg = $('#qtdianeg', tr).val();
-
+        flgdprot = $('#flgdprot', tr).val();
     }
 
     return false;
@@ -1191,6 +1192,7 @@ function buscaConsulta(operacao) {
             cdbandoc: cdbandoc,
             flserasa: flserasa,
             qtdianeg: qtdianeg,
+			flgdprot: flgdprot,
             redirect: 'script_ajax'
         },
         error: function (objAjax, responseError, objExcept) {
