@@ -35,7 +35,7 @@
 
     Programa: b1wgen0015.p
     Autor   : Evandro
-    Data    : Abril/2006                      Ultima Atualizacao: 03/11/2016
+    Data    : Abril/2006                      Ultima Atualizacao: 12/01/2017
     
     Dados referentes ao programa:
 
@@ -389,6 +389,11 @@
 
                03/11/2016 - Correçao de leitura "FIRST crabsnh" da procedure liberar-senha-internet,
                             Prj. Assinatura Conjunta (Jean Michel).
+
+               12/01/2017 - Ajuste para nao permitir que um favorecido de TED seja desativado
+					        caso o mesmo possua algum agendamento cadastrado
+							(Adriano - SD 593235).
+
 ..............................................................................*/
 
 { sistema/internet/includes/b1wnet0002tt.i }
@@ -9666,6 +9671,38 @@ PROCEDURE altera-dados-cont-cadastrada:
         ON STOP   UNDO ALTERA, LEAVE ALTERA
         ON ENDKEY UNDO ALTERA, LEAVE ALTERA:
             
+		    /** Se for conta de outras Instituições financeiras (TED) e for para 
+			    desativar favorecido**/
+		    IF par_intipdif = 2 AND 
+			   par_insitcta = 3 THEN 
+			   DO:
+				   FIND FIRST craplau WHERE craplau.cdcooper = par_cdcooper   AND
+											craplau.nrdconta = par_nrdconta   AND
+											craplau.nrctadst = par_nrctatrf   AND
+											craplau.cdtiptra = 4 /*TED*/      AND
+											craplau.insitlau = 1 /*Pendente*/ AND
+											craplau.cddbanco = par_cddbanco   AND
+											craplau.cdageban = par_cdageban
+											NO-LOCK NO-ERROR.
+
+				   IF AVAIL craplau THEN
+					  DO:
+					     ASSIGN aux_dscritic = "Para desativar, desabilite a(s) ted(s) " + 
+											   "agendada(s) para este favorecido.".
+
+						 RUN gera_erro (INPUT par_cdcooper,
+									    INPUT par_cdagenci,
+									    INPUT par_nrdcaixa,
+									    INPUT 1,            /** Sequencia **/
+									    INPUT 0,            /** Critica   **/
+									    INPUT-OUTPUT aux_dscritic).
+
+						 UNDO ALTERA, LEAVE ALTERA.
+
+					  END.
+
+               END.
+
             Contador: DO aux_contador = 1 TO 10:
 
                 FIND crapcti WHERE crapcti.cdcooper = par_cdcooper  AND
