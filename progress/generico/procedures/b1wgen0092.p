@@ -2,7 +2,7 @@
 
    Programa: b1wgen0092.p                  
    Autora  : André - DB1
-   Data    : 04/05/2011                        Ultima atualizacao: 27/10/2016
+   Data    : 04/05/2011                        Ultima atualizacao: 17/01/2017
     
    Dados referentes ao programa:
    
@@ -162,6 +162,9 @@
               27/10/2016 - Incluir novo tratamento na procedure grava-dados para nao permitir
                            a inclusao de faturas caso a empresa e segmento estiverem zerados
                            (Lucas Ranghetti #542571)
+                           
+              17/01/2017 - Retirar validacao para a TIM, historico 834, par_cdrefere < 1000000000
+                           (Lucas Ranghetti #581878)
 .............................................................................*/
 
 /*............................... DEFINICOES ................................*/
@@ -1154,15 +1157,8 @@ PROCEDURE valida-dados:
                                  ASSIGN aux_cdcritic = 008
                                         par_nmdcampo = "cdrefere".
                                  LEAVE Valida.
-                             END.
-                             
-                        IF   par_cdrefere < 1000000000 THEN
-                              DO:
-                                 ASSIGN aux_cdcritic = 654
-                                        par_nmdcampo = "cdrefere".
-                                 LEAVE Valida.
-                              END.
-                                    
+                             END.                             
+                        
                     END.
                 ELSE    
                 IF  par_cdhistor = 667 OR
