@@ -534,7 +534,7 @@ function mostraTelaAltera() {
     exibeRotina($('#divUsoGenerico'));
 
     if (situacao_limite != "EM ESTUDO") {
-        showError("error", "N&atilde;o &eacute; poss&iacute;vel alterar contrato. Situa&ccedil;&atilde;o do limite ATIVO.", "Alerta - Ayllos", "fechaRotinaAltera();");
+        showError("error", "N&atilde;o &eacute; poss&iacute;vel alterar contrato. Situa&ccedil;&atilde;o do limite DEVE estar em ESTUDO.", "Alerta - Ayllos", "fechaRotinaAltera();");
         return false;
     }
 

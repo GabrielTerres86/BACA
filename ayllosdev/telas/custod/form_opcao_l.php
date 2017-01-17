@@ -115,5 +115,5 @@
 	<a href="#" class="botao" id="btConciliarT" onclick="confirmaConciliarTodos(); return false;" style="display:none" >Conciliar Todos</a>
 	<a href="#" class="botao" id="btCustodiar" onclick="verificaChqConc(); return false;" style="display:none" >Custodiar</a>
 	<a href="#" class="botao" id="btImprimir" onclick="validaImprimirCustodL(); return false;" style="display:none" >Imprimir</a>
-	<a href="#" class="botao" id="btExcluir" onclick="confirmaExclusao(); return false;" style="display:none" >Excluir</a>
+	<a href="#" class="botao" id="btnExcluir" onclick="confirmaExclusao(); return false;" style="display:none" >Excluir</a>
 </div>

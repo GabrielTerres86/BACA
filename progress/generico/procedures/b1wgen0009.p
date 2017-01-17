@@ -2749,12 +2749,52 @@ PROCEDURE busca_dados_limite:
             RETURN "NOK".
         END.
         
+    FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
+                       crapass.nrdconta = par_nrdconta 
+                       NO-LOCK NO-ERROR.
+    
+    IF NOT AVAILABLE crapass  THEN
+      DO:
+         ASSIGN aux_cdcritic = 9
+                aux_dscritic = "".
+                
+         RUN gera_erro (INPUT par_cdcooper,
+                        INPUT par_cdagenci,
+                        INPUT par_nrdcaixa,
+                        INPUT 1,            /** Sequencia **/
+                        INPUT aux_cdcritic,
+                        INPUT-OUTPUT aux_dscritic).
+
+         IF  par_flgerlog  THEN
+         DO:
+             RUN proc_gerar_log (INPUT par_cdcooper,
+                                 INPUT par_cdoperad,
+                                 INPUT aux_dscritic,
+                                 INPUT aux_dsorigem,
+                                 INPUT aux_dstransa,
+                                 INPUT FALSE,
+                                 INPUT par_idseqttl,
+                                 INPUT par_nmdatela,
+                                 INPUT par_nrdconta,
+                                OUTPUT aux_nrdrowid). 
+             
+             RUN proc_gerar_log_item(INPUT aux_nrdrowid,
+                                     INPUT "nrctrlim",
+                                     INPUT "",
+                                     INPUT par_nrctrlim).
+
+         END.             
+         
+         RETURN "NOK".
+      END.
+    
     RUN busca_parametros_dscchq (INPUT par_cdcooper,
                                  INPUT par_cdagenci,
                                  INPUT par_nrdcaixa,
                                  INPUT par_cdoperad,
                                  INPUT par_dtmvtolt,
                                  INPUT par_idorigem,
+                                 INPUT crapass.inpessoa,
                                  OUTPUT TABLE tt-erro,
                                  OUTPUT TABLE tt-dados_dscchq).
 
@@ -10397,6 +10437,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                     INPUT par_cdoperad,
                                     INPUT par_dtmvtolt,
                                     INPUT par_idorigem,
+                                    INPUT crapass.inpessoa,
                                     OUTPUT TABLE tt-erro,
                                     OUTPUT TABLE tt-dados_dscchq).
       

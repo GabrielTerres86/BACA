@@ -39,7 +39,7 @@
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 	
-	$xmlResult = mensageria($xml, "TELA_ATENDA_DESCONTO", "EFETUA_RESGATE_CHQ", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlResult = mensageria($xml, "TELA_ATENDA_DESCTO", "EFETUA_RESGATE_CHQ", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlObj = getObjectXML($xmlResult);		
 		
 	//-----------------------------------------------------------------------------------------------

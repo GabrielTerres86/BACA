@@ -221,14 +221,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_DESCTO AS
       -- Se NAO informou data inicial
       IF TRIM(pr_dtiniper) IS NULL THEN
         vr_cdcritic := 0;
-        vr_dscritic := 'Informe a data.';
+        vr_dscritic := 'Período de Digitação deve ser informado.';
         RAISE vr_exc_erro;
       END IF;
 
       -- Se NAO informou data final
       IF TRIM(pr_dtfimper) IS NULL THEN
         vr_cdcritic := 0;
-        vr_dscritic := 'Informe a data.';
+        vr_dscritic := 'Período de Digitação deve ser informado.';
         RAISE vr_exc_erro;
       END IF;
       
@@ -383,7 +383,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_DESCTO AS
                                  ,pr_cdprogra  => 'DESCTO'
                                  ,pr_dtmvtolt  => rw_crapdat.dtmvtolt
                                  ,pr_dsxml     => vr_des_xml
-                                 ,pr_dsxmlnode => '/raiz/Relat/Bordero'
+                                 ,pr_dsxmlnode => '/raiz/Relat'
                                  ,pr_dsjasper  => 'crrl725.jasper'
                                  ,pr_dsparams  => NULL
                                  ,pr_dsarqsaid => vr_dsdireto||'/'||vr_nmarqpdf
@@ -749,7 +749,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_DESCTO AS
                                  ,pr_cdprogra  => 'DESCTO'
                                  ,pr_dtmvtolt  => rw_crapdat.dtmvtolt
                                  ,pr_dsxml     => vr_des_xml
-                                 ,pr_dsxmlnode => '/raiz/Relat/Limite'
+                                 ,pr_dsxmlnode => '/raiz/Relat'
                                  ,pr_dsjasper  => 'crrl726.jasper'
                                  ,pr_dsparams  => NULL
                                  ,pr_dsarqsaid => vr_dsdireto||'/'||vr_nmarqpdf

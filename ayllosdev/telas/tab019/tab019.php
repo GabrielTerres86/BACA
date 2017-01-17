@@ -96,10 +96,8 @@ if ($glbvars['cdoperad'] != '1') {
                                                                                     <?php include('form_tab019.php'); ?>
 
                                                                                     <div id="divBotoes" name="divBotoes" style="margin-bottom:5px">
-                                                                                        <a href="#" class="botao" id="btVoltar"  onclick="estadoInicial();
-                                                                                                return false;">Voltar</a>
-                                                                                        <a href="#" class="botao" id="btContinuar"  onClick="confirmaOperacao();
-                                                                                                return false;">Alterar</a>
+                                                                                        <a href="#" class="botao" id="btVoltar"  onclick="estadoInicial(); return false;">Voltar</a>
+                                                                                        <a href="#" class="botao" id="btContinuar"  onClick="confirmaOperacao(); return false;">Prosseguir</a>
                                                                                     </div>
 
                                                                                 </div>

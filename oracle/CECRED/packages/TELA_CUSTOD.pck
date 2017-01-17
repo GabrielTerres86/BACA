@@ -619,7 +619,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSTOD IS
 				-- Levantar exceção
 				RAISE vr_exc_erro;
 			END IF;
-																				 
+			
 			-- Verifica se foram encontrados erros durante o processamento
       IF vr_tab_resgate_erro.count > 0 THEN
         vr_xml_erro_resgate := '';
@@ -1517,7 +1517,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSTOD IS
                          '[0-9]<>:',
                          '[0-9]') dsdocmc7
 							,dcc.inconcil
-							,dcc.cdocorre
+              ,(SELECT dcc.cdocorre || ' - ' || occ.dsocorre
+							    FROM crapocc occ
+								 WHERE occ.cdocorre = dcc.cdocorre
+								   AND occ.intipmvt = 2
+								   AND occ.cdtipmvt = 21) cdocorre
 					FROM crapdcc dcc					   
 				 WHERE dcc.cdcooper = pr_cdcooper
 				   AND dcc.nrdconta = pr_nrdconta
@@ -3351,15 +3355,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSTOD IS
 											 ,pr_nrremret IN craphcc.nrremret%TYPE
 											 ,pr_intipmvt IN craphcc.intipmvt%TYPE) IS
 			  SELECT hcc.rowid
+              ,hcc.nmarquiv
+              ,hcc.insithcc
 				  FROM craphcc hcc
 				 WHERE hcc.cdcooper = pr_cdcooper
 				   AND hcc.nrdconta = pr_nrdconta
 					 AND hcc.nrconven = pr_nrconven
 					 AND hcc.nrremret = pr_nrremret
 					 AND hcc.intipmvt = pr_intipmvt
-					 AND hcc.intipmvt = 3
-					 AND hcc.nmarquiv = ' '
-					 AND hcc.insithcc = 1;
+					 AND hcc.intipmvt = 3;
       rw_craphcc cr_craphcc%ROWTYPE;		
 
 			-- Verificar se remessa está pendente
@@ -3441,13 +3445,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSTOD IS
 				CLOSE cr_craphcc;
 				-- Data para Deposito invalida
 				vr_cdcritic := 0;
-				vr_dscritic := 'Remessa não encontrada, já processada ou por arquivo.';
+				vr_dscritic := 'Operação não permitida. Remessa não encontrada.';
 				-- Executa RAISE para sair das validações
 				RAISE vr_exc_erro;				
 			END IF;
 			-- Fecha cursor
-			CLOSE cr_craphcc;				
-			
+			CLOSE cr_craphcc;	
+      
+      IF rw_craphcc.insithcc = 2 THEN
+        vr_cdcritic := 0;
+				vr_dscritic := 'Operação não permitida. Remessa já processada.';
+				-- Executa RAISE para sair das validações
+				RAISE vr_exc_erro;
+      END IF;
+      
+      IF rw_craphcc.nmarquiv <> ' ' THEN
+        vr_cdcritic := 0;
+				vr_dscritic := 'Operação não permitida. Remessa por arquivo.';
+				-- Executa RAISE para sair das validações
+				RAISE vr_exc_erro;
+      END IF;
+      
 			-- Buscar remessa de cheque para verificar se ainda não foi processada
 			OPEN cr_crapdcc(pr_cdcooper => vr_cdcooper
 										 ,pr_nrdconta => pr_nrdconta

@@ -490,6 +490,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
       
       -- Variaveis de log
       vr_dtaltcad      VARCHAR2(20);          --> Data de alteracao do cadastro
+      vr_tpaltcad      VARCHAR2(50);          --> Tipo do cadastro da alteracao
       vr_dsclinha      VARCHAR2(4000);        --> Linha a ser inserida no LOG
       vr_dsdireto      VARCHAR2(400);         --> Diretório do arquivo de LOG
       vr_utlfileh      utl_file.file_type;    --> Handle para arquivo de LOG
@@ -545,6 +546,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
       END IF;
 
       vr_dtaltcad := to_char(SYSDATE,'dd/mm/yyyy hh24:mi:ss');
+      
+      IF pr_tplimite = 2 THEN
+        vr_tpaltcad := ' --> Limite Desconto de Cheque';
+      ELSE
+        vr_tpaltcad := ' --> Limite de Credito';
+      END IF;
+      
+      IF pr_inpessoa = 1 THEN
+        vr_tpaltcad := vr_tpaltcad || ' - PF';
+      ELSE
+        vr_tpaltcad := vr_tpaltcad || ' - PJ';
+      END IF;
+      
       vr_dsdireto := gene0001.fn_diretorio(pr_tpdireto => 'C'
                                           ,pr_cdcooper => vr_cdcooper
                                           ,pr_nmsubdir => '/log');
@@ -562,7 +576,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
       END IF;
 
       IF rw_craprli.vlmaxren <> pr_vlmaxren THEN
-        vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
+        vr_dsclinha := vr_dtaltcad || vr_tpaltcad
+                                   || ' -->  Operador ' || vr_cdoperad 
                                    || ' alterou o campo Valor Maximo do Limite de ' 
                                    || rw_craprli.vlmaxren || ' para ' || pr_vlmaxren;
         -- Gravar linha no arquivo
@@ -571,7 +586,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
       END IF;
         
       IF rw_craprli.nrrevcad <> pr_nrrevcad THEN
-        vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
+        vr_dsclinha := vr_dtaltcad || vr_tpaltcad
+                                   || ' -->  Operador ' || vr_cdoperad 
                                    || ' alterou o campo Revisao Cadastral de ' 
                                    || rw_craprli.nrrevcad || ' para ' || pr_nrrevcad;
         -- Gravar linha no arquivo
@@ -580,7 +596,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
       END IF;
         
       IF rw_craprli.qtmincta <> pr_qtmincta THEN
-        vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
+        vr_dsclinha := vr_dtaltcad || vr_tpaltcad
+                                   || ' -->  Operador ' || vr_cdoperad 
                                    || ' alterou o campo Tempo de Conta de '
                                    || rw_craprli.qtmincta || ' para ' || pr_qtmincta;
         -- Gravar linha no arquivo
@@ -589,7 +606,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
       END IF;
        
       IF rw_craprli.qtdiaren <> pr_qtdiaren THEN
-        vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
+        vr_dsclinha := vr_dtaltcad || vr_tpaltcad
+                                   || ' -->  Operador ' || vr_cdoperad 
                                    || ' alterou o campo Tentativas Diarias de Renovacao de '
                                    || rw_craprli.qtdiaren || ' para ' || pr_qtdiaren;
         -- Gravar linha no arquivo
@@ -598,7 +616,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
       END IF;
         
       IF rw_craprli.dssitdop <> pr_dssitdop THEN
-        vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
+        vr_dsclinha := vr_dtaltcad || vr_tpaltcad
+                                   || ' -->  Operador ' || vr_cdoperad 
                                    || ' alterou o campo Situacao da Conta de ' 
                                    || rw_craprli.dssitdop || ' para ' || pr_dssitdop;                                 
                                      
@@ -608,7 +627,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
       END IF;
         
       IF rw_craprli.qtmaxren <> pr_qtmaxren THEN
-        vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
+        vr_dsclinha := vr_dtaltcad || vr_tpaltcad
+                                   || ' -->  Operador ' || vr_cdoperad 
                                    || ' alterou o campo Qtde. Maxima de Renovacoes de ' 
                                    || rw_craprli.qtmaxren || ' para ' || pr_qtmaxren;                                 
                                      
@@ -618,7 +638,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
       END IF;
         
       IF rw_craprli.qtdiaatr <> pr_qtdiaatr THEN
-        vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
+        vr_dsclinha := vr_dtaltcad || vr_tpaltcad
+                                   || ' -->  Operador ' || vr_cdoperad 
                                    || ' alterou o campo Emprestimo em Atraso de ' 
                                    || rw_craprli.qtdiaatr || ' para ' || pr_qtdiaatr;                                 
                                      
@@ -628,7 +649,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
       END IF;
         
       IF rw_craprli.qtatracc <> pr_qtatracc THEN
-        vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
+        vr_dsclinha := vr_dtaltcad || vr_tpaltcad
+                                   || ' -->  Operador ' || vr_cdoperad 
                                    || ' alterou o campo Conta Corrente em Atraso de ' 
                                    || rw_craprli.qtatracc || ' para ' || pr_qtatracc;                                 
                                     
@@ -638,7 +660,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
       END IF;
         
       IF rw_craprli.dsrisdop <> pr_dsrisdop THEN
-        vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
+        vr_dsclinha := vr_dtaltcad || vr_tpaltcad
+                                   || ' -->  Operador ' || vr_cdoperad 
                                    || ' alterou o campo Risco da Conta de ' 
                                    || rw_craprli.dsrisdop || ' para ' || pr_dsrisdop;                                 
                                      
@@ -650,7 +673,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
       
       IF rw_craprli.pcliqdez <> pr_pcliqdez THEN
 
-        vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
+        vr_dsclinha := vr_dtaltcad || vr_tpaltcad
+                                   || ' -->  Operador ' || vr_cdoperad 
                                    || ' alterou o campo Percentual Minimo de Liquidez de ' 
                                    || rw_craprli.pcliqdez || ' para ' || pr_pcliqdez;                                 
                                      
@@ -663,7 +687,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
      
       IF rw_craprli.qtdialiq <> pr_qtdialiq THEN
 
-        vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
+        vr_dsclinha := vr_dtaltcad || vr_tpaltcad
+                                   || ' -->  Operador ' || vr_cdoperad 
                                    || ' alterou o campo Quantidade de Dias para Calculo Percentual Liquidez de ' 
                                    || rw_craprli.qtdialiq || ' para ' || pr_qtdialiq;                                 
                                      

@@ -56,7 +56,7 @@
 	}	
 		
 ?>
-<div class="divRegistros" id="divCheques" style="overflow:scroll;">	
+<div class="divRegistros" id="divCheques">	
 	<table class="tituloRegistros" id="tbCheques">
 		<thead>
 			<tr>
@@ -108,7 +108,7 @@
 							echo 'disabled ';}?> ></input></td>
 						<td id="cdocorre" ><span></span><? echo $aux_cdocorre ?></td>
 						<td><img src="<?php echo $UrlImagens; ?>geral/detalhes.gif" style="width:15px" title="Detalhar" onclick="mostraDetalhamentoCheque();" /></td>
-						<td><img <?if ($insithcc == 'Processado'){ echo ' style="opacity: 0.4"'; } ?> src="<?php echo $UrlImagens; ?>geral/<? if ($insithcc == 'Processado'){ echo 'panel-delete_desabilita.gif'; }else{ echo 'panel-delete_16x16.gif'; }?>" title="Excluir" onclick="confirmaExcluiCheque();" /></td>
+						<td><img <?if ($insithcc == 'Processado'){ echo ' style="opacity: 0.4; cursor: default;"'; } ?> src="<?php echo $UrlImagens; ?>geral/<? if ($insithcc == 'Processado'){ echo 'panel-delete_desabilita.gif'; }else{ echo 'panel-delete_16x16.gif'; }?>" title="Excluir" onclick="confirmaExcluiCheque();" /></td>
 						<input type="hidden" id="dsdocmc7" name="dsdocmc7" value="<? echo $aux_dsdocmc7?>">
 					</tr>
 					<?

@@ -79,6 +79,6 @@
 	}
 	?>
 	
-    controlaCampos($('#cddopcao', '#frmCab').val());
+    controlaCampos($('#cddopcao', '#frmCab').val(), $('#tplimite', '#frmCab').val());
     $('#frmRegra').css('display','block');    
 </script>

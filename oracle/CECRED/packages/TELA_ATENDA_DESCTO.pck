@@ -469,18 +469,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
       -- Busca capa do lote
       CURSOR cr_craplot (pr_cdcooper IN crapcop.cdcooper%TYPE
                         ,pr_dtmvtolt IN craplot.dtmvtolt%TYPE
-                        ,pr_cdagenci IN craplot.cdagenci%TYPE
-                        ,pr_cdbccxlt IN craplot.cdbccxlt%TYPE
-                        ,pr_nrdolote IN craplot.nrdolote%TYPE) IS
-        SELECT nrseqdig
-              ,qtcompln
+                        ,pr_cdagenci IN craplot.cdagenci%TYPE) IS
+        SELECT nvl(MAX(nrdolote), 0) + 1
           FROM craplot
          WHERE cdcooper = pr_cdcooper 
            AND dtmvtolt = pr_dtmvtolt
            AND cdagenci = pr_cdagenci
-           AND cdbccxlt = pr_cdbccxlt
-           AND nrdolote = pr_nrdolote;
-      rw_craplot cr_craplot%ROWTYPE;
+           AND cdbccxlt = 700;
       
       -- Busca contratos que foram microfilmados.
       CURSOR cr_crapmcr (pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -538,8 +533,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
       vr_valor        craplim.vllimite%TYPE;
       vr_index        INTEGER;
       vr_str_grupo    VARCHAR2(32767) := '';
-      vr_nrseqdig     rw_craplot.nrseqdig%TYPE;
-      vr_qtcompln     rw_craplot.qtcompln%TYPE; 
+      vr_nrdolote     craplot.nrdolote%TYPE;
       vr_vlutilizado  VARCHAR2(100) := '';
       vr_vlexcedido   VARCHAR2(100) := '';
       
@@ -841,34 +835,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
         -- Verifica se ja existe lote criado
         OPEN cr_craplot(pr_cdcooper => vr_cdcooper
                        ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                       ,pr_cdagenci => vr_cdagenci
-                       ,pr_cdbccxlt => 700
-                       ,pr_nrdolote => 1);
-        FETCH cr_craplot INTO rw_craplot;
-        vr_flgfound := cr_craplot%FOUND;
-        IF NOT vr_flgfound THEN
-          -- Se não, cria novo lote
-          BEGIN
-            INSERT INTO craplot (cdcooper
-                                ,dtmvtolt
-                                ,cdagenci
-                                ,cdbccxlt
-                                ,nrdolote)
-                         VALUES (vr_cdcooper
-                                ,rw_crapdat.dtmvtolt
-                                ,vr_cdagenci
-                                ,700
-                                ,1)RETURNING nrseqdig,qtcompln
-                                        INTO vr_nrseqdig, vr_qtcompln;
-          EXCEPTION
-            WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao inserir capa do lote. ' || SQLERRM;
-            RAISE vr_exc_saida;
-          END;
-        ELSE
-            vr_nrseqdig := rw_craplot.nrseqdig;
-            vr_qtcompln := rw_craplot.qtcompln;
-        END IF;
+                       ,pr_cdagenci => vr_cdagenci);
+        FETCH cr_craplot INTO vr_nrdolote;
+
+        -- Se não, cria novo lote
+        BEGIN
+          INSERT INTO craplot (cdcooper
+                              ,dtmvtolt
+                              ,cdagenci
+                              ,cdbccxlt
+                              ,nrdolote
+                              ,tplotmov
+                              ,nrseqdig
+                              ,qtcompln
+                              ,vlcompcr
+                              ,vlinfocr
+                              ,cdoperad)
+                       VALUES (vr_cdcooper
+                              ,rw_crapdat.dtmvtolt
+                              ,vr_cdagenci
+                              ,700
+                              ,vr_nrdolote
+                              ,27
+                              ,1
+                              ,1
+                              ,pr_vllimite
+                              ,pr_vllimite
+                              ,vr_cdoperad);
+        EXCEPTION
+          WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao inserir capa do lote. ' || SQLERRM;
+          RAISE vr_exc_saida;
+        END;
         
         -- Atualiza Limite de credito
         BEGIN
@@ -951,32 +949,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
                        VALUES (rw_crapdat.dtmvtolt
                               ,vr_cdagenci
                               ,700
-                              ,1
+                              ,vr_nrdolote
                               ,pr_nrdconta
                               ,pr_nrctrlim
                               ,pr_vllimite
-                              ,vr_nrseqdig + 1
+                              ,1
                               ,vr_cdcooper
                               ,2);
         EXCEPTION
           WHEN OTHERS THEN
             vr_dscritic := 'Erro ao criar lancamento de contratos de descontos. ' || SQLERRM;
-            RAISE vr_exc_saida;
-        END;
-        
-        -- Atualiza sequencial e Quantidade computada de lancamentos da e craplot
-        BEGIN
-          UPDATE craplot 
-             SET nrseqdig = vr_nrseqdig + 1
-                ,qtcompln = vr_qtcompln + 1
-           WHERE cdcooper = vr_cdcooper
-             AND dtmvtolt = rw_crapdat.dtmvtolt
-             AND cdagenci = vr_cdagenci
-             AND cdbccxlt = 700
-             AND nrdolote = 1;             
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao atualizar capa do lote. ' || SQLERRM;
             RAISE vr_exc_saida;
         END;
         
@@ -1248,7 +1230,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 		
 	BEGIN
     -- Incluir nome do modulo logado
-    GENE0001.pc_informa_acesso(pr_module => 'TELA_ATENDA_DESCONTO'
+    GENE0001.pc_informa_acesso(pr_module => 'TELA_ATENDA_DESCTO'
                               ,pr_action => NULL);		
 	
     -- Extrai os dados vindos do XML
@@ -1658,7 +1640,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 
 	BEGIN	
     -- Incluir nome do modulo logado
-    GENE0001.pc_informa_acesso(pr_module => 'TELA_ATENDA_DESCONTO'
+    GENE0001.pc_informa_acesso(pr_module => 'TELA_ATENDA_DESCTO'
                                 ,pr_action => NULL);	
 	
     -- Extrai os dados vindos do XML
@@ -1991,7 +1973,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
   BEGIN
 		
     -- Incluir nome do modulo logado
-    GENE0001.pc_informa_acesso(pr_module => 'TELA_ATENDA_DESCONTO'
+    GENE0001.pc_informa_acesso(pr_module => 'TELA_ATENDA_DESCTO'
                               ,pr_action => NULL);	
 	
 	  -- Busca a data do sistema
@@ -2303,7 +2285,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 		
   BEGIN		
     -- Incluir nome do modulo logado
-    GENE0001.pc_informa_acesso(pr_module => 'TELA_ATENDA_DESCONTO'
+    GENE0001.pc_informa_acesso(pr_module => 'TELA_ATENDA_DESCTO'
                               ,pr_action => NULL);	
 	
 	  -- Busca a data do sistema
@@ -2479,7 +2461,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 	
 	BEGIN
     -- Incluir nome do modulo logado
-    GENE0001.pc_informa_acesso(pr_module => 'TELA_ATENDA_DESCONTO'
+    GENE0001.pc_informa_acesso(pr_module => 'TELA_ATENDA_DESCTO'
                               ,pr_action => NULL);	
 		
 		gene0004.pc_extrai_dados(pr_xml      => pr_retxml
@@ -2588,7 +2570,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 
 	BEGIN
 	  -- Incluir nome do modulo logado
-    GENE0001.pc_informa_acesso(pr_module => 'TELA_ATENDA_DESCONTO'
+    GENE0001.pc_informa_acesso(pr_module => 'TELA_ATENDA_DESCTO'
                               ,pr_action => NULL);	
 	
 		gene0004.pc_extrai_dados(pr_xml      => pr_retxml
@@ -2745,7 +2727,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 		
   BEGIN		
     -- Incluir nome do modulo logado
-    GENE0001.pc_informa_acesso(pr_module => 'TELA_ATENDA_DESCONTO'
+    GENE0001.pc_informa_acesso(pr_module => 'TELA_ATENDA_DESCTO'
                               ,pr_action => NULL);	
 	
 	  -- Busca a data do sistema

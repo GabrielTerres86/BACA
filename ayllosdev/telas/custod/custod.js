@@ -71,7 +71,7 @@ function controlaOperacao(operacao, nriniseq, nrregist) {
     var dtcusini = $('#dtcusini', '#' + frmOpcao).val();
     var dtcusfim = $('#dtcusfim', '#' + frmOpcao).val();
     var nrdolote = $('#nrdolote', '#' + frmOpcao).val();
-    var dsdocmc7 = $('#dsdocmc7', '#' + frmOpcao).val().replace(/[^0-9]/g, "").substr(0,30);
+    var dsdocmc7 = $('#dsdocmc7', '#' + frmOpcao).val();
     var nmprimtl = $('#nmprimtl', '#' + frmOpcao).val();	
     var dtlibera = $('#dtlibera', '#' + frmOpcao).val();
     var nrborder = normalizaNumero($('#nrborder', '#' + frmOpcao).val());
@@ -84,7 +84,10 @@ function controlaOperacao(operacao, nriniseq, nrregist) {
     var dsdopcao = normalizaNumero($('#dsdopcao', '#' + frmOpcao).val());
 	var cdagenci = normalizaNumero($('#cdagenci', '#' + frmOpcao).val());
 	
-    var mensagem = 'Aguarde, buscando dados ...';
+	if (dsdocmc7 !== undefined)
+		dsdocmc7 = $('#dsdocmc7', '#' + frmOpcao).val().toString().replace(/[^0-9]/g, "").substr(0,30);
+	
+	var mensagem = 'Aguarde, buscando dados ...';
     showMsgAguardo(mensagem);
 
     cTodosOpcao.removeClass('campoErro');
@@ -778,7 +781,7 @@ function formataOpcaoC() {
     arrayLargura[8] = '47px';
     arrayLargura[9] = '73px';
     arrayLargura[10] = '73px';
-	
+
     var arrayAlinha = new Array();
     arrayAlinha[0] = 'center';
     arrayAlinha[1] = 'right';
@@ -790,7 +793,7 @@ function formataOpcaoC() {
     arrayAlinha[7] = 'right';
     arrayAlinha[8] = 'right';
     arrayAlinha[9] = 'center';
-    arrayAlinha[10] = 'center';	
+    arrayAlinha[10] = 'center';
     arrayAlinha[11] = 'left';
 
     tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, '');
@@ -2802,7 +2805,21 @@ function formataTabelaL(){
 	    // tabela
     var divRegistro = $('div.divRegistros', '#divRemessa');
     var tabela = $('table', divRegistro);
-
+	
+	glbTabNrdconta = undefined;
+	glbTabNrctarem = undefined;
+	glbTabDtmvtolt = undefined;
+	glbTabNrremret = undefined;
+	glbTabVltotchq = undefined;
+	glbTabQtcheque = undefined;
+	glbTabQtconcil = undefined;
+	glbTabInsithcc = undefined;
+	glbTabDtcustod = undefined;
+	glbTabNmarquiv = undefined;
+	glbTabNrconven = undefined;
+	glbTabIntipmvt = undefined;
+	glbTabNmprimtl = undefined;
+	
     $('#' + frmOpcao).css({'margin-top': '5px'});
     divRegistro.css({'height': '207px', 'padding-bottom': '2px'});
 
@@ -2850,7 +2867,7 @@ function formataTabelaL(){
 		glbTabIntipmvt = $(this).find('#intipmvt').val();
 		glbTabNmprimtl = $(this).find('#nmprimtl').val();
 	});
-		
+	
 	$('table > tbody > tr:eq(0)', divRegistro).click();	
 	
 }
@@ -2994,6 +3011,9 @@ function adicionaChequeGrid(){
 				)
 			);
 		
+		$('#btResgatar','#divBotoes').css({'display': 'none'});
+		$('#btCancelar','#divBotoes').css({'display': 'none'});
+		$('#btProsseguir','#divBotoes').css({'display': 'inline-block'});
 	}
 }
 
@@ -3229,7 +3249,7 @@ function trocaBotoesL(){
 	var btnConciliarT = $('#btConciliarT','#divBotoes');
 	var btnCustodiar  = $('#btCustodiar','#divBotoes');
 	var btnImprimir   = $('#btImprimir','#divBotoes');
-	var btnExcluir    = $('#btExcluir','#divBotoes');		
+	var btnExcluir    = $('#btnExcluir','#divBotoes');		
 
 	if ($('#divRemessa').css('display') == 'block'){
 		
@@ -3308,6 +3328,10 @@ function buscaRemessas(nriniseq, nrregist){
 
 function buscaChequesRemessa(){
 	
+	if (glbTabNrremret == undefined) {
+		showError('error','Nenhuma remessa selecionada.','Alerta - Ayllos',"unblockBackground()");
+		return false;
+	}
 	showMsgAguardo('Aguarde, buscando cheques da remessa...');
 	
 	$.ajax({        
@@ -3376,7 +3400,7 @@ function formataTabelaChequesL(){
     arrayAlinha[4] = 'right';
     arrayAlinha[5] = 'right';
     arrayAlinha[6] = 'center';
-    arrayAlinha[7] = 'center';
+    arrayAlinha[7] = 'left';
     arrayAlinha[8] = 'center';
     arrayAlinha[9] = 'center';
 
@@ -3406,7 +3430,7 @@ function mostraChequesRemessa(){
 	var btnConciliarT = $('#btConciliarT','#divBotoes');
 	var btnCustodiar  = $('#btCustodiar','#divBotoes');
 	var btnImprimir   = $('#btImprimir','#divBotoes');
-	var btnExcluir    = $('#btExcluir','#divBotoes');
+	var btnExcluir    = $('#btnExcluir','#divBotoes');
 
 	// Mostra/esconde Divs 
 	$('#divFiltros').css({'display': 'none'});
@@ -3419,12 +3443,14 @@ function mostraChequesRemessa(){
 	formataTabelaChequesL();
 	
 	// Mostra/esconde botões
-	btnProsseguir.css({'display': 'inline-block'});
 	btnConciliar.css({'display': 'none'});
 	btnConciliarT.css({'display': 'none'});
 	btnCustodiar.css({'display': 'none'});
 	btnImprimir.css({'display': 'none'});
 	btnExcluir.css({'display': 'none'});
+	
+	if (glbTabInsithcc != 'Processado')
+		btnProsseguir.css({'display': 'inline-block'});
 	
 	// Controla valores e foco dos campos
 	cNrctarem.val(glbTabNrctarem);
@@ -3449,7 +3475,10 @@ function verificaInconcil(inconcil){
 }
 
 function conciliaChequeGrid(){
-
+	
+	if (glbTabInsithcc == 'Processado')
+		return false;
+	
 	var divRegistro = $('div.divRegistros', '#divChqRemessa');
 	var dsdocmc7_sf = cDsdocmc7.val().replace(/[^0-9]/g, "").substr(0,30);
 	var flgEncontrou = 0;
@@ -3627,7 +3656,7 @@ function formataDetalheCheque(){
 	
 	layoutPadrao();
 	
-	if (glbTabIntipmvt == 3 ) {
+	if (glbTabIntipmvt == 3  && glbTabInsithcc != 'Processado') {
 		btnAlterarChq.css('display', 'inline-block');
 		vr_dtemissa = cDtemissa_det.val();
 		cDtemissa_det.habilitaCampo().val(vr_dtemissa).select();
@@ -3815,6 +3844,11 @@ function conciliarCheques(){
 }
 
 function confirmaConciliarTodos(){
+	
+	if (glbTabNrremret == undefined) {
+		showError('error','Nenhuma remessa selecionada.','Alerta - Ayllos',"unblockBackground()");
+		return false;
+	}
 	showConfirmacao('Confirma a execu&ccedil;&atilde;o da opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'conciliarTodosCheques();', 'return false;', 'sim.gif', 'nao.gif');
 }
 
@@ -3848,7 +3882,11 @@ function conciliarTodosCheques(){
 
 function validaImprimirCustodL(){
 
-    if (glbTabInsithcc == 'Pendente'){
+    if (glbTabNrremret == undefined) {
+		showError('error','Nenhuma remessa selecionada.','Alerta - Ayllos',"unblockBackground()");
+		return false;
+	}
+	if (glbTabInsithcc == 'Pendente'){
         showError('error','Impressão apenas permitida para remessas processadas.','Alerta - Ayllos',"unblockBackground()");
 		return false;
     }
@@ -3873,12 +3911,17 @@ function ImprimirCustodL(){
 	$('#sidlogin','#formImpres').val( $('#sidlogin','#frmMenu').val() );
     
 	var action = UrlSite + 'telas/custod/imprimir_custod_l.php';
-
+	
 	carregaImpressaoAyllos("formImpres",action,"bloqueiaFundo(divRotina);hideMsgAguardo();");
      
 }
 
 function verificaChqConc(){
+	
+	if (glbTabNrremret == undefined) {
+		showError('error','Nenhuma remessa selecionada.','Alerta - Ayllos',"unblockBackground()");
+		return false;
+	}
 	
 	showMsgAguardo('Aguarde, verificando cheque(s) conciliado(s) da remessa...');
 		
@@ -3966,6 +4009,11 @@ function custodiarRemessa(){
 
 function confirmaExclusao(){
 
+	if (glbTabNrremret == undefined) {
+		showError('error','Nenhuma remessa selecionada.','Alerta - Ayllos',"unblockBackground()");
+		return false;
+	}
+	
 	showConfirmacao('Esta operacao ir&aacute; excluir esta remessa. Deseja continuar?', 'Confirma&ccedil;&atilde;o - Ayllos', 'excluirRemessa();', 'return false;', 'sim.gif', 'nao.gif');
 	
 	return false;

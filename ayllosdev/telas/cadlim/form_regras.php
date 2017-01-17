@@ -92,14 +92,14 @@
 					<label>&nbsp;Meses</label>
 				</td>
 			</tr>
-			<tr>
+			<tr class="cmpstlim">
 				<td>
 					<label for="pcliqdez">Percentual de Liquidez:</label>	
 					<input name="pcliqdez" type="text"  id="pcliqdez" />
 					<label>&nbsp;%</label>
 				</td>
 			</tr>
-			<tr>
+			<tr class="cmpstlim">
 				<td>
 					<label for="qtdialiq">Qtd. Dias Calculo % de Liquidez:</label>	
 					<input name="qtdialiq" type="text"  id="qtdialiq" />

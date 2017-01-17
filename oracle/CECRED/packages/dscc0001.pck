@@ -2543,6 +2543,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			 FROM crapcst cst
 			WHERE cst.cdcooper = pr_cdcooper
 				AND cst.nrdconta = pr_nrdconta
+        AND cst.insitchq <> 1
 				AND cst.dtlibera BETWEEN pr_dtinilib AND pr_dtfimlib
 				AND cst.nrborder = 0
 			UNION

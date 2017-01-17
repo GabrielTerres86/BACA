@@ -172,7 +172,7 @@
 			<td width="130" align="left"   class="txtNormal"><?php if($qtCheques <= 1){ echo $qtCheques." CHEQUE";}else{ echo $qtCheques." CHEQUES";};?></td>
 			<td width="150" align="left"   class="txtNormal"><?php echo "VALOR TOTAL ".number_format(str_replace(",",".",$vlrtotal),2,",","."); ?></td>
 			<td width="30"  align="right"  class="txtNormal"><?php echo $qtRestricoes; ?></td>
-			<td class="txtNormal"><?php if($qtRestricoes <= 1){echo "RESTRI&Ccedil;&Atilde;O";}else{echo "RESTRI&Ccedil;&Otilde;ES";} ?></td>
+			<td class="txtNormal">&nbsp;<?php if($qtRestricoes <= 1){echo "RESTRI&Ccedil;&Atilde;O";}else{echo "RESTRI&Ccedil;&Otilde;ES";} ?></td>
 		</tr>
 	</table>
 </div>

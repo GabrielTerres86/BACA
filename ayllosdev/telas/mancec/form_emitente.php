@@ -21,7 +21,7 @@
 <br style="clear:both" />	
 
 <fieldset style="padding-bottom:10px">
-	<legend><label ><? echo utf8ToHtml('Consulta do Emitente') ?></label></legend>
+	<legend><? echo utf8ToHtml('Consulta do Emitente') ?></legend>
 
 	<label for="cdcmpchq"><? echo utf8ToHtml('Compe:') ?></label>
 	<input type="text" id="cdcmpchq" name="cdcmpchq" tabindex="3" />	
@@ -41,7 +41,7 @@
 
 <div id="divDadosEmitente" style="display:none;">
 <fieldset style="padding-bottom:10px">
-<legend><label ><? echo utf8ToHtml('Dados do Emitente') ?></label></legend>
+<legend><? echo utf8ToHtml('Dados do Emitente') ?></legend>
 
 <label for="nmemichq"><? echo utf8ToHtml('Nome do Emitente:') ?></label>
 <input type="text" id="nmemichq" name="nmemichq" tabindex="7" />	

@@ -38,12 +38,12 @@
 	if (!validaInteiro($nrdconta)) {
 		exibeErro("Conta/dv inv&aacute;lida.");
 	}
-	
+	/*
 	// Verifica se o número do bordero é um inteiro válido
 	if (!validaInteiro($nrctrlim)) {
 		exibeErro("N&uacute;mero do border&ocirc; inv&aacute;lida.");
 	}	
-	
+	*/
 	$xml  = "<Root>";
 	$xml .= " <Dados>";
 	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
@@ -52,7 +52,7 @@
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 	
-	$xmlResult = mensageria($xml, 'TELA_ATENDA_DESCONTO', 'BUSCA_CHEQUES_DSC_CST', $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlResult = mensageria($xml, 'TELA_ATENDA_DESCTO', 'BUSCA_CHEQUES_DSC_CST', $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlObj = getObjectXML($xmlResult);		
 	//-----------------------------------------------------------------------------------------------
 	// Controle de Erros

@@ -128,6 +128,10 @@ function formataCabecalho() {
 	cTplimite.addClass('inteiro').css({'width':'437px'}).desabilitaCampo();
 	cInpessoa.addClass('inteiro').css({'width':'437px'}).desabilitaCampo();
 	
+	cCddopcao.val('C');
+	cTplimite.val(0);
+	cInpessoa.val(0);
+	
 	controlaFoco();
 	layoutPadrao();
 
@@ -468,7 +472,7 @@ function formataRegra(){
 	return false;
 }
 
-function controlaCampos(op) {
+function controlaCampos(op, tplimite) {
 
     var cTodosCabecalho	= $('input[type="text"],select','#frmCab');	
 	cTodosCabecalho.desabilitaCampo();
@@ -496,7 +500,11 @@ function controlaCampos(op) {
 			trocaBotao('','btnVoltar()');
 			$('#btSalvar','#divBotoes').css('display','none');			
 		break;		
-	}	
+	}
+	
+	if (tplimite == 1)
+		$('.cmpstlim','#frmRegra').css({'display':'none'});
+	
 	return false;	
 }
 
@@ -512,7 +520,17 @@ function btnContinuar() {
     tplimite = $('#tplimite','#frmCab').val();
     inpessoa = $('#inpessoa','#frmCab').val();
 	cddopcao = $('#cddopcao','#frmCab').val();
-		
+	
+	if (tplimite == 0) {
+		showError('error','Tipo de Limite deve ser Selecionado.','Alerta - Ayllos','unblockBackground()');
+		return false;
+	}
+	
+	if (inpessoa == 0) {
+		showError('error','Tipo de Cadastro deve ser Selecionado.','Alerta - Ayllos','unblockBackground()');
+		return false;
+	}
+	
 	if (inpessoa > 0 ) {
 		buscaRegra(cddopcao);
 	}	

@@ -190,11 +190,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANCEC AS
     ELSE
       -- Apenas Fecha o Cursor
       CLOSE cr_crapcec;
-    END IF;
-  
-    IF pr_cddopcao = 'I' THEN
-      vr_dscritic := 'Emitente já Cadastrado.';
-      RAISE vr_exc_erro;
+      
+      IF pr_cddopcao = 'I' THEN
+        vr_dscritic := 'Emitente já Cadastrado.';
+        RAISE vr_exc_erro;
+      END IF;
     END IF;
   
     -- Criar cabeçalho do XML
@@ -427,7 +427,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANCEC AS
         INTO rw_crapcst;
     
       -- Verifica se a retornou registro
-      IF cr_crapcst%NOTFOUND THEN
+      IF cr_crapcst%FOUND THEN
         CLOSE cr_crapcst;
         vr_dscritic := 'Emitente Possui Cheques em Custodia!';
         RAISE vr_exc_erro;
@@ -446,7 +446,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANCEC AS
         INTO rw_crapcdb;
     
       -- Verifica se a retornou registro
-      IF cr_crapcdb%NOTFOUND THEN
+      IF cr_crapcdb%FOUND THEN
         CLOSE cr_crapcdb;
         vr_dscritic := 'Emitente Possui Cheques em Desconto!';
         RAISE vr_exc_erro;

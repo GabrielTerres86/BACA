@@ -98,63 +98,11 @@ function formataCabecalho() {
 }
 
 function formataCampos() {
-
+	
 	$('.labelPri', '#frmTab019').css('width', '300px');
-     
 	$('#tituloO', '#frmTab019').css('width', '390px');
 	$('#tituloC', '#frmTab019').css('width', '160px');
-
-    rVllimite_c = $('label[for="vllimite_c"]', '#frmTab019');
-    rVlconchq_c = $('label[for="vlconchq_c"]', '#frmTab019');
-    rVlmaxemi_c = $('label[for="vlmaxemi_c"]', '#frmTab019');
-    rQtdiavig_c = $('label[for="qtdiavig_c"]', '#frmTab019');
-    rQtprzmin_c = $('label[for="qtprzmin_c"]', '#frmTab019');
-    rQtprzmax_c = $('label[for="qtprzmax_c"]', '#frmTab019');
-    rQtdiasoc_c = $('label[for="qtdiasoc_c"]', '#frmTab019');
-    rPcchqemi_c = $('label[for="pcchqemi_c"]', '#frmTab019');
-    rQtdevchq_c = $('label[for="qtdevchq_c"]', '#frmTab019');
-    rPcchqloc_c = $('label[for="pcchqloc_c"]', '#frmTab019');
-    rPctollim_c = $('label[for="pctollim_c"]', '#frmTab019');
-    rTxdmulta_c = $('label[for="txdmulta_c"]', '#frmTab019');
-    rQtdiasli_c = $('label[for="qtdiasli_c"]', '#frmTab019');
-    rFlemipar_c = $('label[for="flemipar_c"]', '#frmTab019');
-    rFlpjzemi_c = $('label[for="flpjzemi_c"]', '#frmTab019');
-    rFlemisol_c = $('label[for="flemisol_c"]', '#frmTab019');
-    rPrzmxcmp_c = $('label[for="przmxcmp_c"]', '#frmTab019');
-    rPrcliqui_c = $('label[for="prcliqui_c"]', '#frmTab019');
-    rQtmesliq_c = $('label[for="qtmesliq_c"]', '#frmTab019');
-    rVlrenlim_c = $('label[for="vlrenlim_c"]', '#frmTab019');
-    rQtmxrede_c = $('label[for="qtmxrede_c"]', '#frmTab019');
-    rFldchqdv_c = $('label[for="fldchqdv_c"]', '#frmTab019');
-    rVlmxassi_c = $('label[for="vlmxassi_c"]', '#frmTab019');
-    
-    
-
-    rVllimite_c.addClass('rotulo-linha').css('width', '67px');
-    rVlconchq_c.addClass('rotulo-linha').css('width', '67px');
-    rVlmaxemi_c.addClass('rotulo-linha').css('width', '67px');
-    rQtdiavig_c.addClass('rotulo-linha').css('width', '92px');
-    rQtprzmin_c.addClass('rotulo-linha').css('width', '92px');
-    rQtprzmax_c.addClass('rotulo-linha').css('width', '92px');
-    rQtdiasoc_c.addClass('rotulo-linha').css('width', '92px');
-    rPcchqemi_c.addClass('rotulo-linha').css('width', '115px');
-    rQtdevchq_c.addClass('rotulo-linha').css('width', '127px');
-    rPcchqloc_c.addClass('rotulo-linha').css('width', '115px');
-    rPctollim_c.addClass('rotulo-linha').css('width', '115px');
-    rTxdmulta_c.addClass('rotulo-linha').css('width', '75px');
-    rQtdiasli_c.addClass('rotulo-linha').css('width', '44px');
-    rFlemipar_c.addClass('rotulo-linha').css('width', '118px');
-    rFlpjzemi_c.addClass('rotulo-linha').css('width', '118px');
-    rFlemisol_c.addClass('rotulo-linha').css('width', '118px');    
-    rPrzmxcmp_c.addClass('rotulo-linha').css('width', '92px'); 
-    rPrcliqui_c.addClass('rotulo-linha').css('width', '115px'); 
-    rQtmesliq_c.addClass('rotulo-linha').css('width', '127px');
-    rVlrenlim_c.addClass('rotulo-linha').css('width', '127px');    
-    rQtmxrede_c.addClass('rotulo-linha').css('width', '127px');    
-    rFldchqdv_c.addClass('rotulo-linha').css('width', '118px');    
-    rVlmxassi_c.addClass('rotulo-linha').css('width', '67px');    
-    
-        
+	
     if ( $('#inpessoa', '#frmCab').val() == 1 ){
         document.getElementById("flemiparL").innerHTML = "Verificar se Emitente &eacute; Conjugue do Cooperado:";
         document.getElementById("vlrenlimL").innerHTML = "Renda x Limite Desconto:";
@@ -473,7 +421,7 @@ function controlaFoco() {
     
     $('#vlmxassi', '#frmTab019').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
-            $('#btContinuar', '#divBotoes').focus();
+            confirmaOperacao();
             return false;
         }
     });    
@@ -600,7 +548,7 @@ function controlaFoco() {
     
     $('#vlmxassi_c', '#frmTab019').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
-            $('#btContinuar', '#divBotoes').focus();
+            confirmaOperacao();
             return false;
         }
     });
@@ -812,6 +760,8 @@ function liberaCamposCecred() {
 
     $('#vllimite_c', '#frmTab019').focus();
 
+	document.getElementById('btContinuar').innerText ='Alterar';
+	
     return false;
 }
 

@@ -4758,7 +4758,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                          '<dsendweb>'|| vr_tab_contrato_limite(vr_idxctlim).dsendweb ||'</dsendweb>'||
                          '<nmoperad>'|| vr_tab_contrato_limite(vr_idxctlim).nmoperad ||'</nmoperad>'||
                          '<localpag>'|| rw_crapage.nmcidade||'/'||rw_crapage.cdufdcop||'</localpag>'||
-                         '<dtcontra>'|| to_date(rw_craplim.dtinivig, 'DD/MM/RRRR') || '</dtcontra>');
+                         '<dtcontra>'|| to_char(rw_craplim.dtinivig, 'DD/MM/RRRR') || '</dtcontra>');
       pc_escreve_xml('<avalistas>'||
                          '<aval1>'||
                            '<nrsequen>1</nrsequen>'||

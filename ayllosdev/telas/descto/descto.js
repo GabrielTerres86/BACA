@@ -44,7 +44,7 @@ function estadoInicial() {
     $('#divBotoes').remove();
     $('#divPesquisaRodape', '#divTela').remove();
 
-    cCddopcao.val(cddopcao);
+    cCddopcao.val('C');
     cCddopcao.focus();
 
     removeOpacidade('divTela');
@@ -107,6 +107,7 @@ function controlaOperacao(operacao, nriniseq, nrregist) {
             hideMsgAguardo();
             if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
                 try {
+                    hideMsgAguardo();
                     $('#divTela').html(response);
                     return false;
                 } catch (error) {
@@ -115,6 +116,7 @@ function controlaOperacao(operacao, nriniseq, nrregist) {
                 }
             } else {
                 try {
+                    hideMsgAguardo();
                     eval(response);
                 } catch (error) {
                     hideMsgAguardo();
@@ -1870,7 +1872,7 @@ function Gera_Impressao(inresgat) {
 
     $('#cddopcao', '#' + frmOpcao).val(cddopcao);
     $('#inresgat', '#' + frmOpcao).val(inresgat);
-
+	
     var action = UrlSite + 'telas/descto/imprimir_dados.php';
 
     cTodosOpcao.habilitaCampo();
@@ -2046,10 +2048,13 @@ function btnContinuar() {
 
     } else if (cddopcao == 'L') {
         if (cDtiniper.val() == '') {
-            showError("error","Informe a data.","Alerta - Ayllos","cDtiniper.focus()");
+			hideMsgAguardo();
+            showError("error","Período de Digita&ccedil;&atilde;o deve ser informado.","Alerta - Ayllos","cDtiniper.focus()");
         } else if (cDtfimper.val() == '') {
-            showError("error","Informe a data.","Alerta - Ayllos","cDtfimper.focus()");
+			hideMsgAguardo();
+            showError("error","Período de Digita&ccedil;&atilde;o deve ser informado.","Alerta - Ayllos","cDtfimper.focus()");
         } else if (days_between(cDtfimper.val(), cDtiniper.val()) > 60) {
+			hideMsgAguardo();
             showError("error","Informe um intervalo de até 60 dias.","Alerta - Ayllos","cDtfimper.focus()");
         } else {
             Gera_Impressao('');
@@ -2059,9 +2064,9 @@ function btnContinuar() {
         var dtdehoje = dtmvtolt.split('/');
         var dtdigita = cDtfimper.val().split('/');
         if (cDtiniper.val() == '') {
-            showError("error","Informe a data.","Alerta - Ayllos","cDtiniper.focus()");
+            showError("error","Período de Digita&ccedil;&atilde;o deve ser informado.","Alerta - Ayllos","cDtiniper.focus()");
         } else if (cDtfimper.val() == '') {
-            showError("error","Informe a data.","Alerta - Ayllos","cDtfimper.focus()");
+            showError("error","Período de Digita&ccedil;&atilde;o deve ser informado.","Alerta - Ayllos","cDtfimper.focus()");
         } else if (days_between(cDtfimper.val(), cDtiniper.val()) > 30) {
             showError("error","Informe um intervalo de até 30 dias.","Alerta - Ayllos","cDtfimper.focus()");
         } else if (new Date(dtdigita[2], dtdigita[1] - 1, dtdigita[0]) >= new Date(dtdehoje[2], dtdehoje[1] - 1, dtdehoje[0])) {
@@ -2073,7 +2078,7 @@ function btnContinuar() {
     }
 
     controlaPesquisas();
-    hideMsgAguardo();
+    //hideMsgAguardo();
     
     return false;
 }
