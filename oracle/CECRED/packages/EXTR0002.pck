@@ -519,7 +519,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
 
     Programa: EXTR0002                           Antigo: sistema/generico/procedures/b1wgen0112.p
     Autor   : Gabriel Capoia dos Santos (DB1)
-    Data    : Agosto/2011                        Ultima atualizacao: 08/11/2016
+    Data    : Agosto/2011                        Ultima atualizacao: 17/01/2017
 
     Objetivo  : Tranformacao BO tela IMPRES
 
@@ -749,6 +749,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                             M169 (Ricardo Linhares)
 				
 				23/11/2016 - Ajuste nos lancamentos futuros de emprestimos (Lenilson - Mouts)
+        
+        17/01/2017 - Ajuste na pc_consulta_lancamento que nao estava passando a critica
+                     para frente. SD 594506 (Kelvin).
 
   ---------------------------------------------------------------------------------------------------------------
 ..............................................................................*/
@@ -5920,7 +5923,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                              ,pr_cdagenci => pr_cdagenci
                              ,pr_nrdcaixa => pr_nrdcaixa
                              ,pr_nrsequen => 1 --> Fixo
-                             ,pr_cdcritic => 0 --> Critica 0
+                             ,pr_cdcritic => vr_cdcritic --> Critica 0
                              ,pr_dscritic => vr_dscritic
                              ,pr_tab_erro => pr_tab_erro);
         -- Se foi solicitado geração de LOG
