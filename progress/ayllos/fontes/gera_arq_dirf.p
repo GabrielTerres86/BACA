@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Janeiro/2005                    Ultima atualizacao: 08/01/2015
+   Data    : Janeiro/2005                    Ultima atualizacao: 18/01/2017
 
    Dados referentes ao programa:
 
@@ -27,7 +27,10 @@
                08/01/2015 - Incluisão de tratamento para desprezar os lançamentos
                             de janeiro a novembro para as contas incorporadas.
                             (Dionathan)
-                
+               
+			   18/01/2017 - Ajustado para nao gerar as informacoes das contas incorporadas 
+                            no dia 31/12/2016 no arquivo DIRF da Transpocred 
+                            (Douglas - Chamado 595087)
 ............................................................................ */
 
 { includes/var_batch.i }
@@ -186,6 +189,26 @@ FOR EACH crapdrf WHERE crapdrf.cdcooper = glb_cdcooper  AND
                 tot_vlrrimog = 0
                 tot_vlrrip65 = 0
                 aux_flsemmov = NO.
+
+    /* No dia 31/12/2016 foi feita a incorporacao da Transulcred -> Transpocred
+      com isso o "Informe de Rendimentos" deve existir na cooperativa antiga (Transulcred) para gerar o arquivo DIRF.
+      Porém os dados de "Informe de Rendimentos" devem existir na cooperativa nova (Transpocred) para que o cooperado possa consultar na conta online,
+      mas para os anos anteriores a incorporacao (2016), as informacoes geradas no arquivo DIRF da Transpocred nao devem possuir as contas incorporadas 
+      (CHAMADO 595087) */
+    IF par_aarefere <= 2016 AND glb_cdcooper = 9 THEN  
+    DO:
+        /* Apenas para a cooperativa 9 (Transpocred) e no ano anterior a 2016 */
+        /* Verifica se a conta é originada das integrações da concredi/viacredi ou da credmilsul/scrcredi*/
+        FIND craptco WHERE craptco.cdcooper = glb_cdcooper      AND
+                           craptco.nrdconta = crapdrf.nrdconta  AND
+                           craptco.cdcopant = 17                AND
+                           craptco.flgativo = TRUE /* Transulcred */
+                           NO-LOCK NO-ERROR.
+        /* Se encontrar a conta migrada, vai para o proximo registro */
+        IF  AVAILABLE craptco THEN
+            NEXT.
+    
+    END.
 
     /* Verifica se a conta é originada das integrações da concredi/viacredi ou da credmilsul/scrcredi*/
     FIND craptco WHERE craptco.cdcooper = glb_cdcooper      AND
