@@ -512,7 +512,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
   --  Sistema  : Procedimentos envolvendo tarifas bancarias
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 03/05/2016
+  --  Data     : Junho/2013.                   Ultima atualizacao: 15/09/2016
   --
   -- Dados referentes ao programa:
   --
@@ -555,6 +555,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
 
                  03/05/2016 - Retirado verificacao de 5 dia util na pc_deb_tarifa_online e adicionado na rotina
   						                pc_controla_deb_tarifas (Lucas Ranghetti #412789)
+                              
+                 15/09/2016 - #519899 Criação de log de controle de início, erros e fim de execução
+                              do job pc_deb_tarifa_pend (Carlos)
   */
  
   ---------------------------------------------------------------------------------------------------------------
@@ -5124,6 +5127,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     vr_nmarqpdf VARCHAR2(500);
     vr_fposcred BOOLEAN;
        
+    vr_nomdojob VARCHAR2(40) := 'JBTAR_DEBITA_TARIFA_PEND';
+    vr_flgerlog BOOLEAN      := FALSE;
+       
     --------------------------- SUBROTINAS INTERNAS --------------------------
     -- procedimento para gerar log da debtar
     PROCEDURE pc_gera_log(pr_ind_tipo_log IN NUMBER DEFAULT 1,
@@ -5137,6 +5143,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                                  || vr_cdprogra || ' --> '
                                                  || pr_des_log );
     END pc_gera_log;
+        
+    --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
+    PROCEDURE pc_controla_log_batch(pr_cdcooper IN crapcop.cdcooper%type,
+                                    pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
+                                    pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
+  BEGIN
+      --> Controlar geração de log de execução dos jobs 
+      BTCH0001.pc_log_exec_job( pr_cdcooper  => pr_cdcooper    --> Cooperativa
+                               ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
+                               ,pr_nomdojob  => vr_nomdojob    --> Nome do job
+                               ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
+                               ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
+                               ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
+    END pc_controla_log_batch;
         
   BEGIN
 
@@ -5196,7 +5216,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
       vr_dtafinal := pr_dtafinal;  
     END IF;
     
-    -- incluir inicio do processo no log
+    -- Log de inicio de execucao
+    pc_controla_log_batch(pr_cdcooper => pr_cdcooper,
+                          pr_dstiplog => 'I');
+
     pc_gera_log(pr_des_log => 'Inicio da execucao: '||
                               (CASE pr_cdcooper
                                WHEN 3 THEN 'Todas as coop.'
@@ -5294,6 +5317,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                         pr_des_log => 'Coop. '||rw_crapcop.cdcooper||' conta: '||rw_craplat.nrdconta|| 
                                       ' Erro: '|| vr_dscritic );
                                                      
+              pc_controla_log_batch(pr_cdcooper => pr_cdcooper,
+                                    pr_dstiplog => 'E',
+                                    pr_dscritic => ' Conta: ' || rw_craplat.nrdconta || 
+                                                   ' Erro: '  || vr_dscritic);
               CONTINUE;                                         
             END IF;
             
@@ -5318,6 +5345,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                ' final '|| nvl(to_char(vr_dtafinal,'DD/MM/RRRR'),'nao definida')
                                );
 
+    pc_controla_log_batch(pr_cdcooper => pr_cdcooper,
+                          pr_dstiplog => 'F');
+
     ----------------- ENCERRAMENTO DO PROGRAMA -------------------
 
     -- Salvar informações atualizadas
@@ -5337,6 +5367,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                 ,pr_des_log      => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - '
                                                  || vr_cdprogra || ' --> '
                                                  || vr_dscritic );
+                                                 
+      pc_controla_log_batch(pr_cdcooper => pr_cdcooper,
+                            pr_dstiplog => 'E');
+                                                 
       pr_dscritic := vr_dscritic;                                           
       -- Efetuar commit
       COMMIT;
@@ -5352,6 +5386,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                 ,pr_des_log      => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - '
                                                  || vr_cdprogra || ' --> '
                                                  || pr_dscritic );
+
+      pc_controla_log_batch(pr_cdcooper => pr_cdcooper,
+                            pr_dstiplog => 'E');
                                                  
       -- Efetuar rollback
       ROLLBACK;
