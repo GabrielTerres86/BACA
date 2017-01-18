@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Maio/2011                        Ultima atualizacao: 06/01/2015
+   Data    : Maio/2011                        Ultima atualizacao: 18/01/2017
    
    Dados referentes ao programa:
 
@@ -25,6 +25,9 @@
                24/12/2013 - Ajuste Migracao Acredi->Viacredi (Rafael).
                
                06/01/2015 - Ajuste projeto Incorporacao. (Rafael).
+
+			   18/01/2017 - Ajuste incorporacao Transulcred - Transpocred
+			                (Douglas - Chamado 591831)
 ............................................................................ */
 
 { sistema/generico/includes/b1wgen0010tt.i }
@@ -117,7 +120,9 @@ FOR EACH cratarq:
 
 
     /* nao checar CNPJ quando executar na Alto Vale e Viacredi */
-    IF  NOT CAN-DO("1,13,16", STRING(glb_cdcooper)) THEN DO:
+	/* adicionar a Transpocred para nao verificar o CNPJ da cooperativa
+	   ja que os arquivos da Transulcred tambem devem ser processados na Transpocred */
+    IF  NOT CAN-DO("1,9,13,16", STRING(glb_cdcooper)) THEN DO:
     
         /** Verificar se o CNPJ do arqv. pertence coop processada **/
         FIND crapcop WHERE crapcop.cdcooper = glb_cdcooper
