@@ -891,7 +891,14 @@ function controlaFocoFormulariosEmpresa() {
 
                         if (normalizaNumero(cNrdconta.val()) > 0){
                             buscaContaEmp(1);
-                        }
+					} else {
+
+						showError('error','N&uacute;mero de conta d&eacute;bito inv&aacute;lida!',
+                              'Campo Obrigat&oacute;rio!',
+                              '$("#nrdconta","#frmInfEmpresa").focus();');
+						cNrdconta.val("");
+						return false;
+					}
                 cNmcontat.focus();
                 return false;
         });
@@ -1441,8 +1448,14 @@ function buscaEmpresas() {
                             $('#cdempres','#frmInfEmpresa').val('');
                         } else {
                             $('input,select', '#frmInfEmpresa').removeClass('campoErro');
-                            $('#divConteudo').html(response);
-                            exibeRotina($('#divPesquisaEmpresa'));
+                            
+							// Ajuste para limpar html de tabela e evitar carga de dados inválidos
+							var divTabEmpresas = $('div.divRegistros', '#divTabEmpresas'); // '#divPesquisaEmpresa'
+							divTabEmpresas.empty();
+							$('#divTabEmpresas').html(response);
+                            
+							$('#divConteudo').html(response);
+							exibeRotina($('#divPesquisaEmpresa'));
                             exibeRotina($('#divTabEmpresas'));
                             formataTabEmpresas();
                             selecionaEmpresa();
