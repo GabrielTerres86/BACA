@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2007                        Ultima atualizacao: 12/02/2016
+   Data    : Marco/2007                        Ultima atualizacao: 03/08/2016
 
    Dados referentes ao programa:
 
@@ -42,11 +42,26 @@
 			                YEAR do Progress ocasionava problema quando
 							repitida mais de uma vez dentro do where
 							(Tiago/Thiago).
+
+               29/06/2016 - M325 - Tributacao de Juros ao Capital
+                            Alterado tratamento para cod.retencao 5706 p/ 3277
+                            Novos parametros de entrada
+                            (Guilherme/SUPERO)
+
+
+               03/08/2016 - Inclusao de novos historicos de retorno de Sobras 
+			                e de sobras na Conta Corrente (Marcos-Supero).
+                      
+               18/01/2017 - SD595294 - Retorno dos valores pagos em emprestimos
+                            (Marcos-Supero)             
+
+
 ............................................................................*/
     
 CREATE WIDGET-POOL.
 
 { sistema/internet/includes/var_ibank.i }
+{ sistema/generico/includes/var_oracle.i }
 
 DEF VAR h-b1wgen0014 AS HANDLE                                         NO-UNDO.
 
@@ -59,9 +74,11 @@ DEF VAR ant_vlttccap AS DECI                                           NO-UNDO.
 DEF VAR ant_vlpoupan AS DECI                                           NO-UNDO.
 DEF VAR ant_vlfundos AS DECI                                           NO-UNDO.
 DEF VAR ant_vlirfcot AS DECI                                           NO-UNDO.
+DEF VAR ant_vlprepag AS DECI                                           NO-UNDO.
 
 DEF VAR aux_vlrencot AS DECI                                           NO-UNDO.
 DEF VAR aux_vlirfcot AS DECI                                           NO-UNDO.
+DEF VAR aux_vlprepag AS DECI                                           NO-UNDO.
 
 DEF VAR aux_dtrefere AS DATE                                           NO-UNDO.
 
@@ -96,6 +113,7 @@ DEF VAR aux_cdretenc AS INTE                                           NO-UNDO.
 DEF VAR aux_dsretenc AS CHAR                                           NO-UNDO.
 DEF VAR aux_dsre3426 AS CHAR                                           NO-UNDO.
 DEF VAR aux_dsre5706 AS CHAR                                           NO-UNDO.
+DEF VAR aux_dsre3277 AS CHAR                                           NO-UNDO.
 DEF VAR aux_vlrentot AS DECI                                           NO-UNDO.
 DEF VAR aux_vlirfont AS DECI                                           NO-UNDO.
 DEF VAR aux_vlsobras AS DECI                                           NO-UNDO.
@@ -109,6 +127,8 @@ DEF  INPUT PARAM par_nrdconta LIKE crapcob.nrdconta                    NO-UNDO.
 DEF  INPUT PARAM par_idseqttl LIKE crapttl.idseqttl                    NO-UNDO.
 DEF  INPUT PARAM par_dtmvtolt LIKE crapdat.dtmvtolt                    NO-UNDO.
 DEF  INPUT PARAM par_anorefer AS INTE                                  NO-UNDO.
+DEF  INPUT PARAM par_tpinform AS INTE                                  NO-UNDO.
+DEF  INPUT PARAM par_nrperiod AS INTE                                  NO-UNDO.
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 
@@ -125,6 +145,17 @@ IF  par_anorefer < 1995  THEN
                 
         RETURN "NOK".
     END.
+
+IF  par_anorefer < 2016
+AND par_tpinform = 1 THEN DO:
+    ASSIGN aux_dscritic = "Ano do Informe Trimestral deve ser " +
+                          "maior que 2015."
+           xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
+
+    RUN proc_geracao_log (INPUT FALSE).
+
+    RETURN "NOK".
+END.
 
 FIND crapcop WHERE crapcop.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
 
@@ -158,11 +189,26 @@ FOR EACH craplct WHERE craplct.cdcooper = par_cdcooper      AND
                        craplct.cdbccxlt = 100                AND
                        craplct.nrdolote = 8005               AND 
                        craplct.nrdconta = par_nrdconta       AND
-                       (craplct.cdhistor = 64 OR craplct.cdhistor = 1801) 
+                       (craplct.cdhistor = 1940 OR craplct.cdhistor = 2172 OR
+					    craplct.cdhistor = 2174 OR craplct.cdhistor = 2173 OR
+					    craplct.cdhistor = 1801 OR craplct.cdhistor = 64) 
                        NO-LOCK:
     ASSIGN aux_vlsobras = aux_vlsobras + craplct.vllanmto.
 END.
 
+/* Credito Retorno de Sobras em CC */
+FOR EACH craplcm WHERE craplcm.cdcooper = par_cdcooper      AND
+                       YEAR(craplcm.dtmvtolt) = par_anorefer AND
+                       craplcm.cdagenci = 1                  AND
+                       craplcm.cdbccxlt = 100                AND
+                       craplcm.nrdolote = 8005               AND 
+                       craplcm.nrdconta = par_nrdconta       AND
+                       (craplcm.cdhistor = 2175 OR craplcm.cdhistor = 2176 OR
+					    craplcm.cdhistor = 2177 OR craplcm.cdhistor = 2178 OR
+					    craplcm.cdhistor = 2179 OR craplcm.cdhistor = 2189) 
+                       NO-LOCK:
+    ASSIGN aux_vlsobras = aux_vlsobras + craplcm.vllanmto.
+END.
 
 IF  crapass.inpessoa = 1  THEN
     DO: 
@@ -179,12 +225,14 @@ IF  crapass.inpessoa = 1  THEN
             END.
     END.
 ELSE
-IF  crapass.inpessoa = 2  THEN
-    DO:                 
-        RUN proc_ir_juridica.
+IF  crapass.inpessoa = 2  THEN DO:
 
-        IF  RETURN-VALUE = "NOK"  THEN
-            DO:
+    IF  par_tpinform = 0 THEN
+        RUN proc_ir_juridica.
+    ELSE
+        RUN proc_ir_juridica_trimestral.
+
+    IF  RETURN-VALUE = "NOK"  THEN DO:
                 ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic +
                                       "</dsmsgerr>".
                                  
@@ -236,6 +284,7 @@ PROCEDURE proc_ir_fisica:
                              NO-LOCK NO-ERROR.
 
     ASSIGN aux_vlirfcot = crapdir.vlirfcot
+           aux_vlprepag = crapdir.vlprepag
            aux_vlrencot = (crapdir.vlrencot - crapdir.vlirfcot)
            aux_dtrefere = DATE(12,31,YEAR(crapdir.dtmvtolt))
            aux_vlsdapli = crapdir.vlsdapli + crapdir.vlsdrdpp  
@@ -363,14 +412,16 @@ PROCEDURE proc_ir_fisica:
                ant_vlsdccdp = 0
                ant_vlsddvem = 0
                ant_vlttccap = 0
-               ant_vlirfcot = 0.
+               ant_vlirfcot = 0
+               ant_vlprepag = 0.
     ELSE
         ASSIGN ant_dtrefere = DATE(12,31,YEAR(crapdir.dtmvtolt))
                ant_vlsdapli = crapdir.vlsdapli + crapdir.vlsdrdpp
                ant_vlsdccdp = crapdir.vlsdccdp
                ant_vlsddvem = crapdir.vlsddvem
                ant_vlttccap = crapdir.vlttccap
-               ant_vlirfcot = crapdir.vlirfcot.
+               ant_vlirfcot = crapdir.vlirfcot
+               ant_vlprepag = crapdir.vlprepag.
 
     FIND FIRST crapsli WHERE crapsli.cdcooper = par_cdcooper AND
                              crapsli.nrdconta = par_nrdconta AND
@@ -460,7 +511,11 @@ PROCEDURE proc_ir_fisica:
                                    TRIM(STRING(ant_vlirfcot,"zzz,zzz,zz9.99-")) +
                                    "</atirfcot><vlsobras>" +
                                    TRIM(STRING(aux_vlsobras,"zzz,zzz,zz9.99-")) +
-                                   "</vlsobras></IRFISICA>".          
+                                   "</vlsobras><vlprepag>" +
+                                   TRIM(STRING(aux_vlprepag,"zzz,zzz,zz9.99-")) +
+                                   "</vlprepag><atprepag>" +
+                                   TRIM(STRING(ant_vlprepag,"zzz,zzz,zz9.99-")) +
+                                   "</atprepag></IRFISICA>".          
 END PROCEDURE. 
 
 PROCEDURE proc_ir_juridica:
@@ -516,6 +571,16 @@ PROCEDURE proc_ir_juridica:
             RETURN "NOK".
         END.
     ASSIGN aux_dsre5706 = gnrdirf.dsretenc.
+    
+    /* pegar descricao do codigo retencao 3277 */
+    FIND FIRST gnrdirf WHERE gnrdirf.cdretenc = 3277 NO-ERROR.
+    IF  NOT AVAILABLE gnrdirf THEN DO:
+        ASSIGN aux_dscritic = "Problema na consulta da descricao " +
+                              "de retencao. Comunique seu PA.".
+        RETURN "NOK".
+    END.
+    ASSIGN aux_dsre3277 = gnrdirf.dsretenc.
+
     
     ASSIGN aux_dtrefere = DATE(12,31,par_anorefer).
 
@@ -585,12 +650,13 @@ PROCEDURE proc_ir_juridica:
 
                END. /* FOR EACH */
 
-               IF  aux_vlirfont > 0 THEN
-                   DO:
-                      ASSIGN aux_cdretenc = 5706
-                             aux_dsretenc = aux_dsre5706.
 
-                      IF par_anorefer < 2004 THEN
+               IF  aux_vlirfont > 0 THEN DO:
+                   /* Passou a tratar 3277 ao inves de 5706 */
+                   ASSIGN aux_cdretenc = 3277
+                          aux_dsretenc = aux_dsre3277.
+
+                   IF  par_anorefer < 2004 THEN
                          ASSIGN aux_vlirfont = 0.
                      
                       ASSIGN xml_operacao.dslinxml = xml_operacao.dslinxml     +
@@ -605,7 +671,6 @@ PROCEDURE proc_ir_juridica:
                             "</vlrentot><vlirfont>"                           +
                             TRIM(STRING(aux_vlirfont,"zzz,zzz,zz9.99-"))      +
                             "</vlirfont></vlrenmes>".
-
                    END.
             END. /* do to */
         END. /* se for ano vigente */
@@ -642,8 +707,7 @@ PROCEDURE proc_ir_juridica:
                                       crapdir.vlirfrdc[aux_contador].
                 
 
-                IF  aux_vlirfont > 0 THEN
-                    DO:
+                IF  aux_vlirfont > 0 THEN DO:
 
                         IF par_anorefer < 2004 THEN
                            ASSIGN aux_vlirfont = 0.
@@ -665,12 +729,12 @@ PROCEDURE proc_ir_juridica:
 
                 ASSIGN aux_vlirfont = 0.
 
-                FOR EACH craplct WHERE
-                         craplct.cdcooper = par_cdcooper             AND
-                         craplct.nrdconta = crapass.nrdconta         AND
-                         YEAR(craplct.dtmvtolt)  = par_anorefer      AND
-                         MONTH(craplct.dtmvtolt) = aux_contador      AND
-                         CAN-DO("0922,0926",STRING(craplct.cdhistor,"9999"))
+                FOR EACH craplct
+                   WHERE craplct.cdcooper        = par_cdcooper
+                     AND craplct.nrdconta        = crapass.nrdconta
+                     AND YEAR(craplct.dtmvtolt)  = par_anorefer
+                     AND MONTH(craplct.dtmvtolt) = aux_contador
+                     AND CAN-DO("0922,0926",STRING(craplct.cdhistor,"9999"))
                          NO-LOCK:
 
                     IF  craplct.cdhistor = 926 THEN
@@ -680,15 +744,28 @@ PROCEDURE proc_ir_juridica:
 
                 END. /* FOR EACH */
 
-                IF aux_vlirfont > 0 THEN
-                   DO:
+                IF  aux_vlirfont > 0 THEN DO:
+
+                    IF  par_anorefer >= 2016 THEN DO:
+                        /* Ano em que deixou deixou de considerar 5706
+                            => Usado agora 3277 */
+                        ASSIGN aux_cdretenc = 3277
+                               aux_dsretenc = aux_dsre3277.
+
+                        IF  par_anorefer < 2004 THEN
+                            ASSIGN aux_vlirfont = 0.
+
+                    END.
+                    ELSE DO:
                       ASSIGN aux_cdretenc = 5706
                              aux_dsretenc = aux_dsre5706.
                       
-                      IF par_anorefer < 2004 THEN
+                        IF  par_anorefer < 2004 THEN
                            ASSIGN aux_vlirfont = 0.
 
-                      ASSIGN xml_operacao.dslinxml = xml_operacao.dslinxml    +
+                    END. /* FIM DO par_anorefer >= 2016 */
+
+                    ASSIGN xml_operacao.dslinxml = xml_operacao.dslinxml  +
                             "<vlrenmes><nmmesref>"                            +
                             aux_nomedmes                                      +
                             "</nmmesref><cdretenc>"                           +
@@ -700,9 +777,7 @@ PROCEDURE proc_ir_juridica:
                             "</vlrentot><vlirfont>"                           +
                             TRIM(STRING(aux_vlirfont,"zzz,zzz,zz9.99-"))      +
                             "</vlirfont></vlrenmes>".
-
                    END.
-
             END. /* DO TO */
             
             /* Rendimentos Liquidos - Aplicacoes de Renda Fixa*/
@@ -853,6 +928,66 @@ PROCEDURE proc_ir_juridica:
     RETURN "OK".
     
 END PROCEDURE. 
+
+PROCEDURE proc_ir_juridica_trimestral:
+
+    DEF VAR aux_mesinici AS INTE                                    NO-UNDO.
+    DEF VAR aux_xmlopera AS CHAR                                    NO-UNDO.
+
+
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+
+    /* Efetuar a chamada a rotina Oracle */ 
+    RUN STORED-PROCEDURE pc_gera_impextir_pj_trim_car
+       aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper,   /* Código da Cooperativa */
+                                            INPUT 90,             /* Codigo da Agencia */
+                                            INPUT 900,            /* Numero do Caixa */
+                                            INPUT 3,              /* Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA */
+                                            INPUT "InternetBank", /* Nome da Tela */
+                                            INPUT par_dtmvtolt,   /* Data de Movimento */
+                                            INPUT 1,              /* Inproces */
+                                            INPUT "InternetBank", /* Codigo do Programa */
+                                            INPUT "1",            /* Código do Operador */
+                                            INPUT STRING(etime),  /* pr_dsiduser */
+                                            INPUT par_nrdconta,   /* Número da Conta */
+                                            INPUT par_anorefer,   /* Ano de Referencia */
+                                            INPUT 6,              /* Tipo de Extrato 6-PJ */
+                                            INPUT par_nrperiod,   /* Trimestre de Referencia */
+                                            INPUT 0,              /* flgrodar - Flag Executar */
+                                            INPUT 1,              /* flgerlog - Escreve erro Log */
+                                           OUTPUT "",             /* XML em TEXTO - pr_dstexto */
+                                           OUTPUT "",             /* MSG ERRO pr_dsmsgerr */
+                                           OUTPUT "",             /* pr_nmarqimp */
+                                           OUTPUT "",             /* pr_nmarqpdf */
+                                           OUTPUT "").            /* Descrição Erro pr_des_reto */
+
+    /* Fechar o procedimento para buscarmos o resultado */ 
+    CLOSE STORED-PROC pc_gera_impextir_pj_trim_car
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+
+    /* Busca possíveis erros */ 
+    ASSIGN aux_dscritic = ""
+           aux_xmlopera = pc_gera_impextir_pj_trim_car.pr_dstexto 
+                          WHEN pc_gera_impextir_pj_trim_car.pr_dstexto <> ?
+           aux_dscritic = pc_gera_impextir_pj_trim_car.pr_dsmsgerr 
+                          WHEN pc_gera_impextir_pj_trim_car.pr_dsmsgerr <> ? .
+
+    IF aux_dscritic <> "" THEN DO:
+        ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".   
+      
+        RUN proc_geracao_log (INPUT FALSE).  
+    
+        RETURN "NOK".
+        
+    END.    
+
+    CREATE xml_operacao.
+    ASSIGN xml_operacao.dslinxml = "<root>" + aux_xmlopera + "</root>".
+    
+END PROCEDURE. /*proc_ir_juridica_trimestral*/
+
 
 PROCEDURE proc_geracao_log:
 
