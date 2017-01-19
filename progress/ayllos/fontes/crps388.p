@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Abril/2004                          Ultima atualizacao: 15/08/2016
+   Data    : Abril/2004                          Ultima atualizacao: 28/12/2016
 
    Dados referentes ao programa:
 
@@ -211,11 +211,20 @@
 							 agencia com formato novo. 
 
                15/06/2016 - Adicnioar ux2dos para a Van E-sales (Lucas Ranghetti #469980)
+
+               23/06/2016 - P333.1 - Devolução de arquivos com tipo de envio 
+			                6 - WebService (Marcos)
                
                15/08/2016 - Alterado ordem da leitura da crapatr (Lucas Ranghetti #499449)
+
+			   05/10/2016 - Incluir tratamento para a CASAN enviar a angecia 1294 para autorizacoes
+							mais antigas (Lucas Ranghetti ##534110)
+              
+              28/12/2016 - Ajustes para incorporaçao da Credimilsul (SD585459 Tiago/Elton) 
 ............................................................................. */
  
 { includes/var_batch.i {1} }
+{ sistema/generico/includes/var_oracle.i }
 
 DEF        VAR b1wgen0011       AS HANDLE                           NO-UNDO.
 
@@ -465,8 +474,22 @@ FOR EACH gncvcop NO-LOCK WHERE
                    aux_ctamigra = FALSE 
                    aux_nragenci = STRING(crabcop.cdagectl, "9999").
             
+
+
             IF  gnconve.cdconven = 4 THEN   /* CASAN */
-                ASSIGN aux_nragenci = '1294'.
+			    DO:
+				    FIND crapatr WHERE 
+                         crapatr.cdcooper = glb_cdcooper     AND
+                         crapatr.nrdconta = craplcm.nrdconta AND
+                         crapatr.cdhistor = craplcm.cdhistor AND
+                         crapatr.cdrefere = DECIMAL(ENTRY(6,SUBSTR(craplcm.cdpesqbb,6,100),"-")) AND
+						 crapatr.dtiniatr < 10/05/2016
+                         NO-LOCK NO-ERROR.
+
+				    IF  AVAIL crapatr THEN
+					    ASSIGN aux_nragenci = '1294'.
+				END.
+                
 
             IF  aux_flgfirst THEN
                 DO:
@@ -677,9 +700,9 @@ FOR EACH gncvcop NO-LOCK WHERE
                                 " Documento = " + STRING(craplcm.nrdocmto) +
                                 " >> log/proc_message.log").
                            NEXT.
-                       END.
+                END.                                   
                 END.       
-	  
+
             ASSIGN aux_nrseqdig = aux_nrseqdig + 1
                    tot_vlfatura = tot_vlfatura + craplcm.vllanmto.
             
@@ -691,7 +714,7 @@ FOR EACH gncvcop NO-LOCK WHERE
             IF  (gnconve.cdcooper = crabcop.cdcooper  OR
                  crabcop.cdcooper = 1                 OR
                  gnconve.flgagenc = TRUE              OR
-				 crapatr.dtiniatr > date("01/09/2013")) AND
+        				 crapatr.dtiniatr > date("01/09/2013")) AND
                  gnconve.cdconven <> 22               AND
                  gnconve.cdconven <> 32               AND  /*UNIODONTO*/ 
                  gnconve.cdconven <> 38               AND  /*UNIM.PLAN.NORTE*/
@@ -724,8 +747,13 @@ FOR EACH gncvcop NO-LOCK WHERE
                                  gnconve.cdconven <> 58               THEN /*PORTO SEGURO*/
                                  ASSIGN aux_cdcooperativa = " ".
                            ELSE
-                                 ASSIGN aux_cdcooperativa = "9" + 
-                                                            STRING(craptco.cdcopant,"999"). 
+                                 IF gnconve.flgagenc = TRUE THEN
+                                    DO:
+                                      ASSIGN aux_cdcooperativa = " ".
+                                    END.
+                                 ELSE 
+                                   ASSIGN aux_cdcooperativa = "9" + 
+                                                              STRING(craptco.cdcopant,"999"). 
                            ASSIGN aux_dsobserv = "Debito migrado.".
 
                             /*** Verifica agencia na Cecred da coop. da conta migrada ***/
@@ -1424,7 +1452,40 @@ PROCEDURE atualiza_controle.
        END.
    ELSE
        UNIX SILENT VALUE("mv " + aux_nmarqped + " salvar " + "2> /dev/null").
-  
+   
+   IF  gnconve.tpdenvio = 6 THEN  /* WebServices */
+     DO:
+       
+       { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+       
+       /* Efetuar a chamada a rotina Oracle  */
+       RUN STORED-PROCEDURE pc_armazena_arquivo_conven
+           aux_handproc = PROC-HANDLE NO-ERROR (INPUT gnconve.cdconven,
+                                                INPUT glb_dtmvtolt,
+                                                INPUT 'F', /* Retorno a empresa */
+												INPUT 0, /* Nao retornado ainda */
+                                                INPUT '/usr/coop/' + crabcop.dsdircop + '/salvar', 
+                                                INPUT SUBSTR(aux_nmarqped,R-INDEX(aux_nmarqped,'/') + 1),
+                                                OUTPUT 0, 
+                                                OUTPUT "").
+
+       /* Fechar o procedimento para buscarmos o resultado */ 
+       CLOSE STORED-PROC pc_armazena_arquivo_conven
+               aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+       { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+
+       /* Busca possíveis erros */
+       IF pc_armazena_arquivo_conven.pr_cdretorn <> 202 THEN
+          DO:
+             UNIX SILENT VALUE("echo " + STRING(TODAY,"99/99/9999") + " "
+                               + STRING(TIME,"HH:MM:SS") + " - " 
+                               + glb_cdprogra + "' --> '" 
+                               + pc_armazena_arquivo_conven.pr_dsmsgret + " - Convenio: "
+                               + STRING(gncvcop.cdconven) + " >> log/proc_message.log").
+          END.
+     END.
+   
    IF  gnconve.tpdenvio = 1 THEN DO: /* Internet */
    
        ASSIGN aux_nroentries = NUM-ENTRIES(gnconve.dsenddeb).
