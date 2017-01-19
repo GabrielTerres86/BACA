@@ -2,7 +2,7 @@
 
     Programa: b1wgen0075.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Maio/2010                   Ultima atualizacao: 12/04/2016
+    Data    : Maio/2010                   Ultima atualizacao: 17/01/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - COMERCIAL
 
@@ -70,6 +70,23 @@
 
                 12/04/2016 - Incluir crapdoc.cdoperad na procedure Grava_Dados e
                              Grava_Dados_Ppe (Lucas Ranghetti #410302)
+                             
+                04/08/2016 - Ajuste para pegar o idcidade e nao mais cdcidade.
+                             (Jaison/Anderson)
+                             
+                31/08/2016 - Ajustar gravacao na crapdoc do documento 37 para 
+                             gerar pendencia apenas para o primeiro titular
+                             e tambem duplicar dados de pessoa politicamente
+                             exposta para todos as contas do cooperado incluido
+                             contas onde ele eh primeiro titular (Lucas Ranghetti #491441)
+                             
+                16/11/2016 - Ajuste para nao gerar mais pendencia no digidoc com
+                             tpdocmto = 37 e criar o campo inpolexp sempre como
+                             nao inpolexp = 0 (Tiago/Thiago SD532690)
+
+               17/01/2017 - Adicionado chamada a procedure de replicacao do 
+                            endereco para o CDC. (Reinert Prj 289)
+                             
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -79,6 +96,7 @@
 { sistema/generico/includes/gera_log.i}
 { sistema/generico/includes/gera_erro.i}
 { sistema/generico/includes/b1wgenvlog.i &VAR-GERAL=SIM &SESSAO-BO=SIM }
+{ sistema/generico/includes/var_oracle.i }
 
 DEF VAR aux_cdcritic AS INTE                                        NO-UNDO.
 DEF VAR aux_dscritic AS CHAR                                        NO-UNDO.
@@ -1087,8 +1105,25 @@ PROCEDURE Grava_Dados:
             END.
         END.
                  
-        IF tt-comercial-ant.inpolexp <> par_inpolexp THEN
+        IF tt-comercial-ant.inpolexp <> par_inpolexp AND
+           par_inpolexp = 1 /*Politicamente exposto SIM*/ THEN
         DO:
+            IF par_idseqttl = 1 THEN        
+            DO: 
+                /*******************************************************************
+                 ************ se entrou aqui entao nao veio pelo Replica ***********
+                 *******************************************************************/                
+                
+                /* Replicar informacoes de pessoa politicamente exposta para todas 
+                   contas onde o cooperado eh primeiro titular */
+                FOR EACH bcrapttl WHERE bcrapttl.nrcpfcgc = crapttl.nrcpfcgc
+                                    AND bcrapttl.idseqttl = 1
+                                    AND bcrapttl.nrdconta <> crapttl.nrdconta
+                                    EXCLUSIVE-LOCK:
+                                   
+                    ASSIGN bcrapttl.inpolexp = par_inpolexp.
+                                   
+                END.
             FOR FIRST crapdoc WHERE 
                       crapdoc.cdcooper = par_cdcooper AND
                       crapdoc.nrdconta = par_nrdconta AND
@@ -1108,6 +1143,8 @@ PROCEDURE Grava_Dados:
                        crapdoc.idseqttl = par_idseqttl
                        crapdoc.cdoperad = par_cdoperad.
                 VALIDATE crapdoc.
+                END.
+
             END.
         END.   
 
@@ -1189,7 +1226,7 @@ PROCEDURE Grava_Dados:
                ASSIGN aux_dscritic = ERROR-STATUS:GET-MESSAGE(1).
                UNDO Grava, LEAVE Grava.
             END.
-
+        
         IF  par_flgerlog  THEN 
             DO:
                 { sistema/generico/includes/b1wgenllog.i }
@@ -1512,6 +1549,43 @@ PROCEDURE Grava_Dados:
 
     IF VALID-HANDLE(h-b1wgen0021) THEN
         DELETE PROCEDURE h-b1wgen0021.
+
+    IF  par_idseqttl = 1 THEN
+      DO:
+        FOR FIRST crapcdr WHERE crapcdr.cdcooper = par_cdcooper
+                            AND crapcdr.nrdconta = par_nrdconta
+                            AND crapcdr.flgconve = TRUE NO-LOCK:
+
+          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+          
+          RUN STORED-PROCEDURE pc_replica_cdc
+            aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                                ,INPUT par_nrdconta
+                                                ,INPUT par_cdoperad
+                                                ,INPUT par_idorigem
+                                                ,INPUT par_nmdatela
+                                                ,INPUT 1
+                                                ,INPUT 0
+                                                ,INPUT 0
+                                                ,INPUT 0
+                                                ,0
+                                                ,"").
+
+          CLOSE STORED-PROC pc_replica_cdc
+                    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+          ASSIGN aux_cdcritic = 0
+                 aux_dscritic = ""
+                 aux_cdcritic = pc_replica_cdc.pr_cdcritic 
+                                  WHEN pc_replica_cdc.pr_cdcritic <> ?
+                 aux_dscritic = pc_replica_cdc.pr_dscritic 
+                                  WHEN pc_replica_cdc.pr_dscritic <> ?.
+                                  
+        END.
+      END.
+
 
     IF  aux_dscritic <> "" OR aux_cdcritic <> 0 THEN
         DO:
@@ -2152,7 +2226,7 @@ PROCEDURE Busca_Dados_PPE:
                 END.
 
                 /* Busca dados da agencia */
-                FOR FIRST crapage FIELDS(cdcidade)
+                FOR FIRST crapage FIELDS(idcidade)
                                   WHERE crapage.cdcooper = par_cdcooper     AND
                                         crapage.cdagenci = crapass.cdagenci 
                                         NO-LOCK:
@@ -2160,7 +2234,7 @@ PROCEDURE Busca_Dados_PPE:
         
                 IF AVAIL crapage THEN
                 DO:
-                    FIND FIRST crapmun WHERE crapmun.cdcidade = crapage.cdcidade 
+                    FIND FIRST crapmun WHERE crapmun.idcidade = crapage.idcidade 
                         NO-LOCK NO-ERROR.
                 
                     ASSIGN tt-ppe.cidade = IF AVAIL crapmun 
@@ -2217,7 +2291,7 @@ PROCEDURE Busca_Dados_PPE:
                 END.
 
                 /* Busca dados da agencia */
-                FOR FIRST crapage FIELDS(cdcidade)
+                FOR FIRST crapage FIELDS(idcidade)
                                   WHERE crapage.cdcooper = par_cdcooper     AND
                                         crapage.cdagenci = crapass.cdagenci 
                                         NO-LOCK:
@@ -2225,7 +2299,7 @@ PROCEDURE Busca_Dados_PPE:
         
                 IF AVAIL crapage THEN
                 DO:
-                    FIND FIRST crapmun WHERE crapmun.cdcidade = crapage.cdcidade 
+                    FIND FIRST crapmun WHERE crapmun.idcidade = crapage.idcidade 
                         NO-LOCK NO-ERROR.
                 
                     ASSIGN tt-ppe.cidade = IF AVAIL crapmun 
@@ -2263,7 +2337,7 @@ PROCEDURE Busca_Dados_PPE:
             END.
 
             /* Busca dados da agencia */
-            FOR FIRST crapage FIELDS(cdcidade)
+            FOR FIRST crapage FIELDS(idcidade)
                               WHERE crapage.cdcooper = par_cdcooper     AND
                                     crapage.cdagenci = crapass.cdagenci 
                                     NO-LOCK:
@@ -2271,7 +2345,7 @@ PROCEDURE Busca_Dados_PPE:
     
             IF AVAIL crapage THEN
             DO:
-                FIND FIRST crapmun WHERE crapmun.cdcidade = crapage.cdcidade 
+                FIND FIRST crapmun WHERE crapmun.idcidade = crapage.idcidade 
                     NO-LOCK NO-ERROR.
             
                 ASSIGN tt-ppe.cidade = IF AVAIL crapmun 

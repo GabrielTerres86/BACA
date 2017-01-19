@@ -2,7 +2,7 @@
 
     Programa  : sistema/generico/procedures/b1wgen0070.p
     Autor     : David
-    Data      : Abril/2010                  Ultima Atualizacao: 30/07/2014
+    Data      : Abril/2010                  Ultima Atualizacao: 17/01/2017
     
     Dados referentes ao programa:
 
@@ -38,6 +38,9 @@
                  
                  22/01/2016 - Melhoria 147 - Adicionar Campos e Aprovacao de
 				              Transferencia entre PAs (Heitor - RKAM)
+                      
+                 17/01/2017 - Adicionado chamada a procedure de replicacao do 
+                              telefone para o CDC. (Reinert Prj 289)                                       
 .............................................................................*/
 
 
@@ -50,6 +53,7 @@
 { sistema/generico/includes/gera_erro.i }
 { sistema/generico/includes/gera_log.i }
 { sistema/generico/includes/b1wgenvlog.i &VAR-GERAL=SIM &SESSAO-BO=SIM }
+{ sistema/generico/includes/var_oracle.i }
     
 DEF VAR aux_nrdrowid AS ROWID                                          NO-UNDO.
 
@@ -1004,7 +1008,44 @@ PROCEDURE gerenciar-telefone:
         IF RETURN-VALUE <> "OK" THEN
            UNDO TRANS_FONE, LEAVE TRANS_FONE.
         /* FIM - Atualizar os dados da tabela crapcyb */
-    
+
+        /* Telefone comercial deve replicar para o cdc */
+        IF par_tptelefo = 3 THEN
+          DO:
+              FOR FIRST crapcdr WHERE crapcdr.cdcooper = par_cdcooper
+                                  AND crapcdr.nrdconta = par_nrdconta
+                                  AND crapcdr.flgconve = TRUE NO-LOCK:
+
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                
+                RUN STORED-PROCEDURE pc_replica_cdc
+                  aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                                      ,INPUT par_nrdconta
+                                                      ,INPUT par_cdoperad
+                                                      ,INPUT par_idorigem
+                                                      ,INPUT par_nmdatela
+                                                      ,INPUT 0
+                                                      ,INPUT 1
+                                                      ,INPUT 0
+                                                      ,INPUT 0
+                                                      ,0
+                                                      ,"").
+
+                CLOSE STORED-PROC pc_replica_cdc
+                          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                ASSIGN aux_cdcritic = 0
+                       aux_dscritic = ""
+                       aux_cdcritic = pc_replica_cdc.pr_cdcritic 
+                                        WHEN pc_replica_cdc.pr_cdcritic <> ?
+                       aux_dscritic = pc_replica_cdc.pr_dscritic 
+                                        WHEN pc_replica_cdc.pr_dscritic <> ?.
+                                        
+              END.
+          END.
+          
         ASSIGN aux_flgtrans = TRUE.
     
     END. /** Fim do DO TRANSACTION - TRANS_FONE **/
