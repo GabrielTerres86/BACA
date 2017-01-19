@@ -136,7 +136,7 @@
 																															<table id="AbaPublicoAlvo" border="0" cellpadding="0" cellspacing="0">
 																																	<tr>
 																																			<td background="/cecred/images/menu/mnu_nle.gif" width="4" height="21"></td>
-																																			<td width="100" align="center" class="txtTituloHid" onclick="mostraDiv('divPublicoAlvo');document.form.submit();">P&uacute;blico Alvo</td>
+																																			<td width="100" align="center" class="txtTituloHid" onclick="mostraDiv('divPublicoAlvo');document.form.submit();">P&uacute;blico-Alvo</td>
 																																			<td background="/cecred/images/menu/mnu_nld.gif" width="4" height="21"></td>
 																																	</tr>
 																															</table>
@@ -435,7 +435,7 @@
 																				<table id="tbpublicoalvo" border="0" style="width:100%;" class="dataTable">
 																						<tr>
 																								<td id="separador1pa" width="5" background="/cecred/images/menu/fnd_title.jpg">&nbsp;</td>
-																								<td id="tbpublicoalvo_col1" width="525" height="25" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">P&uacute; Alvo</td>
+																								<td id="tbpublicoalvo_col1" width="525" height="25" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">P&uacute;blico-Alvo</td>
 																								<td width="5" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
 																								<td id="tbpublicoalvo_col2" width="40" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos"><div align="center">&nbsp;</div></td>
 																						</tr>
@@ -946,7 +946,7 @@
 					var cell;
 					var cor = '#F7F7F7';
 						
-					// limpa a tabela de Publico Alvo, menos a 1ª linha - linha do cabecalho
+					// limpa a tabela de Publico-Alvo, menos a 1ª linha - linha do cabecalho
 					for (var i=document.all.tbpublicoalvo.rows.length; i > 1; i--){
 						document.all.tbpublicoalvo.deleteRow(i-1); 
 					}
@@ -974,7 +974,7 @@
 								cell.height = 20;
 								cell.align = 'left';
 								cell.width = document.all.tbpublicoalvo_col1.width;
-								cell.innerText = mpublico[i].dspubalv; // fim primeira celula (descricao do publico alvo)
+								cell.innerText = mpublico[i].dspubalv; // fim primeira celula (descricao do publico-alvo)
 
 								cell = row.insertCell();   // Separador
 								cell.className = 'txtNormal';
@@ -987,7 +987,7 @@
 								cell.align = 'center';
 								cell.width = document.all.tbpublicoalvo_col2.width;
 								cell.height = 20;
-								cell.innerHTML = '<a href="#" onClick="ExPublicoAlvo(' + mpublico[i].nrseqpap + ');" class="linkGuia"><img src="/cecred/images/botoes/btn_excluir.gif" border="0" title="Excluir Público Alvo"></a>';
+								cell.innerHTML = '<a href="#" onClick="ExPublicoAlvo(' + mpublico[i].nrseqpap + ');" class="linkGuia"><img src="/cecred/images/botoes/btn_excluir.gif" border="0" title="Excluir Público-Alvo"></a>';
 						}
 					}else{
 							row = tbpublicoalvo.insertRow();  // nova linha 
@@ -996,7 +996,7 @@
 							cell.className = 'txtNormal';
 							cell.align = 'center';
 							cell.colSpan = 4;
-							cell.innerText = 'Nenhum Público Alvo Cadastrado.';
+							cell.innerText = 'Nenhum Público-Alvo Cadastrado.';
 						}	
 				}
 				
@@ -1004,7 +1004,7 @@
 						var row;
 						var cell;
 						var cor;
-						// limpa a tabela de Publico Alvo, menos a 1ª linha - linha do cabecalho
+						// limpa a tabela de Publico-Alvo, menos a 1ª linha - linha do cabecalho
 						for (var i=document.all.tbprodutosugerido.rows.length; i > 1; i--){
 							document.all.tbprodutosugerido.deleteRow(i-1); 
 						}
@@ -1045,7 +1045,7 @@
 									cell.align = 'center';
 									cell.width = document.all.tbprodutosugerido_col2.width;
 									cell.height = 20;
-									cell.innerHTML = '<a href="#" onClick="ExProdutoSugerido(' + mproduto[i].nrseqpdp + ');" class="linkGuia"><img src="/cecred/images/botoes/btn_excluir.gif" border="0" title="Excluir Público Alvo"></a>';
+									cell.innerHTML = '<a href="#" onClick="ExProdutoSugerido(' + mproduto[i].nrseqpdp + ');" class="linkGuia"><img src="/cecred/images/botoes/btn_excluir.gif" border="0" title="Excluir Público-Alvo"></a>';
 							}
 						}else{
 							row = tbprodutosugerido.insertRow();  // nova linha 
@@ -1062,11 +1062,11 @@
         function ExPublicoAlvo(nrseqpap){
         
           if(nrseqpap == 0 || nrseqpap == "" || nrseqpap == undefined || nrseqpap == '0'){
-            alert("Selecione um Público Alvo.");
+            alert("Selecione um Público-Alvo.");
             return false;
           }
           
-          if(confirm("Confirma a Exclusão do Público Alvo?")){
+          if(confirm("Confirma a Exclusão do Público-Alvo?")){
             document.form.aux_nrseqpap.value = nrseqpap;
             document.form.aux_cddopcao.value = "expa";
             document.form.submit();
