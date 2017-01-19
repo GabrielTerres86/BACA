@@ -178,6 +178,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS346(pr_cdcooper  IN crapcop.cdcooper%T
              
               14/10/2016 - Conversao Progress >> Oracle PLSQL (Jonata-MOUTs)
 
+			  19/01/2017 - Ajuste na gravacao das datas nas tabelas lot e rej.
+			               Quando executava pela COMPEFORA, os registros de lancamento
+						   nao eram encontrados, imprimindo em branco.
+						   Jonata (Mouts) - Chamado 588174
+
    ............................................................................. */
 
   -- Constantes do programa
@@ -1094,7 +1099,7 @@ BEGIN
                                 ,nrdolote
                                 ,tplotmov)
                           VALUES(pr_cdcooper  -- cdcooper
-                                ,vr_dtmvtolt  -- dtmvtolt
+                                ,rw_crapdat.dtmvtolt  -- dtmvtolt
                                 ,vr_cdagenci  -- cdagenci
                                 ,vr_cdbccxlt  -- cdbccxlt
                                 ,vr_nrdolote  -- nrdolote
@@ -1397,6 +1402,7 @@ BEGIN
                                 ,cdbccxlt
                                 ,nrdolote
                                 ,tplotmov
+								,dtrefere
                                 ,nrdconta
                                 ,nrdctabb
                                 ,nrdocmto
@@ -1408,11 +1414,12 @@ BEGIN
                                 ,dshistor
                                 ,tpintegr)
                          VALUES (pr_cdcooper                              -- cdcooper
-                                ,rw_craplot.dtmvtolt                      -- dtmvtolt
-                                ,rw_craplot.cdagenci                      -- cdagenci
-                                ,rw_craplot.cdbccxlt                      -- cdbccxlt
-                                ,rw_craplot.nrdolote                      -- nrdolote
-                                ,rw_craplot.tplotmov                      -- tplotmov
+                                ,rw_crapdat.dtmvtolt                      -- dtmvtolt
+                                ,vr_cdagenci                              -- cdagenci
+                                ,vr_cdbccxlt                              -- cdbccxlt
+                                ,vr_nrdolote                              -- nrdolote
+                                ,1                                        -- tplotmov
+                                ,vr_dtrefere                              -- dtrefere
                                 ,vr_nrdconta                              -- nrdconta
                                 ,vr_nrdctabb                              -- nrdctabb
                                 ,vr_nrdocmto                              -- nrdocmto
