@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Abril/2004                        Ultima atualizacao: 28/12/2016
+   Data    : Abril/2004                        Ultima atualizacao: 19/01/2017
 
    Dados referentes ao programa:
 
@@ -369,11 +369,17 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                             
                28/12/2016 - Ajustes para incorporação da Credimilsul (SD585459 Tiago/Elton)             
 			   
-			   05/01/2016 - Incluido NVL para tratar agencia e conta do arquivo
-			                pois recebia NULL e as tratativas subsequentes nao
-              	      		funcionavam da forma esperada, incluido tbem tratamentos
-							de critica qdo usa agencia NAO nos convenios
-							que tem um padrao de layout diferente (Tiago/Fabricio SD571189).            
+      			   05/01/2016 - Incluido NVL para tratar agencia e conta do arquivo
+			                      pois recebia NULL e as tratativas subsequentes nao
+                 	      		funcionavam da forma esperada, incluido tbem tratamentos
+                            de critica qdo usa agencia NAO nos convenios
+                            que tem um padrao de layout diferente (Tiago/Fabricio SD571189).
+                            
+               19/01/2017 - Incluir tratamento em casos que o convenio enviar debitos da mesma referencia
+                            para a mesma conta porém com data de pagamento ou valor diferentes
+                            (Lucas Ranghetti #533520)
+              
+                  
 ............................................................................ */
 
 
@@ -630,6 +636,36 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
            AND  craplau.dsorigem <> 'BLOQJUD'
            AND  craplau.dsorigem <> 'DAUT BANCOOB';
       rw_craplau cr_craplau%ROWTYPE;
+
+      -- Busca os lancamentos automaticos
+      CURSOR cr_craplau_dup(pr_cdcooper craplau.cdcooper%TYPE,
+                            pr_nrdconta craplau.nrdconta%TYPE,
+                            pr_dtmvtolt craplau.dtmvtolt%TYPE,
+                            pr_cdhistor craplau.cdhistor%TYPE,
+                            pr_nrdocmto craplau.nrdocmto%TYPE) IS
+        SELECT dtmvtolt,
+               dtmvtopg,
+               cdhistor,
+               nrdconta,
+               nrdocmto,
+               vllanaut,
+               nrseqdig,
+               ROWID
+          FROM craplau
+         WHERE  craplau.cdcooper = pr_cdcooper
+           AND  craplau.nrdconta = pr_nrdconta
+           AND  craplau.dtmvtolt = pr_dtmvtolt
+           AND  craplau.cdhistor = pr_cdhistor
+           AND  craplau.nrdocmto = pr_nrdocmto
+           AND  craplau.insitlau <> 3
+           AND  craplau.dsorigem <> 'CAIXA'
+           AND  craplau.dsorigem <> 'INTERNET'
+           AND  craplau.dsorigem <> 'TAA'
+           AND  craplau.dsorigem <> 'PG555'
+           AND  craplau.dsorigem <> 'CARTAOBB'
+           AND  craplau.dsorigem <> 'BLOQJUD'
+           AND  craplau.dsorigem <> 'DAUT BANCOOB';
+      rw_craplau_dup cr_craplau_dup%ROWTYPE;
 
       -- Busca os lancamentos automaticos
       CURSOR cr_craplau_2(pr_cdcooper craplau.cdcooper%TYPE,
@@ -3464,27 +3500,60 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                       vr_vllanmto     := SUBSTR(vr_setlinha,53,15) / 100;
 
                       /* Tratamento para registros duplicados */
-                      IF SUBSTR(vr_setlinha,150,1) = 0 AND
-                         (rw_gnconve.cdconven = 22 OR      /** UNIMED **/
-                         rw_gnconve.cdconven = 55)   THEN  /** LIBERTY **/
-                        LOOP
-                          -- Busca os lancamentos automaticos
-                          IF cr_craplau%ISOPEN THEN
-                            CLOSE cr_craplau;
-                          END IF;
-                          OPEN cr_craplau(vr_cdcooper, vr_nrdconta, rw_craplot.dtmvtolt, vr_dtrefere, rw_gnconve.cdhisdeb, vr_nrdocmto_int);
-                          FETCH cr_craplau INTO rw_craplau;
+                      IF SUBSTR(vr_setlinha,150,1) = 0 THEN
 
-                          IF cr_craplau%FOUND THEN
-                            vr_nrdocmto_int :=  to_char(vr_nrdocmto_int) || '0';
-                          ELSE
-                            CLOSE cr_craplau;
-                            EXIT;
-                          END IF;
-                          CLOSE cr_craplau;
-                        END LOOP;
-                      END IF;
+                        IF (rw_gnconve.cdconven = 22 OR      /** UNIMED **/
+                            rw_gnconve.cdconven = 55)   THEN  /** LIBERTY **/
+                          LOOP
+                            -- Busca os lancamentos automaticos
+                            IF cr_craplau%ISOPEN THEN
+                              CLOSE cr_craplau;
+                            END IF;
+                            OPEN cr_craplau(vr_cdcooper, vr_nrdconta, rw_craplot.dtmvtolt, vr_dtrefere, rw_gnconve.cdhisdeb, vr_nrdocmto_int);
+                            FETCH cr_craplau INTO rw_craplau;
 
+                            IF cr_craplau%FOUND THEN
+                              vr_nrdocmto_int :=  to_char(vr_nrdocmto_int) || '0';
+                            ELSE
+                              CLOSE cr_craplau;
+                              EXIT;
+                            END IF;
+                            CLOSE cr_craplau;
+                          END LOOP;
+                        ELSE
+                          LOOP
+                            -- Busca os lancamentos automaticos
+                            IF cr_craplau_dup%ISOPEN THEN
+                              CLOSE cr_craplau_dup;
+                            END IF;
+                            -- Caso o convenio enviar mais que uma referencia no mesmo dia para a mesma
+                            -- conta e valor do debito ou data de pagamento forem diferentes, vamos
+                            -- incrementar um zero no final para permitir a inclusão do lançamento
+                            OPEN cr_craplau_dup(vr_cdcooper, 
+                                                vr_nrdconta, 
+                                                rw_craplot.dtmvtolt, 
+                                                rw_gnconve.cdhisdeb, 
+                                                vr_nrdocmto_int);
+                            FETCH cr_craplau_dup INTO rw_craplau_dup;
+
+                            IF cr_craplau_dup%FOUND THEN
+                              
+                              IF rw_craplau_dup.dtmvtopg = vr_dtrefere AND
+                                 rw_craplau_dup.vllanaut = vr_vllanmto THEN
+                                 CLOSE cr_craplau_dup;
+                                 EXIT;
+                              ELSE                              
+                                vr_nrdocmto_int :=  to_char(vr_nrdocmto_int) || '0';
+                              END IF;
+                            ELSE
+                              CLOSE cr_craplau_dup;
+                              EXIT;
+                            END IF;
+                            CLOSE cr_craplau_dup;
+                          END LOOP;
+                        END IF; 
+                      END IF; -- fim IF SUBSTR(vr_setlinha,150,1) = 0 THEN
+                      
                       -- Busca os lancamentos automaticos
                       IF cr_craplau%ISOPEN THEN
                         CLOSE cr_craplau;
@@ -3728,7 +3797,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                             vr_tab_relato(vr_ind).descrica := SUBSTR(vr_setlinha,110,20);
                             vr_flgrejei     := TRUE;
                           ELSE
-
                              vr_inserir_lancamento := 'S';
                           END IF; /** fim else (vr_setlinha,150,1) **/
 
@@ -3740,19 +3808,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                             IF rw_gnconve.cdhistor = 31   OR  /* BRAS.TELECOM */
                                rw_gnconve.cdhistor = 453  THEN /* VIVO DEB. AUT. */
                               vr_nrcrcard_tmp := SUBSTR(vr_setlinha,2,11);
-                            ELSIF rw_gnconve.cdhistor = 288   OR /* TIM CELULAR */
-                                  rw_gnconve.cdhistor = 301   OR /* DB UNIMED */
-                                  rw_gnconve.cdhistor = 505   OR /* UNIMED-CECRED */
-                                  rw_gnconve.cdhistor = 509   OR  /** UNIMED **/
-                                  rw_gnconve.cdhistor = 553   OR  /** UNIODONTO **/
-                                  rw_gnconve.cdhistor = 697   OR  /** UNIM.PLAN.NORTE **/
-                                  rw_gnconve.cdhistor = 834   OR  /** TIM CELULAR **/
-                                  rw_gnconve.cdhistor = 993   THEN /** LIBERTY **/
-                              vr_nrcrcard_tmp := SUBSTR(vr_setlinha,2,25);
                             ELSIF rw_gnconve.cdhistor = 292 THEN /* BTV */
                               vr_nrcrcard_tmp := 0;
                             ELSE
-                              vr_nrcrcard_tmp := 0;
+                              vr_nrcrcard_tmp := nvl(SUBSTR(vr_setlinha,2,25),0);
                             END IF;
 
                             -- Popula o codigo de criticidade para contas migradas
