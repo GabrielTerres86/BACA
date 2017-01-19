@@ -7,7 +7,7 @@
    
      Autor: Evandro
     
-      Data: Janeiro/2010                        Ultima alteracao: 07/10/2016
+      Data: Janeiro/2010                        Ultima alteracao: 19/01/2017
     
 Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
 
@@ -274,10 +274,13 @@ Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
                          extratos isentos da cooperativa quando o cooperado possuir
                          o servico "extrato" no pacote de tarifas (Diego).
 
-			      07/10/2016 - Ajustes referente a melhoria M271. (Kelvin)
+			07/10/2016 - Ajustes referente a melhoria M271. (Kelvin)
 
             08/11/2016 - Alteracoes referentes a melhoria 165 - Lancamentos Futuros. 
                          Lenilson (Mouts)
+
+            19/01/2017 - Ajuste na validação de agendamentos/pagamentos no último
+                         dia do ano (Rodrigo - SD 587328)
 ............................................................................. */
 
 CREATE WIDGET-POOL.
@@ -4238,15 +4241,9 @@ PROCEDURE verifica_titulo:
     DELETE PROCEDURE h-b1wgen0015.
 
     /* valida se eh ultimo dia util do ano e nao deixa efetuar pagto */
-    IF  crapdat.dtmvtocd = aux_dtultdia  THEN
-        DO:
-            aux_dscritic = "Impossível pagar nesta data".
-            RETURN "NOK".
-        END.
-    ELSE
     IF  aux_datpagto = aux_dtultdia THEN
         DO:
-            aux_dscritic = "Impossível marcar agendamento para essa data.".
+            aux_dscritic = "Pagamento não permitido para essa data.".
             RETURN "NOK".
         END.
         
@@ -4858,15 +4855,9 @@ PROCEDURE verifica_convenio:
     DELETE PROCEDURE h-b1wgen0015.
 
     /* valida se eh ultimo dia util do ano e nao deixa efetuar pagto */
-    IF  crapdat.dtmvtocd = aux_dtultdia  THEN
-        DO:
-            aux_dscritic = "Impossível pagar nesta data".
-            RETURN "NOK".
-        END.
-    ELSE
     IF  aux_datpagto = aux_dtultdia THEN
         DO:
-            aux_dscritic = "Impossível marcar agendamento para essa data.".
+            aux_dscritic = "Pagamento não permitido para essa data.".
             RETURN "NOK".
         END.
 
