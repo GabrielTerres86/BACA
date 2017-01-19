@@ -2539,13 +2539,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 						,1 inconcil
 						,nvl(cst.dtemissa, cst.dtmvtolt) dtdcaptu
 						,cst.dsdocmc7
-						,0 nrremret
+						,dcc.nrremret
 			 FROM crapcst cst
+           ,crapdcc dcc
 			WHERE cst.cdcooper = pr_cdcooper
 				AND cst.nrdconta = pr_nrdconta
         AND cst.insitchq <> 1
 				AND cst.dtlibera BETWEEN pr_dtinilib AND pr_dtfimlib
 				AND cst.nrborder = 0
+        AND dcc.cdcooper = cst.cdcooper
+        AND dcc.nrdconta = cst.nrdconta
+        AND dcc.intipmvt IN (1,3)
+        AND dcc.dtlibera BETWEEN pr_dtinilib AND pr_dtfimlib
+        AND dcc.cdcmpchq = cst.cdcmpchq
+        AND dcc.cdbanchq = cst.cdbanchq
+        AND dcc.cdagechq = cst.cdagechq
+        AND dcc.nrctachq = cst.nrctachq
+        AND dcc.nrcheque = cst.nrcheque
+        AND dcc.nrborder = cst.nrborder
 			UNION
 			SELECT 'DCC' dstipchq
 						,hcc.cdcooper
@@ -5310,7 +5321,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 		OPEN  BTCH0001.cr_crapdat(pr_cdcooper);
 		FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
 		CLOSE BTCH0001.cr_crapdat;
-	
+	  
+    IF pr_tab_cheques.count <= 0 THEN
+      vr_cdcritic := 0;
+			vr_dscritic := 'Não há cheques aprovados para este borderô.';
+      RAISE vr_exc_erro;
+    END IF;
+    
 	  -- Iterar cheques parametrizados
 	  FOR vr_index IN pr_tab_cheques.first..pr_tab_cheques.last LOOP
 		  -- Apagar os registros da tabela de juros dos cheques descontados
@@ -5339,6 +5356,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			-- Gerar crítica
 			vr_cdcritic := 0;
 			vr_dscritic := 'Borderô não encontrado.';
+      RAISE vr_exc_erro;
 		END IF;
 		-- Fechar cursor
 		CLOSE cr_crapbdc;

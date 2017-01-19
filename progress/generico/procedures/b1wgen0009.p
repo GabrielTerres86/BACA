@@ -9969,7 +9969,37 @@ PROCEDURE efetua_exclusao_bordero:
            
     TRANS_EXCLUSAO:
     DO TRANSACTION ON ERROR UNDO TRANS_EXCLUSAO, LEAVE TRANS_EXCLUSAO:
-    
+        
+        /*Atualizar o numero do borderô do cheque para zero*/
+        FOR EACH crapdcc EXCLUSIVE-LOCK
+           WHERE crapdcc.cdcooper = par_cdcooper
+             AND crapdcc.nrdconta = par_nrdconta
+             AND crapdcc.nrborder = par_nrborder
+             AND CAN-DO ('1,3', STRING(crapdcc.intipmvt))
+             AND crapdcc.cdtipmvt = 1:
+          
+          ASSIGN crapdcc.nrborder = 0.
+        END.
+        
+        /*Se o cheque estiver em custódia (crapcst), atualizar o numero do borderô para zero*/
+        FOR EACH crapcst EXCLUSIVE-LOCK
+           WHERE crapcst.cdcooper = par_cdcooper
+             AND crapcst.nrdconta = par_nrdconta
+             AND crapcst.nrborder = par_nrborder
+             AND CAN-DO ('0,2', STRING(crapcst.insitchq)):
+          
+          ASSIGN crapcst.nrborder = 0.
+        END.
+        
+        /* Apagar registro do cálculo de juros do cheque no borderô; */
+        FOR EACH crapljd EXCLUSIVE-LOCK
+           WHERE crapljd.cdcooper = par_cdcooper
+             AND crapljd.nrdconta = par_nrdconta
+             AND crapljd.nrborder = par_nrborder:
+             
+          DELETE crapljd.
+        END.
+        
         DO aux_contador = 1 TO 10:
          
             FIND crapbdc WHERE crapbdc.cdcooper = par_cdcooper   AND
