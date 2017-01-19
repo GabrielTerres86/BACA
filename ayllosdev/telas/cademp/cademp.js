@@ -891,6 +891,13 @@ function controlaFocoFormulariosEmpresa() {
 
                         if (normalizaNumero(cNrdconta.val()) > 0){
                             buscaContaEmp(1);
+					} else {
+
+						showError('error','N&uacute;mero de conta d&eacute;bito inv&aacute;lida!',
+                              'Campo Obrigat&oacute;rio!',
+                              '$("#nrdconta","#frmInfEmpresa").focus();');
+						cNrdconta.val("");
+						return false;
                         }
                 cNmcontat.focus();
                 return false;
@@ -1180,11 +1187,11 @@ function btnVoltar() {
 
 
 function alteraInclui() {
-
+	
 	//Variaveis para tratamento de caracteres invalidos
     var nmextemp, nmresemp, nmcontat, dsendemp, dscomple, nmbairro, nmcidade, cdufdemp, nrfonemp, nrfaxemp, dsdemail;
 		
-    var cnpj;
+	var cnpj;
 
     /* Altera valor nos campos Checkbox */
     cIndescsg.is(':checked') ? cIndescsg.val(2) : cIndescsg.val(1);
@@ -1195,7 +1202,7 @@ function alteraInclui() {
 
     cNrdocnpj = $('#nrdocnpj', '#frmInfEmpresa');
     cnpj = normalizaNumero(cNrdocnpj.val());
-
+	
 	//Substitui/Remove os caracteres invalidos dos campos ao inserer ou alterar
 	nmextemp = removeCaracteresInvalidos(cNmextemp.val().toUpperCase()); // Razao social
 	nmresemp = removeCaracteresInvalidos(cNmresemp.val().toUpperCase()); // Nome fantazia
@@ -1208,7 +1215,7 @@ function alteraInclui() {
 	nrfonemp = removeCaracteresInvalidos(cNrfonemp.val());				 // Telefone
 	nrfaxemp = removeCaracteresInvalidos(cNrfaxemp.val());				 // Fax
 	dsdemail = removeCaracteresInvalidos(cDsdemail.val());				 // Email
-
+	
     /* Altera valor nos campos Checkbox */
     if (cddopcao == "A") {
         showMsgAguardo("Aguarde, alterando empresa...");
@@ -1441,6 +1448,12 @@ function buscaEmpresas() {
                             $('#cdempres','#frmInfEmpresa').val('');
                         } else {
                             $('input,select', '#frmInfEmpresa').removeClass('campoErro');
+                            
+							// Ajuste para limpar html de tabela e evitar carga de dados inválidos
+							var divTabEmpresas = $('div.divRegistros', '#divTabEmpresas'); // '#divPesquisaEmpresa'
+							divTabEmpresas.empty();
+							$('#divTabEmpresas').html(response);
+                            
                             $('#divConteudo').html(response);
                             exibeRotina($('#divPesquisaEmpresa'));
                             exibeRotina($('#divTabEmpresas'));
