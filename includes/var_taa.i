@@ -99,6 +99,8 @@
 			   23/11/2016 - Atualização para versão Emergencial 8.9 (Paulo Samuel).
 
 			   08/12/2016 - Atualização para versão 9.0 (Paulo Samuel).
+
+               19/01/2016 - Atualização para versão 9.1 (Paulo Samuel).
 .............................................................................. */
 
                             
@@ -111,7 +113,7 @@ DEF {1} SHARED VAR glb_cdagetfn AS INT                                   NO-UNDO
 DEF {1} SHARED VAR glb_ipterfin AS CHAR                                  NO-UNDO.
 DEF {1} SHARED VAR glb_nmserver AS CHAR                                  NO-UNDO. /* Servidor */
 DEF {1} SHARED VAR glb_nmservic AS CHAR                                  NO-UNDO. /* Serviço WebSpeed */
-DEF {1} SHARED VAR glb_dsvertaa AS CHAR     INIT "  v9.0"                NO-UNDO.
+DEF {1} SHARED VAR glb_dsvertaa AS CHAR     INIT "  v9.1"                NO-UNDO.
 
 /* Temporizador */
 DEF {1} SHARED VAR glb_nrtempor AS INT                                   NO-UNDO.
