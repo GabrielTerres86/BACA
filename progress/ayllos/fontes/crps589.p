@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Fabricio
-   Data    : Abril/2013                        Ultima atualizacao: 18/11/2015
+   Data    : Abril/2013                        Ultima atualizacao: 19/01/2017
    
    Dados referentes ao programa:
 
@@ -27,6 +27,9 @@
 
                18/11/2015 - Ajustes para que o crps utilize a rotina de
                             obtem-saldo-dia do Oracle (Douglas - Chamado 285228)
+
+			   19/01/2017 - Ajuste no formato do campo Nosso Numero (Diego).
+
 ............................................................................ */
 
 { includes/var_batch.i }
@@ -51,7 +54,7 @@ DEF TEMP-TABLE tt-dados-retorno NO-UNDO
     FIELD cdcomple AS CHAR
     FIELD nrdocmto AS INTE
     FIELD vllanmto AS DECI
-    FIELD chavcred AS INTE.
+    FIELD chavcred AS DECI.
 
 DEF VAR aux_nmarquiv AS CHAR                NO-UNDO.
 DEF VAR aux_nmarqdeb AS CHAR FORMAT "X(97)" NO-UNDO.
@@ -407,7 +410,7 @@ PROCEDURE grava-dados-retorno:
     DEF INPUT PARAM par_cdcomple AS CHAR NO-UNDO.
     DEF INPUT PARAM par_nrdocmto AS INTE NO-UNDO.
     DEF INPUT PARAM par_vllanmto AS DECI NO-UNDO.
-    DEF INPUT PARAM par_chavcred AS INTE NO-UNDO.
+    DEF INPUT PARAM par_chavcred AS DECI NO-UNDO.
 
     CREATE tt-dados-retorno.
     ASSIGN tt-dados-retorno.cdunidad = par_cdunidad
