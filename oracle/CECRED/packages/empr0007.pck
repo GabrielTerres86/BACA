@@ -125,6 +125,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0007 IS
 																		 ,pr_cdoperad IN crapope.cdoperad%TYPE
 																		 ,pr_idorigem IN INTEGER
                                      ,pr_nmtelant IN VARCHAR2                     --> Verificar COMPEFORA
+                                     ,pr_vltotpag OUT NUMBER                      --> Retorno do valor pago
                                      ,pr_cdcritic OUT PLS_INTEGER                 --> Código da crítica
                                      ,pr_dscritic OUT VARCHAR2);                  --> Descrição da crítica
 
@@ -961,6 +962,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 		-- Variaveis locais
     vr_dsparcel gene0002.typ_split;
 		vr_vldpagto crapepr.vlsdeved%TYPE;    
+    vr_vltotpag craplcm.vllanmto%TYPE;
     vr_flgdel   BOOLEAN;
     vr_flgativo PLS_INTEGER;
 
@@ -1182,6 +1184,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                                  , pr_cdoperad => pr_cdoperad
                                  , pr_idorigem => pr_idorigem
                                  , pr_nmtelant => pr_nmtelant
+                                 , pr_vltotpag => vr_vltotpag --> Retorno do valor total pago
                                  , pr_cdcritic => vr_cdcritic
                                  , pr_dscritic => vr_dscritic);                                 
 
@@ -1439,6 +1442,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 																		 ,pr_cdoperad IN crapope.cdoperad%TYPE
 																		 ,pr_idorigem IN INTEGER
                                      ,pr_nmtelant IN VARCHAR2                     --> Verificar COMPEFORA
+                                     ,pr_vltotpag OUT NUMBER                      --> Retorno do valor pago
                                      ,pr_cdcritic OUT PLS_INTEGER                 --> Código da crítica
                                      ,pr_dscritic OUT VARCHAR2) IS                --> Descrição da crítica
   BEGIN
@@ -1447,7 +1451,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       Sistema : CECRED
       Sigla   : EMPR
       Autor   : Carlos Rafael Tanholi
-      Data    : Agosto/15.                    Ultima atualizacao: 13/07/2016
+      Data    : Agosto/15.                    Ultima atualizacao: 16/01/2016
 
       Dados referentes ao programa:
 
@@ -1474,6 +1478,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       19/10/2016 - Deverá avaliar o indicador de pagamentos apenas quando não estiver
                    em um acordo ativo, pois para ACORDOS poderá ocorrer o pagamento de 
                    mais de uma parcela do acordo no mesmo mês ( Renato Darosci - Supero )
+                   
+      16/01/2016 - Alterado para retornar valor total pago do emprestimo. 
+                   PRJ302 - Acordo (Odirlei-AMcom)
                    
     ..............................................................................*/
 
@@ -2373,6 +2380,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                 RAISE vr_exc_undo;
             END;
 
+            --> Armazenar valores 
+            pr_vltotpag := nvl(pr_vltotpag,0) + nvl(vr_vldescto,0);
+            
             -- Atualizar Pl table de conta corrente
             IF vr_tab_craplcm.exists(rw_crapepr.nrdconta) THEN
               vr_ind_lcm := vr_tab_craplcm(rw_crapepr.nrdconta).tab_craplcm.count + 1;
@@ -2576,6 +2586,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                 vr_cdcritic := 0;
                 vr_dscritic := NULL;
               END IF;
+              
+              --> Armazenar valores 
+              pr_vltotpag := nvl(pr_vltotpag,0) + nvl(vr_vldmulta,0) + nvl(vr_vljumora,0);
 
             END IF;
 
