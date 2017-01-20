@@ -26,6 +26,9 @@ BEGIN
 							              lançamento de créditos na conta do cooperado
 							              (Adriano - SD 563707).
 
+               01/12/2016 - Ajuste para incluir mais informações no e-mail de rejeições
+                            (Adriano - SD 568539).             
+
                12/01/2017 - Ajuste para verificar se cooperado é migrado 
                             (Adriano - SD 592406).
    ............................................................................. */
@@ -1064,6 +1067,12 @@ BEGIN
                                                                 '<b>Tipo Trans.</b>' ||
                                                               '</td>' ||
                                                               '<td width="100px">' ||
+                                                                '<b>Nr. Operação</b>' ||
+                                                              '</td>' ||
+                                                              '<td width="100px">' ||
+                                                                '<b>Valor</b>' ||
+                                                              '</td>' ||
+                                                              '<td width="100px">' ||
                                                                 '<b>Dt.Arquivo</b>' ||
                                                               '</td>' ||
                                                               '<td width="100px">' ||
@@ -1095,6 +1104,12 @@ BEGIN
                                         ,pr_texto_novo => '<tr>' ||
                                                             '<td>' ||
                                                               vr_nmevehead ||
+                                                            '</td>' ||
+                                                            '<td>' ||
+                                                              vr_nrctrlif ||
+                                                            '</td>' ||
+                                                            '<td>' ||
+                                                              to_char(vr_vloperac,'fm999g999g999g990d00','NLS_NUMERIC_CHARACTERS='',.''') || 
                                                             '</td>' ||
                                                             '<td>' ||
                                                               to_char(vr_dtarquiv,'DD/MM/RRRR') ||
