@@ -220,7 +220,9 @@
 			   05/10/2016 - Incluir tratamento para a CASAN enviar a angecia 1294 para autorizacoes
 							mais antigas (Lucas Ranghetti ##534110)
               
-              28/12/2016 - Ajustes para incorporaçao da Credimilsul (SD585459 Tiago/Elton) 
+              28/12/2016 - Ajustes para incorporaçao da Transulcred (SD585459 Tiago/Elton) 
+
+			  17/01/2016 - Ajustes para incorporação da Transulcred (SD593672 Tiago/Elton)
 ............................................................................. */
  
 { includes/var_batch.i {1} }
@@ -733,7 +735,8 @@ FOR EACH gncvcop NO-LOCK WHERE
             IF  aux_ctamigra     = TRUE  THEN
                 DO:   
                    IF (craplau.cdcooper = craptco.cdcopant   OR  
-                       craplau.cdcritic = 951)  THEN
+                       craplau.cdcritic = 951                OR
+					   UPPER(craplau.dscodbar) = "MIGRADO")  THEN
                        DO:
                            IF    craptco.cdcopant = 1                 AND 
                                  gnconve.cdconven <> 22               AND

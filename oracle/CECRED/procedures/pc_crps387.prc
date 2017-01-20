@@ -367,7 +367,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                28/11/2016 - Ajustes para quando rodar na Cecred tratar quase que exclusivamente apenas
                             a situacao de Agencia Invalida. (Chamados 564779/565655) - (Fabricio)
                             
-               28/12/2016 - Ajustes para incorporação da Credimilsul (SD585459 Tiago/Elton)             
+               28/12/2016 - Ajustes para incorporação da Transulcred (SD585459 Tiago/Elton)             
+
+			   17/01/2016 - Ajustes para incorporação da Transulcred (SD593672 Tiago/Elton)             
 ............................................................................ */
 
 
@@ -384,6 +386,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
       vr_dscritic   VARCHAR2(4000);
       vr_dsconteu VARCHAR2(4000);
 
+      vr_dscodbar craplau.dscodbar%TYPE;
       ------------------------------- CURSORES ---------------------------------
 
       -- Busca dos dados da cooperativa
@@ -3700,9 +3703,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                               vr_nrcrcard_tmp := 0;
                             END IF;
 
+                            vr_dscodbar := ' ';
+                            
                             -- Popula o codigo de criticidade para contas migradas
                             IF vr_flg_ctamigra THEN
                               vr_cdcritic_tmp := 951; -- Conta migrada.
+                              vr_dscodbar := 'MIGRADO';
                             ELSE
                               vr_cdcritic_tmp := 0;
                             END IF;
@@ -3736,7 +3742,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                                  nrcrcard,
                                  dsorigem,
                                  cdtiptra,
-                                 dscedent)
+                                 dscedent,
+                                 dscodbar)
                                VALUES
                                 (rw_craplot.cdagenci,
                                  rw_craplot.cdbccxlt,
@@ -3760,7 +3767,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                                  vr_nrcrcard_tmp,
                                  'DEBAUT',
                                  6, -- Debito Automatico
-                                 rw_gnconve.nmempres)
+                                 rw_gnconve.nmempres,
+                                 vr_dscodbar)
                                RETURNING dtmvtolt,
                                          dtmvtopg,
                                          cdhistor,
@@ -3783,7 +3791,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                                 vr_dscritic := 'Erro ao inserir na CRAPLAU: '||SQLERRM;
                                 RAISE vr_exc_saida;
                             END;
-
 
                             -- Atualiza a capa do lote
                             BEGIN
