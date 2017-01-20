@@ -124,7 +124,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
 
     Programa: GENE0003 ( Antigo b1wgen0011.p )
     Autor   : David
-    Data    : Agosto/2006                     Ultima Atualizacao: 26/10/2016
+    Data    : Agosto/2006                     Ultima Atualizacao: 20/01/2017
 
     Dados referentes ao programa:
 
@@ -196,6 +196,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
                              
                 26/10/2016 - Logada a exeução do do procedimento pc_process_email_penden apenas quando
                              existirem emails pendentes de envio  (Carlos)
+                             
+                20/01/2017 - Alteracao na procedure pc_solicita_email para gravacao do log de envio de
+                             boletos por e-mail no arquivo PROC_MESSAGE. SD 579741 (Carlos Rafael Tanholi).             
 ..............................................................................*/
 
   /* Saída com erro */
@@ -1084,10 +1087,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
                   END IF;
                   -- Se foi solicitado envio de log
                   IF pr_flg_log_batch = 'S' THEN
-                    -- Grava log para avisar que o anexo será enviado para o destinatário
+                    -- Grava log no PROC_MESSAGE avisando que o anexo será enviado para o destinatário
                     BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                               ,pr_ind_tipo_log => 1 -- Processo normal
-                                              ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '|| pr_cdprogra || ' --> '||vr_caminho||'/'||vr_arquivo||' ENVIADO PARA '||pr_tab_destino(vr_ind)||'.');
+                                              ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '|| pr_cdprogra || ' --> '||vr_caminho||'/'||vr_arquivo||' ENVIADO PARA '||pr_tab_destino(vr_ind)||'.'
+                                              ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE'));
                   END IF;
                 ELSE
                   -- Grava log para avisar que não localizou o anexo
@@ -1095,7 +1099,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
                                             ,pr_ind_tipo_log => 2 -- erro tratado
                                             ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '|| pr_cdprogra ||
                                                                 ' --> Anexo não encontrato '||vr_tab_anexos(vr_ind_a).dspathan);
-                END IF;
+                END IF; 
               END LOOP;
             ELSE
               -- Percorre toda a lista

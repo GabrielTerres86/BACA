@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --  Sistema  : Rotinas genericas referente a tela de Cartões
   --  Sigla    : CCRD
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Abril - 2014.                   Ultima atualizacao: 03/01/2017
+  --  Data     : Abril - 2014.                   Ultima atualizacao: 19/01/2017
   --
   -- Dados referentes ao programa:
   --
@@ -42,6 +42,8 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --             03/01/2017 - #574756 Ajuste de posição da data de movimento do arquivo CEXT na 
   --                          rotina pc_crps670 para buscar os registros corretamente pela chave (Carlos)
   --
+  --             19/01/2017 - Alterei a procedure pc_debita_fatura_web para nao logar o erro de validacao
+  --                          de dia util. SD 579741. (Carlos Rafael Tanholi)
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de Registro para as faturas pendentes
@@ -7075,6 +7077,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       vr_flgerlog    BOOLEAN := FALSE;
       vr_contador    pls_integer := 0;
       vr_exc_saida   EXCEPTION;
+      vr_dsdiautil   VARCHAR2(45) := 'Processo deve rodar apenas em dia util';
 
       --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
       PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
@@ -7134,10 +7137,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
               vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
            END IF;
            
-           -- Envio centralizado de log de erro
-           pc_controla_log_batch(pr_dstiplog => 'E',
-                                pr_dscritic => 'Coop: ' || vr_crapcop(i) || 
-                                                ' - ' || vr_dscritic);
+           -- SD 579741
+           IF vr_dscritic <> vr_dsdiautil THEN        
+             -- Envio centralizado de log de erro
+             pc_controla_log_batch(pr_dstiplog => 'E',
+                                  pr_dscritic => 'Coop: ' || vr_crapcop(i) || 
+                                                  ' - ' || vr_dscritic);
+           END IF;                                                  
 
           CONTINUE; -- vai para a próxima cooperativa
         END IF;   
