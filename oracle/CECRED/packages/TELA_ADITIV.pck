@@ -1132,7 +1132,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
       IF vr_cdaditiv IN ('2','3') THEN
         
         IF pr_cdaditiv = 3 THEN
-          vr_nrdconta := pr_nrctagar;
+          if pr_nrctagar <> 0 then
+            vr_nrdconta := pr_nrctagar;
+          else
+            vr_nrdconta := rw_crapadt.nrctagar;
+          end if;
         ELSE 
           vr_nrdconta := pr_nrdconta;
         END IF;
