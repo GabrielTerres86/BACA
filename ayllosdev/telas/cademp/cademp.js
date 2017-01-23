@@ -898,7 +898,7 @@ function controlaFocoFormulariosEmpresa() {
                               '$("#nrdconta","#frmInfEmpresa").focus();');
 						cNrdconta.val("");
 						return false;
-                        }
+					}
                 cNmcontat.focus();
                 return false;
         });
@@ -1423,7 +1423,6 @@ function buscaEmpresas() {
         },
         success: function(response) {
             try {
-
                 if (cddopcao == "I") {
                     eval(response);
                     $('#frmInfEmpresa').css({'display': 'block'});
@@ -1433,7 +1432,7 @@ function buscaEmpresas() {
                     if (cdempres == '') {
 
                         if ($.trim(response).substring(1,4) == 'div') {
-                            $('#divConteudo').html(response);
+                            $('#divConteudo', '#divPesquisaEmpresa').html(response);
                             fechaRotina($('#divCabecalhoPesquisaEmpresa'));
                             exibeRotina($('#divPesquisaEmpresa'));
                             exibeRotina($('#divTabEmpresas'));
@@ -1449,13 +1448,8 @@ function buscaEmpresas() {
                         } else {
                             $('input,select', '#frmInfEmpresa').removeClass('campoErro');
                             
-							// Ajuste para limpar html de tabela e evitar carga de dados inválidos
-							var divTabEmpresas = $('div.divRegistros', '#divTabEmpresas'); // '#divPesquisaEmpresa'
-							divTabEmpresas.empty();
-							$('#divTabEmpresas').html(response);
-                            
-                            $('#divConteudo').html(response);
-                            exibeRotina($('#divPesquisaEmpresa'));
+							$('#divConteudo', '#divPesquisaEmpresa').html(response);
+							exibeRotina($('#divPesquisaEmpresa'));
                             exibeRotina($('#divTabEmpresas'));
                             formataTabEmpresas();
                             selecionaEmpresa();
