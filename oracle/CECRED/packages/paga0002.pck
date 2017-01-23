@@ -2365,6 +2365,7 @@ create or replace package body cecred.PAGA0002 is
                          ,pr_dtagenda => vr_dtmvtopg  --> Data agendamento
                          ,pr_idorigem => 3 /*INTERNET*/ --> Indicador de origem
                          ,pr_indvalid => 0            --> Nao validar horario limite
+						             ,pr_flmobile => pr_flmobile  --> Indicador Mobile
                          ,pr_nmextcon => vr_nmconban  --> Nome do banco
                          ,pr_cdseqfat => vr_cdseqfat  --> Codigo Sequencial fatura
                          ,pr_vlfatura => vr_vlrdocum  --> Valor fatura
@@ -2422,6 +2423,7 @@ create or replace package body cecred.PAGA0002 is
                                  ,pr_dtagenda => vr_dtmvtopg           --> Data agendamento
                                  ,pr_idorigem => 3 /* INTERNET */      --> Indicador de origem
                                  ,pr_indvalid => 0                     --> Validar
+								                 ,pr_flmobile => pr_flmobile           --> Indicador Mobile
                                  ,pr_nmextbcc => vr_nmconban           --> Nome do banco
                                  ,pr_vlfatura => vr_vlrdocum           --> Valor fatura
                                  ,pr_dtdifere => vr_dtdifere           --> Indicador data diferente
@@ -3055,6 +3057,7 @@ create or replace package body cecred.PAGA0002 is
                          ,pr_dtagenda => vr_dtmvtopg  --> Data agendamento
                          ,pr_idorigem => 3 /*INTERNET*/ --> Indicador de origem
                          ,pr_indvalid => 0            --> Nao validar horario limite
+						             ,pr_flmobile => pr_flmobile  --> Indicador Mobile
                          ,pr_nmextcon => vr_nmconban  --> Nome do banco
                          ,pr_cdseqfat => vr_cdseqfat  --> Codigo Sequencial fatura
                          ,pr_vlfatura => vr_vlrdocum  --> Valor fatura
@@ -3215,6 +3218,7 @@ create or replace package body cecred.PAGA0002 is
                                  ,pr_dtagenda => vr_dtmvtopg           --> Data agendamento
                                  ,pr_idorigem => 3 /* INTERNET */      --> Indicador de origem
                                  ,pr_indvalid => 0                     --> Validar
+								                 ,pr_flmobile => pr_flmobile           --> Indicador Mobile
                                  ,pr_nmextbcc => vr_nmconban           --> Nome do banco
                                  ,pr_vlfatura => vr_vlrdocum           --> Valor fatura
                                  ,pr_dtdifere => vr_dtdifere           --> Indicador data diferente

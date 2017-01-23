@@ -53,6 +53,7 @@ CREATE OR REPLACE PACKAGE cecred.paga0003 IS
                                 ,pr_idagenda IN INTEGER -- Indicador de agendamento (1-Nesta Data/2-Agendamento
                                 ,pr_dtagenda IN DATE -- Data de agendamento
                                 ,pr_indvalid IN INTEGER -- Indicador de controle de validações (1-Operação Online/2-Operação Batch)
+								,pr_flmobile IN INTEGER -- Indicador Mobile
                                 ,pr_cdseqfat OUT VARCHAR2 -- Código sequencial da guia
                                 ,pr_vldocmto OUT NUMBER -- Valor da guia
                                 ,pr_nrdigfat OUT NUMBER -- Digito do faturamento
@@ -945,6 +946,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                 ,pr_idagenda IN INTEGER -- Indicador de agendamento (1-Nesta Data/2-Agendamento
                                 ,pr_dtagenda IN DATE -- Data de agendamento
                                 ,pr_indvalid IN INTEGER -- Indicador de controle de validações (1-Operação Online/2-Operação Batch)
+								,pr_flmobile IN INTEGER -- Indicador Mobile
                                 ,pr_cdseqfat OUT VARCHAR2 -- Código sequencial da guia
                                 ,pr_vldocmto OUT NUMBER -- Valor da guia
                                 ,pr_nrdigfat OUT NUMBER -- Digito do faturamento
@@ -1247,38 +1249,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       vr_cdempcon := SUBSTR(pr_cdbarras, 16, 4);
       vr_cdsegmto := SUBSTR(pr_cdbarras, 2, 1);
             
-      -- Se não for uma DARF/DAS válida
-      IF vr_cdempcon NOT IN (64, 153, 154, 328, 385) OR vr_cdsegmto NOT IN (5) THEN
-      
-        -- GPS -- Convênio 270 e Segmento 5
-        IF vr_cdempcon = 270 AND vr_cdsegmto = 5 THEN
-          vr_dscritic := 'GPS deve ser paga na opção ''Transações - GPS'' do menu de serviços.';
-        
-        -- CONVÊNIO - Se o primeiro dígito do código de barras for 8
-        ELSIF SUBSTR(pr_cdbarras, 0, 1) = 8 THEN
-          vr_dscritic := 'Convênio deve ser pago na opção ''Transações - Pagamentos'' do menu de serviços';
-        
-        -- BOLETO - Se não cair em nenhuma condição anterior
-        ELSE
-          vr_dscritic := 'Boleto deve ser pago na opção ''Transações - Pagamentos'' do menu de serviços';
-        END IF;
-      
-        --Levantar Excecao
-        RAISE vr_exc_erro;
-      END IF;
-      
-      
-      -- Se for DARF sendo paga como DAS, ou vice-versa
-      IF pr_tpdaguia = 1 AND vr_cdempcon IN (328) THEN -- DAS sendo paga como DARF
-        vr_dscritic := 'DAS deve ser pago na opção ''Transações - DAS'' do menu de serviços';
-        --Levantar Excecao
-        RAISE vr_exc_erro;
-      ELSIF pr_tpdaguia = 2 AND vr_cdempcon IN (64, 153, 154, 385) THEN -- DARF sendo paga como DAS
-        vr_dscritic := 'DARF deve ser pago na opção ''Transações - DARF'' do menu de serviços';
-        --Levantar Excecao
-        RAISE vr_exc_erro;
-      END IF;
-    
       -- Busca o convênio na CRAPCON
       OPEN cr_crapcon(pr_cdcooper => pr_cdcooper
                      ,pr_cdempcon => vr_cdempcon
@@ -1296,6 +1266,51 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       --Verifica se o convênio está liberado para pagamento via internet
       IF pr_idorigem = 3 AND rw_crapcon.flginter <> 1 THEN
         vr_dscritic := 'Este convênio não está habilitado para pagamento via internet.';
+        RAISE vr_exc_erro;
+      END IF;
+			
+      -- Se não for uma DARF/DAS válida
+      IF vr_cdempcon NOT IN (64, 153, 154, 328, 385) OR vr_cdsegmto NOT IN (5) THEN
+      
+        -- GPS -- Convênio 270 e Segmento 5
+        IF vr_cdempcon = 270 AND vr_cdsegmto = 5 THEN
+			IF pr_flmobile = 1 THEN -- Canal Mobile
+				vr_dscritic := 'Pagamento de GPS não disponível, utilize a Conta Online.';
+			ELSE -- Conta Online
+          		vr_dscritic := 'GPS deve ser paga na opção ''Transações - GPS'' do menu de serviços.';
+			END IF;
+     
+        -- CONVÊNIO - Se o primeiro dígito do código de barras for 8
+        ELSIF SUBSTR(pr_cdbarras, 0, 1) = 8 THEN
+          vr_dscritic := 'Convênio deve ser pago na opção ''Transações - Pagamentos'' do menu de serviços';
+        
+        -- BOLETO - Se não cair em nenhuma condição anterior
+        ELSE
+          vr_dscritic := 'Boleto deve ser pago na opção ''Transações - Pagamentos'' do menu de serviços';
+        END IF;
+      
+        --Levantar Excecao
+        RAISE vr_exc_erro;
+      END IF;
+      
+      -- Se for DARF sendo paga como DAS, ou vice-versa
+      IF pr_tpdaguia = 1 AND vr_cdempcon IN (328) THEN -- DAS sendo paga como DARF
+		IF pr_flmobile = 1 THEN -- Canal Mobile
+			vr_dscritic := 'DAS deve ser paga na opção ''Tributos - DAS'' do menu de serviços';
+		ELSE -- Conta Online
+			vr_dscritic := 'DAS deve ser paga na opção ''Transações - DAS'' do menu de serviços';
+      	END IF;
+    
+        --Levantar Excecao
+        RAISE vr_exc_erro;
+      ELSIF pr_tpdaguia = 2 AND vr_cdempcon IN (64, 153, 154, 385) THEN -- DARF sendo paga como DAS
+		IF pr_flmobile = 1 THEN -- Canal Mobile
+			vr_dscritic := 'DARF deve ser paga na opção ''Tributos - DARF'' do menu de serviços';
+		ELSE -- Conta Online
+			vr_dscritic := 'DARF deve ser paga na opção ''Transações - DARF'' do menu de serviços';
+      	END IF;
+    
+        --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
       
@@ -2827,6 +2842,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 																	 pr_idagenda => pr_idagenda,
 																	 pr_dtagenda => vr_dtmvtopg,
 																	 pr_indvalid => 1,
+																	 pr_flmobile => pr_flmobile, 
 																	 pr_cdseqfat => vr_cdseqfat,
 																	 pr_vldocmto => vr_vldocmto,
 																	 pr_nrdigfat => vr_nrdigfat,

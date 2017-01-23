@@ -11720,6 +11720,455 @@ PROCEDURE aprova_trans_pend:
                                                 INPUT tt-tbtarif_pacote_trans_pend.vlpacote,
                                                 INPUT aux_conttran).
                     END.
+                 ELSE IF tt-tbgen_trans_pend.tptransacao = 11 THEN /* Pagamento DARF/DAS */
+                  DO: 
+                    FOR FIRST tt-tbpagto_darf_das_trans_pend WHERE tt-tbpagto_darf_das_trans_pend.cdtransacao_pendente = tt-tbgen_trans_pend.cdtransacao_pendente NO-LOCK. END.
+                    
+                    FIND FIRST tt-vlrdat WHERE tt-vlrdat.dattrans = tt-tbpagto_darf_das_trans_pend.dtdebito NO-LOCK NO-ERROR NO-WAIT.
+
+                    /* Procedimento do internetbank pc_verifica_operacao_prog */
+                    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                    RUN STORED-PROCEDURE pc_verifica_operacao_prog
+                        aux_handproc = PROC-HANDLE NO-ERROR      
+                          (INPUT  par_cdcooper
+                          ,INPUT  par_cdagenci
+                          ,INPUT  par_nrdcaixa
+                          ,INPUT  par_nrdconta
+                          ,INPUT  par_idseqttl        
+                          ,INPUT  par_dtmvtolt
+                          ,INPUT  tt-tbpagto_darf_das_trans_pend.idagendamento
+                          ,INPUT  tt-tbpagto_darf_das_trans_pend.dtdebito
+                          ,INPUT  (IF par_indvalid = 0 AND aux_conttran = 1 AND AVAIL tt-vlrdat THEN 
+                                    tt-vlrdat.vlronlin /* Valor Total Composto */
+                                  ELSE tt-tbpagto_darf_das_trans_pend.vlpagamento)
+                          ,INPUT  0            /* par_cddbanco */
+                          ,INPUT  0            /* par_cdageban */
+                          ,INPUT  0            /* par_nrctatrf */
+                          ,INPUT  10           /* par_cdtiptra - DARF/DAS */
+                          ,INPUT  par_cdoperad /* par_cdoperad */
+                          ,INPUT  10           /* par_tpoperac - DARF/DAS */
+                          ,INPUT  1            /* par_flgvalid*/
+                          ,INPUT  aux_dsorigem /* par_dsorigem */
+                          ,INPUT  0
+                          ,INPUT  1            /* par_flgctrag */
+                          ,INPUT  ""           /* par_nmdatela */
+                          ,OUTPUT aux_dstransa
+                          ,OUTPUT ""           /* --> Retorno XML pr_tab_limite      */
+                          ,OUTPUT ""           /* --> Retorno XML pr_tab_internet    */
+                          ,OUTPUT 0            /* --> Retorno pr_cdcritic            */
+                          ,OUTPUT "").         /* --> Retorno pr_dscritic (OK ou NOK)*/
+                                            
+                    IF  ERROR-STATUS:ERROR  THEN DO:
+                        DO  aux_qterrora = 1 TO ERROR-STATUS:NUM-MESSAGES:
+                            ASSIGN aux_msgerora = aux_msgerora + 
+                                                  ERROR-STATUS:GET-MESSAGE(aux_qterrora) + " ".
+                        END.
+                                                                         
+                        ASSIGN aux_dscritic = "pc_verifica_operacao_prog --> "  +
+                                              "Erro ao executar Stored Procedure: " +
+                                              aux_msgerora.      
+                        ASSIGN xml_dsmsgerr = "<dsmsgerr>" + 
+                                                   "Erro inesperado. Nao foi possivel efetuar a verificacao." + 
+                                                   " Tente novamente ou contacte seu PA" +
+                                              "</dsmsgerr>".                        
+                        RUN proc_geracao_log.
+                        RETURN "NOK".
+                        
+                    END. 
+
+                    CLOSE STORED-PROC pc_verifica_operacao_prog
+                          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl}}
+
+                    ASSIGN aux_dscritic   = pc_verifica_operacao_prog.pr_dscritic 
+                                            WHEN pc_verifica_operacao_prog.pr_dscritic <> ?                               
+                           aux_tab_limite = pc_verifica_operacao_prog.pr_tab_limite 
+                                            WHEN pc_verifica_operacao_prog.pr_tab_limite <> ? .                      
+                                            
+                    /* Verificar se retornou critica */
+                    IF aux_dscritic <> "" THEN
+                      DO:
+                        /* Gerar log das teds com erro */
+                        RUN gera_arquivo_log_ted(INPUT par_cdcooper,
+                                                 INPUT "verifica_operacao",
+                                                 INPUT "b1wgen0015",
+                                                 INPUT par_dtmvtolt,
+                                                 INPUT par_nrdconta,
+                                                 INPUT tt-tbgen_trans_pend.nrcpf_operador,
+                                                 INPUT 0,
+                                                 INPUT 0,
+                                                 INPUT 0,
+                                                 INPUT "",
+                                                 INPUT 0,
+                                                 INPUT 0,
+                                                 INPUT 0,
+                                                 INPUT tt-tbpagto_darf_das_trans_pend.vlpagamento,
+                                                 INPUT "",
+                                                 INPUT tt-tbgen_trans_pend.tptransacao,
+                                                 INPUT 0,
+                                                 INPUT aux_dscritic).
+
+                        RUN gera_erro_transacao(INPUT par_cdcooper,
+                                                INPUT par_cdoperad,
+                                                INPUT aux_dscritic,
+                                                INPUT aux_dsorigem,
+                                                INPUT aux_dstransa,
+                                                INPUT FALSE,
+                                                INPUT par_nmdatela,
+                                                INPUT par_nrdconta,
+                                                INPUT STRING(ROWID(tbgen_trans_pend)),
+                                                INPUT FALSE,
+                                                INPUT par_indvalid,
+                                                INPUT tt-tbpagto_darf_das_trans_pend.dtdebito,
+                                                INPUT tt-tbpagto_darf_das_trans_pend.vlpagamento,
+                                                INPUT aux_conttran).
+
+                        IF par_indvalid = 1 THEN
+                          ASSIGN par_flgaviso = TRUE.
+
+                        UNDO TRANSACAO, LEAVE TRANSACAO.
+                      END.
+                    
+                    ASSIGN aux_lindigi1 = DECI(SUBSTR(tt-tbpagto_darf_das_trans_pend.dslinha_digitavel,1,11)  + 
+                                               SUBSTR(tt-tbpagto_darf_das_trans_pend.dslinha_digitavel,13,1))
+                           aux_lindigi2 = DECI(SUBSTR(tt-tbpagto_darf_das_trans_pend.dslinha_digitavel,15,11) + 
+                                               SUBSTR(tt-tbpagto_darf_das_trans_pend.dslinha_digitavel,27,1))
+                           aux_lindigi3 = DECI(SUBSTR(tt-tbpagto_darf_das_trans_pend.dslinha_digitavel,29,11) + 
+                                               SUBSTR(tt-tbpagto_darf_das_trans_pend.dslinha_digitavel,41,1))
+                           aux_lindigi4 = DECI(SUBSTR(tt-tbpagto_darf_das_trans_pend.dslinha_digitavel,43,11) + 
+                                               SUBSTR(tt-tbpagto_darf_das_trans_pend.dslinha_digitavel,55,1)).
+                      
+                    /* Procedimento do internetbank pc_verifica_operacao_prog */
+                    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                    RUN STORED-PROCEDURE pc_verifica_darf_das
+                      aux_handproc = PROC-HANDLE NO-ERROR(INPUT par_cdcooper,                                   /* Código da cooperativa */
+                                                          INPUT par_nrdconta,                                   /* Número da conta */
+                                                          INPUT par_idseqttl,                                   /* Sequencial de titularidade */
+                                                          INPUT par_idorigem,                                   /* Canal de origem da operaçao */
+                                                          INPUT tt-tbpagto_darf_das_trans_pend.tppagamento,     /* Tipo da guia (1 – DARF / 2 – DAS) */
+                                                          INPUT tt-tbpagto_darf_das_trans_pend.tpcaptura,       /* Tipo de captura da guia (1-Código Barras / 2-Manual) */
+                                                          INPUT aux_lindigi1,                                   /* Primeiro campo da linha digitável da guia */
+                                                          INPUT aux_lindigi2,                                   /* Segundo campo da linha digitável da guia */
+                                                          INPUT aux_lindigi3,                                   /* Terceiro campo da linha digitável da guia */
+                                                          INPUT aux_lindigi4,                                   /* Quarto campo da linha digitável da guia */
+                                                          INPUT tt-tbpagto_darf_das_trans_pend.dscod_barras,    /* Código de barras da guia */
+                                                          INPUT tt-tbpagto_darf_das_trans_pend.vlpagamento,     /* Valor total do pagamento da guia */
+                                                          INPUT tt-tbpagto_darf_das_trans_pend.dtapuracao ,      /* Período de apuraçao da guia */
+                                                          INPUT tt-tbpagto_darf_das_trans_pend.nrcpfcgc ,        /* CPF/CNPJ da guia */
+                                                          INPUT tt-tbpagto_darf_das_trans_pend.cdtributo ,       /* Código de tributaçao da guia */
+                                                          INPUT tt-tbpagto_darf_das_trans_pend.nrrefere,        /* Número de referencia da guia */
+                                                          INPUT tt-tbpagto_darf_das_trans_pend.dtvencto,        /* Data de vencimento da guia */
+                                                          INPUT tt-tbpagto_darf_das_trans_pend.vlprincipal,     /* Valor principal da guia */
+                                                          INPUT tt-tbpagto_darf_das_trans_pend.vlmulta,         /* Valor da multa da guia */
+                                                          INPUT tt-tbpagto_darf_das_trans_pend.vljuros,         /* Valor dos juros da guia */
+                                                          INPUT tt-tbpagto_darf_das_trans_pend.vlreceita_bruta, /* Valor da receita bruta acumulada da guia */
+                                                          INPUT tt-tbpagto_darf_das_trans_pend.vlpercentual,    /* Valor do percentual da guia */
+                                                          INPUT tt-tbpagto_darf_das_trans_pend.idagendamento,   /* Indicador de agendamento (1-Nesta Data/2-Agendamento */
+                                                          INPUT tt-tbpagto_darf_das_trans_pend.dtdebito,        /* Data de agendamento */
+                                                          INPUT 0,                                    /* Indicador de controle de validaçoes (1-Operaçao Online/2-Operaçao Batch) */
+                                                          INPUT 0,                                    /* Indicador mobile */
+                                                         OUTPUT "",                                              /* Código sequencial da guia */
+                                                         OUTPUT 0,                                              /* Digito do Faturamento */
+                                                         OUTPUT 0,                                              /* Valor da guia */
+                                                         OUTPUT 0,                                              /* Código do erro */
+                                                         OUTPUT ?).                                             /* Descriçao do erro */
+                                        
+                    /* Fechar o procedimento para buscarmos o resultado */ 
+                    CLOSE STORED-PROC pc_verifica_darf_das
+                          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+                    
+                    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                    
+                    /* Busca possíveis erros */ 
+                    ASSIGN aux_cdcritic = 0
+                           aux_dscritic = ""
+                           aux_cdcritic = pc_verifica_darf_das.pr_cdcritic 
+                                          WHEN pc_verifica_darf_das.pr_dscritic <> ?
+                           aux_dscritic = pc_verifica_darf_das.pr_dscritic 
+                                          WHEN pc_verifica_darf_das.pr_dscritic <> ?
+                           aux_cdseqdrf = pc_verifica_darf_das.pr_cdseqfat
+                           aux_vldocmto = pc_verifica_darf_das.pr_vldocmto
+                           aux_nrdigfat = pc_verifica_darf_das.pr_nrdigfat.
+                    
+                    IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+                      DO:
+                        RUN gera_arquivo_log_ted(INPUT par_cdcooper,
+                                                 INPUT "pc_verifica_darf_das",
+                                                 INPUT "b1wgen0016",
+                                                 INPUT par_dtmvtolt,
+                                                 INPUT par_nrdconta,
+                                                 INPUT tt-tbgen_trans_pend.nrcpf_operador,
+                                                 INPUT 0, /* cddbanco */
+                                                 INPUT 0, /* ag. destino */
+                                                 INPUT 0, /* conta destino */
+                                                 INPUT "", /* nome titular */
+                                                 INPUT 0, /* cpf favorecido */
+                                                 INPUT 0, /* inpessoa favorecido */
+                                                 INPUT 0, /* intipcta favorecido */
+                                                 INPUT tt-tbpagto_darf_das_trans_pend.vlpagamento,
+                                                 INPUT "",
+                                                 INPUT tt-tbgen_trans_pend.tptransacao,
+                                                 INPUT 0, /* nrispbif */
+                                                 INPUT aux_dscritic).
+
+                        RUN gera_erro_transacao(INPUT par_cdcooper,
+                                                INPUT par_cdoperad,
+                                                INPUT aux_dscritic,
+                                                INPUT aux_dsorigem,
+                                                INPUT aux_dstransa,
+                                                INPUT FALSE,
+                                                INPUT par_nmdatela,
+                                                INPUT par_nrdconta,
+                                                INPUT STRING(ROWID(tbgen_trans_pend)),
+                                                INPUT FALSE,
+                                                INPUT par_indvalid,
+                                                INPUT tt-tbpagto_darf_das_trans_pend.dtdebito,
+                                                INPUT tt-tbpagto_darf_das_trans_pend.vlpagamento,
+                                                INPUT aux_conttran).
+    
+                        IF par_indvalid = 1 THEN
+                            ASSIGN par_flgaviso = TRUE.
+    
+                        UNDO TRANSACAO, LEAVE TRANSACAO.
+                      END.
+                               
+                    /* Efetivaçao */ 
+                    IF par_indvalid = 1 AND aux_conttran = 1 THEN
+                      DO:
+
+                        IF tt-tbpagto_darf_das_trans_pend.idagendamento = 1 THEN
+                          DO:
+                           
+                            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                           
+                            RUN STORED-PROCEDURE pc_paga_darf_das
+                              aux_handproc = PROC-HANDLE NO-ERROR(INPUT par_cdcooper,                                   /* Código da cooperativa */
+                                                                  INPUT par_nrdconta,                                   /* Número da conta */
+                                                                  INPUT par_idseqttl,                                   /* Sequencial de titularidade */
+                                                                  INPUT tt-tbgen_trans_pend.nrcpf_operador,             /* CPF do operador PJ */
+                                                                  INPUT par_idorigem,                                   /* Canal de origem da operaçao */
+                                                                  INPUT tt-tbpagto_darf_das_trans_pend.tppagamento,     /* Tipo da guia (1 – DARF / 2 – DAS) */
+                                                                  INPUT tt-tbpagto_darf_das_trans_pend.tpcaptura,       /* Tipo de captura da guia (1 – Código Barras / 2 – Manual) */
+                                                                  INPUT aux_cdseqdrf,
+                                                                  INPUT aux_nrdigfat,
+                                                                  INPUT aux_lindigi1,                                   /* Primeiro campo da linha digitável da guia */
+                                                                  INPUT aux_lindigi2,                                   /* Segundo campo da linha digitável da guia */
+                                                                  INPUT aux_lindigi3,                                   /* Terceiro campo da linha digitável da guia */
+                                                                  INPUT aux_lindigi4,                                   /* Quarto campo da linha digitável da guia */
+                                                                  INPUT tt-tbpagto_darf_das_trans_pend.dscod_barras,    /* Código de barras da guia */
+                                                                  INPUT tt-tbpagto_darf_das_trans_pend.dsidentif_pagto, /* Descriçao da identificaçao do pagamento */
+                                                                  INPUT tt-tbpagto_darf_das_trans_pend.vlpagamento,     /* Valor total do pagamento da guia */
+                                                                  INPUT tt-tbpagto_darf_das_trans_pend.dsnome_fone,        /* Nome e telefone da guia */
+                                                                  INPUT tt-tbpagto_darf_das_trans_pend.dtapuracao,      /* Período de apuraçao da guia */
+                                                                  INPUT tt-tbpagto_darf_das_trans_pend.nrcpfcgc,        /* CPF/CNPJ da guia */
+                                                                  INPUT tt-tbpagto_darf_das_trans_pend.cdtributo,       /* Código de tributaçao da guia */
+                                                                  INPUT tt-tbpagto_darf_das_trans_pend.nrrefere,        /* Número de referencia da guia */
+                                                                  INPUT tt-tbpagto_darf_das_trans_pend.dtvencto,        /* Data de vencimento da guia */
+                                                                  INPUT tt-tbpagto_darf_das_trans_pend.vlprincipal,     /* Valor principal da guia */
+                                                                  INPUT tt-tbpagto_darf_das_trans_pend.vlmulta,         /* Valor da multa da guia */
+                                                                  INPUT tt-tbpagto_darf_das_trans_pend.vljuros,         /* Valor dos juros da guia */
+                                                                  INPUT tt-tbpagto_darf_das_trans_pend.vlreceita_bruta, /* Valor da receita bruta acumulada da guia */
+                                                                  INPUT tt-tbpagto_darf_das_trans_pend.vlpercentual,    /* Valor do percentual da guia */
+                                                                  INPUT aux_vldocmto,
+                                                                  INPUT tt-tbpagto_darf_das_trans_pend.idagendamento,   /* Indicador de agendamento (1 – Nesta Data / 2 – Agendamento) */
+                                                                  INPUT tt-tbpagto_darf_das_trans_pend.tpleitura_docto,       /* Indicador de captura através de leitora de código de barras (1 – Leitora / 2 – Manual) */
+                                                                  OUTPUT ?,                                              /* Descricao do protocolo */
+                                                                 OUTPUT 0,                                              /* Código do erro */
+                                                                 OUTPUT ?).                                             /* Descriçao do erro */ 
+                                                        
+                            /* Fechar o procedimento para buscarmos o resultado */ 
+                            CLOSE STORED-PROC pc_paga_darf_das aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+                            
+                            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                            
+                            /* Busca possíveis erros */ 
+                            ASSIGN aux_cdcritic = 0
+                                   aux_dscritic = ""
+                                   aux_cdcritic = pc_paga_darf_das.pr_cdcritic 
+                                                  WHEN pc_paga_darf_das.pr_dscritic <> ?
+                                   aux_dscritic = pc_paga_darf_das.pr_dscritic 
+                                                  WHEN pc_paga_darf_das.pr_dscritic <> ?.
+                            
+                            IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+                              DO:
+                                RUN gera_arquivo_log_ted(INPUT par_cdcooper,
+                                                         INPUT "pc_paga_darf_das",
+                                                         INPUT "b1wgen0016",
+                                                         INPUT par_dtmvtolt,
+                                                         INPUT par_nrdconta,
+                                                         INPUT tt-tbgen_trans_pend.nrcpf_operador,
+                                                         INPUT 0, /* cddbanco */
+                                                         INPUT 0, /* ag. destino */
+                                                         INPUT 0, /* conta destino */
+                                                         INPUT "", /* nome titular */
+                                                         INPUT 0, /* cpf favorecido */
+                                                         INPUT 0, /* inpessoa favorecido */
+                                                         INPUT 0, /* intipcta favorecido */
+                                                         INPUT tt-tbpagto_darf_das_trans_pend.vlpagamento,
+                                                         INPUT "",
+                                                         INPUT tt-tbgen_trans_pend.tptransacao,
+                                                         INPUT 0, /* nrispbif */
+                                                         INPUT aux_dscritic).
+
+                                RUN gera_erro_transacao(INPUT par_cdcooper,
+                                                        INPUT par_cdoperad,
+                                                        INPUT aux_dscritic,
+                                                        INPUT aux_dsorigem,
+                                                        INPUT aux_dstransa,
+                                                        INPUT FALSE,
+                                                        INPUT par_nmdatela,
+                                                        INPUT par_nrdconta,
+                                                        INPUT STRING(ROWID(tbgen_trans_pend)),
+                                                        INPUT FALSE,
+                                                        INPUT par_indvalid,
+                                                        INPUT tt-tbpagto_darf_das_trans_pend.dtdebito,
+                                                        INPUT tt-tbpagto_darf_das_trans_pend.vlpagamento,
+                                                        INPUT aux_conttran).
+            
+                                IF par_indvalid = 1 THEN
+                                    ASSIGN par_flgaviso = TRUE.
+            
+                                UNDO TRANSACAO, LEAVE TRANSACAO.
+                              END.
+                          END.
+                        ELSE IF tt-tbpagto_darf_das_trans_pend.idagendamento = 2 THEN
+                          DO:
+                            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                            
+                            RUN STORED-PROCEDURE pc_cria_agend_darf_das
+                              aux_handproc = PROC-HANDLE NO-ERROR(INPUT par_cdcooper,  /* Código da cooperativa */
+                                                                  INPUT par_nrdconta,  /* Número da conta */
+                                                                  INPUT par_idseqttl,  /* Sequencial de titularidade */
+                                                                  INPUT par_cdagenci,  /* PA */
+                                                                  INPUT par_nrdcaixa,  /* Numero do caixa */
+                                                                  INPUT par_cdoperad,  /* Codigo do operador */
+                                                                  INPUT tt-tbgen_trans_pend.nrcpf_operador,  /* CPF do operador PJ */
+                                                                  INPUT par_idorigem,  /* Canal de origem da operaçao */
+                                                                  INPUT tt-tbpagto_darf_das_trans_pend.tppagamento,  /* Tipo da guia (1 – DARF / 2 – DAS) */
+                                                                  INPUT tt-tbpagto_darf_das_trans_pend.tpcaptura,  /* Tipo de captura da guia (1 – Código Barras / 2 – Manual) */
+                                                                  INPUT 508, /* Historico */
+                                                                  INPUT aux_lindigi1,  /* Primeiro campo da linha digitável da guia*/
+                                                                  INPUT aux_lindigi2,  /* Segundo campo da linha digitável da guia */
+                                                                  INPUT aux_lindigi3,  /* Terceiro campo da linha digitável da guia */
+                                                                  INPUT aux_lindigi4,  /* Quarto campo da linha digitável da guia*/
+                                                                  INPUT tt-tbpagto_darf_das_trans_pend.dscod_barras,  /* Código de barras da guia */
+                                                                  INPUT tt-tbpagto_darf_das_trans_pend.dsidentif_pagto,  /* Descriçao da identificaçao do pagamento */
+                                                                  INPUT tt-tbpagto_darf_das_trans_pend.vlpagamento,  /* Valor total do pagamento da guia */
+                                                                  INPUT tt-tbpagto_darf_das_trans_pend.dsnome_fone,  /* Nome e telefone da guia */
+                                                                  INPUT tt-tbpagto_darf_das_trans_pend.dtapuracao,  /* Período de apuraçao da guia */
+                                                                  INPUT tt-tbpagto_darf_das_trans_pend.nrcpfcgc,  /* CPF/CNPJ da guia */
+                                                                  INPUT tt-tbpagto_darf_das_trans_pend.cdtributo,  /* Código de tributaçao da guia */
+                                                                  INPUT tt-tbpagto_darf_das_trans_pend.nrrefere,  /* Número de referencia da guia */
+                                                                  INPUT tt-tbpagto_darf_das_trans_pend.dtvencto,  /* Data de vencimento da guia */
+                                                                  INPUT tt-tbpagto_darf_das_trans_pend.vlprincipal,  /* Valor principal da guia */
+                                                                  INPUT tt-tbpagto_darf_das_trans_pend.vlmulta,  /* Valor da multa da guia */
+                                                                  INPUT tt-tbpagto_darf_das_trans_pend.vljuros,  /* Valor dos juros da guia */
+                                                                  INPUT tt-tbpagto_darf_das_trans_pend.vlreceita_bruta,  /* Valor da receita bruta acumulada da guia */
+                                                                  INPUT tt-tbpagto_darf_das_trans_pend.vlpercentual,  /* Valor do percentual da guia */
+                                                                  INPUT tt-tbpagto_darf_das_trans_pend.dtdebito,  /* Data de agendamento */
+                                                                  INPUT tt-tbgen_trans_pend.cdtransacao_pendente,  /* Código de sequencial da transaçao pendente */
+                                                                  INPUT tt-tbpagto_darf_das_trans_pend.tpleitura_docto, /* Indicador de captura através de leitora de código de barras (1 – Leitora / 2 – Manual) */
+                                                                 OUTPUT 0,  /* Código do erro */
+                                                                 OUTPUT ?). /* Descriçao do erro */
+                              
+                            IF ERROR-STATUS:ERROR THEN DO:
+                              DO  aux_qterrora = 1 TO ERROR-STATUS:NUM-MESSAGES:
+                                  ASSIGN aux_msgerora = aux_msgerora + 
+                                                        ERROR-STATUS:GET-MESSAGE(aux_qterrora) + " ".
+                              END.
+                                                                               
+                              ASSIGN aux_dscritic = "pc_cria_agend_darf_das --> "  +
+                                                    "Erro ao executar Stored Procedure: " +
+                                                    aux_msgerora.      
+                              ASSIGN xml_dsmsgerr = "<dsmsgerr>" + 
+                                                         "Erro inesperado. Nao foi possivel efetuar a verificacao." + 
+                                                         " Tente novamente ou contate seu PA" +
+                                                    "</dsmsgerr>".                        
+                              RUN proc_geracao_log.
+                              RETURN "NOK".
+                              
+                            END.
+                            
+                            /* Fechar o procedimento para buscarmos o resultado */ 
+                            CLOSE STORED-PROC pc_cria_agend_darf_das
+                                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                            
+                           { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                            
+                            /* Busca possíveis erros */ 
+                            ASSIGN aux_cdcritic = 0
+                                   aux_dscritic = ""
+                                   aux_cdcritic = pc_cria_agend_darf_das.pr_cdcritic 
+                                                  WHEN pc_cria_agend_darf_das.pr_dscritic <> ?
+                                   aux_dscritic = pc_cria_agend_darf_das.pr_dscritic 
+                                                  WHEN pc_cria_agend_darf_das.pr_dscritic <> ?.
+                            
+                            IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+                              DO:
+                                RUN gera_arquivo_log_ted(INPUT par_cdcooper,
+                                                         INPUT "pc_cria_agend_darf_das",
+                                                         INPUT "b1wgen0016",
+                                                         INPUT par_dtmvtolt,
+                                                         INPUT par_nrdconta,
+                                                         INPUT tt-tbgen_trans_pend.nrcpf_operador,
+                                                         INPUT 0, /* cddbanco */
+                                                         INPUT 0, /* ag. destino */
+                                                         INPUT 0, /* conta destino */
+                                                         INPUT "", /* nome titular */
+                                                         INPUT 0, /* cpf favorecido */
+                                                         INPUT 0, /* inpessoa favorecido */
+                                                         INPUT 0, /* intipcta favorecido */
+                                                         INPUT tt-tbpagto_darf_das_trans_pend.vlpagamento,
+                                                         INPUT "",
+                                                         INPUT tt-tbgen_trans_pend.tptransacao,
+                                                         INPUT 0, /* nrispbif */
+                                                         INPUT aux_dscritic).
+
+                                RUN gera_erro_transacao(INPUT par_cdcooper,
+                                                        INPUT par_cdoperad,
+                                                        INPUT aux_dscritic,
+                                                        INPUT aux_dsorigem,
+                                                        INPUT aux_dstransa,
+                                                        INPUT FALSE,
+                                                        INPUT par_nmdatela,
+                                                        INPUT par_nrdconta,
+                                                        INPUT STRING(ROWID(tbgen_trans_pend)),
+                                                        INPUT FALSE,
+                                                        INPUT par_indvalid,
+                                                        INPUT tt-tbpagto_darf_das_trans_pend.dtdebito,
+                                                        INPUT tt-tbpagto_darf_das_trans_pend.vlpagamento,
+                                                        INPUT aux_conttran).
+            
+                                IF par_indvalid = 1 THEN
+                                    ASSIGN par_flgaviso = TRUE.
+            
+                                UNDO TRANSACAO, LEAVE TRANSACAO.
+                              END. /*IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN*/
+
+                          END. /* ELSE IF tt-tbpagto_darf_das_trans_pend.idagendamento = 2 THEN */
+                      
+                      END. /* EFETIVACAO */
+                      
+                    RUN gera_erro_transacao(INPUT par_cdcooper,
+                                              INPUT par_cdoperad,
+                                              INPUT aux_dscritic,
+                                              INPUT aux_dsorigem,
+                                              INPUT aux_dstransa,
+                                              INPUT FALSE,
+                                              INPUT par_nmdatela,
+                                              INPUT par_nrdconta,
+                                              INPUT STRING(ROWID(tbgen_trans_pend)),
+                                              INPUT TRUE,
+                                              INPUT par_indvalid,
+                                              INPUT tt-tbpagto_darf_das_trans_pend.dtdebito,
+                                              INPUT tt-tbpagto_darf_das_trans_pend.vlpagamento,
+                                              INPUT aux_conttran).
+                                                
+                  
+                  END. /* = 11 */
                      
                 IF par_indvalid = 1 THEN
                     DO: 

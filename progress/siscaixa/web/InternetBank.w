@@ -846,6 +846,7 @@ DEF VAR aux_tpdaguia AS INTE										   NO-UNDO.
 DEF VAR aux_dsretorn AS CHAR                                           NO-UNDO.
 DEF VAR aux_dtdiadeb AS CHAR                                           NO-UNDO.
 DEF VAR aux_tpvalida AS CHAR                                           NO-UNDO.
+DEF VAR aux_dstpcons AS CHAR                                           NO-UNDO.
 
 DEF VAR aux_nrcpfapr AS DECI                                           NO-UNDO.
 DEF VAR aux_vltitulo AS DECI                                           NO-UNDO.
@@ -2076,6 +2077,9 @@ PROCEDURE process-web-request :
 		    IF  aux_operacao = 177 THEN     /* Cancelar integralização */
                 RUN proc_operacao177.
 		ELSE
+            IF  aux_operacao = 180 THEN /* Calcula data útil para agendamento */
+                RUN proc_operacao180.
+    	ELSE
             IF  aux_operacao = 186 THEN /* Retorna valor atualizado de titulos vencidos */
                 RUN proc_operacao186.
 		ELSE
@@ -5045,16 +5049,23 @@ END PROCEDURE.
 
 PROCEDURE proc_operacao88:
 
+    DEF VAR aux_dtmvtpro AS DATE NO-UNDO.
+
      ASSIGN aux_cdtippro = INT(GET-VALUE("cdtippro"))
             aux_nrdocpro = GET-VALUE("nrdocmto").         
             
+    IF GET-VALUE('dtmvtpro') <> '' THEN
+	   aux_dtmvtpro = DATE(GET-VALUE('dtmvtpro')).
+	ELSE
+	   aux_dtmvtpro = aux_dtmvtolt.			
+
     RUN sistema/internet/fontes/InternetBank88.p (INPUT aux_cdcooper,
                                                   INPUT 90, /*cdagenci*/
                                                   INPUT 900, /*nrdcaixa*/
                                                   INPUT "996", /*cdoperad*/
                                                   INPUT "INTERNETBANK",
                                                   INPUT 3, /*idorigem*/
-                                                  INPUT aux_dtmvtolt,
+                                                  INPUT aux_dtmvtpro,
                                                   INPUT aux_nrdconta,
                                                   INPUT aux_idseqttl,
                                                   INPUT aux_cdtippro,
@@ -7717,6 +7728,33 @@ PROCEDURE proc_operacao177:
         FOR EACH xml_operacao NO-LOCK:
             {&out} xml_operacao.dslinxml.
         END.
+    {&out} aux_tgfimprg.
+
+END PROCEDURE.
+
+/* Calculo de Data Útil para Agendamento */
+PROCEDURE proc_operacao180:
+
+    ASSIGN  aux_dtmvtolt = DATE(GET-VALUE("dtmvtolt"))
+            aux_dstpcons = STRING(GET-VALUE("dstpcons")).
+                              
+    RUN sistema/internet/fontes/InternetBank180.p (INPUT aux_cdcooper,
+                                                   INPUT aux_dtmvtolt,
+                                                   INPUT aux_dstpcons,
+                                                  OUTPUT aux_dsmsgerr,
+                                                  OUTPUT TABLE xml_operacao). 
+                                                  
+    IF  RETURN-VALUE = "NOK"  THEN
+        DO:
+            {&out} aux_dsmsgerr aux_tgfimprg.
+            RETURN.
+        END.
+        
+    FIND FIRST xml_operacao NO-LOCK NO-ERROR.
+
+    IF  AVAILABLE xml_operacao  THEN
+        {&out} xml_operacao.dslinxml.
+    
     {&out} aux_tgfimprg.
 
 END PROCEDURE.

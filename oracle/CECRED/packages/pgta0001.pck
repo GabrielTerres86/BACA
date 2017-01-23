@@ -2452,6 +2452,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                                           ,pr_dtagenda => vr_dtmvtopg           --IN OUT --Data agendamento
                                           ,pr_idorigem => pr_idorigem           --Indicador de origem
                                           ,pr_indvalid => 1                     --nao validar
+										                      ,pr_flmobile => 0                     --Indicador mobile
                                           -- Abaixo, todas OUT...
                                           ,pr_nmextbcc => vr_nmextbcc           --Nome do banco
                                           ,pr_vlfatura => vr_vlfatura           --Valor fatura
