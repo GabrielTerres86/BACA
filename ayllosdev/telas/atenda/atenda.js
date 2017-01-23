@@ -1,7 +1,7 @@
 //************************************************************************//
 //*** Fonte: atenda.js                                                 ***//
 //*** Autor: David                                                     ***//
-//*** Data : Agosto/2007                  Última Alteração: 25/11/2015 ***//
+//*** Data : Agosto/2007                  Última Alteração: 20/01/2017 ***//
 //***                                                                  ***//
 //*** Objetivo  : Biblioteca de funções da tela ATENDA                 ***//
 //***                                                                  ***//	 
@@ -67,7 +67,10 @@
 
 				  02/09/2016 - Incluido parametro name na div com id #divSemCartaoAss - necessario para navegação no IE
                              - Adicionado função ControlaFocoAnotacoes.
-                             - Adicionado parametro labelRot na rotina acessaRotina - (Evandro - RKAM)	   
+                             - Adicionado parametro labelRot na rotina acessaRotina - (Evandro - RKAM)	  
+
+				  20/01/2017 - Adicionar parametro 'produtos', na chamada da function acessaRotina(Lucas Ranghetti #537087)
+				  
 ***************************************************************************/
 
 var flgAcessoRotina = false; // Flag para validar acesso as rotinas da tela ATENDA
@@ -502,7 +505,7 @@ function obtemCabecalho() {
                     if (executandoProdutos) {
                         sequenciaProdutos();
                     } else {
-                        acessaRotina('PRODUTOS', 'Produtos', 'produtos', 1);
+                        acessaRotina('PRODUTOS', 'Produtos', 'produtos', 'produtos', 1);
                     }
                     flgProdutos = false;
                 }
