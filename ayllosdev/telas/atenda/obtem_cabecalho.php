@@ -2,7 +2,7 @@
 /* * ****************************************************************************
   Fonte: obtem_cabecalho.php
   Autor: David
-  Data : Julho/2007                   Última Alteração: 07/06/2016
+	 Data : Julho/2007                   Última Alteração: 18/08/2016  
 
   Objetivo  : Capturar dados de cabecalho da tela ATENDA
 
@@ -12,13 +12,15 @@
 
 					  03/09/2009 - Incluir rotina Relacionamento(Guilherme)
 
-					  28/10/2010 - Alterar título da rotina Crédito Rota-tivo para Limite Empresarial (David).
+	             28/10/2010 - Alterar título da rotina Crédito Rota-  
+	                          tivo para Limite Empresarial (David).   
 
 					  07/12/2010 - Incluir rotina de Cobranca (Gabriel)
 
 					  14/01/2011 - Incluir rotina de Telefone (Gabriel)
 
-					  08/02/2011 - Incluir rotina de Emprestimos (Gabriel/DB1)
+				 08/02/2011 - Incluir rotina de Emprestimos		  
+							  (Gabriel/DB1)  						  
 
 					  18/03/2011 - Ajuste nas anotacoes (David)
 
@@ -26,39 +28,60 @@
 
 					  01/11/2011 - Nova rotina Seguro (Marcelo Pereira - GATI)
 
-					  12/07/2012 - Adicionado class classDisabled e desabilidado os campos a seguir (Jorge).
+				 12/07/2012 - Adicionado class classDisabled e
+							  desabilidado os campos a seguir (Jorge).
 
-					  31/05/2013 - Incluir chamada da b1wgen0147 para buscar valores referentes ao BNDES (Lucas R.).
+				 31/05/2013 - Incluir chamada da b1wgen0147 para buscar
+							  valores referentes ao BNDES (Lucas R.).
 
-					  24/07/2013 - Incluir novo item CONSORCIO em tela. Incluir Procedure indicativo_consorcio que
-										 retorna o flgativo, consorcio ativo ou nao (Lucas R.)
+				 24/07/2013 - Incluir novo item CONSORCIO em tela.
+							  Incluir Procedure indicativo_consorcio que
+							  retorna o flgativo, consorcio ativo ou nao
+							  (Lucas R.)
 
 					  30/09/2013 - Incluir campo hdnFlgdig. (Jean Michel).
 
 					  08/11/2013 - Validação para senha Inativa (Cristian - Gati).
 
-					  23/09/2014 - Incluido opção Pagto de Titulos (André Santos - SUPERO)
+	             23/09/2014 - Incluido opção Pagto de Titulos
+							  (André Santos - SUPERO)
 
-					  05/12/2014 - Ajustado fonte para receber novo parâmetro flgerlog via método POST (Daniel)
+				 05/12/2014 - Ajustado fonte para receber novo parâmetro 
+	                          flgerlog via método POST (Daniel)	
 
-					  03/03/2015 - Receber novo parâmetro 'ServerMonitoracao' para utilização nas requisições de monitoração (David).
+	             03/03/2015 - Receber novo parâmetro 'ServerMonitoracao' 
+	                          para utilização nas requisições de monitoração
+                              (David).
 
 					  20/07/2015 - Incluir novo item Limite Saque TAA. (James)
 
-					  21/08/2015 - Ajuste para inclusão das novas telas "Atendimento, Produtos" (Gabriel - Rkam -> Projeto 217).
+				 21/08/2015 - Ajuste para inclusão das novas telas "Atendimento,
+							  Produtos"
+				              (Gabriel - Rkam -> Projeto 217).
 
-					  24/08/2015 - Projeto Reformulacao cadastral (Tiago Castro - RKAM)
+				 24/08/2015 - Projeto Reformulacao cadastral		   
+							 (Tiago Castro - RKAM)
 
-					  18/09/2015 - Ajustado para validar corretamente a restricao de usuario ao acesso a conta (Tiago/Rodrigo #327432)
+				 18/09/2015 - Ajustado para validar corretamente a restricao de 
+                              usuario ao acesso a conta (Tiago/Rodrigo #327432)
 
-					  20/09/2015 - Ajuste para inclusão das novas telas "Atendimento, Produtos" (Gabriel - Rkam -> Projeto 217).
+				 20/09/2015 - Ajuste para inclusão das novas telas "Atendimento,
+						      Produtos"
+				              (Gabriel - Rkam -> Projeto 217).		
 
-					  03/11/2015 - Alterada chamada da rotina "carrega_dados_atenda" para utilização da rotina convertida para oracle 
-										CADA0004.pc_carrega_dados_atenda SD318820 (Odirlei/Busana)
+                 03/11/2015 - Alterada chamada da rotina "carrega_dados_atenda"
+                              para utilização da rotina convertida para oracle
+                              CADA0004.pc_carrega_dados_atenda
+                              SD318820 (Odirlei/Busana)
 
-					  24/11/2015 - Inclusao CDCLCNAE para o PRJ Negativacao Serasa. (Jaison/Andrino)
+                 24/11/2015 - Inclusao CDCLCNAE para o PRJ Negativacao Serasa.
+                              (Jaison/Andrino)
 
 					  07/06/2016 - Melhoria 195 folha de pagamento (Tiago/Thiago)
+				 09/08/2016 - Adicionado format na data das anotações conforme solicitado
+							  no chamado 490482. (Kelvin)
+	
+         23/06/2016 - Alterado a formatação da opção SEGUROS para SIM/NÂO (Marcos-Supero)
 
          28/06/2016  - Incluido Case Cartao Assinatura - (Evandro)
 
@@ -70,6 +93,13 @@
 					  13/07/2016 - Correcao geral nos erros levantados no LOG do PHP .SD 479874 (Carlos Rafael Tanholi)
 
 					  14/07/2016 - Correcao na forma de recuperacao de dados do XML. SD 479874 (Carlos Rafael Tanholi)
+
+                      09/08/2016 - Adicionado format na data das anotações conforme solicitado
+							  no chamado 490482. (Kelvin)
+
+				18/08/2016  - adicionado parametro labelRot na chamada da rotina acessaRotina
+
+
  * ********************************************************************************** */
 
 session_start();
@@ -423,6 +453,12 @@ for ($i = 0; $i < count($rotinasTela); $i++) {
         $strValue   = "";
 				break;
 				}
+            case "CARTAO ASSINATURA": {
+				$nomeRotina = "Cart&atilde;o Assinatura"; 
+				$urlRotina  = "cartao_assinaturas";
+				$strValue   = "";	
+				break;
+			}			
         case "FOLHAS CHEQ": {
                 $nomeRotina = "Folhas de Cheque";
                 $urlRotina = "folhas_cheque";
@@ -491,8 +527,8 @@ for ($i = 0; $i < count($rotinasTela); $i++) {
             }
         case "SEGURO": {
                 $nomeRotina = "Seguro";
-                $urlRotina = "seguro";
-                $strValue = ( isset($valores[16]->cdata) ) ? number_format( floatval(str_replace(",", ".", $valores[16]->cdata)), 2, ",", ".") : '';
+				$urlRotina  = "seguro";    
+				$strValue   = strtolower(getByTagName ($valores,"flgsegur")) == "yes" ? "SIM" : "NAO"; 
                 break;
             }
         case "TELE ATEN": {
@@ -528,6 +564,12 @@ for ($i = 0; $i < count($rotinasTela); $i++) {
 				$nomeRotina = "Servi&ccedil;os Cooperativos";
 				$urlRotina  = "pacote_tarifas";
 				$strValue   = ( isset($valores[20]->cdata) ) ? strtolower($valores[20]->cdata) == 'yes' ? 'SIM' : 'NAO' : 'NAO'; 
+				break;
+			}
+			case "SERVICOS COOPERATIVOS": {
+				$nomeRotina = "Servi&ccedil;os Cooperativos";
+				$urlRotina  = "pacote_tarifas";
+				$strValue   = strtolower($valores[20]->cdata) == "yes" ? "SIM" : "NAO"; 
 				break;
 			}
         case "DDA": {
@@ -589,10 +631,10 @@ for ($i = 0; $i < count($rotinasTela); $i++) {
 
     if (trim($urlRotina) <> "") {
 
-        echo '$("#labelRot' . $contRotina . '").unbind("click");';
-        echo '$("#labelRot' . $contRotina . '").bind("click",function() { acessaRotina("' . $rotinasTela[$i] . '","' . $nomeRotina . '","' . $urlRotina . '","' . $opeProdutos . '"); nmrotina = "' . $nomeRotina . '"; });';
-        echo '$("#valueRot' . $contRotina . '").unbind("click");';
-        echo '$("#valueRot' . $contRotina . '").bind("click",function() { acessaRotina("' . $rotinasTela[$i] . '","' . $nomeRotina . '","' . $urlRotina . '","' . $opeProdutos . '"); nmrotina = "' . $nomeRotina . '"; });';
+			echo '$("#labelRot'.$contRotina.'").unbind("click");';
+			echo '$("#labelRot'.$contRotina.'").bind("click",function() { acessaRotina("#labelRot'.$contRotina.'","'.$rotinasTela[$i].'","'.$nomeRotina.'","'.$urlRotina.'","'.$opeProdutos.'"); nmrotina = "'.$nomeRotina.'"; });';
+			echo '$("#valueRot'.$contRotina.'").unbind("click");';
+			echo '$("#valueRot'.$contRotina.'").bind("click",function() { acessaRotina("#labelRot'.$contRotina.'","'.$rotinasTela[$i].'","'.$nomeRotina.'","'.$urlRotina.'","'.$opeProdutos.'"); nmrotina = "'.$nomeRotina.'"; });';		
     }
 
     $contRotina++;
@@ -693,7 +735,7 @@ if ($glbvars["nmrotina"] == "") {
             echo 'strHTML += \'			<table cellpadding="0" cellspacing="0" border="0">\';';
             echo 'strHTML += \'				<tr>\';';
             echo 'strHTML += \'					<td width="25" height="25" class="txtNormalBold">Em&nbsp;</td>\';';
-            echo 'strHTML += \'					<td width="67"><input name="dtmvtolt" type="text" class="campoTelaSemBorda classDisabled" id="dtmvtolt" value="' . $vr_dtmvtolt . '" style="width: 67px; text-align: center;"></td>\';';
+				echo 'strHTML += \'					<td width="67"><input name="dtmvtolt" type="text" class="campoTelaSemBorda classDisabled" id="dtmvtolt" value="'.date_format(date_create($anotacoes[$i]->tags[1]->cdata),'d/m/Y').'" style="width: 67px; text-align: center;"></td>\';';
             echo 'strHTML += \'					<td width="30" align="center" class="txtNormalBold">&agrave;s&nbsp;</td>\';';
             echo 'strHTML += \'					<td width="67"><input name="hrtransa" type="text" class="campoTelaSemBorda classDisabled" id="hrtransa" value="' . $vr_hrtransa . '" style="width: 67px; text-align: center"></td>\';';
             echo 'strHTML += \'					<td width="35" align="center" class="txtNormalBold">por&nbsp;</td>\';';
