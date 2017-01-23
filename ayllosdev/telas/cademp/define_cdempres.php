@@ -1,4 +1,4 @@
-<?php 
+<?php
 /*!
  * FONTE        : define_cdempres.php
  * CRIAÇÃO      : Cristian Filipe       
@@ -8,6 +8,9 @@
  * ALTERAÇÕES   : Ajustes conforme SD 122814
  *				  28/07/2016 - Correcao na forma de utilizacao das variavies do array $glbvars. SD 491925. (Carlos R.)	
  * -------------- 
+ *
+ *                04/08/2016 - SD495726 - Folha: Correção gravacao/alteracao
+ *                             de empresa (Guilherme/SUPERO)
  */	
     session_start();
 	require_once('../../includes/config.php');
@@ -17,7 +20,7 @@
 	isPostMethod();		
 	
 	$cddopcao = $_POST['cddopcao'];
-
+	
 	$cdcooper = ( isset($glbvars["cdcooper"]) ) ? $glbvars["cdcooper"] : '';
 	$cdagenci = ( isset($glbvars["cdagenci"]) ) ? $glbvars["cdagenci"] : '';
 	$nrdcaixa = ( isset($glbvars["nrdcaixa"]) ) ? $glbvars["nrdcaixa"] : '';
@@ -30,6 +33,8 @@
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
 		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
 	}
+
+    $nmdatela = isset($_POST['nmdatela']) ? $glbvars["nmdatela"] : 'AYLLOSWEB';
 
 	$xml  = '';
 	$xml .= '<Root>';
@@ -64,5 +69,6 @@
 	$cdempres  = ( isset($xmlObjeto->roottag->tags[0]->attributes['CDEMPRES']) ) ? $xmlObjeto->roottag->tags[0]->attributes['CDEMPRES'] : '';
 
 	echo "$('#cdempres', '#frmInfEmpresa').val('{$cdempres}');";
+	echo "alteraInclui();";
 			
 ?>

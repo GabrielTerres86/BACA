@@ -217,7 +217,7 @@ function estadoInicial() {
     $('#cddopcao', '#frmCab').focus();
     fechaRotina($('#divPesquisaEmpresa'));
     fechaRotina($('#divTabEmpresas'));
-
+	
     controlaFoco();
 	
 	if (executandoProdutos) {
@@ -1401,9 +1401,9 @@ function buscaEmpresas() {
         hideMsgAguardo();
         return false;
     } else {
-        $urlFonte = "telas/cademp/busca_empresas.php";
+		$urlFonte = "telas/cademp/busca_empresas.php";
     }
-
+	
     showMsgAguardo("Aguarde, buscando empresas...");
     // Executa script de bloqueio através de ajax
 
@@ -1423,9 +1423,8 @@ function buscaEmpresas() {
         },
         success: function(response) {
             try {
-
                 if (cddopcao == "I") {
-                    eval(response);
+					eval(response);
                     $('#frmInfEmpresa').css({'display': 'block'});
                     controlaFocoFormulariosEmpresa();
                     hideMsgAguardo();
@@ -1433,7 +1432,7 @@ function buscaEmpresas() {
                     if (cdempres == '') {
 
                         if ($.trim(response).substring(1,4) == 'div') {
-                            $('#divConteudo').html(response);
+                            $('#divConteudo', '#divPesquisaEmpresa').html(response);
                             fechaRotina($('#divCabecalhoPesquisaEmpresa'));
                             exibeRotina($('#divPesquisaEmpresa'));
                             exibeRotina($('#divTabEmpresas'));
@@ -1449,12 +1448,7 @@ function buscaEmpresas() {
                         } else {
                             $('input,select', '#frmInfEmpresa').removeClass('campoErro');
                             
-							// Ajuste para limpar html de tabela e evitar carga de dados inválidos
-							var divTabEmpresas = $('div.divRegistros', '#divTabEmpresas'); // '#divPesquisaEmpresa'
-							divTabEmpresas.empty();
-							$('#divTabEmpresas').html(response);
-                            
-							$('#divConteudo').html(response);
+							$('#divConteudo', '#divPesquisaEmpresa').html(response);
 							exibeRotina($('#divPesquisaEmpresa'));
                             exibeRotina($('#divTabEmpresas'));
                             formataTabEmpresas();
