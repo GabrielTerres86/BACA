@@ -186,7 +186,7 @@ function controlaLayout(operacao) {
 	cFlgconve.addClass('campo').css('width','50px');
 	cDtinicon.addClass('campo').addClass('data').css({'width':'85px'});
     cNmfantasia.addClass('campo').css({'width':'370px'}).attr('maxlength','500');
-    cCdcnae.addClass('campo pesquisa cep').css({'width':'80px'}).attr('maxlength','10');
+    cCdcnae.addClass('campo pesquisa').css({'width':'80px'}).attr('maxlength','10');
     cDscnae.addClass('campo').addClass('data').css({'width':'267px'});
     cNrcep.addClass('campo').css({'width':'80px'}).attr('maxlength','10').setMask('INTEGER','zz.zzz-zzz','','');
     cDslogradouro.addClass('campo').css({'width':'280px'}).attr('maxlength','200');
