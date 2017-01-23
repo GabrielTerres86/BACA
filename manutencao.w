@@ -11,6 +11,10 @@ Data     : Janeiro 2010
 
 Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
 
+                  23/01/2017 - #561094 e #537054 Alterado o botao de Fechamento
+                              (Btn_E) para ser usado como opcao de Diagnosticos 
+                              do TAA (Carlos)
+
 ............................................................................... */
 
 /*----------------------------------------------------------------------*/
@@ -94,7 +98,7 @@ DEFINE BUTTON Btn_D
      FONT 8.
 
 DEFINE BUTTON Btn_E 
-     LABEL "FECHAMENTO" 
+     LABEL "DIAGNOSTICOS" 
      SIZE 61 BY 3.33
      FONT 8.
 
@@ -434,7 +438,7 @@ END.
 
 &Scoped-define SELF-NAME Btn_E
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_E w_manutencao
-ON ANY-KEY OF Btn_E IN FRAME f_manutencao /* FECHAMENTO */
+ON ANY-KEY OF Btn_E IN FRAME f_manutencao /* DIAGNOSTICOS */
 DO:
     RUN tecla.
 END.
@@ -444,11 +448,9 @@ END.
 
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_E w_manutencao
-ON CHOOSE OF Btn_E IN FRAME f_manutencao /* FECHAMENTO */
+ON CHOOSE OF Btn_E IN FRAME f_manutencao /* DIAGNOSTICOS */
 DO:
-    RUN procedures/efetua_fechamento.p (OUTPUT aux_flgderro).
-
-    RUN procedures/carrega_suprimento.p (OUTPUT aux_flgderro).
+    RUN manutencao_diagnosticos.w.
 
     RUN habilita_opcoes.
 END.
@@ -698,12 +700,7 @@ PROCEDURE habilita_opcoes :
     /* Aberto */
     IF  glb_cdsittfn = 1  THEN
         DISABLE Btn_A WITH FRAME f_manutencao.
-    ELSE
-    /* Fechado */
-    IF  glb_cdsittfn = 2  THEN
-        DISABLE Btn_E WITH FRAME f_manutencao.
 
-                               
     /* Suprido */
     IF  glb_flgsupri  THEN
         DISABLE Btn_F WITH FRAME f_manutencao.

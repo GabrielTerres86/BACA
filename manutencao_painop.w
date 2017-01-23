@@ -14,6 +14,9 @@ Ultima alteração: 27/08/2015 - Adicionado condicao para verificar se o cartao
                                
                   04/07/2016 - #447974 Adicionada a mensagem IMPRESSORA INOPERANTE
                                quando houver esta ocorrencia (Carlos)
+                               
+                  23/01/2017 - #537054 No procedimento menu_manutencao, retirada
+                               a opcao FECHAMENTO - E (Carlos)
 
 ............................................................................... */
 
@@ -1412,12 +1415,7 @@ DEFINE VARIABLE aux_flgopcaoA AS LOGICAL     NO-UNDO.
     
     
         /* Situações do TAA */
-    
-        /* Aberto */
-        IF  glb_cdsittfn = 1  THEN
-            ASSIGN buff[2]       = "                        FECHAMENTO - E"
-                   aux_flgopcaoE = YES.
-        ELSE
+
         /* Fechado */
         IF  glb_cdsittfn = 2  THEN
             ASSIGN buff[2]       = "A - ABERTURA                          "
@@ -1470,10 +1468,6 @@ DEFINE VARIABLE aux_flgopcaoA AS LOGICAL     NO-UNDO.
         ELSE
         IF  KEYFUNCTION(LASTKEY) = "D"  THEN
             RUN menu_configuracao.
-        ELSE
-        IF  KEYFUNCTION(LASTKEY) = "E"   AND
-            aux_flgopcaoE                THEN
-            RUN fechamento.
         ELSE
         IF  KEYFUNCTION(LASTKEY) = "F"   AND
             aux_flgopcaoF                THEN
