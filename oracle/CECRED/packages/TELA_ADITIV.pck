@@ -840,7 +840,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
     
         Observacao: -----
     
-        Alteracoes:
+        Alteracoes: 23/01/2017 - Quando garantia do aditivo é aplicação de
+                                 terceiros, passar número da conta como parâmetro
+                                 ao invés de zero. (AJFink SD#597917)
+
     ..............................................................................*/
     
     ----------->>> VARIAVEIS <<<--------   
@@ -1132,7 +1135,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
       IF vr_cdaditiv IN ('2','3') THEN
         
         IF pr_cdaditiv = 3 THEN
-          if pr_nrctagar <> 0 then
+          if pr_nrctagar <> 0 then --SD#597917
             vr_nrdconta := pr_nrctagar;
           else
             vr_nrdconta := rw_crapadt.nrctagar;
