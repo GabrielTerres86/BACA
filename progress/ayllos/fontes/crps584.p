@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Novembro/2010                      Ultima atualizacao: 04/11/2016.
+   Data    : Novembro/2010                      Ultima atualizacao: 23/01/2017.
 
    Dados referentes ao programa:
 
@@ -30,6 +30,8 @@
 
                04/11/2016 - Cheques custodiados deverao ter o numero do bordero
                             igual a zero. (Projeto 300 - Rafael)
+
+               23/01/2017 - Realizado merge com a PROD ref ao projeto 300 (Rafael)
 ..............................................................................*/
 
 { includes/var_batch.i "NEW" }

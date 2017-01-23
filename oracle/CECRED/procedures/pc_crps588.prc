@@ -10,10 +10,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS588(pr_cdcooper  IN NUMBER         -->
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme
-   Data    : Janeiro/2011                       Ultima atualizacao: 04/11/2016
+   Data    : Janeiro/2011                       Ultima atualizacao: 23/01/2017
 
    Dados referentes ao programa:
-
+   
    Frequencia: Diario.
    Objetivo  : Gerar arquivos CUS605 - Custodia de Cheques imagem p/ ABBC
                                        Tambem consisera Desconto de Cheque
@@ -67,6 +67,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS588(pr_cdcooper  IN NUMBER         -->
                04/11/2016 - Ajustado cursor para enviar cheques custodiados, somente
                             os que não foram descontados (nrborder = 0) 
                             (Projeto 300 - Rafael)
+
+               23/01/2017 - Realizado merge com PROD ref ao projeto 300 (Rafael)
 
 ..............................................................................*/
 BEGIN

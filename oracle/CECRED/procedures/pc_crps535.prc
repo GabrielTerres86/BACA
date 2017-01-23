@@ -10,8 +10,8 @@ create or replace procedure cecred.pc_crps535(pr_cdcooper  in craptab.cdcooper%t
    Programa: pc_crps535 - antigo Fontes/crps535.p
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
-   Autor   : Guilherme / Precise
-   Data    : Dezembro/2009                   Ultima atualizacao: 04/11/2016
+   Autor   : Guilherme/SUPERO
+   Data    : Dezembro/2009                   Ultima atualizacao: 02/12/2016
 
    Dados referentes ao programa:
 
@@ -20,7 +20,7 @@ create or replace procedure cecred.pc_crps535(pr_cdcooper  in craptab.cdcooper%t
                devolvidos.
                Emite relatorio 529 e 530.
 
-   Alteracoes: 15/12/2009 - Versao Inicial (Guilherme / Precise)
+   Alteracoes: 15/12/2009 - Versao Inicial (Guilherme/SUPERO)
 
                04/06/2010 - Acertos Gerais (Ze).
 
@@ -115,7 +115,16 @@ create or replace procedure cecred.pc_crps535(pr_cdcooper  in craptab.cdcooper%t
                24/06/2016 - Verificar se a agencia acolhedora possui informacao ZERO, se 
                             possuir deve utilizar a agencia de destino (Douglas - Chamado 431378)
                             
-               04/11/2016 - Ajustar cursor de custodia de cheques - Projeto 300 (Rafael)                            
+			   22/07/2016 - Ajustes referentes a Melhoria 69 - Devolucao automatica de cheques
+                            (Lucas Ranghetti #484923)
+
+               25/08/2016 - Permite integrar arquivos de cheques DVA615 devido
+                            aos cheques VLB (Elton - SD 476261)
+
+			   04/11/2016 - Ajustar cursor de custodia de cheques - Projeto 300 (Rafael)                            
+
+               02/12/2016 - Incorporação Transulcred (Guilherme/SUPERO)
+
 ............................................................................. */
 
   -- Cursor genérico de calendário
@@ -649,13 +658,13 @@ BEGIN
   vr_nome_arq_log := gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE');
 
   -- VIACON - Tratamento para buscar dados cooperativa incorporada
-  IF pr_cdcooper = 1 OR pr_cdcooper = 13 THEN
+  IF pr_cdcooper IN (1,9,13) THEN
 
-    IF pr_cdcooper = 1 THEN
-      vr_cdcooper := 4;
-    ELSE
-      vr_cdcooper := 15;
-    END IF;
+    CASE pr_cdcooper
+      WHEN 1   THEN vr_cdcooper := 4;  --    VIACREDI --> CONCREDI
+      WHEN 13  THEN vr_cdcooper := 15; --     SCRCRED --> CREDIMILSUL
+      WHEN 9   THEN vr_cdcooper := 17; -- TRANSPOCRED --> TRANSULCRED
+    END CASE;
 
     -- Buscar os dados da cooperativa
     OPEN  cr_crabcop(vr_cdcooper);
@@ -762,7 +771,7 @@ BEGIN
       END IF;
 
       -- VIACON - Tratamento para incluir arquivos das cooperativas incorporadas
-      IF pr_cdcooper = 1 OR pr_cdcooper = 13 THEN
+      IF  pr_cdcooper IN (1,9,13) THEN
 
         -- Verifica através da extensão do arquivo a qual grupo o mesmo pertence
         IF    vr_array_arquivo(ind) LIKE ('1'||lpad(rw_crabcop.cdagectl,4,'0')||'%.D%N') THEN
@@ -801,7 +810,6 @@ BEGIN
                               ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                      || vr_cdprogra || ' --> '
                                                      || vr_dscritic);
-    --
 
 
     -- Atualiza variaveis iniciais do controle
@@ -875,8 +883,9 @@ BEGIN
       ww_nrlinha := ww_nrlinha + 1;
 
       -- Verifica se é final de arquivo
-      IF substr(vr_dstexto,1,10)  = '9999999999' AND
-         substr(vr_dstexto,48,06) = 'CEL615'     THEN
+      IF SUBSTR(vr_dstexto,1,10)  = '9999999999' AND
+        (SUBSTR(vr_dstexto,48,06) = 'CEL615'     OR
+         SUBSTR(vr_dstexto,48,06) = 'DVA615')    THEN -- Cheque VLB
          IF substr(vr_dstexto,151,10) <> ww_nrlinha THEN
             vr_cdcritic := 166;
             vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
@@ -919,7 +928,8 @@ BEGIN
 
       -- Faz validacoes especificas para a primeira linha
       IF ww_nrlinha = 1 THEN
-        IF SUBSTR(vr_dstexto,48,06) <> 'CEL615' THEN
+        IF (SUBSTR(vr_dstexto,48,06) <> 'CEL615'  AND
+            SUBSTR(vr_dstexto,48,06) <> 'DVA615') THEN   -- Cheque VLB
           vr_cdcritic := 473; --Codigo de remessa invalido.
         ELSIF SUBSTR(vr_dstexto,151,10) <> ww_nrlinha THEN
           vr_cdcritic := 166; -- Sequencia errada
@@ -966,23 +976,23 @@ BEGIN
 
         IF cr_crapcop_ctl%FOUND THEN
           /* Tratamento para incorporação viacon scrmil */
-          IF (pr_cdcooper = 1 and vr_cdcopaco = 4) or
-             (pr_cdcooper = 13 and vr_cdcopaco = 15) then
-             open cr_craptco_inc(pr_cdcooper => pr_cdcooper,
+          IF (pr_cdcooper = 1  AND vr_cdcopaco = 4 ) OR
+             (pr_cdcooper = 13 AND vr_cdcopaco = 15) OR
+             (pr_cdcooper = 9  AND vr_cdcopaco = 17) THEN
+             OPEN cr_craptco_inc(pr_cdcooper => pr_cdcooper,
                                  pr_cdcopant => vr_cdcopaco,
                                  pr_nrctaant => vr_nrctachd,
                                  pr_flgativo => 1);
-             fetch cr_craptco_inc into rw_craptco_inc;
+             FETCH cr_craptco_inc INTO rw_craptco_inc;
 
-             if cr_craptco_inc%found then
+             IF cr_craptco_inc%FOUND THEN
                 /* Variaveis recebem valores da nova conta */
                 vr_nrctachd := rw_craptco_inc.nrdconta;
                 vr_cdcopaco := pr_cdcooper;
-             end if;
-             close cr_craptco_inc;
+             END IF;
+             CLOSE cr_craptco_inc;
 
-          end if;
-
+          END IF;
 					-- Abre o cursor contendo os dados dos cheques
 					OPEN cr_crapchd(pr_cdcooper => vr_cdcopaco,
 													pr_cdbanchq => vr_cdbanchq,
@@ -1085,7 +1095,7 @@ BEGIN
 
             vr_nrdconta := SUBSTR(vr_dstexto,67,12);
 
-            IF (pr_cdcooper = 1 OR pr_cdcooper = 13) AND
+            IF (pr_cdcooper IN (1,9,13)) AND
                 vr_arquivos(ind).idarquivo > 2 THEN
                 
               OPEN cr_craptco_inc(pr_cdcooper => pr_cdcooper,
@@ -1385,8 +1395,8 @@ BEGIN
 
 				-- Se é depósito intercoop.
 				IF vr_cdcopaco <> pr_cdcooper THEN
-					BEGIN
 
+					BEGIN
 						INSERT INTO crapddi
 									 (cdcooper,
 										cdcopaco,
@@ -1410,7 +1420,6 @@ BEGIN
 										vr_cdalinea,
 										rw_crapdat.dtmvtolt,
 										vr_dtdapres);
-
 					EXCEPTION
 						WHEN OTHERS THEN
 							vr_cdcritic := 0;
@@ -1468,10 +1477,8 @@ BEGIN
             -- Se for conta migrada das cooperativas 4 ou 15 nas condicoes
             -- abaixo devera atribui para crawrel.cdagenci o codigo do novo
             -- PA na coopertaiva nova
-
-
-            IF (pr_cdcooper = 1 OR pr_cdcooper = 13) AND
-              vr_arquivos(ind).idarquivo > 3 THEN
+            IF  (pr_cdcooper IN (1,9,13))
+            AND vr_arquivos(ind).idarquivo > 3 THEN
               
               OPEN cr_craptco_inc(pr_cdcooper => pr_cdcooper,
                                   pr_cdcopant => vr_cdcopaco,
@@ -1530,6 +1537,7 @@ BEGIN
             vr_tab_crawrel(vr_ind_crawrel).dtlibera   := rw_crapcdb.dtlibera;
             vr_tab_crawrel(vr_ind_crawrel).cdagenci   := rw_crapcdb.cdagenci;
             vr_tab_crawrel(vr_ind_crawrel).insitprv   := rw_crapcdb.insitprv;
+            vr_tab_crawrel(vr_ind_crawrel).nrctachq   := vr_nrctachq;
           END IF;
           CLOSE cr_crapcdb;
         ELSIF rw_crapchd.cdbccxlt = 11
@@ -1552,15 +1560,16 @@ BEGIN
           vr_tab_crawrel(vr_ind_crawrel).dtlibera   := rw_crapchd.dtmvtolt;
           vr_tab_crawrel(vr_ind_crawrel).cdagenci   := rw_crapchd.cdagenci;
           vr_tab_crawrel(vr_ind_crawrel).insitprv   := rw_crapchd.insitprv;
+          vr_tab_crawrel(vr_ind_crawrel).nrctachq   := vr_nrctachq;
         ELSE
 					IF vr_cdcopaco <> pr_cdcooper THEN
 						vr_cdagenci_ass := rw_crapass.cdagenci;
 					ELSE
 						vr_cdagenci_ass := rw_crapchd.cdagenci;
 					END IF;
-          vr_ind_crawrel := '0'||                                      --flgmigra
-                               lpad(vr_cdagenci_ass,5,'0')||               --agencia
-                               lpad(vr_nrctachd,10,'0')||      --conta
+          vr_ind_crawrel := '0'||                                    --flgmigra
+                             lpad(vr_cdagenci_ass,5,'0')||           --agencia
+                             lpad(vr_nrctachd,10,'0')||              --conta
                                lpad(rw_crapchd.nrcheque,10,'0')||      --cheque
                                lpad(vr_nrcontad,5,'0');                --sequencial
           vr_tab_crawrel(vr_ind_crawrel).dsprodut   := 'CAIXA';
@@ -1571,6 +1580,7 @@ BEGIN
           vr_tab_crawrel(vr_ind_crawrel).dtlibera   := rw_crapchd.dtmvtolt;
           vr_tab_crawrel(vr_ind_crawrel).cdagenci   := vr_cdagenci_ass;
           vr_tab_crawrel(vr_ind_crawrel).insitprv   := rw_crapchd.insitprv;
+          vr_tab_crawrel(vr_ind_crawrel).nrctachq   := vr_nrctachq;
         END IF;
 
         -- Atualiza a tabela de memoria de dados do arquivo
@@ -1585,8 +1595,8 @@ BEGIN
         vr_tab_crawrel(vr_ind_crawrel).nrcheque   := rw_crapchd.nrcheque;
         vr_tab_crawrel(vr_ind_crawrel).nralinea   := vr_cdalinea;
         vr_tab_crawrel(vr_ind_crawrel).vlcheque   := rw_crapchd.vlcheque;
-		vr_tab_crawrel(vr_ind_crawrel).cdageapr   := substr(vr_dstexto,59,04);
-
+		    vr_tab_crawrel(vr_ind_crawrel).cdageapr   := substr(vr_dstexto,59,04);
+        vr_tab_crawrel(vr_ind_crawrel).nrctachq   := vr_nrctachq;
         -- move os dados para a variavel vr_tab_crawrel_2 com outra ordenacao
         vr_ind_crawrel_2 := substr(vr_ind_crawrel,1,6)|| -- flgmigra e Agencia
                             vr_tab_crawrel(vr_ind_crawrel).dsprodut ||-- Produto
@@ -1598,7 +1608,7 @@ BEGIN
 
         -- Se existir boletos atualiza tabela temporaria de boletos
         IF rw_crapchd.nrboleto <> 0 THEN
-          vr_tab_crawbol(vr_tab_crawbol.COUNT()+1).cdagenci   := rw_crapchd.cdagenci;
+          vr_tab_crawbol(vr_tab_crawbol.COUNT()+1).cdagenci := rw_crapchd.cdagenci;
           vr_tab_crawbol(vr_tab_crawbol.COUNT()).nrboleto   := rw_crapchd.nrboleto;
           vr_tab_crawbol(vr_tab_crawbol.COUNT()).nrctabol   := rw_crapchd.nrctabol;
           vr_tab_crawbol(vr_tab_crawbol.COUNT()).nrcnvbol   := rw_crapchd.nrcnvbol;
@@ -1863,6 +1873,7 @@ BEGIN
                        '<nralinea>'|| vr_tab_crawrel_2(vr_ind_crawrel_2).nralinea                             ||'</nralinea>'||
                        '<nrcheque>'|| gene0002.fn_mask(vr_tab_crawrel_2(vr_ind_crawrel_2).nrcheque,'zzz.zz9') ||'</nrcheque>'||
 											 '<cdageapr>'|| vr_tab_crawrel_2(vr_ind_crawrel_2).cdageapr                             ||'</cdageapr>'||
+ 											 '<nrctachq>'|| vr_tab_crawrel_2(vr_ind_crawrel_2).nrctachq                             ||'</nrctachq>'||
                      '</cheque>',3);
 
       -- Se for o ultimo registro de erro, fecha o nó de erro
@@ -1925,6 +1936,7 @@ BEGIN
                        '<dtlibera>'|| to_char(vr_tab_crawrel_2(vr_ind_crawrel_2).dtlibera,'DD/MM/YY')            ||'</dtlibera>'||
                        '<nrprevia>'|| vr_tab_crawrel_2(vr_ind_crawrel_2).nrprevia                                ||'</nrprevia>'||
                        '<insitprv>'|| vr_dssitprv                                                                ||'</insitprv>'||
+ 											 '<nrctachq>'|| vr_tab_crawrel_2(vr_ind_crawrel_2).nrctachq                                ||'</nrctachq>'||
                      '</cheque>',3);
 
     END IF; -- Final do IF de verificacao de agencia igual ou diferente de zeros
@@ -1995,10 +2007,10 @@ BEGIN
                                     pr_dsparams  => 'PR_TPRELATO##0',                --> Enviar como parametro apenas a agencia
                                     pr_dsarqsaid =>  vr_diretori_rl||'/crrl529_'||lpad(vr_tab_crawrel_2(vr_ind_crawrel_2).cdagenci,3,'0')||'.lst', --> Arquivo final
                                     pr_flg_gerar => 'N',                 --> Não gerar o arquivo na hora
-                                    pr_qtcoluna  => 132,
-                                    pr_sqcabrel  => 3,
+                                    pr_qtcoluna  => 234,
+                                    pr_sqcabrel  => 1,
                                     pr_flg_impri => 'N',                 --> Chamar a impressão (Imprim.p)
-                                    pr_nmformul  => '132col',            --> Nome do formulário para impressão
+                                    pr_nmformul  => '234dh',            --> Nome do formulário para impressão
                                     pr_nrcopias  => 1,                   --> Número de cópias para impressão
                                     pr_dspathcop => vr_dspathcop,        --> Diretorio para copia dos arquivos
                                     pr_des_erro  => vr_dscritic);        --> Saida com erro
@@ -2074,10 +2086,10 @@ BEGIN
                                       pr_dsparams  => 'PR_TPRELATO##99',     --> Enviar como parametro apenas a agencia
                                       pr_dsarqsaid =>  vr_diretori_rl||'/'||vr_nmarquiv, --> Arquivo final
                                       pr_flg_gerar => 'N',                 --> Não gerar o arquivo na hora
-                                      pr_qtcoluna  => 132,
+                                      pr_qtcoluna  => 234,
                                       pr_sqcabrel  => 2,
                                       pr_flg_impri => 'S',                 --> Chamar a impressão (Imprim.p)
-                                      pr_nmformul  => '132col',            --> Nome do formulário para impressão
+                                      pr_nmformul  => '234dh',            --> Nome do formulário para impressão
                                       pr_nrcopias  => 1,                   --> Número de cópias para impressão
                                       pr_dsmailcop => vr_email_dest,       --> Lista sep. por ';' de emails para envio do relatório
                                       pr_dsassmail => vr_dsassmail,        --> Assunto do e-mail que enviará o relatório
@@ -2129,17 +2141,17 @@ BEGIN
                             pr_infimsol => pr_infimsol,
                             pr_stprogra => pr_stprogra);
   --
-  commit;
+  COMMIT;
 
-exception
-  when vr_exc_fimprg then
+EXCEPTION
+  WHEN vr_exc_fimprg THEN
     -- Se foi retornado apenas código
-    if nvl(vr_cdcritic,0) > 0 and vr_dscritic is null then
+    IF nvl(vr_cdcritic,0) > 0 and vr_dscritic is null then
       -- Buscar a descrição
       vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-    end if;
+    END IF;
     -- Se foi gerada critica para envio ao log
-    if nvl(vr_cdcritic,0) > 0 or vr_dscritic is not null then
+    IF nvl(vr_cdcritic,0) > 0 or vr_dscritic is not null then
       -- Envio centralizado de log de erro
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                  pr_ind_tipo_log => 2, -- Erro tratato
@@ -2147,31 +2159,31 @@ exception
                                  pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                  || vr_cdprogra || ' --> '
                                                  || vr_dscritic );
-    end if;
+    END IF;
     -- Chamamos a fimprg para encerrarmos o processo sem parar a cadeia
     btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
                              ,pr_cdprogra => vr_cdprogra
                              ,pr_infimsol => pr_infimsol
                              ,pr_stprogra => pr_stprogra);
     -- Efetuar commit pois gravaremos o que foi processo até então
-    commit;
+    COMMIT;
 
-  when vr_exc_saida then
+  WHEN vr_exc_saida THEN
     -- Se foi retornado apenas código
-    if nvl(vr_cdcritic,0) > 0 and vr_dscritic is null then
+    IF nvl(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
       -- Buscar a descrição
       vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-    end if;
+    END IF;
     -- Devolvemos código e critica encontradas
     pr_cdcritic := NVL(vr_cdcritic,0);
     pr_dscritic := vr_dscritic;
     -- Efetuar rollback
-    rollback;
-  when others then
+    ROLLBACK;
+  WHEN OTHERS THEN
     -- Efetuar retorno do erro não tratado
     pr_cdcritic := 0;
-    pr_dscritic := sqlerrm;
-    -- Efetuar rollback
-    rollback;
-end;
+    pr_dscritic := SQLERRM;
+    -- EFETUAR ROLLBACK
+    ROLLBACK;
+END;
 /

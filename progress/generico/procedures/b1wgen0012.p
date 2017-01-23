@@ -2,7 +2,7 @@
 
    Programa: b1wgen0012.p                  
    Autora  : Ze Eduardo
-   Data    : 20/11/2006                        Ultima atualizacao: 04/11/2016
+   Data    : 20/11/2006                        Ultima atualizacao: 23/01/2017
 
    Dados referentes ao programa:
 
@@ -198,7 +198,9 @@
 							SD 476097. Carlos Rafael Tanholi.
               
                04/11/2016 - Cheques custodiados deverao ter o numero do bordero
-                            igual a zero. (Projeto 300 - Rafael)              
+                            igual a zero. (Projeto 300 - Rafael) 
+							
+               23/01/2017 - Realizado merge com a PROD ref ao projeto 300 (Rafael)             
 ............................................................................. */
 
 DEF STREAM str_1.
