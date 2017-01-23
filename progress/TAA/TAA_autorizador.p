@@ -8937,7 +8937,7 @@ PROCEDURE atualizacao-telefone:
                            INPUT "I",            /** Sis.Alteracao**/
                            INPUT TRUE,           /** Logar        **/
                            INPUT 1,              /** Situacao     **/
-                           INPUT 1,              /** Origem       **/
+                           INPUT 4,              /** Origem       **/
                           OUTPUT aux_tpatlcad,
                           OUTPUT aux_msgatcad,
                           OUTPUT aux_chavealt,
