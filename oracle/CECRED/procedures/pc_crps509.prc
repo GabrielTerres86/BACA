@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE cecred.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Abril/2008                        Ultima atualizacao: 25/05/2016
+   Data    : Abril/2008                        Ultima atualizacao: 23/01/2017
 
    Dados referentes ao programa:
 
@@ -52,6 +52,9 @@ CREATE OR REPLACE PROCEDURE cecred.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
                             -> Não alterar a situação de agendamentos de TED para 4 - não efetivado
                             (Adriano - M117).             
                             
+               23/01/2017 - COMMIT após SICR0001.pc_controle_exec_deb para mesmo que haja um
+                            ROLlBACK avançar no controle das execuções 
+                            SD590929 e SD594359  (Tiago/Fabricio).
      ............................................................................. */
 
      DECLARE
@@ -209,6 +212,10 @@ CREATE OR REPLACE PROCEDURE cecred.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
           TRIM(vr_dscritic) IS NOT NULL THEN
          RAISE vr_exc_saida; 
        END IF;             
+
+       --Commit para garantir o 
+       --controle de execucao do programa
+       COMMIT;
 
        --Zerar tabelas de memoria auxiliar
        pc_limpa_tabela;
