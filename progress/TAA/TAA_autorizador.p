@@ -8906,7 +8906,7 @@ PROCEDURE atualizacao-telefone:
         FIND FIRST tt-erro NO-LOCK NO-ERROR.
 
         IF  AVAILABLE tt-erro  THEN
-            aux_dscritic = "[V] " + tt-erro.dscritic.
+            aux_dscritic = tt-erro.dscritic.
         ELSE
             aux_dscritic = "Problemas na BO 70 (1)".
 
@@ -8951,7 +8951,7 @@ PROCEDURE atualizacao-telefone:
         FIND FIRST tt-erro NO-LOCK NO-ERROR.
 
         IF  AVAILABLE tt-erro  THEN
-            aux_dscritic = "[G] " + tt-erro.dscritic.
+            aux_dscritic = tt-erro.dscritic.
         ELSE
             aux_dscritic = "Problemas na BO 70 (2)".
 
