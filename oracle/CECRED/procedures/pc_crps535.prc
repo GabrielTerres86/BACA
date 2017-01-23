@@ -11,7 +11,7 @@ create or replace procedure cecred.pc_crps535(pr_cdcooper  in craptab.cdcooper%t
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme / Precise
-   Data    : Dezembro/2009                   Ultima atualizacao: 24/06/2016
+   Data    : Dezembro/2009                   Ultima atualizacao: 04/11/2016
 
    Dados referentes ao programa:
 
@@ -114,6 +114,8 @@ create or replace procedure cecred.pc_crps535(pr_cdcooper  in craptab.cdcooper%t
                             
                24/06/2016 - Verificar se a agencia acolhedora possui informacao ZERO, se 
                             possuir deve utilizar a agencia de destino (Douglas - Chamado 431378)
+                            
+               04/11/2016 - Ajustar cursor de custodia de cheques - Projeto 300 (Rafael)                            
 ............................................................................. */
 
   -- Cursor genérico de calendário
@@ -345,6 +347,7 @@ create or replace procedure cecred.pc_crps535(pr_cdcooper  in craptab.cdcooper%t
       FROM crapcst
      WHERE crapcst.cdcooper        = pr_cdcooper
        AND upper(crapcst.dsdocmc7) = upper(pr_dsdocmc7)
+       AND crapcst.nrborder        = 0
       ORDER BY PROGRESS_RECID DESC;
   rw_crapcst cr_crapcst%ROWTYPE;
 

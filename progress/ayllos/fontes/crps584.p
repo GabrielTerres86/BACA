@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Novembro/2010                      Ultima atualizacao: 26/03/2012.
+   Data    : Novembro/2010                      Ultima atualizacao: 04/11/2016.
 
    Dados referentes ao programa:
 
@@ -27,6 +27,9 @@
 
 			   20/07/2016 - Alteracao do caminho onde serao salvos os arquivos
 							de truncagem de cheque. SD 476097. Carlos R.	
+
+               04/11/2016 - Cheques custodiados deverao ter o numero do bordero
+                            igual a zero. (Projeto 300 - Rafael)
 ..............................................................................*/
 
 { includes/var_batch.i "NEW" }
@@ -304,7 +307,8 @@ PROCEDURE pi_processa_registros:
                                                                      crapcst.cdbanchq = aux_cdbanchq     AND
                                                                      crapcst.cdagechq = aux_cdagechq     AND
                                                                      crapcst.nrctachq = aux_nrctachq     AND
-                                                                     crapcst.nrcheque = aux_nrcheque
+                                                                     crapcst.nrcheque = aux_nrcheque     AND
+																	 crapcst.nrborder = 0
                                                                      EXCLUSIVE-LOCK NO-ERROR.
                                                         
                                                         IF   AVAILABLE crapcst THEN
@@ -322,7 +326,8 @@ PROCEDURE pi_processa_registros:
                                                                           crapcst.cdbanchq = aux_cdbanchq     AND
                                                                           crapcst.cdagechq = aux_cdagechq     AND
                                                                           crapcst.nrctachq = aux_nrctachq     AND
-                                                                          crapcst.nrcheque = aux_nrcheque
+                                                                          crapcst.nrcheque = aux_nrcheque     AND
+																		  crapcst.nrborder = 0
                                                                           EXCLUSIVE-LOCK NO-ERROR.
                                                                                          
                                                                 IF   AVAILABLE crapcst THEN

@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Dezembro/2009                   Ultima atualizacao: 26/04/2016
+   Data    : Dezembro/2009                   Ultima atualizacao: 04/11/2016
 
    Dados referentes ao programa:
 
@@ -231,12 +231,14 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                22/12/2015 - Ajustar os codigos de alines conforme revisao de alineas e 
                             processo de devolucao de cheque (Douglas - Melhoria 100)
 
-			   31/03/2016 - Ajuste para nao deixar alinea zerada na validação de historicos
+               31/03/2016 - Ajuste para nao deixar alinea zerada na validação de historicos
 							 (Adriano - SD 426308).
 
 
                26/04/2016 - Ajuste para evitar geracao de raise quando tiver erro de 
 			                conversao para numerico (vr_cdcritic:= 843) (Daniel) 
+                      
+               04/11/2016 - Ajustar cursor de custodia de cheques - Projeto 300 (Rafael)
      ............................................................................. */
 
      DECLARE
@@ -1993,7 +1995,8 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                  AND crapcst.nrctachq = pr_nrctachq
                  AND crapcst.nrcheque = pr_nrcheque
                  AND crapcst.insitchq IN (0, 2)
-                 AND crapcst.dtlibera > pr_dtlibera;
+                 AND crapcst.dtlibera > pr_dtlibera
+                 AND crapcst.nrborder = 0;
             rw_crapcst cr_crapcst%ROWTYPE;
 
             --Selecionar Cheques Contidos do Bordero de desconto de cheques

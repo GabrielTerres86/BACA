@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson        
-   Data    : Maio/2000.                      Ultima atualizacao: 30/05/2015
+   Data    : Maio/2000.                      Ultima atualizacao: 04/11/2016
 
    Dados referentes ao programa:
 
@@ -85,6 +85,9 @@
                             
                30/05/2016 - Incluir criticas 251, 695, 410, 95 no relatorio e
                             atualizar o insitlau para 3(Cancelado) (Lucas Ranghetti #449799)
+                            
+               04/11/2016 - Cheques custodiados deverao ter o numero do bordero
+                            igual a zero. (Projeto 300 - Rafael)
 ............................................................................. */
 
 DEF STREAM str_1.   /*  Para relatorio de criticas  */
@@ -576,7 +579,8 @@ PROCEDURE proc_trata_custodia:
                           crapcst.cdbanchq = ind_cdbanchq   AND
                           crapcst.cdagechq = ind_cdagechq   AND
                           crapcst.nrctachq = ind_nrctachq   AND
-                          crapcst.nrcheque = ind_nrcheque
+                          crapcst.nrcheque = ind_nrcheque   AND
+                          crapcst.nrborder = 0
                           EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
                           
        IF   NOT AVAILABLE crapcst   THEN

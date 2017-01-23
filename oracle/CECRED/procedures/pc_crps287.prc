@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Maio/2000.                      Ultima atualizacao: 10/12/2014
+   Data    : Maio/2000.                      Ultima atualizacao: 04/11/2016
 
    Dados referentes ao programa:
 
@@ -88,6 +88,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
 
                10/12/2014 - Nao executar raise vr_exc_erro quando ocorrencia 684 para nao
                             interromper o processamento na cadeia. (Rafael)
+                            
+               04/11/2016 - Ajustar cursor de custodia de cheques - Projeto 300 (Rafael)                            
      ............................................................................. */
 
      DECLARE
@@ -211,7 +213,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
          FROM crapcst
          WHERE crapcst.cdcooper  = pr_cdcooper
          AND   crapcst.dtlibera  > pr_dtmvtolt
-         AND   crapcst.dtlibera  <= pr_dtmvtopr;
+         AND   crapcst.dtlibera  <= pr_dtmvtopr
+         AND   crapcst.nrborder = 0; -- cheque nao descontado 
        rw_crapcst cr_crapcst%ROWTYPE;
 
        --Selecionar informacoes Custodia para relatório
@@ -228,6 +231,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
                ,crapcst.dtmvtolt
          FROM crapcst crapcst
          WHERE crapcst.cdcooper  = pr_cdcooper
+          AND  crapcst.nrborder  = 0 -- cheque nao descontado 
           AND (crapcst.dtdevolu >= pr_dtmvtolt OR
                crapcst.dtlibera >  pr_dtmvtoan OR
                crapcst.dtmvtolt <= pr_dtmvtolt);
@@ -1671,4 +1675,3 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
      END;
    END pc_crps287;
 /
-
