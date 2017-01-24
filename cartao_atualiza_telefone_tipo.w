@@ -55,8 +55,8 @@ DEFINE VARIABLE aux_tptelefo            AS INTEGER                      NO-UNDO.
 &Scoped-define FRAME-NAME f_cartao_atualiza_telefone_tipo
 
 /* Standard List Definitions                                            */
-&Scoped-Define ENABLED-OBJECTS IMAGE-40 IMAGE-41 IMAGE-34 IMAGE-43 ~
-ed_mensagem Btn_B Btn_F Btn_C Btn_H 
+&Scoped-Define ENABLED-OBJECTS IMAGE-41 IMAGE-34 IMAGE-43 IMAGE-44 ~
+ed_mensagem Btn_B Btn_F Btn_C Btn_D 
 &Scoped-Define DISPLAYED-OBJECTS ed_mensagem 
 
 /* Custom List Definitions                                              */
@@ -87,13 +87,13 @@ DEFINE BUTTON Btn_C
      SIZE 61 BY 3.33
      FONT 8.
 
-DEFINE BUTTON Btn_F 
-     LABEL "COMERCIAL" 
+DEFINE BUTTON Btn_D AUTO-END-KEY 
+     LABEL "VOLTAR" 
      SIZE 61 BY 3.33
      FONT 8.
 
-DEFINE BUTTON Btn_H AUTO-END-KEY 
-     LABEL "VOLTAR" 
+DEFINE BUTTON Btn_F 
+     LABEL "COMERCIAL" 
      SIZE 61 BY 3.33
      FONT 8.
 
@@ -106,15 +106,15 @@ DEFINE IMAGE IMAGE-34
      FILENAME "Imagens/seta_esq.gif":U TRANSPARENT
      SIZE 5 BY 3.05.
 
-DEFINE IMAGE IMAGE-40
-     FILENAME "Imagens/seta_dir.gif":U TRANSPARENT
-     SIZE 5 BY 3.05.
-
 DEFINE IMAGE IMAGE-41
      FILENAME "Imagens/seta_dir.gif":U TRANSPARENT
      SIZE 5 BY 3.05.
 
 DEFINE IMAGE IMAGE-43
+     FILENAME "Imagens/seta_esq.gif":U TRANSPARENT
+     SIZE 5 BY 3.05.
+
+DEFINE IMAGE IMAGE-44
      FILENAME "Imagens/seta_esq.gif":U TRANSPARENT
      SIZE 5 BY 3.05.
 
@@ -141,17 +141,17 @@ DEFINE FRAME f_cartao_atualiza_telefone_tipo
      Btn_B AT ROW 14.1 COL 6 WIDGET-ID 178
      Btn_F AT ROW 14.1 COL 94.4 WIDGET-ID 130
      Btn_C AT ROW 19.1 COL 6 WIDGET-ID 184
-     Btn_H AT ROW 24.1 COL 94.4 WIDGET-ID 132
+     Btn_D AT ROW 24.1 COL 6 WIDGET-ID 132
      "    ATUALIZAÇÃO TELEFONE" VIEW-AS TEXT
           SIZE 122 BY 3.33 AT ROW 1.48 COL 21 WIDGET-ID 128
           FGCOLOR 1 FONT 13
      RECT-101 AT ROW 5.05 COL 19.6 WIDGET-ID 118
      RECT-102 AT ROW 5.52 COL 19.6 WIDGET-ID 120
      RECT-103 AT ROW 5.29 COL 19.6 WIDGET-ID 116
-     IMAGE-40 AT ROW 24.24 COL 156 WIDGET-ID 174
      IMAGE-41 AT ROW 14.24 COL 156 WIDGET-ID 176
      IMAGE-34 AT ROW 14.24 COL 1 WIDGET-ID 182
      IMAGE-43 AT ROW 19.24 COL 1 WIDGET-ID 186
+     IMAGE-44 AT ROW 24.29 COL 1 WIDGET-ID 188
     WITH 1 DOWN NO-BOX KEEP-TAB-ORDER OVERLAY 
          SIDE-LABELS NO-UNDERLINE THREE-D 
          AT COL 1 ROW 1
@@ -399,6 +399,31 @@ END.
 &ANALYZE-RESUME
 
 
+&Scoped-define SELF-NAME Btn_D
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_D w_cartao_atualiza_telefone_tipo
+ON ANY-KEY OF Btn_D IN FRAME f_cartao_atualiza_telefone_tipo /* VOLTAR */
+DO:
+    RUN tecla.
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_D w_cartao_atualiza_telefone_tipo
+ON CHOOSE OF Btn_D IN FRAME f_cartao_atualiza_telefone_tipo /* VOLTAR */
+DO:
+
+    par_continua = FALSE.
+
+    APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.  
+    RETURN "NOK".
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
 &Scoped-define SELF-NAME Btn_F
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_F w_cartao_atualiza_telefone_tipo
 ON ANY-KEY OF Btn_F IN FRAME f_cartao_atualiza_telefone_tipo /* COMERCIAL */
@@ -459,35 +484,10 @@ END.
 &ANALYZE-RESUME
 
 
-&Scoped-define SELF-NAME Btn_H
-&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_H w_cartao_atualiza_telefone_tipo
-ON ANY-KEY OF Btn_H IN FRAME f_cartao_atualiza_telefone_tipo /* VOLTAR */
-DO:
-    RUN tecla.
-END.
-
-/* _UIB-CODE-BLOCK-END */
-&ANALYZE-RESUME
-
-
-&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_H w_cartao_atualiza_telefone_tipo
-ON CHOOSE OF Btn_H IN FRAME f_cartao_atualiza_telefone_tipo /* VOLTAR */
-DO:
-
-    par_continua = FALSE.
-
-    APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.  
-/*     RETURN "NOK". */
-END.
-
-/* _UIB-CODE-BLOCK-END */
-&ANALYZE-RESUME
-
-
 &Scoped-define SELF-NAME temporizador
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL temporizador w_cartao_atualiza_telefone_tipo OCX.Tick
 PROCEDURE temporizador.t_cartao_atualiza_telefone_tipo.Tick .
-APPLY "CHOOSE" TO Btn_H IN FRAME f_cartao_atualiza_telefone_tipo.
+APPLY "CHOOSE" TO Btn_D IN FRAME f_cartao_atualiza_telefone_tipo.
 END PROCEDURE.
 
 /* _UIB-CODE-BLOCK-END */
@@ -527,7 +527,7 @@ DO  ON ERROR   UNDO MAIN-BLOCK, LEAVE MAIN-BLOCK
     chtemporizador:t_cartao_atualiza_telefone_tipo:INTERVAL = glb_nrtempor.
 
     /* coloca o foco na senha */
-    APPLY "ENTRY" TO Btn_H.
+    APPLY "ENTRY" TO Btn_D.
 
     IF  NOT THIS-PROCEDURE:PERSISTENT  THEN
         WAIT-FOR CLOSE OF THIS-PROCEDURE.
@@ -609,8 +609,8 @@ PROCEDURE enable_UI :
   RUN control_load.
   DISPLAY ed_mensagem 
       WITH FRAME f_cartao_atualiza_telefone_tipo.
-  ENABLE IMAGE-40 IMAGE-41 IMAGE-34 IMAGE-43 ed_mensagem Btn_B Btn_F Btn_C 
-         Btn_H 
+  ENABLE IMAGE-41 IMAGE-34 IMAGE-43 IMAGE-44 ed_mensagem Btn_B Btn_F Btn_C 
+         Btn_D 
       WITH FRAME f_cartao_atualiza_telefone_tipo.
   {&OPEN-BROWSERS-IN-QUERY-f_cartao_atualiza_telefone_tipo}
   VIEW w_cartao_atualiza_telefone_tipo.
@@ -648,13 +648,19 @@ ASSIGN chtemporizador:t_cartao_atualiza_telefone_tipo:INTERVAL = 0.
         Btn_F:SENSITIVE IN FRAME f_cartao_atualiza_telefone_tipo  THEN
         APPLY "CHOOSE" TO Btn_F.
     ELSE
-    IF  KEY-FUNCTION(LASTKEY) = "H"               AND
-        Btn_H:SENSITIVE IN FRAME f_cartao_atualiza_telefone_tipo  THEN
-        APPLY "CHOOSE" TO Btn_H.
+    IF  KEY-FUNCTION(LASTKEY) = "D"               AND
+        Btn_D:SENSITIVE IN FRAME f_cartao_atualiza_telefone_tipo  THEN
+        APPLY "CHOOSE" TO Btn_D.
     ELSE
         RETURN NO-APPLY.
 
     chtemporizador:t_cartao_atualiza_telefone_tipo:INTERVAL = glb_nrtempor.
+
+    IF  RETURN-VALUE = "OK"  THEN
+        DO:
+            APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.    
+            RETURN "OK".
+        END.
 
 END PROCEDURE.
 

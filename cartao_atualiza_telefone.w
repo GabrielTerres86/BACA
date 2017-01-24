@@ -72,7 +72,7 @@ DEFINE VARIABLE temporizador AS WIDGET-HANDLE NO-UNDO.
 DEFINE VARIABLE chtemporizador AS COMPONENT-HANDLE NO-UNDO.
 
 /* Definitions of the field level widgets                               */
-DEFINE BUTTON Btn_D AUTO-END-KEY 
+DEFINE BUTTON Btn_D 
      LABEL "VOLTAR" 
      SIZE 61 BY 3.33
      FONT 8.
@@ -383,12 +383,13 @@ DO:
                                         , INPUT ed_nrdofone:SCREEN-VALUE
                                         ,OUTPUT par_continua).
 
-    IF  NOT par_continua THEN DO:
-        w_cartao_atualiza_telefone:MOVE-TO-TOP().
-        RETURN NO-APPLY.
+
+    IF  RETURN-VALUE = "NOK"  AND 
+        NOT par_continua      THEN
+        DO:
+            RUN limpa. 
+            PAUSE 1 NO-MESSAGE.
     END.
-    ELSE
-        RETURN "OK".
 
 END.
 
@@ -403,7 +404,7 @@ DO:
     RUN tecla.
 
     IF  KEY-FUNCTION(LASTKEY) = "H"  THEN
-DO:
+        DO:
            IF  LENGTH(ed_nrdofone:SCREEN-VALUE) < 8 THEN 
                DO:
                    RUN mensagem.w (INPUT YES,
@@ -413,15 +414,15 @@ DO:
                                    INPUT "Telefone inválido.",
                                    INPUT "",
                                    INPUT "").
-
+                
                    PAUSE 3 NO-MESSAGE.
                    h_mensagem:HIDDEN = YES.
-
+                
                    APPLY "ENTRY" TO ed_nrdofone.
-    RETURN NO-APPLY.
-END.
+                   RETURN NO-APPLY.
+               END.
            ELSE 
-        DO:
+               DO:
                    APPLY "CHOOSE" TO Btn_H.
                END.
         END.
@@ -544,8 +545,10 @@ DO  ON ERROR   UNDO MAIN-BLOCK, LEAVE MAIN-BLOCK
 
     chtemporizador:t_cartao_atualiza_telefone:INTERVAL = glb_nrtempor.
 
-    /* coloca o foco no DDD */
-    APPLY "ENTRY" TO ed_nr_doddd.
+    RUN limpa.
+
+    /* coloca o foco no DDD  
+    APPLY "ENTRY" TO ed_nr_doddd.*/
 
     IF  NOT THIS-PROCEDURE:PERSISTENT  THEN
         WAIT-FOR CLOSE OF THIS-PROCEDURE.
@@ -671,12 +674,12 @@ ASSIGN chtemporizador:t_cartao_atualiza_telefone:INTERVAL = 0.
 
     chtemporizador:t_cartao_atualiza_telefone:INTERVAL = glb_nrtempor.
 
-    /* repassa o retorno */
     IF  RETURN-VALUE = "OK"  THEN
         DO:
             APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.
             RETURN "OK".
         END.
+
 
 END PROCEDURE.
 
