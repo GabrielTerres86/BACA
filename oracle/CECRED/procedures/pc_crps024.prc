@@ -14,7 +14,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS024
  Sistema : Conta-Corrente - Cooperativa de Credito
  Sigla   : CRED
  Autor   : Deborah/Edson
- Data    : Maio/92.                            Ultima atualizacao: 31/10/2014
+ Data    : Maio/92.                            Ultima atualizacao: 24/01/2017
 
  Dados referentes ao programa:
 
@@ -61,6 +61,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS024
                         e prosseguir demais contas, ajustes para melhorar performace(Odirlei/Amcom).
 
            31/10/2014 - Melhorias de Performance (Alisson - AMcom)
+           
+           24/01/2017 - Apresentar critica 17 para o proc_message e não parar o processo
+                        como faz hoje. (Lucas Ranghetti #580524)
            
 ............................................................................. */
   cursor cr_crapdat(pr_cdcooper in craptab.cdcooper%type) is
@@ -378,8 +381,18 @@ begin
           vr_nmtipcta := 'CONTAS CONJUNTAS (TIPOS: 3,4,10,11,14,15)';
           vr_nrflspad := vr_nrflscon;
         else
-          vr_cdcritic := 17;
-          raise vr_exc_saida;
+          vr_cdcritic := 17; -- Tipo de conta errado
+          -- Envio centralizado de log de erro
+          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                    ,pr_ind_tipo_log => 2 -- Erro tratato
+                                    ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
+                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                     || vr_cdprogra || ' --> '
+                                                     || gene0001.fn_busca_critica(vr_cdcritic) ||
+                                                      ' Conta: '||r_crapfdc(idx).nrdconta  ||
+                                                      ' Cheque: '||r_crapfdc(idx).nrcheque ||
+                                                      ' Banco: '||r_crapfdc(idx).cdbanchq);
+          continue;
         end if;
         -- Monta o índice utilizado para identificar a conta
         vr_ind_associado := lpad(vr_intipcta, 2, '0')||lpad(r_crapfdc(idx).nrdconta, 10, '0');
@@ -599,4 +612,3 @@ exception
 
 end PC_CRPS024;
 /
-
