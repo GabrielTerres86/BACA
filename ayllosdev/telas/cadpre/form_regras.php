@@ -5,7 +5,7 @@
      * DATA CRIAÇÃO : 07/01/2016
      * OBJETIVO     : Formulario de Regras.
      * --------------
-     * ALTERAÇÕES   : 
+     * ALTERAÇÕES   : 11/07/2016 - Adicionados novos campos para a fase 3 do projeto de Pre aprovado. (Lombardi)
      * --------------
      */
 
@@ -40,7 +40,7 @@
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 	<tr>
 		<td align="center">		
-			<table cellpadding="0" cellspacing="0" border="0" width="700">
+			<table cellpadding="0" cellspacing="0" border="0" width="750">
 				<tr>
 					<td>
 						<table width="100%" border="0" cellspacing="0" cellpadding="0">
@@ -95,14 +95,6 @@
                                                         <input name="cdfinemp" type="text"  id="cdfinemp" />
                                                         <a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
                                                         <input name="dsfinemp" id="dsfinemp" type="text" />
-                                                    </td>
-                                                </tr>
-                                                <tr>		
-                                                    <td>
-                                                        <label for="cdlcremp">C&oacute;digo da Linha Cr&eacutedito:</label>	
-                                                        <input name="cdlcremp" type="text"  id="cdlcremp" />
-                                                        <a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
-                                                        <input name="dslcremp" id="dslcremp" type="text" />
                                                     </td>
                                                 </tr>
                                                 <tr>		
@@ -178,12 +170,16 @@
                                                     <td>
                                                         <label for="vlpercom">Comprometimento de Renda:</label>	
                                                         <input name="vlpercom" type="text"  id="vlpercom"/> <label>&nbsp;(%)</label>
+                                                        <label for="qtdiaver">Verificar operações inclusas há:</label>	
+                                                        <input name="qtdiaver" type="text"  id="qtdiaver"/> <label>&nbsp;dias</label>
                                                     </td>
                                                 </tr>
                                                 <tr>
                                                     <td>
                                                         <label for="vlmaxleg">Multiplicar Valor M&aacute;x. Legal:</label>	
                                                         <input name="vlmaxleg" type="text"  id="vlmaxleg"/> <label>&nbsp;(%)</label>
+                                                        <label for="qtmesblq">Período de Bloqueio de Limite por Refinanciamento:</label>	
+                                                        <input name="qtmesblq" type="text"  id="qtmesblq"/> <label>&nbsp;meses</label>
                                                     </td>
                                                 </tr>
                                                 <tr>
@@ -195,56 +191,40 @@
                                         </div>
 
                                         <div id="divAba1" class="clsAbas">
-                                            <table width="100%">
+											<div style="margin-top: 10px;" ></div>
+                                            <div id="divRiscos">
+												<div class="divRegistros">
+													<table>
+														<thead>
                                                 <tr>
-                                                    <td>
-                                                        <label for="vllimcra">Limite Opera&ccedil;&atilde;o Risco A:</label>	
-                                                        <input name="vllimcra" type="text"  id="vllimcra" /> <label>&nbsp;(R$)</label>
-                                                    </td>
+																<th>Risco</th>
+																<th>Valor Limite (R$)</th>
+																<th>Linha de Cr&eacute;dito</th>
+																<th>Taxa (%)</th>
                                                 </tr>
-                                                <tr>		
+														</thead>
+														<tbody>
+														<?
+															$letra = array('A','B','C','D','E','F','G','H');
+															
+															for ($i = 0; $i < 8; $i++) {?>
+																<tr style="cursor: pointer;">
+																	<td><b><p class="dsrisco" id="dsrisco_<?echo $letra[$i]?>"></p></b></td>
+																	<td><input class="vllimite" name="vllimite_<?echo $letra[$i]?>" type="text"  id="vllimite_<?echo $letra[$i]?>" /></td>
                                                     <td>						
-                                                        <label for="vllimcrb">Limite Opera&ccedil;&atilde;o Risco B:</label>	
-                                                        <input name="vllimcrb" type="text"  id="vllimcrb" /> <label>&nbsp;(R$)</label>
+																		<input class="cdlcremp" type="text" name="cdlcremp_<?echo $letra[$i]?>" id="cdlcremp_<?echo $letra[$i]?>" />
+																		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+																		<input class="dslcremp" name="dslcremp_<?echo $letra[$i]?>" id="dslcremp_<?echo $letra[$i]?>" type="text" />
+																		<input type="hidden" name="txmensal_<?echo $letra[$i]?>" type="text" />
                                                     </td>
+																	<td><b><p class="txmensal" id="txmensal_<?echo $letra[$i]?>"></p></b></td>
                                                 </tr>
-                                                <tr>		
-                                                    <td>						
-                                                        <label for="vllimcrc">Limite Opera&ccedil;&atilde;o Risco C:</label>	
-                                                        <input name="vllimcrc" type="text"  id="vllimcrc" /> <label>&nbsp;(R$)</label>
-                                                    </td>
-                                                </tr>
-                                                <tr>		
-                                                    <td>						
-                                                        <label for="vllimcrd">Limite Opera&ccedil;&atilde;o Risco D:</label>	
-                                                        <input name="vllimcrd" type="text"  id="vllimcrd" /> <label>&nbsp;(R$)</label>
-                                                    </td>
-                                                </tr>
-                                                <tr>		
-                                                    <td>						
-                                                        <label for="vllimcre">Limite Opera&ccedil;&atilde;o Risco E:</label>	
-                                                        <input name="vllimcre" type="text"  id="vllimcre" /> <label>&nbsp;(R$)</label>
-                                                    </td>
-                                                </tr>
-                                                <tr>		
-                                                    <td>						
-                                                        <label for="vllimcrf">Limite Opera&ccedil;&atilde;o Risco F:</label>	
-                                                        <input name="vllimcrf" type="text"  id="vllimcrf" /> <label>&nbsp;(R$)</label>
-                                                    </td>
-                                                </tr>
-                                                <tr>		
-                                                    <td>						
-                                                        <label for="vllimcrg">Limite Opera&ccedil;&atilde;o Risco G:</label>	
-                                                        <input name="vllimcrg" type="text"  id="vllimcrg" /> <label>&nbsp;(R$)</label>
-                                                    </td>
-                                                </tr>
-                                                <tr>		
-                                                    <td>						
-                                                        <label for="vllimcrh">Limite Opera&ccedil;&atilde;o Risco H:</label>	
-                                                        <input name="vllimcrh" type="text"  id="vllimcrh" /> <label>&nbsp;(R$)</label>
-                                                    </td>
-                                                </tr>
+															<?}?>
+														</tbody>
                                             </table>
+                                        </div>
+												<div style="margin-top: 10px;" ></div>
+											</div>
                                         </div>
 
                                         <div id="divAba2" class="clsAbas">
@@ -330,6 +310,52 @@
                                                         <td>
                                                             <label for="qtdiaest">Per&iacute;odo de Estouro:</label>	
                                                             <input name="qtdiaest" type="text"  id="qtdiaest" /> <label>&nbsp;dias &uacute;teis</label>
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </fieldset>
+                                            <fieldset>
+                                                <legend align="left">Opera&ccedil;&otilde;es como avalista</legend>
+                                                <table width="100%">
+                                                    <tr>
+                                                        <td>
+                                                            <label for="qtavlatr">Qtd. dias em Atraso:</label>	
+                                                            <input name="qtavlatr" type="text"  id="qtavlatr" />
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>
+                                                            <label for="vlavlatr">Valor em Atraso:</label>	
+                                                            <input name="vlavlatr" type="text"  id="vlavlatr" />
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>
+                                                            <label for="qtavlope">Qtd. Opera&ccedil;&otilde;es em Atraso:</label>	
+                                                            <input name="qtavlope" type="text"  id="qtavlope" />
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </fieldset>
+                                            <fieldset>
+                                                <legend align="left">Opera&ccedil;&otilde;es de C&ocirc;njuge</legend>
+                                                <table width="100%">
+                                                    <tr>
+                                                        <td>
+                                                            <label for="qtcjgatr">Qtd. dias em Atraso:</label>	
+                                                            <input name="qtcjgatr" type="text"  id="qtcjgatr" />
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>
+                                                            <label for="vlcjgatr">Valor em Atraso:</label>	
+                                                            <input name="vlcjgatr" type="text"  id="vlcjgatr" />
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>
+                                                            <label for="qtcjgope">Qtd. Opera&ccedil;&otilde;es em Atraso:</label>	
+                                                            <input name="qtcjgope" type="text"  id="qtcjgope" />
                                                         </td>
                                                     </tr>
                                                 </table>

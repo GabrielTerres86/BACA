@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 04/09/2014
  * OBJETIVO     : Rotina para busca da regra da tela CADPRE
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 11/07/2016 - Adicionados novos campos para a fase 3 do projeto de Pre aprovado. (Lombardi)
  * -------------- 
  */
 
@@ -47,6 +47,7 @@
 	}
 
 	$regra = $xmlObjeto->roottag->tags[0];
+	$riscos = $xmlObjeto->roottag->tags[1]->tags;
 
     $arrsitua = array('1','2','3','4','5','6','8','9');
     $arrsitbd = explode(";", getByTagName($regra->tags,'dssitdop')); // Transforma em array
@@ -76,16 +77,20 @@
     $('#vllimctr','#frmRegra').val('<? echo formataMoeda(getByTagName($regra->tags,'vllimctr')); ?>');
     $('#vlmulpli','#frmRegra').val('<? echo formataMoeda(getByTagName($regra->tags,'vlmulpli')); ?>');
     $('#vlpercom','#frmRegra').val('<? echo getByTagName($regra->tags,'vlpercom'); ?>');
+	$('#qtdiaver','#frmRegra').val('<? echo getByTagName($regra->tags,'qtdiaver') > 0 ?getByTagName($regra->tags,'qtdiaver') : '';?>');
     $('#vlmaxleg','#frmRegra').val('<? echo getByTagName($regra->tags,'vlmaxleg'); ?>');
+	$('#qtmesblq','#frmRegra').val('<? echo getByTagName($regra->tags,'qtmesblq') > 0 ? getByTagName($regra->tags,'qtmesblq') : ''?>');
 
-    $('#vllimcra','#frmRegra').val('<? echo getByTagName($regra->tags,'vllimcra') > 0 ? formataMoeda(getByTagName($regra->tags,'vllimcra')) : ''; ?>');
-    $('#vllimcrb','#frmRegra').val('<? echo getByTagName($regra->tags,'vllimcrb') > 0 ? formataMoeda(getByTagName($regra->tags,'vllimcrb')) : ''; ?>');
-    $('#vllimcrc','#frmRegra').val('<? echo getByTagName($regra->tags,'vllimcrc') > 0 ? formataMoeda(getByTagName($regra->tags,'vllimcrc')) : ''; ?>');
-    $('#vllimcrd','#frmRegra').val('<? echo getByTagName($regra->tags,'vllimcrd') > 0 ? formataMoeda(getByTagName($regra->tags,'vllimcrd')) : ''; ?>');
-    $('#vllimcre','#frmRegra').val('<? echo getByTagName($regra->tags,'vllimcre') > 0 ? formataMoeda(getByTagName($regra->tags,'vllimcre')) : ''; ?>');
-    $('#vllimcrf','#frmRegra').val('<? echo getByTagName($regra->tags,'vllimcrf') > 0 ? formataMoeda(getByTagName($regra->tags,'vllimcrf')) : ''; ?>');
-    $('#vllimcrg','#frmRegra').val('<? echo getByTagName($regra->tags,'vllimcrg') > 0 ? formataMoeda(getByTagName($regra->tags,'vllimcrg')) : ''; ?>');
-    $('#vllimcrh','#frmRegra').val('<? echo getByTagName($regra->tags,'vllimcrh') > 0 ? formataMoeda(getByTagName($regra->tags,'vllimcrh')) : ''; ?>');
+	<?php 
+	foreach( $riscos as $risco ) {
+	?>	
+		$('#dsrisco_<? echo getByTagName($risco->tags,'dsrisco'); ?>','#frmRegra').text('<? echo getByTagName($risco->tags,'dsrisco'); ?>');
+		$('#vllimite_<? echo getByTagName($risco->tags,'dsrisco'); ?>','#frmRegra').val('<? echo getByTagName($risco->tags,'vllimite') > 0 ? formataMoeda(getByTagName($risco->tags,'vllimite')) : ''; ?>');
+		$('#cdlcremp_<? echo getByTagName($risco->tags,'dsrisco'); ?>','#frmRegra').val('<? echo getByTagName($risco->tags,'cdlcremp') > 0 ? getByTagName($risco->tags,'cdlcremp') : ''; ?>');
+		$('#dslcremp_<? echo getByTagName($risco->tags,'dsrisco'); ?>','#frmRegra').val('<? echo getByTagName($risco->tags,'dslcremp'); ?>');
+		$('#txmensal_<? echo getByTagName($risco->tags,'dsrisco'); ?>','#frmRegra').text('<? echo getByTagName($risco->tags,'txmensal') > 0 ? formataMoeda(getByTagName($risco->tags,'txmensal')) : ''; ?>');
+
+	<?}?>
 
     <?php
         foreach ($arrlsali as $cdalinea) {
@@ -100,6 +105,12 @@
     $('#qtepratr','#frmRegra').val('<? echo getByTagName($regra->tags,'qtepratr'); ?>');
     $('#qtestour','#frmRegra').val('<? echo getByTagName($regra->tags,'qtestour'); ?>');
     $('#qtdiaest','#frmRegra').val('<? echo getByTagName($regra->tags,'qtdiaest'); ?>');
+    $('#qtavlatr','#frmRegra').val('<? echo getByTagName($regra->tags,'qtavlatr'); ?>');
+    $('#vlavlatr','#frmRegra').val('<? echo getByTagName($regra->tags,'vlavlatr') > 0 ? formataMoeda(getByTagName($regra->tags,'vlavlatr')) : '0,00'; ?>');
+    $('#qtavlope','#frmRegra').val('<? echo getByTagName($regra->tags,'qtavlope'); ?>');
+    $('#qtcjgatr','#frmRegra').val('<? echo getByTagName($regra->tags,'qtcjgatr'); ?>');
+    $('#vlcjgatr','#frmRegra').val('<? echo getByTagName($regra->tags,'vlcjgatr') > 0 ? formataMoeda(getByTagName($regra->tags,'vlcjgatr')) : '0,00'; ?>');
+    $('#qtcjgope','#frmRegra').val('<? echo getByTagName($regra->tags,'qtcjgope'); ?>');
 
     $("#divLimiteCoop").css({"color":"#000"}).html("<? echo  utf8ToHtml('Valor Máximo Legal: R$ ') . formataMoeda(getByTagName($regra->tags,'vlmaximo')); ?>");
 
