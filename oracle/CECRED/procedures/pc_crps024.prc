@@ -392,6 +392,9 @@ begin
                                                       ' Conta: '||r_crapfdc(idx).nrdconta  ||
                                                       ' Cheque: '||r_crapfdc(idx).nrcheque ||
                                                       ' Banco: '||r_crapfdc(idx).cdbanchq);
+          -- Alimentar para não entrar em loop
+          vr_nrdconta := r_crapfdc(idx).nrdconta; 
+          idx:= r_crapfdc.next(idx);
           continue;
         end if;
         -- Monta o índice utilizado para identificar a conta
