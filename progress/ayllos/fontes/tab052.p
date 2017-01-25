@@ -516,8 +516,8 @@ DO WHILE TRUE:
                      NEXT.
                  END.    
   
-            IF  glb_cddepart = 20 AND   /* TI                   */
-                glb_cddepart = 14 AND   /* PRODUTOS             */
+            IF  glb_cddepart = 20 OR   /* TI                   */
+                glb_cddepart = 14 OR   /* PRODUTOS             */
                 glb_cddepart =  8 THEN  /* COORD.ADM/FINANCEIRO */
                  
                 DO:
