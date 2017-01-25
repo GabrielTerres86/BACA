@@ -1455,8 +1455,17 @@ function dbProcedure($xml){
 function mensageria($xml, $nmprogra, $nmeacao, $cdcooper, $cdagenci,$nrdcaixa, $idorigem, $cdoperad, $tag){
 
     $xml = xmlInsere($xml, $nmprogra, $nmeacao, $cdcooper, $cdagenci, $nrdcaixa, $idorigem, $cdoperad, $tag);
+    $endereco = dirname(dirname(__FILE__)) . '/xml';
+	
+	$arquivo = fopen($endereco."/in.xml","w");
+	fwrite($arquivo, $xml);
+	fclose($arquivo);
 		
 	$retXML = dbProcedure($xml);
+	
+	$arquivo = fopen($endereco."/out.xml", "w");
+	fwrite($arquivo, $retXML);
+	fclose($arquivo);
 	
 	return $retXML;
 }
@@ -1619,4 +1628,26 @@ function justificar($text, $width) {
 	}
 	return $lines;
 }
+
+/*
+Classe auxiliar para montagem de xml usado na mensageria().
+Ex. de uso: telas/cbrfra/manter_rotina.php
+*/
+class XmlMensageria {	
+	private $xml;
+
+	function __construct() {
+		$this->xml = '<Root><Dados>';
+    }
+
+	public function add($tag, $valor) {
+        $this->xml .= '<' . $tag . '>' . trim($valor) . '</' . $tag . '>';
+		return $this;
+    }
+
+    public function __toString() {
+        return $this->xml . '</Dados></Root>';
+    }
+}
+
 ?>
