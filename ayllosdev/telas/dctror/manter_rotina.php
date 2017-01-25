@@ -7,7 +7,6 @@
  * --------------
  * ALTERAÇÕES   : 24/06/2016 - Ajustado para chamar formulario de impressão para Opcao "A" (Lucas Ranghetti #448006 )
  * -------------- 
- *				  12/01/2017 - Incluir flprovis no array da custodia/desconto (Lucas Ranghetti #571653)
  */
 ?> 
 
@@ -358,7 +357,6 @@
 				echo 'aux[\'flgcusto\'] = "'.getByTagName($registro,'flgcusto').'";';
 				echo 'aux[\'flgdesco\'] = "'.getByTagName($registro,'flgdesco').'";';
 				echo 'aux[\'cdhistor\'] = "'.getByTagName($registro,'cdhistor').'";';
-				echo 'aux[\'flprovis\'] = "'.getByTagName($registro,'flprovis').'";';  				
 
 				echo 'arrayCustdesc['.$i.'] = aux;';
 
