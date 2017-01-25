@@ -12,6 +12,8 @@
  * 003: [22/07/2015] Gabriel	       (RKAM) Reformulacao Cadastral.
  * 004: [14/07/2016] Carlos R. Corrigi o tratamento da variavel tpendass que era string e estava sendo comparada 
  *									        como int e passei a mesma para a funcao validaDados que ha usava como sendo global.SD 479874.
+ * 005: [01/12/2016] Renato Darosci (Supero): P341-Automatização BACENJUD - Removido passagem do departamento como parametros
+ *                                            pois a BO não utiliza o mesmo.
  */
 
     session_start();
@@ -48,7 +50,7 @@
 	$idorigem = (isset($_POST['idorigem'])) ? $_POST['idorigem'] : 0;
 
 	$nrcepend = str_replace('-','',$nrcepend);
-	
+
 	if(in_array($operacao,array('AV'))) validaDados($tpendass);
 
 	// Dependendo da operação, chamo uma procedure diferente
@@ -80,7 +82,6 @@
 	$xml .= "		<cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
 	$xml .= "		<nmdatela>".$glbvars["nmdatela"]."</nmdatela>";	
 	$xml .= "		<idorigem>".$glbvars["idorigem"]."</idorigem>";	
-	$xml .= "		<dsdepart>".$glbvars["dsdepart"]."</dsdepart>";	
 	$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";				
 	$xml .= "		<idseqttl>".$idseqttl."</idseqttl>";	            
 	$xml .= "		<incasprp>".$incasprp."</incasprp>";                
@@ -145,7 +146,7 @@
 		echo 'hideMsgAguardo();bloqueiaFundo(divRotina);';
 		exit();	
 	}
-
+	
 	// Se é Validação
 	if( $operacao == 'AV' ) {
 
@@ -198,7 +199,7 @@
 		
 		//Campo imóvel
 		if ( $GLOBALS['incasprp'] == "" ) exibirErro('error','Tipo de imóvel inválido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'incasprp\',\'frmEndereco\')',false);
-
+	
 		//Campo CEP
 		if ( (( $GLOBALS['nrcepend'] == "" ) || ( $GLOBALS['nrcepend'] == 0 ))  && ($tpendass == 10 || $tpendass == 9)) exibirErro('error','CEP inválido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nrcepend\',\'frmEndereco\')',false);
 

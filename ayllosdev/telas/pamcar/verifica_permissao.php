@@ -9,8 +9,9 @@
 	//***                                                                  ***//	 
 	//*** Alterações: 												       ***//
 	//***                          									       ***//
-	//***															       ***//
-	//***             													   ***//
+	//***	05/12/2016 - P341-Automatização BACENJUD - Alterar a passagem  ***//
+	//***             	 da descrição do departamento como parametros e    ***//
+	//***                passar o o código (Renato Darosci)                ***//
 	//***                          									       ***//
 	//************************************************************************//
 	
@@ -39,7 +40,7 @@
 	$xmlPermissao .= "		<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
 	$xmlPermissao .= "		<cdagenci>".$glbvars["cdagenci"]."</cdagenci>";	
 	$xmlPermissao .= "		<nrdcaixa>".$glbvars["nrdcaixa"]."</nrdcaixa>";
-	$xmlPermissao .= "		<dsdepart>".$glbvars["dsdepart"]."</dsdepart>";
+	$xmlPermissao .= "		<cddepart>".$glbvars["cddepart"]."</cddepart>";
 	$xmlPermissao .= "	</Dados>";
 	$xmlPermissao .= "</Root>";
 		

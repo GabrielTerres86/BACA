@@ -7,6 +7,8 @@
  * --------------
  * ALTERAÇÕES   : 01/08/2012 - Incluido variavel de parametro 'cdmovmto' (Tiago).
  *				  22/08/2012 - Ajustes referente ao projeto Fluxo Financeiro (Adriano).
+ *                05/12/2016 - P341-Automatização BACENJUD - Alterar a passagem da descrição do 
+ *                             departamento como parametros e passar o o código (Renato Darosci)		
  * -------------- 
  */ 
 ?>
@@ -45,7 +47,7 @@
 	$xml .= '		<dtmvtolt>'.$glbvars['dtmvtolt'].'</dtmvtolt>';	
 	$xml .= '		<dtmvtopr>'.$glbvars['dtmvtopr'].'</dtmvtopr>';	
 	$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';	
-	$xml .= '		<dsdepart>'.$glbvars['dsdepart'].'</dsdepart>';	
+	$xml .= '		<cddepart>'.$glbvars['cddepart'].'</cddepart>';	
 	$xml .= '		<cddopcao>'.$cddopcao.'</cddopcao>';
 	$xml .= '		<dtmvtolx>'.$dtmvtolx.'</dtmvtolx>';
 	$xml .= '		<cdcoopex>'.$cdcoopex.'</cdcoopex>';

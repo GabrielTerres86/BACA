@@ -7,6 +7,9 @@
  * PROJETO		: Projeto de Novos Cartões Bancoob
  * --------------
  * ALTERAÇÕES   : 05/08/2014 - alterado para '/usr/connect/bancoob' (Lunelli)
+ *
+ *                05/12/2016 - P341-Automatização BACENJUD - Utilizar o código 
+ *                             do departamento no lugar da descrição (R.Darosci)
  * --------------
  */
 	
@@ -20,7 +23,7 @@
 ?>
 
 <form id="frmCab" name="frmCab" class="formulario cabecalho" onSubmit="return false;" style="display:none">
-<input type="hidden" id="hdndepar" name="hdndepar" value="<?php echo $glbvars['dsdepart']; ?>" />
+<input type="hidden" id="hdndepar" name="hdndepar" value="<?php echo $glbvars['cddepart']; ?>" />
 	<table width="100%">
 		<tr>		
 			<td colspan="2"> 	

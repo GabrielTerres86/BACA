@@ -6,14 +6,16 @@
  * OBJETIVO     : Capturar dados para tela MATRIC
  * --------------
  * ALTERAÇÕES   :
- * 001: [14/02/2011] David   (CECRED): Não acionar BO quando operação for limpeza da tela ($operacao = '')
- * 002: [09/06/2012] Adriano (CECRED): Ajustes referente ao projeto GP - Sócios Menores
- * 003: [28/01/2015] Carlos  (CECRED): #239097 Ajustes para cadastro de Resp. legal 0 menor/maior.
- * 004: [09/07/2015] Gabriel (RKAM)  : Projeto Reformulacao Cadastral.
- * 005: [01/10/2015] Kelvin  (CECRED): Adicionado nova opção "J" para alteração apenas do cpf/cnpj e removido 
- *									   a possibilidade de alteração pela opção "X", conforme solicitado no 
- *							           chamado 321572.
- * 006: [27/07/2016] Carlos R.(CECRED):Corrigi a forma de utilizacao de indices de informacoes do XML. SD 479874
+ * 001: [14/02/2011] David   (CECRED) : Não acionar BO quando operação for limpeza da tela ($operacao = '')
+ * 002: [09/06/2012] Adriano (CECRED) : Ajustes referente ao projeto GP - Sócios Menores
+ * 003: [28/01/2015] Carlos  (CECRED) : #239097 Ajustes para cadastro de Resp. legal 0 menor/maior.
+ * 004: [09/07/2015] Gabriel (RKAM)   : Projeto Reformulacao Cadastral.
+ * 005: [01/10/2015] Kelvin  (CECRED) : Adicionado nova opção "J" para alteração apenas do cpf/cnpj e removido 
+ *									    a possibilidade de alteração pela opção "X", conforme solicitado no 
+ *							            chamado 321572.
+ * 006: [27/07/2016] Carlos R.(CECRED): Corrigi a forma de utilizacao de indices de informacoes do XML. SD 479874
+ * 007: [05/12/2016] Renato D.(Supero): P341-Automatização BACENJUD - Removido passagem do departamento 
+ *                                      como parametros pois a BO não utiliza o mesmo.
  */ 
 
 	session_start();	
@@ -50,9 +52,9 @@
 		case 'CR': $cddopcao = 'R'; break;
 		case 'CX': $cddopcao = 'X'; break;
 		case 'CJ': $cddopcao = 'J'; break;
-		default  : $cddopcao = 'C'; break;	
+		default  : $cddopcao = 'C'; break;
 	}
-	
+
 	// Se conta informada não for um número inteiro válido
 	if (!validaInteiro($nrdconta) && $operacao != 'CI') exibirErro('error','Conta/dv inválida.','Alerta - Matric','',false);
 	
@@ -71,7 +73,6 @@
 		$xmlMatric .= '		<cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
 		$xmlMatric .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';
 		$xmlMatric .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';
-		$xmlMatric .= '		<dsdepart>'.$glbvars['dsdepart'].'</dsdepart>';		
 		$xmlMatric .= '		<nrdconta>'.$nrdconta.'</nrdconta>';
 		$xmlMatric .= '		<cddopcao>'.$cddopcao.'</cddopcao>';
 		$xmlMatric .= '		<idseqttl>1</idseqttl>';

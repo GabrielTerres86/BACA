@@ -6,6 +6,9 @@
  * OBJETIVO     : Verifica possibilidade de imprimir relatorio da tela MATRIC para uma determinada conta
  * --------------
  * ALTERAÇÕES   : 28/10/2015 - Reformulacao cadastral (Gabriel-RKAM)
+ *
+ *                05/12/2016 - P341-Automatização BACENJUD - Removido passagem do departamento 
+ *                             como parametros pois a BO não utiliza o mesmo (Renato Darosci)
  * --------------
  */ 
 ?>
@@ -38,7 +41,6 @@
 	$xmlMatric .= '		<cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
 	$xmlMatric .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';
 	$xmlMatric .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';
-	$xmlMatric .= '		<dsdepart>'.$glbvars['dsdepart'].'</dsdepart>';		
 	$xmlMatric .= '		<nrdconta>'.$nrdconta.'</nrdconta>';
 	$xmlMatric .= '		<cddopcao>R</cddopcao>';
 	$xmlMatric .= '		<idseqttl>1</idseqttl>';

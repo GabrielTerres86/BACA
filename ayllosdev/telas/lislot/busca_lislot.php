@@ -9,6 +9,9 @@
  * -------------- 
  *                05/01/2016 - Corrigido opcao de acesso da tela, de 'C' para 'T'.
  *                             (Chamado 377898) - (Fabricio)
+ *
+ *                05/12/2016 - P341-Automatização BACENJUD - Alterar a passagem da descrição do 
+ *                             departamento como parametros e passar o o código (Renato Darosci)
  * -------------- 
  */
 ?>
@@ -54,7 +57,7 @@
 	$xml .= '		<cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
 	$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';	
 	$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';
-	$xml .= '       <dsdepart>'.$glbvars['dsdepart'].'</dsdepart>';	
+	$xml .= '       <cddepart>'.$glbvars['cddepart'].'</cddepart>';	
 	$xml .= '       <dtmvtolt>'.$glbvars['dtmvtolt'].'</dtmvtolt>';	
 	$xml .= '       <cddopcao>'.$cddopcao.'</cddopcao>';
 	$xml .= '       <tpdopcao>'.$tpdopcao.'</tpdopcao>';

@@ -14,6 +14,10 @@
 	#--             07/07/2016 - Correcao no garregamento da variavel server que eh       --#  
 	#--                          opcional e remocao do comando que destroi a sessao       --#
 	#--                          antes de inicializa-la.SD 479274. (Carlos R.)            --#      
+	#--                                                                                   --#
+	#--             29/11/2016 - P341-Automatização BACENJUD - Popular a variável global  --#
+	#--							 cddepart com o código 20 que é equivalente ao            --#
+	#--                          departamento fixado na global dsdepart (Renato Darosci)  --#
 	#---------------------------------------------------------------------------------------#
 	
 	session_destroy();
@@ -69,6 +73,7 @@
 	$glbvars["idorigem"] = 5;
 	$glbvars["idsistem"] = 1;
 	$glbvars["stimeout"] = 3600;
+	$glbvars["cddepart"] = 20;
 	$glbvars["dsdepart"] = "TI";
 	$glbvars["dsdircop"] = "viacredi";
 	$glbvars["hraction"] = strtotime("now");

@@ -51,6 +51,9 @@
 
      25/10/2016 - SD542975 - Tratamento correto do Nrdconta e validação (Guilherme/SUPERO)
 
+	 06/01/2017 - SD588833 - No cadastro das empresas, não pode haver outra empresa na mesma 
+				  cooperativa com a mesma NRDCONTA. A validação não estava funcionando quando 
+				  a conta era selecionada via opção zoom. Ajuste realizado! (Renato - Supero)
 ************************************************************************************************/
 
 
@@ -888,7 +891,14 @@ function controlaFocoFormulariosEmpresa() {
 
                         if (normalizaNumero(cNrdconta.val()) > 0){
                             buscaContaEmp(1);
-                        }
+					} else {
+
+						showError('error','N&uacute;mero de conta d&eacute;bito inv&aacute;lida!',
+                              'Campo Obrigat&oacute;rio!',
+                              '$("#nrdconta","#frmInfEmpresa").focus();');
+						cNrdconta.val("");
+						return false;
+					}
                 cNmcontat.focus();
                 return false;
         });
@@ -1413,7 +1423,6 @@ function buscaEmpresas() {
         },
         success: function(response) {
             try {
-
                 if (cddopcao == "I") {
                     eval(response);
                     $('#frmInfEmpresa').css({'display': 'block'});
@@ -1423,7 +1432,7 @@ function buscaEmpresas() {
                     if (cdempres == '') {
 
                         if ($.trim(response).substring(1,4) == 'div') {
-                            $('#divConteudo').html(response);
+                            $('#divConteudo', '#divPesquisaEmpresa').html(response);
                             fechaRotina($('#divCabecalhoPesquisaEmpresa'));
                             exibeRotina($('#divPesquisaEmpresa'));
                             exibeRotina($('#divTabEmpresas'));
@@ -1438,8 +1447,9 @@ function buscaEmpresas() {
                             $('#cdempres','#frmInfEmpresa').val('');
                         } else {
                             $('input,select', '#frmInfEmpresa').removeClass('campoErro');
-                            $('#divConteudo').html(response);
-                            exibeRotina($('#divPesquisaEmpresa'));
+                            
+							$('#divConteudo', '#divPesquisaEmpresa').html(response);
+							exibeRotina($('#divPesquisaEmpresa'));
                             exibeRotina($('#divTabEmpresas'));
                             formataTabEmpresas();
                             selecionaEmpresa();
@@ -1952,7 +1962,8 @@ function selecionaAvalista() {
                 cNrdconta.val( $('#nrdconta', $(this) ).val() );
                 cNmextttl.val( $('#nmfuncio', $(this) ).val() );
                 cNrdconta.trigger('blur');
-                buscaDadosCooperado();
+                //buscaDadosCooperado();
+				buscaContaEmp(1);
                 return false;
             }
         });

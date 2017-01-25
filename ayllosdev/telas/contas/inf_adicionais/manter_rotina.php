@@ -1,21 +1,17 @@
-<? 
+<?php 
 /*!
  * FONTE        : manter_rotina.php
  * CRIAÇÃO      : Gabriel Capoia (DB1)
  * DATA CRIAÇÃO : 14/04/2010 
  * OBJETIVO     : Rotina para validar/alterar os dados de INF. ADICIONAL da tela de CONTAS
  
-   ALTERACOES   : 15/09/2010 - Incluir campo de observacao na pessoa fisica
-							   (Gabriel).
-							   
+   ALTERACOES   : 15/09/2010 - Incluir campo de observacao na pessoa fisica (Gabriel).
 				  16/11/2011 - Tratamento para cdcooper = 3 na funcao validaDados(). (Fabricio)
-				  
 				  06/08/2015 - Reformulacao Cadastral (Gabriel-RKAM)
- 
+				  14/07/2016 - Correcao na forma de uso do retorno XML. SD 479874. Carlos R.
+				  01/12/2016 - P341-Automatização BACENJUD - Removido passagem do departamento como parametros
+                               pois a BO não utiliza o mesmo (Renato Darosci)
  */
-?>
-
-<?	
     session_start();
 	require_once('../../../includes/config.php');
 	require_once('../../../includes/funcoes.php');
@@ -29,7 +25,6 @@
 	$cdoperad = $glbvars['cdoperad'];
 	$nmdatela = $glbvars['nmdatela'];
 	$idorigem = $glbvars['idorigem'];
-	$dsdepart = $glbvars['dsdepart'];
 	
 	// Guardo os parâmetos do POST em variáveis
 	$operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '' ;		
@@ -42,12 +37,7 @@
 	$inpessoa = (isset($_POST['inpessoa'])) ? $_POST['inpessoa'] : '' ;	
 	$flgcadas = (isset($_POST['flgcadas'])) ? $_POST['flgcadas'] : '';	
 	
-	
     $dsinfadi = retiraSerialize( $dsinfadi, 'dsinfadi' );
-	
-	
-	
-	// exibirErro('error','nrperger= '.$nrperger,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
 	
 	if($operacao == 'AV') validaDados($inpessoa);
 		
@@ -75,7 +65,6 @@
 	$xml .= '		<cdoperad>'.$cdoperad.'</cdoperad>';
 	$xml .= '		<nmdatela>'.$nmdatela.'</nmdatela>';
 	$xml .= '		<idorigem>'.$idorigem.'</idorigem>';
-	$xml .= '		<dsdepart>'.$dsdepart.'</dsdepart>';
 	$xml .= '		<nrdconta>'.$nrdconta.'</nrdconta>';
 	$xml .= '		<idseqttl>'.$idseqttl.'</idseqttl>';
 	$xml .= '		<nrinfcad>'.$nrinfcad.'</nrinfcad>';
@@ -92,13 +81,14 @@
 	$xmlObjeto = getObjectXML($xmlResult);
 		
 	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (isset($xmlObjeto->roottag->tags[0]->name) && strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') 
+		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
 	
 	$msg = Array();
 	
 	// Se não retornou erro, então pegar a mensagem de retorno do Progress na variável msgRetorno, para ser utilizada posteriormente
-	$msgRetorno = $xmlObjeto->roottag->tags[0]->attributes['MSGRETOR'];	
-	$msgAlerta  = $xmlObjeto->roottag->tags[0]->attributes['MSGALERT'];
+	$msgRetorno = ( isset($xmlObjeto->roottag->tags[0]->attributes['MSGRETOR']) ) ? $xmlObjeto->roottag->tags[0]->attributes['MSGRETOR'] : '';	
+	$msgAlerta  = ( isset($xmlObjeto->roottag->tags[0]->attributes['MSGALERT']) ) ? $xmlObjeto->roottag->tags[0]->attributes['MSGALERT'] : '';
 	
 	if ($msgRetorno!='') $msg[] = $msgRetorno;
 	if ($msgAlerta!='' ) $msg[] = $msgAlerta;
@@ -106,9 +96,9 @@
 	$stringArrayMsg = implode( "|", $msg);
 	
 	// Verificação da revisão Cadastral
-	$msgAtCad = $xmlObjeto->roottag->tags[0]->attributes['MSGATCAD'];
-	$chaveAlt = $xmlObjeto->roottag->tags[0]->attributes['CHAVEALT'];
-	$tpAtlCad = $xmlObjeto->roottag->tags[0]->attributes['TPATLCAD'];	
+	$msgAtCad = ( isset($xmlObjeto->roottag->tags[0]->attributes['MSGATCAD']) ) ? $xmlObjeto->roottag->tags[0]->attributes['MSGATCAD'] : '';
+	$chaveAlt    = ( isset($xmlObjeto->roottag->tags[0]->attributes['CHAVEALT']) ) ? $xmlObjeto->roottag->tags[0]->attributes['CHAVEALT'] : '';
+	$tpAtlCad    = ( isset($xmlObjeto->roottag->tags[0]->attributes['TPATLCAD']) ) ? $xmlObjeto->roottag->tags[0]->attributes['TPATLCAD'] : '';
 	
 	if( $operacao == 'AV' ) { // Se é Validação
 		exibirConfirmacao('Deseja confirmar alteração?','Confirmação - Ayllos','controlaOperacao(\'VA\','.$inpessoa.')','bloqueiaFundo(divRotina)',false);

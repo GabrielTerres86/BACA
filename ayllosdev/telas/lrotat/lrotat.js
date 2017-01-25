@@ -5,7 +5,10 @@
  * OBJETIVO     : Biblioteca de funções da tela LROTAT
  * --------------
  * ALTERAÇÕES   : 12/07/2016 - Ajustes para finzaliZação da conversáo 
-                                (Andrei - RKAM)
+ *                               (Andrei - RKAM)
+ *
+ *                05/12/2016 - P341-Automatização BACENJUD - Alterar a validação do deparetamento
+ *                             para tratar pelo código do mesmo (Renato Darosci)
  * --------------
  */
 
@@ -465,9 +468,9 @@ function formataFormularioLrotat(){
 
 	        
 	        /* Descricao so pode ser alterada pela Central */
-	        if (dsdepart == "PRODUTOS"             ||
-                dsdepart == "COORD.ADM/FINANCEIRO" ||
-                dsdepart == "TI") {
+	        if (cddepart == 8  ||  /* COORD.ADM/FINANCEIRO */
+                cddepart == 14 ||  /* PRODUTOS */
+                cddepart == 20 ) { /* TI */
 
 	            $("#dsdlinha", "#frmLrotat").habilitaCampo();
 	            $("#origrecu", "#frmLrotat").habilitaCampo();
@@ -482,9 +485,9 @@ function formataFormularioLrotat(){
 	        }
 
 	        /* Descricao so pode ser alterada pela Central */
-	        if (dsdepart != "PRODUTOS"             &&
-                dsdepart != "COORD.ADM/FINANCEIRO" &&
-                dsdepart != "TI") {
+	        if (cddepart != 8   &&  /* COORD.ADM/FINANCEIRO */
+                cddepart != 14  &&  /* PRODUTOS */
+                cddepart != 20) {   /* TI */
 
 	            $("#qtvezcap", "#frmLrotat").habilitaCampo();
 	            $("#vllimmax", "#frmLrotat").habilitaCampo();

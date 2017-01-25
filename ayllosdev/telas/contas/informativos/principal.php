@@ -1,4 +1,4 @@
-<? 
+<?php
 /*!
  * FONTE        : principal.php
  * CRIAÇÃO      : Rodolpho Telmo (DB1)
@@ -6,12 +6,13 @@
  * OBJETIVO     : Mostrar opcao Principal da rotina de INFORMATIVOS da tela de CONTAS
  *
  * ALTERACOES   : 20/12/2010 - Adicionado chamada validaPermissao (Gabriel - DB1). 
- *
  *                11/09/2015 - Reformulacao cadastral (Gabriel-RKAM).
- * 
+ *                14/07/2016 - Correcao no carregamento de variaveis para o Javascript. SD 479874. Carlos R.
+ *
+ *                02/12/2016 - P341-Automatização BACENJUD - Removido passagem do departamento como parametros
+ *                             pois a BO não utiliza o mesmo (Renato Darosci)
  */
-?> 
-<?
+
     session_start();
 	require_once('../../../includes/config.php');
 	require_once('../../../includes/funcoes.php');
@@ -82,7 +83,6 @@
 	$xml .= '		<cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
 	$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';	
 	$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';	
-	$xml .= '		<dsdepart>'.$glbvars['dsdepart'].'</dsdepart>';	
 	$xml .= '		<nrdconta>'.$nrdconta.'</nrdconta>';
 	$xml .= '		<idseqttl>'.$idseqttl.'</idseqttl>';
 	$xml .= '		<nrdrowid>'.$nrdrowid.'</nrdrowid>';
@@ -108,7 +108,7 @@
 	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);	
 	
 	// Se não retornou erro, então pegar a mensagem de alerta do Progress na variável msgAlert, para ser utilizada posteriormente
-	$msgAlert = trim($xmlObjeto->roottag->tags[0]->attributes['MSGALERT']);		
+	$msgAlert = ( isset($xmlObjeto->roottag->tags[0]->attributes['MSGALERT']) ) ? trim($xmlObjeto->roottag->tags[0]->attributes['MSGALERT']) : '';
 	
 	if ( $operacao == 'BI' ){
 		
@@ -144,11 +144,11 @@
 		var flgcadas    = "<? echo $flgcadas;   ?>";
 	}
 	
-	cdrelato = '<? echo $cdrelato; ?>';
-	cddfrenv = '<? echo $cddfrenv; ?>';
-	cdperiod = '<? echo $cdperiod; ?>';
-	cdseqinc = '<? echo $cdseqinc; ?>';	
-	cdprogra = '<? echo $cdprogra; ?>';	
+	cdrelato = '<?php echo ( isset($cdrelato) ) ? $cdrelato : ''; ?>';	
+	cddfrenv = '<?php echo ( isset($cddfrenv) ) ? $cddfrenv : ''; ?>';	
+	cdperiod = '<?php echo ( isset($cdperiod) ) ? $cdperiod : ''; ?>';	
+	cdseqinc = '<?php echo ( isset($cdseqinc) ) ? $cdseqinc : ''; ?>';	
+	cdprogra = '<?php echo ( isset($cdprogra) ) ? $cdprogra : ''; ?>';	
 	
 	controlaLayout(operacao);
 	

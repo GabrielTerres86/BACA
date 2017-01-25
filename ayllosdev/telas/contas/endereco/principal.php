@@ -6,9 +6,11 @@
  * OBJETIVO     : Mostrar opcao Principal da rotina de Endeço da tela de CONTAS
  *
  * ALTERACOES   : 20/12/2010 - Adicionado chamada validaPermissao (Gabriel - DB1).
- *							  16/06/2011 - Adicionado verificacao de tag xml ALERTAS (Jorge).
- *							  04/08/2015 - Reformulacao cadastral (Gabriel-RKAM).
- *						      13/07/2016 - Correcao da forma de recuperacao da dados do XML.SD 479874. Carlos R.
+ *                16/06/2011 - Adicionado verificacao de tag xml ALERTAS (Jorge).
+ *                04/08/2015 - Reformulacao cadastral (Gabriel-RKAM).
+ *                13/07/2016 - Correcao da forma de recuperacao da dados do XML.SD 479874. Carlos R.
+ *                01/12/2016 - P341-Automatização BACENJUD - Removido passagem do departamento como parametros
+ *                             pois a BO não utiliza o mesmo (Renato Darosci)
  */	
 	
 	session_start();
@@ -72,7 +74,6 @@
 	$xml .= "		<cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
 	$xml .= "		<nmdatela>".$glbvars["nmdatela"]."</nmdatela>";	
 	$xml .= "		<idorigem>".$glbvars["idorigem"]."</idorigem>";	
-	$xml .= "		<dsdepart>".$glbvars["dsdepart"]."</dsdepart>";	
 	$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
 	$xml .= "		<idseqttl>".$idseqttl."</idseqttl>";
 	$xml .= "	</Dados>";
@@ -123,7 +124,6 @@
 		$xmlEA .= "		<cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
 		$xmlEA .= "		<nmdatela>".$glbvars["nmdatela"]."</nmdatela>";	
 		$xmlEA .= "		<idorigem>".$glbvars["idorigem"]."</idorigem>";	
-		$xmlEA .= "		<dsdepart>".$glbvars["dsdepart"]."</dsdepart>";	
 		$xmlEA .= "		<nrdconta>".$nrdconta."</nrdconta>";
 		$xmlEA .= "		<idseqttl>".$idseqttl."</idseqttl>";
 		$xmlEA .= "	</Dados>";

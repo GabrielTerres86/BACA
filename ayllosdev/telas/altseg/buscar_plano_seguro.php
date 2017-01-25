@@ -6,8 +6,11 @@
  * OBJETIVO     : Buscar plano
  * --------------
  * ALTERAÇÕES   : 09/03/2016 - Ajuste feito para que operadores do departamento COORD.PRODUTOS
-							   tenham permições para alterar e incluir conforme solicitado no
-							   chamado 399940 (Kelvin).
+ * 							   tenham permições para alterar e incluir conforme solicitado no
+ * 							   chamado 399940 (Kelvin).
+ * 
+ *                29/11/2016 - P341-Automatização BACENJUD - Alterado para que seja validado
+ *                             o acesso pelo cddepart, ao invés do dsdepart. (Renato Darosci)
  * -------------- 
  */
 ?> 
@@ -33,9 +36,9 @@
 	}
 	
     if ($cddopcao != "C" &&
-		$glbvars["dsdepart"] != "TI" &&
-		$glbvars["dsdepart"] != "PRODUTOS" &&
-		$glbvars["dsdepart"] != "COORD.PRODUTOS"){ 
+		$glbvars["cddepart"] != 20 &&
+		$glbvars["cddepart"] != 14 &&
+		$glbvars["cddepart"] != 9){ 
 		
 		$msgError = "Sistema liberado somente para Consulta !!!";
 		

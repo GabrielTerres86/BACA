@@ -6,6 +6,13 @@
  * OBJETIVO     : Rotina para gerar o arquivo de GRAVAMES
  * --------------
  * ALTERAÇÕES   : 14/07/2016 - Ajuste para corrigir mensagem de sucesso (Andrei - RKAM).
+ *
+ *                02/12/2016 - P341-Automatização BACENJUD - Alterar a passagem da descrição do 
+ *                             departamento como parametros e passar o o código (Renato Darosci)
+ *
+ *                19/12/2016 - Inclusao da validacao dos bens e caso esteja invalido
+ *                             gera um alerta na tela, conforme solicitado no chamado 
+ *                             533529 (Kelvin).
  */
 ?> 
 
@@ -40,7 +47,7 @@
 	$xml 	   .= "     <cdcoptel>".$cdcooper."</cdcoptel>";
 	$xml 	   .= "     <tparquiv>".$tparquiv."</tparquiv>";	
 	$xml 	   .= "     <cddopcao>".$cddopcao."</cddopcao>";
-	$xml       .=		"<dsdepart>".$glbvars["dsdepart"]."</dsdepart>";
+	$xml       .=		"<cddepart>".$glbvars["cddepart"]."</cddepart>";
 	$xml 	   .= "  </Dados>";
 	$xml 	   .= "</Root>";
 	
@@ -53,8 +60,8 @@
 	
 		$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		exibirErro('error',$msgErro,'Alerta - Ayllos','formataFiltroArquivo();',false);		
-					
-	} 
+		
+			}	
 		
 	echo "showError('inform','Gera&ccedil;&atilde;o do arquivo de ".$tparquiv." efetuado com sucesso.','Notifica&ccedil;&atilde;o - Ayllos','formataFiltroArquivo();');";	
 	

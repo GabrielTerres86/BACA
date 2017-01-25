@@ -6,7 +6,8 @@
 	                                                                  
 	 Objetivo  : Efetua a validacao do convenio de cobrança.                                  
 	                                                                  
-	 Alterações: 
+	 Alterações: 30/11/2016 - P341-Automatização BACENJUD - Alterado para passar como parametro o  
+                              código do departamento ao invés da descrição (Renato Darosci - Supero)
 							  
 	********************************************************************************/
 	
@@ -98,7 +99,7 @@
 	$xml       .=		"<perdctmx>".$perdctmx."</perdctmx>";
 	$xml       .=		"<flgapvco>".$flgapvco."</flgapvco>";
 	$xml       .=		"<flrecipr>".$flrecipr."</flrecipr>";	
-	$xml       .=		"<dsdepart>".$glbvars["dsdepart"]."</dsdepart>";
+	$xml       .=		"<cddepart>".$glbvars["cddepart"]."</cddepart>";
 	$xml       .=		"<cddopcao>".$cddopcao."</cddopcao>";
 	$xml       .=		"<nmdatela>".$glbvars["nmdatela"]."</nmdatela>";
 	$xml 	   .= " </Dados>";

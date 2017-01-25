@@ -10,6 +10,9 @@
  *				  14/07/2016 - Correcao da forma de recuperacao da dados do XML.SD 479874. Carlos R.
  *				  18/10/2016 - Correcao no retorno do XML de dados para remover caract. especiais de dados 
  *							   existentes na base inviabilizando o erro. (Carlos Rafael Tanholi - SD 540832)
+ *
+ *                02/12/2016 - P341-Automatização BACENJUD - Removido passagem do departamento como parametros
+ *                             pois a BO não utiliza o mesmo (Renato Darosci)
  */
 	session_start();
 	require_once('../../../includes/config.php');
@@ -69,7 +72,6 @@
 	$xml .= '		<cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
 	$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';	
 	$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';	
-	$xml .= '		<dsdepart>'.$glbvars['dsdepart'].'</dsdepart>';	
 	$xml .= '		<nrdconta>'.$nrdconta.'</nrdconta>';
 	$xml .= '		<idseqttl>'.$idseqttl.'</idseqttl>';
     $xml .= '		<nrdrowid>'.$nrdrowid.'</nrdrowid>';	

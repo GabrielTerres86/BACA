@@ -6,8 +6,11 @@
  * OBJETIVO     : Rotina para busca
  *ALTERAÇÃO     : 27/05/2014 - Incluido a informação de espécie de deposito e
                   relatório do mesmo. (Andre Santos - SUPERO)
-
+ 
                   27/07/2016 - Criacao da opcao 'S'. (Jaison/Anderson)
+
+				  30/11/2016 - P341-Automatização BACENJUD - Alterado para passar como parametro o  
+                               código do departamento ao invés da descrição (Renato Darosci - Supero)
  */
 ?>
  
@@ -109,7 +112,7 @@
 		$xml .= "		<idorigem>".$glbvars['idorigem']."</idorigem>";
 		$xml .= "		<dtmvtolt>".$glbvars['dtmvtolt']."</dtmvtolt>";
 		$xml .= "		<dtmvtopr>".$glbvars['dtmvtopr']."</dtmvtopr>";
-		$xml .= "		<dsdepart>".$glbvars['dsdepart']."</dsdepart>";
+		$xml .= "		<cddepart>".$glbvars['cddepart']."</cddepart>";
 		$xml .= "		<cddopcao>".$cddopcao."</cddopcao>";	
 		$xml .= "		<cddoptrs>".$cddoptrs."</cddoptrs>";	
 		$xml .= "		<dtlimite>".$dtlimite."</dtlimite>";	

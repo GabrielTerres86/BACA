@@ -5,7 +5,8 @@
  * DATA CRIAÇÃO : 16/02/2011
  * OBJETIVO     : Capturar dados para tela ANOTA
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : 29/11/2016 - P341-Automatização BACENJUD - Removido DSDEPART do XML pois 
+ *                             o mesmo não é utilizado na BO (Renato Darosci)
  * -------------- 
  */ 
 ?>
@@ -58,7 +59,6 @@
 		$xmlAnota .= '		<cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
 		$xmlAnota .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';
 		$xmlAnota .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';
-		$xmlAnota .= '		<dsdepart>'.$glbvars['dsdepart'].'</dsdepart>';		
 		$xmlAnota .= '		<nrdconta>'.$nrdconta.'</nrdconta>';
 		$xmlAnota .= '		<cddopcao>'.$cddopcao.'</cddopcao>';
 		$xmlAnota .= '		<nrseqdig>'.$nrseqdig.'</nrseqdig>';

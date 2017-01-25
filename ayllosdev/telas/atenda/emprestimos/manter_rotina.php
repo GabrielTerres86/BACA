@@ -24,9 +24,10 @@
  * 014: [28/05/2015] Padronizacao das consultas automatizadas (Jonata-RKAM).
  * 015: [11/09/2015] Desenvolvimento do Projeto 215 - Estorno. (James)
  * 016: [01/03/2016] PRJ Esteira de Credito. (Jaison/Oscar)
- * 017: [01/03/2016] Adicionado cdpactra na chamada da rotina grava-proposta-completa PRJ Esteira de Credito. (Odirlei-AMcom/Oscar)
- * 018: [16/03/2016] Inclusao da operacao ENV_ESTEIRA. PRJ207 Esteira de Credito. (Odirlei-AMcom)
+ * 017: [01/03/2016] Adicionado cdpactra na chamada da rotina grava-proposta-completa PRJ Esteira de Credito. (Odirlei-AMcom/Oscar) 
+ * 018: [16/03/2016] Inclusao da operacao ENV_ESTEIRA. PRJ207 Esteira de Credito. (Odirlei-AMcom) 
  * 019: [15/07/2016] Adicionado pergunta para bloquear a oferta de credito pre-aprovado. PRJ299/3 Pre aprovado. (Lombardi) 
+ * 020: [30/11/2016] P341-Automatização BACENJUD - Remover o envio da descrição do departamento, pois não utiliza na BO (Renato Darosci - Supero)
  */
 ?>
 
@@ -327,7 +328,6 @@
 	$xml .= '		<cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
 	$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';
 	$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';
-	$xml .= '		<dsdepart>'.$glbvars['dsdepart'].'</dsdepart>';
 	$xml .= '		<dtmvtolt>'.$glbvars['dtmvtolt'].'</dtmvtolt>';
 	$xml .= '		<nrdconta>'.$nrdconta.'</nrdconta>';
 	$xml .= '		<nrctremp>'.$nrctremp.'</nrctremp>';

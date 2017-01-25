@@ -1,4 +1,4 @@
-<? 
+<?php
 /*!
  * FONTE        : manter_rotina.php
  * CRIAÇÃO      : Gabriel Capoia (DB1)
@@ -7,11 +7,11 @@
  * --------------
  * ALTERAÇÕES   :
  * --------------
-  * 001 [07/07/2011] David (CECRED)        : Ajuste na funcao validaPermissao() para utilizar opcao @.
+ * 001 [07/07/2011] David (CECRED)        : Ajuste na funcao validaPermissao() para utilizar opcao @.
  * 002 [14/06/2016] Kelvin (CECRED) 	  : Removendo validação de permissão para corrigir problema no chamado 468177.
+ * 003 [01/12/2016] Renato Darosci(Supero): Alterado para passar como parametro o código do departamento ao invés da descrição.
  */
- ?>
- <?	
+ 
     session_start();
 	require_once('../../../includes/config.php');
 	require_once('../../../includes/funcoes.php');
@@ -45,8 +45,6 @@
 	$nrdrowid = (isset($_POST['nrdrowid'])) ? $_POST['nrdrowid'] : '';
 	$desopcao = $tpregist;
 
-	// exibirErro('error',$dtdenvio.' | '.$dtdemiss,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
-	
 	// Retirando alguns caracteres do cpf e cnpj                                                    
 	$arrayRetirada = array('.','-','/','_');                                                        
 	$nrcpfcgc = str_replace($arrayRetirada,'',$nrcpfcgc);                                           
@@ -76,7 +74,7 @@
 	$xml .= '		<cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';           
 	$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';           
 	$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';           
-	$xml .= '		<dsdepart>'.$glbvars['dsdepart'].'</dsdepart>';           
+	$xml .= '		<cddepart>'.$glbvars['cddepart'].'</cddepart>';
 	$xml .= '		<nrdconta>'.$nrdconta.'</nrdconta>';                       
 	$xml .= '		<idseqttl>'.$idseqttl.'</idseqttl>';	                   
 	$xml .= '       <nrcpfcgc>'.$nrcpfcgc.'</nrcpfcgc>';                       
@@ -113,8 +111,8 @@
 	$msg = Array();
 	
 	// Se não retornou erro, então pegar a mensagem de retorno do Progress na variável msgRetorno, para ser utilizada posteriormente
-	$msgRetorno = $xmlObjeto->roottag->tags[0]->attributes['MSGRETOR'];	
-	$msgAlerta  = $xmlObjeto->roottag->tags[0]->attributes['MSGALERT'];
+	$msgRetorno = ( isset($xmlObjeto->roottag->tags[0]->attributes['MSGRETOR']) ) ? $xmlObjeto->roottag->tags[0]->attributes['MSGRETOR'] : '';
+	$msgAlerta   = ( isset($xmlObjeto->roottag->tags[0]->attributes['MSGALERT']) ) ? $xmlObjeto->roottag->tags[0]->attributes['MSGALERT'] : '';
 	
 	if ($msgRetorno!='') $msg[] = $msgRetorno;
 	if ($msgAlerta!='' ) $msg[] = $msgAlerta;
@@ -122,9 +120,9 @@
 	$stringArrayMsg = implode( "|", $msg);
 	
 	// Verificação da revisão Cadastral
-	$msgAtCad = $xmlObjeto->roottag->tags[0]->attributes['MSGATCAD'];
-	$chaveAlt = $xmlObjeto->roottag->tags[0]->attributes['CHAVEALT'];
-	$tpAtlCad = $xmlObjeto->roottag->tags[0]->attributes['TPATLCAD'];
+	$msgAtCad = ( isset($xmlObjeto->roottag->tags[0]->attributes['MSGATCAD']) ) ? $xmlObjeto->roottag->tags[0]->attributes['MSGATCAD'] : '';
+	$chaveAlt    = ( isset($xmlObjeto->roottag->tags[0]->attributes['CHAVEALT']) ) ? $xmlObjeto->roottag->tags[0]->attributes['CHAVEALT'] : ''; 
+	$tpAtlCad    = ( isset($xmlObjeto->roottag->tags[0]->attributes['TPATLCAD']) ) ? $xmlObjeto->roottag->tags[0]->attributes['TPATLCAD'] : '';
 	
 	// Se é Validação
 	if(in_array($operacao,array('VA','VD','VE','VEE','VED'))) {

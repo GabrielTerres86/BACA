@@ -14,9 +14,12 @@
  *                15/10/2015 - Reformulacao cadastral (Gabriel-RKAM).
  *
  *				  18/04/2016 - Incluir validacoes referentes a melhoria 141 "Incluir senha do Cartao Magnetico 
-							   para digitação do cooperado" (Lucas Ranghetti #436229) 
-				  17/06/2016 - M181 - Alterar o CDAGENCI para passar o CDPACTRA (Rafael Maciel - RKAM)
-
+ *							   para digitação do cooperado" (Lucas Ranghetti #436229)
+ *							    
+ *				  17/06/2016 - M181 - Alterar o CDAGENCI para passar o CDPACTRA (Rafael Maciel - RKAM)
+ *
+ *                30/11/2016 - P341-Automatização BACENJUD - Alterado para passar como parametro o código do 
+ *                             departamento ao invés da descrição (Renato Darosci - Supero)
  */
 ?> 
 
@@ -99,7 +102,7 @@
 	$xml .= "		<nmdatela>".$glbvars["nmdatela"]."</nmdatela>";
 	$xml .= "		<idorigem>".$glbvars["idorigem"]."</idorigem>";
 	$xml .= "		<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
-	$xml .= "		<dsdepart>".$glbvars["dsdepart"]."</dsdepart>";
+	$xml .= "		<cddepart>".$glbvars["cddepart"]."</cddepart>";
     $xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
 	$xml .= "		<idseqttl>".$nrseqdig."</idseqttl>";
 	$xml .= "		<cddopcao>".$cddopcao."</cddopcao>";

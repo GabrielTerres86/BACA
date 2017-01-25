@@ -5,7 +5,8 @@
  * DATA CRIAÇÃO : 16/07/2014
  * OBJETIVO     : Mostrar tela CONAUT
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 30/11/2016 - P341-Automatização BACENJUD - Alterado para validar o departamento  
+ *                             pelo código ao invés da descrição (Renato Darosci - Supero)
  * --------------
  */
 ?>
@@ -27,7 +28,8 @@
 	// Carrega permiss?es do operador
 	include("../../includes/carrega_permissoes.php");
 	
-	if ($glbvars["dsdepart"] != "PRODUTOS"  && $glbvars["dsdepart"] != "TI" ) {
+	// Se o codigo do departamento não for PRODUTOS ou TI
+	if ($glbvars["cddepart"] != 14  && $glbvars["cddepart"] != 20 ) {
 		redirecionaErro($glbvars["redirect"],$UrlSite."principal.php","_self",'036 - Operacao nao autorizada.');
 	}
 	

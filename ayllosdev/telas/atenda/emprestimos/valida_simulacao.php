@@ -1,13 +1,16 @@
-<? 
+<?php
 /*!
  * FONTE        : valida_novo_calculo.php
  * CRIAÇÃO      : Marcelo L. Pereira (GATI)
  * DATA CRIAÇÃO : 16/11/2011 
  * OBJETIVO     : Faz verificação para a tela de simulação
+ *
+ * ALTERACAO: 19/07/2016 - Correcao da passagem incorreta da variavel idseqttl para xb1wgen0097. SD 479874. (Carlos R.)
+ *
+ *            30/11/2016 - P341-Automatização BACENJUD - Alterado para passar como parametro o código do departamento
+ *                         ao invés da descrição (Renato Darosci - Supero)
+ *
  */
-?>
- 
-<?
 	session_start();
 	require_once('../../../includes/config.php');
 	require_once('../../../includes/funcoes.php');
@@ -17,11 +20,11 @@
 	
 	// Guardo os parâmetos do POST em variáveis	
 	$operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '';
-		
 	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : '';
 	$idseqttl = (isset($_POST['idseqttl'])) ? $_POST['idseqttl'] : '1';
 			
 	// Monta o xml de requisição
+	$xml = '';
 	$xml .= "<Root>";
 	$xml .= "	<Cabecalho>";
 	$xml .= "		<Bo>b1wgen0097.p</Bo>";
@@ -35,10 +38,10 @@
 	$xml .= "		<nmdatela>".$glbvars["nmdatela"]."</nmdatela>";	
 	$xml .= "		<idorigem>".$glbvars["idorigem"]."</idorigem>";
 	$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
-	$xml .= "		<idseqtll>".$idseqtll."</idseqtll>";
+	$xml .= "		<idseqttl>".$idseqttl."</idseqttl>";
 	$xml .= "		<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
 	$xml .= "		<flgerlog>FALSE</flgerlog>";
-	$xml .= "		<dsdepart>".$glbvars["dsdepart"]."</dsdepart>";	
+	$xml .= "		<cddepart>".$glbvars["cddepart"]."</cddepart>";	
 	$xml .= "	</Dados>";
 	$xml .= "</Root>";
 	
@@ -48,10 +51,8 @@
 	// Cria objeto para classe de tratamento de XML
 	$xmlObj = getObjectXML($xmlResult);
 	
-	if ( strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {
+	if ( isset($xmlObj->roottag->tags[0]->name) && strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {
 		exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo($(\'#divRotina\'))',false);
 	}
-	
 	echo 'mostraTabelaSimulacao(\'TS\');';
-
 ?>

@@ -7,6 +7,9 @@
  * --------------
  * ALTERAÇÕES   : 14/07/2016-  Ajsute para corrigir a mensagem de retorno do processamento com sucesso
                                (Andrei - RKAM).
+ *
+ *                02/12/2016 - P341-Automatização BACENJUD - Alterar a passagem da descrição do 
+ *                             departamento como parametros e passar o o código (Renato Darosci)
  */
 ?> 
 
@@ -41,7 +44,7 @@
 	$xml 	   .= "     <cdcoptel>".$cdcooper."</cdcoptel>";
 	$xml 	   .= "     <tparquiv>".$tparquiv."</tparquiv>";	
 	$xml 	   .= "     <cddopcao>".$cddopcao."</cddopcao>";
-	$xml     .=	"     <dsdepart>".$glbvars["dsdepart"]."</dsdepart>";
+	$xml     .=	"     <cddepart>".$glbvars["cddepart"]."</cddepart>";
 	$xml 	   .= "  </Dados>";
 	$xml 	   .= "</Root>";
 	

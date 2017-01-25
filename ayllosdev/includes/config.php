@@ -3,7 +3,7 @@
 	//************************************************************************//
 	//*** Fonte: config.php                                                ***//
 	//*** Autor: David                                                     ***//
-	//*** Data : Julho/2007                   Ultima Alteracao: 29/09/2016 ***//
+	//*** Data : Julho/2007                   Ultima Alteracao: 22/11/2016 ***//
 	//***                                                                  ***//
 	//*** Objetivo  : Variaveis globais de controle                        ***//
 	//***                                                                  ***//	 
@@ -28,8 +28,12 @@
 	//***																   ***//	
 	//***			  29/09/2016 - Correcao no carregamento das variaveis  ***//
 	//***						   $UrlSite e $UrlImagens que nao estavam  ***//
-	//***						   sendo carregados corretamente.		   ***//
+	//***						   sendo carregados corretamente.SD 489051 ***//
 	//***						   (Carlos Rafael Tanholi)	 			   ***//	
+	//***																   ***//		
+	//***			  22/11/2016 - Feita nova consistencia para tratar as  ***//
+	//***						   configuracoes de producao criptografadas***//
+	//***						   (Carlos Rafael Tanholi) SD 489051       ***//	
 	//***																   ***//	
 	//************************************************************************//
 	
@@ -49,7 +53,7 @@
 
 	// valida a existencia do servidor e da configuracao para o mesmo no arquivo config.cfg
 	if ( trim($serverCFG) == '' || array_key_exists($serverCFG, $array_dados_ini) == false ) {
-		echo utf8_decode('Configuração inexistente para o servidor ' . $serverCFG . ' no arquivo de configurações (config.cfg)');
+		echo 'Configuração inexistente para o servidor ' . $serverCFG . ' no arquivo de configurações (config.cfg)';
 		exit();
 	}
 
@@ -57,7 +61,7 @@
 	define("SERVERNAMECFG", $serverCFG);    
 
 	// Nome do servidor com banco de dados PROGRESS
-	$DataServer = $array_dados_ini[SERVERNAMECFG]['DATA_SERVER'];
+	$DataServer = ( SERVERNAMECFG == 'PRODUCAO' ) ? base64_decode($array_dados_ini[SERVERNAMECFG]['DATA_SERVER']) : $array_dados_ini[SERVERNAMECFG]['DATA_SERVER'];
 	
 	//URL do servico WebSpeed do Ayllos Web
 	if (isset($ServerMonitoracao) && trim($ServerMonitoracao) <> '') {
@@ -65,14 +69,14 @@
 	} else {		
 		if ( SERVERNAMECFG == 'PRODUCAO' ) {
 			$url_webspeed_ayllosweb = 'https://iayllos'.$array_dados_ini[SERVERNAMECFG]['URL_WEBSPEED_AYLLOS_WEB'];
-		} else {
+	} else {		
 			$url_webspeed_ayllosweb = $array_dados_ini[SERVERNAMECFG]['URL_WEBSPEED_AYLLOS_WEB'];
 		}
-	}
+	}	
 	
 	// Titulo do sistema
 	$TituloSistema = $array_dados_ini[SERVERNAMECFG]['TITULO_SISTEMA'];
-
+	
 	// Titulo para pagina de login
 	$TituloLogin = $array_dados_ini[SERVERNAMECFG]['TITULO_LOGIN'];
 	
@@ -86,7 +90,7 @@
 	$UrlLogin = $array_dados_ini[SERVERNAMECFG]['URL_LOGIN'];
 	
 	// Servidor do GED (Selbetti)
-	$GEDServidor = $array_dados_ini[SERVERNAMECFG]['GED_SERVIDOR'];
+	$GEDServidor = ( SERVERNAMECFG == 'PRODUCAO' ) ? base64_decode($array_dados_ini[SERVERNAMECFG]['GED_SERVIDOR']) : $array_dados_ini[SERVERNAMECFG]['GED_SERVIDOR'];
 	
 	// Identificador dos grupos de usuarios nas maquinas HP-UX
 	$gidNumbers[0] = 103; // Cecred
@@ -129,9 +133,9 @@
 		// URL de conexao "CURITIBA";
 		define("HOST" , $array_dados_ini[SERVERNAMECFG]['HOST_BD_CT']);		
 	}
-
+		
 	define("USERE", $array_dados_ini[SERVERNAMECFG]['USERE']);
 	define("PASSE", $array_dados_ini[SERVERNAMECFG]['PASSE']);
-	define("KEY"  , $array_dados_ini[SERVERNAMECFG]['KEY']);
-	define("IV"   , $array_dados_ini[SERVERNAMECFG]['IV']);
+	define("KEY"  , ( SERVERNAMECFG == 'PRODUCAO' ) ? base64_decode($array_dados_ini[SERVERNAMECFG]['KEY'])   : $array_dados_ini[SERVERNAMECFG]['KEY']);
+	define("IV"   , ( SERVERNAMECFG == 'PRODUCAO' ) ? base64_decode($array_dados_ini[SERVERNAMECFG]['IV'])    : $array_dados_ini[SERVERNAMECFG]['IV']);
 ?>

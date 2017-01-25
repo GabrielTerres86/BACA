@@ -1,31 +1,33 @@
 /***********************************************************************
- Fonte: cadcop.js                                                  
+ Fonte: cadcop.js
  Autor: Andrei - RKAM
- Data : Agosto/2016                Última Alteração: 
-                                                                   
- Objetivo  : Cadastro de servicos ofertados na tela CADCOP
-                                                                   	 
- Alterações:   
-						  
-						  
-************************************************************************/
-var dsdepart = '';
+ Data : Agosto/2016                Última Alteração: 17/11/2016
 
-$(document).ready(function() {	
-	
-	estadoInicial();
-		
+ Objetivo  : Cadastro de servicos ofertados na tela CADCOP
+
+ Alterações: 17/11/2016 - M172 Atualizacao Telefone - Novo campo (Guilherme/SUPERO)
+
+             30/11/2016 - P341-Automatização BACENJUD - Incluir a variável cddepart no fonte
+                          e utilizar a mesma para validação no lugar da DSDEPART (Renato Darosci - Supero)
+
+************************************************************************/
+var cddepart;
+
+$(document).ready(function() {
+
+    estadoInicial();
+
 });
 
 function estadoInicial() {
-    
+
     formataCabecalho();
 
     $('#cddopcao', '#frmCab').habilitaCampo().focus().val('C');
     $('#divBotoes').css({ 'display': 'none' });
     $('#frmFiltro').css('display', 'none');
     $('#divTabela').html('').css('display','none');
-       	
+
 }
 
 
@@ -59,7 +61,7 @@ function formataCabecalho() {
     //Define ação para CLICK no botão de OK
     $("#btnOK", "#frmCab").unbind('click').bind('click', function () {
 
-        // Se esta desabilitado o campo 
+        // Se esta desabilitado o campo
         if ($("#cddopcao", "#frmCab").prop("disabled") == true) {
             return false;
         }
@@ -77,15 +79,15 @@ function formataCabecalho() {
         } else if ($('#cddopcao', '#frmCab').val() == 'A') {
 
             /* critica para permitir somente os seguintes operadores  */
-            if(dsdepart != "TI"                    &&
-               dsdepart != "COORD.ADM/FINANCEIRO"  &&
-               dsdepart != "COMPE"                 &&
-               dsdepart != "SUPORTE"               &&
-               dsdepart != "COORD.PRODUTOS"        &&
-               dsdepart != "CONTABILIDADE"         &&
-               dsdepart != "CONTROLE"              &&
-               dsdepart != "PRODUTOS"              && 
-               dsdepart != "CANAIS"                ){
+            if(cddepart != 1   &&   // CANAIS
+               cddepart != 4   &&   // COMPE
+               cddepart != 6   &&   // CONTABILIDADE
+               cddepart != 7   &&   // CONTROLE
+               cddepart != 8   &&   // COORD.ADM/FINANCEIRO
+               cddepart != 9   &&   // COORD.PRODUTOS
+               cddepart != 14  &&   // PRODUTOS
+               cddepart != 18  &&   // SUPORTE
+               cddepart != 20 ) {   // TI
 
                 showError("error", "Opera&ccedil;&atilde;o n&atilde;o autorizada.", "Alerta - Ayllos", "estadoInicial();");
 
@@ -100,7 +102,7 @@ function formataCabecalho() {
         $(this).unbind('click');
 
         return false;
-        
+
     });
 
     layoutPadrao();
@@ -117,7 +119,7 @@ function formataFormularioIncluir() {
     // campo
     $('#dscidade', '#frmIncluir').addClass('alpha').css({ 'width': '350px', 'text-align': 'left' }).attr('maxlength', '50').habilitaCampo();
     $('#cdestado', '#frmIncluir').addClass('alpha').css({ 'width': '80px', 'text-align': 'left' }).attr('maxlength', '2').habilitaCampo();
-    
+
     $('#frmIncluir').limpaFormulario();
     $('input,select').removeClass('campoErro');
 
@@ -126,9 +128,9 @@ function formataFormularioIncluir() {
     $('#divBotoesIncluir').css({ 'display': 'block' });
     $('#btVoltar', '#divBotoesIncluir').css({ 'display': 'inline' });
     $('#btConcluir', '#divBotoesIncluir').css({ 'display': 'inline' });
-    
+
     highlightObjFocus($('#frmIncluir'));
-    
+
     // Se pressionar dscidade
     $('#dscidade', '#frmIncluir').unbind('keypress').bind('keypress', function (e) {
 
@@ -168,8 +170,8 @@ function formataFormularioIncluir() {
     //Define ação para CLICK no botão de Concluir
     $("#btConcluir", "#divBotoesIncluir").unbind('click').bind('click', function () {
 
-		showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'incluirMunicipios(\'I\');', '$(\'#btVoltar\',\'#divBotoesIncluir\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));', 'sim.gif', 'nao.gif');
-		
+        showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'incluirMunicipios(\'I\');', '$(\'#btVoltar\',\'#divBotoesIncluir\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));', 'sim.gif', 'nao.gif');
+
         return false;
 
     });
@@ -201,7 +203,7 @@ function formataFormularioConsulta() {
     $('label[for="cdcooper"]', "#frmConsulta").addClass("rotulo").css({ "width": "100px" });
     $('label[for="nrdocnpj"]', "#frmConsulta").addClass("rotulo").css({ "width": "100px" });
     $('label[for="dtcdcnpj"]', "#frmConsulta").addClass("rotulo-linha").css({ "width": "75px" });
-    $('label[for="nmextcop"]', "#frmConsulta").addClass("rotulo").css({ "width": "100px" });    
+    $('label[for="nmextcop"]', "#frmConsulta").addClass("rotulo").css({ "width": "100px" });
     $('label[for="dsendcop"]', "#frmConsulta").addClass("rotulo").css({ "width": "100px" });
     $('label[for="nrendcop"]', "#frmConsulta").addClass("rotulo-linha").css({ "width": "60px" });
     $('label[for="dscomple"]', "#frmConsulta").addClass("rotulo").css({ "width": "100px" });
@@ -345,12 +347,13 @@ function formataFormularioConsulta() {
 
     $('label[for="permaxde"]', "#frmConsulta5").addClass("rotulo-linha").css({ "width": "250px" });
     $('label[for="qtmaxmes"]', "#frmConsulta5").addClass("rotulo").css({ "width": "250px" });
+    $('label[for="qtmeatel"]', "#frmConsulta5").addClass("rotulo").css({ "width": "250px" });
     $('label[for="flrecpct"]', "#frmConsulta5").addClass("rotulo-linha").css({ "width": "140px" });
     $('label[for="hrinisac"]', "#frmConsulta5").addClass("rotulo").css({ "width": "80px" });
     $('label[for="hrfimsac"]', "#frmConsulta5").addClass("rotulo-linha").css({ "width": "50px" });
     $('label[for="hriniouv"]', "#frmConsulta5").addClass("rotulo").css({ "width": "80px" });
     $('label[for="hrfimouv"]', "#frmConsulta5").addClass("rotulo-linha").css({ "width": "50px" });
-    
+
 
     // campo
     $("#cdcooper", "#frmConsulta").css({ 'width': '60px', 'text-align': 'right' }).addClass('inteiro').attr('maxlength', '4').desabilitaCampo();
@@ -374,7 +377,7 @@ function formataFormularioConsulta() {
     $('#nrtelfax', '#frmConsulta').css({ 'width': '145px', 'text-align': 'left' }).addClass('alphanum').attr('maxlength', '15').desabilitaCampo();
     $('#dsdempst', '#frmConsulta').css({ 'width': '270px', 'text-align': 'left' }).addClass('email').attr('maxlength', '30').desabilitaCampo();
     $('#nrtelsac', '#frmConsulta').css({ 'width': '145px', 'text-align': 'left' }).addClass('alphanum').attr('maxlength', '20').desabilitaCampo();
-   
+
     $('#nmtitcop', '#frmConsulta').css({ 'width': '400px', 'text-align': 'left' }).addClass('alphanum').attr('maxlength', '40').desabilitaCampo();
     $('#nrcpftit', '#frmConsulta').css({ 'width': '160px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '11');
 
@@ -390,7 +393,7 @@ function formataFormularioConsulta() {
     $('#nrlivcap', '#frmConsulta2').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '7').setMask("INTEGER", "zzz.zzz", "", "");
     $('#nrlivdpv', '#frmConsulta2').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '7').setMask("INTEGER", "zzz.zzz", "", "");
     $('#nrlivepr', '#frmConsulta2').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '7').setMask("INTEGER", "zzz.zzz", "", "");
-    
+
     $('#cdbcoctl', '#frmConsulta2').css({ 'width': '100px', 'text-align': 'right' }).addClass('inteiro').attr('maxlength', '3').desabilitaCampo();
     $('#cdagectl', '#frmConsulta2').css({ 'width': '100px', 'text-align': 'right' }).addClass('inteiro').attr('maxlength', '4').desabilitaCampo();
     $('#cddigage', '#frmConsulta2').css({ 'width': '35px', 'text-align': 'right' }).addClass('inteiro').attr('maxlength', '1').desabilitaCampo();
@@ -434,9 +437,9 @@ function formataFormularioConsulta() {
     $('#cdlcrbol', '#frmConsulta3').css({ 'width': '140px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '14').setMask("DECIMAL", "zzz.zzz.zz9,99", "", "");
 
     $('#dsclactr', '#frmConsulta3').css({ 'width': '590px', 'height': '100px', 'float': 'left', 'margin': '3px 0px 3px 3px', 'padding-right': '1px' }).addClass('alpha').attr('maxlength', '412').desabilitaCampo();
-    
+
     $('#dsclaccb', '#frmConsulta3').css({ 'width': '590px', 'height': '100px', 'float': 'left', 'margin': '3px 0px 3px 3px', 'padding-right': '1px' }).addClass('alpha').attr('maxlength', '355').desabilitaCampo();
-    
+
     $('#dsdircop', '#frmConsulta3').css({ 'width': '220px', 'text-align': 'left' }).desabilitaCampo();
     $('#nmdireto', '#frmConsulta3').css({ 'width': '420px', 'text-align': 'left' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '14').setMask("DECIMAL", "zzz.zzz.zz9,99", "", "");
     $('#flgdopgd', '#frmConsulta3').css({ 'width': '100px', 'text-align': 'left' }).desabilitaCampo();
@@ -457,7 +460,7 @@ function formataFormularioConsulta() {
     $('#nrfoldda', '#frmConsulta4').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '7').setMask("INTEGER", "zzz.zzz", "", "");
     $('#dslocdda', '#frmConsulta4').css({ 'width': '360px', 'text-align': 'left' }).addClass('alphanum').attr('maxlength', '30').desabilitaCampo();
     $('#dsciddda', '#frmConsulta4').css({ 'width': '360px', 'text-align': 'left' }).addClass('alphanum').attr('maxlength', '30').desabilitaCampo();
-    
+
     $('#dtregcob', '#frmConsulta4').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().addClass('data');
     $('#idregcob', '#frmConsulta4').css({ 'width': '100px', 'text-align': 'right' }).addClass('inteiro').attr('maxlength', '20').desabilitaCampo();
     $('#idlivcob', '#frmConsulta4').css({ 'width': '140px', 'text-align': 'left' }).addClass('alphanum').attr('maxlength', '9').desabilitaCampo();
@@ -489,7 +492,7 @@ function formataFormularioConsulta() {
     $('#hriniatr', '#frmConsulta5').css({ 'width': '80px', 'text-align': 'right' }).desabilitaCampo().setMask('STRING', '99:99', ':', '');
     $('#hrfimatr', '#frmConsulta5').css({ 'width': '80px', 'text-align': 'right' }).desabilitaCampo().setMask('STRING', '99:99', ':', '');
     $('#flgofatr', '#frmConsulta5').css({ 'width': '140px', 'text-align': 'left' }).desabilitaCampo();
-       
+
     $('#cdcliser', '#frmConsulta5').css({ 'width': '100px', 'text-align': 'right' }).addClass('alphanum').attr('maxlength', '10').desabilitaCampo();
 
     $('#vlmiplco', '#frmConsulta5').css({ 'width': '140px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '14').setMask("DECIMAL", "zzz.zzz.zz9,99", "", "");
@@ -503,13 +506,14 @@ function formataFormularioConsulta() {
 
     $('#permaxde', '#frmConsulta5').css({ 'width': '100px', 'text-align': 'right' }).addClass('porcento_n').attr('maxlength', '6').desabilitaCampo();
     $('#qtmaxmes', '#frmConsulta5').css({ 'width': '100px', 'text-align': 'right' }).addClass('inteiro').attr('maxlength', '3').desabilitaCampo();
+    $('#qtmeatel', '#frmConsulta5').css({ 'width': '100px', 'text-align': 'right' }).addClass('inteiro').attr('maxlength', '3').desabilitaCampo();
     $('#flrecpct', '#frmConsulta5').css({ 'width': '100px', 'text-align': 'left' }).desabilitaCampo();
 
     $('#hrinisac', '#frmConsulta5').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().setMask('STRING', '99:99', ':', '');
     $('#hrfimsac', '#frmConsulta5').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().setMask('STRING', '99:99', ':', '');
     $('#hriniouv', '#frmConsulta5').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().setMask('STRING', '99:99', ':', '');
     $('#hrfimouv', '#frmConsulta5').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().setMask('STRING', '99:99', ':', '');
-    
+
     $('#frmConsulta').css({ 'display': 'block' });
     $('#frmConsulta2').css({ 'display': 'none' });
     $('#frmConsulta3').css({ 'display': 'none' });
@@ -525,8 +529,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -541,9 +545,9 @@ function formataFormularioConsulta() {
     $("#nmrescop", "#frmConsulta").unbind('keypress').bind('keypress', function (e) {
 
         if (divError.css('display') == 'block') { return false; }
-		
-		$('input,select').removeClass('campoErro');
-		
+
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -559,13 +563,13 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB, F1
         if (e.keyCode == 13 || e.keyCode == 9 || e.keyCode == 18) {
 
             $(this).removeClass('campoErro');
-            
+
             var cpfCnpj = normalizaNumero($('#nrdocnpj', '#frmConsulta').val());
 
             //if (cpfCnpj.length <= 11) {
@@ -588,7 +592,7 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
+        $('input,select').removeClass('campoErro');
 
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
@@ -605,8 +609,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -622,8 +626,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -639,8 +643,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -656,8 +660,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -673,8 +677,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -690,8 +694,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -707,8 +711,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -724,8 +728,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -741,8 +745,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -758,7 +762,7 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
+        $('input,select').removeClass('campoErro');
 
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
@@ -775,8 +779,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -792,8 +796,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -809,8 +813,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -826,8 +830,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -843,8 +847,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -860,8 +864,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -877,8 +881,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -894,8 +898,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -911,8 +915,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB, F1
         if (e.keyCode == 13 || e.keyCode == 9 || e.keyCode == 18) {
 
@@ -940,8 +944,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -951,14 +955,14 @@ function formataFormularioConsulta() {
         }
 
     });
-    
+
     // Se pressionar nrcpfctr
     $('#nrcpfctr', '#frmConsulta2').unbind('keypress').bind('keypress', function (e) {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB, F1
         if (e.keyCode == 13 || e.keyCode == 9 || e.keyCode == 18) {
 
@@ -986,8 +990,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -997,14 +1001,14 @@ function formataFormularioConsulta() {
         }
 
     });
-    
+
     //Define ação para o campo dsemlctr
     $("#dsemlctr", "#frmConsulta2").unbind('keypress').bind('keypress', function (e) {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1020,8 +1024,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1037,8 +1041,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1054,8 +1058,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1071,8 +1075,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1088,8 +1092,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1105,8 +1109,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1122,8 +1126,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1139,8 +1143,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1156,8 +1160,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1173,8 +1177,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1190,8 +1194,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1207,8 +1211,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1224,8 +1228,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1241,8 +1245,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1258,8 +1262,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1274,8 +1278,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1290,8 +1294,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1307,8 +1311,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1325,8 +1329,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1341,8 +1345,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1358,8 +1362,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1431,8 +1435,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1448,8 +1452,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1465,8 +1469,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1481,8 +1485,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1498,8 +1502,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1515,8 +1519,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1531,8 +1535,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1548,8 +1552,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1565,8 +1569,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1581,8 +1585,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1598,8 +1602,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1645,8 +1649,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1662,8 +1666,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1679,8 +1683,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1722,8 +1726,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1739,8 +1743,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1756,8 +1760,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1773,8 +1777,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1790,8 +1794,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1807,8 +1811,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1824,8 +1828,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1841,8 +1845,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1858,8 +1862,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1875,8 +1879,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1892,8 +1896,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1909,8 +1913,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1926,8 +1930,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1943,8 +1947,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1960,8 +1964,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1977,8 +1981,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -1994,8 +1998,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2011,18 +2015,18 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
     });
 
-    
+
     //Define ação para o campo nrconven
     $("#nrconven", "#frmConsulta4").unbind('keypress').bind('keypress', function (e) {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2038,8 +2042,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2055,8 +2059,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2072,8 +2076,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2089,8 +2093,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2106,8 +2110,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2123,8 +2127,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2140,8 +2144,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2157,8 +2161,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2174,8 +2178,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2191,8 +2195,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2208,8 +2212,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2225,8 +2229,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2242,8 +2246,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2259,8 +2263,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2276,8 +2280,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2293,8 +2297,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2305,14 +2309,14 @@ function formataFormularioConsulta() {
 
     });
 
-    
+
     //Define ação para o campo dsnomscr
     $("#dsnomscr", "#frmConsulta5").unbind('keypress').bind('keypress', function (e) {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2329,8 +2333,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2346,8 +2350,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2363,8 +2367,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2380,8 +2384,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2397,8 +2401,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2414,8 +2418,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2431,8 +2435,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2448,8 +2452,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2465,8 +2469,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2484,8 +2488,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2501,8 +2505,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2518,8 +2522,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2535,8 +2539,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2552,8 +2556,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2568,8 +2572,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2585,8 +2589,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2602,8 +2606,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2619,8 +2623,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2636,8 +2640,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2653,8 +2657,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2670,8 +2674,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2687,8 +2691,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2704,8 +2708,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2721,8 +2725,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2738,8 +2742,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2755,8 +2759,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2772,8 +2776,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2789,8 +2793,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2806,8 +2810,25 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
+        // Se é a tecla ENTER, TAB
+        if (e.keyCode == 13 || e.keyCode == 9) {
+
+            $("#qtmeatel", "#frmConsulta5").focus();
+
+            return false;
+        }
+
+    });
+
+    //Define ação para o campo qtmeatel
+    $("#qtmeatel", "#frmConsulta5").unbind('keypress').bind('keypress', function (e) {
+
+        if (divError.css('display') == 'block') { return false; }
+
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2823,8 +2844,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2840,8 +2861,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2857,8 +2878,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2874,8 +2895,8 @@ function formataFormularioConsulta() {
 
         if (divError.css('display') == 'block') { return false; }
 
-		$('input,select').removeClass('campoErro');
-		
+        $('input,select').removeClass('campoErro');
+
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
@@ -2886,10 +2907,10 @@ function formataFormularioConsulta() {
 
     });
 
-            
+
     if ($('#cddopcao','#frmCab').val() == 'A'){
-        
-        if(dsdepart != "TI") {
+
+        if(cddepart != 20) {
 
             $("#qttmpsgr", "#frmConsulta5").desabilitaCampo();
 
@@ -2898,21 +2919,21 @@ function formataFormularioConsulta() {
             $("#qttmpsgr", "#frmConsulta5").habilitaCampo();
 
         }
-    
+
     }
 
     //Define ação para CLICK no botão de Concluir
     $("#btConcluir", "#divBotoesConsulta").unbind('click').bind('click', function () {
-           
-		showConfirmacao('Deseja confirmar a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'alterarCooperativa();', '$(\'#btVoltar\',\'#divBotoesConsulta\').focus();', 'sim.gif', 'nao.gif');
-        return false;       
+
+        showConfirmacao('Deseja confirmar a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'alterarCooperativa();', '$(\'#btVoltar\',\'#divBotoesConsulta\').focus();', 'sim.gif', 'nao.gif');
+        return false;
     });
 
     //Define ação para CLICK no botão de Prosseguir
     $("#btProsseguir", "#divBotoesConsulta").unbind('click').bind('click', function () {
 
         controlaDisplayForm('1');
-		return false;
+        return false;
 
     });
 
@@ -2925,8 +2946,8 @@ function formataFormularioConsulta() {
 
     });
 
-	layoutPadrao();
-	
+    layoutPadrao();
+
     if ($('#cddopcao', '#frmCab').val() == 'A') {
 
         $('input,select,textarea', '#divTabela').habilitaCampo();
@@ -2939,7 +2960,7 @@ function formataFormularioConsulta() {
         $('#flgoppag', '#frmConsulta2').desabilitaCampo();
         $('#inioppag', '#frmConsulta2').desabilitaCampo();
         $('#fimoppag', '#frmConsulta2').desabilitaCampo();
-		$('#flgvrbol', '#frmConsulta2').desabilitaCampo();
+        $('#flgvrbol', '#frmConsulta2').desabilitaCampo();
         $('#hhvrbini', '#frmConsulta2').desabilitaCampo();
         $('#hhvrbfim', '#frmConsulta2').desabilitaCampo();
         $('#nmrescop', '#frmConsulta').focus();
@@ -2949,7 +2970,7 @@ function formataFormularioConsulta() {
         $("#btProsseguir", "#divBotoesConsulta").focus();
 
     }
-    
+
     return false;
 
 }
@@ -2988,7 +3009,7 @@ function controlaPesquisa(valor) {
 // Consulta Histórico
 function controlaPesquisaHistorico() {
 
-    // Se esta desabilitado o campo 
+    // Se esta desabilitado o campo
     if ($("#cdhistor", "#frmConsulta").prop("disabled") == true) {
         return;
     }
@@ -3020,7 +3041,7 @@ function controlaPesquisaHistorico() {
 // Consulta Finalidades de empréstimo
 function controlaPesquisaFinalidadeEmpr() {
 
-    // Se esta desabilitado o campo 
+    // Se esta desabilitado o campo
     if ($("#cdfinemp", "#frmConsulta").prop("disabled") == true) {
         return;
     }
@@ -3051,7 +3072,7 @@ function controlaPesquisaFinalidadeEmpr() {
 
 function controlaPesquisaLinha() {
 
-    // Se esta desabilitado o campo 
+    // Se esta desabilitado o campo
     if ($("#cdlcremp", "#frmFiltro").prop("disabled") == true) {
         return;
     }
@@ -3085,7 +3106,7 @@ function controlaPesquisaLinha() {
 
 function controlaPesquisaModalidade() {
 
-    // Se esta desabilitado o campo 
+    // Se esta desabilitado o campo
     if ($("#cdmodali", "#frmConsulta").prop("disabled") == true) {
         return;
     }
@@ -3117,7 +3138,7 @@ function controlaPesquisaModalidade() {
 
 function controlaPesquisaSubModalidade() {
 
-    // Se esta desabilitado o campo 
+    // Se esta desabilitado o campo
     if ($("#cdsubmod", "#frmConsulta").prop("disabled") == true) {
         return;
     }
@@ -3147,11 +3168,11 @@ function controlaPesquisaSubModalidade() {
 }
 
 function controlaVoltar(ope,tpconsul) {
-    
+
     switch (ope) {
 
         case '1':
-            
+
             estadoInicial();
 
         break;
@@ -3182,7 +3203,7 @@ function controlaVoltar(ope,tpconsul) {
             }
 
             fechaRotina($('#divRotina'));
-            $('#divRotina').html(''); 
+            $('#divRotina').html('');
 
         break;
 
@@ -3199,7 +3220,7 @@ function consultaCooperativa() {
     var cddopcao = $("#cddopcao", "#frmCab").val();
 
     showMsgAguardo("Aguarde, consultando cooperativa ...");
-        
+
     //Requisição para montar o form correspondente a opção escolhida
     $.ajax({
         type: "POST",
@@ -3298,7 +3319,7 @@ function alterarCooperativa() {
     var qtdiaenl = $("#qtdiaenl", "#frmConsulta2").val();
     var cdsinfmg = $("#cdsinfmg", "#frmConsulta2").val();
     var taamaxer = $("#taamaxer", "#frmConsulta2").val();
-    
+
     var cdcrdarr = $("#cdcrdarr", "#frmConsulta3").val();
     var cdagsede = $("#cdagsede", "#frmConsulta3").val();
     var nrctabol = normalizaNumero($("#nrctabol", "#frmConsulta3").val());
@@ -3318,7 +3339,7 @@ function alterarCooperativa() {
     var vlmaxutl = isNaN(parseFloat($('#vlmaxutl', '#frmConsulta3').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#vlmaxutl', '#frmConsulta3').val().replace(/\./g, "").replace(/\,/g, "."));
     var vlcnsscr = isNaN(parseFloat($('#vlcnsscr', '#frmConsulta3').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#vlcnsscr', '#frmConsulta3').val().replace(/\./g, "").replace(/\,/g, "."));
     var vllimmes = isNaN(parseFloat($('#vllimmes', '#frmConsulta3').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#vllimmes', '#frmConsulta3').val().replace(/\./g, "").replace(/\,/g, "."));
-    
+
     var dtctrdda = $("#dtctrdda", "#frmConsulta4").val();
     var nrctrdda = $("#nrctrdda", "#frmConsulta4").val();
     var idlivdda = $("#idlivdda", "#frmConsulta4").val();
@@ -3331,7 +3352,7 @@ function alterarCooperativa() {
     var nrfolcob = $("#nrfolcob", "#frmConsulta4").val();
     var dsloccob = $("#dsloccob", "#frmConsulta4").val();
     var dscidcob = $("#dscidcob", "#frmConsulta4").val();
-    var vltxinss = isNaN(parseFloat($('#vltxinss', '#frmConsulta4').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#vltxinss', '#frmConsulta4').val().replace(/\./g, "").replace(/\,/g, ".")); 
+    var vltxinss = isNaN(parseFloat($('#vltxinss', '#frmConsulta4').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#vltxinss', '#frmConsulta4').val().replace(/\./g, "").replace(/\,/g, "."));
     var flgargps = $("#flgargps", "#frmConsulta4").val();
     var vldataxa = isNaN(parseFloat($('#vldataxa', '#frmConsulta4').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#vldataxa', '#frmConsulta4').val().replace(/\./g, "").replace(/\,/g, "."));
     var nrversao = $("#nrversao", "#frmConsulta4").val();
@@ -3347,8 +3368,9 @@ function alterarCooperativa() {
     var vltfcxcb = isNaN(parseFloat($('#vltfcxcb', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#vltfcxcb', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."));
     var vlrtrfib = isNaN(parseFloat($('#vlrtrfib', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#vlrtrfib', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."));
     var flrecpct = $("#flrecpct", "#frmConsulta5").val();
-    var flsaqpre = $("#flsaqpre", "#frmConsulta5").val();    
+    var flsaqpre = $("#flsaqpre", "#frmConsulta5").val();
     var qtmaxmes = $("#qtmaxmes", "#frmConsulta5").val();
+    var qtmeatel = $("#qtmeatel", "#frmConsulta5").val();
     var permaxde = isNaN(parseFloat($('#permaxde', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#permaxde', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."));
     var cdloggrv = $("#cdloggrv", "#frmConsulta5").val();
     var flgofatr = $("#flgofatr", "#frmConsulta").val();
@@ -3372,7 +3394,7 @@ function alterarCooperativa() {
     var vltarsic = isNaN(parseFloat($('#vltarsic', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#vltarsic', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."));
     var vltardrf = isNaN(parseFloat($('#vltardrf', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#vltardrf', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."));
     var qttmpsgr = $("#qttmpsgr", "#frmConsulta5").val();
-    
+
     showMsgAguardo("Aguarde, alterando cooperativa ...");
 
     //Requisição para montar o form correspondente a opção escolhida
@@ -3380,7 +3402,7 @@ function alterarCooperativa() {
         type: "POST",
         url: UrlSite + "telas/cadcop/alterar_cooperativa.php",
         data: {
-            cddopcao: cddopcao,            
+            cddopcao: cddopcao,
             nmrescop: nmrescop,
             nrdocnpj: nrdocnpj,
             nmextcop: nmextcop,
@@ -3434,7 +3456,7 @@ function alterarCooperativa() {
             cdcrdarr: cdcrdarr,
             cdagsede: cdagsede,
             nrctabol: nrctabol,
-            cdlcrbol: cdlcrbol,            
+            cdlcrbol: cdlcrbol,
             vltxinss: vltxinss,
             flgargps: flgargps,
             vldataxa: vldataxa,
@@ -3452,6 +3474,7 @@ function alterarCooperativa() {
             flsaqpre: flsaqpre,
             flgcmtlc: flgcmtlc,
             qtmaxmes: qtmaxmes,
+            qtmeatel: qtmeatel,
             permaxde: permaxde,
             cdloggrv: cdloggrv,
             flgofatr: flgofatr,
@@ -3715,39 +3738,39 @@ function selecionaMunicipio(tr) {
 
     });
 
-    
+
 }
 
 function controlaFoco(nmdcampo) {
-    
+
     var parentElement = $('#' + nmdcampo).parent().parent().attr('id');
-	
-	$("fieldset", "#divTabela").each(function () {
 
-		if ($(this).parent().attr('id')!= parentElement) {
+    $("fieldset", "#divTabela").each(function () {
 
-			$(this).parent().css('display', 'none');
-            
+        if ($(this).parent().attr('id')!= parentElement) {
+
+            $(this).parent().css('display', 'none');
+
         } else {
 
             $(this).parent().css('display', 'block');
-            
+
             focaCampoErro(nmdcampo, parentElement,true);
-			
-			if ($(this).attr('id') == $("#divTabela").find("fieldset:last").attr('id')) {
-			 
-				 $("#btProsseguir", "#divBotoesConsulta").css({ 'display': 'none' });
-				 $('#btConcluir', '#divBotoesConsulta').css({ 'display': 'inline' });
-				 
-			 }else{
-				 
-				 $("#btProsseguir", "#divBotoesConsulta").css({ 'display': 'inline' });
-				 $('#btConcluir', '#divBotoesConsulta').css({ 'display': 'none' });
-				 
-			 }
+
+            if ($(this).attr('id') == $("#divTabela").find("fieldset:last").attr('id')) {
+
+                 $("#btProsseguir", "#divBotoesConsulta").css({ 'display': 'none' });
+                 $('#btConcluir', '#divBotoesConsulta').css({ 'display': 'inline' });
+
+             }else{
+
+                 $("#btProsseguir", "#divBotoesConsulta").css({ 'display': 'inline' });
+                 $('#btConcluir', '#divBotoesConsulta').css({ 'display': 'none' });
+
+             }
 
         }
-		 
+
     });
 
     return false;
@@ -3760,9 +3783,9 @@ function controlaDisplayForm(tipo) {
     if (tipo == '1') {
 
         var formVisivel = $('form:visible', '#divTabela').attr('id');
-                
+
         $("form", "#divTabela").each(function () {
-            
+
             if ($(this).attr('id') == formVisivel) {
 
                 if ($("#divTabela").find("form:last").attr('id') == $(this).next().attr('id')) {
@@ -3779,12 +3802,12 @@ function controlaDisplayForm(tipo) {
                     $(this).css('display', 'none');
                     $(this).next().css('display', 'block');
                     $(this).next().find(".campo:first").focus();
-                    
+
                     return false;
                 }
-                                                
-            } 
-                        
+
+            }
+
         });
 
     //Controla voltar
@@ -3793,28 +3816,28 @@ function controlaDisplayForm(tipo) {
         var formVisivel = $('form:visible', '#divTabela').attr('id');
 
         $("form", "#divTabela").each(function () {
-            
+
             if ($("#divTabela").find("form:first").attr('id') == $('form:visible', '#divTabela').attr('id')) {
-				
+
                 controlaVoltar('1');
-				
+
                 return false;
 
             }
 
             if ($(this).attr('id') == $('#' + formVisivel,'#divTabela' ).prev().attr('id')) {
-				
+
                 $('#btConcluir', '#divBotoesConsulta').css({ 'display': 'none' });
                 $("#btProsseguir", "#divBotoesConsulta").css({ 'display': 'inline' });
                 $(this).css('display', 'block');
-                $(this).nextAll('.campo:first').focus();                
+                $(this).nextAll('.campo:first').focus();
                 $('#' + formVisivel, '#divTabela').css('display', 'none');
                 $(this).find(".campo:first").focus();
 
                 return false;
 
             }
-                        
+
         });
 
     }

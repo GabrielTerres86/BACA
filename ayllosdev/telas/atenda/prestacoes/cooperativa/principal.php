@@ -1,4 +1,4 @@
-<? 
+<?php
 /*!
  * FONTE        : principal.php
  * CRIAÇÃO      : André Socoloski - DB1
@@ -37,10 +37,9 @@
  * 027: [23/11/2015] Carlos Rafael Tanholi: Merge de implementacoes de Portabilidade.
  * 028: [04/01/2016] Heitor             (RKAM): Inclusao do tipo de risco na tela de prejuizo
  * 029:  17/06/2016 - M181 - Alterar o CDAGENCI para passar o CDPACTRA (Rafael Maciel - RKAM)
+ * 030: [15/12/2016] Tiago            (CECRED): Ajustes na hora da consulta das prestações pois nao carrega dados corretamente(SD531549)
  */
-?>
 
-<?
     session_start();
 	require_once('../../../../includes/config.php');
 	require_once('../../../../includes/funcoes.php');
@@ -48,7 +47,7 @@
 	require_once('../../../../class/xmlfile.php');
 	isPostMethod();
 
-	$cddopcao = (($_POST['cddopcao'] != '') ? $_POST['cddopcao'] : '@');
+	$cddopcao = ( isset($_POST['cddopcao']) && $_POST['cddopcao'] != '') ? $_POST['cddopcao'] : '@';
 	
 	// Verifica permissões de acessa a tela
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {
@@ -67,15 +66,15 @@
 	$tpemprst = (isset($_POST['tpemprst'])) ? $_POST['tpemprst'] : 0;
 	$nrparepr = (isset($_POST['nrparepr'])) ? $_POST['nrparepr'] : 0;
 	$vlpagpar = (isset($_POST['vlpagpar'])) ? $_POST['vlpagpar'] : 0;
-	$nrregist = (isset($_POST['nrregist'])) ? $_POST['nrregist'] : 0 ; 
-	$nriniseq = (isset($_POST['nriniseq'])) ? $_POST['nriniseq'] : 0 ; 
-	$inconcje = $_POST['inconcje'];
-	$dtcnsspc = $_POST['dtcnsspc'];
-	$idSocio  = $_POST['idSocio'];
-	$iddoaval_busca = $_POST['iddoaval_busca'];
-	$inpessoa_busca = $_POST['inpessoa_busca'];
-	$nrdconta_busca = $_POST['nrdconta_busca'];
-	$nrcpfcgc_busca = $_POST['nrcpfcgc_busca'];
+	$nrregist = (isset($_POST['nrregist'])) ? $_POST['nrregist'] : 0; 
+	$nriniseq = (isset($_POST['nriniseq'])) ? $_POST['nriniseq'] : 0; 
+	$inconcje = (isset($_POST['inconcje'])) ? $_POST['inconcje'] : 0;
+	$dtcnsspc = (isset($_POST['dtcnsspc'])) ? $_POST['dtcnsspc'] : '';
+	$idSocio  = (isset($_POST['idSocio']))  ? $_POST['idSocio']	 : 0;
+	$iddoaval_busca = (isset($_POST['iddoaval_busca'])) ? $_POST['iddoaval_busca'] : 0;
+	$inpessoa_busca = (isset($_POST['inpessoa_busca'])) ? $_POST['inpessoa_busca'] : '';
+	$nrdconta_busca = (isset($_POST['nrdconta_busca'])) ? $_POST['nrdconta_busca'] : 0;
+	$nrcpfcgc_busca = (isset($_POST['nrcpfcgc_busca'])) ? $_POST['nrcpfcgc_busca'] : 0;
 	
 	
 	// Verifica se o número da conta e o titular são inteiros válidos
@@ -114,7 +113,13 @@
             $xml .= "    <cdprogra>".$glbvars["nmdatela"]."</cdprogra>";
             $xml .= "    <flgcondc>1</flgcondc>";
             $xml .= "	 <nrregist>".$nrregist."</nrregist>";
+            
+                      if($nrctremp == '0'){
             $xml .= "    <nriniseq>".$nriniseq."</nriniseq>";
+                      }else{
+                          $xml .= "    <nriniseq>1</nriniseq>";
+                      }
+
             $xml .= "  </Dados>";
             $xml .= "</Root>";
             
@@ -180,6 +185,7 @@
                         str_replace(',', '.', str_replace('.', '', getByTagName($registros,'vlmrapar')));
 		
 			?><script type="text/javascript">
+        
 			var arrayRegistros = new Object();
 
 			arrayRegistros['inpessoa'] = '<? echo getByTagName($registros,'inpessoa'); ?>';

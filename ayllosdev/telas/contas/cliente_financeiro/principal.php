@@ -1,20 +1,20 @@
 <?php
 /*!
  * FONTE        : principal.php
- * CRIAÇÃO      : Gabriel Santos (DB1)
- * DATA CRIAÇÃO : Março/2010 
+ * CRIAÃ‡ÃƒO      : Gabriel Santos (DB1)
+ * DATA CRIAÃ‡ÃƒO : MarÃ§o/2010 
  * OBJETIVO     : Mostrar opcao Principal da rotina de CLIENTE FINANCEIRO da tela de CONTAS 
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÃ‡Ã•ES   :
  * --------------
  * 001 [29/03/2010] Rodolpho Telmo (DB1)  : Controle de Abas
  * 002 [20/12/2010] Gabriel Capoia (DB1   : Adicionado chamada validaPermissao
  * 003 [07/07/2011] David (CECRED)        : Ajuste na funcao validaPermissao() para utilizar a opcao @.
  * 004 [05/08/2015] Gabriel (RKAM)        : Reformulacao cadastral. 
- * 005 [14/06/2016] Kelvin (CECRED) 	  : Removendo validação de permissão para corrigir problema no chamado 468177.
- * 006 [14/07/2016] Carlos R. : Correcao na validacao de dados retornados via XML. SD 479874. 
+ * 005 [14/06/2016] Kelvin (CECRED) 	  : Removendo validaÃ§Ã£o de permissÃ£o para corrigir problema no chamado 468177.
+ * 006 [14/07/2016] Carlos R. (CECRED)    : Correcao na validacao de dados retornados via XML. SD 479874.
+ * 007 [01/12/2016] Renato Darosci(Supero): Alterado para passar como parametro o cÃ³digo do departamento ao invÃ©s da descriÃ§Ã£o. 
  */
-
 	session_start();
 	require_once('../../../includes/config.php');
 	require_once('../../../includes/funcoes.php');
@@ -36,10 +36,11 @@
 		default  : $cddopcao = 'C'; break;
 	}	
 	
-	// Verifica se o número da conta foi informado
+	// Verifica se o nÃºmero da conta foi informado
 	if (!isset($_POST['nrdconta']) || !isset($_POST['idseqttl'])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','fechaRotina(divRotina)',false);
 	
-	// Guardo os parâmetos do POST em variáveis	
+	
+	// Guardo os parÃ¢metos do POST em variÃ¡veis	
 	$nrdconta = $_POST['nrdconta'] == '' ?  0   : $_POST['nrdconta'];
 	$idseqttl = $_POST['idseqttl'] == '' ?  0   : $_POST['idseqttl'];
 	$tpregist = $_POST['tpregist'] == '' ?  1   : $_POST['tpregist'];
@@ -49,11 +50,11 @@
 	
 	$nrdrowid = (isset($_POST['nrdrowid'])) ? $_POST['nrdrowid'] : '';	
 		
-	// Verifica se o número da conta e o titular são inteiros válidos
+	// Verifica se o nÃºmero da conta e o titular sÃ£o inteiros vÃ¡lidos
 	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','fechaRotina(divRotina)',false);
 	if (!validaInteiro($idseqttl)) exibirErro('error','Seq.Ttl n&atilde;o foi informada.','Alerta - Ayllos','fechaRotina(divRotina)',false);	
 	
-	// Monta o xml de requisição
+	// Monta o xml de requisiÃ§Ã£o
 	$xml  = '';
 	$xml .= '<Root>';
 	$xml .= '	<Cabecalho>';
@@ -67,7 +68,7 @@
 	$xml .= '		<cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
 	$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';
 	$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';
-	$xml .= '		<dsdepart>'.$glbvars['dsdepart'].'</dsdepart>';
+	$xml .= '		<cddepart>'.$glbvars['cddepart'].'</cddepart>';
 	$xml .= '		<nrdconta>'.$nrdconta.'</nrdconta>';
 	$xml .= '		<nrseqdig>'.$nrseqdig.'</nrseqdig>';
 	$xml .= '		<idseqttl>'.$idseqttl.'</idseqttl>';
@@ -84,11 +85,11 @@
 	
 	$inpessoa   = getByTagName($cliente,'inpessoa');
 	
-	// Se ocorrer um erro, mostra crítica
+	// Se ocorrer um erro, mostra crÃ­tica
 	if (isset($xmlObjeto->roottag->tags[0]->name) && strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') 
 		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);
 	
-	// Se não retornou erro, então pegar a mensagem de alerta do Progress na variável msgAlerta, para ser utilizada posteriormente
+	// Se nÃ£o retornou erro, entÃ£o pegar a mensagem de alerta do Progress na variÃ¡vel msgAlerta, para ser utilizada posteriormente
 	$msgAlert = ( isset($xmlObjeto->roottag->tags[0]->attributes['MSGALERT']) ) ? $xmlObjeto->roottag->tags[0]->attributes['MSGALERT'] : '';
 
 ?>
@@ -103,7 +104,7 @@
 		<input name="nrcpfcgc" id="nrcpfcgc" type="text" value="<? echo formatar(getByTagName($cliente,'nrcpfcgc'),$tipo) ?>" />
 		
 		<label for="inpessoa">Tp. Natureza:</label>
-		<? $tpNatureza = ( $inpessoa == 1 ) ? '1 - Física' : '2 - Jurídica'; ?>
+		<? $tpNatureza = ( $inpessoa == 1 ) ? '1 - F&iacute;sica' : '2 - Jur&iacute;dica'; ?>
 		<input name="inpessoa" id="inpessoa" type="text" class="alphanum" value="<? echo $tpNatureza; ?>" />
 		<br />
 		

@@ -6,6 +6,9 @@
  * OBJETIVO     : Arquivo de entrada para impressão da rotina Impressões da tela de CONTAS
  *
  * ALTERACOES   : 12/07/2012 - Alterado parametro "Attachment" conforme for navegador (Jorge).
+ *
+ *                01/12/2016 - P341-Automatização BACENJUD - Removido passagem do departamento como parametros
+ *                             pois a BO não utiliza o mesmo (Renato Darosci)
  */	 
 ?>
 
@@ -27,7 +30,6 @@
 	$cdoperad = $glbvars['cdoperad'];
 	$nmdatela = $glbvars['nmdatela'];
 	$idorigem = $glbvars['idorigem'];
-    $dsdepart = $glbvars['dsdepart'];
 	
 	// Recebendo valores via POST
 	$GLOBALS['tprelato'] = (isset($_POST['tprelato'])) ? $_POST['tprelato'] : '';
@@ -55,7 +57,6 @@
 	$xmlSetPesquisa .= "		<cdoperad>".$cdoperad."</cdoperad>";
 	$xmlSetPesquisa .= "		<nmdatela>".$nmdatela."</nmdatela>";	
 	$xmlSetPesquisa .= "		<idorigem>".$idorigem."</idorigem>";	
-	$xmlSetPesquisa .= "		<dsdepart>".$dsdepart."</dsdepart>";	
 	$xmlSetPesquisa .= "		<nrdconta>".$nrdconta."</nrdconta>";
 	$xmlSetPesquisa .= "		<idseqttl>".$idseqttl."</idseqttl>";
     $xmlSetPesquisa .= "		<tprelato>".$GLOBALS['tprelato']."</tprelato>";

@@ -6,7 +6,8 @@
 	                                                                  
 	 Objetivo  : Mostrar tela CADCOP.                                 
 	                                                                  
-	 Alterações: 
+	 Alterações: 30/11/2016 - P341-Automatização BACENJUD - Incluir a variável cddepart no fonte
+                              e remover a variável dsdepart(Renato Darosci - Supero)
 	 
 	**********************************************************************/
 	
@@ -44,7 +45,7 @@
 		<script type="text/javascript" src="cadcop.js?keyrand=<?php echo mt_rand(); ?>"></script>
 		
 		<script type="text/javascript">
-			dsdepart = '<? echo $glbvars['dsdepart']?>';
+		    cddepart = '<? echo $glbvars['cddepart']?>';
 		</script>
 </head>
 <body>
