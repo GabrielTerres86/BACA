@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme
-   Data    : Julho/2008                          Ultima alteracao: 07/12/2016
+   Data    : Julho/2008                          Ultima alteracao: 25/01/2016
       
    Dados referentes ao programa:
 
@@ -43,6 +43,9 @@
 
                 07/12/2016 - Alterado campo dsdepart para cddepart.
                              PRJ341 - BANCENJUD (Odirlei-AMcom)
+                             
+                25/01/2016 - Ajustade cddepart sinal errado.
+                             PRJ341 - BANCENJUD (Odirlei-AMcom)             
 ............................................................................. */
 
 { includes/var_online.i }
@@ -513,9 +516,9 @@ DO WHILE TRUE:
                      NEXT.
                  END.    
   
-            IF  glb_cddepart <> 20 AND   /* TI                   */
-                glb_cddepart <> 14 AND   /* PRODUTOS             */
-                glb_cddepart <>  8 THEN  /* COORD.ADM/FINANCEIRO */
+            IF  glb_cddepart = 20 OR   /* TI                   */
+                glb_cddepart = 14 OR   /* PRODUTOS             */
+                glb_cddepart =  8 THEN  /* COORD.ADM/FINANCEIRO */
                  
                 DO:
                 DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
