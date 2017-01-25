@@ -1004,13 +1004,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
        Programa: pc_clob_para_arquivo
        Autor   : Marcos (Supero)
-       Data    : Março/2014                      Ultima atualizacao: 31/08/2015
+       Data    : Março/2014                      Ultima atualizacao: 08/12/2016
 
        Dados referentes ao programa:
 
        Objetivo  : Efetua leitura das informações de um Clob e gravar em arquivo
 
        Alteracoes: 31/08/2015 - Inclusao do parametro flappend. (Jaison/Marcos-Supero)
+
+                   08/12/2016 - Ajuste para incrementar nomenclatura qnd realizar
+                                append, para garantir processo.
+                                SD572620 (Odirlei-AMcom)
 
     ..............................................................................*/
     DECLARE
@@ -1031,7 +1035,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         -- Remove a extensão do nome do arquivo
         vr_nom_arquiv := SUBSTR(vr_nom_arquiv,1,LENGTH(vr_nom_arquiv)-LENGTH(vr_ext_arqsai)-1);
         -- Mudar o nome do arquivo para evitar sobscrever o relatório antigo
-        vr_nom_arquiv := vr_nom_arquiv||'-append'||'.'||vr_ext_arqsai;
+        vr_nom_arquiv := vr_nom_arquiv||'-append'||to_char(SYSTIMESTAMP,'SSSSSFF5')||
+                         '.'||vr_ext_arqsai;
       END IF;
 
       -- Gerar no diretório solicitado
@@ -2443,6 +2448,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --                           relatorio conforme a informada pelo programa gerador.
     --                           PRJ314 - INDEXAÇÃO CENTRALIZADA (Odirlei-AMcom)
     --
+    --              08/12/2016 - Ajuste para incrementar nomenclatura qnd realizar
+    --                           append, para garantir processo.
+    --                           SD572620 (Odirlei-AMcom)         
     -- ...........................................................................
     DECLARE
       -- Buscar dados da solicitação
@@ -2594,7 +2602,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
           -- Remove a extensão do nome do arquivo
           vr_nom_arqsai := SUBSTR(vr_nom_arqsai,1,LENGTH(vr_nom_arqsai)-LENGTH(vr_ext_arqsai)-1);
           -- Mudar o nome do arquivo para evitar sobscrever o relatório antigo
-          vr_nom_arqsai := vr_nom_arqsai||'-append'||'.'||vr_ext_arqsai;
+          vr_nom_arqsai := vr_nom_arqsai||'-append'||pr_nrseqsol||'.'||vr_ext_arqsai;
         END IF;
         -- Adicionar os parâmetros básicos na lista de parâmetros, são eles:
         -- 1 - PR_NMRESCOP => Nome da cooperativa conectada

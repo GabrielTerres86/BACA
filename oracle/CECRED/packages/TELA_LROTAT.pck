@@ -19,7 +19,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_LROTAT IS
 
   PROCEDURE pc_consulta_lrotat(pr_cddopcao IN VARCHAR2
                               ,pr_cddlinha IN NUMBER
-                              ,pr_dsdepart IN VARCHAR2
+                              ,pr_cddepart IN NUMBER
                               ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
                               ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
                               ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
@@ -63,7 +63,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_LROTAT IS
                                ,pr_origrecu IN craplrt.dsorgrec%TYPE
                                ,pr_cdmodali IN craplrt.cdmodali%TYPE
                                ,pr_cdsubmod IN craplrt.cdsubmod%TYPE
-                               ,pr_dsdepart IN VARCHAR2
+                               ,pr_cddepart IN NUMBER
                                ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
                                ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
                                ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
@@ -89,7 +89,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_LROTAT IS
                              ,pr_origrecu IN craplrt.dsorgrec%TYPE
                              ,pr_cdmodali IN craplrt.cdmodali%TYPE
                              ,pr_cdsubmod IN craplrt.cdsubmod%TYPE
-                             ,pr_dsdepart IN VARCHAR2
+                             ,pr_cddepart IN NUMBER
                              ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
                              ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
                              ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
@@ -149,7 +149,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LROTAT IS
 
   PROCEDURE pc_consulta_lrotat(pr_cddopcao IN VARCHAR2
                               ,pr_cddlinha IN NUMBER
-                              ,pr_dsdepart IN VARCHAR2
+                              ,pr_cddepart IN NUMBER
                               ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
                               ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
                               ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
@@ -264,9 +264,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LROTAT IS
       
       IF pr_cddopcao NOT IN ('A','C') THEN
         
-        IF pr_dsdepart <> 'PRODUTOS'             AND
-           pr_dsdepart <> 'COORD.ADM/FINANCEIRO' AND
-           pr_dsdepart <> 'TI'                   THEN
+        -- Se o código do departamento não for 8-COORD.ADM/FINANCEIRO, 14-PRODUTOS ou 20-TI
+        IF pr_cddepart NOT IN (8,14,20) THEN
           
           -- Montar mensagem de critica
           vr_cdcritic := 0;
@@ -1004,7 +1003,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LROTAT IS
                                ,pr_origrecu IN craplrt.dsorgrec%TYPE
                                ,pr_cdmodali IN craplrt.cdmodali%TYPE
                                ,pr_cdsubmod IN craplrt.cdsubmod%TYPE
-                               ,pr_dsdepart IN VARCHAR2
+                               ,pr_cddepart IN NUMBER
                                ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
                                ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
                                ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
@@ -1136,9 +1135,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LROTAT IS
       -- Fechar o cursor
       CLOSE cr_craplrt;
       
-      IF (pr_dsdepart = 'PRODUTOS'             OR
-          pr_dsdepart = 'COORD.ADM/FINANCEIRO' OR
-          pr_dsdepart = 'TI')                  THEN
+      -- Se o código do departamento não for 8-COORD.ADM/FINANCEIRO, 14-PRODUTOS ou 20-TI
+        IF pr_cddepart NOT IN (8,14,20) THEN
         
         IF trim(pr_dsdlinha) IS NOT NULL THEN 
           -- Montar mensagem de critica
@@ -1164,9 +1162,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LROTAT IS
       
       END IF;
       
-      IF pr_dsdepart <> 'PRODUTOS'             AND
-         pr_dsdepart <> 'COORD.ADM/FINANCEIRO' AND
-         pr_dsdepart <> 'TI'                   THEN
+      -- Se o código do departamento não for 8-COORD.ADM/FINANCEIRO, 14-PRODUTOS ou 20-TI
+      IF pr_cddepart NOT IN (8,14,20) THEN
         
         IF nvl(pr_qtvezcap,0) > 0 THEN   
           -- Montar mensagem de critica
@@ -1489,7 +1486,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LROTAT IS
                              ,pr_origrecu IN craplrt.dsorgrec%TYPE
                              ,pr_cdmodali IN craplrt.cdmodali%TYPE
                              ,pr_cdsubmod IN craplrt.cdsubmod%TYPE
-                             ,pr_dsdepart IN VARCHAR2
+                             ,pr_cddepart IN NUMBER
                              ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
                              ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
                              ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica

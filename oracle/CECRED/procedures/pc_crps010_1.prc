@@ -61,6 +61,9 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS010_1" (pr_cdcooper         IN crapco
 
                  21/06/2016 - Correcao para o uso correto do indice da CRAPTAB nesta rotina.
                               SD 470740.(Carlos Rafael Tanholi).     
+							  
+		         05/01/2017 - Ajustado para não parar o processo em caso de parâmetro
+							  nulo. (Rodrigo - 586601)   
   ............................................................................. */
     DECLARE
 
@@ -87,6 +90,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS010_1" (pr_cdcooper         IN crapco
       vr_exc_erro     EXCEPTION;
       -- Guardar registro dstextab
       vr_dstextab craptab.dstextab%TYPE;
+	  vr_flgfound BOOLEAN := TRUE;
 
     BEGIN
       
@@ -198,15 +202,17 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS010_1" (pr_cdcooper         IN crapco
       IF To_Number(To_Char(pr_dtmvtolt,'MM')) IN (6,12) THEN
 
          -- Buscar configuração na tabela
-         vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+         TABE0001.pc_busca_craptab(pr_cdcooper => pr_cdcooper
                          ,pr_nmsistem => 'CRED'
                          ,pr_tptabela => 'GENERI'
                          ,pr_cdempres => 0
                          ,pr_cdacesso => 'VALORBAIXA'
-                         ,pr_tpregist => 0);
+                                  ,pr_tpregist => 0
+                                  ,pr_flgfound => vr_flgfound
+                                  ,pr_dstextab => vr_dstextab);
          
          --Se nao encontrou entao
-         IF TRIM(vr_dstextab) IS NULL THEN
+         IF NOT vr_flgfound THEN
            -- Montar mensagem de critica
            pr_cdcritic := 409;
            vr_des_erro := gene0001.fn_busca_critica(pr_cdcritic => 409);

@@ -150,6 +150,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
   --
   --             14/09/2016 - Adicionado validacao de convenio ativo na procedure
   --                          pc_habilita_convenio (Douglas - Chamado 502770)
+  -- 
+  --             25/11/2016 - Alterado cursor cr_crapope, para ler o departamento
+  --                          do operador a partir da tabela CRAPDPO. O setor de 
+  --                          COBRANCA foi removido da validação, pois o mesmo não 
+  --                          existe na CRAPDPO (Renato Darosci - Supero)
   ---------------------------------------------------------------------------
 
 
@@ -1147,7 +1152,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
       -- Busca o operador
       CURSOR cr_crapope(pr_cdcooper IN crapope.cdcooper%TYPE
                        ,pr_cdoperad IN crapope.cdoperad%TYPE) IS
-        SELECT crapope.dsdepart
+        SELECT crapope.cddepart
               ,crapope.nmoperad
           FROM crapope 
          WHERE crapope.cdcooper = pr_cdcooper
@@ -1509,7 +1514,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
       END LOOP;
 
       -- Permitir a reativacao de convenios de cobranca sem registro (Renato - Supero - SD 194301)
-      IF rw_crapope.dsdepart NOT IN ('SUPORTE','COBRANCA') THEN
+      IF rw_crapope.cddepart NOT IN (18) THEN
         -- Regra para nao permitir ativar um convenio sem registro do BB inativo
         IF  vr_insitceb = 1
         AND rw_crapceb.insitceb = 2
@@ -2393,7 +2398,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                             ,pr_tag_nova => 'flprotes'
                             ,pr_tag_cont => rw_cco_prc.flprotes
                             ,pr_des_erro => vr_dscritic);
-
+                            
       GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                             ,pr_tag_pai  => 'Dados'
                             ,pr_posicao  => 0

@@ -70,6 +70,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WPGD0190 IS
   --                          para não influenciar a forma que o cooperado informa o login ao reativar a conta.
   --                          SD558339 (Odirlei-AMcom)
   --
+  --             18/11/2016 - Ajustado rotina pc_tbead_inscricao_cooperado Incluindo log das operação de 
+  --                          Inclusão, alteração e exclusão. SD555655 (Odirlei-AMcom)
+  -- 
   ---------------------------------------------------------------------------------------------------------------
   -- Rotina geral de insert, update, select e delete da tela WPGD0190 na tabela tbead_limite_inscricoes
   PROCEDURE pc_tbead_limite_inscricoes(pr_cddopcao        IN VARCHAR2              --> Tipo de acao que sera executada (A - Alteracao / C - Consulta / E - Exclur / I - Inclur)
@@ -323,6 +326,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WPGD0190 IS
           ead.cdcooper,
           ass.cdagenci,
           ead.nmparticip,
+          ead.nrcpf_particip,
+          ead.nrfone_particip,
           ead.dsemail_particip,
           ead.nmlogin_particip,
           'coop' || LPAD(ead.cdcooper, 4, 0) || '-P' || LPAD(ass.cdagenci, 4, 0) AS codcoop_cdagenci
@@ -334,6 +339,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WPGD0190 IS
         WHERE 
           ead.idcadast_ead = pr_idcadast;
       rw_inscricao cr_inscricao%ROWTYPE;
+      rw_inscricao_ant cr_inscricao%ROWTYPE;
       
       --> Buscar CPF da pessoa que possui acesso IB da conta PJ
       CURSOR cr_crapsnh(pr_cdcooper  crapsnh.cdcooper%TYPE,
@@ -346,6 +352,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WPGD0190 IS
            AND snh.idseqttl = pr_idseqttl
            AND snh.tpdsenha = 1; 
       rw_crapsnh cr_crapsnh%ROWTYPE;
+      
+      --- Armazenar os campos alterados
+      TYPE typ_rec_campo_alt
+           IS RECORD(dsdadant craplgi.dsdadant%TYPE,
+                     dsdadatu craplgi.dsdadatu%TYPE);
+      TYPE typ_tab_campo_alt IS TABLE OF typ_rec_campo_alt
+           INDEX BY VARCHAR2(50);               
+      vr_tab_campo_alt typ_tab_campo_alt;
       
       -- Variável de críticas
       vr_dscritic      VARCHAR2(10000);
@@ -371,7 +385,85 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WPGD0190 IS
       vr_comand_curl VARCHAR2(4000); --> Comando montado do envio ao curl
       vr_typ_saida  VARCHAR2(3);    --> Saída de erro
       
+      vr_dsorigem     craplgm.dsorigem%TYPE;
+      vr_dstransa     craplgm.dstransa%TYPE;
+      vr_nrdrowid     ROWID;
+      vr_flgerlog     BOOLEAN;
+      
+      --> Gera log da transação
+      PROCEDURE pc_gera_log_trans (pr_dscritic IN VARCHAR2)IS
+      
+        vr_idx VARCHAR2(50);
     BEGIN
+      
+        IF vr_flgerlog THEN
+          -- Gerar log ao cooperado (b1wgen0014 - gera_log);
+          GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                              ,pr_cdoperad => 996
+                              ,pr_dscritic => pr_dscritic
+                              ,pr_dsorigem => vr_dsorigem
+                              ,pr_dstransa => vr_dstransa
+                              ,pr_dttransa => TRUNC(SYSDATE)
+                              ,pr_flgtrans => (CASE WHEN pr_dscritic IS NULL THEN 1
+                                                    ELSE 0 
+                                               END )
+                              ,pr_hrtransa => gene0002.fn_busca_time
+                              ,pr_idseqttl => 1
+                              ,pr_nmdatela => 'INTERNETBANK'
+                              ,pr_nrdconta => pr_nrdconta
+                              ,pr_nrdrowid => vr_nrdrowid);
+            
+          GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                    pr_nmdcampo => 'login',
+                                    pr_dsdadant => NULL,
+                                    pr_dsdadatu => pr_nmlogptp);
+      
+          --> verificar se contem campos alterados
+          IF vr_tab_campo_alt.count > 0 THEN
+          
+            --> ler todos os campos
+            vr_idx := vr_tab_campo_alt.first;
+            WHILE vr_idx IS NOT NULL LOOP
+              
+              --> Verificar se valor foi modificado
+              IF nvl(vr_tab_campo_alt(vr_idx).dsdadant,' ') <> 
+                 nvl(vr_tab_campo_alt(vr_idx).dsdadatu,' ') THEN
+                --> Gravar log 
+                GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                    pr_nmdcampo => vr_idx,
+                                    pr_dsdadant => vr_tab_campo_alt(vr_idx).dsdadant,
+                                    pr_dsdadatu => vr_tab_campo_alt(vr_idx).dsdadatu);
+              END IF;
+             
+              vr_idx := vr_tab_campo_alt.next(vr_idx);
+            END LOOP;
+            
+          END IF;
+          
+        END IF;
+        
+      END pc_gera_log_trans;
+      
+    BEGIN
+      
+      vr_dsorigem  := gene0001.vr_vet_des_origens(3);      
+      vr_dstransa  := NULL;
+      vr_flgerlog  := FALSE;
+      vr_tab_campo_alt.delete;
+      
+      CASE pr_cddopcao 
+        WHEN 'I' THEN
+          vr_dstransa  := 'Inclusão Inscrição EAD.'; 
+          vr_flgerlog  := TRUE;
+        WHEN 'A' THEN
+          vr_dstransa  := 'Alteração Inscrição EAD.'; 
+          vr_flgerlog  := TRUE; 
+        WHEN 'E' THEN
+          vr_dstransa  := 'Exclusão Inscrição EAD.'; 
+          vr_flgerlog  := TRUE;
+        ELSE
+          vr_dstransa  := NULL;
+      END CASE;
       
       --> Garantir que dados foram informados
       IF pr_cddopcao IN ('I','A','E') THEN
@@ -418,7 +510,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WPGD0190 IS
             SELECT idcadast_ead
               INTO VR_EXISTE_LOGIN
               FROM tbead_inscricao_participante
-             WHERE upper(nmlogin_particip) = upper(pr_nmlogptp);
+             WHERE upper(nmlogin_particip) = upper(pr_nmlogptp)
+               AND rownum = 1;
           EXCEPTION
             WHEN NO_DATA_FOUND THEN
                  VR_EXISTE_LOGIN:=0;
@@ -447,6 +540,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WPGD0190 IS
             
             -- Reativa participante existente e excluido
             ELSIF VR_EXISTE > 0 AND VR_DTDEMISS IS NOT NULL THEN
+              vr_dstransa := 'Reativação Inscrição EAD';  
               
               UPDATE tbead_inscricao_participante
                  SET nmparticip       = pr_nmextptp,
@@ -477,6 +571,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WPGD0190 IS
               IF (vr_dscritic IS NOT NULL) THEN
                 RAISE vr_exc_saida;
               END IF;
+            
+              vr_tab_campo_alt('nmparticip').dsdadatu := pr_nmextptp;
+              vr_tab_campo_alt('dsemail').dsdadatu    := pr_dsemlptp;
+              
             
             -- Efetua a inclusao do participante
             ELSE 
@@ -552,6 +650,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WPGD0190 IS
                    RAISE vr_exc_saida;
                 END IF;
                 
+                vr_tab_campo_alt('nmparticip').dsdadatu := pr_nmextptp;
+                vr_tab_campo_alt('dsemail').dsdadatu    := pr_dsemlptp;
+                vr_tab_campo_alt('nrcpf').dsdadatu      := vr_nrcpfptp; 
+                vr_tab_campo_alt('nrfone').dsdadatu     := pr_nrfonptp;
+                
               END IF;
 
               -- Fecha o cursor
@@ -626,6 +729,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WPGD0190 IS
               vr_nrcpfptp := rw_crapsnh.nrcpfcgc;
             END IF;  
           
+            -- Busca informacao do inscrito antes de alterar
+            rw_inscricao_ant := NULL;
+            OPEN  cr_inscricao(pr_idcadast => pr_cdcadead);                 
+            FETCH cr_inscricao INTO rw_inscricao_ant;
+            CLOSE cr_inscricao;
+            
+            vr_tab_campo_alt('nmparticip').dsdadant := rw_inscricao_ant.nmparticip;
+            vr_tab_campo_alt('dsemail').dsdadant    := rw_inscricao_ant.dsemail_particip; 
+            vr_tab_campo_alt('nrcpf').dsdadant      := rw_inscricao_ant.nrcpf_particip; 
+            vr_tab_campo_alt('nrfone').dsdadant     := rw_inscricao_ant.nrfone_particip; 
+          
             -- Atualizacao de registro
             UPDATE tbead_inscricao_participante
                SET nmparticip      	= pr_nmextptp,
@@ -661,6 +775,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WPGD0190 IS
                 RAISE vr_exc_saida;
               END IF;
 
+              vr_tab_campo_alt('nmparticip').dsdadatu := pr_nmextptp;
+              vr_tab_campo_alt('dsemail').dsdadatu    := pr_dsemlptp;
+              vr_tab_campo_alt('nrcpf').dsdadatu      := vr_nrcpfptp; 
+              vr_tab_campo_alt('nrfone').dsdadatu     := pr_nrfonptp;
+              
             END IF;
 
             -- Fecha o cursor
@@ -765,6 +884,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WPGD0190 IS
                      
       END CASE;
       
+      pc_gera_log_trans(pr_dscritic => NULL);
+      
       -- Registra as informações no sistema
       COMMIT;
       
@@ -772,12 +893,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WPGD0190 IS
         WHEN vr_exc_saida THEN
           ROLLBACK;
           pr_dscritic := vr_dscritic;
+          
+          --> Gerar log e commitar
+          pc_gera_log_trans(pr_dscritic => vr_dscritic);
+          COMMIT;
+          
           -- Carregar XML padrão para variável de retorno não utilizada.
           -- Existe para satisfazer exigência da interface.
           vr_retxml := XMLType.createXML('<Root><DSMSGERR>' || pr_dscritic || '</DSMSGERR></Root>');
         WHEN OTHERS THEN
           ROLLBACK;
           pr_dscritic := 'Erro geral em pc_tbead_inscricao_cooperado: ' || SQLERRM;
+          
+          --> Gerar log e commitar
+          pc_gera_log_trans(pr_dscritic => vr_dscritic);
+          COMMIT;
+          
           -- Carregar XML padrão para variável de retorno não utilizada.
           -- Existe para satisfazer exigência da interface.
           vr_retxml := XMLType.createXML('<Root><DSMSGERR>' || pr_dscritic || '</DSMSGERR></Root>');

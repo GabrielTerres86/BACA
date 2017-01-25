@@ -1485,6 +1485,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARHPG AS
                 Quando a cooperativa "0 - TODAS" for selecionada, alterar os horarios de todas as cooperativas
 
     Alteracoes:            
+    
+                24/11/2016 - Alteração para que o fonte realize a avaliação do departamento
+                             pelo campo CDDEPART ao invés do DSDEPART. (Renato Darosci - Supero)
+                               
     ............................................................................. */
       -- CURSORES -- 
       -- Buscar informacoes da cooperativa
@@ -1497,7 +1501,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARHPG AS
       -- Buscar informacoes do operador
       CURSOR cr_crapope (pr_cdcooper IN crapcop.cdcooper%TYPE,
                          pr_cdoperad IN crapope.cdoperad%TYPE ) IS
-        SELECT ope.dsdepart 
+        SELECT ope.cddepart
           FROM crapope ope
          WHERE ope.cdcooper = pr_cdcooper  
            AND ope.cdoperad = pr_cdoperad;
@@ -1586,7 +1590,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARHPG AS
       END IF;
     
       -- validar departamento, apenas TI e COMPE podem alterar os dados
-      IF rw_crapope.dsdepart NOT IN ('TI','COMPE') THEN
+      IF rw_crapope.cddepart NOT IN (4,20) THEN
         vr_cdcritic := 0;
         vr_dscritic := 'Voce nao tem permissao para realizar esta acao.';
         -- gerar critica e retornar ao programa chamador

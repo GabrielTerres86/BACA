@@ -1,5 +1,4 @@
-CREATE OR REPLACE PROCEDURE CECRED.
-                PC_CRPS279 (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
+CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS279 (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
                     ,pr_flgresta  IN PLS_INTEGER            --> Flag padrão para utilização de restart
                     ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
                     ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação
@@ -156,21 +155,24 @@ CREATE OR REPLACE PROCEDURE CECRED.
                                 ja que agora é possivel passar qual a extensão da
                                 copia ou e-mail, e ainda não, o que gerava a necessidade
                                 de duas chamadas (Marcos-Supero)
-                                
+
                    06/05/2014 - Ajustes para utilizar o vr_vlsdeved no totalizador por PA,
                                pois neste é validado o valor maximo e minimo (Odirlei-Amcom)
 
-                   01/07/2014 - Ajustar os totalizadores do PA que estavam apresentando 
+                   01/07/2014 - Ajustar os totalizadores do PA que estavam apresentando
                                 divergencia com relação ao total geral (Douglas - Chamado 153718)
-                                
-                   21/01/2015 - Alterado o formato do campo nrctremp para 8 
-                                caracters (Kelvin - 233714)                                
 
-                   27/04/2015 - Adicionar no cr_crapepr as linhas de crédito 
+                   21/01/2015 - Alterado o formato do campo nrctremp para 8
+                                caracters (Kelvin - 233714)
+
+                   27/04/2015 - Adicionar no cr_crapepr as linhas de crédito
                                 6901,6902,6903,6904,6905 para que elas não sejam listadas.
                                 (Chamado 276392 - Douglas)
-                                
+
                    27/05/2015 - Ajuste para verificar se o emprestimo lista no relatorio (James)
+
+                   04/01/2017 - P342 - Incorporação Transulcred -> Transpocred (Ricardo Linhares)
+
     ............................................................................ */
 
     DECLARE
@@ -240,8 +242,9 @@ CREATE OR REPLACE PROCEDURE CECRED.
       rw_crawepr cr_crawepr%ROWTYPE;
 
       -- Leitura dos associados e seus empréstimos em aberto
-      CURSOR cr_crapepr(pr_tab_dtiniseg DATE) IS
+        CURSOR cr_crapepr(pr_tab_dtiniseg DATE) IS
         SELECT ass.nrcpfcgc
+              ,ass.inmatric
               ,ass.nrdconta
               ,ass.nmprimtl
               ,ass.cdagenci
@@ -266,9 +269,38 @@ CREATE OR REPLACE PROCEDURE CECRED.
            AND lcr.cdcooper = epr.cdcooper
            AND lcr.cdlcremp = epr.cdlcremp
            AND lcr.flgsegpr = 1
-        ORDER BY ass.nrcpfcgc
-                ,ass.inmatric DESC
-                ,ass.nrdconta;
+        UNION
+        SELECT ass.nrcpfcgc 
+              ,ass.inmatric
+              ,ass.nrdconta
+              ,ass.nmprimtl
+              ,ass.cdagenci
+              ,ass.dtnasctl
+              ,epr.nrctremp
+              ,epr.vlsdeved
+              ,epr.dtmvtolt
+              ,ROW_NUMBER () OVER (PARTITION BY ass.nrcpfcgc
+                                       ORDER BY ass.nrcpfcgc
+                                                ,ass.inmatric DESC
+                                                ,ass.nrdconta) sqregcpf
+              ,COUNT (*) OVER (PARTITION BY ass.nrcpfcgc) qtregcpf
+              FROM crapepr epr
+                  ,crapass ass
+                  ,craplcr lcr
+              WHERE ass.cdcooper = 9 -->cooperativa 9
+                AND ass.inpessoa = 1 --> Somente fisica
+                AND ass.cdcooper = epr.cdcooper
+                AND ass.nrdconta = epr.nrdconta
+                AND epr.dtmvtolt < '01/01/2017' --> todos os registros antes do dia primeiro
+                AND epr.inliquid = 0 --> Em aberto
+                AND lcr.cdcooper = epr.cdcooper
+                AND lcr.cdlcremp = epr.cdlcremp
+                AND lcr.flgsegpr = 1
+                AND ass.nrdconta BETWEEN 900001 and 912654 --> somente as contas que foram incorporadas (Incorporação Transulcred -> Transpocred)
+                AND pr_cdcooper = 9 -- Apenas para Cooperativa 9, (Incorporação Transulcred -> Transpocred)
+        ORDER BY nrcpfcgc
+                ,inmatric DESC
+                ,nrdconta;
 
       ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
 
@@ -672,7 +704,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
       ELSE
          --do contratrio somente concatenar, pois um grupo estará vazio e não precisará do separador
          vr_dsmail_generi := vr_dsmail_cooper||vr_dsmail_generi;
-      END IF;            
+      END IF;
 
       -- Submeter geração de relatório para ser enviado por email
       gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper                       --> Cooperativa conectada
@@ -715,7 +747,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
                                ,pr_stprogra => pr_stprogra);
 
       -- Salvar informações atualizada
-      COMMIT;      
+      COMMIT;
 
     EXCEPTION
       WHEN vr_exc_fimprg THEN
@@ -737,7 +769,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
                                  ,pr_stprogra => pr_stprogra);
         -- Efetuar commit
         COMMIT;
-        
+
 
       WHEN vr_exc_saida THEN
         -- Se foi retornado apenas código
@@ -760,4 +792,3 @@ CREATE OR REPLACE PROCEDURE CECRED.
 
   END pc_crps279;
 /
-

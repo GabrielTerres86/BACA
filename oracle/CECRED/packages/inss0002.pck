@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0002 AS
 
    Programa : INSS0002
    Autor    : Dionathan
-   Data     : 27/08/2015                        Ultima atualizacao: 26/09/2016
+   Data     : 27/08/2015                        Ultima atualizacao: 08/12/2016
 
    Dados referentes ao programa:
 
@@ -34,9 +34,9 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0002 AS
                22/06/2016 - Alterada a pasta de gravacao do arquivo XML de salvar/ para salvar/gps/
 							Correcao do parametro passado para a pc_verifica_operacao informando que
                             trata-se de um agendamento ou pagamento (Guilherme/SUPERO)
-
+                            
                23/06/2016 - Correcao no cursor da crapbcx utilizando o indice correto
-                            sobre o campo cdopecxa.(Carlos Rafael Tanholi).
+                            sobre o campo cdopecxa.(Carlos Rafael Tanholi).       
 
                03/08/2016 - Alteração na nomenclatura dos nomes dos XMLs de comunicação com o
                             Sicredi, adicionado os milisecundos (Guilherme/SUPERO)
@@ -56,6 +56,9 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0002 AS
                             listar os arquivos da pasta de pc_lista_arquivos para pc_OScommand_Shell
                             (Guilherme/SUPERO)
 
+               08/12/2016 - Implementacao do controle de lock correto sobre as tabelas craplot e crapbcx
+                            nas procedures envolvidas com o pagamento da guia de previdencia social.
+                            SD 560911 - (Carlos Rafael Tanholi)
   --------------------------------------------------------------------------------------------------------------- */
   PROCEDURE pc_gps_validar_sicredi(pr_cdcooper IN crapcop.cdcooper %TYPE
                                   ,pr_cdagenci IN NUMBER
@@ -649,12 +652,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
         -- ou atualizar o nrseqdig para reservar posição
         UPDATE craplot
            SET craplot.nrseqdig = NVL(craplot.nrseqdig, 0) + 1
-              ,craplot.qtcompln = NVL(craplot.qtcompln, 0) + 1
-              ,craplot.qtinfoln = NVL(craplot.qtinfoln, 0) + 1
-              ,craplot.vlcompdb = NVL(craplot.vlcompdb, 0) +
-                                  NVL(pr_vlcompdb, 0)
-              ,craplot.vlinfodb = NVL(craplot.vlinfodb, 0) +
-                                  NVL(pr_vlinfodb, 0)
          WHERE craplot.rowid = pr_craplot.rowid
         RETURNING craplot.nrseqdig INTO pr_craplot.nrseqdig;
       END IF;
@@ -810,8 +807,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
     END IF;
 
 
-    -- Retorna o NRSEQDIG da LOT
-    pr_sequenci := pr_craplot.nrseqdig;
+    -- atualiza os valores da lote
+    BEGIN
+      UPDATE craplot SET craplot.qtcompln = NVL(craplot.qtcompln, 0) + 1
+                        ,craplot.qtinfoln = NVL(craplot.qtinfoln, 0) + 1
+                        ,craplot.vlcompdb = NVL(craplot.vlcompdb, 0) + NVL(pr_vlrtotal, 0)              
+                        ,craplot.vlinfodb = NVL(craplot.vlinfodb, 0) + NVL(pr_vlrtotal, 0)
+      WHERE craplot.ROWID = pr_craplot.ROWID
+      RETURNING craplot.nrseqdig INTO pr_sequenci;
+    EXCEPTION
+      WHEN OTHERS THEN
+        pr_cdcritic:= 0;
+        pr_dscritic:= 'Erro ao atualizar tabela craplot. '||SQLERRM;
+        --Levantar Excecao
+        RAISE vr_exc_saida;
+    END;
 
   EXCEPTION
     WHEN vr_exc_saida THEN
@@ -994,7 +1004,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
     IF pr_indpagto = 'A' THEN
       vr_dtdenvio := to_char(pr_dtvencto,'YYYY-MM-DD') || 'T00:00:00';
     ELSE
-    vr_dtdenvio := to_char(pr_dtmvtolt,'YYYY-MM-DD') || 'T00:00:00';
+      vr_dtdenvio := to_char(pr_dtmvtolt,'YYYY-MM-DD') || 'T00:00:00';
     END IF;
 
 
@@ -1054,8 +1064,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
         IF pr_indpagto = 'A' THEN
           vr_dtdebito := pr_dtvencto;
         ELSE -- apenas VALIDACAO 
-        vr_dtdebito := pr_dtmvtolt;
-      END IF;
+          vr_dtdebito := pr_dtmvtolt;
+        END IF;
       END IF;
 
       IF pr_indpagto = 'A' THEN
@@ -1419,23 +1429,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
          AND ass.nrdconta = pr_nrdconta;
     rw_crapass cr_crapass%ROWTYPE;
 
-    /* Verifica se existe registro na CRAPBCX */
-    CURSOR cr_existe_bcx(p_cdcooper IN NUMBER
-                        ,p_dtmvtolt IN DATE
-                        ,p_cdagenci IN NUMBER
-                        ,p_nrdcaixa IN NUMBER
-                        ,p_cdopecxa IN VARCHAR2)IS
-        SELECT bcx.qtcompln
-              ,bcx.ROWID
-          FROM crapbcx bcx
-         WHERE bcx.cdcooper = p_cdcooper
-           AND bcx.dtmvtolt = p_dtmvtolt
-           AND bcx.cdagenci = p_cdagenci
-           AND bcx.nrdcaixa = p_nrdcaixa
-           AND UPPER(bcx.cdopecxa) = UPPER(p_cdopecxa)
-           AND bcx.cdsitbcx = 1;
-    rw_existe_bcx cr_existe_bcx%ROWTYPE;
-
     --Tabela de Saldos
     vr_tab_saldos extr0001.typ_tab_saldos;
 
@@ -1514,41 +1507,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
     ELSE
       -- Apenas fechar o cursor
       CLOSE btch0001.cr_crapdat;
-    END IF;
-    /*--------------------VALIDA BOLETIM DO CAIXA---------------------*/
-    /* Validar para criar o lancamento ao fim da procedure */
-    --Selecionar informacoes dos boletins dos caixas
-    IF pr_idorigem = 2 THEN -- CAIXA
-       OPEN cr_existe_bcx (pr_cdcooper
-                          ,rw_crapdat.dtmvtocd
-                          ,pr_cdagenci
-                          ,pr_nrdcaixa
-                          ,pr_cdoperad);
-       --Posicionar no proximo registro
-       FETCH cr_existe_bcx INTO rw_existe_bcx;
-       --Se nao encontrar
-       IF cr_existe_bcx%NOTFOUND THEN
-          --Fechar Cursor
-          CLOSE cr_existe_bcx;
-          pr_cdcritic:= 698;
-          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
-          --Levantar Excecao
-          RAISE vr_exc_saida;
-       END IF;
-       --Fechar Cursor
-       CLOSE cr_existe_bcx;
-
-       --Atualizar tabela crapbcx
-       BEGIN
-         UPDATE crapbcx SET crapbcx.qtcompln = nvl(crapbcx.qtcompln,0) + 1
-         WHERE crapbcx.ROWID = rw_existe_bcx.ROWID;
-       EXCEPTION
-         WHEN Others THEN
-           pr_cdcritic := 0;
-           pr_dscritic := 'Erro ao atualizar tabela crapbcx. Erro: '||SQLERRM;
-           --Levantar Excecao
-           RAISE vr_exc_saida;
-       END;
     END IF;
     /*--------------------BUSCA ASSOCIADO---------------------*/
     IF pr_nrdconta > 0 THEN
@@ -3837,6 +3795,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
            AND ttl.idseqttl = pr_idseqttl;
      rw_crapttl cr_crapttl%ROWTYPE;
 
+
+    /* Verifica se existe registro na CRAPBCX */
+    CURSOR cr_existe_bcx(p_cdcooper IN NUMBER
+                        ,p_dtmvtolt IN DATE
+                        ,p_cdagenci IN NUMBER
+                        ,p_nrdcaixa IN NUMBER
+                        ,p_cdopecxa IN VARCHAR2)IS
+        SELECT bcx.qtcompln
+              ,bcx.ROWID
+          FROM crapbcx bcx
+         WHERE bcx.cdcooper = p_cdcooper
+           AND bcx.dtmvtolt = p_dtmvtolt
+           AND bcx.cdagenci = p_cdagenci
+           AND bcx.nrdcaixa = p_nrdcaixa
+           AND UPPER(bcx.cdopecxa) = UPPER(p_cdopecxa)
+           AND bcx.cdsitbcx = 1
+           FOR UPDATE NOWAIT;
+    rw_existe_bcx cr_existe_bcx%ROWTYPE;
+
+
      -- Variaveis de Cursor
      rw_crapcop cr_crapcop%ROWTYPE;
      rw_crapass cr_crapass%ROWTYPE;
@@ -4143,10 +4121,73 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
         RAISE vr_exc_saida;
      END IF;
 
+
      IF pr_idorigem = 2 THEN -- Apenas CAIXA ON-LINE
        -- Retornar valores
        pr_dslitera := vr_literal;
        pr_cdultseq := vr_nrseqaut;
+       
+       --Selecionar informacoes dos boletins dos caixas
+        /* Tratamento para buscar registro de lote se o mesmo estiver em lock, tenta por 10 seg. */
+        FOR i IN 1 .. 100 LOOP
+          BEGIN
+            OPEN cr_existe_bcx(pr_cdcooper
+                              ,rw_crapdat.dtmvtocd
+                              ,pr_cdagenci
+                              ,pr_nrdcaixa
+                              ,pr_cdoperad);
+            --Posicionar no proximo registro
+            FETCH cr_existe_bcx INTO rw_existe_bcx;
+            --Se nao encontrar
+            IF cr_existe_bcx%NOTFOUND THEN
+              --Fechar Cursor
+              CLOSE cr_existe_bcx;
+              vr_cdcritic:= 698;
+              pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+              --Fechar Cursor
+              CLOSE cr_existe_bcx;              
+              --Levantar Excecao
+              RAISE vr_exc_saida;
+            ELSE  
+              vr_cdcritic := NULL;
+              --Fechar Cursor
+              CLOSE cr_existe_bcx;
+              EXIT;
+            END IF;
+
+        EXCEPTION
+          WHEN OTHERS THEN
+            IF cr_existe_bcx%ISOPEN THEN
+              CLOSE cr_existe_bcx;
+            END IF;
+
+            -- setar critica caso for o ultimo
+            IF i = 100 THEN
+              pr_dscritic := pr_dscritic || 'Registro de banco caixa ' ||
+                             pr_nrdcaixa || ' em uso. Tente novamente!';
+            END IF;
+            -- aguardar 0,5 seg. antes de tentar novamente
+            sys.dbms_lock.sleep(0.1);
+        END;
+      END LOOP;
+
+      -- se encontrou erro ao buscar lote, abortar programa
+      IF pr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      ELSE  
+        --Atualizar tabela crapbcx
+        BEGIN
+         UPDATE crapbcx SET crapbcx.qtcompln = nvl(crapbcx.qtcompln,0) + 1
+         WHERE crapbcx.ROWID = rw_existe_bcx.ROWID;
+        EXCEPTION
+         WHEN Others THEN
+           vr_cdcritic := 0;
+           vr_dscritic := 'Erro ao atualizar tabela crapbcx. Erro: '||SQLERRM;
+           --Levantar Excecao
+           RAISE vr_exc_saida;
+        END;        
+      END IF;
+       
      END IF;
 
      IF NVL(pr_nrdconta,0) > 0 THEN

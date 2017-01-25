@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --  Sistema  : Rotinas genericas referente a tela de Cartões
   --  Sigla    : CCRD
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Abril - 2014.                   Ultima atualizacao: 22/11/2016
+  --  Data     : Abril - 2014.                   Ultima atualizacao: 03/01/2017
   --
   -- Dados referentes ao programa:
   --
@@ -38,6 +38,10 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --             22/11/2016 - #557129 Correção do retorno de críticas na rotina pc_debita_fatura e correção de
   --                          como é feita a iteração das cooperativas na rotina pc_debita_fatura_job para não 
   --                          ocorrer o erro ORA-01002: extração fora de sequência (Carlos)
+  --
+  --             03/01/2017 - #574756 Ajuste de posição da data de movimento do arquivo CEXT na 
+  --                          rotina pc_crps670 para buscar os registros corretamente pela chave (Carlos)
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de Registro para as faturas pendentes
@@ -1791,6 +1795,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                              ,pr_des_comando => vr_dscomando
                              ,pr_typ_saida   => vr_typ_saida
                              ,pr_des_saida   => vr_dscritic);
+                             
         IF vr_typ_saida = 'ERR' THEN
           RAISE vr_exc_saida;
         END IF;
@@ -3290,7 +3295,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                            vr_cdpesqbb,
                                            vr_nsuredec,
                                            vr_cdhistor_on,
-                                           to_date(trim(substr(vr_des_text,204,4)),'mmdd'),
+                                           to_date(trim(substr(vr_des_text,39,8)),'ddmmyyyy'),
                                            vr_vldtrans);
                         FETCH cr_craplcm_dia INTO rw_craplcm_dia;
 
@@ -7035,7 +7040,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         ROLLBACK;
               
       WHEN OTHERS THEN
-                  
         -- Monta mensagem de erro
         pr_cdcritic := NULL;
         pr_dscritic := 'Erro na CCRD0003.pc_debita_fatura --> '|| SQLERRM;
@@ -7048,6 +7052,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
   PROCEDURE pc_debita_fatura_job IS  
   BEGIN
+
     DECLARE 
       CURSOR cr_crapcop IS
         SELECT crapcop.cdcooper
@@ -7138,6 +7143,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         END IF;   
       
         COMMIT;
+        
       END LOOP;   
       
       -- Log de fim de execucao

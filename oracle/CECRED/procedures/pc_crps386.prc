@@ -10,7 +10,7 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Julio/Mirtes
-   Data    : Abril/2004                    Ultima atualizacao: 13/10/2016
+   Data    : Abril/2004                    Ultima atualizacao: 08/12/2016
 
    Dados referentes ao programa:
 
@@ -156,6 +156,7 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
                             "cdagedeb", caso contrario busca "cdagectl" (Lucas Ranghetti #296778)
                             
                15/06/2016 - Adicnioar ux2dos para a Van E-sales (Lucas Ranghetti #469980)
+               
                23/06/2016 - P333.1 - Devolução de arquivos com tipo de envio 6 - WebService (Marcos)              
                             
 			   13/07/2016 - Nao deve mais enviar o codigo da cooperativa na frente do campo conta.
@@ -164,10 +165,13 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
                23/08/2016 - Verificar final de semanas e feriados para verificar suspenções
                             (Lucas Ranghetti #499496)             
 				
-			   04/10/2016 - Retirar validacao especifica para o convenio CASAN (Lucas Ranghetti #534110)  
+			   04/10/2016 - Retirar validacao especifica para o convenio CASAN (Lucas Ranghetti #534110)         	
 			   
 			   13/10/2016 - Ajustado tratamento de critica ao efetuar insert da tabela gncvuni, estava 
 			                efetuando gravção na pr_dscritic e o correto é vr_dscritic (Daniel)        	
+                            
+               08/12/2016 - Tratamento para enviar agencia no formato antigo ou novo 
+                            dependendo da data da autorizacao (Lucas Ranghetti #549795)  
 ............................................................................. */
   -- Buscar os dados da cooperativa
   cursor cr_crapcop (pr_cdcooper in craptab.cdcooper%type) is
@@ -413,16 +417,7 @@ begin
         continue;
       end if;
     close cr_crapatr;
-    -- Define o código da cooperativa
-    if rw_gnconve.cdcooper = pr_cdcooper or 
-       pr_cdcooper = 1 then
-      vr_cdcooperativa := ' ';
-    else
-      --Solicitado no chamado 407247 que não envie mais o código da cooperativa na frente da conta
-      --Deixei o IF acima para deixar mais claro a condição que era utilizada anteriormente, pode ser retirado posteriormente.
-      --vr_cdcooperativa := '9'||to_char(pr_cdcooper,'fm000');
-      vr_cdcooperativa := ' ';
-    end if;
+
     -- Procedure NOMEIA_ARQUIVOS do progress
     open cr_gncontr (pr_cdcooper,
                      rw_gnconve.cdconven,
@@ -559,6 +554,7 @@ begin
     -- Variáveis de controle
     vr_inexecuc := 0;
     vr_tot_qtregist := 0;
+
     -- Leitura das autorizacoes de debito em conta
     for rw_crapatr in cr_crapatr (pr_cdcooper,
                                   vr_dtmovini,
@@ -571,14 +567,20 @@ begin
       IF rw_gnconve.cdconven = 4 AND 
          (rw_crapatr.dtiniatr < to_date('05/10/2016','dd/mm/yyyy')) THEN -- casan
           vr_nragenci := 1294;
+        vr_cdcooperativa := '9'||to_char(pr_cdcooper,'fm000');
       ELSE             
         -- Caso a data de inicio da autorização seja menor que 01/09/2013 e for um cancelamento 
         -- de debito ira gravar a agencia com formato antigo. Ex: "0001"            
         -- Caso contrario grava com novo formato. Ex: 0101
-        IF (rw_crapatr.dtiniatr < to_date('01/09/2013','dd/mm/yyyy')) THEN
+        -- A data de 01/09/2013 somente para Viacredi, para as demais cooperativas devemos utilizar
+        -- a data de 26/07/2016 como referencia
+        IF (pr_cdcooper = 1 AND rw_crapatr.dtiniatr < to_date('01/09/2013','dd/mm/yyyy') OR
+            pr_cdcooper <> 1 AND rw_crapatr.dtiniatr < to_date('26/07/2016','dd/mm/yyyy')) THEN 
           vr_nragenci := TRIM(rw_gnconve.cdagedeb);
+          vr_cdcooperativa := '9'||to_char(pr_cdcooper,'fm000');      
         ELSE
           vr_nragenci := rw_crapcop.cdagectl;      
+          vr_cdcooperativa := ' ';
         END IF;     
       END IF;
 
@@ -965,4 +967,3 @@ exception
     -- Efetuar rollback
     rollback;
 end;
-/

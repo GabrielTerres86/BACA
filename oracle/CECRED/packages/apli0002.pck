@@ -4511,8 +4511,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       FETCH cr_crapttx INTO vr_qtdiafim;
       CLOSE cr_crapttx;
       IF  vr_qtdiaapl > vr_qtdiafim THEN --verifica se periodo tem mais  dias e busca data util anterior                      
-        -- eh passado agora a data do paramentro e nao a variavel temp pois se fosse dia util nao era 
-        -- buscado a data anterior
+       -- eh passado agora a data do paramentro e nao a variavel temp pois se fosse dia util nao era 
+       -- buscado a data anterior
 
         --SD#543149 inicio
         -- RDCPRE
@@ -4520,9 +4520,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
           -- retorna data venc verificada
           vr_dtfimper := pr_dtresgat;
         ELSE
-          vr_dtfimper := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
-                                                    ,pr_dtmvtolt => pr_dtresgat
-                                                    ,pr_tipo     => 'A' );
+        vr_dtfimper := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
+                                                  ,pr_dtmvtolt => pr_dtresgat
+                                                  ,pr_tipo     => 'A' );       
         END IF;
         --SD#543149 fim
         vr_qtdiaapl := vr_dtfimper - pr_dtmvtolt; -- calcula qt dias com base no novo vencimento
@@ -4717,8 +4717,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
      
       END IF;                             
 
-      vr_nrdolote := 4000 + rw_crapass.cdagenci;
-
+      vr_nrdolote := 4000 + rw_crapass.cdagenci;                         
+      
       --Buscar o lote
       OPEN cr_craplot(pr_cdcooper         
                      ,pr_dtmvtolt
@@ -20556,10 +20556,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       CURSOR cr_crapope(pr_cdcooper IN crapope.cdcooper%TYPE
                        ,pr_cdoperad IN crapope.cdoperad%TYPE) IS
         SELECT crapope.cdagenci
-              ,crapope.dsdepart
-        FROM crapope crapope
-        WHERE crapope.cdcooper = pr_cdcooper
-        AND   UPPER(crapope.cdoperad) = UPPER(pr_cdoperad);
+             , crapdpo.dsdepart
+          FROM crapdpo
+             , crapope
+         WHERE crapdpo.cddepart(+) = crapope.cddepart
+           AND crapdpo.cdcooper(+) = crapope.cdcooper
+           AND crapope.cdcooper    = pr_cdcooper
+           AND UPPER(crapope.cdoperad) = UPPER(pr_cdoperad);
       rw_crapope cr_crapope%ROWTYPE; 
       -- Busca do tipo de captacao
       CURSOR cr_crapdtc(pr_cdcooper IN crapdtc.cdcooper%TYPE

@@ -33,7 +33,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_GRAVAM AS
   PROCEDURE pc_gera_arquivo(pr_cdcoptel   IN INTEGER            --> 0- Não traz a opção TODAS / 1 - Traz a opção TODAS      
                            ,pr_tparquiv   IN VARCHAR2           --> Tipo do arquivo                      
                            ,pr_cddopcao   IN VARCHAR2           --> Opção da tela
-                           ,pr_dsdepart   IN VARCHAR2           --> Departamento do operador
+                           ,pr_cddepart   IN VARCHAR2           --> Departamento do operador
                            ,pr_xmllog     IN VARCHAR2           --> XML com informações de LOG
                            ,pr_cdcritic  OUT PLS_INTEGER        --> Código da crítica
                            ,pr_dscritic  OUT VARCHAR2           --> Descrição da crítica
@@ -75,7 +75,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_GRAVAM AS
   PROCEDURE pc_solic_proces_retorno(pr_cdcoptel   IN INTEGER            --> 0- Não traz a opção TODAS / 1 - Traz a opção TODAS      
                                    ,pr_tparquiv   IN VARCHAR2           --> Tipo do arquivo                      
                                    ,pr_cddopcao   IN VARCHAR2           --> Opção da tela
-                                   ,pr_dsdepart   IN VARCHAR2           --> Departamento do operador
+                                   ,pr_cddepart   IN VARCHAR2           --> Departamento do operador
                                    ,pr_xmllog     IN VARCHAR2           --> XML com informações de LOG
                                    ,pr_cdcritic  OUT PLS_INTEGER        --> Código da crítica
                                    ,pr_dscritic  OUT VARCHAR2           --> Descrição da crítica
@@ -114,6 +114,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
                             processamento do arquivos de retorno
                             (Adriano - SD  495514)                          
                                                                
+               25/11/2016 - P341 - Automatização BACENJUD - Alterado o parametro PR_DSDEPART 
+                            para PR_CDDEPART e as consultas do fonte para utilizar o código 
+                            do departamento nas validações (Renato Darosci - Supero)
+                                                          
   ---------------------------------------------------------------------------------------------------------------*/
   
   /* Rotina para buscar as cooperativas */
@@ -248,7 +252,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
   PROCEDURE pc_gera_arquivo(pr_cdcoptel   IN INTEGER            --> 0- Não traz a opção TODAS / 1 - Traz a opção TODAS      
                            ,pr_tparquiv   IN VARCHAR2           --> Tipo do arquivo                      
                            ,pr_cddopcao   IN VARCHAR2           --> Opção da tela
-                           ,pr_dsdepart   IN VARCHAR2           --> Departamento do operador
+                           ,pr_cddepart   IN VARCHAR2           --> Departamento do operador
                            ,pr_xmllog     IN VARCHAR2           --> XML com informações de LOG
                            ,pr_cdcritic  OUT PLS_INTEGER        --> Código da crítica
                            ,pr_dscritic  OUT VARCHAR2           --> Descrição da crítica
@@ -328,11 +332,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
       -- Apenas fechar o cursor
       CLOSE BTCH0001.cr_crapdat;
     END IF;
-      
     
-    IF  vr_cdcooper <> 3           OR
-       (pr_dsdepart <> 'TI'        AND
-        pr_dsdepart <> 'PRODUTOS') THEN 
+
+    IF  vr_cdcooper <> 3 OR pr_cddepart NOT IN (14,20) THEN 
 
       -- Montar mensagem de critica
       vr_dscritic := 'Operador sem autorizacao para gerar arquivos!';
@@ -983,7 +985,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
   PROCEDURE pc_solic_proces_retorno(pr_cdcoptel   IN INTEGER            --> 0- Não traz a opção TODAS / 1 - Traz a opção TODAS      
                                    ,pr_tparquiv   IN VARCHAR2           --> Tipo do arquivo                      
                                    ,pr_cddopcao   IN VARCHAR2           --> Opção da tela
-                                   ,pr_dsdepart   IN VARCHAR2           --> Departamento do operador
+                                   ,pr_cddepart   IN VARCHAR2           --> Departamento do operador
                                    ,pr_xmllog     IN VARCHAR2           --> XML com informações de LOG
                                    ,pr_cdcritic  OUT PLS_INTEGER        --> Código da crítica
                                    ,pr_dscritic  OUT VARCHAR2           --> Descrição da crítica
@@ -1106,9 +1108,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
         CLOSE BTCH0001.cr_crapdat;
       END IF;        
       
-      IF  vr_cdcooper <> 3           OR
-         (pr_dsdepart <> 'TI'        AND
-          pr_dsdepart <> 'PRODUTOS') THEN 
+      IF  vr_cdcooper <> 3 OR pr_cddepart NOT IN (14,20) THEN 
 
         -- Montar mensagem de critica
         vr_dscritic := 'Operador sem autorizacao para gerar arquivos!';
@@ -1262,10 +1262,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
     
     CURSOR cr_crapope (pr_cdcooper crapope.cdcooper%TYPE
                       ,pr_cdoperad crapope.cdoperad%TYPE) IS
-      SELECT dsdepart
-        FROM crapope
-       WHERE cdcooper = pr_cdcooper
-         AND cdoperad = pr_cdoperad;
+      SELECT dpo.dsdepart
+        FROM crapdpo   dpo
+           , crapope   ope
+       WHERE dpo.cddepart = ope.cddepart
+         AND dpo.cdcooper = ope.cdcooper
+         AND ope.cdcooper = pr_cdcooper
+         AND ope.cdoperad = pr_cdoperad;
     rw_crapope cr_crapope%ROWTYPE;
     
     --Tipo de Dados para cursor data

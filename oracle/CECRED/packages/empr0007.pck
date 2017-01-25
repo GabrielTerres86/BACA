@@ -321,6 +321,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
   --
   --             28/11/2016 - Adicionado liberação para canais para gerar boleto de quitação de
   --                          emprestimo. (Kelvin SD 535306)
+  --
+  --             29/11/2016 - P341 - Automatização BACENJUD - Alterado para validar o departamento à partir
+  --                          do código e não mais pela descrição (Renato Darosci - Supero)
+  --
   ---------------------------------------------------------------------------
 
   PROCEDURE pc_busca_convenios(pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da Cooperativa
@@ -1999,23 +2003,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
           vr_dtultpag := rw_crapepr.dtultpag;
           -- Chamar rotina de cálculo externa
           EMPR0001.pc_leitura_lem_car(pr_cdcooper    => pr_cdcooper
-                                 ,pr_cdprogra    => vr_cdprogra
-                                 ,pr_nrdconta    => rw_crapepr.nrdconta
-                                 ,pr_nrctremp    => rw_crapepr.nrctremp
-                                 ,pr_dtcalcul    => NULL
-                                 ,pr_diapagto    => vr_diapagto
-                                 ,pr_txdjuros    => vr_txdjuros
+                                     ,pr_cdprogra    => vr_cdprogra
+                                     ,pr_nrdconta    => rw_crapepr.nrdconta
+                                     ,pr_nrctremp    => rw_crapepr.nrctremp
+                                     ,pr_dtcalcul    => NULL
+                                     ,pr_diapagto    => vr_diapagto
+                                     ,pr_txdjuros    => vr_txdjuros
                                      ,pr_qtprecal    => vr_qtprecal
-                                 ,pr_qtprepag    => vr_qtprepag
-                                 ,pr_vlprepag    => vr_vlprepag
-                                 ,pr_vljurmes    => vr_vljurmes
-                                 ,pr_vljuracu    => vr_vljuracu
-                                 ,pr_vlsdeved    => vr_vlsdeved
-                                 ,pr_dtultpag    => vr_dtultpag
-                                 ,pr_qtmesdec    => vr_qtmesdec
-                                 ,pr_vlpreapg    => vr_vlpreapg
-                                 ,pr_cdcritic    => vr_cdcritic
-                                 ,pr_dscritic    => vr_dscritic);
+                                     ,pr_qtprepag    => vr_qtprepag
+                                     ,pr_vlprepag    => vr_vlprepag
+                                     ,pr_vljurmes    => vr_vljurmes
+                                     ,pr_vljuracu    => vr_vljuracu
+                                     ,pr_vlsdeved    => vr_vlsdeved
+                                     ,pr_dtultpag    => vr_dtultpag
+                                     ,pr_qtmesdec    => vr_qtmesdec
+                                     ,pr_vlpreapg    => vr_vlpreapg
+                                     ,pr_cdcritic    => vr_cdcritic
+                                     ,pr_dscritic    => vr_dscritic);
           -- Se a rotina retornou com erro
           IF vr_dscritic IS NOT NULL OR vr_cdcritic IS NOT NULL THEN
             -- Gerar exceção
@@ -3527,7 +3531,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                                ao dia da parcela. (Rafael)
                                
                   16/12/2015 - Nao permitir gerar boleto TR com vencimento igual ou superior
-                               ao dia da parcela e data do dia inferior a data do debito. (Rafael)                               
+                               ao dia da parcela e data do dia inferior a data do debito. (Rafael)
                                
                   29/06/2016 - Adicionar validacao de substr para a leitura da crapass com a 
                                crapenc (Lucas Ranghetti #456095)
@@ -3599,16 +3603,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 			CURSOR cr_crapass(pr_cdcooper IN crapsab.cdcooper%TYPE
 											 ,pr_nrdconta IN crapsab.nrdconta%TYPE) IS
 				SELECT ass.nrcpfcgc nrcpfcgc
-				      ,ass.inpessoa inpessoa
-                      ,SUBSTR(ass.nmprimtl,1,50) nmprimtl
-					  ,ass.cdagenci cdagenci
-					  ,enc.dsendere dsendere
-					  ,enc.nrendere nrendere
-					  ,enc.nrcepend nrcepend
-                      ,SUBSTR(enc.complend,1,40) complend
-                      ,SUBSTR(enc.nmbairro,1,30) nmbairro
-					  ,enc.nmcidade nmcidade
-					  ,enc.cdufende cdufende
+              ,ass.inpessoa inpessoa              
+              ,SUBSTR(ass.nmprimtl,1,50) nmprimtl
+              ,ass.cdagenci cdagenci
+              ,enc.dsendere dsendere
+              ,enc.nrendere nrendere
+              ,enc.nrcepend nrcepend
+              ,SUBSTR(enc.complend,1,40) complend
+              ,SUBSTR(enc.nmbairro,1,30) nmbairro
+              ,enc.nmcidade nmcidade
+              ,enc.cdufende cdufende
 				  FROM crapass ass
 					    ,crapenc enc
 				 WHERE ass.cdcooper = pr_cdcooper
@@ -3633,7 +3637,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       -- cursor do operador
       CURSOR cr_ope (pr_cdcooper IN crapope.cdcooper%TYPE
                     ,pr_cdoperad IN crapope.cdoperad%TYPE) IS
-        SELECT dsdepart
+        SELECT cddepart
           FROM crapope ope
          WHERE ope.cdcooper = pr_cdcooper
            AND UPPER(ope.cdoperad) = UPPER(pr_cdoperad);
@@ -3659,9 +3663,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
          END IF;
          
          -- se o boleto eh para quitacao do contrato e nao for da central telefonica, criticar...
-         IF pr_tpparepr = 4 AND 
-            nvl(rw_ope.dsdepart,' ') <> 'CENTRAL TELEFONICA' AND
-            nvl(rw_ope.dsdepart,' ') <> 'CANAIS' THEN --Adicionado CANAIS (SD 548663)
+         IF pr_tpparepr = 4 AND nvl(rw_ope.cddepart,0) IN (1,3) THEN  --Adicionado CANAIS (SD 548663)
             -- Atribui crítica
             vr_cdcritic := 0;
             vr_dscritic := 'Quitacao  do contrado permitido apenas para operadores da CENTRAL TELEFONICA e CANAIS.';
@@ -5657,7 +5659,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
       PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
                                       pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
-      BEGIN
+  BEGIN
         --> Controlar geração de log de execução dos jobs 
         BTCH0001.pc_log_exec_job( pr_cdcooper  => 3    --> Cooperativa
                                  ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
@@ -5666,7 +5668,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                                  ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
                                  ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
       END pc_controla_log_batch;
-                                   
+    
   BEGIN
     
       vr_cdcooper := 0;

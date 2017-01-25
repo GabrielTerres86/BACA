@@ -147,10 +147,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_GPS(pr_cdcooper in crapcop.cdcooper%TY
       BEGIN
         DELETE craplgp lgp
          WHERE lgp.cdcooper  = pr_cdcooper
-           AND lgp.dtmvtolt  <= add_months(rw_crapdat.dtmvtolt, -2) -- Inferior a 2 Meses atrás
            AND lgp.idsicred  = 0  -- Guias Nao Autenticadas pelo Sicredi
            AND lgp.nrseqagp  > 0  -- Guias Agendadas
-           AND lgp.flgativo  = 0; -- Apenas os que foram cancelados pelo processo
+           AND lgp.flgativo  = 0  -- Apenas os que foram cancelados pelo processo
+           AND EXISTS (SELECT 1
+                         FROM craplau lau
+                        WHERE lau.cdcooper = lgp.cdcooper
+                          AND lau.nrdconta = lgp.nrctapag
+                          AND lau.nrseqagp = lgp.nrseqagp
+                          AND lau.dtdebito <= add_months(rw_crapdat.dtmvtolt, -2)) -- Inferior a 2 Meses atrás
+          ;
       EXCEPTION
         WHEN OTHERS THEN
           vr_dscritic := 'Job PC_JOB_GPS nao foi executado pois ocorreu erro '||

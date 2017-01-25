@@ -131,6 +131,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
   --
   --              03/11/2016 - Ajuste na procedure pc_reagenda_job para reagendar o job com
   --                           o fusohorario do servidor que esta executando GMT (Tiago/Thiago SD532302)
+  --
+  --              29/11/2016 - P341 - Automatização BACENJUD - Alterado para validar o departamento à partir
+  --                           do código e não mais pela descrição (Renato Darosci - Supero)
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   /* Procedures/functions de uso privado */
@@ -142,7 +146,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
                                     ,pr_nmdatela IN craptel.nmdatela%TYPE      --> Nome da tela
                                     ,pr_nmrotina IN craptel.nmrotina%TYPE      --> Nome da rotina
                                     ,pr_inproces IN crapdat.inproces%TYPE      --> Indicador do processo
-                                    ,pr_dsdepart OUT crapope.dsdepart%TYPE     --> Descrição do departamento
+                                    ,pr_cddepart OUT crapope.cddepart%TYPE     --> Descrição do departamento
                                     ,pr_cdcritic OUT PLS_INTEGER               --> Código de retorno
                                     ,pr_dscritic OUT VARCHAR2) IS              --> Descrição do retorno
     -- ..........................................................................
@@ -201,10 +205,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
       -- Busca dados do cadastro dos operadores
       CURSOR cr_crapope(pr_cdcooper IN crapope.cdcooper%TYPE      --> Código da cooperativa
                        ,pr_cdoperad IN crapope.cdoperad%TYPE) IS  --> Código do operador
-      SELECT pe.dsdepart
+      SELECT pe.cddepart
         FROM crapope pe
-       WHERE pe.cdcooper = pr_cdcooper
-         AND UPPER(pe.cdoperad) = UPPER(pr_cdoperad);
+       WHERE UPPER(pe.cdoperad) = UPPER(pr_cdoperad)
+         AND pe.cdcooper        = pr_cdcooper;
       rw_crapope cr_crapope%ROWTYPE;
 
       -- Busca dados do cadastro de telas
@@ -261,7 +265,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
         RAISE vr_exc_saida;
       ELSE
-        pr_dsdepart := rw_crapope.dsdepart;
+        pr_cddepart := rw_crapope.cddepart;
         CLOSE cr_crapope;
       END IF;
 
@@ -404,7 +408,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
   BEGIN
     DECLARE
       vr_exc_saida   EXCEPTION;             --> Controle de erros
-      vr_dsdepart    crapope.dsdepart%TYPE; --> Descrição do departamento
+      vr_cddepart    crapope.cddepart%TYPE; --> Descrição do departamento
 
       -- Busca dados do cadastro com permissoes de acesso as telas do sistema
       CURSOR cr_crapace(pr_cdcooper IN crapace.cdcooper%TYPE
@@ -429,7 +433,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
                               ,pr_nmdatela => pr_nmdatela
                               ,pr_nmrotina => pr_nmrotina
                               ,pr_inproces => pr_inproces
-                              ,pr_dsdepart => vr_dsdepart
+                              ,pr_cddepart => vr_cddepart
                               ,pr_cdcritic => pr_cdcritic
                               ,pr_dscritic => pr_dscritic);
 
@@ -439,7 +443,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
       END IF;
 
       -- Verifica qual é o departamento de operação
-      IF vr_dsdepart <> 'TI' THEN
+      IF vr_cddepart <> 20 THEN
         -- Verifica as permissões de execução no cadastro
         OPEN cr_crapace(pr_cdcooper, pr_cdoperad, pr_nmdatela, pr_nmrotina, pr_cddopcao);
         FETCH cr_crapace
@@ -947,7 +951,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
     --   Alteracoes: 30/04/2014 - Implementação do cadastro de ações para execução (Petter - Supero).
     --   
     --               03/03/2015 - Alteracao do tamanho da variavel vr_sql para o max
-    --                            do tipo varchar2 (Tiago).    
+    --                            do tipo varchar2 (Tiago).                                       
     --
     --               06/06/2016 - Ajustes realizados:
     --                            -> Incluido upper nos campos que são indice da tabela craprdr

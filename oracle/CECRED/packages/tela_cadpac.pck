@@ -228,7 +228,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
   -- Seleciona operador
   CURSOR cr_crapope(pr_cdcooper crapope.cdcooper%TYPE
                    ,pr_cdoperad crapope.cdoperad%TYPE) IS
-    SELECT crapope.dsdepart
+    SELECT crapope.cddepart
       FROM crapope
      WHERE crapope.cdcooper = pr_cdcooper
        AND UPPER(crapope.cdoperad) = UPPER(pr_cdoperad);
@@ -643,11 +643,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
       -- Verifica se tem permissao de alteracao
       IF (pr_cdagenci = 90 OR pr_cdagenci = 91) AND
           pr_cddopcao <> 'C'                    AND
-          rw_crapope.dsdepart <> 'TI'                   AND
-          rw_crapope.dsdepart <> 'SUPORTE'              AND
-          rw_crapope.dsdepart <> 'COORD.ADM/FINANCEIRO' AND
-          rw_crapope.dsdepart <> 'COORD.PRODUTOS'       AND
-          rw_crapope.dsdepart <> 'COMPE'               THEN
+          -- Não for 4-COMPE / 8-COORD.ADM/FINANCEIRO / 9-COORD.PRODUTOS / 18-SUPORTE / 20-TI
+          rw_crapope.cddepart NOT IN (4,8,9,18,20) THEN
           vr_dscritic := 'PA 90 ou PA 91 podem ser alterados pelos departamentos: TI, SUPORTE, COORD.ADM/FIN., COORD.PROD e COMPE.';
           RAISE vr_exc_erro;
       END IF;
@@ -1668,8 +1665,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
       FETCH cr_crapope INTO rw_crapope;
       CLOSE cr_crapope;
       
-      -- Caso seja da COMPE ou TI
-      IF rw_crapope.dsdepart = 'COMPE' OR rw_crapope.dsdepart = 'TI' THEN
+      -- Caso seja da 4-COMPE ou 20-TI
+      IF rw_crapope.cddepart IN (4,20) THEN
 
         -- Horario SICREDI
         vr_hhini    := TO_NUMBER(SUBSTR(pr_hhsicini,1,2));
@@ -1762,7 +1759,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
 
         END IF; -- Fim Deposito TAA
 
-      END IF; -- vr_dsdepart = 'COMPE' OR vr_dsdepart = 'TI'
+      END IF; -- rw_crapope.cddepart IN (4,20)
       
       -- Se for INTERNET BANK ou TAA
       IF pr_cdagenci = 90 OR pr_cdagenci = 91 THEN
