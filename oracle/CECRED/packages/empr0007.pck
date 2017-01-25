@@ -1451,7 +1451,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       Sistema : CECRED
       Sigla   : EMPR
       Autor   : Carlos Rafael Tanholi
-      Data    : Agosto/15.                    Ultima atualizacao: 16/01/2016
+      Data    : Agosto/15.                    Ultima atualizacao: 20/01/2017
 
       Dados referentes ao programa:
 
@@ -1479,9 +1479,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                    em um acordo ativo, pois para ACORDOS poderá ocorrer o pagamento de 
                    mais de uma parcela do acordo no mesmo mês ( Renato Darosci - Supero )
                    
-      16/01/2016 - Alterado para retornar valor total pago do emprestimo. 
+      16/01/2017 - Alterado para retornar valor total pago do emprestimo. 
                    PRJ302 - Acordo (Odirlei-AMcom)
                    
+      20/01/2017 - Ajuste para permitir efetuar varios pagamentos dentro do mes. (Chamado: 585221)
     ..............................................................................*/
 
     DECLARE
@@ -1590,7 +1591,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
            AND epr.nrdconta = pr_nrdconta          --> Nr. da Conta
 					 AND epr.nrctremp = pr_nrctremp          --> Nr. do contrato
            AND epr.inliquid = 0                    --> Somente não liquidados
-           -- AND epr.indpagto = 0 --> Nao pago no mês ainda -- Removido por Renato Darosci - 19/10/2016
            AND epr.flgpagto = 0                    --> Débito em conta
            AND epr.tpemprst = 0;                   --> Price
 			rw_crapepr cr_crapepr%ROWTYPE;
@@ -1918,11 +1918,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       OPEN cr_crapepr;
 			FETCH cr_crapepr INTO rw_crapepr;
 
-      -- Se encontrou o registro E...
-      IF cr_crapepr%FOUND AND
-        -- Se o flag estiver indicando que não há acordo ativo, deve validar o indicador de pagamento
-        ((NVL(vr_flgativo,0) = 0 AND rw_crapepr.indpagto = 0) OR NVL(vr_flgativo,0) = 1)  THEN
-				
+      IF cr_crapepr%FOUND THEN				
 				-- Busca do cadastro de linhas de crédito de empréstimo
 				FOR rw_craplcr IN cr_craplcr(rw_crapepr.cdlcremp) LOOP
 					-- Guardamos a taxa e o indicador de emissão de boletos
@@ -2326,23 +2322,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
               END IF;
             END IF;
 
-            -- Se o contrato estiver em um acordo ativo
-            IF NVL(vr_flgativo,0) = 0 THEN
-              vr_nrdoclcm := rw_crapepr.nrctremp;
-            ELSE 
-              /*****************************************************************************************
-              ** Quando estiver realizando o lançamento de um empréstimo, devido a pagamento do acordo
-              ** deve lançar o número do documento com o NRSEQDIG e não com o número do contrato, para
-              ** que assim seja possivel realizar mais de um lançamento para o mesmo dia
-              ** Isto apesar de raro, pode acontecer quando o cooperado pagar no mesmo dia uma parcela
-              ** em atraso do acordo, juntamente com a parcela atual no mesmo dia.
-              **
-              ** RENATO DAROSCI - 19/10/2016 - PROJETO 302 - SISTEMA DE ACORDOS
-              ** 
-              ******************************************************************************************/
-              vr_nrdoclcm := rw_craplot_8457.nrseqdig + 1;
-            END IF;
-            
+            vr_nrdoclcm := rw_craplot_8457.nrseqdig + 1;
             
             -- Efetuar lancamento na conta-corrente
             BEGIN
@@ -2370,7 +2350,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                                  ,to_char(rw_crapepr.nrdconta,'fm00000000') -- nrdctitg
                                  ,vr_nrdoclcm                               -- nrdocmto
                                  ,108 --> Prest Empr.                       -- cdhistor
-                                 ,rw_craplot_8457.nrseqdig + 1              -- nrseqdig
+                                 ,vr_nrdoclcm                               -- nrseqdig
                                  ,vr_vldescto);                             -- vllanmto
             EXCEPTION
               WHEN OTHERS THEN
@@ -2426,7 +2406,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                                  ,0                                            -- insitavs
                                  ,rw_crapepr.nrdconta                          -- nrdconta
                                  ,vr_nrdoclcm                                  -- nrdocmto
-                                 ,rw_craplot_8457.nrseqdig + 1                 -- nrseqdig
+                                 ,vr_nrdoclcm                                  -- nrseqdig
                                  ,2                                            -- tpdaviso
                                  ,0                                            -- vldebito
                                  ,0                                            -- vlestdif
@@ -2693,83 +2673,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       
           END IF;
 
-          -- Buscar a data do próximo pagamento, iniciaremos pela
-          -- data do pagamento atual adicionando um mês a mesma
-          vr_dtdpagto := gene0005.fn_calc_data(pr_dtmvtolt => rw_crapepr.dtdpagto --> Data do pagamento anterior
-                                              ,pr_qtmesano => 1                   --> +1 mês
-                                              ,pr_tpmesano => 'M'
-                                              ,pr_des_erro => vr_dscritic);
-          -- Parar se encontrar erro
-          IF vr_dscritic IS NOT NULL THEN
-            RAISE vr_exc_undo;
-          END IF;
-          -- Iniciando a data do próximo
-          vr_prxpagto := null;
-          -- Se o valor da prestação do mes permanece igual ao de desconto
-          IF vr_vlpremes = vr_vldescto THEN
-            -- Se a data de pagamento ainda não venceu
-            IF vr_dtdpagto < rw_crapdat.dtmvtolt THEN
-
-              -- Sair quando a data de pagamento for superior ou igual ao movimento atual
-              LOOP
-                EXIT WHEN vr_dtdpagto >= rw_crapdat.dtmvtolt;
-                -- Adicionar de 1 em 1 mês até a data alcançar a data atual
-                vr_dtdpagto := gene0005.fn_calc_data(pr_dtmvtolt => vr_dtdpagto         --> Data do pagamento anterior
-                                                    ,pr_qtmesano => 1                   --> +1 mês
-                                                    ,pr_tpmesano => 'M'
-                                                    ,pr_des_erro => vr_dscritic);
-                -- Parar se encontrar erro
-                IF vr_dscritic IS NOT NULL THEN
-                  RAISE vr_exc_undo;
-                END IF;
-              END LOOP;
-              -- Utilizar a data buscada acima
-              vr_prxpagto := vr_dtdpagto;
-            ELSE
-              -- Próximo pagamento é 1 mes após o anterior
-              vr_prxpagto := vr_dtdpagto;
-            END IF;
-          ELSE
-            -- Próximo pagamento é igual ao pagamento atual
-            vr_prxpagto := rw_crapepr.dtdpagto;
-          END IF;
-
-          -- Se a data do pagamento emprestimo for anterior a data util anterior
-          -- ou estiver entre a data atual e a data util anterior
-          IF rw_crapepr.dtdpagto < rw_crapdat.dtmvtoan OR (rw_crapepr.dtdpagto < rw_crapdat.dtmvtolt AND rw_crapepr.dtdpagto > rw_crapdat.dtmvtoan) THEN
-            -- Se o valor da prestação for igual a de desconto
-            IF vr_vlpremes = vr_vldescto THEN
-              -- Se a data do pagamento for do mesmo mês da data corrente
-              IF TRUNC(vr_dtdpagto,'MM') = TRUNC(rw_crapdat.dtmvtolt,'MM') THEN
-                -- Considerar a parcela como em aberto
-                rw_crapepr.indpagto := 0;
-              ELSE
-                -- Considerar a parcela como paga
-                rw_crapepr.indpagto := 1;
-              END IF;
-            ELSE
-              -- Considerar a parcela como em aberto
-              rw_crapepr.indpagto := 0;
-            END IF;
-          -- Se o valor da prestação for igual a de desconto
-          ELSIF vr_vlpremes = vr_vldescto THEN
-            -- Considerar a parcela como paga
-            rw_crapepr.indpagto := 1;
-          ELSE
-            -- Considerar a parcela como em aberto
-            rw_crapepr.indpagto := 0;
-          END IF;
-
-          -- Se houve pagamento por fora
-          IF vr_pgtofora THEN
-            -- Considerar a parcela como paga
-            rw_crapepr.indpagto := 1;
-            -- Utilizar como próximo pagamento a data encontrada acima
-            vr_prxpagto := vr_dtdpagto;
-          END IF;
-
-          -- Atualizar a data de pagamento do rowtype para atualização na tabela posteriormente
-          rw_crapepr.dtdpagto := vr_prxpagto;
+          -- Fazer o calculo dos meses decorridos
+          vr_qtmesdec := EMPR0009.fn_calc_meses_decorridos(pr_cdcooper => pr_cdcooper
+                                                          ,pr_qtmesdec => vr_qtmesdec
+                                                          ,pr_dtdpagto => rw_crapepr.dtdpagto
+                                                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt);
+                                             
+          -- Calcular a real data de pagamento
+          rw_crapepr.dtdpagto := EMPR0009.fn_calc_data_pagamento(pr_qtpreemp => rw_crapepr.qtpreemp
+                                                                ,pr_qtmesdec => vr_qtmesdec
+                                                                ,pr_qtprecal => vr_qtprecal
+                                                                ,pr_dtdpagto => rw_crapepr.dtdpagto
+                                                                ,pr_dtcalcul => rw_crapdat.dtmvtolt);
 
           -- Finalmente após todo o processamento, é atualizada a tabela de empréstimo CRAPEPR
           BEGIN
@@ -2778,7 +2693,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                   ,dtultpag = rw_crapepr.dtultpag
                   ,txjuremp = rw_crapepr.txjuremp
                   ,inliquid = rw_crapepr.inliquid
-                  ,indpagto = rw_crapepr.indpagto
              WHERE rowid = rw_crapepr.rowid;
           EXCEPTION
             WHEN OTHERS THEN
