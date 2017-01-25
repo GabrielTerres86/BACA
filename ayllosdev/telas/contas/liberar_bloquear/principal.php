@@ -7,6 +7,9 @@
  * --------------
  * ALTERAÇÕES   : 05/01/2016 - Adicionar leitura dos campos do XML flgcrdpa e libcrdpa, para
                                o comportamento do campo de libera credito pre-aprovado (Anderson)
+							   
+				  27/07/2016 - Adicionados novos campos para a fase 3 do projeto pre aprovado.
+							   Rotinas convertidas para o oracle (Lombardi)
  * --------------
  */	
 ?>
@@ -45,38 +48,36 @@
 	// Monta o xml de requisição
 	$xml  = "";
 	$xml .= "<Root>";
-	$xml .= "	<Cabecalho>";
-	$xml .= "		<Bo>b1wgen0193.p</Bo>";					
-	$xml .= "		<Proc>busca_dados</Proc>";
-	$xml .= "	</Cabecalho>";
 	$xml .= "	<Dados>";
-	$xml .= '       <cdcooper>'.$glbvars['cdcooper'].'</cdcooper>';
-	$xml .= '		<cdagenci>'.$glbvars['cdagenci'].'</cdagenci>';
-	$xml .= '		<nrdcaixa>'.$glbvars['nrdcaixa'].'</nrdcaixa>';
-	$xml .= '		<cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
-	$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';
-	$xml .= '		<dtmvtolt>'.$glbvars['dtmvtolt'].'</dtmvtolt>';
-	$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';	
 	$xml .= '		<nrdconta>'.$nrdconta.'</nrdconta>';
-	$xml .= '		<idseqttl>'.$idseqttl.'</idseqttl>';
 	$xml .= "	</Dados>";
 	$xml .= "</Root>";
 
 	// Executa script para envio do XML
-	$xmlResult = getDataXML($xml);	
+	$xmlResult = mensageria($xml, "TELA_CONTAS_DESAB", "DESOPE_BUSCA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	// Cria objeto para classe de tratamento de XML
-	$xmlObjRegistro = getObjectXML($xmlResult);
+	$xmlObjeto = getObjectXML($xmlResult);
 	
-    if (strtoupper($xmlObjRegistro->roottag->tags[0]->name) == 'ERRO') {
-        exibirErro('error',$xmlObjRegistro->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);
+	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
+		$msgErro = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
+		if ($msgErro == "") {
+			$msgErro = $xmlObjeto->roottag->tags[0]->cdata;
+		}
+		exibirErro('error',htmlentities($msgErro),'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);
     }
 
 	include('form_liberar_bloquear.php');
 ?>
 <script type='text/javascript'>
-	$('#flgrenli','#frmLiberarBloquear').val('<?= ((strtoupper($xmlObjRegistro->roottag->tags[0]->attributes['FLGRENLI']) == "NO") ? "no" : "yes") ?>');
-	$('#flgcrdpa','#frmLiberarBloquear').val('<?= ((strtoupper($xmlObjRegistro->roottag->tags[0]->attributes['FLGCRDPA']) == "NO") ? "no" : "yes") ?>');
-	var libera_crd_pa = <?= ((strtoupper($xmlObjRegistro->roottag->tags[0]->attributes['LIBCRDPA']) == "NO") ? "false" : "true") ?>;
+	$('#flgrenli','#frmLiberarBloquear').val('<? echo (getByTagName($xmlObjeto->roottag->tags[0]->tags,'flgrenli') == 0) ? "no" : "yes" ?>');
+	$('#flgcrdpa','#frmLiberarBloquear').val('<? echo (getByTagName($xmlObjeto->roottag->tags[0]->tags,'flgcrdpa') == 0) ? "no" : "yes" ?>');
+	$('#dtultatt','#frmLiberarBloquear').val('<? echo getByTagName($xmlObjeto->roottag->tags[0]->tags,'dtatualiza') ?>');
+	$('#motivo_bloqueio','#frmLiberarBloquear').val('<? echo getByTagName($xmlObjeto->roottag->tags[0]->tags,'dsmotivo') ?>');
+	$('#liberado_sem','#frmLiberarBloquear').val('<? echo (getByTagName($xmlObjeto->roottag->tags[0]->tags,'preautom') == 0) ? "no" : "yes" ?>');
+	$('#liberado_man','#frmLiberarBloquear').val('<? echo (getByTagName($xmlObjeto->roottag->tags[0]->tags,'premanua') == 0) ? "no" : "yes" ?>');
+	$('#dscarga','#frmLiberarBloquear').val('<? echo getByTagName($xmlObjeto->roottag->tags[0]->tags,'dscarga') ?>');
+	$('#dtinicial','#frmLiberarBloquear').val('<? echo getByTagName($xmlObjeto->roottag->tags[0]->tags,'dtinicial') ?>');
+	$('#dtfinal','#frmLiberarBloquear').val('<? echo getByTagName($xmlObjeto->roottag->tags[0]->tags,'dtfinal') ?>');
 	var operacao = '<? echo $operacao;  ?>';
-	controlaLayout(operacao, libera_crd_pa);
+	controlaLayout(operacao);
 </script>

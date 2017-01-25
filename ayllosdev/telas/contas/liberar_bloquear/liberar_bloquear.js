@@ -5,6 +5,7 @@
  * OBJETIVO     : Biblioteca de funções da rotina Liberar/Bloquear  da tela de CONTAS
  * --------------
  * ALTERAÇÕES   : 06/01/2016 - Adicionar campo de libera credito pre-aprovado (Anderson).
+ *                27/07/2016 - Adicionados novos campos para a fase 3 do projeto pre aprovado (Lombardi)
  * --------------
  */
 // Função para acessar opções da rotina
@@ -151,34 +152,58 @@ function manterRotina(operacao) {
 	});
 }
 
-function controlaLayout(operacao, libera_crd_pa) {	
+function controlaLayout(operacao) {	
 	
-	var rFlgrenli = $('label[for="flgrenli"]','#frmLiberarBloquear');
-	var cFlgrenli = $('#flgrenli','#frmLiberarBloquear');	
+	var rFlgrenli = $('label[for="flgrenli"]', '#frmLiberarBloquear');
 	var rFlgcrdpa = $('label[for="flgcrdpa"]', '#frmLiberarBloquear');
+	var rDtultatt = $('label[for="dtultatt"]', '#frmLiberarBloquear');
+	var rMotivo_bloqueio = $('label[for="motivo_bloqueio"]', '#frmLiberarBloquear');
+	var rLiberado_sem = $('label[for="liberado_sem"]', '#frmLiberarBloquear');
+	var rLiberado_man = $('label[for="liberado_man"]', '#frmLiberarBloquear');
+	var rDscarga = $('label[for="dscarga"]', '#frmLiberarBloquear');
+	var rDtinicial = $('label[for="dtinicial"]', '#frmLiberarBloquear');
+	
+	var cFlgrenli = $('#flgrenli', '#frmLiberarBloquear');
 	var cFlgcrdpa = $('#flgcrdpa', '#frmLiberarBloquear');
+	var cDtultatt = $('#dtultatt', '#frmLiberarBloquear');
+	var cMotivo_bloqueio = $('#motivo_bloqueio', '#frmLiberarBloquear');
+	var cLiberado_sem = $('#liberado_sem', '#frmLiberarBloquear');
+	var cLiberado_man = $('#liberado_man', '#frmLiberarBloquear');
+	var cDscarga = $('#dscarga', '#frmLiberarBloquear');
+	var cDtinicial = $('#dtinicial', '#frmLiberarBloquear');
+	var cDtfinal = $('#dtfinal', '#frmLiberarBloquear');
 
 	$('#divConteudoOpcao').hide(0, function() {
 		$('#frmLiberarBloquear').css({'padding-top':'5px','padding-bottom':'15px'});		
-		cFlgrenli.css('width','50px');
-		cFlgrenli.desabilitaCampo();
-		cFlgcrdpa.css('width', '50px');
-		cFlgcrdpa.desabilitaCampo();
+		cFlgrenli.css('width','50px').desabilitaCampo();
+		cFlgcrdpa.css('width', '50px').desabilitaCampo();
+		cDtultatt.css('width', '80px').desabilitaCampo();
+		cMotivo_bloqueio.css('width', '100px').desabilitaCampo();
+		cLiberado_sem.css('width', '50px').desabilitaCampo();
+		cLiberado_man.css('width', '50px').desabilitaCampo();
+		cDscarga.css('width', '285px').desabilitaCampo();
+		cDtinicial.css('width', '80px').desabilitaCampo();
+		cDtfinal.css('width', '80px').desabilitaCampo();
 		
 		// Formatação dos rotulos
-		rFlgrenli.css('width', '200px');
-		rFlgcrdpa.css('width', '200px');
+		rFlgrenli.css('width', '250px');
+		rFlgcrdpa.css('width', '250px');
+		rDtultatt.css('width', '150px');
+		rMotivo_bloqueio.css('width', '200px');
+		rLiberado_sem.css('width', '245px');
+		rLiberado_man.css('width', '245px');
+		rDscarga.css('width', '245px').addClass('rotulo');
+		rDtinicial.css('width', '245px').addClass('rotulo');
 				
 		switch(operacao) {
 			// Consulta Alteração
 			case 'CA': 
 			    cFlgrenli.habilitaCampo();
-			    if (libera_crd_pa) {
 			        cFlgcrdpa.habilitaCampo();
-			    }
 			break;
 		}
 		
+		divRotina.css('width','600px');
 		layoutPadrao();
 		hideMsgAguardo();
 		bloqueiaFundo(divRotina);	
