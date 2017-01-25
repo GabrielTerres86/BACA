@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Abril/2004                        Ultima atualizacao: 19/01/2017
+   Data    : Abril/2004                        Ultima atualizacao: 25/01/2017
 
    Dados referentes ao programa:
 
@@ -379,7 +379,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                             para a mesma conta porém com data de pagamento ou valor diferentes
                             (Lucas Ranghetti #533520)
               
-                  
+               25/01/2017 - Tratado para qdo for validar se é uma conta migrada e nao encontrar
+                            verificar se é uma cooperativa migrada e criar critica de conta errada   
+                            (Tiago/Fabricio SD596101)
 ............................................................................ */
 
 
@@ -522,6 +524,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
            AND craptco.tpctatrf = 1
            AND craptco.flgativo = 1;
       rw_craptco_conta_incorporada cr_craptco%ROWTYPE;
+
+      CURSOR cr_craptco_coop(pr_cdcooper crapcop.cdcooper%TYPE,
+                             pr_cdcopant crapcop.cdcooper%TYPE) IS
+        SELECT cdcooper, cdcopant
+          FROM craptco
+         WHERE craptco.cdcooper = pr_cdcooper
+           AND craptco.cdcopant = pr_cdcopant
+           AND craptco.tpctatrf = 1
+           AND craptco.flgativo = 1;
+      rw_craptco_coop cr_craptco_coop%ROWTYPE;
 
       -- Cursor sobre os dados do associado
       CURSOR cr_crapass(pr_cdcooper crapass.cdcooper%TYPE,
@@ -2588,7 +2600,24 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                         vr_nrdolote := vr_dstextab;
                       ELSE
                          CLOSE cr_craptco_conta_incorporada;
-                         continue; /* Nao pertence a Cooperativa que estou rodando...*/
+                         
+                         OPEN cr_craptco_coop(pr_cdcooper => pr_cdcooper,
+                                              pr_cdcopant => vr_cdcooper);                                              
+                         FETCH cr_craptco_coop INTO rw_craptco_coop;
+                         
+                         IF cr_craptco_coop%FOUND THEN                                                  
+                            CLOSE cr_craptco_coop;
+                            -- Somente ira gerar crapndb caso o registro não seja do tipo "C"
+                            IF vr_tpregist <> 'C' THEN
+                               vr_cdcooper := pr_cdcooper;
+                               pc_critica_debito_cooperativa(2, rw_gnconve.cdhisdeb, vr_tab_nmarquiv(i));
+                            END IF;
+
+                            CONTINUE; /* Nao pertence a Cooperativa que estou rodando...*/
+                         END IF;
+                         
+                         CLOSE cr_craptco_coop;
+                         CONTINUE;
                       END IF;                    
 
                     ELSE /* Max.Int */
@@ -2771,8 +2800,24 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                        IF cr_craptco_conta_incorporada%FOUND THEN -- Se for uma conta transferida
                          vr_flg_ctamigra := TRUE;
                          vr_nrdconta := rw_craptco_conta_incorporada.nrdconta;
-                       ELSE
-                          continue; /* Nao pertence a Cooperativa que estou rodando...*/
+                       ELSE                         
+                         OPEN cr_craptco_coop(pr_cdcooper => pr_cdcooper,
+                                              pr_cdcopant => vr_cdcooper);                                              
+                         FETCH cr_craptco_coop INTO rw_craptco_coop;
+                         
+                         IF cr_craptco_coop%FOUND THEN                                                  
+                            CLOSE cr_craptco_coop;
+                            -- Somente ira gerar crapndb caso o registro não seja do tipo "C"
+                            IF vr_tpregist <> 'C' THEN
+                               vr_cdcooper := pr_cdcooper;
+                               pc_critica_debito_cooperativa(2, rw_gnconve.cdhisdeb, vr_tab_nmarquiv(i));
+                            END IF;
+
+                            CONTINUE; /* Nao pertence a Cooperativa que estou rodando...*/
+                         END IF;
+                         
+                         CLOSE cr_craptco_coop;
+                         CONTINUE;
                        END IF;
                      END IF;
 
