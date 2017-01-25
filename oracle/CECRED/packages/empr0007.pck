@@ -307,7 +307,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
   --  Sistema  : Rotinas referentes a Portabilidade de Credito
   --  Sigla    : EMPR
   --  Autor    : Lucas Reinert
-  --  Data     : Julho - 2015.                   Ultima atualizacao: 27/09/2016
+  --  Data     : Julho - 2015.                   Ultima atualizacao: 29/11/2016
   --
   -- Dados referentes ao programa:
   --
@@ -319,6 +319,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
   --
   --             27/09/2016 - Inclusao de verificacao de contratos de acordos
   --                          na procedure pc_enviar_boleto, Prj. 302 (Jean Michel).
+  --
+  --             29/11/2016 - P341 - Automatização BACENJUD - Alterado para validar o departamento à partir
+  --                          do código e não mais pela descrição (Renato Darosci - Supero)
+  --
   ---------------------------------------------------------------------------
 
   PROCEDURE pc_busca_convenios(pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da Cooperativa
@@ -3642,7 +3646,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       -- cursor do operador
       CURSOR cr_ope (pr_cdcooper IN crapope.cdcooper%TYPE
                     ,pr_cdoperad IN crapope.cdoperad%TYPE) IS
-        SELECT dsdepart
+        SELECT cddepart
           FROM crapope ope
          WHERE ope.cdcooper = pr_cdcooper
            AND UPPER(ope.cdoperad) = UPPER(pr_cdoperad);
@@ -3668,7 +3672,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
          END IF;
          
          -- se o boleto eh para quitacao do contrato e nao for da central telefonica, criticar...
-         IF pr_tpparepr = 4 AND nvl(rw_ope.dsdepart,' ') <> 'CENTRAL TELEFONICA' THEN
+         IF pr_tpparepr = 4 AND nvl(rw_ope.cddepart,0) <> 3 THEN
             -- Atribui crítica
             vr_cdcritic := 0;
             vr_dscritic := 'Quitacao do contrado permitido apenas para operadores da CENTRAL TELEFONICA.';
