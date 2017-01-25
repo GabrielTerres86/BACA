@@ -153,6 +153,10 @@
                10/10/2016 - Tratamento para nao chamar mais a autentica.htm 
                             quando for historico 707 nas rotinas AA e AT 
 							procedure obtem-reautenticacao (Tiago/Elton SD498973)
+
+               14/12/2016 - Ajustes para nao gravar estorno na crapaut com 
+			                nrseqaut zerado pois ocasionava problemas no
+							fechamento de caixa (SD535528 Tiago/Elton)
 ............................................................................ */
 
   
@@ -584,9 +588,28 @@ PROCEDURE grava-autenticacao:
                                       NO-LOCK NO-ERROR.
 
                             IF  AVAILABLE crapaut  THEN 
+							    DO:
                                 ASSIGN i-seq-aut = crapaut.nrsequen.           
                         END.
+							ELSE
+								DO:
+									FIND LAST crapaut WHERE 
+											  crapaut.cdcooper = crapcop.cdcooper AND
+											  crapaut.cdagenci = p-cod-agencia    AND
+											  crapaut.nrdcaixa = p-nro-caixa      AND
+											  crapaut.dtmvtolt = crapdat.dtmvtocd AND
+											  crapaut.cdhistor = p-histor         AND
+											  crapaut.nrdocmto = DECI(SUBSTR(STRING(p-docto), 1, LENGTH(STRING(p-docto)) - 3)) AND
+											  crapaut.estorno  = NO        
+											  NO-LOCK NO-ERROR.
             
+									IF  AVAILABLE crapaut  THEN 
+										DO:
+                                ASSIGN i-seq-aut = crapaut.nrsequen.           
+                        END.
+								END.
+                        END.
+
                     CREATE crapaut.
                     ASSIGN crapaut.cdcooper = crapcop.cdcooper
                            crapaut.cdagenci = p-cod-agencia

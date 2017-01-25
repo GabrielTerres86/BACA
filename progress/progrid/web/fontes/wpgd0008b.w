@@ -124,6 +124,8 @@ END PROCEDURE.
 
 PROCEDURE PermissaoDeAcesso:
   {includes/wpgd0009.i}
+  ASSIGN v-identificacao = get-cookie("cookie-usuario-em-uso")
+         v-permissoes    = "IAEPLU".
 END PROCEDURE.
 
 PROCEDURE incluiPublicoAlvo:
@@ -148,7 +150,7 @@ END.
 
 PROCEDURE process-web-request :
 
-  ASSIGN aux_nrseqpap = "Selecione um Publico Alvo,0,".
+  ASSIGN aux_nrseqpap = "Selecione um Público-Alvo,0,".
   
   FOR EACH crappap NO-LOCK BY crappap.dspubalv: 
     ASSIGN aux_nrseqpap = aux_nrseqpap + CAPS(crappap.dspubalv) + "," + STRING(crappap.nrseqpap) + ",".

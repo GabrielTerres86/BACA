@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme
-   Data    : Setembro/2011                        Ultima alteracao: 25/03/2016
+   Data    : Setembro/2011                        Ultima alteracao: 06/12/2016
 
    Dados referentes ao programa:
 
@@ -42,6 +42,9 @@
                             b1wgen0138_guilherme.p (Adriano).
                
                25/03/2016 - Ajustes de permissao conforme solicitado no chamado 358761 (Kelvin).    
+               
+               06/12/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)
                
 ............................................................................. */
 
@@ -211,10 +214,10 @@ DO WHILE TRUE:
         NEXT.
     END.
 
-    IF  glb_dsdepart <> "TI"                    AND
-        glb_dsdepart <> "PRODUTOS"              AND
-        glb_dsdepart <> "COORD.ADM/FINANCEIRO"  AND
-        glb_dsdepart <> "COORD.PRODUTOS"        THEN
+    IF  glb_cddepart <> 20  AND  /* TI                   */
+        glb_cddepart <> 14  AND  /* PRODUTOS             */
+        glb_cddepart <>  8  AND  /* COORD.ADM/FINANCEIRO */
+        glb_cddepart <>  9  THEN /* COORD.PRODUTOS       */
     DO:
         MESSAGE "Sem permissao para simular Grupos Economicos!".
         NEXT.
@@ -223,7 +226,7 @@ DO WHILE TRUE:
 
     IF  tel_flgforma  THEN
     DO:
-        IF  glb_dsdepart <> "TI" THEN
+        IF  glb_cddepart <> 20 THEN /* TI */
         DO:
             MESSAGE "Sem permissao para formar Grupos Economicos, somente simular".
             NEXT.

@@ -16,8 +16,9 @@
                            b1wgen9999.p procedure acha-lock, que identifica qual 
                            é o usuario que esta prendendo a transaçao. (Vanessa)
                              
+                06/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
+                             departamento passando a considerar o código (Renato Darosci)
                 
-
 .............................................................................*/
 
 { sistema/generico/includes/var_internet.i }
@@ -49,7 +50,7 @@ PROCEDURE permiss_tab036:
     DEF  INPUT PARAM par_cdagenci AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrdcaixa AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_dsdepart AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cddepart AS INTE                           NO-UNDO.
    
     DEF  OUTPUT PARAM TABLE FOR tt-erro.
 
@@ -60,9 +61,9 @@ PROCEDURE permiss_tab036:
 
     Permiss:
     DO:
-        IF  par_dsdepart <> "COORD.ADM/FINANCEIRO"   AND   
-            par_dsdepart <> "COORD.PRODUTOS"      AND   
-            par_dsdepart <> "TI"      THEN
+        IF  par_cddepart <> 8  AND   /* COORD.ADM/FINANCEIRO */
+            par_cddepart <> 9  AND   /* COORD.PRODUTOS */
+            par_cddepart <> 20 THEN  /* TI */
             DO:
                 aux_cdcritic = 36.
                 LEAVE Permiss.
@@ -155,7 +156,7 @@ PROCEDURE altera_tab036:
    DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
    DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
    DEF  INPUT PARAM par_dstextab AS CHAR                           NO-UNDO.
-   DEF  INPUT PARAM par_dsdepart AS CHAR                           NO-UNDO.
+   DEF  INPUT PARAM par_cddepart AS INTE                           NO-UNDO.
    DEF  INPUT PARAM par_vlrating AS DEC                            NO-UNDO.
    DEF  INPUT PARAM par_pcgrpeco AS DEC                            NO-UNDO.
 
@@ -175,8 +176,9 @@ PROCEDURE altera_tab036:
                       crapope.cdoperad = par_cdoperad    
                       NO-LOCK NO-ERROR.
 
-   IF NOT CAN-DO("TI,SUPORTE,COORD.ADM/FINANCEIRO,COORD.PRODUTOS",par_dsdepart) AND
-      crapope.nvoperad <>  3                                                    THEN
+   /* Verifica se o setor eh 20-TI, 18-SUPORTE, 8-COORD.ADM/FINANCEIRO ou 9-COORD.PRODUTOS */
+   IF NOT CAN-DO("20,18,8,9",STRING(par_cddepart)) AND
+      crapope.nvoperad <>  3                       THEN
       DO:
           ASSIGN aux_cdcritic = 36.
 

@@ -44,6 +44,9 @@
                28/07/2014 - Retiradas as opções "I" e "A" (Jean Michel).
                
                25/03/2016 - Ajustes de permissao conforme solicitado no chamado 358761 (Kelvin).    
+
+			   08/12/2016 - P341-Automatização BACENJUD - Realizar a validação 
+			                do departamento pelo código do mesmo (Renato Darosci)
 ............................................................................. */
 
 { includes/var_online.i  }
@@ -169,8 +172,7 @@ DO  WHILE TRUE ON ENDKEY UNDO, LEAVE:
          END.
 
     IF   CAN-DO("A,I",glb_cddopcao)  AND
-        NOT CAN-DO("TI,FINANCEIRO,COORD.ADM/FINANCEIRO,COORD.PRODUTOS",
-                    glb_dsdepart)  THEN
+        NOT CAN-DO("20,11,8,9",STRING(glb_cddepart))  THEN
          DO:
              ASSIGN glb_cdcritic = 323.
              RUN fontes/critic.p.

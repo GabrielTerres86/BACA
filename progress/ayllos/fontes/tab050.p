@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente
     Sigla   : CRED
     Autor   : Gabriel
-    Data    : Junho/2008                      Ultima atualizacao: 25/03/2016
+    Data    : Junho/2008                      Ultima atualizacao: 07/12/2016
 
     Dados referentes ao programa:
 
@@ -15,6 +15,10 @@
     Alteracoes: 25/05/2009 - Alteracao CDOPERAD (Kbase).
     
                 25/03/2016 - Ajustes de permissao conforme solicitado no chamado 358761 (Kelvin).
+                
+                07/12/2016 - Alterado campo dsdepart para cddepart.
+                             PRJ341 - BANCENJUD (Odirlei-AMcom)
+                            
 ..............................................................................*/
 
 { includes/var_online.i }
@@ -109,8 +113,8 @@ DO WHILE TRUE:
    IF   glb_cddopcao = "A"   THEN
         DO:
             /* Critica para permitir somente os operadores 1, 996 e 997 */
-            IF   glb_dsdepart <> "TI"                   AND
-                 glb_dsdepart <> "COORD.ADM/FINANCEIRO" THEN
+            IF   glb_cddepart <> 20  AND  /*TI                   */
+                 glb_cddepart <>  8  THEN /*COORD.ADM/FINANCEIRO */
                  DO:
                      glb_cdcritic = 36.
                      RUN fontes/critic.p.

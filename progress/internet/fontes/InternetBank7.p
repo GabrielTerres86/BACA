@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2007                        Ultima atualizacao: 03/08/2016
+   Data    : Marco/2007                        Ultima atualizacao: 18/01/2017
 
    Dados referentes ao programa:
 
@@ -51,6 +51,9 @@
 
                03/08/2016 - Inclusao de novos historicos de retorno de Sobras 
 			                e de sobras na Conta Corrente (Marcos-Supero).
+                      
+               18/01/2017 - SD595294 - Retorno dos valores pagos em emprestimos
+                            (Marcos-Supero)             
 
 
 ............................................................................*/
@@ -71,9 +74,11 @@ DEF VAR ant_vlttccap AS DECI                                           NO-UNDO.
 DEF VAR ant_vlpoupan AS DECI                                           NO-UNDO.
 DEF VAR ant_vlfundos AS DECI                                           NO-UNDO.
 DEF VAR ant_vlirfcot AS DECI                                           NO-UNDO.
+DEF VAR ant_vlprepag AS DECI                                           NO-UNDO.
 
 DEF VAR aux_vlrencot AS DECI                                           NO-UNDO.
 DEF VAR aux_vlirfcot AS DECI                                           NO-UNDO.
+DEF VAR aux_vlprepag AS DECI                                           NO-UNDO.
 
 DEF VAR aux_dtrefere AS DATE                                           NO-UNDO.
 
@@ -279,6 +284,7 @@ PROCEDURE proc_ir_fisica:
                              NO-LOCK NO-ERROR.
 
     ASSIGN aux_vlirfcot = crapdir.vlirfcot
+           aux_vlprepag = crapdir.vlprepag
            aux_vlrencot = (crapdir.vlrencot - crapdir.vlirfcot)
            aux_dtrefere = DATE(12,31,YEAR(crapdir.dtmvtolt))
            aux_vlsdapli = crapdir.vlsdapli + crapdir.vlsdrdpp  
@@ -406,14 +412,16 @@ PROCEDURE proc_ir_fisica:
                ant_vlsdccdp = 0
                ant_vlsddvem = 0
                ant_vlttccap = 0
-               ant_vlirfcot = 0.
+               ant_vlirfcot = 0
+               ant_vlprepag = 0.
     ELSE
         ASSIGN ant_dtrefere = DATE(12,31,YEAR(crapdir.dtmvtolt))
                ant_vlsdapli = crapdir.vlsdapli + crapdir.vlsdrdpp
                ant_vlsdccdp = crapdir.vlsdccdp
                ant_vlsddvem = crapdir.vlsddvem
                ant_vlttccap = crapdir.vlttccap
-               ant_vlirfcot = crapdir.vlirfcot.
+               ant_vlirfcot = crapdir.vlirfcot
+               ant_vlprepag = crapdir.vlprepag.
 
     FIND FIRST crapsli WHERE crapsli.cdcooper = par_cdcooper AND
                              crapsli.nrdconta = par_nrdconta AND
@@ -503,7 +511,11 @@ PROCEDURE proc_ir_fisica:
                                    TRIM(STRING(ant_vlirfcot,"zzz,zzz,zz9.99-")) +
                                    "</atirfcot><vlsobras>" +
                                    TRIM(STRING(aux_vlsobras,"zzz,zzz,zz9.99-")) +
-                                   "</vlsobras></IRFISICA>".          
+                                   "</vlsobras><vlprepag>" +
+                                   TRIM(STRING(aux_vlprepag,"zzz,zzz,zz9.99-")) +
+                                   "</vlprepag><atprepag>" +
+                                   TRIM(STRING(ant_vlprepag,"zzz,zzz,zz9.99-")) +
+                                   "</atprepag></IRFISICA>".          
 END PROCEDURE. 
 
 PROCEDURE proc_ir_juridica:

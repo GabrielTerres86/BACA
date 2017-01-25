@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Maio/2003                           Ultima alteracao: 15/07/2009
+   Data    : Maio/2003                           Ultima alteracao: 07/12/2016
 
    Dados referentes ao programa:
 
@@ -19,6 +19,9 @@
                
                15/07/2009 - Alteracao CDOPERAD (Diego).
    
+               07/12/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)
+                            
 ............................................................................. */
 
 { includes/var_online.i }
@@ -90,8 +93,10 @@ DO WHILE TRUE:
       UPDATE glb_cddopcao  WITH FRAME f_tab020.
 
       IF   NOT CAN-DO("C",glb_cddopcao)   THEN
-           IF   NOT CAN-DO("PRODUTOS,COORD.ADM/FINANCEIRO,TI",glb_dsdepart) 
-                    THEN
+           IF  NOT CAN-DO("14," + /* PRODUTOS */
+                          "8,"  + /* COORD.ADM/FINANCEIRO*/
+                          "20"    /* TI*/
+                          ,STRING(glb_cddepart)) THEN
                 DO:
                     glb_cdcritic = 36.
                     NEXT.

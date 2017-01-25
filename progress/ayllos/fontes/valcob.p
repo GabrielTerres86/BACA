@@ -26,6 +26,9 @@
 
                25/03/2016 - Ajustes de permissao conforme solicitado no chamado 358761 (Kelvin).    
    
+               08/12/2016 - P341-Automatização BACENJUD - Realizar a validação 
+			                do departamento pelo código do mesmo (Renato Darosci)
+
 ............................................................................. */
 
 { includes/var_online.i }
@@ -105,7 +108,7 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
    
       UPDATE glb_cddopcao WITH FRAME f_moldura.
       
-      IF   NOT CAN-DO("TI",glb_dsdepart)   THEN
+	  IF glb_cddepart <> 20 THEN
            DO:
                glb_cdcritic = 36.
                RUN fontes/critic.p.
@@ -183,15 +186,15 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
 		  
 	IF aux_cdcritic <> 0  OR
 		aux_dscritic <> "" THEN
-		DO:
-		BELL.
+       DO:
+           BELL.
 		HIDE MESSAGE NO-PAUSE.
 		MESSAGE aux_dscritic.
-		PAUSE 3 NO-MESSAGE.
-			
-		NEXT.
+           PAUSE 3 NO-MESSAGE.
+        
+           NEXT.
 		   
-		END.			 
+       END.
 
 	/*Leitura do XML de retorno da proc e criacao dos registros na tt-rejeita
 	para visualizacao dos registros na tela */
@@ -211,7 +214,7 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
 	CREATE X-NODEREF  xText.   /* Vai conter o texto que existe dentro da tag xField */ 
 		  
 	IF ponteiro_xml <> ? THEN
-		DO:
+       DO:
 		xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE). 
 		xDoc:GET-DOCUMENT-ELEMENT(xRoot).
 			 
@@ -256,21 +259,21 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
 	DELETE OBJECT xText.
 		  
 	HIDE MESSAGE NO-PAUSE.
-		   		  
-	FIND FIRST tt-rejeita NO-LOCK NO-ERROR.
-	IF NOT AVAIL tt-rejeita THEN
-		DO:			
-			MESSAGE "Arquivo encontra-se CORRETO !" VIEW-AS ALERT-BOX.
-			LEAVE.
-		END.
-	ELSE   
-		DO:
-			HIDE tel_diretori IN FRAME f_opcao.
-			UPDATE tel_dsdopcao WITH FRAME f_opcao.   
+           
+           FIND FIRST tt-rejeita NO-LOCK NO-ERROR.
+           IF NOT AVAIL tt-rejeita THEN
+              DO:
+                  MESSAGE "Arquivo encontra-se CORRETO !" VIEW-AS ALERT-BOX.
+                  LEAVE.
+              END.
+           ELSE   
+              DO:
+                  HIDE tel_diretori IN FRAME f_opcao.
+                  UPDATE tel_dsdopcao WITH FRAME f_opcao.   
             
-			IF   tel_dsdopcao  THEN  /* Arquivo  */
-				UPDATE tel_diretori WITH FRAME f_opcao.
-		END.    
+                  IF   tel_dsdopcao  THEN  /* Arquivo  */
+                       UPDATE tel_diretori WITH FRAME f_opcao.
+              END.
 
    IF   KEYFUNCTION(LASTKEY) = "END-ERROR"   THEN    /*   F4 OU FIM   */
         DO:

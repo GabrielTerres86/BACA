@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Setembro/91.                        Ultima atualizacao: 23/07/2015
+   Data    : Setembro/91.                        Ultima atualizacao: 07/12/2016
 
    Dados referentes ao programa:
 
@@ -35,6 +35,10 @@
                             tel_txjursaq para tel_txsaqcal. Adicionado var
                             tel_txnegfix e tel_txsaqfix. Adicionado campos de 
                             Taxa fixa. (Jorge - Rodrigo) - SD 307304
+                            
+               07/12/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)
+                            
 ............................................................................. */
 
 { includes/var_online.i } 
@@ -132,8 +136,8 @@ DO WHILE TRUE:
    IF glb_cddopcao = "A" THEN
         DO:
             /* Permissoes de acesso */
-            IF  glb_dsdepart <> "TI"        AND
-                glb_dsdepart <> "PRODUTOS"  THEN
+            IF  glb_cddepart <> 20 AND  /* TI       */
+                glb_cddepart <> 14 THEN /* PRODUTOS */
                 DO:
                     glb_cdcritic = 36.
                     NEXT.

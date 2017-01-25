@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Abril/2003                          Ultima alteracao: 06/11/2013
+   Data    : Abril/2003                          Ultima alteracao: 07/12/2016
    
    Dados referentes ao programa:
 
@@ -36,6 +36,10 @@
                             
                06/11/2013 - Adicionado parametro "Dias/Hora Limite para Resgate".
                             (Fabricio)
+                            
+               07/12/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)
+                            
 ............................................................................. */
 
 { includes/var_online.i }
@@ -475,7 +479,10 @@ DO WHILE TRUE:
                   END.
               END.
 
-              IF  NOT CAN-DO("PRODUTOS,COORD.ADM/FINANCEIRO,TI",glb_dsdepart)
+              IF  NOT CAN-DO("14," + /* PRODUTOS */
+                             "8,"  + /* COORD.ADM/FINANCEIRO*/
+                             "20"    /* TI*/
+                             ,STRING(glb_cddepart))
                       THEN
                   DO:
                       DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
@@ -506,7 +513,10 @@ DO WHILE TRUE:
               LEAVE.
 
            END.  /*  Fim do DO WHILE TRUE  */
-           IF  CAN-DO("PRODUTOS,COORD.ADM/FINANCEIRO,TI",glb_dsdepart)  THEN
+           IF  CAN-DO( "14," + /* PRODUTOS */
+                       "8,"  + /* COORD.ADM/FINANCEIRO*/
+                       "20"    /* TI*/
+                       ,STRING(glb_cddepart)) THEN
                DO:
                    DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                    

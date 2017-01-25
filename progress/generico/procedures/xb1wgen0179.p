@@ -9,6 +9,9 @@
      Alteracoes: 10/03/2016 - Homologacao e ajustes da conversao da tela 
                               HISTOR para WEB (Douglas - Chamado 412552)
 
+		         06/12/2016 - P341-Automatização BACENJUD - Alterar a passagem 
+				              da descrição do departamento como parametro e 
+							  passar o o código (Renato Darosci)
 ............................................................................*/
 
 
@@ -20,7 +23,7 @@ DEF VAR aux_nrdcaixa AS INTE                                         NO-UNDO.
 DEF VAR aux_cdoperad AS CHAR                                         NO-UNDO.
 DEF VAR aux_nmdatela AS CHAR                                         NO-UNDO.
 DEF VAR aux_idorigem AS INTE                                         NO-UNDO.
-DEF VAR aux_dsdepart AS CHAR                                         NO-UNDO.
+DEF VAR aux_cddepart AS INTE                                         NO-UNDO.
 
 DEF VAR aux_cddopcao AS CHAR                                         NO-UNDO.
 DEF VAR aux_cdhistor AS INTE                                         NO-UNDO.    
@@ -98,7 +101,7 @@ PROCEDURE valores_entrada:
              WHEN "cdoperad" THEN aux_cdoperad = tt-param.valorCampo.
              WHEN "nmdatela" THEN aux_nmdatela = tt-param.valorCampo.
              WHEN "idorigem" THEN aux_idorigem = INTE(tt-param.valorCampo).
-             WHEN "dsdepart" THEN aux_dsdepart = tt-param.valorCampo.
+             WHEN "cddepart" THEN aux_cddepart = INTE(tt-param.valorCampo).
              WHEN "cddopcao" THEN aux_cddopcao = tt-param.valorCampo.
              WHEN "cdhistor" THEN aux_cdhistor = INTE(tt-param.valorCampo).
              WHEN "dshistor" THEN aux_dshistor = tt-param.valorCampo.
@@ -171,7 +174,7 @@ PROCEDURE Busca_Dados:
                      INPUT aux_nmdatela,                            
                      INPUT aux_idorigem,                            
                      INPUT aux_dtmvtolt,
-                     INPUT aux_dsdepart,                            
+                     INPUT aux_cddepart,                            
                      INPUT aux_cddopcao,                            
                      INPUT aux_cdhistor,                            
                      INPUT aux_dshistor,                            
@@ -226,7 +229,7 @@ PROCEDURE Busca_Produto:
                      INPUT aux_cdoperad,    
                      INPUT aux_nmdatela,    
                      INPUT aux_idorigem,    
-                     INPUT aux_dsdepart,  
+                     INPUT aux_cddepart,  
                      INPUT aux_nrregist,                            
                      INPUT aux_nriniseq,                            
                      INPUT aux_cdprodut,
@@ -274,7 +277,7 @@ PROCEDURE Busca_Grupo:
                      INPUT aux_cdoperad,       
                      INPUT aux_nmdatela,       
                      INPUT aux_idorigem,       
-                     INPUT aux_dsdepart,       
+                     INPUT aux_cddepart,       
                      INPUT aux_nrregist,                            
                      INPUT aux_nriniseq,                            
                      INPUT aux_cdagrupa,       

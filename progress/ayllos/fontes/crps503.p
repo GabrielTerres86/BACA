@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED                                         
    Autor   : Diego
-   Data    : Marco/2008                   Ultima atualizacao: 16/08/2013
+   Data    : Marco/2008                   Ultima atualizacao: 22/11/2016
 
    Dados referentes ao programa:
 
@@ -35,6 +35,9 @@
                
                16/08/2013 - Nova forma de chamar as agências, de PAC agora 
                             a escrita será PA (André Euzébio - Supero).             
+                            
+               22/11/2016 - Ajustar programa para filtrar por data, pois estava muito lento
+                            (Lucas Ranghetti #551156)
 ............................................................................. */
 
 { includes/var_batch.i }  
@@ -51,6 +54,10 @@ DEF     VAR aux_dsdlinha AS CHAR      FORMAT "x(70)"                 NO-UNDO.
 DEF     VAR aux_nmarqlog AS CHAR                                     NO-UNDO.
 DEF     VAR aux_nrcpfcgc AS CHAR      FORMAT "x(14)"                 NO-UNDO.
 DEF     VAR aux_nrcpfcg2 AS CHAR      FORMAT "x(11)"                 NO-UNDO.
+
+DEF     VAR aux_data     AS DATE                                     NO-undo.
+DEF     VAR aux_dtainici AS DATE                                     NO-undo.
+DEF     VAR aux_dtafinal AS DATE                                     NO-undo.
 
 DEF     VAR rel_dsagenci AS CHAR                                     NO-UNDO.
 DEF     VAR rel_nmempres AS CHAR      FORMAT "x(15)"                 NO-UNDO.
@@ -143,95 +150,104 @@ IF   INT(SUBSTR(craptab.dstextab,07,01)) = 1 THEN
  
 RUN abre_arquivo.
                       
-/* Nao enviada e Repr. */                      
-FOR EACH crapalt WHERE  crapalt.cdcooper = glb_cdcooper NO-LOCK
-                        BY crapalt.nrdconta:
-
-    IF  NOT (crapalt.dsaltera MATCHES "*exclusao conta-itg*"    AND
-             CAN-DO("0,4",STRING(crapalt.flgctitg)))   AND 
-        
-        NOT (crapalt.dsaltera MATCHES "*reativacao conta-itg*"  AND
-             CAN-DO("0,3,4",STRING(crapalt.flgctitg))) THEN
-        NEXT.
-
-    FIND crapass WHERE crapass.cdcooper = glb_cdcooper AND
-                       crapass.nrdconta = crapalt.nrdconta
-                       NO-LOCK NO-ERROR.
-
-    IF   NOT AVAIL crapass   THEN
-         NEXT.
-
-    FIND crabass WHERE crabass.cdcooper = glb_cdcooper  AND
-                       crabass.nrdconta = crapass.nrdconta
-                       EXCLUSIVE-LOCK NO-ERROR.
-                                                  
-    FIND crabalt WHERE crabalt.cdcooper = glb_cdcooper      AND
-                       crabalt.nrdconta = crapalt.nrdconta  AND
-                       crabalt.dtaltera = crapalt.dtaltera
-                       EXCLUSIVE-LOCK NO-ERROR.
-
-    ASSIGN crapass.dtectitg = glb_dtmvtolt   
-           crapalt.flgctitg = 1.  /* Enviada */
-
-    IF   crapalt.dsaltera MATCHES "*exclusao conta-itg*"    THEN
-         DO:
-             CREATE w_contaitg.
-             ASSIGN w_contaitg.cdagenci = crapass.cdagenci
-                    w_contaitg.nrdconta = crapass.nrdconta
-                    w_contaitg.nrdctitg = crapass.nrdctitg
-                    w_contaitg.nmprimtl = crapass.nmprimtl
-                    w_contaitg.cdsituac = 1.
-         END.  
+/* Buscar registros do ultimo mês ate hoje */  
+ASSIGN aux_dtafinal = glb_dtmvtolt
+       aux_dtainici = ADD-INTERVAL(aux_dtafinal,-01,'months'). 
+                      
+DO  aux_data = aux_dtainici TO aux_dtafinal:                      
     
-    IF   crapalt.dsaltera MATCHES "*reativacao conta-itg*"  THEN
-         DO:
-             CREATE w_contaitg.
-             ASSIGN w_contaitg.cdagenci = crapass.cdagenci
-                    w_contaitg.nrdconta = crapass.nrdconta
-                    w_contaitg.nrdctitg = crapass.nrdctitg
-                    w_contaitg.nmprimtl = crapass.nmprimtl
-                    w_contaitg.cdsituac = 2.
-         END.
+	/* Nao enviada e Repr. */                      
+    FOR EACH crapalt WHERE crapalt.cdcooper  = glb_cdcooper                       
+                       AND crapalt.dtaltera  = aux_data                        
+                       NO-LOCK BY crapalt.nrdconta:
+
+		IF  NOT (crapalt.dsaltera MATCHES "*exclusao conta-itg*"    AND
+				 CAN-DO("0,4",STRING(crapalt.flgctitg)))   AND 
+        
+			NOT (crapalt.dsaltera MATCHES "*reativacao conta-itg*"  AND
+				 CAN-DO("0,3,4",STRING(crapalt.flgctitg))) THEN
+			NEXT.
+
+		FIND crapass WHERE crapass.cdcooper = glb_cdcooper AND
+						   crapass.nrdconta = crapalt.nrdconta
+						   NO-LOCK NO-ERROR.
+
+		IF   NOT AVAIL crapass   THEN
+			 NEXT.
+
+		FIND crabass WHERE crabass.cdcooper = glb_cdcooper  AND
+						   crabass.nrdconta = crapass.nrdconta
+						   EXCLUSIVE-LOCK NO-ERROR.
+                                                  
+		FIND crabalt WHERE crabalt.cdcooper = glb_cdcooper      AND
+						   crabalt.nrdconta = crapalt.nrdconta  AND
+						   crabalt.dtaltera = crapalt.dtaltera
+						   EXCLUSIVE-LOCK NO-ERROR.
+
+		ASSIGN crapass.dtectitg = glb_dtmvtolt   
+			   crapalt.flgctitg = 1.  /* Enviada */
+
+		IF   crapalt.dsaltera MATCHES "*exclusao conta-itg*"    THEN
+			 DO:
+				 CREATE w_contaitg.
+				 ASSIGN w_contaitg.cdagenci = crapass.cdagenci
+						w_contaitg.nrdconta = crapass.nrdconta
+						w_contaitg.nrdctitg = crapass.nrdctitg
+						w_contaitg.nmprimtl = crapass.nmprimtl
+						w_contaitg.cdsituac = 1.
+			 END.  
+    
+		IF   crapalt.dsaltera MATCHES "*reativacao conta-itg*"  THEN
+			 DO:
+				 CREATE w_contaitg.
+				 ASSIGN w_contaitg.cdagenci = crapass.cdagenci
+						w_contaitg.nrdconta = crapass.nrdconta
+						w_contaitg.nrdctitg = crapass.nrdctitg
+						w_contaitg.nmprimtl = crapass.nmprimtl
+						w_contaitg.cdsituac = 2.
+			 END.
      
-     ASSIGN aux_nrcpfcgc = "00000000000000" 
-            aux_nrcpfcg2 = "00000000000".                
+		 ASSIGN aux_nrcpfcgc = "00000000000000" 
+				aux_nrcpfcg2 = "00000000000".                
    
-     IF   w_contaitg.cdsituac = 2   THEN
-         DO:
-             IF  crapass.inpessoa = 1   THEN
-                 FOR EACH crapttl WHERE crapttl.cdcooper = crapcop.cdcooper AND
-                                        crapttl.nrdconta = crapass.nrdconta AND
-                                        CAN-DO("1,2",STRING(crapttl.idseqttl))
-                                        NO-LOCK:
+		 IF   w_contaitg.cdsituac = 2   THEN
+			 DO:
+				 IF  crapass.inpessoa = 1   THEN
+					 FOR EACH crapttl WHERE crapttl.cdcooper = crapcop.cdcooper AND
+											crapttl.nrdconta = crapass.nrdconta AND
+											CAN-DO("1,2",STRING(crapttl.idseqttl))
+											NO-LOCK:
                      
-                     IF   crapttl.idseqttl = 1   THEN
-                          aux_nrcpfcgc = STRING(crapttl.nrcpfcgc,
-                                                "99999999999999").
-                     ELSE
-                          aux_nrcpfcg2 = STRING(crapttl.nrcpfcgc,
-                                                "99999999999").
-                 END.
-             ELSE
-                 aux_nrcpfcgc = STRING(crapass.nrcpfcgc,"99999999999999").
-         END.                         
+						 IF   crapttl.idseqttl = 1   THEN
+							  aux_nrcpfcgc = STRING(crapttl.nrcpfcgc,
+													"99999999999999").
+						 ELSE
+							  aux_nrcpfcg2 = STRING(crapttl.nrcpfcgc,
+													"99999999999").
+					 END.
+				 ELSE
+					 aux_nrcpfcgc = STRING(crapass.nrcpfcgc,"99999999999999").
+			 END.                         
                                   
-    /* Resgistro w_contaitg.cdsituac (Quando 1- Encerrada, 2 - Reativada) */
-    ASSIGN aux_nrregist = aux_nrregist + 1
-           aux_dsdlinha = STRING(SUBSTRING(crapass.nrdctitg,1,7),"x(7)") +
-                          STRING(SUBSTRING(crapass.nrdctitg,8,1),"x(1)")
+		/* Resgistro w_contaitg.cdsituac (Quando 1- Encerrada, 2 - Reativada) */
+		ASSIGN aux_nrregist = aux_nrregist + 1
+			   aux_dsdlinha = STRING(SUBSTRING(crapass.nrdctitg,1,7),"x(7)") +
+							  STRING(SUBSTRING(crapass.nrdctitg,8,1),"x(1)")
                          
-           aux_dsdlinha = aux_dsdlinha                  +
-                          STRING(w_contaitg.cdsituac)   +
-                          aux_nrcpfcgc                  +
-                          aux_nrcpfcg2                  +
-                          "0120"                        +
-                          "        ".
+			   aux_dsdlinha = aux_dsdlinha                  +
+							  STRING(w_contaitg.cdsituac)   +
+							  aux_nrcpfcgc                  +
+							  aux_nrcpfcg2                  +
+							  "0120"                        +
+							  "        ".
 
-    PUT STREAM str_1  aux_nrregist FORMAT "99999" "01".
-    PUT STREAM str_1  aux_dsdlinha FORMAT "x(63)" SKIP.
+		PUT STREAM str_1  aux_nrregist FORMAT "99999" "01".
+		PUT STREAM str_1  aux_dsdlinha FORMAT "x(63)" SKIP.
            
+    END.     /* Fim do FOR EACH */
+END. /* Fim do DO aux_data */
 
-END. /* Fim do FOR EACH */
+
 
 RUN fecha_arquivo.
 

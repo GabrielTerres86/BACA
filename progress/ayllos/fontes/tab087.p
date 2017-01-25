@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Novembro/2010                       Ultima alteracao: 02/08/2016
+   Data    : Novembro/2010                       Ultima alteracao: 07/12/2016
    Dados referentes ao programa:
 
    Frequencia: Diario (on-line)
@@ -28,10 +28,12 @@
                19/09/2014 - Alteração da mensagem com critica 77 substituindo pela 
                            b1wgen9999.p procedure acha-lock, que identifica qual 
                            é o usuario que esta prendendo a transaçao. (Vanessa)
-
+                        
                02/08/2016 - Inclusao insitage 3-Temporariamente Indisponivel.
                             (Jaison/Anderson)
 
+               07/12/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom) 
 ............................................................................. */
 
 { includes/var_online.i }
@@ -232,11 +234,11 @@ DO WHILE TRUE:
 
    IF   glb_cddopcao = "A" THEN
         DO:
-            IF   glb_dsdepart <> "TI"                   AND
-                 glb_dsdepart <> "SUPORTE"              AND
-                 glb_dsdepart <> "COORD.ADM/FINANCEIRO" AND
-                 glb_dsdepart <> "COORD.PRODUTOS"       AND
-                 glb_dsdepart <> "COMPE"                THEN
+            IF  glb_cddepart <> 20 AND   /* TI                   */                
+                glb_cddepart <>  8 AND   /* COORD.ADM/FINANCEIRO */
+                glb_cddepart <>  9 AND   /* COORD.PRODUTOS       */
+                glb_cddepart <> 15 AND   /* SUPORTE              */
+                glb_cddepart <>  4 THEN  /* COMPE                */                
                  DO:
                      IF   glb_cdcooper = 1       AND
                          (glb_cdoperad = "478"   OR

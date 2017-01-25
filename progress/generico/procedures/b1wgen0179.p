@@ -8,6 +8,8 @@
     Alteracoes: 11/03/2016 - Homologacao e ajustes da conversao da tela 
                              HISTOR para WEB (Douglas - Chamado 412552)
         
+		        06/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
+                             departamento passando a considerar o código (Renato Darosci)
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -48,7 +50,7 @@ PROCEDURE Busca_Dados:
     DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsdepart AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cddepart AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cddopcao AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdhistor AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dshistor AS CHAR                           NO-UNDO.
@@ -104,9 +106,9 @@ PROCEDURE Busca_Dados:
     IF par_cddopcao <> "B"   AND
        par_cddopcao <> "O"   AND
        par_cddopcao <> "C"   THEN
-        IF par_dsdepart = "TI"                   OR
-           par_dsdepart = "CONTABILIDADE"        OR
-           par_dsdepart = "COORD.ADM/FINANCEIRO" THEN
+        IF par_cddepart = 20    OR   /* TI */
+           par_cddepart = 6     OR   /* CONTABILIDADE */
+           par_cddepart = 8   THEN   /* COORD.ADM/FINANCEIRO */
             .
         ELSE
         IF par_cdcooper <> 3   THEN
@@ -614,7 +616,7 @@ PROCEDURE Busca_Produto:
     DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsdepart AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cddepart AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrregist AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nriniseq AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdprodut AS INTE                           NO-UNDO.
@@ -672,7 +674,7 @@ PROCEDURE Busca_Grupo:
     DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsdepart AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cddepart AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrregist AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nriniseq AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdagrupa AS INTE                           NO-UNDO.

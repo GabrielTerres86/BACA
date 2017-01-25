@@ -4,14 +4,15 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Gabriel
-   Data    : Novembro/2012                  Ultima atualizacao:
+   Data    : Novembro/2012                  Ultima atualizacao: 06/12/2016
    
    Dados referentes ao programa:
    
    Frequencia: Diario (on-line)
    Objetivo  : Mostrar a tela RELINF
    
-   Alteracoes:
+   Alteracoes: 06/12/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)
 
 
 ............................................................................ */
@@ -112,9 +113,9 @@ DO WHILE TRUE:
                  aux_cddopcao = INPUT glb_cddopcao.
              END.
 
-        IF   glb_dsdepart <> "TI"            AND
-             glb_dsdepart <> "SUPORTE"       AND
-             glb_dsdepart <> "COMUNICACAO"   THEN
+        IF   glb_cddepart <> 20 AND    /* TI          */
+             glb_cddepart <> 18 AND    /* SUPORTE     */
+             glb_cddepart <>  5 THEN   /* COMUNICACAO */
              DO:
                  ASSIGN glb_cdcritic = 36.
                  NEXT.

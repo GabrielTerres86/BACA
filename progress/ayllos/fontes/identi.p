@@ -44,6 +44,10 @@
                
                14/08/2013 - Nova forma de chamar as agências, de PAC agora 
                             a escrita será PA (André Euzébio - Supero).
+
+			   23/12/2016 - P341-Automatização BACENJUD - Alteração para que 
+			                o programa passe a utilizar a descrição do departamento
+							da tabela CRAPDPO (Renato Darosci).
 ............................................................................. */
 { includes/var_online.i }
 { sistema/generico/includes/var_internet.i }
@@ -56,6 +60,7 @@ DEF        VAR tel_nmdatela AS CHAR FORMAT "x(6)"                    NO-UNDO.
 DEF        VAR tel_dsmensag AS CHAR FORMAT "x(78)"                   NO-UNDO.
 
 DEF        VAR aux_stimeout AS INT                                   NO-UNDO.
+DEF        VAR aux_dsdepart AS CHAR                                  NO-UNDO.
 
 DEF        VAR aux_dtdoltab AS DATE FORMAT "99/99/9999"              NO-UNDO.
 
@@ -298,6 +303,17 @@ DO WHILE TRUE ON ENDKEY UNDO, RETRY:
         
    DELETE PROCEDURE h-b1wgen0000.
    
+   /* LOCALIZAR DSDEPART COM BASE NO CDDEPART DO OPERAD */
+    FIND FIRST crapdpo
+         WHERE crapdpo.cdcooper = glb_cdcooper
+           AND crapdpo.cddepart = crapope.cddepart
+       NO-LOCK NO-ERROR.
+
+   IF   AVAILABLE crapdpo   THEN
+       ASSIGN aux_dsdepart = crapdpo.dsdepart.
+   ELSE
+       ASSIGN aux_dsdepart = "".
+
    { includes/termimpr.i }          /*  Verifica se tem impressora conectada  */
  
    IF  (glb_dtmvtolt - crapope.dtaltsnh) >= crapope.nrdedias   THEN
@@ -305,7 +321,8 @@ DO WHILE TRUE ON ENDKEY UNDO, RETRY:
             ASSIGN glb_nmtelant = CAPS(glb_nmdatela)
                    glb_cdoperad = crapope.cdoperad
                    glb_nmoperad = crapope.nmoperad
-                   glb_dsdepart = crapope.dsdepart 
+				   glb_cddepart = crapope.cddepart 
+                   glb_dsdepart = aux_dsdepart
                    glb_nmdatela = "MUDSEN"
                    glb_cdcritic = 4.
 
@@ -320,7 +337,8 @@ DO WHILE TRUE ON ENDKEY UNDO, RETRY:
    ASSIGN glb_nmtelant = glb_nmdatela
           glb_nmdatela = CAPS(glb_nmdatela)
           glb_cdoperad = crapope.cdoperad
-          glb_dsdepart = crapope.dsdepart 
+		  glb_cddepart = crapope.cddepart 
+          glb_dsdepart = aux_dsdepart
           glb_nmoperad = crapope.nmoperad
           glb_cdagenci = tel_cdpactra
           aux_dtdoltab = ?.
@@ -328,7 +346,7 @@ DO WHILE TRUE ON ENDKEY UNDO, RETRY:
    /****** Nao eh mais necessario o cadastramento do dolar - Julio 05/02/2007
    
    IF   CAN-DO("3",STRING(crapope.nvoperad)) AND 
-        glb_dsdepart <> "TI"                 THEN
+        glb_cddepart <> 20         THEN   /* TI */ 
         DO:
             FOR EACH craptab WHERE craptab.cdcooper = glb_cdcooper  AND
                                    craptab.nmsistem = "CRED"        AND

@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego  
-   Data    : Marco/2007                        Ultima atualizacao: 25/03/2016
+   Data    : Marco/2007                        Ultima atualizacao: 06/12/2016
 
    Dados referentes ao programa:
 
@@ -48,6 +48,8 @@
                
                25/03/2016 - Ajustes de permissao conforme solicitado no chamado 358761 (Kelvin).
                             
+               06/12/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)
 ............................................................................. */
 
 { includes/var_online.i } 
@@ -210,7 +212,7 @@ FUNCTION verifica_horario RETURNS LOGICAL (INPUT par_tparquiv AS INT):
 
     IF  (NOT AVAILABLE craptab                                    OR
          STRING(TIME,"HH:MM") > SUBSTRING(craptab.dstextab,9,5))  AND
-         glb_dsdepart <> "TI" THEN
+         glb_cddepart <> 20 THEN /* TI */
          RETURN FALSE.
     ELSE
          RETURN TRUE.

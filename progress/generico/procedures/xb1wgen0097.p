@@ -19,6 +19,10 @@
                             (Lucas R./Gielow)
                             
                25/06/2015 - Projeto 215 - DV 3 (Daniel) 
+
+			   06/12/2016 - P341-Automatização BACENJUD - Alterar a passagem 
+			                da descrição do departamento como parametro e 
+							passar o código (Renato Darosci)
 .............................................................................*/
 
 DEF VAR aux_cdcooper    AS  INTE                                      NO-UNDO.
@@ -39,7 +43,7 @@ DEF VAR aux_dtlibera    AS  DATE                                      NO-UNDO.
 DEF VAR aux_cddopcao    AS  CHAR                                      NO-UNDO.
 DEF VAR aux_dsiduser    AS  CHAR                                      NO-UNDO.
 DEF VAR aux_nrgravad    AS  INTE                                      NO-UNDO.
-DEF VAR aux_dsdepart    AS  CHAR                                      NO-UNDO.
+DEF VAR aux_cddepart    AS  INTE                                      NO-UNDO.
 DEF VAR aux_dtiniper    AS  DATE                                      NO-UNDO.
 DEF VAR aux_dtfinper    AS  DATE                                      NO-UNDO.
 DEF VAR aux_percetop    AS  DECI                                      NO-UNDO.
@@ -62,7 +66,7 @@ PROCEDURE valores_entrada:
     FOR EACH tt-param NO-LOCK:
 
         CASE tt-param.nomeCampo:
-            WHEN "dsdepart" THEN aux_dsdepart =          tt-param.valorCampo.
+            WHEN "cddepart" THEN aux_cddepart =    INTE(tt-param.valorCampo).
             WHEN "cdcooper" THEN aux_cdcooper =    INTE(tt-param.valorCampo).
             WHEN "cdagenci" THEN aux_cdagenci =    INTE(tt-param.valorCampo).
             WHEN "nrdcaixa" THEN aux_nrdcaixa =    INTE(tt-param.valorCampo).
@@ -371,7 +375,7 @@ PROCEDURE valida_simulacao:
                                 INPUT  aux_idseqttl,
                                 INPUT  aux_dtmvtolt,
                                 INPUT  aux_flgerlog,
-                                INPUT  aux_dsdepart,
+                                INPUT  aux_cddepart,
                                 OUTPUT TABLE tt-erro).
 
      IF  RETURN-VALUE = "NOK"  THEN

@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Marco/2003.                       Ultima atualizacao: 27/07/2016
+   Data    : Marco/2003.                       Ultima atualizacao: 29/12/2016
 
    Dados referentes ao programa:
 
@@ -128,6 +128,10 @@
 
 			   19/12/2016 - Tratamento para Migracao Transulcred - bloquear 
                             liberacao de cheque (Daniel).
+
+               29/12/2016 - Ajuste para utilizar leitura com find ao inves
+						    de can-find
+							(Adriano - SD 585728).
 ............................................................................. */
 
 { includes/var_online.i }
@@ -852,7 +856,7 @@ DO WHILE TRUE:
                      NEXT.
                  END.
 
-            IF   CAN-FIND(crapcdb WHERE crapcdb.cdcooper = glb_cdcooper   AND 
+		    FIND crapcdb WHERE crapcdb.cdcooper = glb_cdcooper   AND  
                                         crapcdb.cdagenci = tel_cdagenci   AND
                                         crapcdb.cdbccxlt = tel_cdbccxlt   AND
                                         crapcdb.cdcmpchq = tel_cdcmpchq   AND
@@ -861,7 +865,10 @@ DO WHILE TRUE:
                                         crapcdb.nrctachq = tel_nrctachq   AND
                                         crapcdb.nrcheque = tel_nrcheque   AND
                                         crapcdb.dtdevolu = ?              AND
-                                        crapcdb.insitchq = 0)  THEN
+                               crapcdb.insitchq = 0
+							   NO-LOCK NO-ERROR.
+
+            IF AVAIL crapcdb THEN
                  DO:
                      /* cheque para desconto */
                      MESSAGE "811 - cheque para desconto no bordero " + 

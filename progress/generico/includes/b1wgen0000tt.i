@@ -31,6 +31,9 @@
                             estava em minusculo, isto gerava problemas no oracle
                             ao consultar um nome de operador usando a variavel
                             cdoperad da sessao que estava em maisculo.        
+
+			   07/12/2016 - P341-Automatização BACENJUD - Incluir o CDDEPART na 
+			                temp-table tt-login (Renato Darosci)
 ..............................................................................*/
 
 DEF TEMP-TABLE tt-login                                                 NO-UNDO
@@ -41,13 +44,14 @@ DEF TEMP-TABLE tt-login                                                 NO-UNDO
     FIELD dtmvtoan LIKE crapdat.dtmvtoan
     FIELD inproces LIKE crapdat.inproces
     FIELD stimeout AS INTE
-    FIELD dsdepart LIKE crapope.dsdepart
+	 FIELD dsdepart LIKE crapdpo.dsdepart
     FIELD dsdircop LIKE crapcop.dsdircop
     FIELD flgdsenh AS LOGI
     FIELD cdpactra LIKE crapope.cdpactra
     FIELD flgperac LIKE crapope.flgperac
     FIELD nvoperad LIKE crapope.nvoperad
-    FIELD cdoperad LIKE crapope.cdoperad.
+    FIELD cdoperad LIKE crapope.cdoperad
+	FIELD cddepart LIKE crapdpo.cddepart.
     
 DEF TEMP-TABLE tt-menu                                                  NO-UNDO
     FIELD nmdatela LIKE craptel.nmdatela

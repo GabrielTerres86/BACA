@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : GATI - Peixoto
-   Data    : Julho/2009                        Ultima atualizacao: 24/03/2016 
+   Data    : Julho/2009                        Ultima atualizacao: 02/12/2016 
    
    Dados referentes ao programa:
 
@@ -22,6 +22,9 @@
                              Chamado 229313 (Jean Reddiga - RKAM).    
                              
                 24/03/2016 - Ajustes de permissao conforme solicitado no chamado 358761 (Kelvin).                             
+                           
+                02/12/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)
                            
 ............................................................................. */
 
@@ -174,8 +177,8 @@ IF  NOT AVAILABLE crapcop  THEN
         HIDE FRAME f_impbol NO-PAUSE.
         RETURN.
     END.
-IF  glb_dsdepart <> "TI" AND 
-    glb_dsdepart <> "PRODUTOS" THEN
+IF  glb_cddepart <> 20  AND  /* TI       */
+    glb_cddepart <> 14  THEN /* PRODUTOS */
     DO:
         ASSIGN glb_cdcritic = 36.
         RUN fontes/critic.p.

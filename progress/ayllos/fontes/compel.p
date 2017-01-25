@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson/Margarete
-   Data    : Maio/2001                           Ultima alteracao: 03/01/2014
+   Data    : Maio/2001                           Ultima alteracao: 01/12/2016
 
    Dados referentes ao programa:
 
@@ -181,6 +181,10 @@
                03/01/2014 - Trocar critica 15 Agencia nao cadastrada por 
                             962 PA nao cadastrado 
                           - Trocar Agencia por PA (Reinert)                            
+                          
+               01/12/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)
+                            
 ............................................................................. */
 
 { includes/var_online.i }
@@ -881,10 +885,10 @@ DO WHILE TRUE:
                            glb_cdcritic = 0.
                        END.
                   
-                  IF   glb_dsdepart = "TI"                     OR
-                       glb_dsdepart = "SUPORTE"                OR
-                       glb_dsdepart = "COORD.ADM/FINANCEIRO"   OR
-                       glb_dsdepart = "COMPE"                  THEN
+                  IF   glb_cddepart = 20 OR    /* TI                   */
+                       glb_cddepart = 18 OR    /* SUPORTE              */
+                       glb_cddepart =  8 OR    /* COORD.ADM/FINANCEIRO */
+                       glb_cddepart =  4 THEN  /* COMPE                */
                        DO:
                            UPDATE tel_nrdhhini tel_nrdmmini tel_situacao
                                   WITH FRAME f_fechamento.

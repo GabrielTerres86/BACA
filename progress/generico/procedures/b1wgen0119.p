@@ -44,6 +44,9 @@
                  26/02/2014 - Atribuicao ao campo tt-dados-conta.flgdemis
                               na procedure obtem_dados_conta. (Fabricio)
                              
+				 07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
+                              departamento passando a considerar o código (Renato Darosci)   
+                 
                  12/12/2016 - Incorporacao - Alterada busca_cooperativas para
                               para listar apenas Coops Ativas
                               Telas que utilizam a procedure (IMGCHQ/PARMON)
@@ -99,15 +102,15 @@ PROCEDURE verifica_permissao:
     DEF INPUT PARAM par_cdcooper AS INTE NO-UNDO.
     DEF INPUT PARAM par_cdagenci AS INTE NO-UNDO.
     DEF INPUT PARAM par_nrdcaixa AS INTE NO-UNDO.
-    DEF INPUT PARAM par_dsdepart AS CHAR NO-UNDO.
+    DEF INPUT PARAM par_cddepart AS INTE NO-UNDO.
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
     IF par_cdcooper = 3 THEN
        DO:
-           IF par_dsdepart <> "TI"       AND
-              par_dsdepart <> "PRODUTOS" AND
-              par_dsdepart <> "CARTOES"  THEN
+           IF par_cddepart <> 20  AND /* TI */
+              par_cddepart <> 14  AND /* PRODUTOS */
+              par_cddepart <> 2  THEN /* CARTOES */
            DO:
                ASSIGN aux_cdcritic = 36
                       aux_dscritic = "".

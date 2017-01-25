@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Setembro/91.                        Ultima atualizacao: 20/05/2009
+   Data    : Setembro/91.                        Ultima atualizacao: 06/12/2016
 
    Dados referentes ao programa:
 
@@ -28,6 +28,10 @@
                             para o SUPER-USUARIO (Edson).
                             
                20/05/2009 - Alteracao CDOPERAD (Kbase).
+               
+               06/12/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)
+                            
 ............................................................................. */
 
 { includes/var_online.i }
@@ -112,7 +116,8 @@ DO WHILE TRUE:
           glb_nmrotina = ""
           glb_opvihelp = NO.
 
-   IF   glb_nmdatela = "GOHPUX"   AND   glb_dsdepart = "TI"   THEN
+   IF   glb_nmdatela = "GOHPUX"  AND   
+        glb_cddepart = 20        THEN /* TI */
         DO:
             UNIX.
         END.

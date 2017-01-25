@@ -139,6 +139,8 @@
 
                 17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
 
+				07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
+                             departamento passando a considerar o código (Renato Darosci)
 ..............................................................................*/
 
 
@@ -239,7 +241,7 @@ PROCEDURE obtem-cartoes-magneticos:
 
         /** Mostra todos os cartoes somente para SUPER-USUARIO **/
         /** Despreza cancelados e vencidos ha mais de 180 dias **/
-        IF  crapope.dsdepart <> "TI"                        AND
+        IF  crapope.cddepart <> 20                AND   /* TI */
             ((crapcrm.cdsitcar = 3 AND 
             crapcrm.dtcancel < (par_dtmvtolt - 180))   OR
             (crapcrm.cdsitcar = 2  AND 

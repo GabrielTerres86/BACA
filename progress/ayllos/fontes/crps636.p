@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Lucas Lunelli
-    Data    : Fevereiro/2013                  Ultima Atualizacao : 13/12/2016
+    Data    : Fevereiro/2013                  Ultima Atualizacao : 04/01/2017
     
     Dados referente ao programa:
     
@@ -138,6 +138,10 @@
                  13/12/2016 - Ajustes referente a incorporaçao da Transulcred pela Transpocred. 
                               Os agendamentos recebidos antes da incorporaçao com vencimento após 
                               a incorporaçao serao gravados no arquivo da cooperativa antiga (Elton).             
+
+                 04/01/2017 - Ajustar meio de coleta para codigo '3' quando 
+				              for DARF 0385 paga em canal digital (David).
+							  
 ............................................................................*/
 
 { includes/var_batch.i "NEW" }
@@ -2535,7 +2539,7 @@ PROCEDURE gera-linha-arquivo-exp-darf:
                                                            craplft.vlrjuros + 
                                                            craplft.vlrmulta)
                             tot_vltarint = tot_vltarint + aux_vltrfuni
-                            aux_dsmeicol = "8".
+                            aux_dsmeicol = IF craplft.cdempcon = 385 AND craplft.cdsegmto = 5 THEN "3" ELSE "8".
                 END.
             ELSE                    
             IF  craplft.cdagenci = 91 THEN  /** TAA **/
@@ -2558,7 +2562,7 @@ PROCEDURE gera-linha-arquivo-exp-darf:
                                                            craplft.vlrjuros + 
                                                            craplft.vlrmulta)
                             tot_vltartaa = tot_vltartaa + aux_vltrfuni
-                            aux_dsmeicol = "8".
+                            aux_dsmeicol = IF craplft.cdempcon = 385 AND craplft.cdsegmto = 5 THEN "3" ELSE "8".
                 END.
             ELSE                            /** Caixa **/
                 DO:

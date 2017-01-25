@@ -101,9 +101,12 @@
                10/02/2015 - Inclusao do campo tel_flgdbssd.
                             (PRJ Melhoria - Chamado 229249) - (Fabricio)
                
-               18/09/2015 - Inclusão do campo tel_nrctdbfl PRJ 214 (Vanessa)            
+               18/09/2015 - Inclusão do campo tel_nrctdbfl PRJ 214 (Vanessa)             
                
                14/09/2016 - Incluir chamada da rotina pc_pula_seq_gt0001 (Lucas Ranghetti #484556)
+
+			   08/12/2016 - P341-Automatização BACENJUD - Realizar a validação 
+			                do departamento pelo código do mesmo (Renato Darosci)
 ............................................................................. */
 DEF VAR log_nrseqatu LIKE gnconve.nrseqatu           NO-UNDO.  
 DEF VAR log_nrseqint LIKE gnconve.nrseqint           NO-UNDO.
@@ -611,9 +614,9 @@ DO TRANSACTION ON ENDKEY UNDO, LEAVE:
          UPPER(glb_cdoperad) = "F0030503" OR
          UPPER(glb_cdoperad) = "F0030642" OR
          UPPER(glb_cdoperad) = "F0030175" OR
-         glb_dsdepart = "CONTABILIDADE"   OR
-         glb_dsdepart = "FINANCEIRO"      OR
-         glb_dsdepart = "COMPE"           THEN
+         glb_cddepart        = 6          OR   /* CONTABILIDADE */
+         glb_cddepart        = 11         OR   /* FINANCEIRO    */
+         glb_cddepart        = 4        THEN   /* COMPE         */
           SET tel_tprepass WITH FRAME f_convenio.
             
       SET tel_flgdbssd
@@ -642,9 +645,9 @@ DO TRANSACTION ON ENDKEY UNDO, LEAVE:
            UPPER(glb_cdoperad) = "F0030503" OR
            UPPER(glb_cdoperad) = "F0030642" OR
            UPPER(glb_cdoperad) = "F0030175" OR
-           glb_dsdepart = "CONTABILIDADE"   OR
-           glb_dsdepart = "FINANCEIRO"      OR
-           glb_dsdepart = "COMPE"           THEN
+           glb_cddepart        = 6          OR   /* CONTABILIDADE */
+           glb_cddepart        = 11         OR   /* FINANCEIRO    */
+           glb_cddepart        = 4        THEN   /* COMPE         */
            DO:
               IF   glb_cdoperad = "979"             OR
                    glb_cdoperad = "126"             OR

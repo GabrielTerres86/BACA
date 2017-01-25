@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego   
-   Data    : Outubro/2006                     Ultima Atualizacao: 22/09/2014
+   Data    : Outubro/2006                     Ultima Atualizacao: 30/11/2016
 
    Dados referentes ao programa:
 
@@ -75,6 +75,8 @@
                            b1wgen9999.p procedure acha-lock, que identifica qual 
                            é o usuario que esta prendendo a transaçao. (Vanessa)
                            
+               30/11/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)
 ............................................................................. */
 
 { includes/var_online.i }
@@ -343,9 +345,9 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
             IF  aux_cddopcao = "A" OR 
                 aux_cddopcao = "D" THEN
                 DO:
-                    IF  glb_dsdepart <> "TI"       AND
-                        glb_dsdepart <> "SUPORTE"  AND
-                        glb_dsdepart <> "CARTOES" THEN 
+                    IF  glb_cddepart <> 20 /* TI      */ AND
+                        glb_cddepart <> 18 /* SUPORTE */ AND
+                        glb_cddepart <>  2 /* CARTOES */ THEN 
                         NEXT.
                 END.
         END.  
@@ -591,9 +593,9 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
 
      WHEN "S" THEN
        DO:
-        IF   glb_dsdepart <> "TI"       AND
-             glb_dsdepart <> "SUPORTE"  AND
-             glb_dsdepart <> "CARTOES" THEN
+        IF   glb_cddepart <> 20  AND /* TI      */
+             glb_cddepart <> 18  AND /* SUPORTE */
+             glb_cddepart <>  2 THEN /* CARTOES */
              DO:
                  glb_cdcritic = 36.
                  RUN fontes/critic.p.
@@ -791,9 +793,9 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
        END.
      WHEN "X" THEN
         DO:
-            IF   glb_dsdepart <> "TI"      AND
-                 glb_dsdepart <> "SUPORTE" AND
-                 glb_dsdepart <> "CARTOES" THEN
+            IF   glb_cddepart <> 20 AND  /* TI      */
+                 glb_cddepart <> 18 AND  /* SUPORTE */
+                 glb_cddepart <>  2 THEN /* CARTOES */
                  DO:
                      glb_cdcritic = 36.
                      RUN fontes/critic.p.
@@ -1047,9 +1049,9 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
    
      WHEN "E" THEN
         DO:
-            IF   glb_dsdepart <> "TI"      AND
-                 glb_dsdepart <> "SUPORTE" AND
-                 glb_dsdepart <> "CARTOES" THEN
+            IF   glb_cddepart <> 20 AND  /* TI      */
+                 glb_cddepart <> 18 AND  /* SUPORTE */
+                 glb_cddepart <>  2 THEN /* CARTOES */
                  DO:
                      glb_cdcritic = 36.
                      RUN fontes/critic.p.

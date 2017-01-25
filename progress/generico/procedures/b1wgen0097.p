@@ -92,6 +92,10 @@
                 04/03/2015 - Correçao feita na procedure grava_simulacao para isentar o IOF 
                              das operaçoes de "Portabilidade de Crédito".
                              (Carlos Rafael Tanholi - SD 408032)
+
+                07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
+                             departamento passando a considerar o código (Renato Darosci)
+
 ............................................................................*/
 
 { sistema/generico/includes/var_internet.i }
@@ -1589,7 +1593,7 @@ PROCEDURE valida_simulacao:
     DEF  INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
-    DEF  INPUT PARAM par_dsdepart AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cddepart AS INTE                           NO-UNDO.
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
     ASSIGN aux_cdcritic = 0
@@ -1597,7 +1601,7 @@ PROCEDURE valida_simulacao:
 
     EMPTY TEMP-TABLE tt-erro.
     /*
-    IF   NOT CAN-DO ("TI,PRODUTOS,SUPORTE",par_dsdepart)  THEN
+    IF   NOT CAN-DO ("14,18,20",STRING(par_cddepart))  THEN
         ASSIGN aux_cdcritic = 36.
     */
     IF   aux_cdcritic <> 0 OR aux_dscritic <> ""   THEN

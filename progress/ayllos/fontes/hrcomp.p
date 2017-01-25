@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Tiago
-   Data    : Fevereiro/2014                       Ultima Atualizacao: 21/09/2016
+   Data    : Fevereiro/2014                       Ultima Atualizacao: 02/12/2016
 
    Dados referentes ao programa:
 
@@ -26,6 +26,9 @@
                21/09/2016 - Incluir tratamento para poder alterar a cooperativa cecred e 
                             escolher o programa "DEVOLUCAO DOC" - Melhoria 316 
                             (Lucas Ranghetti #525623)
+                            
+               02/12/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)             
 ............................................................................. */
 
 { includes/var_online.i }
@@ -147,7 +150,7 @@ ON RETURN OF b_consulta DO:
                                         INPUT 0,
                                         INPUT glb_cdoperad,
                                         INPUT glb_nmdatela,
-                                        INPUT glb_dsdepart,
+                                        INPUT glb_cddepart,
                                         INPUT 1,
                                         INPUT glb_dtmvtolt,
                                         INPUT tel_cdcooper,
@@ -249,7 +252,7 @@ DO WHILE TRUE:
 
     RUN acesso_opcao IN h-b1wgen0183(INPUT  glb_cdcooper,
                                      INPUT  glb_cdagenci,
-                                     INPUT  glb_dsdepart,
+                                     INPUT  glb_cddepart,
                                      INPUT  glb_cddopcao,
                                      OUTPUT TABLE tt-erro).
     
@@ -271,7 +274,7 @@ DO WHILE TRUE:
                                     INPUT  0,
                                     INPUT  glb_cdoperad,
                                     INPUT  glb_nmdatela,
-                                    INPUT  glb_dsdepart,
+                                    INPUT  glb_cddepart,
                                     INPUT  1,
                                     INPUT  glb_dtmvtolt,
                                     INPUT  tel_cdcooper,
@@ -343,7 +346,7 @@ PROCEDURE cria_reg_proc:
                                       INPUT  0, /*nrdcaixa*/
                                       INPUT  glb_cdoperad,
                                       INPUT  glb_nmdatela,
-                                      INPUT  glb_dsdepart,
+                                      INPUT  glb_cddepart,
                                       INPUT  1, /*idorigem*/
                                       INPUT  glb_dtmvtolt,
                                       INPUT-OUTPUT TABLE tt-processos,
@@ -450,7 +453,7 @@ PROCEDURE grava_dados:
     DEF INPUT  PARAM par_nrdcaixa    AS   INT                           NO-UNDO.
     DEF INPUT  PARAM par_cdoperad    LIKE crapope.cdoperad              NO-UNDO.
     DEF INPUT  PARAM par_nmdatela    AS   CHAR                          NO-UNDO.
-    DEF INPUT  PARAM par_dsdepart    AS   CHAR                          NO-UNDO.
+    DEF INPUT  PARAM par_cddepart    AS   CHAR                          NO-UNDO.
     DEF INPUT  PARAM par_idorigem    AS   INT                           NO-UNDO.
     DEF INPUT  PARAM par_dtmvtolt    AS   DATE                          NO-UNDO.
     DEF INPUT  PARAM par_cdcoopex    AS   INT                           NO-UNDO.
@@ -471,7 +474,7 @@ PROCEDURE grava_dados:
                                     INPUT  par_nrdcaixa,
                                     INPUT  par_cdoperad,
                                     INPUT  par_nmdatela,
-                                    INPUT  par_dsdepart,
+                                    INPUT  par_cddepart,
                                     INPUT  par_idorigem,
                                     INPUT  par_dtmvtolt,
                                     INPUT  par_cdcoopex,

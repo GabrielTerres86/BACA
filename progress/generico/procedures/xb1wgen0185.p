@@ -8,6 +8,8 @@
 
      Alteracoes: 21/01/2015 - Ajustes para liberacao (Adriano).
 
+	             06/12/2016 - P341-Automatização BACENJUD - Alterar a passagem da descrição do 
+                              departamento como parametro e passar o o código (Renato Darosci)
 ............................................................................*/
 
 
@@ -19,7 +21,7 @@ DEF VAR aux_nrdcaixa AS INTE                                         NO-UNDO.
 DEF VAR aux_cdoperad AS CHAR                                         NO-UNDO.
 DEF VAR aux_nmdatela AS CHAR                                         NO-UNDO.
 DEF VAR aux_idorigem AS INTE                                         NO-UNDO.
-DEF VAR aux_dsdepart AS CHAR                                         NO-UNDO.
+DEF VAR aux_cddepart AS INTE                                         NO-UNDO.
 DEF VAR aux_cddopcao AS CHAR                                         NO-UNDO.
 DEF VAR aux_tppessoa AS INTE                                         NO-UNDO.
 DEF VAR aux_cdultrev AS INTE                                         NO-UNDO.
@@ -67,7 +69,7 @@ PROCEDURE valores_entrada:
              WHEN "cdoperad" THEN aux_cdoperad = tt-param.valorCampo.           
              WHEN "nmdatela" THEN aux_nmdatela = tt-param.valorCampo.           
              WHEN "idorigem" THEN aux_idorigem = INTE(tt-param.valorCampo).     
-             WHEN "dsdepart" THEN aux_dsdepart = tt-param.valorCampo.           
+             WHEN "cddepart" THEN aux_cddepart = INTE(tt-param.valorCampo).     
              WHEN "cddopcao" THEN aux_cddopcao = tt-param.valorCampo.           
              WHEN "tppessoa" THEN aux_tppessoa = INTE(tt-param.valorCampo).     
              WHEN "cdultrev" THEN aux_cdultrev = INTE(tt-param.valorCampo).     
@@ -113,7 +115,7 @@ PROCEDURE Gera_Impressao:
                         INPUT aux_nmdatela,     
                         INPUT aux_idorigem,  
                         INPUT aux_inproces,
-                        INPUT aux_dsdepart,     
+                        INPUT aux_cddepart,     
                         INPUT aux_dtmvtolt,     
                         INPUT aux_cddopcao,     
                         INPUT aux_tpdopcao,     
@@ -178,7 +180,7 @@ PROCEDURE busca_linhas_finalidades:
                                         INPUT aux_cdoperad,             
                                         INPUT aux_nmdatela,             
                                         INPUT aux_idorigem,             
-                                        INPUT aux_dsdepart,             
+                                        INPUT aux_cddepart,             
                                         INPUT aux_dtmvtolt,             
                                         INPUT aux_nrregist,             
                                         INPUT aux_nriniseq,             

@@ -10,6 +10,8 @@
 
    Alteracoes: 11/10/2016 - Acesso da tela HRCOMP em todas cooperativas SD381526 (Tiago/Elton)
 
+               06/12/2016 - P341-Automatização BACENJUD - Alterar a passagem da descrição do 
+                            departamento como parametro e passar o código (Renato Darosci)
 ..............................................................................*/
 
 DEF VAR aux_cdcooper AS INTE                                        NO-UNDO.
@@ -18,7 +20,7 @@ DEF VAR aux_nrdcaixa AS INTE                                        NO-UNDO.
 DEF VAR aux_cdoperad AS CHAR                                        NO-UNDO.
 DEF VAR aux_nmdatela AS CHAR                                        NO-UNDO.
 DEF VAR aux_idorigem AS INTE                                        NO-UNDO.
-DEF VAR aux_dsdepart AS CHAR                                        NO-UNDO.
+DEF VAR aux_cddepart AS INTE                                        NO-UNDO.
 DEF VAR aux_cdcoopex AS INTE                                        NO-UNDO.
 DEF VAR aux_flgativo AS CHAR                                        NO-UNDO.
 DEF VAR aux_nmproces AS CHAR                                        NO-UNDO.
@@ -50,7 +52,7 @@ PROCEDURE valores_entrada:
             WHEN "nmdatela" THEN aux_nmdatela = tt-param.valorCampo.
             WHEN "idorigem" THEN aux_idorigem = INTE(tt-param.valorCampo).
             WHEN "dtmvtolt" THEN aux_dtmvtolt = DATE(tt-param.valorCampo). 
-            WHEN "dsdepart" THEN aux_dsdepart = tt-param.valorCampo.
+            WHEN "cddepart" THEN aux_cddepart = INTE(tt-param.valorCampo).
             WHEN "cdcoopex" THEN aux_cdcoopex = INTE(tt-param.valorCampo).
             WHEN "nmproces" THEN aux_nmproces = tt-param.valorCampo.
             WHEN "flgativo" THEN aux_flgativo = tt-param.valorCampo.
@@ -75,7 +77,7 @@ PROCEDURE busca_dados:
                            INPUT  aux_nrdcaixa,
                            INPUT  aux_cdoperad,
                            INPUT  aux_nmdatela,
-                           INPUT  aux_dsdepart,
+                           INPUT  aux_cddepart,
                            INPUT  aux_idorigem,
                            INPUT  aux_dtmvtolt,
                            INPUT  aux_cdcoopex,
@@ -114,7 +116,7 @@ PROCEDURE carrega_cooperativas:
                            INPUT  aux_nrdcaixa,
                            INPUT  aux_cdoperad,
                            INPUT  aux_nmdatela,
-                           INPUT  aux_dsdepart,
+                           INPUT  aux_cddepart,
                            INPUT  aux_idorigem,
                            INPUT  aux_dtmvtolt,
                            OUTPUT TABLE tt-coop,
@@ -161,7 +163,7 @@ PROCEDURE grava_dados:
                            INPUT  aux_nrdcaixa,
                            INPUT  aux_cdoperad,
                            INPUT  aux_nmdatela,
-                           INPUT  aux_dsdepart,
+                           INPUT  aux_cddepart,
                            INPUT  aux_idorigem,
                            INPUT  aux_dtmvtolt,
                            INPUT  aux_cdcoopex,
@@ -205,7 +207,7 @@ PROCEDURE acesso_opcao:
 
     RUN acesso_opcao IN hBO(INPUT  aux_cdcooper,
                             INPUT  aux_cdagenci,                            
-							INPUT  aux_dsdepart,
+							INPUT  aux_cddepart,
 							INPUT  aux_cddopcao,
                             OUTPUT TABLE tt-erro).
 

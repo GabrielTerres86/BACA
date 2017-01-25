@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme
-   Data    : Agosto/2007                        Ultima alteracao: 08/09/2016
+   Data    : Agosto/2007                        Ultima alteracao: 07/12/2016
 
    Dados referentes ao programa:
 
@@ -91,6 +91,9 @@
                17/05/2016 - Ajuste no tamanho do frame (Adriano - M117)
               
                08/09/2016 - Adição do campo para valor máximo de integralização (Ricardo Linhares - M169)
+               
+               07/12/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)
                
 ............................................................................. */
 
@@ -820,12 +823,12 @@ DO WHILE TRUE:
       
                   END.
                
-               IF glb_dsdepart = "TI"                    OR
-                  glb_dsdepart = "PRODUTOS"              OR
-                  glb_dsdepart = "SUPORTE"               OR
-                  glb_dsdepart = "CANAIS"               OR
-                  glb_dsdepart = "COORD.ADM/FINANCEIRO"  OR
-                  glb_dsdepart = "COORD.PRODUTOS"        THEN
+               IF glb_cddepart = 20  OR   /* TI                   */
+                  glb_cddepart = 14  OR   /* PRODUTOS             */
+                  glb_cddepart = 18  OR   /* SUPORTE              */
+                  glb_cddepart =  1  OR   /* CANAIS               */
+                  glb_cddepart =  8  OR   /* COORD.ADM/FINANCEIRO */
+                  glb_cddepart =  9  THEN /* COORD.PRODUTOS       */
                   DO:
                      DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
       
@@ -1039,8 +1042,8 @@ DO WHILE TRUE:
       
                   END.
                
-               IF glb_dsdepart = "TI"       OR
-                  glb_dsdepart = "PRODUTOS" THEN
+               IF glb_cddepart = 20 OR   /* TI       */
+                  glb_cddepart = 14 THEN /* PRODUTOS */
                   DO:
 
                     IF tel_inpessoa  THEN

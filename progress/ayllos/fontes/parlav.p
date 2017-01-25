@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : HENRIQUE
-   Data    : MAIO/2011                          Ultima Atualizacao: 26/05/2014
+   Data    : MAIO/2011                          Ultima Atualizacao: 06/12/2016
 
    Dados referentes ao programa:
 
@@ -15,6 +15,9 @@
 
                26/05/2014 - Ajustado o acesso de "CONTABILIDADE" para 
                             "SEGURANCA" (Douglas - Chamado 161631)
+                            
+               06/12/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)             
 ..............................................................................*/
 
 { includes/var_online.i }
@@ -98,9 +101,9 @@ DO WHILE TRUE TRANSACTION:
         
         UPDATE glb_cddopcao WITH FRAME f_parlav.
 
-        IF  glb_cddopcao =  "A"             AND
-            glb_dsdepart <> "TI"            AND
-            glb_dsdepart <> "SEGURANCA"     THEN
+        IF  glb_cddopcao =  "A"  AND   
+            glb_cddepart <> 20   AND   /* TI        */
+            glb_cddepart <> 15   THEN  /* SEGURANCA */
             DO:
                 MESSAGE "Acesso nao permitido.".
                 NEXT.    

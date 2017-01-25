@@ -4,13 +4,15 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Carlos/CECRED 
-   Data    : Junho/2013                          Ultima alteracao:
+   Data    : Junho/2013                          Ultima alteracao: 06/12/2016 
 
    Dados referentes ao programa:
 
    Frequencia: Diario (on-line)
    Objetivo  : PRCGRV - Alterar/consultar as sequencias dos lotes dos gravames.
    
+   Alteraçao : 06/12/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)
 ............................................................................. */
 
 { includes/var_online.i }
@@ -139,8 +141,8 @@ DO WHILE TRUE:
         DO TRANSACTION:
 
             /* Permissoes de acesso */
-            IF  glb_dsdepart <> "TI"        AND
-                glb_dsdepart <> "PRODUTOS"  THEN
+            IF  glb_cddepart <> 20 AND  /* TI       */
+                glb_cddepart <> 14 THEN /* PRODUTOS */
                 DO:
                     glb_cdcritic = 36.
                     NEXT.

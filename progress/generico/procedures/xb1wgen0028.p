@@ -85,6 +85,10 @@
                             (James)
                             
                29/07/215 - Inclusao procedure "verifica_acesso_tela_taa". (James)             
+			   
+			   06/12/2016 - P341-Automatização BACENJUD - Alterar a passagem 
+			                da descrição do departamento como parametro e 
+							passar o código (Renato Darosci)           
 ............................................................................ */
 
 
@@ -220,7 +224,7 @@ DEF VAR aux_nrregist AS INT                                            NO-UNDO.
 DEF VAR aux_nriniseq AS INT                                            NO-UNDO.
 DEF VAR aux_qtregist AS INT                                            NO-UNDO.
 DEF VAR aux_flgpagin AS LOG                                            NO-UNDO.
-DEF VAR aux_dsdepart AS CHAR                                           NO-UNDO.
+DEF VAR aux_cddepart AS INTE                                           NO-UNDO.
 DEF VAR aux_flag2via AS LOG                                            NO-UNDO.
 DEF VAR aux_nrcctitg  LIKE crawcrd.nrcctitg                            NO-UNDO.
 DEF VAR aux_nrcctitg2 LIKE crawcrd.nrcctitg                            NO-UNDO.
@@ -369,7 +373,7 @@ PROCEDURE valores_entrada:
             WHEN "nrregist"  THEN aux_nrregist  = INTE(tt-param.valorCampo).
             WHEN "nriniseq"  THEN aux_nriniseq  = INTE(tt-param.valorCampo).
             WHEN "flgpagin"  THEN aux_flgpagin  = LOGICAL(tt-param.valorCampo).
-            WHEN "dsdepart"  THEN aux_dsdepart  = (tt-param.valorCampo).
+            WHEN "cddepart"  THEN aux_cddepart  = INTE(tt-param.valorCampo).
             WHEN "flag2via"  THEN aux_flag2via  = LOGICAL(tt-param.valorCampo).
             WHEN "nrcctitg"  THEN aux_nrcctitg  = DECI(tt-param.valorCampo).
             WHEN "nrcctitg2" THEN aux_nrcctitg2 = DECI(tt-param.valorCampo).            
@@ -3388,7 +3392,7 @@ PROCEDURE busca-cartao:
                              INPUT aux_nrregist,
                              INPUT aux_nriniseq,
                              INPUT aux_flgpagin,
-                             INPUT aux_dsdepart,
+                             INPUT aux_cddepart,
                              OUTPUT aux_qtregist,
                              OUTPUT TABLE tt-cartao,
                              OUTPUT TABLE tt-erro).

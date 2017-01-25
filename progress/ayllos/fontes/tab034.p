@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Janeiro/2005                    Ultima atualizacao: 08/01/2015
+   Data    : Janeiro/2005                    Ultima atualizacao: 07/12/2016
              
    Dados referentes ao programa:
 
@@ -47,6 +47,10 @@
  
                08/01/2015 - Inclusao de log para alteracao da opcao PCAPTA
                             (Jean Michel).
+                            
+               07/12/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)
+                            
 ............................................................................ */
 
 { includes/var_online.i }
@@ -181,10 +185,10 @@ DO WHILE TRUE:
         
         IF   glb_cddopcao <> "C"   THEN
              DO:
-                 IF  glb_dsdepart <> "TI"                   AND
-                     glb_dsdepart <> "COORD.ADM/FINANCEIRO" AND
-                     glb_dsdepart <> "PRODUTOS"             AND
-                     glb_dsdepart <> "COORD.PRODUTOS"       THEN      
+                 IF  glb_cddepart <> 20  AND   /* TI                   */
+                     glb_cddepart <>  8  AND   /* COORD.ADM/FINANCEIRO */
+                     glb_cddepart <> 14  AND   /* PRODUTOS             */
+                     glb_cddepart <>  9  THEN  /* COORD.PRODUTOS       */  
                      DO:
                          glb_cdcritic = 36.
                          RUN fontes/critic.p.

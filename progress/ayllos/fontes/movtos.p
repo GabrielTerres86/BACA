@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito 
    Sigla   : CRED
    Autor   : Adriano
-   Data    : Setembro/2010.                    Ultima Atualizacao: 02/03/2015
+   Data    : Setembro/2010.                    Ultima Atualizacao: 05/12/2016
 
    Dados referentes ao programa:
 
@@ -128,6 +128,8 @@
                             credito para "zzz9". SD - 259996.
                             (Andre Santos - SUPERO)
                             
+               05/12/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)
 .............................................................................*/
 
 { includes/var_online.i }
@@ -994,9 +996,9 @@ DO WHILE TRUE:
    ELSE         
    IF tel_cddopcao = "A" THEN
    	  DO: 
-   	  	 IF glb_dsdepart = "TI"         OR
-   	  	 	glb_dsdepart = "FINANCEIRO" OR 
-   	  	 	glb_dsdepart = "SUPORTE"    THEN
+   	  	 IF glb_cddepart = 20  OR   /* TI         */
+   	  	 	  glb_cddepart = 11  OR   /* FINANCEIRO */
+   	  	 	  glb_cddepart = 18  THEN /* SUPORTE    */
             DO:
                DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
        
@@ -1011,7 +1013,7 @@ DO WHILE TRUE:
                                       INPUT glb_cdoperad,
                                       INPUT glb_nmdatela,
                                       INPUT 1, /*idorigem*/
-                                      INPUT glb_dsdepart,
+                                      INPUT glb_cddepart,
                                       INPUT glb_dtmvtolt,
                                       INPUT 0, /*nrregist*/
                                       INPUT 9999, /*nriniseq*/
@@ -1163,7 +1165,7 @@ DO WHILE TRUE:
                                         INPUT glb_nmdatela,
                                         INPUT 1, /*dorigem*/
                                         INPUT glb_inproces,
-                                        INPUT glb_dsdepart,
+                                        INPUT glb_cddepart,
                                         INPUT glb_dtmvtolt,
                                         INPUT tel_cddopcao,
                                         INPUT "", /*tpdopcao*/
@@ -1219,7 +1221,7 @@ DO WHILE TRUE:
                       INPUT glb_nmdatela,
                       INPUT 1, /*idorigem*/
                       INPUT glb_inproces,
-                      INPUT glb_dsdepart,
+                      INPUT glb_cddepart,
                       INPUT glb_dtmvtolt,
                       INPUT tel_cddopcao,
                       INPUT tel_tpdopcao:SCREEN-VALUE IN FRAME f_movtos_tp,
@@ -1349,7 +1351,7 @@ PROCEDURE Gera_Impressao:
    DEF INPUT PARAM par_nmdatela AS CHAR                            NO-UNDO.   
    DEF INPUT PARAM par_idorigem AS INT                             NO-UNDO.
    DEF INPUT PARAM par_inproces AS INT                             NO-UNDO.  
-   DEF INPUT PARAM par_dsdepart AS CHAR                            NO-UNDO.   
+   DEF INPUT PARAM par_cddepart AS INT                             NO-UNDO.   
    DEF INPUT PARAM par_dtmvtolt AS DATE                            NO-UNDO.  
    DEF INPUT PARAM par_cddopcao AS CHAR                            NO-UNDO.   
    DEF INPUT PARAM par_tpdopcao AS CHAR                            NO-UNDO.
@@ -1472,7 +1474,7 @@ PROCEDURE Gera_Impressao:
                       INPUT par_nmdatela,              
                       INPUT par_idorigem,
                       INPUT par_inproces,
-                      INPUT par_dsdepart,              
+                      INPUT par_cddepart,              
                       INPUT par_dtmvtolt,              
                       INPUT par_cddopcao,
                       INPUT par_tpdopcao,

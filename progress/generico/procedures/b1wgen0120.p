@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0120.p
     Autor   : Gabriel Capoia dos Santos (DB1)
-    Data    : Outubro/2011                     Ultima atualizacao: 17/11/2016 
+    Data    : Outubro/2011                     Ultima atualizacao: 10/01/2017
 
     Objetivo  : Tranformacao BO tela BCAIXA
 
@@ -101,6 +101,12 @@
                              (Guilherme/SUPERO)
 
 			    17/11/2016 - #549653 Ajustes de formats das quantidades para rotinas do bcaixa (Carlos)
+				
+                06/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
+                             departamento passando a considerar o código (Renato Darosci)
+                             
+                10/01/2016 - #587076 aumento de formats para o boletim de caixa (Carlos)
+
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -232,7 +238,7 @@ PROCEDURE Busca_Dados:
                 LEAVE Busca.
             END.
 
-        FOR FIRST crapope FIELDS(dsdepart cdsitope)
+        FOR FIRST crapope FIELDS(cddepart cdsitope)
             WHERE crapope.cdcooper = par_cdcooper  AND
                   crapope.cdoperad = par_cdopecxa NO-LOCK: END.
 
@@ -240,7 +246,7 @@ PROCEDURE Busca_Dados:
         IF  ( par_cdagencx  = 90      OR  /** Internet **/
               par_cdagencx  = 91 )    AND /** TAA **/
               par_nrdcaixx  = 900     AND
-            ( AVAIL crapope AND crapope.dsdepart = "SUPORTE")  AND
+            ( AVAIL crapope AND crapope.cddepart = 18)  AND  /** "SUPORTE" **/
               par_cddopcao <> "C"      AND
               par_cddopcao <> "S"     THEN
             DO:
@@ -963,12 +969,12 @@ PROCEDURE Gera_Boletim:
          WITH NO-BOX COLUMN aux_nrcoluna NO-LABELS WIDTH 76 FRAME f_ini_estornos.
 
     FORM SPACE(2)
-         crapaut.nrsequen COLUMN-LABEL "Aut"
+         crapaut.nrsequen COLUMN-LABEL "Aut"       FORMAT "zzz,zz9"
          aux_dshistor     COLUMN-LABEL "Historico" FORMAT "x(23)"
          crapaut.nrdocmto
          crapaut.vldocmto COLUMN-LABEL "Valor" FORMAT "zzzz,zz9.99"
          crapaut.tpoperac COLUMN-LABEL "PG/RC"
-         crapaut.nrseqaut COLUMN-LABEL "Aut.Est"
+         crapaut.nrseqaut COLUMN-LABEL "Aut.Est"   FORMAT "zzz,zz9"
          WITH NO-BOX COLUMN aux_nrcoluna DOWN WIDTH 76 FRAME f_estornos.
     
     FORM crapaut.nrsequen COLUMN-LABEL "Aut"

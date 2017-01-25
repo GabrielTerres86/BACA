@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Lucas
-   Data    : Março/2012.                     Ultima atualizacao: 05/04/2012
+   Data    : Março/2012.                     Ultima atualizacao: 06/12/2016
 
    Dados referentes ao programa:
 
@@ -14,7 +14,8 @@
    Alteracoes: 05/04/2012 - Alteração na Temp Table que estava replicando
                             informações na opção C. (David Kruger).
                             
-   
+               06/12/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)
 ............................................................................. */
 
 { includes/var_online.i }
@@ -115,9 +116,9 @@ DO WHILE TRUE:
     
        UPDATE glb_cddopcao WITH FRAME f_prctan.
 
-       IF  glb_dsdepart <> "TI"       AND
-           glb_dsdepart <> "CONTABILIDADE" AND 
-           glb_dsdepart <> "PRODUTOS" THEN
+       IF  glb_cddepart <> 20 AND   /* TI            */
+           glb_cddepart <>  6 AND   /* CONTABILIDADE */ 
+           glb_cddepart <> 14 THEN  /* PRODUTOS      */
            DO:
               glb_cdcritic = 36.
               RUN fontes/critic.p.

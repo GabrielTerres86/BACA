@@ -8,7 +8,8 @@
    
     Objetivo  : BO referente a tela TAB042
                  
-    Alteracoes: 
+    Alteracoes: 07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
+                             departamento passando a considerar o código (Renato Darosci)
 
 .............................................................................*/
 
@@ -97,7 +98,7 @@ PROCEDURE altera_tab042:
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
     DEF  INPUT PARAM par_dstextab AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_dsdepart AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cddepart AS INTE                           NO-UNDO.
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
@@ -110,7 +111,8 @@ PROCEDURE altera_tab042:
                        crapope.cdoperad = par_cdoperad    
                        NO-LOCK NO-ERROR.
 
-    IF  NOT CAN-DO("TI,SUPORTE,COORD.ADM/FINANCEIRO,COORD.PRODUTOS",par_dsdepart) 
+	/* Verificar se departamento eh 20-TI, 18-SUPORTE, 8-COORD.ADM/FINANCEIRO ou 9-COORD.PRODUTOS */
+    IF  NOT CAN-DO("20,18,8,9",STRING(par_cddepart)) 
         AND crapope.nvoperad <>  3  THEN
         DO:
             ASSIGN aux_cdcritic = 36.

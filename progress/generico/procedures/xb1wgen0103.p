@@ -8,6 +8,9 @@
 
      Alteracoes: 31/07/2013 - Implementada opcao A da tela EXTRAT (Lucas).
 
+	             06/12/2016 - P341-Automatização BACENJUD - Alterar a passagem 
+			                  da descrição do departamento como parametro e 
+						  	  passar o código (Renato Darosci)
 .............................................................................*/
 
 
@@ -20,7 +23,7 @@ DEF VAR aux_cdoperad AS CHAR                                           NO-UNDO.
 DEF VAR aux_nmdatela AS CHAR                                           NO-UNDO.
 DEF VAR aux_idorigem AS INTE                                           NO-UNDO.
 DEF VAR aux_nmoperad AS CHAR                                           NO-UNDO.
-DEF VAR aux_dsdepart AS CHAR                                           NO-UNDO.
+DEF VAR aux_cddepart AS INTE                                           NO-UNDO.
 
 DEF VAR aux_nrdconta AS INTE                                           NO-UNDO.
 DEF VAR aux_idseqttl AS INTE                                           NO-UNDO.
@@ -76,7 +79,7 @@ DEF VAR aux_dtmovano AS INTE                                           NO-UNDO.
              WHEN "nmdatela" THEN aux_nmdatela = tt-param.valorCampo.
              WHEN "cddopcao" THEN aux_cddopcao = tt-param.valorCampo.
              WHEN "nmoperad" THEN aux_nmoperad = tt-param.valorCampo.
-             WHEN "dsdepart" THEN aux_dsdepart = tt-param.valorCampo.
+             WHEN "cddepart" THEN aux_cddepart = INTE(tt-param.valorCampo).
              WHEN "dsiduser" THEN aux_dsiduser = tt-param.valorCampo.
              WHEN "nmarquiv" THEN aux_nmarquiv = tt-param.valorCampo.
              WHEN "cdcooper" THEN aux_cdcooper = INTE(tt-param.valorCampo).
@@ -137,7 +140,7 @@ PROCEDURE Busca_Extrato:
                       INPUT aux_cddopcao,
                       INPUT aux_idorigem,
                       INPUT aux_dtmvtolt,
-                      INPUT aux_dsdepart,
+                      INPUT aux_cddepart,
                       INPUT aux_nrdconta,
                       INPUT aux_dtinimov,
                       INPUT aux_dtfimmov,

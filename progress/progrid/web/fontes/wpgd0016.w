@@ -2,13 +2,13 @@
 
 Alterações: 04/05/2009 - Utilizar cdcooper = 0 nas consultas (David).
 
-			      05/06/2012 - Adaptação dos fontes para projeto Oracle. Alterado
-                         busca na gnapses de CONTAINS para MATCHES (Guilherme Maba).
+			05/06/2012 - Adaptação dos fontes para projeto Oracle. Alterado
+						 busca na gnapses de CONTAINS para MATCHES (Guilherme Maba).
+             
+      15/10/2015 - Inclusão dos Campos UF e Cidade PRJ 229 (Vanessa).
 
-            15/10/2015 - Inclusão dos Campos UF e Cidade PRJ 229 (Vanessa).
-      
-            30/05/2016 - Ajustes navegaçao com a tela fornecedor wpgd0012c
-                         PRJ229 - Melhorias OQS (Odirlei-AMcom)
+      30/05/2016 - Ajustes navegaçao com a tela fornecedor wpgd0012c
+                   PRJ229 - Melhorias OQS (Odirlei-AMcom)
 
             28/11/2016 - Ajustes de carragamento de UF e cidades, SD - 563601
                          (Jean Michel).
@@ -195,8 +195,8 @@ ab_unmap.aux_dsdiaind_5 ab_unmap.aux_dsdiaind_6 ab_unmap.aux_dsdiaind_7 ab_unmap
 
 /* ************************  Frame Definitions  *********************** */
 
-DEFINE FRAME Web-Frame
-     gnapfep.nrdddfon[1] AT ROW 1 COL 1 NO-LABEL
+DEFINE FRAME Web-Frame    
+    gnapfep.nrdddfon[1] AT ROW 1 COL 1 NO-LABEL
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
      gnapfep.nrdddfon[2] AT ROW 1 COL 1 NO-LABEL
@@ -450,7 +450,7 @@ DEFINE FRAME Web-Frame
           FIELD aux_lspermis AS CHARACTER FORMAT "X(256)":U 
           FIELD aux_nrcpfcgc AS CHARACTER FORMAT "X(256)":U 
           FIELD aux_nrdrowid AS CHARACTER FORMAT "X(256)":U 
-          FIELD aux_stdopcao AS CHARACTER FORMAT "X(256)":U 
+          FIELD aux_stdopcao AS CHARACTER FORMAT "X(256)":U
           FIELD aux_dsestado AS CHARACTER FORMAT "X(256)":U
           FIELD aux_cdcidade AS CHARACTER FORMAT "X(256)":U          
       END-FIELDS.
@@ -571,16 +571,16 @@ PROCEDURE CriaListaEstados :
   
   RUN RodaJavaScript("var estados = new Array();").
   
-  FOR EACH crapmun NO-LOCK WHERE BREAK BY crapmun.cdestado:
+   FOR EACH crapmun NO-LOCK WHERE BREAK BY crapmun.cdestado:
    
-    IF FIRST-OF(crapmun.cdestado) THEN
-      DO:
+   IF FIRST-OF(crapmun.cdestado) THEN
+    DO:
         IF TRIM(vetorestados) <> "" AND TRIM(vetorestados) <> ? THEN
           ASSIGN vetorestados = vetorestados + ",".
-           
+
         ASSIGN vetorestados = vetorestados + "~{cdestado:'" + TRIM(STRING(crapmun.cdestado))+ "'~}"
                aux_contador = aux_contador + 1.
-          
+    
         IF aux_contador = 10 THEN
           DO:
             RUN RodaJavaScript("estados.push(" + vetorestados + ");").
@@ -588,7 +588,7 @@ PROCEDURE CriaListaEstados :
                    vetorestados = "".
           END.
       END.   
-  END. /* for each */  
+    END. /* for each */  
     
   RUN RodaJavaScript("estados.push("  + vetorestados + ");").
 
@@ -613,7 +613,7 @@ PROCEDURE CriaListaCidades :
                                        + "',dscidade:'" + TRIM(string(crapmun.dscidade))
                                        + "',cdcidade:'" + TRIM(string(crapmun.cdcidade))+ "'~}"
            aux_contador = aux_contador + 1.
-                                       
+    
     IF aux_contador = 20 AND (TRIM(vetorcidades) <> ? AND TRIM(vetorcidades) <> "") THEN
       DO:
         RUN RodaJavaScript("cidades.push(" + vetorcidades + ");").
@@ -798,9 +798,9 @@ IF VALID-HANDLE(h-b1wpgd0016) THEN
                     gnatfep.nrdddfon[2] = INPUT gnapfep.nrdddfon[2]
                     gnatfep.nrdddfon[3] = INPUT gnapfep.nrdddfon[3]
 
-                    gnatfep.nrtelefo[1] = INPUT gnapfep.nrtelefo[1]
-                    gnatfep.nrtelefo[2] = INPUT gnapfep.nrtelefo[2]
-                    gnatfep.nrtelefo[3] = INPUT gnapfep.nrtelefo[3]
+                    gnatfep.nrtelefo[1] = dec(string(INPUT gnapfep.nrtelefo[1],'999999999'))
+                    gnatfep.nrtelefo[2] = dec(string(INPUT gnapfep.nrtelefo[2],'999999999'))
+                    gnatfep.nrtelefo[3] = dec(string(INPUT gnapfep.nrtelefo[3],'999999999'))
                     gnatfep.cdcidade    = DECIMAL(ab_unmap.aux_cdcidade).
 
                 RUN inclui-registro IN h-b1wpgd0016(INPUT TABLE gnatfep, OUTPUT msg-erro, OUTPUT ab_unmap.aux_nrdrowid).
@@ -811,7 +811,7 @@ IF VALID-HANDLE(h-b1wpgd0016) THEN
                 /* cria a temp-table e joga o novo valor digitado para o campo */
                 CREATE gnatfep.
                 BUFFER-COPY gnapfep TO gnatfep.
-
+                
                 ASSIGN
                     gnatfep.cdcooper = 0
                     gnatfep.dsavalia = INPUT gnapfep.dsavalia
@@ -835,7 +835,7 @@ IF VALID-HANDLE(h-b1wpgd0016) THEN
                     gnatfep.nrtelefo[2] = INPUT gnapfep.nrtelefo[2]
                     gnatfep.nrtelefo[3] = INPUT gnapfep.nrtelefo[3]
                     gnatfep.cdcidade    = DECIMAL(ab_unmap.aux_cdcidade).
-                 
+                
                 RUN altera-registro IN h-b1wpgd0016(INPUT TABLE gnatfep, OUTPUT msg-erro).
                 
             END.    
@@ -1092,7 +1092,7 @@ ASSIGN opcao                 = GET-FIELD("aux_cddopcao")
        ab_unmap.qtcarhor = GET-VALUE("qtcarhor")
        ab_unmap.aux_idvapost = GET-VALUE("aux_idvapost")
        ab_unmap.aux_lsfacili = GET-VALUE("aux_lsfacili").
-
+       
 RUN outputHeader.
 /* método POST crampmun.cdestado crapmun.cdcidade*/
 IF REQUEST_METHOD = "POST":U THEN 
@@ -1265,9 +1265,9 @@ IF REQUEST_METHOD = "POST":U THEN
                 RUN CriaListaCidades.
     
       END CASE.
-
+      
       RUN CriaListaEstados.
-             
+                 
       IF msg-erro-aux = 10 OR  msg-erro-aux = 11 OR (opcao <> "sa" AND opcao <> "ex" AND opcao <> "in") THEN
          RUN displayFields.
  
@@ -1293,9 +1293,9 @@ IF REQUEST_METHOD = "POST":U THEN
       
       RUN enableFields.
       RUN outputFields.
-
       
-      CASE msg-erro-aux:
+      
+      CASE msg-erro-aux:          
            WHEN 1 THEN
                 DO:
                     ASSIGN v-qtdeerro      = 1
@@ -1320,7 +1320,7 @@ IF REQUEST_METHOD = "POST":U THEN
                 DO:
                     ASSIGN v-qtdeerro      = 1
                            v-descricaoerro = m-erros.
-
+                    
                     RUN RodaJavaScript('alert("'+ v-descricaoerro + '"); ').
                     
                 END.
@@ -1368,7 +1368,7 @@ ELSE /* Método GET */
            OTHERWISE
                 DO:
                     IF GET-VALUE("LinkRowid") <> "" THEN
-                       DO:
+                       DO: 
                         
                            FIND {&SECOND-ENABLED-TABLE} WHERE ROWID({&SECOND-ENABLED-TABLE}) = TO-ROWID(GET-VALUE("LinkRowid")) NO-LOCK NO-WAIT NO-ERROR.
                            
@@ -1417,7 +1417,7 @@ ELSE /* Método GET */
                             ab_unmap.aux_nrcpfcgc = STRING(ab_unmap.aux_nrcpfcgc, "999.999.999-99").
                         ELSE
                             ab_unmap.aux_nrcpfcgc = STRING(ab_unmap.aux_nrcpfcgc, "99.999.999/9999-99").
-
+                            
                     
                     FIND FIRST crapmun WHERE crapmun.cdcidade = {&SECOND-ENABLED-TABLE}.cdcidade  NO-LOCK NO-ERROR. 
                     
@@ -1443,7 +1443,7 @@ ELSE /* Método GET */
                            RUN RodaJavaScript('LimparCampos();').
                            RUN RodaJavaScript('Incluir();').
                        END.
-
+                  
                 END. /* fim otherwise */                  
       END CASE. 
 

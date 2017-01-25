@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Gabriel
-   Data    : Setembro/2008                     Ultima Atualizacao: 22/09/2014
+   Data    : Setembro/2008                     Ultima Atualizacao: 30/11/2016
 
    Dados referentes ao programa:
    
@@ -26,6 +26,10 @@
                22/09/2014 - Alteração da mensagem com critica 77 substituindo pela 
                            b1wgen9999.p procedure acha-lock, que identifica qual 
                            é o usuario que esta prendendo a transaçao. (Vanessa)
+                           
+               30/11/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)
+            
 ..............................................................................*/
 
 { includes/var_online.i }
@@ -125,11 +129,11 @@ DO WHILE TRUE:
       LEAVE.
    END.
       
-   IF   glb_dsdepart <> "TI"                     AND
-        glb_dsdepart <> "SUPORTE"                AND
-        glb_dsdepart <> "COORD.ADM/FINANCEIRO"   AND
-        glb_dsdepart <> "COMPE"                  AND
-        glb_cddopcao <> "C"   THEN
+   IF   glb_cddepart <> 20   AND   /* TI                   */
+        glb_cddepart <> 18   AND   /* SUPORTE              */
+        glb_cddepart <>  8   AND   /* COORD.ADM/FINANCEIRO */
+        glb_cddepart <>  4   AND   /* COMPE                */
+        glb_cddopcao <> "C"  THEN
         DO:
             glb_cdcritic = 36.
             RUN fontes/critic.p.

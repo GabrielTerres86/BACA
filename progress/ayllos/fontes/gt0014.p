@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Elton
-   Data    : Setembro/2006                  Ultima Atualizacao: 21/02/2013.  
+   Data    : Setembro/2006                  Ultima Atualizacao: 02/12/2016.  
 
    Dados referentes ao programa:
    
@@ -27,6 +27,10 @@
                
                21/02/2013 - Retirado campo craptel.flgdonet por craptel.idambtel
                             'Ambiente Acesso' (Jorge).
+                            
+               02/12/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)
+                            
 ............................................................................. */
 
 { includes/var_online.i } 
@@ -204,10 +208,10 @@ DO  WHILE TRUE ON ENDKEY UNDO, LEAVE :
 
     IF   glb_cddopcao = "L"   THEN
          DO: 
-             IF   glb_dsdepart <> "TI"                   AND
-                  glb_dsdepart <> "SUPORTE"              AND
-                  glb_dsdepart <> "COORD.ADM/FINANCEIRO" AND
-                  glb_dsdepart <> "COORD.PRODUTOS"       THEN
+             IF   glb_cddepart <> 20  AND   /* TI                   */
+                  glb_cddepart <> 18  AND   /* SUPORTE              */
+                  glb_cddepart <>  8  AND   /* COORD.ADM/FINANCEIRO */
+                  glb_cddepart <>  9  THEN  /* COORD.PRODUTOS       */
                   DO:
                       glb_cdcritic = 36.
                       RUN fontes/critic.p.

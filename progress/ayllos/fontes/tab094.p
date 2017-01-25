@@ -15,9 +15,10 @@
                            procedure grava_dados -  167998 (Carlos Rafael Tanholi)
                            
               31/07/2015 - Ajuste para retirar o caminho absoluto na chamada
-                           de fontes
-                          (Adriano - SD 314469).              
+                           de fontes (Adriano - SD 314469).              
   
+              08/12/2016 - P341-Automatização BACENJUD - Realizar a validação 
+			               do departamento pelo código do mesmo (Renato Darosci)
 ............................................................................ */
 
 { includes/var_online.i }
@@ -131,7 +132,7 @@ DO WHILE TRUE:
 
     RUN acesso_opcao IN h-b1wgen0139(INPUT  glb_cdcooper,
                                      INPUT  glb_cdagenci,
-                                     INPUT  glb_dsdepart,
+                                     INPUT  glb_cddepart,
                                      INPUT  glb_cddopcao,
                                      OUTPUT TABLE tt-erro).
     
@@ -259,7 +260,7 @@ DO WHILE TRUE:
                                          INPUT  0,
                                          INPUT  glb_cdoperad,
                                          INPUT  glb_nmdatela,
-                                         INPUT  glb_dsdepart,
+                                         INPUT  glb_cddepart,
                                          INPUT  1,
                                          INPUT  glb_dtmvtolt,
                                          INPUT  tel_mrgsrdoc,

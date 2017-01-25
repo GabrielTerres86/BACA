@@ -14,6 +14,8 @@
                 15/06/2016 - Correcao da paginacao para filtro que tras apenas 
                              um registro (Carlos)
         
+		        06/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
+                             departamento passando a considerar o código (Renato Darosci)
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -53,7 +55,7 @@ PROCEDURE Busca_Dados:
     DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsdepart AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cddepart AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cddopcao AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdconven AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdcooped AS INTE                           NO-UNDO.
@@ -185,9 +187,9 @@ PROCEDURE Busca_Dados:
         ELSE 
             IF  CAN-DO("I,E",par_cddopcao) THEN DO:
 
-                IF  par_dsdepart <> "TI"         AND
-                    par_dsdepart <> "FINANCEIRO" AND
-                    par_dsdepart <> "COMPE"      THEN
+                IF  par_cddepart <> 20    AND  /* TI */
+                    par_cddepart <> 11    AND  /* FINANCEIRO */
+                    par_cddepart <>  4   THEN  /* COMPE */
                     DO:
                                aux_dscritic = "".
                         LEAVE Busca.

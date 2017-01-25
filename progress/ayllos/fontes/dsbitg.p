@@ -3,7 +3,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Fernando
-   Data    : Fevereiro/2009                     Ultima alteracao: 08/09/2015
+   Data    : Fevereiro/2009                     Ultima alteracao: 31/11/2016
 
    Dados referentes ao programa:
 
@@ -66,6 +66,10 @@
               
               08/09/2015 - Liberado acesso a tela para departamento SUPORTE. 
                            SD 318079 (Kelvin)
+                           
+              01/12/2016 - Alterado campo dsdepart para cddepart.
+                           PRJ341 - BANCENJUD (Odirlei-AMcom)
+                           
 ..............................................................................*/
 
 { includes/var_online.i }
@@ -261,9 +265,9 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
     DO WHILE TRUE ON ENDKEY UNDO, LEAVE:  
         UPDATE glb_cddopcao WITH FRAME f_opcao.
         
-        IF glb_dsdepart <> "TI"      AND
-           glb_dsdepart <> "CARTOES" AND
-           glb_dsdepart <> "SUPORTE" THEN
+        IF glb_cddepart <> 20 AND  /* TI      */
+           glb_cddepart <>  2 AND  /* CARTOES */
+           glb_cddepart <> 18 THEN /* SUPORTE */
         DO:
             glb_cdcritic = 36.
             RUN fontes/critic.p.

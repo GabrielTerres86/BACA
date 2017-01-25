@@ -14,6 +14,9 @@
                              
                 13/05/2014 - Inclusao de VALIDACAO de CNPJ 
                              (Jaison - SF: 122406)
+							
+                06/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
+                             departamento passando a considerar o código (Renato Darosci)
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -62,7 +65,7 @@ PROCEDURE Retorna_seguradoras:
             RETURN 'NOK'.
         END.
 
-    IF  NOT CAN-DO ("TI,PRODUTOS",crapope.dsdepart)  THEN  DO:
+    IF  NOT CAN-DO ("20,14",STRING(crapope.cddepart))  THEN  DO:
         RUN gera_erro (INPUT par_cdcooper,
                        INPUT par_cdagenci,
                        INPUT par_nrdcaixa,
@@ -167,7 +170,7 @@ PROCEDURE Grava_dados_seguradora:
             RETURN 'NOK'.
         END.
 
-    IF  NOT CAN-DO ("TI,PRODUTOS",crapope.dsdepart)  THEN  DO:
+    IF  NOT CAN-DO ("20,14",STRING(crapope.cddepart))  THEN  DO:
         RUN gera_erro (INPUT par_cdcooper,
                        INPUT par_cdagenci,
                        INPUT par_nrdcaixa,
@@ -302,7 +305,7 @@ PROCEDURE Valida_inclusao_seguradora:
             RETURN 'NOK'.
         END.
 
-    IF  NOT CAN-DO ("TI,PRODUTOS",crapope.dsdepart)  THEN  DO:
+    IF  NOT CAN-DO ("20,14",STRING(crapope.cddepart))  THEN  DO:
         RUN gera_erro (INPUT par_cdcooper,
                        INPUT par_cdagenci,
                        INPUT par_nrdcaixa,
@@ -408,7 +411,7 @@ PROCEDURE Elimina_seguradora:
             RETURN 'NOK'.
         END.
 
-    IF  NOT CAN-DO ("TI,PRODUTOS",crapope.dsdepart)  THEN  DO:
+    IF  NOT CAN-DO ("20,14",STRING(crapope.cddepart))  THEN  DO:
         RUN gera_erro (INPUT par_cdcooper,
                        INPUT par_cdagenci,
                        INPUT par_nrdcaixa,

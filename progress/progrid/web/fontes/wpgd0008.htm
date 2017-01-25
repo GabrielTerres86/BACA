@@ -2,7 +2,7 @@
 					Alteracoes: 22/10/2012 - Inclusão limitação tamanho maximo campo Frequência exigida(%) (Daniel).
 									
 					10/09/2013 - Nova forma de chamar as agências, de PAC agora 
-											 a escrita será PA (André Euzébio - Supero).
+								 a escrita será PA (André Euzébio - Supero).
 
 					29/06/2015 - Melhorias OQS (Gabriel-RKAM). 	
 
@@ -15,17 +15,17 @@
 					09/10/2015 - Alteração da tela de Cadastro de Eventos (Eventos/Recursos) (Carlos Rafael Tanholi)				
 
 					30/12/2015 - Apresentação da nova aba de cadastro de recursos do PA por Evento.
-											 Projeto 229 - Melhorias OQS (Lombardi).
+								 Projeto 229 - Melhorias OQS (Lombardi).
 
 					28/04/2016 - Correcao de erros de ortografia (Carlos Rafael Tanholi).
 			
-          27/05/2016 - Limpeza dos campos zerados em tela na opção incluir.(Carlos Rafael Tanholi)
+                    27/05/2016 - Limpeza dos campos zerados em tela na opção incluir.(Carlos Rafael Tanholi)
 					
 					10/06/2016 - Ajustado para ocultar os campos corretamento ao incluir novo recurso PA.
-											 PRJ229 - Melhorias OQS (Odirlei-AMcom)
+								 PRJ229 - Melhorias OQS (Odirlei-AMcom)
 											 
 					27/06/2018 - Ajustes para RF05/RF06, inclusao de novas ABAS,
-                       PRJ229 - Melhorias OQS (Jean Michel).						 
+                                 PRJ229 - Melhorias OQS (Jean Michel).						 
 	-->
 	<html>
 			<head>
@@ -41,7 +41,8 @@
 					<script SRC="/cecred/jsbiblio/sorttable.js"></script>
 					<script SRC="/cecred/jsbiblio/biblio.js"></script>
 					<script SRC="/cecred/jsbiblio/frcod.js"></script>
-					<script SRC="/modelo/js/funcoes.js"></script>
+					<script SRC="/cecred/js/funcoes.js"></script>
+                    
 					<style type="text/css">
 							<!--
 							.style1 {color: #FF00FF}
@@ -57,7 +58,7 @@
 							NomeDoProgramaDeZoom = '/zoom/zwpgd0008.w';
 							NomeDoProgramaDeZoom_2 = '/zoom/zwpgd0008_2.w';
 					</script>
-					<form action="#." method="POST" name="form">
+					<form action="#." method="POST" name="form" id="form">
             <input name="aux_cdevento"    type="hidden" value="">
             <input name="aux_idevento"    type="hidden" value="">
             <input name="aux_cdorigem"    type="hidden" value="">
@@ -135,7 +136,7 @@
 																															<table id="AbaPublicoAlvo" border="0" cellpadding="0" cellspacing="0">
 																																	<tr>
 																																			<td background="/cecred/images/menu/mnu_nle.gif" width="4" height="21"></td>
-																																			<td width="100" align="center" class="txtTituloHid" onclick="mostraDiv('divPublicoAlvo');document.form.submit();">P&uacute;blico Alvo</td>
+																																			<td width="100" align="center" class="txtTituloHid" onclick="mostraDiv('divPublicoAlvo');document.form.submit();">P&uacute;blico-Alvo</td>
 																																			<td background="/cecred/images/menu/mnu_nld.gif" width="4" height="21"></td>
 																																	</tr>
 																															</table>
@@ -434,7 +435,7 @@
 																				<table id="tbpublicoalvo" border="0" style="width:100%;" class="dataTable">
 																						<tr>
 																								<td id="separador1pa" width="5" background="/cecred/images/menu/fnd_title.jpg">&nbsp;</td>
-																								<td id="tbpublicoalvo_col1" width="525" height="25" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Público Alvo</td>
+																								<td id="tbpublicoalvo_col1" width="525" height="25" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">P&uacute;blico-Alvo</td>
 																								<td width="5" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
 																								<td id="tbpublicoalvo_col2" width="40" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos"><div align="center">&nbsp;</div></td>
 																						</tr>
@@ -681,7 +682,7 @@
 
 							if ((vaux.substring(1, 2) == 'A') || (document.form.aux_stdopcao.value == 'i')) {
 
-									if (document.form.aux_nrseqtem.value == 0){
+									if (document.form.aux_nrseqtem.value == 0 && document.form.aux_idevento.value == 1){
 											alert("O campo Tema é obrigatório.");
 											return false;
 									}
@@ -945,7 +946,7 @@
 					var cell;
 					var cor = '#F7F7F7';
 						
-					// limpa a tabela de Publico Alvo, menos a 1ª linha - linha do cabecalho
+					// limpa a tabela de Publico-Alvo, menos a 1ª linha - linha do cabecalho
 					for (var i=document.all.tbpublicoalvo.rows.length; i > 1; i--){
 						document.all.tbpublicoalvo.deleteRow(i-1); 
 					}
@@ -973,7 +974,7 @@
 								cell.height = 20;
 								cell.align = 'left';
 								cell.width = document.all.tbpublicoalvo_col1.width;
-								cell.innerText = mpublico[i].dspubalv; // fim primeira celula (descricao do publico alvo)
+								cell.innerText = mpublico[i].dspubalv; // fim primeira celula (descricao do publico-alvo)
 
 								cell = row.insertCell();   // Separador
 								cell.className = 'txtNormal';
@@ -986,7 +987,7 @@
 								cell.align = 'center';
 								cell.width = document.all.tbpublicoalvo_col2.width;
 								cell.height = 20;
-								cell.innerHTML = '<a href="#" onClick="ExPublicoAlvo(' + mpublico[i].nrseqpap + ');" class="linkGuia"><img src="/cecred/images/botoes/btn_excluir.gif" border="0" title="Excluir Público Alvo"></a>';
+								cell.innerHTML = '<a href="#" onClick="ExPublicoAlvo(' + mpublico[i].nrseqpap + ');" class="linkGuia"><img src="/cecred/images/botoes/btn_excluir.gif" border="0" title="Excluir Público-Alvo"></a>';
 						}
 					}else{
 							row = tbpublicoalvo.insertRow();  // nova linha 
@@ -995,7 +996,7 @@
 							cell.className = 'txtNormal';
 							cell.align = 'center';
 							cell.colSpan = 4;
-							cell.innerText = 'Nenhum Público Alvo Cadastrado.';
+							cell.innerText = 'Nenhum Público-Alvo Cadastrado.';
 						}	
 				}
 				
@@ -1003,7 +1004,7 @@
 						var row;
 						var cell;
 						var cor;
-						// limpa a tabela de Publico Alvo, menos a 1ª linha - linha do cabecalho
+						// limpa a tabela de Publico-Alvo, menos a 1ª linha - linha do cabecalho
 						for (var i=document.all.tbprodutosugerido.rows.length; i > 1; i--){
 							document.all.tbprodutosugerido.deleteRow(i-1); 
 						}
@@ -1044,7 +1045,7 @@
 									cell.align = 'center';
 									cell.width = document.all.tbprodutosugerido_col2.width;
 									cell.height = 20;
-									cell.innerHTML = '<a href="#" onClick="ExProdutoSugerido(' + mproduto[i].nrseqpdp + ');" class="linkGuia"><img src="/cecred/images/botoes/btn_excluir.gif" border="0" title="Excluir Público Alvo"></a>';
+									cell.innerHTML = '<a href="#" onClick="ExProdutoSugerido(' + mproduto[i].nrseqpdp + ');" class="linkGuia"><img src="/cecred/images/botoes/btn_excluir.gif" border="0" title="Excluir Público-Alvo"></a>';
 							}
 						}else{
 							row = tbprodutosugerido.insertRow();  // nova linha 
@@ -1061,11 +1062,11 @@
         function ExPublicoAlvo(nrseqpap){
         
           if(nrseqpap == 0 || nrseqpap == "" || nrseqpap == undefined || nrseqpap == '0'){
-            alert("Selecione um Público Alvo.");
+            alert("Selecione um Público-Alvo.");
             return false;
           }
           
-          if(confirm("Confirma a Exclusão do Público Alvo?")){
+          if(confirm("Confirma a Exclusão do Público-Alvo?")){
             document.form.aux_nrseqpap.value = nrseqpap;
             document.form.aux_cddopcao.value = "expa";
             document.form.submit();
@@ -1117,7 +1118,7 @@
 				
 				function AdPublicoAlvo(){
 					VarURL = document.form.aux_dsendurl.value + '/wpgd0008b.htm' + '?aux_cdcooper=' + document.form.aux_cdcooper.value + '&aux_cdevento=' + document.form.aux_cdevento.value + '&aux_idevento=' + document.form.aux_idevento.value + '&aux_cdoperad=' + document.form.aux_cdoperad.value + '&aux_cdcopope=' + document.form.aux_cdcopope.value + '&aux_idevento=' + document.form.aux_idevento.value;
-          window.open(VarURL, '', 'toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=530,height=150,top=10,left=10');
+          window.open(VarURL, '', 'toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=740,height=150,top=10,left=10');
 				}
 				
 				function AdProdutoSugerido(){

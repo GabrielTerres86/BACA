@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Mirtes
-   Data    : Janeiro/2004                    Ultima alteracao: 24/03/2016
+   Data    : Janeiro/2004                    Ultima alteracao: 01/12/2016
    
    Dados referentes ao programa:
 
@@ -132,6 +132,9 @@
                            é o usuario que esta prendendo a transaçao. (Vanessa)
                            
                24/03/2016 - Ajustes de permissao conforme solicitado no chamado 358761 (Kelvin).
+               
+               01/12/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)
 ............................................................................. */
 
 { includes/var_online.i }
@@ -1386,11 +1389,11 @@ DO WHILE TRUE:
                          NEXT.
                        END.
                  
-                   IF   glb_dsdepart = "TI"                   OR
-                        glb_dsdepart = "SUPORTE"              OR
-                        glb_dsdepart = "COMPE"                OR
-                        glb_dsdepart = "COORD.ADM/FINANCEIRO" OR 
-                        glb_dsdepart = "CANAIS"               THEN
+                   IF   glb_cddepart = 20  OR   /* TI                  */
+                        glb_cddepart = 18  OR   /* SUPORTE             */
+                        glb_cddepart =  4  OR   /* COMPE               */
+                        glb_cddepart =  8  OR   /* COORD.ADM/FINANCEIRO*/
+                        glb_cddepart =  1  THEN /* CANAIS              */
                         UPDATE tel_nrdhhini tel_nrdmmini tel_situacao
                                WITH FRAME f_opcao_h.
                    ELSE

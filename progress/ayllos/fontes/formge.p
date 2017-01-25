@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Lucas Lunelli
-   Data    : Outubro/2012.                     Ultima alteracao: 28/03/2013
+   Data    : Outubro/2012.                     Ultima alteracao: 01/12/2016
 
    Dados referentes ao programa:
 
@@ -20,7 +20,8 @@
                             chamada da procedure forma_grupo_economico
                             (Adriano).
                                                      
-   
+               01/12/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom) 
 ............................................................................. */
 
 { includes/var_online.i }
@@ -95,8 +96,8 @@ DO WHILE TRUE:
    
    IF glb_cddopcao = "G" THEN
       DO:
-          IF glb_dsdepart <> "TI" AND 
-             glb_dsdepart <> "PRODUTOS" THEN
+          IF glb_cddepart <> 20  AND  /* TI        */
+             glb_cddepart <> 14  THEN /* PRODUTOS  */
              DO:
                 ASSIGN glb_cdcritic = 36.
                 RUN fontes/critic.p.

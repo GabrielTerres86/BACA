@@ -139,7 +139,7 @@
                03/12/2015 - Ajuste de homologacao referente a conversao
                             realizada pela DB1
                             (Adriano).              
-               
+                                          
                18/07/2016 - Incluido campo tel_nrtelvoz.
                             PRJ229 - Melhorias OQS (Odirlei - AMcom)
 ............................................................................. */
@@ -551,7 +551,7 @@ DO TRANSACTION ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
                tel_cdbandoc
                tel_cdagedoc
                tel_flgdsede 
-               tel_cdagepac WHEN glb_dsdepart = "COMPE"
+               tel_cdagepac WHEN glb_cddepart = 4
                WITH FRAME f_pac01.
 
         IF log_cdagepac <> 0 AND
@@ -738,8 +738,8 @@ DO TRANSACTION ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
                                                  "(00:00 a 23:00).".
 
                       
-                      IF  glb_dsdepart = "TI"     OR
-                          glb_dsdepart = "COMPE"  THEN
+                      IF  glb_cddepart = 20   OR  /* TI */
+                          glb_cddepart = 4  THEN  /* COMPE */ 
                           DO:
                               DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                                   
@@ -1565,8 +1565,8 @@ DO TRANSACTION ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
                          IF KEYFUNCTION(LASTKEY) = "END-ERROR"  THEN
                             LEAVE.
 
-                         IF  glb_dsdepart = "TI"     OR
-                             glb_dsdepart = "COMPE"  THEN
+                         IF  glb_cddepart = 20   OR   /* TI */    
+                             glb_cddepart = 4  THEN	  /* COMPE */
                              DO:
                              
                                  DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
@@ -1661,8 +1661,8 @@ DO TRANSACTION ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
                   END.
             ELSE
                DO:
-                   IF  glb_dsdepart = "TI"     OR
-                       glb_dsdepart = "COMPE"  THEN
+                   IF  glb_cddepart = 20   OR  /* TI */
+                       glb_cddepart = 4  THEN  /* COMPE */
                        DO:
                            DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                            
@@ -1763,14 +1763,14 @@ DO TRANSACTION ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
                   IF KEYFUNCTION(LASTKEY) = "END-ERROR"  THEN
                      LEAVE.
 
-                  IF  glb_dsdepart = "TI"     OR
-                      glb_dsdepart = "COMPE"  THEN
+                  IF  glb_cddepart = 20    OR  /* TI */
+                      glb_cddepart = 4   THEN  /* COMPE */
                       DO:
                           DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                              UPDATE tel_nrtelvoz WITH FRAME f_pac03.
                              LEAVE.
                           END.
-                          
+                        
                           DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                         
                             UPDATE tel_hhsiccan

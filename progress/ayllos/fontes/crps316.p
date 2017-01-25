@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Junior.
-   Data    : Agosto/2001                        Ultima atualizacao: 09/09/2013
+   Data    : Agosto/2001                        Ultima atualizacao: 09/01/2017
 
    Dados referentes ao programa:
 
@@ -21,6 +21,10 @@
                
                09/09/2013 - Nova forma de chamar as agências, de PAC agora 
                             a escrita será PA (André Euzébio - Supero).             
+
+               09/01/2017 - #587076 Correcao dos formats dos campos 
+                            aux_slddeved e tot_slddeved para permitirem 
+                            valores negativos (Carlos)
 ...........................................................................*/
 
 DEF STREAM str_1. /* Para os emprestimos listados. */
@@ -55,12 +59,12 @@ DEF    VAR rel_dslanmto AS CHAR    FORMAT "x(30)"                      NO-UNDO.
 DEF    VAR aux_qtemprst AS INT     FORMAT "zzz,zz9"            INIT 0  NO-UNDO.
 DEF    VAR aux_vlemprst AS DECIMAL FORMAT "z,zzz,zzz,zz9.99"   INIT 0  NO-UNDO.
 DEF    VAR aux_qtddeved AS INT     FORMAT "zzz,zz9"            INIT 0  NO-UNDO.
-DEF    VAR aux_slddeved AS DECIMAL FORMAT "z,zzz,zzz,zz9.99"   INIT 0  NO-UNDO.
+DEF    VAR aux_slddeved AS DECIMAL FORMAT "z,zzz,zzz,zz9.99-"  INIT 0  NO-UNDO.
 
 DEF    VAR tot_qtemprst AS INT     FORMAT "zzz,zz9"            INIT 0  NO-UNDO.
 DEF    VAR tot_vlemprst AS DECIMAL FORMAT "z,zzz,zzz,zz9.99"   INIT 0  NO-UNDO.
 DEF    VAR tot_qtddeved AS INT     FORMAT "zzz,zz9"            INIT 0  NO-UNDO.
-DEF    VAR tot_slddeved AS DECIMAL FORMAT "z,zzz,zzz,zz9.99"   INIT 0  NO-UNDO.
+DEF    VAR tot_slddeved AS DECIMAL FORMAT "z,zzz,zzz,zz9.99-"  INIT 0  NO-UNDO.
 
 { includes/var_batch.i "NEW" }
 

@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego/Mirtes
-   Data    : Julho/2005                         Ultima alteracao: 06/10/2016
+   Data    : Julho/2005                         Ultima alteracao: 05/12/2016
  
    Dados referentes ao programa:
 
@@ -95,6 +95,10 @@
 
                06/10/2016 - SD 489677 - Inclusao do flgativo na CRAPLGP
                             (Guilherme/SUPERO)
+                            
+               05/12/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)
+                            
 ............................................................................ */
 
 { includes/var_online.i }
@@ -574,13 +578,13 @@ DO WHILE TRUE:
 
       UPDATE glb_cddopcao  WITH FRAME f_movgps. 
 
-      IF (glb_dsdepart <> "SUPORTE" AND
-          glb_dsdepart <> "TI"      AND
-          glb_dsdepart <> "COMPE")  AND
-         (glb_cddopcao =  "A"       OR
-          glb_cddopcao =  "B"       OR
-          glb_cddopcao =  "X"       OR
-          glb_cddopcao =  "G")      THEN
+      IF (glb_cddepart <> 18     AND  /* SUPORTE */
+          glb_cddepart <> 20     AND  /* TI      */
+          glb_cddepart <>  4 )   AND  /* COMPE   */
+         (glb_cddopcao =  "A"    OR
+          glb_cddopcao =  "B"    OR
+          glb_cddopcao =  "X"    OR
+          glb_cddopcao =  "G")   THEN
         DO:
             glb_cdcritic = 36.
             NEXT.

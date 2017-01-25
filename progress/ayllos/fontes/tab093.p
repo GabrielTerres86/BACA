@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Lucas/Guilherme
-   Data    : Março/2012.                     Ultima atualizacao: 20/09/2016
+   Data    : Março/2012.                     Ultima atualizacao: 07/12/2016
 
    Dados referentes ao programa:
 
@@ -45,6 +45,9 @@
                25/03/2016 - Ajustes de permissao conforme solicitado no chamado 358761 (Kelvin).    
                             
                20/09/2016 - Adicionar filtro de data para o 620_termos (Lucas Ranghetti #480384/#469603)     
+                            
+               07/12/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)
                             
 ..............................................................................*/
 
@@ -235,11 +238,11 @@ DO WHILE TRUE:
          
         UPDATE glb_cddopcao WITH FRAME f_tab093.
         
-        IF  glb_dsdepart <> "TI"       AND 
-            glb_dsdepart <> "CONTROLE" AND
-            glb_dsdepart <> "COMPE"    AND
-            glb_cddopcao <> "C"        AND
-            glb_cddopcao <> "M"        THEN
+        IF  glb_cddepart <> 20   AND  /* TI       */
+            glb_cddepart <>  7   AND  /* CONTROLE */
+            glb_cddepart <>  4   AND  /* COMPE    */
+            glb_cddopcao <> "C"  AND
+            glb_cddopcao <> "M"  THEN
             DO:
                 glb_cdcritic = 36.
                 RUN fontes/critic.p.

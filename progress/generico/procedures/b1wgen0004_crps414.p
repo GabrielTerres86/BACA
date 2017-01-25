@@ -93,6 +93,9 @@
                 
                 12/08/2010 - Ajustada procedure acumula_aplicacoes para nao 
                              estourar variaveis do tipo extent (Elton).
+
+		        07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
+                             departamento passando a considerar o código (Renato Darosci)
 ..............................................................................*/
  
 { sistema/generico/includes/b1wgen0004tt_crps414.i }
@@ -4411,9 +4414,9 @@ PROCEDURE consulta-extrato-rdca.
         END.
 
     IF  p-cdcooper = 3  THEN
-        aux_lsoperad = aux_lsoperad + "," + crapope.dsdepart.
+        aux_lsoperad = aux_lsoperad + "," + STRING(crapope.cddepart).
 
-    IF  NOT CAN-DO(aux_lsoperad,crapope.dsdepar)  THEN  
+    IF  NOT CAN-DO(aux_lsoperad,STRING(crapope.cddepart))  THEN  
         aux_listahis = "113,116,118,119,121,126,143,144,176,178,179," +
                        "183,861,862,868,871,492,493,494,495,875,876,877," +
                        "472,473,474,475,463,478,476,477,527,528,529,530," +
@@ -4425,7 +4428,7 @@ PROCEDURE consulta-extrato-rdca.
                        "531,532,533,534".
     
     /* Nao lista aplicacoes resgatadas a mais de 1 ano */
-    IF  NOT CAN-DO("SUPORTE",crapope.dsdepart)  THEN
+    IF crapope.cddepart <> 18 THEN    /* SUPORTE */
         IF  p-saldo-aplic <= 0                           AND
             craprda.dtsaqtot < (crapdat.dtmvtolt - 365)  THEN
             NEXT.
@@ -4479,7 +4482,7 @@ PROCEDURE consulta-extrato-rdca.
         
         IF  NOT CAN-DO("999",STRING(craphis.cdhistor))  THEN
             DO:
-                IF  CAN-DO(aux_lsoperad,crapope.dsdepart) AND   
+                IF  CAN-DO(aux_lsoperad,STRING(crapope.cddepart)) AND   
                    (craphis.cdhistor = 116                OR
                     craphis.cdhistor = 179)               THEN
                     .

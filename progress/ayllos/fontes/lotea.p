@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Setembro/91.                       Ultima atualizacao: 27/06/2016
+   Data    : Setembro/91.                       Ultima atualizacao: 05/12/2016
 
    Dados referentes ao programa:
 
@@ -160,7 +160,10 @@
 
 			  27/06/2016 - Ajustes para nao alterar lote para o tipo 26 (Tiago/Elton SD438123).
 
-			  28/07/2016 - Permitido alterar o lote 26 quando for banco caixa 700 (Tiago/Elton)			           
+			        28/07/2016 - Permitido alterar o lote 26 quando for banco caixa 700 (Tiago/Elton)			           
+             
+              05/12/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)
 ............................................................................. */
 
 { includes/var_online.i }
@@ -180,7 +183,7 @@ IF  (tel_nrdolote = 4500    OR                /*  Lote de custodia / titulos  */
      tel_nrdolote = 8477    OR                /*  Lote de desconto de chqs    */
      tel_nrdolote = 10001   OR
      tel_nrdolote = 10002   OR
-     tel_nrdolote = 10003)  AND  glb_dsdepart <> "TI"  THEN
+     tel_nrdolote = 10003)  AND  glb_cddepart <> 20 THEN /* TI */
      DO:
          ASSIGN glb_cdcritic = 650.
          CLEAR FRAME f_lote NO-PAUSE.
@@ -399,10 +402,10 @@ DO TRANSACTION ON ERROR UNDO TRANS_A, NEXT:
        END.
       
            /*** Conta salario ***/
-      IF  (glb_dsdepart <> "TI"       AND 
-           glb_dsdepart <> "SUPORTE"  AND 
-           glb_dsdepart <> "CANAIS")  AND
-           tel_tplotmov = 32         THEN
+      IF  (glb_cddepart <> 20   AND /* TI      */
+           glb_cddepart <> 18   AND /* SUPORTE */
+           glb_cddepart <>  1 ) AND /* CANAIS  */
+           tel_tplotmov = 32    THEN
            DO:
                glb_cdcritic = 36.
                NEXT-PROMPT tel_tplotmov WITH FRAME f_lote.
@@ -452,10 +455,10 @@ DO TRANSACTION ON ERROR UNDO TRANS_A, NEXT:
            END.
       
       IF  ((tel_cdbccxlt = 600)  AND 
-           (NOT CAN-DO("6,19",STRING(tel_tplotmov))))       OR
+           (NOT CAN-DO("6,19",STRING(tel_tplotmov))))  OR
           ((tel_cdbccxlt <> 600) AND 
-           (CAN-DO("6,19",STRING(tel_tplotmov))))           AND
-           glb_dsdepart <> "TI"                             THEN
+           (CAN-DO("6,19",STRING(tel_tplotmov))))      AND
+           glb_cddepart <> 20                          THEN /* TI */
            DO:
                glb_cdcritic = 584.
                NEXT-PROMPT tel_tplotmov WITH FRAME f_lote.
@@ -463,7 +466,7 @@ DO TRANSACTION ON ERROR UNDO TRANS_A, NEXT:
            END.
 
       IF   tel_nrdolote > 5999 AND tel_nrdolote < 7000   AND 
-           glb_dsdepart <> "TI"                          THEN
+           glb_cddepart <> 20 /* TI */                          THEN
            IF   NOT CAN-DO("1,6,12,17",STRING(tel_tplotmov))   THEN
                 DO:
                     glb_cdcritic = 261.

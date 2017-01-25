@@ -2,7 +2,7 @@
 
     b2crap13.p - Consulta  Boletim Caixa
     
-    Ultima Atualizacao: 17/10/2016
+    Ultima Atualizacao: 10/01/2017
     
     Alteracoes: 02/03/2006 - Unificacao dos bancos - SQLWorks - Eder
     
@@ -64,6 +64,8 @@
 
                 17/10/2016 - #495989 Correção do erro "tentativa de gravar 
                              no fluxo fechado str_1" (Carlos)
+                             
+                10/01/2017 - #587076 correções de formats para o boletim de caixa (Carlos)
  --------------------------------------------------------------------*/
 {dbo/bo-erro1.i}
 
@@ -952,8 +954,8 @@ PROCEDURE disponibiliza-dados-boletim-caixa:
                                                   LENGTH(aux_descrctb) - 1)
                                aux_descrctb = SUBSTRING(aux_descrctb,1,24) + 
                                               "(" +
-                                              STRING(aux_qtlanchq, "z,zz9") + 
-                                              ") "
+                                              STRING(aux_qtlanchq, "zz,zz9") + 
+                                              ")"
                                aux_cdhistor = craphis.cdhstctb.
 
                         IF  p-nome-arquivo <> " "  THEN 
@@ -983,7 +985,7 @@ PROCEDURE disponibiliza-dados-boletim-caixa:
                                     length(aux_descrctb) - 1)) =
                                          fill(".",24 - length(aux_descrctb) - 1)
                      aux_descrctb = SUBSTRING(aux_descrctb,1,24) + "(" +
-                                    STRING(aux_qtrttctb, "zz,zz9") + ") "
+                                    STRING(aux_qtrttctb, "zz,zz9") + ")"
                      aux_cdhistor = craphis.cdhstctb.
            
                 IF  p-nome-arquivo <> " "  THEN 
@@ -1017,7 +1019,7 @@ PROCEDURE disponibiliza-dados-boletim-caixa:
                                    ASSIGN aux_deschist = 
                                    STRING(w-histor.cdhistor,"9999")   + "-" +  
                                    STRING(w-histor.dshistor,"x(18)")  + "(" +
-                                   STRING(w-histor.qtlanmto, "z,zz9") + ") "
+                                   STRING(w-histor.qtlanmto, "zz,zz9") + ")"
                                    SUBSTR(aux_deschist,length(aux_deschist) + 2,
                                    (41 - length(aux_deschist) - 1)) =
                                    FILL(".",41 - length(aux_deschist) - 1).
@@ -1041,7 +1043,7 @@ PROCEDURE disponibiliza-dados-boletim-caixa:
                                         
                                         ASSIGN aux_deschist = 
                                            "   RECIBO              "  + "(" +
-                                           STRING(w-histor.qtlanmto-recibo, "z,zz9") + ") " +
+                                           STRING(w-histor.qtlanmto-recibo, "zz,zz9") + ")" +
                                            " .........".
 
                                         IF p-nome-arquivo <> " " THEN
@@ -1063,8 +1065,8 @@ PROCEDURE disponibiliza-dados-boletim-caixa:
                                         
                                         ASSIGN aux_deschist = 
                                            "   CARTAO              "  + "(" +
-                                           STRING(w-histor.qtlanmto-cartao, "z,zz9") + ") " +
-                                           " .........".
+                                           STRING(w-histor.qtlanmto-cartao, "zz,zz9") + ") " +
+                                           " ........".
 
                                         IF p-nome-arquivo <> " " THEN
                                         DO:
@@ -1087,7 +1089,7 @@ PROCEDURE disponibiliza-dados-boletim-caixa:
                                    SUBSTR(aux_deschist,length(aux_deschist) + 
                                    2,(44 - length(aux_deschist) - 1)) =
                                    FILL(".",44 - length(aux_deschist) - 1).
-                   
+
                                 IF  p-nome-arquivo <> " "  THEN 
                                     DO:
                                         DISPLAY STREAM str_1
@@ -1160,7 +1162,7 @@ PROCEDURE disponibiliza-dados-boletim-caixa:
                            aux_descrctb = "  " + 
                            STRING(w-histor.cdhistor,"9999") + "-" +  
                            STRING(w-histor.dshistor,"x(18)") + "(" +
-                           STRING(w-histor.qtlanmto, "z,zz9") + ") "
+                           STRING(w-histor.qtlanmto, "zz,zz9") + ")"
                            aux_cdhistor = crabhis.cdhstctb
                            aux_vlrttctb = w-histor.vllanmto.
            
@@ -1219,7 +1221,7 @@ PROCEDURE disponibiliza-dados-boletim-caixa:
                            aux_deschist = 
                                STRING(w_empresa.cdempres,"99999")    + "-" +  
                                STRING(crapemp.nmresemp,"x(16)")  + "(" +
-                               STRING(w_empresa.qtlanmto, "z,zz9") + ") "
+                               STRING(w_empresa.qtlanmto, "zz,zz9") + ")"
                                SUBSTR(aux_deschist,length(aux_deschist) + 2,
                                (41 - length(aux_deschist) - 1)) =
                                FILL(".",41 - length(aux_deschist) - 1).

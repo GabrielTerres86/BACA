@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Sidnei 
-   Data    : Outubro/2008.                       Ultima atualizacao: 25/03/2016
+   Data    : Outubro/2008.                       Ultima atualizacao: 06/12/2016
 
    Dados referentes ao programa:
 
@@ -53,6 +53,11 @@
                            
                 25/03/2016 - Ajustes de permissao conforme solicitado no chamado 358761 (Kelvin).
 							 
+                06/12/2016 - Alterado campo dsdepart para cddepart.
+                             PRJ341 - BANCENJUD (Odirlei-AMcom)
+							
+			    22/12/2016 - Ajustar bloqueio dos departamentos para VIACREDI e CECRED, conforme
+			                 solicitação feita no chamado 549118 (Renato Darosci - Supero)
 ............................................................................. */
 
 DEF NEW SHARED VAR shr_nmdatela AS CHAR                                NO-UNDO.
@@ -528,9 +533,9 @@ DO WHILE TRUE:
            FIND crapope WHERE crapope.cdcooper = glb_cdcooper AND
                               crapope.cdoperad = tel_cdoperad NO-LOCK NO-ERROR.
 
-           IF   glb_dsdepart <> "TI" THEN
-                IF   AVAIL crapope           AND
-                     crapope.dsdepart = "TI" THEN
+           IF   glb_cddepart <> 20 THEN  /* TI */
+                IF AVAIL crapope         AND
+                   crapope.cddepart = 20 THEN /* TI */
                      DO:
                          glb_cdcritic = 36.
                          NEXT.
@@ -1009,9 +1014,9 @@ DO WHILE TRUE:
            FIND crapope WHERE crapope.cdcooper = glb_cdcooper AND
                               crapope.cdoperad = tel_cdoperad NO-LOCK NO-ERROR.
 
-           IF   glb_dsdepart <> "TI" THEN
-                IF   AVAIL crapope           AND
-                     crapope.dsdepart = "TI" THEN
+           IF   glb_cddepart <> 20  THEN /* TI */
+                IF AVAIL crapope         AND
+                   crapope.cddepart = 20 THEN /* TI */
                      DO:
                          glb_cdcritic = 36.
                          NEXT.
@@ -1047,8 +1052,8 @@ DO WHILE TRUE:
                                  crapope.cdoperad = tel_cdopedst 
                                  NO-LOCK NO-ERROR.
 
-              IF glb_dsdepart <> "TI" THEN
-                 IF AVAIL crapope AND crapope.dsdepart = "TI" THEN
+              IF glb_cddepart <> 20 THEN /* TI */
+                 IF AVAIL crapope AND crapope.cddepart = 20 THEN /* TI */
                     DO:
                        glb_cdcritic = 36.
                        NEXT.
@@ -1165,9 +1170,9 @@ DO WHILE TRUE:
            FIND crapope WHERE crapope.cdcooper = glb_cdcooper AND
                               crapope.cdoperad = tel_cdoperad NO-LOCK NO-ERROR.
 
-           IF   glb_dsdepart <> "TI" THEN
-                IF   AVAIL crapope           AND
-                     crapope.dsdepart = "TI" THEN
+           IF   glb_cddepart <> 20 THEN /* TI */
+                IF AVAIL crapope         AND
+                   crapope.cddepart = 20 THEN /* TI */
                      DO:
                          glb_cdcritic = 36.
                          NEXT.
@@ -1262,9 +1267,9 @@ DO WHILE TRUE:
            FIND crapope WHERE crapope.cdcooper = glb_cdcooper AND
                               crapope.cdoperad = tel_cdoperad NO-LOCK NO-ERROR.
 
-           IF   glb_dsdepart <> "TI" THEN
-                IF   AVAIL crapope           AND
-                     crapope.dsdepart = "TI" THEN
+           IF   glb_cddepart <> 20 THEN /* TI */
+                IF AVAIL crapope         AND
+                   crapope.cddepart = 20 THEN /* TI */
                      DO:
                          glb_cdcritic = 36.
                          NEXT.
@@ -1365,9 +1370,9 @@ DO WHILE TRUE:
            FIND crapope WHERE crapope.cdcooper = glb_cdcooper AND
                               crapope.cdoperad = tel_cdoperad NO-LOCK NO-ERROR.
 
-           IF   glb_dsdepart <> "TI" THEN
-                IF   AVAIL crapope  AND
-                     crapope.dsdepart = "TI" THEN
+           IF   glb_cddepart <> 20 THEN /* TI */
+                IF AVAIL crapope         AND
+                   crapope.cddepart = 20 THEN /* TI */
                      DO:
                          glb_cdcritic = 36.
                          NEXT.
@@ -1869,9 +1874,28 @@ PROCEDURE busca-acessos:
                                      crapope.cdoperad = tel_cdoperad  
                                      NO-LOCK NO-ERROR.
     
-                  IF   AVAIL crapope   THEN
-                       IF  NOT CAN-DO("SUPORTE,PRODUTOS,DESENVOLVIMENTO" +
-                                      " CECRED,CANAIS",crapope.dsdepart)  THEN
+                  IF   AVAIL crapope   THEN DO:
+                       IF glb_cdcooper <> 1 AND
+					      glb_cdcooper <> 3 THEN DO:
+					       IF  NOT CAN-DO("18," + /* SUPORTE */
+                                          "14," + /* PRODUTOS */
+                                          "10," + /* DESENVOLVIMENTO CECRED */
+                                          "1"     /* CANAIS */
+                                          ,STRING(crapope.cddepart))  THEN
+                               DO:
+                                   RUN proc_permis 
+                                            (INPUT craptel.nmdatela,
+                                             INPUT ENTRY(indice,craptel.cdopptel),
+                                             INPUT craptel.idevento).
+                               
+                                   IF  RETURN-VALUE = "NOK"   THEN
+                                       NEXT.
+                               END.
+				       END.
+					   ELSE DO:
+					       IF  NOT CAN-DO("18," + /* SUPORTE */
+                                          "20"    /* TI */
+                                          ,STRING(crapope.cddepart))  THEN
                            DO:
                                RUN proc_permis 
                                         (INPUT craptel.nmdatela,
@@ -1881,6 +1905,8 @@ PROCEDURE busca-acessos:
                                IF  RETURN-VALUE = "NOK"   THEN
                                    NEXT.
                            END.
+					   END.
+                  END.
                   
                   IF   NOT AVAILABLE crapope   THEN
                        DO:
@@ -2359,8 +2385,7 @@ PROCEDURE proc_traz_operadores:
                           
             /* Ignora operadores CECRED */
        IF   crapope.nmoperad MATCHES "*CECRED*"    OR
-            
-            crapope.dsdepart = "TI"                 THEN
+            crapope.cddepart = 20 /* TI */         THEN
 
             NEXT.
     

@@ -3,7 +3,7 @@
    Programa: fontes/crps545.p
    Sigla   : CRED
    Autor   : Guilherme
-   Data    : Dezembro/2009.                     Ultima atualizacao: 26/12/2016
+   Data    : Dezembro/2009.                     Ultima atualizacao: 13/01/2017
                                                                           
    Dados referentes ao programa:
 
@@ -80,6 +80,12 @@
                             (Douglas - Chamado 406267)
 
 			   26/12/2016 - Tratamento incorporação Transposul (Diego).
+
+			   13/01/2017 - Incorporacao - Tratado recebimento de TED para 
+			                agencia antiga e conta de destino invalida, para 
+							criar registro na gnmvspb com cdcooper da coop.
+							nova, pois estava criando com a coop. antiga e nao
+							ocorria centralizacao (Diego).
 			    	
 ............................................................................. */
 
@@ -589,7 +595,7 @@ PROCEDURE verifica_conta_transferida.
              
                    IF  NOT AVAIL craptco  THEN DO:
 				       /* - Mensagem recebida para Agencia Antiga e conta Nova.
-						  - Neste caso ocorre DE-PARA do credito para coop. NOVA, e a 
+						  - Neste caso ocorre DEVOLUCAO da mensagem na coop. NOVA, e a 
 							centralizacao deve ocorrer na conta da coop. NOVA */ 
 					   FIND craptco WHERE craptco.cdcopant = aux_cdcooper AND
                                           craptco.nrdconta = aux_nrdconta AND
@@ -630,6 +636,17 @@ PROCEDURE verifica_conta_transferida.
                                           aux_cdagencr = b-crapcop.cdagectl.
                                END.
                        END.
+				   ELSE
+				       DO:  /* Quando vier mensagem para a agencia antiga e conta de destino invalida,
+					           a mesma sera devolvida pela coop. singular nova. Para que ocorra a centralizacao
+							   corretamente devera gravar registro na gnmvspb com o codigo da coop. nova. Nesta
+							   situacao nao encontrara o registro na craptco. */
+					        IF   aux_cdcooper = 17  THEN
+							     IF  glb_dtmvtolt > 03/20/2017  THEN
+							         .
+								 ELSE ASSIGN aux_cdcooper = 9.
+					   END.
+
                 END.        
         END.
 

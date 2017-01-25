@@ -18,6 +18,9 @@
                
               01/10/2014 - Incluir par_dsdepart <> "FINANCEIRO" na procedure
                            acesso_opcao (Lucas R. #201057)
+
+			  06/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
+                           departamento passando a considerar o código (Renato Darosci)
 ............................................................................ */
 
 { sistema/generico/includes/b1wgen0139tt.i }
@@ -120,7 +123,7 @@ PROCEDURE grava_dados:
     DEF INPUT  PARAM par_nrdcaixa    AS   INT                           NO-UNDO.
     DEF INPUT  PARAM par_cdoperad    LIKE crapope.cdoperad              NO-UNDO.
     DEF INPUT  PARAM par_nmdatela    AS   CHAR                          NO-UNDO.
-    DEF INPUT  PARAM par_dsdepart    AS   CHAR                          NO-UNDO.
+    DEF INPUT  PARAM par_cddepart    AS   INTE                          NO-UNDO.
     DEF INPUT  PARAM par_idorigem    AS   INT                           NO-UNDO.
     DEF INPUT  PARAM par_dtmvtolt    AS   DATE                          NO-UNDO.
     DEF INPUT  PARAM par_mrgsrdoc    AS   DECIMAL                       NO-UNDO.
@@ -371,7 +374,7 @@ PROCEDURE acesso_opcao:
 
     DEF INPUT  PARAM par_cdcooper    AS  INTEGER                        NO-UNDO.
     DEF INPUT  PARAM par_cdagenci    AS  INTEGER                        NO-UNDO.
-    DEF INPUT  PARAM par_dsdepart    AS  CHARACTER                      NO-UNDO.
+    DEF INPUT  PARAM par_cddepart    AS  INTEGER                        NO-UNDO.
     DEF INPUT  PARAM par_cddopcao    AS  CHARACTER                      NO-UNDO.
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
@@ -385,10 +388,10 @@ PROCEDURE acesso_opcao:
 
     EMPTY TEMP-TABLE tt-erro.
 
-    IF  par_dsdepart <> "COORD.ADM/FINANCEIRO" AND
-        par_dsdepart <> "TI"                   AND
-        par_dsdepart <> "FINANCEIRO"           AND /* Lucas R. */
-        par_cddopcao <> "C"                    THEN
+    IF  par_cddepart <> 8    AND /* COORD.ADM/FINANCEIRO */
+        par_cddepart <> 11   AND /* FINANCEIRO */
+        par_cddepart <> 20   AND /* TI */
+        par_cddopcao <> "C" THEN
         DO:
             ASSIGN aux_cdcritic = 0
                    aux_dscritic = "Permissao de acesso negada.".

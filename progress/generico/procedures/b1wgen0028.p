@@ -498,6 +498,8 @@
                 
                 17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
 
+				07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
+                             departamento passando a considerar o código (Renato Darosci)
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -1306,7 +1308,7 @@ PROCEDURE carrega_dados_inclusao:
                            crapadc.insitadc = 0 NO-LOCK 
                            BY crapadc.cdadmcrd DESCENDING:
 
-        IF  crapadc.cdadmcrd = 3 AND crapope.dsdepart  <> "CARTOES" THEN
+        IF  crapadc.cdadmcrd = 3 AND crapope.cddepart  <> 2 THEN   /* 2-CARTÕES */
             NEXT.
 
         IF  (crapass.inpessoa = 2 AND crapadc.tpctahab = 1) OR 
@@ -2057,7 +2059,7 @@ PROCEDURE valida_nova_proposta:
         END.
 
     /*Bloquear solicitacao de cartao se nao for departamento de cartoes*/
-    IF  crapadc.cdadmcrd = 3 AND crapope.dsdepart  <> "CARTOES" THEN
+    IF  crapadc.cdadmcrd = 3 AND crapope.cddepart  <> 2 THEN  /* 2-CARTOES */
         DO:
             ASSIGN aux_cdcritic = 0.
                    aux_dscritic = "Administradora de cartoes CECRED VISA " +
@@ -4702,9 +4704,9 @@ PROCEDURE consulta_dados_cartao:
 
             IF  AVAIL crapope  THEN
                 DO:
-                    IF  par_idorigem = 1               AND
-                        crapope.dsdepart <> "TI"       AND
-                        crapope.dsdepart <> "CARTOES"  THEN
+                    IF  par_idorigem = 1         AND
+                        crapope.cddepart <> 20   AND  /* TI */
+                        crapope.cddepart <> 2   THEN /* CARTOES */
                         DO:
                             ASSIGN aux_cdcritic = 0
                                    aux_dscritic = "Opcao indisponivel. " + 
@@ -7661,7 +7663,7 @@ PROCEDURE carrega_dados_limcred_cartao:
                              crapope.cdoperad = par_cdoperad 
                              NO-LOCK NO-ERROR.
     
-    IF  crawcrd.cdadmcrd = 3 AND crapope.dsdepart <> "CARTOES" THEN
+    IF  crawcrd.cdadmcrd = 3 AND crapope.cddepart <> 2 THEN   /* 2-CARTOES */ 
         DO:
             ASSIGN aux_cdcritic = 0
                    aux_dscritic = "Administradora de cartoes CECRED VISA bloqueada".
@@ -9401,7 +9403,7 @@ PROCEDURE carrega_dados_solicitacao2via_cartao:
         END.                
     
     IF   crawcrd.cdadmcrd = 3 AND 
-         crapope.dsdepart <> "CARTOES" THEN /* CECRED VISA */ 
+         crapope.cddepart <> 2 THEN /* CECRED VISA */ 
          DO:
              ASSIGN aux_cdcritic = 0
                     aux_dscritic = "Administradora de cartoes CECRED VISA " +
@@ -11110,8 +11112,8 @@ PROCEDURE desfaz_solici2via_cartao:
                
                /* Verifica se o operador não pertence ao setor de CARTOES ou TI */
                IF  AVAIL crapope THEN
-                   IF  crapope.dsdepart <> "CARTOES" AND
-                       crapope.dsdepart <> "TI"      THEN
+                   IF  crapope.cddepart <> 2   AND  /* "CARTOES" */
+                       crapope.cddepart <> 20 THEN  /* "TI"      */
 
                            /*** Critica se 2a. via do cartao CECRED VISA for desfeita numa data 
                                 diferente da data de solicitacao ***/
@@ -21977,7 +21979,7 @@ PROCEDURE busca-cartao:
    DEF INPUT PARAM par_nrregist AS INT                     NO-UNDO.
    DEF INPUT PARAM par_nriniseq AS INT                     NO-UNDO.
    DEF INPUT PARAM par_flgpagin AS LOG                     NO-UNDO.
-   DEF INPUT PARAM par_dsdepart AS CHAR                    NO-UNDO.
+   DEF INPUT PARAM par_cddepart AS INTE                    NO-UNDO.
    
    DEF OUTPUT PARAM par_qtregist AS INT                    NO-UNDO.
    DEF OUTPUT PARAM TABLE FOR tt-cartao.
@@ -22002,8 +22004,8 @@ PROCEDURE busca-cartao:
        par_dscartao = TRIM(par_dscartao).
            
            
-   IF par_cdcooper <> 3         AND
-      par_dsdepart <> "CARTOES" THEN
+   IF par_cdcooper <> 3  AND
+      par_cddepart <> 2 THEN    /* CARTOES */
       DO:
          FIND crapcop WHERE crapcop.cdcooper = par_cdcooper NO-LOCK.
 
