@@ -320,6 +320,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
   --             27/09/2016 - Inclusao de verificacao de contratos de acordos
   --                          na procedure pc_enviar_boleto, Prj. 302 (Jean Michel).
   --
+  --             28/11/2016 - Adicionado liberação para canais para gerar boleto de quitação de
+  --                          emprestimo. (Kelvin SD 535306)
+  --
   --             29/11/2016 - P341 - Automatização BACENJUD - Alterado para validar o departamento à partir
   --                          do código e não mais pela descrição (Renato Darosci - Supero)
   --
@@ -3547,6 +3550,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                                
                   29/06/2016 - Adicionar validacao de substr para a leitura da crapass com a 
                                crapenc (Lucas Ranghetti #456095)
+                               
+                  28/11/2016 - Adicionado liberação para canais para gerar boleto de quitação de
+                               emprestimo. (Kelvin SD 535306)
   ..............................................................................*/
 
 		DECLARE
@@ -3672,10 +3678,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
          END IF;
          
          -- se o boleto eh para quitacao do contrato e nao for da central telefonica, criticar...
-         IF pr_tpparepr = 4 AND nvl(rw_ope.cddepart,0) <> 3 THEN
+         IF pr_tpparepr = 4 AND nvl(rw_ope.cddepart,0) IN (1,3) THEN  --Adicionado CANAIS (SD 548663)
             -- Atribui crítica
             vr_cdcritic := 0;
-            vr_dscritic := 'Quitacao do contrado permitido apenas para operadores da CENTRAL TELEFONICA.';
+            vr_dscritic := 'Quitacao  do contrado permitido apenas para operadores da CENTRAL TELEFONICA e CANAIS.';
             -- Levanta exceção
             RAISE vr_exc_saida;                                
          END IF;
