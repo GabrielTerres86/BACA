@@ -2,7 +2,7 @@
 
    Programa: b1wgen0010tt.i                  
    Autor   : David
-   Data    : Marco/2008                        Ultima atualizacao: 05/01/2016
+   Data    : Marco/2008                        Ultima atualizacao: 11/10/2016
      
    Dados referentes ao programa:
 
@@ -89,6 +89,9 @@
                             
                05/01/2016 - Incluso os campos inserasa ,dsserasa, qtdianeg na
                             tt-consulta-blt (Projeto Negativacao Serasa - Daniel)
+                            
+               11/10/2016 - Inclusao dos campos de aviso por SMS. 
+                            PRJ319 - SMS Cobrança.  (Odirlei-AMcom)
   
 .............................................................................*/
 
@@ -196,7 +199,15 @@ DEF TEMP-TABLE tt-consulta-blt
     FIELD inserasa AS CHAR
     FIELD dsserasa AS CHAR
     FIELD flserasa AS LOGI
-    FIELD qtdianeg AS INTE.
+    FIELD qtdianeg AS INTE
+	  FIELD inavisms AS INTE
+	  FIELD insmsant AS INTE
+	  FIELD insmsvct AS INTE
+	  FIELD insmspos AS INTE
+    FIELD dsavisms AS CHAR
+	  FIELD dssmsant AS CHAR
+	  FIELD dssmsvct AS CHAR
+	  FIELD dssmspos AS CHAR.
 
 DEF TEMP-TABLE tt-arq-cobranca  
     FIELD cdseqlin AS INTEGER

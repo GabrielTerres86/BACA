@@ -46,9 +46,9 @@
 
                04/02/2016 - Ajustes Projeto Negativação Serasa (Daniel) 
 			   
-			   15/08/2016 - Removido validacao de convenio na consulta da tela
-							manutencao, conforme solicitado no chamado 497079.
-							(Kelvin)
+              15/08/2016 - Removido validacao de convenio na consulta da tela
+							             manutencao, conforme solicitado no chamado 497079.
+							             (Kelvin)
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -398,8 +398,14 @@ FOR EACH tt-consulta-blt NO-LOCK:
                                     "<flserasa>" + (IF (tt-consulta-blt.flserasa = TRUE) THEN 
                                        "S" ELSE "N") + "</flserasa>" +
                                     "<qtdianeg>" + STRING(tt-consulta-blt.qtdianeg) + "</qtdianeg>" +
+                                    /* Aviso SMS */
+                                    "<inavisms>" + STRING(tt-consulta-blt.inavisms) + "</inavisms>" +
+                                    "<insmsant>" + STRING(tt-consulta-blt.insmsant) + "</insmsant>" +
+                                    "<insmsvct>" + STRING(tt-consulta-blt.insmsvct) + "</insmsvct>" +
+                                    "<insmspos>" + STRING(tt-consulta-blt.insmspos) + "</insmspos>" +
                                     
                                    "</BOLETO>".
+                                                                      
 
 END.
 

@@ -42,7 +42,7 @@
    Programa: b1wgen0010.p                  
    Autora  : Ze Eduardo
    
-   Data    : 12/09/2005                     Ultima atualizacao: 06/10/2016
+   Data    : 12/09/2005                     Ultima atualizacao: 11/10/2016
 
    Dados referentes ao programa:
 
@@ -371,6 +371,10 @@
 							"ACORDO" e nao permitir gerar a segunda via do boleto,
 							Prj. 302 (Jean Michel).
 
+                            
+               11/10/2016 - Inclusao dos campos de aviso por SMS. 
+                            PRJ319 - SMS Cobrança.  (Odirlei-AMcom)
+                            
 ........................................................................... */
 
 { sistema/generico/includes/var_internet.i }
@@ -3740,6 +3744,22 @@ PROCEDURE cria_tt-consulta-blt.
                    tt-consulta-blt.vljurmul = tt-consulta-blt.vlrjuros +
                                               tt-consulta-blt.vlrmulta.
 
+     /* Aviso SMS */
+     ASSIGN tt-consulta-blt.inavisms = crapcob.inavisms
+            tt-consulta-blt.insmsant = crapcob.insmsant
+            tt-consulta-blt.insmsvct = crapcob.insmsvct
+            tt-consulta-blt.insmspos = crapcob.insmspos
+            tt-consulta-blt.dssmsant = IF crapcob.insmsant <> 0 THEN "S" ELSE "N"
+            tt-consulta-blt.dssmsvct = IF crapcob.insmsvct <> 0 THEN "S" ELSE "N"
+            tt-consulta-blt.dssmspos = IF crapcob.insmspos <> 0 THEN "S" ELSE "N".            
+
+     
+     CASE crapcob.inavisms:
+         WHEN 0 THEN tt-consulta-blt.dsavisms = "Nao Enviar".
+         WHEN 1 THEN tt-consulta-blt.dsavisms = "Linha Dig.".
+         WHEN 2 THEN tt-consulta-blt.dsavisms = "Sem Linha Dig:".
+     END CASE. 
+     
    END. /* Fim do DO TRANSACTION */
   
 END PROCEDURE. /* cria_tt-consulta-blt */
@@ -4543,6 +4563,21 @@ PROCEDURE proc_nosso_numero.
                                           " S"
                                           ELSE
                                           " N". 
+
+        /* Aviso SMS */
+       ASSIGN tt-consulta-blt.inavisms = crapcob.inavisms
+              tt-consulta-blt.insmsant = crapcob.insmsant
+              tt-consulta-blt.insmsvct = crapcob.insmsvct
+              tt-consulta-blt.insmspos = crapcob.insmspos
+              tt-consulta-blt.dssmsant = IF crapcob.insmsant <> 0 THEN "S" ELSE "N"
+              tt-consulta-blt.dssmsvct = IF crapcob.insmsvct <> 0 THEN "S" ELSE "N"
+              tt-consulta-blt.dssmspos = IF crapcob.insmspos <> 0 THEN "S" ELSE "N".            
+       
+       CASE crapcob.inavisms:
+           WHEN 0 THEN tt-consulta-blt.dsavisms = "Nao Enviar".
+           WHEN 1 THEN tt-consulta-blt.dsavisms = "Linha Dig.".
+           WHEN 2 THEN tt-consulta-blt.dsavisms = "Sem Linha Dig:".
+       END CASE. 
 
         /* fim-gravar na temptable - Rafael Cechet - 01/04/11 */
 
@@ -5969,7 +6004,7 @@ PROCEDURE grava_totais:
         
 END PROCEDURE. /* grava_totais */
 
-
+               
 /***************************************************************************/
 
 PROCEDURE busca_critica.
