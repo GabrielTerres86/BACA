@@ -11,14 +11,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Abril/2004                        Ultima atualizacao: 25/01/2017
+   Data    : Abril/2004                        Ultima atualizacao: 26/01/2017
 
    Dados referentes ao programa:
 
    Frequencia: Diario (Batch).
    Objetivo  : Atende a solicitacao 092.
                Integrar Arquivos Debito Automatico(GENERICO)
-               Emite relatorio 344.
+               Emite relato rio 344.
 
    Alteracoes: 31/05/2004 -  Alterado tamanho campo contrato(impressao).
                              Desprezar convenios que nao pertencam a
@@ -382,6 +382,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                25/01/2017 - Tratado para qdo for validar se é uma conta migrada e nao encontrar
                             verificar se é uma cooperativa migrada e criar critica de conta errada   
                             (Tiago/Fabricio SD596101)
+                            
+               26/01/2017 - Tratamento para criar crapndb para a critica 092 - Lancamento
+                            ja existe, se estiver na cooperativa que estiver rodando.
+                            (Lucas Ranghetti #589758)
 ............................................................................ */
 
 
@@ -781,7 +785,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
       vr_contador PLS_INTEGER;                                        --> Contador para arquivos consistidos
       vr_dtcancel DATE;                                               --> Data de fim (cancelamento) da autorizacao.
       vr_flgrejei BOOLEAN;                                            --> Flag de registro rejeitado
-      vr_flgdupli BOOLEAN;                                            --> Flag de registro duplicado
       vr_nrdbanco gnconve.cddbanco%TYPE;                              --> Identificacao do banco para Febraban
       vr_vldebito NUMBER(17,2);                                       --> Valor do debito
       vr_input_file utl_file.file_type;                               --> Variavel do arquivo
@@ -1677,7 +1680,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
             vr_cdcritic := 0;
 
             vr_flgrejei := FALSE;
-            vr_flgdupli := FALSE;
 
             vr_nrdbanco := rw_gnconve.cddbanco;
             vr_vldebito := 0;
@@ -3683,31 +3685,35 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                                END IF;
                                vr_ind_deb := vr_tab_debcancel.next(vr_ind_deb);
                           END LOOP;
-                          IF vr_ind_debcancel = 'N' THEN
-                          vr_cdcritic := 092; -- Lancamento ja existe
-                          vr_flgdupli := TRUE;
-                          -- Retorna ao convenio com a critica 13 caso lancamento seja duplicado
-                          BEGIN
-                            INSERT INTO crapndb
-                              (dtmvtolt,
-                               nrdconta,
-                               cdhistor,
-                               flgproce,
-                               dstexarq,
-                               cdcooper)
-                            VALUES
-                              (vr_dtultdia,
-                               vr_nrdconta,
-                               rw_gnconve.cdhisdeb,
-                               0,
-                               'F' ||SUBSTR(vr_setlinha,2,66) || '13' || SUBSTR(vr_setlinha,70,81),
-                               vr_cdcooper);
-                          EXCEPTION
-                            WHEN OTHERS THEN
-                              vr_cdcritic := 0;
-                              vr_dscritic := 'Erro ao inserir crapndb: '||SQLERRM;
-                              RAISE vr_exc_saida;
-                          END;
+                          
+                          IF vr_ind_debcancel = 'N' THEN                            
+                            vr_cdcritic := 092; -- Lancamento ja existe
+                            -- Criar retorno para o convenio somente se tiver o lançamento 
+                            -- tiver rodando na cooperativa em questão
+                            IF vr_cdcooper = pr_cdcooper THEN
+                              -- Retorna ao convenio com a critica 13 caso lancamento seja duplicado
+                              BEGIN
+                                INSERT INTO crapndb
+                                  (dtmvtolt,
+                                   nrdconta,
+                                   cdhistor,
+                                   flgproce,
+                                   dstexarq,
+                                   cdcooper)
+                                VALUES
+                                  (vr_dtultdia,
+                                   vr_nrdconta,
+                                   rw_gnconve.cdhisdeb,
+                                   0,
+                                   'F' ||SUBSTR(vr_setlinha,2,66) || '13' || SUBSTR(vr_setlinha,70,81),
+                                   vr_cdcooper);
+                              EXCEPTION
+                                WHEN OTHERS THEN
+                                  vr_cdcritic := 0;
+                                  vr_dscritic := 'Erro ao inserir crapndb: '||SQLERRM;
+                                  RAISE vr_exc_saida;
+                              END;
+                            END IF;
                           ELSE
                             vr_inserir_lancamento := 'S';
                           END IF;
@@ -4256,19 +4262,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                                                          || vr_cdprogra || ' --> '
                                                          || gene0001.fn_busca_critica(vr_cdcritic) ||
                                                          ' --> ' || vr_tab_nmarquiv(i));
-
-              -- Se possui registros duplicados
-              IF vr_flgdupli THEN
-                vr_cdcritic := 740; -- Lancamento de Debito ja Existente.
-                -- Envio centralizado de log de erro
-                btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                          ,pr_ind_tipo_log => 1 -- Processo normal
-                                          ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                          ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                           || vr_cdprogra || ' --> '
-                                                           || gene0001.fn_busca_critica(vr_cdcritic) ||
-                                                           ' --> ' || vr_tab_nmarquiv(i));
-              END IF;
             END IF;
 
 
