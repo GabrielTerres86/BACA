@@ -378,9 +378,12 @@
 			                (Douglas Quisinski - Chamado 562804)
 							
 			   02/12/2016 - Ajuste realizado para nao gerar em branco o relatorio		
-							da tela COBRAN, incluido tambem logs para identificar
-							erros futuros dessa mesma rotina, conforme solicitado
-							no chamado 563327. (Kelvin)
+                      da tela COBRAN, incluido tambem logs para identificar
+                      erros futuros dessa mesma rotina, conforme solicitado
+                      no chamado 563327. (Kelvin)
+                      
+			   02/01/2017 - PRJ340 - Nova Plataforma de Cobranca - Fase II. 
+                      (Ricardo Linhares)                           
 ........................................................................... */
 
 { sistema/generico/includes/var_internet.i }
@@ -538,6 +541,8 @@ PROCEDURE consulta-boleto-2via.
 
     DEF QUERY q_crapcob FOR crapcob, crapcco.
     DEF VAR   aux_query                AS CHAR             NO-UNDO.
+    
+    DEFINE VARIABLE aux_rollout       AS INTEGER                  NO-UNDO.    
 
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-consulta-blt. 
@@ -760,41 +765,64 @@ PROCEDURE consulta-boleto-2via.
                           INPUT crapdat.dtmvtolt,
                           INPUT "2 via de boleto gerado pelo pagador.").
     DELETE PROCEDURE h-b1wgen0089.
-
-    RUN calcula_multa_juros_boleto(INPUT crapcob.cdcooper,           
-                                   INPUT crapcob.nrdconta,           
-                                                 INPUT crapcob.dtvencto,
-                                   INPUT crapdat.dtmvtocd,           
-                                   INPUT crapcob.vlabatim,           
-                                   INPUT crapcob.vltitulo,           
-                                   INPUT crapcob.vlrmulta,           
-                                   INPUT crapcob.vljurdia,           
-                                   INPUT crapcob.cdmensag,           
-                                   INPUT crapcob.vldescto,           
-                                   INPUT crapcob.tpdmulta,           
-                                   INPUT crapcob.tpjurmor,           
-                                   INPUT YES,           
-                                   OUTPUT aux_dtvencut,           
-                                   OUTPUT aux_vltituut,           
-                                   OUTPUT aux_vlmormut,           
-                                   OUTPUT aux_dtvencut_atualizado,
-                                   OUTPUT aux_vltituut_atualizado,
-                                   OUTPUT aux_vlmormut_atualizado,          
-                                   OUTPUT aux_vldescut,           
-                                   OUTPUT aux_cdmensut,
-                                                OUTPUT aux_critdata).
     
-    /* verifica se o titulo esta vencido */
-    IF  aux_critdata  THEN
-    DO: 
-        /* se concede ate o vencimento */
-        IF  crapcob.cdmensag = 1 OR
-            crapcob.cdmensag = 0 THEN
-            ASSIGN tt-consulta-blt.vldescto = aux_vldescut
-                   tt-consulta-blt.cdmensag = aux_cdmensut.
+    /* Consulta Rollout */
+   
+    RUN verifica-rollout(INPUT crapcob.cdcooper,
+                         INPUT crapdat.dtmvtolt,
+                         INPUT crapcob.vltitulo,
+                         OUTPUT aux_rollout).                 
 
-    END.
-        
+    IF vr_rollout = 0 THEN /* fora da faixa de rollout */
+      DO:
+
+      RUN calcula_multa_juros_boleto(INPUT crapcob.cdcooper,           
+                                     INPUT crapcob.nrdconta,           
+                                     INPUT crapcob.dtvencto,
+                                     INPUT crapdat.dtmvtocd,           
+                                     INPUT crapcob.vlabatim,           
+                                     INPUT crapcob.vltitulo,           
+                                     INPUT crapcob.vlrmulta,           
+                                     INPUT crapcob.vljurdia,           
+                                     INPUT crapcob.cdmensag,           
+                                     INPUT crapcob.vldescto,           
+                                     INPUT crapcob.tpdmulta,           
+                                     INPUT crapcob.tpjurmor,           
+                                     INPUT YES,           
+                                     OUTPUT aux_dtvencut,           
+                                     OUTPUT aux_vltituut,           
+                                     OUTPUT aux_vlmormut,           
+                                     OUTPUT aux_dtvencut_atualizado,
+                                     OUTPUT aux_vltituut_atualizado,
+                                     OUTPUT aux_vlmormut_atualizado,          
+                                     OUTPUT aux_vldescut,           
+                                     OUTPUT aux_cdmensut,
+                                     OUTPUT aux_critdata).
+                                     
+        /* verifica se o titulo esta vencido */
+        IF  aux_critdata  THEN
+        DO: 
+            /* se concede ate o vencimento */
+            IF  crapcob.cdmensag = 1 OR
+                crapcob.cdmensag = 0 THEN
+                ASSIGN tt-consulta-blt.vldescto = aux_vldescut
+                       tt-consulta-blt.cdmensag = aux_cdmensut.
+
+        END.
+                                     
+      ELSE
+       DO:
+       
+         /* Se estiver na faixa do rollout, data de vencimento e valor do título devem ser mantidos os originais */
+       
+         ASSIGN aux_dtvencut = IF crapcob.dtvctori = ? THEN crapcob.dtvencto ELSE crapcob.dtvctori
+                aux_vltituut = crapcob.vltitulo
+                aux_vltituut_atualizado = crapcob.vltitulo
+                aux_dtvencut_atualizado = aux_dtvencut.
+                
+       END.
+    
+
     ASSIGN tt-consulta-blt.dtvencto            = aux_dtvencut
            tt-consulta-blt.vltitulo            = aux_vltituut
            tt-consulta-blt.vlmormul            = aux_vlmormut
@@ -8476,6 +8504,37 @@ PROCEDURE verifica_sit_serasa:
             ASSIGN par_proximo = "S".
     END.
   END CASE.
+
+END PROCEDURE.
+
+PROCEDURE verifica-rollout:
+    DEF INPUT PARAM par_cdcooper AS INTE NO-UNDO.
+    DEF INPUT PARAM par_dtmvtolt AS DATE NO-UNDO.
+    DEF INPUT PARAM par_vltitulo AS DECI NO-UNDO.
+    DEF OUTPUT PARAM par_rollout AS INTE NO-UNDO.
+    
+    DEF VAR aux_ponteiro      AS INTE                       NO-UNDO.
+
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+       
+        RUN STORED-PROCEDURE {&sc2_dboraayl}.send-sql-statement
+                           aux_ponteiro = PROC-HANDLE
+                           ("SELECT npcb0001.fn_verifica_rollout(" + STRING(par_cdcooper) + /* Cooperativa */
+                                                                       ",to_date('" + STRING(par_dtmvtolt) + "', 'DD/MM/RRRR')" + /* Data de movimento */
+                                                                       "," + REPLACE(STRING(par_vltitulo),",",".") + /* Vl. do Título */                                                                      
+                                                                       ",2" +                       /* Tipo de regra de rollout(1-registro,2-pagamento)  */
+                                                                       ") FROM dual").
+        
+        FOR EACH {&sc2_dboraayl}.proc-text-buffer WHERE PROC-HANDLE = aux_ponteiro:
+           ASSIGN par_rollout = INT(proc-text).
+        END.
+       
+        CLOSE STORED-PROC {&sc2_dboraayl}.send-sql-statement
+           WHERE PROC-HANDLE = aux_ponteiro.
+        
+       { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }    
+
+    RETURN "OK".
 
 END PROCEDURE.
 
