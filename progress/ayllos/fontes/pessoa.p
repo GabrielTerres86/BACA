@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Fevereiro/95.                   Ultima atualizacao: 24/04/2014
+   Data    : Fevereiro/95.                   Ultima atualizacao: 27/01/2017
 
    Dados referentes ao programa:
 
@@ -44,6 +44,12 @@
                             
                24/04/2014 - Incluido as descrições do vinculo: "DI - Diretor de Cooperat" e
                             "DC - Diretor da Central" (Jaison).
+                            
+               06/12/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)
+                            
+			   27/01/2017 - Criacao do novo vinvulo (AC - Ass. Comercial de Chapeco). 
+							SD 561203 - (Carlos Rafael Tanholi)
 ............................................................................. */
 
 { includes/var_online.i }
@@ -60,16 +66,17 @@ DEF        VAR aux_depoilog AS CHAR    FORMAT "x(50)"                NO-UNDO.
 DEF        VAR aux_stimeout AS INT                                   NO-UNDO.
 DEF        VAR aux_cddopcao AS CHAR    FORMAT "x(1)"                 NO-UNDO.
 DEF        VAR aux_contador AS INT                                   NO-UNDO.
-DEF        VAR aux_sigvincu AS CHAR   FORMAT "x(2)"  EXTENT 11   
-               INIT ["  ","CA","CC","CF","CO","ET","FC","FO","FU","DI","DC"] 
+DEF        VAR aux_sigvincu AS CHAR   FORMAT "x(2)"  EXTENT 12   
+               INIT ["  ","CA","CC","CF","CO","ET","FC","FO","FU","DI","DC", "AC"] 
                                                                      NO-UNDO.
-DEF        VAR aux_desvincu AS CHAR   FORMAT "x(20)"  EXTENT 11
+DEF        VAR aux_desvincu AS CHAR   FORMAT "x(20)"  EXTENT 12
                INIT ["Cooperado","Conselho de Administ",
                      "Conselho da Central","Conselho Fiscal",
                      "Conselho Outras Cooperativas", "Estagiario Terceiro",
                      "Funcion. da Central","Funcion. Outras Coop",
                      "Funcion. da Cooperat",
-                     "Diretor de Cooperat","Diretor da Central"]     NO-UNDO.
+                     "Diretor de Cooperat","Diretor da Central",
+					 "Ass. Comercial de Chapeco"]     NO-UNDO.
 DEF        VAR aux_i        AS INT                                   NO-UNDO.
 
 DEF TEMP-TABLE w-vinculos
@@ -110,7 +117,7 @@ FORM SKIP(3)
      SKIP(1) 
      tel_tpvincul     COLON 20 LABEL "Tipo de Vinculo"
                             HELP "Confirme o tipo de vinculo"
-                            VALIDATE(CAN-DO("CA,,CF,CC,CO,FU,FC,FO,ET,DI,DC",
+                            VALIDATE(CAN-DO("CA,,CF,CC,CO,FU,FC,FO,ET,DI,DC,AC",
                             tel_tpvincul),"513 - Tipo errado.")
      tel_dsvincul           
      SKIP(1)
@@ -150,7 +157,7 @@ ON CHOOSE OF btn-ok
 ASSIGN glb_cddopcao = "C"
        glb_cdcritic = 0.
 
-DO aux_i = 1 TO 11:
+DO aux_i = 1 TO 12:
    CREATE w-vinculos.
    ASSIGN w-vinculos.sigla = aux_sigvincu[aux_i]
           w-vinculos.descr = aux_desvincu[aux_i].
@@ -235,7 +242,7 @@ DO WHILE TRUE:
   
    IF   glb_cddopcao = "A" THEN
         DO:
-            IF   glb_dsdepart <>  "CONTABILIDADE"  THEN
+            IF glb_cddepart <> 6 THEN /* CONTABILIDADE */
                 DO:
                    MESSAGE "Apenas CONSULTA esta liberada para esta tela.".
                    NEXT.
