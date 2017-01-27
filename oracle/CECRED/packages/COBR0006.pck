@@ -7231,6 +7231,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
                    23/12/2016 - Validar nulo no valor do título. (AJFink - SD#581070)
 
+                   27/01/2017 - Incluir atribuição do flgdprot quando houver
+                                instrução de protesto. (AJFink - SD#586758)
+
     ............................................................................ */   
     
     --> Buscar dados do associado
@@ -8060,6 +8063,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         END IF;
         
       END IF;
+
+      --SD#586758
+      if nvl(pr_rec_cobranca.qtdiaprt,0) > 0 then
+        pr_rec_cobranca.flgdprot := 1;
+      end if;
             
     END IF;
     
