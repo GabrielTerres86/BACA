@@ -1580,6 +1580,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
               ,his.indoipmf
           FROM craphis his
          WHERE cdcooper = pr_cdcooper;
+         
+      -- Busca os dados da proposta de emprestimo
+      CURSOR cr_crawepr IS
+        SELECT dtvencto
+          FROM crawepr
+         WHERE cdcooper = pr_cdcooper;         
+      rw_crawepr cr_crawepr%ROWTYPE;    
 
       -- Busca dos empréstimos
       CURSOR cr_crapepr IS
@@ -1938,7 +1945,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       OPEN cr_crapepr;
 			FETCH cr_crapepr INTO rw_crapepr;
 
-      IF cr_crapepr%FOUND THEN				
+      IF cr_crapepr%FOUND THEN
+        
+        -- Busca os dados da proposta de emprestimo
+        OPEN cr_crawepr;
+        FETCH cr_crawepr
+         INTO rw_crawepr;
+        -- Se não encontrar
+        IF cr_crawepr%NOTFOUND THEN
+          -- Fechar o cursor pois haverá raise
+          CLOSE cr_crawepr;
+          -- Montar mensagem de critica
+          vr_cdcritic := 356;
+          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+          RAISE vr_exc_undo;
+        ELSE
+          -- Apenas fechar o cursor
+          CLOSE cr_crawepr;
+        END IF;      
+      
 				-- Busca do cadastro de linhas de crédito de empréstimo
 				FOR rw_craplcr IN cr_craplcr(rw_crapepr.cdlcremp) LOOP
 					-- Guardamos a taxa e o indicador de emissão de boletos
@@ -2693,20 +2718,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       
           END IF;
 
-          -- Fazer o calculo dos meses decorridos
-          vr_qtmesdec := 0; /* JFF 
-          vr_qtmesdec := EMPR0009.fn_calc_meses_decorridos(pr_cdcooper => pr_cdcooper
-                                                          ,pr_qtmesdec => vr_qtmesdec
-                                                          ,pr_dtdpagto => rw_crapepr.dtdpagto
-                                                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt);
-                                             
-          -- Calcular a real data de pagamento
-          rw_crapepr.dtdpagto := EMPR0009.fn_calc_data_pagamento(pr_qtpreemp => rw_crapepr.qtpreemp
-                                                                ,pr_qtmesdec => vr_qtmesdec
-                                                                ,pr_qtprecal => vr_qtprecal
-                                                                ,pr_dtdpagto => rw_crapepr.dtdpagto
-                                                                ,pr_dtcalcul => rw_crapdat.dtmvtolt);
--- */
+          -- Calcular a data de Pagamento
+          pc_gera_data_pag_tr(pr_cdcooper => pr_cdcooper,
+                              pr_dtmvtolt => rw_crapdat.dtmvtolt,
+                              pr_nrdconta => pr_nrdconta, 
+                              pr_nrctremp => pr_nrctremp, 
+                              pr_vlpreemp => rw_crapepr.vlpreemp,
+                              pr_dtdpagto => rw_crapepr.dtdpagto, 
+                              pr_dtvencto => rw_crawepr.dtvencto, 
+                              pr_cdcritic => vr_cdcritic, 
+                              pr_dscritic => vr_dscritic);
+
+          -- Verificar se houve erro 
+          IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_undo;
+          END IF;
+
           -- Finalmente após todo o processamento, é atualizada a tabela de empréstimo CRAPEPR
           BEGIN
             UPDATE crapepr
