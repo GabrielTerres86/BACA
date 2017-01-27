@@ -298,6 +298,17 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0007 IS
 																,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
 																,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
 																,pr_des_erro OUT VARCHAR2);           --> Erros do processo																	 
+
+  PROCEDURE pc_gera_data_pag_tr(pr_cdcooper IN tbepr_cobranca.cdcooper%TYPE --> Codigo da Cooperativa
+                               ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE        --> Data do Movimento
+                               ,pr_nrdconta IN tbepr_cobranca.nrdconta%TYPE --> Numero da conta
+                               ,pr_nrctremp IN tbepr_cobranca.nrctremp%TYPE --> Numero do contrato
+                               ,pr_vlpreemp IN crapepr.vlpreemp %TYPE       --> Valor da prestacao
+                               ,pr_dtdpagto IN OUT crapepr.dtdpagto%TYPE    --> Data do pagamento
+                               ,pr_dtvencto IN crawepr.dtvencto%TYPE        --> Data vencimento
+                               ,pr_cdcritic OUT PLS_INTEGER                 --> Codigo da critica
+                               ,pr_dscritic OUT VARCHAR2);                --> Descricao da critica
+
 END EMPR0007;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
@@ -307,7 +318,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
   --  Sistema  : Rotinas referentes a Portabilidade de Credito
   --  Sigla    : EMPR
   --  Autor    : Lucas Reinert
-  --  Data     : Julho - 2015.                   Ultima atualizacao: 29/11/2016
+  --  Data     : Julho - 2015.                   Ultima atualizacao: 25/01/2017
   --
   -- Dados referentes ao programa:
   --
@@ -325,6 +336,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
   --
   --             29/11/2016 - P341 - Automatização BACENJUD - Alterado para validar o departamento à partir
   --                          do código e não mais pela descrição (Renato Darosci - Supero)
+  --
+  --             25/01/2017 - Criacao da pc_gera_data_pag_tr. (Jaison/James)
   --
   ---------------------------------------------------------------------------
 
@@ -2681,6 +2694,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
           END IF;
 
           -- Fazer o calculo dos meses decorridos
+          vr_qtmesdec := 0; /* JFF 
           vr_qtmesdec := EMPR0009.fn_calc_meses_decorridos(pr_cdcooper => pr_cdcooper
                                                           ,pr_qtmesdec => vr_qtmesdec
                                                           ,pr_dtdpagto => rw_crapepr.dtdpagto
@@ -2692,7 +2706,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                                                                 ,pr_qtprecal => vr_qtprecal
                                                                 ,pr_dtdpagto => rw_crapepr.dtdpagto
                                                                 ,pr_dtcalcul => rw_crapdat.dtmvtolt);
-
+-- */
           -- Finalmente após todo o processamento, é atualizada a tabela de empréstimo CRAPEPR
           BEGIN
             UPDATE crapepr
@@ -6525,6 +6539,158 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       pr_des_erro := 'NOK';
 		END;
 	END pc_gerar_pdf_boletos;
+
+  -- Procedure para calcular a data de pagamento para contratos TR
+  PROCEDURE pc_gera_data_pag_tr(pr_cdcooper IN tbepr_cobranca.cdcooper%TYPE --> Codigo da Cooperativa
+                               ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE        --> Data do Movimento
+                               ,pr_nrdconta IN tbepr_cobranca.nrdconta%TYPE --> Numero da conta
+                               ,pr_nrctremp IN tbepr_cobranca.nrctremp%TYPE --> Numero do contrato
+                               ,pr_vlpreemp IN crapepr.vlpreemp %TYPE       --> Valor da prestacao
+                               ,pr_dtdpagto IN OUT crapepr.dtdpagto%TYPE    --> Data do pagamento
+                               ,pr_dtvencto IN crawepr.dtvencto%TYPE        --> Data vencimento
+                               ,pr_cdcritic OUT PLS_INTEGER                 --> Codigo da critica
+                               ,pr_dscritic OUT VARCHAR2) IS                --> Descricao da critica
+  BEGIN
+    /* .............................................................................
+      Programa: pc_gera_data_pag_tr
+      Sistema : CECRED
+      Sigla   : EMPR
+      Autor   : Jaison Fernando
+      Data    : Janeiro/2017.                    Ultima atualizacao: 
+
+      Dados referentes ao programa:
+
+      Frequencia: Sempre que for chamado
+
+      Objetivo  : Rotina referente a geracao da data de pagamento
+
+      Observacao: -----
+
+      Alteracoes: 
+    ..............................................................................*/
+
+    DECLARE
+
+    ------------------------------- VARIAVEIS -------------------------------
+		-- Variáveis para o tratamento de erros
+		vr_cdcritic crapcri.cdcritic%TYPE;
+		vr_dscritic crapcri.dscritic%TYPE;
+    
+    -- Tratamento de erros
+    vr_exc_saida EXCEPTION;
+		
+		-- Variaveis locais
+    vr_dtdpagto DATE;
+    vr_vltotpag NUMBER := 0;
+    vr_qtprepag INTEGER;
+    vr_qtanopag INTEGER;
+
+    -------------------------- TABELAS TEMPORARIAS --------------------------
+
+    ------------------------------- CURSORES --------------------------------
+		
+		-- Cursor lancamentos de emprestimo
+    CURSOR cr_craplem(pr_cdcooper IN craplem.cdcooper%TYPE
+                     ,pr_nrdconta IN craplem.nrdconta%TYPE
+                     ,pr_nrctremp IN craplem.nrctremp%TYPE) IS
+			SELECT craplem.cdhistor
+						,craplem.vllanmto
+				FROM craplem
+			 WHERE craplem.cdcooper = pr_cdcooper
+				 AND craplem.nrdconta = pr_nrdconta
+				 AND craplem.nrctremp = pr_nrctremp;
+
+    BEGIN
+
+      -- Monta proxima data de pagamento
+      vr_dtdpagto := to_date(to_char(pr_dtdpagto,'DD')
+                          || to_char(pr_dtvencto,'MM')
+                          || to_char(pr_dtvencto,'YYYY'),'ddmmyyyy');
+
+      -- Listagem de lancamentos de emprestimo
+      FOR rw_craplem IN cr_craplem(pr_cdcooper => pr_cdcooper
+                                  ,pr_nrdconta => pr_nrdconta
+                                  ,pr_nrctremp => pr_nrctremp) LOOP
+
+        IF rw_craplem.cdhistor = 91  OR   -- Pagto LANDPV
+           rw_craplem.cdhistor = 92  OR   -- Empr.Consig.Caixa On_line
+           rw_craplem.cdhistor = 93  OR   -- Emprestimo Consignado
+           rw_craplem.cdhistor = 95  OR   -- Pagto crps120
+           rw_craplem.cdhistor = 393 OR   -- Pagto Avalista
+           rw_craplem.cdhistor = 353 THEN -- Transf. Cotas
+           vr_vltotpag := vr_vltotpag + rw_craplem.vllanmto;
+        ELSIF rw_craplem.cdhistor = 88  OR
+              rw_craplem.cdhistor = 507 THEN -- Est.Transf.Cot
+              vr_vltotpag := vr_vltotpag - rw_craplem.vllanmto;
+        END IF;
+
+      END LOOP;
+
+      -- Calcula a quantidade de prestacao
+      vr_qtprepag := TRUNC(vr_vltotpag / pr_vlpreemp, 0);
+
+      -- Calcula a nova data de pagamento de acordo com a
+      -- quantidade de prestacoes pagas, incluindo o lancamento atual
+      vr_qtanopag := TRUNC(vr_qtprepag / 12, 0);
+      vr_qtprepag := MOD(vr_qtprepag, 12);
+      vr_dtdpagto := GENE0005.fn_calc_data(pr_dtmvtolt => vr_dtdpagto
+                                          ,pr_qtmesano => vr_qtprepag
+                                          ,pr_tpmesano => 'M'
+                                          ,pr_des_erro => vr_dscritic);
+      -- Parar se encontrar erro
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+
+      IF vr_qtanopag > 0 THEN
+        vr_dtdpagto := GENE0005.fn_calc_data(pr_dtmvtolt => vr_dtdpagto
+                                            ,pr_qtmesano => vr_qtanopag
+                                            ,pr_tpmesano => 'A'
+                                            ,pr_des_erro => vr_dscritic);
+        -- Parar se encontrar erro
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_saida;
+        END IF;
+      END IF;
+
+      IF vr_dtdpagto > pr_dtmvtolt                                   AND
+        (to_char(vr_dtdpagto,'MM')   <> to_char(pr_dtmvtolt,'MM')    OR
+         to_char(vr_dtdpagto,'YYYY') <> to_char(pr_dtmvtolt,'YYYY')) THEN
+        vr_dtdpagto := GENE0005.fn_calc_data(pr_dtmvtolt => to_date(to_char(vr_dtdpagto,'DD')
+                                                         || to_char(pr_dtmvtolt,'MM')
+                                                         || to_char(pr_dtmvtolt,'YYYY'),'ddmmyyyy')
+                                            ,pr_qtmesano => 1
+                                            ,pr_tpmesano => 'M'
+                                            ,pr_des_erro => vr_dscritic);
+         -- Parar se encontrar erro
+         IF vr_dscritic IS NOT NULL THEN
+           RAISE vr_exc_saida;
+         END IF;
+       END IF;
+
+       -- Retorna a data
+       pr_dtdpagto := vr_dtdpagto;
+
+    EXCEPTION	
+		  WHEN vr_exc_saida THEN
+				-- Se possui código de crítica e não foi informado a descrição
+				IF vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
+					 -- Busca descrição da crítica
+					 vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+				END IF;
+
+				-- Atribui exceção para os parametros de crítica
+				pr_cdcritic := vr_cdcritic;
+				pr_dscritic := vr_dscritic;
+
+			WHEN OTHERS THEN  				
+				-- Atribui exceção para os parametros de crítica				
+				pr_cdcritic := vr_cdcritic;
+				pr_dscritic := 'Erro nao tratado na EMPR0007.pc_gera_data_pag_tr: ' || SQLERRM;			
+
+    END;
+
+  END pc_gera_data_pag_tr;
   
 END EMPR0007;
 /
