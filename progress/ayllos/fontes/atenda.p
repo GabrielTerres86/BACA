@@ -666,6 +666,7 @@ DO:
            glb_nmsistem = "CRED"
            glb_cdoperad = "1"
            glb_dsdepart = "TI".
+		   glb_cddepart = 20.
 END.
 
 
