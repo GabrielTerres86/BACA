@@ -214,6 +214,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
 
      Observacao: -----
      Alteracoes: 
+                 25/11/2016 - Alteração para que o fonte realize a avaliação do departamento
+                              pelo campo CDDEPART ao invés do DSDEPART. (Renato Darosci - Supero)
+           
      ..............................................................................*/ 
     DECLARE
 
@@ -236,7 +239,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
       
       CURSOR cr_crapope(pr_cdcooper IN crapope.cdcooper%TYPE
                        ,pr_cdoperad IN crapope.cdoperad%TYPE) IS
-        SELECT dsdepart
+        SELECT cddepart
           FROM crapope
          WHERE crapope.cdcooper = pr_cdcooper
            AND upper(crapope.cdoperad) = upper(pr_cdoperad);
@@ -288,7 +291,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
         END IF;
           
         -- Somente o departamento credito irá ter acesso para alterar as informacoes
-        IF rw_crapope.dsdepart <> 'PRODUTOS' AND rw_crapope.dsdepart <> 'TI'  THEN
+        IF rw_crapope.cddepart NOT IN (14,20) THEN
           vr_cdcritic := 36;
           vr_dscritic := NULL;
           RAISE vr_exc_saida;          
@@ -387,6 +390,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
 
      Observacao: -----
      Alteracoes: 
+                 25/11/2016 - Alteração para que o fonte realize a avaliação do departamento
+                              pelo campo CDDEPART ao invés do DSDEPART. (Renato Darosci - Supero)
      ..............................................................................*/ 
     DECLARE
 
@@ -409,7 +414,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
 
       CURSOR cr_crapope(pr_cdcooper IN crapope.cdcooper%TYPE
                        ,pr_cdoperad IN crapope.cdoperad%TYPE) IS
-        SELECT dsdepart
+        SELECT cddepart
           FROM crapope
          WHERE crapope.cdcooper = pr_cdcooper
            AND upper(crapope.cdoperad) = upper(pr_cdoperad);
@@ -465,7 +470,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
       END IF;
         
       -- Somente o departamento credito irá ter acesso para alterar as informacoes
-      IF rw_crapope.dsdepart <> 'PRODUTOS' AND rw_crapope.dsdepart <> 'TI'  THEN
+      IF rw_crapope.cddepart NOT IN (14,20) THEN
         vr_cdcritic := 36;
         vr_dscritic := NULL;
         RAISE vr_exc_saida;          
