@@ -74,6 +74,14 @@ CREATE OR REPLACE PACKAGE CECRED.RECP0002 IS
                                 pr_dscritic   OUT VARCHAR2,      --> Descrição da Crítica
                                 pr_dsdetcri   OUT VARCHAR2);     --> Detalhe da critica
   
+  --> Rotina responsavel por retornar dados dos boletos do acordo
+  PROCEDURE pc_consultar_boleto_acordo ( pr_cdcooper    IN  crapcop.cdcooper%TYPE,        --> Codigo da cooperativa
+                                         pr_nrdconta    IN  crapass.nrdconta%TYPE,        --> Numero da conta
+                                         pr_nracordo    IN  tbrecup_acordo.nracordo%TYPE, --> Numero do acordo
+                                         pr_xmlrespo   OUT  xmltype,      --> XML de Resposta
+                                         pr_cdcritic   OUT  NUMBER,       --> Código da Crítica
+                                         pr_dscritic   OUT VARCHAR2,      --> Descrição da Crítica
+                                         pr_dsdetcri   OUT VARCHAR2);     --> Detalhe da critica
 END RECP0002;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
@@ -1183,6 +1191,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     vr_des_erro   VARCHAR2(10000);
     vr_exc_erro   EXCEPTION;
     vr_exc_erro_det EXCEPTION; 
+    vr_exc_saida  EXCEPTION;   
     
     vr_cdcooper   crapcop.cdcooper%TYPE;
     vr_cdorigem   INTEGER;
@@ -1369,8 +1378,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
             VALUES (vr_nracordo, vr_cdcooper, vr_nrdconta, SYSDATE , 1);
     EXCEPTION
       WHEN dup_val_on_index THEN
-        vr_cdcritic := 991; -- Numero do acordo ja cadastrado.
-        RAISE vr_exc_erro;          
+      
+       --> Retornar dados dos boletos do acordo
+       pc_consultar_boleto_acordo ( pr_cdcooper  => vr_cdcooper,    --> Codigo da cooperativa
+                                    pr_nrdconta  => vr_nrdconta,    --> Numero da conta
+                                    pr_nracordo  => vr_nracordo,    --> Numero do acordo
+                                    pr_xmlrespo  => pr_xmlrespo,    --> XML de Resposta
+                                    pr_cdcritic  => vr_cdcritic,    --> Código da Crítica
+                                    pr_dscritic  => vr_dscritic,    --> Descrição da Crítica
+                                    pr_dsdetcri  => pr_dsdetcri);   --> Detalhe da critica
+      
+        IF nvl(vr_cdcritic,0) > 0 OR 
+           TRIM(vr_dscritic) IS NOT NULL THEN 
+          
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := vr_dscritic;
+          RAISE vr_exc_saida;
+        END IF;
+        
+        RAISE vr_exc_saida;          
       WHEN OTHERS THEN
         vr_dscritic := 'Nao foi possivel inserir acordo: '||SQLERRM;
         RAISE vr_exc_erro_det;                
@@ -1559,6 +1585,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     END IF;
     
   EXCEPTION
+    --> apenas sair do programa
+    WHEN vr_exc_saida THEN
+      NULL;
     WHEN vr_exc_erro_det THEN
       --> Buscar descrição critica
       IF nvl(vr_cdcritic,0) > 0 AND 
@@ -1875,6 +1904,181 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
             
   END pc_cancelar_acordo;
   
+  --> Rotina responsavel por retornar dados dos boletos do acordo
+  PROCEDURE pc_consultar_boleto_acordo ( pr_cdcooper    IN  crapcop.cdcooper%TYPE,        --> Codigo da cooperativa
+                                         pr_nrdconta    IN  crapass.nrdconta%TYPE,        --> Numero da conta
+                                         pr_nracordo    IN  tbrecup_acordo.nracordo%TYPE, --> Numero do acordo
+                                         pr_xmlrespo   OUT  xmltype,      --> XML de Resposta
+                                         pr_cdcritic   OUT  NUMBER,       --> Código da Crítica
+                                         pr_dscritic   OUT VARCHAR2,      --> Descrição da Crítica
+                                         pr_dsdetcri   OUT VARCHAR2)  IS  --> Detalhe da critica
+    /* .............................................................................
+      Programa: pc_consultar_boleto_acordo
+      Sistema : Rotinas referentes ao WebService
+      Sigla   : WEBS
+      Autor   : Odirlei Busana - AMcom
+      Data    : Janeiro/2017.                    Ultima atualizacao: 
+
+      Dados referentes ao programa:
+
+      Frequencia: Sempre que for chamado
+
+      Objetivo  : Rotina responsavel por retornar dados dos boletos do acordo
+
+      Observacao: -----
+      Alteracoes: 
+    ..............................................................................*/                                    
+    
+    ---------------> CURSORES <-------------
+    rw_crapdat    BTCH0001.cr_crapdat%ROWTYPE; 
+    
+    --> Buscar parcelas do acordo
+    CURSOR cr_acordo_parc( pr_cdcooper crapcop.cdcooper%TYPE,
+                           pr_nrdconta crapass.nrdconta%TYPE,
+                           pr_nracordo tbrecup_acordo.nracordo%TYPE) IS
+      SELECT par.nrboleto,
+             par.nrconvenio,
+             par.nrdconta_cob,
+             par.nrparcela
+        FROM tbrecup_acordo_parcela par,
+             tbrecup_acordo         aco
+       WHERE aco.cdcooper = pr_cdcooper
+         AND aco.nrdconta = pr_nrdconta
+         AND aco.nracordo = par.nracordo
+         AND par.nracordo = pr_nracordo;
+    
+    ---------------> VARIAVEIS <------------
+    -- Tratamento de erros
+    vr_dscritic     VARCHAR2(10000);
+    vr_cdcritic     INTEGER;
+    vr_des_erro     VARCHAR2(10000);
+    vr_exc_erro     EXCEPTION;
+    vr_exc_erro_det EXCEPTION; 
+    
+    vr_tab_cob    cobr0005.typ_tab_cob;
+    vr_idxcob     PLS_INTEGER;
+    vr_flexiste   BOOLEAN := FALSE;    
+    
+    -- Variáveis para armazenar as informações em XML
+    vr_dscdoxml         CLOB;
+    vr_texto_completo  VARCHAR2(32600);
+    
+    -- Subrotina para escrever texto na variável CLOB do XML
+    PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2,
+                             pr_fecha_xml IN BOOLEAN DEFAULT FALSE) IS
+    BEGIN
+      gene0002.pc_escreve_xml(vr_dscdoxml, vr_texto_completo, pr_des_dados, pr_fecha_xml);
+    END;
+    
+    
+  BEGIN
+    
+    -- Inicializar o CLOB
+    vr_dscdoxml := NULL;
+    dbms_lob.createtemporary(vr_dscdoxml, TRUE);
+    dbms_lob.open(vr_dscdoxml, dbms_lob.lob_readwrite);
+    
+    vr_texto_completo := NULL;
+    pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><boletos>');
+    
+    -- Listar parcelas do acordo
+    FOR rw_acordo_parc IN cr_acordo_parc( pr_cdcooper => pr_cdcooper,
+                                          pr_nrdconta => pr_nrdconta,
+                                          pr_nracordo => pr_nracordo) LOOP
+                                          
+                                          
+      cobr0005.pc_buscar_titulo_cobranca (pr_cdcooper => pr_cdcooper
+                                         ,pr_nrdconta => rw_acordo_parc.nrdconta_cob
+                                         ,pr_nrcnvcob => rw_acordo_parc.nrconvenio
+                                         ,pr_nrdocmto => rw_acordo_parc.nrboleto
+                                         ,pr_cdoperad => 1
+                                         ,pr_nriniseq => 1
+                                         ,pr_nrregist => 1
+                                         ,pr_cdcritic => pr_cdcritic
+                                         ,pr_dscritic => pr_dscritic
+                                         ,pr_tab_cob  => vr_tab_cob);
+                                         
+      -- Se retornou alguma crítica
+      IF nvl(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+         --> Buscar descrição critica
+        IF nvl(vr_cdcritic,0) > 0 AND TRIM(vr_dscritic) IS NULL THEN
+            vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
+         END IF;
+         vr_cdcritic := 0;
+         
+         -- Levanta exceção
+         RAISE vr_exc_erro;
+      END IF;
+      
+      vr_idxcob := vr_tab_cob.first;
+      IF vr_idxcob IS NULL THEN
+        vr_cdcritic := 'Boleto não encontrado.';
+        RAISE vr_exc_erro_det;
+      END IF; 
+    
+      pc_escreve_xml('<boleto>'||      
+                       '<Beneficiario>'     || vr_tab_cob(vr_idxcob).nmprimtl                          || '</Beneficiario>'     ||
+                       '<NossoNumero>'      || vr_tab_cob(vr_idxcob).nossonro                          || '</NossoNumero>'      ||
+                       '<DataVencimento>'   || to_char(vr_tab_cob(vr_idxcob).dtvencto,vr_frmtdata)     || '</DataVencimento>'   ||
+                       '<Valor>'            || to_char(vr_tab_cob(vr_idxcob).vltitulo,vr_formtnum,vr_pdrdonum) || '</Valor>'            ||
+                       '<DataDocumento>'    || to_char(vr_tab_cob(vr_idxcob).dtmvtolt,vr_frmtdata)     || '</DataDocumento>'    ||
+                       '<NumeroDocumento>'  || vr_tab_cob(vr_idxcob).nrdocmto || '</NumeroDocumento>'  || 
+                       '<DataProcessamento>'|| to_char(vr_tab_cob(vr_idxcob).dtmvtolt,vr_frmtdata)     || '</DataProcessamento>'||
+                       '<LinhaDigitavel>'   || vr_tab_cob(vr_idxcob).lindigit || '</LinhaDigitavel>'   ||
+                       '<CodigoBarras>'     || vr_tab_cob(vr_idxcob).cdbarras || '</CodigoBarras>'     ||
+                       '<NumeroParcela>'    || rw_acordo_parc.nrparcela || '</NumeroParcela>'    ||       
+      
+                     '</boleto>');
+      vr_flexiste := TRUE;
+    END LOOP;
+    
+    -- Finalizar xml
+    pc_escreve_xml('</boletos>',TRUE);
+    pr_xmlrespo := XMLType.createxml(vr_dscdoxml);
+    
+    --> Se nao achou nenhum registro apresenta critica
+    IF vr_flexiste = FALSE THEN
+      vr_cdcritic := 991; -- Numero do acordo ja cadastrado.
+      pr_dsdetcri := 'Numero de acordo já cadastrado para outra conta ou boleto(s) não encontrado(s).';
+      RAISE vr_exc_erro;        
+    END IF;
+    
+    
+  EXCEPTION
+    WHEN vr_exc_erro_det THEN
+      --> Buscar descrição critica
+      IF nvl(vr_cdcritic,0) > 0 AND TRIM(vr_dscritic) IS NULL THEN
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
+      END IF;
+      
+      --> Apenas critica generica e detalhe critica em outro parametro        
+      pr_cdcritic := 993;
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
+      pr_dsdetcri := vr_dscritic;
+    WHEN vr_exc_erro THEN
+      --> Buscar descrição critica
+      IF nvl(vr_cdcritic,0) > 0 AND TRIM(vr_dscritic) IS NULL THEN
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
+         
+      ELSIF nvl(vr_cdcritic,0) = 0 AND vr_dscritic IS NULL THEN
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
+        pr_dsdetcri := vr_dscritic;
+      END IF;
+      
+      IF NVL(vr_cdcritic,0) = 0 THEN
+        vr_cdcritic := 993;
+      END IF;
+      
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+      pr_dsdetcri := nvl(pr_dsdetcri,vr_dscritic);
+      
+    WHEN OTHERS THEN
+      pr_cdcritic := 993;
+      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
+      pr_dscritic := vr_dscritic;      
+      pr_dsdetcri := SQLERRM; 
+  END pc_consultar_boleto_acordo;
                                                               	
 END RECP0002;
 /
