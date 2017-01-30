@@ -11,14 +11,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Abril/2004                        Ultima atualizacao: 27/01/2017
+   Data    : Abril/2004                        Ultima atualizacao: 30/01/2017
 
    Dados referentes ao programa:
 
    Frequencia: Diario (Batch).
    Objetivo  : Atende a solicitacao 092.
                Integrar Arquivos Debito Automatico(GENERICO)
-               Emite relato rio 344.
+               Emite relatorio 344.
 
    Alteracoes: 31/05/2004 -  Alterado tamanho campo contrato(impressao).
                              Desprezar convenios que nao pertencam a
@@ -390,6 +390,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                27/01/2017  - Tratamento para a Unimed para cosos que precise adicionar um zero
                              final seja verificado se cooperativa que esta rodando 
                              é igual ao que iremos crirar o registro (Lucas Ranghetti #591560)
+    
+	           30/01/2017 - Implementado join no cursor que verifica coop migrada (Tiago/Facricio)
 ............................................................................ */
 
 
@@ -535,12 +537,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
 
       CURSOR cr_craptco_coop(pr_cdcooper crapcop.cdcooper%TYPE,
                              pr_cdcopant crapcop.cdcooper%TYPE) IS
-        SELECT cdcooper, cdcopant
-          FROM craptco
-         WHERE craptco.cdcooper = pr_cdcooper
-           AND craptco.cdcopant = pr_cdcopant
-           AND craptco.tpctatrf = 1
-           AND craptco.flgativo = 1;
+        SELECT tco.cdcooper, tco.cdcopant
+          FROM craptco tco, crapcop cop
+         WHERE tco.cdcooper = pr_cdcooper
+           AND tco.cdcopant = pr_cdcopant
+           AND tco.tpctatrf = 1
+           AND tco.flgativo = 1
+           AND cop.cdcooper = pr_cdcopant
+           AND cop.flgativo = 0;
       rw_craptco_coop cr_craptco_coop%ROWTYPE;
 
       -- Cursor sobre os dados do associado
@@ -3692,33 +3696,33 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                                vr_ind_deb := vr_tab_debcancel.next(vr_ind_deb);
                           END LOOP;
                           
-                          IF vr_ind_debcancel = 'N' THEN                            
-                            vr_cdcritic := 092; -- Lancamento ja existe
+                          IF vr_ind_debcancel = 'N' THEN
+                          vr_cdcritic := 092; -- Lancamento ja existe
                             -- Criar retorno para o convenio somente se tiver o lançamento 
                             -- tiver rodando na cooperativa em questão
                             IF vr_cdcooper = pr_cdcooper THEN
-                              -- Retorna ao convenio com a critica 13 caso lancamento seja duplicado
-                              BEGIN
-                                INSERT INTO crapndb
-                                  (dtmvtolt,
-                                   nrdconta,
-                                   cdhistor,
-                                   flgproce,
-                                   dstexarq,
-                                   cdcooper)
-                                VALUES
-                                  (vr_dtultdia,
-                                   vr_nrdconta,
-                                   rw_gnconve.cdhisdeb,
-                                   0,
-                                   'F' ||SUBSTR(vr_setlinha,2,66) || '13' || SUBSTR(vr_setlinha,70,81),
-                                   vr_cdcooper);
-                              EXCEPTION
-                                WHEN OTHERS THEN
-                                  vr_cdcritic := 0;
-                                  vr_dscritic := 'Erro ao inserir crapndb: '||SQLERRM;
-                                  RAISE vr_exc_saida;
-                              END;
+                          -- Retorna ao convenio com a critica 13 caso lancamento seja duplicado
+                          BEGIN
+                            INSERT INTO crapndb
+                              (dtmvtolt,
+                               nrdconta,
+                               cdhistor,
+                               flgproce,
+                               dstexarq,
+                               cdcooper)
+                            VALUES
+                              (vr_dtultdia,
+                               vr_nrdconta,
+                               rw_gnconve.cdhisdeb,
+                               0,
+                               'F' ||SUBSTR(vr_setlinha,2,66) || '13' || SUBSTR(vr_setlinha,70,81),
+                               vr_cdcooper);
+                          EXCEPTION
+                            WHEN OTHERS THEN
+                              vr_cdcritic := 0;
+                              vr_dscritic := 'Erro ao inserir crapndb: '||SQLERRM;
+                              RAISE vr_exc_saida;
+                          END;
                             END IF;
                           ELSE
                             vr_inserir_lancamento := 'S';
@@ -4268,7 +4272,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                                                          || vr_cdprogra || ' --> '
                                                          || gene0001.fn_busca_critica(vr_cdcritic) ||
                                                          ' --> ' || vr_tab_nmarquiv(i));
-            END IF;
+              END IF;
 
 
             -- Inicializa as variaveis totalizadoras
