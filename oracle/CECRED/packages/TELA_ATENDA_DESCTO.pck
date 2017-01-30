@@ -1259,7 +1259,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 			CLOSE cr_craplim;
 			-- Atribui crítica
 			vr_cdcritic := 0;
-			vr_dscritic := 'Número do contrato e limite disponível não encontrados.';
+			vr_dscritic := 'Cooperado não possui limite de desconto de cheque ativo.';
 			-- Levanta exceção
 			RAISE vr_exc_erro;
 		END IF;
@@ -1844,7 +1844,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 				vr_xml_emitentes := '';
 				FOR vr_index_cheque IN 1..vr_tab_cheques.count LOOP
 					-- Se exister algum cheque sem emitente
-					IF vr_tab_cheques(vr_index_cheque).inemiten = 0 THEN
+					IF vr_tab_cheques(vr_index_cheque).inemiten = 0 AND
+               vr_tab_cheques(vr_index_cheque).cdbanchq <> 85 THEN
 						-- Passar flag de falta de cadastro de emitente
 						vr_xml_emitentes := vr_xml_emitentes ||
 						                    '<emitente'|| vr_index_cheque || '>' ||
@@ -2004,7 +2005,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 				
    			-- Buscar o cmc7			
 				vr_dsdocmc7 := vr_ret_cheques_exc(2);
-							
+				
 				-- Desmontar as informações do CMC-7
 				-- Banco
 				vr_cdbanchq := to_number(SUBSTR(vr_dsdocmc7,01,03)); 
@@ -2107,7 +2108,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 				FETCH cr_crapcec INTO rw_crapcec;
 					
 				-- Se não encontrou emitente 
-				IF cr_crapcec%NOTFOUND THEN
+				IF cr_crapcec%NOTFOUND AND
+           vr_cdbanchq <> 85 THEN
 					-- Fechar cursor
 					CLOSE cr_crapcec;
 					-- Atribui crítica

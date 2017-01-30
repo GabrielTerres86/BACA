@@ -146,7 +146,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
                         ,pr_dtmvtini IN crapdat.dtmvtolt%TYPE
                         ,pr_dtmvtfin IN crapdat.dtmvtolt%TYPE
                         ,pr_insitbdc IN crapbdc.insitbdc%TYPE) IS
-        SELECT bdc.dtmvtolt
+        SELECT to_char(bdc.dtmvtolt,'DD/MM/RRRR') dtmvtolt
               ,bdc.nrborder
               ,(SELECT COUNT(1)
                   FROM crapcdb cdb
@@ -159,7 +159,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
                    AND cdb.nrdconta = bdc.nrdconta
                    AND cdb.nrborder = bdc.nrborder) vlcheque
               ,bdc.insitbdc
-              ,bdc.dtlibbdc
+              ,to_char(bdc.dtlibbdc,'DD/MM/RRRR') dtlibbdc
               ,bdc.nrctrlim
           from crapbdc bdc
          where bdc.cdcooper = pr_cdcooper
@@ -191,6 +191,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
            AND tab.tpregist = 0;
       rw_craptab cr_craptab%ROWTYPE;
       
+      -- Busca contrato de limite de desconto
+      CURSOR cr_craplim(pr_cdcooper IN craplim.cdcooper%TYPE
+                       ,pr_nrdconta IN craplim.nrdconta%TYPE
+                       ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS
+        SELECT 1
+          FROM craplim lim
+         WHERE lim.cdcooper =  pr_cdcooper
+           AND lim.nrdconta =  pr_nrdconta
+           AND lim.dtfimvig >= pr_dtmvtolt
+           AND lim.tpctrlim =  2
+           AND lim.insitlim =  2;
+      rw_craplim cr_craplim%ROWTYPE;
+      
+      -- Cursor da data
+      rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
+      
       --------- Variaveis ---------
       -- Tratamento de erros
       vr_exc_saida EXCEPTION;
@@ -202,6 +218,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
       vr_xml_pgto_temp VARCHAR2(32726) := '';
       vr_retxml        XMLType;
       vr_cdacesso      VARCHAR2(12);
+      vr_flglimit      INTEGER;
       
     BEGIN
       
@@ -251,10 +268,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
       -- Fechar o cursor
       CLOSE cr_craptab;
       
-      -- Valor máximo dispensa assinatura
+      -- Busca a data do sistema
+      OPEN  BTCH0001.cr_crapdat(pr_cdcooper);
+      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+      CLOSE BTCH0001.cr_crapdat;
+      
+      OPEN cr_craplim (pr_cdcooper => pr_cdcooper
+                      ,pr_nrdconta => pr_nrdconta
+                      ,pr_dtmvtolt => rw_crapdat.dtmvtolt);
+      FETCH cr_craplim INTO rw_craplim;
+      
+      IF cr_craplim%FOUND THEN
+        vr_flglimit := 1;
+      ELSE
+        vr_flglimit := 0;
+      END IF;
+      
+      CLOSE cr_craplim;
+      
       gene0002.pc_escreve_xml(pr_xml            => pr_retxml
-                               ,pr_texto_completo => vr_xml_pgto_temp
-                               ,pr_texto_novo     => '<vlmxassi>' || rw_craptab.vlmxassi || '</vlmxassi>');
+                             ,pr_texto_completo => vr_xml_pgto_temp
+                             ,pr_texto_novo     => '<vlmxassi>' || rw_craptab.vlmxassi || '</vlmxassi>' || -- Valor máximo dispensa assinatura
+                                                   '<flglimit>' ||     vr_flglimit     || '</flglimit>'); -- Flag Possui contrato de limite
       
       -- Insere o cabeçalho do XML
       gene0002.pc_escreve_xml(pr_xml            => pr_retxml
@@ -348,8 +383,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
                         ,pr_nrdconta IN crapass.nrdconta%TYPE
                         ,pr_nrborder IN crapcdb.nrborder%TYPE) IS
         SELECT x.* 
-          FROM (SELECT cdb.dtlibera
-                ,cdb.dtemissa
+          FROM (SELECT to_char(cdb.dtlibera,'DD/MM/RRRR') dtlibera
+                ,to_char(cdb.dtemissa,'DD/MM/RRRR') dtemissa
                 ,cdb.cdbanchq
                 ,cdb.cdagechq
                 ,cdb.nrctachq
@@ -984,7 +1019,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
              vr_contas_existentes := vr_contas_existentes || ';' || vr_conta_atual;
           
             -- Se exister algum cheque sem emitente
-            IF vr_tab_cheques(vr_index_cheque).inemiten = 0 THEN
+            IF vr_tab_cheques(vr_index_cheque).inemiten = 0 AND
+               vr_tab_cheques(vr_index_cheque).cdbanchq <> 85 THEN
               -- Passar flag de falta de cadastro de emitente
               vr_xml_emitentes := vr_xml_emitentes ||
                                   '<emitente'|| vr_index_cheque || '>' ||
@@ -1538,16 +1574,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
                        ,pr_dtdcaptu IN crapdcc.dtdcaptu%TYPE
                        ,pr_vlcheque IN crapdcc.vlcheque%TYPE
                        ,pr_dsdocmc7 IN crapdcc.dsdocmc7%TYPE) IS
-        SELECT 
-          COUNT(1) qtdCheques
-        FROM crapdcc dcc
-        WHERE dcc.cdcooper = pr_cdcooper 
-          AND dcc.nrdconta = pr_nrdconta
-          AND trunc(dcc.dtlibera) = trunc(pr_dtlibera)
-          AND trunc(dcc.dtdcaptu) = trunc(pr_dtdcaptu)
-          AND dcc.vlcheque = pr_vlcheque
-          AND dcc.dsdocmc7 = pr_dsdocmc7
-          AND dcc.intipmvt in (1,3); -- 1 - Remessa / 3 - Retorno
+        SELECT 1
+          FROM crapdcc dcc
+         WHERE dcc.cdcooper = pr_cdcooper 
+           AND dcc.nrdconta = pr_nrdconta
+           AND trunc(dcc.dtlibera) = trunc(pr_dtlibera)
+           AND trunc(dcc.dtdcaptu) = trunc(pr_dtdcaptu)
+           AND dcc.vlcheque = pr_vlcheque
+           AND dcc.dsdocmc7 = pr_dsdocmc7
+           AND dcc.intipmvt in (1,3); -- 1 - Remessa / 3 - Retorno
       rw_crapdcc cr_crapdcc%ROWTYPE;
 
       -- Variaveis de controle de calendario
@@ -1646,6 +1681,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
         ELSE
           vr_intipchq := to_number(vr_ret_all_intipchq(vr_auxcont));
         END IF;
+        
+        -- Busca Emitentes
+        OPEN cr_crapcec (pr_cdcooper => pr_cdcooper
+                        ,pr_cdcmpchq => vr_cdcmpchq
+                        ,pr_cdbanchq => vr_cdbanchq
+                        ,pr_cdagechq => vr_cdagechq
+                        ,pr_nrctachq => vr_nrctachq);
+        FETCH cr_crapcec INTO rw_crapcec;
+        -- Se não encontrar
+        IF cr_crapcec%NOTFOUND  AND
+           vr_cdbanchq <> 85    THEN
+          CLOSE cr_crapcec;
+          vr_dscritic := 'Emitente não cadastrado.';
+          RAISE vr_exc_erro;
+        END IF;
+        -- Fecha cursor
+        CLOSE cr_crapcec;
         
         -- Carrega as informações do cheque para custodiar
         vr_index_cheque := vr_tab_cheques.count + 1;  

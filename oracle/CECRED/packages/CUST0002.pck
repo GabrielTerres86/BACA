@@ -31,6 +31,8 @@ CREATE OR REPLACE PACKAGE CECRED.CUST0002 IS
                                      ,pr_nrdconta  IN crapass.nrdconta%TYPE --> Nr. da Conta
                                      ,pr_nrconven  IN crapdcc.nrconven%TYPE --> Nr do convenio
                                      ,pr_nrremret  IN crapdcc.nrremret%TYPE --> Data final do periodo
+                                     ,pr_nriniseq  IN INTEGER               --> Paginação - Inicio de sequencia
+                                     ,pr_nrregist  IN INTEGER               --> Paginação - Número de registros
                                      ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
                                      ,pr_retxml   OUT CLOB);                --> Arquivo de retorno do XML
   
@@ -978,6 +980,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0002 IS
                                      ,pr_nrdconta  IN crapass.nrdconta%TYPE --> Nr. da Conta
                                      ,pr_nrconven  IN crapdcc.nrconven%TYPE --> Nr do convenio
                                      ,pr_nrremret  IN crapdcc.nrremret%TYPE --> Data final do periodo
+                                     ,pr_nriniseq  IN INTEGER               --> Paginação - Inicio de sequencia
+                                     ,pr_nrregist  IN INTEGER               --> Paginação - Número de registros
                                      ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
                                      ,pr_retxml   OUT CLOB) IS              --> Arquivo de retorno do XML
 
@@ -1004,34 +1008,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0002 IS
                         ,pr_nrdconta IN crapass.nrdconta%TYPE
                         ,pr_nrconven IN crapdcc.nrconven%TYPE
                         ,pr_nrremret IN crapdcc.nrremret%TYPE) IS
-        SELECT dcc.nrconven
-              ,dcc.intipmvt
-              ,dcc.nrremret
-              ,to_char(dcc.dtlibera,'DD/MM/RRRR') dtlibera
-              ,to_char(dcc.dtdcaptu,'DD/MM/RRRR') dtdcaptu
-              ,dcc.cdbanchq
-              ,dcc.cdagechq
-              ,dcc.nrctachq
-              ,dcc.nrcheque
-              ,to_char(dcc.vlcheque,'FM999G999G999G999G990D00') vlcheque
-              ,dcc.inconcil
-              ,dcc.nrseqarq
-              ,translate(dcc.dsdocmc7,
-                         '[0-9]<>:',
-                         '[0-9]') dsdocmc7
-              ,hcc.idorigem
-          FROM crapdcc dcc
-              ,craphcc hcc
-         WHERE dcc.cdcooper = pr_cdcooper
-           AND dcc.nrdconta = pr_nrdconta
-           AND dcc.nrconven = pr_nrconven
-           AND dcc.intipmvt = 3
-           AND dcc.nrremret = pr_nrremret
-           AND hcc.cdcooper = dcc.cdcooper
-           AND hcc.nrdconta = dcc.nrdconta
-           AND hcc.nrconven = dcc.nrconven
-           AND hcc.intipmvt = dcc.intipmvt
-           AND hcc.nrremret = dcc.nrremret;
+        SELECT x.* 
+          FROM (SELECT dcc.nrconven
+                      ,dcc.intipmvt
+                      ,dcc.nrremret
+                      ,to_char(dcc.dtlibera,'DD/MM/RRRR') dtlibera
+                      ,to_char(dcc.dtdcaptu,'DD/MM/RRRR') dtdcaptu
+                      ,dcc.cdbanchq
+                      ,dcc.cdagechq
+                      ,dcc.nrctachq
+                      ,dcc.nrcheque
+                      ,to_char(dcc.vlcheque,'FM999G999G999G999G990D00') vlcheque
+                      ,dcc.inconcil
+                      ,dcc.nrseqarq
+                      ,translate(dcc.dsdocmc7,
+                                 '[0-9]<>:',
+                                 '[0-9]') dsdocmc7
+                      ,hcc.idorigem
+                      ,rownum rnum
+                      ,COUNT(*) over() qtregist
+                  FROM crapdcc dcc
+                      ,craphcc hcc
+                 WHERE dcc.cdcooper = pr_cdcooper
+                   AND dcc.nrdconta = pr_nrdconta
+                   AND dcc.nrconven = pr_nrconven
+                   AND dcc.intipmvt = 3
+                   AND dcc.nrremret = pr_nrremret
+                   AND hcc.cdcooper = dcc.cdcooper
+                   AND hcc.nrdconta = dcc.nrdconta
+                   AND hcc.nrconven = dcc.nrconven
+                   AND hcc.intipmvt = dcc.intipmvt
+                   AND hcc.nrremret = dcc.nrremret) x
+         WHERE rnum >= pr_nriniseq
+           AND rnum < (pr_nriniseq + pr_nrregist);
       
       --------- Variaveis ---------
       -- Tratamento de erros
@@ -1043,6 +1052,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0002 IS
       vr_xml_pgto_temp VARCHAR2(32726) := '';
       vr_retxml        XMLType;
       vr_nrctachq      VARCHAR2(100);
+      vr_qtregist      INTEGER;
       
     BEGIN
       
@@ -1053,8 +1063,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0002 IS
       -- Insere o cabeçalho do XML
       gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_pgto_temp
-                             ,pr_texto_novo     => '<raiz>');
-
+                             ,pr_texto_novo     => '<custodias>');
+      
+      vr_qtregist := 0;
+      
       -- Percorre remessas
       FOR rw_crapdcc IN cr_crapdcc (pr_cdcooper => pr_cdcooper
                                    ,pr_nrdconta => pr_nrdconta
@@ -1084,13 +1096,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0002 IS
                                                   || '<dsdocmc7>'||rw_crapdcc.dsdocmc7||'</dsdocmc7>'
                                                   || '<idorigem>'||rw_crapdcc.idorigem||'</idorigem>'
                                                   || '</custodia>');
-        
+        IF vr_qtregist = 0 THEN
+          vr_qtregist := rw_crapdcc.qtregist;
+        END IF;
       END LOOP;
       
       -- Encerrar a tag raiz
       gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_pgto_temp
-                             ,pr_texto_novo     => '</raiz>'
+                             ,pr_texto_novo     => '</custodias>');
+                             
+      -- Encerrar a tag raiz
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                             ,pr_texto_completo => vr_xml_pgto_temp
+                             ,pr_texto_novo     => '<qtregist>' || vr_qtregist || '</qtregist>'
                              ,pr_fecha_xml      => TRUE);
       
     EXCEPTION
@@ -1566,7 +1585,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0002 IS
             vr_contas_existentes := vr_contas_existentes || ';' || vr_conta_atual;
             
             -- Se exister algum cheque sem emitente
-            IF vr_tab_cheque_custodia(vr_index_cheque).inemiten = 0 THEN
+            IF vr_tab_cheque_custodia(vr_index_cheque).inemiten = 0 AND
+               vr_tab_cheque_custodia(vr_index_cheque).cdbanchq <> 85 THEN
                -- Passar flag de falta de cadastro de emitente
                vr_xml_emitentes := vr_xml_emitentes ||
                                    '<emitente'|| vr_index_cheque || '>' ||
@@ -1798,7 +1818,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0002 IS
         -- Converter o XML
         pr_retxml := vr_retxml.getClobVal();
       WHEN OTHERS THEN
-        pr_dscritic := 'Erro geral em pc_valida_emitentes: ' || SQLERRM;
+        pr_dscritic := 'Erro geral em pc_cadastra_emitentes: ' || SQLERRM;
         -- Carregar XML padrão para variável de retorno não utilizada.
         -- Existe para satisfazer exigência da interface.
         vr_retxml := XMLType.createXML('<DSMSGERR>' || pr_dscritic || '</DSMSGERR>');

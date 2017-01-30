@@ -2,7 +2,7 @@
 
    Programa: b1wnet0002.p                  
    Autor   : David
-   Data    : 03/10/2006                        Ultima atualizacao: 11/05/2016
+   Data    : 03/10/2006                        Ultima atualizacao: 24/01/2017
 
    Dados referentes ao programa:
 
@@ -137,7 +137,27 @@
                             permissoes do menu do Mobile. Projeto 286/3 - Mobile (Lombardi)
                
                11/05/2016 - Remocao de logica para somente mostrar Comprovantes Salariais
-			                quanto houver. Esta busca estava honerando o processo (Marcos-Supero)
+			                      quanto houver. Esta busca estava honerando o processo (Marcos-Supero)	
+               
+               18/08/2016 - Adicionada a propriedade qtdiaace na carrega-tutulares
+                            PRJ286.5 - Cecred Mobile (Dionathan)
+               
+               18/08/2016 - Alteracoes na verifica-acesso para chamada no mobile
+                            PRJ286.5 - Cecred Mobile (Dionathan)
+               
+               06/09/2016 - Removido a busca do preposto pelo proprio CPF do titular (Pessoa Jurídica)
+							              (Andrey - RKAM)
+               
+               09/09/2016 - Alterado procedure Busca_Dados, retorno do parametro
+						    aux_qtminast referente a quantidade minima de assinatura
+						    conjunta, procedure carrega_titulares SD 514239 (Jean Michel).
+               
+			   17/10/2016 - Ajuste feito para que possa visualizar as opcoes de transacoes para
+							contas com inpessoa = 3 ao criar um novo operador. (SD 538293 - Kelvin)
+               
+               24/01/2017 - Ajuste na procedure "permissoes-menu" para somente mostrar a 
+                            opcao Desconto de Cheques quando possuir contrato de limite de
+                            desconto de cheque. Projeto 300 (Lombardi)
                
 ..............................................................................*/
 
@@ -345,10 +365,13 @@ PROCEDURE carrega-titulares.
             
     DEF OUTPUT PARAM TABLE FOR tt-erro.
     DEF OUTPUT PARAM TABLE FOR tt-titulares.
+    DEF OUTPUT PARAM par_qtdiaace AS INTE                           NO-UNDO.
+    DEF OUTPUT PARAM par_nmprimtl AS CHAR                          NO-UNDO.
 
     DEF VAR aux_inbloque AS INTE INIT 0                             NO-UNDO.
     DEF VAR aux_incadsen AS INTE INIT 0                             NO-UNDO.
     DEF VAR aux_qtdiaace AS INTE                                    NO-UNDO.
+    DEF VAR aux_qtminast AS INTE									NO-UNDO.
     
     DEF VAR h-b1wgen0058 AS HANDLE                                  NO-UNDO.
 
@@ -373,6 +396,32 @@ PROCEDURE carrega-titulares.
                                       "novamente mais tarde!".
                 LEAVE.
             END.
+        
+        /* Bloqueio internet Transulcred durante e apos incorporacoes */
+        IF  par_cdcooper = 17           AND
+            aux_datdodia >= 12/31/2016  THEN
+            DO:
+                ASSIGN aux_dscritic = "Sistema indisponivel. Tente " +
+                                      "novamente mais tarde!".
+                LEAVE.
+            END.
+            
+        /* impedir acesso de contas que serao migradas */
+        IF par_cdcooper = 9           AND    /* Transpocred */
+           aux_datdodia <= 12/31/2016 THEN  /* Antes e durante a migraçao */
+           DO:           
+              FIND craptco WHERE craptco.cdcooper = par_cdcooper AND
+                                 craptco.nrdconta = par_nrdconta AND
+                                 craptco.tpctatrf = 1            
+                                 NO-LOCK NO-ERROR.
+                                 
+              IF  AVAILABLE craptco AND craptco.cdcopant = 17 /* Transulcred */ THEN
+                  DO:
+                      ASSIGN aux_dscritic = "Sistema indisponivel. Tente " +
+                                            "novamente mais tarde!".
+                      LEAVE. 
+                  END.
+           END.
         
         FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
                            crapass.nrdconta = par_nrdconta NO-LOCK NO-ERROR.
@@ -422,6 +471,10 @@ PROCEDURE carrega-titulares.
                 LEAVE.
             END.
 
+        /* Seta o nome da conta apenas se for assinatura conjunta */
+        IF crapass.idastcjt = 1 THEN
+          ASSIGN par_nmprimtl = crapass.nmprimtl.
+		  
         LEAVE. 
 
     END. /** Fim do DO WHILE TRUE **/
@@ -588,6 +641,7 @@ PROCEDURE carrega-titulares.
                                                  INPUT ?,     /* par_nrdrowid */
                                                 OUTPUT TABLE tt-crapavt,
                                                 OUTPUT TABLE tt-bens,
+												OUTPUT aux_qtminast,
                                                 OUTPUT TABLE tt-erro) NO-ERROR.
 
                 DELETE PROCEDURE h-b1wgen0058.
@@ -688,6 +742,7 @@ PROCEDURE carrega-titulares.
             RETURN "NOK".
         END.
 
+    par_qtdiaace = aux_qtdiaace.
     RETURN "OK".
     
 END PROCEDURE.
@@ -1631,14 +1686,26 @@ PROCEDURE verifica-acesso.
                             UNDO TRANSACAO, LEAVE TRANSACAO.
                     END.
     
+                IF  NOT par_flmobile THEN /* Conta Online */
+				    DO:
                 ASSIGN tt-acesso.dtaltsnh = crapsnh.dtaltsnh
                        tt-acesso.flgsenha = FALSE
                        tt-acesso.dtultace = crapsnh.dtultace
                        tt-acesso.hrultace = crapsnh.hrultace.
                        
-                IF  NOT par_flmobile THEN
                     ASSIGN crapsnh.dtultace = aux_datdodia
                            crapsnh.hrultace = TIME.
+            END.
+                ELSE /* Cecred Mobile */
+				    DO:
+					    ASSIGN tt-acesso.dtaltsnh = crapsnh.dtaltsnh
+                               tt-acesso.flgsenha = FALSE
+                               tt-acesso.dtultace = crapsnh.dtacemob
+                               tt-acesso.hrultace = crapsnh.hracemob.
+							   
+					    ASSIGN crapsnh.dtacemob = aux_datdodia
+                               crapsnh.hracemob = TIME.
+				    END.
             END.
         ELSE
             ASSIGN tt-acesso.dtaltsnh = crapopi.dtaltsnh
@@ -1902,7 +1969,6 @@ PROCEDURE verifica-acesso.
     
 END PROCEDURE.
 
-
 /******************************************************************************/
 /**            Procedure para gerenciar senha para acesso a conta            **/
 /******************************************************************************/
@@ -1927,6 +1993,7 @@ PROCEDURE gerencia-senha.
     DEF  INPUT PARAM par_inbloque AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nripuser AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_dsorigip AS CHAR                           NO-UNDO.
+	DEF  INPUT PARAM par_flmobile AS LOGI                           NO-UNDO.
     DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
         
     DEF OUTPUT PARAM TABLE FOR tt-erro.
@@ -2030,6 +2097,12 @@ PROCEDURE gerencia-senha.
                                         INPUT par_nmdatela,
                                         INPUT par_nrdconta,
                                        OUTPUT aux_nrdrowid).        
+                
+					RUN proc_gerar_log_item
+                                  (INPUT aux_nrdrowid,
+                                   INPUT "Origem",
+                                   INPUT "",
+                                   INPUT STRING(par_flmobile,"MOBILE/INTERNETBANK")).
                 
                     IF  par_nrcpfope > 0  THEN
                         RUN proc_gerar_log_item 
@@ -2203,6 +2276,12 @@ PROCEDURE gerencia-senha.
                                         INPUT par_nrdconta,
                                        OUTPUT aux_nrdrowid).
 
+					RUN proc_gerar_log_item
+                                  (INPUT aux_nrdrowid,
+                                   INPUT "Origem",
+                                   INPUT "",
+                                   INPUT STRING(par_flmobile,"MOBILE/INTERNETBANK")).
+
                     IF  par_nrcpfope > 0  THEN
                         RUN proc_gerar_log_item 
                                           (INPUT aux_nrdrowid,
@@ -2251,6 +2330,12 @@ PROCEDURE gerencia-senha.
                                 INPUT par_nmdatela,
                                 INPUT par_nrdconta,
                                OUTPUT aux_nrdrowid).
+        
+			RUN proc_gerar_log_item
+                                  (INPUT aux_nrdrowid,
+                                   INPUT "Origem",
+                                   INPUT "",
+                                   INPUT STRING(par_flmobile,"MOBILE/INTERNETBANK")).
         
             IF  par_nrcpfope > 0  THEN
                 RUN proc_gerar_log_item (INPUT aux_nrdrowid,
@@ -2672,6 +2757,8 @@ PROCEDURE permissoes-menu-mobile:
             END.
         END.
     
+  RETURN "OK".
+    
 END PROCEDURE.
 
 /******************************************************************************/
@@ -2713,6 +2800,7 @@ PROCEDURE permissoes-menu:
     DEF VAR aux_flgprepo AS LOGI                                    NO-UNDO.
     DEF VAR aux_flgblque AS LOGI                                    NO-UNDO.
     DEF VAR aux_flgaprov AS LOGI                                    NO-UNDO.
+    DEF VAR aux_flgdesct AS LOGI                                    NO-UNDO.
 
     DEF VAR h-b1wgen0016 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0079 AS HANDLE                                  NO-UNDO.
@@ -2774,6 +2862,7 @@ PROCEDURE permissoes-menu:
            aux_flgconve = FALSE
            aux_flgpagto = FALSE
            aux_flgaprov = FALSE
+           aux_flgdesct = FALSE
            /** DDA nao sera validado no momento - 12/07/2011 (David) **/
            aux_flgpgdda = TRUE 
            aux_flgtbdda = TRUE.
@@ -2828,7 +2917,18 @@ PROCEDURE permissoes-menu:
             IF AVAIL tt-dados-cpa AND tt-dados-cpa.vldiscrd > 0 THEN
                ASSIGN aux_flgaprov = TRUE.
         END.
-
+    
+    /* Verifica se possui limite de desconto de cheque */
+    FIND FIRST craplim WHERE craplim.cdcooper = par_cdcooper AND
+                             craplim.nrdconta = par_nrdconta AND
+                             craplim.tpctrlim = 2            AND
+                             craplim.insitlim > 1
+                             NO-LOCK NO-ERROR.
+    IF AVAILABLE craplim THEN
+       DO:
+         ASSIGN aux_flgdesct = TRUE.
+       END.
+        
     /** DDA nao sera validado no momento - 12/07/2011 (David) **
     RUN sistema/generico/procedures/b1wgen0079.p PERSISTENT SET h-b1wgen0079.
      
@@ -2940,7 +3040,8 @@ PROCEDURE permissoes-menu:
         
 
     /* Verifica se ha um Preposto cadastrado para PJ*/
-    IF  crapass.inpessoa = 2 THEN
+    IF  crapass.inpessoa = 2 OR
+        crapass.inpessoa = 3 THEN
         DO:
             IF crapass.idastcjt = 0 THEN
             DO:
@@ -2950,10 +3051,9 @@ PROCEDURE permissoes-menu:
                                     crapsnh.tpdsenha = 1 NO-LOCK NO-ERROR.
                 IF  AVAIL crapsnh THEN
                     DO:
-                        FIND crapavt WHERE  crapavt.cdcooper = crapsnh.cdcooper AND
+                        FIND FIRST crapavt WHERE  crapavt.cdcooper = crapsnh.cdcooper AND
                                             crapavt.nrdconta = crapsnh.nrdconta AND
-                                            crapavt.tpctrato = 6 AND
-                                            crapavt.nrcpfcgc = crapsnh.nrcpfcgc 
+                                            crapavt.tpctrato = 6
                                             NO-LOCK NO-ERROR.
         
                         IF  AVAIL crapavt THEN
@@ -3148,7 +3248,12 @@ PROCEDURE permissoes-menu:
                     IF crabmni.cditemmn = 4 AND crabmni.cdsubitm = 2 AND
                        NOT aux_flgaprov THEN
                        NEXT.
-
+                    
+                    /* Verifica permissao para custodia de cheque */
+                    IF crabmni.cditemmn = 4 AND crabmni.cdsubitm = 5 AND
+                       NOT aux_flgdesct THEN
+                       NEXT.
+                    
                     CREATE tt-itens-menu.
                     ASSIGN tt-itens-menu.cditemmn = crabmni.cditemmn
                            tt-itens-menu.cdsubitm = crabmni.cdsubitm

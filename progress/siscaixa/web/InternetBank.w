@@ -7766,7 +7766,9 @@ PROCEDURE proc_operacao178:
                  aux_dtlibchq =      GET-VALUE("aux_dtlibera")
                  aux_dtcapchq =      GET-VALUE("aux_dtdcaptu")
                  aux_vlcheque =      GET-VALUE("aux_vlcheque")
-                 aux_dsdocmc7 =      GET-VALUE("aux_dsdocmc7").
+                 aux_dsdocmc7 =      GET-VALUE("aux_dsdocmc7")
+                 aux_nriniseq =  INT(GET-VALUE("aux_nriniseq"))
+                 aux_nrregist =  INT(GET-VALUE("aux_nrregist")).
     
     RUN sistema/internet/fontes/InternetBank178.p (INPUT aux_operacao,
                                                    INPUT aux_cdcooper,
@@ -7785,6 +7787,8 @@ PROCEDURE proc_operacao178:
                                                    INPUT aux_dtcapchq,
                                                    INPUT aux_vlcheque,
                                                    INPUT aux_dsdocmc7,
+                                                   INPUT aux_nriniseq,
+                                                   INPUT aux_nrregist,
                                                   OUTPUT aux_dsmsgerr,
                                                   OUTPUT TABLE xml_operacao).
 

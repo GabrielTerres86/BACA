@@ -593,7 +593,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
            AND crapcdb.cdagechq = pr_cdagechq 
            AND crapcdb.nrctachq = pr_nrctachq 
            AND crapcdb.nrcheque = pr_nrcheque 
-           AND crapcdb.dtdevolu IS NULL       
+           AND crapcdb.dtdevolu IS NULL
+           AND crapcdb.dtlibbdc IS NOT NULL
            AND crapcdb.dtlibera >= pr_dtmvtolt     
            AND (crapcdb.insitchq = 0
              OR crapcdb.insitchq = 2);
@@ -3234,6 +3235,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
                            ,pr_dtlibera IN crapdcc.dtlibera%TYPE
                            ,pr_intipmvt IN crapdcc.intipmvt%TYPE) IS
          SELECT crapdcc.dtlibera
+               ,crapdcc.dtdcaptu
                ,crapdcc.cdcmpchq
                ,crapdcc.cdbanchq
                ,crapdcc.cdagechq
@@ -3638,6 +3640,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
                   dsdocmc7,
                   dtdevolu,
                   dtlibera,
+                  dtemissa,
                   insitchq,
                   nrdconta,
                   nrddigc1,
@@ -3666,6 +3669,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
                  ,rw_crapdcc_2.dsdocmc7
                  ,NULL
                  ,rw_crapdcc_2.dtlibera
+                 ,rw_crapdcc_2.dtdcaptu
                  ,0
                  ,rw_crapdcc_2.nrdconta -- Custodiante
                  ,vr_nrddigc1
@@ -5166,7 +5170,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
 				vr_xml_emitentes := '';
 				FOR vr_index_cheque IN 1..vr_tab_cheque_custodia.count LOOP
 					-- Se exister algum cheque sem emitente
-					IF vr_tab_cheque_custodia(vr_index_cheque).inemiten = 0 THEN
+					IF vr_tab_cheque_custodia(vr_index_cheque).inemiten = 0 AND
+             vr_tab_cheque_custodia(vr_index_cheque).cdbanchq <> 85 THEN
 						-- Passar flag de falta de cadastro de emitente
 						vr_xml_emitentes := vr_xml_emitentes ||
 						                    '<emitente'|| vr_index_cheque || '>' ||

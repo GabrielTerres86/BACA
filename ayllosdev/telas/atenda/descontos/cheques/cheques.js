@@ -125,6 +125,13 @@ function selecionaBorderoCheques(id,qtBorderos,bordero,contrato,nrdolote) {
 // OPÇÕES CONSULTA/EXCLUSÃO/IMPRIMIR/LIBERAÇÃO/ANÁLISE
 // Mostrar dados do border&ocirc; para fazer
 function mostraDadosBorderoDscChq(opcaomostra) {
+	
+	if (nrbordero == 0 || nrbordero == '' || nrbordero === undefined) {
+		hideMsgAguardo();
+		showError("error","Nenhum border&ocirc; selecionado.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		return false;
+	}
+	
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, carregando dados do border&ocirc; ...");
 	
@@ -214,6 +221,13 @@ function excluirBorderoDscChq() {
 // OPÇÃO IMPRIMIR
 // Função para mostrar a opção Imprimir dos borderos de desconto de cheques
 function mostraImprimirBordero(){
+	
+	if (nrbordero == 0 || nrbordero == '' || nrbordero === undefined) {
+		hideMsgAguardo();
+		showError("error","Nenhum border&ocirc; selecionado.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		return false;
+	}
+	
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, carregando op&ccedil;&atilde;o Imprimir ...");
 	
@@ -1411,6 +1425,10 @@ function mostraFormIABordero(cddopcao){
 	
 	if (cddopcao == 'I') {
 		nrbordero = 0;
+	} else if (nrbordero == 0 || nrbordero == '' || nrbordero === undefined) {
+		hideMsgAguardo();
+		showError("error","Nenhum border&ocirc; selecionado.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		return false;
 	}
 	
 	ChqsRemovidos = new Array();
@@ -1429,6 +1447,7 @@ function mostraFormIABordero(cddopcao){
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
 			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+			return false;
 		},
 		success: function(response) {
 			$("#divOpcoesDaOpcao3").html(response);
@@ -2545,6 +2564,13 @@ function manterBordero(){
 }
 
 function mostraFormAnaliseBordero(){
+	
+	if (nrbordero == 0 || nrbordero == '' || nrbordero === undefined) {
+		hideMsgAguardo();
+		showError("error","Nenhum border&ocirc; selecionado.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		return false;
+	}
+	
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, carregando dados do border&ocirc; ...");
 	
@@ -2619,6 +2645,13 @@ function concluirAnaliseBordero(){
 }
 
 function verificaAssinaturaBordero(){
+	
+	if (nrbordero == 0 || nrbordero == '' || nrbordero === undefined) {
+		hideMsgAguardo();
+		showError("error","Nenhum border&ocirc; selecionado.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		return false;
+	}
+	
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, verificando se border&ocirc; necessita de assinatura...");
 	
@@ -2678,8 +2711,16 @@ function efetivaBordero(){
 }
 
 function mostraFormResgate(){
+	
+	if (nrbordero == 0 || nrbordero == '' || nrbordero === undefined) {
+		hideMsgAguardo();
+		showError("error","Nenhum border&ocirc; selecionado.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		return false;
+	}
+	
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, carregando dados do border&ocirc; ...");
+	
 	// Carrega conteúdo da opção através de ajax
 	$.ajax({		
 		type: "POST", 

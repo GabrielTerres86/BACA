@@ -2854,7 +2854,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     -- Variáveis locais
 		vr_nrdolote        NUMBER;
 		vr_nrborder        NUMBER;
-		
+		vr_flg_criou_lot   BOOLEAN;
 	
 	  -- Busca registro de associado
 		CURSOR cr_crapass(pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -3081,68 +3081,79 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 
 		-- Fecha cursor
 		CLOSE cr_craptrf;
-		-- Rotina para criar lote e bordero
-		vr_nrdolote := fn_sequence(pr_nmtabela => 'CRAPLOT'
-		                          ,pr_nmdcampo => 'NRDOLOTE'
-															,pr_dsdchave => TO_CHAR(pr_cdcooper)|| ';' 
-														               || TO_CHAR(rw_crapdat.dtmvtolt, 'DD/MM/RRRR')|| ';'
-																					 || TO_CHAR(pr_cdagenci)|| ';'
-																					 || '700') + 260000;
-			
-		-- Rotina para criar número de bordero por cooperativa
-		vr_nrborder := fn_sequence(pr_nmtabela => 'CRAPBDC'
-		                          ,pr_nmdcampo => 'NRBORDER'
-															,pr_dsdchave => TO_CHAR(pr_cdcooper));
-															
-		BEGIN
-			-- Insere registro na craplot
-      INSERT INTO craplot (dtmvtolt
-			                    ,cdagenci
-													,cdbccxlt
-													,nrdolote
-													,qtinfoln
-													,vlinfodb													
-													,vlinfocr
-													,tplotmov
-													,dtmvtopg
-													,cdoperad
-													,cdhistor
-													,cdbccxpg
-													,cdcooper													
-													,qtinfocc
-													,qtinfoci
-													,vlinfoci																										
-													,vlinfocc
-												  ,qtinfocs
-													,vlinfocs)
-								    VALUES(rw_crapdat.dtmvtolt
-										      ,pr_cdagenci
-													,700
-													,vr_nrdolote
-													,0
-													,0
-													,0
-													,26
-													,NULL
-													,pr_cdoperad
-													,vr_nrborder
-													,0
-													,pr_cdcooper
-													,0
-													,0
-													,0
-													,0
-													,0
-													,0);
-		EXCEPTION
-			WHEN OTHERS THEN
-				-- Gera crítica
-				vr_cdcritic := 0;
-				vr_dscritic := 'Erro ao inserir novo lote ' || SQLERRM;
-				-- Levanta exceção
-				RAISE vr_exc_erro;
-		END;															
-																														
+		
+		vr_flg_criou_lot := FALSE;
+    
+    WHILE NOT vr_flg_criou_lot
+    LOOP
+      -- Rotina para criar lote e bordero
+      vr_nrdolote := fn_sequence(pr_nmtabela => 'CRAPLOT'
+                                ,pr_nmdcampo => 'NRDOLOTE'
+                                ,pr_dsdchave => TO_CHAR(pr_cdcooper)|| ';' 
+                                             || TO_CHAR(rw_crapdat.dtmvtolt, 'DD/MM/RRRR')|| ';'
+                                             || TO_CHAR(pr_cdagenci)|| ';'
+                                             || '700') + 260000;
+  			
+      -- Rotina para criar número de bordero por cooperativa
+      vr_nrborder := fn_sequence(pr_nmtabela => 'CRAPBDC'
+                                ,pr_nmdcampo => 'NRBORDER'
+                                ,pr_dsdchave => TO_CHAR(pr_cdcooper));
+  															
+      BEGIN
+        -- Insere registro na craplot
+        INSERT INTO craplot (dtmvtolt
+                            ,cdagenci
+                            ,cdbccxlt
+                            ,nrdolote
+                            ,qtinfoln
+                            ,vlinfodb													
+                            ,vlinfocr
+                            ,tplotmov
+                            ,dtmvtopg
+                            ,cdoperad
+                            ,cdhistor
+                            ,cdbccxpg
+                            ,cdcooper													
+                            ,qtinfocc
+                            ,qtinfoci
+                            ,vlinfoci																										
+                            ,vlinfocc
+                            ,qtinfocs
+                            ,vlinfocs)
+                      VALUES(rw_crapdat.dtmvtolt
+                            ,pr_cdagenci
+                            ,700
+                            ,vr_nrdolote
+                            ,0
+                            ,0
+                            ,0
+                            ,26
+                            ,NULL
+                            ,pr_cdoperad
+                            ,vr_nrborder
+                            ,0
+                            ,pr_cdcooper
+                            ,0
+                            ,0
+                            ,0
+                            ,0
+                            ,0
+                            ,0);
+      EXCEPTION
+        WHEN DUP_VAL_ON_INDEX THEN
+          CONTINUE;
+        WHEN OTHERS THEN
+          -- Gera crítica
+          vr_cdcritic := 0;
+          vr_dscritic := 'Erro ao inserir novo lote ' || SQLERRM;
+          -- Levanta exceção
+          RAISE vr_exc_erro;
+      END;
+      
+      vr_flg_criou_lot := TRUE;
+      
+    END LOOP;
+
 		BEGIN
 			-- Insere registro no crapbdc
       INSERT INTO crapbdc (dtmvtolt
@@ -3260,7 +3271,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 	vr_fldigit3 BOOLEAN;	
 	vr_inchqcop INTEGER;
 	vr_dscheque VARCHAR2(32726);
-	vr_nrseqdig crapcdb.nrseqdig%TYPE;
+	vr_nrseqdig crapcdb.nrseqdig%TYPE := 0;
 	vr_nrremret_aux NUMBER := 0;
 	vr_nrremret NUMBER := 0;	
 	vr_qtcompln NUMBER := 0;
@@ -3438,7 +3449,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 				END;
 
 			END IF;
-			
+      
+      vr_nrseqdig := vr_nrseqdig + 1;
+      
       BEGIN 
 				-- Insere registro na crapcdb
         INSERT INTO crapcdb
@@ -3485,8 +3498,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 							 ,''
 							 ,0
 							 ,NULL
-							 ,pr_tab_cheques(idx).dsdocmc7
-							 ,pr_tab_cheques(idx).nrseqdig
+							 ,gene0002.fn_mask(pr_tab_cheques(idx).dsdocmc7,'<99999999<9999999999>999999999999:')
+							 ,vr_nrseqdig
 							 ,vr_nrddigc1
 							 ,vr_nrddigc2
 							 ,vr_nrddigc3
@@ -3501,7 +3514,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 							 ,0   -- Situação da análise (0 - Em estudo)
 							 ,0
 							 ,NULL
-							 ,vr_nrremret) RETURNING nrseqdig INTO vr_nrseqdig;
+							 ,vr_nrremret);
 			EXCEPTION
 				WHEN OTHERS THEN
 					-- Gerar crítica
@@ -3786,9 +3799,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 	vr_exc_erro        EXCEPTION;    
 	
 	-- Variáveis auxiliares
-	vr_tab_cheques typ_tab_cheques;
+	vr_tab_cheques  typ_tab_cheques;
 	vr_index_cheque NUMBER;
-																		
+  vr_dtlibera     DATE;
+  
+  CURSOR cr_crapbdc (pr_cdcooper IN crapcdb.cdcooper%TYPE
+	                 ,pr_nrdconta IN crapcdb.nrdconta%TYPE
+									 ,pr_nrborder IN crapcdb.nrborder%TYPE) IS
+    SELECT bdc.dtmvtolt
+      FROM crapbdc bdc
+     WHERE bdc.cdcooper = pr_cdcooper
+			 AND bdc.nrdconta = pr_nrdconta
+			 AND bdc.nrborder = pr_nrborder;
+  rw_crapbdc cr_crapbdc%ROWTYPE;
+  
 	-- Buscar cheques para analise
 	CURSOR cr_crapcdb(pr_cdcooper IN crapcdb.cdcooper%TYPE
 	                 ,pr_nrdconta IN crapcdb.nrdconta%TYPE
@@ -3848,7 +3872,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			 AND cec.nrdconta (+) = 0;
 			 
   BEGIN
-			
+	  
+    -- Buscar data parametro de referencia para calculo de juros
+		vr_dtlibera := to_date(GENE0001.fn_param_sistema (pr_cdcooper => 0
+                                                     ,pr_nmsistem => 'CRED'
+                                                     ,pr_cdacesso => 'DT_BLOQ_ARQ_DSC_CHQ')
+                          ,'DD/MM/RRRR');
+    
+    OPEN cr_crapbdc(pr_cdcooper => pr_cdcooper
+                   ,pr_nrdconta => pr_nrdconta
+                   ,pr_nrborder => pr_nrborder);
+    FETCH cr_crapbdc INTO rw_crapbdc;
+    IF cr_crapbdc%NOTFOUND THEN
+      vr_cdcritic := 0;
+      vr_dscritic := 'Borderô não encontrado.';
+      RAISE vr_exc_erro;
+    END IF;
+    
+    IF vr_dtlibera > rw_crapbdc.dtmvtolt THEN
+      vr_cdcritic := 0;
+      vr_dscritic := 'Não é possível analisar borderos gerados antes do dia \"' ||
+                     vr_dtlibera || '\".';
+      RAISE vr_exc_erro;
+    END IF;
+    
 	  -- Percorrer todos os cheques para analise
 	  FOR rw_crapcdb IN cr_crapcdb(pr_cdcooper => pr_cdcooper
 			                          ,pr_nrdconta => pr_nrdconta
@@ -4419,12 +4466,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			 AND dcc.nrremret = pr_nrremret
 			 AND dcc.intipmvt IN (1,3)
 			 AND dcc.cdtipmvt = 1
-			 AND dcc.inconcil = 0
 			 AND hcc.cdcooper = dcc.cdcooper
 			 AND hcc.nrdconta = dcc.nrdconta
 			 AND hcc.nrremret = dcc.nrremret
 			 AND hcc.intipmvt = dcc.intipmvt
-			 AND hcc.dtcustod IS NULL;
+ 			 AND (dcc.inconcil = 0
+			  OR  hcc.dtcustod IS NULL);
   rw_crapdcc cr_crapdcc%ROWTYPE;
 	
   -- Verificar se já existe a ocorrência gravada na crapabc	
@@ -4496,8 +4543,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 		   AND bdc.nrdconta = pr_nrdconta
 			 AND bdc.nrborder = pr_nrborder;
 	rw_crapbdc cr_crapbdc%ROWTYPE;
-	
-	rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+  
+  rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
 	
   PROCEDURE pc_gerar_ocorrencia_chq(pr_tab_cheques IN OUT typ_tab_cheques
 		                               ,pr_idx_cheques IN NUMBER
@@ -4820,7 +4867,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			FETCH cr_crapcec INTO rw_crapcec;
 			
 			-- Se não encontrar emitente
-			IF cr_crapcec%NOTFOUND THEN
+			IF cr_crapcec%NOTFOUND AND
+         pr_tab_cheques(vr_index).cdbanchq <> 85 THEN
 			  -- Gerar ocorrencia 22 - Emitente não cadastrado
 				pc_gerar_ocorrencia_chq(pr_tab_cheques => pr_tab_cheques
 															 ,pr_idx_cheques => vr_index
@@ -6391,21 +6439,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 	vr_exc_erro        EXCEPTION;    
 																			 
 	-- Variáveis auxiliares
-	vr_index_cheque PLS_INTEGER;
-	vr_tab_cheques  typ_tab_cheques;
-	vr_nrdocmto     NUMBER;
-	vr_vlborder     NUMBER;
-	vr_nrseqdig     NUMBER;
-	vr_dtiniiof     DATE;
-	vr_dtfimiof     DATE;
-	vr_txccdiof     NUMBER;
-	vr_flgimune     BOOLEAN;
-	vr_dsreturn     VARCHAR2(10);
-	vr_tab_erro     gene0001.typ_tab_erro;
-	vr_cdpactra     NUMBER;
-	vr_nrdrowid     ROWID;
-	vr_vllanmto     NUMBER;
-	
+	vr_index_cheque     PLS_INTEGER;
+	vr_tab_cheques      typ_tab_cheques;
+	vr_nrdocmto         NUMBER;
+  vr_vlborder         NUMBER;
+	vr_nrseqdig         NUMBER;
+  vr_dtiniiof         DATE;
+	vr_dtfimiof         DATE;
+  vr_txccdiof         NUMBER;
+	vr_flgimune         BOOLEAN;
+	vr_dsreturn         VARCHAR2(10);
+  vr_tab_erro         gene0001.typ_tab_erro;
+	vr_cdpactra         NUMBER;
+  vr_nrdrowid         ROWID;
+	vr_vllanmto         NUMBER;
+	vr_tab_lim_desconto typ_tab_lim_desconto;
+  
 	-- Buscar borderô de desconto
 	CURSOR cr_crapbdc(pr_cdcooper IN crapbdc.cdcooper%TYPE
 	                 ,pr_nrdconta IN crapbdc.nrdconta%TYPE
@@ -6544,6 +6593,44 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 		   AND cot.nrdconta = pr_nrdconta;
   rw_crapcot cr_crapcot%ROWTYPE;			 
 	
+  -- Buscar valor de limite disponível
+  CURSOR cr_craplim(pr_cdcooper IN craplim.cdcooper%TYPE
+                   ,pr_nrdconta IN craplim.nrdconta%TYPE
+                   ,pr_dtmvtolt IN DATE
+									 ,pr_nrborder IN craplcm.nrdocmto%TYPE) IS
+    SELECT vllimite
+          ,(nvl((SELECT SUM(vlcheque) FROM crapcdb
+            WHERE cdcooper = pr_cdcooper
+              AND nrdconta = pr_nrdconta
+              AND dtlibbdc IS NOT NULL
+              AND dtlibera > pr_dtmvtolt
+              AND insitchq IN (0,2)
+              AND insitana = 1), 0)  + 
+            nvl((SELECT SUM(vlcheque) FROM crapcdb
+            WHERE cdcooper = pr_cdcooper
+              AND nrdconta = pr_nrdconta
+              AND nrborder = pr_nrborder
+              AND insitchq = 0
+              AND insitana = 1), 0)
+            )
+            vltotchq,
+            nrctrlim
+     FROM craplim 
+    WHERE cdcooper = pr_cdcooper
+      AND nrdconta = pr_nrdconta
+      AND insitlim = 2 
+      AND tpctrlim = 2;									 
+  rw_craplim cr_craplim%ROWTYPE;
+  
+  -- Buscar valor de limite disponível
+  CURSOR cr_crapass(pr_cdcooper IN craplim.cdcooper%TYPE
+                   ,pr_nrdconta IN craplim.nrdconta%TYPE) IS
+    SELECT inpessoa
+      FROM crapass
+     WHERE cdcooper = pr_cdcooper
+       AND nrdconta = pr_nrdconta; 
+  rw_crapass cr_crapass%ROWTYPE;
+  
 	rw_crapdat btch0001.cr_crapdat%ROWTYPE;
   BEGIN
 		-- Busca a data do sistema
@@ -6551,6 +6638,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 		FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
 		CLOSE BTCH0001.cr_crapdat;
   
+    OPEN cr_crapass(pr_cdcooper => pr_cdcooper
+		               ,pr_nrdconta => pr_nrdconta);
+		FETCH cr_crapass INTO rw_crapass;
+		
+		IF cr_crapass%NOTFOUND THEN
+			-- Fecha cursor
+			CLOSE cr_crapass;
+			-- Gerar crítica
+			vr_cdcritic := 9;
+			vr_dscritic := '';
+			-- Levanta exceção
+			RAISE vr_exc_erro;
+		END IF;
+    
 	  -- Buscar borderô de desconto
     OPEN cr_crapbdc(pr_cdcooper => pr_cdcooper
 		               ,pr_nrdconta => pr_nrdconta
@@ -6577,6 +6678,52 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			RAISE vr_exc_erro;
 		END IF;
 		
+    -- Buscar valores do parametro
+    pc_busca_tab_limdescont (pr_cdcooper => pr_cdcooper                --> Codigo da cooperativa
+                            ,pr_inpessoa => rw_crapass.inpessoa        --> Tipo de pessoa ( 0 - todos 1-Fisica e 2-Juridica)
+                            ,pr_tab_lim_desconto => vr_tab_lim_desconto--> Temptable com os dados do limite de desconto                                     
+                            ,pr_cdcritic => vr_cdcritic                --> Código da crítica
+                            ,pr_dscritic => vr_dscritic);              --> Descrição da crítica                
+    
+    -- Se retornou alguma crítica
+    IF TRIM(vr_dscritic) IS NOT NULL OR 
+      nvl(vr_cdcritic,0) > 0 THEN
+      -- Levanta exceção
+      RAISE vr_exc_erro;
+    END IF;
+    
+		OPEN cr_craplim (pr_cdcooper => pr_cdcooper
+		                ,pr_nrdconta => pr_nrdconta
+									  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                    ,pr_nrborder => pr_nrborder);
+		FETCH cr_craplim INTO rw_craplim;
+		
+		IF cr_craplim%NOTFOUND THEN
+			-- Fecha cursor
+			CLOSE cr_craplim;
+			-- Atribui crítica
+			vr_cdcritic := 0;
+			vr_dscritic := 'Cooperado não possui limite de desconto de cheque ativo.';
+			-- Levanta exceção
+			RAISE vr_exc_erro;
+		END IF;
+		-- Fecha cursor
+		CLOSE cr_craplim;
+    
+    IF vr_tab_lim_desconto.exists(rw_crapass.inpessoa) THEN
+      IF rw_craplim.vltotchq > (rw_craplim.vllimite + (rw_craplim.vllimite * (vr_tab_lim_desconto(rw_crapass.inpessoa).pctollim / 100))) THEN
+        -- Atribui crítica
+        vr_cdcritic := 0;
+        vr_dscritic := 'Valor limite de desconto de cheque exedido.';
+        -- Levanta exceção
+        RAISE vr_exc_erro;
+      END IF;
+    ELSE
+      vr_cdcritic := 0;
+      vr_dscritic := 'Registro de parametros de desconto de cheques nao encontrado.';
+      RAISE vr_exc_erro;    
+    END IF;
+    
     -- Percorrer todos os cheques do bordero
     FOR rw_crapcdb IN cr_crapcdb(pr_cdcooper => pr_cdcooper
 			                          ,pr_nrdconta => pr_nrdconta
@@ -7219,13 +7366,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 		END IF;
 						
 		-- Buscar data parametro de referencia para calculo de juros
-		vr_dtjurtab := to_date(TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper -- Cooperativa
-																										 ,pr_nmsistem => 'CRED'      -- Sistema
-																										 ,pr_tptabela => 'GENERI'    -- Tipo da tabela
-																										 ,pr_cdempres => 0
-																										 ,pr_cdacesso => 'DTCALCJUROS' -- Código de acesso
-																										 ,pr_tpregist => 0)            -- Tipo de registro
-																									,'DD/MM/RRRR');		
+		vr_dtjurtab :=	to_date(GENE0001.fn_param_sistema (pr_cdcooper => 0
+                                                     ,pr_nmsistem => 'CRED'
+                                                     ,pr_cdacesso => 'DT_BLOQ_ARQ_DSC_CHQ')
+                           ,'DD/MM/RRRR');
 		
 		IF vr_dtjurtab IS NULL THEN
 			-- Gerar crítica

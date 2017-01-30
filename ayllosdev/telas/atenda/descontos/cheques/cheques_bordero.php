@@ -146,12 +146,12 @@
 <div id="divBotoes" >
 	<a href="#" class="botao" id="btVoltar" onclick="voltaDiv(2,1,4,'DESCONTO DE CHEQUES','DSC CHQS');carregaCheques();return false;">Voltar</a>
 	<a href="#" class="botao" id="btIncluir" onclick="mostraFormIABordero('I');">Incluir</a>
-	<a href="#" class="botao" id="btConsultar" <? if ($qtBorderos == 0) { echo 'style="'.$dispC.'" onClick="return false;"'; } else { echo 'style="'.$dispC.'" onClick="mostraDadosBorderoDscChq(\'C\');return false;"'; } ?>>Consultar</a>
+	<a href="#" class="botao" id="btConsultar" style="<? $dispC ?>" onClick="mostraDadosBorderoDscChq('C');return false;">Consultar</a>
 	<a href="#" class="botao" id="btAlterar" onclick="mostraFormIABordero('A');">Alterar</a>
-	<a href="#" class="botao" id="btExcluir"   <? if ($qtBorderos == 0) { echo 'style="'.$dispE.'" onClick="return false;"'; } else { echo 'style="'.$dispE.'" onClick="mostraDadosBorderoDscChq(\'E\');return false;"'; } ?>>Excluir</a>
-	<a href="#" class="botao" id="btAnalisar" onclick="mostraFormAnaliseBordero();return false;" >Analisar</a>
-	<a href="#" class="botao" id="btImprimir"  <? if ($qtBorderos == 0) { echo 'style="'.$dispM.'" onClick="return false;"'; } else { echo 'style="'.$dispM.'" onClick="mostraImprimirBordero();return false;"'; } ?>>Imprimir</a>
-	<a href="#" class="botao" id="btLiberar" onclick="verificaAssinaturaBordero(); return false;" >Liberar</a>
+	<a href="#" class="botao" id="btExcluir" style="<? $dispE ?>" onClick="mostraDadosBorderoDscChq('E');return false;">Excluir</a>
+	<a href="#" class="botao" id="btAnalisar" onclick="mostraFormAnaliseBordero();return false;">Analisar</a>
+	<a href="#" class="botao" id="btImprimir" style="<? $dispM ?>" onClick="mostraImprimirBordero();return false;">Imprimir</a>
+	<a href="#" class="botao" id="btLiberar" onclick="verificaAssinaturaBordero(); return false;">Liberar</a>
 	<a href="#" class="botao" id="btResgatar" onclick="mostraFormResgate(); return false;">Resgatar</a>
 </div>
 

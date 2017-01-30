@@ -40,6 +40,8 @@ DEF  INPUT PARAM par_dtlibera AS CHAR                NO-UNDO.
 DEF  INPUT PARAM par_dtdcaptu AS CHAR                NO-UNDO.
 DEF  INPUT PARAM par_vlcheque AS CHAR                NO-UNDO.
 DEF  INPUT PARAM par_dsdocmc7 AS CHAR                NO-UNDO.
+DEF  INPUT PARAM par_nriniseq AS INT                 NO-UNDO.
+DEF  INPUT PARAM par_nrregist AS INT                 NO-UNDO.
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
@@ -87,6 +89,8 @@ ELSE IF par_operacao = 2 THEN
                          ,INPUT par_nrdconta
                          ,INPUT par_nrconven
                          ,INPUT par_nrremret
+                         ,INPUT par_nriniseq
+                         ,INPUT par_nrregist
                          ,OUTPUT ""
                          ,OUTPUT "").
  
