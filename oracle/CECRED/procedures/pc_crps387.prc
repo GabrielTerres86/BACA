@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Abril/2004                        Ultima atualizacao: 26/01/2017
+   Data    : Abril/2004                        Ultima atualizacao: 27/01/2017
 
    Dados referentes ao programa:
 
@@ -386,6 +386,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                26/01/2017 - Tratamento para criar crapndb para a critica 092 - Lancamento
                             ja existe, se estiver na cooperativa que estiver rodando.
                             (Lucas Ranghetti #589758)
+                            
+               27/01/2017  - Tratamento para a Unimed para cosos que precise adicionar um zero
+                             final seja verificado se cooperativa que esta rodando 
+                             é igual ao que iremos crirar o registro (Lucas Ranghetti #591560)
 ............................................................................ */
 
 
@@ -3559,7 +3563,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                             OPEN cr_craplau(vr_cdcooper, vr_nrdconta, rw_craplot.dtmvtolt, vr_dtrefere, rw_gnconve.cdhisdeb, vr_nrdocmto_int);
                             FETCH cr_craplau INTO rw_craplau;
 
-                            IF cr_craplau%FOUND THEN
+                            -- somente adicionar um zero a mais para a cooperativa que tiver rodando
+                            IF cr_craplau%FOUND AND 
+                              vr_cdcooper = pr_cdcooper THEN 
                               vr_nrdocmto_int :=  to_char(vr_nrdocmto_int) || '0';
                             ELSE
                               CLOSE cr_craplau;
