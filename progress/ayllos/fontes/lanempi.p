@@ -98,6 +98,10 @@
 		     
 			 31/10/2016 - Adicionado tratamento para casos onde o valor de prejuizo
 			              foi gravado como negativo na base. Chamado 533531
+
+			 10/01/2017 - Correcao no abono de prejuizo, verifica se o valor foi armazenado negativo
+			              e transforma em positivo se necessario, em alguns casos estava duplicando o valor.
+						  Andrey (Mouts) - Chamado 568416
                           
 ............................................................................. */
 
@@ -846,36 +850,34 @@ DO WHILE TRUE:
 
                         
                                 /* 3o Valor em Prejuizo */
-                             IF aux_vlrsaldo > 0 THEN
-								 DO:
-									IF crapepr.vlsdprej < 0 THEN
-										DO:
-											ASSIGN crapepr.vlsdprej = (crapepr.vlsdprej * -1) -
-															   aux_vlrsaldo.
-										END.
-									ELSE
-										DO:
-											ASSIGN crapepr.vlsdprej = crapepr.vlsdprej -
-																	  aux_vlrsaldo.
-									END.
-								 END.
-                
-                         END. /* END crapepr.tpemprst = 1  */
-                      ELSE  
-                         DO:
-							IF crapepr.vlsdprej < 0 THEN
-								DO:
-									ASSIGN crapepr.vlsdprej = (crapepr.vlsdprej * -1) -
-                                                       tel_vllanmto.
-								END.
-							ELSE
-								DO:
-									ASSIGN crapepr.vlsdprej = crapepr.vlsdprej -
-															  tel_vllanmto.
-                         END.
-                         END.
-
-                  END. /* END IF aux_indebcre = "C"   THEN */
+                              IF aux_vlrsaldo > 0 THEN
+								                DO:
+									                IF crapepr.vlsdprej < 0 THEN
+										                DO:
+											                ASSIGN crapepr.vlsdprej = (crapepr.vlsdprej * -1) -
+															                                   aux_vlrsaldo.
+								                    END.
+									                ELSE
+										                DO:
+											                ASSIGN crapepr.vlsdprej = crapepr.vlsdprej -
+																	                              aux_vlrsaldo.
+									                  END.
+								                  END.
+                                END. /* END crapepr.tpemprst = 1  */
+                              ELSE  
+                                DO:
+							                    IF crapepr.vlsdprej < 0 THEN
+								                    DO:
+									                    ASSIGN crapepr.vlsdprej = (crapepr.vlsdprej * -1) -
+                                                                tel_vllanmto.
+								                    END.
+							                    ELSE
+								                    DO:
+									                    ASSIGN crapepr.vlsdprej = crapepr.vlsdprej -
+															                                  tel_vllanmto.
+                                    END.
+                                  END.
+                              END. /* END IF aux_indebcre = "C"   THEN */
 
                /* Setar a data de liquidaçao do prejuízo (Renato Darosci - 15/08/2016) */
                IF ant_vlsdprej > 0 AND crapepr.vlsdprej = 0 THEN
