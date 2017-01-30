@@ -96,11 +96,24 @@ END.
 /* Efetivacao */
 IF  par_indvalid = 1  THEN
 DO:
-    ASSIGN aux_dscritic = "Transacoes aprovadas com sucesso.".
-    IF  out_flgaviso  THEN
-        ASSIGN aux_dscritic = aux_dscritic + "\nVerifique as transacoes nao aprovadas.".
+    FOR FIRST tt-criticas_transacoes_oper WHERE tt-criticas_transacoes_oper.flgtrans = TRUE NO-LOCK. END.
+	
+	IF  AVAIL tt-criticas_transacoes_oper  THEN 
+	    DO:	
+            ASSIGN aux_dscritic = "Transacoes aprovadas com sucesso.".
+			
+			IF  out_flgaviso  THEN
+				ASSIGN aux_dscritic = aux_dscritic + "\nVerifique as transacoes nao aprovadas.".
 
-    ASSIGN xml_dsmsgerr = "<dsmsgsuc>" + aux_dscritic + "</dsmsgsuc>".
+			ASSIGN xml_dsmsgerr = "<dsmsgsuc>" + aux_dscritic + "</dsmsgsuc>".
+		END.
+	ELSE
+		DO:
+			ASSIGN aux_dscritic = "As transacoes nao foram aprovadas com sucesso.\nVerifique a critica gerada no detalhamento da transacao."
+			       xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
+				   
+			RETURN "NOK".
+		END.
 END.
 ELSE /* Validacao */
 DO:
