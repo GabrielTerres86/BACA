@@ -38,7 +38,7 @@
                  
                  22/01/2016 - Melhoria 147 - Adicionar Campos e Aprovacao de
 				              Transferencia entre PAs (Heitor - RKAM)
-
+                      
                  04/11/2016 - M172 - Atualizacao Telefone (Guilherme/SUPERO)
 
                       
@@ -849,7 +849,7 @@ PROCEDURE gerenciar-telefone:
 
                 END. /* FIM par_idorigem = 4 */
 
-
+               
                 CREATE craptfc.
                 ASSIGN craptfc.cdcooper = par_cdcooper
                        craptfc.nrdconta = par_nrdconta
@@ -1074,9 +1074,13 @@ PROCEDURE gerenciar-telefone:
         IF RETURN-VALUE <> "OK" THEN
            UNDO TRANS_FONE, LEAVE TRANS_FONE.
         /* FIM - Atualizar os dados da tabela crapcyb */
-    
-        /* Telefone comercial deve replicar para o cdc */
-        IF par_tptelefo = 3 THEN
+
+        /* Quando for primeiro titular e o telefone for comercial, 
+           vamos ver ser o cooperado eh um conveniado CDC. Caso 
+           positivo, vamos replicar os dados alterados de telefone
+           para as tabelas do CDC. */
+        IF par_tptelefo = 3 AND
+           par_idseqttl = 1 THEN
           DO:
               FOR FIRST crapcdr WHERE crapcdr.cdcooper = par_cdcooper
                                   AND crapcdr.nrdconta = par_nrdconta

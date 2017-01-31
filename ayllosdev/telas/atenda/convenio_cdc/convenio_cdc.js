@@ -186,7 +186,7 @@ function controlaLayout(operacao) {
 	cFlgconve.addClass('campo').css('width','50px');
 	cDtinicon.addClass('campo').addClass('data').css({'width':'85px'});
     cNmfantasia.addClass('campo').css({'width':'370px'}).attr('maxlength','500');
-    cCdcnae.addClass('campo pesquisa cep').css({'width':'80px'}).attr('maxlength','10');
+    cCdcnae.addClass('campo pesquisa').css({'width':'80px'}).attr('maxlength','10');
     cDscnae.addClass('campo').addClass('data').css({'width':'267px'});
     cNrcep.addClass('campo').css({'width':'80px'}).attr('maxlength','10').setMask('INTEGER','zz.zzz-zzz','','');
     cDslogradouro.addClass('campo').css({'width':'280px'}).attr('maxlength','200');
@@ -220,7 +220,7 @@ function controlaLayout(operacao) {
 		if ($(this). val() == 1){
 			showConfirmacao('Deseja importar os dados de endere&ccedil;o da Tela CONTAS?','Confirma&ccedil;&atilde;o - Ayllos','buscaInformacoesCadastro();$(\'#dtinicon\',\'#frmConvenioCdc\').focus();','bloqueiaFundo(divRotina);cDtinicon.focus();','sim.gif','nao.gif');
 		}
-    });
+	});
 
 	cDtinicon.unbind('keypress').bind('keypress', function(e) {
 		if ( e.keyCode == 9 || e.keyCode == 13 ) {
@@ -247,7 +247,7 @@ function controlaLayout(operacao) {
 			return false;
 		}
 	});
-
+	
 	cNrcep.unbind('keypress').bind('keypress', function(e) {
 		if ( divError.css('display') == 'block' ) { return false; }		
 		if ( e.keyCode == 13 ) {
@@ -266,7 +266,7 @@ function controlaLayout(operacao) {
 			return false;
 		}
 	});
-
+	
 	cNrendereco.unbind('keypress').bind('keypress', function(e) {
 		if ( e.keyCode == 9 || e.keyCode == 13 ) {
 			cDscomplemento.focus();
@@ -287,7 +287,7 @@ function controlaLayout(operacao) {
 			return false;
 		}
 	});
-
+	
 	
 	cIdcidade.unbind('keypress').bind('keypress', function(e) {
 		if ( e.keyCode == 9 || e.keyCode == 13 ) {
@@ -295,7 +295,7 @@ function controlaLayout(operacao) {
 			return false;
 		}
 	});
-
+	
 	cDstelefone.unbind('keypress').bind('keypress', function(e) {
 		if ( e.keyCode == 9 || e.keyCode == 13 ) {
 			cDsemail.focus();
@@ -406,7 +406,7 @@ function controlaOperacao(operacao) {
         showError('error','Nenhuma filial dispon&iacute;vel.','Alerta - Ayllos','bloqueiaFundo(divRotina);');
 		return false;
     }
-
+	
 	if ((operacao == 'ALTERAR' || operacao == 'INCLUIR') &&
 		($('#idcidade', '#frmConvenioCdc').val() == 0 &&
 		 $('#dscidade', '#frmConvenioCdc').val() != '')){
@@ -512,7 +512,7 @@ function controlaPesquisas() {
 	// Atribui a classe lupa para os links de desabilita todos
 	var lupas = $('a:not(.link)','#frmConvenioCdc');
 	lupas.addClass('lupa').css('cursor','auto');
-	
+
 	// Percorrendo todos os links
 	lupas.each( function(i) {
 	
@@ -592,13 +592,13 @@ function abreFiliais(idmatriz) {
 		success: function(response) {
 			$('#divConteudoOpcao').html(response);
             controlaLayoutTabela();
-    layoutPadrao();
-    hideMsgAguardo();
-    bloqueiaFundo(divRotina);
-    $(this).fadeIn(1000);
-    divRotina.centralizaRotinaH();
-    return false;
-}
+			layoutPadrao();
+			hideMsgAguardo();
+			bloqueiaFundo(divRotina);
+			$(this).fadeIn(1000);
+			divRotina.centralizaRotinaH();
+			return false;
+		}
 	});
 }
 

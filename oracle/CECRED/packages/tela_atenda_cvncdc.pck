@@ -68,11 +68,11 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_CVNCDC IS
 															,pr_dsemail            IN tbsite_cooperado_cdc.dsemail%TYPE --> E-mail de contato
 															,pr_dslink_google_maps IN tbsite_cooperado_cdc.dslink_google_maps%TYPE --> Link da localizacao no google maps
 															,pr_xmllog             IN VARCHAR2 --> XML com informacoes de LOG
-                          ,pr_cdcritic          OUT PLS_INTEGER --> Codigo da critica
-                          ,pr_dscritic          OUT VARCHAR2 --> Descricao da critica
+															,pr_cdcritic          OUT PLS_INTEGER --> Codigo da critica
+															,pr_dscritic          OUT VARCHAR2 --> Descricao da critica
 															,pr_retxml         IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
-                          ,pr_nmdcampo          OUT VARCHAR2 --> Nome do campo com erro
-                          ,pr_des_erro          OUT VARCHAR2); --> Erros do processo
+															,pr_nmdcampo          OUT VARCHAR2 --> Nome do campo com erro
+															,pr_des_erro          OUT VARCHAR2); --> Erros do processo
 
   PROCEDURE pc_busca_filial(pr_idmatriz     IN tbsite_cooperado_cdc.idmatriz%TYPE
                            ,pr_xmllog       IN VARCHAR2 --> XML com informacoes de LOG
@@ -647,7 +647,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
 
       -- Tratamento de erros
       vr_exc_erro EXCEPTION;
-
+      
       -- Variaveis
       vr_idcooperado_cdc    tbsite_cooperado_cdc.idcooperado_cdc%TYPE;
       vr_nrendereco         tbsite_cooperado_cdc.nrendereco%TYPE;
@@ -1871,7 +1871,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
 										,pr_idcidade => vr_info_cdc.idcidade
 										,pr_dstelefone => vr_info_cdc.nrtelefo
 										,pr_dsemail => vr_info_cdc.dsdemail
-										,pr_dslink_google_maps => NULL
+										,pr_dslink_google_maps => '<![CDATA[' || vr_tab_cdr_cdc(pr_nrdconta).dslink_google_maps || ']]>'
 										,pr_cdcritic => vr_cdcritic
 										,pr_dscritic => vr_dscritic
 										,pr_nmdcampo => vr_nmdcampo

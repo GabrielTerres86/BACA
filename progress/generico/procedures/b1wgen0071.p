@@ -733,6 +733,11 @@ PROCEDURE gerenciar-email:
 
             END.
             
+            /* Quando for primeiro titular, vamos ver ser o cooperado eh 
+               um conveniado CDC. Caso positivo, vamos replicar os dados
+               alterados de e-mail para as tabelas do CDC. */
+            IF par_idseqttl = 1 THEN 
+              DO:
             FOR FIRST crapcdr WHERE crapcdr.cdcooper = par_cdcooper
                                 AND crapcdr.nrdconta = par_nrdconta
                                 AND crapcdr.flgconve = TRUE NO-LOCK:
@@ -765,7 +770,8 @@ PROCEDURE gerenciar-email:
                                       WHEN pc_replica_cdc.pr_dscritic <> ?.
                                       
             END.
-         
+              END.
+
          
         ASSIGN aux_flgtrans = TRUE.
     

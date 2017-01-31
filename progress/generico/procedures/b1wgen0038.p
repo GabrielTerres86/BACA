@@ -94,7 +94,7 @@
 				23/06/2016 - Ajustes na procedure grava-importacao para qdo
 				             houver algum erro na importacao devolver uma
 							 mensagem amigavel (Tiago SD427693).             
-							 
+               
 			    07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
                              departamento passando a considerar o código (Renato Darosci)      
                
@@ -113,7 +113,7 @@
 { sistema/generico/includes/b1wgenvlog.i &VAR-GERAL=SIM &SESSAO-BO=SIM }
 { sistema/generico/includes/b1wgen0168tt.i }
 { sistema/generico/includes/var_oracle.i }
-    
+
 DEF STREAM str_1.
 DEF STREAM str_2.
 
@@ -1964,6 +1964,11 @@ PROCEDURE alterar-endereco:
 
         FIND CURRENT crapenc NO-LOCK NO-ERROR.
 
+        /* Quando for primeiro titular, vamos ver ser o cooperado eh 
+           um conveniado CDC. Caso positivo, vamos replicar os dados
+           alterados de endereco para as tabelas do CDC. */
+        IF par_idseqttl = 1 THEN 
+          DO:
         FOR FIRST crapcdr WHERE crapcdr.cdcooper = crapenc.cdcooper
                             AND crapcdr.nrdconta = crapenc.nrdconta
                             AND crapcdr.flgconve = TRUE NO-LOCK:
@@ -2008,6 +2013,7 @@ PROCEDURE alterar-endereco:
             END.
                             
         END.
+          END.
 
         ASSIGN par_msgalert = "Verifique se o item BENS deve ser atualizado."
                aux_flgtrans = TRUE.

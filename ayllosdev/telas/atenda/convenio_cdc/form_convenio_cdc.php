@@ -31,7 +31,7 @@
         <a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif" class="clsCampos"></a>
         <input type="text" id="dscnae" name="dscnae" class="clsCampos" />
         <label for="nrcepend">CEP:</label>
-        <input type="text" id="nrcepend" name="nrcepend" value="<?php echo $nrcep; ?>" onchange="alert('teste');		verificaCidade();		return false;" />
+        <input type="text" id="nrcepend" name="nrcepend" value="<?php echo $nrcep; ?>"/>
 		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>		
         <label for="dslogradouro">Endereço:</label>
         <input type="text" id="dslogradouro" name="dslogradouro" value="<?php echo $dslogradouro; ?>" />
