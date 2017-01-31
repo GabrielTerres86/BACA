@@ -35,7 +35,7 @@
 
     Programa: b1wgen0015.p
     Autor   : Evandro
-    Data    : Abril/2006                      Ultima Atualizacao: 25/07/2016
+    Data    : Abril/2006                      Ultima Atualizacao: 12/01/2017
     
     Dados referentes ao programa:
 
@@ -335,8 +335,7 @@
 		       24/02/2016 - Adicionado validacao na procedure acesso-cadastro-favorecidos
 							para listar somente bancos ativos flgdispb = TRUE (Lucas Ranghetti #400055)
 							    
-			        23/03/2016 - Ajuste para controlar o lock de tabelas de forma correta
-							            (Adriano).
+			   23/03/2016 - Ajuste para controlar o lock de tabelas de forma correta (Adriano).
 										    
                24/03/2016 - Adicionados parâmetros para geraçao de LOG
                            (Lucas Lunelli - PROJ290 Cartao CECRED no CaixaOnline)										    										    
@@ -357,22 +356,44 @@
 
 			   16/05/2016 - Ajuste para retirar comentários e códigos desnecessários.
 					       (Adriano - M117).
+                            
                18/05/2016 - Projeto 117 - Verificacao de assinatura conjunta em 
                             acesso-cadastro-favorecidos (Carlos)
                             
                07/06/2016 - Inclusão de campos de controle de vendas ( Rafael Maciel [RKAM] )
 							
 			   09/06/2016 - Ajuste para corrigir rotinas que estejam ficando inteiramente como
-							um transacao
-							(Adriano).			
+                            um transacao (Adriano).			
 
                17/06/2016 - Inclusão de campos de controle de vendas ( Rafael Maciel [RKAM] )
 
 			   30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
 
 			   25/07/2016 - Ajuste na rotina executa-envio-ted para corrigir nomenclatura 
-			                das tags do xml
-							(Adriano).
+                            das tags do xml(Adriano).
+                            
+               30/08/2016 - Inclusao dos campos de último acesso via Mobile na procedure 
+                            obtem-dados-titulares - PRJ286.5 - Cecred Mobile (Dionathan)
+
+               02/09/2016 - Alteracao da procedure obtem-dados-titulares, SD 514239 (Jean Michel).
+
+               21/09/2016 - Ajuste na validacao do horario de envio da TED (Diego).
+			                  
+			   28/09/2016 - #474660 Alterada a regra de impressao de termo de responsabilidade
+                            na rotina liberar-senha-internet para nao imprimir quando o cooperado
+                            estava com o acesso bloqueado ou quando o mesmo foi admitido na
+                            cooperativa depois de 11/2015 (Carlos)
+
+			   25/10/2016 - Novo ajuste na validacao do horario de envio da TED, solicitado 
+			                pelo financeiro (Diego).
+
+               03/11/2016 - Correçao de leitura "FIRST crabsnh" da procedure liberar-senha-internet,
+                            Prj. Assinatura Conjunta (Jean Michel).
+
+               12/01/2017 - Ajuste para nao permitir que um favorecido de TED seja desativado
+					        caso o mesmo possua algum agendamento cadastrado
+							(Adriano - SD 593235).
+
 ..............................................................................*/
 
 { sistema/internet/includes/b1wnet0002tt.i }
@@ -442,8 +463,6 @@ PROCEDURE horario_operacao:
     DEF VAR aux_hrinipag AS INTE                                    NO-UNDO.
     DEF VAR aux_hrfimpag AS INTE                                    NO-UNDO.
     DEF VAR aux_qtmesagd AS INTE                                    NO-UNDO.
-    DEF VAR aux_flgutstr AS LOGICAL                                 NO-UNDO.
-    DEF VAR aux_flgutpag AS LOGICAL                                 NO-UNDO.
 
     EMPTY TEMP-TABLE tt-limite.
 
@@ -663,23 +682,36 @@ PROCEDURE horario_operacao:
               END.
             ELSE
               DO:
-                /*-- Operando com mensagens STR --*/
-                IF crapcop.flgopstr THEN
-                   IF crapcop.iniopstr <= TIME AND crapcop.fimopstr >= TIME THEN
-                       ASSIGN aux_flgutstr = TRUE.
-                  
-                 /*-- Operando com mensagens PAG --*/
-            IF  crapcop.flgoppag  THEN 
-                    IF crapcop.inioppag <= TIME AND crapcop.fimoppag >= TIME THEN  
-                        ASSIGN aux_flgutpag = TRUE.
 
-                IF aux_flgutpag THEN  
-                ASSIGN aux_hrinipag = crapcop.inioppag
-                       aux_hrfimpag = crapcop.fimoppag.
-            ELSE
-                ASSIGN aux_hrinipag = crapcop.iniopstr
-                       aux_hrfimpag = crapcop.fimopstr.
-                END.
+			    /*****
+                Por solicitacao do financeiro, iremos apenas verificar se a cooperativa esta operante
+                no STR/PAG, sem a necessidade de verificar o horario de operacao. Devera prevalecer o 
+                horario da STR, e somente quando este nao estiver ATIVO mostrara horario da PAG.
+                Por regra, o STR sempre terá um período maior    
+                *****/
+			 
+                /*-- Operando com mensagens STR --*/
+                IF   crapcop.flgopstr THEN
+				     ASSIGN aux_hrinipag = crapcop.iniopstr
+					        aux_hrfimpag = crapcop.fimopstr.
+                     
+					 /**
+                     IF crapcop.iniopstr <= TIME AND crapcop.fimopstr >= TIME THEN
+                        ASSIGN aux_flgutstr = TRUE.
+				     **/
+			    ELSE
+				     DO:
+                 /*-- Operando com mensagens PAG --*/
+                         IF   crapcop.flgoppag  THEN 
+						      ASSIGN aux_hrinipag = crapcop.inioppag
+							         aux_hrfimpag = crapcop.fimoppag.
+
+				              /**
+                     IF crapcop.inioppag <= TIME AND crapcop.fimoppag >= TIME THEN  
+                        ASSIGN aux_flgutpag = TRUE.
+				              **/
+				     END.
+			  END.
 
             CREATE tt-limite.
             ASSIGN tt-limite.idtpdpag = 4
@@ -832,7 +864,6 @@ PROCEDURE horario_operacao:
                 ASSIGN tt-limite.iddiauti = 1.  /* Dia util */
         END.
 
-         
     RETURN "OK".
 
 END.
@@ -1478,7 +1509,8 @@ PROCEDURE verifica_operacao:
             /** Bloquear agendamentos para conta migrada **/
             IF  aux_datdodia >= 12/25/2013  AND
                 craptco.cdcopant <> 4       AND  /* Exceto Concredi    */
-                craptco.cdcopant <> 15      THEN /* Exceto Credimilsul */
+                craptco.cdcopant <> 15      AND  /* Exceto Credimilsul */
+                craptco.cdcopant <> 17      THEN /* Exceto Transulcred */
                 DO:                                                  
                     ASSIGN par_dscritic = "Operacao de agendamento bloqueada." +
                                           " Entre em contato com seu PA.".
@@ -1614,6 +1646,19 @@ PROCEDURE verifica_operacao:
                                                            "transferencia.".
                                      RETURN "NOK".
                                  END.
+                         END.
+                        
+                     /* Nao permitir transf. intercooperativa para
+                        contas da Transulcred, durante
+                        e apos a migracao */
+                     IF  par_tpoperac     = 5           AND
+                         aux_datdodia    >= 12/31/2016  AND
+                         crabcop.cdcooper = 17          THEN                         
+                         DO:
+                             ASSIGN par_dscritic = "Conta destino nao habilitada " +
+                                                   "para receber valores da " +
+                                                   "transferencia.".
+                             RETURN "NOK".
                          END.
                  END.      
             ELSE        /* TED */
@@ -5224,6 +5269,8 @@ PROCEDURE obtem-dados-titulares:
 
     DEF VAR h-b1wgen0058 AS HANDLE NO-UNDO.
 
+	DEF VAR aux_qtminast AS INTEGER NO-UNDO.
+
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = "Obter dados dos titulares".
 
@@ -5332,6 +5379,7 @@ PROCEDURE obtem-dados-titulares:
                                              INPUT ?,
                                             OUTPUT TABLE tt-crapavt,
                                             OUTPUT TABLE tt-bens,
+											OUTPUT aux_qtminast,
                                             OUTPUT TABLE tt-erro) NO-ERROR.
                 
                 /* Representantes Legais */
@@ -6844,11 +6892,15 @@ PROCEDURE liberar-senha-internet:
                                         crappod.flgconju = TRUE         AND
                                         crappod.nrcpfpro <> crapsnh.nrcpfcgc
                                         NO-LOCK,
-                    FIRST crabsnh WHERE crabsnh.cdcooper = par_cdcooper AND
-                                        crabsnh.nrdconta = par_nrdconta AND
-                                        crabsnh.tpdsenha = 1            AND
-                                        crabsnh.nrcpfcgc = crappod.nrcpfpro 
-                                        NO-LOCK:
+                    FIRST crabsnh WHERE crabsnh.cdcooper = par_cdcooper     AND
+                                        crabsnh.nrdconta = par_nrdconta     AND
+                                        crabsnh.tpdsenha = 1                AND
+                                        crabsnh.nrcpfcgc = crappod.nrcpfpro AND
+                                        (crabsnh.vllimweb > 0 OR
+                                         crabsnh.vllimtrf > 0 OR
+                                         crabsnh.vllimpgo > 0 OR
+                                         crabsnh.vllimted > 0 OR
+                                         crabsnh.vllimvrb > 0) NO-LOCK:
                 
                     RUN replica-limite-internet (INPUT par_cdcooper,
                                                  INPUT par_cdoperad,
@@ -7013,7 +7065,13 @@ PROCEDURE liberar-senha-internet:
         crapass.idastcjt = 0 OR 
        (crapass.idastcjt > 0 AND crapass.idimprtr = 1) THEN
         ASSIGN par_flgimpte = TRUE.
- 
+
+    /* Cooperados admitidos após novembro/2015 ou desbloqueio de senha,
+       nao precisa imprimir termo de responsabilidade */
+    IF (crapass.dtadmiss > 11/30/2015) OR 
+       (aux_cdsitsnh = 2) THEN
+        ASSIGN par_flgimpte = FALSE. 
+
     IF  par_flgerlog  THEN
         DO:
             RUN proc_gerar_log (INPUT par_cdcooper,
@@ -8563,6 +8621,8 @@ PROCEDURE cria-registro-titular:
                    tt-dados-titular.dtaltsit = ?
                    tt-dados-titular.dtultace = ?
                    tt-dados-titular.hrultace = ""
+                   tt-dados-titular.dtacemob = ?
+                   tt-dados-titular.hracemob = ""
                    tt-dados-titular.nmoperad = ""
                    tt-dados-titular.vllimweb = 0
                    tt-dados-titular.vllimtrf = 0
@@ -8627,6 +8687,9 @@ PROCEDURE cria-registro-titular:
                    tt-dados-titular.dtaltsit = cratsnh.dtaltsit
                    tt-dados-titular.dtultace = cratsnh.dtultace
                    tt-dados-titular.hrultace = STRING(cratsnh.hrultace,
+                                                      "HH:MM:SS")
+                   tt-dados-titular.dtacemob = cratsnh.dtacemob
+                   tt-dados-titular.hracemob = STRING(cratsnh.hracemob,
                                                       "HH:MM:SS")
                    tt-dados-titular.vllimweb = cratsnh.vllimweb
                    tt-dados-titular.vllimtrf = cratsnh.vllimtrf
@@ -9608,6 +9671,38 @@ PROCEDURE altera-dados-cont-cadastrada:
         ON STOP   UNDO ALTERA, LEAVE ALTERA
         ON ENDKEY UNDO ALTERA, LEAVE ALTERA:
             
+		    /** Se for conta de outras Instituições financeiras (TED) e for para 
+			    desativar favorecido**/
+		    IF par_intipdif = 2 AND 
+			   par_insitcta = 3 THEN 
+			   DO:
+				   FIND FIRST craplau WHERE craplau.cdcooper = par_cdcooper   AND
+											craplau.nrdconta = par_nrdconta   AND
+											craplau.nrctadst = par_nrctatrf   AND
+											craplau.cdtiptra = 4 /*TED*/      AND
+											craplau.insitlau = 1 /*Pendente*/ AND
+											craplau.cddbanco = par_cddbanco   AND
+											craplau.cdageban = par_cdageban
+											NO-LOCK NO-ERROR.
+
+				   IF AVAIL craplau THEN
+					  DO:
+					     ASSIGN aux_dscritic = "Para desativar, desabilite a(s) ted(s) " + 
+											   "agendada(s) para este favorecido.".
+
+						 RUN gera_erro (INPUT par_cdcooper,
+									    INPUT par_cdagenci,
+									    INPUT par_nrdcaixa,
+									    INPUT 1,            /** Sequencia **/
+									    INPUT 0,            /** Critica   **/
+									    INPUT-OUTPUT aux_dscritic).
+
+						 UNDO ALTERA, LEAVE ALTERA.
+
+					  END.
+
+               END.
+
             Contador: DO aux_contador = 1 TO 10:
 
                 FIND crapcti WHERE crapcti.cdcooper = par_cdcooper  AND
@@ -10647,6 +10742,8 @@ PROCEDURE gera-termo-responsabilidade:
                                          "DE  NOVEMBRO DE","DE  DEZEMBRO DE"]
                                                                      NO-UNDO.
 
+    DEF VAR aux_qtminast AS INTE NO-UNDO.
+
     FORM  
         /* Titulo em negrito inicio */
         "\033\105\TERMO DE RESPONSABILIDADE PARA ACESSO E " AT 10
@@ -11231,6 +11328,7 @@ PROCEDURE gera-termo-responsabilidade:
                                                      INPUT ?,
                                                     OUTPUT TABLE tt-crapavt,
                                                     OUTPUT TABLE tt-bens,
+													OUTPUT aux_qtminast,
                                                     OUTPUT TABLE tt-erro) NO-ERROR.
                 
                     IF  RETURN-VALUE <> "OK"   THEN
