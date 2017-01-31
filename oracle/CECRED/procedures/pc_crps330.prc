@@ -24,6 +24,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
   --
   --              21/11/2016 - Ajustado cursor do cr_crapsab para retornar espaço em branco caso o campo possua
   --                           valor NULL (Douglas - Chamado 560819)
+  --
+  --              30/01/2017 - Ajustado para que seja enviado ao Serasa a informacao de conta e documento que estao
+  --                           no campo nosso numero, para que os boletos que sao de contas migradas sejam enviados
+  --                           com a conta antiga (Douglas - Chamado 602825)
   ---------------------------------------------------------------------------------------------------------------
   
   -- Atualiza a situacao do boleto como enviada
@@ -498,8 +502,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
                                            pr_vltitulo => rw_crapcob.vltitulo+vr_vlrjuros+vr_vlrmulta,
                                            pr_nrcnvcob => rw_crapcob.nrcnvcob,
                                            pr_nrcnvceb => 0, -- Utilizado somente para convenios do BB
-                                           pr_nrdconta => rw_crapcob.nrdconta,
-                                           pr_nrdocmto => rw_crapcob.nrdocmto,
+                                           pr_nrdconta => to_number(SUBSTR(rw_crapcob.nrnosnum,1,8)),
+                                           pr_nrdocmto => to_number(SUBSTR(rw_crapcob.nrnosnum,9,9)),
                                            pr_cdcartei => rw_crapcob.cdcartei,
                                            pr_cdbarras => vr_cdbarras);
 
