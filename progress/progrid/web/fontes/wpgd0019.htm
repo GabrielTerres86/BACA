@@ -1,37 +1,41 @@
 <!-------------------------------------------------------------------------------------
 
-Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro).
+Alteraçoes: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro).
 
-            06/07/2009 - Alteração CDOPERAD (Diego).
+            06/07/2009 - Alteraçao CDOPERAD (Diego).
 
-            11/08/2009 - Alterado para copiar itens de avaliação já cadastrados 
+            11/08/2009 - Alterado para copiar itens de avaliaçao já cadastrados 
                          quando um Evento for acrescido (Diego).
 
-            05/06/2012 - Adaptação dos fontes para projeto Oracle. Alterado
+            05/06/2012 - Adaptaçao dos fontes para projeto Oracle. Alterado
                          busca na gnapses de CONTAINS para MATCHES (Guilherme Maba).
 
             09/07/2012 - Tratamento do campo dsobserv para banco Oracle (Lucas R.). 
 
             12/12/2013 - Incluido VALIDATE crapadp, craphep (Lucas R.)
 
-            02/07/2015 - Incluido novos tratamentos e campo para inclusão de EVENTOS,
+            02/07/2015 - Incluido novos tratamentos e campo para inclusao de EVENTOS,
                          PRJ 229 (Jean Michel).
 
-            11/09/2015 - Retirado a opoção de Todos dos Eventos, pois estava estourando o 
+            11/09/2015 - Retirado a opoçao de Todos dos Eventos, pois estava estourando o 
                          array da tela (Lucas Ranghetti #330855)
             
-            15/01/2016 - Alteração na lista de valores do campo "Evento" para nao listar
-                         eventos do tipo 10(ead). Enviar email de notificacao de liberação da 
+            15/01/2016 - Alteraçao na lista de valores do campo "Evento" para nao listar
+                         eventos do tipo 10(ead). Enviar email de notificacao de liberaçao da 
                          agenda para o endereço cadastrado na tela parametros do PROGRID.
                          Consistir no clique do botao "GERAR AGENDA" a existencia do cadastro
-                         de meses de atribuição dos eventos em "Parametros das Agendas".
+                         de meses de atribuiçao dos eventos em "Parametros das Agendas".
                          (Carlos Rafael Tanholi - progrid - fase 4)	
 
             08/03/2016 - Alterado para que os eventos do tipo EAD 
-                         e EAD Assemblear não sejam apresentados.
+                         e EAD Assemblear nao sejam apresentados.
                          Projeto 229 - Melhorias OQS (Lombardi)
 						 
 		    03/06/2016 - Retirada a janela de aguade por showMsgAguardo e ajustes (Vanessa)
+
+            06/12/2016 - P341-Automatizaçao BACENJUD - Alterada a validaçao 
+			             do departamento para que a mesma seja feita através
+						 do código e nao da descriçao (Renato Darosci)
 -------------------------------------------------------------------------------------->
 <html>
   <head>
@@ -45,7 +49,7 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
       // variaveis q aramazenam os valores das coordenadas x e y da div onde esta o nome do PAC
       var vXD=0;vYD=0;vXCabec=0;vYCabec=0;
       /*
-      MesEvento - Array de Registros com as informações dos eventos
+      MesEvento - Array de Registros com as informaçoes dos eventos
       p: Codigo do PAC
       m: Mes da realizacao do evento
       e: codigo do evento 
@@ -60,7 +64,7 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
       mo: motivo da transferencia
       */
       var mesEvento = new Array();  
-      // Arrays auxiliares para enviar as informações alteradas e incluidas na agenda
+      // Arrays auxiliares para enviar as informaçoes alteradas e incluidas na agenda
       var mEventos=new Array();
       var mPacs=new Array();
       var mMes=new Array();
@@ -72,7 +76,7 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
           showMsgAguardo("Carregando Dados..."); 
 	  } 
 	  
-      // Acha a posição do eixo X do objeto
+      // Acha a posiçao do eixo X do objeto
       function findPosX(obj){       
         var curleft = 0;
         if (obj.offsetParent){
@@ -86,7 +90,7 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
         return curleft;
       }
       
-      // Acha a posição do eixo Y do objeto
+      // Acha a posiçao do eixo Y do objeto
       function findPosY(obj){
         var curtop = 0;
         if (obj.offsetParent){
@@ -100,17 +104,17 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
           return curtop;
       }
       
-      //Adiciona linha na tabela de seleção
+      //Adiciona linha na tabela de seleçao
       function novaLinha(num,indice,evento,linha,zebra){
         // num = numero da ultima div
         // indice = indice do evento no vetor q informa o numero de linhas por evento
         // evento = codigo do evento
         // linha = numero da ultima linha da agenda
 
-        /* Observação: Na criação da PRIMEIRA linha nova para o PRIMEIRO EVENTO da lista (indice = 0),
+        /* Observaçao: Na criaçao da PRIMEIRA linha nova para o PRIMEIRO EVENTO da lista (indice = 0),
         as células eram criadas com o mesmo nome das anteriores, fazendo com que fossem
         anuladas as duas linhas.
-        Para isso foi feito alterações nas variáveis que controlam esses nomes, somando
+        Para isso foi feito alteraçoes nas variáveis que controlam esses nomes, somando
         e diminuindo os contadores das mesmas.
         */
         num = parseInt(num);
@@ -137,7 +141,7 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
           poseventos[i] = parseInt(poseventos[i] + 1);
         }
 
-        // para não duplicar os nomes das células
+        // para nao duplicar os nomes das células
         if(indice == 0){
           poseventos[indice] = parseInt(poseventos[indice]  + 1);  
         }
@@ -235,7 +239,7 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
         document.form.ultimalinha.value = parseInt(document.form.ultimalinha.value) + 1;
         mudaXYdoEvento();
 
-        // para não "se perder" na criacao das linhas
+        // para nao "se perder" na criacao das linhas
         if(indice == 0){
           poseventos[indice] = parseInt(poseventos[indice]  - 1);          
         }
@@ -245,7 +249,7 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
         document.all[document.form.novopac.value].innerHTML = valor.substr(0,9);
       }
       
-      // função que corrige a posição do eixo x e y de cada div de evento de cada celula de mes de acordo com a resolução do video 
+      // funçao que corrige a posiçao do eixo x e y de cada div de evento de cada celula de mes de acordo com a resoluçao do video 
       function mudaXYdoEvento(){
         for(j=0;j<mesEvento.length;j++){ 
           mesEvento[j].x = parseInt(findPosX(document.all[mesEvento[j].ev]));
@@ -312,6 +316,7 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
       DEF VAR aux_mes          AS CHAR                  NO-UNDO.
       DEF VAR aux_motivos      AS CHAR                  NO-UNDO.
       DEF VAR aux_evento       AS CHAR                  NO-UNDO.
+			DEF VAR aux_contnrseq     AS INTEGER                  NO-UNDO.
       DEF VAR aux_pac          AS CHAR                  NO-UNDO.
       DEF VAR aux_rowid        AS CHAR                  NO-UNDO.
       DEF VAR aux_ttrowid      AS CHAR                  NO-UNDO.
@@ -379,7 +384,7 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
       FIELD auxrowid AS CHAR
       FIELD idinseve AS LOGICAL FORMAT "yes/no".
 
-      /*** Declaração de BOs ***/
+      /*** Declaraçao de BOs ***/
       DEF VAR h-b1wpgd0029     AS HANDLE                NO-UNDO.
 
       DEF TEMP-TABLE cratrap
@@ -397,7 +402,7 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
       FIELD qtavaoti LIKE craprap.qtavaoti
       FIELD qtavareg LIKE craprap.qtavareg
       FIELD qtavares LIKE craprap.qtavares.
-
+		  			
       DEF BUFFER crabrap FOR craprap.
 
       ASSIGN aux_selevento = INT(GET-VALUE("aux_selevento")).
@@ -411,9 +416,11 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
       DEFINE VARIABLE aux_lspermis AS CHARACTER.
       DEFINE VARIABLE aux_cdcopope AS INTEGER.
       DEFINE VARIABLE aux_cdoperad AS CHARACTER.
-      
+      DEFINE VARIABLE aux_nrseqdig LIKE crapadp.nrseqdig.
+			
       RUN PermissaoDeAcesso(INPUT 'wpgd0019', OUTPUT IdentificacaoDaSessao, OUTPUT aux_lspermis).
-	  RUN RodaJavaScript("aguarde();").
+			
+			RUN RodaJavaScript("aguarde();").
       /* Marcar primeiro evento selecionado  */
       IF REQUEST_METHOD = "GET" THEN
         DO: 
@@ -448,9 +455,9 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
             IF NOT AVAIL gnpapgd THEN
               DO:
                 IF aux_dtanoage <> 0 THEN
-                  RUN RodaJavaScript("alert('Não existe agenda para o ano (" + STRING(aux_dtanoage) + ") informado!');").
+                  RUN RodaJavaScript("alert('Nao existe agenda para o ano (" + STRING(aux_dtanoage) + ") informado!');").
                 ELSE DO:
-                  RUN RodaJavaScript("alert('Não encontrado parametros da agenda.')").
+                  RUN RodaJavaScript("alert('Nao encontrado parametros da agenda.')").
 				  aux_dtanoage = INT(SUBSTRING(STRING(TODAY,'99/99/9999'),7,10)).
 				 END.
 				
@@ -486,13 +493,13 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
             DO:
               IF crapagp.idstagen < 3 THEN
                 DO:
-                  RUN RodaJavaScript("alert('Para a geração da agenda, todos os PAs deverão ter seus eventos confirmados. Verifique na tela de ~"Confirmação de Eventos~"')").
+                  RUN RodaJavaScript("alert('Para a geraçao da agenda, todos os PAs deverao ter seus eventos confirmados. Verifique na tela de ~"Confirmaçao de Eventos~"')").
                   LEAVE bloco.
                 END.
                 
               IF crapagp.idstagen  > 3 THEN
                 DO:
-                  RUN RodaJavaScript("alert('A geração da agenda já foi efetuada. Esse processo não pode ser refeito.')").
+                  RUN RodaJavaScript("alert('A geraçao da agenda já foi efetuada. Esse processo nao pode ser refeito.')").
                   LEAVE bloco.
                 END.
 
@@ -505,7 +512,7 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
                                       AND gnpapgd.lsmeseve = '') THEN*/
 		  IF gnpapgd.lsmeseve = ? OR gnpapgd.lsmeseve = "" THEN
           DO:          
-                RUN RodaJavaScript("alert('Para a geração da agenda, favor cadastrar os meses para atribuição de eventos. Verifique na tela de ~"Parâmetros das Agendas~"')").
+                RUN RodaJavaScript("alert('Para a geraçao da agenda, favor cadastrar os meses para atribuiçao de eventos. Verifique na tela de ~"Parâmetros das Agendas~"')").
                 LEAVE bloco.              
           END.
             
@@ -521,7 +528,7 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
               
               ASSIGN aux_dstextab = '4'.
               
-              RUN RodaJavaScript("alert('A agenda foi gerada com sucesso.Para libera-la aos PAs, clique no botão ~"Liberar Agenda~"')").
+              RUN RodaJavaScript("alert('A agenda foi gerada com sucesso.Para libera-la aos PAs, clique no botao ~"Liberar Agenda~"')").
             END.
         END.
       ELSE
@@ -534,14 +541,14 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
               DO:
                 IF crapagp.idstagen < 4 THEN /* 4-agenda gerada*/
                   DO:
-                    RUN RodaJavaScript("alert('A liberação da agenda só pode ser efetuada após sua geração. Efetue a geração através do botão ~"Gerar Agenda~".')").
+                    RUN RodaJavaScript("alert('A liberaçao da agenda só pode ser efetuada após sua geraçao. Efetue a geraçao através do botao ~"Gerar Agenda~".')").
                     LEAVE bloco.
                   END.
 
                 /* 5-Enviada aos pacs*/
                 IF crapagp.idstagen  > 4 THEN
                   DO: 
-                    RUN RodaJavaScript("alert('A liberação da agenda já foi efetuada anteriormente. Todos os eventos da agenda estão disponíveis aos PAs.')").
+                    RUN RodaJavaScript("alert('A liberaçao da agenda já foi efetuada anteriormente. Todos os eventos da agenda estao disponíveis aos PAs.')").
                     LEAVE bloco.
                   END.
               END.
@@ -567,7 +574,7 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
 
             END. /*crapagp*/
             
-            /* busca o e-mail de liberação agenda para cooperativa */
+            /* busca o e-mail de liberaçao agenda para cooperativa */
             FIND FIRST crapppc WHERE crapppc.cdcooper = gnpapgd.cdcooper NO-LOCK NO-ERROR.    
 
             IF AVAIL crapppc AND crapppc.dsemllib <> ? THEN
@@ -582,7 +589,7 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
 			aux_dsconteu = "A agenda do PROGRID para este ano já está liberada. " +                 
 						   "\nConsulte-a através da tela Agenda Anual.".
             
-            /* envia email avisando os pacs da liberação da nova agenda*/    
+            /* envia email avisando os pacs da liberaçao da nova agenda*/    
             IF aux_dsdemail <> "" THEN
               DO:
 
@@ -660,8 +667,33 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
                 DO:
                   IF INT(ENTRY(aux_i,aux_pac)) <> 0 THEN
                     DO:
+											/* AJUSTE PARA FORCAR NRSEQDIG CRAPADP */
+											ASSIGN aux_nrseqdig = NEXT-VALUE(nrseqadp)
+														 aux_contnrseq = 0.
+											agenda:
+											DO WHILE TRUE:
+												IF aux_nrseqdig = 0 OR aux_nrseqdig = ? THEN
+													DO:
+														ASSIGN aux_nrseqdig = NEXT-VALUE(nrseqadp).
+													END.
+												ELSE
+													DO:
+														IF aux_contnrseq = 10 THEN
+															DO:
+																MESSAGE "ERRO AO GERAR AGENDA. NRSEQDIG NAO TEM VALOR, VERIFICAR A SEQUENCE. JMD". /* MENSAGEM PARA TESTE */
+																ASSIGN aux_msgderro = 'Erro ao gerar agenda.'.
+																RUN RodaJavaScript("alert('" + aux_msgderro + "')").
+																LEAVE agenda.
+															END.
+													END.
+													
+												ASSIGN aux_contnrseq = aux_contnrseq + 1.
+												
+											END.
+											/* FIM AJUSTE PARA FORCAR NRSEQDIG CRAPADP */
+											
                       CREATE crapadp.
-                      ASSIGN crapadp.nrseqdig  = NEXT-VALUE(nrseqadp)
+                      ASSIGN crapadp.nrseqdig  = aux_nrseqdig
                              crapadp.idevento  = gnpapgd.idevento
                              crapadp.cdcooper  = gnpapgd.cdcooper
                              crapadp.dtanoage  = gnpapgd.dtanonov 
@@ -685,7 +717,7 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
 
                           VALIDATE craphep.
 
-                          /* Busca itens de avaliação já cadastrados */ 
+                          /* Busca itens de avaliaçao já cadastrados */ 
                           FIND FIRST craprap WHERE craprap.idevento = gnpapgd.idevento
                                                AND craprap.cdcooper = gnpapgd.cdcooper
                                                AND craprap.dtanoage = gnpapgd.dtanonov
@@ -754,7 +786,7 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
           IF crapadp.idstaeve = 0 then
             ASSIGN crapadp.idstaeve = 1.
 
-          /* Guarda o mês de agendamento inicial do evento */
+          /* Guarda o mes de agendamento inicial do evento */
           IF crapadp.nrmesage = 0 THEN
             crapadp.nrmesage = crapadp.nrmeseve.                
         END.
@@ -795,9 +827,34 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
                              and crapsde.dtanoage = gnpapgd.dtanonov
                              and crapsde.cdevento = crapedp.cdevento
                              and crapsde.cdagenci = crapagp.cdagenci NO-LOCK:
-						 
+						
+						/* AJUSTE PARA FORCAR NRSEQDIG CRAPADP */
+						ASSIGN aux_nrseqdig = NEXT-VALUE(nrseqadp)
+									 aux_contnrseq = 0.
+						agenda:
+						DO WHILE TRUE:
+							IF aux_nrseqdig = 0 OR aux_nrseqdig = ? THEN
+								DO:
+									ASSIGN aux_nrseqdig = NEXT-VALUE(nrseqadp).
+								END.
+							ELSE
+								DO:
+									IF aux_contnrseq = 10 THEN
+										DO:
+											MESSAGE "ERRO AO GERAR AGENDA. NRSEQDIG NAO TEM VALOR, VERIFICAR A SEQUENCE. JMD". /* MENSAGEM PARA TESTE */
+											ASSIGN aux_msgderro = 'Erro ao gerar agenda.'.
+											RUN RodaJavaScript("alert('" + aux_msgderro + "')").
+											LEAVE agenda.
+										END.
+								END.
+								
+							ASSIGN aux_contnrseq = aux_contnrseq + 1.
+							
+						END.
+						/* FIM AJUSTE PARA FORCAR NRSEQDIG CRAPADP */	
+						
             CREATE crapadp.
-            ASSIGN crapadp.nrseqdig = NEXT-VALUE(nrseqadp)
+            ASSIGN crapadp.nrseqdig = aux_nrseqdig
                    crapadp.idevento = gnpapgd.idevento
                    crapadp.cdcooper = gnpapgd.cdcooper
                    crapadp.dtanoage = gnpapgd.dtanonov 
@@ -929,7 +986,7 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
               <tr> 
                 <td width="11"><img src="/cecred/images/geral/guia_esquerda.gif" width="11" height="21"></td>
                 <td width="56"><img src="/cecred/images/geral/spacer.gif" width="10" height="10"></td>
-                <td height="20" class="linkGuia">Composição das Agendas</td>
+                <td height="20" class="linkGuia">Composiçao das Agendas</td>
                 <td width="80" class="linkGuia" align="right">wpgd0019</td>
                 <td width="11" align="right" valign="middle" class="linkGuia"><img src="/cecred/images/geral/guia_direita.gif" width="11" height="21"></td>
               </tr>
@@ -956,7 +1013,7 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
                                 /* Implementa a segurança por Cooperativa */
                                 IF gnapses.nvoperad <> 0 AND
                                    gnapses.cdcooper <> crapcop.cdcooper AND
-                                   (AVAIL crapope AND crapope.dsdepart <> "TI") THEN 
+                                   (AVAIL crapope AND crapope.cddepart <> 20) THEN    /* "TI" */ 
                                   NEXT.
                                   
                                 IF aux_cdcooper = crapcop.cdcooper THEN
@@ -977,7 +1034,7 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
                                                      AND crapeap.cdevento = aux_selevento
                                                      AND crapeap.flgevsel = YES NO-LOCK:
 
-                                    /* Visão somente do pac do usuário */
+                                    /* Visao somente do pac do usuário */
                                     IF (gnapses.nvoperad = 1   OR
                                        gnapses.nvoperad = 2)  AND
                                        gnapses.cdagenci <> crapeap.cdagenci   THEN
@@ -1086,7 +1143,7 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PAs:
                         <select name="aux_cdagenci" class="Campo" id="cdagenci" onchange="mudaTitulo(this.options[this.selectedIndex].innerText)"></select>
                         </td>
-                        <td class="NomeCampo" width="100">PA para Inclusão:</td>
+                        <td class="NomeCampo" width="100">PA para Inclusao:</td>
                         <td nowrap id="tdpac" width="60" class="LinhaTabelaSelect" ><div STYLE="width:'55px';BACKGROUND-COLOR:'`aux_corfundo`';" class="infparcela"  id="novo" nowrap>&nbsp;</div></td>
                       </tr>
                     </table> <!-- tbcabec --> 
@@ -1101,7 +1158,7 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
                           <input type="text" name="aux_qttoteve" size="4" readOnly="true" value="`aux_qttoteve`">
                         </td>
                           <td align="center" valign="middle" class="NomeCampo" width="33%">
-                          Total de Integrações:&nbsp;&nbsp;
+                          Total de Integraçoes:&nbsp;&nbsp;
                           <input type="text" name="aux_qttotint" size="4" readOnly="true" value="`aux_qttotint`">
                         </td>                                
                         <td align="center" valign="middle" class="NomeCampo" width="33%">
@@ -1396,7 +1453,7 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
                     }
                   }
                   if (eheventodopac==false){
-                    alert("PA não está relacionado com esse evento.");break;
+                    alert("PA nao está relacionado com esse evento.");break;
                   }
                 }
               }
@@ -1405,7 +1462,7 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
                 mesEvento[i].p  = document.form.cdagenci.value;
                 document.all[mesEvento[i].ev].innerText = document.all[dd.obj.name].innerText.substr(0,9);
                 
-				//Adicionado valores para centralizar a posição do pac ao voltar (Vanessa)
+				//Adicionado valores para centralizar a posiçao do pac ao voltar (Vanessa)
 				dd.obj.moveTo(parseInt(findPosX(document.all['tdpac']))+5,parseInt(findPosY(document.all['tdpac']))+7);
                 
 				for (j=0;j<dd.elements.length;j++) {
@@ -1521,19 +1578,19 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
                     if ((mesEvento[j].mo == 'X') &&
                     (document.form.auxdstextab.value == '5')){
 
-                    if (mesEvento[j].mo=prompt('Motivo da Transferência do Evento no PA: ' + document.all[mesEvento[j].ev].innerText.toUpperCase(),'')) {}else{mesEvento[j].mo='Não informado.'}
+                    if (mesEvento[j].mo=prompt('Motivo da Transferencia do Evento no PA: ' + document.all[mesEvento[j].ev].innerText.toUpperCase(),'')) {}else{mesEvento[j].mo='Nao informado.'}
 
                     }
 
                     if ((mesEvento[j].bg == 'white') &&
                     (document.form.auxdstextab.value == '5')){
 
-                    if (mesEvento[j].mo=prompt('Motivo do Acréscimo do Evento no PA: ' + document.all[mesEvento[j].ev].innerText.toUpperCase(),'')) {}else{mesEvento[j].mo='Não informado.'}
+                    if (mesEvento[j].mo=prompt('Motivo do Acréscimo do Evento no PA: ' + document.all[mesEvento[j].ev].innerText.toUpperCase(),'')) {}else{mesEvento[j].mo='Nao informado.'}
                     }
 
                     if ((mesEvento[j].bg == '#e4e6dd') &&
                         (document.form.auxdstextab.value == '5')){
-                      if (mesEvento[j].mo=prompt('Motivo do Acréscimo do Evento no PA: ' + document.all[mesEvento[j].ev].innerText.toUpperCase(),'')) {}else{mesEvento[j].mo='Não informado.'}
+                      if (mesEvento[j].mo=prompt('Motivo do Acréscimo do Evento no PA: ' + document.all[mesEvento[j].ev].innerText.toUpperCase(),'')) {}else{mesEvento[j].mo='Nao informado.'}
                     }
                     mMotivos.push(mesEvento[j].mo);
                     mRowids.push(mesEvento[j].rw);
@@ -1543,7 +1600,7 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
             }
           }
         }else{ 
-          alert('Desculpe, mas você não tem permissão para executar esta função.'); 
+          alert('Desculpe, mas voce nao tem permissao para executar esta funçao.'); 
           return false;
         }
 
@@ -1578,7 +1635,7 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
           aguarde();
           document.form.submit();
         }else{ 
-          alert('Desculpe, mas você não tem permissão para executar esta função.'); 
+          alert('Desculpe, mas voce nao tem permissao para executar esta funçao.'); 
           return false;
         }
       }
@@ -1590,14 +1647,14 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
           aguarde();
           document.form.submit();
         }else{ 
-          alert('Desculpe, mas você não tem permissão para executar esta função.'); 
+          alert('Desculpe, mas voce nao tem permissao para executar esta funçao.'); 
           return false;
         }
       }
 
       function EdEvento(rowid,mes,idstagen ){
         if (rowid=='') {
-          alert("Evento não salvo.");
+          alert("Evento nao salvo.");
         }else{ 
           VarURL = document.form.aux_dsendurl.value  + '/wpgd0019a.htm?LinkRowid=' + rowid + '&mes=' + mes +'&aux_dtanoage=' + document.form.aux_dtanoage.value + '&aux_cdevento=' + document.form.aux_selevento.value + '&aux_cdcopope=' + document.form.aux_cdcopope.value + '&aux_cdoperad=' + document.form.aux_cdoperad.value + '&aux_cdcooper=' + document.form.aux_cdcooper.value + '&aux_idstagen=' + idstagen;
           window.open(VarURL,'','toolbar=no,location=no,diretories=no,status=yes,menubar=no,scrollbars=yes,resizable=yes,width=615,height=570,top=10,left=10');
@@ -1673,4 +1730,3 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
   </body>
  
 </html> 
-    
