@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0001 AS
 
    Programa : INSS0001                       Antiga: generico/procedures/b1wgen0091.p
    Autor   : Andre - DB1
-   Data    : 16/05/2011                        Ultima atualizacao: 31/05/2016
+   Data    : 16/05/2011                        Ultima atualizacao: 31/01/2017
 
    Dados referentes ao programa:
 
@@ -1091,7 +1091,7 @@ create or replace package body cecred.INSS0001 as
    Sigla   : CRED
 
    Autor   : Odirlei Busana(AMcom)
-   Data    : 27/08/2013                        Ultima atualizacao: 21/06/2016
+   Data    : 27/08/2013                        Ultima atualizacao: 31/01/2017
 
    Dados referentes ao programa:
 
@@ -1161,6 +1161,10 @@ create or replace package body cecred.INSS0001 as
                21/06/2016 - Ajuste para enviar o arquivo destino ao subdiretorio inss dentro da pasta salvar
                            (Adriano - SD 473539).             
                             
+               22/12/2016 - Ajuste para gerar relatório com data de movimento da cooperativa
+                            em questão e para postar na intranet no dia correto
+                            (Adriano - SD 567303).
+                              
   ---------------------------------------------------------------------------------------------------------------*/
 
   /*Procedimento para gerar lote e lancamento, para gerar credito em conta*/
@@ -3706,7 +3710,7 @@ create or replace package body cecred.INSS0001 as
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Alisson C. Berrido - Amcom
-    Data     : Agosto/2014                           Ultima atualizacao: 11/11/2015
+    Data     : Agosto/2014                           Ultima atualizacao: 22/12/2016
   
     Dados referentes ao programa:
   
@@ -3725,6 +3729,10 @@ create or replace package body cecred.INSS0001 as
                               a cooperaditva
                               (Adriano).
                  
+                 22/12/2016 - Ajuste para gerar relatório com data de movimento da cooperativa
+                              em questão e para postar na intranet no dia correto
+                              (Adriano - SD 567303).
+                 
   ---------------------------------------------------------------------------------------------------------------*/
     -- Busca dos dados da cooperativa
     CURSOR cr_crapcop (pr_cdcooper IN crapcop.cdcooper%TYPE) IS
@@ -3736,6 +3744,8 @@ create or replace package body cecred.INSS0001 as
      WHERE cop.cdcooper = pr_cdcooper;
      
     rw_crapcop cr_crapcop%ROWTYPE;
+    
+    rw_crapdat btch0001.cr_crapdat%ROWTYPE;
     
     --Tipo de tabela para ordenar arquivos e rejeitados
     TYPE typ_tab_arq2 IS TABLE OF inss0001.typ_reg_arquivos INDEX BY VARCHAR2(200);
@@ -3829,6 +3839,30 @@ create or replace package body cecred.INSS0001 as
             CLOSE cr_crapcop;
           END IF;
 
+          -- Leitura do calendário da cooperativa
+					OPEN btch0001.cr_crapdat(pr_cdcooper => rw_crapcop.cdcooper);
+          
+					FETCH btch0001.cr_crapdat INTO rw_crapdat;
+          
+					-- Se não encontrar
+					IF btch0001.cr_crapdat%NOTFOUND THEN
+            
+						-- Fechar o cursor pois efetuaremos raise
+						CLOSE btch0001.cr_crapdat;
+            
+						-- Montar mensagem de critica
+						vr_cdcritic := 1;
+            
+            -- Busca critica
+            vr_dscritic:= gene0001.fn_busca_critica(vr_cdcritic);
+            
+						RAISE vr_exc_erro;
+            
+					ELSE
+						-- Apenas fechar o cursor
+						CLOSE btch0001.cr_crapdat;
+					END IF;
+
           --Buscar Diretorio da Cooperativa
           vr_nmdireto:= gene0001.fn_diretorio(pr_tpdireto => 'C'
                                              ,pr_cdcooper => rw_crapcop.cdcooper
@@ -3843,7 +3877,7 @@ create or replace package body cecred.INSS0001 as
           dbms_lob.open(vr_clobxml, dbms_lob.lob_readwrite);
           
           --Informacoes do cabecalho
-          vr_dstxtaux:= 'data="'||to_char(pr_dtmvtolt,'DD/MM/YYYY')||
+          vr_dstxtaux:= 'data="'||to_char(rw_crapdat.dtmvtolt,'DD/MM/YYYY')||
                         '" time="'||to_char(sysdate,'HH24:MI:SS')||'">';
                         
           --Escrever no arquivo XML
@@ -3927,7 +3961,7 @@ create or replace package body cecred.INSS0001 as
           -- Gera relatório crrl657
 	      gene0002.pc_solicita_relato(pr_cdcooper  => rw_crapcop.cdcooper --> Cooperativa conectada
                                      ,pr_cdprogra  => pr_cdprogra         --> Programa chamador
-                                     ,pr_dtmvtolt  => pr_dtmvtolt         --> Data do movimento atual
+                                     ,pr_dtmvtolt  => rw_crapdat.dtmvtolt --> Data do movimento atual
                                      ,pr_dsxml     => vr_clobxml          --> Arquivo XML de dados
                                      ,pr_dsxmlnode => '/crrl657'          --> Nó base do XML para leitura dos dados
                                      ,pr_dsjasper  => 'crrl657.jasper'    --> Arquivo de layout do iReport
@@ -3956,7 +3990,7 @@ create or replace package body cecred.INSS0001 as
           --Enviar arquivo para Intranet          
           GENE0002.pc_gera_arquivo_intranet (pr_cdcooper => rw_crapcop.cdcooper --Codigo Cooperativa
                                             ,pr_cdagenci => 0                    --Codigo Agencia
-                                            ,pr_dtmvtolt => pr_dtmvtolt          --Data movimento
+                                            ,pr_dtmvtolt => rw_crapdat.dtmvtolt  --Data movimento
                                             ,pr_nmarqimp => vr_nmdireto_rl||'/'|| vr_nmarqimp   --Nome Arquivo Impressao
                                             ,pr_nmformul => '132col'             --Nome Formulario
                                             ,pr_dscritic => vr_dscritic          --Descricao Erro
@@ -4218,7 +4252,7 @@ create or replace package body cecred.INSS0001 as
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Douglas Quisinski
-    Data     : Outubro/2015                          Ultima atualizacao: 05/12/2016
+    Data     : Outubro/2015                          Ultima atualizacao: 10/02/2016
     
     Dados referentes ao programa:
     
@@ -4237,7 +4271,9 @@ create or replace package body cecred.INSS0001 as
                               PRJ342 (Odirlei-AMcom)         
                               
                  03/01/2017 - Ajustes Incorporação Transulcred -> Transpocred.
-                              Alterar o numero da conta antiga para a nova. (Aline)                    
+                              Alterar o numero da conta antiga para a nova. (Aline) 
+                              
+                 31/01/2017 - Ajuste ref Incorporação Transulcred -> Transpocred (Aline)                                 
     -------------------------------------------------------------------------------------------------------------*/
 
       -- Busca dos dados da cooperativa
@@ -4377,27 +4413,27 @@ create or replace package body cecred.INSS0001 as
         IF TO_NUMBER(pr_tab_creditos(pr_index_creditos).cdorgins) IN (801241, 787028) THEN --> Transulcred
               
           IF rw_crapcop.cdcooper IN (9,17) THEN
-            vr_cdcooper_aux := 9;
-            rw_crapcop.cdcooper := 17;
-          
+                          
             IF pr_tab_creditos(pr_index_creditos).nrdconta IN (11240,620,5525,329,345) THEN  
-            /* Verifica se o beneficiario eh um cooperado com conta migrada. */
-              OPEN cr_craptco (pr_cdcooper => vr_cdcooper_aux
-                              ,pr_cdcopant => rw_crapcop.cdcooper
-                              ,pr_nrctaant => pr_tab_creditos(pr_index_creditos).nrdconta);
-                                  
-              FETCH cr_craptco INTO rw_craptco;
-                  
-              -- Verificar se encontrou transferencia
-              vr_craptco:= cr_craptco%FOUND;
-                  
-              --Fechar Cursor
-              CLOSE cr_craptco;
+						vr_cdcooper_aux := 9;
+            rw_crapcop.cdcooper := 17;
+          /* Verifica se o beneficiario eh um cooperado com conta migrada. */
+          OPEN cr_craptco (pr_cdcooper => vr_cdcooper_aux
+                          ,pr_cdcopant => rw_crapcop.cdcooper
+                          ,pr_nrctaant => pr_tab_creditos(pr_index_creditos).nrdconta);
+                              
+          FETCH cr_craptco INTO rw_craptco;
+              
+          -- Verificar se encontrou transferencia
+          vr_craptco:= cr_craptco%FOUND;
+              
+          --Fechar Cursor
+          CLOSE cr_craptco;
              END IF; 
           END IF;    
           --Se encontrou conta migrada
           IF vr_craptco THEN
-                
+            
             -- Verifica se a cooperativa esta cadastrada
             OPEN cr_crapcop (pr_cdcooper => rw_craptco.cdcooper);
                 
