@@ -733,38 +733,44 @@ PROCEDURE gerenciar-email:
 
             END.
             
-            FOR FIRST crapcdr WHERE crapcdr.cdcooper = par_cdcooper
-                                AND crapcdr.nrdconta = par_nrdconta
-                                AND crapcdr.flgconve = TRUE NO-LOCK:
+            /* Quando for primeiro titular, vamos ver ser o cooperado eh 
+               um conveniado CDC. Caso positivo, vamos replicar os dados
+               alterados de e-mail para as tabelas do CDC. */
+            IF par_idseqttl = 1 THEN 
+              DO:
+                FOR FIRST crapcdr WHERE crapcdr.cdcooper = par_cdcooper
+                                    AND crapcdr.nrdconta = par_nrdconta
+                                    AND crapcdr.flgconve = TRUE NO-LOCK:
 
-              { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-              
-              RUN STORED-PROCEDURE pc_replica_cdc
-                aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
-                                                    ,INPUT par_nrdconta
-                                                    ,INPUT par_cdoperad
-                                                    ,INPUT par_idorigem
-                                                    ,INPUT par_nmdatela
-                                                    ,INPUT 0
-                                                    ,INPUT 0
-                                                    ,INPUT 1
-                                                    ,INPUT 0
-                                                    ,0
-                                                    ,"").
+                  { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                  
+                  RUN STORED-PROCEDURE pc_replica_cdc
+                    aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                                        ,INPUT par_nrdconta
+                                                        ,INPUT par_cdoperad
+                                                        ,INPUT par_idorigem
+                                                        ,INPUT par_nmdatela
+                                                        ,INPUT 0
+                                                        ,INPUT 0
+                                                        ,INPUT 1
+                                                        ,INPUT 0
+                                                        ,0
+                                                        ,"").
 
-              CLOSE STORED-PROC pc_replica_cdc
-                        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                  CLOSE STORED-PROC pc_replica_cdc
+                            aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
-              { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                  { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-              ASSIGN aux_cdcritic = 0
-                     aux_dscritic = ""
-                     aux_cdcritic = pc_replica_cdc.pr_cdcritic 
-                                      WHEN pc_replica_cdc.pr_cdcritic <> ?
-                     aux_dscritic = pc_replica_cdc.pr_dscritic 
-                                      WHEN pc_replica_cdc.pr_dscritic <> ?.
-                                      
-            END.
+                  ASSIGN aux_cdcritic = 0
+                         aux_dscritic = ""
+                         aux_cdcritic = pc_replica_cdc.pr_cdcritic 
+                                          WHEN pc_replica_cdc.pr_cdcritic <> ?
+                         aux_dscritic = pc_replica_cdc.pr_dscritic 
+                                          WHEN pc_replica_cdc.pr_dscritic <> ?.
+                                          
+                END.
+              END.
 
          
         ASSIGN aux_flgtrans = TRUE.

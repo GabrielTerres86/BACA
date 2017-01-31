@@ -1999,7 +1999,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
 										,pr_idcidade => vr_info_cdc.idcidade
 										,pr_dstelefone => vr_info_cdc.nrtelefo
 										,pr_dsemail => vr_info_cdc.dsdemail
-										,pr_dslink_google_maps => NULL
+										,pr_dslink_google_maps => '<![CDATA[' || vr_tab_cdr_cdc(pr_nrdconta).dslink_google_maps || ']]>'
 										,pr_cdcritic => vr_cdcritic
 										,pr_dscritic => vr_dscritic
 										,pr_nmdcampo => vr_nmdcampo

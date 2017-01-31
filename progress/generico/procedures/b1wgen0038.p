@@ -1960,51 +1960,57 @@ PROCEDURE alterar-endereco:
             END.
 
         FIND CURRENT crapenc NO-LOCK NO-ERROR.
+        
+        /* Quando for primeiro titular, vamos ver ser o cooperado eh 
+           um conveniado CDC. Caso positivo, vamos replicar os dados
+           alterados de endereco para as tabelas do CDC. */
+        IF par_idseqttl = 1 THEN 
+          DO:
+            FOR FIRST crapcdr WHERE crapcdr.cdcooper = crapenc.cdcooper
+                                AND crapcdr.nrdconta = crapenc.nrdconta
+                                AND crapcdr.flgconve = TRUE NO-LOCK:
 
-        FOR FIRST crapcdr WHERE crapcdr.cdcooper = crapenc.cdcooper
-                            AND crapcdr.nrdconta = crapenc.nrdconta
-                            AND crapcdr.flgconve = TRUE NO-LOCK:
-
-          IF aux_tpendass = 9 THEN
-            DO:
-              { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-              
-              RUN STORED-PROCEDURE pc_replica_cdc
-                aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
-                                                    ,INPUT par_nrdconta
-                                                    ,INPUT par_cdoperad
-                                                    ,INPUT par_idorigem
-                                                    ,INPUT par_nmdatela
-                                                    ,INPUT 1
-                                                    ,INPUT 0
-                                                    ,INPUT 0
-                                                    ,INPUT 0
-                                                    ,0
-                                                    ,"").
-
-              CLOSE STORED-PROC pc_replica_cdc
-                        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-
-              { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-
-              ASSIGN aux_cdcritic = 0
-                     aux_dscritic = ""
-                     aux_cdcritic = pc_replica_cdc.pr_cdcritic 
-                                      WHEN pc_replica_cdc.pr_cdcritic <> ?
-                     aux_dscritic = pc_replica_cdc.pr_dscritic 
-                                      WHEN pc_replica_cdc.pr_dscritic <> ?.
-                                                                            
-              IF aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
+              IF aux_tpendass = 9 THEN
                 DO:
-                  ASSIGN par_msgalert = "Nao foi possivel replicar os dados para o CDC."
-                                      + " Entre em contato com a equipe do CDC da Cecred."
-                         aux_flgtrans = TRUE.
-                  LEAVE TRANS_ENDERECO.
-                END.
+                  { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                  
+                  RUN STORED-PROCEDURE pc_replica_cdc
+                    aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                                        ,INPUT par_nrdconta
+                                                        ,INPUT par_cdoperad
+                                                        ,INPUT par_idorigem
+                                                        ,INPUT par_nmdatela
+                                                        ,INPUT 1
+                                                        ,INPUT 0
+                                                        ,INPUT 0
+                                                        ,INPUT 0
+                                                        ,0
+                                                        ,"").
 
+                  CLOSE STORED-PROC pc_replica_cdc
+                            aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                  { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                  ASSIGN aux_cdcritic = 0
+                         aux_dscritic = ""
+                         aux_cdcritic = pc_replica_cdc.pr_cdcritic 
+                                          WHEN pc_replica_cdc.pr_cdcritic <> ?
+                         aux_dscritic = pc_replica_cdc.pr_dscritic 
+                                          WHEN pc_replica_cdc.pr_dscritic <> ?.
+                                                                                
+                  IF aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
+                    DO:
+                      ASSIGN par_msgalert = "Nao foi possivel replicar os dados para o CDC."
+                                          + " Entre em contato com a equipe do CDC da Cecred."
+                             aux_flgtrans = TRUE.
+                      LEAVE TRANS_ENDERECO.
+                    END.
+
+                END.
+                                
             END.
-                            
-        END.
+          END.
 
         ASSIGN par_msgalert = "Verifique se o item BENS deve ser atualizado."
                aux_flgtrans = TRUE.

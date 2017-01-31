@@ -41,3 +41,4 @@ left join tbgen_cnae cna
                             /* Quando tiver uma matriz, buscar o CNAE da matriz */  
                             else nvl(mtz.cdcnae,cdc.cdcnae)
                         end
+    where ass.dtdemiss is null
