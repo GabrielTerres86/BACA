@@ -2,7 +2,7 @@
 
     Programa  : sistema/generico/procedures/b1wgen0038.p
     Autor     : David
-    Data      : Janeiro/2009                  Ultima Atualizacao: 23/06/2016
+    Data      : Janeiro/2009                  Ultima Atualizacao: 17/01/2017
     
     Dados referentes ao programa:
 
@@ -97,6 +97,10 @@
 							 
 			    07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
                              departamento passando a considerar o código (Renato Darosci)      
+               
+               17/01/2017 - Adicionado chamada a procedure de replicacao do 
+                            endereco para o CDC. (Reinert Prj 289)
+                            
 .............................................................................*/
 
 
@@ -108,6 +112,7 @@
 { sistema/generico/includes/gera_log.i }
 { sistema/generico/includes/b1wgenvlog.i &VAR-GERAL=SIM &SESSAO-BO=SIM }
 { sistema/generico/includes/b1wgen0168tt.i }
+{ sistema/generico/includes/var_oracle.i }
     
 DEF STREAM str_1.
 DEF STREAM str_2.
@@ -1958,6 +1963,51 @@ PROCEDURE alterar-endereco:
             END.
 
         FIND CURRENT crapenc NO-LOCK NO-ERROR.
+
+        FOR FIRST crapcdr WHERE crapcdr.cdcooper = crapenc.cdcooper
+                            AND crapcdr.nrdconta = crapenc.nrdconta
+                            AND crapcdr.flgconve = TRUE NO-LOCK:
+
+          IF aux_tpendass = 9 THEN
+            DO:
+              { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+              
+              RUN STORED-PROCEDURE pc_replica_cdc
+                aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                                    ,INPUT par_nrdconta
+                                                    ,INPUT par_cdoperad
+                                                    ,INPUT par_idorigem
+                                                    ,INPUT par_nmdatela
+                                                    ,INPUT 1
+                                                    ,INPUT 0
+                                                    ,INPUT 0
+                                                    ,INPUT 0
+                                                    ,0
+                                                    ,"").
+
+              CLOSE STORED-PROC pc_replica_cdc
+                        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+              { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+              ASSIGN aux_cdcritic = 0
+                     aux_dscritic = ""
+                     aux_cdcritic = pc_replica_cdc.pr_cdcritic 
+                                      WHEN pc_replica_cdc.pr_cdcritic <> ?
+                     aux_dscritic = pc_replica_cdc.pr_dscritic 
+                                      WHEN pc_replica_cdc.pr_dscritic <> ?.
+                                                                            
+              IF aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
+                DO:
+                  ASSIGN par_msgalert = "Nao foi possivel replicar os dados para o CDC."
+                                      + " Entre em contato com a equipe do CDC da Cecred."
+                         aux_flgtrans = TRUE.
+                  LEAVE TRANS_ENDERECO.
+                END.
+
+            END.
+                            
+        END.
 
         ASSIGN par_msgalert = "Verifique se o item BENS deve ser atualizado."
                aux_flgtrans = TRUE.
