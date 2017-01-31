@@ -508,7 +508,7 @@ function controlaPesquisaAgencia(){
 	bo			= 'b1wgen0059.p';
 	procedure	= 'busca_pac';
 	titulo      = 'Agência PA';
-	qtReg		= '20';					
+	qtReg		= '20';
 	filtrosPesq	= 'Cód. PA;cdagenci;30px;S;0;;codigo;|Agência PA;nmresage;200px;S;;;descricao;';
 	colunas 	= 'Código;cdagepac;20%;right|Descrição;dsagepac;80%;left';
 	mostraPesquisa(bo,procedure,titulo,qtReg,filtrosPesq,colunas);
@@ -525,7 +525,90 @@ function selecionaAgendamentos(tr){
 
     $('#btCancelar', '#divBotoes').css({ 'display': 'none' }).unbind('click');
 	
-	if(dstiptra.indexOf('PAGAMENTO') > -1){
+	if(dstiptra.indexOf('PAGAMENTO-DARF') > -1 || dstiptra.indexOf('PAGAMENTO-DAS') > -1){
+
+		var tpcaptura = $('#tpcaptura', tr ).val();
+		$('#dstpcaptura','#fsetAgendamentoDarfDas').val( $('#dstpcaptura', tr ).val() );
+	    $('#dsnome_fone','#fsetAgendamentoDarfDas').val( $('#dsnome_fone', tr ).val() );
+		$('#nrcpfcgc','#fsetAgendamentoDarfDas').val( $('#nrcpfcgc', tr ).val() );
+		$('#dslinha_digitavel','#fsetAgendamentoDarfDas').val( $('#dslinha_digitavel', tr ).val() );
+		$('#dtapuracao','#fsetAgendamentoDarfDas').val( $('#dtapuracao', tr ).val() );
+		$('#dtvencto','#fsetAgendamentoDarfDas').val( $('#dtvencto', tr ).val() );
+		$('#cdtributo','#fsetAgendamentoDarfDas').val( $('#cdtributo', tr ).val() );
+		$('#nrrefere','#fsetAgendamentoDarfDas').val( $('#nrrefere', tr ).val() );
+		$('#vlreceita_bruta','#fsetAgendamentoDarfDas').val( $('#vlreceita_bruta', tr ).val() );
+		$('#vlpercentual','#fsetAgendamentoDarfDas').val( $('#vlpercentual', tr ).val() );
+		$('#vlprincipal','#fsetAgendamentoDarfDas').val( $('#vlprincipal', tr ).val() );
+		$('#vlmulta','#fsetAgendamentoDarfDas').val( $('#vlmulta', tr ).val() );
+		$('#vljuros','#fsetAgendamentoDarfDas').val( $('#vljuros', tr ).val() );
+		$('#vllanaut','#fsetAgendamentoDarfDas').val( $('#vllanaut', tr ).val() );
+		$('#dttransa','#fsetAgendamentoDarfDas').val( $('#dttransa', tr ).val() );
+		$('#hrtransa','#fsetAgendamentoDarfDas').val( $('#hrtransa', tr ).val() );
+		
+		//label
+		$('label[for="dstpcaptura"]',"#fsetAgendamentoDarfDas").addClass("rotulo").css({"width":"160px"});
+		
+		$('label[for="dsnome_fone"]',"#fsetAgendamentoDarfDas").addClass("rotulo").css({"width":"160px"});
+		
+		$('label[for="nrcpfcgc"]',"#fsetAgendamentoDarfDas").addClass("rotulo").css({"width":"160px"});
+		
+		$('label[for="dslinha_digitavel"]',"#fsetAgendamentoDarfDas").addClass("rotulo").css({"width":"160px"});
+		
+		$('label[for="dtapuracao"]',"#fsetAgendamentoDarfDas").addClass("rotulo").css({"width":"160px"});
+		$('label[for="dtvencto"]',"#fsetAgendamentoDarfDas").addClass("rotulo-linha").css({"width":"160px"});
+		
+		$('label[for="cdtributo"]',"#fsetAgendamentoDarfDas").addClass("rotulo").css({"width":"160px"});
+		$('label[for="nrrefere"]',"#fsetAgendamentoDarfDas").addClass("rotulo-linha").css({"width":"160px"});
+		
+		$('label[for="vlreceita_bruta"]',"#fsetAgendamentoDarfDas").addClass("rotulo").css({"width":"160px"});
+		$('label[for="vlpercentual"]',"#fsetAgendamentoDarfDas").addClass("rotulo-linha").css({"width":"160px"});
+		
+		$('label[for="vlprincipal"]',"#fsetAgendamentoDarfDas").addClass("rotulo").css({"width":"160px"});
+		
+		$('label[for="vlmulta"]',"#fsetAgendamentoDarfDas").addClass("rotulo").css({"width":"160px"});
+		$('label[for="vljuros"]',"#fsetAgendamentoDarfDas").addClass("rotulo-linha").css({"width":"160px"});
+		
+		$('label[for="vllanaut"]',"#fsetAgendamentoDarfDas").addClass("rotulo").css({"width":"160px"});
+		
+		$('label[for="dttransa"]',"#fsetAgendamentoDarfDas").addClass("rotulo").css({"width":"160px"});
+		$('label[for="hrtransa"]',"#fsetAgendamentoDarfDas").addClass("rotulo-linha").css({"width":"160px"});
+		
+		// campo
+		$("#dstpcaptura","#fsetAgendamentoDarfDas").css('width','470px').desabilitaCampo();
+		$("#dsnome_fone","#fsetAgendamentoDarfDas").css('width','470px').desabilitaCampo();
+		$("#nrcpfcgc","#fsetAgendamentoDarfDas").css('width','200px').desabilitaCampo();
+		$("#dslinha_digitavel","#fsetAgendamentoDarfDas").css('width','470px').desabilitaCampo();
+		$("#dtapuracao","#fsetAgendamentoDarfDas").css('width','100px').desabilitaCampo();
+		$("#dtvencto","#fsetAgendamentoDarfDas").css('width','100px').desabilitaCampo();
+		$("#cdtributo","#fsetAgendamentoDarfDas").css({"width":"100px","text-align":"right"}).desabilitaCampo();
+		$("#nrrefere","#fsetAgendamentoDarfDas").css({"width":"100px","text-align":"right"}).desabilitaCampo();
+		$("#vlreceita_bruta","#fsetAgendamentoDarfDas").css({"width":"100px","text-align":"right"}).desabilitaCampo();
+		$("#vlpercentual","#fsetAgendamentoDarfDas").css({"width":"100px","text-align":"right"}).desabilitaCampo();
+		$("#vlprincipal","#fsetAgendamentoDarfDas").css({"width":"100px","text-align":"right"}).desabilitaCampo();
+		$("#vlmulta","#fsetAgendamentoDarfDas").css({"width":"100px","text-align":"right"}).desabilitaCampo();
+		$("#vljuros","#fsetAgendamentoDarfDas").css({"width":"100px","text-align":"right"}).desabilitaCampo();
+		$("#vllanaut","#fsetAgendamentoDarfDas").css({"width":"100px","text-align":"right"}).desabilitaCampo();
+		$("#dttransa","#fsetAgendamentoDarfDas").css('width','100px').desabilitaCampo();
+		$("#hrtransa","#fsetAgendamentoDarfDas").css('width','100px').desabilitaCampo();
+		
+		$('#divDarfDasLinDig').css('display','none');
+		$('#divDarfDasManual').css('display','none');
+
+		if (tpcaptura == 1) //Com código de barras
+		{
+			$('#divDarfDasLinDig').css('display','block');
+		}
+		else //Sem código de barras
+		{
+		    $('#divDarfDasManual').css('display','block');
+		}
+		
+		$('#fsetAgendamentoConta').css('display','none'); 
+		$('#fsetAgendamentoLinhaDig').css('display','none');
+		$('#fsetAgendamentoContaDestino').css('display','none');
+		$('#fsetAgendamentoDarfDas').css('display','block');
+		
+	}else if(dstiptra.indexOf('PAGAMENTO') > -1){
 
 		$('#dstransa','#fsetAgendamentoLinhaDig').val( $('#dstransa', tr ).val() );
 		$('#dttransa','#fsetAgendamentoLinhaDig').val( $('#dttransa', tr ).val() );
@@ -542,10 +625,11 @@ function selecionaAgendamentos(tr){
 		$("#dttransa","#fsetAgendamentoLinhaDig").css('width','100px').desabilitaCampo();
 		$("#hrtransa","#fsetAgendamentoLinhaDig").css('width','100px').desabilitaCampo();
 		$("#dstitdda","#fsetAgendamentoLinhaDig").css('width','190px').desabilitaCampo();
-				
+		
 		$('#fsetAgendamentoConta').css('display','none'); 
 		$('#fsetAgendamentoLinhaDig').css('display','block');
 		$('#fsetAgendamentoContaDestino').css('display','none');
+		$('#fsetAgendamentoDarfDas').css('display','none');
 		
 	}else if((dstiptra.indexOf('TRANSFERENCIA') > -1) || dstiptra.indexOf('TED') > -1) {
 	
@@ -568,6 +652,7 @@ function selecionaAgendamentos(tr){
 		$('#fsetAgendamentoConta').css('display','none'); 
 		$('#fsetAgendamentoLinhaDig').css('display','none');
 		$('#fsetAgendamentoContaDestino').css('display', 'block');
+		$('#fsetAgendamentoDarfDas').css('display','none');
 
 		if ($('#cddopcao', '#frmCab').val() == 'C') {
 
@@ -609,6 +694,7 @@ function selecionaAgendamentos(tr){
 		$('#fsetAgendamentoConta').css('display','block'); 
 		$('#fsetAgendamentoLinhaDig').css('display','none');
 		$('#fsetAgendamentoContaDestino').css('display','none');
+		$('#fsetAgendamentoDarfDas').css('display','none');
 		
 	}
 	
