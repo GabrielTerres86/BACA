@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Lucas Lunelli
-    Data    : Fevereiro/2013                  Ultima Atualizacao : 01/09/2016
+    Data    : Fevereiro/2013                  Ultima Atualizacao : 01/12/2016
     
     Dados referente ao programa:
     
@@ -39,6 +39,12 @@
                               
                  01/09/2016 - Retirar campo FCDEBAUTO da gravacao da tabela, 
                               pois nao utiliza em nenhum lugar (Lucas Ranghetti #506682)
+                              
+                 01/12/2016 - Alterar alteracao do CCROCONV para atualizar campos
+                              de segmento e empresa da crapscn somente se seguir a
+                              regra de crapscn.dsoparre = "E"  AND 
+                              (crapscn.cddmoden = "A"  OR crapscn.cddmoden = "C")
+                              (Lucas Ranghetti #531045)                          
 ..............................................................................*/
 
 DEF STREAM str_1.  /* ARQ. IMPORTAÇÃO       */
@@ -547,95 +553,112 @@ DO WHILE TRUE ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
                crapscn.dtulttar = IF ENTRY(32, aux_setlinha, "|") <> "00/00/0000" THEN                      
                                      DATE(TRIM(ENTRY(32, aux_setlinha, "|"),'"'))           /*  fdulttarif */  
                                   ELSE ?.
+        
+        /* 
+           FCENVIAOPT (crapscn.cddmoden) - identifica quem é o responsavel pelo cadastro do optante do debito 
+                                           automatico.
+           A-Agencia/Cooperativa
+           B-Empresa Conveniada
+           C-Misto
+           
+           FCPERARREC (crapscn.dsoparre) - Identifica se é convenio de arrecadacao ou debito automatico
+           As letras representam os canais:
+           A-Caixa
+           B-ATM
+           C-Agente credenciado
+           D-IB
+           E-Debito automatico
+           F-CNAB
+        */
+        
         IF  crapscn.dsoparre = "E"  AND
            (crapscn.cddmoden = "A"  OR
             crapscn.cddmoden = "C") THEN
-            NEXT.
-        ELSE
             ASSIGN crapscn.cdsegmto = TRIM(ENTRY(39, aux_setlinha, "|"),'"')         /*  fcsegmento */
                    crapscn.cdempcon = INTE(TRIM(ENTRY(38, aux_setlinha, "|"),'"')).  /*  fcnumbarra */ 
-             
-        VALIDATE crapscn.
+        ELSE
+            DO:
+                VALIDATE crapscn.
 
-        /* Não gravar crapcon quando cod. segmento ou cod. empresa forem 0,
-           quando o Segmento for "X" ou quando do conv. estiver cancelado */
-        IF  crapscn.cdempcon = 0   OR
-            crapscn.cdsegmto = ""  OR
-            crapscn.cdsegmto = "X" OR
-            crapscn.dtencemp <> ?  THEN
-            NEXT.
-            
-        FOR EACH crapcop NO-LOCK.
-
-            IF  crapscn.cdempres = "608" THEN /* DARF NUMERADO */
-                NEXT.
-            
-            /* Verifica se convenio existe na cooperativa */
-            FIND crapcon WHERE crapcon.cdcooper  = crapcop.cdcooper AND
-                               crapcon.cdempcon  = crapscn.cdempcon AND   
-                        STRING(crapcon.cdsegmto) = crapscn.cdsegmto
-                               EXCLUSIVE-LOCK NO-ERROR.   
-
-            IF  NOT AVAIL crapcon THEN
-                DO:
-                    ASSIGN aux_flginter = FALSE.
-
-                    /* Faz consulta para verificar se possui meio de arrecadação internet */
-                    IF  CAN-FIND(FIRST crapstn WHERE crapstn.cdempres = crapscn.cdempres AND
-                                                     crapstn.tpmeiarr = "D")             THEN
-                        ASSIGN aux_flginter = TRUE.
+                /* Não gravar crapcon quando cod. segmento ou cod. empresa forem 0,
+                   quando o Segmento for "X" ou quando do conv. estiver cancelado */
+                IF  crapscn.cdempcon = 0   OR
+                    crapscn.cdsegmto = ""  OR
+                    crapscn.cdsegmto = "X" OR
+                    crapscn.dtencemp <> ?  THEN
+                    NEXT.
                     
+                FOR EACH crapcop NO-LOCK.
+
+                    IF  crapscn.cdempres = "608" THEN /* DARF NUMERADO */
+                        NEXT.
                     
-                    /* Faz consulta para verificar se é DARF ou DAS */
-                    IF  CAN-FIND(FIRST crapstn WHERE crapstn.cdempres = crapscn.cdempres AND
-                                                     crapstn.dstipdrf <> "")             OR
-                        crapscn.cdempres = "K0"                                          THEN
-                        ASSIGN aux_flginter = FALSE.
-                    
-                    /* Percorre campos de Cod. da Empresa no Cod. de Barras criando registros na crapcon */
-                    IF  crapscn.cdempcon <> 0 THEN
-                        RUN cria-reg-crapcon (INPUT crapscn.cdempcon,
-                                              INPUT aux_flginter).
+                    /* Verifica se convenio existe na cooperativa */
+                    FIND crapcon WHERE crapcon.cdcooper  = crapcop.cdcooper AND
+                                       crapcon.cdempcon  = crapscn.cdempcon AND   
+                                STRING(crapcon.cdsegmto) = crapscn.cdsegmto
+                                       EXCLUSIVE-LOCK NO-ERROR.   
 
-                    IF  crapscn.cdempco2 <> 0 THEN
-                        RUN cria-reg-crapcon (INPUT crapscn.cdempco2,
-                                              INPUT aux_flginter).
-
-                    IF  crapscn.cdempco3 <> 0 THEN
-                        RUN cria-reg-crapcon (INPUT crapscn.cdempco3,
-                                              INPUT aux_flginter).
-
-                    IF  crapscn.cdempco4 <> 0 THEN
-                        RUN cria-reg-crapcon (INPUT crapscn.cdempco4,
-                                              INPUT aux_flginter).
-
-                    IF  crapscn.cdempco5 <> 0 THEN
-                        RUN cria-reg-crapcon (INPUT crapscn.cdempco5,
-                                              INPUT aux_flginter).
-
-                END.
-            ELSE
-                DO:
-                    IF  crapcon.flgcnvsi = TRUE THEN /* Conv. SICREDI já existente, atualiza dados */
+                    IF  NOT AVAIL crapcon THEN
                         DO:
+                            ASSIGN aux_flginter = FALSE.
+
+                            /* Faz consulta para verificar se possui meio de arrecadação internet */
+                            IF  CAN-FIND(FIRST crapstn WHERE crapstn.cdempres = crapscn.cdempres AND
+                                                             crapstn.tpmeiarr = "D")             THEN
+                                ASSIGN aux_flginter = TRUE.
                             
-                            ASSIGN crapcon.nmrescon = CAPS(crapscn.dssigemp)
-                                   crapcon.nmextcon = CAPS(crapscn.dsnomcnv)
-                                   crapcon.cdhistor = 1154        /* Fixo */
-                                   crapcon.nrdolote = 15000       /* Fixo */
-                                   crapcon.cdagercb = crapscn.cdagenci
-                                   crapcon.dspescto = ""
-                                   crapcon.cdempcon = crapscn.cdempcon
-                                   crapcon.cdsegmto = INT(crapscn.cdsegmto).
-
                             
-                         END.
-                     ELSE            /* Conv. existe na CECRED */
-                         NEXT.
-                END.
+                            /* Faz consulta para verificar se é DARF ou DAS */
+                            IF  CAN-FIND(FIRST crapstn WHERE crapstn.cdempres = crapscn.cdempres AND
+                                                             crapstn.dstipdrf <> "")             OR
+                                crapscn.cdempres = "K0"                                          THEN
+                                ASSIGN aux_flginter = FALSE.
+                            
+                            /* Percorre campos de Cod. da Empresa no Cod. de Barras criando registros na crapcon */
+                            IF  crapscn.cdempcon <> 0 THEN
+                                RUN cria-reg-crapcon (INPUT crapscn.cdempcon,
+                                                      INPUT aux_flginter).
 
-        END. /* FOR EACH crapcop */
+                            IF  crapscn.cdempco2 <> 0 THEN
+                                RUN cria-reg-crapcon (INPUT crapscn.cdempco2,
+                                                      INPUT aux_flginter).
 
+                            IF  crapscn.cdempco3 <> 0 THEN
+                                RUN cria-reg-crapcon (INPUT crapscn.cdempco3,
+                                                      INPUT aux_flginter).
+
+                            IF  crapscn.cdempco4 <> 0 THEN
+                                RUN cria-reg-crapcon (INPUT crapscn.cdempco4,
+                                                      INPUT aux_flginter).
+
+                            IF  crapscn.cdempco5 <> 0 THEN
+                                RUN cria-reg-crapcon (INPUT crapscn.cdempco5,
+                                                      INPUT aux_flginter).
+
+                        END.
+                    ELSE
+                        DO:
+                            IF  crapcon.flgcnvsi = TRUE THEN /* Conv. SICREDI já existente, atualiza dados */
+                                DO:
+                                    
+                                    ASSIGN crapcon.nmrescon = CAPS(crapscn.dssigemp)
+                                           crapcon.nmextcon = CAPS(crapscn.dsnomcnv)
+                                           crapcon.cdhistor = 1154        /* Fixo */
+                                           crapcon.nrdolote = 15000       /* Fixo */
+                                           crapcon.cdagercb = crapscn.cdagenci
+                                           crapcon.dspescto = ""
+                                           crapcon.cdempcon = crapscn.cdempcon
+                                           crapcon.cdsegmto = INT(crapscn.cdsegmto).
+
+                                    
+                                 END.
+                             ELSE            /* Conv. existe na CECRED */
+                                 NEXT.
+                        END.
+
+                END. /* FOR EACH crapcop */
+            END.
     END. /* DO WHILE TRUE */
 
     INPUT STREAM str_2 CLOSE.
