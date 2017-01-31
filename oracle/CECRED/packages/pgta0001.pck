@@ -223,6 +223,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 --
 --             20/06/2016 - Correcao para o uso da function fn_busca_dstextabem da TABE0001 em 
 --                          procedures desta package.(Carlos Rafael Tanholi).                                 
+--
+--             17/01/2017 - Ajustar a procedure pc_validar_arq_pgto para verificar se a conta que
+--                          esta realizando o agendamento possui privilegios de PAGADORVIP,
+--                          para não criticar a data de vencimento do titulo que esta sendo agendado 
+--                          (Douglas - Chamado 551630).
+--
 ---------------------------------------------------------------------------------------------------------------
 
 
@@ -1448,6 +1454,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
      vr_dtmvtopg DATE;
      vr_dtmvtolt DATE;
 
+     -- PAGADOR VIP
+     vr_dstextab_pagador_vip craptab.dstextab%TYPE;
+
   BEGIN
      vr_nmarquiv := pr_nmarquiv;
 
@@ -1491,6 +1500,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
        --Levantar Excecao
        RAISE vr_exc_saida;
      END IF;
+
+     -- Identificar se a Conta que fez UPLOAD do arquivo, eh um PAGADOR VIP
+     vr_dstextab_pagador_vip := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper 
+                                                          ,pr_nmsistem => 'CRED'
+                                                          ,pr_tptabela => 'GENERI'
+                                                          ,pr_cdempres => 0
+                                                          ,pr_cdacesso => 'PAGADORVIP'
+                                                          ,pr_tpregist => pr_nrdconta);
+     
 
      -- Se o arquivo estiver aberto
      IF  utl_file.IS_OPEN(vr_ind_arquivo) THEN
@@ -1890,7 +1908,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                  -- (21,13) Data do Vencimento Invalida
                  --vr_cdtipmvt := nvl(vr_cdtipmvt,0);     -- G060
                  vr_dtvencto := to_date(SUBSTR(vr_des_linha,92,08),'DD/MM/RRRR');
+                 
+                 -- Se for pagador VIP nao criticar
+                 IF TRIM(vr_dstextab_pagador_vip) IS NULL THEN
                  vr_cdocorre := nvl(vr_cdocorre,'AP');  -- G059 - 'AP' = Data Lançamento Inválido
+                 END IF;
+                 
                ELSE
                  vr_dtvencto := to_date(SUBSTR(vr_des_linha,92,08),'DD/MM/RRRR');
                END IF;
@@ -2452,7 +2475,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                                           ,pr_dtagenda => vr_dtmvtopg           --IN OUT --Data agendamento
                                           ,pr_idorigem => pr_idorigem           --Indicador de origem
                                           ,pr_indvalid => 1                     --nao validar
-										                      ,pr_flmobile => 0                     --Indicador mobile
+										  ,pr_flmobile => 0                     --Indicador mobile
                                           -- Abaixo, todas OUT...
                                           ,pr_nmextbcc => vr_nmextbcc           --Nome do banco
                                           ,pr_vlfatura => vr_vlfatura           --Valor fatura
