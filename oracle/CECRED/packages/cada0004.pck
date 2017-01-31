@@ -5018,11 +5018,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     
     IF vr_tab_dados_cpa.exists(vr_idxcpa) AND 
        vr_tab_dados_cpa(vr_idxcpa).vldiscrd > 0 THEN
-      --> Incluir na temptable
-      pc_cria_registro_msg(pr_dsmensag             => 'Atencao: Cooperado possui Credito Pre-Aprovado, limite '||
-                                                      'maximo de R$ '||to_char(vr_tab_dados_cpa(vr_idxcpa).vldiscrd,'FM999G999G990D00MI'),
-                           pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);    
-    END IF;   
+      IF vr_tab_dados_cpa(vr_idxcpa).msgmanua IS NOT NULL THEN
+        --> Incluir na temptable
+        pc_cria_registro_msg(pr_dsmensag             => vr_tab_dados_cpa(vr_idxcpa).msgmanua
+                            ,pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);    
+       
+      ELSE
+        --> Incluir na temptable
+        pc_cria_registro_msg(pr_dsmensag             => 'Atencao: Cooperado possui Credito Pre-Aprovado, limite '||
+                                                        'maximo de R$ '||to_char(vr_tab_dados_cpa(vr_idxcpa).vldiscrd,'FM999G999G990D00MI'),
+                             pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);    
+      END IF;
+    END IF;
     
     -- Verificar Cyber
     OPEN cr_crapcyc;
