@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Lucas Lunelli
-    Data    : Fevereiro/2013                  Ultima Atualizacao : 30/11/2014
+    Data    : Fevereiro/2013                  Ultima Atualizacao : 01/09/2016
     
     Dados referente ao programa:
     
@@ -36,6 +36,9 @@
                  30/11/2015 - Adicionado validacao na leitura da crapscn na 
                               procedure cria-registro-alteracao-tarifa
                               (Lucas Ranghetti #365399 )
+                              
+                 01/09/2016 - Retirar campo FCDEBAUTO da gravacao da tabela, 
+                              pois nao utiliza em nenhum lugar (Lucas Ranghetti #506682)
 ..............................................................................*/
 
 DEF STREAM str_1.  /* ARQ. IMPORTAÇÃO       */
@@ -388,8 +391,7 @@ DO WHILE TRUE ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
                crapscn.dsdiatar = TRIM(ENTRY(36, aux_setlinha, "|"),'"')                    /*  fcdiastari */  
                crapscn.dsiloteg = TRIM(ENTRY(63, aux_setlinha, "|"),'"')                    /*  fcloteg	  */  
                crapscn.dsdiatol = TRIM(ENTRY(12, aux_setlinha, "|"),'"')                    /*  fcdiastole */  
-               crapscn.dstalote = TRIM(ENTRY(83, aux_setlinha, "|"),'"')                    /*  fcctaloteg */  
-               crapscn.dsdebaut = TRIM(ENTRY(89, aux_setlinha, "|"),'"')                    /*  fcdebauto  */  
+               crapscn.dstalote = TRIM(ENTRY(83, aux_setlinha, "|"),'"')                    /*  fcctaloteg */                 
                crapscn.dsarqtra = TRIM(ENTRY(29, aux_setlinha, "|"),'"')                    /*  fcarqtrans */  
                crapscn.dsdirdes = TRIM(ENTRY(51, aux_setlinha, "|"),'"')                    /*  fcdirdest  */  
                crapscn.dsdirori = TRIM(ENTRY(50, aux_setlinha, "|"),'"')                    /*  fcdirorig  */
