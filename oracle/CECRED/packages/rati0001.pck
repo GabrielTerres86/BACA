@@ -119,6 +119,13 @@ CREATE OR REPLACE PACKAGE CECRED.rati0001 is
   --                         Ajuste nos codigos de natureza juridica para o
   --                         existente na receita federal (Tiago Castro - RKAM)
   --
+  --
+  --            30/11/2015 - Ajuste na pc_verifica_contrato_rating para Correção da conversão que não estava
+  --                         conforme com a versão do Progress.
+  --                         Ajuste na pc_desativa_rating para passar o ROWID correto para pc_grava_rating_origem
+  --                            e TRIM na variável pr_flgefeti(erro quando vem pela EMPR0001)
+  --                         Ajuste na pc_ativa_rating para atribuir ROWID à variavel(Guilherme/SUPERO)
+  --
   --			03/06/2016	 Alteracao na atribuicao de notas do rating, se for AA, deve
   --			             assumir a nota referente ao risco A.
   --						 Chamado 431839 (Andrey - RKAM)
@@ -384,16 +391,16 @@ CREATE OR REPLACE PACKAGE CECRED.rati0001 is
                              ,pr_idorigem IN INTEGER                                         --> Identificador Origem
                              ,pr_nmdatela IN craptel.nmdatela%TYPE                           --> Nome da tela
                              ,pr_flgerlog IN VARCHAR2                                        --> Identificador de geração de log
-                             ,pr_tab_rating_sing       IN rati0001.typ_tab_crapras           --> Registros gravados para rating singular
+                             ,pr_tab_rating_sing       IN RATI0001.typ_tab_crapras           --> Registros gravados para rating singular
                              ----- OUT ----
-                             ,pr_tab_impress_coop     OUT rati0001.typ_tab_impress_coop     --> Registro impressão da Cooperado
-                             ,pr_tab_impress_rating   OUT rati0001.typ_tab_impress_rating   --> Registro itens do Rating
-                             ,pr_tab_impress_risco_cl OUT rati0001.typ_tab_impress_risco    --> Registro Nota e risco do cooperado naquele Rating - PROVISAOCL
-                             ,pr_tab_impress_risco_tl OUT rati0001.typ_tab_impress_risco    --> Registro Nota e risco do cooperado naquele Rating - PROVISAOTL
-                             ,pr_tab_impress_assina   OUT rati0001.typ_tab_impress_assina   --> Assinatura na impressao do Rating
-                             ,pr_tab_efetivacao       OUT rati0001.typ_tab_efetivacao       --> Registro dos itens da efetivação
-                             ,pr_tab_ratings          OUT rati0001.typ_tab_ratings          --> Informacoes com os Ratings do Cooperado
-                             ,pr_tab_crapras          OUT rati0001.typ_tab_crapras          --> Tabela com os registros processados
+                             ,pr_tab_impress_coop     OUT RATI0001.typ_tab_impress_coop     --> Registro impressão da Cooperado
+                             ,pr_tab_impress_rating   OUT RATI0001.typ_tab_impress_rating   --> Registro itens do Rating
+                             ,pr_tab_impress_risco_cl OUT RATI0001.typ_tab_impress_risco    --> Registro Nota e risco do cooperado naquele Rating - PROVISAOCL
+                             ,pr_tab_impress_risco_tl OUT RATI0001.typ_tab_impress_risco    --> Registro Nota e risco do cooperado naquele Rating - PROVISAOTL
+                             ,pr_tab_impress_assina   OUT RATI0001.typ_tab_impress_assina   --> Assinatura na impressao do Rating
+                             ,pr_tab_efetivacao       OUT RATI0001.typ_tab_efetivacao       --> Registro dos itens da efetivação
+                             ,pr_tab_ratings          OUT RATI0001.typ_tab_ratings          --> Informacoes com os Ratings do Cooperado
+                             ,pr_tab_crapras          OUT RATI0001.typ_tab_crapras          --> Tabela com os registros processados
                              ,pr_tab_erro             OUT GENE0001.typ_tab_erro             --> Tabela de retorno de erro
                              ,pr_des_reto             OUT VARCHAR2);                          --> Ind. de retorno OK/NOK
                              
@@ -514,7 +521,7 @@ CREATE OR REPLACE PACKAGE CECRED.rati0001 is
 
 END RATI0001;
 /
-CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
+CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
   ---------------------------------------------------------------------------------------------------------------
   --
   --  Programa : RATI0001                     Antiga: sistema/generico/procedures/b1wgen0043.p
@@ -708,7 +715,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
      WHERE cdcooper = pr_cdcooper
        AND nrdconta = pr_nrdconta
        AND tpctrato = 6
-       AND dsproftl = 'SOCIO/PROPRIETARIO'
+       AND dsproftl IN ('SOCIO/PROPRIETARIO','SOCIO ADMINISTRADOR',
+                        'DIRETOR/ADMINISTRADOR','SINDICO','ADMINISTRADOR')
      ORDER BY dtadmsoc DESC;
 
   /* Rotina responsavel por buscar a descrição da operacao do tipo de contrato */
@@ -876,7 +884,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Alisson C. Berrido
-     Data    : Maio/2013.                          Ultima Atualizacao: 14/08/2015
+     Data    : Maio/2013.                          Ultima Atualizacao: 29/03/2016
 
      Dados referentes ao programa:
 
@@ -889,6 +897,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
                
                14/08/2015 - Ajuste na leitura crapris para as operacoes menor que o
                             valor do arrasto. (James)
+                            
+               29/03/2016 - Replicar manutenção realizada no progress SD352945 (Odirlei-AMcom)
+
   ............................................................................. */
     DECLARE
 
@@ -907,7 +918,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
         AND   crapris.nrdconta = pr_nrdconta
         AND   crapris.inddocto = pr_inddocto
         AND   crapris.vldivida > pr_vldivida
-        AND   crapris.dtrefere <> pr_dtrefere
+        AND   crapris.dtrefere <= pr_dtrefere
         ORDER BY crapris.progress_recid DESC;
 
       --Selecionar informacoes do risco
@@ -921,14 +932,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
         WHERE crapris.cdcooper = pr_cdcooper
         AND   crapris.nrdconta = pr_nrdconta
         AND   crapris.inddocto = pr_inddocto
-        AND   crapris.dtrefere <> pr_dtrefere
+        AND   crapris.dtrefere <= pr_dtrefere
         ORDER BY crapris.progress_recid DESC;
       rw_crapris cr_crapris%ROWTYPE;
 
       --Variaveis Locais
       vr_vlarrast NUMBER:= 0;
 
-      vr_dtrefere DATE;
+      vr_dtultdma DATE;
       vr_dtmvtolt DATE;
 
     BEGIN
@@ -942,29 +953,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
         vr_vlarrast:= GENE0002.fn_char_para_number(SubStr(pr_dstextab_bacen,3,9));
       END IF;
 
-      -- Variavel auxiliar para ser utilizada na bisca data util anterior.
-      vr_dtmvtolt := pr_dtmvtolt - 1;
-
-      -- Função para retornar dia útil anterior a data base
-      vr_dtrefere  := gene0005.fn_valida_dia_util(pr_cdcooper  => pr_cdcooper,         -- Cooperativa
-                                                  pr_dtmvtolt  => vr_dtmvtolt,         -- Data de referencia
-                                                  pr_tipo      => 'A',                 -- Se não for dia útil, retorna primeiro dia útil anterior
-                                                  pr_feriado   => TRUE,                -- Considerar feriados,
-                                                  pr_excultdia => TRUE);               -- Considerar 31/12
-
-
-      -- Este tratamento esta sendo efetuado como solução para
-      -- a situação do plsql não ter como efetuar comparativo <> NULL
-      IF to_char(vr_dtrefere,'MM') <> to_char(pr_dtmvtolt,'MM') THEN
-        vr_dtrefere := to_date('31/12/9999','DD/MM/RRRR');
-      END IF;
+      --> Ultimo dia do mes passado 
+      vr_dtultdma := pr_dtmvtolt - to_char(pr_dtmvtolt,'DD');
 
       /** Valor Arrasto **/
       OPEN cr_crapris (pr_cdcooper => pr_cdcooper
                       ,pr_nrdconta => pr_nrdconta
                       ,pr_inddocto => 1
                       ,pr_vldivida => vr_vlarrast
-                      ,pr_dtrefere => vr_dtrefere);
+                      ,pr_dtrefere => vr_dtultdma);
       --Posicionar no primeiro registro
       FETCH cr_crapris INTO rw_crapris;
       IF cr_crapris%NOTFOUND THEN
@@ -974,7 +971,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
         OPEN cr_crapris2 (pr_cdcooper => pr_cdcooper
                          ,pr_nrdconta => pr_nrdconta
                          ,pr_inddocto => 1
-                         ,pr_dtrefere => vr_dtrefere);
+                         ,pr_dtrefere => vr_dtultdma);
         --Posicionar no primeiro registro
         FETCH cr_crapris2 INTO rw_crapris;
         --Se Encontrou
@@ -1035,7 +1032,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
        Objetivo  : Retornar valor parametrizado de rating na TAB036 para a Cooperativa.
 
        Alteracoes: 04/06/2013 - Conversão Progress -> Oracle - Marcos (Supero)
-                                      
+
     ............................................................................. */
     DECLARE
       /* Cursor genérico de parametrização */
@@ -1808,7 +1805,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
           -- Cria a origem como o efetivo
           pc_grava_rating_origem(pr_cdcooper => pr_cdcooper     --> Código da Cooperativa
                                 ,pr_nrdconta => pr_nrdconta     --> Conta do associado
-                                ,pr_rowidnrc => vr_ncr_rowid    --> Rowid para gravação do rating
+                                ,pr_rowidnrc => vr_ncr_efetiv_rowid    --> Rowid para gravação do rating
                                 ,pr_cdcritic => vr_cdcritic     --> Critica encontrada no processo
                                 ,pr_dscritic => vr_dscritic);   --> Descritivo do erro
 
@@ -1878,7 +1875,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
           RAISE vr_exc_erro;
         END IF;
         -- Se o cooperado esta utilizando mais do que o valor legal E nao tem Rating
-        IF (vr_vlutiliz >= vr_vlrating OR vr_vlutiliz >= (vr_vlmaxleg / 3)) AND vr_ncr_efetiv_rowid IS NULL THEN
+        IF (vr_vlutiliz >= vr_vlrating OR vr_vlutiliz >= (vr_vlmaxleg / 3))
+        AND vr_ncr_efetiv_rowid IS NULL THEN
           -- Retornar o Rating Proposto com pior nota.
           pc_procura_pior_nota(pr_cdcooper => pr_cdcooper --> Código da Cooperativa
                               ,pr_nrdconta => pr_nrdconta --> Conta do associado
@@ -1929,7 +1927,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
       END IF; -- Fim efetivar novo rating
 
       -- Se esta abaixo do valor legal e tem Rating
-      IF NOT (vr_vlutiliz >= vr_vlrating OR vr_vlutiliz >= (vr_vlmaxleg / 3)) AND vr_ncr_efetiv_rowid IS NOT NULL THEN
+      IF NOT (vr_vlutiliz >= vr_vlrating OR vr_vlutiliz >= (vr_vlmaxleg / 3))
+      AND vr_ncr_efetiv_rowid IS NOT NULL THEN
         -- Nao pode ter Rating, entao deixa proposto
         pc_muda_situacao_proposto(pr_cdcooper  => pr_cdcooper            --> Código da Cooperativa
                                  ,pr_nrdconta  => pr_nrdconta            --> Conta do associado
@@ -2159,7 +2158,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
       --Verifica se tem rating efetivo
       OPEN cr_crapnrc_efetivo (pr_cdcooper => pr_cdcooper
                               ,pr_nrdconta => pr_nrdconta
-                              ,pr_insitrat => 2);
+                              ,pr_insitrat => 2); -- 2-Efetivo
       FETCH cr_crapnrc_efetivo INTO rw_crapnrc_efetivo;
       -- Se existe
       IF cr_crapnrc_efetivo%FOUND THEN
@@ -2167,6 +2166,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
         CLOSE cr_crapnrc_efetivo;
         /* Nota deste contrato é pior do que nota do Efetivo */
         IF rw_crapnrc.nrnotrat > rw_crapnrc_efetivo.nrnotrat THEN
+
+		  vr_rowidnrc := rw_crapnrc.ROWID;
+
           /* Volta para Proposto o efetivo atual */
           pc_muda_situacao_proposto(pr_cdcooper  => pr_cdcooper            --> Código da Cooperativa
                                    ,pr_nrdconta  => pr_nrdconta            --> Conta do associado
@@ -2205,8 +2207,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
             RAISE vr_exc_erro;
           END IF;
         END IF;
-      ELSE
-        /* Nao tem rating efetivo */
+      ELSE /* Nao tem rating efetivo */
         /* Cadastrado na TAB036 */
         -- Retornar valor de parametrização do rating cadastrado na TAB036
         pc_param_valor_rating(pr_cdcooper => pr_cdcooper --> Código da Cooperativa
@@ -2239,11 +2240,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
                               ,pr_dsoperac => vr_dsoperac --> Descrição da operação do rating
                               ,pr_cdcritic => vr_cdcritic
                               ,pr_dscritic => vr_dscritic);
+          --------------------------------------------------------------------
+          ----- Não versão progress não testava se retornou erro aqui...  ----
+          --------------------------------------------------------------------
           -- Se houve erro
-          IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-            -- Encerrar o processo
-            RAISE vr_exc_erro;
-          END IF;
+          --IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+          --  -- Encerrar o processo
+          --  RAISE vr_exc_erro;
+          --END IF;
           -- Se existe Rating a efetivar
           IF vr_rowidnrc IS NOT NULL THEN
             -- Mudar situacao do Rating para efetivo
@@ -2255,15 +2259,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
                                     ,pr_cdcritic => vr_cdcritic
                                     ,pr_dscritic => vr_dscritic);
 
-            --------------------------------------------------------------------
-            ----- Não versão progress não testava se retornou erro aqui...  ----
-            --------------------------------------------------------------------
-
             -- Se houve erro
-            --IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-            --  -- Encerrar o processo
-            --  RAISE vr_exc_erro;
-            --END IF;
+            IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+              -- Encerrar o processo
+              RAISE vr_exc_erro;
+            END IF;
             -- Gravar o rating de origem
             pc_grava_rating_origem(pr_cdcooper => pr_cdcooper     --> Código da Cooperativa
                                   ,pr_nrdconta => pr_nrdconta     --> Conta do associado
@@ -2301,7 +2301,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
                               ,pr_cdoperad => pr_cdoperad
                               ,pr_dscritic => vr_dscritic
                               ,pr_dsorigem => gene0001.vr_vet_des_origens(pr_idorigem) --> Origem enviada
-                              ,pr_dstransa => 'Desativar o Rating do cooperado.'
+                              ,pr_dstransa => 'Ativar o Rating do cooperado.'
                               ,pr_dttransa => pr_rw_crapdat.dtmvtolt
                               ,pr_flgtrans => 0 --> FALSE
                               ,pr_hrtransa => TO_NUMBER(TO_CHAR(sysdate,'SSSSS'))
@@ -2543,7 +2543,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
             --Levantar Excecao
             RAISE vr_exc_erro;
           END IF;
-        ELSE
+        END IF;
+
+      ELSE  /* Liquidado */
+
+        IF  rw_crapnrc.flgativo = 1  THEN /* Ativo */
           --Desativar o Rating
           pc_desativa_rating(pr_cdcooper   => pr_cdcooper    --> Código da Cooperativa
                             ,pr_cdagenci   => pr_cdagenci    --> Código da agência
@@ -2772,7 +2776,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
                                 ,pr_dtfinrat   IN DATE                  --> Data de termino do Rating
                                 ,pr_insitrat   IN PLS_INTEGER           --> Situação do Rating
                                 ,pr_qtregist   OUT INTEGER              --> Quantidade de registros encontrados
-                                ,pr_tab_ratings OUT rati0001.typ_tab_ratings    --> Registro com os ratings do associado
+                                ,pr_tab_ratings OUT RATI0001.typ_tab_ratings    --> Registro com os ratings do associado
                                 ,pr_des_reto    OUT VARCHAR2) IS                --> Indicador erro
   BEGIN
     /* ..........................................................................
@@ -3085,8 +3089,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
                               ,pr_dtmvtolt   IN crapdat.dtmvtolt%TYPE --> Data do movimento atual
                               ,pr_vlutiliz   IN NUMBER                --> Valor utilizado para gravação
                               ,pr_flgatual   IN BOOLEAN               --> Flag para efetuar ou não a atualização
-                              ,pr_tab_efetivacao OUT rati0001.typ_tab_efetivacao --> Registro de efetivação
-                              ,pr_tab_ratings    OUT rati0001.typ_tab_ratings    --> Registro com os ratings do associado
+                              ,pr_tab_efetivacao OUT RATI0001.typ_tab_efetivacao --> Registro de efetivação
+                              ,pr_tab_ratings    OUT RATI0001.typ_tab_ratings    --> Registro com os ratings do associado
                               ,pr_tab_erro       OUT gene0001.typ_tab_erro       --> Tabela de retorno de erro
                               ,pr_des_reto       OUT VARCHAR2) IS                --> Indicador erro
   BEGIN
@@ -3142,11 +3146,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
                           ,pr_dsoperac => vr_dsoperac --> Descrição da operação do rating
                           ,pr_cdcritic => vr_cdcritic
                           ,pr_dscritic => vr_dscritic);
-      -- Se houve erro
-      IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-        -- Encerrar o processo
-        RAISE vr_exc_erro;
-      END IF;
+      -- Não era tratado retorno de erro no Progress
+      ---- Se houve erro
+      --IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+      --  -- Encerrar o processo
+      --  RAISE vr_exc_erro;
+      --END IF;
       -- Efetivar o rating de pior nota
       pc_muda_situacao_efetivo(pr_rowidnrc => vr_rowidnrc --> Rowid para gravação do rating
                               ,pr_cdoperad => pr_cdoperad --> Código do operador
@@ -3264,7 +3269,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
                                      ,pr_nrnoveri           IN NUMBER                --> Valor a verificar
                                      ,pr_nivrisco           IN pls_integer           --> Nivel do Risco
                                      ,pr_tab_provisao       IN typ_tab_provisao      --> Tabela com informações da craptab cfme opção
-                                     ,pr_tab_impress_risco OUT rati0001.typ_tab_impress_risco --> Registro Nota e risco do cooperado no Rating solicitado
+                                     ,pr_tab_impress_risco OUT RATI0001.typ_tab_impress_risco --> Registro Nota e risco do cooperado no Rating solicitado
                                      ,pr_des_reto          OUT VARCHAR2) IS          --> Indicador erro IS
   BEGIN
     /* ..........................................................................
@@ -3333,8 +3338,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
                                ,pr_nrnotrat    IN NUMBER                --> Valor baseado no calculo do rating
                                ,pr_nrnotatl    IN NUMBER                --> Valor baseado no calculo do risco
                                ,pr_nivrisco    IN pls_integer           --> Nivel do Risco
-                               ,pr_tab_impress_risco_cl OUT rati0001.typ_tab_impress_risco --> Registro Nota e risco do cooperado naquele Rating - PROVISAOCL
-                               ,pr_tab_impress_risco_tl OUT rati0001.typ_tab_impress_risco --> Registro Nota e risco do cooperado naquele Rating - PROVISAOTL
+                               ,pr_tab_impress_risco_cl OUT RATI0001.typ_tab_impress_risco --> Registro Nota e risco do cooperado naquele Rating - PROVISAOCL
+                               ,pr_tab_impress_risco_tl OUT RATI0001.typ_tab_impress_risco --> Registro Nota e risco do cooperado naquele Rating - PROVISAOTL
                                ,pr_des_reto             OUT VARCHAR2) IS          --> Indicador erro IS
   BEGIN
     /* ..........................................................................
@@ -3351,7 +3356,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
        Objetivo  : Direcionar a obtenção as descricoes do risco, provisao , etc ...
 
        Alteracoes: 28/08/2014 - Conversão Progress -> Oracle - Marcos (Supero)
-                   
+
                    25/10/2016 - Correção do problema relatado no chamado 541414. (Kelvin)
     ............................................................................. */
     DECLARE
@@ -3378,10 +3383,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
       IF vr_tab_provisao_cl.count() = 0 THEN
         -- Busca de todos os riscos conforme chave de acesso enviada
         FOR rw_craptab IN cr_craptab(pr_nmsistem => 'CRED'
-                                    ,pr_tptabela => 'GENERI'
-                                    ,pr_cdempres => '00'
-                                    ,pr_cdacesso => 'PROVISAOCL'
-                                    ,pr_tpregist => null) LOOP
+                                             ,pr_tptabela => 'GENERI'
+                                             ,pr_cdempres => '00'
+                                             ,pr_cdacesso => 'PROVISAOCL'
+                                             ,pr_tpregist => null) LOOP
           -- Carregar na tabela
           vr_contador := to_number(SUBSTR(rw_craptab.dstextab,12,2));
           vr_tab_provisao_cl(vr_contador).dsdrisco := TRIM(SUBSTR(rw_craptab.dstextab,8,3));
@@ -3409,10 +3414,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
       IF vr_tab_provisao_tl.count() = 0 THEN
         -- Busca de todos os riscos conforme chave de acesso enviada
         FOR rw_craptab IN cr_craptab(pr_nmsistem => 'CRED'
-                                    ,pr_tptabela => 'GENERI'
-                                    ,pr_cdempres => '00'
-                                    ,pr_cdacesso => 'PROVISAOTL'
-                                    ,pr_tpregist => null) LOOP
+                                             ,pr_tptabela => 'GENERI'
+                                             ,pr_cdempres => '00'
+                                             ,pr_cdacesso => 'PROVISAOTL'
+                                             ,pr_tpregist => null) LOOP
           -- Carregar na tabela
           vr_contador := to_number(SUBSTR(rw_craptab.dstextab,12,2));
           vr_tab_provisao_tl(vr_contador).dsdrisco := TRIM(SUBSTR(rw_craptab.dstextab,8,3));
@@ -3475,12 +3480,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
                                       ,pr_nmdatela    IN craptel.nmdatela%TYPE --> Nome da tela conectada
                                       ,pr_flgerlog    IN VARCHAR2              --> Gerar log S/N
                                       ,pr_tab_crapras IN typ_tab_crapras       --> Interna da BO, para o calculo do Rating
-                                      ,pr_tab_impress_coop     OUT rati0001.typ_tab_impress_coop     --> Registro impressão da Cooperado
-                                      ,pr_tab_impress_rating   OUT rati0001.typ_tab_impress_rating   --> Registro itens do Rating
-                                      ,pr_tab_impress_risco_cl OUT rati0001.typ_tab_impress_risco    --> Registro Nota e risco do cooperado naquele Rating - PROVISAOCL
-                                      ,pr_tab_impress_risco_tl OUT rati0001.typ_tab_impress_risco    --> Registro Nota e risco do cooperado naquele Rating - PROVISAOTL
-                                      ,pr_tab_impress_assina   OUT rati0001.typ_tab_impress_assina   --> Assinatura na impressao do Rating
-                                      ,pr_tab_efetivacao       OUT rati0001.typ_tab_efetivacao       --> Registro dos itens da efetivação
+                                      ,pr_tab_impress_coop     OUT RATI0001.typ_tab_impress_coop     --> Registro impressão da Cooperado
+                                      ,pr_tab_impress_rating   OUT RATI0001.typ_tab_impress_rating   --> Registro itens do Rating
+                                      ,pr_tab_impress_risco_cl OUT RATI0001.typ_tab_impress_risco    --> Registro Nota e risco do cooperado naquele Rating - PROVISAOCL
+                                      ,pr_tab_impress_risco_tl OUT RATI0001.typ_tab_impress_risco    --> Registro Nota e risco do cooperado naquele Rating - PROVISAOTL
+                                      ,pr_tab_impress_assina   OUT RATI0001.typ_tab_impress_assina   --> Assinatura na impressao do Rating
+                                      ,pr_tab_efetivacao       OUT RATI0001.typ_tab_efetivacao       --> Registro dos itens da efetivação
                                       ,pr_tab_erro             OUT gene0001.typ_tab_erro --> Tabela de retorno de erro
                                       ,pr_des_reto             OUT VARCHAR2) IS          --> Indicador erro IS
   BEGIN
@@ -4702,8 +4707,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
                               Ajuste nos codigos de natureza juridica para o
                               existente na receita federal. (Tiago Castro - RKAM)
 
-		             10/05/2016 - Ajuste para iniciar corretamente a pltable
-							                (Andrei - RKAM).
+		         10/05/2016 - Ajuste para iniciar corretamente a pltable
+							  (Andrei - RKAM).
                  
                  25/10/2016 - Ajuste no calculo da quantidade de anos, permitindo
                               duas posições decimais. (Kelvin)
@@ -8011,16 +8016,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
                              ,pr_idorigem IN INTEGER                                         --> Identificador Origem
                              ,pr_nmdatela IN craptel.nmdatela%TYPE                           --> Nome da tela
                              ,pr_flgerlog IN VARCHAR2                                        --> Identificador de geração de log
-                             ,pr_tab_rating_sing       IN rati0001.typ_tab_crapras           --> Registros gravados para rating singular
+                             ,pr_tab_rating_sing       IN RATI0001.typ_tab_crapras           --> Registros gravados para rating singular
                              ----- OUT ----
-                             ,pr_tab_impress_coop     OUT rati0001.typ_tab_impress_coop     --> Registro impressão da Cooperado
-                             ,pr_tab_impress_rating   OUT rati0001.typ_tab_impress_rating   --> Registro itens do Rating
-                             ,pr_tab_impress_risco_cl OUT rati0001.typ_tab_impress_risco    --> Registro Nota e risco do cooperado naquele Rating - PROVISAOCL
-                             ,pr_tab_impress_risco_tl OUT rati0001.typ_tab_impress_risco    --> Registro Nota e risco do cooperado naquele Rating - PROVISAOTL
-                             ,pr_tab_impress_assina   OUT rati0001.typ_tab_impress_assina   --> Assinatura na impressao do Rating
-                             ,pr_tab_efetivacao       OUT rati0001.typ_tab_efetivacao       --> Registro dos itens da efetivação
-                             ,pr_tab_ratings          OUT rati0001.typ_tab_ratings          --> Informacoes com os Ratings do Cooperado
-                             ,pr_tab_crapras          OUT rati0001.typ_tab_crapras          --> Tabela com os registros processados
+                             ,pr_tab_impress_coop     OUT RATI0001.typ_tab_impress_coop     --> Registro impressão da Cooperado
+                             ,pr_tab_impress_rating   OUT RATI0001.typ_tab_impress_rating   --> Registro itens do Rating
+                             ,pr_tab_impress_risco_cl OUT RATI0001.typ_tab_impress_risco    --> Registro Nota e risco do cooperado naquele Rating - PROVISAOCL
+                             ,pr_tab_impress_risco_tl OUT RATI0001.typ_tab_impress_risco    --> Registro Nota e risco do cooperado naquele Rating - PROVISAOTL
+                             ,pr_tab_impress_assina   OUT RATI0001.typ_tab_impress_assina   --> Assinatura na impressao do Rating
+                             ,pr_tab_efetivacao       OUT RATI0001.typ_tab_efetivacao       --> Registro dos itens da efetivação
+                             ,pr_tab_ratings          OUT RATI0001.typ_tab_ratings          --> Informacoes com os Ratings do Cooperado
+                             ,pr_tab_crapras          OUT RATI0001.typ_tab_crapras          --> Tabela com os registros processados
                              ,pr_tab_erro             OUT GENE0001.typ_tab_erro             --> Tabela de retorno de erro
                              ,pr_des_reto             OUT VARCHAR2                          --> Ind. de retorno OK/NOK
                              ) IS
@@ -8041,6 +8046,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
 
      Alteracoes: 27/08/2014 - Conversão Progress -> Oracle - Odirlei (AMcom)
 
+				 29/03/2016 - Replicar manutenção realizada no progress SD352945 (Odirlei-AMcom)
+
 		         10/05/2016 - Ajuste para utitlizar rowtype locais 
 							 (Andrei  - RKAM).
 
@@ -8053,6 +8060,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
        WHERE crapass.cdcooper = pr_cdcooper
          AND crapass.nrdconta = pr_nrdconta;
     rw_crapass cr_crapass%rowtype;
+
+	-- Lockar conta do associado
+    CURSOR cr_crapass_lock (pr_cdcooper crapass.cdcooper%TYPE,
+                            pr_nrdconta crapass.nrdconta%TYPE) IS
+      SELECT crapass.rowid
+        FROM crapass
+       WHERE crapass.cdcooper = pr_cdcooper
+         AND crapass.nrdconta = pr_nrdconta         
+         FOR UPDATE WAIT 10; --aguardar 10 segundos
+    rw_crapass_lock cr_crapass_lock%rowtype;
 
   --------------- VARIAVEIS ----------------
     -- Variaveis para manter critica
@@ -8079,6 +8096,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
 
     rw_crapnrc3 cr_crapnrc%ROWTYPE;
     
+    -- Index temptable
+    vr_idxrisco PLS_INTEGER;
+    
+    -- verifica se deve atualizar crapass
+    vr_flgatuas BOOLEAN;
+    
 
   BEGIN
     -- Montar variaveis para log
@@ -8086,6 +8109,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
       vr_dsorigem := TRIM(gene0001.vr_vet_des_origens(pr_idorigem));
       vr_dstransa := 'Calcular o rating do associado';
     END IF;
+
+    vr_flgatuas := FALSE;
+    vr_cdcritic := 0;
+    vr_dscritic := NULL;
 
     -- verificar conta do associado
     OPEN cr_crapass;
@@ -8115,6 +8142,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
 
     -- Verifica se tem que criar Rating
     IF pr_flgcriar = 1 THEN
+	  
+	  vr_flgatuas := TRUE;  
+
       -- Verificar se o Rating tem que ser criado.
       pc_verifica_criacao (pr_cdcooper => pr_cdcooper    --> Codigo Cooperativa
                           ,pr_cdagenci => 0              --> Codigo Agencia
@@ -8236,6 +8266,51 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
       RAISE vr_exc_erro;
     END IF;
 
+	/* Verifica se atualiza o risco do cooperado */
+    IF vr_flgatuas THEN
+      vr_idxrisco := pr_tab_impress_risco_tl.first;
+      
+      IF pr_tab_impress_risco_tl.exists(vr_idxrisco) THEN
+         
+         BEGIN
+           --> Buscar e locar associado
+           OPEN cr_crapass_lock(pr_cdcooper => pr_cdcooper,
+                                pr_nrdconta => pr_nrdconta);
+           FETCH cr_crapass_lock INTO rw_crapass_lock;
+           IF cr_crapass%NOTFOUND THEN
+
+             vr_cdcritic := 9; --> 009 - Associado nao cadastrado.
+             CLOSE cr_crapass_lock;
+             RAISE vr_exc_erro;
+           END IF;
+           CLOSE cr_crapass_lock;
+         EXCEPTION
+           WHEN OTHERS THEN
+             vr_cdcritic := 77; --> 077 - Tabela sendo alterada p/ outro terminal.
+             IF cr_crapass_lock%ISOPEN THEN
+               CLOSE cr_crapass_lock;
+             END IF;
+             RAISE vr_exc_erro;
+           
+         END;
+
+         --> Atualizar associado
+         BEGIN
+           UPDATE crapass
+              SET crapass.inrisctl = pr_tab_impress_risco_tl(vr_idxrisco).dsdrisco,
+                  crapass.nrnotatl = pr_tab_impress_risco_tl(vr_idxrisco).vlrtotal,
+                  crapass.dtrisctl = rw_crapdat.dtmvtolt
+            WHERE crapass.rowid = rw_crapass_lock.rowid;
+         EXCEPTION 
+           WHEN OTHERS THEN
+             vr_dscritic := 'Nao foi possivel atualizar associado: '|| SQLERRM;
+             CLOSE cr_crapass_lock;
+             RAISE vr_exc_erro;
+         END;
+
+    END IF;
+    END IF; -- Fim IF vr_flgatuas 
+
     -- Se está setada a criação
     IF pr_flgcriar = 1 THEN
 	  IF vr_vlutiliz is null and wglb_vlutiliz is not null then
@@ -8344,11 +8419,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
                           ,pr_tab_ratings    => pr_tab_ratings    --> Registro com os ratings do associado
                           ,pr_tab_erro       => pr_tab_erro       --> Tabela de retorno de erro
                           ,pr_des_reto       => pr_des_reto);     --> Indicador erro
-        -- Em caso de erro
-        IF pr_des_reto <> 'OK' THEN
-          -- Sair
-          RAISE vr_exc_erro;
-        END IF;
+        -- No Progress não é validado o retorno 
+        ---- Em caso de erro
+        --IF pr_des_reto <> 'OK' THEN
+        --  -- Sair
+        --  RAISE vr_exc_erro;
+        --END IF;
       END IF;
     END IF;
 
@@ -8890,19 +8966,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
                       ,pr_tab_erro       => pr_tab_erro       --> Tabela de retorno de erro
                       ,pr_des_reto       => pr_des_reto);     --> Indicador erro
                       
-    -- Em caso de erro
-    IF pr_des_reto <> 'OK' THEN
-        
-      --Se não tem erro na tabela
-      IF pr_tab_erro.COUNT = 0 THEN          
-        vr_cdcritic:= 0;
-        vr_dscritic:= 'Erro ao efetivar rating.';
-      END IF;
+    -- Comentado pois no Progress não é testado o retorno 
+    ---- Em caso de erro
+    --IF pr_des_reto <> 'OK' THEN
+    --    
+    --  --Se não tem erro na tabela
+    --  IF pr_tab_erro.COUNT = 0 THEN          
+    --    vr_cdcritic:= 0;
+    --    vr_dscritic:= 'Erro ao efetivar rating.';
+    --  END IF;
           
-      -- Sair
-      RAISE vr_exc_erro;
+    --  -- Sair
+    --  RAISE vr_exc_erro;
         
-    END IF;
+    --END IF;
           
     -- Se foi solicitado o envio de LOG
     IF pr_flgerlog = 'S' THEN
