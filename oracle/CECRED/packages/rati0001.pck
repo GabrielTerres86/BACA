@@ -131,6 +131,11 @@ CREATE OR REPLACE PACKAGE CECRED.rati0001 is
   --            08/11/2016 - Salvar o valor de endividamento em uma variavel de escopo global, pois em
   --                         algumas situacoes, nao estava gravando o valor considerado para rateio
   --                         Heitor (Mouts) - Chamado 544076
+  --  
+  --            01/02/2017 - Incluir busca na central de risco tambem para os limites rotativos.
+  --                         Ajustada a rotina pc_verifica_atualizacao, que nao estava retornando a mensagem de erro
+  --                         corretamente para a tela ATURAT. Heitor (Mouts)
+  --
   ---------------------------------------------------------------------------------------------------------------
   -- Tipo de Tabela para dados provisao CL
   TYPE typ_tab_dsdrisco IS TABLE OF VARCHAR2(5) INDEX BY PLS_INTEGER;
@@ -5273,6 +5278,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
           -- Usar valor do endividamento
           vr_vlendivi := nvl(vr_vlendivi,0) + nvl(vr_vlutiliz,0);
         END IF;
+	  END IF;
+      
+      RISC0001.pc_obtem_valores_central_risco( pr_cdcooper => pr_cdcooper  --> Codigo Cooperativa
+                                              ,pr_cdagenci => pr_cdagenci  --> Codigo Agencia
+                                              ,pr_nrdcaixa => pr_nrdcaixa  --> Numero Caixa
+                                              ,pr_nrdconta => pr_nrdconta  --> Numero da Conta
+                                              ,pr_nrcpfcgc => 0  -- CPF    --> CPF/CGC do associado
+                                              ,pr_tab_central_risco => vr_tab_central_risco --> Informações da Central de Risco
+                                              ,pr_tab_erro => pr_tab_erro  --> Tabela Erro
+                                              ,pr_des_reto => pr_des_reto);
+      IF pr_des_reto <> 'OK' THEN
+        RETURN;
+      END IF;
+
+      -- se possuir valor, somar valor valor
+      IF NVL(vr_tab_central_risco.vltotsfn,0) <> 0  THEN
+        vr_vlendivi := nvl(vr_vlendivi,0) + vr_tab_central_risco.vltotsfn;
       END IF;
     ELSE
       -- Se solicitado o calculo
@@ -7419,6 +7441,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
         ELSE
           vr_vlendivi := nvl(vr_vlendivi,0) + nvl(vr_vlutiliz,0);
         END IF;
+	  END IF;
+      
+      RISC0001.pc_obtem_valores_central_risco( pr_cdcooper => pr_cdcooper  --> Codigo Cooperativa
+                                                ,pr_cdagenci => pr_cdagenci  --> Codigo Agencia
+                                                ,pr_nrdcaixa => pr_nrdcaixa  --> Numero Caixa
+                                                ,pr_nrdconta => pr_nrdconta  --> Numero da Conta
+                                                ,pr_nrcpfcgc => 0  -- CPF    --> CPF/CGC do associado
+                                                ,pr_tab_central_risco => vr_tab_central_risco --> Informações da Central de Risco
+                                                ,pr_tab_erro => pr_tab_erro  --> Tabela Erro
+                                                ,pr_des_reto => pr_des_reto);
+      IF pr_des_reto <> 'OK' THEN
+        RETURN;
+      END IF;
+        
+      -- se possuir valor, somar valor valor
+      IF NVL(vr_tab_central_risco.vltotsfn,0) <> 0  THEN
+        vr_vlendivi := nvl(vr_vlendivi,0) + vr_tab_central_risco.vltotsfn;
       END IF;
     ELSE
       IF pr_flgdcalc = 1 THEN
@@ -9436,7 +9475,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
                               ,pr_tab_efetivacao       => vr_tab_efetivacao       --> Registro dos itens da efetiv
                               ,pr_tab_ratings          => vr_tab_ratings          --> Informacoes com os Ratings d
                               ,pr_tab_crapras          => vr_tab_crapras          --> Tabela com os registros proc
-                              ,pr_tab_erro             => vr_tab_erro             --> Tabela de retorno de erro
+                              ,pr_tab_erro             => pr_tab_erro             --> Tabela de retorno de erro
                               ,pr_des_reto             => pr_des_reto);           --> Ind. de retorno OK/NOK
                             
     -- Em caso de erro
