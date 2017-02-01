@@ -260,6 +260,11 @@
               16/02/2016 - Adicionado verificacao se chassi informado ja se encontra em outro
                            emprestimo em aberto. (Jorge/Gielow) - SD 391096             
               17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
+              
+              01/02/2017 - Inclusao de comando validate crapepr. Ao chamar a rotina de rating, esta
+                           nao conseguia visualizar o contrato que estava sendo criado, considerando
+                           apenas os antigos e impactando na geracao do rating.
+                           Heitor (Mouts)
 
 ............................................................................. */
 
@@ -3289,6 +3294,8 @@ PROCEDURE grava_efetivacao_proposta:
                            crappep.inprejuz = 1.
                 END.
             END.
+       ELSE
+         VALIDATE crapepr.
 
        RUN sistema/generico/procedures/b1wgen0043.p PERSISTENT SET h-b1wgen0043.
 
