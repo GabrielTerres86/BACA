@@ -2288,7 +2288,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_FLUXOS IS
                 ,pr_nrdcaixa => 0                    -- Numero da caixa
                 ,pr_cdoperad => vr_cdoperad          -- Codigo do operador
                 ,pr_dtmvtolt => rw_crapdat.dtmvtolt  -- Data de movimento
-                ,pr_cdprogra => NULL                 -- Nome da tela
+                ,pr_cdprogra => 'FLUXOD'             -- Nome da tela
                 ,pr_dtmvtoan => rw_crapdat.dtmvtoan  -- Data de movimento anterior
                 ,pr_dtmvtopr => rw_crapdat.dtmvtopr  -- Data do movimento posterior
                 ,pr_tab_erro => vr_tab_erro          -- Tabela contendo os erros
@@ -2296,15 +2296,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_FLUXOS IS
         -- Se retornou erro
         IF vr_dscritic <> 'OK' OR vr_tab_erro.COUNT > 0 THEN
           vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-          RAISE vr_exc_saida;
-        END IF;
-        -- Chamar atualização dos valores consolidades
-        FLXF0001.pc_gera_consolidado_singular(pr_cdcooper => pr_cdcooper          -- Codigo da Cooperativa
-                                             ,pr_dtmvtolt => rw_crapdat.dtmvtolt  -- Data de movimento
-                                             ,pr_cdoperad => NULL                 -- Operador
-                                             ,pr_dscritic => vr_dscritic);
-        -- Se retornou erro
-        IF vr_dscritic <> 'OK' THEN
           RAISE vr_exc_saida;
         END IF;
       END IF;

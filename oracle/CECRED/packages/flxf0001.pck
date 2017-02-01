@@ -93,7 +93,6 @@ CREATE OR REPLACE PACKAGE CECRED.flxf0001 AS
   -- Procedure para atualizar previsão futura 12 meses com base no dia anterior
   PROCEDURE pc_atualiza_projecao12m;
                                  
-           
 END FLXF0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
@@ -7817,12 +7816,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
   END pc_grava_prj_saq_taa_ic;  
 
   -- Procedure para gravar movimento financeiro consolidado do saldo do dia anterior
-  PROCEDURE pc_saldo_consolid_dia_ant(pr_cdcooper  IN INTEGER      -- Codigo da Cooperativa
-                                     ,pr_cdoperad  IN crapope.cdoperad%type     -- Codigo do operador
-                                     ,pr_dtmvtolt  IN DATE         -- Data de movimento
-                                     ,pr_nmdatela  IN VARCHAR2     -- Nome da tela
-                                     ,pr_dtmvtoan  IN DATE         -- Data de movimento anterior
-                                     ,pr_dscritic OUT VARCHAR2) AS -- Descrição da critica
+  PROCEDURE pc_saldo_consolid_dia_ant(pr_cdcooper  IN INTEGER                     -- Codigo da Cooperativa
+                                     ,pr_cdoperad  IN crapope.cdoperad%type       -- Codigo do operador
+                                     ,pr_dscritic OUT VARCHAR2) AS                -- Descrição da critica
 
     -- .........................................................................
     --
@@ -7841,16 +7837,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     --   Atualizacao: 26/11/2013 - Conversao Progress => Oracle (Odirlei-AMcom)
     --..........................................................................
 
-    vr_vlressal      NUMBER;
+    vr_vlressal      NUMBER := 0;
 
     vr_tab_saldos    EXTR0001.typ_tab_saldos;
     vr_tab_erro      GENE0001.typ_tab_erro;
+    rw_crapdat       btch0001.cr_crapdat%ROWTYPE;   
 
     /* Busca dos dados da cooperativa */
     CURSOR cr_crapcop(pr_cdcooper IN craptab.cdcooper%TYPE) IS
-      SELECT nrctactl
+      SELECT cop.nrctactl
+            ,ass.vllimcre
         FROM crapcop cop
-       WHERE cop.cdcooper = pr_cdcooper;
+            ,crapass ass
+       WHERE cop.cdcooper = pr_cdcooper
+         AND ass.cdcooper = 3
+         AND ass.nrdconta = cop.nrctactl;
     rw_crapcop cr_crapcop%ROWTYPE;
 
   BEGIN
@@ -7861,37 +7862,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
      INTO rw_crapcop;
     -- Apenas fechar o cursor
     CLOSE cr_crapcop;
+    
+    -- Buscar calendário da central
+    OPEN btch0001.cr_crapdat(3);
+    FETCH btch0001.cr_crapdat 
+     INTO rw_crapdat;
+    CLOSE btch0001.cr_crapdat; 
 
-    vr_vlressal := 0;
-
-    /* Procedure para obter saldos anteriores da conta-corrente */
-    EXTR0001.pc_obtem_saldos_anteriores  (pr_cdcooper   => 3            -- Codigo da Cooperativa
-                                         ,pr_cdagenci   => 0            -- Codigo da agencia
-                                         ,pr_nrdcaixa   => 0            -- Numero da caixa
-                                         ,pr_cdopecxa   => pr_cdoperad  -- Codigo do operador do caixa
-                                         ,pr_nmdatela   => pr_nmdatela  -- Nome da tela
-                                         ,pr_idorigem   => 1            -- Indicador de origem
-                                         ,pr_nrdconta   => rw_crapcop.nrctactl -- Numero da conta do cooperado
-                                         ,pr_idseqttl   => 1            -- Indicador de sequencial
-                                         ,pr_dtmvtolt   => pr_dtmvtolt  -- Data de movimento
-                                         ,pr_dtmvtoan   => pr_dtmvtoan  -- Data de movimento anterior
-                                         ,pr_dtrefere   => pr_dtmvtoan  -- Data de referencia
-                                         ,pr_flgerlog   => TRUE         -- Flag se deve gerar log
-                                         ,pr_dscritic   => pr_dscritic  -- Retorno de critica
-                                         ,pr_tab_saldos => vr_tab_saldos-- Retorna os saldos
-                                         ,pr_tab_erro   => vr_tab_erro);
-
-    -- Convertido conforme o progress ignorando o retorno da package SSPB0001,
-    -- conforme passado por Diego Vincentini, será revisado todo a BO, caso necessario retornar o erro o codigo ja esta pronto
-    /*IF pr_dscritic <> 'OK' THEN
-      pr_dscritic := pr_tab_erro(1).dscritic;
-    END IF; */
-    vr_tab_erro.DELETE;
-    pr_dscritic := null;
-
+    /* Procedure para obter saldo final da cooperativa */
+    extr0001.pc_obtem_saldo_dia(pr_cdcooper   => 3                       -- Fixo na Central
+                               ,pr_rw_crapdat => rw_crapdat              -- Calendario
+                               ,pr_cdagenci   => 0                       -- Codigo da agencia
+                               ,pr_nrdcaixa   => 0                       -- Numero da caixa
+                               ,pr_cdoperad   => pr_cdoperad             -- Codigo do operador do caixa
+                               ,pr_nrdconta   => rw_crapcop.nrctactl     -- Numero da conta do cooperado
+                               ,pr_vllimcre   => rw_crapcop.vllimcre     -- Limite de credito
+                               ,pr_dtrefere   => rw_crapdat.dtmvtolt     -- Data referencia
+                               ,pr_flgcrass   => FALSE                   -- Não carregar a crapass inteira
+                               ,pr_tipo_busca => 'A'                     -- Busca da SDA do dia anterior
+                               ,pr_des_reto   => pr_dscritic
+                               ,pr_tab_sald   => vr_tab_saldos
+                               ,pr_tab_erro   => vr_tab_erro);
+    
     --Buscar valores do saldo anterior
     IF vr_tab_saldos.count > 0 THEN
-      vr_vlressal := nvl(vr_tab_saldos(vr_tab_saldos.first).vlstotal,0);
+      vr_vlressal := nvl(vr_tab_saldos(vr_tab_saldos.first).vlsddisp,0);
     ELSE
       vr_vlressal := 0;
     END IF;
@@ -7900,7 +7895,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     pc_grava_consolidado_singular
                            (pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
                            ,pr_cdbccxlt => 0             -- GLobal
-                           ,pr_dtmvtolt => pr_dtmvtolt   -- Data de movimento
+                           ,pr_dtmvtolt => rw_crapdat.dtmvtolt -- Data de movimento
                            ,pr_tpdcampo => 3             -- Tipo de campo
                            ,pr_vldcampo => vr_vlressal   -- Valor do campo
                            ,pr_cdoperad => '1'           -- Operador
@@ -9444,7 +9439,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     END IF;  
     
     -- Projeção será executada somente fora da tela
-    IF pr_cdprogra <> 'FLUXOS' THEN
+    IF pr_cdprogra NOT IN('FLUXOS','FLUXOD') THEN
       
       -- Gerar a projeção do próximo dia util
       IF pr_tpfluxo IN(3,4,0) THEN  
@@ -9477,8 +9472,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
       END IF;
     END IF;  
     
-    -- Somente quando a execução é efetuada no processo
-    IF pr_cdprogra = 'CRPS624' THEN   
+    -- Somente quando a execução é efetuada no processo ou através do fluxo do dia
+    IF pr_cdprogra IN('CRPS624','FLUXOD') THEN   
       -- Gravar Informacoes do fluxo financeiro consolidado da Cooperativa para o dia do processo
       pc_gera_consolidado_singular( pr_cdcooper => pr_cdcooper     -- Codigo da Cooperativa
                                    ,pr_cdoperad => pr_cdoperad     -- Codigo do operador
@@ -9497,13 +9492,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
                               pr_dscritic => vr_dscritic,
                               pr_tab_erro => pr_tab_erro);
       END IF;
-        
+    
       -- Gravar movimento financeiro consolidado do saldo do dia anterior
       pc_saldo_consolid_dia_ant(pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
                                ,pr_cdoperad => pr_cdoperad   -- Codigo do operador
-                               ,pr_dtmvtolt => pr_dtmvtolt   -- Data de movimento
-                               ,pr_nmdatela => pr_cdprogra   -- Nome da tela
-                               ,pr_dtmvtoan => pr_dtmvtoan   -- Data de movimento anterior
                                ,pr_dscritic => vr_dscritic);
 
       IF vr_dscritic <> 'OK' THEN
