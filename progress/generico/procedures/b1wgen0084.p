@@ -232,7 +232,7 @@
               29/06/2015 - Ajuste na passagem de parametros da procedure
                            "obtem_emprestimo_risco". (James)
                            											 
-              10/07/2015 - Alterada PROCEDURE grava_efetivacao_proposta para 
+			  10/07/2015 - Alterada PROCEDURE grava_efetivacao_proposta para 
                            tratar operacoes de portabilidade de credito. (Reinert)
 
               30/09/2015 - Desenvolvimento do Projeto 215 - Estorno. (James/Reinert)
@@ -266,6 +266,8 @@
 						               transf_contrato_prejuizo e valida_dados_efetivacao_proposta,
                            Prj. 302 (Jean Michel).
 
+			  04/01/2016 - Validar se as informações de Imóvel foram devidamente preenchidas
+			               para o contrato de empréstimo (Renato Darosci - Supero) - M326
 ............................................................................. */
 
 /*................................ DEFINICOES ............................... */
@@ -2216,6 +2218,7 @@ PROCEDURE valida_dados_efetivacao_proposta:
     DEF VAR h-b1wgen0110 AS HANDLE  NO-UNDO.
     DEF VAR aux_nrctrliq AS CHAR    NO-UNDO.
     DEF VAR aux_flgativo AS INTEGER NO-UNDO.
+	DEF VAR aux_flimovel AS INTEGER NO-UNDO.
     
     DEF BUFFER crabbpr FOR crapbpr.
     
@@ -2468,7 +2471,7 @@ PROCEDURE valida_dados_efetivacao_proposta:
                        crawepr.nrctremp = par_nrctremp   NO-LOCK NO-ERROR.
 
     IF   NOT AVAILABLE crawepr   THEN
-         DO:
+        DO:
             ASSIGN aux_cdcritic = 535
                    aux_dscritic = "".
 
@@ -2480,47 +2483,42 @@ PROCEDURE valida_dados_efetivacao_proposta:
                            INPUT-OUTPUT aux_dscritic).
 
             RETURN "NOK".
-         END.
+        END.
     ELSE DO:
         IF crawepr.insitapr <> 1  AND   /* Aprovado */
            crawepr.insitapr <> 3  THEN DO:  /* Aprovado com Restricao */
     
-              ASSIGN aux_cdcritic = 0
-                     aux_dscritic = "A proposta deve estar aprovada.".
+            ASSIGN aux_cdcritic = 0
+                   aux_dscritic = "A proposta deve estar aprovada.".
          
-              RUN gera_erro (INPUT par_cdcooper,
-                             INPUT par_cdagenci,
-                             INPUT par_nrdcaixa,
-                             INPUT 1,
-                             INPUT aux_cdcritic,
-                             INPUT-OUTPUT aux_dscritic).
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
         
-              RETURN "NOK".
+            RETURN "NOK".
         END.
      
-	 /* Verificar se a analise foi finalizada */
-     IF crawepr.insitest <> 3 THEN   
-     DO:
-         ASSIGN aux_cdcritic = 0
-                aux_dscritic = " A proposta nao pode ser efetivada, "
+	      /* Verificar se a analise foi finalizada */
+        IF crawepr.insitest <> 3 THEN DO:
+            ASSIGN aux_cdcritic = 0
+                   aux_dscritic = " A proposta nao pode ser efetivada, "
                                 + " verifique a situacao da proposta".
         
-              RUN gera_erro (INPUT par_cdcooper,
-                             INPUT par_cdagenci,
-                             INPUT par_nrdcaixa,
-                             INPUT 1,
-                             INPUT aux_cdcritic,
-                             INPUT-OUTPUT aux_dscritic).
-        
-              RETURN "NOK".
-     
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+       
+            RETURN "NOK".
         END.
 
-
-        /** Verificar "inliquid" do contrato relacionado
-            a ser liquidado              **/
+        /** Verificar "inliquid" do contrato relacionado a ser liquidado **/
         DO  aux_contador = 1 TO 10 :
-
             IF  crawepr.nrctrliq[aux_contador] > 0 THEN DO:
 
                 IF  CAN-FIND(FIRST crabepr
@@ -2614,10 +2612,9 @@ PROCEDURE valida_dados_efetivacao_proposta:
                                    INPUT-OUTPUT aux_dscritic).
             
                     RETURN "NOK".
-    END.
+                END.
             END.
         END.
-
     END.
 
     FIND craplcr WHERE craplcr.cdcooper = par_cdcooper AND
@@ -2637,7 +2634,66 @@ PROCEDURE valida_dados_efetivacao_proposta:
 
            RETURN "NOK".
         END.
+    ELSE DO:  /* Se encontrar linha de crédito */
+    
+        /* Se o tipo do contrato for igual a 3 -> Contratos de imóveis */
+        IF craplcr.tpctrato = 3 THEN DO:
+            
+			ASSIGN aux_flimovel = 0.
 
+		    { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+
+            /* Verifica se ha contratos de acordo */
+            RUN STORED-PROCEDURE pc_valida_imoveis_epr
+            aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                                ,INPUT par_nrdconta
+                                                ,INPUT crawepr.nrctremp
+                                                ,OUTPUT 0
+                                                ,OUTPUT 0
+                                                ,OUTPUT "").
+
+            CLOSE STORED-PROC pc_valida_imoveis_epr
+                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+            { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+
+            ASSIGN aux_cdcritic = 0
+                   aux_dscritic = ""
+                   aux_cdcritic = INT(pc_valida_imoveis_epr.pr_cdcritic) WHEN pc_valida_imoveis_epr.pr_cdcritic <> ?
+                   aux_dscritic = pc_valida_imoveis_epr.pr_dscritic WHEN pc_valida_imoveis_epr.pr_dscritic <> ?
+				   aux_flimovel = INT(pc_valida_imoveis_epr.pr_flimovel).
+        
+            IF aux_cdcritic > 0 OR (aux_dscritic <> ? AND aux_dscritic <> "") THEN
+            DO:
+                RUN gera_erro (INPUT par_cdcooper,
+                               INPUT par_cdagenci,
+                               INPUT 1, /* nrdcaixa  */
+                               INPUT 1, /* sequencia */
+                               INPUT aux_cdcritic,
+                               INPUT-OUTPUT aux_dscritic).
+
+                RETURN "NOK".
+            END.        
+          
+            IF aux_flimovel = 1 THEN
+            DO:
+            
+                ASSIGN aux_cdcritic = 0
+                       aux_dscritic = "A proposta nao pode ser efetivada, dados dos Imoveis nao cadastrados.".
+
+                RUN gera_erro (INPUT par_cdcooper,
+                               INPUT par_cdagenci,
+                               INPUT 1, /* nrdcaixa  */
+                               INPUT 1, /* sequencia */
+                               INPUT aux_cdcritic,
+                               INPUT-OUTPUT aux_dscritic).
+
+                RETURN "NOK".
+             
+            END. /* IF aux_flimovel = 1 THEN */
+        END. /* IF craplcr.tpctrato = 3 */
+    END. /* IF  NOT AVAIL craplcr */
+    
     IF  par_dtmvtolt > crawepr.dtlibera THEN
         DO:
             ASSIGN  aux_cdcritic = 0
@@ -3051,7 +3107,7 @@ PROCEDURE grava_efetivacao_proposta:
               RETURN "NOK".
 
         END.
-    
+
     RUN valida_dados_efetivacao_proposta (INPUT par_cdcooper,
                                           INPUT par_cdagenci,
                                           INPUT par_nrdcaixa,
@@ -3063,10 +3119,10 @@ PROCEDURE grava_efetivacao_proposta:
                                           INPUT par_dtmvtolt,
                                           INPUT par_flgerlog,
                                           INPUT par_nrctremp).
-    
+
     IF RETURN-VALUE <> "OK"   THEN
        RETURN "NOK".
-   
+
     EFETIVACAO:
     DO TRANSACTION ON ERROR UNDO, LEAVE:
 
@@ -3133,6 +3189,7 @@ PROCEDURE grava_efetivacao_proposta:
                      
               /* Busca a carga ativa */
               RUN busca_carga_ativa IN h-b1wgen0188(INPUT par_cdcooper,
+                                                    INPUT par_nrdconta,
                                                    OUTPUT aux_idcarga).
         
               IF VALID-HANDLE(h-b1wgen0188) THEN
@@ -3368,6 +3425,7 @@ PROCEDURE grava_efetivacao_proposta:
                                    INPUT par_nmdatela,
                                    INPUT FALSE,
                                    INPUT crawepr.cdfinemp,
+                                   INPUT crawepr.cdlcremp,
                                    INPUT crawepr.nrctrliq,
                                    INPUT "", /* par_dsctrliq */
                                    OUTPUT TABLE tt-erro,
@@ -3992,6 +4050,7 @@ PROCEDURE desfaz_efetivacao_emprestimo.
                      
                /* Busca a carga ativa */
                RUN busca_carga_ativa IN h-b1wgen0188(INPUT par_cdcooper,
+                                                     INPUT par_nrdconta,
                                                      OUTPUT aux_idcarga).
             
                IF VALID-HANDLE(h-b1wgen0188) THEN

@@ -13,8 +13,8 @@ var frmCab   		= 'frmCab';
 var frmcadret       = 'frmcadret';
 
 //Labels/Campos do cabeçalho
-var rCddopcao, rCdoperac, rNrtabela, rCdretorn, rDsretorn;
-var cCddopcao, cCdoperac, cNrtabela, cCdretorn, cDsretorn, cTodosCabecalho;
+var rCddopcao, rCdoperac, rNrtabela, rCdretorn, rDsretorn, rCdprodut;
+var cCddopcao, cCdoperac, cNrtabela, cCdretorn, cDsretorn, cTodosCabecalho, cCdprodut;
 
 
 $(document).ready(function() {
@@ -42,14 +42,16 @@ function estadoInicial() {
 	$('#'+frmCab).css({'display':'block'});
 	$('#'+frmcadret).css({'display':'none'});
 	$('#divRetorno').html('').css({'display':'none'});
-	$('#divBotoes').css({'display':'none'});
+	$('#divBotoes').css({ 'display': 'none' });
 	
+	cCdprodut.habilitaCampo();
 	cCddopcao.habilitaCampo();
 	cCdoperac.habilitaCampo();
 	cNrtabela.habilitaCampo();
 	removeOpacidade('divTela');
 
-	$("#cddopcao","#"+frmCab).val("C").focus();
+	$("#cddopcao", "#" + frmCab).val("C").focus();
+	$("#cdprodut", "#" + frmCab).val("1");
 	
 	return false;
 
@@ -71,26 +73,30 @@ function formataCabecalho() {
 
 function formataFrmcadret() {
 	
-	// Cabecalho
+    // Cabecalho
+    rCdprodut = $('label[for="cdprodut"]', '#' + frmcadret);
 	rCdoperac = $('label[for="cdoperac"]','#'+frmcadret);
 	rNrtabela = $('label[for="nrtabela"]','#'+frmcadret);
 	rCdretorn = $('label[for="cdretorn"]','#'+frmcadret);
 	rDsretorn = $('label[for="dsretorn"]','#'+frmcadret);
 	
+	rCdprodut.addClass('rotulo').css({'width':'75px'});
 	rCdoperac.addClass('rotulo').css({'width':'75px'});
 	rNrtabela.addClass('rotulo').css({'width':'75px'});
 	rCdretorn.addClass('rotulo').css({'width':'75px'});
 	rDsretorn.addClass('rotulo').css({'width':'75px'});
 	
+	cCdprodut = $('#cdprodut', '#' + frmcadret);
 	cCdoperac = $('#cdoperac','#'+frmcadret);
 	cNrtabela = $('#nrtabela','#'+frmcadret);
 	cCdretorn = $('#cdretorn','#'+frmcadret);
 	cDsretorn = $('#dsretorn','#'+frmcadret);
 	
+	cCdprodut.addClass('campo').css({'width':'170px'});
 	cCdoperac.addClass('campo').css({'width':'150px'});
 	cNrtabela.addClass('campo').css({'width':'150px'});
 	cCdretorn.addClass('campo').css({'width':'150px'}).setMask('INTEGER','zz9','','');;
-	cDsretorn.addClass('campo').css({'width':'450px'}).attr({"maxlength":"60"});
+	cDsretorn.addClass('campo').css({'width':'450px'}).attr({"maxlength":"131"}); // Renato(Supero) - alterado de 60 para 131 para ficar igual a coluna da tabela
 	
 	layoutPadrao();
 
@@ -105,11 +111,20 @@ function controlaNavegacao() {
 		if ( divError.css('display') == 'block' ) { return false; }		
 		// Se é a tecla ENTER, 
 		if ( e.keyCode == 13 ) {
-			liberaCampos();
+		    mostraProduto();
 			return false;
 		}
 	});	
 	
+	cCdprodut.unbind('keypress').bind('keypress', function (e) {
+	    if (divError.css('display') == 'block') { return false; }
+	    // Se é a tecla ENTER, 
+	    if (e.keyCode == 13) {
+	        liberaCampos();
+	        return false;
+	    }
+	});
+
 	cCdoperac.unbind('keypress').bind('keypress', function(e) {
 		if ( divError.css('display') == 'block' ) { return false; }		
 		// Se é a tecla ENTER, 
@@ -158,39 +173,101 @@ function controlaNavegacao() {
 	
 }
 
+function mostraProduto() {
+    var cddopcao = $('#cddopcao', '#' + frmCab);
+
+    if (cddopcao.hasClass('campoTelaSemBorda')) { return false; };
+
+    cddopcao.desabilitaCampo();
+    $('#' + frmcadret).css({ 'display': 'block' });
+    $('#FS_RETORNO').css({ 'display': 'none' });
+    $('#divBotoes').css({ 'display': 'block' });
+    trocaBotao('');
+
+    formataFrmcadret();
+
+    cCdprodut.val("1");
+
+    $('input, select', '#' + frmcadret).limpaFormulario().removeClass('campoErro');
+
+    highlightObjFocus($('#' + frmcadret));
+
+    // Setar o foco no campo seguinte
+    cCdprodut.focus();
+
+    return false;
+}
 
 function liberaCampos() {
-	
-	var cddopcao = $('#cddopcao','#'+frmCab);
+    var cddopcao = $('#cddopcao', '#' + frmCab);
+    var cdprodut = $('#cdprodut', '#' + frmcadret);
 
-	if ( cddopcao.hasClass('campoTelaSemBorda')  ) { return false; } ;	
+    if (cdprodut.hasClass('campoTelaSemBorda')) { return false; };
 	
-	cddopcao.desabilitaCampo();
-	$('#'+frmcadret).css({'display':'block'});
-	$('#divBotoes').css({'display':'block'});
-	formataFrmcadret();
+    cdprodut.desabilitaCampo();
 	
-	$('input, select', '#'+frmcadret).limpaFormulario().removeClass('campoErro');
-	
-	highlightObjFocus($('#'+frmcadret));
-	
-	if(cddopcao.val() == "C"){
-		$("#tr_cdretorn","#"+frmcadret).hide();
-		$("#tr_dsretorn","#"+frmcadret).hide();
-		cCdoperac.focus();
-	}else if(cddopcao.val() == "I"){
-		$("#tr_cdretorn","#"+frmcadret).show();
-		$("#tr_dsretorn","#"+frmcadret).show();
-		cCdretorn.habilitaCampo();
-		cDsretorn.habilitaCampo();
-		cCdoperac.focus();
-	}else if(cddopcao.val() == "A"){
-		$("#tr_cdretorn","#"+frmcadret).show();
-		$("#tr_dsretorn","#"+frmcadret).show();
-		cCdretorn.habilitaCampo();
-		cDsretorn.desabilitaCampo();
-		cCdoperac.focus();
-	}
+    $('input, select', '#' + frmcadret).limpaFormulario().removeClass('campoErro');
+
+    // Verificar regras conforme produto selecionado
+    if (cdprodut.val() == 1) {
+
+        $('#FS_RETORNO').css({ 'display': 'block' });
+        trocaBotao('Prosseguir');
+
+        $("#tr_cdoperac", "#" + frmcadret).show();
+        $("#tr_nrtabela", "#" + frmcadret).show();
+
+        highlightObjFocus($('#' + frmcadret));
+
+        if (cddopcao.val() == "C") {
+		    $("#tr_cdretorn","#"+frmcadret).hide();
+		    $("#tr_dsretorn","#"+frmcadret).hide();
+		    cCdoperac.focus();
+	    }else if(cddopcao.val() == "I"){
+		    $("#tr_cdretorn","#"+frmcadret).show();
+		    $("#tr_dsretorn","#"+frmcadret).show();
+		    cCdretorn.habilitaCampo();
+		    cDsretorn.habilitaCampo();
+		    cCdoperac.focus();
+	    }else if(cddopcao.val() == "A"){
+		    $("#tr_cdretorn","#"+frmcadret).show();
+		    $("#tr_dsretorn","#"+frmcadret).show();
+		    cCdretorn.habilitaCampo();
+		    cDsretorn.desabilitaCampo();
+		    cCdoperac.focus();
+	    }
+    } else if (cdprodut.val() == 3) {
+
+        $("#tr_cdoperac", "#" + frmcadret).hide();
+        $("#tr_nrtabela", "#" + frmcadret).hide();
+        // Seta os valores para os campos que estão ocultos
+        $("#tr_cdoperac", "#" + frmcadret).val("I");
+        $("#tr_nrtabela", "#" + frmcadret).val("1");
+
+        $("#tr_cdretorn", "#" + frmcadret).show();
+        $("#tr_dsretorn", "#" + frmcadret).show();
+
+        if (cddopcao.val() == "C") {
+            manter_rotina();
+        } else if (cddopcao.val() == "I") {
+
+            $('#FS_RETORNO').css({ 'display': 'block' });
+            trocaBotao('Prosseguir');
+
+            cCdretorn.habilitaCampo();
+            cDsretorn.habilitaCampo();
+            cCdretorn.focus();
+        } else if (cddopcao.val() == "A") {
+
+            $('#FS_RETORNO').css({ 'display': 'block' });
+            trocaBotao('Prosseguir');
+
+            cCdretorn.habilitaCampo();
+            cDsretorn.desabilitaCampo();
+            cCdretorn.focus();
+        }
+        
+    } 
 	
 	return false;
 
@@ -234,7 +311,8 @@ function trocaBotao( botao ) {
 function manter_rotina(rotina){
 	
 	var cddopcao = $('#cddopcao','#'+frmCab).val();
-	var cdoperac = $('#cdoperac','#'+frmcadret).val();
+	var cdprodut = $('#cdprodut','#'+frmcadret).val();
+    var cdoperac = $('#cdoperac','#'+frmcadret).val();
 	var nrtabela = $('#nrtabela','#'+frmcadret).val();
 	var cdretorn = $('#cdretorn','#'+frmcadret).val();
 	var dsretorn = $('#dsretorn','#'+frmcadret).val();
@@ -271,7 +349,8 @@ function manter_rotina(rotina){
 		dataType: "html",
 		url: UrlSite + "telas/cadret/manter_rotina.php", 
 		data: {
-			cddopcao: cddopcao,
+		    cddopcao: cddopcao,
+		    cdprodut: cdprodut,
 			operacao: operacao,
 			cdoperac: cdoperac,
 			nrtabela: nrtabela,

@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Janeiro/94.                      Ultima atualizacao: 22/09/2016
+   Data    : Janeiro/94.                      Ultima atualizacao: 13/01/2017
 
    Dados referentes ao programa:
 
@@ -226,6 +226,9 @@
                             
                22/09/2016 - Incluido validacao de contrato de acordo, Prj. 302
                             (Jean Michel).             
+
+               13/01/2017 - Implementar trava para não permitir efetivar empréstimo sem que 
+                            as informações de Imóveis estejam preenchidas (Renato - Supero)
 ............................................................................. */
 
 { includes/var_online.i }
@@ -287,6 +290,7 @@ DEF VAR aux_percetop         AS DECI                 NO-UNDO.
 DEF VAR aux_txcetmes         AS DECI                 NO-UNDO.
 DEF VAR aux_flctrliq         AS LOGI                 NO-UNDO.
 DEF VAR aux_flgativo         AS INTE                 NO-UNDO.
+DEF VAR aux_flimovel         AS INTE	             NO-UNDO.
 
 DEF BUFFER b_crawepr FOR crawepr.
 
@@ -345,7 +349,6 @@ DO WHILE TRUE:
              tel_nrctremp
              WITH FRAME f_lanctr.
 
-      
       ASSIGN glb_nrcalcul = tel_nrdconta
              glb_cdcritic = 0.
 
@@ -1494,6 +1497,56 @@ DO WHILE TRUE:
          LEAVE.
 
       END.  /*  Fim do DO WHILE TRUE  */
+      
+      /* Se o tipo do contrato for igual a 3 -> Contratos de imóveis */
+      IF craplcr.tpctrato = 3 THEN DO:
+            
+			   ASSIGN aux_flimovel = 0.
+
+		     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+         /* Verifica se ha contratos de acordo */
+         RUN STORED-PROCEDURE pc_valida_imoveis_epr
+         aux_handproc = PROC-HANDLE NO-ERROR (INPUT glb_cdcooper
+                                             ,INPUT tel_nrdconta
+                                             ,INPUT crabepr.nrctremp
+                                             ,OUTPUT 0
+                                             ,OUTPUT 0
+                                             ,OUTPUT "").
+
+         CLOSE STORED-PROC pc_valida_imoveis_epr
+                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+         { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+         ASSIGN glb_cdcritic = 0
+                glb_dscritic = ""
+                glb_cdcritic = pc_valida_imoveis_epr.pr_cdcritic WHEN pc_valida_imoveis_epr.pr_cdcritic <> ?
+                glb_dscritic = pc_valida_imoveis_epr.pr_dscritic WHEN pc_valida_imoveis_epr.pr_dscritic <> ?
+				        aux_flimovel = INT(pc_valida_imoveis_epr.pr_flimovel).
+        
+         IF glb_cdcritic > 0 THEN
+            DO:
+               RUN fontes/critic.p.
+               BELL.
+               MESSAGE glb_dscritic.
+               ASSIGN glb_cdcritic = 0.
+               UNDO, NEXT.
+            END.
+         ELSE IF glb_dscritic <> ? AND glb_dscritic <> "" THEN
+            DO:
+               MESSAGE glb_dscritic.
+               ASSIGN glb_cdcritic = 0.
+               UNDO, NEXT.
+            END.  
+          
+         IF aux_flimovel = 1 THEN
+            DO:
+               MESSAGE "A proposta nao pode ser efetivada, dados dos Imoveis nao cadastrados.".
+               PAUSE 3 NO-MESSAGE.
+               UNDO, NEXT.
+            END. /* IF aux_flimovel = 1 THEN */
+      END. /* IF craplcr.tpctrato = 3 */
 
       IF glb_cdcritic > 0    THEN
          NEXT INCLUSAO.

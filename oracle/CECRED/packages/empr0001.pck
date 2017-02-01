@@ -756,7 +756,14 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
                                         ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                                         ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                         ,pr_des_erro OUT VARCHAR2);
-                                        
+  
+  PROCEDURE pc_valida_imoveis_epr(pr_cdcooper  IN crapepr.cdcooper%TYPE --> Cooperativa conectada
+                                 ,pr_nrdconta  IN crapepr.nrdconta%TYPE --> Conta do associado
+                                 ,pr_nrctremp  IN crapepr.nrctremp%TYPE --> Numero Contrato
+                                 ,pr_flimovel OUT INTEGER               --> Retorna se possui ou não imóveis pendentes de preenchimento
+                                 ,pr_cdcritic OUT PLS_INTEGER           --> Codigo da critica
+                                 ,pr_dscritic OUT VARCHAR2);            --> Descricão da critica
+                                     
 END empr0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
@@ -7944,7 +7951,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           END IF;                                                                                                                              
         END IF;
       
-        IF pr_idorigem IN(3,5) THEN 
+        /*IF pr_idorigem IN(3,5) THEN 
           -- Verifica se existe contrato de acordo ativo
           RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => pr_cdcooper
                                            ,pr_nrdconta => pr_nrdconta
@@ -7964,7 +7971,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             vr_dscritic := 'Pagamento nao permitido, emprestimo em acordo.';
             RAISE vr_exc_saida;
           END IF;
-        END IF;
+        END IF;*/
 
         --Ocorreu transacao
         vr_flgtrans := TRUE;
@@ -13391,9 +13398,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        vr_blqresg_cc := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
                                                   pr_cdcooper => pr_cdcooper,
                                                   pr_cdacesso => 'COBEMP_BLQ_RESG_CC');											  
-												  
+						vr_flgativo :=	0;
 			 -- Verificar se há acordo ativo para o contrato
-       RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => pr_cdcooper
+       /*RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => pr_cdcooper
                                         ,pr_nrdconta => pr_nrdconta
                                         ,pr_nrctremp => pr_nrctremp
                                         ,pr_flgativo => vr_flgativo
@@ -13404,7 +13411,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        IF vr_dscritic IS NOT NULL THEN
 				 -- Gera exceção
 				 RAISE vr_exc_erro;
-			 END IF;
+			 END IF;*/
 												  
        /* verificar se existe boleto de contrato em aberto e se pode lancar juros remuneratorios no contrato */
        /* 1º) verificar se o parametro está bloqueado para realizar busca de boleto em aberto */		   
@@ -14279,6 +14286,82 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     END;
     
   END pc_valida_alt_valor_prop_web;  
+  
+  PROCEDURE pc_valida_imoveis_epr(pr_cdcooper  IN crapepr.cdcooper%TYPE --> Cooperativa conectada
+                                 ,pr_nrdconta  IN crapepr.nrdconta%TYPE --> Conta do associado
+                                 ,pr_nrctremp  IN crapepr.nrctremp%TYPE --> Numero Contrato
+                                 ,pr_flimovel OUT INTEGER               --> Retorna se possui ou não imóveis pendentes de preenchimento
+                                 ,pr_cdcritic OUT PLS_INTEGER           --> Codigo da critica
+                                 ,pr_dscritic OUT VARCHAR2) IS          --> Descricão da critica
+  
+  /* .............................................................................
+    
+     Programa: pc_valida_imoveis_epr                
+     Sistema : Conta-Corrente - Cooperativa de Credito
+     Sigla   : CRED
+     Autor   : Renato Darosci
+     Data    : Dezembro/2016                        Ultima atualizacao: 
+    
+     Dados referentes ao programa:
+    
+     Frequencia: Sempre que for chamada
+     Objetivo  : Validar se o empréstimo possui imóveis que ainda não tiveram seus
+                 dados preenchidos na tela IMOVEL. Os empréstimos que devem conter
+                 estas informações são os empréstimos de tipo de contrato da linha 
+                 de crédito igual a 3.
+    
+     Alteracoes:     
+  ............................................................................. */
+
+    CURSOR cr_crapepr IS 
+        SELECT 1
+          FROM crapbpr b
+             , craplcr r
+             , crawepr t
+         WHERE t.cdcooper = pr_cdcooper
+           AND t.nrdconta = pr_nrdconta
+           AND t.nrctremp = pr_nrctremp
+           AND r.cdcooper = t.cdcooper
+           AND r.cdlcremp = t.cdlcremp
+           AND r.tpctrato = 3 -- Contratos de imóvel 
+           AND b.cdcooper = t.cdcooper
+           AND b.nrdconta = t.nrdconta
+           AND b.nrctrpro = t.nrctremp
+           AND b.flgalien = 1  -- Alienação
+           AND b.dscatbem IN ('CASA','APARTAMENTO') -- Que seja casa ou apartamento
+           AND NOT EXISTS (SELECT 1
+                             FROM tbepr_imovel_alienado i
+                            WHERE i.cdcooper = t.cdcooper 
+                              AND i.nrdconta = t.nrdconta
+                              AND i.nrctrpro = t.nrctremp
+                              AND i.idseqbem = b.idseqbem);
+    
+    -- VARIÁVEIS
+    vr_inregist   NUMBER;
+        
+  BEGIN
+      
+    -- Setar a flag para zero indicando que não há pendencia
+    pr_flimovel := 0;
+    
+    -- Buscar contratos sem informação de imóveis
+    OPEN  cr_crapepr;
+    FETCH cr_crapepr INTO vr_inregist;
+      
+    -- Se encontrar registros
+    IF cr_crapepr%FOUND THEN
+      -- Setar a flag para hum indicando que há pendencias
+      pr_flimovel := 1;
+    END IF;
+      
+    -- Fechar o cursor
+    CLOSE cr_crapepr;
+      
+  EXCEPTION
+    WHEN OTHERS THEN
+      -- Montar descrição de erro não tratado
+      pr_dscritic := 'Erro não tratado na EMPR0001.pc_valida_imoveis_epr --> ' || SQLERRM;
+  END pc_valida_imoveis_epr;
   
 
 END empr0001;
