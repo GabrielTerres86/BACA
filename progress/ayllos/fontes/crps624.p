@@ -44,7 +44,6 @@ RUN STORED-PROCEDURE pc_crps624 aux_handproc = PROC-HANDLE
    (INPUT glb_cdcooper,
     INPUT glb_cdagenci,
     INPUT glb_cdoperad,                  
-    INPUT glb_nmdatela,                               
     INPUT INT(STRING(glb_flgresta,"1/0")),
     OUTPUT 0,
     OUTPUT 0,
