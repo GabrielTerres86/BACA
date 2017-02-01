@@ -754,6 +754,13 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
                                         ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                         ,pr_des_erro OUT VARCHAR2);
                                         
+  PROCEDURE pc_valida_imoveis_epr(pr_cdcooper  IN crapepr.cdcooper%TYPE --> Cooperativa conectada
+                                 ,pr_nrdconta  IN crapepr.nrdconta%TYPE --> Conta do associado
+                                 ,pr_nrctremp  IN crapepr.nrctremp%TYPE --> Numero Contrato
+                                 ,pr_flimovel OUT INTEGER               --> Retorna se possui ou não imóveis pendentes de preenchimento
+                                 ,pr_cdcritic OUT PLS_INTEGER           --> Codigo da critica
+                                 ,pr_dscritic OUT VARCHAR2);            --> Descricão da critica
+                                     
 END empr0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
@@ -7961,6 +7968,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           END IF;                                                                                                                              
         END IF;
       
+        IF pr_idorigem IN(3,5) THEN 
+          -- Verifica se existe contrato de acordo ativo
+          RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => pr_cdcooper
+                                           ,pr_nrdconta => pr_nrdconta
+                                           ,pr_nrctremp => pr_nrctremp
+                                           ,pr_flgativo => vr_flgativo
+                                           ,pr_cdcritic => vr_cdcritic
+                                           ,pr_dscritic => vr_dscritic);
+
+          IF NVL(vr_cdcritic,0) > 0 THEN
+            vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+            RAISE vr_exc_saida;
+          ELSIF vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_saida;      
+          END IF;
+                                   
+          IF vr_flgativo = 1 THEN
+            vr_dscritic := 'Pagamento nao permitido, emprestimo em acordo.';
+            RAISE vr_exc_saida;
+          END IF;
+        END IF;
+
         --Ocorreu transacao
         vr_flgtrans := TRUE;
       EXCEPTION
@@ -8159,7 +8188,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         END IF;
         --Valor da Parcela menor valor minimo
         IF nvl(apli0001.fn_round(pr_vlpagpar, 2), 0) < nvl(vr_valormin, 0) THEN
-          vr_cdcritic := 0;
+          ----------------------------------------------------------------------------------
+          -- Projeto 302 - Sistema de Acordos - Responsável: James
+          -- Incluso por: Renato Darosci - 27/09/2016
+          --    
+          -- Realizado a fixação do código de erro para pagamento do valor mínimo. O 
+          -- intuíto disto é poder tratar este erro em particular na rotina chamadora,
+          -- pois para o sistema de acordos, esta situação não define um erro, apenas 
+          -- define as parcelas que puderam ou não ser liquidadas conforme o valor do 
+          -- boleto pago. 
+          --
+          -- NA CRIAÇÃO DE NOVAS CRÍTICAS QUANTO AO PAGAMENTO DO VALOR MINÍMO, O CÓDIGO 
+          -- DE ERRO DEVE SER INCLUSO NO PARAMETRO(CRAPPRM) "CRITICA_VLR_MIN_PARCEL", para
+          -- QUE O PAGAMENTO DO ACORDO, TRATE A NOVA CRITICA DA MESMA FORMA.
+          -- EM CASO DE DÚVIDAS VERIFIQUE -> RECP0001
+          ----------------------------------------------------------------------------------
+          vr_cdcritic := 995;
           vr_dscritic := 'Valor a pagar deve ser maior ou igual que R$ ' ||
                          to_char(vr_valormin,'fm999g999g990d00','NLS_NUMERIC_CHARACTERS = '',.''') || '.';
                
@@ -12144,7 +12188,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                      ,pr_nrctremp    IN crapepr.nrctremp%TYPE --> Número do contrato de empréstimo
                                      ,pr_dtmvtoan    IN DATE     --> Data Movimento Anterior
                                      ,pr_ehprcbat    IN VARCHAR2 --> Indicador Processo Batch (S/N)
-                                     ,pr_tab_pgto_parcel IN EMPR0001.typ_tab_pgto_parcel --Tabela com Pagamentos de Parcelas
+                                     ,pr_tab_pgto_parcel IN OUT EMPR0001.typ_tab_pgto_parcel --Tabela com Pagamentos de Parcelas
                                      ,pr_tab_crawepr IN EMPR0001.typ_tab_crawepr --Tabela com Contas e Contratos
                                      ,pr_nrseqava    IN NUMBER DEFAULT 0 --> Pagamento: Sequencia do avalista
                                      ,pr_des_erro    OUT VARCHAR --> Retorno OK / NOK
@@ -12156,7 +12200,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Alisson
-       Data    : Março/2015                        Ultima atualizacao: 24/03/2015
+       Data    : Março/2015                        Ultima atualizacao: 27/09/2016
     
        Dados referentes ao programa:
     
@@ -12164,6 +12208,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Objetivo  : Rotina para Efetuar a Liquidacao do Emprestimo
     
        Alteracoes: 24/03/2015 - Conversão Progress para Oracle (Alisson - AMcom)
+    
+                   27/09/2016 - Tornar o parametro PR_TAB_PGTO_PARCEL um parametro 
+                                "IN OUT" (Renato/Supero - P.302 - Acordos)
     
     ............................................................................. */
   
@@ -12332,6 +12379,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
               END IF;                            
             END IF; --pr_ehprcbat
             
+            -- Renato Darosci - Informa que a parcela foi processada
+            vr_tab_pgto(vr_index_char).inpagmto := 1;
+            
           ELSIF rw_crappep.dtvencto < pr_dtmvtolt THEN /* Parcela Vencida */
             
             --Efetivar Pagamento Atrasado parcela na craplem
@@ -12430,6 +12480,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                 RAISE vr_exc_saida;
               END IF;                            
             END IF; --pr_ehprcbat
+            
+            -- Renato Darosci - Informa que a parcela foi processada
+            vr_tab_pgto(vr_index_char).inpagmto := 1;
+            
           ELSIF rw_crappep.dtvencto > pr_dtmvtolt   THEN /* Parcela a Vencer */ 
              
             --Efetivar Pagamento Antecipado parcela na craplem
@@ -12481,6 +12535,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                 RAISE vr_exc_saida;
               END IF; 
             END IF;  
+            
+            -- Renato Darosci - Informa que a parcela foi processada
+            vr_tab_pgto(vr_index_char).inpagmto := 1;
+            
           END IF;                               
         END LOOP;  --rw_crappep 
       
@@ -12521,6 +12579,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           ROLLBACK TO SAVEPOINT save_trans;
       END;
     
+      -- Renato Darosci - 27/09/2016 - Retornar a tabela de memória após processamento
+      -- Limpa a tabela de memória do parametro
+      pr_tab_pgto_parcel.DELETE();
+    
+      -- Devolver a tabela de memória para a rotina chamadora
+      vr_index_char := vr_tab_pgto.FIRST();
+      WHILE vr_index_char IS NOT NULL LOOP
+        -- Copiar dados de uma tabela para outra
+        pr_tab_pgto_parcel(pr_tab_pgto_parcel.count() + 1) := vr_tab_pgto(vr_index_char);
+        -- Proximo Registro
+        vr_index_char:= vr_tab_pgto.NEXT(vr_index_char);
+      END LOOP;
+      --------------------
+      
       --Se nao ocorreu a transacao
       IF NOT vr_flgtrans THEN
         -- Retorno não OK
@@ -13091,8 +13163,115 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     END;
   END pc_liq_mesmo_dia_web;
   
+  -- Procedure para pagamento antecipado da parcela
+  PROCEDURE pr_efetiva_pagto_antec_parcela (pr_cdcooper    IN crapcop.cdcooper%TYPE --> Cooperativa conectada
+                                           ,pr_cdagenci    IN crapass.cdagenci%TYPE --> Código da agência
+                                           ,pr_nrdcaixa    IN craperr.nrdcaixa%TYPE --> Número do caixa
+                                           ,pr_cdoperad    IN crapdev.cdoperad%TYPE --> Código do Operador
+                                           ,pr_nmdatela    IN VARCHAR2              --> Nome da tela
+                                           ,pr_idorigem    IN INTEGER               --> Id do módulo de sistema
+                                           ,pr_cdpactra    IN INTEGER               --> P.A. da transação
+                                           ,pr_nrdconta    IN crapepr.nrdconta%TYPE --> Número da conta
+                                           ,pr_idseqttl    IN crapttl.idseqttl%TYPE --> Seq titula
+                                           ,pr_dtmvtolt    IN crapdat.dtmvtolt%TYPE --> Movimento atual
+                                           ,pr_flgerlog    IN VARCHAR2              --> Indicador S/N para geração de log
+                                           ,pr_nrctremp    IN crapepr.nrctremp%TYPE --> Número do contrato de empréstimo
+                                           ,pr_nrparepr    IN INTEGER               --> Número parcelas empréstimo
+                                           ,pr_vlpagpar    IN NUMBER                --> Valor a pagar parcela
+                                           ,pr_tab_crawepr IN empr0001.typ_tab_crawepr --Tabela com Contas e Contratos
+                                           ,pr_nrseqava    IN NUMBER DEFAULT 0       --> Pagamento: Sequencia do avalista
+                                           ,pr_cdhistor    OUT craphis.cdhistor%TYPE --> Historico Pagamento
+                                           ,pr_nrdolote    OUT craplot.nrdolote%TYPE --> Numero Lote Pagamento
+                                           ,pr_des_reto    OUT VARCHAR               --> Retorno OK / NOK
+                                           ,pr_tab_erro    OUT gene0001.typ_tab_erro) IS --> Tabela com possíves erros
+    
+    /* .............................................................................
+      
+       Programa: pr_efetiva_pagto_antec_parcela (antigo b1wgen0084a.p --> efetiva_pagamento_antecipado_parcela)
+       Sistema : Conta-Corrente - Cooperativa de Credito
+       Sigla   : CRED
+       Autor   : Renato Darosci
+       Data    : Setembro/2016.                         Ultima atualizacao: 29/09/2016
+      
+       Dados referentes ao programa:
+      
+       Frequencia: Sempre que for chamado.
+       Objetivo  : 
+      
+       Alteracoes:
+                    
+    ............................................................................. */
+  
+    vr_exc_erro  EXCEPTION;
+  
+  BEGIN 
+    
+    pr_des_reto := 'NOK';
+  
+    -- Efetivar Pagamento Antecipado parcela na craplem
+    pc_efetiva_pagto_antec_lem(pr_cdcooper    => pr_cdcooper    --> Cooperativa conectada
+                              ,pr_cdagenci    => pr_cdagenci    --> Código da agência
+                              ,pr_nrdcaixa    => pr_nrdcaixa    --> Número do caixa
+                              ,pr_cdoperad    => pr_cdoperad    --> Código do Operador
+                              ,pr_nmdatela    => pr_nmdatela    --> Nome da tela
+                              ,pr_idorigem    => pr_idorigem    --> Id do módulo de sistema
+                              ,pr_cdpactra    => pr_cdpactra    --> P.A. da transação
+                              ,pr_nrdconta    => pr_nrdconta    --> Número da conta
+                              ,pr_idseqttl    => pr_idseqttl    --> Seq titula
+                              ,pr_dtmvtolt    => pr_dtmvtolt    --> Movimento atual
+                              ,pr_flgerlog    => pr_flgerlog    --> Indicador S/N para geração de log
+                              ,pr_nrctremp    => pr_nrctremp    --> Número do contrato de empréstimo
+                              ,pr_nrparepr    => pr_nrparepr    --> Número parcelas empréstimo
+                              ,pr_vlpagpar    => pr_vlpagpar    --> Valor da parcela emprestimo
+                              ,pr_tab_crawepr => pr_tab_crawepr --> Tabela com Contas e Contratos
+                              ,pr_nrseqava    => pr_nrseqava    --> Pagamento: Sequencia do avalista
+                              ,pr_cdhistor    => pr_cdhistor    --> Historico 
+                              ,pr_nrdolote    => pr_nrdolote    --> Lote Pagamento
+                              ,pr_des_reto    => vr_des_reto    --> Retorno OK / NOK
+                              ,pr_tab_erro    => vr_tab_erro);  --> Tabela com possíves erros
+           
+    --Se Retornou erro
+    IF vr_des_reto <> 'OK' THEN
+      RAISE vr_exc_erro;
+    END IF;
+    
+    /* Lanca em C/C e atualiza o lote */
+    empr0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
+                                         ,pr_dtmvtolt => pr_dtmvtolt --> Movimento atual
+                                         ,pr_cdagenci => pr_cdagenci --> Código da agência
+                                         ,pr_cdbccxlt => 100         --> Número do caixa
+                                         ,pr_cdoperad => pr_cdoperad --> Código do Operador
+                                         ,pr_cdpactra => pr_cdpactra --> P.A. da transação
+                                         ,pr_nrdolote => pr_nrdolote --> Numero do Lote
+                                         ,pr_nrdconta => pr_nrdconta --> Número da conta
+                                         ,pr_cdhistor => pr_cdhistor --> Codigo historico
+                                         ,pr_vllanmto => pr_vlpagpar --> Valor da parcela emprestimo
+                                         ,pr_nrparepr => pr_nrparepr --> Número parcelas empréstimo
+                                         ,pr_nrctremp => pr_nrctremp --> Número do contrato de empréstimo
+                                         ,pr_nrseqava => pr_nrseqava -- Pagamento: Sequencia do avalista
+                                         ,pr_des_reto => vr_des_reto --> Retorno OK / NOK
+                                         ,pr_tab_erro => vr_tab_erro); --> Tabela com possíves erros
+    --Se Retornou erro
+    IF vr_des_reto <> 'OK' THEN
+      --Sair
+      RAISE vr_exc_erro;
+    END IF;
+    
+    -- Retornar ok para as transações
+    pr_des_reto := 'OK';
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      pr_des_reto := vr_des_reto;
+      pr_tab_erro := vr_tab_erro;
+    WHEN OTHERS THEN
+      pr_des_reto := 'NOK';
+      pr_tab_erro(pr_tab_erro.FIRST).dscritic := 'Erro PR_EFETIVA_PAGTO_ANTEC_PARCELA: '||SQLERRM;
+  END pr_efetiva_pagto_antec_parcela;
+  
+  
   --Procedure de pagamentos de parcelas
-  PROCEDURE pc_gera_pagamentos_parcelas( pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da Cooperativa
+  PROCEDURE pc_gera_pagamentos_parcelas(pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da Cooperativa
                                         ,pr_cdagenci IN crapass.cdagenci%TYPE --> Código da agência
                                         ,pr_nrdcaixa IN craperr.nrdcaixa%TYPE --> Número do caixa
                                         ,pr_cdoperad IN VARCHAR2              --> Código do operador
@@ -13108,7 +13287,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                         ,pr_totatual IN crapepr.vlemprst%TYPE
                                         ,pr_totpagto IN crapepr.vlemprst%TYPE
                                         ,pr_nrseqava IN NUMBER DEFAULT 0      --> Pagamento: Sequencia do avalista
-																				,pr_tab_pgto_parcel IN  empr0001.typ_tab_pgto_parcel
+																			 ,pr_tab_pgto_parcel IN OUT empr0001.typ_tab_pgto_parcel
 																				,pr_des_reto OUT VARCHAR
                                         ,pr_tab_erro OUT gene0001.typ_tab_erro) IS --> Tabela com possíves erros     
   BEGIN
@@ -13129,6 +13308,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        
        27/11/2015 - Incluido rotina de bloqueio de pagto de boletos de emprestimo
                     referente ao projeto 210 (Rafael)
+                    
+       28/09/2016 - Incluir validação para contratos de acordo ativos, conforme 
+                    projeto 302 - Sistema de acordos ( Renato Darosci - Supero )
+                    
+       29/09/2016 - Incluir o pagamento de parcela a vencer, seguindo as mesmas
+                    regras da b1wgen0084a.p->gera_pagamentos_parcelas, conforme 
+                    projeto 302 - Sistema de acordos ( Renato Darosci - Supero )
+       
     ............................................................................. */
     DECLARE
        
@@ -13141,6 +13328,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 			-- Erro em chamadas da pc_gera_erro 
 			vr_des_reto VARCHAR(4000);
 			vr_tab_erro GENE0001.typ_tab_erro;
+      vr_flgativo NUMBER;
+      vr_cdhispag INTEGER;
+      vr_lotepaga INTEGER;
+
 
       vr_tab_pgto_parcel empr0001.typ_tab_pgto_parcel; --> Tabela com registros de pagamentos
       vr_tab_calculado   empr0001.typ_tab_calculado;   --> Tabela com totais calculados
@@ -13266,10 +13457,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                                   pr_cdcooper => pr_cdcooper,
                                                   pr_cdacesso => 'COBEMP_BLQ_RESG_CC');											  
 												  
+			 -- Verificar se há acordo ativo para o contrato
+       RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => pr_cdcooper
+                                        ,pr_nrdconta => pr_nrdconta
+                                        ,pr_nrctremp => pr_nrctremp
+                                        ,pr_flgativo => vr_flgativo
+                                        ,pr_cdcritic => vr_cdcritic
+                                        ,pr_dscritic => vr_dscritic);
+       
+       -- Se houve retorno de erro
+       IF vr_dscritic IS NOT NULL THEN
+				 -- Gera exceção
+				 RAISE vr_exc_erro;
+			 END IF;
 												  
        /* verificar se existe boleto de contrato em aberto e se pode lancar juros remuneratorios no contrato */
        /* 1º) verificar se o parametro está bloqueado para realizar busca de boleto em aberto */		   
-       IF vr_blqresg_cc = 'S' THEN                                             
+       /*     e... se o contrato não estiver em um acordo ativo  */
+       IF vr_blqresg_cc = 'S' AND vr_flgativo = 0 THEN                                             
              
           -- inicializar rows de cursores
           rw_cde := NULL;
@@ -13530,11 +13735,46 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
              IF vr_des_reto <> 'OK' THEN
                RAISE vr_exc_erro2;
              END IF;
+  				 
+           ELSIF rw_crappep.dtvencto > pr_dtmvtolt   THEN /* Parcela a Vencer */ 
+             
+             pr_efetiva_pagto_antec_parcela(pr_cdcooper    => pr_cdcooper --> Cooperativa conectada
+                                           ,pr_cdagenci    => pr_cdagenci --> Código da agência
+                                           ,pr_nrdcaixa    => pr_nrdcaixa --> Número do caixa
+                                           ,pr_cdoperad    => pr_cdoperad --> Código do Operador
+                                           ,pr_nmdatela    => pr_nmdatela --> Nome da tela
+                                           ,pr_idorigem    => pr_idorigem --> Id do módulo de sistema
+                                           ,pr_cdpactra    => pr_cdpactra --> P.A. da transação
+                                           ,pr_nrdconta    => pr_nrdconta --> Número da conta
+                                           ,pr_idseqttl    => pr_idseqttl --> Seq titula
+                                           ,pr_dtmvtolt    => pr_dtmvtolt --> Movimento atual
+                                           ,pr_flgerlog    => pr_flgerlog --> Indicador S/N para geração de log
+                                           ,pr_nrctremp    => rw_crappep.nrctremp --> Número do contrato de empréstimo
+                                           ,pr_nrparepr    => rw_crappep.nrparepr --> Número parcelas empréstimo
+                                           ,pr_vlpagpar    => vr_tab_pgto_parcel(idx).vlpagpar --> Valor da parcela emprestimo
+                                           ,pr_tab_crawepr => vr_tab_crawepr --> Tabela com Contas e Contratos
+                                           ,pr_nrseqava    => pr_nrseqava    --> Pagamento: Sequencia do avalista
+                                           ,pr_cdhistor    => vr_cdhispag    --> Historico Multa
+                                           ,pr_nrdolote    => vr_lotepaga    --> Lote Pagamento
+                                           ,pr_des_reto    => vr_des_reto    --> Retorno OK / NOK
+                                           ,pr_tab_erro    => vr_tab_erro);  --> Tabela com possíves erros
+             
+             -- Se Retornou erro
+             IF vr_des_reto <> 'OK' THEN
+               RAISE vr_exc_erro2;
+             END IF;
   																				 
            END IF;
+           
+           -- Indicar que a parcela foi paga
+           vr_tab_pgto_parcel(idx).inpagmto := 1;
+           
          END LOOP;
        END IF;
 			 
+       -- atualizar tabela no parametro de retorno
+       pr_tab_pgto_parcel := vr_tab_pgto_parcel;
+       
        --Se escreve erro log
        IF pr_flgerlog = 'S' THEN
 
@@ -13558,6 +13798,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 	
 	     EXCEPTION
 	       WHEN vr_exc_erro THEN
+           -- atualizar tabela no parametro de retorno
+           pr_tab_pgto_parcel := vr_tab_pgto_parcel;  
+         
 					 -- Retorno não OK
 					 pr_des_reto := 'NOK';
 					 -- Gerar rotina de gravação de erro
@@ -13570,6 +13813,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 																,pr_tab_erro => pr_tab_erro);
 																
          WHEN vr_exc_erro2 THEN
+           -- atualizar tabela no parametro de retorno
+           pr_tab_pgto_parcel := vr_tab_pgto_parcel;
+    
            -- Retorno não OK
 	         pr_des_reto := 'NOK';
 					 -- Copiar o erro já existente na variavel para
@@ -14098,6 +14344,82 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     END;
     
   END pc_valida_alt_valor_prop_web;  
+  
+  PROCEDURE pc_valida_imoveis_epr(pr_cdcooper  IN crapepr.cdcooper%TYPE --> Cooperativa conectada
+                                 ,pr_nrdconta  IN crapepr.nrdconta%TYPE --> Conta do associado
+                                 ,pr_nrctremp  IN crapepr.nrctremp%TYPE --> Numero Contrato
+                                 ,pr_flimovel OUT INTEGER               --> Retorna se possui ou não imóveis pendentes de preenchimento
+                                 ,pr_cdcritic OUT PLS_INTEGER           --> Codigo da critica
+                                 ,pr_dscritic OUT VARCHAR2) IS          --> Descricão da critica
+  
+  /* .............................................................................
+    
+     Programa: pc_valida_imoveis_epr                
+     Sistema : Conta-Corrente - Cooperativa de Credito
+     Sigla   : CRED
+     Autor   : Renato Darosci
+     Data    : Dezembro/2016                        Ultima atualizacao: 
+    
+     Dados referentes ao programa:
+    
+     Frequencia: Sempre que for chamada
+     Objetivo  : Validar se o empréstimo possui imóveis que ainda não tiveram seus
+                 dados preenchidos na tela IMOVEL. Os empréstimos que devem conter
+                 estas informações são os empréstimos de tipo de contrato da linha 
+                 de crédito igual a 3.
+    
+     Alteracoes:     
+  ............................................................................. */
+
+    CURSOR cr_crapepr IS 
+        SELECT 1
+          FROM crapbpr b
+             , craplcr r
+             , crawepr t
+         WHERE t.cdcooper = pr_cdcooper
+           AND t.nrdconta = pr_nrdconta
+           AND t.nrctremp = pr_nrctremp
+           AND r.cdcooper = t.cdcooper
+           AND r.cdlcremp = t.cdlcremp
+           AND r.tpctrato = 3 -- Contratos de imóvel 
+           AND b.cdcooper = t.cdcooper
+           AND b.nrdconta = t.nrdconta
+           AND b.nrctrpro = t.nrctremp
+           AND b.flgalien = 1  -- Alienação
+           AND b.dscatbem IN ('CASA','APARTAMENTO') -- Que seja casa ou apartamento
+           AND NOT EXISTS (SELECT 1
+                             FROM tbepr_imovel_alienado i
+                            WHERE i.cdcooper = t.cdcooper 
+                              AND i.nrdconta = t.nrdconta
+                              AND i.nrctrpro = t.nrctremp
+                              AND i.idseqbem = b.idseqbem);
+    
+    -- VARIÁVEIS
+    vr_inregist   NUMBER;
+        
+  BEGIN
+      
+    -- Setar a flag para zero indicando que não há pendencia
+    pr_flimovel := 0;
+    
+    -- Buscar contratos sem informação de imóveis
+    OPEN  cr_crapepr;
+    FETCH cr_crapepr INTO vr_inregist;
+      
+    -- Se encontrar registros
+    IF cr_crapepr%FOUND THEN
+      -- Setar a flag para hum indicando que há pendencias
+      pr_flimovel := 1;
+    END IF;
+      
+    -- Fechar o cursor
+    CLOSE cr_crapepr;
+      
+  EXCEPTION
+    WHEN OTHERS THEN
+      -- Montar descrição de erro não tratado
+      pr_dscritic := 'Erro não tratado na EMPR0001.pc_valida_imoveis_epr --> ' || SQLERRM;
+  END pc_valida_imoveis_epr;
   
 
 END empr0001;

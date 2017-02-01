@@ -23,9 +23,25 @@
 <div>
 <form id="frmcadret" name="frmcadret" style="display:none" class="formulario" onsubmit="return false;">
 	<fieldset>
-	<legend>Cadastro de Retorno</legend>
+	<legend>Produto</legend>
 	<table width="100%">
 		<tr>		
+			<td>
+				<label for="cdprodut">Produto:</label>
+				<select id="cdprodut" name="cdoperac" style="width: 200px;">
+					<option value="1">1 - Gravames</option>
+					<option value="3">3 - Aliena&ccedil;&atilde;o de Im&oacute;veis</option>
+				</select>
+				<a href="#" class="botao" id="btnOK2" name="btnOK2" onClick="liberaCampos(); return false;" style = "text-align:right;">OK</a>
+			</td>
+		</tr>
+	</table>
+	</fieldset>
+
+	<fieldset id="FS_RETORNO">
+	<legend>Cadastro de Retorno</legend>
+	<table width="100%">
+		<tr  id="tr_cdoperac">		
 			<td>
 				<label for="cdoperac">Opera&ccedil;&atilde;o:</label>
 				<select id="cdoperac" name="cdoperac" style="width: 200px;">
@@ -36,7 +52,7 @@
 				</select>
 			</td>
 		</tr>
-		<tr>		
+		<tr id="tr_nrtabela">		
 			<td>
 				<label for="nrtabela">Tabela:</label>
 				<select id="nrtabela" name="nrtabela" style="width: 200px;">
