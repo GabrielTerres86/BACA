@@ -458,7 +458,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
          AND dtmvtolt = pr_dtdpagto
          AND ( (pr_flgcnvsi = 0 AND cdhistor <> 1154) -- Diferente do Sicredi
               OR 
-               (cdhistor = 1154)                      -- Somente para Sicredi
+               (pr_flgcnvsi = 1 AND cdhistor = 1154)                      -- Somente para Sicredi
               );
               
     --Buscar de bloquetos de cobranca Cecred
@@ -2989,6 +2989,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     vr_nrdiames  VARCHAR2(2);
     vr_dtbuscar  DATE;
     vr_dtmontag  DATE;
+    vr_dtmontaa  DATE;
+    vr_dtmontad  DATE;
     vr_dtlimite  DATE;
     vr_idx       VARCHAR2(11);
 
@@ -3034,19 +3036,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
             pr_tab_per_datas(vr_idx).dtmvtolt := vr_dtmontag;
           -- Se foi passada a flag para buscar um dia para mais ou para menos
           ELSIF pr_flprxant THEN 
-            -- Montar o dia anterior ou próximo verificando mudança de mês
-            IF trunc(vr_dtmontag,'mm') = trunc(vr_dtmontag+1,'mm') THEN
-              -- 1 dia para mais
-              vr_dtmontag := vr_dtmontag + 1;
-            ELSE 
-              -- 1 dia para menos
-              vr_dtmontag := vr_dtmontag - 1;            
-            END IF;
-            -- Refazer o teste agora com a nova data 
-            IF (NOT pr_fldiasem OR to_char(vr_dtmontag,'D') = vr_ndiasema) AND vr_dtmontag = gene0005.fn_valida_dia_util(pr_cdcooper,vr_dtmontag) THEN 
+            -- Montar o dia anterior verificando mudança de mês
+            vr_dtmontaa := vr_dtmontag - 1;
+            -- Somente procurar se o dia estiver no mesmo mês (D-1) E Refazer o teste agora com a nova data 
+            IF trunc(vr_dtmontag,'mm') = trunc(vr_dtmontaa,'mm') AND (NOT pr_fldiasem OR to_char(vr_dtmontaa,'D') = vr_ndiasema) AND vr_dtmontaa = gene0005.fn_valida_dia_util(pr_cdcooper,vr_dtmontaa) THEN 
               -- Adicionar o dia ao vetor
-              vr_idx := '000'||TO_CHAR(vr_dtmontag,'RRRRMMDD');
-              pr_tab_per_datas(vr_idx).dtmvtolt := vr_dtmontag;
+              vr_idx := '000'||TO_CHAR(vr_dtmontaa,'RRRRMMDD');
+              pr_tab_per_datas(vr_idx).dtmvtolt := vr_dtmontaa;
+            ELSE
+              -- Testar com D+1 
+              vr_dtmontad := vr_dtmontag + 1;
+              -- Somente procurar se o dia posterior estiver no mesmo mês (D+1) E Refazer o teste agora com a nova data 
+              IF trunc(vr_dtmontag,'mm') = trunc(vr_dtmontad,'mm') AND (NOT pr_fldiasem OR to_char(vr_dtmontad,'D') = vr_ndiasema) AND vr_dtmontad = gene0005.fn_valida_dia_util(pr_cdcooper,vr_dtmontad) THEN 
+                -- Adicionar o dia ao vetor
+                vr_idx := '000'||TO_CHAR(vr_dtmontad,'RRRRMMDD');
+                pr_tab_per_datas(vr_idx).dtmvtolt := vr_dtmontad; 
+              END IF;
             END IF;
           END IF; 
         END IF;         
@@ -3650,7 +3655,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
 
   -- Procedure para gravar movimento financeiro dos titulos
   PROCEDURE pc_grava_mvt_srtitulos (pr_cdcooper IN INTEGER      -- Codigo da Cooperativa
-                                   ,pr_nmdatela  IN VARCHAR2    -- Nome da tela
+                                   ,pr_nmdatela IN VARCHAR2    -- Nome da tela
                                    ,pr_dtmvtolt IN DATE         -- Data de movimento
                                    ,pr_dscritic OUT VARCHAR2) AS          -- Descrição da critica
 
@@ -3715,10 +3720,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     END IF;
     
     
-    -- Buscar boletos BB Sempre na Cobran
-    FOR rw_crapcob IN cr_crapcob_bb(pr_cdcooper,pr_dtmvtolt) LOOP
-      vr_vlrdotit_01 := nvl(vr_vlrdotit_01,0) + nvl(rw_crapcob.vldpagto,0);
-    END LOOP;
+    /* No processo jah teremos os valores da CENTRAL */
+    IF nvl(pr_nmdatela,' ') <> 'FLUXOS' THEN
+      -- Buscaremos na LCM
+      FOR rw_craplcm IN cr_craplcm_parame(pr_cdbccxlt => 1
+                                         ,pr_dtmvtolt => pr_dtmvtolt
+                                         ,pr_cdcooper => pr_cdcooper
+                                         ,pr_cdremessa => 4
+                                         ,pr_tpfluxo   => 'E') LOOP
+        -- Somar valores
+        vr_vlrdotit_01 := NVL(vr_vlrdotit_01,0) + NVL(rw_craplcm.vllanmto,0);
+      END LOOP;
+    ELSE
+      -- Buscar boletos BB Sempre na Cobran
+      FOR rw_crapcob IN cr_crapcob_bb(pr_cdcooper,pr_dtmvtolt) LOOP
+        vr_vlrdotit_01 := nvl(vr_vlrdotit_01,0) + nvl(rw_crapcob.vldpagto,0);
+      END LOOP;
+    END IF;  
    
     -- Gravar BBRasil
     pc_grava_movimentacao(pr_cdcooper => pr_cdcooper    -- Codigo da Cooperativa
@@ -3874,9 +3892,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
         END LOOP;
       ELSE 
         -- buscar lançamentos
-        FOR rw_crapcob IN cr_crapcob_bb(pr_cdcooper => pr_cdcooper
-                                       ,pr_dtmvtoan => vr_tab_per_datas(vr_idx).dtmvtolt) LOOP
-          vr_vltotger := nvl(vr_vltotger,0) + nvl(rw_crapcob.vldpagto,0);
+        FOR rw_craplcm IN cr_craplcm_parame(pr_cdbccxlt => 1
+                                           ,pr_dtmvtolt => vr_tab_per_datas(vr_idx).dtmvtolt
+                                           ,pr_cdcooper => pr_cdcooper
+                                           ,pr_cdremessa => 4
+                                           ,pr_tpfluxo   => 'E') LOOP
+          -- Somar valores
+          vr_vltotger := NVL(vr_vltotger,0) + NVL(rw_craplcm.vllanmto,0);
         END LOOP;
       END IF;  
 
