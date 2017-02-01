@@ -260,7 +260,7 @@
               16/02/2016 - Adicionado verificacao se chassi informado ja se encontra em outro
                            emprestimo em aberto. (Jorge/Gielow) - SD 391096             
               17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
-              
+
               01/02/2017 - Inclusao de comando validate crapepr. Ao chamar a rotina de rating, esta
                            nao conseguia visualizar o contrato que estava sendo criado, considerando
                            apenas os antigos e impactando na geracao do rating.
@@ -3073,6 +3073,7 @@ PROCEDURE grava_efetivacao_proposta:
                      
               /* Busca a carga ativa */
               RUN busca_carga_ativa IN h-b1wgen0188(INPUT par_cdcooper,
+                                                    INPUT par_nrdconta,
                                                    OUTPUT aux_idcarga).
         
               IF VALID-HANDLE(h-b1wgen0188) THEN
@@ -3310,6 +3311,7 @@ PROCEDURE grava_efetivacao_proposta:
                                    INPUT par_nmdatela,
                                    INPUT FALSE,
                                    INPUT crawepr.cdfinemp,
+                                   INPUT crawepr.cdlcremp,
                                    INPUT crawepr.nrctrliq,
                                    INPUT "", /* par_dsctrliq */
                                    OUTPUT TABLE tt-erro,
@@ -3934,6 +3936,7 @@ PROCEDURE desfaz_efetivacao_emprestimo.
                      
                /* Busca a carga ativa */
                RUN busca_carga_ativa IN h-b1wgen0188(INPUT par_cdcooper,
+                                                     INPUT par_nrdconta,
                                                      OUTPUT aux_idcarga).
             
                IF VALID-HANDLE(h-b1wgen0188) THEN
