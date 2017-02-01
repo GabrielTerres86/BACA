@@ -5021,28 +5021,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     LOOP
       EXIT WHEN vr_idx IS NULL;
       
-      -- CAso utilizar base histórica
-      IF pr_flghistor THEN 
-        -- Buscar dos valores realizados e armazenados no fluxo financeiro 
-        FOR rw_crapffm IN cr_crapffm_histor(pr_cdcooper => pr_cdcooper
-                                           ,pr_dtmvtolt => vr_tab_per_datas(vr_idx).dtmvtolt
-                                           ,pr_cdbccxlt => 756
-                                           ,pr_tpdmovto => 2 --> Saida
-                                           ,pr_tpdcampo => 10 --> VLCARCRE
-                                           ) LOOP 
-          vr_vltotger := vr_vltotger + nvl(rw_crapffm.vllanmto,0);
-        END LOOP;
-      ELSE 
-        -- Buscar os valores pagos nos ultimos 6 meses, lembrando que a data deve ser util
-        FOR rw_craplcm IN cr_craplcm_parame(pr_cdbccxlt  => 756
-                                           ,pr_dtmvtolt  => vr_tab_per_datas(vr_idx).dtmvtolt
-                                           ,pr_cdcooper  => pr_cdcooper
-                                           ,pr_cdremessa => 10
-                                           ,pr_tpfluxo   => 'S') LOOP
-           vr_vltotger := vr_vltotger + nvl(rw_craplcm.vllanmto,0);
-        END LOOP; -- Fim loop craplcm
-      END IF;   
-       
+      -- Buscar os valores pagos nos ultimos 6 meses, lembrando que a data deve ser util
+      FOR rw_craplcm IN cr_craplcm_parame(pr_cdbccxlt  => 756
+                                         ,pr_dtmvtolt  => vr_tab_per_datas(vr_idx).dtmvtolt
+                                         ,pr_cdcooper  => pr_cdcooper
+                                         ,pr_cdremessa => 10
+                                         ,pr_tpfluxo   => 'S') LOOP
+         vr_vltotger := vr_vltotger + nvl(rw_craplcm.vllanmto,0);
+      END LOOP; -- Fim loop craplcm
+      
       vr_contador := vr_contador + 1;
       
       vr_idx := vr_tab_per_datas.NEXT(vr_idx);
@@ -6260,7 +6247,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
         FOR rw_crapffm IN cr_crapffm_histor(pr_cdcooper => pr_cdcooper
                                            ,pr_dtmvtolt => pr_dtmvtoan
                                            ,pr_cdbccxlt => 85
-                                           ,pr_tpdmovto => 4 --> Saida Projetado
+                                           ,pr_tpdmovto => 2 --> Saida Realizado
                                            ,pr_tpdcampo => 1 --> VLCHEQUE
                                            ) LOOP 
           vr_vldevchq := vr_vldevchq + nvl(rw_crapffm.vllanmto,0);
@@ -6796,7 +6783,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
         FOR rw_crapffm IN cr_crapffm_histor(pr_cdcooper => pr_cdcooper
                                            ,pr_dtmvtolt => pr_dtmvtoan
                                            ,pr_cdbccxlt => 85 
-                                           ,pr_tpdmovto => 3 --> Entrada Projetado
+                                           ,pr_tpdmovto => 1 --> Entrada Realizado
                                            ,pr_tpdcampo => 1 --> VLCHEQUE
                                            ) LOOP 
           vr_vldevchq := vr_vldevchq + nvl(rw_crapffm.vllanmto,0);
