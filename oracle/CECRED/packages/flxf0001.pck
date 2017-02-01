@@ -539,16 +539,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
   FUNCTION fn_calcula_difere_valor(pr_vlrealizado IN NUMBER
                                   ,pr_vlprojetado IN NUMBER) RETURN NUMBER IS
   BEGIN
-    BEGIN
-      -- Se houver valor realização
-      IF NVL(pr_vlrealizado,0) <> 0 THEN
-        -- Retornar diferença entre o Realizado e Projetado
-        RETURN pr_vlrealizado - pr_vlprojetado;
-      ELSE
-        -- Diferença será zero:
-        RETURN 0;
-      END IF;
-    END;
+    -- Retornar diferença entre o Realizado e Projetado
+    RETURN pr_vlrealizado - pr_vlprojetado;
   EXCEPTION
     WHEN OTHERS THEN 
       RETURN 0;
