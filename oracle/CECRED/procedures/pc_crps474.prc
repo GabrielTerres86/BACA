@@ -78,7 +78,9 @@ BEGIN
                             e apos cada transacao de debito efetivada no
                             contrato (Tiago Castro - RKAM).
 
-              14/04/2016 - Ajuste feito para não ser possível executar o programa caso
+              31/03/2016 - Ajustes savepoits SD352945 (Odirlei-AMcom)
+			  
+			  14/04/2016 - Ajuste feito para não ser possível executar o programa caso
                            não for dia útil, apenas quando inprocess = 1, conforme solicitado
                            no chamado 409646. (Kelvin)
               27/04/2016 - Ajuste para bloquear a conta 8415005 para nao debitar
@@ -777,7 +779,7 @@ BEGIN
           /*primeiro processamento*/
 
           --Criar savepoint
-          SAVEPOINT sav_trans;
+          SAVEPOINT sav_trans_474;
 
           --Atualizar quantidade meses descontados
           BEGIN
@@ -890,7 +892,7 @@ BEGIN
                                                             || vr_cdprogra || ' --> '
                                                             || vr_dscritic );
                   --Rollback até savepoint
-                  ROLLBACK TO SAVEPOINT sav_trans;
+                  ROLLBACK TO SAVEPOINT sav_trans_474;
                   --Proximo registro
                   CONTINUE;
                 END IF;
@@ -992,7 +994,7 @@ BEGIN
                                                           || vr_cdprogra || ' --> '
                                                           || vr_dscritic );
               --Desfazer transacao
-              ROLLBACK TO SAVEPOINT sav_trans;
+              ROLLBACK TO SAVEPOINT sav_trans_474;
               --Proximo registro
               CONTINUE;
             END IF;
@@ -1079,7 +1081,7 @@ BEGIN
         END IF;
 
         --Criar savepoint
-        SAVEPOINT sav_trans;
+        SAVEPOINT sav_trans_474;
 
         --Buscar pagamentos Parcela
            EMPR0001.pc_busca_pgto_parcelas (pr_cdcooper => pr_cdcooper                --> Cooperativa conectada
@@ -1112,7 +1114,7 @@ BEGIN
                                                           || vr_cdprogra || ' --> '
                                                           || vr_dscritic );
             --Desfazer transacao
-            ROLLBACK TO SAVEPOINT sav_trans;
+            ROLLBACK TO SAVEPOINT sav_trans_474;
             --Proximo registro
             CONTINUE;
           END IF;
@@ -1171,6 +1173,25 @@ BEGIN
         /* Se deu erro eh porque nao tinha dinheiro minimo suficiente */
         --Se ocorreu erro
         IF vr_des_erro <> 'OK' THEN
+
+		  --Desfazer transacao
+          ROLLBACK TO SAVEPOINT sav_trans_474;
+          IF vr_tab_erro.count > 0 THEN
+            vr_cdcritic := 0;            
+            vr_dscritic := 'ERRO coop ' || rw_crappep.cdcooper ||
+                           ' nrdconta ' || rw_crappep.nrdconta ||
+                           ' nrctremp ' || rw_crappep.nrctremp ||
+                           ': '|| vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+                           
+            -- Gerar log
+            btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
+                                       pr_ind_tipo_log => 2, 
+                                       pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
+                                                          ' - '||vr_cdprogra ||' --> '|| vr_dscritic,
+                                       pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));  
+          
+          END IF;
+
           --Proximo registro
           CONTINUE;
         END IF;

@@ -802,6 +802,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
   --             02/02/2016 - Adicionado validação na procedure pc_busca_pgto_parcelas_prefix
   --                          para verificar se o emprestimo já está liquidado 389736 (Kelvin).
   --
+  --
+  --             31/03/2016 - Ajustes savepoints para um savepoint de um procedimento sobrepor o outro
+  --                          e ao realizar o rollback fazer apenas do ultimo savepoint SD352945 (Odirlei - AMcom)
+  --    
   --             28/11/2016 - P341 - Automatização BACENJUD - Alterado para validar o departamento à partir
   --                          do código e não mais pela descrição (Renato Darosci - Supero)
   ---------------------------------------------------------------------------------------------------------------
@@ -8551,7 +8555,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       BEGIN
       
         --Criar savepoint para desfazer transacao
-        SAVEPOINT sav_trans;
+        SAVEPOINT savtrans_grava_liquidacao_empr;
       
         -- Verifica se a data esta cadastrada
         OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
@@ -8766,10 +8770,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                    ,pr_flgerlog   => 'N' --Escrever Log
                                    ,pr_des_reto   => vr_des_erro --Retorno OK/NOK
                                    ,pr_tab_erro   => pr_tab_erro); --Tabela Erro
-        --Se ocorreu erro
-        IF vr_des_erro <> 'OK' THEN
-          RAISE vr_exc_saida;
-        END IF;
+        -- Não era tratada o retorno de erro no Progress
+        ----Se ocorreu erro
+        --IF vr_des_erro <> 'OK' THEN
+        --  RAISE vr_exc_saida;
+        --END IF;
       
         /** GRAVAMES **/
         GRVM0001.pc_solicita_baixa_automatica(pr_cdcooper => pr_cdcooper -- Cooperativa
@@ -8790,7 +8795,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       EXCEPTION
         WHEN vr_exc_saida THEN
           --Desfaz transacoes
-          ROLLBACK TO SAVEPOINT sav_trans;
+          ROLLBACK TO SAVEPOINT savtrans_grava_liquidacao_empr;
       END;
     
       --Se nao ocorreu a transacao
@@ -8975,7 +8980,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     
       BEGIN
         --Criar savepoint para desfazer transacao
-        SAVEPOINT sav_trans;
+        SAVEPOINT sav_efetiva_pag_atr_parcel_lem;
       
         --Buscar registro da parcela
         OPEN cr_crappep(pr_cdcooper => pr_cdcooper --> Cooperativa
@@ -9540,7 +9545,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       EXCEPTION
         WHEN vr_exc_saida THEN
           --Desfaz transacoes
-          ROLLBACK TO SAVEPOINT sav_trans;
+          ROLLBACK TO SAVEPOINT sav_efetiva_pag_atr_parcel_lem;
       END;
     
       --Se nao ocorreu a transacao
@@ -9696,7 +9701,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     
       BEGIN
         --Criar savepoint para desfazer transacao
-        SAVEPOINT sav_trans;
+        SAVEPOINT sav_efetiva_pagto_atr_parcel;
       
         --Efetivar Pagamento Normal parcela na craplem
         EMPR0001.pc_efetiva_pag_atr_parcel_lem(pr_cdcooper    => pr_cdcooper --> Cooperativa conectada
@@ -9814,7 +9819,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       EXCEPTION
         WHEN vr_exc_saida THEN
           --Desfaz transacoes
-          ROLLBACK TO SAVEPOINT sav_trans;
+          ROLLBACK TO SAVEPOINT sav_efetiva_pagto_atr_parcel;
         WHEN vr_exc_ok THEN
           NULL;
       END;
@@ -9992,7 +9997,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
       BEGIN
         --Criar savepoint para desfazer transacao
-        SAVEPOINT sav_trans;
+        SAVEPOINT sav_efetiva_pagto_antec_lem;
 
         --Selecionar Parcela 
         OPEN cr_crappep(pr_cdcooper => pr_cdcooper
@@ -10310,7 +10315,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       EXCEPTION
         WHEN vr_exc_saida THEN
           --Desfaz transacoes
-          ROLLBACK TO SAVEPOINT sav_trans;
+          ROLLBACK TO SAVEPOINT sav_efetiva_pagto_antec_lem;
       END;
     
       --Se nao ocorreu a transacao
@@ -10710,7 +10715,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       BEGIN
       
         --Criar savepoint para desfazer transacao
-        SAVEPOINT sav_trans;
+        SAVEPOINT sav_efetiva_pagto_parc_lem;
       
         -- Procedure para validar se a parcela esta OK.
         EMPR0001.pc_valida_pagto_normal_parcela(pr_cdcooper => pr_cdcooper -- Codigo Cooperativa
@@ -11031,7 +11036,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       EXCEPTION
         WHEN vr_exc_saida THEN
           --Desfaz transacoes
-          ROLLBACK TO SAVEPOINT sav_trans;
+          ROLLBACK TO SAVEPOINT sav_efetiva_pagto_parc_lem;
       END;
     
       --Se nao ocorreu a transacao
@@ -11172,7 +11177,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     
       BEGIN
         --Criar savepoint para desfazer transacao
-        SAVEPOINT sav_trans;
+        SAVEPOINT savtrans_efetiva_pagto_parcela;
         --Efetivar Pagamento Normal parcela na craplem
         EMPR0001.pc_efetiva_pagto_parc_lem(pr_cdcooper    => pr_cdcooper --> Cooperativa conectada
                                           ,pr_cdagenci    => pr_cdagenci --> Código da agência
@@ -11228,7 +11233,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       EXCEPTION
         WHEN vr_exc_saida THEN
           --Desfaz transacoes
-          ROLLBACK TO SAVEPOINT sav_trans;
+          ROLLBACK TO SAVEPOINT savtrans_efetiva_pagto_parcela;
       END;
     
       --Se nao ocorreu a transacao
@@ -12248,7 +12253,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         
       BEGIN
         --Criar savepoint para desfazer transacao
-        SAVEPOINT save_trans;
+        SAVEPOINT save_efetua_liquidacao_empr;
       
         --Selecionar Parcelas Emprestimo
         FOR rw_crappep IN cr_crappep (pr_cdcooper => pr_cdcooper
@@ -12509,7 +12514,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       EXCEPTION
         WHEN vr_exc_saida THEN
           --Desfaz transacoes
-          ROLLBACK TO SAVEPOINT save_trans;
+          ROLLBACK TO SAVEPOINT save_efetua_liquidacao_empr;
       END;
     
       --Se nao ocorreu a transacao
