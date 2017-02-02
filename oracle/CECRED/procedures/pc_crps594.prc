@@ -160,6 +160,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
                    07/05/2015 - Adicionado o valor default FALSE para o campo incoptco da 
                                 vr_tab_regimp (Douglas - Chamado 266731)
                                 
+                   11/01/2016 - Alterado procedures da package PAGA0001 para a COBR0007
+                                  - pc_inst_protestar
+                                  - pc_inst_sustar_baixar
+                                (Douglas - Importacao de Arquivos CNAB)
+                                
                    15/02/2016 - Inclusao do parametro conta na chamada da
 									              TARI0001.pc_carrega_dados_tarifa_cobr. (Jaison/Marcos)
 
@@ -3438,7 +3443,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
                            boleto, o sistema recebeu a liquida¿¿o do boleto 085 */
                         IF vr_crapcob THEN      
                           /* Sustar a baixa */
-                          PAGA0001.pc_inst_sustar_baixar (pr_cdcooper => pr_tab_regimp(vr_index_reg).cdcooper    --Codigo Cooperativa
+                          COBR0007.pc_inst_sustar_baixar (pr_cdcooper => pr_tab_regimp(vr_index_reg).cdcooper    --Codigo Cooperativa
                                                          ,pr_nrdconta => pr_tab_regimp(vr_index_reg).nrdconta    --Numero da Conta
                                                          ,pr_nrcnvcob => pr_tab_regimp(vr_index_reg).nrcnvcob    --Numero Convenio
                                                          ,pr_nrdocmto => pr_tab_regimp(vr_index_reg).nrdocmto    --Numero Documento
@@ -3956,10 +3961,35 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
             IF cr_crapcco%NOTFOUND THEN
               --Fechar Cursor
               CLOSE cr_crapcco;
-              --Convenio Nao encontrado
-              vr_dscritic:= 'Convenio Nao encontrado.';
-              --Levantar Excecao
-              RAISE vr_exc_erro;
+              
+              -- Gerando o nome do arquivo de erro
+              vr_nmarquiv := 'err'||substr(pr_tab_cratarq(vr_index_cratarq).nmarquiv,1,29);
+
+              -- Comando para mover o arquivo para a pasta integra
+              vr_comando:= 'mv '||vr_dir_salvar||'/'||pr_tab_cratarq(vr_index_cratarq).nmarquiv||' '||vr_dir_integra||'/'||vr_nmarquiv||' 2> /dev/null';
+
+              --Executar o comando no unix
+              GENE0001.pc_OScommand (pr_typ_comando => 'S'
+                                    ,pr_des_comando => vr_comando
+                                    ,pr_typ_saida   => vr_typ_saida
+                                    ,pr_des_saida   => vr_dscritic);
+                        
+              IF vr_dscritic IS NOT NULL THEN            
+                -- Envio centralizado de log de erro
+                btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                          ,pr_ind_tipo_log => 2 -- Erro tratato
+                                          ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                             || vr_cdprogra || ' --> '
+                                                             || vr_dscritic );
+              
+                vr_dscritic := NULL;
+                                                             
+              END IF;
+                                    
+              --Proximo Arquivo
+              vr_index_cratarq:= pr_tab_cratarq.NEXT(vr_index_cratarq); 
+              CONTINUE;                     
+              
             END IF;  
             --Fechar Cursor
             CLOSE cr_crapcco;
@@ -4618,7 +4648,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
             END IF;  
                    
             /* se chegou na data de protesto, gera o protesto */
-            PAGA0001.pc_inst_protestar(pr_cdcooper => pr_cdcooper              --Codigo Cooperativa
+            COBR0007.pc_inst_protestar(pr_cdcooper => pr_cdcooper              --Codigo Cooperativa
                                       ,pr_nrdconta => rw_crapceb.nrdconta      --Numero da Conta
                                       ,pr_nrcnvcob => rw_crapceb.nrcnvcob      --Numero Convenio
                                       ,pr_nrdocmto => rw_crapceb.nrdocmto      --Numero Documento
@@ -4712,7 +4742,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
                                                    || 'Fim Processo Lancamento Tarifas'); 
                                                    
       /* -------------------------     Geracao Log crapcol    ------------------------- */
-                                                   
+
       vr_dataflog := trunc(sysdate);
       vr_horaflog := gene0002.fn_busca_time;
       
@@ -4731,7 +4761,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
                                                    || vr_cdprogra || ' --> '|| rw_crapcol.dslogtit); 
                                                                                   
       END LOOP;                   
-                                                   
+
       /*-------------------------  Gera Relatorios Finais ----------------------*/
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                   ,pr_ind_tipo_log => 1 -- processo normal
@@ -4820,4 +4850,3 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
 
 
   END pc_crps594;
-/
