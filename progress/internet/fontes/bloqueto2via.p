@@ -5,15 +5,15 @@
    Sistema : Internet - Cooperativa de Credito 
    Sigla   : CRED
    Autor   : Jorge
-   Data    : Setembro/2011                   Ultima Atualizacao:  00/00/0000
+   Data    : Setembro/2011                   Ultima Atualizacao: 27/01/2017
    
    Dados referentes ao programa:
    
    Frequencia: esporadica(internet)
    Objetivo  : chama a BO de busca de boleto e retona um XML
       
-   Alteracoes: 
- 
+   Alteracoes: 27/01/2017 - Recuperar os campos flserasa e qtdianeg 
+	                        e gravar no objeto boleto (Tiago/Ademir SD601919)
 ..............................................................................*/
 
 CREATE WIDGET-POOL.
@@ -202,6 +202,10 @@ IF  VALID-HANDLE(h-b1wnet0001)  THEN
             criaCampo("dtvctori",(IF  tt-consulta-blt.dtvctori = ?  THEN " "
                                   ELSE STRING(tt-consulta-blt.dtvctori,
                                              "99/99/9999"))).
+            criaCampo("flserasa",(IF tt-consulta-blt.flserasa = TRUE THEN
+                                  "S" ELSE "N")).
+			criaCampo("qtdianeg",STRING(tt-consulta-blt.qtdianeg, "99")).											  
+											 
         END. /* fim for each tt-consulta-blt */
 
     END. /* IF VALID-HANDLE(h-b1wnet0001) */
