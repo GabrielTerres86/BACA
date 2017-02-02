@@ -7,7 +7,7 @@
    
      Autor: Evandro
     
-      Data: Janeiro/2010                        Ultima alteracao: 07/10/2016
+      Data: Janeiro/2010                        Ultima alteracao: 02/02/2017
     
 Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
 
@@ -276,8 +276,14 @@ Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
 
 			      07/10/2016 - Ajustes referente a melhoria M271. (Kelvin)
 
+            04/11/2016 - M172 - Atualizacao Telefone - Nova operacao 65/66/67
+                         (Guilherme/SUPERO)
+
             08/11/2016 - Alteracoes referentes a melhoria 165 - Lancamentos Futuros. 
                          Lenilson (Mouts)
+                         
+            02/02/2017 - #566765 Mudanca do tipo da variavel xml_resp de char para 
+                         longchar (Carlos)
 ............................................................................. */
 
 CREATE WIDGET-POOL.
@@ -398,6 +404,7 @@ DEFINE VARIABLE aux_cdhistor AS INTE                        NO-UNDO.
 DEFINE VARIABLE aux_tpcptdoc AS INTE                        NO-UNDO. /* 1=leitora 2=Linha digitavel*/ 
 DEFINE VARIABLE aux_nrdddtfc AS DECI   INIT 0               NO-UNDO.
 DEFINE VARIABLE aux_nrtelefo AS DECI   INIT 0               NO-UNDO.
+DEFINE VARIABLE aux_tptelefo AS INT                         NO-UNDO.
 DEFINE VARIABLE aux_flgacsms AS INTE                        NO-UNDO.
 DEFINE VARIABLE aux_dsmsgsms AS CHAR                        NO-UNDO.
 
@@ -486,6 +493,7 @@ DEFINE VARIABLE h-b1wgen0028             AS HANDLE   NO-UNDO.
 DEFINE VARIABLE h-b1wgen0031             AS HANDLE   NO-UNDO.
 DEFINE VARIABLE h-b1wgen0032             AS HANDLE   NO-UNDO.
 DEFINE VARIABLE h-b1wgen0059             AS HANDLE   NO-UNDO.
+DEFINE VARIABLE h-b1wgen0070             AS HANDLE   NO-UNDO.
 DEFINE VARIABLE h-b1wgen0092             AS HANDLE   NO-UNDO.
 DEFINE VARIABLE h-b1wgen0123             AS HANDLE   NO-UNDO.
 DEFINE VARIABLE h-b1wgen0155             AS HANDLE   NO-UNDO.
@@ -899,6 +907,9 @@ DO:
         IF   xField:NAME = "NRTELEFO" THEN
              aux_nrtelefo = DECI(xText:NODE-VALUE).
         ELSE
+        IF   xField:NAME = "TPTELEFO" THEN
+             aux_tptelefo = INTE(xText:NODE-VALUE).
+        ELSE
         IF   xField:NAME = "FLGACSMS" THEN
              aux_flgacsms = INTE(xText:NODE-VALUE).
 		ELSE
@@ -942,7 +953,8 @@ DELETE OBJECT xText.
 /* Gera a resposta */
 RESPOSTA:
 DO:
-    DEFINE VARIABLE xml_resp     AS CHARACTER   NO-UNDO.
+/*  Usada apenas para o log (desabilitado) */
+/*  DEFINE VARIABLE xml_resp     AS LONGCHAR   NO-UNDO. */
 
     CREATE X-DOCUMENT xDoc.
     CREATE X-NODEREF  xRoot.
@@ -1503,6 +1515,31 @@ DO:
                  IF   RETURN-VALUE <> "OK"   THEN
                       NEXT.
              END.
+	    ELSE
+        IF  aux_operacao = 65  THEN DO:
+
+            RUN atualizacao-telefone.
+
+            IF  RETURN-VALUE <> "OK"   THEN
+                NEXT.
+        END.
+        ELSE
+        IF  aux_operacao = 66  THEN DO:
+
+            RUN verifica-atualizacao-telefone.
+
+            IF  RETURN-VALUE <> "OK"   THEN
+                NEXT.
+        END.
+        ELSE
+        IF  aux_operacao = 67  THEN DO:
+
+            RUN atualizacao-data-telefone.
+
+            IF  RETURN-VALUE <> "OK"   THEN
+                NEXT.
+        END.
+
 
 
         LEAVE.
@@ -1511,16 +1548,17 @@ DO:
 
     /* log -> nao usa quebra de linha */
     xDoc:SAVE("MEMPTR",ponteiro_xml).
-
-    xml_resp = GET-STRING(ponteiro_xml,1) NO-ERROR.
+/*  Usada apenas para o log (desabilitado) */
+/*  xml_resp = GET-STRING(ponteiro_xml,1) NO-ERROR. */
+/*  COPY-LOB FROM ponteiro_xml TO xml_resp CONVERT SOURCE CODEPAGE "UTF-8" NO-ERROR. */
 
     /* verifica se o XML é muito extenso, e importa somente 32K */
-    IF  ERROR-STATUS:ERROR  THEN
+/*  IF  ERROR-STATUS:ERROR  THEN
         xml_resp = GET-STRING(ponteiro_xml,32000).
 
     ASSIGN xml_resp = REPLACE(xml_resp,CHR(10),"")
            xml_resp = REPLACE(xml_resp,CHR(13),"").
-
+*/
     SET-SIZE(ponteiro_xml) = 0.
 
     /* log desabilitado 
@@ -8833,4 +8871,234 @@ PROCEDURE lancamentos-futuros:
     RETURN "OK".
 END PROCEDURE.
 /*Fim 63 - calcula_valor_titulo_vencido*/
+
+/* 65 - atualizacao-telefone */
+PROCEDURE atualizacao-telefone:
+
+    DEF VAR aux_msgatcad AS CHAR                                       NO-UNDO.
+    DEF VAR aux_chavealt AS CHAR                                       NO-UNDO.
+    DEF VAR aux_msgrvcad AS CHAR                                       NO-UNDO.
+    DEF VAR aux_tpatlcad AS INTE                                       NO-UNDO.
+
+    RUN sistema/generico/procedures/b1wgen0070.p PERSISTENT SET h-b1wgen0070.
+
+    RUN validar-telefone IN h-b1wgen0070
+                        (INPUT aux_cdcooper,
+                         INPUT 91,             /** PAC      **/
+                         INPUT 999,            /** Caixa    **/
+                         INPUT "996",          /** Operador **/
+                         INPUT "TAA",          /** Tela     **/
+                         INPUT 4,              /** Origem   **/
+                         INPUT aux_nrdconta,
+                         INPUT 1,              /** Seq Titular  **/
+                         INPUT "I",
+                         INPUT TO-ROWID(""),
+                         INPUT aux_tptelefo,
+                         INPUT aux_nrdddtfc,
+                         INPUT aux_nrtelefo,
+                         INPUT 0,              /** Ramal     **/
+                         INPUT "",             /** Setor     **/
+                         INPUT "",             /** Contato   **/
+                         INPUT 0,              /** Operadora **/
+                         INPUT TRUE,
+                         INPUT 0,     /** Conta replicadora **/
+                        OUTPUT TABLE tt-erro).
+
+    IF  RETURN-VALUE = "NOK"  THEN DO:
+
+        DELETE PROCEDURE h-b1wgen0070.
+
+        FIND FIRST tt-erro NO-LOCK NO-ERROR.
+
+        IF  AVAILABLE tt-erro  THEN
+            aux_dscritic = tt-erro.dscritic.
+        ELSE
+            aux_dscritic = "Problemas na BO 70 (1)".
+
+        RETURN "NOK".
+    END.
+
+
+    /** SE DEU SUCESSO NA VALIDACAO, SEGUE COM A GRAVACAO DO TELEFONE **/
+    RUN gerenciar-telefone IN h-b1wgen0070
+                          (INPUT aux_cdcooper,
+                           INPUT 91,             /** PAC          **/
+                           INPUT 999,            /** Caixa        **/
+                           INPUT "996",          /** Operador     **/
+                           INPUT "TAA",          /** Tela         **/
+                           INPUT 4,              /** Origem       **/
+                           INPUT aux_nrdconta,
+                           INPUT 1,              /** Seq. Titular **/
+                           INPUT "I",
+                           INPUT aux_dtmvtolt,
+                           INPUT TO-ROWID(""),
+                           INPUT aux_tptelefo,
+                           INPUT aux_nrdddtfc,
+                           INPUT aux_nrtelefo,
+                           INPUT 0,              /** Ramal        **/
+                           INPUT "",             /** Setor        **/
+                           INPUT "",             /** Contato      **/
+                           INPUT 0,              /** Operadora Cel**/
+                           INPUT "I",            /** Sis.Alteracao**/
+                           INPUT TRUE,           /** Logar        **/
+                           INPUT 1,              /** Situacao     **/
+                           INPUT 4,              /** Origem       **/
+                          OUTPUT aux_tpatlcad,
+                          OUTPUT aux_msgatcad,
+                          OUTPUT aux_chavealt,
+                          OUTPUT aux_msgrvcad,
+                          OUTPUT TABLE tt-erro).
+
+    IF  RETURN-VALUE = "NOK"  THEN DO:
+
+        DELETE PROCEDURE h-b1wgen0070.
+
+        FIND FIRST tt-erro NO-LOCK NO-ERROR.
+
+        IF  AVAILABLE tt-erro  THEN
+            aux_dscritic = tt-erro.dscritic.
+        ELSE
+            aux_dscritic = "Problemas na BO 70 (2)".
+
+        RETURN "NOK".
+    END.
+
+    xDoc:CREATE-NODE(xField,"ALTERACAO","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = "OK".
+    xField:APPEND-CHILD(xText).
+
+    RETURN "OK".
+
+END PROCEDURE.
+/* Fim 65 - atualizacao-telefone */
+
+/* 66 - verifica-atualizacao-telefone */
+PROCEDURE verifica-atualizacao-telefone:
+
+    DEF VAR aux_atualiza    AS CHAR             NO-UNDO.
+    DEF VAR aux_nrdofone    AS CHAR             NO-UNDO.
+    DEF VAR aux_cdcritic    AS INTEGER          NO-UNDO.
+    DEF VAR aux_dscritic    AS CHAR             NO-UNDO.
+    DEF VAR aux_qtmeatel    AS INTE             NO-UNDO.
+
+   { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+
+    RUN STORED-PROCEDURE pc_verifica_atualiz_fone
+        aux_handproc = PROC-HANDLE NO-ERROR
+                                (INPUT aux_cdcooper, /* Cooperativa */
+                                 INPUT aux_nrdconta, /* Nr. da conta */
+                                 INPUT 1,    /* Sequencia de titular */
+                                 OUTPUT 0,   /* cdcritic */
+                                 OUTPUT "",  /* dscritic */
+                                 OUTPUT "",  /* Atualiza SIM/NAO */
+                                 OUTPUT "",  /* Nr do Fone       */
+                                 OUTPUT 0).  /* Qtde meses Atualizacao */
+
+    CLOSE STORED-PROC pc_verifica_atualiz_fone
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+    { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+
+    ASSIGN aux_cdcritic = 0
+           aux_dscritic = ""
+           aux_atualiza = ""
+           aux_nrdofone = ""
+           aux_qtmeatel = 0
+           aux_atualiza = pc_verifica_atualiz_fone.pr_atualiza
+                              WHEN pc_verifica_atualiz_fone.pr_atualiza <> ?
+           aux_nrdofone = pc_verifica_atualiz_fone.pr_dsnrfone
+                              WHEN pc_verifica_atualiz_fone.pr_dsnrfone <> ?
+           aux_cdcritic = pc_verifica_atualiz_fone.pr_cdcritic
+                              WHEN pc_verifica_atualiz_fone.pr_cdcritic <> ?
+           aux_dscritic = pc_verifica_atualiz_fone.pr_dscritic
+                              WHEN pc_verifica_atualiz_fone.pr_dscritic <> ?
+           aux_qtmeatel = pc_verifica_atualiz_fone.pr_qtmeatel
+                              WHEN pc_verifica_atualiz_fone.pr_qtmeatel <> ?
+                              .
+
+    IF  aux_cdcritic <> 0
+    OR  aux_dscritic <> ""  THEN DO:
+        IF  aux_dscritic = "" THEN
+            ASSIGN aux_dscritic = "Nao foi possivel verificar atualizacao " +
+                                  "telefo
+                                  ne".
+            RETURN "NOK".
+        END.
+
+    /** OBS.: AQUI, QUANDO A STRING ESTA VAZIA, OCORRE ERRO NO XML
+              LA NO TAA. ATRIBUIDO "FONE" PARA NAO SER NULO/BRANCO.
+              TRATAR TAMBEM ONDE SERA CHAMADA A PROCEDURE */
+    IF aux_nrdofone = "" THEN
+        aux_nrdofone = "FONE".
+
+    xDoc:CREATE-NODE(xField,"ATUALIZA","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(aux_atualiza).
+    xField:APPEND-CHILD(xText).
+
+    xDoc:CREATE-NODE(xField,"NRTELEFO","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(aux_nrdofone).
+    xField:APPEND-CHILD(xText).
+
+    RETURN "OK".
+
+END PROCEDURE.
+/* Fim 66 - verifica-atualizacao-telefone */
+
+/* 67 - atualizacao-data-telefone */
+PROCEDURE atualizacao-data-telefone:
+
+    DEF VAR aux_cdcritic    AS INTEGER          NO-UNDO.
+    DEF VAR aux_dscritic    AS CHAR             NO-UNDO.
+
+   { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+
+    RUN STORED-PROCEDURE pc_atualiz_data_manut_fone
+        aux_handproc = PROC-HANDLE NO-ERROR
+                                (INPUT aux_cdcooper, /* Cooperativa */
+                                 INPUT aux_nrdconta, /* Nr. da conta */
+                                 OUTPUT 0,   /* cdcritic */
+                                 OUTPUT ""). /* dscritic */
+
+    CLOSE STORED-PROC pc_atualiz_data_manut_fone
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+    { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+
+    ASSIGN aux_cdcritic = 0
+           aux_dscritic = ""
+           aux_cdcritic = pc_atualiz_data_manut_fone.pr_cdcritic
+                              WHEN pc_atualiz_data_manut_fone.pr_cdcritic <> ?
+           aux_dscritic = pc_atualiz_data_manut_fone.pr_dscritic
+                              WHEN pc_atualiz_data_manut_fone.pr_dscritic <> ?.
+
+    IF  aux_cdcritic <> 0
+    OR  aux_dscritic <> ""  THEN DO:
+        IF  aux_dscritic = "" THEN
+            ASSIGN aux_dscritic = "Nao foi possivel efetuar atualizacao " +
+                                  "data telefone".
+            RETURN "NOK".
+        END.
+
+    xDoc:CREATE-NODE(xField,"ATUALIZA","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = "OK".
+    xField:APPEND-CHILD(xText).
+
+
+    RETURN "OK".
+
+END PROCEDURE.
+/* Fim 67 - atualizacao-data-telefone */
+
 /* .......................................................................... */
