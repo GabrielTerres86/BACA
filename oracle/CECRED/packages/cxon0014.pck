@@ -510,7 +510,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
   --  Sistema  : Procedimentos e funcoes das transacoes do caixa online
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 19/09/2016
+  --  Data     : Julho/2013.                   Ultima atualizacao: 10/01/2017
   --
   -- Dados referentes ao programa:
   --
@@ -561,7 +561,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
   --
 	--             19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS pelo 
 	--						              InternetBanking (Projeto 338 - Lucas Lunelli)
-	
+  -- 
+  --             10/01/2017 - Ajustar a procedure pc_verifica_vencimento_titulo para verificar se a conta que
+  --                          esta realizando o pagando/agendametno um titulo 085, e possuir privilegios de
+  --                          PAGADORVIP, não calcula multa e juros para o titulo (Douglas - Chamado 551630).
   ---------------------------------------------------------------------------------------------------------------
 
   /* Busca dos dados da cooperativa */
@@ -3514,7 +3517,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
 END pc_gera_titulos_iptu_prog;
 
   /* Procedure para verificar vencimento titulo */
-  PROCEDURE pc_verifica_vencimento_titulo (pr_cod_cooper     IN INTEGER  --Codigo Cooperativa
+  PROCEDURE pc_verifica_vencimento_titulo (pr_cod_cooper      IN INTEGER  --Codigo Cooperativa
+                                          ,pr_numero_conta    IN INTEGER  --Numero da Conta
                                           ,pr_cod_agencia     IN INTEGER  --Codigo da Agencia
                                           ,pr_dt_agendamento  IN DATE     --Data Agendamento
                                           ,pr_dt_vencto       IN DATE     --Data Vencimento
@@ -3551,6 +3555,7 @@ END pc_gera_titulos_iptu_prog;
       vr_dt_dia_util DATE;
       vr_dt_feriado  DATE;
       vr_libepgto    BOOLEAN;
+      vr_dstextab    craptab.dstextab%TYPE;
       --Variaveis Erro
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic VARCHAR2(4000);
@@ -3681,6 +3686,21 @@ END pc_gera_titulos_iptu_prog;
         --Marcar para criticar a data
         pr_critica_data:= TRUE;
 
+        -- Verificacao de agendamento de pagamento
+        -- Carregar informacao de PAGADOR VIP
+        vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cod_cooper
+                                                 ,pr_nmsistem => 'CRED'
+                                                 ,pr_tptabela => 'GENERI'
+                                                 ,pr_cdempres => 0
+                                                 ,pr_cdacesso => 'PAGADORVIP'
+                                                 ,pr_tpregist => pr_numero_conta);
+        -- Verifica se a conta em questão eh de um PAGADOR VIP
+        IF TRIM(vr_dstextab) IS NOT NULL THEN
+          -- Não criticar titulo vencido 
+          -- Regra Implementada para PAGADOR VIP (COOPER), conforme chamado 551630
+          pr_critica_data:= FALSE;
+        ELSE
+          
         /** Aceita agendamento de titulo com vencimento no ultimo dia **/
         /** util do ano somente no primeiro dia util do proximo ano   **/
         /** Exemplo: VENCIMENTO 31/12/2009 - AGENDAMENTO - 04/01/2010 **/
@@ -3715,6 +3735,7 @@ END pc_gera_titulos_iptu_prog;
             END IF;
           END IF;
         END IF;
+        END IF; -- PAGADOR VIP
       END IF;
     EXCEPTION
        WHEN vr_exc_saida THEN
@@ -5616,6 +5637,7 @@ END pc_gera_titulos_iptu_prog;
             vr_tab_erro.DELETE;
             --Verificar vencimento do titulo
             pc_verifica_vencimento_titulo (pr_cod_cooper      => rw_crapcop.cdcooper  --Codigo Cooperativa
+                                          ,pr_numero_conta    => pr_nrdconta          --Numero da Conta
                                           ,pr_cod_agencia     => pr_cod_agencia       --Codigo da Agencia
                                           ,pr_dt_agendamento  => pr_dt_agendamento    --Data Agendamento
                                           ,pr_dt_vencto       => vr_dt_dtvencto       --Data Vencimento
@@ -6132,6 +6154,7 @@ END pc_gera_titulos_iptu_prog;
           vr_tab_erro.DELETE;
           --Verificar vencimento do titulo
           pc_verifica_vencimento_titulo (pr_cod_cooper      => rw_crapcop.cdcooper  --Codigo Cooperativa
+                                        ,pr_numero_conta    => pr_nrdconta          --Numero da Conta 
                                         ,pr_cod_agencia     => pr_cod_agencia       --Codigo da Agencia
                                         ,pr_dt_agendamento  => pr_dt_agendamento    --Data Agendamento
                                         ,pr_dt_vencto       => nvl(rw_crapcob.dtvencto,vr_dt_dtvencto)  --Data Vencimento
@@ -10756,6 +10779,7 @@ END pc_gera_titulos_iptu_prog;
       ELSE
         -- Titulo nao Encontrado
         vr_intitcop := 0;
+        
       END IF;
       --Fechar Cursor
       CLOSE cr_crapcob;
@@ -10763,7 +10787,7 @@ END pc_gera_titulos_iptu_prog;
 
     -- fechar o cursor
     CLOSE cr_crapcco2;
-
+    
     /********************************************************/
     /***********FAZER CALCULO DO VALOR DO TITULO*************/
     IF vr_intitcop = 1 THEN /* Se for titulo da cooperativa */
@@ -10792,8 +10816,9 @@ END pc_gera_titulos_iptu_prog;
 
       --Verificar vencimento do titulo
       pc_verifica_vencimento_titulo (pr_cod_cooper      => rw_crapcop.cdcooper  --Codigo Cooperativa
+                                    ,pr_numero_conta    => pr_nrdconta          --Numero da Conta 
                                     ,pr_cod_agencia     => pr_cdagenci          --Codigo da Agencia
-                                  ,pr_dt_agendamento  => NULL                 --Data Agendamento
+                                    ,pr_dt_agendamento  => NULL                 --Data Agendamento
                                     ,pr_dt_vencto       => rw_crapcob.dtvencto  --Data Vencimento
                                     ,pr_critica_data    => vr_critica_data      --Critica na validacao
                                     ,pr_cdcritic        => vr_cdcritic          --Codigo da Critica
@@ -10899,6 +10924,5 @@ END pc_gera_titulos_iptu_prog;
       pr_dscritic := vr_dscritic;
      
   END pc_retorna_vlr_tit_vencto;
-  
 END CXON0014;
 /
