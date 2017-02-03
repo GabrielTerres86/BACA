@@ -15319,6 +15319,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                                 ,pr_nrretcoo => pr_ret_nrremret --Numero Retorno Cooperativa
                                                 ,pr_cdmotivo => pr_dsmotivo   --Codigo Motivo
                                                 ,pr_cdocorre => pr_cdocorre   --Codigo Ocorrencia
+												,pr_nrispbpg => pr_nrispbpg   --Numero ISPB do pagador
                                                 ,pr_cdbanpag => pr_cdbanpag   --Codigo banco pagamento
                                                 ,pr_cdagepag => pr_cdagepag   --Codigo Agencia pagamento
                                                 ,pr_inestcri => pr_inestcri   --Estado crise
