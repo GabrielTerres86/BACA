@@ -933,13 +933,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
      Sistema : Rotinas referentes ao limite de credito
      Sigla   : LIMI
      Autor   : Odirlei Busana - AMcom
-     Data    : Agosto/16.                    Ultima atualizacao:
+     Data    : Agosto/16.                    Ultima atualizacao: 27/01/2017
 
      Dados referentes ao programa:
 
      Frequencia:
      Objetivo  : Rotina para buscar dados doa avalistas do contrato de limite de credito
-     Alteracoes: -----
+     Alteracoes: 27/01/2017 - Buscar o CPF do avalista e nao do conjuge. (Jaison/Daniel)
     ..............................................................................*/
     
     ---------->> CURSORES <<--------   
@@ -1169,7 +1169,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     
       vr_idxavais := vr_tab_avais_ctr.count() + 1; 
 	  vr_tab_avais_ctr(vr_idxavais).nmdavali := rw_crapavt.nmdavali;
-      vr_tab_avais_ctr(vr_idxavais).cpfavali := 'CPF: '|| gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapavt.nrcpfcjg, 
+      vr_tab_avais_ctr(vr_idxavais).cpfavali := 'CPF: '|| gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapavt.nrcpfcgc, 
                                                                                     pr_inpessoa => 1 );                       
       vr_tab_avais_ctr(vr_idxavais).dsdocava := rw_crapavt.tpdocava ||': '|| rw_crapavt.nrdocava;  
       IF rw_crapavt.nrendere > 0 THEN
