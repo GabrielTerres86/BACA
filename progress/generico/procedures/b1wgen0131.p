@@ -134,12 +134,12 @@
                 12/11/2015 - Na chamada da procedure obtem-log-cecred, incluir
                              novo parametro inestcri projeto Estado de Crise
                              (Jorge/Andrino)             
-                        
+                             
                 27/09/2016 - M211 - Envio do parado cdifconv na chamada da 
                             obtem-log-cecred pela pi_sr_ted_f (Jonata-RKAM)        
                         
 				07/11/2016 - Ajuste para contabilizar as TED - SICREDI (Adriano - M211)                        
-
+                        
 				29/11/2016 - Ajuste para gravar corretamente os movimentos de
 						     entrada referente as TED - SICREDI (Adriano - M211).   
 
@@ -2596,7 +2596,7 @@ PROCEDURE pi_sr_ted_f:
     RUN atualiza_tabela_erros (INPUT par_cdcooper,
                                INPUT FALSE).
 
-    RUN obtem-log-cecred IN h-b1wgen0050 (INPUT par_cdcoopex,
+	RUN obtem-log-cecred IN h-b1wgen0050 (INPUT par_cdcoopex,
                                           INPUT par_cdagenci,
                                           INPUT 0,
                                           INPUT par_cdoperad,
@@ -2610,14 +2610,15 @@ PROCEDURE pi_sr_ted_f:
                                           INPUT 0,
                                           INPUT 1,
                                           INPUT 99999,
-                                          INPUT 0, /* par_vlrdated */
-                                          INPUT 0, /* inestcri, 0 Nao, 1 Sim */
+                                          INPUT 0, /* inestcri, 0 Nao, 1 Sim */                                          
+                                          INPUT 0,  /* IF da TED - Somente CECRED */
+										  INPUT 0, /* par_vlrdated */
                                           OUTPUT TABLE tt-logspb,
                                           OUTPUT TABLE tt-logspb-detalhe,
                                           OUTPUT TABLE tt-logspb-totais,
                                           OUTPUT TABLE tt-erro).
 
-    EMPTY TEMP-TABLE tt-erro.
+	EMPTY TEMP-TABLE tt-erro.
 
     FIND FIRST tt-logspb-totais NO-LOCK NO-ERROR.
 
@@ -2626,7 +2627,7 @@ PROCEDURE pi_sr_ted_f:
     ELSE
        ASSIGN aux_vlrtedsr = 0.
 
-    RUN atualiza_tabela_erros (INPUT par_cdcooper,
+	RUN atualiza_tabela_erros (INPUT par_cdcooper,
                                INPUT TRUE).
 
     DO aux_contador = 1 TO NUM-ENTRIES(aux_cdbccxlt,","):
@@ -2685,14 +2686,14 @@ PROCEDURE pi_sr_ted_f:
        ASSIGN aux_vlrtedsr = tt-logspb-totais.vlrrecok.
     ELSE
        ASSIGN aux_vlrtedsr = 0.
-	   
+
     IF VALID-HANDLE(h-b1wgen0050) THEN
        DELETE OBJECT h-b1wgen0050.
     
     RUN atualiza_tabela_erros (INPUT par_cdcooper,
                                INPUT TRUE).
 
-    RUN grava-movimentacao 
+       RUN grava-movimentacao 
                       (INPUT par_cdcoopex,
                        INPUT par_cdoperad,
                        INPUT par_dtmvtolt,
@@ -2701,8 +2702,8 @@ PROCEDURE pi_sr_ted_f:
                        INPUT 3,
                        INPUT aux_vlrtedsr).
        
-    IF RETURN-VALUE <> "OK" THEN
-       RETURN "NOK".
+       IF RETURN-VALUE <> "OK" THEN
+          RETURN "NOK".
 
     RETURN "OK".
 

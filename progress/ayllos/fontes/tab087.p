@@ -34,6 +34,10 @@
 
                07/12/2016 - Alterado campo dsdepart para cddepart.
                             PRJ341 - BANCENJUD (Odirlei-AMcom) 
+                            
+               01/02/2017 - Alterado para liberar a opcao A da tela para o codigo 18 (Suporte),
+                            antes estava considerando indevidamente o codigo 15.
+                            Heitor (Mouts) - Chamado 603535
 ............................................................................. */
 
 { includes/var_online.i }
@@ -237,7 +241,7 @@ DO WHILE TRUE:
             IF  glb_cddepart <> 20 AND   /* TI                   */                
                 glb_cddepart <>  8 AND   /* COORD.ADM/FINANCEIRO */
                 glb_cddepart <>  9 AND   /* COORD.PRODUTOS       */
-                glb_cddepart <> 15 AND   /* SUPORTE              */
+                glb_cddepart <> 18 AND   /* SUPORTE              */
                 glb_cddepart <>  4 THEN  /* COMPE                */                
                  DO:
                      IF   glb_cdcooper = 1       AND

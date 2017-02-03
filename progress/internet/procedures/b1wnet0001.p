@@ -3,7 +3,7 @@
 
    Programa: sistema/internet/procedures/b1wnet0001.p                  
    Autor   : David
-   Data    : 14/07/2006                        Ultima atualizacao: 04/10/2016
+   Data    : 14/07/2006                        Ultima atualizacao: 31/01/2017
 
    Dados referentes ao programa:
 
@@ -263,6 +263,9 @@
 
 		       23/12/2016 - Ajustes referentes a melhoria de performance na cobrança 
 			                do IB (Tiago/Ademir SD566906).
+
+               31/01/2017 - Ajuste para carregar o nome do beneficiario na geracao do 
+			                boleto (Douglas - Chamado 601478)
 .............................................................................*/
 
 
@@ -962,6 +965,9 @@ PROCEDURE gravar-boleto:
 
     /* EMAIL DOS PAGADORES */
     DEF VAR aux_dsdemail AS CHAR                                    NO-UNDO.
+    
+    /* Nome do Beneficiario para imprimir no boleto */
+    DEF VAR aux_nmdobnfc AS CHAR                                    NO-UNDO.
 
     /* Tratamento para os boletos e a emissão de carnê */
     DEF VAR aux_vltitulo      AS DECI                               NO-UNDO.
@@ -1335,6 +1341,38 @@ PROCEDURE gravar-boleto:
 
                 UNDO TRANSACAO, LEAVE TRANSACAO.
             END.
+
+
+        RUN sistema/generico/procedures/b1wgen0010.p PERSISTENT SET h-b1wgen0010.
+
+        IF  NOT VALID-HANDLE(h-b1wgen0010)  THEN
+        DO:
+            ASSIGN aux_cdcritic = 0
+                   aux_dscritic = "Handle invalido para BO b1wgen0010.".
+
+            UNDO TRANSACAO, LEAVE TRANSACAO.
+        END.                  
+
+
+        /*Busca nome impresso no boleto*/
+        RUN busca-nome-imp-blt IN h-b1wgen0010( INPUT par_cdcooper
+                                              , INPUT par_nrdconta
+                                              , INPUT "consulta-boleto-2via" /*nmprogra*/
+                                              ,OUTPUT aux_nmdobnfc
+                                              ,OUTPUT aux_dscritic).
+                                              
+        IF  VALID-HANDLE(h-b1wgen0010) THEN
+            DELETE PROCEDURE h-b1wgen0010.                                              
+
+        IF  RETURN-VALUE <> "OK" OR
+            aux_dscritic <> ""   THEN 
+		    DO: 
+			      IF  aux_dscritic = "" THEN 
+			      DO:   
+				        ASSIGN aux_dscritic =  "Nao foi possivel buscar o nome do beneficiario para ser impresso no boleto".
+			      END.
+				    UNDO TRANSACAO, LEAVE TRANSACAO.
+        END.
 
 
         /* ************************************************************************* */
@@ -1816,6 +1854,7 @@ PROCEDURE gravar-boleto:
                 RUN p_cria_titulo (INPUT par_cdcooper,
                                    INPUT par_nrdconta,
                                    INPUT par_idseqttl,
+                                   INPUT aux_nmdobnfc,
                                    INPUT crapcco.nrconven,
                                    INPUT aux_nrcnvceb,
                                    INPUT aux_nrdocmto,
@@ -3883,6 +3922,7 @@ END PROCEDURE.
 PROCEDURE p_grava_boleto:
 
    DEF INPUT        PARAM p-cdcooper       AS INTE.
+   DEF INPUT        PARAM p-nmdobnfc       AS CHAR.
    DEF INPUT        PARAM p-cod-agencia    AS INTE.
    DEF INPUT        PARAM p-nro-caixa      AS INTE.
    DEF INPUT        PARAM p-data-limite    AS DATE.
@@ -3929,33 +3969,7 @@ DO TRANSACTION:
     
      CREATE tt-consulta-blt.
 
-     FIND crapass WHERE crapass.cdcooper = crapcob.cdcooper AND
-                        crapass.nrdconta = crapcob.nrdconta 
-                        NO-LOCK NO-ERROR.
-
-     IF  NOT AVAILABLE crapass  THEN
-         DO:
-             RETURN "NOK".
-         END.
-
-     IF  crapass.inpessoa > 1  THEN
-         ASSIGN tt-consulta-blt.nmprimtl = REPLACE(crapass.nmprimtl,"&","%26").
-
-     IF  crapass.inpessoa = 1  THEN
-         DO:
-             FIND crapttl WHERE crapttl.cdcooper = crapcob.cdcooper AND
-                                crapttl.nrdconta = crapcob.nrdconta AND
-                                crapttl.idseqttl = crapcob.idseqttl 
-                                NO-LOCK NO-ERROR.
-
-             IF  NOT AVAILABLE crapttl  THEN
-                 DO:
-                     RETURN "NOK".
-                 END.
-
-             ASSIGN tt-consulta-blt.nmprimtl = REPLACE(crapttl.nmextttl,"&","%26").
-         END.       
-
+     ASSIGN tt-consulta-blt.nmprimtl = REPLACE(p-nmdobnfc,"&","%26").
   
      /*  Verifica no Cadastro de Sacados Cobranca */
      
@@ -4242,6 +4256,7 @@ PROCEDURE p_cria_titulo:
     DEF INPUT   PARAM p-cdcooper    LIKE crapcob.cdcooper   NO-UNDO.
     DEF INPUT   PARAM p-nrdconta    LIKE crapcob.nrdconta   NO-UNDO.
     DEF INPUT   PARAM p-idseqttl    LIKE crapcob.idseqttl   NO-UNDO.
+    DEF INPUT   PARAM p-nmdobnfc    AS CHAR                 NO-UNDO. /* Nome do Beneficiario */
     DEF INPUT   PARAM p-nrcnvcob    LIKE crapcob.nrcnvcob   NO-UNDO.
     DEF INPUT   PARAM p-nrcnvceb    LIKE crapceb.nrcnvceb   NO-UNDO.
     DEF INPUT   PARAM p-nrdocmto    LIKE crapcob.nrdocmto   NO-UNDO.
@@ -4510,6 +4525,7 @@ PROCEDURE p_cria_titulo:
 
                 
     RUN p_grava_boleto (INPUT p-cdcooper,
+                        INPUT p-nmdobnfc,
                         INPUT 1,
                         INPUT 999,
                         INPUT ?,
