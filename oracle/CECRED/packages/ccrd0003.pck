@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --  Sistema  : Rotinas genericas referente a tela de Cartões
   --  Sigla    : CCRD
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Abril - 2014.                   Ultima atualizacao: 03/01/2017
+  --  Data     : Abril - 2014.                   Ultima atualizacao: 03/02/2017
   --
   -- Dados referentes ao programa:
   --
@@ -42,6 +42,8 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --             03/01/2017 - #574756 Ajuste de posição da data de movimento do arquivo CEXT na 
   --                          rotina pc_crps670 para buscar os registros corretamente pela chave (Carlos)
   --
+  --             03/02/2017 - #601772 Inclusão de verificação e log de erros de execução através do procedimento
+  --                          pc_internal_exception no procedimento pc_crps670 (Carlos)
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de Registro para as faturas pendentes
@@ -1975,7 +1977,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 07/12/2016 - Tratamento Incorporacao Transposul. (Fabricio)
                 
                 16/12/2016 - Ajustes para incorporacao/migracao. (Fabricio)
-                             
+
+                03/02/2017 - #601772 Inclusão de verificação e log de erros de execução através do 
+                             procedimento pc_internal_exception no procedimento pc_crps670 (Carlos)
     ....................................................................................................*/
     DECLARE
       ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
@@ -3997,6 +4001,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 WHEN no_data_found THEN -- não encontrar mais linhas
                   EXIT;
                 WHEN OTHERS THEN
+
+                  pc_internal_exception(3, 'Linha do arquivo: ' || vr_des_text);
+                
                   IF vr_dscritic IS NULL THEN
                     vr_dscritic := 'Erro arquivo ['|| vr_vet_nmarquiv(i) ||']: '||SQLERRM;
                   END IF;
@@ -4469,6 +4476,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral em ARQBCB/CRPS670: ' || SQLERRM;
+
+        pc_internal_exception(3, pr_dscritic);
 
         -- Carregar XML padrão para variável de retorno não utilizada.
         -- Existe para satisfazer exigência da interface.

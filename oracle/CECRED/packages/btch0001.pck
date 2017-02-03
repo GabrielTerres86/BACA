@@ -1313,26 +1313,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
 
   -- Programa: pc_log_internal_exception
   -- Autor   : Carlos
-  -- Data    : Julho/2015.                        Ultima atualizacao:
+  -- Data    : Julho/2015.                        Ultima atualizacao: 03/02/2017
   -- Objetivo  : Verificar e criar log de exceções internas do oracle, tais como: string maior que o limite 
   --             definido no tipo varchar, divisão por zero e outras.
   --             Deve ser usado na exception OTHERS. 
   --             Ex. de caminho do log: viacredi/log/internal_exception.log 
+  -- Alterações
+  --
+  -- 03/02/2017 - #601772 Procedure defasado pelo pc_internal_exception. Modificado o corpo da 
+  --              rotina para ficar retrocompatível (Carlos)                
   PROCEDURE pc_log_internal_exception(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
   BEGIN
-    DECLARE
-    vr_sqlcode NUMBER := SQLCODE;
-      
-    BEGIN     
-      IF vr_sqlcode < 0 THEN
-        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                   pr_ind_tipo_log => 2, -- Erro tratado
-                                   pr_des_log      => to_char(sysdate,'dd/mm/RRRR hh24:mi:ss')||' --> ' || 
-                                   dbms_utility.format_error_backtrace || ' - ' ||
-                                   dbms_utility.format_error_stack,
-                                   pr_nmarqlog     => 'internal_exception.log');
-      END IF;
-    END;
+    cecred.pc_internal_exception(pr_cdcooper);
   END pc_log_internal_exception;
 
 END btch0001;
