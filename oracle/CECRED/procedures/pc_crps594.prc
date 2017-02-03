@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Guilherme/Supero
-       Data    : Abril/2011                        Ultima atualizacao: 07/05/2015
+       Data    : Abril/2011                        Ultima atualizacao: 02/02/2017
 
        Dados referentes ao programa:
 
@@ -175,6 +175,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
 
                    19/07/2016 - Retirado log da escrita de registros da Crapcol (Daniel - Cecred) 
               
+                   02/02/2017 - Enviar e-mail com base no registro criado na crapprm 
+                                'CRPS594_EMAIL_COMPBB' (Lucas Ranghetti #556489)
     ............................................................................ */
 
     DECLARE
@@ -191,6 +193,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
       vr_dscritic   VARCHAR2(4000);
       vr_cdcritic2  PLS_INTEGER;
       vr_dscritic2  VARCHAR2(4000);
+      vr_flgarqui   BOOLEAN := TRUE;
+      vr_conteudo   VARCHAR2(1000);
 
       ------------------------------- CURSORES ---------------------------------
 
@@ -4477,6 +4481,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
 
       /* Nao existem arquivos para serem importados */
       IF trim(vr_listadir) IS NULL THEN
+        -- Sem arquivos para processar
+        vr_flgarqui := FALSE; 
+        -- Nao ha arquivo da COMPBB para integrar.
+        vr_cdcritic := 258;   
         -- Finaliza o programa mantendo o processamento da cadeia
         RAISE vr_exc_fimprg;
       END IF;                           
@@ -4505,6 +4513,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
         END LOOP;
       -- Se nao possuir aquivos, sai do programa
       ELSE
+        -- Sem arquivos para processar
+        vr_flgarqui := FALSE; 
+        -- Nao ha arquivo da COMPBB para integrar.
+        vr_cdcritic := 258;   
         -- Finaliza o programa mantendo o processamento da cadeia
         RAISE vr_exc_fimprg;
       END IF;
@@ -4811,13 +4823,36 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
         IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
           -- Buscar a descri¿¿o
           vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-        END IF;
+        END IF;        
         -- Envio centralizado de log de erro
         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                   ,pr_ind_tipo_log => 2 -- Erro tratato
                                   ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                    || vr_cdprogra || ' --> '
                                                    || vr_dscritic );
+                                                   
+        -- Se nao encontrou nenhum arquivo para processar deve continuar o processo 
+        -- apenas alertando ao pessoal
+        IF NOT vr_flgarqui THEN
+          -- Enviar email para sistemas afim de avisar que o processo rodou sem COMPBB
+          vr_conteudo := 'ATENCAO!!<br><br> Voce esta recebendo este e-mail pois o programa ' 
+                      || vr_cdprogra || ' acusou critica ' || vr_dscritic 
+                      || '<br><br>COOPERATIVA: ' || pr_cdcooper || ' - ' 
+                      || rw_crapcop.nmrescop || '.<br>Data: ' || to_char(rw_crapdat.dtmvtolt,'dd/mm/rrrr') 
+                      || '<br>Hora: ' || to_char(SYSDATE,'HH:MI:SS') 
+                      || '<br><br>Arquivo <b>ied242</b> nao foi recebido!';
+          -- Solicitar envio do email 
+          gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
+                                    ,pr_cdprogra        => 'PC_'||vr_cdprogra
+                                    ,pr_des_destino     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'CRPS594_EMAIL_COMPBB')
+                                    ,pr_des_assunto     => 'Processo da Cooperativa ' ||pr_cdcooper || ' sem COMPE BB'
+                                    ,pr_des_corpo       => vr_conteudo
+                                    ,pr_des_anexo       => NULL
+                                    ,pr_flg_remove_anex => 'N' --> Remover os anexos passados
+                                    ,pr_flg_remete_coop => 'N' --> Se o envio sera do e-mail da Cooperativa
+                                    ,pr_flg_enviar      => 'N' --> Enviar o e-mail na hora
+                                    ,pr_des_erro        => vr_dscritic);
+        END IF;                                                    
         -- Chamamos a fimprg para encerrarmos o processo sem parar a cadeia
         btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
                                  ,pr_cdprogra => vr_cdprogra
@@ -4850,3 +4885,4 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
 
 
   END pc_crps594;
+/
