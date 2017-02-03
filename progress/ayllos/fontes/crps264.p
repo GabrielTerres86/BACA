@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Elton/Ze Eduardo
-    Data    : Marco/07.                       Ultima atualizacao: 16/12/2016
+    Data    : Marco/07.                       Ultima atualizacao: 03/02/2017
     
     Dados referentes ao programa:
 
@@ -202,7 +202,10 @@
                            Também validar alinea 35 - Melhoria 69 (Lucas Ranghetti/Elton)
                            
               16/12/2016 - Substituido o histórico 399 pelo 351 na devoluçao de 
-                           cheques de custódia para a conta do beneficiario (Elton).             
+                           cheques de custódia para a conta do beneficiario (Elton).      
+                           
+              03/02/2017 - Incluir dtlibera para as consultas de cheques em custodia/desconto
+                           (Lucas Ranghetti #600012)
 ..............................................................................*/
 
 DEF INPUT  PARAM p-cdcooper AS INT                                   NO-UNDO.
@@ -1128,6 +1131,8 @@ PROCEDURE gera_lancamento:
                                            AND crapcdb.nrctachq = crapfdc.nrctachq
                                            AND crapcdb.nrcheque = crapfdc.nrcheque
                                            AND CAN-DO("0,2",STRING(crapcdb.insitchq))
+                                           AND crapcdb.dtlibera >= glb_dtmvtoan
+                                           AND crapcdb.dtlibera <= glb_dtmvtolt
                                            NO-LOCK:
                        END.                        
                        
@@ -1256,6 +1261,8 @@ PROCEDURE gera_lancamento:
                                                   AND crapcst.nrctachq = crapfdc.nrctachq
                                                   AND crapcst.nrcheque = crapfdc.nrcheque
                                                   AND CAN-DO("0,2",STRING(crapcst.insitchq))
+                                                  AND crapcst.dtlibera >= glb_dtmvtoan
+                                                  AND crapcst.dtlibera <= glb_dtmvtolt
                                                   NO-LOCK:
                               END.
                         
@@ -2852,6 +2859,8 @@ PROCEDURE gera_arquivo_cecred:
                                            AND crapcdb.nrctachq = crapfdc.nrctachq
                                            AND crapcdb.nrcheque = crapfdc.nrcheque
                                            AND CAN-DO("0,2",STRING(crapcdb.insitchq))
+                                           AND crapcdb.dtlibera >= glb_dtmvtoan
+                                           AND crapcdb.dtlibera <= glb_dtmvtolt
                                            NO-LOCK:
                        END.                        
                        
@@ -2868,6 +2877,8 @@ PROCEDURE gera_arquivo_cecred:
                                                   AND crapcst.nrctachq = crapfdc.nrctachq
                                                   AND crapcst.nrcheque = crapfdc.nrcheque
                                                   AND CAN-DO("0,2",STRING(crapcst.insitchq))
+                                                  AND crapcst.dtlibera >= glb_dtmvtoan
+                                                  AND crapcst.dtlibera <= glb_dtmvtolt
                                                   NO-LOCK:
                               END.
                         
