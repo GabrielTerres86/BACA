@@ -368,14 +368,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0009 is
 	  Sistema  : Conta-Corrente - Cooperativa de Credito
 	  Sigla    : CRED
 	  Autor    : Kelvin Souza Ott 
-	  Data     : Setembro/2016.                   Ultima atualizacao: --/--/----
+	  Data     : Setembro/2016.                   Ultima atualizacao: 26/01/2017
 	
 	  Dados referentes ao programa:
 	
 	  Frequencia: Sempre que for chamado
 	  Objetivo  : Procedure para busca o nome que irá aparecer no boleto/carnê
 	
-	  Alteração :
+	  Alteração : 26/01/2017 - Ajustar where do cursor que carrega o nome, deve ser na tabela 
+                               crapass, ao inves de crapjur (Douglas - Chamado 601478)
 	
 	...........................................................................*/
   
@@ -403,8 +404,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0009 is
         LEFT JOIN crapjur jur
           ON jur.cdcooper = ass.cdcooper
          AND jur.nrdconta = ass.nrdconta
-       WHERE jur.cdcooper = p_cdcooper
-         AND jur.nrdconta = p_nrdconta ;     
+       WHERE ass.cdcooper = p_cdcooper
+         AND ass.nrdconta = p_nrdconta ;
     rw_nome_benef cr_nome_benef%ROWTYPE;
     
     --Variaveis de erro

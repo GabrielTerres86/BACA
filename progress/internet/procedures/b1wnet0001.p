@@ -3,7 +3,7 @@
 
    Programa: sistema/internet/procedures/b1wnet0001.p                  
    Autor   : David
-   Data    : 14/07/2006                        Ultima atualizacao: 04/10/2016
+   Data    : 14/07/2006                        Ultima atualizacao: 31/01/2017
 
    Dados referentes ao programa:
 
@@ -245,14 +245,14 @@
                             somente quando o flag serasa for falso na procedure gera-dados.
                             Chamado 490114 - Heitor (RKAM)
 
-			   15/08/2016 - Removido validacao de convenio na consulta da tela
-							manutencao (gera-dados), conforme solicitado no chamado 
-							497079. (Kelvin)
+			         15/08/2016 - Removido validacao de convenio na consulta da tela
+							              manutencao (gera-dados), conforme solicitado no chamado 
+							              497079. (Kelvin)
 
-			   13/10/2016 - Ajuste na aux_flprotes para buscar apenas o convênio
-							do tipo INTERNET crapcco.dsorgarq = 'INTERNET'
-							(Andrey Formigari - Mouts - SD: 533201)
-
+			         13/10/2016 - Ajuste na aux_flprotes para buscar apenas o convênio
+							              do tipo INTERNET crapcco.dsorgarq = 'INTERNET'
+							             (Andrey Formigari - Mouts - SD: 533201)
+               
 			   03/10/2016 - Ajustes referente a melhoria M271. (Kelvin)
 
                09/11/2016 - Ajuste na correcao realizada pelo Andrey no dia 13/10,
@@ -263,6 +263,9 @@
 
 		       23/12/2016 - Ajustes referentes a melhoria de performance na cobrança 
 			                do IB (Tiago/Ademir SD566906).
+
+               31/01/2017 - Ajuste para carregar o nome do beneficiario na geracao do 
+			                boleto (Douglas - Chamado 601478)
 .............................................................................*/
 
 
@@ -963,6 +966,9 @@ PROCEDURE gravar-boleto:
     /* EMAIL DOS PAGADORES */
     DEF VAR aux_dsdemail AS CHAR                                    NO-UNDO.
 
+    /* Nome do Beneficiario para imprimir no boleto */
+    DEF VAR aux_nmdobnfc AS CHAR                                    NO-UNDO.
+
     /* Tratamento para os boletos e a emissão de carnê */
     DEF VAR aux_vltitulo      AS DECI                               NO-UNDO.
     DEF VAR aux_vldescto      AS DECI                               NO-UNDO.
@@ -1333,6 +1339,38 @@ PROCEDURE gravar-boleto:
                 ASSIGN aux_cdcritic = 0
                        aux_dscritic = "Dia de vencimento no mes invalido".
 
+                UNDO TRANSACAO, LEAVE TRANSACAO.
+            END.
+
+
+        RUN sistema/generico/procedures/b1wgen0010.p PERSISTENT SET h-b1wgen0010.
+
+        IF  NOT VALID-HANDLE(h-b1wgen0010)  THEN
+        DO:
+            ASSIGN aux_cdcritic = 0
+                   aux_dscritic = "Handle invalido para BO b1wgen0010.".
+
+            UNDO TRANSACAO, LEAVE TRANSACAO.
+        END.                  
+
+
+        /*Busca nome impresso no boleto*/
+        RUN busca-nome-imp-blt IN h-b1wgen0010( INPUT par_cdcooper
+                                              , INPUT par_nrdconta
+                                              , INPUT "consulta-boleto-2via" /*nmprogra*/
+                                              ,OUTPUT aux_nmdobnfc
+                                              ,OUTPUT aux_dscritic).
+                                              
+        IF  VALID-HANDLE(h-b1wgen0010) THEN
+            DELETE PROCEDURE h-b1wgen0010.                                              
+
+        IF  RETURN-VALUE <> "OK" OR
+            aux_dscritic <> ""   THEN 
+		    DO: 
+			      IF  aux_dscritic = "" THEN 
+			      DO:   
+				        ASSIGN aux_dscritic =  "Nao foi possivel buscar o nome do beneficiario para ser impresso no boleto".
+			      END.
                 UNDO TRANSACAO, LEAVE TRANSACAO.
             END.
 
@@ -1816,6 +1854,7 @@ PROCEDURE gravar-boleto:
                 RUN p_cria_titulo (INPUT par_cdcooper,
                                    INPUT par_nrdconta,
                                    INPUT par_idseqttl,
+                                   INPUT aux_nmdobnfc,
                                    INPUT crapcco.nrconven,
                                    INPUT aux_nrcnvceb,
                                    INPUT aux_nrdocmto,
@@ -2306,22 +2345,22 @@ PROCEDURE gera-dados:
                            OUTPUT aux_intipemi).
 
     ASSIGN aux_flserasa = FALSE
-	       aux_flprotes = FALSE.
+	         aux_flprotes = FALSE.
 
     FOR EACH  crapceb WHERE crapceb.cdcooper = par_cdcooper     AND 
-                             crapceb.nrdconta = par_nrdconta     AND
+                            crapceb.nrdconta = par_nrdconta     AND
                             crapceb.insitceb = 1 /* Somente ativos */ NO-LOCK
 	   ,FIRST  crapcco WHERE crapcco.cdcooper = crapceb.cdcooper AND
 	                         crapcco.nrconven = crapceb.nrconven AND
-                             crapcco.cddbanco = 85               AND /*Cecred*/
-	                         crapcco.flginter = TRUE NO-LOCK:
+                           crapcco.cddbanco = 85               AND /*Cecred*/
+							             crapcco.flginter = TRUE NO-LOCK:
 
     IF aux_flprotes = FALSE THEN
        aux_flprotes = crapceb.flprotes.
 
 		IF aux_flserasa = FALSE THEN
         ASSIGN aux_nrconven = crapcco.nrconven
-			   aux_flserasa = crapceb.flserasa.
+               aux_flserasa = crapceb.flserasa.
 
     END.
 
@@ -3883,6 +3922,7 @@ END PROCEDURE.
 PROCEDURE p_grava_boleto:
 
    DEF INPUT        PARAM p-cdcooper       AS INTE.
+   DEF INPUT        PARAM p-nmdobnfc       AS CHAR.
    DEF INPUT        PARAM p-cod-agencia    AS INTE.
    DEF INPUT        PARAM p-nro-caixa      AS INTE.
    DEF INPUT        PARAM p-data-limite    AS DATE.
@@ -3929,34 +3969,8 @@ DO TRANSACTION:
     
      CREATE tt-consulta-blt.
 
-     FIND crapass WHERE crapass.cdcooper = crapcob.cdcooper AND
-                        crapass.nrdconta = crapcob.nrdconta 
-                        NO-LOCK NO-ERROR.
+     ASSIGN tt-consulta-blt.nmprimtl = REPLACE(p-nmdobnfc,"&","%26").
 
-     IF  NOT AVAILABLE crapass  THEN
-         DO:
-             RETURN "NOK".
-         END.
-
-     IF  crapass.inpessoa > 1  THEN
-         ASSIGN tt-consulta-blt.nmprimtl = REPLACE(crapass.nmprimtl,"&","%26").
-
-     IF  crapass.inpessoa = 1  THEN
-         DO:
-             FIND crapttl WHERE crapttl.cdcooper = crapcob.cdcooper AND
-                                crapttl.nrdconta = crapcob.nrdconta AND
-                                crapttl.idseqttl = crapcob.idseqttl 
-                                NO-LOCK NO-ERROR.
-
-             IF  NOT AVAILABLE crapttl  THEN
-                 DO:
-                     RETURN "NOK".
-                 END.
-
-             ASSIGN tt-consulta-blt.nmprimtl = REPLACE(crapttl.nmextttl,"&","%26").
-         END.       
-
-  
      /*  Verifica no Cadastro de Sacados Cobranca */
      
      FIND crapsab WHERE crapsab.cdcooper = crapcob.cdcooper AND
@@ -4242,6 +4256,7 @@ PROCEDURE p_cria_titulo:
     DEF INPUT   PARAM p-cdcooper    LIKE crapcob.cdcooper   NO-UNDO.
     DEF INPUT   PARAM p-nrdconta    LIKE crapcob.nrdconta   NO-UNDO.
     DEF INPUT   PARAM p-idseqttl    LIKE crapcob.idseqttl   NO-UNDO.
+    DEF INPUT   PARAM p-nmdobnfc    AS CHAR                 NO-UNDO. /* Nome do Beneficiario */
     DEF INPUT   PARAM p-nrcnvcob    LIKE crapcob.nrcnvcob   NO-UNDO.
     DEF INPUT   PARAM p-nrcnvceb    LIKE crapceb.nrcnvceb   NO-UNDO.
     DEF INPUT   PARAM p-nrdocmto    LIKE crapcob.nrdocmto   NO-UNDO.
@@ -4510,6 +4525,7 @@ PROCEDURE p_cria_titulo:
 
                 
     RUN p_grava_boleto (INPUT p-cdcooper,
+                        INPUT p-nmdobnfc,
                         INPUT 1,
                         INPUT 999,
                         INPUT ?,
