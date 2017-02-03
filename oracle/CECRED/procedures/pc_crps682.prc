@@ -928,7 +928,7 @@ BEGIN
                              '          COTAS ' || '       DESCONTO ' ||
                              '        CREDITO ' || ' PARCELA VENCER ' ||
                              '     RENDIMENTO ' || ' PARCELA MAXIMA' ||
-                             '     CELULAR '    || ' BLOQUEADO' || chr(13));
+                             '      CELULAR '    || ' BLOQUEADO' || chr(13));
 
             END IF;
 
@@ -2046,7 +2046,7 @@ BEGIN
                                  LPAD(TO_CHAR(vr_vlparcav,'fm999g999g999g990d00'), 15, ' ') || ' ' ||
                                  LPAD(TO_CHAR(vr_vltotren,'fm999g999g999g990d00'), 15, ' ') || ' ' ||
                                  LPAD(TO_CHAR(vr_vlmaxpar,'fm999g999g999g990d00'), 15, ' ') || '  ' ||
-                                 LPAD(vr_nrtelefo, 10, ' ') || '  ' ||
+                                 LPAD(vr_nrtelefo, 11, ' ') || '  ' ||
                                  LPAD(rw_crapass.bloqueado, 9, ' '));
 
                   -- Grava os dados calculados na tabela de Credito Pre Aprovado
