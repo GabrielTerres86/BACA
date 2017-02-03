@@ -65,6 +65,9 @@ BEGIN
                               considerar apenas os cartões cuja situação esteja [4 - em uso] (Anderson)
                               
                  12/07/2016 - Pre-Aprovado fase III. (Lombardi)
+
+				 03/02/2017 - Inclusao de mais um digito no campo de telefone do arquivo de pre-aprovado.
+				              Andrey (Mouts) - Chamado 577203
                               
   ............................................................................ */
 
