@@ -1526,7 +1526,6 @@ PROCEDURE gerar_titulo:
               " "                    FORMAT "x(18)"         /* Filler */    
               aux_nrispbif_rem       FORMAT "99999999"      /* ISPB recebedor   */
               aux_nrispbif           FORMAT "99999999"      /* ISPB favorecido  */                          
-              FILL(" ",34)           FORMAT "x(34)"         /* FILLER */
               aux_tpdocmto           FORMAT "x(3)"
               aux_nrseqarq           FORMAT "9999999999"
               SKIP.
@@ -1551,9 +1550,8 @@ PROCEDURE gerar_titulo:
               crapage.cdcomchq       FORMAT "999"      /* COMPE  */
               "0001"                 FORMAT "x(4)"     /* VERSAO */
               aux_nrsqarhd           FORMAT "9999999999"
-              FILL(" ",34)           FORMAT "x(34)"    /* FILLER */
               aux_tpdocmto           FORMAT "x(3)"
-              aux_nrseqarq           FORMAT "9999999999"
+              FILL(" ",34)           FORMAT "x(34)"    /* FILLER */                           aux_nrseqarq           FORMAT "9999999999"
               SKIP.*/
        ELSE
           PUT STREAM str_1
@@ -1575,7 +1573,6 @@ PROCEDURE gerar_titulo:
               " "                    FORMAT "x(18)"         /* Filler */    
               aux_nrispbif_rem       FORMAT "99999999"   /* ISPB recebedor   */
               aux_nrispbif           FORMAT "99999999"    /* ISPB favorecido  */                          
-              FILL(" ",34)           FORMAT "x(34)"    /* FILLER */
               aux_tpdocmto           FORMAT "x(3)"
               aux_nrseqarq           FORMAT "9999999999"
               SKIP.
@@ -1658,8 +1655,8 @@ PROCEDURE gerar_titulo:
                   YEAR(par_dtmvtolt)   FORMAT "9999"   /* DATA FORMATO */
                   MONTH(par_dtmvtolt)  FORMAT "99"     /* YYYYMMDD*/
                   DAY(par_dtmvtolt)    FORMAT "99"
-                  FILL(" ",41)         FORMAT "x(41)"  /* FILLER */
-                  aux_nrispbif         FORMAT "99999999"   /* ISPB Remetente*/  
+                  aux_vltotarq * 100   FORMAT "99999999999999999" /* VL Arq */                    FILL(" ",41)         FORMAT "x(41)"  /* FILLER */
+                  aux_nrispbif_rem     FORMAT "99999999"   /* ISPB Remetente*/  
                   FILL(" ",11)         FORMAT "x(11)"  /* FILLER */
                   aux_nrseqarq         FORMAT "9999999999"  /* SEQUENCIA */
                   SKIP.

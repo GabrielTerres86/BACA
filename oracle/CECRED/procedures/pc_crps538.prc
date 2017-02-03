@@ -4771,7 +4771,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                    --Processar liquidacao
                    PAGA0001.pc_processa_liquidacao (pr_idtabcob     => rw_crapcob.rowid       --Rowid da Cobranca
                                                    ,pr_nrnosnum     => 0                      --Nosso Numero
-                                                   ,pr_cdbanpag     => vr_cdbanpag            --Codigo banco pagamento
+                                                   ,pr_nrispbpg     => vr_nrispbif_rec        --Numero ISPB do pagador
+												   ,pr_cdbanpag     => vr_cdbanpag            --Codigo banco pagamento
                                                    ,pr_cdagepag     => vr_cdagepag            --Codigo Agencia pagamento
                                                    ,pr_vltitulo     => nvl(rw_crapcob.vltitulo,0)    --Valor do titulo
                                                    ,pr_vlliquid     => 0                      --Valor Liquidacao
