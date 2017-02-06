@@ -3369,16 +3369,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                  --Fechar Cursor
                  CLOSE cr_crapass;
                  
-                 --Se nao encontrou associado e convenio de EMPRESTIMO ou de ACORDO, pular p/ o prox registro
-                 IF NOT vr_crapass AND 
-                   vr_tab_crapcco(vr_index_crapcco).dsorgarq IN ('EMPRESTIMO','ACORDO') THEN
-                   vr_flgrejei := TRUE;
-                   --Inicializar variavel erro
-                   vr_cdcritic:= 0;
-                   --Pular proxima linha arquivo
-                   RAISE vr_exc_proximo;
-                 END IF;
-                 
                  --Se nao encontrou associado
                  IF NOT vr_crapass THEN
                    vr_flgrejei:= TRUE;
@@ -3505,6 +3495,31 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
 
                    --Atualizar tabela memoria cratrej
                    pc_gera_cratrej (rw_craprej);
+
+                   --> Gerar Devolucao
+                   vr_cdmotdev := 73; --> 73 - Beneficiário sem contrato de cobrança com a instituição financeira Destinatária
+                   
+                   --> Procedimento para grava registro de devolucao
+                   pc_grava_devolucao ( pr_cdcooper   => rw_crapcop.cdcooper  --> codigo da cooperativa
+                                       ,pr_dtmvtolt   => rw_crapdat.dtmvtolt  --> data do movimento
+                                       ,pr_nrseqarq   => vr_nrseqarq          --> numero sequencial do arquivo da devolucao (cob615)
+                                       ,pr_dscodbar   => vr_dscodbar_ori      --> codigo de barras
+                                       ,pr_nrispbif   => vr_nrispbif_rec      --> numero do ispb recebedora
+                                       ,pr_vlliquid   => vr_vltitulo          --> valor de liquidacao do titulo
+                                       ,pr_dtocorre   => vr_dtmvtolt          --> data da ocorrencia da devolucao
+                                       ,pr_nrdconta   => vr_nrdconta          --> numero da conta do cooperado
+                                       ,pr_nrcnvcob   => vr_nrcnvcob          --> numero do convenio de cobranca do cooperado
+                                       ,pr_nrdocmto   => vr_nrdocmto          --> numero do boleto de cobranca
+                                       ,pr_cdmotdev   => vr_cdmotdev          --> codigo do motivo da devolucao
+                                       ,pr_tpcaptur   => vr_tpcaptur          --> tipo de captura (cob615)
+                                       ,pr_tpdocmto   => vr_tpdocmto          --> codigo do tipo de documento (cob615)
+                                       ,pr_cdagerem   => vr_cdagepag          --> codigo da agencia do remetente (cob615)
+                                       ,pr_dslinarq   => vr_setlinha
+                                       ,pr_dscritic   => vr_dscritic);
+                                         
+                   IF TRIM(vr_dscritic) IS NOT NULL THEN
+                     RAISE vr_exc_sair;                       
+                   END IF;
 
                    --Inicializar variavel erro
                    vr_cdcritic:= 0;
