@@ -33,6 +33,7 @@
  * 037: [30/03/2015] Jorge            (CECRED): Ajuste em funcao mostraPesquisa, adicionado quinto parametro da variavel "coluna", campo opcional para coluna visivel ou nao. (SD - 229250)
  * 038: [02/06/2015] Jorge 			  (CECRED): Ajuste de tratamento de parametro em funcao mostraPesquisa.
  * 039: [11/07/2016] Evandro            (RKAM): Adicionado função controlafoco.
+ * 040: [06/02/2017] Lucas Ranghetti  (CECRED): Alterado funcao buscaCEP apra keydown e adicionado a funcao do tab.  #562253
  */
 
 var vg_formRetorno  = '';
@@ -1239,9 +1240,11 @@ $.fn.extend({
 	buscaCEP: function(nomeForm, camposOrigem, divRotina) { 
 		
 		var cCEP = $(this); 
-		cCEP.unbind('keypress').bind('keypress', function(e) {			
-			if ( divError.css('display') == 'block' ) { return false; }		
-			if ( e.keyCode == 13 ) {
+		cCEP.unbind('keydown').bind('keydown', function(e) { 
+			if(divError.css('display') == 'block') { return false; }
+            
+			if (e.keyCode == 13 || e.keyCode == 9) {
+			
 				mostraPesquisaEndereco(nomeForm, camposOrigem, divRotina, $(this).val());
 				return false;
 			}
