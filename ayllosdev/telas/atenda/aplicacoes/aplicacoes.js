@@ -533,11 +533,16 @@ function cadastrarResgate(flmensag) {
         return false;
     }
 
+    var d = new Date();
+    var n = d.getTime();
+
+    $.ajaxSetup({ cache: false });
+
     // Executa script de consulta através de ajax
     $.ajax({
         type: "POST",
         dataType: "html",
-        url: UrlSite + "telas/atenda/aplicacoes/resgate_cadastrar.php",
+        url: UrlSite + "telas/atenda/aplicacoes/resgate_cadastrar.php?q=" + n,
         data: {
             nrdconta: nrdconta,
             nraplica: nraplica,
