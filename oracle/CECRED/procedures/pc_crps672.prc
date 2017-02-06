@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Lucas Lunelli
-       Data    : Abril/2014.                     Ultima atualizacao: 14/07/2016
+       Data    : Abril/2014.                     Ultima atualizacao: 02/01/2017
 
        Dados referentes ao programa:
 
@@ -85,6 +85,34 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                    14/07/2016 - Ajustado a identificacao dos dados da conta e controle na leitura do
                                 numero da conta quando o valor recebido eh zero
                                 (Douglas - Chamado 465010, 478018)
+
+                   04/10/2016 - Ajustado para gravar o nome da empresa do plastico quando criar uma
+                                nova proposta de cartao (Douglas - Chamado 488392)
+                                
+                   10/10/2016 - Ajuste para nao voltar para Aprovado uma solicitacao que
+                                retornar com critica 80 do Bancoob (pessoa ja tem cartao nesta conta).
+                                (Chamado 532712) - (Fabrício)
+
+				           01/11/2016 - Ajustes quando ocorre integracao de cartao via Upgrade/Downgrade.
+                                (Chamado 532712) - (Fabricio)
+                                
+                   11/11/2016 - Adicionado validação de CPF do primeiro cartão da administradora
+                                para que os cartões solicitados como reposição também tenham a mesma
+                                flag de primeiro cartão (Douglas - Chamado 499054 / 541033)
+                                
+                   24/11/2016 - Ajuste para alimentar o campo de indicador de funcao debito (flgdebit)
+                                com a informacao que existe na linha do arquivo referente a
+                                funcao habilitada ou nao. (Fabricio)
+                              - Quando tipo de operacao for 10 (desbloqueio) e for uma reposicao de cartao,
+                                chamar a procedure atualiza_situacao_cartao para cancelar o cartao
+                                anterior. (Chamado 559710) - (Fabricio)
+                                
+                   05/12/2016 - Correcao no cursor cr_crapcrd para buscar cartoes atraves do indice da tabela
+                                e inclusao da validacao da existencia de cartoes sem proposta gerando log 
+                                no proc_message. SD 569619 (Carlos Rafael Tanholi)
+                                
+                   02/01/2017 - Ajuste na leitura dos registros de cartoes ja existentes.
+                                (Fabricio)
     ............................................................................ */
 
     DECLARE
@@ -286,6 +314,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
             ,pcr.nrdoccrd
             ,pcr.dtcancel
             ,pcr.flgdebit
+            ,pcr.nmempcrd
             ,pcr.rowid
         FROM crawcrd pcr
        WHERE pcr.cdcooper = pr_cdcooper  AND
@@ -303,6 +332,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                                   pr_nrdconta IN crawcrd.nrdconta%TYPE,
                                   pr_cdadmcrd IN crawcrd.cdadmcrd%TYPE) IS
       SELECT pcr.flgprcrd
+            ,pcr.nrcpftit
         FROM crawcrd pcr
        WHERE pcr.cdcooper = pr_cdcooper AND
              pcr.nrdconta = pr_nrdconta AND
@@ -339,6 +369,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
             ,pcr.nrdoccrd
             ,pcr.dtcancel
             ,pcr.flgdebit
+            ,pcr.nmempcrd
             ,pcr.rowid
         FROM crawcrd pcr
        WHERE ROWID = pr_rowid;
@@ -346,13 +377,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
       -- cursor para busca de cartão
       CURSOR cr_crapcrd (pr_cdcooper IN crapcrd.cdcooper%TYPE,
                          pr_nrdconta IN crapcrd.nrdconta%TYPE,
-                         pr_nrctrcrd IN crapcrd.nrctrcrd%TYPE) IS
+                         pr_nrcrcard IN crapcrd.nrcrcard%TYPE) IS
       SELECT crd.nrcrcard
             ,crd.rowid
         FROM crapcrd crd
        WHERE crd.cdcooper = pr_cdcooper  AND
              crd.nrdconta = pr_nrdconta  AND
-             crd.nrctrcrd = pr_nrctrcrd  AND
+             crd.nrcrcard = pr_nrcrcard  AND
              crd.dtcancel IS NULL;
       rw_crapcrd cr_crapcrd%ROWTYPE;
 
@@ -1421,18 +1452,19 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                 -- Se vier agencia bancoob zerada, obtem do Nr. da Conta Cartão
                 IF vr_cdagebcb = 0 THEN
                   vr_cdagebcb := to_number(substr(vr_des_text,28,4));
-                END IF;
+                END IF;                
                 
                 /*
                 1 - Inclusao de Cartao
                 3 - Cancelamento de Cartao
                 4 - Inclusao de Adicional
                 7 - Reativacao de Contas
+                10 - Desbloqueio (exclusivo p/ tratamento de reposicao)
                 12 - Alteracao de Estado
                 13 - Alteracao de Estado Conta
                 25 - Reativar Cartao do Adicional                
                 */                
-                IF vr_tipooper NOT IN (1,3,4,7,12,13,25) THEN
+                IF vr_tipooper NOT IN (1,3,4,7,10,12,13,25) THEN
                    CONTINUE;
                 END IF;
                 
@@ -1456,7 +1488,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                 END IF;                
 
                 -- faz associação da variavel cod cooperativa;
-                vr_cdcooper := rw_crapcop_cdagebcb.cdcooper;
+                vr_cdcooper := rw_crapcop_cdagebcb.cdcooper;                
                 
                 -- Caso o numero da conta for igual a 0, vamos buscar o numero da conta pelo CPF
                 IF NVL(vr_nrctatp2,0) = 0 THEN
@@ -1517,6 +1549,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                 
                 -- Se for dados do cartão, e os dados forem de um CNPJ (pos93 = 3)
                 IF TO_NUMBER(substr(vr_des_text,93,02)) = '03' THEN                  
+                  /* nao deve solicitar cartao novamente caso retorne critica 080
+                     (pessoa ja tem cartao nesta conta) */
+                  IF substr(vr_des_text, 211, 3) = '080' THEN
+                    continue;
+                  END IF;
                   
                   vr_nmtitcrd := substr(vr_des_text,38,19)||substr(vr_des_text,250,23)||substr(vr_des_text,7,2);
                   
@@ -1581,6 +1618,32 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                   END IF;
                 END IF;
                 
+                /* Tratamento especifico para casos de operacao 10 (desbloqueio), porem, onde a
+                   informacao que vem no arquivo informa que o cartao esta sendo REPOSTO (deve cancelar).
+                   Fabricio - chamado 559710 */
+                IF vr_tipooper = 10 THEN
+                  IF TO_NUMBER(substr(vr_des_text,114,2)) = 10 THEN /*reposicao*/
+                    -- Atualiza os dados da situacao do cartao
+                    atualiza_situacao_cartao(pr_cdcooper => vr_cdcooper,
+                                             pr_nrdconta => vr_nrdconta,
+                                             pr_nrcrcard => TO_NUMBER(substr(vr_des_text,38,19)),                                           
+                                             pr_insitcrd => TO_NUMBER(substr(vr_des_text,114,2)),                                    
+                                             pr_dtmvtolt => rw_crapdat.dtmvtolt,
+                                             pr_des_erro => vr_des_erro,
+                                             pr_cdcritic => vr_cdcritic,
+                                             pr_dscritic => vr_dscritic);
+                                             
+                    -- Verifica se ocorreu erro                          
+                    IF vr_des_erro <> 'OK' THEN
+                      pc_log_message;
+                      vr_des_erro := '';
+                    END IF;
+                  END IF;
+
+                  -- tipo de operacao 10 (desbloqueio) nao deve fazer mais nada alem disto (Fabricio).
+                  CONTINUE;
+                END IF;
+                
                 /* 
                 3 - Cancelamento de Cartao
                 7 - Reativacao de Contas
@@ -1632,7 +1695,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                   OPEN  cr_crawcrd_cdgrafin(vr_cdcooper                 -- pr_cdcooper
                                            ,vr_nrdconta                 -- pr_nrdconta
                                            ,substr(vr_des_text,25,13)   -- pr_nrcctitg
-                                           ,NULL                        -- pr_nrcpftit
+                                           ,TO_NUMBER(substr(vr_des_text,95,15)) -- pr_nrcpftit
                                            ,NULL                        -- pr_insitcrd -- EM USO
                                            ,1 );                        -- pr_flgprcrd
                   FETCH cr_crawcrd_cdgrafin INTO rw_crapacb.cdadmcrd
@@ -1643,31 +1706,30 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                   -- Se não encontrar registros
                   IF cr_crawcrd_cdgrafin%NOTFOUND THEN
                     -- Fechar o cursor
-                    CLOSE cr_crawcrd_cdgrafin;
+                    CLOSE cr_crawcrd_cdgrafin;                    
                     
-                    -- Buscar pelo CPF do titular
-                    OPEN  cr_crawcrd_cdgrafin(vr_cdcooper                          -- pr_cdcooper
-                                             ,vr_nrdconta                          -- pr_nrdconta
-                                             ,NULL                                 -- pr_nrcctitg
+                    -- Buscar registro de solicitacao
+                    OPEN  cr_crawcrd_cdgrafin(vr_cdcooper                 -- pr_cdcooper
+                                             ,vr_nrdconta                 -- pr_nrdconta
+                                             ,NULL                        -- pr_nrcctitg
                                              ,TO_NUMBER(substr(vr_des_text,95,15)) -- pr_nrcpftit
-                                             ,3                                    -- pr_insitcrd -- LIBERADO
-                                             ,NULL );                              -- pr_flgprcrd
+                                             ,2                             -- pr_insitcrd -- SOLICITADO
+                                             ,NULL);                        -- pr_flgprcrd
                     FETCH cr_crawcrd_cdgrafin INTO rw_crapacb.cdadmcrd
                                                  , vr_dddebito
                                                  , vr_vllimcrd
                                                  , vr_tpdpagto
-                                                 , vr_flgdebcc;  
-                  
+                                                 , vr_flgdebcc;
                     -- Se não encontrar registros
                     IF cr_crawcrd_cdgrafin%NOTFOUND THEN
                       -- Fechar o cursor
-                      CLOSE cr_crawcrd_cdgrafin;
-                      
-                      -- Buscar cartão liberado do próprio
+                      CLOSE cr_crawcrd_cdgrafin;                                     
+                    
+                      -- Buscar pelo CPF do titular
                       OPEN  cr_crawcrd_cdgrafin(vr_cdcooper                          -- pr_cdcooper
                                                ,vr_nrdconta                          -- pr_nrdconta
                                                ,NULL                                 -- pr_nrcctitg
-                                               ,NULL                                 -- pr_nrcpftit
+                                               ,TO_NUMBER(substr(vr_des_text,95,15)) -- pr_nrcpftit
                                                ,3                                    -- pr_insitcrd -- LIBERADO
                                                ,NULL );                              -- pr_flgprcrd
                       FETCH cr_crawcrd_cdgrafin INTO rw_crapacb.cdadmcrd
@@ -1675,46 +1737,81 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                                                    , vr_vllimcrd
                                                    , vr_tpdpagto
                                                    , vr_flgdebcc;  
-                      
+                    
                       -- Se não encontrar registros
                       IF cr_crawcrd_cdgrafin%NOTFOUND THEN
-                        -- Buscar cartão liberado que tenha um outro cancelado na mesma data ( Ou seja: Up/Downgrade)
-                        OPEN  cr_crawcrd_cancel(vr_cdcooper                 -- pr_cdcooper
-                                               ,vr_nrdconta                 -- pr_nrdconta
-                                               ,substr(vr_des_text,25,13)   -- pr_nrcctitg
-                                               ,3                           -- pr_insitcrd
-                                               ,rw_crapdat.dtmvtolt);       -- pr_dtmvtolt
-                        FETCH cr_crawcrd_cancel INTO rw_crapacb.cdadmcrd
-                                                   , vr_dddebito
-                                                   , vr_vllimcrd
-                                                   , vr_tpdpagto
-                                                   , vr_flgdebcc;
+                        -- Fechar o cursor
+                        CLOSE cr_crawcrd_cdgrafin;
+                        
+                        -- Buscar cartão liberado do próprio
+                        OPEN  cr_crawcrd_cdgrafin(vr_cdcooper                          -- pr_cdcooper
+                                                 ,vr_nrdconta                          -- pr_nrdconta
+                                                 ,NULL                                 -- pr_nrcctitg
+                                                 ,NULL                                 -- pr_nrcpftit
+                                                 ,3                                    -- pr_insitcrd -- LIBERADO
+                                                 ,NULL );                              -- pr_flgprcrd
+                        FETCH cr_crawcrd_cdgrafin INTO rw_crapacb.cdadmcrd
+                                                     , vr_dddebito
+                                                     , vr_vllimcrd
+                                                     , vr_tpdpagto
+                                                     , vr_flgdebcc;  
+                        
                         -- Se não encontrar registros
-                        IF cr_crawcrd_cancel%NOTFOUND THEN
-                          CLOSE cr_crawcrd_cancel;                          
-                          -- Buscar os dados do cartao
-                          OPEN cr_crawcrd_cdgrafin_conta(vr_cdcooper               -- pr_cdcooper
-                                                        ,vr_nrdconta               -- pr_nrdconta
-                                                        ,substr(vr_des_text,25,13) -- pr_nrcctitg
-                                                        ,rw_crapdat.dtmvtolt);     -- pr_dtmvtolt
-                          -- Buscar os dados                              
-                          FETCH cr_crawcrd_cdgrafin_conta INTO rw_crawcrd_cdgrafin_conta;
-                          IF cr_crawcrd_cdgrafin_conta%FOUND THEN
-                            CLOSE cr_crawcrd_cdgrafin_conta;
-                            -- Carrega os dados do cartao
-                            rw_crapacb.cdadmcrd := rw_crawcrd_cdgrafin_conta.cdadmcrd;
-                            vr_dddebito         := rw_crawcrd_cdgrafin_conta.dddebito;
-                            vr_vllimcrd         := rw_crawcrd_cdgrafin_conta.vllimcrd;
-                            vr_tpdpagto         := rw_crawcrd_cdgrafin_conta.tpdpagto;
-                            vr_flgdebcc         := rw_crawcrd_cdgrafin_conta.flgdebcc;                          
+                        IF cr_crawcrd_cdgrafin%NOTFOUND THEN
+                          -- Buscar cartão liberado que tenha um outro cancelado na mesma data ( Ou seja: Up/Downgrade)
+                          OPEN  cr_crawcrd_cancel(vr_cdcooper                 -- pr_cdcooper
+                                                 ,vr_nrdconta                 -- pr_nrdconta
+                                                 ,substr(vr_des_text,25,13)   -- pr_nrcctitg
+                                                 ,3                           -- pr_insitcrd
+                                                 ,rw_crapdat.dtmvtolt);       -- pr_dtmvtolt
+                          FETCH cr_crawcrd_cancel INTO rw_crapacb.cdadmcrd
+                                                     , vr_dddebito
+                                                     , vr_vllimcrd
+                                                     , vr_tpdpagto
+                                                     , vr_flgdebcc;
+                          -- Se não encontrar registros
+                          IF cr_crawcrd_cancel%NOTFOUND THEN
+                            CLOSE cr_crawcrd_cancel;                          
+                            -- Buscar os dados do cartao
+                            OPEN cr_crawcrd_cdgrafin_conta(vr_cdcooper               -- pr_cdcooper
+                                                          ,vr_nrdconta               -- pr_nrdconta
+                                                          ,substr(vr_des_text,25,13) -- pr_nrcctitg
+                                                          ,rw_crapdat.dtmvtolt);     -- pr_dtmvtolt
+                            -- Buscar os dados                              
+                            FETCH cr_crawcrd_cdgrafin_conta INTO rw_crawcrd_cdgrafin_conta;
+                            IF cr_crawcrd_cdgrafin_conta%FOUND THEN
+                              CLOSE cr_crawcrd_cdgrafin_conta;
+                              -- Carrega os dados do cartao
+                              rw_crapacb.cdadmcrd := rw_crawcrd_cdgrafin_conta.cdadmcrd;
+                              vr_dddebito         := rw_crawcrd_cdgrafin_conta.dddebito;
+                              vr_vllimcrd         := rw_crawcrd_cdgrafin_conta.vllimcrd;
+                              vr_tpdpagto         := rw_crawcrd_cdgrafin_conta.tpdpagto;
+                              vr_flgdebcc         := rw_crawcrd_cdgrafin_conta.flgdebcc;                          
+                            ELSE
+                              CLOSE cr_crawcrd_cdgrafin_conta;
+                              
+                              IF cr_crawcrd_cdgrafin%ISOPEN THEN
+                                CLOSE cr_crawcrd_cdgrafin;
+                              END IF;
+                              
+                              OPEN  cr_crawcrd_cdgrafin(vr_cdcooper                 -- pr_cdcooper
+                                                       ,vr_nrdconta                 -- pr_nrdconta
+                                                       ,substr(vr_des_text,25,13)   -- pr_nrcctitg
+                                                       ,NULL                        -- pr_nrcpftit
+                                                       ,NULL                        -- pr_insitcrd -- EM USO
+                                                       ,1);                         -- pr_flgprcrd
+                              FETCH cr_crawcrd_cdgrafin INTO rw_crapacb.cdadmcrd
+                                                           , vr_dddebito
+                                                           , vr_vllimcrd
+                                                           , vr_tpdpagto
+                                                           , vr_flgdebcc;                                                                                         
+                            END IF;
+                            
                           ELSE
-                            CLOSE cr_crawcrd_cdgrafin_conta;
+                            CLOSE cr_crawcrd_cancel;
                           END IF;
-                          
-                        ELSE
-                          CLOSE cr_crawcrd_cancel;
+                                                     
                         END IF;
-                                                   
                       END IF;
                     END IF;
                   END IF;
@@ -1746,6 +1843,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                 
                 -- Verifica se houve rejeição do Tipo de Registro 2
                 IF substr(vr_des_text,211,3) <> '000'  THEN
+                  /* nao deve solicitar cartao novamente caso retorne critica 080
+                     (pessoa ja tem cartao nesta conta) */
+                  IF substr(vr_des_text, 211, 3) = '080' THEN
+                    continue;
+                  END IF;
                   
                   BEGIN                  
                     vr_nmtitcrd := substr(vr_des_text,38,19)||substr(vr_des_text,57,23)||substr(vr_des_text,7,2);
@@ -1817,7 +1919,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                   vr_cdlimcrd := 0;
                   
                 END IF;  
-            
+
+                -- Se o cursor estiver aberto
+                IF cr_crawcrd%ISOPEN THEN
+                  -- Fechar cursor
+                  CLOSE cr_crawcrd;
+                END IF;
+
                 -- buscar proposta de cartão
                 OPEN cr_crawcrd(pr_cdcooper => vr_cdcooper,
                                 pr_nrdconta => vr_nrdconta,
@@ -1945,7 +2053,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                                            pr_cdadmcrd => rw_crapacb.cdadmcrd);
                   FETCH cr_crawcrd_flgprcrd INTO rw_crawcrd_flgprcrd;
                   IF cr_crawcrd_flgprcrd%FOUND THEN
-                     vr_flgprcrd := 0; -- Não é o primeiro
+                    -- Verificar se o CPF do titular do primeiro cartão é o mesmo que esta sendo validado
+                    IF rw_crawcrd_flgprcrd.nrcpftit = TO_NUMBER(substr(vr_des_text,95,15)) THEN
+                      vr_flgprcrd := 1; -- É o primeiro cartão Bancoob
+                    ELSE
+                      vr_flgprcrd := 0; -- Não é o primeiro
+                    END IF;
                   ELSE
                      vr_flgprcrd := 1; -- É o primeiro cartão Bancoob
                   END IF;
@@ -2026,58 +2139,88 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                       RAISE vr_exc_saida;
                   END;
 
+                  IF cr_crawcrd_rowid%ISOPEN THEN
+                    CLOSE cr_crawcrd_rowid;
+                  END IF;
+
                   -- Obtem ponteiro do registro de proposta recém criado
                   OPEN cr_crawcrd_rowid(pr_rowid => rw_crawcrd.rowid);
                   FETCH cr_crawcrd_rowid INTO rw_crawcrd;
 
-                  BEGIN
-                    INSERT INTO crapcrd
-                       (cdcooper,
-                        nrdconta,
-                        nrcrcard,
-                        nrcpftit,
-                        nmtitcrd,
-                        dddebito,
-                        cdlimcrd,
-                        dtvalida,
-                        nrctrcrd,
-                        cdmotivo,
-                        nrprotoc,
-                        cdadmcrd,
-                        tpcartao,
-                        dtcancel,
-                        flgdebit)
-                    VALUES
-                       (rw_crawcrd.cdcooper,
-                        rw_crawcrd.nrdconta,
-                        rw_crawcrd.nrcrcard,
-                        rw_crawcrd.nrcpftit,
-                        rw_crawcrd.nmtitcrd,
-                        rw_crawcrd.dddebito,
-                        rw_crawcrd.cdlimcrd,
-                        rw_crawcrd.dtvalida,
-                        rw_crawcrd.nrctrcrd,
-                        rw_crawcrd.cdmotivo,
-                        rw_crawcrd.nrprotoc,
-                        rw_crawcrd.cdadmcrd,
-                        rw_crawcrd.tpcartao,
-                        rw_crawcrd.dtcancel,
-                        rw_crawcrd.flgdebit)
-                        RETURNING ROWID INTO rw_crapcrd.rowid;
-                  EXCEPTION
-                    WHEN OTHERS THEN
-                      vr_dscritic := 'Erro ao inserir crapcrd: '||SQLERRM;
-                      RAISE vr_exc_saida;
-                  END;
+                  IF cr_crapcrd%ISOPEN THEN
+                    CLOSE cr_crapcrd;
+                  END IF;
+                  
+                  -- buscar registro do cartão de crédito
+                  OPEN cr_crapcrd(pr_cdcooper => rw_crawcrd.cdcooper,
+                                  pr_nrdconta => rw_crawcrd.nrdconta,
+                                  pr_nrcrcard => rw_crawcrd.nrcrcard);
+                  FETCH cr_crapcrd INTO rw_crapcrd;
 
+                  -- Se encontrar registro do cartão, cria log e continua
+                  IF cr_crapcrd%FOUND THEN
+                    -- LOGA NO PROC_MESSAGE
+                    btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                              ,pr_ind_tipo_log => 2 -- Erro tratato
+                                              ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                               || vr_cdprogra || ' --> '
+                                                               || 'CARTAO JA EXISTENTE - NR: ' || rw_crawcrd.nrcrcard || ' '
+                                                               || 'CONTA: ' || rw_crawcrd.nrdconta || ' COOP.: ' || rw_crawcrd.cdcooper
+                                                               || ' ARQ.: ' || vr_nmarquiv
+                                              ,pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
+                    CONTINUE;
+                  ELSE      
+                    BEGIN
+                      INSERT INTO crapcrd
+                         (cdcooper,
+                          nrdconta,
+                          nrcrcard,
+                          nrcpftit,
+                          nmtitcrd,
+                          dddebito,
+                          cdlimcrd,
+                          dtvalida,
+                          nrctrcrd,
+                          cdmotivo,
+                          nrprotoc,
+                          cdadmcrd,
+                          tpcartao,
+                          dtcancel,
+                          flgdebit)
+                      VALUES
+                         (rw_crawcrd.cdcooper,
+                          rw_crawcrd.nrdconta,
+                          rw_crawcrd.nrcrcard,
+                          rw_crawcrd.nrcpftit,
+                          rw_crawcrd.nmtitcrd,
+                          rw_crawcrd.dddebito,
+                          rw_crawcrd.cdlimcrd,
+                          rw_crawcrd.dtvalida,
+                          rw_crawcrd.nrctrcrd,
+                          rw_crawcrd.cdmotivo,
+                          rw_crawcrd.nrprotoc,
+                          rw_crawcrd.cdadmcrd,
+                          rw_crawcrd.tpcartao,
+                          rw_crawcrd.dtcancel,
+                          rw_crawcrd.flgdebit)
+                          RETURNING ROWID INTO rw_crapcrd.rowid;
+                    EXCEPTION
+                      WHEN OTHERS THEN
+                        vr_dscritic := 'Erro ao inserir crapcrd: '||SQLERRM;
+                        RAISE vr_exc_saida;
+                    END;
+                  END IF;
+                    
                   -- fecha ponteiro do registro de proposta recém criado
                   CLOSE cr_crawcrd_rowid;
 
-                ELSE -- se encontrar proposta de cartão de crédito
-                                  
+                  -- Fecha cursor de Cartão de crédito
+                  CLOSE cr_crapcrd;
+
+                ELSE -- se encontrar proposta de cartão de crédito   
+                    
                   -- Se número do Cartão for zerado
                   IF rw_crawcrd.nrcrcard = 0 THEN
-
                     -- Atualiza registro de proposta de cartão se operação retornada for 01 ou 04
                     BEGIN
                       UPDATE crawcrd
@@ -2090,14 +2233,22 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                         RAISE vr_exc_saida;
                     END;
 
+                    IF cr_crawcrd_rowid%ISOPEN THEN
+                      CLOSE cr_crawcrd_rowid;
+                    END IF;
+
                     -- Obtem ponteiro do registro de proposta recém atualizado para alimentar a CRAPCRD corretamente
                     OPEN cr_crawcrd_rowid(pr_rowid => rw_crawcrd.rowid);
                     FETCH cr_crawcrd_rowid INTO rw_crawcrd;
 
+                    IF cr_crapcrd%ISOPEN THEN
+                      CLOSE cr_crapcrd;
+                    END IF;
+
                     -- buscar registro do cartão de crédito
                     OPEN cr_crapcrd(pr_cdcooper => rw_crawcrd.cdcooper,
                                     pr_nrdconta => rw_crawcrd.nrdconta,
-                                    pr_nrctrcrd => rw_crawcrd.nrctrcrd);
+                                    pr_nrcrcard => rw_crawcrd.nrcrcard);
                     FETCH cr_crapcrd INTO rw_crapcrd;
 
                     -- Se não encontrar registro do cartão de crédito,
@@ -2142,7 +2293,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                           vr_dscritic := 'Erro ao inserir crapcrd: '||SQLERRM;
                           RAISE vr_exc_saida;
                       END;
-
+                      
                     ELSE -- se encontrar registro do cartão de crédito,
 
                       -- Atualiza registro de cartão de crédito
@@ -2201,7 +2352,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                       -- Fechar cursor
                       CLOSE cr_crawcrd;
                     END IF;
-                  
+                    
                     -- buscar proposta de cartão
                     OPEN cr_crawcrd(pr_cdcooper => vr_cdcooper,
                                     pr_nrdconta => vr_nrdconta,
@@ -2218,6 +2369,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                       
                       -- Deve buscar o contrato para inserir
                       vr_nrseqcrd := CCRD0003.fn_sequence_nrseqcrd(pr_cdcooper => vr_cdcooper);
+                      
+                      -- olha o indicador de funcao debito direto na linha que esta sendo processada
+                      IF to_number(TRIM(substr(vr_des_text,337,12))) = 0 THEN
+                        vr_flgdebit := 0;
+                      ELSE
+                        vr_flgdebit := 1;
+                      END IF;
                   
                       -- cria nova proposta com número do cartão vindo no arquivo
                       BEGIN
@@ -2247,7 +2405,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                             nrseqcrd,
                             dtentr2v,
                             dtpropos,
-                            flgdebit)
+                            flgdebit,
+                            nmempcrd)
                         VALUES
                            (rw_crawcrd.nrdconta,
                             TO_NUMBER(substr(vr_des_text,38,19)), -- número cartão vindo do arquivo
@@ -2274,7 +2433,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                             vr_nrseqcrd,
                             vr_dtentr2v,
                             rw_crapdat.dtmvtolt,
-                            rw_crawcrd.flgdebit)
+                            vr_flgdebit,
+                            rw_crawcrd.nmempcrd)
                             RETURNING ROWID INTO rw_crawcrd.rowid;
                       EXCEPTION
                         WHEN OTHERS THEN
@@ -2296,51 +2456,83 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                     
                     END IF; 
 
+                    IF cr_crawcrd_rowid%ISOPEN THEN
+                      CLOSE cr_crawcrd_rowid;
+                    END IF;
+
                     -- Obtem ponteiro do registro de proposta recém criado
                     OPEN cr_crawcrd_rowid(pr_rowid => rw_crawcrd.rowid);
                     FETCH cr_crawcrd_rowid INTO rw_crawcrd;
 
-                    -- cria novo registro de cartão de crédito
-                    BEGIN
-                      INSERT INTO crapcrd
-                         (cdcooper,
-                          nrdconta,
-                          nrcrcard,
-                          nrcpftit,
-                          nmtitcrd,
-                          dddebito,
-                          cdlimcrd,
-                          dtvalida,
-                          nrctrcrd,
-                          cdmotivo,
-                          nrprotoc,
-                          cdadmcrd,
-                          tpcartao,
-                          dtcancel,
-                          flgdebit)
-                      VALUES
-                         (rw_crawcrd.cdcooper,
-                          rw_crawcrd.nrdconta,
-                          rw_crawcrd.nrcrcard,
-                          rw_crawcrd.nrcpftit,
-                          rw_crawcrd.nmtitcrd,
-                          rw_crawcrd.dddebito,
-                          rw_crawcrd.cdlimcrd,
-                          rw_crawcrd.dtvalida,
-                          rw_crawcrd.nrctrcrd,
-                          rw_crawcrd.cdmotivo,
-                          rw_crawcrd.nrprotoc,
-                          rw_crawcrd.cdadmcrd,
-                          rw_crawcrd.tpcartao,
-                          rw_crawcrd.dtcancel,
-                          rw_crawcrd.flgdebit)
-                          RETURNING ROWID INTO rw_crapcrd.rowid;
-                    EXCEPTION
-                      WHEN OTHERS THEN
-                        vr_dscritic := 'Erro ao inserir crapcrd: '||SQLERRM;
-                        RAISE vr_exc_saida;
-                    END;
+                    IF cr_crapcrd%ISOPEN THEN
+                      CLOSE cr_crapcrd;
+                    END IF;
 
+                    -- buscar registro do cartão de crédito
+                    OPEN cr_crapcrd(pr_cdcooper => rw_crawcrd.cdcooper,
+                                    pr_nrdconta => rw_crawcrd.nrdconta,
+                                    pr_nrcrcard => rw_crawcrd.nrcrcard);
+                    FETCH cr_crapcrd INTO rw_crapcrd;
+
+                    -- Se encontrar registro do cartão, cria log e continua
+                    IF cr_crapcrd%FOUND THEN
+                      -- LOGA NO PROC_MESSAGE
+                      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                                ,pr_ind_tipo_log => 2 -- Erro tratato
+                                                ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                                 || vr_cdprogra || ' --> '
+                                                                 || 'CARTAO JA EXISTENTE - NR: ' || rw_crawcrd.nrcrcard || ' '
+                                                                 || 'CONTA: ' || rw_crawcrd.nrdconta || ' COOP.: ' || rw_crawcrd.cdcooper
+                                                                 || ' ARQ.: ' || vr_nmarquiv
+                                                ,pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
+                      CONTINUE;
+                    ELSE
+                      -- cria novo registro de cartão de crédito
+                      BEGIN
+                        INSERT INTO crapcrd
+                           (cdcooper,
+                            nrdconta,
+                            nrcrcard,
+                            nrcpftit,
+                            nmtitcrd,
+                            dddebito,
+                            cdlimcrd,
+                            dtvalida,
+                            nrctrcrd,
+                            cdmotivo,
+                            nrprotoc,
+                            cdadmcrd,
+                            tpcartao,
+                            dtcancel,
+                            flgdebit)
+                        VALUES
+                           (rw_crawcrd.cdcooper,
+                            rw_crawcrd.nrdconta,
+                            rw_crawcrd.nrcrcard,
+                            rw_crawcrd.nrcpftit,
+                            rw_crawcrd.nmtitcrd,
+                            rw_crawcrd.dddebito,
+                            rw_crawcrd.cdlimcrd,
+                            rw_crawcrd.dtvalida,
+                            rw_crawcrd.nrctrcrd,
+                            rw_crawcrd.cdmotivo,
+                            rw_crawcrd.nrprotoc,
+                            rw_crawcrd.cdadmcrd,
+                            rw_crawcrd.tpcartao,
+                            rw_crawcrd.dtcancel,
+                            rw_crawcrd.flgdebit)
+                            RETURNING ROWID INTO rw_crapcrd.rowid;
+                      EXCEPTION
+                        WHEN OTHERS THEN
+                          vr_dscritic := 'Erro ao inserir crapcrd: '||SQLERRM;
+                          RAISE vr_exc_saida;
+                      END;
+                    
+                    END IF;                    
+                    
+                    -- Fecha cursor de Cartão de crédito
+                    CLOSE cr_crapcrd;
+                                        
                     -- fecha ponteiro do registro de proposta recém criado
                     CLOSE cr_crawcrd_rowid;
 
