@@ -25,6 +25,8 @@
 //***    																***//
 //***			  04/06/2013 - Incluido var complemento no controlaLayout**//
 //***						   (Lucas R.)                               ***//  
+//***             06/02/2017 - Ajuste no ajax de resgaste para evitar   ***//
+//***                          o cache (Andrey Formigari - Mouts)       ***//
 //*************************************************************************//
 
 var nrctrrpp = 0;        // Variável para armazenar número da poupança selecionada
@@ -522,10 +524,15 @@ function validarResgate() {
         return false;
     }
 
+    var d = new Date();
+    var n = d.getTime();
+
+    $.ajaxSetup({ cache: false });
+
     // Executa script de consulta através de ajax
     $.ajax({
         type: "POST",
-        url: UrlSite + "telas/atenda/poupanca_programada/poupanca_resgate_validar.php",
+        url: UrlSite + "telas/atenda/poupanca_programada/poupanca_resgate_validar.php?q=" + n,
         data: {
             nrdconta: nrdconta,
             nrctrrpp: nrctrrpp,
