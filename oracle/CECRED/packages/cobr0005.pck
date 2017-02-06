@@ -3819,6 +3819,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        WHERE pct.idpacote = pr_idpacote;   
     rw_pacotes cr_pacotes%ROWTYPE;
     
+    --> Buscar boletos pendentes de envio de SMS
+    CURSOR cr_crapcob (pr_cdcooper IN crapsnh.cdcooper%type
+                      ,pr_nrdconta IN crapsnh.nrdconta%TYPE) IS
+      SELECT cob.nrcnvcob,
+             cob.nrdocmto,
+             cob.dtmvtolt
+        FROM crapcob cob
+      WHERE cob.cdcooper = pr_cdcooper
+        AND cob.nrdconta = pr_nrdconta
+        AND cob.incobran = 0
+        AND cob.inavisms > 0
+        AND (cob.insmsant = 1 OR 
+             cob.insmsvct = 1 OR 
+             cob.insmspos = 1);
+    
     -------------->> VARIAVEIS <<----------------
     vr_exc_erro     EXCEPTION;
     vr_dscritic     VARCHAR2(2000);
@@ -3985,6 +4000,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
           vr_dscritic := 'Não foi possivel cancelar envio de sms:'|| SQLERRM;
           RAISE vr_exc_erro;
       END;    
+    
+      --> Buscar boletos pendentes de envio de SMS
+      FOR rw_crapcob IN cr_crapcob (pr_cdcooper => pr_cdcooper
+                                   ,pr_nrdconta => pr_nrdconta) LOOP
+                                   
+        -- Procedure para Cancelar o envio de SMS
+        COBR0007.pc_inst_canc_sms 
+                             (pr_cdcooper  => pr_cdcooper         --> Codigo da cooperativa
+                             ,pr_nrdconta  => pr_nrdconta         --> Numero da conta do cooperado
+                             ,pr_nrcnvcob  => rw_crapcob.nrcnvcob --> Numero do Convenio
+                             ,pr_nrdocmto  => rw_crapcob.nrdocmto --> Numero do documento
+                             ,pr_dtmvtolt  => rw_crapcob.dtmvtolt --> Data de Movimentacao
+                             ,pr_cdoperad  => 1                   --> Codigo do Operador
+                             ,pr_nrremass  => 0                   --> Numero da Remessa
+                             ,pr_cdcritic  => vr_cdcritic         --> Codigo da Critica
+                             ,pr_dscritic  => vr_dscritic);       --> Descricao da critica
+      
+      
+        IF nvl(vr_cdcritic,0) <> 0 OR
+           TRIM(vr_dscritic) IS NOT NULL THEN
+          RAISE vr_exc_erro; 
+        END IF;
+      END LOOP;
+      
+      
     
       pr_dsretorn   := 'Cancelamento do serviço efetuada com sucesso.';
     END IF;
