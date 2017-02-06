@@ -5,7 +5,7 @@
  * OBJETIVO     : Biblioteca de funções da tela HISTOR
  * --------------
  * ALTERAÇÕES   : 11/03/2016 - Homologacao e ajustes da conversao da tela HISTOR (Douglas - Chamado 412552)
- *
+ *                06/02/2017 - #552068 Aumento da largura da tabela para comportar os dados corretamente (Carlos)
  * --------------
  */
 
@@ -1139,7 +1139,7 @@ function formataTabelaConsulta(){
 	var tabela      = $('table', divRegistro );
 	var linha       = $('table > tbody > tr', divRegistro );
 	
-    divRegistro.css({'height':'250px','width':'650px','padding-bottom':'2px'});
+    divRegistro.css({'height':'250px','width':'700px','padding-bottom':'2px'});
 	$('#divHistoricos').css({'padding-top':'10px'});	
 
 	var ordemInicial = new Array();
