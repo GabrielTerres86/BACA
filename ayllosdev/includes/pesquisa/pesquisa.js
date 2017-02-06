@@ -32,6 +32,7 @@
  * 036: [05/08/2014] Jaison			  (CECRED): Ajuste na função selecionaPesquisa, verificando se o campo cdlcremp veio da tela de parametros do credito pre-aprovado.
  * 037: [30/03/2015] Jorge            (CECRED): Ajuste em funcao mostraPesquisa, adicionado quinto parametro da variavel "coluna", campo opcional para coluna visivel ou nao. (SD - 229250)
  * 038: [02/06/2015] Jorge 			  (CECRED): Ajuste de tratamento de parametro em funcao mostraPesquisa.
+ * 039: [11/07/2016] Evandro            (RKAM): Adicionado função controlafoco.
  */
 
 var vg_formRetorno  = '';
@@ -403,10 +404,9 @@ function mostraPesquisa(businessObject, nomeProcedure, tituloPesquisa, quantReg,
 	
 	hideMsgAguardo();	
 	exibeRotina($('#divPesquisa'));	
+    controlaFoco();
 	
-	$('input[type=\'text\']:first','#formPesquisa').focus();
-	
-	$('#btPesquisar','#formPesquisa').trigger('click');			
+    $('#btPesquisar', '#formPesquisa').trigger('click');
 	
 }
 
@@ -456,7 +456,7 @@ function realizaPesquisa(nriniseq, quantReg, businessObject, nomeProcedure, titu
 				var filtroValor = "yes";
 			}
 		}else{
-		    var filtroValor = $("#" + filtroNome + "Pesquisa").val();
+			var filtroValor = $("#"+filtroNome+"Pesquisa").val();
 		}
 		
 		// Agora concateno este valor no final da variável "filtrosPesquisa", que será passada 
@@ -538,7 +538,7 @@ function selecionaPesquisa(resultado, idForm) {
 		$('input[name="'+campoNome+'"]','#'+idForm).focus();
 	}else if(idForm == "frmAgenci"){
 		$('input[name="cdageban"]','#'+idForm).focus();
-	}else if(campoNome == "cdlcremp" && tipoPessoaRegra != 'undefined'){
+	}else if(campoNome == "cdlcremp" && typeof tipoPessoaRegra != 'undefined'){
 		var arrayResultado2 = arrayCampos[1].split(";");
         var campoValor2     = arrayResultado2[1];
         if (tipoPessoaRegra == 'PF') {
@@ -743,7 +743,7 @@ function mostraPesquisaAssociado(campoRetorno, formRetorno, divBloqueia, fncFech
 	
 	hideMsgAguardo();	
 	exibeRotina($('#divPesquisaAssociado'));
-	$('#nmdbusca','#frmPesquisaAssociado').focus();	
+    controlaFoco();
 }
 
 /*!
@@ -755,33 +755,119 @@ function pesquisaAssociado(nriniseq) {
 	
 	showMsgAguardo('Aguarde, pesquisando associados ...');
 	
-	var cdpesqui = $('input[type="radio"]:checked','#frmPesquisaAssociado').val();
-	var nmdbusca = $('#nmdbusca','#frmPesquisaAssociado').val();
-	var tpdapesq = $('#tpdapesq','#frmPesquisaAssociado').val();
-	var cdagpesq = $('#cdagpesq','#frmPesquisaAssociado').val();
-	var tpdorgan = $('#tpdorgan','#frmPesquisaAssociado').val();
-	var nrcpfcgc = $('#nrcpfcgc','#frmPesquisaAssociado').val();
-	var nrdctitg = retiraCaracteres($('#nrdctitg','#frmPesquisaAssociado').val(),'0123456789X',true);
+    var cdpesqui = $('input[type="radio"]:checked', '#frmPesquisaAssociado').val();
+    var nmdbusca = $('#nmdbusca', '#frmPesquisaAssociado').val();
+    var tpdapesq = $('#tpdapesq', '#frmPesquisaAssociado').val();
+    var cdagpesq = $('#cdagpesq', '#frmPesquisaAssociado').val();
+    var tpdorgan = $('#tpdorgan', '#frmPesquisaAssociado').val();
+    var nrcpfcgc = $('#nrcpfcgc', '#frmPesquisaAssociado').val();
+    var nrdctitg = retiraCaracteres($('#nrdctitg', '#frmPesquisaAssociado').val(), '0123456789X', true);
+
+
+    // Verifica código do PAC
+    if ((cdpesqui == '1') && (cdagpesq == '' || !validaNumero(cdagpesq, true, 0, 999))) {
+        hideMsgAguardo();
+        showError('error', 'Informe o PA a ser pesquisado ou 0 para TODOS.', 'Alerta - Ayllos', "$('#cdagpesq','#frmPesquisaAssociado').focus();bloqueiaFundo($('#divPesquisaAssociado'));");
+        return false;
+    }
+
+    // Verifica código do PAC
+    if (cdpesqui == '2' && nrdctitg == '') {
+        hideMsgAguardo();
+        showError('error', 'Informe o n&uacute;mero da Conta/ITG.', 'Alerta - Ayllos', "$('#nrdctitg','#frmPesquisaAssociado').focus();bloqueiaFundo($('#divPesquisaAssociado'));");
+        return false;
+    }
+
+    // Verifica código do PAC
+    if (cdpesqui == '3' && nrcpfcgc == '') {
+        hideMsgAguardo();
+        showError('error', 'Informe o CPF/CNPJ a ser pesquisado.', 'Alerta - Ayllos', "$('#nrcpfcgc','#frmPesquisaAssociado').focus();bloqueiaFundo($('#divPesquisaAssociado'));");
+        return false;
+    }
+
+    // Carrega dados da conta através de ajax
+    $.ajax({
+        type: 'POST',
+        url: UrlSite + 'includes/pesquisa/realiza_pesquisa_associados.php',
+        data: {
+            cdpesqui: cdpesqui,
+            nmdbusca: nmdbusca,
+            tpdapesq: tpdapesq,
+            cdagpesq: cdagpesq,
+            nrdctitg: nrdctitg,
+            nriniseq: nriniseq,
+            tpdorgan: tpdorgan,
+            nrcpfcgc: nrcpfcgc,
+            redirect: 'html_ajax' // Tipo de retorno do ajax
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', "bloqueiaFundo($('#divPesquisaAssociado'));");
+        },
+        success: function (response) {
+            $('#divResultadoPesquisaAssociado').html(response);
+            zebradoLinhaTabela($('#divPesquisaAssociadoItens > table > tbody > tr'));
+            $('#divPesquisaAssociadoRodape').formataRodapePesquisa();
+            controlaFoco();
+        }
+    });
+}
+
+//Função para controle de navegação
+function controlaFoco() {
+    $('#divPesquisaAssociado').each(function () {
+        $(this).find("#frmPesquisaAssociado > :input[type=radio]").addClass("FluxoNavega");
+        $(this).find("#frmPesquisaAssociado > :input[type=radio]").first().addClass("FirstInputModal").focus();
+        $(this).find("#frmPesquisaAssociado > :input[type=image]").last().addClass("LastInputModal");
+
+        //Se estiver com foco na classe FluxoNavega
+        $(".FluxoNavega").focus(function () {
+            $(this).bind('keydown', function (e) {
+                if (e.keyCode == 13) {
+                    $(this).click();
+                }
+            });
+        });
+    });
+    $(".FirstInputModal").focus();
+}
+
+
+function pesquisaAssociado_2_OnKeyDown(nriniseq) {
+
+    $('#integra').bind('keydown', function (e) {
+        if (e.keyCode == 13) {
+
+	showMsgAguardo('Aguarde, pesquisando associados ...');
+	
+            var cdpesqui = $('input[type="radio"]:checked', '#frmPesquisaAssociado').val();
+            var nmdbusca = $('#nmdbusca', '#frmPesquisaAssociado').val();
+            var tpdapesq = $('#tpdapesq', '#frmPesquisaAssociado').val();
+            var cdagpesq = $('#cdagpesq', '#frmPesquisaAssociado').val();
+            var tpdorgan = $('#tpdorgan', '#frmPesquisaAssociado').val();
+            var nrcpfcgc = $('#nrcpfcgc', '#frmPesquisaAssociado').val();
+            var nrdctitg = retiraCaracteres($('#nrdctitg', '#frmPesquisaAssociado').val(), '0123456789X', true);
 
 	
 	// Verifica código do PAC
-	if ( (cdpesqui == '1') && (cdagpesq == '' || !validaNumero(cdagpesq,true,0,999))) {
+            if ((cdpesqui == '1') && (cdagpesq == '' || !validaNumero(cdagpesq, true, 0, 999))) {
 		hideMsgAguardo();
-		showError('error','Informe o PA a ser pesquisado ou 0 para TODOS.','Alerta - Ayllos',"$('#cdagpesq','#frmPesquisaAssociado').focus();bloqueiaFundo($('#divPesquisaAssociado'));");
+                showError('error', 'Informe o PA a ser pesquisado ou 0 para TODOS.', 'Alerta - Ayllos', "$('#cdagpesq','#frmPesquisaAssociado').focus();bloqueiaFundo($('#divPesquisaAssociado'));");
 		return false;
 	}	
 	
 	// Verifica código do PAC
 	if (cdpesqui == '2' && nrdctitg == '') {
 		hideMsgAguardo();
-		showError('error','Informe o n&uacute;mero da Conta/ITG.','Alerta - Ayllos',"$('#nrdctitg','#frmPesquisaAssociado').focus();bloqueiaFundo($('#divPesquisaAssociado'));");
+                showError('error', 'Informe o n&uacute;mero da Conta/ITG.', 'Alerta - Ayllos', "$('#nrdctitg','#frmPesquisaAssociado').focus();bloqueiaFundo($('#divPesquisaAssociado'));");
+                $('#btnError').click();
 		return false;
 	}	
 
 	// Verifica código do PAC
 	if (cdpesqui == '3' && nrcpfcgc == '') {
 		hideMsgAguardo();
-		showError('error','Informe o CPF/CNPJ a ser pesquisado.','Alerta - Ayllos',"$('#nrcpfcgc','#frmPesquisaAssociado').focus();bloqueiaFundo($('#divPesquisaAssociado'));");
+                showError('error', 'Informe o CPF/CNPJ a ser pesquisado.', 'Alerta - Ayllos', "$('#nrcpfcgc','#frmPesquisaAssociado').focus();bloqueiaFundo($('#divPesquisaAssociado'));");
 		return false;
 	}	
 
@@ -800,16 +886,22 @@ function pesquisaAssociado(nriniseq) {
 			nrcpfcgc: nrcpfcgc,
 			redirect: 'html_ajax' // Tipo de retorno do ajax
 		},
-		error: function(objAjax,responseError,objExcept) {
+                error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos',"bloqueiaFundo($('#divPesquisaAssociado'));");
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', "bloqueiaFundo($('#divPesquisaAssociado'));");
 		},			
-		success: function(response) {
+                success: function (response) {
 			$('#divResultadoPesquisaAssociado').html(response);			
 			zebradoLinhaTabela($('#divPesquisaAssociadoItens > table > tbody > tr'));
 			$('#divPesquisaAssociadoRodape').formataRodapePesquisa();
+                    controlaFoco();
 		}				
 	});	
+
+        }
+    })
+
+
 }
 
 /*!
