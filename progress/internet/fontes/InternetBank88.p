@@ -202,7 +202,12 @@ FOR EACH wt_protocolo NO-LOCK:
                                      "</nrcpfope>"
            xml_operacao88.cdbcoctl = "<cdbcoctl>" +
                                     (IF wt_protocolo.cdbcoctl <> ? THEN
-                                        STRING(wt_protocolo.cdbcoctl, "999")
+                                        IF  wt_protocolo.cdtippro <> ?   AND 
+                                           (wt_protocolo.cdtippro >= 16  AND
+                                            wt_protocolo.cdtippro <= 19) THEN
+                                              STRING(wt_protocolo.cdbcoctl, "9999")
+                                        ELSE
+											STRING(wt_protocolo.cdbcoctl, "999")
                                      ELSE
                                         "") +
                                      "</cdbcoctl>" 

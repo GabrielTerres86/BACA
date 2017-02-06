@@ -161,7 +161,9 @@ IF  VALID-HANDLE(h-bo_algoritmo_seguranca)  THEN
                    xml_operacao25.cdagectl = "<cdagectl>" +
                                              STRING(cratpro.cdagectl, "9999") +
                                              "</cdagectl>"
-                                             WHEN cratpro.cdagectl <> 0
+                   xml_operacao25.cdagesic = "<cdagesic>" +
+                                             STRING(cratpro.cdagesic, "9999") +
+                                             "</cdagesic>"
                    xml_operacao25.dscabfim = "</DADOS>".
         
         END. /** Fim do FOR EACH cratpro **/

@@ -36,6 +36,7 @@ DEF TEMP-TABLE cratpro                                                 NO-UNDO
     FIELD nmoperad LIKE crapopi.nmoperad
     FIELD nrcpfope LIKE crappro.nrcpfope
     FIELD cdbcoctl LIKE crapcop.cdbcoctl
-    FIELD cdagectl LIKE crapcop.cdagectl.
+    FIELD cdagectl LIKE crapcop.cdagectl
+    FIELD cdagesic LIKE crapcop.cdagesic.
 
 /* ......................................................................... */

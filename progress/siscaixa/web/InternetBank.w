@@ -3230,7 +3230,8 @@ PROCEDURE proc_operacao25:
                xml_operacao25.nrseqaut xml_operacao25.nmprepos
                xml_operacao25.nrcpfpre xml_operacao25.nmoperad
                xml_operacao25.nrcpfope xml_operacao25.cdbcoctl
-               xml_operacao25.cdagectl xml_operacao25.dscabfim.
+               xml_operacao25.cdagectl xml_operacao25.cdagesic
+               xml_operacao25.dscabfim.
     
     END.
     
