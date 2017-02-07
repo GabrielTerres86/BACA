@@ -1580,12 +1580,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
               ,his.indoipmf
           FROM craphis his
          WHERE cdcooper = pr_cdcooper;
-
+         
       -- Busca os dados da proposta de emprestimo
       CURSOR cr_crawepr IS
         SELECT dtvencto
           FROM crawepr
-         WHERE cdcooper = pr_cdcooper;         
+         WHERE cdcooper = pr_cdcooper
+           and nrdconta = pr_nrdconta
+           and nrctremp = pr_nrctremp;         
       rw_crawepr cr_crawepr%ROWTYPE;    
 
       -- Busca dos empréstimos
@@ -2611,7 +2613,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                 vr_cdcritic := 0;
                 vr_dscritic := NULL;
               END IF;
-
+              
               --> Armazenar valores 
               pr_vltotpag := nvl(pr_vltotpag,0) + nvl(vr_vldmulta,0) + nvl(vr_vljumora,0);
 
@@ -2731,8 +2733,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 
           -- Verificar se houve erro 
           IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
-                  RAISE vr_exc_undo;
-                END IF;
+            RAISE vr_exc_undo;
+          END IF;
 
           -- Finalmente após todo o processamento, é atualizada a tabela de empréstimo CRAPEPR
           BEGIN
@@ -6646,7 +6648,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       pr_des_erro := 'NOK';
 		END;
 	END pc_gerar_pdf_boletos;
-  
+
   -- Procedure para calcular a data de pagamento para contratos TR
   PROCEDURE pc_gera_data_pag_tr(pr_cdcooper IN tbepr_cobranca.cdcooper%TYPE --> Codigo da Cooperativa
                                ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE        --> Data do Movimento

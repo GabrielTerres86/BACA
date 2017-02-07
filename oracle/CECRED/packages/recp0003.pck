@@ -194,7 +194,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                          ,pr_cdcooper => vr_cdcooper
                                          ,pr_nmsubdir => '/cyber/recebe/');
       -- Arquivos que serao procurados
-      vr_nmtmpzip:= '%_QUEB_ACORDO_OUT.zip';
+      vr_nmtmpzip:= '%_queb_acordo_out.zip';
 
       -- Vamos ler todos os arquivos .zip
       gene0001.pc_lista_arquivos(pr_path    => vr_endarqui
@@ -289,7 +289,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
 
         -- Buscar todos os arquivos extraidos na nova pasta
         gene0001.pc_lista_arquivos(pr_path     => vr_endarqtxt
-                                  ,pr_pesq     => '%_QUEB_ACORDO_OUT.txt'
+                                  ,pr_pesq     => '%_queb_acordo_out.txt'
                                   ,pr_listarq  => vr_listadir
                                   ,pr_des_erro => vr_dscritic);
 
@@ -308,7 +308,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
         -- Converte cada arquivo texto para formato UNIX
         pc_converte_arquivo_txt_unix (pr_cdcooper => vr_cdcooper
                                      ,pr_caminho  => vr_endarqtxt        -- Diretorio Arquivos
-                                     ,pr_pesq     => '%_QUEB_ACORDO_OUT' -- Filtro Arquivos
+                                     ,pr_pesq     => '%_queb_acordo_out' -- Filtro Arquivos
                                      ,pr_cdcritic => vr_cdcritic         -- Codigo Erro
                                      ,pr_dscritic => vr_dscritic);       -- Descricao erro
         -- Se ocorreu erro
@@ -488,6 +488,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
 
       END LOOP;
 
+      COMMIT;
+
   EXCEPTION
     WHEN OTHERS THEN
       pr_cdcritic := 0;
@@ -657,7 +659,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                          ,pr_cdcooper => vr_cdcooper
                                          ,pr_nmsubdir => '/cyber/recebe/');
       -- Arquivos que serao procurados
-      vr_nmtmpzip:= '%_QUIT_ACORDO_OUT.zip';
+      vr_nmtmpzip:= '%_quit_acordo_out.zip';
 
       -- Vamos ler todos os arquivos .zip
       gene0001.pc_lista_arquivos(pr_path    => vr_endarqui
@@ -751,7 +753,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
 
         -- Buscar todos os arquivos extraidos na nova pasta
         gene0001.pc_lista_arquivos(pr_path     => vr_endarqtxt
-                                  ,pr_pesq     => '%_QUIT_ACORDO_OUT.txt'
+                                  ,pr_pesq     => '%_quit_acordo_out.txt'
                                   ,pr_listarq  => vr_listadir
                                   ,pr_des_erro => vr_dscritic);
 
@@ -770,7 +772,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
         -- Converte cada arquivo texto para formato UNIX
         pc_converte_arquivo_txt_unix (pr_cdcooper => vr_cdcooper
                                      ,pr_caminho  => vr_endarqtxt        -- Diretorio Arquivos
-                                     ,pr_pesq     => '%_QUIT_ACORDO_OUT' -- Filtro Arquivos
+                                     ,pr_pesq     => '%_quit_acordo_out' -- Filtro Arquivos
                                      ,pr_cdcritic => vr_cdcritic         -- Indicador Erro
                                      ,pr_dscritic => vr_dscritic);       -- Descricao erro
         -- Se ocorreu erro
@@ -905,7 +907,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
 
                      --Buscar Indice
                      vr_index_saldo := vr_tab_saldos.FIRST;
-
                      IF vr_index_saldo IS NOT NULL THEN
                        -- Saldo Disponivel na conta corrente
                        vr_vlsddisp := NVL(vr_tab_saldos(vr_index_saldo).vlsddisp, 0);
@@ -914,35 +915,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                      -- Armazenar valor para ser lancado no final como ajuste contabil
                      -- Somente deverá conter o valor para zerar o estouro de conta.
                      IF vr_vlsddisp < 0 THEN        
-                       vr_vllancam := NVL(vr_vllancam,0) + NVL(ABS(vr_vlsddisp),0); 
-                     END IF;
+                       RECP0001.pc_pagar_contrato_conta(pr_cdcooper => rw_crapcyb.cdcooper
+                                                       ,pr_nrdconta => rw_crapcyb.nrdconta
+                                                       ,pr_cdagenci => rw_crapass.cdagenci
+                                                       ,pr_crapdat  => vr_tab_crapdat(rw_crapcyb.cdcooper)
+                                                       ,pr_cdoperad => vr_cdoperad
+                                                       ,pr_nracordo => rw_crapcyb.nracordo
+                                                       ,pr_vlsddisp => vr_vlsddisp
+                                                       ,pr_vlparcel => ABS(vr_vlsddisp)
+                                                       ,pr_vltotpag => vr_vltotpag
+                                                       ,pr_cdcritic => vr_cdcritic
+                                                       ,pr_dscritic => vr_dscritic);
+                                                       
+                       IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
 
-                     RECP0001.pc_pagar_contrato_conta(pr_cdcooper => rw_crapcyb.cdcooper
-                                                     ,pr_nrdconta => rw_crapcyb.nrdconta
-                                                     ,pr_cdagenci => rw_crapass.cdagenci
-                                                     ,pr_crapdat  => vr_tab_crapdat(rw_crapcyb.cdcooper)
-                                                     ,pr_cdoperad => vr_cdoperad
-                                                     ,pr_nracordo => rw_crapcyb.nracordo
-                                                     ,pr_vlsddisp => vr_vlsddisp
-                                                     ,pr_vlparcel => ABS(vr_vlsddisp)
-                                                     ,pr_vltotpag => vr_vltotpag
-                                                     ,pr_cdcritic => vr_cdcritic
-                                                     ,pr_dscritic => vr_dscritic);
-                                                     
-                     IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
-
-                       IF NVL(vr_cdcritic,0) > 0 THEN
-                         vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+                         IF NVL(vr_cdcritic,0) > 0 THEN
+                           vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+                         END IF;
+                         -- Envio centralizado de log de erro
+                         BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
+                                                    pr_ind_tipo_log => 2, -- Erro tratato
+                                                    pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Arquivo: ' || vr_nmarqtxt
+                                                                       || ' Erro:' || vr_dscritic);
+                         ROLLBACK TO SAVE_ACORDO_QUITADO;
+                         pr_flgemail := TRUE;
+                         EXIT LEITURA_TXT;
                        END IF;
-                       -- Envio centralizado de log de erro
-                       BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
-                                                  pr_ind_tipo_log => 2, -- Erro tratato
-                                                  pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Arquivo: ' || vr_nmarqtxt
-                                                                     || ' Erro:' || vr_dscritic);
-                       ROLLBACK TO SAVE_ACORDO_QUITADO;
-                       pr_flgemail := TRUE;
-                       EXIT LEITURA_TXT;
-                     END IF;                                
+
+                       vr_vllancam := NVL(vr_vllancam,0) + NVL(ABS(vr_vltotpag),0); 
+                       
+                     END IF;
 
                    ELSIF rw_crapcyb.cdorigem IN (2,3) THEN
                      
@@ -1343,6 +1345,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
         vr_nrindice:= vr_tab_arqzip.NEXT(vr_nrindice);
 
       END LOOP;
+      
+      COMMIT;
 
   EXCEPTION
     WHEN OTHERS THEN
@@ -1419,6 +1423,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                    pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> ' ||
                                                       'IMPORTACAO EFETUADA COM SUCESSO --> RECP0003.PC_IMPORT_ARQ_ACORDO_JOB');
       END IF;
+      
+      COMMIT;
      
   EXCEPTION
     WHEN OTHERS THEN
