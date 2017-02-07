@@ -637,9 +637,9 @@ PROCEDURE retorna-valores-fatura.
 
     IF   crapcon.cdempcon = 0109 AND crapcon.cdsegmto = 2   THEN /* SANEPAR */
          DO:
-             aux_dtmvtoan = STRING(YEAR(crapdat.dtmvtoan - 25),"9999") +
-                            STRING(MONTH(crapdat.dtmvtoan - 25),"99")  +
-                            STRING(DAY(crapdat.dtmvtoan - 25),"99").
+             aux_dtmvtoan = STRING(YEAR(crapdat.dtmvtocd - 25),"9999") +
+                            STRING(MONTH(crapdat.dtmvtocd - 25),"99")  +
+                            STRING(DAY(crapdat.dtmvtocd - 25),"99").
                           
              IF  SUBSTR(p-codigo-barras,20,8) <= aux_dtmvtoan  THEN
                  DO:
