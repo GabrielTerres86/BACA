@@ -14,7 +14,7 @@
    Sistema : Internet - aux_cdcooper de Credito
    Sigla   : CRED
    Autor   : Junior
-   Data    : Julho/2004.                       Ultima atualizacao: 03/10/2016
+   Data    : Julho/2004.                       Ultima atualizacao: 22/12/2016
 
    Dados referentes ao programa:
 
@@ -637,6 +637,10 @@
                                 adição das funções 176 e 177 (Ricardo Linhares)   
 
 		         03/10/2016 - Ajustes referente a melhoria M271 (Operacao 174, 175, 186). (Kelvin)
+
+                 22/12/2016 - PRJ340 - Nova Plataforma de Cobranca - Fase II. 
+                              (Jaison/Cechet)
+
 ------------------------------------------------------------------------------*/
 
 /*----------------------------------------------------------------*/
@@ -1071,6 +1075,10 @@ DEF VAR aux_inserasa AS INT                                            NO-UNDO.
 
 DEF VAR aux_flserasa AS LOG                                            NO-UNDO.
 DEF VAR aux_qtdianeg AS INT                                            NO-UNDO.
+
+DEF VAR aux_inenvcip AS INT                                            NO-UNDO.
+DEF VAR aux_inpagdiv AS INT                                            NO-UNDO.
+DEF VAR aux_vlminimo AS DECI                                           NO-UNDO.
 
 DEF VAR aux_idapurac AS INTE                                           NO-UNDO.
 
@@ -2287,7 +2295,11 @@ PROCEDURE proc_operacao4:
 
            /* Serasa */
            aux_flserasa = IF INTE(GET-VALUE("cvserasa")) = 1 THEN TRUE ELSE FALSE
-           aux_qtdianeg = INTE(GET-VALUE("qtdianeg")).
+           aux_qtdianeg = INTE(GET-VALUE("qtdianeg"))
+           
+           aux_inenvcip = INTE(GET-VALUE("inenvcip"))
+           aux_inpagdiv = INTE(GET-VALUE("inpagdiv"))
+           aux_vlminimo = DECI(GET-VALUE("vlminimo")).
     
     RUN sistema/internet/fontes/InternetBank4.p (INPUT aux_cdcooper,
                                                  INPUT aux_nrdconta,
@@ -2330,6 +2342,10 @@ PROCEDURE proc_operacao4:
                                                  INPUT aux_nrdiavct,
                                                  INPUT aux_flserasa,
                                                  INPUT aux_qtdianeg,
+
+                                                 INPUT aux_inenvcip,
+                                                 INPUT aux_inpagdiv,
+                                                 INPUT aux_vlminimo,
 
                                                 OUTPUT aux_dsmsgerr,
                                                 OUTPUT TABLE xml_operacao).

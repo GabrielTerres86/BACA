@@ -1,7 +1,7 @@
 <?
 /*************************************************************************
 	Fonte: consulta-habilita.php
-	Autor: Gabriel						Ultima atualizacao: 11/07/2016
+	Autor: Gabriel						Ultima atualizacao: 13/12/2016
 	Data : Dezembro/2010
 	
 	Objetivo: Tela para visualizar a consulta/habilitacao da rotina 
@@ -43,6 +43,8 @@
 				29/11/2016 - P341-Automatização BACENJUD - Realizar as validações pelo código
 				             do departamento ao invés da descrição (Renato Darosci - Supero)
 
+				13/12/2016 - PRJ340 - Nova Plataforma de Cobranca - Fase II. (Jaison/Cechet)
+
 *************************************************************************/
 
 session_start();
@@ -69,6 +71,8 @@ $cddemail    = $_POST["cddemail"];
 $dsdemail    = trim($_POST["dsdemail"]);
 $flgcruni    = trim($_POST["flgcruni"]);
 $flgregis    = trim($_POST["flgregis"]);
+$flgregon    = trim($_POST["flgregon"]);
+$flgpgdiv    = trim($_POST["flgpgdiv"]);
 $flcooexp    = trim($_POST["flcooexp"]);
 $flceeexp    = trim($_POST["flceeexp"]);
 $flserasa    = trim($_POST["flserasa"]);
@@ -229,6 +233,14 @@ $qtapurac  = getByTagName($xmlDados->tags,"QTAPURAC");
                     <?php
                         if ($cco_cddbanco == 85) {
                             ?>
+                            <label for="flgregon"><? echo utf8ToHtml('Registrar Online na CIP:') ?></label>
+                            <input name="flgregon" id="flgregon" type="checkbox" class="checkbox" readonly <?php if ($flgregon == "SIM" ) { ?> checked <?php } ?> />		
+                            <br />
+
+                            <label for="flgpgdiv"><? echo utf8ToHtml('Autorizar Pagamento Divergente:') ?></label>		
+                            <input name="flgpgdiv" id="flgpgdiv" type="checkbox" class="checkbox" readonly <?php if ($flgpgdiv == "SIM" ) { ?> checked <?php } ?> />		
+                            <br />
+
                             <label for="flcooexp"><? echo utf8ToHtml('Cooperado Emite e Expede:') ?></label>
                             <input name="flcooexp" id="flcooexp" type="checkbox" class="checkbox" readonly <?php if ($flcooexp == "SIM" ) { ?> checked <?php } ?> />		
                             <br />
@@ -615,6 +627,8 @@ $("#qtdecprz","#frmConsulta").unbind('blur').bind('blur', function(e) {
         $("#inarqcbr","#divOpcaoConsulta").prop("disabled",true);
         $("#dsdemail","#divOpcaoConsulta").prop("disabled",true);
         $("#flgregis","#divOpcaoConsulta").prop("disabled",true);
+        $("#flgregon","#divOpcaoConsulta").prop("disabled",true);
+        $("#flgpgdiv","#divOpcaoConsulta").prop("disabled",true);
         $("#flcooexp","#divOpcaoConsulta").prop("disabled",true);
         $("#flceeexp","#divOpcaoConsulta").prop("disabled",true);
         $("#flgcruni","#divOpcaoConsulta").prop("disabled",true);

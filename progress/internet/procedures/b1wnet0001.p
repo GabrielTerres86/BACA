@@ -245,14 +245,14 @@
                             somente quando o flag serasa for falso na procedure gera-dados.
                             Chamado 490114 - Heitor (RKAM)
 
-			         15/08/2016 - Removido validacao de convenio na consulta da tela
-							              manutencao (gera-dados), conforme solicitado no chamado 
-							              497079. (Kelvin)
+			   15/08/2016 - Removido validacao de convenio na consulta da tela
+							manutencao (gera-dados), conforme solicitado no chamado 
+							497079. (Kelvin)
 
-			         13/10/2016 - Ajuste na aux_flprotes para buscar apenas o convênio
-							              do tipo INTERNET crapcco.dsorgarq = 'INTERNET'
-							             (Andrey Formigari - Mouts - SD: 533201)
-               
+			   13/10/2016 - Ajuste na aux_flprotes para buscar apenas o convênio
+							do tipo INTERNET crapcco.dsorgarq = 'INTERNET'
+							(Andrey Formigari - Mouts - SD: 533201)
+
 			   03/10/2016 - Ajustes referente a melhoria M271. (Kelvin)
 
                09/11/2016 - Ajuste na correcao realizada pelo Andrey no dia 13/10,
@@ -260,6 +260,9 @@
                             semelhante ao que acontece para SERASA, assumindo valor
                             TRUE se algum dos convenios possuir a opcao de protesto
                             habilitada. Heitor (Mouts) - Chamado 554656
+
+               16/12/2016 - PRJ340 - Nova Plataforma de Cobranca - Fase II. 
+                            (Jaison/Cechet)
 
 		       23/12/2016 - Ajustes referentes a melhoria de performance na cobrança 
 			                do IB (Tiago/Ademir SD566906).
@@ -924,6 +927,10 @@ PROCEDURE gravar-boleto:
     DEF  INPUT PARAM par_flserasa AS LOGI                           NO-UNDO.
     DEF  INPUT PARAM par_qtdianeg AS INTE                           NO-UNDO.
 
+    DEF  INPUT PARAM par_inenvcip AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_inpagdiv AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_vlminimo AS DECI                           NO-UNDO.
+
     DEF OUTPUT PARAM TABLE FOR tt-erro.
     DEF OUTPUT PARAM TABLE FOR tt-consulta-blt.
     DEF OUTPUT PARAM TABLE FOR tt-dados-sacado-blt.
@@ -965,7 +972,7 @@ PROCEDURE gravar-boleto:
 
     /* EMAIL DOS PAGADORES */
     DEF VAR aux_dsdemail AS CHAR                                    NO-UNDO.
-    
+
     /* Nome do Beneficiario para imprimir no boleto */
     DEF VAR aux_nmdobnfc AS CHAR                                    NO-UNDO.
 
@@ -1371,8 +1378,8 @@ PROCEDURE gravar-boleto:
 			      DO:   
 				        ASSIGN aux_dscritic =  "Nao foi possivel buscar o nome do beneficiario para ser impresso no boleto".
 			      END.
-				    UNDO TRANSACAO, LEAVE TRANSACAO.
-        END.
+                UNDO TRANSACAO, LEAVE TRANSACAO.
+            END.
 
 
         /* ************************************************************************* */
@@ -1903,6 +1910,10 @@ PROCEDURE gravar-boleto:
                                    INPUT par_flserasa,
                                    INPUT par_qtdianeg,
 
+                                   INPUT par_inenvcip,
+                                   INPUT par_inpagdiv,
+                                   INPUT par_vlminimo,
+
                                    INPUT TABLE tt-dados-sacado-blt,
                                    INPUT-OUTPUT aux_lsdoctos,
                                   OUTPUT aux_cdcritic,
@@ -2143,6 +2154,8 @@ PROCEDURE gera-dados:
     DEF VAR aux_valormin         AS DEC                             NO-UNDO.
     DEF VAR aux_textodia         AS CHAR                            NO-UNDO.
     DEF VAR aux_flprotes         AS LOG                             NO-UNDO.
+    DEF VAR aux_flgregon         AS LOG                             NO-UNDO.
+    DEF VAR aux_flgpgdiv         AS LOG                             NO-UNDO.
             
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-dados-blt.
@@ -2345,22 +2358,30 @@ PROCEDURE gera-dados:
                            OUTPUT aux_intipemi).
 
     ASSIGN aux_flserasa = FALSE
-	         aux_flprotes = FALSE.
+	       aux_flprotes = FALSE
+	       aux_flgregon = FALSE
+	       aux_flgpgdiv = FALSE.
 
     FOR EACH  crapceb WHERE crapceb.cdcooper = par_cdcooper     AND 
-                            crapceb.nrdconta = par_nrdconta     AND
+                             crapceb.nrdconta = par_nrdconta     AND
                             crapceb.insitceb = 1 /* Somente ativos */ NO-LOCK
 	   ,FIRST  crapcco WHERE crapcco.cdcooper = crapceb.cdcooper AND
 	                         crapcco.nrconven = crapceb.nrconven AND
-                           crapcco.cddbanco = 85               AND /*Cecred*/
-							             crapcco.flginter = TRUE NO-LOCK:
+                             crapcco.cddbanco = 85               AND /*Cecred*/
+	                         crapcco.flginter = TRUE NO-LOCK:
 
     IF aux_flprotes = FALSE THEN
        aux_flprotes = crapceb.flprotes.
 
+    IF aux_flgregon = FALSE THEN
+       aux_flgregon = crapceb.flgregon.
+
+    IF aux_flgpgdiv = FALSE THEN
+       aux_flgpgdiv = crapceb.flgpgdiv.
+
 		IF aux_flserasa = FALSE THEN
         ASSIGN aux_nrconven = crapcco.nrconven
-               aux_flserasa = crapceb.flserasa.
+			   aux_flserasa = crapceb.flserasa.
 
     END.
 
@@ -2442,6 +2463,9 @@ PROCEDURE gera-dados:
            tt-dados-blt.dtmvtolt = aux_datdodia
            tt-dados-blt.nrdctabb = crapcco.nrdctabb
            tt-dados-blt.nrconven = crapcco.nrconven
+           tt-dados-blt.cddbanco = crapcco.cddbanco
+           tt-dados-blt.flgregon = INT(aux_flgregon)
+           tt-dados-blt.flgpgdiv = INT(aux_flgpgdiv)
 
         /* tt-dados-blt.cdcartei = crapcco.nrvarcar*/
            tt-dados-blt.cdcartei = crapcco.cdcartei
@@ -3970,7 +3994,7 @@ DO TRANSACTION:
      CREATE tt-consulta-blt.
 
      ASSIGN tt-consulta-blt.nmprimtl = REPLACE(p-nmdobnfc,"&","%26").
-  
+
      /*  Verifica no Cadastro de Sacados Cobranca */
      
      FIND crapsab WHERE crapsab.cdcooper = crapcob.cdcooper AND
@@ -4301,6 +4325,10 @@ PROCEDURE p_cria_titulo:
     DEF INPUT   PARAM p-flserasa    LIKE crapcob.flserasa   NO-UNDO.
     DEF INPUT   PARAM p-qtdianeg    LIKE crapcob.qtdianeg   NO-UNDO.
 
+    DEF INPUT   PARAM p-inenvcip    LIKE crapcob.inenvcip   NO-UNDO.
+    DEF INPUT   PARAM p-inpagdiv    LIKE crapcob.inpagdiv   NO-UNDO.
+    DEF INPUT   PARAM p-vlminimo    LIKE crapcob.vlminimo   NO-UNDO.
+
     DEF INPUT   PARAM TABLE FOR tt-dados-sacado-blt.
     DEF INPUT-OUTPUT  PARAM p-lsdoctos       AS CHAR        NO-UNDO.
     DEF OUTPUT  PARAM p-cdcritic       AS INTE              NO-UNDO.
@@ -4494,6 +4522,10 @@ PROCEDURE p_cria_titulo:
            /* Serasa */
            crapcob.flserasa = p-flserasa
            crapcob.qtdianeg = p-qtdianeg
+
+           crapcob.inenvcip = p-inenvcip
+           crapcob.inpagdiv = p-inpagdiv
+           crapcob.vlminimo = p-vlminimo
 
            crapcob.indiaprt = p-indiaprt
            crapcob.vljurdia = p-vljurdia

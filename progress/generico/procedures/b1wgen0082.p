@@ -25,7 +25,7 @@
 
   Programa: b1wgen0082.p
   Autor   : Gabriel
-  Data    : 08/12/2010                        Ultima Alteracao: 04/08/2016
+  Data    : 08/12/2010                        Ultima Alteracao: 13/12/2016
   
   Dados referentes ao programa:
   
@@ -132,6 +132,9 @@
 
 			  04/08/2016 - Alterado rotina carrega-convenios-ceb para trazer a 
 						   forma de envio de arquivo de cobranca na tt. (Reinert)
+
+              13/12/2016 - PRJ340 - Nova Plataforma de Cobranca - Fase II. (Jaison/Cechet)
+
 .............................................................................*/
 
 { sistema/generico/includes/var_internet.i }    
@@ -271,6 +274,8 @@ PROCEDURE carrega-convenios-ceb:
                                                crapope.nmoperad
                tt-cadastro-bloqueto.dsorgban = crapcco.dsorgarq + " " + 
                                                STRING(crapcco.cddbanco,"999")
+               tt-cadastro-bloqueto.flgregon = crapceb.flgregon 
+               tt-cadastro-bloqueto.flgpgdiv = crapceb.flgpgdiv
                tt-cadastro-bloqueto.flcooexp = crapceb.flcooexp 
                tt-cadastro-bloqueto.flceeexp = crapceb.flceeexp
                tt-cadastro-bloqueto.cddbanco = crapcco.cddbanco

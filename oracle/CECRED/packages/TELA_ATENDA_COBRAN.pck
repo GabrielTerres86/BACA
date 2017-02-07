@@ -49,6 +49,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_COBRAN IS
                                 ,pr_flgcruni  IN crapceb.flgcruni%TYPE --> Credito Unificado
                                 ,pr_flgcebhm  IN crapceb.flgcebhm%TYPE --> Contem o convenio homologado
                                 ,pr_idseqttl  IN crapttl.idseqttl%TYPE --> Sequencia Titular
+                                ,pr_flgregon  IN crapceb.flgregon%TYPE --> Flag de registro de titulo online (0-Nao/1-Sim)
+                                ,pr_flgpgdiv  IN crapceb.flgpgdiv%TYPE --> Flag de autorizacao de pagamento divergente (0-Nao/ 1-Sim)
                                 ,pr_flcooexp  IN crapceb.flcooexp%TYPE --> Cooperado Emite e Expede Boletos
                                 ,pr_flceeexp  IN crapceb.flceeexp%TYPE --> Cooperativa Emite e Expede Boletos
                                 ,pr_flserasa  IN crapceb.flserasa%TYPE --> Pode negativar no Serasa
@@ -1072,6 +1074,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                                 ,pr_flgcruni  IN crapceb.flgcruni%TYPE --> Credito Unificado
                                 ,pr_flgcebhm  IN crapceb.flgcebhm%TYPE --> Contem o convenio homologado
                                 ,pr_idseqttl  IN crapttl.idseqttl%TYPE --> Sequencia Titular
+                                ,pr_flgregon  IN crapceb.flgregon%TYPE --> Flag de registro de titulo online (0-Nao/1-Sim)
+                                ,pr_flgpgdiv  IN crapceb.flgpgdiv%TYPE --> Flag de autorizacao de pagamento divergente (0-Nao/ 1-Sim)
                                 ,pr_flcooexp  IN crapceb.flcooexp%TYPE --> Cooperado Emite e Expede Boletos
                                 ,pr_flceeexp  IN crapceb.flceeexp%TYPE --> Cooperativa Emite e Expede Boletos
                                 ,pr_flserasa  IN crapceb.flserasa%TYPE --> Pode negativar no Serasa
@@ -1095,7 +1099,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
     Programa: pc_habilita_convenio           Antigo: b1wgen0082.p/habilita-convenio
     Sistema : Ayllos Web
     Autor   : Jaison Fernando
-    Data    : Fevereiro/2016                 Ultima atualizacao: 03/11/2016
+    Data    : Fevereiro/2016                 Ultima atualizacao: 13/12/2016
 
     Dados referentes ao programa:
 
@@ -1113,6 +1117,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
 
                 03/11/2016 - Ajustado as validacoes de situacao do convenio na conta do 
                              cooperado quando alterar os dados (Douglas - Chamado 547082)
+
+        				13/12/2016 - PRJ340 - Nova Plataforma de Cobranca - Fase II. (Jaison/Cechet)
+
     ..............................................................................*/
     DECLARE
 
@@ -1188,6 +1195,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
               ,crapceb.inarqcbr
               ,crapceb.cddemail
               ,crapceb.flgcruni
+              ,crapceb.flgregon
+              ,crapceb.flgpgdiv
               ,crapceb.flcooexp
               ,crapceb.flceeexp
               ,crapceb.flprotes
@@ -1870,6 +1879,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
               ,crapceb.cddemail = DECODE(pr_inarqcbr, 0, 0, pr_cddemail)
               ,crapceb.flgcruni = pr_flgcruni
               ,crapceb.flgcebhm = pr_flgcebhm
+              ,crapceb.flgregon = pr_flgregon
+              ,crapceb.flgpgdiv = pr_flgpgdiv
               ,crapceb.flcooexp = pr_flcooexp
               ,crapceb.flceeexp = pr_flceeexp
               ,crapceb.flserasa = pr_flserasa
@@ -2031,6 +2042,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                                  ,pr_nmdcampo => 'insitceb'
                                  ,pr_dsdadant => CASE WHEN rw_crapceb.insitceb = 1 THEN 'ATIVO' ELSE 'INATIVO' END
                                  ,pr_dsdadatu => CASE WHEN pr_insitceb = 1 THEN 'ATIVO' ELSE 'INATIVO' END);
+      END IF;
+
+      -- Se alterou Registro de Titulo Online
+      IF rw_crapceb.flgregon <> pr_flgregon THEN
+        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                 ,pr_nmdcampo => 'flgregon'
+                                 ,pr_dsdadant => CASE WHEN rw_crapceb.flgregon = 1 THEN 'ATIVO' ELSE 'INATIVO' END
+                                 ,pr_dsdadatu => CASE WHEN pr_flgregon = 1 THEN 'ATIVO' ELSE 'INATIVO' END);
+      END IF;
+
+      -- Se alterou Autorizacao de Pagamento Divergente
+      IF rw_crapceb.flgpgdiv <> pr_flgpgdiv THEN
+        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                 ,pr_nmdcampo => 'flgpgdiv'
+                                 ,pr_dsdadant => CASE WHEN rw_crapceb.flgpgdiv = 1 THEN 'ATIVO' ELSE 'INATIVO' END
+                                 ,pr_dsdadatu => CASE WHEN pr_flgpgdiv = 1 THEN 'ATIVO' ELSE 'INATIVO' END);
       END IF;
 
       -- Se alterou Cooperado Emite e Expede
@@ -2398,7 +2425,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                             ,pr_tag_nova => 'flprotes'
                             ,pr_tag_cont => rw_cco_prc.flprotes
                             ,pr_des_erro => vr_dscritic);
-                            
+
       GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                             ,pr_tag_pai  => 'Dados'
                             ,pr_posicao  => 0
