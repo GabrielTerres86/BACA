@@ -680,7 +680,7 @@ create or replace package body cecred.PAGA0002 is
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Odirlei Busana - Amcom
-  --  Data     : Março/2014.                   Ultima atualizacao: 30/11/2016
+  --  Data     : Março/2014.                   Ultima atualizacao: 07/02/2017
   --
   -- Dados referentes ao programa:
   --
@@ -755,6 +755,10 @@ create or replace package body cecred.PAGA0002 is
   --                          
   --             30/11/2016 - Alterado query do sumario da tela debnet pra trazer corretamente 
   --                          os resultados (Tiago/Elton SD566237)
+  --
+  --             07/02/2017 - #604294 Log de exception others na rotina pc_proc_agendamento_recorrente e
+  --                          aumento do tamanho das variáveis vr_dslinxml_desaprov e vr_dslinxml_aprov
+  --                          para evitar possível repetição do problema relatado no chamado (Carlos)
   ---------------------------------------------------------------------------------------------------------------*/
   
   ----------------------> CURSORES <----------------------
@@ -1117,8 +1121,8 @@ create or replace package body cecred.PAGA0002 is
           INDEX BY VARCHAR2(4000);
       vr_tab_dscritic typ_tab_critica;
       
-      vr_dslinxml_desaprov VARCHAR2(4000) := NULL;
-      vr_dslinxml_aprov    VARCHAR2(4000) := NULL;
+      vr_dslinxml_desaprov VARCHAR2(32000) := NULL;
+      vr_dslinxml_aprov    VARCHAR2(32000) := NULL;
       vr_exiscrit          VARCHAR2(50)   := 'no';
       vr_idxcriti          VARCHAR2(4000) := NULL;
           
@@ -1205,6 +1209,9 @@ create or replace package body cecred.PAGA0002 is
       WHEN vr_exc_erro THEN
         NULL; -- apenas repassar a critica
       WHEN OTHERS THEN
+        
+        pc_internal_exception(pr_cdcooper);
+      
         pr_dscritic := 'Nao foi possivel montar xml de agendamentos recorrentes: '||SQLERRM;
     END pc_proc_agendamento_recorrente;
     
