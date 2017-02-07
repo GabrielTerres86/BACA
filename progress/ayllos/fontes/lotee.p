@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Outubro/91.                         Ultima atualizacao: 05/12/2016
+   Data    : Outubro/91.                         Ultima atualizacao: 07/02/2017
 
    Dados referentes ao programa:
 
@@ -174,9 +174,13 @@
                             alterado o INLIQUID quando o lote é excluído.
                           + Controlar o preenchimento da data de pagamento do prejuízo,
                             voltando o prejuizo antes da liquidaçao. (Renato Darosci - M176)
-                          
+                            
                05/12/2016 - Alterado campo dsdepart para cddepart.
                             PRJ341 - BANCENJUD (Odirlei-AMcom) 
+               
+               07/02/2017 - Incluir LEAVE TRANS_E para a critica 650 da leitura crablem pois mesmo 
+                            com critica estava atualizando o lote (Lucas Ranghetti #570922)
+                          
 ............................................................................. */
 
 DEF BUFFER crabseg FOR crapseg.
@@ -809,7 +813,7 @@ DO TRANSACTION ON ERROR UNDO TRANS_E, NEXT:
                         glb_cdcritic = 0.
                         LEAVE.
                     END.
-
+               
                FIND FIRST craplem WHERE craplem.cdcooper = glb_cdcooper      AND
                                         craplem.nrdconta = crapepr.nrdconta  AND
                                         craplem.nrctremp = crapepr.nrctremp  AND
@@ -976,13 +980,13 @@ DO TRANSACTION ON ERROR UNDO TRANS_E, NEXT:
                       LEAVE.
 
                    END.  /*  Fim do DO WHILE TRUE  */
-
+                
                    IF   glb_cdcritic > 0   THEN
                         DO:
-                            par_situacao = FALSE.
-                            LEAVE.
-                        END.
-
+							 par_situacao = FALSE.
+                      LEAVE.
+                    END.
+                    
                    FIND crapass WHERE crapass.cdcooper = glb_cdcooper       AND
                                       crapass.nrdconta = crapepr.nrdconta
                                       NO-LOCK NO-ERROR.
@@ -1345,7 +1349,7 @@ DO TRANSACTION ON ERROR UNDO TRANS_E, NEXT:
                         BELL.
                         MESSAGE glb_dscritic.
                         glb_cdcritic = 0.
-                        LEAVE.
+                        LEAVE TRANS_E.
                     END.
             END.
         END.
