@@ -93,8 +93,16 @@ CREATE OR REPLACE PACKAGE CECRED.FOLH0001 AS
                                       ,pr_rw_crapdat IN BTCH0001.CR_CRAPDAT%ROWTYPE);
 
   /* Procedure para realizar processamento de credito dos pagamentos aprovados */
-  PROCEDURE pc_credito_pagto_aprovados(pr_cdcooper   IN crapcop.cdcooper%TYPE
-                                      ,pr_rw_crapdat IN BTCH0001.cr_crapdat%ROWTYPE);
+/*  PROCEDURE pc_credito_pagto_aprovados(pr_cdcooper   IN crapcop.cdcooper%TYPE
+                                      ,pr_rw_crapdat IN BTCH0001.cr_crapdat%ROWTYPE);*/
+
+  /* Procedure para realizar processamento de credito dos pagamentos aprovados da cooperativa */                                      
+  PROCEDURE pc_cr_pagto_aprovados_coop(pr_cdcooper   IN crapcop.cdcooper%TYPE
+                                      ,pr_rw_crapdat IN BTCH0001.cr_crapdat%ROWTYPE); 
+                                           
+  /* Procedure para realizar processamento de credito dos pagamentos aprovados de portabilidade */                                      
+  PROCEDURE pc_cr_pagto_aprovados_ctasal(pr_cdcooper   IN crapcop.cdcooper%TYPE
+                                        ,pr_rw_crapdat IN BTCH0001.cr_crapdat%ROWTYPE);                                                                              
 
   /* Busca todos os pagamentos já creditados mas não tarifados ainda para tarifar */
   PROCEDURE pc_cobra_tarifas_pendentes (pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -243,7 +251,9 @@ CREATE OR REPLACE PACKAGE CECRED.FOLH0001 AS
                                  ,pr_dtmvtolt IN  tbfolha_lanaut.dtmvtolt%TYPE
                                  ,pr_cdhistor IN  tbfolha_lanaut.cdhistor%TYPE
                                  ,pr_dscritic OUT crapcri.dscritic%TYPE);                                                        
-  
+                                 
+  FUNCTION fn_valida_hrportabil(pr_cdcooper    IN craptab.cdcooper%TYPE
+                               ,pr_hrvalida    IN DATE DEFAULT SYSDATE) RETURN BOOLEAN;
 END FOLH0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
@@ -407,7 +417,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                                ,vr_hrfinal);
 
   END;
-
+  
   -- Função para optimizar a busca do valor da tarifa de Folha conforme opção Debito
   FUNCTION fn_valor_tarifa_folha(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cooperativa
                                 ,pr_nrdconta IN crapass.nrdconta%TYPE --> Conta
@@ -2580,7 +2590,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
 
 
   /* Procedure para realizar processamento de credito dos pagamentos aprovados */
-  PROCEDURE pc_credito_pagto_aprovados(pr_cdcooper   IN crapcop.cdcooper%TYPE
+  /*PROCEDURE pc_credito_pagto_aprovados(pr_cdcooper   IN crapcop.cdcooper%TYPE
                                       ,pr_rw_crapdat IN BTCH0001.cr_crapdat%ROWTYPE) IS
   ---------------------------------------------------------------------------------------------------------------
   --
@@ -2668,7 +2678,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
            AND pfp.nrseqpag  = lfp.nrseqpag
            AND pfp.idsitapr  > 3 --> Aprovados
            AND pfp.flsitdeb  = 1 --> Ja debitados
-           AND pfp.flsitcre  = 0 --> Ainda nao creditados
+           AND pfp.flsitcre  IN (0,2) --> Ainda nao creditados
            AND ass.cdcooper  = emp.cdcooper
            AND ass.nrdconta  = emp.nrdconta
          GROUP BY emp.cdempres
@@ -2730,7 +2740,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
            AND lfp.cdcooper  = ofp.cdcooper
            AND lfp.cdorigem  = ofp.cdorigem
            AND pfp.flsitdeb  = 1   --> Ja debitados
-           AND pfp.flsitcre  = 0   --> Ainda nao creditados
+           AND pfp.flsitcre  IN (0,2)   --> Ainda nao creditados
            AND lfp.idsitlct NOT IN('E','C') --> Desconsiderar os com erros ou creditados
            AND nvl(lfp.dsobslct,' ') <> 'Transf. solicitada, aguardar transmissão' -- Desconsiderar tbm CTASAL solicitado, pois sua situação persiste em L e somente a Obs pode ser eusada
            AND lfp.vllancto  > 0
@@ -4026,8 +4036,2292 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
       ROLLBACK;
       -- efetuar o raise
       raise_application_error(-25000, 'Erro FOLH0001.PC_CREDITO_PAGTO_APROVADOS: '||vr_dscritic);
-  END pc_credito_pagto_aprovados;
+  END pc_credito_pagto_aprovados;*/
+  
+  /* Procedure para realizar processamento de credito dos pagamentos aprovados de contas da cooperativa */
+  PROCEDURE pc_cr_pagto_aprovados_coop(pr_cdcooper   IN crapcop.cdcooper%TYPE
+                                      ,pr_rw_crapdat IN BTCH0001.cr_crapdat%ROWTYPE) IS
+  ---------------------------------------------------------------------------------------------------------------
+  ---------------------------ROTINA CRIADA A PARTIR DA PROCEDURE pc_cr_pagto_aprovados----------------------------
+  --
+  --  Programa : pc_cr_pagto_aprovados_coop             Antigo: 
+  --  Sistema  : Ayllos
+  --  Sigla    : CRED
+  --  Autor    : Kelvin
+  --  Data     : Janeiro/2017.                   Ultima atualizacao: 
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Frequencia: -----
+  -- Objetivo  : Procedure para realizar processamento de credito dos pagamentos aprovados
+  --             de contas da cooperativa
+  -- Alterações
+  --             12/11/2015 - Migracao da tarifação do sistema da CONFOL para CADTAR,
+  --                          com isso removi a cobrança da tarifa deste ponto, deixando
+  --                          apenas na pc_cobra_tarifas_pendentes (Marcos-Supero)
+  --
+  --             07/12/2015 - Ajustado para validar se o pagamento caso seja do tipo convencional,
+  --                          verificar se a empresa resolveu gravar o salario ou nao.
+  --                          (Andre Santos - SUPERO)
+  --
+  --             25/01/2016 - Ajuste nas mensagens de erro (Marcos-Supero)
+  --
+  --             27/01/2016 - Incluir controle de lançamentos sem crédito (Marcos-Supero)
+  --             
+  --             01/03/2016 - Ajustes para evitar dup_val_on_index em pagamentos ctasal
+  --                          para a mesma conta no mesmo dia (Marcos-Supero)
+  -- 
+  -- 
+  --             22/04/2016 - Inclusao de NVL para evitar que o LCM seja criado sem conta 
+  --                          (Marcos - Supero)
+  --
+  --             23/05/2016 - Ajuste para gravar tab EXECDEBEMP com crapemp.dtlimdeb caso
+  --                          dia da dtmvtopr for anterior ao dia limite para debitos. 
+  --                          (Jaison/Marcos - Supero)
+  --
+  ---------------------------------------------------------------------------------------------------------------
 
+    -- Busca os dados do lote
+    CURSOR cr_craplot(pr_cdcooper craplot.cdcooper%TYPE,
+                      pr_dtmvtolt craplot.dtmvtolt%TYPE,
+                      pr_nrdolote craplot.nrdolote%TYPE) IS
+        SELECT nrdolote
+              ,nrseqdig
+              ,qtinfoln
+              ,qtcompln
+              ,vlinfodb
+              ,vlcompdb
+              ,vlinfocr
+              ,vlcompcr
+              ,ROWID
+          FROM craplot
+         WHERE craplot.cdcooper = pr_cdcooper
+           AND craplot.dtmvtolt = pr_dtmvtolt
+           AND craplot.cdagenci = 1
+           AND craplot.cdbccxlt = 100
+           AND craplot.nrdolote = pr_nrdolote;
+    rw_craplot     cr_craplot%ROWTYPE;
+    rw_craplot_tec cr_craplot%ROWTYPE;
+    rw_craplot_fol cr_craplot%ROWTYPE;
+    rw_craplot_emp cr_craplot%ROWTYPE;
+    rw_craplot_cot cr_craplot%ROWTYPE;
+
+    -- Busca as empresas com pagamentos pendentes
+    CURSOR cr_crapemp(pr_cdcooper crapemp.cdcooper%TYPE,
+                      pr_dtmvtolt crapdat.dtmvtolt%TYPE) IS
+        SELECT emp.cdempres
+              ,emp.nmresemp
+              ,emp.idtpempr
+              ,emp.nrdconta
+              ,emp.dtlimdeb
+              ,ass.vllimcre
+              ,SUM(lfp.vllancto) vllancto
+          FROM crappfp pfp
+              ,crapemp emp
+              ,craplfp lfp
+              ,crapass ass
+         WHERE pfp.cdcooper  = pr_cdcooper
+           AND pfp.dtcredit <= pr_dtmvtolt
+           AND pfp.cdcooper  = emp.cdcooper
+           AND pfp.cdempres  = emp.cdempres
+           AND pfp.cdcooper  = lfp.cdcooper
+           AND pfp.cdempres  = lfp.cdempres
+           AND pfp.nrseqpag  = lfp.nrseqpag           
+           AND ass.cdcooper  = emp.cdcooper
+           AND ass.nrdconta  = emp.nrdconta
+           AND pfp.idsitapr  > 3 --> Aprovados
+           AND pfp.flsitdeb  = 1 --> Ja debitados
+           AND pfp.flsitcre  = 0 --> Ainda nao creditados
+           AND lfp.idtpcont  = 'C'
+         GROUP BY emp.cdempres
+                 ,emp.nmresemp
+                 ,emp.idtpempr
+                 ,emp.nrdconta
+                 ,emp.dtlimdeb
+                 ,ass.vllimcre;
+
+    -- Busca o numero do Lote
+    CURSOR cr_craptab_lot(pr_cdcooper craptab.cdcooper%TYPE,
+                          pr_cdacesso craptab.cdacesso%TYPE,
+                          pr_tpregist craptab.tpregist%TYPE) IS
+         SELECT TO_NUMBER(dstextab)
+           FROM craptab
+          WHERE craptab.cdcooper        = pr_cdcooper
+            AND UPPER(craptab.nmsistem) = 'CRED'
+            AND UPPER(craptab.tptabela) = 'GENERI'
+            AND craptab.cdempres        = 0
+            AND UPPER(craptab.cdacesso) = pr_cdacesso
+            AND craptab.tpregist        = pr_tpregist;
+
+    -- Busca os pagamentos pendentes
+    CURSOR cr_craplfp(pr_cdcooper crappfp.cdcooper%TYPE,
+                      pr_dtmvtolt crapdat.dtmvtolt%TYPE,
+                      pr_cdempres crappfp.cdempres%TYPE,
+                      pr_idtpempr crapemp.idtpempr%TYPE) IS
+        SELECT pfp.nrseqpag
+              ,pfp.idtppagt
+              ,pfp.flgrvsal
+              ,pfp.qtlctpag
+              ,pfp.ROWID pfp_rowid
+              ,LAST_DAY(ADD_MONTHS(pfp.dtcredit, -1)) dtmacred -- Ultimo dia do mes anterior ao credito
+              ,DECODE(pr_idtpempr,'C',ofp.cdhscrcp,ofp.cdhiscre) cdhiscre
+              ,ofp.fldebfol
+              ,lfp.nrseqlfp
+              ,lfp.idtpcont
+              ,lfp.nrdconta
+              ,lfp.nrcpfemp
+              ,lfp.vllancto
+              ,lfp.ROWID
+              ,lfp.progress_recid
+
+              ,ROW_NUMBER() OVER (PARTITION BY lfp.cdempres ORDER BY lfp.cdempres) AS numempre
+              ,COUNT(1) OVER (PARTITION BY lfp.cdempres) qtempres
+
+              ,ROW_NUMBER() OVER (PARTITION BY lfp.cdempres,ofp.fldebfol,lfp.nrdconta ORDER BY lfp.cdempres,ofp.fldebfol,lfp.nrdconta,DECODE(pr_idtpempr,'C',ofp.cdhscrcp,ofp.cdhiscre)) AS numdebfol
+              ,COUNT(1) OVER (PARTITION BY lfp.cdempres,ofp.fldebfol,lfp.nrdconta) qtdebfol
+              ,lfp.cdcooper
+              ,lfp.cdempres              
+          FROM crappfp pfp
+              ,craplfp lfp
+              ,crapofp ofp
+         WHERE pfp.cdcooper  = pr_cdcooper
+           AND pfp.dtcredit <= pr_dtmvtolt
+           AND pfp.cdempres  = pr_cdempres
+           AND pfp.cdcooper  = lfp.cdcooper
+           AND pfp.cdempres  = lfp.cdempres
+           AND pfp.nrseqpag  = lfp.nrseqpag
+           AND lfp.cdcooper  = ofp.cdcooper
+           AND lfp.cdorigem  = ofp.cdorigem
+           AND pfp.flsitdeb  = 1   --> Ja debitados
+           AND pfp.flsitcre  = 0   --> Ainda nao creditados
+           AND lfp.idsitlct NOT IN('E','C') --> Desconsiderar os com erros ou creditados
+           AND nvl(lfp.dsobslct,' ') <> 'Transf. solicitada, aguardar transmissão' -- Desconsiderar tbm CTASAL solicitado, pois sua situação persiste em L e somente a Obs pode ser eusada
+           AND lfp.vllancto  > 0
+           AND lfp.idtpcont  = 'C'
+      ORDER BY lfp.cdempres
+              ,ofp.fldebfol
+              ,lfp.nrdconta
+              ,DECODE(pr_idtpempr,'C',ofp.cdhscrcp,ofp.cdhiscre);
+
+    -- Busca a conta do cooperado
+    CURSOR cr_crapass(pr_cdcooper crapass.cdcooper%TYPE,
+                      pr_nrdconta crapass.nrdconta%TYPE) IS
+        SELECT CASE
+                 WHEN ass.cdsitdtl IN (2,4,6,8) THEN nvl(trf.nrsconta,ass.nrdconta)
+                 ELSE ass.nrdconta
+               END
+          FROM crapass ass
+              ,craptrf trf
+         WHERE ass.cdcooper = pr_cdcooper
+           AND ass.nrdconta = pr_nrdconta
+           AND trf.cdcooper(+) = ass.cdcooper
+           AND trf.nrdconta(+) = ass.nrdconta
+           AND trf.tptransa(+) = 1
+           AND trf.insittrs(+) = 2;
+
+    -- Busca os avisos de debitos de emprestimo/cotas com debito em folha
+    CURSOR cr_crapavs(pr_cdcooper crapavs.cdcooper%TYPE,
+                      pr_nrdconta crapavs.nrdconta%TYPE,
+                      pr_dtrefere crapavs.dtrefere%TYPE) IS
+        SELECT crapavs.*
+              ,crapavs.rowid
+          FROM crapavs
+         WHERE crapavs.cdcooper = pr_cdcooper
+           AND crapavs.nrdconta = pr_nrdconta
+           AND crapavs.tpdaviso = 1
+           AND crapavs.cdhistor IN (108,127)
+           AND crapavs.dtrefere = pr_dtrefere
+           AND crapavs.insitavs = 0
+      ORDER BY crapavs.cdhistor;
+
+    -- Lancamentos dos funcionarios que transferem o salario para outra IF
+    CURSOR cr_avs_fol(pr_cdcooper crapavs.cdcooper%TYPE,
+                      pr_cdempres crapavs.cdempres%TYPE,
+                      pr_dtrefere crapavs.dtrefere%TYPE) IS
+        SELECT crapavs.nrdconta
+          FROM crapavs
+         WHERE crapavs.cdcooper = pr_cdcooper
+           AND crapavs.cdempres = pr_cdempres
+           AND crapavs.dtrefere = pr_dtrefere
+           AND crapavs.tpdaviso = 1 --> Folha
+           AND crapavs.insitavs = 0 --> Nao debitado
+           AND crapavs.cdhistor IN (108,127)
+
+           -- Ja garantimos que nao exista CRAPFOL para evitar DUP_VAL_ON_INDEX
+           AND NOT EXISTS(SELECT 1
+                            FROM crapfol
+                           WHERE crapfol.cdcooper = crapavs.cdcooper
+                             AND crapfol.cdempres = crapavs.cdempres
+                             AND crapfol.dtrefere = crapavs.dtrefere
+                             AND crapfol.nrdconta = crapavs.nrdconta)
+
+      GROUP BY crapavs.nrdconta;
+    
+    --Retorna se existe contas ctasal no lote de pagamento  
+    CURSOR cr_verifica_ctasal(pr_rowid ROWID) IS
+      SELECT 1 
+        FROM crappfp pfp
+            ,craplfp lfp
+       WHERE lfp.cdcooper = pfp.cdcooper  
+         AND lfp.cdempres = pfp.cdempres
+         AND lfp.nrseqpag = pfp.nrseqpag
+         AND lfp.idtpcont = 'T'                  
+         AND pfp.rowid = pr_rowid;
+    
+    -- Tabelas
+    TYPE typ_tab_crappfp IS
+      TABLE OF crappfp.qtlctpag%TYPE
+      INDEX BY VARCHAR2(25);
+
+    TYPE typ_reg_craplfp IS
+      RECORD (vllancto craplfp.vllancto%TYPE);
+
+    TYPE typ_tab_craplfp IS
+      TABLE OF typ_reg_craplfp
+      INDEX BY PLS_INTEGER;
+
+    -- Variaveis da PLTABLE
+    vr_tab_crappfp typ_tab_crappfp;
+    vr_tab_craplfp typ_tab_craplfp;
+
+    -- Variaveis
+    vr_cdhistor   craplcm.cdhistor%TYPE;    
+    vr_lote_tec   crapprm.dsvlrprm%TYPE;
+    vr_lote_nro   craplot.nrdolote%TYPE;
+    vr_dstextab   craptab.dstextab%TYPE;
+    vr_nmprimtl   crapass.nmprimtl%TYPE;
+    vr_nrdconta   crapass.nrdconta%TYPE;
+    vr_flsittar   crappfp.flsittar%TYPE;
+    vr_dsobstar   crappfp.dsobstar%TYPE;
+    vr_idsitlct   craplfp.idsitlct%TYPE;
+    vr_dsobslct   craplfp.dsobslct%TYPE;
+    vr_vlsalliq   craplfp.vllancto%TYPE;
+    vr_vldebtot   craplfp.vllancto%TYPE;
+    vr_tot_debcot craplfp.vllancto%TYPE;
+    vr_tot_debemp craplfp.vllancto%TYPE;
+    vr_tot_lanc   craplfp.vllancto%TYPE;
+    vr_tottarif   craplfp.vllancto%TYPE;
+    vr_vlsddisp   crapsda.vlsddisp%TYPE;
+    vr_vldoipmf   NUMBER;
+    vr_inusatab   BOOLEAN;
+    vr_blnfound   BOOLEAN;
+    vr_blnerror   BOOLEAN;
+    vr_lotechav   VARCHAR2(10);
+    vr_emailds1   VARCHAR2(1000);
+    vr_dsmensag   VARCHAR2(4000);
+    vr_chave      VARCHAR2(25);
+    vr_dtexecde   DATE;
+    vr_idtipcon   NUMBER;
+
+    -- Variaveis de Erro
+    vr_cdcritic   crapcri.cdcritic%TYPE;
+    vr_dscritic   VARCHAR2(4000);
+    vr_dsalerta   VARCHAR2(4000);
+
+    -- Variaveis Excecao
+    vr_exc_erro   EXCEPTION;
+
+  BEGIN
+    --Inicializacao de variaveis
+    vr_idtipcon := NULL;
+    
+    -- Destinatarios responsaveis pelos avisos
+    vr_emailds1 :=  GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                             ,pr_cdcooper => pr_cdcooper
+                                             ,pr_cdacesso => 'FOLHAIB_EMAIL_ALERT_PROC');
+
+    -- Leitura do indicador de uso da tabela de taxa de juros
+    vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                                             ,pr_nmsistem => 'CRED'
+                                             ,pr_tptabela => 'USUARI'
+                                             ,pr_cdempres => 11
+                                             ,pr_cdacesso => 'TAXATABELA'
+                                             ,pr_tpregist => 0);
+    IF vr_dstextab IS NULL THEN
+      vr_inusatab := FALSE;
+    ELSE
+      IF SUBSTR(vr_dstextab,1,1) = '0' THEN
+          vr_inusatab := FALSE;
+      ELSE
+        vr_inusatab := TRUE;
+      END IF;
+    END IF;
+
+    -- Busca o numero de lote para gravacao
+    vr_lote_tec := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                            ,pr_cdcooper => pr_cdcooper
+                                            ,pr_cdacesso => 'FOLHAIB_NRLOTE_CTASAL');
+
+    -- Efetua a busca do lote TEC
+    OPEN cr_craplot(pr_cdcooper => pr_cdcooper,
+                    pr_dtmvtolt => pr_rw_crapdat.dtmvtolt,
+                    pr_nrdolote => vr_lote_tec);
+    FETCH cr_craplot INTO rw_craplot_tec;
+    -- Alimenta a booleana se achou ou nao
+    vr_blnfound := cr_craplot%FOUND;
+    -- Fecha cursor
+    CLOSE cr_craplot;
+
+    -- Se nao achou faz a criacao do lote TEC
+    IF NOT vr_blnfound THEN
+      BEGIN
+        INSERT INTO craplot
+                   (cdcooper
+                   ,dtmvtolt
+                   ,cdagenci
+                   ,cdbccxlt
+                   ,nrdolote
+                   ,tplotmov)
+             VALUES(pr_cdcooper
+                   ,pr_rw_crapdat.dtmvtolt
+                   ,1           -- cdagenci
+                   ,100         -- cdbccxlt
+                   ,vr_lote_tec
+                   ,1)
+          RETURNING craplot.rowid INTO rw_craplot_tec.rowid;
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic := '060 - Lote inexistente.';
+
+          -- Envia o erro para o LOG
+          BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                    ,pr_ind_tipo_log => 3 -- Erro nao tratado
+                                    ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': ' || vr_dscritic
+                                    ,pr_nmarqlog     => 'FOLHIB');
+
+          -- Mensagem informando o erro
+          vr_dsmensag := 'Houve erro inesperado na inclusão do lote CTASAL. ' ||
+                         'Abaixo trazemos o erro retornado durante a operação: <br> ' ||
+                         vr_dscritic;
+
+          -- Solicita envio do email
+          GENE0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
+                                    ,pr_cdprogra        => 'FOLH0001'
+                                    ,pr_des_destino     => TRIM(vr_emailds1)
+                                    ,pr_des_assunto     => 'Folha de Pagamento - Problema com o crédito – CTASAL'
+                                    ,pr_des_corpo       => vr_dsmensag
+                                    ,pr_des_anexo       => NULL--> nao envia anexo, anexo esta disponivel no dir conf. geracao do arq.
+                                    ,pr_flg_remove_anex => 'N' --> Remover os anexos passados
+                                    ,pr_flg_remete_coop => 'N' --> Se o envio sera do e-mail da Cooperativa
+                                    ,pr_flg_enviar      => 'N' --> Enviar o e-mail na hora
+                                    ,pr_des_erro        => vr_dscritic);
+          RAISE vr_exc_erro;
+      END;
+
+      COMMIT; -- Salva o lote TEC
+    END IF;
+
+    -- Percorre todas as empresas da cooperativa atual
+    FOR rw_crapemp IN cr_crapemp(pr_cdcooper => pr_cdcooper,
+                                 pr_dtmvtolt => pr_rw_crapdat.dtmvtolt) LOOP
+
+      BEGIN
+        -- Adicionamos no LOG o inicio do pagamento
+        BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                  ,pr_ind_tipo_log => 1 -- Processo Normal
+                                  ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': CREDITO DE FOLHA – EMP ' ||
+                                                      rw_crapemp.cdempres || ' – INICIANDO CREDITO DOS EMPREGADOS – VALOR TOTAL PREVISTO DE R$ ' ||
+                                                      TO_CHAR(rw_crapemp.vllancto,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.')
+                                  ,pr_nmarqlog     => 'FOLHIB');
+
+        -- Inicializa as variaveis
+        vr_blnerror    := FALSE;
+        rw_craplot_fol := NULL;
+        rw_craplot_emp := NULL;
+        rw_craplot_cot := NULL;
+
+        -- Lotes de Folha/Emprestimo/Cotas
+        FOR vr_index IN 1..3 LOOP
+
+          -- Chave de acesso
+          CASE vr_index
+            WHEN 1 THEN vr_lotechav := 'NUMLOTEFOL';
+            WHEN 2 THEN vr_lotechav := 'NUMLOTEEMP';
+            WHEN 3 THEN vr_lotechav := 'NUMLOTECOT';
+          END CASE;
+
+          -- Efetua a busca do codigo do lote FOL/EMP/COT
+          OPEN cr_craptab_lot(pr_cdcooper => pr_cdcooper,
+                              pr_cdacesso => vr_lotechav,
+                              pr_tpregist => rw_crapemp.cdempres);
+          FETCH cr_craptab_lot INTO vr_lote_nro;
+          -- Alimenta a booleana se achou ou nao
+          vr_blnfound := cr_craptab_lot%FOUND;
+          -- Fecha cursor
+          CLOSE cr_craptab_lot;
+
+          -- Se nao achou
+          IF NOT vr_blnfound THEN
+            vr_blnerror := TRUE;
+            EXIT; -- Sai do loop 1..3
+          END IF;
+
+          -- Busca o lote FOL/EMP/COT
+          OPEN cr_craplot(pr_cdcooper => pr_cdcooper,
+                          pr_dtmvtolt => pr_rw_crapdat.dtmvtolt,
+                          pr_nrdolote => vr_lote_nro);
+          FETCH cr_craplot INTO rw_craplot;
+          -- Alimenta a booleana se achou ou nao
+          vr_blnfound := cr_craplot%FOUND;
+          -- Fecha cursor
+          CLOSE cr_craplot;
+
+          -- Se nao achou faz a criacao do lote FOL/EMP/COT
+          IF NOT vr_blnfound THEN
+            BEGIN
+              INSERT INTO craplot
+                         (cdcooper
+                         ,dtmvtolt
+                         ,cdagenci
+                         ,cdbccxlt
+                         ,nrdolote
+                         ,tplotmov)
+                   VALUES(pr_cdcooper
+                         ,pr_rw_crapdat.dtmvtolt
+                         ,1           -- cdagenci
+                         ,100         -- cdbccxlt
+                         ,vr_lote_nro
+                         ,1)
+                RETURNING craplot.rowid INTO rw_craplot.rowid;
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_blnerror := TRUE;
+                EXIT; -- Sai do loop 1..3
+            END;
+
+          END IF;
+
+          -- Carrega os lotes e cursores
+          CASE vr_index
+            WHEN 1 THEN
+              rw_craplot_fol := rw_craplot;
+              rw_craplot_fol.nrdolote := vr_lote_nro;
+            WHEN 2 THEN
+              rw_craplot_emp := rw_craplot;
+              rw_craplot_emp.nrdolote := vr_lote_nro;
+            WHEN 3 THEN
+              rw_craplot_cot := rw_craplot;
+              rw_craplot_cot.nrdolote := vr_lote_nro;
+          END CASE;
+
+        END LOOP; -- Fim do loop 1..3 dos lotes
+
+        -- Caso tenha ocorrido erro na inclusao do lote vai para a proxima empresa e desfaz as acoes
+        IF vr_blnerror THEN
+
+          -- Mensagem de Critica
+          vr_dscritic := '060 - Lote inexistente.';
+
+          -- Envia o erro para o LOG
+          BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                    ,pr_ind_tipo_log => 2 -- Erro tratato
+                                    ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': ' || vr_dscritic
+                                    ,pr_nmarqlog     => 'FOLHIB');
+
+          -- Mensagem informando o erro
+          vr_dsmensag := 'Houve erro inesperado na busca do numero do lote ('|| vr_lotechav ||') ' ||
+                         'para a empresa ' || rw_crapemp.cdempres || ' - ' || rw_crapemp.nmresemp || '. ' ||
+                         'Abaixo trazemos o erro retornado durante a operação: <br> ' || vr_dscritic;
+
+          -- Solicita envio do email
+          GENE0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
+                                    ,pr_cdprogra        => 'FOLH0001'
+                                    ,pr_des_destino     => TRIM(vr_emailds1)
+                                    ,pr_des_assunto     => 'Folha de Pagamento - Problema com o crédito – Empresa ' || rw_crapemp.cdempres || ' - ' || rw_crapemp.nmresemp
+                                    ,pr_des_corpo       => vr_dsmensag
+                                    ,pr_des_anexo       => NULL--> nao envia anexo, anexo esta disponivel no dir conf. geracao do arq.
+                                    ,pr_flg_remove_anex => 'N' --> Remover os anexos passados
+                                    ,pr_flg_remete_coop => 'N' --> Se o envio sera do e-mail da Cooperativa
+                                    ,pr_flg_enviar      => 'N' --> Enviar o e-mail na hora
+                                    ,pr_des_erro        => vr_dscritic);
+          ROLLBACK;
+          CONTINUE; -- Move para a proxima empresa
+        END IF;
+
+        COMMIT; -- Salva os lotes FOL/EMP/COT
+
+        -- Limpa as PLTABLES
+        vr_tab_crappfp.DELETE;
+        vr_tab_craplfp.DELETE;
+
+        -- Listagem dos pagamentos pendentes
+        FOR rw_craplfp IN cr_craplfp(pr_cdcooper => pr_cdcooper,
+                                     pr_dtmvtolt => pr_rw_crapdat.dtmvtolt,
+                                     pr_cdempres => rw_crapemp.cdempres,
+                                     pr_idtpempr => rw_crapemp.idtpempr) LOOP
+          
+          vr_idtipcon := NULL;
+          
+          -- Verificar a situacao de cada conta, pois algum empregado pode ter encerrado sua conta
+          -- ou efetuado alguma alteracao em seu cadastro que impeca o credito
+          pc_valida_lancto_folha(pr_cdcooper => pr_cdcooper,
+                                 pr_nrdconta => rw_craplfp.nrdconta,
+                                 pr_nrcpfcgc => rw_craplfp.nrcpfemp,
+                                 pr_idtpcont => rw_craplfp.idtpcont,
+                                 pr_nmprimtl => vr_nmprimtl,
+                                 pr_dsalerta => vr_dsalerta,
+                                 pr_dscritic => vr_dscritic);
+          -- Caso tenha retornado alguma critica
+          IF vr_dsalerta IS NOT NULL OR
+             vr_dscritic IS NOT NULL THEN
+            BEGIN
+              -- Atualiza com erro
+              UPDATE craplfp
+                 SET idsitlct = 'E'
+                    ,dsobslct = NVL(vr_dsalerta,vr_dscritic)
+               WHERE ROWID = rw_craplfp.rowid;
+            END;
+
+            -- Adicionamos no LOG o aviso de problema
+            BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                      ,pr_ind_tipo_log => 2 -- Erro tratato
+                                      ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': CREDITO DE FOLHA – EMP ' ||
+                                                          rw_crapemp.cdempres || ' – EMPREGADO ' || ltrim(gene0002.fn_mask_conta(rw_craplfp.nrdconta)) || ' NO VALOR DE R$ ' ||
+                                                          TO_CHAR(rw_craplfp.vllancto,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.') ||
+                                                          ' NÃO SERA EFETUADO, MOTIVO: '||NVL(vr_dsalerta,vr_dscritic)
+                                      ,pr_nmarqlog     => 'FOLHIB');
+            CONTINUE;
+          END IF;
+
+          -- Busca a conta do associado
+          OPEN cr_crapass(pr_cdcooper => pr_cdcooper,
+                          pr_nrdconta => rw_craplfp.nrdconta);
+          FETCH cr_crapass INTO vr_nrdconta;
+          -- Fecha cursor
+          CLOSE cr_crapass;
+
+          -- Inicializa as variaveis
+          vr_idsitlct := 'C';
+          vr_dsobslct := NULL;
+          vr_blnerror := FALSE;
+
+          BEGIN
+            -- Atualiza a CRAPLOT_FOL
+            UPDATE craplot
+               SET qtinfoln = qtinfoln + 1
+                  ,vlinfocr = vlinfocr + rw_craplfp.vllancto
+                  ,qtcompln = qtcompln + 1
+                  ,vlcompcr = vlcompcr + rw_craplfp.vllancto
+                  ,nrseqdig = nrseqdig + 1
+             WHERE ROWID = rw_craplot_fol.rowid
+             RETURNING craplot.nrseqdig INTO rw_craplot_fol.nrseqdig;
+
+            -- Inserir lancamento
+            INSERT INTO craplcm
+                       (dtmvtolt
+                       ,cdagenci
+                       ,cdbccxlt
+                       ,nrdolote
+                       ,nrdconta
+                       ,nrdctabb
+                       ,nrdctitg
+                       ,nrdocmto
+                       ,cdhistor
+                       ,vllanmto
+                       ,nrseqdig
+                       ,cdcooper)
+                 VALUES(pr_rw_crapdat.dtmvtolt
+                       ,1
+                       ,100
+                       ,rw_craplot_fol.nrdolote
+                       ,vr_nrdconta
+                       ,vr_nrdconta
+                       ,GENE0002.fn_mask(vr_nrdconta,'99999999') -- nrdctitg
+                       ,rw_craplfp.cdempres || rw_craplfp.nrseqpag || to_char(rw_craplfp.nrseqlfp,'fm00000')
+                       ,rw_craplfp.cdhiscre
+                       ,rw_craplfp.vllancto
+                       ,rw_craplot_fol.nrseqdig
+                       ,pr_cdcooper);
+                         
+            pc_inserir_lanaut(pr_cdcooper => pr_cdcooper
+                             ,pr_nrdconta => vr_nrdconta
+                             ,pr_dtmvtolt => pr_rw_crapdat.dtmvtolt
+                             ,pr_cdhistor => rw_craplfp.cdhiscre
+                             ,pr_vlrenda  => rw_craplfp.vllancto
+                             ,pr_cdagenci => 1
+                             ,pr_cdbccxlt => 100
+                             ,pr_nrdolote => rw_craplot_fol.nrdolote
+                             ,pr_nrseqdig => rw_craplot_fol.nrseqdig
+                             ,pr_dscritic => vr_dscritic);
+                               
+            IF  vr_dscritic IS NOT NULL THEN
+                vr_idsitlct := 'E';
+                vr_dsobslct := 'Problema encontrado no crédito ao empregado: '||SQLERRM;
+                vr_blnerror := TRUE;
+                ROLLBACK;
+
+                -- Envia o erro para o LOG
+                BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                          ,pr_ind_tipo_log => 2 -- Erro tratato
+                                          ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': ' ||
+                                                              'CREDITO DE FOLHA – EMP ' || rw_crapemp.cdempres ||
+                                                              ' – EMPREGADO ' || ltrim(gene0002.fn_mask_conta(vr_nrdconta)) || ' –  CREDITO ' ||
+                                                              rw_craplfp.cdhiscre || ' NO VALOR DE R$ ' ||
+                                                              TO_CHAR(rw_craplfp.vllancto,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.') ||
+                                                              ' NÃO EFETUADO: ' || SQLERRM
+                                          ,pr_nmarqlog     => 'FOLHIB');                 
+            END IF;              
+                         
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_idsitlct := 'E';
+              vr_dsobslct := 'Problema encontrado no crédito ao empregado: '||SQLERRM;
+              vr_blnerror := TRUE;
+              ROLLBACK;
+
+              -- Envia o erro para o LOG
+              BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                        ,pr_ind_tipo_log => 2 -- Erro tratato
+                                        ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': ' ||
+                                                            'CREDITO DE FOLHA – EMP ' || rw_crapemp.cdempres ||
+                                                            ' – EMPREGADO ' || ltrim(gene0002.fn_mask_conta(vr_nrdconta)) || ' –  CREDITO ' ||
+                                                            rw_craplfp.cdhiscre || ' NO VALOR DE R$ ' ||
+                                                            TO_CHAR(rw_craplfp.vllancto,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.') ||
+                                                            ' NÃO EFETUADO: ' || SQLERRM
+                                        ,pr_nmarqlog     => 'FOLHIB');
+          END;
+
+          BEGIN
+            -- Atualiza com sucesso ou erro
+            UPDATE craplfp
+               SET idsitlct = vr_idsitlct
+                  ,dsobslct = vr_dsobslct
+             WHERE ROWID = rw_craplfp.rowid;
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_blnerror := TRUE;
+          END;
+
+          -- Salva o lancamento de credito na conta e atualiza a situacao
+          COMMIT;
+
+          -- Caso seja o primeiro registro reseta o total de credito
+          IF rw_craplfp.numdebfol = 1 THEN
+            vr_vlsalliq := 0;
+          END IF;
+
+          -- Se NAO ocorreu erro na inclusao da LCM ou atualizacao da LOT/LFP
+          IF NOT vr_blnerror THEN
+            -- Adicionamos no LOG o sucesso ocorrido no pagamento
+            BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                      ,pr_ind_tipo_log => 1 -- Processo Normal
+                                      ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': CREDITO DE FOLHA – EMP ' ||
+                                                          rw_crapemp.cdempres || ' – EMPREGADO ' || ltrim(gene0002.fn_mask_conta(vr_nrdconta)) || ' – CREDITO ' ||
+                                                          rw_craplfp.cdhiscre || ' NO VALOR DE R$ ' ||
+                                                          TO_CHAR(rw_craplfp.vllancto,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.')
+                                      ,pr_nmarqlog     => 'FOLHIB');
+          END IF;
+
+          -- Caso tenha desconto em folha
+          IF rw_craplfp.fldebfol = 1 THEN
+
+            -- Se NAO ocorreu erro na inclusao da LCM ou atualizacao da LOT/LFP
+            IF NOT vr_blnerror THEN
+              -- Soma o lancamento
+              vr_vlsalliq := vr_vlsalliq + rw_craplfp.vllancto;
+            END IF;
+
+            -- Caso seja o ultimo registro e tenha salario liquido
+            IF rw_craplfp.numdebfol = rw_craplfp.qtdebfol AND vr_vlsalliq > 0 THEN
+              vr_blnerror := FALSE;
+
+              BEGIN
+                -- Atualiza o endividamento
+                UPDATE crapass
+                   SET dtedvmto = rw_craplfp.dtmacred
+                      ,vledvmto = APLI0001.fn_round((vr_vlsalliq * 1.15) * 0.30,2)
+                 WHERE cdcooper = pr_cdcooper
+                   AND nrdconta = rw_craplfp.nrdconta;
+
+                -- Insere ou atualiza o controle dos cheques salarios
+                INSERT INTO crapfol
+                           (cdcooper
+                           ,cdempres
+                           ,nrdconta
+                           ,dtrefere
+                           ,vllanmto)
+                     VALUES(pr_cdcooper
+                           ,rw_crapemp.cdempres
+                           ,vr_nrdconta
+                           ,pr_rw_crapdat.dtultdia
+                           ,vr_vlsalliq);
+              EXCEPTION
+                WHEN DUP_VAL_ON_INDEX THEN
+                  -- Se ja existir atualizar valor
+                  UPDATE crapfol
+                     SET crapfol.vllanmto = vr_vlsalliq
+                   WHERE crapfol.cdcooper = pr_cdcooper
+                     AND crapfol.cdempres = rw_crapemp.cdempres
+                     AND crapfol.nrdconta = vr_nrdconta
+                     AND crapfol.dtrefere = pr_rw_crapdat.dtultdia;
+
+                WHEN OTHERS THEN
+                  vr_blnerror := TRUE;
+                  vr_dscritic := SQLERRM;
+              END;
+
+              -- Se ocorreu erro na inclusao/atualizacao da FOL ou atualizacao da ASS
+              IF vr_blnerror THEN
+                -- Envia o erro para o LOG porem continua o processo
+                BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                          ,pr_ind_tipo_log => 2 -- Erro tratato
+                                          ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': ' ||
+                                                              'CREDITO DE FOLHA – EMP ' || rw_crapemp.cdempres ||
+                                                              ' – EMPREGADO ' || ltrim(gene0002.fn_mask_conta(vr_nrdconta)) || ' – NO VALOR DE R$ ' ||
+                                                              TO_CHAR(vr_vlsalliq,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.') ||
+                                                              ': Problema encontrado -> '||vr_dscritic
+                                          ,pr_nmarqlog     => 'FOLHIB');
+              END IF;
+
+              -- Inicializa as variaveis
+              vr_tot_debemp := 0;
+              vr_tot_debcot := 0;
+
+              -- Listagem dos pagamentos pendentes
+              FOR rw_crapavs IN cr_crapavs(pr_cdcooper => pr_cdcooper,
+                                           pr_nrdconta => rw_craplfp.nrdconta,
+                                           pr_dtrefere => rw_craplfp.dtmacred) LOOP
+
+                -- Somente se possuir salario liquido
+                IF vr_vlsalliq > 0 THEN
+                  vr_blnerror := FALSE;
+
+                  -- Aviso de Emprestimo
+                  IF rw_crapavs.cdhistor = 108 THEN
+
+                    -- Chama a rotina PC_CRPS120_1
+                    pc_crps120_1(pr_cdcooper => pr_cdcooper
+                                ,pr_cdprogra => 'FOLH0001'
+                                ,pr_cdoperad => '1'
+                                ,pr_crapdat  => pr_rw_crapdat
+                                ,pr_nrdconta => rw_craplfp.nrdconta
+                                ,pr_nrctremp => rw_crapavs.nrdocmto --> Nr do emprestimo
+                                ,pr_nrdolote => rw_craplot_emp.nrdolote
+                                ,pr_inusatab => vr_inusatab         --> Indicador se utilizar a tabela de juros
+                                ,pr_vldaviso => rw_crapavs.vllanmto - rw_crapavs.vldebito --> Valor de aviso
+                                ,pr_vlsalliq => vr_vlsalliq         --> Valor de saldo liquido
+                                ,pr_dtintegr => pr_rw_crapdat.dtmvtolt --> Data de integracao
+                                ,pr_cdhistor => 95                  --> Cod do historico
+                                -- OUT
+                                ,pr_insitavs => rw_crapavs.insitavs --> Retorna situacao do aviso
+                                ,pr_vldebito => vr_vldebtot         --> Retorna do valor de debito
+                                ,pr_vlestdif => rw_crapavs.vlestdif --> Ret vlr estouro ou diferenca
+                                ,pr_flgproce => rw_crapavs.flgproce --> Ret indicativo de processamento
+                                ,pr_cdcritic => vr_cdcritic         --> Critica encontrada
+                                ,pr_dscritic => vr_dscritic);       --> Texto de erro/critica encontrada
+
+                    -- Se retornar critica
+                    IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+                      vr_blnerror := TRUE;
+                    ELSE
+                      -- Acumular o valor lancado para unificar a criacao da CRAPLCM
+                      vr_tot_debemp := NVL(vr_tot_debemp,0) + NVL(vr_vldebtot,0);
+                      -- Decrementar do valor liquido a prestacao paga
+                      vr_vlsalliq := NVL(vr_vlsalliq,0) - NVL(vr_vldebtot,0);
+                    END IF;
+
+                    BEGIN
+                      -- Atualiza Aviso
+                      UPDATE crapavs
+                         SET crapavs.insitavs = rw_crapavs.insitavs,
+                             crapavs.vlestdif = rw_crapavs.vlestdif,
+                             crapavs.flgproce = rw_crapavs.flgproce,
+                             crapavs.vldebito = rw_crapavs.vldebito + NVL(vr_vldebtot,0)
+                       WHERE ROWID = rw_crapavs.rowid;
+                    EXCEPTION
+                      WHEN OTHERS THEN
+                        vr_blnerror := TRUE;
+                        vr_dscritic := SQLERRM;
+                    END;
+
+                    -- Se ocorreu erro na PC_CRPS120_1 ou atualizacao da AVS
+                    IF vr_blnerror THEN
+                      -- Envia o erro para o LOG porem continua o processo
+                      BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                                ,pr_ind_tipo_log => 2 -- Erro tratato
+                                                ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': ' ||
+                                                                    'CREDITO DE FOLHA – EMP ' || rw_crapemp.cdempres ||
+                                                                    ' – EMPREGADO ' || ltrim(gene0002.fn_mask_conta(vr_nrdconta)) || ' – AVISO NO VALOR DE R$ ' ||
+                                                                    TO_CHAR(vr_vldebtot,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.') ||
+                                                                    ': Erro -> ' || vr_cdcritic || ' - ' || vr_dscritic
+                                                ,pr_nmarqlog     => 'FOLHIB');
+                    END IF;
+
+                  -- Aviso de Plano de Cotas
+                  ELSIF rw_crapavs.cdhistor = 127 THEN
+
+                    -- Chama a rotina PC_CRPS120_2
+                    pc_crps120_2(pr_cdcooper => pr_cdcooper
+                                ,pr_cdprogra => 'FOLH0001'
+                                ,pr_crapdat  => pr_rw_crapdat
+                                ,pr_nrdconta => rw_craplfp.nrdconta
+                                ,pr_nrdolote => rw_craplot_cot.nrdolote
+                                ,pr_vldaviso => rw_crapavs.vllanmto --> Valor do aviso
+                                ,pr_vlsalliq => vr_vlsalliq         --> Valor do saldo liquido
+                                ,pr_dtintegr => pr_rw_crapdat.dtmvtolt --> Data de integracao
+                                ,pr_cdhistor => 75                  --> Cod do historico
+                                -- OUT
+                                ,pr_insitavs => rw_crapavs.insitavs --> Retorna indicador do aviso
+                                ,pr_vldebito => rw_crapavs.vldebito --> Retorno do valor debito
+                                ,pr_vlestdif => rw_crapavs.vlestdif --> retorna valor de estorno/diferença
+                                ,pr_vldoipmf => vr_vldoipmf         --> Valor do CPMF (Não mais utilizado)
+                                ,pr_flgproce => rw_crapavs.flgproce --> retorno indicativo de processamento
+                                ,pr_cdcritic => vr_cdcritic         --> Critica encontrada
+                                ,pr_dscritic => vr_dscritic);       --> Texto de erro/critica encontrada
+
+                    -- Se retornar critica
+                    IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+                      vr_blnerror := TRUE;
+                    ELSE
+                      -- Acumular o valor lancado para unificar a criacao da CRAPLCM
+                      vr_tot_debcot := NVL(vr_tot_debcot,0) + NVL(rw_crapavs.vldebito,0);
+                      -- Decrementar do valor liquido a prestacao paga
+                      vr_vlsalliq := NVL(vr_vlsalliq,0) - NVL(rw_crapavs.vldebito,0);
+                    END IF;
+
+                    BEGIN
+                      -- Atualiza Aviso
+                      UPDATE crapavs
+                         SET crapavs.insitavs = rw_crapavs.insitavs,
+                             crapavs.vlestdif = rw_crapavs.vlestdif,
+                             crapavs.flgproce = rw_crapavs.flgproce,
+                             crapavs.vldebito = NVL(rw_crapavs.vldebito,0)
+                       WHERE ROWID = rw_crapavs.rowid;
+                    EXCEPTION
+                      WHEN OTHERS THEN
+                        vr_blnerror := TRUE;
+                        vr_dscritic := SQLERRM;
+                    END;
+
+                    -- Se ocorreu erro na PC_CRPS120_2 ou atualizacao da AVS
+                    IF vr_blnerror THEN
+                      -- Envia o erro para o LOG porem continua o processo
+                      BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                                ,pr_ind_tipo_log => 2 -- Erro tratato
+                                                ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': ' ||
+                                                                    'CREDITO DE FOLHA – EMP ' || rw_crapemp.cdempres ||
+                                                                    ' – EMPREGADO ' || ltrim(gene0002.fn_mask_conta(vr_nrdconta)) || ' – AVISO NO VALOR DE R$ ' ||
+                                                                    TO_CHAR(rw_crapavs.vldebito,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.') ||
+                                                                    ': Erro - ' || vr_dscritic
+                                                ,pr_nmarqlog     => 'FOLHIB');
+                    END IF;
+
+                  END IF; -- Avisos EMP/COT
+
+                  -- Se nao houve debito
+                  IF rw_crapavs.vldebito = 0 AND rw_crapavs.insitavs = 0 THEN
+                    -- Atualizar valor de estouro/diferenca aviso de debito
+                    BEGIN
+                     UPDATE crapavs
+                        SET crapavs.vlestdif = crapavs.vllanmto * -1
+                      WHERE ROWID = rw_crapavs.rowid;
+                    END;
+                  END IF;
+
+                ELSE
+                  EXIT; -- Sai do loop cr_crapavs
+                END IF; -- vr_vlsalliq > 0
+
+              END LOOP; -- cr_crapavs
+
+              -- Se houve lancamento de AVS
+              IF vr_tot_debcot > 0 OR vr_tot_debemp > 0 THEN
+
+                FOR vr_index IN 1..2 LOOP
+
+                  -- Seta as variaveis
+                  CASE vr_index
+                    WHEN 1 THEN -- Cotas
+                      vr_cdhistor := 127;
+                      vr_tot_lanc := vr_tot_debcot;
+                      rw_craplot  := rw_craplot_cot;
+                    WHEN 2 THEN -- Emprestimos
+                      vr_cdhistor := 108;
+                      vr_tot_lanc := vr_tot_debemp;
+                      rw_craplot  := rw_craplot_emp;
+                  END CASE;
+
+                  -- Executa somente se existir valor
+                  IF vr_tot_lanc > 0 THEN
+
+                    BEGIN
+                      -- Atualiza a CRAPLOT
+                      UPDATE craplot
+                         SET qtinfoln = qtinfoln + 1
+                            ,vlinfodb = vlinfodb + vr_tot_lanc
+                            ,qtcompln = qtcompln + 1
+                            ,vlcompdb = vlcompdb + vr_tot_lanc
+                            ,nrseqdig = nrseqdig + 1
+                       WHERE ROWID = rw_craplot.rowid
+                       RETURNING craplot.nrseqdig INTO rw_craplot.nrseqdig;
+
+                      -- Inserir lancamento
+                      INSERT INTO craplcm
+                                 (dtmvtolt
+                                 ,cdagenci
+                                 ,cdbccxlt
+                                 ,nrdolote
+                                 ,nrdconta
+                                 ,nrdctabb
+                                 ,nrdctitg
+                                 ,nrdocmto
+                                 ,cdhistor
+                                 ,vllanmto
+                                 ,nrseqdig
+                                 ,cdcooper)
+                           VALUES(pr_rw_crapdat.dtmvtolt
+                                 ,1
+                                 ,100
+                                 ,rw_craplot.nrdolote
+                                 ,vr_nrdconta
+                                 ,vr_nrdconta
+                                 ,GENE0002.fn_mask(vr_nrdconta,'99999999') -- nrdctitg
+                                 ,rw_craplot.nrseqdig
+                                 ,vr_cdhistor
+                                 ,vr_tot_lanc
+                                 ,rw_craplot.nrseqdig
+                                 ,pr_cdcooper);
+                    EXCEPTION
+                      WHEN OTHERS THEN
+                        -- Envia o erro para o LOG
+                        BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                                  ,pr_ind_tipo_log => 2 -- Erro tratato
+                                                  ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': ' ||
+                                                                      'CREDITO DE FOLHA – EMP ' || rw_crapemp.cdempres ||
+                                                                      ' – EMPREGADO ' || ltrim(gene0002.fn_mask_conta(vr_nrdconta)) || ' –  DEBITO ' ||
+                                                                      vr_cdhistor || ' NO VALOR DE R$ ' ||
+                                                                      TO_CHAR(vr_tot_lanc,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.') ||
+                                                                      ' NÃO EFETUADO: ' || SQLERRM
+                                                  ,pr_nmarqlog     => 'FOLHIB');
+                    END;
+
+                  END IF; -- tot_lanc > 0
+
+                END LOOP; -- Fim do loop 1..2
+
+              END IF; -- tot_debcot OR tot_debemp > 0
+
+            END IF; -- numdebfol = qtdebfol
+
+            COMMIT; -- Salva a FOL, ASS, AVS e o Debito
+
+          END IF; -- fldebfol = 1
+
+          -- Carrega os dados na PLTABLE
+          vr_tab_crappfp(rw_craplfp.pfp_rowid) := rw_craplfp.qtlctpag;
+
+          -- Caso seja do tipo Convencional
+          IF rw_craplfp.idtppagt = 'C' THEN
+            --Se a empresa escolheu gravar o salario
+            IF rw_craplfp.flgrvsal = 1 THEN
+              --Atualizaremos o salário com este lançamento
+              vr_tab_craplfp(rw_craplfp.nrdconta).vllancto := rw_craplfp.vllancto;
+            ELSE
+             --Iremos apagar o histórico de salário
+             vr_tab_craplfp(rw_craplfp.nrdconta).vllancto := 0;
+            END IF;
+          END IF;
+
+          -- Caso seja ultimo registro da empresa
+          IF rw_craplfp.numempre = rw_craplfp.qtempres THEN
+
+            -- Caso seja debito em folha
+            IF rw_craplfp.fldebfol = 1 THEN
+
+              vr_dtexecde := pr_rw_crapdat.dtmvtopr;
+
+              -- Se o dia da dtmvtopr for anterior ao dia limite para debitos
+              IF TO_CHAR(vr_dtexecde,'DD') <= rw_crapemp.dtlimdeb THEN
+                vr_dtexecde := GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
+                                                          ,pr_dtmvtolt => TO_DATE(TO_CHAR(rw_crapemp.dtlimdeb,'fm00') || '/' || 
+                                                                                  TO_CHAR(pr_rw_crapdat.dtmvtopr,'MM/RRRR'), 
+                                                                                  'DD/MM/RRRR'));
+              END IF;
+
+              BEGIN
+                -- Inserir registro de controle na craptab
+                INSERT INTO craptab
+                           (nmsistem
+                           ,tptabela
+                           ,cdempres
+                           ,cdacesso
+                           ,tpregist
+                           ,cdcooper
+                           ,dstextab)
+                     VALUES('CRED'              -- nmsistem
+                           ,'USUARI'            -- tptabela
+                           ,rw_crapemp.cdempres -- cdempres
+                           ,'EXECDEBEMP'        -- cdacesso
+                           ,0                   -- tpregist
+                           ,pr_cdcooper         -- cdcooper
+                           ,TO_CHAR(rw_craplfp.dtmacred,'DD/MM/RRRR') || ' ' ||
+                            TO_CHAR(vr_dtexecde,'DD/MM/RRRR') || ' 0' ); -- dstextab
+              EXCEPTION
+                WHEN DUP_VAL_ON_INDEX THEN
+                  -- Se ja existe deve alterar
+                  BEGIN
+                    UPDATE craptab
+                       SET craptab.dstextab = TO_CHAR(rw_craplfp.dtmacred,'DD/MM/RRRR') || ' ' ||
+                                              TO_CHAR(vr_dtexecde,'DD/MM/RRRR') || ' 0'
+                     WHERE craptab.cdcooper        = pr_cdcooper
+                       AND UPPER(craptab.nmsistem) = 'CRED'
+                       AND UPPER(craptab.tptabela) = 'USUARI'
+                       AND craptab.cdempres        = rw_crapemp.cdempres
+                       AND UPPER(craptab.cdacesso) = 'EXECDEBEMP'
+                       AND craptab.tpregist        = 0;
+                  END;
+              END;
+
+              -- Busca os avisos de debito que tenham ficado pendentes para gerar a CRAPFOL zerada
+              FOR rw_avs_fol IN cr_avs_fol(pr_cdcooper => pr_cdcooper,
+                                           pr_cdempres => rw_crapemp.cdempres,
+                                           pr_dtrefere => rw_craplfp.dtmacred) LOOP
+                BEGIN
+                  INSERT INTO crapfol
+                             (cdcooper
+                             ,cdempres
+                             ,dtrefere
+                             ,nrdconta)
+                       VALUES(pr_cdcooper
+                             ,rw_crapemp.cdempres
+                             ,rw_craplfp.dtmacred
+                             ,rw_avs_fol.nrdconta); --> Conta encontrada na AVS
+                END;
+              END LOOP; -- cr_avs_fol
+
+            END IF; -- fldebfol = 1
+
+            -- Inicializa as avariaveis
+            vr_vlsddisp := 0;
+            vr_tottarif := 0;
+            vr_flsittar := 1;
+            vr_dsobstar := NULL;
+            
+            -- Percorre a lista de pagamentos
+            vr_chave := vr_tab_crappfp.FIRST;
+            WHILE vr_chave IS NOT NULL LOOP
+              BEGIN
+                
+                vr_idtipcon := NULL;
+                
+                OPEN cr_verifica_ctasal(vr_chave);
+                  FETCH cr_verifica_ctasal
+                   INTO vr_idtipcon;
+                CLOSE cr_verifica_ctasal;  
+              
+                IF vr_idtipcon IS NULL THEN                
+                  UPDATE crappfp
+                     SET -- Atualiza os pagamentos que foram processados
+                         dthorcre = SYSDATE,
+                         flsitcre = 1, --> Creditado
+                         dsobscre = NULL
+                   WHERE ROWID = vr_chave;
+                ELSE
+                  UPDATE crappfp
+                     SET -- Atualiza os pagamentos que foram processados
+                         dthorcre = SYSDATE,
+                         flsitcre = 2, --> Cred. Parcial
+                         dsobscre = NULL
+                   WHERE ROWID = vr_chave;
+                END IF;
+              END;
+              vr_chave := vr_tab_crappfp.NEXT(vr_chave);
+            END LOOP;
+
+            BEGIN
+              -- Atualizar a data da ultima utilizacao do produto
+              UPDATE crapemp
+                 SET crapemp.dtultufp = SYSDATE
+               WHERE crapemp.cdcooper = pr_cdcooper
+                 AND crapemp.cdempres = rw_crapemp.cdempres;
+            END;
+
+            -- Percorre a lista de lancamentos
+            vr_chave := vr_tab_craplfp.FIRST;
+            WHILE vr_chave IS NOT NULL LOOP
+              BEGIN
+                -- Atualizar com o ultimo valor liquido pago
+                UPDATE crapefp
+                   SET vlultsal = vr_tab_craplfp(vr_chave).vllancto
+                 WHERE cdcooper = pr_cdcooper
+                   AND cdempres = rw_crapemp.cdempres
+                   AND nrdconta = vr_chave;
+              END;
+              vr_chave := vr_tab_craplfp.NEXT(vr_chave);
+            END LOOP;
+
+            BEGIN
+              -- Atualizar a CRAPTAB
+              UPDATE craptab
+                 SET craptab.dstextab        = SUBSTR(craptab.dstextab, 1, 13) || '1'
+               WHERE craptab.cdcooper        = pr_cdcooper
+                 AND UPPER(craptab.nmsistem) = 'CRED'
+                 AND UPPER(craptab.tptabela) = 'GENERI'
+                 AND craptab.cdempres        = 0
+                 AND UPPER(craptab.cdacesso) = 'DIADOPAGTO'
+                 AND craptab.tpregist        = rw_crapemp.cdempres;
+            END;
+
+            -- Lotes de Folha/Emprestimo/Cotas
+            FOR vr_index IN 1..3 LOOP
+
+              -- Carrega os lotes
+              CASE vr_index
+                WHEN 1 THEN vr_lote_nro := rw_craplot_fol.nrdolote;
+                WHEN 2 THEN vr_lote_nro := rw_craplot_emp.nrdolote;
+                WHEN 3 THEN vr_lote_nro := rw_craplot_cot.nrdolote;
+              END CASE;
+
+              -- Busca o lote FOL/EMP/COT
+              OPEN cr_craplot(pr_cdcooper => pr_cdcooper,
+                              pr_dtmvtolt => pr_rw_crapdat.dtmvtolt,
+                              pr_nrdolote => vr_lote_nro);
+              FETCH cr_craplot INTO rw_craplot;
+              CLOSE cr_craplot;
+
+              -- Caso os valores de credito/debito estejam zerados
+              IF rw_craplot.vlinfodb = 0 AND
+                 rw_craplot.vlcompdb = 0 AND
+                 rw_craplot.vlinfocr = 0 AND
+                 rw_craplot.vlcompcr = 0 THEN
+                BEGIN
+                  -- Remove o lote zerado
+                  DELETE FROM craplot WHERE ROWID = rw_craplot.rowid;
+                END;
+              END IF;
+
+            END LOOP; -- Fim do loop 1..3 dos lotes
+
+            -- Efetua Commit
+            COMMIT;
+
+          END IF; -- numempre = qtempres
+
+        END LOOP; -- cr_craplfp
+
+        -- Após processar todos os pagamentos da empresa, iremos atualizar
+        -- aqueles pagamentos em que só restaram lançamentos de erro, e devido
+        -- a isso o mesmo não é processado e ficaria pendente
+
+        BEGIN
+          UPDATE crappfp pfp
+             SET pfp.dthorcre = SYSDATE
+                ,pfp.flsitcre = 1 --> Creditado
+           WHERE pfp.cdcooper = pr_cdcooper
+             AND pfp.cdempres = rw_crapemp.cdempres
+             AND pfp.flsitdeb = 1 -- Já debitado
+             AND pfp.flsitcre = 0 -- Com crédito pendente
+             -- Não exista nenhum lançamento pendente
+             AND NOT EXISTS(SELECT 1
+                              FROM craplfp lfp
+                             WHERE pfp.cdcooper = lfp.cdcooper
+                               AND pfp.cdempres = lfp.cdempres
+                               AND pfp.nrseqpag = lfp.nrseqpag
+                               AND lfp.idsitlct = 'L'
+                               AND lfp.vllancto > 0);
+        END;
+
+        -- Atualizar todos os lançamentos sem crédito pois eles estão pendentes devido ao vllancto = 0
+        BEGIN
+          UPDATE craplfp lfp
+             SET lfp.idsitlct = 'C'
+                ,lfp.dsobslct = 'Lançamento sem crédito - apenas para emissão do comprovante'
+           WHERE lfp.cdcooper = pr_cdcooper
+             AND lfp.cdempres = rw_crapemp.cdempres
+             AND lfp.idsitlct = 'L' -- Ainda pendentes
+             AND lfp.vllancto = 0 -- Somente aqueles sem crédito
+             -- E o pagamento tenha sido creditado
+             AND EXISTS (SELECT 1
+                           FROM crappfp pfp
+                          WHERE pfp.cdcooper = lfp.cdcooper
+                            AND pfp.cdempres = lfp.cdempres
+                            AND pfp.nrseqpag = lfp.nrseqpag
+                            AND pfp.flsitcre = 1);
+        END;
+
+        -- Adicionamos no LOG o encerramento do processo de credito desta empresa
+        BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                  ,pr_ind_tipo_log => 1 -- Processo Normal
+                                  ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': CREDITO DE FOLHA – EMP ' ||
+                                                      rw_crapemp.cdempres || ' – ENCERRAMENTO DO PROCESSO DE CREDITO'
+                                  ,pr_nmarqlog     => 'FOLHIB');
+        -- Gravação final
+        COMMIT;
+      EXCEPTION
+        WHEN vr_exc_erro THEN
+          -- Desfazemos alterações até o momento adicionamos ao
+          -- log da empresa o erro tratado
+          ROLLBACK;
+          BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                    ,pr_ind_tipo_log => 1 -- Processo Normal
+                                    ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': CREDITO DE FOLHA – EMP ' ||
+                                                        rw_crapemp.cdempres || ' – ERRO NO PROCESSO --> '||vr_dscritic
+                                  ,pr_nmarqlog     => 'FOLHIB');
+        WHEN OTHERS THEN
+          -- Desfazemos alterações até o momento adicionamos ao
+          -- log da empresa o erro não tratado
+          ROLLBACK;
+          BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                    ,pr_ind_tipo_log => 1 -- Processo Normal
+                                    ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': CREDITO DE FOLHA – EMP ' ||
+                                                        rw_crapemp.cdempres || ' – ERRO NO PROCESSO --> '||SQLERRM
+                                    ,pr_nmarqlog     => 'FOLHIB');
+      END;
+    END LOOP; -- cr_crapemp
+
+    -- Busca o lote TEC (Global para a Cooperativa)
+    OPEN cr_craplot(pr_cdcooper => pr_cdcooper,
+                    pr_dtmvtolt => pr_rw_crapdat.dtmvtolt,
+                    pr_nrdolote => rw_craplot_tec.nrdolote);
+    FETCH cr_craplot INTO rw_craplot_tec;
+    CLOSE cr_craplot;
+
+    -- Caso os valores de credito/debito estejam zerados
+    IF rw_craplot_tec.vlinfodb = 0 AND
+       rw_craplot_tec.vlcompdb = 0 AND
+       rw_craplot_tec.vlinfocr = 0 AND
+       rw_craplot_tec.vlcompcr = 0 THEN
+      BEGIN
+        -- Remove o lote zerado
+        DELETE FROM craplot WHERE ROWID = rw_craplot_tec.rowid;
+      END;
+    END IF;
+
+    -- Efetua Commit
+    COMMIT;
+
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      -- Desfazer a operacao
+      ROLLBACK;
+      -- efetuar o raise
+      raise_application_error(-25001, 'Erro FOLH0001.PC_CREDITO_PAGTO_APROVADOS: '||vr_dscritic);
+    WHEN OTHERS THEN
+      -- Desfazer a operacao
+      ROLLBACK;
+      -- efetuar o raise
+      raise_application_error(-25000, 'Erro FOLH0001.PC_CREDITO_PAGTO_APROVADOS: '||vr_dscritic);
+  END pc_cr_pagto_aprovados_coop;
+  
+  /* Procedure para realizar processamento de credito dos pagamentos aprovados */
+  PROCEDURE pc_cr_pagto_aprovados_ctasal(pr_cdcooper   IN crapcop.cdcooper%TYPE
+                                        ,pr_rw_crapdat IN BTCH0001.cr_crapdat%ROWTYPE) IS
+  ---------------------------------------------------------------------------------------------------------------
+  ---------------------------ROTINA CRIADA A PARTIR DA PROCEDURE pc_cr_pagto_aprovados----------------------------
+  --  Programa : pc_credito_pagto_aprovados_ctasal             Antigo:
+  --  Sistema  : Ayllos
+  --  Sigla    : CRED
+  --  Autor    : Kelvin
+  --  Data     : Janeiro/2017.                   Ultima atualizacao: 
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Frequencia: -----
+  -- Objetivo  : Procedure para realizar processamento de credito dos pagamentos aprovados de portabilidade
+  -- Alterações
+  --             12/11/2015 - Migracao da tarifação do sistema da CONFOL para CADTAR,
+  --                          com isso removi a cobrança da tarifa deste ponto, deixando
+  --                          apenas na pc_cobra_tarifas_pendentes (Marcos-Supero)
+  --
+  --             07/12/2015 - Ajustado para validar se o pagamento caso seja do tipo convencional,
+  --                          verificar se a empresa resolveu gravar o salario ou nao.
+  --                          (Andre Santos - SUPERO)
+  --
+  --             25/01/2016 - Ajuste nas mensagens de erro (Marcos-Supero)
+  --
+  --             27/01/2016 - Incluir controle de lançamentos sem crédito (Marcos-Supero)
+  --             
+  --             01/03/2016 - Ajustes para evitar dup_val_on_index em pagamentos ctasal
+  --                          para a mesma conta no mesmo dia (Marcos-Supero)
+  -- 
+  -- 
+  --             22/04/2016 - Inclusao de NVL para evitar que o LCM seja criado sem conta 
+  --                          (Marcos - Supero)
+  --
+  --             23/05/2016 - Ajuste para gravar tab EXECDEBEMP com crapemp.dtlimdeb caso
+  --                          dia da dtmvtopr for anterior ao dia limite para debitos. 
+  --                          (Jaison/Marcos - Supero)
+  --
+  ---------------------------------------------------------------------------------------------------------------
+
+    -- Busca os dados do lote
+    CURSOR cr_craplot(pr_cdcooper craplot.cdcooper%TYPE,
+                      pr_dtmvtolt craplot.dtmvtolt%TYPE,
+                      pr_nrdolote craplot.nrdolote%TYPE) IS
+        SELECT nrdolote
+              ,nrseqdig
+              ,qtinfoln
+              ,qtcompln
+              ,vlinfodb
+              ,vlcompdb
+              ,vlinfocr
+              ,vlcompcr
+              ,ROWID
+          FROM craplot
+         WHERE craplot.cdcooper = pr_cdcooper
+           AND craplot.dtmvtolt = pr_dtmvtolt
+           AND craplot.cdagenci = 1
+           AND craplot.cdbccxlt = 100
+           AND craplot.nrdolote = pr_nrdolote;
+    rw_craplot     cr_craplot%ROWTYPE;
+    rw_craplot_tec cr_craplot%ROWTYPE;
+    rw_craplot_fol cr_craplot%ROWTYPE;
+    rw_craplot_emp cr_craplot%ROWTYPE;
+    rw_craplot_cot cr_craplot%ROWTYPE;
+
+    -- Busca as empresas com pagamentos pendentes
+    CURSOR cr_crapemp(pr_cdcooper crapemp.cdcooper%TYPE,
+                      pr_dtmvtolt crapdat.dtmvtolt%TYPE) IS
+        SELECT emp.cdempres
+              ,emp.nmresemp
+              ,emp.idtpempr
+              ,emp.nrdconta
+              ,emp.dtlimdeb
+              ,ass.vllimcre
+              ,SUM(lfp.vllancto) vllancto
+          FROM crappfp pfp
+              ,crapemp emp
+              ,craplfp lfp
+              ,crapass ass
+         WHERE pfp.cdcooper  = pr_cdcooper
+           AND pfp.dtcredit <= pr_dtmvtolt
+           AND pfp.cdcooper  = emp.cdcooper
+           AND pfp.cdempres  = emp.cdempres
+           AND pfp.cdcooper  = lfp.cdcooper
+           AND pfp.cdempres  = lfp.cdempres
+           AND pfp.nrseqpag  = lfp.nrseqpag
+           AND ass.cdcooper  = emp.cdcooper
+           AND ass.nrdconta  = emp.nrdconta
+           AND pfp.idsitapr  > 3 --> Aprovados
+           AND pfp.flsitdeb  = 1 --> Ja debitados
+           AND pfp.flsitcre  IN (0,2) --> Ainda nao creditados           
+           AND lfp.idtpcont  = 'T'
+         GROUP BY emp.cdempres
+                 ,emp.nmresemp
+                 ,emp.idtpempr
+                 ,emp.nrdconta
+                 ,emp.dtlimdeb
+                 ,ass.vllimcre;
+
+    -- Busca o numero do Lote
+    CURSOR cr_craptab_lot(pr_cdcooper craptab.cdcooper%TYPE,
+                          pr_cdacesso craptab.cdacesso%TYPE,
+                          pr_tpregist craptab.tpregist%TYPE) IS
+         SELECT TO_NUMBER(dstextab)
+           FROM craptab
+          WHERE craptab.cdcooper        = pr_cdcooper
+            AND UPPER(craptab.nmsistem) = 'CRED'
+            AND UPPER(craptab.tptabela) = 'GENERI'
+            AND craptab.cdempres        = 0
+            AND UPPER(craptab.cdacesso) = pr_cdacesso
+            AND craptab.tpregist        = pr_tpregist;
+
+    -- Busca os pagamentos pendentes
+    CURSOR cr_craplfp(pr_cdcooper crappfp.cdcooper%TYPE,
+                      pr_dtmvtolt crapdat.dtmvtolt%TYPE,
+                      pr_cdempres crappfp.cdempres%TYPE,
+                      pr_idtpempr crapemp.idtpempr%TYPE) IS
+        SELECT pfp.nrseqpag
+              ,pfp.idtppagt
+              ,pfp.flgrvsal
+              ,pfp.qtlctpag
+              ,pfp.ROWID pfp_rowid
+              ,LAST_DAY(ADD_MONTHS(pfp.dtcredit, -1)) dtmacred -- Ultimo dia do mes anterior ao credito
+              ,DECODE(pr_idtpempr,'C',ofp.cdhscrcp,ofp.cdhiscre) cdhiscre
+              ,ofp.fldebfol
+              ,lfp.nrseqlfp
+              ,lfp.idtpcont
+              ,lfp.nrdconta
+              ,lfp.nrcpfemp
+              ,lfp.vllancto
+              ,lfp.ROWID
+              ,lfp.progress_recid
+
+              ,ROW_NUMBER() OVER (PARTITION BY lfp.cdempres ORDER BY lfp.cdempres) AS numempre
+              ,COUNT(1) OVER (PARTITION BY lfp.cdempres) qtempres
+
+              ,ROW_NUMBER() OVER (PARTITION BY lfp.cdempres,ofp.fldebfol,lfp.nrdconta ORDER BY lfp.cdempres,ofp.fldebfol,lfp.nrdconta,DECODE(pr_idtpempr,'C',ofp.cdhscrcp,ofp.cdhiscre)) AS numdebfol
+              ,COUNT(1) OVER (PARTITION BY lfp.cdempres,ofp.fldebfol,lfp.nrdconta) qtdebfol
+
+          FROM crappfp pfp
+              ,craplfp lfp
+              ,crapofp ofp
+         WHERE pfp.cdcooper  = pr_cdcooper
+           AND pfp.dtcredit <= pr_dtmvtolt
+           AND pfp.cdempres  = pr_cdempres
+           AND pfp.cdcooper  = lfp.cdcooper
+           AND pfp.cdempres  = lfp.cdempres
+           AND pfp.nrseqpag  = lfp.nrseqpag
+           AND lfp.cdcooper  = ofp.cdcooper
+           AND lfp.cdorigem  = ofp.cdorigem
+           AND pfp.flsitdeb  = 1   --> Ja debitados
+           AND pfp.flsitcre  IN (0,2)   --> Ainda nao creditados
+           AND lfp.idsitlct NOT IN('E','C') --> Desconsiderar os com erros ou creditados
+           AND nvl(lfp.dsobslct,' ') <> 'Transf. solicitada, aguardar transmissão' -- Desconsiderar tbm CTASAL solicitado, pois sua situação persiste em L e somente a Obs pode ser eusada
+           AND lfp.vllancto  > 0
+           AND lfp.idtpcont  = 'T'
+      ORDER BY lfp.cdempres
+              ,ofp.fldebfol
+              ,lfp.nrdconta
+              ,DECODE(pr_idtpempr,'C',ofp.cdhscrcp,ofp.cdhiscre);
+
+    -- Busca a conta do cooperado
+    CURSOR cr_crapass(pr_cdcooper crapass.cdcooper%TYPE,
+                      pr_nrdconta crapass.nrdconta%TYPE) IS
+        SELECT CASE
+                 WHEN ass.cdsitdtl IN (2,4,6,8) THEN nvl(trf.nrsconta,ass.nrdconta)
+                 ELSE ass.nrdconta
+               END
+          FROM crapass ass
+              ,craptrf trf
+         WHERE ass.cdcooper = pr_cdcooper
+           AND ass.nrdconta = pr_nrdconta
+           AND trf.cdcooper(+) = ass.cdcooper
+           AND trf.nrdconta(+) = ass.nrdconta
+           AND trf.tptransa(+) = 1
+           AND trf.insittrs(+) = 2;
+
+    -- Busca os avisos de debitos de emprestimo/cotas com debito em folha
+    CURSOR cr_crapavs(pr_cdcooper crapavs.cdcooper%TYPE,
+                      pr_nrdconta crapavs.nrdconta%TYPE,
+                      pr_dtrefere crapavs.dtrefere%TYPE) IS
+        SELECT crapavs.*
+              ,crapavs.rowid
+          FROM crapavs
+         WHERE crapavs.cdcooper = pr_cdcooper
+           AND crapavs.nrdconta = pr_nrdconta
+           AND crapavs.tpdaviso = 1
+           AND crapavs.cdhistor IN (108,127)
+           AND crapavs.dtrefere = pr_dtrefere
+           AND crapavs.insitavs = 0
+      ORDER BY crapavs.cdhistor;
+
+    -- Busca os pagamentos da empresa creditados e com lancamentos pendentes de envio ao SPB
+    CURSOR cr_lancspb(pr_cdcooper crappfp.cdcooper%TYPE,
+                      pr_cdempres crappfp.cdempres%TYPE) IS
+        SELECT 1
+          FROM craplcs lcs
+              ,craplfp lfp
+              ,crappfp pfp
+         WHERE pfp.cdcooper = pr_cdcooper
+           AND pfp.cdempres = pr_cdempres
+           AND pfp.cdcooper = lfp.cdcooper
+           AND pfp.cdempres = lfp.cdempres
+           AND pfp.nrseqpag = lfp.nrseqpag
+           AND lcs.cdcooper = lfp.cdcooper
+           AND lcs.nrdconta = lfp.nrdconta
+           AND lcs.nrridlfp = lfp.progress_recid
+           AND lfp.idsitlct = 'L' --> Ainda nao transmitido
+           AND lcs.flgenvio = 0;  --> Nao enviado
+    rw_lancspb cr_lancspb%ROWTYPE;
+
+    -- Lancamentos dos funcionarios que transferem o salario para outra IF
+    CURSOR cr_avs_fol(pr_cdcooper crapavs.cdcooper%TYPE,
+                      pr_cdempres crapavs.cdempres%TYPE,
+                      pr_dtrefere crapavs.dtrefere%TYPE) IS
+        SELECT crapavs.nrdconta
+          FROM crapavs
+         WHERE crapavs.cdcooper = pr_cdcooper
+           AND crapavs.cdempres = pr_cdempres
+           AND crapavs.dtrefere = pr_dtrefere
+           AND crapavs.tpdaviso = 1 --> Folha
+           AND crapavs.insitavs = 0 --> Nao debitado
+           AND crapavs.cdhistor IN (108,127)
+
+           -- Ja garantimos que nao exista CRAPFOL para evitar DUP_VAL_ON_INDEX
+           AND NOT EXISTS(SELECT 1
+                            FROM crapfol
+                           WHERE crapfol.cdcooper = crapavs.cdcooper
+                             AND crapfol.cdempres = crapavs.cdempres
+                             AND crapfol.dtrefere = crapavs.dtrefere
+                             AND crapfol.nrdconta = crapavs.nrdconta)
+
+      GROUP BY crapavs.nrdconta;
+
+    -- Tabelas
+    TYPE typ_tab_crappfp IS
+      TABLE OF crappfp.qtlctpag%TYPE
+      INDEX BY VARCHAR2(25);
+
+    TYPE typ_reg_craplfp IS
+      RECORD (vllancto craplfp.vllancto%TYPE);
+
+    TYPE typ_tab_craplfp IS
+      TABLE OF typ_reg_craplfp
+      INDEX BY PLS_INTEGER;
+
+    -- Variaveis da PLTABLE
+    vr_tab_crappfp typ_tab_crappfp;
+    vr_tab_craplfp typ_tab_craplfp;
+
+    -- Variaveis
+    vr_cdhistor   craplcm.cdhistor%TYPE;
+    vr_nrdocmto   craplcs.nrdocmto%TYPE;
+    vr_cdhistec   crapprm.dsvlrprm%TYPE;
+    vr_lote_tec   crapprm.dsvlrprm%TYPE;
+    vr_lote_nro   craplot.nrdolote%TYPE;
+    vr_dstextab   craptab.dstextab%TYPE;
+    vr_nmprimtl   crapass.nmprimtl%TYPE;
+    vr_nrdconta   crapass.nrdconta%TYPE;
+    vr_flsittar   crappfp.flsittar%TYPE;
+    vr_dsobstar   crappfp.dsobstar%TYPE;
+    vr_idsitlct   craplfp.idsitlct%TYPE;
+    vr_dsobslct   craplfp.dsobslct%TYPE;
+    vr_vlsalliq   craplfp.vllancto%TYPE;
+    vr_vldebtot   craplfp.vllancto%TYPE;
+    vr_tot_debcot craplfp.vllancto%TYPE;
+    vr_tot_debemp craplfp.vllancto%TYPE;
+    vr_tot_lanc   craplfp.vllancto%TYPE;
+    vr_tottarif   craplfp.vllancto%TYPE;
+    vr_vlsddisp   crapsda.vlsddisp%TYPE;
+    vr_vldoipmf   NUMBER;
+    vr_inusatab   BOOLEAN;
+    vr_blnfound   BOOLEAN;
+    vr_blnerror   BOOLEAN;
+    vr_blctasal   BOOLEAN := FALSE;
+    vr_lotechav   VARCHAR2(10);
+    vr_emailds1   VARCHAR2(1000);
+    vr_emailds2   VARCHAR2(1000);
+    vr_dsmensag   VARCHAR2(4000);
+    vr_chave      VARCHAR2(25);
+    vr_dtexecde   DATE;
+
+    -- Variaveis de Erro
+    vr_cdcritic   crapcri.cdcritic%TYPE;
+    vr_dscritic   VARCHAR2(4000);
+    vr_dsalerta   VARCHAR2(4000);
+
+    -- Variaveis Excecao
+    vr_exc_erro   EXCEPTION;
+
+  BEGIN
+
+    -- Destinatarios responsaveis pelos avisos
+    vr_emailds1 :=  GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                             ,pr_cdcooper => pr_cdcooper
+                                             ,pr_cdacesso => 'FOLHAIB_EMAIL_ALERT_PROC');
+
+    -- Leitura do indicador de uso da tabela de taxa de juros
+    vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                                             ,pr_nmsistem => 'CRED'
+                                             ,pr_tptabela => 'USUARI'
+                                             ,pr_cdempres => 11
+                                             ,pr_cdacesso => 'TAXATABELA'
+                                             ,pr_tpregist => 0);
+    IF vr_dstextab IS NULL THEN
+      vr_inusatab := FALSE;
+    ELSE
+      IF SUBSTR(vr_dstextab,1,1) = '0' THEN
+          vr_inusatab := FALSE;
+      ELSE
+        vr_inusatab := TRUE;
+      END IF;
+    END IF;
+
+    -- Busca o numero de lote para gravacao
+    vr_lote_tec := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                            ,pr_cdcooper => pr_cdcooper
+                                            ,pr_cdacesso => 'FOLHAIB_NRLOTE_CTASAL');
+
+    -- Efetua a busca do lote TEC
+    OPEN cr_craplot(pr_cdcooper => pr_cdcooper,
+                    pr_dtmvtolt => pr_rw_crapdat.dtmvtolt,
+                    pr_nrdolote => vr_lote_tec);
+    FETCH cr_craplot INTO rw_craplot_tec;
+    -- Alimenta a booleana se achou ou nao
+    vr_blnfound := cr_craplot%FOUND;
+    -- Fecha cursor
+    CLOSE cr_craplot;
+
+    -- Se nao achou faz a criacao do lote TEC
+    IF NOT vr_blnfound THEN
+      BEGIN
+        INSERT INTO craplot
+                   (cdcooper
+                   ,dtmvtolt
+                   ,cdagenci
+                   ,cdbccxlt
+                   ,nrdolote
+                   ,tplotmov)
+             VALUES(pr_cdcooper
+                   ,pr_rw_crapdat.dtmvtolt
+                   ,1           -- cdagenci
+                   ,100         -- cdbccxlt
+                   ,vr_lote_tec
+                   ,1)
+          RETURNING craplot.rowid INTO rw_craplot_tec.rowid;
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic := '060 - Lote inexistente.';
+
+          -- Envia o erro para o LOG
+          BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                    ,pr_ind_tipo_log => 3 -- Erro nao tratado
+                                    ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': ' || vr_dscritic
+                                    ,pr_nmarqlog     => 'FOLHIB');
+
+          -- Mensagem informando o erro
+          vr_dsmensag := 'Houve erro inesperado na inclusão do lote CTASAL. ' ||
+                         'Abaixo trazemos o erro retornado durante a operação: <br> ' ||
+                         vr_dscritic;
+
+          -- Solicita envio do email
+          GENE0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
+                                    ,pr_cdprogra        => 'FOLH0001'
+                                    ,pr_des_destino     => TRIM(vr_emailds1)
+                                    ,pr_des_assunto     => 'Folha de Pagamento - Problema com o crédito – CTASAL'
+                                    ,pr_des_corpo       => vr_dsmensag
+                                    ,pr_des_anexo       => NULL--> nao envia anexo, anexo esta disponivel no dir conf. geracao do arq.
+                                    ,pr_flg_remove_anex => 'N' --> Remover os anexos passados
+                                    ,pr_flg_remete_coop => 'N' --> Se o envio sera do e-mail da Cooperativa
+                                    ,pr_flg_enviar      => 'N' --> Enviar o e-mail na hora
+                                    ,pr_des_erro        => vr_dscritic);
+          RAISE vr_exc_erro;
+      END;
+
+      COMMIT; -- Salva o lote TEC
+    END IF;
+
+    -- Busca o historico de credito parametrizado para TECs salario
+    vr_cdhistec := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                            ,pr_cdcooper => pr_cdcooper
+                                            ,pr_cdacesso => 'FOLHAIB_HIS_CRE_TECSAL');
+
+    -- Percorre todas as empresas da cooperativa atual
+    FOR rw_crapemp IN cr_crapemp(pr_cdcooper => pr_cdcooper,
+                                 pr_dtmvtolt => pr_rw_crapdat.dtmvtolt) LOOP
+
+      BEGIN
+        -- Adicionamos no LOG o inicio do pagamento
+        BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                  ,pr_ind_tipo_log => 1 -- Processo Normal
+                                  ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': CREDITO DE FOLHA – EMP ' ||
+                                                      rw_crapemp.cdempres || ' – INICIANDO CREDITO DOS EMPREGADOS – VALOR TOTAL PREVISTO DE R$ ' ||
+                                                      TO_CHAR(rw_crapemp.vllancto,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.')
+                                  ,pr_nmarqlog     => 'FOLHIB');
+
+        -- Inicializa as variaveis
+        vr_blnerror    := FALSE;
+        rw_craplot_fol := NULL;
+        rw_craplot_emp := NULL;
+        rw_craplot_cot := NULL;
+
+        -- Lotes de Folha/Emprestimo/Cotas
+        FOR vr_index IN 1..3 LOOP
+
+          -- Chave de acesso
+          CASE vr_index
+            WHEN 1 THEN vr_lotechav := 'NUMLOTEFOL';
+            WHEN 2 THEN vr_lotechav := 'NUMLOTEEMP';
+            WHEN 3 THEN vr_lotechav := 'NUMLOTECOT';
+          END CASE;
+
+          -- Efetua a busca do codigo do lote FOL/EMP/COT
+          OPEN cr_craptab_lot(pr_cdcooper => pr_cdcooper,
+                              pr_cdacesso => vr_lotechav,
+                              pr_tpregist => rw_crapemp.cdempres);
+          FETCH cr_craptab_lot INTO vr_lote_nro;
+          -- Alimenta a booleana se achou ou nao
+          vr_blnfound := cr_craptab_lot%FOUND;
+          -- Fecha cursor
+          CLOSE cr_craptab_lot;
+
+          -- Se nao achou
+          IF NOT vr_blnfound THEN
+            vr_blnerror := TRUE;
+            EXIT; -- Sai do loop 1..3
+          END IF;
+
+          -- Busca o lote FOL/EMP/COT
+          OPEN cr_craplot(pr_cdcooper => pr_cdcooper,
+                          pr_dtmvtolt => pr_rw_crapdat.dtmvtolt,
+                          pr_nrdolote => vr_lote_nro);
+          FETCH cr_craplot INTO rw_craplot;
+          -- Alimenta a booleana se achou ou nao
+          vr_blnfound := cr_craplot%FOUND;
+          -- Fecha cursor
+          CLOSE cr_craplot;
+
+          -- Se nao achou faz a criacao do lote FOL/EMP/COT
+          IF NOT vr_blnfound THEN
+            BEGIN
+              INSERT INTO craplot
+                         (cdcooper
+                         ,dtmvtolt
+                         ,cdagenci
+                         ,cdbccxlt
+                         ,nrdolote
+                         ,tplotmov)
+                   VALUES(pr_cdcooper
+                         ,pr_rw_crapdat.dtmvtolt
+                         ,1           -- cdagenci
+                         ,100         -- cdbccxlt
+                         ,vr_lote_nro
+                         ,1)
+                RETURNING craplot.rowid INTO rw_craplot.rowid;
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_blnerror := TRUE;
+                EXIT; -- Sai do loop 1..3
+            END;
+
+          END IF;
+
+          -- Carrega os lotes e cursores
+          CASE vr_index
+            WHEN 1 THEN
+              rw_craplot_fol := rw_craplot;
+              rw_craplot_fol.nrdolote := vr_lote_nro;
+            WHEN 2 THEN
+              rw_craplot_emp := rw_craplot;
+              rw_craplot_emp.nrdolote := vr_lote_nro;
+            WHEN 3 THEN
+              rw_craplot_cot := rw_craplot;
+              rw_craplot_cot.nrdolote := vr_lote_nro;
+          END CASE;
+
+        END LOOP; -- Fim do loop 1..3 dos lotes
+
+        -- Caso tenha ocorrido erro na inclusao do lote vai para a proxima empresa e desfaz as acoes
+        IF vr_blnerror THEN
+
+          -- Mensagem de Critica
+          vr_dscritic := '060 - Lote inexistente.';
+
+          -- Envia o erro para o LOG
+          BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                    ,pr_ind_tipo_log => 2 -- Erro tratato
+                                    ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': ' || vr_dscritic
+                                    ,pr_nmarqlog     => 'FOLHIB');
+
+          -- Mensagem informando o erro
+          vr_dsmensag := 'Houve erro inesperado na busca do numero do lote ('|| vr_lotechav ||') ' ||
+                         'para a empresa ' || rw_crapemp.cdempres || ' - ' || rw_crapemp.nmresemp || '. ' ||
+                         'Abaixo trazemos o erro retornado durante a operação: <br> ' || vr_dscritic;
+
+          -- Solicita envio do email
+          GENE0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
+                                    ,pr_cdprogra        => 'FOLH0001'
+                                    ,pr_des_destino     => TRIM(vr_emailds1)
+                                    ,pr_des_assunto     => 'Folha de Pagamento - Problema com o crédito – Empresa ' || rw_crapemp.cdempres || ' - ' || rw_crapemp.nmresemp
+                                    ,pr_des_corpo       => vr_dsmensag
+                                    ,pr_des_anexo       => NULL--> nao envia anexo, anexo esta disponivel no dir conf. geracao do arq.
+                                    ,pr_flg_remove_anex => 'N' --> Remover os anexos passados
+                                    ,pr_flg_remete_coop => 'N' --> Se o envio sera do e-mail da Cooperativa
+                                    ,pr_flg_enviar      => 'N' --> Enviar o e-mail na hora
+                                    ,pr_des_erro        => vr_dscritic);
+          ROLLBACK;
+          CONTINUE; -- Move para a proxima empresa
+        END IF;
+
+        COMMIT; -- Salva os lotes FOL/EMP/COT
+
+        -- Limpa as PLTABLES
+        vr_tab_crappfp.DELETE;
+        vr_tab_craplfp.DELETE;
+
+        -- Listagem dos pagamentos pendentes
+        FOR rw_craplfp IN cr_craplfp(pr_cdcooper => pr_cdcooper,
+                                     pr_dtmvtolt => pr_rw_crapdat.dtmvtolt,
+                                     pr_cdempres => rw_crapemp.cdempres,
+                                     pr_idtpempr => rw_crapemp.idtpempr) LOOP
+          -- Verificar a situacao de cada conta, pois algum empregado pode ter encerrado sua conta
+          -- ou efetuado alguma alteracao em seu cadastro que impeca o credito
+          pc_valida_lancto_folha(pr_cdcooper => pr_cdcooper,
+                                 pr_nrdconta => rw_craplfp.nrdconta,
+                                 pr_nrcpfcgc => rw_craplfp.nrcpfemp,
+                                 pr_idtpcont => rw_craplfp.idtpcont,
+                                 pr_nmprimtl => vr_nmprimtl,
+                                 pr_dsalerta => vr_dsalerta,
+                                 pr_dscritic => vr_dscritic);
+          -- Caso tenha retornado alguma critica
+          IF vr_dsalerta IS NOT NULL OR
+             vr_dscritic IS NOT NULL THEN
+            BEGIN
+              -- Atualiza com erro
+              UPDATE craplfp
+                 SET idsitlct = 'E'
+                    ,dsobslct = NVL(vr_dsalerta,vr_dscritic)
+               WHERE ROWID = rw_craplfp.rowid;
+            END;
+
+            -- Adicionamos no LOG o aviso de problema
+            BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                      ,pr_ind_tipo_log => 2 -- Erro tratato
+                                      ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': CREDITO DE FOLHA – EMP ' ||
+                                                          rw_crapemp.cdempres || ' – EMPREGADO ' || ltrim(gene0002.fn_mask_conta(rw_craplfp.nrdconta)) || ' NO VALOR DE R$ ' ||
+                                                          TO_CHAR(rw_craplfp.vllancto,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.') ||
+                                                          ' NÃO SERA EFETUADO, MOTIVO: '||NVL(vr_dsalerta,vr_dscritic)
+                                      ,pr_nmarqlog     => 'FOLHIB');
+            CONTINUE;
+          END IF;
+
+          -- Busca próximo número de documento não utilizado
+          vr_nrdocmto := rw_craplfp.nrseqpag||to_char(rw_craplfp.nrseqlfp,'fm00000');
+          vr_exis_lcs := 0;
+          LOOP 
+            -- Verifica se existe craplcs com memso numero de documento
+            OPEN cr_craplcs_nrdoc (pr_cdcooper => pr_cdcooper
+                                  ,pr_dtmvtolt => pr_rw_crapdat.dtmvtolt
+                                  ,pr_nrdconta => rw_craplfp.nrdconta
+                                  ,pr_cdhisdev => vr_cdhistec
+                                  ,pr_nrdocmto => vr_nrdocmto);
+            FETCH cr_craplcs_nrdoc 
+             INTO vr_exis_lcs;
+            -- Sair quando não tiver encontrado
+            EXIT WHEN cr_craplcs_nrdoc%NOTFOUND;
+            -- Fechamos o CURSOR pois ele será reaberto no próximo LOOP
+            CLOSE cr_craplcs_nrdoc;
+            -- Se persite no loop é pq existe, então adicionamos o numero documento
+            vr_nrdocmto := vr_nrdocmto + 1000000000;
+          END LOOP;  
+          -- Fechar cursor
+          IF cr_craplcs_nrdoc%ISOPEN THEN
+            CLOSE cr_craplcs_nrdoc;
+          END IF;
+            
+          -- Inicializa a variavel
+          vr_blnerror := FALSE;
+
+          BEGIN
+            -- Inserir lancamento
+            INSERT INTO craplcs
+                       (cdcooper
+                       ,cdopecrd
+                       ,dtmvtolt
+                       ,nrdconta
+                       ,nrdocmto
+                       ,vllanmto
+                       ,cdhistor
+                       ,nrdolote
+                       ,cdbccxlt
+                       ,cdagenci
+                       ,flgenvio
+                       ,dttransf
+                       ,hrtransf
+                       ,nrridlfp)
+                 VALUES(pr_cdcooper
+                       ,1     -- super-usuario
+                       ,pr_rw_crapdat.dtmvtolt
+                       ,rw_craplfp.nrdconta
+                       ,vr_nrdocmto
+                       ,rw_craplfp.vllancto
+                       ,vr_cdhistec
+                       ,rw_craplot_tec.nrdolote
+                       ,100   -- cdbccxlt
+                       ,1     -- cdagenci
+                       ,0     -- falso flgenvio
+                       ,NULL  -- dttransf
+                       ,0     -- hrtransf
+                       ,rw_craplfp.progress_recid); -- Recid do pagamento para busca da empresa em possiveis estornos
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_blnerror := TRUE;
+              vr_dscritic := SQLERRM;
+              -- Atualiza com sucesso ou erro
+              UPDATE craplfp
+                 SET idsitlct = 'E'
+                    ,dsobslct = 'Problema encontrado -> '||vr_dscritic
+               WHERE ROWID = rw_craplfp.rowid;
+          END;
+
+          -- Se ocorreu erro na inclusao da LCS ou atualizacao da LFP
+          IF vr_blnerror THEN
+            -- Envia o erro para o LOG porem continua o processo
+            BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                      ,pr_ind_tipo_log => 2 -- Erro tratato
+                                      ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': ' ||
+                                                          'CREDITO DE FOLHA – EMP ' || rw_crapemp.cdempres ||
+                                                          ' – EMPREGADO ' || ltrim(gene0002.fn_mask_conta(rw_craplfp.nrdconta)) || ' – TRANSFERENCIA ' ||
+                                                          vr_cdhistec || ' NO VALOR DE R$ ' ||
+                                                          TO_CHAR(rw_craplfp.vllancto,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.') ||
+                                                          ' NÃO EFETUADA: ' || vr_dscritic
+                                      ,pr_nmarqlog     => 'FOLHIB');
+          ELSE
+            -- Marca como possui CTASAL
+            vr_blctasal := TRUE;
+
+            BEGIN
+              -- Atualiza a CRAPLOT_TEC (CTASAL)
+              UPDATE craplot
+                 SET qtinfoln = qtinfoln + 1
+                    ,vlinfocr = vlinfocr + rw_craplfp.vllancto
+                    ,qtcompln = qtcompln + 1
+                    ,vlcompcr = vlcompcr + rw_craplfp.vllancto
+                    ,nrseqdig = nrseqdig + 1
+               WHERE ROWID = rw_craplot_tec.rowid;
+            END;
+
+            BEGIN
+              -- Atualiza solicitação da trasferência
+              UPDATE craplfp
+                 SET dsobslct = 'Transf. solicitada, aguardar transmissão'
+               WHERE ROWID = rw_craplfp.rowid;
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_blnerror := TRUE;
+            END;
+
+            -- Adicionamos no LOG o sucesso ocorrido na transferencia do pagamento
+            BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                      ,pr_ind_tipo_log => 1 -- Processo Normal
+                                      ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': CREDITO DE FOLHA – EMP ' ||
+                                                          rw_crapemp.cdempres || ' – EMPREGADO ' || ltrim(gene0002.fn_mask_conta(rw_craplfp.nrdconta)) || ' – TRANSFERENCIA ' ||
+                                                          vr_cdhistec || ' NO VALOR DE R$ ' ||
+                                                          TO_CHAR(rw_craplfp.vllancto,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.') ||
+                                                          ' SOLICITADA COM SUCESSO – AGUARDAR TRANSMISSAO'
+                                      ,pr_nmarqlog     => 'FOLHIB');
+
+          END IF;
+
+          -- Carrega os dados na PLTABLE
+          vr_tab_crappfp(rw_craplfp.pfp_rowid) := rw_craplfp.qtlctpag;
+
+          -- Caso seja do tipo Convencional
+          IF rw_craplfp.idtppagt = 'C' THEN
+            --Se a empresa escolheu gravar o salario
+            IF rw_craplfp.flgrvsal = 1 THEN
+              --Atualizaremos o salário com este lançamento
+              vr_tab_craplfp(rw_craplfp.nrdconta).vllancto := rw_craplfp.vllancto;
+            ELSE
+             --Iremos apagar o histórico de salário
+             vr_tab_craplfp(rw_craplfp.nrdconta).vllancto := 0;
+            END IF;
+          END IF;
+
+          -- Caso seja ultimo registro da empresa
+          IF rw_craplfp.numempre = rw_craplfp.qtempres THEN
+
+            -- Caso seja debito em folha
+            IF rw_craplfp.fldebfol = 1 THEN
+
+              vr_dtexecde := pr_rw_crapdat.dtmvtopr;
+
+              -- Se o dia da dtmvtopr for anterior ao dia limite para debitos
+              IF TO_CHAR(vr_dtexecde,'DD') <= rw_crapemp.dtlimdeb THEN
+                vr_dtexecde := GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
+                                                          ,pr_dtmvtolt => TO_DATE(TO_CHAR(rw_crapemp.dtlimdeb,'fm00') || '/' || 
+                                                                                  TO_CHAR(pr_rw_crapdat.dtmvtopr,'MM/RRRR'), 
+                                                                                  'DD/MM/RRRR'));
+              END IF;
+
+              BEGIN
+                -- Inserir registro de controle na craptab
+                INSERT INTO craptab
+                           (nmsistem
+                           ,tptabela
+                           ,cdempres
+                           ,cdacesso
+                           ,tpregist
+                           ,cdcooper
+                           ,dstextab)
+                     VALUES('CRED'              -- nmsistem
+                           ,'USUARI'            -- tptabela
+                           ,rw_crapemp.cdempres -- cdempres
+                           ,'EXECDEBEMP'        -- cdacesso
+                           ,0                   -- tpregist
+                           ,pr_cdcooper         -- cdcooper
+                           ,TO_CHAR(rw_craplfp.dtmacred,'DD/MM/RRRR') || ' ' ||
+                            TO_CHAR(vr_dtexecde,'DD/MM/RRRR') || ' 0' ); -- dstextab
+              EXCEPTION
+                WHEN DUP_VAL_ON_INDEX THEN
+                  -- Se ja existe deve alterar
+                  BEGIN
+                    UPDATE craptab
+                       SET craptab.dstextab = TO_CHAR(rw_craplfp.dtmacred,'DD/MM/RRRR') || ' ' ||
+                                              TO_CHAR(vr_dtexecde,'DD/MM/RRRR') || ' 0'
+                     WHERE craptab.cdcooper        = pr_cdcooper
+                       AND UPPER(craptab.nmsistem) = 'CRED'
+                       AND UPPER(craptab.tptabela) = 'USUARI'
+                       AND craptab.cdempres        = rw_crapemp.cdempres
+                       AND UPPER(craptab.cdacesso) = 'EXECDEBEMP'
+                       AND craptab.tpregist        = 0;
+                  END;
+              END;
+
+              -- Busca os avisos de debito que tenham ficado pendentes para gerar a CRAPFOL zerada
+              FOR rw_avs_fol IN cr_avs_fol(pr_cdcooper => pr_cdcooper,
+                                           pr_cdempres => rw_crapemp.cdempres,
+                                           pr_dtrefere => rw_craplfp.dtmacred) LOOP
+                BEGIN
+                  INSERT INTO crapfol
+                             (cdcooper
+                             ,cdempres
+                             ,dtrefere
+                             ,nrdconta)
+                       VALUES(pr_cdcooper
+                             ,rw_crapemp.cdempres
+                             ,rw_craplfp.dtmacred
+                             ,rw_avs_fol.nrdconta); --> Conta encontrada na AVS
+                END;
+              END LOOP; -- cr_avs_fol
+
+            END IF; -- fldebfol = 1
+
+            -- Inicializa as avariaveis
+            vr_vlsddisp := 0;
+            vr_tottarif := 0;
+            vr_flsittar := 1;
+            vr_dsobstar := NULL;
+
+            -- Percorre a lista de pagamentos
+            vr_chave := vr_tab_crappfp.FIRST;
+            WHILE vr_chave IS NOT NULL LOOP
+              BEGIN
+                UPDATE crappfp
+                   SET -- Atualiza os pagamentos que foram processados
+                       dthorcre = SYSDATE,
+                       flsitcre = 1, --> Creditado
+                       dsobscre = NULL
+                 WHERE ROWID = vr_chave;
+              END;
+              vr_chave := vr_tab_crappfp.NEXT(vr_chave);
+            END LOOP;
+
+            BEGIN
+              -- Atualizar a data da ultima utilizacao do produto
+              UPDATE crapemp
+                 SET crapemp.dtultufp = SYSDATE
+               WHERE crapemp.cdcooper = pr_cdcooper
+                 AND crapemp.cdempres = rw_crapemp.cdempres;
+            END;
+
+            -- Percorre a lista de lancamentos
+            vr_chave := vr_tab_craplfp.FIRST;
+            WHILE vr_chave IS NOT NULL LOOP
+              BEGIN
+                -- Atualizar com o ultimo valor liquido pago
+                UPDATE crapefp
+                   SET vlultsal = vr_tab_craplfp(vr_chave).vllancto
+                 WHERE cdcooper = pr_cdcooper
+                   AND cdempres = rw_crapemp.cdempres
+                   AND nrdconta = vr_chave;
+              END;
+              vr_chave := vr_tab_craplfp.NEXT(vr_chave);
+            END LOOP;
+
+            BEGIN
+              -- Atualizar a CRAPTAB
+              UPDATE craptab
+                 SET craptab.dstextab        = SUBSTR(craptab.dstextab, 1, 13) || '1'
+               WHERE craptab.cdcooper        = pr_cdcooper
+                 AND UPPER(craptab.nmsistem) = 'CRED'
+                 AND UPPER(craptab.tptabela) = 'GENERI'
+                 AND craptab.cdempres        = 0
+                 AND UPPER(craptab.cdacesso) = 'DIADOPAGTO'
+                 AND craptab.tpregist        = rw_crapemp.cdempres;
+            END;
+
+            -- Lotes de Folha/Emprestimo/Cotas
+            FOR vr_index IN 1..3 LOOP
+
+              -- Carrega os lotes
+              CASE vr_index
+                WHEN 1 THEN vr_lote_nro := rw_craplot_fol.nrdolote;
+                WHEN 2 THEN vr_lote_nro := rw_craplot_emp.nrdolote;
+                WHEN 3 THEN vr_lote_nro := rw_craplot_cot.nrdolote;
+              END CASE;
+
+              -- Busca o lote FOL/EMP/COT
+              OPEN cr_craplot(pr_cdcooper => pr_cdcooper,
+                              pr_dtmvtolt => pr_rw_crapdat.dtmvtolt,
+                              pr_nrdolote => vr_lote_nro);
+              FETCH cr_craplot INTO rw_craplot;
+              CLOSE cr_craplot;
+
+              -- Caso os valores de credito/debito estejam zerados
+              IF rw_craplot.vlinfodb = 0 AND
+                 rw_craplot.vlcompdb = 0 AND
+                 rw_craplot.vlinfocr = 0 AND
+                 rw_craplot.vlcompcr = 0 THEN
+                BEGIN
+                  -- Remove o lote zerado
+                  DELETE FROM craplot WHERE ROWID = rw_craplot.rowid;
+                END;
+              END IF;
+
+            END LOOP; -- Fim do loop 1..3 dos lotes
+
+            -- Efetua Commit
+            COMMIT;
+
+            -- Caso possua CTASAL
+            IF vr_blctasal THEN
+
+              -- Verifica lancamentos pendentes de envio ao SPB
+              OPEN cr_lancspb(pr_cdcooper => pr_cdcooper,
+                              pr_cdempres => rw_crapemp.cdempres);
+              FETCH cr_lancspb INTO rw_lancspb;
+              vr_blnfound := cr_lancspb%FOUND;
+              CLOSE cr_lancspb;
+
+              -- Se encontrou lancamentos pendentes
+              IF vr_blnfound THEN
+
+                -- Chama a rotina PC_TRFSAL_OPCAO_B
+                SSPB0001.pc_trfsal_opcao_b(pr_cdcooper => pr_cdcooper
+                                          ,pr_cdagenci => 0
+                                          ,pr_nrdcaixa => 1
+                                          ,pr_cdoperad => 1
+                                          ,pr_cdempres => rw_crapemp.cdempres
+                                          ,pr_cdcritic => vr_cdcritic
+                                          ,pr_dscritic => vr_dscritic);
+
+                -- Se retornar critica
+                IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+
+                  -- Envia o erro para o LOG
+                  BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                            ,pr_ind_tipo_log => 2 -- Erro tratato
+                                            ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': ' ||
+                                                                'CREDITO DE FOLHA – EMP ' || rw_crapemp.cdempres ||
+                                                                ' – CONTA ' || rw_crapemp.nrdconta || ' –  ERRO NAO TRATADO COM AS TECS SALARIO: ' ||
+                                                                vr_cdcritic || '-' || vr_dscritic
+                                            ,pr_nmarqlog     => 'FOLHIB');
+
+                  -- Destinatarios responsaveis pelos avisos
+                  vr_emailds2 :=  GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                           ,pr_cdcooper => pr_cdcooper
+                                                           ,pr_cdacesso => 'FOLHAIB_EMAIL_ALERT_FIN');
+
+                  -- Mensagem informando o erro
+                  vr_dsmensag := 'Houveram erros inesperados no sistema e as transferências TEC salário ' ||
+                                 'da empresa não puderam ser efetuadas automaticamente. Abaixo trazemos o ' ||
+                                 'erro ocorrido:<br>' || vr_cdcritic || '-' || vr_dscritic || '<br><br>' ||
+                                 'Lembramos que estes pagamentos continuam pendentes de processamento e ' ||
+                                 'sugerimos que os mesmos sejam gerados pela tela TRFSAL, opção B.';
+
+                  -- Solicita envio do email
+                  GENE0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
+                                            ,pr_cdprogra        => 'FOLH0001'
+                                            ,pr_des_destino     => TRIM(vr_emailds2)
+                                            ,pr_des_assunto     => 'Folha de Pagamento - Problema com as TECs – Empresa ' || rw_crapemp.cdempres || ' - ' || rw_crapemp.nmresemp
+                                            ,pr_des_corpo       => vr_dsmensag
+                                            ,pr_des_anexo       => NULL--> nao envia anexo, anexo esta disponivel no dir conf. geracao do arq.
+                                            ,pr_flg_remove_anex => 'N' --> Remover os anexos passados
+                                            ,pr_flg_remete_coop => 'N' --> Se o envio sera do e-mail da Cooperativa
+                                            ,pr_flg_enviar      => 'N' --> Enviar o e-mail na hora
+                                            ,pr_des_erro        => vr_dscritic);
+
+                END IF; -- vr_cdcritic / vr_dscritic
+
+              END IF; -- vr_blnfound
+
+              -- Reseta a variavel
+              vr_blctasal := FALSE;
+
+              COMMIT;
+
+            END IF; -- vr_blctasal
+
+          END IF; -- numempre = qtempres
+
+        END LOOP; -- cr_craplfp
+
+        -- Após processar todos os pagamentos da empresa, iremos atualizar
+        -- aqueles pagamentos em que só restaram lançamentos de erro, e devido
+        -- a isso o mesmo não é processado e ficaria pendente
+
+        BEGIN
+          UPDATE crappfp pfp
+             SET pfp.dthorcre = SYSDATE
+                ,pfp.flsitcre = 1 --> Creditado
+           WHERE pfp.cdcooper = pr_cdcooper
+             AND pfp.cdempres = rw_crapemp.cdempres
+             AND pfp.flsitdeb = 1 -- Já debitado
+             AND pfp.flsitcre = 0 -- Com crédito pendente
+             -- Não exista nenhum lançamento pendente
+             AND NOT EXISTS(SELECT 1
+                              FROM craplfp lfp
+                             WHERE pfp.cdcooper = lfp.cdcooper
+                               AND pfp.cdempres = lfp.cdempres
+                               AND pfp.nrseqpag = lfp.nrseqpag
+                               AND lfp.idsitlct = 'L'
+                               AND lfp.vllancto > 0);
+        END;
+
+        -- Atualizar todos os lançamentos sem crédito pois eles estão pendentes devido ao vllancto = 0
+        BEGIN
+          UPDATE craplfp lfp
+             SET lfp.idsitlct = 'C'
+                ,lfp.dsobslct = 'Lançamento sem crédito - apenas para emissão do comprovante'
+           WHERE lfp.cdcooper = pr_cdcooper
+             AND lfp.cdempres = rw_crapemp.cdempres
+             AND lfp.idsitlct = 'L' -- Ainda pendentes
+             AND lfp.vllancto = 0 -- Somente aqueles sem crédito
+             -- E o pagamento tenha sido creditado
+             AND EXISTS (SELECT 1
+                           FROM crappfp pfp
+                          WHERE pfp.cdcooper = lfp.cdcooper
+                            AND pfp.cdempres = lfp.cdempres
+                            AND pfp.nrseqpag = lfp.nrseqpag
+                            AND pfp.flsitcre = 1);
+        END;
+
+        -- Adicionamos no LOG o encerramento do processo de credito desta empresa
+        BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                  ,pr_ind_tipo_log => 1 -- Processo Normal
+                                  ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': CREDITO DE FOLHA – EMP ' ||
+                                                      rw_crapemp.cdempres || ' – ENCERRAMENTO DO PROCESSO DE CREDITO'
+                                  ,pr_nmarqlog     => 'FOLHIB');
+        -- Gravação final
+        COMMIT;
+      EXCEPTION
+        WHEN vr_exc_erro THEN
+          -- Desfazemos alterações até o momento adicionamos ao
+          -- log da empresa o erro tratado
+          ROLLBACK;
+          BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                    ,pr_ind_tipo_log => 1 -- Processo Normal
+                                    ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': CREDITO DE FOLHA – EMP ' ||
+                                                        rw_crapemp.cdempres || ' – ERRO NO PROCESSO --> '||vr_dscritic
+                                  ,pr_nmarqlog     => 'FOLHIB');
+        WHEN OTHERS THEN
+          -- Desfazemos alterações até o momento adicionamos ao
+          -- log da empresa o erro não tratado
+          ROLLBACK;
+          BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                    ,pr_ind_tipo_log => 1 -- Processo Normal
+                                    ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': CREDITO DE FOLHA – EMP ' ||
+                                                        rw_crapemp.cdempres || ' – ERRO NO PROCESSO --> '||SQLERRM
+                                    ,pr_nmarqlog     => 'FOLHIB');
+      END;
+    END LOOP; -- cr_crapemp
+
+    -- Busca o lote TEC (Global para a Cooperativa)
+    OPEN cr_craplot(pr_cdcooper => pr_cdcooper,
+                    pr_dtmvtolt => pr_rw_crapdat.dtmvtolt,
+                    pr_nrdolote => rw_craplot_tec.nrdolote);
+    FETCH cr_craplot INTO rw_craplot_tec;
+    CLOSE cr_craplot;
+
+    -- Caso os valores de credito/debito estejam zerados
+    IF rw_craplot_tec.vlinfodb = 0 AND
+       rw_craplot_tec.vlcompdb = 0 AND
+       rw_craplot_tec.vlinfocr = 0 AND
+       rw_craplot_tec.vlcompcr = 0 THEN
+      BEGIN
+        -- Remove o lote zerado
+        DELETE FROM craplot WHERE ROWID = rw_craplot_tec.rowid;
+      END;
+    END IF;
+
+    -- Efetua Commit
+    COMMIT;
+
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      -- Desfazer a operacao
+      ROLLBACK;
+      -- efetuar o raise
+      raise_application_error(-25001, 'Erro FOLH0001.PC_CREDITO_PAGTO_APROVADOS: '||vr_dscritic);
+    WHEN OTHERS THEN
+      -- Desfazer a operacao
+      ROLLBACK;
+      -- efetuar o raise
+      raise_application_error(-25000, 'Erro FOLH0001.PC_CREDITO_PAGTO_APROVADOS: '||vr_dscritic);
+  END pc_cr_pagto_aprovados_ctasal;
+  
   /* Busca todos os pagamentos já creditados mas não tarifados ainda para tarifar */
   PROCEDURE pc_cobra_tarifas_pendentes (pr_cdcooper IN crapcop.cdcooper%TYPE
                                        ,pr_rw_crapdat IN BTCH0001.CR_CRAPDAT%ROWTYPE) IS
@@ -5192,7 +7486,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           AND pfp.nrseqpag = lfp.nrseqpag
           AND lfp.cdcooper = ofp.cdcooper
           AND lfp.cdorigem = ofp.cdorigem
-          AND pfp.flsitcre = 1          --> Pagos
+          AND pfp.flsitcre IN (1,2)          --> Pagos
           AND lfp.idsitlct IN ('C','T') --> Creditado ou Transferido
           AND lfp.vllancto > 0
           AND pfp.cdcooper =  pr_cdcooper
@@ -5330,6 +7624,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
   vr_dtexppor    DATE;
   vr_dtultpor    DATE;
   vr_hrlimpor    DATE;
+  vr_hrlimcop    DATE;
   vr_dtavispb    DATE;
   vr_dtcobtar    DATE;
   vr_hr_valid    BOOLEAN;
@@ -5521,28 +7816,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
 
   -------- ROTINA 05 - Débitos pendentes -------------------------------------------------------------
   -------- ROTINA 06 - Créditos pendentes ------------------------------------------------------------
-  -------- ROTINA 06.01 - Atualiza o XML do comprovante liquido --------------------------------------
+  -------- ROTINA 06.01 - Créditos pendentes conta cooperativa ---------------------------------------
+  -------- ROTINA 06.02 - Créditos pendentes conta ctasal --------------------------------------------
+  -------- ROTINA 06.03 - Atualiza o XML do comprovante liquido --------------------------------------
+          
+          -- Prepara mensagem de erro
+          vr_dscritic := to_char(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': PROCESSO CONTROLADOR – ROTINA 05 - ';
 
-          -- Busca do horário limite para a portabilidade
-          vr_hrlimpor := to_date(to_char(SYSDATE,'DD/MM/RRRR ') || gene0001.fn_param_sistema('CRED', vr_cdcooper,'FOLHAIB_HOR_LIM_PORTAB'),'DD/MM/RRRR HH24:MI');
-          -- Somente efetuar debito e crédito dentro da portabilidade e dentro do horário de operação do SPB
-          IF vr_hrlimpor > SYSDATE AND to_char(SYSDATE,'sssss') BETWEEN rw_crapcop.iniopstr AND rw_crapcop.fimopstr THEN
-
-            -- Prepara mensagem de erro
-            vr_dscritic := to_char(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': PROCESSO CONTROLADOR – ROTINA 05 - ';
-
-            -- Acionar a rotina 05
-            pc_debito_pagto_aprovados (vr_cdcooper, rw_crapdat);
+          -- Acionar a rotina 05
+          pc_debito_pagto_aprovados (vr_cdcooper, rw_crapdat);
+   
+          -- Horario limite para contas da cooperativa
+          vr_hrlimcop := to_date(to_char(SYSDATE,'DD/MM/RRRR ') || gene0001.fn_param_sistema('CRED', vr_cdcooper, 'FOLHAIB_HOR_LIM_PAG_COOP'),'DD/MM/RRRR HH24:MI');
+          
+          IF vr_hrlimcop > SYSDATE AND FOLH0001.fn_valida_hrtransfer(vr_cdcooper, TO_DATE(TO_CHAR(SYSDATE,'HH24:MI'),'HH24:MI')) THEN
 
             -- Prepara mensgem de erro
-            vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': PROCESSO CONTROLADOR – ROTINA 06 - ';
+            vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': PROCESSO CONTROLADOR – ROTINA 06.01 - ';
+            
+            --Acionar a rotina 6.1
+            pc_cr_pagto_aprovados_coop(vr_cdcooper, rw_crapdat);
+            
+            -- Busca do horário limite para a portabilidade
+       	    vr_hrlimpor := to_date(to_char(SYSDATE,'DD/MM/RRRR ') || gene0001.fn_param_sistema('CRED', vr_cdcooper, 'FOLHAIB_HOR_LIM_PORTAB'),'DD/MM/RRRR HH24:MI');
+            
+            IF vr_hrlimpor > SYSDATE AND to_char(SYSDATE,'sssss') BETWEEN rw_crapcop.iniopstr AND rw_crapcop.fimopstr THEN
+               
+               vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': PROCESSO CONTROLADOR – ROTINA 06.01 - ';
+               
+               --Acionar a rotina 6.2
+               pc_cr_pagto_aprovados_ctasal(vr_cdcooper, rw_crapdat);
+            END IF;
 
-            -- Acionar a rotina 06
-            pc_credito_pagto_aprovados(vr_cdcooper, rw_crapdat);
-
-            -- Acionar a rotina 06.01
+            -- Acionar a rotina 06.03
             pc_atualiza_xml_comprov_liquid(vr_cdcooper, rw_crapdat);
-
           END IF;
 
   -------- ROTINA 07 - Cobrança das tarifas pendentes -----------------------------------------------
@@ -10037,6 +12344,54 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
       ROLLBACK;          
   END pc_excluir_lanaut_dia;
 
+  /* Função para validar se a hora informada esta dentro do horário de operacao do SPB*/
+  FUNCTION fn_valida_hrportabil(pr_cdcooper    IN craptab.cdcooper%TYPE
+                               ,pr_hrvalida    IN DATE DEFAULT SYSDATE) RETURN BOOLEAN IS -- Critica
+
+  ---------------------------------------------------------------------------------------------------------------
+  --
+  --  Programa : fn_valida_hrportabil                  Antigo: Não há
+  --  Sistema  : Ayllos
+  --  Sigla    : CRED
+  --  Autor    : Kelvin Souza Ott
+  --  Data     : Janeiro/2017.                   Ultima atualizacao: --/--/----
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Frequencia: Sempre que for chamado
+  -- Objetivo  : Validar se a hora informada esta dentro do horário de operacao do SPB.
+  --
+  ---------------------------------------------------------------------------------------------------------------
+    CURSOR cr_hrportabil(pr_cdcooper crapcop.cdcooper%TYPE) IS
+      SELECT cop.fimopstr-600 fimopstr -- 10 minutos antes
+            ,cop.iniopstr+600 iniopstr -- 10 minutos depois
+        FROM crapcop cop
+       WHERE cop.cdcooper = pr_cdcooper;    
+    
+    rw_hrportabil cr_hrportabil%ROWTYPE;
+  BEGIN
+    
+    --Busca horario final de operacao do spb menos 10 minutos
+    OPEN cr_hrportabil(pr_cdcooper);
+      FETCH cr_hrportabil
+       INTO rw_hrportabil;
+    CLOSE cr_hrportabil;
+   
+    -- Se não possuir horário limite, não limita
+    IF rw_hrportabil.fimopstr IS NULL OR rw_hrportabil.iniopstr IS NULL  THEN
+      RETURN TRUE;
+    END IF;
+    
+    IF to_date(to_char(pr_hrvalida,'HH24:MI'),'HH24:MI') 
+       BETWEEN to_date(rw_hrportabil.iniopstr,'sssss') AND 
+               to_date(rw_hrportabil.fimopstr,'sssss') THEN
+      RETURN TRUE;
+    END IF;
+    
+    --Se nao estiver no horario permitido, retorna false
+    RETURN FALSE;  
+
+  END;
 
 END FOLH0001;
 /
