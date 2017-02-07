@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson        
-   Data    : Maio/2000.                      Ultima atualizacao: 30/05/2015
+   Data    : Maio/2000.                      Ultima atualizacao: 02/02/2017
 
    Dados referentes ao programa:
 
@@ -85,9 +85,12 @@
                             
                30/05/2016 - Incluir criticas 251, 695, 410, 95 no relatorio e
                             atualizar o insitlau para 3(Cancelado) (Lucas Ranghetti #449799)
+                            
+               02/02/2017 - Conversao Progress para PLSQL (Jonata - Mouts)             
+                            
 ............................................................................. */
 
-{ includes/var_batch.i} 
+{ includes/var_batch.i } 
 { sistema/generico/includes/var_oracle.i }
 
 ASSIGN glb_cdprogra = "CRPS290"
@@ -111,7 +114,6 @@ ETIME(TRUE).
 
 RUN STORED-PROCEDURE pc_crps290 aux_handproc = PROC-HANDLE
    (INPUT glb_cdcooper,   
-    INPUT glb_cdoperad,   
     INPUT INT(STRING(glb_flgresta,"1/0")),
     OUTPUT 0,
     OUTPUT 0,                                        
