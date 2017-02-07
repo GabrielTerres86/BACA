@@ -8934,10 +8934,10 @@ PROCEDURE atualizacao-telefone:
                            INPUT "",             /** Setor        **/
                            INPUT "",             /** Contato      **/
                            INPUT 0,              /** Operadora Cel**/
-                           INPUT "I",            /** Sis.Alteracao**/
+                           INPUT "T",            /** Sis.Alteracao (A=Ayllos, I=Internet, P=Progrid, T=TAA, C=Caixa Online) **/
                            INPUT TRUE,           /** Logar        **/
                            INPUT 1,              /** Situacao     **/
-                           INPUT 4,              /** Origem       **/
+                           INPUT 1,              /** Origem  (1-Cooperado/2-Cooperativa/3-Terceiros) **/
                           OUTPUT aux_tpatlcad,
                           OUTPUT aux_msgatcad,
                           OUTPUT aux_chavealt,
