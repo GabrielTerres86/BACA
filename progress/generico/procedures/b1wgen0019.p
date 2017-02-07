@@ -808,6 +808,8 @@ PROCEDURE confirmar-novo-limite:
     DEF VAR old_cddlinha AS INTE                                    NO-UNDO.
     DEF VAR aux_dsoperac AS CHAR                                    NO-UNDO.
 
+	DEF VAR aux_cdagenci LIKE crapass.cdagenci						NO-UNDO.
+
     DEF VAR h-b1wgen9999 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0043 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0138 AS HANDLE                                  NO-UNDO.
@@ -1375,13 +1377,19 @@ PROCEDURE confirmar-novo-limite:
           ASSIGN par_cdagenci = glb_cdagenci.
         /* Fim - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
 
+		ASSIGN aux_cdagenci = par_cdagenci.
+
+		IF AVAIL(crapope) THEN
+		   DO:
+		     aux_cdagenci = crapope.cdpactra.
+		   END.
 
         ASSIGN craplim.insitlim = 2
                craplim.dtinivig = par_dtmvtolt
                craplim.cdopelib = par_cdoperad
                /* Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
                craplim.cdopeori = par_cdoperad
-               craplim.cdageori = IF AVAIL(crapope) THEN crapope.cdpactra ELSE par_cdagenci
+               craplim.cdageori = aux_cdagenci
                craplim.dtinsori = TODAY
                /* Fim - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
                craplim.dtfimvig = craplim.dtinivig + craplim.qtdiavig.
@@ -1389,7 +1397,7 @@ PROCEDURE confirmar-novo-limite:
         FIND crapmcr WHERE crapmcr.cdcooper = par_cdcooper     AND
                            crapmcr.nrdconta = par_nrdconta     AND
                            crapmcr.dtmvtolt = par_dtmvtolt     AND
-                           crapmcr.cdagenci = IF AVAIL(crapope) THEN crapope.cdpactra ELSE par_cdagenci AND
+                           crapmcr.cdagenci = aux_cdagenci     AND
                            crapmcr.cdbccxlt = 0                AND
                            crapmcr.nrdolote = 0                AND
                            crapmcr.nrcontra = craplim.nrctrlim AND
@@ -1407,7 +1415,7 @@ PROCEDURE confirmar-novo-limite:
             DO:
                 CREATE crapmcr.
                 ASSIGN crapmcr.dtmvtolt = par_dtmvtolt
-                       crapmcr.cdagenci = IF AVAIL(crapope) THEN crapope.cdpactra ELSE par_cdagenci
+                       crapmcr.cdagenci = aux_cdagenci
                        crapmcr.cdbccxlt = 0
                        crapmcr.nrdolote = 0
                        crapmcr.nrdconta = par_nrdconta
