@@ -3685,7 +3685,7 @@ END pc_gera_titulos_iptu_prog;
         END IF;
         --Marcar para criticar a data
         pr_critica_data:= TRUE;
-
+        
         -- Verificacao de agendamento de pagamento
         -- Carregar informacao de PAGADOR VIP
         vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cod_cooper
@@ -3701,40 +3701,40 @@ END pc_gera_titulos_iptu_prog;
           pr_critica_data:= FALSE;
         ELSE
           
-        /** Aceita agendamento de titulo com vencimento no ultimo dia **/
-        /** util do ano somente no primeiro dia util do proximo ano   **/
-        /** Exemplo: VENCIMENTO 31/12/2009 - AGENDAMENTO - 04/01/2010 **/
+          /** Aceita agendamento de titulo com vencimento no ultimo dia **/
+          /** util do ano somente no primeiro dia util do proximo ano   **/
+          /** Exemplo: VENCIMENTO 31/12/2009 - AGENDAMENTO - 04/01/2010 **/
 
-        IF to_number(To_Char(pr_dt_agendamento,'YYYY')) -
-           To_Number(to_char(pr_dt_vencto,'YYYY')) = 1  THEN
-          --Montar o dia util
-          vr_dt_dia_util:= TO_DATE('01/01/'||To_Char(pr_dt_agendamento,'YYYY'),'DD/MM/YYYY');
-          --Verficar se eh dia util
-          vr_dt_dia_util:= GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cod_cooper
-                                                      ,pr_dtmvtolt => vr_dt_dia_util
-                                                      ,pr_tipo     => 'P');
-          --Se data agendamento igual ao dia util encontrado
-          IF pr_dt_agendamento = vr_dt_dia_util THEN
-            --Data dia util
-            vr_dt_dia_util:= TO_DATE('31/12/'||to_char(pr_dt_vencto,'YYYY'),'DD/MM/YYYY');
-            /** Se dia 31/12 for segunda-feira obtem data do sabado **/
-            /** para aceitar vencidos do ultimo final de semana     **/
-            IF To_Number(to_char(vr_dt_dia_util,'D')) = 2  THEN
-              vr_dt_dia_util:= TO_DATE('29/12/'||to_char(pr_dt_vencto,'YYYY'),'DD/MM/YYYY');
-            ELSIF To_Number(to_char(vr_dt_dia_util,'D')) = 1  THEN
-              /** Se dia 31/12 for domingo, o ultimo dia util e 29/12 **/
-              vr_dt_dia_util:= TO_DATE('29/12/'||to_char(pr_dt_vencto,'YYYY'),'DD/MM/YYYY');
-            ELSIF To_Number(to_char(vr_dt_dia_util,'D')) = 7  THEN
-              /** Se dia 31/12 for sabado, o ultimo dia util e 30/12 **/
-              vr_dt_dia_util:= TO_DATE('30/12/'||to_char(pr_dt_vencto,'YYYY'),'DD/MM/YYYY');
-            END IF;
-            /** Verifica se pode aceitar o titulo vencido **/
-            IF  pr_dt_vencto >= vr_dt_dia_util THEN
-              --Retorna false
-              pr_critica_data:= FALSE;
+          IF to_number(To_Char(pr_dt_agendamento,'YYYY')) -
+             To_Number(to_char(pr_dt_vencto,'YYYY')) = 1  THEN
+            --Montar o dia util
+            vr_dt_dia_util:= TO_DATE('01/01/'||To_Char(pr_dt_agendamento,'YYYY'),'DD/MM/YYYY');
+            --Verficar se eh dia util
+            vr_dt_dia_util:= GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cod_cooper
+                                                        ,pr_dtmvtolt => vr_dt_dia_util
+                                                        ,pr_tipo     => 'P');
+            --Se data agendamento igual ao dia util encontrado
+            IF pr_dt_agendamento = vr_dt_dia_util THEN
+              --Data dia util
+              vr_dt_dia_util:= TO_DATE('31/12/'||to_char(pr_dt_vencto,'YYYY'),'DD/MM/YYYY');
+              /** Se dia 31/12 for segunda-feira obtem data do sabado **/
+              /** para aceitar vencidos do ultimo final de semana     **/
+              IF To_Number(to_char(vr_dt_dia_util,'D')) = 2  THEN
+                vr_dt_dia_util:= TO_DATE('29/12/'||to_char(pr_dt_vencto,'YYYY'),'DD/MM/YYYY');
+              ELSIF To_Number(to_char(vr_dt_dia_util,'D')) = 1  THEN
+                /** Se dia 31/12 for domingo, o ultimo dia util e 29/12 **/
+                vr_dt_dia_util:= TO_DATE('29/12/'||to_char(pr_dt_vencto,'YYYY'),'DD/MM/YYYY');
+              ELSIF To_Number(to_char(vr_dt_dia_util,'D')) = 7  THEN
+                /** Se dia 31/12 for sabado, o ultimo dia util e 30/12 **/
+                vr_dt_dia_util:= TO_DATE('30/12/'||to_char(pr_dt_vencto,'YYYY'),'DD/MM/YYYY');
+              END IF;
+              /** Verifica se pode aceitar o titulo vencido **/
+              IF  pr_dt_vencto >= vr_dt_dia_util THEN
+                --Retorna false
+                pr_critica_data:= FALSE;
+              END IF;
             END IF;
           END IF;
-        END IF;
         END IF; -- PAGADOR VIP
       END IF;
     EXCEPTION
@@ -10494,12 +10494,12 @@ END pc_gera_titulos_iptu_prog;
                                       ,pr_des_erro      OUT VARCHAR2  -- Indicador erro OK/NOK   
                                       ,pr_dscritic      OUT VARCHAR2) IS --Descricao do erro
     /* ..........................................................................
-      
+	
 	  Programa : pc_retorna_vlr_tit_vencto
 	  Sistema  : Conta-Corrente - Cooperativa de Credito
 	  Sigla    : CRED
 	  Autor    : Kelvin Souza Ott 
-	  Data     : Setembro/2016.                   Ultima atualizacao: 10/01/2017
+	  Data     : Setembro/2016.                   Ultima atualizacao: 07/02/2017
 	
 	  Dados referentes ao programa:
 	
@@ -10516,59 +10516,47 @@ END pc_gera_titulos_iptu_prog;
                                o valor do titulo, caso já exista no Ayllos, devolve o valor, caso
                                contrário deverá devolver o valor que está no código de barras
                                (Douglas - Chamado 575078)
-    ...........................................................................*/      
-     CURSOR cr_crapcco2 (pr_cdcooper IN crapcco.cdcooper%type
-                        ,pr_nrconven IN crapcco.nrconven%type
-                        ,pr_cddbanco IN crapcco.cddbanco%TYPE) IS
-        SELECT crapcco.cddbanco,
-               crapcco.dsorgarq
-        FROM crapcco
-        WHERE crapcco.cdcooper = pr_cdcooper
-        AND   crapcco.nrconven = pr_nrconven
-        AND   crapcco.cddbanco = pr_cddbanco;        
-        rw_crapcco cr_crapcco2%ROWTYPE;
     
+                  07/02/2017 - Ajustado a query para verificar se o boleto existe no sistema.
+                               (Douglas - Chamado 602954)
+
+    ...........................................................................*/      
      --Selecionar informacoes cobranca
-     CURSOR cr_crapcob (pr_cdcooper IN crapcob.cdcooper%type
-                       ,pr_nrcnvcob IN crapcob.nrcnvcob%type
-                       ,pr_nrdconta IN crapcob.nrdconta%type
-                       ,pr_nrdocmto IN crapcob.nrdocmto%type
-                       ,pr_nrdctabb IN crapcob.nrdctabb%type) IS
-       SELECT /*+index (crapcob CRAPCOB##CRAPCOB1) */
-              crapcob.vltitulo
-             ,crapcob.cdmensag
-             ,crapcob.vldescto
-             ,crapcob.vlabatim
-             ,crapcob.tpdmulta
-             ,crapcob.vlrmulta
-             ,crapcob.vljurdia
-             ,crapcob.tpjurmor
-             ,crapcob.dtvencto
-             ,crapcob.dsinform
-       FROM crapcob
-       WHERE crapcob.cdcooper = pr_cdcooper
-       AND   crapcob.nrcnvcob = pr_nrcnvcob
-       AND   crapcob.nrdconta = pr_nrdconta
-       AND   crapcob.nrdocmto = pr_nrdocmto
-       AND   crapcob.nrdctabb = pr_nrdctabb;
+    CURSOR cr_crapcob (pr_nrcnvcob IN crapcob.nrcnvcob%type
+                      ,pr_nrdconta IN crapcob.nrdconta%type
+                      ,pr_nrdocmto IN crapcob.nrdocmto%type
+                      ,pr_cdbandoc IN crapcob.cdbandoc%type) IS
+      SELECT crapcob.cdcooper,
+             crapcob.nrdconta,
+             crapcob.vltitulo,
+             crapcob.cdmensag,
+             crapcob.vldescto,
+             crapcob.vlabatim,
+             crapcob.tpdmulta,
+             crapcob.vlrmulta,
+             crapcob.vljurdia,
+             crapcob.tpjurmor,
+             crapcob.dtvencto,
+             crapcob.dsinform
+        FROM crapcob, crapceb, crapcco
+       WHERE crapceb.nrconven = pr_nrcnvcob
+         AND crapceb.nrdconta = pr_nrdconta
+         AND crapcco.cdcooper = crapceb.cdcooper + 0
+         AND crapcco.nrconven = crapceb.nrconven + 0
+         AND crapcob.cdcooper = crapceb.cdcooper + 0
+         AND crapcob.nrcnvcob = crapceb.nrconven + 0
+         AND crapcob.nrdconta = crapceb.nrdconta + 0
+         AND crapcob.nrdocmto = pr_nrdocmto
+         AND crapcob.nrdctabb = crapcco.nrdctabb + 0
+         AND crapcob.cdbandoc = pr_cdbandoc;
      rw_crapcob cr_crapcob%ROWTYPE;
-     
-     CURSOR cr_crapcri (pr_cdcritic IN crapcri.cdcritic%TYPE) IS
-       SELECT cri.dscritic
-         FROM crapcri cri
-        WHERE cri.cdcritic = pr_cdcritic ;
-     rw_crapcri cr_crapcri%ROWTYPE;
      
     vr_de_valor_calc  VARCHAR2(100);
     vr_flg_zeros      BOOLEAN;
     vr_nro_digito     INTEGER;
     vr_retorno        BOOLEAN;
     vr_flg_cdbarerr   BOOLEAN;
-    vr_nrdconta_cob   crapcob.nrdconta%TYPE;
     vr_intitcop       NUMBER;
-    vr_convenio       INTEGER;
-    vr_bloqueto       NUMBER;
-    vr_nrdctabb       INTEGER;
     vr_vldescto       NUMBER; 
     vr_vlabatim       NUMBER; 
     vr_de_p_titulo5   NUMBER;
@@ -10650,12 +10638,7 @@ END pc_gera_titulos_iptu_prog;
             IF vr_cdcritic IS NOT NULL AND
                TRIM(vr_dscritic) IS NULL THEN
               
-              OPEN cr_crapcri(vr_cdcritic);
-                FETCH cr_crapcri
-                 INTO rw_crapcri;
-              CLOSE cr_crapcri;
-              
-              vr_dscritic := rw_crapcri.dscritic;
+              vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
             END IF;
             --Levantar Excecao
             RAISE vr_exc_erro;
@@ -10693,13 +10676,7 @@ END pc_gera_titulos_iptu_prog;
         IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
           IF vr_cdcritic IS NOT NULL AND
              TRIM(vr_dscritic) IS NULL THEN
-            
-            OPEN cr_crapcri(vr_cdcritic);
-              FETCH cr_crapcri
-               INTO rw_crapcri;
-            CLOSE cr_crapcri;
-            
-            vr_dscritic := rw_crapcri.dscritic;
+            vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
           END IF;
           
           --Levantar Excecao
@@ -10753,27 +10730,16 @@ END pc_gera_titulos_iptu_prog;
     END IF;
 
     /* Verifica se conv boleto eh de cobranca 085 */
-    --Selecionar informacoes convenio cobranca
-    OPEN cr_crapcco2 (pr_cdcooper => rw_crapcop.cdcooper
-                     ,pr_nrconven => to_number(vr_convenio)
-                     ,pr_cddbanco => rw_crapcop.cdbcoctl);
-    --Posicionar no proximo registro
-    FETCH cr_crapcco2 INTO rw_crapcco;
-    --Se encontrar
-    IF cr_crapcco2%FOUND THEN
-      -- Se for cobranca registrada, calcular o valor do titulo conforme instru¿¿o
-
       --Selecionar informacoes cobranca
-      OPEN cr_crapcob (pr_cdcooper => rw_crapcop.cdcooper
-                      ,pr_nrcnvcob => to_number(vr_convenio)
-                      ,pr_nrdconta => vr_nrdconta_cob
-                      ,pr_nrdocmto => vr_bloqueto
-                      ,pr_nrdctabb => vr_nrdctabb);
+    OPEN cr_crapcob (pr_nrcnvcob => to_number(SUBSTR(vr_codigo_barras, 20, 06))
+                    ,pr_nrdconta => to_number(SUBSTR(vr_codigo_barras, 26, 08))
+                    ,pr_nrdocmto => to_number(SUBSTR(vr_codigo_barras, 34, 09))
+                    ,pr_cdbandoc => to_number(SUBSTR(vr_codigo_barras, 01, 03)));
                         
       --Posicionar no proximo registro
       FETCH cr_crapcob INTO rw_crapcob;
       --Se nao encontrar
-      IF cr_crapcob%NOTFOUND THEN
+      IF cr_crapcob%FOUND THEN
         --Titulo Encontrado
         vr_intitcop := 1;
       ELSE
@@ -10783,10 +10749,6 @@ END pc_gera_titulos_iptu_prog;
       END IF;
       --Fechar Cursor
       CLOSE cr_crapcob;
-    END IF;
-
-    -- fechar o cursor
-    CLOSE cr_crapcco2;
     
     /********************************************************/
     /***********FAZER CALCULO DO VALOR DO TITULO*************/
@@ -10815,7 +10777,7 @@ END pc_gera_titulos_iptu_prog;
       END IF;
 
       --Verificar vencimento do titulo
-      pc_verifica_vencimento_titulo (pr_cod_cooper      => rw_crapcop.cdcooper  --Codigo Cooperativa
+      pc_verifica_vencimento_titulo (pr_cod_cooper      => rw_crapcob.cdcooper  --Codigo Cooperativa
                                     ,pr_numero_conta    => pr_nrdconta          --Numero da Conta 
                                     ,pr_cod_agencia     => pr_cdagenci          --Codigo da Agencia
                                     ,pr_dt_agendamento  => NULL                 --Data Agendamento
@@ -10833,13 +10795,7 @@ END pc_gera_titulos_iptu_prog;
               
             IF vr_cdcritic IS NOT NULL AND
                TRIM(vr_dscritic) IS NULL THEN
-                
-              OPEN cr_crapcri(vr_cdcritic);
-                FETCH cr_crapcri
-                 INTO rw_crapcri;
-              CLOSE cr_crapcri;
-                
-              vr_dscritic := rw_crapcri.dscritic;
+              vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
             END IF;
             --Levantar Excecao
             RAISE vr_exc_erro;
