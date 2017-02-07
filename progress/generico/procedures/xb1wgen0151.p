@@ -2,7 +2,7 @@
 
      Programa: sistema/generico/procedures/xb1wgen0151.p
      Autor   : Gabriel Capoia
-     Data    : 26/01/2013                    Ultima atualizacao: 00/00/0000
+     Data    : 26/01/2013                    Ultima atualizacao: 13/01/2017
 
      Objetivo  : BO de Comunicacao XML x BO - Tela CTASAL
 
@@ -10,6 +10,9 @@
                               Projeto 158 - Servico Folha de Pagto
                               (Andre Santos - SUPERO)
 
+                 13/01/2017 - Ajustado o campo nrctatrf para DECIMAL pois 
+				              esta estourando o format pois deixa digitar
+							  maior que INTE na tela (Tiago/Thiago 581315).
 ............................................................................*/
 
 
@@ -35,7 +38,7 @@ DEF VAR aux_cdagenca  AS INTE                                        NO-UNDO.
 DEF VAR aux_cdempres  AS INTE                                        NO-UNDO.
 DEF VAR aux_cdbantrf  AS INTE                                        NO-UNDO.
 DEF VAR aux_cdagetrf  AS INTE                                        NO-UNDO.
-DEF VAR aux_nrctatrf  AS INTE                                        NO-UNDO.
+DEF VAR aux_nrctatrf  AS DECI                                        NO-UNDO.
 DEF VAR aux_nrcpfcgc  AS DECI                                        NO-UNDO.
 DEF VAR aux_flgsolic  AS LOGI                                        NO-UNDO.
 
@@ -78,7 +81,7 @@ DEF VAR aux_cdsitcta  AS CHAR                                        NO-UNDO.
              WHEN "cdempres"  THEN aux_cdempres = INTE(tt-param.valorCampo).
              WHEN "cdbantrf"  THEN aux_cdbantrf = INTE(tt-param.valorCampo).
              WHEN "cdagetrf"  THEN aux_cdagetrf = INTE(tt-param.valorCampo).
-             WHEN "nrctatrf"  THEN aux_nrctatrf = INTE(tt-param.valorCampo).
+             WHEN "nrctatrf"  THEN aux_nrctatrf = DECI(tt-param.valorCampo).
              WHEN "nrcpfcgc"  THEN aux_nrcpfcgc = DECI(tt-param.valorCampo).
              WHEN "flgsolic"  THEN aux_flgsolic = IF   tt-param.valorCampo = "YES" THEN
                                                        TRUE

@@ -5,7 +5,8 @@
  * OBJETIVO     : Biblioteca de funções da tela HISTOR
  * --------------
  * ALTERAÇÕES   : 11/03/2016 - Homologacao e ajustes da conversao da tela HISTOR (Douglas - Chamado 412552)
- *
+ *                07/02/2017 - #552068 Aumento da largura da tabela para comportar os dados corretamente 
+ *                             Retirada a coluna de CPMF na função formataTabelaConsulta (Carlos)
  * --------------
  */
 
@@ -1139,7 +1140,7 @@ function formataTabelaConsulta(){
 	var tabela      = $('table', divRegistro );
 	var linha       = $('table > tbody > tr', divRegistro );
 	
-    divRegistro.css({'height':'250px','width':'650px','padding-bottom':'2px'});
+    divRegistro.css({'height':'250px','width':'700px','padding-bottom':'2px'});
 	$('#divHistoricos').css({'padding-top':'10px'});	
 
 	var ordemInicial = new Array();
@@ -1149,20 +1150,22 @@ function formataTabelaConsulta(){
 	arrayLargura[1] = '';
 	arrayLargura[2] = '30px';
 	arrayLargura[3] = '45px';
-	arrayLargura[4] = '55px';
-	arrayLargura[5] = '45px';
+/*	arrayLargura[4] = '55px'; CPMF */ 
+	arrayLargura[4] = '45px';
+	arrayLargura[5] = '55px';
 	arrayLargura[6] = '55px';
-	arrayLargura[7] = '55px';
+/*  arrayLargura[7] = '55px'; */
 	
 	var arrayAlinha = new Array();
 	arrayAlinha[0] = 'right';
 	arrayAlinha[1] = 'left';
 	arrayAlinha[2] = 'left';
 	arrayAlinha[3] = 'right';	
+/*	arrayAlinha[4] = 'right'; CPMF */
 	arrayAlinha[4] = 'right';
 	arrayAlinha[5] = 'right';
 	arrayAlinha[6] = 'right';
-	arrayAlinha[7] = 'right';
+/*  arrayAlinha[7] = 'right'; */
 	
 	tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
 	

@@ -3,7 +3,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0151.p
     Autor   : Gabriel Capoia (DB1)
-    Data    : 07/02/2013                     Ultima atualizacao: 29/08/2016
+    Data    : 07/02/2013                     Ultima atualizacao: 13/01/2017
 
     Objetivo  : Tranformacao BO tela PESQDP.
 
@@ -45,6 +45,10 @@
 		29/08/2016 - Ajuste na procedure Gera_Impressao: aumento do format
 		             do campo rel_nrctatrf, pois nao estava imprimindo o 
 					 dv do numero da conta. (Chamado 499004) - (Fabricio)
+
+		13/01/2017 - Ajustado o campo nrctatrf para DECIMAL pois 
+ 					 esta estourando o format pois deixa digitar 
+					 maior que INTE na tela (Tiago/Thiago 581315).
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -279,7 +283,7 @@ PROCEDURE Valida_Conta_Salario:
     DEF  INPUT PARAM par_cdempres AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdbantrf AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdagetrf AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_nrctatrf AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrctatrf AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_nrdigtrf AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrcpfcgc AS DECI                           NO-UNDO.
     
@@ -449,7 +453,7 @@ PROCEDURE Valida_Dados:
     DEF  INPUT PARAM par_cdempres AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdbantrf AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdagetrf AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_nrctatrf AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrctatrf AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_nrdigtrf AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrcpfcgc AS DECI                           NO-UNDO.
 
@@ -717,7 +721,7 @@ PROCEDURE Grava_Dados:
     DEF  INPUT PARAM par_cdagetrf AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdbantrf AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrdigtrf AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_nrctatrf AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrctatrf AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_nrcpfcgc AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
     
