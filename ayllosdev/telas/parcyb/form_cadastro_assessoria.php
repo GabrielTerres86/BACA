@@ -1,11 +1,13 @@
 <?php
 	/*!
 	 * FONTE        : form_cadastro_assessoria.php
-	 * CRIAÇÃO      : Douglas Quisinski
-	 * DATA CRIAÇÃO : 25/08/2015
+	 * CRIAÃ‡ÃƒO      : Douglas Quisinski
+	 * DATA CRIAÃ‡ÃƒO : 25/08/2015
 	 * OBJETIVO     : Cadastro de Assessorias para a tela CADCAS
 	 * --------------
-	 * ALTERAÇÕES   : Inclusão do campo "cdasscyb" Código de Acessoria do CYBER, Prj. 302 (Jean Michel)
+	 * ALTERAÃ‡Ã•ES   : InclusÃ£o do campo "cdasscyb" CÃ³digo de Acessoria do CYBER, Prj. 302 (Jean Michel)
+   *
+   *                17/01/2017 - inclusao campos flgjudic e fljudext - prj 432 (Jean CalÃ£o / MoutÂ´S)
 	 * --------------
 	 */
 ?>
@@ -19,5 +21,13 @@
 	<br />
 	<label for="nmassessoria"><? echo utf8ToHtml("Nome da Assessoria:") ?></label>
 	<input name="nmassessoria" type="text"  id="nmassessoria" class="campo alphanum"/>
+	<br />
+	<label for="flgjudic"><? echo utf8ToHtml("Judicial:") ?></label>
+    <input name="flgjudic" type="checkbox"  id="flgjudic" class="inteiro"/>
+    <br />
+    <label for="flextjud"><? echo utf8ToHtml("Extra Judicial:")?></label>
+    <input name="flextjud" type="checkbox"  id="flextjud" class="inteiro"/>
+    <br />
 	<br style="clear:both" />
+  
 </form>

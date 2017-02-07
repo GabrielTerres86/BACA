@@ -1,11 +1,11 @@
 <?php
 	/*!
 	 * FONTE        : form_parametrizar_historico.php
-	 * CRIAÇÃO      : Douglas Quisinski
-	 * DATA CRIAÇÃO : 26/08/2015
-	 * OBJETIVO     : Cabecalho para a tela de Parametrização de Históricos
+	 * CRIAÃ‡ÃƒO      : Douglas Quisinski
+	 * DATA CRIAÃ‡ÃƒO : 26/08/2015
+	 * OBJETIVO     : Cabecalho para a tela de ParametrizaÃ§Ã£o de HistÃ³ricos
 	 * --------------
-	 * ALTERAÇÕES   : 
+	 * ALTERAÃ‡Ã•ES   : 13/01/2016 - InclusÃ£o da coluna CÃ³digo de TransaÃ§Ã£o CYBER - PRJ 432 - Jean CalÃ£o
 	 * --------------
 	 */
 ?>
@@ -60,6 +60,7 @@
 							<th><? echo utf8ToHtml("Indicador");?></th>
 							<th><? echo utf8ToHtml("C&aacute;lculo Empr&eacute;stimo");?></th>
 							<th><? echo utf8ToHtml("C&aacute;lculo Conta Corrente");?></th>
+                            <th><? echo utf8ToHtml("C&oacute;digo Trans.CYBER");?></th>
 						</tr>
 					</thead>
 					<tbody>
