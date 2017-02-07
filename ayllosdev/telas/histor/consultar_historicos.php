@@ -5,14 +5,17 @@
  * DATA CRIAÇÃO : 11/03/2016
  * OBJETIVO     : Rotina para consultar históricos do sistema - HISTOR
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 05/12/2016 - P341-Automatização BACENJUD - Alterar a passagem da descrição do 
+ *                             departamento como parametros e passar o o código (Renato Darosci)
+ *
+ *                07/02/2017 - #552068 Mudança de informacao da coluna de descricao do historico,
+ *                             de dshistor para dsexthst;
+ *                             Comentada a coluna de CPMF(Carlos)
+ *
  * -------------- 
  *
  * -------------- 
  */
-?>
- 
-<?
 	session_start();
 	require_once('../../includes/config.php');
 	require_once('../../includes/funcoes.php');
@@ -45,7 +48,7 @@
 	$xml .= '		<cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
 	$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';	
 	$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';
-	$xml .= '       <dsdepart>'.$glbvars['dsdepart'].'</dsdepart>';	
+	$xml .= '       <cddepart>'.$glbvars['cddepart'].'</cddepart>';	
 	$xml .= '       <dtmvtolt>'.$glbvars['dtmvtolt'].'</dtmvtolt>';	
 	$xml .= '       <cddopcao>'.$cddopcao.'</cddopcao>';
 	$xml .= '       <cdhistor>'.$cdhistor.'</cdhistor>';
@@ -79,7 +82,7 @@
 	echo "strHTML += '  		    <th>Descri&ccedil;&atilde;o</th>';";
 	echo "strHTML += '  		    <th>D/C</th>';";
 	echo "strHTML += '  		    <th>Lote</th>';";
-	echo "strHTML += '  		    <th>% CMPF</th>';";
+/*	echo "strHTML += '  		    <th>% CPMF</th>';"; */
 	echo "strHTML += '  		    <th>Aviso</th>';";
 	echo "strHTML += '  		    <th>Debita</th>';";
 	echo "strHTML += '  		    <th>Credita</th>';";
@@ -90,10 +93,10 @@
 	foreach($xmlObjeto->roottag->tags[0]->tags as $historico){
 		// Recebo todos valores em variáveis
 		$cdhistor	= getByTagName($historico->tags,'cdhistor');
-		$dshistor	= getByTagName($historico->tags,'dshistor');
+		$dsexthst	= getByTagName($historico->tags,'dsexthst');
 		$indebcre 	= getByTagName($historico->tags,'indebcre');
 		$tplotmov 	= getByTagName($historico->tags,'tplotmov');
-		$txcpmfcc 	= getByTagName($historico->tags,'txcpmfcc');
+/*		$txcpmfcc 	= getByTagName($historico->tags,'txcpmfcc'); */
 		$inavisar 	= getByTagName($historico->tags,'inavisar');
 		$nrctadeb 	= getByTagName($historico->tags,'nrctadeb');
 		$nrctacrd 	= getByTagName($historico->tags,'nrctacrd');
@@ -101,11 +104,11 @@
 		/* Converter os campos de valores */ 			
 		echo "strHTML += '<tr>';";	
 		echo "strHTML += '   <td><span>".$cdhistor."</span>".$cdhistor."</td>';";
-		echo "strHTML += '   <td><span>".$dshistor."</span>".$dshistor."</td>';";
+		echo "strHTML += '   <td><span>".$dsexthst."</span>".$dsexthst."</td>';";
 		echo "strHTML += '   <td><span>".$indebcre."</span>".$indebcre."</td>';";
 		echo "strHTML += '   <td><span>".$tplotmov."</span>".$tplotmov."</td>';";
 
-		echo "strHTML += '   <td><span >".converteFloat($txcpmfcc,'MOEDA') ."</span>". formataMoeda($txcpmfcc) ."</td>';";
+/*		echo "strHTML += '   <td><span >".converteFloat($txcpmfcc,'MOEDA') ."</span>". formataMoeda($txcpmfcc) ."</td>';"; */
 
 		echo "strHTML += '   <td><span>".$inavisar."</span>".$inavisar."</td>';";
 		echo "strHTML += '   <td><span>".$nrctadeb."</span>".$nrctadeb."</td>';";
