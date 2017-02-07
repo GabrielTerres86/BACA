@@ -31,7 +31,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0084.p
     Autor   : Irlan
-    Data    : Fevereiro/2011               ultima Atualizacao: 21/03/2016
+    Data    : Fevereiro/2011               ultima Atualizacao: 26/09/2016
 
     Dados referentes ao programa:
 
@@ -232,7 +232,7 @@
               29/06/2015 - Ajuste na passagem de parametros da procedure
                            "obtem_emprestimo_risco". (James)
                            											 
-              10/07/2015 - Alterada PROCEDURE grava_efetivacao_proposta para 
+			  10/07/2015 - Alterada PROCEDURE grava_efetivacao_proposta para 
                            tratar operacoes de portabilidade de credito. (Reinert)
 
               30/09/2015 - Desenvolvimento do Projeto 215 - Estorno. (James/Reinert)
@@ -258,7 +258,8 @@
                            (Jaison/Anderson)
 
               16/02/2016 - Adicionado verificacao se chassi informado ja se encontra em outro
-                           emprestimo em aberto. (Jorge/Gielow) - SD 391096       
+                           emprestimo em aberto. (Jorge/Gielow) - SD 391096             
+						         
               17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
 
               01/02/2017 - Inclusao de comando validate crapepr. Ao chamar a rotina de rating, esta
@@ -268,6 +269,10 @@
 
 			  04/01/2016 - Validar se as informações de Imóvel foram devidamente preenchidas
 			               para o contrato de empréstimo (Renato Darosci - Supero) - M326
+              28/09/2016 - Incluido verificacao de contratos de acordos na procedure
+						               transf_contrato_prejuizo e valida_dados_efetivacao_proposta,
+                           Prj. 302 (Jean Michel).
+
 ............................................................................. */
 
 /*................................ DEFINICOES ............................... */
@@ -2219,7 +2224,7 @@ PROCEDURE valida_dados_efetivacao_proposta:
     DEF VAR aux_nrctrliq AS CHAR    NO-UNDO.
     DEF VAR aux_flgativo AS INTEGER NO-UNDO.
 	DEF VAR aux_flimovel AS INTEGER NO-UNDO.
-    
+
     DEF BUFFER crabbpr FOR crapbpr.
     
      ASSIGN aux_cdcritic = 0
@@ -2745,8 +2750,8 @@ PROCEDURE valida_dados_efetivacao_proposta:
                            INPUT-OUTPUT aux_dscritic).
 
             RETURN "NOK".
-          END.        
-          
+        END.
+
         IF aux_flgativo = 1 THEN
           DO:
             
@@ -3066,7 +3071,7 @@ PROCEDURE grava_efetivacao_proposta:
     DEF VAR aux_flgportb AS LOGI INIT FALSE                           NO-UNDO.
     DEF VAR aux_idcarga  AS INTE                                      NO-UNDO.
     DEF VAR aux_flgativo AS INTE                                      NO-UNDO.
-    
+
     DEF VAR h-b1wgen0097 AS HANDLE                                    NO-UNDO.
     DEF VAR h-b1wgen0134 AS HANDLE                                    NO-UNDO.
     DEF VAR h-b1wgen0110 AS HANDLE                                    NO-UNDO.
@@ -3093,21 +3098,21 @@ PROCEDURE grava_efetivacao_proposta:
 
     IF  aux_flgportb = FALSE THEN
         DO:
-          /** GRAVAMES **/
-          RUN sistema/generico/procedures/b1wgen0171.p PERSISTENT SET h-b1wgen0171.
+    /** GRAVAMES **/
+    RUN sistema/generico/procedures/b1wgen0171.p PERSISTENT SET h-b1wgen0171.
 
-          RUN valida_bens_alienados IN h-b1wgen0171 (INPUT par_cdcooper,
-                                                     INPUT par_nrdconta,
-                                                     INPUT par_nrctremp,
-                                                     INPUT "",
-                                                    OUTPUT TABLE tt-erro).
-          DELETE PROCEDURE h-b1wgen0171.
+    RUN valida_bens_alienados IN h-b1wgen0171 (INPUT par_cdcooper,
+                                               INPUT par_nrdconta,
+                                               INPUT par_nrctremp,
+                                               INPUT "",
+                                              OUTPUT TABLE tt-erro).
+    DELETE PROCEDURE h-b1wgen0171.
 
-          IF  RETURN-VALUE <> "OK"   THEN
-              RETURN "NOK".
+    IF  RETURN-VALUE <> "OK"   THEN
+        RETURN "NOK".
 
         END.
-    
+
     RUN valida_dados_efetivacao_proposta (INPUT par_cdcooper,
                                           INPUT par_cdagenci,
                                           INPUT par_nrdcaixa,
@@ -3119,10 +3124,10 @@ PROCEDURE grava_efetivacao_proposta:
                                           INPUT par_dtmvtolt,
                                           INPUT par_flgerlog,
                                           INPUT par_nrctremp).
-    
+
     IF RETURN-VALUE <> "OK"   THEN
        RETURN "NOK".
-   
+
     EFETIVACAO:
     DO TRANSACTION ON ERROR UNDO, LEAVE:
 
@@ -3334,17 +3339,17 @@ PROCEDURE grava_efetivacao_proposta:
 
 
        IF aux_flgportb = FALSE THEN
-         DO:
-           RUN sistema/generico/procedures/b1wgen0097.p PERSISTENT SET h-b1wgen0097.
+            DO:
+       RUN sistema/generico/procedures/b1wgen0097.p PERSISTENT SET h-b1wgen0097.
 
-           RUN consulta_iof IN h-b1wgen0097 (INPUT par_cdcooper,
-                                             INPUT par_dtmvtolt,
-                                             INPUT crawepr.vlemprst,
-                                            OUTPUT aux_vliofepr,
-                                            OUTPUT TABLE tt-erro).
+       RUN consulta_iof IN h-b1wgen0097 (INPUT par_cdcooper,
+                                         INPUT par_dtmvtolt,
+                                         INPUT crawepr.vlemprst,
+                                        OUTPUT aux_vliofepr,
+                                        OUTPUT TABLE tt-erro).
 
-           DELETE PROCEDURE h-b1wgen0097.
-         END.
+       DELETE PROCEDURE h-b1wgen0097.
+            END.
 
        CREATE crapepr.
        ASSIGN crapepr.dtmvtolt = par_dtmvtolt
@@ -3388,7 +3393,7 @@ PROCEDURE grava_efetivacao_proposta:
               crapepr.vltarifa = par_vltarifa
               crapepr.vltaxiof = par_vltaxiof
               crapepr.vltariof = par_vltariof
-              crapepr.iddcarga = aux_idcarga.
+			  crapepr.iddcarga = aux_idcarga.
 
        IF   crapepr.cdlcremp = 100   THEN
             DO:
@@ -4237,7 +4242,7 @@ PROCEDURE transf_contrato_prejuizo.
     DEF VAR aux_diarefju     AS INTE                                NO-UNDO.
     DEF VAR aux_mesrefju     AS INTE                                NO-UNDO.
     DEF VAR aux_anorefju     AS INTE                                NO-UNDO.
-    
+
     DEF VAR aux_flgativo     AS DEC                                 NO-UNDO.
   
     EMPTY TEMP-TABLE tt-erro.
@@ -4307,17 +4312,17 @@ PROCEDURE transf_contrato_prejuizo.
             ASSIGN aux_cdcritic = 0
                    aux_dscritic = "Transferencia para prejuizo nao permitida, emprestimo em acordo.".
 
-            RUN gera_erro (INPUT par_cdcooper,
-                           INPUT par_cdagenci,
-                           INPUT 1, /* nrdcaixa  */
-                           INPUT 1, /* sequencia */
-                           INPUT aux_cdcritic,
-                           INPUT-OUTPUT aux_dscritic).
+           RUN gera_erro (INPUT par_cdcooper,
+                          INPUT par_cdagenci,
+                          INPUT 1, /* nrdcaixa  */
+                          INPUT 1, /* sequencia */
+                          INPUT aux_cdcritic,
+                          INPUT-OUTPUT aux_dscritic).
 
-            RETURN "NOK".
+           RETURN "NOK".
              
-          END.
-       
+       END.
+          
        /* Fim verificacao contrato acordo */     
           
           
@@ -4828,8 +4833,7 @@ PROCEDURE desfaz_transferencia_prejuizo.
     ASSIGN aux_flgtrans = FALSE.
 
     TRANSFERE:
-    DO ON ENDKEY UNDO , LEAVE ON ERROR UNDO , LEAVE:   
-
+    DO ON ENDKEY UNDO , LEAVE ON ERROR UNDO , LEAVE:
 
         FOR FIRST crapepr
             WHERE crapepr.cdcooper = par_cdcooper

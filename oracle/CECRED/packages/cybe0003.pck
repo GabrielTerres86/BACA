@@ -35,6 +35,7 @@ CREATE OR REPLACE PACKAGE CECRED.CYBE0003 AS
   PROCEDURE pc_manter_assessorias(pr_cddopcao   IN VARCHAR2           --> Opção (IA-Incluir/AA-Alterar/EA-Excluir)
                                  ,pr_cdassess   IN INTEGER            --> Código da Assessoria
                                  ,pr_dsassess   IN VARCHAR2           --> Descrição da Assessoria
+                                 ,pr_cdasscyb   IN INTEGER            --> Código da Assessoria Cyber
                                  ,pr_xmllog     IN VARCHAR2           --> XML com informações de LOG
                                  ,pr_cdcritic  OUT PLS_INTEGER        --> Código da crítica
                                  ,pr_dscritic  OUT VARCHAR2           --> Descrição da crítica
@@ -94,7 +95,6 @@ CREATE OR REPLACE PACKAGE CECRED.CYBE0003 AS
                                   ,pr_des_erro  OUT VARCHAR2);         --> Erros do processo
 END CYBE0003;
 /
-
 CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0003 AS
 ---------------------------------------------------------------------------------------------------------------
 --
@@ -143,6 +143,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0003 AS
       CURSOR cr_assessorias(pr_cdassessoria IN tbcobran_assessorias.cdassessoria%TYPE) IS
       SELECT tbcobran_assessorias.cdassessoria
             ,tbcobran_assessorias.nmassessoria
+            ,tbcobran_assessorias.cdassessoria_cyber
         FROM tbcobran_assessorias
        WHERE tbcobran_assessorias.cdassessoria = NVL(pr_cdassessoria,tbcobran_assessorias.cdassessoria)
        ORDER BY tbcobran_assessorias.cdassessoria;
@@ -157,6 +158,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0003 AS
                                             ,XMLTYPE('<assessoria>'
                                                    ||'  <cdassessoria>'||rw_assessoria.cdassessoria||'</cdassessoria>'
                                                    ||'  <nmassessoria>'||UPPER(rw_assessoria.nmassessoria)||'</nmassessoria>'
+                                                   ||'  <cdasscyb>'||UPPER(rw_assessoria.cdassessoria_cyber)||'</cdasscyb>'
                                                    ||'</assessoria>'));
       END LOOP;
       
@@ -211,6 +213,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0003 AS
       CURSOR cr_assessorias(pr_nmassessoria IN tbcobran_assessorias.nmassessoria%TYPE) IS
       SELECT tbcobran_assessorias.cdassessoria
             ,tbcobran_assessorias.nmassessoria
+            ,tbcobran_assessorias.cdassessoria_cyber
         FROM tbcobran_assessorias
        WHERE UPPER(tbcobran_assessorias.nmassessoria) LIKE UPPER('%' || pr_nmassessoria || '%')
        ORDER BY tbcobran_assessorias.cdassessoria;
@@ -226,6 +229,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0003 AS
                                             ,XMLTYPE('<assessoria>'
                                                    ||'  <cdassessoria>'||rw_assessoria.cdassessoria||'</cdassessoria>'
                                                    ||'  <nmassessoria>'||UPPER(rw_assessoria.nmassessoria)||'</nmassessoria>'
+                                                   ||'  <cdasscyb>'||UPPER(rw_assessoria.cdassessoria_cyber)||'</cdasscyb>'
                                                    ||'</assessoria>'));
       END LOOP;
       
@@ -250,6 +254,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0003 AS
   PROCEDURE pc_manter_assessorias(pr_cddopcao   IN VARCHAR2           --> Opção (I-Incluir/A-Alterar/E-Excluir)
                                  ,pr_cdassess   IN INTEGER            --> Código da Assessoria
                                  ,pr_dsassess   IN VARCHAR2           --> Descrição da Assessoria
+                                 ,pr_cdasscyb   IN INTEGER            --> Código da Assessoria Cyber
                                  ,pr_xmllog     IN VARCHAR2           --> XML com informações de LOG
                                  ,pr_cdcritic  OUT PLS_INTEGER        --> Código da crítica
                                  ,pr_dscritic  OUT VARCHAR2           --> Descrição da crítica
@@ -297,18 +302,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0003 AS
                                    ,pr_dsdchave => ' '
                                    ,pr_flgdecre => 'N');
           BEGIN
-            INSERT INTO tbcobran_assessorias(cdassessoria,nmassessoria)
-                 VALUES(vr_cdassess,UPPER(pr_dsassess));
+            INSERT INTO tbcobran_assessorias(cdassessoria,nmassessoria,cdassessoria_cyber)
+                 VALUES(vr_cdassess,UPPER(pr_dsassess),pr_cdasscyb);
           EXCEPTION
             WHEN OTHERS THEN
             -- Descricao do erro na insercao de registros
-            vr_dscritic := 'Problema ao incluir Assessoria: ' || sqlerrm;
+            vr_dscritic := 'Problema ao incluir Assessoria: ' || SQLERRM;
             RAISE vr_exc_erro;
           END;
 
         WHEN 'AA' THEN -- Alterar Assessoria
           BEGIN
-            UPDATE tbcobran_assessorias SET nmassessoria = UPPER(pr_dsassess)
+            UPDATE tbcobran_assessorias SET nmassessoria = UPPER(pr_dsassess), cdassessoria_cyber = pr_cdasscyb
              WHERE cdassessoria = pr_cdassess;
           EXCEPTION
             WHEN OTHERS THEN
@@ -822,4 +827,3 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0003 AS
 
 END CYBE0003;
 /
-

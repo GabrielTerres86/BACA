@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Codigo Cooperativa
+CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TYPE   --> Codigo Cooperativa
                                        ,pr_flgresta IN PLS_INTEGER             --> Flag padrão para utilização de restart
                                        ,pr_nmtelant IN VARCHAR2                --> Nome tela anterior
                                        ,pr_stprogra OUT PLS_INTEGER            --> Saida de termino da execucao
@@ -287,16 +287,18 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
 
                12/04/2016 - Ajustado a data de movimento para a baixa de titulo
                             (Douglas - Chamado 424571)
-
+                            
                09/05/2016 - Tratamento para não liquidar boletos de convenios bloqueados
-                            PRJ318 - Nova Plataforma de cobrança (Odirlei-AMcom)
-
+                            PRJ318 - Nova Plataforma de cobrança (Odirlei-AMcom)      
+                                   
                22/09/2016 - Ajuste nos cursores e alteração da lógica para obtenção de títulos (Rodrigo)
                
 			   10/10/2016 - Alteração do diretório para geração de arquivo contábil.
                             P308 (Ricardo Linhares).
 
                11/10/2016 - Ajustes referente ao processo de REPROC do arquivo COB615 (Renato Darosci)
+               30/09/2016 - Alterações referentes ao projeto 302 - Sistema de acordos
+                            (Renato Darosci - Supero)                 
    .............................................................................*/
 
      DECLARE
@@ -571,7 +573,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
        rw_crapsab cr_crapsab%ROWTYPE;
 
        -- RETIRADO O PROCESSAMENTO DE LIQUIDAÇÃO INTRABANCÁRIA (Renato Darosci - 11/10/2016)
-       --Selecionar informacoes para liquidacao 
+       --Selecionar informacoes para liquidacao
        /*CURSOR cr_crapcco_liquida (pr_cdcooper IN crapcop.cdcooper%type
                                  ,pr_cdbcoctl IN crapcop.cdbcoctl%type
                                  ,pr_dtmvtolt IN crapdat.dtmvtolt%type) IS
@@ -741,6 +743,43 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
             ORDER BY cde.nrdconta, cde.nrctremp;
        rw_cde cr_cde%ROWTYPE;
 
+       -- Buscar boletos dos acordos pagos na cobranca para serem regularizados
+       CURSOR cr_boletos_pagos_acordos (pr_cdcooper IN crapret.cdcooper%TYPE
+                                       ,pr_nrcnvcob IN crapret.nrcnvcob%TYPE
+                                       ,pr_dtocorre IN crapret.dtocorre%TYPE) IS
+         SELECT aco.cdcooper
+              , aco.nrdconta
+              , acp.nracordo
+              , acp.nrparcela
+              , acp.nrconvenio
+              , acp.nrboleto
+              , cob.dsdoccop
+              , cob.dtvencto
+              , cob.vltitulo
+              , ret.vlrpagto
+              , ret.flcredit
+              , cob.rowid     cob_rowid
+           FROM crapret   ret
+              , crapcob   cob
+              , tbrecup_acordo_parcela  acp
+              , tbrecup_acordo          aco
+         WHERE ret.cdcooper = pr_cdcooper
+           AND ret.nrcnvcob = pr_nrcnvcob
+           AND ret.dtocorre = pr_dtocorre
+           AND ret.cdocorre IN (6,76) -- liquidacao normal COO/CEE
+           
+           AND cob.cdcooper = ret.cdcooper
+           AND cob.nrcnvcob = ret.nrcnvcob
+           AND cob.nrdconta = ret.nrdconta
+           AND cob.nrdocmto = ret.nrdocmto
+           
+           AND aco.cdcooper     = cob.cdcooper
+           AND acp.nrdconta_cob = cob.nrdconta
+           AND acp.nrconvenio   = cob.nrcnvcob
+           AND acp.nrboleto     = cob.nrdocmto
+
+           AND aco.nracordo     = acp.nracordo;
+       
        --Registro do tipo calendario
        rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
        rw_craprej  craprej%ROWTYPE;
@@ -837,7 +876,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
        vr_email_tarif  VARCHAR2(1000);
        vr_descorpo     VARCHAR2(3900);
        vr_flamenor     BOOLEAN := FALSE;
-       
+       vr_cdtipreg     NUMBER;
+
        -- Variáveis relacionadas ao processo de REPROC
        vr_inreproc     BOOLEAN;
        vr_dsarqrep     VARCHAR2(100);
@@ -1353,7 +1393,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
          IF vr_inreproc THEN
            vr_nmarqimp:= 'crrl686_REP_'||GENE0002.fn_busca_time()||'.lst';
          ELSE   
-           vr_nmarqimp:= 'crrl686.lst';
+         vr_nmarqimp:= 'crrl686.lst';
          END IF;
          
 
@@ -1625,7 +1665,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
                          '_REP_'||GENE0002.fn_busca_time||'.lst';
            ELSE   
              -- Nome arquivo impressao
-             vr_nmarqimp:= 'crrl605_'|| gene0002.fn_mask(rw_crapcco.nrconven,'9999999') ||
+           vr_nmarqimp:= 'crrl605_'|| gene0002.fn_mask(rw_crapcco.nrconven,'9999999') ||
                          '_'|| gene0002.fn_mask(vr_contador,'99')|| '.lst';
            END IF;
            
@@ -2124,11 +2164,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
                              gene0002.fn_mask(vr_tab_rel618(vr_index_rel618).cddbanco,'999') || 
                            '_REP_'||GENE0002.fn_busca_time||'.lst';
              ELSE   
-               --Nome arquivo Impressao
-               vr_nmarqimp:= 'crrl618_'|| rw_crapcop.dsdircop ||'_'||
-                             gene0002.fn_mask(vr_tab_rel618(vr_index_rel618).cddbanco,'999') || '.lst';
+             --Nome arquivo Impressao
+             vr_nmarqimp:= 'crrl618_'|| rw_crapcop.dsdircop ||'_'||
+                           gene0002.fn_mask(vr_tab_rel618(vr_index_rel618).cddbanco,'999') || '.lst';
              END IF;
-             
+
              --Descricao da Origem
              vr_nmorigem:= gene0002.fn_mask(rw_crapcop.cdbcoctl,'999')||' - ' ||
                            rw_crapcop.nmrescop ||' - AGENCIA: '||
@@ -2241,7 +2281,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
                vr_nmarqimp:= 'crrl706_REP_'||GENE0002.fn_busca_time||'.lst';
              ELSE   
                -- Nome arquivo Impressao
-               vr_nmarqimp:= 'crrl706.lst';
+             vr_nmarqimp:= 'crrl706.lst';
              END IF;
            
 
@@ -2485,7 +2525,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
            RAISE vr_exc_final;
          END IF;
          /*  Fim da verificacao se deve executar  */
-         
+
          -- Se for execução pela COMPEFORA, deve criticar caso seja encontrado 
          -- mais de um arquivo para processamento, de forma a evitar que um arquivo 
          -- normal e um REPROC sejam reprocessados juntos  ( Renato Darosci - Supero)
@@ -2604,7 +2644,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
              --Ir para proximo arquivo
              CONTINUE;
            END IF;
-           
+
            -- Verificar se o arquivo é um REPROC  (Renato Darosci - 11/10/2016)
            IF TRIM(SUBSTR(vr_setlinha,99,3)) = 'REP' THEN
              -- Indica que o arquivo é de reprocessamento
@@ -2669,7 +2709,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
                    vr_dscritic:= 'Erro na leitura do arquivo. '||sqlerrm;
                    RAISE vr_exc_sair;
                END;
-               
+
                /* Trailer do lote do arquivo - Quanto encontrar a sequencia 
                   especifica, deve ignorar a linha ( Renato Darosci - 11/10/2016) */
                IF SUBSTR(vr_setlinha,1,31) = '0180859999999999999999999999999' THEN
@@ -2881,7 +2921,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
                    --Marcar como rejeitado
                    vr_flgrejei:= TRUE;
                    
-                 ELSIF vr_tab_crapcco(vr_index_crapcco).dsorgarq = 'EMPRESTIMO' THEN
+                 ELSIF vr_tab_crapcco(vr_index_crapcco).dsorgarq IN ('EMPRESTIMO','ACORDO') THEN
                    -- inicializar variavel 
                    vr_flgproc_sing := 0;
                  
@@ -3057,9 +3097,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
                  --Fechar Cursor
                  CLOSE cr_crapass;
                  
-                 --Se nao encontrou associado e convenio de EMPRESTIMO, pular p/ o prox registro
+                 --Se nao encontrou associado e convenio de EMPRESTIMO ou de ACORDO, pular p/ o prox registro
                  IF NOT vr_crapass AND 
-                   vr_tab_crapcco(vr_index_crapcco).dsorgarq = 'EMPRESTIMO' THEN
+                   vr_tab_crapcco(vr_index_crapcco).dsorgarq IN ('EMPRESTIMO','ACORDO') THEN
                    vr_flgrejei := TRUE;
                    --Inicializar variavel erro
                    vr_cdcritic:= 0;
@@ -3221,7 +3261,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
                    -- Verificar se o Convenio do cooperado está bloqueado
                    IF rw_crapceb.insitceb = 4 THEN -- bloqueado
                      vr_cdcritic := 980; --> 980 - Convenio do cooperado bloqueado
-                 END IF;
+                   END IF;
                  END IF;
 
                  -- verificar se ocorreu alguma das criticas acima (965 ou 966)
@@ -3365,9 +3405,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
                                        ,pr_nrdocmto => vr_nrdocmto);
                  FETCH cr_crapcob INTO rw_crapcob;
 
-                 -- se o boleto de emprestimo nao foi encontrado, será devolvido no crrl574
+                 -- se o boleto de emprestimo ou do acordo nao foi encontrado, será devolvido no crrl574
                  IF cr_crapcob%NOTFOUND AND
-                    vr_tab_crapcco(vr_index_crapcco).dsorgarq = 'EMPRESTIMO' THEN
+                    vr_tab_crapcco(vr_index_crapcco).dsorgarq IN ('EMPRESTIMO','ACORDO') THEN
                     CLOSE cr_crapcob;
                     RAISE vr_exc_proximo;
                  END IF;                                  
@@ -3563,7 +3603,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
                                           ,pr_nrdconta => vr_nrdconta
                                           ,pr_nrdocmto => vr_nrdocmto);
                     FETCH cr_crapcob INTO rw_crapcob;
-	               -- liquidacao após baixa ou liquidação de título não registrado
+		               -- liquidacao após baixa ou liquidação de título não registrado
                    vr_liqaposb:= TRUE;
                  END IF;
 
@@ -3573,9 +3613,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
                    CLOSE cr_crapcob;
                  END IF;
 
-                 -- se o boleto de emprestimo ja foi pago ou baixado, será devolvido no crrl574
+                 -- se o boleto de emprestimo ou acordo ja foi pago ou baixado, será devolvido no crrl574
                  IF rw_crapcob.incobran IN (3,5) AND 
-                    vr_tab_crapcco(vr_index_crapcco).dsorgarq = 'EMPRESTIMO' THEN
+                    vr_tab_crapcco(vr_index_crapcco).dsorgarq IN ('EMPRESTIMO','ACORDO') THEN
                     RAISE vr_exc_proximo;
                  END IF;                 
 
@@ -3976,10 +4016,15 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
                    END IF;
                  END IF; --vr_flgvenci
 
-                 /* se pagou valor menor ou vencido e é do convenio EMPRESTIMO, 
-                    pular para o proximo registro - será devolvido no crrl574 */
+                 /* se pagou valor menor ou vencido e é do convenio EMPRESTIMO */
                  IF (ROUND(vr_vlliquid,2) < ROUND(vr_vlfatura,2) OR vr_flgvenci) AND 
                     vr_tab_crapcco(vr_index_crapcco).dsorgarq = 'EMPRESTIMO' THEN
+                    -- pular para o proximo registro - será devolvido no crrl574
+                    RAISE vr_exc_proximo;
+                 -- Se pagou valor a menor e é ACORDO
+                 ELSIF ROUND(vr_vlliquid,2) < ROUND(vr_vlfatura,2) AND 
+                    vr_tab_crapcco(vr_index_crapcco).dsorgarq = 'ACORDO' THEN
+                    -- pular para o proximo registro - será devolvido no crrl574
                     RAISE vr_exc_proximo;
                  END IF;
 
@@ -4217,6 +4262,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
                                                                  || ' - Linha: '|| SUBSTR(vr_setlinha,151,10)
                                                                  || ' - Arquivo: integra/'||vr_tab_nmarqtel(idx));
                                                          
+                   -- Incluir a regra para processamento do acordo - Renato Darosci - 30/09/2016
+                   IF nvl(rw_crapcob.nrctremp,0) > 0 THEN 
+                     vr_cdtipreg := 5; 
+                   ELSIF vr_tab_crapcco(vr_index_crapcco).dsorgarq = 'ACORDO' THEN
+                     vr_cdtipreg := 5;
+                   ELSE
+                     vr_cdtipreg := 3;
+                   END IF;
+                   
+                   
                    /* Criacao da tabela generica gncptit - utilizada na conciliacao */
                    BEGIN
                      INSERT INTO gncptit
@@ -4265,7 +4320,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
                       ,vr_cdoperad
                       ,TO_NUMBER(TRIM(SUBSTR(vr_setlinha,151,10)))
                       ,to_number(TRIM(SUBSTR(vr_setlinha,10,10))) / 100
-                      ,(CASE WHEN nvl(rw_crapcob.nrctremp,0) > 0 THEN 5 ELSE 3 END)  /* Sua Remessa - Erro */
+                      ,vr_cdtipreg    /* Sua Remessa - Erro */
                       ,1              /* registro conciliado */
                       ,1              /* processou na central */
                       ,vr_cdcritic    /* integrado c/ erro */
@@ -4300,6 +4355,15 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
                  --Atribuir tipo documento
                  vr_cdtipdoc:= SUBSTR(vr_setlinha, 148, 3);
 
+                 -- Incluir a regra para processamento do acordo - Renato Darosci - 30/09/2016
+                 IF nvl(rw_crapcob.nrctremp,0) > 0 THEN 
+                   vr_cdtipreg := 5; 
+                 ELSIF vr_tab_crapcco(vr_index_crapcco).dsorgarq = 'ACORDO' THEN
+                   vr_cdtipreg := 5;
+                 ELSE
+                   vr_cdtipreg := 4;
+                 END IF;
+                 
                  --Tipo documento
                  IF vr_cdtipdoc IN (140,144) THEN
                    vr_flgpgdda:= 1;
@@ -4355,7 +4419,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
                     ,vr_cdoperad
                     ,TO_NUMBER(TRIM(SUBSTR(vr_setlinha,151,10)))
                     ,to_number(TRIM(SUBSTR(vr_setlinha,10,10))) / 100
-                    ,(CASE WHEN nvl(rw_crapcob.nrctremp,0) > 0 THEN 5 ELSE 4 END)  /* Sua Remessa */
+                    ,vr_cdtipreg    /* Sua Remessa */
                     ,1              /* registro conciliado */
                     ,0              /* processou na central */
                     ,0              /* integrado coop */
@@ -4460,9 +4524,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
                /*  Move arquivo integrado para o diretorio salvar  */
                vr_comando:= 'mv '||vr_caminho_integra||'/'||vr_tab_nmarqtel(idx)||' '||vr_caminho_salvar||'/'||vr_dsarqrep;
              ELSE
-               --Move Arquivo diretorio salvar
-               vr_comando:= 'mv '||vr_caminho_integra||'/'||vr_tab_nmarqtel(idx)||' '||vr_caminho_salvar||' 2> /dev/null';
-             
+             --Move Arquivo diretorio salvar
+             vr_comando:= 'mv '||vr_caminho_integra||'/'||vr_tab_nmarqtel(idx)||' '||vr_caminho_salvar||' 2> /dev/null';
+
              END IF;
              
 	           /* Não deve mais executar o comando neste momento!!!
@@ -4697,34 +4761,82 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
 
               END LOOP; 
 
+           ELSIF rw_crapcco.dsorgarq = 'ACORDO' THEN
+             -- Percorrer boletos dos acordos pagos na cobranca para serem regularizados
+             FOR rw_boletos_pagos_acordos IN cr_boletos_pagos_acordos (pr_cdcooper => rw_crapcco.cdcooper
+                                                                      ,pr_nrcnvcob => rw_crapcco.nrconven
+                                                                      ,pr_dtocorre => vr_dtcredit)   LOOP
+                                        					 
+               BEGIN
+                 -- Efetuar o pagamento do acordo
+                 RECP0001.pc_pagar_contrato_acordo(pr_nracordo => rw_boletos_pagos_acordos.nracordo
+                                                  ,pr_nrparcel => rw_boletos_pagos_acordos.nrparcela
+                                                  ,pr_vlparcel => rw_boletos_pagos_acordos.vlrpagto
+                                                  ,pr_cdoperad => 1 -- usuário master
+                                                  ,pr_idorigem => 1 -- Ayllos
+                                                  ,pr_nmtelant => pr_nmtelant
+                                                  ,pr_vltotpag => vr_vltotpag
+                                                  ,pr_cdcritic => vr_cdcritic
+                                                  ,pr_dscritic => vr_dscritic);
+                                                  
+                 -- Se retornar erro
+                 IF vr_dscritic IS NOT NULL THEN
+                   RAISE vr_exc_saida;
+           END IF;
+
+               EXCEPTION
+                 WHEN OTHERS THEN
+                   -- Erro
+                   vr_cdcritic:= 0;
+                   vr_dscritic:= 'Erro nao tratado - '||sqlerrm;
+               END;					
+                                        	
+               -- se ocorreu alguma critica de pagto de emprestimo, registrar no boleto
+               IF vr_dscritic IS NOT NULL THEN
+                 PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_boletos_pagos_acordos.cob_rowid    --ROWID da Cobranca
+                                              ,pr_cdoperad => 'PAGAACORDO'                   		    --Operador
+                                              ,pr_dtmvtolt => rw_crapdat.dtmvtolt            		    --Data movimento
+                                              ,pr_dsmensag => 'Erro: ' || substr(vr_dscritic,1,100) --Descricao Mensagem
+                                              ,pr_des_erro => vr_des_erro                    		    --Indicador erro
+                                              ,pr_dscritic => vr_dscritic2);                  	    --Descricao erro
+               ELSE
+                 PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_boletos_pagos_acordos.cob_rowid    --ROWID da Cobranca
+                                              ,pr_cdoperad => vr_cdoperad                    		  --Operador
+                                              ,pr_dtmvtolt => rw_crapdat.dtmvtolt           	 	  --Data movimento
+                                              ,pr_dsmensag => 'Pagto realizado ref ao acordo ' || to_char(rw_boletos_pagos_acordos.nracordo) ||
+                                                              (CASE WHEN TRIM(pr_nmtelant) IS NULL THEN ' ' ELSE ' - COMPEFORA' END) --Descricao Mensagem
+                                              ,pr_des_erro => vr_des_erro                    		  --Indicador erro
+                                              ,pr_dscritic => vr_dscritic2);                 		  --Descricao erro
+               END IF;			  
+             END LOOP;
            END IF;
 
          END LOOP;
          
          -- Não deve executar o 2o processamento quando for execução de arquivo REPROC (Renato Darosci - 11/10/2016)
          IF NOT vr_inreproc THEN
-           -- 2o processamento
-           /* Busca todos os convenios da IF CECRED que foram gerados pela internet */
-           FOR rw_crapcco IN cr_crapcco_ativo (pr_cdcooper => rw_crapcop.cdcooper
-                                              ,pr_cddbanco => rw_crapcop.cdbcoctl) LOOP
-                    
-             btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                       ,pr_ind_tipo_log => 2 -- Erro tratato
-                                       ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                       ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                          || vr_cdprogra || ' --> '
-                                                          || 'Processando baixas e protestos  : convenio ' || to_char(rw_crapcco.nrconven) );                                           
-           
-             IF pr_nmtelant = 'COMPEFORA' THEN
-                   --Data Atual
-                   vr_dtmvtaux:= rw_crapdat.dtmvtoan;
+         -- 2o processamento
+         /* Busca todos os convenios da IF CECRED que foram gerados pela internet */
+         FOR rw_crapcco IN cr_crapcco_ativo (pr_cdcooper => rw_crapcop.cdcooper
+                                            ,pr_cddbanco => rw_crapcop.cdbcoctl) LOOP
+                  
+           btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                     ,pr_ind_tipo_log => 2 -- Erro tratato
+                                     ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
+                                     ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                        || vr_cdprogra || ' --> '
+                                                        || 'Processando baixas e protestos  : convenio ' || to_char(rw_crapcco.nrconven) );                                           
+         
+               IF pr_nmtelant = 'COMPEFORA' THEN
+                 --Data Atual
+                 vr_dtmvtaux:= rw_crapdat.dtmvtoan;
                vr_dtmvtpro:= rw_crapdat.dtmvtolt;
-                 ELSE
-                   --Proximo Dia Util
-                   vr_dtmvtaux:= rw_crapdat.dtmvtolt;
+               ELSE
+                 --Proximo Dia Util
+                 vr_dtmvtaux:= rw_crapdat.dtmvtolt;
                vr_dtmvtpro:= rw_crapdat.dtmvtopr;
-             END IF;     
-       
+               END IF;     
+     
              FOR idx IN 0..7 LOOP
             
                FOR idxprt IN 5..15 LOOP
@@ -4735,40 +4847,40 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
                                                    ,pr_qtdiaprt => idxprt) LOOP
                    /* que devem ser protestados */
                    IF nvl(rw_crapcob.flgdprot,0) = 1 AND nvl(rw_crapcob.flgregis,0) = 1 THEN
-                 /* Validar se chegou no limite de protesto
-                     Data de vencimento conta como data pro protesto */
-                 IF (rw_crapcob.dtvencto + rw_crapcob.qtdiaprt) <= vr_dtmvtaux THEN          
-                   /* Gerar Protesto */
+               /* Validar se chegou no limite de protesto
+                   Data de vencimento conta como data pro protesto */
+               IF (rw_crapcob.dtvencto + rw_crapcob.qtdiaprt) <= vr_dtmvtaux THEN          
+                 /* Gerar Protesto */
                    COBR0007.pc_inst_protestar (pr_cdcooper => pr_cdcooper           --Codigo Cooperativa
-                                              ,pr_nrdconta => rw_crapcob.nrdconta   --Numero da Conta
-                                              ,pr_nrcnvcob => rw_crapcob.nrcnvcob   --Numero Convenio
-                                              ,pr_nrdocmto => rw_crapcob.nrdocmto   --Numero Documento
-                                              ,pr_cdocorre => 9 /* cdocorre */      --Codigo da ocorrencia
-                                              ,pr_cdtpinsc => rw_crapcob.cdtpinsc   --Tipo Inscricao
+                                            ,pr_nrdconta => rw_crapcob.nrdconta   --Numero da Conta
+                                            ,pr_nrcnvcob => rw_crapcob.nrcnvcob   --Numero Convenio
+                                            ,pr_nrdocmto => rw_crapcob.nrdocmto   --Numero Documento
+                                            ,pr_cdocorre => 9 /* cdocorre */      --Codigo da ocorrencia
+                                            ,pr_cdtpinsc => rw_crapcob.cdtpinsc   --Tipo Inscricao
                                                   ,pr_dtmvtolt => vr_dtmvtpro           --Data pagamento
-                                              ,pr_cdoperad => vr_cdoperad           --Operador
-                                              ,pr_nrremass => 0                     --Numero da Remessa
-                                              ,pr_tab_lat_consolidada => vr_tab_lat_consolidada --Tabela
-                                              ,pr_cdcritic => vr_cdcritic           --Codigo da Critica
-                                              ,pr_dscritic => vr_dscritic);         --Descricao da critica
+                                            ,pr_cdoperad => vr_cdoperad           --Operador
+                                            ,pr_nrremass => 0                     --Numero da Remessa
+                                            ,pr_tab_lat_consolidada => vr_tab_lat_consolidada --Tabela
+                                            ,pr_cdcritic => vr_cdcritic           --Codigo da Critica
+                                            ,pr_dscritic => vr_dscritic);         --Descricao da critica
 
-                   --Se ocorreu erro
-                   IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                     /* Alterado para não apresentar a critica no log, e sim salvar no log de cobrança */
-                     PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid            --ROWID da Cobranca
-                                                    ,pr_cdoperad => vr_cdoperad               --Operador
-                                                    ,pr_dtmvtolt => rw_crapdat.dtmvtolt       --Data movimento
-                                                    ,pr_dsmensag => 'Protesto nao efetuado: '||
-                                                                    vr_dscritic               --Descricao Mensagem
-                                                    ,pr_des_erro => vr_des_erro               --Indicador erro
-                                                    ,pr_dscritic => vr_dscritic);
+                 --Se ocorreu erro
+                 IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+                   /* Alterado para não apresentar a critica no log, e sim salvar no log de cobrança */
+                   PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid            --ROWID da Cobranca
+                                                  ,pr_cdoperad => vr_cdoperad               --Operador
+                                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt       --Data movimento
+                                                  ,pr_dsmensag => 'Protesto nao efetuado: '||
+                                                                  vr_dscritic               --Descricao Mensagem
+                                                  ,pr_des_erro => vr_des_erro               --Indicador erro
+                                                  ,pr_dscritic => vr_dscritic);
 
-                     --Inicializar variavel erro
-                     vr_cdcritic:= NULL;
-                     vr_dscritic:= NULL;
-                   END IF;
+                   --Inicializar variavel erro
+                   vr_cdcritic:= NULL;
+                   vr_dscritic:= NULL;
                  END IF;
-                 END IF;     
+               END IF;
+               END IF;     
                  END LOOP;
                END LOOP;
 
@@ -4776,165 +4888,169 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
                                                    ,pr_nrconven => rw_crapcco.nrconven
                                                    ,pr_dtvencto => TRUNC(rw_crapdat.dtmvtolt) -idx
                                                    ,pr_incobran => 0 /*aberto*/) LOOP 
+               -- se o titulo for DDA e emissao apos 17/03/2012 e vencido
+               -- a 59 dias,  baixar por decurso de prazo */                             
+               IF ( (nvl(rw_crapcob.flgregis,0) = 1 AND
+                  rw_crapcob.dtmvtolt < TO_DATE('03/17/2012','MM/DD/YYYY')  AND nvl(rw_crapcob.flgcbdda,0) = 1 AND
+                 (rw_crapcob.dtvencto + rw_crapcob.qtdecprz + 6) <= vr_dtmvtaux) OR
+                 
+                 -- se o titulo estiver vencido a 59 dias e nao for DDA ou                 
+                 (nvl(rw_crapcob.flgregis,0) = 1 AND nvl(rw_crapcob.flgcbdda,-1) = 0 AND
+                 (rw_crapcob.dtvencto + rw_crapcob.qtdecprz) <= vr_dtmvtaux) OR
+
                  -- se o titulo for DDA e emissao apos 17/03/2012 e vencido
-                 -- a 59 dias,  baixar por decurso de prazo */                             
-                 IF ( (nvl(rw_crapcob.flgregis,0) = 1 AND
-                    rw_crapcob.dtmvtolt < TO_DATE('03/17/2012','MM/DD/YYYY')  AND nvl(rw_crapcob.flgcbdda,0) = 1 AND
-                   (rw_crapcob.dtvencto + rw_crapcob.qtdecprz + 6) <= vr_dtmvtaux) OR
-                   
-                   -- se o titulo estiver vencido a 59 dias e nao for DDA ou                 
-                   (nvl(rw_crapcob.flgregis,0) = 1 AND nvl(rw_crapcob.flgcbdda,-1) = 0 AND
-                   (rw_crapcob.dtvencto + rw_crapcob.qtdecprz) <= vr_dtmvtaux) OR
+                 -- a 59 dias,  baixar por decurso de prazo                  
+                 (nvl(rw_crapcob.flgregis,0) = 1 AND
+                  rw_crapcob.dtmvtolt >= TO_DATE('03/17/2012','MM/DD/YYYY') AND nvl(rw_crapcob.flgcbdda,0) = 1 AND
+                 (rw_crapcob.dtvencto + rw_crapcob.qtdecprz) <= vr_dtmvtaux) OR
+                 
+                 -- se o boleto eh de emprestimo, venceu no dia e nao foi pago, baixar por decurso de prazo
+                 (rw_crapcco.dsorgarq = 'EMPRESTIMO' AND rw_crapcob.dtvencto <= rw_crapdat.dtmvtolt) ) AND
+                 
+                 -- Se o boleto é de acordo, não será baixado por decurso de prazo, pois a baixa 
+                 -- acontece apenas no momento de quebra do acordo
+                 (rw_crapcco.dsorgarq <> 'ACORDO' ) AND
+                 
+                 -- não pode-se baixar caso o crapcob.inserasa for 1 (Pendente automática) ou 
+                 -- 2 (Pendente manual) ou 3 (Solicitação enviada) ou 4 (Sol. Cancel. Enviadas)
+				         -- 5 (Negativada) ou 7 (Ação Judicial)
+                 rw_crapcob.inserasa NOT IN (1,2,3,4,5,7) THEN
+                 
 
-                   -- se o titulo for DDA e emissao apos 17/03/2012 e vencido
-                   -- a 59 dias,  baixar por decurso de prazo                  
-                   (nvl(rw_crapcob.flgregis,0) = 1 AND
-                    rw_crapcob.dtmvtolt >= TO_DATE('03/17/2012','MM/DD/YYYY') AND nvl(rw_crapcob.flgcbdda,0) = 1 AND
-                   (rw_crapcob.dtvencto + rw_crapcob.qtdecprz) <= vr_dtmvtaux) OR
-                   
-                   -- se o boleto eh de emprestimo, venceu no dia e nao foi pago, baixar por decurso de prazo
-                   (rw_crapcco.dsorgarq = 'EMPRESTIMO' AND rw_crapcob.dtvencto <= rw_crapdat.dtmvtolt) ) AND
-                   
-                   -- não pode-se baixar caso o crapcob.inserasa for 1 (Pendente automática) ou 
-                   -- 2 (Pendente manual) ou 3 (Solicitação enviada) ou 4 (Sol. Cancel. Enviadas)
-                   -- 5 (Negativada) ou 7 (Ação Judicial)
-                   rw_crapcob.inserasa NOT IN (1,2,3,4,5,7) THEN
-                   
-
-                   IF rw_crapcco.dsorgarq = 'EMPRESTIMO' THEN
-                     IF pr_nmtelant = 'COMPEFORA' THEN
-                       vr_dtmvtpro:= rw_crapdat.dtmvtoan;
-                     ELSE
-                       vr_dtmvtpro:= rw_crapdat.dtmvtolt;
-                     END IF;
-                   ELSE                   
-                   --Determinar a data do protesto
+                 IF rw_crapcco.dsorgarq = 'EMPRESTIMO' THEN
                    IF pr_nmtelant = 'COMPEFORA' THEN
-                     vr_dtmvtpro:= rw_crapdat.dtmvtolt;
+                       vr_dtmvtpro:= rw_crapdat.dtmvtoan;
                    ELSE
-                     vr_dtmvtpro:= rw_crapdat.dtmvtopr;
-                     END IF;
+                       vr_dtmvtpro:= rw_crapdat.dtmvtolt;
                    END IF;
-
-                   --Baixar titulo por decurso de prazo
-                   COBR0007.pc_inst_pedido_baixa_decurso (pr_cdcooper => rw_crapcob.cdcooper   --Codigo Cooperativa
-                                                         ,pr_nrdconta => rw_crapcob.nrdconta   --Numero da Conta
-                                                         ,pr_nrcnvcob => rw_crapcob.nrcnvcob   --Numero Convenio
-                                                         ,pr_nrdocmto => rw_crapcob.nrdocmto   --Numero Documento
-                                                         ,pr_cdocorre => 2                     --Codigo da ocorrencia
-                                                         ,pr_dtmvtolt => vr_dtmvtpro           --Data pagamento
-                                                         ,pr_cdoperad => vr_cdoperad           --Operador
-                                                         ,pr_nrremass => 0                     --Numero da Remessa
-                                                         ,pr_tab_lat_consolidada => vr_tab_lat_consolidada --Tabela
-                                                         ,pr_cdcritic => vr_cdcritic           --Codigo da Critica
-                                                         ,pr_dscritic => vr_dscritic);         --Descricao da critica
-
-                   --Se ocorreu erro
-                   IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                     /* Alterado para não apresentar a critica no log, e sim salvar no log de cobrança */
-                     PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid            --ROWID da Cobranca
-                                                    ,pr_cdoperad => vr_cdoperad               --Operador
-                                                    ,pr_dtmvtolt => rw_crapdat.dtmvtolt       --Data movimento
-                                                    ,pr_dsmensag => 'Baixa por por decurso de prazo nao efetuada: '||
-                                                                    vr_dscritic               --Descricao Mensagem
-                                                    ,pr_des_erro => vr_des_erro               --Indicador erro
-                                                    ,pr_dscritic => vr_dscritic);
-
-                     --Inicializar variavel erro
-                     vr_cdcritic:= NULL;
-                     vr_dscritic:= NULL;
+                 ELSE                   
+                 --Determinar a data do protesto
+                 IF pr_nmtelant = 'COMPEFORA' THEN
+                     vr_dtmvtpro:= rw_crapdat.dtmvtolt;
+                 ELSE
+                     vr_dtmvtpro:= rw_crapdat.dtmvtopr;
                    END IF;
                  END IF;
-               END LOOP;
-               
+
+                 --Baixar titulo por decurso de prazo
+                   COBR0007.pc_inst_pedido_baixa_decurso (pr_cdcooper => rw_crapcob.cdcooper   --Codigo Cooperativa
+                                                       ,pr_nrdconta => rw_crapcob.nrdconta   --Numero da Conta
+                                                       ,pr_nrcnvcob => rw_crapcob.nrcnvcob   --Numero Convenio
+                                                       ,pr_nrdocmto => rw_crapcob.nrdocmto   --Numero Documento
+                                                       ,pr_cdocorre => 2                     --Codigo da ocorrencia
+                                                         ,pr_dtmvtolt => vr_dtmvtpro           --Data pagamento
+                                                       ,pr_cdoperad => vr_cdoperad           --Operador
+                                                       ,pr_nrremass => 0                     --Numero da Remessa
+                                                       ,pr_tab_lat_consolidada => vr_tab_lat_consolidada --Tabela
+                                                       ,pr_cdcritic => vr_cdcritic           --Codigo da Critica
+                                                       ,pr_dscritic => vr_dscritic);         --Descricao da critica
+
+                 --Se ocorreu erro
+                 IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+                   /* Alterado para não apresentar a critica no log, e sim salvar no log de cobrança */
+                   PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid            --ROWID da Cobranca
+                                                  ,pr_cdoperad => vr_cdoperad               --Operador
+                                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt       --Data movimento
+                                                  ,pr_dsmensag => 'Baixa por por decurso de prazo nao efetuada: '||
+                                                                  vr_dscritic               --Descricao Mensagem
+                                                  ,pr_des_erro => vr_des_erro               --Indicador erro
+                                                  ,pr_dscritic => vr_dscritic);
+
+                   --Inicializar variavel erro
+                   vr_cdcritic:= NULL;
+                   vr_dscritic:= NULL;
+                 END IF;
+               END IF;
+           END LOOP;
+           
              END LOOP;
              
-             --Determinar a data para arquivo de retorno
-             IF pr_nmtelant = 'COMPEFORA' THEN
-               --Data Atual
-               vr_dtmvtaux:= rw_crapdat.dtmvtoan;
-             ELSE
-               --Proximo Dia Util
-               vr_dtmvtaux:= rw_crapdat.dtmvtolt;
-             END IF;
-             
-             btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                       ,pr_ind_tipo_log => 2 -- Erro tratato
-                                       ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                       ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                          || vr_cdprogra || ' --> '
-                                                          || 'Gerando arq retorno ao cooperado: convenio ' || to_char(rw_crapcco.nrconven) );
-                       
-             /* Gerar e enviar arquivo de retorno para o cooperado */
-             PAGA0001.pc_gera_arq_cooperado (pr_cdcooper => rw_crapcco.cdcooper   --Codigo Cooperativa
-                                            ,pr_nrcnvcob => rw_crapcco.nrconven   --Numero Convenio
-                                            ,pr_nrdconta => 0                     --Numero da Conta
-                                            ,pr_dtmvtolt => vr_dtmvtaux           --Data pagamento
-                                            ,pr_idorigem => 1  /* AYLLOS */       --Identificador Origem
-                                            ,pr_flgproce => 0  /* false */         --Flag Processo
-                                            ,pr_cdprogra => vr_cdprogra           --Nome Programa
-                                            ,pr_tab_arq_cobranca => vr_tab_arq_cobranca --Tabela Cobranca
-                                            ,pr_cdcritic => vr_cdcritic           --Codigo da Critica
-                                            ,pr_dscritic => vr_dscritic);         --Descricao da critica
-             --Se ocorreu erro
-             IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-               --Levantar Excecao
-               RAISE vr_exc_saida;
-             END IF;
-             
-           END LOOP;
-                  
-           -- Limpar lancamentos de debitos e creditos
-           -- para efetuar os creditos do movimento D+1
-           vr_tab_lcm_consolidada.delete;
+           --Determinar a data para arquivo de retorno
+           IF pr_nmtelant = 'COMPEFORA' THEN
+             --Data Atual
+             vr_dtmvtaux:= rw_crapdat.dtmvtoan;
+           ELSE
+             --Proximo Dia Util
+             vr_dtmvtaux:= rw_crapdat.dtmvtolt;
+           END IF;
+           
+           btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                     ,pr_ind_tipo_log => 2 -- Erro tratato
+                                     ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
+                                     ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                        || vr_cdprogra || ' --> '
+                                                        || 'Gerando arq retorno ao cooperado: convenio ' || to_char(rw_crapcco.nrconven) );
+                     
+           /* Gerar e enviar arquivo de retorno para o cooperado */
+           PAGA0001.pc_gera_arq_cooperado (pr_cdcooper => rw_crapcco.cdcooper   --Codigo Cooperativa
+                                          ,pr_nrcnvcob => rw_crapcco.nrconven   --Numero Convenio
+                                          ,pr_nrdconta => 0                     --Numero da Conta
+                                          ,pr_dtmvtolt => vr_dtmvtaux           --Data pagamento
+                                          ,pr_idorigem => 1  /* AYLLOS */       --Identificador Origem
+                                          ,pr_flgproce => 0  /* false */         --Flag Processo
+                                          ,pr_cdprogra => vr_cdprogra           --Nome Programa
+                                          ,pr_tab_arq_cobranca => vr_tab_arq_cobranca --Tabela Cobranca
+                                          ,pr_cdcritic => vr_cdcritic           --Codigo da Critica
+                                          ,pr_dscritic => vr_dscritic);         --Descricao da critica
+           --Se ocorreu erro
+           IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+             --Levantar Excecao
+             RAISE vr_exc_saida;
+           END IF;
+           
+         END LOOP;
 
-           /* Busca todos os convenios da IF CECRED que foram gerados pela internet */
-           FOR rw_crapcco IN cr_crapcco_ativo (pr_cdcooper => rw_crapcop.cdcooper
-                                              ,pr_cddbanco => rw_crapcop.cdbcoctl) LOOP
+         -- Limpar lancamentos de debitos e creditos
+         -- para efetuar os creditos do movimento D+1
+         vr_tab_lcm_consolidada.delete;
 
-             /************************************************************
-              Realizar lançamentos dos creditos do movimento D+1
-             *************************************************************/
-             -- Determinar a data do pagamento
-             IF pr_nmtelant = 'COMPEFORA' THEN
-               --Dia Atual
-               vr_dtcredit:= rw_crapdat.dtmvtolt;
-             ELSE
-               --Data do dia
-               vr_dtcredit:= rw_crapdat.dtmvtopr;
-             END IF;
+         /* Busca todos os convenios da IF CECRED que foram gerados pela internet */
+         FOR rw_crapcco IN cr_crapcco_ativo (pr_cdcooper => rw_crapcop.cdcooper
+                                            ,pr_cddbanco => rw_crapcop.cdbcoctl) LOOP
 
-             PAGA0001.pc_valores_a_creditar( pr_cdcooper => rw_crapcco.cdcooper
-                                            ,pr_nrcnvcob => rw_crapcco.nrconven
-                                            ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                            ,pr_dtcredit => vr_dtcredit
-                                            ,pr_idtabcob => NULL
-                                            ,pr_tab_lcm_consolidada => vr_tab_lcm_consolidada --Tabela lancamentos consolidada
-                                            ,pr_nmtelant => pr_nmtelant
-                                            ,pr_cdprogra => vr_cdprogra           --Nome Programa
-                                            ,pr_cdcritic => vr_cdcritic           --Codigo da Critica
-                                            ,pr_dscritic => vr_dscritic);         --Descricao da critica
+           /************************************************************
+            Realizar lançamentos dos creditos do movimento D+1
+           *************************************************************/
+           -- Determinar a data do pagamento
+           IF pr_nmtelant = 'COMPEFORA' THEN
+             --Dia Atual
+             vr_dtcredit:= rw_crapdat.dtmvtolt;
+           ELSE
+             --Data do dia
+             vr_dtcredit:= rw_crapdat.dtmvtopr;
+           END IF;
 
-             IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-               --Levantar Excecao
-               RAISE vr_exc_saida;
-             END IF;
+           PAGA0001.pc_valores_a_creditar( pr_cdcooper => rw_crapcco.cdcooper
+                                          ,pr_nrcnvcob => rw_crapcco.nrconven
+                                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                          ,pr_dtcredit => vr_dtcredit
+                                          ,pr_idtabcob => NULL
+                                          ,pr_tab_lcm_consolidada => vr_tab_lcm_consolidada --Tabela lancamentos consolidada
+                                          ,pr_nmtelant => pr_nmtelant
+                                          ,pr_cdprogra => vr_cdprogra           --Nome Programa
+                                          ,pr_cdcritic => vr_cdcritic           --Codigo da Critica
+                                          ,pr_dscritic => vr_dscritic);         --Descricao da critica
 
-             PAGA0001.pc_realiza_lancto_cooperado (pr_cdcooper => rw_crapcco.cdcooper --Codigo Cooperativa
-                                                  ,pr_dtmvtolt => vr_dtcredit         --Data Movimento
-                                                  ,pr_cdagenci => rw_crapcco.cdagenci --Codigo Agencia
-                                                  ,pr_cdbccxlt => rw_crapcco.cdbccxlt --Codigo banco caixa
-                                                  ,pr_nrdolote => rw_crapcco.nrdolote --Numero do Lote
-                                                  ,pr_cdpesqbb => rw_crapcco.nrconven --Codigo Convenio
-                                                  ,pr_cdcritic => vr_cdcritic         --Codigo Critica
-                                                  ,pr_dscritic => vr_dscritic         --Descricao Critica
-                                                  ,pr_tab_lcm_consolidada => vr_tab_lcm_consolidada);        --Tabela Lancamentos
-              --Se ocorreu erro
-              IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                --Levantar Excecao
-                RAISE vr_exc_saida;
-              END IF;
-           END LOOP;
+           IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+             --Levantar Excecao
+             RAISE vr_exc_saida;
+           END IF;
+
+           PAGA0001.pc_realiza_lancto_cooperado (pr_cdcooper => rw_crapcco.cdcooper --Codigo Cooperativa
+                                                ,pr_dtmvtolt => vr_dtcredit         --Data Movimento
+                                                ,pr_cdagenci => rw_crapcco.cdagenci --Codigo Agencia
+                                                ,pr_cdbccxlt => rw_crapcco.cdbccxlt --Codigo banco caixa
+                                                ,pr_nrdolote => rw_crapcco.nrdolote --Numero do Lote
+                                                ,pr_cdpesqbb => rw_crapcco.nrconven --Codigo Convenio
+                                                ,pr_cdcritic => vr_cdcritic         --Codigo Critica
+                                                ,pr_dscritic => vr_dscritic         --Descricao Critica
+                                                ,pr_tab_lcm_consolidada => vr_tab_lcm_consolidada);        --Tabela Lancamentos
+            --Se ocorreu erro
+            IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+              --Levantar Excecao
+              RAISE vr_exc_saida;
+            END IF;
+         END LOOP;
          
          END IF; -- Fim REPROC
          
@@ -4973,7 +5089,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
            END IF;
          END LOOP; --rw_liquida         
          *******************************************************************************************************/
-         
+
          /**************************************************************/
          /*************TRATAMENTO P/ COBRANCA REGISTRADA****************/
          /**************************************************************/
@@ -4990,7 +5106,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
            IF vr_inreproc THEN
              vr_nmarqimp:= 'crrl574_REP_'||GENE0002.fn_busca_time()||'.lst';
            ELSE   
-             vr_nmarqimp:= 'crrl574.lst';
+           vr_nmarqimp:= 'crrl574.lst';
            END IF;
 
            -- Inicializar o CLOB
@@ -5290,7 +5406,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
              --Ir para proximo arquivo
              CONTINUE;
            END IF;
-                      
+
            /* Nao ocorreu erro nas validacoes, abrir o arquivo e processar as linhas */
 
            --Abrir o arquivo de dados e pular a primeira linha

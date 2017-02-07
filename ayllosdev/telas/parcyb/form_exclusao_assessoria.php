@@ -5,7 +5,7 @@
 	 * DATA CRIAÇÃO : 25/08/2015
 	 * OBJETIVO     : Exclusão de Assessorias para a tela CADCAS
 	 * --------------
-	 * ALTERAÇÕES   : 
+	 * ALTERAÇÕES   : 19/09/2016 - Inclusão do campo de codigo de acessoria do CYBER, Prj. 302 (Jean Michel)
 	 * --------------
 	 */
 ?>
@@ -16,6 +16,7 @@
 				<thead>
 					<tr>
 						<th><? echo utf8ToHtml("C&oacute;digo");?></th>
+						<th><? echo utf8ToHtml("C&oacute;digo CYBER");?></th>
 						<th><? echo utf8ToHtml("Nome da Assessoria");?></th>
 						<th></th>
 					</tr>

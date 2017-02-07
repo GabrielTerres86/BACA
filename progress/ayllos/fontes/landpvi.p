@@ -479,7 +479,10 @@
 
 			   24/08/2016 - Ajuste para passar corretamente o nome da tabela a se verificar o lock 
 						   (Adriano - SD 511318 ).
-			
+							
+               22/09/2016 - Incluido tratamento para verificacao de contrato de 
+                            acordo, Prj. 302 (Jean Michel).
+                            
 			   21/10/2016 - Incluir o historico 384	na listagem dos historicos para verificacao do 
 			                saldo disponivel (Renato Darosci - SD542195).
 
@@ -537,6 +540,7 @@ DEF VAR par_dtconnec         AS CHAR                            NO-UNDO.
 DEF VAR par_numipusr         AS CHAR                            NO-UNDO.
 DEF VAR aux_vlblqjud         AS DEC                             NO-UNDO.
 DEF VAR aux_vlresblq         AS DEC                             NO-UNDO.
+DEF VAR aux_flgativo         AS DEC                             NO-UNDO.
 
 DEF VAR h-b1wgen9999         AS HANDLE                          NO-UNDO.
 DEF VAR h-b1wgen0175         AS HANDLE                          NO-UNDO.
@@ -2607,7 +2611,7 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
 
             RETURN.  /* Volta pedir a opcao para o operador */
         END.    
-        
+
         /* Historicos de pagamento de emprestimo */
         IF CAN-DO("275,394,428,384",STRING(tel_cdhistor)) THEN
           DO:
@@ -4550,8 +4554,7 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                 ASSIGN glb_cdcritic = 952.
                                 RUN fontes/critic.p.
                                 BELL.
-                                /*MESSAGE glb_dscritic + "Saldo R$"
-                                TRIM(STRING(aux_sldesblo,"zzz,zz9.99")).*/
+                                
                                 MESSAGE glb_dscritic.
                                 glb_cdcritic = 0.
 								glb_dscritic = "".
@@ -4589,7 +4592,7 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                        DO:                               
                                            glb_cdcritic = 77.
                                            PAUSE 1 NO-MESSAGE.
-                                           NEXT.                                                             
+                                           NEXT.
                                        END.                              
                                    ELSE                                  
                                    DO:                                   
@@ -4650,6 +4653,52 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                  UNDO, NEXT INICIO.
                              END.
 
+                        /* Verificacao de contrato de acordo */  
+                        
+                          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                          /* Verifica se ha contratos de acordo */
+                          RUN STORED-PROCEDURE pc_verifica_acordo_ativo
+                            aux_handproc = PROC-HANDLE NO-ERROR (INPUT glb_cdcooper
+                                                                ,INPUT tel_nrdctabb
+                                                                ,INPUT his_nrctremp
+                                                                ,OUTPUT 0
+                                                                ,OUTPUT 0
+                                                                ,OUTPUT "").
+
+                          CLOSE STORED-PROC pc_verifica_acordo_ativo
+                                    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                          ASSIGN glb_cdcritic = 0
+                                 glb_dscritic = ""
+                                 glb_cdcritic = INT(pc_verifica_acordo_ativo.pr_cdcritic) WHEN pc_verifica_acordo_ativo.pr_cdcritic <> ?
+                                 glb_dscritic = pc_verifica_acordo_ativo.pr_dscritic WHEN pc_verifica_acordo_ativo.pr_dscritic <> ?
+                                 aux_flgativo = INT(pc_verifica_acordo_ativo.pr_flgativo).
+                          
+                          IF glb_cdcritic > 0 THEN
+                            DO:
+                                RUN fontes/critic.p.
+                                BELL.
+                                MESSAGE glb_dscritic.
+                                UNDO, NEXT INICIO.
+                            END.
+                          ELSE IF glb_dscritic <> ? AND glb_dscritic <> "" THEN
+                            DO:
+                              MESSAGE glb_dscritic.
+                              ASSIGN glb_cdcritic = 0.
+                              UNDO, NEXT INICIO.
+                            END.
+                            
+                          IF aux_flgativo = 1 THEN
+                            DO:
+                              MESSAGE "Lancamento nao permitido, emprestimo em acordo.".
+                              PAUSE 3 NO-MESSAGE.
+                              UNDO, NEXT INICIO.
+                            END.
+                        /* Fim verificacao contrato acordo */
+                        
                         IF  NOT VALID-HANDLE(h-b1wgen0002)  THEN
                             RUN sistema/generico/procedures/b1wgen0002.p
                             PERSISTENT SET h-b1wgen0002.

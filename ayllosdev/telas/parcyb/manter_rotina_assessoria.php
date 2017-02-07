@@ -5,7 +5,7 @@
 	 * DATA CRIAÇÃO : 25/08/2015
 	 * OBJETIVO     : Rotina para manter as operações da tela de Assessorias
 	 * --------------
-	 * ALTERAÇÕES   : 
+	 * ALTERAÇÕES   : 19/09/2016 - Inclusao do campo de codigo de acessoria do CYBER, Prj. 302 (Jean Michel)
 	 * -------------- 
 	 */		
 
@@ -22,6 +22,7 @@
 	$cddopcao      = (isset($_POST["cddopcao"]))      ? $_POST["cddopcao"]      : ""; // Opção (CA-Consulta/IA-Incluir/AA-Alterar/EA-Excluir)
 	$cdassessoria  = (isset($_POST["cdassessoria"]))  ? $_POST["cdassessoria"]  : ""; // Código da Assessoria
 	$nmassessoria  = (isset($_POST["nmassessoria"]))  ? $_POST["nmassessoria"]  : ""; // Descrição da Assessoria
+	$cdasscyb      = (isset($_POST["cdasscyb"]))  ? $_POST["cdasscyb"]  : "";		  // Código da Assessoria CYBER
 
 	//Validar permissão do usuário
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],$cddopcao)) <> "") {
@@ -75,6 +76,7 @@
 		$xml .= "		<cddopcao>".$cddopcao."</cddopcao>";
 		$xml .= "		<cdassess>".$cdassessoria."</cdassess>";
 		$xml .= "		<dsassess>".$nmassessoria."</dsassess>";
+		$xml .= "		<cdasscyb>".$cdasscyb."</cdasscyb>";
 	}
 	$xml .= "  </Dados>";
 	$xml .= "</Root>";
@@ -104,11 +106,13 @@
 				if ($xmlObjeto->roottag->tags[0]->name == "ASSESSORIAS") {
 					$cdassess = getByTagName($xmlObjeto->roottag->tags[0]->tags[0]->tags,'cdassessoria');
 					$nmassess = getByTagName($xmlObjeto->roottag->tags[0]->tags[0]->tags,'nmassessoria');
+					$cdasscyb = getByTagName($xmlObjeto->roottag->tags[0]->tags[0]->tags,'cdasscyb');
 					// Verificar se foi encontrada a assessoria para o código informado
 					if ($cdassess != "" && $nmassess != "") {
 						//Se existir preenche na tela
 						$command .= "$('#cdassessoria').val('" . $cdassess . "');";
-						$command .= "$('#nmassessoria').val('" . $nmassess . "').focus();";
+						$command .= "$('#cdasscyb').val('" . $cdasscyb . "').focus();";
+						$command .= "$('#nmassessoria').val('" . $nmassess . "');";
 					} else {
 						//Se não existir exibe o erro
 						$command .= "showError('error','Assessoria n&atilde;o encontrada!','Alerta - Ayllos','$(\'#cdassessoria\').val(\'\').focus();')";
@@ -119,7 +123,8 @@
 				if ($xmlObjeto->roottag->tags[0]->name == "ASSESSORIAS") {
 					foreach($xmlObjeto->roottag->tags[0]->tags as $assessoria){
 						$command .=  "criaLinhaAssessoriaConsulta('" . getByTagName($assessoria->tags,'cdassessoria') . 
-						                                       "','" . getByTagName($assessoria->tags,'nmassessoria') . "');";
+															   "','" . getByTagName($assessoria->tags,'nmassessoria') . 
+						                                       "','" . getByTagName($assessoria->tags,'cdasscyb') . "');";
 					}
 				}
 				//Alternar a cor das linhas
@@ -146,7 +151,8 @@
 				if ($xmlObjeto->roottag->tags[0]->name == "ASSESSORIAS") {
 					foreach($xmlObjeto->roottag->tags[0]->tags as $assessoria){
 						$command .=  "criaLinhaAssessoria('" . getByTagName($assessoria->tags,'cdassessoria') . 
-						                               "','" . getByTagName($assessoria->tags,'nmassessoria') . "');";
+						                               "','" . getByTagName($assessoria->tags,'nmassessoria') .
+													   "','" . getByTagName($assessoria->tags,'cdasscyb') . "');";
 					}
 				}
 				//Alternar a cor das linhas

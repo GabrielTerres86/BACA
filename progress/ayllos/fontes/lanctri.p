@@ -349,6 +349,7 @@ DO WHILE TRUE:
              tel_nrctremp
              WITH FRAME f_lanctr.
 
+      
       ASSIGN glb_nrcalcul = tel_nrdconta
              glb_cdcritic = 0.
 
@@ -601,7 +602,7 @@ DO WHILE TRUE:
          END.
       ELSE
          DO:
-            
+         
             IF crawepr.insitest <> 3 AND 
                crawepr.dtenvest <> ? THEN
             DO:
@@ -630,8 +631,8 @@ DO WHILE TRUE:
                            "nao pode ser usado para o produto TR.".
                    NEXT.
                END.
-           
-           /** Verificar "inliquid" do contrato relacionado
+                            
+            /** Verificar "inliquid" do contrato relacionado
                 a ser liquidado              **/
             DO  aux_contador = 1 TO 10 :
 

@@ -1,0 +1,1433 @@
+CREATE OR REPLACE PACKAGE CECRED.RECP0003 IS
+  ---------------------------------------------------------------------------------------------------------------
+  --
+  --  Programa : RECP0003
+  --  Sistema  : Rotinas referentes a importacao de arquivos CYBER de acordos de emprestimos
+  --  Sigla    : RECP
+  --  Autor    : Jean Michel Deschamps
+  --  Data     : Outubro/2016.                   Ultima atualizacao: 11/10/2016
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Frequencia: N/A
+  -- Objetivo  : Agrupar rotinas genericas refente a importacao de arquivos referente a acordos de emprestimos
+  --
+  -- Alteracoes:
+  -- 
+  ---------------------------------------------------------------------------------------------------------------
+
+  -- Retorna valor bloqueado em acordos
+  PROCEDURE pc_import_arq_acordo_job;
+                                    
+END RECP0003;
+/
+CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
+  ---------------------------------------------------------------------------------------------------------------
+  --
+  --  Programa : RECP0003
+  --  Sistema  : Rotinas referentes a importacao de arquivos CYBER de acordos de emprestimos
+  --  Sigla    : RECP
+  --  Autor    : Jean Michel Deschamps
+  --  Data     : Outubro/2016.                   Ultima atualizacao: 11/10/2016
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Frequencia: N/A
+  -- Objetivo  : Agrupar rotinas genericas refente a importacao de arquivos referente a acordos de emprestimos
+  --
+  -- Alteracoes:
+  -- 
+  ---------------------------------------------------------------------------------------------------------------
+    
+  -- Procedure para converter arquivos unix
+  PROCEDURE pc_converte_arquivo_txt_unix (pr_cdcooper IN crapcop.cdcooper%TYPE      -- Codigo da Cooperativa
+                                         ,pr_caminho  IN  VARCHAR2                  -- Diretorio dos Arquivos
+                                         ,pr_pesq     IN  VARCHAR2                  -- Filtro dos Arquivos
+                                         ,pr_cdcritic OUT crapcri.cdcritic%TYPE     -- Codigo Erro
+                                         ,pr_dscritic OUT crapcri.dscritic%TYPE) IS -- Descricao erro
+    BEGIN
+      DECLARE
+        -- Variaveis Locais
+        vr_index    INTEGER;
+        vr_cdcritic INTEGER;
+        vr_dscritic VARCHAR2(4000);
+        
+        vr_listadir VARCHAR2(2000);
+        vr_nmarqsem VARCHAR2(100);
+        -- Tabela arquivos
+        vr_tab_arqtmp GENE0002.typ_split;
+
+        vr_exc_saida EXCEPTION;
+
+        vr_typ_saida VARCHAR2(10);
+        vr_comando   VARCHAR2(4000);
+        
+      BEGIN
+        
+        vr_cdcritic := 0;
+        vr_dscritic := '';
+        
+        -- Vamos ler todos os arquivos .txt extraido do arquivo .zip do dia
+        gene0001.pc_lista_arquivos(pr_path     => pr_caminho
+                                  ,pr_pesq     => pr_pesq || '.txt'
+                                  ,pr_listarq  => vr_listadir
+                                  ,pr_des_erro => vr_dscritic);
+
+        -- Se ocorrer erro ao recuperar lista de arquivos registra no log
+        IF TRIM(vr_dscritic) IS NOT NULL THEN
+          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                    ,pr_ind_tipo_log => 2 -- Erro tratato
+                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' --> ' || vr_dscritic);
+        END IF;
+
+        -- Carregar a lista de arquivos txt na temp table
+        vr_tab_arqtmp:= gene0002.fn_quebra_string(pr_string => vr_listadir);
+
+        -- Converte todos os arquivos para formato Unix
+        vr_index:= vr_tab_arqtmp.FIRST;
+   
+        WHILE vr_index IS NOT NULL LOOP
+         -- Retirar a extensao do nome do arquivo
+         vr_nmarqsem:= substr(vr_tab_arqtmp(vr_index),1,instr(vr_tab_arqtmp(vr_index),'.')-1);
+
+         -- Converte o arquivo para formato unix
+         vr_comando:= 'ux2dos '||pr_caminho||'/'||vr_tab_arqtmp(vr_index)||' > '||
+                                 pr_caminho||'/TMP_'||vr_nmarqsem||'.txt 2>/dev/null';
+
+         -- Executar o comando no unix
+         GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                              ,pr_des_comando => vr_comando
+                              ,pr_typ_saida   => vr_typ_saida
+                              ,pr_des_saida   => vr_dscritic);
+
+         -- Se ocorreu erro dar RAISE
+         IF vr_typ_saida = 'ERR' THEN
+           vr_dscritic:= 'Nao foi possivel executar comando unix. '||vr_comando;
+           RAISE vr_exc_saida;
+         END IF;
+
+         -- Converte o arquivo para formato unix */
+         vr_comando:= 'mv '||pr_caminho||'/TMP_'||vr_tab_arqtmp(vr_index)|| ' ' ||
+                      pr_caminho||'/'||vr_nmarqsem||'.txt 2>/dev/null';
+
+         -- Executar o comando no unix
+         GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                              ,pr_des_comando => vr_comando
+                              ,pr_typ_saida   => vr_typ_saida
+                              ,pr_des_saida   => vr_dscritic);
+
+         -- Se ocorreu erro dar RAISE
+         IF vr_typ_saida = 'ERR' THEN
+           vr_dscritic:= 'Nao foi possivel executar comando unix. '||vr_comando;
+           RAISE vr_exc_saida;
+         END IF;
+
+         -- Proximo registro
+         vr_index:= vr_tab_arqtmp.NEXT(vr_index);
+             
+       END LOOP;
+
+     EXCEPTION
+       WHEN vr_exc_saida THEN
+         pr_cdcritic := vr_cdcritic;
+         
+         IF pr_cdcritic > 0 THEN
+           pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
+         ELSE
+           pr_dscritic := vr_dscritic;
+         END IF;
+
+       WHEN OTHERS THEN
+         pr_cdcritic := 0;
+         pr_dscritic:= 'Erro ao converter arquivo para Dos no RECP0003.pc_converte_arquivo_txt_unix '||SQLERRM;
+     END;
+   END pc_converte_arquivo_txt_unix;
+  
+  -- Importa arquivo referente a acordos cancelados
+  PROCEDURE pc_imp_arq_acordo_cancel(pr_flgemail OUT BOOLEAN
+                                    ,pr_cdcritic OUT crapcri.cdcritic%TYPE
+                                    ,pr_dscritic OUT crapcri.dscritic%TYPE) IS
+    
+      -- Variaveis de Erros
+      vr_cdcritic crapcri.cdcritic%TYPE := 0;
+      vr_dscritic crapcri.dscritic%TYPE := '';
+      vr_dsdetcri crapcri.dscritic%TYPE := '';
+
+      -- Variaveis Locais
+      vr_des_erro VARCHAR2(100);
+      vr_nmarqtxt VARCHAR2(200)  := '';
+      vr_nmtmpzip VARCHAR2(4000) := '';
+      vr_endarqui VARCHAR2(4000) := '';
+      vr_nmtmparq VARCHAR2(4000) := '';
+      vr_nmarqzip VARCHAR2(4000) := '';
+      vr_setlinha VARCHAR2(4000) := '';
+      vr_nrindice INTEGER;
+      vr_idx_txt  INTEGER;
+      vr_nrlinha  INTEGER := 0;
+
+      vr_cdcooper crapcop.cdcooper%TYPE := 3;
+
+      --Variaveis Comando Unix
+      vr_typ_saida VARCHAR2(10);
+      vr_comando   VARCHAR2(4000);
+      vr_listadir  VARCHAR2(4000);
+      vr_endarqtxt VARCHAR2(4000);
+      vr_input_file  utl_file.file_type;
+
+      -- Tabela para armazenar arquivos lidos
+      vr_tab_arqzip gene0002.typ_split;
+      vr_tab_arqtxt gene0002.typ_split;
+
+      -- Buscar situacao do acordo
+      CURSOR cr_tbacordo(pr_nracordo tbrecup_acordo.nracordo%TYPE) IS
+         SELECT aco.cdsituacao
+          FROM tbrecup_acordo aco
+          WHERE nracordo = pr_nracordo;
+      rw_tbacordo cr_tbacordo%ROWTYPE;
+
+    BEGIN
+
+      pr_flgemail := FALSE; 
+
+      -- Busca do diretorio micros da cooperativa
+      vr_endarqui:= gene0001.fn_diretorio(pr_tpdireto => 'M' -- /micros/coop
+                                         ,pr_cdcooper => vr_cdcooper
+                                         ,pr_nmsubdir => '/cyber/recebe/');
+      -- Arquivos que serao procurados
+      vr_nmtmpzip:= '%_QUEB_ACORDO_OUT.zip';
+
+      -- Vamos ler todos os arquivos .zip
+      gene0001.pc_lista_arquivos(pr_path    => vr_endarqui
+                                ,pr_pesq     => vr_nmtmpzip
+                                ,pr_listarq  => vr_listadir
+                                ,pr_des_erro => vr_dscritic);
+
+      
+      -- Se ocorrer erro ao recuperar lista de arquivos registra no log
+      IF TRIM(vr_dscritic) IS NOT NULL THEN
+        btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
+                                  ,pr_ind_tipo_log => 2 -- Erro tratato
+                                  ,pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss')||' - ' || ' --> ' || vr_dscritic);
+      END IF;
+
+      -- Carregar a lista de arquivos na temp table
+      vr_tab_arqzip := gene0002.fn_quebra_string(pr_string => vr_listadir);
+
+      -- Buscar Primeiro arquivo da temp table
+      vr_nrindice:= vr_tab_arqzip.FIRST;
+      
+      -- Processar os arquivos lidos
+      WHILE vr_nrindice IS NOT NULL LOOP
+        -- Nome Arquivo zip
+        vr_nmarqzip:= vr_tab_arqzip(vr_nrindice);
+
+        -- Envio centralizado de log de erro
+        BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
+                                 pr_ind_tipo_log => 2, -- Erro tratato
+                                 pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> ' || 'INTEGRANDO ARQUIVO ' || vr_nmarqzip);
+
+        -- Nome do arquivo sem extensao
+        vr_nmtmparq:= SUBSTR(vr_nmarqzip,1,LENGTH(vr_nmarqzip)-4);
+
+        -- Montar Comando para eliminar arquivos do diretorio
+        vr_comando := 'rm '||vr_endarqui||'/'||vr_nmtmparq||'/*.txt 1> /dev/null';
+
+        -- Executar o comando no unix
+        GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                             ,pr_des_comando => vr_comando
+                             ,pr_typ_saida   => vr_typ_saida
+                             ,pr_des_saida   => vr_dscritic);
+
+        -- Remover o diretorio caso exista
+        vr_comando:= 'rmdir ' || vr_endarqui || '/' || vr_nmtmparq || ' 1> /dev/null';
+
+        -- Executar o comando no unix
+        GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                             ,pr_des_comando => vr_comando
+                             ,pr_typ_saida   => vr_typ_saida
+                             ,pr_des_saida   => vr_dscritic);
+
+        -- Criar o diretorio com o nome do arquivo
+        vr_comando:= 'mkdir '||vr_endarqui||'/'||vr_nmtmparq||' 1> /dev/null';
+
+        -- Executar o comando no unix
+        GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                             ,pr_des_comando => vr_comando
+                             ,pr_typ_saida   => vr_typ_saida
+                             ,pr_des_saida   => vr_dscritic);
+
+        -- Se ocorreu erro dar RAISE
+        IF vr_typ_saida = 'ERR' THEN
+          vr_dscritic:= 'Nao foi possivel executar comando unix. ' || vr_comando || ' - ' || vr_dscritic;
+          -- Envio centralizado de log de erro
+          BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
+                                     pr_ind_tipo_log => 2, -- Erro tratato
+                                     pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Erro: ' || vr_dscritic);
+          CONTINUE;
+        END IF;
+
+        -- Executar Extracao do arquivo zip
+        gene0002.pc_zipcecred (pr_cdcooper => vr_cdcooper
+                              ,pr_tpfuncao => 'E'
+                              ,pr_dsorigem => vr_endarqui||'/'||vr_nmarqzip
+                              ,pr_dsdestin => vr_endarqui||'/'||vr_nmtmparq
+                              ,pr_dspasswd => NULL
+                              ,pr_flsilent => 'S'
+                              ,pr_des_erro => vr_dscritic);
+      	
+        --Se ocorreu erro
+        IF vr_dscritic IS NOT NULL THEN
+          -- Envio centralizado de log de erro
+          BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
+                                     pr_ind_tipo_log => 2, -- Erro tratato
+                                     pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Erro: ' || vr_dscritic);
+          CONTINUE;
+        END IF;
+
+        -- Lista todos os arquivos .txt do diretorio criado
+        vr_endarqtxt:= vr_endarqui || '/' || vr_nmtmparq;
+
+        -- Buscar todos os arquivos extraidos na nova pasta
+        gene0001.pc_lista_arquivos(pr_path     => vr_endarqtxt
+                                  ,pr_pesq     => '%_QUEB_ACORDO_OUT.txt'
+                                  ,pr_listarq  => vr_listadir
+                                  ,pr_des_erro => vr_dscritic);
+
+        -- Se ocorrer erro ao recuperar lista de arquivos registra no log
+        IF TRIM(vr_dscritic) IS NOT NULL THEN
+          btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
+                                    ,pr_ind_tipo_log => 2 -- Erro tratato
+                                    ,pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Erro: ' || vr_dscritic);
+          CONTINUE;
+        END IF;
+
+        IF vr_listadir IS NULL THEN
+          CONTINUE;
+        END IF;
+
+        -- Converte cada arquivo texto para formato UNIX
+        pc_converte_arquivo_txt_unix (pr_cdcooper => vr_cdcooper
+                                     ,pr_caminho  => vr_endarqtxt        -- Diretorio Arquivos
+                                     ,pr_pesq     => '%_QUEB_ACORDO_OUT' -- Filtro Arquivos
+                                     ,pr_cdcritic => vr_cdcritic         -- Codigo Erro
+                                     ,pr_dscritic => vr_dscritic);       -- Descricao erro
+        -- Se ocorreu erro
+        IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+          -- Envio centralizado de log de erro
+          BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
+                                     pr_ind_tipo_log => 2, -- Erro tratato
+                                     pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Erro: ' || vr_dscritic);
+          CONTINUE;
+        END IF;
+
+        -- Carregar a lista de arquivos na temp table
+        vr_tab_arqtxt:= gene0002.fn_quebra_string(pr_string => vr_listadir);
+
+        -- Se possuir arquivos no diretorio
+        IF vr_tab_arqtxt.COUNT > 0 THEN
+
+          --Selecionar primeiro arquivo
+           vr_idx_txt:= vr_tab_arqtxt.FIRST;
+           --Percorrer todos os arquivos lidos
+           WHILE vr_idx_txt IS NOT NULL LOOP
+
+             --Nome do arquivo
+             vr_nmarqtxt:= vr_tab_arqtxt(vr_idx_txt);
+
+             --Abrir o arquivo lido
+             gene0001.pc_abre_arquivo(pr_nmdireto => vr_endarqtxt   --> Diretório do arquivo
+                                     ,pr_nmarquiv => vr_nmarqtxt    --> Nome do arquivo
+                                     ,pr_tipabert => 'R'            --> Modo de abertura (R,W,A)
+                                     ,pr_utlfileh => vr_input_file  --> Handle do arquivo aberto
+                                     ,pr_des_erro => vr_des_erro);  --> Erro
+
+             IF vr_des_erro <> 'OK' THEN
+               
+               btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
+                                         ,pr_ind_tipo_log => 2 -- Erro tratato
+                                         ,pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Erro ao abrir arquivo: ' || vr_nmarqtxt);
+
+               -- Fechar o arquivo
+               GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file); --> Handle do arquivo aberto;  
+
+               -- Buscar proximo arquivo
+               vr_idx_txt:= vr_tab_arqtxt.NEXT(vr_idx_txt);
+               CONTINUE;
+             END IF;
+
+             SAVEPOINT SAVE_ACORDO_CANCELADO;
+
+             vr_nrlinha := 0;
+
+             LOOP
+               -- Verificar se o arquivo está aberto
+               IF utl_file.IS_OPEN(vr_input_file) THEN
+                 BEGIN
+                   -- Le os dados do arquivo e coloca na variavel vr_setlinha
+                   gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                               ,pr_des_text => vr_setlinha); --> Texto lido
+
+                   vr_nrlinha := vr_nrlinha + 1;
+                 EXCEPTION
+                   WHEN NO_DATA_FOUND THEN
+                     -- Fechar o arquivo
+                     GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file); --> Handle do arquivo aberto;
+                     -- Fim do arquivo
+                     EXIT;
+                 END;
+                 
+                 IF SUBSTR(vr_setlinha,1,1) = 'H' AND vr_nrlinha = 1 THEN
+                   CONTINUE;
+                 ELSIF SUBSTR(vr_setlinha,1,1) = 'H' AND vr_nrlinha > 1 THEN
+                   -- Header errado
+                   -- Envio centralizado de log de erro
+                   BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
+                                              pr_ind_tipo_log => 2, -- Erro tratato
+                                              pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> ' ||
+                                                             'ARQUIVO INCONSISTENTE' || vr_nmarqzip); 
+
+                   ROLLBACK TO SAVE_ACORDO_CANCELADO;
+                   pr_flgemail := TRUE;
+                   -- Fim do arquivo
+                   EXIT;
+                 ELSIF SUBSTR(vr_setlinha,1,1) = 'T' THEN
+                   CONTINUE;                                          
+                 END IF;
+
+                 -- Procedure responsavel para cancelar o acordo    
+                 RECP0002.pc_cancelar_acordo(pr_nracordo => TO_NUMBER(SUBSTR(vr_setlinha,29,13))         -- NUMERO_ACORDO_ARQUIVO
+                                            ,pr_dtcancel => TO_DATE(SUBSTR(vr_setlinha,42,8),'MMDDRRRR') -- DATA_CANCELAMENTO_ARQUIVO
+                                            ,pr_cdcritic => vr_cdcritic
+                                            ,pr_dscritic => vr_dscritic
+                                            ,pr_dsdetcri => vr_dsdetcri);
+
+                 IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL OR vr_dsdetcri IS NOT NULL THEN
+                   
+                   OPEN cr_tbacordo(pr_nracordo => TO_NUMBER(SUBSTR(vr_setlinha,29,13)));
+
+                   FETCH cr_tbacordo INTO rw_tbacordo;
+                   
+                   IF cr_tbacordo%FOUND AND rw_tbacordo.cdsituacao IN(2,3)THEN -- Acordo Quitado e Cancelado
+                     CLOSE cr_tbacordo;                                        
+                   ELSE
+                     CLOSE cr_tbacordo;
+                     
+                     -- Envio centralizado de log de erro
+                     BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
+                                                pr_ind_tipo_log => 2, -- Erro tratato
+                                                pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> ' ||
+                                                                 'ARQUIVO INTEGRADO: ' || vr_nmarqzip); 
+                     --Buscar proximo arquivo
+                     vr_idx_txt:= vr_tab_arqtxt.NEXT(vr_idx_txt);
+                     ROLLBACK TO SAVE_ACORDO_CANCELADO;
+                     pr_flgemail := TRUE;
+                     EXIT;
+                   END IF;
+
+                 END IF;
+               END IF; --Arquivo aberto
+             END LOOP;
+
+             -- Verificar se o arquivo está aberto
+             IF utl_file.IS_OPEN(vr_input_file) THEN
+               -- Fechar o arquivo
+               GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file); --> Handle do arquivo aberto;
+             END IF;
+             --Buscar proximo arquivo
+             vr_idx_txt:= vr_tab_arqtxt.NEXT(vr_idx_txt);
+             
+           END LOOP;
+           
+        END IF;
+        
+        -- Renomear os arquivos .zip que foram processados
+        vr_comando:= 'mv '||vr_endarqui||'/'||vr_nmtmparq||'.zip '||
+                    vr_endarqui||'/'||vr_nmtmparq||'_processado.pro 1> /dev/null';
+        
+        -- Executar o comando no unix
+        GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                             ,pr_des_comando => vr_comando
+                             ,pr_typ_saida   => vr_typ_saida
+                             ,pr_des_saida   => vr_dscritic);
+        
+        -- Se ocorreu erro dar RAISE
+        IF vr_typ_saida = 'ERR' THEN
+          vr_dscritic:= 'Nao foi possivel executar comando unix. ' || vr_comando;
+          -- Envio centralizado de log de erro
+          BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
+                                     pr_ind_tipo_log => 2, -- Erro tratato
+                                     pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Erro: ' || vr_dscritic);
+        END IF;
+
+        -- Remove o diretorio criado
+        vr_comando:= 'rm -R '||vr_endarqui||'/'||vr_nmtmparq;
+
+        -- Executar o comando no unix
+        GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                             ,pr_des_comando => vr_comando
+                             ,pr_typ_saida   => vr_typ_saida
+                             ,pr_des_saida   => vr_dscritic);
+        
+        -- Se ocorreu erro dar RAISE
+        IF vr_typ_saida = 'ERR' THEN
+          vr_dscritic:= 'Nao foi possivel executar comando unix. ' || vr_comando || '. Erro: ' || vr_dscritic;
+          -- Envio centralizado de log de erro
+          BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
+                                     pr_ind_tipo_log => 2, -- Erro tratato
+                                     pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Erro: ' || vr_dscritic);
+        END IF;                
+
+        -- Envio centralizado de log de erro
+        BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
+                                   pr_ind_tipo_log => 2, -- Erro tratato
+                                   pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> ' ||
+                                                   'ARQUIVO INTEGRADO: ' || vr_nmarqzip); 
+
+        -- Proximo registro
+        vr_nrindice:= vr_tab_arqzip.NEXT(vr_nrindice);
+
+      END LOOP;
+
+  EXCEPTION
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro na RECP0003.PC_IMP_ARQ_ACORDO_CANCEL: ' || SQLERRM;
+      pr_flgemail := TRUE;
+      -- Envio centralizado de log de erro
+      BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
+                                 pr_ind_tipo_log => 2, -- Erro tratato
+                                 pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Erro: ' || pr_dscritic);
+      ROLLBACK;
+  END pc_imp_arq_acordo_cancel;
+
+  -- Importa arquivo referente a acordos quitados
+  PROCEDURE pc_imp_arq_acordo_quitado(pr_flgemail OUT BOOLEAN
+                                     ,pr_cdcritic OUT crapcri.cdcritic%TYPE
+                                     ,pr_dscritic OUT crapcri.dscritic%TYPE) IS
+    
+      -- Variaveis de Erros
+      vr_cdcritic crapcri.cdcritic%TYPE := 0;
+      vr_dscritic crapcri.dscritic%TYPE := '';
+
+      -- Variaveis Locais
+      vr_des_erro VARCHAR2(100);
+      vr_nmarqtxt VARCHAR2(200)  := '';
+      vr_nmtmpzip VARCHAR2(4000) := '';
+      vr_endarqui VARCHAR2(4000) := '';
+      vr_nmtmparq VARCHAR2(4000) := '';
+      vr_nmarqzip VARCHAR2(4000) := '';
+      vr_setlinha VARCHAR2(4000) := '';
+      vr_nrindice INTEGER;
+      vr_idx_txt  INTEGER;
+      vr_nrlinha  INTEGER := 0;
+
+      vr_cdcooper crapcop.cdcooper%TYPE := 3;
+
+      -- Variavel de retorno
+      vr_des_reto  VARCHAR2(100);
+
+      --Variaveis Comando Unix
+      vr_typ_saida VARCHAR2(10);
+      vr_comando   VARCHAR2(4000);
+      vr_listadir  VARCHAR2(4000);
+      vr_endarqtxt VARCHAR2(4000);
+      vr_input_file  utl_file.file_type;
+
+      -- Tabela para armazenar arquivos lidos
+      vr_tab_arqzip gene0002.typ_split;
+      vr_tab_arqtxt gene0002.typ_split;
+
+      vr_vlsddisp NUMBER(25,2) := 0; -- Saldo disponivel
+      vr_vltotpag NUMBER(25,2) := 0; -- Valor Total de Pagamento
+      vr_vllancam NUMBER(25,2) := 0; -- Saldo disponivel
+      vr_idvlrmin NUMBER(25,2) := 0; -- Indicador de valor Minimo
+      vr_cdoperad crapope.cdoperad%TYPE := '1';
+      vr_nmdatela craptel.nmdatela%TYPE := 'JOB';
+
+      -- Consulta contratos em acordo
+      CURSOR cr_crapcyb(pr_nracordo tbrecup_acordo.nracordo%TYPE) IS
+        SELECT acordo.nracordo
+              ,acordo.cdcooper
+              ,acordo.nrdconta
+              ,cyb.cdorigem
+              ,acordoctr.nrctremp
+          FROM tbrecup_acordo acordo,
+               tbrecup_acordo_contrato acordoctr,
+               crapcyb cyb
+         WHERE acordo.nracordo = acordoctr.nracordo      
+           AND cyb.cdcooper = acordo.cdcooper
+           AND cyb.nrdconta = acordo.nrdconta
+           AND cyb.nrctremp = acordoctr.nrctremp
+           AND cyb.cdorigem = acordoctr.cdorigem          
+           AND acordoctr.nracordo = pr_nracordo
+      ORDER BY cyb.cdorigem;
+      rw_crapcyb cr_crapcyb%ROWTYPE;
+
+      -- Consulta PA e limites de credito do cooperado
+      CURSOR cr_crapass(pr_cdcooper crapass.cdcooper%TYPE
+                       ,pr_nrdconta crapass.nrdconta%TYPE) IS
+        SELECT ass.cdagenci
+              ,ass.vllimcre
+              ,ass.cdcooper
+              ,ass.nrdconta
+          FROM crapass ass
+         WHERE ass.cdcooper = pr_cdcooper
+           AND ass.nrdconta = pr_nrdconta;
+      rw_crapass cr_crapass%ROWTYPE;
+     
+      -- Consulta cooperativas
+      CURSOR cr_crapcop IS
+        SELECT cop.cdcooper
+          FROM crapcop cop
+         WHERE cop.flgativo = 1;
+      rw_crapcop cr_crapcop%ROWTYPE;
+
+      -- Consulta valor bloqueado pelo acordo
+      CURSOR cr_nracordo(pr_nracordo tbrecup_acordo.nracordo%TYPE)IS
+        SELECT aco.vlbloqueado
+              ,aco.cdcooper
+              ,aco.nrdconta
+              ,aco.nracordo
+         FROM tbrecup_acordo aco
+        WHERE aco.nracordo = pr_nracordo;
+      rw_nracordo cr_nracordo%ROWTYPE;  
+
+      -- Consulta valor bloqueado pelo acordo
+      CURSOR cr_crapepr(pr_cdcooper crapepr.cdcooper%TYPE
+                       ,pr_nrdconta crapepr.nrdconta%TYPE
+                       ,pr_nrctremp crapepr.nrctremp%TYPE)IS
+        SELECT epr.cdcooper
+              ,epr.nrdconta
+              ,epr.nrctremp
+              ,epr.inliquid
+              ,epr.inprejuz
+              ,epr.flgpagto
+              ,epr.tpemprst
+              ,epr.vlsdprej
+              ,epr.vlprejuz
+              ,epr.vlsprjat
+              ,epr.vlpreemp
+              ,epr.vlttmupr
+              ,epr.vlpgmupr
+              ,epr.vlttjmpr
+              ,epr.vlpgjmpr
+              ,epr.cdlcremp
+              ,epr.qtprepag
+              ,epr.vlsdeved
+              ,epr.vlsdevat
+              ,epr.vljuracu
+              ,epr.txjuremp
+              ,epr.dtultpag
+         FROM crapepr epr
+        WHERE epr.cdcooper = pr_cdcooper
+          AND epr.nrdconta = pr_nrdconta
+          AND epr.nrctremp = pr_nrctremp;
+      rw_crapepr cr_crapepr%ROWTYPE;      
+
+      -- Cursor genérico de data
+      rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+
+      TYPE typ_tab_crapdat IS
+      TABLE OF btch0001.cr_crapdat%ROWTYPE
+		  INDEX BY BINARY_INTEGER;
+            
+      -- Tabela de Saldos
+      vr_tab_saldos EXTR0001.typ_tab_saldos;
+      vr_tab_crapdat typ_tab_crapdat;
+      vr_tab_erro GENE0001.typ_tab_erro;
+      vr_index_saldo INTEGER;
+
+    BEGIN
+
+      FOR rw_crapcop IN cr_crapcop LOOP
+        OPEN btch0001.cr_crapdat(pr_cdcooper => rw_crapcop.cdcooper);
+        
+        FETCH btch0001.cr_crapdat INTO rw_crapdat;
+        
+        vr_tab_crapdat(rw_crapcop.cdcooper) := rw_crapdat;
+
+        CLOSE btch0001.cr_crapdat;
+
+      END LOOP;
+  
+      pr_flgemail := FALSE; 
+
+      -- Busca do diretorio micros da cooperativa
+      vr_endarqui:= gene0001.fn_diretorio(pr_tpdireto => 'M' -- /micros/coop
+                                         ,pr_cdcooper => vr_cdcooper
+                                         ,pr_nmsubdir => '/cyber/recebe/');
+      -- Arquivos que serao procurados
+      vr_nmtmpzip:= '%_QUIT_ACORDO_OUT.zip';
+
+      -- Vamos ler todos os arquivos .zip
+      gene0001.pc_lista_arquivos(pr_path    => vr_endarqui
+                                ,pr_pesq     => vr_nmtmpzip
+                                ,pr_listarq  => vr_listadir
+                                ,pr_des_erro => vr_dscritic);
+      
+      -- Se ocorrer erro ao recuperar lista de arquivos registra no log
+      IF TRIM(vr_dscritic) IS NOT NULL THEN
+        btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
+                                  ,pr_ind_tipo_log => 2 -- Erro tratato
+                                  ,pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss')||' - ' || ' --> ' || vr_dscritic);
+      END IF;
+
+      -- Carregar a lista de arquivos na temp table
+      vr_tab_arqzip := gene0002.fn_quebra_string(pr_string => vr_listadir);
+
+      -- Buscar Primeiro arquivo da temp table
+      vr_nrindice:= vr_tab_arqzip.FIRST;
+      
+      -- Processar os arquivos lidos
+      WHILE vr_nrindice IS NOT NULL LOOP
+        -- Nome Arquivo zip
+        vr_nmarqzip:= vr_tab_arqzip(vr_nrindice);
+
+        -- Envio centralizado de log de erro
+        BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
+                                 pr_ind_tipo_log => 2, -- Erro tratato
+                                 pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> ' || 'INTEGRANDO ARQUIVO ' || vr_nmarqzip);
+
+        -- Nome do arquivo sem extensao
+        vr_nmtmparq:= SUBSTR(vr_nmarqzip,1,LENGTH(vr_nmarqzip)-4);
+
+        -- Montar Comando para eliminar arquivos do diretorio
+        vr_comando := 'rm '||vr_endarqui||'/'||vr_nmtmparq||'/*.txt 1> /dev/null';
+
+        -- Executar o comando no unix
+        GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                             ,pr_des_comando => vr_comando
+                             ,pr_typ_saida   => vr_typ_saida
+                             ,pr_des_saida   => vr_dscritic);
+
+        -- Remover o diretorio caso exista
+        vr_comando := 'rmdir ' || vr_endarqui || '/' || vr_nmtmparq || ' 1> /dev/null';
+
+        -- Executar o comando no unix
+        GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                             ,pr_des_comando => vr_comando
+                             ,pr_typ_saida   => vr_typ_saida
+                             ,pr_des_saida   => vr_dscritic);
+
+        -- Criar o diretorio com o nome do arquivo
+        vr_comando:= 'mkdir '||vr_endarqui||'/'||vr_nmtmparq||' 1> /dev/null';
+
+        -- Executar o comando no unix
+        GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                             ,pr_des_comando => vr_comando
+                             ,pr_typ_saida   => vr_typ_saida
+                             ,pr_des_saida   => vr_dscritic);
+
+        -- Se ocorreu erro dar RAISE
+        IF vr_typ_saida = 'ERR' THEN
+          vr_dscritic:= 'Nao foi possivel executar comando unix. ' || vr_comando || ' - ' || vr_dscritic;
+          -- Envio centralizado de log de erro
+          BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
+                                     pr_ind_tipo_log => 2, -- Erro tratato
+                                     pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Erro: ' || vr_dscritic);
+          CONTINUE;
+        END IF;
+
+        -- Executar Extracao do arquivo zip
+        gene0002.pc_zipcecred (pr_cdcooper => vr_cdcooper
+                              ,pr_tpfuncao => 'E'
+                              ,pr_dsorigem => vr_endarqui||'/'||vr_nmarqzip
+                              ,pr_dsdestin => vr_endarqui||'/'||vr_nmtmparq
+                              ,pr_dspasswd => NULL
+                              ,pr_flsilent => 'S'
+                              ,pr_des_erro => vr_dscritic);
+      	
+        --Se ocorreu erro
+        IF vr_dscritic IS NOT NULL THEN
+          -- Envio centralizado de log de erro
+          BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
+                                     pr_ind_tipo_log => 2, -- Erro tratato
+                                     pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Erro: ' || vr_dscritic);
+          CONTINUE;
+        END IF;
+
+        -- Lista todos os arquivos .txt do diretorio criado
+        vr_endarqtxt:= vr_endarqui || '/' || vr_nmtmparq;
+
+        -- Buscar todos os arquivos extraidos na nova pasta
+        gene0001.pc_lista_arquivos(pr_path     => vr_endarqtxt
+                                  ,pr_pesq     => '%_QUIT_ACORDO_OUT.txt'
+                                  ,pr_listarq  => vr_listadir
+                                  ,pr_des_erro => vr_dscritic);
+
+        -- Se ocorrer erro ao recuperar lista de arquivos registra no log
+        IF TRIM(vr_dscritic) IS NOT NULL THEN
+          btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
+                                    ,pr_ind_tipo_log => 2 -- Erro tratato
+                                    ,pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Erro: ' || vr_dscritic);
+          CONTINUE;
+        END IF;
+
+        IF vr_listadir IS NULL THEN
+          CONTINUE;
+        END IF;
+
+        -- Converte cada arquivo texto para formato UNIX
+        pc_converte_arquivo_txt_unix (pr_cdcooper => vr_cdcooper
+                                     ,pr_caminho  => vr_endarqtxt        -- Diretorio Arquivos
+                                     ,pr_pesq     => '%_QUIT_ACORDO_OUT' -- Filtro Arquivos
+                                     ,pr_cdcritic => vr_cdcritic         -- Indicador Erro
+                                     ,pr_dscritic => vr_dscritic);       -- Descricao erro
+        -- Se ocorreu erro
+        IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+          -- Envio centralizado de log de erro
+          BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
+                                     pr_ind_tipo_log => 2, -- Erro tratato
+                                     pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Erro: ' || vr_dscritic);
+          CONTINUE;
+        END IF;
+
+        -- Carregar a lista de arquivos na temp table
+        vr_tab_arqtxt:= gene0002.fn_quebra_string(pr_string => vr_listadir);
+
+        --Se possuir arquivos no diretorio
+        IF vr_tab_arqtxt.COUNT > 0 THEN
+
+          --Selecionar primeiro arquivo
+           vr_idx_txt:= vr_tab_arqtxt.FIRST;
+           --Percorrer todos os arquivos lidos
+           WHILE vr_idx_txt IS NOT NULL LOOP
+
+             --Nome do arquivo
+             vr_nmarqtxt:= vr_tab_arqtxt(vr_idx_txt);
+
+             --Abrir o arquivo lido
+             gene0001.pc_abre_arquivo(pr_nmdireto => vr_endarqtxt   --> Diretório do arquivo
+                                     ,pr_nmarquiv => vr_nmarqtxt    --> Nome do arquivo
+                                     ,pr_tipabert => 'R'            --> Modo de abertura (R,W,A)
+                                     ,pr_utlfileh => vr_input_file  --> Handle do arquivo aberto
+                                     ,pr_des_erro => vr_des_erro);  --> Erro
+
+             IF vr_des_erro <> 'OK' THEN
+               
+               btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
+                                         ,pr_ind_tipo_log => 2 -- Erro tratato
+                                         ,pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Erro ao abrir arquivo: ' || vr_nmarqtxt);
+                                         
+               -- Verificar se o arquivo está aberto
+               IF utl_file.IS_OPEN(vr_input_file) THEN
+                 -- Fechar o arquivo
+                 GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file); --> Handle do arquivo aberto;
+               END IF;
+
+               --Buscar proximo arquivo
+               vr_idx_txt:= vr_tab_arqtxt.NEXT(vr_idx_txt);
+               CONTINUE;
+             END IF;
+
+             SAVEPOINT SAVE_ACORDO_QUITADO;
+             vr_nrlinha := 0;
+             <<LEITURA_TXT>>
+             LOOP
+               --Verificar se o arquivo está aberto
+               IF utl_file.IS_OPEN(vr_input_file) THEN
+                 BEGIN
+                   -- Le os dados do arquivo e coloca na variavel vr_setlinha
+                   gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                               ,pr_des_text => vr_setlinha); --> Texto lido
+
+                   vr_nrlinha := vr_nrlinha + 1;
+                 EXCEPTION
+                   WHEN NO_DATA_FOUND THEN
+                     -- Fechar o arquivo
+                     GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file); --> Handle do arquivo aberto;
+                     --Fim do arquivo
+                     EXIT;
+                 END;
+                 
+                 IF SUBSTR(vr_setlinha,1,1) = 'H' AND vr_nrlinha = 1 THEN
+                   CONTINUE;
+                 ELSIF SUBSTR(vr_setlinha,1,1) = 'H' AND vr_nrlinha > 1 THEN
+                   -- Header errado
+                   -- Envio centralizado de log de erro
+                   BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
+                                              pr_ind_tipo_log => 2, -- Erro tratato
+                                              pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> ' ||
+                                                                 'ARQUIVO INCONSISTENTE' || vr_nmarqtxt); 
+                   --Fim do arquivo
+                   ROLLBACK TO SAVE_ACORDO_QUITADO;
+                   pr_flgemail := TRUE;
+                   EXIT LEITURA_TXT;
+                 ELSIF SUBSTR(vr_setlinha,1,1) = 'T' THEN
+                   CONTINUE;                                          
+                 END IF;
+
+                 vr_vllancam := 0;
+
+                 FOR rw_crapcyb IN cr_crapcyb(pr_nracordo => TO_NUMBER(SUBSTR(vr_setlinha,29,13))) LOOP
+                   
+                   OPEN cr_crapass(pr_cdcooper => rw_crapcyb.cdcooper
+                                  ,pr_nrdconta => rw_crapcyb.nrdconta);
+
+                   FETCH cr_crapass INTO rw_crapass;
+                     
+                   CLOSE cr_crapass;
+  
+                   -- Estouro de Conta
+                   IF rw_crapcyb.cdorigem IN (1) THEN 
+                     --Limpar tabela saldos
+                     vr_tab_saldos.DELETE;
+                    
+                     -- Saldo  disponivel
+                     vr_vlsddisp := 0;
+
+                     --Obter Saldo do Dia
+                     EXTR0001.pc_obtem_saldo_dia(pr_cdcooper   => rw_crapcyb.cdcooper
+                                                ,pr_rw_crapdat => vr_tab_crapdat(rw_crapcyb.cdcooper)
+                                                ,pr_cdagenci   => rw_crapass.cdagenci
+                                                ,pr_nrdcaixa   => 100
+                                                ,pr_cdoperad   => vr_cdoperad
+                                                ,pr_nrdconta   => rw_crapcyb.nrdconta
+                                                ,pr_vllimcre   => rw_crapass.vllimcre
+                                                ,pr_dtrefere   => vr_tab_crapdat(rw_crapcyb.cdcooper).dtmvtolt
+                                                ,pr_des_reto   => vr_des_erro
+                                                ,pr_tab_sald   => vr_tab_saldos
+                                                ,pr_tipo_busca => 'A'
+                                                ,pr_tab_erro   => vr_tab_erro);
+
+                     IF vr_des_erro <> 'OK' THEN
+                       vr_cdcritic := vr_tab_erro(vr_tab_erro.first).cdcritic;
+                       vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
+                       -- Envio centralizado de log de erro
+                       BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
+                                                  pr_ind_tipo_log => 2, -- Erro tratato
+                                                  pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Arquivo: ' || vr_nmarqtxt
+                                                                     || ' Erro:' || vr_dscritic); 
+                       ROLLBACK TO SAVE_ACORDO_QUITADO;
+                       pr_flgemail := TRUE;
+                       EXIT LEITURA_TXT;
+                     END IF;
+
+                     --Buscar Indice
+                     vr_index_saldo := vr_tab_saldos.FIRST;
+
+                     IF vr_index_saldo IS NOT NULL THEN
+                       -- Saldo Disponivel na conta corrente
+                       vr_vlsddisp := NVL(vr_tab_saldos(vr_index_saldo).vlsddisp, 0);
+                     END IF;
+
+                     -- Armazenar valor para ser lancado no final como ajuste contabil
+                     -- Somente deverá conter o valor para zerar o estouro de conta.
+                     IF vr_vlsddisp < 0 THEN        
+                       vr_vllancam := NVL(vr_vllancam,0) + NVL(ABS(vr_vlsddisp),0); 
+                     END IF;
+
+                     RECP0001.pc_pagar_contrato_conta(pr_cdcooper => rw_crapcyb.cdcooper
+                                                     ,pr_nrdconta => rw_crapcyb.nrdconta
+                                                     ,pr_cdagenci => rw_crapass.cdagenci
+                                                     ,pr_crapdat  => vr_tab_crapdat(rw_crapcyb.cdcooper)
+                                                     ,pr_cdoperad => vr_cdoperad
+                                                     ,pr_nracordo => rw_crapcyb.nracordo
+                                                     ,pr_vlsddisp => vr_vlsddisp
+                                                     ,pr_vlparcel => ABS(vr_vlsddisp)
+                                                     ,pr_vltotpag => vr_vltotpag
+                                                     ,pr_cdcritic => vr_cdcritic
+                                                     ,pr_dscritic => vr_dscritic);
+                                                     
+                     IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+
+                       IF NVL(vr_cdcritic,0) > 0 THEN
+                         vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+                       END IF;
+                       -- Envio centralizado de log de erro
+                       BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
+                                                  pr_ind_tipo_log => 2, -- Erro tratato
+                                                  pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Arquivo: ' || vr_nmarqtxt
+                                                                     || ' Erro:' || vr_dscritic);
+                       ROLLBACK TO SAVE_ACORDO_QUITADO;
+                       pr_flgemail := TRUE;
+                       EXIT LEITURA_TXT;
+                     END IF;                                
+
+                   ELSIF rw_crapcyb.cdorigem IN (2,3) THEN
+                     
+                     OPEN cr_crapepr(pr_cdcooper => rw_crapcyb.cdcooper
+                                    ,pr_nrdconta => rw_crapcyb.nrdconta
+                                    ,pr_nrctremp => rw_crapcyb.nrctremp);
+
+                     FETCH cr_crapepr INTO rw_crapepr;
+
+                     IF cr_crapepr%NOTFOUND THEN
+                       CLOSE cr_crapepr;
+                       
+                       -- Erro
+                       vr_dscritic := 'Contrato Num. ' || GENE0002.fn_mask_contrato(rw_crapcyb.nrctremp) ||
+                                      ' nao encontrado. Conta: ' || GENE0002.fn_mask_conta(rw_crapcyb.nrdconta) ||
+                                      ', Cooperativa: ' || TO_CHAR(rw_crapcyb.cdcooper);
+
+                       -- Envio centralizado de log de erro
+                       BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
+                                                  pr_ind_tipo_log => 2, -- Erro tratato
+                                                  pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Arquivo: ' || vr_nmarqtxt
+                                                                     || ' Erro:' || vr_dscritic);
+                       ROLLBACK TO SAVE_ACORDO_QUITADO;
+                       pr_flgemail := TRUE;
+                       EXIT LEITURA_TXT;
+                     ELSE
+                       CLOSE cr_crapepr;
+                     END IF;
+
+                     -- Verificar se o contrato já está LIQUIDADO   OU
+                     -- Se o contrato de PREJUIZO já foi TOTALMENTE PAGO
+                     IF (rw_crapepr.inliquid = 1 AND rw_crapepr.inprejuz = 0) OR 
+                        (rw_crapepr.inprejuz = 1 AND rw_crapepr.vlsdprej <= 0) THEN
+                       -- Proximo Contrato
+                       CONTINUE;
+                     END IF;
+
+                     -- Condicao para verificar se o contrato de emprestimo é de prejuizo
+                     IF rw_crapepr.inprejuz = 1 THEN
+                        
+                       -- Realizar a chamada da rotina para pagamento de prejuizo
+                       RECP0001.pc_pagar_emprestimo_prejuizo(pr_cdcooper => rw_crapepr.cdcooper         
+                                                            ,pr_nrdconta => rw_crapepr.nrdconta         
+                                                            ,pr_cdagenci => rw_crapass.cdagenci         
+                                                            ,pr_crapdat  => vr_tab_crapdat(rw_crapepr.cdcooper)
+                                                            ,pr_nrctremp => rw_crapepr.nrctremp 
+                                                            ,pr_tpemprst => rw_crapepr.tpemprst
+                                                            ,pr_vlprejuz => rw_crapepr.vlprejuz 
+                                                            ,pr_vlsdprej => rw_crapepr.vlsdprej
+                                                            ,pr_vlsprjat => rw_crapepr.vlsprjat 
+                                                            ,pr_vlpreemp => rw_crapepr.vlpreemp 
+                                                            ,pr_vlttmupr => rw_crapepr.vlttmupr
+                                                            ,pr_vlpgmupr => rw_crapepr.vlpgmupr 
+                                                            ,pr_vlttjmpr => rw_crapepr.vlttjmpr 
+                                                            ,pr_vlpgjmpr => rw_crapepr.vlpgjmpr
+                                                            ,pr_nracordo => rw_crapcyb.nracordo 
+                                                            ,pr_cdoperad => vr_cdoperad
+                                                            ,pr_vlparcel => 0
+                                                            ,pr_nmtelant => vr_nmdatela
+                                                            ,pr_inliqaco => 'S'           -- Indicador informando que é para liquidar o contrato de emprestimo
+                                                            ,pr_vltotpag => vr_vltotpag -- Retorno do total pago       
+                                                            ,pr_cdcritic => vr_cdcritic
+                                                            ,pr_dscritic => vr_dscritic);
+                       
+                       -- Se retornar erro da rotina
+                       IF vr_dscritic IS NOT NULL OR NVL(vr_cdcritic,0) > 0 THEN
+
+                         IF NVL(vr_cdcritic,0) > 0 THEN
+                           vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+                         END IF;
+
+                         -- Envio centralizado de log de erro
+                         BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
+                                                    pr_ind_tipo_log => 2, -- Erro tratato
+                                                    pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Arquivo: ' || vr_nmarqtxt
+                                                                       || ' Erro:' || vr_dscritic);
+                         ROLLBACK TO SAVE_ACORDO_QUITADO;
+                         pr_flgemail := TRUE;
+                         EXIT LEITURA_TXT;
+                       END IF;
+                        
+                       vr_vllancam := NVL(vr_vllancam,0) + NVL(vr_vltotpag,0);   
+                     -- Folha de Pagamento
+                     ELSIF rw_crapepr.flgpagto = 1 THEN 
+                       
+                       -- Realizar a chamada da rotina para pagamento de prejuizo
+                       RECP0001.pc_pagar_emprestimo_folha(pr_cdcooper => rw_crapepr.cdcooper
+                                                         ,pr_nrdconta => rw_crapepr.nrdconta
+                                                         ,pr_cdagenci => rw_crapass.cdagenci
+                                                         ,pr_crapdat  => vr_tab_crapdat(rw_crapepr.cdcooper)
+                                                         ,pr_nrctremp => rw_crapepr.nrctremp
+                                                         ,pr_nracordo => rw_crapcyb.nracordo
+                                                         ,pr_cdlcremp => rw_crapepr.cdlcremp
+                                                         ,pr_inliquid => rw_crapepr.inliquid
+                                                         ,pr_qtprepag => rw_crapepr.qtprepag
+                                                         ,pr_vlsdeved => rw_crapepr.vlsdeved
+                                                         ,pr_vlsdevat => rw_crapepr.vlsdevat
+                                                         ,pr_vljuracu => rw_crapepr.vljuracu
+                                                         ,pr_txjuremp => rw_crapepr.txjuremp
+                                                         ,pr_dtultpag => rw_crapepr.dtultpag
+                                                         ,pr_vlparcel => 0
+                                                         ,pr_nmtelant => vr_nmdatela
+                                                         ,pr_cdoperad => vr_cdoperad
+                                                         ,pr_inliqaco => 'S'           -- Indicador informando que é para liquidar o contrato de emprestimo
+                                                         ,pr_vltotpag => vr_vltotpag
+                                                         ,pr_cdcritic => vr_cdcritic
+                                                         ,pr_dscritic => vr_dscritic);
+                       
+                       -- Se retornar erro da rotina
+                       IF vr_dscritic IS NOT NULL OR NVL(vr_cdcritic,0) > 0 THEN
+
+                         IF NVL(vr_cdcritic,0) > 0 THEN
+                           vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+                         END IF;
+
+                         -- Envio centralizado de log de erro
+                         BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
+                                                    pr_ind_tipo_log => 2, -- Erro tratato
+                                                    pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Arquivo: ' || vr_nmarqtxt
+                                                                       || ' Erro:' || vr_dscritic);
+                         ROLLBACK TO SAVE_ACORDO_QUITADO;
+                         pr_flgemail := TRUE;
+                         EXIT LEITURA_TXT;
+                       END IF;
+                       
+                       vr_vllancam := NVL(vr_vllancam,0) + NVL(vr_vltotpag,0); 
+                      -- Emprestimo TR
+                      ELSIF rw_crapepr.tpemprst = 0 THEN
+                        
+                        -- Pagar empréstimo TR
+                        RECP0001.pc_pagar_emprestimo_tr(pr_cdcooper => rw_crapepr.cdcooper
+                                                       ,pr_nrdconta => rw_crapepr.nrdconta
+                                                       ,pr_cdagenci => rw_crapass.cdagenci
+                                                       ,pr_crapdat  => vr_tab_crapdat(rw_crapepr.cdcooper)
+                                                       ,pr_nrctremp => rw_crapepr.nrctremp
+                                                       ,pr_nracordo => rw_crapcyb.nracordo
+                                                       ,pr_cdlcremp => rw_crapepr.cdlcremp
+                                                       ,pr_inliquid => rw_crapepr.inliquid
+                                                       ,pr_qtprepag => rw_crapepr.qtprepag
+                                                       ,pr_vlsdeved => rw_crapepr.vlsdeved
+                                                       ,pr_vlsdevat => rw_crapepr.vlsdevat
+                                                       ,pr_vljuracu => rw_crapepr.vljuracu
+                                                       ,pr_txjuremp => rw_crapepr.txjuremp
+                                                       ,pr_dtultpag => rw_crapepr.dtultpag
+                                                       ,pr_vlparcel => 0
+                                                       ,pr_idorigem => 7
+                                                       ,pr_nmtelant => vr_nmdatela
+                                                       ,pr_cdoperad => vr_cdoperad
+                                                       ,pr_inliqaco => 'S'
+                                                       ,pr_vltotpag => vr_vltotpag
+                                                       ,pr_cdcritic => vr_cdcritic
+                                                       ,pr_dscritic => vr_dscritic);
+                         
+                        -- Se retornar erro da rotina
+                        IF vr_dscritic IS NOT NULL OR NVL(vr_cdcritic,0) > 0 THEN
+
+                          IF NVL(vr_cdcritic,0) > 0 THEN
+                            vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+                          END IF;
+
+                          -- Envio centralizado de log de erro
+                          BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
+                                                     pr_ind_tipo_log => 2, -- Erro tratato
+                                                     pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Arquivo: ' || vr_nmarqtxt
+                                                                        || ' Erro:' || vr_dscritic);
+                          ROLLBACK TO SAVE_ACORDO_QUITADO;
+                          pr_flgemail := TRUE;
+                          EXIT LEITURA_TXT;
+                        END IF;
+                       
+                        vr_vllancam := NVL(vr_vllancam,0) + NVL(vr_vltotpag,0); 
+                      -- Emprestimo PP
+                      ELSIF rw_crapepr.tpemprst = 1 THEN
+                        -- Pagar empréstimo PP
+                        RECP0001.pc_pagar_emprestimo_pp(pr_cdcooper => rw_crapepr.cdcooper
+                                                       ,pr_nrdconta => rw_crapepr.nrdconta         
+                                                       ,pr_cdagenci => rw_crapass.cdagenci         
+                                                       ,pr_crapdat  => vr_tab_crapdat(rw_crapepr.cdcooper)
+                                                       ,pr_nrctremp => rw_crapcyb.nrctremp
+                                                       ,pr_nracordo => rw_crapcyb.nracordo
+                                                       ,pr_vlsdeved => rw_crapepr.vlsdeved
+                                                       ,pr_vlsdevat => rw_crapepr.vlsdevat
+                                                       ,pr_vlparcel => 0
+                                                       ,pr_idorigem => 7 
+                                                       ,pr_nmtelant => vr_nmdatela
+                                                       ,pr_cdoperad => vr_cdoperad
+                                                       ,pr_inliqaco => 'S'
+                                                       ,pr_idvlrmin => vr_idvlrmin
+                                                       ,pr_vltotpag => vr_vltotpag         
+                                                       ,pr_cdcritic => vr_cdcritic         
+                                                       ,pr_dscritic => vr_dscritic);       
+                        
+                        -- Se retornar erro da rotina
+                        IF vr_dscritic IS NOT NULL OR NVL(vr_cdcritic,0) > 0 THEN
+
+                          IF NVL(vr_cdcritic,0) > 0 THEN
+                            vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+                          END IF;
+
+                          -- Envio centralizado de log de erro
+                          BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
+                                                     pr_ind_tipo_log => 2, -- Erro tratato
+                                                     pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Arquivo: ' || vr_nmarqtxt
+                                                                        || ' Erro:' || vr_dscritic);
+                          ROLLBACK TO SAVE_ACORDO_QUITADO;
+                          pr_flgemail := TRUE;
+                          EXIT LEITURA_TXT;
+                        END IF;
+                       
+                        vr_vllancam := NVL(vr_vllancam,0) + NVL(vr_vltotpag,0);
+                      END IF;
+                      
+                    END IF; 
+
+                 END LOOP;
+                 
+                 OPEN cr_nracordo(pr_nracordo => TO_NUMBER(SUBSTR(vr_setlinha,29,13)));
+
+                 FETCH cr_nracordo INTO rw_nracordo;
+
+                 CLOSE cr_nracordo;
+
+                 OPEN cr_crapass(pr_cdcooper => rw_nracordo.cdcooper
+                                ,pr_nrdconta => rw_nracordo.nrdconta);   
+
+                 FETCH cr_crapass INTO rw_crapass;               
+
+                 CLOSE cr_crapass;
+
+                 IF rw_nracordo.vlbloqueado > 0 THEN
+                                      
+                    EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => rw_crapass.cdcooper                          --> Cooperativa conectada
+                                                  ,pr_dtmvtolt => vr_tab_crapdat(rw_crapass.cdcooper).dtmvtolt --> Movimento atual
+                                                  ,pr_cdagenci => rw_crapass.cdagenci                          --> Código da agência
+                                                  ,pr_cdbccxlt => 100                                          --> Número do caixa
+                                                  ,pr_cdoperad => vr_cdoperad                                  --> Código do Operador
+                                                  ,pr_cdpactra => rw_crapass.cdagenci                          --> P.A. da transação
+                                                  ,pr_nrdolote => 650001                                       --> Numero do Lote
+                                                  ,pr_nrdconta => rw_crapass.nrdconta                          --> Número da conta
+                                                  ,pr_cdhistor => 2194                                         --> Codigo historico 2194 - CR.DESB.ACORD
+                                                  ,pr_vllanmto => rw_nracordo.vlbloqueado                      --> Valor da parcela emprestimo
+                                                  ,pr_nrparepr => rw_nracordo.nracordo                         --> Número parcelas empréstimo
+                                                  ,pr_nrctremp => 0                                            --> Número do contrato de empréstimo
+                                                  ,pr_des_reto => vr_des_reto                                  --> Retorno OK / NOK
+                                                  ,pr_tab_erro => vr_tab_erro);                                --> Tabela com possíves erros
+                    --Se Retornou erro
+                    IF vr_des_reto <> 'OK' THEN
+                      -- Se possui algum erro na tabela de erros
+                      IF vr_tab_erro.count() > 0 THEN
+                        -- Atribui críticas às variaveis
+                        vr_cdcritic := vr_tab_erro(vr_tab_erro.first).cdcritic;
+                        vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
+                      ELSE
+                        vr_cdcritic := 0;
+                        vr_dscritic := 'Erro ao criar o lancamento de desbloqueio de acordo';
+                      END IF;
+                      
+                      -- Envio centralizado de log de erro
+                      BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
+                                                 pr_ind_tipo_log => 2, -- Erro tratato
+                                                 pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Arquivo: ' || vr_nmarqtxt
+                                                                    || ' Erro:' || vr_dscritic);
+
+                      ROLLBACK TO SAVE_ACORDO_QUITADO;
+                      pr_flgemail := TRUE;
+                      EXIT LEITURA_TXT;
+                    END IF;
+
+                 END IF;
+
+                 -- Verificar se sera necessario efetuar o lancamento de ajuste
+                 IF vr_vllancam - rw_nracordo.vlbloqueado > 0 THEN
+                 
+                   /* Se ainda houver saldo devedor nas operações vinculadas ao acordo, 
+                      o sistema Ayllos deverá efetuar o abatimento do saldo devedor das operações
+                      vinculadas ao acordo cujo ainda existem saldo(s) devedor(es), de forma automatica.
+                      Para este procedimento, utilizar o histórico: 2181 */
+                 
+                   EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => rw_crapass.cdcooper                          --> Cooperativa conectada
+                                                 ,pr_dtmvtolt => vr_tab_crapdat(rw_crapass.cdcooper).dtmvtolt --> Movimento atual
+                                                 ,pr_cdagenci => rw_crapass.cdagenci                          --> Código da agência
+                                                 ,pr_cdbccxlt => 100                                          --> Número do caixa
+                                                 ,pr_cdoperad => vr_cdoperad                                  --> Código do Operador
+                                                 ,pr_cdpactra => rw_crapass.cdagenci                          --> P.A. da transação
+                                                 ,pr_nrdolote => 650001                                       --> Numero do Lote
+                                                 ,pr_nrdconta => rw_crapass.nrdconta                          --> Número da conta
+                                                 ,pr_cdhistor => 2181                                         --> Codigo historico
+                                                 ,pr_vllanmto => vr_vllancam - rw_nracordo.vlbloqueado        --> Valor do credito
+                                                 ,pr_nrparepr => rw_nracordo.nracordo                         --> Número do Acordo
+                                                 ,pr_nrctremp => 0                                            --> Número do contrato de empréstimo
+                                                 ,pr_des_reto => vr_des_reto                                  --> Retorno OK / NOK
+                                                 ,pr_tab_erro => vr_tab_erro);                                --> Tabela com possíves erros
+
+                   -- Se ocorreu erro
+                   IF vr_des_reto <> 'OK' THEN
+                     -- Se possui algum erro na tabela de erros
+                     IF vr_tab_erro.COUNT() > 0 THEN
+                       vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+                       vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+                     ELSE
+                       vr_cdcritic := 0;
+                       vr_dscritic := 'Erro ao criar o lancamento na conta corrente.';
+                     END IF;
+                     -- Envio centralizado de log de erro
+                     BTCH0001.pc_gera_log_batch(pr_cdcooper    => vr_cdcooper,
+                                               pr_ind_tipo_log => 2, -- Erro tratato
+                                               pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Arquivo: ' || vr_nmarqtxt
+                                                                  || ' Erro:' || vr_dscritic);
+                     ROLLBACK TO SAVE_ACORDO_QUITADO;
+                     pr_flgemail := TRUE;
+                     EXIT LEITURA_TXT;
+                   END IF;
+
+                 END IF;
+
+                 BEGIN
+                   UPDATE tbrecup_acordo
+                      SET vlbloqueado = 0,
+                          cdsituacao  = 2,
+                          dtliquid    = TO_DATE(SUBSTR(vr_setlinha,42,8),'MMDDRRRR')
+                    WHERE tbrecup_acordo.nracordo = TO_NUMBER(SUBSTR(vr_setlinha,29,13));
+                 EXCEPTION
+                   WHEN OTHERS THEN
+                     vr_dscritic := 'Erro ao atualizar registro na tabela TBRECUP_ACORDO: ' || SQLERRM;
+                     -- Envio centralizado de log de erro
+                     BTCH0001.pc_gera_log_batch(pr_cdcooper    => vr_cdcooper,
+                                               pr_ind_tipo_log => 2, -- Erro tratato
+                                               pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Arquivo: ' || vr_nmarqtxt
+                                                                  || ' Erro:' || vr_dscritic);
+                     ROLLBACK TO SAVE_ACORDO_QUITADO;
+                     pr_flgemail := TRUE;
+                     EXIT LEITURA_TXT;                                          
+                 END;   
+                  
+               END IF; --Arquivo aberto
+             END LOOP;
+             
+             -- Verificar se o arquivo está aberto
+             IF utl_file.IS_OPEN(vr_input_file) THEN
+               -- Fechar o arquivo
+               GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file); --> Handle do arquivo aberto;
+             END IF;
+
+             -- Buscar proximo arquivo
+             vr_idx_txt:= vr_tab_arqtxt.NEXT(vr_idx_txt);
+           END LOOP;
+
+        END IF;
+        
+        -- Renomear os arquivos .zip que foram processados
+        vr_comando:= 'mv '||vr_endarqui||'/'||vr_nmtmparq||'.zip '||
+                    vr_endarqui||'/'||vr_nmtmparq||'_processado.pro 1> /dev/null';
+        
+        -- Executar o comando no unix
+        GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                             ,pr_des_comando => vr_comando
+                             ,pr_typ_saida   => vr_typ_saida
+                             ,pr_des_saida   => vr_dscritic);
+        
+        -- Se ocorreu erro dar RAISE
+        IF vr_typ_saida = 'ERR' THEN
+          vr_dscritic:= 'Nao foi possivel executar comando unix. ' || vr_comando;
+          -- Envio centralizado de log de erro
+          BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
+                                     pr_ind_tipo_log => 2, -- Erro tratato
+                                     pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> ' ||
+                                                        'ERRO: ' || vr_dscritic);
+          CONTINUE;
+        END IF;
+
+        -- Remove o diretorio criado
+        vr_comando:= 'rm -Rf '||vr_endarqui||'/'||vr_nmtmparq||' 1> /dev/null';
+
+        -- Executar o comando no unix
+        GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                             ,pr_des_comando => vr_comando
+                             ,pr_typ_saida   => vr_typ_saida
+                             ,pr_des_saida   => vr_dscritic);
+        
+        -- Se ocorreu erro dar RAISE
+        IF vr_typ_saida = 'ERR' THEN
+          vr_dscritic:= 'Nao foi possivel executar comando unix. ' || vr_comando || '. Erro: ' || vr_dscritic;
+          -- Envio centralizado de log de erro
+          BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
+                                     pr_ind_tipo_log => 2, -- Erro tratato
+                                     pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> ' ||
+                                                        'ERRO: ' || vr_dscritic); 
+          CONTINUE;
+        END IF;                
+
+        -- Envio centralizado de log de erro
+        BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
+                                   pr_ind_tipo_log => 2, -- Erro tratato
+                                   pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> ' ||
+                                                      'ARQUIVO INTEGRADO: ' || vr_nmarqzip); 
+
+        -- Proximo registro
+        vr_nrindice:= vr_tab_arqzip.NEXT(vr_nrindice);
+
+      END LOOP;
+
+  EXCEPTION
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro na RECP0003.PC_IMP_ARQ_ACORDO_QUITADO: ' || SQLERRM;
+      pr_flgemail := TRUE;
+      -- Envio centralizado de log de erro
+      BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
+                                 pr_ind_tipo_log => 2, -- Erro tratato
+                                 pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Erro: ' || pr_dscritic);
+
+      ROLLBACK;
+  END pc_imp_arq_acordo_quitado; 
+
+  PROCEDURE pc_import_arq_acordo_job IS
+
+    -- Variaveis de Erros
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic crapcri.dscritic%TYPE;
+    vr_flgemail_cancelado BOOLEAN := FALSE;
+    vr_flgemail_quitado BOOLEAN := FALSE;
+    vr_dscemail VARCHAR2(4000) := '';     
+  BEGIN
+      -- Envio centralizado de log de erro
+      BTCH0001.pc_gera_log_batch(pr_cdcooper     => 3,
+                                 pr_ind_tipo_log => 2, -- Erro tratato
+                                 pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> ' ||
+                                                    'INCIO DE IMPORTACAO REFERENTE A ACORDOS --> RECP0003.PC_IMPORT_ARQ_ACORDO_JOB');
+            
+      -- Importacao de arquivo de acordos cancelados
+      pc_imp_arq_acordo_cancel(pr_flgemail => vr_flgemail_cancelado
+                              ,pr_cdcritic => vr_cdcritic
+                              ,pr_dscritic => vr_dscritic);
+
+      -- Importacao de arquivo de acordos quitados
+      pc_imp_arq_acordo_quitado(pr_flgemail => vr_flgemail_quitado
+                               ,pr_cdcritic => vr_cdcritic
+                               ,pr_dscritic => vr_dscritic);
+
+      IF vr_flgemail_cancelado AND vr_flgemail_quitado THEN
+        vr_dscemail := 'Houve erro de importação no arquivo referente a acordos cancelados e quitados.';
+      ELSIF vr_flgemail_cancelado THEN
+        vr_dscemail := 'Houve erro de importação no arquivo referente a acordos cancelados.';
+      ELSIF vr_flgemail_quitado THEN
+        vr_dscemail := 'Houve erro de importação no arquivo referente a acordos quitados.';
+      END IF;
+           
+      IF vr_dscemail IS NOT NULL THEN
+        -- Envia email aos responsaveis pela importacao do arquivo CB117
+        GENE0003.pc_solicita_email(pr_cdcooper        => 3
+                                  ,pr_cdprogra        => 'RECP0003'
+                                  ,pr_des_destino     => 'estrategiadecobranca@cecred.coop.br'
+                                  ,pr_des_assunto     => 'IMPORTACAO ARQUIVO ACORDO'
+                                  ,pr_des_corpo       => vr_dscemail
+                                  ,pr_des_anexo       => NULL --> nao envia anexo, anexo esta disponivel no dir conf. geracao do arq.
+                                  ,pr_flg_remove_anex => 'N'  --> Remover os anexos passados
+                                  ,pr_flg_remete_coop => 'N'  --> Se o envio sera do e-mail da Cooperativa
+                                  ,pr_flg_enviar      => 'S'  --> Enviar o e-mail na hora
+                                  ,pr_des_erro        => vr_dscritic);
+
+        -- Se houver erros
+        IF vr_dscritic IS NOT NULL THEN
+          -- Envio centralizado de log de erro
+          BTCH0001.pc_gera_log_batch(pr_cdcooper     => 3,
+                                     pr_ind_tipo_log => 2, -- Erro tratato
+                                     pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Erro: ' || vr_dscritic
+                                                        || ' --> RECP0003.PC_IMPORT_ARQ_ACORDO_JOB');
+        END IF;
+      ELSE
+      
+        -- Envio centralizado de log de erro
+        BTCH0001.pc_gera_log_batch(pr_cdcooper     => 3,
+                                   pr_ind_tipo_log => 2, -- Erro tratato
+                                   pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> ' ||
+                                                      'IMPORTACAO EFETUADA COM SUCESSO --> RECP0003.PC_IMPORT_ARQ_ACORDO_JOB');
+      END IF;
+     
+  EXCEPTION
+    WHEN OTHERS THEN
+      -- Envio centralizado de log de erro
+      BTCH0001.pc_gera_log_batch(pr_cdcooper     => 3,
+                                 pr_ind_tipo_log => 2, -- Erro tratato
+                                 pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || 'RECP0003.PC_IMPORT_ARQ_ACORDO_JOB --> Erro: ' || SQLERRM);
+      ROLLBACK;
+  END pc_import_arq_acordo_job;
+  
+END RECP0003;
+/

@@ -6513,7 +6513,7 @@ BEGIN
         if rw_craprej.tpctbcxa in (4, 6) then  -- POR BB A DEBITO
           vr_nrdctabb := null;
           --
-          IF rw_craprej.cdhistor in (266, 971, 977, 1088, 1089, 1998, 1999, 2000, 2001, 2002, 2012) then
+          IF rw_craprej.cdhistor in (266, 971, 977, 1088, 1089, 1998, 1999, 2000, 2001, 2002, 2012, 2180) then
              --  266 - cred. cobranca
              --  971 - cred cobr - BB
              --  977 - cred cobr - CECRED
@@ -6525,6 +6525,7 @@ BEGIN
              -- 2001 - DEVOLUCAO BOLETO VENCIDO
              -- 2002 - AJUSTE CONTRATO PROCESSO EM ATRASO
              -- 2012 - AJUSTE BOLETO (EMPRESTIMO) 
+			 -- 2180 - CRED.COB. ACORDO
             vr_nrdctabb := to_char(rw_craprej.nrctadeb);
           else
             open cr_craptab (pr_cdcooper,

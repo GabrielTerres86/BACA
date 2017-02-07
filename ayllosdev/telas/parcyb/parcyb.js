@@ -4,7 +4,7 @@
  * DATA CRIAÇÃO : 08/09/2015
  * OBJETIVO     : Biblioteca de funções da tela PARCYB
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : 19/09/2016 - Ajustes para exibicao do codigo de acessoria do CYBER, PRJ. 302 (Jean Michel).
  * --------------
  */
 
@@ -242,11 +242,12 @@ function formataCadastroAssessoria(){
 	// rotulo
 	$('label[for="cdassessoria"]',"#frmAssessoria").addClass("rotulo").css({"width":"150px"}); 
 	$('label[for="nmassessoria"]',"#frmAssessoria").addClass("rotulo").css({"width":"150px"}); 
-	
+	$('label[for="cdasscyb"]', "#frmAssessoria").addClass("rotulo").css({ "width": "150px" });
 	// campo
 	$("#cdassessoria","#frmAssessoria").css("width","100px").habilitaCampo();
 	$("#nmassessoria","#frmAssessoria").addClass("alphanum").css("width","500px").attr("maxlength","50").habilitaCampo();
-	
+	$("#cdasscyb", "#frmAssessoria").css("width", "100px").habilitaCampo();
+
 	$('input[type="text"],select','#frmAssessoria').limpaFormulario().removeClass('campoErro');
 	layoutPadrao();
 
@@ -257,7 +258,16 @@ function formataCadastroAssessoria(){
 			buscaAssessoria();
 			return false;
 		}
-    });	
+	});
+	
+    //Define ação para o campo de código da assessoria CYBER
+	$("#cdasscyb", "#frmAssessoria").unbind('keypress').bind('keypress', function (e) {
+	    if (e.keyCode == 9 || e.keyCode == 13) {
+	        // Quando ENTER ou TAB coloca foco no campo de nome de acessoria
+	        $("#nmassessoria", "#frmAssessoria").focus();
+	        return false;
+	    }
+	});
 	
 	//Define ação para o campo de código da assessoria
 	$("#cdassessoria","#frmAssessoria").unbind('blur').bind('blur', function(e) {
@@ -294,8 +304,7 @@ function formataConsultaAssessoria() {
 	//Define a largura dos campos
 	var arrayLargura = new Array();
     arrayLargura[0] = "80px";
-    arrayLargura[1] = "";
-    arrayLargura[2] = "80px";
+    arrayLargura[1] = "140";
 
 	//Define a posição dos elementos nas células da linha
     var arrayAlinha = new Array();
@@ -338,7 +347,8 @@ function liberaAcaoAssessoria(){
 		if(cddopcao.val() == "IA"){
 			// Quando for inclusão desabilita o código para que seja possivel informar apenas o nome da assessoria
 			$("#cdassessoria","#frmAssessoria").desabilitaCampo();
-			$("#nmassessoria","#frmAssessoria").focus();
+			$("#cdasscyb", "#frmAssessoria").focus();
+		    //$("#nmassessoria","#frmAssessoria").focus();
 		}
 		
 		// Verificar a opção para exibir a lupa de pesquisa
@@ -369,6 +379,12 @@ function controlaConcluirAssessoria(){
 		return false;
 	}
 	
+    //Validação da descrição informada
+	if ($("#cdasscyb", "#frmAssessoria").val() == "") {
+	    showError('error', 'C&oacute;digo CYBER inv&aacute;lido!!', 'Campo obrigat&oacute;rio', '$("#cdasscyb","#frmAssessoria").focus();');
+	    return false;
+	}
+
 	//Validação da descrição informada
 	if($("#nmassessoria","#frmAssessoria").val() == "") {
 		showError('error','Nome de Assessoria inv&aacute;lido!','Campo obrigat&oacute;rio','$("#nmassessoria","#frmAssessoria").focus();');
@@ -417,7 +433,7 @@ function confirmouOperacaoAssessoria(){
 														  .replace(/[ñ]/g,"n")
 														  .replace(/[^A-z0-9\s\!\@\$\%\*\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/\>\<]/g,"");
 
-	manterAssessoria(cddopcao,$("#cdassessoria","#frmAssessoria").val(),nmassessoria);
+	manterAssessoria(cddopcao, $("#cdassessoria", "#frmAssessoria").val(), nmassessoria, $("#cdasscyb", "#frmAssessoria").val());
 }
 
 // Função para executar a busca de todas as acessorias
@@ -449,21 +465,25 @@ function executaConsultaAssessoriasExclusao(){
 }
 
 // Função para criar a linha com as assessorias cadastradas
-function criaLinhaAssessoria(cdassessoria,nmassessoria){
+function criaLinhaAssessoria(cdassessoria, nmassessoria, cdasscyb) {
 	// Criar a linha na tabela
 	$("#tbCadcas > tbody")
 		.append($('<tr>') // Linha
 			.attr('id',"id_".concat(cdassessoria))
 			.append($('<td>') // Coluna: Código da Assessoria
-				.attr('style','width: 80px; text-align:right')
+				.attr('style','width: 13%; text-align:right')
 				.text(cdassessoria)
 			)
+            .append($('<td>') // Coluna: Código da Assessoria CYBER
+				.attr('style', 'width: 22%; text-align:right')
+				.text(cdasscyb)
+			)
 			.append($('<td>') // Coluna: Nome da Assessoria
-				.attr('style','text-align:left')
+				.attr('style', '55%; text-align:left')
 				.text(nmassessoria)
 			)
 			.append($('<td>') // Coluna: Botão para REMOVER
-				.attr('style','width: 80px; text-align:center')
+				.attr('style', ' text-align:center')
 				.append($('<img onclick="solicitarMensagemExclusaoAssessoria(' + cdassessoria + ')">')
 					.attr('src', UrlImagens + 'geral/btn_excluir.gif')
 				)
@@ -471,7 +491,7 @@ function criaLinhaAssessoria(cdassessoria,nmassessoria){
 		);
 }
 
-function criaLinhaAssessoriaConsulta(cdassessoria,nmassessoria){
+function criaLinhaAssessoriaConsulta(cdassessoria, nmassessoria, cdasscyb) {
 	// Criar a linha na tabela
 	$("#tbCadcas > tbody")
 		.append($('<tr>') // Linha
@@ -479,6 +499,10 @@ function criaLinhaAssessoriaConsulta(cdassessoria,nmassessoria){
 			.append($('<td>') // Coluna: Código da Assessoria
 				.attr('style','width: 80px; text-align:right')
 				.text(cdassessoria)
+			)
+            .append($('<td>') // Coluna: Código da Assessoria CYBER
+				.attr('style', 'width: 140px; text-align:right')
+				.text(cdasscyb)
 			)
 			.append($('<td>') // Coluna: Nome da Assessoria
 				.attr('style','text-align:left')
@@ -504,7 +528,7 @@ function excluirAssessoria(cdassessoria){
 }
 
 // Função para manter rotina (Consultar/Incluir/Alterar/Excluir)
-function manterAssessoria(cddopcao,cdassessoria,nmassessoria){
+function manterAssessoria(cddopcao, cdassessoria, nmassessoria, cdasscyb) {
     //Requisição para processar a opção que foi selecionada
 	$.ajax({
         type: "POST",
@@ -513,6 +537,7 @@ function manterAssessoria(cddopcao,cdassessoria,nmassessoria){
             cddopcao:     cddopcao,
 			cdassessoria: cdassessoria,
 			nmassessoria: nmassessoria,
+			cdasscyb    : cdasscyb,
             redirect:     "script_ajax"
         },
         error: function(objAjax,responseError,objExcept) {
@@ -547,7 +572,7 @@ function mostrarPesquisaAssessoria(){
 	//Definição dos filtros
 	var filtros	= "Código Assessoria;cdassessoria;50px;N;;N;|Nome Assessoria;nmassessoria;200px;S;;S;descricao";
 	//Campos que serão exibidos na tela
-	var colunas = 'Código;cdassessoria;20%;right|Nome Assessoria;nmassessoria;80%;left';			
+	var colunas = 'Código;cdassessoria;20%;right|Código CYBER;cdasscyb;20%;right|Nome Assessoria;nmassessoria;60%;left';
 	//Exibir a pesquisa
 	mostraPesquisa("PARCYB", "PARCYB_BUSCAR_ASSESSORIAS", "Assessorias","100",filtros,colunas);
 }

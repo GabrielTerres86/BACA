@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0001 AS
     Sistema  : Rotinas genéricas para calculos e envios de extratos
     Sigla    : GENE
     Autor    : Mirtes.
-    Data     : Dezembro/2012.                   Ultima atualizacao: 03/10/2016
+    Data     : Dezembro/2012.                   Ultima atualizacao: 06/10/2016
 
     Alteracoes: 27/08/2014 - Incluida chamada da procedure pc_busca_saldo_aplicacoes,
                              na procedure pc_ver_saldos (Jean Michel).
@@ -31,7 +31,10 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0001 AS
                             atraves de rotinas PROGRESS. (Carlos Rafael Tanholi - SD 513352)    
 							
 			   03/10/2016 - Correcao no tratamento de retorno de campos data da pc_obtem_saldo_car
-							com formato invalido. (Carlos Rafael Tanholi - SD 531031)
+							com formato invalido. (Carlos Rafael Tanholi - SD 531031)                            
+
+               06/10/2016 - Inclusao da procedure de retorno de valores referente a acordos de emprestimos,
+                            na procedure pc_obtem_saldo_dia, Prj. 302 (Jean Michel).                                           
 ..............................................................................*/
 
   -- Tipo para guardar as 5 linhas da mensagem de e-mail
@@ -105,7 +108,9 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0001 AS
              ,dslimcre VARCHAR2(100)
              ,vlipmfpg NUMBER(18,6)
              ,dtultlcr crapass.dtultlcr%TYPE
-             ,vlblqjud crapblj.vlbloque%TYPE);
+             ,vlblqjud crapblj.vlbloque%TYPE
+             ,vlblqaco tbrecup_acordo.vlbloqueado%TYPE);
+
   /* Definição de tabela que compreende os registros acima declarados */
   TYPE typ_tab_saldos IS
     TABLE OF typ_reg_saldos
@@ -700,7 +705,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
 
               02/06/2016 - Adicionado validações Para melhorar desempenho da 
                            rotina pc_obtem_saldo_dia (Kelvin - SD 459346)
-                           
+                          
               20/06/2016 - Correcao para o uso correto do indice da CRAPTAB em  varias procedures 
                            desta package.(Carlos Rafael Tanholi).                              
                            
@@ -715,10 +720,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
               09/08/2016 - #483189 Retirada do cursor cr_max_sda pois o mesmo não é mais utilizado;
                            Mudança do default do parâmetro pr_tipo_busca para 'A' nas rotinas 
                            pc_obtem_saldo_dia (Carlos)
-
                29/08/2016 - Criacao da procedure pc_obtem_saldo_car para uso da pc_obtem_saldo
                             atraves de rotinas PROGRESS. (Carlos Rafael Tanholi - SD 513352)
-			    
+
+              06/10/2016 - Inclusao da procedure de retorno de valores referente a acordos de emprestimos,
+                           na procedure pc_obtem_saldo_dia, Prj. 302 (Jean Michel).
+
                17/11/2016 - Correcao do cursor cr_crapepr removendo o comando NVL com intuito de
                							ganho em performance. SD 516113 (Carlos Rafael Tanholi)			  
 
@@ -772,7 +779,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
        AND ( pr_lsthistor_ret = ' ' OR ','||pr_lsthistor_ret||',' LIKE ('%,'||lcm.cdhistor||',%') );     --> Retornar quando passado         
   rw_craplcm_olt cr_craplcm_olt%ROWTYPE;    
           
-
+         
   -- Busca de lançamentos no periodo para a conta do associado
   CURSOR cr_craplcm_ign(pr_cdcooper  IN crapcop.cdcooper%TYPE  --> Cooperativa conectada
                    ,pr_nrdconta  IN crapass.nrdconta%TYPE  --> Número da conta
@@ -1585,7 +1592,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         Sistema  : Conta-Corrente - Cooperativa de Credito
         Sigla    : CRED
         Autor    : Odirlei Busana - AMcom
-        Data     : Maio/2015.                   Ultima atualizacao: 17/11/2015
+        Data     : Maio/2015.                   Ultima atualizacao: 06/10/2016
 
         Dados referentes ao programa:
 
@@ -1600,6 +1607,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
 
                     22/12/2015 - Ajustado parametro pr_flgcrass para FALSE na chamada de
                                  pc_obtem_saldo_dia. (Douglas - Chamado 285228)
+
+                    06/10/2016 - Inclusao do valor de saldo bloqueado de acordos de contratos
+                                 de emprestimos, Prj. 302 (Jean Michel).             
     ..........................................................................*/
 
 
@@ -1738,7 +1748,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
             ,vlsrdcpo
             ,vlblqjud
             ,vlsdcota
-            ,vlblqtaa)
+            ,vlblqtaa
+            ,vlblqaco)
             VALUES
             (vr_tab_saldos(vr_ind).nrdconta
             ,vr_tab_saldos(vr_ind).dtmvtolt
@@ -1779,7 +1790,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
             ,vr_tab_saldos(vr_ind).vlsrdcpo
             ,vr_tab_saldos(vr_ind).vlblqjud
             ,vr_tab_saldos(vr_ind).vlsdcota
-            ,vr_tab_saldos(vr_ind).vlblqtaa);
+            ,vr_tab_saldos(vr_ind).vlblqtaa
+            ,vr_tab_saldos(vr_ind).vlblqaco);
+
         EXCEPTION
           WHEN OTHERS THEN
             pr_cdcritic := 0;
@@ -2204,18 +2217,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
     --                21/06/2016 - Ajuste para utilizar o cursor cr_crapsda_pk para encontrar o saldo
     --                            (Adriano).
     --
-    --
+    --                06/10/2016 - Inclusao da procedure de retorno de valores referente a acordos de emprestimos,
+    --                             Prj. 302 (Jean Michel).
     ---------------------------------------------------------------------------------------------------------------------
 
     DECLARE
       -- Descrição da critica
       vr_dscritic VARCHAR2(4000);
+      vr_cdcritic crapcri.cdcritic%TYPE := 0;
+
       -- Sequencia do vetor de saldos
       vr_ind BINARY_INTEGER;
       -- Retorno dos valores de bloqueio judiciais
       vr_vlblqjud NUMBER;
       vr_vlresblq NUMBER;
       vr_dtrefere DATE;
+      vr_vlblqaco tbrecup_acordo.vlbloqueado%TYPE;
+
     BEGIN
       
       vr_dtrefere := gene0005.fn_valida_dia_util
@@ -2287,6 +2305,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                                       ,pr_vlbloque => vr_vlblqjud            --> Valor bloqueado
                                       ,pr_vlresblq => vr_vlresblq            --> Valor que falta bloquear
                                       ,pr_dscritic => vr_dscritic);          --> Erros encontrados no processo
+
+      RECP0001.pc_ret_vlr_bloq_acordo(pr_cdcooper => pr_cdcooper
+                                     ,pr_nrdconta => pr_nrdconta
+                                     ,pr_vlblqaco => vr_vlblqaco
+                                     ,pr_cdcritic => vr_cdcritic
+                                     ,pr_dscritic => vr_dscritic);
+
+      IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+        -- Chamar rotina de gravação de erro
+        gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                             ,pr_cdagenci => pr_cdagenci
+                             ,pr_nrdcaixa => pr_nrdcaixa
+                             ,pr_nrsequen => 1 --> Fixo
+                             ,pr_cdcritic => NVL(vr_cdcritic,0)
+                             ,pr_dscritic => vr_dscritic
+                             ,pr_tab_erro => pr_tab_erro);
+                               
+        -- Levantar exceção
+        RAISE vr_exc_erro;
+      END IF;
+
       -- Se chegou nesse ponto é pq encontrou saldo, então copia as informações pro vetor de saldo
       vr_ind := pr_tab_sald.COUNT;
       pr_tab_sald(vr_ind).nrdconta := rw_crapsda.nrdconta;
@@ -2328,6 +2367,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       pr_tab_sald(vr_ind).vlsrdcpo := rw_crapsda.vlsrdcpo;
       pr_tab_sald(vr_ind).vlblqjud := vr_vlblqjud;
       pr_tab_sald(vr_ind).vlsdcota := rw_crapsda.vlsdcota;
+      pr_tab_sald(vr_ind).vlblqaco := vr_vlblqaco;
+     
       -- Chegou ao final sem problemas
       pr_des_reto := 'OK';
     EXCEPTION
@@ -2531,6 +2572,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
     END;
 
   END pc_obtem_saldo_car;    
+
+
 
   -- Chamar funçao para montagem do número do documento para extrato
   FUNCTION fn_format_nrdocmto_extr(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cooperativa
@@ -2776,7 +2819,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                                  Depositos Identificados (Alisson - AMcom)
 
                     01/04/2015 - Ajuste na variavel vr_dshistor (Jean Michel).
-
+                    
                     17/05/2016 - Incluido tratamento para historico 1019 exibir o correta
                                  descrição no historico e para caso for um lançamento de 
                                  debito automatico concatenar com historico complementar
@@ -6108,7 +6151,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
 
      Alteracoes: 19/10/2015 - Conversão Progress -> Oracle (Odirlei/AMcom)
 
-                 03/08/2016 - Retirado campo 'flgcrdpa' do cursor "cr_crapass'.
+	             03/08/2016 - Retirado campo 'flgcrdpa' do cursor "cr_crapass'.
                               Projeto 299/3 - Pre Aprovado (Lombardi)
     ..............................................................................*/
 
@@ -6836,7 +6879,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         pr_dscritic:= 'Erro na extr0001.pc_consulta_extrato_car --> '|| SQLERRM;
 
   END pc_consulta_extrato_car;  
-  
+
   --> Rotina para obter as medias dos cooperados
   PROCEDURE pc_obtem_medias ( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Código da Cooperativa
                              ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Código da agencia

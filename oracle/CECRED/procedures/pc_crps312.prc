@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Margarete
-   Data    : Junho/2001.                     Ultima atualizacao: 30/06/2015
+   Data    : Junho/2001.                     Ultima atualizacao: 19/09/2016
 
    Dados referentes ao programa:
 
@@ -118,7 +118,10 @@ CREATE OR REPLACE PROCEDURE CECRED.
               05/05/2015 - Alteração para realizar a geração do relatório separado por PF e PJ.
                            Projeto 186  ( Renato - Supero )
                            
-              30/06/2015 - Alterações referentes ao Projeto 215 - DV3 (Daniel)             
+              30/06/2015 - Alterações referentes ao Projeto 215 - DV3 (Daniel)  
+
+              19/09/2016 - Gravar na coluna "crapepr.vlsprjat" o saldo do prejuízo anterior 
+                           "crapepr.vlsdprej", Prj.302 (Jean Michel)           
 ................................................................................. */
 
     DECLARE
@@ -456,7 +459,8 @@ CREATE OR REPLACE PROCEDURE CECRED.
           BEGIN
             -- Atualiza os campos da tabela crapepr
             UPDATE crapepr
-               SET crapepr.vlsdprej = crapepr.vlsdprej + vr_vljurmes
+               SET crapepr.vlsprjat = crapepr.vlsdprej
+				  ,crapepr.vlsdprej = crapepr.vlsdprej + vr_vljurmes
                   ,crapepr.vljraprj = crapepr.vljraprj + vr_vljurmes
                   ,crapepr.vljrmprj = vr_vljurmes
             WHERE crapepr.ROWID = rw_crapepr_crapass.ROWID

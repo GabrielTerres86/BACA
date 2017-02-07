@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
   --  Sistema  : Rotinas gen¿ricas focando nas funcionalidades de empréstimos
   --  Sigla    : EMPR
   --  Autor    : Marcos Ernani Martini
-  --  Data     : Fevereiro/2013.                   Ultima atualizacao: 11/05/2016
+  --  Data     : Fevereiro/2013.                   Ultima atualizacao: 26/09/2016
   --
   -- Dados referentes ao programa:
   --
@@ -23,6 +23,8 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
   --
   --             11/05/2016 - Criacao do FIELD vlatraso na typ_reg_dados_epr. (Jaison/James)
   --
+  --             26/09/2016 - Adicionado validacao de contratos de acordo na procedure
+  --                          pc_valida_pagamentos_geral, Prj. 302 (Jean Michel).
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tipo com as informacoes do registro de emprestimo. Antiga: tt-dados-epr */
@@ -145,6 +147,7 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
     ,vljinp60 NUMBER(12, 2)
     ,inliquid INTEGER
     ,flgantec BOOLEAN
+    ,inpagmto INTEGER -- indica que o registro foi processada com sucesso 
     );
 
   /* Definicao de tabela que compreende os registros acima declarados */
@@ -647,7 +650,7 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
                                      ,pr_nrctremp    IN crapepr.nrctremp%TYPE --> Número do contrato de empréstimo
                                      ,pr_dtmvtoan    IN DATE     --> Data Movimento Anterior
                                      ,pr_ehprcbat    IN VARCHAR2 --> Indicador Processo Batch (S/N)
-                                     ,pr_tab_pgto_parcel IN EMPR0001.typ_tab_pgto_parcel --Tabela com Pagamentos de Parcelas
+                                     ,pr_tab_pgto_parcel IN OUT EMPR0001.typ_tab_pgto_parcel --Tabela com Pagamentos de Parcelas
                                      ,pr_tab_crawepr IN EMPR0001.typ_tab_crawepr --Tabela com Contas e Contratos
                                      ,pr_nrseqava    IN NUMBER DEFAULT 0 --> Pagamento: Sequencia do avalista
                                      ,pr_des_erro    OUT VARCHAR --> Retorno OK / NOK
@@ -683,7 +686,7 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
                                         ,pr_totatual IN crapepr.vlemprst%TYPE
                                         ,pr_totpagto IN crapepr.vlemprst%TYPE
                                         ,pr_nrseqava IN NUMBER DEFAULT 0      --> Pagamento: Sequencia do avalista
-																				,pr_tab_pgto_parcel IN  empr0001.typ_tab_pgto_parcel
+																				,pr_tab_pgto_parcel IN OUT empr0001.typ_tab_pgto_parcel
 																				,pr_des_reto OUT VARCHAR
                                         ,pr_tab_erro OUT gene0001.typ_tab_erro);--> Tabela com possíves erros     														
 
@@ -819,6 +822,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
   --
   --             28/11/2016 - P341 - Automatização BACENJUD - Alterado para validar o departamento à partir
   --                          do código e não mais pela descrição (Renato Darosci - Supero)
+  --
+  --             26/09/2016 - Adicionado validacao de contratos de acordo na procedure
+  --                          pc_valida_pagamentos_geral, Prj. 302 (Jean Michel). 
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tratamento de erro */
@@ -7771,6 +7777,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                    01/06/2016 - Adicionado validacao para identificar se esta executando
                                 no batch ou online na chamada da procedure 
                                 pc_obtem_saldo_dia (Douglas - Chamado 455609)
+
+                   26/09/2016 - Adicionado validacao de contratos de acordo na procedure,
+                                Prj. 302 (Jean Michel).             
     ............................................................................. */
   
     DECLARE
@@ -7820,6 +7829,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_exc_erro  EXCEPTION;
       vr_exc_saida EXCEPTION;
     
+      vr_flgativo INTEGER := 0;
+
     BEGIN
       --Inicializar variavel erro
       pr_des_reto := 'OK';
@@ -13972,7 +13983,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         Sistema  : Conta-Corrente - Cooperativa de Credito
         Sigla    : CRED
         Autor    : Douglas Quisinski
-        Data     : Novembro/2015                Ultima atualizacao:   /  /    
+        Data     : Novembro/2015                Ultima atualizacao:
 
         Dados referentes ao programa:
 

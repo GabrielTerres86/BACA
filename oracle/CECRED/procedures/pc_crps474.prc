@@ -1,7 +1,7 @@
 CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS474 (pr_cdcooper IN crapcop.cdcooper%TYPE      --> Codigo Cooperativa
-                                       ,pr_cdagenci IN crapage.cdagenci%TYPE --> Codigo Agencia
+                                              ,pr_cdagenci IN crapage.cdagenci%TYPE      --> Codigo Agencia
                                        ,pr_nmdatela IN VARCHAR2                   --> Nome Tela
-                                       ,pr_idparale in crappar.idparale%TYPE --> Indicador de processoparalelo
+                                              ,pr_idparale in crappar.idparale%TYPE      --> Indicador de processoparalelo
                                        ,pr_stprogra OUT PLS_INTEGER               --> Saida de termino da execucao
                                        ,pr_infimsol OUT PLS_INTEGER               --> Saida de termino da solicitacao
                                        ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Codigo da Critica
@@ -14,7 +14,7 @@ BEGIN
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Gabriel
-  Data    : Fevereiro/2012.                    Ultima atualizacao: 27/04/2016
+  Data    : Fevereiro/2012.                    Ultima atualizacao: 26/09/2016
 
   Dados referentes ao programa:
 
@@ -71,12 +71,12 @@ BEGIN
               25/11/2015 - Ajuste ref ao lancamento de juros remuneratorios referente
                            ao pagto de boletos de emprestimo - Projeto 210 (Rafael)
 
-              02/02/2016 - Incluso novo parametro cdorigem referente Projeto Pgo
-                           PP InternetBank. (Daniel)
+               02/02/2016 - Incluso novo parametro cdorigem referente Projeto Pgo
+                      PP InternetBank. (Daniel)
 
-              03/02/2016 - (Chamado 393718) Inclusao de um log dos saldos antes
-                           e apos cada transacao de debito efetivada no
-                           contrato (Tiago Castro - RKAM).
+         03/02/2016 - (Chamado 393718) Inclusao de um log dos saldos antes
+                            e apos cada transacao de debito efetivada no
+                            contrato (Tiago Castro - RKAM).
 
               31/03/2016 - Ajustes savepoits SD352945 (Odirlei-AMcom)
 			  
@@ -90,7 +90,7 @@ BEGIN
                            abortando o processamento tambem para INPROCES = 2, indevidamente.
                            Executar em paralelo tambem no processo diurno.
                            Chamado 458731 (Heitor - RKAM)
-
+              
               15/06/2016 - Alterado tratamento de erros para geracao de erro no proc_batch
                            caso ocorra problema em algum processo paralelo.
                            Retornado o processo paralelo somente para o periodo da noite.
@@ -103,13 +103,13 @@ BEGIN
 			  05/07/2016 - Melhorias de performance e gerenciamento de memoria. Chamado 479871.
 			               Alterado local onde e feito uma das geracoes de log, pois o indice
 						   utilizado na geracao poderia estar nulo, ocasionando problemas.
-						   Chamado 408357.
-			               (Heitor - RKAM)
+						               Chamado 408357. (Heitor - RKAM)
+
+              26/09/2016 - Incluido verificacao de contratos de acordo, Prj. 302 (Jean Michel).
 
     ............................................................................. */
 
   DECLARE
-
 
     /*Cursores Locais */
 
@@ -130,10 +130,10 @@ BEGIN
     rw_crapcop cr_crapcop%ROWTYPE;
 
     /* Cursor de Emprestimos */
-    CURSOR cr_crapepr (pr_cdcooper IN crapepr.cdcooper%TYPE
-                      ,pr_nrdconta IN crapepr.nrdconta%TYPE
-                      ,pr_nrctremp IN crapepr.nrctremp%TYPE
-                      ,pr_inliquid IN crapepr.inliquid%TYPE) IS
+       CURSOR cr_crapepr (pr_cdcooper IN crapepr.cdcooper%TYPE
+                         ,pr_nrdconta IN crapepr.nrdconta%TYPE
+                         ,pr_nrctremp IN crapepr.nrctremp%TYPE
+                         ,pr_inliquid IN crapepr.inliquid%TYPE) IS
       SELECT crapepr.dtdpagto
            , crapepr.rowid
         FROM crapepr
@@ -145,11 +145,11 @@ BEGIN
     rw_crapepr cr_crapepr%ROWTYPE;
 
     --Selecionar Parcelas emprestimo
-    CURSOR cr_crappep (pr_cdcooper  IN crappep.cdcooper%TYPE
-                      ,pr_dtmvtolt  IN crappep.dtvencto%TYPE
-                      ,pr_dtmvtoan  IN crappep.dtvencto%TYPE
-                      ,pr_cdagenci IN crapass.cdagenci%TYPE) IS
-      SELECT crappep.cdcooper
+       CURSOR cr_crappep (pr_cdcooper  IN crappep.cdcooper%TYPE
+                         ,pr_dtmvtolt  IN crappep.dtvencto%TYPE
+                         ,pr_dtmvtoan  IN crappep.dtvencto%TYPE
+                         ,pr_cdagenci IN crapass.cdagenci%TYPE) IS
+         SELECT crappep.cdcooper
            , crappep.nrdconta
            , crappep.nrctremp
            , crappep.dtvencto
@@ -169,9 +169,9 @@ BEGIN
          AND crapass.cdcooper = crappep.cdcooper
          AND crapass.nrdconta = crappep.nrdconta
          AND crappep.cdcooper = pr_cdcooper
-         AND crappep.dtvencto <= pr_dtmvtolt
+                 AND crappep.dtvencto <= pr_dtmvtolt
          AND crappep.inprejuz = 0
-         AND ((crappep.inliquid = 0) OR (crappep.inliquid = 1 AND crappep.dtvencto > pr_dtmvtoan))
+                       AND ((crappep.inliquid = 0) OR (crappep.inliquid = 1 AND crappep.dtvencto > pr_dtmvtoan))
        ORDER
           BY crappep.cdcooper
            , crappep.nrdconta
@@ -234,7 +234,7 @@ BEGIN
          AND ret.cdocorre = 6
          AND ret.flcredit = 0;
     rw_ret cr_ret%ROWTYPE;
-
+    
     cursor cr_erro(pr_cdcooper in crapcop.cdcooper%TYPE) is
       select c.dsvlrprm
         from crapprm c
@@ -242,6 +242,20 @@ BEGIN
          and c.cdcooper = pr_cdcooper
          and c.cdacesso = 'PC_CRPS474-ERRO';
     rw_erro cr_erro%ROWTYPE;
+
+    -- Consulta contratos ativos de acordos
+   CURSOR cr_ctr_acordo IS
+   SELECT tbrecup_acordo_contrato.nracordo
+         ,tbrecup_acordo.cdcooper
+         ,tbrecup_acordo.nrdconta
+         ,tbrecup_acordo_contrato.nrctremp
+     FROM tbrecup_acordo_contrato
+     JOIN tbrecup_acordo
+       ON tbrecup_acordo.nracordo   = tbrecup_acordo_contrato.nracordo
+    WHERE tbrecup_acordo.cdsituacao = 1
+      AND tbrecup_acordo_contrato.cdorigem IN (2,3);
+
+   rw_ctr_acordo cr_ctr_acordo%ROWTYPE;
 
     --tabela de Memoria dos detalhes de emprestimo
     vr_tab_crawepr EMPR0001.typ_tab_crawepr;
@@ -257,6 +271,10 @@ BEGIN
 
     /* Tabela de Memoria de Calculados */
     vr_tab_calculado empr0001.typ_tab_calculado;
+
+    /* Contratos de acordo */
+    TYPE typ_tab_acordo   IS TABLE OF NUMBER(10) INDEX BY VARCHAR2(30);
+    vr_tab_acordo   typ_tab_acordo;
 
     --Registro do tipo calendario
        rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
@@ -282,7 +300,9 @@ BEGIN
     vr_mesrefju INTEGER;
     vr_anorefju INTEGER;
     vr_flgpripr BOOLEAN;
-    
+
+    vr_cdindice VARCHAR2(30) := ''; -- Indice da tabela de acordos
+
     --Variaveis de Indices
        vr_index_crawepr VARCHAR2(30);
     vr_index_pgto_parcel PLS_INTEGER;
@@ -436,6 +456,14 @@ BEGIN
       --Sair do programa
       RAISE vr_exc_saida;
     END IF;
+    
+    -- Carregar Contratos de Acordos
+    FOR rw_ctr_acordo IN cr_ctr_acordo LOOP
+      vr_cdindice := LPAD(rw_ctr_acordo.cdcooper,10,'0') || LPAD(rw_ctr_acordo.nrdconta,10,'0') ||
+                     LPAD(rw_ctr_acordo.nrctremp,10,'0');
+      vr_tab_acordo(vr_cdindice) := rw_ctr_acordo.nracordo;
+    END LOOP;
+
 
     if pr_cdagenci = 0 then
       begin
@@ -443,7 +471,7 @@ BEGIN
          where c.nmsistem = 'CRED'
            and c.cdcooper = pr_cdcooper
            and c.cdacesso = 'PC_CRPS474-ERRO';
-
+        
         commit;
         
       exception
@@ -651,7 +679,7 @@ BEGIN
                                     ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                     ,pr_dtmvtoan => rw_crapdat.dtmvtoan
                                     ,pr_cdagenci => pr_cdagenci) LOOP
-         
+
          vr_tab_crawepr.DELETE;
 
          if rw_crappep.dtlibera is not null then
@@ -662,7 +690,7 @@ BEGIN
            vr_tab_crawepr(vr_index_crawepr).tpemprst:= rw_crappep.tpemprst;
          end if;
 
-         --Selecionar Informacoes Emprestimo
+      --Selecionar Informacoes Emprestimo
          OPEN cr_crapepr (pr_cdcooper => rw_crappep.cdcooper
                          ,pr_nrdconta => rw_crappep.nrdconta
                          ,pr_nrctremp => rw_crappep.nrctremp
@@ -677,6 +705,7 @@ BEGIN
       END IF;
       --Fechar CURSOR
       CLOSE cr_crapepr;
+
       /* 229243 Verifica se possui movimento de credito no dia */
       IF rw_crapdat.inproces = 1
          AND vr_flgpripr THEN
@@ -754,7 +783,7 @@ BEGIN
           CONTINUE;
         END IF;
       END IF;
-      
+
       -- Trava para nao cobrar as parcelas desta conta pelo motivo de uma acao judicial
       IF INSTR(',' || vr_dsctajud || ',',',' || rw_crappep.nrdconta || ',') > 0 THEN
         vr_vlsomato_tmp := 0;
@@ -844,6 +873,12 @@ BEGIN
 
           END IF;
 
+          vr_cdindice := LPAD(pr_cdcooper,10,'0') || LPAD(rw_crappep.nrdconta,10,'0') ||
+                         LPAD(rw_crappep.nrctremp,10,'0');
+
+          IF vr_tab_acordo.EXISTS(vr_cdindice) THEN
+            vr_flgpagpa := FALSE;
+          END IF;
 
           /* Sem valor suficiente para pagar parcela ou parcela ja liquidada */
           IF NOT vr_flgpagpa THEN
@@ -1037,6 +1072,13 @@ BEGIN
 
         END IF;
 
+        vr_cdindice := LPAD(pr_cdcooper,10,'0') || LPAD(rw_crappep.nrdconta,10,'0') ||
+                       LPAD(rw_crappep.nrctremp,10,'0');
+
+        IF vr_tab_acordo.EXISTS(vr_cdindice) THEN
+          vr_vlsomato := 0;
+        END IF;
+
         IF vr_vlsomato <= 0 THEN
           /* Sem nada para pagar */
           gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
@@ -1121,31 +1163,31 @@ BEGIN
         END IF;
 
         --Se retornou dados Buscar primeiro registro
-        vr_index_pgto_parcel:= vr_tab_pgto_parcel.FIRST;
+           vr_index_pgto_parcel:= vr_tab_pgto_parcel.FIRST;
 
         IF vr_index_pgto_parcel IS NOT NULL THEN
           /* Se valor disponivel a pagar eh maior do que tem que pagar , entao liquida parcela */
-          IF nvl(vr_vlsomato,0) > nvl(vr_tab_pgto_parcel(vr_index_pgto_parcel).vlatrpag,0) THEN
-            vr_vlsomato:= nvl(vr_tab_pgto_parcel(vr_index_pgto_parcel).vlatrpag,0);
+             IF nvl(vr_vlsomato,0) > nvl(vr_tab_pgto_parcel(vr_index_pgto_parcel).vlatrpag,0) THEN
+               vr_vlsomato:= nvl(vr_tab_pgto_parcel(vr_index_pgto_parcel).vlatrpag,0);
           END IF;
-		  
-		  gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
-                              ,pr_cdoperad => 1
-                              ,pr_dsorigem => 'AYLLOS'
-                              ,pr_dscritic => null
-                              ,pr_dstransa => 'Efetiva parcela atraso, contrato: ' ||rw_crappep.nrctremp||
-                                              '  Saldo em ' ||rw_crapdat.dtmvtoan || ': ' ||
-                                              to_char(nvl(vr_vlsomato, 0),'fm999G999G990D00')||'  A Pagar: ' ||
-                                              to_char(nvl(vr_tab_pgto_parcel(vr_index_pgto_parcel).vlatrpag,0),'fm999G999G990D00')
-                              ,pr_dttransa => trunc(sysdate)
-                              ,pr_flgtrans => 1
-                              ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
-                              ,pr_idseqttl => 1
-                              ,pr_nmdatela => 'CRPS474'
-                              ,pr_nrdconta => rw_crappep.nrdconta
-                              ,pr_nrdrowid => vr_rowid);
-	    
-		  gene0001.pc_gera_log_item(pr_nrdrowid => vr_rowid,
+
+        gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                            ,pr_cdoperad => 1
+                            ,pr_dsorigem => 'AYLLOS'
+                            ,pr_dscritic => null
+                            ,pr_dstransa => 'Efetiva parcela atraso, contrato: ' ||rw_crappep.nrctremp||
+                                            '  Saldo em ' ||rw_crapdat.dtmvtoan || ': ' ||
+                                            to_char(nvl(vr_vlsomato, 0),'fm999G999G990D00')||'  A Pagar: ' ||
+                                            to_char(nvl(vr_tab_pgto_parcel(vr_index_pgto_parcel).vlatrpag,0),'fm999G999G990D00')
+                            ,pr_dttransa => trunc(sysdate)
+                            ,pr_flgtrans => 1
+                            ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+                            ,pr_idseqttl => 1
+                            ,pr_nmdatela => 'CRPS474'
+                            ,pr_nrdconta => rw_crappep.nrdconta
+                            ,pr_nrdrowid => vr_rowid);
+        
+		gene0001.pc_gera_log_item(pr_nrdrowid => vr_rowid,
                                   pr_nmdcampo => 'Saldo',
                                   pr_dsdadant => to_char(nvl(vr_vlsomato_tmp,0),'fm999G999G990D00'),
                                   pr_dsdadatu => to_char(vr_vlsomato,'fm999G999G990D00'));
@@ -1279,7 +1321,7 @@ BEGIN
         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
       END IF;
       -- Devolvemos codigo e critica encontradas
-         pr_cdcritic := NVL(vr_cdcritic,0);
+      pr_cdcritic := NVL(vr_cdcritic,0);
       pr_dscritic := vr_dscritic;
 
       IF pr_cdagenci <> 0 THEN
@@ -1299,7 +1341,7 @@ BEGIN
       END IF;
       -- Efetuar rollback
       ROLLBACK;
-
+      
       IF pr_cdagenci <> 0 THEN
         begin
           insert into crapprm(nmsistem
@@ -1340,7 +1382,7 @@ BEGIN
       END IF;
       -- Efetuar rollback
       ROLLBACK;
-
+      
       IF pr_cdagenci <> 0 THEN
         begin
           insert into crapprm(nmsistem
