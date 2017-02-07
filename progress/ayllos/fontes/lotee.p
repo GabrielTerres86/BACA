@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Outubro/91.                         Ultima atualizacao: 23/09/2016
+   Data    : Outubro/91.                         Ultima atualizacao: 07/02/2017
 
    Dados referentes ao programa:
 
@@ -175,7 +175,10 @@
                           + Controlar o preenchimento da data de pagamento do prejuízo,
                             voltando o prejuizo antes da liquidaçao. (Renato Darosci - M176)
                             
-               23/09/2016 - Inclusao de validacao de contratos de acordos, Prj. 302 (Jean Michel).             
+               23/09/2016 - Inclusao de validacao de contratos de acordos, Prj. 302 (Jean Michel).    
+               
+               07/02/2017 - Incluir LEAVE TRANS_E para a critica 650 da leitura crablem pois mesmo 
+                            com critica estava atualizando o lote (Lucas Ranghetti #570922)
                           
 ............................................................................. */
 
@@ -1397,7 +1400,7 @@ DO TRANSACTION ON ERROR UNDO TRANS_E, NEXT:
                         BELL.
                         MESSAGE glb_dscritic.
                         glb_cdcritic = 0.
-                        LEAVE.
+                        LEAVE TRANS_E.
                     END.
             END.
         END.
