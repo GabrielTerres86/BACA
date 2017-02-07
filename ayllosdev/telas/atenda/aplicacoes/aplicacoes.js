@@ -78,10 +78,7 @@
 			 14/04/2015 - Adicionado novo campo com a data de carência 
 			     	      da aplicação SD - 266191 (Kelvin)
 						  
-			 08/10/2015 - Reformulacao cadastral (Gabriel-RKAM)
-
-             06/02/2017 - Ajuste no ajax de resgaste para evitar o cache.
-                          (Andrey Formigari - Mouts)
+			 08/10/2015 - Reformulacao cadastral (Gabriel-RKAM)  
 ***************************************************************************/
 
 var nraplica = 0;     // Variável para armazenar número da aplicação selecionada
