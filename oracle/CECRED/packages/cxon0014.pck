@@ -510,7 +510,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
   --  Sistema  : Procedimentos e funcoes das transacoes do caixa online
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 10/01/2017
+  --  Data     : Julho/2013.                   Ultima atualizacao: 07/02/2017
   --
   -- Dados referentes ao programa:
   --
@@ -565,6 +565,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
   --             10/01/2017 - Ajustar a procedure pc_verifica_vencimento_titulo para verificar se a conta que
   --                          esta realizando o pagando/agendametno um titulo 085, e possuir privilegios de
   --                          PAGADORVIP, não calcula multa e juros para o titulo (Douglas - Chamado 551630).
+  --
+  --             07/02/2017 - Ajustes para verificar vencimento da P.M. PRES GETULIO, P.M. GUARAMIRIM e SANEPAR
+  --                          (Tiago/Fabricio SD593203)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Busca dos dados da cooperativa */
@@ -7788,8 +7791,10 @@ END pc_gera_titulos_iptu_prog;
           END IF;
         END IF;
       END IF;
-      /* P.M. ITAJAI */
-      IF rw_crapcon.cdempcon = 2044 AND rw_crapcon.cdsegmto = 1 THEN
+      
+      IF ((rw_crapcon.cdempcon = 2044 AND rw_crapcon.cdsegmto = 1)  OR   /* P.M. ITAJAI */
+          (rw_crapcon.cdempcon = 3493 AND rw_crapcon.cdsegmto = 1)  OR   /* P.M. PRES GETULIO */
+          (rw_crapcon.cdempcon = 1756 AND rw_crapcon.cdsegmto = 1)) THEN /* P.M. GUARAMIRIM */
         --Data movimento anterior
         vr_dtmvtoan:= To_Char(rw_crapdat.dtmvtoan,'YYYYMMDD');
         IF To_Number(SUBSTR(pr_codigo_barras,20,8)) <= To_Number(vr_dtmvtoan) THEN
@@ -7813,6 +7818,33 @@ END pc_gera_titulos_iptu_prog;
           END IF;
         END IF;
       END IF;
+
+      /* SANEPAR */
+      IF rw_crapcon.cdempcon = 0109 AND rw_crapcon.cdsegmto = 2 THEN
+        --Data movimento anterior
+        vr_dtmvtoan:= To_Char(rw_crapdat.dtmvtocd - 25,'YYYYMMDD');
+        IF To_Number(SUBSTR(pr_codigo_barras,20,8)) <= To_Number(vr_dtmvtoan) THEN
+          --Criar Erro
+          CXON0000.pc_cria_erro(pr_cdcooper => pr_cdcooper
+                               ,pr_cdagenci => pr_cod_agencia
+                               ,pr_nrdcaixa => vr_nrdcaixa
+                               ,pr_cod_erro => 0
+                               ,pr_dsc_erro => 'Nao eh possivel efetuar esta operacao, pois a fatura esta vencida.'
+                               ,pr_flg_erro => TRUE
+                               ,pr_cdcritic => vr_cdcritic
+                               ,pr_dscritic => vr_dscritic);
+          IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+          ELSE
+            vr_cdcritic:= 0;
+            vr_dscritic:= 'Nao eh possivel efetuar esta operacao, pois a fatura esta vencida.';
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+          END IF;
+        END IF;
+      END IF;
+      
       /* Buscar Sequencial da fatura */
       CXON0014.pc_busca_sequencial_fatura(pr_cdhistor      => rw_crapcon.cdhistor  --Codigo historico
                                          ,pr_codigo_barras => pr_codigo_barras     --Codigo Barras
@@ -10516,15 +10548,15 @@ END pc_gera_titulos_iptu_prog;
                                o valor do titulo, caso já exista no Ayllos, devolve o valor, caso
                                contrário deverá devolver o valor que está no código de barras
                                (Douglas - Chamado 575078)
-
+    
                   07/02/2017 - Ajustado a query para verificar se o boleto existe no sistema.
                                (Douglas - Chamado 602954)
 
     ...........................................................................*/      
-    --Selecionar informacoes cobranca
+     --Selecionar informacoes cobranca
     CURSOR cr_crapcob (pr_nrcnvcob IN crapcob.nrcnvcob%type
-                      ,pr_nrdconta IN crapcob.nrdconta%type
-                      ,pr_nrdocmto IN crapcob.nrdocmto%type
+                       ,pr_nrdconta IN crapcob.nrdconta%type
+                       ,pr_nrdocmto IN crapcob.nrdocmto%type
                       ,pr_cdbandoc IN crapcob.cdbandoc%type) IS
       SELECT crapcob.cdcooper,
              crapcob.nrdconta,
@@ -10549,7 +10581,7 @@ END pc_gera_titulos_iptu_prog;
          AND crapcob.nrdocmto = pr_nrdocmto
          AND crapcob.nrdctabb = crapcco.nrdctabb + 0
          AND crapcob.cdbandoc = pr_cdbandoc;
-    rw_crapcob cr_crapcob%ROWTYPE;
+     rw_crapcob cr_crapcob%ROWTYPE;
      
     vr_de_valor_calc  VARCHAR2(100);
     vr_flg_zeros      BOOLEAN;
@@ -10730,25 +10762,25 @@ END pc_gera_titulos_iptu_prog;
     END IF;
 
     /* Verifica se conv boleto eh de cobranca 085 */
-    --Selecionar informacoes cobranca
+      --Selecionar informacoes cobranca
     OPEN cr_crapcob (pr_nrcnvcob => to_number(SUBSTR(vr_codigo_barras, 20, 06))
                     ,pr_nrdconta => to_number(SUBSTR(vr_codigo_barras, 26, 08))
                     ,pr_nrdocmto => to_number(SUBSTR(vr_codigo_barras, 34, 09))
                     ,pr_cdbandoc => to_number(SUBSTR(vr_codigo_barras, 01, 03)));
-
-    --Posicionar no proximo registro
-    FETCH cr_crapcob INTO rw_crapcob;
-    --Se nao encontrar
+                        
+      --Posicionar no proximo registro
+      FETCH cr_crapcob INTO rw_crapcob;
+      --Se nao encontrar
     IF cr_crapcob%FOUND THEN
-      --Titulo Encontrado
-      vr_intitcop := 1;
-    ELSE
-      -- Titulo nao Encontrado
-      vr_intitcop := 0;
+        --Titulo Encontrado
+        vr_intitcop := 1;
+      ELSE
+        -- Titulo nao Encontrado
+        vr_intitcop := 0;
         
-    END IF;
-    --Fechar Cursor
-    CLOSE cr_crapcob;
+      END IF;
+      --Fechar Cursor
+      CLOSE cr_crapcob;
     
     /********************************************************/
     /***********FAZER CALCULO DO VALOR DO TITULO*************/
