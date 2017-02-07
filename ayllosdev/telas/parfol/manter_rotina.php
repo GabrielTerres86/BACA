@@ -2,25 +2,30 @@
 	/*********************************************************************
 	 Fonte: manter_rotina.php                                                 
 	 Autor: Renato Darosci                                                   
-	 Data : Mai/2015                Última Alteração: 23/11/2015
+	 Data : Mai/2015                Ãšltima AlteraÃ§Ã£o: 19/01/2017
 	                                                                  
 	 Objetivo  : Tratar as requisicoes da tela PARFOL                                 
 	                                                                  
-	 Alterações: 21/10/2015 - Correcao para envio da cddopcao de alteracao
+	 AlteraÃ§Ãµes: 21/10/2015 - Correcao para envio da cddopcao de alteracao
 	                          na validaPermissao (Marcos-Supero)
 							  
 				 23/11/2015 - Desconsiderando a posicao 4 do array de acessos
 				        	  (Andre Santos - SUPERO)	
+							  
+				 18/01/2017 - Validacao de horario de operacao do spb. (M342 - Kelvin)   
+				
+				 19/01/2017 - Adicionado novo limite de horario para pagamento no dia
+							   para contas da cooperativa. (M342 - Kelvin)
 	**********************************************************************/
 	
 	session_start();
 	
-	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções	
+	// Includes para controle da session, variÃ¡veis globais de controle, e biblioteca de funÃ§Ãµes	
 	require_once("../../includes/config.php");
 	require_once("../../includes/funcoes.php");		
 	require_once("../../includes/controla_secao.php");
 
-	// Verifica se tela foi chamada pelo método POST
+	// Verifica se tela foi chamada pelo mÃ©todo POST
 	isPostMethod();	
 		
 	// Classe para leitura do xml de retorno
@@ -47,13 +52,14 @@
 	$dsvlrprm19= $_POST["dsvlrprm19"];
 	$dsvlrprm20= $_POST["dsvlrprm20"];
 	$dsvlrprm21= $_POST["dsvlrprm21"];
+	$dsvlrprm22= $_POST["dsvlrprm22"];
 	
-    // Verifica Permissão
+    // Verifica PermissÃ£o
 	if (($msgError = validaPermissao($glbvars["nmdatela"],"","A")) <> "") {
 		exibirErro('error',$msgError,'Alerta - Ayllos','voltar()',false);
 	}	
 	
-	// Monta o xml de requisição
+	// Monta o xml de requisiÃ§Ã£o
 	$xml  = "";
 	$xml .= "<Root>";
 	$xml .= "  <Dados>";
@@ -84,6 +90,7 @@
 	$xml .= "    <dsvlrprm19>".$dsvlrprm19."</dsvlrprm19>"; 
 	$xml .= "    <dsvlrprm20>".$dsvlrprm20."</dsvlrprm20>"; 
 	$xml .= "    <dsvlrprm21>".$dsvlrprm21."</dsvlrprm21>"; 
+	$xml .= "    <dsvlrprm22>".$dsvlrprm22."</dsvlrprm22>"; 
 	$xml .= "  </Dados>";
 	$xml .= "</Root>";
 		
@@ -96,7 +103,7 @@
 		$msgErro  = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;	
 		$cdCmpErr = $xmlObjeto->roottag->tags[0]->tags[0]->tags[3]->cdata;
 		
-		// Aqui estão todos os tratamentos de erro retornados pelo Oracle
+		// Aqui estÃ£o todos os tratamentos de erro retornados pelo Oracle
 		if ($cdCmpErr > 0) {
 			switch ($cdCmpErr) {
 				case 8:
@@ -114,6 +121,10 @@
 				case 11:
 					$dsComand = 'Cdsvlrprm11.focus();Cdsvlrprm11.addClass(\'campoErro\');';
 					$msgErro  = 'Hora de An&aacute;lise Estouro Conta informada &eacute; inv&aacute;lida!';
+					break;
+				case 22:
+					$dsComand = 'Cdsvlrprm22.focus();Cdsvlrprm22.addClass(\'campoErro\');';
+					$msgErro  = 'Hora de Pagto no dia (contas cooperativa) informada &eacute; inv&aacute;lida!';
 					break;
 				case 51:
 					$dsComand = 'Cdsvlrprm5.focus();Cdsvlrprm5.addClass(\'campoErro\');';
@@ -205,6 +216,14 @@
 					break;
 				case 113:
 					$dsComand = 'Cdsvlrprm11.focus();Cdsvlrprm11.addClass(\'campoErro\');';
+					$msgErro  = 'Hor&aacute;rio informado deve estar dentro do hor&aacute;rio limite de transfer&ecirc;ncia para Internet.';
+					break;
+				case 114:
+					$dsComand = 'Cdsvlrprm9.focus();Cdsvlrprm9.addClass(\'campoErro\');';
+					$msgErro  = 'Hor&aacute;rio informado deve estar dentro do hor&aacute;rio de opera&ccedil;&atilde;o do SPB.';
+					break;
+				case 115:
+					$dsComand = 'Cdsvlrprm22.focus();Cdsvlrprm22.addClass(\'campoErro\');';
 					$msgErro  = 'Hor&aacute;rio informado deve estar dentro do hor&aacute;rio limite de transfer&ecirc;ncia para Internet.';
 					break;
 				default:

@@ -13,6 +13,8 @@
             23/11/2015 - Desconsiderando a posicao 4 do array de acessos
 						(Andre Santos - SUPERO)	  						  
 							 
+			19/01/2017 - Adicionado novo limite de horario para pagamento no dia
+                         para contas da cooperativa. (M342 - Kelvin)			
 ************************************************************************/
 
 var qtfolind;
@@ -40,6 +42,7 @@ var Cdsvlrprm18;
 var Cdsvlrprm19;
 var Cdsvlrprm20;
 var Cdsvlrprm21;
+var Cdsvlrprm22;
 
 // Array com os labels da tela
 var dslabels = ["Qtde meses cancelamento automático"
@@ -53,6 +56,7 @@ var dslabels = ["Qtde meses cancelamento automático"
 			   ,"Portabilidade (Pgto no dia)"
 			   ,"Solicitação Estouro Conta"
 			   ,"Liberação Estouro Conta"
+			   ,"Pagto no dia (contas cooperativa)"
 			   ,"Lote"
 			   ,"Histórico Crédito TEC"
 			   ,"Histórico Débito TEC"
@@ -96,6 +100,7 @@ $(document).ready(function() {
 	Cdsvlrprm19= $('#dsvlrprm_19','#frmPARFOL');
 	Cdsvlrprm20= $('#dsvlrprm_20','#frmPARFOL');
 	Cdsvlrprm21= $('#dsvlrprm_21','#frmPARFOL');
+	Cdsvlrprm22= $('#dsvlrprm_22','#frmPARFOL');
 	
 	Cdsvlrprm1.setMask('INTEGER' ,'zz'     	,'','');
 	Cdsvlrprm2.setMask('INTEGER' ,'zz'		,'','');
@@ -126,6 +131,9 @@ $(document).ready(function() {
 	Cdsvlrprm19.setMask('INTEGER','zzzz'	,'','');
 	Cdsvlrprm20.setMask('INTEGER','zzzz'	,'','');
 	
+	Cdsvlrprm22.mask('00:00');
+	Cdsvlrprm22.setMask('STRING','99:99',':','');
+	
 	formataMsgAjuda('');
 	
 	$("#divBotoes").css('display','block'); 
@@ -153,7 +161,7 @@ $(document).ready(function() {
 	Cdsvlrprm19.unbind('paste').bind('paste', function(e) { return false; });	
 	Cdsvlrprm20.unbind('paste').bind('paste', function(e) { return false; });
 	Cdsvlrprm21.unbind('paste').bind('paste', function(e) { return false; });
-	
+	Cdsvlrprm22.unbind('paste').bind('paste', function(e) { return false; });
 	
 	$('.campo','#frmPARFOL').unbind('keypress').bind('keypress', function(e) {
 		if ( e.keyCode == 9 || e.keyCode == 13 ) {	
@@ -248,8 +256,21 @@ function altera_parfol() {
 			// Nao considerar a posicao quando estiver vazia
 			if (dslabels[i]=="") { continue; }
 			
+			/*Foi realizado esse tratamento pois a forma como a tela foi construida estava
+			  impossibilitando adicionar um novo campo sem ter que mexer na estrutura inteira
+			  sendo muito perigoso */
+			if(i == 11){
+				showError("error","Favor informar " + dslabels[i] + ".","Alerta - Ayllos","focaCampoErro('dsvlrprm_" + (22) + "','frmPARFOL')");
+				return false;
+			}else{
+				if(i > 11){
+					showError("error","Favor informar " + dslabels[i] + ".","Alerta - Ayllos","focaCampoErro('dsvlrprm_" + (i) + "','frmPARFOL')");
+					return false;
+				}else{
 		    showError("error","Favor informar " + dslabels[i] + ".","Alerta - Ayllos","focaCampoErro('dsvlrprm_" + (i+1) + "','frmPARFOL')");
 			return false; 
+		}
+	}
 		}
 	}
 	
@@ -306,16 +327,17 @@ function altera_parfol() {
 			dsvlrprm9:  dsvlrprm[8].value,
 			dsvlrprm10: dsvlrprm[9].value,
 			dsvlrprm11: dsvlrprm[10].value,
-			dsvlrprm12: dsvlrprm[11].value,
-			dsvlrprm13: dsvlrprm[12].value,
-			dsvlrprm14: dsvlrprm[13].value,
-			dsvlrprm15: dsvlrprm[14].value,
-			dsvlrprm16: dsvlrprm[15].value,
-			dsvlrprm17: dsvlrprm[16].value,
-			dsvlrprm18: dsvlrprm[17].value,
-			dsvlrprm19: dsvlrprm[18].value,
-			dsvlrprm20: dsvlrprm[19].value,
+			dsvlrprm12: dsvlrprm[12].value,
+			dsvlrprm13: dsvlrprm[13].value,
+			dsvlrprm14: dsvlrprm[14].value,
+			dsvlrprm15: dsvlrprm[15].value,
+			dsvlrprm16: dsvlrprm[16].value,
+			dsvlrprm17: dsvlrprm[17].value,
+			dsvlrprm18: dsvlrprm[18].value,
+			dsvlrprm19: dsvlrprm[19].value,
+			dsvlrprm20: dsvlrprm[20].value,
 			dsvlrprm21: dsSemQuebra2,
+			dsvlrprm22: dsvlrprm[11].value,
 			redirect: "html_ajax" // Tipo de retorno do ajax
 		},
 		error: function(objAjax,responseError,objExcept) {

@@ -165,6 +165,7 @@ CREATE OR REPLACE PACKAGE CECRED.FOLH0002 AS
                                  ,pr_dsvlrprm19  IN VARCHAR2  -- Histórico Débito TRF
                                  ,pr_dsvlrprm20  IN VARCHAR2  -- Histórico Crédito TRF
                                  ,pr_dsvlrprm21  IN VARCHAR2  -- E-mails para alerta ao Financeiro
+                                 ,pr_dsvlrprm22  IN VARCHAR2  -- Pagto no dia (contas cooperativa)
                                  ,pr_xmllog      IN VARCHAR2            --> XML com informações de LOG
                                  ,pr_cdcritic  OUT PLS_INTEGER          --> Código da crítica
                                  ,pr_dscritic  OUT VARCHAR2             --> Descrição da crítica
@@ -459,7 +460,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
    Sistema : Cred
    Sigla   : CRED
    Autor   : Andre Santos - SUPERO
-   Data    : Maio/2015                      Ultima atualizacao: 08/12/2016
+   Data    : Maio/2015                      Ultima atualizacao: 19/01/2017
 
    Dados referentes ao programa:
 
@@ -473,14 +474,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                18/12/2015 - Criado proc. pc_hrlimite, para listar horario limite de
                             Folha Pagamento. (Jorge/David) Proj. 131 Asinatura Multipla.
 
-               08/12/2016 - Ajuste realizado para solucionar o problema que estava 
-                            impedindo que continuasse a operação pois o cooperado
-                            havia feito uma solicitacao de estouro, conforme relatado
-                            no chamado 499370. (Kelvin)
+               19/01/2017 - Adicionado novo limite de horario para pagamento no dia
+                            para contas da cooperativa. (M342 - Kelvin)  
+
 ..............................................................................*/
    -- Arrays
    -- Campos da tela
-   TYPE typ_dstabela   IS VARRAY(21) OF VARCHAR2(50);
+   TYPE typ_dstabela   IS VARRAY(22) OF VARCHAR2(50);
    vr_tab_dscmptel     typ_dstabela := typ_dstabela('Qtde meses cancelamento automático'
                                                    ,'Qtde dias para envio comprovantes'
                                                    ,'Nro meses para emissão dos Comprovantes'
@@ -501,7 +501,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                                                    ,'Lote TRF'
                                                    ,'Histórico Débito TRF'
                                                    ,'Histórico Crédito TRF'
-                                                   ,'E-mails para alerta ao Financeiro');
+                                                   ,'E-mails para alerta ao Financeiro'
+                                                   ,'Pagto no dia (contas cooperativa)');
 
    vr_tab_cdacesso     typ_dstabela := typ_dstabela('FOLHAIB_QTD_MES_CANCELA'
                                                    ,'FOLHAIB_QTD_DIA_ENV_COMP'
@@ -523,7 +524,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                                                    ,'FOLHAIB_NRLOT_CTASAL_B85'
                                                    ,'FOLHAIB_HIST_DEB_TEC_B85'
                                                    ,'FOLHAIB_HIST_CRE_TEC_B85'
-                                                   ,'FOLHAIB_EMAIL_ALERT_FIN');
+                                                   ,'FOLHAIB_EMAIL_ALERT_FIN'
+                                                   ,'FOLHAIB_HOR_LIM_PAG_COOP');
    /* Procedimento de gravacao de tarifas de convenios */
    PROCEDURE pc_grava_crapcfp(pr_cdcontar IN VARCHAR2
                              ,pr_dscontar IN VARCHAR2
@@ -2459,6 +2461,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                                  ,pr_dsvlrprm19  IN VARCHAR2  -- Historico Debito TRF
                                  ,pr_dsvlrprm20  IN VARCHAR2  -- Histórico Credito TRF
                                  ,pr_dsvlrprm21  IN VARCHAR2  -- E-mails para alerta ao Financeiro
+                                 ,pr_dsvlrprm22  IN VARCHAR2  -- Pagto no dia (contas cooperativa)
                                  ,pr_xmllog      IN VARCHAR2            --> XML com informacoes de LOG
                                  ,pr_cdcritic  OUT PLS_INTEGER          --> Código da critica
                                  ,pr_dscritic  OUT VARCHAR2             --> Descrição da critica
@@ -2472,7 +2475,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
    Sistema : AyllosWeb
    Sigla   : FOLH
    Autor   : Renato Darosci - Supero
-   Data    : Maio/2015.                  Ultima atualizacao: 18/11/2015
+   Data    : Maio/2015.                  Ultima atualizacao: 18/01/2017
 
    Dados referentes ao programa:
 
@@ -2486,6 +2489,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                           -- Desconsiderando a posicao 4 do array de acessos
                             (Andre Santos - SUPERO)
 
+               18/01/2017 - Validacao de horario de operacao do spb. (M342 - Kelvin)
+               
+               19/01/2017 - Adicionado novo limite de horario para pagamento no dia
+                            para contas da cooperativa. (M342 - Kelvin)            
    ..............................................................................*/
     -- Cursores
 
@@ -2512,6 +2519,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
     vr_hrportab         crapprm.dsvlrprm%TYPE; -- Portabilidade (Pgto no dia)
     vr_hrestcta         crapprm.dsvlrprm%TYPE; -- Solicitação Estouro Conta
     vr_hranaest         crapprm.dsvlrprm%TYPE; -- Análise Estouro Conta
+    vr_hrlimcop         crapprm.dsvlrprm%TYPE; -- Pagto no dia (contas cooperativa)          
     vr_dsvlrprm4        NUMBER;
     vr_dsvlrprm5        NUMBER;
     vr_dsvlrprm6        NUMBER;
@@ -2556,6 +2564,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
         vr_typ_consulta_prm(19).dsvlrprm := pr_dsvlrprm19;
         vr_typ_consulta_prm(20).dsvlrprm := pr_dsvlrprm20;
         vr_typ_consulta_prm(21).dsvlrprm := pr_dsvlrprm21;
+        vr_typ_consulta_prm(22).dsvlrprm := pr_dsvlrprm22;
     END;
 
     -- Rotina de validação de hora
@@ -2658,6 +2667,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
     vr_hrportab := pr_dsvlrprm9;
     vr_hrestcta := pr_dsvlrprm10;
     vr_hranaest := pr_dsvlrprm11;
+    vr_hrlimcop := pr_dsvlrprm22;
 
     -- Extrair informacoes padrao do xml - parametros
     gene0004.pc_extrai_dados(pr_xml      => pr_retxml
@@ -2785,6 +2795,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
      END IF;
 
      -- Validar os campos de hora
+     -- Pagto no dia (contas cooperativa)     
+     pc_valida_hora(pr_dshorinf => vr_hrlimcop
+                   ,pr_dscritic => pr_des_erro);
+     -- Verifica ocorrencia de erros na validação
+     IF pr_des_erro IS NOT NULL THEN
+       -- Nesta situação o cdcritic ira retornar o indice do campo da tela que caiu na validação
+       pr_cdcritic := 22;
+       RAISE vr_exc_erro;
+     END IF;
+
+     -- Verifica se a hora informada está dentro do Range permitido
+     -- Pagto no dia (contas cooperativa)  
+     IF NOT FOLH0001.fn_valida_hrtransfer(vr_cdcooper, to_date(vr_hrlimcop,'hh24:mi')) THEN
+       -- Retornar o cdcritic para tratamento no PHP
+       pr_cdcritic := 115;
+       pr_des_erro := 'Mostrar erro '||pr_cdcritic;
+       RAISE vr_exc_erro;
+     END IF;
+     
+     -- Validar os campos de hora
      -- Agendamento
      pc_valida_hora(pr_dshorinf => vr_hragenda
                    ,pr_dscritic => pr_des_erro);
@@ -2813,10 +2843,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
        RAISE vr_exc_erro;
      END IF;
 
-     -- Verifica se a hora informada está dentro do Range permitido
-     IF NOT FOLH0001.fn_valida_hrtransfer(vr_cdcooper, to_date(vr_hrportab,'hh24:mi')) THEN
+     --Verifica se o horario informado está dentro do horario de operacao do spb
+     IF NOT FOLH0001.fn_valida_hrportabil(vr_cdcooper, to_date(vr_hrportab,'hh24:mi')) THEN
        -- Retornar o cdcritic para tratamento no PHP
-       pr_cdcritic := 93;
+       pr_cdcritic := 114;
        pr_des_erro := 'Mostrar erro '||pr_cdcritic;
        RAISE vr_exc_erro;
      END IF;
@@ -2915,7 +2945,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                                          ,18, pr_dsvlrprm18
                                          ,19, vr_dsvlrprm19
                                          ,20, vr_dsvlrprm20
-                                         ,21, pr_dsvlrprm21)
+                                         ,21, pr_dsvlrprm21
+                                         ,22, pr_dsvlrprm22)
           WHERE prm.cdcooper = vr_cdcooper
             AND prm.nmsistem = 'CRED'
             AND prm.cdacesso = vr_tab_cdacesso(ind);
@@ -2952,7 +2983,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                                          ,18, pr_dsvlrprm18
                                          ,19, vr_dsvlrprm19
                                          ,20, vr_dsvlrprm20
-                                         ,21, pr_dsvlrprm21));
+                                         ,21, pr_dsvlrprm21
+                                         ,22, pr_dsvlrprm22));
          END IF;
 
        EXCEPTION
@@ -4194,7 +4226,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
             , to_char(pfp.dtmvtolt,'dd/mm/yyyy') dtmvtolt -- Data Agendamento - Data do Ultimo movimento antes da aprovação
             , DECODE(pfp.flsitcre,1, to_char(pfp.dthorcre,'dd/mm/yyyy - HH24:MI')
                                    , to_char(pfp.dtcredit,'dd/mm/yyyy')) dtcredit -- Data do Agendamento do Crédito
-            , DECODE(pfp.flsitcre,1, 'OK', DECODE(pfp.idsitapr,4,'Age',5,'Age','Pen')) flsitcre      -- Situação do Crédito / true false
+            , DECODE(pfp.flsitcre,1, 'OK',2,'Parcial', DECODE(pfp.idsitapr,4,'Age',5,'Age','Pen')) flsitcre      -- Situação do Crédito / true false
             , DECODE(pfp.flsitdeb,1, to_char(pfp.dthordeb,'dd/mm/yyyy - HH24:MI')
                                    , to_char(pfp.dtdebito,'dd/mm/yyyy')) dtdebito -- Data do Agendamento do Débito
             , DECODE(pfp.flsitdeb,1, 'OK', DECODE(pfp.idsitapr,4,'Age',5,'Age','Pen')) flsitdeb      -- Situação do Debito  / true false
@@ -5528,7 +5560,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
          SELECT /*Principal*/
                 pfp.idtppagt
                ,pfp.dtmvtolt
-               ,DECODE(pfp.flsitcre,1,'Creditado',DECODE(pfp.flsitdeb,1,'Debitado','Agendado')) dssitpgt
+               ,DECODE(pfp.flsitcre,1,'Creditado',2,'Cred. Parcial',DECODE(pfp.flsitdeb,1,'Debitado','Agendado')) dssitpgt
                ,pfp.qtregpag qtlctpag
                ,pfp.vllctpag
                ,pfp.qtlctpag * pfp.vltarapr vltarifa
@@ -6013,19 +6045,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
       CLOSE cr_valida_reg;
 
       -- Se o registro ja foi creditado
-      IF rw_valida_reg.flsitcre = 1 THEN
+      IF rw_valida_reg.flsitcre IN (1, 2) THEN
          -- Gera critica
          pr_cdcritic := 0;
          pr_dscritic := 'Pagamentos já creditados aos empregados não podem ser cancelados!';
-         RAISE vr_erro;
-      END IF;
-
-      -- Se o registro nao foi debitado ou a situacao
-      -- for diferente de 2-EM ESTOURO e 5-APROVADO
-      IF rw_valida_reg.flsitcre = 1 THEN
-         -- Gera critica
-         pr_cdcritic := 0;
-         pr_dscritic := 'Não é possível cancelar pagamentos Creditados!';
          RAISE vr_erro;
       END IF;
 
@@ -6296,6 +6319,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
    --
    --             07/07/2016 - Mudança nos parâmetros da chamada de saldo para melhora
    --                          de performance - Marcos(Supero)
+   --                          
+   --             08/12/2016 - Ajuste realizado para solucionar o problema que estava 
+   --                          impedindo que continuasse a operação pois o cooperado
+   --                          havia feito uma solicitacao de estouro, conforme relatado
+   --                          no chamado 499370. (Kelvin)
+   --                     
+   --             16/01/2017 - Adicionado validacao de horario para agendamentos d-2. (M342 - Kelvin)
    ---------------------------------------------------------------------------------------------------------------
 
       -- Cursor genérico de calendário
@@ -6340,7 +6370,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
            AND pfp.cdempres = pr_cdempres
            AND pfp.dtdebito = pr_dtdebito
            AND pfp.idsitapr IN (2,4,5) -- 2-Em estouro / 4-Aprv.Estouro / 5-Aprovado
-           AND pfp.nrseqpag NOT IN (pr_nrseqpag);
+           AND gene0002.fn_existe_valor(pr_nrseqpag,pfp.nrseqpag,',') = 'N';
 
      -- Busca os lancamentos da folha
      CURSOR cr_craplfp(pr_cdcooper craplfp.cdcooper%TYPE
@@ -6406,9 +6436,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
      vr_vltarifa crappfp.vllctpag%TYPE;
      vr_vltottar crappfp.vllctpag%TYPE;
      vr_hrlimite crapprm.dsvlrprm%TYPE;
+     vr_hrlimcop crapprm.dsvlrprm%TYPE;
      vr_nmprimtl crapass.nmprimtl%TYPE;
      vr_vlsddisp crapsda.vlsddisp%TYPE;
      vr_nrseqpag VARCHAR2(1500);
+     vr_dsmsgret VARCHAR2(1000);
+     vr_totporta NUMBER;
+     vr_totcoope NUMBER;
+     vr_totporar NUMBER;
 
      -- Variaveis de Erro
      vr_dscritic VARCHAR2(4000);
@@ -6429,6 +6464,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
        vr_vltottar := 0;
        vr_vlsddisp := 0;
        vr_vlrtotal := 0;
+       vr_dsmsgret := NULL;
+       vr_totporta := 0;
+       vr_totcoope := 0;
+       vr_totporar := 0;
        vr_tab_craplfp.DELETE;
        vr_nrseqpag := NULL;
 
@@ -6437,6 +6476,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
 
        -- Para cada registro selecionado, faremos as validacoes necessarias
        FOR vr_index IN 1..vr_indrowid.COUNT() LOOP
+         --Reinicilizando variaveis
+         vr_totporta := 0;
+         vr_totcoope := 0;
+         
          -- ROWID do pagamento
          vr_rowid := vr_indrowid(vr_index);
 
@@ -6450,7 +6493,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
          ELSE
            vr_nrseqpag := vr_nrseqpag || ',' || rw_crappfp.nrseqpag;  
          END IF;
-          
+
          -- Caso NAO esteja como Pendente(1), Reprovado(3)
          -- Se for Solicitacao De Estouro(2), devemos deixar processeguir
          -- pois usuario pode ter ajustado o saldo da conta e desaja tentar
@@ -6492,7 +6535,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
          END IF;
 
          -- Caso o debito seja no dia
-         IF rw_crappfp.dtdebito = pr_dtmvtolt THEN
+         /*IF rw_crappfp.dtdebito = pr_dtmvtolt THEN
 
            -- Credito agendado (D-1)
            IF rw_crappfp.idopdebi = 1 THEN
@@ -6522,10 +6565,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
 
          END IF;
 
+         END IF;*/
+
          -- Listagem dos lancamentos dos pagamentos
          FOR rw_craplfp IN cr_craplfp(pr_cdcooper => pr_cdcooper,
                                       pr_cdempres => rw_crappfp.cdempres,
                                       pr_nrseqpag => rw_crappfp.nrseqpag) LOOP
+           
+           --Portabilidade
+           IF rw_craplfp.idtpcont = 'T' THEN
+              vr_totporta := vr_totporta + 1;
+              vr_totporar := vr_totporar + 1;
+           --Conta da cooperativa
+           ELSIF rw_craplfp.idtpcont = 'C' THEN
+              vr_totcoope := vr_totcoope + 1;   
+           END IF;  
+                                                                          
            -- Verificar a situacao de cada conta, pois algum empregado pode ter encerrado sua conta
            -- ou efetuado alguma alteracao em seu cadastro que impeca o credito
            FOLH0001.pc_valida_lancto_folha(pr_cdcooper => pr_cdcooper,
@@ -6544,8 +6599,69 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
              vr_tab_craplfp(vr_tab_craplfp.COUNT()).nmprimtl := vr_nmprimtl;
              vr_tab_craplfp(vr_tab_craplfp.COUNT()).dscritic := NVL(vr_dsalerta,vr_dscritic);
            END IF;
+           
          END LOOP; -- cr_craplfp
 
+         IF rw_crappfp.dtdebito = pr_dtmvtolt THEN
+           
+           -- Credito agendado (D-1 ou D-2)
+           IF rw_crappfp.idopdebi IN (1,2) THEN
+             -- Busca o horario limite
+             vr_hrlimite := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                     ,pr_cdcooper => pr_cdcooper
+                                                     ,pr_cdacesso => 'FOLHAIB_HOR_LIM_AGENDA');
+             -- Se atingiu o horario, gera critica
+             IF TO_CHAR(SYSDATE,'hh24:mi') > vr_hrlimite THEN
+               -- Gera critica
+               pr_dscritic := 'Horário inválido! Para agendar os pagamentos, você deveria aprová-los até as ' || vr_hrlimite;
+               RAISE vr_exc_erro;
+             END IF;
+                                                     
+           ELSE
+         
+             --Tem apenas contas de portabilidade
+             IF vr_totporta > 0 AND vr_totcoope = 0 THEN           
+               -- Busca o horario limite
+               vr_hrlimite := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                       ,pr_cdcooper => pr_cdcooper
+                                                       ,pr_cdacesso => 'FOLHAIB_HOR_LIM_PORTAB');
+               -- Se atingiu o horario permitido
+               IF TO_CHAR(SYSDATE,'hh24:mi') > vr_hrlimite THEN
+                 -- Gera critica
+                 pr_dscritic := 'Horário inválido! Para pagamento do dia, você deve aprovar os pagamentos até as ' || vr_hrlimite;
+                 RAISE vr_exc_erro;
+               END IF;            
+             --Pode ou nao ter os dois tipos*/
+             ELSE
+               vr_hrlimcop := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                       ,pr_cdcooper => pr_cdcooper
+                                                       ,pr_cdacesso => 'FOLHAIB_HOR_LIM_PAG_COOP');
+               
+               -- Se atingiu o horario permitido
+               IF TO_CHAR(SYSDATE,'hh24:mi') > vr_hrlimcop THEN
+                 -- Gera critica
+                 pr_dscritic := 'Horário inválido! Para pagamento do dia, você deve aprovar os pagamentos até as ' || vr_hrlimcop;
+                 RAISE vr_exc_erro;
+               END IF;  
+               
+               IF vr_totporta > 0 THEN
+                 
+                 vr_hrlimite := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                         ,pr_cdcooper => pr_cdcooper
+                                                         ,pr_cdacesso => 'FOLHAIB_HOR_LIM_PORTAB');  
+               
+               
+                 -- Se atingiu o horario permitido
+                 IF TO_CHAR(SYSDATE,'hh24:mi') > vr_hrlimite THEN
+                   vr_dsmsgret := 'Cooperado, neste pagamento há ' || vr_totporar || ' conta(s) de portabilidade que devem receber o salário até
+                                   às ' || vr_hrlimite ||', conforme determinação do Banco Central. Para essas contas o pagamento será
+                                   realizado somente no próximo dia útil. Deseja continuar?';                                                   
+                 END IF;
+               END IF;
+             END IF;
+           END IF;
+         END IF;
+         
          -- Busca o valor da tarifa
          OPEN  cr_vltarif(pr_cdcooper => pr_cdcooper,
                           pr_nrdconta => pr_nrdconta,
@@ -6705,6 +6821,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                                                    || '<vltotpag>'|| TO_CHAR(vr_vltotsel,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.') ||'</vltotpag>'
                                                    || '<vltottar>'|| TO_CHAR(vr_vltottar,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.') ||'</vltottar>'
                                                    || '<vlsomado>'|| TO_CHAR((vr_vltotsel + vr_vltottar),'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.') ||'</vlsomado>');
+       
+         --Caso tenha mensagem retorna
+         IF vr_dsmsgret IS NOT NULL THEN
+           GENE0002.pc_escreve_xml(pr_xml            => pr_retxml
+                                  ,pr_texto_completo => vr_xml_temp
+                                  ,pr_texto_novo     => '<mensagem><dsmsgret> ' || vr_dsmsgret || ' </dsmsgret></mensagem>');
+             
+         END IF;  
+       
          -- Encerrar a tag
          GENE0002.pc_escreve_xml(pr_xml            => pr_retxml
                                 ,pr_texto_completo => vr_xml_temp

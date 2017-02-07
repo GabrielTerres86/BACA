@@ -3,13 +3,15 @@
 	
 	  Fonte: form.php                                               
 	  Autor: Renato Darosci                                                  
-	  Data : Mai/2015                       Última Alteração: 23/11/2015
+	  Data : Mai/2015                       Última Alteração: 19/01/2017
 
 	  Objetivo  : Mostrar os campos do formulario
 
 	  Alterações: 23/11/2015 - Desconsiderando a posicao 4 do array de acessos
 							   (Andre Santos - SUPERO)	  
 
+				  19/01/2017 - Adicionado novo limite de horario para pagamento no dia
+							   para contas da cooperativa. (M342 - Kelvin)
 	***********************************************************************/	
 	?>
 	
@@ -84,6 +86,10 @@
 								<td><input  type="text" class="campo" id="dsvlrprm_10" name="dsvlrprm"  size = "4" maxlength = "5" style="text-align:center;"/></td>
 								<td  class="txtNormalBold" style="text-align:right;"> <label for="dsvlrprm_11" align = "right" style="width:100%;">Liberação Estouro Conta:</label></td>
 								<td><input  type="text" class="campo" id="dsvlrprm_11" name="dsvlrprm"  size = "4" maxlength = "5" style="text-align:center;"/></td>
+							</tr>
+							<tr>
+								<td  class="txtNormalBold" style="text-align:right;"> <label for="dsvlrprm_22" align = "right" style="width:100%;">Pagto no dia (contas cooperativa):</label></td>
+								<td><input  type="text" class="campo" id="dsvlrprm_22" name="dsvlrprm"  size = "4" maxlength = "5" style="text-align:center;"/></td>
 							</tr>
 							<tr>
 								<td>&nbsp;</td>
