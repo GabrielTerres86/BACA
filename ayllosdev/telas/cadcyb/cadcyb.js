@@ -11,6 +11,8 @@
  *                             isso ocorria devido a funcao habilita e desabilita que adicionava a classe campo
  *                             devido a isso foi criaca as funcoes desabilitaCheckbox e habilitaCheckbox e ajustado o tamanho dos campos
  *                             SD347594 (Odirlei-AMcom)
+ *                19/01/2017 - PRJ 432 - Melhorias Envio CYber - incluída validação para verificar se assessoria estiver preenchida,
+                               os campos flgjudic e flextjud não podem er nulos (Jean/Mout´S).
  * -----------------------------------------------------------------------
  */
 
@@ -535,6 +537,12 @@ function btnContinuar() {
 		return false;	
 	}
 
+    // 17/01/2017 - Prj 432 - verificar se assessoria está preenchida, ao menos um dos flags (flgjudic ou flextjud) devem estar setados. (Jean/Mout´S)
+	if ((cdassess != '') && (flgjudic == 'false') && (flextjud == 'false')) {
+        showError('error','Se a assessoria estiver preenchida, deve ser definido os flags Judicial ou Extra Judicial.','Alerta - Ayllos','focaCampoErro(\'cdassess\',\'frmCab\');');
+        return false;
+    }
+
 	var mensagem = 'Aguarde, buscando dados da conta ...';
 	showMsgAguardo( mensagem );	
 
@@ -659,7 +667,13 @@ function alteraCadcyb() {
 	if ( (flgjudic == 'true') && (flextjud == 'true') ) {
 		showError('error','O cooperado não pode ser Judicial e Extra Judicial ao mesmo tempo.','Alerta - Ayllos','focaCampoErro(\'flgjudic\',\'frmCab\');');
 		return false;	
-	}
+    }
+
+    // 17/01/2017 - Prj 432 - verificar se assessoria está preenchida, ao menos um dos flags (flgjudic ou flextjud) devem estar setados. (Jean/Mout´S)
+	if ((cdassess != '') && (flgjudic == 'false') && (flextjud == 'false')) {
+        showError('error','Se a assessoria estiver preenchida, deve ser definido os flags Judicial ou Extra Judicial.','Alerta - Ayllos','focaCampoErro(\'cdassess\',\'frmCab\');');
+	    return false;
+    }
 
 	var mensagem = 'Aguarde, alterando dados...';
 	showMsgAguardo( mensagem );	

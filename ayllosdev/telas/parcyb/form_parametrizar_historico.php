@@ -1,11 +1,11 @@
 <?php
 	/*!
 	 * FONTE        : form_parametrizar_historico.php
-	 * CRIAÇÃO      : Douglas Quisinski
-	 * DATA CRIAÇÃO : 26/08/2015
-	 * OBJETIVO     : Cabecalho para a tela de Parametrização de Históricos
+	 * CRIAÃ‡ÃƒO      : Douglas Quisinski
+	 * DATA CRIAÃ‡ÃƒO : 26/08/2015
+	 * OBJETIVO     : Cabecalho para a tela de ParametrizaÃ§Ã£o de HistÃ³ricos
 	 * --------------
-	 * ALTERAÇÕES   : 
+	 * ALTERAÃ‡Ã•ES   : 13/01/2016 - InclusÃ£o da coluna CÃ³digo de TransaÃ§Ã£o CYBER - PRJ 432 - Jean CalÃ£o
 	 * --------------
 	 */
 ?>
@@ -41,7 +41,7 @@
 					<td id="tdFiltrarHistorico">
 						<input type="radio" id="rdfiltro1" class="campo" name="rdfiltro" value="1"/> <label for="rdfiltro1"><? echo utf8ToHtml("C&aacute;lculo Empr&eacute;stimo");?></label>
 						<input type="radio" id="rdfiltro2" class="campo" name="rdfiltro" value="2"/> <label for="rdfiltro2"><? echo utf8ToHtml("C&aacute;lculo Conta Corrente");?></label>
-						<input type="radio" id="rdfiltro3" class="campo" name="rdfiltro" value="3"/> <label for="rdfiltro3"><? echo utf8ToHtml("Ambos");?></label>
+						<input type="radio" id="rdfiltro3" class="campo" name="rdfiltro" value="3"/> <label for="rdfiltro3"><? echo utf8ToHtml("Ambos");?></label>					
 						<a href="#" class="botao" id="btnFiltrarHistorico" name="btnFiltrarHistorico" style="text-align:right;">Pesquisar</a>
 					</td>
 				</tr>
@@ -60,6 +60,7 @@
 							<th><? echo utf8ToHtml("Indicador");?></th>
 							<th><? echo utf8ToHtml("C&aacute;lculo Empr&eacute;stimo");?></th>
 							<th><? echo utf8ToHtml("C&aacute;lculo Conta Corrente");?></th>
+                            <th><? echo utf8ToHtml("C&oacute;digo Trans.CYBER");?></th>
 						</tr>
 					</thead>
 					<tbody>

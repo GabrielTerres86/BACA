@@ -1,11 +1,13 @@
 <?php
 	/*!
 	 * FONTE        : manter_rotina_assessoria.php
-	 * CRIA«√O      : Douglas Quisinski
-	 * DATA CRIA«√O : 25/08/2015
-	 * OBJETIVO     : Rotina para manter as operaÁıes da tela de Assessorias
+	 * CRIA√á√ÉO      : Douglas Quisinski
+	 * DATA CRIA√á√ÉO : 25/08/2015
+	 * OBJETIVO     : Rotina para manter as opera√ß√µes da tela de Assessorias
 	 * --------------
-	 * ALTERA«’ES   : 19/09/2016 - Inclusao do campo de codigo de acessoria do CYBER, Prj. 302 (Jean Michel)
+	 * ALTERA√á√ïES   : 19/09/2016 - Inclusao do campo de codigo de acessoria do CYBER, Prj. 302 (Jean Michel)
+   *
+   *                17/01/2017 - Inclusao campos flgjudic e flextjud, Prj. 432 (Jean Cal√£o / Mout¬¥S)
 	 * -------------- 
 	 */		
 
@@ -19,17 +21,19 @@
 	isPostMethod();
 
 	// Ler parametros passados via POST
-	$cddopcao      = (isset($_POST["cddopcao"]))      ? $_POST["cddopcao"]      : ""; // OpÁ„o (CA-Consulta/IA-Incluir/AA-Alterar/EA-Excluir)
-	$cdassessoria  = (isset($_POST["cdassessoria"]))  ? $_POST["cdassessoria"]  : ""; // CÛdigo da Assessoria
-	$nmassessoria  = (isset($_POST["nmassessoria"]))  ? $_POST["nmassessoria"]  : ""; // DescriÁ„o da Assessoria
-	$cdasscyb      = (isset($_POST["cdasscyb"]))  ? $_POST["cdasscyb"]  : "";		  // CÛdigo da Assessoria CYBER
+	$cddopcao      = (isset($_POST["cddopcao"]))      ? $_POST["cddopcao"]      : ""; // Op√ß√£o (CA-Consulta/IA-Incluir/AA-Alterar/EA-Excluir)
+	$cdassessoria  = (isset($_POST["cdassessoria"]))  ? $_POST["cdassessoria"]  : ""; // C√≥digo da Assessoria
+	$nmassessoria  = (isset($_POST["nmassessoria"]))  ? $_POST["nmassessoria"]  : ""; // Descri√ß√£o da Assessoria
+	$cdasscyb      = (isset($_POST["cdasscyb"]))  ? $_POST["cdasscyb"]  : "";		  // C√≥digo da Assessoria CYBER
+    $flgjudic      = (isset($_POST["flgjudic"]))  ? $_POST["flgjudic"]  : "";		  // flag de cobran√ßa judicial
+    $flextjud      = (isset($_POST["flextjud"]))  ? $_POST["flextjud"]  : "";		  // flag de cobran√ßa extra judicial
 
-	//Validar permiss„o do usu·rio
+	//Validar permiss√£o do usu√°rio
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],$cddopcao)) <> "") {
 		exibirErro("error",$msgError,"Alerta - Ayllos","",false);
 	}
 
-	// Validar os campos e identificar as operaÁıes
+	// Validar os campos e identificar as opera√ß√µes
 	switch ($cddopcao) {
 		case "CA":
 			$procedure = "PARCYB_CONSULTAR_ASSESSORIAS";
@@ -37,13 +41,13 @@
 		
 		case "IA":
 			$procedure = "PARCYB_MANTER_ASSESSORIAS";
-			// Verifica se os par‚metros necess·rios foram informados
+			// Verifica se os par√¢metros necess√°rios foram informados
 			if ($nmassessoria == "") exibirErro("error","Nome da Assessoria inv&aacute;lido.","Alerta - Ayllos","",false);
 		break;
 		
 		case "AA":
 			$procedure = "PARCYB_MANTER_ASSESSORIAS";
-			// Verifica se os par‚metros necess·rios foram informados
+			// Verifica se os par√¢metros necess√°rios foram informados
 			if (!validaInteiro($cdassessoria)) exibirErro("error","C&oacute;digo da Assessoria inv&aacute;lido.","Alerta - Ayllos","",false);
 			if ($nmassessoria == "") exibirErro("error","Nome da Assessoria inv&aacute;lido.","Alerta - Ayllos","",false);
 		break;
@@ -51,7 +55,7 @@
 		case "EA":
 			if($cdassessoria != ""){
 				$procedure = "PARCYB_MANTER_ASSESSORIAS";
-				// Verifica se os par‚metros necess·rios foram informados
+				// Verifica se os par√¢metros necess√°rios foram informados
 				if (!validaInteiro($cdassessoria)) exibirErro("error","C&oacute;digo da Assessoria inv&aacute;lido.","Alerta - Ayllos","",false);
 			} else {
 				$procedure = "PARCYB_CONSULTAR_ASSESSORIAS";
@@ -59,7 +63,7 @@
 		break;
 		
 		default:
-			// Se n„o for uma opÁ„o v·lida exibe o erro
+			// Se n√£o for uma op√ß√£o v√°lida exibe o erro
 			exibirErro("error","Op&ccedil;&atilde;o inv&aacute;lida.","Alerta - Ayllos","",false);
 		break;
 	}
@@ -69,14 +73,16 @@
 	$xml .= "<Root>";
 	$xml .= "  <Dados>";
 	if($cddopcao == "CA"){
-		// Para consulta È necess·rio apenas o cÛdigo da assessoria, para que seja identificado apenas uma, sem o parametro deve listar todas
+		// Para consulta √© necess√°rio apenas o c√≥digo da assessoria, para que seja identificado apenas uma, sem o parametro deve listar todas
 		$xml .= "		<cdassess>".$cdassessoria."</cdassess>";
 	} else {
-		// OpÁ„o e dados da assessoria necess·rios para Incluir, Alterar e Excluir a assessoria
+		// Op√ß√£o e dados da assessoria necess√°rios para Incluir, Alterar e Excluir a assessoria
 		$xml .= "		<cddopcao>".$cddopcao."</cddopcao>";
 		$xml .= "		<cdassess>".$cdassessoria."</cdassess>";
 		$xml .= "		<dsassess>".$nmassessoria."</dsassess>";
 		$xml .= "		<cdasscyb>".$cdasscyb."</cdasscyb>";
+        $xml .= "		<flgjudic>".$flgjudic."</flgjudic>";
+        $xml .= "		<flextjud>".$flextjud."</flextjud>";
 	}
 	$xml .= "  </Dados>";
 	$xml .= "</Root>";
@@ -87,7 +93,7 @@
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjeto = getObjectXML($xmlResult);
 	
-	// Se ocorrer um erro, mostra crÌtica
+	// Se ocorrer um erro, mostra cr√≠tica
  	if ($xmlObjeto->roottag->tags[0]->name == "ERRO") {
 		$msgErro = $xmlObj->roottag->tags[0]->cdata;
 		if($msgErro == null || $msgErro == ''){
@@ -96,35 +102,51 @@
 		exibirErro("error",$msgErro,"Alerta - Ayllos","",false);
 	}
 	
-	//Comando para ser excutado em caso de sucesso na operaÁ„o
+	//Comando para ser excutado em caso de sucesso na opera√ß√£o
 	$command = "";
-	// Verificar se a opÁ„o È de consulta
+	// Verificar se a op√ß√£o √© de consulta
 	switch ($cddopcao) {
 		case "CA" :
-			// Se o cÛdigo da assessoria veio preenchida È pq est· sendo pesquisado na tela de alteraÁ„o
+			// Se o c√≥digo da assessoria veio preenchida √© pq est√° sendo pesquisado na tela de altera√ß√£o
 			if($cdassessoria != ""){
 				if ($xmlObjeto->roottag->tags[0]->name == "ASSESSORIAS") {
 					$cdassess = getByTagName($xmlObjeto->roottag->tags[0]->tags[0]->tags,'cdassessoria');
 					$nmassess = getByTagName($xmlObjeto->roottag->tags[0]->tags[0]->tags,'nmassessoria');
 					$cdasscyb = getByTagName($xmlObjeto->roottag->tags[0]->tags[0]->tags,'cdasscyb');
-					// Verificar se foi encontrada a assessoria para o cÛdigo informado
+					$flgjudic = getByTagName($xmlObjeto->roottag->tags[0]->tags[0]->tags,'flgjudic');
+					$flextjud = getByTagName($xmlObjeto->roottag->tags[0]->tags[0]->tags,'flextjud');
+					// Verificar se foi encontrada a assessoria para o c√≥digo informado
 					if ($cdassess != "" && $nmassess != "") {
 						//Se existir preenche na tela
 						$command .= "$('#cdassessoria').val('" . $cdassess . "');";
 						$command .= "$('#cdasscyb').val('" . $cdasscyb . "').focus();";
 						$command .= "$('#nmassessoria').val('" . $nmassess . "');";
+					    $command .= "$('#flgjudic').val('" . $flgjudic . "');";
+                        $command .= "$('#flextjud').val('" . $flextjud . "');";						
+						if ($flgjudic == 1) {
+							$command .= "$('#flgjudic').attr('checked','checked');";							
+						} else {
+							$command .= "$('#flgjudic').removeAttr('checked','checked');";
+						}
+						if ($flextjud == 1) {
+							$command .= "$('#flextjud').attr('checked','checked');";
+						} else {
+							$command .= "$('#flextjud').removeAttr('checked','checked');";
+						}
 					} else {
-						//Se n„o existir exibe o erro
+						//Se n√£o existir exibe o erro
 						$command .= "showError('error','Assessoria n&atilde;o encontrada!','Alerta - Ayllos','$(\'#cdassessoria\').val(\'\').focus();')";
 					}
 				}
 			} else {
-				// Se n„o possui codigo de assessoria lista todas as assessorias encontradas
+				// Se n√£o possui codigo de assessoria lista todas as assessorias encontradas
 				if ($xmlObjeto->roottag->tags[0]->name == "ASSESSORIAS") {
 					foreach($xmlObjeto->roottag->tags[0]->tags as $assessoria){
 						$command .=  "criaLinhaAssessoriaConsulta('" . getByTagName($assessoria->tags,'cdassessoria') . 
 															   "','" . getByTagName($assessoria->tags,'nmassessoria') . 
-						                                       "','" . getByTagName($assessoria->tags,'cdasscyb') . "');";
+						                                       "','" . getByTagName($assessoria->tags,'cdasscyb') .
+                                                               "','" . getByTagName($assessoria->tags,'flgjudic') .
+                                                               "','" . getByTagName($assessoria->tags,'flextjud') . "');";
 					}
 				}
 				//Alternar a cor das linhas
@@ -133,26 +155,28 @@
 		break;
 		
 		case "IA" :
-			//Exibir confirmaÁ„o da inclus„o
+			//Exibir confirma√ß√£o da inclus√£o			
 			$command .= "showError('inform','Inclu&iacute;do com sucesso.','Alerta - Ayllos','estadoInicialAssessorias();')";
 		break;
 		
 		case "AA" :
-			//Exibir confirmaÁ„o da alteraÁ„o
+			//Exibir confirma√ß√£o da altera√ß√£o
 			$command .= "showError('inform','Alterado com sucesso.','Alerta - Ayllos','estadoInicialAssessorias();')";
 		break;
 		
 		case "EA" :
 			if($cdassessoria != ""){
-				//Exibir confirmaÁ„o da exclus„o
+				//Exibir confirma√ß√£o da exclus√£o
 				$command .= "showError('inform','Exclu&iacute;do com sucesso.','Alerta - Ayllos','executaConsultaAssessoriasExclusao();');";
 			} else {
-				// Se n„o possui codigo de assessoria lista todas as assessorias encontradas
+				// Se n√£o possui codigo de assessoria lista todas as assessorias encontradas
 				if ($xmlObjeto->roottag->tags[0]->name == "ASSESSORIAS") {
 					foreach($xmlObjeto->roottag->tags[0]->tags as $assessoria){
 						$command .=  "criaLinhaAssessoria('" . getByTagName($assessoria->tags,'cdassessoria') . 
 						                               "','" . getByTagName($assessoria->tags,'nmassessoria') .
-													   "','" . getByTagName($assessoria->tags,'cdasscyb') . "');";
+													   "','" . getByTagName($assessoria->tags,'cdasscyb') . 
+                                                       "','" . getByTagName($assessoria->tags,'flgjudic') . 
+													   "','" . getByTagName($assessoria->tags,'flextjud') . "');";
 					}
 				}
 				//Alternar a cor das linhas
@@ -161,6 +185,6 @@
 		break;
 	}
 	
-	//Esconde a mensagem de aguardo do processo e executa o comando criado pelas opÁıes
+	//Esconde a mensagem de aguardo do processo e executa o comando criado pelas op√ß√µes
 	echo "hideMsgAguardo();" . $command;
 ?>
