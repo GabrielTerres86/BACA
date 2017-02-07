@@ -1585,7 +1585,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       CURSOR cr_crawepr IS
         SELECT dtvencto
           FROM crawepr
-         WHERE cdcooper = pr_cdcooper;         
+         WHERE cdcooper = pr_cdcooper
+           and nrdconta = pr_nrdconta
+           and nrctremp = pr_nrctremp;         
       rw_crawepr cr_crawepr%ROWTYPE;    
 
       -- Busca dos empréstimos
