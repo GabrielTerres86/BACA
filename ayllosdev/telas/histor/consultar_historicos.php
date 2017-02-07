@@ -8,8 +8,10 @@
  * ALTERAÇÕES   : 05/12/2016 - P341-Automatização BACENJUD - Alterar a passagem da descrição do 
  *                             departamento como parametros e passar o o código (Renato Darosci)
  *
- *                06/02/2017 - #552068 Mudança de informacao da coluna de descricao do historico,
- *                             de dshistor para dsexthst (Carlos)
+ *                07/02/2017 - #552068 Mudança de informacao da coluna de descricao do historico,
+ *                             de dshistor para dsexthst;
+ *                             Comentada a coluna de CPMF(Carlos)
+ *
  * -------------- 
  *
  * -------------- 
@@ -80,7 +82,7 @@
 	echo "strHTML += '  		    <th>Descri&ccedil;&atilde;o</th>';";
 	echo "strHTML += '  		    <th>D/C</th>';";
 	echo "strHTML += '  		    <th>Lote</th>';";
-	echo "strHTML += '  		    <th>% CMPF</th>';";
+/*	echo "strHTML += '  		    <th>% CPMF</th>';"; */
 	echo "strHTML += '  		    <th>Aviso</th>';";
 	echo "strHTML += '  		    <th>Debita</th>';";
 	echo "strHTML += '  		    <th>Credita</th>';";
@@ -94,7 +96,7 @@
 		$dsexthst	= getByTagName($historico->tags,'dsexthst');
 		$indebcre 	= getByTagName($historico->tags,'indebcre');
 		$tplotmov 	= getByTagName($historico->tags,'tplotmov');
-		$txcpmfcc 	= getByTagName($historico->tags,'txcpmfcc');
+/*		$txcpmfcc 	= getByTagName($historico->tags,'txcpmfcc'); */
 		$inavisar 	= getByTagName($historico->tags,'inavisar');
 		$nrctadeb 	= getByTagName($historico->tags,'nrctadeb');
 		$nrctacrd 	= getByTagName($historico->tags,'nrctacrd');
@@ -106,7 +108,7 @@
 		echo "strHTML += '   <td><span>".$indebcre."</span>".$indebcre."</td>';";
 		echo "strHTML += '   <td><span>".$tplotmov."</span>".$tplotmov."</td>';";
 
-		echo "strHTML += '   <td><span >".converteFloat($txcpmfcc,'MOEDA') ."</span>". formataMoeda($txcpmfcc) ."</td>';";
+/*		echo "strHTML += '   <td><span >".converteFloat($txcpmfcc,'MOEDA') ."</span>". formataMoeda($txcpmfcc) ."</td>';"; */
 
 		echo "strHTML += '   <td><span>".$inavisar."</span>".$inavisar."</td>';";
 		echo "strHTML += '   <td><span>".$nrctadeb."</span>".$nrctadeb."</td>';";
