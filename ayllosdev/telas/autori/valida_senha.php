@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 15/04/2016
  * OBJETIVO     : Rotina para manter, validar senha do cooperado
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 16/01/2017 - Arrumar a gravacao da flginassele (Lucas Ranghetti #564654)
  * -------------- 
  */
 ?> 
@@ -59,7 +59,7 @@
 	//----------------------------------------------------------------------------------------------------------------------------------
 	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {	
 		$mtdErro = 'bloqueiaFundo( $(\'#divRotina\') ); $(\'#cddsenha\',\'#frmSenha\').focus();';
-		echo "flginassele == 0;"; // Nao deve validar senha
+		echo "flginassele = 0;"; // Nao deve validar senha
 		$msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		exibirErro('error',$msgErro,'Alerta - Ayllos',$mtdErro,false);
 	}else{

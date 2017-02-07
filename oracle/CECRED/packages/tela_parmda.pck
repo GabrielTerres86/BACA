@@ -51,14 +51,15 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_parmda IS
   --  Programa : TELA_PARMDA
   --  Sistema  : Ayllos Web
   --  Autor    : Dionathan Henchel
-  --  Data     : Dezembro - 2015.                Ultima atualizacao:
+  --  Data     : Dezembro - 2015.                Ultima atualizacao: 20/01/2017
   --
   -- Dados referentes ao programa:
   --
   -- Objetivo  : Centralizar rotinas relacionadas a tela parmda
   --
-  -- Alteracoes:
-  --
+  -- Alteracoes: 20/01/2017 - Incluir replace dos caractered de enter e quebra de linha por
+  --                          nada, pois estava afetando na consulta das informações
+  --                          (Lucas Ranghetti #581389)
   ---------------------------------------------------------------------------
 
   vr_nmdatela VARCHAR(6) := 'PARMDA';
@@ -145,7 +146,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_parmda IS
     Programa: pc_busca_mensagens_produto
     Sistema : Ayllos Web
     Autor   : Dionathan Henchel
-    Data    : Maio/2015                 Ultima atualizacao:
+    Data    : Maio/2015                 Ultima atualizacao: 20/01/2017
     
     Dados referentes ao programa:
     
@@ -153,7 +154,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_parmda IS
     
     Objetivo  : Rotina para buscar as mensagens de cada produto para SMS/Minhas Mensagens(Internet Bank)
     
-    Alteracoes: -----
+    Alteracoes: 20/01/2017 - Incluir replace dos caractered de enter e quebra de linha por
+                             nada, pois estava afetando na consulta das informações
+                             (Lucas Ranghetti #581389)
     ..............................................................................*/
     
     CURSOR cr_msg(pr_cdcooper tbgen_mensagem.cdcooper%TYPE
@@ -161,7 +164,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_parmda IS
     SELECT tip.cdtipo_mensagem
           ,tip.dstipo_mensagem
           ,msg.idmensagem
-          ,msg.dsmensagem
+          ,REPLACE(REPLACE(msg.dsmensagem,chr(10),''),chr(13),'') dsmensagem
           ,DECODE(tip.cdtipo_mensagem
                  ,3, 'Os campos #Cooperativa#, #Convenio#, #Data# e #Valor# são preenchidos automaticamente pelo sistema.'
                  ,5, 'Os campos #Cooperativa#, #Convenio#, #Data# e #Valor# são preenchidos automaticamente pelo sistema.'
@@ -389,7 +392,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_parmda IS
     Programa: pc_mantem_parmda
     Sistema : Ayllos Web
     Autor   : Dionathan Henchel
-    Data    : Maio/2015                 Ultima atualizacao:
+    Data    : Maio/2015                 Ultima atualizacao: 20/01/2017
     
     Dados referentes ao programa:
     
@@ -397,7 +400,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_parmda IS
     
     Objetivo  : Rotina para inserir/alterar os parâmetros de mensagem do débito automatico
     
-    Alteracoes: -----
+    Alteracoes: 20/01/2017 - Incluir replace dos caractered de enter e quebra de linha por
+                             nada, pois estava afetando na consulta das informações
+                             (Lucas Ranghetti #581389)
     ..............................................................................*/
   
     -- Variaveis auxiliares
@@ -551,7 +556,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_parmda IS
       vr_json_msg := json(vr_json_mensagens.get(i));
       vr_cdtipo_mensagem := to_number(json_ext.get_string(vr_json_msg,'cdtipo_mensagem'));
       vr_dsmensagem := json_ext.get_string(vr_json_msg,'dsmensagem');
-      
+      vr_dsmensagem:= REPLACE(REPLACE(vr_dsmensagem,chr(10),''),chr(13),'');
       BEGIN
         
         --Insere as mensagens recebidas no JSON

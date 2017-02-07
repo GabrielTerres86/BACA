@@ -2,7 +2,7 @@
 
     Programa: validadoc.p
     Autor   : Guilherme Strube
-    Data    :                              Ultima atualizacao: 05/08/2015
+    Data    :                              Ultima atualizacao: 19/01/2017
 
     Objetivo  : Validação de Documentos
 
@@ -12,6 +12,7 @@
                              p_nrborder, p_nraditiv, pois nao devem iniciar 
                              com 0(zero) (Lucas Ranghetti #314745)
    
+                19/01/2017 - Verificar se cooperativa esta ativa (Lucas Ranghetti #596704)
 .............................................................................*/
 
 /*** validadoc.p = Validação Documento ***/
@@ -234,6 +235,11 @@ PROCEDURE process-web-request :
                 ASSIGN par_cdstatus = 0.
            ELSE           
                 DO:
+                    FIND crapcop WHERE crapcop.cdcooper = p_cdcooper 
+                                   AND crapcop.flgativo = TRUE 
+                                   NO-LOCK NO-ERROR.
+                  
+                    IF  AVAILABLE crapcop THEN                        
                     RUN traz_situacao_documento IN h-b1wgen0137 
                                                    (INPUT p_cdcooper,
                                                     INPUT p_nrdconta,
@@ -243,7 +249,10 @@ PROCEDURE process-web-request :
                                                     INPUT INT(p_nraditiv),
                                                     INPUT p_key,
                                                    OUTPUT par_cdstatus). 
+                    ELSE 
+                        ASSIGN par_cdstatus = 0.
                     
+                    IF  VALID-HANDLE(h-b1wgen0137) THEN
                     DELETE PROCEDURE h-b1wgen0137.
                 END.
        END.
