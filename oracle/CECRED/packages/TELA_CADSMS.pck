@@ -284,7 +284,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADSMS IS
       vr_idorigem VARCHAR2(100);
       vr_cdcoptel crapcop.cdcooper%TYPE;
       
-      vr_retxml   VARCHAR2(20000);
+      vr_retxml   CLOB; 
       vr_tab_mensagens typ_tab_campo_mensagem;
       vr_idx_mensagem  VARCHAR2(20);
       
@@ -877,6 +877,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADSMS IS
     vr_cdagenci VARCHAR2(100);
     vr_nrdcaixa VARCHAR2(100);
     vr_idorigem VARCHAR2(100);
+    vr_qtd      INTEGER := 0;
     
     ---------->> CURSORES <<--------
     
@@ -948,9 +949,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADSMS IS
           FETCH cr_tpmsg INTO rw_tpmsg;
           CLOSE cr_tpmsg;
         
-          vr_dscritic := '<![CDATA[<span>'|| rw_tpmsg.dstipo_mensagem||
-                         ':<br>Quantidade de caracteres maior que o '||
-                         'permitido devido ao Termos utilizados.</span>]]>';
+          --> Tentar alinhar as mensagens, visto que o objeto utiliza tag CENTER no Ayllos
+          vr_qtd := (74 - length(rw_tpmsg.dstipo_mensagem) )  * 12;
+          
+          vr_dscritic := '<![CDATA[<span>'|| rpad(rw_tpmsg.dstipo_mensagem||':',74 + vr_qtd,'&nbsp;')||
+                         '<br>Quantidade de caracteres maior que o '||
+                         'permitido devido aos Termos utilizados.</span>]]>';
           RAISE vr_exc_saida;
         END IF;
         

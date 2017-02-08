@@ -191,7 +191,7 @@ function FormatOpcaoZ(){
     tabela.zebraTabela(0);
       
     $('#divLotes').css({'width': '80%'});
-    divRegistro.css({'height':'80px'});
+    divRegistro.css({'height':'280px'});
                         
     var ordemInicial = new Array();
               
