@@ -68,7 +68,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WRES0001 AS
    Objetivo  : Fornecer funcionalidades para acessar um serviço HTTP
                 
   ---------------------------------------------------------------------------*/
-
+  
   PROCEDURE pc_cabecalho_to_clob(pr_cabecalho IN typ_tab_http_cabecalho
                                 ,pr_clob       OUT CLOB) IS
   BEGIN
@@ -87,6 +87,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WRES0001 AS
   END;
   
   PROCEDURE pc_log_rest(pr_requisicao   IN typ_http_request
+                       ,pr_endereco     IN VARCHAR2
                        ,pr_dtrequisicao IN DATE
                        ,pr_resposta     IN typ_http_response
                        ,pr_dtresposta   IN DATE
@@ -118,7 +119,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WRES0001 AS
                                      ,cdcritic)
                 VALUES (pr_dtrequisicao
                        ,pr_dtresposta
-                       ,pr_requisicao.endereco
+                       ,pr_endereco
                        ,pr_requisicao.verbo
                        ,vr_clob_cabecalho_requisicao
                        ,pr_requisicao.conteudo
@@ -165,13 +166,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WRES0001 AS
       vr_resposta_texto  VARCHAR2(32000); --> Texto de resposta da requisição
       vr_exc_saida       EXCEPTION;
       vr_chave           VARCHAR2(256); -- chave para cabecalhos HTTP de resposta
-      vr_valor           VARCHAR2(1024); -- valor para cabecalhos HTTP de reposta   
+      vr_valor           VARCHAR2(1024); -- valor para cabecalhos HTTP de reposta  
       vr_dtrequisicao    DATE;
       vr_dtresposta      DATE; 
     
     BEGIN
-    
-    BEGIN
+      
+      BEGIN
     
       vr_endereco := pr_requisicao.endereco || pr_requisicao.rota;
     
@@ -216,7 +217,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WRES0001 AS
         vr_index_cabecalho := pr_requisicao.cabecalho.next(vr_index_cabecalho);
       END LOOP;
 
-        utl_http.set_header(vr_req ,'User-Agent', 'Ayllos/PLSQL');
+      utl_http.set_header(vr_req ,'User-Agent', 'Ayllos/PLSQL');
 
       -- Envia o conteúdo no Content se for um POST
       IF (pr_requisicao.verbo = WRES0001.post) THEN
@@ -260,8 +261,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WRES0001 AS
           utl_http.end_response(vr_res);
         END IF;
 
-        pr_resposta.conteudo := vr_resposta;
-    
+      pr_resposta.conteudo := vr_resposta;
+
     EXCEPTION
       WHEN vr_exc_saida THEN
         IF pr_cdcritic > 0 AND pr_dscritic IS NULL THEN
@@ -274,13 +275,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WRES0001 AS
     
     -- log da requisição
     pc_log_rest(pr_requisicao   => pr_requisicao
+               ,pr_endereco     => vr_endereco
                ,pr_dtrequisicao => vr_dtrequisicao
                ,pr_resposta     => pr_resposta
                ,pr_dtresposta   => vr_dtresposta
                ,pr_cdcritic     => pr_cdcritic);        
 
    END;
-  
+
   
   END pc_consumir_rest;
 
