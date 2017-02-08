@@ -11,6 +11,7 @@
 							   alteração pela opção "X", conforme solicitado no 
 							   chamado 321572 (Kelvin).
 				  17/06/2016 - M181 - Alterar o CDAGENCI para passar o CDPACTRA (Rafael Maciel - RKAM)
+				  08/02/2017 - Ajuste realiazado para tratar o chamado 566462. (Kelvin)
  */
 ?> 
 
@@ -28,6 +29,9 @@
 	$inpessoa = (isset($_POST['inpessoa'])) ? $_POST['inpessoa'] : '' ;		                                                       	
 	$permalte = (isset($_POST['permalte'])) ? $_POST['permalte'] : '' ;	
 	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : '' ;	
+	$inhabmen = (isset($_POST['inhabmen'])) ? $_POST['inhabmen'] : '' ;	
+	$dthabmen = (isset($_POST['dthabmen'])) ? $_POST['dthabmen'] : '' ;	
+	
 	$arrayFilhos = (isset($_POST['arrayFilhos'])) ? $_POST['arrayFilhos'] : '' ;	
 		
 
@@ -75,6 +79,8 @@
 		$xml .= '		<nrdcaixa>'.$glbvars['nrdcaixa'].'</nrdcaixa>';
 		$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';
 		$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';
+		$xml .= '		<inhabmen>'.$inhabmen.'</inhabmen>';
+		$xml .= '		<inhabmen>'.$dthabmen.'</inhabmen>';		
 		$xml .= '       <idseqttl>1</idseqttl>';    
 		$xml .= '       <cddopcao>'.$cddopcao.'</cddopcao>'; 
 	}	 	
@@ -91,8 +97,6 @@
 		
 	}
 	
-
-	
 	if($procedure == 'Valida_Dados' ||
 	   $procedure == 'Grava_Dados') {
 	   
@@ -100,7 +104,6 @@
 		
 		// Resp. Legal
 		foreach ($arrayFilhos as $key => $value) {
-    
 			$campospc = "";
 			$dadosprc = "";
 			$contador = 0;
