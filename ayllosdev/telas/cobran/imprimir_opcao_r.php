@@ -1,5 +1,5 @@
-<?
-/*!
+<?php
+/*
  * FONTE        : imprimir_opcao_r.php
  * CRIAÇÃO      : Rogérius Militão (DB1)
  * DATA CRIAÇÃO : 29/02/2012
@@ -8,11 +8,10 @@
  * ALTERAÇÕES   : 30/12/2015 - Alterações Referente Projeto Negativação Serasa (Daniel)	
  *				  
  *				  04/08/2016 - Adicionado parametro cddemail na chamada da procedure gera_relatorio. (Reinert)
+ *
+ *				  07/02/2016 - Implementei a validacao do campo nrdconta para listagem do relatorio tipo 6. SD 560911 - Carlos Rafael Tanholi.
  * -------------- 
  */
-?>
-
-<? 
 	
 	session_cache_limiter("private");
 	session_start();
@@ -46,6 +45,12 @@
 	$nmprimtl	= $_POST['nmprimtl'];
 	$cdagencx	= $_POST['cdagenci'];
 	$inserasa	= $_POST['inserasa'];
+
+
+	if (trim($nrdconta) == "") {
+		?><script language="javascript">alert('Favor informar a conta a ser filtrada.');</script><?php
+		exit();	
+	}
 
 	// Monta o xml de requisição
 	$xml  = '';

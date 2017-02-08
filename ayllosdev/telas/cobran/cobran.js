@@ -19,6 +19,8 @@
  * 03/05/2016 - Ajustes para inclusao da opcao S. PRJ318 - Nova Plataforma de cobranca (Odirlei-AMcom)
  * 09/05/2016 - Adicionar o filtro numero da conta para os tipos: 2 - Numero do Boleto, 3 - Data de Emissao, 4 - Data de Pagamento
  *              5 - Data de Vencimento, 6 - Nome do Pagador (Douglas - Chamado 441759)
+ * 08/01/2017 - Adicionar o campo flgdprot para definir label e informacao a mostrar (Protesto x Negativacao (Heitor - Mouts) - Chamado 574161
+ * 07/02/2016 - Implementei a validacao do campo nrdconta para listagem do relatorio tipo 6. SD 560911 - Carlos Rafael Tanholi.
  */
 
 //Formulários e Tabela
@@ -45,7 +47,7 @@ var registro;
 
 var cdcooper, nrinssac, nrnosnum, dsdoccop, nmdsacad, flgcbdda, flgreaux, dsendsac, complend, nmbaisac, nmcidsac, cdufsaca, nrcepsac,
 	dscjuros, dscmulta, dscdscto, dtdocmto, dsdespec, flgaceit, dsstacom, dtvencto, vltitulo, vldesabt, qtdiaprt, dtdpagto, vldpagto,
-	vljurmul, cdbandoc, nrdcoaux, nrcnvcob, cdsituac, dssituac, cdtpinsc, nrdocmto, dsemiten, inserasa, flserasa, qtdianeg;
+	vljurmul, cdbandoc, nrdcoaux, nrcnvcob, cdsituac, dssituac, cdtpinsc, nrdocmto, dsemiten, inserasa, flserasa, qtdianeg, flgdprot;
 
 $(document).ready(function () {
     estadoInicial();
@@ -1161,7 +1163,7 @@ function selecionaTabela(tr) {
         inserasa = $('#inserasa', tr).val();
         flserasa = $('#flserasa', tr).val();
         qtdianeg = $('#qtdianeg', tr).val();
-
+        flgdprot = $('#flgdprot', tr).val();
     }
 
     return false;
@@ -1191,6 +1193,7 @@ function buscaConsulta(operacao) {
             cdbandoc: cdbandoc,
             flserasa: flserasa,
             qtdianeg: qtdianeg,
+			flgdprot: flgdprot,
             redirect: 'script_ajax'
         },
         error: function (objAjax, responseError, objExcept) {
@@ -1948,7 +1951,7 @@ function formataOpcaoR() {
         if (e.keyCode == 9 || e.keyCode == 13 || typeof e.keyCode == 'undefined') {
 
             if (tprelato == 6 && normalizaNumero(cNrdconta.val()) == 0) {
-                cNrdconta.desabilitaCampo();
+                //cNrdconta.desabilitaCampo();
                 cCdagenci.habilitaCampo().focus();
             } else if (validaCampo('nrdconta', auxconta)) {
                 manterRotina('BA');
@@ -2123,6 +2126,12 @@ function formataTabOpS(frmOpcao) {
 
 // imprimir
 function Gera_Impressao(nmarqpdf) {
+
+    if (cNrdconta.val() == '') {
+        cNrdconta.habilitaCampo();
+        showError('error', 'Informe a conta.', 'Alerta - Ayllos', '$(\'#nrdconta\',\'#frmOpcao\').focus();');
+        return false;
+    }
 
     cTodosOpcao.habilitaCampo();
 
