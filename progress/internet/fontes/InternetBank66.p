@@ -47,6 +47,7 @@
                              (Daniel/Rafael/Reinert)   
 
                 04/02/2016 - Ajuste Projeto Negativação Serasa (Daniel)   
+                                 
                 13/10/2016 - Inclusao opcao 95 e 96, para Enviar e cancelar
                              SMS de vencimento. PRJ319 - SMS Cobranca (Odirlei-AMcom)
                                  

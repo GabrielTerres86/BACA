@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2007                        Ultima atualizacao: 08/01/2016
+   Data    : Marco/2007                        Ultima atualizacao: 11/10/2016
 
    Dados referentes ao programa:
 
@@ -47,6 +47,10 @@
                             do envio por e-mail (Projeto Boleto Formato Carnê - Douglas)
                             
                08/01/2016 - Ajustes referente Projeto Negativacao Serasa (Daniel)
+               
+               11/10/2016 - Ajustes para permitir Aviso cobrança por SMS.
+                            PRJ319 - SMS Cobrança (Odirlei-AMcom)
+                            
                
                28/10/2016 - Ajustes realizados referente a melhoria 271. (Kelvin)
                11/10/2016 - Ajustes para permitir Aviso cobrança por SMS.
@@ -110,6 +114,8 @@ DEF  INPUT PARAM par_inavisms AS INTE                                  NO-UNDO.
 DEF  INPUT PARAM par_insmsant AS INTE                                  NO-UNDO.
 DEF  INPUT PARAM par_insmsvct AS INTE                                  NO-UNDO.
 DEF  INPUT PARAM par_insmspos AS INTE                                  NO-UNDO.
+
+
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
 
@@ -432,6 +438,7 @@ FOR EACH tt-consulta-blt NO-LOCK:
                                    (IF tt-consulta-blt.flserasa = TRUE 
                                    THEN "S" ELSE "N") + "</flserasa>" +
                                    "<qtdianeg>" +  STRING(tt-consulta-blt.qtdianeg) + "</qtdianeg>" +
+                                   
                                    /* Aviso SMS*/
                                    "<inavisms>" + 
                                    STRING(tt-consulta-blt.inavisms) + 
@@ -445,8 +452,8 @@ FOR EACH tt-consulta-blt NO-LOCK:
                                    "<insmspos>" + 
                                    STRING(tt-consulta-blt.insmspos) + 
                                    "</insmspos>" +
+                                   
                                    "</boleto>".
-
 
     /* Geramos esse log apenas quando for emissão de boleto */
     IF par_tpemitir = 1 THEN 

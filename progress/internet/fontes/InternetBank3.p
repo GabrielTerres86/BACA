@@ -41,7 +41,7 @@
                08/01/2016 - Ajustes referente Projeto Negativacao Serasa (Daniel)
 
                16/02/2016 - Criacao do campo flprotes no XML. (Jaison/Marcos)
-               
+
                11/10/2016 - Ajustes para permitir Aviso cobrança por SMS.
                             PRJ319 - SMS Cobrança(Odirlei-AMcom)
 

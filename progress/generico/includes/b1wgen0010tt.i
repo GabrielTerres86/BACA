@@ -89,7 +89,7 @@
                             
                05/01/2016 - Incluso os campos inserasa ,dsserasa, qtdianeg na
                             tt-consulta-blt (Projeto Negativacao Serasa - Daniel)
-
+  
                11/10/2016 - Inclusao dos campos de aviso por SMS. 
                             PRJ319 - SMS Cobrança.  (Odirlei-AMcom)
   
@@ -205,6 +205,14 @@ DEF TEMP-TABLE tt-consulta-blt
     FIELD dsserasa AS CHAR
     FIELD flserasa AS LOGI
     FIELD qtdianeg AS INTE
+	  FIELD inavisms AS INTE
+	  FIELD insmsant AS INTE
+	  FIELD insmsvct AS INTE
+	  FIELD insmspos AS INTE
+    FIELD dsavisms AS CHAR
+	  FIELD dssmsant AS CHAR
+	  FIELD dssmsvct AS CHAR
+	  FIELD dssmspos AS CHAR
    	FIELD dtvencto_atualizado AS DATE
     FIELD vltitulo_atualizado AS DECI
 	FIELD vlmormul_atualizado AS DECI

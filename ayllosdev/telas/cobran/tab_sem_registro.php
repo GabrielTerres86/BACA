@@ -45,7 +45,7 @@
 								  <input type="hidden" id="dsdoccop" name="dsdoccop" value="<? echo getByTagName($r->tags,'dsdoccop') ?>" />								  
 								  <input type="hidden" id="dsorgarq" name="dsorgarq" value="<? echo getByTagName($r->tags,'dsorgarq') ?>" />								  
 								  <input type="hidden" id="nrdctabb" name="nrdctabb" value="<? echo mascara(getByTagName($r->tags,'nrdctabb'), '####.###.#') ?>" />								  
-                                  
+								  
                                   <!-- Aviso SMS -->
                                   <input type="hidden" id="inavisms" name="inavisms" value="<? echo getByTagName($r->tags,'inavisms') ?>" />
                                   <input type="hidden" id="insmsant" name="insmsant" value="<? echo getByTagName($r->tags,'insmsant') ?>" />

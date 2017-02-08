@@ -47,8 +47,8 @@ var registro;
 
 var cdcooper, nrinssac, nrnosnum, dsdoccop, nmdsacad, flgcbdda, flgreaux, dsendsac, complend, nmbaisac, nmcidsac, cdufsaca, nrcepsac,
 	dscjuros, dscmulta, dscdscto, dtdocmto, dsdespec, flgaceit, dsstacom, dtvencto, vltitulo, vldesabt, qtdiaprt, dtdpagto, vldpagto,
-	vljurmul, cdbandoc, nrdcoaux, nrcnvcob, cdsituac, dssituac, cdtpinsc, nrdocmto, dsemiten, inserasa, flserasa, qtdianeg, flgdprot,
-    dsavisms, dssmsant, dssmsvct, dssmspos;
+	vljurmul, cdbandoc, nrdcoaux, nrcnvcob, cdsituac, dssituac, cdtpinsc, nrdocmto, dsemiten, inserasa, flserasa, qtdianeg,
+    dsavisms, dssmsant, dssmsvct, dssmspos, flgdprot;
 
 $(document).ready(function () {
     estadoInicial();
@@ -1272,6 +1272,7 @@ function formataConsulta() {
     rVldpagto = $('label[for="vldpagto"]', '#frmConsulta');
     rVljurmul = $('label[for="vljurmul"]', '#frmConsulta');
     rCdbandoc = $('label[for="cdbandoc"]', '#frmConsulta');
+
     // Aviso SMS
     rDsavisms = $('label[for="dsavisms"]', '#frmConsulta');
     rDssmsant = $('label[for="dssmsant"]', '#frmConsulta');
@@ -1345,6 +1346,7 @@ function formataConsulta() {
     cVljurmul = $('#vljurmul', '#frmConsulta');
     cCdbandoc = $('#cdbandoc', '#frmConsulta');
     cInserasa = $('#inserasa', '#frmConsulta');
+
     // Aviso SMS
     cDsavisms = $('#dsavisms', '#frmConsulta');
     cDssmsant = $('#dssmsant', '#frmConsulta');
@@ -2013,6 +2015,7 @@ function tipoOptionR() {
             option = option + '<option value="5">5- Relatorio Beneficiario</option>';
             option = option + '<option value="6">6- Relatorio Movimento de Cobranca Registrada</option>';
             option = option + '<option value="7">7- Relatório analítico de envio de SMS</option>';
+            
 
         } else if (flgregis == 'no') {
             option = option + '<option value="1">1- Gestao da carteira de cobranca sem registro - Por PA</option>';
@@ -2063,6 +2066,7 @@ function controlaLayoutR() {
     } else if (tprelato == '6') {
         cNrdconta.habilitaCampo();
         //cCdagenci.habilitaCampo();	
+     
      // Analitico de envio SMS
     }else if (tprelato == '7') {
                 
@@ -2077,6 +2081,7 @@ function controlaLayoutR() {
         cInidtmvt.val($('#dtmvtolt', '#' + frmOpcao).val());
         cFimdtmvt.val($('#dtmvtolt', '#' + frmOpcao).val());
     }
+
 
     $('#' + frmOpcao + ' fieldset:eq(1)').css({ 'display': 'block' });
     cInidtmvt.focus();

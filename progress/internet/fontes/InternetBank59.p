@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2009                        Ultima atualizacao: 11/10/2016
+   Data    : Marco/2009                        Ultima atualizacao: 17/10/2016
 
    Dados referentes ao programa:
 
@@ -52,10 +52,9 @@
 			   11/10/2016 - Ajustes realizado para inserir parte do campo nosso numero
 							ao relatório de  movimento de cobranca com registro,
 							conforme solicitado no chamado 496856 (Kelvin).
-
+                            
                17/10/2016 - Inclusao Relatorio de Envio de SMS.    
 	                          PRJ319 - SMS Cobrança(Odirlei-AMcom)   
-                            
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -81,6 +80,7 @@ DEF VAR aux_dsxmlrel AS CHAR                                           NO-UNDO.
 DEF VAR aux_iteracoes AS INTEGER                                       NO-UNDO.
 DEF VAR aux_posini    AS INTEGER                                       NO-UNDO.
 DEF VAR aux_contador  AS INTEGER                                       NO-UNDO.
+
 
 DEF  INPUT PARAM par_cdcooper LIKE crapcob.cdcooper                    NO-UNDO.
 DEF  INPUT PARAM par_nrdconta LIKE crapcob.nrdconta                    NO-UNDO.
@@ -628,6 +628,13 @@ ELSE IF par_idrelato = 2 THEN
            END CASE.
 
         END.
+           
+    END.
+/* Relatorio analitico de envio de SMS*/    
+ELSE IF par_idrelato = 6 THEN
+    DO:
+       
+      ASSIGN aux_dsiduser = STRING(par_nrdconta) + STRING(TIME).
            
     END.
 /* Relatorio analitico de envio de SMS*/    

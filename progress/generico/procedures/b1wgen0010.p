@@ -407,6 +407,10 @@
 			   13/01/2017 - Retirado create da tt-consulta-blt na procedure consulta-boleto-2via
 			                pois ja estava criando no procedure proc_nosso_num
 							(Tiago/Ademir SD593608)
+                            
+               11/10/2016 - Inclusao dos campos de aviso por SMS. 
+                            PRJ319 - SMS Cobrança.  (Odirlei-AMcom)
+                            
 ........................................................................... */
 
 { sistema/generico/includes/var_internet.i }
@@ -5121,10 +5125,6 @@ PROCEDURE proc_nosso_numero.
                                           ELSE
                                           " N". 
 
-	    IF AVAIL(crapceb) THEN
-		   DO:
-		     ASSIGN tt-consulta-blt.flprotes = INTE(crapceb.flprotes).
-		   END.
         /* Aviso SMS */
        ASSIGN tt-consulta-blt.inavisms = crapcob.inavisms
               tt-consulta-blt.insmsant = crapcob.insmsant

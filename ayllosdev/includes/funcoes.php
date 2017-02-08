@@ -673,7 +673,7 @@ function formatar($campo,$tipo,$formatado=true) {
 	
 	$codigoLimpo = preg_replace("/[' '-.]/", '', $campo);
     
-    $tamanho = (strlen($codigoLimpo) -2);
+	$tamanho = (strlen($codigoLimpo) -2);
 
     if ($tamanho != 9 && $tamanho != 12) { return $campo; }
     if ($formatado){
@@ -1265,7 +1265,7 @@ function removeCaracteresInvalidos( $str, $encodeString = false ){
 	
 	//Se passar encode como true
 	if($encodeString){
-		$str = preg_replace("/[\n]/", "", $str);
+	$str = preg_replace("/[\n]/", "", $str);
 		$str = preg_replace("/[^A-z0-9\sÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ\!\"\@\$\%\*\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/\>\<]/", "", utf8_decode($str));	
 		$str = utf8_encode($str);
 	}else{
@@ -1294,7 +1294,7 @@ function dbOracle() {
 	//valida se a constante nao esta definida
 	if (defined('USER') == false) {
 		define('USER', $user);
-}
+	}
 	//valida se a constante nao esta definida
 	if (defined('PASS') == false) {
 		define('PASS', $pass);
@@ -1469,9 +1469,18 @@ function dbProcedure($xml){
 function mensageria($xml, $nmprogra, $nmeacao, $cdcooper, $cdagenci,$nrdcaixa, $idorigem, $cdoperad, $tag){
 
     $xml = xmlInsere($xml, $nmprogra, $nmeacao, $cdcooper, $cdagenci, $nrdcaixa, $idorigem, $cdoperad, $tag);
+    $endereco = dirname(dirname(__FILE__)) . '/xml';
+	
+	$arquivo = fopen($endereco."/in.xml","w");
+	fwrite($arquivo, $xml);
+	fclose($arquivo);
 		
 	$retXML = dbProcedure($xml);
-
+	
+	$arquivo = fopen($endereco."/out.xml", "w");
+	fwrite($arquivo, $retXML);
+	fclose($arquivo);
+	
 	return $retXML;
 }
 

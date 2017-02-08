@@ -417,6 +417,7 @@ FOR EACH tt-consulta-blt NO-LOCK:
                                     
                                    "</BOLETO>".
 
+
 END.
 
 CREATE xml_operacao.

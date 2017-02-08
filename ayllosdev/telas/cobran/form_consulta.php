@@ -217,6 +217,7 @@
 													}
 												?>
 
+                                                
 												<label for="dtdpagto">Pagto:</label>
 												<input type="text" id="dtdpagto" name="dtdpagto" value="<?php echo $dtdpagto ?>"/>
 

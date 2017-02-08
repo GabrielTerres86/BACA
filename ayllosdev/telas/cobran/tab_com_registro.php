@@ -12,6 +12,9 @@
  * [04/05/2015] Lucas Reinert (CECRED) : Incluido campo dsemiten - Projeto DP 219 - Cooperativa Emite e Expede.
  *
  *			    30/12/2015 - Alterações Referente Projeto Negativação Serasa (Daniel)	
+ *
+ *              11/10/2016 - Inclusao dos campos de aviso por SMS 
+ *                           PRJ319 - SMS Cobrança (Odirlei - AMcom)
 *               08/01/2017 - Inclusao do campo flgdprot (Heitor - Mouts) - Chamado 574161 
  *              11/10/2016 - Inclusao dos campos de aviso por SMS 
  *                           PRJ319 - SMS Cobrança (Odirlei - AMcom)

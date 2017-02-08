@@ -269,6 +269,9 @@
 
                31/01/2017 - Ajuste para carregar o nome do beneficiario na geracao do 
 			                boleto (Douglas - Chamado 601478)
+               11/10/2016 - Ajustes para permitir Aviso cobrança por SMS.
+                            PRJ319 - SMS Cobrança(Odirlei-AMcom)
+
 .............................................................................*/
 
 
@@ -2483,7 +2486,7 @@ PROCEDURE gera-dados:
 
     IF aux_dscritic <> "" THEN
       DO:
-      
+
           RUN gera_erro (INPUT par_cdcooper,
                          INPUT par_cdagenci,
                          INPUT par_nrdcaixa,
@@ -2542,8 +2545,7 @@ PROCEDURE gera-dados:
                               WHEN pc_verif_permite_lindigi.pr_flglinha_digitavel <> ?
            aux_dscritic = pc_verif_permite_lindigi.pr_dscritic
                               WHEN pc_verif_permite_lindigi.pr_dscritic <> ?.       
-
-
+      
     CREATE tt-dados-blt.
     ASSIGN tt-dados-blt.vllbolet = crapsnh.vllbolet
            tt-dados-blt.dsdinstr = crapsnh.dsdinstr
@@ -4353,7 +4355,7 @@ DO TRANSACTION:
          FIND crapcop WHERE crapcop.cdcooper = crapcob.cdcooper NO-LOCK.
          ASSIGN tt-consulta-blt.agencidv = STRING(crapcop.cdagedbb,"99999").
      END.
-     
+
      /* Aviso SMS */
      ASSIGN tt-consulta-blt.inavisms = crapcob.inavisms
             tt-consulta-blt.insmsant = crapcob.insmsant
@@ -4575,7 +4577,7 @@ PROCEDURE p_cria_titulo:
 
 
     END.
-    
+
     /* Se foi informado para enviar aviso, porem sem selecionar
        o momente, deve gravar como nao enviar aviso */
     IF  p-inavisms <> 0 AND 
@@ -4585,6 +4587,7 @@ PROCEDURE p_cria_titulo:
     DO:
       ASSIGN p-inavisms = 0.
     END.
+    
     CREATE crapcob.
     ASSIGN crapcob.cdcooper = p-cdcooper
            crapcob.nrdconta = p-nrdconta
