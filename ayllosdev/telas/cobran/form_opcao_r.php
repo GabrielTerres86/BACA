@@ -8,6 +8,8 @@
  * ALTERAÇÕES   : 14/08/2013 - Alteração da sigla PAC para PA (Carlos).
  *
  *			      30/12/2015 - Alterações Referente Projeto Negativação Serasa (Daniel)		
+ * 
+ *                17/01/2016 - Alterado para incluir campo Status SMS. PRJ319 - SMS Cobrança (Odirlei-AMcom) 
  * --------------
  */
  
@@ -28,6 +30,7 @@
 
 	<input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>">
 	<input type="hidden" id="cddopcao" name="cddopcao" value=""/>
+    <input type="hidden" id="dtmvtolt" name="dtmvtolt" value="<?php echo $glbvars["dtmvtolt"]; ?>"/>
 
 	<fieldset>
 		<legend> <? echo utf8ToHtml('Relatório');  ?> </legend>	
@@ -72,6 +75,15 @@
 			<option value="5"><? echo utf8ToHtml('Negativados');  	?></option>
 			<option value="6"><? echo utf8ToHtml('Sol. Com Erros'); ?></option>
 			<option value="7"><? echo utf8ToHtml('Ação Judicial'); ?></option>
+			</select>
+		</div>
+        
+        <div id="divStatusSMS" style="display:none">
+			<label for="inStatusSMS"><? echo utf8ToHtml('Situação SMS:');  ?></label>
+			<select id="inStatusSMS" name="inStatusSMS">
+			<option value="0"><? echo utf8ToHtml('Todos');  	    ?></option>			
+			<option value="3"><? echo utf8ToHtml('Enviados com Sucesso');  ?></option>
+			<option value="4"><? echo utf8ToHtml('Erro');  	?></option>
 			</select>
 		</div>
 		

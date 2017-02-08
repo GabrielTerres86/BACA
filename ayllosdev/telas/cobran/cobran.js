@@ -19,6 +19,7 @@
  * 03/05/2016 - Ajustes para inclusao da opcao S. PRJ318 - Nova Plataforma de cobranca (Odirlei-AMcom)
  * 09/05/2016 - Adicionar o filtro numero da conta para os tipos: 2 - Numero do Boleto, 3 - Data de Emissao, 4 - Data de Pagamento
  *              5 - Data de Vencimento, 6 - Nome do Pagador (Douglas - Chamado 441759)
+ * [11/10/2016] Odirlei Busana(AMcom)  : Inclusao dos campos de aviso por SMS. PRJ319 - SMS Cobrança.
  * 08/01/2017 - Adicionar o campo flgdprot para definir label e informacao a mostrar (Protesto x Negativacao (Heitor - Mouts) - Chamado 574161
  */
 
@@ -46,7 +47,8 @@ var registro;
 
 var cdcooper, nrinssac, nrnosnum, dsdoccop, nmdsacad, flgcbdda, flgreaux, dsendsac, complend, nmbaisac, nmcidsac, cdufsaca, nrcepsac,
 	dscjuros, dscmulta, dscdscto, dtdocmto, dsdespec, flgaceit, dsstacom, dtvencto, vltitulo, vldesabt, qtdiaprt, dtdpagto, vldpagto,
-	vljurmul, cdbandoc, nrdcoaux, nrcnvcob, cdsituac, dssituac, cdtpinsc, nrdocmto, dsemiten, inserasa, flserasa, qtdianeg, flgdprot;
+	vljurmul, cdbandoc, nrdcoaux, nrcnvcob, cdsituac, dssituac, cdtpinsc, nrdocmto, dsemiten, inserasa, flserasa, qtdianeg, flgdprot,
+    dsavisms, dssmsant, dssmsvct, dssmspos;
 
 $(document).ready(function () {
     estadoInicial();
@@ -1165,6 +1167,11 @@ function selecionaTabela(tr) {
         flgdprot = $('#flgdprot', tr).val();
     }
 
+    dsavisms = $('#dsavisms', tr).val();
+    dssmsant = $('#dssmsant', tr).val(); 
+    dssmsvct = $('#dssmsvct', tr).val(); 
+    dssmspos = $('#dssmspos', tr).val();
+
     return false;
 }
 
@@ -1265,6 +1272,11 @@ function formataConsulta() {
     rVldpagto = $('label[for="vldpagto"]', '#frmConsulta');
     rVljurmul = $('label[for="vljurmul"]', '#frmConsulta');
     rCdbandoc = $('label[for="cdbandoc"]', '#frmConsulta');
+    // Aviso SMS
+    rDsavisms = $('label[for="dsavisms"]', '#frmConsulta');
+    rDssmsant = $('label[for="dssmsant"]', '#frmConsulta');
+    rDssmsvct = $('label[for="dssmsvct"]', '#frmConsulta');
+    rDssmspos = $('label[for="dssmspos"]', '#frmConsulta');
 
 
     rNrinssac.addClass('rotulo').css({ 'width': '61px' });
@@ -1297,6 +1309,10 @@ function formataConsulta() {
     rVldpagto.addClass('rotulo-linha').css({ 'width': '55px' });
     rVljurmul.addClass('rotulo-linha').css({ 'width': '78px' });
     rCdbandoc.addClass('rotulo-linha').css({ 'width': '41px' });
+    rDsavisms.addClass('rotulo').css({ 'width': '61px' });
+    rDssmsant.addClass('rotulo-linha').css({ 'width': '115px' });
+    rDssmsvct.addClass('rotulo-linha').css({ 'width': '120px' });
+    rDssmspos.addClass('rotulo-linha').css({ 'width': '90px' });
 
     cNrinssac = $('#nrinssac', '#frmConsulta');
     cNrnosnum = $('#nrnosnum', '#frmConsulta');
@@ -1329,6 +1345,11 @@ function formataConsulta() {
     cVljurmul = $('#vljurmul', '#frmConsulta');
     cCdbandoc = $('#cdbandoc', '#frmConsulta');
     cInserasa = $('#inserasa', '#frmConsulta');
+    // Aviso SMS
+    cDsavisms = $('#dsavisms', '#frmConsulta');
+    cDssmsant = $('#dssmsant', '#frmConsulta');
+    cDssmsvct = $('#dssmsvct', '#frmConsulta');
+    cDssmspos = $('#dssmspos', '#frmConsulta');
 
     cNrinssac.val(nrinssac).css({ 'width': '140px' });
     cNrnosnum.val(nrnosnum).css({ 'width': '140px' });
@@ -1360,6 +1381,10 @@ function formataConsulta() {
     cVldpagto.val(vldpagto).css({ 'width': '110px' });
     cVljurmul.val(vljurmul).css({ 'width': '90px' });
     cCdbandoc.val(cdbandoc).css({ 'width': '100px' });
+    cDsavisms.val(dsavisms).css({ 'width': '90px' });
+    cDssmsant.val(dssmsant).css({ 'width': '50px' });
+    cDssmsvct.val(dssmsvct).css({ 'width': '50px' });
+    cDssmspos.val(dssmspos).css({ 'width': '50px' });
 
     cInserasa.val(inserasa);
 
@@ -1818,6 +1843,7 @@ function formataOpcaoR() {
     rCdagenci = $('label[for="cdagenci"]', '#' + frmOpcao);
     rNmprimtl = $('label[for="nmprimtl"]', '#' + frmOpcao);
     rInserasa = $('label[for="inserasa"]', '#' + frmOpcao);
+    rInStatusSMS = $('label[for="inStatusSMS"]', '#' + frmOpcao);    
 
     rInidtmvt.css({ 'width': '53px' }).addClass('rotulo');
     rFimdtmvt.css({ 'width': '20px' }).addClass('rotulo-linha');
@@ -1826,6 +1852,7 @@ function formataOpcaoR() {
     rNrdconta.css({ 'width': '50px' }).addClass('rotulo-linha');
     rCdagenci.css({ 'width': '38px' }).addClass('rotulo-linha');
     rNmprimtl.css({ 'width': '53px' }).addClass('rotulo-linha');
+    rInStatusSMS.css({ 'width': '66px' }).addClass('rotulo-linha');
 
     // input
     cInidtmvt = $('#inidtmvt', '#' + frmOpcao);
@@ -1835,6 +1862,7 @@ function formataOpcaoR() {
     cCdagenci = $('#cdagenci', '#' + frmOpcao);
     cNmprimtl = $('#nmprimtl', '#' + frmOpcao);
     cInserasa = $('#inserasa', '#' + frmOpcao);
+    cInStatusSMS = $('#inStatusSMS', '#' + frmOpcao);
 
     cInidtmvt.css({ 'width': '75px' }).addClass('data');
     cFimdtmvt.css({ 'width': '75px' }).addClass('data');
@@ -1842,6 +1870,7 @@ function formataOpcaoR() {
     cNrdconta.css({ 'width': '75px' }).addClass('conta pesquisa');
     cCdagenci.css({ 'width': '40px' }).addClass('inteiro').attr('maxlength', '3');
     cNmprimtl.css({ 'width': '350px' });
+    cInStatusSMS.css({ 'width': '150px' });
 
     if ($.browser.msie) {
         cTprelato.css({ 'width': '462px' });
@@ -1952,6 +1981,9 @@ function formataOpcaoR() {
             if (tprelato == 6 && normalizaNumero(cNrdconta.val()) == 0) {
                 cNrdconta.desabilitaCampo();
                 cCdagenci.habilitaCampo().focus();
+            // para tipo 7, permitir informar conta 0    
+            }else if (tprelato == 7 && normalizaNumero(cNrdconta.val()) == 0) {
+                showConfirmacao("Deseja visualizar a impress&atilde;o?","Confirma&ccedil;&atilde;o - Ayllos","Gera_Impressao();","hideMsgAguardo();","sim.gif","nao.gif");
             } else if (validaCampo('nrdconta', auxconta)) {
                 manterRotina('BA');
             }
@@ -1980,6 +2012,7 @@ function tipoOptionR() {
         if (flgregis == 'yes') {
             option = option + '<option value="5">5- Relatorio Beneficiario</option>';
             option = option + '<option value="6">6- Relatorio Movimento de Cobranca Registrada</option>';
+            option = option + '<option value="7">7- Relatório analítico de envio de SMS</option>';
 
         } else if (flgregis == 'no') {
             option = option + '<option value="1">1- Gestao da carteira de cobranca sem registro - Por PA</option>';
@@ -2007,7 +2040,13 @@ function controlaLayoutR() {
     cInidtmvt.habilitaCampo();
     cFimdtmvt.habilitaCampo();
 
+    //Inicializar layout
     $('#divInserasa').css({ 'display': 'none' });
+    $('#divStatusSMS').css({ 'display': 'none' });
+    cCdagenci.css({ 'display': 'block' });
+    rCdagenci.css({ 'display': 'block' });
+    rCdstatus.css({ 'display': 'block' });
+    cCdstatus.css({ 'display': 'block' });
 
     if (tprelato == '2') {
         cNrdconta.habilitaCampo();
@@ -2024,6 +2063,19 @@ function controlaLayoutR() {
     } else if (tprelato == '6') {
         cNrdconta.habilitaCampo();
         //cCdagenci.habilitaCampo();	
+     // Analitico de envio SMS
+    }else if (tprelato == '7') {
+                
+        cNrdconta.habilitaCampo();
+        cCdagenci.css({ 'display': 'none' });
+        rCdagenci.css({ 'display': 'none' });
+        rCdstatus.css({ 'display': 'none' });
+        cCdstatus.css({ 'display': 'none' });
+        $('#divStatusSMS').css({ 'display': 'block' });      
+        cInStatusSMS.habilitaCampo();        
+        
+        cInidtmvt.val($('#dtmvtolt', '#' + frmOpcao).val());
+        cFimdtmvt.val($('#dtmvtolt', '#' + frmOpcao).val());
     }
 
     $('#' + frmOpcao + ' fieldset:eq(1)').css({ 'display': 'block' });

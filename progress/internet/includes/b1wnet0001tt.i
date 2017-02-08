@@ -38,6 +38,9 @@
 
                16/02/2016 - Criacao do campo flprotes na tt-dados-blt.
                             (Jaison/Marcos)
+                            
+               11/10/2016 - Ajustes para permitir Aviso cobrança por SMS.
+                            PRJ319 - SMS Cobrança(Odirlei-AMcom)             
 
 ..............................................................................*/
 
@@ -77,7 +80,10 @@ DEF TEMP-TABLE tt-dados-blt NO-UNDO
     FIELD qtmaxneg AS INT
     FIELD valormin AS DEC
     FIELD textodia AS CHAR
-    FIELD flprotes AS INT.
+    FIELD flprotes AS INT
+    FIELD flpersms AS INT
+    FIELD fllindig AS INT.
+
 
 DEF TEMP-TABLE tt-sacados-blt NO-UNDO
     FIELD nmdsacad LIKE crapsab.nmdsacad
