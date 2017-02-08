@@ -64,6 +64,7 @@ A PARTIR DE 10/MAI/2013, FAVOR ENTRAR EM CONTATO COM AS SEGUINTES PESSOAS:
  * 038: [24/08/2016] Carlos (CECRED)        : Criada a classe XmlMensageria para auxiliar a montagem do xml usado para mensageria
  
  * 041: [22/09/2016] Carlos Rafael Tanholi: Alterei a função cecredCript e cecredDecript que usava mcrypt_cbc depreciada. SD 495858.
+ * 038: [18/10/2016] Kelvin (CECRED)        : Ajustes feito na funcao RemoveCaracteresInvalidos para codificar a string antes de tratar.
  */
 ?>
 <?php
@@ -672,7 +673,7 @@ function formatar($campo,$tipo,$formatado=true) {
 	
 	$codigoLimpo = preg_replace("/[' '-.]/", '', $campo);
     
-	$tamanho = (strlen($codigoLimpo) -2);
+    $tamanho = (strlen($codigoLimpo) -2);
 
     if ($tamanho != 9 && $tamanho != 12) { return $campo; }
     if ($formatado){
@@ -1255,15 +1256,25 @@ function converteFloat( $valor, $tipo="" ){
  * OBJETIVO   : Remover caracteres DIFERENTES dos listados no replace da função.
 				Assim, serão removidos caracteres que invalidam o XML ou outras transações.
 				Remove tudo que for diferente de Letras (A-z), numéricos (0-9), caracteres com acentos e alguns sinais de pontuação.
- * PARÂMETROS : $str  [String]  -> Texto que será retornado sem os caracteres.
+ * PARÂMETROS : $str  	    [String]  -> Texto que será retornado sem os caracteres.
+				$encodeString [Bool]  -> Faz encode e decode da string caso for chamado de um fonte que seja necessario.
  */
-function removeCaracteresInvalidos( $str ){
+function removeCaracteresInvalidos( $str, $encodeString = false ){
 	//Removendo escapes da string e colocando barras com scape
 	$str = str_replace('\\', '', $str );
 	
+	//Se passar encode como true
+	if($encodeString){
+		$str = preg_replace("/[\n]/", "", $str);
+		$str = preg_replace("/[^A-z0-9\sÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ\!\"\@\$\%\*\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/\>\<]/", "", utf8_decode($str));	
+		$str = utf8_encode($str);
+	}else{
 	$str = preg_replace("/[\n]/", "", $str);
 	$str = preg_replace("/[^A-z0-9\sÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ\!\"\@\$\%\*\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/\>\<]/", "", $str);	
+	}
 	return $str;
+	
+	
 }
 
 /************************************************************/
@@ -1283,7 +1294,7 @@ function dbOracle() {
 	//valida se a constante nao esta definida
 	if (defined('USER') == false) {
 		define('USER', $user);
-	}
+}
 	//valida se a constante nao esta definida
 	if (defined('PASS') == false) {
 		define('PASS', $pass);
@@ -1460,7 +1471,7 @@ function mensageria($xml, $nmprogra, $nmeacao, $cdcooper, $cdagenci,$nrdcaixa, $
     $xml = xmlInsere($xml, $nmprogra, $nmeacao, $cdcooper, $cdagenci, $nrdcaixa, $idorigem, $cdoperad, $tag);
 		
 	$retXML = dbProcedure($xml);
-	
+
 	return $retXML;
 }
 
