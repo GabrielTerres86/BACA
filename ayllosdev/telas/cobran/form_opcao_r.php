@@ -82,8 +82,8 @@
 			<label for="inStatusSMS"><? echo utf8ToHtml('Situação SMS:');  ?></label>
 			<select id="inStatusSMS" name="inStatusSMS">
 			<option value="0"><? echo utf8ToHtml('Todos');  	    ?></option>			
-			<option value="3"><? echo utf8ToHtml('Enviados com Sucesso');  ?></option>
-			<option value="4"><? echo utf8ToHtml('Erro');  	?></option>
+			<option value="4"><? echo utf8ToHtml('Enviados com Sucesso');  ?></option>
+			<option value="3"><? echo utf8ToHtml('Erro');  	?></option>
 			</select>
 		</div>
 		
