@@ -97,6 +97,7 @@
  * 084: [18/08/2016] Evandro          (RKAM)   : Adicionado condição na função showConfirmacao para voltar foco a classe FirstInputModal, ao fechar janela
  * 080: [18/10/2016] Kelvin			  (CECRED) : Funcao removeCaracteresInvalidos nao estava removendo os caracteres ">" e "<", ajustado 
 												 para remover os mesmos e criado uma flag para identificar se deve remover os acentos ou nao.
+ * 081: [08/02/2017] Kelvin		      (CECRED) : Adicionado na funcao removeCaracteresInvalidos os caracteres ("º","°","ª") para ajustar o chamado 562089.
 												 
  */ 	 
 
@@ -2526,11 +2527,11 @@ function removeCaracteresInvalidos(str, flgRemAcentos){
 	
 	//Se necessario remover acentuacao
 	if (flgRemAcentos){
-		return removeAcentos(str.replace(/[^A-z0-9\sÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöøÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ\!\@\$\%\*\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/]/g,""));				 
+		return removeAcentos(str.replace(/[^A-z0-9\sÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöøÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ\!\@\$\%\*\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/\°\º\ª]/g,""));				 
 	}
 		
 	else
-		return str.replace(/[^A-z0-9\sÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöøÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ\!\@\$\%\*\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/]/g,"");				 
+		return str.replace(/[^A-z0-9\sÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöøÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ\!\@\$\%\*\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/\°\º\ª]/g,"");				 
 	
 }
 
