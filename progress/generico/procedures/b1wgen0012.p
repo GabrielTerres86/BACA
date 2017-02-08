@@ -2,7 +2,7 @@
 
    Programa: b1wgen0012.p                  
    Autora  : Ze Eduardo
-   Data    : 20/11/2006                        Ultima atualizacao: 30/05/2016
+   Data    : 20/11/2006                        Ultima atualizacao: 12/12/2016
 
    Dados referentes ao programa:
 
@@ -193,6 +193,12 @@
                             nas procedures gerar_compel_prcctl, gerar_compel_dscchq,
                             gerar_compel_custodia, gerar_compel, gerar_digita e 
                             gerar_compel_altoVale (Douglas - Chamado 445731)
+
+			   20/07/2016 - Alteracao do caminho onde serao salvos os arquivos
+							de truncagem com nomes("caixa-*", "desc-*" e "custodia-*"). 
+							SD 476097. Carlos Rafael Tanholi.
+
+               12/12/2016 - Ajuste gerar_titulo Nova Plataforma de Cobrana. PRJ340 - NPC (Odirlei-AMcom)
 ............................................................................. */
 
 DEF STREAM str_1.
@@ -1258,6 +1264,10 @@ PROCEDURE gerar_titulo:
    DEF VAR aux_cdsituac AS INT                                        NO-UNDO.
    DEF VAR aux_nrdahora AS INT                                        NO-UNDO.
    DEF VAR aux_contador AS INT                                        NO-UNDO.
+   DEF VAR aux_nrispbif_rem AS INT                                    NO-UNDO.
+   DEF VAR aux_nrispbif AS INT                                        NO-UNDO.   
+   
+   
 
    ASSIGN aux_qttitcxa = 0
           aux_qttitprg = 0
@@ -1362,10 +1372,36 @@ PROCEDURE gerar_titulo:
 
                  END.
               
+              /* Buscar ISPB do banco */
+              FIND FIRST crapban 
+                   WHERE crapban.cdbccxlt = crapcop.cdbcoctl
+                   NO-LOCK NO-ERROR .
+              
+              IF AVAILABLE crapban THEN
+                DO:
+                  ASSIGN aux_nrispbif_rem = crapban.nrispbif.
+                END.              
+                   
+              
               OUTPUT STREAM str_1 TO VALUE(aux_dscooper + "arq/" + 
                                            aux_nmarquiv).
           
               PUT STREAM str_1
+                  FILL("0",47)         FORMAT "x(47)"      /* CONTROLE DO HEADER */
+                  "COB605"                                 /* NOME   */
+                  "0000001 "           FORMAT "x(7)"       /* VERSAO */
+                  FILL(" ",4)          FORMAT "x(4)"       /* FILLER */
+                  "3"                                      /* Ind. Remes */
+                  YEAR(par_dtmvtolt)   FORMAT "9999"       /* DATA FORMATO */
+                  MONTH(par_dtmvtolt)  FORMAT "99"         /* YYYYMMDD*/
+                  DAY(par_dtmvtolt)    FORMAT "99"
+                  FILL(" ",58)         FORMAT "x(58)"      /* FILLER */
+                  aux_nrispbif_rem     FORMAT "99999999"   /* ISPB Remetente*/  
+                  FILL(" ",11)         FORMAT "x(11)"      /* FILLER */
+                  aux_nrseqarq         FORMAT "9999999999" /* SEQUENCIAL 1 */
+                  SKIP.
+                  
+                  /* Layout antigo
                   FILL("0",47)         FORMAT "x(47)" /* CONTROLE DO HEADER */
                   "COB605"                             /* NOME   */
                   crapage.cdcomchq     FORMAT "999"    /* COMPE  */
@@ -1379,6 +1415,8 @@ PROCEDURE gerar_titulo:
                   FILL(" ",77)         FORMAT "x(77)"  /* FILLER */
                   aux_nrseqarq         FORMAT "9999999999"  /* SEQUENCIAL 1 */
                   SKIP.
+                  */
+                  
 
           END.
 
@@ -1452,9 +1490,48 @@ PROCEDURE gerar_titulo:
        ASSIGN aux_cdfatven = DECIMAL(SUBSTR(
                              STRING(craptit.dscodbar,"99999999999999"),6,4)).
 
+       /* Buscar ISPB do banco */
+       FIND FIRST crapban 
+           WHERE crapban.cdbccxlt = craptit.cdbandst
+           NO-LOCK NO-ERROR.
+      
+       IF AVAILABLE crapban THEN
+         DO:
+           ASSIGN aux_nrispbif = crapban.nrispbif.
+         END.
+       ELSE
+         DO:
+           ASSIGN aux_nrispbif = craptit.nrispbds.
+         END.
+       
+       
        IF craptit.cdagenci = 90   OR   /* PAC INTERNET */
           craptit.cdagenci = 91   THEN /* PAC TAA       */
           PUT STREAM str_1
+              SUBSTR(craptit.dscodbar,01,44) FORMAT "x(44)" /* Cod. Barras */
+              aux_tpdocmto           FORMAT "x(2)"         /* Tip Docto */
+              crapage.cdcomchq       FORMAT "999"           /* Filler */
+              aux_tpcaptur           FORMAT "9"             /* Tipo de captura */ 
+              " "                    FORMAT "x(6)"          /* Filler */    
+              crapcop.cdagectl       FORMAT "9999"
+              aux_nrdolote           FORMAT "9999999"       /* NUMERO LOTE */
+              aux_nrseqdig           FORMAT "999"           /* SEQ NO LOTE */
+              YEAR(par_dtmvtolt)     FORMAT "9999"          /* DATA FORMATO */
+              MONTH(par_dtmvtolt)    FORMAT "99"            /* YYYYMMDD*/
+              DAY(par_dtmvtolt)      FORMAT "99"
+              "      "               FORMAT "x(6)"          /* CENTRO PROCES */
+              craptit.vldpagto * 100 FORMAT "999999999999"  /* VALOR LIQ. */
+              "0000001"              FORMAT "x(7)"          /* VERSAO */
+              aux_nrsqarhd           FORMAT "9999999999"    /* SEQ. do arquivo troca */
+              " "                    FORMAT "x(18)"         /* Filler */    
+              aux_nrispbif_rem       FORMAT "99999999"      /* ISPB recebedor   */
+              aux_nrispbif           FORMAT "99999999"      /* ISPB favorecido  */                          
+              aux_tpdocmto           FORMAT "x(3)"
+              aux_nrseqarq           FORMAT "9999999999"
+              SKIP.
+              
+          
+              /* Layout antigo
               SUBSTR(craptit.dscodbar,01,44) FORMAT "x(44)" /* Cod. Barras */
               aux_tpdocmto           FORMAT "x(2)"         /* Tip Docto */
               crapage.cdcomchq       FORMAT "999"
@@ -1473,12 +1550,35 @@ PROCEDURE gerar_titulo:
               crapage.cdcomchq       FORMAT "999"      /* COMPE  */
               "0001"                 FORMAT "x(4)"     /* VERSAO */
               aux_nrsqarhd           FORMAT "9999999999"
-              FILL(" ",34)           FORMAT "x(34)"    /* FILLER */
+              aux_tpdocmto           FORMAT "x(3)"
+              FILL(" ",34)           FORMAT "x(34)"    /* FILLER */                           aux_nrseqarq           FORMAT "9999999999"
+              SKIP.*/
+       ELSE
+          PUT STREAM str_1
+              SUBSTR(craptit.dscodbar,01,44) FORMAT "x(44)" /* Cod. Barras */
+              aux_tpdocmto           FORMAT "x(2)"          /* Tip Docto */
+              crapage.cdcomchq       FORMAT "999"
+              aux_tpcaptur           FORMAT "9"             /* Tipo de captura */ 
+              " "                    FORMAT "x(6)"          /* Filler */    
+              crapcop.cdagectl       FORMAT "9999"
+              aux_nrdolote           FORMAT "9999999"       /* NUMERO LOTE */
+              aux_nrseqdig           FORMAT "999"           /* SEQ NO LOTE */
+              YEAR(par_dtmvtolt)     FORMAT "9999"          /* DATA FORMATO */
+              MONTH(par_dtmvtolt)    FORMAT "99"            /* YYYYMMDD*/
+              DAY(par_dtmvtolt)      FORMAT "99"
+              "      "               FORMAT "x(6)"     /* CENTRO PROCES */
+              craptit.vldpagto * 100 FORMAT "999999999999"   /* VALOR LIQ. */
+              "0000001"              FORMAT "x(7)"       /* VERSAO */
+              aux_nrsqarhd           FORMAT "9999999999" /* SEQ. do arquivo troca */
+              " "                    FORMAT "x(18)"         /* Filler */    
+              aux_nrispbif_rem       FORMAT "99999999"   /* ISPB recebedor   */
+              aux_nrispbif           FORMAT "99999999"    /* ISPB favorecido  */                          
               aux_tpdocmto           FORMAT "x(3)"
               aux_nrseqarq           FORMAT "9999999999"
               SKIP.
-       ELSE
-          PUT STREAM str_1
+              
+          
+              /* Layout antigo
               craptit.cdbandst       FORMAT "999"      /* BANCO DESTINO */
               craptit.cddmoeda       FORMAT "9"        /* CODIGO MOEDA  */
               craptit.nrdvcdbr       FORMAT "9"        /* DIG. COD.BARRA */
@@ -1505,7 +1605,7 @@ PROCEDURE gerar_titulo:
               FILL(" ",34)           FORMAT "x(34)"    /* FILLER */
               aux_tpdocmto           FORMAT "x(3)"
               aux_nrseqarq           FORMAT "9999999999"
-              SKIP.
+              SKIP.*/
        
        /* Criacao da tabela Generica - GNCPTIT */
        CREATE gncptit.
@@ -1549,6 +1649,22 @@ PROCEDURE gerar_titulo:
               PUT STREAM str_1
                   FILL("9",47)         FORMAT "x(47)" /* Constante de 9 */
                   "COB605"                            /* Constante COB605 */
+                  "0000001"                            /* VERSAO */
+                  FILL(" ",4)          FORMAT "x(4)"   /* FILLER */
+                  "3"                                  /* Ind. Remes */
+                  YEAR(par_dtmvtolt)   FORMAT "9999"   /* DATA FORMATO */
+                  MONTH(par_dtmvtolt)  FORMAT "99"     /* YYYYMMDD*/
+                  DAY(par_dtmvtolt)    FORMAT "99"
+                  aux_vltotarq * 100   FORMAT "99999999999999999" /* VL Arq */                    FILL(" ",41)         FORMAT "x(41)"  /* FILLER */
+                  aux_nrispbif_rem     FORMAT "99999999"   /* ISPB Remetente*/  
+                  FILL(" ",11)         FORMAT "x(11)"  /* FILLER */
+                  aux_nrseqarq         FORMAT "9999999999"  /* SEQUENCIA */
+                  SKIP.
+                  
+                  
+              /*  layout antigo
+                  FILL("9",47)         FORMAT "x(47)" /* Constante de 9 */
+                  "COB605"                            /* Constante COB605 */                                    
                   crapage.cdcomchq     FORMAT "999"   /* COMPE  */
                   "0001"                              /* VERSAO */
                   crapcop.cdbcoctl     FORMAT "999"    /* BANCO  */
@@ -1560,7 +1676,7 @@ PROCEDURE gerar_titulo:
                   aux_vltotarq * 100   FORMAT "99999999999999999" /* VL Arq */
                   FILL(" ",60)         FORMAT "x(60)"  /* FILLER */
                   aux_nrseqarq         FORMAT "9999999999"  /* SEQUENCIA */
-                  SKIP.
+                  SKIP.*/
 
               OUTPUT STREAM str_1 CLOSE.
 
@@ -2130,7 +2246,7 @@ PROCEDURE gerar_compel:
                          /* move para o salvar */
                          UNIX SILENT VALUE("mv " + aux_dscooper + "arq/"     +
                                            aux_nmarqdat + " " + aux_dscooper +
-                                           "salvar/" + aux_nmarqdat + "_"    +
+                                           "salvar/truncagem/" + aux_nmarqdat + "_"    +
                                            STRING(TIME,"99999")              + 
                                            " 2>/dev/null").
                                    
@@ -3327,7 +3443,7 @@ PROCEDURE gerar_compel_custodia:
                          UNIX SILENT VALUE(
                               "mv " + aux_dscooper + "arq/"     +
                               aux_nmarqdat + " " + aux_dscooper +
-                              "salvar/" + aux_nmarqdat + "_"    +
+                              "salvar/truncagem/" + aux_nmarqdat + "_"    +
                               STRING(TIME,"99999")              + 
                               " 2>/dev/null").
                 END.
@@ -3728,7 +3844,7 @@ PROCEDURE gerar_compel_dscchq:
                          UNIX SILENT VALUE(
                               "mv " + aux_dscooper + "arq/"     +
                               aux_nmarqdat + " " + aux_dscooper +
-                              "salvar/" + aux_nmarqdat + "_"    +
+                              "salvar/truncagem/" + aux_nmarqdat + "_"    +
                               STRING(TIME,"99999")              +
                               " 2>/dev/null").
                 END.
