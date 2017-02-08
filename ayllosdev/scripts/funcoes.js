@@ -95,6 +95,9 @@
  * 082: [19/07/2016] Andrei           (RKAM)   : Ajuste na rotina layoutPadrao para incluir o tratamento para a classe porcento_6. 
  * 083: [12/07/2016] Evandro          (RKAM)   : Adicionado a função atalhoTeclado condição para fechar telas (divMsgsAlerta e divAnotacoes) com ESC ou F4
  * 084: [18/08/2016] Evandro          (RKAM)   : Adicionado condição na função showConfirmacao para voltar foco a classe FirstInputModal, ao fechar janela
+ * 080: [18/10/2016] Kelvin			  (CECRED) : Funcao removeCaracteresInvalidos nao estava removendo os caracteres ">" e "<", ajustado 
+												 para remover os mesmos e criado uma flag para identificar se deve remover os acentos ou nao.
+												 
  */ 	 
 
 var UrlSite     = parent.window.location.href.substr(0,parent.window.location.href.lastIndexOf("/") + 1); // Url do site
@@ -415,13 +418,13 @@ $(document).ready(function () {
 	 * OBJETIVO   : Tornar as mensagens padrão de Erro ou Confirmação "Movimentáveis", permitindo arrastar a janela para qualquer direção, com o objetivo
 	 *              de desobstruindo os dados que se encontram logo abaixo da caixa de mensagem. Funcionalidade replicada as telas de rotinas.
 	 */	 
-    var elementosDrag = $('#divRotina, #divError, #divConfirm, #divPesquisa, #divPesquisaEndereco, #divFormularioEndereco, #divPesquisaAssociado, #divUsoGenerico, #divMsgsAlerta');
-	elementosDrag.unbind('dragstart');
+	var elementosDrag = $('#divRotina, #divError, #divConfirm, #divPesquisa, #divPesquisaEndereco, #divFormularioEndereco, #divPesquisaAssociado, #divUsoGenerico, #divMsgsAlerta');
+	elementosDrag.unbind('dragstart');	
     elementosDrag.bind('dragstart', function (event) {
 		return $(event.target).is('.ponteiroDrag');
 	}).bind('drag', function (event) {
         $(this).css({ top: event.offsetY, left: event.offsetX });
-	});
+    });  	
 	
 });
 
@@ -2514,9 +2517,21 @@ function removeAcentos(str) {
     return str.replace(/[àáâãäå]/g, "a").replace(/[ÀÁÂÃÄÅ]/g, "A").replace(/[ÒÓÔÕÖØ]/g, "O").replace(/[òóôõöø]/g, "o").replace(/[ÈÉÊË]/g, "E").replace(/[èéêë]/g, "e").replace(/[Ç]/g, "C").replace(/[ç]/g, "c").replace(/[ÌÍÎÏ]/g, "I").replace(/[ìíîï]/g, "i").replace(/[ÙÚÛÜ]/g, "U").replace(/[ùúûü]/g, "u").replace(/[ÿ]/g, "y").replace(/[Ñ]/g, "N").replace(/[ñ]/g, "n");
 }
 
-/*! OBJETIVO: Remover caracteres que invalidam o xml*/
-function removeCaracteresInvalidos(str) {
-    return str.replace(/[^A-z0-9\sÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöøÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ\!\@\$\%\*\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/\>\<]/g, "");
+/*! OBJETIVO  : Remover caracteres que invalidam o xml
+	PARAMETROS: str           -> Texto que contera os caracteres invalidos que irao ser removidos
+				flgRemAcentos -> Flag para identificar se é necessário remover acentuacao
+*/
+
+function removeCaracteresInvalidos(str, flgRemAcentos){
+	
+	//Se necessario remover acentuacao
+	if (flgRemAcentos){
+		return removeAcentos(str.replace(/[^A-z0-9\sÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöøÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ\!\@\$\%\*\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/]/g,""));				 
+	}
+		
+	else
+		return str.replace(/[^A-z0-9\sÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöøÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ\!\@\$\%\*\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/]/g,"");				 
+	
 }
 
 function utf8_decode(str_data) {
