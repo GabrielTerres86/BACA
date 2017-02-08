@@ -2782,6 +2782,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     vr_dtmvtopg := pr_dtmvtopg;						
     ------
 		
+		-- alimenta linha digitável (para log) caso tenha sido informada
+		IF TRIM(pr_lindigi1) IS NOT NULL THEN
+		   vr_dslindig := SUBSTR(to_char(vr_lindigi1,'fm000000000000'),1,11) ||'-'||
+		                  SUBSTR(to_char(vr_lindigi1,'fm000000000000'),12,1) ||' '||
+
+		                  SUBSTR(to_char(vr_lindigi2,'fm000000000000'),1,11) ||'-'||
+		                  SUBSTR(to_char(vr_lindigi2,'fm000000000000'),12,1) ||' '||
+
+                      SUBSTR(to_char(vr_lindigi3,'fm000000000000'),1,11) ||'-'||
+		                  SUBSTR(to_char(vr_lindigi3,'fm000000000000'),12,1) ||' '||
+
+		                  SUBSTR(to_char(vr_lindigi4,'fm000000000000'),1,11) ||'-'||
+		                  SUBSTR(to_char(vr_lindigi4,'fm000000000000'),12,1);
+		END IF;
+		
 		vr_dtmvtopg := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper, 
 																							 pr_dtmvtolt => pr_dtmvtopg, 
 																							 pr_tipo     => 'A');

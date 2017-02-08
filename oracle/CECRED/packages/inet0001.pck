@@ -2429,6 +2429,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
         RAISE vr_exc_erro;
       END IF;
 
+	  IF pr_tpoperac = 10 AND -- DARF/DAS 
+		 pr_tab_limite(pr_tab_limite.FIRST).iddiauti = 2 THEN
+			pr_tab_limite(pr_tab_limite.FIRST).idesthor := 1;
+	  END IF;
+
       --Se nao for para validar retorna
       IF NOT pr_flgvalid THEN
         --Sair
