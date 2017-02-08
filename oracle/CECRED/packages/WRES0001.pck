@@ -146,6 +146,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WRES0001 AS
         vr_index_cabecalho := pr_requisicao.cabecalho.next(vr_index_cabecalho);
       END LOOP;
     
+      utl_http.set_header(vr_req ,'User-Agent', 'Ayllos/PLSQL');
+
       -- Envia o conteúdo no Content se for um POST
       IF (pr_requisicao.verbo = WRES0001.post) THEN
         utl_http.set_header(vr_req ,'Content-Length', LENGTH(pr_requisicao.conteudo));
