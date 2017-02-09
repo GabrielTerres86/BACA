@@ -3051,7 +3051,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                
                /* Trailer do lote do arquivo - Quanto encontrar a sequencia 
                   especifica, deve ignorar a linha ( Renato Darosci - 11/10/2016) */
-               IF SUBSTR(vr_setlinha,1,31) = '0180859999999999999999999999999' THEN
+               IF SUBSTR(vr_setlinha,1,31) = '      9999999999999999999999999' THEN
                  CONTINUE; -- Passa para o processamento da Próxima linha do arquivo
                END IF;
                
