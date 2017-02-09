@@ -53,6 +53,9 @@
                22/12/2016 - PRJ340 - Nova Plataforma de Cobranca - Fase II. 
                             (Jaison/Cechet)
                             
+               02/01/2017 - PRJ340 - Nova Plataforma de Cobranca - Fase II. 
+                            (Ricardo Linhares)                            
+
 ..............................................................................*/
 
 CREATE WIDGET-POOL.
@@ -574,6 +577,49 @@ ASSIGN xml_operacao.dslinxml = "<dados_beneficiario><nmprimtl>" +
                                "</inpessoa><dsdemail>" + 
                                aux_dsdemail_ben + 
                                "</dsdemail></dados_beneficiario>".
+                               
+
+  /* Enviar para CIP
+   par_inenvcip (CRAPCOB.INENVCIP)  0 - Online, 
+                                    1 - A enviar, 
+                                    20 - Enviado Online, 
+                                    21 - Enviado, 
+                                    30 - Confirmado Online,
+                                    31 - Confirmado,
+                                    40 - Rejeitado Online,
+                                    41 - Rejeitado
+  */
+  
+  IF par_inenvcip = 0 THEN /* Envia para CIP apenas no Online */
+    DO: 
+    
+    { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+
+       RUN STORED-PROCEDURE pc_crps618 aux_handproc = PROC-HANDLE
+       (INPUT par_cdcooper,
+        INPUT par_nrdconta,
+        INPUT 0,
+        OUTPUT 0,
+        OUTPUT 0,    
+        OUTPUT 0, 
+        OUTPUT "").
+
+        CLOSE STORED-PROC pc_crps618
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+        ASSIGN aux_dscritic = ""
+               aux_dscritic = pc_crps618.pr_dscritic
+                              WHEN pc_crps618.pr_dscritic <> ? .   
+                              
+        IF aux_dscritic <> "" THEN
+        DO:
+            ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>". 
+            RETURN "NOK".
+        END.
+            
+        { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+     
+    END.              
 
 RETURN "OK".
 
