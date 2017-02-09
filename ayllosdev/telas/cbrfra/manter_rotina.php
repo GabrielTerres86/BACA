@@ -5,6 +5,9 @@
  * DATA CRIAÇÃO : 16/06/2014
  * OBJETIVO       : Mantem a rotina das informacoes de inclusao, selecao e delecao na tela CBRFRA
  *
+ *   16/08/2016 - #456682 Adicionados os campos tipo e nrcpfcnpj nas rotinas de manutenção da tela (Carlos)
+ *   22/08/2016 - #456682 Adicionados os campos nrcpf e nrcnpj nas rotinas de manutenção da tela (Carlos)
+ *   16/09/2016 - Melhoria nas mensagens, de "Código" para "Registro", para ficar genérico, conforme solicitado pelo Maicon (Carlos)
  */
 	session_start();
 	require_once('../../includes/config.php');
@@ -14,87 +17,99 @@
 	isPostMethod();
 	$stracao = $_POST['cddopcao'];
 	$stropcao = $_POST['stropcao'];
-	$strcodbar = $_POST['nrdcodigo'];
-	$strcodbarexc = $_POST['nrdcodigoexc'];
+	$tipo     = $_POST['tipo'];      // 1-boleto; 2-ted pf; 3-ted pj
+
+	switch ($tipo) {
+		case 1:  $dsfraude = $_POST['nrdcodigo']; // Boleto
+		         break;
+		case 2:  $dsfraude = $_POST['nrcpf'];     // TED PF
+		         break;
+		case 3:  $dsfraude = $_POST['nrcnpj'];    // TED PJ 
+				 break;
+		default: $dsfraude = $_POST['nrdcodigo']; // Boleto
+		         $tipo = 1; 
+		         break;
+	}
+
+	$strcodexc   = $_POST['nrdcodigoexc'];
 	$datinclusao = $_POST['nmdata'];
 	$datinicial = $_POST['nmdatainicial'];
 	$datfinal = $_POST['nmdatafinal'];
 	$nriniseq    = isset($_POST['nriniseq']) ? $_POST['nriniseq'] : 0;
 	$nrregist    = isset($_POST['nrregist']) ? $_POST['nrregist'] : 0;
-	$strnomacao = '';
-
  
 	//rotina da exclusao de codigos com fraude	
-	if($stracao == 'E' && $strcodbarexc != ''){
-		$strnomacao = 	'EXCCBRFRA';
+	if ($stracao == 'E' && $strcodexc != '') {
+
+		$xmlexclusao = new XmlMensageria();
+		$xmlexclusao->add('cdcooper', $glbvars["cdcooper"])
+		            ->add('tpfraude', $tipo)
+					->add('dsfraude', $strcodexc);
+
 		$strdisabled = '';
-		$strcodbar = '' ;
 		$datinicial = '';
 		$datfinal = '' ;
-		$xmlexclusao  = "";
-		$xmlexclusao .= "<Root>";
-		$xmlexclusao .= " <Dados>";
-		$xmlexclusao .= "    <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
-		$xmlexclusao .= "    <dscodbar>".$strcodbarexc."</dscodbar>";
-		$xmlexclusao .= " </Dados>";
-		$xmlexclusao .= "</Root>";
-		$xmlResultExc = mensageria($xmlexclusao, "CBRFRA", $strnomacao, $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["nmoperad"], "</Root>");
+
+		$xmlResultExc = mensageria($xmlexclusao, "CBRFRA", 'EXCCBRFRA', $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["nmoperad"], "</Root>");
 		$xmlObjFraudeExc = getObjectXML($xmlResultExc);
 	
 		if (strtoupper($xmlObjFraudeExc->roottag->tags[0]->name) == "ERRO") {
-			$msgErro = $xmlObjFraudeExc->roottag->tags[0]->cdata;
+			$msgErro = $xmlObjFraudeExc->roottag->tags[0]->tags[0]->tags[4]->cdata;
 			exibirErro('error',$msgErro,'Alerta - Ayllos',false);
 		} else{
-			$msgOK = "C&oacute;digo com fraude exclu&iacute;do com sucesso!";
+			$msgOK = "Registro de fraude exclu&iacute;do com sucesso!";
 			exibirErro('inform',$msgOK,'Alerta - Ayllos',false);
 		}
 	}
 	else
-	if($stracao == 'I' && $strcodbar != ''){
+	if($stracao == 'I' && $dsfraude != ''){
+
 		$strdisabled = '';
-		$xmlInclusao  = "";
-		$xmlInclusao .= "<Root>";
-		$xmlInclusao .= " <Dados>";
-		$xmlInclusao .= "    <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
-		$xmlInclusao .= "    <dscodbar>".$strcodbar."</dscodbar>"; 
-		$xmlInclusao .= "    <dtsolici>".$datinclusao."</dtsolici>";
-		$xmlInclusao .= " </Dados>";
-		$xmlInclusao .= "</Root>";  
-		$xmlResultInc = mensageria($xmlInclusao, "CBRFRA", "INCCBRFRA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["nmoperad"], "</Root>");
+
+		$xmlInclusao  = new XmlMensageria();
+		$xmlInclusao->add('cdcooper',$glbvars["cdcooper"])
+					->add('tpfraude',$tipo)
+					->add('dsfraude',$dsfraude)
+					->add('dtsolici',$datinclusao);
+
+		$xmlResultInc = mensageria($xmlInclusao, "CBRFRA", 'INCCBRFRA', $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["nmoperad"], "</Root>");
 		$xmlObjFraudeInc = getObjectXML($xmlResultInc);
 		
 		if (strtoupper($xmlObjFraudeInc->roottag->tags[0]->name) == "ERRO") {
-			$msgErro = $xmlObjFraudeInc->roottag->tags[0]->cdata;
+			$msgErro = $xmlObjFraudeInc->roottag->tags[0]->tags[0]->tags[4]->cdata;			
 			exibirErro('error',$msgErro,'Alerta - Ayllos',false);
 		} else{
-			$msgOK = "C&oacute;digo com fraude inclu&iacute;do com sucesso!";
+			$msgOK = "Registro de fraude inclu&iacute;do com sucesso!";
 			exibirErro('inform',$msgOK,'Alerta - Ayllos',false);
 		}
 		
+		$tipo       = 1;
 		$strcodbar = '' ;
+		$nrcpf      = '';
+		$nrcnpj     = '';		
 		$datinicial = '';
 		$datfinal = '' ;
 	}	
 	else {
-		//rotina da colsulta de codigos com fraude	
+		//rotina da consulta de codigos com fraude	
 		// caso a consulta seja no modo exclusao ativa a opcao de exclusao na tabela
 		$strdisabled = ($stropcao == 'E') ? '' : 'display:none';
-		//nome da acao enviada para mensageria e o monta o xml
-		$strnomacao = 	'CONCBRFRA';	
-		$xml  = "";
-		$xml .= "<Root>";
-		$xml .= " <Dados>";
-		$xml .= "    <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
-		$xml .= "    <dscodbar>".$strcodbar."</dscodbar>";
-		$xml .= "    <dtiniper>".$datinicial."</dtiniper>";
-		$xml .= "    <dtfimper>".$datfinal."</dtfimper>";
-		$xml .= "    <nriniseq>".$nriniseq."</nriniseq>";
-		$xml .= "    <nrregist>".$nrregist."</nrregist>";
-		$xml .= " </Dados>";
-		$xml .= "</Root>";
+
+		if ($dsfraude == '000.000.000-00') {
+			$dsfraude = '';
+		}
+
+		$xml = new XmlMensageria();
+		$xml->add('cdcooper',$glbvars["cdcooper"])
+		    ->add('tpfraude',$tipo)
+			->add('dsfraude',$dsfraude)
+			->add('dtiniper',$datinicial)
+            ->add('dtfimper',$datfinal)
+			->add('nriniseq',$nriniseq)
+			->add('nrregist',$nrregist);
 
 		//realiza o processo de mensageria para efetuar a transacao no banco de dados
-		$xmlResult = mensageria($xml, "CBRFRA", $strnomacao, $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["nmoperad"], "</Root>");
+		$xmlResult = mensageria($xml, "CBRFRA", 'CONCBRFRA', $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["nmoperad"], "</Root>");
 		$xmlObjFraude = getObjectXML($xmlResult); 
 
 		//retorno dos registros
