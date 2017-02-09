@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2007                        Ultima atualizacao: 22/12/2016
+   Data    : Marco/2007                        Ultima atualizacao: 02/01/2017
 
    Dados referentes ao programa:
 
@@ -52,7 +52,7 @@
 
                22/12/2016 - PRJ340 - Nova Plataforma de Cobranca - Fase II. 
                             (Jaison/Cechet)
-
+                            
 ..............................................................................*/
 
 CREATE WIDGET-POOL.

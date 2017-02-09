@@ -269,6 +269,9 @@
 
                31/01/2017 - Ajuste para carregar o nome do beneficiario na geracao do 
 			                boleto (Douglas - Chamado 601478)
+			   02/01/2017 - PRJ340 - Nova Plataforma de Cobranca - Fase II. 
+                            (Ricardo Linhares)                            
+
 .............................................................................*/
 
 
@@ -1909,7 +1912,7 @@ PROCEDURE gravar-boleto:
                                    /* Serasa */
                                    INPUT par_flserasa,
                                    INPUT par_qtdianeg,
-
+                                   
                                    INPUT par_inenvcip,
                                    INPUT par_inpagdiv,
                                    INPUT par_vlminimo,
@@ -1941,6 +1944,17 @@ PROCEDURE gravar-boleto:
 
         END. /** Fim do DO ... TO par_insssac - sacados**/
     
+
+        /* Enviar para CIP */
+
+        IF par_inenvcip = 0 THEN /* Envia para CIP apenas no Online */
+        DO: 
+          
+          RUN enviar-cip (INPUT par_cdcooper,
+                          INPUT par_nrdconta).
+          
+        END.              		
+
         ASSIGN aux_flgtrans = TRUE.
             
     END. /** Fim do DO TRANSACTION - TRANSACAO **/
@@ -2124,6 +2138,24 @@ PROCEDURE gravar-boleto:
     
 END PROCEDURE.
 
+PROCEDURE enviar-cip:
+    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
+
+		{ includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+
+			RUN STORED-PROCEDURE pc_registra_tit_cip_online  aux_handproc = PROC-HANDLE
+			(INPUT par_cdcooper,
+			 INPUT par_nrdconta,
+			 OUTPUT 0, 
+			 OUTPUT "").
+
+			CLOSE STORED-PROC pc_registra_tit_cip_online 
+					aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+            
+		{ includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+  
+END PROCEDURE.
 
 /******************************************************************************/
 /**           Procedure para retornar dados para geracao de boletos          **/
@@ -4324,7 +4356,7 @@ PROCEDURE p_cria_titulo:
      /* Serasa */
     DEF INPUT   PARAM p-flserasa    LIKE crapcob.flserasa   NO-UNDO.
     DEF INPUT   PARAM p-qtdianeg    LIKE crapcob.qtdianeg   NO-UNDO.
-
+    
     DEF INPUT   PARAM p-inenvcip    LIKE crapcob.inenvcip   NO-UNDO.
     DEF INPUT   PARAM p-inpagdiv    LIKE crapcob.inpagdiv   NO-UNDO.
     DEF INPUT   PARAM p-vlminimo    LIKE crapcob.vlminimo   NO-UNDO.
@@ -4522,7 +4554,7 @@ PROCEDURE p_cria_titulo:
            /* Serasa */
            crapcob.flserasa = p-flserasa
            crapcob.qtdianeg = p-qtdianeg
-
+           
            crapcob.inenvcip = p-inenvcip
            crapcob.inpagdiv = p-inpagdiv
            crapcob.vlminimo = p-vlminimo
