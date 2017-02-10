@@ -18,6 +18,7 @@
  *				  29/01/2015 - Removido attr('value','no') do campo flgdepec (Lucas R #241971)
  *                04/08/2015 - Reformulacao cadastral (Gabriel-RKAM).
  *                03/11/2015 - Incluida a funcao selecionaPoder(), PRJ. 131 - Ass. Conjunta (Jean Michel).
+ *                26/08/2016 - Inclusao da function validaResponsaveis e alteracao controlaOperacaoPoderes, SD 510426 (Jean Michel).
  */
 var flgAcessoRotina = true; // Flag para validar acesso as rotinas da tela CONTAS
 var nrcpfcgc_proc = ''; 
@@ -2325,15 +2326,52 @@ function salvarPoderes(){
 	
 }
 
-function controlaOperacaoPoderes(operacao){
-	switch (operacao) {
+function controlaOperacaoPoderes(operacao) {
+    switch (operacao) {
 		
 		case 'SP':
 			// Oculto o formulario e mostro a tabela
-			showConfirmacao('Deseja confirmar altera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','salvarPoderes()','bloqueiaFundo(divRotina)','sim.gif','nao.gif');
+		    //showConfirmacao('Deseja confirmar altera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','salvarPoderes()','bloqueiaFundo(divRotina)','sim.gif','nao.gif');
+		    validaResponsaveis();
 			return false;
 			break;
 	}
+}
+
+function validaResponsaveis() {
+
+    var valRadio;
+    var flgconju;
+    
+    $('table > tbody > tr', 'div.divRegistros').each(function () {
+
+        valRadio = $('input:checked', $(this)).val();
+        
+        if ($('input[name="hdnCodPoder"]', $(this)).val() == 10) {
+          if (valRadio == 'con') {
+            flgconju = "yes";            
+          } else {
+            flgconju = "no";
+          }
+        }
+        
+    });
+
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'includes/procuradores/valida_responsaveis.php',
+        data: {
+            nrdconta: nrdconta,
+            nrcpfcgc: nrcpfcgc_proc,
+            nrdctato: nrdctato,
+            flgconju: flgconju,
+            redirect: 'script_ajax'
+        },
+        success: function (response) {
+            eval(response);
+        }
+    });
 }
 
 function voltarRotina() {
