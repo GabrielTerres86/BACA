@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
   --
   --  Programa: PAGA0001                       Antiga: b1wgen0016.p
   --  Autor   : Evandro/David
-  --  Data    : Abril/2006                     Ultima Atualizacao: 28/10/2016
+  --  Data    : Abril/2006                     Ultima Atualizacao: 10/02/2017
   --
   --  Dados referentes ao programa:
   --
@@ -277,6 +277,9 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
   --        28/10/2016 - SD 509982 - DEBCON - Atualização criticas (Guilherme/SUPERO)
   --
   --        29/12/2016 - Tratamento Nova Plataforma de cobrança PRJ340 - NPC (Odirlei-AMcom)
+  --
+  --        10/02/2017 - Ajustado parâmetros pr_nrispbpg das procedures pc_processa_liquidacao e
+  --                     pc_proc_liquid_apos_baixa para DEFAULT 99999999 (Rafael)
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de registro de agendamento
@@ -848,7 +851,7 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
   /* Procedure para processar liquidacao de titulos */
   PROCEDURE pc_processa_liquidacao (pr_idtabcob IN ROWID    --Rowid da Cobranca
                                    ,pr_nrnosnum IN VARCHAR2 --Nosso Numero
-                                   ,pr_nrispbpg IN INTEGER DEFAULT NULL  --Numero ISPB do pagador
+                                   ,pr_nrispbpg IN INTEGER DEFAULT 99999999  --Numero ISPB do pagador
                                    ,pr_cdbanpag IN INTEGER  --Codigo banco pagamento
                                    ,pr_cdagepag IN INTEGER  --Codigo Agencia pagamento
                                    ,pr_vltitulo IN NUMBER   --Valor do titulo
@@ -912,7 +915,7 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
   /* Procedure para processar liquidacao de titulos apos baixa */
   PROCEDURE pc_proc_liquid_apos_baixa (pr_idtabcob IN ROWID    --Rowid da Cobranca
                                       ,pr_nrnosnum IN VARCHAR2 --Nosso Numero
-                                      ,pr_nrispbpg IN INTEGER DEFAULT NULL  --Numero ISPB do pagador
+                                      ,pr_nrispbpg IN INTEGER DEFAULT 99999999  --Numero ISPB do pagador
                                       ,pr_cdbanpag IN INTEGER  --Codigo banco pagamento
                                       ,pr_cdagepag IN INTEGER  --Codigo Agencia pagamento
                                       ,pr_vltitulo IN NUMBER   --Valor do titulo
@@ -1037,7 +1040,7 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
                              ,pr_dsmotivo IN VARCHAR2                   --Descricao Motivo
                              ,pr_nrremret IN INTEGER                    --Numero remessa retorno
                              ,pr_nrseqreg IN INTEGER                    --Sequencial do registro
-                             ,pr_nrispbrc IN NUMBER DEFAULT NULL        --> Numero ISPB do recebedor
+                             ,pr_nrispbrc IN NUMBER DEFAULT 99999999    --Numero ISPB do recebedor
                              ,pr_cdbcorec IN INTEGER                    --Codigo banco recebedor
                              ,pr_cdagerec IN INTEGER                    --Codigo Agencia recebedora
                              ,pr_cdbcocor IN INTEGER                    --Codigo Banco
@@ -1101,7 +1104,7 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
                                            ,pr_nrretcoo IN NUMBER   --Numero Retorno Cooperativa
                                            ,pr_cdmotivo IN VARCHAR  --Codigo Motivo
                                            ,pr_cdocorre IN INTEGER  --Codigo Ocorrencia
-                                           ,pr_nrispbpg IN INTEGER DEFAULT NULL  --Numero ISPB do pagador
+                                           ,pr_nrispbpg IN INTEGER DEFAULT 99999999  --Numero ISPB do pagador
                                            ,pr_cdbanpag IN INTEGER  --Codigo banco pagamento
                                            ,pr_cdagepag IN INTEGER  --Codigo Agencia pagamento
                                            ,pr_inestcri IN INTEGER DEFAULT 0 --Estado crise
@@ -13590,7 +13593,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                              ,pr_dsmotivo IN VARCHAR2                   --Descricao Motivo
                              ,pr_nrremret IN INTEGER                    --Numero remessa retorno
                              ,pr_nrseqreg IN INTEGER                    --Sequencial do registro
-                             ,pr_nrispbrc IN NUMBER DEFAULT NULL        --> Numero ISPB do recebedor
+                             ,pr_nrispbrc IN NUMBER DEFAULT 99999999    --Numero ISPB do recebedor
                              ,pr_cdbcorec IN INTEGER                    --Codigo banco recebedor
                              ,pr_cdagerec IN INTEGER                    --Codigo Agencia recebedora
                              ,pr_cdbcocor IN INTEGER                    --Codigo Banco
@@ -14510,7 +14513,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                            ,pr_nrretcoo IN NUMBER   --Numero Retorno Cooperativa
                                            ,pr_cdmotivo IN VARCHAR  --Codigo Motivo
                                            ,pr_cdocorre IN INTEGER  --Codigo Ocorrencia
-                                           ,pr_nrispbpg IN INTEGER DEFAULT NULL  --Numero ISPB do pagador
+                                           ,pr_nrispbpg IN INTEGER DEFAULT 99999999  --Numero ISPB do pagador
                                            ,pr_cdbanpag IN INTEGER  --Codigo banco pagamento
                                            ,pr_cdagepag IN INTEGER  --Codigo Agencia pagamento
                                            ,pr_inestcri IN INTEGER DEFAULT 0 --Estado crise
@@ -14788,7 +14791,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
   /* Procedure para processar liquidacao de titulos */
   PROCEDURE pc_processa_liquidacao (pr_idtabcob IN ROWID    --Rowid da Cobranca
                                    ,pr_nrnosnum IN VARCHAR2 --Nosso Numero
-                                   ,pr_nrispbpg IN INTEGER DEFAULT NULL  --Numero ISPB do pagador
+                                   ,pr_nrispbpg IN INTEGER DEFAULT 99999999  --Numero ISPB do pagador
                                    ,pr_cdbanpag IN INTEGER  --Codigo banco pagamento
                                    ,pr_cdagepag IN INTEGER  --Codigo Agencia pagamento
                                    ,pr_vltitulo IN NUMBER   --Valor do titulo
@@ -15993,7 +15996,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
   /* Procedure para processar liquidacao de titulos apos baixa */
   PROCEDURE pc_proc_liquid_apos_baixa (pr_idtabcob IN ROWID    --Rowid da Cobranca
                                       ,pr_nrnosnum IN VARCHAR2 --Nosso Numero
-                                      ,pr_nrispbpg IN INTEGER DEFAULT NULL  --Numero ISPB do pagador
+                                      ,pr_nrispbpg IN INTEGER DEFAULT 99999999  --Numero ISPB do pagador
                                       ,pr_cdbanpag IN INTEGER  --Codigo banco pagamento
                                       ,pr_cdagepag IN INTEGER  --Codigo Agencia pagamento
                                       ,pr_vltitulo IN NUMBER   --Valor do titulo

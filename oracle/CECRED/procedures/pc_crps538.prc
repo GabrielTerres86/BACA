@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme / Supero
-   Data    : Novembro/2009.                   Ultima atualizacao: 15/12/2016
+   Data    : Novembro/2009.                   Ultima atualizacao: 10/02/2017
 
    Dados referentes ao programa:
 
@@ -306,6 +306,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
 
                15/12/2016 - Ajustes projeto 340 - Nova plataforma de cobrança.
                             (Odirlei - AMcom)             
+
+               10/02/2017 - P340 - Ajustes emergenciais antes da liberação programada de 21/02/17
+			              - Ajustado pasta micros/<cooperativa>/abbc;
+						  - Ajustado cláusula where dos cursores cr_devolucao; (Rafael)
    .............................................................................*/
 
      DECLARE
@@ -1426,9 +1430,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
                   dev.cdmotdev
              FROM tbcobran_devolucao dev,
                   crapban ban
-            WHERE dev.nrispbif = ban.nrispbif(+)
-              AND dev.cdcooper = pr_cdcooper
-              AND dev.dtmvtolt = pr_dtmvtolt;
+            WHERE dev.cdcooper = pr_cdcooper
+              AND dev.dtmvtolt = pr_dtmvtolt
+              AND ban.nrispbif (+) = dev.nrispbif
+              AND ban.cdbccxlt (+) = decode(ban.nrispbif(+),0,1,ban.cdbccxlt(+));
               
          ---------> VARIAVEIS <----------
          vr_dsmotdev VARCHAR2(4000);     
@@ -2424,11 +2429,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
                   crapban ban,
                   crapban ban2,
                   crapcop cop
-            WHERE dev.nrispbif = ban.nrispbif
-              AND cop.cdbcoctl = ban2.cdbccxlt              
-              AND dev.cdcooper = cop.cdcooper
-              AND dev.dtmvtolt = pr_dtmvtolt
-              AND dev.cdcooper = pr_cdcooper
+            WHERE dev.cdcooper     = pr_cdcooper
+              AND dev.dtmvtolt     = pr_dtmvtolt
+              AND cop.cdcooper     = dev.cdcooper
+              AND ban2.cdbccxlt    = cop.cdbcoctl 
+              AND ban.nrispbif (+) = dev.nrispbif 
+              AND ban.cdbccxlt (+) = decode(dev.nrispbif,0,1,ban.cdbccxlt(+))
             ORDER BY cop.cdagectl ASC;
               
          ---------> VARIAVEIS <----------
@@ -2448,7 +2454,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
        BEGIN
        
          --> Definir sigra do mes
-         vr_cddomes := to_char(pr_dtmvtolt,'MM');         
+         vr_cddomes := replace(to_char(pr_dtmvtolt,'MM'),'0','');
          IF vr_cddomes >= 10 THEN
            CASE vr_cddomes
              WHEN 10 THEN            
@@ -2590,7 +2596,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
              
              vr_dsdirmic_arq := gene0001.fn_diretorio( pr_tpdireto => 'M', 
                                                        pr_cdcooper => pr_cdcooper, 
-                                                       pr_nmsubdir => '/ABBC');
+                                                       pr_nmsubdir => '/abbc');
                                                        
              -- Geracao do arquivo
              GENE0002.pc_solicita_relato_arquivo(pr_cdcooper  => pr_cdcooper              --> Cooperativa conectada
@@ -2986,7 +2992,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
 
                /* Trailer do lote do arquivo - Quanto encontrar a sequencia 
                   especifica, deve ignorar a linha ( Renato Darosci - 11/10/2016) */
-               IF SUBSTR(vr_setlinha,1,31) = '0180859999999999999999999999999' THEN
+               IF SUBSTR(vr_setlinha,1,31) = '      9999999999999999999999999' THEN
                  CONTINUE; -- Passa para o processamento da Próxima linha do arquivo
                END IF;
                
@@ -4907,6 +4913,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
                    --Processar Liquidacao apos baixa
                    PAGA0001.pc_proc_liquid_apos_baixa (pr_idtabcob     => rw_crapcob.rowid       --Rowid da Cobranca
                                                       ,pr_nrnosnum     => 0                      --Nosso Numero
+                                                      ,pr_nrispbpg     => vr_nrispbif_rec        --Numero ISPB do pagador
                                                       ,pr_cdbanpag     => vr_cdbanpag            --Codigo banco pagamento
                                                       ,pr_cdagepag     => vr_cdagepag            --Codigo Agencia pagamento
                                                       ,pr_vltitulo     => nvl(rw_crapcob.vltitulo,0)    --Valor do titulo
@@ -5759,7 +5766,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
            vr_dtmvtaux:= rw_crapdat.dtmvtolt;
            --Data Pagamento
            vr_dtdpagto:= rw_crapdat.dtmvtolt;
-         END IF;
+         END IF; */
 
          /*************TRATAMENTO P/ COBRANCA REGISTRADA****************/
          /**************************************************************/
