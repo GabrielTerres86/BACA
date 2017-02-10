@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0004 AS
   --  Sistema  : Rotinas referente ao processo de domicilio bancario
   --  Sigla    : CCRD
   --  Autor    : Andrino Carlos de Souza Junior (RKAM)
-  --  Data     : Setembro - 2015.                   Ultima atualizacao: 30/09/2016
+  --  Data     : Setembro - 2015.                   Ultima atualizacao: 10/02/2017
   --
   -- Dados referentes ao programa:
   --
@@ -26,11 +26,26 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0004 AS
   --
   --       20/09/2016 - #523937 Criação de log de controle de início, erros e fim de execução
   --                    do job pc_efetua_processo (Carlos)
+  --
+  --       08/12/2016 - Tratamento para incorporacao/migracao de cooperativas. (Fabricio)
+  --
+  --       10/02/2017 - #602248 Melhoria de quando o programa pc_efetua_processo sinaliza o início 
+  --                    da execução; retirada a verificação de final de semana pois o job do mesmo
+  --                    executa apenas de seg a sex; criação da rotina pc_efetua_processo_web, chamada
+  --                    pela tela CONLDB (Carlos)
   ---------------------------------------------------------------------------------------------------------------
   
   -- Rotina para o processamento do arquivo oriundo do Sicoob
   PROCEDURE pc_efetua_processo(pr_cdcritic OUT crapcri.cdcritic%TYPE
                               ,pr_dscritic OUT VARCHAR2);
+
+  -- Rotina para o processamento do arquivo oriundo do Sicoob (executada pela tela CONLDB)
+  PROCEDURE pc_efetua_processo_web(pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                                  ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                  ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica                                  
+                                  ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
+                                  ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
+                                  ,pr_des_erro OUT VARCHAR2);            --> Erros do processo
 
   -- Rotina para retornar os arquivos processados
   PROCEDURE pc_lista_arquivos(pr_dtinicio IN VARCHAR2               --> Data inicial da consulta
@@ -991,7 +1006,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0004 AS
     CURSOR cr_crapcop IS
       SELECT cdcooper,
              cdagebcb,
-             nmrescop
+             nmrescop,
+             flgativo
         FROM crapcop;
         
     -- Cursor sobre os associados
@@ -1030,9 +1046,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0004 AS
          AND insituacao   = 1;
     rw_registro_repetido cr_registro_repetido%ROWTYPE;
 
+    CURSOR cr_craptco (pr_cdcopant IN crapcop.cdcooper%TYPE,
+                       pr_nrctaant IN craptco.nrctaant%TYPE) IS
+      SELECT tco.nrdconta,
+             tco.cdcooper
+        FROM craptco tco
+       WHERE tco.cdcopant = pr_cdcopant
+         AND tco.nrctaant = pr_nrctaant;
+    rw_craptco cr_craptco%ROWTYPE;
+
     -- PL/Table para armazenar as agencias
     type typ_crapcop IS RECORD (cdcooper crapcop.cdcooper%TYPE,
-                                nmrescop crapcop.nmrescop%TYPE);
+                                nmrescop crapcop.nmrescop%TYPE,
+                                flgativo crapcop.flgativo%TYPE);
     type typ_tab_crapcop IS TABLE OF typ_crapcop INDEX BY PLS_INTEGER;
     vr_crapcop       typ_tab_crapcop;
 
@@ -1060,6 +1086,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0004 AS
     vr_qtprocessados PLS_INTEGER := 0;      --> Quantidade de registros processados
     vr_qtfuturos     PLS_INTEGER := 0;      --> Quantidade de lancamentos futuros processados
     vr_inlctfut      VARCHAR2(01);          --> Indicador de lancamento futuro
+    
+    vr_coopdest      crapcop.cdcooper%TYPE; --> coop destino (incorporacao/migracao)
+    vr_nrdconta      crapass.nrdconta%TYPE; 
   BEGIN
     -- Busca a data do sistema
     OPEN btch0001.cr_crapdat(3); -- Utiliza a cooperativa da Cecred
@@ -1070,6 +1099,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0004 AS
     FOR rw_crapcop IN cr_crapcop LOOP
       vr_crapcop(rw_crapcop.cdagebcb).cdcooper := rw_crapcop.cdcooper;
       vr_crapcop(rw_crapcop.cdagebcb).nmrescop := rw_crapcop.nmrescop;
+      vr_crapcop(rw_crapcop.cdagebcb).flgativo := rw_crapcop.flgativo;
     END LOOP;
       
     -- Efetua loop sobre os registros pendentes
@@ -1126,8 +1156,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0004 AS
           RAISE vr_erro;
         END IF;
         
+        IF vr_crapcop(rw_tabela.cdagebcb).flgativo = 0 THEN
+          
+          OPEN cr_craptco (pr_cdcopant => vr_crapcop(rw_tabela.cdagebcb).cdcooper,
+                           pr_nrctaant => rw_tabela.nrdconta);
+          FETCH cr_craptco INTO rw_craptco;
+          
+          IF cr_craptco%FOUND THEN
+            vr_nrdconta := rw_craptco.nrdconta;
+            vr_coopdest := rw_craptco.cdcooper;
+          ELSE
+           vr_nrdconta := 0;
+           vr_coopdest := 0;
+          END IF;
+        
+          CLOSE cr_craptco;
+          
+        ELSE
+          vr_nrdconta := rw_tabela.nrdconta;
+          vr_coopdest := vr_crapcop(rw_tabela.cdagebcb).cdcooper;          
+        END IF;
+        
         -- Busca os dados do associado
-        OPEN cr_crapass(vr_crapcop(rw_tabela.cdagebcb).cdcooper, rw_tabela.nrdconta);
+        OPEN cr_crapass(vr_coopdest, vr_nrdconta);
         FETCH cr_crapass INTO rw_crapass;
         IF cr_crapass%NOTFOUND THEN -- Se nao encontrar, deve-se gerar inconsistencia
           CLOSE cr_crapass;
@@ -1200,7 +1251,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0004 AS
          rw_tabela.dtreferencia <= rw_crapdat.dtmvtolt THEN -- Nao integrar lancamentos futuros
 
         -- Atualiza a cooperativa
-        vr_cdcooper := vr_crapcop(rw_tabela.cdagebcb).cdcooper;
+        vr_cdcooper := vr_coopdest;
 
         -- Se nao existir registro na CRAPLOT ou 
         IF rw_craplot.cdcooper IS NULL OR 
@@ -1289,13 +1340,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0004 AS
              1,                                                 --cdagenci
              100,                                               --cdbccxlt
              vr_nrdolote,                                       --nrdolote
-             rw_tabela.nrdconta,                                --nrdconta
+             vr_nrdconta,                                --nrdconta
              rw_craplot.nrseqdig,                               --nrdocmto
              vr_cdhistor,                                       --cdhistor
              rw_craplot.nrseqdig,                               --nrseqdig
              rw_tabela.vllancamento,                            --vllanmto
-             rw_tabela.nrdconta,                                --nrdctabb
-             gene0002.fn_mask(rw_tabela.nrdconta,'99999999'),   --nrdctitg
+             vr_nrdconta,                                --nrdctabb
+             gene0002.fn_mask(vr_nrdconta,'99999999'),   --nrdctitg
              vr_cdcooper,                                       --cdcooper
              rw_crapdat.dtmvtolt,                               --dtrefere
              '1');                                              --cdoperad
@@ -1507,15 +1558,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0004 AS
     END pc_controla_log_batch;
 
     BEGIN
-    
-    -- Se o dia da semana for sabado ou domingo, nao deve executar o fonte
-    IF to_char(SYSDATE,'D') IN (1,7) THEN
-      RETURN; -- Encerra o programa;
-    END IF;
-    
-    -- Log de inicio de execucao
-    pc_controla_log_batch(pr_dstiplog => 'I');
-    
+
     -- Se for um feriado, nao deve executar o fonte
     OPEN cr_crapfer;
     FETCH cr_crapfer INTO rw_crapfer;
@@ -1551,12 +1594,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0004 AS
     -- Se possuir arquivos para serem processados
     IF vr_listaarq IS NOT NULL THEN
 
+      -- Log de inicio de execucao
+      pc_controla_log_batch(pr_dstiplog => 'I');
+
       --Carregar a lista de arquivos txt na pl/table
       vr_tab_arqtmp := gene0002.fn_quebra_string(pr_string => vr_listaarq);
       
       -- Leitura da PL/Table e processamento dos arquivos
       vr_indice := vr_tab_arqtmp.first;
-      while vr_indice is not null loop
+      WHILE vr_indice is not null LOOP
         -- Chama o procedimento que faz a leitura do arquivo
         processa_arquivos(vr_dsdiretorio,
                           vr_tab_arqtmp(vr_indice),
@@ -1631,6 +1677,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0004 AS
       -- Efetuar rollback
       ROLLBACK;
 
+      pc_internal_exception;
+      
+      -- Log de erro de execucao
+      pc_controla_log_batch(pr_dstiplog => 'E',
+                            pr_dscritic => pr_dscritic);
+
   END;
+  
+  PROCEDURE pc_efetua_processo_web(pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                                  ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                  ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica                                  
+                                  ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
+                                  ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
+                                  ,pr_des_erro OUT VARCHAR2) IS          --> Erros do processo
+
+  BEGIN
+    BEGIN
+      pc_efetua_processo(pr_cdcritic => pr_cdcritic, 
+                         pr_dscritic => pr_dscritic);                       
+      EXCEPTION
+        WHEN OTHERS THEN
+        pc_internal_exception(3, pr_dscritic);
+    END;
+  END; -- END pc_efetua_processo_web
+
 END CCRD0004;
 /
