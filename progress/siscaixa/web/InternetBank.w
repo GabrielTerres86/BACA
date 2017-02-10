@@ -694,6 +694,7 @@ DEF VAR aux_sftcdbar AS CHAR                                           NO-UNDO.
 DEF VAR aux_qtcheque AS CHAR                                           NO-UNDO.
 DEF VAR aux_qtcordem AS CHAR                                           NO-UNDO.
 DEF VAR aux_dscedent AS CHAR                                           NO-UNDO.
+DEF VAR aux_cdctrlcs AS CHAR                                           NO-UNDO.
 DEF VAR aux_dsdoccop AS CHAR                                           NO-UNDO.
 DEF VAR aux_dsurlace AS CHAR                                           NO-UNDO.
 DEF VAR aux_desdacao AS CHAR                                           NO-UNDO.
@@ -3234,7 +3235,8 @@ PROCEDURE proc_operacao26:
            aux_dtmvtopg = IF  aux_idagenda = 1  THEN /** Pagto data corrente **/
                               aux_dtmvtocd
                           ELSE
-                              DATE(GET-VALUE("aux_dtmvtopg")).
+                              DATE(GET-VALUE("aux_dtmvtopg"))
+                   aux_cdctrlcs = GET-VALUE("aux_cdctrlcs").
     
     RUN sistema/internet/fontes/InternetBank26.p (INPUT aux_cdcooper,
                                                   INPUT aux_nrdconta,
@@ -3254,6 +3256,7 @@ PROCEDURE proc_operacao26:
                                                   INPUT aux_dscedent,
                                                   INPUT aux_nrcpfope,
                                                   INPUT aux_flmobile,
+                                                                                                  INPUT aux_cdctrlcs,
                                                  OUTPUT aux_dsmsgerr,
                                                  OUTPUT TABLE xml_operacao26).
     
@@ -7740,6 +7743,8 @@ END PROCEDURE.
 /* Operação para buscar valor do titulo vencido */
 PROCEDURE proc_operacao186:
 	
+        DEF VAR aux_inmobile  AS INTE     NO-UNDO.
+
     ASSIGN aux_idseqttl		 = INTE(GET-VALUE("aux_idseqttl"))
 	       aux_cdagenci		 = INTE(GET-VALUE("aux_cdagenci"))
 	       aux_nrdcaixa		 = INTE(GET-VALUE("aux_nrdcaixa"))
@@ -7750,17 +7755,25 @@ PROCEDURE proc_operacao186:
 	       aux_titulo5       = DECI(GET-VALUE("aux_titulo5"))
 	       aux_codigo_barras = GET-VALUE("aux_codigo_barras").
 			
+    IF aux_flmobile THEN
+            ASSIGN aux_inmobile = 1.
+          ELSE
+                  ASSIGN aux_inmobile = 0.
+
 	RUN sistema/internet/fontes/InternetBank186.p (INPUT aux_cdcooper,
 	                                               INPUT aux_nrdconta,
 	                                               INPUT aux_idseqttl,
                                                    INPUT aux_cdagenci,
 												   INPUT aux_nrdcaixa,
+                                                   INPUT aux_inmobile,
 												   INPUT aux_titulo1,
 												   INPUT aux_titulo2,
 												   INPUT aux_titulo3,
 												   INPUT aux_titulo4,
 												   INPUT aux_titulo5,
 												   INPUT aux_codigo_barras,
+                           INPUT "996",  /*cdoperad*/
+                           INPUT 3,      /* origem */
                                                   OUTPUT aux_dsmsgerr,
 												  OUTPUT TABLE xml_operacao).
 

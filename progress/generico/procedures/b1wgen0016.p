@@ -2655,6 +2655,7 @@ PROCEDURE verifica_titulo:
              INPUT 0,
              INPUT 0,
              INPUT par_dtagenda,
+             INPUT "", /*pr_cdctrlcs*/
              OUTPUT 0,
              OUTPUT 0,
              OUTPUT 0,
