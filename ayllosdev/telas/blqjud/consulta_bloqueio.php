@@ -1,29 +1,31 @@
 <?php
 
-	//************************************************************************//
-	//*** Fonte: consulta_bloqueio.php                                     ***//
-	//*** Autor: Guilherme / SUPERO                                        ***//
-	//*** Data : Maio/2013                   Última Alteração: 29/07/2016  ***//
-	//***                                                                  ***//
-	//*** Objetivo  : Exibir os dados obtidos na consulta dos              ***//	
-	//***             processamentos do BLOQUEIO JUDICIAL.                 ***//
-	//***                                                                  ***//
-	//***                                                                  ***//
-	//*** Alterações: 06/09/2013 - Incluido tag <cddopcao> como parametro  ***//
-	//***             			   (Lucas R.)       					   ***//
-	//***                          									       ***//
-	//***             17/09/2014 - Retirado tt-grid. 					   ***//
-	//***						   (Jorge/Gielow - SD 175038)			   ***//
-	//***                          									       ***//
-	//***             18/12/2014 - Ajuste para mostrar tabela no retorno.  ***//
-	//***						   (Jorge/Gielow - SD 228463)			   ***//
-	//***                                                                  ***//
-	//***             29/07/2016 - Ajuste para controle de permissão sobre ***//
-	//***                          as subrotinas de cada opção	           ***//
-    //***                         (Adriano - SD 492902).                   ***//
-	//***                                                                  ***//
-	//***                                                                  ***//
-	//************************************************************************//
+	//**************************************************************************//
+	//*** Fonte: consulta_bloqueio.php                                       ***//
+	//*** Autor: Guilherme / SUPERO                                          ***//
+	//*** Data : Maio/2013                   Última Alteração: 08/02/2017    ***//
+	//***                                                                    ***//
+	//*** Objetivo  : Exibir os dados obtidos na consulta dos                ***//	
+	//***             processamentos do BLOQUEIO JUDICIAL.                   ***//
+	//***                                                                    ***//
+	//***                                                                    ***//
+	//*** Alterações: 06/09/2013 - Incluido tag <cddopcao> como parametro    ***//
+	//***             			   (Lucas R.)       					     ***//
+	//***                          									         ***//
+	//***             17/09/2014 - Retirado tt-grid. 					     ***//
+	//***						   (Jorge/Gielow - SD 175038)			     ***//
+	//***                          									         ***//
+	//***             18/12/2014 - Ajuste para mostrar tabela no retorno.    ***//
+	//***						   (Jorge/Gielow - SD 228463)			     ***//
+	//***                                                                    ***//
+	//***             29/07/2016 - Ajuste para controle de permissão sobre   ***//
+	//***                          as subrotinas de cada opção	             ***//
+    //***                         (Adriano - SD 492902).                     ***//
+	//***                                                                    ***//
+	//***             08/02/2017 - Chamda da funcao RemoveCaracteresInvalido ***// 
+	//*** 						   para ajustar o problema do chamado		 ***//
+	//***	  					   562089 (Kelvin)							 ***//                                                    
+	//**************************************************************************//
 	
 	
 	session_start();
@@ -82,7 +84,7 @@
 	$glbvars["nmrotina"] = $nmrotina;
 
 	// Cria objeto para classe de tratamento de XML
-	$xmlObjConsulta = getObjectXML($xmlResult);
+	$xmlObjConsulta = getObjectXML(removeCaracteresInvalidos($xmlResult));
 	
 	$msgErro = $xmlObjConsulta->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		
