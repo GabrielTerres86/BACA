@@ -42,6 +42,8 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
 				  08/11/2016 - Alteracoes referentes a melhoria 165 - Lancamentos
                                Futuros. Lenilson (Mouts)
 
+                  20/01/2017 - Ajustes Nova Plataforma de cobrança.
+                               PRJ340 - NPC (Odirlei-AMcom)   
 ............................................................................... */
 
 /*----------------------------------------------------------------------*/
@@ -70,6 +72,7 @@ DEFINE INPUT PARAM par_datpagto     AS DATE         NO-UNDO.
 DEFINE INPUT PARAM par_flagenda     AS LOGI         NO-UNDO.
 DEFINE INPUT PARAM par_idtpdpag     AS INTE         NO-UNDO. /* 1- convenio 2-titulo */
 DEFINE INPUT PARAM par_tpcptdoc     AS INTE         NO-UNDO. /* 1- Codigo de barras 2-Linha digitavel*/
+DEFINE INPUT PARAM par_nrctlnpc     AS CHAR         NO-UNDO. /* Numero de controle de consulta do NPC */
 
 
 /* Local Variable Definitions ---                                       */
@@ -573,6 +576,7 @@ DO:
                                                INPUT par_flagenda,
                                                INPUT par_idtpdpag,
                                                INPUT par_tpcptdoc,
+                                               INPUT par_nrctlnpc,
                                               OUTPUT aux_dsprotoc,
                                               OUTPUT aux_cdbcoctl,
                                               OUTPUT aux_cdagectl,
@@ -711,6 +715,7 @@ DO  ON ERROR   UNDO MAIN-BLOCK, LEAVE MAIN-BLOCK
                                        INPUT par_vldpagto,
                                        INPUT par_datpagto,
                                        INPUT par_flagenda,
+                                       INPUT par_nrctlnpc,
                                       OUTPUT ed_nmdbanco ,
                                       OUTPUT ed_dslindig ,
                                       OUTPUT ed_vlrdocum ,

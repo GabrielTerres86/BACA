@@ -21,6 +21,9 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
                                conjunta. (Reinert)
                   23/11/2016 - inclusao de campo obtem_saldo_limite.p             
 
+                  20/01/2017 - Ajustes Nova Plataforma de cobrança.
+                               PRJ340 - NPC (Odirlei-AMcom)        
+
 ............................................................................... */
 
 DEFINE  INPUT PARAM par_cdbarra1    AS CHAR             NO-UNDO.     
@@ -35,6 +38,7 @@ DEFINE  INPUT PARAM par_dtvencto    AS DATE             NO-UNDO.
 DEFINE  INPUT PARAM par_flagenda    AS LOGICAL          NO-UNDO.
 DEFINE  INPUT PARAM par_idtpdpag    AS INTE             NO-UNDO.
 DEFINE  INPUT PARAM par_tpcptdoc    AS INTE             NO-UNDO.
+DEFINE  INPUT PARAM par_nrctlnpc    AS CHAR             NO-UNDO.
 DEFINE OUTPUT PARAM par_dsprotoc    AS CHAR             NO-UNDO.     
 DEFINE OUTPUT PARAM par_cdbcoctl    AS CHAR             NO-UNDO.     
 DEFINE OUTPUT PARAM par_cdagectl    AS CHAR             NO-UNDO.     
@@ -456,6 +460,19 @@ DO:
     xDoc:CREATE-NODE(xText,"","TEXT").
     xText:NODE-VALUE = STRING(par_tpcptdoc).
     xField:APPEND-CHILD(xText).
+
+
+    /* ------------------- */
+    IF  par_nrctlnpc <> ?  THEN
+        DO:
+            /* ---------- */
+            xDoc:CREATE-NODE(xField,"NRCTLNPC","ELEMENT").
+            xRoot:APPEND-CHILD(xField).
+            
+            xDoc:CREATE-NODE(xText,"","TEXT").
+            xText:NODE-VALUE = STRING(par_nrctlnpc).
+            xField:APPEND-CHILD(xText).
+        END.
 
     xDoc:SAVE("MEMPTR",ponteiro_xml).
     

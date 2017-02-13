@@ -1,6 +1,6 @@
 /* ..............................................................................
 
-Procedure: calcula_valor_titulo_vencido.p 
+Procedure: calcula_valor_titulo.p 
 Objetivo : Obter valor do titulo vencido calculadp
 Autor    : Kelvin Souza Ott
 Data     : Setembro 2016
@@ -25,6 +25,10 @@ DEFINE OUTPUT  PARAMETER pr_vlfatura       AS DECI         NO-UNDO.
 DEFINE OUTPUT  PARAMETER pr_vlrjuros       AS DECI         NO-UNDO.
 DEFINE OUTPUT  PARAMETER pr_vlrmulta       AS DECI         NO-UNDO.
 DEFINE OUTPUT  PARAMETER pr_fltitven       AS INTE         NO-UNDO.
+DEFINE OUTPUT  PARAMETER pr_inpesbnf       AS INTE         NO-UNDO.
+DEFINE OUTPUT  PARAMETER pr_nrdocbnf       AS DECI         NO-UNDO. 
+DEFINE OUTPUT  PARAMETER pr_nmbenefi       AS CHAR         NO-UNDO. 
+DEFINE OUTPUT  PARAMETER pr_nrctlnpc       AS CHAR         NO-UNDO.
 DEFINE OUTPUT  PARAMETER pr_des_erro       AS CHAR         NO-UNDO.
 DEFINE OUTPUT  PARAMETER pr_dscritic       AS CHAR         NO-UNDO.
 
@@ -36,7 +40,7 @@ DEFINE         VARIABLE xRoot           AS HANDLE               NO-UNDO.
 DEFINE         VARIABLE xField          AS HANDLE               NO-UNDO.
 DEFINE         VARIABLE xText           AS HANDLE               NO-UNDO.
 		
-RUN procedures/grava_log.p (INPUT "Valor Titulo Vencido...").
+RUN procedures/grava_log.p (INPUT "Consultar Valor Titulo...").
 
 REQUISICAO:
 DO: 
@@ -263,6 +267,18 @@ DO:
 			IF  xField:NAME = "FLTITVEN"  THEN 
 				pr_fltitven = INTEGER(xText:NODE-VALUE). 
 			ELSE
+            IF  xField:NAME = "INPESBNF"  THEN 
+				pr_inpesbnf = INTEGER(xText:NODE-VALUE). 
+			ELSE
+            IF  xField:NAME = "NRDOCBNF"  THEN 
+				pr_nrdocbnf = INTEGER(xText:NODE-VALUE). 
+			ELSE
+            IF  xField:NAME = "NMBENEFI"  THEN 
+				pr_nmbenefi = STRING(xText:NODE-VALUE). 
+			ELSE
+            IF  xField:NAME = "NRCRLNPC"  THEN 
+				pr_nrctlnpc = STRING(xText:NODE-VALUE). 
+			ELSE
 			IF  xField:NAME = "DSCRITIC"  THEN 
 				pr_dscritic = STRING(xText:NODE-VALUE).
 			ELSE
@@ -281,6 +297,6 @@ DO:
 
 END. /* Fim RESPOSTA */
 
-RUN procedures/grava_log.p (INPUT "Valor Titulo Vencido obtido com sucesso").
+RUN procedures/grava_log.p (INPUT "Valor Titulo obtido com sucesso").
 
 RETURN "OK".

@@ -32,6 +32,9 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
 
 		          23/11/2016 - Ajustar validação do valor para carregar corretamente na tela
 				               (Douglas - Melhoria 271)
+                               
+                  20/01/2017 - Exibir nome do beneficiario e ajustes NPC.
+                               PRJ340 - NPC (Odirlei-AMcom)             
 ............................................................................... */
 
 /*----------------------------------------------------------------------*/
@@ -63,6 +66,10 @@ DEFINE VARIABLE aux_vlfatura        AS DECI         NO-UNDO.
 DEFINE VARIABLE aux_vlrjuros        AS DECI         NO-UNDO.
 DEFINE VARIABLE aux_vlrmulta        AS DECI         NO-UNDO.
 DEFINE VARIABLE aux_fltitven        AS INTE         NO-UNDO.
+DEFINE VARIABLE aux_inpesbnf        AS INTE         NO-UNDO.
+DEFINE VARIABLE aux_nrdocbnf        AS DECI         NO-UNDO.
+DEFINE VARIABLE aux_nmbenefi        AS CHAR         NO-UNDO.
+DEFINE VARIABLE aux_nrctlnpc        AS CHAR         NO-UNDO.
 DEFINE VARIABLE aux_dscritic        AS CHAR         NO-UNDO.                                                  
 DEFINE VARIABLE aux_des_erro        AS CHAR         NO-UNDO.
 
@@ -82,8 +89,8 @@ DEFINE VARIABLE aux_des_erro        AS CHAR         NO-UNDO.
 
 /* Standard List Definitions                                            */
 &Scoped-Define ENABLED-OBJECTS RECT-132 RECT-133 IMAGE-36 IMAGE-37 IMAGE-40 ~
-RECT-134 ed_dscodbar ed_vldpagto ed_datpagto Btn_C ed_mensagem Btn_D Btn_H ~
-ed_cdagectl ed_nmrescop ed_nrdconta ed_nmextttl 
+RECT-134 ed_dscodbar ed_nmbenefi ed_vldpagto ed_datpagto Btn_C ed_mensagem ~
+Btn_D Btn_H ed_cdagectl ed_nmrescop ed_nrdconta ed_nmextttl 
 &Scoped-Define DISPLAYED-OBJECTS ed_dscodbar ed_vldpagto ed_datpagto ~
 ed_mensagem ed_cdagectl ed_nmrescop ed_nrdconta ed_nmextttl 
 
@@ -147,6 +154,11 @@ DEFINE VARIABLE ed_idtpdpag AS INTEGER FORMAT "Z":U INITIAL 0
      SIZE 8.4 BY 1.19
      FONT 14 NO-UNDO.
 
+DEFINE VARIABLE ed_nmbenefi AS CHARACTER FORMAT "x(60)":U 
+     VIEW-AS FILL-IN 
+     SIZE 108 BY 1.19
+     BGCOLOR 15 FONT 14 NO-UNDO.
+
 DEFINE VARIABLE ed_nmextttl AS CHARACTER FORMAT "X(26)":U 
       VIEW-AS TEXT 
      SIZE 68 BY 1.19
@@ -172,6 +184,11 @@ DEFINE VARIABLE ed_vldpagto AS DECIMAL FORMAT "zzz,zzz,zz9.99":U INITIAL 0
      SIZE 24.2 BY 1.19
      FONT 14 NO-UNDO.
 
+DEFINE VARIABLE Label_nmbenefi AS CHARACTER FORMAT "x(60)":U 
+     VIEW-AS FILL-IN 
+     SIZE 22 BY 1.19
+     FONT 14 NO-UNDO.
+
 DEFINE IMAGE IMAGE-36
      FILENAME "Imagens/seta_esq.gif":U TRANSPARENT
      SIZE 5 BY 3.05.
@@ -183,6 +200,10 @@ DEFINE IMAGE IMAGE-37
 DEFINE IMAGE IMAGE-40
      FILENAME "Imagens/seta_dir.gif":U TRANSPARENT
      SIZE 5 BY 3.05.
+
+DEFINE RECTANGLE F_nmbenefi
+     EDGE-PIXELS 2 GRAPHIC-EDGE  NO-FILL   
+     SIZE 110 BY 1.67.
 
 DEFINE RECTANGLE RECT-100
      EDGE-PIXELS 2 GRAPHIC-EDGE    
@@ -216,9 +237,11 @@ DEFINE RECTANGLE RECT-99
 
 DEFINE FRAME f_cartao_pagamento
      ed_dscodbar AT ROW 10.76 COL 33 COLON-ALIGNED NO-LABEL WIDGET-ID 162
-     ed_tpcptdoc AT ROW 12.57 COL 32.6 COLON-ALIGNED NO-LABEL WIDGET-ID 254
-     ed_idtpdpag AT ROW 13.91 COL 32.4 COLON-ALIGNED NO-LABEL WIDGET-ID 256
+     Label_nmbenefi AT ROW 12.62 COL 31 RIGHT-ALIGNED NO-LABEL WIDGET-ID 262
+     ed_nmbenefi AT ROW 12.62 COL 33 COLON-ALIGNED NO-LABEL WIDGET-ID 258
      ed_vldpagto AT ROW 15.52 COL 70 RIGHT-ALIGNED NO-LABEL WIDGET-ID 166
+     ed_idtpdpag AT ROW 15.52 COL 140 COLON-ALIGNED NO-LABEL WIDGET-ID 256
+     ed_tpcptdoc AT ROW 15.52 COL 150 COLON-ALIGNED NO-LABEL WIDGET-ID 254
      ed_datpagto AT ROW 17.38 COL 68.8 RIGHT-ALIGNED NO-LABEL WIDGET-ID 246
      Btn_C AT ROW 19.1 COL 6 WIDGET-ID 154
      ed_mensagem AT ROW 19.1 COL 94.4 NO-LABEL WIDGET-ID 164 NO-TAB-STOP 
@@ -231,24 +254,24 @@ DEFINE FRAME f_cartao_pagamento
      "Valor:" VIEW-AS TEXT
           SIZE 11 BY 1.19 AT ROW 15.76 COL 34.8 WIDGET-ID 152
           FONT 14
-     "        PAGAMENTO" VIEW-AS TEXT
-          SIZE 100 BY 3.33 AT ROW 1.48 COL 31 WIDGET-ID 214
-          FGCOLOR 1 FONT 10
-     "Cooperativa:" VIEW-AS TEXT
-          SIZE 28 BY 1.19 AT ROW 6 COL 18.6 WIDGET-ID 134
-          FONT 8
-     "Data do Pagamento:" VIEW-AS TEXT
-          SIZE 35 BY 1.19 AT ROW 17.62 COL 10.4 WIDGET-ID 250
+     "Cod. Barras /" VIEW-AS TEXT
+          SIZE 26 BY 1.19 AT ROW 9.81 COL 7 WIDGET-ID 178
+          FONT 14
+     "Linha Digitável:" VIEW-AS TEXT
+          SIZE 26 BY 1.19 AT ROW 11 COL 7 WIDGET-ID 176
           FONT 14
      "Conta/Titular:" VIEW-AS TEXT
           SIZE 29 BY 1.19 AT ROW 7.43 COL 17 WIDGET-ID 140
           FONT 8
-     "Linha Digitável:" VIEW-AS TEXT
-          SIZE 26 BY 1.19 AT ROW 11 COL 7 WIDGET-ID 176
+     "Data do Pagamento:" VIEW-AS TEXT
+          SIZE 35 BY 1.19 AT ROW 17.62 COL 10.4 WIDGET-ID 250
           FONT 14
-     "Cod. Barras /" VIEW-AS TEXT
-          SIZE 26 BY 1.19 AT ROW 9.81 COL 7 WIDGET-ID 178
-          FONT 14
+     "Cooperativa:" VIEW-AS TEXT
+          SIZE 28 BY 1.19 AT ROW 6 COL 18.6 WIDGET-ID 134
+          FONT 8
+     "        PAGAMENTO" VIEW-AS TEXT
+          SIZE 100 BY 3.33 AT ROW 1.48 COL 31 WIDGET-ID 214
+          FGCOLOR 1 FONT 10
      RECT-132 AT ROW 10.52 COL 34 WIDGET-ID 170
      RECT-133 AT ROW 15.29 COL 45.8 WIDGET-ID 172
      RECT-98 AT ROW 5.05 COL 19.6 WIDGET-ID 118
@@ -258,6 +281,7 @@ DEFINE FRAME f_cartao_pagamento
      IMAGE-37 AT ROW 24.24 COL 1 WIDGET-ID 148
      IMAGE-40 AT ROW 24.24 COL 156 WIDGET-ID 218
      RECT-134 AT ROW 17.14 COL 45.8 WIDGET-ID 248
+     F_nmbenefi AT ROW 12.38 COL 34 WIDGET-ID 260
     WITH 1 DOWN NO-BOX KEEP-TAB-ORDER OVERLAY 
          SIDE-LABELS NO-UNDERLINE THREE-D 
          AT COL 1 ROW 1
@@ -331,6 +355,12 @@ ASSIGN
 ASSIGN 
        ed_mensagem:READ-ONLY IN FRAME f_cartao_pagamento        = TRUE.
 
+/* SETTINGS FOR FILL-IN ed_nmbenefi IN FRAME f_cartao_pagamento
+   NO-DISPLAY                                                           */
+ASSIGN 
+       ed_nmbenefi:HIDDEN IN FRAME f_cartao_pagamento           = TRUE
+       ed_nmbenefi:READ-ONLY IN FRAME f_cartao_pagamento        = TRUE.
+
 /* SETTINGS FOR FILL-IN ed_tpcptdoc IN FRAME f_cartao_pagamento
    NO-DISPLAY NO-ENABLE                                                 */
 ASSIGN 
@@ -339,6 +369,17 @@ ASSIGN
 
 /* SETTINGS FOR FILL-IN ed_vldpagto IN FRAME f_cartao_pagamento
    ALIGN-R                                                              */
+/* SETTINGS FOR RECTANGLE F_nmbenefi IN FRAME f_cartao_pagamento
+   NO-ENABLE                                                            */
+ASSIGN 
+       F_nmbenefi:HIDDEN IN FRAME f_cartao_pagamento           = TRUE.
+
+/* SETTINGS FOR FILL-IN Label_nmbenefi IN FRAME f_cartao_pagamento
+   NO-DISPLAY NO-ENABLE ALIGN-R                                         */
+ASSIGN 
+       Label_nmbenefi:HIDDEN IN FRAME f_cartao_pagamento           = TRUE
+       Label_nmbenefi:READ-ONLY IN FRAME f_cartao_pagamento        = TRUE.
+
 /* SETTINGS FOR RECTANGLE RECT-100 IN FRAME f_cartao_pagamento
    NO-ENABLE                                                            */
 /* SETTINGS FOR RECTANGLE RECT-98 IN FRAME f_cartao_pagamento
@@ -433,8 +474,13 @@ DO:
            ed_tpcptdoc:SCREEN-VALUE = "0"
            ed_idtpdpag:SCREEN-VALUE = "0"
            ed_datpagto:SCREEN-VALUE = ""
+           ed_nmbenefi:SCREEN-VALUE = ""
+           Label_nmbenefi:SCREEN-VALUE = ""
            ed_dscodbar:FORMAT = "x(44)"
            aux_sfcodbar = "".
+    ed_nmbenefi:HIDDEN    IN FRAME f_cartao_pagamento = TRUE.
+    Label_nmbenefi:HIDDEN IN FRAME f_cartao_pagamento = TRUE.
+    F_nmbenefi:HIDDEN     IN FRAME f_cartao_pagamento = TRUE.
     RUN habilita_campos.
 
     APPLY "ENTRY" TO ed_vldpagto.
@@ -583,7 +629,8 @@ IF  par_flagenda THEN
                                                  INPUT DATE(ed_datpagto:SCREEN-VALUE),
                                                  INPUT par_flagenda,
                                                INPUT INT(ed_idtpdpag:SCREEN-VALUE),
-                                               INPUT INT(ed_tpcptdoc:SCREEN-VALUE)).
+                                                 INPUT INT(ed_tpcptdoc:SCREEN-VALUE),
+                                                 INPUT aux_nrctlnpc).
         
             IF  RETURN-VALUE = "NOK"  THEN
                 DO:
@@ -877,6 +924,193 @@ END.
 &ANALYZE-RESUME
 
 
+&Scoped-define SELF-NAME ed_nmbenefi
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL ed_nmbenefi w_cartao_pagamento
+ON ANY-KEY OF ed_nmbenefi IN FRAME f_cartao_pagamento
+DO:
+    IF  KEY-FUNCTION(LASTKEY) = "D" THEN
+        RETURN NO-APPLY.
+    IF KEY-FUNCTION(LASTKEY) = "C" THEN
+        APPLY "CHOOSE" TO Btn_C.
+    ELSE 
+    DO:
+        RUN tecla.
+        
+        /* Se for o primeiro digito, verificar qual o formato a ser utilizado*/
+        IF TRIM(ed_dscodbar:SCREEN-VALUE) = "" THEN
+            DO:
+                
+                /* Se o campo estava em branco e é digitado a primeira tecla
+                   deve cancelar a leitora */
+                IF CAN-DO("0,1,2,3,4,5,6,7,8,9,RETURN",KEY-FUNCTION(LASTKEY)) THEN
+                  DO: 
+                    /* desativa o temporizador do cod de barras */
+                    chtemporizador_cod_barras:t_cod_barras:INTERVAL = 0. 
+
+                    RUN WinCancelaLeituraCodBarLcbCh IN aux_xfsliteh (OUTPUT LT_Resp). 
+                  END. 
+
+                /*Se a tecla for 8 é convenio*/
+                IF KEY-FUNCTION(LASTKEY) = "8" THEN
+                  DO:
+    
+                    ed_dscodbar:FORMAT = "99999999999-9 99999999999-9 99999999999-9 99999999999-9".
+                    ASSIGN ed_tpcptdoc:SCREEN-VALUE = "2"  /* LINHA DIGITAVEL */
+                           ed_idtpdpag:SCREEN-VALUE = "1". /*FATURA*/
+    
+    
+                  END.
+                ELSE  /*se for numeros menos o 8 é titulo*/
+                  IF CAN-DO("0,1,2,3,4,5,6,7,9,RETURN",KEY-FUNCTION(LASTKEY)) THEN
+                    DO:
+    
+                      ed_dscodbar:FORMAT = "99999.99999 99999.999999 99999.999999 9 99999999999999".
+                      ASSIGN ed_tpcptdoc:SCREEN-VALUE = "2" /* LINHA DIGITAVEL */
+                             ed_idtpdpag:SCREEN-VALUE = "2". /*TITULO*/
+        
+                    END.
+                  ELSE 
+                    RETURN NO-APPLY.
+            END.
+        ELSE
+        DO:
+            IF ed_tpcptdoc:SCREEN-VALUE = "2"   AND  
+               ed_idtpdpag:SCREEN-VALUE = "2"   AND 
+               KEY-FUNCTION(LASTKEY) = "RETURN" THEN
+            DO:
+                APPLY "LEAVE" TO ed_dscodbar.
+            END.                             
+        END.
+
+
+        APPLY KEY-FUNCTION(LASTKEY).
+
+        IF TRIM(REPLACE(REPLACE(ed_dscodbar:SCREEN-VALUE,".",""),"-","")) = "" THEN
+            DO:
+                ASSIGN ed_dscodbar:FORMAT = "x(44)"
+                       ed_dscodbar:SCREEN-VALUE = ""
+                       aux_sfcodbar = "".
+
+                /* se o campo voltou a estar vazio
+                   pode iniciar a leitura assincrona */
+                LT_resp = 0.       
+                RUN WinStartLeAssincronoCodBarLcbCh IN aux_xfsliteh (INPUT 15, /* timeout 15s */
+                                                                     INPUT 0,  /* tamanho variavel */
+                                                                     OUTPUT LT_Resp).
+            
+                /* OK */
+                IF  LT_Resp = 1  THEN
+                    chtemporizador_cod_barras:t_cod_barras:INTERVAL = 1000 . 
+
+            END.
+
+        /*se for o ultimo caracter deve pular para o proximo campo*/
+        IF  ed_tpcptdoc:SCREEN-VALUE = "2" AND 
+           ((ed_idtpdpag:SCREEN-VALUE = "2" AND LENGTH(ed_dscodbar:SCREEN-VALUE) >= 54) OR 
+            (ed_idtpdpag:SCREEN-VALUE = "1" AND LENGTH(ed_dscodbar:SCREEN-VALUE) >= 55)
+           ) THEN
+        DO:
+          APPLY "LEAVE" TO ed_dscodbar. 
+        END.
+    END.
+    
+    RETURN NO-APPLY.
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL ed_nmbenefi w_cartao_pagamento
+ON ENTRY OF ed_nmbenefi IN FRAME f_cartao_pagamento
+DO:
+    
+    /* durante a criação do frame chama o ENTRY, desconsiderar */
+    IF  FRAME-NAME <> "f_cartao_pagamento"  THEN
+        RETURN.
+    
+    ed_mensagem:SCREEN-VALUE = "Posicione o código de barras no feixe de luz " + CHR(13) +
+                                "ou Informe a linha digitável...".
+
+    /* desativa o temporizador de tela */
+    chtemporizador:t_cartao_pagamento:INTERVAL = 0.
+    
+    IF TRIM(REPLACE(REPLACE(ed_dscodbar:SCREEN-VALUE,".",""),"-","")) = "" THEN
+    DO:
+        ASSIGN ed_dscodbar:FORMAT = "x(44)"
+               ed_dscodbar:SCREEN-VALUE = ""
+               aux_sfcodbar = "".
+
+    END.
+
+    /* inicia a leitura assincrona */
+    LT_resp = 0.       
+           
+    RUN WinStartLeAssincronoCodBarLcbCh IN aux_xfsliteh (INPUT 15, /* timeout 15s */
+                                                         INPUT 0,  /* tamanho variavel */
+                                                         OUTPUT LT_Resp).
+
+    /* OK */
+    IF  LT_Resp = 1  THEN
+        chtemporizador_cod_barras:t_cod_barras:INTERVAL = 1000 .   
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL ed_nmbenefi w_cartao_pagamento
+ON LEAVE OF ed_nmbenefi IN FRAME f_cartao_pagamento
+DO:     
+
+    IF  NOT par_flagenda  THEN
+        DO:
+            ed_datpagto:SCREEN-VALUE = STRING(glb_dtmvtocd, "99/99/9999").
+            ed_datpagto:READ-ONLY    = YES.
+            ed_datpagto:BGCOLOR      = 8.
+        END.
+
+    ASSIGN aux_sfcodbar = REPLACE(REPLACE(REPLACE(ed_dscodbar:SCREEN-VALUE,".",""),"-","")," ","").
+
+    /* se estiver saindo do campo e o mesmo estiver nulo, deve retirar a mascara*/
+    IF  TRIM(aux_sfcodbar) = "" THEN
+    DO:
+        ed_dscodbar:FORMAT = "x(44)".
+    END.
+
+    /* validar o codigo de barras/linha digitavel*/
+    RUN valida_codbar.
+
+    IF aux_flgderro THEN
+        RETURN NO-APPLY.
+
+    /* Extrair valor do titulo/fatura */
+    RUN extrai_valor_codbar.   
+    IF aux_flgderro THEN
+        RETURN NO-APPLY.
+
+    /* se for titulo sempre vai para o campo de valor*/
+    IF  ed_idtpdpag:SCREEN-VALUE = "2"    THEN
+        DO:      
+            APPLY "ENTRY" TO ed_vldpagto.
+        END.        
+        
+    ELSE 
+    IF  par_flagenda                       THEN
+        APPLY "ENTRY" TO ed_datpagto.         
+    ELSE /* nao permite alterar o valor em caso de fatura */
+    IF  DEC(ed_vldpagto:SCREEN-VALUE) > 0  THEN
+        APPLY "ENTRY" TO Btn_D.
+    ELSE 
+        APPLY "ENTRY" TO ed_vldpagto.
+                           
+        
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
 &Scoped-define SELF-NAME ed_vldpagto
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL ed_vldpagto w_cartao_pagamento
 ON ANY-KEY OF ed_vldpagto IN FRAME f_cartao_pagamento
@@ -933,6 +1167,193 @@ DO:
                                 IF ed_idtpdpag:SCREEN-VALUE = "1" THEN "convênio"
                                 ELSE "título".
                                   
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&Scoped-define SELF-NAME Label_nmbenefi
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Label_nmbenefi w_cartao_pagamento
+ON ANY-KEY OF Label_nmbenefi IN FRAME f_cartao_pagamento
+DO:
+    IF  KEY-FUNCTION(LASTKEY) = "D" THEN
+        RETURN NO-APPLY.
+    IF KEY-FUNCTION(LASTKEY) = "C" THEN
+        APPLY "CHOOSE" TO Btn_C.
+    ELSE 
+    DO:
+        RUN tecla.
+        
+        /* Se for o primeiro digito, verificar qual o formato a ser utilizado*/
+        IF TRIM(ed_dscodbar:SCREEN-VALUE) = "" THEN
+            DO:
+                
+                /* Se o campo estava em branco e é digitado a primeira tecla
+                   deve cancelar a leitora */
+                IF CAN-DO("0,1,2,3,4,5,6,7,8,9,RETURN",KEY-FUNCTION(LASTKEY)) THEN
+                  DO: 
+                    /* desativa o temporizador do cod de barras */
+                    chtemporizador_cod_barras:t_cod_barras:INTERVAL = 0. 
+
+                    RUN WinCancelaLeituraCodBarLcbCh IN aux_xfsliteh (OUTPUT LT_Resp). 
+                  END. 
+
+                /*Se a tecla for 8 é convenio*/
+                IF KEY-FUNCTION(LASTKEY) = "8" THEN
+                  DO:
+    
+                    ed_dscodbar:FORMAT = "99999999999-9 99999999999-9 99999999999-9 99999999999-9".
+                    ASSIGN ed_tpcptdoc:SCREEN-VALUE = "2"  /* LINHA DIGITAVEL */
+                           ed_idtpdpag:SCREEN-VALUE = "1". /*FATURA*/
+    
+    
+                  END.
+                ELSE  /*se for numeros menos o 8 é titulo*/
+                  IF CAN-DO("0,1,2,3,4,5,6,7,9,RETURN",KEY-FUNCTION(LASTKEY)) THEN
+                    DO:
+    
+                      ed_dscodbar:FORMAT = "99999.99999 99999.999999 99999.999999 9 99999999999999".
+                      ASSIGN ed_tpcptdoc:SCREEN-VALUE = "2" /* LINHA DIGITAVEL */
+                             ed_idtpdpag:SCREEN-VALUE = "2". /*TITULO*/
+        
+                    END.
+                  ELSE 
+                    RETURN NO-APPLY.
+            END.
+        ELSE
+        DO:
+            IF ed_tpcptdoc:SCREEN-VALUE = "2"   AND  
+               ed_idtpdpag:SCREEN-VALUE = "2"   AND 
+               KEY-FUNCTION(LASTKEY) = "RETURN" THEN
+            DO:
+                APPLY "LEAVE" TO ed_dscodbar.
+            END.                             
+        END.
+
+
+        APPLY KEY-FUNCTION(LASTKEY).
+
+        IF TRIM(REPLACE(REPLACE(ed_dscodbar:SCREEN-VALUE,".",""),"-","")) = "" THEN
+            DO:
+                ASSIGN ed_dscodbar:FORMAT = "x(44)"
+                       ed_dscodbar:SCREEN-VALUE = ""
+                       aux_sfcodbar = "".
+
+                /* se o campo voltou a estar vazio
+                   pode iniciar a leitura assincrona */
+                LT_resp = 0.       
+                RUN WinStartLeAssincronoCodBarLcbCh IN aux_xfsliteh (INPUT 15, /* timeout 15s */
+                                                                     INPUT 0,  /* tamanho variavel */
+                                                                     OUTPUT LT_Resp).
+            
+                /* OK */
+                IF  LT_Resp = 1  THEN
+                    chtemporizador_cod_barras:t_cod_barras:INTERVAL = 1000 . 
+
+            END.
+
+        /*se for o ultimo caracter deve pular para o proximo campo*/
+        IF  ed_tpcptdoc:SCREEN-VALUE = "2" AND 
+           ((ed_idtpdpag:SCREEN-VALUE = "2" AND LENGTH(ed_dscodbar:SCREEN-VALUE) >= 54) OR 
+            (ed_idtpdpag:SCREEN-VALUE = "1" AND LENGTH(ed_dscodbar:SCREEN-VALUE) >= 55)
+           ) THEN
+        DO:
+          APPLY "LEAVE" TO ed_dscodbar. 
+        END.
+    END.
+    
+    RETURN NO-APPLY.
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Label_nmbenefi w_cartao_pagamento
+ON ENTRY OF Label_nmbenefi IN FRAME f_cartao_pagamento
+DO:
+    
+    /* durante a criação do frame chama o ENTRY, desconsiderar */
+    IF  FRAME-NAME <> "f_cartao_pagamento"  THEN
+        RETURN.
+    
+    ed_mensagem:SCREEN-VALUE = "Posicione o código de barras no feixe de luz " + CHR(13) +
+                                "ou Informe a linha digitável...".
+
+    /* desativa o temporizador de tela */
+    chtemporizador:t_cartao_pagamento:INTERVAL = 0.
+    
+    IF TRIM(REPLACE(REPLACE(ed_dscodbar:SCREEN-VALUE,".",""),"-","")) = "" THEN
+    DO:
+        ASSIGN ed_dscodbar:FORMAT = "x(44)"
+               ed_dscodbar:SCREEN-VALUE = ""
+               aux_sfcodbar = "".
+
+    END.
+
+    /* inicia a leitura assincrona */
+    LT_resp = 0.       
+           
+    RUN WinStartLeAssincronoCodBarLcbCh IN aux_xfsliteh (INPUT 15, /* timeout 15s */
+                                                         INPUT 0,  /* tamanho variavel */
+                                                         OUTPUT LT_Resp).
+
+    /* OK */
+    IF  LT_Resp = 1  THEN
+        chtemporizador_cod_barras:t_cod_barras:INTERVAL = 1000 .   
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Label_nmbenefi w_cartao_pagamento
+ON LEAVE OF Label_nmbenefi IN FRAME f_cartao_pagamento
+DO:     
+
+    IF  NOT par_flagenda  THEN
+        DO:
+            ed_datpagto:SCREEN-VALUE = STRING(glb_dtmvtocd, "99/99/9999").
+            ed_datpagto:READ-ONLY    = YES.
+            ed_datpagto:BGCOLOR      = 8.
+        END.
+
+    ASSIGN aux_sfcodbar = REPLACE(REPLACE(REPLACE(ed_dscodbar:SCREEN-VALUE,".",""),"-","")," ","").
+
+    /* se estiver saindo do campo e o mesmo estiver nulo, deve retirar a mascara*/
+    IF  TRIM(aux_sfcodbar) = "" THEN
+    DO:
+        ed_dscodbar:FORMAT = "x(44)".
+    END.
+
+    /* validar o codigo de barras/linha digitavel*/
+    RUN valida_codbar.
+
+    IF aux_flgderro THEN
+        RETURN NO-APPLY.
+
+    /* Extrair valor do titulo/fatura */
+    RUN extrai_valor_codbar.   
+    IF aux_flgderro THEN
+        RETURN NO-APPLY.
+
+    /* se for titulo sempre vai para o campo de valor*/
+    IF  ed_idtpdpag:SCREEN-VALUE = "2"    THEN
+        DO:      
+            APPLY "ENTRY" TO ed_vldpagto.
+        END.        
+        
+    ELSE 
+    IF  par_flagenda                       THEN
+        APPLY "ENTRY" TO ed_datpagto.         
+    ELSE /* nao permite alterar o valor em caso de fatura */
+    IF  DEC(ed_vldpagto:SCREEN-VALUE) > 0  THEN
+        APPLY "ENTRY" TO Btn_D.
+    ELSE 
+        APPLY "ENTRY" TO ed_vldpagto.
+                           
+        
 END.
 
 /* _UIB-CODE-BLOCK-END */
@@ -1088,8 +1509,8 @@ END.
 
 /* **********************  Internal Procedures  *********************** */
 
-&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE calcula_valor_titulo_vencido w_cartao_pagamento 
-PROCEDURE calcula_valor_titulo_vencido :
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE calcula_valor_titulo w_cartao_pagamento 
+PROCEDURE calcula_valor_titulo :
 /*------------------------------------------------------------------------------
   Purpose: Retornar o valor de titulos contendo juros/multas    
   Parameters:  <none>
@@ -1111,10 +1532,14 @@ DEF OUTPUT  PARAM pr_vlfatura       AS DECI         NO-UNDO.
 DEF OUTPUT  PARAM pr_vlrjuros       AS DECI         NO-UNDO.
 DEF OUTPUT  PARAM pr_vlrmulta       AS DECI         NO-UNDO.
 DEF OUTPUT  PARAM pr_fltitven       AS INTE         NO-UNDO.
+DEF OUTPUT  PARAM pr_inpesbnf       AS INTE         NO-UNDO.
+DEF OUTPUT  PARAM pr_nrdocbnf       AS DECI         NO-UNDO. 
+DEF OUTPUT  PARAM pr_nmbenefi       AS CHAR         NO-UNDO. 
+DEF OUTPUT  PARAM pr_nrctlnpc       AS CHAR         NO-UNDO.
 DEF OUTPUT  PARAM pr_des_erro       AS CHAR         NO-UNDO.
 DEF OUTPUT  PARAM pr_dscritic       AS CHAR         NO-UNDO.
 
-RUN procedures/calcula_valor_titulo_vencido.p (INPUT pr_cdcooper,
+RUN procedures/calcula_valor_titulo.p (INPUT pr_cdcooper,
                                                INPUT pr_nrdconta, 
                                                INPUT pr_idseqttl,
                                                INPUT pr_cdagenci,
@@ -1129,6 +1554,10 @@ RUN procedures/calcula_valor_titulo_vencido.p (INPUT pr_cdcooper,
                                               OUTPUT pr_vlrjuros,
                                               OUTPUT pr_vlrmulta,
                                               OUTPUT pr_fltitven,
+                                      OUTPUT pr_inpesbnf,
+                                      OUTPUT pr_nrdocbnf,
+                                      OUTPUT pr_nmbenefi,
+                                      OUTPUT pr_nrctlnpc,                                      
                                               OUTPUT pr_des_erro,
                                               OUTPUT pr_dscritic).
 
@@ -1212,8 +1641,8 @@ PROCEDURE enable_UI :
           ed_nmrescop ed_nrdconta ed_nmextttl 
       WITH FRAME f_cartao_pagamento.
   ENABLE RECT-132 RECT-133 IMAGE-36 IMAGE-37 IMAGE-40 RECT-134 ed_dscodbar 
-         ed_vldpagto ed_datpagto Btn_C ed_mensagem Btn_D Btn_H ed_cdagectl 
-         ed_nmrescop ed_nrdconta ed_nmextttl 
+         ed_nmbenefi ed_vldpagto ed_datpagto Btn_C ed_mensagem Btn_D Btn_H 
+         ed_cdagectl ed_nmrescop ed_nrdconta ed_nmextttl 
       WITH FRAME f_cartao_pagamento.
   {&OPEN-BROWSERS-IN-QUERY-f_cartao_pagamento}
   VIEW w_cartao_pagamento.
@@ -1234,6 +1663,12 @@ PROCEDURE extrai_valor_codbar :
         ASSIGN aux_valor    = ""
                aux_flgderro = NO.
 
+        /* Caso nao possua codbar, deve sair da rotina */
+        IF aux_sfcodbar = "" THEN
+        DO:
+            RETURN.
+        END.
+
         /* se o tipo de captura for leitora*/
         IF ed_tpcptdoc:SCREEN-VALUE = "1" THEN  
         DO:
@@ -1246,7 +1681,7 @@ PROCEDURE extrai_valor_codbar :
            END. /* Titulos */
            ELSE IF ed_idtpdpag:SCREEN-VALUE = "2"  THEN
            DO:
-              RUN calcula_valor_titulo_vencido(INPUT glb_cdcooper,
+              RUN calcula_valor_titulo(INPUT glb_cdcooper,
                                                INPUT glb_nrdconta,
                                                INPUT 1,
                                                INPUT 91,
@@ -1261,6 +1696,10 @@ PROCEDURE extrai_valor_codbar :
                                               OUTPUT aux_vlrjuros,
                                               OUTPUT aux_vlrmulta,
                                               OUTPUT aux_fltitven,
+                                      OUTPUT aux_inpesbnf,
+                                      OUTPUT aux_nrdocbnf,
+                                      OUTPUT aux_nmbenefi,
+                                      OUTPUT aux_nrctlnpc,
                                               OUTPUT aux_des_erro,
                                               OUTPUT aux_dscritic).
 
@@ -1296,7 +1735,7 @@ PROCEDURE extrai_valor_codbar :
                END. /* Titulos */
                ELSE IF ed_idtpdpag:SCREEN-VALUE = "2"  THEN
                DO:                  
-                  RUN calcula_valor_titulo_vencido(INPUT glb_cdcooper,
+                  RUN calcula_valor_titulo ( INPUT glb_cdcooper,
                                                    INPUT glb_nrdconta,
                                                    INPUT 1,
                                                    INPUT 91,
@@ -1311,6 +1750,10 @@ PROCEDURE extrai_valor_codbar :
                                                   OUTPUT aux_vlrjuros,
                                                   OUTPUT aux_vlrmulta,
                                                   OUTPUT aux_fltitven,
+                                            OUTPUT aux_inpesbnf,
+                                            OUTPUT aux_nrdocbnf,
+                                            OUTPUT aux_nmbenefi,
+                                            OUTPUT aux_nrctlnpc,
                                                   OUTPUT aux_des_erro,
                                                   OUTPUT aux_dscritic). 
                   
@@ -1321,6 +1764,16 @@ PROCEDURE extrai_valor_codbar :
     
             END.
         
+       IF aux_nmbenefi <> "" AND aux_nmbenefi <> ? THEN
+          DO:
+            ASSIGN ed_nmbenefi:SCREEN-VALUE = aux_nmbenefi
+                   Label_nmbenefi:SCREEN-VALUE = "Beneficiário:".
+            Label_nmbenefi:HIDDEN IN FRAME f_cartao_pagamento = FALSE.
+            F_nmbenefi:HIDDEN     IN FRAME f_cartao_pagamento = FALSE.
+            ed_nmbenefi:HIDDEN    IN FRAME f_cartao_pagamento = FALSE.
+            /*ed_nmbenefi:ENABLED   = TRUE. */
+          END.
+
        IF TRIM(aux_valor) <> ""  THEN
        DO:
          /* verifica se o valor esta correto, caso contrario o documento
@@ -1372,10 +1825,12 @@ PROCEDURE habilita_campos :
                ed_dscodbar:SCREEN-VALUE = ""
                ed_datpagto:SCREEN-VALUE = ""
                ed_vldpagto:SCREEN-VALUE = ""
-
                ed_mensagem:SCREEN-VALUE = "Posicione o código de barras no feixe de luz " + CHR(13) +
                                           "ou Informe a linha digitável...".
         
+        ed_nmbenefi:HIDDEN    IN FRAME f_cartao_pagamento = TRUE.
+        Label_nmbenefi:HIDDEN IN FRAME f_cartao_pagamento = TRUE.
+        F_nmbenefi:HIDDEN     IN FRAME f_cartao_pagamento = TRUE.
         APPLY "ENTRY" TO ed_dscodbar.
     END.
 
