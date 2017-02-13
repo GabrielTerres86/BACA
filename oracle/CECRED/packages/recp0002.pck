@@ -1839,7 +1839,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       -- Desmarcar o contrato como CIN
       UPDATE crapcyc
          SET crapcyc.flgehvip = 0,
-             crapcyc.cdmotcin = 0
+             crapcyc.cdmotcin = 0,
+             crapcyc.dtaltera = rw_crapdat.dtmvtolt
          WHERE EXISTS(SELECT 1
                         FROM tbrecup_acordo_contrato
                         JOIN tbrecup_acordo

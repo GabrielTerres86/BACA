@@ -307,7 +307,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
       COMMIT;
   END pc_gera_log_mail;
   
-  
   -- Verifica se existe contrato de acordo ativo
   PROCEDURE pc_verifica_acordo_ativo(pr_cdcooper  IN crapepr.cdcooper%TYPE -- Código da Cooperativa
                                     ,pr_nrdconta  IN crapepr.nrdconta%TYPE -- Número da Conta
@@ -2286,6 +2285,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
           UPDATE crapcyc 
              SET flgehvip = 1
                , cdmotcin = 1
+               , dtaltera = BTCH0001.rw_crapdat.dtmvtolt
            WHERE cdcooper = rw_acordo_contrato.cdcooper
              AND cdorigem = rw_acordo_contrato.cdorigem
              AND nrdconta = rw_acordo_contrato.nrdconta
