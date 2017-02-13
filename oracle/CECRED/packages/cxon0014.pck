@@ -210,6 +210,8 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0014 AS
   PROCEDURE pc_gera_titulos_iptu (pr_cooper          IN INTEGER --Codigo Cooperativa
                                  ,pr_nrdconta        IN INTEGER --Numero da Conta
                                  ,pr_idseqttl        IN crapttl.idseqttl%TYPE --Sequencial do titular
+                                 ,pr_inpessoa        IN crapass.inpessoa%TYPE DEFAULT NULL --> Indicador do tipo de pessoa pagadora 
+                                 ,pr_nrcpfcgc        IN crapass.inpessoa%TYPE DEFAULT NULL --> Numero CPF/CNPJ da pessoa pagadora
                                  ,pr_cod_operador    IN VARCHAR2          --Codigo do operador
                                  ,pr_cod_agencia     IN INTEGER            --Codigo da Agencia
                                  ,pr_nro_caixa       IN INTEGER            --Numero do Caixa
@@ -244,6 +246,7 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0014 AS
                                  ,pr_vloutdeb        IN NUMBER         --Valor Saida Debitado
                                  ,pr_vloutcre        IN NUMBER         --Valor Saida Creditado
                                  ,pr_tpcptdoc        IN craptit.tpcptdoc%TYPE DEFAULT 1-- Tipo de captura do documento (1=Leitora, 2=Linha digitavel).
+                                 ,pr_cdctrlcs        IN tbcobran_consulta_titulo.cdctrlcs%TYPE DEFAULT NULL --> Numero de controle da consulta no NPC
                                  ,pr_rowidcob        OUT ROWID         --ROWID da cobranca
                                  ,pr_indpagto        OUT INTEGER       --Indicador Pagamento
                                  ,pr_nrcnvbol        OUT INTEGER       --Numero Convenio Boleto
@@ -327,6 +330,7 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0014 AS
                                        ,pr_cadastro        IN NUMBER             --Numero Cadastro
                                        ,pr_cadastro_conf   IN NUMBER           --Confirmacao Cadastro
                                        ,pr_dt_agendamento  IN DATE            --Data Agendamento
+                                       ,pr_cdctrlcs        IN tbcobran_consulta_titulo.cdctrlcs%TYPE DEFAULT NULL --> Numero de controle da consulta no NPC
                                        ,pr_vlfatura        OUT NUMBER          --Valor da Fatura
                                        ,pr_outra_data      OUT PLS_INTEGER        --Outra data
                                        ,pr_outro_valor     OUT PLS_INTEGER        --Outro valor
@@ -595,16 +599,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
           ,crapass.cdagenci
           ,crapass.vllimcre
           ,crapass.nrdctitg
+          ,crapass.nrcpfcgc
       FROM crapass
      WHERE crapass.cdcooper = pr_cdcooper
      AND   crapass.nrdconta = pr_nrdconta;
   rw_crapass cr_crapass%ROWTYPE;
+  rw_crapass_pag cr_crapass%ROWTYPE;
 
   --Selecionar informacoes dos bancos
   CURSOR cr_crapban (pr_cdbccxlt IN crapban.cdbccxlt%type) IS
     SELECT crapban.nmresbcc
           ,crapban.nmextbcc
           ,crapban.cdbccxlt
+          ,crapban.nrispbif 
     FROM crapban
     WHERE crapban.cdbccxlt = pr_cdbccxlt;
   rw_crapban cr_crapban%ROWTYPE;
@@ -1526,7 +1533,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
   /* Procedure para gerar os titulos de iptu */
   PROCEDURE pc_gera_titulos_iptu (pr_cooper          IN INTEGER --Codigo Cooperativa
                                  ,pr_nrdconta        IN INTEGER --Numero da Conta
-                                 ,pr_idseqttl        IN crapttl.idseqttl%TYPE --Sequencial do titular
+                                 ,pr_idseqttl        IN crapttl.idseqttl%TYPE --> Sequencial do titular
+                                 ,pr_inpessoa        IN crapass.inpessoa%TYPE DEFAULT NULL --> Indicador do tipo de pessoa pagadora 
+                                 ,pr_nrcpfcgc        IN crapass.inpessoa%TYPE DEFAULT NULL --> Numero CPF/CNPJ da pessoa pagadora
                                  ,pr_cod_operador    IN VARCHAR2          --Codigo do operador
                                  ,pr_cod_agencia     IN INTEGER            --Codigo da Agencia
                                  ,pr_nro_caixa       IN INTEGER            --Numero do Caixa
@@ -1561,6 +1570,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
                                  ,pr_vloutdeb        IN NUMBER             --Valor Saida Debitado
                                  ,pr_vloutcre        IN NUMBER             --Valor Saida Creditado
                                  ,pr_tpcptdoc        IN craptit.tpcptdoc%TYPE DEFAULT 1-- Tipo de captura do documento (1=Leitora, 2=Linha digitavel).
+                                 ,pr_cdctrlcs        IN tbcobran_consulta_titulo.cdctrlcs%TYPE DEFAULT NULL --> Numero de controle da consulta no NPC
                                  ,pr_rowidcob        OUT ROWID             --ROWID da cobranca
                                  ,pr_indpagto        OUT INTEGER           --Indicador Pagamento
                                  ,pr_nrcnvbol        OUT INTEGER           --Numero Convenio Boleto
@@ -1746,6 +1756,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
       vr_nrnosnum  crapcob.nrnosnum%TYPE;
       vr_registro  ROWID;
       vr_dsconmig  VARCHAR2(100);
+      vr_tpdbaixa  INTEGER;
+      vr_inpessoa  crapass.inpessoa%TYPE;
+      vr_nrcpfcgc  crapass.nrcpfcgc%TYPE;
+      
       --Variaveis Erro
       --vr_cod_erro crapcri.cdcritic%TYPE;
       vr_des_erro VARCHAR2(4000);
@@ -1982,6 +1996,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
           RAISE vr_exc_erro;
         END IF;
       END IF;
+      
+      --> Caso possua numero de consulta da Nova Plataforma de cobrança
+      --> Deve efetuar as validações
+      IF nvl(pr_cdctrlcs,0) <> 0 THEN
+      
+        --> Validação do pagamento do boleto na Nova plataforma de cobrança 
+        NPCB0001.pc_valid_pagamento_npc 
+                          ( pr_cdcooper  => rw_crapcop.cdcooper --> Codigo da cooperativa
+                           ,pr_dtmvtolt  => rw_crapdat.dtmvtolt --> Data de movimento                                   
+                           ,pr_cdctrlcs  => pr_cdctrlcs         --> Numero de controle da consulta no NPC
+                           ,pr_vldpagto  => pr_valor_informado  --> Valor a ser pago
+                           ,pr_tpdbaixa  => vr_tpdbaixa         --> Retornar tipo de baixa
+                           ,pr_cdcritic  => vr_cdcritic         --> Codigo da critico
+                           ,pr_dscritic  => vr_dscritic );      --> Descrição da critica
+                           
+        --> Verificar se retornou critica                             
+        IF nvl(vr_cdcritic,0) <> 0 OR
+           TRIM(vr_dscritic) IS NOT NULL THEN
+          --> Abortar programa
+          RAISE vr_exc_erro; 
+        END IF;
+      END IF;
+      
       --Se for iptu
       IF pr_iptu THEN
         --Numero lote
@@ -2087,6 +2124,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
       ELSE
         vr_flgenvio:= 0;
       END IF;
+      
+      --Selecionar Banco
+      rw_crapban := NULL;
+      OPEN cr_crapban (pr_cdbccxlt => vr_cdbandst);
+      --Posicionar no proximo registro
+      FETCH cr_crapban INTO rw_crapban;
+      CLOSE cr_crapban;
+      
+      --> Atribuir valores do parametro
+      vr_inpessoa := pr_inpessoa;
+      vr_nrcpfcgc := pr_nrcpfcgc;
+      
+      -- Se possui conta informada e nao contem o inpessoa ou o CPF/CNPJ
+      -- Deve buscar da conta do cooperato
+      IF nvl(pr_nrdconta,0) <> 0 AND 
+        (nvl(pr_inpessoa,0) = 0 OR nvl(pr_nrcpfcgc,0) = 0) THEN        
+        --Selecionar informacoes associado
+        OPEN cr_crapass (pr_cdcooper => pr_cooper
+                        ,pr_nrdconta => pr_nrdconta);
+        --Posicionar no proximo registro
+        FETCH cr_crapass INTO rw_crapass_pag;
+        IF cr_crapass%FOUND THEN         
+          CLOSE cr_crapass;
+          vr_inpessoa := rw_crapass_pag.inpessoa;
+          vr_nrcpfcgc := rw_crapass_pag.nrcpfcgc;
+        ELSE
+           CLOSE cr_crapass;        
+        END IF;        
+      END IF;
+      
       --Inserir titulo
       BEGIN
         INSERT INTO craptit
@@ -2117,7 +2184,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
           ,craptit.cdcoptfn
           ,craptit.cdagetfn
           ,craptit.nrterfin
-          ,craptit.tpcptdoc)
+          ,craptit.tpcptdoc
+          ,craptit.cdctrlcs
+          ,craptit.nrdident
+          ,craptit.nrispbds
+          ,craptit.inpessoa
+          ,craptit.nrcpfcgc
+          ,craptit.tpbxoper)
         VALUES
           (rw_crapcop.cdcooper               -- cdcooper
           ,pr_nrdconta                       -- nrdconta
@@ -2146,7 +2219,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
           ,pr_cdcoptfn                       -- cdcoptfn
           ,pr_cdagetfn                       -- cdagetfn
           ,pr_nrterfin                       -- nrterfin
-          ,pr_tpcptdoc)                      -- tpcptdoc
+          ,pr_tpcptdoc                       -- tpcptdoc
+          ,nvl(pr_cdctrlcs,0)                -- cdctrlcs
+          ,nvl(pr_idtitdda,0)                -- nrdident
+          ,nvl(rw_crapban.nrispbif,0)        -- nrispbds
+          ,nvl(vr_inpessoa,0)                -- inpessoa
+          ,nvl(vr_nrcpfcgc,0)                -- nrcpfcgc
+          ,nvl(vr_tpdbaixa,0))               -- tpbxoper          
         RETURNING
           craptit.nrseqdig
          ,craptit.nrdocmto
@@ -4612,6 +4691,7 @@ END pc_gera_titulos_iptu_prog;
                                        ,pr_cadastro        IN NUMBER                --Numero Cadastro
                                        ,pr_cadastro_conf   IN NUMBER                --Confirmacao Cadastro
                                        ,pr_dt_agendamento  IN DATE                  --Data Agendamento
+                                       ,pr_cdctrlcs        IN tbcobran_consulta_titulo.cdctrlcs%TYPE DEFAULT NULL --> Numero de controle da consulta no NPC
                                        ,pr_vlfatura        OUT NUMBER               --Valor da Fatura
                                        ,pr_outra_data      OUT PLS_INTEGER          --Outra data
                                        ,pr_outro_valor     OUT PLS_INTEGER          --Outro valor
@@ -4842,6 +4922,7 @@ END pc_gera_titulos_iptu_prog;
       vr_clobxmlc       CLOB;
 
       vr_nrdipatu VARCHAR2(1000);
+      vr_tpdbaixa       INTEGER;
 
       --Variaveis Erro
       vr_des_erro VARCHAR2(1000);
@@ -4953,6 +5034,29 @@ END pc_gera_titulos_iptu_prog;
         -- Apenas fechar o cursor
         CLOSE BTCH0001.cr_crapdat;
       END IF;
+      
+      --> Caso possua numero de consulta da Nova Plataforma de cobrança
+      --> Deve efetuar as validações
+      IF nvl(pr_cdctrlcs,0) <> 0 THEN
+      
+        --> Validação do pagamento do boleto na Nova plataforma de cobrança 
+        NPCB0001.pc_valid_pagamento_npc 
+                          ( pr_cdcooper  => rw_crapcop.cdcooper --> Codigo da cooperativa
+                           ,pr_dtmvtolt  => rw_crapdat.dtmvtolt --> Data de movimento                                   
+                           ,pr_cdctrlcs  => pr_cdctrlcs         --> Numero de controle da consulta no NPC
+                           ,pr_vldpagto  => pr_valor_informado  --> Valor a ser pago
+                           ,pr_tpdbaixa  => vr_tpdbaixa         --> Retornar tipo de baixa
+                           ,pr_cdcritic  => vr_cdcritic         --> Codigo da critico
+                           ,pr_dscritic  => vr_dscritic );      --> Descrição da critica
+                           
+        --> Verificar se retornou critica                             
+        IF nvl(vr_cdcritic,0) <> 0 OR
+           TRIM(vr_dscritic) IS NOT NULL THEN
+          --> Abortar programa
+          RAISE vr_exc_erro; 
+        END IF;
+      END IF;
+      
       --Se for iptu
       IF pr_iptu = 1 THEN
         --Numero lote

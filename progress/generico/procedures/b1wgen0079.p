@@ -96,6 +96,7 @@
                  Cedente por Beneficiário e  Sacado por Pagador 
                  Chamado 229313 (Jean Reddiga - RKAM).    
                            
+    29/12/2016 - Tratamento Nova Plataforma de cobrança PRJ340 - NPC (Odirlei-AMcom)                         
 .............................................................................*/
 
 
@@ -681,7 +682,7 @@ PROCEDURE requisicao-incluir-sacado:
 
     DEF  VAR         aux_tppessoa AS CHAR                            NO-UNDO. 
     DEF  VAR         aux_nrcpfcgc AS DECI                            NO-UNDO.
-
+    DEF  VAR         aux_ctrlpart AS CHAR                            NO-UNDO. 
 
     ASSIGN aux_cdcritic = 0
            aux_dscritic = ""
@@ -737,29 +738,45 @@ PROCEDURE requisicao-incluir-sacado:
        cria-tag (INPUT "CdLegado",INPUT aux_cdlegado,
                  INPUT "string",INPUT hXmlMetodo).
        
-       cria-tag (INPUT "ISPBIF",INPUT aux_nrispbif,
+       cria-tag (INPUT "ISPBPartRecbdrPrincipal",INPUT aux_nrispbif,
                  INPUT "int",INPUT hXmlMetodo).
        
-       cria-tag (INPUT "TpPessoaSac",INPUT aux_tppessoa,
-                 INPUT "string",INPUT hXmlMetodo).
-       
-       cria-tag (INPUT "CPFCNPJSac",INPUT STRING(aux_nrcpfcgc),
+       cria-tag (INPUT "ISPBPartRecebdrAdmtd",INPUT aux_nrispbif,
                  INPUT "int",INPUT hXmlMetodo). 
        
-       cria-tag (INPUT "Agencia",INPUT STRING(crapcop.cdagectl),
-                 INPUT "int",INPUT hXmlMetodo). 
+       ASSIGN aux_ctrlpart = STRING(TODAY,"99999999")+ STRING( ETIME) + "DDAI" .
        
-       cria-tag (INPUT "TpConta",INPUT "CC",
+       cria-tag (INPUT "NumCtrlPart",INPUT aux_ctrlpart,
                  INPUT "string",INPUT hXmlMetodo). 
        
-       cria-tag (INPUT "Conta",INPUT STRING(par_nrdconta),
+       cria-tag (INPUT "TpPessoaPagdr",INPUT aux_tppessoa,
+                 INPUT "string",INPUT hXmlMetodo).
+       
+       cria-tag (INPUT "CPFCNPJPagdr",INPUT STRING(aux_nrcpfcgc),
                  INPUT "int",INPUT hXmlMetodo). 
        
-       cria-tag (INPUT "TpAvisManutTit","2",
-                 INPUT "int",INPUT hXmlMetodo).
-
-       cria-tag (INPUT "TpAvisManutTitConsd","2",
-                 INPUT "int",INPUT hXmlMetodo). 
+                 
+       
+       /* Cria Root 'RepetCtPagdr' */
+       hXmlSoap:CREATE-NODE(hXmlRootSoap,"RepetCtPagdr","ELEMENT").
+       hXmlMetodo:APPEND-CHILD(hXmlRootSoap).
+                  
+        
+       /* Cria novo Pagador */
+       hXmlSoap:CREATE-NODE(hXmlNode1Soap,"CtPagdr","ELEMENT").
+       hXmlRootSoap:APPEND-CHILD(hXmlNode1Soap).
+        
+       cria-tag (INPUT "TpAgPagdr",INPUT 'F', /* Fisica  */
+                 INPUT "int",INPUT hXmlNode1Soap). 
+       
+       cria-tag (INPUT "AgPagdr",INPUT STRING(crapcop.cdagectl),
+                 INPUT "int",INPUT hXmlNode1Soap). 
+       
+       cria-tag (INPUT "TpCtPagdr",INPUT "CC",
+                 INPUT "string",INPUT hXmlNode1Soap). 
+       
+       cria-tag (INPUT "CtPagdr",INPUT STRING(par_nrdconta),
+                 INPUT "int",INPUT hXmlNode1Soap).       
 
        RUN efetua-requisicao-soap (INPUT 1,INPUT "Incluir").
 
@@ -841,7 +858,7 @@ PROCEDURE requisicao-encerrar-sacado:
 
     DEF  VAR         aux_tppessoa AS CHAR                            NO-UNDO. 
     DEF  VAR         aux_nrcpfcgc AS DECI                            NO-UNDO.
-
+    DEF  VAR         aux_ctrlpart AS CHAR                            NO-UNDO. 
 
     ASSIGN aux_cdcritic = 0
            aux_dscritic = ""
@@ -897,13 +914,22 @@ PROCEDURE requisicao-encerrar-sacado:
        cria-tag (INPUT "CdLegado",INPUT aux_cdlegado,
                  INPUT "string",INPUT hXmlMetodo).
 
-       cria-tag (INPUT "ISPBIF",INPUT aux_nrispbif,
+       cria-tag (INPUT "ISPBPartRecbdrPrincipal",INPUT aux_nrispbif,
                  INPUT "int",INPUT hXmlMetodo).
 
-       cria-tag (INPUT "TpPessoaSac",INPUT aux_tppessoa,
+       cria-tag (INPUT "ISPBPartRecebdrAdmtd",INPUT aux_nrispbif,
+                 INPUT "int",INPUT hXmlMetodo).
+
+       ASSIGN aux_ctrlpart = STRING(TODAY,"99999999")+ STRING( ETIME) + "DDAE" .
+       
+       cria-tag (INPUT "NumCtrlPart",INPUT aux_ctrlpart,
                  INPUT "string",INPUT hXmlMetodo).
 
-       cria-tag (INPUT "CPFCNPJSac",INPUT STRING(aux_nrcpfcgc),
+
+       cria-tag (INPUT "TpPessoaPagdr",INPUT aux_tppessoa,
+                 INPUT "string",INPUT hXmlMetodo).
+
+       cria-tag (INPUT "CPFCNPJPagdr",INPUT STRING(aux_nrcpfcgc),
                  INPUT "int",INPUT hXmlMetodo). 
 
        RUN efetua-requisicao-soap (INPUT 1,INPUT "Excluir").
@@ -1052,13 +1078,16 @@ PROCEDURE requisicao-consulta-situacao:
        cria-tag (INPUT "CdLegado",INPUT aux_cdlegado,
                  INPUT "string",INPUT hXmlMetodo).
 
-       cria-tag (INPUT "ISPBIF",INPUT aux_nrispbif,
+       cria-tag (INPUT "ISPBPartRecbdrPrincipal",INPUT aux_nrispbif,
                  INPUT "int",INPUT hXmlMetodo).
 
-       cria-tag (INPUT "TpPessoaSac",INPUT aux_tppessoa,
+       cria-tag (INPUT "ISPBPartRecebdrAdmtd",INPUT aux_nrispbif,
+                 INPUT "int",INPUT hXmlMetodo).
+       
+       cria-tag (INPUT "TpPessoaPagdr",INPUT aux_tppessoa,
                  INPUT "string",INPUT hXmlMetodo).
 
-       cria-tag (INPUT "CPFCNPJSac",INPUT STRING(aux_nrcpfcgc),
+       cria-tag (INPUT "CPFCNPJPagdr",INPUT STRING(aux_nrcpfcgc),
                  INPUT "int",INPUT hXmlMetodo). 
        
        RUN efetua-requisicao-soap (INPUT 1,INPUT "ConsultaProprio").
@@ -1111,17 +1140,12 @@ PROCEDURE requisicao-consulta-situacao:
         
           hXmlTag:GET-CHILD(hXmlText,1).
 
-          IF   hXmlTag:NAME = "IndSacEletr"   THEN
-               DO:
-                   aux_flgativo = LOGICAL(hXmlText:NODE-VALUE,"S/N").
-               END.
-          ELSE
-          IF   hXmlTag:NAME = "JDDDASitSacEletrc"   THEN
+          IF   hXmlTag:NAME = "JDNPCSitPagEletrc"   THEN
                DO:
                    aux_cdsituac = INTE(hXmlText:NODE-VALUE).
                END.
           ELSE
-          IF   hXmlTag:NAME = "JDDDADtHrSitSacEletrc"   THEN
+          IF   hXmlTag:NAME = "JDNPCDtHrSitSacEletrc"   THEN
                DO:
                    aux_dtsituac = DATE(INT(SUBSTR(hXmlText:NODE-VALUE,5,2)),
                                        INT(SUBSTR(hXmlText:NODE-VALUE,7,2)),
@@ -1147,6 +1171,17 @@ PROCEDURE requisicao-consulta-situacao:
                                        INT(SUBSTR(hXmlText:NODE-VALUE,1,4))).  
                END.
        END.
+
+       /* Caso seja situacao seja 6, DDDA esta ativo */
+       IF aux_cdsituac = 6 THEN
+         DO:       
+            ASSIGN aux_flgativo = TRUE.
+         END.
+       ELSE  
+         DO:       
+            ASSIGN aux_flgativo = FALSE.
+         END.
+       
 
        CREATE tt-consulta-situacao.
        ASSIGN tt-consulta-situacao.flgativo = aux_flgativo
@@ -1302,10 +1337,10 @@ PROCEDURE requisicao-verificar-lote:
             hXmlSoap:CREATE-NODE(hXmlNode1Soap,"SacEletronico","ELEMENT").
             hXmlRootSoap:APPEND-CHILD(hXmlNode1Soap).
                    
-            cria-tag (INPUT "TpPessoaSac",INPUT tt-verificar-lote.tppessoa,
+            cria-tag (INPUT "TpPessoaPagdr",INPUT tt-verificar-lote.tppessoa,
                       INPUT "string"     ,INPUT hXmlNode1Soap).
              
-            cria-tag (INPUT "CPFCNPJSac", INPUT STRING(tt-verificar-lote.nrcpfsac),
+            cria-tag (INPUT "CPFCNPJPagdr", INPUT STRING(tt-verificar-lote.nrcpfsac),
                       INPUT "int"       , INPUT hXmlNode1Soap).                                       
         END.
         
@@ -1365,12 +1400,12 @@ PROCEDURE requisicao-verificar-lote:
 
                 hXmlTag:GET-CHILD(hXmlText,1).
 
-                IF   hXmlTag:NAME = "CPFCNPJSac"   THEN
+                IF   hXmlTag:NAME = "CPFCNPJPagdr"   THEN
                      DO:
                          ASSIGN aux_nrcpfsac = DECI(hXmlText:NODE-VALUE).
                      END.
                 ELSE 
-                IF   hXmlTag:NAME = "IndSacEletr"   THEN
+                IF   hXmlTag:NAME = "IndrAdesPagdrDDA"   THEN
                      DO:
                          ASSIGN aux_flgativo = (hXmlText:NODE-VALUE = "S").   
                      END.
@@ -1486,10 +1521,10 @@ PROCEDURE requisicao-verificar:
        cria-tag (INPUT "CdLegado",INPUT aux_cdlegado,
                  INPUT "string",INPUT hXmlMetodo).
 
-       cria-tag (INPUT "TpPessoaSac",INPUT aux_tppessoa,
+       cria-tag (INPUT "TpPessoaPagdr",INPUT aux_tppessoa,
                  INPUT "string",INPUT hXmlMetodo).
 
-       cria-tag (INPUT "CPFCNPJSac",INPUT STRING(aux_nrcpfcgc),
+       cria-tag (INPUT "CPFCNPJPagdr",INPUT STRING(aux_nrcpfcgc),
                  INPUT "int",INPUT hXmlMetodo). 
 
        RUN efetua-requisicao-soap (INPUT 1,INPUT "Verificar").
@@ -1710,9 +1745,9 @@ PROCEDURE gera-cabecalho-soap PRIVATE:
     DEF VAR aux_nmservic AS CHAR                                    NO-UNDO.
 
     CASE par_idservic:
-        WHEN 1 THEN aux_nmservic = "SacadoEletronico".
-        WHEN 2 THEN aux_nmservic = "SacadoEletronicoAgregado".
-        WHEN 3 THEN aux_nmservic = "TituloSacadoEletronico".
+        WHEN 1 THEN aux_nmservic = "PagadorEletronico".
+        WHEN 2 THEN aux_nmservic = "PagadorEletronicoAgregado".
+        WHEN 3 THEN aux_nmservic = "TituloPagadorEletronico".
     END CASE.
 
     RUN cria-objetos-soap.
@@ -1734,7 +1769,7 @@ PROCEDURE gera-cabecalho-soap PRIVATE:
     hXmlHeader:SET-ATTRIBUTE("SOAP-ENV:encodingStyle",
                              "http://schemas.xmlsoap.org/soap/encoding/").
     hXmlHeader:SET-ATTRIBUTE("xmlns:NS1",
-                             "urn:JDDDA_" + aux_nmservic + "Intf").
+                             "urn:JDNPC_" + aux_nmservic + "Intf").
     hXmlEnvelope:APPEND-CHILD(hXmlHeader).
 
     /** Criacao do Node de Autenticacao **/
@@ -1759,7 +1794,7 @@ PROCEDURE gera-cabecalho-soap PRIVATE:
     /** Criacao do Node de Metodo e Parametros **/
     hXmlSoap:CREATE-NODE(hXmlMetodo,"NS2:" + par_nmmetodo,"ELEMENT").
     hXmlMetodo:SET-ATTRIBUTE("xmlns:NS2",
-                             "urn:JDDDA_" + aux_nmservic + "Intf-IJDDDA_" + 
+                             "urn:JDNPC_" + aux_nmservic + "Intf-IJDNPC_" + 
                              aux_nmservic).
     hXmlBody:APPEND-CHILD(hXmlMetodo).
 
@@ -1776,7 +1811,7 @@ PROCEDURE efetua-requisicao-soap PRIVATE:
     hXmlSoap:SAVE("FILE",aux_msgenvio).
 
     UNIX SILENT VALUE("cat " + aux_msgenvio + " | /usr/local/cecred/bin/" +
-                      "SendSoapDDA.pl --servico='" + STRING(par_idservic) + 
+                      "SendSoapNPC.pl --servico='" + STRING(par_idservic) + 
                       "' > " + aux_msgreceb).
 
     ASSIGN aux_dsderror = "".
@@ -1953,16 +1988,19 @@ PROCEDURE requisicao-lista-titulos PRIVATE:
     cria-tag (INPUT "CdLegado", INPUT aux_cdlegado,
               INPUT "string", INPUT hXmlMetodo).
 
-    cria-tag (INPUT "ISPBIF", INPUT aux_nrispbif, 
+    cria-tag (INPUT "ISPBPartRecbdrPrincipal", INPUT aux_nrispbif, 
               INPUT "int", INPUT hXmlMetodo).
 
-    cria-tag (INPUT "TpPessoaSac", INPUT aux_tppessoa, 
+    cria-tag (INPUT "ISPBPartRecebdrAdmtd", INPUT aux_nrispbif, 
+              INPUT "int", INPUT hXmlMetodo).          
+
+    cria-tag (INPUT "TpPessoaPagdr", INPUT aux_tppessoa, 
               INPUT "string", INPUT hXmlMetodo).
 
-    cria-tag (INPUT "CPFCNPJSac", INPUT STRING(par_nrcpfcgc), 
+    cria-tag (INPUT "CNPJ_CPFPagdr", INPUT STRING(par_nrcpfcgc), 
               INPUT "int", INPUT hXmlMetodo).
 
-    cria-tag (INPUT "JDDDASitTitulo", INPUT STRING(par_cdsittit), 
+    cria-tag (INPUT "JDNPCSitTitulo", INPUT STRING(par_cdsittit), 
               INPUT "int", INPUT hXmlMetodo).
 
     IF   aux_dtvenini <> ?   THEN
@@ -1979,7 +2017,7 @@ PROCEDURE requisicao-lista-titulos PRIVATE:
     cria-tag (INPUT "ItemFinal", INPUT STRING(par_nritmfin), 
               INPUT "int", INPUT hXmlMetodo).
 
-    cria-tag (INPUT "JDDDAOrdemTit", INPUT STRING(par_idordena), 
+    cria-tag (INPUT "JDNPCOrdemTit", INPUT STRING(par_idordena), 
               INPUT "int", INPUT hXmlMetodo).
 
     RUN efetua-requisicao-soap (INPUT 3,INPUT "ListarTitulos").
@@ -2199,13 +2237,16 @@ PROCEDURE requisicao-atualizar-situacao PRIVATE:
     cria-tag (INPUT "CdLegado", INPUT aux_cdlegado,
               INPUT "string", INPUT hXmlMetodo).
 
-    cria-tag (INPUT "ISPBIF", INPUT aux_nrispbif,
+    cria-tag (INPUT "ISPBPartRecbdrPrincipal", INPUT aux_nrispbif,
               INPUT "int", INPUT hXmlMetodo).
 
-    cria-tag (INPUT "NumIdentcDDA", INPUT STRING(par_idtitdda),
+    cria-tag (INPUT "ISPBPartRecebdrAdmtd", INPUT aux_nrispbif,
               INPUT "int", INPUT hXmlMetodo).
 
-    cria-tag (INPUT "JDDDASitManutTitSac", INPUT STRING(par_cdsittit),
+    cria-tag (INPUT "NumIdentcNPC", INPUT STRING(par_idtitdda),
+              INPUT "int", INPUT hXmlMetodo).
+
+    cria-tag (INPUT "JDNPCSitManutTitSac", INPUT STRING(par_cdsittit),
               INPUT "int", INPUT hXmlMetodo).
 
     RUN efetua-requisicao-soap (INPUT 3,INPUT "AtualizarSituacao").
@@ -2260,17 +2301,17 @@ DEF    VAR       aux_flgxmlok AS LOGICAL                        NO-UNDO.
     CASE (hXmlTag:NAME):
         WHEN "NumItem" THEN 
             ASSIGN aux_nrorditm = INTE(hXmlText:NODE-VALUE).
-        WHEN "NumIdentcDDA" THEN 
+        WHEN "NumIdentcNPC" THEN 
             ASSIGN aux_idtitdda = DECI(hXmlText:NODE-VALUE).
-        WHEN "JDDDASitTitulo" THEN
+        WHEN "JDNPCSitTitulo" THEN
             ASSIGN aux_cdsittit = INTE(hXmlText:NODE-VALUE).
-        WHEN "CodIFCed" THEN
+        WHEN "CodIFBenfcrioFinl" THEN
             ASSIGN aux_cdbccced = INTE(hXmlText:NODE-VALUE).
-        WHEN "TpPessoaCed" THEN
+        WHEN "TpPessoaBenfcrioFinl" THEN
             ASSIGN aux_tppesced = hXmlText:NODE-VALUE.
-        WHEN "CPFCNPJCed" THEN 
+        WHEN "CNPJ_CPFBenfcrioFinl" THEN 
             ASSIGN aux_nrdocced = DECI(hXmlText:NODE-VALUE).
-        WHEN "Nom_RzSocCed" THEN
+        WHEN "Nom_RzSocBenfcrioFinl" THEN
             ASSIGN aux_nmcedent = REPLACE(
                                   REPLACE(
                                   REPLACE(
@@ -2278,11 +2319,11 @@ DEF    VAR       aux_flgxmlok AS LOGICAL                        NO-UNDO.
                                                              ,";","")
                                                              ,"#","")
                                                              ,"'","").
-        WHEN "TpPessoaSacdEletrnc" THEN
+        WHEN "TpPessoaPagdr" THEN
             ASSIGN aux_tppessac = hXmlText:NODE-VALUE.
-        WHEN "CPFCNPJSacdEletrnc" THEN
+        WHEN "CNPJ_CPFPagdr" THEN
             ASSIGN aux_nrdocsac = DECI(hXmlText:NODE-VALUE).
-        WHEN "Nom_RzSocSacdEletrnc" THEN
+        WHEN "Nom_RzSocPagdr" THEN
             ASSIGN aux_nmdsacad = REPLACE(
                                   REPLACE(
                                   REPLACE(

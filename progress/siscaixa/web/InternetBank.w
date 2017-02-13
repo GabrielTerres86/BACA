@@ -3309,7 +3309,8 @@ PROCEDURE proc_operacao27:
            aux_nrdctabb = INTE(GET-VALUE("aux_nrdctabb"))
            aux_vlapagar = DECI(GET-VALUE("aux_vlapagar"))
            aux_versaldo = INTE(GET-VALUE("aux_versaldo"))
-           aux_tpcptdoc = INTE(GET-VALUE("aux_tpcptdoc")).
+           aux_tpcptdoc = INTE(GET-VALUE("aux_tpcptdoc"))
+           aux_cdctrlcs = GET-VALUE("aux_cdctrlcs").
 
     RUN sistema/internet/fontes/InternetBank27.p (INPUT aux_cdcooper,
                                                   INPUT aux_nrdconta,
@@ -3342,6 +3343,7 @@ PROCEDURE proc_operacao27:
                                                   INPUT aux_versaldo,
                                                   INPUT aux_flmobile,
                                                   INPUT aux_tpcptdoc,
+                                                  INPUT aux_cdctrlcs,
                                                  OUTPUT aux_dsmsgerr,
                                                  OUTPUT aux_msgofatr,
                                                  OUTPUT xml_cdempcon,

@@ -276,6 +276,7 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
   --
   --        28/10/2016 - SD 509982 - DEBCON - Atualização criticas (Guilherme/SUPERO)
   --
+  --        29/12/2016 - Tratamento Nova Plataforma de cobrança PRJ340 - NPC (Odirlei-AMcom)
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de registro de agendamento
@@ -637,6 +638,7 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
                                ,pr_dtagenda IN OUT DATE                 --Data agendamento
                                ,pr_idorigem IN  INTEGER                 --Indicador de origem
                                ,pr_indvalid IN  INTEGER                 --Indicador se ja foi feito
+                               ,pr_cdctrlcs IN tbcobran_consulta_titulo.cdctrlcs%TYPE DEFAULT NULL --> Numero de controle da consulta no NPC
                                ,pr_nmextbcc OUT VARCHAR2                --Nome do banco
                                ,pr_vlfatura OUT NUMBER                  --Valor fatura
                                ,pr_dtdifere OUT BOOLEAN                 --Indicador data diferente
@@ -676,6 +678,7 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
                                      ,pr_dtagenda IN OUT DATE                 --Data agendamento
                                      ,pr_idorigem IN  INTEGER                 --Indicador de origem
                                      ,pr_indvalid IN  INTEGER                 --Indicador se ja foi feito
+                                     ,pr_cdctrlcs IN tbcobran_consulta_titulo.cdctrlcs%TYPE DEFAULT NULL --> Numero de controle da consulta no NPC
                                      ,pr_nmextbcc OUT VARCHAR2                --Nome do banco
                                      ,pr_vlfatura OUT NUMBER                  --Valor fatura
                                      ,pr_dtdifere OUT INTEGER                 --Indicador data diferente
@@ -733,6 +736,7 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
                            ,pr_vloutcre IN NUMBER                   --Valor saida credito
                            ,pr_nrcpfope IN NUMBER                   --Numero cpf operador
                            ,pr_tpcptdoc IN craptit.tpcptdoc%TYPE DEFAULT 1 --> Tipo de captura do documento (1=Leitora, 2=Linha digitavel).
+                           ,pr_cdctrlcs IN tbcobran_consulta_titulo.cdctrlcs%TYPE DEFAULT NULL --> Numero de controle da consulta no NPC
                            ,pr_dstransa OUT VARCHAR2                --Descricao transacao
                            ,pr_dsprotoc OUT VARCHAR2                --Descricao Protocolo
                            ,pr_cdbcoctl OUT VARCHAR2                --Codigo Banco Centralizador
@@ -847,6 +851,7 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
   /* Procedure para processar liquidacao de titulos */
   PROCEDURE pc_processa_liquidacao (pr_idtabcob IN ROWID    --Rowid da Cobranca
                                    ,pr_nrnosnum IN VARCHAR2 --Nosso Numero
+                                   ,pr_nrispbpg IN INTEGER DEFAULT NULL  --Numero ISPB do pagador
                                    ,pr_cdbanpag IN INTEGER  --Codigo banco pagamento
                                    ,pr_cdagepag IN INTEGER  --Codigo Agencia pagamento
                                    ,pr_vltitulo IN NUMBER   --Valor do titulo
@@ -910,6 +915,7 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
   /* Procedure para processar liquidacao de titulos apos baixa */
   PROCEDURE pc_proc_liquid_apos_baixa (pr_idtabcob IN ROWID    --Rowid da Cobranca
                                       ,pr_nrnosnum IN VARCHAR2 --Nosso Numero
+                                      ,pr_nrispbpg IN INTEGER DEFAULT NULL  --Numero ISPB do pagador
                                       ,pr_cdbanpag IN INTEGER  --Codigo banco pagamento
                                       ,pr_cdagepag IN INTEGER  --Codigo Agencia pagamento
                                       ,pr_vltitulo IN NUMBER   --Valor do titulo
@@ -1034,6 +1040,7 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
                              ,pr_dsmotivo IN VARCHAR2                   --Descricao Motivo
                              ,pr_nrremret IN INTEGER                    --Numero remessa retorno
                              ,pr_nrseqreg IN INTEGER                    --Sequencial do registro
+                             ,pr_nrispbrc IN NUMBER DEFAULT NULL        --> Numero ISPB do recebedor
                              ,pr_cdbcorec IN INTEGER                    --Codigo banco recebedor
                              ,pr_cdagerec IN INTEGER                    --Codigo Agencia recebedora
                              ,pr_cdbcocor IN INTEGER                    --Codigo Banco
@@ -1097,6 +1104,7 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
                                            ,pr_nrretcoo IN NUMBER   --Numero Retorno Cooperativa
                                            ,pr_cdmotivo IN VARCHAR  --Codigo Motivo
                                            ,pr_cdocorre IN INTEGER  --Codigo Ocorrencia
+                                           ,pr_nrispbpg IN INTEGER DEFAULT NULL  --Numero ISPB do pagador
                                            ,pr_cdbanpag IN INTEGER  --Codigo banco pagamento
                                            ,pr_cdagepag IN INTEGER  --Codigo Agencia pagamento
                                            ,pr_inestcri IN INTEGER DEFAULT 0 --Estado crise
@@ -1456,6 +1464,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                     na procedure pc_paga_titulo (Lucas Ranghetti #511679)                      
                     
        04/11/2016 - Ajuste para tratar a terceira execucao do processo debnet M349 (Tiago/Elton)             
+
+       29/12/2016 - Tratamento Nova Plataforma de cobrança PRJ340 - NPC (Odirlei-AMcom)
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Cursores da Package */
@@ -1796,6 +1806,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
            ,crapcob.dtdbaixa
            ,crapcob.nrctremp
            ,crapcob.inserasa
+           ,crapcob.nrdident
            ,crapcob.rowid
     FROM crapcob
     WHERE crapcob.ROWID = pr_rowid;
@@ -5606,6 +5617,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                ,pr_dtagenda IN OUT DATE                 --Data agendamento
                                ,pr_idorigem IN  INTEGER                 --Indicador de origem
                                ,pr_indvalid IN  INTEGER                 --Indicador se ja foi feito
+                               ,pr_cdctrlcs IN tbcobran_consulta_titulo.cdctrlcs%TYPE DEFAULT NULL --> Numero de controle da consulta no NPC
                                ,pr_nmextbcc OUT VARCHAR2                --Nome do banco
                                ,pr_vlfatura OUT NUMBER                  --Valor fatura
                                ,pr_dtdifere OUT BOOLEAN                 --Indicador data diferente
@@ -5717,6 +5729,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 				   AND tbgen_trans_pend.idsituacao_transacao IN (1,5); /* Pendente */
 			rw_tbpagto_trans_pend cr_tbpagto_trans_pend%ROWTYPE;
 
+      --> buscar agencia
+      CURSOR cr_crapage ( pr_cdcooper crapage.cdcooper%TYPE,
+                          pr_cdagenci crapage.cdagenci%TYPE) IS
+        SELECT crapage.qtddaglf
+          FROM crapage 
+         WHERE crapage.cdcooper = pr_cdcooper 
+           AND crapage.cdagenci = pr_cdagenci;
+      rw_crapage cr_crapage%ROWTYPE;
       --Variaveis Locais
       vr_cdbccxlt INTEGER;
       vr_cdagenci INTEGER;
@@ -5731,6 +5751,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
       vr_cobregis PLS_INTEGER;
       vr_dtdifere PLS_INTEGER;
       vr_vldifere PLS_INTEGER;
+      vr_dtdialim DATE;
+      
       --Variaveis de Erro
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic VARCHAR2(4000);
@@ -5767,6 +5789,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
           --Levantar Excecao
           RAISE vr_exc_erro;
         END IF;
+      
+        --> buscar agencia
+        OPEN cr_crapage ( pr_cdcooper => pr_cdcooper,
+                          pr_cdagenci => vr_cdagenci);
+        FETCH cr_crapage INTO rw_crapage;
+        
+        IF cr_crapage%NOTFOUND THEN
+          CLOSE cr_crapage;
+          vr_dscritic := 'PA nao cadastrado.';
+          RAISE vr_exc_erro;
+        END IF;
+        CLOSE cr_crapage;
+        
+        vr_dtdialim := trunc(SYSDATE) + rw_crapage.qtddaglf;
+        
+        --Verificar se a data do agendamento eh dia util
+        vr_dtdialim:= GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
+                                                 ,pr_dtmvtolt => vr_dtdialim
+                                                 ,pr_tipo     => 'P');
+                          
+       
+        IF pr_dtagenda > vr_dtdialim  THEN                     
+          vr_dscritic := 'A data limite para efetuar agendamentos é '|| 
+                          to_char(vr_dtdialim,'DD/MM/RRRR') ||'.';
+          RAISE vr_exc_erro;
+        END IF;                      
       END IF;
 
       --Montar a descricao da transacao
@@ -5854,6 +5902,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                           ,pr_cadastro        => 0               --Numero Cadastro
                                           ,pr_cadastro_conf   => 0               --Confirmacao Cadastro
                                           ,pr_dt_agendamento  => pr_dtagenda     --Data Agendamento
+                                          ,pr_cdctrlcs        => pr_cdctrlcs     --> Numero de controle da consulta no NPC
                                           ,pr_vlfatura        => pr_vlfatura     --Valor da Fatura
                                           ,pr_outra_data      => vr_dtdifere     --Outra data
                                           ,pr_outro_valor     => vr_vldifere     --Outro valor
@@ -6035,6 +6084,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                      ,pr_dtagenda IN OUT DATE                 --Data agendamento
                                      ,pr_idorigem IN  INTEGER                 --Indicador de origem
                                      ,pr_indvalid IN  INTEGER                 --Indicador se ja foi feito
+                                     ,pr_cdctrlcs IN tbcobran_consulta_titulo.cdctrlcs%TYPE DEFAULT NULL --> Numero de controle da consulta no NPC
                                      ,pr_nmextbcc OUT VARCHAR2                --Nome do banco
                                      ,pr_vlfatura OUT NUMBER                  --Valor fatura
                                      ,pr_dtdifere OUT INTEGER                 --Indicador data diferente
@@ -7889,6 +7939,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                            ,pr_vloutcre IN NUMBER                   --Valor saida credito
                            ,pr_nrcpfope IN NUMBER                   --Numero cpf operador
                            ,pr_tpcptdoc IN craptit.tpcptdoc%TYPE DEFAULT 1 --> Tipo de captura do documento (1=Leitora, 2=Linha digitavel).
+                           ,pr_cdctrlcs IN tbcobran_consulta_titulo.cdctrlcs%TYPE DEFAULT NULL --> Numero de controle da consulta no NPC
                            ,pr_dstransa OUT VARCHAR2                --Descricao transacao
                            ,pr_dsprotoc OUT VARCHAR2                --Descricao Protocolo
                            ,pr_cdbcoctl OUT VARCHAR2                --Codigo Banco Centralizador
@@ -8475,6 +8526,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                     ,pr_vloutdeb        => pr_vloutdeb         --Valor Saida Debitado
                                     ,pr_vloutcre        => pr_vloutcre         --Valor Saida Creditado
                                     ,pr_tpcptdoc        => pr_tpcptdoc         --Tipo de captura do documento (1=Leitora, 2=Linha digitavel).
+                                    ,pr_cdctrlcs        => pr_cdctrlcs         --> Numero de controle da consulta no NPC
                                     ,pr_rowidcob        => vr_rowidcob         --ROWID da cobranca
                                     ,pr_indpagto        => vr_indpagto         --Indicador Pagamento
                                     ,pr_nrcnvbol        => vr_nrcnvbol         --Numero Convenio Boleto
@@ -8640,47 +8692,51 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
       vr_nrcpfpre:= 0;
 
       IF pr_idorigem = 3 THEN
-        /* busca dados do preposto */
-        OPEN cr_crapsnh (pr_cdcooper => pr_cdcooper
-                        ,pr_nrdconta => pr_nrdconta
-                        ,pr_idseqttl => 1
-                        ,pr_tpdsenha => 1);
-        --Posicionar no proximo registro
-        FETCH cr_crapsnh INTO rw_crapsnh;
-        --Se nao encontrar
-        IF cr_crapsnh%FOUND THEN
-          --Numero cpf preposto
-          vr_nrcpfpre:= rw_crapsnh.nrcpfcgc;
-          --Selecionar dados avalista
-          OPEN cr_crapavt (pr_cdcooper => rw_crapsnh.cdcooper
-                          ,pr_nrdconta => rw_crapsnh.nrdconta
-                          ,pr_tpctrato => 6
-                          ,pr_nrcpfcgc => rw_crapsnh.nrcpfcgc);
+      
+        --> Busca dados apenas quando nao possui assinatura conjunta 
+        IF rw_crapass.idastcjt = 0 THEN
+          /* busca dados do preposto */
+          OPEN cr_crapsnh (pr_cdcooper => pr_cdcooper
+                          ,pr_nrdconta => pr_nrdconta
+                          ,pr_idseqttl => 1
+                          ,pr_tpdsenha => 1);
           --Posicionar no proximo registro
-          FETCH cr_crapavt INTO rw_crapavt;
+          FETCH cr_crapsnh INTO rw_crapsnh;
           --Se nao encontrar
-          IF cr_crapavt%FOUND THEN
-            --Selecionar informacoes avalista
-            OPEN cr_crapass (pr_cdcooper => pr_cdcooper
-                            ,pr_nrdconta => rw_crapavt.nrdctato);
+          IF cr_crapsnh%FOUND THEN
+            --Numero cpf preposto
+            vr_nrcpfpre:= rw_crapsnh.nrcpfcgc;
+            --Selecionar dados avalista
+            OPEN cr_crapavt (pr_cdcooper => rw_crapsnh.cdcooper
+                            ,pr_nrdconta => rw_crapsnh.nrdconta
+                            ,pr_tpctrato => 6
+                            ,pr_nrcpfcgc => rw_crapsnh.nrcpfcgc);
             --Posicionar no proximo registro
-            FETCH cr_crapass INTO rw_cra2ass;
+            FETCH cr_crapavt INTO rw_crapavt;
             --Se nao encontrar
-            IF cr_crapass%FOUND THEN
-              --Nome preposto recebe nome avalista
-              vr_nmprepos:= rw_cra2ass.nmprimtl;
-            ELSE
-              --Nome preposto recebe nome avalista
-              vr_nmprepos:= rw_crapavt.nmdavali;
+            IF cr_crapavt%FOUND THEN
+              --Selecionar informacoes avalista
+              OPEN cr_crapass (pr_cdcooper => pr_cdcooper
+                              ,pr_nrdconta => rw_crapavt.nrdctato);
+              --Posicionar no proximo registro
+              FETCH cr_crapass INTO rw_cra2ass;
+              --Se nao encontrar
+              IF cr_crapass%FOUND THEN
+                --Nome preposto recebe nome avalista
+                vr_nmprepos:= rw_cra2ass.nmprimtl;
+              ELSE
+                --Nome preposto recebe nome avalista
+                vr_nmprepos:= rw_crapavt.nmdavali;
+              END IF;
+              --Fechar Cursor
+              CLOSE cr_crapass;
             END IF;
             --Fechar Cursor
-            CLOSE cr_crapass;
+            CLOSE cr_crapavt;
           END IF;
           --Fechar Cursor
-          CLOSE cr_crapavt;
+          CLOSE cr_crapsnh;
         END IF;
-        --Fechar Cursor
-        CLOSE cr_crapsnh;
       END IF;
       --Tipo Protocolo
       IF pr_idorigem = 4 THEN
@@ -13582,6 +13638,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                              ,pr_dsmotivo IN VARCHAR2                   --Descricao Motivo
                              ,pr_nrremret IN INTEGER                    --Numero remessa retorno
                              ,pr_nrseqreg IN INTEGER                    --Sequencial do registro
+                             ,pr_nrispbrc IN NUMBER DEFAULT NULL        --> Numero ISPB do recebedor
                              ,pr_cdbcorec IN INTEGER                    --Codigo banco recebedor
                              ,pr_cdagerec IN INTEGER                    --Codigo Agencia recebedora
                              ,pr_cdbcocor IN INTEGER                    --Codigo Banco
@@ -13813,6 +13870,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
           ,crapret.cdmotivo
           ,crapret.nrretcoo
           ,crapret.dtcredit
+          ,crapret.nrispbrc
           ,crapret.cdbcorec
           ,crapret.cdagerec
           ,crapret.cdbcocor
@@ -13845,6 +13903,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
           ,pr_dsmotivo
           ,pr_nrretcoo
           ,pr_dtcredit
+          ,pr_nrispbrc
           ,pr_cdbcorec
           ,pr_cdagerec
           ,pr_cdbcocor
@@ -14499,6 +14558,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                            ,pr_nrretcoo IN NUMBER   --Numero Retorno Cooperativa
                                            ,pr_cdmotivo IN VARCHAR  --Codigo Motivo
                                            ,pr_cdocorre IN INTEGER  --Codigo Ocorrencia
+                                           ,pr_nrispbpg IN INTEGER DEFAULT NULL  --Numero ISPB do pagador
                                            ,pr_cdbanpag IN INTEGER  --Codigo banco pagamento
                                            ,pr_cdagepag IN INTEGER  --Codigo Agencia pagamento
                                            ,pr_inestcri IN INTEGER DEFAULT 0 --Estado crise
@@ -14735,6 +14795,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                 ,pr_dsmotivo => pr_cdmotivo           --Descricao Motivo
                                 ,pr_nrremret => vr_nrremret           --Numero remessa retorno
                                 ,pr_nrseqreg => vr_nrseqreg           --Sequencial do registro
+                                ,pr_nrispbrc => pr_nrispbpg           --Numero do ISPB do recebedor
                                 ,pr_cdbcorec => pr_cdbanpag           --Codigo banco recebedor
                                 ,pr_cdagerec => pr_cdagepag           --Codigo Agencia recebedora
                                 ,pr_cdbcocor => 0                     --Codigo Banco
@@ -14775,6 +14836,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
   /* Procedure para processar liquidacao de titulos */
   PROCEDURE pc_processa_liquidacao (pr_idtabcob IN ROWID    --Rowid da Cobranca
                                    ,pr_nrnosnum IN VARCHAR2 --Nosso Numero
+                                   ,pr_nrispbpg IN INTEGER DEFAULT NULL  --Numero ISPB do pagador
                                    ,pr_cdbanpag IN INTEGER  --Codigo banco pagamento
                                    ,pr_cdagepag IN INTEGER  --Codigo Agencia pagamento
                                    ,pr_vltitulo IN NUMBER   --Valor do titulo
@@ -14818,6 +14880,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --
     --              29/10/2015 - Inclusao do indicador estado de crise. (Jaison/Andrino)
     --
+    --              29/12/2016 - Tratamento Nova Plataforma de cobrança PRJ340 - NPC (Odirlei-AMcom)
     -- .........................................................................*/
 
   BEGIN
@@ -15156,6 +15219,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                           ,crapcob.vljurpag = pr_vlrjuros
                           ,crapcob.vloutdeb = pr_vloutdeb
                           ,crapcob.vloutcre = pr_vloutcre
+                          ,crapcob.nrispbrc = pr_nrispbpg
         WHERE crapcob.ROWID = pr_idtabcob;
       EXCEPTION
         WHEN Others THEN
@@ -15236,6 +15300,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
           RAISE vr_exc_erro;
         END IF;
       END IF;
+      
+      --> Realizar baixa operacional
+      IF rw_crapcob.nrdident > 0 THEN
+        BEGIN
+          UPDATE tbcobran_baixa_operac o
+             SET o.flgbaixa_efetiva = 1
+           WHERE o.nrdident = rw_crapcob.nrdident
+             AND o.tpoperac_jd = 'BO';
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Não foi possivel atualizar baixa operacional: '||SQLERRM;
+            RAISE vr_exc_erro;
+        END;        
+      END IF;       
+      
+      
     EXCEPTION
       WHEN vr_exc_erro THEN
         pr_cdcritic:= vr_cdcritic;
@@ -15975,6 +16055,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
   /* Procedure para processar liquidacao de titulos apos baixa */
   PROCEDURE pc_proc_liquid_apos_baixa (pr_idtabcob IN ROWID    --Rowid da Cobranca
                                       ,pr_nrnosnum IN VARCHAR2 --Nosso Numero
+                                      ,pr_nrispbpg IN INTEGER DEFAULT NULL  --Numero ISPB do pagador
                                       ,pr_cdbanpag IN INTEGER  --Codigo banco pagamento
                                       ,pr_cdagepag IN INTEGER  --Codigo Agencia pagamento
                                       ,pr_vltitulo IN NUMBER   --Valor do titulo
@@ -16011,6 +16092,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --   Objetivo  : Procedure para processar liquidacao de titulos apos baixa
     --
     --   Alteracoes: 29/10/2015 - Inclusao do indicador estado de crise. (Jaison/Andrino)
+    --
+    --               29/12/2016 - Tratamento Nova Plataforma de cobrança PRJ340 - NPC (Odirlei-AMcom)
     --
   BEGIN
     DECLARE
@@ -16119,6 +16202,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
           UPDATE crapcob SET crapcob.incobran = 5 /* Liquidado/Pago */
                             ,crapcob.dtdpagto = pr_dtocorre
                             ,crapcob.vldpagto = pr_vlrpagto
+                            ,crapcob.nrispbrc = pr_nrispbpg
                             ,crapcob.cdagepag = pr_cdagepag
                             ,crapcob.cdbanpag = pr_cdbanpag
                             ,crapcob.indpagto = pr_indpagto
@@ -16251,6 +16335,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                                 ,pr_nrretcoo => pr_ret_nrremret   --Numero Retorno Cooperativa
                                                 ,pr_cdmotivo => pr_dsmotivo   --Codigo Motivo
                                                 ,pr_cdocorre => pr_cdocorre   --Codigo Ocorrencia
+                                                ,pr_nrispbpg => pr_nrispbpg   --> Numero ISPB do pagador
                                                 ,pr_cdbanpag => pr_cdbanpag   --Codigo banco pagamento
                                                 ,pr_cdagepag => pr_cdagepag   --Codigo Agencia pagamento
                                                 ,pr_inestcri => pr_inestcri   --Estado crise
@@ -16262,6 +16347,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
           RAISE vr_exc_erro;
         END IF;
       END IF;
+      
+      --> Realizar baixa operacional
+      IF rw_crapcob.nrdident > 0 THEN
+        BEGIN
+          UPDATE tbcobran_baixa_operac o
+             SET o.flgbaixa_efetiva = 1
+           WHERE o.nrdident = rw_crapcob.nrdident
+             AND o.tpoperac_jd = 'BO';
+        EXCEPTION  
+          WHEN OTHERS THEN
+            vr_dscritic := 'Não foi possivel atualizar baixa operacional: '||SQLERRM;
+            RAISE vr_exc_erro;
+        END;        
+      END IF;
+      
     EXCEPTION
       WHEN vr_exc_erro THEN
         pr_cdcritic:= vr_cdcritic;

@@ -7,7 +7,7 @@
 
      Autor: Evandro
 
-      Data: Janeiro/2010                        Ultima alteracao: 04/11/2016
+      Data: Janeiro/2010                        Ultima alteracao: 20/01/2017 
 
 Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
 
@@ -281,6 +281,10 @@ Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
 
 			08/11/2016 - Alteracoes referentes a melhoria 165 - Lancamentos Futuros. 
                          Lenilson (Mouts)
+                         
+            20/01/2017 - Alterado nome da procedure calcula_valor_titulo_vencido para calcula_valor_titulo
+                         e incluido retorno de novas informaçoes.
+                         PRJ340 - NPC (Odirlei-AMcom)
 ............................................................................. */
 
 CREATE WIDGET-POOL.
@@ -404,6 +408,7 @@ DEFINE VARIABLE aux_nrtelefo AS DECI   INIT 0               NO-UNDO.
 DEFINE VARIABLE aux_tptelefo AS INT                         NO-UNDO.
 DEFINE VARIABLE aux_flgacsms AS INTE                        NO-UNDO.
 DEFINE VARIABLE aux_dsmsgsms AS CHAR                        NO-UNDO.
+DEFINE VARIABLE aux_nrctlnpc AS CHAR                        NO-UNDO.
 
 /* para exclusao de agendamentos */
 DEFINE VARIABLE aux_dtmvtopg AS DATE                        NO-UNDO.
@@ -927,7 +932,9 @@ DO:
 		ELSE
 		IF   xField:NAME = "CODIGO_BARRAS" THEN
              aux_codigo_barras = STRING(xText:NODE-VALUE).
-
+    ELSE
+		IF   xField:NAME = "NRCTLNPC" THEN
+             aux_nrctlnpc = STRING(xText:NODE-VALUE). 
     END.
 
     IF   aux_operacao = 0   THEN
@@ -1498,7 +1505,7 @@ DO:
         ELSE
         IF   aux_operacao = 63   THEN
              DO:               
-                 RUN calcula_valor_titulo_vencido.
+                 RUN calcula_valor_titulo.
 
                  IF   RETURN-VALUE <> "OK"   THEN
                       NEXT.
@@ -4309,6 +4316,7 @@ PROCEDURE verifica_titulo:
                                  INPUT        aux_datpagto,  /* data agendamento */
                                  INPUT        4,             /* origem TAA */
                                  INPUT        1, /* nao validar */
+                                 INPUT aux_nrctlnpc, /* Numero controle consulta npc */   
                                        OUTPUT aux_nmconban,
                                        OUTPUT aux_vlrdocum,  /* valor do titulo */
                                        OUTPUT aux_dtdifere,
@@ -4468,6 +4476,7 @@ PROCEDURE paga_titulo:
                                  INPUT        aux_datpagto,  /* data agendamento */
                                  INPUT        4,             /* origem TAA */
                                  INPUT        1, /* nao validar */
+                                 INPUT aux_nrctlnpc, /* Numero controle consulta npc */   
                                        OUTPUT aux_nmconban,
                                        OUTPUT aux_vlrdocum,  /* valor do titulo */
                                        OUTPUT aux_dtdifere,
@@ -4575,6 +4584,7 @@ PROCEDURE paga_titulo:
                                                      INPUT par_vloutcre,
                                                      INPUT 0,
                                                      INPUT aux_tpcptdoc,
+                                                     INPUT aux_nrctlnpc, /* Numero controle consulta npc */   
                                                     OUTPUT aux_dstrans1,
                                                     OUTPUT aux_dscritic,
                                                     OUTPUT aux_dsprotoc,
@@ -8623,14 +8633,20 @@ PROCEDURE alterar-autorizacao-debito:
 END PROCEDURE.
 /* Fim 62 - alterar-autorizacao-debito */
 
-/*Inicio 63 - calcula_valor_titulo_vencido*/
-PROCEDURE calcula_valor_titulo_vencido:
+/*Inicio 63 - calcula_valor_titulo*/
+PROCEDURE calcula_valor_titulo:
 
     DEF VAR aux_vlfatura                AS DECI         NO-UNDO.
 	DEF VAR aux_vlrjuros                AS DECI         NO-UNDO.
 	DEF VAR aux_vlrmulta                AS DECI         NO-UNDO.
 	DEF VAR aux_fltitven                AS INTE         NO-UNDO.
 
+  DEF VAR aux_tppesbenf               AS CHAR         NO-UNDO.
+  DEF VAR aux_inpesbnf                AS INTE         NO-UNDO.
+  DEF VAR aux_nrdocbnf                AS DECI         NO-UNDO.
+  DEF VAR aux_nmbenefi                AS CHAR         NO-UNDO.
+  DEF VAR aux_nrctlnpc                AS CHAR         NO-UNDO.
+  
 	DEF VAR aux_des_erro                AS CHAR         NO-UNDO.
 	DEF VAR aux_dscritic                AS CHAR         NO-UNDO.
 
@@ -8657,7 +8673,40 @@ PROCEDURE calcula_valor_titulo_vencido:
 
 	{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
-	RUN STORED-PROCEDURE pc_retorna_vlr_tit_vencto
+  RUN STORED-PROCEDURE pc_consultar_valor_titulo
+      aux_handproc = PROC-HANDLE NO-ERROR
+                         (INPUT aux_cdcooper       /* Cooperativa             */
+                         ,INPUT aux_nrdconta       /* Número da conta         */
+                         ,INPUT 91                 /* Agencia                 */
+                         ,INPUT 900       /* Número do caixa         */
+                         ,INPUT 1                  /* Titular da conta        */
+                         ,INPUT 0                  /* Indicador origem Mobile */
+                         ,INPUT aux_titulo1
+                         ,INPUT aux_titulo2
+                         ,INPUT aux_titulo3
+                         ,INPUT aux_titulo4
+                         ,INPUT aux_titulo5
+                         ,INPUT aux_codigo_barras /* Codigo de Barras */
+                         ,INPUT "996"      /* Código do operador */
+                         /* OUTPUT */
+                         ,OUTPUT 0       /* pr_nrdocbenf    -- Documento do beneficiário emitente */
+                         ,OUTPUT ""      /* pr_tppesbenf    -- Tipo de pessoa beneficiaria */
+                         ,OUTPUT ""      /* pr_dsbenefic    -- Descriçao do beneficiário emitente */
+                         ,OUTPUT 0       /* pr_vlrtitulo    -- Valor do título */
+                         ,OUTPUT 0       /* pr_vlrjuros     -- Valor dos Juros */
+                         ,OUTPUT 0       /* pr_vlrmulta	    -- Valor da multa */
+                         ,OUTPUT 0       /* pr_vlrdescto	  -- Valor do desconto */
+                         ,OUTPUT ""      /* pr_nrctrlcs     -- Numero do controle da consulta */
+                         ,OUTPUT 0       /* pr_flblq_valor  -- Flag para bloquear o valor de pagamento */
+                         ,OUTPUT 0       /* pr_fltitven     -- Flag indicador de titulo vencido */
+                         ,OUTPUT ""      /* pr_des_erro     -- Indicador erro OK/NOK */
+                         ,OUTPUT 0       /* pr_cdcritic     -- Código do erro  */
+                         ,OUTPUT "").    /* pr_dscritic     -- Descricao do erro  */
+    
+  CLOSE STORED-PROC pc_consultar_valor_titulo aux_statproc = PROC-STATUS
+        WHERE PROC-HANDLE = aux_handproc.
+  
+	/*RUN STORED-PROCEDURE pc_retorna_vlr_tit_vencto
 	  aux_handproc = PROC-HANDLE NO-ERROR
                         (INPUT aux_cdcooper,
                          INPUT aux_nrdconta,
@@ -8680,11 +8729,43 @@ PROCEDURE calcula_valor_titulo_vencido:
 	/* Fechar o procedimento para buscarmos o resultado */ 
 	CLOSE STORED-PROC pc_retorna_vlr_tit_vencto
 		   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+	*/
 
 	{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
 
 	/* Busca possíveis erros */ 
 	ASSIGN aux_des_erro = ""
+           aux_dscritic = ""
+           aux_vlfatura = 0
+           aux_vlrjuros = 0
+           aux_vlrmulta = 0
+         aux_fltitven = 0.
+  ASSIGN aux_tppesbenf = ""
+         aux_nrdocbnf = 0
+         aux_nmbenefi = ""
+         aux_nrctlnpc = "".
+  ASSIGN aux_vlfatura = pc_consultar_valor_titulo.pr_vlrtitulo
+                        WHEN pc_consultar_valor_titulo.pr_vlrtitulo <> ?        
+         aux_vlrjuros = pc_consultar_valor_titulo.pr_vlrjuros
+                        WHEN pc_consultar_valor_titulo.pr_vlrjuros <> ?
+         aux_vlrmulta = pc_consultar_valor_titulo.pr_vlrmulta
+                        WHEN pc_consultar_valor_titulo.pr_vlrmulta <> ?
+         aux_fltitven = pc_consultar_valor_titulo.pr_fltitven
+                        WHEN pc_consultar_valor_titulo.pr_fltitven <> ?.
+  ASSIGN aux_tppesbenf = pc_consultar_valor_titulo.pr_tppesbenf
+                        WHEN pc_consultar_valor_titulo.pr_tppesbenf <> ?
+         aux_nrdocbnf = pc_consultar_valor_titulo.pr_nrdocbenf
+                        WHEN pc_consultar_valor_titulo.pr_nrdocbenf <> ?
+         aux_nmbenefi = pc_consultar_valor_titulo.pr_dsbenefic
+                        WHEN pc_consultar_valor_titulo.pr_dsbenefic <> ?
+         aux_nrctlnpc = pc_consultar_valor_titulo.pr_nrctrlcs
+                        WHEN pc_consultar_valor_titulo.pr_nrctrlcs <> ?               
+         aux_des_erro = pc_consultar_valor_titulo.pr_des_erro
+                        WHEN pc_consultar_valor_titulo.pr_des_erro <> ?
+         aux_dscritic = pc_consultar_valor_titulo.pr_dscritic
+                        WHEN pc_consultar_valor_titulo.pr_dscritic <> ?.
+  
+	/*ASSIGN aux_des_erro = ""
            aux_dscritic = ""
            aux_vlfatura = 0
            aux_vlrjuros = 0
@@ -8701,7 +8782,7 @@ PROCEDURE calcula_valor_titulo_vencido:
            aux_des_erro = pc_retorna_vlr_tit_vencto.pr_des_erro
                           WHEN pc_retorna_vlr_tit_vencto.pr_des_erro <> ?
            aux_dscritic = pc_retorna_vlr_tit_vencto.pr_dscritic
-                          WHEN pc_retorna_vlr_tit_vencto.pr_dscritic <> ?.
+                          WHEN pc_retorna_vlr_tit_vencto.pr_dscritic <> ?.*/
 
 
 	/*---------------*/
@@ -8737,6 +8818,52 @@ PROCEDURE calcula_valor_titulo_vencido:
     xField:APPEND-CHILD(xText).
 
     /*---------------*/
+    IF aux_tppesbenf = 'F' THEN
+      aux_inpesbnf = 1.  
+    ELSE
+      aux_inpesbnf = 2.  
+    
+    xDoc:CREATE-NODE(xField,"INPESBNF","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(aux_inpesbnf).
+    xField:APPEND-CHILD(xText). 
+    
+    /*---------------*/    
+    xDoc:CREATE-NODE(xField,"NRDOCBNF","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(aux_nrdocbnf).
+    xField:APPEND-CHILD(xText). 
+    
+    /*---------------*/    
+    
+    IF aux_nmbenefi <> ?  AND 
+       aux_nmbenefi <> "" THEN
+    DO:   
+      xDoc:CREATE-NODE(xField,"NMBENEFI","ELEMENT").
+      xRoot:APPEND-CHILD(xField).
+    
+      xDoc:CREATE-NODE(xText,"","TEXT").
+      xText:NODE-VALUE = STRING(aux_nmbenefi).
+      xField:APPEND-CHILD(xText).
+    END.
+
+    /*---------------*/             
+    IF aux_nrctlnpc <> ?  AND 
+       aux_nrctlnpc <> "" THEN
+    DO: 
+      xDoc:CREATE-NODE(xField,"NRCRLNPC","ELEMENT").
+      xRoot:APPEND-CHILD(xField).
+
+      xDoc:CREATE-NODE(xText,"","TEXT").
+      xText:NODE-VALUE = STRING(aux_nrctlnpc).
+      xField:APPEND-CHILD(xText).
+    END.
+
+    /*---------------*/
     xDoc:CREATE-NODE(xField,"DES_ERRO","ELEMENT").
     xRoot:APPEND-CHILD(xField).
 
@@ -8755,6 +8882,7 @@ PROCEDURE calcula_valor_titulo_vencido:
 	      xText:NODE-VALUE = STRING(aux_dscritic).
 		  xField:APPEND-CHILD(xText).
 	   END.
+    
     RETURN "OK".
 
 END PROCEDURE.
@@ -8865,8 +8993,7 @@ PROCEDURE lancamentos-futuros:
 
     RETURN "OK".
 END PROCEDURE.
-/*Fim 63 - calcula_valor_titulo_vencido*/
-
+/*Fim 63 - calcula_valor_titulo*/
 /* 65 - atualizacao-telefone */
 PROCEDURE atualizacao-telefone:
 
