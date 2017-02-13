@@ -85,7 +85,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_FLUXOS IS
                    ,pr_cdoperad IN crapope.cdoperad%TYPE) IS
     SELECT cdoperad
           ,nmoperad
-          ,dsdepart
+          ,cddepart
       FROM crapope
      WHERE cdcooper = pr_cdcooper
        AND UPPER(cdoperad) = UPPER(pr_cdoperad);
@@ -1923,12 +1923,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_FLUXOS IS
       CLOSE cr_crapope;
 
       -- Se NAO fizer parte dos departamentos abaixo
-      IF rw_crapope.dsdepart <> 'TI'                   AND
-         rw_crapope.dsdepart <> 'SUPORTE'              AND
-         rw_crapope.dsdepart <> 'COORD.ADM/FINANCEIRO' AND
-         rw_crapope.dsdepart <> 'COORD.PRODUTOS'       AND
-         rw_crapope.dsdepart <> 'COMPE'                AND
-         rw_crapope.dsdepart <> 'FINANCEIRO'           THEN
+      IF rw_crapope.cddepart <> 20/*TI*/                   AND
+         rw_crapope.cddepart <> 18/*SUPORTE*/              AND
+         rw_crapope.cddepart <> 08/*COORD.ADM/FINANCEIRO*/ AND
+         rw_crapope.cddepart <> 09/*COORD.PRODUTOS*/       AND
+         rw_crapope.cddepart <> 04/*COMPE*/                AND
+         rw_crapope.cddepart <> 11/*FINANCEIRO*/           THEN
         vr_cdcritic := 36;
         RAISE vr_exc_saida;
       END IF;

@@ -121,7 +121,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARFLU IS
   -- Busca operador
   CURSOR cr_crapope(pr_cdcooper IN crapope.cdcooper%TYPE
                    ,pr_cdoperad IN crapope.cdoperad%TYPE) IS
-    SELECT dsdepart
+    SELECT cddepart
       FROM crapope
      WHERE crapope.cdcooper = pr_cdcooper
        AND UPPER(crapope.cdoperad) = UPPER(pr_cdoperad);
@@ -1007,9 +1007,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARFLU IS
       CLOSE cr_crapope;
 
       -- Se NAO fizer parte dos departamentos abaixo
-      IF rw_crapope.dsdepart <> 'COORD.ADM/FINANCEIRO' AND
-         rw_crapope.dsdepart <> 'TI'                   AND
-         rw_crapope.dsdepart <> 'FINANCEIRO'           THEN
+      IF rw_crapope.cddepart <> 08/*COORD.ADM/FINANCEIRO*/ AND
+         rw_crapope.cddepart <> 20/*TI*/                   AND
+         rw_crapope.cddepart <> 18/*SUPORTE*/              AND
+         rw_crapope.cddepart <> 11/*FINANCEIRO*/           THEN
         vr_dscritic := 'Permissao de acesso negada.';
         RAISE vr_exc_saida;
       END IF;
@@ -1164,9 +1165,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARFLU IS
       CLOSE cr_crapope;
 
       -- Se NAO fizer parte dos departamentos abaixo
-      IF rw_crapope.dsdepart <> 'COORD.ADM/FINANCEIRO' AND
-         rw_crapope.dsdepart <> 'TI'                   AND
-         rw_crapope.dsdepart <> 'FINANCEIRO'           THEN
+      IF rw_crapope.cddepart <> 08/*COORD.ADM/FINANCEIRO*/ AND
+         rw_crapope.cddepart <> 20/*TI*/                   AND
+         rw_crapope.cddepart <> 18/*SUPORTE*/              AND
+         rw_crapope.cddepart <> 11/*FINANCEIRO*/           THEN
         vr_dscritic := 'Permissao de acesso negada.';
         RAISE vr_exc_saida;
       END IF;
@@ -1323,9 +1325,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARFLU IS
       CLOSE cr_crapope;
 
       -- Se NAO fizer parte dos departamentos abaixo
-      IF rw_crapope.dsdepart <> 'COORD.ADM/FINANCEIRO' AND
-         rw_crapope.dsdepart <> 'TI'                   AND
-         rw_crapope.dsdepart <> 'FINANCEIRO'           THEN
+      IF rw_crapope.cddepart <> 08/*COORD.ADM/FINANCEIRO*/ AND
+         rw_crapope.cddepart <> 20/*TI*/                   AND
+         rw_crapope.cddepart <> 18/*SUPORTE*/              AND
+         rw_crapope.cddepart <> 11/*FINANCEIRO*/           THEN
         vr_dscritic := 'Permissao de acesso negada.';
         RAISE vr_exc_saida;
       END IF;
@@ -1446,9 +1449,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARFLU IS
       CLOSE cr_crapope;
 
       -- Se NAO fizer parte dos departamentos abaixo
-      IF rw_crapope.dsdepart <> 'COORD.ADM/FINANCEIRO' AND
-         rw_crapope.dsdepart <> 'TI'                   AND
-         rw_crapope.dsdepart <> 'FINANCEIRO'           THEN
+      IF rw_crapope.cddepart <> 08/*COORD.ADM/FINANCEIRO*/ AND
+         rw_crapope.cddepart <> 20/*TI*/                   AND
+         rw_crapope.cddepart <> 18/*SUPORTE*/              AND
+         rw_crapope.cddepart <> 11/*FINANCEIRO*/           THEN
         vr_dscritic := 'Permissao de acesso negada.';
         RAISE vr_exc_saida;
       END IF;
