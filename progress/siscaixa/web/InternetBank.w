@@ -5140,6 +5140,7 @@ PROCEDURE proc_operacao88:
                xml_operacao88.nrcpfope 
                xml_operacao88.cdbcoctl
                xml_operacao88.cdagectl 
+               xml_operacao88.cdagesic
                xml_operacao88.dscabfim.
     
     END.

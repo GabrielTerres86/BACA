@@ -427,6 +427,7 @@ DEF TEMP-TABLE xml_operacao88                                           NO-UNDO
     FIELD nrcpfope AS CHAR
     FIELD cdbcoctl AS CHAR
     FIELD cdagectl AS CHAR
+    FIELD cdagesic AS CHAR
     FIELD dscabfim AS CHAR.
 
 

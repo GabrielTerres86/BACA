@@ -90,6 +90,14 @@ IF aux_cdcritic <> 0   OR
        
    END.
 
+FIND FIRST crapcop WHERE crapcop.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
+
+IF  NOT AVAIL crapcop  THEN
+    DO:
+        ASSIGN xml_dsmsgerr = "<dsmsgerr>Cooperativa nao encontrada.</dsmsgerr>".  
+        RETURN "NOK".   
+    END.     
+
 FOR EACH wt_protocolo NO-LOCK:
 
     CREATE xml_operacao88.
@@ -202,21 +210,37 @@ FOR EACH wt_protocolo NO-LOCK:
                                      "</nrcpfope>"
            xml_operacao88.cdbcoctl = "<cdbcoctl>" +
                                     (IF wt_protocolo.cdbcoctl <> ? THEN
-                                        IF  wt_protocolo.cdtippro <> ?   AND 
-                                           (wt_protocolo.cdtippro >= 16  AND
-                                            wt_protocolo.cdtippro <= 19) THEN
-                                              STRING(wt_protocolo.cdbcoctl, "9999")
-                                        ELSE
 											STRING(wt_protocolo.cdbcoctl, "999")
                                      ELSE
-                                        "") +
+                                        IF par_cdtippro = 16 OR 
+                                           par_cdtippro = 17 OR
+                                           par_cdtippro = 18 OR
+                                           par_cdtippro = 19 THEN
+                                           STRING(crapcop.cdbcoctl, "999")
+                                        ELSE 
+											"") +
                                      "</cdbcoctl>" 
            xml_operacao88.cdagectl = "<cdagectl>" +
                                     (IF wt_protocolo.cdagectl <> ? THEN
                                         STRING(wt_protocolo.cdagectl, "9999") 
                                      ELSE
-                                        "") +
+                                        IF par_cdtippro = 16 OR 
+                                           par_cdtippro = 17 OR
+                                           par_cdtippro = 18 OR
+                                           par_cdtippro = 19 THEN
+                                           STRING(crapcop.cdagectl, "9999")
+                                        ELSE 
+											"") +
                                      "</cdagectl>"
+           xml_operacao88.cdagesic = "<cdagesic>" +
+                                    (IF par_cdtippro = 16 OR 
+                                        par_cdtippro = 17 OR
+                                        par_cdtippro = 18 OR
+                                        par_cdtippro = 19 THEN
+                                        STRING(crapcop.cdagesic, "9999")
+                                     ELSE 
+                                         "") +
+                                     "</cdagesic>"
            xml_operacao88.dscabfim = "</DADOS>".
 
 END.
