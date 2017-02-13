@@ -1552,7 +1552,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
       CURSOR cr_crapcop(pr_cdcooper IN crappro.cdcooper%TYPE) IS   --> Código da cooperativa
       SELECT cop.cdbcoctl
             ,cop.cdagectl
-			,cop.cdagesic
         FROM crapcop cop
        WHERE cop.cdcooper = pr_cdcooper;
       rw_crapcop cr_crapcop%ROWTYPE;
@@ -1728,8 +1727,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
         IF rw_crappro.cdtippro IN (2,6,9) THEN
           pr_protocolo(vr_index).cdbcoctl := rw_crapcop.cdbcoctl;
           pr_protocolo(vr_index).cdagectl := rw_crapcop.cdagectl;
-		ELSIF rw_crappro.cdtippro IN (16,17,18,19) THEN
-		  pr_protocolo(vr_index).cdbcoctl := rw_crapcop.cdagesic;
         END IF;
 
         -- Valida TAA
