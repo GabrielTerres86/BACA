@@ -3,7 +3,7 @@
    Programa: fontes/crps545.p
    Sigla   : CRED
    Autor   : Guilherme
-   Data    : Dezembro/2009.                     Ultima atualizacao: 13/01/2017
+   Data    : Dezembro/2009.                     Ultima atualizacao: 02/02/2017
                                                                           
    Dados referentes ao programa:
 
@@ -87,6 +87,9 @@
 							nova, pois estava criando com a coop. antiga e nao
 							ocorria centralizacao (Diego).
 			    	
+               02/02/2017 - Ajustado para que seja possivel importar os arquivos 
+                            do SPB para quando o Bacen estiver em crise 
+                            (Douglas - Chamado 536015)
 ............................................................................. */
 
 { includes/var_batch.i } 
@@ -130,6 +133,7 @@ DEF TEMP-TABLE crawint NO-UNDO
 
 DEF BUFFER b-crapcop FOR crapcop.
     
+DEF VAR aux_nmarqfind AS CHAR  NO-UNDO. 
 DEF VAR aux_nmarquiv AS CHAR   NO-UNDO.
 DEF VAR aux_nmarqimp AS CHAR   NO-UNDO.
 DEF VAR aux_setlinha AS CHAR   NO-UNDO.
@@ -155,12 +159,27 @@ RUN fontes/iniprg.p.
 IF  glb_cdcritic > 0  THEN
     RETURN.
 
-ASSIGN aux_codiispb = "05463212_" + STRING(YEAR(glb_dtmvtolt),"9999") + 
+/*
+  Conforme informado pela Juliana e pela Karoline do Financeiro (SPB)
+  o nome do arquivo é composto da seguinte forma:
+      - ISPB da Instituicao Financeira
+      - Data inicial do estado de crise
+      - Data final do estado de crise
+      
+  Dessa forma a mascara do arquivo que vamo procurar é:
+  ISPB + QUALQUER DATA + DATA FINAL
+  
+  Assim o arquivo sempre vai conter a data atual do sistema no campo de DATA FINAL
+*/
+
+ASSIGN aux_codiispb  = "05463212"
+       aux_nmarqfind = aux_codiispb + "_*_" + 
+                       STRING(YEAR(glb_dtmvtolt),"9999") + 
                       STRING(MONTH(glb_dtmvtolt),"99") +
                       STRING(DAY(glb_dtmvtolt),"99").
 
-INPUT STREAM str_1 THROUGH VALUE("ls /micros/cecred/spb/" + aux_codiispb 
-                                 + "_*.txt 2> /dev/null") NO-ECHO.
+INPUT STREAM str_1 THROUGH VALUE("ls /micros/cecred/spb/" + aux_nmarqfind 
+                                 + ".txt 2> /dev/null") NO-ECHO.
 
 DO WHILE TRUE ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
 
