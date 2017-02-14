@@ -5307,19 +5307,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
          WHERE cdtransacao_pendente = pr_cdtransa;
 
       rw_tbaprova_rep cr_tbaprova_rep%ROWTYPE;
-
-			-- Cursor para buscar a transação de adesão de pacote de tarifa pendente
-			CURSOR cr_pactar (pr_cdtranpe IN tbtarif_pacote_trans_pend.cdtransacao_pendente%TYPE)IS
-			  SELECT tpend.vlpacote
-				      ,tpend.dtinicio_vigencia dtinivig
-				      ,(tpac.cdpacote || ' - ' || tpac.dspacote) dspacote
-							,tpend.nrdiadebito dtdiadeb
-				  FROM tbtarif_pacote_trans_pend tpend
-					    ,tbtarif_pacotes tpac
-				 WHERE tpend.cdtransacao_pendente = pr_cdtranpe			
-				   AND tpac.cdpacote = tpend.cdpacote;
-			rw_pactar cr_pactar%ROWTYPE;
-
+		
       --> Contrato de SMS - Transacao 16
       CURSOR cr_sms_trans_pend (pr_cdtransa IN tbcobran_sms_trans_pend.cdtransacao_pendente%TYPE) IS
         SELECT pen.vlservico

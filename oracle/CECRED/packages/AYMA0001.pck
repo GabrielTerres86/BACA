@@ -241,10 +241,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AYMA0001 AS
       -- header para Authentication Secret
       vr_index_http_cabecalho := vr_index_http_cabecalho + 1;
       vr_cabecalho(vr_index_http_cabecalho).chave := TRIM(gene0002.fn_busca_entrada(pr_postext     => 1
-                                                                                   ,pr_dstext      => rw_token_aymaru.authentication_secred
+                                                                                   ,pr_dstext      => rw_token_aymaru.authentication_secret
                                                                                    ,pr_delimitador => ':'));
       vr_cabecalho(vr_index_http_cabecalho).valor := TRIM(gene0002.fn_busca_entrada(pr_postext     => 2
-                                                                                     ,pr_dstext      => rw_token_aymaru.authentication_secred
+                                                                                     ,pr_dstext      => rw_token_aymaru.authentication_secret
                                                                                      ,pr_delimitador => ':'));
 
     
