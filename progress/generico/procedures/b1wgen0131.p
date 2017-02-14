@@ -1003,6 +1003,3 @@ PROCEDURE libera_acesso:
 
 
 END PROCEDURE.
-
-    
-END FUNCTION.
