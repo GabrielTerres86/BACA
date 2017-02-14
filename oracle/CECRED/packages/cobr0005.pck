@@ -1374,7 +1374,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                ,sab.nrendsac
                ,sab.complend
                ,sab.cdsitsac
-               ,sab.dsdemail
+         --    ,sab.dsdemail
                ,sab.flgemail
                ,sab.nrcelsac
                ,ceb.nrcnvceb
