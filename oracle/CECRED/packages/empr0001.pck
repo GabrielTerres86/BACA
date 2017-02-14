@@ -764,7 +764,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
   --  Sistema  : Rotinas genéricas focando nas funcionalidades de empréstimos
   --  Sigla    : EMPR
   --  Autor    : Marcos Ernani Martini
-  --  Data     : Fevereiro/2013.                   Ultima atualizacao: 02/02/2016
+  --  Data     : Fevereiro/2013.                   Ultima atualizacao: 16/11/2016
   --
   -- Dados referentes ao programa:
   --
@@ -801,6 +801,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
   --
   --             02/02/2016 - Adicionado validação na procedure pc_busca_pgto_parcelas_prefix
   --                          para verificar se o emprestimo já está liquidado 389736 (Kelvin).
+  --
+  --
+  --             31/03/2016 - Ajustes savepoints para um savepoint de um procedimento sobrepor o outro
+  --                          e ao realizar o rollback fazer apenas do ultimo savepoint SD352945 (Odirlei - AMcom)
+  --    
+  --             16/11/2016 - Realizado ajuste para corrigir o problema ao abrir o detalhamento
+  --                          do emprestimo na tela prestações, conforme solicitado no chamado
+  --                          553330. (Kelvin)
+  --
+  --             28/11/2016 - P341 - Automatização BACENJUD - Alterado para validar o departamento à partir
+  --                          do código e não mais pela descrição (Renato Darosci - Supero)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tratamento de erro */
@@ -2246,7 +2257,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_qtdiamor NUMBER; --> Qtde de dias entre a data atual e a calculada
       vr_txdiaria NUMBER(18, 10); --> Taxa para calculo de mora
       vr_dstextab craptab.dstextab%TYPE;
-    
+
     BEGIN
       -- Criar um bloco para faciliar o tratamento de erro
       BEGIN
@@ -4339,7 +4350,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Marcos (Supero)
-       Data    : Abril/2013.                         Ultima atualizacao: 11/05/2016
+       Data    : Abril/2013.                         Ultima atualizacao: 16/11/2016
     
        Dados referentes ao programa:
     
@@ -4390,6 +4401,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
                     11/05/2016 - Calculo vlatraso na chamada pc_calcula_atraso_tr.
                                  (Jaison/James)
+
+                    16/11/2016 - Realizado ajuste para corrigir o problema ao abrir o detalhamento
+                                 do emprestimo na tela prestações, conforme solicitado no chamado
+                                 553330. (Kelvin)
 
     ............................................................................. */
     DECLARE
@@ -5052,7 +5067,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           -- Apenas para origem web e que venha com parametros de paginacao
           IF pr_idorigem = 5
              AND pr_nriniseq <> 0
-             AND pr_nrregist <> 0 THEN
+             AND pr_nrregist <> 0
+             AND pr_nrctremp = 0 THEN
           
             pr_qtregist := nvl(pr_qtregist,0) + 1;
           
@@ -8548,7 +8564,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       BEGIN
       
         --Criar savepoint para desfazer transacao
-        SAVEPOINT sav_trans;
+        SAVEPOINT savtrans_grava_liquidacao_empr;
       
         -- Verifica se a data esta cadastrada
         OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
@@ -8763,10 +8779,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                    ,pr_flgerlog   => 'N' --Escrever Log
                                    ,pr_des_reto   => vr_des_erro --Retorno OK/NOK
                                    ,pr_tab_erro   => pr_tab_erro); --Tabela Erro
-        --Se ocorreu erro
-        IF vr_des_erro <> 'OK' THEN
-          RAISE vr_exc_saida;
-        END IF;
+        -- Não era tratada o retorno de erro no Progress
+        ----Se ocorreu erro
+        --IF vr_des_erro <> 'OK' THEN
+        --  RAISE vr_exc_saida;
+        --END IF;
       
         /** GRAVAMES **/
         GRVM0001.pc_solicita_baixa_automatica(pr_cdcooper => pr_cdcooper -- Cooperativa
@@ -8787,7 +8804,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       EXCEPTION
         WHEN vr_exc_saida THEN
           --Desfaz transacoes
-          ROLLBACK TO SAVEPOINT sav_trans;
+          ROLLBACK TO SAVEPOINT savtrans_grava_liquidacao_empr;
       END;
     
       --Se nao ocorreu a transacao
@@ -8886,6 +8903,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                    16/10/2015 - Zerar o campo vlsdvsji quando liquidar a parcela PP (Oscar)             
                    
                    17/03/2016 - Limpar campos de saldo ai liquidar crappep SD366229 (Odirlei-AMcom)
+
+                   31/10/2016 - Validação dentro para identificar
+                                parcelas ja liquidadas (AJFink - SD#545719)
+
     ............................................................................. */
   
     DECLARE
@@ -8968,7 +8989,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     
       BEGIN
         --Criar savepoint para desfazer transacao
-        SAVEPOINT sav_trans;
+        SAVEPOINT sav_efetiva_pag_atr_parcel_lem;
       
         --Buscar registro da parcela
         OPEN cr_crappep(pr_cdcooper => pr_cdcooper --> Cooperativa
@@ -8986,7 +9007,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         END IF;
         --Fechar Cursor
         CLOSE cr_crappep;
-      
+
+        --SD#545719 inicio
+        IF rw_crappep.inliquid = 1 THEN
+          -- Atribui críticas
+          vr_cdcritic := 0;
+          vr_dscritic := 'Parcela ja liquidada.';
+          -- Gera exceção
+          RAISE vr_exc_saida;
+        END IF;
+        --SD#545719 fim
+
         --Buscar registro emprestimo
         OPEN cr_crapepr(pr_cdcooper => pr_cdcooper --> Cooperativa
                        ,pr_nrdconta => pr_nrdconta --> Numero da Conta
@@ -9523,7 +9554,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       EXCEPTION
         WHEN vr_exc_saida THEN
           --Desfaz transacoes
-          ROLLBACK TO SAVEPOINT sav_trans;
+          ROLLBACK TO SAVEPOINT sav_efetiva_pag_atr_parcel_lem;
       END;
     
       --Se nao ocorreu a transacao
@@ -9679,7 +9710,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     
       BEGIN
         --Criar savepoint para desfazer transacao
-        SAVEPOINT sav_trans;
+        SAVEPOINT sav_efetiva_pagto_atr_parcel;
       
         --Efetivar Pagamento Normal parcela na craplem
         EMPR0001.pc_efetiva_pag_atr_parcel_lem(pr_cdcooper    => pr_cdcooper --> Cooperativa conectada
@@ -9797,7 +9828,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       EXCEPTION
         WHEN vr_exc_saida THEN
           --Desfaz transacoes
-          ROLLBACK TO SAVEPOINT sav_trans;
+          ROLLBACK TO SAVEPOINT sav_efetiva_pagto_atr_parcel;
         WHEN vr_exc_ok THEN
           NULL;
       END;
@@ -9894,7 +9925,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                    16/10/2015 - Zerar o campo vlsdvsji quando liquidar a parcela PP (Oscar)             
     
                    17/03/2016 - Limpar campos de saldo ai liquidar crappep SD366229 (Odirlei-AMcom)
-    
+
+                   31/10/2016 - Validação dentro para identificar
+                                parcelas ja liquidadas (AJFink - SD#545719)
+
     ............................................................................. */
   
     DECLARE
@@ -9972,7 +10006,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
       BEGIN
         --Criar savepoint para desfazer transacao
-        SAVEPOINT sav_trans;
+        SAVEPOINT sav_efetiva_pagto_antec_lem;
 
         --Selecionar Parcela 
         OPEN cr_crappep(pr_cdcooper => pr_cdcooper
@@ -9992,6 +10026,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           --Fechar Cursor
           CLOSE cr_crappep;                
         END IF;  
+
+        --SD#545719 inicio
+        IF rw_crappep.inliquid = 1 THEN
+          -- Atribui críticas
+          vr_cdcritic := 0;
+          vr_dscritic := 'Parcela ja liquidada..';
+          -- Gera exceção
+          RAISE vr_exc_saida;
+        END IF;
+        --SD#545719 fim
 
         /* Cursor de Emprestimos */
         OPEN cr_crapepr(pr_cdcooper => rw_crappep.cdcooper
@@ -10280,7 +10324,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       EXCEPTION
         WHEN vr_exc_saida THEN
           --Desfaz transacoes
-          ROLLBACK TO SAVEPOINT sav_trans;
+          ROLLBACK TO SAVEPOINT sav_efetiva_pagto_antec_lem;
       END;
     
       --Se nao ocorreu a transacao
@@ -10629,6 +10673,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                 "pc_valida_pagamento_normal_parcela". (James)
 
                    16/10/2015 - Zerar o campo vlsdvsji quando liquidar a parcela PP (Oscar)                          
+
+                   31/10/2016 - Validação dentro para identificar
+                                parcelas ja liquidadas (AJFink - SD#545719)
+
     ............................................................................. */
   
     DECLARE
@@ -10676,7 +10724,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       BEGIN
       
         --Criar savepoint para desfazer transacao
-        SAVEPOINT sav_trans;
+        SAVEPOINT sav_efetiva_pagto_parc_lem;
       
         -- Procedure para validar se a parcela esta OK.
         EMPR0001.pc_valida_pagto_normal_parcela(pr_cdcooper => pr_cdcooper -- Codigo Cooperativa
@@ -10717,7 +10765,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         END IF;
         --Fechar Cursor
         CLOSE cr_crappep;
-      
+
+        --SD#545719 inicio
+        IF rw_crappep.inliquid = 1 THEN
+          -- Atribui críticas
+          vr_cdcritic := 0;
+          vr_dscritic := 'Parcela ja liquidada...';
+          -- Gera exceção
+          RAISE vr_exc_saida;
+        END IF;
+        --SD#545719 fim
+
         --Buscar registro emprestimo
         OPEN cr_crapepr(pr_cdcooper => pr_cdcooper --> Cooperativa
                        ,pr_nrdconta => pr_nrdconta --> Numero da Conta
@@ -10987,7 +11045,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       EXCEPTION
         WHEN vr_exc_saida THEN
           --Desfaz transacoes
-          ROLLBACK TO SAVEPOINT sav_trans;
+          ROLLBACK TO SAVEPOINT sav_efetiva_pagto_parc_lem;
       END;
     
       --Se nao ocorreu a transacao
@@ -11128,7 +11186,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     
       BEGIN
         --Criar savepoint para desfazer transacao
-        SAVEPOINT sav_trans;
+        SAVEPOINT savtrans_efetiva_pagto_parcela;
         --Efetivar Pagamento Normal parcela na craplem
         EMPR0001.pc_efetiva_pagto_parc_lem(pr_cdcooper    => pr_cdcooper --> Cooperativa conectada
                                           ,pr_cdagenci    => pr_cdagenci --> Código da agência
@@ -11184,7 +11242,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       EXCEPTION
         WHEN vr_exc_saida THEN
           --Desfaz transacoes
-          ROLLBACK TO SAVEPOINT sav_trans;
+          ROLLBACK TO SAVEPOINT savtrans_efetiva_pagto_parcela;
       END;
     
       --Se nao ocorreu a transacao
@@ -11765,7 +11823,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     -- Cursor do Operador
     CURSOR cr_crapope(pr_cdcooper IN crapope.cdcooper%TYPE
                      ,pr_cdoperad IN crapope.cdoperad%TYPE) IS
-      SELECT dsdepart
+      SELECT cddepart
         FROM crapope
        WHERE crapope.cdcooper        = pr_cdcooper
          AND UPPER(crapope.cdoperad) = UPPER(pr_cdoperad);
@@ -11859,7 +11917,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         END IF;
         
         -- Somente o departamento credito irá ter acesso para alterar as informacoes
-        IF rw_crapope.dsdepart = 'PRODUTOS' OR rw_crapope.dsdepart = 'TI' THEN
+        IF rw_crapope.cddepart IN (14,20) THEN
           RAISE vr_exc_saida;
         END IF;
         
@@ -11899,7 +11957,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         END IF;
         
         -- Somente o departamento credito irá ter acesso para alterar as informacoes
-        IF rw_crapope.dsdepart = 'PRODUTOS' OR rw_crapope.dsdepart = 'TI' THEN
+        IF rw_crapope.cddepart IN (14,20) THEN
           RAISE vr_exc_saida;
         END IF;  
       
@@ -12204,7 +12262,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         
       BEGIN
         --Criar savepoint para desfazer transacao
-        SAVEPOINT save_trans;
+        SAVEPOINT save_efetua_liquidacao_empr;
       
         --Selecionar Parcelas Emprestimo
         FOR rw_crappep IN cr_crappep (pr_cdcooper => pr_cdcooper
@@ -12465,7 +12523,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       EXCEPTION
         WHEN vr_exc_saida THEN
           --Desfaz transacoes
-          ROLLBACK TO SAVEPOINT save_trans;
+          ROLLBACK TO SAVEPOINT save_efetua_liquidacao_empr;
       END;
     
       --Se nao ocorreu a transacao
@@ -13423,7 +13481,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
              vr_cdcritic := 0;
              vr_dscritic := 'Parcela ja liquidada';
              -- Gera exceção
-             RAISE vr_exc_erro;					 
+             RAISE vr_exc_erro;
            END IF;
   				 
            -- Parcela em dia
