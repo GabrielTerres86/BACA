@@ -1041,6 +1041,134 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
 
       END IF; -- TRIM(vr_dsconteudo_mail) IS NOT NULL
 
+      COMMIT;
+
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        IF vr_cdcritic <> 0 THEN
+          vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        END IF;
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+				-- Efetuar rollback
+				ROLLBACK;
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina da tela CVNCDC: ' || SQLERRM;
+				-- Efetuar rollback
+				ROLLBACK;				
+    END;
+
+  END pc_grava_dados;
+
+  PROCEDURE pc_grava_dados_web(pr_nrdconta           IN crapcdr.nrdconta%TYPE --> Numero da conta
+															,pr_inpessoa           IN crapass.inpessoa%TYPE --> Tipo de pessoa
+															,pr_idmatriz           IN tbsite_cooperado_cdc.idcooperado_cdc%TYPE --> Identificador da Matriz
+															,pr_idcooperado_cdc    IN tbsite_cooperado_cdc.idcooperado_cdc%TYPE --> Identificador do cooperado no CDC
+															,pr_flgconve           IN crapcdr.flgconve%TYPE --> Indicador se cooperado possui convenio CDC
+															,pr_dtinicon           IN VARCHAR2 --> Data de inicio de convenio
+															,pr_nmfantasia         IN tbsite_cooperado_cdc.nmfantasia%TYPE --> Nome fantasia
+															,pr_cdcnae             IN tbsite_cooperado_cdc.cdcnae%TYPE --> Codigo da classificacao CNAE
+															,pr_dslogradouro       IN tbsite_cooperado_cdc.dslogradouro%TYPE --> Descricao do logradouro
+															,pr_dscomplemento      IN tbsite_cooperado_cdc.dscomplemento%TYPE --> Complemento da localizacao
+															,pr_nrendereco         IN tbsite_cooperado_cdc.nrendereco%TYPE --> Numero do endereco da localizacao
+															,pr_nmbairro           IN tbsite_cooperado_cdc.nmbairro%TYPE --> Bairro da localizacao
+															,pr_nrcep              IN tbsite_cooperado_cdc.nrcep%TYPE --> CEP da localizacao
+															,pr_idcidade           IN tbsite_cooperado_cdc.idcidade%TYPE --> Codigo da cidade da localizacao
+															,pr_dstelefone         IN tbsite_cooperado_cdc.dstelefone%TYPE --> Telefone do conveniado CDC
+															,pr_dsemail            IN tbsite_cooperado_cdc.dsemail%TYPE --> E-mail de contato
+															,pr_dslink_google_maps IN tbsite_cooperado_cdc.dslink_google_maps%TYPE --> Link da localizacao no google maps
+															,pr_xmllog             IN VARCHAR2 --> XML com informacoes de LOG
+															,pr_cdcritic          OUT PLS_INTEGER --> Codigo da critica
+															,pr_dscritic          OUT VARCHAR2 --> Descricao da critica
+															,pr_retxml         IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+															,pr_nmdcampo          OUT VARCHAR2 --> Nome do campo com erro
+															,pr_des_erro          OUT VARCHAR2) IS --> Erros do processo
+  BEGIN
+
+    /* .............................................................................
+
+    Programa: pc_grava_dados
+    Sistema : Ayllos Web
+    Autor   : Jaison Fernando
+    Data    : Agosto/2016                 Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Rotina para cadastrar os dados do Convenio CDC.
+
+    Alteracoes: -----
+    ..............................................................................*/
+    DECLARE
+
+      -- Variavel de criticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_erro EXCEPTION;
+
+      -- Variaveis de log
+      vr_cdcooper INTEGER;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+      
+      -- Variaveis
+      vr_idcooperado_cdc    tbsite_cooperado_cdc.idcooperado_cdc%TYPE;
+      vr_nrendereco         tbsite_cooperado_cdc.nrendereco%TYPE;
+      vr_nrcep              tbsite_cooperado_cdc.nrcep%TYPE;
+      vr_idcidade           tbsite_cooperado_cdc.idcidade%TYPE;
+      vr_cdcnae             tbsite_cooperado_cdc.cdcnae%TYPE;
+      vr_dslink_google_maps tbsite_cooperado_cdc.dslink_google_maps%TYPE;
+      vr_dscnae_new         tbgen_cnae.dscnae%TYPE;
+      vr_dscnae_old         tbgen_cnae.dscnae%TYPE;
+      vr_dscidade_new       crapmun.dscidade%TYPE;
+      vr_dscidade_old       crapmun.dscidade%TYPE;
+      vr_nmrescop           crapcop.nmrescop%TYPE;
+      vr_dtinicon_old       VARCHAR2(10);
+      vr_dsconteudo_mail    VARCHAR2(10000) := '';
+      vr_emaildst           VARCHAR2(4000);
+      vr_rowid              ROWID;
+
+      -- Vetor para armazenar os dados da tabela
+      vr_tab_crapmun CADA0003.typ_tab_crapmun;
+
+    BEGIN
+      -- Extrai os dados vindos do XML
+      GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+      -- Se NAO foi informado nome fantasia e ativar
+      IF TRIM(pr_dtinicon) IS NULL AND pr_flgconve = 1 THEN
+        vr_dscritic := 'Informe a data de início do convênio.';
+        RAISE vr_exc_erro;
+      END IF;
+
+      -- Se NAO foi informado nome fantasia e ativar
+      IF TRIM(pr_nmfantasia) IS NULL AND pr_flgconve = 1 THEN
+        vr_dscritic := 'Informe o nome fantasia.';
+        RAISE vr_exc_erro;
+      END IF;
+
+      -- Seta as variaveis
+      vr_cdcnae     := (CASE WHEN pr_inpessoa = 1 AND pr_idmatriz = 0 THEN pr_cdcnae ELSE NULL END);
+      vr_nrcep      := (CASE WHEN pr_nrcep = 0      THEN NULL ELSE pr_nrcep      END);
+      vr_idcidade   := (CASE WHEN pr_idcidade = 0   THEN NULL ELSE pr_idcidade   END);
+      vr_nrendereco := (CASE WHEN pr_nrendereco = 0 THEN NULL ELSE pr_nrendereco END);
 
       -- Se for PJ e Matriz e NAO foi informado CNAE e ativar
       IF pr_inpessoa = 1 AND pr_idmatriz = 0 AND vr_cdcnae IS NULL AND pr_flgconve = 1 THEN
