@@ -134,8 +134,6 @@
 		<?
 
 	}
-
-    include('form_cabecalho.php');
 			
 	if ( $cddopcao == 'A' or $cddopcao == 'C' or $cddopcao == 'I' ) {
 	
