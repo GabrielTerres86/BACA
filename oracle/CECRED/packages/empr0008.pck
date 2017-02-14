@@ -873,7 +873,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
       vr_dstextab        craptab.dstextab%TYPE;
       vr_vlmaxest        NUMBER(15,2) := 0;
       vr_vltotest        NUMBER(15,2) := 0;
-          
+      vr_flgativo        INTEGER := 0;
+    
     BEGIN
       vr_tab_erro.DELETE;
       vr_tab_lancto_parcelas.DELETE;
@@ -899,10 +900,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
         
       ELSIF NVL(LENGTH(TRIM(pr_dsjustificativa)),0) > 250 THEN
         vr_dscritic := 'O tamanho do texto do campo Justificativa excedeu o tamanho maximo';
-        RAISE vr_exc_saida;
-      
+        RAISE vr_exc_saida;      
       END IF;                        
-                              
+
+      RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => vr_cdcooper
+                                       ,pr_nrdconta => pr_nrdconta
+                                       ,pr_nrctremp => pr_nrctremp
+                                       ,pr_flgativo => vr_flgativo
+                                       ,pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic);
+
+      IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+
+      IF vr_flgativo = 1 THEN
+        vr_dscritic := 'Estorno nao permitido, emprestimo em acordo.';
+        RAISE vr_exc_saida;
+      END IF;
+                 
       vr_vlmaxest := 0;
       vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => vr_cdcooper
                                                ,pr_nmsistem => 'CRED'
