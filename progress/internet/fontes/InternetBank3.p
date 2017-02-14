@@ -381,7 +381,6 @@ ASSIGN xml_operacao.dslinxml = "<SACADOS qttotsac='" +
                                        "</flgemail></DADOS>".
                                          
 END.
-END.
          
 CREATE xml_operacao.
 ASSIGN xml_operacao.dslinxml = "</SACADOS>".
