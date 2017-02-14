@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autora  : Lucas R.
-  Data    : Setembro/2013                        Ultima atualizacao: 03/11/2016
+  Data    : Setembro/2013                        Ultima atualizacao: 14/02/2017
 
   Dados referentes ao programa:
 
@@ -123,6 +123,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
                
               03/11/2016 - Conversao Progress >> Oracle PLSQL (Jonata-MOUTs)
 
+              14/02/2017 - Incluir validacao para critica 502 para caso o sicredi nos
+                           envie agendamento de debito com o valor zerado 
+                           (Lucas Ranghetti #604860)
    ............................................................................. */
   -- Constantes do programa
   vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'CRPS647';
@@ -177,6 +180,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
   vr_nrdconta crapass.nrdconta%TYPE;
   vr_cdagenci crapass.cdagenci%TYPE;
   vr_cdcrindb VARCHAR2(2);
+  vr_critiarq VARCHAR2(2);
      
   -- Comandos no OS
   vr_typsaida varchar2(3);
@@ -506,9 +510,20 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
           -- Contrato não encontrado
           pr_cdcritic := 484;
       END;  
+      -- validar valor zerado, se for zerado vamos criticar com a critica 
+      -- 502 - Conta nao emitida.
+      IF vr_vllanmto = 0 THEN
+        pr_cdcritic := 502;     
+      END IF;
     END IF;
     -- Se encontrarmos critica, somente gerar NDB no tipo de registro E
-    IF pr_cdcritic > 0 AND vr_tpregist = 'E' THEN 
+    IF pr_cdcritic > 0 AND vr_tpregist = 'E' THEN
+      
+      IF pr_cdcritic = 502 THEN
+        vr_critiarq := '96'; -- 96 - Manutenção do Cadastro
+      ELSE
+        vr_critiarq := '30';
+      END IF;
       -- Criar NDB 
       BEGIN 
         INSERT INTO crapndb (cdcooper
@@ -523,7 +538,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
                             ,vr_cdhistor
                             ,0
                             ,'F' || SUBSTR(vr_dslinharq,2,66) || 
-                             '30' || SUBSTR(vr_dslinharq,70,60) ||
+                             vr_critiarq || 
+                             SUBSTR(vr_dslinharq,70,60) ||
                              lpad(' ',16,' ')                ||
                              SUBSTR(vr_dslinharq,140,2)  ||
                              SUBSTR(vr_dslinharq,148,10) ||
