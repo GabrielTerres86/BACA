@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps294 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Margarete/Planner
-   Data    : Agosto/2000.                    Ultima atualizacao: 03/11/2016
+   Data    : Agosto/2000.                    Ultima atualizacao: 15/02/2017
 
    Dados referentes ao programa:
 
@@ -77,9 +77,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps294 (pr_cdcooper IN crapcop.cdcooper%T
 
                26/01/2015 - Alterado o formato do campo nrctremp para 8
                             caracters (Kelvin - 233714)
-                            
-               03/11/2016 - Aumentar tamanho das variaveis que escrevem no xml, pois
-                            estava estourando o tamanho (Lucas Ranghetti #550880)
+
+               15/02/2017 - Ajustando o format do campo nrctrcrd nos relatórios que o utilizam.
+			     		    SD 594718 (Kelvin).
     ............................................................................ */
 
     DECLARE
@@ -114,8 +114,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps294 (pr_cdcooper IN crapcop.cdcooper%T
       -- Variavel de Controle de XML
       vr_crrl244_xml      CLOB;
       vr_crrl394_xml      CLOB;
-      vr_detalhe          VARCHAR2(32600);
-      vr_detalhe394       VARCHAR2(32600);
+      vr_detalhe          VARCHAR2(4000);
+      vr_detalhe394       VARCHAR2(4000);
 
       ------------------------------- CURSORES ---------------------------------
 
@@ -465,7 +465,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps294 (pr_cdcooper IN crapcop.cdcooper%T
           vr_dsreturn := vr_dsreturn||' NR.CONTRATO:'||LPAD(to_char(pr_nrconpro,'FM99G999G990'),10,' ');
         ELSIF pr_inconpro = 2 THEN
           -- Proposta
-          vr_dsreturn := vr_dsreturn||' NR.PROPOSTA:'||LPAD(to_char(pr_nrconpro,'FM999G990'),10,' ');
+          vr_dsreturn := vr_dsreturn||' NR.PROPOSTA:'||LPAD(to_char(pr_nrconpro,'FM999G999G990'),10,' ');
         END IF;
 
         -- RETORNA O TEXTO JÁ FORMADO

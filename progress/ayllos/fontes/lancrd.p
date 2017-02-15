@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Marco/97                           Ultima atualizacao: 05/08/2014
+   Data    : Marco/97                           Ultima atualizacao: 14/02/2017
 
    Dados referentes ao programa:
 
@@ -38,7 +38,10 @@
              30/04/2013 - Ajustes para inclusao da chamada alerta_fraude
                           (Adriano).
                           
-             05/08/2014 - Alteração da Nomeclatura para PA (Vanessa).             
+             05/08/2014 - Alteração da Nomeclatura para PA (Vanessa).       
+
+			 14/02/2017 - Ajustando o format do campo nrctrcrd nos relatórios que o utilizam.
+			    		  SD 594718 (Kelvin).			 
 
              
 ............................................................................. */
@@ -60,7 +63,7 @@ DEF       VAR tel_nrseqdig AS INT     FORMAT "zz,zz9"              NO-UNDO.
 DEF       VAR tel_reganter AS CHAR    FORMAT "x(60)" EXTENT 6      NO-UNDO.
 
 DEF       VAR tel_nrdconta AS INT     FORMAT "zzzz,zzz,9"          NO-UNDO.
-DEF       VAR tel_nrctrcrd AS INT     FORMAT "zzz,zz9"             NO-UNDO.
+DEF       VAR tel_nrctrcrd AS INT     FORMAT "zzz,zzz,zz9"         NO-UNDO.
 DEF       VAR tel_vllimpro AS DECIMAL FORMAT "zzz,zzz,zz9.99"      NO-UNDO.
 
 DEF       VAR aux_confirma AS CHAR    FORMAT "!(1)"                NO-UNDO.
@@ -120,11 +123,11 @@ FORM tel_nrdconta AT 13 NO-LABEL
      tel_nrctrcrd AT 28 NO-LABEL
                   HELP "Entre com o numero da proposta/contrato Cecred Visa."
 
-     tel_vllimpro AT 39 NO-LABEL
+     tel_vllimpro AT 43 NO-LABEL
                   HELP "Entre com o valor do premio mensal"
                   VALIDATE(tel_vllimpro > 0, "91 - Valor do lancamento errado.")
 
-     tel_nrseqdig AT 57 NO-LABEL
+     tel_nrseqdig AT 61 NO-LABEL
      WITH ROW 14 COLUMN 2 OVERLAY NO-LABELS NO-BOX FRAME f_lancrd.
 
 FORM tel_reganter[1] AT 2 NO-LABEL  tel_reganter[2] AT 2 NO-LABEL
