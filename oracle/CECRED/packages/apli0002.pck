@@ -4078,7 +4078,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
    Programa: APLI0002                Antigo: sistema/generico/procedures/b1wgen0081.p
    Sigla   : APLI
    Autor   : Adriano.
-   Data    : Maio/2014                          Ultima atualizacao: 09/06/2016
+   Data    : Maio/2014                          Ultima atualizacao: 25/10/2016
 
    Dados referentes ao programa:
 
@@ -4111,6 +4111,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                            - Ajustado para carregar as aplicacoes bloqueadas da conta com 
                              a rotina pradrao TABE0001.pc_carrega_ctabloq
                              (Douglas - Chamado 454248)
+
+                25/10/2016 - Por solicitação de Fabiano Luiz Verdi, RDC PRE foi ajustado para quando
+                             data de resgate cair em final de semana em vez de antecipar o resgate
+                             para o dia útil anterior, mantém resgate com data do final de semana.
+                             (AJFink - SD#543149)
+
   .......................................................................................*/
   PROCEDURE pc_incluir_nova_aplicacao(pr_cdcooper IN crapcop.cdcooper%TYPE
                                      ,pr_cdagenci IN crapage.cdagenci%TYPE
@@ -4469,6 +4475,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
               
       END IF; 
 
+      --SD#543149 mudar local de chamada do tipo de aplicação para possibilitar uso mais amplo do cursor
+      -- Busca o tipo da aplicação
+      OPEN cr_crapdtc(pr_cdcooper => pr_cdcooper
+                     ,pr_tpaplica => pr_tpaplica);
+
+      FETCH cr_crapdtc INTO rw_crapdtc;
+
+      -- Se não econtrar
+      IF cr_crapdtc%NOTFOUND THEN
+
+        -- Fecha o cursor
+        CLOSE cr_crapdtc;
+
+        -- Gerar critica
+        vr_cdcritic := 346;
+        vr_dscritic := NULL;
+
+        -- Gera exceção
+        RAISE vr_exc_erro;
+
+      ELSE
+        -- Fecha o cursor
+        CLOSE cr_crapdtc;
+
+      END IF;
+
       -- verifica se data vencimento eh util
       vr_dtvenc := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
                                               ,pr_dtmvtolt => pr_dtresgat);     
@@ -4481,9 +4513,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       IF  vr_qtdiaapl > vr_qtdiafim THEN --verifica se periodo tem mais  dias e busca data util anterior                      
        -- eh passado agora a data do paramentro e nao a variavel temp pois se fosse dia util nao era 
        -- buscado a data anterior
+
+        --SD#543149 inicio
+        -- RDCPRE
+        IF rw_crapdtc.tpaplrdc = 1 THEN
+          -- retorna data venc verificada
+          vr_dtfimper := pr_dtresgat;
+        ELSE
         vr_dtfimper := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
                                                   ,pr_dtmvtolt => pr_dtresgat
                                                   ,pr_tipo     => 'A' );       
+        END IF;
+        --SD#543149 fim
         vr_qtdiaapl := vr_dtfimper - pr_dtmvtolt; -- calcula qt dias com base no novo vencimento
       ELSE
         -- retorna data venc verificada
@@ -4675,32 +4716,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
         RAISE vr_exc_erro;
      
       END IF;                             
-                               
-      -- Busca o tipo da aplicação
-      OPEN cr_crapdtc(pr_cdcooper => pr_cdcooper
-                     ,pr_tpaplica => pr_tpaplica);
-                     
-      FETCH cr_crapdtc INTO rw_crapdtc;
-      
-      -- Se não econtrar
-      IF cr_crapdtc%NOTFOUND THEN
-        
-        -- Fecha o cursor
-        CLOSE cr_crapdtc;
-        
-        -- Gerar critica
-        vr_cdcritic := 346;
-        vr_dscritic := NULL;
-          
-        -- Gera exceção
-        RAISE vr_exc_erro;                       
-        
-      ELSE
-        -- Fecha o cursor
-        CLOSE cr_crapdtc;
-        
-      END IF;                         
-                               
+
       vr_nrdolote := 4000 + rw_crapass.cdagenci;                         
       
       --Buscar o lote
@@ -20540,10 +20556,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       CURSOR cr_crapope(pr_cdcooper IN crapope.cdcooper%TYPE
                        ,pr_cdoperad IN crapope.cdoperad%TYPE) IS
         SELECT crapope.cdagenci
-              ,crapope.dsdepart
-        FROM crapope crapope
-        WHERE crapope.cdcooper = pr_cdcooper
-        AND   UPPER(crapope.cdoperad) = UPPER(pr_cdoperad);
+             , crapdpo.dsdepart
+          FROM crapdpo
+             , crapope
+         WHERE crapdpo.cddepart(+) = crapope.cddepart
+           AND crapdpo.cdcooper(+) = crapope.cdcooper
+           AND crapope.cdcooper    = pr_cdcooper
+           AND UPPER(crapope.cdoperad) = UPPER(pr_cdoperad);
       rw_crapope cr_crapope%ROWTYPE; 
       -- Busca do tipo de captacao
       CURSOR cr_crapdtc(pr_cdcooper IN crapdtc.cdcooper%TYPE

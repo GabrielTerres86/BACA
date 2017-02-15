@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0001 AS
   --  Sistema  : Rotinas genericas focando nas funcionalidades das aplicacoes
   --  Sigla    : APLI
   --  Autor    : Alisson C. Berrido - AMcom
-  --  Data     : Dezembro/2012.                   Ultima atualizacao: 20/01/2015
+  --  Data     : Dezembro/2012.                   Ultima atualizacao: 25/11/2016
   --
   -- Dados referentes ao programa:
   --
@@ -75,6 +75,9 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0001 AS
   --
   -- 17/11/2015 - Na verificação da IMUT0001.pc_verifica_imunidade_trib trocado log para
   --              proc_message na procedure pc_calc_poupanca (Lucas Ranghetti #314905)
+  --
+  -- 25/11/2016 - Incluir CRPS005 nas excessoes da procedure - Melhoria 69 
+  --              (Lucas Ranghetti/Elton)                             
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tabela com o mes e a aliquota para desconto de IR nas aplicacoes
@@ -1613,7 +1616,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
 
      Programa: pc_consul_saldo_aplic_rdca30 (Antigo b1wgen0004.i)
      Autora  : Junior.
-     Data    : 24/10/2005                     Ultima atualizacao: 05/01/2015
+     Data    : 24/10/2005                     Ultima atualizacao: 25/11/2016
 
      Dados referentes ao programa:
 
@@ -1658,6 +1661,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                  05/01/2015 - Ajustar o nome das telas e a adicionar o Internet Bank na 
                               segunda validação do inproces (Douglas - Chamado 191876)
 
+                 25/11/2016 - Incluir CRPS005 nas excessoes da procedure - Melhoria 69 
+                              (Lucas Ranghetti/Elton)
     .................................................................................... */
 
     DECLARE
@@ -1841,8 +1846,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       IF pr_inproces > 2 AND pr_cdprogra NOT IN('CRPS011','CRPS109','CRPS110','CRPS113','CRPS128'
                                                ,'CRPS175','CRPS176','CRPS168','CRPS140','CRPS169'
                                                ,'CRPS210','CRPS323','CRPS349','CRPS414','CRPS445'
-                                               ,'CRPS563','CRPS029','CRPS688','ATENDA','ANOTA'
-                                               ,'IMPRES','INTERNETBANK') THEN
+                                               ,'CRPS563','CRPS029','CRPS688','CRPS005','ATENDA'
+                                               ,'ANOTA','IMPRES','INTERNETBANK') THEN
         -- Buscar a taxa da RDCA
         OPEN cr_craptrd(rw_craprda.dtiniper);
         FETCH cr_craptrd
@@ -2263,7 +2268,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       IF pr_inproces > 2 AND pr_cdprogra NOT IN('CRPS011','CRPS105','CRPS109','CRPS110','CRPS113','CRPS117',
                         'CRPS128','CRPS175','CRPS176','CRPS168','CRPS135','CRPS431','CRPS140','CRPS169',
                         'CRPS210','CRPS323','CRPS349','CRPS414','CRPS445','CRPS563','CRPS029','CRPS688',
-                        'ATENDA','ANOTA','IMPRES','INTERNETBANK') THEN
+                        'CRPS005','ATENDA','ANOTA','IMPRES','INTERNETBANK') THEN
 
         IF pr_cdprogra = 'CRPS103' THEN                     /*  MENSAL  */
           vr_dtdolote := pr_dtmvtolt;
@@ -10745,7 +10750,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Deborah/Edson
-     Data    : Novembro/94.                    Ultima atualizacao: 05/09/2013
+     Data    : Novembro/94.                    Ultima atualizacao: 25/11/2016
 
      Dados referentes ao programa:
 
@@ -10857,6 +10862,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                              R$ 1,00 (Ze).
 
                 05/09/2013 - Conversão Progress >> Oracle PL/SQL (Daniel - Supero)
+                
+                25/11/2016 - Incluir CRPS005 nas excessoes da procedure - Melhoria 69 
+                             (Lucas Ranghetti/Elton)
   ............................................................................. */
     -- Aplicação RDCA
     cursor cr_craprda is
@@ -11234,8 +11242,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
        pr_cdprogra not in ('CRPS011', 'CRPS109', 'CRPS110', 'CRPS113', 'CRPS128',
                            'CRPS175', 'CRPS176', 'CRPS168', 'CRPS140', 'CRPS169',
                            'CRPS210', 'CRPS323', 'CRPS349', 'CRPS414', 'CRPS445',
-                           'CRPS563', 'CRPS029', 'CRPS688', 'ATENDA', 'ANOTA',
-                           'INTERNETBANK') then
+                           'CRPS563', 'CRPS029', 'CRPS688', 'CRPS005', 'ATENDA', 
+                           'ANOTA','INTERNETBANK') then
       vr_incalcul := 1;
       if pr_cdprogra = 'CRPS103' then -- mensal
         vr_dtmvtolt := pr_dtmvtolt + 1;
@@ -11475,8 +11483,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
        pr_cdprogra not in ('CRPS011', 'CRPS105', 'CRPS109', 'CRPS110', 'CRPS113', 'CRPS117',
                            'CRPS128', 'CRPS175', 'CRPS176', 'CRPS168', 'CRPS135', 'CRPS431',
                            'CRPS140', 'CRPS169', 'CRPS210', 'CRPS323', 'CRPS349', 'CRPS414',
-                           'CRPS445', 'CRPS563', 'CRPS029', 'CRPS688', 'ATENDA', 'ANOTA',
-                           'INTERNETBANK') then
+                           'CRPS445', 'CRPS563', 'CRPS029', 'CRPS688', 'CRPS005', 'ATENDA', 
+                           'ANOTA', 'INTERNETBANK') then
       if pr_cdprogra = 'CRPS103' then  -- MENSAL
         vr_dtdolote := pr_dtmvtolt;
         vr_nrdolote := 8380;
