@@ -501,7 +501,6 @@ DEF TEMP-TABLE tt-tbconv_trans_pend   NO-UNDO LIKE tbconv_trans_pend.
 DEF TEMP-TABLE tt-tbfolha_trans_pend  NO-UNDO LIKE tbfolha_trans_pend.
 DEF TEMP-TABLE tt-tbtarif_pacote_trans_pend NO-UNDO LIKE tbtarif_pacote_trans_pend.
 DEF TEMP-TABLE tt-tbcobran_sms_trans_pend  NO-UNDO LIKE tbcobran_sms_trans_pend.
-
 DEF TEMP-TABLE tt-pagtos-mon NO-UNDO
 FIELD nrsequen AS INTE
 FIELD dslinhas AS CHAR.
@@ -1467,6 +1466,23 @@ FUNCTION IdentificaMovCC RETURNS INTEGER
                               aux_vllantra = tbtarif_pacote_trans_pend.vlpacote
                               aux_dscedent = "SERVICOS COOPERATIVOS".
                             END.
+                            ELSE IF tbgen_trans_pend.tptransacao = 11 THEN /* DARF-DAS */
+                            DO:
+                              FIND tt-tbpagto_darf_das_trans_pend WHERE tt-tbpagto_darf_das_trans_pend.cdtransacao_pendente = tbgen_trans_pend.cdtransacao_pendente NO-LOCK NO-ERROR NO-WAIT.
+                              
+                              ASSIGN aux_dtdebito = (IF tt-tbpagto_darf_das_trans_pend.idagendamento = 1 THEN "Nesta Data" ELSE STRING(tt-tbpagto_darf_das_trans_pend.dtdebito,"99/99/9999"))
+                              aux_vllantra = tt-tbpagto_darf_das_trans_pend.vlpagamento.
+                              
+                              IF TRIM(tt-tbpagto_darf_das_trans_pend.dsidentif_pagto) <> ? AND
+                              TRIM(tt-tbpagto_darf_das_trans_pend.dsidentif_pagto) <> "" THEN
+                              ASSIGN aux_dscedent = TRIM(tt-tbpagto_darf_das_trans_pend.dsidentif_pagto).
+                              ELSE DO:
+                                IF tt-tbpagto_darf_das_trans_pend.tppagamento = 1 THEN
+                                ASSIGN aux_dscedent = "Pagamento de DARF".
+                                ELSE IF tt-tbpagto_darf_das_trans_pend.tppagamento = 2 THEN
+                                ASSIGN aux_dscedent = "Pagamento de DAS".
+                              END.
+                            END. /* FIM DARF/DAS */
                             ELSE
                             /** CONTRATO SMS **/
                             IF tbgen_trans_pend.tptransacao = 16  OR
@@ -1486,24 +1502,6 @@ FUNCTION IdentificaMovCC RETURNS INTEGER
                               ASSIGN aux_dstptran = "Cancelamento do Serviço SMS de Cobrança".
                                 
                               END.
-                              ELSE IF tbgen_trans_pend.tptransacao = 11 THEN /* DARF-DAS */
-                              DO:
-                                FIND tt-tbpagto_darf_das_trans_pend WHERE tt-tbpagto_darf_das_trans_pend.cdtransacao_pendente = tbgen_trans_pend.cdtransacao_pendente NO-LOCK NO-ERROR NO-WAIT.
-                                
-                                ASSIGN aux_dtdebito = (IF tt-tbpagto_darf_das_trans_pend.idagendamento = 1 THEN "Nesta Data" ELSE STRING(tt-tbpagto_darf_das_trans_pend.dtdebito,"99/99/9999"))
-                                aux_vllantra = tt-tbpagto_darf_das_trans_pend.vlpagamento.
-                                
-                                IF TRIM(tt-tbpagto_darf_das_trans_pend.dsidentif_pagto) <> ? AND
-                                TRIM(tt-tbpagto_darf_das_trans_pend.dsidentif_pagto) <> "" THEN
-                                ASSIGN aux_dscedent = TRIM(tt-tbpagto_darf_das_trans_pend.dsidentif_pagto).
-                                ELSE DO:
-                                  IF tt-tbpagto_darf_das_trans_pend.tppagamento = 1 THEN
-                                  ASSIGN aux_dscedent = "Pagamento de DARF".
-                                  ELSE IF tt-tbpagto_darf_das_trans_pend.tppagamento = 2 THEN
-                                  ASSIGN aux_dscedent = "Pagamento de DAS".
-                                END.
-                              END. /* FIM DARF/DAS */
-                              
                               IF tbgen_trans_pend.tptransacao = 2 THEN
                               aux_dstiptra= (IF tbpagto_trans_pend.tppagamento = 1 THEN "Pagamento de Convenio" ELSE "Pagamento de Boletos Diversos").
                               ELSE
@@ -1529,12 +1527,8 @@ FUNCTION IdentificaMovCC RETURNS INTEGER
                               IF tbgen_trans_pend.tptransacao = 9 THEN
                               aux_dstiptra = "Folha de Pagamento".
                               ELSE
-                              IF tbgen_trans_pend.tptransacao = 10 THEN /*OK*/
+                              IF tbgen_trans_pend.tptransacao = 10  THEN /** PACOTE DE TARIFAS **/
                               aux_dstiptra = "Servicos Cooperativos".
-                              ELSE IF tbgen_trans_pend.tptransacao = 16 THEN /*OK*/
-                              aux_dstiptra = "Adesao SMS Cobrança".
-                              ELSE IF tbgen_trans_pend.tptransacao = 17 THEN /*OK*/
-                              aux_dstiptra = "Cancelamento SMS Cobrança".
                               ELSE
                               IF tbgen_trans_pend.tptransacao = 11 THEN
                               DO:
@@ -1543,6 +1537,10 @@ FUNCTION IdentificaMovCC RETURNS INTEGER
                                 ELSE IF tt-tbpagto_darf_das_trans_pend.tppagamento = 2 THEN
                                 aux_dstiptra = "Pagamento de DAS".
                               END.
+                              ELSE IF tbgen_trans_pend.tptransacao = 16 THEN /*OK*/
+                              aux_dstiptra = "Adesao SMS Cobrança".
+                              ELSE IF tbgen_trans_pend.tptransacao = 17 THEN /*OK*/
+                              aux_dstiptra = "Cancelamento SMS Cobrança".
                               ELSE
                               aux_dstiptra = "Transacao".
                               
@@ -6926,8 +6924,6 @@ FUNCTION IdentificaMovCC RETURNS INTEGER
                                                                                             
                                                                                             DEF VAR aux_vldocmto AS DECIMAL                                 NO-UNDO.
                                                                                             
-                                                                                            DEF VAR aux_dsretorn AS CHAR                                    NO-UNDO.
-                                                                                            
                                                                                             DEF VAR h-b1wgen0015 AS HANDLE NO-UNDO.
                                                                                             DEF VAR h-b1wgen0081 AS HANDLE NO-UNDO.
                                                                                             DEF VAR h-b1wgen0092 AS HANDLE NO-UNDO.
@@ -7432,7 +7428,6 @@ FUNCTION IdentificaMovCC RETURNS INTEGER
                                                                                                                               
                                                                                                                               ASSIGN tt-tbgen_trans_pend.idmovimento_conta  = IdentificaMovCC(tbgen_trans_pend.tptransacao,1,0).
                                                                                                                             END.
-                                                                                                                          END.
                                                                                                                           
                                                                                                                           ELSE
                                                                                                                           DO:
@@ -11868,7 +11863,7 @@ FUNCTION IdentificaMovCC RETURNS INTEGER
                                                                                                                                                                     
                                                                                                                                                                     UNDO TRANSACAO, LEAVE TRANSACAO.
                                                                                                                                                                     
-                                                                                                                                                                  END. /* critica*/
+                                                                                                                                                                  END.
                                                                                                                                                                   
                                                                                                                                                                 END.
                                                                                                                                                                 
@@ -12019,7 +12014,6 @@ FUNCTION IdentificaMovCC RETURNS INTEGER
                                                                                                                                                                   INPUT TRUE,
                                                                                                                                                                   INPUT par_indvalid,
                                                                                                                                                                   INPUT DATE(1, MONTH(TODAY), YEAR(TODAY)),
-                                                                                                                                                                  INPUT tt-tbtarif_pacote_trans_pend.vlpacote,
                                                                                                                                                                   INPUT tt-tbcobran_sms_trans_pend.vlservico,
                                                                                                                                                                   INPUT aux_conttran).
                                                                                                                                                                   
@@ -12173,7 +12167,6 @@ FUNCTION IdentificaMovCC RETURNS INTEGER
                                                                                                                                                                     INPUT tt-tbpagto_darf_das_trans_pend.idagendamento,   /* Indicador de agendamento (1-Nesta Data/2-Agendamento */
                                                                                                                                                                     INPUT tt-tbpagto_darf_das_trans_pend.dtdebito,        /* Data de agendamento */
                                                                                                                                                                     INPUT 0,                                    /* Indicador de controle de validaçoes (1-Operaçao Online/2-Operaçao Batch) */
-                                                                                                                                                                    INPUT 0,                                    /* Indicador mobile */
                                                                                                                                                                     OUTPUT "",                                              /* Código sequencial da guia */
                                                                                                                                                                     OUTPUT 0,                                              /* Digito do Faturamento */
                                                                                                                                                                     OUTPUT 0,                                              /* Valor da guia */
