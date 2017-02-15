@@ -420,7 +420,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     Sistema  : Procedimentos para  gerais da cobranca
     Sigla    : CRED
     Autor    : Odirlei Busana - AMcom
-    Data     : Novembro/2015.                   Ultima atualizacao: 22/12/2016
+    Data     : Novembro/2015.                   Ultima atualizacao: 13/02/2017
   
    Dados referentes ao programa:
   
@@ -486,6 +486,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 							Heitor (Mouts) - Chamado 574161
 
          07/02/2017 - Projeto 319 - Envio de SMS para boletos de cobranca (Andrino - Mout's)
+
+		       13/02/2017 - Ajustes realizados: 
+						    > Utilizar NOCOPY na passagem de PLTABLEs como parâmetro;
+							> Alterado diretório para mover os arquivos rejeitados;
+							(Andrei - Mouts).
   ---------------------------------------------------------------------------------------------------------------*/
   
   ------------------------------- CURSORES ---------------------------------    
@@ -1067,7 +1072,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     pr_rec_cobranca.cdocorre := NULL;
     -- Inicializa como NAO rejeitada
     pr_rec_cobranca.flgrejei := FALSE;
-	  pr_rec_cobranca.inserasa := 0;
+	pr_rec_cobranca.inserasa := 0;
     pr_rec_cobranca.flserasa := 0;
     -- Indicadores de SMS
     pr_rec_cobranca.inavisms := 0;
@@ -1081,7 +1086,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                               pr_nrdconta  IN crapass.nrdconta%TYPE, --> Numero da conta do cooperado
                               pr_nrdocmto  IN crapcob.nrdocmto%TYPE, --> Numero do documento
                               pr_dscritic  IN VARCHAR2,              --> Descricao da critica
-                              pr_tab_crawrej IN OUT COBR0006.typ_tab_crawrej --> Tabela de rejeitos
+                              pr_tab_crawrej IN OUT NOCOPY COBR0006.typ_tab_crawrej --> Tabela de rejeitos
                               ) IS
                                    
   /* ............................................................................
@@ -1090,7 +1095,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana - AMcom
-       Data    : Novembro/2015.                   Ultima atualizacao: 25/11/2015
+       Data    : Novembro/2015.                   Ultima atualizacao: 13/02/2017
 
        Dados referentes ao programa:
 
@@ -1098,6 +1103,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Objetivo  : Gravar criticas do processo
 
        Alteracoes: 25/11/2015 - Conversão Progress -> Oracle (Odirlei-AMcom)
+
+				   13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
+								(Andrei - Mouts). 
     ............................................................................ */   
     
     ------------------------ VARIAVEIS  ----------------------------
@@ -1122,7 +1130,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
   PROCEDURE pc_grava_boleto( pr_rec_cobranca IN typ_rec_cobranca,    --> Dados da linha
                              pr_qtbloque     IN OUT INTEGER,         --> Quantidade de boletos 
                              pr_vlrtotal     IN OUT NUMBER,          --> Valor total dos boletos
-                             pr_tab_crapcob  IN OUT typ_tab_crapcob, --> Tabela de Cobranca
+                             pr_tab_crapcob  IN OUT NOCOPY typ_tab_crapcob, --> Tabela de Cobranca
                              pr_dscritic    OUT VARCHAR2             --> Descricao da critica
                             ) IS
                                    
@@ -1132,14 +1140,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Douglas Quisinski
-       Data    : Dezembro/2015.                   Ultima atualizacao:   /  /    
+       Data    : Dezembro/2015.                   Ultima atualizacao: 13/02/2017 
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que chamado
        Objetivo  : Gerar o registro do cabranca na PL TABLE
 
-       Alteracoes: 
+       Alteracoes: 13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
+								(Andrei - Mouts). 
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -1247,7 +1256,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     pr_tab_crapcob(vr_index).qtdiaprt := pr_rec_cobranca.qtdiaprt;
     pr_tab_crapcob(vr_index).inemiexp := pr_rec_cobranca.inemiexp;
     
-  	pr_tab_crapcob(vr_index).inserasa := pr_rec_cobranca.inserasa;
+	pr_tab_crapcob(vr_index).inserasa := pr_rec_cobranca.inserasa;
     pr_tab_crapcob(vr_index).flserasa := pr_rec_cobranca.flserasa;
     pr_tab_crapcob(vr_index).qtdianeg := pr_rec_cobranca.qtdianeg;
 
@@ -1269,7 +1278,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
   --> Gravar Instrucoes -> Gerar registro na PL TABLE de Intrucoes
   PROCEDURE pc_grava_instrucao( pr_rec_cobranca  IN typ_rec_cobranca,      --> Dados da linha
-                                pr_tab_instrucao IN OUT typ_tab_instrucao, --> Tabela de Instrucoes
+                                pr_tab_instrucao IN OUT NOCOPY typ_tab_instrucao, --> Tabela de Instrucoes
                                 pr_dscritic      OUT VARCHAR2              --> Descricao da critica
                               ) IS
                                    
@@ -1279,14 +1288,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Douglas Quisinski
-       Data    : Dezembro/2015.                   Ultima atualizacao: 
+       Data    : Dezembro/2015.                   Ultima atualizacao: 13/02/2017 
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que chamado
        Objetivo  : Gravar as instrucoes do processo
 
-       Alteracoes: 
+       Alteracoes: 13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
+								(Andrei - Mouts). 
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -1346,7 +1356,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                               ,pr_cdoperad      IN crapope.cdoperad%TYPE --> Operador
                               ,pr_cdocorre      IN INTEGER               --> Codigo da Ocorrencia
                               ,pr_cdmotivo      IN VARCHAR2              --> Motivo da Rejeicao
-                              ,pr_tab_rejeitado IN OUT typ_tab_rejeitado  --> Tabela de Rejeitados
+                              ,pr_tab_rejeitado IN OUT NOCOPY typ_tab_rejeitado  --> Tabela de Rejeitados
                               ) IS
                                    
   /* ............................................................................
@@ -1355,14 +1365,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Douglas Quisinski
-       Data    : Dezembro/2015.                   Ultima atualizacao: 
+       Data    : Dezembro/2015.                   Ultima atualizacao: 13/02/2017
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que chamado
        Objetivo  : Gravar os rejeitados do processo
 
-       Alteracoes: 
+       Alteracoes: 13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
+								(Andrei - Mouts). 
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -1411,7 +1422,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                      ,pr_cdoperad      IN crapope.cdoperad%TYPE --> Operador
                                      ,pr_cdocorre      IN INTEGER               --> Codigo da Ocorrencia
                                      ,pr_cdmotivo      IN VARCHAR2              --> Motivo da Rejeicao
-                                     ,pr_tab_rejeitado IN OUT typ_tab_rejeitado --> Tabela de Rejeitados
+                                     ,pr_tab_rejeitado IN OUT NOCOPY typ_tab_rejeitado --> Tabela de Rejeitados
                                      ) IS
                                    
   /* ............................................................................
@@ -1420,14 +1431,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Douglas Quisinski
-       Data    : Dezembro/2015.                   Ultima atualizacao: 
+       Data    : Dezembro/2015.                   Ultima atualizacao: 13/02/2017
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que chamado
        Objetivo  : verificar qual ocorrencia gerar a rejeicao
 
-       Alteracoes: 
+       Alteracoes: 13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
+								(Andrei - Mouts). 
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -1475,7 +1487,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
   --> Gravar Sacado -> Gerar registro na PL TABLE de Sacados
   PROCEDURE pc_grava_sacado( pr_cdoperad     IN crapope.cdoperad%TYPE, --> Operador
                              pr_rec_cobranca IN typ_rec_cobranca,      --> Dados da linha
-                             pr_tab_sacado   IN OUT typ_tab_sacado,    --> Tabela de Instrucoes
+                             pr_tab_sacado   IN OUT NOCOPY typ_tab_sacado,    --> Tabela de Instrucoes
                              pr_dscritic        OUT VARCHAR2           --> Descricao da critica
                             ) IS                                  
   /* ............................................................................
@@ -1484,7 +1496,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Douglas Quisinski
-       Data    : Janeiro/2016                     Ultima atualizacao: 
+       Data    : Janeiro/2016                     Ultima atualizacao: 13/02/2017 
 
        Dados referentes ao programa:
 
@@ -1492,6 +1504,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Objetivo  : Gravar as informacoes do sacado
 
        Alteracoes: 25/11/2016 - Remover caracteres especial no nome do sacado (Gil Furtado - MOUTS)
+
+	               13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
+								(Andrei - Mouts). 
+
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -1813,7 +1829,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                 pr_cdoperad    IN crapope.cdoperad%TYPE, --> Operador
                                 pr_tab_crapcob IN typ_tab_crapcob,       --> Tabela de Cobranca
                                 pr_rec_header  IN typ_rec_header,        --> Dados do Header do Arquivo
-                                pr_tab_lat_consolidada IN OUT PAGA0001.typ_tab_lat_consolidada, --> Tabela tarifas
+                                pr_tab_lat_consolidada IN OUT NOCOPY PAGA0001.typ_tab_lat_consolidada, --> Tabela tarifas
                                 pr_cdcritic   OUT INTEGER,               --> Codigo da Critica
                                 pr_dscritic   OUT VARCHAR2               --> Descricao da Critica
                                ) IS
@@ -1824,7 +1840,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Douglas Quisinski
-       Data    : Janeiro/2016                     Ultima atualizacao: 02/12/2016
+       Data    : Janeiro/2016                     Ultima atualizacao: 13/02/2017
 
        Dados referentes ao programa:
 
@@ -1836,6 +1852,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        
                    02/12/2016 - Ajuste para tratar nome da cidade, nome do bairro e uf nulos 
   						               		(Andrei - RKAM).
+
+				   13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
+								(Andrei - Mouts). 
+
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -2172,8 +2192,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                   ,pr_cdoperad      IN crapope.cdoperad%TYPE --> Operador
                                   ,pr_tab_instrucao IN typ_tab_instrucao     --> Tabela de Cobranca
                                   ,pr_rec_header    IN typ_rec_header        --> Dados do Header do Arquivo
-                                  ,pr_tab_rejeitado IN OUT typ_tab_rejeitado --> Tabela de rejeitados
-                                  ,pr_tab_lat_consolidada IN OUT PAGA0001.typ_tab_lat_consolidada --> Tabela tarifas
+                                  ,pr_tab_rejeitado IN OUT NOCOPY typ_tab_rejeitado --> Tabela de rejeitados
+                                  ,pr_tab_lat_consolidada IN OUT NOCOPY PAGA0001.typ_tab_lat_consolidada --> Tabela tarifas
                                   ,pr_cdcritic     OUT INTEGER               --> Codigo da Critica
                                   ,pr_dscritic     OUT VARCHAR2              --> Descricao da Critica
                                   ) IS
@@ -2184,7 +2204,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Douglas Quisinski
-       Data    : Janeiro/2016                     Ultima atualizacao: 25/01/2016
+       Data    : Janeiro/2016                     Ultima atualizacao: 13/02/2017
 
        Dados referentes ao programa:
 
@@ -2193,6 +2213,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                    remessa
 
        Alteracoes: 25/01/2016 - Conversão Progress -> Oracle (Douglas Quisinski)
+
+	               13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
+								(Andrei - Mouts). 
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -3402,14 +3425,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                           pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE, --> Data de Movimento
                           pr_nmarquiv  IN craprtc.nmarquiv%TYPE, --> Nome do Arquivo
                           pr_cdoperad  IN crapope.cdoperad%TYPE, --> Operador
-                          pr_tab_crawrej   IN OUT typ_tab_crawrej, --> Tabela de Rejeitados
+                          pr_tab_crawrej   IN OUT NOCOPY typ_tab_crawrej, --> Tabela de Rejeitados
                           pr_des_reto OUT VARCHAR2) IS           --> Retorno OK/NOK
   /* ............................................................................
        Programa: pc_grava_rtc                     Antiga: b1wgen0090.p/pi_grava_rtc
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Douglas Quisinski
-       Data    : Janeiro/2016                     Ultima atualizacao: 29/01/2016
+       Data    : Janeiro/2016                     Ultima atualizacao: 13/02/2017
 
        Dados referentes ao programa:
 
@@ -3417,6 +3440,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Objetivo  : Gravar Controle de Remessa/Retorno de Titulos do Cooperado
 
        Alteracoes: 29/01/2016 - Conversão Progress -> Oracle (Douglas)
+
+	               13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
+								(Andrei - Mouts). 
+
     ............................................................................ */   
      
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -3505,7 +3532,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                               ,pr_cdseqcri IN INTEGER                         --> Código sequencial da critica
                               ,pr_seqdetal IN VARCHAR2 DEFAULT ' '            --> Detalhes
                               ,pr_dscritic IN VARCHAR2                        --> Dscrição da critica
-                              ,pr_tab_rejeita IN OUT COBR0006.typ_tab_rejeita --> Contem as linhas rejeitadas
+                              ,pr_tab_rejeita IN OUT NOCOPY COBR0006.typ_tab_rejeita --> Contem as linhas rejeitadas
                               ,pr_critica OUT VARCHAR2                        --> Descricao do erro 
                               ,pr_des_reto OUT VARCHAR2) IS                   --> Retorno OK/NOK     
          
@@ -3515,14 +3542,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Andrei -RKAM
-       Data    : Marco/2016.                   Ultima atualizacao: 
+       Data    : Marco/2016.                   Ultima atualizacao: 13/02/2017
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que chamado
        Objetivo  : Cria registros para identificar linhas rejeitadas
 
-       Alteracoes: 
+       Alteracoes: 13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
+								(Andrei - Mouts). 
     ............................................................................ */   
     
     vr_index INTEGER;
@@ -4635,11 +4663,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         pr_qtdinstr      IN OUT INTEGER,             --> contador de instucoes
                                         pr_qtbloque      IN OUT INTEGER,             --> contador de boletos processados
                                         pr_vlrtotal      IN OUT NUMBER,              --> Valor total dos boletos
-                                        pr_rec_cobranca  IN OUT typ_rec_cobranca,    --> Dados da Cobranca
-                                        pr_tab_crapcob   IN OUT typ_tab_crapcob,     --> Tabela de Cobranca
-                                        pr_tab_instrucao IN OUT typ_tab_instrucao,   --> Tabela de Instrucoes
-                                        pr_tab_rejeitado IN OUT typ_tab_rejeitado,   --> Tabela de Rejeitados
-                                        pr_tab_crawrej   IN OUT typ_tab_crawrej,     --> Tabela de Rejeitados
+                                        pr_rec_cobranca  IN OUT NOCOPY typ_rec_cobranca,    --> Dados da Cobranca
+                                        pr_tab_crapcob   IN OUT NOCOPY typ_tab_crapcob,     --> Tabela de Cobranca
+                                        pr_tab_instrucao IN OUT NOCOPY typ_tab_instrucao,   --> Tabela de Instrucoes
+                                        pr_tab_rejeitado IN OUT NOCOPY typ_tab_rejeitado,   --> Tabela de Rejeitados
+                                        pr_tab_crawrej   IN OUT NOCOPY typ_tab_crawrej,     --> Tabela de Rejeitados
                                         pr_des_reto         OUT VARCHAR2             --> Retorno OK/NOK
                                         ) IS
                                    
@@ -4649,7 +4677,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana - AMcom
-       Data    : Novembro/2015.                   Ultima atualizacao: 28/12/2016
+       Data    : Novembro/2015.                   Ultima atualizacao: 13/02/2017
 
        Dados referentes ao programa:
 
@@ -4669,6 +4697,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                 20 caracteres, deve gravar na cob somente 17.
                                 (AJFink - SD#580867)
 
+				   13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
+								(Andrei - Mouts).
+						
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -5190,9 +5221,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         pr_cdoperad      IN crapope.cdoperad%TYPE,   --> Operador
                                         pr_tab_linhas    IN gene0009.typ_tab_campos, --> Dados da linha
                                         pr_rec_header    IN typ_rec_header,          --> Dados do Header do Arquivo
-                                        pr_rec_cobranca  IN OUT typ_rec_cobranca,    --> Dados da Cobranca
-                                        pr_tab_rejeitado IN OUT typ_tab_rejeitado,   --> Tabela de Rejeitados
-                                        pr_tab_sacado    IN OUT typ_tab_sacado,      --> Tabela de Sacados
+                                        pr_rec_cobranca  IN OUT NOCOPY typ_rec_cobranca,    --> Dados da Cobranca
+                                        pr_tab_rejeitado IN OUT NOCOPY typ_tab_rejeitado,   --> Tabela de Rejeitados
+                                        pr_tab_sacado    IN OUT NOCOPY typ_tab_sacado,      --> Tabela de Sacados
                                         pr_des_reto         OUT VARCHAR2             --> Retorno OK/NOK
                                         ) IS
                                          
@@ -5202,7 +5233,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Douglas Quisinski
-       Data    : Novembro/2015.                   Ultima atualizacao: 26/10/2016
+       Data    : Novembro/2015.                   Ultima atualizacao: 13/02/2017
 
        Dados referentes ao programa:
 
@@ -5218,6 +5249,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                26/10/2016 - Ajuste na validacao do nome do sacado para considerar 
                             o caracter ':' como valido.
                             (Chamado 535830) - (Fabricio)
+
+				  13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
+							   (Andrei - Mouts).
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -5567,8 +5601,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         pr_cdoperad      IN crapope.cdoperad%TYPE,   --> Operador
                                         pr_tab_linhas    IN gene0009.typ_tab_campos, --> Dados da linha
                                         pr_rec_header    IN typ_rec_header,          --> Dados do Header do Arquivo
-                                        pr_rec_cobranca  IN OUT typ_rec_cobranca,    --> Dados da Cobranca
-                                        pr_tab_rejeitado IN OUT typ_tab_rejeitado,   --> Tabela de Rejeitados
+                                        pr_rec_cobranca  IN OUT NOCOPY typ_rec_cobranca,    --> Dados da Cobranca
+                                        pr_tab_rejeitado IN OUT NOCOPY typ_tab_rejeitado,   --> Tabela de Rejeitados
                                         pr_des_reto         OUT VARCHAR2             --> Retorno OK/NOK
                                         ) IS
                                    
@@ -5578,7 +5612,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Douglas Quisinski
-       Data    : Novembro/2015.                   Ultima atualizacao: 06/01/2016
+       Data    : Novembro/2015.                   Ultima atualizacao: 13/02/2017
 
        Dados referentes ao programa:
 
@@ -5586,6 +5620,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Objetivo  : Tratar linha do arquivo tipo de segmento R
 
        Alteracoes: 06/01/2016 - Conversão Progress -> Oracle (Douglas Quisinski)
+	    
+		           13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
+								(Andrei - Mouts). 
+
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -5717,8 +5755,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         pr_cdoperad      IN crapope.cdoperad%TYPE,   --> Operador
                                         pr_rec_header    IN typ_rec_header,          --> Dados do Header do Arquivo
                                         pr_tab_linhas    IN gene0009.typ_tab_campos, --> Dados da linha
-                                        pr_rec_cobranca  IN OUT typ_rec_cobranca,    --> Dados da Cobranca
-                                        pr_tab_rejeitado IN OUT typ_tab_rejeitado,   --> Tabela de Rejeitados
+                                        pr_rec_cobranca  IN OUT NOCOPY typ_rec_cobranca,    --> Dados da Cobranca
+                                        pr_tab_rejeitado IN OUT NOCOPY typ_tab_rejeitado,   --> Tabela de Rejeitados
                                         pr_des_reto         OUT VARCHAR2             --> Retorno OK/NOK
                                         ) IS
                                    
@@ -5728,7 +5766,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Douglas Quisinski
-       Data    : Novembro/2015.                   Ultima atualizacao: 06/01/2016
+       Data    : Novembro/2015.                   Ultima atualizacao: 13/02/2017
 
        Dados referentes ao programa:
 
@@ -5736,6 +5774,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Objetivo  : Tratar linha do arquivo tipo de segmento S
 
        Alteracoes: 06/01/2016 - Conversão Progress -> Oracle (Douglas Quisinski)
+
+	               13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
+								(Andrei - Mouts). 
+
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -5823,9 +5865,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                           pr_cdoperad      IN crapope.cdoperad%TYPE,   --> Operador
                                           pr_rec_header    IN typ_rec_header,          --> Dados do Header do Arquivo
                                           pr_tab_linhas    IN gene0009.typ_tab_campos, --> Dados da linha
-                                          pr_rec_cobranca  IN OUT typ_rec_cobranca,    --> Dados da Cobranca
-                                          pr_tab_rejeitado IN OUT typ_tab_rejeitado,   --> Tabela de Rejeitados
-                                          pr_tab_sacado    IN OUT typ_tab_sacado,      --> Tabela de Sacados
+                                          pr_rec_cobranca  IN OUT NOCOPY typ_rec_cobranca,    --> Dados da Cobranca
+                                          pr_tab_rejeitado IN OUT NOCOPY typ_tab_rejeitado,   --> Tabela de Rejeitados
+                                          pr_tab_sacado    IN OUT NOCOPY typ_tab_sacado,      --> Tabela de Sacados
                                           pr_des_reto         OUT VARCHAR2             --> Retorno OK/NOK
                                          ) IS
                                    
@@ -5835,7 +5877,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Douglas Quisinski
-       Data    : Novembro/2015.                   Ultima atualizacao: 06/01/2016
+       Data    : Novembro/2015.                   Ultima atualizacao: 13/02/2017
 
        Dados referentes ao programa:
 
@@ -5843,6 +5885,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Objetivo  : Tratar linha do arquivo tipo de segmento Y-04
 
        Alteracoes: 06/01/2016 - Conversão Progress -> Oracle (Douglas Quisinski)
+
+	               13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
+								(Andrei - Mouts). 
+
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -6157,11 +6203,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         pr_qtdinstr      IN OUT INTEGER,             --> contador de instucoes
                                         pr_qtbloque      IN OUT INTEGER,             --> contador de boletos processados
                                         pr_vlrtotal      IN OUT NUMBER,              --> Valor total dos boletos
-                                        pr_rec_cobranca  IN OUT typ_rec_cobranca,    --> Dados da Cobranca
-                                        pr_tab_crapcob   IN OUT typ_tab_crapcob,     --> Tabela de Cobranca
-                                        pr_tab_instrucao IN OUT typ_tab_instrucao,   --> Tabela de Instrucoes
-                                        pr_tab_rejeitado IN OUT typ_tab_rejeitado,   --> Tabela de Rejeitados
-                                        pr_tab_crawrej   IN OUT typ_tab_crawrej,     --> Tabela de Rejeitados
+                                        pr_rec_cobranca  IN OUT NOCOPY typ_rec_cobranca,    --> Dados da Cobranca
+                                        pr_tab_crapcob   IN OUT NOCOPY typ_tab_crapcob,     --> Tabela de Cobranca
+                                        pr_tab_instrucao IN OUT NOCOPY typ_tab_instrucao,   --> Tabela de Instrucoes
+                                        pr_tab_rejeitado IN OUT NOCOPY typ_tab_rejeitado,   --> Tabela de Rejeitados
+                                        pr_tab_crawrej   IN OUT NOCOPY typ_tab_crawrej,     --> Tabela de Rejeitados
                                         pr_des_reto         OUT VARCHAR2             --> Retorno OK/NOK
                                         ) IS
                                    
@@ -6171,7 +6217,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Andrei - RKAM
-       Data    : Marco/2016.                   Ultima atualizacao: 07/11/2016
+       Data    : Marco/2016.                   Ultima atualizacao: 13/02/2017
 
        Dados referentes ao programa:
 
@@ -6182,6 +6228,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                 quantidade de dias seja parametrizada. Sera alterado 
                                 de 90 para 365 dias. (Douglas - Chamado 523329)
        
+	               13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
+								(Andrei - Mouts).
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -6378,10 +6426,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                        ,pr_cdoperad      IN crapope.cdoperad%TYPE   --> Operador
                                        ,pr_tab_linhas    IN gene0009.typ_tab_campos --> Dados da linha
                                        ,pr_rec_header    IN typ_rec_header          --> Dados do Header do Arquivo
-                                       ,pr_tab_crawrej   IN OUT typ_tab_crawrej     --> Tabela de rejeitados
-                                       ,pr_rec_cobranca  IN OUT typ_rec_cobranca    --> Dados da Cobranca
-                                       ,pr_tab_rejeitado IN OUT typ_tab_rejeitado   --> Tabela de Rejeitados
-                                       ,pr_tab_sacado    IN OUT typ_tab_sacado      --> Tabela de Sacados
+                                       ,pr_tab_crawrej   IN OUT NOCOPY typ_tab_crawrej     --> Tabela de rejeitados
+                                       ,pr_rec_cobranca  IN OUT NOCOPY typ_rec_cobranca    --> Dados da Cobranca
+                                       ,pr_tab_rejeitado IN OUT NOCOPY typ_tab_rejeitado   --> Tabela de Rejeitados
+                                       ,pr_tab_sacado    IN OUT NOCOPY typ_tab_sacado      --> Tabela de Sacados
                                        ,pr_des_reto         OUT VARCHAR2            --> Retorno OK/NOK
                                         ) IS
                                    
@@ -6391,14 +6439,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Andrei - RKAM
-       Data    : Marco/2016.                   Ultima atualizacao:  
+       Data    : Marco/2016.                   Ultima atualizacao: 13/02/2017 
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que chamado
        Objetivo  : Tratar linha do arquivo tipo de segmento Q
 
-       Alteracoes:  
+       Alteracoes: 13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
+								(Andrei - Mouts). 
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -6788,7 +6837,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       IF cr_craprtc%NOTFOUND THEN
         --Fechar Cursor
         CLOSE cr_craprtc;
-        
+
         -- Utilizar a SEQUENCE para gerar o numero de remessa do cooperado
         vr_nrremrtc := fn_sequence(pr_nmtabela => 'CRAPRTC'
                                   ,pr_nmdcampo => 'NRREMRET'
@@ -7334,12 +7383,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                      ,pr_qtdinstr      IN OUT INTEGER             --> contador de instucoes
                                      ,pr_qtbloque      IN OUT INTEGER             --> contador de boletos processados
                                      ,pr_vlrtotal      IN OUT NUMBER              --> Valor total dos boletos
-                                     ,pr_rec_cobranca  IN OUT typ_rec_cobranca    --> Dados da Cobranca
-                                     ,pr_tab_crapcob   IN OUT typ_tab_crapcob     --> Tabela de Cobranca
-                                     ,pr_tab_instrucao IN OUT typ_tab_instrucao   --> Tabela de Instrucoes
-                                     ,pr_tab_rejeitado IN OUT typ_tab_rejeitado   --> Tabela de Rejeitados
-                                     ,pr_tab_sacado    IN OUT typ_tab_sacado      --> Tabela de Sacados                                  
-                                     ,pr_tab_crawrej   IN OUT typ_tab_crawrej     --> Tabela de Rejeitados
+                                     ,pr_rec_cobranca  IN OUT NOCOPY typ_rec_cobranca    --> Dados da Cobranca
+                                     ,pr_tab_crapcob   IN OUT NOCOPY typ_tab_crapcob     --> Tabela de Cobranca
+                                     ,pr_tab_instrucao IN OUT NOCOPY typ_tab_instrucao   --> Tabela de Instrucoes
+                                     ,pr_tab_rejeitado IN OUT NOCOPY typ_tab_rejeitado   --> Tabela de Rejeitados
+                                     ,pr_tab_sacado    IN OUT NOCOPY typ_tab_sacado      --> Tabela de Sacados                                  
+                                     ,pr_tab_crawrej   IN OUT NOCOPY typ_tab_crawrej     --> Tabela de Rejeitados
                                      ,pr_des_reto      OUT VARCHAR2)IS            --> Retorno OK/NOK
                                          
   /* ............................................................................
@@ -7348,7 +7397,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Andrei - RKAM
-       Data    : Marco/2016.                   Ultima atualizacao: 07/11/2016 
+       Data    : Marco/2016.                   Ultima atualizacao: 13/02/2017
 
        Dados referentes ao programa:
 
@@ -7368,6 +7417,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                    27/01/2017 - Incluir atribuição do flgdprot quando houver
                                 instrução de protesto. (AJFink - SD#586758)
 
+				   13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
+								(Andrei - Mouts).
     ............................................................................ */   
     
     --> Buscar dados do associado
@@ -8197,7 +8248,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         END IF;
         
       END IF;
-
+            
       --SD#586758
       if nvl(pr_rec_cobranca.qtdiaprt,0) > 0 then
         pr_rec_cobranca.flgdprot := 1;
@@ -8291,9 +8342,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                    ,pr_cdoperad      IN crapope.cdoperad%TYPE   --> Operador
                                    ,pr_tab_linhas    IN gene0009.typ_tab_campos --> Dados da linha
                                    ,pr_rec_header    IN typ_rec_header          --> Dados do Header do Arquivo
-                                   ,pr_rec_cobranca  IN OUT typ_rec_cobranca    --> Dados da Cobranca
-                                   ,pr_tab_rejeitado IN OUT typ_tab_rejeitado   --> Tabela de Rejeitados
-                                   ,pr_tab_sacado    IN OUT typ_tab_sacado      --> Tabela de Sacados
+                                   ,pr_rec_cobranca  IN OUT NOCOPY typ_rec_cobranca    --> Dados da Cobranca
+                                   ,pr_tab_rejeitado IN OUT NOCOPY typ_tab_rejeitado   --> Tabela de Rejeitados
+                                   ,pr_tab_sacado    IN OUT NOCOPY typ_tab_sacado      --> Tabela de Sacados
                                    ,pr_des_reto      OUT VARCHAR2)IS            --> Retorno OK/NOK
                                    
   /* ............................................................................
@@ -8302,14 +8353,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Andrei - RKAM
-       Data    : Marco/2016.                   Ultima atualizacao:  
+       Data    : Marco/2016.                   Ultima atualizacao: 13/02/2017 
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que chamado
        Objetivo  : Tratar linha do arquivo que contem as informações de multa
 
-       Alteracoes:  
+       Alteracoes: 13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
+								(Andrei - Mouts). 
     ............................................................................ */   
     
     ------------------------ VARIAVEIS  ----------------------------
@@ -8481,7 +8533,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                        ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE --> Data do movimento
                                        ,pr_cdoperad  IN crapope.cdoperad%TYPE --> Codigo do operador
                                        ,pr_nmdatela  IN VARCHAR2              --> Nome da Tela                                 
-                                       ,pr_tab_crawrej IN OUT typ_tab_crawrej --> Tabela de Rejeitados
+                                       ,pr_tab_crawrej IN OUT NOCOPY typ_tab_crawrej --> Tabela de Rejeitados
                                        ,pr_hrtransa OUT INTEGER               --> Hora da transacao
                                        ,pr_nrprotoc OUT VARCHAR2              --> Numero do Protocolo
                                        ,pr_des_reto OUT VARCHAR2              --> OK ou NOK
@@ -8494,7 +8546,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Andrei - RKAM
-       Data    : Marco/2016.                   Ultima atualizacao: 17/08/2016
+       Data    : Marco/2016.                   Ultima atualizacao: 13/02/2017
 
        Dados referentes ao programa:
 
@@ -8506,6 +8558,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        
                    17/08/2016 - Ajuste para enviar o nome original do arquivo para emissao do protocolo
                                 (Andrei - RKAM).
+
+
+			       13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
+								(Andrei - Mouts). 
+
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -8708,7 +8765,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         vr_idxarq := vr_tab_crapaux.count;
         vr_tab_crapaux(vr_idxarq).nrsequen := SUBSTR(vr_setlinha,158,06);
         vr_tab_crapaux(vr_idxarq).nmarquiv := vr_nmfisico;
-        vr_tab_crapaux(vr_idxarq).nmarqori := pr_nmarquiv;
+        vr_tab_crapaux(vr_idxarq).nmarqori := SUBSTR(pr_nmarquiv,INSTR(pr_nmarquiv,'/',-1)+1);
         
         vr_flgfirst := TRUE;
         
@@ -9376,7 +9433,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                           pr_cdoperad  IN crapope.cdoperad%TYPE, --> Codigo do operador
                                           pr_nmdatela  IN VARCHAR2,              --> Nome da Tela
                                           ------> OUT <------
-                                          pr_tab_crawrej IN OUT typ_tab_crawrej, --> Tabela de Rejeitados
+                                          pr_tab_crawrej IN OUT NOCOPY typ_tab_crawrej, --> Tabela de Rejeitados
                                           pr_hrtransa OUT INTEGER,               --> Hora da transacao
                                           pr_nrprotoc OUT VARCHAR2,              --> Numero do Protocolo
                                           pr_des_reto OUT VARCHAR2,              --> OK ou NOK
@@ -9390,7 +9447,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana - AMcom
-       Data    : Novembro/2015.                   Ultima atualizacao: 17/08/2016
+       Data    : Novembro/2015.                   Ultima atualizacao: 13/02/2017
 
        Dados referentes ao programa:
 
@@ -9403,6 +9460,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                    17/08/2016 - Ajuste para enviar o nome original do arquivo para emissao do protocolo
                                 (Andrei - RKAM).
                                 
+                   13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
+								(Andrei - Mouts). 
+
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -9598,7 +9658,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         vr_idxarq := vr_tab_crapaux.count;
         vr_tab_crapaux(vr_idxarq).nrsequen := SUBSTR(vr_setlinha,158,06);
         vr_tab_crapaux(vr_idxarq).nmarquiv := vr_nmfisico;
-        vr_tab_crapaux(vr_idxarq).nmarqori := pr_nmarquiv;
+        vr_tab_crapaux(vr_idxarq).nmarqori := SUBSTR(pr_nmarquiv,INSTR(pr_nmarquiv,'/',-1)+1);
         
         vr_flgfirst := TRUE;
       END LOOP;
@@ -10332,7 +10392,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                        ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE --> Data do movimento
                                        ,pr_cdoperad  IN crapope.cdoperad%TYPE --> Codigo do operador
                                        ,pr_nmdatela  IN VARCHAR2              --> Nome da Tela
-                                       ,pr_tab_crawrej IN OUT typ_tab_crawrej --> Tabela de Rejeitados
+                                       ,pr_tab_crawrej IN OUT NOCOPY typ_tab_crawrej --> Tabela de Rejeitados
                                        ,pr_hrtransa OUT INTEGER               --> Hora da transacao
                                        ,pr_nrprotoc OUT VARCHAR2              --> Numero do Protocolo
                                        ,pr_des_reto OUT VARCHAR2              --> OK ou NOK
@@ -10346,7 +10406,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Andrei - RKAM
-       Data    : Marco/2016.                   Ultima atualizacao: 17/08/2016 
+       Data    : Marco/2016.                   Ultima atualizacao:13/02/2017
 
        Dados referentes ao programa:
 
@@ -10356,6 +10416,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
        Alteracoes: 17/08/2016 - Ajuste para enviar o nome original do arquivo para emissao do protocolo
                                 (Andrei - RKAM).
+
+                   13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
+								(Andrei - Mouts). 
+
     ............................................................................ */   
     
     ------------------------------- CURSORES ---------------------------------
@@ -10544,7 +10608,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         vr_idxarq := vr_tab_crapaux.count;
         vr_tab_crapaux(vr_idxarq).nrsequen := SUBSTR(vr_setlinha,101,07);
         vr_tab_crapaux(vr_idxarq).nmarquiv := vr_nmfisico;
-        vr_tab_crapaux(vr_idxarq).nmarqori := pr_nmarquiv;
+        vr_tab_crapaux(vr_idxarq).nmarqori := SUBSTR(pr_nmarquiv,INSTR(pr_nmarquiv,'/',-1)+1);
         
         vr_flgfirst := TRUE;
         
@@ -14897,14 +14961,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       Sistema : Internet - Cooperativa de Credito
       Sigla   : CRED
       Autor   : Odirlei Busana - AMcom
-      Data    : Julho/2017.                       Ultima atualizacao: 
+      Data    : Julho/2017.                       Ultima atualizacao: 13/02/2017
    
       Dados referentes ao programa:
        
       Frequencia: Sempre que for chamado (On-Line)
       Objetivo  : Procedure para rejeitar arquivo de remessa
           
-      Alteracoes:         
+      Alteracoes: 13/02/2017 - Ajuste para alterar o diretório destino para os arquivos rejeitados
+                               e efetuar corretamente o comando para envio do arquivo ao ftp
+				                      (Andrei - Mouts).        
                                     
     .................................................................................*/
     
@@ -14930,6 +14996,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     vr_diretorio_log VARCHAR2(4000);
     vr_diretorio_err VARCHAR2(4000);
     vr_dir_coop VARCHAR2(4000);
+    vr_dscomora VARCHAR2(1000);
     
     vr_serv_ftp VARCHAR2(100);
     vr_user_ftp VARCHAR2(100);
@@ -14985,12 +15052,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     -- Diretório do arquivo de Erro (.ERR)
     vr_diretorio_err := gene0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/coop
                                              ,pr_cdcooper => pr_cdcooper
-                                             ,pr_nmsubdir => '/upload') ;  
+                                             ,pr_nmsubdir => '/upload/ftp') ;  
+      
+    -- Renomeia o Arquivo .REM para .LOG
+    gene0001.pc_OScommand_Shell('cp ' || vr_diretorio_err || '/' || pr_nmarquiv || ' ' || 
+                                vr_diretorio_log || '/' || vr_nmarquivo_log);  
       
     -- Renomeia o Arquivo .REM para .ERR
     gene0001.pc_OScommand_Shell('mv ' || vr_diretorio_err || '/' || pr_nmarquiv || ' ' || 
                                 vr_diretorio_err || '/' || vr_nmarquivo_err); 
            
+    vr_dscomora:= gene0001.fn_param_sistema('CRED',pr_cdcooper,'SCRIPT_EXEC_SHELL');
+        
     -- Caminho script que envia/recebe via FTP os arquivos de custodia cheque
     vr_script_cust := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
                                                ,pr_cdcooper => '0'
@@ -15012,7 +15085,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                       '/' || TRIM(to_char(pr_nrdconta)) || '/RETORNO';                                                                              
             
     -- Copia Arquivo .ERR para Servidor FTP
-    vr_comando := vr_script_cust                                 || ' ' ||
+    vr_comando := vr_dscomora ||' perl_remoto ' || vr_script_cust || ' ' ||
     '-envia'                                                     || ' ' || 
     '-srv '         || vr_serv_ftp                               || ' ' || -- Servidor
     '-usr '         || vr_user_ftp                               || ' ' || -- Usuario
@@ -15035,14 +15108,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       RAISE vr_exc_erro;
     END IF;                    
                            
-      
     -- Copia Arquivo .LOG para Servidor FTP
-    vr_comando := vr_script_cust                                 || ' ' ||
+    vr_comando := vr_dscomora|| ' perl_remoto ' || vr_script_cust || ' ' ||
     '-envia'                                                     || ' ' || 
     '-srv '         || vr_serv_ftp                               || ' ' || -- Servidor
     '-usr '         || vr_user_ftp                               || ' ' || -- Usuario
     '-pass '        || vr_pass_ftp                               || ' ' || -- Senha
-    '-arq '         || vr_nmarquivo_log                          || ' ' || -- .LOG
+    '-arq '         || CHR(39) || vr_nmarquivo_log || CHR(39)    || ' ' || -- .LOG
     '-dir_local '   || vr_diretorio_log                          || ' ' || -- /usr/coop/<cooperativa>/arq
     '-dir_remoto '  || vr_dir_retorno                            || ' ' || -- /<coop>/<conta do cooperado>/RETORNO 
     '-salvar '      || vr_dir_coop || '/salvar'                  || ' ' || -- /usr/coop/<cooperativa>/salvar 
@@ -15060,7 +15132,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       RAISE vr_exc_erro;
     END IF;
    
-    
     -- Verifica Qual a Origem
     CASE pr_idorigem 
       WHEN 1 THEN vr_dsorigem := 'AYLLOS';
