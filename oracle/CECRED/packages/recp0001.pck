@@ -2350,6 +2350,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
              AND cdorigem = rw_acordo_contrato.cdorigem
              AND nrdconta = rw_acordo_contrato.nrdconta
              AND nrctremp = rw_acordo_contrato.nrctremp;
+             
+          -- Se não encontrou registro para alterar
+          IF SQL%ROWCOUNT = 0 THEN
+            -- Deverá realizar a inclusão do registro
+            INSERT INTO crapcyc(cdcooper
+                               ,cdorigem
+                               ,nrdconta
+                               ,nrctremp
+                               ,cdoperad
+                               ,dtinclus
+                               ,cdopeinc
+                               ,dtaltera
+                               ,flgehvip
+                               ,cdmotcin)
+                        VALUES (rw_acordo_contrato.cdcooper  -- cdcooper
+                               ,rw_acordo_contrato.cdorigem  -- cdorigem
+                               ,rw_acordo_contrato.nrdconta  -- nrdconta
+                               ,rw_acordo_contrato.nrctremp  -- nrctremp
+                               ,pr_cdoperad                  -- cdoperad
+                               ,BTCH0001.rw_crapdat.dtmvtolt -- dtinclus
+                               ,pr_cdoperad                  -- cdopeinc
+                               ,BTCH0001.rw_crapdat.dtmvtolt -- dtaltera
+                               ,1                            -- flgehvip
+                               ,1);                          -- cdmotcin
+           
+          END IF; -- IF SQL%ROWCOUNT = 0 
+
         EXCEPTION
           WHEN OTHERS THEN
             vr_dscritic := 'Erro ao atualizar CRAPCYC: '||SQLERRM;
