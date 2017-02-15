@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_cdcooper IN crapcop.cdcooper%T
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Odirlei Busana - AMcom
-     Data    : Julho/2016                         Ultima atualizacao: 25/08/2016 
+     Data    : Julho/2016                         Ultima atualizacao: 14/02/2017
 
      Dados referentes ao programa:
 
@@ -22,6 +22,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_cdcooper IN crapcop.cdcooper%T
 
                  25/08/2016 - Ajuste para mover o arquivo processado para o diretório salvar
                               (Andrei - RKAM).
+
+                 14/02/2017 - Ajsute para efetuar o commit por arquivo e não mais por cooperativa
+							                (Andrei - Mouts).
   ............................................................................ */
 
   ------------------------------- CURSORES ---------------------------------
@@ -619,13 +622,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_cdcooper IN crapcop.cdcooper%T
              
             -- Busca próxima chave de arquivos
             vr_chave := vr_tab_cratarq.NEXT(vr_chave);
-  		        
+  		    
+			      -- Efetuar commit por arquivo
+            COMMIT;
+		       
           END LOOP; -- Loop por arquivo
              
         END IF; --Fim da importação dos arquivos
-                    
-        -- Efetuar commit por cooperativa
-        COMMIT;	
          
        EXCEPTION
          WHEN vr_exc_erro THEN
