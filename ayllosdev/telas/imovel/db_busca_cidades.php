@@ -54,7 +54,7 @@ echo "cCdcidade.html(\"\");";
 echo "add_cidade_tela(\"\", \"\");";
 
 foreach($cidades as $c) {
-    if ($c->tags[1]->cdata == $dscidade) {
+    if (strtoupper($c->tags[1]->cdata) == strtoupper($dscidade)) {
 		echo "cdcidade = " . $c->tags[0]->cdata . ";";
 	} 
 	echo "add_cidade_tela(" . $c->tags[0]->cdata . ",\"" . $c->tags[1]->cdata . "\");";
