@@ -758,6 +758,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                         ,pr_vlrecbru IN NUMBER                 -- Valor da receita bruta acumulada da guia
                                         ,pr_vlpercen IN NUMBER                 -- Valor do percentual da guia
                                         ,pr_flgagend IN BOOLEAN                -- Indicador de agendamento (TRUE – Agendamento / FALSE – Nesta Data)
+										                    ,pr_cdtransa IN VARCHAR2               -- Código da transação por meio de arrecadação do SICREDI
+										                    ,pr_dssigemp IN VARCHAR2               -- Descrição resumida de convênio DARF para autenticação modelo SICREDI
                                         ,pr_dsprotoc OUT crappro.dsprotoc%TYPE -- Descrição do protocolo do comprovante
                                         ,pr_cdcritic OUT INTEGER               -- Código do erro
                                         ,pr_dscritic OUT VARCHAR2              -- Descriçao do erro
@@ -784,6 +786,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
        AND agb.cdageban = pr_cdageban;
     rw_arrec cr_arrec%ROWTYPE;
   
+	CURSOR cr_crapcop(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
+    	SELECT cop.cdcooper
+        	  ,cop.cdagesic
+    	FROM crapcop cop
+    	WHERE cop.cdcooper = pr_cdcooper;
+    rw_crapcop cr_crapcop%ROWTYPE;
+  
 	vr_inpessoa INTEGER;
 	vr_stsnrcal BOOLEAN;		
 	vr_cdempcon crapcon.cdempcon%TYPE;
@@ -792,11 +801,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     vr_dsinfor2 crappro.dsinform##2%TYPE;
     vr_dsinfor3 crappro.dsinform##3%TYPE;
     vr_dsretorn VARCHAR2(500) := '';
+	vr_dsautsic VARCHAR2(500) := '';
 	vr_nrrefere VARCHAR2(500) := '';
     vr_exc_erro EXCEPTION;
   
   BEGIN
     
+    --Verificar cooperativa
+    OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
+    FETCH cr_crapcop INTO rw_crapcop;
+    CLOSE cr_crapcop;  
+	
 	vr_cdempcon := SUBSTR(pr_cdbarras, 16, 4);
     vr_cdsegmto := SUBSTR(pr_cdbarras, 2, 1);
 			
@@ -882,6 +897,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     
     vr_dsinfor3 := vr_dsinfor3 || '#Valor Total: '            || TO_CHAR(pr_vlrtotal,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.');
     vr_dsinfor3 := vr_dsinfor3 || '#Descrição do Pagamento: ' || pr_dsidepag;
+    
+	-- Composição de autenticação conforme comprovante do modelo do SICREDI
+	IF pr_tpcaptur = 2 THEN --Apenas para captura manual (InternetBanking e Tela VERPRO)
+			
+      vr_dsautsic := 'BCS'                                                                  ||
+			               '000892'                                                               ||
+					           LPAD(rw_crapcop.cdagesic, 6, '0')                                      ||
+					           'IB'                                                                   ||
+					           TO_CHAR(pr_vlrtotal,'FM9G999999999990D00','NLS_NUMERIC_CHARACTERS=.,') ||
+					           'RR'                                                                   ||
+					           TO_CHAR(pr_dtmvtolt,'DD/MM/YYYY')                                      ||
+					           pr_cdtransa                                                            ||										 
+					           pr_dssigemp                                                            ;
+	  vr_dsinfor3 := vr_dsinfor3 || '#Autenticação Sicredi: ' || vr_dsautsic;
+			
+	END IF;
     
     --################## FIM DOS DADOS DO COMPROVANTE ##################
     
@@ -1575,11 +1606,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
        AND pod.cdcooper = pr_cdcooper
        AND pod.nrdconta = pr_nrdconta;
     
-		CURSOR cr_crapscn(pr_cdempres crapscn.cdempres%TYPE)IS
+		CURSOR cr_crapscn(pr_cdempres crapscn.cdempres%TYPE,
+		                  pr_tpmeiarr crapstn.tpmeiarr%TYPE)IS
     SELECT scn.cdempres
 		      ,scn.dsnomcnv
-      FROM crapscn scn
-     WHERE scn.cdempres = pr_cdempres;
+		   ,scn.dssigemp
+		   ,stn.cdtransa
+      FROM crapscn scn,
+		   crapstn stn
+     WHERE scn.cdempres = pr_cdempres
+		   AND stn.cdempres = scn.cdempres
+		   AND stn.tpmeiarr = pr_tpmeiarr;
     rw_crapscn cr_crapscn%ROWTYPE;
     
     --Busca o associado
@@ -1686,6 +1723,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     vr_vlmovpgo NUMBER;
     vr_nrautdoc craplcm.nrautdoc%TYPE;
     vr_flgagend BOOLEAN;
+	vr_cdtransa VARCHAR2(80);
+	vr_dssigemp	VARCHAR2(80);
   
   BEGIN
         
@@ -1707,6 +1746,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     ELSE
       vr_cdoperad:= '996';
     END IF;
+    
+	vr_cdtransa := '';
+	vr_dssigemp	:= '';
     
     /* Data do sistema */
     OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
@@ -1854,6 +1896,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     
     -- tipo de guia
 		IF pr_tpdaguia = 1 THEN
+			
 			vr_cdtippro:= 16; -- DARF
 				
 			IF pr_tpcaptur = 1 THEN -- CD BARRAS									
@@ -1893,6 +1936,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 				OPEN cr_crapscn (pr_cdempres => CASE pr_cdtribut
 																						 WHEN 6106 THEN 'D0'
 																						 ELSE 'A0' 
+												END,
+								pr_tpmeiarr => CASE pr_idorigem
+												    WHEN 3 THEN 'D'
+													ELSE 'C'
 																						 END);
 				FETCH cr_crapscn INTO rw_crapscn;
 				--Se nao encontrar
@@ -1906,6 +1953,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 					
 				vr_dtvencto := pr_dtvencto;
 			  vr_dsnomcnv := rw_crapscn.dsnomcnv;
+				vr_cdtransa := rw_crapscn.cdtransa;
+				vr_dssigemp	:= rw_crapscn.dssigemp;
 								
 			END IF;								
 		ELSE  -- DAS
@@ -1980,6 +2029,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                          ,pr_vlrecbru => pr_vlrecbru -- Valor da receita bruta acumulada da guia
                                          ,pr_vlpercen => pr_vlpercen -- Valor do percentual da guia
                                          ,pr_flgagend => vr_flgagend -- Indicador de agendamento (TRUE – Agendamento / FALSE – Nesta Data)
+										,pr_cdtransa => vr_cdtransa -- Código da transação por meio de arrecadação do SICREDI
+										,pr_dssigemp => vr_dssigemp -- Descrição resumida de convênio DARF para autenticação modelo SICREDI
                                          ,pr_dsprotoc => pr_dsprotoc -- Descrição do protocolo do comprovante
                                          ,pr_cdcritic => vr_cdcritic -- Código do erro
                                          ,pr_dscritic => vr_dscritic -- Descriçao do erro
@@ -3269,11 +3320,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 						 crapscn.cdsegmto = pr_cdsegmto;
      rw_crapscn cr_crapscn%ROWTYPE;
 		 
-		CURSOR cr_crapscn2(pr_cdempres crapscn.cdempres%TYPE)IS
+		CURSOR cr_crapscn2(pr_cdempres crapscn.cdempres%TYPE,
+		                   pr_tpmeiarr crapstn.tpmeiarr%TYPE)IS
 			SELECT scn.cdempres
 						,scn.dsnomcnv
-				FROM crapscn scn
-			 WHERE scn.cdempres = pr_cdempres;
+						,scn.dssigemp
+						,stn.cdtransa
+				FROM crapscn scn,
+				     crapstn stn
+			 WHERE scn.cdempres = pr_cdempres
+			   AND stn.cdempres = scn.cdempres
+				 AND stn.tpmeiarr = pr_tpmeiarr;
 			rw_crapscn2 cr_crapscn2%ROWTYPE;
 		 
 		CURSOR cr_crapsnh (pr_cdcooper  crapsnh.cdcooper%TYPE,
@@ -3322,6 +3379,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 	vr_flgagend BOOLEAN;
 	vr_cdtippro INTEGER;
 	vr_dsprotoc VARCHAR2(80);
+	vr_cdtransa VARCHAR2(80);
+	vr_dssigemp	VARCHAR2(80);
 		
   BEGIN
 	  -- Busca a data da cooperativa
@@ -3353,7 +3412,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 		
 		-- Convênios Sicredi
 		vr_tpdvalor := 1;
-		
+		vr_cdtransa := '';
+		vr_dssigemp	:= '';
 		vr_nrdolote := 11000 + pr_nrdcaixa;
 		
 		-- Compor linha digitável
@@ -3401,7 +3461,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 			OPEN cr_crapscn2 (pr_cdempres => CASE pr_cdtribut
 											WHEN 6106 THEN 'D0'
 												ELSE 'A0' 
-												END);
+								               END,
+								pr_tpmeiarr => CASE pr_idorigem
+								                    WHEN 3 THEN 'D'
+													ELSE 'C'
+															 END
+												);
 			FETCH cr_crapscn2 INTO rw_crapscn2;
 					    
 			--Se nao encontrar
@@ -3414,6 +3479,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 			
 		  CLOSE cr_crapscn2;
 			vr_dsnomcnv := rw_crapscn2.dsnomcnv;			
+			vr_cdtransa := rw_crapscn2.cdtransa;
+			vr_dssigemp	:= rw_crapscn2.dssigemp;
 		END IF;
 		
 		-- criação lote 
@@ -3708,6 +3775,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 																					 ,pr_vlrecbru => pr_vlrecbru         -- Valor da receita bruta acumulada da guia
 																					 ,pr_vlpercen => pr_vlpercen         -- Valor do percentual da guia
 																					 ,pr_flgagend => vr_flgagend         -- Indicador de agendamento (TRUE – Agendamento / FALSE – Nesta Data)
+																					 ,pr_cdtransa => vr_cdtransa         -- Código da transação por meio de arrecadação do SICREDI
+																					 ,pr_dssigemp => vr_dssigemp         -- Descrição resumida de convênio DARF para autenticação modelo SICREDI
 																					 ,pr_dsprotoc => vr_dsprotoc         -- Descrição do protocolo do comprovante
 																					 ,pr_cdcritic => vr_cdcritic         -- Código do erro
 																					 ,pr_dscritic => vr_dscritic         -- Descriçao do erro
