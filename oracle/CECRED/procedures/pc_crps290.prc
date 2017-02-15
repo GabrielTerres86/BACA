@@ -1432,11 +1432,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
                                                  ,pr_cdcooper => pr_cdcooper
                                                  ,pr_nmsubdir => '/rl'); --> Utilizaremos o rl
 
-gene0002.pc_clob_para_arquivo(pr_clob => vr_des_xml
-                             ,pr_caminho => vr_caminho_integra
-                             ,pr_arquivo => 'crrl238_.xml'
-                             ,pr_des_erro => vr_dscritic);
-
       -- Efetuar solicitação de geração de relatório --
       gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper         --> Cooperativa conectada
                                  ,pr_cdprogra  => vr_cdprogra         --> Programa chamador
