@@ -209,7 +209,7 @@ DEF TEMP-TABLE tt-consulta-blt
     FIELD vltitulo_atualizado AS DECI
 	FIELD vlmormul_atualizado AS DECI
 	FIELD flg2viab AS INTE
-	FIELD flprotes AS INTE.
+	FIELD flprotes AS INTE
     FIELD inavisms AS INTE
 	FIELD insmsant AS INTE
 	FIELD insmsvct AS INTE
