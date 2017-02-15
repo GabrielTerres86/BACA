@@ -546,12 +546,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                      ,pr_nrdconta  IN crapenc.nrdconta%TYPE
                      ,pr_inpessoa  IN crapass.inpessoa%TYPE
                      ,pr_idseqttl  IN crapttl.idseqttl%TYPE) IS 
-      SELECT dsendere 
+      SELECT TRIM(dsendere) dsendere
            , nrendere
-           , nmbairro
-           , nmcidade
+           , TRIM(nmbairro) nmbairro
+           , TRIM(nmcidade) nmcidade
            , nrcepend
-           , cdufende
+           , TRIM(cdufende) cdufende
         FROM crapenc t
        WHERE t.cdcooper = pr_cdcooper
          AND t.nrdconta = pr_nrdconta
@@ -658,8 +658,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
       
       FETCH cr_crapenc INTO rw_crapenc;
       
-      -- Se encontrar registro
-      IF cr_crapenc%FOUND THEN
+      -- Se encontrar registro e o endereço não estiver nulo
+      IF cr_crapenc%FOUND AND rw_crapenc.dsendere IS NOT NULL  THEN
         -- Popular os dados do endereço
         pr_tab_cooperado(vr_nrindice).dsendere := rw_crapenc.dsendere;
         pr_tab_cooperado(vr_nrindice).nrendere := rw_crapenc.nrendere;
@@ -667,8 +667,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
         pr_tab_cooperado(vr_nrindice).nmcidade := rw_crapenc.nmcidade;
         pr_tab_cooperado(vr_nrindice).nrcepend := rw_crapenc.nrcepend;
         pr_tab_cooperado(vr_nrindice).cdufende := rw_crapenc.cdufende;
+      ELSE
+        -- Fechar o cursor que está aberto, para realizar nova consulta
+        CLOSE cr_crapenc;
+        
+        -- Buscar endereço do cooperado pelo titular 1
+        OPEN  cr_crapenc(rw_crapass_ttl.cdcooper    -- pr_cdcooper
+                        ,rw_crapass_ttl.nrdconta    -- pr_nrdconta
+                        ,rw_crapass_ttl.inpessoa    -- pr_inpessoa
+                        ,1 );                       -- pr_idseqttl -- INFORMAÇÕES DO PRIMEIRO TITULAR
+      
+        FETCH cr_crapenc INTO rw_crapenc;
+        
+        -- Se encontrar registro e o endereço não estiver nulo
+        IF cr_crapenc%FOUND AND TRIM(rw_crapenc.dsendere) IS NOT NULL  THEN
+          -- Popular os dados do endereço
+          pr_tab_cooperado(vr_nrindice).dsendere := rw_crapenc.dsendere;
+          pr_tab_cooperado(vr_nrindice).nrendere := rw_crapenc.nrendere;
+          pr_tab_cooperado(vr_nrindice).nmbairro := rw_crapenc.nmbairro;
+          pr_tab_cooperado(vr_nrindice).nmcidade := rw_crapenc.nmcidade;
+          pr_tab_cooperado(vr_nrindice).nrcepend := rw_crapenc.nrcepend;
+          pr_tab_cooperado(vr_nrindice).cdufende := rw_crapenc.cdufende;
+        END IF;
+        
       END IF;
       
+      -- Fechar o cursor
       CLOSE cr_crapenc;
             
     END LOOP;
