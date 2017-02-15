@@ -1,4 +1,14 @@
 CREATE OR REPLACE PACKAGE CECRED.RECP0001 IS
+  
+  -- Verifica se existe contrato de acordo na situacao informada
+  PROCEDURE pc_verifica_situacao_acordo(pr_cdcooper         IN crapepr.cdcooper%TYPE -- Codigo da Cooperativa
+                                       ,pr_nrdconta         IN crapepr.nrdconta%TYPE -- Numero da Conta
+                                       ,pr_nrctremp         IN crapepr.nrctremp%TYPE -- Numero do contrato
+                                       ,pr_flgretativo     OUT INTEGER               -- 0 - NAO / 1 - SIM
+                                       ,pr_flgretquitado   OUT INTEGER               -- 0 - NAO / 1 - SIM
+                                       ,pr_flgretcancelado OUT INTEGER               -- 0 - NAO / 1 - SIM
+                                       ,pr_cdcritic        OUT INTEGER               -- Codigo de criticia
+                                       ,pr_dscritic        OUT VARCHAR2);            -- Descricao da critica
 
   -- Verifica se existe contrato de acordo ativo
   PROCEDURE pc_verifica_acordo_ativo(pr_cdcooper  IN crapepr.cdcooper%TYPE  -- Código da Cooperativa
@@ -156,7 +166,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
   --  Sistema  : Rotinas genéricas com foco no Sistema de Acordos
   --  Sigla    : RECP
   --  Autor    : Renato Darosci / James Prust Junior
-  --  Data     : Setembro/2016.                   Ultima atualizacao: --/--/----
+  --  Data     : Setembro/2016.                   Ultima atualizacao: 14/02/2017
   --
   -- Dados referentes ao programa:
   --
@@ -169,6 +179,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
   --
   --             10/01/2017 - Ajuste pc_pagar_emprestimo_prejuizo para gerar corretamente o lancamento de debito
   --                          na conta corrente do cooperado - PRJ302 - Acordos (Odirlei-AMcom)
+  --
+  --             14/02/2017 - Criacao pc_verifica_situacao_acordo. (Jaison/James - PRJ302)
+  --
   ---------------------------------------------------------------------------------------------------------------
   
   -- Constante com o nome do programa
@@ -307,6 +320,60 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
       COMMIT;
   END pc_gera_log_mail;
   
+  -- Verifica se existe contrato de acordo na situacao informada
+  PROCEDURE pc_verifica_situacao_acordo(pr_cdcooper         IN crapepr.cdcooper%TYPE -- Codigo da Cooperativa
+                                       ,pr_nrdconta         IN crapepr.nrdconta%TYPE -- Numero da Conta
+                                       ,pr_nrctremp         IN crapepr.nrctremp%TYPE -- Numero do contrato
+                                       ,pr_flgretativo     OUT INTEGER               -- 0 - NAO / 1 - SIM
+                                       ,pr_flgretquitado   OUT INTEGER               -- 0 - NAO / 1 - SIM
+                                       ,pr_flgretcancelado OUT INTEGER               -- 0 - NAO / 1 - SIM
+                                       ,pr_cdcritic        OUT INTEGER               -- Codigo de criticia
+                                       ,pr_dscritic        OUT VARCHAR2) IS          -- Descricao da critica
+    -- CURSORES
+    CURSOR cr_tbrecup(pr_cdcooper tbrecup_acordo.cdcooper%TYPE
+                     ,pr_nrdconta tbrecup_acordo.nrdconta%TYPE
+                     ,pr_nrctremp tbrecup_acordo_contrato.nrctremp%TYPE) IS
+      SELECT tba.cdsituacao
+        FROM tbrecup_acordo_contrato tbac
+           , tbrecup_acordo tba
+       WHERE tba.nracordo = tbac.nracordo
+         AND (tbac.nrctremp = pr_nrctremp OR pr_nrctremp = 0)
+         AND tba.nrdconta   = pr_nrdconta
+         AND tba.cdcooper   = pr_cdcooper;
+
+  BEGIN
+    pr_flgretativo     := 0;
+    pr_flgretquitado   := 0;
+    pr_flgretcancelado := 0;
+
+    FOR rw_tbrecup IN cr_tbrecup(pr_cdcooper => pr_cdcooper
+                                ,pr_nrdconta => pr_nrdconta
+                                ,pr_nrctremp => pr_nrctremp) LOOP
+
+      -- Se estiver ATIVO
+      IF rw_tbrecup.cdsituacao = 1 THEN
+         pr_flgretativo := 1;
+      END IF;
+
+      -- Se estiver QUITADO
+      IF rw_tbrecup.cdsituacao = 2 THEN
+         pr_flgretquitado := 1;
+      END IF;
+
+      -- Se estiver CANCELADO
+      IF rw_tbrecup.cdsituacao = 3 THEN
+         pr_flgretcancelado := 1;
+      END IF;
+
+    END LOOP;
+
+  EXCEPTION
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro na RECP0001.PC_VERIFICA_SITUACAO_ACORDO: ' || SQLERRM;
+
+  END pc_verifica_situacao_acordo;
+  
   -- Verifica se existe contrato de acordo ativo
   PROCEDURE pc_verifica_acordo_ativo(pr_cdcooper  IN crapepr.cdcooper%TYPE -- Código da Cooperativa
                                     ,pr_nrdconta  IN crapepr.nrdconta%TYPE -- Número da Conta
@@ -314,47 +381,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                     ,pr_flgativo OUT INTEGER               -- [0 - NAO ATIVO] / [1 - ATIVO]
                                     ,pr_cdcritic OUT INTEGER               -- Código de críticia
                                     ,pr_dscritic OUT VARCHAR2) IS          -- Descrição da crítica
-    -- CURSORES
-    CURSOR cr_tbrecup(pr_cdcooper tbrecup_acordo.cdcooper%TYPE
-                     ,pr_nrdconta tbrecup_acordo.nrdconta%TYPE
-                     ,pr_nrctremp tbrecup_acordo_contrato.nrctremp%TYPE) IS
-      SELECT tba.cdcooper
-            ,tba.nrdconta
-            ,tbac.nrctremp
-        FROM tbrecup_acordo_contrato tbac
-           , tbrecup_acordo tba
-       WHERE tba.nracordo = tbac.nracordo
-         AND (tbac.nrctremp = pr_nrctremp OR pr_nrctremp = 0)
-         AND tba.cdsituacao = 1
-         AND tba.nrdconta   = pr_nrdconta
-         AND tba.cdcooper   = pr_cdcooper;
-    rw_tbrecup cr_tbrecup%ROWTYPE;
-
-    -- EXCEPTION
-    vr_exc_erro       EXCEPTION;
+    -- VARIAVEIS
+    vr_cdcritic        NUMBER;
+    vr_dscritic        VARCHAR2(1000);
+    vr_exc_erro        EXCEPTION;
+    vr_flgretquitado   INTEGER;
+    vr_flgretcancelado INTEGER;
     
   BEGIN
     
-    -- Valor default
-    pr_flgativo := 0;
-  
-    OPEN cr_tbrecup(pr_cdcooper => pr_cdcooper
-                   ,pr_nrdconta => pr_nrdconta
-                   ,pr_nrctremp => pr_nrctremp);
-    FETCH cr_tbrecup INTO rw_tbrecup;
-
-    IF cr_tbrecup%NOTFOUND THEN
-      pr_flgativo := 0; -- NAO ATIVO
-    ELSE
-      pr_flgativo := 1; -- ATIVO
+    RECP0001.pc_verifica_situacao_acordo(pr_cdcooper        => pr_cdcooper
+                                        ,pr_nrdconta        => pr_nrdconta
+                                        ,pr_nrctremp        => pr_nrctremp
+                                        ,pr_flgretativo     => pr_flgativo
+                                        ,pr_flgretquitado   => vr_flgretquitado
+                                        ,pr_flgretcancelado => vr_flgretcancelado
+                                        ,pr_cdcritic        => vr_cdcritic
+                                        ,pr_dscritic        => vr_dscritic);
+    -- Se ocorreu erro
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
     END IF;
 
-    CLOSE cr_tbrecup;
-
   EXCEPTION
+    WHEN vr_exc_erro THEN
+      IF vr_cdcritic <> 0 THEN
+        vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      END IF;
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+    
     WHEN OTHERS THEN
       pr_cdcritic := 0;
       pr_dscritic := 'Erro na RECP0001.PC_VERIFICA_ACORDO_ATIVO: ' || SQLERRM;
+
   END pc_verifica_acordo_ativo;
   
   

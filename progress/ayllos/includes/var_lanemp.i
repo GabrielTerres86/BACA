@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Janeiro/94.                         Ultima atualizacao: 23/09/2016
+   Data    : Janeiro/94.                         Ultima atualizacao: 14/02/2017
 
    Dados referentes ao programa:
 
@@ -58,6 +58,10 @@
              15/08/2016 - Inclusa a declaracao da variavel ant_vlsdprej (Renato Darosci - M176).
 
 			 23/09/2016 - Inclusao da variavel aux_flgativo, Prj. 302 (Jean Michel).
+
+             14/02/2017 - Inclusao da variavel aux_flgretativo e aux_flgretquitado. 
+                          (Jaison/James - PRJ302)
+
 ............................................................................. */
 
 DEF {1} SHARED VAR tel_dtmvtolt AS DATE    FORMAT "99/99/9999"          NO-UNDO.
@@ -148,7 +152,8 @@ DEF {1} SHARED VAR flg_next     AS LOGICAL                              NO-UNDO.
 DEF {1} SHARED VAR aux_dtrefere    AS DATE                              NO-UNDO.
 DEF {1} SHARED VAR aux_vlr_arrasto AS DECI                              NO-UNDO.
 
-DEF {1} SHARED VAR aux_flgativo AS INTEGER                              NO-UNDO.
+DEF {1} SHARED VAR aux_flgretativo   AS INTEGER                         NO-UNDO.
+DEF {1} SHARED VAR aux_flgretquitado AS INTEGER                         NO-UNDO.
 
 DEF {1} SHARED FRAME f_lanemp.
 DEF {1} SHARED FRAME f_regant.

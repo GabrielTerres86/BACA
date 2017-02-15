@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Outubro/91.                         Ultima atualizacao: 07/02/2017
+   Data    : Outubro/91.                         Ultima atualizacao: 14/02/2017
 
    Dados referentes ao programa:
 
@@ -182,7 +182,10 @@
                
                07/02/2017 - Incluir LEAVE TRANS_E para a critica 650 da leitura crablem pois mesmo 
                             com critica estava atualizando o lote (Lucas Ranghetti #570922)
-                          
+
+               14/02/2017 - Alteracao para chamar pc_verifica_situacao_acordo. 
+                            (Jaison/James - PRJ302)
+
 ............................................................................. */
 
 DEF BUFFER crabseg FOR crapseg.
@@ -213,7 +216,8 @@ DEF    VAR aux_sldmulta AS DEC                                          NO-UNDO.
 DEF    VAR aux_sldjmora AS DEC                                          NO-UNDO.
 DEF    VAR aux_vlrpagos AS DECIMAL                                      NO-UNDO.
 
-DEF    VAR aux_flgativo AS INTEGER                                      NO-UNDO.
+DEF    VAR aux_flgretativo   AS INTEGER                                 NO-UNDO.
+DEF    VAR aux_flgretquitado AS INTEGER                                 NO-UNDO.
 
 { includes/var_online.i } 
 { sistema/generico/includes/var_oracle.i }
@@ -995,24 +999,27 @@ DO TRANSACTION ON ERROR UNDO TRANS_E, NEXT:
                    /* Verifica se ha contratos de acordo */            
                   { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
                   
-                  RUN STORED-PROCEDURE pc_verifica_acordo_ativo
+                  RUN STORED-PROCEDURE pc_verifica_situacao_acordo
                     aux_handproc = PROC-HANDLE NO-ERROR (INPUT glb_cdcooper    
                                                         ,INPUT crapepr.nrdconta
                                                         ,INPUT crapepr.nrctremp
-                                                        ,0
+                                                        ,0 /* pr_flgretativo */
+                                                        ,0 /* pr_flgretquitado */
+                                                        ,0 /* pr_flgretcancelado */
                                                         ,0
                                                         ,"").
 
-                  CLOSE STORED-PROC pc_verifica_acordo_ativo
+                  CLOSE STORED-PROC pc_verifica_situacao_acordo
                             aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
                   { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-                  ASSIGN glb_cdcritic = 0
-                         glb_dscritic = ""
-                         glb_cdcritic = pc_verifica_acordo_ativo.pr_cdcritic WHEN pc_verifica_acordo_ativo.pr_cdcritic <> ?
-                         glb_dscritic = pc_verifica_acordo_ativo.pr_dscritic WHEN pc_verifica_acordo_ativo.pr_dscritic <> ?
-                         aux_flgativo = INT(pc_verifica_acordo_ativo.pr_flgativo).
+                  ASSIGN glb_cdcritic      = 0
+                         glb_dscritic      = ""
+                         glb_cdcritic      = pc_verifica_situacao_acordo.pr_cdcritic WHEN pc_verifica_situacao_acordo.pr_cdcritic <> ?
+                         glb_dscritic      = pc_verifica_situacao_acordo.pr_dscritic WHEN pc_verifica_situacao_acordo.pr_dscritic <> ?
+                         aux_flgretativo   = INT(pc_verifica_situacao_acordo.pr_flgretativo)
+                         aux_flgretquitado = INT(pc_verifica_situacao_acordo.pr_flgretquitado).
                   
                   IF glb_cdcritic > 0 THEN
                     DO:
@@ -1031,13 +1038,14 @@ DO TRANSACTION ON ERROR UNDO TRANS_E, NEXT:
                             LEAVE.
                         END.
                     
-                  IF aux_flgativo = 1 THEN
+                  /* Se estiver ATIVO ou QUITADO */
+                  IF aux_flgretativo = 1 OR aux_flgretquitado = 1 THEN
                     DO:
-					  ASSIGN par_situacao = FALSE.
+                      ASSIGN par_situacao = FALSE.
                       MESSAGE "Nao e possivel excluir o lote, contem lancamentos de emprestimo em acordo.".
                       PAUSE 3 NO-MESSAGE.
                       LEAVE.
-                    END.            
+                    END.
 
                   /* Fim verifica se ha contratos de acordo */   
 
