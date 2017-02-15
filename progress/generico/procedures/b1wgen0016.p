@@ -6915,6 +6915,7 @@ FUNCTION IdentificaMovCC RETURNS INTEGER
                                                                                             DEF VAR aux_vldifere AS LOGI                                    NO-UNDO.
                                                                                             DEF VAR aux_cobregis AS LOGI                                    NO-UNDO.
                                                                                             DEF VAR aux_msgalert AS CHAR                                    NO-UNDO.
+																							DEF VAR aux_dsretorn AS CHAR                                    NO-UNDO.
                                                                                             DEF VAR aux_qtminast AS INTE                                    NO-UNDO.
                                                                                             DEF VAR aux_contapro AS INTE                                    NO-UNDO.
                                                                                             
