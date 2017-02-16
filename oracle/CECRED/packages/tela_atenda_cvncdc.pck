@@ -1,17 +1,17 @@
 CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_CVNCDC IS
 
   TYPE typ_reg_info_cdc
-	     IS RECORD(dsendere crapenc.dsendere%TYPE
-								,nrendere crapenc.nrendere%TYPE
-								,complend crapenc.complend%TYPE
-								,nmbairro crapenc.nmbairro%TYPE
-								,nrcepend crapenc.nrcepend%TYPE
-								,nmcidade crapenc.nmcidade%TYPE
-                ,cdufende crapenc.cdufende%TYPE
-								,idcidade crapmun.idcidade%TYPE
-								,nrtelefo VARCHAR2(20)
-								,dsdemail crapcem.dsdemail%TYPE
-								,nmfansia crapjur.nmfansia%TYPE);
+	     IS RECORD(dsendere tbsite_cooperado_cdc.dslogradouro%TYPE
+                  ,nrendere tbsite_cooperado_cdc.nrendereco%TYPE
+                  ,complend tbsite_cooperado_cdc.dscomplemento%TYPE
+                  ,nmbairro tbsite_cooperado_cdc.nmbairro%TYPE
+                  ,nrcepend tbsite_cooperado_cdc.nrcep%TYPE
+                  ,nmcidade crapenc.nmcidade%TYPE
+                  ,cdufende crapenc.cdufende%TYPE
+                  ,idcidade tbsite_cooperado_cdc.idcidade%TYPE
+                  ,nrtelefo tbsite_cooperado_cdc.dstelefone%TYPE
+                  ,dsdemail tbsite_cooperado_cdc.dsemail%TYPE
+                  ,nmfansia tbsite_cooperado_cdc.nmfantasia%TYPE);
 
   PROCEDURE pc_busca_dados(pr_nrdconta        IN crapcdr.nrdconta%TYPE --> Numero da conta
                           ,pr_inpessoa        IN crapass.inpessoa%TYPE --> Tipo de pessoa
