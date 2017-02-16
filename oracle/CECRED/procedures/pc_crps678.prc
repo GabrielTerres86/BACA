@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps678 ( pr_cdcooper IN crapcop.cdcooper%
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Rafael Cechet/Lucas Reinert
-     Data    : Abril/2014                         Ultima atualizacao: 12/06/2014
+     Data    : Abril/2014                         Ultima atualizacao: 16/02/2017
 
      Dados referentes ao programa:
 
@@ -22,6 +22,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps678 ( pr_cdcooper IN crapcop.cdcooper%
      
                  12/06/2014 - Ajustado mensagem de crítica ao executar script. (Rafael)         
                             - Ajustado idretorno = 2 no cursor cr_crapccc. (Rafael)
+                            
+                 16/02/2017 #598480 Filtradas as cooperativas ativas e renomeados os arquivos CST validados
+                            com erro para ERRO_ + nome do arquivo (Carlos)
 
   ............................................................................ */
 
@@ -43,8 +46,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps678 ( pr_cdcooper IN crapcop.cdcooper%
         SELECT cop.cdcooper
               ,cop.nmrescop
               ,cop.dsdircop
-        FROM crapcop cop
-        WHERE cop.cdcooper <> 3;
+          FROM crapcop cop
+         WHERE cop.cdcooper <> 3
+           AND cop.flgativo = 1;
       rw_crapcoop cr_crapcop%ROWTYPE;
 			
 			CURSOR cr_crapccc(pr_cdcooper IN crapccc.cdcooper%TYPE) IS 
@@ -308,32 +312,38 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps678 ( pr_cdcooper IN crapcop.cdcooper%
 					-- Atribui à chave o primeiro registro da vr_tab_cratarq
 					vr_chave := vr_tab_cratarq.FIRST;
 		      
-					LOOP
-						-- Sai quando nao houver mais registros na vr_tab_cratarq
-						EXIT WHEN vr_chave IS NULL;
+          LOOP
+            -- Sai quando nao houver mais registros na vr_tab_cratarq
+            EXIT WHEN vr_chave IS NULL;
 
-						-- Rotina para validar arquivo de remessa  
-						CUST0001.pc_validar_arquivo(pr_cdcooper => rw_crapcoop.cdcooper                -- Cooperativa
-																			 ,pr_nrdconta => vr_tab_cratarq(vr_chave).nrdconta   -- Nr. da conta
-																			 ,pr_nrconven => vr_tab_cratarq(vr_chave).nrconven   -- Nr. Convênio
-																			 ,pr_nmarquiv => vr_tab_cratarq(vr_chave).nmarquiv   -- Nome do arquivo
---																			 ,pr_dtmvtolt => rw_crapdat.dtmvtolt                 -- Data atual
-																			 ,pr_dtmvtolt => trunc(SYSDATE)                 -- Data atual
-																			 ,pr_idorigem => 1                                   -- Fixo Ayllos
-																			 ,pr_cdoperad => '1'                                 -- Fixo '1'
-																			 ,pr_nrremess => vr_nrremess                         -- Nr. da remessa
-																			 ,pr_cdcritic => vr_cdcritic                         -- Cód. crítica
-																			 ,pr_dscritic => vr_dscritic);                       -- Desc. crítica
+            -- Rotina para validar arquivo de remessa  
+            CUST0001.pc_validar_arquivo(pr_cdcooper => rw_crapcoop.cdcooper                -- Cooperativa
+                                       ,pr_nrdconta => vr_tab_cratarq(vr_chave).nrdconta   -- Nr. da conta
+                                       ,pr_nrconven => vr_tab_cratarq(vr_chave).nrconven   -- Nr. Convênio
+                                       ,pr_nmarquiv => vr_tab_cratarq(vr_chave).nmarquiv   -- Nome do arquivo
+--                                     ,pr_dtmvtolt => rw_crapdat.dtmvtolt                 -- Data atual
+                                       ,pr_dtmvtolt => trunc(SYSDATE)                 -- Data atual
+                                       ,pr_idorigem => 1                                   -- Fixo Ayllos
+                                       ,pr_cdoperad => '1'                                 -- Fixo '1'
+                                       ,pr_nrremess => vr_nrremess                         -- Nr. da remessa
+                                       ,pr_cdcritic => vr_cdcritic                         -- Cód. crítica
+                                       ,pr_dscritic => vr_dscritic);                       -- Desc. crítica
 
-						-- Se retornou erro
-						IF NVL(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN                                            
-		           -- Erro ja esta sendo logado na procedure
-							 vr_cdcritic := 0;
-							 vr_dscritic := '';
-							 vr_chave := vr_tab_cratarq.NEXT(vr_chave);
-							 CONTINUE;                   
-							                                                  
-						END IF;
+            -- Se retornou erro
+            IF NVL(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN                                            
+              -- Erro ja esta sendo logado na procedure
+              vr_cdcritic := 0;
+              vr_dscritic := '';
+
+              -- Renomeia arquivo para 'ERRO_' + nome do arquivo
+              gene0001.pc_OScommand_Shell('mv ' || 
+                  vr_caminho_arq || '/' || vr_tab_cratarq(vr_chave).nmarquiv || ' ' ||
+                  vr_caminho_arq || '/' ||  'ERRO_' || vr_tab_cratarq(vr_chave).nmarquiv);
+
+              vr_chave := vr_tab_cratarq.NEXT(vr_chave);               
+
+              CONTINUE;							                                                  
+            END IF;
 
 						-- Se arquivo foi validado então processar arquivo
 						CUST0001.pc_processar_arquivo(pr_cdcooper => rw_crapcoop.cdcooper                -- Cooperativa
@@ -496,4 +506,3 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps678 ( pr_cdcooper IN crapcop.cdcooper%
     END;
   END pc_crps678;
 /
-
