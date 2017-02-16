@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0007 IS
   --  Sistema  : Rotinas para manipulação de XML
   --  Sigla    : GENE
   --  Autor    : Petter R. Villa Real  - Supero
-  --  Data     : Junho/2013.                   Ultima atualizacao: 30/06/2015
+  --  Data     : Junho/2013.                   Ultima atualizacao: 29/08/2016
   --
   -- Dados referentes ao programa:
   --
@@ -14,6 +14,9 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0007 IS
   --
   -- Alteracoes: 30/06/2015 - Converte os caracteres especiais de acordo com o CHARSET
   --                          (Andre Santos - SUPERO)
+  --
+  --             29/08/2016 - Criacao da fn_remove_cdata. (Jaison/Anderson)
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   /* Definições de objetos de uso comum por outras rotinas */
@@ -169,10 +172,12 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0007 IS
   /* Converte os caracteres especiais de acordo com o CHARSET */
   FUNCTION fn_convert_web_db(pr_convtext IN VARCHAR2) RETURN VARCHAR2; 
   FUNCTION fn_convert_db_web(pr_convtext IN VARCHAR2) RETURN VARCHAR2;
+
+  /* Remover CDATA da string */
+  FUNCTION fn_remove_cdata(pr_texto IN VARCHAR2) RETURN VARCHAR2;  --> String de saida
     
 END GENE0007;
 /
-
 CREATE OR REPLACE PACKAGE BODY CECRED.GENE0007 IS
   ---------------------------------------------------------------------------------------------------------------
   --
@@ -180,7 +185,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0007 IS
   --  Sistema  : Rotinas para manipulação de XML
   --  Sigla    : GENE
   --  Autor    : Petter R. Villa Real  - Supero
-  --  Data     : Junho/2013.                   Ultima atualizacao: 30/06/2015
+  --  Data     : Junho/2013.                   Ultima atualizacao: 29/08/2016
   --
   -- Dados referentes ao programa:
   --
@@ -189,6 +194,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0007 IS
   --
   -- Alteracoes: 30/06/2015 - Converte os caracteres especiais de acordo com o CHARSET
   --                          (Andre Santos - SUPERO)
+  --
+  --             29/08/2016 - Criacao da fn_remove_cdata. (Jaison/Anderson)
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   /* Função para invocar classe Java para executar parser SAX (XML) */
@@ -1230,7 +1238,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0007 IS
     -- Converter o texto de WE8ISO8859P1 para UTF8
     RETURN CONVERT(pr_convtext, 'UTF8', 'WE8ISO8859P1');
   END fn_convert_db_web;
+
+  /* Remover CDATA da string */
+  FUNCTION fn_remove_cdata(pr_texto IN VARCHAR2) RETURN VARCHAR2 IS  --> String de saida
+  ---------------------------------------------------------------------------------------------------------------
+  --
+  --  Programa : fn_remove_cdata
+  --  Sigla    : GENE
+  --  Autor    : Jaison
+  --  Data     : Agosto/2016                   Ultima atualizacao: --/--/----
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Frequencia: -----
+  -- Objetivo  : Remover o CDATA da string recebida.
+  ---------------------------------------------------------------------------------------------------------------
+  BEGIN
+    BEGIN
+      RETURN regexp_substr(pr_texto, '<!\[CDATA\[(.*)\]\]>', 1, 1, '', 1);
+    END;
+  END fn_remove_cdata;
   
 END GENE0007;
 /
-
