@@ -651,7 +651,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     --  Sistema  : CRED
     --  Sigla    : DSCC0001
     --  Autor    : Jaison
-    --  Data     : Agosto/2016                        Ultima atualizacao: 30/08/2016
+    --  Data     : Agosto/2016                        Ultima atualizacao: 15/02/2017
     --
     --  Dados referentes ao programa:
     --
@@ -659,6 +659,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     --   Objetivo  : Buscar cheques de um determinado bordero a partir da crapcdb
     --
     --   Alteração : 30/08/2016 - Conversao Progress -> Oracle (Jaison/Daniel)
+    --
+    --               15/02/2017 - Inclusao do LENGTH na verificacao do nrcpfcgc > 11. (Jaison/Daniel)
+    --
     -- .........................................................................*/
     
     ---------->>> CURSORES <<<---------- 
@@ -745,7 +748,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
         vr_rel_nmcheque := 'NAO CADASTRADO';
       ELSE
         vr_rel_dscpfcgc := GENE0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapcec.nrcpfcgc,
-                                                     pr_inpessoa => (CASE WHEN rw_crapcec.nrcpfcgc > 11 THEN 2 ELSE 1 END));
+                                                     pr_inpessoa => (CASE WHEN LENGTH(rw_crapcec.nrcpfcgc) > 11 THEN 2 ELSE 1 END));
         vr_rel_nmcheque := (CASE WHEN NVL(rw_crapcec.nrdconta,0) > 0 THEN '(' || TRIM(GENE0002.fn_mask_conta(rw_crapcec.nrdconta)) || ')' ELSE '' END)
                         || rw_crapcec.nmcheque;
       END IF;
