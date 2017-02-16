@@ -1,7 +1,7 @@
 	/************************************************************************
 	 Fonte: relacionamento.js                                             
 	 Autor: Guilherme                                                 
-	 Data : Setembro/2009                    Última Alteração: 28/06/2016
+	 Data : Setembro/2009                    Última Alteração: 16/02/2017
 
 	 Objetivo  : Biblioteca de funções da rotina de relacionamento
 
@@ -21,7 +21,9 @@
                  
                  28/06/2016 - Ajustado msgConfirmaStatus. PRJ229 - Melhorias OQS (Odirlei-AMcom)
              
-             01/08/2016 - Adicionado função controlaFoco.(Evandro - RKAM).
+                 01/08/2016 - Adicionado função controlaFoco.(Evandro - RKAM).
+
+                 16/02/2017 - Alterei a rotina selecionaEventoAndamento para validar a exibicao da table.(SD 605275 Carlos Tanholi)
 	************************************************************************/
 
 var callafterRelacionamento = '';
@@ -422,7 +424,7 @@ function mostraPreInscricao() {
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, carregando op&ccedil;&atilde;o pr&eacute;-inscri&ccedil;&atilde;o ...");
 	showMsgAguardo("Aguarde, carregando op&ccedil;&atilde;o pr&eacute;-inscri&ccedil;&atilde;o ...");
-	
+
 	// Carrega conteúdo da opção através de ajax
 	$.ajax({		
 		type: "POST", 
@@ -618,31 +620,36 @@ function selecionaEventoAndamento(idLinha, qtEAndamento, id, cd, edp, adp, obs, 
 
 	var cor = "";
 	
-	// Formata cor da linha da tabela que lista os eventos em andamento
-	for (var i = 1; i <= qtEAndamento; i++) {		
-		if (cor == "#F4F3F0") {
-			cor = "#FFFFFF";
-		} else {
-			cor = "#F4F3F0";
-		}		
-		
-		// Formata cor da linha
-        $("#trEvento" + i).css("background-color", cor);
-		
-		if (i == idLinha) {
-			// Atribui cor de destaque para limite selecionado
-            $("#trEvento" + idLinha).css("background-color", "#FFB9AB");
-			// Armazena codigo e id do evento selecionado
-			idevento = id;
-			cdevento = cd;
-			rowidedp = edp;
-			rowidadp = adp;
-			dsobserv = obs;
-			nmevento = nmEven;
-			dsrestri = dsRest;
-			imptermo = temTermo;
-            idLinhaEA = idLinha;
-		}
+	if ($("#divOpcoesDaOpcao1").css("display") == 'block') {
+
+	    // Formata cor da linha da tabela que lista os eventos em andamento
+	    for (var i = 1; i <= qtEAndamento; i++) {
+	        if (cor == "#F4F3F0") {
+	            cor = "#FFFFFF";
+	        } else {
+	            cor = "#F4F3F0";
+	        }
+
+	        // Formata cor da linha
+	        $("#trEvento" + i).css("background-color", cor);
+
+	        if (i == idLinha) {
+	            // Atribui cor de destaque para limite selecionado
+	            $("#trEvento" + idLinha).css("background-color", "#FFB9AB");
+	            // Armazena codigo e id do evento selecionado
+	            idevento = id;
+	            cdevento = cd;
+	            rowidedp = edp;
+	            rowidadp = adp;
+	            dsobserv = obs;
+	            nmevento = nmEven;
+	            dsrestri = dsRest;
+	            imptermo = temTermo;
+	            idLinhaEA = idLinha;
+	        }
+	    }
+	} else {
+	    return false;
 	}
 }
 
