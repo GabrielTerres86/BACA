@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Janeiro/94.                         Ultima atualizacao: 06/11/2015
+   Data    : Janeiro/94.                         Ultima atualizacao: 16/02/2017
 
    Dados referentes ao programa:
 
@@ -96,12 +96,24 @@
              15/08/2016 - Controlar o preenchimento da data de pagamento do prejuízo,
                           no momento da liquidaçao do mesmo. (Renato Darosci - M176)
                           
+             23/09/2016 - Inclusao da verificacao de contrato de acordo (Jean Michel).             
+                          
+			 31/10/2016 - Adicionado tratamento para casos onde o valor de prejuizo
+			              foi gravado como negativo na base. Chamado 533531
+
+			 10/01/2017 - Correcao no abono de prejuizo, verifica se o valor foi armazenado negativo
+			              e transforma em positivo se necessario, em alguns casos estava duplicando o valor.
+						  Andrey (Mouts) - Chamado 568416
+
+             16/02/2017 - Alteracao de aux_flgativo para aux_flgretativo. (Jaison/James)
+                          
 ............................................................................. */
 
 { includes/var_online.i }
 { includes/var_lanemp.i }
 
 { sistema/generico/includes/gera_log.i }
+{ sistema/generico/includes/var_oracle.i }
 { sistema/generico/includes/var_internet.i }
 
 DEF VAR h-b1wgen0001 AS HANDLE                                      NO-UNDO.
@@ -453,6 +465,51 @@ DO WHILE TRUE:
          LEAVE.
 
       END.  /*  Fim do DO WHILE TRUE  */
+
+      /* Verifica se ha contratos de acordo */            
+      { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+      
+      RUN STORED-PROCEDURE pc_verifica_acordo_ativo
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT glb_cdcooper
+                                            ,INPUT tel_nrdconta
+                                            ,INPUT tel_nrctremp
+                                            ,OUTPUT 0
+                                            ,OUTPUT 0
+                                            ,OUTPUT "").
+
+      CLOSE STORED-PROC pc_verifica_acordo_ativo
+                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+      { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+      ASSIGN glb_cdcritic = 0
+             glb_dscritic = ""
+             glb_cdcritic = pc_verifica_acordo_ativo.pr_cdcritic WHEN pc_verifica_acordo_ativo.pr_cdcritic <> ?
+             glb_dscritic = pc_verifica_acordo_ativo.pr_dscritic WHEN pc_verifica_acordo_ativo.pr_dscritic <> ?
+             aux_flgretativo = INT(pc_verifica_acordo_ativo.pr_flgativo).
+      
+      IF glb_cdcritic > 0 THEN
+        DO:
+            RUN fontes/critic.p.
+            BELL.
+            MESSAGE glb_dscritic.
+            ASSIGN glb_cdcritic = 0.
+            NEXT.
+        END.
+      ELSE IF glb_dscritic <> ? AND glb_dscritic <> "" THEN
+        DO:
+            MESSAGE glb_dscritic.
+            ASSIGN glb_cdcritic = 0.
+            NEXT.
+        END.
+      /* Fim verifica se ha contratos de acordo */
+      
+      IF aux_flgretativo = 1 THEN
+         DO:
+             ASSIGN flg_next = TRUE.
+             MESSAGE "Lancamento nao permitido, emprestimo em acordo.".
+             NEXT.
+         END.
 
       LEAVE.
 
@@ -844,16 +901,32 @@ DO WHILE TRUE:
                         
                                 /* 3o Valor em Prejuizo */
                              IF aux_vlrsaldo > 0 THEN
+								                DO:
+									                IF crapepr.vlsdprej < 0 THEN
+										                DO:
+											                ASSIGN crapepr.vlsdprej = (crapepr.vlsdprej * -1) -
+															                                   aux_vlrsaldo.
+								                    END.
+									                ELSE
+										                DO:
                                 ASSIGN crapepr.vlsdprej = crapepr.vlsdprej - 
                                                           aux_vlrsaldo.
-                
+									                  END.
+								                  END.
                          END. /* END crapepr.tpemprst = 1  */
                       ELSE  
                          DO:
+							                    IF crapepr.vlsdprej < 0 THEN
+								                    DO:
+									                    ASSIGN crapepr.vlsdprej = (crapepr.vlsdprej * -1) -
+                                                                tel_vllanmto.
+								                    END.
+							                    ELSE
+								                    DO:
                              ASSIGN crapepr.vlsdprej = crapepr.vlsdprej -
                                                        tel_vllanmto.
                          END.
-
+                                  END.
                   END. /* END IF aux_indebcre = "C"   THEN */
                   
                /* Setar a data de liquidaçao do prejuízo (Renato Darosci - 15/08/2016) */
