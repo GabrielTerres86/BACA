@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Lucas Lunelli
-       Data    : Abril/2014.                     Ultima atualizacao: 02/01/2017
+       Data    : Abril/2014.                     Ultima atualizacao: 06/02/2017
 
        Dados referentes ao programa:
 
@@ -113,6 +113,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                                 
                    02/01/2017 - Ajuste na leitura dos registros de cartoes ja existentes.
                                 (Fabricio)
+                                
+                   06/02/2017 - Ajuste para nao atualizar a wcrd em cima de um cartao ja existente
+                                quando se trata de reposicao/2a via. (Fabricio)
     ............................................................................ */
 
     DECLARE
@@ -1488,7 +1491,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                 END IF;                
 
                 -- faz associação da variavel cod cooperativa;
-                vr_cdcooper := rw_crapcop_cdagebcb.cdcooper;
+                vr_cdcooper := rw_crapcop_cdagebcb.cdcooper;                
                 
                 -- Caso o numero da conta for igual a 0, vamos buscar o numero da conta pelo CPF
                 IF NVL(vr_nrctatp2,0) = 0 THEN
@@ -2338,8 +2341,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                                               , vr_vllimcrd
                                               , vr_tpdpagto
                                               , vr_flgdebcc;
-                    -- Se não encontrar registro, caracteriza uma segunda via
-                    IF cr_crawcrd_ativo%NOTFOUND THEN
+
+                    IF cr_crawcrd_ativo%NOTFOUND OR 
+                       (cr_crawcrd_ativo%FOUND AND 
+                        (TO_NUMBER(substr(vr_des_text,38,19)) <> rw_crawcrd.nrcrcard) AND 
+                        rw_crawcrd.nrcrcard <> 0) THEN
                       vr_dtentr2v := rw_crapdat.dtmvtolt;
                     ELSE
                       vr_dtentr2v := NULL;
@@ -2362,7 +2368,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                     FETCH cr_crawcrd INTO rw_crawcrd;
                     
                     -- Se não encontrar o cartão solicitado
-                    IF cr_crawcrd%NOTFOUND THEN
+                    IF cr_crawcrd%NOTFOUND 
+                      OR (cr_crawcrd%FOUND 
+                          AND (TO_NUMBER(substr(vr_des_text,38,19)) <> rw_crawcrd.nrcrcard) 
+                          AND rw_crawcrd.nrcrcard <> 0) THEN
                       
                       -- obter numero do contrato (sequencial)
                       vr_nrctrcrd := fn_sequence('CRAPMAT','NRCTRCRD', vr_cdcooper);
