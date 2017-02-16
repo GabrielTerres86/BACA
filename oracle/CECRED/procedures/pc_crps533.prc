@@ -2859,8 +2859,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                           CLOSE cr_craptco;
                         ELSE
                           vr_flctamig:= FALSE;
-                          vr_cdcooper := pr_cdcooper;                          
+                          vr_cdcooper := pr_cdcooper;
                         END IF;
+                      ELSE
+                        vr_cdcooper := pr_cdcooper;
                       END IF;
 
                       --Atribuir zero para variavel de erro
