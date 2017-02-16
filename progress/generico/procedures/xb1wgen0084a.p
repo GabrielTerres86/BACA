@@ -91,8 +91,10 @@ PROCEDURE valores_entrada:
         BREAK BY tt-param-i.nomeTabela
               BY tt-param-i.sqControle:
 
+			  /*
         MESSAGE tt-param-i.nomeTabela
             VIEW-AS ALERT-BOX INFO BUTTONS OK.
+			*/
 
         CASE tt-param-i.nomeTabela:
             WHEN "Lancamentos" THEN DO:
