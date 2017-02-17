@@ -3,7 +3,7 @@
    Programa: siscaixa/web/crap020.w
    Sistema : Caixa On-Line
    Sigla   : CRED
-                                                Ultima atualizacao: 29/02/2016
+                                                Ultima atualizacao: 17/02/2017
 
    Dados referentes ao programa:
 
@@ -54,6 +54,9 @@
                                                            
                  29/02/2016 - Tratamentos para utilizaçao do Cartao CECRED e 
                               PinPad Novo (Lucas Lunelli - [PROJ290])
+
+				        17/02/2017 - Retirar v_dssencrd <> '' pois precisamos validar se 
+							               senha esta informada (Lucas Ranghetti #597410)
 -----------------------------------------------------------------------------*/
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -1167,30 +1170,34 @@ PROCEDURE process-web-request :
                         {include/i-erro.i}
                     END.
                     
-                IF  v_dssencrd <> ''    AND 
-                    l-houve-erro = NO   THEN
-                    DO:
-                        RUN valida_senha_cartao IN h-b1crap20 (INPUT v_coop,
-                                                               INPUT v_pac,
-                                                               INPUT v_caixa,
-                                                               INPUT v_nrocontade,
-                                                               INPUT DECI(aux_nrcartao),
-                                                               INPUT v_opcao,
-                                                               INPUT v_dssencrd,
-                                                               INPUT aux_idtipcar,
-                                                               INPUT v_infocry,
-                                                               INPUT v_chvcry). 
-                                                               
-                        IF  RETURN-VALUE <> "OK" THEN DO:                        
-                            ASSIGN l-houve-erro = YES
-                                   v_btn_ok     = ''
-                                   v_btn_cancela = ''
-                                   v_dssencrd   = ''
-                                   v_infocry    = ""
-                                   v_chvcry     = ""
-                                   v_opcao      = "C".                          
-                            {include/i-erro.i}
-                END.
+                IF  l-houve-erro = NO THEN
+                    DO:                    
+                        IF  v_btn_ok <> '' THEN
+                            DO:
+                                RUN valida_senha_cartao IN h-b1crap20 (INPUT v_coop,
+                                                                       INPUT v_pac,
+                                                                       INPUT v_caixa,
+                                                                       INPUT v_nrocontade,
+                                                                       INPUT DECI(aux_nrcartao),
+                                                                       INPUT v_opcao,
+                                                                       INPUT v_dssencrd,
+                                                                       INPUT aux_idtipcar,
+                                                                       INPUT v_infocry,
+                                                                       INPUT v_chvcry). 
+                                                                       
+                                IF  RETURN-VALUE <> "OK" THEN DO:                        
+                                    ASSIGN l-houve-erro = YES
+                                           v_btn_ok     = ''
+                                           v_btn_cancela = ''
+                                           v_dssencrd   = ''
+                                           v_infocry    = ""
+                                           v_chvcry     = ""
+                                           v_opcao      = "C".                          
+                                    {include/i-erro.i}
+                                END.
+                            END.
+            
+                        
                     END.
                     
             END.

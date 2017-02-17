@@ -30,7 +30,7 @@
 
     b1crap20.p - DOC/TED - Inclusao
     
-    Ultima Atualizacao: 27/04/2016
+    Ultima Atualizacao: 17/02/2017
     
     Alteracoes:
                 23/02/2006 - Unificacao dos bancos - SQLWorks - Eder
@@ -226,18 +226,21 @@
                             craptvl sem nrdconta e ajustado a mensagem.
                             (Odirlei-AMcom)
 
-				07/03/2016 - Incluir validacao para agencia zerada (Lucas Ranghetti #411852)
+				        07/03/2016 - Incluir validacao para agencia zerada (Lucas Ranghetti #411852)
 
-  			    26/04/2016 - Inclusao dos horarios de SAC e OUVIDORIA nos
-			                 comprovantes, melhoria 112 (Tiago/Elton).				
+  			        26/04/2016 - Inclusao dos horarios de SAC e OUVIDORIA nos
+			                       comprovantes, melhoria 112 (Tiago/Elton).				
 							 
-				27/04/2016 - Adicionado tratamento para verificar isencao ou nao
+				        27/04/2016 - Adicionado tratamento para verificar isencao ou nao
                              de tarifa no envio de DOC/TED. PRJ 218/2 (Reinert).			 
 							 
-			    25/08/2016 - Ajustado para gerar o log de cartão no envio da TED antes de 
-				             chamar a rotina que envia as informações para a Cabine,
-							 para garantir que envie as informacoes para a cabine e posteriormente
-							 aborte o programa. (Odirlei - AMcom)				 		 
+			          25/08/2016 - Ajustado para gerar o log de cartão no envio da TED antes de 
+				                     chamar a rotina que envia as informações para a Cabine,
+							                para garantir que envie as informacoes para a cabine e posteriormente
+							                aborte o programa. (Odirlei - AMcom)	
+						
+				        17/02/2017 - Incluir validacao de senha na procedure valida_senha_cartao (Lucas Ranghetti #597410)						
+									 		 
 -----------------------------------------------------------------------------*/
                              
 {dbo/bo-erro1.i}
@@ -3357,6 +3360,17 @@ PROCEDURE valida_senha_cartao:
 
     IF   p-opcao = "C"   THEN
          DO:
+            IF  TRIM(p-senha-cartao) = '' THEN
+                DO:
+                    RUN cria-erro (INPUT p-cooper,
+                                   INPUT p-cod-agencia,
+                                   INPUT p-nro-caixa,
+                                   INPUT 0,
+                                   INPUT "Insira uma senha.",
+                                   INPUT YES).
+                     RETURN "NOK".
+                END.
+
             RUN sistema/generico/procedures/b1wgen0025.p 
                  PERSISTENT SET h-b1wgen0025.
 
