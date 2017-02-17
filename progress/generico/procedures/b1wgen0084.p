@@ -266,8 +266,12 @@
 						               transf_contrato_prejuizo e valida_dados_efetivacao_proposta,
                            Prj. 302 (Jean Michel).
 
-			  04/01/2016 - Validar se as informações de Imóvel foram devidamente preenchidas
-			               para o contrato de empréstimo (Renato Darosci - Supero) - M326
+      			  04/01/2016 - Validar se as informações de Imóvel foram devidamente preenchidas
+			                     para o contrato de empréstimo (Renato Darosci - Supero) - M326
+                     
+              17/02/2017 - Retirada a trava de efetivaçao de empréstimo sem que as informações 
+                           de Imóveis estejam preenchidas, conforme solicitaçao antes da 
+                           liberaçao do projeto (Renato - Supero)
 ............................................................................. */
 
 /*................................ DEFINICOES ............................... */
@@ -2218,7 +2222,7 @@ PROCEDURE valida_dados_efetivacao_proposta:
     DEF VAR h-b1wgen0110 AS HANDLE  NO-UNDO.
     DEF VAR aux_nrctrliq AS CHAR    NO-UNDO.
     DEF VAR aux_flgativo AS INTEGER NO-UNDO.
-	DEF VAR aux_flimovel AS INTEGER NO-UNDO.
+	  /* DEF VAR aux_flimovel AS INTEGER NO-UNDO. 17/02/2017 - Validaçao removida */
     
     DEF BUFFER crabbpr FOR crapbpr.
     
@@ -2634,12 +2638,14 @@ PROCEDURE valida_dados_efetivacao_proposta:
 
            RETURN "NOK".
         END.
+    
+    /* 17/02/2017 - Retirado a validaçao conforme solicitaçao 
     ELSE DO:  /* Se encontrar linha de crédito */
     
         /* Se o tipo do contrato for igual a 3 -> Contratos de imóveis */
         IF craplcr.tpctrato = 3 THEN DO:
             
-			ASSIGN aux_flimovel = 0.
+			  ASSIGN aux_flimovel = 0.
 
 		    { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
 
@@ -2693,6 +2699,7 @@ PROCEDURE valida_dados_efetivacao_proposta:
             END. /* IF aux_flimovel = 1 THEN */
         END. /* IF craplcr.tpctrato = 3 */
     END. /* IF  NOT AVAIL craplcr */
+	FIM - 17/02/2017 - Retirado a validaçao conforme solicitaçao */
     
     IF  par_dtmvtolt > crawepr.dtlibera THEN
         DO:
