@@ -1370,6 +1370,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
     vr_flgemail_quitado BOOLEAN := FALSE;
     vr_dscemail VARCHAR2(4000) := '';     
   BEGIN
+    RETURN;
+    -- Buscar o CRAPDAT da cooperativa
+    OPEN BTCH0001.cr_crapdat(3); 
+    FETCH BTCH0001.cr_crapdat INTO BTCH0001.rw_crapdat;
+    -- Se não encontrar registro na CRAPDAT
+    IF BTCH0001.cr_crapdat%NOTFOUND THEN
+      -- Fechar o cursor
+      CLOSE BTCH0001.cr_crapdat;    
+      RETURN;
+    END IF;        
+    -- Fechar o cursor
+    CLOSE BTCH0001.cr_crapdat;
+  
+    -- Condicao para verificar se o processo noturno está rodando
+    IF BTCH0001.rw_crapdat.inproces >= 2 THEN
+      RETURN;
+    END IF;  
+  
       -- Envio centralizado de log de erro
       BTCH0001.pc_gera_log_batch(pr_cdcooper     => 3,
                                  pr_ind_tipo_log => 2, -- Erro tratato
