@@ -2307,6 +2307,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         RAISE vr_exc_erro;
     END;
     
+		-- Monitoração sendo realizada antes das atualizações da craplot para evitar prolongar lock
+		-- Executa monitoração de Pagamentos
+		pc_monitoracao_pagamento(pr_cdcooper => pr_cdcooper
+														,pr_nrdconta => pr_nrdconta
+														,pr_idseqttl => pr_idseqttl
+														,pr_dtmvtocd => rw_crapdat.dtmvtocd
+														,pr_cdagenci => vr_cdagenci
+														,pr_idagenda => pr_idagenda
+														,pr_vlfatura => pr_vlrtotal
+														,pr_dscritic => vr_dscritic
+														);
+	    
+		-- se encontrou erro ao buscar lote, abortar programa
+		IF vr_dscritic IS NOT NULL THEN
+			RAISE vr_exc_erro;
+		END IF;	
+    
     /* Tratamento para buscar registro de lote se o mesmo estiver em lock, tenta por 10 seg. */
     FOR i IN 1..100 LOOP
       BEGIN
@@ -2405,22 +2422,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
           RAISE vr_exc_erro;
       END;
     END IF; -- IF vr_cdagenci = 90 --INTERNET
-    
-    -- Executa monitoração de Pagamentos
-    pc_monitoracao_pagamento(pr_cdcooper => pr_cdcooper
-                            ,pr_nrdconta => pr_nrdconta
-                            ,pr_idseqttl => pr_idseqttl
-                            ,pr_dtmvtocd => rw_crapdat.dtmvtocd
-                            ,pr_cdagenci => vr_cdagenci
-                            ,pr_idagenda => pr_idagenda
-                            ,pr_vlfatura => pr_vlrtotal
-                            ,pr_dscritic => vr_dscritic
-                            );
-    
-    -- se encontrou erro ao buscar lote, abortar programa
-    IF vr_dscritic IS NOT NULL THEN
-      RAISE vr_exc_erro;
-    END IF;
     
   EXCEPTION
     WHEN vr_exc_erro THEN
