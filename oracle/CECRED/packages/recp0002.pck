@@ -1129,19 +1129,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
          AND sab.nrinssac = pr_nrinssac;
     rw_crapsab cr_crapsab%ROWTYPE;     
     
-    CURSOR cr_crapcyc(pr_cdcooper crapcyc.cdcooper%TYPE
-                     ,pr_cdorigem crapcyc.cdorigem%TYPE
-                     ,pr_nrdconta crapcyc.nrdconta%TYPE
-                     ,pr_nrctremp crapcyc.nrctremp%TYPE) IS
-      SELECT cyc.flgjudic
-            ,cyc.flextjud
-        FROM crapcyc cyc
-       WHERE cyc.cdcooper = pr_cdcooper
-         AND cyc.cdorigem =	DECODE(pr_cdorigem,2,3,pr_cdorigem)
-         AND cyc.nrdconta =	pr_nrdconta
-         AND cyc.nrctremp = pr_nrctremp;
-    rw_crapcyc cr_crapcyc%ROWTYPE;	 
-		    
     CURSOR cr_crapepr(pr_cdcooper crapepr.cdcooper%TYPE
                      ,pr_nrdconta crapepr.nrdconta%TYPE
                      ,pr_dtmvtolt crapepr.dtmvtolt%TYPE
@@ -1224,9 +1211,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     -- Variáveis para armazenar as informações em XML
     vr_dscdoxml         CLOB;
     vr_texto_completo  VARCHAR2(32600);
-
-    vr_flgjudic BOOLEAN := FALSE;
-    vr_flextjud BOOLEAN := FALSE;
 
     --------------------------- SUBROTINAS INTERNAS --------------------------
     -- Subrotina para escrever texto na variável CLOB do XML
@@ -1436,32 +1420,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       ELSE
         vr_cdcritic := 484; --> Contrato não encontrado
         RAISE vr_exc_erro;  
-      END IF;
-      
-      OPEN cr_crapcyc(pr_cdcooper => vr_cdcooper_aux
-                     ,pr_cdorigem => vr_cdorigem_aux 
-                     ,pr_nrdconta => vr_nrdconta_aux 
-                     ,pr_nrctremp => vr_nrctremp_aux);
-      FETCH cr_crapcyc INTO rw_crapcyc;
-      IF cr_crapcyc%NOTFOUND THEN
-        CLOSE cr_crapcyc;
-        vr_dscritic := 'Nao e possivel realizar acordo com contratos que nao estao em cobranca Judicial/Extrajudicial.';
-        RAISE vr_exc_erro; 
-      ELSE
-        CLOSE cr_crapcyc;
-        IF rw_crapcyc.flgjudic = 1 THEN
-          vr_flgjudic := TRUE;
-        END IF;
-
-        IF rw_crapcyc.flextjud = 1 THEN
-          vr_flextjud := TRUE;
-        END IF;
-
-        IF vr_flgjudic = vr_flextjud THEN
-          vr_dscritic := 'Nao e possivel realizar acordo com contratos que nao estao no mesmo processo judicial.';
-          RAISE vr_exc_erro; 
-        END IF;
-
       END IF;
       
       -- Verifica se contrato esta em acordo
@@ -1931,8 +1889,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     ..............................................................................*/                                    
     
     ---------------> CURSORES <-------------
-    rw_crapdat    BTCH0001.cr_crapdat%ROWTYPE; 
-    
     --> Buscar parcelas do acordo
     CURSOR cr_acordo_parc( pr_cdcooper crapcop.cdcooper%TYPE,
                            pr_nrdconta crapass.nrdconta%TYPE,
@@ -1952,7 +1908,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     -- Tratamento de erros
     vr_dscritic     VARCHAR2(10000);
     vr_cdcritic     INTEGER;
-    vr_des_erro     VARCHAR2(10000);
     vr_exc_erro     EXCEPTION;
     vr_exc_erro_det EXCEPTION; 
     
