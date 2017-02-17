@@ -229,6 +229,11 @@
 
                13/01/2017 - Implementar trava para não permitir efetivar empréstimo sem que 
                             as informações de Imóveis estejam preenchidas (Renato - Supero)
+                            
+               17/02/2017 - Retirada a trava de efetivaçao de empréstimo sem que as informações 
+                            de Imóveis estejam preenchidas, conforme solicitaçao antes da 
+                            liberaçao do projeto (Renato - Supero)
+                            
 ............................................................................. */
 
 { includes/var_online.i }
@@ -290,7 +295,7 @@ DEF VAR aux_percetop         AS DECI                 NO-UNDO.
 DEF VAR aux_txcetmes         AS DECI                 NO-UNDO.
 DEF VAR aux_flctrliq         AS LOGI                 NO-UNDO.
 DEF VAR aux_flgativo         AS INTE                 NO-UNDO.
-DEF VAR aux_flimovel         AS INTE	             NO-UNDO.
+/*DEF VAR aux_flimovel         AS INTE	             NO-UNDO. 17/02/2017 - Validaçao removida */
 
 DEF BUFFER b_crawepr FOR crawepr.
 
@@ -349,7 +354,6 @@ DO WHILE TRUE:
              tel_nrctremp
              WITH FRAME f_lanctr.
 
-      
       ASSIGN glb_nrcalcul = tel_nrdconta
              glb_cdcritic = 0.
 
@@ -602,7 +606,7 @@ DO WHILE TRUE:
          END.
       ELSE
          DO:
-         
+            
             IF crawepr.insitest <> 3 AND 
                crawepr.dtenvest <> ? THEN
             DO:
@@ -631,8 +635,8 @@ DO WHILE TRUE:
                            "nao pode ser usado para o produto TR.".
                    NEXT.
                END.
-                            
-            /** Verificar "inliquid" do contrato relacionado
+           
+           /** Verificar "inliquid" do contrato relacionado
                 a ser liquidado              **/
             DO  aux_contador = 1 TO 10 :
 
@@ -1498,7 +1502,8 @@ DO WHILE TRUE:
          LEAVE.
 
       END.  /*  Fim do DO WHILE TRUE  */
-
+      
+      /* 17/02/2017 - Retirado a validaçao conforme solicitaçao 
       /* Se o tipo do contrato for igual a 3 -> Contratos de imóveis */
       IF craplcr.tpctrato = 3 THEN DO:
             
@@ -1548,6 +1553,7 @@ DO WHILE TRUE:
                UNDO, NEXT.
             END. /* IF aux_flimovel = 1 THEN */
       END. /* IF craplcr.tpctrato = 3 */
+      FIM - 17/02/2017 - Retirado a validaçao conforme solicitaçao */
 
       IF glb_cdcritic > 0    THEN
          NEXT INCLUSAO.
