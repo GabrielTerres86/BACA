@@ -249,7 +249,7 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
 
                03/12/2016 - Incorporação Transulcred (Guilherme/SUPERO)
 
-			   07/12/2016 - Ajustes referentes a M69, alinea 49 e leitura da crapneg
+			         07/12/2016 - Ajustes referentes a M69, alinea 49 e leitura da crapneg
                             (Lucas Ranghetti/Elton)
                             
                12/01/2017 - Limpar crapdev com situacao devolvido, jogar as 
@@ -2862,6 +2862,8 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                           vr_flctamig:= FALSE;
                           vr_cdcooper := pr_cdcooper;                          
                         END IF;
+                      ELSE
+                        vr_cdcooper := pr_cdcooper;
                       END IF;
 
                       --Atribuir zero para variavel de erro
@@ -3838,11 +3840,11 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                       -- Se não tiver critica
                       IF vr_cdcritic = 0 AND 
                          vr_cdcritic_aux = 0 THEN                        
-                        
+                      
                         IF cr_tbchq_param_conta%ISOPEN THEN
                           CLOSE cr_tbchq_param_conta;  
-                        END IF;  
-                            
+                        END IF;                         
+                        
                         OPEN cr_tbchq_param_conta(pr_cdcooper => vr_cdcooper
                                                  ,pr_nrdconta => nvl(vr_nrdconta_incorp,vr_nrdconta));
                         FETCH cr_tbchq_param_conta INTO rw_tbchq_param_conta;                                      
