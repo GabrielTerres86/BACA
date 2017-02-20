@@ -1147,7 +1147,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 04/11/2016
+  --  Data     : Junho/2013.                   Ultima atualizacao: 17/02/2017
   --
   -- Dados referentes ao programa:
   --
@@ -1455,7 +1455,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
        28/09/2016 - Incluir ROLLBACK TO undopoint na saida de critica da pc_insere_lote
                     na procedure pc_paga_titulo (Lucas Ranghetti #511679)                      
                     
-       04/11/2016 - Ajuste para tratar a terceira execucao do processo debnet M349 (Tiago/Elton)             
+       04/11/2016 - Ajuste para tratar a terceira execucao do processo debnet M349 (Tiago/Elton) 
+       
+       17/02/2017 - Incluir chamada da rotina PGTA0001.pc_gera_retorno_tit_pago
+                    conforme o programa crps509 ja faz (Lucas Ranghetti #590601)
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Cursores da Package */
@@ -20697,7 +20700,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --  Sistema  : Rotinas Internet
     --  Sigla    : CRED
     --  Autor    : Douglas Quisinski
-    --  Data     : Julho/2015.                   Ultima atualizacao: 07/07/2016
+    --  Data     : Julho/2015.                   Ultima atualizacao: 17/02/2017
     --
     --  Dados referentes ao programa:
     --
@@ -20709,6 +20712,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --
     --              07/07/2016 - Alterar parametro cdprogra para passar 'DEBNET' ao
     --                           inves de passar NULL (Lucas Ranghetti #483791)
+    --
+    --              17/02/2017 - Incluir chamada da rotina PGTA0001.pc_gera_retorno_tit_pago
+    --                           conforme o programa crps509 ja faz (Lucas Ranghetti #590601)
     -- ..........................................................................
   BEGIN
     DECLARE
@@ -20784,6 +20790,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
         -- Se retornou alguma critica
         IF vr_cdcritic <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
           RAISE vr_exc_saida;
+        END IF;
+        
+        -- Proj. Pagamento de Titulos - Gera registro de Retorno
+        IF vr_flultexe = 1 THEN -- Apenas na ultima execução do processo
+          PGTA0001.pc_gera_retorno_tit_pago(pr_cdcooper => pr_cdcooper
+                                          , pr_dtmvtolt => pr_dtmvtopg
+                                          , pr_idorigem => 3    -- Ayllos
+                                          , pr_cdoperad => '1'
+                                          , pr_cdcritic => vr_cdcritic
+                                          , pr_dscritic => vr_dscritic );
+          --Se ocorreu erro
+          IF TRIM(vr_dscritic) IS NOT NULL OR vr_cdcritic IS NOT NULL THEN
+            --Levantar Excecao
+            RAISE vr_exc_saida;
+          END IF;
         END IF;
 
         -- Chama procedure para efetuar os débitos
