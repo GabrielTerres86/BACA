@@ -630,13 +630,7 @@ ELSE IF par_idrelato = 2 THEN
         END.
            
     END.
-/* Relatorio analitico de envio de SMS*/    
-ELSE IF par_idrelato = 6 THEN
-    DO:
-       
-      ASSIGN aux_dsiduser = STRING(par_nrdconta) + STRING(TIME).
-           
-    END.
+
 /* Relatorio analitico de envio de SMS*/    
 ELSE IF par_idrelato = 6 THEN
     DO:
