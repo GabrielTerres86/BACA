@@ -5,7 +5,8 @@ Data de criação: 05/09/2016
 
 Objetivo.......: Rotina para formatar mascara do numero de conta no caixa online
 
-Alteracoes.....: 
+Alteracoes.....: 03/11/2016 - Ajustes para TAB e ESC funcionarem de acrodo com o padrão
+                              de navegação (Tiago/Elton SD535217).
 */
 
 $(document).ready(function () {
@@ -31,11 +32,15 @@ $(document).ready(function () {
 	$("#v_conta").bind("keydown", function (e) {
         //Verificar tecla ENTER para realizar acao
 	    var code = (e.keyCode ? e.keyCode : e.which);
-	    if (code == 13) {
+	    if (code == 13 || code == 9) {
 	        document.forms[0].submit();
 	        e.preventDefault();
 	    }
 
+		if(e.keyCode == 27){
+			top.frames[0].document.forms[0].v_rotina.focus();
+			e.preventDefault();
+	    }
 
 		// Seta máscara ao campo
 		return $("#v_conta").setMaskOnKeyDown("INTEGER","zzzz.zzz.z",".",e);		
