@@ -3244,7 +3244,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --  Sistema  : Procedure para consulta de contas de trnsf cadastradas 
   --  Sigla    : CRED
   --  Autor    : Carlos Henrique
-  --  Data     : março/2016.                   Ultima atualizacao: 25/05/2016
+  --  Data     : março/2016.                   Ultima atualizacao: 20/02/2017
   --
   -- Dados referentes ao programa:
   --
@@ -3257,6 +3257,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --                             possibilitar a ordenação por nome de favorecido;
   --                          -> Utilizar rotina genérica para consultar registro da craptab;
   --                          (Adriano - M117).
+  --               
+  --             20/02/2017 - Ajuste no problema que não filtrava os favorecidos, conforme
+  --                          relatado no chamado 605338. (Kelvin)
   --
   ---------------------------------------------------------------------------------------------------------------
   -------------------------> VARIAVEIS <-------------------------
@@ -3464,6 +3467,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           
           vr_aux_dsctatrf := to_char(rw_crapass.nrdconta);
           vr_aux_dstipcta := '';
+          
+          IF TRIM(pr_nmtitula) IS NOT NULL AND
+            vr_aux_nmprimtl NOT LIKE '%' || pr_nmtitula || '%' THEN              
+            CONTINUE;
+          END IF;
           
         ELSE /* Outras instituições financeiras */
           
