@@ -5125,6 +5125,10 @@ PROCEDURE proc_nosso_numero.
                                           ELSE
                                           " N". 
 
+										   IF AVAIL(crapceb) THEN
+		   DO:
+		     ASSIGN tt-consulta-blt.flprotes = INTE(crapceb.flprotes).
+		   END.
         /* Aviso SMS */
        ASSIGN tt-consulta-blt.inavisms = crapcob.inavisms
               tt-consulta-blt.insmsant = crapcob.insmsant
