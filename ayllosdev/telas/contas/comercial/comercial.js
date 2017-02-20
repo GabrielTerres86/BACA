@@ -13,6 +13,8 @@
  *                18/08/2015 - Reformulacao cadastral (Gabriel-RKAM)
  *                23/12/2015 - #350828 Inclusão da operação PPE (Carlos)
  *                01/12/2016 - Definir a não obrigatoriedade do PEP (Tiago/Thiago SD532690)
+ *                20/02/2017 - Alterado codigo para que os caracteres com acento sejam substituidos pelos equivalentes sem acento,
+ *                             ao inves de removidos. (Heitor - Chamado 614746)
  * --------------
  */
 
@@ -407,7 +409,7 @@ function controlaLayout(operacao) {
 
     var cDsjusren = $('#dsjusren', '#frmJustificativa');
 
-    cDsjusren.addClass('alphanum').css('width', '470px').css('overflow-y', 'scroll').css('overflow-x', 'hidden').css('height', '60').css('margin-left', '3').setMask('STRING', '160', charPermitido(), '');
+    cDsjusren.addClass('alphanum').css('width', '470px').css('overflow-y', 'scroll').css('overflow-x', 'hidden').css('height', '60').css('margin-left', '3').attr('maxlength', '160');
 
     cDsjusren.desabilitaCampo();
 
@@ -434,7 +436,7 @@ function controlaLayout(operacao) {
     cCodigos_3.addClass('codigo pesquisa');
     cDesc_3.addClass('descricao').css('width', '150px');
     cValores_3.addClass('moeda_6').css('width', '80px');
-    cJustif.addClass('alphanum').css('width', '470px').css('overflow-y', 'scroll').css('overflow-x', 'hidden').css('height', '60').css('margin-left', '3').setMask('STRING', '160', charPermitido(), '');
+    cJustif.addClass('alphanum').css('width', '470px').css('overflow-y', 'scroll').css('overflow-x', 'hidden').css('height', '60').css('margin-left', '3').attr('maxlength', '160');
 
     cCodigos_3.habilitaCampo();
     cValores_3.habilitaCampo();
@@ -1084,8 +1086,8 @@ function gravaRendimentos() {
     var cddopcao = operacao;
     var tpdrend2 = $('#tpdrend2', '#frmManipulaRendi').val();
     var vldrend2 = $('#vldrend2', '#frmManipulaRendi').val();
-    var dsjusren = $('#dsjusren', '#frmJustificativa').val();
-    var dsjusre2 = $('#dsjusre2', '#frmManipulaRendi').val();
+    var dsjusren = removeCaracteresInvalidos($('#dsjusren', '#frmJustificativa').val(),1);
+    var dsjusre2 = removeCaracteresInvalidos($('#dsjusre2', '#frmManipulaRendi').val(),1);
 
 
     // Carrega conteúdo da opção através de ajax
