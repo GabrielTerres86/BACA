@@ -7,7 +7,8 @@ Objetivo.......: Rotina para formatar mascara do numero de conta no caixa online
 
 Alteracoes.....: 03/11/2016 - Ajustes para TAB e ESC funcionarem de acrodo com o padrão
                               de navegação (Tiago/Elton SD535217).
-                 20/02/2017 - Ajuste para que
+                 20/02/2017 - Ajuste para que o focus funciona no botão Iniciar
+							  (Andrey Formigari - Mouts, SD:613365).
 */
 
 $(document).ready(function () {
