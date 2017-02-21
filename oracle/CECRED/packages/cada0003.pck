@@ -13,6 +13,16 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0003 is
   -- Objetivo  : Rotinas utilizadas para as telas MATRIC, CONTAS e ATENDA referente a cadastros
   ---------------------------------------------------------------------------------------------------------------
 
+  -- Definicao do tipo de registro
+  TYPE typ_reg_crapmun IS
+  RECORD (idcidade crapmun.idcidade%TYPE
+         ,cdestado crapmun.cdestado%TYPE
+         ,cdcidade crapmun.idcidade%TYPE
+         ,dscidade crapmun.dscidade%TYPE);
+
+  -- Definicao do tipo de tabela registro
+  TYPE typ_tab_crapmun IS TABLE OF typ_reg_crapmun INDEX BY PLS_INTEGER;
+
   -- Rotina para buscar do CNAE
   PROCEDURE pc_busca_cnae(pr_cdcnae   IN tbgen_cnae.cdcnae%TYPE --> Codigo do CNAE
                          ,pr_dscnae   IN tbgen_cnae.dscnae%TYPE --> Descricao do CNAE
@@ -384,6 +394,69 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0003 is
                              ,pr_nmdcampo OUT VARCHAR2                       --> Nome do campo com erro
                              ,pr_des_erro OUT VARCHAR2);                     --> Descrição do erro
 
+  -- Retorna se cheque tem devolucao automatica ou nao
+  PROCEDURE pc_verifica_sit_dev(pr_cdcooper IN  crapcop.cdcooper%TYPE, --> Cooperativa
+                                 pr_nrdconta IN  crapass.nrdconta%TYPE, --> Conta/Dv
+                                 pr_flgdevolu_autom OUT PLS_INTEGER);    --> Devolucao automatica ou nao
+
+  -- Retorna se cheque tem devolucao automatica ou nao, por XML
+  PROCEDURE pc_verifica_sit_dev_xml(pr_cdcooper IN  crapcop.cdcooper%TYPE, --> Cooperativa
+                                     pr_nrdconta IN  crapass.nrdconta%TYPE, --> Conta/Dv
+                                     pr_xmllog   IN VARCHAR2,           --> XML com informações de LOG
+                                     pr_cdcritic OUT PLS_INTEGER,       --> Código da crítica
+                                     pr_dscritic OUT VARCHAR2,          --> Descrição da crítica
+                                     pr_retxml   IN OUT NOCOPY XMLType, --> Arquivo de retorno do XML
+                                     pr_nmdcampo OUT VARCHAR2,          --> Nome do campo com erro
+                                     pr_des_erro OUT VARCHAR2);         --> Erros do processo                             
+                                     
+  -- Gravar registros na tabela tbchq_param_conta
+  PROCEDURE pc_grava_tbchq_param_conta(pr_cddopcao IN VARCHAR2,               --> Opcao I/A
+                                       pr_cdcooper IN  crapcop.cdcooper%TYPE, --> Cooperativa
+                                       pr_nrdconta IN  crapass.nrdconta%TYPE, --> Conta/Dv
+                                       pr_flgdevolu_autom IN NUMBER,          --> Devolve automatico ou nao
+                                       pr_cdoperad IN VARCHAR2,               --> Operador
+                                       pr_cdopecor IN VARCHAR2,               --> Operador Coordenador
+                                       pr_dscritic OUT VARCHAR2);             --> Critica
+                                       
+  -- Gravar registros na tabela tbchq_param_conta, por xml
+  PROCEDURE pc_grava_tbchq_param_conta_xml(pr_cddopcao IN VARCHAR2,               --> Opcao I/A
+                                           pr_cdcooper IN  crapcop.cdcooper%TYPE, --> Cooperativa
+                                           pr_nrdconta IN  crapass.nrdconta%TYPE, --> Conta/Dv
+                                           pr_flgdevolu_autom IN NUMBER,          --> Devolve automatico ou nao
+                                           pr_cdoperad IN VARCHAR2,               --> Operador
+                                           pr_cdopecor IN VARCHAR2,               --> Operador Coordenador
+                                           pr_xmllog   IN VARCHAR2,               --> XML com informações de LOG
+                                           pr_cdcritic OUT PLS_INTEGER,           --> Código da crítica
+                                           pr_dscritic OUT VARCHAR2,              --> Descrição da crítica
+                                           pr_retxml   IN OUT NOCOPY XMLType,     --> Arquivo de retorno do XML
+                                           pr_nmdcampo OUT VARCHAR2,              --> Nome do campo com erro
+                                           pr_des_erro OUT VARCHAR2);             --> Erros do processo   
+
+  PROCEDURE pc_busca_cidades(pr_idcidade     IN crapmun.idcidade%TYPE --> Identificador unico do cadstro de cidade
+                            ,pr_cdcidade     IN crapmun.cdcidbge%TYPE --> Codigo da cidade CETIP/IBGE/CORREIOS/SFN
+                            ,pr_dscidade     IN crapmun.dscidade%TYPE --> Nome da cidade
+                            ,pr_cdestado     IN crapmun.cdestado%TYPE --> Codigo da UF
+                            ,pr_infiltro     IN PLS_INTEGER --> 1-CETIP / 2-IBGE / 3-CORREIOS / 4-SFN
+                            ,pr_intipnom     IN PLS_INTEGER --> 1-SEM ACENTUACAO / 2-COM ACENTUACAO
+                            ,pr_tab_crapmun OUT typ_tab_crapmun --> PLTABLE com os dados
+                            ,pr_cdcritic    OUT PLS_INTEGER --> Codigo da critica
+                            ,pr_dscritic    OUT VARCHAR2); --> Descricao da critica
+
+  PROCEDURE pc_lista_cidades(pr_idcidade IN crapmun.idcidade%TYPE --> Identificador unico do cadstro de cidade
+                            ,pr_cdcidade IN crapmun.cdcidbge%TYPE --> Codigo da cidade CETIP/IBGE/CORREIOS/SFN
+                            ,pr_dscidade IN crapmun.dscidade%TYPE --> Nome da cidade
+                            ,pr_cdestado IN crapmun.cdestado%TYPE --> Codigo da UF
+                            ,pr_infiltro IN PLS_INTEGER           --> 1-CETIP / 2-IBGE / 3-CORREIOS / 4-SFN
+                            ,pr_intipnom IN PLS_INTEGER           --> 1-SEM ACENTUACAO / 2-COM ACENTUACAO
+                            ,pr_nriniseq IN PLS_INTEGER           --> Numero inicial do registro para enviar
+                            ,pr_nrregist IN PLS_INTEGER           --> Numero de registros que deverao ser retornados
+                            ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                            ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                            ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                            ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                            ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                            ,pr_des_erro OUT VARCHAR2);           --> Erros do processo 
+
 END CADA0003;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
@@ -393,7 +466,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --  Sistema  : Rotinas acessadas pelas telas de cadastros Web
   --  Sigla    : CADA
   --  Autor    : Andrino Carlos de Souza Junior - RKAM
-  --  Data     : Julho/2014.                   Ultima atualizacao: 06/05/2016
+  --  Data     : Julho/2014.                   Ultima atualizacao: 29/11/2016
   --
   -- Dados referentes ao programa:
   --
@@ -424,7 +497,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --                          de cotas minimas na rotina pc_duplica_cont, para RESOLVER 
   --                          o problema do chamado 441211. (Kelvin)
   --             17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
+  --
+  --             02/08/2016 - Inclusao insitage 3-Temporariamente Indisponivel. 
+  --                          Criacao da pc_busca_cidades. (Jaison/Anderson)
+  --
+  --             19/08/2016 - Ajustes referentes a Melhoria 69 - Devolucao automatica 
+  --                          de cheques (Lucas Ranghetti #484923)
+  --
+  --             03/11/2016 - Ajuste realizado na fn_produto_habilitado para validar contas de 
+  --                          assinatura multiplas, onde por acidente foi comentado no cursor
+  --                          uma regra que não incluia as assinaturas multiplas, conforme 
+  --                          solicitado no chamado 548898. (Kelvin)                              
+  --
+  --             16/11/2016 - Inclusao do UPPER(dscnae) na pesquisa por texto. (Jaison/Anderson)
+  --
+  --             29/11/2016 - Retirado COMMIT da procedure pc_grava_tbchq_param_conta
+  --                          pois estava ocasionando problemas na abertura de contas 
+  --                          na MATRIC criando registros com PA zerado (Tiago/Thiago).
   ---------------------------------------------------------------------------------------------------------------
+
+  CURSOR cr_tbchq_param_conta(pr_cdcooper crapcop.cdcooper%TYPE
+                             ,pr_nrdconta crapass.nrdconta%TYPE) IS
+    SELECT tbchq.flgdevolu_autom
+      FROM tbchq_param_conta tbchq
+     WHERE tbchq.cdcooper = pr_cdcooper
+       AND tbchq.nrdconta = pr_nrdconta;
+    rw_tbchq_param_conta cr_tbchq_param_conta%ROWTYPE;
 
   -- Rotina para buscar do CNAE
   PROCEDURE pc_busca_cnae(pr_cdcnae   IN tbgen_cnae.cdcnae%TYPE --> Codigo do CNAE
@@ -447,7 +545,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
           FROM tbgen_cnae
          WHERE cdcnae = decode(nvl(pr_cdcnae,0),0,cdcnae, pr_cdcnae)
            AND (trim(pr_dscnae) IS NULL
-            OR  dscnae LIKE '%'||pr_dscnae||'%')
+            OR  UPPER(dscnae) LIKE '%'||UPPER(pr_dscnae)||'%')
            AND flserasa = decode(nvl(pr_flserasa,2),2,flserasa, pr_flserasa)
          ORDER BY cdcnae;
 
@@ -3150,6 +3248,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
 
       END IF;
 
+      -- Seta flag de devolucao automatica de cheques
+      pc_grava_tbchq_param_conta('I'              -- Opcao, Incluir
+                                 ,pr_cdcooper     -- Cooperativa 
+                                 ,pr_nrdconta_dst -- Numero da Conta 
+                                 ,1               -- Flag devolucao automatica/ 1=sim/0=nao 
+                                 ,pr_cdoperad     -- Operador   
+                                 ,' '             -- Operador Coordenador 
+                                 ,vr_dscritic);
+
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+
       -- Efetua a transferencia de cotas da conta de origem para a conta de destino
       pc_transfere_cotas(pr_cdcooper     => pr_cdcooper
                         ,pr_nrdconta_org => pr_nrdconta_org
@@ -3229,8 +3340,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
            AND snh.tpdsenha = pr_tpdsenha
            AND snh.cdsitsnh = 1  -- Ativa
            AND ((ass.idastcjt = 0 AND snh.idseqttl = DECODE(pr_tpdsenha,2,0,1))
-            --OR ass.idastcjt = 1
-            ); -- JMD
+            OR ass.idastcjt = 1
+            ); 
 
       rw_crapsnh cr_crapsnh%ROWTYPE;
 
@@ -5639,7 +5750,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
         FROM crapage           c
        WHERE c.cdcooper = pr_cdcooper
          AND c.cdagenci = nvl(pr_cdagenci,c.cdagenci)
-         AND c.insitage = 1
+         AND c.insitage IN (1,3) -- 1-Ativo ou 3-Temporariamente Indisponivel
        ORDER
           BY c.cdagenci;
 
@@ -6317,5 +6428,508 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       pr_retxml   := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
   END pc_email_troca_pa;
+  
+  -- Retorna se cheque tem devolucao automatica ou nao
+  PROCEDURE pc_verifica_sit_dev(pr_cdcooper IN  crapcop.cdcooper%TYPE,   --> Cooperativa
+                                 pr_nrdconta IN  crapass.nrdconta%TYPE,   --> Conta/Dv
+                                 pr_flgdevolu_autom OUT PLS_INTEGER) IS   --> Devolucao automatica ou nao
+    /* .............................................................................
+    Programa: pc_verifica_sit_dev
+    Sistema : Conta-Corrente - Cooperativa de Credito
+    Sigla   : CRED
+    Autor   : Lucas Ranghetti
+    Data    : 11/07/2016                        Ultima atualizacao: --/--/----
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+    Objetivo  : Rotina para carregar se devolve automatico ou nao
+
+    Alteracoes: 
+
+    ............................................................................. */    
+    
+  BEGIN
+  
+    OPEN cr_tbchq_param_conta(pr_cdcooper => pr_cdcooper
+                             ,pr_nrdconta => pr_nrdconta);
+    FETCH cr_tbchq_param_conta INTO rw_tbchq_param_conta;        
+        
+    IF cr_tbchq_param_conta%FOUND THEN
+      CLOSE cr_tbchq_param_conta;  
+      -- Se char registro, retorna se devolucao esta automatica ou nao
+      pr_flgdevolu_autom := rw_tbchq_param_conta.flgdevolu_autom;
+    ELSE 
+      CLOSE cr_tbchq_param_conta;  
+      -- Se nao tiver registro cadastrado, retorna 0 - Nao
+      pr_flgdevolu_autom := 0;
+    END IF;
+  
+  END pc_verifica_sit_dev;
+      
+  -- Retorna se cheque tem devolucao automatica ou nao, por XML  
+  PROCEDURE pc_verifica_sit_dev_xml(pr_cdcooper IN  crapcop.cdcooper%TYPE,   --> Cooperativa
+                                     pr_nrdconta IN  crapass.nrdconta%TYPE,   --> Conta/Dv
+                                     pr_xmllog   IN VARCHAR2,                 --> XML com informações de LOG
+                                     pr_cdcritic OUT PLS_INTEGER,             --> Código da crítica
+                                     pr_dscritic OUT VARCHAR2,                --> Descrição da crítica
+                                     pr_retxml   IN OUT NOCOPY XMLType,       --> Arquivo de retorno do XML
+                                     pr_nmdcampo OUT VARCHAR2,                --> Nome do campo com erro
+                                     pr_des_erro OUT VARCHAR2) IS             --> Erros do processo
+    /* .............................................................................
+    Programa: pc_verifica_sit_dev_xml
+    Sistema : Conta-Corrente - Cooperativa de Credito
+    Sigla   : CRED
+    Autor   : Lucas Ranghetti
+    Data    : 11/07/2016                        Ultima atualizacao: --/--/----
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+    Objetivo  : Rotina para carregar se devolve automatico ou nao, e retornar em xml
+
+    Alteracoes: 
+
+    ............................................................................. */
+    
+    vr_flgdevolu_autom INTEGER;
+  BEGIN
+     
+    cada0003.pc_verifica_sit_dev(pr_cdcooper => pr_cdcooper
+                                ,pr_nrdconta => pr_nrdconta
+                                ,pr_flgdevolu_autom => vr_flgdevolu_autom);
+                        
+    -- Criar cabecalho do XML
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+    
+    -- Criar nodo filho
+    pr_retxml := XMLTYPE.appendChildXML(pr_retxml
+                                        ,'/Root'
+                                        ,XMLTYPE('<devolucao>'
+                                               ||'  <flgdevolu_autom>'||vr_flgdevolu_autom||'</flgdevolu_autom>'
+                                               ||'</devolucao>'));    
+  EXCEPTION                                    
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro geral (CADA003.pc_verifica_situacao_xml): ' || SQLERRM;
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      ROLLBACK;                                             
+    
+  END pc_verifica_sit_dev_xml;
+  
+  PROCEDURE pc_grava_tbchq_param_conta(pr_cddopcao IN VARCHAR2,               --> Opcao I/A
+                                       pr_cdcooper IN  crapcop.cdcooper%TYPE, --> Cooperativa
+                                       pr_nrdconta IN  crapass.nrdconta%TYPE, --> Conta/Dv                                       
+                                       pr_flgdevolu_autom IN NUMBER,          --> Devolve automatico ou nao
+                                       pr_cdoperad IN VARCHAR2,               --> Operador
+                                       pr_cdopecor IN VARCHAR2,               --> Operador Coordenador
+                                       pr_dscritic OUT VARCHAR2) IS           --> Critica
+      /* .............................................................................
+    Programa: pc_grava_tbchq_param_conta
+    Sistema : Conta-Corrente - Cooperativa de Credito
+    Sigla   : CRED
+    Autor   : Lucas Ranghetti
+    Data    : 11/07/2016                        Ultima atualizacao: --/--/----
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+    Objetivo  : Rotina para gravar dados na tabela tbchq_param_conta
+
+    Alteracoes: 29/11/2016 - Retirado COMMIT pois estava ocasionando problemas na
+                             abertura de contas na MATRIC criando registros com PA
+                             zerado (Tiago/Thiago).
+    ............................................................................. */
+    vr_exc_saida  EXCEPTION;
+    vr_dsflgdevolu_antes VARCHAR2(3);
+    vr_dsflgdevolu_depois VARCHAR2(3);
+    
+    CURSOR cr_crapope IS
+    SELECT  ope.nmoperad 
+      FROM crapope ope
+     WHERE ope.cdcooper = pr_cdcooper
+       AND upper(ope.cdoperad) = upper(pr_cdoperad);
+     rw_crapope cr_crapope%ROWTYPE;
+        
+    BEGIN      
+      
+      OPEN cr_crapope;
+      FETCH cr_crapope INTO rw_crapope;
+      
+      IF cr_crapope%ISOPEN THEN
+        CLOSE cr_crapope;
+      END IF;
+
+      -- verificar se existe registro
+      OPEN cr_tbchq_param_conta(pr_cdcooper => pr_cdcooper
+                               ,pr_nrdconta => pr_nrdconta);
+      FETCH cr_tbchq_param_conta INTO rw_tbchq_param_conta;        
+          
+      IF cr_tbchq_param_conta%NOTFOUND THEN      
+        CLOSE cr_tbchq_param_conta;  
+        -- Caso for opcao "I", iremos inserir registro com o flgdevolu_autom como true(default)
+        IF pr_cddopcao = 'I' THEN
+          BEGIN
+            INSERT INTO tbchq_param_conta
+                        (cdcooper
+                        ,nrdconta
+                        ,flgdevolu_autom)
+                        VALUES
+                        (pr_cdcooper
+                        ,pr_nrdconta
+                        ,pr_flgdevolu_autom); -- defatult e 1-sim
+          EXCEPTION
+            WHEN OTHERS THEN          
+              pr_dscritic := 'Erro ao inserir registro na tbchq_param_conta: ' || SQLERRM;
+              RAISE vr_exc_saida;
+          END;      
+          
+        END IF;
+      ELSE
+        CLOSE cr_tbchq_param_conta;
+        -- Se for opcao "A", ira atualizar conforme parametro pr_flgdevolu_autom(1/0)
+        IF pr_cddopcao = 'A' THEN
+                                                    
+          -- So atualiza se for diferente do anterior
+          IF rw_tbchq_param_conta.flgdevolu_autom <> pr_flgdevolu_autom THEN          
+            BEGIN
+              UPDATE tbchq_param_conta tbchq
+                 SET tbchq.flgdevolu_autom = pr_flgdevolu_autom
+               WHERE tbchq.cdcooper = pr_cdcooper
+                 AND tbchq.nrdconta = pr_nrdconta;
+            EXCEPTION 
+              WHEN OTHERS THEN
+                pr_dscritic := 'Erro ao atualizar registro na tbchq_param_conta: ' || SQLERRM;
+                RAISE vr_exc_saida;
+            END;
+            
+            IF pr_flgdevolu_autom = 1 THEN
+              vr_dsflgdevolu_depois := 'SIM';
+              vr_dsflgdevolu_antes  := 'NAO';
+            ELSE
+              vr_dsflgdevolu_depois := 'NAO';
+              vr_dsflgdevolu_antes  := 'SIM';
+            END IF;
+            
+            --Escrever No LOG
+            btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                      ,pr_ind_tipo_log => 2 -- Erro tratato
+                                      ,pr_nmarqlog     => 'contas.log'
+                                      ,pr_des_log      => to_char(SYSDATE,'DD/MM/YYYY hh24:mi:ss') ||
+                                                          ' -->  Operador ' || pr_cdoperad || ' - ' || rw_crapope.nmoperad  ||
+                                                          ' atraves do Coordenador ' || pr_cdopecor || ' alterou na conta ' ||
+                                                          pr_nrdconta || ' o campo Dev. Aut. Cheques de ' || 
+                                                          vr_dsflgdevolu_antes || ' para ' || vr_dsflgdevolu_depois || '.');
+          END IF;
+        END IF;
+      END IF;  
+
+    EXCEPTION
+      WHEN vr_exc_saida THEN        
+        NULL;
+      WHEN OTHERS THEN
+        pr_dscritic := 'Erro geral em CADA0003.pc_grava_tbchq_param_conta: ' || SQLERRM;
+        
+    END pc_grava_tbchq_param_conta;
+    
+    -- Gravar registros na tabela tbchq_param_conta, por xml
+    PROCEDURE pc_grava_tbchq_param_conta_xml(pr_cddopcao IN VARCHAR2,               --> Opcao I/A
+                                             pr_cdcooper IN  crapcop.cdcooper%TYPE, --> Cooperativa
+                                             pr_nrdconta IN  crapass.nrdconta%TYPE, --> Conta/Dv
+                                             pr_flgdevolu_autom IN NUMBER,          --> Devolve automatico ou nao
+                                             pr_cdoperad IN VARCHAR2,               --> Operador
+                                             pr_cdopecor IN VARCHAR2,               --> Operador Coordenador
+                                             pr_xmllog   IN VARCHAR2,               --> XML com informações de LOG
+                                             pr_cdcritic OUT PLS_INTEGER,           --> Código da crítica
+                                             pr_dscritic OUT VARCHAR2,              --> Descrição da crítica
+                                             pr_retxml   IN OUT NOCOPY XMLType,     --> Arquivo de retorno do XML
+                                             pr_nmdcampo OUT VARCHAR2,              --> Nome do campo com erro
+                                             pr_des_erro OUT VARCHAR2) IS           --> Erros do processo 
+          
+      /* .............................................................................
+      Programa: pc_grava_tbchq_param_conta_xml
+      Sistema : Conta-Corrente - Cooperativa de Credito
+      Sigla   : CRED
+      Autor   : Lucas Ranghetti
+      Data    : 15/07/2016                        Ultima atualizacao: --/--/----
+
+      Dados referentes ao programa:
+
+      Frequencia: Sempre que for chamado
+      Objetivo  : Rotina para chamar a rotina de gravação/alteração do parametro de
+                  devolução automatica.
+
+      Alteracoes: 
+
+      ............................................................................. */
+      vr_dscritic VARCHAR2(100);
+      vr_exc_saida  EXCEPTION;
+    BEGIN
+    
+      pc_grava_tbchq_param_conta(pr_cddopcao => pr_cddopcao, 
+                                 pr_cdcooper => pr_cdcooper, 
+                                 pr_nrdconta => pr_nrdconta, 
+                                 pr_flgdevolu_autom => pr_flgdevolu_autom, 
+                                 pr_cdoperad => pr_cdoperad, 
+                                 pr_cdopecor => pr_cdopecor, 
+                                 pr_dscritic => vr_dscritic);
+                        
+      IF vr_dscritic IS NOT NULL THEN
+        pr_dscritic := vr_dscritic;
+        RAISE vr_exc_saida;
+      END IF;
+      
+    EXCEPTION                                    
+      WHEN vr_exc_saida THEN
+        pr_cdcritic := 0;
+        IF pr_dscritic IS NULL THEN
+          pr_dscritic := 'Erro geral (CADA003.pc_grava_tbchq_param_conta_xml): ' || SQLERRM;
+        END IF;
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || pr_dscritic || '</Erro></Root>');
+        ROLLBACK;           
+   END pc_grava_tbchq_param_conta_xml;
+   
+
+  PROCEDURE pc_busca_cidades(pr_idcidade     IN crapmun.idcidade%TYPE --> Identificador unico do cadstro de cidade
+                            ,pr_cdcidade     IN crapmun.cdcidbge%TYPE --> Codigo da cidade CETIP/IBGE/CORREIOS/SFN
+                            ,pr_dscidade     IN crapmun.dscidade%TYPE --> Nome da cidade
+                            ,pr_cdestado     IN crapmun.cdestado%TYPE --> Codigo da UF
+                            ,pr_infiltro     IN PLS_INTEGER --> 1-CETIP / 2-IBGE / 3-CORREIOS
+                            ,pr_intipnom     IN PLS_INTEGER --> 1-SEM ACENTUACAO / 2-COM ACENTUACAO
+                            ,pr_tab_crapmun OUT typ_tab_crapmun --> PLTABLE com os dados
+                            ,pr_cdcritic    OUT PLS_INTEGER --> Codigo da critica
+                            ,pr_dscritic    OUT VARCHAR2) IS --> Descricao da critica
+  BEGIN
+
+    /* .............................................................................
+
+    Programa: pc_busca_cidades
+    Sistema : Ayllos Web
+    Autor   : Jaison Fernando
+    Data    : Agosto/2016                 Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Rotina para buscar as cidades.
+
+    Alteracoes: -----
+    ..............................................................................*/
+    DECLARE
+
+      -- Selecionar os dados
+      CURSOR cr_crapmun(pr_idcidade IN crapmun.idcidade%TYPE
+                       ,pr_cdcidade IN crapmun.cdcidbge%TYPE
+                       ,pr_dscidade IN crapmun.dscidade%TYPE
+                       ,pr_cdestado IN crapmun.cdestado%TYPE
+                       ,pr_infiltro IN PLS_INTEGER
+                       ,pr_intipnom IN PLS_INTEGER) IS
+        SELECT crapmun.idcidade
+              ,crapmun.cdestado
+              ,CASE pr_infiltro
+                 WHEN 1 THEN crapmun.cdcidade -- CETIP
+                 WHEN 2 THEN crapmun.cdcidbge -- IBGE
+                 WHEN 3 THEN crapmun.cdcidcor -- CORREIOS
+               END cdcidade
+              ,CASE pr_intipnom
+                 WHEN 1 THEN crapmun.dscidade -- SEM ACENTUACAO
+                 WHEN 2 THEN crapmun.dscidesp -- COM ACENTUACAO
+               END dscidade
+
+          FROM crapmun
+
+         WHERE crapmun.idcidade = DECODE(NVL(pr_idcidade,0), 0, crapmun.idcidade, pr_idcidade)
+           
+           AND (TRIM(pr_dscidade) IS NULL
+                OR (UPPER(crapmun.dscidade) LIKE '%'||UPPER(pr_dscidade)||'%' AND 1 = pr_intipnom)  -- SEM ACENTUACAO
+                OR (UPPER(crapmun.dscidesp) LIKE '%'||UPPER(pr_dscidade)||'%' AND 2 = pr_intipnom)) -- COM ACENTUACAO
+           
+           AND UPPER(crapmun.cdestado) = DECODE(TRIM(pr_cdestado), NULL, crapmun.cdestado, UPPER(pr_cdestado))
+           
+           AND ((crapmun.cdcidade IS NOT NULL AND 1 = pr_infiltro AND -- CETIP
+                 crapmun.cdcidade = DECODE(NVL(pr_cdcidade,0), 0, crapmun.cdcidade, pr_cdcidade)) OR
+
+                (crapmun.cdcidbge IS NOT NULL AND 2 = pr_infiltro AND -- IBGE
+                 crapmun.cdcidbge = DECODE(NVL(pr_cdcidade,0), 0, crapmun.cdcidbge, pr_cdcidade)) OR
+
+                (crapmun.cdcidcor IS NOT NULL AND 3 = pr_infiltro AND -- CORREIOS
+                 crapmun.cdcidcor = DECODE(NVL(pr_cdcidade,0), 0, crapmun.cdcidcor, pr_cdcidade)))
+
+      ORDER BY crapmun.dscidade;
+
+      -- Variaveis Gerais
+      vr_indice NUMBER := 0;
+
+    BEGIN
+      -- Limpa PLTABLE
+      pr_tab_crapmun.DELETE;
+
+      -- Percorrer todas as cidades
+      FOR rw_crapmun IN cr_crapmun(pr_idcidade => pr_idcidade
+                                  ,pr_cdcidade => pr_cdcidade
+                                  ,pr_dscidade => pr_dscidade
+                                  ,pr_cdestado => pr_cdestado
+                                  ,pr_infiltro => pr_infiltro
+                                  ,pr_intipnom => pr_intipnom) LOOP
+        -- Incrementa o indice
+        vr_indice := vr_indice + 1;
+
+        -- Carrega os dados na PLTRABLE
+        pr_tab_crapmun(vr_indice).idcidade := rw_crapmun.idcidade;
+        pr_tab_crapmun(vr_indice).cdestado := rw_crapmun.cdestado;
+        pr_tab_crapmun(vr_indice).cdcidade := rw_crapmun.cdcidade;
+        pr_tab_crapmun(vr_indice).dscidade := rw_crapmun.dscidade;
+
+      END LOOP;
+
+    EXCEPTION
+      WHEN OTHERS THEN
+        pr_cdcritic := 0;
+        pr_dscritic := 'Erro geral na rotina da tela CADA0003.pc_busca_cidades: ' || SQLERRM;
+    END;
+
+  END pc_busca_cidades;
+
+  PROCEDURE pc_lista_cidades(pr_idcidade IN crapmun.idcidade%TYPE --> Identificador unico do cadstro de cidade
+                            ,pr_cdcidade IN crapmun.cdcidbge%TYPE --> Codigo da cidade CETIP/IBGE/CORREIOS/SFN
+                            ,pr_dscidade IN crapmun.dscidade%TYPE --> Nome da cidade
+                            ,pr_cdestado IN crapmun.cdestado%TYPE --> Codigo da UF
+                            ,pr_infiltro IN PLS_INTEGER           --> 1-CETIP / 2-IBGE / 3-CORREIOS / 4-SFN
+                            ,pr_intipnom IN PLS_INTEGER           --> 1-SEM ACENTUACAO / 2-COM ACENTUACAO
+                            ,pr_nriniseq IN PLS_INTEGER           --> Numero inicial do registro para enviar
+                            ,pr_nrregist IN PLS_INTEGER           --> Numero de registros que deverao ser retornados
+                            ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                            ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                            ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                            ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                            ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                            ,pr_des_erro OUT VARCHAR2) IS         --> Erros do processo
+
+    -- Variável de críticas
+    vr_cdcritic      crapcri.cdcritic%TYPE;
+    vr_dscritic      VARCHAR2(10000);
+
+    -- Tratamento de erros
+    vr_exc_saida     EXCEPTION;
+
+    -- Variaveis gerais
+    vr_contador PLS_INTEGER := 0;
+    vr_posreg   PLS_INTEGER := 0;
+    vr_xml_temp VARCHAR2(32726) := '';
+    vr_clob     CLOB;
+
+    -- Vetor para armazenar os dados da tabela
+    vr_tab_crapmun typ_tab_crapmun;
+
+  BEGIN
+
+    -- Monta documento XML de ERRO
+    dbms_lob.createtemporary(vr_clob, TRUE);
+    dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
+
+    -- Criar cabeçalho do XML
+    gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                           ,pr_texto_completo => vr_xml_temp
+                           ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><Dados>');
+
+    -- Busca as cidades
+    CADA0003.pc_busca_cidades(pr_idcidade    => pr_idcidade    --> Identificador unico do cadstro de cidade
+                             ,pr_cdcidade    => pr_cdcidade    --> Codigo da cidade CETIP/IBGE/CORREIOS/SFN
+                             ,pr_dscidade    => pr_dscidade    --> Nome da cidade
+                             ,pr_cdestado    => pr_cdestado    --> Codigo da UF
+                             ,pr_infiltro    => pr_infiltro    --> 1-CETIP / 2-IBGE / 3-CORREIOS / 4-SFN
+                             ,pr_intipnom    => pr_intipnom    --> 1-SEM ACENTUACAO / 2-COM ACENTUACAO
+                             ,pr_tab_crapmun => vr_tab_crapmun --> PLTABLE com os dados
+                             ,pr_cdcritic    => vr_cdcritic    --> Codigo da critica
+                             ,pr_dscritic    => vr_dscritic);  --> Descricao da critica
+    -- Se retornou erro
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_saida;
+    END IF;
+
+    -- Se nao possuir nenhum registro, envia a quantidade de registros zerada
+    IF vr_tab_crapmun.COUNT = 0 THEN
+      gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                             ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_novo     => '<Servico qtregist="0">');
+    ELSE
+      -- Loop das cidades
+      FOR vr_ind IN 1..vr_tab_crapmun.COUNT LOOP
+
+        -- Incrementa o contador de registros
+        vr_posreg := vr_posreg + 1;
+
+        -- Se for o primeiro registro, insere uma tag com o total de registros existentes no filtro
+        IF vr_posreg = 1 THEN
+          gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                                 ,pr_texto_completo => vr_xml_temp
+                                 ,pr_texto_novo     => '<Servico qtregist="' || vr_tab_crapmun.COUNT || '">');
+        END IF;
+
+        -- Enviar somente se a linha for superior a linha inicial
+        IF nvl(pr_nriniseq,0) <= vr_posreg THEN
+
+          -- Carrega os dados
+          gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                                 ,pr_texto_completo => vr_xml_temp
+                                 ,pr_texto_novo     => '<inf>'||
+                                                          '<idcidade>' || vr_tab_crapmun(vr_ind).idcidade ||'</idcidade>'||
+                                                          '<dscidade>' || vr_tab_crapmun(vr_ind).dscidade ||'</dscidade>'||
+                                                          '<cdestado>' || vr_tab_crapmun(vr_ind).cdestado ||'</cdestado>'||
+                                                       '</inf>');
+
+          vr_contador := vr_contador + 1;
+
+        END IF;
+
+        -- Deve-se sair se o total de registros superar o total solicitado
+        EXIT WHEN vr_contador > nvl(pr_nrregist,99999);
+
+      END LOOP;
+
+    END IF;
+
+    -- Encerrar a tag raiz
+    gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                           ,pr_texto_completo => vr_xml_temp
+                           ,pr_texto_novo     => '</Servico></Dados>'
+                           ,pr_fecha_xml      => TRUE);
+
+    -- Atualiza o XML de retorno
+    pr_retxml := xmltype(vr_clob);
+
+    -- Libera a memoria do CLOB
+    dbms_lob.close(vr_clob);
+
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
+
+    WHEN OTHERS THEN
+
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro geral na rotina PC_LISTA_SERVICOS: ' || SQLERRM;
+
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
+
+  END pc_lista_cidades;
+
 END CADA0003;
 /
