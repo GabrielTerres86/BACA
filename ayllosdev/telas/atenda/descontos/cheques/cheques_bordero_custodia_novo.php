@@ -37,7 +37,7 @@
 	
 	// Verifica se o número do bordero é um inteiro válido
 	if (!validaInteiro($nrctrlim)) {
-		exibeErro("N&uacute;mero do border&ocirc; inv&aacute;lida.");
+		exibeErro("N&uacute;mero do contrato de limite inv&aacute;lido.");
 	}	
 	
 	// Função para exibir erros na tela através de javascript

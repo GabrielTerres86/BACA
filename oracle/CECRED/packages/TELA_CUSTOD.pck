@@ -1284,7 +1284,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSTOD IS
 					 AND hcc.dtmvtolt BETWEEN pr_dtinicst AND pr_dtfimcst
 					 AND(hcc.insithcc = pr_insithcc OR pr_insithcc = 0)
 					 AND hcc.intipmvt IN (1,3)
-           AND rownum <= (pr_nriniseq + pr_nrregist))
+           AND rownum <= (pr_nriniseq + pr_nrregist)
+           ORDER BY hcc.nrremret DESC)
 					 WHERE rnum >= pr_nriniseq;
 
       -- Buscar quantidade total de registros					 

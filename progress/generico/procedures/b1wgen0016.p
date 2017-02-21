@@ -1528,13 +1528,14 @@ PROCEDURE proc_cria_critica_transacao_oper:
                 IF tbgen_trans_pend.tptransacao = 12 THEN
                     DO:
                         FOR EACH  tbdscc_trans_pend 
-                            WHERE  tbdscc_trans_pend.cdtransacao_pendente = tbdscc_trans_pend.cdtransacao_pendente NO-LOCK:
+                            WHERE  tbdscc_trans_pend.cdtransacao_pendente = tbgen_trans_pend.cdtransacao_pendente NO-LOCK:
                           
                           ASSIGN aux_vltotbdc = aux_vltotbdc + tbdscc_trans_pend.vlcheque.
                           
                         END.
                         ASSIGN aux_dtdebito = "Nesta Data"
                                aux_vllantra = aux_vltotbdc
+                               aux_dscedent = "Bordero de Desconto de Cheques"
                                aux_dstptran = "Bordero de Desconto de Cheques"
                                aux_dstiptra = "Desconto de Cheque".
                      

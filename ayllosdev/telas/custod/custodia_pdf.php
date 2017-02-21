@@ -73,8 +73,8 @@
 		$pdf->Cell(24,0,'Valor',    0, 0, 'R');
 		$pdf->Cell(12,0,'Banco',    0, 0, 'C');
 		$pdf->Cell(16,0,'Agência',  0, 0, 'C');
-		$pdf->Cell(21,0,'Cheque',   0, 0, 'R');
-		$pdf->Cell(21,0,'Conta',    0, 0, 'R');
+		$pdf->Cell(17,0,'Cheque',   0, 0, 'R');
+		$pdf->Cell(25,0,'Conta',    0, 0, 'R');
 		$pdf->Cell(70,0,'CMC-7',    0, 0, 'R');
 		$pdf->Ln(2); // Linha de espaçamento
 
@@ -85,8 +85,8 @@
 		$pdf->Cell(23,0.2,"",0,0,"",1,""); $pdf->Cell(1,0.2,"",0,0,"",0,"");
 		$pdf->Cell(11,0.2,"",0,0,"",1,""); $pdf->Cell(1,0.2,"",0,0,"",0,"");
 		$pdf->Cell(15,0.2,"",0,0,"",1,""); $pdf->Cell(1,0.2,"",0,0,"",0,"");
-		$pdf->Cell(20,0.2,"",0,0,"",1,""); $pdf->Cell(1,0.2,"",0,0,"",0,"");
-		$pdf->Cell(20,0.2,"",0,0,"",1,""); $pdf->Cell(1,0.2,"",0,0,"",0,"");
+		$pdf->Cell(16,0.2,"",0,0,"",1,""); $pdf->Cell(1,0.2,"",0,0,"",0,"");
+		$pdf->Cell(24,0.2,"",0,0,"",1,""); $pdf->Cell(1,0.2,"",0,0,"",0,"");
 		$pdf->Cell(70,0.2,"",0,0,"",1,"");
 		$pdf->Ln(3); // Linha de espaçamento
 	}
@@ -150,8 +150,8 @@
 		$pdf->Cell(24,0,number_format($aDados[1],2,',','.'), 0, 0, 'R');
 		$pdf->Cell(12,0,$aDados[2], 0, 0, 'C');
 		$pdf->Cell(16,0,$aDados[3], 0, 0, 'C');
-		$pdf->Cell(21,0,$aDados[4], 0, 0, 'R');
-		$pdf->Cell(21,0,$aDados[5], 0, 0, 'R');
+		$pdf->Cell(17,0,$aDados[4], 0, 0, 'R');
+		$pdf->Cell(25,0,$aDados[5], 0, 0, 'R');
 		$pdf->Cell(70,0,$aDados[6], 0, 0, 'R');
 		$pdf->Ln(4); // Linha de espaçamento
 	}

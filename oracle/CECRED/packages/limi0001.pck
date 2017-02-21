@@ -2613,11 +2613,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
      
   BEGIN
     
-    IF(pr_vllimite < 0) THEN
+    IF(pr_vllimite <= 0) OR pr_vllimite IS NULL THEN
       vr_dscritic := 'Valor do limite inválido.';
       RAISE vr_exc_saida;
     END IF;
-     
+    
     -- Consultar o limite de credito
     OPEN cr_craplim(pr_cdcooper => pr_cdcooper,
                     pr_nrdconta => pr_nrdconta,
@@ -2927,7 +2927,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     ELSE
       CLOSE cr_crapass;
     END IF;
-
+    
     -- Verifica se o cooperado está demitido
     IF rw_crapass.dtdemiss IS NOT NULL THEN
       vr_dscritic := 'Operacao nao efetuada. Cooperado Demitido';
@@ -3045,8 +3045,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
           RAISE vr_exc_saida;
       END;
       
-    END IF;      
-
+    END IF;     
+    
     EXCEPTION
       WHEN vr_exc_saida THEN     
 

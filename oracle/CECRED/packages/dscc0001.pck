@@ -1177,7 +1177,51 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
          AND cec.nrctachq = pr_nrctachq
          AND cec.nrcpfcgc = pr_nrcpfcgc;
     rw_crapcec  cr_crapcec%ROWTYPE;
-
+    
+    --> Buscar cadastro do cooperado emitente
+    CURSOR cr_crapass (pr_cdagectl crapcop.cdagectl%TYPE,
+                       pr_nrdconta crapass.nrdconta%TYPE)IS
+      SELECT ass.inpessoa
+            ,ass.nrcpfcgc
+            ,ass.nmprimtl
+        FROM crapass ass
+            ,crapcop cop
+       WHERE cop.cdagectl = pr_cdagectl
+         AND ass.cdcooper = cop.cdcooper
+         AND ass.nrdconta = pr_nrdconta;
+    rw_crapass  cr_crapass%ROWTYPE;
+--> Buscar cadastro do cooperado emitente
+    CURSOR cr_crapass_2 (pr_cdagectl crapcop.cdagectl%TYPE,
+                         pr_nrdconta crapass.nrdconta%TYPE)IS
+      SELECT ass.inpessoa
+            ,ass.nrcpfcgc
+            ,ass.nmprimtl
+        FROM crapass ass
+            ,crapcop cop
+       WHERE cop.cdagectl = pr_cdagectl
+         AND ass.cdcooper = cop.cdcooper
+         AND ass.nrdconta = pr_nrdconta;
+    rw_crapass_2  cr_crapass_2%ROWTYPE;
+  
+    --> Buscar primeiro titular da conta
+    CURSOR cr_crapttl (pr_cdcooper IN crapcop.cdcooper%TYPE
+                      ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+      SELECT ttl.nmtalttl
+            ,ttl.nrcpfcgc
+        FROM crapttl ttl
+       WHERE ttl.cdcooper = pr_cdcooper
+         AND ttl.nrdconta = pr_nrdconta;
+    rw_crapttl  cr_crapttl%ROWTYPE;
+    
+    --> Busca pessoa juridica
+    CURSOR cr_crapjur (pr_cdcooper IN crapcop.cdcooper%TYPE
+                      ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+      SELECT jur.nmtalttl
+        FROM crapjur jur
+       WHERE jur.cdcooper = pr_cdcooper
+         AND jur.nrdconta = pr_nrdconta;
+    rw_crapjur  cr_crapjur%ROWTYPE;
+    
     ----------->>> VARIAVEIS <<<--------   
     -- Variável de críticas
     vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
@@ -1200,33 +1244,78 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 
     --> Cheques contidos no bordero
     FOR rw_crapcdb IN cr_crapcdb LOOP
-
-      -- Buscar cadastro de emitentes de cheques
-      OPEN cr_crapcec(pr_cdcooper => pr_cdcooper,
-                      pr_cdcmpchq => rw_crapcdb.cdcmpchq,
-                      pr_cdbanchq => rw_crapcdb.cdbanchq,
-                      pr_cdagechq => rw_crapcdb.cdagechq,
-                      pr_nrctachq => rw_crapcdb.nrctachq,
-                      pr_nrcpfcgc => rw_crapcdb.nrcpfcgc);
-      FETCH cr_crapcec INTO rw_crapcec;
-      vr_blnfound := cr_crapcec%FOUND;
-      CLOSE cr_crapcec;
-      -- Se NAO encontrar
-      IF NOT vr_blnfound THEN
-        vr_rel_dscpfcgc := 'NAO CADASTRADO';
-        vr_rel_nmcheque := 'NAO CADASTRADO';
+      -- Se for do sistema CECRED
+      -- Se for do sistema CECRED
+      IF rw_crapcdb.cdbanchq = 85 THEN
+        -- Buscar cadastro do cooperado emitente
+        OPEN cr_crapass_2 (pr_cdagectl => rw_crapcdb.cdagechq
+                        ,pr_nrdconta => rw_crapcdb.nrctachq);
+        FETCH cr_crapass_2 INTO rw_crapass_2;
+        vr_blnfound := cr_crapass_2%FOUND;
+        CLOSE cr_crapass_2;
+        -- Se NAO encontrar
+        IF vr_blnfound THEN
+          -- Pessoa Física
+          IF rw_crapass_2.inpessoa = 1 THEN
+            OPEN cr_crapttl (pr_cdcooper => pr_cdcooper
+                            ,pr_nrdconta => rw_crapcdb.nrctachq);
+            FETCH cr_crapttl INTO rw_crapttl;
+            vr_blnfound := cr_crapttl%FOUND;
+            CLOSE cr_crapttl;
+            -- Se NAO encontrar
+            IF vr_blnfound THEN
+              vr_rel_nmcheque := rw_crapttl.nmtalttl;
+              vr_rel_dscpfcgc := GENE0002.fn_mask_cpf_cnpj(pr_nrcpfcgc =>rw_crapttl.nrcpfcgc,
+                                                           pr_inpessoa => 1);
+            ELSE
+              vr_rel_dscpfcgc := 'NAO CADASTRADO';
+              vr_rel_nmcheque := 'NAO CADASTRADO';
+            END IF;
+          ELSE -- Pessoa Juridica
+            OPEN cr_crapjur (pr_cdcooper => pr_cdcooper
+                            ,pr_nrdconta => rw_crapcdb.nrctachq);
+            FETCH cr_crapjur INTO rw_crapjur;
+            vr_blnfound := cr_crapjur%FOUND;
+            CLOSE cr_crapjur;
+            -- Se NAO encontrar
+            IF vr_blnfound THEN
+              vr_rel_nmcheque := rw_crapjur.nmtalttl;
+              vr_rel_dscpfcgc := GENE0002.fn_mask_cpf_cnpj(pr_nrcpfcgc =>rw_crapass_2.nrcpfcgc,
+                                                           pr_inpessoa => 2);
+            ELSE
+              vr_rel_dscpfcgc := 'NAO CADASTRADO';
+              vr_rel_nmcheque := 'NAO CADASTRADO';
+            END IF;
+          END IF;
+        END IF;
       ELSE
-				-- Validar CPF/CNPJ
-				gene0005.pc_valida_cpf_cnpj(pr_nrcalcul => rw_crapcec.nrcpfcgc, 
-																		pr_stsnrcal => vr_stsnrcal, 
-																		pr_inpessoa => vr_inpessoa);
-			
-        vr_rel_dscpfcgc := GENE0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapcec.nrcpfcgc,
-                                                     pr_inpessoa => vr_inpessoa);
-        vr_rel_nmcheque := (CASE WHEN NVL(rw_crapcec.nrdconta,0) > 0 THEN '(' || TRIM(GENE0002.fn_mask_conta(rw_crapcec.nrdconta)) || ')' ELSE '' END)
-                        || rw_crapcec.nmcheque;
+        -- Buscar cadastro de emitentes de cheques
+        OPEN cr_crapcec(pr_cdcooper => pr_cdcooper,
+                        pr_cdcmpchq => rw_crapcdb.cdcmpchq,
+                        pr_cdbanchq => rw_crapcdb.cdbanchq,
+                        pr_cdagechq => rw_crapcdb.cdagechq,
+                        pr_nrctachq => rw_crapcdb.nrctachq,
+                        pr_nrcpfcgc => rw_crapcdb.nrcpfcgc);
+        FETCH cr_crapcec INTO rw_crapcec;
+        vr_blnfound := cr_crapcec%FOUND;
+        CLOSE cr_crapcec;
+        -- Se NAO encontrar
+        IF NOT vr_blnfound THEN
+          vr_rel_dscpfcgc := 'NAO CADASTRADO';
+          vr_rel_nmcheque := 'NAO CADASTRADO';
+        ELSE
+          -- Validar CPF/CNPJ
+          gene0005.pc_valida_cpf_cnpj(pr_nrcalcul => rw_crapcec.nrcpfcgc, 
+                                      pr_stsnrcal => vr_stsnrcal, 
+                                      pr_inpessoa => vr_inpessoa);
+  			
+          vr_rel_dscpfcgc := GENE0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapcec.nrcpfcgc,
+                                                       pr_inpessoa => vr_inpessoa);
+          vr_rel_nmcheque := (CASE WHEN NVL(rw_crapcec.nrdconta,0) > 0 THEN '(' || TRIM(GENE0002.fn_mask_conta(rw_crapcec.nrdconta)) || ')' ELSE '' END)
+                          || rw_crapcec.nmcheque;
+        END IF;
       END IF;
-
+      
       vr_idxchequ := pr_tab_chq_bordero.COUNT + 1;
       pr_tab_chq_bordero(vr_idxchequ).cdcmpchq := rw_crapcdb.cdcmpchq;
       pr_tab_chq_bordero(vr_idxchequ).cdbanchq := rw_crapcdb.cdbanchq;
@@ -2495,10 +2584,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 		vr_tab_dados_dscchq DSCT0002.typ_tab_dados_dscchq;
 		vr_tab_cstdsc typ_tab_cstdsc;
 		vr_idx_cstdsc INTEGER;
-		vr_dtinilib DATE; -- Data ínicio do prazo de liberação
-		vr_dtfimlib DATE; -- Data fim do prazo de liberação
-		vr_qtregist NUMBER := 0;
-		
+		vr_dtinilib   DATE; -- Data ínicio do prazo de liberação
+		vr_dtfimlib   DATE; -- Data fim do prazo de liberação
+		vr_qtregist   NUMBER := 0;
+		vr_nmcheque   VARCHAR2(200);
+    vr_nrcpfcgc   INTEGER;
+    vr_blnfound   BOOLEAN;
+    
 		-- Cheques em custodia para desconto
 		CURSOR cr_cstdsc (pr_cdcooper IN crapcop.cdcooper%TYPE
 										 ,pr_nrdconta IN crapass.nrdconta%TYPE
@@ -2599,6 +2691,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			   AND ass.nrdconta = pr_nrdconta;
 	  rw_crapass cr_crapass%ROWTYPE;
 		
+    --> Buscar cadastro do cooperado emitente
+    CURSOR cr_crapass_2 (pr_cdagectl crapcop.cdagectl%TYPE,
+                         pr_nrdconta crapass.nrdconta%TYPE)IS
+      SELECT ass.inpessoa
+            ,ass.nrcpfcgc
+            ,ass.nmprimtl
+        FROM crapass ass
+            ,crapcop cop
+       WHERE cop.cdagectl = pr_cdagectl
+         AND ass.cdcooper = cop.cdcooper
+         AND ass.nrdconta = pr_nrdconta;
+    rw_crapass_2  cr_crapass_2%ROWTYPE;
+  
+    --> Buscar primeiro titular da conta
+    CURSOR cr_crapttl (pr_cdcooper IN crapcop.cdcooper%TYPE
+                      ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+      SELECT ttl.nmtalttl
+            ,ttl.nrcpfcgc
+        FROM crapttl ttl
+       WHERE ttl.cdcooper = pr_cdcooper
+         AND ttl.nrdconta = pr_nrdconta;
+    rw_crapttl  cr_crapttl%ROWTYPE;
+    
+    --> Busca pessoa juridica
+    CURSOR cr_crapjur (pr_cdcooper IN crapcop.cdcooper%TYPE
+                      ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+      SELECT jur.nmtalttl
+        FROM crapjur jur
+       WHERE jur.cdcooper = pr_cdcooper
+         AND jur.nrdconta = pr_nrdconta;
+    rw_crapjur  cr_crapjur%ROWTYPE;
+    
 		-- Cursor da data
 		rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
 
@@ -2651,7 +2775,48 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 															,pr_nrdconta => pr_nrdconta
 															,pr_dtinilib => vr_dtinilib
 															,pr_dtfimlib => vr_dtfimlib) LOOP																														
-		  -- Atribui novo valor ao indice
+		  
+      -- Se for do sistema CECRED
+      IF rw_cstdsc.cdbanchq = 85 THEN
+        -- Buscar cadastro do cooperado emitente
+        OPEN cr_crapass_2 (pr_cdagectl => rw_cstdsc.cdagechq
+                        ,pr_nrdconta => rw_cstdsc.nrctachq);
+        FETCH cr_crapass_2 INTO rw_crapass_2;
+        vr_blnfound := cr_crapass_2%FOUND;
+        CLOSE cr_crapass_2;
+        -- Se NAO encontrar
+        IF vr_blnfound THEN
+          -- Pessoa Física
+          IF rw_crapass_2.inpessoa = 1 THEN
+            OPEN cr_crapttl (pr_cdcooper => pr_cdcooper
+                            ,pr_nrdconta => rw_cstdsc.nrctachq);
+            FETCH cr_crapttl INTO rw_crapttl;
+            vr_blnfound := cr_crapttl%FOUND;
+            CLOSE cr_crapttl;
+            -- Se NAO encontrar
+            IF vr_blnfound THEN
+              vr_nmcheque := rw_crapttl.nmtalttl;
+              vr_nrcpfcgc := rw_crapttl.nrcpfcgc;
+            END IF;
+          ELSE -- Pessoa Juridica
+            OPEN cr_crapjur (pr_cdcooper => pr_cdcooper
+                            ,pr_nrdconta => rw_cstdsc.nrctachq);
+            FETCH cr_crapjur INTO rw_crapjur;
+            vr_blnfound := cr_crapjur%FOUND;
+            CLOSE cr_crapjur;
+            -- Se NAO encontrar
+            IF vr_blnfound THEN
+              vr_nmcheque := rw_crapjur.nmtalttl;
+              vr_nrcpfcgc := rw_crapass_2.nrcpfcgc;
+            END IF;
+          END IF;
+        END IF;
+      ELSE
+        vr_nmcheque := rw_cstdsc.nmcheque;
+        vr_nrcpfcgc := rw_cstdsc.nrcpfcgc;
+      END IF;
+      
+      -- Atribui novo valor ao indice
   		vr_idx_cstdsc	:= vr_tab_cstdsc.count + 1;
 		  -- Atribui dados à PlTable
 			vr_tab_cstdsc(vr_idx_cstdsc).dstipchq := rw_cstdsc.dstipchq;
@@ -2666,8 +2831,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			vr_tab_cstdsc(vr_idx_cstdsc).nrcheque := rw_cstdsc.nrcheque;
 			vr_tab_cstdsc(vr_idx_cstdsc).vlcheque := rw_cstdsc.vlcheque;
 			vr_tab_cstdsc(vr_idx_cstdsc).inconcil := rw_cstdsc.inconcil;
-			vr_tab_cstdsc(vr_idx_cstdsc).nmcheque := rw_cstdsc.nmcheque;
-			vr_tab_cstdsc(vr_idx_cstdsc).nrcpfcgc := rw_cstdsc.nrcpfcgc;
+			vr_tab_cstdsc(vr_idx_cstdsc).nmcheque := vr_nmcheque;
+			vr_tab_cstdsc(vr_idx_cstdsc).nrcpfcgc := vr_nrcpfcgc;
 			vr_tab_cstdsc(vr_idx_cstdsc).dtdcaptu := rw_cstdsc.dtdcaptu;
 			vr_tab_cstdsc(vr_idx_cstdsc).dsdocmc7 := rw_cstdsc.dsdocmc7;
 			vr_tab_cstdsc(vr_idx_cstdsc).nrremret := rw_cstdsc.nrremret;
@@ -2887,6 +3052,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			      ,lim.nrctrlim
 						,lim.nrdconta
 						,lim.cddlinha
+            ,lim.insitblq
 				FROM craplim lim
 			 WHERE lim.cdcooper = pr_cdcooper
 			   AND lim.nrdconta = pr_nrdconta
@@ -3025,7 +3191,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 		END IF;
 		-- Fechar cursor
 		CLOSE cr_craplim;
-
+    
     -- Verifica se contrato venceu		
 		IF rw_crapdat.dtmvtolt > rw_craplim.dtfimvig THEN
 		  -- Gerar crítica
@@ -3034,7 +3200,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			-- Levantar exceção
 			RAISE vr_exc_erro;
 		END IF;
-
+    
+    -- Verifica se limite está bloqueado para inclusão de novos borderos
+    IF rw_craplim.insitblq = 1 THEN
+      -- Gerar crítica
+			vr_cdcritic := 0;
+      
+      IF pr_idorigem = 3 THEN
+			  vr_dscritic := 'Contrato de limite bloqueado. Entre em contato com seu PA.';
+      ELSE
+        vr_dscritic := 'Contrato de limite bloqueado para inclusão de novo borderô..';
+      END IF;
+        
+			-- Levantar exceção
+			RAISE vr_exc_erro;
+    END IF; 
+    
     -- Verificar se a linha de desconto está bloqueada
     OPEN cr_crapldc(pr_cdcooper => pr_cdcooper
 		               ,pr_cddlinha => rw_craplim.cddlinha);
@@ -3277,7 +3458,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 	vr_qtcompln NUMBER := 0;
 	vr_vlcompdb NUMBER := 0;
 	vr_vlcompcr NUMBER := 0;
-
+  vr_dstransa VARCHAR2(200);
+  vr_rowid_log ROWID;
+  
   -- PlTable com erros de validação de custódia
   vr_tab_erro_cust cust0001.typ_erro_custodia;
 	
@@ -3300,6 +3483,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
   rw_crapbdc cr_crapbdc%ROWTYPE;			 		
 	
 	BEGIN
+    
 		-- Buscar bordero de desconto de cheque
 	  OPEN cr_crapbdc(pr_cdcooper => pr_cdcooper
 		               ,pr_nrdconta => pr_nrdconta
@@ -3349,8 +3533,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 		FOR idx IN pr_tab_cheques.first..pr_tab_cheques.last LOOP
       
 		  -- Verificar Cheque
-			CUST0001.pc_ver_cheque(pr_cdcooper => pr_tab_cheques(idx).cdcooper
-			                      ,pr_nrcustod => pr_tab_cheques(idx).nrdconta
+			CUST0001.pc_ver_cheque(pr_cdcooper => pr_cdcooper
+			                      ,pr_nrcustod => pr_nrdconta
 														,pr_cdbanchq => pr_tab_cheques(idx).cdbanchq
 														,pr_cdagechq => pr_tab_cheques(idx).cdagechq
 														,pr_nrctachq => pr_tab_cheques(idx).nrctachq
@@ -3459,6 +3643,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 							 ,nrdolote
 							 ,dtmvtolt
 							 ,dtlibera
+               ,dtemissa
 							 ,cdcmpchq
 							 ,cdbanchq
 							 ,cdagechq
@@ -3489,6 +3674,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 				       ,pr_nrdolote
 				       ,pr_tab_cheques(idx).dtmvtolt
 				       ,pr_tab_cheques(idx).dtlibera
+               ,pr_tab_cheques(idx).dtdcaptu
 							 ,pr_tab_cheques(idx).cdcmpchq
 							 ,pr_tab_cheques(idx).cdbanchq
 							 ,pr_tab_cheques(idx).cdagechq
@@ -3559,9 +3745,53 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			-- Incrementa valores e quantidade de cheques
 			vr_qtcompln := vr_qtcompln + 1;
 			vr_vlcompcr := vr_vlcompcr + pr_tab_cheques(idx).vlcheque;
-			vr_vlcompdb := vr_vlcompdb + pr_tab_cheques(idx).vlcheque;			
+			vr_vlcompdb := vr_vlcompdb + pr_tab_cheques(idx).vlcheque;
+      
+      
+      vr_dstransa := 'Inclusao de cheque no bordero Nro.: ' || pr_nrborder;
+      
+      -- Efetua os inserts para apresentacao na tela VERLOG
+      gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                          ,pr_cdoperad => pr_cdoperad
+                          ,pr_dscritic => ' '
+                          ,pr_dsorigem => gene0001.vr_vet_des_origens(pr_idorigem)
+                          ,pr_dstransa => vr_dstransa
+                          ,pr_dttransa => trunc(SYSDATE)
+                          ,pr_flgtrans => 1
+                          ,pr_hrtransa => to_char(SYSDATE,'SSSSS')
+                          ,pr_idseqttl => 1
+                          ,pr_nmdatela => 'ATENDA_DESCT'
+                          ,pr_nrdconta => pr_nrdconta
+                          ,pr_nrdrowid => vr_rowid_log);
+      
+      gene0001.pc_gera_log_item(pr_nrdrowid => vr_rowid_log
+                               ,pr_nmdcampo => 'Borderô'
+                               ,pr_dsdadant => NULL
+                               ,pr_dsdadatu => pr_nrborder);
+      
+      gene0001.pc_gera_log_item(pr_nrdrowid => vr_rowid_log
+                               ,pr_nmdcampo => 'CMC7'
+                               ,pr_dsdadant => NULL
+                               ,pr_dsdadatu => gene0002.fn_mask(pr_tab_cheques(idx).dsdocmc7,'<99999999<9999999999>999999999999:'));
+                               
+      gene0001.pc_gera_log_item(pr_nrdrowid => vr_rowid_log
+                               ,pr_nmdcampo => 'Data Boa'
+                               ,pr_dsdadant => NULL
+                               ,pr_dsdadatu => to_char(pr_tab_cheques(idx).dtlibera,'DD/MM/RRRR'));
+                               
+      gene0001.pc_gera_log_item(pr_nrdrowid => vr_rowid_log
+                               ,pr_nmdcampo => 'Data Emissao'
+                               ,pr_dsdadant => NULL
+                               ,pr_dsdadatu => to_char(pr_tab_cheques(idx).dtdcaptu,'DD/MM/RRRR'));
+                               
+      gene0001.pc_gera_log_item(pr_nrdrowid => vr_rowid_log
+                               ,pr_nmdcampo => 'Valor'
+                               ,pr_dsdadant => NULL
+                               ,pr_dsdadatu => pr_tab_cheques(idx).vlcheque);
+      
 		END LOOP;
-		-- Atualiza o lote
+    
+    -- Atualiza o lote
 		UPDATE craplot lot
 		   SET lot.qtcompln = lot.qtcompln + vr_qtcompln
 			    ,lot.vlcompdb = lot.vlcompdb + vr_vlcompdb
@@ -3632,11 +3862,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 	vr_exc_erro        EXCEPTION;    
 
   -- Variáveis auxiliares
-	vr_qtcompln NUMBER := 0;
-  vr_vlcompcr NUMBER := 0;
-	vr_vlcompdb NUMBER := 0;
-	vr_vlcompax NUMBER := 0;
-	
+	vr_qtcompln  NUMBER := 0;
+  vr_vlcompcr  NUMBER := 0;
+	vr_vlcompdb  NUMBER := 0;
+	vr_vlcompax  NUMBER := 0;
+	vr_dstransa  VARCHAR2(200);
+  vr_rowid_log ROWID;
+  
 	-- Buscar bordero de desconto de cheque
 	CURSOR cr_crapbdc(pr_cdcooper IN crapbdc.cdcooper%TYPE
 	                 ,pr_nrdconta IN crapbdc.nrdconta%TYPE
@@ -3739,7 +3971,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			vr_qtcompln := vr_qtcompln + 1;
 			vr_vlcompcr := vr_vlcompcr + vr_vlcompax;
 			vr_vlcompdb := vr_vlcompdb + vr_vlcompax;			
-
+      
+      vr_dstransa := 'Exclusao de cheque do bordero Nro.: ' || pr_nrborder;
+      
+      -- Efetua os inserts para apresentacao na tela VERLOG
+      gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                          ,pr_cdoperad => pr_cdoperad
+                          ,pr_dscritic => ' '
+                          ,pr_dsorigem => gene0001.vr_vet_des_origens(pr_idorigem)
+                          ,pr_dstransa => vr_dstransa
+                          ,pr_dttransa => trunc(SYSDATE)
+                          ,pr_flgtrans => 1
+                          ,pr_hrtransa => to_char(SYSDATE,'SSSSS')
+                          ,pr_idseqttl => 1
+                          ,pr_nmdatela => 'ATENDA_DESCT'
+                          ,pr_nrdconta => pr_nrdconta
+                          ,pr_nrdrowid => vr_rowid_log);
+      
+      gene0001.pc_gera_log_item(pr_nrdrowid => vr_rowid_log
+                               ,pr_nmdcampo => 'Borderô'
+                               ,pr_dsdadant => NULL
+                               ,pr_dsdadatu => pr_nrborder);
+      
+      gene0001.pc_gera_log_item(pr_nrdrowid => vr_rowid_log
+                               ,pr_nmdcampo => 'CMC7'
+                               ,pr_dsdadant => NULL
+                               ,pr_dsdadatu => pr_tab_cheques(idx).dsdocmc7);
     END LOOP;	
 		
 		-- Atualiza o lote
@@ -3802,6 +4059,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 	vr_tab_cheques  typ_tab_cheques;
 	vr_index_cheque NUMBER;
   vr_dtlibera     DATE;
+  vr_nrcpfcgc     VARCHAR2(100);
+  vr_nmcheque     VARCHAR2(100);
+  vr_blnfound     BOOLEAN;
+  vr_stsnrcal     BOOLEAN;
+  vr_inpessoa     INTEGER;
   
   CURSOR cr_crapbdc (pr_cdcooper IN crapcdb.cdcooper%TYPE
 	                 ,pr_nrdconta IN crapcdb.nrdconta%TYPE
@@ -3823,8 +4085,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 					,cdb.cdagechq
 					,cdb.nrctachq
 					,cdb.nrcheque
-				  ,nvl(cec.nmcheque, 'Não cadastrado') nmcheque
-					,nvl(cec.nrcpfcgc, 0) nrcpfcgc
+				  ,nvl(cdb.nrcpfcgc, 0) nrcpfcgc
 					,cdb.vlcheque
 /*				  ,(SELECT LISTAGG(oco.dsocorre, ';') WITHIN GROUP (ORDER BY oco.cdocorre) 
 					    FROM crapabc abc, TBDSCC_OCORRENCIAS oco
@@ -3844,7 +4105,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			FROM crapcdb cdb
 				  ,crapbdc bdc
 				  ,craplim lim
-				  ,crapcec cec
 					,crapdcc dcc
 		 WHERE cdb.cdcooper = pr_cdcooper
 			 AND cdb.nrdconta = pr_nrdconta
@@ -3862,15 +4122,59 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			 AND dcc.cdagechq = cdb.cdagechq
 			 AND dcc.nrctachq = cdb.nrctachq
 			 AND dcc.nrcheque = cdb.nrcheque
-			 AND dcc.nrborder = cdb.nrborder
-			 AND cec.cdcooper (+) = cdb.cdcooper
-			 AND cec.nrcpfcgc (+) = cdb.nrcpfcgc
-			 AND cec.cdcmpchq (+) = cdb.cdcmpchq
-			 AND cec.cdbanchq (+) = cdb.cdbanchq
-			 AND cec.cdagechq (+) = cdb.cdagechq
-			 AND cec.nrctachq (+) = cdb.nrctachq
-			 AND cec.nrdconta (+) = 0;
-			 
+			 AND dcc.nrborder = cdb.nrborder;
+       
+  --> Buscar cadastro do cooperado emitente
+  CURSOR cr_crapass (pr_cdagectl IN crapcop.cdagectl%TYPE,
+                     pr_nrdconta IN crapass.nrdconta%TYPE)IS
+    SELECT ass.inpessoa
+          ,ass.cdcooper
+          ,ass.nrcpfcgc
+      FROM crapass ass
+          ,crapcop cop
+     WHERE cop.cdagectl = pr_cdagectl
+       AND ass.cdcooper = cop.cdcooper
+       AND ass.nrdconta = pr_nrdconta;
+  rw_crapass  cr_crapass%ROWTYPE;
+  
+  --> Buscar primeiro titular da conta
+  CURSOR cr_crapttl (pr_cdcooper IN crapcop.cdcooper%TYPE
+                    ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+    SELECT ttl.nmtalttl
+          ,ttl.nrcpfcgc
+      FROM crapttl ttl
+     WHERE ttl.cdcooper = pr_cdcooper
+       AND ttl.nrdconta = pr_nrdconta;
+  rw_crapttl  cr_crapttl%ROWTYPE;
+  
+  --> Busca pessoa juridica
+  CURSOR cr_crapjur (pr_cdcooper IN crapcop.cdcooper%TYPE
+                    ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+    SELECT jur.nmtalttl
+      FROM crapjur jur
+     WHERE jur.cdcooper = pr_cdcooper
+       AND jur.nrdconta = pr_nrdconta;
+  rw_crapjur  cr_crapjur%ROWTYPE;
+
+	-- Buscar cheques para analise
+	CURSOR cr_crapcec(pr_cdcooper IN crapcec.cdcooper%TYPE
+                   ,pr_nrcpfcgc IN crapcec.nrcpfcgc%TYPE
+                   ,pr_cdcmpchq IN crapcec.cdcmpchq%TYPE
+                   ,pr_cdbanchq IN crapcec.cdbanchq%TYPE
+                   ,pr_cdagechq IN crapcec.cdagechq%TYPE
+                   ,pr_nrctachq IN crapcec.nrctachq%TYPE) IS
+		SELECT cec.nmcheque
+					,cec.nrcpfcgc
+			FROM crapcec cec
+		 WHERE cec.cdcooper = pr_cdcooper
+			 AND cec.nrcpfcgc = pr_nrcpfcgc
+			 AND cec.cdcmpchq = pr_cdcmpchq
+       AND cec.cdbanchq = pr_cdbanchq
+			 AND cec.cdagechq = pr_cdagechq
+       AND cec.nrctachq = pr_nrctachq
+			 AND cec.nrdconta = 0;
+  rw_crapcec cr_crapcec%ROWTYPE;
+  
   BEGIN
 	  
     -- Buscar data parametro de referencia para calculo de juros
@@ -3900,7 +4204,77 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 	  FOR rw_crapcdb IN cr_crapcdb(pr_cdcooper => pr_cdcooper
 			                          ,pr_nrdconta => pr_nrdconta
 																,pr_nrborder => pr_nrborder) LOOP
-			-- Alimentar PlTable com dados do cheque
+      -- Se for do sistema CECRED
+      IF rw_crapcdb.cdbanchq = 85 THEN
+        -- Buscar cadastro do cooperado emitente
+        OPEN cr_crapass (pr_cdagectl => rw_crapcdb.cdagechq
+                        ,pr_nrdconta => rw_crapcdb.nrctachq);
+        FETCH cr_crapass INTO rw_crapass;
+        vr_blnfound := cr_crapass%FOUND;
+        CLOSE cr_crapass;
+        -- Se NAO encontrar
+        IF NOT vr_blnfound THEN
+          vr_nmcheque := 'NAO CADASTRADO';
+          vr_nrcpfcgc := 'NAO CADASTRADO';
+        ELSE
+          -- Pessoa Física
+          IF rw_crapass.inpessoa = 1 THEN
+            OPEN cr_crapttl (pr_cdcooper => rw_crapass.cdcooper
+                            ,pr_nrdconta => rw_crapcdb.nrctachq);
+            FETCH cr_crapttl INTO rw_crapttl;
+            vr_blnfound := cr_crapttl%FOUND;
+            CLOSE cr_crapttl;
+            -- Se NAO encontrar
+            IF NOT vr_blnfound THEN
+              vr_nmcheque := 'NAO CADASTRADO';
+              vr_nrcpfcgc := 'NAO CADASTRADO';
+            ELSE
+              vr_nmcheque := rw_crapttl.nmtalttl;
+              vr_nrcpfcgc := rw_crapttl.nrcpfcgc;
+            END IF;
+          ELSE -- Pessoa Juridica
+            OPEN cr_crapjur (pr_cdcooper => rw_crapass.cdcooper
+                            ,pr_nrdconta => rw_crapcdb.nrctachq);
+            FETCH cr_crapjur INTO rw_crapjur;
+            vr_blnfound := cr_crapjur%FOUND;
+            CLOSE cr_crapjur;
+            -- Se NAO encontrar
+            IF NOT vr_blnfound THEN
+              vr_nmcheque := 'NAO CADASTRADO';
+              vr_nrcpfcgc := 'NAO CADASTRADO';
+            ELSE
+              vr_nmcheque := rw_crapjur.nmtalttl;
+              vr_nrcpfcgc := rw_crapass.nrcpfcgc;
+            END IF;
+          END IF;
+        END IF;
+      ELSE
+        -- Buscar cadastro de emitentes de cheques
+        OPEN cr_crapcec(pr_cdcooper => pr_cdcooper
+                       ,pr_nrcpfcgc => rw_crapcdb.nrcpfcgc
+                       ,pr_cdcmpchq => rw_crapcdb.cdcmpchq
+                       ,pr_cdbanchq => rw_crapcdb.cdbanchq
+                       ,pr_cdagechq => rw_crapcdb.cdagechq
+                       ,pr_nrctachq => rw_crapcdb.nrctachq);
+        FETCH cr_crapcec INTO rw_crapcec;
+        vr_blnfound := cr_crapcec%FOUND;
+        CLOSE cr_crapcec;
+        -- Se NAO encontrar
+        IF NOT vr_blnfound THEN
+          vr_nmcheque := 'NAO CADASTRADO';
+          vr_nrcpfcgc := 'NAO CADASTRADO';
+        ELSE
+          -- Validar CPF/CNPJ
+          gene0005.pc_valida_cpf_cnpj(pr_nrcalcul => rw_crapcec.nrcpfcgc, 
+                                      pr_stsnrcal => vr_stsnrcal, 
+                                      pr_inpessoa => vr_inpessoa);
+  			
+          vr_nrcpfcgc := rw_crapcec.nrcpfcgc;
+          vr_nmcheque := rw_crapcec.nmcheque;
+        END IF;
+      END IF;
+      
+      -- Alimentar PlTable com dados do cheque
 			vr_index_cheque := vr_tab_cheques.count;
 			vr_tab_cheques(vr_index_cheque).dtlibera := rw_crapcdb.dtlibera;
 			vr_tab_cheques(vr_index_cheque).cdcmpchq := rw_crapcdb.cdcmpchq;
@@ -3908,8 +4282,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			vr_tab_cheques(vr_index_cheque).cdagechq := rw_crapcdb.cdagechq;
 			vr_tab_cheques(vr_index_cheque).nrctachq := rw_crapcdb.nrctachq;
 			vr_tab_cheques(vr_index_cheque).nrcheque := rw_crapcdb.nrcheque;
-			vr_tab_cheques(vr_index_cheque).nrcpfcgc := rw_crapcdb.nrcpfcgc;
-			vr_tab_cheques(vr_index_cheque).nmcheque := rw_crapcdb.nmcheque;
+			vr_tab_cheques(vr_index_cheque).nrcpfcgc := vr_nrcpfcgc;
+			vr_tab_cheques(vr_index_cheque).nmcheque := vr_nmcheque;
 			vr_tab_cheques(vr_index_cheque).vlcheque := rw_crapcdb.vlcheque;
 			vr_tab_cheques(vr_index_cheque).dssitana := rw_crapcdb.dssitana;
 			vr_tab_cheques(vr_index_cheque).insitana := rw_crapcdb.insitana;
@@ -4617,6 +4991,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			RAISE vr_exc_erro;
   END pc_gerar_ocorrencia_bordero;
 	
+  PROCEDURE pc_limpar_ocorrencias_bordero IS
+																			 
+  BEGIN
+    
+		DELETE 
+      FROM crapabc
+     WHERE cdcooper = pr_cdcooper
+       AND nrdconta = pr_nrdconta
+       AND nrborder = pr_nrborder;
+       							
+	EXCEPTION
+		WHEN OTHERS THEN
+			vr_cdcritic := 0;
+			vr_dscritic := 'Erro ao limpar ocorrências do borderô: ' || SQLERRM;
+			RAISE vr_exc_erro;
+  END pc_limpar_ocorrencias_bordero;
+	
 	FUNCTION fn_busca_ocorre(pr_cdcritic IN PLS_INTEGER) RETURN INTEGER IS
 	BEGIN
 		-- Retorno ver_cheque -> ocorrências de desconto de cheque
@@ -4666,6 +5057,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			vr_tab_ocorrencias(rw_ocorrencias.cdocorre).dsrestri := rw_ocorrencias.dsocorre;
 		END LOOP;	
 		
+    -- Limpa os registros de ocorrencias no borderô
+    pc_limpar_ocorrencias_bordero;
+    
 		-- Buscar associado
 		OPEN cr_crapass(pr_cdcooper => pr_cdcooper
 		               ,pr_nrdconta => pr_nrdconta);
@@ -4729,8 +5123,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     FOR vr_index IN pr_tab_cheques.first..pr_tab_cheques.last LOOP
 			
 		  -- Verificar Cheque
-			CUST0001.pc_ver_cheque(pr_cdcooper => pr_tab_cheques(vr_index).cdcooper
-			                      ,pr_nrcustod => pr_tab_cheques(vr_index).nrdconta
+			CUST0001.pc_ver_cheque(pr_cdcooper => pr_cdcooper
+			                      ,pr_nrcustod => pr_nrdconta
 														,pr_cdbanchq => pr_tab_cheques(vr_index).cdbanchq
 														,pr_cdagechq => pr_tab_cheques(vr_index).cdagechq
 														,pr_nrctachq => pr_tab_cheques(vr_index).nrctachq
@@ -6454,6 +6848,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
   vr_nrdrowid         ROWID;
 	vr_vllanmto         NUMBER;
 	vr_tab_lim_desconto typ_tab_lim_desconto;
+  vr_dsdmensg         VARCHAR2(300);
+  
+  -- Buscar Cooperativa
+  CURSOR cr_crapcop(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
+    SELECT nmrescop
+      FROM crapcop
+     WHERE cdcooper = pr_cdcooper;
+  rw_crapcop cr_crapcop%ROWTYPE;
   
 	-- Buscar borderô de desconto
 	CURSOR cr_crapbdc(pr_cdcooper IN crapbdc.cdcooper%TYPE
@@ -6714,7 +7116,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
       IF rw_craplim.vltotchq > (rw_craplim.vllimite + (rw_craplim.vllimite * (vr_tab_lim_desconto(rw_crapass.inpessoa).pctollim / 100))) THEN
         -- Atribui crítica
         vr_cdcritic := 0;
-        vr_dscritic := 'Valor limite de desconto de cheque exedido.';
+        vr_dscritic := 'Valor limite de desconto de cheque excedido.';
         -- Levanta exceção
         RAISE vr_exc_erro;
       END IF;
@@ -7213,7 +7615,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 					RAISE vr_exc_erro;				
 			END;
 		END IF;
+    
+    OPEN cr_crapcop(pr_cdcooper);
+    FETCH cr_crapcop INTO rw_crapcop;
+    IF cr_crapcop%NOTFOUND THEN
+      vr_cdcritic := 651;
+      RAISE vr_exc_erro;
+    END IF;
+    
+    vr_dsdmensg := 'Seu borderô de desconto de cheque nº ' || pr_nrborder || 
+                   ' foi liberado.' || '\n' ||
+                   ' Em caso de dúvidas, favor dirigir-se ao seu PA de relacionamento.';
 
+    -- Insere na tabela de mensagens (CRAPMSG)
+    GENE0003.pc_gerar_mensagem(pr_cdcooper => pr_cdcooper
+                              ,pr_nrdconta => pr_nrdconta
+                              ,pr_idseqttl => 0 /* Titular */
+                              ,pr_cdprogra => 'DESCTO' /* Programa */
+                              ,pr_inpriori => 0
+                              ,pr_dsdmensg => vr_dsdmensg /* corpo da mensagem */
+                              ,pr_dsdassun => 'Borderô de Desconto de Cheque Liberado' /* Assunto */
+                              ,pr_dsdremet => rw_crapcop.nmrescop 
+                              ,pr_dsdplchv => 'Desconto de Cheque'
+                              ,pr_cdoperad => pr_cdoperad
+                              ,pr_cdcadmsg => 0
+                              ,pr_dscritic => vr_dscritic);
+    
+    -- Se ocorrer erro
+    IF vr_dscritic IS NOT NULL THEN
+      vr_cdcritic := 0;
+      RAISE vr_exc_erro;
+    END IF;
+    
 	EXCEPTION    
     WHEN vr_exc_erro THEN      
       IF NVL(vr_cdcritic,0) <> 0 AND 

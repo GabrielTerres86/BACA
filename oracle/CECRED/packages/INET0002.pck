@@ -6779,6 +6779,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                  vr_vltotchq := to_char(rw_tbdscc_trans_pend.vltotchq,'fm999g999g990d00');
 								 vr_dtdebito := to_char(rw_tbdscc_trans_pend.dtmvtolt,'DD/MM/RRRR');
                  vr_qtcheque := rw_tbdscc_trans_pend.qtcheque;
+                 vr_vlasomar := rw_tbdscc_trans_pend.vltotchq;
             ELSE
                 vr_dscritic := 'Tipo de transação não encontrado.';
                 --Levantar Excecao

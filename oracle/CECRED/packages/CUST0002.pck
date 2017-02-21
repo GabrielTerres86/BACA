@@ -209,7 +209,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0002 IS
            AND crapcdb.cdagechq = pr_cdagechq 
            AND crapcdb.nrctachq = pr_nrctachq 
            AND crapcdb.nrcheque = pr_nrcheque 
-           AND crapcdb.dtdevolu IS NULL       
+           AND crapcdb.dtdevolu IS NULL
+           AND crapcdb.dtlibbdc IS NOT NULL
            AND crapcdb.dtlibera >= pr_dtmvtolt     
            AND (crapcdb.insitchq = 0
              OR crapcdb.insitchq = 2);
@@ -766,12 +767,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0002 IS
             CLOSE cr_crapocc;
             vr_erro_custodia := rw_crapocc.dsocorre;
           END IF;
-        
+          
           vr_index_erro := vr_tab_custodia_erro.count + 1;  
           vr_tab_custodia_erro(vr_index_erro).dsdocmc7 := vr_dsdocmc7;
           vr_tab_custodia_erro(vr_index_erro).dscritic := vr_erro_custodia;
+        ELSIF vr_vlcheque <= 0 THEN
+          vr_index_erro := vr_tab_custodia_erro.count + 1;  
+          vr_tab_custodia_erro(vr_index_erro).dsdocmc7 := vr_dsdocmc7;
+          vr_tab_custodia_erro(vr_index_erro).dscritic := 'Cheque com valor zerado';
         END IF;
-        
+          
         -- Verificar se possui emitente cadastrado
         OPEN cr_crapcec(pr_cdcooper => pr_cdcooper
                        ,pr_cdcmpchq => vr_cdcmpchq
@@ -1874,7 +1879,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0002 IS
       vr_retxml            XMLType;
       vr_nrremret          craphcc.nrremret%TYPE;
       vr_nrdrowid          ROWID;
-      vr_vlcustot          NUMBER;
+      vr_vlcustot          NUMBER := 0;
       
       vr_tab_custodia_erro   CUST0001.typ_erro_custodia;
       vr_tab_cheque_custodia CUST0001.typ_cheque_custodia;
@@ -2073,9 +2078,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0002 IS
                           ,pr_flgtrans => 0 -- TRUE
                           ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
                           ,pr_idseqttl => pr_idseqttl
-                          ,pr_nmdatela => ' '
+                          ,pr_nmdatela => 'INTERNETBANK'
                           ,pr_nrdconta => pr_nrdconta
                           ,pr_nrdrowid => vr_nrdrowid);
+      
+      gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                 ,pr_nmdcampo => 'Remessa'
+                                 ,pr_dsdadant => NULL
+                                 ,pr_dsdadatu => vr_nrremret);
+                                 
+      gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                 ,pr_nmdcampo => 'Valor Total'
+                                 ,pr_dsdadant => NULL
+                                 ,pr_dsdadatu => 'R$ ' || to_char(vr_vlcustot,'FM999G999G999G999G990D00'));
+      
+      -- Percorre todos os cheques para inserir na crapdcc
+      FOR vr_index_cheque IN 1..vr_tab_cheque_custodia.count LOOP
+        
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                 ,pr_nmdcampo => 'Cheque ' || vr_index_cheque
+                                 ,pr_dsdadant => NULL
+                                 ,pr_dsdadatu => vr_tab_cheque_custodia(vr_index_cheque).dsdocmc7);
+      END LOOP; 
       
       pr_retxml := '<Root>OK</Root>';
 			

@@ -1194,7 +1194,7 @@ function renovaValorLimite() {
 		data: {
 			nrdconta: nrdconta,
 			vllimite: vllimite,
-			nrctrlim: nrctrlim,
+			nrctrlim: nrctrlim.replace(/[^0-9]/g,''),
 			redirect: "script_ajax"
 		},		
 		error: function(objAjax,responseError,objExcept) {
@@ -1226,7 +1226,7 @@ function desbloqueiaInclusaoBordero() {
 		url: UrlSite + "telas/atenda/descontos/cheques/cheques_desbloqueia_bordero.php",
 		data: {
 			nrdconta: nrdconta,
-			nrctrlim: nrctrlim,
+			nrctrlim: nrctrlim.replace(/\./g,''),
 			redirect: "script_ajax"
 		},		
 		error: function(objAjax,responseError,objExcept) {
@@ -1420,6 +1420,17 @@ function converteNumero (numero){
 }
 
 function mostraFormIABordero(cddopcao){
+	
+	if (cddopcao == 'I' && $('#hd_insitblq','#frmCheques').val() == 1){
+		showError("error","Inclus&atilde;o de novos border&ocirc;s bloqueada.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		return false;
+	}
+	
+	if (cddopcao == 'I' && $('#hd_perrenov','#frmCheques').val() == 1){
+		showError("error","Opera&ccedil;&atilde;o n&atilde;o permitida. Contrato de limite de desconto vencido.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		return false;
+	}
+	
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, carregando dados do border&ocirc; ...");
 	
@@ -1513,7 +1524,7 @@ function mostraTelaChequesNovos(){
 		dataType: "html",
 		data: {
 			nrdconta: nrdconta,
-			nrctrlim: nrcontrato,
+			nrctrlim: normalizaNumero($('#nrctrlim','#frmCheques').val()),
 			redirect: "html_ajax"
 		},		
 		error: function(objAjax,responseError,objExcept) {
@@ -1581,7 +1592,18 @@ function adicionarChqsBordero(intipchq, idTabela){
 	var dtlibera, cdcmpchq, cdbanchq, cdagechq, nrctachq, 
 		nrcheque, nmcheque, nrcpfcgc, vlcheque, dssithcc,
 		dsdocmc7, dtdcaptu, dtcustod, flchqbor;
-	    
+	
+	var x = 0;
+	
+	$('#' + idTabela + ' tbody tr').each(function(){
+		x = x + 1
+	});
+	
+	if ( x == 0) {
+		showError('error','N&atilde;o foram selecionados cheques.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));');
+		return false;
+	} 
+	
 	if (idTabela == 'tbChequesSel'){
 		$('#' + idTabela + ' tbody tr').each(function(){
 			dtlibera = $(this).find('td:eq(0) > span').text();  // Data Boa
@@ -1873,7 +1895,7 @@ function adicionaChequeGrid(){
 		return false;
 	}
 	
-	if ( cVlcheque.val() == '' ) {
+	if ( cVlcheque.val() == '' || cVlcheque.val() == '0,00') {
 		showError('error','Valor inv&aacute;lido.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\'))); $(\'#vlcheque\', \'#frmChequesCustodiaNovo\').focus();');
 		return false;
 	}
@@ -2300,6 +2322,7 @@ function criaEmitente(cdcmpchq, cdbanchq, cdagechq, nrctachq, nrsequen){
 						.attr('name','nrcpfcnpj')
 						.attr('id','nrcpfcnpj' + nrsequen)
 						.attr('style', 'width: 140px;')
+						.attr('maxlength','18')
 						.attr('class', 'campo')
 					)
 					
@@ -2340,7 +2363,7 @@ function criaEmitente(cdcmpchq, cdbanchq, cdagechq, nrctachq, nrsequen){
             return false;
         }
 		
-		formataCPF_CNPJ(nrsequen);
+		mascaraCpfCnpj(this,cpfCnpj);
 		
    });
 	
@@ -2363,19 +2386,30 @@ function criaEmitente(cdcmpchq, cdbanchq, cdagechq, nrctachq, nrsequen){
 	return false;
 }
 
-function formataCPF_CNPJ(nrsequen){
-
-	var aux_cpfcnpj = cNrcpfcnpj[nrsequen].val().replace(/[^0-9]/g, '');
-		
-	var tamanho = aux_cpfcnpj.length;
-	
-	if(tamanho < 11){
-		cNrcpfcnpj[nrsequen].setMask('INTEGER', 'zzz.zzz.zzz-zz', '.', '');
-	} else if(tamanho >= 11){
-		cNrcpfcnpj[nrsequen].setMask('INTEGER', 'zz.zzz.zzz/zzzz-zz', '.', '');
-	}                   	
-	
-	return false;
+function mascaraCpfCnpj(o,f){
+    v_obj=o
+    v_fun=f
+    setTimeout('execmascara()',1)
+}
+ 
+function execmascara(){
+    v_obj.value=v_fun(v_obj.value)
+}
+ 
+function cpfCnpj(v){
+    v=v.replace(/\D/g,"")
+    if (v.length <= 11) { //CPF
+        v=v.replace(/(\d{3})(\d)/,"$1.$2")
+        v=v.replace(/(\d{3})(\d)/,"$1.$2")
+        v=v.replace(/(\d{3})(\d{1,2})$/,"$1-$2")
+ 
+    } else { //CNPJ
+        v=v.replace(/^(\d{2})(\d)/,"$1.$2")
+        v=v.replace(/^(\d{2})\.(\d{3})(\d)/,"$1.$2.$3")
+		v=v.replace(/\.(\d{3})(\d)/,".$1/$2")
+        v=v.replace(/(\d{4})(\d)/,"$1-$2")
+    }
+    return v
 }
 
 function mostraDivEmiten(){

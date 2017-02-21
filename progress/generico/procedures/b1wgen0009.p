@@ -9842,33 +9842,76 @@ PROCEDURE busca_cheques_bordero:
                                             BY crapcdb.cdagechq
                                                BY crapcdb.nrctachq 
                                                   BY crapcdb.nrcheque:
-        
-        FIND FIRST crapcec WHERE crapcec.cdcooper = par_cdcooper     AND
-                                 crapcec.cdcmpchq = crapcdb.cdcmpchq AND
-                                 crapcec.cdbanchq = crapcdb.cdbanchq AND
-                                 crapcec.cdagechq = crapcdb.cdagechq AND
-                                 crapcec.nrctachq = crapcdb.nrctachq AND
-                                 crapcec.nrcpfcgc = crapcdb.nrcpfcgc     
-                                 NO-LOCK NO-ERROR.
-     
-        IF  NOT AVAILABLE crapcec  THEN
-            ASSIGN rel_dscpfcgc = "NAO CADASTRADO"
-                   rel_nmcheque = "NAO CADASTRADO".
+        IF crapcdb.cdbanchq = 85 THEN
+          DO:
+            FIND FIRST crapcop WHERE crapcop.cdagectl = crapcdb.cdagechq NO-LOCK NO-ERROR.
+            
+            IF  NOT AVAILABLE crapcop  THEN
+              ASSIGN rel_dscpfcgc = "NAO CADASTRADO"
+                     rel_nmcheque = "NAO CADASTRADO".
+            ELSE
+              DO:
+                FIND FIRST crapass WHERE crapass.cdcooper = crapcop.cdcooper AND
+                                         crapass.nrdconta = crapcdb.nrctachq 
+                                         NO-LOCK NO-ERROR.
+             
+                IF  NOT AVAILABLE crapass  THEN
+                    ASSIGN rel_dscpfcgc = "NAO CADASTRADO"
+                           rel_nmcheque = "NAO CADASTRADO".
+                ELSE
+                  DO:
+                      IF  crapass.inpessoa = 1  THEN
+                        DO:
+                            FIND FIRST crapttl WHERE crapttl.cdcooper = crapcop.cdcooper AND
+                                                     crapttl.nrdconta = crapcdb.nrctachq
+                                                     NO-LOCK NO-ERROR.
+                            
+                            ASSIGN rel_nmcheque = TRIM(crapttl.nmtalttl)
+                                   rel_dscpfcgc = STRING(crapttl.nrcpfcgc,"99999999999")
+                                   rel_dscpfcgc = STRING(rel_dscpfcgc,"xxx.xxx.xxx-xx").
+                        END.
+                      ELSE 
+                        DO:
+                            FIND FIRST crapjur WHERE crapjur.cdcooper = crapcop.cdcooper AND
+                                                     crapjur.nrdconta = crapcdb.nrctachq
+                                                     NO-LOCK NO-ERROR.
+                            
+                            ASSIGN rel_nmcheque = TRIM(crapjur.nmtalttl)
+                                   rel_dscpfcgc = STRING(crapass.nrcpfcgc,"99999999999999")
+                                   rel_dscpfcgc = STRING(rel_dscpfcgc,"xx.xxx.xxx/xxxx-xx").
+                        END.
+                  END.
+              END.
+          END.
         ELSE
-        DO:
-            ASSIGN rel_nmcheque = (IF  crapcec.nrdconta > 0 THEN 
-                                       "(" + TRIM(STRING(
-                                       crapcec.nrdconta,"zzzz,zzz,9")) + ")"
-                                   ELSE 
-                                       "") + 
-                                  TRIM(crapcec.nmcheque).
-            IF  LENGTH(STRING(crapcec.nrcpfcgc)) > 11  THEN
-                ASSIGN rel_dscpfcgc = STRING(crapcec.nrcpfcgc,"99999999999999")
-                       rel_dscpfcgc = STRING(rel_dscpfcgc,"xx.xxx.xxx/xxxx-xx").
-            ELSE 
-                ASSIGN rel_dscpfcgc = STRING(crapcec.nrcpfcgc,"99999999999")
-                       rel_dscpfcgc = STRING(rel_dscpfcgc,"xxx.xxx.xxx-xx").
+          DO:
+            FIND FIRST crapcec WHERE crapcec.cdcooper = par_cdcooper     AND
+                                     crapcec.cdcmpchq = crapcdb.cdcmpchq AND
+                                     crapcec.cdbanchq = crapcdb.cdbanchq AND
+                                     crapcec.cdagechq = crapcdb.cdagechq AND
+                                     crapcec.nrctachq = crapcdb.nrctachq AND
+                                     crapcec.nrcpfcgc = crapcdb.nrcpfcgc     
+                                     NO-LOCK NO-ERROR.
+         
+            IF  NOT AVAILABLE crapcec  THEN
+                ASSIGN rel_dscpfcgc = "NAO CADASTRADO"
+                       rel_nmcheque = "NAO CADASTRADO".
+            ELSE
+            DO:
+                ASSIGN rel_nmcheque = (IF  crapcec.nrdconta > 0 THEN 
+                                           "(" + TRIM(STRING(
+                                           crapcec.nrdconta,"zzzz,zzz,9")) + ")"
+                                       ELSE 
+                                           "") + 
+                                      TRIM(crapcec.nmcheque).
+                IF  LENGTH(STRING(crapcec.nrcpfcgc)) > 11  THEN
+                    ASSIGN rel_dscpfcgc = STRING(crapcec.nrcpfcgc,"99999999999999")
+                           rel_dscpfcgc = STRING(rel_dscpfcgc,"xx.xxx.xxx/xxxx-xx").
+                ELSE 
+                    ASSIGN rel_dscpfcgc = STRING(crapcec.nrcpfcgc,"99999999999")
+                           rel_dscpfcgc = STRING(rel_dscpfcgc,"xxx.xxx.xxx-xx").
 
+            END.
         END.
        
         CREATE tt-chqs_do_bordero.
@@ -10181,9 +10224,14 @@ PROCEDURE efetua_exclusao_bordero:
                            OUTPUT aux_nrdrowid).
                            
         RUN proc_gerar_log_item(INPUT aux_nrdrowid,
-                                INPUT "nrborder",
+                                INPUT "Nr bordero",
                                 INPUT "",
                                 INPUT par_nrborder).
+                                
+        RUN proc_gerar_log_item(INPUT aux_nrdrowid,
+                                INPUT "Operador",
+                                INPUT "",
+                                INPUT par_cdoperad).
     END.    
     
     RETURN "OK".

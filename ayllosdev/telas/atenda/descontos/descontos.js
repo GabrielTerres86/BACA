@@ -236,11 +236,17 @@ function formataLayout(nomeForm){
 		Cvlutiliz.desabilitaCampo();
 		Cinsitblq.desabilitaCampo();
 		
-		if (Cperrenov.val() != 1)
-			$('#btnrenovacao').desabilitaCampo();
+		if (Cperrenov.val() != 1) {
+			$('#btnrenovacao').css({'color':'gray'});
+			$('#btnrenovacao').css({'cursor':'default'});
+			$('#btnrenovacao').css({'pointer-events':'none'});
+		}
 		
-		if (Chd_insitblq.val() != 1)
-			$('#btndesinbord').desabilitaCampo();
+		if (Chd_insitblq.val() != 1) {
+			$('#btndesinbord').css({'color':'gray'});	 
+			$('#btndesinbord').css({'cursor':'default'});
+			$('#btndesinbord').css({'pointer-events':'none'});
+		}
 		
 		$('#btnrenovacao').unbind('click').bind('click', function(){
 			if (Cperrenov.val() != 1) {return false}
@@ -808,7 +814,7 @@ function formataLayout(nomeForm){
 		
 		cDtlibera.css({'width':'75px'}).addClass('data');	
 		cDtdcaptu.css({'width':'75px'}).addClass('data');	
-		cVlcheque.css({'width':'110px','text-align':'right'}).setMask('DECIMAL','zzz.zzz.zz9,99','.','');
+		cVlcheque.css({'width':'110px'}).addClass('moeda');
 		cDsdocmc7.css({'width':'290px'}).attr('maxlength','34');
 	
 		// Outros	

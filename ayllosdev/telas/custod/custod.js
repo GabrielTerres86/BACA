@@ -3649,7 +3649,7 @@ function formataDetalheCheque(){
     cNrdolote_det.css({'width': '80px'}).addClass('inteiro');
     cDtemissa_det.css({'width': '80px'}).addClass('data');
     cDtlibera_det.css({'width': '80px'}).addClass('data');
-	cVlcheque_det.css({'width': '125px','text-align':'right'}).setMask('DECIMAL','zzz.zzz.zz9,99','.','');
+	cVlcheque_det.css({'width': '125px'}).addClass('moeda');
 	cDsocorre_det.css({'width': '430px'});
 
 	cTodosDetalheChq.desabilitaCampo();
@@ -4078,7 +4078,7 @@ function formataOpcaoI() {
     cNmprimtl.css({'width': '517px'});
 	cDtchqbom.css({'width':'75px'}).addClass('data');	
 	cDtemissa.css({'width':'75px'}).addClass('data');	
-	cVlcheque.css({'width':'110px','text-align':'right'}).setMask('DECIMAL','zzz.zzz.zz9,99','.','');
+	cVlcheque.css({'width':'110px'}).addClass('moeda');
 	cDsdocmc7.css({'width':'290px'}).attr('maxlength','34');
 
 	
@@ -4293,7 +4293,7 @@ function adicionaChequeI(){
 		return false;
 	}
 	
-	if ( valor == '' ) {
+	if ( valor == '' || valor == '0,00') {
 		showError('error','Valor inv&aacute;lido.','Alerta - Ayllos','cVlcheque.focus();');
 		return false;
 	}
@@ -4708,6 +4708,7 @@ function criaEmitente(cdcmpchq, cdbanchq, cdagechq, nrctachq, nrsequen){
 						.attr('name','nrcpfcnpj')
 						.attr('id','nrcpfcnpj' + nrsequen)
 						.attr('style', 'width: 140px;')
+						.attr('maxlength','18')
 						.attr('class', 'campo')
 					)
 					
@@ -4748,7 +4749,7 @@ function criaEmitente(cdcmpchq, cdbanchq, cdagechq, nrctachq, nrsequen){
             return false;
         }
 		
-		formataCPF_CNPJ(nrsequen);
+		mascaraCpfCnpj(this,cpfCnpj);
 		
    });
 	
@@ -4771,19 +4772,30 @@ function criaEmitente(cdcmpchq, cdbanchq, cdagechq, nrctachq, nrsequen){
 	return false;
 }
 
-function formataCPF_CNPJ(nrsequen){
-
-	var aux_cpfcnpj = cNrcpfcnpj[nrsequen].val().replace(/[^0-9]/g, '');
-		
-	var tamanho = aux_cpfcnpj.length;
-	
-	if(tamanho < 11){
-		cNrcpfcnpj[nrsequen].setMask('INTEGER', 'zzz.zzz.zzz-zz', '.', '');
-	} else if(tamanho >= 11){
-		cNrcpfcnpj[nrsequen].setMask('INTEGER', 'zz.zzz.zzz/zzzz-zz', '.', '');
-	}                   	
-	
-	return false;
+function mascaraCpfCnpj(o,f){
+    v_obj=o
+    v_fun=f
+    setTimeout('execmascara()',1)
+}
+ 
+function execmascara(){
+    v_obj.value=v_fun(v_obj.value)
+}
+ 
+function cpfCnpj(v){
+    v=v.replace(/\D/g,"")
+    if (v.length <= 11) { //CPF
+        v=v.replace(/(\d{3})(\d)/,"$1.$2")
+        v=v.replace(/(\d{3})(\d)/,"$1.$2")
+        v=v.replace(/(\d{3})(\d{1,2})$/,"$1-$2")
+ 
+    } else { //CNPJ
+        v=v.replace(/^(\d{2})(\d)/,"$1.$2")
+        v=v.replace(/^(\d{2})\.(\d{3})(\d)/,"$1.$2.$3")
+		v=v.replace(/\.(\d{3})(\d)/,".$1/$2")
+        v=v.replace(/(\d{4})(\d)/,"$1-$2")
+    }
+    return v
 }
 
 function cadastrarEmitentes(){

@@ -867,7 +867,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
           CLOSE cr_crapfdc;
           -- (21,17) Conta do Cheque Invalida
           pr_cdtipmvt := nvl(pr_cdtipmvt,21);
-          pr_cdocorre := nvl(pr_cdocorre,'17');
+          pr_cdocorre := nvl(pr_cdocorre,'85');
           -- Se possui critica de Tipo de Movimentação e Ocorrencia
           -- Executa RAISE para sair das validações
           RAISE vr_exc_saida;
@@ -3250,6 +3250,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
                ,crapdcc.nrremret
                ,crapdcc.intipmvt
                ,crapdcc.inchqcop
+               ,crapdcc.nrborder
          FROM crapdcc crapdcc
          WHERE crapdcc.cdcooper = pr_cdcooper
          AND   crapdcc.nrdconta = pr_nrdconta
@@ -3315,7 +3316,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
            WHERE crapope.cdcooper = pr_cdcooper
              AND crapope.cdoperad = pr_cdoperad;
        rw_crapope cr_crapope%ROWTYPE;
-
+       
+       CURSOR cr_crapcst (pr_cdcooper IN crapcst.cdcooper%TYPE
+                         ,pr_cdagenci IN crapcst.cdagenci%TYPE
+                         ,pr_cdbccxlt IN crapcst.cdbccxlt%TYPE
+                         ,pr_cdcmpchq IN crapcst.cdcmpchq%TYPE
+                         ,pr_cdbanchq IN crapcst.cdbanchq%TYPE
+                         ,pr_cdagechq IN crapcst.cdagechq%TYPE
+                         ,pr_nrctachq IN crapcst.nrctachq%TYPE
+                         ,pr_nrcheque IN crapcst.nrcheque%TYPE) IS
+         SELECT 1
+           FROM crapcst cst
+          WHERE cst.cdcooper = pr_cdcooper
+            AND cst.cdagenci = pr_cdagenci
+            AND cst.cdbccxlt = pr_cdbccxlt
+            AND cst.cdcmpchq = pr_cdcmpchq
+            AND cst.cdbanchq = pr_cdbanchq
+            AND cst.cdagechq = pr_cdagechq
+            AND cst.nrctachq = pr_nrctachq
+            AND cst.nrcheque = pr_nrcheque
+            AND cst.dtdevolu IS NULL;
+       rw_crapcst cr_crapcst%ROWTYPE;
+       
        -- typ_tab_erro Generica
        vr_tab_erro GENE0001.typ_tab_erro;                     
        
@@ -3621,9 +3643,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
              vr_flgdigok3 := GENE0005.fn_calc_digito (pr_nrcalcul => vr_nrcalcul);
                   
              vr_nrddigc3 := to_number(SUBSTR(to_char(vr_nrcalcul),LENGTH(to_char(vr_nrcalcul))));  
-                                                  
-             -- Insere registro na tabela CRAPCST
-             BEGIN
+             
+             
+             OPEN cr_crapcst (pr_cdcooper => pr_cdcooper
+                             ,pr_cdagenci => rw_crapope.cdagenci
+                             ,pr_cdbccxlt => 600
+                             ,pr_cdcmpchq => rw_crapdcc_2.cdcmpchq
+                             ,pr_cdbanchq => rw_crapdcc_2.cdbanchq
+                             ,pr_cdagechq => rw_crapdcc_2.cdagechq
+                             ,pr_nrctachq => rw_crapdcc_2.nrctachq
+                             ,pr_nrcheque => rw_crapdcc_2.nrcheque);
+             
+             FETCH cr_crapcst INTO rw_crapcst;
+             IF cr_crapcst%FOUND THEN
+                CLOSE cr_crapcst;
+                vr_dscritic := 'Cheque nr: '   || rw_crapdcc_2.nrcheque || 
+                                  ' banco: '   || rw_crapdcc_2.cdbanchq ||
+                                  ' agencia: ' || rw_crapdcc_2.cdagechq ||
+                                  ' conta: '   || rw_crapdcc_2.nrctachq ||
+                                  ' já encontra-se custodiado.';
+                RAISE vr_exc_erro;
+             END IF;
+             
+             CLOSE cr_crapcst;
+                                                          
+             -- Insere registro na tabela CRAPCST         
+             BEGIN                                        
                INSERT INTO crapcst
                  (cdcooper,
                   dtmvtolt,
@@ -3652,7 +3697,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
                   cdopeori,
                   cdageori,
                   dtinsori,
-                  flcstarq)
+                  flcstarq,
+                  nrborder)
                VALUES
                  (pr_cdcooper
                  ,pr_dtmvtolt
@@ -3681,7 +3727,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
                  ,pr_cdoperad -- INICIO - Alteracoes referentes a M181 - Rafael Maciel (RKAM)"
                  ,NVL(rw_crapope.cdagenci, 0)
                  ,SYSDATE -- FIM - Alteracoes referentes a M181 - Rafael Maciel (RKAM)"
-                 ,1); -- Flag para Informar que o Cheque foi Custodiado por Arquivo (TRUE)
+                 ,1 -- Flag para Informar que o Cheque foi Custodiado por Arquivo (TRUE)
+                 ,rw_crapdcc_2.nrborder);
              EXCEPTION
              WHEN OTHERS THEN
                vr_dscritic := 'Erro ao inserir CRAPCST(CUST0001.pc_custodiar_cheques): '||SQLERRM;
@@ -4454,7 +4501,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
                                       ,pr_cdcritic => vr_cdcritic
                                       ,pr_dscritic => vr_dscritic);
                              
-         IF vr_stsnrcal = 1 THEN                
+         IF vr_stsnrcal = 0 THEN                
            vr_cdcritic := 8; -- Digito Invalido
            RAISE vr_exc_saida;
          END IF;                    
@@ -5497,6 +5544,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
           vr_index_erro := vr_tab_custodia_erro.count + 1;  
           vr_tab_custodia_erro(vr_index_erro).dsdocmc7 := vr_dsdocmc7;
           vr_tab_custodia_erro(vr_index_erro).dscritic := vr_erro_custodia;
+        ELSIF vr_vlcheque <= 0 THEN
+          vr_index_erro := vr_tab_custodia_erro.count + 1;  
+          vr_tab_custodia_erro(vr_index_erro).dsdocmc7 := vr_dsdocmc7;
+          vr_tab_custodia_erro(vr_index_erro).dscritic := 'Cheque com valor zerado';
         END IF;
         
 				-- Verificar se possui emitente cadastrado

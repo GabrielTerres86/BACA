@@ -195,7 +195,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
       CURSOR cr_craplim(pr_cdcooper IN craplim.cdcooper%TYPE
                        ,pr_nrdconta IN craplim.nrdconta%TYPE
                        ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS
-        SELECT 1
+        SELECT lim.insitblq
           FROM craplim lim
          WHERE lim.cdcooper =  pr_cdcooper
            AND lim.nrdconta =  pr_nrdconta
@@ -219,6 +219,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
       vr_retxml        XMLType;
       vr_cdacesso      VARCHAR2(12);
       vr_flglimit      INTEGER;
+      vr_insitblq      INTEGER;
       
     BEGIN
       
@@ -280,8 +281,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
       
       IF cr_craplim%FOUND THEN
         vr_flglimit := 1;
+        vr_insitblq := rw_craplim.insitblq;
       ELSE
-        vr_flglimit := 0;
+        vr_flglimit := 1;
       END IF;
       
       CLOSE cr_craplim;
@@ -289,7 +291,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
       gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_pgto_temp
                              ,pr_texto_novo     => '<vlmxassi>' || rw_craptab.vlmxassi || '</vlmxassi>' || -- Valor máximo dispensa assinatura
-                                                   '<flglimit>' ||     vr_flglimit     || '</flglimit>'); -- Flag Possui contrato de limite
+                                                   '<flglimit>' ||     vr_flglimit     || '</flglimit>' || -- Flag Possui contrato de limite
+                                                   '<insitblq>' ||     vr_insitblq     || '</insitblq>');  -- Bloqueio inclusao de novos borderos
       
       -- Insere o cabeçalho do XML
       gene0002.pc_escreve_xml(pr_xml            => pr_retxml
@@ -795,7 +798,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
                               ,pr_flgtrans => 1
                               ,pr_hrtransa => to_char(SYSDATE,'SSSSS')
                               ,pr_idseqttl => 1
-                              ,pr_nmdatela => ' '
+                              ,pr_nmdatela => 'INTERNETBANK'
                               ,pr_nrdconta => pr_nrdconta
                               ,pr_nrdrowid => vr_rowid_log);
         
@@ -1183,7 +1186,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
                           ,pr_flgtrans => 0 -- TRUE
                           ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
                           ,pr_idseqttl => pr_idseqttl
-                          ,pr_nmdatela => ' '
+                          ,pr_nmdatela => 'INTERNETBANK'
                           ,pr_nrdconta => pr_nrdconta
                           ,pr_nrdrowid => vr_nrdrowid);
       
@@ -1201,6 +1204,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
                                ,pr_nmdcampo => 'Quantidade de Cheques'
                                ,pr_dsdadant => NULL
                                ,pr_dsdadatu => vr_qtcheque);
+      
+      FOR idx IN pr_tab_cheques.first..pr_tab_cheques.last LOOP
+        
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                 ,pr_nmdcampo => 'Cheque ' || idx
+                                 ,pr_dsdadant => NULL
+                                 ,pr_dsdadatu => gene0002.fn_mask(pr_tab_cheques(idx).dsdocmc7,'<99999999<9999999999>999999999999:'));
+      END LOOP;
       
       -- Busca e-mail da empresa
       OPEN cr_crapage (pr_cdcooper
@@ -1421,7 +1432,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
                                ,pr_dsdadant => NULL
                                ,pr_dsdadatu => vr_qtcheque);
       
-      pr_retxml := '<Root>Borderô de desconto de cheques registrado com sucesso. Aguardando aprovacao do registro pelos demais responsáveis.</Root>';
+      pr_retxml := '<Root>Borderô de desconto de cheques registrado com sucesso. Aguardando aprovação do registro pelos demais responsáveis.</Root>';
 			
       -- Commita as alterações;
       COMMIT;
@@ -1682,23 +1693,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
           vr_intipchq := to_number(vr_ret_all_intipchq(vr_auxcont));
         END IF;
         
-        -- Busca Emitentes
-        OPEN cr_crapcec (pr_cdcooper => pr_cdcooper
-                        ,pr_cdcmpchq => vr_cdcmpchq
-                        ,pr_cdbanchq => vr_cdbanchq
-                        ,pr_cdagechq => vr_cdagechq
-                        ,pr_nrctachq => vr_nrctachq);
-        FETCH cr_crapcec INTO rw_crapcec;
-        -- Se não encontrar
-        IF cr_crapcec%NOTFOUND  AND
-           vr_cdbanchq <> 85    THEN
-          CLOSE cr_crapcec;
-          vr_dscritic := 'Emitente não cadastrado.';
-          RAISE vr_exc_erro;
-        END IF;
-        -- Fecha cursor
-        CLOSE cr_crapcec;
-        
         -- Carrega as informações do cheque para custodiar
         vr_index_cheque := vr_tab_cheques.count + 1;  
         vr_tab_cheques(vr_index_cheque).cdcooper := pr_cdcooper;
@@ -1716,8 +1710,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
         vr_tab_cheques(vr_index_cheque).cdagechq := vr_cdagechq;
         vr_tab_cheques(vr_index_cheque).nrctachq := vr_nrctachq;
         vr_tab_cheques(vr_index_cheque).nrcheque := vr_nrcheque;
-        vr_tab_cheques(vr_index_cheque).nrcpfcgc := rw_crapcec.nrcpfcgc;
-
+        
+        -- Busca Emitentes
+        OPEN cr_crapcec (pr_cdcooper => pr_cdcooper
+                        ,pr_cdcmpchq => vr_cdcmpchq
+                        ,pr_cdbanchq => vr_cdbanchq
+                        ,pr_cdagechq => vr_cdagechq
+                        ,pr_nrctachq => vr_nrctachq);
+        FETCH cr_crapcec INTO rw_crapcec;
+        -- Se não encontrar
+        IF cr_crapcec%NOTFOUND  AND
+           vr_cdbanchq <> 85    THEN
+          CLOSE cr_crapcec;
+          vr_dscritic := 'Emitente não cadastrado.';
+          RAISE vr_exc_erro;
+        ELSE
+          vr_tab_cheques(vr_index_cheque).nrcpfcgc := rw_crapcec.nrcpfcgc;
+        END IF;
+        
+        -- Fecha cursor
+        CLOSE cr_crapcec;
+        
       END LOOP;
   		
       -- Validar Bordero
