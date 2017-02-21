@@ -6,7 +6,7 @@
  * OBJETIVO     : Formulário de exibição das previsoes
  * --------------
  * ALTERAÇÕES   : 21/03/2016 - Ajuste layout, valores negativos (Adriano)
- * --------------
+ * -------------- 
  */	
 ?>
 <form name="frmPrevisoes" id="frmPrevisoes" class="formulario" onSubmit="return false;" >	
