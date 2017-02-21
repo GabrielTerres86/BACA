@@ -9,7 +9,7 @@
  *				  
  *				  04/08/2016 - Adicionado parametro cddemail na chamada da procedure gera_relatorio. (Reinert)
  * 
- *                17/01/2016 - Alterado para incluir campo Status SMS. PRJ319 - SMS Cobrança (Odirlei-AMcom)  
+ *                17/01/2017 - Alterado para incluir campo Status SMS. PRJ319 - SMS Cobrança (Odirlei-AMcom)  
  * -------------- 
  */
 ?>
@@ -48,6 +48,10 @@
 	$nmprimtl	= $_POST['nmprimtl'];
 	$cdagencx	= $_POST['cdagenci'];
 	$inserasa	= $_POST['inserasa'];
+    $instatussms = $_POST['inStatusSMS'];
+    
+    //  Para relatorio 7 - Analitico de SMS
+    if ($tprelato == 7) { 
 
         $xml = new XmlMensageria();
         $xml->add('nrdconta',$nrdconta);
