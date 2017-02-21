@@ -4,7 +4,7 @@
  * DATA CRIAÇÃO : 21/12/2015 
  * OBJETIVO     : Biblioteca de funções na rotina COMERCIAL PPE da tela de CONTAS
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 01/12/2016 - Definir a não obrigatoriedade do PEP (Tiago/Thiago SD532690)
  * --------------
  */
 
@@ -578,8 +578,12 @@ function proximaRotina () {
 						'function foo() { return false }',
 						'sim.gif','nao.gif');
 	} else if(opcao == 'A' || operacao == 'CA') {
+	    if (inpolexp == 1) {
 		imprimirDeclaracao();
 		setTimeout(acessaAbaBens, 5000); // aguardar 5 segundos para a tela nao mudar repentinamente enquanto faz a requisicao de impressao					
+	} else {
+		acessaAbaBens();
+	}
 	} else {
 		acessaAbaBens();
 	}
