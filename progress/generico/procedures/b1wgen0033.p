@@ -33,7 +33,7 @@
 
     Programa: b1wgen0033.p
     Autor   : Guilherme
-    Data    : Agosto/2008                     Ultima Atualizacao: 09/11/2016
+    Data    : Agosto/2008                     Ultima Atualizacao: 21/02/2017
            
     Dados referentes ao programa:
                 
@@ -216,6 +216,8 @@
 
 				09/11/2016 - Corrigido Problemas na impressao da proposta, nao limitar mais os 
 				             resultados a 1 ano SD553284 (Tiago/Thiago).
+				
+				21/02/2017 - Ajuste no contrato conforme solicitado no chamado 606658. (Kelvin)
 ..............................................................................*/
                     
 { sistema/generico/includes/b1wgen0038tt.i }
@@ -466,9 +468,9 @@ FORM
     SKIP
     "domicilio apos alta hospitalar, assessoria administrativa.  SERVICOS" 
     SKIP
-    "EMERGENCIAIS - SEM VINCULO AO EVENTO: indicacao  medico  hospitalar,"
+    "EMERGENCIAIS - SEM VINCULO AO EVENTO: organizacao e envio de flores,"
     SKIP
-    "organizacao  e  envio  de   flores,   indicacao   de   profissional."
+    "indicacao   de   profissional."
     WITH NO-BOX COLUMN 5 NO-ATTR-SPACE NO-LABELS WIDTH 150 FRAME f_autori_casa_3_2.
 
 FORM 
@@ -568,9 +570,9 @@ FORM
     SKIP
     "serao  garantidos  quaisquer  bens  relacionados  a   esta   pequena"
     SKIP
-    "atividade comercial, exceto para maquinas de costura, limitado  a  4"
+    "atividade comercial, inclusive para maquinas de costura,  limitado a" 
     SKIP
-    "(quatro) maquinas por vigencia de apolice;                          "
+    "4 (quatro) maquinas por vigencia de apolice;                        "
     SKIP
     "* Manutencao e utilizacao inadequada dos padroes  recomendados  pelo"
     SKIP
