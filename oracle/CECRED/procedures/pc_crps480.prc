@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : David
-     Data    : Maio/2007                       Ultima atualizacao: 28/09/2016
+     Data    : Maio/2007                       Ultima atualizacao: 11/10/2016
 
      Dados referentes ao programa:
 
@@ -140,6 +140,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
 
                  28/09/2016 - Alteração do diretório para geração de arquivo contábil.
                               P308 (Ricardo Linhares).                                    
+
+               11/10/2016 - Limpeza e inclusao de valor acumulado, na tabela
+                            TBFIN_FLUXO_CONTAS_SYSPHERA. (Jaison/Marcos SUPERO)
+
   ..............................................................................*/
 
     DECLARE
@@ -815,6 +819,17 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
         -- Envio centralizado de log de erro
         RAISE vr_exc_erro;
       END IF;
+
+      -- Limpa historico passado da tabela de alimentacao ao BI, ja que eh necessario o mes atual
+      BEGIN
+        DELETE tbfin_fluxo_contas_sysphera 
+         WHERE cdcooper = pr_cdcooper
+           AND cdconta = 25;
+      EXCEPTION
+        WHEN OTHERS THEN
+        vr_dscritic := 'Problema ao limpar tbfin_fluxo_contas_sysphera: ' || SQLERRM;
+        RAISE vr_exc_erro;
+      END;
 
       -- Tratamento e retorno de valores de restart
       btch0001.pc_valida_restart(pr_cdcooper  => pr_cdcooper   --> Cooperativa conectada
@@ -2008,6 +2023,35 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
                          ||'  <vllctoac>'||to_char(NVL(vr_tot_vlacumul,0),'fm999g999g999g990d00')||'</vllctoac>'        --> VALOR ACUMULADO
                          ||'  <qtaplica>'||to_char(NVL(vr_tab_craprej(vr_num_chave_craprej).nrseqdig,0),'fm999g990')||'</qtaplica>'        --> QTD.RDC
                          ||'</periodo>');
+
+            -- Somente RDC Pos
+            IF vr_tab_resumo(vr_num_chave_resumo).tpaplrdc = 2 THEN
+              -- Incluir registro para cada valor acumulado
+              BEGIN
+                INSERT INTO tbfin_fluxo_contas_sysphera
+                             (cdcooper
+                             ,dtmvtolt
+                             ,cdconta
+                             ,nrseqconta
+                             ,cdprazo
+                             ,vlacumulado
+                             ,cdoperador
+                             ,datalteracao)
+                       VALUES(pr_cdcooper
+                             ,rw_crapdat.dtmvtolt
+                             ,25
+                             ,0
+                             ,vr_vet_periodo(vr_per)
+                             ,vr_tab_craprej(vr_num_chave_craprej).vllanmto
+                             ,'1'
+                             ,SYSDATE);
+              EXCEPTION
+                WHEN OTHERS THEN
+                vr_dscritic := 'Problema ao incluir tbfin_fluxo_contas_sysphera: ' || SQLERRM;
+                RAISE vr_exc_erro;
+              END;
+            END IF;
+
           ELSE
             -- Enviar ao XML um registro em branco
             pc_escreve_xml('<periodo>'

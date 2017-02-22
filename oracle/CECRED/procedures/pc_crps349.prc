@@ -124,6 +124,11 @@ BEGIN
             26/11/2014 - Melhorias de Performance. Foi retirada a procedure interna que gerava o XML
                          para utilizar a gene0002.pc_escreve_xml (Alisson-AMcom)
                          
+			06/02/2017 - Comentados dois IFs que determinavam se deveria ou nao somar os valores 
+			             totais de aplicacao e resgate do dia. Caso so houvesse um lancamento para o 
+						 dia, o somatario nao estava sendo efetuado.
+			             Rafael (Mouts) - Chamado 581361
+                         
   ............................................................................. */
   DECLARE
     -- Tipo para totalização de valores (utilizados para criar totais dos relatórios)
@@ -696,10 +701,10 @@ BEGIN
       END IF;
 
       -- Gravar dados de fechamento da última iteração da data
-      IF vr_craplcm.dtmvtolt = vr_inddata THEN
+      --IF vr_craplcm.dtmvtolt = vr_inddata THEN
         vr_typ_total(vr_contadia).vr_dtmvtdia := vr_craplcm.dtmvtolt;
         vr_typ_total(vr_contadia).vr_vltotdia := vr_typ_total(vr_contadia).vr_vlaplica - vr_typ_total(vr_contadia).vr_vlresgat;
-      END IF;
+      --END IF;
 
       vr_inddata := vr_craplcm.dtmvtolt;
     END LOOP;
@@ -741,10 +746,10 @@ BEGIN
       END IF;
 
       -- Atribui valores somente se for o último registro retornada para a data
-      IF vr_craplci.dtmvtolt = vr_inddata THEN
+      --IF vr_craplci.dtmvtolt = vr_inddata THEN
         vr_typ_total(vr_contadia).vr_dtmvtdia := vr_craplci.dtmvtolt;
         vr_typ_total(vr_contadia).vr_vltotdia := vr_typ_total(vr_contadia).vr_vlaplica - vr_typ_total(vr_contadia).vr_vlresgat;
-      END IF;
+      --END IF;
 
       vr_inddata := vr_craplci.dtmvtolt;
     END LOOP;

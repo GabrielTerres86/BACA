@@ -1,5 +1,4 @@
-CREATE OR REPLACE PROCEDURE CECRED.
-         pc_crps120_1 (pr_cdcooper  IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
+CREATE OR REPLACE PROCEDURE CECRED.pc_crps120_1 (pr_cdcooper  IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
                       ,pr_cdprogra  IN crapprg.cdprogra%TYPE default null  --> Codigo do programa chamador                      
                       ,pr_cdoperad  IN crapope.cdoperad%type  --> codigo do operador                 
                       ,pr_crapdat   IN  btch0001.cr_crapdat%rowtype  --> type contendo as informações da crapdat
@@ -24,7 +23,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Deborah/Edson
-       Data    : Maio/1995                     Ultima atualizacao: 22/09/2015
+       Data    : Maio/1995                     Ultima atualizacao: 26/09/2016
 
        Dados referentes ao programa:
 
@@ -76,6 +75,12 @@ CREATE OR REPLACE PROCEDURE CECRED.
                                 é inicializada com zero e no Oracle permanecia vazia
                                 (Marcos-Supero)
 
+                   26/09/2016 - Inclusao de verificacao de contratos de acordos,
+                                Prj. 302 (Jean Michel). 
+                                
+                   06/10/2016 - Incluir inclusão do lote, caso o mesmo não seja encontrado. Solicitado
+                                por James - Projeto 302 - ACordos   (Renato Darosci - Supero)
+
     ............................................................................ */
 
     DECLARE
@@ -90,6 +95,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
       vr_exc_fimprg EXCEPTION;
       vr_cdcritic   PLS_INTEGER;
       vr_dscritic   VARCHAR2(4000);
+      vr_flgativo   INTEGER := 0;
 
       ------------------------------- CURSORES ---------------------------------
 
@@ -141,7 +147,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
              qtcompln,
              vlinfocr,
              vlcompcr,
-             rowid             
+             rowid  dsrowid
         FROM craplot
        WHERE craplot.cdcooper = pr_cdcooper
          AND craplot.dtmvtolt = pr_dtintegr
@@ -201,6 +207,31 @@ CREATE OR REPLACE PROCEDURE CECRED.
          vr_vlmindeb := to_number(vr_dstextab);
       END IF;
       
+      -- Verificar se está sendo chamado da rotina de pagamento de acordos
+      IF pr_cdprogra <> 'RECP0001' THEN
+        -- Verifica se existe contrato de acordo ativo
+        RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => pr_cdcooper
+                                         ,pr_nrdconta => pr_nrdconta
+                                         ,pr_nrctremp => pr_nrctremp
+                                         ,pr_flgativo => vr_flgativo
+                                         ,pr_cdcritic => vr_cdcritic
+                                         ,pr_dscritic => vr_dscritic);
+
+        IF NVL(vr_cdcritic,0) > 0 THEN
+          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+          RAISE vr_exc_saida;
+        ELSIF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_saida;      
+        END IF;
+                                   
+        IF vr_flgativo = 1 THEN
+   		  pr_insitavs := 0; -- situacao do aviso (0-naodeb).
+          pr_flgproce := 0; --FALSE;
+		  pr_vlestdif := pr_vldaviso * -1;
+          RAISE vr_exc_saida;
+        END IF;
+      END IF;
+
       --Ler emprestimos
       OPEN cr_crapepr(pr_cdcooper => pr_cdcooper,
                       pr_nrdconta => pr_nrdconta,
@@ -433,7 +464,73 @@ CREATE OR REPLACE PROCEDURE CECRED.
       
       --  se não encontrar gravar log
       IF cr_craplot%NOTFOUND THEN
-        vr_dscritic := gene0001.fn_busca_critica(60);  
+        CLOSE cr_craplot;
+        
+        -- Alterado para que ao não encontrar o lote, criar o mesmo. Esta solicitação foi feita pelo 
+        -- James, devido há uma situação ocorrida no projeto 302 - Acordos. (Renato Darosci - 06/10/2016)
+        BEGIN
+          -- Insere o lote
+          INSERT INTO craplot(cdcooper
+                             ,dtmvtolt 
+                             ,cdagenci
+                             ,cdbccxlt
+                             ,nrdolote
+                             ,tplotmov
+                             ,nrseqdig
+                             ,vlcompcr
+                             ,vlinfocr
+                             ,cdhistor
+                             ,cdoperad
+                             ,dtmvtopg)
+                       VALUES(pr_cdcooper
+                             ,pr_dtintegr
+                             ,vr_cdagenci
+                             ,vr_cdbccxlt
+                             ,pr_nrdolote -- 8453
+                             ,5
+                             ,0
+                             ,0
+                             ,0
+                             ,0
+                             ,'1'
+                             ,NULL) RETURNING dtmvtolt
+                                            , cdagenci
+                                            , cdbccxlt
+                                            , nrdolote
+                                            , nrseqdig
+                                            , qtinfoln
+                                            , qtcompln
+                                            , vlinfocr
+                                            , vlcompcr
+                                            , ROWID   
+                                         INTO rw_craplot.dtmvtolt
+                                            , rw_craplot.cdagenci
+                                            , rw_craplot.cdbccxlt
+                                            , rw_craplot.nrdolote
+                                            , rw_craplot.nrseqdig
+                                            , rw_craplot.qtinfoln
+                                            , rw_craplot.qtcompln
+                                            , rw_craplot.vlinfocr
+                                            , rw_craplot.vlcompcr
+                                            , rw_craplot.dsrowid;
+                                             
+        EXCEPTION 
+          WHEN OTHERS THEN
+            -- A lógica de não retornar o erro foi mantida da mesma forma como era feito 
+            -- na versão antiga, para que não cause erros que antes não ocorriam
+            vr_dscritic := 'Erro ao inserir lote: '||SQLERRM;  
+            -- Envio centralizado de log de erro
+            btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                      ,pr_ind_tipo_log => 2 -- Erro tratato
+                                      ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                       || vr_cdprogra || ' --> '|| vr_dscritic 
+                                                       ||'AG: 001 BCX: 100 LOTE:'|| gene0002.fn_mask(pr_nrdolote,'999999'));
+            --retonar para o programa chamador
+            RETURN;
+        END;
+        
+        -- 
+        /*vr_dscritic := gene0001.fn_busca_critica(60);  
         -- Envio centralizado de log de erro
         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                   ,pr_ind_tipo_log => 2 -- Erro tratato
@@ -442,7 +539,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
                                                    ||'AG: 001 BCX: 100 LOTE:'|| gene0002.fn_mask(pr_nrdolote,'999999'));
         CLOSE cr_craplot;
         --retonar para o programa chamador
-        RETURN;
+        RETURN;*/
       ELSE
         --somente fechar cursor
         CLOSE cr_craplot;
@@ -499,7 +596,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
                craplot.vlinfodb = craplot.vlinfodb + vr_vllanmto,
                craplot.vlcompdb = craplot.vlcompdb + vr_vllanmto,
                craplot.nrseqdig = vr_nrseqdig
-         WHERE ROWID = rw_craplot.rowid;
+         WHERE ROWID = rw_craplot.dsrowid;
       EXCEPTION
         WHEN OTHERS THEN
           vr_dscritic := 'Não foi possivel atualizar lote(CRAPLOT)'
@@ -605,6 +702,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
         END IF;
         -- Devolvemos código e critica encontradas das variaveis locais
         pr_cdcritic := NVL(vr_cdcritic,0);
+		pr_insitavs := NVL(pr_insitavs,0);
         pr_dscritic := vr_dscritic;
       WHEN OTHERS THEN
         -- Efetuar retorno do erro não tratado
@@ -614,4 +712,3 @@ CREATE OR REPLACE PROCEDURE CECRED.
 
   END pc_crps120_1;
 /
-

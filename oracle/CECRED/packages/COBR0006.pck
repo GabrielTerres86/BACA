@@ -114,7 +114,12 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0006 IS
                serasa    INTEGER,
                flserasa crapcob.flserasa%TYPE,
                qtdianeg crapcob.qtdianeg%TYPE,
-               inserasa crapcob.inserasa%TYPE);
+               inserasa crapcob.inserasa%TYPE,
+               -- Indicadores de SMS
+               inavisms crapcob.inavisms%TYPE,
+               insmsant crapcob.insmsant%TYPE,
+               insmsvct crapcob.insmsvct%TYPE,
+               insmspos crapcob.insmspos%TYPE);
 
   --> type para armazenar as informacoes dos segmentos do arquivo
   TYPE typ_rec_instrucao
@@ -140,7 +145,12 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0006 IS
                cdbandoc  crapcob.cdbandoc%TYPE,
                nrdctabb  crapcob.nrdctabb%TYPE,
                inemiten  crapcob.inemiten%TYPE,
-               dtemscob  crapcob.dtretcob%TYPE);
+               dtemscob  crapcob.dtretcob%TYPE,
+               inavisms  crapcob.inavisms%TYPE,
+               insmsant  crapcob.insmsant%TYPE,
+               insmsvct  crapcob.insmsvct%TYPE,
+               insmspos  crapcob.insmspos%TYPE,
+               nrcelsac  crapsab.nrcelsac%TYPE);
   TYPE typ_tab_instrucao IS TABLE OF typ_rec_instrucao
     INDEX BY PLS_INTEGER;
 
@@ -235,11 +245,15 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0006 IS
                inemiexp  crapcob.inemiexp%TYPE,
                flserasa  crapcob.flserasa%TYPE,
                qtdianeg  crapcob.qtdianeg%TYPE,
-               inserasa  crapcob.inserasa%TYPE);
+               inserasa  crapcob.inserasa%TYPE,
+               inavisms  crapcob.inavisms%TYPE,
+               insmsant  crapcob.insmsant%TYPE,
+               insmsvct  crapcob.insmsvct%TYPE,
+               insmspos  crapcob.insmspos%TYPE);
   TYPE typ_tab_crapcob IS TABLE OF typ_rec_crapcob
     INDEX BY VARCHAR2(50);
 
-  --> type para armazenar os dados do sacado do segmento Q
+  --> type para armazenatyp_rec_sacador os dados do sacado do segmento Q
   TYPE typ_rec_sacado
     IS RECORD (cdcooper  crapsab.cdcooper%TYPE,
                nrdconta  crapsab.nrdconta%TYPE,
@@ -253,7 +267,8 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0006 IS
                cdufsaca  crapsab.cdufsaca%TYPE,
                nrcepsac  crapsab.nrcepsac%TYPE,
                cdoperad  crapsab.cdoperad%TYPE,
-               dtmvtolt  crapsab.dtmvtolt%TYPE
+               dtmvtolt  crapsab.dtmvtolt%TYPE,
+               nrcelsac  crapsab.nrcelsac%TYPE
                );
   TYPE typ_tab_sacado IS TABLE OF typ_rec_sacado
     INDEX BY PLS_INTEGER;  
@@ -469,6 +484,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 			   06/01/2017 - Ajuste na forma como sao feitas as atribuicoes dos campos de protesto e serasa, estava
 			                gerando problemas com protesto e negativacao automaticos e exibicao na COBRAN.
 							Heitor (Mouts) - Chamado 574161
+
+         07/02/2017 - Projeto 319 - Envio de SMS para boletos de cobranca (Andrino - Mout's)
 
 		       13/02/2017 - Ajustes realizados: 
 						    > Utilizar NOCOPY na passagem de PLTABLEs como parâmetro;
@@ -1057,6 +1074,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     pr_rec_cobranca.flgrejei := FALSE;
 	pr_rec_cobranca.inserasa := 0;
     pr_rec_cobranca.flserasa := 0;
+    -- Indicadores de SMS
+    pr_rec_cobranca.inavisms := 0;
+    pr_rec_cobranca.insmsant := 0;
+    pr_rec_cobranca.insmsvct := 0;
+    pr_rec_cobranca.insmspos := 0;
   END pc_inicializa_cobranca;
   
   --> Gravar criticas do processo
@@ -1237,6 +1259,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 	pr_tab_crapcob(vr_index).inserasa := pr_rec_cobranca.inserasa;
     pr_tab_crapcob(vr_index).flserasa := pr_rec_cobranca.flserasa;
     pr_tab_crapcob(vr_index).qtdianeg := pr_rec_cobranca.qtdianeg;
+
+    pr_tab_crapcob(vr_index).inavisms := pr_rec_cobranca.inavisms;
+    pr_tab_crapcob(vr_index).insmsant := pr_rec_cobranca.insmsant;
+    pr_tab_crapcob(vr_index).insmsvct := pr_rec_cobranca.insmsvct;
+    pr_tab_crapcob(vr_index).insmspos := pr_rec_cobranca.insmspos;
     -- Atualizar os totalizadores
     pr_qtbloque := pr_qtbloque + 1;
     pr_vlrtotal := pr_vlrtotal + NVL(pr_rec_cobranca.vltitulo, 0);
@@ -1306,6 +1333,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     pr_tab_instrucao(vr_index).dsdoccop := pr_rec_cobranca.dsdoccop;
     pr_tab_instrucao(vr_index).inemiten := pr_rec_cobranca.inemiten;
     pr_tab_instrucao(vr_index).dtemscob := pr_rec_cobranca.dtemscob; 
+    pr_tab_instrucao(vr_index).nrcelsac := pr_rec_cobranca.nrcelsac;
+    pr_tab_instrucao(vr_index).inavisms := pr_rec_cobranca.inavisms;
     
   EXCEPTION
     WHEN OTHERS THEN
@@ -1505,6 +1534,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     pr_tab_sacado(vr_index).nrcepsac := pr_rec_cobranca.nrcepsac;
     pr_tab_sacado(vr_index).cdoperad := pr_cdoperad;
     pr_tab_sacado(vr_index).dtmvtolt := pr_rec_cobranca.dtmvtolt;
+    pr_tab_sacado(vr_index).nrcelsac := pr_rec_cobranca.nrcelsac;
     
   EXCEPTION
     WHEN OTHERS THEN
@@ -1968,7 +1998,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                 insitpro,
                 flserasa,
                 qtdianeg,
-                inserasa
+                inserasa,
+                inavisms,
+                insmsant,
+                insmsvct,
+                insmspos
                 )
         VALUES (pr_tab_crapcob(vr_idx_cob).cdcooper,
                 pr_tab_crapcob(vr_idx_cob).dtmvtolt,
@@ -2021,7 +2055,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                 vr_insitpro,
                 pr_tab_crapcob(vr_idx_cob).flserasa,
                 pr_tab_crapcob(vr_idx_cob).qtdianeg,
-                pr_tab_crapcob(vr_idx_cob).inserasa) -- insitpro
+                pr_tab_crapcob(vr_idx_cob).inserasa,
+                pr_tab_crapcob(vr_idx_cob).inavisms,
+                pr_tab_crapcob(vr_idx_cob).insmsant,
+                pr_tab_crapcob(vr_idx_cob).insmsvct,
+                pr_tab_crapcob(vr_idx_cob).insmspos)
         RETURNING ROWID INTO vr_new_rowid;
       
       IF pr_tab_crapcob(vr_idx_cob).flgregis = 1 THEN      
@@ -2739,6 +2777,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
               RAISE vr_processa_erro;
             END IF;
             
+          -- 95 = Instrucao manual de envio de SMS
+          WHEN 95 THEN
+            COBR0007.pc_inst_envio_sms(pr_cdcooper => vr_instrucao.cdcooper,
+                                       pr_nrdconta => vr_instrucao.nrcnvcob,
+                                       pr_nrcnvcob => vr_instrucao.nrdconta,
+                                       pr_nrdocmto => vr_instrucao.nrdocmto,
+                                       pr_dtmvtolt => pr_dtmvtolt,
+                                       pr_cdoperad => pr_cdoperad,
+                                       pr_inavisms => vr_instrucao.inavisms,
+                                       pr_nrcelsac => vr_instrucao.nrcelsac,
+                                       pr_nrremass => vr_instrucao.nrremass,
+                                       pr_cdcritic => vr_cdcritic,
+                                       pr_dscritic => vr_dscritic);
+            -- Verificar se ocorreu erro durante a execucao da instrucao
+            IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+              RAISE vr_processa_erro;
+            END IF;
+
+          -- 96 = Cancelamento de envio de SMS
+          WHEN 96 THEN
+            COBR0007.pc_inst_canc_sms(pr_cdcooper => vr_instrucao.cdcooper,
+                                      pr_nrdconta => vr_instrucao.nrcnvcob,
+                                      pr_nrcnvcob => vr_instrucao.nrdconta,
+                                      pr_nrdocmto => vr_instrucao.nrdocmto,
+                                      pr_dtmvtolt => pr_dtmvtolt,
+                                      pr_cdoperad => pr_cdoperad,
+                                      pr_nrremass => vr_instrucao.nrremass,
+                                      pr_cdcritic => vr_cdcritic,
+                                      pr_dscritic => vr_dscritic);
+            -- Verificar se ocorreu erro durante a execucao da instrucao
+            IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+              RAISE vr_processa_erro;
+            END IF;
+
           -- Instrucoes que nao estavam previstas
           ELSE
             -- Preparar Lote de Retorno Cooperado
@@ -3107,6 +3179,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       SELECT sab.rowid
             ,sab.nrendsac
             ,sab.dsendsac
+            ,sab.nrcelsac
         FROM crapsab sab
        WHERE sab.cdcooper = pr_cdcooper
          AND sab.nrdconta = pr_nrdconta
@@ -3151,7 +3224,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                            ,cdufsaca
                            ,nrcepsac
                            ,cdoperad
-                           ,dtmvtolt)
+                           ,dtmvtolt
+                           ,nrcelsac)
                     VALUES(vr_sacado.cdcooper
                           ,vr_sacado.nrdconta
                           ,vr_nmdsacad
@@ -3164,7 +3238,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                           ,nvl(trim(vr_sacado.cdufsaca),' ')
                           ,vr_sacado.nrcepsac
                           ,vr_sacado.cdoperad
-                          ,vr_sacado.dtmvtolt);
+                          ,vr_sacado.dtmvtolt
+                          ,nvl(vr_sacado.nrcepsac,0));
       ELSE
         -- Fecha cursor
         CLOSE cr_crapsab;
@@ -3186,6 +3261,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
               ,crapsab.cdufsaca = nvl(trim(vr_sacado.cdufsaca),' ')
               ,crapsab.cdoperad = vr_sacado.cdoperad
               ,crapsab.dtmvtolt = vr_sacado.dtmvtolt
+              ,crapsab.nrcelsac = nvl(TRIM(vr_sacado.nrcelsac),rw_crapsab.nrcelsac)
          WHERE crapsab.rowid = rw_crapsab.rowid;
       END IF;
     END LOOP;
@@ -3499,11 +3575,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
   END pc_cria_rejeitado;   
                                                                           
   --> Verifica o tipo de arquivo
-   PROCEDURE pc_identifica_arq_cnab (pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
+  PROCEDURE pc_identifica_arq_cnab (pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
                                    ,pr_nmarqint IN VARCHAR2               --> Nome do arquivo
                                    ,pr_tparquiv OUT VARCHAR2              --> Tipo do arquivo
                                    ,pr_cddbanco OUT INTEGER               --> Codigo do banco
-								                   ,pr_nrdconta OUT crapass.nrdconta%TYPE --> Numero da conta do cooperado
+								   ,pr_nrdconta OUT crapass.nrdconta%TYPE --> Numero da conta do cooperado
                                    ,pr_rec_rejeita OUT COBR0006.typ_tab_rejeita --> Tabela com rejeitados
                                    ,pr_cdcritic OUT INTEGER               --> Código da critica
                                    ,pr_dscritic OUT VARCHAR2              --> Descrição da critica
@@ -4620,7 +4696,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                    28/12/2016 - Quando nosso número bem com zeros a esquerda completando
                                 20 caracteres, deve gravar na cob somente 17.
                                 (AJFink - SD#580867)
-		
+
 				   13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
 								(Andrei - Mouts).
 						
@@ -4737,7 +4813,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     
     --> 07.3P Valida Codigo do Movimento
     pr_rec_cobranca.cdocorre := pr_tab_linhas('CDMOVRE').numero;
-    IF pr_rec_cobranca.cdocorre NOT IN (1,2,4,5,6,7,8,9,10,11,31,41,90,93,94) THEN
+    IF pr_rec_cobranca.cdocorre NOT IN (1,2,4,5,6,7,8,9,10,11,31,41,90,93,94,95,96) THEN
       vr_rej_cdmotivo := '05'; --> Codigo de Movimento Invalido
       RAISE vr_exc_reje;
     END IF;
@@ -4750,7 +4826,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
     --> Validacao de Comandos de Instrucao
     IF pr_rec_cobranca.cdocorre <> 1 THEN -- 01 - Remessa
-      IF pr_rec_cobranca.cdocorre <> 31 THEN 
+      IF pr_rec_cobranca.cdocorre NOT IN (31,95,96) THEN 
         -- Realiza as validações da instrucao
         pc_valida_exec_instrucao (pr_cdcooper   => pr_cdcooper,
                                   pr_nrdconta   => pr_nrdconta,
@@ -5170,9 +5246,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 								a rotina de validação de caracteres para endereços
 								(Andrei). 
                 
-                   26/10/2016 - Ajuste na validacao do nome do sacado para considerar 
-                                o caracter ':' como valido.
-                               (Chamado 535830) - (Fabricio)
+               26/10/2016 - Ajuste na validacao do nome do sacado para considerar 
+                            o caracter ':' como valido.
+                            (Chamado 535830) - (Fabricio)
 
 				  13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
 							   (Andrei - Mouts).
@@ -5791,6 +5867,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                           pr_tab_linhas    IN gene0009.typ_tab_campos, --> Dados da linha
                                           pr_rec_cobranca  IN OUT NOCOPY typ_rec_cobranca,    --> Dados da Cobranca
                                           pr_tab_rejeitado IN OUT NOCOPY typ_tab_rejeitado,   --> Tabela de Rejeitados
+                                          pr_tab_sacado    IN OUT NOCOPY typ_tab_sacado,      --> Tabela de Sacados
                                           pr_des_reto         OUT VARCHAR2             --> Retorno OK/NOK
                                          ) IS
                                    
@@ -5817,11 +5894,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
     
     ------------------------------- CURSORES ---------------------------------    
+    CURSOR cr_config IS
+      SELECT 1
+        FROM tbcobran_sms_contrato
+       WHERE cdcooper = pr_cdcooper
+         AND nrdconta = pr_nrdconta
+         AND dhcancela IS NULL;
+    rw_config cr_config%ROWTYPE;
     
     ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
     
     ------------------------------- VARIAVEIS -------------------------------
     vr_rej_cdmotivo VARCHAR2(2);
+    vr_dscritic VARCHAR2(500);
     
   BEGIN
     
@@ -5831,6 +5916,55 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       pr_rec_cobranca.dsdemail := pr_tab_linhas('DSDEMAIL').texto;
       -- 10.4Y 11.4Y - Celular do pagador
       pr_rec_cobranca.nrcelsac := pr_tab_linhas('NRCELSAC').texto;
+      -- Indicadores de SMS
+      IF pr_tab_linhas('INAVISMS').numero = 0 THEN
+        pr_rec_cobranca.inavisms := 0;
+        pr_rec_cobranca.insmsant := 0;
+        pr_rec_cobranca.insmsvct := 0;
+        pr_rec_cobranca.insmspos := 0;
+      ELSE
+        -- verifica se pode existir SMS para a conta
+        OPEN cr_config;
+        FETCH cr_config INTO rw_config;
+        -- Se nao possui acesso gera rejeicao
+        IF cr_config%NOTFOUND THEN
+          pr_rec_cobranca.inavisms := 0;
+          pr_rec_cobranca.insmsant := 0;
+          pr_rec_cobranca.insmsvct := 0;
+          pr_rec_cobranca.insmspos := 0;
+          -- Insere como rejeitado
+          pc_valida_grava_rejeitado(pr_cdcooper      => pr_rec_cobranca.cdcooper --> Codigo da Cooperativa
+                                   ,pr_nrdconta      => pr_rec_cobranca.nrdconta --> Numero da Conta
+                                   ,pr_nrcnvcob      => pr_rec_cobranca.nrcnvcob --> Numero do Convenio
+                                   ,pr_vltitulo      => pr_rec_cobranca.vltitulo --> Valor do Titulo
+                                   ,pr_cdbcoctl      => pr_rec_header.cdbcoctl   --> Codigo do banco na central
+                                   ,pr_cdagectl      => pr_rec_header.cdagectl   --> Codigo da Agencial na central
+                                   ,pr_nrnosnum      => pr_rec_cobranca.dsnosnum --> Nosso Numero
+                                   ,pr_dsdoccop      => pr_rec_cobranca.dsdoccop --> Descricao do Documento
+                                   ,pr_nrremass      => pr_rec_header.nrremass   --> Numero da Remessa
+                                   ,pr_dtvencto      => pr_rec_cobranca.dtvencto --> Data de Vencimento
+                                   ,pr_dtmvtolt      => pr_dtmvtolt              --> Data de Movimento
+                                   ,pr_cdoperad      => pr_cdoperad              --> Operador
+                                   ,pr_cdocorre      => 26                       --> Codigo da Ocorrencia
+                                   ,pr_cdmotivo      => ' '                     --> Motivo da Rejeicao
+                                   ,pr_tab_rejeitado => pr_tab_rejeitado);       --> Tabela de Rejeitados
+        ELSE
+          pr_rec_cobranca.inavisms := pr_tab_linhas('INAVISMS').numero;
+          pr_rec_cobranca.insmsant := pr_tab_linhas('INSMSANT').numero;
+          pr_rec_cobranca.insmsvct := pr_tab_linhas('INSMSVCT').numero;
+          pr_rec_cobranca.insmspos := pr_tab_linhas('INSMSPOS').numero;
+        END IF;
+       CLOSE cr_config;
+      END IF;
+
+      -- Se for solicitacao de Remessa, entao devera gravar sacado
+      IF  pr_rec_cobranca.cdocorre = 01 THEN
+         pc_grava_sacado( pr_cdoperad     => pr_cdoperad,     --> Operador
+                          pr_rec_cobranca => pr_rec_cobranca, --> Dados da linha
+                          pr_tab_sacado   => pr_tab_sacado,   --> Tabela de Instrucoes
+                          pr_dscritic     => vr_dscritic);    --> Descricao do Erro
+      END IF;
+
     END IF;
     
     pr_des_reto := 'OK';
@@ -6703,7 +6837,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       IF cr_craprtc%NOTFOUND THEN
         --Fechar Cursor
         CLOSE cr_craprtc;
-        
+
         -- Utilizar a SEQUENCE para gerar o numero de remessa do cooperado
         vr_nrremrtc := fn_sequence(pr_nmtabela => 'CRAPRTC'
                                   ,pr_nmdcampo => 'NRREMRET'
@@ -7279,6 +7413,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                 de 90 para 365 dias. (Douglas - Chamado 523329)
 
                    23/12/2016 - Validar nulo no valor do título. (AJFink - SD#581070)
+
+                   27/01/2017 - Incluir atribuição do flgdprot quando houver
+                                instrução de protesto. (AJFink - SD#586758)
 
 				   13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
 								(Andrei - Mouts).
@@ -8111,6 +8248,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         END IF;
         
       END IF;
+            
+      --SD#586758
+      if nvl(pr_rec_cobranca.qtdiaprt,0) > 0 then
+        pr_rec_cobranca.flgdprot := 1;
+      end if;
             
     END IF;
     
@@ -9764,6 +9906,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                             pr_rec_header    => vr_rec_header,             --> Dados do Header do Arquivo
                                             pr_tab_linhas    => vr_tab_linhas(vr_idlinha), --> Dados da linha
                                             pr_rec_cobranca  => vr_rec_cobranca,           --> Dados da Cobranca
+                                            pr_tab_sacado    => vr_tab_sacado,             --> Tabela de Sacados
                                             pr_tab_rejeitado => vr_tab_rejeitado,          --> Tabela de Rejeitados
                                             pr_des_reto      => vr_des_reto);              --> Retorno OK/NOK
             END IF;
@@ -14752,7 +14895,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
     END IF;
       
-    --> Remover arquivo 
+    --> Mover arquivo 
     vr_dscomand := 'mv '|| vr_dsdircop || '/upload/' || pr_nmarquiv|| ' ' ||
                            vr_dsdircop || '/salvar';
                 
@@ -14777,7 +14920,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       pr_xml_dsmsgerr := '<dsmsgerr>'|| vr_dscritic ||'</dsmsgerr>';
       pr_dsretorn := 'NOK';    
       
-      --> Remover arquivo 
+      --> Mover arquivo 
       vr_dscomand := 'mv '|| vr_dsdircop || '/upload/' || pr_nmarquiv|| ' ' ||
                              vr_dsdircop || '/salvar';
               
@@ -14791,7 +14934,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       pr_xml_dsmsgerr := '<dsmsgerr>Erro inesperado. Nao foi possivel importar o arquivo de cobranca. Tente novamente ou contacte seu PA</dsmsgerr>' || sqlerrm;
       pr_dsretorn := 'NOK';           
       
-       --> Remover arquivo 
+       --> Mover arquivo 
       vr_dscomand := 'mv '|| vr_dsdircop || '/upload/' || pr_nmarquiv|| ' ' ||
                              vr_dsdircop || '/salvar';
               
@@ -14905,7 +15048,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     vr_diretorio_log := gene0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/coop
                                              ,pr_cdcooper => pr_cdcooper
                                              ,pr_nmsubdir => '/arq') ;                                   
-    
+        
     -- Diretório do arquivo de Erro (.ERR)
     vr_diretorio_err := gene0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/coop
                                              ,pr_cdcooper => pr_cdcooper
@@ -14914,11 +15057,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     -- Renomeia o Arquivo .REM para .LOG
     gene0001.pc_OScommand_Shell('cp ' || vr_diretorio_err || '/' || pr_nmarquiv || ' ' || 
                                 vr_diretorio_log || '/' || vr_nmarquivo_log);  
-    
+      
     -- Renomeia o Arquivo .REM para .ERR
     gene0001.pc_OScommand_Shell('mv ' || vr_diretorio_err || '/' || pr_nmarquiv || ' ' || 
                                 vr_diretorio_err || '/' || vr_nmarquivo_err); 
-       
+           
     vr_dscomora:= gene0001.fn_param_sistema('CRED',pr_cdcooper,'SCRIPT_EXEC_SHELL');
         
     -- Caminho script que envia/recebe via FTP os arquivos de custodia cheque
@@ -14937,10 +15080,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     vr_pass_ftp := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
                                             ,pr_cdcooper => '0'
                                             ,pr_cdacesso => 'CUST_CHQ_ARQ_PASS_FTP');   
-      
+                                              
     vr_dir_retorno := '/' ||TRIM(rw_crapcop.dsdircop)   ||
                       '/' || TRIM(to_char(pr_nrdconta)) || '/RETORNO';                                                                              
-    
+            
     -- Copia Arquivo .ERR para Servidor FTP
     vr_comando := vr_dscomora ||' perl_remoto ' || vr_script_cust || ' ' ||
     '-envia'                                                     || ' ' || 
@@ -14964,7 +15107,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       vr_dscritic:= 'Nao foi possivel executar comando unix. '||vr_comando;
       RAISE vr_exc_erro;
     END IF;                    
-    
+                           
     -- Copia Arquivo .LOG para Servidor FTP
     vr_comando := vr_dscomora|| ' perl_remoto ' || vr_script_cust || ' ' ||
     '-envia'                                                     || ' ' || 
@@ -14988,7 +15131,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       vr_dscritic:= 'Nao foi possivel executar comando unix. '||vr_comando;
       RAISE vr_exc_erro;
     END IF;
-       
+   
     -- Verifica Qual a Origem
     CASE pr_idorigem 
       WHEN 1 THEN vr_dsorigem := 'AYLLOS';

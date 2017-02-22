@@ -457,6 +457,10 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0003 is
                             ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                             ,pr_des_erro OUT VARCHAR2);           --> Erros do processo 
 
+	-- Function para retornar código da cidade
+	FUNCTION fn_busca_codigo_cidade(pr_cdestado IN crapmun.cdestado%TYPE
+		                             ,pr_dscidade IN crapmun.dscidade%TYPE) RETURN INTEGER;
+
 END CADA0003;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
@@ -514,6 +518,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --             29/11/2016 - Retirado COMMIT da procedure pc_grava_tbchq_param_conta
   --                          pois estava ocasionando problemas na abertura de contas 
   --                          na MATRIC criando registros com PA zerado (Tiago/Thiago).
+  --
+  --			 19/01/2016 - Adicionada function fn_busca_codigo_cidade. (Reinert)
   ---------------------------------------------------------------------------------------------------------------
 
   CURSOR cr_tbchq_param_conta(pr_cdcooper crapcop.cdcooper%TYPE
@@ -6930,6 +6936,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                                      '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
 
   END pc_lista_cidades;
+
+	-- Function para retornar código da cidade
+	FUNCTION fn_busca_codigo_cidade(pr_cdestado IN crapmun.cdestado%TYPE
+		                             ,pr_dscidade IN crapmun.dscidade%TYPE) RETURN INTEGER IS
+	  CURSOR cr_crapmun IS
+			SELECT mun.idcidade
+				FROM crapmun mun
+			 WHERE upper(mun.cdestado) = upper(pr_cdestado)
+				 AND (upper(mun.dscidade) = upper(pr_dscidade)
+					OR  upper(GENE0007.fn_caract_acento(mun.dscidesp)) = upper(pr_dscidade));
+	  rw_crapmun cr_crapmun%ROWTYPE;
+	BEGIN
+		OPEN cr_crapmun;
+		FETCH cr_crapmun INTO rw_crapmun;
+		CLOSE cr_crapmun;
+		RETURN nvl(rw_crapmun.idcidade, 0);
+  END fn_busca_codigo_cidade;
 
 END CADA0003;
 /

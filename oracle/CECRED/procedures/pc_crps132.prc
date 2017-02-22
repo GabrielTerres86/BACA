@@ -63,6 +63,10 @@ BEGIN
                22/08/2016 - Adicionado operações de financiamento do BNDES 
 							              no relatório 109. (Reinert)
 
+               11/10/2016 - Limpeza e inclusao de valor de emprestimo ou financiamento, 
+                            na tabela TBFIN_FLUXO_CONTAS_SYSPHERA. (Jaison/Marcos SUPERO)
+
+
                01/12/2016 - Ajuste para zerar a vr_tab_financ(vr_idfina).qtfinanc
 							quando nao tem valor. (Jaison/Diego - SD: 534498)
 
@@ -182,6 +186,7 @@ BEGIN
     vr_idfina   number;
     vr_nrmes    number;
     vr_desperio varchar2(30);
+    vr_cdprazo  tbfin_fluxo_contas_sysphera.cdprazo%TYPE;
 
     --Valores acumulados para enviar para a contabilidade
     vr_vlacempr NUMBER;
@@ -405,6 +410,17 @@ BEGIN
       -- Envio centralizado de log de erro
       RAISE vr_exc_erro;
     END IF;
+
+    -- Limpa historico passado da tabela de alimentacao ao BI, ja que eh necessario o mes atual
+    BEGIN
+      DELETE tbfin_fluxo_contas_sysphera
+       WHERE cdcooper = pr_cdcooper
+         AND cdconta = 9;
+    EXCEPTION
+      WHEN OTHERS THEN
+      vr_dscritic := 'Problema ao limpar tbfin_fluxo_contas_sysphera: ' || SQLERRM;
+      RAISE vr_exc_erro;
+    END;
 
     --Inicializar array, com os meses para mesmo se n?o houver valores no periodo exibir no relatorio.
     FOR vr_idx IN 1..19 LOOP
@@ -726,9 +742,58 @@ BEGIN
       -- Montar descricao do periodo
       IF vr_tab_financ(vr_idx).qtdiames > 5400 THEN
         vr_desperio := 'MAIS DE 5400 DIAS';
+        vr_cdprazo  := 5401;
       ELSE
         vr_desperio := 'ATE '||lpad(vr_tab_financ(vr_idx).qtdiames,4,' ')||' DIAS';
+        vr_cdprazo  := vr_tab_financ(vr_idx).qtdiames;
       END IF;
+
+      -- Incluir registro para cada valor por periodo para emprestimo ou financiamento
+      BEGIN
+        IF NVL(vr_tab_financ(vr_idx).retempre,0) > 0 THEN
+          INSERT INTO tbfin_fluxo_contas_sysphera
+                       (cdcooper
+                       ,dtmvtolt
+                       ,cdconta
+                       ,nrseqconta
+                       ,cdprazo
+                       ,vlacumulado
+                       ,cdoperador
+                       ,datalteracao)
+                 VALUES(pr_cdcooper
+                       ,rw_crapdat.dtmvtolt
+                       ,9
+                       ,1 -- Emprestimos
+                       ,vr_cdprazo
+                       ,vr_tab_financ(vr_idx).retempre
+                       ,'1'
+                       ,SYSDATE);
+        END IF;
+
+        IF NVL(vr_tab_financ(vr_idx).retfinan,0) > 0 THEN
+          INSERT INTO tbfin_fluxo_contas_sysphera
+                       (cdcooper
+                       ,dtmvtolt
+                       ,cdconta
+                       ,nrseqconta
+                       ,cdprazo
+                       ,vlacumulado
+                       ,cdoperador
+                       ,datalteracao)
+                 VALUES(pr_cdcooper
+                       ,rw_crapdat.dtmvtolt
+                       ,9
+                       ,2 -- Financiamentos
+                       ,vr_cdprazo
+                       ,vr_tab_financ(vr_idx).retfinan
+                       ,'1'
+                       ,SYSDATE);
+        END IF;
+      EXCEPTION
+        WHEN OTHERS THEN
+        vr_dscritic := 'Problema ao incluir tbfin_fluxo_contas_sysphera: ' || SQLERRM;
+        RAISE vr_exc_erro;
+      END;
 
       pc_escreve_xml('<detalhes>
                          <desperio>'||vr_desperio                          ||'</desperio>

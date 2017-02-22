@@ -6,14 +6,15 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_COBEMP IS
   --  Sistema  : Rotinas referentes a Portabilidade de Credito
   --  Sigla    : EMPR
   --  Autor    : Lucas Reinert
-  --  Data     : Julho - 2015.                   Ultima atualizacao:
+  --  Data     : Julho - 2015.                   Ultima atualizacao: 27/09/2016
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Centralizar rotinas relacionadas a Portabilidade de Credito
   --
-  -- Alteracoes:
+  -- Alteracoes: 27/09/2016 - Inclusao de verificacao de contratos de acordos
+  --                          nas procedures pc_verifica_gerar_boleto, Prj. 302 (Jean Michel).
   --
   ---------------------------------------------------------------------------
 
@@ -157,7 +158,6 @@ PROCEDURE pc_lista_pa(pr_cdagenci IN INTEGER
                        ,pr_des_erro OUT VARCHAR2);
 END TELA_COBEMP;
 /
-
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
   ---------------------------------------------------------------------------
   --
@@ -165,14 +165,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
   --  Sistema  : Rotinas da Tela Ayllos Web COBEMP
   --  Sigla    : TELA
   --  Autor    : Daniel Zimmermann
-  --  Data     : Agosto - 2015.                   Ultima atualizacao:
+  --  Data     : Agosto - 2015.                   Ultima atualizacao: 27/09/2016
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Centralizar rotinas da Tela COBEMP
   --
-  -- Alteracoes:
+  -- Alteracoes: 27/09/2016 - Inclusao de verificacao de contratos de acordos
+  --                          nas procedures pc_verifica_gerar_boleto, Prj. 302 (Jean Michel).
   --
   ---------------------------------------------------------------------------
 
@@ -1610,7 +1611,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
       Sistema : CECRED
       Sigla   : TELA
       Autor   : Lucas Reinert
-      Data    : Agosto/15.                    Ultima atualizacao: --/--/----
+      Data    : Agosto/15.                    Ultima atualizacao: 27/09/2016
 
       Dados referentes ao programa:
 
@@ -1620,7 +1621,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
 
       Observacao: -----
 
-      Alteracoes:
+      Alteracoes: 27/09/2016 - Incluida verificacao de contratos de acordo,
+                               Prj. 302 (Jean Michel).
     ..............................................................................*/
 		DECLARE
 		  -- Variável de críticas
@@ -1639,6 +1641,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
       vr_nrdcaixa VARCHAR2(100);
       vr_idorigem VARCHAR2(100);
 
+      vr_flgativo INTEGER := 0;
+
 		BEGIN
 			-- Extrai os dados do XML
 			GENE0004.pc_extrai_dados(pr_xml      => pr_retxml,
@@ -1651,6 +1655,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
 															 pr_cdoperad => vr_cdoperad,
 															 pr_dscritic => vr_dscritic);
 
+      -- Verifica contratos de acordo
+      RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => vr_cdcooper
+                                       ,pr_nrdconta => pr_nrdconta
+                                       ,pr_nrctremp => pr_nrctremp
+                                       ,pr_flgativo => vr_flgativo
+                                       ,pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic);
+
+      IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+        -- Gerar exceção
+				RAISE vr_exc_saida;
+      END IF;
+          
+      IF vr_flgativo = 1 THEN
+        vr_dscritic := 'Geracao do boleto nao permitido, emprestimo em acordo.';
+        -- Gerar exceção
+				RAISE vr_exc_saida;
+      END IF;
+               
       -- Chama procedure de validação para gerar o boleto
  		  EMPR0007.pc_verifica_gerar_boleto (pr_cdcooper => vr_cdcooper      --> Cód. cooperativa
 																				,pr_nrctacob => pr_nrctacob      --> Nr. da Conta Cob.
@@ -1904,7 +1927,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
 		Sistema : CECRED
 		Sigla   : EMPR
 		Autor   : Lucas Reinert
-		Data    : Agosto/15.                    Ultima atualizacao: --/--/----
+		Data    : Agosto/15.                    Ultima atualizacao:
 
 		Dados referentes ao programa:
 
@@ -2310,4 +2333,3 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
   
 END TELA_COBEMP;
 /
-

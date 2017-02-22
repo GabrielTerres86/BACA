@@ -302,6 +302,9 @@ create or replace package body cecred.SICR0001 is
                               posicoes, devemos incluir um hifen para completar 12 posicoes 
                               ex: 40151016407- na procedure pc_gera_crapndb 
                               (Lucas Ranghetti #560620/453337)
+                              
+                 19/01/2017 - Incluir validacao em casos que a DEBNET chamar a procedure
+                              pc_identifica_crapatr (Lucas Ranghetti #533520)
   ..............................................................................*/
 
   /* Procedimento para buscar os lançamentos automáticos efetuados pela Internet e TAA*/
@@ -1492,7 +1495,7 @@ create or replace package body cecred.SICR0001 is
     
       -- definir savepoint
       SAVEPOINT TRANS1;
-
+    
       --> Verificar a execução da DEBNET/DEBSIC
       SICR0001.pc_controle_exec_deb(pr_cdcooper => pr_cdcooper --> Código da coopertiva
                                    ,pr_cdtipope => 'C' --> Tipo de operacao I-incrementar e C-Consultar
@@ -1604,7 +1607,7 @@ create or replace package body cecred.SICR0001 is
           ELSIF rw_crapatr.dtfimatr IS NOT NULL
              OR rw_crapatr.dtfimsus >= pr_dtmvtolt THEN
             vr_cdcritic := 447; -- AUTORIZACAO CANCELADA
-        END IF;
+          END IF;
         END IF;
       
         -- Validar cooperado demitido
@@ -1740,7 +1743,7 @@ create or replace package body cecred.SICR0001 is
                 vr_cdcritic := vr_aux_cdcritic;
                 RAISE vr_exc_erro;
               END IF;
-
+            
               BEGIN
               
                 -- Atualiza registros de lancamentos automaticos
@@ -2078,7 +2081,7 @@ create or replace package body cecred.SICR0001 is
           IF vr_dscritic IS NOT NULL
           OR vr_des_erro IS NOT NULL THEN
             --Levantar Excecao
-              RAISE vr_exc_erro;
+            RAISE vr_exc_erro;
           END IF;
         
           --> Armazena protocolo na autenticacao
@@ -2128,7 +2131,7 @@ create or replace package body cecred.SICR0001 is
                   RAISE vr_exc_erro;
               END;
             END IF;
-            END IF;
+          END IF;
         
         END IF;
       
@@ -2640,14 +2643,14 @@ create or replace package body cecred.SICR0001 is
   --   Sistema : Conta-Corrente - Cooperativa de Credito
   --   Sigla   : CRED
   --   Autor   : Odirlei Busana - AMcom
-  --   Data    : Novembro/2015                       Ultima atualizacao: 17/11/2015
+  --   Data    : Novembro/2015                       Ultima atualizacao: 19/01/2017
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: Sempre que chamado
   -- Objetivo  : Procedimento para identificar se cooperado possui debito autorizado
   --
-  --  Alteracoes:
+  --  Alteracoes: 19/01/2017 - Incluir validacao em casos que a DEBNET chamar (Lucas Ranghetti #533520)
   --
   --------------------------------------------------------------------------------------------------------------------*/
     -------------> CURSOR <--------------
@@ -2736,7 +2739,40 @@ create or replace package body cecred.SICR0001 is
         END IF;
 
       END LOOP; -- FIM DO LOOP
+    ELSIF pr_cdprogra = 'PAGA0001' THEN
+      
+      vr_flagatr := 0;
+      OPEN cr_crapatr(pr_cdcooper => pr_cdcooper,
+                      pr_nrdconta => pr_nrdconta,
+                      pr_cdhistor => pr_cdhistor,
+                      pr_nrcrcard => pr_nrcrcard);
 
+      FETCH cr_crapatr INTO rw_crapatr;
+      
+      IF cr_crapatr%NOTFOUND THEN
+        CLOSE cr_crapatr;
+        
+        OPEN cr_crapatr(pr_cdcooper => pr_cdcooper,
+                        pr_nrdconta => pr_nrdconta,
+                        pr_cdhistor => pr_cdhistor,
+                        pr_nrcrcard => pr_nrdocmto);
+
+        FETCH cr_crapatr INTO rw_crapatr;
+          
+        IF cr_crapatr%NOTFOUND THEN
+          CLOSE cr_crapatr;
+          -- FLAG PARA REGISTROS DA CRAPATR NAO ENCONTRADO
+          vr_flagatr := 0;
+        ELSE
+          CLOSE cr_crapatr;
+          -- FLAG PARA REGISTROS DA CRAPATR ENCONTRADO
+          vr_flagatr := 1;
+        END IF;  
+      ELSE
+        CLOSE cr_crapatr;
+        -- FLAG PARA REGISTROS DA CRAPATR ENCONTRADO
+        vr_flagatr := 1;
+      END IF;   
     ELSE
       -- BUSCA CADASTRO DAS AUTORIZACOES DE DEBITO EM CONTA
       OPEN cr_crapatr(pr_cdcooper => pr_cdcooper,

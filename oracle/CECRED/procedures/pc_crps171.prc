@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS171 ( pr_cdcooper IN crapcop.cdcooper%TYPE    --> Cooperativa solicitada
+CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS171 (pr_cdcooper IN crapcop.cdcooper%TYPE    --> Cooperativa solicitada
                                           ,pr_flgresta IN PLS_INTEGER              --> Flag 0/1 para utilização de restar N/S
                                           ,pr_stprogra OUT PLS_INTEGER             --> Saída de termino da execução
                                           ,pr_infimsol OUT PLS_INTEGER             --> Saída de termino da solicitação
@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS171 ( pr_cdcooper IN crapcop.cdcooper%
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odair
-       Data    : Outubro/96.                     Ultima atualizacao: 19/05/2016
+       Data    : Outubro/96.                     Ultima atualizacao: 26/09/2016
 
        Dados referentes ao programa:
 
@@ -199,10 +199,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS171 ( pr_cdcooper IN crapcop.cdcooper%
                    13/05/2016 - Cobranca de Multa e Juros de Mora para emprestimos TR.
                                 (Jaison/James)
 
-                                
                    19/05/2016 - Colocar trava para nao cobrar as parcelas da 
                                 conta: 2496380 e contrato: 289361 da Viacredi.
                                 (Tiago/Thiago - SD: 455213).                                
+
+                   26/09/2016 - Inclusao de validacao de contrato de acordo,
+                                Prj. 302 (Jean Michel)         
     ............................................................................ */
 
     DECLARE
@@ -234,6 +236,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS171 ( pr_cdcooper IN crapcop.cdcooper%
       -- Variaveis para gravação da craplot
       vr_cdagenci CONSTANT PLS_INTEGER := 1;
       vr_cdbccxlt CONSTANT PLS_INTEGER := 100;
+
+      vr_cdindice VARCHAR2(30) := ''; -- Indice da tabela de acordos
 
       ------------------------------- CURSORES ---------------------------------
 
@@ -299,6 +303,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS171 ( pr_cdcooper IN crapcop.cdcooper%
       -- Busca dos empréstimos
       CURSOR cr_crapepr IS
         SELECT epr.rowid
+              ,epr.cdcooper
+              ,epr.cdorigem 
               ,epr.nrdconta
               ,epr.nrctremp
               ,epr.inliquid
@@ -488,6 +494,20 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS171 ( pr_cdcooper IN crapcop.cdcooper%
              AND ret.flcredit = 0;
       rw_ret cr_ret%ROWTYPE;                      
 
+      -- Consulta contratos ativos de acordos
+       CURSOR cr_ctr_acordo IS
+       SELECT tbrecup_acordo_contrato.nracordo
+             ,tbrecup_acordo_contrato.nrctremp
+             ,tbrecup_acordo.cdcooper
+             ,tbrecup_acordo.nrdconta
+         FROM tbrecup_acordo_contrato
+         JOIN tbrecup_acordo
+           ON tbrecup_acordo.nracordo   = tbrecup_acordo_contrato.nracordo
+        WHERE tbrecup_acordo.cdsituacao = 1
+          AND tbrecup_acordo_contrato.cdorigem IN (2,3);
+
+       rw_ctr_acordo cr_ctr_acordo%ROWTYPE;
+
       ------------------------- ESTRUTURAS DE REGISTRO ---------------------
 
       -- Definição dos lançamentos de deposito a vista
@@ -573,6 +593,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS171 ( pr_cdcooper IN crapcop.cdcooper%
           INDEX BY PLS_INTEGER; -- Obs. A chave é o número da conta
       vr_tab_empresa typ_tab_empresa;
 
+      TYPE typ_tab_acordo   IS TABLE OF NUMBER(10) INDEX BY VARCHAR2(30);
+      vr_tab_acordo   typ_tab_acordo;
       ----------------------------- VARIAVEIS ------------------------------
 
       -- Variáveis auxiliares ao processo
@@ -777,7 +799,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS171 ( pr_cdcooper IN crapcop.cdcooper%
         RAISE vr_exc_erro;
       END IF;
 
-
       -- Procedimento padrão de busca de informações de CPMF
       gene0005.pc_busca_cpmf(pr_cdcooper  => pr_cdcooper
                             ,pr_dtmvtolt  => rw_crapdat.dtmvtolt
@@ -825,7 +846,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS171 ( pr_cdcooper IN crapcop.cdcooper%
         vr_tab_craplcm(rw_craplcm.nrdconta).tab_craplcm(cr_craplcm%ROWCOUNT).sqatureg := rw_craplcm.sqatureg;
       END LOOP;
 
-
+      -- Carregar Contratos de Acordos
+      FOR rw_ctr_acordo IN cr_ctr_acordo LOOP
+        vr_cdindice := LPAD(rw_ctr_acordo.cdcooper,10,'0') || LPAD(rw_ctr_acordo.nrdconta,10,'0') ||
+                       LPAD(rw_ctr_acordo.nrctremp,10,'0');
+        vr_tab_acordo(vr_cdindice) := rw_ctr_acordo.nracordo;
+      END LOOP;
 
       -- Busca das informações de saldo cfme a conta
       FOR rw_crapsld IN cr_crapsld LOOP
@@ -996,6 +1022,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS171 ( pr_cdcooper IN crapcop.cdcooper%
                                             
           END IF;
           
+          vr_cdindice := LPAD(rw_crapepr.cdcooper,10,'0') || LPAD(rw_crapepr.nrdconta,10,'0') ||
+                         LPAD(rw_crapepr.nrctremp,10,'0');
+
+          IF vr_tab_acordo.EXISTS(vr_cdindice) THEN
+            RAISE vr_exc_next;
+          END IF;
 
           -- Se há controle de restart e Se é a mesma conta, mas de uma aplicação anterior
           IF vr_inrestar > 0  AND rw_crapepr.nrdconta = vr_nrctares AND rw_crapepr.nrctremp <= vr_nrctremp THEN

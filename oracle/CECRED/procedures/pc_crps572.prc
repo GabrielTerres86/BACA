@@ -68,6 +68,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS572(pr_cdcooper  IN craptab.cdcooper%T
                                arquivo xml 3046" por email, removendo-a desta forma 
                                do log do processo. (Jaison/Gielow - SD: 273558)
 
+                  31/01/2017 - Ajustar mensagens de erro escritas no log do proc_batch, pois 
+                               as mensagens não estavam sendo apresentadas (Renato-Supero)
   ............................................................................. */
 
   -- CURSORES
@@ -759,7 +761,7 @@ BEGIN
                              ,NVL(vr_crapopfi(vr_ixOPF).inpessoa, 0));
       EXCEPTION
         WHEN others THEN
-          pr_dscritic := 'Erro ao incluir registro CRAPOPF: ' || SQLERRM(-(SQL%BULK_EXCEPTIONS(1). ERROR_CODE));
+          vr_dscritic := 'Erro ao incluir registro CRAPOPF: ' || SQLERRM(-(SQL%BULK_EXCEPTIONS(1). ERROR_CODE));
           RAISE vr_exc_saida;
       END;
       
@@ -832,7 +834,7 @@ BEGIN
       EXCEPTION
         WHEN others THEN
           -- Gerar erro
-          pr_dscritic := 'Erro ao incluir registro CRAPVOP: ' || SQLERRM(-(SQL%BULK_EXCEPTIONS(1). ERROR_CODE));
+          vr_dscritic := 'Erro ao incluir registro CRAPVOP: ' || SQLERRM(-(SQL%BULK_EXCEPTIONS(1). ERROR_CODE));
           RAISE vr_exc_saida;
       END;
       
@@ -845,6 +847,9 @@ BEGIN
                                   ,pr_ind_tipo_log => 2 -- Erro tratato
                                   ,pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' - ' || vr_cdprogra || ' --> ' || vr_dscritic );
                                   
+        -- Limpar a variável de crítica
+        vr_dscritic := NULL;
+                                 
         -- Desfazer alterações deste arquivo
         ROLLBACK;
         -- Pular para próximo arquivo
@@ -882,6 +887,9 @@ BEGIN
           END IF;
         END IF;
                                   
+        -- Limpar a variável de crítica
+        vr_dscritic := NULL;
+                         
         -- Desfazer alterações deste arquivo
         ROLLBACK;
         -- Pular para próximo arquivo
@@ -989,4 +997,3 @@ EXCEPTION
     ROLLBACK;
 END PC_CRPS572;
 /
-
