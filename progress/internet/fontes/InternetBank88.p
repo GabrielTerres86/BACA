@@ -5,7 +5,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Adriano
-   Data    : Junho/2014.                       Ultima atualizacao: 14/10/2014
+   Data    : Junho/2014.                       Ultima atualizacao: 22/02/2017
    
    Dados referentes ao programa:
    
@@ -16,7 +16,9 @@
                             para atender os ajustes de emissao de protocolos
                             de resgate de aplicacoes
                             (Adriano). 
-
+                            
+               22/02/2017 - Alteraçoes para compor comprovantes DARF/DAS 
+                            Modelo Sicredi (Lucas Lunelli)
 ..............................................................................*/
 
 { sistema/internet/includes/var_ibank.i    }

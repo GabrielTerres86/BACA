@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Junior
-   Data    : Julho/2004.                       Ultima atualizacao: 19/09/2016
+   Data    : Julho/2004.                       Ultima atualizacao: 22/02/2017
 
    Dados referentes ao programa:
 
@@ -134,6 +134,10 @@
                
               19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS 
                            pelo InternetBanking (Projeto 338 - Lucas Lunelli)
+                           
+              22/02/2017 - Alteraçoes para compor comprovantes DARF/DAS 
+                           Modelo Sicredi (Lucas Lunelli)
+                           
 ..............................................................................*/
 
 DEF TEMP-TABLE xml_operacao                                             NO-UNDO

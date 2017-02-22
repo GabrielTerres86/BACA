@@ -41,7 +41,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Agosto/2006                   Ultima Atualizacao: 19/05/2016 
+   Data    : Agosto/2006                   Ultima Atualizacao: 22/02/2017
    Dados referentes ao programa:
 
    Frequencia: Diario (internet)
@@ -93,6 +93,9 @@
                     
                 19/05/2016 - Ajuste para exibir protocolos 15 - pagamento convenio
 				             PRJ320 - Oferta DebAut (Odirlei-AMcom)
+                     
+                22/02/2017 - Alteraçoes para compor comprovantes DARF/DAS 
+                             Modelo Sicredi (Lucas Lunelli)
 ............................................................................. */
 
 { sistema/generico/includes/var_internet.i }

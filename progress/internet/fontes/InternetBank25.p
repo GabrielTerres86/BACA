@@ -3,7 +3,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Junho/2007.                       Ultima atualizacao: 21/07/2015
+   Data    : Junho/2007.                       Ultima atualizacao: 22/02/2017
    Dados referentes ao programa:
    Frequencia: Sempre que for chamado (On-Line)
    Objetivo  : Listar protocolos de transferencias e pagamentos para Internet.
@@ -35,6 +35,9 @@
                21/07/2015 - Aumentando a formatacao do campo nrdocmto para
                             realizar o ajustes do erro relatado no chamado
                             304892. (Kelvin)
+                            
+               22/02/2017 - Alteraçoes para compor comprovantes DARF/DAS 
+                            Modelo Sicredi (Lucas Lunelli)                            
 .............................................................................*/
  
 create widget-pool.

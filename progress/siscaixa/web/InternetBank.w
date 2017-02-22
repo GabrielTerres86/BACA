@@ -14,7 +14,7 @@
    Sistema : Internet - aux_cdcooper de Credito
    Sigla   : CRED
    Autor   : Junior
-   Data    : Julho/2004.                       Ultima atualizacao: 11/10/2016
+   Data    : Julho/2004.                       Ultima atualizacao: 22/02/2017
 
    Dados referentes ao programa:
 
@@ -642,7 +642,12 @@
                               operacao4 e 66 - PRJ319 - SMS Cobrança(Odirlei-AMcom)       
                               
                  26/10/2016 - Inclusao da operacao 189 - Servico de SMS de cobranca
-                              PRJ319 - SMS Cobrança(Odirlei-AMcom)       
+                              PRJ319 - SMS Cobrança(Odirlei-AMcom)  
+                              
+                 22/02/2017 - Ajustes para correçao de crítica de pagamento DARF/DAS (P.349.2)
+                            - Criada op 180 (P.349.2)
+                            - Alteraçoes para composiçao de comprovante DARF/DAS Modelo Sicredi
+                            (Lucas Lunelli)
                               
 ------------------------------------------------------------------------------*/
 

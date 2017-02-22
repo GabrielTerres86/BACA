@@ -34,7 +34,7 @@
 
     Programa: b1wgen0016.p
     Autor   : Evandro/David
-    Data    : Abril/2006                     Ultima Atualizacao: 28/11/2016
+    Data    : Abril/2006                     Ultima Atualizacao: 22/02/2017
     
     Dados referentes ao programa:
 
@@ -455,6 +455,10 @@
                            
               28/11/2016 - Incluido tratamento de transaçoes pendentes 16 e 17.
                            PRJ319 - SMS Cobrança (Odirlei - AMcom)
+                           
+              22/02/2017 - Ajustes para correçao de crítica de 
+                           pagamento DARF/DAS (Lucas Lunelli - P.349.2)
+              
  .............................................................................*/
 { sistema/internet/includes/var_ibank.i }
 
