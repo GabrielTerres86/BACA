@@ -4,7 +4,7 @@
    Sistema : CAIXA ON-LINE - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Mirtes/Evandro
-   Data    : Marco/2007                        Ultima atualizacao: 05/09/2016
+   Data    : Marco/2007                        Ultima atualizacao: 22/02/2017
 
    Dados referentes ao programa:
 
@@ -31,7 +31,11 @@
                18/03/2015 - Melhoria SD 260475 (Lunelli).
 
 			   05/09/2016 - Melhoria para usar copiar e colar o numero de conta
-			                nas rotinas do caixa online SD 474875 (Tiago/Elton).               
+			                nas rotinas do caixa online SD 474875 (Tiago/Elton). 
+
+			   22/02/2017 - Auto-clicar quando o campo conta for preenchido 
+			                dando um enter/tab (Andrey Formigari - Mouts).
+							SD: 613365
 ..............................................................................*/
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12
@@ -263,7 +267,7 @@ PROCEDURE process-web-request:
 
       ASSIGN de_troco = crapcbl.vlinicial + crapcbl.vlcompdb - crapcbl.vlcompcr
              v_ident  = crapcbl.blidenti
-             vh_foco = "3".
+             vh_foco = "9".
 
       {&OUT}
         "<HTML>":U SKIP
@@ -282,7 +286,7 @@ PROCEDURE process-web-request:
 
 
       {&OUT}
-        '<body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onLoad="JavaScript:mudaFoco(); click();" onKeyDown="JavaScript:onKey(event)">' SKIP
+        '<body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onLoad="SetFocus(); JavaScript:mudaFoco(); click();" onKeyDown="JavaScript:onKey(event)">' SKIP
         '<form method=post>' SKIP
         '<input type="hidden" name="vh_foco" value="' vh_foco '">'.
 
