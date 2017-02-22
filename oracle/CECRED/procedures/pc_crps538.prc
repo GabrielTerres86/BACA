@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme / Supero
-   Data    : Novembro/2009.                   Ultima atualizacao: 10/02/2017
+   Data    : Novembro/2009.                   Ultima atualizacao: 22/02/2017
 
    Dados referentes ao programa:
 
@@ -308,8 +308,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                             (Odirlei - AMcom)             
 
                10/02/2017 - P340 - Ajustes emergenciais antes da liberação programada de 21/02/17
-			              - Ajustado pasta micros/<cooperativa>/abbc;
-						  - Ajustado cláusula where dos cursores cr_devolucao; (Rafael)
+  			              - Ajustado pasta micros/<cooperativa>/abbc;
+      			          - Ajustado cláusula where dos cursores cr_devolucao; (Rafael)
+
+               22/02/2017 - Incluido novamente relatório 618 - CAC (Renato);
+			              - Ajustado valor do pagto na rotina de devolução (Rafael);
    .............................................................................*/
 
      DECLARE
@@ -3384,7 +3387,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                        ,pr_nrseqarq   => vr_nrseqarq          --> numero sequencial do arquivo da devolucao (cob615)
                                        ,pr_dscodbar   => vr_dscodbar_ori      --> codigo de barras
                                        ,pr_nrispbif   => vr_nrispbif_rec      --> numero do ispb recebedora
-                                       ,pr_vlliquid   => vr_vltitulo          --> valor de liquidacao do titulo
+                                       ,pr_vlliquid   => vr_vlliquid          --> valor de liquidacao do titulo
                                        ,pr_dtocorre   => vr_dtmvtolt          --> data da ocorrencia da devolucao
                                        ,pr_nrdconta   => vr_nrdconta          --> numero da conta do cooperado
                                        ,pr_nrcnvcob   => vr_nrcnvcob          --> numero do convenio de cobranca do cooperado
@@ -3582,7 +3585,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                          ,pr_nrseqarq   => vr_nrseqarq          --> numero sequencial do arquivo da devolucao (cob615)
                                          ,pr_dscodbar   => vr_dscodbar_ori      --> codigo de barras
                                          ,pr_nrispbif   => vr_nrispbif_rec      --> numero do ispb recebedora
-                                         ,pr_vlliquid   => vr_vltitulo          --> valor de liquidacao do titulo
+                                         ,pr_vlliquid   => vr_vlliquid          --> valor de liquidacao do titulo
                                          ,pr_dtocorre   => vr_dtmvtolt          --> data da ocorrencia da devolucao
                                          ,pr_nrdconta   => vr_nrdconta          --> numero da conta do cooperado
                                          ,pr_nrcnvcob   => vr_nrcnvcob          --> numero do convenio de cobranca do cooperado
@@ -3792,7 +3795,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                        ,pr_nrseqarq   => vr_nrseqarq          --> numero sequencial do arquivo da devolucao (cob615)
                                        ,pr_dscodbar   => vr_dscodbar_ori      --> codigo de barras
                                        ,pr_nrispbif   => vr_nrispbif_rec      --> numero do ispb recebedora
-                                       ,pr_vlliquid   => vr_vltitulo          --> valor de liquidacao do titulo
+                                       ,pr_vlliquid   => vr_vlliquid          --> valor de liquidacao do titulo
                                        ,pr_dtocorre   => vr_dtmvtolt          --> data da ocorrencia da devolucao
                                        ,pr_nrdconta   => vr_nrdconta          --> numero da conta do cooperado
                                        ,pr_nrcnvcob   => vr_nrcnvcob          --> numero do convenio de cobranca do cooperado
@@ -3982,7 +3985,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                          ,pr_nrseqarq   => vr_nrseqarq          --> numero sequencial do arquivo da devolucao (cob615)
                                          ,pr_dscodbar   => vr_dscodbar_ori      --> codigo de barras
                                          ,pr_nrispbif   => vr_nrispbif_rec      --> numero do ispb recebedora
-                                         ,pr_vlliquid   => vr_vltitulo          --> valor de liquidacao do titulo
+                                         ,pr_vlliquid   => vr_vlliquid          --> valor de liquidacao do titulo
                                          ,pr_dtocorre   => vr_dtmvtolt          --> data da ocorrencia da devolucao
                                          ,pr_nrdconta   => vr_nrdconta          --> numero da conta do cooperado
                                          ,pr_nrcnvcob   => vr_nrcnvcob          --> numero do convenio de cobranca do cooperado
@@ -4164,7 +4167,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                        ,pr_nrseqarq   => vr_nrseqarq          --> numero sequencial do arquivo da devolucao (cob615)
                                        ,pr_dscodbar   => vr_dscodbar_ori      --> codigo de barras
                                        ,pr_nrispbif   => vr_nrispbif_rec      --> numero do ispb recebedora
-                                       ,pr_vlliquid   => vr_vltitulo          --> valor de liquidacao do titulo
+                                       ,pr_vlliquid   => vr_vlliquid          --> valor de liquidacao do titulo
                                        ,pr_dtocorre   => vr_dtmvtolt          --> data da ocorrencia da devolucao
                                        ,pr_nrdconta   => vr_nrdconta          --> numero da conta do cooperado
                                        ,pr_nrcnvcob   => vr_nrcnvcob          --> numero do convenio de cobranca do cooperado
@@ -4341,7 +4344,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                          ,pr_nrseqarq   => vr_nrseqarq          --> numero sequencial do arquivo da devolucao (cob615)
                                          ,pr_dscodbar   => vr_dscodbar_ori      --> codigo de barras
                                          ,pr_nrispbif   => vr_nrispbif_rec      --> numero do ispb recebedora
-                                         ,pr_vlliquid   => vr_vltitulo          --> valor de liquidacao do titulo
+                                         ,pr_vlliquid   => vr_vlliquid          --> valor de liquidacao do titulo
                                          ,pr_dtocorre   => vr_dtmvtolt          --> data da ocorrencia da devolucao
                                          ,pr_nrdconta   => vr_nrdconta          --> numero da conta do cooperado
                                          ,pr_nrcnvcob   => vr_nrcnvcob          --> numero do convenio de cobranca do cooperado
@@ -4439,7 +4442,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                        ,pr_nrseqarq   => vr_nrseqarq          --> numero sequencial do arquivo da devolucao (cob615)
                                        ,pr_dscodbar   => vr_dscodbar_ori      --> codigo de barras
                                        ,pr_nrispbif   => vr_nrispbif_rec      --> numero do ispb recebedora
-                                       ,pr_vlliquid   => vr_vltitulo          --> valor de liquidacao do titulo
+                                       ,pr_vlliquid   => vr_vlliquid          --> valor de liquidacao do titulo
                                        ,pr_dtocorre   => vr_dtmvtolt          --> data da ocorrencia da devolucao
                                        ,pr_nrdconta   => vr_nrdconta          --> numero da conta do cooperado
                                        ,pr_nrcnvcob   => vr_nrcnvcob          --> numero do convenio de cobranca do cooperado
@@ -4537,7 +4540,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                        ,pr_nrseqarq   => vr_nrseqarq          --> numero sequencial do arquivo da devolucao (cob615)
                                        ,pr_dscodbar   => vr_dscodbar_ori      --> codigo de barras
                                        ,pr_nrispbif   => vr_nrispbif_rec      --> numero do ispb recebedora
-                                       ,pr_vlliquid   => vr_vltitulo          --> valor de liquidacao do titulo
+                                       ,pr_vlliquid   => vr_vlliquid          --> valor de liquidacao do titulo
                                        ,pr_dtocorre   => vr_dtmvtolt          --> data da ocorrencia da devolucao
                                        ,pr_nrdconta   => vr_nrdconta          --> numero da conta do cooperado
                                        ,pr_nrcnvcob   => vr_nrcnvcob          --> numero do convenio de cobranca do cooperado
