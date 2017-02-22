@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS544 (pr_cdcooper  IN crapcop.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme / Supero
-   Data    : Dezembro/2009.                      Ultima atualizacao: 10/10/2013
+   Data    : Dezembro/2009.                      Ultima atualizacao: 16/02/2017
 
    Dados referentes ao programa:
 
@@ -29,6 +29,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS544 (pr_cdcooper  IN crapcop.cdcooper%
                20/09/2013 - Conversão Progress => Oracle (Gabriel).
 
                10/10/2013 - Ajuste de criticas (Gabriel).
+               
+               16/02/2017 - Ajuste ref ao novo layout ROC640 (Rafael).
 ............................................................................. */
 
   -- Variaveis de uso no programa
@@ -345,9 +347,6 @@ BEGIN
             IF  substr(vr_setlinha,2,6) != 'ROC640'  THEN     -- Se arquivo nao for ROC640, critica
               vr_cdcritic := 173;
             ELSIF
-              substr(vr_setlinha,16,3) != vr_cdbanctl  THEN   -- Se nao for banco 085, critica
-              vr_cdcritic := 057;
-            ELSIF
               substr(vr_setlinha,8,8) != vr_dtauxili  THEN    -- Se nao for a data atual ou anterior dependendo da chamada do programa, criticar
               vr_cdcritic := 013;
             END IF;
@@ -428,7 +427,7 @@ BEGIN
                     ,substr(vr_setlinha,43,1)
                     ,to_number(substr(vr_setlinha,44,8))
                     ,to_number(substr(vr_setlinha,18,8))
-                    ,to_number(substr(vr_setlinha,5,3))
+                    ,to_number(nvl(trim(substr(vr_setlinha,5,3)),0))
                     ,vr_idperiod
                     ,vr_cdtipdoc
                     ,2
