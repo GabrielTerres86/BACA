@@ -3,7 +3,7 @@
 	 /************************************************************************
 	   Fonte: principal.php
 	   Autor: Guilherme
-	   Data : Fevereiro/2008                 Última Alteração: 04/06/2013
+	   Data : Fevereiro/2008                 Última Alteração: 06/10/2015
 
 	   Objetivo  : Mostrar opcao Principal da rotina de Dep. Vista
                    da tela ATENDA
@@ -11,7 +11,9 @@
 	   Alterações: 02/09/2010 - Ajuste no xml de retorno (David).
 				   24/06/2011 - Alterado para layout padrão (Gabriel - DB1).
 				   12/04/2012 - Ajustar leitura das tags do XML (David).
-				   04/06/2013 - Incluir label vlblqjud Bloq. Judicial (Lucas R.)           	   	               
+				   04/06/2013 - Incluir label vlblqjud Bloq. Judicial (Lucas R.)   
+				   06/10/2016 - Incluido campo de valores bloqueados em acordos de empréstimos,
+								Prj. 302 (Jean Michel).        	   	               
 	
 	 ************************************************************************/
 	
@@ -131,6 +133,10 @@
 		<input name="vlipmfpg" id="vlipmfpg" type="text" value="<?php echo number_format(str_replace(",",".",getByTagName($depvista,"vlipmfpg")),2,",","."); ?>" />
 		<br />
 		
+		<label for="vlblqaco"><? echo utf8ToHtml('Bloqueado Acordo:') ?></label>
+		<input name="vlblqaco" id="vlblqaco" type="text" value="<?php echo number_format(str_replace(",",".",getByTagName($depvista,"vlblqaco")),2,",","."); ?>" />
+		<br />
+
 		<label for="vlsdchsl"><? echo utf8ToHtml('Cheque Salário:') ?></label>
 		<input name="vlsdchsl" id="vlsdchsl" type="text" value="<?php echo number_format(str_replace(",",".",getByTagName($depvista,"vlsdchsl")),2,",","."); ?>" />
 		<br />

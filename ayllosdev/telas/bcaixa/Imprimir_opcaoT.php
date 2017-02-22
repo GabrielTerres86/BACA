@@ -7,6 +7,7 @@
  * --------------
  * ALTERAÇÕES   : 24/09/2013 - Carlos   (CECRED) : Inclusão da data na procedure imprime_caixa_cofre.
  * -------------- 
+ *				  24/01/2017 - Retirar validação de permissão pois não estava utilizando (Lucas Ranghetti #572241).
  *                
  */ 	
 	session_cache_limiter("private");
@@ -29,11 +30,6 @@
 	$cdagenci   = $_POST['cdagenci'];
 	$dtrefere   = $_POST['dtmvtolt'];
 	
-	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],$cddopcao)) <> "") {
-	    ?><script language="javascript">alert('<?php echo $msgError; ?>');</script><?php
-		exit();	
-	}	
-
 	// Monta o xml de requisição
 	$xml  = '';
 	$xml .= '<Root>';

@@ -1,12 +1,12 @@
 <? 
  /*!
- * FONTE        : form_previsoes.php
+ * FONTE        : form_previsoes.php							Última alteração: 21/03/2016
  * CRIAÇÃO      : Rogerius Militão (DB1)
  * DATA CRIAÇÃO : 27/12/2011 
  * OBJETIVO     : Formulário de exibição das previsoes
  * --------------
- * ALTERAÇÕES   :
- * --------------
+ * ALTERAÇÕES   : 21/03/2016 - Ajuste layout, valores negativos (Adriano)
+ * -------------- 
  */	
 ?>
 <form name="frmPrevisoes" id="frmPrevisoes" class="formulario" onSubmit="return false;" >	
@@ -29,8 +29,8 @@
 	<fieldset>
 		<legend> <? echo utf8ToHtml('Titulos') ?> </legend>	
 
-		<label for="qtremtit"><? echo utf8ToHtml('Quantidade:') ?></label>
-		<input name="qtremtit" id="qtremtit" type="text" value="<?php echo getByTagName($registro,'qtremtit') ?>" />
+		<label for="qtremtit"><? echo utf8ToHtml('Quantidade:') ?></label>                 
+		<input name="qtremtit" id="qtremtit" type="text" value="<?php echo formataNumericos("zzz.zzz.zzz",getByTagName($registro,'qtremtit'),"."); ?>" />
 		
 		<label for="vlremtit"><? echo utf8ToHtml('Valor:') ?></label>
 		<input name="vlremtit" id="vlremtit" type="text" value="<?php echo formataMoeda(getByTagName($registro,'vlremtit')) ?>" />
@@ -162,11 +162,7 @@
 	
 </form>
 
-<div id="divMsgAjuda">
-	<span>Tecle algo ou pressione F4 para sair!</span>
+<div id="divBotoesPrevisoes" style="margin-top:5px; margin-bottom :10px; display:none; text-align: center;">
+	<a href="#" class="botao" id="btVoltar" onclick="btnVoltar(); return false;">Voltar</a>																				
+</div>
 
-	<div id="divBotoes" >
-		<input type="image" id="btVoltar" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onclick="btnVoltar(); return false;" />
-	</div>
-
-</div>																			

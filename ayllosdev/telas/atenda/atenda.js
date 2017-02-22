@@ -1,7 +1,7 @@
 //************************************************************************//
 //*** Fonte: atenda.js                                                 ***//
 //*** Autor: David                                                     ***//
-//*** Data : Agosto/2007                  Última Alteração: 25/11/2015 ***//
+//*** Data : Agosto/2007                  Última Alteração: 20/01/2017 ***//
 //***                                                                  ***//
 //*** Objetivo  : Biblioteca de funções da tela ATENDA                 ***//
 //***                                                                  ***//	 
@@ -71,6 +71,9 @@
                   14/12/2016 - Correcao referente aos chamados 568566, erro ao redirecioar da tela contas para produtos
                                telas atenda. (Gil - MOUTS)
 
+
+				  20/01/2017 - Adicionar parametro 'produtos', na chamada da function acessaRotina(Lucas Ranghetti #537087)
+				  
 ***************************************************************************/
 
 var flgAcessoRotina = false; // Flag para validar acesso as rotinas da tela ATENDA
@@ -505,7 +508,7 @@ function obtemCabecalho() {
                     if (executandoProdutos) {
                         sequenciaProdutos();
                     } else {
-                        acessaRotina('', 'PRODUTOS', 'Produtos', 'produtos', 1);
+                        acessaRotina('PRODUTOS', 'Produtos', 'produtos', 'produtos', 1);
                     }
                     flgProdutos = false;
                 }

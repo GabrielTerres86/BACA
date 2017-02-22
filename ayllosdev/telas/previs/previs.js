@@ -1,13 +1,15 @@
 /*!
  * FONTE        : previs.js
  * CRIAÇÃO      : Rogerius Militão (DB1) 
- * DATA CRIAÇÃO : 27/12/2011													ÚLTIMA ALTERAÇÃO: 25/03/2013
+ * DATA CRIAÇÃO : 27/12/2011													ÚLTIMA ALTERAÇÃO: 03/10/2016
  * OBJETIVO     : Biblioteca de funções da tela PREVIS
  * --------------
  * ALTERAÇÕES   : 01/08/2012 - Implementado regras para as subopcoes (E,S,R) da tela PREVIS opcao 'F' (Tiago)
  *				  22/08/2012 - Ajustes referente ao projeto Fluxo Financeiro (Adriano).
                   25/03/2013 - Padronização de novo layout (Daniel). 
 				  05/09/2013 - Alteração da sigla PAC para PA (Carlos).
+                  21/03/2016 - Ajuste layout, valores negativos (Adriano)
+                  03/10/2016 - Remocao das opcoes "F" e "L" para o PRJ313. (Jaison/Marcos SUPERO)
  * --------------
  */
 
@@ -52,21 +54,13 @@ function estadoInicial() {
 
 	// formailzia	
 	formataCabecalho();
-	formataMsgAjuda('divTela');
 	
-	// remove o campo prosseguir
-	trocaBotao('Prosseguir','btnContinuar()');	
-	
-	// inicializa com a frase de ajuda para o campo cddopcao
-	/*$('span:eq(0)', '#divMsgAjuda').html( cCddopcao.attr('alt') );*/
+	$('#divBotoes').css('display', 'block');
 
-	//
 	cTodosCabecalho.limpaFormulario().removeClass('campoErro');	
 
-	$('#frmPrevisoes').remove();
-	$('#frmLiquidacao').remove();
-	$('#frmFluxo').remove();
-
+	$('#divInformacoes').html('');
+	
 	cCddopcao.habilitaCampo();
 	cCddopcao.focus();
 	cCddopcao.val( cddopcao );
@@ -124,7 +118,7 @@ function controlaOperacao() {
 					hideMsgAguardo();
 					if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
 						try { 
-							$('#divTela').html(response);
+							$('#divInformacoes').html(response);
 							return false;
 						} catch(error) {
 							hideMsgAguardo();
@@ -246,87 +240,34 @@ function controlaPesquisas() {
 }
 
 function controlaLayout() {
-
-	formataCabecalho();
-	formataMsgAjuda('divTela');
-		
+        
+    $('#divBotoes').css('display', 'none');
+   	
 	if ( cddopcao == 'A' || cddopcao == 'I' ) {
 	
-		formataPrevisoes();
-		ativaCampoCabecalho();
-		trocaBotao('Prosseguir','btnGravar()');
+		formataPrevisoes();		
 		cVldepesp.habilitaCampo(); 
 		cVldvlnum.habilitaCampo();
 		cQtmoedaN.habilitaCampo();
 		cQtdnotaN.habilitaCampo();
 		cVldepesp.select();
+
+		cDtmvtolt.desabilitaCampo(); 
+		cCdagenci.desabilitaCampo(); 
+
+		$('#divBotoesPrevisoes').append('&nbsp;<a href="#" class="botao" id="btSalvar" onClick="btnGravar(); return false;">Prosseguir</a>');
+		$('#divBotoesPrevisoes').css('display', 'block');
 		
 		
 	} else if ( cddopcao == 'C' ) {
 	
 		formataPrevisoes();
-		ativaCampoCabecalho();
+		$('#divBotoesPrevisoes').css({ 'display': 'block', 'padding-bottom': '15px' });
+		$('#btVoltar', '#divBotoesPrevisoes').css({ 'display': 'inline' });		
+
 		cDtmvtolt.desabilitaCampo(); // Daniel
 		cCdagenci.desabilitaCampo(); // Daniel
-
-	} else if ( cddopcao == 'F' ) {
-	
-		formataFluxo();
-		ativaCampoCabecalho();
-		dtmvtolx = cDtmvtolt.val();
-		cdmovmto = cCdmovmto.val();
-		habmovte = $('#vlrepass1,#vlrepass2,#vlrepass3,#vlrfolha2,#vlnumera2,#vloutros1,#vloutros2,#vloutros3,#vloutros4','#frmFluxo');
-		habmovts = $('#vlrepass1,#vlrepass2,#vlrepass3,#vlrfolha2,#vlnumera2,#vloutros1,#vloutros2,#vloutros3,#vloutros4','#frmFluxo');
-		habmovtr = $('#vlresgat, #vlaplica','#frmFluxo');
-				
-		if(cdcoplog != 3){
 		
-			if(dtmvtolt == cDtmvtolt.val()){
-			
-				if (cdmovmto == 'E'){
-				
-					$('#vlrepass1','#frmFluxo').focus();
-					habmovte.habilitaCampo();
-										
-				}else{
-					if (cdmovmto == 'S'){
-
-						$('#vlrepass1','#frmFluxo').focus();
-						habmovts.habilitaCampo();
-											
-					}else{
-						if(cdmovmto == 'R'){
-						
-							$('#vltotres','#frmFluxo').focus();
-							habmovtr.habilitaCampo();
-													
-						}
-					
-					}
-					
-				}
-				
-			}else{
-				$('#btVoltar','#divBotoes').select();
-				
-			}
-			
-			if(hrpermit){
-			
-				if(cdmovmto == "E" || cdmovmto == "S"){
-					trocaBotao('Prosseguir','showConfirmacao(\'Deseja confirmar opera&ccedil;&atilde;o?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'gravaDiversos();\',\'\',\'sim.gif\',\'nao.gif\');');
-				}else if(cdmovmto == "R"){
-					trocaBotao('Prosseguir','showConfirmacao(\'Deseja confirmar opera&ccedil;&atilde;o?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'gravaApliResg();\',\'\',\'sim.gif\',\'nao.gif\');');
-									
-				}
-			
-			}
-										
-		}
-				
-	} else if ( cddopcao == 'L') {
-		formataLiquidacao();
-		ativaCampoCabecalho();		
 	}	
 	
 	controlaPesquisas();
@@ -415,39 +356,7 @@ function formataCabecalho() {
 		} 	
 	});
 	
-	cCdmovmto.change(function(){
-	
-		if ( divError.css('display') == 'block' ) { return false; }		
-		cdmovmto = cCdmovmto.val();
-		
-		if(cdcoplog == 3){
-		
-			($(this).val() == "A") ? cDivcooper.hide() : cDivcooper.show();
-			
-		}else{
-		
-			cDivcooper.hide();
-		
-		}
-		
-		if($("#divcooper").is(":visible")){
-		
-		    cCdcooper.html( slcooper );
-			cCdcooper.val( cdcoopex );		
-			cCdcooper.habilitaCampo();
-			
-		}else{
-			cDtmvtolt.select();			
-		}	
-		
-		cDtmvtolt.focus();
-		cdmovmto = cCdmovmto.val();			
-		cCdmovmto.desabilitaCampo();
-		return false;
-		
-	});
-	
-	cCddopcao.unbind('keypress').bind('keypress', function(e) {
+    cCddopcao.unbind('keypress').bind('keypress', function(e) {
 	
 		if ( divError.css('display') == 'block' ) { return false; }		
 		
@@ -459,57 +368,22 @@ function formataCabecalho() {
 			cddopcao = cCddopcao.val();
 			ativaCampoCabecalho();
 			
-			if(auxopcao == 'F'){
-				cCdmovmto.focus();
-			}
-			
 			controlaPesquisas();
 			return false;
 		} 
 		
 	});	
 	
-	cCddopcao.change(function(){
-	
-		if ( divError.css('display') == 'block' ) { return false; }		
-		
-		var auxopcao = cCddopcao.val();				
-		
-		dtmvtolx = '';
-		cddopcao = cCddopcao.val();
-		ativaCampoCabecalho();
-		
-		if(auxopcao == 'F'){
-			cCdmovmto.focus();
-		}
-		
-		controlaPesquisas();
-		
-		return false;		
-		
-	});
-
-	cCdcooper.unbind('keypress').bind('keypress', function(e) {
+    cCdcooper.unbind('keypress').bind('keypress', function(e) {
 		
 		if ( divError.css('display') == 'block' ) { return false; }		
 				
 		var auxopcao = cCddopcao.val();
 		
 		// Se é a tecla ENTER, 
-		if ( e.keyCode == 13 && cddopcao == 'L' ) {
-		
-			cdcoopex = normalizaNumero( cCdcooper.val() );
-			controlaOperacao();
-			return false;
-			
-		} else if ( e.keyCode == 13 && (cddopcao == 'A' || cddopcao == 'C' || cddopcao == 'I') ) {
+		if ( e.keyCode == 13 && (cddopcao == 'A' || cddopcao == 'C' || cddopcao == 'I') ) {
 		
 			cCdagenci.select();
-			
-		} else if (cddopcao == 'F' && e.keyCode == 13) {
-				
-			(dtmvtolt == cDtmvtolt.val()) ? verificaAcesso() : controlaOperacao();
-			return false;
 			
 		}
 		
@@ -530,24 +404,9 @@ function formataCabecalho() {
 		if ( divError.css('display') == 'block' ) { return false; }	
 		
 		// Se é a tecla ENTER, 
-		if ( e.keyCode == 13 && cddopcao == 'L' ) {
-		
-			cCdcooper.focus();
-			return false;
-			
-		} else if ( e.keyCode == 13 && (cddopcao == 'A' || cddopcao == 'C' || cddopcao == 'I') ) {
+		if ( e.keyCode == 13 && (cddopcao == 'A' || cddopcao == 'C' || cddopcao == 'I') ) {
 		
 			cCdagenci.select();
-			
-		} else if (cddopcao == 'F' && e.keyCode == 13) {
-				
-			if($("#divcooper").is(":visible")){
-				cCdcooper.focus();
-	
-			}else{
-				(dtmvtolt == cDtmvtolt.val()) ? verificaAcesso() : controlaOperacao();
-			}
-			return false;
 			
 		}
 		
@@ -592,8 +451,8 @@ function formataPrevisoes() {
 	cVldvlbcb = $('#vldvlbcb', '#frmPrevisoes');
 	
 	cVldepesp.css({'width':'90px'}).addClass('monetario');
-	cVldvlnum.css({'width':'90px'}).addClass('monetario');
-	cVldvlbcb.css({'width':'90px'}).addClass('monetario');
+	cVldvlnum.css({'width':'100px'}).addClass('monetario');
+	cVldvlbcb.css({'width':'100px'}).addClass('monetario');
 
 	if ( $.browser.msie ) {
 		rVldepesp.css({'width':'102px'});
@@ -617,7 +476,7 @@ function formataPrevisoes() {
 	cVlremtit = $('#vlremtit', '#frmPrevisoes');
 	
 	cQtremtit.css({'width':'90px'}).addClass('inteiro');
-	cVlremtit.css({'width':'90px'}).addClass('monetario');
+	cVlremtit.css({'width':'100px'}).addClass('monetario');
 
 	if ( $.browser.msie ) {
 		rVlremtit.css({'width':'71px'});
@@ -635,11 +494,11 @@ function formataPrevisoes() {
 	rSubnotas = $('label[for="subnotas"]', '#frmPrevisoes');	
 	
 	rVlmoedas.addClass('rotulo-linha').css({'width':'59px'});
-	rQtmoedas.addClass('rotulo-linha').css({'width':'66px'});
+	rQtmoedas.addClass('rotulo-linha').css({'width':'76px'});
 	rSubmoeds.addClass('rotulo-linha').css({'width':'80px'});
 	rVldnotas.addClass('rotulo-linha').css({'width':'142px'});
-	rQtdnotas.addClass('rotulo-linha').css({'width':'62px'});
-	rSubnotas.addClass('rotulo-linha').css({'width':'92px'});
+	rQtdnotas.addClass('rotulo-linha').css({'width':'72px'});
+	rSubnotas.addClass('rotulo-linha').css({'width':'102px'});
 	
 	rVlmoedaN = $('label[for="vlmoeda1"], label[for="vlmoeda2"], label[for="vlmoeda3"], label[for="vlmoeda4"], label[for="vlmoeda5"], label[for="vlmoeda6"]', '#frmPrevisoes');
 	rQtmoedaN = $('label[for="qtmoeda1"], label[for="qtmoeda2"], label[for="qtmoeda3"], label[for="qtmoeda4"], label[for="qtmoeda5"], label[for="qtmoeda6"]', '#frmPrevisoes');
@@ -662,10 +521,10 @@ function formataPrevisoes() {
 	rHrtransa = $('label[for="hrtransa"]', '#frmPrevisoes');
 	
 	rTotalpre.addClass('rotulo').css({'width':'53px'});
-	rTotmoeda.addClass('rotulo-linha').css({'width':'94px'});
-	rTotnotas.addClass('rotulo-linha').css({'width':'217px'});
+	rTotmoeda.addClass('rotulo-linha').css({'width':'104px'});
+	rTotnotas.addClass('rotulo-linha').css({'width':'227px'});
 	rNmoperad.addClass('rotulo').css({'width':'72px'});
-	rHrtransa.addClass('rotulo-linha').css({'width':'75px'});
+	rHrtransa.addClass('rotulo-linha').css({'width':'5px'});
 	
 	// input
 	cVlmoedaN = $('#vlmoeda1, #vlmoeda2, #vlmoeda3, #vlmoeda4, #vlmoeda5, #vlmoeda6', '#frmPrevisoes');
@@ -675,10 +534,10 @@ function formataPrevisoes() {
 	cQtdnotaN = $('#qtdnota1, #qtdnota2, #qtdnota3, #qtdnota4, #qtdnota5, #qtdnota6', '#frmPrevisoes');
 	cSubnotaN = $('#subnota1, #subnota2, #subnota3, #subnota4, #subnota5, #subnota6', '#frmPrevisoes');
 
-	cVlmoedaN.css({'width':'45px'}).addClass('monetario');
+	cVlmoedaN.css({'width':'55px'}).addClass('monetario');
 	cQtmoedaN.css({'width':'50px'}).addClass('inteiro').attr('maxlength','3');
 	cSubmoedN.css({'width':'90px'}).addClass('monetario');
-	cVldnotaN.css({'width':'45px'}).addClass('monetario');
+	cVldnotaN.css({'width':'55px'}).addClass('monetario');
 	cQtdnotaN.css({'width':'60px'}).addClass('inteiro').attr('maxlength','6');
 	cSubnotaN.css({'width':'90px'}).addClass('monetario');
 
@@ -689,7 +548,7 @@ function formataPrevisoes() {
 	
 	cTotmoeda.css({'width':'90px'}).addClass('monetario');
 	cTotnotas.css({'width':'90px'}).addClass('monetario');
-	cNmoperad.css({'width':'300px'});
+	cNmoperad.css({'width':'400px'});
 	cHrtransa.css({'width':'90px'});
 	
 	if ( $.browser.msie ) {
@@ -843,286 +702,13 @@ function formataPrevisoes() {
 	return false;
 }
 
-function formataLiquidacao() {
-	/******************
-		SILOC
-	******************/
-	// label
-	rVlcobbil = $('label[for="vlcobbil"]', '#frmLiquidacao');
-	rVlcobmlt = $('label[for="vlcobmlt"]', '#frmLiquidacao');
-	
-	rVlcobbil.addClass('rotulo').css({'width':'150px'});
-	rVlcobmlt.addClass('rotulo-linha').css({'width':'200px'});
-	
-	// input
-	cVlcobbil = $('#vlcobbil', '#frmLiquidacao');
-	cVlcobmlt = $('#vlcobmlt', '#frmLiquidacao');
-	
-	cVlcobbil.css({'width':'90px'}).addClass('monetario');
-	cVlcobmlt.css({'width':'90px'}).addClass('monetario');
-	
-	/******************
-		COMPE
-	******************/
-	// label
-	rVlchqnot = $('label[for="vlchqnot"]', '#frmLiquidacao');
-	rVlchqdia = $('label[for="vlchqdia"]', '#frmLiquidacao');
-
-	rVlchqnot.addClass('rotulo').css({'width':'150px'});
-	rVlchqdia.addClass('rotulo-linha').css({'width':'200px'});
-	
-	// input
-	cVlchqnot = $('#vlchqnot', '#frmLiquidacao');
-	cVlchqdia = $('#vlchqdia', '#frmLiquidacao');
-	
-	cVlchqnot.css({'width':'90px'}).addClass('monetario');
-	cVlchqdia.css({'width':'90px'}).addClass('monetario');
-
-	/******************
-		OUTROS
-	******************/
-	cTodosLiquidacao = $('input[type="text"],select','#frmLiquidacao');
-	cTodosLiquidacao.desabilitaCampo();
-	
-	layoutPadrao();
-	return false;
-}
-
-function formataFluxo() {
-
-	/******************
-		OUTROS
-	******************/
-	cTodosFluxo = $('input[type="text"],select','#frmFluxo');
-	cTodosFluxo.desabilitaCampo();
-
-	/******************
-	INVESTIMENTO CENTRAL
-	******************/
-	rCooperat = $('label[for="lbcooper"]', '#frmFluxo');
-	rOperador = $('label[for="lboperad"]', '#frmFluxo');
-	rValorinv = $('label[for="lbvlrinv"]', '#frmFluxo');
-	rMoviment = $('label[for="lbmovime"]', '#frmFluxo');
-	
-	rCooperat.css({'width':'270px'}).addClass('rotulo');
-	rOperador.css({'width':'110px'}).addClass('rotulo-linha');
-	rValorinv.css({'width':'192px'}).addClass('rotulo-linha');
-	rMoviment.css({'width':'115px'}).addClass('rotulo-linha');
-
-	rNmoperador = $('label[for="operador"]', '#frmFluxo');
-	rNmoperador.css({'width':'50px'});
-	
-	rTpoMovto = $('label[for="tpomovto"]', '#frmFluxo');
-	rTpoMovto.css({'width':'20px'});
-	
-	for(var i = 0; i < qtcopapl; i++){
-	
-		eval('var rVlresapl'+i+' = $(\'label[for="vlresapl'+i+'"]\', \'#frmFluxo\');');
-		eval('rVlresapl'+i+'.css(\'width\',\'20px\');');
-		
-		eval('var cVlresapl'+i+' = $(\'#vlresapl'+i+'\',\'#frmFluxo\');');
-		eval('cVlresapl'+i+'.css(\'width\',\'100px\').addClass(\'monetario\');');
-				
-	}
-	
-	rTotmovto = $('label[for="totmovto"]', '#frmFluxo');
-	rTotmovto.css({'width':'208px'});
-	
-	if($.browser.msie){
-		rTotmovto.css({'width':'200px'});
-	}
-	
-	cTpoMovto = $('#tpomovto','#frmFluxo');
-	cTotmovto = $('#totmovto','#frmFluxo');
-	
-	cTpoMovto.css({'width':'100px'});
-	cTotmovto.css({'width':'100px'}).addClass('monetario');
-	
-		
-	/******************
-	DEBITOS e CREDITOS
-	******************/
-	// label
-	rCdbcova1 = $('label[for="cdbcova1"]', '#frmFluxo');
-	rCdbcova2 = $('label[for="cdbcova2"]', '#frmFluxo');
-	rCdbcova3 = $('label[for="cdbcova3"]', '#frmFluxo');
-	rCdbcova4 = $('label[for="cdbcova4"]', '#frmFluxo');	
-	
-	rCdbcova1.css({'width':'295px'}).addClass('rotulo');
-	rCdbcova2.css({'width':'148px'}).addClass('rotulo-linha');
-	rCdbcova3.css({'width':'146px'}).addClass('rotulo-linha');
-			
-	rCdbcova4.css({'width':'142px'}).addClass('rotulo-linha');	
-	
-	if ( $.browser.msie ) {
-		rCdbcova2.css({'width':'146px'}).addClass('rotulo-linha');
-		rCdbcova3.css({'width':'142px'}).addClass('rotulo-linha');	
-		rCdbcova4.css({'width':'146px'}).addClass('rotulo-linha');
-	}	
-	
-	if(cdmovmto == "R"){
-		
-		if(!$.browser.msie){
-		
-			rCdbcova1.css({'width':'304px'}).addClass('rotulo');	
-			rCdbcova2.css({'width':'142px'}).addClass('rotulo-linha');
-			rCdbcova3.css({'width':'148px'}).addClass('rotulo-linha');
-			
-		}else{
-		
-			rCdbcova1.css({'width':'298px'}).addClass('rotulo');
-			rCdbcova2.css({'width':'142px'}).addClass('rotulo-linha');
-			rCdbcova3.css({'width':'148px'}).addClass('rotulo-linha');
-		
-		}
-		
-	}
-	
-	
-	rTodostit = $('label[for="vlcheque"] , label[for="vltotdoc"] , label[for="vltotted"] , label[for="vltottit"] , label[for="vldevolu"] , label[for="vlmvtitg"] , label[for="vlttinss"] , label[for="vltrdeit"] , label[for="vlsatait"] , label[for="vldivers"] , label[for="vlrepass"] , label[for="vlrfolha"] , label[for="vlnumera"] , label[for="vloutros"] , label[for="vlttcrdb"] ', '#frmFluxo');
-	rTodosli1 = $('label[for="vlcheque1"], label[for="vltotdoc1"], label[for="vltotted1"], label[for="vltottit1"], label[for="vldevolu1"], label[for="vlmvtitg1"], label[for="vlttinss1"], label[for="vltrdeit1"], label[for="vlsatait1"], label[for="vldivers1"], label[for="vlrepass1"], label[for="vlrfolha1"], label[for="vlnumera1"], label[for="vloutros1"], label[for="vlttcrdb1"]', '#frmFluxo');
-	rTodosli2 = $('label[for="vlcheque2"], label[for="vltotdoc2"], label[for="vltotted2"], label[for="vltottit2"], label[for="vldevolu2"], label[for="vlmvtitg2"], label[for="vlttinss2"], label[for="vltrdeit2"], label[for="vlsatait2"], label[for="vldivers2"], label[for="vlrepass2"], label[for="vlrfolha2"], label[for="vlnumera2"], label[for="vloutros2"], label[for="vlttcrdb2"]', '#frmFluxo');
-	rTodosli3 = $('label[for="vlcheque3"], label[for="vltotdoc3"], label[for="vltotted3"], label[for="vltottit3"], label[for="vldevolu3"], label[for="vlmvtitg3"], label[for="vlttinss3"], label[for="vltrdeit3"], label[for="vlsatait3"], label[for="vldivers3"], label[for="vlrepass3"], label[for="vlrfolha3"], label[for="vlnumera3"], label[for="vloutros3"], label[for="vlttcrdb3"]', '#frmFluxo');
-	rTodosli4 = $('label[for="vlcheque4"], label[for="vltotdoc4"], label[for="vltotted4"], label[for="vltottit4"], label[for="vldevolu4"], label[for="vlmvtitg4"], label[for="vlttinss4"], label[for="vltrdeit4"], label[for="vlsatait4"], label[for="vldivers4"], label[for="vlrepass4"], label[for="vlrfolha4"], label[for="vlnumera4"], label[for="vloutros4"], label[for="vlttcrdb4"]', '#frmFluxo');
-		
-	rTodostit.css({'width':'150px'}).addClass('rotulo');
-	rTodosli1.css({'width':'42px'}).addClass('rotulo-linha');
-    rTodosli2.css({'width':'42px'}).addClass('rotulo-linha');
-    rTodosli3.css({'width':'42px'}).addClass('rotulo-linha');
-	rTodosli4.css({'width':'42px'}).addClass('rotulo-linha');
-		
-	// input
-	cTodosli1 = $('#vlcheque1, #vltotdoc1, #vltotted1, #vltottit1, #vldevolu1, #vlmvtitg1, #vlttinss1, #vltrdeit1, #vlsatait1, #vldivers1, #vlrepass1, #vlrfolha1, #vlnumera1, #vloutros1, #vlttcrdb1', '#frmFluxo');
-	cTodosli2 = $('#vlcheque2, #vltotdoc2, #vltotted2, #vltottit2, #vldevolu2, #vlmvtitg2, #vlttinss2, #vltrdeit2, #vlsatait2, #vldivers2, #vlrepass2, #vlrfolha2, #vlnumera2, #vloutros2, #vlttcrdb2', '#frmFluxo');
-	cTodosli3 = $('#vlcheque3, #vltotdoc3, #vltotted3, #vltottit3, #vldevolu3, #vlmvtitg3, #vlttinss3, #vltrdeit3, #vlsatait3, #vldivers3, #vlrepass3, #vlrfolha3, #vlnumera3, #vloutros3, #vlttcrdb3', '#frmFluxo');
-	cTodosli4 = $('#vlcheque4, #vltotdoc4, #vltotted4, #vltottit4, #vldevolu4, #vlmvtitg4, #vlttinss4, #vltrdeit4, #vlsatait4, #vldivers4, #vlrepass4, #vlrfolha4, #vlnumera4, #vloutros4, #vlttcrdb4', '#frmFluxo');
-				
-	cTodosli1.css({'width':'100px'}).addClass('moeda_15');
-	cTodosli2.css({'width':'100px'}).addClass('moeda_15');
-	cTodosli3.css({'width':'100px'}).addClass('moeda_15');
-	cTodosli4.css({'width':'100px'}).addClass('moeda_15');
-	
-	cEntHabil = $('#vlrepass1, #vlrfolha1, #vlnumera1, #vloutros1, #vlrepass2, #vlrfolha2, #vlnumera2, #vloutros2, #vlrepass3, #vlrfolha3, #vlnumera3, #vloutros3, #vlrepass4, #vlrfolha4, #vlnumera4, #vloutros4', '#frmFluxo');
-	cEntHabil.desabilitaCampo();	
-	
-	if ( $.browser.msie ) {
-		rTodostit.css({'width':'150px'});	
-	}	
-	
-	
-	/********************
-	  LAYOUT SAIDA
-	*********************/
-	rTodossai = $('label[for="vlcheque"] , label[for="vltotdoc"] , label[for="vltotted"] , label[for="vltottit"] , label[for="vldevolu"] , label[for="vlmvtitg"] , label[for="vlttinss"] , label[for="vltrdeit"] , label[for="vlsatait"] , label[for="vlfatbra"] , label[for="vlconven"] , label[for="vldivers"] , label[for="vlrepass"] , label[for="vlnumera"] , label[for="vlrfolha"] , label[for="vloutros"] , label[for="vlttcrdb"]', '#frmFluxo');
-	rTodossd1 = $('label[for="vlcheque1"], label[for="vltotdoc1"], label[for="vltotted1"], label[for="vltottit1"], label[for="vldevolu1"], label[for="vlmvtitg1"], label[for="vlttinss1"], label[for="vltrdeit1"], label[for="vlsatait1"], label[for="vlfatbra1"], label[for="vlconven1"], label[for="vldivers1"], label[for="vlrepass1"], label[for="vlnumera1"], label[for="vlrfolha1"], label[for="vloutros1"], label[for="vlttcrdb1"]', '#frmFluxo');
-	rTodossd2 = $('label[for="vlcheque2"], label[for="vltotdoc2"], label[for="vltotted2"], label[for="vltottit2"], label[for="vldevolu2"], label[for="vlmvtitg2"], label[for="vlttinss2"], label[for="vltrdeit2"], label[for="vlsatait2"], label[for="vlfatbra2"], label[for="vlconven2"], label[for="vldivers2"], label[for="vlrepass2"], label[for="vlnumera2"], label[for="vlrfolha2"], label[for="vloutros2"], label[for="vlttcrdb2"]', '#frmFluxo');
-	rTodossd3 = $('label[for="vlcheque3"], label[for="vltotdoc3"], label[for="vltotted3"], label[for="vltottit3"], label[for="vldevolu3"], label[for="vlmvtitg3"], label[for="vlttinss3"], label[for="vltrdeit3"], label[for="vlsatait3"], label[for="vlfatbra3"], label[for="vlconven3"], label[for="vldivers3"], label[for="vlrepass3"], label[for="vlnumera3"], label[for="vlrfolha3"], label[for="vloutros3"], label[for="vlttcrdb3"]', '#frmFluxo');
-	rTodossd4 = $('label[for="vlcheque4"], label[for="vltotdoc4"], label[for="vltotted4"], label[for="vltottit4"], label[for="vldevolu4"], label[for="vlmvtitg4"], label[for="vlttinss4"], label[for="vltrdeit4"], label[for="vlsatait4"], label[for="vlfatbra4"], label[for="vlconven4"], label[for="vldivers4"], label[for="vlrepass4"], label[for="vlnumera4"], label[for="vlrfolha4"], label[for="vloutros4"], label[for="vlttcrdb4"]', '#frmFluxo');
-    	
-	rTodossai.css({'width':'150px'}).addClass('rotulo');
-	rTodossd1.css({'width':'42px'}).addClass('rotulo-linha');
-    rTodossd2.css({'width':'42px'}).addClass('rotulo-linha');
-    rTodossd3.css({'width':'42px'}).addClass('rotulo-linha');
-	rTodossd4.css({'width':'42px'}).addClass('rotulo-linha');
-		
-	// input
-	cTodossd1 = $('#vlcheque1, #vltotdoc1, #vltotted1, #vltottit1, #vldevolu1, #vlmvtitg1, #vlttinss1, #vltrdeit1, #vlsatait1, #vlfatbra1, #vlconven1, #vldivers1, #vlrepass1, #vlnumera1, #vlrfolha1, #vloutros1, #vlttcrdb1', '#frmFluxo');
-	cTodossd2 = $('#vlcheque2, #vltotdoc2, #vltotted2, #vltottit2, #vldevolu2, #vlmvtitg2, #vlttinss2, #vltrdeit2, #vlsatait2, #vlfatbra2, #vlconven2, #vldivers2, #vlrepass2, #vlnumera2, #vlrfolha2, #vloutros2, #vlttcrdb2', '#frmFluxo');
-	cTodossd3 = $('#vlcheque3, #vltotdoc3, #vltotted3, #vltottit3, #vldevolu3, #vlmvtitg3, #vlttinss3, #vltrdeit3, #vlsatait3, #vlfatbra3, #vlconven3, #vldivers3, #vlrepass3, #vlnumera3, #vlrfolha3, #vloutros3, #vlttcrdb3', '#frmFluxo');
-	cTodossd4 = $('#vlcheque4, #vltotdoc4, #vltotted4, #vltottit4, #vldevolu4, #vlmvtitg4, #vlttinss4, #vltrdeit4, #vlsatait4, #vlfatbra4, #vlconven4, #vldivers4, #vlrepass4, #vlnumera4, #vlrfolha4, #vloutros4, #vlttcrdb4', '#frmFluxo');
-		
-	cTodossd1.css({'width':'100px'}).addClass('moeda_15');
-	cTodossd2.css({'width':'100px'}).addClass('moeda_15');
-	cTodossd3.css({'width':'100px'}).addClass('moeda_15');
-	cTodossd4.css({'width':'100px'}).addClass('moeda_15');
-		
-	cSaiHabil = $('#vlrepass1, #vlnumera1, #vlrfolha1, #vloutros1, #vlrepass2, #vlnumera2, #vlrfolha2, #vloutros2, #vlrepass3, #vlnumera3, #vlrfolha3, #vloutros3, #vlrepass4, #vlnumera4, #vlrfolha4, #vloutros4','#frmFluxo');
-	cSaiHabil.desabilitaCampo();
-	
-	if ( $.browser.msie ) {
-		rTodossai.css({'width':'150px'});
-	}
-	
-	/********************
-	  LAYOUT RESULTADO
-	*********************/
-	rTodosrel = $('label[for="vlentrad"] , label[for="lbinvest"] , label[for="vlsaidas"] , label[for="vlresgat"] , label[for="vlresult"] , label[for="vlaplica"] , label[for="vlsldcta"] , label[for="vlsldfin"]', '#frmFluxo');	
-	rTodosrel.css({'width':'180px'}).addClass('rotulo-linha');
-	
-	rVlentrad1 = $('label[for="vlentrad1"] , label[for="vlsaidas1"], label[for="vlresult1"]'); 
-	rVlentrad1.css({'width':'15px'}).addClass('rotulo-linha');
-	
-	rVlentrad2 =  $('label[for="vlentrad2"] , label[for="vlsaidas2"], label[for="vlresult2"]'); 
-	rVlentrad2.css({'width':'38px'}).addClass('rotulo-linha');
-
-	rVlentrad2 =  $('label[for="vlentrad3"] , label[for="vlsaidas3"], label[for="vlresult3"]'); 
-	rVlentrad2.css({'width':'47px'}).addClass('rotulo-linha');	
-	
-	rNmoperad = $('label[for="nmoperad"]', '#frmFluxo');
-	rNmoperad.addClass('rotulo').css({'width':'182px'});
-	
-	rHrtransa = $('label[for="hrtransa"]', '#frmFluxo');
-	rHrtransa.addClass('rotulo-linha').css({'width':'182px'});
-	
-	cTodosrel = $('#vlentrad, #vlentrad1, #vlentrad2, #vlentrad3, #vlsaidas, #vlsaidas1, #vlsaidas2, #vlsaidas3, #vlresgat, #vlresult, #vlresult1, #vlresult2, #vlresult3, #vlaplica, #vlsldcta, #vlsldfin', '#frmFluxo');
-	cTodosrel.css({'width':'100px'}).addClass('moeda_15');	
-	
-	cVlresgat = $('#vlresgat','#frmFluxo');
-	cVlaplica = $('#vlaplica','#frmFluxo');
-	
-	cRelHabil = $('#vlresgat, #vlaplica','#frmFluxo');
-	cRelHabil.desabilitaCampo();
-	
-	cNmoperad = $('#nmoperad', '#frmFluxo');	
-	cNmoperad.css({'width':'100px'});
-	
-	cHrtransa = $('#hrtransa', '#frmFluxo');
-	cHrtransa.css({'width':'100px'});
-		
-	if ( $.browser.msie ) {
-		
-		rTodosrel.css({'width':'180px'});
-		
-	}
-	
-	
-	//Se o valor de resgate for > 0, não será permitido incluir um valor para aplicação 
-	cVlresgat.unbind('keypress').bind('keypress', function() {
-		
-		if( $(this).val() != 0 ){
-			cVlaplica.desabilitaCampo();
-			cVlaplica.val(0);
-		}else{
-			cVlaplica.habilitaCampo();
-		}
-		
-	});	
-		
-	
-	//Se o valor da aplicação for > 0, não será permitido incluir um valor para resgate
-	cVlaplica.unbind('keypress').bind('keypress', function() {
-		
-		if( $(this).val() != 0 ){
-			cVlresgat.desabilitaCampo();
-			cVlresgat.val(0);
-		}else{
-			cVlresgat.habilitaCampo();
-		}
-				
-	});
-				
-	layoutPadrao();
-	return false;
-	
-}
 
 
 // ativa campo do cabecalho conforme a opcao
 function ativaCampoCabecalho() {
 
-	trocaBotao('Prosseguir','btnContinuar()');
 	cCddopcao.desabilitaCampo();
-	
+
 	if(dtmvtolx == ''){
 		cDtmvtolt.val( dtmvtolt );
 	}else{
@@ -1149,38 +735,6 @@ function ativaCampoCabecalho() {
 		cDtmvtolt.habilitaCampo().select(); 
 		cCdagenci.habilitaCampo().show();
 			
-	} else if ( cddopcao == 'F' ) {
-	
-		if(cdcoplog == 3){
-								
-			if(cCdmovmto.val() != "A"){
-							
-				cCdcooper.habilitaCampo().show().focus(); 
-				cDivmovmto.show();
-				cDivagenci.hide();
-				cCdcooper.html( slcooper );
-				cDtmvtolt.habilitaCampo(); 
-				cCdcooper.val( cdcoopex );	
-				cDivcooper.show();
-				
-			}else{
-				
-				$('#divcooper').hide();
-				cDivmovmto.show();
-				cDivagenci.hide();
-				cDtmvtolt.habilitaCampo().focus(); 
-								
-			}
-			
-		}else{
-		
-			cDivmovmto.show();
-			cDivagenci.hide();
-			cDivcooper.hide();
-			cDtmvtolt.habilitaCampo(); 
-				
-		}
-		
 	} else if ( cddopcao == 'I' ) { 
 	
 		cDivmovmto.hide();
@@ -1189,17 +743,6 @@ function ativaCampoCabecalho() {
 		cCdcooper.desabilitaCampo().hide(); 
 		cDtmvtolt.desabilitaCampo(); 
 		cCdagenci.habilitaCampo().show().select();
-	
-	} else if ( cddopcao == 'L' ) {
-	
-   		cDivmovmto.hide();
-		cDivagenci.hide();
-		cDivcooper.show();
-		cCdcooper.habilitaCampo().show(); 
-		cCdcooper.html( slcoper2 );
-		cDtmvtolt.habilitaCampo().focus(); 
-		cCdagenci.desabilitaCampo().hide();
-		cCdcooper.val( cdcoopex );
 	
 	}
 	
@@ -1244,39 +787,6 @@ function calculaTotalNotas() {
 }
 
 
-// ajuda
-function formataMsgAjuda( tela ) {	
-	
-	var divMensagem = $('#divMsgAjuda', '#'+tela );
-	/*divMensagem.css({'border':'1px solid #ddd','background-color':'#eee','padding':'2px','height':'20px','margin':'7px 0px'});*/
-	
-	var spanMensagem = $('span',divMensagem);
-/*	spanMensagem.css({'text-align':'left','font-size':'11px','float':'left','padding':'3px'});*/
-
-	var botoesMensagem = $('#divBotoes',divMensagem);
-	botoesMensagem.css({'float':'center','padding':'0 0 0 2px', 'margin-top':'7px', 'margin-bottom':'5px'});		
-	
-	if ( $.browser.msie ) {
-		spanMensagem.css({'padding':'5px 3px 3px 3px'});
-		botoesMensagem.css({'margin-top':'2px'});		
-	}
-		
-/*	spanMensagem.html('Tecle algo ou pressione F4 para sair!');*/
-	/*
-	$('input[type="text"],select').focus( function() {
-		if ( $(this).hasClass('monetario') ) {
-			spanMensagem.html('Tecle algo ou pressione F4 para sair!');
-		}else if ( $(this).hasClass('moeda_15') ) {
-			spanMensagem.html('Tecle algo ou pressione F4 para sair!');
-		} else { 
-			spanMensagem.html($(this).attr('alt'));
-						
-		}
-	});	
-			*/
-}
-
-
 // botoes
 function btnVoltar() {
 
@@ -1302,11 +812,7 @@ function btnContinuar() {
 		cdmovmto = cCdmovmto.val();
 		cdcoopex = normalizaNumero( cCdcooper.val() );
 			
-		if(cddopcao == "F" && (dtmvtolt == cDtmvtolt.val())){
-			verificaAcesso();
-		}else{
-			controlaOperacao();		
-		}
+		controlaOperacao();
 						
 	}	
 	
@@ -1318,15 +824,13 @@ function btnContinuar() {
 function btnGravar() {
 
 	if ( divError.css('display') == 'block' ) { return false; }		
-			
+  
 	if ( cCddopcao.hasClass('campo') ) {
-	
 		cddopcao = cCddopcao.val();
 		cdmovmto = cCdmovmto.val();
 		ativaCampoCabecalho();		
 		
-	} else if ( cCdcooper.hasClass('campo') || cDtmvtolt.hasClass('campo') || cCdagenci.hasClass('campo') ) {
-	
+	} else {
 		cdmovmto = cCdmovmto.val();
 		cdcoopex = normalizaNumero( cCdcooper.val() );
 			
@@ -1348,40 +852,6 @@ function trocaBotao( botao,funcao ) {
 		$('#divBotoes','#divTela').append('&nbsp;<a href="#" class="botao" id="btSalvar" onClick="'+funcao+'; return false;">'+botao+'</a>');
 	}
 	
-	return false;
-	
-}
-
-
-function validaHorario(){
-
-	var mensagem = 'Aguarde, validando horário ...';
-	
-	showMsgAguardo( mensagem );	
-
-	// Gera requisição ajax para validar horário limite para alteração de valores
-	$.ajax({		
-		type	: 'POST',
-		dataType: 'html',
-		url		: UrlSite + 'telas/previs/valida_horario.php', 
-		data    : 
-				{ 
-					cddopcao    : cddopcao,
-					cdmovmto	: cdmovmto,
-					redirect	: 'script_ajax' 
-				},
-		error   : function(objAjax,responseError,objExcept) {
-					hideMsgAguardo();
-					showError('error','Não foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
-				},
-		success : function(response) {
-					hideMsgAguardo();
-					eval( response );
-													
-				}
-				
-	});
-
 	return false;
 	
 }
@@ -1480,149 +950,9 @@ function liberaAcesso(){
 
 }
 
-function gravaDiversos(){
-
-	var mensagem = 'Aguarde, gravando valores ...';
-	var vlrepass = new Array();
-	var vlnumera = new Array();
-	var vlrfolha = new Array();
-	var vloutros = new Array();
-	var aux_vlrepass = new Object();
-	var aux_vlnumera = new Object();
-	var aux_vlrfolha = new Object();
-	var aux_vloutros = new Object();
-	 
-		
-	aux_vlrepass['85']  = $('#vlrepass1','#frmFluxo').val();
-	aux_vlrepass['01']  = $('#vlrepass2','#frmFluxo').val();
-	aux_vlrepass['756'] = $('#vlrepass3','#frmFluxo').val();
-	aux_vlrepass['100'] = $('#vlrepass4','#frmFluxo').val();
-	aux_vlnumera['85']  = $('#vlnumera1','#frmFluxo').val();	
-	aux_vlnumera['01']  = $('#vlnumera2','#frmFluxo').val();	
-	aux_vlnumera['756'] = $('#vlnumera3','#frmFluxo').val();	
-	aux_vlnumera['100'] = $('#vlnumera4','#frmFluxo').val();	
-	aux_vlrfolha['85']  = $('#vlrfolha1','#frmFluxo').val();	
-	aux_vlrfolha['01']  = $('#vlrfolha2','#frmFluxo').val();	
-	aux_vlrfolha['756'] = $('#vlrfolha3','#frmFluxo').val();	
-	aux_vlrfolha['100'] = $('#vlrfolha4','#frmFluxo').val();	
-	aux_vloutros['85']  = $('#vloutros1','#frmFluxo').val();	
-	aux_vloutros['01']  = $('#vloutros2','#frmFluxo').val();	
-	aux_vloutros['756'] = $('#vloutros3','#frmFluxo').val();	
-	aux_vloutros['100'] = $('#vloutros4','#frmFluxo').val();
-	
-	
-	vlrepass = aux_vlrepass;
-	vlnumera = aux_vlnumera;
-	vlrfolha = aux_vlrfolha;
-	vloutros = aux_vloutros;
-		
-	showMsgAguardo( mensagem );	
-		
-
-	// Gera requisição ajax para gravar os valores diversos
-	$.ajax({		
-		type	: 'POST',
-		dataType: 'html',
-		url		: UrlSite + 'telas/previs/grava_diversos.php', 
-		data    : 
-				{ 
-					cddopcao    : cddopcao,
-					cdmovmto	: cdmovmto,
-					vlrepass	: vlrepass,
-					vlnumera	: vlnumera,
-					vlrfolha	: vlrfolha,
-					vloutros	: vloutros,
-					dtmvtolx	: dtmvtolx,
-					redirect	: 'script_ajax' 
-				},
-		error   : function(objAjax,responseError,objExcept) {
-					hideMsgAguardo();
-					showError('error','Não foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
-				},
-		success : function(response) {
-					hideMsgAguardo();
-					if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
-						try { 
-							$('#divTela').html(response);
-							return false;
-						} catch(error) {
-							hideMsgAguardo();
-							showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground()');
-						}
-					} else {
-						try { 
-							eval( response );							
-						} catch(error) {
-							hideMsgAguardo();
-							showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground()');
-						}
-					}
-				}
-						
-	});
-	
-	
-	return false;
-
-}
 
 
 
-function gravaApliResg(){
-
-	var mensagem = 'Aguarde, gravando valores ...';
-	var vlaplica = $('#vlaplica','#frmFluxo').val();
-	var vlresgat = $('#vlresgat','#frmFluxo').val();
-	
-	showMsgAguardo( mensagem );	
-	
-	// Gera a requisição ajax para gravar o valor da aplicação/resgate
-	$.ajax({		
-		type	: 'POST',
-		dataType: 'html',
-		url		: UrlSite + 'telas/previs/grava_apli_resg.php', 
-		data    : 
-				{ 
-					cddopcao    : cddopcao,
-					dtmvtolx	: dtmvtolx,
-					cdcoopex	: cdcoopex,
-					vlresgat	: vlresgat,
-					vlresgan	: vlresgan,
-					vlaplica	: vlaplica,
-					vlaplian	: vlaplian,
-					cdmovmto	: cdmovmto,
-					redirect	: 'script_ajax' 
-					
-				},
-		error   : function(objAjax,responseError,objExcept) {
-					hideMsgAguardo();
-					showError('error','Não foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
-				},
-		success : function(response) {
-					hideMsgAguardo();
-					if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
-						try { 
-							$('#divTela').html(response);							
-							return false;
-						} catch(error) {
-							hideMsgAguardo();
-							showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground()');
-						}
-					} else {
-						try { 
-							eval( response );							
-						} catch(error) {
-							hideMsgAguardo();
-							showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground()');
-						}
-					}
-				}
-				
-	});
-	
-	return false;
-
-}
 
 // Função para fechar div com mensagens de alerta
 function encerraMsgsAlerta() {

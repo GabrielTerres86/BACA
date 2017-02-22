@@ -2,13 +2,15 @@
 	/*********************************************************************
 	 Fonte: buscar_rotina.php                                                 
 	 Autor: Renato Darosci                                                   
-	 Data : Mai/2015                Última Alteração: 21/10/2015 
+	 Data : Mai/2015                Última Alteração: 19/01/2017 
 	                                                                  
 	 Objetivo  : Tratar as requisicoes da tela PARFOL                                 
 	                                                                  
 	 Alterações: 21/10/2015 - Correcao para envio da cddopcao de consulta
 	                          na validaPermissao (Marcos-Supero)
 	 
+				 19/01/2017 - Adicionado novo limite de horario para pagamento no dia
+							  para contas da cooperativa. (M342 - Kelvin)
 	**********************************************************************/
 	
 	session_start();
@@ -75,5 +77,6 @@
 	echo 'Cdsvlrprm19.val("'.$xmlObjeto->roottag->tags[18]->cdata.'");';
 	echo 'Cdsvlrprm20.val("'.$xmlObjeto->roottag->tags[19]->cdata.'");';
 	echo 'Cdsvlrprm21.val("'.$xmlObjeto->roottag->tags[20]->cdata.'");';
+	echo 'Cdsvlrprm22.val("'.$xmlObjeto->roottag->tags[21]->cdata.'");';
 	echo 'Cdsvlrprm1.focus();';
 ?>

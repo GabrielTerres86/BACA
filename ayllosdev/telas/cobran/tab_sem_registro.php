@@ -9,6 +9,8 @@
  * --------------
  * [03/12/2014] Jean Reddiga  (RKAM)   : De acordo com a circula 3.656 do Banco Central,substituir nomenclaturas Cedente
  *	             			             por Beneficiário e  Sacado por Pagador  Chamado 229313 (Jean Reddiga - RKAM).
+ *
+ * [11/10/2016] Odirlei Busana(AMcom)  : Inclusao dos campos de aviso por SMS. PRJ319 - SMS Cobrança (Odirlei - AMcom)
  */	
 ?>
 
@@ -43,6 +45,17 @@
 								  <input type="hidden" id="dsdoccop" name="dsdoccop" value="<? echo getByTagName($r->tags,'dsdoccop') ?>" />								  
 								  <input type="hidden" id="dsorgarq" name="dsorgarq" value="<? echo getByTagName($r->tags,'dsorgarq') ?>" />								  
 								  <input type="hidden" id="nrdctabb" name="nrdctabb" value="<? echo mascara(getByTagName($r->tags,'nrdctabb'), '####.###.#') ?>" />								  
+								  
+                                  <!-- Aviso SMS -->
+                                  <input type="hidden" id="inavisms" name="inavisms" value="<? echo getByTagName($r->tags,'inavisms') ?>" />
+                                  <input type="hidden" id="insmsant" name="insmsant" value="<? echo getByTagName($r->tags,'insmsant') ?>" />
+                                  <input type="hidden" id="insmsvct" name="insmsvct" value="<? echo getByTagName($r->tags,'insmsvct') ?>" />
+                                  <input type="hidden" id="insmspos" name="insmspos" value="<? echo getByTagName($r->tags,'insmspos') ?>" />
+                                  
+                                  <input type="hidden" id="dsavisms" name="dsavisms" value="<? echo getByTagName($r->tags,'dsavisms') ?>" />
+                                  <input type="hidden" id="dssmsant" name="dssmsant" value="<? echo getByTagName($r->tags,'dssmsant') ?>" />
+                                  <input type="hidden" id="dssmsvct" name="dssmsvct" value="<? echo getByTagName($r->tags,'dssmsvct') ?>" />
+                                  <input type="hidden" id="dssmspos" name="dssmspos" value="<? echo getByTagName($r->tags,'dssmspos') ?>" />
 								  
 						</td>
 						<td><span><? echo getByTagName($r->tags,'idseqttl') ?></span>

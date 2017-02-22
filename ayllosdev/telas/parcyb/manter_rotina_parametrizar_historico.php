@@ -1,11 +1,11 @@
 <?php
 	/*!
 	 * FONTE        : manter_rotina_parametrizar_historico.php
-	 * CRIA��O      : Douglas Quisinski
-	 * DATA CRIA��O : 10/09/2015
-	 * OBJETIVO     : Rotina para manter as opera��es da tela de parametriza��o de hist�rico
+	 * CRIAÇÃO      : Douglas Quisinski
+	 * DATA CRIAÇÃO : 10/09/2015
+	 * OBJETIVO     : Rotina para manter as operações da tela de parametrização de histórico
 	 * --------------
-	 * ALTERA��ES   : 
+	 * ALTERAÇÕES   : 13/01/2016 - Inclusão da coluna Código de Transação CYBER - PRJ 432 - Jean Calão
 	 * -------------- 
 	 */		
 
@@ -23,41 +23,41 @@
 
 	
 	// Ler parametros passados via POST
-	$cddopcao = (isset($_POST["cddopcao"])) ? $_POST["cddopcao"] : ""; // Op��o (CH-Consulta/AH-Alterar)
+	$cddopcao = (isset($_POST["cddopcao"])) ? $_POST["cddopcao"] : ""; // Opção (CH-Consulta/AH-Alterar)
 	$pesquisa = (isset($_POST["pesquisa"])) ? $_POST["pesquisa"] : ""; // Pesquisa (C-Codigo/D-Descricao/F-Filtro/T-Todos)
-	$cdfiltro = (isset($_POST["cdfiltro"])) ? $_POST["cdfiltro"] :  0; // C�digo do filtro
-	$cdhistor = (isset($_POST["cdhistor"])) ? $_POST["cdhistor"] : ""; // C�digo do Hist�rico
-	$dshistor = (isset($_POST["dshistor"])) ? $_POST["dshistor"] : ""; // Descri��o do Hist�rico
-	$historicos = (isset($_POST["historicos"])) ? $_POST["historicos"] : ""; // Hist�ricos para alterar
+	$cdfiltro = (isset($_POST["cdfiltro"])) ? $_POST["cdfiltro"] :  0; // Código do filtro
+	$cdhistor = (isset($_POST["cdhistor"])) ? $_POST["cdhistor"] : ""; // Código do Histórico
+	$dshistor = (isset($_POST["dshistor"])) ? $_POST["dshistor"] : ""; // Descrição do Histórico
+	$historicos = (isset($_POST["historicos"])) ? $_POST["historicos"] : ""; // Históricos para alterar
 
-	//Validar permiss�o do usu�rio
+	//Validar permissão do usuário
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],$cddopcao)) <> "") {
 		exibirErro("error",$msgError,"Alerta - Ayllos","",false);
 	}
 
-	// Validar os campos e identificar as opera��es
+	// Validar os campos e identificar as operações
 	switch ($cddopcao) {
 		case "CH":
 			$procedure = "PARCYB_CONSULTAR_PARAM_HISTOR";
 			
 			switch ($pesquisa) {
-				case "C": // Pesquisar por c�digo
-					// Verifica se os par�metros necess�rios foram informados
+				case "C": // Pesquisar por código
+					// Verifica se os parâmetros necessários foram informados
 					if (!validaInteiro($cdhistor)) exibirErro("error","Filtro inv&aacute;lido.","Alerta - Ayllos","",false);
 				break;
 				
 				case "F": // Pesquisar por filtro
-					// Verifica se os par�metros necess�rios foram informados
+					// Verifica se os parâmetros necessários foram informados
 					if (!validaInteiro($cdfiltro) || ($cdfiltro != 1 && $cdfiltro != 2 && $cdfiltro != 3))
 						exibirErro("error","Filtro inv&aacute;lido.","Alerta - Ayllos","",false);
 				break;
-				case "D": // Pesquisar por descri��o
+				case "D": // Pesquisar por descrição
 				case "T": // Pesquisar Todos
-					// N�o existem valida��es para essas pesquisas
+					// Não existem validações para essas pesquisas
 				break;
 			}
 			
-			// Monta o xml para a op��o de consulta dos dados
+			// Monta o xml para a opção de consulta dos dados
 			$xml  = "";
 			$xml .= "<Root>";
 			$xml .= "  <Dados>";
@@ -72,10 +72,10 @@
 		
 		case "AH":
 			$procedure = "PARCYB_MANTER_PARAM_HISTOR";
-			// Verifica se os par�metros necess�rios foram informados
+			// Verifica se os parâmetros necessários foram informados
 			if ($historicos == "") exibirErro("error","Nenhum historico foi alterado.","Alerta - Ayllos","",false);
 		
-			// Monta o xml para a op��o de consulta dos dados
+			// Monta o xml para a opção de consulta dos dados
 			$xml  = "";
 			$xml .= "<Root>";
 			$xml .= "  <Dados>";
@@ -86,7 +86,7 @@
 		break;
 		
 		default:
-			// Se n�o for uma op��o v�lida exibe o erro
+			// Se não for uma opção válida exibe o erro
 			exibirErro("error","Op&ccedil;&atilde;o inv&aacute;lida.","Alerta - Ayllos","",false);
 		break;
 	}
@@ -97,16 +97,16 @@
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjeto = getObjectXML($xmlResult);
 
-	// Se ocorrer um erro, mostra cr�tica
+	// Se ocorrer um erro, mostra crítica
  	if ($xmlObjeto->roottag->tags[0]->name == "ERRO") {
 		$msgErro = $xmlObj->roottag->tags[0]->cdata;
 		if($msgErro == null || $msgErro == ''){
-			$msgErro = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
+			$msgErro = $xmlObjeto->roottag->tags[0]->tags[0]->tags[5]->cdata;
 		}
 		exibirErro("error",$msgErro,"Alerta - Ayllos","",false);
 	}
 	
-	//Comando para ser excutado em caso de sucesso na opera��o
+	//Comando para ser excutado em caso de sucesso na operação
 	$command = "";
 	switch ($cddopcao) {
 		case "CH":
@@ -116,7 +116,8 @@
 															  "','" . getByTagName($parametro->tags,"dshistor") . 
 															  "','" . getByTagName($parametro->tags,"indebcre") . 
 															  "','" . getByTagName($parametro->tags,"indcalem") . 
-															  "','" . getByTagName($parametro->tags,"indcalcc") . "');";
+															  "','" . getByTagName($parametro->tags,"indcalcc") . 
+															  "','" . getByTagName($parametro->tags,"cdtrscyb") ."');";
 				}
 			}
 
@@ -128,6 +129,6 @@
 			$command .= "showError('inform','Parametriza&ccedil;&atilde;o alterada com sucesso.','Alerta - Ayllos','estadoInicialParametrizarHistorico();')";
 		break;
 	}
-	//Esconde a mensagem de aguardo do processo e executa o comando criado pelas op��es
+	//Esconde a mensagem de aguardo do processo e executa o comando criado pelas opções
 	echo "hideMsgAguardo();" . $command;
 ?>

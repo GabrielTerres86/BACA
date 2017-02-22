@@ -14,7 +14,10 @@
  * [02/06/2015] Adriano (CECRED) : Alterado o label do campo "dtdocmto" para "Data Dcto".
  *
  * 30/12/2015 - Alterações Referente Projeto Negativação Serasa (Daniel)	
+ * [11/10/2016] Odirlei Busana(AMcom)  : Inclusao dos campos de aviso por SMS. PRJ319 - SMS Cobrança. 
  * 
+ * 17/01/2017 - Recebimento do flag flgdprot para definicao de layout da tela (Heitor - Mouts)
+ *
  */
  
 ?>
@@ -214,6 +217,7 @@
 													}
 												?>
 
+                                                
 												<label for="dtdpagto">Pagto:</label>
 												<input type="text" id="dtdpagto" name="dtdpagto" value="<?php echo $dtdpagto ?>"/>
 
@@ -230,6 +234,20 @@
 												
 												<input type="hidden" id="flserasa" name="flserasa" value="<?php echo $flserasa ?>"/>
 												
+                                                <!-- Aviso SMS -->
+                                                <label for="dsavisms">SMS:</label>
+												<input type="text" id="dsavisms" name="dsavisms" value="<?php echo $dsavisms; ?>"/>
+                                                
+                                                <label for="dssmsant">1 dia Antes Vct:</label>
+												<input type="text" id="dssmsant" name="dssmsant" value="<?php echo $dssmsant; ?>"/>
+                                                
+                                                <label for="dssmsvct">No vencimento:</label>
+												<input type="text" id="dssmsvct" name="dssmsvct" value="<?php echo $dssmsvct; ?>"/>
+                                                
+                                                <label for="dssmspos"><? echo utf8ToHtml('1 dia Após Vct:') ?> </label>
+												<input type="text" id="dssmspos" name="dssmspos" value="<?php echo $dssmspos; ?>"/>
+                                                
+                                                <!-- Fim Aviso SMS -->
 											</fieldset>		
 											
 											<fieldset>

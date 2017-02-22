@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 27/08/2013
  * OBJETIVO     : Rotina tela CADRET.
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : [23/06/2016] - Renato Darosci - Supero: Incluir o código do produto como parametro 
  * -------------- 
  */
 ?> 
@@ -21,6 +21,7 @@
 	
 	// Recebe a operação que está sendo realizada
 	$cddopcao = (isset($_POST['cddopcao'])) ? $_POST['cddopcao'] : '' ; 
+	$cdprodut = (isset($_POST['cdprodut'])) ? $_POST['cdprodut'] : '' ; 
 	$operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '' ; 
 	$cdoperac = (isset($_POST['cdoperac'])) ? $_POST['cdoperac'] : ''  ;
 	$nrtabela = (isset($_POST['nrtabela'])) ? $_POST['nrtabela'] : 0  ;
@@ -61,6 +62,7 @@
 	$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';	
 	$xml .= '		<dtmvtolt>'.$glbvars['dtmvtolt'].'</dtmvtolt>';	
 	$xml .= '		<cddopcao>'.$cddopcao.'</cddopcao>';
+	$xml .= '		<cdprodut>'.$cdprodut.'</cdprodut>';
 	$xml .= '		<cdoperac>'.$cdoperac.'</cdoperac>';
 	$xml .= '		<nrtabela>'.$nrtabela.'</nrtabela>';
 	$xml .= '		<cdretorn>'.$cdretorn.'</cdretorn>';

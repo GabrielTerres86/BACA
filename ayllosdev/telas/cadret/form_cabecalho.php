@@ -31,7 +31,7 @@
 					<option value="C">C - Consultar Retorno</option>
 					<option value="I">I - Incluir Retorno</option> 					
 				</select>
-				<a href="#" class="botao" id="btnOK" name="btnOK" onClick="liberaCampos(); return false;" style = "text-align:right;">OK</a>
+				<a href="#" class="botao" id="btnOK" name="btnOK" onClick="mostraProduto(); return false;" style = "text-align:right;">OK</a>
 			</td>
 		</tr>
 	</table>

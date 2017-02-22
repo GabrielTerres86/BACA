@@ -11,8 +11,13 @@
  *	             			             por Beneficiário e  Sacado por Pagador  Chamado 229313 (Jean Reddiga - RKAM).
  * [04/05/2015] Lucas Reinert (CECRED) : Incluido campo dsemiten - Projeto DP 219 - Cooperativa Emite e Expede.
  *
- *			    30/12/2015 - Alterações Referente Projeto Negativação Serasa (Daniel)
+ *			    30/12/2015 - Alterações Referente Projeto Negativação Serasa (Daniel)	
+ *
+ *              11/10/2016 - Inclusao dos campos de aviso por SMS 
+ *                           PRJ319 - SMS Cobrança (Odirlei - AMcom)
 *               08/01/2017 - Inclusao do campo flgdprot (Heitor - Mouts) - Chamado 574161 
+ *              11/10/2016 - Inclusao dos campos de aviso por SMS 
+ *                           PRJ319 - SMS Cobrança (Odirlei - AMcom)
  */	
 ?>
 
@@ -81,6 +86,16 @@
 								  <input type="hidden" id="flserasa" name="flserasa" value="<? echo getByTagName($r->tags,'flserasa') ?>" />
 								  <input type="hidden" id="qtdianeg" name="qtdianeg" value="<? echo getByTagName($r->tags,'qtdianeg') ?>" />
 								  <input type="hidden" id="flgdprot" name="flgdprot" value="<? echo getByTagName($r->tags,'flgdprot') ?>" />
+                                  <!-- Aviso SMS -->
+                                  <input type="hidden" id="inavisms" name="inavisms" value="<? echo getByTagName($r->tags,'inavisms') ?>" />
+                                  <input type="hidden" id="insmsant" name="insmsant" value="<? echo getByTagName($r->tags,'insmsant') ?>" />
+                                  <input type="hidden" id="insmsvct" name="insmsvct" value="<? echo getByTagName($r->tags,'insmsvct') ?>" />
+                                  <input type="hidden" id="insmspos" name="insmspos" value="<? echo getByTagName($r->tags,'insmspos') ?>" />
+                                  
+                                  <input type="hidden" id="dsavisms" name="dsavisms" value="<? echo getByTagName($r->tags,'dsavisms') ?>" />
+                                  <input type="hidden" id="dssmsant" name="dssmsant" value="<? echo getByTagName($r->tags,'dssmsant') ?>" />
+                                  <input type="hidden" id="dssmsvct" name="dssmsvct" value="<? echo getByTagName($r->tags,'dssmsvct') ?>" />
+                                  <input type="hidden" id="dssmspos" name="dssmspos" value="<? echo getByTagName($r->tags,'dssmspos') ?>" />
 								  
 						</td>
 						<td><span><? echo getByTagName($r->tags,'nrdocmto') ?></span>

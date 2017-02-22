@@ -46,7 +46,7 @@
  *                31/10/2016 - Incluir validação para passar histórico 1019 caso for Sicredi e não for 
  *							   operação de consulta (Lucas Ranghetti #547448)
  *
- *
+ *				  16/01/2017 - Arrumar a gravacao da flginassele (Lucas Ranghetti #564654)
  */
 
 // Definição de algumas variáveis globais 
@@ -1477,7 +1477,7 @@ function mensagem(tipo){
 	        showError('inform', 'Opera&ccedil;&atilde;o cancelada!', 'Alerta - Ayllos', 'controlaOperacao("");');
 	    }		
 	}else if(tipo == 3){
-		flginassele == 2; // atualizar o campo inassele para 2
+		flginassele = 2; // atualizar o campo inassele para 2
 		showError('inform','Requisite a assinatura do cooperado.','Alerta - Ayllos','controlaOperacao("' + operacao_aux + '");');
 	}
 }
