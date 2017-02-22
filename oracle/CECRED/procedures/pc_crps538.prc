@@ -347,6 +347,22 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                   ,vlddocmt NUMBER
                   ,vlliquid NUMBER);
 
+       TYPE typ_reg_rel618 IS RECORD
+         (cddbanco INTEGER
+         ,bancoage VARCHAR2(100)
+         ,nrcpfcnj crapcob.nrinssac%type
+         ,nmsacado crapsab.nmdsacad%type
+         ,dscodbar VARCHAR2(100)
+         ,nrdocmto crapcob.dsdoccop%type
+         ,dtvencto crapcob.dtvencto%type
+         ,vldocmto crapcob.vltitulo%type
+         ,vldesaba crapcob.vlabatim%type
+         ,vljurmul NUMBER
+         ,vldescar NUMBER
+         ,vlrpagto NUMBER
+         ,vlrdifer NUMBER
+         ,inpessoa INTEGER);
+
        TYPE typ_reg_rel706 IS RECORD
          (cdagenci crapass.cdagenci%TYPE
          ,nrdconta crapass.nrdconta%TYPE
@@ -380,7 +396,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
        TYPE typ_tab_craptco IS TABLE OF typ_reg_craptco INDEX BY PLS_INTEGER;
        TYPE typ_tab_crapcco IS TABLE OF typ_reg_crapcco INDEX BY VARCHAR2(20);
        TYPE typ_tab_relat_cecred IS TABLE OF typ_reg_relat_cecred INDEX BY VARCHAR2(50);
-
+       TYPE typ_tab_rel618 IS TABLE OF typ_reg_rel618 INDEX BY VARCHAR2(100);
        TYPE typ_tab_conv_arq IS TABLE OF typ_reg_conv_arq INDEX BY VARCHAR2(20);
        --TYPE typ_tab_crapsab IS TABLE OF crapsab.nmdsacad%type INDEX BY VARCHAR2(45);
        TYPE typ_tab_crapmot IS TABLE OF crapmot.dsmotivo%type INDEX BY VARCHAR2(17);
@@ -392,7 +408,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
        vr_tab_crapcco      typ_tab_crapcco;
        vr_tab_craptco      typ_tab_craptco;
 --       vr_tab_relat_cecred typ_tab_relat_cecred;
-
+       vr_tab_rel618       typ_tab_rel618;
        vr_tab_rel706       typ_tab_rel706;
        vr_tab_conv_arq     typ_tab_conv_arq;
        vr_tab_crapmot      typ_tab_crapmot;
@@ -912,7 +928,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
        --Variaveis utilizadas nos indices
        vr_index_desc          VARCHAR2(20);
        vr_index_titulo        VARCHAR2(20);
-
+       vr_index_rel618        VARCHAR2(100);
        vr_index_rel706        VARCHAR2(50);
        vr_index_erro          PLS_INTEGER;
        vr_index_crapcco       VARCHAR2(20);
@@ -2270,6 +2286,124 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
            pr_dscritic:= 'Erro na rotina pc_CRPS538.pc_gera_relatorio_605. '||sqlerrm;
            --Sair do programa
            RAISE vr_exc_saida;
+       END;
+
+       --Gerar Relatorio 618
+       PROCEDURE pc_gera_relatorio_618 (pr_cdcritic OUT INTEGER
+                                       ,pr_dscritic OUT VARCHAR2) IS
+       BEGIN
+         --Inicializar variaveis erro
+         pr_cdcritic:= NULL;
+         pr_dscritic:= NULL;
+
+         --Percorrer toda a tabela de memória
+         vr_index_rel618:= vr_tab_rel618.FIRST;
+         WHILE vr_index_rel618 IS NOT NULL LOOP
+
+           --Primeiro registro do banco
+           IF vr_index_rel618 = vr_tab_rel618.FIRST  OR
+            vr_tab_rel618(vr_index_rel618).cddbanco <> vr_tab_rel618(vr_tab_rel618.PRIOR(vr_index_rel618)).cddbanco THEN
+
+             -- Inicializar o CLOB
+             dbms_lob.createtemporary(vr_des_xml, TRUE);
+             dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+             vr_dstexto:= NULL;
+             
+             -- Quando for REPROC deve montar o nome do arquivo de forma diferenciada, 
+             -- para evitar sobrepor arquivos de outras execuções
+             IF vr_inreproc THEN
+               -- Nome arquivo impressao
+               vr_nmarqimp:= 'crrl618_'|| rw_crapcop.dsdircop ||'_'||
+                             gene0002.fn_mask(vr_tab_rel618(vr_index_rel618).cddbanco,'999') || 
+                           '_REP_'||GENE0002.fn_busca_time||'.lst';
+             ELSE   
+             --Nome arquivo Impressao
+             vr_nmarqimp:= 'crrl618_'|| rw_crapcop.dsdircop ||'_'||
+                           gene0002.fn_mask(vr_tab_rel618(vr_index_rel618).cddbanco,'999') || '.lst';
+             END IF;
+
+             --Descricao da Origem
+             vr_nmorigem:= gene0002.fn_mask(rw_crapcop.cdbcoctl,'999')||' - ' ||
+                           rw_crapcop.nmrescop ||' - AGENCIA: '||
+                           gene0002.fn_mask(rw_crapcop.cdagectl,'9999');
+
+             --Descricao do Destino
+             vr_nmdestin:= 'COBRANCA';
+
+             --Selecionar Bancos
+             OPEN cr_crapban (pr_cdbccxlt => vr_tab_rel618(vr_index_rel618).cddbanco);
+             FETCH cr_crapban INTO vr_nmdestin;
+             CLOSE cr_crapban;
+
+             -- Inicilizar as informacoes do XML
+             gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'<?xml version="1.0" encoding="utf-8"?><crrl618><dados>');
+           END IF;
+
+           --Montar tag saldo contabil para arquivo XML
+           gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,
+             '<dado>
+                  <bancoage>'||vr_tab_rel618(vr_index_rel618).bancoage||'</bancoage>
+                  <nrcpfcnj>'||gene0002.fn_mask(vr_tab_rel618(vr_index_rel618).nrcpfcnj,'zzzzzzzzzzzzzz9')||'</nrcpfcnj>
+                  <nmsacado>'||gene0007.fn_caract_controle(substr(vr_tab_rel618(vr_index_rel618).nmsacado,1,30))||'</nmsacado>
+                  <dscodbar>'||substr(vr_tab_rel618(vr_index_rel618).dscodbar,1,43)||'</dscodbar>
+                  <nrdocmto>'||substr(vr_tab_rel618(vr_index_rel618).nrdocmto,1,15)||'</nrdocmto>
+                  <dtvencto>'||to_char(vr_tab_rel618(vr_index_rel618).dtvencto,'DD/MM/YY')||'</dtvencto>
+                  <vldocmto>'||to_char(vr_tab_rel618(vr_index_rel618).vldocmto,'fm999g999g999g990d00')||'</vldocmto>
+                  <vldesaba>'||to_char(vr_tab_rel618(vr_index_rel618).vldesaba,'fm999g999g990d00')||'</vldesaba>
+                  <vljurmul>'||to_char(vr_tab_rel618(vr_index_rel618).vljurmul,'fm999g999g990d00')||'</vljurmul>
+                  <vlrpagto>'||to_char(vr_tab_rel618(vr_index_rel618).vlrpagto,'fm999g999g990d00')||'</vlrpagto>
+                  <vlrdifer>'||to_char(vr_tab_rel618(vr_index_rel618).vlrdifer,'fm999g999g990d00')||'</vlrdifer>
+                  <vldescar>'||to_char(vr_tab_rel618(vr_index_rel618).vldescar,'fm999g999g990d00')||'</vldescar>
+               </dado>');
+           --Ultimo registro do banco
+           IF vr_index_rel618 = vr_tab_rel618.LAST OR
+              vr_tab_rel618(vr_index_rel618).cddbanco <> vr_tab_rel618(vr_tab_rel618.NEXT(vr_index_rel618)).cddbanco THEN
+
+             --Buscar relatorio RL da Cecred
+             vr_caminho_rl_3:= gene0001.fn_diretorio(pr_tpdireto => 'C' --> Usr/Coop
+                                                    ,pr_cdcooper => 3
+                                                    ,pr_nmsubdir => 'rl');
+
+             -- Finalizar tag XML
+             gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'</dados></crrl618>',true);
+
+             -- Efetuar solicitacao de geracao de relatorio crrl618 --
+             gene0002.pc_solicita_relato (pr_cdcooper  => pr_cdcooper                  --> Cooperativa conectada
+                                         ,pr_cdprogra  => vr_cdprogra                  --> Programa chamador
+                                         ,pr_dtmvtolt  => rw_crapdat.dtmvtolt          --> Data do movimento atual
+                                         ,pr_dsxml     => vr_des_xml                   --> Arquivo XML de dados
+                                         ,pr_dsxmlnode => '/crrl618/dados/dado'        --> No base do XML para leitura dos dados
+                                         ,pr_dsjasper  => 'crrl618.jasper'             --> Arquivo de layout do iReport
+                                         ,pr_dsparams  => 'PR_NMORIGEM##'||vr_nmorigem||'@@PR_NMDESTIN##'||vr_nmdestin||'@@PR_DTRELATO##'||to_char(rw_crapdat.dtmvtolt,'DD/MM/YYYY')  --> Campo Origem e Destino no Cabecalho
+                                         ,pr_dsarqsaid => vr_caminho_rl||'/'||vr_nmarqimp --> Arquivo final
+                                         ,pr_qtcoluna  => 234                          --> 234 colunas
+                                         ,pr_sqcabrel  => 1                            --> Sequencia do Relatorio {includes/cabrel132_2.i}
+                                         ,pr_cdrelato  => 618                          --> Codigo do Relatorio
+                                         ,pr_flg_impri => 'S'                          --> Chamar a impress?o (Imprim.p)
+                                         ,pr_nmformul  => '234dh'                      --> Nome do formul?rio para impress?o
+                                         ,pr_nrcopias  => 1                            --> N?mero de c?pias
+                                         ,pr_flg_gerar => 'N'                          --> gerar PDF
+                                         ,pr_dspathcop => vr_caminho_rl_3              --> Lista sep. por ';' de diretórios a copiar o relatório
+                                         ,pr_des_erro  => vr_dscritic);                --> Sa?da com erro
+             -- Testar se houve erro
+             IF vr_dscritic IS NOT NULL THEN
+               -- Gerar excecao
+               RAISE vr_exc_saida;
+             END IF;
+
+             -- Liberando a mem?ria alocada pro CLOB
+             dbms_lob.close(vr_des_xml);
+             dbms_lob.freetemporary(vr_des_xml);
+             vr_dstexto:= NULL;
+           END IF;
+           --Proximo registro da tabela de memeria
+           vr_index_rel618:= vr_tab_rel618.NEXT(vr_index_rel618);
+         END LOOP;
+       EXCEPTION
+         WHEN OTHERS THEN
+           --Variavel de erro recebe erro ocorrido
+           pr_cdcritic:= 0;
+           pr_dscritic:= 'Erro na rotina pc_CRPS538.pc_gera_relatorio_618. '||sqlerrm;
        END;
 
        -- Gerar Relatorio 706 - Pagto de Contrato com Boleto
@@ -4603,6 +4737,44 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                          CLOSE cr_crabcco2;
                        END IF;
 
+                       --Se valor despesa > 0 e
+                       --se valor despeza > que Valor Minimo CAC
+                       IF nvl(vr_vldescar,0) > 0 AND
+                          nvl(vr_vldescar,0) >= vr_vlrmincac THEN
+                         --Selecionar nome sacado
+                         OPEN cr_crapsab (pr_cdcooper => rw_crapcob.cdcooper
+                                         ,pr_nrdconta => rw_crapcob.nrdconta
+                                         ,pr_nrinssac => rw_crapcob.nrinssac);
+                         FETCH cr_crapsab INTO rw_crapsab;
+                         --Indicar se encontrou ou nao
+                         vr_crapsab:= cr_crapsab%FOUND;
+                         --Fechar Cursor
+                         CLOSE cr_crapsab;
+                         --Se nao encontrou
+                         IF NOT vr_crapsab THEN
+                           rw_crapsab.nmdsacad:= NULL;
+                         END IF;
+                         --Montar Indice para relatorio 618
+                         vr_index_rel618:= lpad(SUBSTR(vr_setlinha,54,3),10,'0')||
+                                           rpad(TRIM(rw_crapsab.nmdsacad),50,'#')||
+                                           lpad(to_char(rw_crabcob.vltitulo*100),25,'0')||
+                                           lpad(vr_tab_rel618.COUNT+1,10,'0');
+                         /* Alimenta a temp-table do rel. 618 */
+                         vr_tab_rel618(vr_index_rel618).cddbanco:= TO_NUMBER(TRIM(SUBSTR(vr_setlinha,54,3)));
+                         vr_tab_rel618(vr_index_rel618).bancoage:= TO_NUMBER(TRIM(SUBSTR(vr_setlinha,54,3))) ||'/'||TO_NUMBER(TRIM(SUBSTR(vr_setlinha,57,4)));
+                         vr_tab_rel618(vr_index_rel618).nrcpfcnj:= rw_crabcob.nrinssac;
+                         vr_tab_rel618(vr_index_rel618).nmsacado:= rw_crapsab.nmdsacad;
+                         vr_tab_rel618(vr_index_rel618).dscodbar:= SUBSTR(vr_setlinha,01,44);
+                         vr_tab_rel618(vr_index_rel618).nrdocmto:= rw_crabcob.dsdoccop;
+                         vr_tab_rel618(vr_index_rel618).dtvencto:= rw_crabcob.dtvencto;
+                         vr_tab_rel618(vr_index_rel618).vldocmto:= rw_crabcob.vltitulo;
+                         vr_tab_rel618(vr_index_rel618).vldesaba:= APLI0001.fn_round((nvl(rw_crabcob.vldescto,0) + nvl(rw_crabcob.vlabatim,0)),2);
+                         vr_tab_rel618(vr_index_rel618).vljurmul:= APLI0001.fn_round(nvl(vr_vlrjuros,0) + nvl(vr_vlrmulta,0),2);
+                         vr_tab_rel618(vr_index_rel618).vlrpagto:= TO_NUMBER(TRIM(SUBSTR(vr_setlinha,85,12))) / 100;
+                         vr_tab_rel618(vr_index_rel618).vlrdifer:= 0;
+                         vr_tab_rel618(vr_index_rel618).vldescar:= vr_vldescar;
+                         vr_tab_rel618(vr_index_rel618).inpessoa:= rw_crapass.inpessoa;
+                       END IF; -- vr_vldescar > 0
                      END IF; --rw_crapcob.cdtitprt IS NOT NULL
                    ELSIF rw_crapcob.insitcrt = 0 THEN
                      vr_cdcritic:= 943;
@@ -4863,6 +5035,33 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                      rw_crapsab.nmdsacad:= NULL;
                    END IF;
 
+                   IF ( ROUND(vr_vlfatura,2) - ROUND(vr_vlliquid,2) ) >= vr_vlrmincac THEN
+
+                     --Montar Indice para relatorio 618
+                     vr_index_rel618:= lpad(SUBSTR(vr_setlinha,54,3),10,'0')||
+                                       rpad(TRIM(rw_crapsab.nmdsacad),50,'#')||
+                                       lpad(to_char(rw_crapcob.vltitulo*100),25,'0')||
+                                       lpad(vr_tab_rel618.COUNT+1,10,'0');
+                     /* Alimenta a temp-table do rel. 618 */
+                   vr_tab_rel618(vr_index_rel618).cddbanco:= TO_NUMBER(TRIM(SUBSTR(vr_setlinha,54,3)));
+                   vr_tab_rel618(vr_index_rel618).bancoage:= to_number(TRIM(SUBSTR(vr_setlinha,54,3)))||'/'||to_number(TRIM(SUBSTR(vr_setlinha,57,4)));
+                     vr_tab_rel618(vr_index_rel618).nrcpfcnj:= rw_crapcob.nrinssac;
+                     vr_tab_rel618(vr_index_rel618).nmsacado:= rw_crapsab.nmdsacad;
+                     vr_tab_rel618(vr_index_rel618).dscodbar:= SUBSTR(vr_setlinha,01,44);
+                     vr_tab_rel618(vr_index_rel618).nrdocmto:= rw_crapcob.dsdoccop;
+                     vr_tab_rel618(vr_index_rel618).dtvencto:= rw_crapcob.dtvencto;
+                     vr_tab_rel618(vr_index_rel618).vldocmto:= rw_crapcob.vltitulo;
+                     vr_tab_rel618(vr_index_rel618).vldesaba:= APLI0001.fn_round((nvl(rw_crapcob.vldescto,0) + nvl(rw_crapcob.vlabatim,0)),2);
+                     vr_tab_rel618(vr_index_rel618).vljurmul:= APLI0001.fn_round(nvl(vr_vlrjuros,0) + nvl(vr_vlrmulta,0),2);
+                   vr_tab_rel618(vr_index_rel618).vlrpagto:= TO_NUMBER(TRIM(SUBSTR(vr_setlinha,85,12))) / 100;
+                     vr_tab_rel618(vr_index_rel618).vlrdifer:= ROUND(nvl(vr_tab_rel618(vr_index_rel618).vldocmto,0) -
+                                                                   nvl(vr_tab_rel618(vr_index_rel618).vldesaba,0) +
+                                                                   nvl(vr_tab_rel618(vr_index_rel618).vljurmul,0) -
+                                                                   nvl(vr_tab_rel618(vr_index_rel618).vlrpagto,0),2);
+                     vr_tab_rel618(vr_index_rel618).vldescar:= 0;
+
+                   END IF;
+
                    --Inicializar variaveis
                    vr_cdcritic:= 0;
                    vr_dscritic:= NULL;
@@ -4884,7 +5083,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                    WHEN '7' THEN vr_dsmotivo:= '06'; /*Liquidaçao Arquivo Eletronico*/
                    ELSE NULL;
                  END CASE;
-                 
                  /* buscar banco/agencia origem do pagamento (Rafael) */
                  BEGIN
                    vr_cdagepag:= TO_NUMBER(TRIM(SUBSTR(vr_setlinha,57,4)));
@@ -5841,6 +6039,18 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
              RAISE vr_exc_saida;
            END IF;
 
+           --Se existem dados no relatorio 618
+           IF vr_tab_rel618.count > 0 THEN
+             --Gerar relatorio 618
+             pc_gera_relatorio_618 (pr_cdcritic => vr_cdcritic
+                                   ,pr_dscritic => vr_dscritic);
+
+             --Se ocorreu erro
+             IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+               --Levantar Excecao
+               RAISE vr_exc_saida;
+             END IF;
+           END IF;
 
            --Se existem dados no relatorio 706
            IF vr_tab_rel706.count > 0 THEN
@@ -5864,7 +6074,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
            --Levantar Excecao
            RAISE vr_exc_saida;
          END IF;
-
        EXCEPTION
          WHEN vr_exc_final THEN
            -- Nao tem arquivo para processar ou foi encontrado mais de um arquivo
