@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0001 AS
 
    Programa : INSS0001                       Antiga: generico/procedures/b1wgen0091.p
    Autor   : Andre - DB1
-   Data    : 16/05/2011                        Ultima atualizacao: 31/05/2016
+   Data    : 16/05/2011                        Ultima atualizacao: 31/01/2017
 
    Dados referentes ao programa:
 
@@ -1091,7 +1091,7 @@ create or replace package body cecred.INSS0001 as
    Sigla   : CRED
 
    Autor   : Odirlei Busana(AMcom)
-   Data    : 27/08/2013                        Ultima atualizacao: 22/12/2016
+   Data    : 27/08/2013                        Ultima atualizacao: 31/01/2017
 
    Dados referentes ao programa:
 
@@ -4272,6 +4272,8 @@ create or replace package body cecred.INSS0001 as
                               
                  03/01/2017 - Ajustes Incorporação Transulcred -> Transpocred.
                               Alterar o numero da conta antiga para a nova. (Aline)                    
+                              
+                 31/01/2017 - Ajuste ref Incorporação Transulcred -> Transpocred (Aline)                                 
     -------------------------------------------------------------------------------------------------------------*/
 
       -- Busca dos dados da cooperativa
@@ -4411,22 +4413,22 @@ create or replace package body cecred.INSS0001 as
         IF TO_NUMBER(pr_tab_creditos(pr_index_creditos).cdorgins) IN (801241, 787028) THEN --> Transulcred
               
           IF rw_crapcop.cdcooper IN (9,17) THEN
+                          
+            IF pr_tab_creditos(pr_index_creditos).nrdconta IN (11240,620,5525,329,345) THEN  
             vr_cdcooper_aux := 9;
             rw_crapcop.cdcooper := 17;
-              
-            IF pr_tab_creditos(pr_index_creditos).nrdconta IN (11240,620,5525,329,345) THEN  
-          /* Verifica se o beneficiario eh um cooperado com conta migrada. */
-          OPEN cr_craptco (pr_cdcooper => vr_cdcooper_aux
-                          ,pr_cdcopant => rw_crapcop.cdcooper
-                          ,pr_nrctaant => pr_tab_creditos(pr_index_creditos).nrdconta);
-                              
-          FETCH cr_craptco INTO rw_craptco;
-              
-          -- Verificar se encontrou transferencia
-          vr_craptco:= cr_craptco%FOUND;
-              
-          --Fechar Cursor
-          CLOSE cr_craptco;
+            /* Verifica se o beneficiario eh um cooperado com conta migrada. */
+              OPEN cr_craptco (pr_cdcooper => vr_cdcooper_aux
+                              ,pr_cdcopant => rw_crapcop.cdcooper
+                              ,pr_nrctaant => pr_tab_creditos(pr_index_creditos).nrdconta);
+                                  
+              FETCH cr_craptco INTO rw_craptco;
+                  
+              -- Verificar se encontrou transferencia
+              vr_craptco:= cr_craptco%FOUND;
+                  
+              --Fechar Cursor
+              CLOSE cr_craptco;
              END IF; 
           END IF;    
           --Se encontrou conta migrada
