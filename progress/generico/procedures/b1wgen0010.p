@@ -343,14 +343,14 @@
                             (Adriano - SD 391157)
 
                08/03/2016 - Conversao da rotinas abaixo para PL SQL:
-							  - valida-arquivo-cobranca   
-							  - identifica-arq-cnab       
-							  - p_importa                 
-							  - p_importa_cnab240_085     
-							  - p_importa_cnab400_085     
-							  - f_EhData 
-							  - f_numericos
-							(Andrei - RKAM).
+															- valida-arquivo-cobranca   
+															- identifica-arq-cnab       
+															- p_importa                 
+															- p_importa_cnab240_085     
+															- p_importa_cnab400_085     
+															- f_EhData 
+															- f_numericos
+														(Andrei - RKAM).
 
                10/05/2016 - Ajustar a proc. consulta-bloqueto para filtrar o parametro
                             numero da conta nas consultas 2,3,4,5,6 
@@ -368,6 +368,13 @@
 
 			   03/10/2016 - Ajustes referente a melhoria M271. (Kelvin)
                
+			   06/10/2016 - Ajuste consulta-boleto-2via para contemplar a origem de 
+							"ACORDO" e nao permitir gerar a segunda via do boleto,
+							Prj. 302 (Jean Michel).
+
+               11/10/2016 - Inclusao dos campos de aviso por SMS. 
+                            PRJ319 - SMS Cobrança.  (Odirlei-AMcom)
+
                24/11/2016 - A busca de conta transferida/migrada nao estava sendo
                             feita corretamente na consulta de 2via de boleto.
                             Nao estava considerando a conta retornada na pesquisa
@@ -376,7 +383,7 @@
 
 			   25/11/2016 - Correção no calculo de multa e juros da Melhoria 271
 			                (Douglas Quisinski - Chamado 562804)
-			       				
+							
 			   02/12/2016 - Ajuste realizado para nao gerar em branco o relatorio		
 							da tela COBRAN, incluido tambem logs para identificar
 							erros futuros dessa mesma rotina, conforme solicitado
@@ -384,7 +391,7 @@
 							
 			   12/12/2016 - Correcao do relatorio da tela cobran que estavam sendo
 							gerado em branco, onde no chamado 563327 incluimos logs
-							para que futuramente podessemos identifcar o problema (Kelvin)
+							para que futuramente podessemos identifcar o problema (Kelvin)	
 							
 			   23/12/2016 - Realizado ajustes na rotina consulta-bloqueto e consulta-boleto-2via
 							para aumentar o desempenho na tela de manutencao do internet bank,
@@ -400,6 +407,10 @@
 			   13/01/2017 - Retirado create da tt-consulta-blt na procedure consulta-boleto-2via
 			                pois ja estava criando no procedure proc_nosso_num
 							(Tiago/Ademir SD593608)
+                            
+               11/10/2016 - Inclusao dos campos de aviso por SMS. 
+                            PRJ319 - SMS Cobrança.  (Odirlei-AMcom)
+                            
 ........................................................................... */
 
 { sistema/generico/includes/var_internet.i }
@@ -684,7 +695,8 @@ PROCEDURE consulta-boleto-2via.
     FIND FIRST crapcco WHERE ROWID(crapcco) = aux_rowidcco NO-LOCK NO-ERROR.
 
     /* nao eh permitido gerar 2via de boleto do convenio EMPRESTIMO */
-    IF  AVAIL(crapcco) AND crapcco.dsorgarq = "EMPRESTIMO" THEN 
+    IF  AVAIL(crapcco) AND (crapcco.dsorgarq = "EMPRESTIMO" OR 
+		crapcco.dsorgarq = "ACORDO")THEN 
         DO:
             CREATE tt-erro.
             ASSIGN tt-erro.dscritic = "Nao eh permitito gerar 2a. via " + 
@@ -838,28 +850,28 @@ PROCEDURE consulta-boleto-2via.
                    tt-consulta-blt.cdmensag = aux_cdmensut.
 
     END.
-
+        
 	IF AVAIL(tt-consulta-blt) THEN
-	   DO:
-			ASSIGN tt-consulta-blt.dtvencto            = aux_dtvencut
-				   tt-consulta-blt.vltitulo            = aux_vltituut
-				   tt-consulta-blt.vlmormul            = aux_vlmormut
+            DO:
+    ASSIGN tt-consulta-blt.dtvencto            = aux_dtvencut
+           tt-consulta-blt.vltitulo            = aux_vltituut
+           tt-consulta-blt.vlmormul            = aux_vlmormut
 
-				   tt-consulta-blt.dtvencto_atualizado = aux_dtvencut_atualizado
-				   tt-consulta-blt.vltitulo_atualizado = aux_vltituut_atualizado
-				   tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
-				   tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0
-				   tt-consulta-blt.nmprimtl 	       = aux_nmdobnfc
+           tt-consulta-blt.dtvencto_atualizado = aux_dtvencut_atualizado
+           tt-consulta-blt.vltitulo_atualizado = aux_vltituut_atualizado
+           tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
+           tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0
+		   tt-consulta-blt.nmprimtl 	       = aux_nmdobnfc
 
-				   tt-consulta-blt.nrdconta = crapcob.nrdconta
-				   tt-consulta-blt.vldocmto = crapcob.vltitulo
-				   tt-consulta-blt.dtvctori = aux_dtvencut
-				   tt-consulta-blt.flgaceit = "N".
+           tt-consulta-blt.nrdconta = crapcob.nrdconta
+           tt-consulta-blt.vldocmto = crapcob.vltitulo
+           tt-consulta-blt.dtvctori = aux_dtvencut
+           tt-consulta-blt.flgaceit = "N".
 
-			VALIDATE tt-consulta-blt.
+    VALIDATE tt-consulta-blt.
 	   END.
-
-    RETURN "OK".        
+        
+    RETURN "OK".
 END PROCEDURE.  /* consulta-boleto-2via */
 
 PROCEDURE consulta-bloqueto.
@@ -911,7 +923,7 @@ PROCEDURE consulta-bloqueto.
 	DEF VAR aux_nmdobnfc			   AS CHAR			   NO-UNDO.
 	DEF VAR aux_des_erro			   AS CHAR			   NO-UNDO.
     DEF VAR aux_contaant             LIKE crapass.nrdconta NO-UNDO.
-
+	
  /******************************** CONSULTAS *********************************/
  /*                                                                          */
  /* p-tipo-consulta > 1-NAO COBRADOS/2-COBRADOS/3-TODOS                      */
@@ -1215,10 +1227,10 @@ PROCEDURE consulta-bloqueto.
                                  ASSIGN tt-consulta-blt.dtvencto_atualizado = aux_dtvencut_atualizado
                                         tt-consulta-blt.vltitulo_atualizado = aux_vltituut_atualizado
                                         tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
-                                        tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0.                               
+                                        tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0. 
 										tt-consulta-blt.nmprimtl 			= aux_nmdobnfc.	    								
-                                 END.
-                                          
+                             END.
+
                              END.
 
 
@@ -1411,7 +1423,7 @@ PROCEDURE consulta-bloqueto.
                                     tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
                                     tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0
 									tt-consulta-blt.nmprimtl 			= aux_nmdobnfc.
-                                 END.
+                             END.    
                              END.    
 
                              FIND LAST tt-consulta-blt EXCLUSIVE-LOCK NO-ERROR.
@@ -2108,11 +2120,11 @@ PROCEDURE consulta-bloqueto.
 
                              RETURN "NOK".
                         END.
-                   
+
                     IF   p-origem = 3 THEN                /* Internet */
                          DO:
                             
-                            FOR EACH crapcco WHERE 
+                        FOR EACH crapcco WHERE 
                                      crapcco.cdcooper = p-cdcooper 
                                      NO-LOCK
                                ,EACH crapceb WHERE 
@@ -2618,7 +2630,7 @@ PROCEDURE consulta-bloqueto.
                             IF  NOT AVAIL crapoco THEN NEXT.
                             
                             IF  crapret.nrdocmto <> 0 THEN
-								DO:
+								DO:              
                                 RUN p_grava_bloqueto(INPUT p-cdcooper,
                                                      INPUT p-cod-agencia,
                                                      INPUT p-nro-caixa,
@@ -2640,7 +2652,7 @@ PROCEDURE consulta-bloqueto.
 									
 								END.
                             ELSE
-								DO:
+								DO:                         
                                 RUN p_grava_bloqueto_rej (INPUT p-cdcooper,
                                                      INPUT p-cod-agencia,
                                                      INPUT p-nro-caixa,
@@ -3702,21 +3714,21 @@ PROCEDURE cria_tt-consulta-blt.
    DO TRANSACTION:
 
      CREATE tt-consulta-blt.
-
+     
      FIND crabceb WHERE crabceb.cdcooper = crapcob.cdcooper
                     AND crabceb.nrconven = crapcob.nrcnvcob
                     AND crabceb.nrdconta = crapcob.nrdconta
                     NO-LOCK NO-ERROR.
-       
+
      IF AVAIL(crabceb) THEN
      DO:
         ASSIGN tt-consulta-blt.flprotes = INTE(crabceb.flprotes).
-       END.
+     END.
      ELSE
      DO:
          ASSIGN tt-consulta-blt.flprotes = 0.
-   END.
-   
+     END.
+
      /*  Verifica no Cadastro de Sacados Cobranca */
      FOR FIRST crapass FIELDS(nmprimtl)
          WHERE crapass.cdcooper = crapcob.cdcooper AND
@@ -3738,7 +3750,7 @@ PROCEDURE cria_tt-consulta-blt.
                 tt-consulta-blt.nmbaisac = crapsab.nmbaisac
                 tt-consulta-blt.nmcidsac = crapsab.nmcidsac
                 tt-consulta-blt.cdufsaca = crapsab.cdufsaca
-                    tt-consulta-blt.nrcepsac = crapsab.nrcepsac.
+                tt-consulta-blt.nrcepsac = crapsab.nrcepsac.
                     
              { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
 
@@ -4214,6 +4226,22 @@ PROCEDURE cria_tt-consulta-blt.
                    tt-consulta-blt.vljurmul = tt-consulta-blt.vlrjuros +
                                               tt-consulta-blt.vlrmulta.
 
+     /* Aviso SMS */
+     ASSIGN tt-consulta-blt.inavisms = crapcob.inavisms
+            tt-consulta-blt.insmsant = crapcob.insmsant
+            tt-consulta-blt.insmsvct = crapcob.insmsvct
+            tt-consulta-blt.insmspos = crapcob.insmspos
+            tt-consulta-blt.dssmsant = IF crapcob.insmsant <> 0 THEN "S" ELSE "N"
+            tt-consulta-blt.dssmsvct = IF crapcob.insmsvct <> 0 THEN "S" ELSE "N"
+            tt-consulta-blt.dssmspos = IF crapcob.insmspos <> 0 THEN "S" ELSE "N".            
+
+     
+     CASE crapcob.inavisms:
+         WHEN 0 THEN tt-consulta-blt.dsavisms = "Nao Enviar".
+         WHEN 1 THEN tt-consulta-blt.dsavisms = "Linha Dig.".
+         WHEN 2 THEN tt-consulta-blt.dsavisms = "Sem Linha Dig:".
+     END CASE. 
+     
    END. /* Fim do DO TRANSACTION */
   
    /*Bloco para tratamento de erro do create da lcm try catch*/
@@ -4301,7 +4329,7 @@ PROCEDURE cria_tt-consulta-blt_rej.
     ELSE
         ASSIGN aux_nossonro = STRING(crapret.nrnosnum,"99999999999999999").
     
-
+   
    DO TRANSACTION:
 
      CREATE tt-consulta-blt.
@@ -4512,7 +4540,7 @@ PROCEDURE cria_tt-consulta-blt_tdb.
               tt-consulta-blt.nmbaisac = crapsab.nmbaisac
               tt-consulta-blt.nmcidsac = crapsab.nmcidsac
               tt-consulta-blt.cdufsaca = crapsab.cdufsaca
-                    tt-consulta-blt.nrcepsac = crapsab.nrcepsac.
+              tt-consulta-blt.nrcepsac = crapsab.nrcepsac.
 
              { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
 
@@ -5097,10 +5125,24 @@ PROCEDURE proc_nosso_numero.
                                           ELSE
                                           " N". 
 
-	    IF AVAIL(crapceb) THEN
+										   IF AVAIL(crapceb) THEN
 		   DO:
 		     ASSIGN tt-consulta-blt.flprotes = INTE(crapceb.flprotes).
 		   END.
+        /* Aviso SMS */
+       ASSIGN tt-consulta-blt.inavisms = crapcob.inavisms
+              tt-consulta-blt.insmsant = crapcob.insmsant
+              tt-consulta-blt.insmsvct = crapcob.insmsvct
+              tt-consulta-blt.insmspos = crapcob.insmspos
+              tt-consulta-blt.dssmsant = IF crapcob.insmsant <> 0 THEN "S" ELSE "N"
+              tt-consulta-blt.dssmsvct = IF crapcob.insmsvct <> 0 THEN "S" ELSE "N"
+              tt-consulta-blt.dssmspos = IF crapcob.insmspos <> 0 THEN "S" ELSE "N".            
+       
+       CASE crapcob.inavisms:
+           WHEN 0 THEN tt-consulta-blt.dsavisms = "Nao Enviar".
+           WHEN 1 THEN tt-consulta-blt.dsavisms = "Linha Dig.".
+           WHEN 2 THEN tt-consulta-blt.dsavisms = "Sem Linha Dig:".
+       END CASE. 
 
         /* fim-gravar na temptable - Rafael Cechet - 01/04/11 */
 

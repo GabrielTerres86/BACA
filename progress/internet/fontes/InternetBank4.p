@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2007                        Ultima atualizacao: 08/01/2016
+   Data    : Marco/2007                        Ultima atualizacao: 11/10/2016
 
    Dados referentes ao programa:
 
@@ -48,7 +48,13 @@
                             
                08/01/2016 - Ajustes referente Projeto Negativacao Serasa (Daniel)
                
+               11/10/2016 - Ajustes para permitir Aviso cobrança por SMS.
+                            PRJ319 - SMS Cobrança (Odirlei-AMcom)
+                            
+               
                28/10/2016 - Ajustes realizados referente a melhoria 271. (Kelvin)
+               11/10/2016 - Ajustes para permitir Aviso cobrança por SMS.
+                            PRJ319 - SMS Cobrança (Odirlei-AMcom)
 ..............................................................................*/
 
 CREATE WIDGET-POOL.
@@ -102,6 +108,13 @@ DEF  INPUT PARAM par_nrdiavct AS INTE                                  NO-UNDO.
 /* Parametros Negativacao Serasa */
 DEF  INPUT PARAM par_flserasa AS LOGI                                  NO-UNDO.
 DEF  INPUT PARAM par_qtdianeg AS INTE                                  NO-UNDO.
+
+/* Aviso SMS */
+DEF  INPUT PARAM par_inavisms AS INTE                                  NO-UNDO.
+DEF  INPUT PARAM par_insmsant AS INTE                                  NO-UNDO.
+DEF  INPUT PARAM par_insmsvct AS INTE                                  NO-UNDO.
+DEF  INPUT PARAM par_insmspos AS INTE                                  NO-UNDO.
+
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
@@ -242,6 +255,12 @@ RUN gravar-boleto IN h-b1wnet0001 (INPUT par_cdcooper,
                                    /* Serasa */
                                    INPUT par_flserasa,
                                    INPUT par_qtdianeg,
+
+                                   /*Aviso SMS*/
+                                   INPUT par_inavisms,
+                                   INPUT par_insmsant,
+                                   INPUT par_insmsvct,
+                                   INPUT par_insmspos,
 
                                   OUTPUT TABLE tt-erro,
                                   OUTPUT TABLE tt-consulta-blt,
@@ -419,8 +438,22 @@ FOR EACH tt-consulta-blt NO-LOCK:
                                    (IF tt-consulta-blt.flserasa = TRUE 
                                    THEN "S" ELSE "N") + "</flserasa>" +
                                    "<qtdianeg>" +  STRING(tt-consulta-blt.qtdianeg) + "</qtdianeg>" +
+                                   
+                                   /* Aviso SMS*/
+                                   "<inavisms>" + 
+                                   STRING(tt-consulta-blt.inavisms) + 
+                                   "</inavisms>" +
+                                   "<insmsant>" + 
+                                   STRING(tt-consulta-blt.insmsant) + 
+                                   "</insmsant>" +
+                                   "<insmsvct>" + 
+                                   STRING(tt-consulta-blt.insmsvct) + 
+                                   "</insmsvct>" +
+                                   "<insmspos>" + 
+                                   STRING(tt-consulta-blt.insmspos) + 
+                                   "</insmspos>" +
+                                   
                                    "</boleto>".
-
 
     /* Geramos esse log apenas quando for emissão de boleto */
     IF par_tpemitir = 1 THEN 

@@ -2,7 +2,7 @@
 
     Programa  : sistema/generico/procedures/b1wgen0071.p
     Autor     : David
-    Data      : Abril/2010                  Ultima Atualizacao: 13/12/2013
+    Data      : Abril/2010                  Ultima Atualizacao: 17/01/2017
     
     Dados referentes ao programa:
 
@@ -22,6 +22,9 @@
                  06/01/2012 - Validacao de espacos no email (Tiago).
                  
                  13/12/2013 - Adicionado VALIDATE para CREATE. (Jorge)
+                 
+                 17/01/2017 - Adicionado chamada a procedure de replicacao do 
+                              email para o CDC. (Reinert Prj 289)                 
 .............................................................................*/
 
 
@@ -33,6 +36,7 @@
 { sistema/generico/includes/gera_erro.i }
 { sistema/generico/includes/gera_log.i }
 { sistema/generico/includes/b1wgenvlog.i &VAR-GERAL=SIM &SESSAO-BO=SIM }
+{ sistema/generico/includes/var_oracle.i }
     
 DEF VAR aux_nrdrowid AS ROWID                                          NO-UNDO.
 
@@ -728,6 +732,46 @@ PROCEDURE gerenciar-email:
                END.
 
             END.
+            
+            /* Quando for primeiro titular, vamos ver ser o cooperado eh 
+               um conveniado CDC. Caso positivo, vamos replicar os dados
+               alterados de e-mail para as tabelas do CDC. */
+            IF par_idseqttl = 1 THEN 
+              DO:
+            FOR FIRST crapcdr WHERE crapcdr.cdcooper = par_cdcooper
+                                AND crapcdr.nrdconta = par_nrdconta
+                                AND crapcdr.flgconve = TRUE NO-LOCK:
+
+              { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+              
+              RUN STORED-PROCEDURE pc_replica_cdc
+                aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                                    ,INPUT par_nrdconta
+                                                    ,INPUT par_cdoperad
+                                                    ,INPUT par_idorigem
+                                                    ,INPUT par_nmdatela
+                                                    ,INPUT 0
+                                                    ,INPUT 0
+                                                    ,INPUT 1
+                                                    ,INPUT 0
+                                                    ,0
+                                                    ,"").
+
+              CLOSE STORED-PROC pc_replica_cdc
+                        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+              { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+              ASSIGN aux_cdcritic = 0
+                     aux_dscritic = ""
+                     aux_cdcritic = pc_replica_cdc.pr_cdcritic 
+                                      WHEN pc_replica_cdc.pr_cdcritic <> ?
+                     aux_dscritic = pc_replica_cdc.pr_dscritic 
+                                      WHEN pc_replica_cdc.pr_dscritic <> ?.
+                                      
+            END.
+              END.
+
          
         ASSIGN aux_flgtrans = TRUE.
     

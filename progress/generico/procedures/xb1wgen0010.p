@@ -89,7 +89,7 @@ DEF VAR aux_cddemail AS INTE                                           NO-UNDO.
 
     FOR EACH tt-param:
 
-        MESSAGE tt-param.nomeCampo tt-param.valorCampo VIEW-AS ALERT-BOX.
+/*        MESSAGE tt-param.nomeCampo tt-param.valorCampo VIEW-AS ALERT-BOX. */
 
         CASE tt-param.nomeCampo:
               

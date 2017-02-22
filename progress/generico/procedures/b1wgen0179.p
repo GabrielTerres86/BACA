@@ -1,7 +1,7 @@
 /*.............................................................................
     Programa: sistema/generico/procedures/b1wgen0179.p
     Autor   : Jéssica Laverde Gracino (DB1)
-    Data    : 27/09/2013                     Ultima atualizacao: 11/03/2016
+    Data    : 27/09/2013                     Ultima atualizacao: 06/02/2017
 
     Objetivo  : Tranformacao BO tela HISTOR.
 
@@ -10,6 +10,9 @@
         
 		        06/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
                              departamento passando a considerar o código (Renato Darosci)
+
+                06/02/2017 - #552068 Inclusao da descricao extensa do historico
+                             na rotina Busca_Consulta (Carlos)
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -293,7 +296,8 @@ PROCEDURE Busca_Consulta PRIVATE:
                                  par_cdhistor <> 0) OR par_cdhistor = 0)
                            AND ((craphis.tplotmov = par_tpltmvpq    AND
                                  par_tpltmvpq <> 0) OR par_tpltmvpq = 0)
-                           AND  craphis.dshistor MATCHES "*" + TRIM(par_dshistor) + "*"
+                           AND  (craphis.dshistor MATCHES "*" + TRIM(par_dshistor) + "*" OR
+						         craphis.dsexthst MATCHES "*" + TRIM(par_dshistor) + "*" )
                          NO-LOCK
                          BY craphis.cdhistor:
             
@@ -312,6 +316,7 @@ PROCEDURE Busca_Consulta PRIVATE:
             CREATE tt-histor.
             ASSIGN tt-histor.cdhistor = craphis.cdhistor
                    tt-histor.dshistor = craphis.dshistor
+				   tt-histor.dsexthst = craphis.dsexthst
                    tt-histor.indebcre = craphis.indebcre
                    tt-histor.tplotmov = craphis.tplotmov
                    tt-histor.txcpmfcc = par_txcpmfcc

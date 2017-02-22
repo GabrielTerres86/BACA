@@ -27,23 +27,13 @@
 *******************************************************************************/
 
 
-
-
-
-
-
-
-
-
-
-
 /* ..........................................................................
     
    Programa: siscaixa/web/dbo/b2crap14.p
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 24/08/2016
+   Data    : Marco/2001                      Ultima atualizacao: 06/10/2016
 
    Dados referentes ao programa:
 
@@ -317,6 +307,10 @@
                             
                24/08/2016 - #456682 Atualizacao do campo crapcbf.dscodbar para 
                             dsfraude e inclusao do campo crapcbf.tpfraude (Carlos)
+
+               06/10/2016 - Incluido tratamento na procedure identifica-titulo-coop,
+							para origem de "ACORDO", Prj. 302 (Jean Michel).
+
 ............................................................................ */
 
 /*---------------------------------------------------------------------*/
@@ -2768,7 +2762,7 @@ PROCEDURE identifica-titulo-coop:
           aux-bloqueto2 = DECIMAL(SUBSTR(p-codbarras, 34, 9))  /* ALPES */
           aux-bloqueto3 = DECIMAL(SUBSTR(p-codbarras, 33, 10)) /* 10 dígitos */
           aux-bloqueto4 = DECIMAL(SUBSTR(p-codbarras, 37, 6)) /*6 dígitos CEB*/
-          aux-nrdconta  = INTEGER(SUBSTR(p-codbarras, 26, 8))  /* ALPES */          
+          aux-nrdconta  = INTEGER(SUBSTR(p-codbarras, 26, 8))  /* ALPES */
           p-insittit    = 4
           p-intitcop    = 0
           p-convenio    = 0
@@ -2780,14 +2774,14 @@ PROCEDURE identifica-titulo-coop:
    /* Validar digito geral do codigo de barras - titulos */ 
    RUN dbo/pcrap05.p(INPUT DEC(p-codbarras),
                     OUTPUT aux-retorno).    
-   
+
    IF  aux-retorno = NO  THEN 
        DO:
            ASSIGN i-cod-erro  = 8           
                   c-desc-erro = " ".
            RUN cria-erro (INPUT p-cooper,
-                          INPUT p-cod-agencia,
-                          INPUT p-nro-caixa,
+                                                INPUT p-cod-agencia,
+                                                INPUT p-nro-caixa,
                           INPUT i-cod-erro,
                           INPUT c-desc-erro,
                           INPUT YES).
@@ -3209,7 +3203,8 @@ PROCEDURE identifica-titulo-coop:
            IF  crapcco.dsorgarq = "IMPRESSO PELO SOFTWARE" OR
                crapcco.dsorgarq = "INTERNET"               OR 
                crapcco.dsorgarq = "EMPRESTIMO"             OR
-               crapcco.dsorgarq = "MIGRACAO"               THEN
+               crapcco.dsorgarq = "MIGRACAO"               OR
+			   crapcco.dsorgarq = "ACORDO"				 THEN
            DO:
                FIND crapcob WHERE 
                     crapcob.cdcooper = crapcop.cdcooper  AND

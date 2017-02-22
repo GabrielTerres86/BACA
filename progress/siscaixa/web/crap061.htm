@@ -68,6 +68,8 @@
                           (Douglas - Chamado 496644)
 
              12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM).
+             
+             31/01/2017 - Validar corretamente a conta beneficiaria CRAPASS (Lucas Ranghetti #603860)
 -->
 
 <html>
@@ -394,6 +396,8 @@
     DEF VAR p-nro-lote   AS INTEGER                                NO-UNDO.
     DEF VAR v_dinheiro   AS CHARACTER                              NO-UNDO.
     DEF VAR v_cheque     AS CHARACTER                              NO-UNDO.
+    
+    DEF BUFFER crabcop FOR crapcop.
     
     DEFINE TEMP-TABLE w-craperr  NO-UNDO
            FIELD cdagenci   LIKE craperr.cdagenc
@@ -878,18 +882,24 @@
                                                        /* caso conta foi transferida, pega o numero da nova conta */
                                                        DO WHILE TRUE:
                                                     
-                                                          FIND FIRST crapass WHERE crapass.cdcooper = crapcop.cdcooper AND
+                                                          FIND FIRST crabcop WHERE crabcop.nmrescop = TRIM(ENTRY(1,aux_nmcopdst,"-"))
+                                                                             NO-LOCK NO-ERROR.
+                                                                             
+                                                          IF  NOT AVAIL crabcop THEN
+                                                              LEAVE.
+                                                              
+                                                          FIND FIRST crapass WHERE crapass.cdcooper = crabcop.cdcooper AND
                                                                                    crapass.nrdconta = INT(v_conta) 
                                                                                    NO-LOCK NO-ERROR.
                                                     
-                                                          IF NOT AVAIL crapass THEN
+                                                          IF  NOT AVAIL crapass THEN
                                                              LEAVE.
                                                     
                                                           IF AVAIL crapass THEN 
                                                              DO:
                                                                 IF CAN-DO("2,4,6,8",STRING(crapass.cdsitdtl))   THEN  
                                                                    DO:
-                                                                      FIND FIRST craptrf WHERE craptrf.cdcooper = crapcop.cdcooper AND
+                                                                      FIND FIRST craptrf WHERE craptrf.cdcooper = crapass.cdcooper AND
                                                                                                craptrf.nrdconta = crapass.nrdconta AND
                                                                                                craptrf.tptransa = 1                AND
                                                                                                craptrf.insittrs = 2 

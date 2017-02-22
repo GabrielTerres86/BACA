@@ -3,7 +3,7 @@
    Sistema : Cobranca - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Rafael
-   Data    : janeiro/2012.                     Ultima atualizacao: 18/08/2015
+   Data    : janeiro/2012.                     Ultima atualizacao: 06/10/2016
 
    Dados referentes ao programa:
 
@@ -74,11 +74,9 @@
                                                                         
                18/08/2015 - Ajuste na data limite de pagto para boletos do 
                             convenio "EMPRESTIMO" - Projeto 210 (Rafael).
-               
-               01/12/2016 - Alterado para enviar como texto informativo o conteudo do campo
-                            dsinform, ao inves do campo dsdinstr
-                            Heitor (Mouts) - Chamado 564818
 
+			   06/10/2016 - Incluido tratamento de crapcco.dsorgarq = ACORDO”,
+                            na procedure p_cria_titulo, Projeto 302 (Jean Michel).
  ........................................................................... */
 
 { includes/var_batch.i "NEW" }
@@ -873,6 +871,10 @@ PROCEDURE p_cria_titulo:
                       INTE(STRING(YEAR(crapcob.dtvencto),"9999") +
                            STRING(MONTH(crapcob.dtvencto), "99") + 
                            STRING(DAY(crapcob.dtvencto), "99"))
+                 ELSE IF crapcco.dsorgarq = "ACORDO" THEN
+                      INTE(STRING(YEAR(crapcob.dtvencto + crapcco.qtdecate),"9999") +
+                           STRING(MONTH(crapcob.dtvencto + crapcco.qtdecate), "99") + 
+                           STRING(DAY(crapcob.dtvencto + crapcco.qtdecate), "99"))
                  ELSE
                       INTE(STRING(YEAR(crapcob.dtvencto + 52),"9999") +
                            STRING(MONTH(crapcob.dtvencto + 52), "99") + 

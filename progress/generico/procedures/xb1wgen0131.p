@@ -2,12 +2,15 @@
 
     Programa: sistema/generico/procedures/b1wgen0131.p
     Autor   : Gabriel Capoia
-    Data    : Dezembro/2011                      Ultima atualizacao: 00/00/0000
+    Data    : Dezembro/2011                      Ultima atualizacao: 06/12/2016
 
     Objetivo  : BO de Comunicacao XML x BO - Tela PREVIS
 
     Alteracoes: 13/08/2012 - Ajuste referente ao projeto Fluxo Financeiro
                              (Adriano).
+   
+                03/10/2016 - Remocao das opcoes "F" e "L" para o PRJ313.
+                             (Jaison/Marcos SUPERO)
    
                 06/12/2016 - P341-Automatização BACENJUD - Alterar a passagem da descrição do 
                              departamento como parametro e passar o código (Renato Darosci)
@@ -252,11 +255,6 @@ PROCEDURE Busca_Dados:
                              INPUT aux_dtmvtoan,
                              INPUT aux_cdagefim, 
                              OUTPUT TABLE tt-previs,
-                             OUTPUT TABLE tt-fluxo,
-                             OUTPUT TABLE tt-ffin-mvto-cent, 
-                             OUTPUT TABLE tt-ffin-mvto-sing, 
-                             OUTPUT TABLE tt-ffin-cons-cent, 
-                             OUTPUT TABLE tt-ffin-cons-sing, 
                              OUTPUT TABLE tt-erro).
 
     IF RETURN-VALUE <> "OK" THEN
@@ -282,16 +280,6 @@ PROCEDURE Busca_Dados:
           RUN piXmlNew.
           RUN piXmlExport (INPUT TEMP-TABLE tt-previs:HANDLE,
                            INPUT "Previsao").
-          RUN piXmlExport (INPUT TEMP-TABLE tt-fluxo:HANDLE,
-                           INPUT "Fluxo").
-          RUN piXmlExport (INPUT TEMP-TABLE tt-ffin-mvto-cent:HANDLE,
-                           INPUT "Movto-Cent").
-          RUN piXmlExport (INPUT TEMP-TABLE tt-ffin-mvto-sing:HANDLE,
-                           INPUT "Movto-Sing").                      
-          RUN piXmlExport (INPUT TEMP-TABLE tt-ffin-cons-cent:HANDLE,
-                           INPUT "ConsCent").
-          RUN piXmlExport (INPUT TEMP-TABLE tt-ffin-cons-sing:HANDLE,
-                           INPUT "Cons-Sing").
           IF TEMP-TABLE tt-erro:HAS-RECORDS THEN
              RUN piXmlExport (INPUT TEMP-TABLE tt-erro:HANDLE,
                            INPUT "Msg").
@@ -384,26 +372,6 @@ PROCEDURE Busca_Cooperativas:
 
 END PROCEDURE. /* Busca_Cooperativas */
 
-
-/* ------------------------------------------------------------------------- */
-/*    VALIDA O HORAIO PARA DIGITACAO DE CAMPOS                               */
-/* ------------------------------------------------------------------------- */
-PROCEDURE valida_horario:
-
-    DYNAMIC-FUNCTION("valida_horario" IN hBO, 
-                     INPUT aux_cdcooper,
-                     INPUT TIME,
-                     OUTPUT aux_hrpermit,
-                     OUTPUT aux_dscritic).
-
-   RUN piXmlNew.
-   RUN piXmlAtributo (INPUT "hrpermit", INPUT aux_hrpermit).
-   RUN piXmlAtributo (INPUT "dscritic", INPUT aux_dscritic).
-   RUN piXmlSave.
-
-END PROCEDURE.
-
-
 /* ------------------------------------------------------------------------- */
 /*    VERIFICA SE TELA ESTA SENDO USADA                                      */
 /* ------------------------------------------------------------------------- */
@@ -483,172 +451,5 @@ PROCEDURE libera_acesso:
           RUN piXmlNew.
           RUN piXmlSave.
        END.
-
-END PROCEDURE.
-
-
-/* ------------------------------------------------------------------------- */
-/*    GRAVA O VALOR DOS DIVERSOS                                             */
-/* ------------------------------------------------------------------------- */
-PROCEDURE diversos:
-
-   RUN pi_diversos_f IN hBO(INPUT aux_cdcooper,
-                            INPUT aux_cdagenci,
-                            INPUT aux_nrdcaixa,
-                            INPUT aux_cdoperad,
-                            INPUT aux_dtmvtolt,
-                            INPUT aux_nmdatela,
-                            INPUT aux_tpdmovto,
-                            INPUT aux_vlrepass,
-                            INPUT aux_vlnumera,
-                            INPUT aux_vlrfolha,
-                            INPUT aux_vloutros,
-                            OUTPUT TABLE tt-erro).
-
-   IF RETURN-VALUE <> "OK" THEN
-      DO:
-         FIND FIRST tt-erro NO-LOCK NO-ERROR.
-
-         IF  NOT AVAILABLE tt-erro  THEN
-             DO:
-                CREATE tt-erro.
-                ASSIGN tt-erro.dscritic = "Nao foi possivel gravar o valor " +
-                                          "dos diversos.".
-             END.
-
-         RUN piXmlNew.
-         RUN piXmlExport (INPUT TEMP-TABLE tt-erro:HANDLE,INPUT "Erro").
-         RUN piXmlSave.
-
-      END.
-   ELSE
-      DO:
-         RUN piXmlNew.
-         RUN piXmlSave.
-      END.
-
-
-END PROCEDURE.
-
-
-/* ------------------------------------------------------------------------- */
-/*    BUSCA DADOS DO FLUXO DA SINGULAR                                       */
-/* ------------------------------------------------------------------------- */
-PROCEDURE busca_dados_fluxo_singular:
-
-   
-   RUN busca_dados_fluxo_singular IN hBO (INPUT aux_cdcooper,
-                                          INPUT aux_dtmvtolx,
-                                          INPUT aux_tpdmovto,
-                                          OUTPUT TABLE tt-ffin-mvto-sing).
-
-   IF  RETURN-VALUE <> "OK" THEN
-       DO:
-          FIND FIRST tt-erro NO-LOCK NO-ERROR.
-
-          IF  NOT AVAILABLE tt-erro  THEN
-              DO:
-                 CREATE tt-erro.
-                 ASSIGN tt-erro.dscritic = "Nao foi possivel buscar o valor " +
-                                           "do fluxo singular.".
-              END.
-
-          RUN piXmlNew.
-          RUN piXmlExport (INPUT TEMP-TABLE tt-erro:HANDLE,INPUT "Erro").
-          RUN piXmlSave.
-
-       END.
-   ELSE
-       DO:
-          RUN piXmlNew.
-          RUN piXmlExport (INPUT TEMP-TABLE tt-ffin-mvto-sing:HANDLE,
-                           INPUT "Previsao").
-          RUN piXmlSave.
-       END.
-
-
-END PROCEDURE.
-
-/* ------------------------------------------------------------------------- */
-/*    GRAVA O VALOR DA APLICACAO E DO RESGATE                                */
-/* ------------------------------------------------------------------------- */
-PROCEDURE grava_apli_resg:
-
-    
-   RUN grava_apli_resg IN hBO(INPUT aux_cdcooper,  
-                              INPUT aux_cdagenci,  
-                              INPUT aux_nrdcaixa,  
-                              INPUT aux_cdoperad,  
-                              INPUT aux_nmdatela,  
-                              INPUT aux_dtmvtolt,  
-                              INPUT aux_dtmvtolx,  
-                              INPUT aux_vlresgat,
-                              INPUT aux_vlresgan,
-                              INPUT aux_vlaplica,  
-                              INPUT aux_vlaplian,  
-                              OUTPUT TABLE tt-erro).
-
-   IF RETURN-VALUE <> "OK" THEN
-     DO:
-        FIND FIRST tt-erro NO-LOCK NO-ERROR.
-
-        IF NOT AVAILABLE tt-erro  THEN
-           DO:
-              CREATE tt-erro.
-              ASSIGN tt-erro.dscritic = "Nao foi possivel gravar o valor " +
-                                        "da aplicacao/resgate.".
-           END.
-
-        RUN piXmlNew.
-        RUN piXmlExport (INPUT TEMP-TABLE tt-erro:HANDLE,INPUT "Erro").
-        RUN piXmlSave.
-
-     END.
-   ELSE
-     DO:
-        RUN piXmlNew.
-        RUN piXmlSave.
-
-     END.
-        
-
-END PROCEDURE.
-
-/* ------------------------------------------------------------------------- */
-/*    BUSCA DADOS CONSOLIDADOS DA SINGULAR                                   */
-/* ------------------------------------------------------------------------- */
-PROCEDURE busca_dados_consolidado_singular:
-
-   RUN busca_dados_consolidado_singular IN hBO(INPUT aux_cdcooper,
-                                               INPUT aux_dtmvtolt,
-                                               INPUT aux_cdcoopex,
-                                               OUTPUT TABLE tt-ffin-cons-sing).
-
-
-   IF RETURN-VALUE <> "OK" THEN
-      DO:
-         FIND FIRST tt-erro NO-LOCK NO-ERROR.
-
-         IF NOT AVAILABLE tt-erro  THEN
-            DO:
-               CREATE tt-erro.
-               ASSIGN tt-erro.dscritic = "Nao buscar os dados consolidados " +
-                                         "da singular.".
-            END.
-
-         RUN piXmlNew.
-         RUN piXmlExport (INPUT TEMP-TABLE tt-erro:HANDLE,INPUT "Erro").
-         RUN piXmlSave.
-
-      END.
-   ELSE
-      DO:
-         RUN piXmlNew.
-         RUN piXmlExport (INPUT TEMP-TABLE tt-ffin-cons-sing:HANDLE,
-                          INPUT "Consolidado").
-         RUN piXmlSave.
-
-      END.
-
 
 END PROCEDURE.

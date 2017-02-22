@@ -11,6 +11,8 @@
                  
     Alteracoes: 12/12/2013 - Adicionado VALIDATE para CREATE. (Jorge)
 
+				24/06/2016 - Adicionar o parametro par_cdprodut (Renato - Supero)
+
 	            06/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
                              departamento passando a considerar o código (Renato Darosci)
 
@@ -36,6 +38,7 @@ PROCEDURE consultar_cadret:
     DEF  INPUT  PARAM par_idorigem AS CHAR                           NO-UNDO.
     DEF  INPUT  PARAM par_dtmvtolt AS DATE                           NO-UNDO.
     DEF  INPUT  PARAM par_cddopcao AS CHAR                           NO-UNDO.
+	DEF  INPUT  PARAM par_cdprodut AS INTE                           NO-UNDO.
     DEF  INPUT  PARAM par_cdoperac AS CHAR                           NO-UNDO.
     DEF  INPUT  PARAM par_nrtabela AS INTE                           NO-UNDO.
     DEF  INPUT  PARAM par_cdretorn AS INTE                           NO-UNDO.
@@ -63,7 +66,7 @@ PROCEDURE consultar_cadret:
                                         
     IF par_cddopcao = "C" THEN
     DO:
-        FOR EACH craprto WHERE craprto.cdprodut = 1 /* produto GRAVAMES */
+        FOR EACH craprto WHERE craprto.cdprodut = par_cdprodut  /* => 1 - produto GRAVAMES / 2 - Alienação de imóveis */
                            AND craprto.cdoperac = par_cdoperac
                            AND craprto.nrtabela = par_nrtabela
                            NO-LOCK:
@@ -77,7 +80,7 @@ PROCEDURE consultar_cadret:
     END.
     ELSE IF par_cddopcao = "A" THEN
     DO:
-        FIND FIRST craprto WHERE craprto.cdprodut = 1 /* produto GRAVAMES */
+        FIND FIRST craprto WHERE craprto.cdprodut = par_cdprodut  /* => 1 - produto GRAVAMES / 2 - Alienação de imóveis */
                              AND craprto.cdoperac = par_cdoperac
                              AND craprto.nrtabela = par_nrtabela
                              AND craprto.cdretorn = par_cdretorn
@@ -125,6 +128,7 @@ PROCEDURE incluir_cadret:
     DEF  INPUT  PARAM par_idorigem AS CHAR                           NO-UNDO.
     DEF  INPUT  PARAM par_dtmvtolt AS DATE                           NO-UNDO.
     DEF  INPUT  PARAM par_cddopcao AS CHAR                           NO-UNDO.
+	DEF  INPUT  PARAM par_cdprodut AS INTE                           NO-UNDO.
     DEF  INPUT  PARAM par_cdoperac AS CHAR                           NO-UNDO.
     DEF  INPUT  PARAM par_nrtabela AS INTE                           NO-UNDO.
     DEF  INPUT  PARAM par_cdretorn AS INTE                           NO-UNDO.
@@ -165,7 +169,7 @@ PROCEDURE incluir_cadret:
         RETURN "NOK".
     END.
 
-    IF CAN-FIND(craprto WHERE craprto.cdprodut = 1
+    IF CAN-FIND(craprto WHERE craprto.cdprodut = par_cdprodut  /* => 1 - produto GRAVAMES / 2 - Alienação de imóveis */
                           AND craprto.cdoperac = par_cdoperac
                           AND craprto.nrtabela = par_nrtabela
                           AND craprto.cdretorn = par_cdretorn
@@ -187,7 +191,7 @@ PROCEDURE incluir_cadret:
     END.
 
     CREATE craprto.
-    ASSIGN craprto.cdprodut = 1
+    ASSIGN craprto.cdprodut = par_cdprodut
            craprto.cdoperac = par_cdoperac
            craprto.nrtabela = par_nrtabela
            craprto.cdretorn = par_cdretorn
@@ -212,6 +216,7 @@ PROCEDURE alterar_cadret:
     DEF  INPUT  PARAM par_idorigem AS CHAR                           NO-UNDO.
     DEF  INPUT  PARAM par_dtmvtolt AS DATE                           NO-UNDO.
     DEF  INPUT  PARAM par_cddopcao AS CHAR                           NO-UNDO.
+	DEF  INPUT  PARAM par_cdprodut AS INTE                           NO-UNDO.
     DEF  INPUT  PARAM par_cdoperac AS CHAR                           NO-UNDO.
     DEF  INPUT  PARAM par_nrtabela AS INTE                           NO-UNDO.
     DEF  INPUT  PARAM par_cdretorn AS INTE                           NO-UNDO.
@@ -235,7 +240,7 @@ PROCEDURE alterar_cadret:
     IF RETURN-VALUE = "NOK" THEN
        RETURN "NOK".
 
-    FIND FIRST craprto WHERE craprto.cdprodut = 1
+    FIND FIRST craprto WHERE craprto.cdprodut = par_cdprodut
                          AND craprto.cdoperac = par_cdoperac
                          AND craprto.nrtabela = par_nrtabela
                          AND craprto.cdretorn = par_cdretorn

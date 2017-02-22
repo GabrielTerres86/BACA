@@ -255,6 +255,9 @@
                
 			   03/10/2016 - Ajustes referente a melhoria M271. (Kelvin)
 
+               11/10/2016 - Ajustes para permitir Aviso cobrança por SMS.
+                            PRJ319 - SMS Cobrança(Odirlei-AMcom)
+
                09/11/2016 - Ajuste na correcao realizada pelo Andrey no dia 13/10,
                             nao fixara em convenio INTERNET, mas utilizara uma logica
                             semelhante ao que acontece para SERASA, assumindo valor
@@ -266,6 +269,9 @@
 
                31/01/2017 - Ajuste para carregar o nome do beneficiario na geracao do 
 			                boleto (Douglas - Chamado 601478)
+               11/10/2016 - Ajustes para permitir Aviso cobrança por SMS.
+                            PRJ319 - SMS Cobrança(Odirlei-AMcom)
+
 .............................................................................*/
 
 
@@ -924,6 +930,12 @@ PROCEDURE gravar-boleto:
     DEF  INPUT PARAM par_flserasa AS LOGI                           NO-UNDO.
     DEF  INPUT PARAM par_qtdianeg AS INTE                           NO-UNDO.
 
+    /* Aviso SMS */
+    DEF  INPUT PARAM par_inavisms AS INTE                                  NO-UNDO.
+    DEF  INPUT PARAM par_insmsant AS INTE                                  NO-UNDO.
+    DEF  INPUT PARAM par_insmsvct AS INTE                                  NO-UNDO.
+    DEF  INPUT PARAM par_insmspos AS INTE                                  NO-UNDO.
+
     DEF OUTPUT PARAM TABLE FOR tt-erro.
     DEF OUTPUT PARAM TABLE FOR tt-consulta-blt.
     DEF OUTPUT PARAM TABLE FOR tt-dados-sacado-blt.
@@ -965,7 +977,7 @@ PROCEDURE gravar-boleto:
 
     /* EMAIL DOS PAGADORES */
     DEF VAR aux_dsdemail AS CHAR                                    NO-UNDO.
-    
+
     /* Nome do Beneficiario para imprimir no boleto */
     DEF VAR aux_nmdobnfc AS CHAR                                    NO-UNDO.
 
@@ -1371,8 +1383,8 @@ PROCEDURE gravar-boleto:
 			      DO:   
 				        ASSIGN aux_dscritic =  "Nao foi possivel buscar o nome do beneficiario para ser impresso no boleto".
 			      END.
-				    UNDO TRANSACAO, LEAVE TRANSACAO.
-        END.
+                UNDO TRANSACAO, LEAVE TRANSACAO.
+            END.
 
 
         /* ************************************************************************* */
@@ -1903,6 +1915,12 @@ PROCEDURE gravar-boleto:
                                    INPUT par_flserasa,
                                    INPUT par_qtdianeg,
 
+                                   /* Aviso SMS*/
+                                   INPUT par_inavisms,
+                                   INPUT par_insmsant,
+                                   INPUT par_insmsvct,
+                                   INPUT par_insmspos,
+
                                    INPUT TABLE tt-dados-sacado-blt,
                                    INPUT-OUTPUT aux_lsdoctos,
                                   OUTPUT aux_cdcritic,
@@ -2143,6 +2161,10 @@ PROCEDURE gera-dados:
     DEF VAR aux_valormin         AS DEC                             NO-UNDO.
     DEF VAR aux_textodia         AS CHAR                            NO-UNDO.
     DEF VAR aux_flprotes         AS LOG                             NO-UNDO.
+    DEF VAR aux_flpersms         AS INT                             NO-UNDO.
+    DEF VAR aux_fllindig         AS INT                             NO-UNDO.
+    DEF VAR aux_flsitsms         AS INT                             NO-UNDO.
+    DEF VAR aux_idcontrato       AS INT                             NO-UNDO.
             
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-dados-blt.
@@ -2435,7 +2457,95 @@ PROCEDURE gera-dados:
            aux_textodia = pc_busca_param_negativ.pr_dstexto_dia
                               WHEN pc_busca_param_negativ.pr_dstexto_dia <> ?.
 
+    /* Verificar serviço de SMS*/
+    { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+                                                  
+    RUN STORED-PROCEDURE pc_verifar_serv_sms
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper  /* pr_cdcooper  */
+                                            ,INPUT par_nrdconta  /* pr_nrdconta  */
+                                            ,INPUT 'INTERNETBANK'/* pr_nmdatela  */
+                                            ,INPUT 3             /* pr_idorigem  */
+                                            /*----> OUT <-----*/ 
+                                            ,OUTPUT 0            /* pr_idcontrato */
+                                            ,OUTPUT 0            /* pr_flsitsms */ 
+                                            ,OUTPUT ""           /* pr_dsalerta */ 
+                                            ,OUTPUT 0            /* pr_cdcritic */ 
+                                            ,OUTPUT "").         /* pr_dscritic */ 
 
+    CLOSE STORED-PROC pc_verifar_serv_sms
+                    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.     
+
+    { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl}}
+
+    ASSIGN aux_cdcritic = 0
+           aux_dscritic = ""
+           aux_cdcritic = pc_verifar_serv_sms.pr_cdcritic 
+                          WHEN pc_verifar_serv_sms.pr_cdcritic <> ?
+           aux_dscritic = pc_verifar_serv_sms.pr_dscritic 
+                          WHEN pc_verifar_serv_sms.pr_dscritic <> ?.
+
+    IF aux_dscritic <> "" THEN
+      DO:
+
+          RUN gera_erro (INPUT par_cdcooper,
+                         INPUT par_cdagenci,
+                         INPUT par_nrdcaixa,
+                         INPUT 1,            /** Sequencia **/
+                         INPUT aux_cdcritic,
+                         INPUT-OUTPUT aux_dscritic).
+                         
+          IF  par_flgerlog  THEN
+              RUN proc_gerar_log (INPUT par_cdcooper,
+                                  INPUT par_cdoperad,
+                                  INPUT aux_dscritic,
+                                  INPUT aux_dsorigem,
+                                  INPUT aux_dstransa,
+                                  INPUT FALSE,
+                                  INPUT par_idseqttl,
+                                  INPUT par_nmdatela,
+                                  INPUT par_nrdconta,
+                                 OUTPUT aux_nrdrowid).
+
+          RETURN "NOK".          
+      END. 
+            
+    ASSIGN aux_flsitsms = 0
+           aux_idcontrato = 0
+           aux_flsitsms = pc_verifar_serv_sms.pr_flsitsms 
+                          WHEN pc_verifar_serv_sms.pr_flsitsms <> ?
+           aux_idcontrato = pc_verifar_serv_sms.pr_idcontrato 
+                          WHEN pc_verifar_serv_sms.pr_idcontrato <> ?.
+    
+    /* Se retornou numero de contrato é pq existe contrato ativo */
+    ASSIGN aux_flpersms = 0.
+    IF aux_idcontrato > 0 AND 
+       aux_flsitsms = 1 THEN
+    DO:
+      ASSIGN aux_flpersms = 1.
+    END.  
+      
+      
+    /* Verificar se coop permite enviar linha digitavel por email  */
+    { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }    
+
+    RUN STORED-PROCEDURE pc_verif_permite_lindigi
+        aux_handproc = PROC-HANDLE NO-ERROR
+                                ( INPUT par_cdcooper,
+                                 OUTPUT 0,            /* pr_flglinha_digitavel */ 
+                                 OUTPUT "").          /* pr_dscritic */
+
+    CLOSE STORED-PROC pc_verif_permite_lindigi
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+    { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+
+    ASSIGN aux_dscritic = ""
+           aux_fllindig = 0 
+           aux_fllindig = pc_verif_permite_lindigi.pr_flglinha_digitavel
+                              WHEN pc_verif_permite_lindigi.pr_flglinha_digitavel <> ?
+           aux_dscritic = pc_verif_permite_lindigi.pr_dscritic
+                              WHEN pc_verif_permite_lindigi.pr_dscritic <> ?.       
+      
     CREATE tt-dados-blt.
     ASSIGN tt-dados-blt.vllbolet = crapsnh.vllbolet
            tt-dados-blt.dsdinstr = crapsnh.dsdinstr
@@ -2454,6 +2564,8 @@ PROCEDURE gera-dados:
            tt-dados-blt.nmcidade = REPLACE(crapenc.nmcidade,"&","%26")
            tt-dados-blt.cdufende = crapenc.cdufende
            tt-dados-blt.nrcepend = crapenc.nrcepend
+           tt-dados-blt.flpersms = aux_flpersms
+           tt-dados-blt.fllindig = aux_fllindig
            tt-dados-blt.intipcob = aux_intipcob  /* 1-Cob S/ Registro 
                                                     2-Cob C/ Registro
                                                     3-Todos */
@@ -3970,7 +4082,7 @@ DO TRANSACTION:
      CREATE tt-consulta-blt.
 
      ASSIGN tt-consulta-blt.nmprimtl = REPLACE(p-nmdobnfc,"&","%26").
-  
+
      /*  Verifica no Cadastro de Sacados Cobranca */
      
      FIND crapsab WHERE crapsab.cdcooper = crapcob.cdcooper AND
@@ -4244,6 +4356,12 @@ DO TRANSACTION:
          ASSIGN tt-consulta-blt.agencidv = STRING(crapcop.cdagedbb,"99999").
      END.
 
+     /* Aviso SMS */
+     ASSIGN tt-consulta-blt.inavisms = crapcob.inavisms
+            tt-consulta-blt.insmsant = crapcob.insmsant
+            tt-consulta-blt.insmsvct = crapcob.insmsvct
+            tt-consulta-blt.insmspos = crapcob.insmspos.
+
 
    END. /* Fim do DO TRANSACTION */
   
@@ -4300,6 +4418,12 @@ PROCEDURE p_cria_titulo:
      /* Serasa */
     DEF INPUT   PARAM p-flserasa    LIKE crapcob.flserasa   NO-UNDO.
     DEF INPUT   PARAM p-qtdianeg    LIKE crapcob.qtdianeg   NO-UNDO.
+
+    /* Aviso SMS */
+    DEF  INPUT PARAM p-inavisms AS INTE                                  NO-UNDO.
+    DEF  INPUT PARAM p-insmsant AS INTE                                  NO-UNDO.
+    DEF  INPUT PARAM p-insmsvct AS INTE                                  NO-UNDO.
+    DEF  INPUT PARAM p-insmspos AS INTE                                  NO-UNDO.
 
     DEF INPUT   PARAM TABLE FOR tt-dados-sacado-blt.
     DEF INPUT-OUTPUT  PARAM p-lsdoctos       AS CHAR        NO-UNDO.
@@ -4453,6 +4577,16 @@ PROCEDURE p_cria_titulo:
 
 
     END.
+
+    /* Se foi informado para enviar aviso, porem sem selecionar
+       o momente, deve gravar como nao enviar aviso */
+    IF  p-inavisms <> 0 AND 
+        p-insmsant =  0 AND 
+        p-insmsvct =  0 AND 
+        p-insmspos =  0 THEN
+    DO:
+      ASSIGN p-inavisms = 0.
+    END.
     
     CREATE crapcob.
     ASSIGN crapcob.cdcooper = p-cdcooper
@@ -4494,6 +4628,12 @@ PROCEDURE p_cria_titulo:
            /* Serasa */
            crapcob.flserasa = p-flserasa
            crapcob.qtdianeg = p-qtdianeg
+
+           /* Aviso SMS */
+           crapcob.inavisms = p-inavisms
+           crapcob.insmsant = p-insmsant
+           crapcob.insmsvct = p-insmsvct
+           crapcob.insmspos = p-insmspos
 
            crapcob.indiaprt = p-indiaprt
            crapcob.vljurdia = p-vljurdia

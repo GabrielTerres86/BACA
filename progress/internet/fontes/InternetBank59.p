@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2009                        Ultima atualizacao: 11/10/2016
+   Data    : Marco/2009                        Ultima atualizacao: 17/10/2016
 
    Dados referentes ao programa:
 
@@ -53,6 +53,8 @@
 							ao relatório de  movimento de cobranca com registro,
 							conforme solicitado no chamado 496856 (Kelvin).
                             
+               17/10/2016 - Inclusao Relatorio de Envio de SMS.    
+	                          PRJ319 - SMS Cobrança(Odirlei-AMcom)   
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -60,6 +62,7 @@ CREATE WIDGET-POOL.
 { sistema/internet/includes/var_ibank.i }
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/b1wgen0010tt.i }
+{ sistema/generico/includes/var_oracle.i }
 
 DEF VAR h-b1wnet0001 AS HANDLE                                         NO-UNDO.
 DEF VAR h-b1wgen0010 AS HANDLE                                         NO-UNDO.
@@ -67,11 +70,17 @@ DEF VAR h-b1wgen0010 AS HANDLE                                         NO-UNDO.
 DEF VAR i            AS INTE                                           NO-UNDO.
 
 DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
+DEF VAR aux_cdcritic AS INTE                                           NO-UNDO.
 DEF VAR aux_dslinxml AS CHAR                                           NO-UNDO.
 DEF VAR vr_flgfirst  AS LOGI                                           NO-UNDO.
 DEF VAR aux_dsiduser AS CHAR                                           NO-UNDO.
 DEF VAR aux_nmarqimp AS CHAR                                           NO-UNDO.
 DEF VAR aux_nmarqpdf AS CHAR                                           NO-UNDO.
+DEF VAR aux_dsxmlrel AS CHAR                                           NO-UNDO.
+DEF VAR aux_iteracoes AS INTEGER                                       NO-UNDO.
+DEF VAR aux_posini    AS INTEGER                                       NO-UNDO.
+DEF VAR aux_contador  AS INTEGER                                       NO-UNDO.
+
 
 DEF  INPUT PARAM par_cdcooper LIKE crapcob.cdcooper                    NO-UNDO.
 DEF  INPUT PARAM par_nrdconta LIKE crapcob.nrdconta                    NO-UNDO.
@@ -88,10 +97,18 @@ DEF  INPUT PARAM par_iniemiss AS DATE                                  NO-UNDO.
 DEF  INPUT PARAM par_fimemiss AS DATE                                  NO-UNDO.
 DEF  INPUT PARAM par_flgregis AS LOGI                                  NO-UNDO.
 DEF  INPUT PARAM par_inserasa AS INTE                                  NO-UNDO. 
+DEF  INPUT PARAM par_instatussms AS INTE                               NO-UNDO. 
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
+
+function roundUp returns integer ( x as decimal ):
+  if x = truncate( x, 0 ) then
+    return integer( x ).
+  else
+    return integer( truncate( x, 0 ) + 1 ).
+end.
 
 /*    se for 1. Carteira de Cobranca sem Registro
    ou se for 3. Movimento de Liquidações (Francesa)
@@ -612,6 +629,65 @@ ELSE IF par_idrelato = 2 THEN
 
         END.
            
+    END.
+
+/* Relatorio analitico de envio de SMS*/    
+ELSE IF par_idrelato = 6 THEN
+    DO:
+       
+      ASSIGN aux_dsiduser = STRING(par_nrdconta) + STRING(TIME).
+      
+      { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }    
+
+      RUN STORED-PROCEDURE pc_relat_anali_envio_sms
+          aux_handproc = PROC-HANDLE NO-ERROR
+                                  (INPUT par_cdcooper,      /* pr_cdcooper */
+                                   INPUT par_nrdconta,      /* pr_nrdconta */
+                                   INPUT par_iniemiss,      /* pr_dtiniper */
+                                   INPUT par_fimemiss,      /* pr_dtfimper */
+                                   INPUT 3,                 /* pr_idorigem */
+                                   INPUT aux_dsiduser,      /* pr_dsiduser */
+                                   INPUT par_instatussms,   /* pr_instatus */
+                                   
+                                  OUTPUT "",            /* pr_nmarqpdf */
+                                  OUTPUT "",            /* pr_dsxmlrel */
+                                  OUTPUT 0,             /* pr_cdcritic */ 
+                                  OUTPUT "").           /* pr_dscritic */
+
+      CLOSE STORED-PROC pc_relat_anali_envio_sms
+            aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+      { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+
+      ASSIGN aux_dscritic = ""
+             aux_cdcritic = 0
+             aux_nmarqpdf = ""
+             aux_cdcritic = pc_relat_anali_envio_sms.pr_cdcritic
+                                WHEN pc_relat_anali_envio_sms.pr_cdcritic <> ?
+             aux_dscritic = pc_relat_anali_envio_sms.pr_dscritic
+                                WHEN pc_relat_anali_envio_sms.pr_dscritic <> ?
+             aux_dsxmlrel = pc_relat_anali_envio_sms.pr_dsxmlrel
+                                WHEN pc_relat_anali_envio_sms.pr_dsxmlrel <> ?.
+      
+      IF aux_dscritic <> "" THEN
+        DO:
+            xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".  
+            RETURN "NOK".
+        END.  
+
+      /* Atribuir xml de retorno a temptable*/ 
+      IF aux_dsxmlrel <> "" THEN
+      DO:    
+        ASSIGN aux_iteracoes = roundUp(LENGTH(aux_dsxmlrel) / 31000)
+               aux_posini    = 1.    
+        
+        DO aux_contador = 1 TO aux_iteracoes:
+          CREATE xml_operacao.
+          ASSIGN xml_operacao.dslinxml = SUBSTRING(aux_dsxmlrel, aux_posini, 31000)
+                 aux_posini            = aux_posini + 31000.
+        END.
+        
+      END.
     END.
 
 RETURN "OK".

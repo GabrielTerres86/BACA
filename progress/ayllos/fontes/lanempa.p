@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Janeiro/94.                         Ultima atualizacao: 18/03/2015
+   Data    : Janeiro/94.                         Ultima atualizacao: 23/09/2016
 
    Dados referentes ao programa:
 
@@ -74,10 +74,14 @@
                
              16/08/2016 - Controlar o preenchimento da data de pagamento do prejuízo,
                           no momento da liquidaçao do mesmo. (Renato Darosci - M176)
+                          
+             23/09/2016 - Inclusao da verificacao de contrato de acordo (Jean Michel).
+             
 ............................................................................. */
 
 { includes/var_online.i }
 { includes/var_lanemp.i }
+{ sistema/generico/includes/var_oracle.i }
 { sistema/generico/includes/var_internet.i }
 
 DEF BUFFER crablem FOR craplem.
@@ -155,6 +159,53 @@ DO WHILE TRUE:
                NEXT-PROMPT tel_nrdconta WITH FRAME f_lanemp.
            END.
 
+      /* Verifica se ha contratos de acordo */
+            
+      { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+      
+      RUN STORED-PROCEDURE pc_verifica_acordo_ativo
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT glb_cdcooper
+                                            ,INPUT tel_nrdconta
+                                            ,INPUT tel_nrctremp
+                                            ,0
+                                            ,0
+                                            ,"").
+
+      CLOSE STORED-PROC pc_verifica_acordo_ativo
+                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+      { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+      ASSIGN glb_cdcritic = 0
+             glb_dscritic = ""
+             glb_cdcritic = pc_verifica_acordo_ativo.pr_cdcritic WHEN pc_verifica_acordo_ativo.pr_cdcritic <> ?
+             glb_dscritic = pc_verifica_acordo_ativo.pr_dscritic WHEN pc_verifica_acordo_ativo.pr_dscritic <> ?
+             aux_flgativo = INT(pc_verifica_acordo_ativo.pr_flgativo).
+      
+      IF glb_cdcritic > 0 THEN
+        DO:
+            RUN fontes/critic.p.
+            BELL.
+            MESSAGE glb_dscritic.
+            ASSIGN glb_cdcritic = 0.
+            NEXT.
+        END.
+      ELSE IF glb_dscritic <> ? AND glb_dscritic <> "" THEN
+        DO:
+          MESSAGE glb_dscritic.
+          ASSIGN glb_cdcritic = 0.
+          NEXT.
+        END.
+        
+      IF aux_flgativo = 1 THEN
+        DO:
+          MESSAGE "Alteracao nao permitida, emprestimo em acordo.".
+          PAUSE 3 NO-MESSAGE.
+          NEXT.
+        END.            
+      
+      /* Fim verifica se ha contratos de acordo */
+      
       LEAVE.
 
    END.  /*  Fim do DO WHILE TRUE  */

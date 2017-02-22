@@ -42,6 +42,9 @@
 
                16/02/2016 - Criacao do campo flprotes no XML. (Jaison/Marcos)
 
+               11/10/2016 - Ajustes para permitir Aviso cobrança por SMS.
+                            PRJ319 - SMS Cobrança(Odirlei-AMcom)
+
 			   14/12/2016 Retirado limitacao de resultados aqui
                           pois qdo atinigia o limite nao mostrava nada na tela
 						  mas mesmo assim levava todo o tempo como se tivesse 
@@ -311,6 +314,8 @@ IF  AVAILABLE tt-dados-blt  THEN
                                        "<valormin>" + STRING(tt-dados-blt.valormin) + "</valormin>" +
                                        "<textodia>" + STRING(tt-dados-blt.textodia) + "</textodia>" +
                                        "<flprotes>" + STRING(tt-dados-blt.flprotes) + "</flprotes>" +
+                                       "<flpersms>" + STRING(tt-dados-blt.flpersms) + "</flpersms>" +
+                                       "<fllindig>" + STRING(tt-dados-blt.fllindig) + "</fllindig>" +
                                        "</BOLETO>".
 
     END.

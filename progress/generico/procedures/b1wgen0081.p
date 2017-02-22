@@ -190,6 +190,8 @@
 							 
 				07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
                              departamento passando a considerar o código (Renato Darosci)
+                             
+               08/02/2016 - P341-Automatização BACENJUD - Ajuste da liberacao anterior (Andrino - Mouts)
 ............................................................................*/
  
  { sistema/generico/includes/b1wgen0001tt.i }
@@ -5567,8 +5569,7 @@ PROCEDURE consulta-extrato-rdca.
            aux_cdcritic = 0
            aux_dscritic = ""
            aux_tpaplrdc = 0
-           aux_lsoperad = "TI,SUPORTE,COORD.ADM/FINANCEIRO," +
-                          "CONTABILIDADE,COORD.PRODUTOS".
+           aux_lsoperad = ",20,18,8,6,9,".
 
     FIND craprda WHERE craprda.cdcooper = par_cdcooper AND
                        craprda.nrdconta = par_nrdconta AND
@@ -5636,11 +5637,11 @@ PROCEDURE consulta-extrato-rdca.
         END.
 
     IF  par_cdcooper = 3  THEN
-        aux_lsoperad = aux_lsoperad + "," + STRING(crapope.cddepart).
+        aux_lsoperad = aux_lsoperad + STRING(crapope.cddepart) + ",".
 
     IF  par_nmdatela = "EXTRDA" THEN
         DO:
-            IF  CAN-DO(aux_lsoperad,STRING(crapope.cddepart)) THEN 
+            IF  CAN-DO(aux_lsoperad,"," + STRING(crapope.cddepart) + ",") THEN 
                 aux_listahis = "113,116,117,118,119,121,124,125,126,143,144," +
                 "176,178,179,180,181,182,183,861,862,866,868,871,492,493,494," +
                 "495,875,877,876,527,528,529,530,531,533,534,532,472,473,474," +
@@ -5654,7 +5655,7 @@ PROCEDURE consulta-extrato-rdca.
     ELSE
     IF  par_nmdatela = "IMPRES"  THEN
         DO:
-            IF  NOT CAN-DO(aux_lsoperad,STRING(crapope.cddepart))   THEN
+            IF  NOT CAN-DO(aux_lsoperad,"," + STRING(crapope.cddepart) + ",")   THEN
                 aux_listahis = "113,116,118,119,121,126,143,144,176,178,179," +
                                "183,861,862,868,871,492,493,494,495,875,876," +
                                "877,923,924,527,528,529,530,531,533,534,532," +
@@ -5669,7 +5670,7 @@ PROCEDURE consulta-extrato-rdca.
         END.
     ELSE
         DO: 
-            IF  NOT CAN-DO(aux_lsoperad,STRING(crapope.cddepart)) THEN  
+            IF  NOT CAN-DO(aux_lsoperad,"," + STRING(crapope.cddepart) + ",") THEN  
                 aux_listahis = "113,116,118,119,121,126,143,144,176,178,179," +
                            "183,861,862,868,871,492,493,494,495,875,876,877," +
                            "472,473,474,475,463,478,476,477,527,528,529,530," +
@@ -5772,7 +5773,7 @@ PROCEDURE consulta-extrato-rdca.
         
         IF  NOT CAN-DO("999",STRING(craphis.cdhistor))  THEN
             DO:
-                IF  CAN-DO(aux_lsoperad,STRING(crapope.cddepart)) AND   
+                IF  CAN-DO(aux_lsoperad,"," + STRING(crapope.cddepart) + ",") AND   
                    (craphis.cdhistor = 116                OR
                     craphis.cdhistor = 179)               THEN
                     .

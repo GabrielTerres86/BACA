@@ -409,8 +409,14 @@ FOR EACH tt-consulta-blt NO-LOCK:
                                     "<vlmormul_atualizado>" + STRING(tt-consulta-blt.vlmormul_atualizado,"zzzzzzzzz9.99") + "</vlmormul_atualizado>" +
                                     "<flg2viab>" + STRING(tt-consulta-blt.flg2viab) + "</flg2viab>" +
 									"<flprotes>" + STRING(tt-consulta-blt.flprotes) + "</flprotes>" +
+                                    /* Aviso SMS */
+                                    "<inavisms>" + STRING(tt-consulta-blt.inavisms) + "</inavisms>" +
+                                    "<insmsant>" + STRING(tt-consulta-blt.insmsant) + "</insmsant>" +
+                                    "<insmsvct>" + STRING(tt-consulta-blt.insmsvct) + "</insmsvct>" +
+                                    "<insmspos>" + STRING(tt-consulta-blt.insmspos) + "</insmspos>" +
                                     
                                    "</BOLETO>".
+
 
 END.
 

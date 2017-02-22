@@ -2,7 +2,7 @@
 
     Programa: b1wgen0053.p
     Autor   : Jose Luis (DB1)
-    Data    : Janeiro/2010                   Ultima atualizacao: 25/10/2016
+    Data    : Janeiro/2010                   Ultima atualizacao: 17/01/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - Pessoa Juridica
 
@@ -28,6 +28,10 @@
 
                 25/10/2016 - Melhoria 310 - Verificacao da data de validade da
 				             licença (Tiago/Thiago).
+                     
+                17/01/2017 - Adicionado chamada a procedure de replicacao do 
+                             nome fantasia para o CDC. (Reinert Prj 289)                                       
+                   
 ..................................................................................*/
 
 
@@ -40,6 +44,7 @@
 { sistema/generico/includes/gera_log.i }
 { sistema/generico/includes/gera_erro.i }
 { sistema/generico/includes/b1wgenvlog.i &VAR-GERAL=SIM &SESSAO-BO=SIM }
+{ sistema/generico/includes/var_oracle.i }
 
 DEF VAR aux_cdcritic AS INTE                                           NO-UNDO.
 DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
@@ -605,6 +610,43 @@ PROCEDURE grava_dados:
 
     RELEASE crapjur.
     RELEASE crapass.
+
+    IF CAPS(par_nmfatasi) <> tt-dados-jur-ant.nmfansia THEN
+      DO:
+          FOR FIRST crapcdr WHERE crapcdr.cdcooper = par_cdcooper
+                              AND crapcdr.nrdconta = par_nrdconta
+                              AND crapcdr.flgconve = TRUE NO-LOCK:
+
+            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+            
+            RUN STORED-PROCEDURE pc_replica_cdc
+              aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                                  ,INPUT par_nrdconta
+                                                  ,INPUT par_cdoperad
+                                                  ,INPUT par_idorigem
+                                                  ,INPUT par_nmdatela
+                                                  ,INPUT 0
+                                                  ,INPUT 0
+                                                  ,INPUT 0
+                                                  ,INPUT 1
+                                                  ,0
+                                                  ,"").
+
+            CLOSE STORED-PROC pc_replica_cdc
+                      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+            ASSIGN aux_cdcritic = 0
+                   aux_dscritic = ""
+                   aux_cdcritic = pc_replica_cdc.pr_cdcritic 
+                                    WHEN pc_replica_cdc.pr_cdcritic <> ?
+                   aux_dscritic = pc_replica_cdc.pr_dscritic 
+                                    WHEN pc_replica_cdc.pr_dscritic <> ?.
+                                    
+          END.
+
+      END.
 
     IF aux_dscritic <> "" OR aux_cdcritic <> 0 THEN
        DO:

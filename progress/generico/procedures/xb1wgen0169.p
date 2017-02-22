@@ -8,7 +8,7 @@
 
    Objetivo  : BO de Comunicacao XML VS BO169 (b1wgen0169.p) [CADRET]
 
-   Alteracoes: 
+   Alteracoes: 24/06/2016 - Adicionar o parametro cdprodut as chamadas das rotinas
 
 ..............................................................................*/
 
@@ -20,6 +20,7 @@ DEF VAR aux_nrtabela AS INTE                                       NO-UNDO.
 DEF VAR aux_cdretorn AS INTE                                       NO-UNDO.
 
 DEF VAR aux_cddopcao AS CHAR                                       NO-UNDO.
+DEF VAR aux_cdprodut AS INTE                                       NO-UNDO.
 DEF VAR aux_cdoperac AS CHAR                                       NO-UNDO.
 DEF VAR aux_cdoperad AS CHAR                                       NO-UNDO.
 DEF VAR aux_nmdatela AS CHAR                                       NO-UNDO.
@@ -49,6 +50,7 @@ PROCEDURE valores_entrada:
             WHEN "dtmvtolt" THEN aux_dtmvtolt = DATE(tt-param.valorCampo).
             WHEN "nmdcampo" THEN aux_nmdcampo = tt-param.valorCampo.
             WHEN "cddopcao" THEN aux_cddopcao = tt-param.valorCampo.
+			WHEN "cdprodut" THEN aux_cdprodut = INTE(tt-param.valorCampo).
             WHEN "cdoperac" THEN aux_cdoperac = tt-param.valorCampo.
             WHEN "nrtabela" THEN aux_nrtabela = INTE(tt-param.valorCampo).
             WHEN "cdretorn" THEN aux_cdretorn = INTE(tt-param.valorCampo).
@@ -75,6 +77,7 @@ PROCEDURE consultar_cadret:
                                  INPUT aux_idorigem,
                                  INPUT aux_dtmvtolt,
                                  INPUT aux_cddopcao,
+								 INPUT aux_cdprodut,  /* Adicionado por Renato em 24/06/2016 */
                                  INPUT aux_cdoperac,
                                  INPUT aux_nrtabela,
                                  INPUT aux_cdretorn,
@@ -119,6 +122,7 @@ PROCEDURE incluir_cadret:
                                INPUT aux_idorigem,
                                INPUT aux_dtmvtolt,
                                INPUT aux_cddopcao,
+							   INPUT aux_cdprodut,  /* Adicionado por Renato em 24/06/2016 */
                                INPUT aux_cdoperac,
                                INPUT aux_nrtabela,
                                INPUT aux_cdretorn,
@@ -165,6 +169,7 @@ PROCEDURE alterar_cadret:
                                INPUT aux_idorigem,
                                INPUT aux_dtmvtolt,
                                INPUT aux_cddopcao,
+							   INPUT aux_cdprodut,  /* Adicionado por Renato em 24/06/2016 */
                                INPUT aux_cdoperac,
                                INPUT aux_nrtabela,
                                INPUT aux_cdretorn,
