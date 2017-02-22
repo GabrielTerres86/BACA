@@ -463,6 +463,9 @@
               26/09/2016 - Ajuste para enviar mais de um email para monitoracao de fraude
                            qdo o corpo do email ultrapassar 25 titulos pois estava
                            acarretando em problemas no IB (Tiago/Elton SD 521667).             
+						   
+			  07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
+                           departamento passando a considerar o código (Renato Darosci)             
  .............................................................................*/
 { sistema/internet/includes/var_ibank.i }
 
@@ -6067,8 +6070,8 @@ PROCEDURE consultar_parmon:
             RETURN "NOK".
         END.
 
-     IF   crapope.dsdepart <> "TI"       AND
-          crapope.dsdepart <> "SEGURANCA" THEN
+     IF   crapope.cddepart <> 20   AND   /* TI */
+          crapope.cddepart <> 15  THEN   /* SEGURANCA */
           DO:
               ASSIGN aux_cdcritic = 0
                      aux_dscritic = "Acesso nao autorizado.".
@@ -6192,8 +6195,8 @@ PROCEDURE alterar_parmon:
             RETURN "NOK".
         END.
 
-     IF   crapope.dsdepart <> "TI"       AND
-          crapope.dsdepart <> "SEGURANCA" THEN
+     IF   crapope.cddepart <> 20  AND   /* TI        */
+          crapope.cddepart <> 15 THEN   /* SEGURANCA */
           DO:
               ASSIGN aux_cdcritic = 0
                      aux_dscritic = "Acesso nao autorizado.".

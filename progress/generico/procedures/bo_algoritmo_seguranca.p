@@ -414,8 +414,9 @@ PROCEDURE lista_protocolos:
                               par_dtfimpro
            par_qttotreg = 0.
                
+    /*Validaçao removida em 31/08/2016 - PRJ386.5 - CECRED MOBILE (Dionathan)
     IF  par_dtfimpro > aux_datdodia  THEN
-        ASSIGN par_dtfimpro = aux_datdodia.
+        ASSIGN par_dtfimpro = aux_datdodia.*/
 
 
     FIND FIRST crapdat
