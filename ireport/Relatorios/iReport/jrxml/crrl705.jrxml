@@ -2,7 +2,7 @@
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="modrel080" language="groovy" pageWidth="442" pageHeight="924" whenNoDataType="AllSectionsNoDetail" columnWidth="442" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.0"/>
 	<property name="ireport.x" value="0"/>
-	<property name="ireport.y" value="772"/>
+	<property name="ireport.y" value="788"/>
 	<parameter name="PR_NMRESCOP" class="java.lang.String">
 		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
 	</parameter>
@@ -625,7 +625,7 @@
 				<text><![CDATA[Representante]]></text>
 			</staticText>
 			<textField>
-				<reportElement uuid="d5b541f8-414b-475f-8d3c-435cd3b7e0f5" x="164" y="23" width="100" height="8"/>
+				<reportElement uuid="d5b541f8-414b-475f-8d3c-435cd3b7e0f5" x="66" y="23" width="290" height="8"/>
 				<textElement textAlignment="Center">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
