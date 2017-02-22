@@ -520,7 +520,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
 
     Programa: EXTR0002                           Antigo: sistema/generico/procedures/b1wgen0112.p
     Autor   : Gabriel Capoia dos Santos (DB1)
-    Data    : Agosto/2011                        Ultima atualizacao: 08/11/2016
+    Data    : Agosto/2011                        Ultima atualizacao: 17/01/2017
 
     Objetivo  : Tranformacao BO tela IMPRES
 
@@ -723,7 +723,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                              na pc_gera_impressao_car (Douglas - Chamado 452281)
 
                 06/04/2016 - Incluido novo tratamento para Prj. Tarifas na procedure pc_gera_tarifa_extrato (Jean Michel)   
-
+                             
                 15/06/2016 - Tramaneto feito para ajustar a data de lançamentos futuros conforme solicitado
                              no chamado 469078. (Kelvin)
 
@@ -753,6 +753,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
 
         29/11/2016 - P341 - Automatização BACENJUD - Alterado para validar o departamento à partir
                      do código e não mais pela descrição (Renato Darosci - Supero)
+
+        17/01/2017 - Ajuste na pc_consulta_lancamento que nao estava passando a critica
+                     para frente. SD 594506 (Kelvin).
 
   ---------------------------------------------------------------------------------------------------------------
 ..............................................................................*/
@@ -5924,7 +5927,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                              ,pr_cdagenci => pr_cdagenci
                              ,pr_nrdcaixa => pr_nrdcaixa
                              ,pr_nrsequen => 1 --> Fixo
-                             ,pr_cdcritic => 0 --> Critica 0
+                             ,pr_cdcritic => vr_cdcritic --> Critica 0
                              ,pr_dscritic => vr_dscritic
                              ,pr_tab_erro => pr_tab_erro);
         -- Se foi solicitado geração de LOG
