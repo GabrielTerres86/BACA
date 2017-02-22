@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Janeiro/94.                      Ultima atualizacao: 09/05/2016
+   Data    : Janeiro/94.                      Ultima atualizacao: 13/01/2017
 
    Dados referentes ao programa:
 
@@ -223,11 +223,24 @@
                09/05/2016 - Incluido validacao da situacao esteira na valida_dados_efetivacao_proposta . 
                           - Gravar operador que realizou a efetivacao da proposta 
                             PRJ207 - Esteira (Odirlei-AMcom)
+                            
+               22/09/2016 - Incluido validacao de contrato de acordo, Prj. 302
+                            (Jean Michel).             
+
+               13/01/2017 - Implementar trava para não permitir efetivar empréstimo sem que 
+                            as informações de Imóveis estejam preenchidas (Renato - Supero)
+                            
+               17/02/2017 - Retirada a trava de efetivaçao de empréstimo sem que as informações 
+                            de Imóveis estejam preenchidas, conforme solicitaçao antes da 
+                            liberaçao do projeto (Renato - Supero)
+                            
 ............................................................................. */
 
 { includes/var_online.i }
 { includes/var_lanctr.i }
 { includes/var_altava.i "NEW"}
+
+{ sistema/generico/includes/var_oracle.i }
 
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/b1wgen0043tt.i }
@@ -238,53 +251,55 @@ ON RETURN OF b-ge-economico
         APPLY "GO".
    END.
 
-DEF VAR h-b1wgen0001         AS HANDLE                                NO-UNDO.
-DEF VAR h-b1wgen0043         AS HANDLE                                NO-UNDO.
-DEF VAR h-b1wgen0134         AS HANDLE                                NO-UNDO.
-DEF VAR h-b1wgen0138         AS HANDLE                                NO-UNDO.
-DEF VAR h-b1wgen0110         AS HANDLE                                NO-UNDO.
-DEF VAR h-b1wgen0171         AS HANDLE                                NO-UNDO.
-DEF VAR h-b1wgen0002         AS HANDLE                                NO-UNDO.
+DEF VAR h-b1wgen0001         AS HANDLE               NO-UNDO.
+DEF VAR h-b1wgen0043         AS HANDLE               NO-UNDO.
+DEF VAR h-b1wgen0134         AS HANDLE               NO-UNDO.
+DEF VAR h-b1wgen0138         AS HANDLE               NO-UNDO.
+DEF VAR h-b1wgen0110         AS HANDLE               NO-UNDO.
+DEF VAR h-b1wgen0171         AS HANDLE               NO-UNDO.
+DEF VAR h-b1wgen0002         AS HANDLE               NO-UNDO.
 
-DEF VAR aux_totlinha         AS DECI                                  NO-UNDO.
-DEF VAR aux_cdgraupr         LIKE crapttl.cdgraupr                    NO-UNDO.
-DEF VAR ass_cdempres         AS INTE                                  NO-UNDO.
-DEF VAR ass_nrcadast         AS INTE                                  NO-UNDO.
-DEF VAR aux_flgpagto         AS LOGI                                  NO-UNDO.
-DEF VAR aux_par_nrdconta     AS INTE                                  NO-UNDO.
-DEF VAR aux_par_dsctrliq     AS CHAR                                  NO-UNDO.
-DEF VAR aux_par_vlutiliz     AS DECI                                  NO-UNDO.
-DEF VAR aux_vlr_maxleg       AS DECI                                  NO-UNDO.
-DEF VAR aux_vlr_maxutl       AS DECI                                  NO-UNDO.
-DEF VAR aux_vlr_minscr       AS DECI                                  NO-UNDO.
-DEF VAR aux_vlr_excedido     AS LOGI                                  NO-UNDO.
-DEF VAR aux_qtprecal_retorno LIKE crapepr.qtprecal                    NO-UNDO.
-DEF VAR aux_mensagem_liq     AS CHAR FORMAT "x(40)"                   NO-UNDO.
-DEF VAR aux_valor_maximo     AS DECI                                  NO-UNDO.
-DEF VAR aux_tpdescto         LIKE crawepr.tpdescto                    NO-UNDO.
-DEF VAR aux_cdtpinsc         LIKE crapsab.cdtpinsc                    NO-UNDO.
-DEF VAR aux_nmdsacad         LIKE crapsab.nmdsacad                    NO-UNDO.
-DEF VAR aux_dsendsac         LIKE crapsab.dsendsac                    NO-UNDO.
-DEF VAR aux_nmbaisac         LIKE crapsab.nmbaisac                    NO-UNDO.
-DEF VAR aux_nrcepsac         LIKE crapsab.nrcepsac                    NO-UNDO.
-DEF VAR aux_nmcidsac         LIKE crapsab.nmcidsac                    NO-UNDO.
-DEF VAR aux_cdufsaca         LIKE crapsab.cdufsaca                    NO-UNDO.
-DEF VAR aux_complend         LIKE crapsab.complend                    NO-UNDO.
-DEF VAR aux_nrendsac         LIKE crapsab.nrcepsac                    NO-UNDO.
-DEF VAR aux_dsnivris         AS CHAR                                  NO-UNDO.
-DEF VAR aux_nrdgrupo         AS INTE                                  NO-UNDO.
-DEF VAR aux_gergrupo         AS CHAR                                  NO-UNDO.
-DEF VAR aux_dsdrisco         AS CHAR                                  NO-UNDO.
-DEF VAR aux_dsdrisgp         AS CHAR                                  NO-UNDO.
-DEF VAR aux_pertengp         AS LOGI                                  NO-UNDO.
-DEF VAR aux_dsrotina         AS CHAR                                  NO-UNDO.
-DEF VAR aux_percetop         AS DECI                                  NO-UNDO.
-DEF VAR aux_txcetmes         AS DECI                                  NO-UNDO.
-DEF VAR aux_flctrliq         AS LOGI                                  NO-UNDO.
+DEF VAR aux_totlinha         AS DECI                 NO-UNDO.
+DEF VAR aux_cdgraupr         LIKE crapttl.cdgraupr   NO-UNDO.
+DEF VAR ass_cdempres         AS INTE                 NO-UNDO.
+DEF VAR ass_nrcadast         AS INTE                 NO-UNDO.
+DEF VAR aux_flgpagto         AS LOGI                 NO-UNDO.
+DEF VAR aux_par_nrdconta     AS INTE                 NO-UNDO.
+DEF VAR aux_par_dsctrliq     AS CHAR                 NO-UNDO.
+DEF VAR aux_par_vlutiliz     AS DECI                 NO-UNDO.
+DEF VAR aux_vlr_maxleg       AS DECI                 NO-UNDO.
+DEF VAR aux_vlr_maxutl       AS DECI                 NO-UNDO.
+DEF VAR aux_vlr_minscr       AS DECI                 NO-UNDO.
+DEF VAR aux_vlr_excedido     AS LOGI                 NO-UNDO.
+DEF VAR aux_qtprecal_retorno LIKE crapepr.qtprecal   NO-UNDO.
+DEF VAR aux_mensagem_liq     AS CHAR FORMAT "x(40)"  NO-UNDO.
+DEF VAR aux_valor_maximo     AS DECI                 NO-UNDO.
+DEF VAR aux_tpdescto         LIKE crawepr.tpdescto   NO-UNDO.
+DEF VAR aux_cdtpinsc         LIKE crapsab.cdtpinsc   NO-UNDO.
+DEF VAR aux_nmdsacad         LIKE crapsab.nmdsacad   NO-UNDO.
+DEF VAR aux_dsendsac         LIKE crapsab.dsendsac   NO-UNDO.
+DEF VAR aux_nmbaisac         LIKE crapsab.nmbaisac   NO-UNDO.
+DEF VAR aux_nrcepsac         LIKE crapsab.nrcepsac   NO-UNDO.
+DEF VAR aux_nmcidsac         LIKE crapsab.nmcidsac   NO-UNDO.
+DEF VAR aux_cdufsaca         LIKE crapsab.cdufsaca   NO-UNDO.
+DEF VAR aux_complend         LIKE crapsab.complend   NO-UNDO.
+DEF VAR aux_nrendsac         LIKE crapsab.nrcepsac   NO-UNDO.
+DEF VAR aux_dsnivris         AS CHAR                 NO-UNDO.
+DEF VAR aux_nrdgrupo         AS INTE                 NO-UNDO.
+DEF VAR aux_gergrupo         AS CHAR                 NO-UNDO.
+DEF VAR aux_dsdrisco         AS CHAR                 NO-UNDO.
+DEF VAR aux_dsdrisgp         AS CHAR                 NO-UNDO.
+DEF VAR aux_pertengp         AS LOGI                 NO-UNDO.
+DEF VAR aux_dsrotina         AS CHAR                 NO-UNDO.
+DEF VAR aux_percetop         AS DECI                 NO-UNDO.
+DEF VAR aux_txcetmes         AS DECI                 NO-UNDO.
+DEF VAR aux_flctrliq         AS LOGI                 NO-UNDO.
+DEF VAR aux_flgativo         AS INTE                 NO-UNDO.
+/*DEF VAR aux_flimovel         AS INTE	             NO-UNDO. 17/02/2017 - Validaçao removida */
 
 DEF BUFFER b_crawepr FOR crawepr.
 
-DEFINE TEMP-TABLE w_contas                                            NO-UNDO
+DEFINE TEMP-TABLE w_contas                           NO-UNDO
        FIELD  nrdconta  LIKE crapass.nrdconta.
 
 EMPTY TEMP-TABLE tt-grupo.
@@ -591,7 +606,7 @@ DO WHILE TRUE:
          END.
       ELSE
          DO:
-         
+            
             IF crawepr.insitest <> 3 AND 
                crawepr.dtenvest <> ? THEN
             DO:
@@ -620,8 +635,8 @@ DO WHILE TRUE:
                            "nao pode ser usado para o produto TR.".
                    NEXT.
                END.
-                            
-            /** Verificar "inliquid" do contrato relacionado
+           
+           /** Verificar "inliquid" do contrato relacionado
                 a ser liquidado              **/
             DO  aux_contador = 1 TO 10 :
 
@@ -638,8 +653,57 @@ DO WHILE TRUE:
                         aux_flctrliq = TRUE.
                         LEAVE.
                     END.
+                    
+                    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                    /* Verifica se ha contratos de acordo */
+                    RUN STORED-PROCEDURE pc_verifica_acordo_ativo
+                      aux_handproc = PROC-HANDLE NO-ERROR (INPUT crawepr.cdcooper
+                                                          ,INPUT crawepr.nrdconta
+                                                          ,INPUT crawepr.nrctrliq[aux_contador]
+                                                          ,0
+                                                          ,0
+                                                          ,"").
+
+                    CLOSE STORED-PROC pc_verifica_acordo_ativo
+                              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                    ASSIGN glb_cdcritic = 0
+                           glb_dscritic = ""
+                           glb_cdcritic = pc_verifica_acordo_ativo.pr_cdcritic WHEN pc_verifica_acordo_ativo.pr_cdcritic <> ?
+                           glb_dscritic = pc_verifica_acordo_ativo.pr_dscritic WHEN pc_verifica_acordo_ativo.pr_dscritic <> ?
+                           aux_flgativo = INT(pc_verifica_acordo_ativo.pr_flgativo).
+
+					IF aux_flgativo = 1 THEN
+					  LEAVE.
+                                      
                 END.
            END.
+           
+           IF glb_cdcritic > 0 THEN
+              DO:
+                  RUN fontes/critic.p.
+                  BELL.
+                  MESSAGE glb_dscritic.
+                  ASSIGN glb_cdcritic = 0.
+                  NEXT.
+              END.
+            ELSE IF glb_dscritic <> ? AND glb_dscritic <> "" THEN
+              DO:
+                MESSAGE glb_dscritic.
+                ASSIGN glb_cdcritic = 0.
+                NEXT.
+              END.
+              
+            IF aux_flgativo = 1 THEN
+              DO:
+                MESSAGE "Lancamento nao permitido, contrato marcado para liquidar esta em acordo".
+                PAUSE 3 NO-MESSAGE.
+                NEXT.
+              END.
+              
            IF  aux_flctrliq THEN
                NEXT.
 
@@ -1294,6 +1358,7 @@ DO WHILE TRUE:
                                  INPUT 0, /* par_nmdatela */
                                  INPUT FALSE, /* par_flgerlog */
                                  INPUT tel_cdfinemp,
+								 INPUT crawepr.cdlcremp,
                                  INPUT crawepr.nrctrliq,
                                  INPUT "", /* par_dsctrliq */
                                  OUTPUT TABLE tt-erro,
@@ -1438,6 +1503,58 @@ DO WHILE TRUE:
          LEAVE.
 
       END.  /*  Fim do DO WHILE TRUE  */
+      
+      /* 17/02/2017 - Retirado a validaçao conforme solicitaçao 
+      /* Se o tipo do contrato for igual a 3 -> Contratos de imóveis */
+      IF craplcr.tpctrato = 3 THEN DO:
+            
+			   ASSIGN aux_flimovel = 0.
+
+		     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+         /* Verifica se ha contratos de acordo */
+         RUN STORED-PROCEDURE pc_valida_imoveis_epr
+         aux_handproc = PROC-HANDLE NO-ERROR (INPUT glb_cdcooper
+                                             ,INPUT tel_nrdconta
+                                             ,INPUT crabepr.nrctremp
+                                             ,OUTPUT 0
+                                             ,OUTPUT 0
+                                             ,OUTPUT "").
+
+         CLOSE STORED-PROC pc_valida_imoveis_epr
+                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+         { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+         ASSIGN glb_cdcritic = 0
+                glb_dscritic = ""
+                glb_cdcritic = pc_valida_imoveis_epr.pr_cdcritic WHEN pc_valida_imoveis_epr.pr_cdcritic <> ?
+                glb_dscritic = pc_valida_imoveis_epr.pr_dscritic WHEN pc_valida_imoveis_epr.pr_dscritic <> ?
+				        aux_flimovel = INT(pc_valida_imoveis_epr.pr_flimovel).
+        
+         IF glb_cdcritic > 0 THEN
+            DO:
+               RUN fontes/critic.p.
+               BELL.
+               MESSAGE glb_dscritic.
+               ASSIGN glb_cdcritic = 0.
+               UNDO, NEXT.
+            END.
+         ELSE IF glb_dscritic <> ? AND glb_dscritic <> "" THEN
+            DO:
+               MESSAGE glb_dscritic.
+               ASSIGN glb_cdcritic = 0.
+               UNDO, NEXT.
+            END.  
+          
+         IF aux_flimovel = 1 THEN
+            DO:
+               MESSAGE "A proposta nao pode ser efetivada, dados dos Imoveis nao cadastrados.".
+               PAUSE 3 NO-MESSAGE.
+               UNDO, NEXT.
+            END. /* IF aux_flimovel = 1 THEN */
+      END. /* IF craplcr.tpctrato = 3 */
+      FIM - 17/02/2017 - Retirado a validaçao conforme solicitaçao */
 
       IF glb_cdcritic > 0    THEN
          NEXT INCLUSAO.
