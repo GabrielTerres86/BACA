@@ -1,11 +1,11 @@
 CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS474 (pr_cdcooper IN crapcop.cdcooper%TYPE      --> Codigo Cooperativa
                                               ,pr_cdagenci IN crapage.cdagenci%TYPE      --> Codigo Agencia
-                                              ,pr_nmdatela IN VARCHAR2                   --> Nome Tela
+                                       ,pr_nmdatela IN VARCHAR2                   --> Nome Tela
                                               ,pr_idparale in crappar.idparale%TYPE      --> Indicador de processoparalelo
-                                              ,pr_stprogra OUT PLS_INTEGER               --> Saida de termino da execucao
-                                              ,pr_infimsol OUT PLS_INTEGER               --> Saida de termino da solicitacao
-                                              ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Codigo da Critica
-                                              ,pr_dscritic OUT VARCHAR2) IS              --> Descricao da Critica
+                                       ,pr_stprogra OUT PLS_INTEGER               --> Saida de termino da execucao
+                                       ,pr_infimsol OUT PLS_INTEGER               --> Saida de termino da solicitacao
+                                       ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Codigo da Critica
+                                       ,pr_dscritic OUT VARCHAR2) IS              --> Descricao da Critica
 BEGIN
 
   /* .............................................................................
@@ -71,13 +71,15 @@ BEGIN
               25/11/2015 - Ajuste ref ao lancamento de juros remuneratorios referente
                            ao pagto de boletos de emprestimo - Projeto 210 (Rafael)
 
-              02/02/2016 - Incluso novo parametro cdorigem referente Projeto Pgo
-                           PP InternetBank. (Daniel)
+               02/02/2016 - Incluso novo parametro cdorigem referente Projeto Pgo
+                      PP InternetBank. (Daniel)
 
-              03/02/2016 - (Chamado 393718) Inclusao de um log dos saldos antes
+         03/02/2016 - (Chamado 393718) Inclusao de um log dos saldos antes
                             e apos cada transacao de debito efetivada no
                             contrato (Tiago Castro - RKAM).
 
+              31/03/2016 - Ajustes savepoits SD352945 (Odirlei-AMcom)
+			  
               14/04/2016 - Ajuste feito para não ser possível executar o programa caso
                            não for dia útil, apenas quando inprocess = 1, conforme solicitado
                            no chamado 409646. (Kelvin)
@@ -98,9 +100,9 @@ BEGIN
                            quando o correto e testar inproces > 2.
                            Heitor (RKAM)
 		      
-			        05/07/2016 - Melhorias de performance e gerenciamento de memoria. Chamado 479871.
-			                     Alterado local onde e feito uma das geracoes de log, pois o indice
-            						   utilizado na geracao poderia estar nulo, ocasionando problemas.
+			  05/07/2016 - Melhorias de performance e gerenciamento de memoria. Chamado 479871.
+			               Alterado local onde e feito uma das geracoes de log, pois o indice
+						   utilizado na geracao poderia estar nulo, ocasionando problemas.
 						               Chamado 408357. (Heitor - RKAM)
 
               26/09/2016 - Incluido verificacao de contratos de acordo, Prj. 302 (Jean Michel).
@@ -167,7 +169,7 @@ BEGIN
          AND crapass.cdcooper = crappep.cdcooper
          AND crapass.nrdconta = crappep.nrdconta
          AND crappep.cdcooper = pr_cdcooper
-         AND crappep.dtvencto <= pr_dtmvtolt
+                 AND crappep.dtvencto <= pr_dtmvtolt
          AND crappep.inprejuz = 0
                        AND ((crappep.inliquid = 0) OR (crappep.inliquid = 1 AND crappep.dtvencto > pr_dtmvtoan))
        ORDER
@@ -298,7 +300,7 @@ BEGIN
     vr_mesrefju INTEGER;
     vr_anorefju INTEGER;
     vr_flgpripr BOOLEAN;
-    
+
     vr_cdindice VARCHAR2(30) := ''; -- Indice da tabela de acordos
 
     --Variaveis de Indices
@@ -806,7 +808,7 @@ BEGIN
           /*primeiro processamento*/
 
           --Criar savepoint
-          SAVEPOINT sav_trans;
+          SAVEPOINT sav_trans_474;
 
           --Atualizar quantidade meses descontados
           BEGIN
@@ -925,7 +927,7 @@ BEGIN
                                                             || vr_cdprogra || ' --> '
                                                             || vr_dscritic );
                   --Rollback até savepoint
-                  ROLLBACK TO SAVEPOINT sav_trans;
+                  ROLLBACK TO SAVEPOINT sav_trans_474;
                   --Proximo registro
                   CONTINUE;
                 END IF;
@@ -1027,7 +1029,7 @@ BEGIN
                                                           || vr_cdprogra || ' --> '
                                                           || vr_dscritic );
               --Desfazer transacao
-              ROLLBACK TO SAVEPOINT sav_trans;
+              ROLLBACK TO SAVEPOINT sav_trans_474;
               --Proximo registro
               CONTINUE;
             END IF;
@@ -1075,7 +1077,7 @@ BEGIN
 
         IF vr_tab_acordo.EXISTS(vr_cdindice) THEN
           vr_vlsomato := 0;
-        END IF;	
+        END IF;
 
         IF vr_vlsomato <= 0 THEN
           /* Sem nada para pagar */
@@ -1121,7 +1123,7 @@ BEGIN
         END IF;
 
         --Criar savepoint
-        SAVEPOINT sav_trans;
+        SAVEPOINT sav_trans_474;
 
         --Buscar pagamentos Parcela
            EMPR0001.pc_busca_pgto_parcelas (pr_cdcooper => pr_cdcooper                --> Cooperativa conectada
@@ -1154,7 +1156,7 @@ BEGIN
                                                           || vr_cdprogra || ' --> '
                                                           || vr_dscritic );
             --Desfazer transacao
-            ROLLBACK TO SAVEPOINT sav_trans;
+            ROLLBACK TO SAVEPOINT sav_trans_474;
             --Proximo registro
             CONTINUE;
           END IF;
@@ -1213,6 +1215,25 @@ BEGIN
         /* Se deu erro eh porque nao tinha dinheiro minimo suficiente */
         --Se ocorreu erro
         IF vr_des_erro <> 'OK' THEN
+
+		  --Desfazer transacao
+          ROLLBACK TO SAVEPOINT sav_trans_474;
+          IF vr_tab_erro.count > 0 THEN
+            vr_cdcritic := 0;            
+            vr_dscritic := 'ERRO coop ' || rw_crappep.cdcooper ||
+                           ' nrdconta ' || rw_crappep.nrdconta ||
+                           ' nrctremp ' || rw_crappep.nrctremp ||
+                           ': '|| vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+                           
+            -- Gerar log
+            btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
+                                       pr_ind_tipo_log => 2, 
+                                       pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
+                                                          ' - '||vr_cdprogra ||' --> '|| vr_dscritic,
+                                       pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));  
+          
+          END IF;
+
           --Proximo registro
           CONTINUE;
         END IF;
