@@ -9038,7 +9038,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         FROM craplap lap
        WHERE lap.cdcooper = pr_cdcooper
          AND lap.nrdconta = pr_nrdconta
-         AND lap.dtmvtolt < last_day(to_date('01/'|| pr_nrmesref ||'/' || pr_nranoref,'dd/mm/rrrr'))
+         AND lap.dtmvtolt <= last_day(to_date('01/'|| pr_nrmesref ||'/' || pr_nranoref,'dd/mm/rrrr'))
        GROUP BY lap.nrdconta;
     rw_aplica  cr_aplica%ROWTYPE;
 
