@@ -1,10 +1,10 @@
 CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS171 (pr_cdcooper IN crapcop.cdcooper%TYPE    --> Cooperativa solicitada
-                                              ,pr_flgresta IN PLS_INTEGER              --> Flag 0/1 para utilização de restar N/S
-                                              ,pr_stprogra OUT PLS_INTEGER             --> Saída de termino da execução
-                                              ,pr_infimsol OUT PLS_INTEGER             --> Saída de termino da solicitação
-                                              ,pr_cdoperad IN crapnrc.cdoperad%TYPE    --> Código do operador
-                                              ,pr_cdcritic OUT crapcri.cdcritic%TYPE   --> Critica encontrada
-                                              ,pr_dscritic OUT VARCHAR2) IS            --> Texto de erro/critica encontrada
+                                          ,pr_flgresta IN PLS_INTEGER              --> Flag 0/1 para utilização de restar N/S
+                                          ,pr_stprogra OUT PLS_INTEGER             --> Saída de termino da execução
+                                          ,pr_infimsol OUT PLS_INTEGER             --> Saída de termino da solicitação
+                                          ,pr_cdoperad IN crapnrc.cdoperad%TYPE    --> Código do operador
+                                          ,pr_cdcritic OUT crapcri.cdcritic%TYPE   --> Critica encontrada
+                                          ,pr_dscritic OUT VARCHAR2) IS            --> Texto de erro/critica encontrada
   BEGIN
     /* ..........................................................................
 
@@ -198,10 +198,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS171 (pr_cdcooper IN crapcop.cdcooper%T
 
                    13/05/2016 - Cobranca de Multa e Juros de Mora para emprestimos TR.
                                 (Jaison/James)
-                                
+
                    19/05/2016 - Colocar trava para nao cobrar as parcelas da 
                                 conta: 2496380 e contrato: 289361 da Viacredi.
-                                (Tiago/Thiago - SD: 455213).                       
+                                (Tiago/Thiago - SD: 455213).                                
 
                    26/09/2016 - Inclusao de validacao de contrato de acordo,
                                 Prj. 302 (Jean Michel)         
@@ -798,7 +798,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS171 (pr_cdcooper IN crapcop.cdcooper%T
         -- Envio centralizado de log de erro
         RAISE vr_exc_erro;
       END IF;
-      
+
       -- Procedimento padrão de busca de informações de CPMF
       gene0005.pc_busca_cpmf(pr_cdcooper  => pr_cdcooper
                             ,pr_dtmvtolt  => rw_crapdat.dtmvtolt
