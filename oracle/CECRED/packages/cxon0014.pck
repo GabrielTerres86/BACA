@@ -500,6 +500,13 @@ PROCEDURE pc_retorna_vlr_tit_vencto (pr_cdcooper      IN INTEGER    -- Cooperati
                                     ,pr_des_erro      OUT VARCHAR2  -- Indicador erro OK/NOK   
                                     ,pr_dscritic      OUT VARCHAR2);                 
    
+/* Retonar o ano do codigo barras do Darf Europa */
+FUNCTION fn_ret_ano_barras_darf (pr_innumano IN INTEGER) -- Numero Ano
+RETURN INTEGER;
+  
+ /* Retonar o ano do codigo barras do Darf Europa */
+PROCEDURE pc_ret_ano_barras_darf_car (pr_innumano IN INTEGER,
+                                      pr_outnumano OUT INTEGER); -- Numero Ano
 END CXON0014;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
@@ -568,6 +575,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
   --
   --             07/02/2017 - Ajustes para verificar vencimento da P.M. PRES GETULIO, P.M. GUARAMIRIM e SANEPAR
   --                          (Tiago/Fabricio SD593203)
+  --  
+  --              13/01/2017 - Criar procedure/function ret_ano_barras_darf
+  --                           para a nova regra de validacao das DARFs
+  --                           (Lucas Ranghetti #588835)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Busca dos dados da cooperativa */
@@ -6733,8 +6744,7 @@ END pc_gera_titulos_iptu_prog;
       /* DARF PRETO EUROPA */
       IF pr_cdempcon IN (64,153) AND pr_cdsegmto = 5 THEN /* DARFC0064 ou DARFC0153 */
         --Retornar ano
-        vr_inanocal:= CXON0014.fn_retorna_ano_cdbarras(pr_innumano => TO_NUMBER(SUBSTR(pr_codigo_barras,20,1))
-                                                      ,pr_darfndas => FALSE);
+        vr_inanocal:= CXON0014.fn_ret_ano_barras_darf (pr_innumano => TO_NUMBER(SUBSTR(pr_codigo_barras,20,1)));
         --Retornar data dias
         vr_dttolera:= CXON0014.fn_retorna_data_dias(pr_nrdedias => To_Number(SUBSTR(pr_codigo_barras,21,3)) --Numero de Dias
                                                    ,pr_inanocal => vr_inanocal); --Indicador do Ano
@@ -8833,15 +8843,13 @@ END pc_gera_titulos_iptu_prog;
         CLOSE cr_crapstb;
         /* Calculo da Data Limite */
         --Retornar ano do codigo barras
-        vr_inanocal:= CXON0014.fn_retorna_ano_cdbarras(pr_innumano => TO_NUMBER(SUBSTR(pr_cdbarras,20,1))
-                                                      ,pr_darfndas => FALSE);
+        vr_inanocal:= CXON0014.fn_ret_ano_barras_darf(pr_innumano => TO_NUMBER(SUBSTR(pr_cdbarras,20,1)));
         --Retornar data dias
         vr_dtlimite:= CXON0014.fn_retorna_data_dias(pr_nrdedias => To_Number(SUBSTR(pr_cdbarras,21,3)) --Numero de Dias
                                                    ,pr_inanocal => vr_inanocal); --Indicador do Ano
         /* Calculo do Periodo de Apuracao */
         --Retornar ano do codigo barras
-        vr_inanocal:= CXON0014.fn_retorna_ano_cdbarras(pr_innumano => TO_NUMBER(SUBSTR(pr_cdbarras,41,1))
-                                                      ,pr_darfndas => FALSE);
+        vr_inanocal:= CXON0014.fn_ret_ano_barras_darf(pr_innumano => TO_NUMBER(SUBSTR(pr_cdbarras,41,1)));
         --Retornar data dias
         vr_dtapurac:= CXON0014.fn_retorna_data_dias(pr_nrdedias => To_Number(SUBSTR(pr_cdbarras,42,3)) --Numero de Dias
                                                    ,pr_inanocal => vr_inanocal); --Indicador do Ano
@@ -10912,5 +10920,72 @@ END pc_gera_titulos_iptu_prog;
       pr_dscritic := vr_dscritic;
      
   END pc_retorna_vlr_tit_vencto;
+  
+  /* Retonar o ano do codigo barras do Darf Europa */
+  FUNCTION fn_ret_ano_barras_darf (pr_innumano IN INTEGER) -- Numero Ano
+  RETURN INTEGER IS
+--------------------------------------------------------------------------------------------------------------
+  --
+  --  Programa : fn_ret_ano_cdbarras_darf          
+  --  Sistema  : Retonar o ano do codigo barras do Darf Europa
+  --  Sigla    : CXON
+  --  Autor    : Lucas Ranghetti
+  --  Data     : Janeiro/2017.                   Ultima atualizacao: --/--/----
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Frequencia: -----
+  -- Objetivo  : Retonar o ano do codigo barras do Darf Europa
+
+  ---------------------------------------------------------------------------------------------------------------
+  BEGIN
+    DECLARE
+      --Variaveis de Excecao
+      vr_exc_erro EXCEPTION;
+    BEGIN      
+      --Se Indicador ano entiver entre 1 e 3
+      IF pr_innumano BETWEEN 1 AND 3 THEN
+        RETURN (2020 + pr_innumano);
+      ELSIF  pr_innumano BETWEEN 4 AND 9 THEN
+        RETURN (2010 + pr_innumano);
+      ELSIF  pr_innumano = 0 THEN
+        RETURN(2020);
+      END IF;
+    EXCEPTION
+       WHEN vr_exc_erro THEN
+         RETURN(NULL);
+       WHEN OTHERS THEN
+         RETURN(NULL);
+    END;
+  END fn_ret_ano_barras_darf;
+  
+   /* Retonar o ano do codigo barras do Darf Europa */
+  PROCEDURE pc_ret_ano_barras_darf_car (pr_innumano IN INTEGER,
+                                        pr_outnumano OUT INTEGER) IS -- Numero Ano
+
+--------------------------------------------------------------------------------------------------------------
+  --
+  --  Programa : pc_ret_ano_cdbarras_darf          
+  --  Sistema  : Retonar o ano do codigo barras do Darf Europa
+  --  Sigla    : CXON
+  --  Autor    : Lucas Ranghetti
+  --  Data     : Janeiro/2017.                   Ultima atualizacao: --/--/----
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Frequencia: -----
+  -- Objetivo  : Retonar o ano do codigo barras do Darf Europa
+
+  ---------------------------------------------------------------------------------------------------------------
+  BEGIN   
+    BEGIN      
+      
+     pr_outnumano:= fn_ret_ano_barras_darf(pr_innumano => pr_innumano);
+    
+    EXCEPTION      
+       WHEN OTHERS THEN
+         NULL;
+    END;
+  END pc_ret_ano_barras_darf_car;
 END CXON0014;
 /
