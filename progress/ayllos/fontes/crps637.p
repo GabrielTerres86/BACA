@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Lucas Lunelli
-    Data    : Fevereiro/2013                  Ultima Atualizacao : 01/12/2016
+    Data    : Fevereiro/2013                  Ultima Atualizacao : 22/02/2017
     
     Dados referente ao programa:
     
@@ -45,6 +45,9 @@
                               regra de crapscn.dsoparre = "E"  AND 
                               (crapscn.cddmoden = "A"  OR crapscn.cddmoden = "C")
                               (Lucas Ranghetti #531045)                          
+                              
+                22/02/2017 - Atualizar somente o segmento para a planilha CCROCONV
+                             (Lucas Ranghetti #618741)
 ..............................................................................*/
 
 DEF STREAM str_1.  /* ARQ. IMPORTAÇÃO       */
@@ -574,10 +577,12 @@ DO WHILE TRUE ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
         IF  crapscn.dsoparre = "E"  AND
            (crapscn.cddmoden = "A"  OR
             crapscn.cddmoden = "C") THEN
+            ASSIGN crapscn.cdsegmto = TRIM(ENTRY(39, aux_setlinha, "|"),'"').   /*  fcsegmento */
+        ELSE
+            DO:            
             ASSIGN crapscn.cdsegmto = TRIM(ENTRY(39, aux_setlinha, "|"),'"')         /*  fcsegmento */
                    crapscn.cdempcon = INTE(TRIM(ENTRY(38, aux_setlinha, "|"),'"')).  /*  fcnumbarra */ 
-        ELSE
-            DO:
+
         VALIDATE crapscn.
 
         /* Não gravar crapcon quando cod. segmento ou cod. empresa forem 0,
