@@ -190,6 +190,7 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0002 AS
       ,cdagenci crapass.cdagenci%type
       ,nmsegntl crapass.nmsegntl%type
       ,dsanoant VARCHAR2(10)
+
       ,dtrefer1 DATE
       ,dtrefer2 DATE
 
@@ -519,7 +520,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
 
     Programa: EXTR0002                           Antigo: sistema/generico/procedures/b1wgen0112.p
     Autor   : Gabriel Capoia dos Santos (DB1)
-    Data    : Agosto/2011                        Ultima atualizacao: 08/11/2016
+    Data    : Agosto/2011                        Ultima atualizacao: 17/01/2017
 
     Objetivo  : Tranformacao BO tela IMPRES
 
@@ -749,6 +750,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                             M169 (Ricardo Linhares)
 				
 				23/11/2016 - Ajuste nos lancamentos futuros de emprestimos (Lenilson - Mouts)
+
+        29/11/2016 - P341 - Automatização BACENJUD - Alterado para validar o departamento à partir
+                     do código e não mais pela descrição (Renato Darosci - Supero)
+
+        17/01/2017 - Ajuste na pc_consulta_lancamento que nao estava passando a critica
+                     para frente. SD 594506 (Kelvin).
 
   ---------------------------------------------------------------------------------------------------------------
 ..............................................................................*/
@@ -1921,7 +1928,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       CURSOR cr_crapope(pr_cdcooper IN crapope.cdcooper%TYPE
                        ,pr_cdoperad IN crapope.cdoperad%TYPE) IS
         SELECT crapope.cdagenci
-              ,crapope.dsdepart
+              ,crapope.cddepart
         FROM crapope crapope
         WHERE crapope.cdcooper = pr_cdcooper
         AND   UPPER(crapope.cdoperad) = UPPER(pr_cdoperad);
@@ -2068,14 +2075,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       --Tela for ATENDA
       IF pr_nmdatela = 'ATENDA' THEN
         --Usuario TI
-        IF rw_crapope.dsdepart = 'TI'  THEN  /** SUPER-USUARIO **/
+        IF rw_crapope.cddepart = 20  THEN  /** SUPER-USUARIO **/
           vr_listahis:= '150,151,152,154,155,158,496,863,925,1115';
         ELSE
           vr_listahis:= '150,151,158,496,863,925,1115';
         END IF;
       ELSE
         --Usuario TI
-        IF rw_crapope.dsdepart = 'TI'  THEN  /** SUPER-USUARIO **/
+        IF rw_crapope.cddepart = 20  THEN  /** SUPER-USUARIO **/
           vr_listahis:= '150,151,152,154,155,158,496,863,869,870,925,1115';
         ELSE
           vr_listahis:= '150,151,158,496,863,870,925,1115';
@@ -5920,7 +5927,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                              ,pr_cdagenci => pr_cdagenci
                              ,pr_nrdcaixa => pr_nrdcaixa
                              ,pr_nrsequen => 1 --> Fixo
-                             ,pr_cdcritic => 0 --> Critica 0
+                             ,pr_cdcritic => vr_cdcritic --> Critica 0
                              ,pr_dscritic => vr_dscritic
                              ,pr_tab_erro => pr_tab_erro);
         -- Se foi solicitado geração de LOG
@@ -6047,7 +6054,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                          ,pr_cdoperad IN crapope.cdoperad%TYPE) IS
           SELECT crapope.cdagenci
                 ,crapope.nmoperad
-                ,crapope.dsdepart
+                ,crapope.cddepart
           FROM crapope crapope
           WHERE crapope.cdcooper = pr_cdcooper
           AND   UPPER(crapope.cdoperad) = UPPER(pr_cdoperad);
@@ -6213,7 +6220,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
             --Empresas
             IF vr_cdempres IN (11,50)  AND
                rw_crapope.nmoperad <> rw_crapass.nmprimtl  AND
-               rw_crapope.dsdepart <> 'TI' THEN
+               rw_crapope.cddepart <> 20 THEN
               --Ayllos
               IF pr_idorigem = 1 THEN
                 -- Comando para copiar o arquivo para a pasta salvar
@@ -8051,6 +8058,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                                nvl(rw_crapdir.vlrenrda##7,0) + nvl(rw_crapdir.vlrenrda##8,0) +
                                nvl(rw_crapdir.vlrenrda##9,0) + nvl(rw_crapdir.vlrenrda##10,0) +
                                nvl(rw_crapdir.vlrenrda##11,0) + nvl(rw_crapdir.vlrenrda##12,0) +
+
                                nvl(rw_crapdir.vlrenrdc##1,0) + nvl(rw_crapdir.vlrenrdc##2,0) +
                                nvl(rw_crapdir.vlrenrdc##3,0) + nvl(rw_crapdir.vlrenrdc##4,0) +
                                nvl(rw_crapdir.vlrenrdc##5,0) + nvl(rw_crapdir.vlrenrdc##6,0) +
@@ -8553,6 +8561,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                     pr_tab_retencao_ir(vr_index_retenc).cdretenc:= vr_cdretenc;
                     pr_tab_retencao_ir(vr_index_retenc).dsretenc:= vr_dsretenc;
                     pr_tab_retencao_ir(vr_index_retenc).vlrentot:= vr_vlrentot;
+
                     --Ano referencia maior ou igual 2004
                     IF pr_nranoref >= 2004 THEN
                       pr_tab_retencao_ir(vr_index_retenc).vlirfont:= vr_vlirfont;
@@ -8817,7 +8826,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       END;
     END pc_consulta_imposto_renda;
 
-
  PROCEDURE pc_consulta_ir_pj_trim (pr_cdcooper IN crapcop.cdcooper%TYPE       --Codigo Cooperativa
                                   ,pr_cdagenci IN crapass.cdagenci%TYPE       --Codigo Agencia
                                   ,pr_nrdcaixa IN INTEGER                     --Numero do Caixa
@@ -8840,7 +8848,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --  Sistema  :
   --  Sigla    : CRED
   --  Autor    : Guilherme/SUPERO
-  --  Data     : Julho/2016                           Ultima atualizacao: 17/08/2016
+  --  Data     : Julho/2016                           Ultima atualizacao: 23/02/2017
   --
   -- Dados referentes ao programa:
   --
@@ -8850,7 +8858,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   -- Alterações :
   --
   --              17/08/2016 - M360 - Inclusão de novas buscas de Sobras ao Cooperado (Marcos-Supero)
-
+  --              23/02/2017 - SD618188 - Inclusao do formato na conversao de data para aplicacoes (Marcos-Supero)
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
     -- Busca dos dados da cooperativa
@@ -8921,7 +8929,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       FROM crapdir crapdir
       WHERE crapdir.cdcooper = pr_cdcooper
       AND   crapdir.nrdconta = pr_nrdconta
-      AND   to_number(to_char(crapdir.dtmvtolt,'YYYY')) = pr_nranoref
+      AND   to_char(crapdir.dtmvtolt,'RRRR') = pr_nranoref
       order by cdcooper,nrdconta,dtmvtolt,progress_recid;
     rw_crapdir cr_crapdir%ROWTYPE;
 
@@ -8971,6 +8979,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
          AND lct.cdhistor IN (sobr0001.vr_cdhisopc_cot,sobr0001.vr_cdhisdpp_cot
                              ,sobr0001.vr_cdhisdpa_cot,sobr0001.vr_cdhistar_cot
                              ,sobr0001.vr_cdhisaut_cot,sobr0001.vr_cdhisdep_cot);
+                             
     -- Selecionar Credito Retorno de Sobras em CC
     CURSOR cr_craplcm (pr_cdcooper IN craplcm.cdcooper%type
                       ,pr_anorefer IN INTEGER
@@ -9029,7 +9038,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         FROM craplap lap
        WHERE lap.cdcooper = pr_cdcooper
          AND lap.nrdconta = pr_nrdconta
-         AND lap.dtmvtolt < last_day(to_date('01/'|| pr_nrmesref ||'/' || pr_nranoref))
+         AND lap.dtmvtolt < last_day(to_date('01/'|| pr_nrmesref ||'/' || pr_nranoref,'dd/mm/rrrr'))
        GROUP BY lap.nrdconta;
     rw_aplica  cr_aplica%ROWTYPE;
 
@@ -19215,10 +19224,7 @@ btch0001.pc_log_internal_exception(pr_cdcooper);
              vr_soma_cre := nvl(vr_tab_totais_futuros(vr_contador_totais).vllaucre,0);
              vr_soma_tot := nvl(vr_tab_totais_futuros(vr_contador_totais).vllautom,0);
            else
-           
              vr_soma_tot :=vr_soma_cre - vr_soma_deb;
-             
-             --vr_soma_deb := nvl(vr_tab_totais_futuros(vr_contador_totais).vllautom,0);
            end if;
           -- Montar XML com registros de carencia
           gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc_totais
