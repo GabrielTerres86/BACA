@@ -5,7 +5,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
   --
   --  Programa: PC_CRPS331
   --  Autor   : Andrino Carlos de Souza Junior (RKAM)
-  --  Data    : Novembro/2015                     Ultima Atualizacao: - 20/06/2016
+  --  Data    : Novembro/2015                     Ultima Atualizacao: - 21/11/2016
   --
   --  Dados referentes ao programa:
   --
@@ -17,6 +17,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
   --
   --		      20/06/2016 - Receber o numero da conta ja na primeira linha do arquivo.
   --
+  --          21/11/2016 - #557129 Incluida a função trim em algumas atribuições para corrigir a conversão para
+  --                       o tipo number (Carlos)
   ---------------------------------------------------------------------------------------------------------------
 
   -- Atualiza a situacao do boleto
@@ -105,7 +107,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
             
           -- Vai para o proximo registro
           vr_ind := vr_ind + 1;
-		  EXIT;
+          EXIT;
         END LOOP;
       END IF;
       
@@ -629,7 +631,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
                  ELSIF vr_intipreg = 1 THEN
                    
                    -- Busca o numero do convenio
-                   vr_nrcnvcob := substr(vr_dsdlinha,773,10);
+                   vr_nrcnvcob := trim(substr(vr_dsdlinha,773,10));
 
                    -- Busca o numero da conta
                    -- Este campo sera rebido somente apos o dia 10/06. Antes disso era recebido 
@@ -637,10 +639,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
                    vr_nrdconta := nvl(trim(substr(vr_dsdlinha,783,10)),0);
 
                    -- Busca o numero do documento
-                   vr_nrdocmto := substr(vr_dsdlinha,704,10);
+                   vr_nrdocmto := trim(substr(vr_dsdlinha,704,10));
                    
                    -- Busca a UF do devedor
-                   vr_ufsacado := substr(vr_dsdlinha,473,2);
+                   vr_ufsacado := trim(substr(vr_dsdlinha,473,2));
 
                    -- Verificar se a UF deve possuir AR
                    IF instr(vr_uf_excecao,vr_ufsacado) <> 0 THEN
@@ -727,6 +729,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
                  WHEN no_data_found THEN
                    -- Acabou a leitura, então finaliza o loop
                    EXIT;
+                 WHEN OTHERS THEN
+                   btch0001.pc_log_internal_exception(3);
+                   EXIT;
                END;
 
              END LOOP; -- Finaliza o loop das linhas do arquivo
@@ -774,6 +779,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
          -- Efetuar rollback
          ROLLBACK;
        WHEN OTHERS THEN
+
+         btch0001.pc_log_internal_exception(3);
+
          -- Efetuar retorno do erro não tratado
          pr_cdcritic := 0;
          pr_dscritic := SQLERRM;
