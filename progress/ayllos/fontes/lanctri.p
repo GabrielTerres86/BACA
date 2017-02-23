@@ -1358,6 +1358,7 @@ DO WHILE TRUE:
                                  INPUT 0, /* par_nmdatela */
                                  INPUT FALSE, /* par_flgerlog */
                                  INPUT tel_cdfinemp,
+								 INPUT crawepr.cdlcremp,
                                  INPUT crawepr.nrctrliq,
                                  INPUT "", /* par_dsctrliq */
                                  OUTPUT TABLE tt-erro,
