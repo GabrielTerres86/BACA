@@ -313,6 +313,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
 
                22/02/2017 - Incluido novamente relatório 618 - CAC (Renato);
 			              - Ajustado valor do pagto na rotina de devolução (Rafael);
+						  - Ajustado data de movimento no arquivo de devolução (Rafael);
    .............................................................................*/
 
      DECLARE
@@ -2654,7 +2655,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
              vr_nmarquiv:= '2' ||                                    --> arquivo de cobrança
                            to_char(rw_devolucao.cdagectl,'fm0000')|| --> Agencia
                            vr_cddomes ||                             --> código do mês
-                           to_char(pr_dtmvtolt,'DD')||                 --> número do dia do movimento
+                           to_char(rw_crapdat.dtmvtopr,'DD') ||                 --> número do dia do movimento
                            '.DVS';
 
              -- Inicializar o CLOB
@@ -2669,7 +2670,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                               '0000001'                       || -->  3 054-060   9(007)  Versão do arquivo
                               lpad(' ',4,' ')                 || -->  4 061-064   X(004)  Filler - Preencher com brancos 
                               '7'                             || -->  5 065-065   9(001)  Indicador de remessa
-                              to_char(pr_dtmvtolt,'RRRRMMDD') || -->  6 066-073   9(008)  Data do movimento 
+                              to_char(rw_crapdat.dtmvtopr,'RRRRMMDD') || -->  6 066-073   9(008)  Data do movimento 
                               lpad(' ',58,' ')                || -->  7 074-131   X(058)  Filler -Preencher com brancos 
                               to_char(rw_devolucao.nrispbif_cop,
                                         'fm00000000')         || -->  8 132-139   9(008)  ISPB IF remetente  
@@ -2744,7 +2745,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                               '0000001'                       || -->  3 054-060   9(007)  Versão do arquivo
                               lpad(' ',4,' ')                 || -->  4 061-064   X(004)  Filler - Preencher com brancos 
                               '7'                             || -->  5 065-065   9(001)  Indicador de remessa
-                              to_char(pr_dtmvtolt,'RRRRMMDD') || -->  6 066-073   9(008)  Data do movimento 
+                              to_char(rw_crapdat.dtmvtopr,'RRRRMMDD') || -->  6 066-073   9(008)  Data do movimento 
                               to_char(vr_vltotarq * 100,
                                        'fm00000000000000000') || --> 7 074-090 9(017) Somatório do valor dos detalhes do arquivo (*) 
                               lpad(' ',41,' ')                || --> 8  091-131  X(041) Filler - Preencher com brancos
