@@ -453,7 +453,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 12/12/2016
+  --  Data     : Junho/2013.                   Ultima atualizacao: 22/02/2017
   --
   -- Dados referentes ao programa:
   --
@@ -521,6 +521,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --                          - Contabilizar corretamente o limite diário de TED
   --                            (Adriano - SD 563147 / 482831)
   --
+	--        22/02/2017 - Ajuste retorno horário estourado pagamento DARF/DAS (Lucas Lunelli - P.349.2)
+	--
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Busca dos dados da cooperativa */
@@ -2428,6 +2430,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
+
+			IF pr_tpoperac = 10 AND -- DARF/DAS 
+				 pr_tab_limite(pr_tab_limite.FIRST).iddiauti = 2 THEN
+				 	pr_tab_limite(pr_tab_limite.FIRST).idesthor := 1;
+			END IF;
 
       --Se nao for para validar retorna
       IF NOT pr_flgvalid THEN

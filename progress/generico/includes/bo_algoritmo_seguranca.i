@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Gabriel
-   Data    : Agosto/2011                   Ultima Atualizacao: 09/03/2012
+   Data    : Agosto/2011                   Ultima Atualizacao: 22/02/2017
    
    Dados referentes ao programa:
 
@@ -15,6 +15,9 @@
                             (Jorge). 
                             
                09/03/2012 - Adicionado os campos cdbcoctl e cdagectl.(Fabricio)
+   
+               22/02/2017 - Alteraçoes para compor comprovantes DARF/DAS 
+                            Modelo Sicredi (Lucas Lunelli)
    
 ............................................................................ */
 
@@ -36,6 +39,7 @@ DEF TEMP-TABLE cratpro                                                 NO-UNDO
     FIELD nmoperad LIKE crapopi.nmoperad
     FIELD nrcpfope LIKE crappro.nrcpfope
     FIELD cdbcoctl LIKE crapcop.cdbcoctl
-    FIELD cdagectl LIKE crapcop.cdagectl.
+    FIELD cdagectl LIKE crapcop.cdagectl
+    FIELD cdagesic LIKE crapcop.cdagesic.
 
 /* ......................................................................... */

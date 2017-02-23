@@ -4,7 +4,7 @@ create or replace package cecred.PAGA0002 is
 
    Programa: PAGA0002                          Antiga: b1wgen0089.p
    Autor   : Guilherme/Supero
-   Data    : 13/04/2011                        Ultima atualizacao: 06/09/2016
+   Data    : 13/04/2011                        Ultima atualizacao: 22/02/2017
 
    Dados referentes ao programa:
 
@@ -159,6 +159,8 @@ create or replace package cecred.PAGA0002 is
                                         
        06/09/2016 - Ajuste para apresentar o horario limite para debito de ted's agendadas
                           (Adriano - SD509480).    
+													
+							 22/02/2017 - Ajustes para correçao de crítica de pagamento DARF/DAS (Lucas Lunelli - P.349.2)
                                         
 ..............................................................................*/
   -- Antigo tt-agenda-recorrente
@@ -680,7 +682,7 @@ create or replace package body cecred.PAGA0002 is
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Odirlei Busana - Amcom
-  --  Data     : Março/2014.                   Ultima atualizacao: 30/11/2016
+  --  Data     : Março/2014.                   Ultima atualizacao: 22/02/2017
   --
   -- Dados referentes ao programa:
   --
@@ -755,6 +757,9 @@ create or replace package body cecred.PAGA0002 is
   --                          
   --             30/11/2016 - Alterado query do sumario da tela debnet pra trazer corretamente 
   --                          os resultados (Tiago/Elton SD566237)
+	--
+	--             22/02/2017 - Ajustes para correçao de crítica de pagamento DARF/DAS (Lucas Lunelli - P.349.2)
+	--
   ---------------------------------------------------------------------------------------------------------------*/
   
   ----------------------> CURSORES <----------------------
@@ -2470,6 +2475,7 @@ create or replace package body cecred.PAGA0002 is
                          ,pr_dtagenda => vr_dtmvtopg  --> Data agendamento
                          ,pr_idorigem => 3 /*INTERNET*/ --> Indicador de origem
                          ,pr_indvalid => 0            --> Nao validar horario limite
+						 	           ,pr_flmobile => pr_flmobile  --> Indicador Mobile
                          ,pr_nmextcon => vr_nmconban  --> Nome do banco
                          ,pr_cdseqfat => vr_cdseqfat  --> Codigo Sequencial fatura
                          ,pr_vlfatura => vr_vlrdocum  --> Valor fatura
@@ -2527,6 +2533,7 @@ create or replace package body cecred.PAGA0002 is
                                  ,pr_dtagenda => vr_dtmvtopg           --> Data agendamento
                                  ,pr_idorigem => 3 /* INTERNET */      --> Indicador de origem
                                  ,pr_indvalid => 0                     --> Validar
+								                 ,pr_flmobile => pr_flmobile           --> Indicador Mobile
                                  ,pr_nmextbcc => vr_nmconban           --> Nome do banco
                                  ,pr_vlfatura => vr_vlrdocum           --> Valor fatura
                                  ,pr_dtdifere => vr_dtdifere           --> Indicador data diferente
@@ -3192,6 +3199,7 @@ create or replace package body cecred.PAGA0002 is
                          ,pr_dtagenda => vr_dtmvtopg  --> Data agendamento
                          ,pr_idorigem => 3 /*INTERNET*/ --> Indicador de origem
                          ,pr_indvalid => 0            --> Nao validar horario limite
+						             ,pr_flmobile => pr_flmobile  --> Indicador Mobile
                          ,pr_nmextcon => vr_nmconban  --> Nome do banco
                          ,pr_cdseqfat => vr_cdseqfat  --> Codigo Sequencial fatura
                          ,pr_vlfatura => vr_vlrdocum  --> Valor fatura
@@ -3352,6 +3360,7 @@ create or replace package body cecred.PAGA0002 is
                                  ,pr_dtagenda => vr_dtmvtopg           --> Data agendamento
                                  ,pr_idorigem => 3 /* INTERNET */      --> Indicador de origem
                                  ,pr_indvalid => 0                     --> Validar
+								                 ,pr_flmobile => pr_flmobile           --> Indicador Mobile
                                  ,pr_nmextbcc => vr_nmconban           --> Nome do banco
                                  ,pr_vlfatura => vr_vlrdocum           --> Valor fatura
                                  ,pr_dtdifere => vr_dtdifere           --> Indicador data diferente

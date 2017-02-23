@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.PGTA0001 IS
 --  Sistema  : Rotinas genericas focando nas funcionalidades de Pagamento de Titulos Lote
 --  Sigla    : PGTA
 --  Autor    : Daniel Zimmermann
---  Data     : Abril/2014.                   Ultima atualizacao:  20/06/2016
+--  Data     : Abril/2014.                   Ultima atualizacao:  22/02/2016
 --
 -- Dados referentes ao programa:
 --
@@ -22,6 +22,9 @@ CREATE OR REPLACE PACKAGE CECRED.PGTA0001 IS
 --
 --             20/06/2016 - Correcao para o uso da function fn_busca_dstextab da TABE0001 em 
 --                          varias procedures desta package.(Carlos Rafael Tanholi). 
+--
+--             22/02/2017 - Ajustes para correçao de crítica de pagamento DARF/DAS (Lucas Lunelli - P.349.2)
+--
 ---------------------------------------------------------------------------------------------------------------
 
     -- Tabela de memoria que ira conter os titulos que foram marcados como retorno
@@ -208,7 +211,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 --  Sistema  : Rotinas genericas focando nas funcionalidades do pagamento por arquivo
 --  Sigla    : PGTA
 --  Autor    : Daniel Zimmermann
---  Data     : Maio/2014.                   Ultima atualizacao: 20/06/2016
+--  Data     : Maio/2014.                   Ultima atualizacao: 22/02/2016
 --
 -- Dados referentes ao programa:
 --
@@ -228,6 +231,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 --                          esta realizando o agendamento possui privilegios de PAGADORVIP,
 --                          para não criticar a data de vencimento do titulo que esta sendo agendado 
 --                          (Douglas - Chamado 551630).
+--
+--             22/02/2017 - Ajustes para correçao de crítica de pagamento DARF/DAS (Lucas Lunelli - P.349.2)
 --
 ---------------------------------------------------------------------------------------------------------------
 
@@ -2475,6 +2480,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                                           ,pr_dtagenda => vr_dtmvtopg           --IN OUT --Data agendamento
                                           ,pr_idorigem => pr_idorigem           --Indicador de origem
                                           ,pr_indvalid => 1                     --nao validar
+										                      ,pr_flmobile => 0                     --Indicador mobile
                                           -- Abaixo, todas OUT...
                                           ,pr_nmextbcc => vr_nmextbcc           --Nome do banco
                                           ,pr_vlfatura => vr_vlfatura           --Valor fatura

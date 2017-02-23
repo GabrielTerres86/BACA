@@ -5,7 +5,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Adriano
-   Data    : Junho/2014.                       Ultima atualizacao: 14/10/2014
+   Data    : Junho/2014.                       Ultima atualizacao: 22/02/2017
    
    Dados referentes ao programa:
    
@@ -17,6 +17,8 @@
                             de resgate de aplicacoes
                             (Adriano). 
 
+               22/02/2017 - Alteraçoes para compor comprovantes DARF/DAS 
+                            Modelo Sicredi (Lucas Lunelli)
 ..............................................................................*/
 
 { sistema/internet/includes/var_ibank.i    }
@@ -89,6 +91,14 @@ IF aux_cdcritic <> 0   OR
       RETURN "NOK".
        
    END.
+
+FIND FIRST crapcop WHERE crapcop.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
+
+IF  NOT AVAIL crapcop  THEN
+    DO:
+        ASSIGN xml_dsmsgerr = "<dsmsgerr>Cooperativa nao encontrada.</dsmsgerr>".  
+        RETURN "NOK".   
+    END.     
 
 FOR EACH wt_protocolo NO-LOCK:
 
@@ -204,14 +214,35 @@ FOR EACH wt_protocolo NO-LOCK:
                                     (IF wt_protocolo.cdbcoctl <> ? THEN
                                         STRING(wt_protocolo.cdbcoctl, "999")
                                      ELSE
+                                        IF par_cdtippro = 16 OR 
+                                           par_cdtippro = 17 OR
+                                           par_cdtippro = 18 OR
+                                           par_cdtippro = 19 THEN
+                                           STRING(crapcop.cdbcoctl, "999")
+                                        ELSE 
                                         "") +
                                      "</cdbcoctl>" 
            xml_operacao88.cdagectl = "<cdagectl>" +
                                     (IF wt_protocolo.cdagectl <> ? THEN
                                         STRING(wt_protocolo.cdagectl, "9999") 
                                      ELSE
+                                        IF par_cdtippro = 16 OR 
+                                           par_cdtippro = 17 OR
+                                           par_cdtippro = 18 OR
+                                           par_cdtippro = 19 THEN
+                                           STRING(crapcop.cdagectl, "9999")
+                                        ELSE 
                                         "") +
                                      "</cdagectl>"
+           xml_operacao88.cdagesic = "<cdagesic>" +
+                                    (IF par_cdtippro = 16 OR 
+                                        par_cdtippro = 17 OR
+                                        par_cdtippro = 18 OR
+                                        par_cdtippro = 19 THEN
+                                        STRING(crapcop.cdagesic, "9999")
+                                     ELSE 
+                                         "") +
+                                     "</cdagesic>"
            xml_operacao88.dscabfim = "</DADOS>".
 
 END.

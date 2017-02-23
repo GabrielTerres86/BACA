@@ -37,7 +37,7 @@
 
     Programa: b1wgen0016.p
     Autor   : Evandro/David
-Data    : Abril/2006                     Ultima Atualizacao: 28/11/2016
+    Data    : Abril/2006                     Ultima Atualizacao: 22/02/2017
     
     Dados referentes ao programa:
 
@@ -463,7 +463,11 @@ Data    : Abril/2006                     Ultima Atualizacao: 28/11/2016
 PRJ319 - SMS Cobrança (Odirlei - AMcom)
 
 			  07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
-                           departamento passando a considerar o código (Renato Darosci)             
+                           departamento passando a considerar o código (Renato Darosci)           
+
+			  22/02/2017 - Ajustes para correçao de crítica de 
+                           pagamento DARF/DAS (Lucas Lunelli - P.349.2)  
+              
  .............................................................................*/
 { sistema/internet/includes/var_ibank.i }
 
@@ -12168,6 +12172,7 @@ PROCEDURE aprova_trans_pend:
                                                           INPUT tt-tbpagto_darf_das_trans_pend.idagendamento,   /* Indicador de agendamento (1-Nesta Data/2-Agendamento */
                                                           INPUT tt-tbpagto_darf_das_trans_pend.dtdebito,        /* Data de agendamento */
                                                           INPUT 0,                                    /* Indicador de controle de validaçoes (1-Operaçao Online/2-Operaçao Batch) */
+                                                          INPUT 0,                                    /* Indicador mobile */
                                                          OUTPUT "",                                              /* Código sequencial da guia */
                                                          OUTPUT 0,                                              /* Digito do Faturamento */
                                                          OUTPUT 0,                                              /* Valor da guia */
