@@ -5,7 +5,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
   --
   --  Programa: PC_CRPS331
   --  Autor   : Andrino Carlos de Souza Junior (RKAM)
-  --  Data    : Novembro/2015                     Ultima Atualizacao: - 21/11/2016
+  --  Data    : Novembro/2015                     Ultima Atualizacao: - 23/02/2017
   --
   --  Dados referentes ao programa:
   --
@@ -17,8 +17,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
   --
   --		      20/06/2016 - Receber o numero da conta ja na primeira linha do arquivo.
   --
-  --          21/11/2016 - #557129 Incluida a função trim em algumas atribuições para corrigir a conversão para
-  --                       o tipo number (Carlos)
+  --			  21/11/2016 - #557129 Incluida a função trim em algumas atribuições para corrigir a conversão para
+  --                           o tipo number (Carlos)
+  --
+  --              23/02/2017 - #602584 Implementado na rotina que trata os retornos da Serasa, algumas condições para 
+  --						   que o sistema consiga identificar corretamente quando ocorreu erro na Serasa e salvar 
+  --						   o log na Cecred (Andrey Formigari - Mouts).
   ---------------------------------------------------------------------------------------------------------------
 
   -- Atualiza a situacao do boleto
@@ -67,6 +71,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
        vr_dslog       VARCHAR2(500);
        vr_inreterr    PLS_INTEGER; -- Indicador de erro (0-Sem erro, 1-Com erro)
        vr_erros       typ_tab_erros; -- Tabela com os erros no retorno
+	   vr_erros_temp  PLS_INTEGER := 0; -- Variavel com o código do erro temporario
        vr_ind         PLS_INTEGER := 0; -- Indice da tabelas de erros
        vr_tab_lcm     PAGA0001.typ_tab_lcm_consolidada; -- Tabela de lancamentos para cobranda da tarifa
 
@@ -98,6 +103,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
           
           -- Busca o codigo de erro, contendo 3 posicoes
           vr_erros(vr_ind+1) := trim(substr(pr_dsretser,(vr_ind*3)+1,3));
+		  vr_erros_temp := vr_erros(vr_ind+1);
                     
           -- Conforme e-mail passado pela Marajoana (Serasa-17/03/2016), nos casos de remessa informacional
           -- vira apenas um erro
@@ -120,10 +126,17 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
         vr_dtretser := rw_crapcob.dtretser; -- Manter a mesma data
         vr_dslog := 'Serasa - Recebido informacoes apenas informacionais';
       ELSIF pr_intipret = 3 AND -- Se for consulta (para os casos de SP)
-         rw_crapcob.inserasa = 2 THEN -- E estiver com o status de enviada
+         rw_crapcob.inserasa = 2 AND -- E estiver com o status de enviada
+         vr_erros_temp = 0 THEN  -- E veio como REGISTRO AR - ASSINADO
         vr_inserasa := rw_crapcob.inserasa; -- Continua com o mesmo status
         vr_dtretser := pr_dtmvtolt; -- Coloca como recebida com sucesso
         vr_dslog := 'Serasa - Recebido informacoes do AR';
+	  ELSIF pr_intipret = 3 AND -- Se for consulta (para os casos de SP)
+         rw_crapcob.inserasa = 2 AND -- E estiver com o status de enviada
+         vr_erros_temp <> 0 THEN  -- E veio com erro
+        vr_inserasa := 6; -- Recusada Serasa
+        vr_dtretser := NULL; -- Nao recebida
+        vr_dslog := 'Serasa - Erro no recebimento da solicitacao da negativacao do AR';
       ELSIF pr_intipret = 3 AND -- Se for consulta (para os casos de SP)
          rw_crapcob.inserasa <> 2 THEN -- E estiver com o status diferente de enviada
         vr_inserasa := rw_crapcob.inserasa; -- Continua com o mesmo status
@@ -308,7 +321,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
           paga0001.pc_cria_log_cobranca(pr_idtabcob => pr_rowid,
                                         pr_cdoperad => '1',
                                         pr_dtmvtolt => trunc(SYSDATE), -- Rotina nao utiliza esta data
-                                        pr_dsmensag => 'Retorno Serasa: '||vr_erros(vr_ind)||rw_erro.dserro_serasa,
+                                        pr_dsmensag => 'Retorno Serasa: '||vr_erros(vr_ind)||'-'||rw_erro.dserro_serasa,
                                         pr_des_erro => vr_des_erro,
                                         pr_dscritic => vr_dscritic);
           IF vr_dscritic IS NOT NULL THEN
