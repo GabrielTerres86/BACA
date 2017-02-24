@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS673 (pr_cdcooper IN crapcop.cdcooper%T
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Lucas Lunelli
-       Data    : Março/2014.                     Ultima atualizacao: 09/12/2015
+       Data    : Março/2014.                     Ultima atualizacao: 24/02/2017
 
        Dados referentes ao programa:
 
@@ -47,6 +47,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS673 (pr_cdcooper IN crapcop.cdcooper%T
                                 (Melhoria repique fatura cartao - Tiago/Rodrigo)           
                                 
                    09/12/2015 - Alterar log para proc_message (Lucas Ranghetti #365409 )
+                   
+                   24/02/2017 - Incluindo tratamento para enviar e-mail para responsavel caso
+                                o arquivo ao tenha trailler, conforme solicitado no chamado
+                                615979. (Kelvin)
 ........................................................................................................... */
     DECLARE                                                                             
       ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
@@ -66,9 +70,15 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS673 (pr_cdcooper IN crapcop.cdcooper%T
       vr_contador   NUMBER:= 0;                                        --> Conta qtd. arquivos	
       vr_indice     NUMBER:= 0;                                        --> Conta qtd. linhas arquivo	
       vr_idinsert   NUMBER:= 0;                                        --> Conta qtd. linhas inseridas fatura	
-      vr_chave      NUMBER:= 0;
-
-
+      vr_chave      NUMBER:= 0;  
+      vr_flgtrail   NUMBER;                                             --> Identifica se o arquivo tem trailler
+        
+      
+      --Variaveis para e-mail
+      vr_conteudo    VARCHAR2(4000); 	      
+      vr_des_assunto VARCHAR2(100);
+      vr_email_dest  VARCHAR2(100);
+      
       -- Tratamento de erros
       vr_exc_saida  EXCEPTION;
       vr_exc_fimprg EXCEPTION;
@@ -159,7 +169,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS673 (pr_cdcooper IN crapcop.cdcooper%T
       rw_crapscb cr_crapscb%ROWTYPE;
    
       vr_idfatura tbcrd_fatura.idfatura%TYPE;
-                                  
+         
       -- Subrotina para escrever críticas no LOG do processo
       PROCEDURE pc_log_batch IS
       BEGIN
@@ -376,7 +386,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS673 (pr_cdcooper IN crapcop.cdcooper%T
       
     -- Percorre cada arquivo encontrado
 	  FOR i IN 1..vr_contador LOOP
-
+        vr_flgtrail := 0;
         -- adquire sequencial do arquivo
 		    vr_nrseqarq := to_number(substr(vr_vet_nmarquiv(i),22,3));           
 										 							
@@ -477,7 +487,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS673 (pr_cdcooper IN crapcop.cdcooper%T
             
             -- adquire data do TRAILER do arquivo
             IF substr(vr_tab_linarq(vr_indice).linhaarq,5,1) = '9'  THEN
-              
+               
+               vr_flgtrail := 1;
+               
                IF (substr(vr_tab_linarq(vr_indice).linhaarq,22,16) / 100 ) != vr_vlcompdb THEN
 																	
                    -- Montar mensagem de critica
@@ -623,7 +635,44 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS673 (pr_cdcooper IN crapcop.cdcooper%T
             vr_vlcompdb := vr_vlcompdb + vr_tab_linarq(vr_indice).vlfatura;
             
         END LOOP;           
-
+        
+        --Se não há trailler
+        IF vr_flgtrail = 0 THEN
+          
+          ROLLBACK;
+          
+          --Buscar destinatario email
+          vr_email_dest := gene0001.fn_param_sistema('CRED',0,'EMAIL_DESTINO_CRPS673');          
+          
+          --Assunto do e-mail
+          vr_des_assunto := 'Falha na execução do CRPS637';
+          
+          --Corpo do e-mail
+          vr_conteudo := 'Arquivo incompleto: ' ||  vr_vet_nmarquiv(i);          
+          
+          --Solicita o envio do e-mail
+          GENE0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper    --> Cooperativa conectada
+                                    ,pr_cdprogra        => 'CRPS673'      --> Programa conectado
+                                    ,pr_des_destino     => vr_email_dest  --> Um ou mais detinatários separados por ';' ou ','
+                                    ,pr_des_assunto     => vr_des_assunto --> Assunto do e-mail
+                                    ,pr_des_corpo       => vr_conteudo    --> Corpo (conteudo) do e-mail
+                                    ,pr_des_anexo       => NULL           --> Um ou mais anexos separados por ';' ou ','
+                                    ,pr_flg_remove_anex => 'N'            --> Remover os anexos passados
+                                    ,pr_flg_remete_coop => 'N'            --> Se o envio será do e-mail da Cooperativa
+                                    ,pr_des_nome_reply  => NULL           --> Nome para resposta ao e-mail
+                                    ,pr_des_email_reply => NULL           --> Endereço para resposta ao e-mail
+                                    ,pr_flg_enviar      => 'S'            --> Enviar o e-mail na hora
+                                    ,pr_flg_log_batch    => 'N'           --> Incluir inf. no log
+                                    ,pr_des_erro        => vr_dscritic);  --> Descricao Erro  
+          
+          IF TRIM(vr_dscritic) IS NOT NULL THEN
+            RAISE vr_exc_saida;
+          END IF;
+          
+          EXIT;
+          
+        END IF;
+        
         -- Montar Comando para copiar o arquivo lido para o diretório recebidos do CONNECT
         vr_comando:= 'cp '|| vr_direto_connect || '/' || vr_vet_nmarquiv(i) ||
                      ' '  || vr_dsdireto || '/recebidos/ 2> /dev/null';
