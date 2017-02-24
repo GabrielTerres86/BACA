@@ -295,7 +295,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   --
   --  Programa: CYBE0002
   --  Autor   : Andre Santos - SUPERO
-  --  Data    : Outubro/2013                     Ultima Atualizacao: 31/10/2016
+  --  Data    : Outubro/2013                     Ultima Atualizacao: 17/02/2017
   --
   --  Dados referentes ao programa:
   --
@@ -314,6 +314,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   --              31/10/2016 - #550394 Tratadas as mensagens de críticas de busca de arquivos do ftp 
   --                           da rotina pc_controle_remessas para não enviar mais email, apenas 
   --                           logar no proc_message (Carlos)
+  --
+  --              17/02/2017 - #551213 Log de início, erros e fim de execução do procedimento
+  --                           pc_gra_arquivo_reafor (jbcybe_arquivo_reafor) (Carlos)
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -7644,6 +7647,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   vr_dscritic        VARCHAR2(32767);
   vr_exc_saida EXCEPTION;
 
+  vr_cdprogra  CONSTANT crapprg.cdprogra%TYPE := 'pc_grava_arquivo_reafor';
+  vr_nomdojob  CONSTANT VARCHAR2(100)         := 'jbcybe_arquivo_reafor';
+  vr_flgerlog  BOOLEAN := FALSE;
+
   --Funcao para retornar cpf/cnpj
   FUNCTION fn_busca_cpfcgc (pr_nrcpfcgc IN NUMBER) RETURN VARCHAR2 IS
      BEGIN
@@ -7734,17 +7741,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
      vr_linha       varchar2(5000) := null;
      vr_tam_linha   integer;
      vr_qtd_brancos integer;
-     BEGIN
-        vr_linha := vr_tab_linha(pr_arquivo);
-        -- Verifica quantos caracteres já existem na linha
-        vr_tam_linha := nvl(length(vr_linha), 0);
-        -- Calcula quantidade de espaços a incluir na linha
-        vr_qtd_brancos := pr_nrposic - vr_tam_linha - 1;
-        -- Concatena os espaços em branco e o novo texto
-        vr_linha := vr_linha || rpad(' ', vr_qtd_brancos, ' ') || pr_text;
-        --Modificar vetor com a linha atualizada
-        vr_tab_linha(pr_arquivo) := vr_linha;
-     END pc_monta_linha;
+  BEGIN
+    vr_linha := vr_tab_linha(pr_arquivo);
+    -- Verifica quantos caracteres já existem na linha
+    vr_tam_linha := nvl(length(vr_linha), 0);
+    -- Calcula quantidade de espaços a incluir na linha
+    vr_qtd_brancos := pr_nrposic - vr_tam_linha - 1;
+    -- Concatena os espaços em branco e o novo texto
+    vr_linha := vr_linha || rpad(' ', vr_qtd_brancos, ' ') || pr_text;
+    --Modificar vetor com a linha atualizada
+    vr_tab_linha(pr_arquivo) := vr_linha;
+  END pc_monta_linha;
 
   -- Procedimento de Reabilitacao Forcada de Credito
   PROCEDURE pc_reab_forcada_credito(pr_cdcooper    IN crapcop.cdcooper%TYPE -- Cooperativa
@@ -8028,9 +8035,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
            -- Erro do Sistema
            pr_dscritic := 'Erro na rotina pc_reab_forcada_credito: '||SQLERRM;
      END pc_reab_forcada_credito;
+    
+    --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
+    PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
+                                    pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
+    BEGIN
+      --> Controlar geração de log de execução dos jobs 
+      BTCH0001.pc_log_exec_job( pr_cdcooper  => 3              --> Cooperativa
+                               ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
+
+                               ,pr_nomdojob  => vr_nomdojob    --> Nome do job
+                               ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
+                               ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
+                               ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
+    END pc_controla_log_batch;
 
   -- INICIO DA PROCEDURE
   BEGIN
+
+     -- Início do programa
+     pc_controla_log_batch('I');
 
      -- Verifica se a cooperativa esta cadastrada
      OPEN cr_crapcop1(pr_cdcooper => pr_cdcooper);
@@ -8213,33 +8237,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
      --Salvar informacoes no banco de dados
      COMMIT;
 
+     -- Log de fim do programa
+     pc_controla_log_batch('F');     
+
   EXCEPTION
     WHEN vr_exc_saida THEN
-      -- Se foi retornado apenas código
-      IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-        -- Buscar a descrição
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-      END IF;
-      -- Se foi gerada critica para envio ao log
-      IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
-        -- Envio centralizado de log de erro
-        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                  ,pr_ind_tipo_log => 2 -- Erro tratato
-                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                   || 'CYBE0002.pc_grava_arquivo_reafor --> '
-                                                   || vr_dscritic );
-      END IF;
+
+      -- Buscar a descrição
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
+
+      -- Log de erro no programa
+      pc_controla_log_batch('E', vr_dscritic);
+
       -- Efetuar rollback
       ROLLBACK;
     WHEN OTHERS THEN
+
+      cecred.pc_internal_exception(pr_cdcooper);
+    
       -- Efetuar retorno do erro nao tratado
       vr_dscritic := SQLERRM;
-      -- Envio centralizado de log de erro
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                ,pr_ind_tipo_log => 3 -- Erro não tratato
-                                ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                 || 'CYBE0002.pc_grava_arquivo_reafor --> '
-                                                 || vr_dscritic );
+      
+      -- Log de erro no programa
+      pc_controla_log_batch('E', vr_dscritic);
+
       -- Efetuar rollback
       ROLLBACK;
   END pc_grava_arquivo_reafor;

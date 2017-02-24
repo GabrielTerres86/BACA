@@ -124,7 +124,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
 
     Programa: GENE0003 ( Antigo b1wgen0011.p )
     Autor   : David
-    Data    : Agosto/2006                     Ultima Atualizacao: 26/10/2016
+    Data    : Agosto/2006                     Ultima Atualizacao: 21/02/2017
 
     Dados referentes ao programa:
 
@@ -194,8 +194,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
                 21/09/2016 - #523938 Criação de log de controle de início, erros e fim de execução
                              do job pc_process_email_penden (Carlos)
                              
-                26/10/2016 - Logada a exeução do do procedimento pc_process_email_penden apenas quando
+                26/10/2016 - Logada a execução do procedimento pc_process_email_penden apenas quando
                              existirem emails pendentes de envio  (Carlos)
+                             
+                13/02/2017 - #605926 Incluída a validação de e-mail no procedimento pc_solicita_email para não 
+                             inserir e-mails inválidos na tabela crapsle; Procedimento pc_process_email_penden
+                             atualizado para o novo log pc_log_programa (Carlos)
+                             
+                21/02/2017 - #584244 Atualizada a rotina pc_process_email_penden para não gravar mais os erros
+                             de envio no proc_batch, apenas no log proc_envio_email (Carlos)
 ..............................................................................*/
 
   /* Saída com erro */
@@ -709,6 +716,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
       vr_cdprogra    VARCHAR2(40) := 'PC_PROCESS_EMAIL_PENDEN';
       vr_nomdojob    VARCHAR2(40) := 'JBEMAIL_PROCESS_PENDENTES';
       vr_flgerlog    BOOLEAN := FALSE;
+      vr_idprglog    tbgen_prglog.idprglog%TYPE := 0;
 
       --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
       PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
@@ -791,9 +799,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
           -- Se houve erro
           IF trim(vr_des_erro) IS NOT NULL THEN
 
-            -- Log de erro de execucao
-            pc_controla_log_batch(pr_dstiplog => 'E',
-                                  pr_dscritic => vr_des_erro);
+            -- Log de erro de execucao   
+            cecred.pc_log_programa(PR_DSTIPLOG      => 'E', 
+                                   PR_CDPROGRAMA    => vr_nomdojob, 
+                                   pr_cdcooper      => 3, 
+                                   pr_tpexecucao    => 1, -- batch
+                                   pr_tpocorrencia  => 4, -- mensagem
+                                   pr_cdcriticidade => 0, -- normal
+                                   pr_dsmensagem    => vr_des_erro,
+                                   pr_flgsucesso    => 0,
+                                   PR_IDPRGLOG      => vr_idprglog);
 
             -- Adicionar no arquivo de log o problema na execução
             pc_gera_log_email(rw_crapsle.cdcooper,to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' --> '||vr_des_erro);
@@ -828,6 +843,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
       WHEN OTHERS THEN
         -- Gravar pois não podemos reenviar os e-mails
         COMMIT;
+
+        cecred.pc_internal_exception;
 
         -- Gerar Log
         pc_gera_log_email(0,to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' --> Erro não tratado ao processar emails pendentes --> '|| sqlerrm);
@@ -967,6 +984,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
       vr_nrseqsol_anx crapsle.nrseqsol%TYPE;
       --Diretorio da cooperativa para manter os anexos
       vr_direconv varchar2(100);
+      
+      vr_idprglog  tbgen_prglog.idprglog%type;
     BEGIN
       -- Busca do diretório base da cooperativa
       vr_direconv := gene0001.fn_diretorio(pr_tpdireto => 'C' -- /usr/coop
@@ -994,6 +1013,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
         vr_nrseqsol := NULL;
         -- Criar o registro na tabela de solicitaçao
         BEGIN
+          
+          -- Validação do e-mail
+          IF fn_valida_email(pr_tab_destino(vr_ind)) = 0 THEN
+            cecred.pc_log_programa(PR_DSTIPLOG      => 'E', 
+                                   PR_CDPROGRAMA    => 'GENE0003.PC_SOLICITA_EMAIL',
+                                   pr_tpexecucao    => 3,  -- Tipo de execucao (1-Batch/ 2-Job/ 3-Online)
+                                   pr_tpocorrencia  => 3,  -- Alerta
+                                   pr_dsmensagem    => 'E-mail [' || pr_tab_destino(vr_ind) || '] inválido.' ||
+                                                       ' pr_cdprogra: '    || pr_cdprogra || 
+                                                       ' pr_des_assunto: ' || pr_des_assunto,
+                                   PR_IDPRGLOG      => vr_idprglog);
+            CONTINUE;
+          END IF;
+
           -- Cria o registro guardando seu Rowid
           INSERT INTO crapsle(dtsolici
                              ,cdcooper
@@ -1321,7 +1354,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
     else
       return 0;
     end if;
-  END;  
+  END fn_valida_email;  
 
   -- Rotina para geracao de mensagens para o servico do site
   PROCEDURE pc_gerar_mensagem(pr_cdcooper IN crapmsg.cdcooper%TYPE
@@ -1348,6 +1381,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
     --
     -- Frequencia: -----
     -- Objetivo  : Geracao de mensagens para o servico do site
+    --
+    -- Alterações: 20/10/2016 - Utilização da fn_sequence. (Pablão)
     ---------------------------------------------------------------------------------------------------------------
     
     /* Busca dos dados do associado */
@@ -1363,25 +1398,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
        WHERE crapass.cdcooper = pr_cdcooper
              AND crapass.nrdconta = pr_nrdconta;
     rw_crapass cr_crapass%ROWTYPE;
-    
-    -- Cursor para buscar o maior numero da ultima mensagem
-    CURSOR cr_crapmsg(pr_cdcooper IN crapmsg.cdcooper%TYPE
-                     ,pr_nrdconta IN crapmsg.nrdconta%TYPE) IS
-      SELECT nvl(MAX(nrdmensg), 0) + 1
-        FROM crapmsg
-       WHERE cdcooper = pr_cdcooper
-             AND nrdconta = pr_nrdconta;
   
-    vr_ultnrmsg crapmsg.nrdmensg%TYPE := 0;
+    vr_nrdmensg crapmsg.nrdmensg%TYPE := 0;
     vr_dsdmensg crapmsg.dsdmensg%TYPE := ' ';
     
   BEGIN
   
-    -- Abre o cursor para buscar o maior numero da ultima mensagem
-    OPEN cr_crapmsg(pr_cdcooper => pr_cdcooper, pr_nrdconta => pr_nrdconta);
-    FETCH cr_crapmsg
-      INTO vr_ultnrmsg;
-    CLOSE cr_crapmsg;
+    -- Obtém o proximo valor da sequence
+    vr_nrdmensg := fn_sequence(pr_nmtabela => 'CRAPMSG'
+                              ,pr_nmdcampo => 'NRDMENSG'
+                              ,pr_dsdchave => pr_cdcooper || ';' || pr_nrdconta
+                              ,pr_flgdecre => 'N');
   
     -- Busca os dados do associado
     OPEN cr_crapass(pr_cdcooper => pr_cdcooper, pr_nrdconta => pr_nrdconta);
@@ -1429,7 +1456,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
         (pr_cdcooper
         ,pr_nrdconta
         ,pr_idseqttl
-        ,vr_ultnrmsg
+        ,vr_nrdmensg
         ,pr_cdprogra
         ,trunc(SYSDATE)
         ,to_char(SYSDATE, 'sssss')
@@ -1445,7 +1472,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
       WHEN OTHERS THEN
         pr_dscritic := 'Erro ao inserir CRAPMSG: ' || SQLERRM;
     END;
-  END;
+  END pc_gerar_mensagem;
 
   -- Rotina para buscar conteúdo das mensagens do iBank/SMS
   FUNCTION fn_buscar_mensagem(pr_cdcooper          IN tbgen_mensagem.cdcooper%TYPE

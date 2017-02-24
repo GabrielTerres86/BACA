@@ -358,7 +358,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --  Sistema  : Procedimentos para Convenios
   --  Sigla    : CRED
   --  Autor    : Douglas Pagel
-  --  Data     : Outubro/2013.                   Ultima atualizacao: 14/09/2016
+  --  Data     : Outubro/2013.                   Ultima atualizacao: 20/02/2017
   --
   -- Dados referentes ao programa:
   --
@@ -427,6 +427,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --
   --             14/09/2016 - Incluir nova procedure pc_pula_seq_gt0001, irá criar registro de
   --                          controle na gncontr caso seja alterado o sequencial (Lucas Ranghetti #484556)
+  --
+  --             21/11/2016 - Se for o convenio 045, 14 BRT CELULAR - FEBRABAN e referencia conter 11 
+  --                          posicoes, devemos incluir um hifen para completar 12 posicoes 
+  --                          ex: 40151016407- na procedure pc_gerandb (Lucas Ranghetti #560620/453337)
+  --
+  --             20/02/2017 - #551216 Ajustes em pc_busca_concilia_transabbc para logar início, erros e
+  --                          fim da execução do programa e mudança nos logs dos erros para atenderem ao 
+  --                          padrão 'HH24:MI:SS - nome_programa' (Carlos)
   ---------------------------------------------------------------------------------------------------------------
 
 
@@ -1574,7 +1582,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Odair
-  --  Data     : Agosto/98.                  Ultima atualizacao: 27/07/2016
+  --  Data     : Agosto/98.                  Ultima atualizacao: 21/11/2016
   --
   -- Dados referentes ao programa:
   --
@@ -1662,6 +1670,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --             21/06/2016 - Adicionar historico 690 do Samae Sao Bento para 10 posicoes (Lucas Ranghetti #467618)  
   --
   --             27/07/2016 - Adicionar historico 900 do Samae Rio Negrinho para 6 posicoes (Lucas Ranghetti #486565)
+  --
+  --             21/11/2016 - Se for o convenio 045, 14 BRT CELULAR - FEBRABAN e referencia conter 11 
+  --                          posicoes, devemos incluir um hifen para completar 12 posicoes 
+  --                          ex: 40151016407- (Lucas Ranghetti #560620/453337)
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -1877,6 +1889,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
             vr_resultado := RPAD(vr_resultado,25,' ');
           END IF;
 
+          /* Se for o convenio 045 - 14 BRT CELULAR - FEBRABAN e tiver 11 posicoes, devemos 
+             adicionar um hifen para completar 12 posicoes ex:(40151016407-) chamado 453337 */
+          IF pr_cdempres = '045' AND LENGTH(pr_nrdocmto) = 11 THEN
+            vr_resultado := RPAD(pr_nrdocmto,12,'-') || RPAD(' ',13,' ');
+          END IF; 
+        
           -- Se existir cdseqtel irá gravar na variavel
           IF trim(pr_cdseqtel) IS NOT NULL THEN
             vr_cdseqtel := RPAD(pr_cdseqtel,60);
@@ -2033,10 +2051,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
 
      Objetivo  : Conectar-se ao FTP da Transabbc e efetuar download de três
                  arquivos diariamente.
-
-     Observacao: -----
-
-     Alteracoes:
      ..............................................................................*/
 
     DECLARE
@@ -2062,12 +2076,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
       -- Cursor genérico de calendário
       rw_crapdat BTCH0001.CR_CRAPDAT%ROWTYPE;
 
+      vr_jobname  VARCHAR2(40) := 'jbconv_concilia_transabbc';
+      vr_idprglog PLS_INTEGER  := 0;
+
     BEGIN
       
-      -- Somente executar a rotina de segunda a sexta... 
-      IF to_char(SYSDATE,'d') IN(1,7) THEN
-        RETURN;
-      END IF;
+      cecred.pc_log_programa(PR_DSTIPLOG   => 'I', 
+                             PR_CDPROGRAMA => vr_jobname, 
+                             PR_IDPRGLOG   => vr_idprglog);
     
       -- Buscar a data do movimento
       OPEN btch0001.cr_crapdat(3);
@@ -2179,19 +2195,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
       END LOOP;
       -- Gravar os comandos no banco
       COMMIT;
-      
+
+      cecred.pc_log_programa(PR_DSTIPLOG   => 'F', 
+                             PR_CDPROGRAMA => vr_jobname, 
+                             PR_IDPRGLOG   => vr_idprglog);
+
     EXCEPTION
       WHEN vr_exc_saida THEN
+
         btch0001.pc_gera_log_batch(pr_cdcooper     => 3 --> Sempre na Cecred
                                   ,pr_ind_tipo_log => 1
-                                  ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || 
-                                                      ': CONV0001.PC_BUSCA_CONCILIA_TRANSABBC: Erro ao efetuar download dos arquivos: ' || vr_dscritic);
+                                  ,pr_des_log      => TO_CHAR(SYSDATE,'HH24:MI:SS') || 
+                                                      ' - CONV0001.PC_BUSCA_CONCILIA_TRANSABBC Erro ao efetuar download dos arquivos: ' || vr_dscritic
+                                  ,pr_dstiplog   => 'E'
+                                  ,pr_cdprograma => vr_jobname);
         ROLLBACK;
       WHEN OTHERS THEN
+
+        cecred.pc_internal_exception;
+      
         btch0001.pc_gera_log_batch(pr_cdcooper     => 3 --> Sempre na Cecred
                                   ,pr_ind_tipo_log => 1
-                                  ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || 
-                                                      ': CONV0001.PC_BUSCA_CONCILIA_TRANSABBC: Erro ao efetuar download dos arquivos: ' || SQLERRM);
+                                  ,pr_des_log      => TO_CHAR(SYSDATE,'HH24:MI:SS') || 
+                                                      ' - CONV0001.PC_BUSCA_CONCILIA_TRANSABBC Erro ao efetuar download dos arquivos: ' || SQLERRM
+                                  ,pr_dstiplog   => 'E'
+                                  ,pr_cdprograma => vr_jobname);
         ROLLBACK;
     END;
 

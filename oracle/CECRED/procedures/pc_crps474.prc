@@ -14,7 +14,7 @@ BEGIN
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Gabriel
-  Data    : Fevereiro/2012.                    Ultima atualizacao: 27/04/2016
+  Data    : Fevereiro/2012.                    Ultima atualizacao: 30/01/2017
 
   Dados referentes ao programa:
 
@@ -78,6 +78,8 @@ BEGIN
                            e apos cada transacao de debito efetivada no
                            contrato (Tiago Castro - RKAM).
 
+              31/03/2016 - Ajustes savepoits SD352945 (Odirlei-AMcom)
+			  
               14/04/2016 - Ajuste feito para não ser possível executar o programa caso
                            não for dia útil, apenas quando inprocess = 1, conforme solicitado
                            no chamado 409646. (Kelvin)
@@ -98,35 +100,35 @@ BEGIN
                            quando o correto e testar inproces > 2.
                            Heitor (RKAM)
 		      
-			  05/07/2016 - Melhorias de performance e gerenciamento de memoria. Chamado 479871.
-			               Alterado local onde e feito uma das geracoes de log, pois o indice
-						   utilizado na geracao poderia estar nulo, ocasionando problemas.
-						   Chamado 408357.
-			               (Heitor - RKAM)
+              05/07/2016 - Melhorias de performance e gerenciamento de memoria. Chamado 479871.
+			                     Alterado local onde e feito uma das geracoes de log, pois o indice
+						               utilizado na geracao poderia estar nulo, ocasionando problemas.
+						               Chamado 408357.
+			                     (Heitor - RKAM)
+
+              26/09/2016 - Incluido verificacao de contratos de acordo, Prj. 302 (Jean Michel).
+
+              30/01/2017 - #551205 Inlusão de loop para todas as cooperativas para tirar a lógica
+                           de negócio de dentro do job; inclusão de log de controle de erros e tempo
+                           de execuão do programa; melhorias menores de código (Carlos)
+
+              23/02/2016 - Incluída verificação de contas e contratos específicos com
+                           bloqueio judicial para não debitar parcelas - AJFink SD#618307
 
     ............................................................................. */
 
   DECLARE
 
-
     /*Cursores Locais */
-
-    -- Selecionar os dados da Cooperativa
-       CURSOR cr_crapcop (pr_cdcooper IN crapcop.cdcooper%TYPE) IS
-         SELECT crapcop.cdcooper
-               ,crapcop.nmrescop
-               ,crapcop.nrtelura
-               ,crapcop.cdbcoctl
-               ,crapcop.cdagectl
-               ,crapcop.dsdircop
-               ,crapcop.nrctactl
-               ,crapcop.cdagedbb
-               ,crapcop.cdageitg
-               ,crapcop.nrdocnpj
-        FROM crapcop crapcop
-       WHERE crapcop.cdcooper = pr_cdcooper;
-    rw_crapcop cr_crapcop%ROWTYPE;
-
+    
+    /* Todas as cooperativas */
+    CURSOR cr_todas_cooperativas IS
+    SELECT cdcooper
+      FROM crapcop
+     WHERE flgativo = 1
+     ORDER BY cdcooper;
+    rw_todas_cooperativas cr_todas_cooperativas%ROWTYPE;
+    
     /* Cursor de Emprestimos */
     CURSOR cr_crapepr (pr_cdcooper IN crapepr.cdcooper%TYPE
                       ,pr_nrdconta IN crapepr.nrdconta%TYPE
@@ -178,9 +180,9 @@ BEGIN
     rw_crappep cr_crappep%ROWTYPE;
 
     /* Cursor de Lançamentos de crédito em conta */
-        CURSOR cr_craplcmC(pr_cdcooper IN craplcm.cdcooper%TYPE
-                          ,pr_nrdconta IN craplcm.nrdconta%TYPE
-                          ,pr_dtmvtolt IN craplcm.dtmvtolt%TYPE) IS
+    CURSOR cr_craplcmC(pr_cdcooper IN craplcm.cdcooper%TYPE
+                      ,pr_nrdconta IN craplcm.nrdconta%TYPE
+                      ,pr_dtmvtolt IN craplcm.dtmvtolt%TYPE) IS
       SELECT a.vllanmto
             FROM craplcm a
                 ,craphis b
@@ -193,9 +195,9 @@ BEGIN
     rw_craplcmC cr_craplcmC%ROWTYPE;
 
     -- Cursor para verificar se existe algum boleto em aberto
-        CURSOR cr_cde (pr_cdcooper IN crapcob.cdcooper%TYPE
-                      ,pr_nrdconta IN crapcob.nrdconta%TYPE
-                      ,pr_nrctremp IN crapcob.nrctremp%TYPE) IS
+    CURSOR cr_cde (pr_cdcooper IN crapcob.cdcooper%TYPE
+                  ,pr_nrdconta IN crapcob.nrdconta%TYPE
+                  ,pr_nrctremp IN crapcob.nrctremp%TYPE) IS
       SELECT cob.nrdocmto
         FROM crapcob cob
        WHERE cob.cdcooper = pr_cdcooper
@@ -209,10 +211,10 @@ BEGIN
     rw_cde cr_cde%ROWTYPE;
 
     -- Cursor para verificar se existe algum boleto pago pendente de processamento
-        CURSOR cr_ret (pr_cdcooper IN crapcob.cdcooper%TYPE
-                      ,pr_nrdconta IN crapcob.nrdconta%TYPE
-                      ,pr_nrctremp IN crapcob.nrctremp%TYPE
-                      ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS
+    CURSOR cr_ret (pr_cdcooper IN crapcob.cdcooper%TYPE
+                  ,pr_nrdconta IN crapcob.nrdconta%TYPE
+                  ,pr_nrctremp IN crapcob.nrctremp%TYPE
+                  ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS
       SELECT cob.nrdocmto
         FROM crapcob cob, crapret ret
        WHERE cob.cdcooper = pr_cdcooper
@@ -233,13 +235,27 @@ BEGIN
          AND ret.flcredit = 0;
     rw_ret cr_ret%ROWTYPE;
 
-    cursor cr_erro(pr_cdcooper in crapcop.cdcooper%TYPE) is
-      select c.dsvlrprm
-        from crapprm c
-       where c.nmsistem = 'CRED'
-         and c.cdcooper = pr_cdcooper
-         and c.cdacesso = 'PC_CRPS474-ERRO';
+    CURSOR cr_erro(pr_cdcooper in crapcop.cdcooper%TYPE) IS
+      SELECT c.dsvlrprm
+        FROM crapprm c
+       WHERE c.nmsistem = 'CRED'
+         AND c.cdcooper = pr_cdcooper
+         AND c.cdacesso = 'PC_CRPS474-ERRO';
     rw_erro cr_erro%ROWTYPE;
+
+    -- Consulta contratos ativos de acordos
+   CURSOR cr_ctr_acordo IS
+   SELECT tbrecup_acordo_contrato.nracordo
+         ,tbrecup_acordo.cdcooper
+         ,tbrecup_acordo.nrdconta
+         ,tbrecup_acordo_contrato.nrctremp
+     FROM tbrecup_acordo_contrato
+     JOIN tbrecup_acordo
+       ON tbrecup_acordo.nracordo   = tbrecup_acordo_contrato.nracordo
+    WHERE tbrecup_acordo.cdsituacao = 1
+      AND tbrecup_acordo_contrato.cdorigem IN (2,3);
+
+   rw_ctr_acordo cr_ctr_acordo%ROWTYPE;
 
     --tabela de Memoria dos detalhes de emprestimo
     vr_tab_crawepr EMPR0001.typ_tab_crawepr;
@@ -256,11 +272,15 @@ BEGIN
     /* Tabela de Memoria de Calculados */
     vr_tab_calculado empr0001.typ_tab_calculado;
 
+    /* Contratos de acordo */
+    TYPE typ_tab_acordo   IS TABLE OF NUMBER(10) INDEX BY VARCHAR2(30);
+    vr_tab_acordo   typ_tab_acordo;
+
     --Registro do tipo calendario
-       rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
+    rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
 
     --Constantes
-       vr_cdprogra CONSTANT crapprg.cdprogra%TYPE:= 'CRPS474';
+    vr_cdprogra CONSTANT crapprg.cdprogra%TYPE:= 'CRPS474';
 
     -- Globais
     vr_rowid rowid;
@@ -281,19 +301,23 @@ BEGIN
     vr_anorefju INTEGER;
     vr_flgpripr BOOLEAN;
     
+    vr_cdindice VARCHAR2(30) := ''; -- Indice da tabela de acordos
+
+    vr_cdcooper crapcop.cdcooper%TYPE;
+    
     --Variaveis de Indices
-       vr_index_crawepr VARCHAR2(30);
+    vr_index_crawepr VARCHAR2(30);
     vr_index_pgto_parcel PLS_INTEGER;
 
     --Variaveis para retorno de erro
-       vr_cdcritic      INTEGER:= 0;
-       vr_dscritic      VARCHAR2(4000);
-       vr_des_erro      VARCHAR2(3);
+    vr_cdcritic      INTEGER:= 0;
+    vr_dscritic      VARCHAR2(4000);
+    vr_des_erro      VARCHAR2(3);
 
     --Variaveis de Excecao
-       vr_exc_final     EXCEPTION;
-       vr_exc_saida     EXCEPTION;
-       vr_exc_fimprg    EXCEPTION;
+    vr_exc_final     EXCEPTION;
+    vr_exc_saida     EXCEPTION;
+    vr_exc_fimprg    EXCEPTION;
 
     -- ID para o paralelismo
     vr_idparale INTEGER;
@@ -304,7 +328,11 @@ BEGIN
     vr_blqresg_cc VARCHAR2(1);
 
     -- Parametro de contas que nao podem debitar os emprestimos
-    vr_dsctajud   crapprm.dsvlrprm%TYPE;
+    vr_dsctajud    crapprm.dsvlrprm%TYPE;
+    -- Parametro de contas e contratos específicos que nao podem debitar os emprestimos SD#618307
+    vr_dsctactrjud crapprm.dsvlrprm%TYPE := null;
+
+    vr_flgerlog    BOOLEAN := FALSE;
 
     -- Busca de todas as agencias da cooperativa
     CURSOR cr_crapage(pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -322,8 +350,8 @@ BEGIN
          AND crappep.dtvencto <= pr_dtmvtolt
          AND ((crappep.inliquid = 0) OR
              (crappep.inliquid = 1 AND crappep.dtvencto > pr_dtmvtoan))
-       group by crapass.cdagenci
-       order by 2 desc;
+       GROUP BY crapass.cdagenci
+       ORDER BY 2 DESC;
 
     -- Bloco PLSQL para chamar a execução paralela do pc_crps414
     vr_dsplsql VARCHAR2(4000);
@@ -346,23 +374,23 @@ BEGIN
     END pc_limpa_tabela;
 
     --Verificar Pagamento
-       PROCEDURE pc_verifica_pagamento (pr_vlsomato IN NUMBER          --Soma Total
-                                       ,pr_inliquid IN INTEGER         --Indicador Liquidacao
-                                       ,pr_flgpagpa OUT BOOLEAN        --Indicador Pago
-                                       ,pr_des_reto OUT VARCHAR2) IS   -- Indicador Erro OK/NOK
+    PROCEDURE pc_verifica_pagamento (pr_vlsomato IN NUMBER          --Soma Total
+                                    ,pr_inliquid IN INTEGER         --Indicador Liquidacao
+                                    ,pr_flgpagpa OUT BOOLEAN        --Indicador Pago
+                                    ,pr_des_reto OUT VARCHAR2) IS   -- Indicador Erro OK/NOK
     BEGIN
       BEGIN
         /* Se parcela ja liquidada ou nao tem valor pra pagar, nao permitir pagamento */
-           IF nvl(pr_vlsomato,0) <= 0 OR pr_inliquid = 1 THEN
-             pr_flgpagpa:= FALSE;
+        IF nvl(pr_vlsomato,0) <= 0 OR pr_inliquid = 1 THEN
+          pr_flgpagpa:= FALSE;
         ELSE
-             pr_flgpagpa:= TRUE;
+          pr_flgpagpa:= TRUE;
         END IF;
         --Retornar OK
-           pr_des_reto:= 'OK';
+        pr_des_reto:= 'OK';
       EXCEPTION
         WHEN OTHERS THEN
-             pr_des_reto:= 'NOK';
+          pr_des_reto:= 'NOK';
       END;
     END pc_verifica_pagamento;
 
@@ -389,44 +417,73 @@ BEGIN
       CLOSE cr_crapprm;
 
       --Converte o valor do parametro em data
-      vr_dtutlpro := to_date(substr(rw_crapprm.dsvlrprm, 1, 10)
-                            ,'DD/MM/YYYY');
+      vr_dtutlpro := to_date(substr(rw_crapprm.dsvlrprm, 1, 10), 'DD/MM/YYYY');
 
       --Verifica se ja ocorreu processo hoje
-      IF vr_dtutlpro = TRUNC(rw_crapdat.dtmvtolt) THEN
-        vr_flgpripr := TRUE;
-      ELSE
-        vr_flgpripr := FALSE;
-      END IF;
+      vr_flgpripr := (vr_dtutlpro = TRUNC(rw_crapdat.dtmvtolt));
 
     END pc_verifica_processo;
 
-    ---------------------------------------
-    -- Inicio Bloco Principal PC_CRPS474
-    ---------------------------------------
+    --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
+    PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
+                                    pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
+    BEGIN
+      --> Controlar geração de log de execução dos jobs 
+      BTCH0001.pc_log_exec_job( pr_cdcooper  => 3                   --> Cooperativa
+                               ,pr_cdprogra  => vr_cdprogra         --> Codigo do programa
+                               ,pr_nomdojob  => 'JBEPR_PGMTO_PARCS' --> Nome do job
+                               ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
+                               ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
+                               ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
+    END pc_controla_log_batch;
+
+
+  ---------------------------------------
+  -- Inicio Bloco Principal PC_CRPS474
+  ---------------------------------------
   BEGIN
 
+  FOR rw_todas_cooperativas IN cr_todas_cooperativas LOOP
+    
+    -- Se estiver rodando via paralelo o programa só processará a cooperativa parametrizada no crps
+    -- Ao rodar a primeira vez o crps executa para todas as cooperativas
+    IF pr_cdcooper <> 0 AND 
+       rw_todas_cooperativas.cdcooper <> pr_cdcooper THEN
+      CONTINUE;
+    END IF;
+    
+    -- Variavel utilizada nas exceptions
+    vr_cdcooper := rw_todas_cooperativas.cdcooper;
+    
+    OPEN btch0001.cr_crapdat(rw_todas_cooperativas.cdcooper);
+    FETCH btch0001.cr_crapdat  INTO rw_crapdat;
+    CLOSE btch0001.cr_crapdat;
+          
+    IF rw_crapdat.inproces <> 1 OR (to_char(sysdate,'D') IN (1,7)) THEN
+      CONTINUE;
+    END IF;
+
     --Limpar parametros saida
-       pr_cdcritic:= NULL;
-       pr_dscritic:= NULL;
+    pr_cdcritic:= NULL;
+    pr_dscritic:= NULL;
 
     -- Incluir nome do modulo logado
-       GENE0001.pc_informa_acesso(pr_module => 'PC_'||vr_cdprogra
-                                 ,pr_action => NULL);
+    GENE0001.pc_informa_acesso(pr_module => 'PC_'||vr_cdprogra
+                              ,pr_action => NULL);
 
     -- Validacoes iniciais do programa
-       BTCH0001.pc_valida_iniprg (pr_cdcooper => pr_cdcooper
-                                 ,pr_flgbatch => 0
-                                 ,pr_cdprogra => vr_cdprogra
-                                 ,pr_infimsol => pr_infimsol
-                                 ,pr_cdcritic => vr_cdcritic);
+    BTCH0001.pc_valida_iniprg (pr_cdcooper => rw_todas_cooperativas.cdcooper
+                              ,pr_flgbatch => 0
+                              ,pr_cdprogra => vr_cdprogra
+                              ,pr_infimsol => pr_infimsol
+                              ,pr_cdcritic => vr_cdcritic);
 
     --Se retornou critica aborta programa
     IF vr_cdcritic <> 0 THEN
       --Descricao do erro recebe mensagam da critica
       vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
       -- Envio centralizado de log de erro
-         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+         btch0001.pc_gera_log_batch(pr_cdcooper     => rw_todas_cooperativas.cdcooper
                                    ,pr_ind_tipo_log => 2 -- Erro tratato
                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                        || vr_cdprogra || ' --> '
@@ -434,59 +491,36 @@ BEGIN
       --Sair do programa
       RAISE vr_exc_saida;
     END IF;
+    
+    -- Carregar Contratos de Acordos
+    FOR rw_ctr_acordo IN cr_ctr_acordo LOOP
+      vr_cdindice := LPAD(rw_ctr_acordo.cdcooper,10,'0') || LPAD(rw_ctr_acordo.nrdconta,10,'0') ||
+                     LPAD(rw_ctr_acordo.nrctremp,10,'0');
+      vr_tab_acordo(vr_cdindice) := rw_ctr_acordo.nracordo;
+    END LOOP;
 
-    if pr_cdagenci = 0 then
-      begin
-        delete crapprm c
-         where c.nmsistem = 'CRED'
-           and c.cdcooper = pr_cdcooper
-           and c.cdacesso = 'PC_CRPS474-ERRO';
+    IF pr_cdagenci = 0 THEN
+      BEGIN
+        DELETE crapprm c
+         WHERE c.nmsistem = 'CRED'
+           AND c.cdcooper = rw_todas_cooperativas.cdcooper
+           AND c.cdacesso = 'PC_CRPS474-ERRO';
 
-        commit;
+        COMMIT;
         
-      exception
-        when others then
-          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+      EXCEPTION
+        WHEN OTHERS THEN
+          btch0001.pc_gera_log_batch(pr_cdcooper     => rw_todas_cooperativas.cdcooper
                                      ,pr_ind_tipo_log => 2 -- Erro tratato
                                      ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                          || vr_cdprogra || ' --> '
                                                          || 'Erro ao tentar deletar registro de erro da CRAPPRM');
           --Sair do programa
           RAISE vr_exc_saida;
-      end;
-    end if;
-
-    -- Verifica se a cooperativa esta cadastrada
-    OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
-       FETCH cr_crapcop INTO rw_crapcop;
-    -- Se nao encontrar
-    IF cr_crapcop%NOTFOUND THEN
-      -- Fechar o cursor pois havera raise
-      CLOSE cr_crapcop;
-      -- Montar mensagem de critica
-         vr_cdcritic:= 651;
-      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-      RAISE vr_exc_saida;
-    ELSE
-      -- Apenas fechar o cursor
-      CLOSE cr_crapcop;
+      END;
     END IF;
 
-    -- Verifica se a data esta cadastrada
-    OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
-       FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
-    -- Se nao encontrar
-    IF BTCH0001.cr_crapdat%NOTFOUND THEN
-      -- Fechar o cursor pois havera raise
-      CLOSE BTCH0001.cr_crapdat;
-      -- Montar mensagem de critica
-         vr_cdcritic:= 1;
-      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-      RAISE vr_exc_saida;
-    ELSE
-      -- Apenas fechar o cursor
-      CLOSE BTCH0001.cr_crapdat;
-    END IF;
+    pc_controla_log_batch('I');
 
     /* 229243 Paralelismo visando performance
     *  Rodar Somente no processo Noturno */
@@ -504,11 +538,11 @@ BEGIN
       END IF;
       -- Buscar quantidade parametrizada de Jobs
       vr_qtdjobs := NVL(gene0001.fn_param_sistema('CRED'
-                                                 ,pr_cdcooper
+                                                 ,rw_todas_cooperativas.cdcooper
                                                  ,'QTD_PARALE_CRPS474')
                        ,16);
       -- Para cada agência da cooperativa
-      FOR rw_crapage IN cr_crapage(pr_cdcooper => pr_cdcooper
+      FOR rw_crapage IN cr_crapage(pr_cdcooper => rw_todas_cooperativas.cdcooper
                                   ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                   ,pr_dtmvtoan => rw_crapdat.dtmvtoan) LOOP
         -- Cadastra o programa paralelo
@@ -532,7 +566,7 @@ BEGIN
                       '  wpr_dscritic VARCHAR2(1500);' || chr(13) || --
                       'BEGIN' || chr(13) || --
                       '  pc_crps474( ' || --
-                      pr_cdcooper || ',' || --
+                      rw_todas_cooperativas.cdcooper || ',' || --
                       rw_crapage.cdagenci || --
                       ', ''JOB'',' || --
                       vr_idparale || ',' || --
@@ -540,9 +574,10 @@ BEGIN
                       chr(13) || --
                       'END;'; --
         -- Montar o prefixo do código do programa para o jobname
-        vr_jobname := 'crps474_' || rw_crapage.cdagenci || '$';
+        vr_jobname := 'JBEPR_PG_PARC_' || rw_crapage.cdagenci || '$';
+                       
         -- Faz a chamada ao programa paralelo atraves de JOB
-        gene0001.pc_submit_job(pr_cdcooper => pr_cdcooper --> Código da cooperativa
+        gene0001.pc_submit_job(pr_cdcooper => rw_todas_cooperativas.cdcooper --> Código da cooperativa
                               ,pr_cdprogra => vr_cdprogra --> Código do programa
                               ,pr_dsplsql  => vr_dsplsql --> Bloco PLSQL a executar
                               ,pr_dthrexe  => SYSTIMESTAMP --> Executar nesta hora
@@ -571,16 +606,16 @@ BEGIN
                                   ,pr_qtdproce => 0
                                   ,pr_des_erro => pr_dscritic);
       -- Testar saida com erro
-      open cr_erro(pr_cdcooper);
-      fetch cr_erro into rw_erro;
-      if cr_erro%found then
-        close cr_erro;
+      OPEN cr_erro(rw_todas_cooperativas.cdcooper);
+      FETCH cr_erro INTO rw_erro;
+      IF cr_erro%FOUND THEN
+        CLOSE cr_erro;
         vr_cdcritic := 0;
         vr_dscritic := rw_erro.dsvlrprm;
-        raise vr_exc_saida;
-      else
-        close cr_erro;
-      end if;
+        RAISE vr_exc_saida;
+      ELSE
+        CLOSE cr_erro;
+      END IF;
 
       IF pr_dscritic IS NOT NULL THEN
         -- Levantar exceçao
@@ -588,7 +623,7 @@ BEGIN
       END IF;
 
       -- Processo OK, devemos chamar a fimprg
-      btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
+      btch0001.pc_valida_fimprg(pr_cdcooper => rw_todas_cooperativas.cdcooper
                                ,pr_cdprogra => vr_cdprogra
                                ,pr_infimsol => pr_infimsol
                                ,pr_stprogra => pr_stprogra);
@@ -598,15 +633,16 @@ BEGIN
 
       RETURN;
     END IF;
+    
     /*No ultimo dia util do ano, nao havera debito de parcelas em atraso no
     processo, mesmo que houver saldo em conta. Nesta data nenhum lancamento
     e feito na conta. Comunicado 08/2011.*/
-       IF to_number(to_char(rw_crapdat.dtmvtolt,'MM')) = 12 THEN
+    IF to_number(to_char(rw_crapdat.dtmvtolt,'MM')) = 12 THEN
       --Buscar Ultimo dia util ano
-         vr_dtultdia:= GENE0005.fn_valida_dia_util(pr_cdcooper  => pr_cdcooper
-                                                  ,pr_dtmvtolt  => last_day(rw_crapdat.dtmvtolt)
-                                                  ,pr_tipo      => 'A'
-                                                  ,pr_excultdia => TRUE);
+      vr_dtultdia:= GENE0005.fn_valida_dia_util(pr_cdcooper  => rw_todas_cooperativas.cdcooper
+                                               ,pr_dtmvtolt  => last_day(rw_crapdat.dtmvtolt)
+                                               ,pr_tipo      => 'A'
+                                               ,pr_excultdia => TRUE);
 
       --Ultimo dia util do ano igual data processamento
       IF rw_crapdat.dtmvtolt = vr_dtultdia THEN
@@ -620,13 +656,13 @@ BEGIN
     /***************************************/
 
     --Setar Operador
-       vr_cdoperad:= '1';
+    vr_cdoperad:= '1';
 
     --Limpar Tabela
     pc_limpa_tabela;
 
     IF  TRUNC(SYSDATE) <> rw_crapdat.dtmvtolt
-    and rw_crapdat.inproces = 1 THEN
+        AND rw_crapdat.inproces = 1 THEN
       --> O JOB esta configurado para rodar de Segunda a Sexta
       -- Mas nao existe a necessidade de rodar nos feriados
       -- Por isso que validamos se o dia de hoje eh o dia do sistema
@@ -636,36 +672,42 @@ BEGIN
     -- Parametro de bloqueio de resgate de valores em c/c
     -- ref ao pagto de contrato com boleto (Projeto 210)
     vr_blqresg_cc := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
-                                               pr_cdcooper => pr_cdcooper,
+                                               pr_cdcooper => rw_todas_cooperativas.cdcooper,
                                                pr_cdacesso => 'COBEMP_BLQ_RESG_CC');
 
     -- Lista de contas que nao podem debitar na conta corrente, devido a acao judicial
     vr_dsctajud := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
-                                             pr_cdcooper => pr_cdcooper,
+                                             pr_cdcooper => rw_todas_cooperativas.cdcooper,
                                              pr_cdacesso => 'CONTAS_ACAO_JUDICIAL');
 
+    -- Lista de contas e contratos específicos que nao podem debitar os emprestimos (formato="(cta,ctr)") SD#618307
+    vr_dsctactrjud := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                               ,pr_cdcooper => rw_todas_cooperativas.cdcooper
+                                               ,pr_cdacesso => 'CTA_CTR_ACAO_JUDICIAL');
+
     /* Todas as parcelas nao liquidadas que estao para serem pagas em dia ou estao em atraso */
-       FOR rw_crappep IN cr_crappep (pr_cdcooper => pr_cdcooper
-                                    ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                    ,pr_dtmvtoan => rw_crapdat.dtmvtoan
-                                    ,pr_cdagenci => pr_cdagenci) LOOP
+    FOR rw_crappep IN cr_crappep (pr_cdcooper => rw_todas_cooperativas.cdcooper
+                                 ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                 ,pr_dtmvtoan => rw_crapdat.dtmvtoan
+                                 ,pr_cdagenci => pr_cdagenci) LOOP
          
-         vr_tab_crawepr.DELETE;
+      vr_tab_crawepr.DELETE;
 
-         if rw_crappep.dtlibera is not null then
-           vr_index_crawepr := lpad(rw_crappep.cdcooper,10,'0')||
-                               lpad(rw_crappep.nrdconta,10,'0')||
-                               lpad(rw_crappep.nrctremp,10,'0');
-           vr_tab_crawepr(vr_index_crawepr).dtlibera:= rw_crappep.dtlibera;
-           vr_tab_crawepr(vr_index_crawepr).tpemprst:= rw_crappep.tpemprst;
-         end if;
+      IF rw_crappep.dtlibera IS NOT NULL THEN
+        vr_index_crawepr := lpad(rw_crappep.cdcooper,10,'0')||
+                            lpad(rw_crappep.nrdconta,10,'0')||
+                            lpad(rw_crappep.nrctremp,10,'0');
+        vr_tab_crawepr(vr_index_crawepr).dtlibera:= rw_crappep.dtlibera;
+        vr_tab_crawepr(vr_index_crawepr).tpemprst:= rw_crappep.tpemprst;
+      END IF;
 
-         --Selecionar Informacoes Emprestimo
-         OPEN cr_crapepr (pr_cdcooper => rw_crappep.cdcooper
-                         ,pr_nrdconta => rw_crappep.nrdconta
-                         ,pr_nrctremp => rw_crappep.nrctremp
-                         ,pr_inliquid => 0);
-         FETCH cr_crapepr INTO rw_crapepr;
+      --Selecionar Informacoes Emprestimo
+      OPEN cr_crapepr (pr_cdcooper => rw_crappep.cdcooper
+                      ,pr_nrdconta => rw_crappep.nrdconta
+                      ,pr_nrctremp => rw_crappep.nrctremp
+                      ,pr_inliquid => 0);
+      FETCH cr_crapepr INTO rw_crapepr;
+      
       --Se nao encontrou
       IF cr_crapepr%NOTFOUND THEN
         --Fechar Cursor
@@ -673,6 +715,7 @@ BEGIN
         --Proxima Parcela
         CONTINUE;
       END IF;
+
       --Fechar CURSOR
       CLOSE cr_crapepr;
       /* 229243 Verifica se possui movimento de credito no dia */
@@ -684,6 +727,7 @@ BEGIN
                         ,pr_dtmvtolt => rw_crapdat.dtmvtolt);
         FETCH cr_craplcmC
           INTO rw_craplcmC;
+        
         --Se nao encontrou
         IF cr_craplcmC%NOTFOUND THEN
           --Fechar Cursor
@@ -691,6 +735,7 @@ BEGIN
           --Proxima Parcela
           CONTINUE;
         END IF;
+        
         --Fechar CURSOR
         CLOSE cr_craplcmC;
       END IF;
@@ -699,8 +744,9 @@ BEGIN
       /* Saldo devedor da parcela */
       vr_vlapagar     := rw_crappep.vlsdvpar;
       vr_vlsomato_tmp := nvl(vr_vlsomato,0); -- apenas para log
+      
       -- gera log para futuros rastreios
-      gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+      gene0001.pc_gera_log(pr_cdcooper => rw_todas_cooperativas.cdcooper
                           ,pr_cdoperad => 1
                           ,pr_dscritic => null
                           ,pr_dsorigem => 'AYLLOS'
@@ -717,44 +763,50 @@ BEGIN
                           ,pr_nrdrowid => vr_rowid);
 
       --Validar Pagamentos
-         EMPR0001.pc_valida_pagamentos_geral (pr_cdcooper => pr_cdcooper                   --> Codigo Cooperativa
-                                             ,pr_cdagenci => pr_cdagenci                   --> Codigo Agencia
-                                             ,pr_nrdcaixa => 0                             --> Codigo Caixa
-                                             ,pr_cdoperad => vr_cdoperad                   --> Operador
-                                             ,pr_nmdatela => pr_nmdatela                   --> Nome da Tela
-                                             ,pr_idorigem => 7 /*Batch*/                   --> Identificador origem
-                                             ,pr_nrdconta => rw_crappep.nrdconta           --> Numero da Conta
-                                             ,pr_nrctremp => rw_crappep.nrctremp           --> Numero Contrato
-                                             ,pr_idseqttl => 1                             --> Sequencial Titular
-                                             ,pr_dtmvtolt => rw_crapdat.dtmvtolt           --> Data Emprestimo
-                                             ,pr_flgerlog => TRUE                          --> Erro no Log
-                                             ,pr_dtrefere => rw_crapdat.dtmvtolt           --> Data Referencia
-                                             ,pr_vlapagar => vr_vlapagar                   --> Valor Pagar
-                                             ,pr_tab_crawepr => vr_tab_crawepr             --> Tabela com Contas e Contratos
-                                             ,pr_vlsomato => vr_vlsomato                   --> Soma Total
-                                             ,pr_tab_erro => vr_tab_erro                   --> tabela Erros
-                                             ,pr_des_reto => vr_des_erro                   --> Indicador OK/NOK
-                                             ,pr_tab_msg_confirma => vr_tab_msg_confirma); --> Tabela Confirmacao
+      EMPR0001.pc_valida_pagamentos_geral (pr_cdcooper => rw_todas_cooperativas.cdcooper                   --> Codigo Cooperativa
+                                          ,pr_cdagenci => pr_cdagenci                   --> Codigo Agencia
+                                          ,pr_nrdcaixa => 0                             --> Codigo Caixa
+                                          ,pr_cdoperad => vr_cdoperad                   --> Operador
+                                          ,pr_nmdatela => pr_nmdatela                   --> Nome da Tela
+                                          ,pr_idorigem => 7 /*Batch*/                   --> Identificador origem
+                                          ,pr_nrdconta => rw_crappep.nrdconta           --> Numero da Conta
+                                          ,pr_nrctremp => rw_crappep.nrctremp           --> Numero Contrato
+                                          ,pr_idseqttl => 1                             --> Sequencial Titular
+                                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt           --> Data Emprestimo
+                                          ,pr_flgerlog => TRUE                          --> Erro no Log
+                                          ,pr_dtrefere => rw_crapdat.dtmvtolt           --> Data Referencia
+                                          ,pr_vlapagar => vr_vlapagar                   --> Valor Pagar
+                                          ,pr_tab_crawepr => vr_tab_crawepr             --> Tabela com Contas e Contratos
+                                          ,pr_vlsomato => vr_vlsomato                   --> Soma Total
+                                          ,pr_tab_erro => vr_tab_erro                   --> tabela Erros
+                                          ,pr_des_reto => vr_des_erro                   --> Indicador OK/NOK
+                                          ,pr_tab_msg_confirma => vr_tab_msg_confirma); --> Tabela Confirmacao
 
       --Se ocorreu erro
-      IF vr_des_erro <> 'OK' THEN
-        -- Se tem erro
-        IF vr_tab_erro.count > 0 THEN
-             vr_cdcritic:= 0;
-             vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-          -- Envio centralizado de log de erro
-             btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                       ,pr_ind_tipo_log => 2 -- Erro tratato
-                                       ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                        || vr_cdprogra || ' --> '
-                                                        || vr_dscritic );
-          --Proximo registro
-          CONTINUE;
-        END IF;
+      IF vr_des_erro <> 'OK' AND
+         vr_tab_erro.count > 0 THEN
+          
+        vr_cdcritic:= 0;
+        vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+        
+        -- Envio centralizado de log de erro
+        btch0001.pc_gera_log_batch(pr_cdcooper     => rw_todas_cooperativas.cdcooper
+                                  ,pr_ind_tipo_log => 2 -- Erro tratato
+                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                      || vr_cdprogra || ' --> '
+                                                      || vr_dscritic );
+        --Proximo registro
+        CONTINUE;
       END IF;
       
       -- Trava para nao cobrar as parcelas desta conta pelo motivo de uma acao judicial
       IF INSTR(',' || vr_dsctajud || ',',',' || rw_crappep.nrdconta || ',') > 0 THEN
+        vr_vlsomato_tmp := 0;
+        vr_vlsomato     := 0;
+      END IF;
+
+      -- Trava para nao cobrar as parcelas desta conta e contrato específico pelo motivo de uma acao judicial SD#618307
+      IF INSTR(replace(vr_dsctactrjud,' '),'('||trim(to_char(rw_crappep.nrdconta))||','||trim(to_char(rw_crappep.nrctremp))||')') > 0 THEN
         vr_vlsomato_tmp := 0;
         vr_vlsomato     := 0;
       END IF;
@@ -766,9 +818,9 @@ BEGIN
 
       vr_vlsomato_tmp := vr_vlsomato;
       /* Atribuir se operacao esta em dia ou atraso */
-         vr_flgemdia:= rw_crappep.dtvencto > rw_crapdat.dtmvtoan;
+      vr_flgemdia:= rw_crappep.dtvencto > rw_crapdat.dtmvtoan;
 
-         IF vr_flgemdia THEN /* Parcela em dia */
+      IF vr_flgemdia THEN /* Parcela em dia */
         /* Parcela em dia */
         /* 229243 Definido pela area de negocio que serão pagas apenas
         parcelas vencidas no processo on-line */
@@ -777,7 +829,7 @@ BEGIN
           /*primeiro processamento*/
 
           --Criar savepoint
-          SAVEPOINT sav_trans;
+          SAVEPOINT sav_trans_474;
 
           --Atualizar quantidade meses descontados
           BEGIN
@@ -792,10 +844,10 @@ BEGIN
           END;
 
           --Verificar Pagamento
-           pc_verifica_pagamento (pr_vlsomato => vr_vlsomato           --> Soma Total
-                                 ,pr_inliquid => rw_crappep.inliquid   --> Indicador Liquidacao
-                                 ,pr_flgpagpa => vr_flgpagpa           --> Pagamento OK
-                                 ,pr_des_reto => vr_des_erro);         --> Indicador Erro OK/NOK
+          pc_verifica_pagamento (pr_vlsomato => vr_vlsomato           --> Soma Total
+                                ,pr_inliquid => rw_crappep.inliquid   --> Indicador Liquidacao
+                                ,pr_flgpagpa => vr_flgpagpa           --> Pagamento OK
+                                ,pr_des_reto => vr_des_erro);         --> Indicador Erro OK/NOK
           --Se ocorreu erro
           IF vr_des_erro <> 'OK' THEN
             --Proximo Registro
@@ -811,95 +863,99 @@ BEGIN
             rw_ret := NULL;
 
             /* 2º se permitir, verificar se possui boletos em aberto */
-              OPEN cr_cde( pr_cdcooper => rw_crappep.cdcooper
-                          ,pr_nrdconta => rw_crappep.nrdconta
-                          ,pr_nrctremp => rw_crappep.nrctremp);
+            OPEN cr_cde( pr_cdcooper => rw_crappep.cdcooper
+                        ,pr_nrdconta => rw_crappep.nrdconta
+                        ,pr_nrctremp => rw_crappep.nrctremp);
               FETCH cr_cde INTO rw_cde;
             CLOSE cr_cde;
 
             /* 3º se existir boleto de contrato em aberto, lancar juros */
-              IF nvl(rw_cde.nrdocmto,0) > 0 THEN
+            IF nvl(rw_cde.nrdocmto,0) > 0 THEN
               IF vr_flgpagpa THEN
                 vr_flgpagpa := FALSE;
               END IF;
             ELSE
               /* 4º cursor para verificar se existe boleto pago pendente de processamento */
-                OPEN cr_ret( pr_cdcooper => rw_crappep.cdcooper
-                            ,pr_nrdconta => rw_crappep.nrdconta
-                            ,pr_nrctremp => rw_crappep.nrctremp
-                            ,pr_dtmvtolt => rw_crapdat.dtmvtolt);
+              OPEN cr_ret( pr_cdcooper => rw_crappep.cdcooper
+                          ,pr_nrdconta => rw_crappep.nrdconta
+                          ,pr_nrctremp => rw_crappep.nrctremp
+                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt);
                 FETCH cr_ret INTO rw_ret;
               CLOSE cr_ret;
 
               /* 6º se existir boleto de contrato pago pendente de processamento, lancar juros */
-                IF nvl(rw_ret.nrdocmto,0) > 0 THEN
-                IF vr_flgpagpa THEN
-                  vr_flgpagpa := FALSE;
-                END IF;
+              IF nvl(rw_ret.nrdocmto,0) > 0 
+                  AND vr_flgpagpa THEN
+                vr_flgpagpa := FALSE;
               END IF;
 
             END IF;
-
           END IF;
 
+
+          vr_cdindice := LPAD(rw_todas_cooperativas.cdcooper,10,'0') || LPAD(rw_crappep.nrdconta,10,'0') ||
+                         LPAD(rw_crappep.nrctremp,10,'0');
+
+          IF vr_tab_acordo.EXISTS(vr_cdindice) THEN
+            vr_flgpagpa := FALSE;
+          END IF;
 
           /* Sem valor suficiente para pagar parcela ou parcela ja liquidada */
           IF NOT vr_flgpagpa THEN
             --buscar ultimo dia Util do mes
-             vr_dtcalcul:= GENE0005.fn_valida_dia_util (pr_cdcooper => pr_cdcooper
-                                                       ,pr_dtmvtolt => last_day(rw_crappep.dtvencto)
-                                                       ,pr_tipo => 'A'
-                                                       ,pr_excultdia => TRUE);
+            vr_dtcalcul:= GENE0005.fn_valida_dia_util (pr_cdcooper => rw_todas_cooperativas.cdcooper
+                                                      ,pr_dtmvtolt => last_day(rw_crappep.dtvencto)
+                                                      ,pr_tipo => 'A'
+                                                      ,pr_excultdia => TRUE);
             --Determinar se eh mensal
-             vr_ehmensal:= rw_crappep.dtvencto > vr_dtcalcul;
+            vr_ehmensal:= rw_crappep.dtvencto > vr_dtcalcul;
 
             /* 229243 Juros não devem ser lançados no processamento on line */
             IF rw_crapdat.inproces <> 1 THEN
               --Lancar Juro Contrato
-             EMPR0001.pc_lanca_juro_contrato (pr_cdcooper => pr_cdcooper           --> Codigo Cooperativa
-                                             ,pr_cdagenci => pr_cdagenci           --> Codigo Agencia
-                                             ,pr_nrdcaixa => 0                     --> Codigo Caixa
-                                             ,pr_nrdconta => rw_crappep.nrdconta   --> Numero da Conta
-                                             ,pr_nrctremp => rw_crappep.nrctremp   --> Numero Contrato
-                                             ,pr_dtmvtolt => rw_crapdat.dtmvtolt   --> Data Emprestimo
-                                             ,pr_cdoperad => vr_cdoperad           --> Operador
-                                             ,pr_cdpactra => pr_cdagenci           --> Posto Atendimento
-                                             ,pr_flnormal => TRUE                  --> Lancamento Normal
-                                             ,pr_dtvencto => rw_crappep.dtvencto   --> Data vencimento
-                                             ,pr_ehmensal => vr_ehmensal           --> Indicador Mensal
-                                             ,pr_dtdpagto => rw_crapepr.dtdpagto   --> Data pagamento
-                                             ,pr_tab_crawepr => vr_tab_crawepr     --> Tabela com Contas e Contratos
-                                             ,pr_cdorigem => 7 -- 7) Batch
-                                             ,pr_vljurmes => vr_vljurmes           --> Valor Juros no Mes
-                                             ,pr_diarefju => vr_diarefju           --> Dia Referencia Juros
-                                             ,pr_mesrefju => vr_mesrefju           --> Mes Referencia Juros
-                                             ,pr_anorefju => vr_anorefju           --> Ano Referencia Juros
-                                             ,pr_des_reto => vr_des_erro           --> Retorno OK/NOK
-                                             ,pr_tab_erro => vr_tab_erro);         --> tabela Erros
+              EMPR0001.pc_lanca_juro_contrato (pr_cdcooper => rw_todas_cooperativas.cdcooper --> Codigo Cooperativa
+                                              ,pr_cdagenci => pr_cdagenci           --> Codigo Agencia
+                                              ,pr_nrdcaixa => 0                     --> Codigo Caixa
+                                              ,pr_nrdconta => rw_crappep.nrdconta   --> Numero da Conta
+                                              ,pr_nrctremp => rw_crappep.nrctremp   --> Numero Contrato
+                                              ,pr_dtmvtolt => rw_crapdat.dtmvtolt   --> Data Emprestimo
+                                              ,pr_cdoperad => vr_cdoperad           --> Operador
+                                              ,pr_cdpactra => pr_cdagenci           --> Posto Atendimento
+                                              ,pr_flnormal => TRUE                  --> Lancamento Normal
+                                              ,pr_dtvencto => rw_crappep.dtvencto   --> Data vencimento
+                                              ,pr_ehmensal => vr_ehmensal           --> Indicador Mensal
+                                              ,pr_dtdpagto => rw_crapepr.dtdpagto   --> Data pagamento
+                                              ,pr_tab_crawepr => vr_tab_crawepr     --> Tabela com Contas e Contratos
+                                              ,pr_cdorigem => 7 -- 7) Batch
+                                              ,pr_vljurmes => vr_vljurmes           --> Valor Juros no Mes
+                                              ,pr_diarefju => vr_diarefju           --> Dia Referencia Juros
+                                              ,pr_mesrefju => vr_mesrefju           --> Mes Referencia Juros
+                                              ,pr_anorefju => vr_anorefju           --> Ano Referencia Juros
+                                              ,pr_des_reto => vr_des_erro           --> Retorno OK/NOK
+                                              ,pr_tab_erro => vr_tab_erro);         --> tabela Erros
 
               --Se ocorreu erro
-              IF vr_des_erro <> 'OK' THEN
-                -- Se tem erro
-                IF vr_tab_erro.count > 0 THEN
-                 vr_cdcritic:= 0;
-                 vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-                  -- Envio centralizado de log de erro
-                 btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                           ,pr_ind_tipo_log => 2 -- Erro tratato
-                                           ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                            || vr_cdprogra || ' --> '
-                                                            || vr_dscritic );
-                  --Rollback até savepoint
-                  ROLLBACK TO SAVEPOINT sav_trans;
-                  --Proximo registro
-                  CONTINUE;
-                END IF;
+              IF vr_des_erro <> 'OK' AND vr_tab_erro.count > 0 THEN
+                
+                vr_cdcritic:= 0;
+                vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+                
+                -- Envio centralizado de log de erro
+                btch0001.pc_gera_log_batch(pr_cdcooper     => rw_todas_cooperativas.cdcooper
+                                          ,pr_ind_tipo_log => 2 -- Erro tratato
+                                          ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                              || vr_cdprogra || ' --> '
+                                                              || vr_dscritic );
+                --Rollback até savepoint
+                ROLLBACK TO SAVEPOINT sav_trans_474;
+                --Proximo registro
+                CONTINUE;
               END IF;
 
             END IF;
 
             --Possui Juros
-             IF nvl(vr_vljurmes,0) > 0 THEN
+            IF nvl(vr_vljurmes,0) > 0 THEN
               /* Atualiza saldo devedor e juros */
               BEGIN
                  UPDATE crapepr SET crapepr.diarefju = nvl(vr_diarefju,0)
@@ -922,20 +978,20 @@ BEGIN
           END IF; --NOT vr_flgpagpa
 
           /* Verifica se tem uma parcela anterior nao liquida e ja vencida */
-           EMPR0001.pc_verifica_parcel_anteriores (pr_cdcooper => pr_cdcooper         --> Cooperativa conectada
-                                                  ,pr_nrdconta => rw_crappep.nrdconta --> Número da conta
-                                                  ,pr_nrctremp => rw_crappep.nrctremp --> Número do contrato de empréstimo
-                                                  ,pr_nrparepr => rw_crappep.nrparepr --> Número parcelas empréstimo
-                                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt --> Movimento atual
-                                                  ,pr_des_reto => vr_des_erro         --> Retorno OK / NOK
-                                                  ,pr_dscritic => vr_dscritic);       --> Descricao Erro
+          EMPR0001.pc_verifica_parcel_anteriores (pr_cdcooper => rw_todas_cooperativas.cdcooper --> Cooperativa conectada
+                                                 ,pr_nrdconta => rw_crappep.nrdconta --> Número da conta
+                                                 ,pr_nrctremp => rw_crappep.nrctremp --> Número do contrato de empréstimo
+                                                 ,pr_nrparepr => rw_crappep.nrparepr --> Número parcelas empréstimo
+                                                 ,pr_dtmvtolt => rw_crapdat.dtmvtolt --> Movimento atual
+                                                 ,pr_des_reto => vr_des_erro         --> Retorno OK / NOK
+                                                 ,pr_dscritic => vr_dscritic);       --> Descricao Erro
           --Se ocorreu erro
           IF vr_des_erro <> 'OK' THEN
             --Proximo Registro
             CONTINUE;
           END IF;
 
-          gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+          gene0001.pc_gera_log(pr_cdcooper => rw_todas_cooperativas.cdcooper
                               ,pr_cdoperad => 1
                               ,pr_dsorigem => 'AYLLOS'
                               ,pr_dscritic => null
@@ -955,50 +1011,48 @@ BEGIN
                               ,pr_nrdrowid => vr_rowid);
 
           /* Se saldo disp. maior que sald. devedor, entao pega saldo devedor */
-           IF nvl(vr_vlsomato,0) > nvl(vr_vlapagar,0) THEN
+          IF nvl(vr_vlsomato,0) > nvl(vr_vlapagar,0) THEN
             --Soma total recebe valor a pagar
-             vr_vlsomato:= vr_vlapagar;
+            vr_vlsomato:= vr_vlapagar;
           END IF;
 
           --Efetivar Pagamento Normal da Parcela
-           EMPR0001.pc_efetiva_pagto_parcela (pr_cdcooper => pr_cdcooper          --> Codigo Cooperativa
-                                             ,pr_cdagenci => pr_cdagenci          --> Codigo Agencia
-                                             ,pr_nrdcaixa => 0                    --> Codigo Caixa
-                                             ,pr_cdoperad => vr_cdoperad          --> Operador
-                                             ,pr_nmdatela => pr_nmdatela          --> Nome da Tela
-                                             ,pr_idorigem => 7 /*Batch*/          --> Identificador origem
-                                             ,pr_cdpactra => pr_cdagenci /*cdpactra*/ --> Posto Atendimento
-                                             ,pr_nrdconta => rw_crappep.nrdconta  --> Numero da Conta
-                                             ,pr_idseqttl => 1 /* Tit. */         --> Sequencial Titular
-                                             ,pr_dtmvtolt => rw_crapdat.dtmvtolt  --> Data Emprestimo
-                                             ,pr_flgerlog => 'S'                  --> Erro no Log
-                                             ,pr_nrctremp => rw_crappep.nrctremp  --> Numero Contrato
-                                             ,pr_nrparepr => rw_crappep.nrparepr  --> Numero parcela
-                                             ,pr_vlparepr => vr_vlsomato          --> Valor da parcela
-                                             ,pr_tab_crawepr => vr_tab_crawepr    --> Tabela com Contas e Contratos
-                                             ,pr_tab_erro => vr_tab_erro          --> tabela Erros
-                                             ,pr_des_reto => vr_des_erro);        --> Indicador OK/NOK
+          EMPR0001.pc_efetiva_pagto_parcela (pr_cdcooper => rw_todas_cooperativas.cdcooper --> Codigo Cooperativa
+                                            ,pr_cdagenci => pr_cdagenci          --> Codigo Agencia
+                                            ,pr_nrdcaixa => 0                    --> Codigo Caixa
+                                            ,pr_cdoperad => vr_cdoperad          --> Operador
+                                            ,pr_nmdatela => pr_nmdatela          --> Nome da Tela
+                                            ,pr_idorigem => 7 /*Batch*/          --> Identificador origem
+                                            ,pr_cdpactra => pr_cdagenci /*cdpactra*/ --> Posto Atendimento
+                                            ,pr_nrdconta => rw_crappep.nrdconta  --> Numero da Conta
+                                            ,pr_idseqttl => 1 /* Tit. */         --> Sequencial Titular
+                                            ,pr_dtmvtolt => rw_crapdat.dtmvtolt  --> Data Emprestimo
+                                            ,pr_flgerlog => 'S'                  --> Erro no Log
+                                            ,pr_nrctremp => rw_crappep.nrctremp  --> Numero Contrato
+                                            ,pr_nrparepr => rw_crappep.nrparepr  --> Numero parcela
+                                            ,pr_vlparepr => vr_vlsomato          --> Valor da parcela
+                                            ,pr_tab_crawepr => vr_tab_crawepr    --> Tabela com Contas e Contratos
+                                            ,pr_tab_erro => vr_tab_erro          --> tabela Erros
+                                            ,pr_des_reto => vr_des_erro);        --> Indicador OK/NOK
 
           --Se ocorreu erro
-          IF vr_des_erro <> 'OK' THEN
-            -- Se tem erro
-            IF vr_tab_erro.count > 0 THEN
-               vr_cdcritic:= 0;
-               vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-              -- Envio centralizado de log de erro
-               btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                         ,pr_ind_tipo_log => 2 -- Erro tratato
-                                         ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+          IF vr_des_erro <> 'OK' AND vr_tab_erro.count > 0 THEN
+            vr_cdcritic:= 0;
+            vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+            -- Envio centralizado de log de erro
+            btch0001.pc_gera_log_batch(pr_cdcooper     => rw_todas_cooperativas.cdcooper
+                                      ,pr_ind_tipo_log => 2 -- Erro tratato
+                                      ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                           || vr_cdprogra || ' --> '
                                                           || vr_dscritic );
-              --Desfazer transacao
-              ROLLBACK TO SAVEPOINT sav_trans;
-              --Proximo registro
-              CONTINUE;
-            END IF;
+            --Desfazer transacao
+            ROLLBACK TO SAVEPOINT sav_trans_474;
+            --Proximo registro
+            CONTINUE;
           END IF;
         END IF;
-         ELSE /* Parcela vencida */
+        
+      ELSE /* Parcela vencida */
         /* verificar se existe boleto de contrato em aberto e se pode debitar do cooperado */
         /* 1º) verificar se o parametro está bloqueado para realizar busca de boleto em aberto */
         IF vr_blqresg_cc = 'S' THEN
@@ -1015,19 +1069,19 @@ BEGIN
           CLOSE cr_cde;
 
           /* 3º se existir boleto de contrato em aberto, nao debitar */
-              IF nvl(rw_cde.nrdocmto,0) > 0 THEN
+          IF nvl(rw_cde.nrdocmto,0) > 0 THEN
             vr_vlsomato := 0;
           ELSE
             /* 4º cursor para verificar se existe boleto pago pendente de processamento, nao debitar */
-                OPEN cr_ret( pr_cdcooper => rw_crappep.cdcooper
-                            ,pr_nrdconta => rw_crappep.nrdconta
-                            ,pr_nrctremp => rw_crappep.nrctremp
-                            ,pr_dtmvtolt => rw_crapdat.dtmvtolt);
+            OPEN cr_ret( pr_cdcooper => rw_crappep.cdcooper
+                        ,pr_nrdconta => rw_crappep.nrdconta
+                        ,pr_nrctremp => rw_crappep.nrctremp
+                        ,pr_dtmvtolt => rw_crapdat.dtmvtolt);
                 FETCH cr_ret INTO rw_ret;
             CLOSE cr_ret;
 
             /* 6º se existir boleto de contrato pago pendente de processamento, nao debitar */
-                IF nvl(rw_ret.nrdocmto,0) > 0 THEN
+            IF nvl(rw_ret.nrdocmto,0) > 0 THEN
               vr_vlsomato := 0;
             END IF;
 
@@ -1035,9 +1089,16 @@ BEGIN
 
         END IF;
 
+        vr_cdindice := LPAD(pr_cdcooper,10,'0') || LPAD(rw_crappep.nrdconta,10,'0') ||
+                       LPAD(rw_crappep.nrctremp,10,'0');
+
+        IF vr_tab_acordo.EXISTS(vr_cdindice) THEN
+          vr_vlsomato := 0;
+        END IF;
+
         IF vr_vlsomato <= 0 THEN
           /* Sem nada para pagar */
-          gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+          gene0001.pc_gera_log(pr_cdcooper => rw_todas_cooperativas.cdcooper
                               ,pr_cdoperad => 1
                               ,pr_dsorigem => 'AYLLOS'
                               ,pr_dscritic => null
@@ -1065,13 +1126,13 @@ BEGIN
         END IF;
 
         /* Verifica se tem uma parcela anterior nao liquida e ja vencida */
-           EMPR0001.pc_verifica_parcel_anteriores (pr_cdcooper => pr_cdcooper         --> Cooperativa conectada
-                                                  ,pr_nrdconta => rw_crappep.nrdconta --> Número da conta
-                                                  ,pr_nrctremp => rw_crappep.nrctremp --> Número do contrato de empréstimo
-                                                  ,pr_nrparepr => rw_crappep.nrparepr --> Número parcelas empréstimo
-                                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt --> Movimento atual
-                                                  ,pr_des_reto => vr_des_erro         --> Retorno OK / NOK
-                                                  ,pr_dscritic => vr_dscritic);       --> Descricao Erro
+        EMPR0001.pc_verifica_parcel_anteriores (pr_cdcooper => rw_todas_cooperativas.cdcooper --> Cooperativa conectada
+                                               ,pr_nrdconta => rw_crappep.nrdconta --> Número da conta
+                                               ,pr_nrctremp => rw_crappep.nrctremp --> Número do contrato de empréstimo
+                                               ,pr_nrparepr => rw_crappep.nrparepr --> Número parcelas empréstimo
+                                               ,pr_dtmvtolt => rw_crapdat.dtmvtolt --> Movimento atual
+                                               ,pr_des_reto => vr_des_erro         --> Retorno OK / NOK
+                                               ,pr_dscritic => vr_dscritic);       --> Descricao Erro
         --Se ocorreu erro
         IF vr_des_erro <> 'OK' THEN
           --Proximo Registro
@@ -1079,43 +1140,41 @@ BEGIN
         END IF;
 
         --Criar savepoint
-        SAVEPOINT sav_trans;
+        SAVEPOINT sav_trans_474;
 
         --Buscar pagamentos Parcela
-           EMPR0001.pc_busca_pgto_parcelas (pr_cdcooper => pr_cdcooper                --> Cooperativa conectada
-                                           ,pr_cdagenci => pr_cdagenci                --> Código da agência
-                                           ,pr_nrdcaixa => 0                          --> Número do caixa
-                                           ,pr_cdoperad => vr_cdoperad                --> Código do Operador
-                                           ,pr_nmdatela => pr_nmdatela                --> Nome da tela
-                                           ,pr_idorigem => 7 /*Batch*/                --> Id do módulo de sistema
-                                           ,pr_nrdconta => rw_crappep.nrdconta        --> Número da conta
-                                           ,pr_idseqttl => 1                          --> Seq titula
-                                           ,pr_dtmvtolt => rw_crapdat.dtmvtolt        --> Movimento atual
-                                           ,pr_flgerlog => 'N'                        --> Indicador S/N para geração de log
-                                           ,pr_nrctremp => rw_crappep.nrctremp        --> Número do contrato de empréstimo
-                                           ,pr_dtmvtoan => rw_crapdat.dtmvtoan        --> Data anterior
-                                           ,pr_nrparepr => rw_crappep.nrparepr        --> Número parcelas empréstimo
-                                           ,pr_des_reto => vr_des_erro                --> Retorno OK / NOK
-                                           ,pr_tab_erro => vr_tab_erro                --> Tabela com possíves erros
-                                           ,pr_tab_pgto_parcel => vr_tab_pgto_parcel  --> Tabela com registros de pagamentos
-                                           ,pr_tab_calculado   => vr_tab_calculado);  --> Tabela com totais calculados
+        EMPR0001.pc_busca_pgto_parcelas (pr_cdcooper => rw_todas_cooperativas.cdcooper --> Cooperativa conectada
+                                        ,pr_cdagenci => pr_cdagenci                --> Código da agência
+                                        ,pr_nrdcaixa => 0                          --> Número do caixa
+                                        ,pr_cdoperad => vr_cdoperad                --> Código do Operador
+                                        ,pr_nmdatela => pr_nmdatela                --> Nome da tela
+                                        ,pr_idorigem => 7 /*Batch*/                --> Id do módulo de sistema
+                                        ,pr_nrdconta => rw_crappep.nrdconta        --> Número da conta
+                                        ,pr_idseqttl => 1                          --> Seq titula
+                                        ,pr_dtmvtolt => rw_crapdat.dtmvtolt        --> Movimento atual
+                                        ,pr_flgerlog => 'N'                        --> Indicador S/N para geração de log
+                                        ,pr_nrctremp => rw_crappep.nrctremp        --> Número do contrato de empréstimo
+                                        ,pr_dtmvtoan => rw_crapdat.dtmvtoan        --> Data anterior
+                                        ,pr_nrparepr => rw_crappep.nrparepr        --> Número parcelas empréstimo
+                                        ,pr_des_reto => vr_des_erro                --> Retorno OK / NOK
+                                        ,pr_tab_erro => vr_tab_erro                --> Tabela com possíves erros
+                                        ,pr_tab_pgto_parcel => vr_tab_pgto_parcel  --> Tabela com registros de pagamentos
+                                        ,pr_tab_calculado   => vr_tab_calculado);  --> Tabela com totais calculados
         --Se ocorreu erro
-        IF vr_des_erro <> 'OK' THEN
-          -- Se tem erro
-          IF vr_tab_erro.count > 0 THEN
-               vr_cdcritic:= 0;
-               vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-            -- Envio centralizado de log de erro
-               btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                         ,pr_ind_tipo_log => 2 -- Erro tratato
-                                         ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                          || vr_cdprogra || ' --> '
-                                                          || vr_dscritic );
-            --Desfazer transacao
-            ROLLBACK TO SAVEPOINT sav_trans;
-            --Proximo registro
-            CONTINUE;
-          END IF;
+        IF vr_des_erro <> 'OK' AND vr_tab_erro.count > 0 THEN
+            
+          vr_cdcritic:= 0;
+          vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+          -- Envio centralizado de log de erro
+          btch0001.pc_gera_log_batch(pr_cdcooper     => rw_todas_cooperativas.cdcooper
+                                    ,pr_ind_tipo_log => 2 -- Erro tratato
+                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                     || vr_cdprogra || ' --> '
+                                                     || vr_dscritic );
+          --Desfazer transacao
+          ROLLBACK TO SAVEPOINT sav_trans_474;
+          --Proximo registro
+          CONTINUE;
         END IF;
 
         --Se retornou dados Buscar primeiro registro
@@ -1127,7 +1186,7 @@ BEGIN
             vr_vlsomato:= nvl(vr_tab_pgto_parcel(vr_index_pgto_parcel).vlatrpag,0);
           END IF;
 		  
-		  gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+		      gene0001.pc_gera_log(pr_cdcooper => rw_todas_cooperativas.cdcooper
                               ,pr_cdoperad => 1
                               ,pr_dsorigem => 'AYLLOS'
                               ,pr_dscritic => null
@@ -1143,34 +1202,53 @@ BEGIN
                               ,pr_nrdconta => rw_crappep.nrdconta
                               ,pr_nrdrowid => vr_rowid);
 	    
-		  gene0001.pc_gera_log_item(pr_nrdrowid => vr_rowid,
-                                  pr_nmdcampo => 'Saldo',
-                                  pr_dsdadant => to_char(nvl(vr_vlsomato_tmp,0),'fm999G999G990D00'),
-                                  pr_dsdadatu => to_char(vr_vlsomato,'fm999G999G990D00'));
+          gene0001.pc_gera_log_item(pr_nrdrowid => vr_rowid,
+                                    pr_nmdcampo => 'Saldo',
+                                    pr_dsdadant => to_char(nvl(vr_vlsomato_tmp,0),'fm999G999G990D00'),
+                                    pr_dsdadatu => to_char(vr_vlsomato,'fm999G999G990D00'));
         END IF;
 
         --Efetivar Pagamento da Parcela Atrasada
-           EMPR0001.pc_efetiva_pagto_atr_parcel (pr_cdcooper => pr_cdcooper           --> Cooperativa conectada
-                                                ,pr_cdagenci => pr_cdagenci           --> Código da agência
-                                                ,pr_nrdcaixa => 0                     --> Número do caixa
-                                                ,pr_cdoperad => vr_cdoperad           --> Código do Operador
-                                                ,pr_nmdatela => pr_nmdatela           --> Nome da tela
-                                                ,pr_idorigem => 7 /*Batch*/           --> Id do módulo de sistema
-                                                ,pr_cdpactra => pr_cdagenci /*cdpactra*/ --> P.A. da transação
-                                                ,pr_nrdconta => rw_crappep.nrdconta   --> Número da conta
-                                                ,pr_idseqttl => 1 /* Titular */       --> Seq titula
-                                                ,pr_dtmvtolt => rw_crapdat.dtmvtolt   --> Movimento atual
-                                                ,pr_flgerlog => 'N'                   --> Indicador S/N para geração de log
-                                                ,pr_nrctremp => rw_crappep.nrctremp   --> Número do contrato de empréstimo
-                                                ,pr_nrparepr => rw_crappep.nrparepr   --> Número parcelas empréstimo
-                                                ,pr_vlpagpar => vr_vlsomato           --> Soma Total
-                                                ,pr_tab_crawepr => vr_tab_crawepr     --> Tabela com Contas e Contratos
-                                                ,pr_des_reto => vr_des_erro           --> Retorno OK / NOK
-                                                ,pr_tab_erro => vr_tab_erro);         --> Tabela com possíves erros
+        EMPR0001.pc_efetiva_pagto_atr_parcel (pr_cdcooper => rw_todas_cooperativas.cdcooper --> Cooperativa conectada
+                                             ,pr_cdagenci => pr_cdagenci           --> Código da agência
+                                             ,pr_nrdcaixa => 0                     --> Número do caixa
+                                             ,pr_cdoperad => vr_cdoperad           --> Código do Operador
+                                             ,pr_nmdatela => pr_nmdatela           --> Nome da tela
+                                             ,pr_idorigem => 7 /*Batch*/           --> Id do módulo de sistema
+                                             ,pr_cdpactra => pr_cdagenci /*cdpactra*/ --> P.A. da transação
+                                             ,pr_nrdconta => rw_crappep.nrdconta   --> Número da conta
+                                             ,pr_idseqttl => 1 /* Titular */       --> Seq titula
+                                             ,pr_dtmvtolt => rw_crapdat.dtmvtolt   --> Movimento atual
+                                             ,pr_flgerlog => 'N'                   --> Indicador S/N para geração de log
+                                             ,pr_nrctremp => rw_crappep.nrctremp   --> Número do contrato de empréstimo
+                                             ,pr_nrparepr => rw_crappep.nrparepr   --> Número parcelas empréstimo
+                                             ,pr_vlpagpar => vr_vlsomato           --> Soma Total
+                                             ,pr_tab_crawepr => vr_tab_crawepr     --> Tabela com Contas e Contratos
+                                             ,pr_des_reto => vr_des_erro           --> Retorno OK / NOK
+                                             ,pr_tab_erro => vr_tab_erro);         --> Tabela com possíves erros
 
         /* Se deu erro eh porque nao tinha dinheiro minimo suficiente */
         --Se ocorreu erro
         IF vr_des_erro <> 'OK' THEN
+
+		  --Desfazer transacao
+          ROLLBACK TO SAVEPOINT sav_trans_474;
+          IF vr_tab_erro.count > 0 THEN
+            vr_cdcritic := 0;            
+            vr_dscritic := 'ERRO coop ' || rw_crappep.cdcooper ||
+                           ' nrdconta ' || rw_crappep.nrdconta ||
+                           ' nrctremp ' || rw_crappep.nrctremp ||
+                           ': '|| vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+                           
+            -- Gerar log
+            btch0001.pc_gera_log_batch(pr_cdcooper     => rw_todas_cooperativas.cdcooper,
+                                       pr_ind_tipo_log => 2, 
+                                       pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
+                                                          ' - '||vr_cdprogra ||' --> '|| vr_dscritic,
+                                       pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));  
+          
+          END IF;
+
           --Proximo registro
           CONTINUE;
         END IF;
@@ -1189,7 +1267,7 @@ BEGIN
     BEGIN
       UPDATE crapprm a
          SET a.dsvlrprm = to_char(rw_crapdat.dtmvtolt, 'DD/MM/YYYY')
-       WHERE a.cdcooper = pr_cdcooper
+       WHERE a.cdcooper = rw_todas_cooperativas.cdcooper
          AND a.cdacesso = 'CRPS474_DATA_PROCESSO';
     EXCEPTION
       WHEN OTHERS THEN
@@ -1203,7 +1281,7 @@ BEGIN
 
     IF pr_cdagenci = 0 THEN
       -- Processo OK, devemos chamar a fimprg
-         btch0001.pc_valida_fimprg (pr_cdcooper => pr_cdcooper
+         btch0001.pc_valida_fimprg (pr_cdcooper => rw_todas_cooperativas.cdcooper
                                    ,pr_cdprogra => vr_cdprogra
                                    ,pr_infimsol => pr_infimsol
                                    ,pr_stprogra => pr_stprogra);
@@ -1216,21 +1294,24 @@ BEGIN
                                      ,pr_idprogra => pr_cdagenci
                                      ,pr_des_erro => vr_dscritic);
     END IF;
+  END LOOP; -- rw_todas_cooperativas
+  
+  pc_controla_log_batch('F');
+  
   EXCEPTION
     WHEN vr_exc_fimprg THEN
-      -- Se foi retornado apenas codigo
-      IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-        -- Buscar a descricao da critica
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-      END IF;
+
+      -- Buscar a descricao da critica      
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
+      
       -- Se foi gerada critica para envio ao log
-      IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+      IF vr_dscritic IS NOT NULL THEN
         -- Envio centralizado de log de erro
-           btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                     ,pr_ind_tipo_log => 2 -- Erro tratato
-                                     ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                      || vr_cdprogra || ' --> '
-                                                      || vr_dscritic );
+        btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
+                                  ,pr_ind_tipo_log => 2 -- Erro tratato
+                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                   || vr_cdprogra || ' --> '
+                                                   || vr_dscritic );
       END IF;
 
       IF pr_cdagenci <> 0 THEN
@@ -1241,24 +1322,23 @@ BEGIN
       END IF;
 
       -- Chamamos a fimprg para encerrarmos o processo sem parar a cadeia
-         btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
-                                  ,pr_cdprogra => vr_cdprogra
-                                  ,pr_infimsol => pr_infimsol
-                                  ,pr_stprogra => pr_stprogra);
+      btch0001.pc_valida_fimprg(pr_cdcooper => vr_cdcooper
+                               ,pr_cdprogra => vr_cdprogra
+                               ,pr_infimsol => pr_infimsol
+                               ,pr_stprogra => pr_stprogra);
       --Limpar parametros
-         pr_cdcritic:= 0;
-         pr_dscritic:= NULL;
+      pr_cdcritic:= 0;
+      pr_dscritic:= NULL;
       -- Efetuar commit pois gravaremos o que foi processado ate entao
       COMMIT;
 
     WHEN vr_exc_saida THEN
-      -- Se foi retornado apenas codigo
-      IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-        -- Buscar a descricao
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-      END IF;
+
+      -- Buscar a descricao
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
+
       -- Devolvemos codigo e critica encontradas
-         pr_cdcritic := NVL(vr_cdcritic,0);
+      pr_cdcritic := NVL(vr_cdcritic,0);
       pr_dscritic := vr_dscritic;
 
       IF pr_cdagenci <> 0 THEN
@@ -1268,39 +1348,44 @@ BEGIN
                                     ,pr_des_erro => vr_dscritic);
       ELSE
         IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
-          -- Envio centralizado de log de erro
-          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 2 -- Erro tratato
-                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                     || vr_cdprogra || ' --> '
-                                                     || vr_dscritic );
+          -- Envio centralizado de log de erro          
+          pc_controla_log_batch('E', vr_dscritic);
         END IF;
       END IF;
       -- Efetuar rollback
       ROLLBACK;
-
+      
       IF pr_cdagenci <> 0 THEN
-        begin
-          insert into crapprm(nmsistem
+        BEGIN
+          INSERT INTO crapprm(nmsistem
                              ,cdcooper
                              ,cdacesso
                              ,dstexprm
                              ,dsvlrprm)
-                             values
+                             VALUES
                              ('CRED'
-                             ,pr_cdcooper
+                             ,vr_cdcooper
                              ,'PC_CRPS474-ERRO'
                              ,'Erro na execução da rotina pc_crps474'
                              ,'Agência: '||pr_cdagenci||' - Erro: '||pr_dscritic);
-        exception
-          when dup_val_on_index then
-            null;
-        end;
+        EXCEPTION
+          WHEN dup_val_on_index then
+            NULL;
+        END;
       END IF;
     WHEN OTHERS THEN
+
+      IF vr_cdcooper = 0 THEN
+        vr_cdcooper := 3;
+      END IF;
+      
+      btch0001.pc_log_internal_exception(vr_cdcooper);
+    
       -- Efetuar retorno do erro nao tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
+
+      pc_controla_log_batch('E', pr_dscritic);
 
       IF pr_cdagenci <> 0 THEN
         -- Encerrar o job do processamento paralelo dessa agência
@@ -1310,7 +1395,7 @@ BEGIN
       ELSE
         IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
           -- Envio centralizado de log de erro
-          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+          btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                                     ,pr_ind_tipo_log => 2 -- Erro tratato
                                     ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                      || vr_cdprogra || ' --> '
@@ -1319,24 +1404,24 @@ BEGIN
       END IF;
       -- Efetuar rollback
       ROLLBACK;
-
+      
       IF pr_cdagenci <> 0 THEN
-        begin
-          insert into crapprm(nmsistem
+        BEGIN
+          INSERT INTO crapprm(nmsistem
                              ,cdcooper
                              ,cdacesso
                              ,dstexprm
                              ,dsvlrprm)
-                             values
+                             VALUES
                              ('CRED'
-                             ,pr_cdcooper
+                             ,vr_cdcooper
                              ,'PC_CRPS474-ERRO'
                              ,'Erro na execução da rotina pc_crps474'
                              ,'Agência: '||pr_cdagenci||' - Erro: '||pr_dscritic);
-        exception
-          when dup_val_on_index then
-            null;
-        end;
+        EXCEPTION
+          WHEN DUP_VAL_ON_INDEX then
+            NULL;
+        END;
       END IF;
   END;
 END PC_CRPS474;

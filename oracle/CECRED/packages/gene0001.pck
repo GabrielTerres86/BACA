@@ -119,7 +119,8 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
                             ,pr_dsvlrprm OUT crapprm.dsvlrprm%TYPE);
 
   /* Mostrar o texto das criticas na tela de acordo com o ocorrido. */
-  FUNCTION fn_busca_critica(pr_cdcritic IN crapcri.cdcritic%TYPE) RETURN VARCHAR2;
+  FUNCTION fn_busca_critica(pr_cdcritic IN crapcri.cdcritic%TYPE DEFAULT 0
+                           ,pr_dscritic IN crapcri.dscritic%TYPE DEFAULT NULL) RETURN VARCHAR2;
 
   /* Mostrar mensagem dbms_output.put_line */
   PROCEDURE pc_print(pr_des_mensag IN VARCHAR2);
@@ -363,7 +364,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   --  Sistema  : Rotinas genéricas
   --  Sigla    : GENE
   --  Autor    : Marcos E. Martini - Supero
-  --  Data     : Novembro/2012.                   Ultima atualizacao: 09/06/2016
+  --  Data     : Novembro/2012.                   Ultima atualizacao: 12/01/2017
   --
   -- Dados referentes ao programa:
   --
@@ -378,7 +379,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   --                          ao pegar o nome do JOB a ser criado
   --                         (Adriano - SD 464856).
   --
-  --
+  --             12/01/2017 - #551192 Na função fn_busca_critica, mudança para parâmetros opcionais cd e 
+  --                          dscritic para centralizar a lógica de captura dos erros (Carlos) 
   ---------------------------------------------------------------------------------------------------------------
 
   -- Busca do diretório conforme a cooperativa conectada
@@ -386,7 +388,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     SELECT cop.dsdircop
       FROM crapcop cop
      WHERE cop.cdcooper = pr_cdcooper;
-  vr_dsdircop crapcop.dsdircop%TYPE;
 
   /* Tratamento de erro */
   vr_des_erro VARCHAR2(32000);
@@ -629,9 +630,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                                     ,pr_cdacesso => pr_cdacesso);
 
   END pc_param_sistema;
-
+  
   /* Mostrar o texto das criticas na tela de acordo com o ocorrido. */
-  FUNCTION fn_busca_critica(pr_cdcritic IN crapcri.cdcritic%TYPE) RETURN VARCHAR2 IS
+  FUNCTION fn_busca_critica(pr_cdcritic IN crapcri.cdcritic%TYPE DEFAULT 0,
+                            pr_dscritic IN crapcri.dscritic%TYPE DEFAULT NULL) RETURN VARCHAR2 IS
   BEGIN
     -- ..........................................................................
     --
@@ -639,7 +641,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Deborah/Edson
-    --  Data     : Setembro/1991.                   Ultima atualizacao: 13/11/2012
+    --  Data     : Setembro/1991.                   Ultima atualizacao: 12/01/2017
     --
     --  Dados referentes ao programa:
     --
@@ -652,6 +654,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     --                            do prefixo "banco" (Guilherme Maba).
     --
     --               13/11/2012 - Conversão Progress >> Oracle PLSQL
+    --
+    --               12/01/2017 - #551192 Mudança para parâmetros opcionais cd e dscritic para centralizar
+    --                            a lógica de captura dos erros (Carlos) 
     -- .............................................................................
 
     DECLARE
@@ -662,19 +667,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
          WHERE cri.cdcritic = pr_cdcritic;
       vr_dscritic crapcri.dscritic%TYPE;
     BEGIN
-      -- Busca descrição da critica cfme parâmetro passado
-      OPEN cr_crapcri;
-      FETCH cr_crapcri
-       INTO vr_dscritic;
-      -- Se não encontrou nenhum registro
-      IF cr_crapcri%NOTFOUND THEN
-        -- Montar descrição padrão
-        vr_dscritic := pr_cdcritic || ' - Critica nao cadastrada!';
-      END IF;
-      -- Apenas fechar o cursor
-      CLOSE cr_crapcri;
-      -- Retornar a string montada
-      RETURN vr_dscritic;
+      -- Se veio código de crítica e não veio descrição
+      IF pr_cdcritic > 0 AND pr_dscritic IS NULL THEN
+    
+        -- Busca descrição da critica cfme parâmetro passado
+        OPEN cr_crapcri;
+        FETCH cr_crapcri
+         INTO vr_dscritic;
+        -- Se não encontrou nenhum registro
+        IF cr_crapcri%NOTFOUND THEN
+          -- Montar descrição padrão
+          vr_dscritic := pr_cdcritic || ' - Critica nao cadastrada!';
+        END IF;
+        -- Apenas fechar o cursor
+        CLOSE cr_crapcri;
+        -- Retornar a string montada
+        RETURN vr_dscritic;
+
+      END IF;      
+      
+      -- Retorna apenas as descrição
+      RETURN pr_dscritic;
+      
     END;
   END fn_busca_critica;
 

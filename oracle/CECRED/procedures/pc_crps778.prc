@@ -1,9 +1,4 @@
-CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Codigo da cooperativa
-                                              ,pr_flgresta IN PLS_INTEGER             --> Flag 0/1 para utilizar restart na chamada
-                                              ,pr_stprogra OUT PLS_INTEGER            --> Saida de termino da execucao
-                                              ,pr_infimsol OUT PLS_INTEGER            --> Saida de termino da solicitacao
-                                              ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Codigo da critica
-                                              ,pr_dscritic OUT VARCHAR2) IS           --> Descricao da critica
+CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_dscritic OUT VARCHAR2) IS           --> Descricao da critica
 
   /* ............................................................................
 
@@ -11,7 +6,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_cdcooper IN crapcop.cdcooper%T
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Odirlei Busana - AMcom
-     Data    : Julho/2016                         Ultima atualizacao: 25/08/2016 
+     Data    : Julho/2016                         Ultima atualizacao: 22/02/2017
 
      Dados referentes ao programa:
 
@@ -22,20 +17,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_cdcooper IN crapcop.cdcooper%T
 
                  25/08/2016 - Ajuste para mover o arquivo processado para o diretório salvar
                               (Andrei - RKAM).
+
+                 14/02/2017 - Ajsute para efetuar o commit por arquivo e não mais por cooperativa
+							                (Andrei - Mouts).
+                              
+                 22/02/2017 - #551199 Melhorias de performance e inclusão de logs de controle de execução (Carlos)
   ............................................................................ */
 
   ------------------------------- CURSORES ---------------------------------
-
-    -- Selecionar os dados da Cooperativa
-    CURSOR cr_crapcop( pr_cdcooper IN crapcop.cdcooper%TYPE) IS
-      SELECT cop.cdcooper
-            ,cop.nmrescop
-            ,cop.nrdocnpj
-            ,cop.cdagedbb
-            ,cop.dsdircop
-      FROM crapcop cop
-      WHERE cop.cdcooper = pr_cdcooper;
-    rw_crapcop cr_crapcop%ROWTYPE;
 			
     -- Selecionar os dados de cada Cooperativa
     CURSOR cr_crapcoop IS
@@ -46,7 +35,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_cdcooper IN crapcop.cdcooper%T
       WHERE cop.cdcooper <> 3
         AND cop.flgativo = 1
       ORDER BY cop.cdcooper;
-    rw_crapcoop cr_crapcop%ROWTYPE;
+    rw_crapcoop cr_crapcoop%ROWTYPE;
 			
     CURSOR cr_crapceb(pr_cdcooper IN crapceb.cdcooper%TYPE) IS 
     SELECT ceb.nrdconta 
@@ -78,9 +67,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_cdcooper IN crapcop.cdcooper%T
     vr_cdprogra     CONSTANT crapprg.cdprogra%TYPE := 'CRPS778';
       
     -- Tratamento de erros
-    vr_exc_saida     EXCEPTION;
-    vr_exc_fimprg1   EXCEPTION;
-    vr_exc_fimprg2   EXCEPTION;
     vr_exc_erro      EXCEPTION;				
     vr_cdcritic     crapcri.cdcritic%TYPE;
     vr_dscritic     VARCHAR2(4000);
@@ -101,9 +87,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_cdcooper IN crapcop.cdcooper%T
     -- variaveis de controle de comandos shell
     vr_listadir      VARCHAR2(4000);    
     vr_chave         VARCHAR2(100);
-
-    -- variáveis de controle de arquivos
-    vr_setlinha     VARCHAR2(402);
       
     -- variáveis de paramatros ftp
     vr_serv_ftp     VARCHAR2(100);
@@ -117,8 +100,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_cdcooper IN crapcop.cdcooper%T
     vr_cddbanco    INTEGER;
     vr_hrtransa    INTEGER;
     vr_nrprotoc    VARCHAR2(200);
-	idx INTEGER;
-	--Enquanto nao existir operador "ftp", deverá usar o Internet
+    idx INTEGER;
+	  
+    --Enquanto nao existir operador "ftp", deverá usar o Internet
     vr_cdoperad     crapope.cdoperad%TYPE := '996'; 
     
     vr_dscomand     VARCHAR2(4000);
@@ -127,6 +111,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_cdcooper IN crapcop.cdcooper%T
 	--Variaveis novas em funcao da pc_identifica_arq_cnab    
     vr_rec_rejeita  COBR0006.typ_tab_rejeita;   --> Dados invalidados    
     vr_nrdconta     crapass.nrdconta%TYPE;
+
+    vr_nomdojob  CONSTANT VARCHAR2(100) := 'jbcobran_crps778';
+    vr_flgerlog  BOOLEAN := FALSE;
+    
     --------------------------- SUBROTINAS INTERNAS --------------------------
     PROCEDURE pc_gerar_log(pr_cdcooper crapcop.cdcooper%TYPE,
                            pr_dscdolog VARCHAR2)IS
@@ -139,46 +127,39 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_cdcooper IN crapcop.cdcooper%T
                                  pr_des_log      => vr_dscdolog, 
                                  pr_nmarqlog     => 'cobranca_por_arquivo' );
     END;
-    
+
+  --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
+  PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
+                                  pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
+  BEGIN
+
+    --> Controlar geração de log de execução dos jobs 
+    BTCH0001.pc_log_exec_job( pr_cdcooper  => 3              --> Cooperativa
+                             ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
+                             ,pr_nomdojob  => vr_nomdojob    --> Nome do job
+                             ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
+                             ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
+                             ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
+
+  END pc_controla_log_batch;
+
   BEGIN
     --------------- VALIDACOES INICIAIS -----------------
+
+    -- Executar apenas quando as cooperativas estiverem online
+    IF btch0001.fn_cooperativas_online = FALSE THEN
+      RETURN;
+    END IF;
+
+    -- Executar apenas em dias úteis na cecred
+    IF gene0005.fn_valida_dia_util(pr_cdcooper => 3, pr_dtmvtolt => trunc(SYSDATE)) <> trunc(SYSDATE) THEN
+      RETURN;
+    END IF;
+
     -- Incluir nome do módulo logado
     GENE0001.pc_informa_acesso(pr_module => 'PC_'||vr_cdprogra
                               ,pr_action => null);
 
-    -- Verifica se a cooperativa esta cadastrada
-    OPEN cr_crapcop( pr_cdcooper => pr_cdcooper);
-      
-    FETCH cr_crapcop INTO rw_crapcop;
-	  
-    -- Se não encontrar
-    IF cr_crapcop%NOTFOUND THEN
-      -- Fechar o cursor pois haverá raise
-      CLOSE cr_crapcop;
-      -- Montar mensagem de critica
-      vr_cdcritic := 651;
-      RAISE vr_exc_saida;
-    ELSE
-      -- Apenas fechar o cursor
-      CLOSE cr_crapcop;
-    END IF;
-
-    -- Leitura do calendário da cooperativa
-    OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
-    FETCH btch0001.cr_crapdat INTO rw_crapdat;
-    -- Se não encontrar
-    IF btch0001.cr_crapdat%NOTFOUND THEN
-      -- Fechar o cursor pois efetuaremos raise
-      CLOSE btch0001.cr_crapdat;
-      -- Montar mensagem de critica
-      vr_cdcritic := 1;
-      -- gera excecao
-      RAISE vr_exc_saida;
-    ELSE
-      -- Apenas fechar o cursor
-      CLOSE btch0001.cr_crapdat;
-    END IF;
-			
     --------------- REGRA DE NEGOCIO DO PROGRAMA -----------------
 
     -- Busca nome do servidor
@@ -205,8 +186,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_cdcooper IN crapcop.cdcooper%T
         -- Leitura do calendário da cooperativa
         OPEN btch0001.cr_crapdat(pr_cdcooper => rw_crapcoop.cdcooper);
         FETCH btch0001.cr_crapdat INTO rw_crapdat;
-        IF btch0001.cr_crapdat%NOTFOUND THEN
-            
+        IF btch0001.cr_crapdat%NOTFOUND THEN            
           -- Fechar o cursor pois efetuaremos raise
           CLOSE btch0001.cr_crapdat;
           vr_cdcritic := 1;
@@ -214,10 +194,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_cdcooper IN crapcop.cdcooper%T
           RAISE vr_exc_erro;
         ELSE
           CLOSE btch0001.cr_crapdat;            
-        END IF;
-          
-        IF rw_crapdat.inproces <> 1 THEN
-          CONTINUE;
         END IF;
 					
         IF vr_tab_arquivo.count() > 0 THEN
@@ -233,8 +209,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_cdcooper IN crapcop.cdcooper%T
         -- Setando os diretorios auxiliares
         vr_caminho_arq     := vr_caminho_cooper||'/upload/ftp';							
 					
-        FOR rw_crapceb IN cr_crapceb(rw_crapcoop.cdcooper) LOOP
-			
+        FOR rw_crapceb IN cr_crapceb(rw_crapcoop.cdcooper) LOOP      
+      
           vr_caminho_conta := rw_crapcoop.dsdircop || '/' || 
                               TRIM(to_char(rw_crapceb.nrdconta)) || '/REMESSA';
           vr_comando_ftp := vr_script_cust                                        || ' ' || 
@@ -293,6 +269,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_cdcooper IN crapcop.cdcooper%T
 
         -- Se retornou informacoes na temp table
         IF vr_tab_arquivo.count() > 0 THEN
+          
+          pc_controla_log_batch('I'); -- logará o início da execução assim que encontrar o primeiro arquivo
             
           -- carrega informacoes na cratarq
           FOR vr_ind IN vr_tab_arquivo.first .. vr_tab_arquivo.last LOOP
@@ -385,7 +363,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_cdcooper IN crapcop.cdcooper%T
               -- Arquivo possui erros criticos, aborta processo de validação
               COBR0006.pc_rejeitar_arquivo(pr_cdcooper => rw_crapcoop.cdcooper
                                           ,pr_nrdconta => vr_tab_cratarq(vr_chave).nrdconta
-                                          ,pr_dtmvtolt => trunc(SYSDATE) -- rw_crapdat.dtmvtolt
+                                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                           ,pr_nmarquiv => vr_tab_cratarq(vr_chave).nmarquiv
                                           ,pr_idorigem => 3 --FTP pr_idorigem
                                           ,pr_cdoperad => vr_cdoperad
@@ -438,7 +416,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_cdcooper IN crapcop.cdcooper%T
               -- Arquivo possui erros criticos, aborta processo de validação
               COBR0006.pc_rejeitar_arquivo(pr_cdcooper => rw_crapcoop.cdcooper
                                           ,pr_nrdconta => vr_tab_cratarq(vr_chave).nrdconta
-                                          ,pr_dtmvtolt => trunc(SYSDATE) -- rw_crapdat.dtmvtolt
+                                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                           ,pr_nmarquiv => vr_tab_cratarq(vr_chave).nmarquiv
                                           ,pr_idorigem => 3 --FTP pr_idorigem
                                           ,pr_cdoperad => vr_cdoperad
@@ -470,7 +448,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_cdcooper IN crapcop.cdcooper%T
               -- Arquivo possui erros criticos, aborta processo de validação
               COBR0006.pc_rejeitar_arquivo(pr_cdcooper => rw_crapcoop.cdcooper
                                           ,pr_nrdconta => vr_tab_cratarq(vr_chave).nrdconta
-                                          ,pr_dtmvtolt => trunc(SYSDATE) -- rw_crapdat.dtmvtolt
+                                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                           ,pr_nmarquiv => vr_tab_cratarq(vr_chave).nmarquiv
                                           ,pr_idorigem => 3 --FTP pr_idorigem
                                           ,pr_cdoperad => vr_cdoperad
@@ -567,7 +545,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_cdcooper IN crapcop.cdcooper%T
               -- Arquivo possui erros criticos, aborta processo de validação
               COBR0006.pc_rejeitar_arquivo(pr_cdcooper => rw_crapcoop.cdcooper
                                           ,pr_nrdconta => vr_tab_cratarq(vr_chave).nrdconta
-                                          ,pr_dtmvtolt => trunc(SYSDATE) -- rw_crapdat.dtmvtolt
+                                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                           ,pr_nmarquiv => vr_tab_cratarq(vr_chave).nmarquiv
                                           ,pr_idorigem => 3 --FTP pr_idorigem
                                           ,pr_cdoperad => vr_cdoperad
@@ -620,60 +598,56 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_cdcooper IN crapcop.cdcooper%T
             -- Busca próxima chave de arquivos
             vr_chave := vr_tab_cratarq.NEXT(vr_chave);
   		        
+            -- Efetuar commit por arquivo
+            COMMIT;
+		       
           END LOOP; -- Loop por arquivo
              
         END IF; --Fim da importação dos arquivos
-                    
-        -- Efetuar commit por cooperativa
-        COMMIT;	
-         
-       EXCEPTION
-         WHEN vr_exc_erro THEN
-           -- Se foi retornado apenas codigo
-           IF NVL(vr_cdcritic, 0) > 0 AND trim(vr_dscritic) IS NULL THEN
-             -- Buscar a descricao
-             vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-           END IF;
-						
-           IF NVL(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
-             -- Envio centralizado de log de erro							 
-             -- Gera log 
-             pc_gerar_log(pr_cdcooper => rw_crapcoop.cdcooper,
-                          pr_dscdolog => vr_dscritic);
-           END IF;
-						
-           vr_cdcritic := 0;
-           vr_dscritic := NULL;
-           -- Efetuar rollback				  
-           ROLLBACK;
+                       
+        EXCEPTION
+          WHEN vr_exc_erro THEN
+            
+            -- Verifica se houve código de erro
+            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
+            
+            IF vr_dscritic IS NOT NULL THEN
+              -- Envio centralizado de log de erro							 
+              -- Gera log 
+              pc_gerar_log(pr_cdcooper => rw_crapcoop.cdcooper,
+                           pr_dscdolog => vr_dscritic);
+            END IF;
+
+            vr_cdcritic := 0;
+            vr_dscritic := NULL;
+            
+            -- Efetuar rollback				  
+            ROLLBACK;
              
        END;
 				
      END LOOP; -- FOR rw_crapcoop
 			     
-     -- Efetuar Commit de informacoes pendentes de gravacao
-     COMMIT;
-       
-   EXCEPTION
-     WHEN vr_exc_saida THEN
-         
-       -- Se foi retornado apenas codigo
-       IF NVL(vr_cdcritic, 0) > 0 AND trim(vr_dscritic) IS NULL THEN
-         -- Buscar a descricao
-         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-       END IF;
-         
-       -- Devolvemos codigo e critica encontradas
-       pr_cdcritic := NVL(vr_cdcritic,0);
-       pr_dscritic := vr_dscritic;
-         
-       -- Efetuar rollback
-       ROLLBACK;
+    -- Log de fim da execucao
+    pc_controla_log_batch(pr_dstiplog => 'F');
 
+    -- Efetuar Commit de informacoes pendentes de gravacao
+    COMMIT;
+       
+   EXCEPTION   
+       
      WHEN OTHERS THEN
+       
+       btch0001.pc_log_internal_exception(3);
+          
        -- Efetuar retorno do erro nao tratado
-       pr_cdcritic := 0;
        pr_dscritic := sqlerrm;
+
+       -- Log de erro de execucao
+       vr_flgerlog := TRUE;
+       pc_controla_log_batch(pr_dstiplog => 'E',
+                             pr_dscritic => pr_dscritic);
+       
        -- Efetuar rollback
        ROLLBACK;
   END pc_crps778;
