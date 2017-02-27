@@ -331,7 +331,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                               realizar a validação atráves do nível do risco.
                               
                  22/12/2016 - Alteracoes para melhorar a performance deste programa. SD 573847.
-                              (Carlos R. Tanholi)                              
+                              (Carlos R. Tanholi)
+                              
+                 22/02/2017 - Ajustes referente ao Prj.307 Automatização Arquivos Contábeis Ayllos (Jonatas-Supero)                                                            
   ............................................................................. */
 
    DECLARE
@@ -510,7 +512,40 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
         IS TABLE OF crapass.nrdconta%TYPE
           INDEX BY PLS_INTEGER;
 
-      vr_tab_craptco typ_tab_craptco;      
+      vr_tab_craptco typ_tab_craptco;  
+      
+      -- Definição de registro para totalização por origem de microcrédito
+      TYPE typ_reg_microcredito IS
+        RECORD(idgrumic INTEGER   -- Id do grupo para separação das informações - 1 - CECRED / 2 - BNDES
+              ,vlpesfis NUMBER    -- Valor acumulado das operações no MicroCrédito para Pessoas Físicas
+              ,vlpesjur NUMBER    -- Valor acumulado das operações no MicroCrédito para Pessoas Jurídicas
+              ,vlate59d NUMBER    -- Valor acumulado das operações no MicroCrédito com prazo até 59 dias
+              ,vlaci59d NUMBER);  -- Valor acumulado das operações no MicroCrédito com prazo acima de 59 dias
+
+      -- Definicao do tipo de tabela totalização por origem de microcrédito
+      TYPE typ_tab_microcredito IS
+        TABLE OF typ_reg_microcredito
+          INDEX BY craplcr.dsorgrec%type;
+
+      -- Vetor para armazenar a totalização por origem de microcrédito
+      vr_tab_microcredito typ_tab_microcredito;     
+      
+      
+      -- Definição de registro para totalização de recursos microcredito CAIXA
+      TYPE typ_reg_rec_caixa IS
+        RECORD(nrctremp crapepr.nrctremp%TYPE   -- Número do contrato de empréstimo
+              ,dtinictr DATE/*CRAPEPR.DTINICTR%TYPE*/    -- Data de início do contrato
+              ,vlemprst crapepr.vlemprst%TYPE    -- Valor emprestado originalmente
+              ,vlsdeved crapepr.vlsdeved%TYPE);  -- Valor atualizado do saldo devedor
+
+      -- Definicao do tipo de tabela totalização por origem de microcrédito
+      TYPE typ_tab_rec_caixa IS
+        TABLE OF typ_reg_rec_caixa
+          INDEX BY PLS_INTEGER;
+
+      -- Vetor para armazenar a totalização por origem de microcrédito
+      vr_tab_rec_caixa typ_tab_rec_caixa;   
+          
 
       ---------- Cursores específicos do processo ----------
 
@@ -532,6 +567,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
               ,ass.cdagenci
               ,ass.nmprimtl
               ,ris.dsinfaux
+              ,ris.dtinictr
           FROM crapass ass
               ,crapris ris
          WHERE ris.cdcooper  = ass.cdcooper
@@ -777,6 +813,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
               ,craplcr.dsoperac
               ,craplcr.txmensal
               ,craplcr.txdiaria
+              ,craplcr.cdusolcr
+              ,craplcr.dsorgrec              
         FROM craplcr
         WHERE craplcr.cdcooper = pr_cdcooper
         AND   craplcr.cdlcremp = pr_cdlcremp;
@@ -944,6 +982,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
       -- Configuração para mês novo
       vr_tab_ddmesnov INTEGER;
       vr_flgconsg     INTEGER;
+      
+      --microcredito
+      vr_chave_microcredito craplcr.dsorgrec%TYPE;
+      vr_dsgrpmic           VARCHAR2(20);
 
 
       -- SobRotina que cria registros contab no arquivo texto
@@ -967,6 +1009,30 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                       ||'  <vldivfis>'||to_char(pr_num_vldvpf,'fm999g999g999g990d00')||'</vldivfis>'
                       ||'  <vldivjur>'||to_char(pr_num_vldvpj,'fm999g999g999g990d00')||'</vldivjur>'
                       ||'</contab>';
+      END;
+      
+      -- SobRotina que cria registros microcredito no arquivo texto
+      PROCEDURE pc_cria_node_miccre(pr_des_xml          IN OUT VARCHAR2
+                                   ,pr_dsgrpmic         IN VARCHAR2
+                                   ,pr_ds_microcredito  IN VARCHAR2
+                                   ,pr_vlreprec         IN NUMBER
+                                   ,pr_vlempatr         IN NUMBER
+                                   ,pr_vlreprec_pf      IN NUMBER
+                                   ,pr_vlreprec_pj      IN NUMBER
+                                   ,pr_vlate59d         IN NUMBER
+                                   ,pr_vlaci59d         IN NUMBER) IS
+      BEGIN
+         -- Escreve no XML abrindo e fechando a tag de microcredito
+         pr_des_xml := pr_des_xml
+                      ||'<'||pr_dsgrpmic||'>'
+                      ||'  <dsmcrcre>'||pr_ds_microcredito||'</dsmcrcre>'
+                      ||'  <vlreprec>'||to_char(pr_vlreprec,'fm999g999g999g990d00')||'</vlreprec>'
+                      ||'  <vlrepfis>'||to_char(pr_vlreprec_pf,'fm999g999g999g990d00')||'</vlrepfis>'
+                      ||'  <vlrepjur>'||to_char(pr_vlreprec_pj,'fm999g999g999g990d00')||'</vlrepjur>'
+                      ||'  <vlempatr>'||to_char(pr_vlempatr,'fm999g999g999g990d00')||'</vlempatr>'                      
+                      ||'  <vlate59d>'||to_char(pr_vlate59d,'fm999g999g999g990d00')||'</vlate59d>'
+                      ||'  <vlaci59d>'||to_char(pr_vlaci59d,'fm999g999g999g990d00')||'</vlaci59d>'
+                      ||'</'||pr_dsgrpmic||'>';
       END;
       
       
@@ -1427,7 +1493,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                      vr_tab_dados_epr(vr_indice).cdfinemp := rw_crapepr.cdfinemp;
                      vr_tab_dados_epr(vr_indice).dtmvtolt := rw_crapepr.dtmvtolt;
                      vr_tab_dados_epr(vr_indice).vlemprst := rw_crapepr.vlemprst;
-                     vr_tab_dados_epr(vr_indice).tpdescto := rw_crapepr.tpdescto;                
+                     vr_tab_dados_epr(vr_indice).tpdescto := rw_crapepr.tpdescto; 
+                     -- Para microcrédito
+                     IF rw_craplcr.cdusolcr = 1 AND rw_craplcr.dsorgrec <> ' ' THEN
+                       -- Armazenar a origem do Microcrédito 
+                       vr_tab_dados_epr(vr_indice).dsorgrec := rw_craplcr.dsorgrec;
+                     END IF;
+                     -- Armazenar a data de início do contrato
+                     vr_tab_dados_epr(vr_indice).dtinictr := rw_crapris.dtinictr;             
 
                      -- Para empréstimo pré-fixado
                      IF rw_crapepr.tpemprst = 1 THEN
@@ -1842,6 +1915,64 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
 
             -- Para origens de empréstimo
             IF vr_tab_crapris(vr_des_chave_crapris).cdorigem = 3 THEN
+               
+               
+               -- Re-criando o indice da tabela temporaria
+               vr_indice := LPAD(vr_tab_crapris(vr_des_chave_crapris).nrdconta,10,'0')
+                         || LPAD(vr_tab_crapris(vr_des_chave_crapris).nrctremp,10,'0');
+                                   
+               -- Checagem Origem
+               IF vr_tab_dados_epr(vr_indice).dsorgrec IS NOT NULL THEN 
+                  -- Checar se este recurso já possui registro na vr_tab_microcredito 
+                  IF NOT vr_tab_microcredito.exists(vr_tab_dados_epr(vr_indice).dsorgrec) THEN
+                     -- Criar o registro:
+                     vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).vlpesfis := 0;
+                     vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).vlpesjur := 0;
+                     vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).vlate59d := 0;
+                     vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).vlaci59d := 0;
+
+                     -- Verificar o grupo conforme os tipos de MicroCrédito
+                     IF vr_tab_dados_epr(vr_indice).dsorgrec LIKE '%BRDE%' 
+                     OR vr_tab_dados_epr(vr_indice).dsorgrec LIKE '%BNDES%' THEN
+                        -- BNDEs
+                        vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).idgrumic := 2;        
+                     ELSE
+                        -- Cecred
+                        vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).idgrumic := 1;         
+                     END IF;
+                  END IF;
+
+                  -- Armazenaremos a operação atual conforme o tipo de pessoa da mesma
+                  IF vr_tab_crapris(vr_des_chave_crapris).inpessoa = 1 THEN
+                     vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).vlpesfis 
+                        := vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).vlpesfis + vr_vldivida;
+                  ELSE
+                     vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).vlpesjur 
+                        := vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).vlpesjur + vr_vldivida;
+                  END IF;
+                  
+                  -- Se o atraso for até 59 dias
+                  IF vr_tab_crapris(vr_des_chave_crapris).qtdiaatr <= 59 THEN
+                     -- Acumular no período até 59 
+                     vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).vlate59d 
+                        := vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).vlate59d + vr_vldivida;
+                  ELSE
+                     -- Acumular no restante
+                     vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).vlaci59d 
+                        := vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).vlaci59d + vr_vldivida;
+                  END IF;
+               END IF;
+
+               -- Também iremos armazenar os recursos captados Caixa
+               IF vr_tab_dados_epr(vr_indice).cdfinemp = 1 THEN 
+                  -- Criar registro
+                  vr_tab_rec_caixa(vr_tab_rec_caixa.count+1).nrctremp := vr_tab_dados_epr(vr_indice).nrctremp;
+                  vr_tab_rec_caixa(vr_tab_rec_caixa.count+1).dtinictr := vr_tab_dados_epr(vr_indice).dtinictr;
+                  vr_tab_rec_caixa(vr_tab_rec_caixa.count+1).vlemprst := vr_tab_dados_epr(vr_indice).vlemprst;
+                  vr_tab_rec_caixa(vr_tab_rec_caixa.count+1).vlsdeved := vr_tab_dados_epr(vr_indice).vlsdeved;
+               END IF;
+
+               
                -- Para modalidade 299 -
                IF vr_tab_crapris(vr_des_chave_crapris).cdmodali = 299 THEN
                   
@@ -2847,6 +2978,39 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
       -- FEchar a tag de contabilização
       vr_des_xml_gene := vr_des_xml_gene || '</tabcontab>';
       
+      --Abrir tag microcredito
+      vr_des_xml_gene := vr_des_xml_gene || '<tabmicrocredito>';
+      
+      vr_chave_microcredito := vr_tab_microcredito.first;
+      LOOP 
+        
+         EXIT WHEN vr_chave_microcredito IS NULL;
+        
+         --Nome da tag por grupo de microcredito
+         IF vr_tab_microcredito(vr_chave_microcredito).idgrumic = 1 then
+           vr_dsgrpmic := 'miccred_grp1';  
+         ELSE
+           vr_dsgrpmic := 'miccred_grp2';  
+         END IF;
+          
+         pc_cria_node_miccre(pr_des_xml          => vr_des_xml_gene
+                            ,pr_dsgrpmic         => vr_dsgrpmic
+                            ,pr_ds_microcredito  => vr_chave_microcredito
+                            ,pr_vlreprec         => vr_tab_microcredito(vr_chave_microcredito).vlpesfis +
+                                                    vr_tab_microcredito(vr_chave_microcredito).vlpesjur
+                            ,pr_vlempatr         => vr_tab_microcredito(vr_chave_microcredito).vlate59d +
+                                                    vr_tab_microcredito(vr_chave_microcredito).vlaci59d
+                            ,pr_vlreprec_pf      => vr_tab_microcredito(vr_chave_microcredito).vlpesfis
+                            ,pr_vlreprec_pj      => vr_tab_microcredito(vr_chave_microcredito).vlpesjur
+                            ,pr_vlate59d         => vr_tab_microcredito(vr_chave_microcredito).vlate59d
+                            ,pr_vlaci59d      	  => vr_tab_microcredito(vr_chave_microcredito).vlaci59d);     
+         
+         
+         vr_chave_microcredito := vr_tab_microcredito.next(vr_chave_microcredito); 
+        
+      END LOOP; 
+      vr_des_xml_gene := vr_des_xml_gene || '</tabmicrocredito>';
+      
       -- Zerar totalizadores para Limite não Utilizado (Dados para Bacen)
       vr_vldivida := 0;
       vr_vldivjur := 0;
@@ -2995,7 +3159,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                                  ,pr_dsparams  => null                                 --> Sem parâmetros
                                  ,pr_dsarqsaid => vr_nom_direto||'/rl/crrl227.lst'     --> Arquivo final com o path
                                  ,pr_qtcoluna  => 234                                  --> 132 colunas
-                                 ,pr_flg_gerar => vr_flgerar                           --> Geraçao na hora
+                                 ,pr_flg_gerar => 'S'/*vr_flgerar*/                           --> Geraçao na hora
                                  ,pr_flg_impri => 'S'                                  --> Chamar a impressão (Imprim.p)
                                  ,pr_nmformul  => '234dh'                              --> Nome do formulário para impressão
                                  ,pr_nrcopias  => 3                                    --> Número de cópias
