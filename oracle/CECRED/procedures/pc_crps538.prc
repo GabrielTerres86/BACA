@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme / Supero
-   Data    : Novembro/2009.                   Ultima atualizacao: 22/02/2017
+   Data    : Novembro/2009.                   Ultima atualizacao: 24/02/2017
 
    Dados referentes ao programa:
 
@@ -308,12 +308,15 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                             (Odirlei - AMcom)             
 
                10/02/2017 - P340 - Ajustes emergenciais antes da liberação programada de 21/02/17
-  			              - Ajustado pasta micros/<cooperativa>/abbc;
-      			          - Ajustado cláusula where dos cursores cr_devolucao; (Rafael)
+  			                  - Ajustado pasta micros/<cooperativa>/abbc;
+      			              - Ajustado cláusula where dos cursores cr_devolucao; (Rafael)
 
                22/02/2017 - Incluido novamente relatório 618 - CAC (Renato);
-			              - Ajustado valor do pagto na rotina de devolução (Rafael);
-						  - Ajustado data de movimento no arquivo de devolução (Rafael);
+			                    - Ajustado valor do pagto na rotina de devolução (Rafael);
+						              - Ajustado data de movimento no arquivo de devolução (Rafael);
+                          
+               24/02/2017 - Ajustado relatório 618 em função do novo layout COB615 (Rafael);
+
    .............................................................................*/
 
      DECLARE
@@ -3535,7 +3538,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                          ,craprej.nrdocmto)
                        VALUES
                          (rw_crapdat.dtmvtolt
-                         ,TO_NUMBER(TRIM(SUBSTR(vr_setlinha,57,4)))
+                         ,vr_cdagepag
                          ,TO_NUMBER(TRIM(SUBSTR(vr_setlinha,85,12))) / 100
                          ,TO_NUMBER(TRIM(SUBSTR(vr_setlinha,151,10)))
                          ,vr_setlinha
@@ -3745,7 +3748,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                        ,craprej.nrdocmto)
                      VALUES
                        (rw_crapdat.dtmvtolt
-                       ,TO_NUMBER(TRIM(SUBSTR(vr_setlinha,57,4)))
+                       ,vr_cdagepag
                        ,TO_NUMBER(TRIM(SUBSTR(vr_setlinha,85,12))) / 100
                        ,TO_NUMBER(TRIM(SUBSTR(vr_setlinha,151,10)))
                        ,vr_setlinha
@@ -3928,7 +3931,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                        ,craprej.nrdocmto)
                      VALUES
                        (rw_crapdat.dtmvtolt
-                       ,TO_NUMBER(trim(SUBSTR(vr_setlinha,57,4)))
+                       ,vr_cdagepag
                        ,TO_NUMBER(trim(SUBSTR(vr_setlinha,85,12))) / 100
                        ,TO_NUMBER(trim(SUBSTR(vr_setlinha,151,10)))
                        ,vr_setlinha
@@ -4118,7 +4121,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                        ,craprej.nrdocmto)
                      VALUES
                        (rw_crapdat.dtmvtolt
-                       ,TO_NUMBER(TRIM(SUBSTR(vr_setlinha,57,4)))
+                       ,vr_cdagepag
                        ,TO_NUMBER(TRIM(SUBSTR(vr_setlinha,85,12))) / 100
                        ,TO_NUMBER(TRIM(SUBSTR(vr_setlinha,151,10)))
                        ,vr_setlinha
@@ -4599,7 +4602,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                        ,craprej.nrdocmto)
                      VALUES
                        (rw_crapdat.dtmvtolt
-                       ,TO_NUMBER(TRIM(SUBSTR(vr_setlinha,57,4)))
+                       ,vr_cdagepag
                        ,TO_NUMBER(TRIM(SUBSTR(vr_setlinha,85,12))) / 100
                        ,TO_NUMBER(TRIM(SUBSTR(vr_setlinha,151,10)))
                        ,vr_setlinha
@@ -4759,13 +4762,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                            rw_crapsab.nmdsacad:= NULL;
                          END IF;
                          --Montar Indice para relatorio 618
-                         vr_index_rel618:= lpad(SUBSTR(vr_setlinha,54,3),10,'0')||
+                         vr_index_rel618:= lpad(to_char(vr_cdbanpag,'fm000'),10,'0')||
                                            rpad(TRIM(rw_crapsab.nmdsacad),50,'#')||
                                            lpad(to_char(rw_crabcob.vltitulo*100),25,'0')||
                                            lpad(vr_tab_rel618.COUNT+1,10,'0');
                          /* Alimenta a temp-table do rel. 618 */
-                         vr_tab_rel618(vr_index_rel618).cddbanco:= TO_NUMBER(TRIM(SUBSTR(vr_setlinha,54,3)));
-                         vr_tab_rel618(vr_index_rel618).bancoage:= TO_NUMBER(TRIM(SUBSTR(vr_setlinha,54,3))) ||'/'||TO_NUMBER(TRIM(SUBSTR(vr_setlinha,57,4)));
+                         vr_tab_rel618(vr_index_rel618).cddbanco:= vr_cdbanpag;
+                         vr_tab_rel618(vr_index_rel618).bancoage:= to_char(vr_cdbanpag,'fm000') ||'/'||to_char(vr_cdagepag,'fm0000');
                          vr_tab_rel618(vr_index_rel618).nrcpfcnj:= rw_crabcob.nrinssac;
                          vr_tab_rel618(vr_index_rel618).nmsacado:= rw_crapsab.nmdsacad;
                          vr_tab_rel618(vr_index_rel618).dscodbar:= SUBSTR(vr_setlinha,01,44);
@@ -4817,7 +4820,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                        ,craprej.nrdocmto)
                      VALUES
                        (rw_crapdat.dtmvtolt
-                       ,TO_NUMBER(TRIM(SUBSTR(vr_setlinha,57,4)))
+                       ,vr_cdagepag
                        ,TO_NUMBER(TRIM(SUBSTR(vr_setlinha,85,12))) / 100
                        ,TO_NUMBER(TRIM(SUBSTR(vr_setlinha,151,10)))
                        ,vr_setlinha
@@ -4889,7 +4892,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                  pc_verifica_vencto (pr_cdcooper => rw_crapcop.cdcooper                  --Codigo da cooperativa
                                     ,pr_dtmvtolt => vr_dtrefere                          --Data para verificacao
                                     ,pr_cddbanco => vr_cdbanpag                          --Codigo do Banco
-                                    ,pr_cdagenci => TO_NUMBER(SUBSTR(vr_setlinha,57,4))  --Codigo da Agencia
+                                    ,pr_cdagenci => vr_cdagepag                          --Codigo da Agencia
                                     ,pr_dtboleto => rw_crapcob.dtvencto                  --Data do Titulo
                                     ,pr_flgvenci => vr_flgvenci                          --Indicador titulo vencido
                                     ,pr_cdcritic => vr_cdcritic                          --Codigo do erro
@@ -4984,7 +4987,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                        ,craprej.nrdocmto)
                      VALUES
                        (rw_crapdat.dtmvtolt
-                       ,TO_NUMBER(TRIM(SUBSTR(vr_setlinha,57,4)))
+                       ,vr_cdagepag
                        ,TO_NUMBER(TRIM(SUBSTR(vr_setlinha,85,12))) / 100
                        ,TO_NUMBER(TRIM(SUBSTR(vr_setlinha,151,10)))
                        ,vr_setlinha
@@ -5042,13 +5045,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                    IF ( ROUND(vr_vlfatura,2) - ROUND(vr_vlliquid,2) ) >= vr_vlrmincac THEN
 
                      --Montar Indice para relatorio 618
-                     vr_index_rel618:= lpad(SUBSTR(vr_setlinha,54,3),10,'0')||
+                     vr_index_rel618:= lpad(to_char(vr_cdbanpag,'fm000'),10,'0')||
                                        rpad(TRIM(rw_crapsab.nmdsacad),50,'#')||
                                        lpad(to_char(rw_crapcob.vltitulo*100),25,'0')||
                                        lpad(vr_tab_rel618.COUNT+1,10,'0');
                      /* Alimenta a temp-table do rel. 618 */
-                   vr_tab_rel618(vr_index_rel618).cddbanco:= TO_NUMBER(TRIM(SUBSTR(vr_setlinha,54,3)));
-                   vr_tab_rel618(vr_index_rel618).bancoage:= to_number(TRIM(SUBSTR(vr_setlinha,54,3)))||'/'||to_number(TRIM(SUBSTR(vr_setlinha,57,4)));
+                     vr_tab_rel618(vr_index_rel618).cddbanco:= vr_cdbanpag;
+                     vr_tab_rel618(vr_index_rel618).bancoage:= to_char(vr_cdbanpag,'fm000')||'/'||to_char(vr_cdagepag,'fm0000');
                      vr_tab_rel618(vr_index_rel618).nrcpfcnj:= rw_crapcob.nrinssac;
                      vr_tab_rel618(vr_index_rel618).nmsacado:= rw_crapsab.nmdsacad;
                      vr_tab_rel618(vr_index_rel618).dscodbar:= SUBSTR(vr_setlinha,01,44);
@@ -5057,7 +5060,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                      vr_tab_rel618(vr_index_rel618).vldocmto:= rw_crapcob.vltitulo;
                      vr_tab_rel618(vr_index_rel618).vldesaba:= APLI0001.fn_round((nvl(rw_crapcob.vldescto,0) + nvl(rw_crapcob.vlabatim,0)),2);
                      vr_tab_rel618(vr_index_rel618).vljurmul:= APLI0001.fn_round(nvl(vr_vlrjuros,0) + nvl(vr_vlrmulta,0),2);
-                   vr_tab_rel618(vr_index_rel618).vlrpagto:= TO_NUMBER(TRIM(SUBSTR(vr_setlinha,85,12))) / 100;
+                     vr_tab_rel618(vr_index_rel618).vlrpagto:= TO_NUMBER(TRIM(SUBSTR(vr_setlinha,85,12))) / 100;
                      vr_tab_rel618(vr_index_rel618).vlrdifer:= ROUND(nvl(vr_tab_rel618(vr_index_rel618).vldocmto,0) -
                                                                    nvl(vr_tab_rel618(vr_index_rel618).vldesaba,0) +
                                                                    nvl(vr_tab_rel618(vr_index_rel618).vljurmul,0) -
