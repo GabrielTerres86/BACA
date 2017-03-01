@@ -30,6 +30,8 @@
  *
  *                011: [01/11/2016] Fabrício: Para solicitação de cartão PF, o campo 'Habilita função débito' deve sempre vir marcado.
  *                                            Não há solicitação de cartão Puro Crédito para PF. (Chamado 545667)
+ *				  
+ *				  012: [01/03/2017] Kelvin: Realizado ajuste para não desabilitar o campo "Nome da empresa" caso cooperado já tenha cartão. (SD 609533)
  * --------------
  */
 
@@ -207,7 +209,6 @@
 				echo "$('#tpenvcrd').attr('disabled', true);";
 				echo "$('#tpdpagto').attr('disabled', true);";
 				
-				echo "$('#nmempres').attr('disabled', true);"; // Daniel		
 				echo "atualizaCampoLimiteProposto(new Array('".formataMoeda($vllimcrd)."'));";
 		
 			}  else {
