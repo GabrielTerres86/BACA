@@ -128,6 +128,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WRES0001 AS
                        ,pr_requisicao.timeout
                        ,pr_resposta.status_code
                        ,pr_cdcritic);
+
+			COMMIT;
                        
       END;                       
 
