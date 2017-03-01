@@ -201,8 +201,13 @@
               05/05/2016 - Incluir transacao na criacao da craplft na procedure
                            gera-faturas (Lucas Ranghetti #436077)
 
+			  13/01/2017 - Incluir chamada da procedure pc_ret_ano_barras_darf_car
+                           para a nova regra de validacao das DARFs
+                           (Lucas Ranghetti #588835)
+
               07/02/2017 - Ajustes para verificar vencimento da P.M. PRES GETULIO, 
 			               P.M. GUARAMIRIM e SANEPAR (Tiago/Fabricio SD593203)                           
+			  
 ............................................................................ */
 
 {dbo/bo-erro1.i}
@@ -945,10 +950,22 @@ PROCEDURE validacoes-sicredi:
                                (crapcon.cdempcon = 153 AND  /* DARFC0153 */
                                 crapcon.cdsegmto = 5 ) THEN
                                 DO:
-                                    RUN retorna-ano-cdbarras (INPUT INT(SUBSTR(p-codigo-barras,20,1)),
-                                                              INPUT FALSE, /* DARF PRETO EUROPA */
-                                                             OUTPUT aux_inanocal).
+                                    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
+                                    /* Efetuar a chamada a rotina Oracle CXON0014.pc_ret_ano_barras_darf_car */ 
+                                    RUN STORED-PROCEDURE pc_ret_ano_barras_darf_car
+                                     aux_handproc = PROC-HANDLE NO-ERROR (INPUT INT(SUBSTR(p-codigo-barras,20,1)), /* pr_innumano*/
+                                                                         OUTPUT 0).                /* pr_outnumano */                                                                         
+                                    
+                                    /* Fechar o procedimento para buscarmos o resultado */ 
+                                    CLOSE STORED-PROC pc_ret_ano_barras_darf_car
+                                        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+                                    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                                    ASSIGN aux_inanocal = pc_ret_ano_barras_darf_car.pr_outnumano
+                                                             WHEN pc_ret_ano_barras_darf_car.pr_outnumano <> ?.       
+  
                                     RUN retorna-data-dias (INPUT INT(SUBSTR(p-codigo-barras,21,3)),
                                                            INPUT aux_inanocal,
                                                           OUTPUT aux_dttolera).
@@ -1452,18 +1469,42 @@ PROCEDURE gera-faturas.
         crapcon.cdsegmto = 5 ) THEN
         DO:
             /* Calculo da Data Limite */
-            RUN retorna-ano-cdbarras (INPUT INT(SUBSTR(p-codigo-barras,20,1)),
-                                      INPUT FALSE, /* DARF PRETO EUROPA */
-                                     OUTPUT aux_inanocal).
+            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+            /* Efetuar a chamada a rotina Oracle CXON0014.pc_ret_ano_barras_darf_car */ 
+            RUN STORED-PROCEDURE pc_ret_ano_barras_darf_car
+             aux_handproc = PROC-HANDLE NO-ERROR (INPUT INT(SUBSTR(p-codigo-barras,20,1)), /* pr_innumano*/
+                                                 OUTPUT 0).                /* pr_outnumano */                                                                         
+            
+            /* Fechar o procedimento para buscarmos o resultado */ 
+            CLOSE STORED-PROC pc_ret_ano_barras_darf_car
+                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+            ASSIGN aux_inanocal = pc_ret_ano_barras_darf_car.pr_outnumano
+                                     WHEN pc_ret_ano_barras_darf_car.pr_outnumano <> ?.
 
             RUN retorna-data-dias (INPUT INT(SUBSTR(p-codigo-barras,21,3)),
                                    INPUT aux_inanocal,
                                   OUTPUT aux_dtlimite).
 
             /* Calculo do Periodo de Apuracao */
-            RUN retorna-ano-cdbarras (INPUT INT(SUBSTR(p-codigo-barras,41,1)),
-                                      INPUT FALSE, /* DARF PRETO EUROPA */
-                                     OUTPUT aux_inanocal).
+            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+            /* Efetuar a chamada a rotina Oracle CXON0014.pc_ret_ano_barras_darf_car */ 
+            RUN STORED-PROCEDURE pc_ret_ano_barras_darf_car
+             aux_handproc = PROC-HANDLE NO-ERROR (INPUT INT(SUBSTR(p-codigo-barras,41,1)), /* pr_innumano*/
+                                                 OUTPUT 0).                /* pr_outnumano */                                                                         
+            
+            /* Fechar o procedimento para buscarmos o resultado */ 
+            CLOSE STORED-PROC pc_ret_ano_barras_darf_car
+                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+            ASSIGN aux_inanocal = pc_ret_ano_barras_darf_car.pr_outnumano
+                                     WHEN pc_ret_ano_barras_darf_car.pr_outnumano <> ?.
 
             RUN retorna-data-dias (INPUT INT(SUBSTR(p-codigo-barras,42,3)),
                                    INPUT aux_inanocal,
