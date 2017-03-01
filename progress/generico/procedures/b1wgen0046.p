@@ -9,6 +9,8 @@
   |   gera_xml_vr_boleto               | SSPB0001.pc_gera_xml_vr_boleto      |
   |   proc_envia_tec_ted               | SSPB0001.pc_proc_envia_tec_ted      |
   |   gera_xml                         | SSPB0001.pc_gera_xml                |
+  |   proc_pag0101                     | SSPB0001.pc_proc_pag0101            |
+  |   proc_opera_str                   | SSPB0001.pc_proc_opera_str          |
   +------------------------------------+-------------------------------------+
 
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
@@ -30,7 +32,7 @@
 
     Programa: b1wgen0046.p
     Autor   : David/Fernando/Guilherme
-    Data    : Outubro/2009                    Ultima Atualizacao: 04/02/2016
+    Data    : Outubro/2009                    Ultima Atualizacao: 25/08/2016
            
     Dados referentes ao programa:
                 
@@ -136,10 +138,17 @@
                              
                 04/02/2016 - Ajustado Tags do STR0007 para ficarem de acordo com o 
                              catalogo 4.07 (Lucas Ranghetti #385390)
+                             
+                15/08/2016 - Conversao rotinas proc_pag0101 e proc_opera_str.
+                             (Reinert)
+                             
+                29/08/2016 - #456682 Inclusao de validacao de fraude de TED na
+                             rotina proc_envia_tec_ted (Carlos)
 ..............................................................................*/                                                                             
 { sistema/generico/includes/b1wgen0046tt.i }
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/gera_erro.i }
+{ sistema/generico/includes/var_oracle.i }
 
 DEFINE STREAM str_1.
 
@@ -163,68 +172,47 @@ PROCEDURE proc_pag0101:
     
     DEF  INPUT PARAM TABLE FOR tt-situacao-if.
     
-    DEF VAR aux_flgtrans AS LOGI INIT FALSE                         NO-UNDO.
+    DEF VAR aux_xmlsitif AS LONGCHAR                                NO-UNDO. 
+    DEF VAR aux_desretor AS CHAR                                    NO-UNDO.
 
-    DO TRANSACTION ON ERROR UNDO, LEAVE:
+    /* Abrir tag raiz do xml */
+    ASSIGN aux_xmlsitif = "<root>".
     
         FOR EACH tt-situacao-if NO-LOCK:
-     
-            DO WHILE TRUE:
-    
-                FIND FIRST crapban WHERE 
-                           crapban.nrispbif = tt-situacao-if.nrispbif AND
-                           crapban.flgdispb = TRUE                    
-                           EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-
-                IF  NOT AVAILABLE crapban  THEN
-                    DO:                    
-                        IF  LOCKED crapban  THEN
-                            DO:
-                                PAUSE 1 NO-MESSAGE.
-                                NEXT.
-                            END.
-                        ELSE
-                            UNIX SILENT VALUE ("echo " + '"' + 
-                                 STRING(TODAY,"99/99/9999") +
-                                 " - " + STRING(TIME,"HH:MM:SS") + " - " +
-                                 par_cdprogra + " - PAG0101            --> "  +
-                                 "Arquivo " + par_nmarqxml + 
-                                 ". Codigo Erro: IF nao cadastrada ou nao " +
-                                 "operante no SPB => ISPB " +
-                                 STRING(tt-situacao-if.nrispbif,"99999999") +
-                                 '"' + ". >> " + par_nmarqlog).   
-                    END.      
-                ELSE
-                    DO:
-                        IF  tt-situacao-if.cdsitope = 4  THEN
-                            ASSIGN crapban.flgoppag = TRUE.
-                        
-                        FIND CURRENT crapban NO-LOCK NO-ERROR.    
-                    END.        
-                            
-                LEAVE.
-
-            END. /** Fim do DO WHILE TRUE **/  
-           
+      /* Monta xml da temp-table */
+      ASSIGN aux_xmlsitif = aux_xmlsitif +
+                            "<dados>" +
+                              "<nrispbif>" + STRING(tt-situacao-if.nrispbif) + "</nrispbif>" +
+                              "<cdsitope>" + STRING(tt-situacao-if.cdsitope) + "</cdsitope>" +
+                            "</dados>".        
         END. /** Fim do FOR EACH tt-situacao-if **/
 
-        ASSIGN aux_flgtrans = TRUE.
-        
-    END. /** Fim do DO TRANSACTION **/
+    /* Fechar tag raiz do xml */
+    ASSIGN aux_xmlsitif = aux_xmlsitif + "</root>".
     
-    IF  NOT aux_flgtrans  THEN
-        UNIX SILENT VALUE ("echo " + '"' + 
-                           STRING(TODAY,"99/99/9999") +
-                           " - " + STRING(TIME,"HH:MM:SS") + " - " +
-                           par_cdprogra + " - PAG0101         --> "  +
-                           "Arquivo " + STRING(par_nmarqxml,"x(40)") + 
-                           ". Codigo Erro: Atualizacao abortada" +
-                           '"' + ". >> " + par_nmarqlog).    
-        
-    RETURN "OK".
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+
+    /* Efetuar a chamada a rotina Oracle */
+    RUN STORED-PROCEDURE pc_proc_pag0101
+    aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdprogra,
+                                         INPUT par_nmarqxml,
+                                         INPUT par_nmarqlog,
+                                         INPUT aux_xmlsitif,
+                                        OUTPUT "").
+
+    /* Fechar o procedimento para buscarmos o resultado */ 
+    CLOSE STORED-PROC pc_proc_pag0101
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+         
+    ASSIGN aux_desretor = ""
+           aux_desretor = pc_proc_pag0101.pr_des_erro
+                          WHEN pc_proc_pag0101.pr_des_erro <> ?.
+            
+    RETURN aux_desretor.
 
 END PROCEDURE.
-
 
 /****************************************************************************/
 /**          Procedure para inclusao/exclusao de IF's no SPB-STR           **/
@@ -238,130 +226,35 @@ PROCEDURE proc_opera_str:
     DEF  INPUT PARAM par_nrispbif AS INT                            NO-UNDO.
     DEF  INPUT PARAM par_cddbanco AS INT                            NO-UNDO.
     DEF  INPUT PARAM par_nmdbanco AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_dtinispb AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_dtinispb AS CHAR                           NO-UNDO.
     
-    DEF VAR aux_flgtrans AS LOGI INIT FALSE                         NO-UNDO.
-    DEF VAR b1wgen0011   AS HANDLE                                  NO-UNDO.
-    DEF VAR aux_conteudo AS CHAR                                    NO-UNDO.
+    DEF VAR aux_desretor AS CHAR                                    NO-UNDO.
+    
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
 
-    DO TRANSACTION ON ERROR UNDO, LEAVE:
-    
-       DO WHILE TRUE:
+    /* Efetuar a chamada a rotina Oracle */
+    RUN STORED-PROCEDURE pc_proc_opera_str
+    aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdprogra,
+                                         INPUT par_nmarqxml,
+                                         INPUT par_nmarqlog,
+                                         INPUT par_CodMsg,
+                                         INPUT par_nrispbif,
+                                         INPUT par_cddbanco,
+                                         INPUT par_nmdbanco,
+                                         INPUT par_dtinispb,
+                                        OUTPUT "").
+
+    /* Fechar o procedimento para buscarmos o resultado */ 
+    CLOSE STORED-PROC pc_proc_opera_str
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+         
+    ASSIGN aux_desretor = ""
+           aux_desretor = pc_proc_opera_str.pr_des_erro
+                          WHEN pc_proc_opera_str.pr_des_erro <> ?.
             
-          IF  par_CodMsg = "STR0019" THEN  /* Inclusao IF STR */ 
-              DO:
-                  IF par_cddbanco > 0 THEN
-                     FIND crapban WHERE crapban.cdbccxlt = par_cddbanco 
-                                  AND crapban.nrispbif = par_nrispbif 
-                                  EXCLUSIVE-LOCK NO-ERROR.
-                
-                  ELSE
-                     FIND crapban WHERE crapban.nrispbif = par_nrispbif
-                                   EXCLUSIVE-LOCK NO-ERROR.
-                  
-                  IF  NOT AVAIL crapban  THEN
-                      DO:
-                          IF  LOCKED crapban  THEN
-                              DO:
-                                  PAUSE 1 NO-MESSAGE.
-                                  NEXT.
-                              END.
-                          ELSE
-                              DO:
-                                  CREATE crapban.
-                                  ASSIGN crapban.cdoperad = "1"
-                                         crapban.dtmvtolt = TODAY
-                                         crapban.cdbccxlt = par_cddbanco
-                                         crapban.nmresbcc = par_nmdbanco
-                                         crapban.nmextbcc = par_nmdbanco
-                                         crapban.nrispbif = par_nrispbif
-                                         crapban.flgdispb = TRUE
-                                         crapban.dtinispb = par_dtinispb. 
-                                  VALIDATE crapban.
-    
-                              END.
-                      END.
-                  ELSE
-                       DO:
-                           ASSIGN crapban.flgdispb = TRUE
-                                  crapban.nmresbcc = par_nmdbanco
-                                  crapban.nmextbcc = par_nmdbanco
-                                  crapban.dtinispb = par_dtinispb. 
-                       END.
-              END.
-          ELSE  /* Exclusao IF STR */  
-              DO:
-                  /* No XML nao contem o codigo do banco, mas o numero do ISPB
-                     nao deve se repetir no sistema */ 
-                  FIND crapban WHERE crapban.nrispbif = par_nrispbif
-                                     EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-               
-                  IF  NOT AVAILABLE crapban  THEN
-                      DO:
-                          IF  LOCKED crapban  THEN
-                              DO:
-                                  PAUSE 1 NO-MESSAGE.
-                                  NEXT.
-                              END.
-                          ELSE
-                              DO:
-                                 /* ENVIAR E-MAIL */
-                                RUN sistema/generico/procedures/b1wgen0011.p PERSISTENT SET b1wgen0011.
-                            
-                                IF NOT VALID-HANDLE(b1wgen0011) THEN
-                                DO:
-                                    RUN Gera_Critica(0,"Handle invalido!").
-                                END.
-                                ELSE 
-                                    DO: 
-                                        ASSIGN aux_conteudo = "Não foi possível excluir registro de participante no SPB: Instituição Financeira não encontrada: ISPB: " + STRING(par_nrispbif) + "".
-
-                                        RUN enviar_email_completo IN b1wgen0011
-                                                   (INPUT 3,                    /*par_cdcooper */
-                                                    INPUT "crps531",            /*par_cdprogra*/
-                                                    INPUT "cpd@cecred.coop.br", /*par_remetent*/
-                                                    INPUT "spb@cecred.coop.br", /*par_lsemails */
-                                                    INPUT "STR0018 - Erro na exclusão de participante no SPB", /*par_dsassunt*/
-                                                    INPUT "",                   /*par_responde*/
-                                                    INPUT "",                   /*par_nmarquiv */
-                                                    INPUT aux_conteudo,         /*par_conteudo*/
-                                                    INPUT FALSE                 /*par_flgbinar*/).
-                                
-                                        IF VALID-HANDLE(b1wgen0011) THEN
-                                            DELETE PROCEDURE b1wgen0011.
-                                   END.
-                     
-                                  RETURN "NOK".
-                              END.
-                      END.
-                  ELSE
-                      DO: 
-                          ASSIGN crapban.flgdispb = FALSE.
-                      END.
-              END.      
-                      
-          LEAVE.
-
-       END. /** Fim do DO WHILE TRUE **/  
-        
-        ASSIGN aux_flgtrans = TRUE.
-        
-    END. /** Fim do DO TRANSACTION **/
-    
-    IF  NOT aux_flgtrans  THEN
-        DO:
-            UNIX SILENT VALUE 
-                          ("echo " + '"' + 
-                           STRING(TODAY,"99/99/9999") +
-                           " - " + STRING(TIME,"HH:MM:SS") + " - " +
-                           par_cdprogra + " - " + STRING(par_CodMsg,"x(18)") +
-                           " --> Arquivo " + STRING(par_nmarqxml,"x(40)") + 
-                           ". Codigo Erro: Atualizacao abortada" +
-                           '"' + ". >> " + par_nmarqlog).
-            RETURN "NOK".
-        END.
-        
-    RETURN "OK".
+    RETURN aux_desretor.
 
 END PROCEDURE.
 
@@ -438,12 +331,19 @@ DEFINE VARIABLE aux_cpfcgde1         AS CHARACTER                    NO-UNDO.
 DEFINE VARIABLE aux_dtagendt         AS CHARACTER                    NO-UNDO.
 DEFINE VARIABLE aux_dtmvtopr         AS CHARACTER                    NO-UNDO.
 DEFINE VARIABLE aux_nrseqarq         AS CHARACTER                    NO-UNDO.
+DEFINE VARIABLE aux_flpagmax         AS LOGICAL                      NO-UNDO.
+
+DEFINE VARIABLE aux_tpfraude          AS INTEGER                     NO-UNDO.
+DEFINE VARIABLE aux_dsfraude          AS CHARACTER                   NO-UNDO.
 
 DEF VAR h-b1wgen0016                 AS HANDLE                       NO-UNDO.
+DEF VAR h-b1wgen0011                 AS HANDLE                       NO-UNDO.
+DEF VAR aux_conteudo                 AS CHARACTER                    NO-UNDO.
 
     ASSIGN aux_flgutstr = FALSE
            aux_flgutpag = FALSE
-           aux_flgbcpag = FALSE.
+           aux_flgbcpag = FALSE
+		   aux_flpagmax = FALSE.
    
     /* Busca dados da cooperativa */
     FIND crapcop WHERE crapcop.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
@@ -503,30 +403,6 @@ DEF VAR h-b1wgen0016                 AS HANDLE                       NO-UNDO.
     ELSE      
          ASSIGN aux_ispbdebt = DECIMAL(craptab.dstextab).
 
-    /* ISPB Credt eh os 8 primeiros digitos do CNPJ do Banco de Destino */
-    IF par_cdbccxlt > 0 THEN
-       FIND crapban WHERE crapban.cdbccxlt = par_cdbccxlt AND 
-                       crapban.flgdispb = TRUE         NO-LOCK NO-ERROR.
-    ELSE 
-        FIND crapban WHERE crapban.nrispbif = par_cdispbif AND 
-                           crapban.flgdispb = TRUE         NO-LOCK NO-ERROR.
-
-    IF   NOT AVAILABLE crapban   THEN
-         DO:
-            ASSIGN aux_cdcritic = 0
-                   aux_dscritic = "Banco nao operante no SPB.".
-
-            RUN gera_erro (INPUT par_cdcooper,
-                           INPUT par_cdagenci,
-                           INPUT par_nrdcaixa,
-                           INPUT 1, /** Sequencia **/
-                           INPUT aux_cdcritic,      
-                           INPUT-OUTPUT aux_dscritic).
-            RETURN "NOK".
-         END.
-    ELSE 
-         ASSIGN aux_ispbcred = STRING(crapban.nrispbif,"99999999").
-
     /* Verificar se o Banco de destino esta operando com o PAG */
     IF par_cdbccxlt > 0 THEN
         FIND crapban WHERE crapban.cdbccxlt = par_cdbccxlt  NO-LOCK NO-ERROR.
@@ -550,6 +426,30 @@ DEF VAR h-b1wgen0016                 AS HANDLE                       NO-UNDO.
     ELSE
          ASSIGN aux_flgbcpag = crapban.flgoppag.
 
+    /* ISPB Credt eh os 8 primeiros digitos do CNPJ do Banco de Destino */
+    IF par_cdbccxlt > 0 THEN
+       FIND crapban WHERE crapban.cdbccxlt = par_cdbccxlt AND 
+                       crapban.flgdispb = TRUE         NO-LOCK NO-ERROR.
+    ELSE 
+        FIND crapban WHERE crapban.nrispbif = par_cdispbif AND 
+                           crapban.flgdispb = TRUE         NO-LOCK NO-ERROR.
+
+    IF   NOT AVAILABLE crapban   THEN
+         DO:
+            ASSIGN aux_cdcritic = 0
+                   aux_dscritic = "Banco não operante no SPB.".
+
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1, /** Sequencia **/
+                           INPUT aux_cdcritic,      
+                           INPUT-OUTPUT aux_dscritic).
+            RETURN "NOK".
+         END.
+    ELSE 
+         ASSIGN aux_ispbcred = STRING(crapban.nrispbif,"99999999").
+
     /*-- Operando com mensagens STR --*/
     IF   crapcop.flgopstr   THEN
          IF   crapcop.iniopstr <= TIME AND crapcop.fimopstr >= TIME   THEN
@@ -560,10 +460,18 @@ DEF VAR h-b1wgen0016                 AS HANDLE                       NO-UNDO.
          IF   crapcop.inioppag <= TIME AND crapcop.fimoppag >= TIME   THEN
               ASSIGN aux_flgutpag = TRUE.
 
+    IF  aux_flgutpag = TRUE  THEN /* Operando com PAG */ 
+        IF  par_vldocmto > crapcop.vlmaxpag THEN
+            ASSIGN aux_flpagmax = TRUE
+			       aux_flgutpag = FALSE. /* Altera para nao operante */
+
     IF   aux_flgutstr = FALSE AND aux_flgutpag = FALSE    THEN
          DO:
             ASSIGN aux_cdcritic = 0
-                   aux_dscritic = "Horário de envio dos TEDs encerrado.".
+                   aux_dscritic = IF  aux_flpagmax  THEN
+                                      "Limite máximo por operaçao: R$ " +
+                                      STRING(crapcop.vlmaxpag,"zz,zzz,zz9.99")
+                                  ELSE "Horário de envio de TEDs encerrado.".
 
             RUN gera_erro (INPUT par_cdcooper,
                            INPUT par_cdagenci,
@@ -635,6 +543,61 @@ DEF VAR h-b1wgen0016                 AS HANDLE                       NO-UNDO.
            aux_nroperacao = par_nrctrlif
            aux_fldebcred  = "D". /* Debito */  
 
+    /* ----- Validar crapcbf (Fraude) ----- */
+    ASSIGN aux_tpfraude = IF par_tppesrec = 1 THEN 2 ELSE 3
+           aux_dsfraude = IF par_tppesrec = 1 THEN 
+                          STRING(aux_cpfcgrcb, "xxx.xxx.xxx-xx") 
+                          ELSE 
+                          STRING(aux_cpfcgrcb, "xx.xxx.xxx/xxxx-xx").
+    
+    FIND FIRST crapcbf WHERE tpfraude = aux_tpfraude AND 
+                             dsfraude = aux_dsfraude
+                             NO-LOCK NO-ERROR.
+    
+    IF AVAILABLE crapcbf THEN
+    DO:
+        ASSIGN aux_cdcritic = 0
+               aux_dscritic = "Dados inconsistentes.
+                               Impossibilidade de realizar a transação.
+                               Entre em contato com a área de Segurança Corporativa da CECRED.".
+        
+        RUN gera_erro (INPUT par_cdcooper,
+                     INPUT par_cdagenci,
+                     INPUT par_nrdcaixa,
+                     INPUT 1, /** Sequencia **/
+                     INPUT aux_cdcritic,      
+                     INPUT-OUTPUT aux_dscritic).
+
+        /* Enviar e-mail para a area */
+        RUN sistema/generico/procedures/b1wgen0011.p PERSISTENT SET h-b1wgen0011.
+
+        IF  VALID-HANDLE(h-b1wgen0011) THEN
+        DO:
+            ASSIGN aux_conteudo = '<b>Atencao! Houve tentativa de TED fraudulento.<br>' +
+                'Coop: ' + string(par_cdcooper) + '<br>' +
+                'Age: '  + string(par_cdagenci) + '<br>' +
+                'Caixa: '+ string(par_nrdcaixa) + '<br>' +
+                'Conta: </b>' + string(par_nrdconta) + '<br>' +
+                '<b>CPF/CNPJ destino: </b>' + aux_dsfraude.
+
+            RUN enviar_email_completo IN h-b1wgen0011
+              (INPUT par_cdcooper,
+               INPUT "CAIXAONLINE",
+               INPUT "cpd@cecred.coop.br",
+               INPUT "monitoracaodefraudes@cecred.coop.br",
+               INPUT "Atencao - Tentativa de TED para CPF/CNPJ em restritivo",
+               INPUT "",
+               INPUT "",
+               INPUT aux_conteudo,
+               INPUT TRUE).
+
+            DELETE PROCEDURE h-b1wgen0011.
+        END.
+
+        RETURN "NOK".
+    END.
+    /* ----- Fim Validar crapcbf (Fraude) ----- */
+
     IF   par_nrdconta <> 0   THEN
          IF   par_nmpesde1 MATCHES "E/OU*"   THEN
               par_nmpesde1 = SUBSTRING(par_nmpesde1,6). 
@@ -649,8 +612,25 @@ DEF VAR h-b1wgen0016                 AS HANDLE                       NO-UNDO.
             IF   aux_flgutpag AND aux_flgbcpag   THEN
                  ASSIGN aux_nmmsgenv = "PAG0137".
             ELSE
-            /* Se STR Disponivel */
+                DO:
+                   IF  aux_flgutstr  THEN /* Se STR Disponivel */
                  ASSIGN aux_nmmsgenv = "STR0037".
+                   ELSE
+                       DO:
+                          ASSIGN aux_cdcritic = 0
+                                 aux_dscritic = "Operação indisponível para " +
+                                                "o banco favorecido.".
+                                   
+                          RUN gera_erro (INPUT par_cdcooper,
+                                         INPUT par_cdagenci,
+                                         INPUT par_nrdcaixa,
+                                         INPUT 1, /** Sequencia **/
+                                         INPUT aux_cdcritic,      
+                                         INPUT-OUTPUT aux_dscritic).
+                          
+                          RETURN "NOK".
+                       END.
+                END.
                                
             RUN gera_xml(INPUT par_cdcooper,
                          INPUT par_cdorigem,
@@ -705,8 +685,25 @@ DEF VAR h-b1wgen0016                 AS HANDLE                       NO-UNDO.
             IF   aux_flgutpag AND aux_flgbcpag   THEN
                  ASSIGN aux_nmmsgenv = "PAG0107".
             ELSE
-            /* Se STR Disponivel */
+                DO:
+                   IF  aux_flgutstr  THEN /* Se STR Disponivel */
                  ASSIGN aux_nmmsgenv = "STR0005".
+                   ELSE
+                       DO:
+                          ASSIGN aux_cdcritic = 0
+                                 aux_dscritic = "Operação indisponível para " +
+                                                "o banco favorecido.".
+                                   
+                          RUN gera_erro (INPUT par_cdcooper,
+                                         INPUT par_cdagenci,
+                                         INPUT par_nrdcaixa,
+                                         INPUT 1, /** Sequencia **/
+                                         INPUT aux_cdcritic,      
+                                         INPUT-OUTPUT aux_dscritic).
+                          
+                          RETURN "NOK".
+                       END.
+                END.
                                            
             RUN gera_xml(INPUT par_cdcooper,
                          INPUT par_cdorigem,
@@ -827,8 +824,25 @@ DEF VAR h-b1wgen0016                 AS HANDLE                       NO-UNDO.
             IF   aux_flgutpag AND aux_flgbcpag   THEN
                  ASSIGN aux_nmmsgenv = "PAG0108".
             ELSE
-            /* Se STR Disponivel */
+                DO:
+                   IF  aux_flgutstr  THEN /* Se STR Disponivel */
                  ASSIGN aux_nmmsgenv = "STR0008".
+                   ELSE
+                       DO:
+                          ASSIGN aux_cdcritic = 0
+                                 aux_dscritic = "Operação indisponível para " +
+                                                "o banco favorecido.".
+                                   
+                          RUN gera_erro (INPUT par_cdcooper,
+                                         INPUT par_cdagenci,
+                                         INPUT par_nrdcaixa,
+                                         INPUT 1, /** Sequencia **/
+                                         INPUT aux_cdcritic,      
+                                         INPUT-OUTPUT aux_dscritic).
+                          
+                          RETURN "NOK".
+                       END.
+                END.
 
             RUN gera_xml(INPUT par_cdcooper,
                          INPUT par_cdorigem,
