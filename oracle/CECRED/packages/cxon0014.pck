@@ -10539,7 +10539,7 @@ END pc_gera_titulos_iptu_prog;
 	  Sistema  : Conta-Corrente - Cooperativa de Credito
 	  Sigla    : CRED
 	  Autor    : Kelvin Souza Ott 
-	  Data     : Setembro/2016.                   Ultima atualizacao: 07/02/2017
+	  Data     : Setembro/2016.                   Ultima atualizacao: 22/02/2017
 	
 	  Dados referentes ao programa:
 	
@@ -10560,6 +10560,9 @@ END pc_gera_titulos_iptu_prog;
                   07/02/2017 - Ajustado a query para verificar se o boleto existe no sistema.
                                (Douglas - Chamado 602954)
 
+                  22/02/2017 - Adicionado o calculo do valor do desconto do boleto.
+                               Nao estava sendo calculado para exibir em tela
+                               (Douglas - Chamado 611514)
     ...........................................................................*/      
     --Selecionar informacoes cobranca
     CURSOR cr_crapcob (pr_nrcnvcob IN crapcob.nrcnvcob%type
@@ -10874,6 +10877,14 @@ END pc_gera_titulos_iptu_prog;
                                               ,pr_dscritic =>  vr_dscritic);
 
             
+      ELSE
+        -- se concede apos vencto, ja calculou 
+        IF rw_crapcob.cdmensag <> 2  THEN
+          --Valor Desconto
+          vr_vldescto:= rw_crapcob.vldescto;
+          --Retirar o desconto da fatura
+          vr_vlfatura:= Nvl(vr_vlfatura,0) - vr_vldescto;
+        END IF;
       END IF;
           
     ELSE
