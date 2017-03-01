@@ -4905,7 +4905,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     --  Sistema  : Cred
     --  Sigla    : DSCT0002
     --  Autor    : Odirlei Busana - AMcom
-    --  Data     : Setembro/2016.                   Ultima atualizacao: 08/09/2016
+    --  Data     : Setembro/2016.                   Ultima atualizacao: 15/02/2017
     --
     --  Dados referentes ao programa:
     --
@@ -4913,6 +4913,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     --   Objetivo  : Procedure para gerar impressoes de bordero de tit.
     --
     --   Alteração : 08/09/2016 - Conversão Progress -> Oracle (Odirlei-AMcom)
+    --
+    --               15/02/2017 - Inclusao do LENGTH na verificacao do nrinssac > 11. (Jaison/Daniel)
+    --
     -- .........................................................................*/
     
     ----------->>> CURSORES  <<<-------- 
@@ -5229,7 +5232,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
         vr_tab_totais(vr_idxtot).vltottit := nvl(vr_tab_totais(vr_idxtot).vltottit,0) + vr_tab_tit_bordero_ord(vr_idxord).vltitulo;
         vr_tab_totais(vr_idxtot).vltotliq := nvl(vr_tab_totais(vr_idxtot).vltotliq,0) + vr_tab_tit_bordero_ord(vr_idxord).vlliquid;
         
-        IF vr_tab_tit_bordero_ord(vr_idxord).nrinssac > 11 THEN
+        IF LENGTH(vr_tab_tit_bordero_ord(vr_idxord).nrinssac) > 11 THEN
           vr_inpessoa := 2;
         ELSE
           vr_inpessoa := 1;
