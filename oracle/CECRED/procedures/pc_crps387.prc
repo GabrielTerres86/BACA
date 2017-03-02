@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Abril/2004                        Ultima atualizacao: 30/01/2017
+   Data    : Abril/2004                        Ultima atualizacao: 02/03/2017
 
    Dados referentes ao programa:
 
@@ -391,7 +391,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                              final seja verificado se cooperativa que esta rodando 
                              é igual ao que iremos crirar o registro (Lucas Ranghetti #591560)
     
-	           30/01/2017 - Implementado join no cursor que verifica coop migrada (Tiago/Facricio)
+               30/01/2017 - Implementado join no cursor que verifica coop migrada (Tiago/Facricio)
+               
+               02/03/2017 - Adicionar dtmvtopg no filtro do cursor cr_craplau_dup (Lucas Ranghetti #618379)
 ............................................................................ */
 
 
@@ -666,6 +668,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
       CURSOR cr_craplau_dup(pr_cdcooper craplau.cdcooper%TYPE,
                             pr_nrdconta craplau.nrdconta%TYPE,
                             pr_dtmvtolt craplau.dtmvtolt%TYPE,
+                            pr_dtmvtopg craplau.dtmvtopg%TYPE,
                             pr_cdhistor craplau.cdhistor%TYPE,
                             pr_nrdocmto craplau.nrdocmto%TYPE) IS
         SELECT dtmvtolt,
@@ -679,7 +682,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
           FROM craplau
          WHERE  craplau.cdcooper = pr_cdcooper
            AND  craplau.nrdconta = pr_nrdconta
-           AND  craplau.dtmvtolt = pr_dtmvtolt
+           AND  (craplau.dtmvtolt = pr_dtmvtolt
+            OR  craplau.dtmvtopg = pr_dtmvtopg)
            AND  craplau.cdhistor = pr_cdhistor
            AND  craplau.nrdocmto = pr_nrdocmto
            AND  craplau.insitlau <> 3
@@ -3585,14 +3589,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                             IF cr_craplau_dup%ISOPEN THEN
                               CLOSE cr_craplau_dup;
                             END IF;
+                            
                             -- Caso o convenio enviar mais que uma referencia no mesmo dia para a mesma
                             -- conta e valor do debito ou data de pagamento forem diferentes, vamos
                             -- incrementar um zero no final para permitir a inclusão do lançamento
-                            OPEN cr_craplau_dup(vr_cdcooper, 
-                                                vr_nrdconta, 
-                                                rw_craplot.dtmvtolt, 
-                                                rw_gnconve.cdhisdeb, 
-                                                vr_nrdocmto_int);
+                            OPEN cr_craplau_dup(vr_cdcooper, -- cdcooper
+                                                vr_nrdconta, -- nrdconta
+                                                rw_craplot.dtmvtolt, -- dtmvtolt
+                                                vr_dtrefere, -- dtmvtopg
+                                                rw_gnconve.cdhisdeb, -- cdhistor
+                                                vr_nrdocmto_int); -- nrdocmto
                             FETCH cr_craplau_dup INTO rw_craplau_dup;
 
                             IF cr_craplau_dup%FOUND THEN
