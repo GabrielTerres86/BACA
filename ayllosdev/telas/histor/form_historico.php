@@ -5,7 +5,7 @@
 	* DATA CRIAÇÃO : 30/09/2013
 	* OBJETIVO     : Formulario de alteração e inclusão dos históricos da Tela HISTOR
 	* --------------
-	* ALTERAÇÕES   :
+	* ALTERAÇÕES   : 24/02/2017 - Remocao dos caracteres "')?>" dos textos dos campos no form. (Jaison/James)
 	* --------------
 	*/ 
 
@@ -101,14 +101,14 @@
 					<td>
 						<label for="inautori">Ind. p/ autoriza&ccedil;&atilde;o d&eacute;bito:</label>
 						<select id="inautori" name="inautori">
-							<option value="1">Sim')?> </option>
+							<option value="1">Sim </option>
 							<option value="0">N&atilde;o </option>
 						</select>
 					</td>
 					<td>
 						<label for="inavisar">Ind. de aviso p/ d&eacute;bito:</label>
 						<select id="inavisar" name="inavisar">
-							<option value="1">Sim')?> </option>
+							<option value="1">Sim </option>
 							<option value="0">N&atilde;o </option>
 						</select>
 					</td>
@@ -117,14 +117,14 @@
 					<td>
 						<label for="indcompl">Indicador de Complemento:</label>
 						<select id="indcompl" name="indcompl">
-							<option value="1">Sim')?> </option>
+							<option value="1">Sim </option>
 							<option value="0">N&atilde;o </option>
 						</select>
 					</td>
 					<td>
 						<label for="indebcta">Ind. D&eacute;bito em Conta:</label>
 						<select id="indebcta" name="indebcta">
-							<option value="1">D&eacute;bito em conta')?> </option>
+							<option value="1">D&eacute;bito em conta </option>
 							<option value="0">N&atilde;o </option>
 						</select>
 					</td>
@@ -133,7 +133,7 @@
 					<td colspan="2">
 						<label for="incremes">Ind. p/Estat. Cr&eacute;dito do M&ecirc;s:</label>
 						<select id="incremes" name="incremes">
-							<option value="1">Soma na estat&iacute;istica')?> </option>
+							<option value="1">Soma na estat&iacute;stica </option>
 							<option value="0">N&atilde;o soma </option>
 						</select>
 					</td>
@@ -157,7 +157,7 @@
 					<td colspan="2">
 						<label for="tpctbccu">Tipo de Contab. Centro Custo:</label>
 						<select id="tpctbccu" name="tpctbccu">
-							<option value="1">1 - Por centro de custo')?> </option>
+							<option value="1">1 - Por centro de custo </option>
 							<option value="0">0 - N&atilde;o </option>
 						</select>
 					</td>
@@ -166,13 +166,13 @@
 					<td colspan="2">
 						<label for="tpctbcxa" >Tipo Contab. Caixa:</label>
 						<select name="tpctbcxa" id="tpctbcxa">
-							<option value="0">0 - N&atilde;o tem tipo de contabiliza&ccedil;&atilde;o')?></option> 
-							<option value="1">1 - Contabiliza&ccedil;&atilde;o geral')?></option> 
-							<option value="2">2 - Contabiliza&ccedil;&atilde;o a d&eacute;bito por caixa')?></option> 
-							<option value="3">3 - Contabiliza&ccedil;&atilde;o a cr&eacute;dito por caixa')?></option> 
-							<option value="4">4 - Contabiliza&ccedil;&atilde;o a d&eacute;bito Banco do Brasil')?></option> 
-							<option value="5">5 - Contabiliza&ccedil;&atilde;o a cr&eacute;dito Banco do Brasil')?></option> 
-							<option value="6">6 - Contabiliza&ccedil;&atilde;o a d&eacute;bito Banco do Brasil')?></option> 
+							<option value="0">0 - N&atilde;o tem tipo de contabiliza&ccedil;&atilde;o</option> 
+							<option value="1">1 - Contabiliza&ccedil;&atilde;o geral</option> 
+							<option value="2">2 - Contabiliza&ccedil;&atilde;o a d&eacute;bito por caixa</option> 
+							<option value="3">3 - Contabiliza&ccedil;&atilde;o a cr&eacute;dito por caixa</option> 
+							<option value="4">4 - Contabiliza&ccedil;&atilde;o a d&eacute;bito Banco do Brasil</option> 
+							<option value="5">5 - Contabiliza&ccedil;&atilde;o a cr&eacute;dito Banco do Brasil</option> 
+							<option value="6">6 - Contabiliza&ccedil;&atilde;o a d&eacute;bito Banco do Brasil</option> 
 						</select>
 					</td>
 				</tr>
@@ -254,7 +254,7 @@
 					<td>
 						<label for="flgsenha">Solicitar Senha:</label>
 						<select id="flgsenha" name="flgsenha">
-							<option value="1">Sim')?> </option>
+							<option value="1">Sim </option>
 							<option value="0">N&atilde;o </option>
 						</select>
 					</td>

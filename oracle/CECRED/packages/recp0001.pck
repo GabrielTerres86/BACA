@@ -44,6 +44,7 @@ CREATE OR REPLACE PACKAGE CECRED.RECP0001 IS
                                         ,pr_cdagenci  IN crapass.cdagenci%TYPE        -- Código da agencia
                                         ,pr_crapdat   IN btch0001.cr_crapdat%ROWTYPE  -- Datas da cooperativa
                                         ,pr_nracordo  IN tbrecup_acordo.nracordo%TYPE -- Número do acordo
+                                        ,pr_nrparcel  IN tbrecup_acordo_parcela.nrparcela%TYPE -- Número da parcela
                                         ,pr_nrctremp  IN crapepr.nrctremp%TYPE        -- Número do contrato de empréstimo                              
                                         ,pr_tpemprst  IN crapepr.tpemprst%TYPE        -- Tipo do empréstimo
                                         ,pr_vlprejuz  IN crapepr.vlprejuz%TYPE        -- Valor do prejuízo
@@ -70,6 +71,7 @@ CREATE OR REPLACE PACKAGE CECRED.RECP0001 IS
                                      ,pr_crapdat   IN btch0001.cr_crapdat%ROWTYPE  -- Datas da cooperativa
                                      ,pr_nrctremp  IN crapepr.nrctremp%TYPE        -- Número do contrato de empréstimo 
                                      ,pr_nracordo  IN tbrecup_acordo.nracordo%TYPE -- Número do acordo
+                                     ,pr_nrparcel  IN tbrecup_acordo_parcela.nrparcela%TYPE -- Número da parcela
                                      ,pr_cdlcremp  IN crapepr.cdlcremp%TYPE        -- Código da linha de crédito do empréstimo
                                      ,pr_inliquid  IN crapepr.inliquid%TYPE        -- Indicador de liquidado
                                      ,pr_qtprepag  IN crapepr.qtprepag%TYPE        -- Quantidade de prestacoes pagas
@@ -93,6 +95,7 @@ CREATE OR REPLACE PACKAGE CECRED.RECP0001 IS
                                   ,pr_crapdat   IN btch0001.cr_crapdat%ROWTYPE  -- Datas da cooperativa
                                   ,pr_nrctremp  IN crapepr.nrctremp%TYPE        -- Número do contrato de empréstimo 
                                   ,pr_nracordo  IN tbrecup_acordo.nracordo%TYPE -- Número do acordo
+                                  ,pr_nrparcel  IN tbrecup_acordo_parcela.nrparcela%TYPE -- Número da parcela
                                   ,pr_cdlcremp  IN crapepr.cdlcremp%TYPE        -- Código da linha de crédito do empréstimo
                                   ,pr_inliquid  IN crapepr.inliquid%TYPE        -- Indicador de liquidado
                                   ,pr_qtprepag  IN crapepr.qtprepag%TYPE        -- Quantidade de prestacoes pagas
@@ -117,6 +120,7 @@ CREATE OR REPLACE PACKAGE CECRED.RECP0001 IS
                                   ,pr_crapdat   IN btch0001.cr_crapdat%ROWTYPE   -- Datas da cooperativa
                                   ,pr_nrctremp  IN crapepr.nrctremp%TYPE         -- Número do contrato de empréstimo 
                                   ,pr_nracordo  IN tbrecup_acordo.nracordo%TYPE  -- Número do acordo
+                                  ,pr_nrparcel  IN tbrecup_acordo_parcela.nrparcela%TYPE -- Número da parcela
                                   ,pr_vlsdeved  IN crapepr.vlsdeved%TYPE         -- Valor do saldo devedor
                                   ,pr_vlsdevat  IN crapepr.vlsdevat%TYPE         -- Valor anterior do saldo devedor
                                   ,pr_vlparcel  IN NUMBER                        -- Valor pago do boleto do acordo
@@ -136,6 +140,7 @@ CREATE OR REPLACE PACKAGE CECRED.RECP0001 IS
                                         ,pr_crapdat   IN btch0001.cr_crapdat%ROWTYPE -- Datas da cooperativa
                                         ,pr_nrctremp  IN crapepr.nrctremp%TYPE       -- Número do contrato de empréstimo 
                                         ,pr_nracordo  IN NUMBER                      -- Número do acordo
+                                        ,pr_nrparcel  IN tbrecup_acordo_parcela.nrparcela%TYPE -- Número da parcela
                                         ,pr_cdoperad  IN VARCHAR2                    -- Código do operador
                                         ,pr_vlparcel  IN NUMBER                      -- Valor pago do boleto do acordo
                                         ,pr_idorigem  IN NUMBER                      -- Indicador da origem
@@ -166,7 +171,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
   --  Sistema  : Rotinas genéricas com foco no Sistema de Acordos
   --  Sigla    : RECP
   --  Autor    : Renato Darosci / James Prust Junior
-  --  Data     : Setembro/2016.                   Ultima atualizacao: 14/02/2017
+  --  Data     : Setembro/2016.                   Ultima atualizacao: 22/02/2017
   --
   -- Dados referentes ao programa:
   --
@@ -181,6 +186,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
   --                          na conta corrente do cooperado - PRJ302 - Acordos (Odirlei-AMcom)
   --
   --             14/02/2017 - Criacao pc_verifica_situacao_acordo. (Jaison/James - PRJ302)
+  --
+  --             22/02/2017 - Alteracao para passar pr_nrparcel na pc_cria_lancamento_cc. (Jaison/James)
   --
   ---------------------------------------------------------------------------------------------------------------
   
@@ -537,6 +544,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                         ,pr_cdagenci  IN crapass.cdagenci%TYPE        -- Código da agencia
                                         ,pr_crapdat   IN btch0001.cr_crapdat%ROWTYPE  -- Datas da cooperativa
                                         ,pr_nracordo  IN tbrecup_acordo.nracordo%TYPE -- Número do acordo
+                                        ,pr_nrparcel  IN tbrecup_acordo_parcela.nrparcela%TYPE -- Número da parcela
                                         ,pr_nrctremp  IN crapepr.nrctremp%TYPE        -- Número do contrato de empréstimo                               
                                         ,pr_tpemprst  IN crapepr.tpemprst%TYPE        -- Tipo do empréstimo
                                         ,pr_vlprejuz  IN crapepr.vlprejuz%TYPE        -- Valor do prejuízo
@@ -621,7 +629,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                         ,pr_nrdconta => pr_nrdconta     --> Número da conta
                                         ,pr_cdhistor => 2012            --> Codigo historico 2012 - AJUSTE BOLETO
                                         ,pr_vllanmto => vr_vlajuste     --> Valor da parcela emprestimo
-                                        ,pr_nrparepr => pr_nracordo     --> Número parcelas empréstimo
+                                        ,pr_nrparepr => pr_nrparcel     --> Número parcelas empréstimo
                                         ,pr_nrctremp => pr_nrctremp     --> Número do contrato de empréstimo
                                         ,pr_des_reto => vr_des_reto     --> Retorno OK / NOK
                                         ,pr_tab_erro => vr_tab_erro);   --> Tabela com possíves erros
@@ -912,7 +920,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                       ,pr_nrdconta => pr_nrdconta         --> Número da conta
                                       ,pr_cdhistor => 384                 --> Codigo historico
                                       ,pr_vllanmto => pr_vltotpag         --> Valor do debito
-                                      ,pr_nrparepr => pr_nracordo         --> Número do Acordo
+                                      ,pr_nrparepr => pr_nrparcel         --> Número parcelas empréstimo
                                       ,pr_nrctremp => 0                   --> Número do contrato de empréstimo
                                       ,pr_des_reto => vr_des_reto         --> Retorno OK / NOK
                                       ,pr_tab_erro => vr_tab_erro);       --> Tabela com possíves erros
@@ -956,6 +964,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                      ,pr_crapdat   IN btch0001.cr_crapdat%ROWTYPE  -- Datas da cooperativa
                                      ,pr_nrctremp  IN crapepr.nrctremp%TYPE        -- Número do contrato de empréstimo 
                                      ,pr_nracordo  IN tbrecup_acordo.nracordo%TYPE -- Número do acordo
+                                     ,pr_nrparcel  IN tbrecup_acordo_parcela.nrparcela%TYPE -- Número da parcela
                                      ,pr_cdlcremp  IN crapepr.cdlcremp%TYPE        -- Código da linha de crédito do empréstimo
                                      ,pr_inliquid  IN crapepr.inliquid%TYPE        -- Indicador de liquidado
                                      ,pr_qtprepag  IN crapepr.qtprepag%TYPE        -- Quantidade de prestacoes pagas
@@ -1134,7 +1143,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                       ,pr_nrdconta => pr_nrdconta         --> Número da conta
                                       ,pr_cdhistor => 2012                --> Codigo historico 2012 - AJUSTE BOLETO
                                       ,pr_vllanmto => vr_vlajuste         --> Valor da parcela emprestimo
-                                      ,pr_nrparepr => pr_nracordo         --> Número parcelas empréstimo
+                                      ,pr_nrparepr => pr_nrparcel         --> Número parcelas empréstimo
                                       ,pr_nrctremp => pr_nrctremp         --> Número do contrato de empréstimo
                                       ,pr_des_reto => vr_des_reto         --> Retorno OK / NOK
                                       ,pr_tab_erro => vr_tab_erro);       --> Tabela com possíves erros
@@ -1262,7 +1271,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                   ,pr_nrdconta => pr_nrdconta   --> Número da conta
                                   ,pr_cdhistor => 275           --> Codigo historico
                                   ,pr_vllanmto => pr_vltotpag   --> Valor do credito
-                                  ,pr_nrparepr => pr_nracordo   --> Número do Acordo
+                                  ,pr_nrparepr => pr_nrparcel   --> Número parcelas empréstimo
                                    ,pr_nrctremp => 0             --> Número do contrato de empréstimo
                                   ,pr_des_reto => vr_des_reto   --> Retorno OK / NOK
                                   ,pr_tab_erro => vr_tab_erro); --> Tabela com possíves erros
@@ -1304,6 +1313,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                   ,pr_crapdat   IN btch0001.cr_crapdat%ROWTYPE  -- Datas da cooperativa
                                   ,pr_nrctremp  IN crapepr.nrctremp%TYPE        -- Número do contrato de empréstimo 
                                   ,pr_nracordo  IN tbrecup_acordo.nracordo%TYPE -- Número do acordo
+                                  ,pr_nrparcel  IN tbrecup_acordo_parcela.nrparcela%TYPE -- Número da parcela
                                   ,pr_cdlcremp  IN crapepr.cdlcremp%TYPE        -- Código da linha de crédito do empréstimo
                                   ,pr_inliquid  IN crapepr.inliquid%TYPE        -- Indicador de liquidado
                                   ,pr_qtprepag  IN crapepr.qtprepag%TYPE        -- Quantidade de prestacoes pagas
@@ -1459,7 +1469,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                       ,pr_nrdconta => pr_nrdconta         --> Número da conta
                                       ,pr_cdhistor => 2012                --> Codigo historico 2012 - AJUSTE BOLETO
                                       ,pr_vllanmto => vr_vlajuste         --> Valor da parcela emprestimo
-                                      ,pr_nrparepr => pr_nracordo         --> Número parcelas empréstimo
+                                      ,pr_nrparepr => pr_nrparcel         --> Número parcelas empréstimo
                                       ,pr_nrctremp => pr_nrctremp         --> Número do contrato de empréstimo
                                       ,pr_des_reto => vr_des_reto         --> Retorno OK / NOK
                                       ,pr_tab_erro => vr_tab_erro);       --> Tabela com possíves erros
@@ -1544,6 +1554,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                   ,pr_crapdat   IN btch0001.cr_crapdat%ROWTYPE  -- Datas da cooperativa
                                   ,pr_nrctremp  IN crapepr.nrctremp%TYPE        -- Número do contrato de empréstimo 
                                   ,pr_nracordo  IN tbrecup_acordo.nracordo%TYPE -- Número do acordo
+                                  ,pr_nrparcel  IN tbrecup_acordo_parcela.nrparcela%TYPE -- Número da parcela
                                   ,pr_vlsdeved  IN crapepr.vlsdeved%TYPE        -- Valor do saldo devedor
                                   ,pr_vlsdevat  IN crapepr.vlsdevat%TYPE        -- Valor anterior do saldo devedor
                                   ,pr_vlparcel  IN NUMBER                       -- Valor pago do boleto do acordo
@@ -1769,7 +1780,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                     ,pr_nrdconta => pr_nrdconta         --> Número da conta
                                     ,pr_cdhistor => 2012                --> Codigo historico 2012 - AJUSTE BOLETO
                                     ,pr_vllanmto => vr_vlajuste         --> Valor da parcela emprestimo
-                                    ,pr_nrparepr => pr_nracordo         --> Número parcelas empréstimo
+                                    ,pr_nrparepr => pr_nrparcel         --> Número parcelas empréstimo
                                     ,pr_nrctremp => pr_nrctremp         --> Número do contrato de empréstimo
                                     ,pr_des_reto => vr_des_reto         --> Retorno OK / NOK
                                     ,pr_tab_erro => vr_tab_erro);       --> Tabela com possíves erros
@@ -1898,6 +1909,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                         ,pr_crapdat   IN btch0001.cr_crapdat%ROWTYPE -- Datas da cooperativa
                                         ,pr_nrctremp  IN crapepr.nrctremp%TYPE       -- Número do contrato de empréstimo 
                                         ,pr_nracordo  IN NUMBER                      -- Número do acordo
+                                        ,pr_nrparcel  IN tbrecup_acordo_parcela.nrparcela%TYPE -- Número da parcela
                                         ,pr_cdoperad  IN VARCHAR2                    -- Código do operador
                                         ,pr_vlparcel  IN NUMBER                      -- Valor pago do boleto do acordo
                                         ,pr_idorigem  IN NUMBER                      -- Indicador da origem
@@ -1994,6 +2006,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                   ,pr_vlttjmpr => rw_crapepr.vlttjmpr 
                                   ,pr_vlpgjmpr => rw_crapepr.vlpgjmpr
                                   ,pr_nracordo => pr_nracordo 
+                                  ,pr_nrparcel => pr_nrparcel
                                   ,pr_cdoperad => pr_cdoperad         
                                   ,pr_vlparcel => vr_vlpagmto
                                   ,pr_nmtelant => pr_nmtelant
@@ -2016,6 +2029,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                ,pr_crapdat  => pr_crapdat
                                ,pr_nrctremp => pr_nrctremp
                                ,pr_nracordo => pr_nracordo
+                               ,pr_nrparcel => pr_nrparcel
                                ,pr_cdlcremp => rw_crapepr.cdlcremp
                                ,pr_inliquid => rw_crapepr.inliquid
                                ,pr_qtprepag => rw_crapepr.qtprepag
@@ -2049,6 +2063,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                               ,pr_crapdat  => pr_crapdat
                               ,pr_nrctremp => pr_nrctremp
                               ,pr_nracordo => pr_nracordo
+                              ,pr_nrparcel => pr_nrparcel
                               ,pr_cdlcremp => rw_crapepr.cdlcremp
                               ,pr_inliquid => rw_crapepr.inliquid
                               ,pr_qtprepag => rw_crapepr.qtprepag
@@ -2080,6 +2095,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                               ,pr_crapdat  => pr_crapdat          
                               ,pr_nrctremp => pr_nrctremp         
                               ,pr_nracordo => pr_nracordo         
+                              ,pr_nrparcel => pr_nrparcel
                               ,pr_vlsdeved => rw_crapepr.vlsdeved 
                               ,pr_vlsdevat => rw_crapepr.vlsdevat 
                               ,pr_vlparcel => vr_vlpagmto         
@@ -2300,7 +2316,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                     ,pr_nrdconta => rw_acordo.nrdconta           --> Número da conta
                                     ,pr_cdhistor => 2194                         --> Codigo historico 2194 - CR.DESB.ACORD
                                     ,pr_vllanmto => rw_acordo.vlbloqueado        --> Valor da parcela emprestimo
-                                    ,pr_nrparepr => pr_nracordo                  --> Número parcelas empréstimo
+                                    ,pr_nrparepr => pr_nrparcel                  --> Número parcelas empréstimo
                                     ,pr_nrctremp => 0                            --> Número do contrato de empréstimo
                                     ,pr_des_reto => vr_des_erro                  --> Retorno OK / NOK
                                     ,pr_tab_erro => vr_tab_erro);                --> Tabela com possíves erros
@@ -2449,6 +2465,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                     ,pr_nrdconta => rw_acordo_contrato.nrdconta
                                     ,pr_nrctremp => rw_acordo_contrato.nrctremp
                                     ,pr_nracordo => pr_nracordo
+                                    ,pr_nrparcel => pr_nrparcel
                                     ,pr_cdagenci => rw_crapass.cdagenci
                                     ,pr_cdoperad => pr_cdoperad
                                     ,pr_crapdat  => BTCH0001.rw_crapdat
@@ -2534,7 +2551,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                       ,pr_nrdconta => rw_acordo.nrdconta           --> Número da conta
                                       ,pr_cdhistor => 2193                         --> Codigo historico 2193 - DEBITO BLOQUEIO ACORDOS
                                       ,pr_vllanmto => vr_vlparcel                  --> Valor da parcela emprestimo
-                                      ,pr_nrparepr => pr_nracordo                  --> Número parcelas empréstimo
+                                      ,pr_nrparepr => pr_nrparcel                  --> Número parcelas empréstimo
                                       ,pr_nrctremp => 0                            --> Número do contrato de empréstimo
                                       ,pr_des_reto => vr_des_erro                  --> Retorno OK / NOK
                                       ,pr_tab_erro => vr_tab_erro);                --> Tabela com possíves erros
@@ -2581,7 +2598,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                       ,pr_nrdconta => rw_acordo.nrdconta           --> Número da conta
                                       ,pr_cdhistor => 2182                         --> Codigo historico 2182 - PAGAMENTO DAS DESPESAS ACORDO
                                       ,pr_vllanmto => vr_vlparcel                  --> Valor da parcela emprestimo
-                                      ,pr_nrparepr => pr_nracordo                  --> Número parcelas empréstimo
+                                      ,pr_nrparepr => pr_nrparcel                  --> Número parcelas empréstimo
                                       ,pr_nrctremp => 0                            --> Número do contrato de empréstimo
                                       ,pr_des_reto => vr_des_erro     --> Retorno OK / NOK
                                       ,pr_tab_erro => vr_tab_erro);   --> Tabela com possíves erros
