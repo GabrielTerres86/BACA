@@ -206,6 +206,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
   --                          crapass em campos de indice que possuem UPPER
   --                          (Adriano - SD 463762).
   --
+  --             21/02/2017 - Alterada busca do saldo de empréstimos para o CRPS405
+  --                          devido cálculo já ter ocorrido anteriormente na cadeia (Rodrigo)
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -880,6 +882,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
                04/10/2013 - Retirado insitctr = P no Ratinf do BNDES (Renato - Supero)
 
                07/01/2015 - Incluido possibilidade de buscar o saldo atual (Andrino - RKAM)
+
+		       21/02/2017 - Alterada busca do saldo de empréstimos para o CRPS405
+                            devido cálculo já ter ocorrido anteriormente na cadeia (Rodrigo)
+
      ............................................................................. */
 
      DECLARE
@@ -920,7 +926,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
 
        -- Selecionar informacoes dos emprestimos
        CURSOR cr_crapepr(pr_nrdconta IN crapepr.nrdconta%TYPE) IS
-         SELECT nrctremp
+         SELECT nrctremp, vlsdevat
            FROM crapepr
           WHERE cdcooper = pr_cdcooper
             AND nrdconta = pr_nrdconta
@@ -963,7 +969,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
             AND (craptdb.insittit =  4 OR (insittit = 2 AND dtdpagto = pr_dtdpagto));
 
        -- Variaveis Locais
-       vr_vlutiliz            NUMBER;
        vr_contaliq            NUMBER;
        vr_vlsdeved_epr        NUMBER;
        vr_vlsdeved_dschq      NUMBER;
@@ -984,9 +989,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
        -- Inicializar variaveis de erro
        pr_cdcritic := NULL;
        pr_dscritic := NULL;
-
-       -- Inicializar valor utilizado
-       vr_vlutiliz := 0;
 
        -- Se foi passada a conta
        IF pr_nrdconta IS NOT NULL THEN
@@ -1063,27 +1065,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
              -- Inicializar o saldo devedor
              vr_vlsdeved := 0;
              -- Calcular o saldo devedor do emprestimo cfme o tipo da chamada:
-             -- PAra chamadas do tipo 1 (Proveniente da conversão da fontes/saldo_utiliza.p)
+             -- Para chamadas do tipo 1 (Proveniente da conversão da fontes/saldo_utiliza.p)
              IF pr_tpdecons = 1 THEN
-               -- Utilizar a pc_calc_saldo_epr
-               EMPR0001.pc_calc_saldo_epr(pr_cdcooper   => pr_cdcooper         --> Codigo da Cooperativa
-                                         ,pr_rw_crapdat => pr_tab_crapdat      --> Vetor com dados de parametro (CRAPDAT)
-                                         ,pr_cdprogra   => pr_cdprogra         --> Programa que solicitou o calculo
-                                         ,pr_nrdconta   => vr_index_conta      --> Numero da conta do emprestimo
-                                         ,pr_nrctremp   => rw_crapepr.nrctremp --> Numero do contrato do emprestimo
-                                         ,pr_inusatab   => pr_inusatab         --> Indicador de utilizacão da tabela de juros
-                                         ,pr_vlsdeved   => vr_vlsdeved         --> Saldo devedor do emprestimo
-                                         ,pr_qtprecal   => vr_qtprecal_retorno --> Quantidade de parcelas do emprestimo
-                                         ,pr_cdcritic   => vr_cdcritic         --> Codigo de critica encontrada
-                                         ,pr_des_erro   => vr_des_erro);       --> Retorno de Erro
+			   IF UPPER(pr_cdprogra) = 'CRPS405' THEN	-- Saldo já atualizado na crapepr
+                 vr_vlsdeved := rw_crapepr.vlsdevat;
+               ELSE
+				 -- Utilizar a pc_calc_saldo_epr
+				 EMPR0001.pc_calc_saldo_epr(pr_cdcooper   => pr_cdcooper         --> Codigo da Cooperativa
+					  					   ,pr_rw_crapdat => pr_tab_crapdat      --> Vetor com dados de parametro (CRAPDAT)
+										   ,pr_cdprogra   => pr_cdprogra         --> Programa que solicitou o calculo
+										   ,pr_nrdconta   => vr_index_conta      --> Numero da conta do emprestimo
+										   ,pr_nrctremp   => rw_crapepr.nrctremp --> Numero do contrato do emprestimo
+										   ,pr_inusatab   => pr_inusatab         --> Indicador de utilizacão da tabela de juros
+										   ,pr_vlsdeved   => vr_vlsdeved         --> Saldo devedor do emprestimo
+										   ,pr_qtprecal   => vr_qtprecal_retorno --> Quantidade de parcelas do emprestimo
+										   ,pr_cdcritic   => vr_cdcritic         --> Codigo de critica encontrada
+										   ,pr_des_erro   => vr_des_erro);       --> Retorno de Erro
 
-               -- Se ocorreu erro, gerar critica
-               IF vr_cdcritic IS NOT NULL OR vr_des_erro IS NOT NULL THEN
-                 -- Zerar saldo devedor
-                 vr_vlsdeved := 0;
-                 -- Gerar critica
-                 RAISE vr_exc_erro;
-               END IF;
+				 -- Se ocorreu erro, gerar critica
+				 IF vr_cdcritic IS NOT NULL OR vr_des_erro IS NOT NULL THEN
+				   -- Zerar saldo devedor
+				   vr_vlsdeved := 0;
+				   -- Gerar critica
+				   RAISE vr_exc_erro;
+				 END IF;
+			   END IF;
              ELSE --> E uma chamada provenitente da bo b1wgen9999, procedure saldo_utiliza
                -- Utilizaremos a pc_saldo_devedor_epr
                EMPR0001.pc_saldo_devedor_epr(pr_cdcooper   => pr_cdcooper           --> Cooperativa conectada
