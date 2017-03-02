@@ -197,6 +197,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
                 26/10/2016 - Logada a execução do procedimento pc_process_email_penden apenas quando
                              existirem emails pendentes de envio  (Carlos)
                              
+                20/01/2017 - Alteracao na procedure pc_solicita_email para gravacao do log de envio de
+                             boletos por e-mail no arquivo PROC_MESSAGE. SD 579741 (Carlos Rafael Tanholi).             
+                             
                 13/02/2017 - #605926 Incluída a validação de e-mail no procedimento pc_solicita_email para não 
                              inserir e-mails inválidos na tabela crapsle; Procedimento pc_process_email_penden
                              atualizado para o novo log pc_log_programa (Carlos)
@@ -721,7 +724,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
       --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
       PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
                                       pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
-      BEGIN
+    BEGIN
         --> Controlar geração de log de execução dos jobs 
         BTCH0001.pc_log_exec_job( pr_cdcooper  => 3    --> Cooperativa
                                  ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
@@ -1117,10 +1120,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
                   END IF;
                   -- Se foi solicitado envio de log
                   IF pr_flg_log_batch = 'S' THEN
-                    -- Grava log para avisar que o anexo será enviado para o destinatário
+                    -- Grava log no PROC_MESSAGE avisando que o anexo será enviado para o destinatário
                     BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                               ,pr_ind_tipo_log => 1 -- Processo normal
-                                              ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '|| pr_cdprogra || ' --> '||vr_caminho||'/'||vr_arquivo||' ENVIADO PARA '||pr_tab_destino(vr_ind)||'.');
+                                              ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '|| pr_cdprogra || ' --> '||vr_caminho||'/'||vr_arquivo||' ENVIADO PARA '||pr_tab_destino(vr_ind)||'.'
+                                              ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE'));
                   END IF;
                 ELSE
                   -- Grava log para avisar que não localizou o anexo

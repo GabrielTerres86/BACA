@@ -1,5 +1,5 @@
-<?
-/*!
+<?php
+/*
  * FONTE        : imprimir_opcao_r.php
  * CRIAÇÃO      : Rogérius Militão (DB1)
  * DATA CRIAÇÃO : 29/02/2012
@@ -10,12 +10,11 @@
  *				  04/08/2016 - Adicionado parametro cddemail na chamada da procedure gera_relatorio. (Reinert)
  * 
  *                17/01/2017 - Alterado para incluir campo Status SMS. PRJ319 - SMS Cobrança (Odirlei-AMcom)  
+ *
+ *				  07/02/2016 - Implementei a validacao do campo nrdconta para listagem do relatorio tipo 6. SD 560911 - Carlos Rafael Tanholi.
  * -------------- 
  */
-?>
 
-<? 
-	
 	session_cache_limiter("private");
 	session_start();
 	
@@ -52,6 +51,12 @@
     
     //  Para relatorio 7 - Analitico de SMS
     if ($tprelato == 7) { 
+
+
+	if (trim($nrdconta) == "") {
+		?><script language="javascript">alert('Favor informar a conta a ser filtrada.');</script><?php
+		exit();	
+	}
 
         $xml = new XmlMensageria();
         $xml->add('nrdconta',$nrdconta);
