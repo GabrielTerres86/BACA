@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps678 ( pr_cdcooper IN crapcop.cdcooper%
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Rafael Cechet/Lucas Reinert
-     Data    : Abril/2014                         Ultima atualizacao: 12/06/2014
+     Data    : Abril/2014                         Ultima atualizacao: 16/02/2017
 
      Dados referentes ao programa:
 
@@ -22,6 +22,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps678 ( pr_cdcooper IN crapcop.cdcooper%
      
                  12/06/2014 - Ajustado mensagem de crítica ao executar script. (Rafael)         
                             - Ajustado idretorno = 2 no cursor cr_crapccc. (Rafael)
+
+                 16/02/2017 #598480 Filtradas as cooperativas ativas e renomeados os arquivos CST validados
+                            com erro para ERRO_ + nome do arquivo (Carlos)
 
   ............................................................................ */
 
@@ -44,7 +47,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps678 ( pr_cdcooper IN crapcop.cdcooper%
               ,cop.nmrescop
               ,cop.dsdircop
         FROM crapcop cop
-        WHERE cop.cdcooper <> 3;
+         WHERE cop.cdcooper <> 3
+           AND cop.flgativo = 1;
       rw_crapcoop cr_crapcop%ROWTYPE;
 			
 			CURSOR cr_crapccc(pr_cdcooper IN crapccc.cdcooper%TYPE) IS 
@@ -317,7 +321,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps678 ( pr_cdcooper IN crapcop.cdcooper%
 																			 ,pr_nrdconta => vr_tab_cratarq(vr_chave).nrdconta   -- Nr. da conta
 																			 ,pr_nrconven => vr_tab_cratarq(vr_chave).nrconven   -- Nr. Convênio
 																			 ,pr_nmarquiv => vr_tab_cratarq(vr_chave).nmarquiv   -- Nome do arquivo
---																			 ,pr_dtmvtolt => rw_crapdat.dtmvtolt                 -- Data atual
+--                                     ,pr_dtmvtolt => rw_crapdat.dtmvtolt                 -- Data atual
 																			 ,pr_dtmvtolt => trunc(SYSDATE)                 -- Data atual
 																			 ,pr_idorigem => 1                                   -- Fixo Ayllos
 																			 ,pr_cdoperad => '1'                                 -- Fixo '1'
@@ -330,9 +334,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps678 ( pr_cdcooper IN crapcop.cdcooper%
 		           -- Erro ja esta sendo logado na procedure
 							 vr_cdcritic := 0;
 							 vr_dscritic := '';
+
+              -- Renomeia arquivo para 'ERRO_' + nome do arquivo
+              gene0001.pc_OScommand_Shell('mv ' || 
+                  vr_caminho_arq || '/' || vr_tab_cratarq(vr_chave).nmarquiv || ' ' ||
+                  vr_caminho_arq || '/' ||  'ERRO_' || vr_tab_cratarq(vr_chave).nmarquiv);
+
 							 vr_chave := vr_tab_cratarq.NEXT(vr_chave);
+
 							 CONTINUE;                   
-							                                                  
 						END IF;
 
 						-- Se arquivo foi validado então processar arquivo
@@ -496,4 +506,3 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps678 ( pr_cdcooper IN crapcop.cdcooper%
     END;
   END pc_crps678;
 /
-
