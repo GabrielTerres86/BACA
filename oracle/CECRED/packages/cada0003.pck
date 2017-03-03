@@ -470,7 +470,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --  Sistema  : Rotinas acessadas pelas telas de cadastros Web
   --  Sigla    : CADA
   --  Autor    : Andrino Carlos de Souza Junior - RKAM
-  --  Data     : Julho/2014.                   Ultima atualizacao: 29/11/2016
+  --  Data     : Julho/2014.                   Ultima atualizacao: 21/02/2017
   --
   -- Dados referentes ao programa:
   --
@@ -520,6 +520,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --                          na MATRIC criando registros com PA zerado (Tiago/Thiago).
   --
   --			 19/01/2016 - Adicionada function fn_busca_codigo_cidade. (Reinert)
+  --
+  --             21/02/2017 - Removido um dos meses exibido pela rotina pc_lista_cred_recebidos,
+  --                          pois a tela é semestral e estava sendo exibido 7 meses, conforme 
+  --                          solicitadono chamado 599051. (Kelvin)                            
+  --                          
   ---------------------------------------------------------------------------------------------------------------
 
   CURSOR cr_tbchq_param_conta(pr_cdcooper crapcop.cdcooper%TYPE
@@ -4753,10 +4758,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                            ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><Dados>');
 
     -- Atualiza a data de inicio da busca
-    vr_dtinicio := TRUNC(ADD_MONTHS(rw_crapdat.dtmvtolt,-7),'MM');
+    vr_dtinicio := TRUNC(ADD_MONTHS(rw_crapdat.dtmvtolt,-6),'MM');
 
     -- Efetua loop sobre os meses de busca
-    FOR x IN 1..7 LOOP
+    FOR x IN 1..6 LOOP
 
       -- Busca o valor do do mes solicitado
       OPEN cr_craplcm(pr_dtinicio => vr_dtinicio
@@ -4775,7 +4780,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       END IF;
 
       -- Efetua a somatoria do semestre
-      IF x < 7 THEN
+      IF x <= 6 THEN
         vr_vlsemestre := NVL(vr_vlsemestre,0) + NVL(rw_craplcm.valor,0);
       END IF;
 
