@@ -1702,7 +1702,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
 
      Frequencia:
      Objetivo  : Rotina para geração do contrato de limite de credito
-     Alteracoes: -----
+     Alteracoes: 03/03/2017 - Tratamento para que na impressão do contrato apenas imprima o
+				              contrato, e não o CET e nem a nota promissora como no completo.
+				              Chamado: 511304 (Andrey Formigari - Mouts)
     ..............................................................................*/
     
     ---------->>> CURSORES  <<<---------
@@ -1954,7 +1956,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                      
     pc_escreve_xml('</avalistas>');             
     
-    IF pr_idimpres <> 6 THEN
+    IF pr_idimpres NOT IN (2, 6) THEN
       --> Tratamento da impressao da nota promissoria
       IF pr_flgimpnp = 1 THEN             
         pc_escreve_xml('<Promissoria>'||
@@ -1999,8 +2001,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     END IF;
     
     
-    IF pr_idimpres IN (1,       --> Completa 
-                       2)  THEN --> Contrato 
+    IF pr_idimpres = 1  THEN --> Completa 
       
       --> GERAR CONTRATO DO CET
       OPEN cr_craplrt (pr_cdcooper => pr_cdcooper, 
