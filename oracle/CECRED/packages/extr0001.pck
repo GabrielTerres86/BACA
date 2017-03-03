@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0001 AS
     Sistema  : Rotinas genéricas para calculos e envios de extratos
     Sigla    : GENE
     Autor    : Mirtes.
-    Data     : Dezembro/2012.                   Ultima atualizacao: 03/10/2016
+    Data     : Dezembro/2012.                   Ultima atualizacao: 06/10/2016
 
     Alteracoes: 27/08/2014 - Incluida chamada da procedure pc_busca_saldo_aplicacoes,
                              na procedure pc_ver_saldos (Jean Michel).
@@ -31,7 +31,12 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0001 AS
                             atraves de rotinas PROGRESS. (Carlos Rafael Tanholi - SD 513352)    
 							
 			   03/10/2016 - Correcao no tratamento de retorno de campos data da pc_obtem_saldo_car
-							com formato invalido. (Carlos Rafael Tanholi - SD 531031)
+							com formato invalido. (Carlos Rafael Tanholi - SD 531031)                            
+
+               06/10/2016 - Inclusao da procedure de retorno de valores referente a acordos de emprestimos,
+                            na procedure pc_obtem_saldo_dia, Prj. 302 (Jean Michel).                        
+
+                24/02/2017 - Melhoria 119 - Composicao saldo de fim de semana - Jean (Mout´S)							
 ..............................................................................*/
 
   -- Tipo para guardar as 5 linhas da mensagem de e-mail
@@ -105,7 +110,9 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0001 AS
              ,dslimcre VARCHAR2(100)
              ,vlipmfpg NUMBER(18,6)
              ,dtultlcr crapass.dtultlcr%TYPE
-             ,vlblqjud crapblj.vlbloque%TYPE);
+             ,vlblqjud crapblj.vlbloque%TYPE
+             ,vlblqaco tbrecup_acordo.vlbloqueado%TYPE);
+
   /* Definição de tabela que compreende os registros acima declarados */
   TYPE typ_tab_saldos IS
     TABLE OF typ_reg_saldos
@@ -165,6 +172,26 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0001 AS
                vllibera crapdpb.vllanmto%TYPE);
   TYPE typ_tab_libera_epr IS TABLE OF typ_rec_libera_epr
     INDEX BY PLS_INTEGER;
+  
+  --> TempTable para armazenar valores semestrais(antiga b1wgen0001tt.tt-medias)  
+  TYPE typ_rec_medias 
+       IS RECORD (periodo  VARCHAR2(300),
+                  vlsmstre NUMBER);
+  TYPE typ_tab_medias IS TABLE OF typ_rec_medias 
+       INDEX BY PLS_INTEGER;
+       
+  --> TempTable para armazenar valores semestrais(antiga b1wgen0001tt.tt-comp_medias)  
+  TYPE typ_rec_comp_medias
+       IS RECORD (vlsmnmes crapsld.vlsmnmes%TYPE,
+                  vlsmnesp crapsld.vlsmnesp%TYPE,
+                  vlsmnblq crapsld.vlsmnblq%TYPE,
+                  qtdiaute crapsld.qtlanmes%TYPE,
+                  vlsmdtri crapsld.vlsmstre##1%TYPE,
+                  vlsmdsem crapsld.vlsmstre##1%TYPE,
+                  qtdiauti INTEGER,
+                  vltsddis crapsda.vlsddisp%TYPE);
+  TYPE typ_tab_comp_medias IS TABLE OF typ_rec_comp_medias 
+       INDEX BY PLS_INTEGER;    
   
   /* Apenas faz a chamada para a pc_obtem_saldo_dia */
   PROCEDURE pc_obtem_saldo_dia_sd(pr_cdcooper   IN crapcop.cdcooper%TYPE                            
@@ -410,7 +437,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
     Sistema  : Rotinas genéricas para formulários postmix
     Sigla    : GENE
     Autor    : Mirtes.
-    Data     : Dezembro/2012.                   Ultima atualizacao: 29/08/2016
+    Data     : Dezembro/2012.                   Ultima atualizacao: 17/11/2016
 
    Dados referentes ao programa:
 
@@ -678,25 +705,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                            no batch ou online na chamada da função fn_inpessoa_nrdconta 
                            (Kelvin - Chamado 459346)
 
-			  02/06/2016 - Adicionado validações Para melhorar desempenho da 
-						   rotina pc_obtem_saldo_dia (Kelvin - SD 459346)
-                           
+              02/06/2016 - Adicionado validações Para melhorar desempenho da 
+                           rotina pc_obtem_saldo_dia (Kelvin - SD 459346)
+                          
               20/06/2016 - Correcao para o uso correto do indice da CRAPTAB em  varias procedures 
                            desta package.(Carlos Rafael Tanholi).                              
                            
               21/06/2016 - Ajuste para utilizar o cursor cr_crapsda_pk para encontrar o saldo
-                           (Adriano).             
-                           
+                           (Adriano). 
+               
               30/06/2016 - Alterado parametro (pr_flgcrass), para false, na função fn_inpessoa_nrdconta.
                            Busca de saldo para popular a uma temp/table, chamando o conteudo da temp/table 
                            dentro do loop de saldo, evitando uma nova chamada dentro do loop de consulta de saldo. (Evandro)
 
+              
               09/08/2016 - #483189 Retirada do cursor cr_max_sda pois o mesmo não é mais utilizado;
                            Mudança do default do parâmetro pr_tipo_busca para 'A' nas rotinas 
                            pc_obtem_saldo_dia (Carlos)
-
                29/08/2016 - Criacao da procedure pc_obtem_saldo_car para uso da pc_obtem_saldo
                             atraves de rotinas PROGRESS. (Carlos Rafael Tanholi - SD 513352)
+
+              06/10/2016 - Inclusao da procedure de retorno de valores referente a acordos de emprestimos,
+                           na procedure pc_obtem_saldo_dia, Prj. 302 (Jean Michel).
+
+               17/11/2016 - Correcao do cursor cr_crapepr removendo o comando NVL com intuito de
+               							ganho em performance. SD 516113 (Carlos Rafael Tanholi)			  
+
 ..............................................................................*/
 
   -- Tratamento de erros
@@ -747,6 +781,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
        AND ( pr_lsthistor_ret = ' ' OR ','||pr_lsthistor_ret||',' LIKE ('%,'||lcm.cdhistor||',%') );     --> Retornar quando passado         
   rw_craplcm_olt cr_craplcm_olt%ROWTYPE;    
           
+         
   -- Busca de lançamentos no periodo para a conta do associado
   CURSOR cr_craplcm_ign(pr_cdcooper  IN crapcop.cdcooper%TYPE  --> Cooperativa conectada
                    ,pr_nrdconta  IN crapass.nrdconta%TYPE  --> Número da conta
@@ -785,8 +820,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
 
   /* Cursor com informações dos empréstimos */
   CURSOR cr_crapepr(pr_cdcooper IN crapepr.cdcooper%TYPE
-                   ,pr_inliquid IN crapepr.inliquid%TYPE
-                   ,pr_inprejuz IN crapepr.inprejuz%TYPE
                    ,pr_nrdconta IN crapepr.nrdconta%TYPE
                    ,pr_nrctremp IN crapepr.nrctremp%TYPE) IS
     SELECT epr.dtmvtolt
@@ -808,10 +841,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
           ,epr.qtmesdec
       FROM crapepr epr
      WHERE epr.cdcooper = pr_cdcooper
-       AND epr.inliquid = NVL(pr_inliquid,epr.inliquid)
-       AND epr.inprejuz = NVL(pr_inprejuz,epr.inprejuz)
-       AND epr.nrdconta = nvl(pr_nrdconta,epr.nrdconta)
-       AND epr.nrctremp = nvl(pr_nrctremp,epr.nrctremp);
+       AND epr.nrdconta = pr_nrdconta
+       AND epr.nrctremp = pr_nrctremp;
   rw_crapepr cr_crapepr%ROWTYPE;
 
   -- Gurdar o Progress Recid da tabela de saldo
@@ -1563,7 +1594,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         Sistema  : Conta-Corrente - Cooperativa de Credito
         Sigla    : CRED
         Autor    : Odirlei Busana - AMcom
-        Data     : Maio/2015.                   Ultima atualizacao: 17/11/2015
+        Data     : Maio/2015.                   Ultima atualizacao: 06/10/2016
 
         Dados referentes ao programa:
 
@@ -1578,6 +1609,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
 
                     22/12/2015 - Ajustado parametro pr_flgcrass para FALSE na chamada de
                                  pc_obtem_saldo_dia. (Douglas - Chamado 285228)
+
+                    06/10/2016 - Inclusao do valor de saldo bloqueado de acordos de contratos
+                                 de emprestimos, Prj. 302 (Jean Michel).             
     ..........................................................................*/
 
 
@@ -1716,7 +1750,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
             ,vlsrdcpo
             ,vlblqjud
             ,vlsdcota
-            ,vlblqtaa)
+            ,vlblqtaa
+            ,vlblqaco)
             VALUES
             (vr_tab_saldos(vr_ind).nrdconta
             ,vr_tab_saldos(vr_ind).dtmvtolt
@@ -1757,7 +1792,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
             ,vr_tab_saldos(vr_ind).vlsrdcpo
             ,vr_tab_saldos(vr_ind).vlblqjud
             ,vr_tab_saldos(vr_ind).vlsdcota
-            ,vr_tab_saldos(vr_ind).vlblqtaa);
+            ,vr_tab_saldos(vr_ind).vlblqtaa
+            ,vr_tab_saldos(vr_ind).vlblqaco);
+
         EXCEPTION
           WHEN OTHERS THEN
             pr_cdcritic := 0;
@@ -1890,14 +1927,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
           vr_dtmvtaux:= NULL;
       END CASE;
 
-        -- Busca do Saldo da conta pela PK
-        OPEN cr_crapsda_pk(pr_cdcooper => pr_cdcooper
-                          ,pr_dtmvtolt => vr_dtmvtaux
-                          ,pr_nrdconta => pr_nrdconta);
-        FETCH cr_crapsda_pk INTO rw_crapsda;
-        vr_crapsda:= cr_crapsda_pk%FOUND;
-        --Fechar Cursor
-        CLOSE cr_crapsda_pk;
+      -- Busca do Saldo da conta pela PK
+      OPEN cr_crapsda_pk(pr_cdcooper => pr_cdcooper
+                        ,pr_dtmvtolt => vr_dtmvtaux
+                        ,pr_nrdconta => pr_nrdconta);
+      FETCH cr_crapsda_pk INTO rw_crapsda;
+      vr_crapsda:= cr_crapsda_pk%FOUND;
+      --Fechar Cursor
+      CLOSE cr_crapsda_pk;
 
       -- Se não encontrou crapsda
       IF NOT vr_crapsda THEN
@@ -2005,7 +2042,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       /** que TODAY. Valido somente se par_dtrefere igual ao dia do feriado,**/
       /** sabado ou domingo.                                                **/
       /***********************************************************************/
-      IF vr_dtrefere > pr_rw_crapdat.dtmvtoan AND vr_dtrefere < pr_rw_crapdat.dtmvtocd THEN
+      IF vr_dtrefere > pr_rw_crapdat.dtmvtoan AND vr_dtrefere <= pr_rw_crapdat.dtmvtocd THEN
         -- Busca de dos lançamentos:
         -- --- ---------------------------------
         -- 316 SAQUE CARTAO
@@ -2026,7 +2063,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         -- 1110 DB.CESSAO
         -- 1009 TRANSF.INTERC
         -- 1011 CR.TRF.INTERC
-        
+
         -- Busca o inpessoa da conta
         vr_inpessoa := fn_inpessoa_nrdconta(pr_cdcooper => pr_cdcooper
                                            ,pr_nrdconta => pr_nrdconta
@@ -2088,7 +2125,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
           vr_cdhishcb := vr_cdhishcb || ',' || rw_craphcb.cdhistor;
         END LOOP;
 
-        vr_lscdhist_ret := '15,316,375,376,377,450,530,537,538,539,767,771,772,918,920,1109,1110,1009,1011,'||vr_tab_tarifa_transf(vr_tariidx).cdhisint||','||vr_tab_tarifa_transf(vr_tariidx).cdhistaa || vr_cdhishcb; --> Lista com códigos de histórico a retornar         
+        vr_lscdhist_ret := '15,316,375,376,377,450,530,537,538,539,767,771,772,918,920,1109,1110,1009,1011,527,472,478,497,499,501,530,108,1060,1070,1071,1072,'||vr_tab_tarifa_transf(vr_tariidx).cdhisint||','||vr_tab_tarifa_transf(vr_tariidx).cdhistaa || vr_cdhishcb; --> Lista com códigos de histórico a retornar         
         -- Buscar lançamentos no dia apenas dos historicos listados acima
         FOR rw_craplcm_olt IN cr_craplcm_olt(pr_cdcooper => pr_cdcooper    --> Cooperativa conectada
                                     ,pr_nrdconta => pr_nrdconta            --> Número da conta
@@ -2137,7 +2174,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         pr_tab_sald(vr_ind).vlblqtaa := nvl(pr_tab_sald(vr_ind).vlblqtaa,0) + nvl(rw_crapenl.vldininf,0) + nvl(rw_crapenl.vlchqinf,0);
       END LOOP;
       -- Chegou ao final sem problemas
-      pr_des_reto := 'OK';      
+      pr_des_reto := 'OK';
     EXCEPTION
       WHEN vr_exc_erro THEN
         -- Retorno não OK
@@ -2182,18 +2219,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
     --                21/06/2016 - Ajuste para utilizar o cursor cr_crapsda_pk para encontrar o saldo
     --                            (Adriano).
     --
-    --
+    --                06/10/2016 - Inclusao da procedure de retorno de valores referente a acordos de emprestimos,
+    --                             Prj. 302 (Jean Michel).
     ---------------------------------------------------------------------------------------------------------------------
 
     DECLARE
       -- Descrição da critica
       vr_dscritic VARCHAR2(4000);
+      vr_cdcritic crapcri.cdcritic%TYPE := 0;
+
       -- Sequencia do vetor de saldos
       vr_ind BINARY_INTEGER;
       -- Retorno dos valores de bloqueio judiciais
       vr_vlblqjud NUMBER;
       vr_vlresblq NUMBER;
       vr_dtrefere DATE;
+      vr_vlblqaco tbrecup_acordo.vlbloqueado%TYPE;
+
     BEGIN
       
       vr_dtrefere := gene0005.fn_valida_dia_util
@@ -2265,6 +2307,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                                       ,pr_vlbloque => vr_vlblqjud            --> Valor bloqueado
                                       ,pr_vlresblq => vr_vlresblq            --> Valor que falta bloquear
                                       ,pr_dscritic => vr_dscritic);          --> Erros encontrados no processo
+
+      RECP0001.pc_ret_vlr_bloq_acordo(pr_cdcooper => pr_cdcooper
+                                     ,pr_nrdconta => pr_nrdconta
+                                     ,pr_vlblqaco => vr_vlblqaco
+                                     ,pr_cdcritic => vr_cdcritic
+                                     ,pr_dscritic => vr_dscritic);
+
+      IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+        -- Chamar rotina de gravação de erro
+        gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                             ,pr_cdagenci => pr_cdagenci
+                             ,pr_nrdcaixa => pr_nrdcaixa
+                             ,pr_nrsequen => 1 --> Fixo
+                             ,pr_cdcritic => NVL(vr_cdcritic,0)
+                             ,pr_dscritic => vr_dscritic
+                             ,pr_tab_erro => pr_tab_erro);
+                               
+        -- Levantar exceção
+        RAISE vr_exc_erro;
+      END IF;
+
       -- Se chegou nesse ponto é pq encontrou saldo, então copia as informações pro vetor de saldo
       vr_ind := pr_tab_sald.COUNT;
       pr_tab_sald(vr_ind).nrdconta := rw_crapsda.nrdconta;
@@ -2306,6 +2369,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       pr_tab_sald(vr_ind).vlsrdcpo := rw_crapsda.vlsrdcpo;
       pr_tab_sald(vr_ind).vlblqjud := vr_vlblqjud;
       pr_tab_sald(vr_ind).vlsdcota := rw_crapsda.vlsdcota;
+      pr_tab_sald(vr_ind).vlblqaco := vr_vlblqaco;
+     
       -- Chegou ao final sem problemas
       pr_des_reto := 'OK';
     EXCEPTION
@@ -2756,7 +2821,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                                  Depositos Identificados (Alisson - AMcom)
 
                     01/04/2015 - Ajuste na variavel vr_dshistor (Jean Michel).
-
+                    
                     17/05/2016 - Incluido tratamento para historico 1019 exibir o correta
                                  descrição no historico e para caso for um lançamento de 
                                  debito automatico concatenar com historico complementar
@@ -2827,7 +2892,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         FROM craplcm lcm
             ,craphis his
         WHERE lcm.cdcooper = his.cdcooper
-        AND   lcm.cdhistor = his.cdhistor
+        AND   lcm.cdhistor = his.cdhistor         
         AND   lcm.rowid    = pr_rowid;
       --Tipo de Registro de Lancamento
       rw_craplcm cr_craplcm%ROWTYPE;
@@ -2874,8 +2939,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
 	       AND craplmt.hrtransa = pr_hrtransa
            AND craplmt.vldocmto = pr_vllanmto;
       -- Tipo de registro do Log do SPB
-      rw_craplmt cr_craplmt%ROWTYPE;  
-      
+      rw_craplmt cr_craplmt%ROWTYPE;     
+
       --Busca o inprocess na crapdat
       CURSOR cr_crapdat(pr_cdcooper IN crapdat.cdcooper%TYPE) IS --> Cooperativa
         SELECT dat.inproces
@@ -2889,18 +2954,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       -- Busca do tipo de pessoa do associado
       vr_inpessoa crapass.inpessoa%TYPE;
       -- Index para a temptable de tarifa
-      vr_tariidx varchar2(11);      
+      vr_tariidx varchar2(11);
      --Flag valida se estar rodando no batch
       vr_flgcrass BOOLEAN;
       
     BEGIN
-      
+
       -- Selecionar Informacoes do Lancamento
       OPEN cr_craplcm (pr_rowid => pr_rowid);
       FETCH cr_craplcm INTO rw_craplcm;
       --Fechar Cursor
       CLOSE cr_craplcm;
-
+      
       rw_crapatr := NULL;
       --> Verificar se convenio é de debito automatico
       OPEN cr_crapatr (pr_cdcooper => rw_craplcm.cdcooper   --> Cooperativa
@@ -3032,7 +3097,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
           vr_dshistor := substr(vr_dshistor || ' - ' || rw_craplcm.dscedent,1,100);
 
         END IF;
-
       /* Lancamento de pagamento de avalista */
       ELSIF ((rw_craplcm.cdhistor IN(1539,1541,1542,1543,1544)) AND (rw_craplcm.nrseqava > 0)) THEN
         vr_dsextrat := rw_craplcm.dsextrat;
@@ -3107,8 +3171,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         -- Buscar destalhes do empréstimo
         rw_crapepr := NULL;
         OPEN cr_crapepr(pr_cdcooper => pr_cdcooper
-                       ,pr_inliquid => NULL
-                       ,pr_inprejuz => NULL
                        ,pr_nrdconta => rw_craplcm.nrdconta
                        ,pr_nrctremp => TRIM(REPLACE(rw_craplcm.cdpesqbb,'.','')));
         FETCH cr_crapepr
@@ -3287,6 +3349,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       --Flag valida se estar rodando no batch
       vr_flgcrass BOOLEAN;
 
+      vr_idorigem number; -- Melhoria 119 - Jean / Mout´S
+ 
+
       /* Tabelas de memória para guardar registros cfme estrutura das Temp Tables */
       vr_tab_extr typ_tab_extrato_conta;    --> tt-extrato_conta
       vr_tab_depo typ_tab_dep_identificado; --> tt-dep-identificado
@@ -3338,7 +3403,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         vr_dsorigem := gene0001.vr_vet_des_origens(pr_idorigem);
         vr_dstransa := 'Consultar dados Dep. Vista.';
       END IF;
-      
+
       -- Verificar se o BATCH esta rodando
       IF pr_rw_crapdat.inproces <> 1 THEN
         -- Se estiver no BATCH, utiliza a verificacao da conta a partir do vetor de contas
@@ -3349,7 +3414,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         -- Se nao estiver no BATCH, busca apenas a informacao da conta que esta sendo passada
         vr_flgcrass := FALSE;
       END IF;
-      
+
       -- Busca do tipo de pessoa do associado
       vr_inpessoa := fn_inpessoa_nrdconta(pr_cdcooper => pr_cdcooper
                                          ,pr_nrdconta => pr_nrdconta
@@ -3415,8 +3480,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         -- Usar a data informada
         vr_dtiniper := pr_dtiniper;
       END IF;
+
+      
+      -- 22/02/2017 - Melhoria 119 - se a data do systema, for inferior à data de movimento (fim de semana ou feriado), 
+      --              E maior que a data anterior, considerar a origem como 5 - Intranet - Jean / Mout´S
+--      if  sysdate < pr_rw_crapdat.dtmvtolt then
+--          vr_idorigem := 5;
+--      else 
+          vr_idorigem := pr_idorigem;
+--      end if;
+      
       -- Para caixa ON_LINE - pr_idorigem = 2
-      IF pr_idorigem = 2 THEN
+      IF vr_idorigem = 2 THEN -- pr_idorigem
         -- A data inicial não pode ser inferior ao
         -- primeiro dia do mês anterior ao movimento
         IF vr_dtiniper < ADD_MONTHS(TRUNC(pr_rw_crapdat.dtmvtolt,'mm'),-1) THEN
@@ -3425,7 +3500,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         END IF;
       END IF;
       -- Para Internet ou TAA (pr_idorigem 3 ou 4) THEN
-      IF pr_idorigem IN (3,4) THEN
+      IF vr_idorigem IN (3,4) THEN
         -- DAta final não pode ser superior a hoje
         IF pr_dtfimper > trunc(sysdate) THEN
           -- Usar o dia de hoje como data final
@@ -3440,12 +3515,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
           -- Usar a data do movimento atual
           vr_dtfimper := pr_rw_crapdat.dtmvtolt;
         ELSE
-          -- Usar a data passada
-          vr_dtfimper := pr_dtfimper;
+          -- Melhoria 119 no caso de fim de semana ou feriados, considerar a data final como a data do sistema
+          IF pr_dtfimper > trunc(sysdate) THEN
+            -- Usar o dia de hoje como data final
+             vr_dtfimper := trunc(sysdate);
+          ELSE
+            -- Usar a data passada
+            vr_dtfimper := pr_dtfimper;
+          end if;
         END IF;
       END IF;
+
+
+    
       -- Busca de todos os lançamentos
-      FOR rw_craplcm_ign IN cr_craplcm_ign(pr_cdcooper => pr_cdcooper      --> Cooperativa conectada
+      FOR rw_craplcm_ign IN cr_craplcm_ign(pr_cdcooper => pr_cdcooper  --> Cooperativa conectada
                                   ,pr_nrdconta => pr_nrdconta      --> Número da conta
                                   ,pr_dtiniper => vr_dtiniper      --> Data movimento inicial
                                   ,pr_dtfimper => vr_dtfimper      --> Data movimento final
@@ -3515,7 +3599,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       /** Valido somente se par_dtfimper igual ao dia do feriado, sabado ou **/
       /** domingo.                                                          **/
       /***********************************************************************/
-      IF pr_dtfimper > pr_rw_crapdat.dtmvtoan AND pr_dtfimper < pr_rw_crapdat.dtmvtocd THEN
+      IF pr_dtfimper > pr_rw_crapdat.dtmvtoan AND pr_dtfimper <= pr_rw_crapdat.dtmvtocd THEN
         -- Busca de dos lançamentos:
         -- --- ---------------------------------
         -- 316 SAQUE CARTAO
@@ -3544,10 +3628,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
           vr_cdhishcb := vr_cdhishcb || ',' || rw_craphcb.cdhistor;
         END LOOP;
 
+
+
         FOR rw_craplcm_olt IN cr_craplcm_olt(pr_cdcooper => pr_cdcooper            --> Cooperativa conectada
                                     ,pr_nrdconta => pr_nrdconta            --> Número da conta
                                     ,pr_dtmvtolt => pr_rw_crapdat.dtmvtocd --> Data do movimento utilizada no cash dispenser.                                    
-                                    ,pr_lsthistor_ret => '15,316,375,376,377,450,530,537,538,539,767,771,772,918,920,1109,1110,1009,1011,'||vr_tab_tarifa_transf(vr_tariidx).cdhisint||','||vr_tab_tarifa_transf(vr_tariidx).cdhistaa || vr_cdhishcb) LOOP --> Lista com códigos de histórico a retornar
+                                    ,pr_lsthistor_ret => '15,316,375,376,377,450,530,537,538,539,767,771,772,918,920,1109,1110,1009,1011,527,472,478,497,499,501,530,108,1060,1070,1071,1072,'||vr_tab_tarifa_transf(vr_tariidx).cdhisint||','||vr_tab_tarifa_transf(vr_tariidx).cdhistaa || vr_cdhishcb) LOOP --> Lista com códigos de histórico a retornar
           -- Se for uma transferencia agendada, nao compor saldo
           IF NOT( (rw_craplcm_olt.cdhistor IN(375,376,377,537,538,539,771,772) AND NVL(SUBSTR(rw_craplcm_olt.cdpesqbb,54,8),' ') = 'AGENDADO')
                  OR
@@ -3597,6 +3683,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
           END IF;
         END LOOP;
       END IF;
+
+
       /* Verifica os envelopes nao processados, depositados no cash para o saldo bloqueado */
       FOR rw_crapenl IN cr_crapenl(pr_cdcooper => pr_cdcooper
                                   ,pr_nrdconta => pr_nrdconta
@@ -3656,12 +3744,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
 
       
       LOOP
+
+      
         -- Sair quando não existir a informação
         EXIT WHEN vr_ind_tab IS NULL;
         -- Se for o ultimo registro da data ou do vetor
         IF vr_ind_tab = vr_tab_extr.LAST OR vr_tab_extr(vr_ind_tab).dtmvtolt <> vr_tab_extr(vr_tab_extr.NEXT(vr_ind_tab)).dtmvtolt THEN
           -- Para origens 3,4,5 ('INTERNET','CASH','INTRANET') e na primeira interação
-          IF pr_idorigem IN(3,4,5) AND vr_flgfirst THEN
+          IF vr_idorigem IN(3,4,5) AND vr_flgfirst THEN -- pr_idorigem
             -- Desativa flag de primeiro encontro
             vr_flgfirst := FALSE;
             -- Chamar rotina para busca do saldo
@@ -3766,7 +3856,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
             END IF;
           END IF;
           -- Para origem 4 - Cash
-          IF pr_idorigem = 4  THEN
+          IF vr_idorigem = 4  THEN -- pr_idorigem
             -- Inserir este registro no final dos lançamentos deste dia
             vr_ind_tab_new := to_char(vr_tab_extr(vr_ind_tab).dtmvtolt,'yymmdd')||LPAD(vr_tab_extr(vr_ind_tab).nrsequen + 1,6,'0');
             -- Cria um registro de Saldo do Dia
@@ -3787,6 +3877,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         -- Buscar o próximo registro do Hash
         vr_ind_tab := vr_tab_extr.NEXT(vr_ind_tab);
       END LOOP;
+
+      
+
+      
       -- Após processar todos os extratos, copiar o vetor montado para a saída do procedicmento
       pr_tab_extrato := vr_tab_extr;
       -- Se foi solicitado geração de LOG
@@ -3813,7 +3907,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         pr_des_reto := 'NOK';
         -- Limpa vetor de saldo
         pr_tab_extrato.DELETE;
-      WHEN OTHERS THEN
+      WHEN OTHERS THEN      
 
         btch0001.pc_log_internal_exception(pr_cdcooper);
       
@@ -4294,6 +4388,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
               ELSE
                 -- Usar null
                 vr_dstextab := null;
+
               END IF;
               -- Inserir log de item do período do extrato
               gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
@@ -4761,6 +4856,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       ELSE
         vr_vlcapmin := gene0002.fn_char_para_number(vr_dstextab);
       END IF;
+
 
       -- Encontra a conta corrente
       OPEN cr_crapass(pr_cdcooper => pr_cdcooper
@@ -6075,13 +6171,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
      Objetivo  : Procedimento para buscar informaçoes de depositos avista
 
      Alteracoes: 19/10/2015 - Conversão Progress -> Oracle (Odirlei/AMcom)
+
+	             03/08/2016 - Retirado campo 'flgcrdpa' do cursor "cr_crapass'.
+                              Projeto 299/3 - Pre Aprovado (Lombardi)
     ..............................................................................*/
+
     ---------------> CURSORES <-----------------
     --> buscar dados do associado
     CURSOR cr_crapass IS
       SELECT ass.cdcooper
             ,ass.nrdconta
-            ,ass.flgcrdpa
             ,ass.inpessoa
             ,ass.vllimcre
             ,ass.tplimcre
@@ -6089,6 +6188,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         FROM crapass ass
        WHERE ass.cdcooper = pr_cdcooper
          AND ass.nrdconta = pr_nrdconta;
+
     rw_crapass cr_crapass%ROWTYPE;
 
     --> Buscar saldo do associado
@@ -6104,6 +6204,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         FROM crapsld
        WHERE crapsld.cdcooper = pr_cdcooper
          AND crapsld.nrdconta = pr_nrdconta;
+
     rw_crapsld cr_crapsld%ROWTYPE;
 
     --> Buscar lançamentos do cooperado
@@ -6123,6 +6224,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
          AND lcm.nrdconta = pr_nrdconta
          AND lcm.dtmvtolt = pr_dtmvtolt
          AND lcm.cdhistor <> 289;
+
 
     --> Depositos Bloqueados
     CURSOR cr_crapdpb IS
@@ -6798,6 +6900,380 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         pr_dscritic:= 'Erro na extr0001.pc_consulta_extrato_car --> '|| SQLERRM;
 
   END pc_consulta_extrato_car;  
+
+  --> Rotina para obter as medias dos cooperados
+  PROCEDURE pc_obtem_medias ( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Código da Cooperativa
+                             ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Código da agencia
+                             ,pr_nrdcaixa IN crapbcx.nrdcaixa%TYPE  --> Numero do caixa do operador
+                             ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Código do Operador
+                             ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Número da Conta
+                             ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> Data de Movimento
+                             --------> OUT <--------  
+                             ,pr_tab_medias OUT typ_tab_medias      --> Retornar medias                                 
+                             ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                             ,pr_dscritic OUT VARCHAR2) IS          --> Descrição da crítica
+    /* .........................................................................
+    --
+    --  Programa : pc_obtem_medias           Antigo: b1wgen0001.p/obtem-medias
+    --  Sistema  : Cred
+    --  Sigla    : EXTR0001
+    --  Autor    : Odirlei Busana - AMcom
+    --  Data     : Agosto/2016.                   Ultima atualizacao: 29/08/2016
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Rotina para obter as medias dos cooperados
+    --
+    --   Alteração : 29/08/2016 - Conversão Progress -> Oracle (Odirlei-AMcom)
+    -- .........................................................................*/
+    
+    ---------->>> CURSORES <<<----------
+    rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+     
+    ----------->>> VARIAVEIS <<<--------   
+    -- Variável de críticas
+    vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
+    vr_dscritic        VARCHAR2(1000);        --> Desc. Erro    
+    
+    -- Tratamento de erros
+    vr_exc_erro        EXCEPTION;
+
+    --> Buscar valores do semetre
+    CURSOR cr_vlsmstre IS               
+      SELECT decode(SUBSTR(mes,-1),'S',7,SUBSTR(mes,-1)) AS MES      
+             ,MAX AS vlsmstre      
+        FROM   (SELECT sld.vlsmstre##1,
+                       sld.vlsmstre##2,
+                       sld.vlsmstre##3,
+                       sld.vlsmstre##4,
+                       sld.vlsmstre##5,
+                       sld.vlsmstre##6
+                FROM   crapsld sld 
+                WHERE sld.cdcooper = pr_cdcooper
+                  AND sld.nrdconta = pr_nrdconta)
+        UNPIVOT (MAX FOR mes IN (vlsmstre##1,
+                                 vlsmstre##2,
+                                 vlsmstre##3,
+                                 vlsmstre##4,
+                                 vlsmstre##5,
+                                 vlsmstre##6));
+    
+    TYPE typ_tab_vlsmstre IS TABLE OF NUMBER
+         INDEX BY PLS_INTEGER;
+    vr_tab_vlsmstre typ_tab_vlsmstre;
+    
+    vr_dscdomes VARCHAR2(50); 
+    vr_nrdoano  NUMBER;
+    vr_nrmesatu INTEGER;
+    vr_nrindtab INTEGER;
+    vr_nrindice INTEGER;
+
+    vr_idx      PLS_INTEGER;
+    
+  BEGIN
+  
+    vr_nrmesatu := to_char(pr_dtmvtolt,'MM');
+    --> Buscar valores do saldo semestre
+    FOR rw_vlsmstre IN cr_vlsmstre LOOP
+      vr_tab_vlsmstre(rw_vlsmstre.mes) := rw_vlsmstre.vlsmstre      ;
+    END LOOP;
+    
+    --> Identificar qual mês se refere cada indice
+    --> Conforme mês atual
+    FOR vr_contador IN vr_nrmesatu..vr_nrmesatu+5 LOOP
+      --> identificar mês de referencia
+      vr_nrindice := 6 + vr_contador;
+      IF vr_nrindice > 12 THEN
+        vr_nrindice := vr_nrindice - 12;
+      END IF;
+      
+      --identificar index da tabela que o valor do mes esta
+      IF vr_nrindice > 6 THEN
+        vr_nrindtab := vr_nrindice - 6;
+      ELSE 
+        vr_nrindtab := vr_nrindice;
+      END IF;  
+      
+      IF vr_nrindice > vr_nrmesatu THEN
+        vr_nrdoano := to_char(pr_dtmvtolt,'RRRR') - 1;
+      ELSE
+        vr_nrdoano := to_char(pr_dtmvtolt,'RRRR');
+      END IF;
+    
+      vr_dscdomes := gene0001.vr_vet_nmmesano(vr_nrindice);
+      vr_idx := pr_tab_medias.count() + 1;
+      pr_tab_medias(vr_idx).periodo  := vr_dscdomes ||'/'||vr_nrdoano;
+      pr_tab_medias(vr_idx).vlsmstre := vr_tab_vlsmstre(vr_nrindtab);
+    END LOOP;
+    
+    --> incluir mês atual
+    vr_dscdomes := gene0001.vr_vet_nmmesano(vr_nrmesatu);
+    vr_idx := pr_tab_medias.count() + 1;
+    pr_tab_medias(vr_idx).periodo  := vr_dscdomes ||'/'||to_char(pr_dtmvtolt,'RRRR');
+    pr_tab_medias(vr_idx).vlsmstre := vr_tab_vlsmstre(7);
+      
+  
+  EXCEPTION    
+    WHEN vr_exc_erro THEN
+      
+      IF nvl(vr_cdcritic,0) <> 0 AND 
+         TRIM(vr_dscritic) IS NULL THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+      END IF; 
+    WHEN OTHERS THEN      
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := replace(replace('Erro ao Obter Medias: ' || SQLERRM, chr(13)),chr(10));   
+      
+  END pc_obtem_medias;  
+  
+  --> Rotina para carregar as medias dos cooperados
+  PROCEDURE pc_carrega_medias ( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Código da Cooperativa
+                               ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Código da agencia
+                               ,pr_nrdcaixa IN crapbcx.nrdcaixa%TYPE  --> Numero do caixa do operador
+                               ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Código do Operador
+                               ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Número da Conta
+                               ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> Data de Movimento
+                               ,pr_idorigem IN INTEGER                --> Identificador de Origem                               
+                               ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> Sequencial do titular
+                               ,pr_nmdatela IN craptel.nmdatela%TYPE  --> Nome da Tela
+                               ,pr_flgerlog IN INTEGER                --> Indicador se deve gerar log(0-nao, 1-sim)
+                               --------> OUT <--------                                   
+                               ,pr_tab_medias      OUT typ_tab_medias      --> Retornar valores das medias
+                               ,pr_tab_comp_medias OUT typ_tab_comp_medias --> Retorna complemento medias
+                               ,pr_cdcritic        OUT PLS_INTEGER         --> Código da crítica
+                               ,pr_dscritic        OUT VARCHAR2) IS        --> Descrição da crítica
+    /* .........................................................................
+    --
+    --  Programa : pc_carrega_medias           Antigo: b1wgen0001.p/carrega_medias
+    --  Sistema  : Cred
+    --  Sigla    : EXTR0001
+    --  Autor    : Odirlei Busana - AMcom
+    --  Data     : Agosto/2016.                   Ultima atualizacao: 29/08/2016
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Rotina para carregar as medias dos cooperados
+    --
+    --   Alteração : 29/08/2016 - Conversão Progress -> Oracle (Odirlei-AMcom)
+    -- .........................................................................*/
+    
+    ---------->>> CURSORES <<<----------
+    rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+    
+    --> Buscar saldo do cooperado
+    CURSOR cr_crapsld IS
+      SELECT sld.cdcooper,
+             sld.vlsmnmes,
+             sld.vlsmnesp,
+             sld.vlsmnblq,
+             sld.vlsmstre##1, 
+             sld.vlsmstre##2,
+             sld.vlsmstre##3,
+             sld.vlsmstre##4,
+             sld.vlsmstre##5,
+             sld.vlsmstre##6
+        FROM crapsld sld
+       WHERE sld.cdcooper = pr_cdcooper
+         AND sld.nrdconta = pr_nrdconta;
+    rw_crapsld cr_crapsld%ROWTYPE;
+     
+    --> Buscar media de saldo do mês
+    CURSOR cr_crapsda (pr_cdcooper crapsda.cdcooper%TYPE,
+                       pr_nrdconta crapsda.nrdconta%TYPE,
+                       pr_dtmvtolt crapsda.dtmvtolt%TYPE) IS
+      SELECT SUM(sda.vlsddisp) / COUNT(sda.nrdconta) vltsddis
+            ,COUNT(sda.nrdconta) qtdiauti
+        FROM crapsda sda
+       WHERE sda.cdcooper = pr_cdcooper
+         AND sda.nrdconta = pr_nrdconta
+         AND sda.dtmvtolt BETWEEN trunc(pr_dtmvtolt,'MM') AND last_day(pr_dtmvtolt);
+    rw_crapsda cr_crapsda%ROWTYPE;
+    
+         
+    ----------->>> VARIAVEIS <<<--------   
+    -- Variável de críticas
+    vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
+    vr_dscritic        VARCHAR2(1000);        --> Desc. Erro    
+    
+    -- Tratamento de erros
+    vr_exc_erro        EXCEPTION;
+    
+    vr_dsorigem        craplgm.dsorigem%TYPE;
+    vr_dstransa        craplgm.dstransa%TYPE;
+    vr_nrdrowid        ROWID;
+    
+    vr_vlsmnmes        NUMBER;
+    vr_vlsmnesp        NUMBER;
+    vr_vlsmnblq        NUMBER;
+    vr_vlsmdsem        NUMBER;
+    vr_nrmesano        INTEGER;
+    vr_vlsmdtri        NUMBER;
+    vr_idx             PLS_INTEGER;
+    
+    
+  BEGIN
+    vr_dsorigem := gene0001.vr_vet_des_origens(pr_idorigem);
+    vr_dstransa := 'Consultar dados para Extrato Medias.';
+    
+    -- DATA DA COOPERATIVA
+    OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+    FETCH btch0001.cr_crapdat INTO rw_crapdat;
+
+    IF btch0001.cr_crapdat%NOTFOUND THEN
+      CLOSE btch0001.cr_crapdat;
+      -- MONTAR MENSAGEM DE CRITICA
+      vr_cdcritic := 1;
+      RAISE vr_exc_erro;
+    ELSE      
+      CLOSE btch0001.cr_crapdat;
+    END IF;
+    
+    --> Rotina para obter as medias dos cooperados
+    pc_obtem_medias ( pr_cdcooper   => pr_cdcooper   --> Código da Cooperativa
+                     ,pr_cdagenci   => pr_cdagenci   --> Código da agencia
+                     ,pr_nrdcaixa   => pr_nrdcaixa   --> Numero do caixa do operador
+                     ,pr_cdoperad   => pr_cdoperad   --> Código do Operador
+                     ,pr_nrdconta   => pr_nrdconta   --> Número da Conta
+                     ,pr_dtmvtolt   => rw_crapdat.dtmvtolt  --> Data de Movimento
+                     --------> OUT <--------  
+                     ,pr_tab_medias => pr_tab_medias --> Retornar medias                                 
+                     ,pr_cdcritic   => vr_cdcritic   --> Código da crítica
+                     ,pr_dscritic   => vr_dscritic); --> Descrição da crítica
+                     
+    IF nvl(vr_cdcritic,0) > 0 OR
+       TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro; 
+    END IF; 
+    
+    --> Buscar saldo do cooperado
+    OPEN cr_crapsld;
+    FETCH cr_crapsld INTO rw_crapsld;
+    IF cr_crapsld%NOTFOUND THEN
+      CLOSE cr_crapsld;
+      vr_cdcritic := 0;
+      vr_dscritic := 'Conta/dv: '||pr_nrdconta ||' sem registro de saldo.';
+      RAISE vr_exc_erro;      
+    ELSE
+      CLOSE cr_crapsld;
+    END IF;
+    
+    vr_vlsmnmes := rw_crapsld.vlsmnmes;
+    vr_vlsmnesp := rw_crapsld.vlsmnesp;
+    vr_vlsmnblq := rw_crapsld.vlsmnblq;
+    vr_vlsmdsem := (rw_crapsld.vlsmstre##1 + rw_crapsld.vlsmstre##2 +
+                    rw_crapsld.vlsmstre##3 + rw_crapsld.vlsmstre##4 +
+                    rw_crapsld.vlsmstre##5 + rw_crapsld.vlsmstre##6) / 6;
+    IF to_char(rw_crapdat.dtmvtolt,'MM') > 6 THEN    
+      vr_nrmesano := to_char(rw_crapdat.dtmvtolt,'MM') - 6;
+    ELSE
+      vr_nrmesano := to_char(rw_crapdat.dtmvtolt,'MM');
+    END IF;  
+    
+    CASE vr_nrmesano
+      WHEN 1 THEN   --> Meses 1 ou 7 
+        vr_vlsmdtri := (rw_crapsld.vlsmstre##6 + rw_crapsld.vlsmstre##5 + rw_crapsld.vlsmstre##4) / 3;
+      WHEN 2 THEN   --> Meses 2 ou 8 
+        vr_vlsmdtri := (rw_crapsld.vlsmstre##1 + rw_crapsld.vlsmstre##6 + rw_crapsld.vlsmstre##5) / 3;
+      WHEN 3 THEN   --> Meses 3 ou 9 
+        vr_vlsmdtri := (rw_crapsld.vlsmstre##2 + rw_crapsld.vlsmstre##1 + rw_crapsld.vlsmstre##6) / 3;
+      WHEN 4 THEN   --> Meses 4 ou 10
+        vr_vlsmdtri := (rw_crapsld.vlsmstre##3 + rw_crapsld.vlsmstre##2 + rw_crapsld.vlsmstre##1) / 3;
+      WHEN 5 THEN   --> Meses 5 ou 11
+        vr_vlsmdtri := (rw_crapsld.vlsmstre##4 + rw_crapsld.vlsmstre##3 + rw_crapsld.vlsmstre##2) / 3;
+      WHEN 6 THEN   --> Meses 6 ou 12
+        vr_vlsmdtri := (rw_crapsld.vlsmstre##5 + rw_crapsld.vlsmstre##4 + rw_crapsld.vlsmstre##3) / 3;
+      ELSE 
+        vr_vlsmdtri := 0;
+    END CASE;    
+    
+    --> Buscar media de saldo do mês
+    OPEN cr_crapsda (pr_cdcooper => pr_cdcooper,
+                     pr_nrdconta => pr_nrdconta,
+                     pr_dtmvtolt => rw_crapdat.dtmvtolt);
+    FETCH cr_crapsda INTO rw_crapsda;
+    CLOSE cr_crapsda;
+    
+    vr_idx := pr_tab_comp_medias.count + 1;
+    pr_tab_comp_medias(vr_idx).vlsmnmes := vr_vlsmnmes;
+    pr_tab_comp_medias(vr_idx).vlsmnesp := vr_vlsmnesp;
+    pr_tab_comp_medias(vr_idx).vlsmnblq := vr_vlsmnblq;
+    pr_tab_comp_medias(vr_idx).qtdiaute := rw_crapdat.qtdiaute;
+    pr_tab_comp_medias(vr_idx).vlsmdtri := vr_vlsmdtri;
+    pr_tab_comp_medias(vr_idx).vlsmdsem := vr_vlsmdsem;
+    pr_tab_comp_medias(vr_idx).qtdiauti := rw_crapsda.qtdiauti;
+    pr_tab_comp_medias(vr_idx).vltsddis := rw_crapsda.vltsddis;
+    
+    IF pr_flgerlog = 1 THEN
+      gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper,
+                           pr_cdoperad => pr_cdoperad, 
+                           pr_dscritic => NULL, 
+                           pr_dsorigem => vr_dsorigem, 
+                           pr_dstransa => vr_dstransa, 
+                           pr_dttransa => trunc(SYSDATE),
+                           pr_flgtrans => 1,
+                           pr_hrtransa => gene0002.fn_busca_time, 
+                           pr_idseqttl => pr_idseqttl, 
+                           pr_nmdatela => pr_nmdatela, 
+                           pr_nrdconta => pr_nrdconta, 
+                           pr_nrdrowid => vr_nrdrowid);
+    END IF;
+
+  EXCEPTION    
+    WHEN vr_exc_erro THEN
+      
+      IF nvl(vr_cdcritic,0) <> 0 AND 
+         TRIM(vr_dscritic) IS NULL THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := replace(replace(vr_dscritic,chr(13)),chr(10));
+      END IF;
+
+      
+      IF pr_flgerlog = 1 THEN
+        gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper,
+                             pr_cdoperad => pr_cdoperad, 
+                             pr_dscritic => pr_dscritic, 
+                             pr_dsorigem => vr_dsorigem, 
+                             pr_dstransa => vr_dstransa, 
+                             pr_dttransa => trunc(SYSDATE),
+                             pr_flgtrans => 0,
+                             pr_hrtransa => gene0002.fn_busca_time, 
+                             pr_idseqttl => pr_idseqttl, 
+                             pr_nmdatela => pr_nmdatela, 
+                             pr_nrdconta => pr_nrdconta, 
+                             pr_nrdrowid => vr_nrdrowid);
+      END IF;
+      
+      
+    WHEN OTHERS THEN
+      
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := replace(replace('Erro ao Carregar Medias: ' || SQLERRM, chr(13)),chr(10));   
+      
+      IF pr_flgerlog = 1 THEN
+        gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper,
+                             pr_cdoperad => pr_cdoperad, 
+                             pr_dscritic => pr_dscritic, 
+                             pr_dsorigem => vr_dsorigem, 
+                             pr_dstransa => vr_dstransa, 
+                             pr_dttransa => trunc(SYSDATE),
+                             pr_flgtrans =>  0, --FALSE
+                             pr_hrtransa => gene0002.fn_busca_time, 
+                             pr_idseqttl => pr_idseqttl, 
+                             pr_nmdatela => pr_nmdatela, 
+                             pr_nrdconta => pr_nrdconta, 
+                             pr_nrdrowid => vr_nrdrowid);
+      END IF;
+  END pc_carrega_medias;    
+  
 
 END EXTR0001;
 /
