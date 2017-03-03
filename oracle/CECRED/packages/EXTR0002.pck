@@ -8826,7 +8826,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       END;
     END pc_consulta_imposto_renda;
 
-
  PROCEDURE pc_consulta_ir_pj_trim (pr_cdcooper IN crapcop.cdcooper%TYPE       --Codigo Cooperativa
                                   ,pr_cdagenci IN crapass.cdagenci%TYPE       --Codigo Agencia
                                   ,pr_nrdcaixa IN INTEGER                     --Numero do Caixa
@@ -8849,7 +8848,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --  Sistema  :
   --  Sigla    : CRED
   --  Autor    : Guilherme/SUPERO
-  --  Data     : Julho/2016                           Ultima atualizacao: 17/08/2016
+  --  Data     : Julho/2016                           Ultima atualizacao: 23/02/2017
   --
   -- Dados referentes ao programa:
   --
@@ -8859,7 +8858,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   -- Alterações :
   --
   --              17/08/2016 - M360 - Inclusão de novas buscas de Sobras ao Cooperado (Marcos-Supero)
-
+  --              23/02/2017 - SD618188 - Inclusao do formato na conversao de data para aplicacoes (Marcos-Supero)
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
     -- Busca dos dados da cooperativa
@@ -8930,7 +8929,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       FROM crapdir crapdir
       WHERE crapdir.cdcooper = pr_cdcooper
       AND   crapdir.nrdconta = pr_nrdconta
-      AND   to_number(to_char(crapdir.dtmvtolt,'YYYY')) = pr_nranoref
+      AND   to_char(crapdir.dtmvtolt,'RRRR') = pr_nranoref
       order by cdcooper,nrdconta,dtmvtolt,progress_recid;
     rw_crapdir cr_crapdir%ROWTYPE;
 
@@ -8980,6 +8979,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
          AND lct.cdhistor IN (sobr0001.vr_cdhisopc_cot,sobr0001.vr_cdhisdpp_cot
                              ,sobr0001.vr_cdhisdpa_cot,sobr0001.vr_cdhistar_cot
                              ,sobr0001.vr_cdhisaut_cot,sobr0001.vr_cdhisdep_cot);
+                             
     -- Selecionar Credito Retorno de Sobras em CC
     CURSOR cr_craplcm (pr_cdcooper IN craplcm.cdcooper%type
                       ,pr_anorefer IN INTEGER
@@ -9038,7 +9038,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         FROM craplap lap
        WHERE lap.cdcooper = pr_cdcooper
          AND lap.nrdconta = pr_nrdconta
-         AND lap.dtmvtolt < last_day(to_date('01/'|| pr_nrmesref ||'/' || pr_nranoref))
+         AND lap.dtmvtolt <= last_day(to_date('01/'|| pr_nrmesref ||'/' || pr_nranoref,'dd/mm/rrrr'))
        GROUP BY lap.nrdconta;
     rw_aplica  cr_aplica%ROWTYPE;
 
