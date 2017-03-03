@@ -6275,9 +6275,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
   BEGIN
     
     vr_xmldoc:= xmldom.newDOMDocument(pr_xmlrequi); 
-    
-     DBMS_XSLPROCESSOR.CLOB2FILE(pr_xmlrequi.getclobval(), '/microsh/cecred/odirlei', 'retlote'||pr_idlotsms||'.xml', NLS_CHARSET_ID('UTF8'));   
-        
+       
     ----------------------------------------------------
     --            GRAVAR OS DADOS DO CONTRATO         --
     ----------------------------------------------------      
