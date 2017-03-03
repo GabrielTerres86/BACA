@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
   --
   --  Programa: PAGA0001                       Antiga: b1wgen0016.p
   --  Autor   : Evandro/David
-  --  Data    : Abril/2006                     Ultima Atualizacao: 10/02/2017
+  --  Data    : Abril/2006                     Ultima Atualizacao: 22/02/2017
   --
   --  Dados referentes ao programa:
   --
@@ -280,6 +280,9 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
   --
   --        10/02/2017 - Ajustado parâmetros pr_nrispbpg das procedures pc_processa_liquidacao e
   --                     pc_proc_liquid_apos_baixa para DEFAULT 99999999 (Rafael)
+	--
+	--        22/02/2017 - Ajustes para correçao de crítica de pagamento DARF/DAS (Lucas Lunelli - P.349.2)
+	--
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de registro de agendamento
@@ -542,6 +545,7 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
                                  ,pr_dtagenda IN OUT DATE                 --Data agendamento
                                  ,pr_idorigem IN  INTEGER                 --Indicador de origem
                                  ,pr_indvalid IN  INTEGER                 --Indicador se ja foi feito
+								 ,pr_flmobile IN  INTEGER                 --Indicador Mobile
                                  ,pr_nmextcon OUT VARCHAR2                --Nome do banco
                                  ,pr_cdseqfat OUT NUMBER                  --Codigo Sequencial fatura
                                  ,pr_vlfatura OUT NUMBER                  --Valor fatura
@@ -641,6 +645,7 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
                                ,pr_dtagenda IN OUT DATE                 --Data agendamento
                                ,pr_idorigem IN  INTEGER                 --Indicador de origem
                                ,pr_indvalid IN  INTEGER                 --Indicador se ja foi feito
+							   ,pr_flmobile IN  INTEGER                 --Indicador Mobile
                                ,pr_nmextbcc OUT VARCHAR2                --Nome do banco
                                ,pr_vlfatura OUT NUMBER                  --Valor fatura
                                ,pr_dtdifere OUT BOOLEAN                 --Indicador data diferente
@@ -1155,7 +1160,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 17/02/2017
+  --  Data     : Junho/2013.                   Ultima atualizacao: 22/02/2017
   --
   -- Dados referentes ao programa:
   --
@@ -1479,7 +1484,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                     (Tiago/Fabricio).       
        
        17/02/2017 - Incluir chamada da rotina PGTA0001.pc_gera_retorno_tit_pago
-                    conforme o programa crps509 ja faz (Lucas Ranghetti #590601)
+                    conforme o programa crps509 ja faz (Lucas Ranghetti #590601) 
+
+       22/02/2017 - Ajustes para correçao de crítica de pagamento DARF/DAS (Lucas Lunelli - P.349.2)      
+
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Cursores da Package */
@@ -5630,6 +5638,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                ,pr_dtagenda IN OUT DATE                 --Data agendamento
                                ,pr_idorigem IN  INTEGER                 --Indicador de origem
                                ,pr_indvalid IN  INTEGER                 --Indicador se ja foi feito
+							                 ,pr_flmobile IN  INTEGER                 --Indicador Mobile
                                ,pr_nmextbcc OUT VARCHAR2                --Nome do banco
                                ,pr_vlfatura OUT NUMBER                  --Valor fatura
                                ,pr_dtdifere OUT BOOLEAN                 --Indicador data diferente
@@ -6124,6 +6133,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                        ,pr_dtagenda => pr_dtagenda   --Data agendamento
                        ,pr_idorigem => pr_idorigem   --Indicador de origem
                        ,pr_indvalid => pr_indvalid   --nao validar
+					             ,pr_flmobile => 0             --Indicador Mobile
                        ,pr_nmextbcc => pr_nmextbcc   --Nome do banco
                        ,pr_vlfatura => pr_vlfatura   --Valor fatura
                        ,pr_dtdifere => vr_dtdifere   --Indicador data diferente
@@ -9553,6 +9563,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                  ,pr_dtagenda IN OUT DATE                 --Data agendamento
                                  ,pr_idorigem IN  INTEGER                 --Indicador de origem
                                  ,pr_indvalid IN  INTEGER                 --Indicador se ja foi feito
+								                 ,pr_flmobile IN  INTEGER                 --Indicador Mobile
                                  ,pr_nmextcon OUT VARCHAR2                --Nome do banco
                                  ,pr_cdseqfat OUT NUMBER                  --Codigo Sequencial fatura
                                  ,pr_vlfatura OUT NUMBER                  --Valor fatura
@@ -9870,25 +9881,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
         vr_cdoperad:= '996';
       END IF;
 
-	  --Verificação para pagamento de GPS
-	  IF pr_idorigem = 3  THEN	  	
-		IF SUBSTR(pr_cdbarras,2,1) = '5' THEN
-		    IF SUBSTR(pr_cdbarras,16,4) = '0270' THEN
-				vr_cdcritic := 0;
-				vr_dscritic := 'GPS deve ser paga na opção ''Transações - GPS'' do menu de serviços.';
-				RAISE vr_exc_erro;
-			ELSIF SUBSTR(pr_cdbarras,16,4) IN ('0064','0153','0154','0385') THEN -- DARF
-				vr_cdcritic := 0;
-				vr_dscritic := 'DARF deve ser paga na opção ''Transações - DARF'' do menu de serviços.';
-				RAISE vr_exc_erro;
-			ELSIF SUBSTR(pr_cdbarras,16,4) IN ('0328') THEN -- DAS
-				vr_cdcritic := 0;
-				vr_dscritic := 'DAS deve ser paga na opção ''Transações - DAS'' do menu de serviços.';
-				RAISE vr_exc_erro;
-			END IF;
-		END IF;
-	  END IF;
-
       /* Retornar valores fatura */
       CXON0014.pc_retorna_valores_fatura (pr_cdcooper      => rw_crapcop.cdcooper  --Codigo Cooperativa
                                          ,pr_nrdconta      => pr_nrdconta     --Numero da Conta
@@ -9958,6 +9950,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
         --Retornar nome convenio
         pr_nmextcon:= rw_crapcon.nmextcon;
       END IF;
+
+		IF pr_idorigem = 3  THEN				
+			IF SUBSTR(pr_cdbarras,2,1) = '5' THEN
+				--Verificação para pagamento de GPS
+				IF SUBSTR(pr_cdbarras,16,4) = '0270' THEN
+					vr_cdcritic := 0;
+					IF pr_flmobile = 1 THEN -- Canal Mobile
+						vr_dscritic := 'Pagamento de GPS não disponível, utilize a Conta Online.';
+					ELSE -- Conta Online							
+						vr_dscritic := 'GPS deve ser paga na opção ''Transações - GPS'' do menu de serviços.';
+					END IF;
+					RAISE vr_exc_erro;
+				ELSIF SUBSTR(pr_cdbarras,16,4) IN ('0064','0153','0154','0385') THEN -- DARF
+					vr_cdcritic := 0;
+					IF pr_flmobile = 1 THEN -- Canal Mobile
+						vr_dscritic := 'DARF deve ser paga na opção ''Tributos - DARF'' do menu de serviços.';
+					ELSE -- Conta Online							
+						vr_dscritic := 'DARF deve ser paga na opção ''Transações - DARF'' do menu de serviços.';
+					END IF;						
+					RAISE vr_exc_erro;
+				ELSIF SUBSTR(pr_cdbarras,16,4) IN ('0328') THEN -- DAS
+					vr_cdcritic := 0;
+					IF pr_flmobile = 1 THEN -- Canal Mobile
+						vr_dscritic := 'DAS deve ser paga na opção ''Tributos - DAS'' do menu de serviços.';
+					ELSE -- Conta Online							
+						vr_dscritic := 'DAS deve ser paga na opção ''Transações - DAS'' do menu de serviços.';
+					END IF;						
+					RAISE vr_exc_erro;
+				END IF;
+			END IF;
+		END IF;
 
       -- Verifica se a data esta cadastrada
       OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
@@ -10131,6 +10154,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                          ,pr_dtagenda => pr_dtagenda  --Data agendamento
                          ,pr_idorigem => pr_idorigem  --Indicador de origem
                          ,pr_indvalid => pr_indvalid  --Nao validar horario limite
+						             ,pr_flmobile => 0            --Indicador Mobile
                          ,pr_nmextcon => pr_nmextcon  --Nome do banco
                          ,pr_cdseqfat => vr_cdseqfat  --Codigo Sequencial fatura
                          ,pr_vlfatura => pr_vlfatura  --Valor fatura
@@ -10915,6 +10939,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                        ,pr_idagenda => 1 -- Indicador de agendamento (1-Nesta Data/2-Agendamento)
                                        ,pr_dtagenda => rw_craplau.dtmvtopg -- Data de agendamento
                                        ,pr_indvalid => 2 -- Indicador de controle de validações (1-Operação Online/2-Operação Batch)
+									                     ,pr_flmobile => 0 --Indicador Mobile
                                        ,pr_cdseqfat => vr_cdseqfat -- Código sequencial da guia
                                        ,pr_vldocmto => vr_vlrdocum -- Valor da guia
                                        ,pr_nrdigfat => vr_nrdigfat -- Digito do faturamento
@@ -10978,6 +11003,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                              ,pr_dtagenda => rw_craplau.dtmvtopg   --Data agendamento
                              ,pr_idorigem => pr_idorigem           --Indicador de origem
                              ,pr_indvalid => 1                     --nao validar
+							               ,pr_flmobile => 0                     --Indicador Mobile
                              ,pr_nmextbcc => vr_nmconban           --Nome do banco
                              ,pr_vlfatura => vr_vlrdocum           --Valor fatura
                              ,pr_dtdifere => vr_dtdifere           --Indicador data diferente
@@ -11060,6 +11086,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                ,pr_dtagenda => rw_craplau.dtmvtopg    --Data agendamento
                                ,pr_idorigem => pr_idorigem            --Indicador de origem
                                ,pr_indvalid => 2                      --Nao validar horario limite
+							                 ,pr_flmobile => 0                    --Indicador Mobile
                                ,pr_nmextcon => vr_nmconban            --Nome do banco
                                ,pr_cdseqfat => vr_cdseqfat            --Codigo Sequencial fatura
                                ,pr_vlfatura => vr_vlrdocum            --Valor fatura

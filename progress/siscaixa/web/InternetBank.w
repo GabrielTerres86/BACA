@@ -14,7 +14,7 @@
    Sistema : Internet - aux_cdcooper de Credito
    Sigla   : CRED
    Autor   : Junior
-   Data    : Julho/2004.                       Ultima atualizacao: 11/10/2016
+   Data    : Julho/2004.                       Ultima atualizacao: 22/02/2017
 
    Dados referentes ao programa:
 
@@ -644,6 +644,11 @@
                  26/10/2016 - Inclusao da operacao 189 - Servico de SMS de cobranca
                               PRJ319 - SMS Cobrança(Odirlei-AMcom)       
                               
+                 22/02/2017 - Ajustes para correçao de crítica de pagamento DARF/DAS (P.349.2)
+                            - Criada op 180 (P.349.2)
+                            - Alteraçoes para composiçao de comprovante DARF/DAS Modelo Sicredi
+                            (Lucas Lunelli)
+                              
 ------------------------------------------------------------------------------*/
 
 /*----------------------------------------------------------------*/
@@ -853,6 +858,7 @@ DEF VAR aux_tpdaguia AS INTE										   NO-UNDO.
 DEF VAR aux_dsretorn AS CHAR                                           NO-UNDO.
 DEF VAR aux_dtdiadeb AS CHAR                                           NO-UNDO.
 DEF VAR aux_tpvalida AS CHAR                                           NO-UNDO.
+DEF VAR aux_dstpcons AS CHAR                                           NO-UNDO.
 
 DEF VAR aux_nrcpfapr AS DECI                                           NO-UNDO.
 DEF VAR aux_vltitulo AS DECI                                           NO-UNDO.
@@ -2093,6 +2099,9 @@ PROCEDURE process-web-request :
 		    IF  aux_operacao = 177 THEN     /* Cancelar integralização */
                 RUN proc_operacao177.
 		ELSE
+            IF  aux_operacao = 180 THEN /* Calcula data útil para agendamento */
+                RUN proc_operacao180.
+    	ELSE
             IF  aux_operacao = 186 THEN /* Retorna valor atualizado de titulos vencidos */
                 RUN proc_operacao186.
 		ELSE
@@ -3226,7 +3235,8 @@ PROCEDURE proc_operacao25:
                xml_operacao25.nrseqaut xml_operacao25.nmprepos
                xml_operacao25.nrcpfpre xml_operacao25.nmoperad
                xml_operacao25.nrcpfope xml_operacao25.cdbcoctl
-               xml_operacao25.cdagectl xml_operacao25.dscabfim.
+               xml_operacao25.cdagectl xml_operacao25.cdagesic
+               xml_operacao25.dscabfim.
     
     END.
     
@@ -5081,16 +5091,23 @@ END PROCEDURE.
 
 PROCEDURE proc_operacao88:
 
+    DEF VAR aux_dtmvtpro AS DATE NO-UNDO.
+
      ASSIGN aux_cdtippro = INT(GET-VALUE("cdtippro"))
             aux_nrdocpro = GET-VALUE("nrdocmto").         
             
+    IF GET-VALUE('dtmvtpro') <> '' THEN
+	   aux_dtmvtpro = DATE(GET-VALUE('dtmvtpro')).
+	ELSE
+	   aux_dtmvtpro = aux_dtmvtolt.			
+
     RUN sistema/internet/fontes/InternetBank88.p (INPUT aux_cdcooper,
                                                   INPUT 90, /*cdagenci*/
                                                   INPUT 900, /*nrdcaixa*/
                                                   INPUT "996", /*cdoperad*/
                                                   INPUT "INTERNETBANK",
                                                   INPUT 3, /*idorigem*/
-                                                  INPUT aux_dtmvtolt,
+                                                  INPUT aux_dtmvtpro,
                                                   INPUT aux_nrdconta,
                                                   INPUT aux_idseqttl,
                                                   INPUT aux_cdtippro,
@@ -5128,6 +5145,7 @@ PROCEDURE proc_operacao88:
                xml_operacao88.nrcpfope 
                xml_operacao88.cdbcoctl
                xml_operacao88.cdagectl 
+               xml_operacao88.cdagesic
                xml_operacao88.dscabfim.
     
     END.
@@ -7753,6 +7771,33 @@ PROCEDURE proc_operacao177:
         FOR EACH xml_operacao NO-LOCK:
             {&out} xml_operacao.dslinxml.
         END.
+    {&out} aux_tgfimprg.
+
+END PROCEDURE.
+
+/* Calculo de Data Útil para Agendamento */
+PROCEDURE proc_operacao180:
+
+    ASSIGN  aux_dtmvtolt = DATE(GET-VALUE("dtmvtolt"))
+            aux_dstpcons = STRING(GET-VALUE("dstpcons")).
+                              
+    RUN sistema/internet/fontes/InternetBank180.p (INPUT aux_cdcooper,
+                                                   INPUT aux_dtmvtolt,
+                                                   INPUT aux_dstpcons,
+                                                  OUTPUT aux_dsmsgerr,
+                                                  OUTPUT TABLE xml_operacao). 
+                                                  
+    IF  RETURN-VALUE = "NOK"  THEN
+        DO:
+            {&out} aux_dsmsgerr aux_tgfimprg.
+            RETURN.
+        END.
+        
+    FIND FIRST xml_operacao NO-LOCK NO-ERROR.
+
+    IF  AVAILABLE xml_operacao  THEN
+        {&out} xml_operacao.dslinxml.
+    
     {&out} aux_tgfimprg.
 
 END PROCEDURE.

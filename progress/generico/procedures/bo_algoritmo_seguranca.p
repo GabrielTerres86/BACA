@@ -41,7 +41,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Agosto/2006                   Ultima Atualizacao: 19/05/2016 
+   Data    : Agosto/2006                   Ultima Atualizacao: 22/02/2017
    Dados referentes ao programa:
 
    Frequencia: Diario (internet)
@@ -93,6 +93,9 @@
                     
                 19/05/2016 - Ajuste para exibir protocolos 15 - pagamento convenio
 				             PRJ320 - Oferta DebAut (Odirlei-AMcom)
+                     
+                22/02/2017 - Alteraçoes para compor comprovantes DARF/DAS 
+                             Modelo Sicredi (Lucas Lunelli)
 ............................................................................. */
 
 { sistema/generico/includes/var_internet.i }
@@ -443,8 +446,8 @@ PROCEDURE lista_protocolos:
             NEXT.
                            
         /** Nao carregar Protocolo pagamento fatura 
-		    caso seje o dia de geracao, devido o pagamento
-			ainda poder ser extornado. **/
+		    caso seja o dia de geracao, devido o pagamento
+			ainda poder ser estornado. **/
         IF crappro.cdtippro = 15  AND
 		   crappro.dtmvtolt = crapdat.dtmvtolt THEN 
 		   NEXT.
@@ -500,12 +503,21 @@ PROCEDURE lista_protocolos:
                                                         OR crappro.cdtippro = 9
                                                         OR crappro.cdtippro = 11
                                                         OR crappro.cdtippro = 15
+                                                        OR crappro.cdtippro = 16
+                                                        OR crappro.cdtippro = 17
+                                                        OR crappro.cdtippro = 18
+                                                        OR crappro.cdtippro = 19
                cratpro.cdagectl    = crapcop.cdagectl WHEN (crappro.cdtippro = 1 AND par_cdorigem = 3)
                                                         OR crappro.cdtippro = 2
                                                         OR crappro.cdtippro = 6
                                                         OR crappro.cdtippro = 9
                                                         OR crappro.cdtippro = 11
-                                                        OR crappro.cdtippro = 15.
+                                                        OR crappro.cdtippro = 15
+                                                        OR crappro.cdtippro = 16
+                                                        OR crappro.cdtippro = 17
+                                                        OR crappro.cdtippro = 18
+                                                        OR crappro.cdtippro = 19
+               cratpro.cdagesic    = crapcop.cdagesic.
 
         IF   par_cdorigem = 4   THEN /* TAA */
              DO:

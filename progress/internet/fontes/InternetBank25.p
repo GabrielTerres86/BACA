@@ -3,7 +3,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Junho/2007.                       Ultima atualizacao: 21/07/2015
+   Data    : Junho/2007.                       Ultima atualizacao: 22/02/2017
    Dados referentes ao programa:
    Frequencia: Sempre que for chamado (On-Line)
    Objetivo  : Listar protocolos de transferencias e pagamentos para Internet.
@@ -39,6 +39,9 @@
                09/09/2016 - Ajustar tamanho da formatacao do campo nrdocmto,
                             pois nao esta sendo formatado corretamente quando
                             o numero possuir muitas casas (Anderson).
+
+ 				22/02/2017 - Alteraçoes para compor comprovantes DARF/DAS 
+                             Modelo Sicredi (Lucas Lunelli)                            
 .............................................................................*/
  
 create widget-pool.
@@ -165,7 +168,9 @@ IF  VALID-HANDLE(h-bo_algoritmo_seguranca)  THEN
                    xml_operacao25.cdagectl = "<cdagectl>" +
                                              STRING(cratpro.cdagectl, "9999") +
                                              "</cdagectl>"
-                                             WHEN cratpro.cdagectl <> 0
+                   xml_operacao25.cdagesic = "<cdagesic>" +
+                                             STRING(cratpro.cdagesic, "9999") +
+                                             "</cdagesic>"
                    xml_operacao25.dscabfim = "</DADOS>".
         
         END. /** Fim do FOR EACH cratpro **/
