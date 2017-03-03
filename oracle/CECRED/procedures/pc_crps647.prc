@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autora  : Lucas R.
-  Data    : Setembro/2013                        Ultima atualizacao: 03/11/2016
+  Data    : Setembro/2013                        Ultima atualizacao: 03/03/2017
 
   Dados referentes ao programa:
 
@@ -122,7 +122,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
                            (Lucas Ranghetti #507171)
                
               03/11/2016 - Conversao Progress >> Oracle PLSQL (Jonata-MOUTs)
-
+              
+              03/03/2017 - Enviar e-mail para o convenios em caso de gerar algum erro inesperado.
+                           (Lucas Ranghetti #622878)
    ............................................................................. */
   -- Constantes do programa
   vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'CRPS647';
@@ -177,7 +179,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
   vr_nrdconta crapass.nrdconta%TYPE;
   vr_cdagenci crapass.cdagenci%TYPE;
   vr_cdcrindb VARCHAR2(2);
-     
+  vr_texto_email VARCHAR2(4000);
+  vr_emaildst VARCHAR2(1000);
+  
   -- Comandos no OS
   vr_typsaida varchar2(3);
   vr_dessaida varchar2(2000);
@@ -627,6 +631,8 @@ BEGIN
   -- Diretorios de retorno 
   vr_nmdirrec := gene0001.fn_param_sistema('CRED',0,'DIR_658_RECEBE');
   vr_nmdirrcb := gene0001.fn_param_sistema('CRED',0,'DIR_658_RECEBIDOS');
+  -- Busca o endereco de email para os casos de criticas
+  vr_emaildst := gene0001.fn_param_sistema('CRED',pr_cdcooper,'CRPS387_EMAIL');
   
   -- Montagem do nome do arquivo conforme a data
   CASE to_char(rw_crapdat.dtmvtolt,'MM') 
@@ -1292,12 +1298,36 @@ BEGIN
         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
       END IF;
       -- Adicionar o numero da linha ao erro 
-      vr_dscritic := 'Erro na linha '||vr_nrdlinha||' --> '|| vr_dscritic;
+      vr_dscritic := 'Erro na linha '||vr_nrdlinha|| ' do arquivo: '||vr_nmarqmov ||' --> '|| vr_dscritic;      
+      
+      vr_texto_email := '<b>Abaixo os erros encontrados no processo de importacao do debito SICREDI:</b><br><br>'||
+                        to_char(SYSDATE,'dd/mm/yyyy HH24:MI:SS') || ' --> ' || vr_dscritic;
+
+      -- Por fim, envia o email
+      gene0003.pc_solicita_email(pr_cdprogra    => vr_cdprogra
+                                ,pr_des_destino => vr_emaildst
+                                ,pr_des_assunto => 'Critica importacao debito - SICREDI'
+                                ,pr_des_corpo   => vr_texto_email
+                                ,pr_des_anexo   => NULL
+                                ,pr_flg_enviar  => 'N'
+                                ,pr_des_erro    => vr_dscritic);
     WHEN no_data_found THEN
       NULL; --> Fim da leitura 
     WHEN OTHERS THEN
       -- Adicionar o numero da linha ao erro 
-      vr_dscritic := 'Erro na linha '||vr_nrdlinha||' --> '|| sqlerrm;
+      vr_dscritic := 'Erro na linha '||vr_nrdlinha|| ' do arquivo: '||vr_nmarqmov ||' --> '|| SQLERRM;
+      
+      vr_texto_email := '<b>Abaixo os erros encontrados no processo de importacao do debito SICREDI:</b><br><br>'||
+                        to_char(SYSDATE,'dd/mm/yyyy HH24:MI:SS') || ' --> ' || vr_dscritic;
+
+      -- Por fim, envia o email
+      gene0003.pc_solicita_email(pr_cdprogra    => vr_cdprogra
+                                ,pr_des_destino => vr_emaildst
+                                ,pr_des_assunto => 'Critica importacao debito - SICREDI'
+                                ,pr_des_corpo   => vr_texto_email
+                                ,pr_des_anexo   => NULL
+                                ,pr_flg_enviar  => 'N'
+                                ,pr_des_erro    => vr_dscritic);
   END;
   
   -- Fechar handle do arquivo pendente 
@@ -1587,6 +1617,19 @@ EXCEPTION
                              ,pr_cdprogra => vr_cdprogra
                              ,pr_infimsol => pr_infimsol
                              ,pr_stprogra => pr_stprogra);
+                             
+    vr_texto_email := '<b>Abaixo os erros encontrados no processo de importacao do debito SICREDI:</b><br><br>'||
+                        to_char(SYSDATE,'dd/mm/yyyy HH24:MI:SS') || ' --> ' || vr_dscritic;
+
+    -- Por fim, envia o email
+    gene0003.pc_solicita_email(pr_cdprogra    => vr_cdprogra
+                              ,pr_des_destino => vr_emaildst
+                              ,pr_des_assunto => 'Critica importacao debito - SICREDI'
+                              ,pr_des_corpo   => vr_texto_email
+                              ,pr_des_anexo   => NULL
+                              ,pr_flg_enviar  => 'N'
+                              ,pr_des_erro    => vr_dscritic);                         
+                             
     -- Efetuar commit pois gravaremos o que foi processo até então
     COMMIT;
   WHEN vr_exc_saida THEN
@@ -1595,9 +1638,23 @@ EXCEPTION
       -- Buscar a descrição
       vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
     END IF;
-    -- Devolvemos código e critica encontradas
+                              
+    -- Devolvemos código e critica encontradas    
     pr_cdcritic := NVL(vr_cdcritic,0);
     pr_dscritic := vr_dscritic;
+    
+    vr_texto_email := '<b>Abaixo os erros encontrados no processo de importacao do debito SICREDI:</b><br><br>'||
+                      to_char(SYSDATE,'dd/mm/yyyy HH24:MI:SS') || ' --> ' || vr_dscritic;
+
+    -- Por fim, envia o email
+    gene0003.pc_solicita_email(pr_cdprogra    => vr_cdprogra
+                              ,pr_des_destino => vr_emaildst
+                              ,pr_des_assunto => 'Critica importacao debito - SICREDI'
+                              ,pr_des_corpo   => vr_texto_email
+                              ,pr_des_anexo   => NULL
+                              ,pr_flg_enviar  => 'N'
+                              ,pr_des_erro    => vr_dscritic);     
+                                 
     -- Efetuar rollback
     ROLLBACK;
   WHEN OTHERS THEN
