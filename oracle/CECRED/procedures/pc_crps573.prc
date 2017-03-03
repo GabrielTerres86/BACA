@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Guilherme
-       Data    : Agosto/2010                       Ultima atualizacao: 06/01/2017
+       Data    : Agosto/2010                       Ultima atualizacao: 24/02/2017
 
        Dados referentes ao programa:
 
@@ -295,8 +295,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                  cadastradas com rendimento igual a 0.01 estavam sendo enviadas com código de porte igual
                                  a 2 - ATÉ 1 SALÁRIO MÍNIMO. (Renato Darosci - Supero)
                                  
-                    06/01/2016 - Ajuste para desprezar contas migradas da Transulcred para Transpocred antes da incorporação.
+                    06/01/2017 - Ajuste para desprezar contas migradas da Transulcred para Transpocred antes da incorporação.
                                  PRJ342 - Incorporação Transulcred (Odirlei-AMcom)
+
+					24/02/2017 - Ajuste na tratativa do campo Ident, o qual estava verificando campos incorretos para
+					             informar a baixa do gravames (Daniel - Chamado: 615103) 
+
 .............................................................................................................................*/
 
     DECLARE
@@ -639,7 +643,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                  vlmerbem,
                  dschassi,
                  flgbaixa,
-                 flcancel
+                 flcancel,
+                 cdsitgrv,
+                 dtdbaixa,
+                 dtcancel,
+                 dtmvtolt
             FROM crapbpr
            WHERE crapbpr.cdcooper = pr_cdcooper
              AND crapbpr.nrdconta = pr_nrdconta
@@ -2447,15 +2455,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                 -- Somente se encontrar Linha de Credito e a linha for Financiamento (Mod=4)
                 -- e (Sub=01) Aquis de bens – veic automotores
                 IF vr_tab_craplcr.EXISTS(vr_tab_crapepr(vr_ind_epr).cdlcremp) AND vr_tab_craplcr(vr_tab_crapepr(vr_ind_epr).cdlcremp).cdmodali = '04' AND vr_tab_craplcr(vr_tab_crapepr(vr_ind_epr).cdlcremp).cdsubmod = '01' THEN
-                   -- Condicao para verificar se o bem estah baixado ou cancelado
-                   IF rw_crapbpr.flgbaixa = 0 AND rw_crapbpr.flcancel = 0 THEN
-                     -- Informação do Empréstimo
-                     gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
-                                            ,pr_texto_completo => vr_xml_3040_temp
-                                            ,pr_texto_novo     => '            <Inf Tp="0401" Cd="'  
-                                                               || rw_crapbpr.dschassi || '" />' || chr(10));
-                   ELSE
                      
+                   IF (rw_crapbpr.cdsitgrv = 4 AND rw_crapbpr.dtdbaixa <= vr_dtrefere ) OR 
+                      (rw_crapbpr.cdsitgrv = 5 AND rw_crapbpr.dtcancel <= vr_dtrefere) THEN
                      /*********************************************************************************
                      ** Alterado o Ident de 1 para 2 conforme solicitação realizada no chamado 541753
                      ** Renato Darosci - Supero
@@ -2466,6 +2468,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                      gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
                                             ,pr_texto_completo => vr_xml_3040_temp
                                             ,pr_texto_novo     => '            <Inf Tp="0401" Ident="2" />' || chr(10));
+                     
+                   ELSE
+                   
+                     IF rw_crapbpr.dtmvtolt <= vr_dtrefere THEN
+                       -- Informação do Empréstimo
+                       gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                              ,pr_texto_completo => vr_xml_3040_temp
+                                              ,pr_texto_novo     => '            <Inf Tp="0401" Cd="'  
+                                                                 || rw_crapbpr.dschassi || '" />' || chr(10));
+                   END IF;
+                       
+                     
                    END IF;
                 END IF;
               END IF;  
