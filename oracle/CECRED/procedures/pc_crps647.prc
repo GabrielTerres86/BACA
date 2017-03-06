@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autora  : Lucas R.
-  Data    : Setembro/2013                        Ultima atualizacao: 03/03/2017
+  Data    : Setembro/2013                        Ultima atualizacao: 06/03/2017
 
   Dados referentes ao programa:
 
@@ -125,6 +125,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
               
               03/03/2017 - Enviar e-mail para o convenios em caso de gerar algum erro inesperado.
                            (Lucas Ranghetti #622878)
+                           
+              06/03/2017 - Adicionar nvl para os campos nrdaviso e nrboleto ao atualizar
+                           informações de consorcios (Lucas Ranghetti #623432)
    ............................................................................. */
   -- Constantes do programa
   vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'CRPS647';
@@ -475,8 +478,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
         -- Atualizar aviso e boleto 
         BEGIN 
           UPDATE crapcns 
-             SET nrdaviso = SUBSTR(vr_dslinharq,89,11)
-                ,nrboleto = SUBSTR(vr_dslinharq,70,9)
+             SET nrdaviso = nvl(TRIM(SUBSTR(vr_dslinharq,89,11)),0)
+                ,nrboleto = nvl(TRIM(SUBSTR(vr_dslinharq,70,9)),0)
            WHERE rowid = rw_crapcns.rowid;
         EXCEPTION 
           WHEN OTHERS THEN 
