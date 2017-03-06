@@ -311,7 +311,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
   /*---------------------------------------------------------------------------------------------------------------
    Programa : INSS0002
    Autor    : Dionathan
-   Data     : 27/08/2015                        Ultima atualizacao: 25/04/2016
+   Data     : 27/08/2015                        Ultima atualizacao: 06/03/2017
 
    Dados referentes ao programa:
 
@@ -330,6 +330,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                05/09/2016 - SD 490844 - Removido o código que limpava a variável
                             vr_cdlindig quando o agendamento era feito pelo código
                             de barras (procedure pc_gps_agmto_novo). (Carlos)
+                            
+               02/02/2017 - Incluir chamada da procedure pc_insere_movimento_internet para
+                            gravar registro na tabela crapmvi, para somar as movimentacoes
+                            de GPS junto com as outras. (Lucas Ranghetti #556489)
+                            
+               06/03/2017 - Ajustado no cursor da craplgp na procedure pc_gps_agmto_novo para
+                            converter cddidenti para numero antes de realizar a clausula where
+                            pois a autoconversao do oracle nao convertia de forma adequada
+                            (Tiago/Fabricio SD616352).             
   ---------------------------------------------------------------------------------------------------------------*/
 
   --Buscar informacoes de lote
@@ -1809,10 +1818,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
           vr_dsmsglog:= 'Erro ao atualizar LCM.' || pr_nrseqaut;
           RAISE vr_exc_saida;
       END;
+      
+      -- Atualiza o registro de movimento da internet
+      paga0001.pc_insere_movimento_internet(pr_cdcooper => pr_cdcooper
+                                           ,pr_nrdconta => pr_nrdconta
+                                           ,pr_idseqttl => pr_idseqttl
+                                           ,pr_dtmvtolt => rw_craplot.dtmvtolt
+                                           ,pr_cdoperad => vr_cdoperad
+                                           ,pr_inpessoa => rw_crapass.inpessoa
+                                           ,pr_tpoperac => 2 -- Pagamento
+                                           ,pr_vllanmto => pr_vlrtotal
+                                           ,pr_dscritic => pr_dscritic);
+                                           
+       IF TRIM(pr_dscritic) IS NOT NULL THEN
+         RAISE vr_exc_saida;
+       END IF;
 
     END IF;
-
-
 
     -- Gerar cabeçalho do envelope SOAP
     inss0001.pc_gera_cabecalho_soap(pr_idservic => 5 -- idservic
@@ -2628,7 +2650,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
            AND craplgp.cdagenci  = p_cdagenci
            AND craplgp.cdbccxlt  = 100    /* Fixo */
            AND craplgp.nrdolote  = p_nrdolote
-           AND craplgp.cdidenti2 = p_cdidenti
+           AND craplgp.cdidenti2 = TO_NUMBER(p_cdidenti)
            AND craplgp.mmaacomp  = to_number(p_dtcompet)
            AND craplgp.vlrtotal  = p_vlrtotal
            AND craplgp.cddpagto  = p_cddpagto

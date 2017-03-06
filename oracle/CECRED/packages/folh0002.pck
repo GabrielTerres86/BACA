@@ -5001,7 +5001,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
     Sistema  : Ayllos Web
     Sigla    : FOLH
     Autor    : Andre Santos - SUPERO
-    Data     : Julho/2015.                      Ultima atualizacao: 31/05/2016
+    Data     : Julho/2015.                      Ultima atualizacao: 22/02/2017
 
     Dados referentes ao programa:
 
@@ -5021,6 +5021,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
 			    31/05/2016 - Alteracao para pegar o nome da crapass para colocar
                              na Razao Social do termo. (Jaison/Marcos-Supero)
                 
+                22/02/2016 - Realizado ajuste para para trazer a razao social ao inves
+                             do nome resumido, conforme solicitado no chamado 590014. (Kelvin)
     ............................................................................. */
 
      -- Seleciona os dados da Cooperativa
@@ -5353,7 +5355,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                 RAISE vr_exc_saida;
              END IF;
              pc_escreve_xml('<assinatura>
-                               <nmextemp>'||rw_crapemp.nmresemp||'</nmextemp>
+                               <nmextemp>'||rw_crapemp.nmprimtl||'</nmextemp>
                                <nmprimtl>'||rw_crapass.nmprimtl||'</nmprimtl>
                              </assinatura>');
              -- fechar o cursor
@@ -5366,7 +5368,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
          -- Verifica a lista de associados para assinatura
          pc_escreve_xml('<assinaturas>');
          pc_escreve_xml('<assinatura>
-                           <nmextemp>'||rw_crapemp.nmresemp||'</nmextemp>
+                           <nmextemp>'||rw_crapemp.nmprimtl||'</nmextemp>
                          </assinatura>');
          pc_escreve_xml('</assinaturas>');
 

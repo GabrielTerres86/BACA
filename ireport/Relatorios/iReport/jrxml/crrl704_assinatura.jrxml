@@ -35,14 +35,14 @@
 				<text><![CDATA[________________________________]]></text>
 			</staticText>
 			<textField>
-				<reportElement uuid="698a867e-6120-4682-9ff4-3dc2f10858a5" x="118" y="16" width="100" height="8"/>
+				<reportElement uuid="698a867e-6120-4682-9ff4-3dc2f10858a5" x="22" y="16" width="290" height="8"/>
 				<textElement textAlignment="Center">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{nmextemp}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement uuid="73b1068a-54dd-4b15-9457-f6b6c75cf03e" x="118" y="24" width="100" height="8"/>
+				<reportElement uuid="73b1068a-54dd-4b15-9457-f6b6c75cf03e" x="22" y="24" width="290" height="8"/>
 				<textElement textAlignment="Center">
 					<font fontName="Courier New" size="7"/>
 				</textElement>

@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego   
-   Data    : Outubro/2006                     Ultima Atualizacao: 30/11/2016
+   Data    : Outubro/2006                     Ultima Atualizacao: 15/02/2017
 
    Dados referentes ao programa:
 
@@ -77,6 +77,9 @@
                            
                30/11/2016 - Alterado campo dsdepart para cddepart.
                             PRJ341 - BANCENJUD (Odirlei-AMcom)
+			  
+			   15/02/2017 - Ajustando o format do campo nrctrcrd nos relatórios que o utilizam.
+			     		    SD 594718 (Kelvin).	
 ............................................................................. */
 
 { includes/var_online.i }
@@ -106,7 +109,7 @@ DEF   VAR tel_qtcartao   AS INTEGER  FORMAT "zzz,zz9"                NO-UNDO.
 DEF   VAR tel_qtcancel   AS INTEGER  FORMAT "zzz,zz9"                NO-UNDO.
 DEF   VAR tel_qtdemuso   AS INTEGER  FORMAT "zzz,zz9"                NO-UNDO.
 DEF   VAR tel_qtdsolic   AS INTEGER  FORMAT "zzz,zz9"                NO-UNDO.
-DEF   VAR tel_nrctrcrd   AS INTEGER  FORMAT "zzz,zz9"                NO-UNDO.
+DEF   VAR tel_nrctrcrd   AS INTEGER  FORMAT "zzz,zzz,zz9"            NO-UNDO.
 DEF   VAR tel_cdadmcrd   LIKE crawcrd.cdadmcrd                       NO-UNDO.
 DEF   VAR tel_nrcrcard   LIKE crawcrd.nrcrcard                       NO-UNDO.
 DEF   VAR tel_nrcrdnov   LIKE crapcrd.nrcrcard                       NO-UNDO.
