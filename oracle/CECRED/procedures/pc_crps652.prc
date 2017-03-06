@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : CYBER - GERACAO DE ARQUIVO
    Sigla   : CRED
    Autor   : Lucas Reinert
-   Data    : AGOSTO/2013                      Ultima atualizacao: 06/01/2017
+   Data    : AGOSTO/2013                      Ultima atualizacao: 06/03/2017
 
    Dados referentes ao programa:
 
@@ -177,6 +177,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                            
                06/01/2017 - Ajuste no hint da craplcm, retirar espaço entre o index. 
                 Voltar a flgativo nos cursor da cooperativas.(Oscar)            
+                
+               06/03/2017 - Ajuste no hint cr_valor_pago_emprestimo mover para baixo
+               do primeiro union. (Oscar)
                            
      ............................................................................. */
 
@@ -496,8 +499,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                                        ,pr_nrdconta  IN crapcyb.nrdconta%type
                                        ,pr_nrctremp  IN crapcyb.nrctremp%type
                                        ,pr_dtmvtolt  IN crapdat.dtmvtolt%type) IS
-         SELECT /*+ index(craplcm CRAPLCM##CRAPLCM2) */
-               SUM(craplem.vllanmto) vllanmto
+         SELECT SUM(craplem.vllanmto) vllanmto
                ,craplem.cdhistor
                ,craphis.dshistor
            FROM craplem, craphis
@@ -511,7 +513,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
          GROUP BY craplem.cdhistor,craphis.dshistor
          --Melhoria 155
          UNION
-         SELECT SUM(craplcm.vllanmto) vllanmto
+         SELECT /*+ index(craplcm CRAPLCM##CRAPLCM2) */ 
+               SUM(craplcm.vllanmto) vllanmto
                ,craplcm.cdhistor
                ,craphis.dshistor
            FROM craplcm, craphis, crapepr
