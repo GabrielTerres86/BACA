@@ -2,7 +2,7 @@
 
     Programa  : sistema/generico/procedures/b1wgen0137.p
     Autor     : Guilherme
-    Data      : Abril/2012                      Ultima Atualizacao: 03/03/2017
+    Data      : Abril/2012                      Ultima Atualizacao: 25/10/2016
     
     Dados referentes ao programa:
 
@@ -297,16 +297,11 @@
                 14/10/2016 - Descontinuar batimento do 620_credito para todas as cooperativas 
                              (Lucas Ranghetti #510032)
 
-	              25/10/2016 - Inserido LICENCAS SOCIO AMBIENTAIS no digidoc 
-				                     Melhoria 310 (Tiago/Thiago).
+	            25/10/2016 - Inserido LICENCAS SOCIO AMBIENTAIS no digidoc 
+				             Melhoria 310 (Tiago/Thiago).
 
-			          11/11/2016 - Alterado titulo relatorio de Lic. Soc.Ambiental
-				                     para Lic. Soc.Ambientais M310(Tiago/Thiago).
-                             
-                03/03/2017 - Na procedure retorna_docs_liberados foi adicionado leitura
-                             da crapneg onde vamos buscar os cheques baixados através da tela
-                             MANCCF (Lucas Ranghetti #611593)
-                     
+			    11/11/2016 - Alterado titulo relatorio de Lic. Soc.Ambiental
+				             para Lic. Soc.Ambientais M310(Tiago/Thiago).
 .............................................................................*/
 
 
@@ -1250,7 +1245,7 @@ PROCEDURE efetua_batimento_ged_cadastro:
          tt-contr_ndigi_cadastro.tpdocctc  FORMAT "x(14)"      COLUMN-LABEL "  Cta. CNPJ   "
          tt-contr_ndigi_cadastro.tpdocidp  FORMAT "x(15)"      COLUMN-LABEL "Doc. Ident - PJ"
          tt-contr_ndigi_cadastro.tpdocdfi  FORMAT "x(14)"      COLUMN-LABEL " Demons. Finan"
-		     tt-contr_ndigi_cadastro.tpdoclic  FORMAT "x(18)"      COLUMN-LABEL "Lic. Socioambientais"
+		 tt-contr_ndigi_cadastro.tpdoclic  FORMAT "x(18)"      COLUMN-LABEL "Lic. Socioambientais"
          tt-contr_ndigi_cadastro.idseqttl  FORMAT "99"         COLUMN-LABEL "   Titular   "
          tt-contr_ndigi_cadastro.dtmvtolt  FORMAT "99/99/9999" COLUMN-LABEL "    Data    "
          WITH DOWN WIDTH 234 CENTERED FRAME f_contr_2.
@@ -4629,7 +4624,7 @@ PROCEDURE retorna_docs_liberados:
      88 - Contrato de bordero de tutulos
      89 - Contrato de emprestimo/financiamento
      102 - Aditivo de contrato de emprestimo
-     132 - Cadastro de Cheques sem Fundo (Aguardando Fabricio com o Numero que a selbetti ira nos passar)
+     
     *************************************************************/
 
     /* o programa inicia ok */
@@ -4639,7 +4634,7 @@ PROCEDURE retorna_docs_liberados:
 
         /* Validar a chave de acesso e tipos de documentos */
         IF  par_key <> "Ck3tBzyhxp8dWzq" OR 
-            NOT CAN-DO("84,85,86,87,88,89,102,132",STRING(par_tpdocmto)) THEN
+            NOT CAN-DO("84,85,86,87,88,89,102",STRING(par_tpdocmto)) THEN
             DO:
                 aux_flgok = FALSE.
                 LEAVE.
@@ -4848,43 +4843,6 @@ PROCEDURE retorna_docs_liberados:
         
                 END.
             END.
-            
-        /* Cheque sem fundo(CCF) */
-        IF  par_tpdocmto = 132 THEN
-            DO:
-                FOR EACH crapneg WHERE crapneg.cdcooper = par_cdcooper
-                                   AND crapneg.dtimpreg = par_dtlibera
-                                   NO-LOCK:
-                    
-                    FIND FIRST crapope WHERE crapope.cdcooper = crapneg.cdcooper AND
-                                             crapope.cdoperad = crapneg.cdopeimp
-                                             NO-LOCK NO-ERROR.    
-                    
-                    FIND FIRST crapass WHERE crapass.cdcooper = crapneg.cdcooper 
-                                         AND crapass.nrdconta = crapneg.nrdconta
-                                         NO-LOCK NO-ERROR.
-                    
-                    CREATE tt-documentos-liberados.
-                    ASSIGN tt-documentos-liberados.tpdocmto = 132
-                           tt-documentos-liberados.nrdconta = crapneg.nrdconta
-                           tt-documentos-liberados.cdcooper = crapneg.cdcooper
-                           tt-documentos-liberados.cdagenci = crapope.cdpactra 
-                                                                WHEN AVAIL crapope
-                           tt-documentos-liberados.nrctrato = 0
-                           tt-documentos-liberados.nrborder = 0
-                           tt-documentos-liberados.nraditiv = 0
-                           tt-documentos-liberados.dtlibera = crapneg.dtimpreg
-                           tt-documentos-liberados.vllanmto = 0
-                           tt-documentos-liberados.cdoperad = crapneg.cdopeimp
-                           tt-documentos-liberados.nmprimtl = crapass.nmprimtl
-                                                                WHEN AVAIL crapass
-                           tt-documentos-liberados.nrcheque = crapneg.nrdocmto.
-                           
-                    
-                END.
-               
-            END.
-            
         LEAVE. 
     END. /* Fim do DO WHILE */
 
