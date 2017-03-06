@@ -9,7 +9,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Marco/96.                       Ultima atualizacao: 16/05/2016
+   Data    : Marco/96.                       Ultima atualizacao: 06/03/2017
 
    Dados referentes ao programa:
 
@@ -219,6 +219,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
                             Projeto de Tarifas-218(Lombardi)
              
                16/05/2016 - Alteracao para chamar a nova pc_leitura_lem_car. (Jaison/James)
+
+               06/03/2017 - Regra para gerar lançamento do histórico 622 deve ser a mesma
+                            utilizada para gerar o lançamento do histórico 2.(AJFink-SD#622251)
 
   ............................................................................. */
   
@@ -2073,8 +2076,10 @@ BEGIN
         -- Apenas Fecha Cursor
         CLOSE cr_craplot;
           
-        IF rw_crawepr.qtdialib > 0 THEN
-                         
+        --IF  rw_crawepr.qtdialib > 0 THEN SD#622251
+        IF (rw_crawepr.qtdialib > 0 AND rw_crawepr.tpemprst = 0) OR 
+           (rw_crawepr.dtlibera > rw_crapdat.dtmvtolt AND rw_crawepr.tpemprst = 1) THEN
+
           -- Gera Credito Liq.Emprestimo + CPMF
           -- Calcula cpmf saldo devedor
 
