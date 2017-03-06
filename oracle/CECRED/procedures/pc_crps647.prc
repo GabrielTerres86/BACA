@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autora  : Lucas R.
-  Data    : Setembro/2013                        Ultima atualizacao: 14/02/2017
+  Data    : Setembro/2013                        Ultima atualizacao: 23/02/2017
 
   Dados referentes ao programa:
 
@@ -126,6 +126,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
               14/02/2017 - Incluir validacao para critica 502 para caso o sicredi nos
                            envie agendamento de debito com o valor zerado 
                            (Lucas Ranghetti #604860)
+                           
+              23/02/2017 - Retirado caracteres especiais na hora de exibir as 
+                           criticas no relatorio 673 (Tiago/Fabricio #616085)
    ............................................................................. */
   -- Constantes do programa
   vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'CRPS647';
@@ -514,10 +517,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
       -- 502 - Conta nao emitida.
       IF vr_vllanmto = 0 THEN
         pr_cdcritic := 502;     
-    END IF;
+      END IF;
     END IF;
     -- Se encontrarmos critica, somente gerar NDB no tipo de registro E
-    IF pr_cdcritic > 0 AND vr_tpregist = 'E' THEN 
+    IF pr_cdcritic > 0 AND vr_tpregist = 'E' THEN
       
       IF pr_cdcritic = 502 THEN
         vr_critiarq := '96'; -- 96 - Manutenção do Cadastro
@@ -1493,7 +1496,8 @@ BEGIN
                                        ' cdrefere="'||vr_tab_relato_673(vr_idx_relato).cdrefere||'" '||
                                        ' vlparcns="'||TO_CHAR(vr_tab_relato_673(vr_idx_relato).vlparcns,'fm999g999g999g990d00')||'" '||
                                        ' dtdebito="'||TO_CHAR(vr_tab_relato_673(vr_idx_relato).dtdebito,'dd/mm/rrrr')||'" '||
-                                       ' dscritic="'||SUBSTR(vr_tab_relato_673(vr_idx_relato).dscritic,1,35)||'"/>');
+                                       ' dscritic="'||gene0007.fn_caract_acento(pr_texto => SUBSTR(vr_tab_relato_673(vr_idx_relato).dscritic,1,35)
+                                                                               ,pr_insubsti => 1)||'"/>');
       -- Acumular recebidos 
       vr_tot_qtdreceb := vr_tot_qtdreceb + 1;
       vr_tot_vlparceb := vr_tot_vlparceb + nvl(vr_tab_relato_673(vr_idx_relato).vlparcns,0);
