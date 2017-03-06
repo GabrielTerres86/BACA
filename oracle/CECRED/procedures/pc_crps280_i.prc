@@ -333,7 +333,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                  22/12/2016 - Alteracoes para melhorar a performance deste programa. SD 573847.
                               (Carlos R. Tanholi)
                               
-                 22/02/2017 - Ajustes referente ao Prj.307 Automatização Arquivos Contábeis Ayllos (Jonatas-Supero)                                                            
+                 22/02/2017 - Ajustes referente ao Prj.307 Automatização Arquivos Contábeis Ayllos 
+                              Inclusão de informações no crrl227 e criçãode novos arquivos para o
+                              Radar e Matera (Jonatas-Supero)                                                            
   ............................................................................. */
 
    DECLARE
