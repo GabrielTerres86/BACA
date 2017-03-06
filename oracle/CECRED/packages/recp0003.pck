@@ -28,7 +28,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
   --  Sistema  : Rotinas referentes a importacao de arquivos CYBER de acordos de emprestimos
   --  Sigla    : RECP
   --  Autor    : Jean Michel Deschamps
-  --  Data     : Outubro/2016.                   Ultima atualizacao: 22/02/2017
+  --  Data     : Outubro/2016.                   Ultima atualizacao: 06/03/2017
   --
   -- Dados referentes ao programa:
   --
@@ -38,7 +38,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
   -- Alteracoes: 20/02/2017 - Alteracao para colocar msgs do log de JOB. (Jaison/James)
   --
   --             22/02/2017 - Alteracao para passar pr_nrparcel como zero. (Jaison/James)
-  -- 
+  --
+  --             06/03/2017 - Foi passado o UPDATE crapcyc para dentro do LOOP. (Jaison/James)
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   vr_flgerlog BOOLEAN := FALSE;
@@ -1185,7 +1187,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                         vr_vllancam := NVL(vr_vllancam,0) + NVL(vr_vltotpag,0);
                       END IF;
                       
-                    END IF; 
+                    END IF;
+
+                   BEGIN
+                     UPDATE crapcyc 
+                        SET flgehvip = 0
+                          , cdmotcin = 0
+                          , dtaltera = vr_tab_crapdat(rw_crapcyb.cdcooper).dtmvtolt
+                      WHERE cdcooper = rw_crapcyb.cdcooper
+                        AND cdorigem = DECODE(rw_crapcyb.cdorigem,2,3,rw_crapcyb.cdorigem)
+                        AND nrdconta = rw_crapcyb.nrdconta
+                        AND nrctremp = rw_crapcyb.nrctremp;
+                   EXCEPTION
+                     WHEN OTHERS THEN
+                       vr_dscritic := 'Erro ao atualizar CRAPCYC: '||SQLERRM;
+                       -- Envio centralizado de log de erro
+                       BTCH0001.pc_gera_log_batch(pr_cdcooper    => vr_cdcooper,
+                                                  pr_ind_tipo_log => 2, -- Erro tratato
+                                                  pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Arquivo: ' || vr_nmarqtxt
+                                                                      || ' Erro:' || vr_dscritic);
+                       pr_flgemail := TRUE;
+                       CONTINUE;
+                   END;
 
                  END LOOP;
                  
@@ -1241,28 +1264,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                     END IF;
 
                  END IF;
-                 
-                 BEGIN
-                   UPDATE crapcyc 
-                      SET flgehvip = 0
-                        , cdmotcin = 0
-                        , dtaltera = vr_tab_crapdat(rw_crapcyb.cdcooper).dtmvtolt
-                    WHERE cdcooper = rw_crapcyb.cdcooper
-                      AND cdorigem = DECODE(rw_crapcyb.cdorigem,2,3,rw_crapcyb.cdorigem)
-                      AND nrdconta = rw_crapcyb.nrdconta
-                      AND nrctremp = rw_crapcyb.nrctremp;
-                 EXCEPTION
-                   WHEN OTHERS THEN
-                     vr_dscritic := 'Erro ao atualizar CRAPCYC: '||SQLERRM;
-                     -- Envio centralizado de log de erro
-                     BTCH0001.pc_gera_log_batch(pr_cdcooper    => vr_cdcooper,
-                                                pr_ind_tipo_log => 2, -- Erro tratato
-                                                pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Arquivo: ' || vr_nmarqtxt
-                                                                    || ' Erro:' || vr_dscritic);
-                     ROLLBACK TO SAVE_ACORDO_QUITADO;
-                     pr_flgemail := TRUE;
-                     EXIT LEITURA_TXT;
-                 END;
 
                  -- Verificar se sera necessario efetuar o lancamento de ajuste
                  IF vr_vllancam - rw_nracordo.vlbloqueado > 0 THEN
