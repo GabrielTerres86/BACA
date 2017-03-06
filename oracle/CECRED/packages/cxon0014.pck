@@ -3699,7 +3699,7 @@ END pc_gera_titulos_iptu_prog;
         END IF;
         --Marcar para criticar a data
         pr_critica_data:= TRUE;
-        
+
         -- Verificacao de agendamento de pagamento
         -- Carregar informacao de PAGADOR VIP
         vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cod_cooper
@@ -3715,40 +3715,40 @@ END pc_gera_titulos_iptu_prog;
           pr_critica_data:= FALSE;
         ELSE
           
-          /** Aceita agendamento de titulo com vencimento no ultimo dia **/
-          /** util do ano somente no primeiro dia util do proximo ano   **/
-          /** Exemplo: VENCIMENTO 31/12/2009 - AGENDAMENTO - 04/01/2010 **/
+        /** Aceita agendamento de titulo com vencimento no ultimo dia **/
+        /** util do ano somente no primeiro dia util do proximo ano   **/
+        /** Exemplo: VENCIMENTO 31/12/2009 - AGENDAMENTO - 04/01/2010 **/
 
-          IF to_number(To_Char(pr_dt_agendamento,'YYYY')) -
-             To_Number(to_char(pr_dt_vencto,'YYYY')) = 1  THEN
-            --Montar o dia util
-            vr_dt_dia_util:= TO_DATE('01/01/'||To_Char(pr_dt_agendamento,'YYYY'),'DD/MM/YYYY');
-            --Verficar se eh dia util
-            vr_dt_dia_util:= GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cod_cooper
-                                                        ,pr_dtmvtolt => vr_dt_dia_util
-                                                        ,pr_tipo     => 'P');
-            --Se data agendamento igual ao dia util encontrado
-            IF pr_dt_agendamento = vr_dt_dia_util THEN
-              --Data dia util
-              vr_dt_dia_util:= TO_DATE('31/12/'||to_char(pr_dt_vencto,'YYYY'),'DD/MM/YYYY');
-              /** Se dia 31/12 for segunda-feira obtem data do sabado **/
-              /** para aceitar vencidos do ultimo final de semana     **/
-              IF To_Number(to_char(vr_dt_dia_util,'D')) = 2  THEN
-                vr_dt_dia_util:= TO_DATE('29/12/'||to_char(pr_dt_vencto,'YYYY'),'DD/MM/YYYY');
-              ELSIF To_Number(to_char(vr_dt_dia_util,'D')) = 1  THEN
-                /** Se dia 31/12 for domingo, o ultimo dia util e 29/12 **/
-                vr_dt_dia_util:= TO_DATE('29/12/'||to_char(pr_dt_vencto,'YYYY'),'DD/MM/YYYY');
-              ELSIF To_Number(to_char(vr_dt_dia_util,'D')) = 7  THEN
-                /** Se dia 31/12 for sabado, o ultimo dia util e 30/12 **/
-                vr_dt_dia_util:= TO_DATE('30/12/'||to_char(pr_dt_vencto,'YYYY'),'DD/MM/YYYY');
-              END IF;
-              /** Verifica se pode aceitar o titulo vencido **/
-              IF  pr_dt_vencto >= vr_dt_dia_util THEN
-                --Retorna false
-                pr_critica_data:= FALSE;
-              END IF;
+        IF to_number(To_Char(pr_dt_agendamento,'YYYY')) -
+           To_Number(to_char(pr_dt_vencto,'YYYY')) = 1  THEN
+          --Montar o dia util
+          vr_dt_dia_util:= TO_DATE('01/01/'||To_Char(pr_dt_agendamento,'YYYY'),'DD/MM/YYYY');
+          --Verficar se eh dia util
+          vr_dt_dia_util:= GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cod_cooper
+                                                      ,pr_dtmvtolt => vr_dt_dia_util
+                                                      ,pr_tipo     => 'P');
+          --Se data agendamento igual ao dia util encontrado
+          IF pr_dt_agendamento = vr_dt_dia_util THEN
+            --Data dia util
+            vr_dt_dia_util:= TO_DATE('31/12/'||to_char(pr_dt_vencto,'YYYY'),'DD/MM/YYYY');
+            /** Se dia 31/12 for segunda-feira obtem data do sabado **/
+            /** para aceitar vencidos do ultimo final de semana     **/
+            IF To_Number(to_char(vr_dt_dia_util,'D')) = 2  THEN
+              vr_dt_dia_util:= TO_DATE('29/12/'||to_char(pr_dt_vencto,'YYYY'),'DD/MM/YYYY');
+            ELSIF To_Number(to_char(vr_dt_dia_util,'D')) = 1  THEN
+              /** Se dia 31/12 for domingo, o ultimo dia util e 29/12 **/
+              vr_dt_dia_util:= TO_DATE('29/12/'||to_char(pr_dt_vencto,'YYYY'),'DD/MM/YYYY');
+            ELSIF To_Number(to_char(vr_dt_dia_util,'D')) = 7  THEN
+              /** Se dia 31/12 for sabado, o ultimo dia util e 30/12 **/
+              vr_dt_dia_util:= TO_DATE('30/12/'||to_char(pr_dt_vencto,'YYYY'),'DD/MM/YYYY');
+            END IF;
+            /** Verifica se pode aceitar o titulo vencido **/
+            IF  pr_dt_vencto >= vr_dt_dia_util THEN
+              --Retorna false
+              pr_critica_data:= FALSE;
             END IF;
           END IF;
+        END IF;
         END IF; -- PAGADOR VIP
       END IF;
     EXCEPTION
@@ -10534,12 +10534,12 @@ END pc_gera_titulos_iptu_prog;
                                       ,pr_des_erro      OUT VARCHAR2  -- Indicador erro OK/NOK   
                                       ,pr_dscritic      OUT VARCHAR2) IS --Descricao do erro
     /* ..........................................................................
-	
+      
 	  Programa : pc_retorna_vlr_tit_vencto
 	  Sistema  : Conta-Corrente - Cooperativa de Credito
 	  Sigla    : CRED
 	  Autor    : Kelvin Souza Ott 
-	  Data     : Setembro/2016.                   Ultima atualizacao: 07/02/2017
+	  Data     : Setembro/2016.                   Ultima atualizacao: 22/02/2017
 	
 	  Dados referentes ao programa:
 	
@@ -10556,15 +10556,18 @@ END pc_gera_titulos_iptu_prog;
                                o valor do titulo, caso já exista no Ayllos, devolve o valor, caso
                                contrário deverá devolver o valor que está no código de barras
                                (Douglas - Chamado 575078)
-
+    
                   07/02/2017 - Ajustado a query para verificar se o boleto existe no sistema.
                                (Douglas - Chamado 602954)
 
+                  22/02/2017 - Adicionado o calculo do valor do desconto do boleto.
+                               Nao estava sendo calculado para exibir em tela
+                               (Douglas - Chamado 611514)
     ...........................................................................*/      
-    --Selecionar informacoes cobranca
+     --Selecionar informacoes cobranca
     CURSOR cr_crapcob (pr_nrcnvcob IN crapcob.nrcnvcob%type
-                      ,pr_nrdconta IN crapcob.nrdconta%type
-                      ,pr_nrdocmto IN crapcob.nrdocmto%type
+                       ,pr_nrdconta IN crapcob.nrdconta%type
+                       ,pr_nrdocmto IN crapcob.nrdocmto%type
                       ,pr_cdbandoc IN crapcob.cdbandoc%type) IS
       SELECT crapcob.cdcooper,
              crapcob.nrdconta,
@@ -10589,7 +10592,7 @@ END pc_gera_titulos_iptu_prog;
          AND crapcob.nrdocmto = pr_nrdocmto
          AND crapcob.nrdctabb = crapcco.nrdctabb + 0
          AND crapcob.cdbandoc = pr_cdbandoc;
-    rw_crapcob cr_crapcob%ROWTYPE;
+     rw_crapcob cr_crapcob%ROWTYPE;
      
     vr_de_valor_calc  VARCHAR2(100);
     vr_flg_zeros      BOOLEAN;
@@ -10770,25 +10773,25 @@ END pc_gera_titulos_iptu_prog;
     END IF;
 
     /* Verifica se conv boleto eh de cobranca 085 */
-    --Selecionar informacoes cobranca
+      --Selecionar informacoes cobranca
     OPEN cr_crapcob (pr_nrcnvcob => to_number(SUBSTR(vr_codigo_barras, 20, 06))
                     ,pr_nrdconta => to_number(SUBSTR(vr_codigo_barras, 26, 08))
                     ,pr_nrdocmto => to_number(SUBSTR(vr_codigo_barras, 34, 09))
                     ,pr_cdbandoc => to_number(SUBSTR(vr_codigo_barras, 01, 03)));
-
-    --Posicionar no proximo registro
-    FETCH cr_crapcob INTO rw_crapcob;
-    --Se nao encontrar
+                        
+      --Posicionar no proximo registro
+      FETCH cr_crapcob INTO rw_crapcob;
+      --Se nao encontrar
     IF cr_crapcob%FOUND THEN
-      --Titulo Encontrado
-      vr_intitcop := 1;
-    ELSE
-      -- Titulo nao Encontrado
-      vr_intitcop := 0;
+        --Titulo Encontrado
+        vr_intitcop := 1;
+      ELSE
+        -- Titulo nao Encontrado
+        vr_intitcop := 0;
         
-    END IF;
-    --Fechar Cursor
-    CLOSE cr_crapcob;
+      END IF;
+      --Fechar Cursor
+      CLOSE cr_crapcob;
     
     /********************************************************/
     /***********FAZER CALCULO DO VALOR DO TITULO*************/
@@ -10874,6 +10877,14 @@ END pc_gera_titulos_iptu_prog;
                                               ,pr_dscritic =>  vr_dscritic);
 
             
+      ELSE
+        -- se concede apos vencto, ja calculou 
+        IF rw_crapcob.cdmensag <> 2  THEN
+          --Valor Desconto
+          vr_vldescto:= rw_crapcob.vldescto;
+          --Retirar o desconto da fatura
+          vr_vlfatura:= Nvl(vr_vlfatura,0) - vr_vldescto;
+        END IF;
       END IF;
           
     ELSE

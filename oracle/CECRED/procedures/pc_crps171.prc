@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS171 (pr_cdcooper IN crapcop.cdcooper%T
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odair
-       Data    : Outubro/96.                     Ultima atualizacao: 26/09/2016
+       Data    : Outubro/96.                     Ultima atualizacao: 23/02/2017
 
        Dados referentes ao programa:
 
@@ -205,6 +205,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS171 (pr_cdcooper IN crapcop.cdcooper%T
 
                    26/09/2016 - Inclusao de validacao de contrato de acordo,
                                 Prj. 302 (Jean Michel)         
+
+                   23/02/2016 - Incluída verificação de contas e contratos específicos com
+                                bloqueio judicial para não debitar parcelas - AJFink SD#618307
+
     ............................................................................ */
 
     DECLARE
@@ -663,7 +667,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS171 (pr_cdcooper IN crapcop.cdcooper%T
       vr_blqresg_cc VARCHAR2(1);      
 
       -- Parametro de contas que nao podem debitar os emprestimos
-      vr_dsctajud   crapprm.dsvlrprm%TYPE;
+      vr_dsctajud    crapprm.dsvlrprm%TYPE;
+      -- Parametro de contas e contratos específicos que nao podem debitar os emprestimos SD#618307
+      vr_dsctactrjud crapprm.dsvlrprm%TYPE := null;
 
       ----------------- SUBROTINAS INTERNAS --------------------
 
@@ -966,7 +972,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS171 (pr_cdcooper IN crapcop.cdcooper%T
       vr_dsctajud := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
                                                pr_cdcooper => pr_cdcooper,
                                                pr_cdacesso => 'CONTAS_ACAO_JUDICIAL');
-                                                     
+
+      -- Lista de contas e contratos específicos que nao podem debitar os emprestimos (formato="(cta,ctr)") SD#618307
+      vr_dsctactrjud := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                 ,pr_cdcooper => pr_cdcooper
+                                                 ,pr_cdacesso => 'CTA_CTR_ACAO_JUDICIAL');
+
       -- Busca dos empréstimos
       FOR rw_crapepr IN cr_crapepr LOOP
         -- Criar bloco para tratar desvio de fluxo (next record)
@@ -985,7 +996,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS171 (pr_cdcooper IN crapcop.cdcooper%T
           IF INSTR(',' || vr_dsctajud || ',',',' || rw_crapepr.nrdconta || ',') > 0 THEN
             CONTINUE;
           END IF;
-          
+
+          -- Condicao para verificar se permite incluir as linhas parametrizadas SD#618307
+          IF INSTR(replace(vr_dsctactrjud,' '),'('||trim(to_char(rw_crapepr.nrdconta))||','||trim(to_char(rw_crapepr.nrctremp))||')') > 0 THEN
+            CONTINUE;
+          END IF;
+
           /* verificar se existe boleto de contrato em aberto e se pode debitar do cooperado */
           /* 1º) verificar se o parametro está bloqueado para realizar busca de boleto em aberto */
           IF vr_blqresg_cc = 'S' THEN   
