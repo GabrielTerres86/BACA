@@ -311,7 +311,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
   /*---------------------------------------------------------------------------------------------------------------
    Programa : INSS0002
    Autor    : Dionathan
-   Data     : 27/08/2015                        Ultima atualizacao: 02/02/2017
+   Data     : 27/08/2015                        Ultima atualizacao: 06/03/2017
 
    Dados referentes ao programa:
 
@@ -334,6 +334,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                02/02/2017 - Incluir chamada da procedure pc_insere_movimento_internet para
                             gravar registro na tabela crapmvi, para somar as movimentacoes
                             de GPS junto com as outras. (Lucas Ranghetti #556489)
+                            
+               06/03/2017 - Ajustado no cursor da craplgp na procedure pc_gps_agmto_novo para
+                            converter cddidenti para numero antes de realizar a clausula where
+                            pois a autoconversao do oracle nao convertia de forma adequada
+                            (Tiago/Fabricio SD616352).             
   ---------------------------------------------------------------------------------------------------------------*/
 
   --Buscar informacoes de lote
@@ -2645,7 +2650,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
            AND craplgp.cdagenci  = p_cdagenci
            AND craplgp.cdbccxlt  = 100    /* Fixo */
            AND craplgp.nrdolote  = p_nrdolote
-           AND craplgp.cdidenti2 = p_cdidenti
+           AND craplgp.cdidenti2 = TO_NUMBER(p_cdidenti)
            AND craplgp.mmaacomp  = to_number(p_dtcompet)
            AND craplgp.vlrtotal  = p_vlrtotal
            AND craplgp.cddpagto  = p_cddpagto
