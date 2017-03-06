@@ -728,7 +728,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADFRA IS
 
           -- Valida os minutos
           IF vr_hrfim < vr_hrcompara THEN
-            vr_dscritic := 'O horário final deve respeitar os minutos após início.###hrfim###0';
+            vr_dscritic := 'A diferença em minutos entre a hora de inicio e fim não pode ser menor que a quantidade de minutos informada para a retenção.###hrfim###0';
             RAISE vr_exc_erro;
           END IF;
 
