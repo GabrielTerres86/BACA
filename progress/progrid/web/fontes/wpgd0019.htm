@@ -32,6 +32,10 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
                          Projeto 229 - Melhorias OQS (Lombardi)
 						 
 		    03/06/2016 - Retirada a janela de aguade por showMsgAguardo e ajustes (Vanessa)
+
+            06/12/2016 - P341-Automatização BACENJUD - Alterada a validação 
+			             do departamento para que a mesma seja feita através
+						 do código e não da descrição (Renato Darosci)
 -------------------------------------------------------------------------------------->
 <html>
   <head>
@@ -312,6 +316,7 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
       DEF VAR aux_mes          AS CHAR                  NO-UNDO.
       DEF VAR aux_motivos      AS CHAR                  NO-UNDO.
       DEF VAR aux_evento       AS CHAR                  NO-UNDO.
+			DEF VAR aux_contnrseq     AS INTEGER                  NO-UNDO.
       DEF VAR aux_pac          AS CHAR                  NO-UNDO.
       DEF VAR aux_rowid        AS CHAR                  NO-UNDO.
       DEF VAR aux_ttrowid      AS CHAR                  NO-UNDO.
@@ -397,7 +402,7 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
       FIELD qtavaoti LIKE craprap.qtavaoti
       FIELD qtavareg LIKE craprap.qtavareg
       FIELD qtavares LIKE craprap.qtavares.
-
+		  			
       DEF BUFFER crabrap FOR craprap.
 
       ASSIGN aux_selevento = INT(GET-VALUE("aux_selevento")).
@@ -411,9 +416,11 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
       DEFINE VARIABLE aux_lspermis AS CHARACTER.
       DEFINE VARIABLE aux_cdcopope AS INTEGER.
       DEFINE VARIABLE aux_cdoperad AS CHARACTER.
-      
+      DEFINE VARIABLE aux_nrseqdig LIKE crapadp.nrseqdig.
+			
       RUN PermissaoDeAcesso(INPUT 'wpgd0019', OUTPUT IdentificacaoDaSessao, OUTPUT aux_lspermis).
-	  RUN RodaJavaScript("aguarde();").
+			
+			RUN RodaJavaScript("aguarde();").
       /* Marcar primeiro evento selecionado  */
       IF REQUEST_METHOD = "GET" THEN
         DO: 
@@ -511,7 +518,7 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
             
           RUN CriaAgenda.
           
-          IF aux_erro = NO THEN
+          IF aux_erro = NO AND RETURN-VALUE <> "NOK" THEN
             DO:
               FOR EACH  crapagp WHERE crapagp.idevento = gnpapgd.idevento
                                   AND crapagp.cdcooper = gnpapgd.cdcooper
@@ -660,8 +667,45 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
                 DO:
                   IF INT(ENTRY(aux_i,aux_pac)) <> 0 THEN
                     DO:
+											/* AJUSTE PARA FORCAR NRSEQDIG CRAPADP */
+											ASSIGN aux_nrseqdig = NEXT-VALUE(nrseqadp)
+														 aux_contnrseq = 0.
+											agenda:
+											DO WHILE TRUE:
+												IF aux_nrseqdig = 0 OR aux_nrseqdig = ? THEN
+													DO:
+														ASSIGN aux_nrseqdig = NEXT-VALUE(nrseqadp).
+                            IF aux_nrseqdig = 0 OR aux_nrseqdig = ? THEN
+                              DO:
+                                ASSIGN aux_nrseqdig = NEXT-VALUE(nrseqadp).
+                                leave agenda.
+                              END.
+                            ELSE
+                              LEAVE agenda.
+                            
+                          END.
+                        ELSE
+                          DO:
+                            IF aux_contnrseq = 10 AND (aux_nrseqdig = 0 OR aux_nrseqdig = ?) THEN
+                                DO:
+                                  MESSAGE "ERRO AO GERAR AGENDA. NRSEQDIG NAO TEM VALOR, VERIFICAR A SEQUENCE. JMD". /* MENSAGEM PARA TESTE */
+                                  ASSIGN aux_msgderro = 'Erro ao gerar agenda.'
+                                         aux_erro = NO.
+                                  RUN RodaJavaScript("alert('" + aux_msgderro + "')").
+                                  RETURN "NOK".
+                                END.
+                            ELSE IF aux_nrseqdig <> 0 AND aux_nrseqdig <> ? THEN	
+                              LEAVE agenda.      
+                          END.
+												
+                          
+												ASSIGN aux_contnrseq = aux_contnrseq + 1.
+												
+											END.
+											/* FIM AJUSTE PARA FORCAR NRSEQDIG CRAPADP */
+											
                       CREATE crapadp.
-                      ASSIGN crapadp.nrseqdig  = NEXT-VALUE(nrseqadp)
+                      ASSIGN crapadp.nrseqdig  = aux_nrseqdig
                              crapadp.idevento  = gnpapgd.idevento
                              crapadp.cdcooper  = gnpapgd.cdcooper
                              crapadp.dtanoage  = gnpapgd.dtanonov 
@@ -795,9 +839,46 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
                              and crapsde.dtanoage = gnpapgd.dtanonov
                              and crapsde.cdevento = crapedp.cdevento
                              and crapsde.cdagenci = crapagp.cdagenci NO-LOCK:
-						 
+						
+						/* AJUSTE PARA FORCAR NRSEQDIG CRAPADP */
+            ASSIGN aux_nrseqdig = NEXT-VALUE(nrseqadp)
+                   aux_contnrseq = 0.
+            agenda:
+            DO WHILE TRUE:
+              IF aux_nrseqdig = 0 OR aux_nrseqdig = ? THEN
+                DO:
+                  ASSIGN aux_nrseqdig = NEXT-VALUE(nrseqadp).
+                  IF aux_nrseqdig = 0 OR aux_nrseqdig = ? THEN
+                    DO:
+                      ASSIGN aux_nrseqdig = NEXT-VALUE(nrseqadp).
+                      leave agenda.
+                    END.
+                  ELSE
+                    LEAVE agenda.
+                  
+                END.
+              ELSE
+                DO:
+                  IF aux_contnrseq = 10 AND (aux_nrseqdig = 0 OR aux_nrseqdig = ?) THEN
+                      DO:
+                        MESSAGE "ERRO AO GERAR AGENDA. NRSEQDIG NAO TEM VALOR, VERIFICAR A SEQUENCE. JMD". /* MENSAGEM PARA TESTE */
+                        ASSIGN aux_msgderro = 'Erro ao gerar agenda.'
+                               aux_erro = NO.
+                        RUN RodaJavaScript("alert('" + aux_msgderro + "')").
+                        RETURN "NOK".
+                      END.
+                  ELSE IF aux_nrseqdig <> 0 AND aux_nrseqdig <> ? THEN	
+                    LEAVE agenda.      
+                END.
+              
+                
+              ASSIGN aux_contnrseq = aux_contnrseq + 1.
+              
+            END.
+            /* FIM AJUSTE PARA FORCAR NRSEQDIG CRAPADP */
+						
             CREATE crapadp.
-            ASSIGN crapadp.nrseqdig = NEXT-VALUE(nrseqadp)
+            ASSIGN crapadp.nrseqdig = aux_nrseqdig
                    crapadp.idevento = gnpapgd.idevento
                    crapadp.cdcooper = gnpapgd.cdcooper
                    crapadp.dtanoage = gnpapgd.dtanonov 
@@ -956,7 +1037,7 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
                                 /* Implementa a segurança por Cooperativa */
                                 IF gnapses.nvoperad <> 0 AND
                                    gnapses.cdcooper <> crapcop.cdcooper AND
-                                   (AVAIL crapope AND crapope.dsdepart <> "TI") THEN 
+                                   (AVAIL crapope AND crapope.cddepart <> 20) THEN    /* "TI" */ 
                                   NEXT.
                                   
                                 IF aux_cdcooper = crapcop.cdcooper THEN

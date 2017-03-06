@@ -18,7 +18,12 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
             08/03/2016 - Alterado para que os eventos do tipo EAD 
                          e EAD Assemblear não sejam apresentados.
                          Projeto 229 - Melhorias OQS (Lombardi)
-...............................................................................*/
+
+			09/11/2016 - inclusao de LOG. (Jean Michel)
+
+......................................................................... */
+
+{ sistema/generico/includes/var_log_progrid.i }
 
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -874,6 +879,9 @@ IF ab_unmap.aux_dtanoage <> "" THEN
    ASSIGN dataInicial = DATE(01,01,INTEGER(ab_unmap.aux_dtanoage))
           dataFinal   = DATE(12,31,INTEGER(ab_unmap.aux_dtanoage)).
 
+RUN insere_log_progrid("WPGD0038.w",STRING(opcao) + "|" + STRING(ab_unmap.aux_idevento) + "|" +
+					  STRING(ab_unmap.aux_dtanoage) + "|" + STRING(ab_unmap.cdagenci) + "|" +
+					  STRING(ab_unmap.aux_tpevento) + "|" + STRING(ab_unmap.cdcooper)).
 
 /* método POST */
 IF REQUEST_METHOD = "POST":U THEN 
