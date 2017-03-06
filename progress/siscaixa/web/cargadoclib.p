@@ -3,12 +3,13 @@
 
     Programa: cargadoclib.p
     Autor   : Lucas Ranghetti
-    Data    : Junho/2015                         Ultima atualizacao: 00/00/0000
+    Data    : Junho/2015                         Ultima atualizacao: 03/03/2017
 
     Objetivo  : Enviar para a Selbetti os documentos liberados e nao 
                 digitalizados via WebService "JSON".
 
-    Alteracoes: 
+    Alteracoes: 03/03/2017 - Adicionar campos na listagem do JSON para enviarmos para 
+                             a Selbetti (Lucas Ranghetti #611593)
    
 .............................................................................*/
 
@@ -76,6 +77,9 @@ DEF TEMP-TABLE tt-documentos-liberados NO-UNDO
     FIELD vllanmto AS DECI
     FIELD nrdolote AS INTE
     FIELD cdbccxlt AS INTE
+    FIELD cdoperad AS CHAR 
+    FIELD nmprimtl AS CHAR
+    FIELD nrcheque AS DEC
     INDEX tt-documento-digitalizado1
           AS PRIMARY cdcooper tpdocmto nrdconta nrctrato nrborder
     INDEX tt-documento-digitalizado3 cdcooper nrdconta.
@@ -276,7 +280,10 @@ PROCEDURE process-web-request :
                                '"Bordero":"'       + STRING(tt-documentos-liberados.nrborder,"z,zzz,zz9") + '",' +
                                '"Aditivo":"'       + STRING(tt-documentos-liberados.nraditiv,"zzzzzzzzz9") + '",' +
                                '"DataLiberacao":"' + STRING(tt-documentos-liberados.dtlibera,"99/99/9999") + '",' +
-                               '"Valor":"'         + STRING(tt-documentos-liberados.vllanmto,"zzzzzzzzz9.99") + '"' +
+                               '"Valor":"'         + STRING(tt-documentos-liberados.vllanmto,"zzzzzzzzz9.99") + '",' +
+                               '"Operador":"'      + STRING(tt-documentos-liberados.cdoperad) + '",' +
+                               '"Cooperado":"'     + STRING(tt-documentos-liberados.nmprimtl) + '",' +
+                               '"Cheque":"'        + STRING(tt-documentos-liberados.nrcheque,"zzz,zzz,9") + '"' +
                           '~}' + aux_virgula.
                       END.
 
@@ -298,7 +305,10 @@ PROCEDURE process-web-request :
                         '"Bordero":"'       + '0",' +
                         '"Aditivo":"'       + '0",' +
                         '"DataLiberacao":"' + STRING(p_dtlibera,"99/99/9999") + '",' +
-                        '"Valor":"'         + '0,00"' +
+                        '"Valor":"'         + '0,00",' +
+                        '"Operador":"'      + '",' +
+                        '"Cooperado":"'     + '",' +
+                        '"Cheque":"'        + '0"' +
                     '~}'
                   ']' /* Fim Documento */
                . /* Fim saida OUT */
