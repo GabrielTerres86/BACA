@@ -31,6 +31,10 @@
                              digitalizar cheques da propria cooperativa (ZE).
 			    
 				23/08/2016 - Agrupamento das informacoes (M36 - Kelvin).
+				
+				14/02/2017 - Ajustes para imprimir boletim de fechamento de
+				             caixa corretamente pois imprimia como aberto
+							 (Tiago/Elton SD584098)
 ------------------------------------------------------------------------------*/
 {dbo/bo-erro1.i}
 
@@ -398,7 +402,7 @@ PROCEDURE fechamento-boletim-caixa:
                                       INPUT "CRAP012",
                                       INPUT crapdat.dtmvtolt,       
                                       INPUT STRING(RANDOM(1,10000)),
-                                      INPUT NO, /* tipconsu */
+                                      INPUT YES, /* tipconsu */
                                       INPUT RECID(crapbcx),
                                      OUTPUT aux_flgsemhi,
                                      OUTPUT aux_sdfinbol,
@@ -546,7 +550,7 @@ PROCEDURE atualiza-fechamento:
                                       INPUT "CRAP012",
                                       INPUT crapdat.dtmvtolt,       
                                       INPUT STRING(RANDOM(1,10000)),
-                                      INPUT YES, /* tipconsu */
+                                      INPUT NO, /* tipconsu */
                                       INPUT aux_bcxrecid,
                                      OUTPUT aux_flgsemhi,
                                      OUTPUT aux_sdfinbol,
