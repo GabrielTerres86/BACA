@@ -173,6 +173,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS279 (pr_cdcooper IN crapcop.cdcooper%T
 
                    04/01/2017 - P342 - Incorporação Transulcred -> Transpocred (Ricardo Linhares)
 
+                   20/02/2017 - Ajuste na query do cursor cr_crapepr, este está retornando registros
+                                desordenado e duplicado. (Chamado 615774 - Rafael Monteiro)
+
     ............................................................................ */
 
     DECLARE
@@ -269,6 +272,22 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS279 (pr_cdcooper IN crapcop.cdcooper%T
            AND lcr.cdcooper = epr.cdcooper
            AND lcr.cdlcremp = epr.cdlcremp
            AND lcr.flgsegpr = 1
+           AND NOT EXISTS (SELECT 1
+                             FROM crapepr epr
+                                 ,crapass ass
+                                 ,craplcr lcr
+                            WHERE ass.cdcooper = 9 -->cooperativa 9
+                              AND ass.inpessoa = 1 --> Somente fisica
+                              AND ass.cdcooper = epr.cdcooper
+                              AND ass.nrdconta = epr.nrdconta
+                              AND epr.dtmvtolt < '01/01/2017' --> todos os registros antes do dia primeiro
+                              AND epr.inliquid = 0 --> Em aberto
+                              AND lcr.cdcooper = epr.cdcooper
+                              AND lcr.cdlcremp = epr.cdlcremp
+                              AND lcr.flgsegpr = 1
+                              AND ass.nrdconta BETWEEN 900001 and 912654 --> somente as contas que foram incorporadas (Incorporação Transulcred -> Transpocred)
+                              AND pr_cdcooper = 9 -- Apenas para Cooperativa 9, (Incorporação Transulcred -> Transpocred))
+                              )
         UNION
         SELECT ass.nrcpfcgc 
               ,ass.inmatric
@@ -300,7 +319,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS279 (pr_cdcooper IN crapcop.cdcooper%T
                 AND pr_cdcooper = 9 -- Apenas para Cooperativa 9, (Incorporação Transulcred -> Transpocred)
         ORDER BY nrcpfcgc
                 ,inmatric DESC
-                ,nrdconta;
+                ,nrdconta
+                ,sqregcpf;
 
       ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
 
