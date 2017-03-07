@@ -1595,7 +1595,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       Sistema : Rotinas referentes ao WebService
       Sigla   : WEBS
       Autor   : Odirlei Busana - AMcom
-      Data    : Julho/2016.                    Ultima atualizacao: 29/09/2016
+      Data    : Julho/2016.                    Ultima atualizacao: 22/02/2017
 
       Dados referentes ao programa:
 
@@ -1611,6 +1611,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
 
                   29/09/2016 - Incluido tratamento para desbloquear valor em C/C,
                                Prj. 302 (Jean Michel). 
+
+                  22/02/2017 - Passagem de parametros rw_tbacordo para cr_crapass. (Jaison/James)
 
     ..............................................................................*/                                    
     
@@ -1671,8 +1673,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     -- Pl/Table utilizada na procedure de baixa
     vr_tab_lat_consolidada     paga0001.typ_tab_lat_consolidada;      
     
-    vr_cdcooper     crapcop.cdcooper%TYPE;  
-    vr_nrdconta     crapass.nrdconta%TYPE;
     vr_des_reto     VARCHAR2(10);
     vr_tab_erro    gene0001.typ_tab_erro;
     
@@ -1750,8 +1750,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     -- Condicao para verificar se possui valor de acordo
     IF rw_tbacordo.vlbloqueado > 0 THEN
 
-      OPEN cr_crapass(pr_cdcooper => vr_cdcooper
-                     ,pr_nrdconta => vr_nrdconta);   
+      OPEN cr_crapass(pr_cdcooper => rw_tbacordo.cdcooper
+                     ,pr_nrdconta => rw_tbacordo.nrdconta);   
 
       FETCH cr_crapass INTO rw_crapass;               
 
