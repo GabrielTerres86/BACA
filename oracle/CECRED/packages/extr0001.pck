@@ -437,7 +437,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
     Sistema  : Rotinas genéricas para formulários postmix
     Sigla    : GENE
     Autor    : Mirtes.
-    Data     : Dezembro/2012.                   Ultima atualizacao: 17/11/2016
+    Data     : Dezembro/2012.                   Ultima atualizacao: 07/03/2017
 
    Dados referentes ao programa:
 
@@ -730,6 +730,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
 
                17/11/2016 - Correcao do cursor cr_crapepr removendo o comando NVL com intuito de
                							ganho em performance. SD 516113 (Carlos Rafael Tanholi)			  
+
+               07/03/2017 - Alteracao no texto da procedure pc_envia_extrato_email informando a 
+                            descontinuidade do extrato essa solicitacao partiu de uma necessidade de 
+                            performance sobre o crps217 (Carlos Rafael Tanholi)
 
 ..............................................................................*/
 
@@ -3957,7 +3961,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
     --    Sistema : Conta-Corrente - Cooperativa de Credito
     --    Sigla   : CRED
     --    Autor   : Marcos (Supero)
-    --    Data    : Dez/2012                         Ultima atualizacao: 22/09/2014
+    --    Data    : Dez/2012                         Ultima atualizacao: 07/03/2017
     --
     --    Dados referetes ao programa:
     --    Frequencia: Sempre que chamado pelos programas de extrato da conta
@@ -3979,8 +3983,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
     --                20/01/2014 - Não remover o arquivo na solicitação de e-mail (Marcos-Supero)
     --
     --                22/09/2014 - Adicionado observacao no corpo de e-mail (Daniele).
-
-
+    --
+    --                07/03/2017 - Alteracao no texto informando a descontinuidade do extrato	
+    --                             essa solicitacao partiu de uma necessidade de performance 
+    --                             sobre o crps217 (Carlos Rafael Tanholi)
+    --                              
+    --
     DECLARE
       -- Período do extrato
       vr_dsperiod VARCHAR2(400);
@@ -4336,17 +4344,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
 
             -- Remove arquivo PDF
             gene0001.pc_OScommand_Shell('rm '||vr_arquipdf);
-
+                       
             -- Montagem do corpo do e-mail
             vr_dscorpo := 'Prezado (a) Cooperado (a),<br><br>'
-                       || 'Você esta recebendo o extrato da sua conta. Para visualiza-lo, clique no arquivo anexo<br>'
-                       || 'e digite sua senha. A senha é a mesma utilizada no tele-atendimento. Se voce ainda nao possui<br>'
-                       || 'esta senha, dirija-se ao seu Posto de Atendimento para cadastrar uma.<br><br>'
-                       || 'Se você preferir cancelar o recebimento, basta acessar sua conta no site da cooperativa, opcao de '
-                       || 'Informativos/Recebimento, ou entrar em contato com o Posto de Atendimento onde voce movimenta sua conta.<br><br>'
-                       || 'OBS.: Esta mensagem foi enviada automaticamente, em caso de duvidas entre em contato com sua cooperativa!<br><br>'
+            
+                       || 'O serviço de envio de extrato por e-mail será suspenso a partir do mês de junho.<br>'
+                       || 'Utilize os canais de autoatendimento da sua cooperativa para continuar tendo acesso ao seu extrato. '
+                       || 'Você pode consultá-lo por meio dos Caixas Eletrônicos, Conta Online ou ainda pelo aplicativo CECRED Mobile.<br><br>'
+
+                       || 'Caso tenha dúvidas em relação ao acesso a esses canais, entre em contato com o SAC: 0800 647 2200 ou com seu posto de atendimento.<br><br>'
+
+                       || 'Você está recebendo o extrato da sua conta. Para visualizá-lo, clique no arquivo anexo e digite sua senha. A senha é a mesma utilizada no tele-atendimento.<br><br>'
+                       
+                       || 'OBS.: Esta mensagem foi enviada automaticamente, em caso de dúvidas entre em contato com sua cooperativa!<br><br>'
                        || 'Atenciosamente,<br>'
-                       || pr_nmrescop||'.';
+                       || pr_nmrescop||'.';                       
+                       
             -- Enviar por e-mail o arquivo gerado
             gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
                                       ,pr_flg_remete_coop => 'S' --> Envio pelo e-mail da Cooperativa
