@@ -43,6 +43,7 @@
  *                                              bloqueios de acesso.
  * 020: [25/10/2016] Tiago            (CECRED): M310 Tratamento para abertura de conta com CNAE CPF/CPNJ restrito ou proibidos.
  * 021: [08/02/2017] Kelvin           (CECRED): Ajuste realiazado para tratar o chamado 566462. 
+ * 022: [03/03/2017] Adriano          (CECRED): Ajuste devido a conversão das rotinas busca_nat_ocupacao, busca_ocupacao (Adriano - SD 614408).
  */
 
 // Definição de algumas variáveis globais 
@@ -1922,27 +1923,25 @@ function controlaPesquisas() {
         linkEmp.addClass('lupa').css('cursor', 'auto').unbind('click').bind('click', function () { return false; });
 	} else {
         linkEmp.css('cursor', 'pointer').unbind('click').bind('click', function () {
-            procedure = 'busca_ocupacao';
-            titulo = 'Ocupação';
-            qtReg = '30';
+            
             filtrosPesq = 'Cód. Ocupação;cdocpttl;30px;S;0;;codigo|Ocupação;dsocpttl;200px;S;;;descricao';
             colunas = 'Código;cdocupa;20%;right|Ocupação;rsdocupa;80%;left';
-            mostraPesquisa(bo, procedure, titulo, qtReg, filtrosPesq, colunas);
+            mostraPesquisa("ZOOM0001", "BUSCOCUPACAO", "Ocupação", "30", filtrosPesq, colunas);
 			return false;	
+
 		});
         linkEmp.prev().unbind('change').bind('change', function () {
-            procedure = 'busca_ocupacao';
-            titulo = 'Ocupação';
+            
 			filtrosDesc = '';
-            buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'dsocpttl', $(this).val(), 'rsdocupa', filtrosDesc, 'frmFisico');
+            buscaDescricao("ZOOM0001", "BUSCOCUPACAO", "Ocupação", $(this).attr('name'), 'dsocpttl', $(this).val(), 'rsdocupa', filtrosDesc, 'frmFisico');
 			return false;
+
 		});
         linkEmp.prev().unbind('blur').bind('blur', function () {
             $(this).unbind('change').bind('change', function () {
-                procedure = 'busca_ocupacao';
-                titulo = 'Ocupação';
+                
 				filtrosDesc = '';
-                buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'dsocpttl', $(this).val(), 'rsdocupa', filtrosDesc, 'frmFisico');
+                buscaDescricao("ZOOM0001", "BUSCOCUPACAO", "Ocupação", $(this).attr('name'), 'dsocpttl', $(this).val(), 'rsdocupa', filtrosDesc, 'frmFisico');
 				return false;
 			});
 		});
