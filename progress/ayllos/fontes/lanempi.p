@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Janeiro/94.                         Ultima atualizacao: 23/09/2016
+   Data    : Janeiro/94.                         Ultima atualizacao: 16/02/2017
 
    Dados referentes ao programa:
 
@@ -104,6 +104,8 @@
 			 10/01/2017 - Correcao no abono de prejuizo, verifica se o valor foi armazenado negativo
 			              e transforma em positivo se necessario, em alguns casos estava duplicando o valor.
 						  Andrey (Mouts) - Chamado 568416
+
+             16/02/2017 - Alteracao de aux_flgativo para aux_flgretativo. (Jaison/James)
                           
 ............................................................................. */
 
@@ -484,7 +486,7 @@ DO WHILE TRUE:
              glb_dscritic = ""
              glb_cdcritic = pc_verifica_acordo_ativo.pr_cdcritic WHEN pc_verifica_acordo_ativo.pr_cdcritic <> ?
              glb_dscritic = pc_verifica_acordo_ativo.pr_dscritic WHEN pc_verifica_acordo_ativo.pr_dscritic <> ?
-             aux_flgativo = INT(pc_verifica_acordo_ativo.pr_flgativo).
+             aux_flgretativo = INT(pc_verifica_acordo_ativo.pr_flgativo).
       
       IF glb_cdcritic > 0 THEN
         DO:
@@ -502,7 +504,7 @@ DO WHILE TRUE:
         END.
       /* Fim verifica se ha contratos de acordo */
       
-      IF aux_flgativo = 1 THEN
+      IF aux_flgretativo = 1 THEN
          DO:
              ASSIGN flg_next = TRUE.
              MESSAGE "Lancamento nao permitido, emprestimo em acordo.".
