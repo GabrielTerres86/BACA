@@ -532,6 +532,8 @@ DEF VAR par_dtconnec         AS CHAR                            NO-UNDO.
 DEF VAR par_numipusr         AS CHAR                            NO-UNDO.
 DEF VAR aux_vlblqjud         AS DEC                             NO-UNDO.
 DEF VAR aux_vlresblq         AS DEC                             NO-UNDO.
+DEF VAR aux_flgretativo      AS INT                             NO-UNDO.
+DEF VAR aux_flgretquitado    AS INT                             NO-UNDO.
 
 DEF VAR h-b1wgen9999         AS HANDLE                          NO-UNDO.
 DEF VAR h-b1wgen0175         AS HANDLE                          NO-UNDO.
@@ -4616,6 +4618,63 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                  UNDO, NEXT INICIO.
                              END.
 
+                        /* Verificacao de contrato de acordo */  
+                        
+                          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                          /* Verifica se ha contratos de acordo */
+                          RUN STORED-PROCEDURE pc_verifica_situacao_acordo
+                            aux_handproc = PROC-HANDLE NO-ERROR (INPUT glb_cdcooper
+                                                                ,INPUT tel_nrdctabb
+                                                                ,INPUT his_nrctremp
+                                                                ,OUTPUT 0 /* pr_flgretativo */
+                                                                ,OUTPUT 0 /* pr_flgretquitado */
+                                                                ,OUTPUT 0 /* pr_flgretcancelado */
+                                                                ,OUTPUT 0
+                                                                ,OUTPUT "").
+
+                          CLOSE STORED-PROC pc_verifica_situacao_acordo
+                                    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                          ASSIGN glb_cdcritic = 0
+                                 glb_dscritic = ""
+                                 glb_cdcritic = INT(pc_verifica_situacao_acordo.pr_cdcritic) WHEN pc_verifica_situacao_acordo.pr_cdcritic <> ?
+                                 glb_dscritic = pc_verifica_situacao_acordo.pr_dscritic WHEN pc_verifica_situacao_acordo.pr_dscritic <> ?
+                                 aux_flgretativo   = INT(pc_verifica_situacao_acordo.pr_flgretativo)
+                                 aux_flgretquitado = INT(pc_verifica_situacao_acordo.pr_flgretquitado).
+                          
+                          IF glb_cdcritic > 0 THEN
+                            DO:
+                                RUN fontes/critic.p.
+                                BELL.
+                                MESSAGE glb_dscritic.
+                                UNDO, NEXT INICIO.
+                            END.
+                          ELSE IF glb_dscritic <> ? AND glb_dscritic <> "" THEN
+                            DO:
+                              MESSAGE glb_dscritic.
+                              ASSIGN glb_cdcritic = 0.
+                              UNDO, NEXT INICIO.
+                            END.
+                            
+                          IF aux_flgretativo = 1 THEN
+                             DO:
+                                MESSAGE "Lancamento nao permitido, emprestimo em acordo.".
+                                PAUSE 3 NO-MESSAGE.
+                                UNDO, NEXT INICIO.
+                             END.
+                            
+                          /* Se estiver QUITADO */
+                          IF aux_flgretquitado = 1 THEN
+                             DO:
+                                MESSAGE "Lancamento nao permitido, contrato liquidado atraves de acordo.".
+                                PAUSE 3 NO-MESSAGE.
+                                UNDO, NEXT INICIO.
+                             END.
+                          /* Fim verificacao contrato acordo */
+                        
                         IF  NOT VALID-HANDLE(h-b1wgen0002)  THEN
                             RUN sistema/generico/procedures/b1wgen0002.p
                             PERSISTENT SET h-b1wgen0002.

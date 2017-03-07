@@ -469,24 +469,27 @@ DO WHILE TRUE:
       /* Verifica se ha contratos de acordo */            
       { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
       
-      RUN STORED-PROCEDURE pc_verifica_acordo_ativo
+      RUN STORED-PROCEDURE pc_verifica_situacao_acordo
         aux_handproc = PROC-HANDLE NO-ERROR (INPUT glb_cdcooper
                                             ,INPUT tel_nrdconta
                                             ,INPUT tel_nrctremp
-                                            ,OUTPUT 0
-                                            ,OUTPUT 0
-                                            ,OUTPUT "").
+                                            ,0 /* pr_flgretativo */
+                                            ,0 /* pr_flgretquitado */
+                                            ,0 /* pr_flgretcancelado */
+                                            ,0
+                                            ,"").
 
-      CLOSE STORED-PROC pc_verifica_acordo_ativo
+      CLOSE STORED-PROC pc_verifica_situacao_acordo
                 aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
       { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
       ASSIGN glb_cdcritic = 0
              glb_dscritic = ""
-             glb_cdcritic = pc_verifica_acordo_ativo.pr_cdcritic WHEN pc_verifica_acordo_ativo.pr_cdcritic <> ?
-             glb_dscritic = pc_verifica_acordo_ativo.pr_dscritic WHEN pc_verifica_acordo_ativo.pr_dscritic <> ?
-             aux_flgretativo = INT(pc_verifica_acordo_ativo.pr_flgativo).
+             glb_cdcritic = pc_verifica_situacao_acordo.pr_cdcritic WHEN pc_verifica_situacao_acordo.pr_cdcritic <> ?
+             glb_dscritic = pc_verifica_situacao_acordo.pr_dscritic WHEN pc_verifica_situacao_acordo.pr_dscritic <> ?
+             aux_flgretativo   = INT(pc_verifica_situacao_acordo.pr_flgretativo)
+             aux_flgretquitado = INT(pc_verifica_situacao_acordo.pr_flgretquitado).
       
       IF glb_cdcritic > 0 THEN
         DO:
@@ -510,6 +513,14 @@ DO WHILE TRUE:
              MESSAGE "Lancamento nao permitido, emprestimo em acordo.".
              NEXT.
          END.
+
+       /* Se estiver QUITADO */
+      IF aux_flgretquitado = 1 THEN
+         DO:
+             ASSIGN flg_next = TRUE.
+             MESSAGE "Lancamento nao permitido, contrato liquidado atraves de acordo.".
+             NEXT.
+         END.   
 
       LEAVE.
 
