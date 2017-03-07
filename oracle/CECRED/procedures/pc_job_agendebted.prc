@@ -6,7 +6,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTED(pr_cdcooper in crapcop.cdco
    JOB: PC_JOB_AGENDEBTED
    Sistema : Conta-Corrente - Cooperativa de Credito
    Autor   : Adriano 
-   Data    : Maio/2016.                     Ultima atualizacao: 02/01/2017
+   Data    : Maio/2016.                     Ultima atualizacao: 07/03/2017
 
    Dados referentes ao programa:
 
@@ -22,6 +22,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTED(pr_cdcooper in crapcop.cdco
    15/09/2016 - #519637 Criação de log de controle de início, erros e fim de execução do job (Carlos)
    
    02/01/2017 - Adição de filtro para não agendar o job para cooperativas inativas (Anderson).
+
+   07/03/2017 - Ajuste para aumentar o tamanho da variável vr_jobname (Adriano - SD 625356 ).
    
   ..........................................................................*/
       ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
@@ -38,7 +40,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTED(pr_cdcooper in crapcop.cdco
 
     vr_dtdiahoje   DATE;
     vr_dsplsql     VARCHAR2(2000);
-    vr_jobname     VARCHAR2(20);
+    vr_jobname     VARCHAR2(100);
     
     vr_dtmvtolt    DATE;
     
