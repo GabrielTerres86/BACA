@@ -6849,13 +6849,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
             
             IF TRIM(vr_dsdescri) IS NOT NULL THEN
               vr_xml_auxi := vr_xml_auxi || '<dados_campo><label>Identificação do Pagamento</label><valor>'||vr_dsdescri||'</valor></dados_campo>';
-         ELSIF vr_tptranpe = 11 THEN --Pagamento DARF/DAS
-           NULL;
- 
-         ELSIF vr_tptranpe IN (16,17) THEN --> Contrato de SMS
-            vr_xml_auxi := vr_xml_auxi            
-            || '<dados_campo><label>Serviço</label><valor>'  || rw_sms_trans_pend.dspacote ||'</valor></dados_campo>'
-            || '<dados_campo><label>Início</label><valor>'   || to_char(rw_sms_trans_pend.dtassinatura,'DD/MM/RRRR')      ||'</valor></dados_campo>';
          END IF;
          
             IF TRIM(vr_dsnomfone) IS NOT NULL THEN
@@ -6894,6 +6887,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                        || '<dados_campo><label>Indicador de Agendamento</label><valor>'||(CASE WHEN vr_idagendamento = 1 THEN
                                                                                                           'NAO' ELSE 'SIM' END)||'</valor></dados_campo>';
  
+         
+         ELSIF vr_tptranpe IN (16,17) THEN --> Contrato de SMS
+            vr_xml_auxi := vr_xml_auxi            
+            || '<dados_campo><label>Serviço</label><valor>'  || rw_sms_trans_pend.dspacote ||'</valor></dados_campo>'
+            || '<dados_campo><label>Início</label><valor>'   || to_char(rw_sms_trans_pend.dtassinatura,'DD/MM/RRRR')      ||'</valor></dados_campo>';
          END IF;
          
          vr_xml_auxi := vr_xml_auxi || '</dados_detalhe>';
