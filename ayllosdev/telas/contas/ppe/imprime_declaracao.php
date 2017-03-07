@@ -3,11 +3,12 @@
 	//******************************************************************************************//
 	//*** Fonte: imprime_declaracao.php                                            			 ***//
 	//*** Autor: Carlos Henrique                                              				 ***//
-	//*** Data : Dezembro/2015             Última Alteração: 				   				 ***//
+	//*** Data : Dezembro/2015             Última Alteração: 21/02/2017 				     ***//
 	//***                                                                   				 ***//
 	//*** Objetivo  : Imprimir declaracao de pessoa exposta politicamente.     				 ***//	
 	//***             							                               				 ***//	 
-	//*** Alterações:                                        								 ***//	
+	//*** Alterações: 21/02/2017 - Ajuste para enviar campos sem formatação                  ***//
+	//***                          (Adriano - SD 614408).                               	 ***//	
 	//***             			   										     				 ***//
 	//***                          									         				 ***//
 	//******************************************************************************************//
@@ -48,6 +49,11 @@
 		$tpexposto = 0; 
 	}
 	
+	$arrayRetirada = array('.','-','/');                                                        
+	$nrcnpj_empresa = str_replace($arrayRetirada,'',$nrcnpj_empresa);
+	$nrcpf_politico = str_replace($arrayRetirada,'',$nrcpf_politico);
+	$nrcpfcgc = str_replace($arrayRetirada,'',$nrcpfcgc);
+
 	$xml  = "<Root>";
 	$xml .= " <Dados>";
 	$xml .= "  <tpexposto>"        .$tpexposto                                           ."</tpexposto>";
@@ -56,12 +62,12 @@
 	$xml .= "  <dtinicio>"         .$dtinicio                                            ."</dtinicio>";
 	$xml .= "  <dttermino>"        .$dttermino                                           ."</dttermino>";	
 	$xml .= "  <nmempresa>"        .retiraAcentos(removeCaracteresInvalidos($nmempresa)) ."</nmempresa>";
-	$xml .= "  <nrcnpj_empresa>"   .formatar($nrcnpj_empresa,'cnpj',true)                ."</nrcnpj_empresa>";
+	$xml .= "  <nrcnpj_empresa>"   .$nrcnpj_empresa                                      ."</nrcnpj_empresa>";
 	$xml .= "  <nmpolitico>"       .retiraAcentos(removeCaracteresInvalidos($nmpolitico))."</nmpolitico>";
-	$xml .= "  <nrcpf_politico>"   .formatar($nrcpf_politico,'cpf',true)                 ."</nrcpf_politico>";
+	$xml .= "  <nrcpf_politico>"   .$nrcpf_politico                                      ."</nrcpf_politico>";
 	$xml .= "  <nmextttl>"         .$nmextttl                                            ."</nmextttl>";
 	$xml .= "  <rsocupa>"          .$rsdocupa                                            ."</rsocupa>";
-	$xml .= "  <nrcpfcgc>"         .formatar($nrcpfcgc,'cpf',true)                       ."</nrcpfcgc>";
+	$xml .= "  <nrcpfcgc>"         .$nrcpfcgc                                            ."</nrcpfcgc>";
 	$xml .= "  <dsrelacionamento>" .$dsrelacionamento                                    ."</dsrelacionamento>";
 	$xml .= "  <nrdconta>"         .formataContaDVsimples($nrdconta)                     ."</nrdconta>";
 	$xml .= "  <cidade>"           .$cidade                                              ."</cidade>";

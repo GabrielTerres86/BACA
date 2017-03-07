@@ -11,7 +11,8 @@
  * 003: [26/04/2010] Rodolpho Telmo  (DB1): Retirada função "revisaoCadastral", agora se encontra no arquivo funcoes.js
  * 004: [12/11/2012] Daniel Zimmermann    : Alterado chamadas do procedimento controlaPesquisas() para evitar bloqueio 
  *											tela quando efetuado busca atraves lupa.
- * 005: [01/09/2015] Gabriel (RKAM)       : Reformulacao cadastral. 
+ * 005: [01/09/2015] Gabriel (RKAM)       : Reformulacao cadastral.
+ * 006: [03/03/2017] Adriano              : Ajuste devido a conversão das rotinas busca_nat_ocupacao, busca_ocupacao - SD 614408.
  */
 
 // Definindo variáveis globais 
@@ -592,22 +593,18 @@ function controlaPesquisas() {
 
 				// Natureza Ocupação
 				} else if ( campoAnterior == 'cdnatopc' ) {
-					procedure	= 'busca_nat_ocupacao';
-					titulo      = 'Natureza da Ocupa&ccedil;&atilde;o';
-					qtReg		= '30';
-					filtrosPesq	= 'Cód. Nat. Ocupação;cdnatopc;30px;S;0|Natureza da Ocupação;rsnatocp;200px;S;';
-					colunas 	= 'Código;cdnatocp;25%;right|Natureza da Ocupação;rsnatocp;75%;left';
-					mostraPesquisa(bo,procedure,titulo,qtReg,filtrosPesq,colunas,divRotina);
-					return false;
+					filtrosPesq = "Cód. Nat. Ocupação;cdnatopc;30px;S;0|Natureza da Ocupação;rsnatocp;200px;S;";
+                    colunas = 'Código;cdnatocp;25%;right|Natureza da Ocupação;rsnatocp;75%;left';
+                    mostraPesquisa("ZOOM0001", "BUSCANATOCU", "Natureza da Ocupa&ccedil;&atilde;o", "30", filtrosPesq, colunas, divRotina);
+
+                    return false;
 				
 				// Código Ocupação
 				} else if ( campoAnterior == 'cdocpcje' ) {
-					procedure	= 'busca_ocupacao';
-					titulo      = 'Ocupa&ccedil;&atilde;o';
-					qtReg		= '30';
+					
 					filtrosPesq	= 'Cód. Ocupação;cdocpcje;30px;S;0|Ocupação;rsdocupa;200px;S;';
 					colunas 	= 'Código;cdocupa;20%;right|Ocupação;dsdocupa;80%;left';
-					mostraPesquisa(bo,procedure,titulo,qtReg,filtrosPesq,colunas,divRotina);
+					mostraPesquisa("ZOOM0001", "BUSCOCUPACAO", "Ocupa&ccedil;&atilde;o", "30", filtrosPesq, colunas, divRotina);
 					return false;
 				}					
 			}
@@ -639,20 +636,18 @@ function controlaPesquisas() {
 	
 	// Natureza Ocupação
 	$('#cdnatopc','#'+nomeForm).unbind('change').bind('change', function() {
-		titulo      = 'Natureza Ocupação';
-		procedure   = 'busca_nat_ocupacao';
 		filtrosDesc = '';
-		buscaDescricao(bo,procedure,titulo,$(this).attr('name'),'rsnatocp',$(this).val(),'rsnatocp',filtrosDesc,nomeForm);
-		return false;
+        buscaDescricao("ZOOM0001", "BUSCANATOCU", "Natureza Ocupação", $(this).attr('name'), 'rsnatocp', $(this).val(), 'rsnatocp', filtrosDesc, nomeForm);
+        return false;
 	});	
 	
 	// Ocupação
 	$('#cdocpcje','#'+nomeForm).unbind('change').bind('change',function() {
-		titulo      = 'Ocupação';
-		procedure   = 'busca_ocupacao';
-		filtrosDesc = '';
-		buscaDescricao(bo,procedure,titulo,$(this).attr('name'),'rsdocupa',$(this).val(),'dsdocupa',filtrosDesc,nomeForm);
-		return false;
+		
+        filtrosDesc = '';
+        buscaDescricao("ZOOM0001", "BUSCOCUPACAO", "Ocupação", $(this).attr('name'), 'rsdocupa', $(this).val(), 'dsdocupa', filtrosDesc, nomeForm);
+        return false;
+
 	});		
 }
 
