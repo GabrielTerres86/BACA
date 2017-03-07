@@ -1,9 +1,16 @@
 /*
  * Programa wpgd004a.p - Exibe certificado do evento do Progrid no Internet Bank, Prj. 229 (Jean Michel)
  * 
- * Alterações:  
+ * Alterações:  28/10/2016 - Inclusão da chamada da procedure pc_informa_acesso_progrid
+ *							 para gravar log de acesso. (Jean Michel)
+ *
+ *	            17/11/2016 - Inclusão de assinatura. (Jean Michel)
+ *
+ *	            07/03/2017 - Alteração de diretório da cooperativa Viacredi Alto Vale. (Jean Michel)
 */
 
+	{ sistema/generico/includes/var_log_progrid.i }
+	
   CREATE WIDGET-POOL.
 
   DEF VAR aux_idevento AS INTEGER.
@@ -49,7 +56,7 @@ FUNCTION montaCertificado RETURNS LOGICAL():
                     '   .a4            ~{ font-family: DIN-REGULAR, sans-serif; color:#2d5495;font-size: 26px; font-weight: bold;}' SKIP
                     '   .a5            ~{ font-family: DIN-REGULAR, sans-serif; color:#2d5495;font-size: 28px; font-weight: bold;}' SKIP
                     '   .data          ~{ font-family: DIN-REGULAR, sans-serif; color:#2d5495;font-size: 26px; font-weight: bold;}' SKIP
-                    '</style><style type="text/css" media="print">@page ~{size: landscape; }</style>' SKIP.
+                    '</style><style type="text/css" media="print">@page ~{size: landscape; }</style><body onload="imprimir();">' SKIP.
                                 
        FOR EACH crapidp WHERE crapidp.cdcooper = aux_cdcooper
                           AND crapidp.nrseqeve = aux_nrseqeve
@@ -59,12 +66,12 @@ FUNCTION montaCertificado RETURNS LOGICAL():
                           AND crapass.nrdconta = crapidp.nrdconta
                           AND crapass.inpessoa = 1 NO-LOCK
                            BY crapidp.nminseve:
-            {&out} '<div id="imprimir" name="imprimir" align="right" style="border: 0px solid orange; height:848px; float: left; position: relative; text-align: center; "><img src="/extrato-' + (IF aux_nmrescop <> 'VIACREDI AV' THEN LOWER(aux_nmrescop) ELSE 'altovale') + '/crm/images/icones/imprimir.gif" onclick="imprimir();"/></div>' SKIP.
+            /*{&out} '<div id="imprimir" name="imprimir" align="right" style="border: 0px solid orange; height:848px; float: left; position: relative; text-align: center; "><img src="/extrato-' + (IF aux_nmrescop <> 'VIACREDI AV' THEN LOWER(aux_nmrescop) ELSE 'viacrediav') + '/crm/images/icones/imprimir.gif" onclick="imprimir();"/></div>' SKIP.*/
             {&out} '<div id="conteudo" name="conteudo" align="center" style="border: 0px solid orange; height:848px; float: left; position: relative; text-align: center; ">' SKIP.
             
             {&out} '<div style="position: absolute; height:848px; border: 0px solid green; float:left; z-index:1; text-alig:center; padding-top: 10px; padding-left: 20px; ">' SKIP.
             
-            {&out}  '<img style=" height:848px;" src="/extrato-' + (IF aux_nmrescop <> 'VIACREDI AV' THEN LOWER(aux_nmrescop) ELSE 'altovale') + '/crm/images/certificados/' + 
+            {&out}  '<img style=" height:848px;" src="/extrato-' + (IF aux_nmrescop <> 'VIACREDI AV' THEN LOWER(aux_nmrescop) ELSE 'viacrediav') + '/crm/images/certificados/' + 
                     (IF aux_nmrescop <> 'VIACREDI AV' THEN LOWER(aux_nmrescop) ELSE 'altovale') + '.jpg"/></div>' SKIP.
                     
             {&out} '<div id="texto" name="texto" style="position: absolute; padding-top:300px; text-align:center; border: 0px solid red; z-index:2; width:1200px;" >'.
@@ -89,7 +96,7 @@ FUNCTION montaCertificado RETURNS LOGICAL():
             ELSE
             {&out} '<p>'
             '   <a class="a5">O evento foi realizado no período de&nbsp;</a>'
-            '   <a class="a5">' DAY(crapadp.dtinieve) ' de ' ENTRY(MONTH(crapadp.dtinieve),aux_nommeses) ' a ' DAY(crapadp.dtfineve) ' de ' ENTRY(MONTH(crapadp.dtfineve),aux_nommeses) ' de ' YEAR(crapadp.dtfineve) ',</a></br></br>'.
+            '   <a class="a5">' DAY(crapadp.dtinieve) ' de ' ENTRY(MONTH(crapadp.dtinieve),aux_nommeses) ' a ' DAY(crapadp.dtfineve) ' de ' ENTRY(MONTH(crapadp.dtfineve),aux_nommeses) ' de ' YEAR(crapadp.dtfineve) ',</a></br>'.
             
             /* Verifica se foi mais de 1 hora mostrando um 's' após a hora de duração */
             
@@ -103,7 +110,17 @@ FUNCTION montaCertificado RETURNS LOGICAL():
             /* Verifica se a data do evento foi concluido em um unico dia para ajusta os espaçamentos entre o texto e a assinatura.
                Obs: primeira situação do if é que foi realizado em um unico dia */
             
-            {&out} '<div style="clear:both"><div id="data" name="data" style="position: relative; padding-left: 260px; border: 0px solid red; padding-top: 620px; z-index:3;">'
+            {&out} '<div style="clear:both">'
+                    '<div id="assinatura_imagem" name="assinatura_imagem" style="position: absolute; padding-left: 450px; padding-top: 430px; z-index:4;">'
+                    '<img style=" height:400px;" src="/extrato-' + (IF aux_nmrescop <> 'VIACREDI AV' THEN LOWER(aux_nmrescop) ELSE 'viacrediav') + '/crm/images/assinaturas/moacir_krambeck.png"/>'
+                    '</div>'
+                    '<div id="assinatura_texto" name="assinatura_texto" style="position: absolute; padding-left: 270px; margin-top: 580px; z-index:5;">'
+                    '<a align="center" class="a4">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ________________________________________________________ </a>'
+                    '</br>'
+                    '<a align="center" class="a4">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Moacir Krambeck - Presidente Sistema CECRED</a>' 
+                    '</div><div style="clear:both">' SKIP.
+            
+            {&out} '<div style="clear:both"><div id="data" name="data" style="position: relative; padding-left: 260px; border: 0px solid red; padding-top: 700px; z-index:3;">'
                    '   <p align="LEFT"> <a CLASS="data">' aux_nmcidade ', ' DAY(TODAY) ' de ' ENTRY(MONTH(TODAY),aux_nommeses) ' de ' YEAR(TODAY) '.</a> </p>'
                    '</div><div style="clear:both">' SKIP.
             
@@ -111,7 +128,7 @@ FUNCTION montaCertificado RETURNS LOGICAL():
                           
         END. /* for each */
 
-				{&out} '<script> function imprimir() ~{alert(~'ATENÇÃO! Certifique-se que a página esteja configurada no modo PAISAGEM.~');  print();~} </script>' SKIP.
+				{&out} '<script> function imprimir() ~{alert(~'ATENÇÃO! Certifique-se que a página esteja configurada no modo PAISAGEM.\\r\\rCASO QUEIRA IMPRIMIR NOVAMENTE PRESSIONE A TECLA ALT -> MENU ARQUIVO -> IMPRIMIR~'); print();~} </script>' SKIP.
 				
         {&out} '</body>' SKIP
                '</html>' SKIP.
@@ -131,7 +148,9 @@ END FUNCTION. /* montaTela RETURNS LOGICAL () */
          aux_nrseqeve = INTEGER(GET-VALUE("aux_nrseqeve"))
          aux_idseqttl = INTEGER(GET-VALUE("aux_idseqttl"))
          aux_tpevento = INTEGER(GET-VALUE("aux_tpevento")).
-    
+  
+  RUN insere_log_progrid("WPGD0004a.p",STRING(aux_idevento) + "|" + STRING(aux_cdcooper) + "|" + STRING(aux_nrdconta) + "|" + STRING(aux_dtanoage)).
+	
   FOR FIRST crapass FIELDS(cdagenci) WHERE crapass.cdcooper = aux_cdcooper
                                        AND crapass.nrdconta = aux_nrdconta NO-LOCK. END.
   
