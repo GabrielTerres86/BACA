@@ -79,17 +79,22 @@
                             migradas VIACREDI >> VIACREDI ALTO VALE
                             (Douglas - Chamado 406267)
 
-			   26/12/2016 - Tratamento incorporação Transposul (Diego).
+               26/12/2016 - Tratamento incorporação Transposul (Diego).
 
-			   13/01/2017 - Incorporacao - Tratado recebimento de TED para 
-			                agencia antiga e conta de destino invalida, para 
-							criar registro na gnmvspb com cdcooper da coop.
-							nova, pois estava criando com a coop. antiga e nao
-							ocorria centralizacao (Diego).
-			    	
+               13/01/2017 - Incorporacao - Tratado recebimento de TED para 
+                            agencia antiga e conta de destino invalida, para 
+                            criar registro na gnmvspb com cdcooper da coop.
+                            nova, pois estava criando com a coop. antiga e nao
+                            ocorria centralizacao (Diego).
+                  
                02/02/2017 - Ajustado para que seja possivel importar os arquivos 
                             do SPB para quando o Bacen estiver em crise 
                             (Douglas - Chamado 536015)
+                            
+               07/03/2017 - Na mensagem STR0010R2 originada pelo sistema MATERA
+                            foi adicionado tratamento para enviar por e-mail.
+                            (Ricardo Linhares - Chamado 625310)
+                                             
 ............................................................................. */
 
 { includes/var_batch.i } 
@@ -101,6 +106,10 @@ DEF STREAM str_1.
 
 DEF TEMP-TABLE crawarq NO-UNDO
     FIELD nmarquiv AS CHAR.
+    
+DEF TEMP-TABLE devolucoes_matera NO-UNDO
+    FIELD data AS date
+    FIELD valor AS DECI.
     
 DEF TEMP-TABLE crawint NO-UNDO
     FIELD nrseqreg AS INTE
@@ -306,8 +315,23 @@ FOR EACH crawarq NO-LOCK:
                     TRIM(SUBSTR(aux_setlinha,71,11)) = "PAG0111R2" OR
                     TRIM(SUBSTR(aux_setlinha,71,11)) = "STR0010"   OR
                     TRIM(SUBSTR(aux_setlinha,71,11)) = "PAG0111"   THEN
-                    /* Codigo da Agencia(debito ou credito) nas mensagens de devolucao */
-                    ASSIGN aux_cdagectl = INT(SUBSTR(aux_setlinha,21,4)).
+                    DO:
+                    
+                      /* Se veio do MATERA */
+                      IF SUBSTRING(aux_setlinha,21,6) = "MATERA"  THEN
+                      DO:
+                        CREATE devolucoes_matera.
+                        ASSIGN devolucoes_matera.data = DATE(INTE(SUBSTR(aux_setlinha,16,2)),
+                                                             INTE(SUBSTR(aux_setlinha,18,2)),
+                                                             INTE(SUBSTR(aux_setlinha,12,4)))
+                               devolucoes_matera.valor = DECI(REPLACE(SUBSTR(aux_setlinha, 324,22),".",",")).
+                        NEXT.
+                      END.
+                      
+                      /* Codigo da Agencia(debito ou credito) nas mensagens de devolucao */
+                      ASSIGN aux_cdagectl = INT(SUBSTR(aux_setlinha,21,4)).
+                    
+                    END.
                 ELSE
                 IF  TRIM(SUBSTR(aux_setlinha,71,11)) = "STR0026R2" THEN
                     DO:
@@ -540,6 +564,11 @@ FOR EACH crawarq NO-LOCK:
     END. /*** Fim do FOR EACH crawint ***/
 
     
+    /* Enviar e-mail Matera */
+    
+    IF AVAILABLE devolucoes_matera THEN
+      RUN enviar_email_devolucoes_matera.
+    
     UNIX SILENT VALUE("mv " + crawarq.nmarquiv + " salvar").
     
 END. /*** Fim do FOR EACH crawarq ***/
@@ -551,6 +580,46 @@ IF  VALID-HANDLE(h-b1wgen0046) THEN
 RUN fontes/fimprg.p.
 
 /*................................ PROCEDURES ................................*/
+
+PROCEDURE enviar_email_devolucoes_matera:
+
+  DEFINE VARIABLE corpo AS CHAR NO-UNDO.
+  DEF VAR h-b1wgen0011 AS HANDLE NO-UNDO.
+                          
+  ASSIGN corpo = "Foram identificadas <b>devoluções</b> de TED do legado <b>Matera:</b> \n\n".
+  
+  FOR EACH devolucoes_matera NO-LOCK:
+    ASSIGN corpo = corpo + "Valor: " + TRIM(STRING(devolucoes_matera.valor,"zzz,zzz,zzz,zz9.99")) + 
+                           "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" +
+                           "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" +
+                           " Data: " + STRING(DAY(devolucoes_matera.data),"99") + "/" + 
+                                             STRING(MONTH(devolucoes_matera.data),"99") +  "/" +
+                                             STRING(YEAR(devolucoes_matera.data),"9999") + "\n".
+  END.
+  
+  ASSIGN corpo = corpo + "\n Deverá ser efetuado crédito de devolução na conta da Cooperativa Filiada (histórico 2218)".
+  
+  MESSAGE corpo.
+  
+  RUN sistema/generico/procedures/b1wgen0011.p PERSISTENT SET h-b1wgen0011.
+
+  RUN enviar_email_completo IN h-b1wgen0011
+                (INPUT 1,
+                 INPUT glb_cdprogra,
+                 INPUT "cecred@cecred.coop.br",                   
+                 INPUT "contasapagar@cecred.coop.br,spb@cecred.coop.br",
+                 INPUT "Devoluções de TED - MATERA",
+                 INPUT "",
+                 INPUT "",
+                 INPUT corpo,
+                 INPUT FALSE). 
+
+
+  DELETE PROCEDURE h-b1wgen0011.
+
+  RETURN "OK".
+
+END PROCEDURE.
 
 PROCEDURE proc_critica_header:
 
