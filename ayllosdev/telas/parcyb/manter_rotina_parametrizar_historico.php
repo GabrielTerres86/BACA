@@ -5,7 +5,7 @@
 	 * DATA CRIAÇÃO : 10/09/2015
 	 * OBJETIVO     : Rotina para manter as operações da tela de parametrização de histórico
 	 * --------------
-	 * ALTERAÇÕES   : 
+	 * ALTERAÇÕES   : 13/01/2016 - Inclusão da coluna Código de Transação CYBER - PRJ 432 - Jean Calão
 	 * -------------- 
 	 */		
 
@@ -101,7 +101,7 @@
  	if ($xmlObjeto->roottag->tags[0]->name == "ERRO") {
 		$msgErro = $xmlObj->roottag->tags[0]->cdata;
 		if($msgErro == null || $msgErro == ''){
-			$msgErro = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
+			$msgErro = $xmlObjeto->roottag->tags[0]->tags[0]->tags[5]->cdata;
 		}
 		exibirErro("error",$msgErro,"Alerta - Ayllos","",false);
 	}
@@ -116,7 +116,8 @@
 															  "','" . getByTagName($parametro->tags,"dshistor") . 
 															  "','" . getByTagName($parametro->tags,"indebcre") . 
 															  "','" . getByTagName($parametro->tags,"indcalem") . 
-															  "','" . getByTagName($parametro->tags,"indcalcc") . "');";
+															  "','" . getByTagName($parametro->tags,"indcalcc") . 
+															  "','" . getByTagName($parametro->tags,"cdtrscyb") ."');";
 				}
 			}
 
@@ -129,5 +130,5 @@
 		break;
 	}
 	//Esconde a mensagem de aguardo do processo e executa o comando criado pelas opções
-	echo "hideMsgAguardo();" . $command;
+	echo "hideMsgAguardo();" . $command;	
 ?>
