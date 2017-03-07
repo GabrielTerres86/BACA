@@ -14226,6 +14226,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
       vr_tar_cdfvlcop INTEGER;
       vr_inpessoa     INTEGER;
       vr_cdmotivo     craptar.cdmotivo%TYPE;
+	  vr_dsorgarq     crapcco.dsorgarq%TYPE;
       --Variavel Indice tabela
       vr_index VARCHAR2(40);
       --Tabela de memoria de erros
@@ -14240,6 +14241,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
       --Inicializar variaveis retorno
       pr_cdcritic:= NULL;
       pr_dscritic:= NULL;
+	  vr_dsorgarq:= NULL;
       --Selecionar registro cobranca
       OPEN cr_crapcob (pr_rowid => pr_idtabcob);
       --Posicionar no proximo registro
@@ -14304,6 +14306,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
           vr_vltarifa:= 0;
           vr_cdhistor:= 0;
         ELSE
+		  vr_dsorgarq:= rw_crapcco.dsorgarq;
           vr_vltarifa:= pr_vltarifa;
           --Se historico passado = 0
           IF nvl(pr_cdhistor,0) = 0 THEN
@@ -14356,7 +14359,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
       --Se Encontrou tarifa
       IF vr_vltarifa > 0 THEN
         --Montar indice para acessar tabela
-        IF nvl(rw_crapcob.nrctremp,0) > 0 THEN
+        IF nvl(rw_crapcob.nrctremp,0) > 0 OR vr_dsorgarq = 'ACORDO' THEN
            vr_index:= LPad(rw_crapcob.cdcooper,3,'0')||
                       LPad(rw_crapcob.nrdconta,10,'0')||
                       LPad(rw_crapcob.nrcnvcob,7,'0')||

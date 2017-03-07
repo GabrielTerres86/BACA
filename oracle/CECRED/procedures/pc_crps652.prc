@@ -1647,7 +1647,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
 
            IF vr_tab_acordo.EXISTS(vr_cdindice) THEN
              pc_monta_linha(LPAD(vr_tab_acordo(vr_cdindice),15,'0'),76,6);
-             pc_monta_linha(LPAD('PC',6,' '),91,6);
+             pc_monta_linha(RPAD('PC',6,' '),91,6);
            ELSE  
              pc_monta_linha(SUBSTR(NVL(pr_dshistor,' '),1,15),76,6);
              pc_monta_linha(gene0002.fn_mask(NVL(pr_cdhistor,0),'999999'),91,6);
