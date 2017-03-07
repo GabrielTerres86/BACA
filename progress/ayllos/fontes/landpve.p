@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Outubro/91.                     Ultima atualizacao: 22/09/2016
+   Data    : Outubro/91.                     Ultima atualizacao: 14/02/2017
 
    Dados referentes ao programa:
 
@@ -301,6 +301,9 @@
                22/09/2016 - Incluido tratamento para verificacao de contrato de 
                             acordo, Prj. 302 (Jean Michel).
                             
+               14/02/2017 - Alteracao para chamar pc_verifica_situacao_acordo. 
+                            (Jaison/James - PRJ302)
+
 ............................................................................. */
 
 { includes/var_online.i }
@@ -323,7 +326,8 @@ DEF VAR ant_cdcooper         AS INT                                  NO-UNDO.
 DEF VAR aux_cdcoptco         AS INT                                  NO-UNDO.
 DEF VAR aux_nrctatco         AS INT                                  NO-UNDO.
 DEF VAR aux_sldesblo         AS DECI                                 NO-UNDO.
-DEF VAR aux_flgativo         AS INT                                  NO-UNDO. 
+DEF VAR aux_flgretativo      AS INT                                  NO-UNDO.
+DEF VAR aux_flgretquitado    AS INT                                  NO-UNDO.
 
 DEF BUFFER crabdev FOR crapdev.
 
@@ -1788,24 +1792,27 @@ DO WHILE TRUE:
                       { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
                       /* Verifica se ha contratos de acordo */
-                      RUN STORED-PROCEDURE pc_verifica_acordo_ativo
+                      RUN STORED-PROCEDURE pc_verifica_situacao_acordo
                         aux_handproc = PROC-HANDLE NO-ERROR (INPUT glb_cdcooper
                                                             ,INPUT craplcm.nrdconta
                                                             ,INPUT INT(ENTRY(1,craplcm.cdpesqbb, ";"))
-                                                            ,OUTPUT 0
+                                                            ,OUTPUT 0 /* pr_flgretativo */
+                                                            ,OUTPUT 0 /* pr_flgretquitado */
+                                                            ,OUTPUT 0 /* pr_flgretcancelado */
                                                             ,OUTPUT 0
                                                             ,OUTPUT "").
 
-                      CLOSE STORED-PROC pc_verifica_acordo_ativo
+                      CLOSE STORED-PROC pc_verifica_situacao_acordo
                         aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
                       { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
                       
-                      ASSIGN glb_cdcritic = 0
-                             glb_dscritic = ""
-                             glb_cdcritic = INT(pc_verifica_acordo_ativo.pr_cdcritic) WHEN pc_verifica_acordo_ativo.pr_cdcritic <> ?
-                             glb_dscritic = TRIM(pc_verifica_acordo_ativo.pr_dscritic) WHEN pc_verifica_acordo_ativo.pr_dscritic <> ?
-                             aux_flgativo = INT(pc_verifica_acordo_ativo.pr_flgativo).
+                      ASSIGN glb_cdcritic      = 0
+                             glb_dscritic      = ""
+                             glb_cdcritic      = INT(pc_verifica_situacao_acordo.pr_cdcritic) WHEN pc_verifica_situacao_acordo.pr_cdcritic <> ?
+                             glb_dscritic      = TRIM(pc_verifica_situacao_acordo.pr_dscritic) WHEN pc_verifica_situacao_acordo.pr_dscritic <> ?
+                             aux_flgretativo   = INT(pc_verifica_situacao_acordo.pr_flgretativo)
+                             aux_flgretquitado = INT(pc_verifica_situacao_acordo.pr_flgretquitado).
                       
                       IF glb_cdcritic > 0 THEN
                         DO:
@@ -1821,12 +1828,22 @@ DO WHILE TRUE:
                           UNDO, NEXT.
                         END.
                         
-                      IF aux_flgativo = 1 THEN
+                      /* Se estiver ATIVO */
+                      IF aux_flgretativo = 1 THEN
                         DO:
                           MESSAGE "Lancamento nao permitido, emprestimo em acordo.".
                           PAUSE 3 NO-MESSAGE.
                           UNDO, NEXT.
                         END.
+                        
+                      /* Se estiver QUITADO */
+                      IF aux_flgretquitado = 1 THEN
+                        DO:
+                          MESSAGE "Lancamento nao permitido, contrato liquidado atraves de acordo.".
+                          PAUSE 3 NO-MESSAGE.
+                          UNDO, NEXT.
+                        END.
+
                       /* Fim verifica se possui contrato de acordo */              
                     
                         RUN fontes/saldo_epr.p 

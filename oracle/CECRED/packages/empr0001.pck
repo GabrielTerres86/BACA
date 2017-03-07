@@ -2270,7 +2270,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_qtdiamor NUMBER; --> Qtde de dias entre a data atual e a calculada
       vr_txdiaria NUMBER(18, 10); --> Taxa para calculo de mora
       vr_dstextab craptab.dstextab%TYPE;
-    
+
     BEGIN
       -- Criar um bloco para faciliar o tratamento de erro
       BEGIN
@@ -2538,7 +2538,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Tiago.
-       Data    : 06/03/2012                         Ultima atualizacao: 21/10/2016
+       Data    : 06/03/2012                         Ultima atualizacao: 14/02/2017
     
        Dados referentes ao programa:
     
@@ -2570,6 +2570,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                     09/10/2015 - Inclusao de histórico de estorno PP. (Oscar)
 
 				    21/10/2016 - Ajuste para utilização do cursor padrão da craptab. (Rodrigo)
+
+                    14/02/2017 - Foi inicializada a vr_vlsderel com zero. (Jaison/James)
+
     ............................................................................. */
   
     -------------------> CURSOR <--------------------
@@ -2658,7 +2661,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     vr_exec_BUSCA exception;
     --vr_vlatupar   NUMBER(11,2) := 0;
     vr_vlatupar NUMBER := 0;
-    vr_vlsderel NUMBER;
+    vr_vlsderel NUMBER := 0;
     vr_qtdianor NUMBER := 0;
     vr_qtdiamor NUMBER := 0;
     vr_prtljuro NUMBER := 0;
@@ -9062,7 +9065,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         END IF;
         --Fechar Cursor
         CLOSE cr_crappep;
-      
+
         --SD#545719 inicio
         IF rw_crappep.inliquid = 1 THEN
           -- Atribui críticas
@@ -9980,7 +9983,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                    16/10/2015 - Zerar o campo vlsdvsji quando liquidar a parcela PP (Oscar)             
     
                    17/03/2016 - Limpar campos de saldo ai liquidar crappep SD366229 (Odirlei-AMcom)
-    
+
                    31/10/2016 - Validação dentro para identificar
                                 parcelas ja liquidadas (AJFink - SD#545719)
 
@@ -10820,7 +10823,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         END IF;
         --Fechar Cursor
         CLOSE cr_crappep;
-      
+
         --SD#545719 inicio
         IF rw_crappep.inliquid = 1 THEN
           -- Atribui críticas
@@ -13480,7 +13483,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                         ,pr_flgativo => vr_flgativo
                                         ,pr_cdcritic => vr_cdcritic
                                         ,pr_dscritic => vr_dscritic);
-       
+												  
        -- Se houve retorno de erro
        IF vr_dscritic IS NOT NULL THEN
 				 -- Gera exceção
@@ -13697,7 +13700,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
              vr_cdcritic := 0;
              vr_dscritic := 'Parcela ja liquidada';
              -- Gera exceção
-             RAISE vr_exc_erro;					 
+             RAISE vr_exc_erro;
            END IF;
   				 
            -- Parcela em dia
@@ -13751,7 +13754,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
              IF vr_des_reto <> 'OK' THEN
                RAISE vr_exc_erro2;
              END IF;
-  				 
+  																				 
            ELSIF rw_crappep.dtvencto > pr_dtmvtolt   THEN /* Parcela a Vencer */ 
              
              pr_efetiva_pagto_antec_parcela(pr_cdcooper    => pr_cdcooper --> Cooperativa conectada
@@ -13778,7 +13781,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
              -- Se Retornou erro
              IF vr_des_reto <> 'OK' THEN
                RAISE vr_exc_erro2;
-             END IF;
+           END IF;
   																				 
            END IF;
            

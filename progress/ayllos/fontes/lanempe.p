@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Janeiro/94.                         Ultima atualizacao: 23/09/2016
+   Data    : Janeiro/94.                         Ultima atualizacao: 14/02/2017
 
    Dados referentes ao programa:
 
@@ -54,6 +54,10 @@
                           no momento da liquidaçao do mesmo. (Renato Darosci - M176)
                           
              23/09/2016 - Inclusao da verificacao de contrato de acordo (Jean Michel).             
+
+             14/02/2017 - Alteracao para chamar pc_verifica_situacao_acordo. 
+                          (Jaison/James - PRJ302)
+
 ............................................................................. */
 
 { includes/var_online.i }
@@ -200,24 +204,27 @@ DO WHILE TRUE:
       /* Verifica se ha contratos de acordo */            
       { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
       
-      RUN STORED-PROCEDURE pc_verifica_acordo_ativo
+      RUN STORED-PROCEDURE pc_verifica_situacao_acordo
         aux_handproc = PROC-HANDLE NO-ERROR (INPUT glb_cdcooper
                                             ,INPUT tel_nrdconta
                                             ,INPUT tel_nrctremp
-                                            ,0
+                                            ,0 /* pr_flgretativo */
+                                            ,0 /* pr_flgretquitado */
+                                            ,0 /* pr_flgretcancelado */
                                             ,0
                                             ,"").
 
-      CLOSE STORED-PROC pc_verifica_acordo_ativo
+      CLOSE STORED-PROC pc_verifica_situacao_acordo
                 aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
       { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-      ASSIGN glb_cdcritic = 0
-             glb_dscritic = ""
-             glb_cdcritic = pc_verifica_acordo_ativo.pr_cdcritic WHEN pc_verifica_acordo_ativo.pr_cdcritic <> ?
-             glb_dscritic = pc_verifica_acordo_ativo.pr_dscritic WHEN pc_verifica_acordo_ativo.pr_dscritic <> ?
-             aux_flgativo = INT(pc_verifica_acordo_ativo.pr_flgativo).
+      ASSIGN glb_cdcritic      = 0
+             glb_dscritic      = ""
+             glb_cdcritic      = pc_verifica_situacao_acordo.pr_cdcritic WHEN pc_verifica_situacao_acordo.pr_cdcritic <> ?
+             glb_dscritic      = pc_verifica_situacao_acordo.pr_dscritic WHEN pc_verifica_situacao_acordo.pr_dscritic <> ?
+             aux_flgretativo   = INT(pc_verifica_situacao_acordo.pr_flgretativo)
+             aux_flgretquitado = INT(pc_verifica_situacao_acordo.pr_flgretquitado).
       
       IF glb_cdcritic > 0 THEN
         DO:
@@ -234,9 +241,17 @@ DO WHILE TRUE:
           NEXT.
         END.
                 
-      IF aux_flgativo = 1 THEN
+      /* Se estiver ATIVO */
+      IF aux_flgretativo = 1 THEN
         DO:
           MESSAGE "Exclusao nao permitida, emprestimo em acordo.".
+          NEXT.
+        END. 
+                  
+      /* Se estiver QUITADO */
+      IF aux_flgretquitado = 1 THEN
+        DO:
+          MESSAGE "Lancamento nao permitido, contrato liquidado atraves de acordo.".
           NEXT.
         END. 
                   
