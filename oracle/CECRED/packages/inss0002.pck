@@ -1818,7 +1818,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
           vr_dsmsglog:= 'Erro ao atualizar LCM.' || pr_nrseqaut;
           RAISE vr_exc_saida;
       END;
-      
+
       -- Atualiza o registro de movimento da internet
       paga0001.pc_insere_movimento_internet(pr_cdcooper => pr_cdcooper
                                            ,pr_nrdconta => pr_nrdconta
@@ -1832,7 +1832,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                                            
        IF TRIM(pr_dscritic) IS NOT NULL THEN
          RAISE vr_exc_saida;
-       END IF;
+    END IF;
 
     END IF;
 
