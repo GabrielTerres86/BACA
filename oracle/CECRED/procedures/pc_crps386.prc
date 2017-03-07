@@ -10,7 +10,7 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Julio/Mirtes
-   Data    : Abril/2004                    Ultima atualizacao: 15/06/2016
+   Data    : Abril/2004                    Ultima atualizacao: 08/12/2016
 
    Dados referentes ao programa:
 
@@ -156,10 +156,22 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
                             "cdagedeb", caso contrario busca "cdagectl" (Lucas Ranghetti #296778)
                             
                15/06/2016 - Adicnioar ux2dos para a Van E-sales (Lucas Ranghetti #469980)
+               
+               23/06/2016 - P333.1 - Devolução de arquivos com tipo de envio 6 - WebService (Marcos)              
                             
 			   13/07/2016 - Nao deve mais enviar o codigo da cooperativa na frente do campo conta.
 			                Chamado 407247 (Heitor - RKAM)
                             
+               23/08/2016 - Verificar final de semanas e feriados para verificar suspenções
+                            (Lucas Ranghetti #499496)             
+				
+			   04/10/2016 - Retirar validacao especifica para o convenio CASAN (Lucas Ranghetti #534110)         	
+			   
+			   13/10/2016 - Ajustado tratamento de critica ao efetuar insert da tabela gncvuni, estava 
+			                efetuando gravção na pr_dscritic e o correto é vr_dscritic (Daniel)        	
+                            
+               08/12/2016 - Tratamento para enviar agencia no formato antigo ou novo 
+                            dependendo da data da autorizacao (Lucas Ranghetti #549795)  
 ............................................................................. */
   -- Buscar os dados da cooperativa
   cursor cr_crapcop (pr_cdcooper in craptab.cdcooper%type) is
@@ -201,6 +213,7 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
        and craphis.cdhistor = gnconve.cdhisdeb;
   -- Buscar autorizacoes de debito em conta
   cursor cr_crapatr (pr_cdcooper in crapcop.cdcooper%type,
+                     pr_dtmovini IN crapdat.dtmvtolt%TYPE,
                      pr_dtmvtolt in crapdat.dtmvtolt%type,
                      pr_cdhisdeb in gnconve.cdhisdeb%type) is
     select crapatr.dtiniatr,           
@@ -226,7 +239,7 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
        and (   crapatr.dtiniatr = pr_dtmvtolt
             or crapatr.dtfimatr = pr_dtmvtolt
             or crapatr.dtinisus = pr_dtmvtolt 
-            or crapatr.dtfimsus = pr_dtmvtolt)
+            or crapatr.dtfimsus BETWEEN pr_dtmovini AND pr_dtmvtolt)
        and crapatr.cdhistor = pr_cdhisdeb
      order by inexecuc,
               nlssort(crapatr.nmfatura, 'NLS_SORT=BINARY_AI'),
@@ -263,6 +276,8 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
   -- Tratamento de erros
   vr_exc_saida       exception;
   vr_exc_fimprg      exception;
+  vr_cdretorn        NUMBER;
+  vr_dsretorn        VARCHAR2(4000);
   vr_cdcritic        pls_integer;
   vr_dscritic        varchar2(4000);
   vr_typ_said        varchar2(3);
@@ -302,6 +317,7 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
   vr_nrsequen        varchar2(6);
   vr_nmarqdat        varchar2(100);
   vr_nmarqped        varchar2(24);
+  vr_dtmovini        DATE;
 
   -- Subrotina para escrever texto na variável CLOB do XML
   procedure pc_escreve_xml(pr_des_dados in varchar2,
@@ -360,6 +376,15 @@ begin
     end if;
   close btch0001.cr_crapdat;
 
+  -- Data anterior util
+  vr_dtmovini := gene0005.fn_valida_dia_util(pr_cdcooper,
+                                             (rw_crapdat.dtmvtolt - 1), -- 1 dia anterior
+                                             'A',    -- Anterior
+                                             TRUE,   -- Feriado
+                                             FALSE); -- Desconsiderar 31/12
+  -- Adiciona mais um 1 dia na data inicial, para pegar finais de semana e feriados
+  vr_dtmovini := vr_dtmovini + 1;
+
  -- Número sequencial para Movimento de Convenios Unificados
   vr_concvuni := 0;
   -- Leitura dos convênios ativos para a cooperativa
@@ -375,6 +400,7 @@ begin
     -- Verifica se o convênio possui movimento
     -- Se não tem movimento, não precisa gerar os arquivos
     open cr_crapatr (pr_cdcooper,
+                     vr_dtmovini,
                      rw_crapdat.dtmvtolt,
                      rw_gnconve.cdhisdeb);
       fetch cr_crapatr into rw_crapatr;
@@ -391,16 +417,7 @@ begin
         continue;
       end if;
     close cr_crapatr;
-    -- Define o código da cooperativa
-    if rw_gnconve.cdcooper = pr_cdcooper or 
-       pr_cdcooper = 1 then
-      vr_cdcooperativa := ' ';
-    else
-      --Solicitado no chamado 407247 que não envie mais o código da cooperativa na frente da conta
-      --Deixei o IF acima para deixar mais claro a condição que era utilizada anteriormente, pode ser retirado posteriormente.
-      --vr_cdcooperativa := '9'||to_char(pr_cdcooper,'fm000');
-      vr_cdcooperativa := ' ';
-    end if;
+
     -- Procedure NOMEIA_ARQUIVOS do progress
     open cr_gncontr (pr_cdcooper,
                      rw_gnconve.cdconven,
@@ -537,25 +554,34 @@ begin
     -- Variáveis de controle
     vr_inexecuc := 0;
     vr_tot_qtregist := 0;
+
     -- Leitura das autorizacoes de debito em conta
     for rw_crapatr in cr_crapatr (pr_cdcooper,
+                                  vr_dtmovini,
                                   rw_crapdat.dtmvtolt,
                                   rw_gnconve.cdhisdeb) loop
             
       -- Atribuir a data da autorização
       vr_dtautori := to_char(rw_crapatr.dtiniatr, 'yyyymmdd');
-     
-      IF rw_gnconve.cdconven = 4 THEN -- CASAN
-        vr_nragenci := 1294;
-      ELSE
+
+      IF rw_gnconve.cdconven = 4 AND 
+         (rw_crapatr.dtiniatr < to_date('05/10/2016','dd/mm/yyyy')) THEN -- casan
+          vr_nragenci := 1294;
+        vr_cdcooperativa := '9'||to_char(pr_cdcooper,'fm000');
+      ELSE             
         -- Caso a data de inicio da autorização seja menor que 01/09/2013 e for um cancelamento 
         -- de debito ira gravar a agencia com formato antigo. Ex: "0001"            
         -- Caso contrario grava com novo formato. Ex: 0101
-        IF (rw_crapatr.dtiniatr < to_date('01/09/2013','dd/mm/yyyy')) THEN 
+        -- A data de 01/09/2013 somente para Viacredi, para as demais cooperativas devemos utilizar
+        -- a data de 26/07/2016 como referencia
+        IF (pr_cdcooper = 1 AND rw_crapatr.dtiniatr < to_date('01/09/2013','dd/mm/yyyy') OR
+            pr_cdcooper <> 1 AND rw_crapatr.dtiniatr < to_date('26/07/2016','dd/mm/yyyy')) THEN 
           vr_nragenci := TRIM(rw_gnconve.cdagedeb);
+          vr_cdcooperativa := '9'||to_char(pr_cdcooper,'fm000');      
         ELSE
           vr_nragenci := rw_crapcop.cdagectl;      
-        END IF;
+          vr_cdcooperativa := ' ';
+        END IF;     
       END IF;
 
       if rw_gnconve.cdconven <> 1 then -- Brasil Telecom
@@ -569,7 +595,7 @@ begin
             if rw_crapatr.dtiniatr = rw_crapdat.dtmvtolt then
                vr_dtautori := to_char(rw_crapatr.dtiniatr, 'yyyymmdd');
             else
-               vr_dtautori := to_char(rw_crapatr.dtfimsus, 'yyyymmdd');
+               vr_dtautori := to_char(rw_crapdat.dtmvtolt, 'yyyymmdd');
             end if; 
          end if;     
       end if;
@@ -644,7 +670,7 @@ begin
                   3); -- Tipo Autoriz. Debito
         exception
           when others then
-            pr_dscritic := 'Erro ao criar gncvuni: '||sqlerrm;
+            vr_dscritic := 'Erro ao criar gncvuni: '||sqlerrm;
             raise vr_exc_saida;
         end;
       end if;
@@ -794,6 +820,29 @@ begin
       end if;
       --
 
+      IF rw_gnconve.tpdenvio = 6 THEN -- WebServices
+        --codigo da critica
+        vr_cdcritic := 982;
+            
+        
+        CONV0002.pc_armazena_arquivo_conven (pr_cdconven => rw_gnconve.cdconven
+                                            ,pr_dtarquiv => rw_crapdat.dtmvtolt
+                                            ,pr_tparquiv => 'B' -- Debito em conta --
+                                            ,pr_flproces => 0 -- Não retornado ainda
+                                            ,pr_dscaminh => gene0001.fn_diretorio(pr_tpdireto => 'C', -- /usr/coop
+                                                                                  pr_cdcooper => pr_cdcooper,
+                                                                                  pr_nmsubdir => '/salvar')
+                                            ,pr_nmarquiv => vr_nmarqped
+                                            ,pr_cdretorn => vr_cdretorn   -- Tratar possível erro no retorno (Quando OK virá 202, qualquer outro código é erro) 
+                                            ,pr_dsmsgret => vr_dsretorn); -- Detalhe do erro
+        
+        IF vr_cdretorn <> 202 THEN
+          vr_dscritic:= vr_dsretorn;
+          -- retornando ao programa chamador
+          RAISE vr_exc_saida;
+        END IF;
+      END IF;
+      
       vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                  pr_ind_tipo_log => 2, -- Erro tratato
@@ -918,3 +967,4 @@ exception
     -- Efetuar rollback
     rollback;
 end;
+/
