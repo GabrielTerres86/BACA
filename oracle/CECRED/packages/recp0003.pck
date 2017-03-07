@@ -28,7 +28,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
   --  Sistema  : Rotinas referentes a importacao de arquivos CYBER de acordos de emprestimos
   --  Sigla    : RECP
   --  Autor    : Jean Michel Deschamps
-  --  Data     : Outubro/2016.                   Ultima atualizacao: 22/02/2017
+  --  Data     : Outubro/2016.                   Ultima atualizacao: 06/03/2017
   --
   -- Dados referentes ao programa:
   --
@@ -36,11 +36,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
   -- Objetivo  : Agrupar rotinas genericas refente a importacao de arquivos referente a acordos de emprestimos
   --
   -- Alteracoes: 20/02/2017 - Alteracao para colocar msgs do log de JOB. (Jaison/James)
-  -- 
+  --
   --             22/02/2017 - Alteracao para passar pr_nrparcel como zero. (Jaison/James)
-  -- 
+  --
+  --             06/03/2017 - Foi passado o UPDATE crapcyc para dentro do LOOP. (Jaison/James)
+  --
   ---------------------------------------------------------------------------------------------------------------
-    
+
   vr_flgerlog BOOLEAN := FALSE;
 
   -- Controla log proc_batch, para apensa exibir qnd realmente processar informacao
@@ -371,7 +373,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                pc_controla_log_batch(pr_cdcooper => vr_cdcooper
                                     ,pr_dstiplog => 'E'
                                     ,pr_dscritic => 'Erro ao abrir arquivo: ' || vr_nmarqtxt);
-               
+
                -- Fechar o arquivo
                GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file); --> Handle do arquivo aberto;  
 
@@ -417,17 +419,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                  ELSIF SUBSTR(vr_setlinha,1,1) = 'T' THEN
                    CONTINUE;                                          
                  END IF;
-
+                 
                  vr_nracordo := TO_NUMBER(SUBSTR(vr_setlinha,29,13));
                  vr_dtcancel := TO_DATE(SUBSTR(vr_setlinha,42,8),'MMDDRRRR');
-
+                 
                  OPEN cr_tbacordo(pr_nracordo => vr_nracordo);
-                   FETCH cr_tbacordo INTO rw_tbacordo;
+                 FETCH cr_tbacordo INTO rw_tbacordo;
                  IF cr_tbacordo%NOTFOUND THEN
-                     CLOSE cr_tbacordo;                                        
+                   CLOSE cr_tbacordo;
                    CONTINUE;
-                   ELSE
-                     CLOSE cr_tbacordo;
+                 ELSE
+                   CLOSE cr_tbacordo;
                  END IF;
                  
                   -- Acordo Quitado e Cancelado
@@ -441,15 +443,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                             ,pr_cdcritic => vr_cdcritic
                                             ,pr_dscritic => vr_dscritic
                                             ,pr_dsdetcri => vr_dsdetcri);
-                     
+
                  IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
                    -- Log de erro de execucao
                    pc_controla_log_batch(pr_cdcooper => vr_cdcooper
                                         ,pr_dstiplog => 'E'
                                         ,pr_dscritic => 'Acordo: ' || vr_nracordo || '. Critica: ' || vr_dscritic);
-                     pr_flgemail := TRUE;
+                   pr_flgemail := TRUE;
                    CONTINUE;
-                   END IF;
+                 END IF;
 
                END IF; --Arquivo aberto
              END LOOP;
@@ -840,7 +842,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                pc_controla_log_batch(pr_cdcooper => vr_cdcooper
                                     ,pr_dstiplog => 'E'
                                     ,pr_dscritic => 'Erro ao abrir arquivo: ' || vr_nmarqtxt);
-               
+                                         
                -- Verificar se o arquivo está aberto
                IF utl_file.IS_OPEN(vr_input_file) THEN
                  -- Fechar o arquivo
@@ -1185,7 +1187,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                         vr_vllancam := NVL(vr_vllancam,0) + NVL(vr_vltotpag,0);
                       END IF;
                       
-                    END IF; 
+                    END IF;
+
+                   BEGIN
+                     UPDATE crapcyc 
+                        SET flgehvip = 0
+                          , cdmotcin = 0
+                          , dtaltera = vr_tab_crapdat(rw_crapcyb.cdcooper).dtmvtolt
+                      WHERE cdcooper = rw_crapcyb.cdcooper
+                        AND cdorigem = DECODE(rw_crapcyb.cdorigem,2,3,rw_crapcyb.cdorigem)
+                        AND nrdconta = rw_crapcyb.nrdconta
+                        AND nrctremp = rw_crapcyb.nrctremp;
+                   EXCEPTION
+                     WHEN OTHERS THEN
+                       vr_dscritic := 'Erro ao atualizar CRAPCYC: '||SQLERRM;
+                       -- Envio centralizado de log de erro
+                       BTCH0001.pc_gera_log_batch(pr_cdcooper    => vr_cdcooper,
+                                                  pr_ind_tipo_log => 2, -- Erro tratato
+                                                  pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Arquivo: ' || vr_nmarqtxt
+                                                                      || ' Erro:' || vr_dscritic);
+                       pr_flgemail := TRUE;
+                       CONTINUE;
+                   END;
 
                  END LOOP;
                  
@@ -1241,28 +1264,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                     END IF;
 
                  END IF;
-                 
-                 BEGIN
-                   UPDATE crapcyc 
-                      SET flgehvip = 0
-                        , cdmotcin = 0
-                        , dtaltera = vr_tab_crapdat(rw_crapcyb.cdcooper).dtmvtolt
-                    WHERE cdcooper = rw_crapcyb.cdcooper
-                      AND cdorigem = DECODE(rw_crapcyb.cdorigem,2,3,rw_crapcyb.cdorigem)
-                      AND nrdconta = rw_crapcyb.nrdconta
-                      AND nrctremp = rw_crapcyb.nrctremp;
-                 EXCEPTION
-                   WHEN OTHERS THEN
-                     vr_dscritic := 'Erro ao atualizar CRAPCYC: '||SQLERRM;
-                      -- Envio centralizado de log de erro
-                     BTCH0001.pc_gera_log_batch(pr_cdcooper    => vr_cdcooper,
-                                                 pr_ind_tipo_log => 2, -- Erro tratato
-                                                 pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Arquivo: ' || vr_nmarqtxt
-                                                                    || ' Erro:' || vr_dscritic);
-                      ROLLBACK TO SAVE_ACORDO_QUITADO;
-                      pr_flgemail := TRUE;
-                      EXIT LEITURA_TXT;
-                 END;
 
                  -- Verificar se sera necessario efetuar o lancamento de ajuste
                  IF vr_vllancam - rw_nracordo.vlbloqueado > 0 THEN
@@ -1474,12 +1475,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                ,pr_dstiplog => 'E'
                                ,pr_dscritic => vr_dscritic);
         END IF;
-        END IF;
-      
+      END IF;
+
       -- Log de final de execucao
       pc_controla_log_batch(pr_cdcooper => 3
                            ,pr_dstiplog => 'F');
-      
+
       COMMIT;
      
   EXCEPTION
