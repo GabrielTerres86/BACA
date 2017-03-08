@@ -6,7 +6,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTIBSICREDI(pr_cdcooper in crapc
    JOB: PC_JOB_AGENDEBTIBSICREDI
    Sistema : Conta-Corrente - Cooperativa de Credito
    Autor   : Evandro Guaranha 
-   Data    : Setembro/2016.                     Ultima atualizacao: 30/11/2016 
+   Data    : Setembro/2016.                     Ultima atualizacao: 07/03/2017
 
    Dados referentes ao programa:
 
@@ -16,6 +16,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTIBSICREDI(pr_cdcooper in crapc
    Alteracoes: 30/11/2016 - Ajuste para efetuar o reagendamento de forma correta
                            (Adriano - SD 568045).
    
+               07/03/2017 - Ajuste para aumentar o tamanho da variável vr_jobname 
+						    (Adriano - SD 625356 ).
+
   ..........................................................................*/
   
 ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
@@ -29,7 +32,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTIBSICREDI(pr_cdcooper in crapc
 
     vr_dtdiahoje   DATE;
     vr_dsplsql     VARCHAR2(2000);
-    vr_jobname     VARCHAR2(20);
+    vr_jobname     VARCHAR2(100);
     
     vr_qtintsom    NUMBER:=0;
     
