@@ -12,6 +12,14 @@
   |   busca_total_descto_lim        | DSCT0001.pc_busca_total_descto_lim      |
   |   busca_total_descontos         | DSCT0001.pc_busca_total_descontos       |
   |   efetua_resgate_tit_bordero    | DSCT0001.pc_efetua_resgate_tit_bord     |
+  |   busca_parametros_dsctit       | DSCT0002.pc_busca_parametros_dsctit     |
+  |   busca_dados_limite            | DSCT0002.pc_busca_dados_limite          |
+  |   busca_dados_limite_consulta   | DSCT0002.pc_busca_dados_limite_cons     |
+  |   busca_restricoes              | DSCT0002.pc_busca_restricoes            |
+  |   busca_dados_bordero           | DSCT0002.pc_busca_dados_bordero         |
+  |   busca_titulos_bordero         | DSCT0002.pc_busca_titulos_bordero       |
+  |   carrega_dados_bordero_titulos | DSCT0002.pc_carrega_dados_bordero_tit   |
+  |   busca_dados_impressao_dsctit  | DSCT0002.pc_busca_dados_imp_descont     |
   +---------------------------------+-----------------------------------------+
 
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
@@ -28,7 +36,7 @@
 
     Programa: b1wgen0030.p
     Autor   : Guilherme
-    Data    : Julho/2008                     Ultima Atualizacao: 27/06/2016
+    Data    : Julho/2008                     Ultima Atualizacao: 25/10/2016
            
     Dados referentes ao programa:
                 
@@ -453,17 +461,24 @@
                             (carencia debito titulos vencidos) 
                             (Tiago/Rodrigo Melhoria 116).
 
-              16/05/2016 - Ajustado rotina efetua_resgate_tit_bordero para gerar
-			               tarifa de resgate na data de resgate e não na data na qual
-						   foi criado o bordero de desconto de titulo.
+               16/05/2016 - Ajustado rotina efetua_resgate_tit_bordero para gerar
+			                tarifa de resgate na data de resgate e não na data na qual
+				  		   foi criado o bordero de desconto de titulo.
 						   PRJ318 - Nova plataforma de cobrança (Odirlei-AMcom)
 
+			   28/04/2016 - Adicionado verificacao para tratar isencao de cobranca
+                            de tarifa na procedure efetua_liber_anali_bordero. 
+                            (Reinert)
                17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
 
                27/06/2016 - Criacao dos parametros inconfi6, cdopcoan e cdopcolb na
                             efetua_liber_anali_bordero. Inclusao de funcionamento
                             de pedir senha do coordenador. (Jaison/James)
 
+               02/08/2016 - Inclusao insitage 3-Temporariamente Indisponivel.
+                            (Jaison/Anderson)
+
+               25/10/2016 - Validacao de CNAE restrito Melhoria 310 (Tiago/Thiago)
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -1560,7 +1575,7 @@ PROCEDURE efetua_liber_anali_bordero:
                   VALIDATE tt-msg-confirma.
                   RETURN "OK".
              END.
-             
+
       END.
    
    /*  Calculo do juros sobre o desconto do titulo .......................... */
@@ -3043,6 +3058,7 @@ PROCEDURE busca_dados_limite_incluir:
     DEF VAR aux_dsdidade         AS CHAR                    NO-UNDO.
     DEF VAR aux_dsoperac         AS CHAR                    NO-UNDO.
     DEF VAR aux_nriniseq 	     AS INTE					NO-UNDO.
+	DEF VAR aux_flgrestrito      AS INTE                    NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-risco.
@@ -3115,6 +3131,34 @@ PROCEDURE busca_dados_limite_incluir:
 
         END.
     
+		/*Se tem cnae verificar se e um cnae restrito*/
+		IF  crapass.cdclcnae > 0 THEN
+			DO:
+
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                /* Busca a se o CNAE eh restrito */
+                RUN STORED-PROCEDURE pc_valida_cnae_restrito
+                aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.cdclcnae
+                                                    ,0).
+
+                CLOSE STORED-PROC pc_valida_cnae_restrito
+                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                ASSIGN aux_flgrestrito = INTE(pc_valida_cnae_restrito.pr_flgrestrito)
+                                            WHEN pc_valida_cnae_restrito.pr_flgrestrito <> ?.
+
+				IF  aux_flgrestrito = 1 THEN
+					DO:
+    						CREATE tt-msg-confirma.
+							ASSIGN tt-msg-confirma.inconfir = par_inconfir + 1
+								   tt-msg-confirma.dsmensag = "CNAE restrito, conforme previsto na Política de Responsabilidade <br> Socioambiental do Sistema CECRED. Necessário apresentar Licença Regulatória.<br><br>Deseja continuar?".
+        END.
+    
+			END.
+
         /* rotina para buscar o crapttl.inhabmen */
     FIND FIRST crapttl WHERE crapttl.cdcooper = par_cdcooper   AND
                              crapttl.nrdconta = par_nrdconta   AND
@@ -6728,7 +6772,7 @@ PROCEDURE grava_parametros_dsctit:
                                + ";" + STRING(tt-dados_cecred_dsctit.qtnaopag,"9999")
                                + ";" + STRING(tt-dados_cecred_dsctit.qtprotes,"9999").
 
-     
+
         DO aux_contador = 1 TO 10:
 
             FIND b-craptab WHERE b-craptab.cdcooper = par_cdcooper    AND
@@ -15325,7 +15369,7 @@ PROCEDURE analisar-titulo-bordero:
                 ((aux_vltotsac_sr / aux_vltotbdt_sr) * 100) > tt-dados_dsctit.pctitemi     THEN
                 DO:
                     ASSIGN aux_dsrestri = "Percentual de titulo do " +
-                                          "pagador excedido no contrato"
+                                          "pagador excedido no bordero"
                            aux_nrseqdig = IF crapcob.flgregis = TRUE THEN 52
                                           ELSE 2.
 
@@ -16101,7 +16145,8 @@ PROCEDURE valida_situacao_pa:
     IF  NOT AVAILABLE crapage   THEN
         ASSIGN aux_cdcritic = 15.
     ELSE    
-    IF  crapage.insitage <> 1   THEN
+    IF  crapage.insitage <> 1   AND   /* Ativo */
+        crapage.insitage <> 3   THEN  /* Temporariamente Indisponivel */
         ASSIGN aux_cdcritic = 856.
 
     IF  aux_cdcritic <> 0 THEN
