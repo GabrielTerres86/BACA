@@ -6,7 +6,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTIBSICREDI(pr_cdcooper in crapc
    JOB: PC_JOB_AGENDEBTIBSICREDI
    Sistema : Conta-Corrente - Cooperativa de Credito
    Autor   : Evandro Guaranha 
-   Data    : Setembro/2016.                     Ultima atualizacao: 30/11/2016 
+   Data    : Setembro/2016.                     Ultima atualizacao: 07/03/2017
 
    Dados referentes ao programa:
 
@@ -16,6 +16,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTIBSICREDI(pr_cdcooper in crapc
    Alteracoes: 30/11/2016 - Ajuste para efetuar o reagendamento de forma correta
                            (Adriano - SD 568045).
    
+               07/03/2017 - Ajuste para aumentar o tamanho da variável vr_jobname 
+						    (Adriano - SD 625356 ).
+
   ..........................................................................*/
   
 ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
@@ -29,7 +32,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTIBSICREDI(pr_cdcooper in crapc
 
     vr_dtdiahoje   DATE;
     vr_dsplsql     VARCHAR2(2000);
-    vr_jobname     VARCHAR2(20);
+    vr_jobname     VARCHAR2(100);
     
     vr_qtintsom    NUMBER:=0;
     
@@ -107,7 +110,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTIBSICREDI(pr_cdcooper in crapc
       -- Verificação do calendário
       OPEN BTCH0001.cr_crapdat(pr_cdcooper => 3);
       
-      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;        
+      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;    
           
       IF BTCH0001.cr_crapdat%NOTFOUND THEN     
         CLOSE BTCH0001.cr_crapdat;
@@ -131,14 +134,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTIBSICREDI(pr_cdcooper in crapc
         vr_qtintsom := vr_qtintsom * 15;
         
       ELSE
-      --> Verificar se a data do sistema eh o dia de hoje
-      IF vr_dtdiahoje <> rw_crapdat.dtmvtolt THEN
-        --> Executaremos no proximo dia util
-        vr_qtintsom := 1;
+        --> Verificar se a data do sistema eh o dia de hoje
+        IF vr_dtdiahoje <> rw_crapdat.dtmvtolt THEN
+          --> Executaremos no proximo dia util
+          vr_qtintsom := 1;
          
-        END IF;  
+        END IF;
           
-      END IF;
+      END IF;   
 
       --> Se náo podemos executar agora
       IF vr_qtintsom > 0 THEN
