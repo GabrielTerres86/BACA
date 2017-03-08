@@ -42,6 +42,8 @@
                   05/11/2015 - Inclusão de novo Poder, PRJ. 131 - Ass. Conjunta (Jean Michel)
 				  
 				  23/12/2015 - Inclusão de impressão de PEP (Carlos)
+
+				  01/12/2016 - Definir a não obrigatoriedade do PEP (Tiago/Thiago SD532690)
  */	 
 ?>
 <?
@@ -805,13 +807,13 @@
 	//********************** Pessoa exposta politicamente **********************************
 	if ($fichaCadastralComDeclaracaoPEP == true) {	
 	
-		if (getByTagName($pfisica,'inpolexp') <> 2) {
+		if (getByTagName($pfisica,'inpolexp') == 1) {
+			
 			$GLOBALS['numLinha']	= 70;
 			pulaLinha(2);
 			escreve('               DECLARACAO DE PESSOA EXPOSTA POLITICAMENTE – PEP');
 			pulaLinha(3);
-		}
-		if (getByTagName($pfisica,'inpolexp') == 1) {
+			
 			if (getByTagName($comercial,'tpexposto') == 1) {
 				
 				$qtdLinhas = escreveJustificado('    Declaro que eu, ' . getByTagName($comercial,'nmextttl') . ', portador ' . 
@@ -867,27 +869,6 @@
 				escreveRodape();
 			}
 
-		} else if (getByTagName($pfisica,'inpolexp') == 0) {
-			
-			//	Declaro que eu, PDTNX UFSMMZRR IV URTPS, portador 
-			//do CPF 030.320.949-68, não sou uma pessoa exposta politicamente, nos termos 
-			//dos normativos em vigor.
-			//	Declaro, ainda, que comunicarei a Cooperativa qualquer alteração da 
-			//presente condição.
-			
-			$qtdLinhas = escreveJustificado('    Declaro que eu, ' . getByTagName($comercial,'nmextttl') . ', portador do CPF ' . getByTagName($pfisica,'nrcpfcgc') . ', titular da conta ' . getByTagName($registros,'nrdconta') . 
-											', não sou uma pessoa exposta politicamente, nos termos dos normativos em vigor.');
-			pulaLinha(2);
-			$qtdLinhas+= escreveJustificado('    Declaro, ainda, que comunicarei a Cooperativa qualquer alteração da presente condição.');
-			pulaLinha(4);
-			escreveCidadeData(getByTagName($registros,'dscidade'));
-			pulaLinha(4);
-			escreve('                      ________________________________                      ');
-			escreveLinha(preencheString(getByTagName($comercial,'nmextttl'), 76, ' ', 'C'));
-			
-			pulaLinha(44 - $qtdLinhas);
-			
-			escreveRodape();
 		}
 	}
 	//********************** FIM Pessoa exposta politicamente **********************************
