@@ -85,9 +85,9 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
     ,flgstfin crapfin.flgstfin%TYPE
     ,tpfinali crapfin.tpfinali%TYPE);
        
-   /* Tabela para guardar as finalidades de empréstimos */
+  /* Tabela para guardar as finalidades de empréstimos */
   TYPE typ_tab_finalidades_empr IS TABLE OF typ_finalidades_empr INDEX BY PLS_INTEGER;
-              
+  
   /* Tabela para guardar as naturezas de ocupação */
   TYPE typ_natureza_ocupacao IS RECORD 
     (cdnatocp gncdnto.cdnatocp%TYPE
@@ -301,8 +301,8 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
                                           ,pr_des_erro OUT VARCHAR2             -- Saida OK/NOK
                                           ,pr_clob_ret OUT CLOB                 -- Tabela clob                                 
                                           ,pr_cdcritic OUT PLS_INTEGER          -- Codigo Erro
-                                          ,pr_dscritic OUT VARCHAR2);          -- Descricao Erro                                           
-                                                                                                        
+                                          ,pr_dscritic OUT VARCHAR2);          -- Descricao Erro   
+                                                                                  
   PROCEDURE pc_busca_gncdnto_car( pr_cdnatocp IN gncdnto.cdnatocp%TYPE -- Código da finalidade
                                  ,pr_rsnatocp IN gncdnto.rsnatocp%TYPE -- Descrição da finalidade
                                  ,pr_nrregist IN INTEGER               -- Quantidade de registros                            
@@ -359,7 +359,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
    Sigla   : CRED
 
    Autor   : Adriano Marchi
-   Data    : 30/11/2015                       Ultima atualizacao: 22/02/2017 
+   Data    : 30/11/2015                       Ultima atualizacao: 08/03/2017
 
    Dados referentes ao programa:
 
@@ -374,9 +374,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
                                                     
                12/06/2016 - Criação das rotinas para consulta de linhas de crédito e finalidades de empréstimo
                             (Andrei - RKAM).
-                                                 
+                    
                22/02/2017 - Conversão da rotina busca-gncdnto (Adriano - SD 614408).
                                                    
+			   08/03/2017 - Ajuste para enviar corretamente o campo cdocupa no xml de retorno
+			                (Adriano - SD 614408).                               
   ---------------------------------------------------------------------------------------------------------------*/
   
   /*PROCEDURE RESPONSAVEL POR ENCONTRAR OPERADORES*/
@@ -4401,14 +4403,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Adriano  
-    Data     : Fevereiro/2017                          Ultima atualizacao:
+    Data     : Fevereiro/2017                          Ultima atualizacao: 08/03/2017
     
     Dados referentes ao programa:
     
     Frequencia: -----
     Objetivo   : Pesquisa de ocupação
     
-    Alterações : 
+    Alterações : 08/03/2017 - Ajuste para enviar corretamente o campo cdocupa no xml de retorno
+			                  (Adriano - SD 614408).
+
     -------------------------------------------------------------------------------------------------------------*/                                    
     --Variaveis de Criticas
     vr_cdcritic INTEGER;
@@ -4547,7 +4551,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
       gene0002.pc_escreve_xml(pr_xml            => vr_clob
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '<ocupacoes>'||
-                                                   '  <cdocupa>' || vr_tab_ocupacoes(vr_index).cdnatocp||'</cdocupa>'||
+                                                   '  <cdocupa>' || vr_tab_ocupacoes(vr_index).cdocupa||'</cdocupa>'||
                                                    '  <dsdocupa>' || vr_tab_ocupacoes(vr_index).dsdocupa||'</dsdocupa>'|| 
                                                    '  <rsdocupa>' || vr_tab_ocupacoes(vr_index).rsdocupa||'</rsdocupa>'||                                                    
                                                    '</ocupacoes>'); 

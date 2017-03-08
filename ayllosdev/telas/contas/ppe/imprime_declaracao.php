@@ -3,11 +3,14 @@
 	//******************************************************************************************//
 	//*** Fonte: imprime_declaracao.php                                            			 ***//
 	//*** Autor: Carlos Henrique                                              				 ***//
-	//*** Data : Dezembro/2015             Última Alteração: 21/02/2017 				     ***//
+	//*** Data : Dezembro/2015             Última Alteração: 08/03/2017 				     ***//
 	//***                                                                   				 ***//
 	//*** Objetivo  : Imprimir declaracao de pessoa exposta politicamente.     				 ***//	
 	//***             							                               				 ***//	 
 	//*** Alterações: 21/02/2017 - Ajuste para enviar campos sem formatação                  ***//
+	//***                          (Adriano - SD 614408).                               	 ***//	
+	//***                                                                                    ***//
+	//****            21/02/2017 - Ajuste para receber a informação nmemporg                 ***//
 	//***                          (Adriano - SD 614408).                               	 ***//	
 	//***             			   										     				 ***//
 	//***                          									         				 ***//
@@ -33,6 +36,7 @@
 	$dtinicio         = (isset($_POST['dtinicio'])) ?         $_POST['dtinicio']         : '';
 	$dttermino        = (isset($_POST['dttermino'])) ?        $_POST['dttermino']        : '';
 	$nmempresa        = (isset($_POST['nmempresa'])) ?        $_POST['nmempresa']        : '';
+	$nmemporg         = (isset($_POST['nmemporg'])) ?         $_POST['nmemporg']         : '';
 	$nrcnpj_empresa   = (isset($_POST['nrcnpj_empresa'])) ?   $_POST['nrcnpj_empresa']   : '';
 	$nmpolitico       = (isset($_POST['nmpolitico'])) ?       $_POST['nmpolitico']       : '';
 	$nrcpf_politico   = (isset($_POST['nrcpf_politico'])) ?   $_POST['nrcpf_politico']   : '';
@@ -61,7 +65,16 @@
 	$xml .= "  <cdrelacionamento>" .$cdrelacionamento                                    ."</cdrelacionamento>";
 	$xml .= "  <dtinicio>"         .$dtinicio                                            ."</dtinicio>";
 	$xml .= "  <dttermino>"        .$dttermino                                           ."</dttermino>";	
+	
+	if($nmempresa != ''){
+
 	$xml .= "  <nmempresa>"        .retiraAcentos(removeCaracteresInvalidos($nmempresa)) ."</nmempresa>";
+
+	}else {
+
+		$xml .= "  <nmempresa>"        .retiraAcentos(removeCaracteresInvalidos($nmemporg)) ."</nmempresa>";
+	}	
+	
 	$xml .= "  <nrcnpj_empresa>"   .$nrcnpj_empresa                                      ."</nrcnpj_empresa>";
 	$xml .= "  <nmpolitico>"       .retiraAcentos(removeCaracteresInvalidos($nmpolitico))."</nmpolitico>";
 	$xml .= "  <nrcpf_politico>"   .$nrcpf_politico                                      ."</nrcpf_politico>";
@@ -73,9 +86,7 @@
 	$xml .= "  <cidade>"           .$cidade                                              ."</cidade>";
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
-	//pr_tpexposto,pr_cdocpttl,pr_cdrelacionamento,pr_dtinicio,pr_dttermino,pr_nmempresa,pr_nrcnpj_empresa,
-	//pr_nmpolitico,pr_nrcpf_politico,pr_nmextttl,pr_rsocupa,pr_nrcpfcgc,pr_dsrelacionamento
-	//								    crapaca (craprdr seq 242)
+	
 	$xmlResult = mensageria($xml, $glbvars["nmdatela"], "IMP_DEC_PEP", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlObj = getObjectXML($xmlResult);
 
