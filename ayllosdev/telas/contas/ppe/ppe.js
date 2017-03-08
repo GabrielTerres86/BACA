@@ -1,12 +1,14 @@
 /*!
  * FONTE        : ppe.js
- * CRIAÇÃO      : Carlos Henrique                               Última alteração: 21/02/2017
+ * CRIAÇÃO      : Carlos Henrique                               Última alteração: 08/03/2017
  * DATA CRIAÇÃO : 21/12/2015 
  * OBJETIVO     : Biblioteca de funções na rotina COMERCIAL PPE da tela de CONTAS
  * --------------
  * ALTERAÇÕES   : 01/12/2016 - Definir a não obrigatoriedade do PEP (Tiago/Thiago SD532690)
 
                   21/02/2017 - Ajustes para inclusão de novos campos (Adriano - SD 614408).
+
+                  08/03/2017 - Ajuste devido a troca de nome do campo nmempresa para nmemporg (Adriano - SD 614408).
  * --------------
  */
 
@@ -30,6 +32,7 @@ var cdrelacionamento = '';
 var dtinicio         = '';
 var dttermino        = '';
 var nmempresa        = '';
+var nmemporg        = '';
 var nrcnpj_empresa   = '';
 var nmpolitico       = '';
 var nrcpf_politico   = '';
@@ -263,7 +266,7 @@ function controlaLayout(operacao) {
 	rDttermino = $('label[for="dttermino"]', '#divExposto1');
 	rNmpolitico = $('label[for="nmpolitico"]', '#divExposto2');
 	rNrCpfPolitico = $('label[for="nrcpf_politico"]', '#divExposto2');
-	rNmempresa2 = $('label[for="nmempresa"]', '#divExposto2');
+	rNmemporg = $('label[for="nmemporg"]', '#divExposto2');
 	rCdrelacionamento = $('label[for="cdrelacionamento"]', '#divExposto2');
 
 	rTpexposto.css('width', '130px').addClass('rotulo');
@@ -274,7 +277,7 @@ function controlaLayout(operacao) {
 	rDttermino.css('width', '70px').addClass('rotulo-linha');
 	rNmpolitico.css('width', '130px').addClass('rotulo');
 	rNrCpfPolitico.css('width', '45px').addClass('rotulo-linha');
-	rNmempresa2.css('width', '130px').addClass('rotulo');
+	rNmemporg.css('width', '130px').addClass('rotulo');
 	rCdrelacionamento.css('width', '130px').addClass('rotulo');
 
     //Campos do frmDadosPpe
@@ -287,7 +290,7 @@ function controlaLayout(operacao) {
 	cDttermino = $('#dttermino', '#divExposto1');
 	cNmpolitico = $('#nmpolitico', '#divExposto2');
 	cNrCpfPolitico = $('#nrcpf_politico', '#divExposto2');
-	cNmempresa2 = $('#nmempresa', '#divExposto2');
+	cNmemporg = $('#nmemporg', '#divExposto2');
 	cCdrelacionamento = $('#cdrelacionamento', '#divExposto2');
 	cDsrelacionamento = $('#dsrelacionamento', '#divExposto2');
 
@@ -300,7 +303,7 @@ function controlaLayout(operacao) {
 	cDttermino.css({ 'width': '75px' }).addClass('data');
 	cNmpolitico.css('width', '250px').addClass('alpha').attr('maxlength', '60');
 	cNrCpfPolitico.css('width', '100px').addClass('cpf');
-	cNmempresa2.css('width', '400px').addClass('alpha').attr('maxlength', '35');
+	cNmemporg.css('width', '400px').addClass('alpha').attr('maxlength', '35');
 	cCdrelacionamento.css('width', '80px').addClass('inteiro').attr('maxlength', '5');
 	cDsrelacionamento.css('width', '295px').addClass('alphanum');
     	
@@ -456,6 +459,7 @@ function salvarPpe() {
 		dtinicio         = $('#dtinicio',        '#'+nomeForm).val();
 		dttermino        = $('#dttermino',       '#'+nomeForm).val();
 		nmempresa        = $('#nmempresa',       '#'+nomeForm).val();
+        nmemporg         = $('#nmemporg',        '#'+nomeForm).val();
 		nrcnpj_empresa   = normalizaNumero($('#nrcnpj_empresa',  '#'+nomeForm).val());
 		nmpolitico       = $('#nmpolitico',      '#'+nomeForm).val();
 		nrcpf_politico   = normalizaNumero($('#nrcpf_politico',  '#'+nomeForm).val());
@@ -472,7 +476,8 @@ function salvarPpe() {
 				cdrelacionamento:	cdrelacionamento, 
 				dtinicio: 			dtinicio,				
 				dttermino: 			dttermino, 	
-				nmempresa: 			nmempresa, 
+			    nmempresa:          nmempresa,
+			    nmemporg:           nmemporg,
 				nrcnpj_empresa: 	nrcnpj_empresa, 
 				nmpolitico: 		nmpolitico, 
 				nrcpf_politico: 	nrcpf_politico,			
@@ -542,15 +547,11 @@ function validarPpe() {
 	cdocpttl         = $('#cdocpttl',        '#'+nomeForm).val();
 	cdrelacionamento = $('#cdrelacionamento','#'+nomeForm).val();
 	dtinicio         = $('#dtinicio',        '#'+nomeForm).val();
-	dttermino        = $('#dttermino',       '#'+nomeForm).val();
-	nmempresa        = $('#nmempresa',       '#'+nomeForm).val();
 	nrcnpj_empresa   = $('#nrcnpj_empresa',  '#'+nomeForm).val();
 	nmpolitico       = $('#nmpolitico',      '#'+nomeForm).val();
 	nrcpf_politico   = $('#nrcpf_politico',  '#'+nomeForm).val();
 	inpolexp         = $('#inpolexp',        '#'+nomeForm).val();
-	nmextttl         = $('#nmextttl',        '#'+nomeForm).val();
-	rsocupa          = $('#rsocupa',         '#'+nomeForm).val();
-	
+		
 	if (tpexposto == 1) { // exerce/exerceu
 	
 		nrcnpj_empresa = normalizaNumero(nrcnpj_empresa);

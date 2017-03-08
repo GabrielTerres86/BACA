@@ -1,11 +1,11 @@
 <? 
 /*!
- * FONTE        : manter_rotina.php
+ * FONTE        : manter_rotina.php								Última alteração: 08/03/2017
  * CRIAÇÃO      : Carlos Henrique
  * DATA CRIAÇÃO : 22/12/2015 
  * OBJETIVO     : Rotina para validar/alterar os dados da PPE da tela de CONTAS, Comercial
  *
- * ALTERACOES   :  
+ * ALTERACOES   :  08/03/2017 - Ajuste para receber a informação nmemporg (Adriano - SD 614408).
  */
 session_cache_limiter("private");
 	session_start();
@@ -27,20 +27,11 @@ session_cache_limiter("private");
 	$dtinicio         = (isset($_POST['dtinicio'])) ?         $_POST['dtinicio']         : '';
 	$dttermino        = (isset($_POST['dttermino'])) ?        $_POST['dttermino']        : '';
 	$nmempresa        = (isset($_POST['nmempresa'])) ?        $_POST['nmempresa']        : '';
+	$nmemporg         = (isset($_POST['nmemporg'])) ?         $_POST['nmemporg']         : '';
 	$nrcnpj_empresa   = (isset($_POST['nrcnpj_empresa'])) ?   $_POST['nrcnpj_empresa']   : '';
 	$nmpolitico       = (isset($_POST['nmpolitico'])) ?       $_POST['nmpolitico']       : '';
 	$nrcpf_politico   = (isset($_POST['nrcpf_politico'])) ?   $_POST['nrcpf_politico']   : '';	
-/*
-tpexposto       
-cdocpttl      
-cdrelacionamento
-dtinicio        
-dttermino       
-nmempresa       
-nrcnpj_empresa  
-nmpolitico      
-nrcpf_politico  
-	*/															
+												
 	
 	// Dependendo da operação, chamo uma procedure diferente
 	$procedure = "";	
@@ -53,8 +44,8 @@ nrcpf_politico
 		default: return false;
 	}
 	
-
 	$nmendter = session_id();
+	
 	
 	// Monta o xml dinâmico de acordo com a operação
 	$xml  = "";
@@ -79,7 +70,17 @@ nrcpf_politico
 	$xml .= "       <cdrelacionamento>".$cdrelacionamento."</cdrelacionamento>";
 	$xml .= "       <dtinicio>"        .$dtinicio."</dtinicio>";
 	$xml .= "       <dttermino>"       .$dttermino."</dttermino>";	
-	$xml .= "       <nmempresa>"       .retiraAcentos(removeCaracteresInvalidos($nmempresa))."</nmempresa>";
+	
+	if($tpexposto == '1'){
+
+		$xml .= "       <nmempresa>"       .retiraAcentos(removeCaracteresInvalidos($nmempresa))."</nmempresa>";
+		
+	}else {
+
+		$xml .= "       <nmempresa>"       .retiraAcentos(removeCaracteresInvalidos($nmemporg))."</nmempresa>";
+		
+	}	
+	
 	$xml .= "       <nrcnpj_empresa>"  .$nrcnpj_empresa."</nrcnpj_empresa>";
 	$xml .= "       <nmpolitico>"      .retiraAcentos(removeCaracteresInvalidos($nmpolitico))."</nmpolitico>";
 	$xml .= "       <nrcpf_politico>"  .$nrcpf_politico."</nrcpf_politico>";

@@ -1,11 +1,13 @@
 <?php 
 /*!
- * FONTE        : contas/ppe/formulario_ppe.php					Última alteração: 21/02/2017
+ * FONTE        : contas/ppe/formulario_ppe.php					Última alteração: 08/03/2017
  * CRIAÇÃO      : Carlos Henrique (CECRED)
  * DATA CRIAÇÃO : 24/05/2010 
  * OBJETIVO     : Formulário de dados de Comercial/PPE da tela de CONTAS
  * --------------
  * ALTERAÇÕES   : 21/02/2017 - Ajuste para inclusão de novos campos (Adriano - SD 614408). 
+
+	              08/03/2017 - Ajuste para alterar o nome do campo nmempresa para nmemporg (Adriano - SD 614408).
  */	
 ?>
 <form name="frmDadosPpe" id="frmDadosPpe" class="formulario">
@@ -67,8 +69,8 @@
 				
 				<br />
 
-				<label for="nmempresa">Nome Empresa:</label>
-				<input name="nmempresa" id="nmempresa" type="text" value="<? echo getByTagName($ppe,'nmempresa') ?>"  />
+				<label for="nmemporg">Nome Empresa:</label>
+				<input name="nmemporg" id="nmemporg" type="text" value="<? echo getByTagName($ppe,'nmempresa') ?>"  />
 
 				<br />
 
