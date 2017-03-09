@@ -71,6 +71,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps328 (pr_cdcooper IN crapcop.cdcooper%T
              tbcobran_sms a
        WHERE a.cdcooper = pr_cdcooper
          AND a.instatus_sms = 2 -- Em processamento
+         AND b.cdretorno IS NOT NULL -- Ja teve processamento
          AND b.idlote_sms = a.idlote_sms
          AND b.idsms = a.idsms
          AND c.cdcooper = a.cdcooper
