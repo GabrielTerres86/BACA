@@ -91,17 +91,6 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0121 IS
   BEGIN
     DECLARE
       
-      -- Cursor sobre o cadastro de eventos
-      CURSOR cr_crapedp IS
-      SELECT cdevento, nmevento
-        FROM crapedp
-       WHERE (cdcooper = 0)
-        
-       ORDER BY nmevento;
-        
-      rw_crapedp cr_crapedp%ROWTYPE;
-      
-      
       -- Cursor sobre os eventos da agenda 
       CURSOR cr_crapedp_age IS
       SELECT DISTINCT edp.cdevento, edp.nmevento
@@ -203,6 +192,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0121 IS
            AND c.cdcooper  = pr_cdcooper -- Parâmetro
            AND c.cdagenci  = decode(pr_cdagenci,0,c.cdagenci,pr_cdagenci)    -- Parâmetros
            AND c.cdevento  = decode(pr_cdevento,0,c.cdevento,pr_cdevento)    -- Parâmetros
+           AND ce.idevento = 1
            AND ce.idevento = c.idevento
            AND ce.cdcooper = c.cdcooper
            AND ce.dtanoage = c.dtanoage
