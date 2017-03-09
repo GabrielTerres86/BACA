@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2007                        Ultima atualizacao: 04/07/2016
+   Data    : Marco/2007                        Ultima atualizacao: 16/11/2016
 
    Dados referentes ao programa:
 
@@ -123,6 +123,8 @@
 
 			   04/07/2016 - Incluida TAG nmtitula, SD 472160 (Jean Michel).
                             
+               16/11/2016 - M172 - Atualizacao Telefone Auto Atendimento
+                            (Guilherme/SUPERO)
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -1206,7 +1208,39 @@ IF  CAN-DO("1,2,6,7,8,9,10,11,12,16",STRING(par_cdcooper))  AND
     IF  AVAIL craplct  THEN
         ASSIGN aux_vljurcap = craplct.vllanmto.
 END.
+
+
+/* M172 - Atualizacao Tefefone - SO FAZ SE FOR Pessoa Fisica */
+IF  aux_inpessoa = 1 THEN DO:
+
+    /** VERIFICACAO DA ATUALIZACAO TELEFONE **/
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+
+    RUN STORED-PROCEDURE pc_ib_verif_atualiz_fone
+        aux_handproc = PROC-HANDLE NO-ERROR
+                         (INPUT par_cdcooper,
+                          INPUT par_nrdconta,
+                          INPUT aux_inpessoa,
+                          INPUT par_idseqttl,
+                          OUTPUT 0,
+                          OUTPUT "").
+
+    CLOSE STORED-PROC pc_ib_verif_atualiz_fone
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+    ASSIGN aux_cdcritic = 0
+           aux_dscritic = ""
+           aux_cdcritic = pc_ib_verif_atualiz_fone.pr_cdcritic
+                          WHEN pc_ib_verif_atualiz_fone.pr_cdcritic <> ?
+           aux_dscritic = pc_ib_verif_atualiz_fone.pr_dscritic
+                          WHEN pc_ib_verif_atualiz_fone.pr_dscritic <> ?.
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    /** VERIFICACAO DA ATUALIZACAO TELEFONE **/
+END.
   
+
 CREATE xml_operacao.
 ASSIGN xml_operacao.dslinxml = "<CORRENTISTA><nmextttl>" + 
                                aux_nmextttl + 
