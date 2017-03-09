@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme / Supero
-   Data    : Novembro/2009.                   Ultima atualizacao: 24/02/2017
+   Data    : Novembro/2009.                   Ultima atualizacao: 09/03/2017
 
    Dados referentes ao programa:
 
@@ -282,7 +282,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                             tabela de detalhes de contas. Projeto 213 - Reciprocidade (Lombardi)
 
 			   
-			   29/02/2016 - Inicializar as variaveis totalizadoras para cada contador
+		      	   29/02/2016 - Inicializar as variaveis totalizadoras para cada contador
                             (Douglas - Chamado 394368)
 
                12/04/2016 - Ajustado a data de movimento para a baixa de titulo
@@ -296,7 +296,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                30/09/2016 - Alterações referentes ao projeto 302 - Sistema de acordos
                             (Renato Darosci - Supero)
 												 
-			   10/10/2016 - Alteração do diretório para geração de arquivo contábil.
+			         10/10/2016 - Alteração do diretório para geração de arquivo contábil.
                             P308 (Ricardo Linhares).
 
                11/10/2016 - Ajustes referente ao processo de REPROC do arquivo COB615 (Renato Darosci)
@@ -317,6 +317,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                           
                24/02/2017 - Ajustado relatório 618 em função do novo layout COB615 (Rafael);
 
+               09/03/2017 - Altarar o comando tail -2 para tail -1, pois no servidor
+                            "_AIX" nao consideramos a linha em branco do final do arquivo
+                            como fazia no servidor "UNIX" (Lucas Ranghetti #620474).
    .............................................................................*/
 
      DECLARE
@@ -6187,7 +6190,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
            vr_tot_vlregrej:= 0;
 
            /* Verificar se o arquivo esta completo */
-           vr_comando:= 'tail -2 '||vr_caminho_integra||'/'||vr_tab_nmarqtel(idx);
+           vr_comando:= 'tail -1 '||vr_caminho_integra||'/'||vr_tab_nmarqtel(idx);
 
            --Executar o comando no unix
            GENE0001.pc_OScommand(pr_typ_comando => 'S'
