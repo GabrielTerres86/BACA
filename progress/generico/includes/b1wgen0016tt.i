@@ -136,4 +136,30 @@ DEF TEMP-TABLE tt-vlrdat NO-UNDO
     FIELD dattrans AS DATE
     FIELD vlronlin AS DEC.
                        
+DEF TEMP-TABLE tt-tbpagto_darf_das_trans_pend NO-UNDO
+  FIELD cdtransacao_pendente AS DECIMAL
+  FIELD cdcooper             AS DECIMAL
+  FIELD nrdconta             AS DECIMAL
+  FIELD tppagamento          AS DECIMAL
+  FIELD tpcaptura            AS DECIMAL
+  FIELD dsidentif_pagto      AS CHAR
+  FIELD dsnome_fone          AS CHAR
+  FIELD dscod_barras         AS CHAR
+  FIELD dslinha_digitavel    AS CHAR
+  FIELD dtapuracao           AS DATE
+  FIELD nrcpfcgc             AS CHAR
+  FIELD cdtributo            AS CHAR
+  FIELD nrrefere             AS DECIMAL
+  FIELD vlprincipal          AS DECIMAL
+  FIELD vlmulta              AS DECIMAL
+  FIELD vljuros              AS DECIMAL
+  FIELD vlreceita_bruta      AS DECIMAL
+  FIELD vlpercentual         AS DECIMAL
+  FIELD dtvencto             AS DATE
+  FIELD tpleitura_docto      AS DECIMAL
+  FIELD vlpagamento          AS DECIMAL
+  FIELD dtdebito             AS DATE
+  FIELD idagendamento        AS DECIMAL
+  FIELD idrowid              AS CHAR.  
+
 /*............................................................................*/
