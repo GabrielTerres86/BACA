@@ -2720,6 +2720,18 @@ PROCEDURE permissoes-menu-mobile:
             END.
         END.
     
+    CREATE tt-itens-menu-mobile.
+    ASSIGN tt-itens-menu-mobile.cditemmn = 204. /*TRANSAÇÕES PENDENTES*/
+           tt-itens-menu-mobile.flcreate = FALSE.
+    
+    FIND crapopi WHERE crapopi.cdcooper = par_cdcooper AND
+                       crapopi.nrdconta = par_nrdconta NO-LOCK NO-ERROR. 
+    
+    IF crapass.idastcjt = 1 OR AVAILABLE crapopi THEN
+      DO:
+          tt-itens-menu-mobile.flcreate = TRUE.
+      END.
+    
   RETURN "OK".
     
 END PROCEDURE.

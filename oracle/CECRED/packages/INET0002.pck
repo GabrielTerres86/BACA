@@ -4857,7 +4857,10 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
                               442860 (Kelvin).
 
                  02/09/2016 - Ajustada para retornar os aprovadores da transação que
-                              está sendo consultada., SD 514239 (Jean Michel).                          
+                              está sendo consultada., SD 514239 (Jean Michel).
+                              
+                 30/01/2017 - Adição do campo idsituacao_transacao no xml de retorno para utilização no
+                              Cecred Mobile (Dionathan)
     ..............................................................................*/
     DECLARE
      
@@ -5215,6 +5218,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
       CURSOR cr_tbaprova_rep(pr_cdtransa IN tbgen_aprova_trans_pend.cdtransacao_pendente%TYPE) IS
         SELECT apr.cdtransacao_pendente
               ,apr.nrcpf_responsavel_aprov AS cpf_responsavel
+              ,apr.idsituacao_aprov idsituacao
               ,DECODE(apr.idsituacao_aprov,1,'Pendente',2,'Aprovada',3,'Reprovada',4,'Expirada','Sem Situacao') AS situacao
           FROM tbgen_aprova_trans_pend apr
          WHERE cdtransacao_pendente = pr_cdtransa;
@@ -5249,6 +5253,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
       vr_hrtranpe VARCHAR2(8);
       vr_dsoritra VARCHAR2(50);
       vr_dtmvttra VARCHAR2(10);
+      vr_idsittra NUMBER;
       vr_dssittra VARCHAR2(50);
       vr_dtreptra VARCHAR2(10);
       vr_dtexctra VARCHAR2(10);
@@ -5732,6 +5737,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
          vr_hrtranpe := TO_CHAR(to_date(rw_tbgen_trans_pend.hrregistro_transacao,'sssss'),'hh24:mi:ss');
          vr_dsoritra := gene0001.vr_vet_des_origens(rw_tbgen_trans_pend.idorigem_transacao);
          vr_dtmvttra := TO_CHAR(rw_tbgen_trans_pend.dtmvtolt,'DD/MM/RRRR');
+         vr_idsittra := rw_tbgen_trans_pend.idsituacao_transacao;
          vr_dssittra := CASE WHEN rw_tbgen_trans_pend.idsituacao_transacao = 1 THEN 'Pendente'
                              WHEN rw_tbgen_trans_pend.idsituacao_transacao = 2 THEN 'Aprovada'
                              WHEN rw_tbgen_trans_pend.idsituacao_transacao = 3 THEN 'Excluida'
@@ -6541,6 +6547,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
                                                    || '   <situacao_transacao>' ||vr_dssittra||'</situacao_transacao>'
                                                    || '   <data_alteracao_sit>' ||vr_dtaltera||'</data_alteracao_sit>'
                                                    || '   <pode_alterar>'       ||vr_indiacao||'</pode_alterar>'
+                                                   || '   <idsituacao_transacao>' ||vr_idsittra||'</idsituacao_transacao>'
                                                    || '</dados_resumo>');
          
          --Detalhes da Transacao
@@ -6777,7 +6784,8 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
            END LOOP;
 
            vr_xml_auxi := vr_xml_auxi || '<aprovador><nmaprova>' || TO_CHAR(NVL(vr_nmagenda,TO_CHAR(rw_tbaprova_rep.cpf_responsavel) || '-' || 'APROVADOR NAO CADASTRADO')) || '</nmaprova>'
-                                      || '<situacao>' || rw_tbaprova_rep.situacao || '</situacao></aprovador>';
+                                      || '<situacao>' || rw_tbaprova_rep.situacao || '</situacao>'
+                                      || '<idsituacao>' || rw_tbaprova_rep.idsituacao || '</idsituacao></aprovador>';
 
          END LOOP;
 
