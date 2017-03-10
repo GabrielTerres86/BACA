@@ -235,8 +235,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
   vr_tot_vltotfat number(15,2);
   vr_tot_vlrecliq number(15,2);
   vr_tot_vlrtrfpf number(15,2);
+  vr_tot_vlrtrfpf_semgps number(15,2);
   vr_tot_vlrliqpf number(15,2);
   vr_tot_vlrtrfpj number(15,2);
+  vr_tot_vlrtrfpj_semgps number(15,2);
   vr_tot_vlrliqpj number(15,2);
   vr_tot_vltrfsic number(15,2);
 
@@ -452,9 +454,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
                             ,pr_dsmeiarr VARCHAR2
                             ,pr_nrdconta IN NUMBER default 0
                             ,pr_inpessoa IN NUMBER default 0
-                            ,pr_cdagenci IN NUMBER default 0) IS 
+                            ,pr_cdagenci IN NUMBER DEFAULT 0) IS 
     -- Tipo de pessoa 
     vr_aux_inpessoa number;
+    -- Agencia
+    vr_aux_cdagenci NUMBER;
   BEGIN 
     -- Montar indice para gravação na(s) PLTABLE(s)
     vr_ind_rel63X := RPAD(pr_nmconven,35,' ')||RPAD(pr_dsmeiarr,15,' ');
@@ -521,11 +525,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
         ELSE 
           vr_tab_rel635(vr_ind_rel63X).vltrfsic := vr_tab_rel635(vr_ind_rel63X).vltottar - vr_tab_rel635(vr_ind_rel63X).vlrecliq;
         END IF;      
+        
         -- Tratamento PF / PJ 
         IF pr_inpessoa = 0 THEN 
           -- Buscaremos do cadastro do associado 
           IF vr_tab_crapass.EXISTS(pr_nrdconta) THEN 
-            vr_aux_inpessoa := vr_tab_crapass(pr_nrdconta).cdagenci;
+            vr_aux_inpessoa := vr_tab_crapass(pr_nrdconta).inpessoa;
           ELSE 
             vr_aux_inpessoa := 1; -- Default 1 quando não encontrar 
           END IF;
@@ -533,27 +538,44 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
           -- Usaremos o tipo de pessoa passado 
           vr_aux_inpessoa := pr_inpessoa;
         END IF;
+        -- Buscar agencia
+        vr_aux_cdagenci := 0;
+        IF vr_tab_crapass.exists(pr_nrdconta) THEN 
+          vr_aux_cdagenci := vr_tab_crapass(pr_nrdconta).cdagenci;   
+        ELSE
+          -- Usaremos o gravado no registro do lançamento
+          vr_aux_cdagenci := pr_cdagenci;
+        END IF;
+        
         -- Gravar conforme tipo de pessoa 
         IF vr_aux_inpessoa = 1 THEN
           -- Gravar nos campos de PF         
           vr_tab_rel635(vr_ind_rel63X).vlrtrfpf := vr_tab_rel635(vr_ind_rel63X).vlrtrfpf + (pr_vltrfuni * pr_qtfatura);
           vr_tab_rel635(vr_ind_rel63X).vlrliqpf := vr_tab_rel635(vr_ind_rel63X).vlrliqpf + (pr_vltrfuni * pr_qtfatura) - (pr_qtfatura * pr_vltarifa);
-          -- Tratar informações para o arquivo contabil 
-          IF NOT vr_relvltrpapf.exists(pr_cdagenci) THEN 
-            vr_relvltrpapf(pr_cdagenci) := pr_vltrfuni * pr_qtfatura;
-          END IF;
-          -- Acumular 
-          vr_relvltrpapf(pr_cdagenci) := vr_relvltrpapf(pr_cdagenci) + (pr_vltrfuni * pr_qtfatura);
+          -- Tratar informações para o arquivo contabil quando não for GPS 
+          IF SUBSTR(pr_nmconven,1,3) <> 'GPS' THEN           
+            IF NOT vr_relvltrpapf.exists(vr_aux_cdagenci) THEN 
+              -- Criar 
+              vr_relvltrpapf(vr_aux_cdagenci) := pr_vltrfuni * pr_qtfatura;
+            ELSE 
+              -- Acumular 
+              vr_relvltrpapf(vr_aux_cdagenci) := vr_relvltrpapf(vr_aux_cdagenci) + (pr_vltrfuni * pr_qtfatura);
+            END IF;  
+          END IF;  
         ELSE
           -- Gravar nos campos de PJ         
           vr_tab_rel635(vr_ind_rel63X).vlrtrfpj := vr_tab_rel635(vr_ind_rel63X).vlrtrfpj + (pr_vltrfuni * pr_qtfatura);
           vr_tab_rel635(vr_ind_rel63X).vlrliqpj := vr_tab_rel635(vr_ind_rel63X).vlrliqpj + (pr_vltrfuni * pr_qtfatura) - (pr_qtfatura * pr_vltarifa);
-          -- Tratar informações para o arquivo contabil 
-          IF NOT vr_relvltrpapj.exists(pr_cdagenci) THEN 
-            vr_relvltrpapj(pr_cdagenci) := pr_vltrfuni * pr_qtfatura;
-          END IF;
-          -- Acumular 
-          vr_relvltrpapj(pr_cdagenci) := vr_relvltrpapj(pr_cdagenci) + (pr_vltrfuni * pr_qtfatura);
+          -- Tratar informações para o arquivo contabil quando não for GPS 
+          IF SUBSTR(pr_nmconven,1,3) <> 'GPS' THEN           
+            IF NOT vr_relvltrpapj.exists(vr_aux_cdagenci) THEN 
+              -- Criar 
+              vr_relvltrpapj(vr_aux_cdagenci) := pr_vltrfuni * pr_qtfatura;
+            ELSE 
+              -- Acumular 
+              vr_relvltrpapj(vr_aux_cdagenci) := vr_relvltrpapj(vr_aux_cdagenci) + (pr_vltrfuni * pr_qtfatura);
+            END IF;  
+          END IF;  
         END IF;
       ELSE
         -- 636 só é alimentado na execução mensal e na Cecred 
@@ -1176,7 +1198,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
                                  ,pr_flg_impri => 'S'                 --> Chamar a impressão (Imprim.p)
                                  ,pr_nmformul  => '132col'            --> Nome do formulário para impressão
                                  ,pr_nrcopias  => 1                   --> Número de cópias
-                                 ,pr_flg_gerar => 'S'                 --> gerar PDF
+                                 ,pr_flg_gerar => 'N'                 --> gerar PDF
                                  ,pr_des_erro  => vr_dscritic);       --> Saída com erro
 
       -- Liberando a memória alocada pro CLOB
@@ -1204,8 +1226,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
           vr_tot_vlrecliq := 0;
           vr_tot_vltrfsic := 0;
           vr_tot_vlrtrfpf := 0;
+          vr_tot_vlrtrfpf_semgps := 0;          
           vr_tot_vlrliqpf := 0;
           vr_tot_vlrtrfpj := 0;
+          vr_tot_vlrtrfpj_semgps := 0;
           vr_tot_vlrliqpj := 0;
           -- internet
           vr_int_qttotfat := 0;
@@ -1355,6 +1379,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
             vr_tot_vlrliqpf := vr_tot_vlrliqpf + vr_tab_rel635(vr_ind_rel63X).vlrliqpf;
             vr_tot_vlrtrfpj := vr_tot_vlrtrfpj + vr_tab_rel635(vr_ind_rel63X).vlrtrfpj;
             vr_tot_vlrliqpj := vr_tot_vlrliqpj + vr_tab_rel635(vr_ind_rel63X).vlrliqpj;
+            -- Valores sem GPS
+            IF SUBSTR(vr_tab_rel635(vr_ind_rel63X).nmconven,1,3) <> 'GPS' THEN 
+              vr_tot_vlrtrfpf_semgps := vr_tot_vlrtrfpf_semgps + vr_tab_rel635(vr_ind_rel63X).vlrtrfpf;
+              vr_tot_vlrtrfpj_semgps := vr_tot_vlrtrfpj_semgps + vr_tab_rel635(vr_ind_rel63X).vlrtrfpj;
+            END IF;
             
             -- Enviar o registro para o XML
             gene0002.pc_escreve_xml(vr_des_clb
@@ -1495,7 +1524,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
           ---------------------------------------------------------------------------------
 
           -- Somente será montado se houver valor tarifa fisica ou juridica
-          IF NVL(vr_tot_vlrtrfpf,0) + NVL(vr_tot_vlrtrfpj,0) > 0 THEN
+          IF NVL(vr_tot_vlrtrfpf_semgps,0) + NVL(vr_tot_vlrtrfpj_semgps,0) > 0 THEN
 
             vr_con_dtmvtolt := '70'||substr(to_char(rw_crapdat.dtmvtolt,'YYYY'),3,2)
                                    ||to_char(rw_crapdat.dtmvtolt,'MM')
@@ -1514,12 +1543,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
             dbms_lob.open(vr_des_clb, dbms_lob.lob_readwrite);
 
             -- Se há valor tarifa PF
-            IF vr_tot_vlrtrfpf <> 0 THEN
+            IF vr_tot_vlrtrfpf_semgps <> 0 THEN
 
               -- Montar cabeçalho do dia atual
               vr_aux_linhadet := vr_con_dtmvtolt || ','
                               || to_char(rw_crapdat.dtmvtolt,'DDMMYY') || ',7268,7376,'
-                              || TO_CHAR(vr_tot_vlrtrfpf,'fm999999999999990D00')
+                              || replace(TO_CHAR(vr_tot_vlrtrfpf_semgps,'fm999999999999990D00'),',','.')
                               || ',1434,' || '"TARIFAS CONVENIO SICREDI - COOPERADOS PESSOA FISICA"'
                               || chr(10);
 
@@ -1528,12 +1557,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
 
               -- Enviar os dados dos PAs para o arquivo, duas vezes 
               FOR vr_i IN 1..2 LOOP
-                FOR vr_idx IN 1..vr_relvltrpapf.COUNT() LOOP
+                FOR vr_idx IN vr_relvltrpapf.first..vr_relvltrpapf.last LOOP
                   -- Se existir o registro na tabela
                   IF vr_relvltrpapf.exists(vr_idx) THEN
                     -- Gerar a linha
                     vr_aux_linhadet := to_char(vr_idx,'fm000')|| ','
-                                    || to_char((vr_relvltrpapf(vr_idx) * 100),'fm99999999990D00')
+                                    || replace(to_char((vr_relvltrpapf(vr_idx)),'fm99999999990D00'),',','.')
                                     || chr(10);
 
                     -- Enviar para o clob
@@ -1544,12 +1573,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
             END IF;
 
             -- Se há valor tarifa PJ
-            IF vr_tot_vlrtrfpj <> 0 THEN
+            IF vr_tot_vlrtrfpj_semgps <> 0 THEN
 
               -- Montar cabeçalho do dia atual
               vr_aux_linhadet := vr_con_dtmvtolt || ','
                               || to_char(rw_crapdat.dtmvtolt,'DDMMYY') || ',7268,7377,' 
-                              || TO_CHAR(vr_tot_vlrtrfpj,'fm999999999999990D00')
+                              || replace(TO_CHAR(vr_tot_vlrtrfpj_semgps,'fm999999999999990D00'),',','.')
                               || ',1434,' || '"TARIFAS CONVENIO SICREDI - COOPERADOS PESSOA JURIDICA"'
                               || chr(10);
 
@@ -1558,12 +1587,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
 
               -- Enviar os dados dos PAs para o arquivo, duas vezes 
               FOR vr_i IN 1..2 LOOP
-                FOR vr_idx IN 1..vr_relvltrpapj.COUNT() LOOP
+                FOR vr_idx IN vr_relvltrpapj.first..vr_relvltrpapj.last LOOP
                   -- Se existir o registro na tabela
                   IF vr_relvltrpapj.exists(vr_idx) THEN
                     -- Gerar a linha
                     vr_aux_linhadet := to_char(vr_idx,'fm000')|| ','
-                                    || to_char((vr_relvltrpapj(vr_idx) * 100),'fm99999999990D00')
+                                    || replace(to_char((vr_relvltrpapj(vr_idx)),'fm99999999990D00'),',','.')
                                     || chr(10);
 
                     -- Enviar para o clob
