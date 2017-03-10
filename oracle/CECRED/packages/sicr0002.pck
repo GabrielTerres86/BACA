@@ -79,7 +79,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Lucas Ranghetti
-     Data    : Junho/2014                       Ultima atualizacao: 27/10/2016
+     Data    : Junho/2014                       Ultima atualizacao: 10/03/2017
 
      Dados referentes ao programa:
 
@@ -136,6 +136,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
                               craplau (Lucas Ranghetti #537385)
                               
                  27/10/2016 - SD509982 - Ajuste leitura registros DEBCON (Guilherme/SUPERO)
+                 
+                 10/03/2017 - Ajuste na procedure pc_cria_lancamentos_deb na hora do update da
+                              craplau utilizar o vllanaut como filtro pois estava retornando
+                              mais de um registro (Tiago/Fabricio SD615681).
   ......................................................................................................... */
 
   -- VARIAVEIS A UTILIZAR
@@ -728,7 +732,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
 							 craplau.insitlau  = 3         ) AND
                craplau.nrdconta  = pr_nrdconta AND
                to_char(craplau.nrdocmto) = pr_nrdocmto AND
-               craplau.cdhistor = pr_cdhistor
+               craplau.cdhistor = pr_cdhistor  AND 
+               craplau.vllanaut = pr_vllanaut
          RETURNING craplau.dsorigem,
                    craplau.cdcoptfn,
                    craplau.cdagetfn,
