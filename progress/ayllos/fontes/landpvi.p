@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Outubro/91.                     Ultima atualizacao: 05/12/2016
+   Data    : Outubro/91.                     Ultima atualizacao: 10/03/2017
 
    Dados referentes ao programa:
 
@@ -443,7 +443,7 @@
                             no 521. Tratamento p hist 1873 igual ao tratamento 
                             do hist 521 (Carlos)
 
-			   23/06/2015 - Adicionado tratamento para portabilidade de crédito.
+			         23/06/2015 - Adicionado tratamento para portabilidade de crédito.
                             (Reinert)
                             
                24/06/2015 - #298239 Criacao do log para inclusao de lancamento;
@@ -459,15 +459,15 @@
                07/12/2015 - #367740 Criado o tratamento para o historico 1874 
                             assim como eh feito com o historico 1873 (Carlos)
 
-			   15/12/2015 - Corrigido problema referente a descricrao da critica.
+			         15/12/2015 - Corrigido problema referente a descricrao da critica.
                             (Reinert)
                 
                21/12/2015 - Utilizar a procedure convertida na bo 2175 para as 
                             validacoes de alinea, conforme revisao de alineas
                             e processo de devolucao de cheque (Douglas - Melhoria 100)
 
-			   12/02/2016 - Ajustes decorrente a homologação do projeto M100
-						   (Adriano).
+			         12/02/2016 - Ajustes decorrente a homologação do projeto M100
+						                (Adriano).
 
                12/05/2016 - Mudanca para pegar saldo devedor da obtem-dados-emprestimos
                             na b1wgen0002 e nao mais da saldo_epr.p. Cobranca de Multa
@@ -477,19 +477,22 @@
                             historicos(275, 428 e 394) (James)
 
 
-			   24/08/2016 - Ajuste para passar corretamente o nome da tabela a se verificar o lock 
-						   (Adriano - SD 511318 ).
+			         24/08/2016 - Ajuste para passar corretamente o nome da tabela a se verificar o lock 
+						                (Adriano - SD 511318 ).
 							
                22/09/2016 - Incluido tratamento para verificacao de contrato de 
                             acordo, Prj. 302 (Jean Michel).
                             
-			   21/10/2016 - Incluir o historico 384	na listagem dos historicos para verificacao do 
-			                saldo disponivel (Renato Darosci - SD542195).
+			         21/10/2016 - Incluir o historico 384	na listagem dos historicos para verificacao do 
+			                      saldo disponivel (Renato Darosci - SD542195).
 
                31/10/2016 - Bloquear os historicos 354 e 451 para a cooperativa Transulcred. (James)
 							
                05/12/2016 - Incorporacao Transulcred (Guilherme/SUPERO)
 
+               10/03/2017 - Incluir buffer craxlcm para efetuar busca do recid e armazenar na variavel
+                            global glb_nrdrecid (Lucas Ranghetti #601012)
+                            
 ............................................................................. */
 /*** Historico 351 aceita nossos cheques e de outros bancos ***/
 
@@ -546,6 +549,7 @@ DEF VAR h-b1wgen9999         AS HANDLE                          NO-UNDO.
 DEF VAR h-b1wgen0175         AS HANDLE                          NO-UNDO.
         
 DEF BUFFER crabcop FOR crapcop.
+DEF BUFFER craxlcm FOR craplcm.
 DEF TEMP-TABLE tt-saldos LIKE wt_saldos.
 
 {includes/atualiza_epr.i}
@@ -3865,6 +3869,26 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                     END.
                ELSE 
                     DO:
+                        /*************************************************************************************
+                         * Verifica se lançamento de devolução se refere a cheque de custodia/desconto e     *
+                         * nesse caso grava a informação desse lançamento na glb_nrdrecid para que a         *
+                         * informação do campo cdpesqbb da craplcm seja gravado no campo cdpesqui da crapdev *
+                         *************************************************************************************/
+                        FIND FIRST craxlcm WHERE craxlcm.cdcooper =  glb_cdcooper 
+                                             AND craxlcm.dtmvtolt >= glb_dtmvtoan
+                                             AND craxlcm.dtmvtolt <= glb_dtmvtolt
+                                             AND craxlcm.nrdconta =  aux_nrdconta
+                                             AND craxlcm.nrdocmto =  tel_nrdocmto
+                                             AND craxlcm.vllanmto =  tel_vllanmto
+                                             AND craxlcm.cdagenci =  1
+                                             AND craxlcm.cdbccxlt =  100
+                                             AND (craxlcm.nrdolote = 4500 
+                                              OR craxlcm.nrdolote =  4501)
+                                             NO-LOCK NO-ERROR.
+                                             
+                        IF  AVAILABLE craxlcm THEN
+                            glb_nrdrecid = RECID(craxlcm).
+                            
                         RUN fontes/geradev.p 
                                 (INPUT glb_cdcooper,
                                  INPUT glb_dtmvtolt,
