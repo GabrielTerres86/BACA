@@ -453,7 +453,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 22/02/2017
+  --  Data     : Junho/2013.                   Ultima atualizacao: 10/03/2017
   --
   -- Dados referentes ao programa:
   --
@@ -523,6 +523,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --
 	--        22/02/2017 - Ajuste retorno horário estourado pagamento DARF/DAS (Lucas Lunelli - P.349.2)
 	--
+  --            10/03/2017 - Ajustes na pc_verifica_operacao para liberar agendamento de TED 
+  --                         para o ultimo dia util do ano (Tiago/Elton SD586106).
+  --
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Busca dos dados da cooperativa */
@@ -2090,6 +2093,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                            quando for efetivação de agendamentos de TED
                            (Adriano - SD 563147)
 
+              10/03/2017 - Ajustes para liberar agendamento de TED para o ultimo dia util
+                           do ano (Tiago/Elton SD586106)
   ---------------------------------------------------------------------------------------------------------------*/
   BEGIN
     DECLARE
@@ -2511,8 +2516,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       --Se for transferencia ou ted
       IF pr_tpoperac IN (1,4,5) THEN
         
-        /** Data do agendamento nao pode ser o ultimo dia util do ano **/
-        IF pr_idagenda = 2 AND
+        IF pr_idagenda = 2  AND
+           pr_tpoperac <> 4 AND 
            pr_dtmvtopg = vr_dtdialim THEN
            
           vr_dscritic := 'Nao e possivel efetuar agendamentos para este dia.';
