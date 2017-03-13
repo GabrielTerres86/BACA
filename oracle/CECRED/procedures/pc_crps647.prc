@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autora  : Lucas R.
-  Data    : Setembro/2013                        Ultima atualizacao: 06/03/2017
+  Data    : Setembro/2013                        Ultima atualizacao: 13/03/2017
 
   Dados referentes ao programa:
 
@@ -134,6 +134,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
                            
               06/03/2017 - Adicionar nvl para os campos nrdaviso e nrboleto ao atualizar
                            informações de consorcios (Lucas Ranghetti #623432)
+                           
+              13/03/2017 - Alterado para no registro 'C' quando cancelamento, gravar a data
+                           do processamento e nao do inicio da autorização (Lucas Ranghetti #628127)
    ............................................................................. */
   -- Constantes do programa
   vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'CRPS647';
@@ -801,7 +804,7 @@ BEGIN
             -- Efetuaremos o cancelamento da autorização 
             BEGIN 
               UPDATE crapatr 
-                 SET dtfimatr = dtiniatr
+                 SET dtfimatr = rw_crapdat.dtmvtolt
                WHERE ROWID = rw_crapatr.rowid;
             EXCEPTION
               WHEN OTHERS THEN 
