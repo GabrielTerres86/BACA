@@ -136,7 +136,7 @@ CREATE OR REPLACE PACKAGE PROGRID.PRGD0001 IS
                            ,pr_retxml   IN OUT NOCOPY xmltype    --> Arquivo de retorno do XML
                            ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                            ,pr_des_erro OUT VARCHAR2);           --> Descricao do Erro    
-                           
+                          
   --> Rotina de envio de email de eventos sem local de realização
   PROCEDURE pc_envia_email_evento_local(pr_dscritic OUT VARCHAR2);                        
   
@@ -150,11 +150,11 @@ CREATE OR REPLACE PACKAGE PROGRID.PRGD0001 IS
                         ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
                         ,pr_nmdcampo OUT VARCHAR2    --> Nome do campo com erro
                         ,pr_des_erro OUT VARCHAR2);  --> Descricao do Erro
-                        
+                   
   --> Informação do modulo em execução na sessão do Progrid
   PROCEDURE pc_informa_acesso_progrid(pr_module IN VARCHAR2
                                      ,pr_action IN VARCHAR2 DEFAULT NULL);                             
-                         
+      
   --> Validacao de data
   PROCEDURE pc_valida_data(pr_idevento IN crapidp.idevento%TYPE --> Indicador do Evento(1-Progrid/2-Assembleia)
                           ,pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo da Cooperativa
@@ -1281,7 +1281,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
     -- .............................................................................
   BEGIN
     DECLARE
-
+    
       -- Cursores
       CURSOR cr_crapage(pr_cdcooper IN crapcop.cdcooper%TYPE
                        ,pr_dtanoage IN crapidp.dtanoage%TYPE) IS
@@ -1581,81 +1581,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
     END;
 
   END pc_lista_evento;
-  
-  /* Procedure para retornar data base da agenda da cooperativa */
-  PROCEDURE pc_retanoage(pr_cdcooper IN VARCHAR2     --> Codigo da Cooperativa
-                        ,pr_idevento IN VARCHAR2     --> Ide do evento
-                        ,pr_dtanoage IN VARCHAR2     --> Ano agenda
-                        ,pr_xmllog   IN VARCHAR2     --> XML com informações de LOG
-                        ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
-                        ,pr_dscritic OUT VARCHAR2    --> Descrição da crítica
-                        ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
-                        ,pr_nmdcampo OUT VARCHAR2    --> Nome do campo com erro
-                        ,pr_des_erro OUT VARCHAR2) IS--> Descricao do Erro
-    -- ..........................................................................
-    --
-    --  Programa : pc_retanoage
-    --  Sistema  : Rotinas gerais
-    --  Sigla    : GENE
-    --  Autor    : Odirlei Busana - AMcom
-    --  Data     : Junho/2016.                   Ultima atualizacao: --/--/----
-    --
-    --  Dados referentes ao programa:
-    --
-    --  Frequencia: Sempre que for chamado
-    --  Objetivo  : Procedure para retornar data base da agenda da cooperativa
-    --
-    --  Alteracoes: 
-    --              
-    -- .............................................................................
     
-    -- Cursores
-    --> Buscar agenda da cooperativa
-    CURSOR cr_gnpapgd IS
-      SELECT /*+index_desc (gnpapgd GNPAPGD##GNPAPGD1 )*/
-             dtanonov,
-             dtanoage
-        FROM gnpapgd 
-       WHERE gnpapgd.idevento = pr_idevento
-         AND gnpapgd.cdcooper = pr_cdcooper     
-         AND ( pr_dtanoage IS NULL OR
-              (pr_dtanoage IS NOT NULL AND 
-               gnpapgd.dtanonov = pr_dtanoage)
-             );
-    
-    rw_gnpapgd cr_gnpapgd%ROWTYPE;    
-      
-    vr_dtanoage gnpapgd.dtanoage%TYPE;
-    
-  BEGIN
-  
-    --> Buscar agenda da cooperativa
-    OPEN cr_gnpapgd;
-    FETCH cr_gnpapgd INTO rw_gnpapgd;
-    IF cr_gnpapgd%NOTFOUND THEN      
-      pr_dscritic := 'Nao existe agenda para o ano ('|| pr_dtanoage ||') informado!';
-      RETURN;        
-    ELSE
-      --> Se nao informou data como parametro
-      IF pr_dtanoage IS NULL THEN
-        vr_dtanoage := rw_gnpapgd.dtanoage;
-      ELSE
-        vr_dtanoage := rw_gnpapgd.dtanonov;   
-      END IF;
-       
-      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                     '<Root><dtanoage>' || vr_dtanoage || '</dtanoage></Root>');
-                                     
-    END IF;    
-    
-  EXCEPTION
-    WHEN OTHERS THEN
-      pr_cdcritic := 0;
-      pr_des_erro := 'Erro geral em PRGD0001.pc_retanoage: ' || SQLERRM;
-      pr_dscritic := 'Erro geral em PRGD0001.pc_retanoage: ' || SQLERRM;
-
-  END pc_retanoage;  
-  
   --> Rotina de envio de email de eventos sem local de realização
   PROCEDURE pc_envia_email_evento_local(pr_dscritic OUT VARCHAR2)  IS
     -- ..........................................................................
@@ -1986,7 +1912,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
     --  Frequencia: Sempre que for chamado
     --  Objetivo  : Procedure para retornar data base da agenda da cooperativa
     --
-    --  Alteracoes: 
+    --  Alteracoes: 13/03/2017 - Ajustes Prj. 229-5 (Jean Michel).
     --              
     --
     --              
@@ -2041,8 +1967,8 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
       pr_des_erro := 'Erro geral em PRGD0001.pc_retanoage: ' || SQLERRM;
       pr_dscritic := 'Erro geral em PRGD0001.pc_retanoage: ' || SQLERRM;
 
-  END pc_retanoage;  
-  
+  END pc_retanoage;
+
 	/* Informação do modulo em execução na sessão */
 	PROCEDURE pc_informa_acesso_progrid(pr_module IN VARCHAR2
 																		 ,pr_action IN VARCHAR2 DEFAULT NULL) IS
@@ -2249,6 +2175,6 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
       pr_dscritic := 'Erro geral em PRGD0001.pc_valida_data: ' || SQLERRM;
 
   END pc_valida_data;
-
+	
 END PRGD0001;
 /

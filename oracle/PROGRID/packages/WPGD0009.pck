@@ -130,7 +130,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0009 IS
                      ,pr_tpfiltro crapidp.idevento%TYPE
                      ,pr_tpordena crapidp.idevento%TYPE) IS
                      SELECT insc.*, 
-ROW_NUMBER() OVER(ORDER BY DECODE(pr_tpordena,1,insc.nminseve,2,insc.nrdconta,3,insc.dsstains,insc.nminseve)) nrdseque
+ROW_NUMBER() OVER(ORDER BY DECODE(pr_tpordena,1,insc.nminseve,2,LPAD(insc.nrdconta,10,'0'),3,insc.dsstains,insc.nminseve)) nrdseque
 FROM (
       SELECT idp.nminseve -- NAO RETIRAR ESSE CAMPO, IMPACTA NA ORDENACAO
             ,idp.nrdconta -- NAO RETIRAR ESSE CAMPO, IMPACTA NA ORDENACAO
@@ -170,7 +170,7 @@ FROM (
          AND pr_idevento = 2
          AND pr_cdageins = 0
          AND pr_nrseqeve <> 0 ))
-    ORDER BY DECODE(pr_tpordena,1,idp.nminseve,2,idp.nrdconta,3,dsstains,idp.nminseve)
+    ORDER BY DECODE(pr_tpordena,1,idp.nminseve,2,LPAD(idp.nrdconta,10,'0'),3,dsstains,idp.nminseve)
             ,DECODE(pr_tpordena,3,idp.nminseve,0)) insc;
 
     rw_crapidp cr_crapidp%ROWTYPE;
@@ -376,14 +376,14 @@ FROM (
         vr_tab_inscritos(vr_ind_care).cdevento := rw_crapidp.cdevento;
         vr_tab_inscritos(vr_ind_care).nrseqdig := rw_crapidp.nrseqdig;
         vr_tab_inscritos(vr_ind_care).nrseqeve := rw_crapidp.nrseqeve;
-        vr_tab_inscritos(vr_ind_care).dtconins := vr_dtconins;
+        vr_tab_inscritos(vr_ind_care).dtconins := TRUNC(vr_dtconins);
         vr_tab_inscritos(vr_ind_care).cdgraupr := vr_cdgraupr;
         vr_tab_inscritos(vr_ind_care).nmresage := vr_nmresage;
         vr_tab_inscritos(vr_ind_care).idstains := rw_crapidp.idstains;
         vr_tab_inscritos(vr_ind_care).dsstains := rw_crapidp.dsstains;
         vr_tab_inscritos(vr_ind_care).nrdrowid := rw_crapidp.cdrowid;
         vr_tab_inscritos(vr_ind_care).progress := rw_crapidp.progress_recid;
-        vr_tab_inscritos(vr_ind_care).dtpreins := rw_crapidp.dtpreins;
+        vr_tab_inscritos(vr_ind_care).dtpreins := TRUNC(rw_crapidp.dtpreins);
         vr_tab_inscritos(vr_ind_care).qtfaleve := rw_crapidp.qtfaleve;
         vr_tab_inscritos(vr_ind_care).flginsin := vr_internet;
 
@@ -595,7 +595,7 @@ FROM (
                                                     || '<dsstains>' || vr_tab_inscritos(vr_contador).dsstains || '</dsstains>'
                                                     || '<nrdrowid>' || vr_tab_inscritos(vr_contador).nrdrowid || '</nrdrowid>'
                                                     || '<progress>' || vr_tab_inscritos(vr_contador).progress || '</progress>'
-                                                    || '<dtpreins>' || vr_tab_inscritos(vr_contador).dtpreins || '</dtpreins>'
+                                                    || '<dtpreins>' || TO_CHAR(TO_DATE(vr_tab_inscritos(vr_contador).dtpreins)) || '</dtpreins>'
                                                     || '<qtfaleve>' || vr_tab_inscritos(vr_contador).qtfaleve || '</qtfaleve>'
                                                     || '<flginsin>' || vr_tab_inscritos(vr_contador).flginsin || '</flginsin>' 
                                                     || '</inscrito>');
