@@ -1915,7 +1915,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
     --  Frequencia: Sempre que for chamado
     --  Objetivo  : Procedure para retornar data base da agenda da cooperativa
     --
-    --  Alteracoes: 
+    --  Alteracoes: 13/03/2017 - Ajustes Prj. 229-5 (Jean Michel).
     --              
     --
     --              
