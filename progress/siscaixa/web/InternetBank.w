@@ -14,7 +14,7 @@
    Sistema : Internet - aux_cdcooper de Credito
    Sigla   : CRED
    Autor   : Junior
-   Data    : Julho/2004.                       Ultima atualizacao: 19/12/2016
+   Data    : Julho/2004.                       Ultima atualizacao: 22/02/2017
 
    Dados referentes ao programa:
 
@@ -547,7 +547,7 @@
                               transferencia com debito Nesta Data.
                               Solucao temporaria para item 1. do chamado 356737. 
                               (David).
-                              
+
                  20/11/2015 - Ajuste na operacao 14 incluso novo campo cdorigem.
                               (Daniel)
                               
@@ -572,9 +572,9 @@
                               dos operadores de internet, Prj. 131 (Jean Michel).  
 
                  15/02/2016 - Inclusao de parametro CPF operador para as operacoes
-				              141, 142, 147, 149 e 150 (Marcos-Supero)
+				                      141, 142, 147, 149 e 150 (Marcos-Supero)
                               
-	             01/03/2016 - Retirado a passagem do parametro par_dsiduser
+	               01/03/2016 - Retirado a passagem do parametro par_dsiduser
                               na chamada da rotina 162 (Adriano).        
 							  
 				 28/03/2016 - Inclusao do parametro aux_nripuser na chamada da rotina 
@@ -588,22 +588,22 @@
                               plataformas de autoatendimento. E alteracao do retorno
                               da operacao 13 com o novo campo recidepr.
                               (Carlos Rafael Tanholi - Prj 216 - Pré-aprovado fase 2)								                                    
-				 11/03/2016 - Inclusao da operacao 166 para buscar as permissoes
-				              dos itens do menu do mobile. Projeto 286_3 - Mobile
-                              (Lombardi)   
-
-                16/03/2016 - Inclusão da validação da assinatura do cooperado na
+				         11/03/2016 - Inclusao da operacao 166 para buscar as permissoes
+							                dos itens do menu do mobile. Projeto 286_3 - Mobile
+                              (Lombardi)
+                 
+				         16/03/2016 - Inclusão da validação da assinatura do cooperado na
                               operação 100 quando não existir criptografia na senha,
                               frase e letras - Mobile (Dionathan)
                  
-				29/03/2016 - Inclusão da operacao 168 para retornar as informações
+				         29/03/2016 - Inclusão da operacao 168 para retornar as informações
                               de telefone e horários do SAC e da Ouvidoria - Mobile
                               (Dionathan)
                                                                     
                 15/04/2016 - Inclusao da operacao 165 e 167 referente as telas de 
 						      Pacote de Tarifas para o Projeto 218. (Reinert)
                               
-				04/05/2016 - Ajuste para devolver o campo cdageban na chamada da rotina
+                04/05/2016 - Ajuste para devolver o campo cdageban na chamada da rotina
 							 proc_operacao38
 							 (Adriano - M117).
 
@@ -611,20 +611,20 @@
 							(Adriano - M117).
 
 				16/05/2016 - Inclusao do parametro aux_flmobile na rotina 38 
-                            (Carlos)
+                     (Carlos)
                      
-                25/05/2016 - Inclusao do parametro aux_nripuser na rotina 22 
-                             (Carlos)
+        25/05/2016 - Inclusao do parametro aux_nripuser na rotina 22 
+                     (Carlos)
 
                 30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
-                                                                    
+							 
                 26/07/2016 - Inclusao da operacao 187, pagamento de DARF/DAS,
 							 Prj. 338 (Jean Michel).
 
                  14/07/2016 - M325 Informe de Rendimentos - Novos parametros
                               operacao7. (Guilherme/SUPERO)
                               
-                  04/08/2016 - Adicionado tratamento para envio de arquivos de 
+				 04/08/2016 - Adicionado tratamento para envio de arquivos de 
 							  cobranca por e-mail nas operacoes 36 e 59. (Reinert)
 
 				 17/08/2016 - Adição da coluna nomconta e remoção da tabela
@@ -639,11 +639,23 @@
 
 		         29/09/2016 - Inclusao 176 a 183. Reservado para o projeto 300. (Lombardi)
                  
-				 03/10/2016 - Ajustes referente a melhoria M271 (Operacao 174, 175, 186). (Kelvin)
+		         03/10/2016 - Ajustes referente a melhoria M271 (Operacao 174, 175, 186). (Kelvin)
 				 
                  19/12/2016 - Usado 178 e 179 para Custodia de Cheque e Desconto
                              de Cheque. Liberados 180 a 185 para novo projetos.
                              Projeto 300 (Lombardi)
+                              
+                              
+                 11/10/2016 - Ajustes para permitir Aviso cobrança por SMS.
+                              operacao4 e 66 - PRJ319 - SMS Cobrança(Odirlei-AMcom)       
+                              
+                 26/10/2016 - Inclusao da operacao 189 - Servico de SMS de cobranca
+                              PRJ319 - SMS Cobrança(Odirlei-AMcom)       
+                              
+                 22/02/2017 - Ajustes para correçao de crítica de pagamento DARF/DAS (P.349.2)
+                            - Criada op 180 (P.349.2)
+                            - Alteraçoes para composiçao de comprovante DARF/DAS Modelo Sicredi
+                            (Lucas Lunelli)
                               
 ------------------------------------------------------------------------------*/
 
@@ -858,12 +870,13 @@ DEF VAR aux_idvalida AS INTE                                           NO-UNDO.
 DEF VAR aux_tpdpagto AS INTE                                           NO-UNDO.
 DEF VAR aux_cdpagmto AS INTE                                           NO-UNDO.
 DEF VAR aux_idfisjur AS INTE                                           NO-UNDO.
-DEF VAR aux_gravafav AS INTE                                           NO-UNDO.
+DEF VAR aux_gravafav AS INTE										   NO-UNDO.
 DEF VAR aux_tpdaguia AS INTE										   NO-UNDO.
 
 DEF VAR aux_dsretorn AS CHAR                                           NO-UNDO.
 DEF VAR aux_dtdiadeb AS CHAR                                           NO-UNDO.
 DEF VAR aux_tpvalida AS CHAR                                           NO-UNDO.
+DEF VAR aux_dstpcons AS CHAR                                           NO-UNDO.
 
 DEF VAR aux_nrcpfapr AS DECI                                           NO-UNDO.
 DEF VAR aux_vltitulo AS DECI                                           NO-UNDO.
@@ -979,6 +992,9 @@ DEF VAR aux_qtdiacar AS INT                                            NO-UNDO.
 DEF VAR aux_qtdiaven AS INTE                                           NO-UNDO.
 DEF VAR aux_cdperapl AS INT                                            NO-UNDO.
 DEF VAR aux_nrdocpro AS CHAR                                           NO-UNDO.
+DEF VAR aux_idcontrato AS INT                                          NO-UNDO.
+DEF VAR aux_tpnommis AS INT                                            NO-UNDO.
+DEF VAR aux_nmemisms AS CHAR                                           NO-UNDO.
 
 /*parametros agendamento de aplicacao resgate*/
 DEF VAR aux_flgtipar AS INTE                                           NO-UNDO.
@@ -1088,12 +1104,19 @@ DEF VAR aux_qtdprepr AS INT                                            NO-UNDO.
 DEF VAR aux_listapar AS CHAR                                           NO-UNDO.
 DEF VAR aux_tipopgto AS INT                                            NO-UNDO.
 DEF VAR aux_dtexerci AS CHAR                                           NO-UNDO.
-DEF VAR aux_dsiduser AS CHAR                                           NO-UNDO.
+DEF VAR aux_dsiduser AS CHAR										   NO-UNDO.
 
 DEF VAR aux_inserasa AS INT                                            NO-UNDO. 
+DEF VAR aux_instatussms  AS INT                                        NO-UNDO. 
 
 DEF VAR aux_flserasa AS LOG                                            NO-UNDO.
 DEF VAR aux_qtdianeg AS INT                                            NO-UNDO.
+
+/* Aviso SMS */
+DEF VAR aux_inavisms AS INT                                            NO-UNDO.
+DEF VAR aux_insmsant AS INT                                            NO-UNDO.
+DEF VAR aux_insmsvct AS INT                                            NO-UNDO.
+DEF VAR aux_insmspos AS INT                                            NO-UNDO.
 
 DEF VAR aux_idapurac AS INTE                                           NO-UNDO.
 
@@ -2053,7 +2076,7 @@ PROCEDURE process-web-request :
         ELSE
             IF  aux_operacao = 161 THEN /* Trata da chamada das rotinas de Demonstrativo de INSS */
                 RUN proc_operacao161.
-		ELSE
+        ELSE
             IF  aux_operacao = 162 THEN /* Extrato operacoes de credito */
                 RUN proc_operacao162.
         ELSE
@@ -2067,8 +2090,8 @@ PROCEDURE process-web-request :
                 RUN proc_operacao165.
         ELSE
             IF  aux_operacao = 166 THEN /* Consultar permissoes dos itens do menu mobile */
-                RUN proc_operacao166. 
-	    ELSE
+                RUN proc_operacao166.
+        ELSE
             IF  aux_operacao = 167 THEN /* Aderir pacote de tarifas */
                 RUN proc_operacao167.
 	    ELSE
@@ -2084,12 +2107,12 @@ PROCEDURE process-web-request :
 			IF  aux_operacao = 172 THEN /* Termo pacote de tarifas PDF */
 				RUN proc_operacao172.
 		ELSE
-            IF  aux_operacao = 173 THEN /* Busca motivos exclusao DEBAUT */
-                RUN proc_operacao173. 
-		ELSE
+        IF  aux_operacao = 173 THEN /* Busca motivos exclusao DEBAUT */
+            RUN proc_operacao173. 
+    ELSE
             IF  aux_operacao = 174 THEN /* Busca configurações para nome da emissão */
                 RUN proc_operacao174.
-        ELSE
+		ELSE
             IF  aux_operacao = 175 THEN /* Grava configurações de nome da emissão */
                 RUN proc_operacao175.
 		ELSE
@@ -2105,6 +2128,9 @@ PROCEDURE process-web-request :
             IF  aux_operacao = 179 THEN /* Mantem Desconto de Cheques. */
                 RUN proc_operacao179. 
 		ELSE
+            IF  aux_operacao = 180 THEN /* Calcula data útil para agendamento */
+                RUN proc_operacao180.
+    	ELSE
             IF  aux_operacao = 186 THEN /* Retorna valor atualizado de titulos vencidos */
                 RUN proc_operacao186.
 		ELSE
@@ -2113,6 +2139,9 @@ PROCEDURE process-web-request :
         ELSE
             IF  aux_operacao = 188 THEN /* Operar pagamento de DARF/DAS */
                 RUN proc_operacao188.
+    ELSE
+            IF  aux_operacao = 189 THEN /* Carrega dados Servico SMS Cobranca */
+                RUN proc_operacao189. 
     END.
 /*....................................................................*/
     
@@ -2238,7 +2267,7 @@ PROCEDURE proc_operacao2:
 
             {&out} xml_operacao.dslinxml. 
                 
-        END.
+        END.	
 
     RETURN "OK".
         
@@ -2316,7 +2345,13 @@ PROCEDURE proc_operacao4:
 
            /* Serasa */
            aux_flserasa = IF INTE(GET-VALUE("cvserasa")) = 1 THEN TRUE ELSE FALSE
-           aux_qtdianeg = INTE(GET-VALUE("qtdianeg")).
+           aux_qtdianeg = INTE(GET-VALUE("qtdianeg"))
+    
+           /* Aviso SMS */ 
+           aux_inavisms = INTE(GET-VALUE("inavisms"))
+           aux_insmsant = INTE(GET-VALUE("insmsant"))
+           aux_insmsvct = INTE(GET-VALUE("insmsvct"))
+           aux_insmspos = INTE(GET-VALUE("insmspos")).
     
     RUN sistema/internet/fontes/InternetBank4.p (INPUT aux_cdcooper,
                                                  INPUT aux_nrdconta,
@@ -2360,6 +2395,12 @@ PROCEDURE proc_operacao4:
                                                  INPUT aux_flserasa,
                                                  INPUT aux_qtdianeg,
 
+                                                 /* Aviso SMS */ 
+                                                 INPUT aux_inavisms,
+                                                 INPUT aux_insmsant,
+                                                 INPUT aux_insmsvct,
+                                                 INPUT aux_insmspos,
+                                                  
                                                 OUTPUT aux_dsmsgerr,
                                                 OUTPUT TABLE xml_operacao).
 
@@ -3061,7 +3102,7 @@ PROCEDURE proc_operacao22:
            aux_dtinicio = GET-VALUE("aux_dtinicio")
            aux_lsdatagd = GET-VALUE("aux_lsdatagd")
            aux_dshistor = GET-VALUE("aux_dshistor")
-		   aux_gravafav = INTE(GET-VALUE("aux_gravafav")).
+		       aux_gravafav = INTE(GET-VALUE("aux_gravafav")).
 
     IF  GET-VALUE("aux_flgexecu") <> ""  THEN
         ASSIGN aux_flgexecu = LOGICAL(GET-VALUE("aux_flgexecu")).
@@ -3100,10 +3141,10 @@ PROCEDURE proc_operacao22:
                                                   INPUT aux_dtinicio,
                                                   INPUT aux_lsdatagd,
                                                   INPUT aux_flgexecu,
-                                                  INPUT aux_gravafav,
+                                                  INPUT aux_gravafav,                                                  
                                                   INPUT aux_dshistor,
                                                   INPUT aux_flmobile,
-                                                  INPUT aux_nripuser,	
+                                                  INPUT aux_nripuser,
                                                  OUTPUT aux_dsmsgerr,
                                                  OUTPUT TABLE xml_operacao).
            
@@ -3223,7 +3264,8 @@ PROCEDURE proc_operacao25:
                xml_operacao25.nrseqaut xml_operacao25.nmprepos
                xml_operacao25.nrcpfpre xml_operacao25.nmoperad
                xml_operacao25.nrcpfope xml_operacao25.cdbcoctl
-               xml_operacao25.cdagectl xml_operacao25.dscabfim.
+               xml_operacao25.cdagectl xml_operacao25.cdagesic
+               xml_operacao25.dscabfim.
     
     END.
     
@@ -3668,7 +3710,7 @@ PROCEDURE proc_operacao38:
                    xml_operacao38.nmoperad
                    xml_operacao38.nrcpfope
                    xml_operacao38.dsageban 
-                   xml_operacao38.cdageban                   
+				   xml_operacao38.cdageban
                    
                    /* DARF/DAS */
                    xml_operacao38.tpcaptur
@@ -3689,7 +3731,7 @@ PROCEDURE proc_operacao38:
                    xml_operacao38.nrcpfcgc                   
                    
                    xml_operacao38.dscabfim.
-
+				   
         END.
         
     {&out} aux_tgfimprg.
@@ -4197,7 +4239,8 @@ PROCEDURE proc_operacao59:
            aux_iniemiss = DATE(GET-VALUE("iniemiss"))
            aux_fimemiss = DATE(GET-VALUE("fimemiss"))
            aux_flgregis = INTE(GET-VALUE("flgregis"))
-           aux_inserasa = INTE(GET-VALUE("inserasa")).
+           aux_inserasa = INTE(GET-VALUE("inserasa"))
+           aux_instatussms = INTE(GET-VALUE("instatussms")).
 
     RUN sistema/internet/fontes/InternetBank59.p (INPUT aux_cdcooper,
                                                   INPUT aux_nrdconta,
@@ -4215,6 +4258,7 @@ PROCEDURE proc_operacao59:
                                                   INPUT (IF aux_flgregis = 1
                                                          THEN TRUE ELSE FALSE),
                                                   INPUT aux_inserasa,
+                                                  INPUT aux_instatussms,
                                                  OUTPUT aux_dsmsgerr,
                                                  OUTPUT TABLE xml_operacao).
 
@@ -4230,7 +4274,7 @@ PROCEDURE proc_operacao59:
             {&out} xml_operacao.dslinxml.
         
         END.
-        END.
+    END.
     
     {&out} aux_tgfimprg.
 
@@ -4423,7 +4467,8 @@ PROCEDURE proc_operacao66:
            aux_dtvencto = DATE(GET-VALUE("dtvencto"))
            aux_vlabatim = DECI(GET-VALUE("vlabatim"))
            aux_cdtpinsc = INTE(GET-VALUE("inpessoa"))
-           aux_vldescto = DECI(GET-VALUE("vldescto")).
+           aux_vldescto = DECI(GET-VALUE("vldescto"))
+           aux_inavisms = INTE(GET-VALUE("inavisms")).
 
     RUN sistema/internet/fontes/InternetBank66.p (INPUT aux_cdcooper,
                                                   INPUT aux_nrdconta,
@@ -4437,6 +4482,7 @@ PROCEDURE proc_operacao66:
                                                   INPUT aux_vlabatim,
                                                   INPUT aux_cdtpinsc,
                                                   INPUT aux_vldescto,
+                                                  INPUT aux_inavisms,
                                                  OUTPUT aux_dsinserr).
 
     {&out} aux_dsinserr. 
@@ -5074,8 +5120,15 @@ END PROCEDURE.
 
 PROCEDURE proc_operacao88:
 
+    DEF VAR aux_dtmvtpro AS DATE NO-UNDO.
+
      ASSIGN aux_cdtippro = INT(GET-VALUE("cdtippro"))
             aux_nrdocpro = GET-VALUE("nrdocmto").         
+
+    IF GET-VALUE('dtmvtpro') <> '' THEN
+	   aux_dtmvtpro = DATE(GET-VALUE('dtmvtpro')).
+	ELSE
+	   aux_dtmvtpro = aux_dtmvtolt.			
 
     RUN sistema/internet/fontes/InternetBank88.p (INPUT aux_cdcooper,
                                                   INPUT 90, /*cdagenci*/
@@ -5083,7 +5136,7 @@ PROCEDURE proc_operacao88:
                                                   INPUT "996", /*cdoperad*/
                                                   INPUT "INTERNETBANK",
                                                   INPUT 3, /*idorigem*/
-                                                  INPUT aux_dtmvtolt,
+                                                  INPUT aux_dtmvtpro,
                                                   INPUT aux_nrdconta,
                                                   INPUT aux_idseqttl,
                                                   INPUT aux_cdtippro,
@@ -5121,6 +5174,7 @@ PROCEDURE proc_operacao88:
                xml_operacao88.nrcpfope 
                xml_operacao88.cdbcoctl
                xml_operacao88.cdagectl 
+               xml_operacao88.cdagesic
                xml_operacao88.dscabfim.
     
     END.
@@ -6690,7 +6744,7 @@ PROCEDURE proc_operacao141:
                                                    INPUT aux_dtmvtolt,
                                                    INPUT aux_lisrowid,
                                                    INPUT aux_nrdconta,
-                                                   INPUT aux_idseqttl,
+												   INPUT aux_idseqttl,
                                                    INPUT aux_nrcpfapr,
                                                    INPUT aux_flsolest,
                                                    INPUT aux_dsarquiv,
@@ -7341,7 +7395,7 @@ PROCEDURE proc_operacao162:
                                                    INPUT aux_nrdconta,
                                                    INPUT aux_idseqttl,
                                                    INPUT aux_dtmvtolt,
-                                                   INPUT aux_dtexerci,	
+                                                   INPUT aux_dtexerci,												   
 												   INPUT aux_dsiduser,											   
                                                    OUTPUT aux_dsmsgerr,
                                                    OUTPUT TABLE xml_operacao).
@@ -7449,22 +7503,22 @@ PROCEDURE proc_operacao165:
                                                   OUTPUT aux_dsmsgerr,
                                                   OUTPUT TABLE xml_operacao).
 
-    IF  RETURN-VALUE = "NOK"  THEN
-        {&out} aux_dsmsgerr.
-    ELSE
-        FOR EACH xml_operacao NO-LOCK:
-        
-            {&out} xml_operacao.dslinxml.
-                   
-        END. 
+	IF  RETURN-VALUE = "NOK"  THEN
+	  {&out} aux_dsmsgerr.
+	ELSE
+	  FOR EACH xml_operacao NO-LOCK:
+	  
+		  {&out} xml_operacao.dslinxml.
+				 
+	  END. 
 
-    {&out} aux_tgfimprg.        
+    {&out} aux_tgfimprg.
 
 END PROCEDURE.
 
 /* Consulta de permissões do menu mobile */
 PROCEDURE proc_operacao166:
-    
+
     RUN sistema/internet/fontes/InternetBank166.p (INPUT aux_cdcooper,
                                                    INPUT aux_nrdconta,
                                                    INPUT aux_idseqttl,
@@ -7655,26 +7709,26 @@ PROCEDURE proc_operacao173:
 
     {&out} aux_tgfimprg.        
 
-END PROCEDURE.	
+END PROCEDURE.
 
 /* Operação de configurações */
 PROCEDURE proc_operacao174:	
-
+   
 	RUN sistema/internet/fontes/InternetBank174.p (INPUT aux_cdcooper,
-                                                  INPUT aux_nrdconta,
-                                                 OUTPUT aux_dsmsgerr,
-                                                 OUTPUT TABLE xml_operacao).
-    
+                                                   INPUT aux_nrdconta,
+                                                  OUTPUT aux_dsmsgerr,
+												  OUTPUT TABLE xml_operacao).
+                                                 
     IF  RETURN-VALUE = "NOK"  THEN
         {&out} aux_dsmsgerr.
     ELSE
-    FOR EACH xml_operacao NO-LOCK:
-    
-        {&out} xml_operacao.dslinxml.
+        FOR EACH xml_operacao NO-LOCK:
         
-    END.
-    
-    {&out} aux_tgfimprg.
+            {&out} xml_operacao.dslinxml.
+                   
+        END. 
+
+    {&out} aux_tgfimprg.  
 
 END PROCEDURE.
 
@@ -7714,7 +7768,7 @@ PROCEDURE proc_operacao176:
 
     IF  RETURN-VALUE = "NOK"  THEN
         {&out} aux_dsmsgerr.
-                          ELSE
+    ELSE
         FOR EACH xml_operacao NO-LOCK:
             {&out} xml_operacao.dslinxml.
         END.
@@ -7726,7 +7780,7 @@ END PROCEDURE.
 PROCEDURE proc_operacao177:
     
     ASSIGN aux_nrdrowid = GET-VALUE("nrdrowid").    
-                              
+    
     RUN sistema/internet/fontes/InternetBank177.p (INPUT aux_cdcooper,
                            												 INPUT 90,             /* par_cdagenci */
                                                    INPUT 900,            /* par_nrdcaixa */
@@ -7738,8 +7792,8 @@ PROCEDURE proc_operacao177:
                                                    INPUT aux_dtmvtolt,
                                                    INPUT aux_nrdrowid,   /* id do lancamento a ser excluído */
                                                   OUTPUT aux_dsmsgerr,
-                                                  OUTPUT TABLE xml_operacao). 
-                                                  
+                                                  OUTPUT TABLE xml_operacao).
+
     IF  RETURN-VALUE = "NOK"  THEN
         {&out} aux_dsmsgerr.
     ELSE
@@ -7852,6 +7906,32 @@ PROCEDURE proc_operacao179:
             {&out} xml_operacao.dslinxml.
         
         END.
+    {&out} aux_tgfimprg.
+
+END PROCEDURE.
+
+/* Calculo de Data Útil para Agendamento */
+PROCEDURE proc_operacao180:
+
+    ASSIGN  aux_dtmvtolt = DATE(GET-VALUE("dtmvtolt"))
+            aux_dstpcons = STRING(GET-VALUE("dstpcons")).
+                              
+    RUN sistema/internet/fontes/InternetBank180.p (INPUT aux_cdcooper,
+                                                   INPUT aux_dtmvtolt,
+                                                   INPUT aux_dstpcons,
+                                                  OUTPUT aux_dsmsgerr,
+                                                  OUTPUT TABLE xml_operacao). 
+                                                  
+    IF  RETURN-VALUE = "NOK"  THEN
+        DO:
+            {&out} aux_dsmsgerr aux_tgfimprg.
+            RETURN.
+        END.
+        
+    FIND FIRST xml_operacao NO-LOCK NO-ERROR.
+
+    IF  AVAILABLE xml_operacao  THEN
+        {&out} xml_operacao.dslinxml.
     
     {&out} aux_tgfimprg.
 
@@ -7884,17 +7964,17 @@ PROCEDURE proc_operacao186:
 												   INPUT aux_codigo_barras,
                                                   OUTPUT aux_dsmsgerr,
 												  OUTPUT TABLE xml_operacao).
-
+   
     IF  RETURN-VALUE = "NOK"  THEN
         {&out} aux_dsmsgerr.
     ELSE
-    FOR EACH xml_operacao NO-LOCK:
-    
-        {&out} xml_operacao.dslinxml.
+        FOR EACH xml_operacao NO-LOCK:
         
-    END.
-    
-    {&out} aux_tgfimprg.
+            {&out} xml_operacao.dslinxml.
+                   
+        END. 
+
+    {&out} aux_tgfimprg.  
 
 END PROCEDURE.
 
@@ -7919,6 +7999,39 @@ PROCEDURE proc_operacao187:
             RETURN.
         END.
 
+    FOR EACH xml_operacao NO-LOCK:
+        
+            {&out} xml_operacao.dslinxml.
+                   
+        END. 
+
+    {&out} aux_tgfimprg.        
+
+END PROCEDURE.
+
+/* Servico de SMS Cobranca */
+PROCEDURE proc_operacao189:	
+  
+  ASSIGN aux_cddopcao   = GET-VALUE("cddopcao")
+         aux_tpnommis   = INTE(GET-VALUE("tpnommis"))
+         aux_nmemisms   = GET-VALUE("nmemisms")
+         aux_idcontrato = INTE(GET-VALUE("idcontrato")).
+  
+  
+	RUN sistema/internet/fontes/InternetBank189.p (INPUT aux_cdcooper,
+                                                 INPUT aux_nrdconta,
+                                                 INPUT aux_idseqttl,
+                                                 INPUT aux_nrcpfope,
+                                                 INPUT aux_cddopcao,
+                                                 INPUT aux_idcontrato,
+                                                 INPUT aux_tpnommis,
+                                                 INPUT aux_nmemisms,
+                                                OUTPUT aux_dsmsgerr,
+                                                OUTPUT TABLE xml_operacao).
+
+    IF  RETURN-VALUE = "NOK"  THEN
+        {&out} aux_dsmsgerr.
+    ELSE
     FOR EACH xml_operacao NO-LOCK:
     
         {&out} xml_operacao.dslinxml.
