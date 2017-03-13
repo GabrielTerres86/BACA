@@ -228,7 +228,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Agosto/2006                   Ultima Atualizacao: 06/07/2016
+   Data    : Agosto/2006                   Ultima Atualizacao: 05/10/2016
    Dados referentes ao programa:
 
    Frequencia: Diario (internet)
@@ -282,6 +282,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
 
                06/07/2016 - Incluir log no exception da crappro na procedure 
                             pc_gera_protocolo (Lucas Ranghetti #468306)
+                            
+               29/09/2016 - Ajuste para gravar a data no formato DD/MM/RRRR ao gravar o protocolo
+                            (Andrei - RKAM).             
+                            
+               05/10/2016 - Correcao na geracao de log de erro nas procedures de geração e listagem
+                            de protocolo. SD 535051 (Carlos Rafael Tanholi)
 ............................................................................. */
 
   /* Rotina para gerar um codigo identificador de sessão para ser usado na validacao de parametros na URL */
@@ -752,7 +758,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
     --  Sistema  : Processos Genéricos
     --  Sigla    : GENE
     --  Autor    : Petter Rafael - Supero
-    --  Data     : Junho/2013.                   Ultima atualização: 06/07/2016
+    --  Data     : Junho/2013.                   Ultima atualização: 05/10/2016
     --
     --  Dados referentes ao programa:
     --
@@ -770,6 +776,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
     --   Alteracoes: 01/06/2013 - Conversão Progress-Oracle (Petter - Supero).
     -- 
     --               06/07/2016 - Incluir log no exception da crappro (Lucas Ranghetti #468306)
+    --
+    --               29/09/2016 - Ajuste para gravar a data no formato DD/MM/RRRR ao gravar o protocolo
+    --                            (Andrei - RKAM).
+    --               
+    --               05/10/2016 - Correcao no tratamento do LOG gerado "proc_agendamento". SD 535051
+    --                            (Carlos Rafael Tanholi).      
     -- .............................................................................
   BEGIN
     DECLARE
@@ -921,52 +933,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
                                                           ' nrcpfpre: ' || pr_nrcpfpre ||
                                                           ' nmprepos: ' || pr_nmprepos || ' - ' || sqlerrm
                                       ,pr_nmarqlog     => 'proc_agendamento'
-                                      ,pr_flnovlog     => 'S');
+                                      ,pr_flnovlog     => 'N');
           
             -- Volta os dados sem realizar o insert
             ROLLBACK TO SAVEPOINT sem_dados;
         END;
-
+        
         -- Verifica se ocorreu a transação
-        IF NOT vr_flgtrans THEN
-          /*Incluido geração de log pois não conseguia simular o erro do chamado
-            253323. A espera de novas ocorrências para que com o log possa solucionar
-            o problema. (Kelvin)*/
-          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 3 
-                                    ,pr_des_log      => to_char(sysdate,'dd/mm/yyyy hh24:mi:ss') || ' - ' ||
-                                                        'GENE0006.pc_gera_protocolo --> ' ||
-                                                        'erro ao gravar crappro' ||
-                                                        ' cdcooper: ' || pr_cdcooper ||
-                                                        ' cdtippro: ' || pr_cdtippro ||
-                                                        ' dscedent: ' || pr_dscedent ||
-                                                        ' dsinform##1: ' || pr_dsinfor1 ||
-                                                        ' dsinform##2: ' || pr_dsinfor2 ||
-                                                        ' dsinform##3: ' || pr_dsinfor3 ||
-                                                        ' dsprotoc: ' || pr_dsprotoc ||
-                                                        ' dtmvtolt: ' || pr_dtmvtolt ||
-                                                        ' dttransa: ' || SYSDATE ||
-                                                        ' flgagend: ' || vr_flgagend ||
-                                                        ' hrautent: ' || pr_hrtransa ||
-                                                        ' nrdconta: ' || pr_nrdconta ||
-                                                        ' nrdocmto: ' || pr_nrdocmto ||
-                                                        ' nrseqaut: ' || pr_nrseqaut ||
-                                                        ' vldocmto: ' || pr_vllanmto ||
-                                                        ' nrcpfope: ' || pr_nrcpfope ||
-                                                        ' dsprotoc: ' || pr_dsprotoc ||
-                                                        ' nrcpfpre: ' || pr_nrcpfpre ||
-                                                        ' nmprepos: ' || pr_nmprepos || ' - ' || sqlerrm
-                                    ,pr_nmarqlog     => 'proc_agendamento'
-                                    ,pr_flnovlog     => 'S');
-
+        IF NOT vr_flgtrans THEN          
           pr_dscritic := 'Nao foi possivel gerar o protocolo. Tente novamente.';
-          pr_des_erro := 'NOK';
           RAISE vr_exc_erro;
         END IF;
+        
       END IF;
     EXCEPTION
       WHEN vr_exc_erro THEN
-        pr_des_erro := 'Erro em GENE0006.pc_gera_protocolo: ' || pr_des_erro;
+        pr_dscritic := 'Erro em GENE0006.pc_gera_protocolo: ' || pr_dscritic;
+        pr_des_erro := 'NOK';
       WHEN OTHERS THEN
         pr_dscritic := 'Erro em GENE0006.pc_gera_protocolo: ' || SQLERRM;
         pr_des_erro := 'NOK';
@@ -1002,7 +985,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
     --  Sistema  : Processos Genéricos
     --  Sigla    : GENE
     --  Autor    : Carlos Rafael Tanholi
-    --  Data     : Setembro/2015.                   Ultima atualização: --/--/----
+    --  Data     : Setembro/2015.                   Ultima atualização: 05/10/2016
     --
     --  Dados referentes ao programa:
     --
@@ -1011,7 +994,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
     --
     --   Observação: 
     --
-    --   Alteracoes: 
+    --   Alteracoes:     05/10/2016 - Correcao no tratamento do LOG gerado "proc_agendamento". 
+    --                                SD 535051 (Carlos Rafael Tanholi).
     --
     -- .............................................................................
   BEGIN
@@ -1147,7 +1131,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
                                                         ' nrcpfpre: ' || pr_nrcpfpre ||
                                                         ' nmprepos: ' || pr_nmprepos || ' - ' || sqlerrm
                                     ,pr_nmarqlog     => 'proc_agendamento'
-                                    ,pr_flnovlog     => 'S');
+                                    ,pr_flnovlog     => 'N');
 
           pr_dscritic := 'Nao foi possivel gerar o protocolo. Tente novamente.';
           pr_des_erro := 'NOK';
@@ -1157,7 +1141,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
 
     EXCEPTION
       WHEN vr_exc_erro THEN
-        pr_des_erro := 'Erro em GENE0006.pc_gera_protocolo_md5: ' || pr_des_erro;
+        pr_dscritic := 'Erro em GENE0006.pc_gera_protocolo_md5: ' || pr_dscritic;
       WHEN OTHERS THEN
         pr_dscritic := 'Erro em GENE0006.pc_gera_protocolo_md5: ' || SQLERRM;
         pr_des_erro := 'NOK';
@@ -1185,7 +1169,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
     --  Sistema  : Processos Genéricos
     --  Sigla    : GENE
     --  Autor    : Petter Rafael - Supero
-    --  Data     : Junho/2013.                   Ultima atualização: 19/05/2016
+    --  Data     : Junho/2013.                   Ultima atualização: 05/10/2016
     --
     --  Dados referentes ao programa:
     --
@@ -1203,9 +1187,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
     --                            fora da internet passar parametro com valor "0"
     --
     --  Alteracoes: 01/06/2013 - Conversão Progress-Oracle (Petter - Supero).
-	--               
-	--              19/05/2016 - Ajuste para exibir protocolos 15 - pagamento convenio
-	--  			             PRJ320 - Oferta DebAut (Odirlei-AMcom)          
+  	--               
+	  --              19/05/2016 - Ajuste para exibir protocolos 15 - pagamento convenio
+	  --  			                   PRJ320 - Oferta DebAut (Odirlei-AMcom)          
+    --
+    --              05/10/2016 - Correcao no tratamento de erros retornados pela procedure. 
+    --                           SD 535051 (Carlos Rafael Tanholi).
     -- .............................................................................
   BEGIN
     DECLARE
@@ -1295,11 +1282,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
 
       -- Valida data final do protocolo
       IF vr_dtfimpro IS NULL THEN
-        vr_dtfimpro := SYSDATE;
-      END IF;
-
-      -- Validar data do dia
-      IF vr_dtfimpro > to_date(SYSDATE, 'DD/MM/RRRR') THEN
         vr_dtfimpro := SYSDATE;
       END IF;
 
@@ -1394,7 +1376,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
       END LOOP;
     EXCEPTION
       WHEN vr_exc_erro THEN
-        pr_des_erro := 'Erro em GENE0006.pc_lista_protocolos: ' || pr_des_erro;
+        pr_dscritic := 'Erro em GENE0006.pc_lista_protocolos: ' || pr_dscritic;
       WHEN OTHERS THEN
         pr_dscritic := 'Erro em GENE0006.pc_lista_protocolos: ' || SQLERRM;
         pr_des_erro := 'NOK';
