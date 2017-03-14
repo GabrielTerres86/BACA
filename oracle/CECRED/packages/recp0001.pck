@@ -1,5 +1,5 @@
 CREATE OR REPLACE PACKAGE CECRED.RECP0001 IS
-  
+
   -- Verifica se existe contrato de acordo na situacao informada
   PROCEDURE pc_verifica_situacao_acordo(pr_cdcooper         IN crapepr.cdcooper%TYPE -- Codigo da Cooperativa
                                        ,pr_nrdconta         IN crapepr.nrdconta%TYPE -- Numero da Conta
@@ -391,14 +391,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
     -- VARIAVEIS
     vr_cdcritic        NUMBER;
     vr_dscritic        VARCHAR2(1000);
-    vr_exc_erro        EXCEPTION;
+    vr_exc_erro       EXCEPTION;
     vr_flgretquitado   INTEGER;
     vr_flgretcancelado INTEGER;
     
   BEGIN
     
     RECP0001.pc_verifica_situacao_acordo(pr_cdcooper        => pr_cdcooper
-                                        ,pr_nrdconta        => pr_nrdconta
+                   ,pr_nrdconta => pr_nrdconta
                                         ,pr_nrctremp        => pr_nrctremp
                                         ,pr_flgretativo     => pr_flgativo
                                         ,pr_flgretquitado   => vr_flgretquitado
@@ -414,14 +414,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
     WHEN vr_exc_erro THEN
       IF vr_cdcritic <> 0 THEN
         vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-      END IF;
+    END IF;
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
-    
+
     WHEN OTHERS THEN
       pr_cdcritic := 0;
       pr_dscritic := 'Erro na RECP0001.PC_VERIFICA_ACORDO_ATIVO: ' || SQLERRM;
-
   END pc_verifica_acordo_ativo;
   
   
@@ -1566,7 +1565,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                   ,pr_vltotpag OUT NUMBER                       -- Retorno do valor pago
                                   ,pr_cdcritic OUT NUMBER                       -- Código de críticia
                                   ,pr_dscritic OUT VARCHAR2) IS                 -- Descrição da crítica
-           
+    
+    -- CURSORES
+    --Selecionar Lancamentos
+    CURSOR cr_craplem IS
+      SELECT SUM(DECODE(craplem.cdhistor
+                       ,1043
+                       ,craplem.vllanmto * -1
+                       ,1041
+                       ,craplem.vllanmto * -1
+                       ,1040
+                       ,craplem.vllanmto
+                       ,1042
+                       ,craplem.vllanmto))
+          FROM craplem
+         WHERE craplem.cdcooper = pr_cdcooper
+           AND craplem.nrdconta = pr_nrdconta
+           AND craplem.nrctremp = pr_nrctremp
+           AND craplem.cdhistor IN (1040, 1041, 1042, 1043);
+        
     -- VARIÁVEIS
     vr_tab_pgto_parcel empr0001.typ_tab_pgto_parcel;
     vr_tab_pagto_compe empr0001.typ_tab_pgto_parcel;
@@ -1579,6 +1596,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
     vr_vlpagpar        NUMBER;
     vr_vldsaldo        NUMBER;
     vr_vlajuste        NUMBER := 0;
+    vr_vllanlem        NUMBER := 0;
     
     vr_des_reto        VARCHAR2(10);
     vr_tab_erro        GENE0001.typ_tab_erro;
@@ -1769,35 +1787,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
       
     -- Valor do ajuste -- Quando o processamento se der pela COMPEFORA
     IF nvl(vr_vlajuste, 0) > 0 THEN
-      -- Lanca em C/C e atualiza o lote
-      EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper     --> Cooperativa conectada
-                                    ,pr_dtmvtolt => pr_crapdat.dtmvtolt --> Movimento atual
-                                    ,pr_cdagenci => pr_cdagenci         --> Código da agência
-                                    ,pr_cdbccxlt => 100                 --> Número do caixa
-                                    ,pr_cdoperad => pr_cdoperad         --> Código do Operador
-                                    ,pr_cdpactra => pr_cdagenci         --> P.A. da transação
-                                    ,pr_nrdolote => 600032              --> Numero do Lote
-                                    ,pr_nrdconta => pr_nrdconta         --> Número da conta
-                                    ,pr_cdhistor => 2012                --> Codigo historico 2012 - AJUSTE BOLETO
-                                    ,pr_vllanmto => vr_vlajuste         --> Valor da parcela emprestimo
-                                    ,pr_nrparepr => pr_nrparcel         --> Número parcelas empréstimo
-                                    ,pr_nrctremp => pr_nrctremp         --> Número do contrato de empréstimo
-                                    ,pr_des_reto => vr_des_reto         --> Retorno OK / NOK
-                                    ,pr_tab_erro => vr_tab_erro);       --> Tabela com possíves erros
-              
-      -- Se ocorreu erro
-      IF vr_des_reto <> 'OK' THEN
-        -- Se possui algum erro na tabela de erros
-        IF vr_tab_erro.COUNT() > 0 THEN
-          pr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-          pr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-        ELSE
-          pr_cdcritic := 0;
-          pr_dscritic := 'Erro ao criar o lancamento na conta corrente.';
-        END IF;
-        RAISE vr_exc_erro;
-      END IF;
-     
+      
       -- O Valor do pagamento deverá considerar também o valor do ajuste
       vr_vldpagto := NVL(vr_vldpagto,0) + nvl(vr_vlajuste, 0);
       
@@ -1883,7 +1873,60 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
         END IF;
       END LOOP;
     END IF;
-        
+    
+    
+    -- REALIZAR O LANÇAMENTO DO AJUSTE CALCULADO NA COMPEFORA
+    IF nvl(vr_vlajuste, 0) > 0 THEN
+      
+      -- Buscar o valor de lançamento dos historicos de ajuste
+      OPEN  cr_craplem;
+      FETCH cr_craplem INTO vr_vllanlem;
+      
+      -- Se não encontrar registro
+      IF cr_craplem%NOTFOUND THEN
+        vr_vllanlem := 0;
+      END IF;
+      
+      -- FEchar cursor
+      CLOSE cr_craplem;
+      
+      -- Realiza o ajuste de lançamento
+      vr_vlajuste := vr_vlajuste + NVL(vr_vllanlem,0);
+      
+      -- VERIFICAR NOVAMENTE SE O VALOR DO AJUSTE É MAIOR QUE ZERO
+      IF nvl(vr_vlajuste, 0) > 0 THEN
+      
+        -- Lanca em C/C e atualiza o lote
+        EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper     --> Cooperativa conectada
+                                      ,pr_dtmvtolt => pr_crapdat.dtmvtolt --> Movimento atual
+                                      ,pr_cdagenci => pr_cdagenci         --> Código da agência
+                                      ,pr_cdbccxlt => 100                 --> Número do caixa
+                                      ,pr_cdoperad => pr_cdoperad         --> Código do Operador
+                                      ,pr_cdpactra => pr_cdagenci         --> P.A. da transação
+                                      ,pr_nrdolote => 600032              --> Numero do Lote
+                                      ,pr_nrdconta => pr_nrdconta         --> Número da conta
+                                      ,pr_cdhistor => 2012                --> Codigo historico 2012 - AJUSTE BOLETO
+                                      ,pr_vllanmto => vr_vlajuste         --> Valor da parcela emprestimo
+                                      ,pr_nrparepr => pr_nrparcel         --> Número parcelas empréstimo
+                                      ,pr_nrctremp => pr_nrctremp         --> Número do contrato de empréstimo
+                                      ,pr_des_reto => vr_des_reto         --> Retorno OK / NOK
+                                      ,pr_tab_erro => vr_tab_erro);       --> Tabela com possíves erros
+              
+        -- Se ocorreu erro
+        IF vr_des_reto <> 'OK' THEN
+          -- Se possui algum erro na tabela de erros
+          IF vr_tab_erro.COUNT() > 0 THEN
+            pr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+            pr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+          ELSE
+            pr_cdcritic := 0;
+            pr_dscritic := 'Erro ao criar o lancamento na conta corrente.';
+          END IF;
+          RAISE vr_exc_erro;
+        END IF;
+      END IF; -- fim IF nvl(vr_vlajuste, 0) > 0
+    END IF; -- FIM nvl(vr_vlajuste, 0) > 0 
+     
   EXCEPTION
     WHEN  vr_exc_erro THEN
       pr_vltotpag := 0; -- retornar zero
