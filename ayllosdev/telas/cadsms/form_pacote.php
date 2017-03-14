@@ -37,7 +37,7 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
         $msgErro = $xmlObj->roottag->tags[0]->cdata;
     }
 
-    exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','',false);
+    exibirErro('error',"Erro ao consultar pacote",'Alerta - Ayllos','',false);
 
 } else {
 
@@ -49,7 +49,7 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
     $perdesconto = getByTagName($registro->tags,'perdesconto');
     $qtdsms = getByTagName($registro->tags,'qtdsms');
     $flgstatus = getByTagName($registro->tags,'flgstatus');
-    $inpessoa = getByTagName($registro->tags,'inpessoa');
+    $dspessoa = getByTagName($registro->tags,'dspessoa');
     $vlsms =   getByTagName($registro->tags,'vlsms');
     $vlsmsad =   getByTagName($registro->tags,'vlsmsad');
     $vlpacote =  getByTagName($registro->tags,'vlpacote');    
@@ -131,8 +131,8 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
                                             <label for="vlsmsad" class="labelFormPacote"><? echo utf8ToHtml('Valor da SMS/Adicional:') ?></label>                        
                                             <input name="vlsmsad" id="vlsmsad" class="registroinput" type="text" style="margin-right: 5px;" value=<? echo utf8ToHtml($vlsmsad) ?> />                                             
 
-                                            <label for="inpessoa" class="labelFormPacote"><? echo utf8ToHtml('Tipo de Conta:') ?></label>
-                                            <input name="inpessoa" id="inpessoa" class="registroinput" type="text" style="margin-right: 5px;" value="<? echo $inpessoa ?>" />                                                                                                                 
+                                            <label for="dspessoa" class="labelFormPacote"><? echo utf8ToHtml('Tipo de Conta:') ?></label>
+                                            <input name="dspessoa" id="dspessoa" class="registroinput" type="text" style="margin-right: 5px;" value="<? echo $dspessoa ?>" />                                                                                                                 
 
                                             <br style="clear:both" />	   
 

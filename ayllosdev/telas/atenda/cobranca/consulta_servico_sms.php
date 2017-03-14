@@ -32,6 +32,7 @@ $nmemisms    = trim($_POST["nmemisms"]);
 $tpnmemis    = trim($_POST["tpnmemis"]);
 $idcontrato  = trim($_POST["idcontrato"]);
 $flimpctr    = trim($_POST["flimpctr"]);
+$idpacote    = trim($_POST["idpacote"]);
 $dsiduser    = session_id();	
 $nmdeacao    = '';
 
@@ -48,6 +49,7 @@ if ($cddopcao == 'A'  ||
         $xml = new XmlMensageria();
         $xml->add('nrdconta',$nrdconta);  
         $xml->add('idseqttl',$idseqttl);  
+        $xml->add('idpacote',$idpacote);
         
         $nmdeacao = 'GERA_CTR_SERV_SMS'; 
         
@@ -62,8 +64,8 @@ if ($cddopcao == 'A'  ||
         // Montar o xml de Requisicao
         $xml = new XmlMensageria();
         $xml->add('nrdconta',$nrdconta);
+        $xml->add('idseqttl',$idseqttl);
         $xml->add('idcontrato',$idcontrato);
-        
         $nmdeacao = 'CANCEL_SERV_SMS';
         
         $idcontrato   = getByTagName($xmlDados->tags,"idcontrato");
@@ -108,8 +110,7 @@ if ($cddopcao == 'A'  ||
         $idcontrato   = getByTagName($xmlDados->tags,"idcontrato");
         
         if ($idcontrato != ""){
-            
-            
+
             // Verificar se deve gerar impressao do contrato apos ativar o serviço
             if ($flimpctr == 0){
                 exibeErroNew('inform','Contrato de servi&ccedil;o de SMS de numero '.$idcontrato.' criado com sucesso!');                       
@@ -177,6 +178,10 @@ $vltarifa   = getByTagName($xmlDados->tags,"vltarifa");
 $flsitsms   = getByTagName($xmlDados->tags,"flsitsms");
 $dsalerta   = getByTagName($xmlDados->tags,"dsalerta");
 
+$qtsmspct   = getByTagName($xmlDados->tags,"qtsmspct");
+$qtsmsusd   = getByTagName($xmlDados->tags,"qtsmsusd");
+$idpacote   = getByTagName($xmlDados->tags,"idpacote");
+
 if ($flgativo == 1){
   $dssituac  = 'Ativo';    
 }else{
@@ -193,8 +198,8 @@ if ($dsalerta != ''){
 
 // Se esta abrindo o modo de consulta e serviço esta inativo e OK, 
 // será questionado se deseja ativa
-if ($cddopcao== 'C' && $flgativo == 0 && $flsitsms == 1 ){    
-    echo '<script>hideMsgAguardo(); confirmaServSMS();</script>';
+if ($cddopcao== 'C' && $flgativo == 0 && $flsitsms == 1 ) {    
+    echo '<script>hideMsgAguardo(); confirmarHabilitacaoSmsCobranca();</script>';
     exit();
 }
 
@@ -267,6 +272,17 @@ function exibeErroNew($tpdmsg,$msgErro,$dsdacao) {
         <label for="dssituac">Situa&ccedil;&atilde;o:</label>
         <input name="dssituac" id="dssituac" class="campo" value="<?php echo $dssituac; ?>" />
         <br style="clear:both">
+
+        <? if ($idpacote > 2) { ?>
+
+            <label class='rotulo' style='width:207px;' for="qtsmspct">SMSs contratados:</label>
+            <input name="qtsmspct" id="qtsmspct" class="campo" style="width:65px;" value="<?php echo $qtsmspct; ?>" />
+
+            <label class='rotulo-linha' style='width:79px;' for="qtsmsusd">Utilizados:</label>
+            <input name="qtsmsusd" id="qtsmsusd" class="campo" style="width:71px;" value="<?php echo $qtsmsusd; ?>" />
+
+        <? } ?>
+
     
 	</fieldset>
 </form>
@@ -279,6 +295,7 @@ function exibeErroNew($tpdmsg,$msgErro,$dsdacao) {
 </form>
 
 <div id="divBotoes">    
+    <a href="#" class="botao" id="btTrocarPacoteSMS" onclick="exibirHabilitacaoSmsCobranca();" >Trocar Pacote</a>
     <a href="#" class="botao" id="btCancelServSMS"  onclick="confirmaCancelServSMS(); return false;" > Cancelar Servi&ccedil;o</a>
     <a href="#" class="botao" id="btImpCtrSMS"      onclick="imprimirServSMS('IA'); return false;"   > Imprimir Contrato</a>
 	<a href="#" class="botao" id="btVoltar"         onclick="acessaOpcaoAba(); return false;"        > Voltar</a>

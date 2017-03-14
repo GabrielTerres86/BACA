@@ -204,7 +204,7 @@ function Grid() {
                 showMsgAguardo("Aguarde, carregando informa&ccedil;&otilde;es ...");
             },
             success: function(response) {
-                if (response.substr(0, 14) == 'hideMsgAguardo') {
+                if (response.substr(0, 16).indexOf("hideMsgAguardo") > -1) {
                     eval(response);
                 } else {
                     popup.inicializar(response);

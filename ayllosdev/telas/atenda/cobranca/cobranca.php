@@ -8,7 +8,7 @@
   
   Objetivo: Mostrar a rotina de Cobranca na ATENDA.
   
-  Alteracoes: 14/07/2011 - Alterado para layout padr„o 
+  Alteracoes: 14/07/2011 - Alterado para layout padr√£o 
 *						   (Gabriel Capoia - DB1)
 *		   
 *	          26/07/2011 - Incluir frame com as testemunhas
@@ -16,9 +16,9 @@
 *
 *			  09/07/2012 - Retirado campo "redirect" popup. (Jorge)
 *
-*             28/04/2016 - PRJ 318 - Ajustes projeto Nova Plataforma de cobranÁa (Odirlei/AMcom)
+*             28/04/2016 - PRJ 318 - Ajustes projeto Nova Plataforma de cobran√ßa (Odirlei/AMcom)
 *
-*			  25/07/2016 - Adicionado classe (SetWindow) - necessaria para navegaÁ„o com teclado - (Evandro - RKAM)
+*			  25/07/2016 - Adicionado classe (SetWindow) - necessaria para navega√ß√£o com teclado - (Evandro - RKAM)
 ****************************************************************/
 
 session_start();
@@ -107,6 +107,7 @@ include("../../../includes/carrega_permissoes.php");
 							    <div id="divTestemunhas"></div>
                                 <div id="divLogCeb"></div>
                                 <div id="divServSMS"></div>
+								<div id="divHabilita_SMS"></div>
 							</td>							
 						</tr>
 						

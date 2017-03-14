@@ -292,10 +292,9 @@ function exibeErro($msgErro) {
     <?php //Habilitar botão apenas se possuir cobrança ativa
           // e se o serviço estiver ativo ou com algum tipo de alerta
           // que significa que serviço esta ativo para coop porém possui algum alerta para o cooperado          
-          if ($aux_insitceb == 1 && 
-              ($flsitsms == 1 || $dsalerta != "")) { ?>
-        <a href="#" class="botao" onclick="consultaServicoSMS('C'); return false;">Servi&ccedil;o SMS</a>
-    <?php  } ?>
+          if ($aux_insitceb == 1 && ($flsitsms == 1 || $dsalerta != "")) { ?>
+        		<a href="#" class="botao" onclick="consultaServicoSMS('C'); return false;">Servi&ccedil;o SMS</a>
+    		<?php  } ?>
     
     <a href="#" class="botao" <? if (in_array("X",$glbvars["opcoesTela"])) { ?> onClick="confirmaExclusao();return false;" <? } else { ?> style="cursor: default;" <? } ?>>Cancelamento</a>
     <a href="#" class="botao" <? if (in_array("C",$glbvars["opcoesTela"])) { ?> onClick="consulta('C','','','false','','');return false;" <? } else { ?> style="cursor: default;" <? } ?> >Consultar</a>
