@@ -1893,35 +1893,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
       -- Realiza o ajuste de lançamento
       vr_vlajuste := vr_vlajuste + NVL(vr_vllanlem,0);
       
-      -- Lanca em C/C e atualiza o lote
-      EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper     --> Cooperativa conectada
-                                    ,pr_dtmvtolt => pr_crapdat.dtmvtolt --> Movimento atual
-                                    ,pr_cdagenci => pr_cdagenci         --> Código da agência
-                                    ,pr_cdbccxlt => 100                 --> Número do caixa
-                                    ,pr_cdoperad => pr_cdoperad         --> Código do Operador
-                                    ,pr_cdpactra => pr_cdagenci         --> P.A. da transação
-                                    ,pr_nrdolote => 600032              --> Numero do Lote
-                                    ,pr_nrdconta => pr_nrdconta         --> Número da conta
-                                    ,pr_cdhistor => 2012                --> Codigo historico 2012 - AJUSTE BOLETO
-                                    ,pr_vllanmto => vr_vlajuste         --> Valor da parcela emprestimo
-                                    ,pr_nrparepr => pr_nrparcel         --> Número parcelas empréstimo
-                                    ,pr_nrctremp => pr_nrctremp         --> Número do contrato de empréstimo
-                                    ,pr_des_reto => vr_des_reto         --> Retorno OK / NOK
-                                    ,pr_tab_erro => vr_tab_erro);       --> Tabela com possíves erros
+      -- VERIFICAR NOVAMENTE SE O VALOR DO AJUSTE É MAIOR QUE ZERO
+      IF nvl(vr_vlajuste, 0) > 0 THEN
+      
+        -- Lanca em C/C e atualiza o lote
+        EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper     --> Cooperativa conectada
+                                      ,pr_dtmvtolt => pr_crapdat.dtmvtolt --> Movimento atual
+                                      ,pr_cdagenci => pr_cdagenci         --> Código da agência
+                                      ,pr_cdbccxlt => 100                 --> Número do caixa
+                                      ,pr_cdoperad => pr_cdoperad         --> Código do Operador
+                                      ,pr_cdpactra => pr_cdagenci         --> P.A. da transação
+                                      ,pr_nrdolote => 600032              --> Numero do Lote
+                                      ,pr_nrdconta => pr_nrdconta         --> Número da conta
+                                      ,pr_cdhistor => 2012                --> Codigo historico 2012 - AJUSTE BOLETO
+                                      ,pr_vllanmto => vr_vlajuste         --> Valor da parcela emprestimo
+                                      ,pr_nrparepr => pr_nrparcel         --> Número parcelas empréstimo
+                                      ,pr_nrctremp => pr_nrctremp         --> Número do contrato de empréstimo
+                                      ,pr_des_reto => vr_des_reto         --> Retorno OK / NOK
+                                      ,pr_tab_erro => vr_tab_erro);       --> Tabela com possíves erros
               
-      -- Se ocorreu erro
-      IF vr_des_reto <> 'OK' THEN
-        -- Se possui algum erro na tabela de erros
-        IF vr_tab_erro.COUNT() > 0 THEN
-          pr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-          pr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-        ELSE
-          pr_cdcritic := 0;
-          pr_dscritic := 'Erro ao criar o lancamento na conta corrente.';
+        -- Se ocorreu erro
+        IF vr_des_reto <> 'OK' THEN
+          -- Se possui algum erro na tabela de erros
+          IF vr_tab_erro.COUNT() > 0 THEN
+            pr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+            pr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+          ELSE
+            pr_cdcritic := 0;
+            pr_dscritic := 'Erro ao criar o lancamento na conta corrente.';
+          END IF;
+          RAISE vr_exc_erro;
         END IF;
-        RAISE vr_exc_erro;
-      END IF;
-     
+      END IF; -- fim IF nvl(vr_vlajuste, 0) > 0
     END IF; -- FIM nvl(vr_vlajuste, 0) > 0 
      
   EXCEPTION
