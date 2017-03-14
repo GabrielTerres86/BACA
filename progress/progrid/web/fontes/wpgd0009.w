@@ -851,6 +851,8 @@ PROCEDURE CriaListaEventos:
         
     DEFINE VARIABLE aux_prfreque AS CHAR NO-UNDO.
             
+    DEFINE VARIABLE aux_idstaeve AS INTEGER NO-UNDO.       
+    
     DEF VAR cont AS INTE NO-UNDO.
 
     DEFINE BUFFER bf-crapidp FOR crapidp.
@@ -1058,31 +1060,42 @@ PROCEDURE CriaListaEventos:
 	              LEAVE.
 	           END.
        END.              
-              
-       vetorevento = "~{" +
-                     "cdagenci:'" +  STRING(crapeap.cdagenci) + "'," + 
-                     "cdcooper:'" +  STRING(crapeap.cdcooper) + "'," +
-                     "cdevento:'" +  STRING(crapeap.cdevento) + "'," +
-                     "nmevento:'" +  STRING(aux_nmevento)     + "'," + 
-                     "idstaeve:'" +  STRING(crapadp.idstaeve) + "'," +
-                     "flgcompr:'" +  STRING(aux_flgcompr)     + "'," +
-                     "prfreque:'" +  STRING(aux_prfreque)     + "'," +
-                     "flgrest:'"  +  STRING(aux_flgrest)      + "'," +
-                     "qtmaxtur:'" +  STRING(aux_qtmaxtur)     + "'," +
-                     "nrinscri:'" +  STRING(aux_nrinscri)     + "'," +
-                     "nrconfir:'" +  STRING(aux_nrconfir)     + "'," +
-                     "nrcompar:'" +  STRING(aux_nrcompar)     + "'," +
-                     "nrfaltan:'" +  STRING(aux_nrfaltan)     + "'," +
-                     "nrseqeve:'" +  STRING(aux_nrseqeve)     + "'," +
-                     "idademin:'" +  STRING(aux_idademin)     + "'," +
-                     "tppartic:'" +  STRING(aux_tppartic)     + "'," +
-                     "dtfineve:'" + (IF  crapadp.dtfineve = ? THEN "" ELSE STRING(crapadp.dtfineve))                                                               + "'," +    
-                     /* facilitar validacao no javascript, enviar
-                       S se ja finalizou o evento */                                         
-                     "dsfineve:'" + (IF  crapadp.dtfineve <= TODAY THEN "N" ELSE "S" )               + "'," +                                          
-                     "dtmvtolt:'" +  STRING(TODAY)            + "'," + 
-                     "fechamen:'" +  STRING(aux_fechamen)     +  "'"  + "~}".
-				
+      
+      ASSIGN aux_idstaeve = crapadp.idstaeve.
+      
+      IF aux_idstaeve <> 4 THEN
+        DO:
+          IF AVAILABLE gnpapgd THEN
+            DO:
+              IF CAN-DO(STRING(gnpapgd.lsmesctb),STRING(crapadp.nrmeseve)) THEN
+                DO:
+                  ASSIGN aux_idstaeve = 4.
+                END.
+            END.
+        END.
+       
+       ASSIGN vetorevento = "~{cdagenci:'" +  STRING(crapeap.cdagenci) + "'," + 
+                            "cdcooper:'" +  STRING(crapeap.cdcooper) + "'," +
+                            "cdevento:'" +  STRING(crapeap.cdevento) + "'," +
+                            "nmevento:'" +  STRING(aux_nmevento)     + "'," + 
+                            "idstaeve:'" +  STRING(aux_idstaeve)     + "'," +
+                            "flgcompr:'" +  STRING(aux_flgcompr)     + "'," +
+                            "prfreque:'" +  STRING(aux_prfreque)     + "'," +
+                            "flgrest:'"  +  STRING(aux_flgrest)      + "'," +
+                            "qtmaxtur:'" +  STRING(aux_qtmaxtur)     + "'," +
+                            "nrinscri:'" +  STRING(aux_nrinscri)     + "'," +
+                            "nrconfir:'" +  STRING(aux_nrconfir)     + "'," +
+                            "nrcompar:'" +  STRING(aux_nrcompar)     + "'," +
+                            "nrfaltan:'" +  STRING(aux_nrfaltan)     + "'," +
+                            "nrseqeve:'" +  STRING(aux_nrseqeve)     + "'," +
+                            "idademin:'" +  STRING(aux_idademin)     + "'," +
+                            "tppartic:'" +  STRING(aux_tppartic)     + "'," +
+                            "dtfineve:'" + (IF  crapadp.dtfineve = ? THEN "" ELSE STRING(crapadp.dtfineve))                                                               + "'," +    
+                            /* facilitar validacao no javascript, enviar
+                            S se ja finalizou o evento */                                         
+                            "dsfineve:'" + (IF  crapadp.dtfineve <= TODAY THEN "N" ELSE "S" )               + "'," +                                          
+                            "dtmvtolt:'" +  STRING(TODAY)            + "'," + 
+                            "fechamen:'" +  STRING(aux_fechamen)     +  "'"  + "~}".				
 						
            RUN RodaJavaScript("mevento.push("  + vetorevento + ");").    
 
