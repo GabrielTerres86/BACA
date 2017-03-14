@@ -1,16 +1,14 @@
 <?php
 /* !
- * FONTE        : prestacoes.php
+ * FONTE        : conldb.php
  * CRIAÇÃO      : Lucas Reinert/Daniel Zimmermann
  * DATA CRIAÇÃO : 12/08/2015 
- * OBJETIVO     : Mostra rotina Cobranca de Emprestimos
+ * OBJETIVO     : Mostra rotina Consulta de Lancamento de Domicilio Bancario
  * --------------
- * ALTERAÇÃO    :
+ * ALTERAÇÃO    : 10/02/2017 - #602248 Inclusao dos botoes para a opcao P - processar arquivo (Carlos)
  * --------------
  */
-?>
 
-<?php
 session_start();
 
 // Includes para controle da session, variáveis globais de controle, e biblioteca de funções	
@@ -49,7 +47,7 @@ include('../../includes/carrega_permissoes.php');
         <script type="text/javascript" src="../../scripts/ui/jquery.ui.core.js"></script>
         <script type="text/javascript" src="../../scripts/ui/jquery.ui.datepicker.js"></script>
         <script type="text/javascript" src="../../scripts/ui/i18n/jquery.ui.datepicker-pt-BR.js"></script>
-        <script type="text/javascript" src="conldb.js"></script>
+        <script type="text/javascript" src="conldb.js?<?php echo time()?>"></script>
 
     </head>
     <body>
@@ -107,6 +105,11 @@ include('../../includes/carrega_permissoes.php');
                                                                                     <?php include('form_cabecalho.php'); ?>
                                                                                     <?php include('form_arquivo.php'); ?>
                                                                                     <?php include('form_conta.php'); ?>
+																					
+																					<div id="divBotaoProcessar" style="display:none; margin-bottom: 15px; text-align:center; margin-top: 15px;" >
+																					    <a href="#" class="botao" id="btVoltar"  onClick="btnVoltar(); return false;">Voltar</a>
+																						<a href="#" class="botao" id="btConsultar"  onClick="controlaOperacao('P'); return false;">Processar</a>
+																					</div>
                                                                                 </div>
                                                                             </td>
                                                                         </tr>
