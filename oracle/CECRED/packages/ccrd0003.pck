@@ -1886,7 +1886,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
     Sistema : Cartoes de Credito - Cooperativa de Credito
     Sigla   : CRRD
     Autor   : Lucas Lunelli
-    Data    : Maio/14.                    Ultima atualizacao: 16/12/2016
+    Data    : Maio/14.                    Ultima atualizacao: 09/03/2017
 
     Dados referentes ao programa:
 
@@ -1980,6 +1980,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
                 03/02/2017 - #601772 Inclusão de verificação e log de erros de execução através do 
                              procedimento pc_internal_exception no procedimento pc_crps670 (Carlos)
+
+                09/03/2017 - Ao verificar se ja existe a 0200 na dcb, olhar tambem com o historico
+                             offline da transacao, caso nao encontre com o historico online.
+                             (problemas com chave duplicada no indice #1). (Fabricio)
     ....................................................................................................*/
     DECLARE
       ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
@@ -2147,7 +2151,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                              pr_cdcooper IN crapass.cdcooper%TYPE,
                              pr_nrdconta IN crapdcb.nrdconta%TYPE,
                              pr_cdhistor IN crapdcb.cdhistor%TYPE) IS
-        SELECT dcb.rowid
+        SELECT dcb.rowid,
+               dcb.cdhistor
           FROM crapdcb dcb
          WHERE dcb.cdcooper = pr_cdcooper   AND
                dcb.nrdconta = pr_nrdconta   AND
@@ -3703,7 +3708,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   -- FIM ALTERACAO JMD                          
                 END IF;
 
-                 -- verifica se já existe debito de cartão bancoob msg 0200
+               -- verifica se já existe debito de cartão bancoob msg 0200 (historico online)
                OPEN cr_crapdcb_200 (pr_nrnsucap => substr(vr_des_text,198,6),
                                      pr_dtdtrgmt => to_date(trim(substr(vr_des_text,204,4)),'mmdd'),
                                      pr_hrdtrgmt => substr(vr_des_text,208,6),
@@ -3711,13 +3716,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                      pr_nrdconta => rw_crapass.nrdconta,
                                      pr_cdhistor => vr_cdhistor_on);
                 FETCH cr_crapdcb_200 INTO rw_crapdcb_200;
+                
+                IF cr_crapdcb_200%NOTFOUND THEN
+                  
+                  CLOSE cr_crapdcb_200;
+                  -- verifica se já existe debito de cartão bancoob msg 0200 (historico offline)
+                  OPEN cr_crapdcb_200 (pr_nrnsucap => substr(vr_des_text,198,6),
+                                       pr_dtdtrgmt => to_date(trim(substr(vr_des_text,204,4)),'mmdd'),
+                                       pr_hrdtrgmt => substr(vr_des_text,208,6),
+                                       pr_cdcooper => rw_crapcop_cdagebcb.cdcooper,
+                                       pr_nrdconta => rw_crapass.nrdconta,
+                                       pr_cdhistor => vr_cdhistor_off);
+                  FETCH cr_crapdcb_200 INTO rw_crapdcb_200;
+                END IF;
 
                 -- Se nao existir vai criar registro de débito
                 IF cr_crapdcb_200%NOTFOUND THEN                    
                    -- Se for crédito insere com o tipo 0400 - Cancelamento de Compra ou Saque em ATM com cartão na função débito
                    IF nvl(trim(substr(vr_des_text,27,1)),0) = 'C' AND substr(vr_des_text,214,2) = '00' THEN
                       vr_tpmensag := '0400';
-                      -- verifica se já existe Credito de cartão bancoob msg 0200
+                      -- verifica se já existe Credito de cartão bancoob msg 0400 (historico online)
                       OPEN cr_crapdcb_400 (pr_nrnsucap => substr(vr_des_text,198,6),
                                            pr_dtdtrgmt => to_date(trim(substr(vr_des_text,204,4)),'mmdd'),
                                            pr_hrdtrgmt => substr(vr_des_text,208,6),
@@ -3725,6 +3743,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                            pr_nrdconta => rw_crapass.nrdconta,
                                            pr_cdhistor => vr_cdhistor_on);
                       FETCH cr_crapdcb_400 INTO rw_crapdcb_400;
+                      
+                      IF cr_crapdcb_400%NOTFOUND THEN
+                        
+                        CLOSE cr_crapdcb_400;
+                        
+                        -- verifica se já existe Credito de cartão bancoob msg 0400 (historico online)
+                        OPEN cr_crapdcb_400 (pr_nrnsucap => substr(vr_des_text,198,6),
+                                             pr_dtdtrgmt => to_date(trim(substr(vr_des_text,204,4)),'mmdd'),
+                                             pr_hrdtrgmt => substr(vr_des_text,208,6),
+                                             pr_cdcooper => rw_crapcop_cdagebcb.cdcooper,
+                                             pr_nrdconta => rw_crapass.nrdconta,
+                                             pr_cdhistor => vr_cdhistor_off);
+                        FETCH cr_crapdcb_400 INTO rw_crapdcb_400;
+                        
+                      END IF;
+                      
                       IF cr_crapdcb_400%NOTFOUND THEN
                          vr_criardcb := TRUE;
                       ELSE
@@ -3735,6 +3769,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                       vr_tpmensag := nvl(trim(substr(vr_des_text,254,4)),' ');
                       vr_criardcb := TRUE;
                    END IF;
+                   
                    IF vr_criardcb THEN
                       -- se coop do registro esta inativa, temos que ver na coop destino
                       IF rw_crapcop_cdagebcb.flgativo = 0 THEN
@@ -3839,7 +3874,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                     pr_nrcrcard => nvl(trim(substr(vr_des_text,7,19)),' '),
                                     pr_tpdtrans => nvl(trim(substr(vr_des_text,27,1)),' '),
                                     pr_cddtrans => NULL,
-                                    pr_cdhistor => vr_cdhistor_on,
+                                    pr_cdhistor => rw_crapdcb_200.cdhistor,
                                     pr_dtdtrans => NULL,
                                     pr_dtpostag => to_date(trim(substr(vr_des_text,39,8)),'ddmmyyyy'),
                                     pr_dtcnvvlr => to_date(trim(substr(vr_des_text,47,8)),'ddmmyyyy'),
@@ -6379,6 +6414,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
    01/09/2016 - Qdo o ultimo dia de repique da fatura for feriado mudar a situacao da
                 fatura pra Nao Efetivado pois esta gerando um problema
                 (Tiago/Quisinski #506917).
+                
+   13/03/2017 - Ajuste no tratamento acima descrito para contemplar tambem o feriado de carnaval.
+                (Chamado 624482) - (Fabricio)
   .......................................................................................*/
   PROCEDURE pc_debita_fatura(pr_cdcooper  IN crapcop.cdcooper%TYPE
                             ,pr_cdprogra  IN crapprg.cdprogra%TYPE
@@ -6909,11 +6947,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                         ,pr_dtmvtolt => rw_tbcrd_fatura.dtvencimento
                                         ,pr_tipo => 'P') = (pr_dtmvtolt - vr_qtddiapg) AND 
             (rw_tbcrd_fatura.vlpendente - vr_vlpagmto) > 0)  OR           
-           --Se for o penultimo dia de repique o o proximo dia nao eh dia util
-           --mudar a situacao da fatura para finalizar o repique
+            -- valida se eh penultimo dia, antipenultimo... 
+            -- (contempla feriado de carnaval com esta mudanca no IF)
            ((gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
                                         ,pr_dtmvtolt => rw_tbcrd_fatura.dtvencimento
-                                        , pr_tipo => 'P') -  (pr_dtmvtolt - vr_qtddiapg)) = 1 AND
+             ,pr_tipo => 'P') -  (pr_dtmvtolt - vr_qtddiapg)) < (rw_crapdat.dtmvtopr - pr_dtmvtolt) AND
             (gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
                                         ,pr_dtmvtolt => pr_dtmvtolt + 1
                                         , pr_tipo => 'P') > (pr_dtmvtolt + 1)))               AND 
