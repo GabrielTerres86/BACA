@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Margarete/Planner
-   Data    : Agosto/2000.                    Ultima atualizacao: 14/03/2013
+   Data    : Agosto/2000.                    Ultima atualizacao: 14/03/2017
    
    Dados referentes ao programa:
 
@@ -63,7 +63,10 @@
                             
                14/03/2013 - Colocado a chamada da procedure alerta_fraude no
                             inicio do programa e retirado tratamento
-                            de contas BB "aux_lsconta3" (Adriano).             
+                            de contas BB "aux_lsconta3" (Adriano).   
+                            
+               14/03/2017 - Aumentar para 1400 folhas por requisição no formulario  
+                            3, conforme solicitado no chamado 627236. (Kelvin)
                   
 ............................................................................ */
 
@@ -353,7 +356,7 @@ DO WHILE TRUE:
                    
                    IF tel_qtreqtal MODULO 20 > 0   OR
                       tel_qtreqtal < 100           OR
-                      tel_qtreqtal > 400           THEN
+                      tel_qtreqtal > 1500          THEN
                       ASSIGN glb_cdcritic = 26.
                    ELSE
                    IF crapass.cdsitcpf <> 1   THEN
@@ -399,7 +402,7 @@ DO WHILE TRUE:
                                                            crabreq.qtreqtal.
                                  END.
                              
-                                 IF aux_contador + tel_qtreqtal > 400   THEN
+                                 IF aux_contador + tel_qtreqtal > 1500   THEN
                                     DO:
                                         MESSAGE "Limite por pedido"
                                                 "excedido.".
@@ -572,7 +575,7 @@ DO WHILE TRUE:
           tel_reganter[1] =
               STRING(tel_nrdctabb,"zzzz,zzz,9") + "        "      +
               STRING(tel_tprequis,"9")          + "            "  +
-              STRING(tel_qtreqtal,"zz9")         + "      "       +
+              STRING(tel_qtreqtal,"zzz9")         + "     "       +
               STRING(tel_nrseqdig,"zz,zz9")
           
           tel_nrdctabb = 0
