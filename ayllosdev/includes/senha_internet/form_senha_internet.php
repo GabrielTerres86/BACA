@@ -30,11 +30,7 @@
 	$nrdconta = (isset($_POST["nrdconta"])) ? $_POST["nrdconta"] : "";
 	$idseqttl = (isset($_POST["idseqttl"])) ? $_POST["idseqttl"] : "";
 	
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'])) <> '') {		
-	
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
-	}
-		
+
 	// Guardo os parâmetos do POST em variáveis	
 	$nmdatela = (isset($_POST['nmdatela'])) ? $_POST['nmdatela'] : '';
 	$nmrotina = (isset($_POST['nmrotina'])) ? $_POST['nmrotina'] : '';
