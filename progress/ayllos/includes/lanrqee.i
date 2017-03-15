@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Margarete/Planner
-   Data    : Agosto/2000.                       Ultima atualizacao: 15/04/2013
+   Data    : Agosto/2000.                       Ultima atualizacao: 15/04/2017
 
    Dados referentes ao programa:
 
@@ -20,6 +20,8 @@
                15/04/2013 - Retirado o tratamento de contas BB "aux_lsconta3"
                             (Adriano).
                             
+               14/03/2017 - Aumentar para 1500 folhas por requisição no formulario  
+                            3, conforme solicitado no chamado 627236. (Kelvin)
 ............................................................................. */
 
 INICIO:
@@ -253,7 +255,7 @@ DO WHILE TRUE:
           tel_reganter[1] =
               STRING(tel_nrdctabb,"zzzz,zzz,9") + "        "      +
               STRING(tel_tprequis,"9")          + "            "  +
-              STRING(tel_qtreqtal,"zz9")         + "      "       +
+              STRING(tel_qtreqtal,"zzz9")         + "     "       +
               STRING(tel_nrseqdig,"zz,zz9")
           tel_nrdctabb = 0
           tel_tprequis = 0
