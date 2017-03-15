@@ -89,14 +89,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_OCPPEP AS
    Sigla   : CRED
 
    Autor   : Adriano
-   Data    : Fevereiro/2017                       Ultima atualizacao: 
+   Data    : Fevereiro/2017                       Ultima atualizacao: 15/03/2017
 
    Dados referentes ao programa:
 
    Frequencia: Diario (on-line).
    Objetivo  : Mostrar a tela OCPPEP, manutenção de natureza de ocupação e ocupações.
 
-   Alteracoes:              
+   Alteracoes: 15/03/2017 - Ajustado cursor para utilizar campo correto na busca da ocupação
+							 (Adriano - SD 614408)
                                                              
   ---------------------------------------------------------------------------------------------------------------*/
   
@@ -535,21 +536,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_OCPPEP AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Adriano  
-    Data     : Fevereiro/2017                          Ultima atualizacao:
+    Data     : Fevereiro/2017                          Ultima atualizacao: 15/03/2017
     
     Dados referentes ao programa:
     
     Frequencia: -----
     Objetivo   : Rotina responsável pela inclusão/alteração/exclusão da ocupação
     
-    Alterações : 
+    Alterações : 15/03/2017 - Ajustado cursor para utilizar campo correto na busca da ocupação
+							 (Adriano - SD 614408)
     -------------------------------------------------------------------------------------------------------------*/                                    
     CURSOR cr_gncdocp(pr_cdocupa IN gncdocp.cdocupa%TYPE) IS
     SELECT ocp.cdocupa
           ,ocp.dsdocupa
           ,ocp.rsdocupa
      FROM gncdocp ocp
-    WHERE ocp.cdnatocp = pr_cdocupa;
+    WHERE ocp.cdocupa = pr_cdocupa;
     rw_gncdocp cr_gncdocp%ROWTYPE;
     
     --Variaveis de Criticas
