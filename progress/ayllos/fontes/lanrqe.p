@@ -74,7 +74,11 @@
                                craptab que alimentao as variaveis aux_lsconta3,
                                aux_lsconta4;
                              - Incluido a declaracao da variavel aux_dsoperac
-                              (Adriano).         
+                              (Adriano).
+
+               09/11/2016 - #551764 A partir do dia 16/11 a area de suprimentos
+                            nao produzira mais cheques avulsos. Opcao 5, formulario
+                            avulso, foi retirada (Carlos)         
                
                14/03/2017 - Aumentar para 1400 folhas por requisição no formulario  
                             3, conforme solicitado no chamado 627236. (Kelvin)
@@ -85,8 +89,8 @@
 
 DEF        VAR tel_qtinforq AS INT     FORMAT "z,zz9"                NO-UNDO.
 DEF        VAR tel_qtcomprq AS INT     FORMAT "z,zz9"                NO-UNDO.
-DEF        VAR tel_qtinfotl AS INT     FORMAT "z,zz9"                NO-UNDO.
-DEF        VAR tel_qtcomptl AS INT     FORMAT "z,zz9"                NO-UNDO.
+DEF        VAR tel_qtinfotl AS INT     FORMAT "zz,zz9"                NO-UNDO.
+DEF        VAR tel_qtcomptl AS INT     FORMAT "zz,zz9"                NO-UNDO.
 DEF        VAR tel_qtreqtal AS INT     FORMAT "zzz9"                  NO-UNDO.
 DEF        VAR tel_tprequis AS INT     FORMAT "9"                    NO-UNDO.
 DEF        VAR tel_nrseqdig AS INT     FORMAT "zz,zz9"               NO-UNDO.
@@ -140,8 +144,8 @@ FORM glb_cddopcao AT  5 LABEL "Opcao" AUTO-RETURN
      "Informado   Computado            "  AT 39
      SKIP
      "Requisicoes       :"  AT 20
-     tel_qtinforq    AT 42 NO-LABEL
-     tel_qtcomprq    AT 54 NO-LABEL
+     tel_qtinforq    AT 43 NO-LABEL
+     tel_qtcomprq    AT 55 NO-LABEL
      SKIP
      "Folhas/bloq solic.:" AT 20
      tel_qtinfotl    AT 42 NO-LABEL
@@ -154,10 +158,10 @@ FORM glb_cddopcao AT  5 LABEL "Opcao" AUTO-RETURN
                          HELP "Informe o numero da conta do associado."
      
      tel_tprequis AT  30 NO-LABEL AUTO-RETURN
-         HELP "2-Folhas TB / 3-Form.Continuo / 5-Form.Avulso / 8-Bloquetos BB"
+         HELP "2-Folhas TB / 3-Form.Continuo / 8-Bloquetos BB"
                 VALIDATE(tel_tprequis = 2 OR tel_tprequis = 3 OR
-                         tel_tprequis = 5 OR tel_tprequis = 8 OR
-                         tel_tprequis = 0,"014 - Opcao Errada")
+                         tel_tprequis = 8 OR tel_tprequis = 0,
+                         "014 - Opcao Errada")
                          
      tel_qtreqtal AT  43 NO-LABEL AUTO-RETURN
          HELP "Qtd.Max:TB=20/Cont=100-1500/Avulso=20(PF),200(PJ)/Bloquet.BB=500"
