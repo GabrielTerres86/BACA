@@ -539,7 +539,7 @@
 				</reportElement>
 				<subreport>
 					<reportElement uuid="cbfc45f7-2851-41f8-8da6-3fa4221da4b3" positionType="Float" x="50" y="0" width="742" height="8"/>
-					<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//agencia/tabmicrocredito/reccaixa")]]></dataSourceExpression>
+					<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//agencia/tabreccaixa/reccaixa")]]></dataSourceExpression>
 					<subreportExpression><![CDATA["crrl227_reccaixa.jasper"]]></subreportExpression>
 				</subreport>
 			</frame>

@@ -14,7 +14,7 @@
 	<parameter name="PR_NMDESTIN" class="java.lang.String"/>
 	<parameter name="PR_SQSOLICI" class="java.lang.String"/>
 	<queryString language="xPath">
-		<![CDATA[/raiz/agencia/tabmicrocredito/reccaixa]]>
+		<![CDATA[/raiz/agencia/tabreccaixa/reccaixa]]>
 	</queryString>
 	<field name="nrctremp_caixa" class="java.lang.String">
 		<fieldDescription><![CDATA[nrctremp_caixa]]></fieldDescription>
