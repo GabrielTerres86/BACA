@@ -75,11 +75,11 @@
                                aux_lsconta4;
                              - Incluido a declaracao da variavel aux_dsoperac
                               (Adriano).         
-                            
+               
                09/11/2016 - #551764 A partir do dia 16/11 a area de suprimentos
                             nao produzira mais cheques avulsos. Opcao 5, formulario
-                            avulso, foi retirada (Carlos)
-
+                            avulso, foi retirada (Carlos)         
+               
                14/03/2017 - Aumentar para 1400 folhas por requisição no formulario  
                             3, conforme solicitado no chamado 627236. (Kelvin)
 ............................................................................. */
@@ -89,8 +89,8 @@
 
 DEF        VAR tel_qtinforq AS INT     FORMAT "z,zz9"                NO-UNDO.
 DEF        VAR tel_qtcomprq AS INT     FORMAT "z,zz9"                NO-UNDO.
-DEF        VAR tel_qtinfotl AS INT     FORMAT "z,zz9"                NO-UNDO.
-DEF        VAR tel_qtcomptl AS INT     FORMAT "z,zz9"                NO-UNDO.
+DEF        VAR tel_qtinfotl AS INT     FORMAT "zz,zz9"                NO-UNDO.
+DEF        VAR tel_qtcomptl AS INT     FORMAT "zz,zz9"                NO-UNDO.
 DEF        VAR tel_qtreqtal AS INT     FORMAT "zzz9"                  NO-UNDO.
 DEF        VAR tel_tprequis AS INT     FORMAT "9"                    NO-UNDO.
 DEF        VAR tel_nrseqdig AS INT     FORMAT "zz,zz9"               NO-UNDO.
@@ -144,8 +144,8 @@ FORM glb_cddopcao AT  5 LABEL "Opcao" AUTO-RETURN
      "Informado   Computado            "  AT 39
      SKIP
      "Requisicoes       :"  AT 20
-     tel_qtinforq    AT 42 NO-LABEL
-     tel_qtcomprq    AT 54 NO-LABEL
+     tel_qtinforq    AT 43 NO-LABEL
+     tel_qtcomprq    AT 55 NO-LABEL
      SKIP
      "Folhas/bloq solic.:" AT 20
      tel_qtinfotl    AT 42 NO-LABEL
