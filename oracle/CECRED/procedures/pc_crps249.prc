@@ -5407,12 +5407,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                        -- escreve a linha duplicada
                        vr_index := vr_tab_valores_ag.FIRST;
                        WHILE vr_index IS NOT NULL LOOP
-                          -- Ignora o cabecalho de reversao
-                          IF vr_index <> 1 THEN
-                             gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                                           ,pr_des_text => vr_tab_valores_ag(vr_index)); --> Texto para escrita                   
-                          END IF;
+
+                          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                                        ,pr_des_text => vr_tab_valores_ag(vr_index)); --> Texto para escrita                   
+
                           vr_index := vr_tab_valores_ag.NEXT(vr_index);
+                          
                        END LOOP;
                     
                        -- limpa a table de reveraso
@@ -5457,17 +5457,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                  -- Monta o cabecalho da linha
                  IF rw_craprej.cdagenci = 0 THEN
 
-                    -- Verifica se existe reversao
+                    -- Verifica se agrupamento por PA
                     IF vr_tab_valores_ag.COUNT() > 0 THEN
                        
                        -- escreve a linha duplicada
                        vr_index := vr_tab_valores_ag.FIRST;
                        WHILE vr_index IS NOT NULL LOOP
-                          -- Ignora o cabecalho de reversao
-                          IF vr_index <> 1 THEN
-                             gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                                           ,pr_des_text => vr_tab_valores_ag(vr_index)); --> Texto para escrita                   
-                          END IF;
+
+                          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                                        ,pr_des_text => vr_tab_valores_ag(vr_index)); --> Texto para escrita                   
+
                           vr_index := vr_tab_valores_ag.NEXT(vr_index);
                        END LOOP;
                        
@@ -5517,17 +5516,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                  -- Monta o cabecalho da linha
                  IF rw_craprej.cdagenci = 0 THEN
 
-                    -- Verifica se existe reversao
+                    -- Verifica se existe agrupamento por PA
                     IF vr_tab_valores_ag.COUNT() > 0 THEN
                        
                        -- escreve a linha duplicada
                        vr_index := vr_tab_valores_ag.FIRST;
                        WHILE vr_index IS NOT NULL LOOP
-                          -- Ignora o cabecalho de reversao
-                          IF vr_index <> 1 THEN
-                             gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                                           ,pr_des_text => vr_tab_valores_ag(vr_index)); --> Texto para escrita                   
-                          END IF;
+
+                          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                                        ,pr_des_text => vr_tab_valores_ag(vr_index)); --> Texto para escrita                   
+
                           vr_index := vr_tab_valores_ag.NEXT(vr_index);
                        END LOOP;
                        
@@ -5575,17 +5573,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                  -- Monta o cabecalho da linha
                  IF rw_craprej.cdagenci = 0 THEN
 
-                    -- Verifica se existe reversao
+                    -- Verifica se existe agrupamento por PA
                     IF vr_tab_valores_ag.COUNT() > 0 THEN
                       
                        -- escreve a linha duplicada
                        vr_index := vr_tab_valores_ag.FIRST;
                        WHILE vr_index IS NOT NULL LOOP
-                          -- Ignora o cabecalho de reversao
-                          IF vr_index <> 1 THEN
-                             gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                                           ,pr_des_text => vr_tab_valores_ag(vr_index)); --> Texto para escrita                   
-                          END IF;
+
+                          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                                        ,pr_des_text => vr_tab_valores_ag(vr_index)); --> Texto para escrita                   
+
                           vr_index := vr_tab_valores_ag.NEXT(vr_index);
                        END LOOP;
                     
@@ -5636,17 +5633,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
            IF rw_craprej.vlsdapli > 0 THEN
 
               IF rw_craprej.cdagenci = 0 THEN -- Monta o cabecalho da linha
-                 -- Verifica se existe reversao
+                 -- Verifica se existe agrupamento por PA
                  IF vr_tab_valores_ag.COUNT() > 0 THEN
                     
                     -- escreve a linha duplicada
                     vr_index := vr_tab_valores_ag.FIRST;
                     WHILE vr_index IS NOT NULL LOOP
-                       -- Ignora o cabecalho de reversao
-                       IF vr_index <> 1 THEN
-                          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                                        ,pr_des_text => vr_tab_valores_ag(vr_index)); --> Texto para escrita                   
-                       END IF;
+
+                       gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                                     ,pr_des_text => vr_tab_valores_ag(vr_index)); --> Texto para escrita                   
+
                        vr_index := vr_tab_valores_ag.NEXT(vr_index);
                     END LOOP;
                     
@@ -5691,17 +5687,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         END IF;
      END LOOP;
      
-     -- Quando for o ultimo historico, verifica se existe reversao
+     -- Quando for o ultimo historico, verifica se existe agrupamento por PA
      IF vr_tab_valores_ag.COUNT() > 0 THEN
         
         -- escreve a linha duplicada
         vr_index := vr_tab_valores_ag.FIRST;
         WHILE vr_index IS NOT NULL LOOP
-           -- Ignora o cabecalho de reversao
-           IF vr_index <> 1 THEN
-              gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                            ,pr_des_text => vr_tab_valores_ag(vr_index)); --> Texto para escrita                   
-           END IF;
+
+           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                         ,pr_des_text => vr_tab_valores_ag(vr_index)); --> Texto para escrita                   
+
            vr_index := vr_tab_valores_ag.NEXT(vr_index);
         END LOOP;
         
@@ -5721,17 +5716,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
 
               IF rw_craprej.cdagenci = 0 THEN -- Monta o cabecalho da linha
 
-                 -- Verifica se existe reversao
+                 -- Verifica se existe agrupamento por PA
                  IF vr_tab_valores_ag.COUNT() > 0 THEN
                    
                     -- escreve a linha duplicada
                     vr_index := vr_tab_valores_ag.FIRST;
                     WHILE vr_index IS NOT NULL LOOP
-                       -- Ignora o cabecalho de reversao
-                       IF vr_index <> 1 THEN
-                          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                                        ,pr_des_text => vr_tab_valores_ag(vr_index)); --> Texto para escrita                   
-                       END IF;
+
+                       gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                                     ,pr_des_text => vr_tab_valores_ag(vr_index)); --> Texto para escrita                   
+
                        vr_index := vr_tab_valores_ag.NEXT(vr_index);
                     END LOOP;
                  
@@ -5779,17 +5773,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         END IF;
      END LOOP;
      
-     -- Quando for o ultimo historico, verifica se existe reversao
+     -- Quando for o ultimo historico, Verifica se existe agrupamento por PA
      IF vr_tab_valores_ag.COUNT() > 0 THEN
      
         -- escreve a linha duplicada
         vr_index := vr_tab_valores_ag.FIRST;
         WHILE vr_index IS NOT NULL LOOP
-           -- Ignora o cabecalho de reversao
-           IF vr_index <> 1 THEN
-              gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                            ,pr_des_text => vr_tab_valores_ag(vr_index)); --> Texto para escrita                   
-           END IF;
+
+           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                         ,pr_des_text => vr_tab_valores_ag(vr_index)); --> Texto para escrita                   
+
            vr_index := vr_tab_valores_ag.NEXT(vr_index);
         END LOOP;  
         
@@ -5809,17 +5802,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
 
               IF rw_craprej.cdagenci = 0 THEN -- Monta o cabecalho da linha
 
-                 -- Verifica se existe reversao
+                 -- Verifica se existe agrupamento por PA
                  IF vr_tab_valores_ag.COUNT() > 0 THEN
                  
                     -- escreve a linha duplicada
                     vr_index := vr_tab_valores_ag.FIRST;
                     WHILE vr_index IS NOT NULL LOOP
-                       -- Ignora o cabecalho de reversao
-                       IF vr_index <> 1 THEN
-                          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                                        ,pr_des_text => vr_tab_valores_ag(vr_index)); --> Texto para escrita                   
-                       END IF;
+
+                       gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                                     ,pr_des_text => vr_tab_valores_ag(vr_index)); --> Texto para escrita                   
+
                        vr_index := vr_tab_valores_ag.NEXT(vr_index);
                     END LOOP;  
 
@@ -5863,17 +5855,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         END IF;
      END LOOP;
      
-     -- Quando for o ultimo historico, verifica se existe reversao
+     -- Quando for o ultimo historico, Verifica se existe agrupamento por PA
      IF vr_tab_valores_ag.COUNT() > 0 THEN
        
         -- escreve a linha duplicada
         vr_index := vr_tab_valores_ag.FIRST;
         WHILE vr_index IS NOT NULL LOOP
-           -- Ignora o cabecalho de reversao
-           IF vr_index <> 1 THEN
-              gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                            ,pr_des_text => vr_tab_valores_ag(vr_index)); --> Texto para escrita                   
-           END IF;
+
+           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                         ,pr_des_text => vr_tab_valores_ag(vr_index)); --> Texto para escrita                   
+
            vr_index := vr_tab_valores_ag.NEXT(vr_index);
         END LOOP;
      END IF;
