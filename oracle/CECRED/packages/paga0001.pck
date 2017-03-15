@@ -11962,7 +11962,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 	--               19/07/2016 - Ajustes para Prj. 338, Pagamento de DARF/DAS (Jean Michel).
     --                            
     --               03/08/2016 - Ajustar a validação de agendamento de folha de pagamento
-    --                            (Douglas - Chamado 488327)
+    --                            (Douglas - Chamado 488327)   
+    --
+    --               21/11/2016 - Incluido tratamento para transacao: 
+    --                             16 - Contrato SMS Cobrança
+    --                             17 - Cancelamento Contrato SMS Cobrança
+    --                            para expirar 30 dias apos criação.
+    --                            PRJ319 - SMS Cobrança (Odirlei-AMcom)
     --
     --               14/12/2016 - Incluido tratamento para transacao: 
     --                             12 - Desconto de Cheque
@@ -12207,9 +12213,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
             vr_idagenda := rw_tbspb_trans_pend.idagendamento;
             vr_dtmvtopg := rw_tbspb_trans_pend.dtdebito;                
         ELSE
-			-- Adesão de pacote de tarifas(10) e Desconto de cheque(12)
+			-- Adesão de pacote de tarifas(10), contrao de SMS(16,17) e Desconto de cheque(12)
       -- não permite agendamento
-			IF vr_tptransa NOT IN(10,12) THEN
+			IF vr_tptransa NOT IN(10,12,16,17) THEN
 				vr_idagenda := 1;
 				vr_dtmvtopg := rw_tbgen_trans_pend.dtmvtolt;
 			END IF;
@@ -12223,7 +12229,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
         -- tptransa 6     Creduti Pre-Aprovado
         -- tptransa 7     Aplicacao
         -- tptransa 8     Debito Automatico
-        -- tptransa 9     Folha Pagamento
+        -- tptransa 9     Folha Pagamento  
+        -- tptransa 11     DARF/DAS
         -- tptransa 12    Desconto de Cheque
         --
         -- Codigo Horario
@@ -12234,6 +12241,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
         -- 13 - Folha Paga. (Portabilidade),
         -- 14 - Folha Paga. (Solicitacao Estouro).
         -- 15 - DARF/DAS
+        -- 16 - Contrato SMS Cobrança
+        -- 17 - Cancelamento Contrato SMS Cobrança
         
         IF vr_tptransa = 9 THEN /* Folha de Pagamento */
            OPEN cr_tbfolha_trans_pend (pr_cdtrapen => vr_cdtransa);
@@ -12329,7 +12338,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 						  vr_flgalter := TRUE;
 						  pr_flgalter := TRUE;
             END IF;           
-												 
+		  ELSIF  vr_tptransa IN (16,17) THEN --> Contrato SMS cobrança
+            --> Verificar se ja se passou 30 dias desde a criação da pendencia
+            IF rw_tbgen_trans_pend.dtmvtolt + 30 < pr_dtmvtolt THEN
+              --Atualizar flag para true
+						  vr_flgalter := TRUE;
+						  pr_flgalter := TRUE;
+            END IF; 									 
 					ELSE
           --Debito por agendamento
 						vr_dtauxili := GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper --> Cooperativa conectada

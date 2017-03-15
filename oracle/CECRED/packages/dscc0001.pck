@@ -1210,7 +1210,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
             ,ttl.nrcpfcgc
         FROM crapttl ttl
        WHERE ttl.cdcooper = pr_cdcooper
-         AND ttl.nrdconta = pr_nrdconta;
+         AND ttl.nrdconta = pr_nrdconta
+         AND ttl.idseqttl = 1;
     rw_crapttl  cr_crapttl%ROWTYPE;
     
     --> Busca pessoa juridica
@@ -2711,7 +2712,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
             ,ttl.nrcpfcgc
         FROM crapttl ttl
        WHERE ttl.cdcooper = pr_cdcooper
-         AND ttl.nrdconta = pr_nrdconta;
+         AND ttl.nrdconta = pr_nrdconta
+         AND ttl.idseqttl = 1;
     rw_crapttl  cr_crapttl%ROWTYPE;
     
     --> Busca pessoa juridica
@@ -4144,7 +4146,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
           ,ttl.nrcpfcgc
       FROM crapttl ttl
      WHERE ttl.cdcooper = pr_cdcooper
-       AND ttl.nrdconta = pr_nrdconta;
+       AND ttl.nrdconta = pr_nrdconta
+       AND ttl.idseqttl = 1;
   rw_crapttl  cr_crapttl%ROWTYPE;
   
   --> Busca pessoa juridica
@@ -4694,7 +4697,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 		    AND cdb.nrcheque = pr_nrcheque 
 			  AND cdb.nrborder <> pr_nrborder
 			  AND cdb.dtlibera >= pr_dtmvtolt
-		    AND cdb.dtdevolu IS NULL;
+		    AND cdb.dtdevolu IS NULL
+        AND cdb.dtlibbdc IS NOT NULL;
 	rw_crapcdb cr_crapcdb%ROWTYPE;
 	
 	-- Buscar cadastro de emitentes de cheques

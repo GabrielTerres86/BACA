@@ -1080,6 +1080,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 
     vr_clob CLOB;
 	
+    vr_nmcheque VARCHAR2(150);
+    vr_nrcpfcgc VARCHAR2(25);
+	
 	  -- Buscar informações do bordero
 		CURSOR cr_crapbdc(pr_cdcooper IN crapcdb.cdcooper%TYPE
 		                 ,pr_nrdconta IN crapcdb.nrdconta%TYPE
@@ -1228,6 +1231,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 		
 		rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 		
+    -- Buscar cadastro do cooperado emitente
+    CURSOR cr_crapass_2 (pr_cdagectl crapcop.cdagectl%TYPE,
+                         pr_nrdconta crapass.nrdconta%TYPE)IS
+      SELECT ass.inpessoa,
+             ass.nmprimtl,
+             CASE
+               WHEN ass.inpessoa IN (1) THEN
+                (SELECT ttl.nmtalttl
+                   FROM crapttl ttl
+                  WHERE ttl.cdcooper = ass.cdcooper
+                    AND ttl.nrdconta = ass.nrdconta
+                    AND ttl.idseqttl = 1)
+               ELSE
+                (SELECT jur.nmtalttl
+                   FROM crapjur jur
+                  WHERE jur.cdcooper = ass.cdcooper
+                    AND jur.nrdconta = ass.nrdconta)
+             END nmtalttl,
+             CASE
+               WHEN ass.inpessoa IN (1) THEN
+                (SELECT ttl.nrcpfcgc
+                   FROM crapttl ttl
+                  WHERE ttl.cdcooper = ass.cdcooper
+                    AND ttl.nrdconta = ass.nrdconta
+                    AND ttl.idseqttl = 1)
+               ELSE
+                ass.nrcpfcgc
+             END nrcpfcgc
+        FROM crapass ass,
+             crapcop cop
+       WHERE cop.cdagectl = pr_cdagectl
+         AND ass.cdcooper = cop.cdcooper
+         AND ass.nrdconta = pr_nrdconta;
+    rw_crapass_2  cr_crapass_2%ROWTYPE;
+		
 	BEGIN
     -- Incluir nome do modulo logado
     GENE0001.pc_informa_acesso(pr_module => 'TELA_ATENDA_DESCTO'
@@ -1310,10 +1348,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 				                          ,pr_nrdconta => pr_nrdconta
 																	,pr_nrborder => pr_nrborder) LOOP
 																	
+        
+        -- Se for do sistema CECRED
+        IF rw_crapcdb.cdbanchq = 85 THEN
+          -- Buscar cadastro do cooperado emitente
+          OPEN cr_crapass_2 (pr_cdagectl => rw_crapcdb.cdagechq
+                            ,pr_nrdconta => rw_crapcdb.nrctachq);
+          FETCH cr_crapass_2 INTO rw_crapass_2;
+          CLOSE cr_crapass_2;
+          
+          vr_nmcheque := nvl(rw_crapass_2.nmtalttl,' ');
+          
+          IF TRIM(rw_crapass_2.nrcpfcgc) IS NOT NULL THEN 
+            vr_nrcpfcgc :=  gene0002.fn_mask_cpf_cnpj(rw_crapass_2.nrcpfcgc,rw_crapass_2.inpessoa);
+          ELSE
+            vr_nrcpfcgc := ' ';
+          END IF;
+          
+        ELSE
 				-- Buscar inpessoa do cpf/cnpj
 				gene0005.pc_valida_cpf_cnpj(pr_nrcalcul => rw_crapcdb.nrcpfcgc
 																	 ,pr_stsnrcal => vr_stsnrcal
 																	 ,pr_inpessoa => vr_inpessoa);																	
+																	
+          vr_nmcheque := nvl(rw_crapcdb.nmcheque,' ');
+          IF TRIM(rw_crapcdb.nrcpfcgc) IS NOT NULL THEN 
+            vr_nrcpfcgc :=  gene0002.fn_mask_cpf_cnpj(rw_crapcdb.nrcpfcgc,vr_inpessoa);
+          ELSE
+            vr_nrcpfcgc := ' ';
+          END IF;
+        END IF;                          
+                                  
+                                  
+																	
+																					
 																	
 				vr_clob := vr_clob
 				        || '<Cheque>'
@@ -1329,12 +1397,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 
 								|| '<nrcheque>' || rw_crapcdb.nrcheque || '</nrcheque>'
 								|| '<vlcheque>' || to_char(rw_crapcdb.vlcheque, 'fm999g999g999g990d00') || '</vlcheque>'								
-								|| '<nmcheque>' || nvl(rw_crapcdb.nmcheque,' ') || '</nmcheque>'								
-							  || '<nrcpfcgc>' || CASE WHEN trim(rw_crapcdb.nrcpfcgc) IS NOT NULL THEN 
-							                        gene0002.fn_mask_cpf_cnpj(rw_crapcdb.nrcpfcgc
-							                                                 ,vr_inpessoa)
-																 END
-							                                         || '</nrcpfcgc>'
+								|| '<nmcheque>' || nvl(vr_nmcheque,' ') || '</nmcheque>'								
+							  || '<nrcpfcgc>' || vr_nrcpfcgc || '</nrcpfcgc>'
 								|| '<dssitchq>' || rw_crapcdb.dssitchq || '</dssitchq>'								
                 || '<dsdocmc7>' || regexp_replace(rw_crapcdb.dsdocmc7, '[^0-9]') || '</dsdocmc7>'								
 								|| '</Cheque>';

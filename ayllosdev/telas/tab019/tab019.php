@@ -21,9 +21,6 @@ isPostMethod();
 // Carrega permissões do operador
 include("../../includes/carrega_permissoes.php");
 
-if ($glbvars['cdoperad'] != '1') {
-    return false;
-}
 ?>
 
 <html>
