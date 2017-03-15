@@ -257,6 +257,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
 
                  11/05/2016 - Leitura do risco soberano da tbrisco_cadastro_conta
                               e nao mais da crapprm. (Jaison/James)
+			     
+				 15/03/2017 - Ajuste na regra da classificação de qual nivel de risco do produto de Adiantamento a 
+				              Depositante (AD) se encontra, onde para o nível "A" o 15 dia de atraso estava sendo considerado, 
+							  sendo que o correto para este nível é até o 14 dia de atraso. (Rafael Monteiro).
 
   ............................................................................ */
 
@@ -3847,7 +3851,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               vr_dtrisclq := nvl(vr_tab_crapsld(rw_crapass.nrdconta).dtrisclq,pr_rw_crapdat.dtmvtolt);
               -- Verificar qual nivel de risco o AD se encontra
               CASE
-                WHEN vr_qtdiaatr <= 15 THEN
+			    -- Regra alterada, considerar para o risco igual a dois somente até o 14 dias de atraso
+                WHEN vr_qtdiaatr < 15 THEN 
                   vr_risco_aux := 2;
                 WHEN vr_qtdiaatr <= 30 THEN
                   vr_risco_aux := 3;
