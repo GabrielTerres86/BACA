@@ -239,36 +239,72 @@ CREATE OR REPLACE PROCEDURE CECRED.
            AND nrctremp = pr_nrctremp;
       rw_crawepr cr_crawepr%ROWTYPE;
 
-      -- Leitura dos associados e seus empréstimos em aberto
-      CURSOR cr_crapepr(pr_tab_dtiniseg DATE) IS
-        SELECT ass.nrcpfcgc
-              ,ass.nrdconta
-              ,ass.nmprimtl
-              ,ass.cdagenci
-              ,ass.dtnasctl
-              ,epr.nrctremp
-              ,epr.vlsdeved
-              ,epr.dtmvtolt
-              ,ROW_NUMBER () OVER (PARTITION BY ass.nrcpfcgc
-                                       ORDER BY ass.nrcpfcgc
-                                               ,ass.inmatric DESC
-                                               ,ass.nrdconta) sqregcpf
-              ,COUNT (*) OVER (PARTITION BY ass.nrcpfcgc)     qtregcpf
-          FROM crapepr epr
-              ,crapass ass
-              ,craplcr lcr
-         WHERE ass.cdcooper = pr_cdcooper
-           AND ass.inpessoa = 1 --> Somente fisica
-           AND ass.cdcooper = epr.cdcooper
-           AND ass.nrdconta = epr.nrdconta
-           AND epr.dtmvtolt >= pr_tab_dtiniseg
-           AND epr.inliquid  = 0     --> Em aberto
-           AND lcr.cdcooper = epr.cdcooper
-           AND lcr.cdlcremp = epr.cdlcremp
-           AND lcr.flgsegpr = 1
-        ORDER BY ass.nrcpfcgc
-                ,ass.inmatric DESC
-                ,ass.nrdconta;
+        -- Leitura dos associados e seus empréstimos em aberto
+        CURSOR cr_crapepr(pr_tab_dtiniseg DATE) IS
+          select a.nrcpfcgc
+                ,a.inmatric
+                ,a.nrdconta
+                ,a.nmprimtl
+                ,a.cdagenci
+                ,a.dtnasctl
+                ,a.nrctremp
+                ,a.vlsdeved
+                ,a.dtmvtolt
+                ,ROW_NUMBER () OVER (PARTITION BY a.nrcpfcgc
+                                         ORDER BY a.nrcpfcgc
+                                                 ,a.inmatric DESC
+                                                 ,a.nrdconta) sqregcpf
+                ,COUNT (*) OVER (PARTITION BY a.nrcpfcgc)     qtregcpf
+            from ( SELECT ass.nrcpfcgc
+                          ,ass.inmatric
+                          ,ass.nrdconta
+                          ,ass.nmprimtl
+                          ,ass.cdagenci
+                          ,ass.dtnasctl
+                          ,epr.nrctremp
+                          ,epr.vlsdeved
+                          ,epr.dtmvtolt
+                      FROM crapepr epr
+                          ,crapass ass
+                          ,craplcr lcr
+                     WHERE ass.cdcooper = pr_cdcooper
+                       AND ass.inpessoa = 1 --> Somente fisica
+                       AND ass.cdcooper = epr.cdcooper
+                       AND ass.nrdconta = epr.nrdconta
+                       AND epr.dtmvtolt >= pr_tab_dtiniseg
+                       AND epr.inliquid  = 0     --> Em aberto
+                       AND lcr.cdcooper = epr.cdcooper
+                       AND lcr.cdlcremp = epr.cdlcremp
+                       AND lcr.flgsegpr = 1
+                    UNION
+                    SELECT ass.nrcpfcgc 
+                          ,ass.inmatric
+                          ,ass.nrdconta
+                          ,ass.nmprimtl
+                          ,ass.cdagenci
+                          ,ass.dtnasctl
+                          ,epr.nrctremp
+                          ,epr.vlsdeved
+                          ,epr.dtmvtolt
+                           FROM crapepr epr
+                              ,crapass ass
+                              ,craplcr lcr
+                          WHERE ass.cdcooper = 9 -->cooperativa 9
+                            AND ass.inpessoa = 1 --> Somente fisica
+                            AND ass.cdcooper = epr.cdcooper
+                            AND ass.nrdconta = epr.nrdconta
+                            AND epr.dtmvtolt < '01/01/2017' --> todos os registros antes do dia primeiro
+                            AND epr.inliquid = 0 --> Em aberto
+                            AND lcr.cdcooper = epr.cdcooper
+                            AND lcr.cdlcremp = epr.cdlcremp
+                            AND lcr.flgsegpr = 1
+                            AND ass.nrdconta BETWEEN 900001 and 912654 --> somente as contas que foram incorporadas (Incorporação Transulcred -> Transpocred)
+                            AND pr_cdcooper = 9 -- Apenas para Cooperativa 9, (Incorporação Transulcred -> Transpocred)
+                            ) a
+        ORDER BY a.nrcpfcgc
+                ,a.inmatric DESC
+                ,a.nrdconta
+                ,sqregcpf;
 
       ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
 
