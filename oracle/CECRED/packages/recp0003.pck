@@ -421,7 +421,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                  END IF;
                  
                  vr_nracordo := TO_NUMBER(SUBSTR(vr_setlinha,29,13));
-                 vr_dtcancel := TO_DATE(SUBSTR(vr_setlinha,42,8),'MMDDRRRR');
+                 vr_dtcancel := TRUNC(SYSDATE);
                  
                  OPEN cr_tbacordo(pr_nracordo => vr_nracordo);
                  FETCH cr_tbacordo INTO rw_tbacordo;
@@ -892,7 +892,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
 
                  vr_vllancam := 0;
                  vr_nracordo := TO_NUMBER(SUBSTR(vr_setlinha,29,13));
-                 vr_dtquitac := TO_DATE(SUBSTR(vr_setlinha,42,8),'MMDDRRRR');
+                 vr_dtquitac := TRUNC(SYSDATE);
 
                  FOR rw_crapcyb IN cr_crapcyb(pr_nracordo => vr_nracordo) LOOP
                    
