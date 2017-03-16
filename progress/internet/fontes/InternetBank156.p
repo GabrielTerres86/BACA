@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Daniel Zimmermann
-   Data    : Setembro/2015.                       Ultima atualizacao: 21/11/2016
+   Data    : Setembro/2015.                       Ultima atualizacao: 16/03/2017
    
    Dados referentes ao programa:
    
@@ -12,6 +12,8 @@
    Objetivo  : Busca totais para liquidacao contrato
    
    Alteracoes: 21/11/2016 - Incluido a verificaçao de acordos, Prj. 302 (Jean Michel)
+
+               16/03/2017 - Alteracao de mensagem de Contrato em acordo. (Jaison/James)
 
 ..............................................................................*/
 
@@ -81,7 +83,7 @@ IF aux_dscritic <> ? AND aux_dscritic <> "" THEN
 
 IF aux_flgativo = 1 THEN
     DO:
-		ASSIGN xml_dsmsgerr = "<dsmsgerr>Pagamento nao permitido, emprestimo em acordo.</dsmsgerr>".
+		ASSIGN xml_dsmsgerr = "<dsmsgerr>Contrato em acordo. Pagamento permitido somente por boleto.</dsmsgerr>".
         RETURN "NOK".
     END.
     

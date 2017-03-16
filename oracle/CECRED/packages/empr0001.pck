@@ -7759,7 +7759,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Alisson
-       Data    : Fevereiro/2014                        Ultima atualizacao: 01/06/2016
+       Data    : Fevereiro/2014                        Ultima atualizacao: 16/03/2017
     
        Dados referentes ao programa:
     
@@ -7783,6 +7783,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
                    26/09/2016 - Adicionado validacao de contratos de acordo na procedure,
                                 Prj. 302 (Jean Michel).             
+
+                   16/03/2017 - Alteracao de mensagem de Contrato em acordo. (Jaison/James)
     ............................................................................. */
   
     DECLARE
@@ -8003,7 +8005,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           END IF;
                                    
           IF vr_flgativo = 1 THEN
-            vr_dscritic := 'Pagamento nao permitido, emprestimo em acordo.';
+            vr_dscritic := 'Contrato em acordo. Pagamento permitido somente por boleto.';
             RAISE vr_exc_saida;
           END IF;
         END IF;
