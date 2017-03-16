@@ -1,6 +1,6 @@
 <?
 /*!
- * FONTE        : imp_fichacadastral_pf_html.php						Última alteração: 08/03/2017
+ * FONTE        : imp_fichacadastral_pf_html.php						Última alteração: 15/03/2017
  * CRIAÇÃO      : Rodolpho Telmo (DB1)
  * DATA CRIAÇÃO : 06/04/2010 
  * OBJETIVO     : Responsável por buscar as informações que serão apresentadas no PDF da Ficha Cadastral 
@@ -45,7 +45,11 @@
 
 				  01/12/2016 - Definir a não obrigatoriedade do PEP (Tiago/Thiago SD532690)
 
-				  08/03/2017 -  Ajuste para apresentar novas informações para o PEP (Adriano - SD 614408).
+				  08/03/2017 - Ajuste para apresentar novas informações para o PEP (Adriano - SD 614408).
+
+				  15/03/2017 - Ajuste para corrigir quebra de página devido aos ajustes realizados
+				               para a inclusão de novas informações na declaração PEP
+							   (Adriano - SD 614408).
  */	 
 ?>
 <?
@@ -830,7 +834,7 @@
 				escreve('Empresa/Órgão Público: '    . getByTagName($comercial,'nmempresa'));			
 				
 				if(getByTagName($comercial,'nrcnpj_empresa') != "0"){
-				escreve('CNPJ: '                     . formatar(getByTagName($comercial,'nrcnpj_empresa'),'cnpj',true));			
+					escreve('CNPJ: '                     . formatar(getByTagName($comercial,'nrcnpj_empresa'),'cnpj',true));			
 				}
 				
 				pulaLinha(4);
@@ -872,7 +876,7 @@
 				escreve('                      ________________________________                      ');			
 				escreveLinha(preencheString(getByTagName($comercial,'nmextttl'), 76, ' ', 'C'));
 				
-				pulaLinha(38 - $qtdLinhas);
+				pulaLinha(37 - $qtdLinhas);
 				escreveRodape();
 			}
 
