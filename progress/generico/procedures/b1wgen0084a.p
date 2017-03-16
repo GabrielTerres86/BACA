@@ -167,6 +167,9 @@
                 27/11/2015 - Feito ajuste no tratamento para pagamento de boletos
                              de emprestimos. (Reinert)
 
+                31/10/2016 - Validação dentro do busca_registro_parcela para identificar
+				             parcelas ja liquidadas (AJFink - SD545719)
+
 ............................................................................. */
 
 { sistema/generico/includes/var_internet.i }
@@ -1447,7 +1450,7 @@ PROCEDURE gera_pagamentos_parcelas:
             IF   crappep.inliquid = 1 /* liquidada */    THEN
                  DO:
                      ASSIGN aux_cdcritic = 0
-                            aux_dscritic = "Parcela ja liquidada.".
+                            aux_dscritic = "Parcela ja liquidada!".
 
                      UNDO BLOCO_TRANSACAO, LEAVE BLOCO_TRANSACAO.                    
                  END.
@@ -3554,6 +3557,15 @@ PROCEDURE busca_registro_parcela:
        
     IF   aux_cdcritic <> 0   THEN
          RETURN "NOK".
+
+    /* SD545719 inicio */
+	IF   crappep.inliquid = 1 /* liquidada */    THEN
+	DO:
+		 ASSIGN aux_cdcritic = 0
+				aux_dscritic = "Parcela ja liquidada!!".
+		 RETURN "NOK".
+	END.
+	/* SD545719 fim */
 
     RETURN "OK".
 
