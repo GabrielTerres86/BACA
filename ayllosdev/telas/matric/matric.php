@@ -6,6 +6,8 @@
  * OBJETIVO     : Mostrar tela MATRIC
  * --------------
  * ALTERAÇÕES   : Adicionado pesquisa CEP. ( Rodolpho/Rogérius. (DB1) ).
+                  
+				  01/03/2017 - Ajuste realizado para corrigir a codificação do arquivo. (Kelvin - SD 627278)
  * --------------
  */
 ?>
