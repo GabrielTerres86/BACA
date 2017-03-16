@@ -4,7 +4,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENCONTABSICREDI(pr_cdcooper in crapc
    JOB: PC_JOB_AGENCONTABSICREDI
    Sistema : Conta-Corrente - Cooperativa de Credito
    Autor   : Evandro Guaranha 
-   Data    : Setembro/2016.                     Ultima atualizacao: 24/11/2016
+   Data    : Setembro/2016.                     Ultima atualizacao: 13/03/2017
 
    Dados referentes ao programa:
 
@@ -14,6 +14,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENCONTABSICREDI(pr_cdcooper in crapc
    Alteracoes: 24/11/2016 - Ajuste para retirar o tratamento de inproces
                             (Adriano - SD 563707).
    
+               13/03/2017 - Ajuste para que o pc_crps709 não seja executado em feriados 
+                            (Adriano - SD 623040).
   ..........................................................................*/
       ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
     vr_cdprogra    VARCHAR2(40) := 'PC_JOB_AGENCONTABSICREDI';
@@ -27,6 +29,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENCONTABSICREDI(pr_cdcooper in crapc
     vr_email_dest  VARCHAR2(1000); 
     vr_conteudo    VARCHAR2(4000);
     vr_tempo       NUMBER;
+    vr_dtdiahoje   DATE;
+    vr_dtmvtolt    DATE;
     
     -- Variáveis de controle de calendário
     rw_crapdat     BTCH0001.cr_crapdat%ROWTYPE;    
@@ -87,6 +91,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENCONTABSICREDI(pr_cdcooper in crapc
          
   BEGIN
     
+    vr_dtdiahoje:= trunc(SYSDATE);
+    
     --> Se for coop 3, deve criar o job para cada coop
     IF pr_cdcooper = 3 THEN
       
@@ -114,32 +120,47 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENCONTABSICREDI(pr_cdcooper in crapc
         -- Apenas fechar o cursor
         CLOSE BTCH0001.cr_crapdat;
       END IF;
-                         
-      --> Executar programa
-      pc_crps709 (pr_cdcooper => pr_cdcooper, 
-                  pr_stprogra => vr_stprogra,
-                  pr_infimsol => vr_infimsol, 
-                  pr_cdcritic => vr_cdcritic, 
-                  pr_dscritic => vr_dscritic);
-          
-      --> Tratamento de erro                                 
-      IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN 
-             
-        pc_gera_log_execucao(pr_indexecu  => 'Fim execucao com critica: '||vr_dscritic ,
-                             pr_cdcooper  => pr_cdcooper, 
-                             pr_tpexecuc  => NULL,
-                             pr_idtiplog  => 'E');
-                                
-        RAISE vr_exc_email;    
-                     
-      END IF;   
+      
+      --> Se a coop ainda estiver no processo batch, usar proxima data util
+      IF rw_crapdat.inproces > 1 THEN
+        vr_dtmvtolt := rw_crapdat.dtmvtopr;
+      ELSE
+        vr_dtmvtolt := rw_crapdat.dtmvtolt;
+      END IF; 
         
+      --> Verificar se a data do sistema eh o dia de hoje
+          -- O JOB esta configurado para rodar em dia úteis,
+          -- mas nao existe a necessidade de rodar nos feriados,
+          -- por isso que validamos se o dia de hoje eh o dia do sistema.
+      IF vr_dtdiahoje = rw_crapdat.dtmvtolt THEN
+  
+        --> Executar programa
+        pc_crps709 (pr_cdcooper => pr_cdcooper, 
+                    pr_stprogra => vr_stprogra,
+                    pr_infimsol => vr_infimsol, 
+                    pr_cdcritic => vr_cdcritic, 
+                    pr_dscritic => vr_dscritic);
+            
+        --> Tratamento de erro                                 
+        IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN 
+               
+          pc_gera_log_execucao(pr_indexecu  => 'Fim execucao com critica: '||vr_dscritic ,
+                               pr_cdcooper  => pr_cdcooper, 
+                               pr_tpexecuc  => NULL,
+                               pr_idtiplog  => 'E');
+                                  
+          RAISE vr_exc_email;    
+                       
+        END IF;   
+        
+      END IF;
+      
       --> Log de fim de execucao
       pc_gera_log_execucao(pr_indexecu  => 'Fim execucao',
                            pr_cdcooper  => pr_cdcooper, 
                            pr_tpexecuc  => NULL,
                            pr_idtiplog  => 'F');      
-      
+                              
     END IF; -- fim IF coop = 3
     
     COMMIT;  
