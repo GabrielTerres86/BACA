@@ -3532,7 +3532,6 @@ END pc_gera_titulos_iptu_prog;
 
   /* Procedure para verificar vencimento titulo */
   PROCEDURE pc_verifica_vencimento_titulo (pr_cod_cooper      IN INTEGER  --Codigo Cooperativa
-                                          ,pr_numero_conta    IN INTEGER  --Numero da Conta
                                           ,pr_cod_agencia     IN INTEGER  --Codigo da Agencia
                                           ,pr_dt_agendamento  IN DATE     --Data Agendamento
                                           ,pr_dt_vencto       IN DATE     --Data Vencimento
@@ -3546,7 +3545,7 @@ END pc_gera_titulos_iptu_prog;
   --  Sistema  : Procedure para verificar vencimento titulo
   --  Sigla    : CXON
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 06/10/2015
+  --  Data     : Julho/2013.                   Ultima atualizacao: 17/03/2017
   --
   -- Dados referentes ao programa:
   --
@@ -3560,6 +3559,8 @@ END pc_gera_titulos_iptu_prog;
   --
   --             06/10/2015 - Ajuste na rotina devido devido para incluir tratamento quando o 
   --                          processo ainda estiver rodando, no qual a dtmvtoan esta ainda defazada SD329517 (Odirlei)
+  --
+  --             17/03/2017 - Removido validacao de pagador vip (Chamado 629635)
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -3569,7 +3570,6 @@ END pc_gera_titulos_iptu_prog;
       vr_dt_dia_util DATE;
       vr_dt_feriado  DATE;
       vr_libepgto    BOOLEAN;
-      vr_dstextab    craptab.dstextab%TYPE;
       --Variaveis Erro
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic VARCHAR2(4000);
@@ -3699,22 +3699,7 @@ END pc_gera_titulos_iptu_prog;
         END IF;
         --Marcar para criticar a data
         pr_critica_data:= TRUE;
-
-        -- Verificacao de agendamento de pagamento
-        -- Carregar informacao de PAGADOR VIP
-        vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cod_cooper
-                                                 ,pr_nmsistem => 'CRED'
-                                                 ,pr_tptabela => 'GENERI'
-                                                 ,pr_cdempres => 0
-                                                 ,pr_cdacesso => 'PAGADORVIP'
-                                                 ,pr_tpregist => pr_numero_conta);
-        -- Verifica se a conta em questão eh de um PAGADOR VIP
-        IF TRIM(vr_dstextab) IS NOT NULL THEN
-          -- Não criticar titulo vencido 
-          -- Regra Implementada para PAGADOR VIP (COOPER), conforme chamado 551630
-          pr_critica_data:= FALSE;
-        ELSE
-          
+        
         /** Aceita agendamento de titulo com vencimento no ultimo dia **/
         /** util do ano somente no primeiro dia util do proximo ano   **/
         /** Exemplo: VENCIMENTO 31/12/2009 - AGENDAMENTO - 04/01/2010 **/
@@ -3749,7 +3734,6 @@ END pc_gera_titulos_iptu_prog;
             END IF;
           END IF;
         END IF;
-        END IF; -- PAGADOR VIP
       END IF;
     EXCEPTION
        WHEN vr_exc_saida THEN
@@ -5651,7 +5635,6 @@ END pc_gera_titulos_iptu_prog;
             vr_tab_erro.DELETE;
             --Verificar vencimento do titulo
             pc_verifica_vencimento_titulo (pr_cod_cooper      => rw_crapcop.cdcooper  --Codigo Cooperativa
-                                          ,pr_numero_conta    => pr_nrdconta          --Numero da Conta
                                           ,pr_cod_agencia     => pr_cod_agencia       --Codigo da Agencia
                                           ,pr_dt_agendamento  => pr_dt_agendamento    --Data Agendamento
                                           ,pr_dt_vencto       => vr_dt_dtvencto       --Data Vencimento
@@ -6168,7 +6151,6 @@ END pc_gera_titulos_iptu_prog;
           vr_tab_erro.DELETE;
           --Verificar vencimento do titulo
           pc_verifica_vencimento_titulo (pr_cod_cooper      => rw_crapcop.cdcooper  --Codigo Cooperativa
-                                        ,pr_numero_conta    => pr_nrdconta          --Numero da Conta 
                                         ,pr_cod_agencia     => pr_cod_agencia       --Codigo da Agencia
                                         ,pr_dt_agendamento  => pr_dt_agendamento    --Data Agendamento
                                         ,pr_dt_vencto       => nvl(rw_crapcob.dtvencto,vr_dt_dtvencto)  --Data Vencimento
@@ -10473,9 +10455,6 @@ END pc_gera_titulos_iptu_prog;
                                          ,pr_vlrjuros_calc OUT crapcob.vljurdia%TYPE -- Contem o valor do juros calculado
                                          ,pr_dscritic      OUT VARCHAR2) IS          -- Descricao do erro
 
-    --Variaveis de erro
-    vr_dscritic  VARCHAR2(1000); 
-    
   BEGIN            
     
     pr_vlfatura := pr_vltitulo;
@@ -10534,7 +10513,7 @@ END pc_gera_titulos_iptu_prog;
                                       ,pr_des_erro      OUT VARCHAR2  -- Indicador erro OK/NOK   
                                       ,pr_dscritic      OUT VARCHAR2) IS --Descricao do erro
     /* ..........................................................................
-      
+	
 	  Programa : pc_retorna_vlr_tit_vencto
 	  Sistema  : Conta-Corrente - Cooperativa de Credito
 	  Sigla    : CRED
@@ -10556,7 +10535,7 @@ END pc_gera_titulos_iptu_prog;
                                o valor do titulo, caso já exista no Ayllos, devolve o valor, caso
                                contrário deverá devolver o valor que está no código de barras
                                (Douglas - Chamado 575078)
-    
+
                   07/02/2017 - Ajustado a query para verificar se o boleto existe no sistema.
                                (Douglas - Chamado 602954)
 
@@ -10564,10 +10543,10 @@ END pc_gera_titulos_iptu_prog;
                                Nao estava sendo calculado para exibir em tela
                                (Douglas - Chamado 611514)
     ...........................................................................*/      
-     --Selecionar informacoes cobranca
+    --Selecionar informacoes cobranca
     CURSOR cr_crapcob (pr_nrcnvcob IN crapcob.nrcnvcob%type
-                       ,pr_nrdconta IN crapcob.nrdconta%type
-                       ,pr_nrdocmto IN crapcob.nrdocmto%type
+                      ,pr_nrdconta IN crapcob.nrdconta%type
+                      ,pr_nrdocmto IN crapcob.nrdocmto%type
                       ,pr_cdbandoc IN crapcob.cdbandoc%type) IS
       SELECT crapcob.cdcooper,
              crapcob.nrdconta,
@@ -10592,7 +10571,7 @@ END pc_gera_titulos_iptu_prog;
          AND crapcob.nrdocmto = pr_nrdocmto
          AND crapcob.nrdctabb = crapcco.nrdctabb + 0
          AND crapcob.cdbandoc = pr_cdbandoc;
-     rw_crapcob cr_crapcob%ROWTYPE;
+    rw_crapcob cr_crapcob%ROWTYPE;
      
     vr_de_valor_calc  VARCHAR2(100);
     vr_flg_zeros      BOOLEAN;
@@ -10773,25 +10752,25 @@ END pc_gera_titulos_iptu_prog;
     END IF;
 
     /* Verifica se conv boleto eh de cobranca 085 */
-      --Selecionar informacoes cobranca
+    --Selecionar informacoes cobranca
     OPEN cr_crapcob (pr_nrcnvcob => to_number(SUBSTR(vr_codigo_barras, 20, 06))
                     ,pr_nrdconta => to_number(SUBSTR(vr_codigo_barras, 26, 08))
                     ,pr_nrdocmto => to_number(SUBSTR(vr_codigo_barras, 34, 09))
                     ,pr_cdbandoc => to_number(SUBSTR(vr_codigo_barras, 01, 03)));
-                        
-      --Posicionar no proximo registro
-      FETCH cr_crapcob INTO rw_crapcob;
-      --Se nao encontrar
+
+    --Posicionar no proximo registro
+    FETCH cr_crapcob INTO rw_crapcob;
+    --Se nao encontrar
     IF cr_crapcob%FOUND THEN
-        --Titulo Encontrado
-        vr_intitcop := 1;
-      ELSE
-        -- Titulo nao Encontrado
-        vr_intitcop := 0;
+      --Titulo Encontrado
+      vr_intitcop := 1;
+    ELSE
+      -- Titulo nao Encontrado
+      vr_intitcop := 0;
         
-      END IF;
-      --Fechar Cursor
-      CLOSE cr_crapcob;
+    END IF;
+    --Fechar Cursor
+    CLOSE cr_crapcob;
     
     /********************************************************/
     /***********FAZER CALCULO DO VALOR DO TITULO*************/
@@ -10821,7 +10800,6 @@ END pc_gera_titulos_iptu_prog;
 
       --Verificar vencimento do titulo
       pc_verifica_vencimento_titulo (pr_cod_cooper      => rw_crapcob.cdcooper  --Codigo Cooperativa
-                                    ,pr_numero_conta    => pr_nrdconta          --Numero da Conta 
                                     ,pr_cod_agencia     => pr_cdagenci          --Codigo da Agencia
                                     ,pr_dt_agendamento  => NULL                 --Data Agendamento
                                     ,pr_dt_vencto       => rw_crapcob.dtvencto  --Data Vencimento
