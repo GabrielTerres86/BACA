@@ -2605,7 +2605,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                              (Douglas - Chamado 452286)
                               
                  03/08/2016 - Busca dos lançamentos de Sobra em CC e novos historicos
-                              (Marcos-Supero)             
+                              (Marcos-Supero)       
+
+                 15/03/2017 - Ajuste para que a flag flgconsu retorne para o InternetBanking
+                              contendo o identificador da forma como o retorno de sobras ocorreu (Anderson).
                               
 	............................................................................. */
   DECLARE  
@@ -2644,17 +2647,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
     -- Tratamento de erros
     vr_exc_saida  EXCEPTION;				
     vr_cdcritic   crapcri.cdcritic%TYPE;
-    vr_dscritic   crapcri.dscritic%TYPE;
+    vr_dscritic   crapcri.dscritic%TYPE;    
 					
     -- Busca na CRAPTAB      
     vr_dstextab   craptab.dstextab%TYPE;
+    
+    -- Identificam se houve credito de retorno de sobras em cotas e/ou conta corrente
+    vr_retcotas   boolean;
+    vr_retccorr   boolean;
 					
     BEGIN
 			
-    -- Iniciar variaveis de retorno
-    pr_flgconsu := 0; -- Flag de consulta de lançamentos de cotas/capital
-    pr_vltotsob := 0; -- Valor total das sobras
-    pr_vlliqjur := 0; -- Valor liquido do crédito de juros sobre capital
+      -- Iniciar variaveis de retorno
+      pr_flgconsu := 0; -- Flag de consulta de lançamentos de cotas/capital
+      pr_vltotsob := 0; -- Valor total das sobras
+      pr_vlliqjur := 0; -- Valor liquido do crédito de juros sobre capital
+      vr_retcotas := false;
+      vr_retccorr := false;
       
 			-- Leitura do calendário da cooperativa
       OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
@@ -2688,7 +2697,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
 			
 		  BEGIN
         -- Captura data de comunicação a partir do resultado da consulta
-		vr_dtcomuni := to_date(SUBSTR(vr_dstextab,67,10), 'dd/mm/rrrr');  
+		    vr_dtcomuni := to_date(SUBSTR(vr_dstextab,67,10), 'dd/mm/rrrr');  
         EXCEPTION
           WHEN OTHERS THEN
         vr_cdcritic := 0;
@@ -2696,58 +2705,78 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
         RAISE vr_exc_saida;
       END;
         
-    /* Enviar a comunicação até 15 dias após a data parametrizada */
-    IF rw_crapdat.dtmvtolt BETWEEN vr_dtcomuni AND (vr_dtcomuni + gene0001.fn_param_sistema('CRED',pr_cdcooper,'QTDIAS_BANNER_SOBRAS')) THEN
-      -- Busca lançamentos de cotas
-      OPEN cr_craplct(rw_crapdat.dtmvtocd);
-      FETCH cr_craplct
-       INTO rw_craplct;
-      -- Se encontrar
-      IF cr_craplct%FOUND THEN
-        CLOSE cr_craplct;
-        -- Copiar aos parâmetros de saída
-        pr_vlliqjur := nvl(rw_craplct.vlliqjur,0);
-        pr_vltotsob := nvl(rw_craplct.vltotsob,0);
-      ELSE
-        CLOSE cr_craplct;
-      END IF;  
-       -- Busca lançamentos de cotas em CC
-      OPEN cr_craplcm(rw_crapdat.dtmvtocd);
-      FETCH cr_craplcm
-       INTO rw_craplcm;
-      -- Se encontrar
-      IF cr_craplcm%FOUND THEN
-        CLOSE cr_craplcm;
-        -- Copiar aos parâmetros de saída
-        pr_vltotsob := pr_vltotsob + nvl(rw_craplcm.vltotsob,0);
-      ELSE
-        CLOSE cr_craplcm;
-						END IF;            
-      -- Se houve valor das Sobras
-      IF pr_vlliqjur + pr_vltotsob > 0 THEN
-        pr_flgconsu := 1;
-						END IF;
-			END IF;
+      /* Enviar a comunicação até 15 dias após a data parametrizada */
+      IF rw_crapdat.dtmvtolt BETWEEN vr_dtcomuni AND (vr_dtcomuni + gene0001.fn_param_sistema('CRED',pr_cdcooper,'QTDIAS_BANNER_SOBRAS')) THEN
+        -- Busca lançamentos de cotas
+        OPEN cr_craplct(rw_crapdat.dtmvtocd);
+        FETCH cr_craplct
+         INTO rw_craplct;
+        -- Se encontrar
+        IF cr_craplct%FOUND THEN
+          CLOSE cr_craplct;
+          -- Copiar aos parâmetros de saída
+          pr_vlliqjur := nvl(rw_craplct.vlliqjur,0);
+          pr_vltotsob := nvl(rw_craplct.vltotsob,0);
+          IF nvl(rw_craplct.vltotsob,0) > 0 THEN
+            vr_retcotas := true;
+          END IF;
+        ELSE
+          CLOSE cr_craplct;
+        END IF;  
+         -- Busca lançamentos de cotas em CC
+        OPEN cr_craplcm(rw_crapdat.dtmvtocd);
+        FETCH cr_craplcm
+         INTO rw_craplcm;
+        -- Se encontrar
+        IF cr_craplcm%FOUND THEN
+          CLOSE cr_craplcm;
+          -- Copiar aos parâmetros de saída
+          pr_vltotsob := pr_vltotsob + nvl(rw_craplcm.vltotsob,0);
+          IF nvl(rw_craplcm.vltotsob,0) > 0 THEN
+            vr_retccorr := true;
+          END IF;
+        ELSE
+          CLOSE cr_craplcm;
+        END IF;            
+        
+        /* Carrega o pr_flgconsu de acordo com a forma que as sobras foram creditadas:
+           1 - Credito em cotas capital
+           2 - Credito em Conta Corrente
+           3 - Credito em cotas capital e conta corrente 
+           Obs. Caso tenha sido realizado apenas o credito de juros, para o IB basta que flgconsu seja > 0 */
+        IF pr_vlliqjur + pr_vltotsob > 0 THEN
+          IF vr_retcotas THEN
+            IF vr_retccorr THEN
+              pr_flgconsu := 3;
+            ELSE
+              pr_flgconsu := 1;
+            END IF;
+          ELSE
+            pr_flgconsu := 2;
+          END IF;
+        END IF;
+        
+      END IF;
 			
-			EXCEPTION
-			  WHEN vr_exc_saida THEN
-					-- Se foi retornado apenas código
-					IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-						-- Buscar a descrição
-						vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-					END IF;
-					-- Devolvemos código e critica encontradas das variaveis locais
-					pr_cdcritic := NVL(vr_cdcritic,0);
-      pr_dscritic := 'SOBR0001.pc_verifica_conta_capital --> '|| vr_dscritic;
-					-- Efetuar rollback
-					ROLLBACK;
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        -- Se foi retornado apenas código
+        IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
+          -- Buscar a descrição
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+        END IF;
+        -- Devolvemos código e critica encontradas das variaveis locais
+        pr_cdcritic := NVL(vr_cdcritic,0);
+        pr_dscritic := 'SOBR0001.pc_verifica_conta_capital --> '|| vr_dscritic;
+        -- Efetuar rollback
+        ROLLBACK;
       
-				WHEN OTHERS THEN
-					-- Efetuar retorno do erro não tratado
-					pr_cdcritic := 0;
-      pr_dscritic :=  'SOBR0001.pc_verifica_conta_capital --> '||sqlerrm;
-					-- Efetuar rollback
-					ROLLBACK;			
+      WHEN OTHERS THEN
+        -- Efetuar retorno do erro não tratado
+        pr_cdcritic := 0;
+        pr_dscritic :=  'SOBR0001.pc_verifica_conta_capital --> '||sqlerrm;
+        -- Efetuar rollback
+        ROLLBACK;			
     END;
   END pc_verifica_conta_capital;
 
