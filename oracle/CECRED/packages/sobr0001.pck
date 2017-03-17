@@ -220,7 +220,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                                  - Fracionamento das distribuição entre CC e Cotas
                                  - Separação dos lançaemntos de DEP a Vista e a Prazo
                                  - Ajustes nos relatórios para os novos campos (Marcos-Supero)           
-                            
+
                14/12/2016 - Adicao de funcionalidade para carregar uma pltable com
                             contas que nao devem receber juros sobre o capital e nem
                             retorno de sobras. No momento, necessario devido a incorporacao
@@ -2607,6 +2607,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                  03/08/2016 - Busca dos lançamentos de Sobra em CC e novos historicos
                               (Marcos-Supero)             
                               
+                 15/03/2017 - Ajuste para que a flag flgconsu retorne para o InternetBanking
+                              contendo o identificador da forma como o retorno de sobras ocorreu (Anderson).
+                              
 	............................................................................. */
   DECLARE  
 		
@@ -2649,12 +2652,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
     -- Busca na CRAPTAB      
     vr_dstextab   craptab.dstextab%TYPE;
 					
+    -- Identificam se houve credito de retorno de sobras em cotas e/ou conta corrente
+    vr_retcotas   boolean;
+    vr_retccorr   boolean;
+					
     BEGIN
 			
     -- Iniciar variaveis de retorno
     pr_flgconsu := 0; -- Flag de consulta de lançamentos de cotas/capital
     pr_vltotsob := 0; -- Valor total das sobras
     pr_vlliqjur := 0; -- Valor liquido do crédito de juros sobre capital
+      vr_retcotas := false;
+      vr_retccorr := false;
       
 			-- Leitura do calendário da cooperativa
       OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
@@ -2708,6 +2717,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
         -- Copiar aos parâmetros de saída
         pr_vlliqjur := nvl(rw_craplct.vlliqjur,0);
         pr_vltotsob := nvl(rw_craplct.vltotsob,0);
+          IF nvl(rw_craplct.vltotsob,0) > 0 THEN
+            vr_retcotas := true;
+          END IF;
       ELSE
         CLOSE cr_craplct;
       END IF;  
@@ -2720,13 +2732,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
         CLOSE cr_craplcm;
         -- Copiar aos parâmetros de saída
         pr_vltotsob := pr_vltotsob + nvl(rw_craplcm.vltotsob,0);
+          IF nvl(rw_craplcm.vltotsob,0) > 0 THEN
+            vr_retccorr := true;
+          END IF;
       ELSE
         CLOSE cr_craplcm;
 						END IF;            
-      -- Se houve valor das Sobras
+        
+        /* Carrega o pr_flgconsu de acordo com a forma que as sobras foram creditadas:
+           1 - Credito em cotas capital
+           2 - Credito em Conta Corrente
+           3 - Credito em cotas capital e conta corrente 
+           Obs. Caso tenha sido realizado apenas o credito de juros, para o IB basta que flgconsu seja > 0 */
       IF pr_vlliqjur + pr_vltotsob > 0 THEN
+          IF vr_retcotas THEN
+            IF vr_retccorr THEN
+              pr_flgconsu := 3;
+            ELSE
         pr_flgconsu := 1;
 						END IF;
+          ELSE
+            pr_flgconsu := 2;
+          END IF;
+        END IF;
+        
 			END IF;
 			
 			EXCEPTION
