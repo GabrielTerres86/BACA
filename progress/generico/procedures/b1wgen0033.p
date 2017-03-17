@@ -297,6 +297,10 @@ DEF VAR aux_premitot    AS DECIMAL                                    NO-UNDO.
 DEF VAR aux_comprela    AS CHAR                                       NO-UNDO.
 DEF VAR rel_prestami    AS CHAR                                       NO-UNDO.
 DEF VAR aux_vlmorada    AS DECI                                       NO-UNDO.
+DEF VAR aux_dscontr1    AS CHAR  FORMAT "x(70)"                       NO-UNDO.
+DEF VAR aux_dscontr2    AS CHAR  FORMAT "x(70)"                       NO-UNDO.
+DEF VAR aux_dscontr3    AS CHAR  FORMAT "x(70)"                       NO-UNDO.
+DEF VAR aux_dscontr4    AS CHAR  FORMAT "x(70)"                       NO-UNDO.
 
 DEF VAR aux_casa3325    AS CHAR FORMAT "x(76)"                        NO-UNDO.
 DEF VAR aux_casa0401    AS CHAR FORMAT "x(76)"                        NO-UNDO.
@@ -468,9 +472,9 @@ FORM
     SKIP
     "domicilio apos alta hospitalar, assessoria administrativa.  SERVICOS" 
     SKIP
-    "EMERGENCIAIS - SEM VINCULO AO EVENTO: organizacao e envio de flores,"
+    aux_dscontr1
     SKIP
-    "indicacao   de   profissional."
+    aux_dscontr2
     WITH NO-BOX COLUMN 5 NO-ATTR-SPACE NO-LABELS WIDTH 150 FRAME f_autori_casa_3_2.
 
 FORM 
@@ -570,9 +574,9 @@ FORM
     SKIP
     "serao  garantidos  quaisquer  bens  relacionados  a   esta   pequena"
     SKIP
-    "atividade comercial, inclusive para maquinas de costura,  limitado a" 
+    aux_dscontr3 
     SKIP
-    "4 (quatro) maquinas por vigencia de apolice;                        "
+    aux_dscontr4
     SKIP
     "* Manutencao e utilizacao inadequada dos padroes  recomendados  pelo"
     SKIP
@@ -3774,9 +3778,24 @@ PROCEDURE imprimir_proposta_seguro:
                 aux_casa0619 = "SUSEP: 02922410129020".
             END.
         
+		IF  rel_dtinivig < 03/21/2017 THEN	/*Antes da liberação*/ 	    
+			ASSIGN aux_dscontr1 = "EMERGENCIAIS - SEM VINCULO AO EVENTO: indicacao  medico  hospitalar,"
+				   aux_dscontr2 = "organizacao  e  envio  de   flores,   indicacao   de   profissional."
+				   aux_dscontr3 = "atividade comercial, exceto para maquinas de costura, limitado  a  4"
+				   aux_dscontr4 = "(quatro) maquinas por vigencia de apolice;                          ".
+				   
+		ELSE /*Depois da liberação*/			
+			ASSIGN aux_dscontr1 = "EMERGENCIAIS - SEM VINCULO AO EVENTO: organizacao e envio de flores,"
+				   aux_dscontr2 = "indicacao   de   profissional."
+				   aux_dscontr3 = "atividade comercial, inclusive para maquinas de costura,  limitado a" 
+				   aux_dscontr4 = "4 (quatro) maquinas por vigencia de apolice;                        ".
+				   
         DISP STREAM str_1 WITH FRAME f_autori_casa_3.
         DISP STREAM str_1 WITH FRAME f_autori_casa_3_1.
-        DISP STREAM str_1 WITH FRAME f_autori_casa_3_2.
+        DISP STREAM str_1 
+		     aux_dscontr1 
+			 aux_dscontr2 
+			 WITH FRAME f_autori_casa_3_2.
 
         DISP STREAM str_1 
              aux_casa3325
@@ -3793,7 +3812,10 @@ PROCEDURE imprimir_proposta_seguro:
              aux_casa0408
              WITH FRAME f_autori_casa_4.
 
-        DISP STREAM str_1 WITH FRAME f_autori_casa_4_1.
+        DISP STREAM str_1 
+		     aux_dscontr3
+		     aux_dscontr4
+			 WITH FRAME f_autori_casa_4_1.
         DISP STREAM str_1 WITH FRAME f_autori_casa_4_2.
 
         DISP STREAM str_1
