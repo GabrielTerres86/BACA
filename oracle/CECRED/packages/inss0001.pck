@@ -1091,7 +1091,7 @@ create or replace package body cecred.INSS0001 as
    Sigla   : CRED
 
    Autor   : Odirlei Busana(AMcom)
-   Data    : 27/08/2013                        Ultima atualizacao: 31/01/2017
+   Data    : 27/08/2013                        Ultima atualizacao: 17/03/2017
 
    Dados referentes ao programa:
 
@@ -1149,22 +1149,26 @@ create or replace package body cecred.INSS0001 as
                09/03/2016 - feita a troca na geração do log que gerava no batch para o message conforme 
                             solicitado no chamado 396313. (Kelvin)                      
                              
-			   10/03/2016 - Ajuste para pegar o código da agencia corretamente
-                           (Adriano).				            
+			         10/03/2016 - Ajuste para pegar o código da agencia corretamente
+                            (Adriano).				            
 
                12/05/2016 - Ajustado fn_verifica_renovacao_vida para remover o OR do numero da conta
                             do cursor cr_verifica. Todas as chamadas para essa procedure passam o
                             numero da conta (Douglas - Chamado 451221)
                
-			   07/06/2016 - Melhoria 195 folha de pagamento (Tiago/Thiago)             
+			         07/06/2016 - Melhoria 195 folha de pagamento (Tiago/Thiago)             
                             
                21/06/2016 - Ajuste para enviar o arquivo destino ao subdiretorio inss dentro da pasta salvar
                            (Adriano - SD 473539).             
                             
                22/12/2016 - Ajuste para gerar relatório com data de movimento da cooperativa
                             em questão e para postar na intranet no dia correto
-                            (Adriano - SD 567303).
-                              
+                            (Adriano - SD 567303).            
+                            
+               17/03/2017 - Ajuste para buscar na craplcm atraves do NB do beneficiario no 
+                            campo cdpesqbb, também ajustado cursor cr_tbinss_dcb para listarmos
+                            somente o registro mais antigo da tabela junto com o NB
+                            na fn_verifica_renovacao_vida (Lucas Ranghetti #626129)
   ---------------------------------------------------------------------------------------------------------------*/
 
   /*Procedimento para gerar lote e lancamento, para gerar credito em conta*/
@@ -16860,6 +16864,7 @@ create or replace package body cecred.INSS0001 as
           
           vr_flgpvida := INSS0001.fn_verifica_renovacao_vida(pr_cdcooper => vr_cdcooper --> Codigo da cooperativa
                                                             ,pr_nrdconta => vr_tab_beneficiario(vr_index).nrdconta --> Numero da conta
+                                                            ,pr_nrrecben => vr_tab_beneficiario(vr_index).nrrecben --> Numero do beneficio
                                                             ,pr_dtmvtolt => vr_dtmvtolt); --> Data do movimento
           
           IF vr_flgpvida = 1 THEN
@@ -17246,7 +17251,7 @@ create or replace package body cecred.INSS0001 as
 		Sistema  : Conta-Corrente - Cooperativa de Credito
 		Sigla    : CRED
 		Autor    : Lucas Reinert
-    Data     : Outubro/2015                           Ultima atualizacao: 06/04/2016
+    Data     : Outubro/2015                           Ultima atualizacao: 17/03/2017
 
 
 		Dados referentes ao programa:
@@ -17254,15 +17259,17 @@ create or replace package body cecred.INSS0001 as
 		Frequencia: -----
 		Objetivo   : Procedure para verificar se beneficiario necessita comprovar vida
 
-		Alterações : 
+		Alterações : 06/04/2016 - PRJ 255 Fase 2 - Mesmo vencida a PV, emitir aviso apenas se houve
+                              LCM 1399 nos ultimos 3 meses. (Guilherme/SUPERO)
 		
-		 06/04/2016 - PRJ 255 Fase 2 - Mesmo vencida a PV, emitir aviso apenas se houve
-                               LCM 1399 nos ultimos 3 meses. (Guilherme/SUPERO)
-		
-		 12/05/2016 - Removido a condicao o OR do numero da conta do cursor cr_verifica. 
-                                  Todas as chamadas para essa procedure passam o numero da conta 
-                                  (Douglas - Chamado 451221)
-        
+              	 12/05/2016 - Removido a condicao o OR do numero da conta do cursor cr_verifica. 
+                              Todas as chamadas para essa procedure passam o numero da conta 
+                              (Douglas - Chamado 451221)     
+                              
+                 17/03/2017 - Ajuste para buscar na craplcm atraves do NB do beneficiario no 
+                              campo cdpesqbb, também ajustado cursor cr_tbinss_dcb para listarmos
+                              somente o registro mais antigo da tabela junto com o NB
+                              (Lucas Ranghetti #626129)
 		------------------------------------------------------------------------------------------------------------------*/
   	-- Tratamento de erros
 		vr_cdcritic INTEGER;        -- Código da crítica
@@ -17286,29 +17293,33 @@ create or replace package body cecred.INSS0001 as
 		CURSOR cr_tbinss_dcb (pr_cdcooper IN tbinss_dcb.cdcooper%TYPE
 												 ,pr_nrdconta IN tbinss_dcb.nrdconta%TYPE
 												 ,pr_nrrecben IN tbinss_dcb.nrrecben%TYPE)IS
-		  SELECT MIN(dcb2.dtvencpv) dtvencpv
-				  FROM (SELECT MAX(dcb.dtcompet) dtcomp,
-											 dcb.dtvencpv
-									FROM tbinss_dcb dcb
-                 WHERE dcb.cdcooper  = pr_cdcooper
-									 AND (dcb.nrdconta = pr_nrdconta OR pr_nrdconta = 0)
-									 AND (dcb.nrrecben = pr_nrrecben OR pr_nrrecben = 0)
-								GROUP BY dcb.dtvencpv) dcb2;
+		  SELECT dtvencpv
+            ,nrrecben
+        FROM (SELECT dcb.dtvencpv
+                    ,dcb.nrrecben
+                FROM tbinss_dcb dcb
+               WHERE dcb.cdcooper  = pr_cdcooper
+                 AND (dcb.nrdconta = pr_nrdconta OR pr_nrdconta = 0)
+                 AND (dcb.nrrecben = pr_nrrecben OR pr_nrrecben = 0)
+               ORDER BY dcb.dtvencpv)
+       WHERE ROWNUM = 1;      
 			rw_tbinss_dcb cr_tbinss_dcb%ROWTYPE;
 
       -- Verificar se a conta teve lancamento 1399 nos ultimos 3 meses
       CURSOR cr_craplcm_inss(pr_cdcooper IN crapcop.cdcooper%TYPE
                             ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
-                            ,pr_nrdconta IN tbinss_dcb.nrdconta%TYPE) IS
+                            ,pr_nrdconta IN tbinss_dcb.nrdconta%TYPE
+                            ,pr_nrrecben IN tbinss_dcb.nrrecben%TYPE) IS
         SELECT 1
           FROM craplcm lcm
          WHERE lcm.cdcooper = pr_cdcooper
            AND lcm.nrdconta = pr_nrdconta
            AND lcm.cdhistor = 1399
            AND lcm.dtmvtolt <= pr_dtmvtolt
-           AND lcm.dtmvtolt >= (pr_dtmvtolt - 90);
+           AND lcm.dtmvtolt >= (pr_dtmvtolt - 90)
+           --Buscar cdpesqbb até o primeiro ';' que é o NB(numero do beneficio)
+           AND SUBSTR(lcm.cdpesqbb, 1, INSTR(lcm.cdpesqbb, ';') - 1) = pr_nrrecben;
       rw_craplcm_inss cr_craplcm_inss%ROWTYPE;
-
 
 		BEGIN
       
@@ -17331,19 +17342,19 @@ create or replace package body cecred.INSS0001 as
           -- Verificar se a conta possui LCM 1399 nos ultimos 3 meses
           OPEN cr_craplcm_inss(pr_cdcooper => pr_cdcooper,
                                pr_dtmvtolt => pr_dtmvtolt,
-                               pr_nrdconta => pr_nrdconta);
+                               pr_nrdconta => pr_nrdconta,
+                               pr_nrrecben => rw_tbinss_dcb.nrrecben);
           FETCH cr_craplcm_inss INTO rw_craplcm_inss;
 
           IF cr_craplcm_inss%FOUND THEN
             RETURN 1; -- Tem LCM nos ultimos 3 meses / Notificar
-        ELSE
+          ELSE
             RETURN 0; -- Apesar de Vencido, nao tem LCM nos ultimos 3 meses / Não Notificar
-        END IF;
+          END IF;
         
-      ELSE
+        ELSE
           RETURN 0;  -- Em dia
-      END IF;
-      
+        END IF;      
       ELSE
         RETURN 0;  -- Em dia
       END IF;
