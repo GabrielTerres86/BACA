@@ -3778,7 +3778,7 @@ PROCEDURE imprimir_proposta_seguro:
                 aux_casa0619 = "SUSEP: 02922410129020".
             END.
         
-		IF  rel_dtinivig < 03/21/2017 THEN	/*Antes da liberação*/ 	    
+		IF  rel_dtinivig < 03/22/2017 THEN	/*Antes da liberação*/ 	    
 			ASSIGN aux_dscontr1 = "EMERGENCIAIS - SEM VINCULO AO EVENTO: indicacao  medico  hospitalar,"
 				   aux_dscontr2 = "organizacao  e  envio  de   flores,   indicacao   de   profissional."
 				   aux_dscontr3 = "atividade comercial, exceto para maquinas de costura, limitado  a  4"
