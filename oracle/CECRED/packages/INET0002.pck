@@ -6129,6 +6129,11 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
                                                            ,pr_saldo_rdca => vr_saldo_rdca);                             
                           END IF;    
                           
+							--Filtro data
+							IF rw_tbgen_trans_pend.dtregistro_transacao NOT BETWEEN pr_dtiniper AND pr_dtfimper THEN
+								CONTINUE;                                                               
+							END IF;
+                          
                           --Valor a somar
                           vr_vlasomar := vr_vlaplica;
                           
