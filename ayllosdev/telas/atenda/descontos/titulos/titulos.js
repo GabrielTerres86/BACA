@@ -23,6 +23,7 @@
  *
  * 008: [17/12/2015] Lunelli   (CECRED) : Edição de número do contrato de limite (Lunelli - SD 360072 [M175])
  * 009: [27/06/2016] Jaison/James (CECRED) : Inicializacao da aux_inconfi6.
+ * 010: [09/03/2017] Adriano    (CECRED): Ajuste devido ao tratamento para validar titulos já inclusos em outro borderô - SD 603451.
  */
 
 var contWin    = 0;  // Variável para contagem do número de janelas abertas para impressos
@@ -944,52 +945,49 @@ function controlaLupas(nrdconta) {
 	
 	return false;
 }
-
-
 // Função para fechar div com mensagens de alerta
 function encerraMsgsGrupoEconomico(){
-	
-	// Esconde div
-	$("#divMsgsGrupoEconomico").css("visibility","hidden");
-	
-	$("#divListaMsgsGrupoEconomico").html("&nbsp;");
-	
-	// Esconde div de bloqueio
-	unblockBackground();
-	blockBackground(parseInt($("#divRotina").css("z-index")));
-	
-	eval(dsmetodo);
-	
-	return false;
-	
-}
+
+    // Esconde div
+    $("#divMsgsGrupoEconomico").css("visibility","hidden");
+
+    $("#divListaMsgsGrupoEconomico").html("&nbsp;");
+
+    // Esconde div de bloqueio
+    unblockBackground();
+    blockBackground(parseInt($("#divRotina").css("z-index")));
+
+    eval(dsmetodo);
+
+    return false;
+
+    }
 
 function mostraMsgsGrupoEconomico(){
-	
-	
-	if(strHTML != ''){
-		
-		// Coloca conteúdo HTML no div
-		$("#divListaMsgsGrupoEconomico").html(strHTML);
-		$("#divMensagem").html(strHTML2);
-				
-		// Mostra div 
-		$("#divMsgsGrupoEconomico").css("visibility","visible");
-		
-		exibeRotina($("#divMsgsGrupoEconomico"));
-		
-		// Esconde mensagem de aguardo
-		hideMsgAguardo();
-					
-		// Bloqueia conteúdo que está átras do div de mensagens
-		blockBackground(parseInt($("#divMsgsGrupoEconomico").css("z-index")));
-				
-	}
-	
-	return false;
-	
-}
 
+
+    if(strHTML != ''){
+
+    // Coloca conteúdo HTML no div
+	$("#divListaMsgsGrupoEconomico").html(strHTML);
+	$("#divMensagem").html(strHTML2);
+
+		// Mostra div 
+        $("#divMsgsGrupoEconomico").css("visibility","visible");
+
+	exibeRotina($("#divMsgsGrupoEconomico"));
+
+	// Esconde mensagem de aguardo
+	hideMsgAguardo();
+
+		// Bloqueia conteúdo que está átras do div de mensagens
+	blockBackground(parseInt($("#divMsgsGrupoEconomico").css("z-index")));
+
+	}
+
+return false;
+
+}
 function formataGrupoEconomico(){
 
 	var divRegistro = $('div.divRegistros','#divMsgsGrupoEconomico');		
@@ -1111,4 +1109,79 @@ function mostraListagemRestricoes(opcao,idconfir,idconfi2,idconfi3,idconfi4,idco
 			$("#divOpcoesDaOpcao2").html(response);
 		}				
 	});		
+}
+
+//Funcao para formatar a tabela com inconsistências encontradas
+function tabela(){
+
+	var divRegistro = $('div.divRegistros', '#divMsgsGenericas');
+	var tabela      = $('table',divRegistro );	
+	var linha		= $('table > tbody > tr', divRegistro );
+			
+	$('#divMsgsGenericas').css('width', '400px');
+    divRegistro.css({ 'height': '230px', 'width' : '100%'});
+
+	var ordemInicial = new Array();
+		ordemInicial = [[1,0]];		
+			
+	var arrayLargura = new Array(); 
+		arrayLargura[0] = '25%';
+
+    var arrayAlinha = new Array();
+        arrayAlinha[0] = 'center';
+		
+	var metodoTabela = '';
+				
+	tabela.formataTabela(ordemInicial,arrayLargura,arrayAlinha,metodoTabela);			
+			
+    
+	$('div.divRegistros', '#divListaMsgsGenericas').css('display', 'block');
+		
+}
+
+    
+// Função para fechar div com mensagens de alerta
+function encerraMsgsGenericas(){
+	
+    // Esconde div
+    $("#divMsgsGenericas").css("visibility", "hidden");
+	
+    $("#divListaMsgsGenericas").html("&nbsp;");
+	
+	// Esconde div de bloqueio
+	unblockBackground();
+	blockBackground(parseInt($("#divRotina").css("z-index")));
+	
+	return false;
+	
+}
+
+function mostraMsgsGenericas(){
+	
+	
+	if(strHTML != ''){
+		
+	    //Coloca o titulo na tela
+	    $("#tituloDaTela", "#divMsgsGenericas").html("Inconsist&ecirc;ncias");
+
+		// Coloca conteúdo HTML no div
+	    $("#divListaMsgsGenericas").html(strHTML);
+		
+		// Mostra div 
+	    $("#divMsgsGenericas").css("visibility", "visible");
+		
+        tabela();
+
+	    exibeRotina($("#divMsgsGenericas"));
+		
+		// Esconde mensagem de aguardo
+		hideMsgAguardo();
+					
+		// Bloqueia conteúdo que está átras do div de mensagens
+		blockBackground(parseInt($("#divMsgsGenericas").css("z-index")));
+				
+	}
+	
+	return false;
+	
 }

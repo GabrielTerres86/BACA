@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme
-   Data    : Setembro/2008                    Ultima atualizacao: 11/05/2015
+   Data    : Setembro/2008                    Ultima atualizacao: 10/03/2017
 
    Dados referentes ao programa:
 
@@ -39,7 +39,11 @@
                11/05/2015 - #278936 Inclusao de busca de cooperado com atalho
                             na tecla F7; Inclusao de filtro por nome do pagador
                             (Carlos)
-                           
+                    
+			   10/03/2017 - Ajuste devido ao tratamento para validar se o titulo ja esta
+			                incluso em um bordero
+							(Adriano - SD 603451).
+			          
 ............................................................................. */
 
 { includes/var_online.i }
@@ -58,6 +62,15 @@ DEF VAR aux_vlutiliz AS DECIMAL                                     NO-UNDO.
 DEF VAR aux_qttitpro AS INTEGER                                     NO-UNDO.
 DEF VAR aux_qttitcar AS INTEGER                                     NO-UNDO.
 
+DEF QUERY q-criticas FOR tt-erro.
+
+DEF BROWSE b-criticas QUERY q-criticas
+    DISPLAY tt-erro.dscritic format "x(48)"
+    WITH 5 DOWN WIDTH 50 NO-BOX NO-LABELS OVERLAY.
+
+FORM b-criticas                            
+     HELP "Pressione ENTER, F4/END para sair"
+     WITH ROW 9 CENTERED NO-LABELS OVERLAY WIDTH 55 TITLE COLOR NORMAL " Inconsistencias " FRAME f_criticas.
 
 ASSIGN tel_nmcustod = ""
        tel_nrcustod = 0
@@ -134,11 +147,28 @@ ON "END-ERROR" OF b_browse IN FRAME f_browse DO:
             
     IF  RETURN-VALUE = "NOK"  THEN
         DO:
-            FIND FIRST tt-erro NO-LOCK NO-ERROR.
-            IF  AVAIL tt-erro  THEN
-                MESSAGE tt-erro.dscritic.
+		    FIND FIRST tt-erro NO-LOCK NO-ERROR.
+
+            IF  AVAIL tt-erro  THEN			    
+                DO:
+				    DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
+                          
+						OPEN QUERY q-criticas FOR EACH tt-erro	NO-LOCK.
+                              
+						UPDATE b-criticas
+								WITH FRAME f_criticas.
+                   
+						LEAVE.
+                   
+					END.
+                   
+					CLOSE QUERY q-criticas.
+					HIDE FRAME f_criticas.
+                   
+				END.
             ELSE
                 MESSAGE "Ocorreu erro na inclusao de titulos.".
+
         END.
 END.
 
