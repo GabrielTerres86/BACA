@@ -4,8 +4,11 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
 
             04/05/2009 - Utilizar cdcooper = 0 nas consultas (David).
 			
-			05/06/2012 - Adaptação dos fontes para projeto Oracle. Alterado
-						 busca na gnapses de CONTAINS para MATCHES (Guilherme Maba).
+            05/06/2012 - Adaptação dos fontes para projeto Oracle. Alterado
+                         busca na gnapses de CONTAINS para MATCHES (Guilherme Maba).
+                         
+            20/03/2012 - Melhoria de performance da procedure CriaListaEventos e
+                         ordenaçao dos resultados (Jean Michel).
 
 ...............................................................................*/
 
@@ -30,7 +33,18 @@ DEFINE TEMP-TABLE ab_unmap
        FIELD aux_nrdrowid AS CHARACTER FORMAT "X(256)":U 
        FIELD aux_salcusto AS CHARACTER FORMAT "X(256)":U 
        FIELD aux_stdopcao AS CHARACTER FORMAT "X(256)":U .
-
+       
+/* Temp-Table and Buffer definitions                                    */
+DEFINE TEMP-TABLE tt-eventos
+       FIELD cdagenci LIKE crapage.cdagenci
+       FIELD cdcooper LIKE crapage.cdcooper
+       FIELD cdevento LIKE crapedp.cdevento
+       FIELD nmevento LIKE crapedp.nmevento
+       FIELD dseixtem AS CHARACTER 
+       FIELD dtanoage LIKE crapedp.dtanoage
+       FIELD vlcuseve AS DECIMAL
+       FIELD qtcarhor AS CHARACTER 
+       FIELD idevento LIKE crapedp.idevento.
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS w-html 
 /*------------------------------------------------------------------------
@@ -311,63 +325,45 @@ DEFINE FRAME Web-Frame
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
 
-
-/* **********************  Internal Procedures  *********************** */
-
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE CriaListaEventos w-html 
-PROCEDURE CriaListaEventos :
-/*------------------------------------------------------------------------------
-  Purpose:     
-  Parameters:  <none>
-  Notes:       
-------------------------------------------------------------------------------*/
-DEFINE VARIABLE aux_qtcarhor AS CHAR NO-UNDO.
-DEFINE VARIABLE aux_vlcuseve AS DEC  NO-UNDO.
+PROCEDURE CriaListaEventos:
 
-FOR EACH crapcdp WHERE crapcdp.idevento = INT(ab_unmap.aux_idevento)        AND
-                       crapcdp.cdcooper = INT(ab_unmap.aux_cdcooper)        AND
-                       crapcdp.cdagenci = INT(ab_unmap.aux_cdagenci)        AND
-                       crapcdp.dtanoage = INT(ab_unmap.aux_dtanoage)        AND
-                       crapcdp.tpcuseve = 1 /* somente custos DIRETOS */    AND
-                       crapcdp.flgfecha = YES                               NO-LOCK 
-                       BREAK BY crapcdp.cdevento:
-
-    /*
-    FIND FIRST crapeap WHERE
-       crapeap.idevento = crapcdp.idevento  AND
-       crapeap.cdcooper = crapcdp.cdcooper  AND
-       crapeap.cdagenci = crapcdp.cdagenci  AND
-       crapeap.dtanoage = crapcdp.dtanoage  AND
-       crapeap.cdevento = crapcdp.cdevento  NO-LOCK NO-ERROR.
-
-    IF AVAIL crapeap AND crapeap.flgevsel THEN NEXT.
-    */
-    
+  DEFINE VARIABLE aux_qtcarhor AS CHAR NO-UNDO.
+  DEFINE VARIABLE aux_vlcuseve AS DEC  NO-UNDO.
+  DEFINE VARIABLE aux_contador AS INT  INIT 0 NO-UNDO.
+  
+  FOR EACH crapcdp WHERE crapcdp.idevento = INT(ab_unmap.aux_idevento)    
+                     AND crapcdp.cdcooper = INT(ab_unmap.aux_cdcooper)    
+                     AND crapcdp.cdagenci = INT(ab_unmap.aux_cdagenci)    
+                     AND crapcdp.dtanoage = INT(ab_unmap.aux_dtanoage)    
+                     AND crapcdp.tpcuseve = 1 /* somente custos DIRETOS */
+                     AND crapcdp.flgfecha = YES NO-LOCK 
+                     BREAK BY crapcdp.cdevento:
+      
     /* Procura o modelo do evento */ 
     FIND FIRST crapedp WHERE crapedp.cdevento = crapcdp.cdevento    AND
-                             crapedp.cdcooper = 0                   AND
-                             crapedp.dtanoage = 0                   AND
-                             crapedp.idevento = crapcdp.idevento    NO-LOCK NO-ERROR.
+                           crapedp.cdcooper = 0                   AND
+                           crapedp.dtanoage = 0                   AND
+                           crapedp.idevento = crapcdp.idevento    NO-LOCK NO-ERROR.
 
     IF NOT AVAIL crapedp THEN NEXT.
 
     FIND FIRST gnapetp WHERE gnapetp.cdcooper = 0                   AND
-                             gnapetp.cdeixtem = crapedp.cdeixtem    NO-LOCK NO-ERROR.
+                           gnapetp.cdeixtem = crapedp.cdeixtem    NO-LOCK NO-ERROR.
 
     IF NOT AVAIL gnapetp THEN NEXT.
 
     /* Nomes da Cooperativa e do PAC */
     FIND FIRST crapage WHERE crapage.cdcooper = crapcdp.cdcooper    AND
-                             crapage.cdagenci = crapcdp.cdagenci    NO-LOCK NO-ERROR.
+                           crapage.cdagenci = crapcdp.cdagenci    NO-LOCK NO-ERROR.
     IF NOT AVAIL crapage THEN NEXT.
 
     FIND FIRST crapcop WHERE crapcop.cdcooper = crapcdp.cdcooper    NO-LOCK NO-ERROR.
     IF NOT AVAIL crapcop THEN NEXT.
 
-    
     /* Em honorários é que está gravado o fornecedor, e se tiver, a proposta */
     IF crapcdp.cdcuseve = 1 THEN
-    DO:
+      DO:
         FIND FIRST gnappdp WHERE gnappdp.cdcooper = 0                   AND
                                  gnappdp.nrcpfcgc = crapcdp.nrcpfcgc    AND
                                  gnappdp.nrpropos = crapcdp.nrpropos    NO-LOCK NO-ERROR.
@@ -376,43 +372,55 @@ FOR EACH crapcdp WHERE crapcdp.idevento = INT(ab_unmap.aux_idevento)        AND
             aux_qtcarhor = string(gnappdp.qtcarhor, ">>>,>>9.99").
         ELSE
             aux_qtcarhor = "0:00".
-    END.
+      END.
 
     ASSIGN aux_vlcuseve = aux_vlcuseve + crapcdp.vlcuseve.
 
     /* Se já apurou todos os custos, grava o vetor */ 
     IF LAST-OF(crapcdp.cdevento) THEN
-    DO: 
-        IF  vetorevento = "" THEN
-            vetorevento = "~{" +
-                 "cdagenci:'" +  STRING(crapcdp.cdagenci)                + "'," + 
-                 "cdcooper:'" +  STRING(crapcdp.cdcooper)                + "'," +
-                 "cdevento:'" +  STRING(crapcdp.cdevento)                + "'," +
-                 "nmevento:'" +  STRING(crapedp.nmevento)                + "'," +
-                 "dseixtem:'" +  STRING(gnapetp.dseixtem)                + "'," +
-                 "dtanoage:'" +  STRING(crapcdp.dtanoage)                + "'," +
-                 "vlcuseve:'" +  STRING(aux_vlcuseve, "->>>,>>9.99")     + "'," +
-                 "qtcarhor:'" +  REPLACE(STRING(aux_qtcarhor), ",", ":") + "'," +
-                 "idevento:'" +  STRING(crapcdp.idevento)                + "'"  + "~}".
-        ELSE
-            vetorevento = vetorevento + "," + "~{" +
-                 "cdagenci:'" +  STRING(crapcdp.cdagenci)                + "'," + 
-                 "cdcooper:'" +  STRING(crapcdp.cdcooper)                + "'," +
-                 "cdevento:'" +  STRING(crapcdp.cdevento)                + "'," +
-                 "nmevento:'" +  STRING(crapedp.nmevento)                + "'," +
-                 "dseixtem:'" +  STRING(gnapetp.dseixtem)                + "'," +
-                 "dtanoage:'" +  STRING(crapcdp.dtanoage)                + "'," +
-                 "vlcuseve:'" +  STRING(aux_vlcuseve, "->>>,>>9.99")     + "'," +
-                 "qtcarhor:'" +  REPLACE(STRING(aux_qtcarhor), ",", ":") + "'," +
-                 "idevento:'" +  STRING(crapcdp.idevento)                + "'"  + "~}".
+      DO: 
+        CREATE tt-eventos.
+        ASSIGN tt-eventos.cdagenci = crapcdp.cdagenci
+               tt-eventos.cdcooper = crapcdp.cdcooper
+               tt-eventos.cdevento = crapcdp.cdevento
+               tt-eventos.nmevento = crapedp.nmevento
+               tt-eventos.dseixtem = gnapetp.dseixtem
+               tt-eventos.dtanoage = crapcdp.dtanoage
+               tt-eventos.vlcuseve = aux_vlcuseve
+               tt-eventos.qtcarhor = aux_qtcarhor
+               tt-eventos.idevento = crapcdp.idevento
+               aux_vlcuseve = 0.                
+      END.
+  END.
 
-        aux_vlcuseve = 0.
-    END.
-
-END.
-
-RUN RodaJavaScript("var mevento=new Array();mevento=["  + vetorevento + "]").
-
+  RUN RodaJavaScript("var mevento = new Array();").
+  
+  FOR EACH tt-eventos NO-LOCK BY tt-eventos.nmevento:
+  
+    IF vetorevento <> "" THEN
+      ASSIGN vetorevento = vetorevento + ",".
+    
+    ASSIGN aux_contador = aux_contador + 1
+           vetorevento = vetorevento + "~{cdagenci:'" + STRING(tt-eventos.cdagenci)
+                                     + "',cdcooper:'" + STRING(tt-eventos.cdcooper)
+                                     + "',cdevento:'" + STRING(tt-eventos.cdevento)
+                                     + "',nmevento:'" + STRING(tt-eventos.nmevento)
+                                     + "',dseixtem:'" + STRING(tt-eventos.dseixtem)
+                                     + "',dtanoage:'" + STRING(tt-eventos.dtanoage)
+                                     + "',vlcuseve:'" + STRING(tt-eventos.vlcuseve, "->>>,>>9.99")
+                                     + "',qtcarhor:'" + REPLACE(STRING(tt-eventos.qtcarhor), ",", ":")
+                                     + "',idevento:'" + STRING(tt-eventos.idevento) + "'~}".
+           
+    IF aux_contador = 30 THEN
+      DO:
+        RUN RodaJavaScript("mevento.push(" + vetorevento + ");").
+        ASSIGN vetorevento = ""
+               aux_contador = 0.
+      END.    
+  END.
+  
+  IF vetorevento <> "" THEN
+    RUN RodaJavaScript("mevento.push("  + vetorevento + ");").   
 
 END PROCEDURE.
 
