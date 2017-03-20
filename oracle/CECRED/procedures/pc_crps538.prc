@@ -336,12 +336,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
        /* Tipos e registros da pc_CRPS538 */
 
        TYPE typ_reg_crapcco IS
-         RECORD (cdcooper crapcco.cdcooper%type
-                ,cdagenci crapcco.cdagenci%type
-                ,cdbccxlt crapcco.cdbccxlt%type
-                ,nrdolote crapcco.nrdolote%type
-                ,nrconven crapcco.nrconven%type
-                ,flgativo crapcco.flgativo%type
+         RECORD (cdcooper crapcco.cdcooper%TYPE
+                ,cdagenci crapcco.cdagenci%TYPE
+                ,cdbccxlt crapcco.cdbccxlt%TYPE
+                ,nrdolote crapcco.nrdolote%TYPE
+                ,nrconven crapcco.nrconven%TYPE
+                ,flgativo crapcco.flgativo%TYPE
                 ,cddbanco crapcco.cddbanco%TYPE
                 ,nrdctabb crapcco.nrdctabb%TYPE
                 ,dsorgarq crapcco.dsorgarq%TYPE
@@ -1319,7 +1319,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
               AND ceb.nrconven = ret.nrcnvcob
               AND ceb.nrdconta = ret.nrdconta
               AND cco.cddbanco = 85
-              AND ret.flcredit = 0
+           --   AND ret.flcredit = 0
             GROUP BY ret.dtocorre
                     ,ret.dtcredit 
                     ,ret.nrcnvcob
@@ -1331,6 +1331,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
 
           vr_dtdpagto_rel DATE;
           vr_aux_float INTEGER;
+          vr_vlsldpen  crapret.vlrpagto%TYPE := 0;
 
        BEGIN
 
@@ -1379,6 +1380,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
                   <dtocorre>'||to_char(vr_dtdpagto_rel,'DD/MM/RRRR')||'</dtocorre>
                 </convenio>');
 
+               if rw_crapret.qtdfloat > 0 then
+                 vr_vlsldpen := vr_vlsldpen + rw_crapret.vltotpag;
+               end if;
+
          END LOOP;
 
          -- Finalizar tag XML
@@ -1415,7 +1420,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
               <dtocorre>'||to_char(rw_crapret.dtocorre,'DD/MM/RRRR')||'</dtocorre>
             </convenio>');
 
+           IF rw_crapret.qtdfloat > 0 THEN
+              vr_vlsldpen := vr_vlsldpen + rw_crapret.vltotpag;
+           END IF;            
+
          END LOOP;
+         
+         gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,
+         '<convenio>
+            <tot_vlsldpen>'||to_char(vr_vlsldpen,'fm999g999g990d00')||'</tot_vlsldpen>
+          </convenio>');
 
          -- Finalizar tag XML
          IF (vr_dtcredit IS NOT NULL) THEN

@@ -3899,7 +3899,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                                     ,pr_flg_impri => 'S'                 --> Chamar a impressão (Imprim.p)
                                     ,pr_nmformul  => '132dm'             --> Nome do formulário para impressão
                                     ,pr_nrcopias  => 1                   --> Número de cópias
-                                    ,pr_flg_gerar => 'S'                 --> gerar PDF
+                                    ,pr_flg_gerar => 'N'                 --> gerar PDF
                                     ,pr_des_erro  => vr_des_erro);       --> Saída com erro
 
          -- Testar se houve erro
