@@ -466,6 +466,8 @@
               
               19/12/2016 - Inclusao da aprovacao de Desconto de Cheque. Projeto 300 (Lombardi).
               
+			  22/11/2016 - Inclusao do parametro pr_iptransa na chamada da rotina pc_cadastrar_agendamento.
+                           PRJ335 - Analise de Fraude (Odirlei-AMcom ) 
  .....................................................................................................*/
 { sistema/internet/includes/var_ibank.i }
 
@@ -4134,6 +4136,8 @@ PROCEDURE cadastrar-agendamento:
     DEF  INPUT PARAM par_cdfinali AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dstransf AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_dshistor AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_iptransa AS CHAR                           NO-UNDO.
+
 
     DEF OUTPUT PARAM par_msgofatr AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM par_cdempcon AS INTE                           NO-UNDO.
@@ -4182,6 +4186,7 @@ PROCEDURE cadastrar-agendamento:
                           INPUT par_cdfinali,
                           INPUT par_dstransf,
                           INPUT par_dshistor,
+                          INPUT par_iptransa,  /* pr_iptransa */
                          OUTPUT "",  /* pr_dstransa */                         
                          OUTPUT "",
                          OUTPUT 0,
@@ -6821,6 +6826,7 @@ PROCEDURE aprova_trans_pend:
     DEF  INPUT PARAM par_cdditens AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_indvalid AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrcpfope AS DECI                           NO-UNDO.
+    DEF  INPUT PARAM par_iptransa AS CHAR                           NO-UNDO.
    
     DEF OUTPUT PARAM TABLE FOR tt-erro.
     DEF OUTPUT PARAM TABLE FOR tt-criticas_transacoes_oper.
@@ -8052,6 +8058,7 @@ PROCEDURE aprova_trans_pend:
                                                                           INPUT 0,   /* cdfinali */
                                                                           INPUT ' ', /* dstransf */
                                                                           INPUT ' ', /* dshistor */                                                           
+                                                                          INPUT par_iptransa,
                                                                          OUTPUT aux_msgofatr,
                                                                          OUTPUT aux_cdempcon,
                                                                          OUTPUT aux_cdsegmto,
@@ -8216,6 +8223,7 @@ PROCEDURE aprova_trans_pend:
                                                                           INPUT 0,   /* cdfinali */
                                                                           INPUT ' ', /* dstransf */
                                                                           INPUT ' ', /* dshistor */
+                                                                          INPUT par_iptransa,
                                                                          OUTPUT aux_msgofatr,
                                                                          OUTPUT aux_cdempcon,
                                                                          OUTPUT aux_cdsegmto,
@@ -8575,6 +8583,8 @@ PROCEDURE aprova_trans_pend:
                                                                        INPUT tt-tbspb_trans_pend.nrispb_banco_favorecido,
 																		   INPUT FALSE, /* flgmobile */
 																		   INPUT tt-tbspb_trans_pend.idagendamento,
+                                                                       INPUT par_iptransa,
+                                                                       INPUT aux_dstransa,
                                                                       OUTPUT aux_dsprotoc,
                                                                       OUTPUT aux_dscritic,
                                                                       OUTPUT TABLE tt-protocolo-ted).
@@ -8665,6 +8675,7 @@ PROCEDURE aprova_trans_pend:
                                                INPUT tt-tbspb_trans_pend.cdfinalidade,
                                                INPUT tt-tbspb_trans_pend.dscodigo_identificador,
                                                INPUT tt-tbspb_trans_pend.dshistorico,                                                               
+                                               INPUT par_iptransa,
                                               OUTPUT aux_msgofatr,
                                               OUTPUT aux_cdempcon,
                                               OUTPUT aux_cdsegmto,
@@ -9048,6 +9059,7 @@ PROCEDURE aprova_trans_pend:
                                                                   INPUT 0,   /* cdfinali */
                                                                   INPUT ' ', /* dstransf */
                                                                   INPUT ' ', /* dshistor */
+                                                                  INPUT par_iptransa,
                                                                  OUTPUT aux_msgofatr,
                                                                  OUTPUT aux_cdempcon,
                                                                  OUTPUT aux_cdsegmto,
@@ -9328,6 +9340,7 @@ PROCEDURE aprova_trans_pend:
                                                                   INPUT 0,   /* cdfinali */
                                                                   INPUT ' ', /* dstransf */
                                                                   INPUT ' ', /* dshistor */
+                                                                  INPUT par_iptransa,
                                                                  OUTPUT aux_msgofatr,
                                                                  OUTPUT aux_cdempcon,
                                                                  OUTPUT aux_cdsegmto,

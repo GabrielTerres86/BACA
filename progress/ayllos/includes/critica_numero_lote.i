@@ -49,6 +49,9 @@ na procedure critica_numero_lote da BO sistema/generico/procedures/b1wgen9999.p
                 17/08/2016 - Incluir lote 10119 - Melhoria 69 (Lucas Ranghetti #484923)							 
 							
                 26/09/2016 - Incluir lotes da M211 para nao exclusao (Jonata-RKAM)
+                
+                13/01/2016 - Incluir lotes 44000 estorno TED analise de fraude.
+                             PRJ335 - Analise de fraudes (Odirlei-AMcom)
 ............................................................................. */
 
 IF  ({1}nrdolote > 1350   AND       /* CMC-7 e Codigo de Barras */
@@ -140,6 +143,7 @@ IF  ({1}nrdolote > 1350   AND       /* CMC-7 e Codigo de Barras */
      {1}nrdolote = 6651   OR   /*Debitos nao efetuados no processo noturno (e efetuados pela DEBCON)*/
      {1}nrdolote = 7050   OR   /*Debitos automaticos nao efetuados no processo noturno (apenas convenios CECRED; efetuados pela DEBNET).*/
 	 {1}nrdolote = 10119  OR   /* Lote devolução - Melhoria 69 */ 
+     {1}nrdolote = 44000  OR   /* Lote Estorno TED analise de fraude */    
 	 ({1}nrdolote >= 8482  AND      /* TEDS Sicredi */
      {1}nrdolote <= 8486) THEN
 	 
