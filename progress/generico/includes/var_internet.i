@@ -65,6 +65,9 @@
 							(Adriano).
 
                07/01/2016 - Incluir novos codigos de origem  (Oscar)
+
+			   20/03/2016 - Incluido novo codigo de origem 13 -  COBRANCA (RENOVACAO AUTOMATICA) 
+			                PRJ319.2 - SMS Cobrança (Odirlei-AMcom)
                             
 ..............................................................................*/
 
@@ -89,9 +92,10 @@ DEF VAR aux_srvintra AS CHAR                                           NO-UNDO.
 /** -> Origem = 7 - PROCESSO (PROCESSO BATCH)                 **/
 /** -> Origem = 8 - MENSAGERIA (DEBITO ONLINE CARTAO BANCOOB) **/
 /** -> Origem = 9 - ESTEIRA (ESTEIRA DE CREDITO IBRATAN)      **/
+/** -> Origem = 13 - COBRANCA (RENOVACAO AUTOMATICA)          **/
 /** --------------------------------------------------------- **/
 
-ASSIGN des_dorigens = "AYLLOS,CAIXA,INTERNET,CASH,INTRANET,URA,PROCESSO,MENSAGERIA,ESTEIRA".
+ASSIGN des_dorigens = "AYLLOS,CAIXA,INTERNET,CASH,INTRANET,URA,PROCESSO,MENSAGERIA,ESTEIRA,,'','','','COBRANCA'".
 
 /** Armazenar data do servidor **/
 ASSIGN aux_datdodia = TODAY.

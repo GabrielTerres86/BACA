@@ -459,14 +459,18 @@
                            qdo o corpo do email ultrapassar 25 titulos pois estava
                            acarretando em problemas no IB (Tiago/Elton SD 521667).             
 						   
-28/11/2016 - Incluido tratamento de transaçoes pendentes 16 e 17.
-PRJ319 - SMS Cobrança (Odirlei - AMcom)
+              28/11/2016 - Incluido tratamento de transaçoes pendentes 16 e 17.
+                           PRJ319 - SMS Cobrança (Odirlei - AMcom)
 
-			  07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
+			        07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
                            departamento passando a considerar o código (Renato Darosci)           
 
-			  22/02/2017 - Ajustes para correçao de crítica de 
+     			    22/02/2017 - Ajustes para correçao de crítica de 
                            pagamento DARF/DAS (Lucas Lunelli - P.349.2)  
+                           
+                           
+              17/03/2017 - Incluido campos na chamada da rotina pc_gera_contrato_sms.
+                           PRJ319.2 - SMS Cobrança (Odirlei - AMcom)             
               
  .............................................................................*/
 { sistema/internet/includes/var_ibank.i }
@@ -6919,7 +6923,7 @@ PROCEDURE aprova_trans_pend:
     DEF VAR aux_vldifere AS LOGI                                    NO-UNDO.
     DEF VAR aux_cobregis AS LOGI                                    NO-UNDO.
     DEF VAR aux_msgalert AS CHAR                                    NO-UNDO.
-																							DEF VAR aux_dsretorn AS CHAR                                    NO-UNDO.
+    DEF VAR aux_dsretorn AS CHAR                                    NO-UNDO.
     DEF VAR aux_qtminast AS INTE                                    NO-UNDO.
     DEF VAR aux_contapro AS INTE                                    NO-UNDO.    
         
@@ -11911,6 +11915,10 @@ PROCEDURE aprova_trans_pend:
                                     ,INPUT IF par_indvalid = 1 AND
                                     aux_conttran = 1 THEN 1
                                     ELSE  3        /* pr_inaprpen */
+                                    ,tt-tbcobran_sms_trans_pend.idpacote /* pr_idpacote */
+                                    ,1                    /* pr_tpnmemis */
+                                    ,""                   /* pr_nmemissa */
+                                    
                                     ,OUTPUT 0              /* pr_idcontrato */
                                     ,OUTPUT ""             /* pr_dsretorn */
                                     ,OUTPUT 0

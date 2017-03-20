@@ -648,7 +648,9 @@
                             - Criada op 180 (P.349.2)
                             - Alteraçoes para composiçao de comprovante DARF/DAS Modelo Sicredi
                             (Lucas Lunelli)
-                              
+                 
+                 17/03/2017 - Ajustes operacao 189 - Servico de SMS de cobranca
+                              PRJ319.2 - SMS Cobrança(Odirlei-AMcom)    
 ------------------------------------------------------------------------------*/
 
 /*----------------------------------------------------------------*/
@@ -972,6 +974,7 @@ DEF VAR aux_qtdiaven AS INTE                                           NO-UNDO.
 DEF VAR aux_cdperapl AS INT                                            NO-UNDO.
 DEF VAR aux_nrdocpro AS CHAR                                           NO-UNDO.
 DEF VAR aux_idcontrato AS INT                                          NO-UNDO.
+DEF VAR aux_idpacote AS INT                                            NO-UNDO.
 DEF VAR aux_tpnommis AS INT                                            NO-UNDO.
 DEF VAR aux_nmemisms AS CHAR                                           NO-UNDO.
 
@@ -7879,7 +7882,8 @@ PROCEDURE proc_operacao189:
   ASSIGN aux_cddopcao   = GET-VALUE("cddopcao")
          aux_tpnommis   = INTE(GET-VALUE("tpnommis"))
          aux_nmemisms   = GET-VALUE("nmemisms")
-         aux_idcontrato = INTE(GET-VALUE("idcontrato")).
+         aux_idcontrato = INTE(GET-VALUE("idcontrato"))
+         aux_idpacote   = INTE(GET-VALUE("idpacote")).
   
   
 	RUN sistema/internet/fontes/InternetBank189.p (INPUT aux_cdcooper,
@@ -7888,8 +7892,11 @@ PROCEDURE proc_operacao189:
                                                  INPUT aux_nrcpfope,
                                                  INPUT aux_cddopcao,
                                                  INPUT aux_idcontrato,
+                                                 INPUT aux_idpacote,
                                                  INPUT aux_tpnommis,
                                                  INPUT aux_nmemisms,
+                                                 INPUT 1,
+                                                 INPUT 100,
                                                 OUTPUT aux_dsmsgerr,
                                                 OUTPUT TABLE xml_operacao).
 
