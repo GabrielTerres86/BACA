@@ -27,7 +27,7 @@
 
     Programa: b1wgen0025.p
     Autor   : Ze Eduardo
-    Data    : Novembro/2007                  Ultima Atualizacao: 25/07/2016
+    Data    : Novembro/2007                  Ultima Atualizacao: 24/01/2017
     
     Dados referentes ao programa:
 
@@ -332,6 +332,14 @@
                 25/07/2016 - #480602 tratada a verifica_saque para fazer a verificação do 
                              limite da pc_obtem_saldo_dia_prog e removida a chamada da 
                              procedure obtem-valor-limite (Carlos)
+                             
+                18/11/2016 - #559508 correção na verificação da existência do cartão
+                             magnético de operador. Quando for um cartão de operador,
+                             não consultar transferência de conta (Carlos)
+                             
+                24/01/2017 - #576728 modificado o procedimento efetua_saque para 
+                             salvar na craplcm e craplot o PA do cooperado, e não
+                             o PA do TAA onde ocorreu a operação (Carlos)
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0025tt.i }
@@ -488,8 +496,10 @@ PROCEDURE verifica_cartao:
            RETURN "NOK".
        END.    
     
-    FOR FIRST crapcrd FIELDS(cdcooper) 
+    FOR FIRST crapcrd, crapcop FIELDS(cdcooper) 
                       WHERE crapcrd.nrcrcard = aux_nrcrcard
+          				AND crapcop.cdcooper = crapcrd.cdcooper
+          				AND crapcop.flgativo = TRUE
                             NO-LOCK: END.
     
     /* Cartao de credito CECRED */
@@ -1841,6 +1851,18 @@ PROCEDURE verifica_transferencia:
                 END.
         END.
 
+    /* Regra para impedir transferencia intercooperativa para 
+                contas Transulcred que serao migradas no dia 31/12/2016. */
+    IF  par_tpoperac     = 5           AND
+        crabcop.cdcooper = 17          AND /* Transulcred */
+        aux_datdodia    >= 12/31/2016  THEN
+        DO: 
+            ASSIGN par_dscritic = "Conta destino nao habilitada " +
+                                  "para receber valores da " +
+                                  "transferencia.".
+            RETURN "NOK".
+        END.
+       
     IF  par_flagenda THEN
         DO:
             RUN calcula_dia_util(INPUT  par_cdcooper,
@@ -2191,7 +2213,8 @@ PROCEDURE verifica_transferencia:
             IF  AVAIL craptco               AND
                 aux_datdodia >= 12/25/2013  AND
                 craptco.cdcopant <> 4       AND  /* Exceto Concredi    */
-                craptco.cdcopant <> 15      THEN /* Exceto Credimilsul */
+                craptco.cdcopant <> 15      AND  /* Exceto Credimilsul */
+                craptco.cdcopant <> 17      THEN /* Exceto Transulcred */                
                 DO:
                     ASSIGN par_dscritic = "Operacao de agendamento bloqueada." +
                                           " Entre em contato com seu PA.".
@@ -2495,6 +2518,7 @@ PROCEDURE efetua_saque:
     DEFINE VARIABLE     aux_dssaqmax    AS CHAR                     NO-UNDO.
     DEFINE VARIABLE     aux_flgcompr    AS LOGICAL                  NO-UNDO.
     DEFINE VARIABLE     aux_cdhisdeb    AS INT                      NO-UNDO.
+    DEFINE VARIABLE     aux_cdagenci    AS INT                      NO-UNDO.
     DEFINE VARIABLE     h-b1craplot     AS HANDLE                   NO-UNDO.
     DEFINE VARIABLE     h-b1craplcm     AS HANDLE                   NO-UNDO.
 
@@ -2508,15 +2532,14 @@ PROCEDURE efetua_saque:
     DEFINE VARIABLE     aux_dscritic    AS CHAR                     NO-UNDO.
     DEFINE VARIABLE     h-b1wgen0011    AS HANDLE                   NO-UNDO.
 
-    DEFINE BUFFER crabass FOR crapass.
-
+    DEFINE BUFFER crabass FOR crapass.    
+    DEFINE BUFFER crabass2 FOR crapass.
 
     /* Saque conforme a cooperativa */
     IF  par_cdcoptfn = par_cdcooper  THEN
         aux_cdhisdeb = 316.  /* Saque Coop */
     ELSE
         aux_cdhisdeb = 918.  /* Saque Multicoop */
-
 
     /* para evitar saque simultaneo em mais de uma maquina, verifica
        novamente o saque */
@@ -2537,6 +2560,10 @@ PROCEDURE efetua_saque:
         par_dscritic <> ""     THEN
         RETURN "NOK".
 
+    FIND FIRST crabass2 WHERE crabass2.cdcooper = par_cdcooper AND 
+                              crabass2.nrdconta = par_nrdconta
+                              NO-LOCK NO-ERROR.
+    ASSIGN aux_cdagenci = crabass2.cdagenci.
 
 
     ASSIGN aux_cdbccxlt = 100
@@ -2546,7 +2573,7 @@ PROCEDURE efetua_saque:
     
         FIND craplot WHERE craplot.cdcooper = par_cdcooper  AND 
                            craplot.dtmvtolt = par_dtmvtocd  AND
-                           craplot.cdagenci = par_cdagetfn  AND
+                           craplot.cdagenci = aux_cdagenci  AND
                            craplot.cdbccxlt = aux_cdbccxlt  AND
                            craplot.nrdolote = aux_nrdolote
                            USE-INDEX craplot1 
@@ -2565,7 +2592,7 @@ PROCEDURE efetua_saque:
                     CREATE cratlot.
                     ASSIGN cratlot.cdcooper = par_cdcooper
                            cratlot.dtmvtolt = par_dtmvtocd
-                           cratlot.cdagenci = par_cdagetfn
+                           cratlot.cdagenci = aux_cdagenci
                            cratlot.cdbccxlt = aux_cdbccxlt
                            cratlot.nrdolote = aux_nrdolote
                            cratlot.tplotmov = 1.
@@ -2604,7 +2631,7 @@ PROCEDURE efetua_saque:
         CREATE cratlcm.
         ASSIGN cratlcm.cdcooper = par_cdcooper
                cratlcm.dtmvtolt = par_dtmvtocd
-               cratlcm.cdagenci = par_cdagetfn
+               cratlcm.cdagenci = aux_cdagenci
                cratlcm.cdbccxlt = aux_cdbccxlt
                cratlcm.nrdolote = aux_nrdolote
                cratlcm.dtrefere = par_dtmvtocd
@@ -4942,6 +4969,8 @@ PROCEDURE verifica_cartao_magnetico:
                     RETURN "NOK".
                 END.
 
+            IF  aux_tptitcar <> 9 THEN
+            DO:
             /* Verifica se a conta foi migrada para outra cooperativa */
             FIND craptco WHERE craptco.cdcopant = crapcop.cdcooper  AND
                                craptco.nrctaant = par_nrdconta      AND
@@ -4979,6 +5008,7 @@ PROCEDURE verifica_cartao_magnetico:
                             END.
                         END.
                 END.
+            END.
 
 
             /* verifica se o sistema das 2 cooperativas em questao,
@@ -6041,8 +6071,10 @@ PROCEDURE busca_numero_conta:
     DEFINE OUTPUT PARAM par_nrdconta AS INT                 NO-UNDO.
     DEFINE OUTPUT PARAM par_dscritic AS CHAR                NO-UNDO.
 
-    FOR FIRST crapcrd FIELDS(nrdconta) 
+    FOR FIRST crapcrd, crapcop FIELDS(nrdconta) 
                       WHERE crapcrd.nrcrcard = par_nrcrcard
+          AND crapcop.cdcooper = crapcrd.cdcooper
+          AND crapcop.flgativo = TRUE
                             NO-LOCK: END.
     
     /* Cartao de credito CECRED */
@@ -6246,4 +6278,3 @@ END PROCEDURE.
 
 
 /* .......................................................................... */
-
