@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2017-01-18T10:12:37 -->
+<!-- 2017-03-20T14:37:45 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="aditiv" language="groovy" pageWidth="480" pageHeight="842" whenNoDataType="AllSectionsNoDetail" columnWidth="480" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.0"/>
 	<property name="ireport.x" value="27"/>
@@ -36,9 +36,6 @@
 	</field>
 	<field name="nmextcop" class="java.lang.String">
 		<fieldDescription><![CDATA[nmextcop]]></fieldDescription>
-	</field>
-	<field name="teste" class="java.lang.String">
-		<fieldDescription><![CDATA[teste]]></fieldDescription>
 	</field>
 	<field name="idimpres" class="java.lang.String">
 		<fieldDescription><![CDATA[idimpres]]></fieldDescription>
@@ -355,7 +352,7 @@
 		</band>
 		<band height="12">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
-			<printWhenExpression><![CDATA[$F{idimpres} != "2" && $F{idimpres} != "6"]]></printWhenExpression>
+			<printWhenExpression><![CDATA[$F{idimpres} == "1"]]></printWhenExpression>
 			<break>
 				<reportElement x="0" y="0" width="100" height="1" uuid="153af2c2-f703-4dbc-a0c0-864068337107">
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>

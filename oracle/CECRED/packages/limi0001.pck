@@ -1696,13 +1696,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
      Sistema : Rotinas referentes ao limite de credito
      Sigla   : LIMI
      Autor   : Odirlei Busana - AMcom
-     Data    : Agosto/16.                    Ultima atualizacao:
+     Data    : Agosto/16.                    Ultima atualizacao: 20/03/2017
 
      Dados referentes ao programa:
 
      Frequencia:
      Objetivo  : Rotina para geração do contrato de limite de credito
-     Alteracoes: 03/03/2017 - Tratamento para que na impressão do contrato apenas imprima o
+     Alteracoes: 20/03/2017 - Tratamento para que na impressão do contrato apenas imprima o
 				              contrato, e não o CET e nem a nota promissora como no completo.
 				              Chamado: 511304 (Andrey Formigari - Mouts)
     ..............................................................................*/
@@ -1897,11 +1897,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     
     --> INICIO
     pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><raiz><contrato>
-                    
                     <inpessoa>'|| vr_tab_dados_ctr(vr_idxctr).inpessoa ||'</inpessoa>                    
                     <nmprimtl>'|| vr_tab_dados_ctr(vr_idxctr).nmprimtl ||'</nmprimtl>
                     <nmextcop>'|| vr_tab_dados_ctr(vr_idxctr).nmextcop ||'</nmextcop>
                     <nmoperad>'|| vr_tab_dados_ctr(vr_idxctr).nmoperad ||'</nmoperad>
+					<idimpres>'|| pr_idimpres ||'</idimpres>
                     <dsemsctr>'|| vr_tab_dados_ctr(vr_idxctr).dsemsctr ||'</dsemsctr>'); 
     
     pc_escreve_xml('<dados>'||   
