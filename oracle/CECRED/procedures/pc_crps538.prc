@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme / Supero
-   Data    : Novembro/2009.                   Ultima atualizacao: 24/02/2017
+   Data    : Novembro/2009.                   Ultima atualizacao: 15/03/2017
 
    Dados referentes ao programa:
 
@@ -319,6 +319,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
                           
                24/02/2017 - Ajustado relatório 618 em função do novo layout COB615 (Rafael);
 
+               15/03/2017 - Removido a inicialição da variavel de multa e juros após inclusão do boleto na
+                            PL Table do relatório 618. Estava sendo zerado de forma incorreta, fazendo com 
+                            que o boleto tivesse o valor de multa/juros pago zerado (Douglas - Chamado 624683)
    .............................................................................*/
 
      DECLARE
@@ -5074,11 +5077,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
 
                    END IF;
 
-                   --Inicializar variaveis
-                   vr_cdcritic:= 0;
-                   vr_dscritic:= NULL;
-                   vr_vlrmulta:= 0;
-                   vr_vlrjuros:= 0;
                  ELSIF ROUND(vr_vlliquid,2) > ROUND(vr_vlfatura,2) THEN
                    /* se o valor foi pago acima, entao colocar o valor excedente em juros */
                    vr_vlrmulta:= 0;
