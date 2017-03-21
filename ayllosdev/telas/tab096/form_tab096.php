@@ -4,9 +4,9 @@
  * CRIAÇÃO      	: Lucas Reinert
  * DATA CRIAÇÃO 	: Julho/2015
  * OBJETIVO     	: Cabeçalho para a tela TAB096
- * ÚLTIMA ALTERAÇÃO : --/--/----
+ * ÚLTIMA ALTERAÇÃO : 07/03/2017
  * --------------
- * ALTERAÇÕES   	: 
+ * ALTERAÇÕES   	: 07/03/2017 - Adicao do campo descprej. (P210.2 - Jaison/Daniel)
  * --------------
  */ 
 ?>
@@ -37,6 +37,11 @@
 
 	<label for="vlrmintr"><? echo utf8ToHtml('Valor m&iacute;nimo do boleto - TR:') ?></label>
 	<input name="vlrmintr" id="vlrmintr" type="text" />				
+	<br style="clear:both" />	
+
+	<label for="descprej"><? echo utf8ToHtml('Desconto M&aacute;ximo Contrato Preju&iacute;zo:') ?></label>
+	<input name="descprej" id="descprej" type="text" style="margin-right: 5px"/>				
+	<label><? echo utf8ToHtml(' %') ?></label>
 
 	<fieldset id="fsetFormulario" name="fsetFormulario" style="padding:0px; margin:0px; padding-bottom:10px;">
 	<legend> <? echo utf8ToHtml('Instru&ccedil;&otilde;es ( Mensagens do Boleto)'); ?> </legend>
@@ -65,7 +70,7 @@
 
 		<textarea name="dstxtsms" id="dstxtsms" rows="4" cols="56" maxlength="140" style="margin-left: 15px; margin-top: 10px; margin-bottom: 10px;" ></textarea>
 	
-		<p style=" margin-left: 15px; font-family:Arial, Helvetica, sans-serif; font-size:11px;"><? echo utf8ToHtml('Obs.: Os campos "#LinhaDigitavel#", "#Cooperativa#" e "#Cooperado#" s&atilde;o preenchidos automaticamente pelo sistema.') ?></p>
+		<p style=" margin-left: 15px; font-family:Arial, Helvetica, sans-serif; font-size:11px;"><? echo utf8ToHtml('Obs.: Os campos "#LinhaDigitavel#", "#Cooperativa#", "#Cooperado#", #Contrato#, #Valor# e #Vencimento# s&atilde;o preenchidos automaticamente pelo sistema.') ?></p>
 	</fieldset>
 	<br style="clear:both" />
 	

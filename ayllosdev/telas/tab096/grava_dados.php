@@ -2,11 +2,11 @@
 	/*************************************************************************
 	  Fonte: grava_dados.php                                               
 	  Autor: Lucas Reinert
-	  Data : Julho/2015                       Última Alteração: --/--/----
+	  Data : Julho/2015                       Última Alteração: 07/03/2017
 	                                                                   
 	  Objetivo  : Grava parametros na crapprm.
 	                                                                 
-	  Alterações: 
+	  Alterações: 07/03/2017 - Gravacao do campo descprej. (P210.2 - Jaison/Daniel)
 	                                                                  
 	***********************************************************************/
 
@@ -31,6 +31,7 @@
 	$prazobxa = (isset($_POST['prazobxa'])) ? $_POST['prazobxa'] : ''  ;	
 	$vlrminpp = (isset($_POST['vlrminpp'])) ? $_POST['vlrminpp'] : ''  ;	
 	$vlrmintr = (isset($_POST['vlrmintr'])) ? $_POST['vlrmintr'] : ''  ;	
+	$descprej = (isset($_POST['descprej'])) ? $_POST['descprej'] : ''  ;
 	$dslinha1 = (isset($_POST['dslinha1'])) ? $_POST['dslinha1'] : ''  ;	
 	$dslinha2 = (isset($_POST['dslinha2'])) ? $_POST['dslinha2'] : ''  ;	
 	$dslinha3 = (isset($_POST['dslinha3'])) ? $_POST['dslinha3'] : ''  ;	
@@ -54,6 +55,7 @@
 	$xmlCarregaDados .= "   <prazobxa>".$prazobxa."</prazobxa>";	
 	$xmlCarregaDados .= "   <vlrminpp>".$vlrminpp."</vlrminpp>";	
 	$xmlCarregaDados .= "   <vlrmintr>".$vlrmintr."</vlrmintr>";	
+	$xmlCarregaDados .= "   <descprej>".$descprej."</descprej>";
 	$xmlCarregaDados .= "   <dslinha1>".$dslinha1."</dslinha1>";	
 	$xmlCarregaDados .= "   <dslinha2>".$dslinha2."</dslinha2>";	
 	$xmlCarregaDados .= "   <dslinha3>".$dslinha3."</dslinha3>";	

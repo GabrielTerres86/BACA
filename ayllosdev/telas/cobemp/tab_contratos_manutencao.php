@@ -6,6 +6,8 @@
  * OBJETIVO     : Tabela que apresenta a consulta de contratos
  * --------------
 	 * ALTERAÇÕES   : 01/08/2016 - Corrigi o uso desnecessario da funcao session_start. SD 491672 (Carlos R.)
+ *
+ *                    03/03/2017 - Inclusao de title para boletos de contrato PP. (P210.2 - Jaison/Daniel)
  * --------------
  */
 
@@ -60,7 +62,7 @@ isPostMethod();
                         <td><span><?php echo getByTagName($r->tags, 'dtmvtolt'); ?></span>
                             <?php echo getByTagName($r->tags, 'dtmvtolt'); ?>
                         </td>
-                        <td id="nrdocmto"><span><?php echo getByTagName($r->tags, 'nrdocmto'); ?></span>
+                        <td id="nrdocmto"<?php echo getByTagName($r->tags, 'dsparcel') != '' ? ' title="'.getByTagName($r->tags, 'dsparcel').'"' : ''; ?>><span><?php echo getByTagName($r->tags, 'nrdocmto'); ?></span>
                             <?php echo getByTagName($r->tags, 'nrdocmto'); ?>
                         </td>
                         <td><span><?php echo getByTagName($r->tags, 'dtvencto'); ?></span>

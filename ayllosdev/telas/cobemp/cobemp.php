@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 12/08/2015 
  * OBJETIVO     : Mostra rotina Cobranca de Emprestimos
  * --------------
- * ALTERAÇÃO    :
+ * ALTERAÇÃO    : 13/03/2017 - Criacao do form_arquivos.php. (P210.2 - Jaison/Daniel)
  * --------------
  */
 ?>
@@ -108,6 +108,7 @@ include('../../includes/carrega_permissoes.php');
                                                                                     <?php include('form_cabecalho.php'); ?>
                                                                                     <?php include('form_manutencao.php'); ?>
                                                                                     <?php include('form_contratos.php'); ?>
+                                                                                    <?php include('form_arquivos.php'); ?>
                                                                                     <div id="divBotoes" style="margin-bottom: 15px; text-align:center; margin-top: 15px;display:none"></div>
                                                                                     <div id="divManutencao"></div>
                                                                                     <div id="divUsoGenerico"></div>

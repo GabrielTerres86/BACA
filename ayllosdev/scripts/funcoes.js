@@ -97,6 +97,7 @@
  * 084: [18/08/2016] Evandro          (RKAM)   : Adicionado condição na função showConfirmacao para voltar foco a classe FirstInputModal, ao fechar janela
  * 080: [18/10/2016] Kelvin			  (CECRED) : Funcao removeCaracteresInvalidos nao estava removendo os caracteres ">" e "<", ajustado 
 												 para remover os mesmos e criado uma flag para identificar se deve remover os acentos ou nao.
+ * 081: [13/03/2017] Jaison/Daniel    (CECRED) : Criada a funcao retornaDateDiff.
 												 
  */ 	 
 
@@ -2573,4 +2574,58 @@ function utf8_decode(str_data) {
   }
 
   return tmp_arr.join('');
+}
+
+/*! OBJETIVO: Calcular a diferenca entre datas em: Dias, Semanas, Meses e Anos */
+function retornaDateDiff(tipo, dtini, dtfim) {
+
+    var DateDiff = {
+
+        inDays: function (d1, d2) {
+            var t2 = d2.getTime();
+            var t1 = d1.getTime();
+
+            return parseInt((t2 - t1) / (24 * 3600 * 1000));
+        },
+
+        inWeeks: function (d1, d2) {
+            var t2 = d2.getTime();
+            var t1 = d1.getTime();
+
+            return parseInt((t2 - t1) / (24 * 3600 * 1000 * 7));
+        },
+
+        inMonths: function (d1, d2) {
+            var d1Y = d1.getFullYear();
+            var d2Y = d2.getFullYear();
+            var d1M = d1.getMonth();
+            var d2M = d2.getMonth();
+
+            return (d2M + 12 * d2Y) - (d1M + 12 * d1Y);
+        },
+
+        inYears: function (d1, d2) {
+            return d2.getFullYear() - d1.getFullYear();
+        }
+    }
+
+    var dt_s1 = dtini.split('/');
+    var d1 = new Date(dt_s1.slice(0, 3).reverse().join('/'));
+    var dt_s2 = dtfim.split('/');
+    var d2 = new Date(dt_s2.slice(0, 3).reverse().join('/'));
+
+    switch (tipo.toUpperCase()) {
+        case 'D': // Days
+            return DateDiff.inDays(d1, d2);
+            break;
+        case 'W': // Weeks
+            return DateDiff.inWeeks(d1, d2);
+            break;
+        case 'M': // Months
+            return DateDiff.inMonths(d1, d2);
+            break;
+        case 'Y': // Years
+            return DateDiff.inYears(d1, d2);
+            break;
+    }
 }

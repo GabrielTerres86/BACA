@@ -2,11 +2,11 @@
 	/*************************************************************************
 	  Fonte: obtem_consulta.php                                               
 	  Autor: Lucas Reinert                                          
-	  Data : Julho/2015                         Última Alteração: --/--/----		   
+	  Data : Julho/2015                         Última Alteração: 07/03/2017
 	                                                                   
 	  Objetivo  : Carrega os dados da tela TAB096.              
 	                                                                 
-	  Alterações: 
+	  Alterações: 07/03/2017 - Busca do campo descprej. (P210.2 - Jaison/Daniel)
 				  
 	***********************************************************************/
 
@@ -51,6 +51,7 @@
 	$pzbxavct = getByTagName($xmlObj->roottag->tags,'pzbxavct');
 	$vlrminpp = getByTagName($xmlObj->roottag->tags,'vlrminpp');
 	$vlrmintr = getByTagName($xmlObj->roottag->tags,'vlrmintr');
+	$descprej = getByTagName($xmlObj->roottag->tags,'descprej');
 	$dslinha1 = getByTagName($xmlObj->roottag->tags,'dslinha1');
 	$dslinha2 = getByTagName($xmlObj->roottag->tags,'dslinha2');
 	$dslinha3 = getByTagName($xmlObj->roottag->tags,'dslinha3');
@@ -99,6 +100,7 @@
 	$('#prazobxa','#frmTab096').val('<? echo $pzbxavct; ?>');
 	$('#vlrminpp','#frmTab096').val('<? echo formataMoeda($vlrminpp); ?>');
 	$('#vlrmintr','#frmTab096').val('<? echo formataMoeda($vlrmintr); ?>');			
+	$('#descprej','#frmTab096').val('<? echo formataMoeda($descprej); ?>');
 	$('#dslinha1','#frmTab096').val('<? echo $dslinha1; ?>');
 	$('#dslinha2','#frmTab096').val('<? echo $dslinha2; ?>');
 	$('#dslinha3','#frmTab096').val('<? echo $dslinha3; ?>');	

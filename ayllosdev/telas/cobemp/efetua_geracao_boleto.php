@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 04/09/2015
  * OBJETIVO     : Rotina para geracao boleto
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 02/03/2017 - Inclusao de CPF do avalista. (P210.2 - Jaison/Daniel)
  * --------------
  */
 ?>
@@ -24,6 +24,7 @@ $dsparepr = (isset($_POST['dsparepr'])) ? $_POST['dsparepr'] : '';
 $dtvencto = (isset($_POST['dtvencto'])) ? $_POST['dtvencto'] : '';
 $vlparepr = (isset($_POST['vlparepr'])) ? $_POST['vlparepr'] : 0;
 $tpemprst = (isset($_POST['tpemprst'])) ? $_POST['tpemprst'] : '';
+$nrcpfava = (isset($_POST['nrcpfava'])) ? $_POST['nrcpfava'] : 0;
      
 if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"G",false)) <> "") {
 	exibeErro($msgError);		
@@ -40,6 +41,7 @@ $xml .= "   <tpparepr>" . $tpparepr . "</tpparepr>";
 $xml .= "   <dsparepr>" . $dsparepr . "</dsparepr>";
 $xml .= "   <dtvencto>" . $dtvencto . "</dtvencto>";
 $xml .= "   <vlparepr>" . $vlparepr . "</vlparepr>";
+$xml .= "   <nrcpfava>" . $nrcpfava . "</nrcpfava>";
 $xml .= " </Dados>";
 $xml .= "</Root>";
 

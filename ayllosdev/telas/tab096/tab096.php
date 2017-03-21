@@ -3,11 +3,11 @@
 	/*******************************************************************
 	Fonte: tab096.php                                                		
 	Autor: Lucas Reinert                                             		
-	Data : Julho/2015                 Última Alteração: --/--/----   		
+	Data : Julho/2015                 Última Alteração: 06/03/2017
 	                                                                 		
 	Objetivo  : Mostrar tela TAB096.                                    
 	                                                                    
-	Alterações: 															
+	Alterações: 06/03/2017 - Buscar somente as cooperativas ativas. (P210.2 - Jaison/Daniel)
 	*******************************************************************/
 	
 	session_start();
@@ -24,47 +24,34 @@
 	
 	// Carrega permissões do operador
 	include("../../includes/carrega_permissoes.php");	
-	
-		
-	// Monta o xml de requisição
-	$xml  = '';
-	$xml .= '<Root>';
-	$xml .= '	<Cabecalho>';
-	$xml .= '		<Bo>b1wgen0131.p</Bo>';
-	$xml .= '		<Proc>Busca_Cooperativas</Proc>';
-	$xml .= '	</Cabecalho>';
-	$xml .= '	<Dados>';
-	$xml .= '       <cdcooper>'.$glbvars['cdcooper'].'</cdcooper>';
-	$xml .= '		<cdagenci>'.$glbvars['cdagenci'].'</cdagenci>';
-	$xml .= '		<nrdcaixa>'.$glbvars['nrdcaixa'].'</nrdcaixa>';
-	$xml .= '		<cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
-	$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';	
-	$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';	
-	$xml .= '		<nmrescop>'.$glbvars['nmrescop'].'</nmrescop>';	
-	$xml .= '	</Dados>';
-	$xml .= '</Root>';
 
-	
-	// Executa script para envio do XML e cria objeto para classe de tratamento de XML
-	$xmlResult 		= getDataXML($xml);
-	$xmlObjeto 		= getObjectXML($xmlResult);
+    $xml = "<Root>";
+    $xml .= " <Dados>";
+    $xml .= "   <cdcooper>0</cdcooper>";
+    $xml .= "   <flgativo>1</flgativo>";
+    $xml .= " </Dados>";
+    $xml .= "</Root>";
 
-	// Recebe as cooperativas
-	$nmcooper		= $xmlObjeto->roottag->tags[0]->attributes['NMCOOPER'];
-		
-	// Faz o tratamento para criar o select
-	$nmcooperArray	= explode(',', $nmcooper);
-	
-	$qtcooper		= count($nmcooperArray);
-	$slcooper		= '<option value="0">TODAS</option>';	    	
-	
-	for ( $j = 0; $j < $qtcooper; $j +=2 ) {
-		
-		if($j > 0){
-			$slcooper = $slcooper . '<option value="'.$nmcooperArray[$j+1].'">'.$nmcooperArray[$j].'</option>';
-		}
-	}			
-	
+    $xmlResult = mensageria($xml, "CADA0001", "LISTA_COOPERATIVAS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+    $xmlObject = getObjectXML($xmlResult);
+
+    if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
+        $msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
+        if ($msgErro == "") {
+            $msgErro = $xmlObject->roottag->tags[0]->cdata;
+        }
+        exibirErro('error',$msgErro,'Alerta - Ayllos','',false);
+    }
+
+    $registros = $xmlObject->roottag->tags[0]->tags;
+    $slcooper  = '<option value="0">TODAS</option>';
+
+    foreach ($registros as $r) {
+        if (getByTagName($r->tags, 'cdcooper') <> '' && 
+            getByTagName($r->tags, 'cdcooper') <> 3) {
+            $slcooper .= '<option value="'.getByTagName($r->tags, 'cdcooper').'">'.strtoupper(getByTagName($r->tags, 'nmrescop')).'</option>';
+        }
+    }
 ?>
 
 <script>

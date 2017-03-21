@@ -1,11 +1,11 @@
 //*********************************************************************************************//
 //*** Fonte: tab096.js                                                 						***//
 //*** Autor: Lucas Reinert                                           						***//
-//*** Data : Julho/2015                  Última Alteração: --/--/----  						***//
+//*** Data : Julho/2015                  Última Alteração: 07/03/2017  						***//
 //***                                                                  						***//
 //*** Objetivo  : Biblioteca de funções da tela TAB096                 						***//
 //***                                                                  						***//	 
-//*** Alterações: 																			***//
+//*** Alterações: 07/03/2017 - Adicao do campo descprej. (P210.2 - Jaison/Daniel)			***//
 //*********************************************************************************************//
 
 var cCddopcao;
@@ -108,6 +108,7 @@ function formataFormulario() {
     var rPrazobxa = $('label[for="prazobxa"]', '#frmTab096');
     var rVlrminpp = $('label[for="vlrminpp"]', '#frmTab096');
     var rVlrmintr = $('label[for="vlrmintr"]', '#frmTab096');
+    var rDescprej = $('label[for="descprej"]', '#frmTab096');
     var rLinha1 = $('label[for="dslinha1"]', '#frmTab096');
     var rLinha2 = $('label[for="dslinha2"]', '#frmTab096');
     var rLinha3 = $('label[for="dslinha3"]', '#frmTab096');
@@ -125,6 +126,7 @@ function formataFormulario() {
 	rPrazobxa.addClass('rotulo').css('width','270px');
 	rVlrminpp.addClass('rotulo').css('width','270px');
 	rVlrmintr.addClass('rotulo').css('width','270px');
+	rDescprej.addClass('rotulo').css('width','270px');
 	rLinha1.addClass('rotulo').css('width','100px');
     rLinha2.addClass('rotulo').css('width','100px');
     rLinha3.addClass('rotulo').css('width','100px');
@@ -140,6 +142,7 @@ function formataFormulario() {
     var cPrazobxa = $('#prazobxa', '#frmTab096');
     var cVlrminpp = $('#vlrminpp', '#frmTab096');
     var cVlrmintr = $('#vlrmintr', '#frmTab096');
+    var cDescprej = $('#descprej', '#frmTab096');
     var cLinha1 = $('#dslinha1', '#frmTab096');
     var cLinha2 = $('#dslinha2', '#frmTab096');
     var cLinha3 = $('#dslinha3', '#frmTab096');
@@ -157,6 +160,7 @@ function formataFormulario() {
     cPrazobxa.css('width', '127px').addClass('inteiro').attr('maxlength','2');
     cVlrminpp.css('width', '127px').addClass('moeda');
     cVlrmintr.css('width', '127px').addClass('moeda');
+    cDescprej.css('width', '127px').addClass('moeda');
     cLinha1.css('width', '500px').addClass('alphanum').attr('maxlength','50');
     cLinha2.css('width', '500px').addClass('alphanum').attr('maxlength','50');
     cLinha3.css('width', '500px').addClass('alphanum').attr('maxlength','50');
@@ -235,6 +239,13 @@ function formataFormulario() {
         });
 
         cVlrmintr.keypress(function(e) {
+            if (e.keyCode == 13 || e.keyCode == 09 || e.keyCode == 18) {
+                cDescprej.focus();
+                return false;
+            }
+        });
+
+        cDescprej.keypress(function(e) {
             if (e.keyCode == 13 || e.keyCode == 09 || e.keyCode == 18) {
                 cLinha1.focus();
                 return false;
@@ -370,9 +381,14 @@ function controlaOperacao() {
 function alterarDados() {
 
     var cddopcao = $("#cddopcao", "#frmCab").val();
+    var descprej = converteMoedaFloat($('#descprej', '#frmTab096').val());
 
     if (cddopcao == "A") {
-        showConfirmacao('Confirma a atualiza&ccedil;&atilde;o dos parametros?', 'Tab096', 'grava_dados();', 'voltaDiv();estadoInicial();', 'sim.gif', 'nao.gif');
+        if (descprej < 0 || descprej > 100) {
+            showError("error", "Informe um percentual entre 0 e 100.", "Alerta - Ayllos", "$('#descprej','#frmTab096').focus()");
+        } else {
+            showConfirmacao('Confirma a atualiza&ccedil;&atilde;o dos parametros?', 'Tab096', 'grava_dados();', 'voltaDiv();estadoInicial();', 'sim.gif', 'nao.gif');
+        }
     }
 }
 
@@ -384,6 +400,7 @@ function grava_dados() {
     var prazobxa = $('#prazobxa', '#frmTab096').val();
     var vlrminpp = $('#vlrminpp', '#frmTab096').val();
     var vlrmintr = $('#vlrmintr', '#frmTab096').val();
+    var descprej = $('#descprej', '#frmTab096').val();
     var dslinha1 = $('#dslinha1', '#frmTab096').val();
     var dslinha2 = $('#dslinha2', '#frmTab096').val();
     var dslinha3 = $('#dslinha3', '#frmTab096').val();
@@ -413,6 +430,7 @@ function grava_dados() {
             prazobxa: prazobxa,
             vlrminpp: vlrminpp,
             vlrmintr: vlrmintr,
+            descprej: descprej,
             dslinha1: dslinha1,
             dslinha2: dslinha2,
             dslinha3: dslinha3,

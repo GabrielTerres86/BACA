@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
   --
   --  Programa:  DSCT0002                       Antiga: generico/procedures/b1wgen0030.p
   --  Autor   : Odirlei Busana - AMcom 
-  --  Data    : Agosto/2016                     Ultima Atualizacao: 
+  --  Data    : Agosto/2016                     Ultima Atualizacao: 02/03/2017
   --
   --  Dados referentes ao programa:
   --
@@ -12,7 +12,9 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
   --              titulos.
   --
   --  Alteracoes: 05/08/2016 - Conversao Progress para oracle (Odirlei - AMcom)
-  --  
+  --
+  --              02/03/2017 - Tornar a pc_lista_avalistas publica. (P210.2 - Jaison/Daniel)
+  --
   --------------------------------------------------------------------------------------------------------------*/
  
   -- Tabela para armazenar parametros para desconto de titulo(antigo b1wgen0030tt.i/tt-dsctit.)
@@ -300,6 +302,24 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
   
   TYPE typ_tab_restri_apr_coo IS TABLE OF VARCHAR2(100)
        INDEX BY VARCHAR2(100);
+  
+  --> listar avalistas de contratos
+  PROCEDURE pc_lista_avalistas ( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Código da Cooperativa
+                                ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Código da agencia
+                                ,pr_nrdcaixa IN crapbcx.nrdcaixa%TYPE  --> Numero do caixa do operador
+                                ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Código do Operador
+                                ,pr_nmdatela IN craptel.nmdatela%TYPE  --> Nome da tela
+                                ,pr_idorigem IN INTEGER                --> Identificador de Origem
+                                ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Numero da conta do cooperado
+                                ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> Sequencial do titular
+                                ,pr_tpctrato IN INTEGER                --> Tipo de contrado
+                                ,pr_nrctrato IN crapepr.nrctremp%TYPE  --> Numero do contrato
+                                ,pr_nrctaav1 IN crawepr.nrctaav1%TYPE  --> Numero da conta do primeiro avalista
+                                ,pr_nrctaav2 IN crawepr.nrctaav2%TYPE  --> Numero da conta do segundo avalista
+                                 --------> OUT <--------                                   
+                                ,pr_tab_dados_avais   OUT typ_tab_dados_avais   --> retorna dados do avalista
+                                ,pr_cdcritic          OUT PLS_INTEGER           --> Código da crítica
+                                ,pr_dscritic          OUT VARCHAR2);            --> Descrição da crítica
                  
   --> Buscar dados para montar contratos etc para desconto de titulos
   PROCEDURE pc_busca_dados_imp_descont( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Código da Cooperativa

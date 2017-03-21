@@ -4,6 +4,9 @@
  * CRIAÇÃO      : Daniel Zimmermann
  * DATA CRIAÇÃO : 25/08/2015
  * OBJETIVO     : Rotina para busca valores TR.
+ * --------------
+ * ALTERAÇÕES   : 01/03/2017 - Inclusao de indicador se possui avalista. (P210.2 - Jaison/Daniel)
+ * --------------
  */
 ?>
 
@@ -15,9 +18,16 @@ require_once('../../includes/controla_secao.php');
 require_once('../../class/xmlfile.php');
 isPostMethod();
 
+$avalista = (isset($_POST['avalista'])) ? $_POST['avalista'] : 0;
+$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0;
+$nrctremp = (isset($_POST['nrctremp'])) ? $_POST['nrctremp'] : 0;
+
 // Montar o xml de Requisicao
 $xml  = "<Root>";
 $xml .= " <Dados>";
+$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+$xml .= "   <nrctremp>".$nrctremp."</nrctremp>";
+$xml .= "   <inprejuz>0</inprejuz>";
 $xml .= " </Dados>";
 $xml .= "</Root>";
 
@@ -35,7 +45,6 @@ if (strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')) {
 }
 
 $maxDate = $xmlObj->roottag->cdata;
-
 ?>
 
 <style>
@@ -109,28 +118,60 @@ $maxDate = $xmlObj->roottag->cdata;
             $("#dtvencto").datepicker("option", "gotoCurrent", true);
     });</script>
 
-<form id="frmGerarBoletoTR" name="frmGerarBoletoTR" class="formulario" onSubmit="return false;" >
+<form id="frmGerarBoletoTR" name="frmGerarBoletoTR" class="formulario" onSubmit="return false;">
 
     <br style="clear:both" />		
 
-    <label for="rdvencto"><?php echo utf8ToHtml('Vencimento:') ?></label>
-    <input type="radio" id="rdvencto1" class="campo" name="rdvencto" value="1" onclick="habilitaDataVencimentoTR(false)" /> <label style="margin-left:10px">Nesta Data </label>
-    <br style="clear:both" />	
-    <input type="radio" id="rdvencto2" class="campo" name="rdvencto" value="2" onclick="habilitaDataVencimentoTR(true)" /> <label style="margin-left:10px">Data Futura:	</label>
-    <input type="text" id="dtvencto" class="campo" name="dtvencto" readonly="true"/>
-    <input type="hidden" id="dtmvtolt" class="campo" name="dtmvtolt" value="<?php echo $glbvars["dtmvtolt"]; ?>"/>
+    <fieldset>
+        <legend align="left">Vencimento</legend>
+        <input type="radio" id="rdvencto1" class="campo" name="rdvencto" value="1" onclick="habilitaDataVencimentoTR(false)" /> <label style="margin-left:10px">Nesta Data</label>
+        <br style="clear:both" />	
+        <input type="radio" id="rdvencto2" class="campo" name="rdvencto" value="2" onclick="habilitaDataVencimentoTR(true)" /> <label style="margin-left:10px">Data Futura:</label>
+        <input type="text" id="dtvencto" class="campo" name="dtvencto" readonly="true"/>
+        <input type="hidden" id="dtmvtolt" class="campo" name="dtmvtolt" value="<?php echo $glbvars["dtmvtolt"]; ?>"/>
+    </fieldset>
+    <br style="clear:both" />
 
+    <?php
+        // Se possui Avalista
+        if ($avalista == 1) {
+            $xmlResult = mensageria($xml, "TELA_COBEMP", "COBEMP_AVAL", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+            $xmlObject = getObjectXML($xmlResult);
 
-    <div id="divBotoesGerarBoletoTR" style="margin-bottom: 5px; text-align:center;" >
-        <a href="#" class="botao" id="btVoltar"  	onClick="<?php echo 'fechaRotina($(\'#divRotina\')); '; ?> return false;">Voltar</a>
-        <a href="#" class="botao" id="btEnviar"  	onClick="mostraValoresTR(); return false;">Avancar</a>
+            if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO"){
+                $msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
+                exibirErro('error',$msgErro,'Alerta - Ayllos','', false);
+            }
+
+            $regAval = $xmlObject->roottag->tags[0]->tags;
+            ?>
+            <fieldset>
+                <legend align="left">Sacado</legend>
+                <input type="radio" id="rdsacado1" class="campo" name="rdsacado" value="1" onclick="habilitaAvalista(1)" /> <label style="margin-left:10px">Devedor</label>
+                <br style="clear:both" />	
+                <input type="radio" id="rdsacado2" class="campo" name="rdsacado" value="2" onclick="habilitaAvalista(2)" /> <label style="margin-left:10px">Avalista:</label>
+                <select name="nrcpfava" id="nrcpfava">
+                    <option value=""></option>
+                    <?php
+                        foreach ($regAval as $reg) {
+                            echo '<option value="'.getByTagName($reg->tags,'NRCPFCGC').'">'.getByTagName($reg->tags,'NMDAVALI').'</option>';
+                        }
+                    ?>
+                </select>
+            </fieldset>
+            <br style="clear:both" />
+            <?php
+        }
+    ?>
+
+    <div id="divBotoesGerarBoletoTR" style="margin-bottom: 5px; text-align:center;">
+        <a href="#" class="botao" id="btVoltar" style="float:none" onClick="<?php echo 'fechaRotina($(\'#divRotina\')); '; ?> return false;">Voltar</a>
+        <a href="#" class="botao" id="btEnviar" style="float:none" onClick="mostraValoresTR(); return false;">Avancar</a>
     </div>
 
     <br style="clear:both" />	
 
-
-    <div id="divValoresTR">
-    </div>
+    <div id="divValoresTR"></div>
 
     <br style="clear:both" />
     <br style="clear:both" />
