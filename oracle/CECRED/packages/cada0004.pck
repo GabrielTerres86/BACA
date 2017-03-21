@@ -8027,7 +8027,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Andrino Carlos de Souza Junior (RKAM)
-    --  Data     : Abril/2016.                   Ultima atualizacao: 08/06/2016
+    --  Data     : Abril/2016.                   Ultima atualizacao: 14/11/2016
     --
     --  Dados referentes ao programa:
     --
@@ -8041,6 +8041,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --                           e 'FINTRFTEDS' para utilizar a rotina padrao da TABE0001
     --                           (Douglas - Chamado 454248)
     --
+    --              14/11/2016 - Ajustado para ler o cdorigem da gene0001 e não utilizar 
+    --                           ifs no programa(Odirlei-AMcom)  
     -- ..........................................................................*/
 
     -- Cursor para retornar o nome do banco
@@ -8087,26 +8089,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     END IF;
     
     -- Preenche a descricao da origem
-    IF pr_cdorigem = 1 THEN
-      vr_dsorigem := 'AYLLOS';
-    ELSIF pr_cdorigem = 2 THEN
-      vr_dsorigem := 'CAIXA';
-    ELSIF pr_cdorigem = 3 THEN
-      vr_dsorigem := 'INTERNET';
-    ELSIF pr_cdorigem = 4 THEN
-      vr_dsorigem := 'CASH';
-    ELSIF pr_cdorigem = 5 THEN
-      vr_dsorigem := 'INTRANET';
-    ELSIF pr_cdorigem = 6 THEN
-      vr_dsorigem := 'URA';
-    ELSIF pr_cdorigem = 7 THEN
-      vr_dsorigem := 'BATCH';
-    ELSIF pr_cdorigem = 8 THEN
-      vr_dsorigem := 'MENSAGERIA';
-    ELSIF pr_cdorigem = 9 THEN
-      vr_dsorigem := 'MOBILE';
-    ELSE
+    IF vr_dsorigem > gene0001.vr_vet_des_origens.count() THEN
       vr_dsorigem := 'OUTROS';
+    ELSE
+      vr_dsorigem := gene0001.vr_vet_des_origens(pr_cdorigem);
     END IF;    
    
     -- Se deve gerar log na VERLOG
