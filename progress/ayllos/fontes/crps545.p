@@ -599,8 +599,6 @@ PROCEDURE enviar_email_devolucoes_matera:
   
   ASSIGN corpo = corpo + "\n Deverá ser efetuado crédito de devolução na conta da Cooperativa Filiada (histórico 2218)".
   
-  MESSAGE corpo.
-  
   RUN sistema/generico/procedures/b1wgen0011.p PERSISTENT SET h-b1wgen0011.
 
   RUN enviar_email_completo IN h-b1wgen0011
