@@ -459,6 +459,9 @@
                            qdo o corpo do email ultrapassar 25 titulos pois estava
                            acarretando em problemas no IB (Tiago/Elton SD 521667).
 						   
+28/11/2016 - Incluido tratamento de transaçoes pendentes 16 e 17.
+PRJ319 - SMS Cobrança (Odirlei - AMcom)
+
 			  07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
                            departamento passando a considerar o código (Renato Darosci)             
  .............................................................................*/
@@ -497,6 +500,9 @@ DEF TEMP-TABLE tt-tbcapt_trans_pend   NO-UNDO LIKE tbcapt_trans_pend.
 DEF TEMP-TABLE tt-tbconv_trans_pend   NO-UNDO LIKE tbconv_trans_pend.
 DEF TEMP-TABLE tt-tbfolha_trans_pend  NO-UNDO LIKE tbfolha_trans_pend.
 DEF TEMP-TABLE tt-tbtarif_pacote_trans_pend NO-UNDO LIKE tbtarif_pacote_trans_pend.
+DEF TEMP-TABLE tt-tbcobran_sms_trans_pend  NO-UNDO LIKE tbcobran_sms_trans_pend.
+DEF TEMP-TABLE tt-tbrecarga_trans_pend        NO-UNDO LIKE tbrecarga_trans_pend.
+
 DEF TEMP-TABLE tt-pagtos-mon NO-UNDO
     FIELD nrsequen AS INTE
     FIELD dslinhas AS CHAR.
@@ -1479,7 +1485,25 @@ PROCEDURE proc_cria_critica_transacao_oper:
                         ASSIGN aux_dscedent = "Pagamento de DAS".
                     END.
                   END. /* FIM DARF/DAS */
-                
+                            ELSE
+                            /** CONTRATO SMS **/
+                            IF tbgen_trans_pend.tptransacao = 16  OR
+                            tbgen_trans_pend.tptransacao = 17  THEN
+                            DO:
+                              FIND tbcobran_sms_trans_pend
+                              WHERE  tbcobran_sms_trans_pend.cdtransacao_pendente = tbgen_trans_pend.cdtransacao_pendente
+                              NO-LOCK NO-ERROR NO-WAIT.
+                              
+                              ASSIGN aux_dtdebito = "Nesta Data"
+                              aux_dscedent = "SMS INDIVIDUAL"
+                              aux_vllantra = tbcobran_sms_trans_pend.vlservico.
+                              
+                              IF tbgen_trans_pend.tptransacao = 16 THEN
+                              ASSIGN aux_dstptran = "Adesao Serviço SMS de Cobrança".
+                              ELSE
+                              ASSIGN aux_dstptran = "Cancelamento do Serviço SMS de Cobrança".
+                                
+                              END.
                 IF tbgen_trans_pend.tptransacao = 2 THEN
                     aux_dstiptra= (IF tbpagto_trans_pend.tppagamento = 1 THEN "Pagamento de Convenio" ELSE "Pagamento de Boletos Diversos").
                                                               ELSE
@@ -1515,6 +1539,39 @@ PROCEDURE proc_cria_critica_transacao_oper:
                         ELSE IF tt-tbpagto_darf_das_trans_pend.tppagamento = 2 THEN
                             aux_dstiptra = "Pagamento de DAS".
                     END.
+                ELSE
+                IF tbgen_trans_pend.tptransacao = 13 THEN
+                    DO:
+                        
+                        FIND tbrecarga_operacao WHERE  tbrecarga_operacao.idoperacao = tt-tbrecarga_trans_pend.idoperacao NO-LOCK NO-ERROR NO-WAIT.
+                        
+                        { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+                             
+                        RUN STORED-PROCEDURE pc_busca_recarga_prog aux_handproc = PROC-HANDLE NO-ERROR
+                                             (INPUT tt-tbrecarga_trans_pend.idoperacao
+                                             ,OUTPUT ""
+                                             ,OUTPUT 0
+                                             ,OUTPUT "").
+                        CLOSE STORED-PROC pc_busca_recarga_prog 
+                            aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.     
+             
+                        ASSIGN aux_resposta = ""
+                               aux_resposta = pc_busca_recarga_prog.pr_resposta
+                                              WHEN pc_busca_recarga_prog.pr_resposta <> ?.
+                        
+                        { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+                        
+                        ASSIGN aux_dtdebito = (IF tt-tbrecarga_trans_pend.tprecarga = 1 THEN "Nesta Data" ELSE
+                                               STRING(tbrecarga_operacao.dtrecarga,"99/99/9999"))
+                               aux_vllantra = tbrecarga_operacao.vlrecarga
+                               aux_dstptran = aux_resposta
+                        	   aux_dstiptra = "Recarga de Celular".
+                    END.
+
+                              ELSE IF tbgen_trans_pend.tptransacao = 16 THEN /*OK*/
+                              aux_dstiptra = "Adesao SMS Cobrança".
+                              ELSE IF tbgen_trans_pend.tptransacao = 17 THEN /*OK*/
+                              aux_dstiptra = "Cancelamento SMS Cobrança".
                                                               ELSE
                     aux_dstiptra = "Transacao".
                 
@@ -6889,6 +6946,7 @@ PROCEDURE aprova_trans_pend:
     DEF VAR aux_vldifere AS LOGI                                    NO-UNDO.
     DEF VAR aux_cobregis AS LOGI                                    NO-UNDO.
     DEF VAR aux_msgalert AS CHAR                                    NO-UNDO.
+																							DEF VAR aux_dsretorn AS CHAR                                    NO-UNDO.
     DEF VAR aux_qtminast AS INTE                                    NO-UNDO.
     DEF VAR aux_contapro AS INTE                                    NO-UNDO.    
             
@@ -7072,7 +7130,9 @@ PROCEDURE aprova_trans_pend:
     EMPTY TEMP-TABLE tt-tbconv_trans_pend.
     EMPTY TEMP-TABLE tt-tbfolha_trans_pend.
     EMPTY TEMP-TABLE tt-tbtarif_pacote_trans_pend.
-    EMPTY TEMP-TABLE tt-tbpagto_darf_das_trans_pend.
+    EMPTY TEMP-TABLE tt-tbpagto_darf_das_trans_pend. 
+    EMPTY TEMP-TABLE tt-tbrecarga_trans_pend.
+                                                                                                  EMPTY TEMP-TABLE tt-tbcobran_sms_trans_pend.
     
     DO aux_contador = 1 TO NUM-ENTRIES(par_cdditens,"/"):
         
@@ -7387,6 +7447,21 @@ PROCEDURE aprova_trans_pend:
 
                                 ASSIGN tt-tbgen_trans_pend.idmovimento_conta  = IdentificaMovCC(tbgen_trans_pend.tptransacao,1,0).
             END.        
+                                                                                                                        END.
+                                                                                                                        /* Contrato SMS */
+                                                                                                                        ELSE IF tbgen_trans_pend.tptransacao = 16 OR
+                                                                                                                        tbgen_trans_pend.tptransacao = 17 THEN
+                                                                                                                        DO:
+                                                                                                                          FOR FIRST tbcobran_sms_trans_pend WHERE tbcobran_sms_trans_pend.cdtransacao_pendente = aux_cddoitem NO-LOCK. END.
+                                                                                                                            
+                                                                                                                            IF AVAIL tbcobran_sms_trans_pend THEN
+                                                                                                                            DO:
+                                                                                                                              CREATE tt-tbcobran_sms_trans_pend.
+                                                                                                                              BUFFER-COPY tbcobran_sms_trans_pend TO tt-tbcobran_sms_trans_pend.
+                                                                                                                              
+                                                                                                                              ASSIGN tt-tbgen_trans_pend.idmovimento_conta  = IdentificaMovCC(tbgen_trans_pend.tptransacao,1,0).
+                                                                                                                            END.
+                                                                                                                          
                         ELSE
                             DO:
                                 ASSIGN aux_cdcritic = 0
@@ -7427,6 +7502,49 @@ PROCEDURE aprova_trans_pend:
                     ASSIGN aux_trandarf = aux_trandarf + STRING(aux_cddoitem).
                     
             END.        
+		    ELSE IF tbgen_trans_pend.tptransacao = 13 THEN /* Recarga de Celular */
+                  DO:
+                      
+                      FOR FIRST tbrecarga_trans_pend WHERE tbrecarga_trans_pend.cdtransacao_pendente = aux_cddoitem NO-LOCK. END.
+        
+                      IF AVAIL tbrecarga_trans_pend THEN
+                          DO:
+                              CREATE tt-tbrecarga_trans_pend.
+                              BUFFER-COPY tbrecarga_trans_pend TO tt-tbrecarga_trans_pend. 
+        
+                              ASSIGN tt-tbgen_trans_pend.idmovimento_conta  = IdentificaMovCC(tbgen_trans_pend.tptransacao,tbrecarga_trans_pend.tprecarga,0).
+                          END.                            
+                       ELSE
+                          DO:
+                            ASSIGN aux_cdcritic = 0
+                                   aux_dscritic = "Registro de Recarga de celular Inexistente.".
+                    
+                            RUN gera_erro (INPUT par_cdcooper,
+                                           INPUT par_cdagenci,
+                                           INPUT par_nrdcaixa,
+                                           INPUT 1,            /** Sequencia **/
+                                           INPUT aux_cdcritic,
+                                           INPUT-OUTPUT aux_dscritic).
+                            
+                            IF par_flgerlog THEN
+                              DO:
+                                  RUN proc_gerar_log (INPUT par_cdcooper,
+                                                      INPUT par_cdoperad,
+                                                      INPUT aux_dscritic,
+                                                      INPUT aux_dsorigem,
+                                                      INPUT aux_dstransa,
+                                                      INPUT FALSE,
+                                                      INPUT 1,
+                                                      INPUT par_nmdatela,
+                                                      INPUT par_nrdconta,
+                                                     OUTPUT aux_nrdrowid).
+                                END.
+                
+                            RETURN "NOK".
+                          END.
+                          
+                      
+                  END.
        
             END. /*IF AVAILABLE tbgen_trans_pend THEN*/
              
@@ -11840,6 +11958,142 @@ PROCEDURE aprova_trans_pend:
                                                 INPUT tt-tbtarif_pacote_trans_pend.vlpacote,
                                                 INPUT aux_conttran).
                     END.
+                                                                                                                                                              /* Contrato SMS */
+                                                                                                                                                              ELSE IF tt-tbgen_trans_pend.tptransacao = 16 OR
+                                                                                                                                                              tt-tbgen_trans_pend.tptransacao = 17 THEN
+                                                                                                                                                              DO:
+                                                                                                                                                                FOR FIRST tt-tbcobran_sms_trans_pend WHERE tt-tbcobran_sms_trans_pend.cdtransacao_pendente = tt-tbgen_trans_pend.cdtransacao_pendente NO-LOCK. END.
+                                                                                                                                                                  
+                                                                                                                                                                  
+                                                                                                                                                                  /** ADESAO **/
+                                                                                                                                                                  IF tt-tbgen_trans_pend.tptransacao = 16 THEN
+                                                                                                                                                                  DO:
+                                                                                                                                                                    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                                                                                                                                                                    
+                                                                                                                                                                    RUN STORED-PROCEDURE pc_gera_contrato_sms
+                                                                                                                                                                    aux_handproc = PROC-HANDLE NO-ERROR
+                                                                                                                                                                    ( INPUT par_cdcooper   /* pr_cdcooper  */
+                                                                                                                                                                    ,INPUT par_nrdconta   /* pr_nrdconta  */
+                                                                                                                                                                    ,INPUT par_idseqttl   /* pr_idseqttl  */
+                                                                                                                                                                    ,INPUT 3              /* pr_idorigem  */
+                                                                                                                                                                    ,INPUT '996'          /* pr_cdoperad  */
+                                                                                                                                                                    ,INPUT 'INTERNETBANK' /* pr_nmdatela  */
+                                                                                                                                                                    ,INPUT par_nrcpfope   /* pr_nrcpfope  */
+                                                                                                                                                                    /* se for efetivacao e o ultima aprovacao, mandar 1 */
+                                                                                                                                                                    ,INPUT IF par_indvalid = 1 AND
+                                                                                                                                                                    aux_conttran = 1 THEN 1
+                                                                                                                                                                    ELSE  3        /* pr_inaprpen */
+                                                                                                                                                                    ,OUTPUT 0              /* pr_idcontrato */
+                                                                                                                                                                    ,OUTPUT ""             /* pr_dsretorn */
+                                                                                                                                                                    ,OUTPUT 0
+                                                                                                                                                                    ,OUTPUT "").           /* par_dscritic */
+                                                                                                                                                                    
+                                                                                                                                                                    CLOSE STORED-PROC pc_gera_contrato_sms
+                                                                                                                                                                    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                                                                                                                                                                    
+                                                                                                                                                                    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                                                                                                                                                                    
+                                                                                                                                                                    ASSIGN aux_dscritic = ""
+                                                                                                                                                                    aux_dsretorn = ""
+                                                                                                                                                                    aux_cdcritic = 0
+                                                                                                                                                                    aux_dsretorn = pc_gera_contrato_sms.pr_dsretorn
+                                                                                                                                                                    WHEN pc_gera_contrato_sms.pr_dsretorn <> ?
+                                                                                                                                                                    aux_cdcritic = pc_gera_contrato_sms.pr_cdcritic
+                                                                                                                                                                    WHEN pc_gera_contrato_sms.pr_cdcritic <> ?
+                                                                                                                                                                    aux_dscritic = pc_gera_contrato_sms.pr_dscritic
+                                                                                                                                                                    WHEN pc_gera_contrato_sms.pr_dscritic <> ?.
+                                                                                                                                                                  END.
+                                                                                                                                                                  
+                                                                                                                                                                  /** Cancelamento **/
+                                                                                                                                                                  ELSE IF tt-tbgen_trans_pend.tptransacao = 17  THEN
+                                                                                                                                                                  DO:
+                                                                                                                                                                    /* Cancelar contrato de servico de SMS de cobranca */
+                                                                                                                                                                    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                                                                                                                                                                    
+                                                                                                                                                                    RUN STORED-PROCEDURE pc_cancel_contrato_sms
+                                                                                                                                                                    aux_handproc = PROC-HANDLE NO-ERROR
+                                                                                                                                                                    ( INPUT par_cdcooper     /* pr_cdcooper  */
+                                                                                                                                                                    ,INPUT par_nrdconta     /* pr_nrdconta  */
+                                                                                                                                                                    ,INPUT par_idseqttl     /* pr_idseqttl  */
+                                                                                                                                                                    ,INPUT 0                /* pr_idcontrato*/
+                                                                                                                                                                    ,INPUT 3                /* pr_idorigem  */
+                                                                                                                                                                    ,INPUT '996'            /* pr_cdoperad  */
+                                                                                                                                                                    ,INPUT 'INTERNETBANK'   /* pr_nmdatela  */
+                                                                                                                                                                    ,INPUT par_nrcpfope     /* pr_nrcpfope  */
+                                                                                                                                                                    /* se for efetivacao e o ultima aprovacao, mandar 1 */
+                                                                                                                                                                    ,INPUT IF par_indvalid = 1 AND
+                                                                                                                                                                    aux_conttran = 1 THEN 1
+                                                                                                                                                                    ELSE  3        /* pr_inaprpen */
+                                                                                                                                                                    ,OUTPUT ""               /* pr_dsretorn  */
+                                                                                                                                                                    ,OUTPUT 0
+                                                                                                                                                                    ,OUTPUT "").             /* par_dscritic */
+                                                                                                                                                                    
+                                                                                                                                                                    CLOSE STORED-PROC pc_cancel_contrato_sms
+                                                                                                                                                                    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                                                                                                                                                                    
+                                                                                                                                                                    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                                                                                                                                                                    
+                                                                                                                                                                    ASSIGN aux_dscritic = ""
+                                                                                                                                                                    aux_dsretorn = ""
+                                                                                                                                                                    aux_cdcritic = 0
+                                                                                                                                                                    aux_dsretorn = pc_cancel_contrato_sms.pr_dsretorn
+                                                                                                                                                                    WHEN pc_cancel_contrato_sms.pr_dsretorn <> ?
+                                                                                                                                                                    aux_cdcritic = pc_cancel_contrato_sms.pr_cdcritic
+                                                                                                                                                                    WHEN pc_cancel_contrato_sms.pr_cdcritic <> ?
+                                                                                                                                                                    aux_dscritic = pc_cancel_contrato_sms.pr_dscritic
+                                                                                                                                                                    WHEN pc_cancel_contrato_sms.pr_dscritic <> ?.
+                                                                                                                                                                  END.
+                                                                                                                                                                  
+                                                                                                                                                                  IF  aux_cdcritic <> 0   OR
+                                                                                                                                                                  aux_dscritic <> ""  THEN DO:
+                                                                                                                                                                    IF  aux_dscritic = "" THEN DO:
+                                                                                                                                                                      FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic
+                                                                                                                                                                      NO-LOCK NO-ERROR.
+                                                                                                                                                                      
+                                                                                                                                                                      IF  AVAIL crapcri THEN
+                                                                                                                                                                      ASSIGN aux_dscritic = crapcri.dscritic.
+                                                                                                                                                                      ELSE
+                                                                                                                                                                      ASSIGN aux_dscritic =  "Nao foi possivel incluir o servico".
+                                                                                                                                                                    END.
+                                                                                                                                                                    
+                                                                                                                                                                    RUN gera_erro_transacao(INPUT par_cdcooper,
+                                                                                                                                                                    INPUT par_cdoperad,
+                                                                                                                                                                    INPUT aux_dscritic,
+                                                                                                                                                                    INPUT aux_dsorigem,
+                                                                                                                                                                    INPUT aux_dstransa,
+                                                                                                                                                                    INPUT FALSE,
+                                                                                                                                                                    INPUT par_nmdatela,
+                                                                                                                                                                    INPUT par_nrdconta,
+                                                                                                                                                                    INPUT STRING(ROWID(tbgen_trans_pend)),
+                                                                                                                                                                    INPUT FALSE,
+                                                                                                                                                                    INPUT par_indvalid,
+                                                                                                                                                                    INPUT DATE(1, MONTH(TODAY), YEAR(TODAY)),
+                                                                                                                                                                    INPUT tt-tbcobran_sms_trans_pend.vlservico,
+                                                                                                                                                                    INPUT aux_conttran).
+                                                                                                                                                                    
+                                                                                                                                                                    IF par_indvalid = 1 THEN
+                                                                                                                                                                    ASSIGN par_flgaviso = TRUE.
+                                                                                                                                                                    
+                                                                                                                                                                    UNDO TRANSACAO, LEAVE TRANSACAO.
+                                                                                                                                                                  END. /* fim IF critica THEN*/
+                                                                                                                                                                  
+                                                                                                                                                                  /* Log de Sucesso*/
+                                                                                                                                                                  RUN gera_erro_transacao(INPUT par_cdcooper,
+                                                                                                                                                                  INPUT par_cdoperad,
+                                                                                                                                                                  INPUT aux_dscritic,
+                                                                                                                                                                  INPUT aux_dsorigem,
+                                                                                                                                                                  INPUT aux_dstransa,
+                                                                                                                                                                  INPUT FALSE,
+                                                                                                                                                                  INPUT par_nmdatela,
+                                                                                                                                                                  INPUT par_nrdconta,
+                                                                                                                                                                  INPUT STRING(ROWID(tbgen_trans_pend)),
+                                                                                                                                                                  INPUT TRUE,
+                                                                                                                                                                  INPUT par_indvalid,
+                                                                                                                                                                  INPUT DATE(1, MONTH(TODAY), YEAR(TODAY)),
+                                                                                                                                                                  INPUT tt-tbcobran_sms_trans_pend.vlservico,
+                                                                                                                                                                  INPUT aux_conttran).
+                                                                                                                                                                  
+                                                                                                                                                                END.
                  ELSE IF tt-tbgen_trans_pend.tptransacao = 11 THEN /* Pagamento DARF/DAS */
                   DO: 
                     FOR FIRST tt-tbpagto_darf_das_trans_pend WHERE tt-tbpagto_darf_das_trans_pend.cdtransacao_pendente = tt-tbgen_trans_pend.cdtransacao_pendente NO-LOCK. END.
@@ -12288,7 +12542,95 @@ PROCEDURE aprova_trans_pend:
                                                 
                   
                   END. /* = 11 */
-    
+    			  ELSE IF tt-tbgen_trans_pend.tptransacao = 13 THEN /* Recarga de Celular */
+                        DO: 
+                        FOR FIRST tt-tbrecarga_trans_pend WHERE tt-tbrecarga_trans_pend.cdtransacao_pendente = tt-tbgen_trans_pend.cdtransacao_pendente NO-LOCK. END.
+                        
+                                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                             
+                                RUN STORED-PROCEDURE pc_confirma_regarca_ib aux_handproc = PROC-HANDLE NO-ERROR
+                                                     (INPUT par_cdcooper
+                                                     ,INPUT par_nrdconta
+                                                     ,INPUT par_idseqttl
+                                                     ,INPUT tt-tbgen_trans_pend.nrcpf_operador
+                                                     ,INPUT 0
+                                                     ,INPUT 0
+                                                     ,INPUT 0
+                                                     ,INPUT 0
+                                                     ,INPUT 0
+                                                     ,INPUT tt-tbrecarga_trans_pend.tprecarga
+                                                     ,INPUT ?
+                                                     ,INPUT 0
+                                                     ,INPUT tt-tbrecarga_trans_pend.idoperacao
+                                                     ,INPUT IF par_indvalid = 1 AND 
+                                                               aux_conttran = 1 THEN 1 
+                                                            ELSE  3        /* pr_aprvpend */
+                                                     ,OUTPUT 0
+                                                     ,OUTPUT 0
+                                                     ,OUTPUT "").
+                                CLOSE STORED-PROC pc_confirma_regarca_ib 
+                                    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.     
+                     
+                                ASSIGN aux_cdcritic = 0
+                                       aux_dscritic = ""
+                                       aux_cdcritic = pc_confirma_regarca_ib.pr_cdcritic
+                                                      WHEN pc_confirma_regarca_ib.pr_cdcritic <> ?
+                                       aux_dscritic = pc_confirma_regarca_ib.pr_dscritic
+                                                      WHEN pc_confirma_regarca_ib.pr_dscritic <> ?.
+                                       
+                                
+                                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                              
+                                IF  aux_cdcritic <> 0   OR
+                                    aux_dscritic <> ""  THEN DO: 
+                                
+                                    IF  aux_dscritic = "" THEN DO:
+                                        FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic 
+                                                   NO-LOCK NO-ERROR.
+                                
+                                        IF  AVAIL crapcri THEN
+                                            ASSIGN aux_dscritic = crapcri.dscritic.
+                                        ELSE
+                                            ASSIGN aux_dscritic =  "Nao foi possivel incluir o servico".
+                                    END.
+                     
+                                    RUN gera_erro_transacao(INPUT par_cdcooper,
+                                                            INPUT par_cdoperad,
+                                                            INPUT aux_dscritic,
+                                                            INPUT aux_dsorigem,
+                                                            INPUT aux_dstransa,
+                                                            INPUT FALSE,
+                                                            INPUT par_nmdatela,
+                                                            INPUT par_nrdconta,
+                                                            INPUT STRING(ROWID(tbgen_trans_pend)),
+                                                            INPUT FALSE,
+                                                            INPUT par_indvalid,
+                                                            INPUT DATE(1, MONTH(TODAY), YEAR(TODAY)),
+                                                            INPUT 0, /*tt-tbtarif_pacote_trans_pend.vlpacote,*/
+                                                            INPUT aux_conttran).
+                
+                                    IF par_indvalid = 1 THEN
+                                        ASSIGN par_flgaviso = TRUE.
+                
+                                    UNDO TRANSACAO, LEAVE TRANSACAO.
+
+                            END.
+
+                        RUN gera_erro_transacao(INPUT par_cdcooper,
+                                                INPUT par_cdoperad,
+                                                INPUT aux_dscritic,
+                                                INPUT aux_dsorigem,
+                                                INPUT aux_dstransa,
+                                                INPUT FALSE,
+                                                INPUT par_nmdatela,
+                                                INPUT par_nrdconta,
+                                                INPUT STRING(ROWID(tbgen_trans_pend)),
+                                                INPUT TRUE,
+                                                INPUT par_indvalid,
+                                                INPUT DATE(1, MONTH(TODAY), YEAR(TODAY)),
+                                                INPUT 0, /*tt-tbtarif_pacote_trans_pend.vlpacote,*/
+                                                INPUT aux_conttran).
+                    END. /* 13 */
                 IF par_indvalid = 1 THEN
                     DO: 
                         FOR FIRST tbgen_aprova_trans_pend WHERE tbgen_aprova_trans_pend.cdtransacao_pendente = tt-tbgen_trans_pend.cdtransacao_pendente
@@ -12625,7 +12967,7 @@ PROCEDURE pc_valores_online:
         DO:
             FOR FIRST tt-tbtarif_pacote_trans_pend WHERE tt-tbtarif_pacote_trans_pend.cdtransacao_pendente = tt-tbgen_trans_pend.cdtransacao_pendente NO-LOCK. END.            
             
-            FIND FIRST tt-vlrdat WHERE tt-vlrdat.dattrans = tt-tbfolha_trans_pend.dtdebito EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+            FIND FIRST tt-vlrdat WHERE tt-vlrdat.dattrans = tt-tbtarif_pacote_trans_pend.dtinicio_vigencia EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
     
             IF NOT AVAIL tt-vlrdat THEN
                 DO:
@@ -12634,11 +12976,11 @@ PROCEDURE pc_valores_online:
                 END.
             
             IF tt-tbgen_trans_pend.idmovimento_conta = 1 THEN /* Crédito */
-                ASSIGN tt-vlrdat.vlronlin = tt-vlrdat.vlronlin - tt-tbfolha_trans_pend.vlfolha.
+                ASSIGN tt-vlrdat.vlronlin = tt-vlrdat.vlronlin - tt-tbtarif_pacote_trans_pend.vlpacote.
             ELSE IF tt-tbgen_trans_pend.idmovimento_conta = 2 THEN /* Débito */
-                ASSIGN tt-vlrdat.vlronlin = tt-vlrdat.vlronlin + tt-tbfolha_trans_pend.vlfolha.
+                ASSIGN tt-vlrdat.vlronlin = tt-vlrdat.vlronlin + tt-tbtarif_pacote_trans_pend.vlpacote.
             ELSE IF tt-tbgen_trans_pend.idmovimento_conta = 3 THEN /* Agendamento */
-                ASSIGN tt-vlrdat.vlronlin = tt-vlrdat.vlronlin + tt-tbfolha_trans_pend.vlfolha.
+                ASSIGN tt-vlrdat.vlronlin = tt-vlrdat.vlronlin + tt-tbtarif_pacote_trans_pend.vlpacote.
         END.
 ELSE IF tt-tbgen_trans_pend.tptransacao = 11 THEN /* Pagamentos DARF/DAS */
       DO:
@@ -12658,6 +13000,19 @@ ELSE IF tt-tbgen_trans_pend.tptransacao = 11 THEN /* Pagamentos DARF/DAS */
               ASSIGN tt-vlrdat.vlronlin = tt-vlrdat.vlronlin + tt-tbpagto_darf_das_trans_pend.vlpagamento.
           ELSE IF tt-tbgen_trans_pend.idmovimento_conta = 3 THEN /* Agendamento */
               ASSIGN tt-vlrdat.vlronlin = tt-vlrdat.vlronlin + tt-tbpagto_darf_das_trans_pend.vlpagamento.
+                                                                                                                                                                                  END.
+                                                                                                                                                                                  /* Contrato SMS */
+                                                                                                                                                                                  ELSE IF tt-tbgen_trans_pend.tptransacao = 16 OR
+                                                                                                                                                                                  tt-tbgen_trans_pend.tptransacao = 17  THEN
+                                                                                                                                                                                  DO:
+                                                                                                                                                                                    
+                                                                                                                                                                                    FIND FIRST tt-vlrdat WHERE tt-vlrdat.dattrans = tt-tbgen_trans_pend.dtmvtolt EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+                                                                                                                                                                                    
+                                                                                                                                                                                    IF NOT AVAIL tt-vlrdat THEN
+                                                                                                                                                                                    DO:
+                                                                                                                                                                                      CREATE tt-vlrdat.
+                                                                                                                                                                                      ASSIGN tt-vlrdat.dattrans = tt-tbgen_trans_pend.dtmvtolt.
+                                                                                                                                                                                    END.
       END.
 END PROCEDURE.
 
@@ -12686,7 +13041,9 @@ FUNCTION IdentificaMovCC RETURNS INTEGER
          INPUT par_idagendamento AS INTEGER,
          INPUT par_tpoperacao    AS INTEGER):
     
-    IF par_idagendamento = 2 THEN
+    /* Quando operaçao for 13 (Recarga de Celular), nao deve ser considerado 
+    no limite diário de operaçoes no IB (cairá automaticamente no RETURN 4) */
+    IF par_idagendamento = 2 AND par_tptransacao <> 13 THEN
        RETURN 3. /* Agendamentos */
     ELSE
     IF par_tptransacao = 1 OR   /* Transferência Intracoop. */

@@ -2938,6 +2938,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                   19/09/2016 - Removida a validacao de horario cadastrado na TAB085
                                para a geracao de TED dos convenios. SD 519980.
                                (Carlos Rafael Tanholi)      
+                  
+                  16/03/2017 - Alteração para vr_dtmvtolt receber crapdat.dtmvtocd
+                               quando for repasse de recarga de celular. PRJ 321. (Lombardi)
   ---------------------------------------------------------------------------------------------------------------*/
     ---------------> CURSORES <-----------------
     -- Buscar dados do associado
@@ -3522,7 +3525,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       END IF;
 
       /* Format da data deve ser AAAA-MM-DD */
+      IF  pr_nmpesemi = 'CECRED-RECARGA' THEN
+        vr_dtmvtolt := to_char(rw_crapdat.dtmvtocd,'RRRR-MM-DD');
+      ELSE
       vr_dtmvtolt := to_char(rw_crapdat.dtmvtolt,'RRRR-MM-DD');
+      END IF;
+      
       vr_dtagendt := to_char(pr_dtagendt,'RRRR-MM-DD');
 
       pc_gera_xml (pr_cdcooper   => pr_cdcooper        --> Codigo da cooperativa

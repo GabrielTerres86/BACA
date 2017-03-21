@@ -5385,6 +5385,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
            AND pen.cdtransacao_pendente = pr_cdtransa;	
 
       rw_sms_trans_pend cr_sms_trans_pend%ROWTYPE;
+      
+      --> Recarga Celular - Transacao 13
+      CURSOR cr_tbrecarga_trans_pend (pr_cdtransa IN tbrecarga_trans_pend.cdtransacao_pendente%TYPE) IS
+        SELECT ('(' || ope.nrddd || ') ' || gene0002.fn_mask(ope.nrcelular,'99999-9999')) telefone
+              ,ope.vlrecarga
+              ,ope.dtrecarga
+              ,ope.dttransa
+              ,pdt.nmproduto
+              ,pen.tprecarga
+          FROM tbrecarga_trans_pend pen
+              ,tbrecarga_produto pdt
+              ,tbrecarga_operacao ope
+         WHERE ope.idoperacao = pen.idoperacao
+           AND pdt.cdoperadora = ope.cdoperadora
+           AND pdt.cdproduto = ope.cdproduto
+           AND pen.cdtransacao_pendente = pr_cdtransa;	
+      
+      rw_tbrecarga_trans_pend cr_tbrecarga_trans_pend%ROWTYPE;
+      
       -- Variável de críticas
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic VARCHAR2(10000);
@@ -5532,7 +5551,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       vr_vlreceita_bruta tbpagto_darf_das_trans_pend.vlreceita_bruta%TYPE; -- Receita Bruta Acumulada  (retornar se estiver preenchido)
       vr_vlpercentual tbpagto_darf_das_trans_pend.vlpercentual%TYPE;       -- Percentual (retornar se estiver preenchido)
       vr_idagendamento tbpagto_darf_das_trans_pend.idagendamento%TYPE;     -- Indicador de Agendamento     
-
+      
+      --Recarga de Celular
+      vr_telefone  VARCHAR2(200);
+      vr_vlrecarga VARCHAR2(200);
+      vr_dtrecarga VARCHAR2(200);
+      vr_dttransa  VARCHAR2(200);
+      vr_nmproduto VARCHAR2(200);
+      
       --Variavel de indice
       vr_ind NUMBER := 0;
       
@@ -6679,7 +6705,47 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                vr_dtdebito        := TO_CHAR(rw_tbpagto_darf_das_trans_pend.dtdebito,'DD/MM/RRRR');
                vr_idagendamento   := NVL(rw_tbpagto_darf_das_trans_pend.idagendamento,0); 
                vr_vlasomar        := vr_vlrtotal;            
-
+            
+            WHEN vr_tptranpe = 13 THEN
+              OPEN cr_tbrecarga_trans_pend(vr_cdtranpe);
+              FETCH cr_tbrecarga_trans_pend INTO rw_tbrecarga_trans_pend;
+    							 
+              IF cr_tbrecarga_trans_pend%NOTFOUND THEN
+                --Fechar Cursor
+                CLOSE cr_tbrecarga_trans_pend;
+                CONTINUE;
+              ELSE
+                --Fechar Cursor
+                CLOSE cr_tbrecarga_trans_pend;
+                        
+                --Controle de paginação
+                vr_qttotpen := vr_qttotpen + 1;
+                IF ((vr_qttotpen <= pr_nriniseq) OR
+                   (vr_qttotpen > (pr_nriniseq + pr_nrregist))) THEN
+                   CONTINUE;
+                END IF;
+              END IF;
+              
+              vr_dsagenda := CASE WHEN rw_tbrecarga_trans_pend.tprecarga = 1
+                                  THEN 'NÃO' ELSE
+                                  'SIM'
+                              END;
+              
+              vr_dsdtefet := CASE WHEN rw_tbrecarga_trans_pend.tprecarga = 1
+                                  THEN 'Nesta Data' ELSE
+                                  to_char(rw_tbrecarga_trans_pend.dtrecarga,'DD/MM/RRRR')
+                                END; -- Data Efetivacao
+              
+              vr_dsdescri := rw_tbrecarga_trans_pend.telefone || ' – ' || rw_tbrecarga_trans_pend.nmproduto;
+              vr_dstptran := 'Recarga de Celular';
+              vr_dsvltran := to_char(rw_tbrecarga_trans_pend.vlrecarga,'fm999g999g990d00');
+              vr_telefone := rw_tbrecarga_trans_pend.telefone;
+              vr_vlrecarga := to_char(rw_tbrecarga_trans_pend.vlrecarga,'fm999g999g990d00');
+              vr_dtrecarga := to_char(rw_tbrecarga_trans_pend.dtrecarga,'DD/MM/RRRR');
+              vr_dttransa := to_char(rw_tbrecarga_trans_pend.dttransa,'DD/MM/RRRR');
+              vr_nmproduto := rw_tbrecarga_trans_pend.nmproduto;
+              vr_vlasomar := rw_tbrecarga_trans_pend.vlrecarga;
+              
             --> CONTRATO DE SMS
             WHEN vr_tptranpe IN (16,17) THEN
             
@@ -6914,13 +6980,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
             
             IF TRIM(vr_dsdescri) IS NOT NULL THEN
               vr_xml_auxi := vr_xml_auxi || '<dados_campo><label>Identificação do Pagamento</label><valor>'||vr_dsdescri||'</valor></dados_campo>';
-         ELSIF vr_tptranpe = 11 THEN --Pagamento DARF/DAS
-           NULL;
- 
-         ELSIF vr_tptranpe IN (16,17) THEN --> Contrato de SMS
-            vr_xml_auxi := vr_xml_auxi            
-            || '<dados_campo><label>Serviço</label><valor>'  || rw_sms_trans_pend.dspacote ||'</valor></dados_campo>'
-            || '<dados_campo><label>Início</label><valor>'   || to_char(rw_sms_trans_pend.dtassinatura,'DD/MM/RRRR')      ||'</valor></dados_campo>';
             END IF;
             
             IF TRIM(vr_dsnomfone) IS NOT NULL THEN
@@ -6958,7 +7017,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
             vr_xml_auxi := vr_xml_auxi || '<dados_campo><label>Débito Em</label><valor>'||vr_dtdebito||'</valor></dados_campo>'
                                        || '<dados_campo><label>Indicador de Agendamento</label><valor>'||(CASE WHEN vr_idagendamento = 1 THEN
                                                                                                           'NAO' ELSE 'SIM' END)||'</valor></dados_campo>';
- 
+         ELSIF vr_tptranpe = 13 THEN -- Recarga de Celular
+            vr_xml_auxi := vr_xml_auxi
+            || '<dados_campo><label>Valor</label><valor>'                   ||vr_vlrecarga||'</valor></dados_campo>'
+            || '<dados_campo><label>Operadora</label><valor>'               ||vr_nmproduto||'</valor></dados_campo>'
+            || '<dados_campo><label>DDD/Telefone</label><valor>'            ||vr_telefone ||'</valor></dados_campo>'
+            || '<dados_campo><label>Data da Recarga</label><valor>'         ||vr_dtrecarga||'</valor></dados_campo>'
+            || '<dados_campo><label>Indicador de Agendamento</label><valor>'||vr_dsagenda ||'</valor></dados_campo>';
+            
+         ELSIF vr_tptranpe IN (16,17) THEN --> Contrato de SMS
+            vr_xml_auxi := vr_xml_auxi            
+            || '<dados_campo><label>Serviço</label><valor>'  || rw_sms_trans_pend.dspacote ||'</valor></dados_campo>'
+            || '<dados_campo><label>Início</label><valor>'   || to_char(rw_sms_trans_pend.dtassinatura,'DD/MM/RRRR')      ||'</valor></dados_campo>';
+                  
          END IF;
          
          vr_xml_auxi := vr_xml_auxi || '</dados_detalhe>';
@@ -8397,7 +8468,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
           -- Cria operação de recarga para data agendada																		 
 					pc_cria_operacao_pendente(pr_cdtranpe => vr_cdtranpe
 					                         ,pr_tprecarga => pr_tprecarga
-					                         ,pr_dtrecarg => vr_lsdatagd(i));
+					                         ,pr_dtrecarg => to_date(vr_lsdatagd(i),'DD/MM/RRRR'));
 					
 				  pc_cria_aprova_transpend(pr_cdagenci => pr_cdagenci
 					                        ,pr_nrdcaixa => pr_nrdconta

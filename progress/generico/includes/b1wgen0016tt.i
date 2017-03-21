@@ -43,6 +43,9 @@
 
                19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS pelo 
                             InternetBanking (Projeto 338 - Lucas Lunelli)
+                            
+               06/03/2017 - Adicionados campos nrddd, nrcelular e nmoperadora em 
+                            tt-dados-agendamento (Projeto 321 - Lombardi).
 
 ..............................................................................*/
 
@@ -93,7 +96,11 @@ DEF TEMP-TABLE tt-dados-agendamento NO-UNDO
     FIELD vlrjuros AS DECIMAL /* Prj. 338 */
     FIELD vlrtotal AS DECIMAL /* Prj. 338 */
     FIELD vlrrecbr AS DECIMAL /* Prj. 338 */
-    FIELD vlrperce AS DECIMAL.    /* Prj. 338 */
+    FIELD vlrperce AS DECIMAL /* Prj. 338 */
+    FIELD nrddd    AS INT     /* Prj. 321 */
+    FIELD nrcelular AS CHAR   /* Prj. 321 */
+    FIELD nmoperadora AS CHAR. /* Prj. 321 */
+    
 
 DEF TEMP-TABLE tt-transacoes_operadores NO-UNDO
     FIELD dtmvtolt AS DATE
