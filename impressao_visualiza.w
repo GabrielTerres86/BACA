@@ -14,6 +14,10 @@ Ultima alteração:
 29/06/2016 #413717 Desabilitado o botao imprimir (Btn_G) quando houver problema 
            na impressora. Alterado o label de "Voltar" para "Finalizar" (Carlos)
 
+01/02/2017 #566765 Aumentos dos tipos de dados dos parametros par_tximpres e 
+           par_impressao; e das variaveis aux_txtimpre e ed_impressao, de char 
+           para longchar (Carlos)
+
 ............................................................................... */
 
 /*----------------------------------------------------------------------*/
@@ -32,7 +36,7 @@ CREATE WIDGET-POOL.
 
 /* Parameters Definitions ---                                           */
 DEFINE INPUT PARAM  par_dsdocmto    AS CHAR                     NO-UNDO.
-DEFINE INPUT PARAM  par_tximpres    AS CHAR                     NO-UNDO.
+DEFINE INPUT PARAM  par_tximpres    AS LONGCHAR                 NO-UNDO.
 DEFINE INPUT PARAM  par_tpimpres    AS INTE                     NO-UNDO. /* Tipo de Impressão */
 DEFINE INPUT PARAM  par_dsdparam    AS CHAR                     NO-UNDO. /* Parâmetro Genérico, varia da acordo com par_tpimpres */
 
@@ -41,7 +45,7 @@ DEFINE INPUT PARAM  par_dsdparam    AS CHAR                     NO-UNDO. /* Parâ
 { includes/var_xfs_lite.i }
 
 DEFINE VARIABLE     aux_contador    AS INTEGER                  NO-UNDO.
-DEFINE VARIABLE     aux_txtimpre    AS CHARACTER                NO-UNDO. /* Texto a ser Impresso */
+DEFINE VARIABLE     aux_txtimpre    AS LONGCHAR                 NO-UNDO. /* Texto a ser Impresso */
 DEFINE VARIABLE     aux_txtdispl    AS CHARACTER                NO-UNDO. /* Texto a ser Exibido */
 DEFINE VARIABLE     aux_posatual    AS INTEGER INIT 0           NO-UNDO. /* Retorno de posição para paginação */
 DEFINE VARIABLE     imp_dadosimp    AS MEMPTR                   NO-UNDO.
@@ -105,8 +109,8 @@ DEFINE BUTTON Btn_H
      SIZE 41 BY 3.33
      FONT 8.
 
-DEFINE VARIABLE ed_impressao AS CHARACTER 
-     VIEW-AS EDITOR NO-WORD-WRAP
+DEFINE VARIABLE ed_impressao AS LONGCHAR 
+     VIEW-AS EDITOR NO-WORD-WRAP LARGE
      SIZE 69 BY 27.38
      BGCOLOR 15 FONT 0 NO-UNDO.
 
@@ -514,7 +518,7 @@ END PROCEDURE.
 PROCEDURE paginacao :
 /* Pagina impressao */
 
-    DEFINE INPUT        PARAM  par_impressao   AS CHAR               NO-UNDO.
+    DEFINE INPUT        PARAM  par_impressao   AS LONGCHAR              NO-UNDO.
     DEFINE INPUT        PARAM  par_flgorien    AS LOGI               NO-UNDO.
     DEFINE INPUT-OUTPUT PARAM  par_posatual    AS INTE               NO-UNDO.
     DEFINE OUTPUT       PARAM  par_txtdispl    AS CHAR               NO-UNDO.
@@ -560,7 +564,7 @@ END PROCEDURE.
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE realiza-impressao w_impressao 
 PROCEDURE realiza-impressao :
-DEFINE INPUT PARAM  par_impressao    AS CHAR                     NO-UNDO.
+DEFINE INPUT PARAM  par_impressao    AS LONGCHAR                 NO-UNDO.
 
     IF  NOT xfs_painop_em_uso  THEN
         DO:

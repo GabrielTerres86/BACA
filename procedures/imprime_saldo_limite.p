@@ -19,6 +19,11 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
                   27/01/2016 - Imprimir valor disponível de pré-aprovado
                                (Lucas Lunelli - PRJ261)
 
+                  01/02/2017 - #566765 Aumento do tipo de dado do parametro
+                               par_tximpres, de char para longchar;
+                               
+                               #601715 Mudanca de "debitos programados" para
+                               "debitos futuros" (Carlos)
 ............................................................................... */
 
 DEFINE  INPUT PARAM par_nmtitula    AS CHARACTER    EXTENT 2        NO-UNDO.
@@ -32,7 +37,7 @@ DEFINE  INPUT PARAM par_vlsdchsl    AS DECIMAL                      NO-UNDO.
 DEFINE  INPUT PARAM par_vllimcre    AS DECIMAL                      NO-UNDO.
 DEFINE  INPUT PARAM par_vldiscrd    AS DECIMAL                      NO-UNDO. /* PRÉ-APROVADO */
 DEFINE  INPUT PARAM par_vlstotal    AS DECIMAL                      NO-UNDO.
-DEFINE OUTPUT PARAM par_tximpres    AS CHARACTER                    NO-UNDO.
+DEFINE OUTPUT PARAM par_tximpres    AS LONGCHAR                     NO-UNDO.
 
 { includes/var_taa.i }
 
@@ -86,7 +91,7 @@ par_tximpres = par_tximpres +
                                                 "               "            +
                "                                                "            +
                "    DISPONIVEL PARA SAQUE:    " + STRING(par_vlsddisp,"zz,zzz,zzz,zz9.99-") +
-               "      DEBITOS PROGRAMADOS:    " + STRING(par_vllautom,"zz,zzz,zzz,zz9.99-") +
+               "          DEBITOS FUTUROS:    " + STRING(par_vllautom,"zz,zzz,zzz,zz9.99-") +
                "    EMPRESTIMOS A LIBERAR:    " + STRING(par_vlsdbloq,"zz,zzz,zzz,zz9.99-") +
                "DEPOSITOS TAA A CONFIRMAR:    " + STRING(par_vlblqtaa,"zz,zzz,zzz,zz9.99-") +
                "      EM CHEQUES DA PRACA:    " + STRING(par_vlsdblpr,"zz,zzz,zzz,zz9.99-") +

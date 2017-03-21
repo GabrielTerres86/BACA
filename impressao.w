@@ -14,6 +14,8 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
                   13/10/2014 - Incluir mensagem para retirada de papel da
                                                impressora (David).
 
+01/02/2017 #566765 Aumentos dos tipos de dados dos parametros par_tximpres; e das 
+           variaveis aux_txtimpre e ed_impressao, de char para longchar (Carlos)
 ............................................................................... */
 
 /*----------------------------------------------------------------------*/
@@ -32,7 +34,7 @@ CREATE WIDGET-POOL.
 
 /* Parameters Definitions ---                                           */
 DEFINE INPUT PARAM  par_dsdocmto    AS CHAR                     NO-UNDO.
-DEFINE INPUT PARAM  par_tximpres    AS CHAR                     NO-UNDO.
+DEFINE INPUT PARAM  par_tximpres    AS LONGCHAR                 NO-UNDO.
 
 
 /* Local Variable Definitions ---                                       */
@@ -40,6 +42,9 @@ DEFINE INPUT PARAM  par_tximpres    AS CHAR                     NO-UNDO.
 { includes/var_xfs_lite.i }
 
 DEFINE VARIABLE     aux_contador    AS INTEGER                  NO-UNDO.
+DEFINE VARIABLE     aux_txtimpre    AS LONGCHAR                 NO-UNDO. /* Texto a ser Impresso */
+
+
 DEFINE VARIABLE     imp_dadosimp    AS MEMPTR                   NO-UNDO.
 DEFINE VARIABLE     aux_flgderro    AS LOGICAL                  NO-UNDO.
 
@@ -71,8 +76,8 @@ DEFINE VARIABLE     aux_flgderro    AS LOGICAL                  NO-UNDO.
 DEFINE VAR w_impressao AS WIDGET-HANDLE NO-UNDO.
 
 /* Definitions of the field level widgets                               */
-DEFINE VARIABLE ed_impressao AS CHARACTER 
-     VIEW-AS EDITOR NO-WORD-WRAP
+DEFINE VARIABLE ed_impressao AS LONGCHAR 
+     VIEW-AS EDITOR NO-WORD-WRAP LARGE
      SIZE 69 BY 27.38
      BGCOLOR 15 FONT 0 NO-UNDO.
 
@@ -201,119 +206,18 @@ RUN enable_UI.
 /* deixa o mouse transparente */
 FRAME f_impressao:LOAD-MOUSE-POINTER("blank.cur").
 
+
 /* monta o editor */
+
+
+/* monta var de texto para impressao separado por "ENTER" */
 DO  aux_contador = 1 TO LENGTH(par_tximpres) BY 48:
-    ed_impressao:INSERT-STRING(SUBSTRING(par_tximpres,aux_contador,48) + CHR(13)).
+    aux_txtimpre = aux_txtimpre + (SUBSTRING(par_tximpres,aux_contador,48) + CHR(13)).
 END.
 
+RUN realiza-impressao (INPUT aux_txtimpre).
 
-IF  NOT xfs_painop_em_uso  THEN
-    DO:
-        RUN mensagem.w (INPUT NO,
-                        INPUT " IMPRIMINDO",
-                        INPUT "",
-                        INPUT "",
-                        INPUT par_dsdocmto,
-                        INPUT "",
-                        INPUT "").
-        
-        PAUSE 3 NO-MESSAGE.
-        h_mensagem:HIDDEN = YES.
-    END.
-
-
-IF  xfs_impressora       AND
-    NOT xfs_impsempapel  THEN
-    DO:
-        SET-SIZE(imp_dadosimp) = LENGTH(ed_impressao:SCREEN-VALUE) + 1.
-         
-        PUT-STRING(imp_dadosimp,1) = ed_impressao:SCREEN-VALUE + CHR(0).
-
-        RUN WinImprimePrtCh IN aux_xfsliteh 
-            (INPUT  0,
-             INPUT  GET-POINTER-VALUE(imp_dadosimp),
-             INPUT  LENGTH(ed_impressao:SCREEN-VALUE) + 1,
-             OUTPUT LT_Resp).
-         
-        SET-SIZE(imp_dadosimp) = 0.
-         
-        IF  LT_Resp <> 0  THEN
-            DO: 
-                IF  NOT xfs_painop_em_uso  THEN
-                    DO:
-                        RUN mensagem.w (INPUT YES,
-                                        INPUT "   ATENÇÃO",
-                                        INPUT "",
-                                        INPUT "",
-                                        INPUT "Erro na impressão.",
-                                        INPUT "",
-                                        INPUT "").
-                        
-                        PAUSE 3 NO-MESSAGE.
-                        h_mensagem:HIDDEN = YES.
-                    END.
-            END.
-         ELSE
-            DO:
-                RUN WinCutPrtCh IN aux_xfsliteh (OUTPUT LT_Resp).
-
-                IF  LT_Resp <> 0  THEN
-                    DO: 
-                        IF  NOT xfs_painop_em_uso  THEN
-                            DO:
-                                RUN mensagem.w (INPUT YES,
-                                                INPUT "   ATENÇÃO",
-                                                INPUT "",
-                                                INPUT "",
-                                                INPUT "Erro no corte do papel.",
-                                                INPUT "",
-                                                INPUT "").
-                                
-                                PAUSE 3 NO-MESSAGE.
-                                h_mensagem:HIDDEN = YES.
-                            END.
-                    END.
-                ELSE
-                                IF  NOT xfs_painop_em_uso  THEN
-                    DO:
-                        aux_contador = 0.
-
-                        DO WHILE TRUE:
-
-                            IF  aux_contador = 5  THEN
-                                DO:
-                                    h_mensagem:HIDDEN = YES.
-                                    LEAVE.
-                                END.
-
-                            IF  aux_contador = 0  THEN
-                                RUN mensagem.w (INPUT NO,
-                                                INPUT "   ATENÇÃO",
-                                                INPUT "",
-                                                INPUT "",
-                                                INPUT "Retire o papel da impressão.",
-                                                INPUT "",
-                                                INPUT "").
-
-                            RUN procedures/inicializa_dispositivo.p (INPUT 6,
-                                                         OUTPUT aux_flgderro).
-
-                            IF  NOT xfs_imppapelsaida  THEN
-                                DO:
-                                    h_mensagem:HIDDEN = YES.
-                                    LEAVE.
-                                END.
-                            ELSE
-                                DO:
-                                    PAUSE 1 NO-MESSAGE.
-                                    aux_contador = aux_contador + 1.
-                                    NEXT.
-                                END.
-
-                        END.
-                    END.
-            END.
-    END.
+ASSIGN aux_txtimpre = "".
 
 APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.
 RETURN "OK".
@@ -355,6 +259,125 @@ PROCEDURE enable_UI :
 ------------------------------------------------------------------------------*/
   {&OPEN-BROWSERS-IN-QUERY-f_impressao}
   VIEW w_impressao.
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE realiza-impressao w_impressao 
+PROCEDURE realiza-impressao :
+DEFINE INPUT PARAM  par_impressao    AS LONGCHAR                 NO-UNDO.
+
+    IF  NOT xfs_painop_em_uso  THEN
+        DO:
+            RUN mensagem.w (INPUT NO,
+                            INPUT " IMPRIMINDO",
+                            INPUT "",
+                            INPUT "",
+                            INPUT par_dsdocmto,
+                            INPUT "",
+                            INPUT "").
+            
+            PAUSE 3 NO-MESSAGE.
+            h_mensagem:HIDDEN = YES.
+        END.
+    
+    
+    IF  xfs_impressora       AND
+        NOT xfs_impsempapel  THEN
+        DO:
+            SET-SIZE(imp_dadosimp) = LENGTH(par_impressao) + 1.
+             
+            PUT-STRING(imp_dadosimp,1) = par_impressao + CHR(0).
+    
+            RUN WinImprimePrtCh IN aux_xfsliteh 
+                (INPUT  0,
+                 INPUT  GET-POINTER-VALUE(imp_dadosimp),
+                 INPUT  LENGTH(par_impressao) + 1,
+                 OUTPUT LT_Resp).
+             
+            SET-SIZE(imp_dadosimp) = 0.
+             
+            IF  LT_Resp <> 0  THEN
+                DO: 
+                    IF  NOT xfs_painop_em_uso  THEN
+                        DO:
+                            RUN mensagem.w (INPUT YES,
+                                            INPUT "   ATENÇÃO",
+                                            INPUT "",
+                                            INPUT "",
+                                            INPUT "Erro na impressão.",
+                                            INPUT "",
+                                            INPUT "").
+                            
+                            PAUSE 3 NO-MESSAGE.
+                            h_mensagem:HIDDEN = YES.
+                        END.
+                END.
+             ELSE
+                DO:
+                    RUN WinCutPrtCh IN aux_xfsliteh (OUTPUT LT_Resp).
+    
+                    IF  LT_Resp <> 0  THEN
+                        DO: 
+                            IF  NOT xfs_painop_em_uso  THEN
+                                DO:
+                                    RUN mensagem.w (INPUT YES,
+                                                    INPUT "   ATENÇÃO",
+                                                    INPUT "",
+                                                    INPUT "",
+                                                    INPUT "Erro no corte do papel.",
+                                                    INPUT "",
+                                                    INPUT "").
+                                    
+                                    PAUSE 3 NO-MESSAGE.
+                                    h_mensagem:HIDDEN = YES.
+                                END.
+                        END.
+                    ELSE
+                        IF  NOT xfs_painop_em_uso  THEN
+                            DO:
+                                aux_contador = 0.
+        
+                                DO WHILE TRUE:
+        
+                                    IF  aux_contador = 5  THEN
+                                        DO:
+                                            h_mensagem:HIDDEN = YES.
+                                            LEAVE.
+                                        END.
+        
+                                    IF  aux_contador = 0  THEN
+                                        RUN mensagem.w (INPUT NO,
+                                                        INPUT "   ATENÇÃO",
+                                                        INPUT "",
+                                                        INPUT "",
+                                                        INPUT "Retire o papel da impressão.",
+                                                        INPUT "",
+                                                        INPUT "").
+        
+                                    RUN procedures/inicializa_dispositivo.p (INPUT 6,
+                                                                            OUTPUT aux_flgderro).
+        
+                                    IF  NOT xfs_imppapelsaida  THEN
+                                        DO:
+                                            h_mensagem:HIDDEN = YES.
+                                            LEAVE.
+                                        END.
+                                    ELSE
+                                        DO:
+                                            PAUSE 1 NO-MESSAGE.
+                                            aux_contador = aux_contador + 1.
+                                            NEXT.
+                                        END.
+        
+                                END.
+                            END.
+                END.
+        END.
+
+    RETURN "OK".
+
 END PROCEDURE.
 
 /* _UIB-CODE-BLOCK-END */
