@@ -117,7 +117,11 @@ $registros = $xmlObj->roottag->tags;
                                     at&eacute; <? 
 
                                     if($pagina == 1) {
-                                        echo $tamanho_pagina;
+                                        if ($qtregist > $tamanho_pagina) {
+                                            echo $tamanho_pagina;
+                                        } else {
+                                            echo $qtregist;
+                                        }
                                     } else if (($pagina * $tamanho_pagina) > $qtregist) { 
                                         echo $qtregist; 
                                     } else { 

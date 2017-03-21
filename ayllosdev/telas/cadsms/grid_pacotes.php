@@ -74,11 +74,16 @@
                                 at&eacute; <? 
 
                                 if($pagina == 1) {
-                                    echo $tamanho_pagina - 1;
+                                    if ($qtregist > $tamanho_pagina) {
+                                        echo $tamanho_pagina;
+                                    } else {
+                                        echo $qtregist;
+                                    }
+
                                 } else if (($pagina * $tamanho_pagina) > $qtregist) { 
                                     echo $qtregist; 
                                 } else { 
-                                    echo (($pagina * $tamanho_pagina) - ($tamanho_pagina - 1) + $tamanho_pagina); 
+                                    echo (($pagina * $tamanho_pagina) - ($tamanho_pagina) + $tamanho_pagina); 
                                 } ?> 
                                 de <? echo $qtregist; ?>
                     <?

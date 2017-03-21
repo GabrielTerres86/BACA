@@ -273,6 +273,7 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0005 IS
                                      ,pr_idorigem  IN INTEGER                         --> Codigo de origem do sistema
                                      ,pr_dsiduser   IN VARCHAR2                       --> id do usuario
                                      ,pr_instatus  IN INTEGER DEFAULT 0               --> Status do SMS (0 - para todos)
+                                     ,pr_tppacote  IN INTEGER DEFAULT 0               --> Tipo de pacote(1-pacote,2-individual,0-Todos)
                                      --------->> OUT <<-----------
                                      ,pr_nmarqpdf OUT  VARCHAR2                       --> Retorna o nome do relatorio gerado
                                      ,pr_dsxmlrel OUT CLOB                            --> Retorna xml do relatorio quando origem for 3 -InternetBank
@@ -314,7 +315,7 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0005 IS
                                      ,pr_des_erro  OUT VARCHAR2);             --> Erros do processo
 
   --> Buscar informações dos contratos de serviço de SMS
-  PROCEDURE pc_ret_dados_serv_sms (pr_cdcooper      IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
+PROCEDURE pc_ret_dados_serv_sms (pr_cdcooper      IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
                                   ,pr_nrdconta      IN crapass.nrdconta%TYPE  --> Conta do associado
                                   ,pr_nmdatela      IN craptel.nmdatela%TYPE  --> Nome da tela
                                   ,pr_idorigem      IN INTEGER                --> Indicador de sistema origem
@@ -329,13 +330,14 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0005 IS
                                   ,pr_dhadesao     OUT tbcobran_sms_contrato.dhadesao%TYPE   --> Data hora de adesao
                                   ,pr_idcontrato   OUT tbcobran_sms_contrato.idcontrato%TYPE --> Numero do contrato
                                   ,pr_vltarifa     OUT crapfco.vltarifa%TYPE                 --> Valor da tarifa
-                                  ,pr_flsitsms     OUT  INTEGER                              --> Retorna se serviço esta ok para o cooperado(1-Ok,0-NOK )
-                                  ,pr_dsalerta     OUT  VARCHAR2                             --> Retorna alerta para o cooperado
+                                  ,pr_flsitsms     OUT INTEGER                               --> Retorna se serviço esta ok para o cooperado(1-Ok,0-NOK )
+                                  ,pr_dsalerta     OUT VARCHAR2                              --> Retorna alerta para o cooperado
                                   ,pr_qtsmspct     OUT tbcobran_sms_contrato.qtdsms_pacote%TYPE --> Retorna quantidade de sms contratada do pacote
                                   ,pr_qtsmsusd     OUT tbcobran_sms_contrato.qtdsms_usados%TYPE --> Retorna quantidade de sms ja utilizadas do pacote
-                                  
-                                  ,pr_cdcritic OUT  INTEGER                 --> Retorna codigo de critica
-                                  ,pr_dscritic OUT  VARCHAR2);              --> Retorno de critica
+                                  ,pr_dsmsgsemlinddig OUT VARCHAR2                                  
+                                  ,pr_dsmsgcomlinddig OUT VARCHAR2                                  
+                                  ,pr_cdcritic     OUT  INTEGER                 --> Retorna codigo de critica
+                                  ,pr_dscritic     OUT  VARCHAR2);     
                                   
   --> Buscar informações dos contratos de serviço de SMS - Web
   PROCEDURE pc_ret_dados_serv_sms_web ( pr_nrdconta   IN crapass.nrdconta%TYPE  --> Numer de conta do cooperado                                     
@@ -2243,8 +2245,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                      ,pr_dtiniper  IN  DATE                           --> Data inicio do periodo para relatorio
                                      ,pr_dtfimper  IN  DATE                           --> Data fim do periodo para relatorio
                                      ,pr_idorigem  IN INTEGER                         --> Codigo de origem do sistema
-                                     ,pr_dsiduser   IN VARCHAR2                       --> id do usuario
+                                     ,pr_dsiduser  IN VARCHAR2                        --> id do usuario
                                      ,pr_instatus  IN INTEGER DEFAULT 0               --> Status do SMS (0 - para todos)
+                                     ,pr_tppacote  IN INTEGER DEFAULT 0               --> Tipo de pacote(1-pacote,2-individual,0-Todos)
                                      --------->> OUT <<-----------
                                      ,pr_nmarqpdf OUT VARCHAR2                        --> Retorna o nome do relatorio gerado
                                      ,pr_dsxmlrel OUT CLOB                            --> Retorna xml do relatorio quando origem for 3 -InternetBank
@@ -2279,9 +2282,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
              cob.dtvencto,
              cob.vltitulo,
              ctl.dhenvio_sms AS dhenvsms,
-             ctl.nrddd||' '||ctl.nrtelefone  AS nrdofone
+             ctl.nrddd||' '||ctl.nrtelefone  AS nrdofone,
+             pct.dspacote
         FROM tbgen_sms_controle ctl,             
              tbcobran_sms sms,
+             tbcobran_sms_contrato ctr,
+             tbcobran_sms_pacotes pct,
              crapsab sab,
              crapcob cob,
              crapass ass,
@@ -2291,7 +2297,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
          AND ctl.dhenvio_sms BETWEEN pr_dtiniper AND to_date(to_char(pr_dtfimper,'DDMMRRRR')||'235959','DDMMRRHH24MISS')
          AND sms.idlote_sms = ctl.idlote_sms
          AND sms.idsms    = ctl.idsms
-         AND sms.instatus_sms = DECODE(pr_instatus,0,sms.instatus_sms,pr_instatus)          
+         AND sms.instatus_sms = DECODE(pr_instatus,0,sms.instatus_sms,pr_instatus)     
+         AND sms.cdcooper = ctr.cdcooper
+         AND sms.nrdconta = ctr.nrdconta
+         AND sms.idcontrato = ctr.idcontrato
+         AND ctr.cdcooper = pct.cdcooper
+         AND ctr.idpacote = pct.idpacote
          AND cob.cdcooper = sms.cdcooper
          AND cob.nrdconta = sms.nrdconta
          AND cob.nrcnvcob = sms.nrcnvcob
@@ -2304,7 +2315,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
          AND cob.cdcooper = ass.cdcooper
          AND cob.nrdconta = ass.nrdconta
          AND ass.cdcooper = age.cdcooper
-         AND ass.cdagenci = age.cdagenci;
+         AND ass.cdagenci = age.cdagenci
+         AND ( (pr_tppacote = 2 AND ctr.idpacote IN (1,2)) OR
+               (pr_tppacote = 1 AND ctr.idpacote > 2) OR
+               (pr_tppacote = 0)
+              );
     
     -- Cursor genérico de calendário
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;
@@ -2370,7 +2385,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                        '<dtvencto>'||     to_char(rw_cobran_sms.dtvencto,'DD/MM/RRRR')       ||'</dtvencto>'||   
                        '<vltitulo>'||     rw_cobran_sms.vltitulo                             ||'</vltitulo>'||   
                        '<dhenvio_sms>'||  to_char(rw_cobran_sms.dhenvsms,'DD/MM/RRRR HH24:MI:SS')   ||'</dhenvio_sms>'||
-                       '<nrdofone>'||     rw_cobran_sms.nrdofone                             ||'</nrdofone>
+                       '<nrdofone>'||     rw_cobran_sms.nrdofone                             ||'</nrdofone> '||
+                       '<dspacote>'||     rw_cobran_sms.dspacote                             ||'</dspacote>
                      </SMS>');      
     END LOOP;
     
@@ -3018,6 +3034,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                   ,pr_dsalerta     OUT VARCHAR2                              --> Retorna alerta para o cooperado
                                   ,pr_qtsmspct     OUT tbcobran_sms_contrato.qtdsms_pacote%TYPE --> Retorna quantidade de sms contratada do pacote
                                   ,pr_qtsmsusd     OUT tbcobran_sms_contrato.qtdsms_usados%TYPE --> Retorna quantidade de sms ja utilizadas do pacote
+                                  ,pr_dsmsgsemlinddig OUT VARCHAR2                                  
+                                  ,pr_dsmsgcomlinddig OUT VARCHAR2                                  
                                   ,pr_cdcritic     OUT  INTEGER                 --> Retorna codigo de critica
                                   ,pr_dscritic     OUT  VARCHAR2) IS            --> Retorno de critica
 
@@ -3057,6 +3075,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     --> Buscar dados do contrato de sms     
     CURSOR cr_contrato_sms IS
       SELECT pct.cdtarifa
+            ,ctr.cdcooper
             ,pct.dspacote
             ,ctr.idpacote
             ,ctr.dhcancela
@@ -3090,7 +3109,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        AND fco.flgvigen = 1 --> ativa 
        AND fco.cdfaixav = fvl.cdfaixav 
        AND fvl.cdtarifa = pr_cdtarifa;
-    
+       
+    CURSOR cr_crapass (pr_cdcooper crapass.cdcooper%TYPE
+                      ,pr_nrdconta crapass.nrdconta%TYPE) IS
+                      
+     SELECT ass.nmprimtl
+       FROM crapass ass
+      WHERE ass.cdcooper = pr_cdcooper
+        AND ass.nrdconta = pr_nrdconta;
     
     -------------->> VARIAVEIS <<----------------
     vr_exc_erro     EXCEPTION;
@@ -3099,7 +3125,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     
     vr_cdtarifa     craptar.cdtarifa%TYPE;
     vr_idctrativ    tbcobran_sms_contrato.idcontrato%TYPE;
-    
+    vr_nmremsms     VARCHAR2(1000);
+    vr_valores_dinamicos VARCHAR2(1000);
     
   BEGIN
   
@@ -3157,8 +3184,49 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
         OPEN cr_crapjur;
         FETCH cr_crapjur INTO pr_nmfansia;
         CLOSE cr_crapjur;      
-    END IF;
+      END IF;
       
+     
+    -- Definir nome de remetente para o SMS
+    IF rw_contrato_sms.tpnome_emissao = 3 THEN
+      vr_nmremsms := rw_contrato_sms.nmemissao_sms;
+    --> se selecionou Razao social/Nome
+    ELSIF rw_contrato_sms.tpnome_emissao = 1 THEN
+      --> Buscar nome na crapass
+      OPEN cr_crapass(pr_cdcooper => pr_cdcooper,
+                      pr_nrdconta => pr_nrdconta);
+      FETCH cr_crapass INTO vr_nmremsms;
+      CLOSE cr_crapass;
+                    
+    -- se selecionou Nome fantasia
+    ELSIF rw_contrato_sms.tpnome_emissao = 1 THEN
+                  
+      -- Buscar nome na crapjur
+      OPEN cr_crapjur;
+      FETCH cr_crapjur INTO vr_nmremsms;
+      CLOSE cr_crapjur;              
+
+    END IF;  
+
+ --> Variavel para SMS
+    vr_valores_dinamicos := '#Nome#=' ||vr_nmremsms ||';'|| 
+                            '#LinhaDigitavel#='|| '000000000000';
+          
+    --> buscar mensagem
+    pr_dsmsgcomlinddig := GENE0003.fn_buscar_mensagem
+                               (pr_cdcooper        => pr_cdcooper
+                               ,pr_cdproduto       => 19
+                               ,pr_cdtipo_mensagem => 9
+                               ,pr_sms             => 1
+                               ,pr_valores_dinamicos => vr_valores_dinamicos);
+                               
+    --> buscar mensagem
+    pr_dsmsgsemlinddig := GENE0003.fn_buscar_mensagem
+                               (pr_cdcooper        => pr_cdcooper
+                               ,pr_cdproduto       => 19
+                               ,pr_cdtipo_mensagem => 12
+                               ,pr_sms             => 1
+                               ,pr_valores_dinamicos => vr_valores_dinamicos);                               
     END IF;
     
     --> Se estiver cancelado, mandar como inativo, para solicitar
@@ -3243,7 +3311,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     vr_dsalerta   VARCHAR2(4000);
     vr_qtsmspct   tbcobran_sms_contrato.qtdsms_pacote%TYPE;
     vr_qtsmsusd   tbcobran_sms_contrato.qtdsms_usados%TYPE;
-    
+    vr_dsmsgsemlinddig VARCHAR2(1000);
+    vr_dsmsgcomlinddig VARCHAR2(1000);
 
     
     
@@ -3279,7 +3348,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                           ,pr_dsalerta  => vr_dsalerta   --> Retorna alerta para o cooperado
                           ,pr_qtsmspct  => vr_qtsmspct   --> Retorna quantidade de sms contratada do pacote
                           ,pr_qtsmsusd  => vr_qtsmsusd   --> Retorna quantidade de sms ja utilizadas do pacote
-                          
+                          ,pr_dsmsgsemlinddig => vr_dsmsgsemlinddig
+                          ,pr_dsmsgcomlinddig => vr_dsmsgcomlinddig
                           ,pr_cdcritic  => vr_cdcritic   --> Codigo de critica
                           ,pr_dscritic  => vr_dscritic); --> Retorno de critica
                                                           

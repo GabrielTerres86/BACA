@@ -651,6 +651,10 @@
                  
                  17/03/2017 - Ajustes operacao 189 - Servico de SMS de cobranca
                               PRJ319.2 - SMS Cobrança(Odirlei-AMcom)    
+                              
+                 21/03/2017 - Segunda fase projeto Boleto SMS
+                              PRJ319.2 - SMS Cobrança(Ricardo Linhares)    
+                              
 ------------------------------------------------------------------------------*/
 
 /*----------------------------------------------------------------*/
@@ -1143,6 +1147,7 @@ DEF VAR aux_titulo3  AS DECI								           NO-UNDO.
 DEF VAR aux_titulo4  AS DECI								 		   NO-UNDO.
 DEF VAR aux_titulo5  AS DECI				 						   NO-UNDO.
 DEF VAR aux_codigo_barras AS CHAR      								   NO-UNDO.
+DEF VAR aux_tppacote AS INTE                                            NO-UNDO.
 
 /*  Operacao 176/177 */
 DEF VAR aux_vintegra AS DECIMAL										   NO-UNDO.
@@ -4214,7 +4219,8 @@ PROCEDURE proc_operacao59:
            aux_fimemiss = DATE(GET-VALUE("fimemiss"))
            aux_flgregis = INTE(GET-VALUE("flgregis"))
            aux_inserasa = INTE(GET-VALUE("inserasa"))
-           aux_instatussms = INTE(GET-VALUE("instatussms")).
+           aux_instatussms = INTE(GET-VALUE("instatussms"))
+           aux_tppacote = INTE(GET-VALUE("tppacote")).
 
     RUN sistema/internet/fontes/InternetBank59.p (INPUT aux_cdcooper,
                                                   INPUT aux_nrdconta,
@@ -4233,6 +4239,7 @@ PROCEDURE proc_operacao59:
                                                          THEN TRUE ELSE FALSE),
                                                   INPUT aux_inserasa,
                                                   INPUT aux_instatussms,
+                                                  INPUT aux_tppacote,
                                                  OUTPUT aux_dsmsgerr,
                                                  OUTPUT TABLE xml_operacao).
 

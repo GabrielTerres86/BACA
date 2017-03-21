@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odirlei Busana - AMcom
-   Data    : Outubro/2016.                       Ultima atualizacao: 17/03/2017
+   Data    : Outubro/2016.                       Ultima atualizacao: 20/03/2017
    
    Dados referentes ao programa:
    Frequencia: Sempre que for chamado (On-Line)
@@ -12,7 +12,10 @@
    Objetivo  : Serviço de SMS de cobrança
    
    Alteracoes: 17/03/2017 - Incluido novas opcoes.
-                            PRJ319.2 - SMS Cobrança(Odirlei-AMcom)    
+                            PRJ319.2 - SMS Cobrança(Odirlei-AMcom) 
+                            
+               20/03/2017 - Alteraçao filtro relatório e adiçao de campo
+	                          PRJ319 - SMS Cobrança(Ricardo Linhares)                                
 ..............................................................................*/
  
 CREATE WIDGET-POOL.
@@ -51,7 +54,9 @@ DEF VAR aux_qtsmspct        AS INT                                       NO-UNDO
 DEF VAR aux_qtsmsusd        AS INT                                       NO-UNDO.
 DEF VAR aux_dsmensag        AS CHAR                                      NO-UNDO.
 DEF VAR aux_flofesms        AS INT                                       NO-UNDO.
-DEF VAR aux_retxml          AS LONGCHAR                                 NO-UNDO.
+DEF VAR aux_retxml          AS LONGCHAR                                  NO-UNDO.
+DEF VAR aux_dsmsgsemlinddig AS LONGCHAR                                  NO-UNDO.
+DEF VAR aux_dsmsgcomlinddig AS LONGCHAR                                  NO-UNDO.
 
 
 
@@ -129,7 +134,7 @@ ELSE IF par_cddopcao = "CA" THEN
       RUN STORED-PROCEDURE pc_cancel_contrato_sms
           aux_handproc = PROC-HANDLE NO-ERROR
                                   ( INPUT par_cdcooper     /* pr_cdcooper  */
-                                   ,INPUT par_nrdconta     /* pr_nrdconta  */
+                                   ,INPUT par_nrdconta     /* pr_nrdconta  */ 
                                    ,INPUT par_idseqttl     /* pr_idseqttl  */
                                    ,INPUT par_idcontrato   /* pr_idcontrato*/
                                    ,INPUT 3                /* pr_idorigem  */
@@ -168,6 +173,7 @@ ELSE IF par_cddopcao = "CA" THEN
 ELSE IF par_cddopcao = "A" THEN
   DO:
   
+  MESSAGE "ODIRLEI ATIVAR" par_idpacote.
   
       /* Rotina para geraçao do contrato de SMS */
       { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }    
@@ -543,6 +549,8 @@ ELSE IF par_cddopcao = "C" THEN
                                             ,OUTPUT ""           /* pr_dsalerta */ 
                                             ,OUTPUT 0            /* pr_qtsmspct */
                                             ,OUTPUT 0            /* pr_qtsmsusd */
+                                            ,OUTPUT ""           /* pr_dsmsgsemlinddig */
+                                            ,OUTPUT ""           /* pr_dsmsgcomlinddig */
                                             ,OUTPUT 0            /* pr_cdcritic */ 
                                             ,OUTPUT "").         /* pr_dscritic */ 
 
@@ -602,7 +610,9 @@ ELSE IF par_cddopcao = "C" THEN
            aux_idcontra = 0
            aux_vltarifa = 0
            aux_qtsmspct = 0
-           aux_qtsmsusd = 0.
+           aux_qtsmsusd = 0
+           aux_dsmsgsemlinddig = ""
+           aux_dsmsgcomlinddig = "".
 
     ASSIGN aux_nmprintl = pc_ret_dados_serv_sms.pr_nmprintl 
                           WHEN pc_ret_dados_serv_sms.pr_nmprintl <> ?
@@ -627,8 +637,12 @@ ELSE IF par_cddopcao = "C" THEN
            aux_qtsmspct = pc_ret_dados_serv_sms.pr_qtsmspct 
                           WHEN pc_ret_dados_serv_sms.pr_qtsmspct <> ?
            aux_qtsmsusd = pc_ret_dados_serv_sms.pr_qtsmsusd 
-                          WHEN pc_ret_dados_serv_sms.pr_qtsmsusd <> ?.
-
+                          WHEN pc_ret_dados_serv_sms.pr_qtsmsusd <> ?
+           aux_dsmsgsemlinddig = pc_ret_dados_serv_sms.pr_dsmsgsemlinddig
+                                 WHEN pc_ret_dados_serv_sms.pr_dsmsgsemlinddig <> ?
+           aux_dsmsgcomlinddig = pc_ret_dados_serv_sms.pr_dsmsgcomlinddig
+                                 WHEN pc_ret_dados_serv_sms.pr_dsmsgcomlinddig <> ?.                                 
+                        
     CREATE xml_operacao.
     ASSIGN xml_operacao.dslinxml = '<dados>' + 
                                    '<flposcob>' + STRING(aux_flposcob) + '</flposcob>' + 
@@ -646,7 +660,9 @@ ELSE IF par_cddopcao = "C" THEN
                                    '<idcontra>' + STRING(aux_idcontra) + '</idcontra>' + 
                                    '<vltarifa>' + STRING(aux_vltarifa,"zzz,zz9.99") + '</vltarifa>' +
                                    '<qtsmspct>' + STRING(aux_qtsmspct) + '</qtsmspct>' + 
-                                   '<qtsmsusd>' + STRING(aux_qtsmsusd) + '</qtsmsusd>'.
+                                   '<qtsmsusd>' + STRING(aux_qtsmsusd) + '</qtsmsusd>' +
+                                   '<dsmsgsemlinddig>' + STRING(aux_dsmsgsemlinddig) + '</dsmsgsemlinddig>' +
+                                   '<dsmsgcomlinddig>' + STRING(aux_dsmsgcomlinddig) + '</dsmsgcomlinddig>'.
 
     CREATE xml_operacao.
     ASSIGN xml_operacao.dslinxml = '</dados>'.

@@ -166,6 +166,15 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADSMS IS
                                  ,pr_nmdcampo OUT VARCHAR2                   --> Nome do campo com erro
                                  ,pr_des_erro OUT VARCHAR2);                            
                                 
+  PROCEDURE pc_listar_pacotes_prog (pr_cdcooper IN tbcobran_sms_pacotes.cdcooper%TYPE
+                                   ,pr_flgstatus IN NUMBER
+                                   ,pr_pagina IN PLS_INTEGER                   -- Numero inicial do registro para enviar
+                                   ,pr_tamanho_pagina IN PLS_INTEGER           -- Numero de registros que deverao ser retornados                                   
+                                   ,pr_retxml   OUT NOCOPY CLOB                --> Arquivo de retorno do XML
+                                   ,pr_cdcritic OUT INTEGER                    --> Retornar codigo de critica
+                                   ,pr_dscritic OUT VARCHAR2                   --> Retornar descrição de critica
+                                   );
+                                   
   PROCEDURE pc_alterar_pacote_web(pr_idpacote IN tbcobran_sms_pacotes.idpacote%TYPE
                              ,pr_cooper IN tbcobran_sms_pacotes.cdcooper%TYPE
                              ,pr_flgstatus IN tbcobran_sms_pacotes.flgstatus%TYPE    
@@ -2098,7 +2107,189 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADSMS IS
 
     
   END;                             
+  
+  PROCEDURE pc_listar_pacotes_prog (pr_cdcooper IN tbcobran_sms_pacotes.cdcooper%TYPE
+                                   ,pr_flgstatus IN NUMBER
+                                   ,pr_pagina IN PLS_INTEGER                   -- Numero inicial do registro para enviar
+                                   ,pr_tamanho_pagina IN PLS_INTEGER           -- Numero de registros que deverao ser retornados                                   
+                                   ,pr_retxml   OUT NOCOPY CLOB                --> Arquivo de retorno do XML
+                                   ,pr_cdcritic OUT INTEGER                    --> Retornar codigo de critica
+                                   ,pr_dscritic OUT VARCHAR2                   --> Retornar descrição de critica
+                                   ) IS
+                                    
+    /* .............................................................................
+    
+    Programa: pc_listar_pacotes_prog
+    Sistema : Ayllos Web
+    Autor   : Ricardo Linhares
+    Data    : Março/2017                 Ultima atualizacao:
+    
+    Dados referentes ao programa:
+    
+    Frequencia: Sempre que for chamado
+    
+    Objetivo  : Listar pacotes de SMS - Chamada Progress
+    
+    Alteracoes: -----
+    ..............................................................................*/                                 
+   
+     CURSOR cr_pacote_sms(pr_cdcooper tbcobran_sms_pacotes.cdcooper%TYPE
+                         ,pr_flgstatus tbcobran_sms_pacotes.flgstatus%TYPE) IS
 
+
+      SELECT * FROM 
+      (
+       SELECT a.*, rownum r__
+       FROM (
+          SELECT idpacote
+                ,dspacote
+                ,decode(flgstatus, 0, 'Inativo', 1, 'Ativo') flgstatus
+                ,cdtarifa
+                ,perdesconto
+                ,inpessoa
+                ,qtdsms
+                ,dhinclusao
+                ,cdoperad
+            FROM tbcobran_sms_pacotes
+           WHERE cdcooper = pr_cdcooper
+             AND idpacote > 2
+             AND flgstatus = pr_flgstatus
+        )a WHERE rownum < ((pr_pagina * pr_tamanho_pagina) + 1)
+        ) WHERE r__ >= (((pr_pagina-1) * pr_tamanho_pagina) + 1);
+
+        
+     rw_pacote_sms cr_pacote_sms%ROWTYPE;
+        
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(10000);
+    vr_exc_saida EXCEPTION;    
+    vr_contador PLS_INTEGER := 0;
+    vr_vlsms    NUMBER(15,2) := 0; -- Valor da SMS do Pacote
+    vr_vlsmsad  NUMBER(15,2) := 0; --Valor da SMS/Adicional
+    vr_vlpacote NUMBER(15,2) := 0; --Valor do Pacote
+    vr_vltarifa NUMBER(15,2) := 0; --Valor Tarifa    
+    vr_flgstatus PLS_INTEGER := 0; 
+    vr_total_registros INTEGER := 0;
+    vr_retxml          xmltype;
+
+  BEGIN
+    
+    
+    IF pr_flgstatus = -1 THEN
+      vr_flgstatus := NULL;
+    ELSE
+      vr_flgstatus := pr_flgstatus;
+
+    END IF;    
+    
+    -- Conta quantos registros
+    SELECT COUNT(*) INTO vr_total_registros
+      FROM tbcobran_sms_pacotes
+     WHERE cdcooper = pr_cdcooper
+       AND idpacote > 2
+       AND flgstatus = pr_flgstatus;
+
+    
+     -- Criar cabecalho do XML
+    vr_retxml := XMLTYPE.CREATEXML('<Dados/>');  
+
+    FOR pacote IN cr_pacote_sms(pr_cdcooper => pr_cdcooper
+                                ,pr_flgstatus => vr_flgstatus)
+    LOOP
+       
+        pc_calcula_valor_pacote(pr_cdcooper    => pr_cdcooper
+                               ,pr_cdtarifa    => pacote.cdtarifa
+                               ,pr_qtdsms      => pacote.qtdsms
+                               ,pr_perdesconto => pacote.perdesconto
+                               ,pr_vlsms       => vr_vlsms
+                               ,pr_vlsmsad     => vr_vlsmsad
+                               ,pr_vlpacote    => vr_vlpacote
+                               ,pr_vltarifa    => vr_vltarifa
+                               ,pr_cdcritic    => vr_cdcritic
+                               ,pr_dscritic    => vr_dscritic);
+
+         IF TRIM(vr_dscritic) IS NOT NULL THEN
+           
+           IF vr_dscritic <> 'Tarifa nao cadastrada ou inativa.' THEN
+             RAISE vr_exc_saida;
+           END IF;
+
+
+         END IF;     
+       
+        gene0007.pc_insere_tag(pr_xml      => vr_retxml,
+                               pr_tag_pai  => 'Dados',
+                               pr_posicao  => 0,
+                               pr_tag_nova => 'inf',
+                               pr_tag_cont => NULL,
+                               pr_des_erro => vr_dscritic);
+                               
+        gene0007.pc_insere_tag(pr_xml      => vr_retxml,
+                               pr_tag_pai  => 'inf',
+                               pr_posicao  => vr_contador,
+                               pr_tag_nova => 'qtregist',
+                               pr_tag_cont => vr_total_registros,
+                               pr_des_erro => vr_dscritic);                                                              
+
+        gene0007.pc_insere_tag(pr_xml      => vr_retxml,
+                               pr_tag_pai  => 'inf',
+                               pr_posicao  => vr_contador,
+                               pr_tag_nova => 'idpacote',
+                               pr_tag_cont => pacote.idpacote,
+                               pr_des_erro => vr_dscritic);
+
+        gene0007.pc_insere_tag(pr_xml      => vr_retxml,
+                               pr_tag_pai  => 'inf',
+                               pr_posicao  => vr_contador,
+                               pr_tag_nova => 'dspacote',
+                               pr_tag_cont => pacote.dspacote,
+                               pr_des_erro => vr_dscritic);                               
+                               
+        gene0007.pc_insere_tag(pr_xml      => vr_retxml,
+                               pr_tag_pai  => 'inf',
+                               pr_posicao  => vr_contador,
+                               pr_tag_nova => 'flgstatus',
+                               pr_tag_cont => pacote.flgstatus,
+                               pr_des_erro => vr_dscritic);
+                               
+        gene0007.pc_insere_tag(pr_xml      => vr_retxml,
+                               pr_tag_pai  => 'inf',
+                               pr_posicao  => vr_contador,
+                               pr_tag_nova => 'qtdsms',
+                               pr_tag_cont => pacote.qtdsms,
+                               pr_des_erro => vr_dscritic);                               
+                              
+        gene0007.pc_insere_tag(pr_xml      => vr_retxml,
+                               pr_tag_pai  => 'inf',
+                               pr_posicao  => vr_contador,
+                               pr_tag_nova => 'vlpacote',
+                               pr_tag_cont => TO_CHAR(NVL(vr_vlpacote,0),'fm999g999g990d00'),
+                               pr_des_erro => vr_dscritic);                                                                                                                                                                                                                                                      
+
+        vr_contador := vr_contador + 1;
+     
+     END LOOP;
+     
+     
+     pr_retxml := vr_retxml.getClobVal;
+          
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        IF vr_cdcritic <> 0 THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        ELSE
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := vr_dscritic;
+
+        END IF;
+
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina da tela TAB098: ' || SQLERRM;
+
+  END;  
+  
   PROCEDURE pc_listar_pacotes_web(pr_cdcooper IN tbcobran_sms_pacotes.cdcooper%TYPE
                                  ,pr_flgstatus IN NUMBER
                                  ,pr_pagina IN PLS_INTEGER               -- Numero inicial do registro para enviar
@@ -2163,10 +2354,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADSMS IS
     vr_vltarifa NUMBER(15,2) := 0; --Valor Tarifa    
     vr_flgstatus PLS_INTEGER := 0; 
     vr_total_registros INTEGER := 0;
+    vr_retxml          CLOB;
 
   BEGIN
     
-    gene0001.pc_informa_acesso(pr_module => 'TELA_CADSMS.pc_consultar_pacotes');
+    gene0001.pc_informa_acesso(pr_module => 'TELA_CADSMS.pc_listar_pacotes_web');
   
     pr_des_erro := 'OK';
     
@@ -2184,86 +2376,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADSMS IS
        AND flgstatus = pr_flgstatus;
 
     
-     -- Criar cabecalho do XML
-    pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');  
-
-    FOR pacote IN cr_pacote_sms(pr_cdcooper => pr_cdcooper
-                                ,pr_flgstatus => vr_flgstatus)
-    LOOP
-       
-        pc_calcula_valor_pacote(pr_cdcooper    => pr_cdcooper
-                               ,pr_cdtarifa    => pacote.cdtarifa
-                               ,pr_qtdsms      => pacote.qtdsms
-                               ,pr_perdesconto => pacote.perdesconto
-                               ,pr_vlsms       => vr_vlsms
-                               ,pr_vlsmsad     => vr_vlsmsad
-                               ,pr_vlpacote    => vr_vlpacote
-                               ,pr_vltarifa    => vr_vltarifa
-                               ,pr_cdcritic    => vr_cdcritic
-                               ,pr_dscritic    => vr_dscritic);
-
-         IF TRIM(vr_dscritic) IS NOT NULL THEN
-           
-           IF vr_dscritic <> 'Tarifa nao cadastrada ou inativa.' THEN
-             RAISE vr_exc_saida;
-           END IF;
-
-
-         END IF;     
-       
-        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                               pr_tag_pai  => 'Dados',
-                               pr_posicao  => 0,
-                               pr_tag_nova => 'inf',
-                               pr_tag_cont => NULL,
-                               pr_des_erro => vr_dscritic);
-                               
-        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                               pr_tag_pai  => 'inf',
-                               pr_posicao  => vr_contador,
-                               pr_tag_nova => 'qtregist',
-                               pr_tag_cont => vr_total_registros,
-                               pr_des_erro => vr_dscritic);                                                              
-
-        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                               pr_tag_pai  => 'inf',
-                               pr_posicao  => vr_contador,
-                               pr_tag_nova => 'idpacote',
-                               pr_tag_cont => pacote.idpacote,
-                               pr_des_erro => vr_dscritic);
-
-        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                               pr_tag_pai  => 'inf',
-                               pr_posicao  => vr_contador,
-                               pr_tag_nova => 'dspacote',
-                               pr_tag_cont => pacote.dspacote,
-                               pr_des_erro => vr_dscritic);                               
-                               
-        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                               pr_tag_pai  => 'inf',
-                               pr_posicao  => vr_contador,
-                               pr_tag_nova => 'flgstatus',
-                               pr_tag_cont => pacote.flgstatus,
-                               pr_des_erro => vr_dscritic);
-                               
-        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                               pr_tag_pai  => 'inf',
-                               pr_posicao  => vr_contador,
-                               pr_tag_nova => 'qtdsms',
-                               pr_tag_cont => pacote.qtdsms,
-                               pr_des_erro => vr_dscritic);                               
-                              
-        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                               pr_tag_pai  => 'inf',
-                               pr_posicao  => vr_contador,
-                               pr_tag_nova => 'vlpacote',
-                               pr_tag_cont => TO_CHAR(NVL(vr_vlpacote,0),'fm999g999g990d00'),
-                               pr_des_erro => vr_dscritic);                                                                                                                                                                                                                                                      
-
-        vr_contador := vr_contador + 1;
-     
-     END LOOP;
-
+    pc_listar_pacotes_prog (pr_cdcooper  => pr_cdcooper             --> Codigo da cooperativa
+                           ,pr_flgstatus => pr_flgstatus            --> Situação pacote 
+                           ,pr_pagina    => pr_pagina               --> Numero inicial do registro para enviar
+                           ,pr_tamanho_pagina  => pr_tamanho_pagina --> Numero de registros que deverao ser retornados                                   
+                           ,pr_retxml    => vr_retxml               --> Arquivo de retorno do XML
+                           ,pr_cdcritic  => vr_cdcritic             --> Retornar codigo de critica
+                           ,pr_dscritic  => vr_dscritic );          --> Retornar descrição de critica
+    
+    IF vr_cdcritic > 0 OR
+       vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_saida; 
+    END IF;   
+    vr_retxml := '<?xml version="1.0" encoding="ISO-8859-1" ?>' || vr_retxml; 
+    
+    -- Criar cabecalho do XML
+    pr_retxml := XMLTYPE.CREATEXML(vr_retxml);
     
     EXCEPTION
       WHEN vr_exc_saida THEN
