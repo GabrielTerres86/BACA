@@ -358,7 +358,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --  Sistema  : Procedimentos para Convenios
   --  Sigla    : CRED
   --  Autor    : Douglas Pagel
-  --  Data     : Outubro/2013.                   Ultima atualizacao: 21/11/2016
+  --  Data     : Outubro/2013.                   Ultima atualizacao: 20/02/2017
   --
   -- Dados referentes ao programa:
   --
@@ -431,6 +431,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --             21/11/2016 - Se for o convenio 045, 14 BRT CELULAR - FEBRABAN e referencia conter 11 
   --                          posicoes, devemos incluir um hifen para completar 12 posicoes 
   --                          ex: 40151016407- na procedure pc_gerandb (Lucas Ranghetti #560620/453337)
+  --
+  --             20/02/2017 - #551216 Ajustes em pc_busca_concilia_transabbc para logar início, erros e
+  --                          fim da execução do programa e mudança nos logs dos erros para atenderem ao 
+  --                          padrão 'HH24:MI:SS - nome_programa' (Carlos)
   ---------------------------------------------------------------------------------------------------------------
 
 
@@ -2047,10 +2051,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
 
      Objetivo  : Conectar-se ao FTP da Transabbc e efetuar download de três
                  arquivos diariamente.
-
-     Observacao: -----
-
-     Alteracoes:
      ..............................................................................*/
 
     DECLARE
@@ -2076,6 +2076,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
       -- Cursor genérico de calendário
       rw_crapdat BTCH0001.CR_CRAPDAT%ROWTYPE;
 
+      vr_jobname  VARCHAR2(40) := 'jbconv_concilia_transabbc';
+      vr_idprglog PLS_INTEGER  := 0;
+
     BEGIN
       
       -- Somente executar a rotina de segunda a sexta... 
@@ -2083,6 +2086,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
         RETURN;
       END IF;
     
+      cecred.pc_log_programa(PR_DSTIPLOG   => 'I', 
+                             PR_CDPROGRAMA => vr_jobname, 
+                             PR_IDPRGLOG   => vr_idprglog);
+
       -- Buscar a data do movimento
       OPEN btch0001.cr_crapdat(3);
       FETCH btch0001.cr_crapdat
@@ -2194,18 +2201,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
       -- Gravar os comandos no banco
       COMMIT;
       
+      cecred.pc_log_programa(PR_DSTIPLOG   => 'F', 
+                             PR_CDPROGRAMA => vr_jobname, 
+                             PR_IDPRGLOG   => vr_idprglog);
+
     EXCEPTION
       WHEN vr_exc_saida THEN
+
         btch0001.pc_gera_log_batch(pr_cdcooper     => 3 --> Sempre na Cecred
                                   ,pr_ind_tipo_log => 1
-                                  ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || 
-                                                      ': CONV0001.PC_BUSCA_CONCILIA_TRANSABBC: Erro ao efetuar download dos arquivos: ' || vr_dscritic);
+                                  ,pr_des_log      => TO_CHAR(SYSDATE,'HH24:MI:SS') || 
+                                                      ' - CONV0001.PC_BUSCA_CONCILIA_TRANSABBC Erro ao efetuar download dos arquivos: ' || vr_dscritic
+                                  ,pr_dstiplog   => 'E'
+                                  ,pr_cdprograma => vr_jobname);
         ROLLBACK;
       WHEN OTHERS THEN
+
+        cecred.pc_internal_exception;
+      
         btch0001.pc_gera_log_batch(pr_cdcooper     => 3 --> Sempre na Cecred
                                   ,pr_ind_tipo_log => 1
-                                  ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || 
-                                                      ': CONV0001.PC_BUSCA_CONCILIA_TRANSABBC: Erro ao efetuar download dos arquivos: ' || SQLERRM);
+                                  ,pr_des_log      => TO_CHAR(SYSDATE,'HH24:MI:SS') || 
+                                                      ' - CONV0001.PC_BUSCA_CONCILIA_TRANSABBC Erro ao efetuar download dos arquivos: ' || SQLERRM
+                                  ,pr_dstiplog   => 'E'
+                                  ,pr_cdprograma => vr_jobname);
         ROLLBACK;
     END;
 

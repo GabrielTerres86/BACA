@@ -3532,7 +3532,6 @@ END pc_gera_titulos_iptu_prog;
 
   /* Procedure para verificar vencimento titulo */
   PROCEDURE pc_verifica_vencimento_titulo (pr_cod_cooper      IN INTEGER  --Codigo Cooperativa
-                                          ,pr_numero_conta    IN INTEGER  --Numero da Conta
                                           ,pr_cod_agencia     IN INTEGER  --Codigo da Agencia
                                           ,pr_dt_agendamento  IN DATE     --Data Agendamento
                                           ,pr_dt_vencto       IN DATE     --Data Vencimento
@@ -3546,7 +3545,7 @@ END pc_gera_titulos_iptu_prog;
   --  Sistema  : Procedure para verificar vencimento titulo
   --  Sigla    : CXON
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 06/10/2015
+  --  Data     : Julho/2013.                   Ultima atualizacao: 17/03/2017
   --
   -- Dados referentes ao programa:
   --
@@ -3560,6 +3559,8 @@ END pc_gera_titulos_iptu_prog;
   --
   --             06/10/2015 - Ajuste na rotina devido devido para incluir tratamento quando o 
   --                          processo ainda estiver rodando, no qual a dtmvtoan esta ainda defazada SD329517 (Odirlei)
+  --
+  --             17/03/2017 - Removido validacao de pagador vip (Chamado 629635)
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -3569,7 +3570,6 @@ END pc_gera_titulos_iptu_prog;
       vr_dt_dia_util DATE;
       vr_dt_feriado  DATE;
       vr_libepgto    BOOLEAN;
-      vr_dstextab    craptab.dstextab%TYPE;
       --Variaveis Erro
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic VARCHAR2(4000);
@@ -3700,56 +3700,40 @@ END pc_gera_titulos_iptu_prog;
         --Marcar para criticar a data
         pr_critica_data:= TRUE;
         
-        -- Verificacao de agendamento de pagamento
-        -- Carregar informacao de PAGADOR VIP
-        vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cod_cooper
-                                                 ,pr_nmsistem => 'CRED'
-                                                 ,pr_tptabela => 'GENERI'
-                                                 ,pr_cdempres => 0
-                                                 ,pr_cdacesso => 'PAGADORVIP'
-                                                 ,pr_tpregist => pr_numero_conta);
-        -- Verifica se a conta em questão eh de um PAGADOR VIP
-        IF TRIM(vr_dstextab) IS NOT NULL THEN
-          -- Não criticar titulo vencido 
-          -- Regra Implementada para PAGADOR VIP (COOPER), conforme chamado 551630
-          pr_critica_data:= FALSE;
-        ELSE
-          
-          /** Aceita agendamento de titulo com vencimento no ultimo dia **/
-          /** util do ano somente no primeiro dia util do proximo ano   **/
-          /** Exemplo: VENCIMENTO 31/12/2009 - AGENDAMENTO - 04/01/2010 **/
+        /** Aceita agendamento de titulo com vencimento no ultimo dia **/
+        /** util do ano somente no primeiro dia util do proximo ano   **/
+        /** Exemplo: VENCIMENTO 31/12/2009 - AGENDAMENTO - 04/01/2010 **/
 
-          IF to_number(To_Char(pr_dt_agendamento,'YYYY')) -
-             To_Number(to_char(pr_dt_vencto,'YYYY')) = 1  THEN
-            --Montar o dia util
-            vr_dt_dia_util:= TO_DATE('01/01/'||To_Char(pr_dt_agendamento,'YYYY'),'DD/MM/YYYY');
-            --Verficar se eh dia util
-            vr_dt_dia_util:= GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cod_cooper
-                                                        ,pr_dtmvtolt => vr_dt_dia_util
-                                                        ,pr_tipo     => 'P');
-            --Se data agendamento igual ao dia util encontrado
-            IF pr_dt_agendamento = vr_dt_dia_util THEN
-              --Data dia util
-              vr_dt_dia_util:= TO_DATE('31/12/'||to_char(pr_dt_vencto,'YYYY'),'DD/MM/YYYY');
-              /** Se dia 31/12 for segunda-feira obtem data do sabado **/
-              /** para aceitar vencidos do ultimo final de semana     **/
-              IF To_Number(to_char(vr_dt_dia_util,'D')) = 2  THEN
-                vr_dt_dia_util:= TO_DATE('29/12/'||to_char(pr_dt_vencto,'YYYY'),'DD/MM/YYYY');
-              ELSIF To_Number(to_char(vr_dt_dia_util,'D')) = 1  THEN
-                /** Se dia 31/12 for domingo, o ultimo dia util e 29/12 **/
-                vr_dt_dia_util:= TO_DATE('29/12/'||to_char(pr_dt_vencto,'YYYY'),'DD/MM/YYYY');
-              ELSIF To_Number(to_char(vr_dt_dia_util,'D')) = 7  THEN
-                /** Se dia 31/12 for sabado, o ultimo dia util e 30/12 **/
-                vr_dt_dia_util:= TO_DATE('30/12/'||to_char(pr_dt_vencto,'YYYY'),'DD/MM/YYYY');
-              END IF;
-              /** Verifica se pode aceitar o titulo vencido **/
-              IF  pr_dt_vencto >= vr_dt_dia_util THEN
-                --Retorna false
-                pr_critica_data:= FALSE;
-              END IF;
+        IF to_number(To_Char(pr_dt_agendamento,'YYYY')) -
+           To_Number(to_char(pr_dt_vencto,'YYYY')) = 1  THEN
+          --Montar o dia util
+          vr_dt_dia_util:= TO_DATE('01/01/'||To_Char(pr_dt_agendamento,'YYYY'),'DD/MM/YYYY');
+          --Verficar se eh dia util
+          vr_dt_dia_util:= GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cod_cooper
+                                                      ,pr_dtmvtolt => vr_dt_dia_util
+                                                      ,pr_tipo     => 'P');
+          --Se data agendamento igual ao dia util encontrado
+          IF pr_dt_agendamento = vr_dt_dia_util THEN
+            --Data dia util
+            vr_dt_dia_util:= TO_DATE('31/12/'||to_char(pr_dt_vencto,'YYYY'),'DD/MM/YYYY');
+            /** Se dia 31/12 for segunda-feira obtem data do sabado **/
+            /** para aceitar vencidos do ultimo final de semana     **/
+            IF To_Number(to_char(vr_dt_dia_util,'D')) = 2  THEN
+              vr_dt_dia_util:= TO_DATE('29/12/'||to_char(pr_dt_vencto,'YYYY'),'DD/MM/YYYY');
+            ELSIF To_Number(to_char(vr_dt_dia_util,'D')) = 1  THEN
+              /** Se dia 31/12 for domingo, o ultimo dia util e 29/12 **/
+              vr_dt_dia_util:= TO_DATE('29/12/'||to_char(pr_dt_vencto,'YYYY'),'DD/MM/YYYY');
+            ELSIF To_Number(to_char(vr_dt_dia_util,'D')) = 7  THEN
+              /** Se dia 31/12 for sabado, o ultimo dia util e 30/12 **/
+              vr_dt_dia_util:= TO_DATE('30/12/'||to_char(pr_dt_vencto,'YYYY'),'DD/MM/YYYY');
+            END IF;
+            /** Verifica se pode aceitar o titulo vencido **/
+            IF  pr_dt_vencto >= vr_dt_dia_util THEN
+              --Retorna false
+              pr_critica_data:= FALSE;
             END IF;
           END IF;
-        END IF; -- PAGADOR VIP
+        END IF;
       END IF;
     EXCEPTION
        WHEN vr_exc_saida THEN
@@ -5651,7 +5635,6 @@ END pc_gera_titulos_iptu_prog;
             vr_tab_erro.DELETE;
             --Verificar vencimento do titulo
             pc_verifica_vencimento_titulo (pr_cod_cooper      => rw_crapcop.cdcooper  --Codigo Cooperativa
-                                          ,pr_numero_conta    => pr_nrdconta          --Numero da Conta
                                           ,pr_cod_agencia     => pr_cod_agencia       --Codigo da Agencia
                                           ,pr_dt_agendamento  => pr_dt_agendamento    --Data Agendamento
                                           ,pr_dt_vencto       => vr_dt_dtvencto       --Data Vencimento
@@ -6168,7 +6151,6 @@ END pc_gera_titulos_iptu_prog;
           vr_tab_erro.DELETE;
           --Verificar vencimento do titulo
           pc_verifica_vencimento_titulo (pr_cod_cooper      => rw_crapcop.cdcooper  --Codigo Cooperativa
-                                        ,pr_numero_conta    => pr_nrdconta          --Numero da Conta 
                                         ,pr_cod_agencia     => pr_cod_agencia       --Codigo da Agencia
                                         ,pr_dt_agendamento  => pr_dt_agendamento    --Data Agendamento
                                         ,pr_dt_vencto       => nvl(rw_crapcob.dtvencto,vr_dt_dtvencto)  --Data Vencimento
@@ -10473,9 +10455,6 @@ END pc_gera_titulos_iptu_prog;
                                          ,pr_vlrjuros_calc OUT crapcob.vljurdia%TYPE -- Contem o valor do juros calculado
                                          ,pr_dscritic      OUT VARCHAR2) IS          -- Descricao do erro
 
-    --Variaveis de erro
-    vr_dscritic  VARCHAR2(1000); 
-    
   BEGIN            
     
     pr_vlfatura := pr_vltitulo;
@@ -10821,7 +10800,6 @@ END pc_gera_titulos_iptu_prog;
 
       --Verificar vencimento do titulo
       pc_verifica_vencimento_titulo (pr_cod_cooper      => rw_crapcob.cdcooper  --Codigo Cooperativa
-                                    ,pr_numero_conta    => pr_nrdconta          --Numero da Conta 
                                     ,pr_cod_agencia     => pr_cdagenci          --Codigo da Agencia
                                     ,pr_dt_agendamento  => NULL                 --Data Agendamento
                                     ,pr_dt_vencto       => rw_crapcob.dtvencto  --Data Vencimento

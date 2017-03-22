@@ -1471,7 +1471,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       Sistema : CECRED
       Sigla   : EMPR
       Autor   : Carlos Rafael Tanholi
-      Data    : Agosto/15.                    Ultima atualizacao: 20/01/2017
+      Data    : Agosto/15.                    Ultima atualizacao: 24/02/2017
 
       Dados referentes ao programa:
 
@@ -1503,6 +1503,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                    PRJ302 - Acordo (Odirlei-AMcom)
                    
       20/01/2017 - Ajuste para permitir efetuar varios pagamentos dentro do mes. (Chamado: 585221)
+
+      24/02/2017 - Contratos do produto TR nao devera cobrar multa e juros de mora
+                   quando o contrato estiver com acordo ativo. (Jaison/James)
+
     ..............................................................................*/
 
     DECLARE
@@ -2575,8 +2579,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
             rw_crapepr.dtultpag := rw_crapdat.dtmvtolt;
             rw_crapepr.txjuremp := vr_txdjuros;
 
-            -- Caso pagamento seja menor que data atual
-            IF rw_crapepr.dtdpagto < rw_crapdat.dtmvtolt THEN
+            -- Caso pagamento seja menor que data atual e NAO esteja ativo
+            IF rw_crapepr.dtdpagto < rw_crapdat.dtmvtolt AND 
+               NVL(vr_flgativo,0) = 0                    THEN
 
               -- Procedure para lancar Multa e Juros de Mora para o TR
               EMPR0009.pc_efetiva_pag_atraso_tr(pr_cdcooper => pr_cdcooper

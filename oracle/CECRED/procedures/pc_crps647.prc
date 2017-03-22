@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autora  : Lucas R.
-  Data    : Setembro/2013                        Ultima atualizacao: 03/11/2016
+  Data    : Setembro/2013                        Ultima atualizacao: 06/03/2017
 
   Dados referentes ao programa:
 
@@ -122,7 +122,18 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
                            (Lucas Ranghetti #507171)
                
               03/11/2016 - Conversao Progress >> Oracle PLSQL (Jonata-MOUTs)
-
+              
+              14/02/2017 - Incluir validacao para critica 502 para caso o sicredi nos
+                           envie agendamento de debito com o valor zerado 
+                           (Lucas Ranghetti #604860)
+                           
+              23/02/2017 - Retirado caracteres especiais na hora de exibir as 
+                           criticas no relatorio 673 (Tiago/Fabricio #616085)
+              03/03/2017 - Enviar e-mail para o convenios em caso de gerar algum erro inesperado.
+                           (Lucas Ranghetti #622878)
+                           
+              06/03/2017 - Adicionar nvl para os campos nrdaviso e nrboleto ao atualizar
+                           informações de consorcios (Lucas Ranghetti #623432)
    ............................................................................. */
   -- Constantes do programa
   vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'CRPS647';
@@ -177,7 +188,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
   vr_nrdconta crapass.nrdconta%TYPE;
   vr_cdagenci crapass.cdagenci%TYPE;
   vr_cdcrindb VARCHAR2(2);
-     
+  vr_critiarq VARCHAR2(2);
+  vr_texto_email VARCHAR2(4000);
+  vr_emaildst VARCHAR2(1000);
+  
   -- Comandos no OS
   vr_typsaida varchar2(3);
   vr_dessaida varchar2(2000);
@@ -471,8 +485,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
         -- Atualizar aviso e boleto 
         BEGIN 
           UPDATE crapcns 
-             SET nrdaviso = SUBSTR(vr_dslinharq,89,11)
-                ,nrboleto = SUBSTR(vr_dslinharq,70,9)
+             SET nrdaviso = nvl(TRIM(SUBSTR(vr_dslinharq,89,11)),0)
+                ,nrboleto = nvl(TRIM(SUBSTR(vr_dslinharq,70,9)),0)
            WHERE rowid = rw_crapcns.rowid;
         EXCEPTION 
           WHEN OTHERS THEN 
@@ -506,9 +520,20 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
           -- Contrato não encontrado
           pr_cdcritic := 484;
       END;  
+      -- validar valor zerado, se for zerado vamos criticar com a critica 
+      -- 502 - Conta nao emitida.
+      IF vr_vllanmto = 0 THEN
+        pr_cdcritic := 502;     
+    END IF;
     END IF;
     -- Se encontrarmos critica, somente gerar NDB no tipo de registro E
     IF pr_cdcritic > 0 AND vr_tpregist = 'E' THEN 
+      
+      IF pr_cdcritic = 502 THEN
+        vr_critiarq := '96'; -- 96 - Manutenção do Cadastro
+      ELSE
+        vr_critiarq := '30';
+      END IF;
       -- Criar NDB 
       BEGIN 
         INSERT INTO crapndb (cdcooper
@@ -523,7 +548,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
                             ,vr_cdhistor
                             ,0
                             ,'F' || SUBSTR(vr_dslinharq,2,66) || 
-                             '30' || SUBSTR(vr_dslinharq,70,60) ||
+                             vr_critiarq || 
+                             SUBSTR(vr_dslinharq,70,60) ||
                              lpad(' ',16,' ')                ||
                              SUBSTR(vr_dslinharq,140,2)  ||
                              SUBSTR(vr_dslinharq,148,10) ||
@@ -627,6 +653,8 @@ BEGIN
   -- Diretorios de retorno 
   vr_nmdirrec := gene0001.fn_param_sistema('CRED',0,'DIR_658_RECEBE');
   vr_nmdirrcb := gene0001.fn_param_sistema('CRED',0,'DIR_658_RECEBIDOS');
+  -- Busca o endereco de email para os casos de criticas
+  vr_emaildst := gene0001.fn_param_sistema('CRED',pr_cdcooper,'CRPS387_EMAIL');
   
   -- Montagem do nome do arquivo conforme a data
   CASE to_char(rw_crapdat.dtmvtolt,'MM') 
@@ -1292,12 +1320,36 @@ BEGIN
         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
       END IF;
       -- Adicionar o numero da linha ao erro 
-      vr_dscritic := 'Erro na linha '||vr_nrdlinha||' --> '|| vr_dscritic;
+      vr_dscritic := 'Erro na linha '||vr_nrdlinha|| ' do arquivo: '||vr_nmarqmov ||' --> '|| vr_dscritic;      
+      
+      vr_texto_email := '<b>Abaixo os erros encontrados no processo de importacao do debito SICREDI:</b><br><br>'||
+                        to_char(SYSDATE,'dd/mm/yyyy HH24:MI:SS') || ' --> ' || vr_dscritic;
+
+      -- Por fim, envia o email
+      gene0003.pc_solicita_email(pr_cdprogra    => vr_cdprogra
+                                ,pr_des_destino => vr_emaildst
+                                ,pr_des_assunto => 'Critica importacao debito - SICREDI'
+                                ,pr_des_corpo   => vr_texto_email
+                                ,pr_des_anexo   => NULL
+                                ,pr_flg_enviar  => 'N'
+                                ,pr_des_erro    => vr_dscritic);
     WHEN no_data_found THEN
       NULL; --> Fim da leitura 
     WHEN OTHERS THEN
       -- Adicionar o numero da linha ao erro 
-      vr_dscritic := 'Erro na linha '||vr_nrdlinha||' --> '|| sqlerrm;
+      vr_dscritic := 'Erro na linha '||vr_nrdlinha|| ' do arquivo: '||vr_nmarqmov ||' --> '|| SQLERRM;
+      
+      vr_texto_email := '<b>Abaixo os erros encontrados no processo de importacao do debito SICREDI:</b><br><br>'||
+                        to_char(SYSDATE,'dd/mm/yyyy HH24:MI:SS') || ' --> ' || vr_dscritic;
+
+      -- Por fim, envia o email
+      gene0003.pc_solicita_email(pr_cdprogra    => vr_cdprogra
+                                ,pr_des_destino => vr_emaildst
+                                ,pr_des_assunto => 'Critica importacao debito - SICREDI'
+                                ,pr_des_corpo   => vr_texto_email
+                                ,pr_des_anexo   => NULL
+                                ,pr_flg_enviar  => 'N'
+                                ,pr_des_erro    => vr_dscritic);
   END;
   
   -- Fechar handle do arquivo pendente 
@@ -1477,7 +1529,8 @@ BEGIN
                                        ' cdrefere="'||vr_tab_relato_673(vr_idx_relato).cdrefere||'" '||
                                        ' vlparcns="'||TO_CHAR(vr_tab_relato_673(vr_idx_relato).vlparcns,'fm999g999g999g990d00')||'" '||
                                        ' dtdebito="'||TO_CHAR(vr_tab_relato_673(vr_idx_relato).dtdebito,'dd/mm/rrrr')||'" '||
-                                       ' dscritic="'||SUBSTR(vr_tab_relato_673(vr_idx_relato).dscritic,1,35)||'"/>');
+                                       ' dscritic="'||gene0007.fn_caract_acento(pr_texto => SUBSTR(vr_tab_relato_673(vr_idx_relato).dscritic,1,35)
+                                                                               ,pr_insubsti => 1)||'"/>');
       -- Acumular recebidos 
       vr_tot_qtdreceb := vr_tot_qtdreceb + 1;
       vr_tot_vlparceb := vr_tot_vlparceb + nvl(vr_tab_relato_673(vr_idx_relato).vlparcns,0);
@@ -1587,6 +1640,19 @@ EXCEPTION
                              ,pr_cdprogra => vr_cdprogra
                              ,pr_infimsol => pr_infimsol
                              ,pr_stprogra => pr_stprogra);
+                             
+    vr_texto_email := '<b>Abaixo os erros encontrados no processo de importacao do debito SICREDI:</b><br><br>'||
+                        to_char(SYSDATE,'dd/mm/yyyy HH24:MI:SS') || ' --> ' || vr_dscritic;
+
+    -- Por fim, envia o email
+    gene0003.pc_solicita_email(pr_cdprogra    => vr_cdprogra
+                              ,pr_des_destino => vr_emaildst
+                              ,pr_des_assunto => 'Critica importacao debito - SICREDI'
+                              ,pr_des_corpo   => vr_texto_email
+                              ,pr_des_anexo   => NULL
+                              ,pr_flg_enviar  => 'N'
+                              ,pr_des_erro    => vr_dscritic);                         
+                             
     -- Efetuar commit pois gravaremos o que foi processo até então
     COMMIT;
   WHEN vr_exc_saida THEN
@@ -1595,9 +1661,23 @@ EXCEPTION
       -- Buscar a descrição
       vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
     END IF;
-    -- Devolvemos código e critica encontradas
+                              
+    -- Devolvemos código e critica encontradas    
     pr_cdcritic := NVL(vr_cdcritic,0);
     pr_dscritic := vr_dscritic;
+    
+    vr_texto_email := '<b>Abaixo os erros encontrados no processo de importacao do debito SICREDI:</b><br><br>'||
+                      to_char(SYSDATE,'dd/mm/yyyy HH24:MI:SS') || ' --> ' || vr_dscritic;
+
+    -- Por fim, envia o email
+    gene0003.pc_solicita_email(pr_cdprogra    => vr_cdprogra
+                              ,pr_des_destino => vr_emaildst
+                              ,pr_des_assunto => 'Critica importacao debito - SICREDI'
+                              ,pr_des_corpo   => vr_texto_email
+                              ,pr_des_anexo   => NULL
+                              ,pr_flg_enviar  => 'N'
+                              ,pr_des_erro    => vr_dscritic);     
+                                 
     -- Efetuar rollback
     ROLLBACK;
   WHEN OTHERS THEN

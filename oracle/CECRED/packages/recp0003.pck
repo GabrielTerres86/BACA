@@ -28,17 +28,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
   --  Sistema  : Rotinas referentes a importacao de arquivos CYBER de acordos de emprestimos
   --  Sigla    : RECP
   --  Autor    : Jean Michel Deschamps
-  --  Data     : Outubro/2016.                   Ultima atualizacao: 11/10/2016
+  --  Data     : Outubro/2016.                   Ultima atualizacao: 06/03/2017
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: N/A
   -- Objetivo  : Agrupar rotinas genericas refente a importacao de arquivos referente a acordos de emprestimos
   --
-  -- Alteracoes:
-  -- 
+  -- Alteracoes: 20/02/2017 - Alteracao para colocar msgs do log de JOB. (Jaison/James)
+  --
+  --             22/02/2017 - Alteracao para passar pr_nrparcel como zero. (Jaison/James)
+  --
+  --             06/03/2017 - Foi passado o UPDATE crapcyc para dentro do LOOP. (Jaison/James)
+  --
   ---------------------------------------------------------------------------------------------------------------
-    
+
+  vr_flgerlog BOOLEAN := FALSE;
+
+  -- Controla log proc_batch, para apensa exibir qnd realmente processar informacao
+  PROCEDURE pc_controla_log_batch(pr_cdcooper IN PLS_INTEGER
+                                 ,pr_dstiplog IN VARCHAR2
+                                 ,pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
+  BEGIN
+
+    --> Controlar geração de log de execução dos jobs
+    BTCH0001.pc_log_exec_job( pr_cdcooper  => pr_cdcooper    --> Cooperativa
+                             ,pr_cdprogra  => 'JOB_ACORDO_CYBER' --> Codigo do programa
+                             ,pr_nomdojob  => 'JOB_ACORDO_CYBER' --> Nome do job
+                             ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
+                             ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
+                             ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
+
+  END pc_controla_log_batch;
+
   -- Procedure para converter arquivos unix
   PROCEDURE pc_converte_arquivo_txt_unix (pr_cdcooper IN crapcop.cdcooper%TYPE      -- Codigo da Cooperativa
                                          ,pr_caminho  IN  VARCHAR2                  -- Diretorio dos Arquivos
@@ -75,9 +97,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
 
         -- Se ocorrer erro ao recuperar lista de arquivos registra no log
         IF TRIM(vr_dscritic) IS NOT NULL THEN
-          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 2 -- Erro tratato
-                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' --> ' || vr_dscritic);
+          -- Log de erro de execucao
+          pc_controla_log_batch(pr_cdcooper => pr_cdcooper
+                               ,pr_dstiplog => 'E'
+                               ,pr_dscritic => vr_dscritic);
         END IF;
 
         -- Carregar a lista de arquivos txt na temp table
@@ -164,6 +187,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
       vr_nrindice INTEGER;
       vr_idx_txt  INTEGER;
       vr_nrlinha  INTEGER := 0;
+      vr_nracordo NUMBER;
+      vr_dtcancel DATE;
 
       vr_cdcooper crapcop.cdcooper%TYPE := 3;
 
@@ -205,9 +230,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
       
       -- Se ocorrer erro ao recuperar lista de arquivos registra no log
       IF TRIM(vr_dscritic) IS NOT NULL THEN
-        btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
-                                  ,pr_ind_tipo_log => 2 -- Erro tratato
-                                  ,pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss')||' - ' || ' --> ' || vr_dscritic);
+        -- Log de erro de execucao
+        pc_controla_log_batch(pr_cdcooper => vr_cdcooper
+                             ,pr_dstiplog => 'E'
+                             ,pr_dscritic => vr_dscritic);
       END IF;
 
       -- Carregar a lista de arquivos na temp table
@@ -259,10 +285,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
         -- Se ocorreu erro dar RAISE
         IF vr_typ_saida = 'ERR' THEN
           vr_dscritic:= 'Nao foi possivel executar comando unix. ' || vr_comando || ' - ' || vr_dscritic;
-          -- Envio centralizado de log de erro
-          BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
-                                     pr_ind_tipo_log => 2, -- Erro tratato
-                                     pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Erro: ' || vr_dscritic);
+          -- Log de erro de execucao
+          pc_controla_log_batch(pr_cdcooper => vr_cdcooper
+                               ,pr_dstiplog => 'E'
+                               ,pr_dscritic => vr_dscritic);
           CONTINUE;
         END IF;
 
@@ -277,10 +303,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
       	
         --Se ocorreu erro
         IF vr_dscritic IS NOT NULL THEN
-          -- Envio centralizado de log de erro
-          BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
-                                     pr_ind_tipo_log => 2, -- Erro tratato
-                                     pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Erro: ' || vr_dscritic);
+          -- Log de erro de execucao
+          pc_controla_log_batch(pr_cdcooper => vr_cdcooper
+                               ,pr_dstiplog => 'E'
+                               ,pr_dscritic => vr_dscritic);
           CONTINUE;
         END IF;
 
@@ -295,9 +321,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
 
         -- Se ocorrer erro ao recuperar lista de arquivos registra no log
         IF TRIM(vr_dscritic) IS NOT NULL THEN
-          btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
-                                    ,pr_ind_tipo_log => 2 -- Erro tratato
-                                    ,pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Erro: ' || vr_dscritic);
+          -- Log de erro de execucao
+          pc_controla_log_batch(pr_cdcooper => vr_cdcooper
+                               ,pr_dstiplog => 'E'
+                               ,pr_dscritic => vr_dscritic);
           CONTINUE;
         END IF;
 
@@ -313,10 +340,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                      ,pr_dscritic => vr_dscritic);       -- Descricao erro
         -- Se ocorreu erro
         IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-          -- Envio centralizado de log de erro
-          BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
-                                     pr_ind_tipo_log => 2, -- Erro tratato
-                                     pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Erro: ' || vr_dscritic);
+          -- Log de erro de execucao
+          pc_controla_log_batch(pr_cdcooper => vr_cdcooper
+                               ,pr_dstiplog => 'E'
+                               ,pr_dscritic => vr_dscritic);
           CONTINUE;
         END IF;
 
@@ -342,10 +369,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                      ,pr_des_erro => vr_des_erro);  --> Erro
 
              IF vr_des_erro <> 'OK' THEN
-               
-               btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
-                                         ,pr_ind_tipo_log => 2 -- Erro tratato
-                                         ,pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Erro ao abrir arquivo: ' || vr_nmarqtxt);
+               -- Log de erro de execucao
+               pc_controla_log_batch(pr_cdcooper => vr_cdcooper
+                                    ,pr_dstiplog => 'E'
+                                    ,pr_dscritic => 'Erro ao abrir arquivo: ' || vr_nmarqtxt);
 
                -- Fechar o arquivo
                GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file); --> Handle do arquivo aberto;  
@@ -380,11 +407,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                    CONTINUE;
                  ELSIF SUBSTR(vr_setlinha,1,1) = 'H' AND vr_nrlinha > 1 THEN
                    -- Header errado
-                   -- Envio centralizado de log de erro
-                   BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
-                                              pr_ind_tipo_log => 2, -- Erro tratato
-                                              pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> ' ||
-                                                             'ARQUIVO INCONSISTENTE' || vr_nmarqzip); 
+                   -- Log de erro de execucao
+                   pc_controla_log_batch(pr_cdcooper => vr_cdcooper
+                                        ,pr_dstiplog => 'E'
+                                        ,pr_dscritic => 'ARQUIVO INCONSISTENTE');
 
                    ROLLBACK TO SAVE_ACORDO_CANCELADO;
                    pr_flgemail := TRUE;
@@ -393,38 +419,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                  ELSIF SUBSTR(vr_setlinha,1,1) = 'T' THEN
                    CONTINUE;                                          
                  END IF;
-
+                 
+                 vr_nracordo := TO_NUMBER(SUBSTR(vr_setlinha,29,13));
+                 vr_dtcancel := TRUNC(SYSDATE);
+                 
+                 OPEN cr_tbacordo(pr_nracordo => vr_nracordo);
+                 FETCH cr_tbacordo INTO rw_tbacordo;
+                 IF cr_tbacordo%NOTFOUND THEN
+                   CLOSE cr_tbacordo;
+                   CONTINUE;
+                 ELSE
+                   CLOSE cr_tbacordo;
+                 END IF;
+                 
+                  -- Acordo Quitado e Cancelado
+                 IF rw_tbacordo.cdsituacao IN(2,3) THEN
+                   CONTINUE;
+                 END IF;              
+                 
                  -- Procedure responsavel para cancelar o acordo    
-                 RECP0002.pc_cancelar_acordo(pr_nracordo => TO_NUMBER(SUBSTR(vr_setlinha,29,13))         -- NUMERO_ACORDO_ARQUIVO
-                                            ,pr_dtcancel => TO_DATE(SUBSTR(vr_setlinha,42,8),'MMDDRRRR') -- DATA_CANCELAMENTO_ARQUIVO
+                 RECP0002.pc_cancelar_acordo(pr_nracordo => vr_nracordo
+                                            ,pr_dtcancel => vr_dtcancel
                                             ,pr_cdcritic => vr_cdcritic
                                             ,pr_dscritic => vr_dscritic
                                             ,pr_dsdetcri => vr_dsdetcri);
 
-                 IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL OR vr_dsdetcri IS NOT NULL THEN
-                   
-                   OPEN cr_tbacordo(pr_nracordo => TO_NUMBER(SUBSTR(vr_setlinha,29,13)));
-
-                   FETCH cr_tbacordo INTO rw_tbacordo;
-                   
-                   IF cr_tbacordo%FOUND AND rw_tbacordo.cdsituacao IN(2,3)THEN -- Acordo Quitado e Cancelado
-                     CLOSE cr_tbacordo;                                        
-                   ELSE
-                     CLOSE cr_tbacordo;
-                     
-                     -- Envio centralizado de log de erro
-                     BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
-                                                pr_ind_tipo_log => 2, -- Erro tratato
-                                                pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> ' ||
-                                                                 'ARQUIVO INTEGRADO: ' || vr_nmarqzip); 
-                     --Buscar proximo arquivo
-                     vr_idx_txt:= vr_tab_arqtxt.NEXT(vr_idx_txt);
-                     ROLLBACK TO SAVE_ACORDO_CANCELADO;
-                     pr_flgemail := TRUE;
-                     EXIT;
-                   END IF;
-
+                 IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+                   -- Log de erro de execucao
+                   pc_controla_log_batch(pr_cdcooper => vr_cdcooper
+                                        ,pr_dstiplog => 'E'
+                                        ,pr_dscritic => 'Acordo: ' || vr_nracordo || '. Critica: ' || vr_dscritic);
+                   pr_flgemail := TRUE;
+                   CONTINUE;
                  END IF;
+
                END IF; --Arquivo aberto
              END LOOP;
 
@@ -453,10 +481,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
         -- Se ocorreu erro dar RAISE
         IF vr_typ_saida = 'ERR' THEN
           vr_dscritic:= 'Nao foi possivel executar comando unix. ' || vr_comando;
-          -- Envio centralizado de log de erro
-          BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
-                                     pr_ind_tipo_log => 2, -- Erro tratato
-                                     pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Erro: ' || vr_dscritic);
+          -- Log de erro de execucao
+          pc_controla_log_batch(pr_cdcooper => vr_cdcooper
+                               ,pr_dstiplog => 'E'
+                               ,pr_dscritic => vr_dscritic);
         END IF;
 
         -- Remove o diretorio criado
@@ -471,10 +499,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
         -- Se ocorreu erro dar RAISE
         IF vr_typ_saida = 'ERR' THEN
           vr_dscritic:= 'Nao foi possivel executar comando unix. ' || vr_comando || '. Erro: ' || vr_dscritic;
-          -- Envio centralizado de log de erro
-          BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
-                                     pr_ind_tipo_log => 2, -- Erro tratato
-                                     pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Erro: ' || vr_dscritic);
+          -- Log de erro de execucao
+          pc_controla_log_batch(pr_cdcooper => vr_cdcooper
+                               ,pr_dstiplog => 'E'
+                               ,pr_dscritic => vr_dscritic);
         END IF;                
 
         -- Envio centralizado de log de erro
@@ -495,10 +523,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
       pr_cdcritic := 0;
       pr_dscritic := 'Erro na RECP0003.PC_IMP_ARQ_ACORDO_CANCEL: ' || SQLERRM;
       pr_flgemail := TRUE;
-      -- Envio centralizado de log de erro
-      BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
-                                 pr_ind_tipo_log => 2, -- Erro tratato
-                                 pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Erro: ' || pr_dscritic);
+      -- Log de erro de execucao
+      pc_controla_log_batch(pr_cdcooper => vr_cdcooper
+                           ,pr_dstiplog => 'E'
+                           ,pr_dscritic => pr_dscritic);
       ROLLBACK;
   END pc_imp_arq_acordo_cancel;
 
@@ -545,6 +573,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
       vr_idvlrmin NUMBER(25,2) := 0; -- Indicador de valor Minimo
       vr_cdoperad crapope.cdoperad%TYPE := '1';
       vr_nmdatela craptel.nmdatela%TYPE := 'JOB';
+      vr_nracordo NUMBER;
+      vr_dtquitac DATE;
 
       -- Consulta contratos em acordo
       CURSOR cr_crapcyb(pr_nracordo tbrecup_acordo.nracordo%TYPE) IS
@@ -669,9 +699,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
       
       -- Se ocorrer erro ao recuperar lista de arquivos registra no log
       IF TRIM(vr_dscritic) IS NOT NULL THEN
-        btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
-                                  ,pr_ind_tipo_log => 2 -- Erro tratato
-                                  ,pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss')||' - ' || ' --> ' || vr_dscritic);
+        -- Log de erro de execucao
+        pc_controla_log_batch(pr_cdcooper => vr_cdcooper
+                             ,pr_dstiplog => 'E'
+                             ,pr_dscritic => vr_dscritic);
       END IF;
 
       -- Carregar a lista de arquivos na temp table
@@ -723,10 +754,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
         -- Se ocorreu erro dar RAISE
         IF vr_typ_saida = 'ERR' THEN
           vr_dscritic:= 'Nao foi possivel executar comando unix. ' || vr_comando || ' - ' || vr_dscritic;
-          -- Envio centralizado de log de erro
-          BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
-                                     pr_ind_tipo_log => 2, -- Erro tratato
-                                     pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Erro: ' || vr_dscritic);
+          -- Log de erro de execucao
+          pc_controla_log_batch(pr_cdcooper => vr_cdcooper
+                               ,pr_dstiplog => 'E'
+                               ,pr_dscritic => vr_dscritic);
           CONTINUE;
         END IF;
 
@@ -741,10 +772,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
       	
         --Se ocorreu erro
         IF vr_dscritic IS NOT NULL THEN
-          -- Envio centralizado de log de erro
-          BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
-                                     pr_ind_tipo_log => 2, -- Erro tratato
-                                     pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Erro: ' || vr_dscritic);
+          -- Log de erro de execucao
+          pc_controla_log_batch(pr_cdcooper => vr_cdcooper
+                               ,pr_dstiplog => 'E'
+                               ,pr_dscritic => vr_dscritic);
           CONTINUE;
         END IF;
 
@@ -759,9 +790,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
 
         -- Se ocorrer erro ao recuperar lista de arquivos registra no log
         IF TRIM(vr_dscritic) IS NOT NULL THEN
-          btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
-                                    ,pr_ind_tipo_log => 2 -- Erro tratato
-                                    ,pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Erro: ' || vr_dscritic);
+          -- Log de erro de execucao
+          pc_controla_log_batch(pr_cdcooper => vr_cdcooper
+                               ,pr_dstiplog => 'E'
+                               ,pr_dscritic => vr_dscritic);
           CONTINUE;
         END IF;
 
@@ -777,10 +809,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                      ,pr_dscritic => vr_dscritic);       -- Descricao erro
         -- Se ocorreu erro
         IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-          -- Envio centralizado de log de erro
-          BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
-                                     pr_ind_tipo_log => 2, -- Erro tratato
-                                     pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Erro: ' || vr_dscritic);
+          -- Log de erro de execucao
+          pc_controla_log_batch(pr_cdcooper => vr_cdcooper
+                               ,pr_dstiplog => 'E'
+                               ,pr_dscritic => vr_dscritic);
           CONTINUE;
         END IF;
 
@@ -806,10 +838,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                      ,pr_des_erro => vr_des_erro);  --> Erro
 
              IF vr_des_erro <> 'OK' THEN
-               
-               btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
-                                         ,pr_ind_tipo_log => 2 -- Erro tratato
-                                         ,pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Erro ao abrir arquivo: ' || vr_nmarqtxt);
+               -- Log de erro de execucao
+               pc_controla_log_batch(pr_cdcooper => vr_cdcooper
+                                    ,pr_dstiplog => 'E'
+                                    ,pr_dscritic => 'Erro ao abrir arquivo: ' || vr_nmarqtxt);
                                          
                -- Verificar se o arquivo está aberto
                IF utl_file.IS_OPEN(vr_input_file) THEN
@@ -846,11 +878,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                    CONTINUE;
                  ELSIF SUBSTR(vr_setlinha,1,1) = 'H' AND vr_nrlinha > 1 THEN
                    -- Header errado
-                   -- Envio centralizado de log de erro
-                   BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
-                                              pr_ind_tipo_log => 2, -- Erro tratato
-                                              pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> ' ||
-                                                                 'ARQUIVO INCONSISTENTE' || vr_nmarqtxt); 
+                   -- Log de erro de execucao
+                   pc_controla_log_batch(pr_cdcooper => vr_cdcooper
+                                        ,pr_dstiplog => 'E'
+                                        ,pr_dscritic => 'Arquivo: ' || vr_nmarqtxt || ' ' || 'ARQUIVO INCONSISTENTE');
                    --Fim do arquivo
                    ROLLBACK TO SAVE_ACORDO_QUITADO;
                    pr_flgemail := TRUE;
@@ -860,8 +891,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                  END IF;
 
                  vr_vllancam := 0;
+                 vr_nracordo := TO_NUMBER(SUBSTR(vr_setlinha,29,13));
+                 vr_dtquitac := TRUNC(SYSDATE);
 
-                 FOR rw_crapcyb IN cr_crapcyb(pr_nracordo => TO_NUMBER(SUBSTR(vr_setlinha,29,13))) LOOP
+                 FOR rw_crapcyb IN cr_crapcyb(pr_nracordo => vr_nracordo) LOOP
                    
                    OPEN cr_crapass(pr_cdcooper => rw_crapcyb.cdcooper
                                   ,pr_nrdconta => rw_crapcyb.nrdconta);
@@ -895,11 +928,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                      IF vr_des_erro <> 'OK' THEN
                        vr_cdcritic := vr_tab_erro(vr_tab_erro.first).cdcritic;
                        vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
-                       -- Envio centralizado de log de erro
-                       BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
-                                                  pr_ind_tipo_log => 2, -- Erro tratato
-                                                  pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Arquivo: ' || vr_nmarqtxt
-                                                                     || ' Erro:' || vr_dscritic); 
+                       -- Log de erro de execucao
+                       pc_controla_log_batch(pr_cdcooper => vr_cdcooper
+                                            ,pr_dstiplog => 'E'
+                                            ,pr_dscritic => 'Arquivo: ' || vr_nmarqtxt || ' ' || vr_dscritic);
                        ROLLBACK TO SAVE_ACORDO_QUITADO;
                        pr_flgemail := TRUE;
                        EXIT LEITURA_TXT;
@@ -932,11 +964,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                          IF NVL(vr_cdcritic,0) > 0 THEN
                            vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
                          END IF;
-                         -- Envio centralizado de log de erro
-                         BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
-                                                    pr_ind_tipo_log => 2, -- Erro tratato
-                                                    pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Arquivo: ' || vr_nmarqtxt
-                                                                       || ' Erro:' || vr_dscritic);
+                         -- Log de erro de execucao
+                         pc_controla_log_batch(pr_cdcooper => vr_cdcooper
+                                              ,pr_dstiplog => 'E'
+                                              ,pr_dscritic => 'Arquivo: ' || vr_nmarqtxt || ' ' || vr_dscritic);
                          ROLLBACK TO SAVE_ACORDO_QUITADO;
                          pr_flgemail := TRUE;
                          EXIT LEITURA_TXT;
@@ -962,11 +993,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                       ' nao encontrado. Conta: ' || GENE0002.fn_mask_conta(rw_crapcyb.nrdconta) ||
                                       ', Cooperativa: ' || TO_CHAR(rw_crapcyb.cdcooper);
 
-                       -- Envio centralizado de log de erro
-                       BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
-                                                  pr_ind_tipo_log => 2, -- Erro tratato
-                                                  pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Arquivo: ' || vr_nmarqtxt
-                                                                     || ' Erro:' || vr_dscritic);
+                       -- Log de erro de execucao
+                       pc_controla_log_batch(pr_cdcooper => vr_cdcooper
+                                            ,pr_dstiplog => 'E'
+                                            ,pr_dscritic => 'Arquivo: ' || vr_nmarqtxt || ' ' || vr_dscritic);
                        ROLLBACK TO SAVE_ACORDO_QUITADO;
                        pr_flgemail := TRUE;
                        EXIT LEITURA_TXT;
@@ -1001,6 +1031,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                                             ,pr_vlttjmpr => rw_crapepr.vlttjmpr 
                                                             ,pr_vlpgjmpr => rw_crapepr.vlpgjmpr
                                                             ,pr_nracordo => rw_crapcyb.nracordo 
+                                                            ,pr_nrparcel => 0
                                                             ,pr_cdoperad => vr_cdoperad
                                                             ,pr_vlparcel => 0
                                                             ,pr_nmtelant => vr_nmdatela
@@ -1016,11 +1047,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                            vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
                          END IF;
 
-                         -- Envio centralizado de log de erro
-                         BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
-                                                    pr_ind_tipo_log => 2, -- Erro tratato
-                                                    pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Arquivo: ' || vr_nmarqtxt
-                                                                       || ' Erro:' || vr_dscritic);
+                         -- Log de erro de execucao
+                         pc_controla_log_batch(pr_cdcooper => vr_cdcooper
+                                              ,pr_dstiplog => 'E'
+                                              ,pr_dscritic => 'Arquivo: ' || vr_nmarqtxt || ' ' || vr_dscritic);
                          ROLLBACK TO SAVE_ACORDO_QUITADO;
                          pr_flgemail := TRUE;
                          EXIT LEITURA_TXT;
@@ -1037,6 +1067,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                                          ,pr_crapdat  => vr_tab_crapdat(rw_crapepr.cdcooper)
                                                          ,pr_nrctremp => rw_crapepr.nrctremp
                                                          ,pr_nracordo => rw_crapcyb.nracordo
+                                                         ,pr_nrparcel => 0
                                                          ,pr_cdlcremp => rw_crapepr.cdlcremp
                                                          ,pr_inliquid => rw_crapepr.inliquid
                                                          ,pr_qtprepag => rw_crapepr.qtprepag
@@ -1060,11 +1091,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                            vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
                          END IF;
 
-                         -- Envio centralizado de log de erro
-                         BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
-                                                    pr_ind_tipo_log => 2, -- Erro tratato
-                                                    pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Arquivo: ' || vr_nmarqtxt
-                                                                       || ' Erro:' || vr_dscritic);
+                         -- Log de erro de execucao
+                         pc_controla_log_batch(pr_cdcooper => vr_cdcooper
+                                              ,pr_dstiplog => 'E'
+                                              ,pr_dscritic => 'Arquivo: ' || vr_nmarqtxt || ' ' || vr_dscritic);
                          ROLLBACK TO SAVE_ACORDO_QUITADO;
                          pr_flgemail := TRUE;
                          EXIT LEITURA_TXT;
@@ -1081,6 +1111,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                                        ,pr_crapdat  => vr_tab_crapdat(rw_crapepr.cdcooper)
                                                        ,pr_nrctremp => rw_crapepr.nrctremp
                                                        ,pr_nracordo => rw_crapcyb.nracordo
+                                                       ,pr_nrparcel => 0
                                                        ,pr_cdlcremp => rw_crapepr.cdlcremp
                                                        ,pr_inliquid => rw_crapepr.inliquid
                                                        ,pr_qtprepag => rw_crapepr.qtprepag
@@ -1105,11 +1136,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                             vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
                           END IF;
 
-                          -- Envio centralizado de log de erro
-                          BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
-                                                     pr_ind_tipo_log => 2, -- Erro tratato
-                                                     pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Arquivo: ' || vr_nmarqtxt
-                                                                        || ' Erro:' || vr_dscritic);
+                          -- Log de erro de execucao
+                          pc_controla_log_batch(pr_cdcooper => vr_cdcooper
+                                               ,pr_dstiplog => 'E'
+                                               ,pr_dscritic => 'Arquivo: ' || vr_nmarqtxt || ' ' || vr_dscritic);
                           ROLLBACK TO SAVE_ACORDO_QUITADO;
                           pr_flgemail := TRUE;
                           EXIT LEITURA_TXT;
@@ -1125,6 +1155,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                                        ,pr_crapdat  => vr_tab_crapdat(rw_crapepr.cdcooper)
                                                        ,pr_nrctremp => rw_crapcyb.nrctremp
                                                        ,pr_nracordo => rw_crapcyb.nracordo
+                                                       ,pr_nrparcel => 0
                                                        ,pr_vlsdeved => rw_crapepr.vlsdeved
                                                        ,pr_vlsdevat => rw_crapepr.vlsdevat
                                                        ,pr_vlparcel => 0
@@ -1144,11 +1175,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                             vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
                           END IF;
 
-                          -- Envio centralizado de log de erro
-                          BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
-                                                     pr_ind_tipo_log => 2, -- Erro tratato
-                                                     pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Arquivo: ' || vr_nmarqtxt
-                                                                        || ' Erro:' || vr_dscritic);
+                          -- Log de erro de execucao
+                          pc_controla_log_batch(pr_cdcooper => vr_cdcooper
+                                               ,pr_dstiplog => 'E'
+                                               ,pr_dscritic => 'Arquivo: ' || vr_nmarqtxt || ' ' || vr_dscritic);
                           ROLLBACK TO SAVE_ACORDO_QUITADO;
                           pr_flgemail := TRUE;
                           EXIT LEITURA_TXT;
@@ -1157,11 +1187,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                         vr_vllancam := NVL(vr_vllancam,0) + NVL(vr_vltotpag,0);
                       END IF;
                       
-                    END IF; 
+                    END IF;
+
+                   BEGIN
+                     UPDATE crapcyc 
+                        SET flgehvip = 0
+                          , cdmotcin = 0
+                          , dtaltera = vr_tab_crapdat(rw_crapcyb.cdcooper).dtmvtolt
+                      WHERE cdcooper = rw_crapcyb.cdcooper
+                        AND cdorigem = DECODE(rw_crapcyb.cdorigem,2,3,rw_crapcyb.cdorigem)
+                        AND nrdconta = rw_crapcyb.nrdconta
+                        AND nrctremp = rw_crapcyb.nrctremp;
+                   EXCEPTION
+                     WHEN OTHERS THEN
+                       vr_dscritic := 'Erro ao atualizar CRAPCYC: '||SQLERRM;
+                       -- Envio centralizado de log de erro
+                       BTCH0001.pc_gera_log_batch(pr_cdcooper    => vr_cdcooper,
+                                                  pr_ind_tipo_log => 2, -- Erro tratato
+                                                  pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Arquivo: ' || vr_nmarqtxt
+                                                                      || ' Erro:' || vr_dscritic);
+                       pr_flgemail := TRUE;
+                       CONTINUE;
+                   END;
 
                  END LOOP;
                  
-                 OPEN cr_nracordo(pr_nracordo => TO_NUMBER(SUBSTR(vr_setlinha,29,13)));
+                 OPEN cr_nracordo(pr_nracordo => vr_nracordo);
 
                  FETCH cr_nracordo INTO rw_nracordo;
 
@@ -1202,11 +1253,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                         vr_dscritic := 'Erro ao criar o lancamento de desbloqueio de acordo';
                       END IF;
                       
-                      -- Envio centralizado de log de erro
-                      BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
-                                                 pr_ind_tipo_log => 2, -- Erro tratato
-                                                 pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Arquivo: ' || vr_nmarqtxt
-                                                                    || ' Erro:' || vr_dscritic);
+                      -- Log de erro de execucao
+                      pc_controla_log_batch(pr_cdcooper => vr_cdcooper
+                                           ,pr_dstiplog => 'E'
+                                           ,pr_dscritic => 'Arquivo: ' || vr_nmarqtxt || ' ' || vr_dscritic);
 
                       ROLLBACK TO SAVE_ACORDO_QUITADO;
                       pr_flgemail := TRUE;
@@ -1248,11 +1298,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                        vr_cdcritic := 0;
                        vr_dscritic := 'Erro ao criar o lancamento na conta corrente.';
                      END IF;
-                     -- Envio centralizado de log de erro
-                     BTCH0001.pc_gera_log_batch(pr_cdcooper    => vr_cdcooper,
-                                               pr_ind_tipo_log => 2, -- Erro tratato
-                                               pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Arquivo: ' || vr_nmarqtxt
-                                                                  || ' Erro:' || vr_dscritic);
+                     -- Log de erro de execucao
+                     pc_controla_log_batch(pr_cdcooper => vr_cdcooper
+                                          ,pr_dstiplog => 'E'
+                                          ,pr_dscritic => 'Arquivo: ' || vr_nmarqtxt || ' ' || vr_dscritic);
                      ROLLBACK TO SAVE_ACORDO_QUITADO;
                      pr_flgemail := TRUE;
                      EXIT LEITURA_TXT;
@@ -1264,16 +1313,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                    UPDATE tbrecup_acordo
                       SET vlbloqueado = 0,
                           cdsituacao  = 2,
-                          dtliquid    = TO_DATE(SUBSTR(vr_setlinha,42,8),'MMDDRRRR')
-                    WHERE tbrecup_acordo.nracordo = TO_NUMBER(SUBSTR(vr_setlinha,29,13));
+                          dtliquid    = vr_dtquitac
+                    WHERE tbrecup_acordo.nracordo = vr_nracordo;
                  EXCEPTION
                    WHEN OTHERS THEN
                      vr_dscritic := 'Erro ao atualizar registro na tabela TBRECUP_ACORDO: ' || SQLERRM;
-                     -- Envio centralizado de log de erro
-                     BTCH0001.pc_gera_log_batch(pr_cdcooper    => vr_cdcooper,
-                                               pr_ind_tipo_log => 2, -- Erro tratato
-                                               pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Arquivo: ' || vr_nmarqtxt
-                                                                  || ' Erro:' || vr_dscritic);
+                     -- Log de erro de execucao
+                     pc_controla_log_batch(pr_cdcooper => vr_cdcooper
+                                          ,pr_dstiplog => 'E'
+                                          ,pr_dscritic => 'Arquivo: ' || vr_nmarqtxt || ' ' || vr_dscritic);
                      ROLLBACK TO SAVE_ACORDO_QUITADO;
                      pr_flgemail := TRUE;
                      EXIT LEITURA_TXT;                                          
@@ -1307,11 +1355,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
         -- Se ocorreu erro dar RAISE
         IF vr_typ_saida = 'ERR' THEN
           vr_dscritic:= 'Nao foi possivel executar comando unix. ' || vr_comando;
-          -- Envio centralizado de log de erro
-          BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
-                                     pr_ind_tipo_log => 2, -- Erro tratato
-                                     pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> ' ||
-                                                        'ERRO: ' || vr_dscritic);
+          -- Log de erro de execucao
+          pc_controla_log_batch(pr_cdcooper => vr_cdcooper
+                               ,pr_dstiplog => 'E'
+                               ,pr_dscritic => vr_dscritic);
           CONTINUE;
         END IF;
 
@@ -1327,11 +1374,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
         -- Se ocorreu erro dar RAISE
         IF vr_typ_saida = 'ERR' THEN
           vr_dscritic:= 'Nao foi possivel executar comando unix. ' || vr_comando || '. Erro: ' || vr_dscritic;
-          -- Envio centralizado de log de erro
-          BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
-                                     pr_ind_tipo_log => 2, -- Erro tratato
-                                     pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> ' ||
-                                                        'ERRO: ' || vr_dscritic); 
+          -- Log de erro de execucao
+          pc_controla_log_batch(pr_cdcooper => vr_cdcooper
+                               ,pr_dstiplog => 'E'
+                               ,pr_dscritic => vr_dscritic);
           CONTINUE;
         END IF;                
 
@@ -1353,10 +1399,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
       pr_cdcritic := 0;
       pr_dscritic := 'Erro na RECP0003.PC_IMP_ARQ_ACORDO_QUITADO: ' || SQLERRM;
       pr_flgemail := TRUE;
-      -- Envio centralizado de log de erro
-      BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
-                                 pr_ind_tipo_log => 2, -- Erro tratato
-                                 pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Erro: ' || pr_dscritic);
+      -- Log de erro de execucao
+      pc_controla_log_batch(pr_cdcooper => vr_cdcooper
+                           ,pr_dstiplog => 'E'
+                           ,pr_dscritic => pr_dscritic);
 
       ROLLBACK;
   END pc_imp_arq_acordo_quitado; 
@@ -1370,7 +1416,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
     vr_flgemail_quitado BOOLEAN := FALSE;
     vr_dscemail VARCHAR2(4000) := '';     
   BEGIN
-    RETURN;
     -- Buscar o CRAPDAT da cooperativa
     OPEN BTCH0001.cr_crapdat(3); 
     FETCH BTCH0001.cr_crapdat INTO BTCH0001.rw_crapdat;
@@ -1388,11 +1433,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
       RETURN;
     END IF;  
   
-      -- Envio centralizado de log de erro
-      BTCH0001.pc_gera_log_batch(pr_cdcooper     => 3,
-                                 pr_ind_tipo_log => 2, -- Erro tratato
-                                 pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> ' ||
-                                                    'INCIO DE IMPORTACAO REFERENTE A ACORDOS --> RECP0003.PC_IMPORT_ARQ_ACORDO_JOB');
+      -- Log de inicio de execucao
+      pc_controla_log_batch(pr_cdcooper => 3
+                           ,pr_dstiplog => 'I');
             
       -- Importacao de arquivo de acordos cancelados
       pc_imp_arq_acordo_cancel(pr_flgemail => vr_flgemail_cancelado
@@ -1427,29 +1470,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
 
         -- Se houver erros
         IF vr_dscritic IS NOT NULL THEN
-          -- Envio centralizado de log de erro
-          BTCH0001.pc_gera_log_batch(pr_cdcooper     => 3,
-                                     pr_ind_tipo_log => 2, -- Erro tratato
-                                     pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> Erro: ' || vr_dscritic
-                                                        || ' --> RECP0003.PC_IMPORT_ARQ_ACORDO_JOB');
+          -- Log de erro de execucao
+          pc_controla_log_batch(pr_cdcooper => 3
+                               ,pr_dstiplog => 'E'
+                               ,pr_dscritic => vr_dscritic);
         END IF;
-      ELSE
-      
-        -- Envio centralizado de log de erro
-        BTCH0001.pc_gera_log_batch(pr_cdcooper     => 3,
-                                   pr_ind_tipo_log => 2, -- Erro tratato
-                                   pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> ' ||
-                                                      'IMPORTACAO EFETUADA COM SUCESSO --> RECP0003.PC_IMPORT_ARQ_ACORDO_JOB');
       END IF;
-      
+
+      -- Log de final de execucao
+      pc_controla_log_batch(pr_cdcooper => 3
+                           ,pr_dstiplog => 'F');
+
       COMMIT;
      
   EXCEPTION
     WHEN OTHERS THEN
-      -- Envio centralizado de log de erro
-      BTCH0001.pc_gera_log_batch(pr_cdcooper     => 3,
-                                 pr_ind_tipo_log => 2, -- Erro tratato
-                                 pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || 'RECP0003.PC_IMPORT_ARQ_ACORDO_JOB --> Erro: ' || SQLERRM);
+      -- Log de erro de execucao
+          pc_controla_log_batch(pr_cdcooper => 3
+                               ,pr_dstiplog => 'E'
+                               ,pr_dscritic => SQLERRM);
       ROLLBACK;
   END pc_import_arq_acordo_job;
   

@@ -838,7 +838,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
      Sistema : Rotinas referentes ao limite de credito
      Sigla   : LIMI
      Autor   : James Prust Junior
-     Data    : Setembro/15.                    Ultima atualizacao:
+     Data    : Setembro/15.                    Ultima atualizacao: 14/02/2017
 
      Dados referentes ao programa:
 
@@ -847,7 +847,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
      Objetivo  : Validacao para efetuar o estorno
 
      Observacao: -----
-     Alteracoes:
+
+     Alteracoes: 14/02/2017 - Nao permitir estorno para situacao Ativo ou Quitado. (Jaison/James - PRJ302)
+
      ..............................................................................*/
     DECLARE
       vr_tab_erro                  GENE0001.typ_tab_erro;
@@ -857,7 +859,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
       vr_cdcritic      crapcri.cdcritic%TYPE;
       vr_dscritic      VARCHAR2(10000);
       vr_des_reto      VARCHAR2(3);
-      vr_typ_saida     VARCHAR2(3);
       
       -- Tratamento de erros
       vr_exc_saida     EXCEPTION;
@@ -873,7 +874,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
       vr_dstextab        craptab.dstextab%TYPE;
       vr_vlmaxest        NUMBER(15,2) := 0;
       vr_vltotest        NUMBER(15,2) := 0;
-      vr_flgativo        INTEGER := 0;
+      vr_flgretativo     INTEGER := 0;
+      vr_flgretquitado   INTEGER := 0;
+      vr_flgretcancelado INTEGER := 0;
     
     BEGIN
       vr_tab_erro.DELETE;
@@ -903,22 +906,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
         RAISE vr_exc_saida;      
       END IF;                        
 
-      RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => vr_cdcooper
-                                       ,pr_nrdconta => pr_nrdconta
-                                       ,pr_nrctremp => pr_nrctremp
-                                       ,pr_flgativo => vr_flgativo
-                                       ,pr_cdcritic => vr_cdcritic
-                                       ,pr_dscritic => vr_dscritic);
+      RECP0001.pc_verifica_situacao_acordo(pr_cdcooper        => vr_cdcooper
+                                          ,pr_nrdconta        => pr_nrdconta
+                                          ,pr_nrctremp        => pr_nrctremp
+                                          ,pr_flgretativo     => vr_flgretativo    
+                                          ,pr_flgretquitado   => vr_flgretquitado  
+                                         	,pr_flgretcancelado => vr_flgretcancelado
+                                          ,pr_cdcritic        => vr_cdcritic
+                                          ,pr_dscritic        => vr_dscritic);
 
       IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_saida;
       END IF;
 
-      IF vr_flgativo = 1 THEN
+      -- Se estiver ATIVO
+      IF vr_flgretativo = 1 THEN
         vr_dscritic := 'Estorno nao permitido, emprestimo em acordo.';
         RAISE vr_exc_saida;
       END IF;
                  
+      -- Se estiver QUITADO
+      IF vr_flgretquitado = 1 THEN
+        vr_dscritic := 'Lancamento nao permitido, contrato liquidado atraves de acordo.';
+        RAISE vr_exc_saida;
+      END IF;
+
       vr_vlmaxest := 0;
       vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => vr_cdcooper
                                                ,pr_nmsistem => 'CRED'

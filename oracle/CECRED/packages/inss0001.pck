@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0001 AS
 
    Programa : INSS0001                       Antiga: generico/procedures/b1wgen0091.p
    Autor   : Andre - DB1
-   Data    : 16/05/2011                        Ultima atualizacao: 31/01/2017
+   Data    : 16/05/2011                        Ultima atualizacao: 13/02/2017
 
    Dados referentes ao programa:
 
@@ -1091,7 +1091,7 @@ create or replace package body cecred.INSS0001 as
    Sigla   : CRED
 
    Autor   : Odirlei Busana(AMcom)
-   Data    : 27/08/2013                        Ultima atualizacao: 31/01/2017
+   Data    : 27/08/2013                        Ultima atualizacao: 13/02/2017
 
    Dados referentes ao programa:
 
@@ -1165,6 +1165,10 @@ create or replace package body cecred.INSS0001 as
                             em questão e para postar na intranet no dia correto
                             (Adriano - SD 567303).
                               
+               13/02/2017 - #605926 Retirado o parametro pr_dsmailcop (pc_solicita_relato em 
+                            pc_gera_relatorio_rejeic) pois o mesmo estava cadastrando o diretório 
+                            rlnsv da cooperativa no lugar do e-mail, ocasionando erros nas tentativas
+                            de envio do mesmo (Carlos)
   ---------------------------------------------------------------------------------------------------------------*/
 
   /*Procedimento para gerar lote e lancamento, para gerar credito em conta*/
@@ -3973,7 +3977,6 @@ create or replace package body cecred.INSS0001 as
                                      ,pr_nmformul  => '132col'            --> Nome do formulário para impressão
                                      ,pr_nrcopias  => 1                   --> Número de cópias
                                      ,pr_sqcabrel  => 1                   --> Qual a seq do cabrel
-                                     ,pr_dsmailcop => vr_nmdireto_rlnsv   --> Copiar arquivo para diretorio rlnsv
                                      ,pr_flappend  => 'S'                 --> Ira incrementar o relatorio se ja existir 
                                      ,pr_des_erro  => vr_dscritic);       --> Saída com erro
           
@@ -4413,7 +4416,7 @@ create or replace package body cecred.INSS0001 as
         IF TO_NUMBER(pr_tab_creditos(pr_index_creditos).cdorgins) IN (801241, 787028) THEN --> Transulcred
               
           IF rw_crapcop.cdcooper IN (9,17) THEN
-                          
+              
             IF pr_tab_creditos(pr_index_creditos).nrdconta IN (11240,620,5525,329,345) THEN  
 						vr_cdcooper_aux := 9;
             rw_crapcop.cdcooper := 17;
@@ -4433,7 +4436,7 @@ create or replace package body cecred.INSS0001 as
           END IF;    
           --Se encontrou conta migrada
           IF vr_craptco THEN
-            
+                
             -- Verifica se a cooperativa esta cadastrada
             OPEN cr_crapcop (pr_cdcooper => rw_craptco.cdcooper);
                 
@@ -16095,7 +16098,7 @@ create or replace package body cecred.INSS0001 as
           ELSIF pr_cdcooper = 9 THEN
             vr_cdcopant := 17;
           END IF;          
-                  
+          
           /*Verifica se o beneficiario eh um cooperado migrado da: 
              - Concredi para Viacredi.
              - Transulcred para Transpocred */

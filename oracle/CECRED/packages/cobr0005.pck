@@ -1950,7 +1950,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     END;
       
   END pc_buscar_titulo_cobranca;                                          
-  
+
   --> Rotina para atualizar nome do remetente de SMS de cobrança
   PROCEDURE pc_atualizar_remetente_sms ( pr_cdcooper IN  crapcop.cdcooper%TYPE                  --> Codigo da cooperativa
                                         ,pr_nrdconta IN  crapass.nrdconta%TYPE          --> Numero da conta
@@ -5332,7 +5332,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana- AMcom
-       Data    : novembro/2016                     Ultima atualizacao: --/--/----
+       Data    : novembro/2016                     Ultima atualizacao: 14/03/2017
 
        Dados referentes ao programa:
 
@@ -5340,7 +5340,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        Objetivo  : Rotina para identificar os SMSs de cobrança pendente de envio 
                    e realizar o envio
 
-       Alteracoes: ----
+       Alteracoes: 14/03/2017 - Ajuste no select do cursor cr_sms_cobran (Aline)
 
     ............................................................................ */
     --------------->> CURSORES <<----------------
@@ -5405,6 +5405,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
          AND cob.cdcooper = ctr.cdcooper
          AND cob.nrdconta = ctr.nrdconta
          AND ctr.dhcancela IS null
+		 AND ctr.cdcooper = pct.cdcooper
          AND ctr.idpacote = pct.idpacote 
          AND cob.cdcooper = pr_cdcooper
          AND sab.nrcelsac <> 0 --ativo

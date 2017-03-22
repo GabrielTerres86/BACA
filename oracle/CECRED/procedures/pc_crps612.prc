@@ -1,5 +1,4 @@
-CREATE OR REPLACE PROCEDURE CECRED.pc_crps612 (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
-                                               ) IS
+CREATE OR REPLACE PROCEDURE CECRED.pc_crps612 (pr_dscritic OUT VARCHAR2) IS
 
   /* ............................................................................
 
@@ -7,7 +6,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps612 (pr_cdcooper IN crapcop.cdcooper%T
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Henrique
-     Data    : Outubro/2011                         Ultima alteracao: 22/02/2016
+     Data    : Outubro/2011                         Ultima alteracao: 12/01/2017
 
      Dados referentes ao programa:
 
@@ -20,6 +19,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps612 (pr_cdcooper IN crapcop.cdcooper%T
               22/02/2016 - Alterado rotina para retirar programa da cadeia e colocar
                            em job com execução diaria SD388026 (Odirlei-AMcom).
 
+              12/01/2017 - #551192 Melhorias de performance e inclusão de logs de controle de execução (Carlos)
   ............................................................................ */
   -- Código do programa
   vr_cdprogra     CONSTANT crapprg.cdprogra%TYPE := 'CRPS612';
@@ -27,25 +27,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps612 (pr_cdcooper IN crapcop.cdcooper%T
   ------------------------------- CURSORES ---------------------------------
   -- Busca dos dados da cooperativa
   CURSOR cr_crapcop IS
-    SELECT cop.nmrescop,
-           cop.cdcooper
+    SELECT cop.cdcooper
       FROM crapcop cop
      WHERE cop.cdcooper <> 3
        AND cop.flgativo = 1
-       AND(cop.cdcooper = pr_cdcooper OR
-           pr_cdcooper = 3)
      ORDER BY cop.cdcooper;
        
-  -- Buscar nome do programa      
-  CURSOR cr_crapprg IS
-    SELECT dsprogra##1
-      FROM crapprg
-     WHERE cdprogra = vr_cdprogra
-       AND dsprogra##1 IS NOT NULL
-       AND ROWNUM = 1;     
-  rw_crapprg cr_crapprg%ROWTYPE; 
-  
-  
   ------------------------------- REGISTROS -------------------------------
   rw_crapcop cr_crapcop%ROWTYPE;
 
@@ -55,26 +42,30 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps612 (pr_cdcooper IN crapcop.cdcooper%T
   vr_dtmvtolt     DATE;
   vr_dtmvtoan     DATE;
   
-  vr_desdolog     VARCHAR2(500);
-  vr_tempo        NUMBER;
   vr_cdcooper     crapcop.cdcooper%TYPE;
 
-  -- Rolbacks para erros, ignorar o resto do processo e rollback
   -- Tratamento de erros
-  vr_exc_saida  EXCEPTION;
   vr_cdcritic   PLS_INTEGER;
   vr_dscritic   VARCHAR2(4000);
 
+  vr_nomdojob  CONSTANT VARCHAR2(100) := 'jbcobran_crps612';
+  vr_idprglog  PLS_INTEGER := 0;
+
+
 BEGIN
+
+  cecred.pc_log_programa(PR_DSTIPLOG   => 'I'
+                        ,PR_CDPROGRAMA => vr_nomdojob                        
+                        ,PR_IDPRGLOG   => vr_idprglog);
 
   -- Incluir nome do módulo logado
   GENE0001.pc_informa_acesso(pr_module => 'PC_'||vr_cdprogra);
-  vr_cdcooper := pr_cdcooper;
+  vr_cdcooper := 3;
   
-  --> buscar nome do programa
-  OPEN cr_crapprg;
-  FETCH cr_crapprg INTO rw_crapprg;
-  CLOSE cr_crapprg;
+  --> Definir datas de filtro, processo será rodado todos os dia,
+  -- assim buscará sempre os dados do dia anterior
+  vr_dtmvtoan := SYSDATE - 1;
+  vr_dtmvtolt := SYSDATE;
   
   -- Buscar os titulos DDA por cooperativa  
   FOR rw_crapcop IN cr_crapcop LOOP
@@ -82,96 +73,61 @@ BEGIN
     --> Armazenar codigo da cooperativa
     vr_cdcooper := rw_crapcop.cdcooper;
       
-    -- Inicializar o tempo
-    vr_tempo := to_char(SYSDATE,'SSSSS'); 
-    
-    -- Gerar log    
-    vr_desdolog := to_char(SYSDATE,'HH24:MI:SS')||' - '|| vr_cdprogra ||
-                   ' --> Inicio da execucao: '||vr_cdprogra||' - '||lower(rw_crapprg.dsprogra##1);
-                   
-    btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper, 
-                               pr_ind_tipo_log => 1, 
-                               pr_des_log      => vr_desdolog);    
-                               
-    --> Definir datas de filtro, processo será rodado todos os dia,
-    -- assim buscará sempre os dados do dia anterior
-    vr_dtmvtoan := SYSDATE - 1;
-    vr_dtmvtolt := SYSDATE;
-    
     -- Chama a rotina para envio de mensagens atraves do site de chegada de novos titulos DDA
-    DDDA0001.pc_chegada_titulos_DDA(pr_cdcooper => rw_crapcop.cdcooper
+    DDDA0001.pc_chegada_titulos_DDA(pr_cdcooper => vr_cdcooper
                                    ,pr_cdprogra => vr_cdprogra
                                    ,pr_dtemiini => vr_dtmvtoan
                                    ,pr_dtemifim => vr_dtmvtolt
                                    ,pr_cdcritic => vr_cdcritic
                                    ,pr_dscritic => vr_dscritic);
 
-    -- Se retornar crítica
-    IF TRIM(vr_dscritic) IS NOT NULL OR 
-       nvl(vr_cdcritic,0) > 0 THEN
+    -- Verifica se houve crítica
+    vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);   
+
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
       
-      IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-        -- Buscar a descrição
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-      END IF;
+      pr_dscritic := 'Coop: ' || vr_cdcooper || ' - ' || vr_dscritic;
+      
+      -- Log de alerta de execucao
+      cecred.pc_log_programa(PR_DSTIPLOG   => 'E'
+                            ,PR_CDPROGRAMA => vr_nomdojob
+                            ,pr_tpocorrencia  => 3 -- alerta
+                            ,pr_cdcriticidade => 1 -- media
+                            ,pr_dsmensagem    => pr_dscritic
+                            ,PR_IDPRGLOG      => vr_idprglog);
     
-      -- Gerar log de critica
-      vr_desdolog := to_char(SYSDATE,'HH24:MI:SS')||' - '|| vr_cdprogra ||
-                     ' --> ERRO:'||vr_dscritic;
-      btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper, 
-                                 pr_ind_tipo_log => 2, 
-                                 pr_des_log      => vr_desdolog);
       ROLLBACK;
       --> Buscar proxima cooperativa
-      continue;
-      
+      CONTINUE;
     END IF;
-    
-    --> Criar log de fim de execução
-    vr_desdolog := to_char(SYSDATE,'HH24:MI:SS')||' - '|| vr_cdprogra ||
-                       ' --> Stored Procedure rodou em '|| 
-                       -- calcular tempo de execução
-                       to_char(to_date(to_char(SYSDATE,'SSSSS') - vr_tempo,'SSSSS'),'HH24:MI:SS');
-                   
-    btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper, 
-                               pr_ind_tipo_log => 1, 
-                               pr_des_log      => vr_desdolog);
     
     -- Commitar as alterações
     COMMIT;
     
   END LOOP;  
 
+  -- Log de fim da execucao
+  cecred.pc_log_programa(PR_DSTIPLOG   => 'F'
+                        ,PR_CDPROGRAMA => vr_nomdojob                        
+                        ,PR_IDPRGLOG   => vr_idprglog);
+                        
   -- Salvar informacoes no banco de dados
   COMMIT;
 
 EXCEPTION
-  WHEN vr_exc_saida THEN
-    -- Se foi retornado apenas código
-    IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-      -- Buscar a descrição
-      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-    END IF;
-    
-    -- Gerar log de critica
-    vr_desdolog := to_char(SYSDATE,'HH24:MI:SS')||' - '|| vr_cdprogra ||
-                   ' --> ERRO:'||vr_dscritic;
-    btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper, 
-                               pr_ind_tipo_log => 2, 
-                               pr_des_log      => vr_desdolog);
-    -- Efetuar rollback
-    ROLLBACK;
   WHEN OTHERS THEN
     
-    vr_cdcritic := 0;
-    vr_dscritic := sqlerrm;
-    -- Gerar log de critica
-    vr_desdolog := to_char(SYSDATE,'HH24:MI:SS')||' - '|| vr_cdprogra ||
-                   ' --> ERRO:'||vr_dscritic;
+    pc_internal_exception(vr_cdcooper);
+    
+    pr_dscritic := 'Coop: ' || vr_cdcooper || ' - ' || sqlerrm;
                    
-    btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper, 
-                               pr_ind_tipo_log => 2, 
-                               pr_des_log      => vr_desdolog);
+    -- Log de erro de execucao
+    cecred.pc_log_programa(PR_DSTIPLOG   => 'E'
+                          ,PR_CDPROGRAMA => vr_nomdojob
+                          ,pr_tpocorrencia  => 2 -- erro nao tratado
+                          ,pr_cdcriticidade => 4
+                          ,pr_dsmensagem    => pr_dscritic
+                          ,PR_IDPRGLOG      => vr_idprglog);
     -- Efetuar rollback
     ROLLBACK;
 END PC_CRPS612;

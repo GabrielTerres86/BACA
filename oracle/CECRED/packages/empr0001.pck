@@ -2538,7 +2538,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Tiago.
-       Data    : 06/03/2012                         Ultima atualizacao: 21/10/2016
+       Data    : 06/03/2012                         Ultima atualizacao: 14/02/2017
     
        Dados referentes ao programa:
     
@@ -2570,6 +2570,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                     09/10/2015 - Inclusao de histórico de estorno PP. (Oscar)
 
 				    21/10/2016 - Ajuste para utilização do cursor padrão da craptab. (Rodrigo)
+
+                    14/02/2017 - Foi inicializada a vr_vlsderel com zero. (Jaison/James)
+
     ............................................................................. */
   
     -------------------> CURSOR <--------------------
@@ -2658,7 +2661,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     vr_exec_BUSCA exception;
     --vr_vlatupar   NUMBER(11,2) := 0;
     vr_vlatupar NUMBER := 0;
-    vr_vlsderel NUMBER;
+    vr_vlsderel NUMBER := 0;
     vr_qtdianor NUMBER := 0;
     vr_qtdiamor NUMBER := 0;
     vr_prtljuro NUMBER := 0;
@@ -7756,7 +7759,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Alisson
-       Data    : Fevereiro/2014                        Ultima atualizacao: 01/06/2016
+       Data    : Fevereiro/2014                        Ultima atualizacao: 16/03/2017
     
        Dados referentes ao programa:
     
@@ -7780,6 +7783,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
                    26/09/2016 - Adicionado validacao de contratos de acordo na procedure,
                                 Prj. 302 (Jean Michel).             
+
+                   16/03/2017 - Alteracao de mensagem de Contrato em acordo. (Jaison/James)
     ............................................................................. */
   
     DECLARE
@@ -8000,7 +8005,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           END IF;
                                    
           IF vr_flgativo = 1 THEN
-            vr_dscritic := 'Pagamento nao permitido, emprestimo em acordo.';
+            vr_dscritic := 'Contrato em acordo. Pagamento permitido somente por boleto.';
             RAISE vr_exc_saida;
           END IF;
         END IF;

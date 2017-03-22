@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps658 (pr_cdcooper IN crapcop.cdcooper%T
       Sistema : Conta-Corrente - Cooperativa de Credito
       Sigla   : CRED
       Autora  : Lucas R.
-      Data    : Setembro/2013                        Ultima atualizacao: 28/10/2016
+      Data    : Setembro/2013                        Ultima atualizacao: 13/02/2017
 
       Dados referentes ao programa:
 
@@ -37,6 +37,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps658 (pr_cdcooper IN crapcop.cdcooper%T
                   28/10/2016 - Incluir replace de "&" por "e" no nome do consorciado, 
                                pois estava estourando o xml na hora de gerar o relatorio
                                (Lucas Ranghetti #520936)
+                               
+                  13/02/2017 - Remover envio de e-mail para quando as criticas 190 e 191
+                               (Lucas Ranghetti #597333)
       ............................................................................*/
 
 
@@ -395,7 +398,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps658 (pr_cdcooper IN crapcop.cdcooper%T
               btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                         ,pr_ind_tipo_log => 2 -- Erro tratato
                                         ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                        ,pr_des_log      => to_char(sysdate,'dd/mm/yyyy hh24:mi:ss')||' - '
+                                        ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                          || vr_cdprogra || ' --> '
                                                          || gene0001.fn_busca_critica(468)); --468 - Tipo de registro errado.
 
@@ -474,11 +477,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps658 (pr_cdcooper IN crapcop.cdcooper%T
           vr_tab_crapass(vr_idxass) := rw_crapass.nrdconta;        
         END LOOP;        
         
-        -- Gera o log de arquivo integrado com rejeitados
+        -- Gera o log de 219 - INTEGRANDO ARQUIVO
         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                   ,pr_ind_tipo_log => 1 -- Processo normal
                                   ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')                            
-                                  ,pr_des_log      => to_char(sysdate,'dd/mm/yyyy hh24:mi:ss')||' - '
+                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                    || vr_cdprogra || ' --> '
                                                    || gene0001.fn_busca_critica(219)||
                                                    ' --> '||vr_caminho_arq||'/'||vr_tab_nmarquiv(idx)); 
@@ -763,20 +766,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps658 (pr_cdcooper IN crapcop.cdcooper%T
                                                      || gene0001.fn_busca_critica(190)||
                                                      ' --> '||vr_nmarquiv_err); 
           
-          -- Montar assunto do email                                          
-          vr_texto_email := 'Arquivo: ' || '<b>' || to_char(vr_nmarqimp) || '</b><br><br>' ||
-                            'Critica: ' || '<b>' || to_char(gene0001.fn_busca_critica(190)) || '</b>';
-                                                     
-          -- Enviar email para area responsavel                                           
-          gene0003.pc_solicita_email(pr_cdcooper    => pr_cdcooper
-                                    ,pr_cdprogra    => vr_cdprogra
-                                    ,pr_des_destino => vr_emaildst
-                                    ,pr_des_assunto => 'Criticas atualizacoes consorcios'
-                                    ,pr_des_corpo   => vr_texto_email
-                                    ,pr_des_anexo   => NULL
-                                    ,pr_flg_enviar  => 'N'
-                                    ,pr_des_erro    => vr_dscritic);
-                               
         ELSE /* se houver erro importa arquivo e exibe critica 191 */
           -- busca o diretorio padrao dos arquivos recebidos e processados
           vr_caminho_arq_rec := gene0001.fn_param_sistema('CRED', pr_cdcooper, 'DIR_658_RECEBIDOS'); 
@@ -792,25 +781,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps658 (pr_cdcooper IN crapcop.cdcooper%T
           btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                     ,pr_ind_tipo_log => 1 -- Processo normal
                                     ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                    ,pr_des_log      => to_char(sysdate,'dd/mm/yyyy hh24:mi:ss')||' - '
+                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                      || vr_cdprogra || ' --> '
                                                      || gene0001.fn_busca_critica(191)||
                                                      ' --> '||vr_nmarquiv_err); 
-          
-          -- Montar assunto do email                                          
-          vr_texto_email := 'Arquivo: ' || '<b>' || to_char(vr_nmarqimp) || '</b><br><br>' ||
-                            'Critica: ' || '<b>' || to_char(gene0001.fn_busca_critica(191)) || '</b>';
-                                                     
-          -- Enviar email para area responsavel                                           
-          gene0003.pc_solicita_email(pr_cdcooper    => pr_cdcooper
-                                    ,pr_cdprogra    => vr_cdprogra
-                                    ,pr_des_destino => vr_emaildst
-                                    ,pr_des_assunto => 'Criticas atualizacoes consorcios'
-                                    ,pr_des_corpo   => vr_texto_email
-                                    ,pr_des_anexo   => NULL
-                                    ,pr_flg_enviar  => 'N'
-                                    ,pr_des_erro    => vr_dscritic);
-          
         END IF;
         
         -- Fecha arquivo de dados
@@ -958,7 +932,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps658 (pr_cdcooper IN crapcop.cdcooper%T
         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                   ,pr_ind_tipo_log => 2 -- Erro tratato
                                   ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                  ,pr_des_log      => to_char(sysdate,'dd/mm/yyyy hh24:mi:ss')||' - '
+                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                    || vr_cdprogra || ' --> '
                                                    || vr_dscritic );
         -- Montar texto do email                                          

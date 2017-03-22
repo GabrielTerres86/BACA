@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
     Sistema  : Rotinas genericas referente a zoom de pesquisa
     Sigla    : ZOOM
     Autor    : Adriano Marchi
-    Data     : 30/11/2015.                   Ultima atualizacao: 12/07/2016
+    Data     : 30/11/2015.                   Ultima atualizacao: 22/02/2017
   
    Dados referentes ao programa:
   
@@ -18,6 +18,9 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
   
                12/06/2016 - Criação da rotina pc_busca_craplrt em vritude da conversão da tela LROTAT
                             (Andrei - RKAM).
+                            
+               22/02/2017 - Conversão da rotina busca-gncdnto (Adriano - SD 614408).
+                                           
   ---------------------------------------------------------------------------------------------------------------*?
   
   /* Tabela para guardar os operadores */
@@ -82,8 +85,27 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
     ,flgstfin crapfin.flgstfin%TYPE
     ,tpfinali crapfin.tpfinali%TYPE);
        
-   /* Tabela para guardar as finalidades de empréstimos */
+  /* Tabela para guardar as finalidades de empréstimos */
   TYPE typ_tab_finalidades_empr IS TABLE OF typ_finalidades_empr INDEX BY PLS_INTEGER;
+  
+  /* Tabela para guardar as naturezas de ocupação */
+  TYPE typ_natureza_ocupacao IS RECORD 
+    (cdnatocp gncdnto.cdnatocp%TYPE
+    ,dsnatocp gncdnto.dsnatocp%TYPE
+    ,rsnatocp gncdnto.rsnatocp%TYPE);
+       
+  /* Tabela para guardar as naturezas de ocupação */
+  TYPE typ_tab_natureza_ocupacao IS TABLE OF typ_natureza_ocupacao INDEX BY PLS_INTEGER;
+
+  /* Tabela para guardar as ocupações */
+  TYPE typ_ocupacoes IS RECORD 
+    (cdocupa  gncdocp.cdocupa%TYPE
+    ,dsdocupa gncdocp.dsdocupa%TYPE
+    ,cdnatocp gncdocp.cdnatocp%TYPE
+    ,rsdocupa gncdocp.rsdocupa%TYPE);
+    
+  /* Tabela para guardar as ocupações */
+  TYPE typ_tab_ocupacoes IS TABLE OF typ_ocupacoes INDEX BY PLS_INTEGER;  
               
   /* Procedure para encontrar operadores */
   PROCEDURE pc_busca_operadores_web(pr_cdoperad IN crapope.cdoperad%TYPE   --Operador                                   
@@ -279,8 +301,54 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
                                           ,pr_des_erro OUT VARCHAR2             -- Saida OK/NOK
                                           ,pr_clob_ret OUT CLOB                 -- Tabela clob                                 
                                           ,pr_cdcritic OUT PLS_INTEGER          -- Codigo Erro
-                                          ,pr_dscritic OUT VARCHAR2);          -- Descricao Erro                                           
-                                                                                                        
+                                          ,pr_dscritic OUT VARCHAR2);          -- Descricao Erro   
+                                                                                  
+  PROCEDURE pc_busca_gncdnto_car( pr_cdnatocp IN gncdnto.cdnatocp%TYPE -- Código da finalidade
+                                 ,pr_rsnatocp IN gncdnto.rsnatocp%TYPE -- Descrição da finalidade
+                                 ,pr_nrregist IN INTEGER               -- Quantidade de registros                            
+                                 ,pr_nriniseq IN INTEGER               -- Qunatidade inicial
+                                 ,pr_nmdcampo OUT VARCHAR2             -- Nome do Campo
+                                 ,pr_des_erro OUT VARCHAR2             -- Saida OK/NOK
+                                 ,pr_clob_ret OUT CLOB                 -- Tabela clob                                 
+                                 ,pr_cdcritic OUT PLS_INTEGER          -- Codigo Erro
+                                 ,pr_dscritic OUT VARCHAR2);          -- Descricao Erro  
+                                 
+  PROCEDURE pc_busca_gncdnto_web(pr_cdnatocp  IN gncdnto.cdnatocp%TYPE -- Código da natureza
+                                ,pr_cdnatopc  IN gncdnto.cdnatocp%TYPE --Código da natureza
+                                ,pr_rsnatocp  IN gncdnto.dsnatocp%TYPE -- Descrição da natureza
+                                ,pr_nrregist  IN INTEGER               -- Quantidade de registros                            
+                                ,pr_nriniseq  IN INTEGER               -- Qunatidade inicial
+                                ,pr_xmllog    IN VARCHAR2              --XML com informações de LOG
+                                ,pr_cdcritic  OUT PLS_INTEGER          --Código da crítica
+                                ,pr_dscritic  OUT VARCHAR2             --Descrição da crítica
+                                ,pr_retxml    IN OUT NOCOPY XMLType    --Arquivo de retorno do XML
+                                ,pr_nmdcampo  OUT VARCHAR2             --Nome do Campo
+                                ,pr_des_erro  OUT VARCHAR2);          --Saida OK/NOK  
+                                
+  PROCEDURE pc_busca_gncdocp_web(pr_cdocupa   IN gncdocp.cdocupa%TYPE  -- Código da ocupação
+                                ,pr_cdocpttl  IN gncdnto.cdnatocp%TYPE --Código da natureza
+                                ,pr_cdocpcje  IN gncdnto.cdnatocp%TYPE --Código da natureza
+                                ,pr_rsdocupa  IN gncdocp.rsdocupa%TYPE -- Descrição da ocupação
+                                ,pr_dsocpttl  IN gncdocp.rsdocupa%TYPE -- Descrição da ocupação
+                                ,pr_nrregist  IN INTEGER               -- Quantidade de registros                            
+                                ,pr_nriniseq  IN INTEGER               -- Qunatidade inicial
+                                ,pr_xmllog    IN VARCHAR2              --XML com informações de LOG
+                                ,pr_cdcritic  OUT PLS_INTEGER          --Código da crítica
+                                ,pr_dscritic  OUT VARCHAR2             --Descrição da crítica
+                                ,pr_retxml    IN OUT NOCOPY XMLType    --Arquivo de retorno do XML
+                                ,pr_nmdcampo  OUT VARCHAR2             --Nome do Campo
+                                ,pr_des_erro  OUT VARCHAR2);          --Saida OK/NOK      
+                                
+  PROCEDURE pc_busca_gncdocp_car( pr_cdocupa  IN gncdocp.cdocupa%TYPE  -- Código da ocupação
+                                 ,pr_rsdocupa IN gncdocp.rsdocupa%TYPE -- Descrição da ocupação
+                                 ,pr_nrregist IN INTEGER               -- Quantidade de registros                            
+                                 ,pr_nriniseq IN INTEGER               -- Qunatidade inicial
+                                 ,pr_nmdcampo OUT VARCHAR2             -- Nome do Campo
+                                 ,pr_des_erro OUT VARCHAR2             -- Saida OK/NOK
+                                 ,pr_clob_ret OUT CLOB                 -- Tabela clob                                 
+                                 ,pr_cdcritic OUT PLS_INTEGER          -- Codigo Erro
+                                 ,pr_dscritic OUT VARCHAR2);          -- Descricao Erro                                                                                          
+                                                                                                                                         
 END ZOOM0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
@@ -291,7 +359,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
    Sigla   : CRED
 
    Autor   : Adriano Marchi
-   Data    : 30/11/2015                       Ultima atualizacao: 12/07/2016
+   Data    : 30/11/2015                       Ultima atualizacao: 08/03/2017
 
    Dados referentes ao programa:
 
@@ -306,8 +374,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
                                                     
                12/06/2016 - Criação das rotinas para consulta de linhas de crédito e finalidades de empréstimo
                             (Andrei - RKAM).
-                                                 
+                    
+               22/02/2017 - Conversão da rotina busca-gncdnto (Adriano - SD 614408).
                                                    
+			   08/03/2017 - Ajuste para enviar corretamente o campo cdocupa no xml de retorno
+			                (Adriano - SD 614408).                               
   ---------------------------------------------------------------------------------------------------------------*/
   
   /*PROCEDURE RESPONSAVEL POR ENCONTRAR OPERADORES*/
@@ -3761,5 +3832,933 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
       
   END pc_busca_finalidades_empr_car; 
   
+  PROCEDURE pc_busca_gncdnto(pr_cdnatocp IN gncdnto.cdnatocp%TYPE -- Código da natureza
+                            ,pr_rsnatocp IN gncdnto.rsnatocp%TYPE -- Descrição da natureza
+                            ,pr_nrregist IN INTEGER               -- Número de registro
+                            ,pr_nriniseq IN INTEGER               -- Número sequencial do registro
+                            ,pr_qtregist OUT INTEGER              -- Quantidade de registro
+                            ,pr_nmdcampo OUT VARCHAR2             -->Nome do campo com erro
+                            ,pr_tab_natureza_ocupacao OUT typ_tab_natureza_ocupacao --Tabela natureza de ocupação
+                            ,pr_tab_erro OUT gene0001.typ_tab_erro -->Tabela Erros
+                            ,pr_des_erro OUT VARCHAR2)IS --Tabela de erros 
+  
+  /*---------------------------------------------------------------------------------------------------------------
+    
+    Programa : pc_busca_gncdnto                            antiga: b1wgen0059\busca-gncdnto
+    Sistema  : Conta-Corrente - Cooperativa de Credito
+    Sigla    : CRED
+    Autor    : Adriano
+    Data     : Fevereiro/2017                           Ultima atualizacao:
+    
+    Dados referentes ao programa:
+    
+    Frequencia: -----
+    Objetivo   : Pesquisa naturezas de ocupação
+    
+    Alterações : 
+    -------------------------------------------------------------------------------------------------------------*/                                    
+  
+  CURSOR cr_gncdnto(pr_cdnatocp IN gncdnto.cdnatocp%TYPE
+                   ,pr_dsnatocp IN gncdnto.dsnatocp%TYPE) IS
+  SELECT gncdnto.cdnatocp
+        ,gncdnto.dsnatocp
+        ,gncdnto.rsnatocp
+   FROM gncdnto
+  WHERE (pr_cdnatocp = 0 
+     OR gncdnto.cdnatocp = pr_cdnatocp)
+    AND UPPER(gncdnto.rsnatocp) LIKE '%' || pr_dsnatocp || '%';
+  rw_gncdnto cr_gncdnto%ROWTYPE;
+  
+  vr_nrregist INTEGER := nvl(pr_nrregist,9999);
+  
+  --Variaveis de Criticas
+  vr_exc_erro EXCEPTION;
+  
+  vr_index PLS_INTEGER;
+                              
+  BEGIN
+    
+    --Limpar tabelas auxiliares
+    pr_tab_natureza_ocupacao.DELETE;  
+                       
+    FOR rw_gncdnto IN cr_gncdnto(pr_cdnatocp => pr_cdnatocp
+                                ,pr_dsnatocp => pr_rsnatocp) LOOP
+      
+      IF trim(rw_gncdnto.rsnatocp) IS NULL THEN
+        
+        CONTINUE;
+        
+      END IF;
+      
+      IF rw_gncdnto.cdnatocp = 99 THEN
+        
+        CONTINUE;
+      
+      END IF;
+      
+      --Indice para a temp-table
+      vr_index:= pr_tab_natureza_ocupacao.COUNT + 1;
+      pr_qtregist := nvl(pr_qtregist,0) + 1;
+      
+      /* controles da paginacao */
+      IF (pr_qtregist < pr_nriniseq) OR
+         (pr_qtregist > (pr_nriniseq + pr_nrregist)) THEN
+         --Proxima linha
+          CONTINUE;
+      END IF; 
+      
+      --Numero Registros
+      IF vr_nrregist > 0 THEN 
+        
+        --Verificar se já existe na temp-table                             
+        IF NOT pr_tab_natureza_ocupacao.EXISTS(vr_index) THEN  
+                      
+            --Popular dados na tabela memoria
+            pr_tab_natureza_ocupacao(vr_index).cdnatocp:= rw_gncdnto.cdnatocp;
+            pr_tab_natureza_ocupacao(vr_index).dsnatocp:= rw_gncdnto.dsnatocp;
+            pr_tab_natureza_ocupacao(vr_index).rsnatocp:= rw_gncdnto.rsnatocp;
+                       
+          END IF;  
+          
+      END IF;
+      
+      --Diminuir registros
+      vr_nrregist:= nvl(vr_nrregist,0) - 1; 
+      
+    END LOOP;
+    
+    --Retorno OK
+    pr_des_erro:= 'OK'; 
+    
+  END pc_busca_gncdnto;                             
+  
+  PROCEDURE pc_busca_gncdnto_web(pr_cdnatocp  IN gncdnto.cdnatocp%TYPE -- Código da natureza
+                                ,pr_cdnatopc  IN gncdnto.cdnatocp%TYPE -- Código da natureza
+                                ,pr_rsnatocp  IN gncdnto.dsnatocp%TYPE -- Descrição da natureza
+                                ,pr_nrregist  IN INTEGER               -- Quantidade de registros                            
+                                ,pr_nriniseq  IN INTEGER               -- Qunatidade inicial
+                                ,pr_xmllog    IN VARCHAR2              --XML com informações de LOG
+                                ,pr_cdcritic  OUT PLS_INTEGER          --Código da crítica
+                                ,pr_dscritic  OUT VARCHAR2             --Descrição da crítica
+                                ,pr_retxml    IN OUT NOCOPY XMLType    --Arquivo de retorno do XML
+                                ,pr_nmdcampo  OUT VARCHAR2             --Nome do Campo
+                                ,pr_des_erro  OUT VARCHAR2)IS          --Saida OK/NOK
+                                    
+  /*---------------------------------------------------------------------------------------------------------------
+    
+    Programa : pc_busca_gncdnto_web                            antiga: b1wgen0059\busca-gncdnto
+    Sistema  : Conta-Corrente - Cooperativa de Credito
+    Sigla    : CRED
+    Autor    : Adriano  
+    Data     : Fevereiro/2017                          Ultima atualizacao:
+    
+    Dados referentes ao programa:
+    
+    Frequencia: -----
+    Objetivo   : Pesquisa Naturezas de ocupação
+    
+    Alterações : 
+    -------------------------------------------------------------------------------------------------------------*/                                    
+    --Variaveis de Criticas
+    vr_cdcritic INTEGER;
+    vr_dscritic VARCHAR2(4000);
+    vr_des_reto VARCHAR2(3); 
+
+    --Tabela de Erros
+    vr_tab_erro gene0001.typ_tab_erro;
+    
+    --Tabela de natureza de ocupação
+    vr_tab_natureza_ocupacao typ_tab_natureza_ocupacao;
+
+    -- Variaveis de log
+    vr_cdcooper crapcop.cdcooper%TYPE;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+    vr_cdnatocp gncdnto.cdnatocp%TYPE;
+    
+    --Variaveis Locais
+    vr_qtregist INTEGER := 0;   
+    vr_clob     CLOB;   
+    vr_xml_temp VARCHAR2(32726) := ''; 
+        
+    --Variaveis de Indice
+    vr_index PLS_INTEGER;
+    
+    --Variaveis de Excecoes
+    vr_exc_ok    EXCEPTION;                                       
+    vr_exc_erro  EXCEPTION;    
+  
+  BEGIN
+    --limpar tabela erros
+    vr_tab_erro.DELETE;
+      
+    --Limpar tabela dados
+    vr_tab_natureza_ocupacao.DELETE;
+      
+    --Inicializar Variaveis
+    vr_cdcritic:= 0;                         
+    vr_dscritic:= NULL;
+      
+    -- Recupera dados de log para consulta posterior
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscritic);
+
+    -- Verifica se houve erro recuperando informacoes de log                              
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+    
+    IF pr_cdnatopc > 0 THEN
+    
+      vr_cdnatocp := pr_cdnatopc;
+      
+    ELSE
+      
+      vr_cdnatocp := pr_cdnatocp;
+          
+    END IF;
+    
+    pc_busca_gncdnto(pr_cdnatocp => nvl(vr_cdnatocp,0) -- Código da natureza
+                    ,pr_rsnatocp => UPPER(pr_rsnatocp) -- Descrição da natureza
+                    ,pr_nrregist => pr_nrregist        -- Número de registro
+                    ,pr_nriniseq => pr_nriniseq        -- Número sequencial do registro
+                    ,pr_qtregist => vr_qtregist        -- Quantidade de registro
+                    ,pr_nmdcampo => pr_nmdcampo        -- Nome do campo com erro
+                    ,pr_tab_natureza_ocupacao => vr_tab_natureza_ocupacao -- Tabela naturezas
+                    ,pr_tab_erro => vr_tab_erro   --Tabela Erros
+                    ,pr_des_erro => vr_des_reto); --Tabela de erros 
+                           
+    --Se Ocorreu erro
+    IF vr_des_reto <> 'OK' THEN       
+       
+      --Se possuir erro na tabela
+      IF vr_tab_erro.COUNT > 0 THEN
+        
+        --Mensagem Erro
+        vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+        vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+        
+      ELSE  
+        
+        --Mensagem Erro
+        vr_dscritic:= 'Erro na pc_busca_gncdnto_web.';
+        
+      END IF;          
+      
+      --Levantar Excecao
+      RAISE vr_exc_erro;  
+            
+    END IF;
+    
+    -- Monta documento XML de ERRO
+    dbms_lob.createtemporary(vr_clob, TRUE);
+    dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);                                          
+      
+    -- Criar cabeçalho do XML
+    gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                           ,pr_texto_completo => vr_xml_temp
+                           ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><Root><gncdnto>');
+      
+    --Buscar Primeiro registro
+    vr_index:= vr_tab_natureza_ocupacao.FIRST;
+        
+    --Percorrer todos os historicos
+    WHILE vr_index IS NOT NULL LOOP
+      
+      -- Carrega os dados           
+      gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                             ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_novo     => '<naturezas>'||
+                                                   '  <cdnatocp>' || vr_tab_natureza_ocupacao(vr_index).cdnatocp||'</cdnatocp>'||
+                                                   '  <dsnatocp>' || vr_tab_natureza_ocupacao(vr_index).dsnatocp||'</dsnatocp>'|| 
+                                                   '  <rsnatocp>' || vr_tab_natureza_ocupacao(vr_index).rsnatocp||'</rsnatocp>'||                                                    
+                                                   '</naturezas>'); 
+                                                              
+      --Proximo Registro
+      vr_index:= vr_tab_natureza_ocupacao.NEXT(vr_index); 
+    
+    END LOOP;
+    -- Encerrar a tag raiz
+    gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                           ,pr_texto_completo => vr_xml_temp
+                           ,pr_texto_novo     => '</gncdnto></Root>'
+                           ,pr_fecha_xml      => TRUE);
+                  
+    -- Atualiza o XML de retorno
+    pr_retxml := xmltype(vr_clob);
+
+    -- Insere atributo na tag banco com a quantidade de registros
+    gene0007.pc_gera_atributo(pr_xml   => pr_retxml           --> XML que irá receber o novo atributo
+                             ,pr_tag   => 'gncdnto'            --> Nome da TAG XML
+                             ,pr_atrib => 'qtregist'          --> Nome do atributo
+                             ,pr_atval => vr_qtregist         --> Valor do atributo
+                             ,pr_numva => 0                   --> Número da localização da TAG na árvore XML
+                             ,pr_des_erro => vr_dscritic);    --> Descrição de erros
+                             
+    -- Libera a memoria do CLOB
+    dbms_lob.close(vr_clob);  
+                                   
+    --Se ocorreu erro
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF; 
+                                      
+    --Retorno
+    pr_des_erro:= 'OK'; 
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      -- Retorno não OK          
+      pr_des_erro:= 'NOK';
+        
+      -- Erro
+      pr_cdcritic:= vr_cdcritic;
+      pr_dscritic:= vr_dscritic;
+        
+      -- Existe para satisfazer exigência da interface. 
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');                                                            
+    WHEN OTHERS THEN
+      -- Retorno não OK
+      pr_des_erro:= 'NOK';
+        
+      -- Erro
+      pr_cdcritic:= 0;
+      pr_dscritic:= 'Erro na pc_busca_gncdnto_web --> '|| SQLERRM;
+        
+      -- Existe para satisfazer exigência da interface. 
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');                     
+  
+  END pc_busca_gncdnto_web;                             
+    
+  PROCEDURE pc_busca_gncdnto_car( pr_cdnatocp IN gncdnto.cdnatocp%TYPE -- Código da finalidade
+                                 ,pr_rsnatocp IN gncdnto.rsnatocp%TYPE -- Descrição da finalidade
+                                 ,pr_nrregist IN INTEGER               -- Quantidade de registros                            
+                                 ,pr_nriniseq IN INTEGER               -- Qunatidade inicial
+                                 ,pr_nmdcampo OUT VARCHAR2             -- Nome do Campo
+                                 ,pr_des_erro OUT VARCHAR2             -- Saida OK/NOK
+                                 ,pr_clob_ret OUT CLOB                 -- Tabela clob                                 
+                                 ,pr_cdcritic OUT PLS_INTEGER          -- Codigo Erro
+                                 ,pr_dscritic OUT VARCHAR2)IS          -- Descricao Erro  
+                                     
+  /*---------------------------------------------------------------------------------------------------------------
+    
+    Programa : pc_busca_gncdnto_car                            antiga: b1wgen0059\busca-gncdnto
+    Sistema  : Conta-Corrente - Cooperativa de Credito
+    Sigla    : CRED
+    Autor    : Adriano 
+    Data     : Fevereiro/2017                           Ultima atualizacao:
+    
+    Dados referentes ao programa:
+    
+    Frequencia: -----
+    Objetivo   : Pesquisa naturezas de ocupação
+    
+    Alterações : 
+    -------------------------------------------------------------------------------------------------------------*/                                    
+  
+    --Variaveis de Criticas
+    vr_cdcritic INTEGER;
+    vr_dscritic VARCHAR2(4000);
+    vr_des_reto VARCHAR2(3); 
+
+    --Tabela de Erros
+    vr_tab_erro gene0001.typ_tab_erro;
+    
+    --Tabela de naturezas de ocupação
+    vr_tab_natureza_ocupacao typ_tab_natureza_ocupacao;
+    
+    --Variaveis Arquivo Dados
+    vr_dstexto VARCHAR2(32767);
+    vr_string  VARCHAR2(32767);
+            
+    --Variaveis de Indice
+    vr_index PLS_INTEGER;
+        
+    --Variaveis auxiliares
+    vr_qtregist INTEGER := 0;
+    
+    --Variaveis de Excecoes
+    vr_exc_ok    EXCEPTION;                                       
+    vr_exc_erro  EXCEPTION;      
+
+  BEGIN
+    --limpar tabela erros
+    vr_tab_erro.DELETE;
+      
+    --Limpar tabela dados
+    vr_tab_natureza_ocupacao.DELETE;
+          
+    pc_busca_gncdnto(pr_cdnatocp   => nvl(pr_cdnatocp,0)
+                    ,pr_rsnatocp   => UPPER(pr_rsnatocp)
+                    ,pr_nrregist   => pr_nrregist
+                    ,pr_nriniseq   => pr_nriniseq
+                    ,pr_qtregist   => vr_qtregist
+                    ,pr_nmdcampo   => pr_nmdcampo
+                    ,pr_tab_natureza_ocupacao => vr_tab_natureza_ocupacao
+                    ,pr_tab_erro   => vr_tab_erro
+                    ,pr_des_erro   => vr_des_reto);
+                      
+    --Se Ocorreu erro
+    IF vr_des_reto <> 'OK' THEN  
+            
+      --Se possuir erro na tabela
+      IF vr_tab_erro.COUNT > 0 THEN
+        
+        --Mensagem Erro
+        vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+        vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+        
+      ELSE  
+        --Mensagem Erro
+        vr_dscritic:= 'Erro na pc_busca_gncdnto_car.';
+      END IF; 
+               
+      --Levantar Excecao
+      RAISE vr_exc_erro; 
+             
+    END IF;
+    
+    -- Criar documento XML
+    dbms_lob.createtemporary(pr_clob_ret, TRUE);
+    dbms_lob.open(pr_clob_ret, dbms_lob.lob_readwrite);
+
+    -- Insere o cabeçalho do XML
+    gene0002.pc_escreve_xml(pr_xml            => pr_clob_ret
+                           ,pr_texto_completo => vr_dstexto
+                           ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><root qtregist="'|| vr_qtregist || '">');
+
+    --Buscar Primeiro registro
+    vr_index:= vr_tab_natureza_ocupacao.FIRST;
+        
+    --Percorrer todos as regionais
+    WHILE vr_index IS NOT NULL LOOP
+      vr_string:= '<naturezas>'||
+                  '  <cdnatocp>' || vr_tab_natureza_ocupacao(vr_index).cdnatocp||'</cdnatocp>'||
+                  '  <rsnatocp>' || vr_tab_natureza_ocupacao(vr_index).rsnatocp||'</rsnatocp>'||
+                  '  <dsnatocp>' || vr_tab_natureza_ocupacao(vr_index).dsnatocp||'</dsnatocp>'||                                       
+                  '</naturezas>';
+                  
+       -- Escrever no XML
+      gene0002.pc_escreve_xml(pr_xml            => pr_clob_ret
+                             ,pr_texto_completo => vr_dstexto
+                             ,pr_texto_novo     => vr_string
+                             ,pr_fecha_xml      => FALSE);
+
+      --Proximo Registro
+      vr_index:= vr_tab_natureza_ocupacao.NEXT(vr_index);
+      
+    END LOOP;     
+    
+    -- Encerrar a tag raiz
+    gene0002.pc_escreve_xml(pr_xml            => pr_clob_ret
+                           ,pr_texto_completo => vr_dstexto
+                           ,pr_texto_novo     => '</root>'
+                           ,pr_fecha_xml      => TRUE);
+                                                                                                                   
+    --Retorno
+    pr_des_erro:= 'OK';         
+
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      -- Retorno não OK          
+      pr_des_erro:= 'NOK';
+        
+      --Erro
+      pr_cdcritic:= vr_cdcritic;
+      pr_dscritic:= vr_dscritic;                  
+    WHEN OTHERS THEN
+      -- Retorno não OK
+      pr_des_erro:= 'NOK';
+        
+      pr_cdcritic:= 0;
+      -- Chamar rotina de gravação de erro
+      pr_dscritic:= 'Erro na pc_busca_gncdnto_car --> '|| SQLERRM;
+      
+  END pc_busca_gncdnto_car; 
+  
+  PROCEDURE pc_busca_gncdocp(pr_cdocupa  IN gncdocp.cdocupa%TYPE  -- Código da ocupação
+                            ,pr_rsdocupa IN gncdocp.rsdocupa%TYPE -- Descrição da ocupação
+                            ,pr_nrregist IN INTEGER               -- Número de registro
+                            ,pr_nriniseq IN INTEGER               -- Número sequencial do registro
+                            ,pr_qtregist OUT INTEGER              -- Quantidade de registro
+                            ,pr_nmdcampo OUT VARCHAR2             -->Nome do campo com erro
+                            ,pr_tab_ocupacoes OUT typ_tab_ocupacoes --Tabela de ocupação
+                            ,pr_tab_erro OUT gene0001.typ_tab_erro -->Tabela Erros
+                            ,pr_des_erro OUT VARCHAR2)IS --Tabela de erros 
+  
+  /*---------------------------------------------------------------------------------------------------------------
+    
+    Programa : pc_busca_gncdocp                            antiga: b1wgen0059\busca-gncdocp
+    Sistema  : Conta-Corrente - Cooperativa de Credito
+    Sigla    : CRED
+    Autor    : Adriano
+    Data     : Fevereiro/2017                           Ultima atualizacao:
+    
+    Dados referentes ao programa:
+    
+    Frequencia: -----
+    Objetivo   : Pesquisa de ocupação
+    
+    Alterações : 
+    -------------------------------------------------------------------------------------------------------------*/                                    
+  
+  CURSOR cr_gncdocp(pr_cdocupa  IN gncdocp.cdnatocp%TYPE
+                   ,pr_rsdocupa IN gncdocp.rsdocupa%TYPE) IS
+  SELECT ocp.cdocupa
+        ,ocp.dsdocupa
+        ,ocp.rsdocupa
+   FROM gncdocp ocp
+  WHERE(pr_cdocupa = 0
+     OR ocp.cdocupa = pr_cdocupa)
+    AND UPPER(ocp.rsdocupa) LIKE '%' || pr_rsdocupa || '%';
+  rw_gncdocp cr_gncdocp%ROWTYPE;
+  
+  vr_nrregist INTEGER := nvl(pr_nrregist,9999);
+  
+  --Variaveis de Criticas
+  vr_exc_erro EXCEPTION;
+  
+  vr_index PLS_INTEGER;
+                              
+  BEGIN
+    
+    --Limpar tabelas auxiliares
+    pr_tab_ocupacoes.DELETE;  
+                       
+    FOR rw_gncdocp IN cr_gncdocp(pr_cdocupa  => pr_cdocupa
+                                ,pr_rsdocupa => pr_rsdocupa) LOOP
+      
+      IF trim(rw_gncdocp.rsdocupa) IS NULL THEN
+        
+        CONTINUE;
+        
+      END IF;
+      
+      --Indice para a temp-table
+      vr_index:= pr_tab_ocupacoes.COUNT + 1;
+      pr_qtregist := nvl(pr_qtregist,0) + 1;
+      
+      /* controles da paginacao */
+      IF (pr_qtregist < pr_nriniseq) OR
+         (pr_qtregist > (pr_nriniseq + pr_nrregist)) THEN
+         --Proxima linha
+          CONTINUE;
+      END IF; 
+      
+      --Numero Registros
+      IF vr_nrregist > 0 THEN 
+        
+        --Verificar se já existe na temp-table                             
+        IF NOT pr_tab_ocupacoes.EXISTS(vr_index) THEN  
+                      
+            --Popular dados na tabela memoria
+            pr_tab_ocupacoes(vr_index).cdocupa:= rw_gncdocp.cdocupa;
+            pr_tab_ocupacoes(vr_index).dsdocupa:= rw_gncdocp.dsdocupa;
+            pr_tab_ocupacoes(vr_index).rsdocupa:= rw_gncdocp.rsdocupa;
+                       
+          END IF;  
+          
+      END IF;
+      
+      --Diminuir registros
+      vr_nrregist:= nvl(vr_nrregist,0) - 1; 
+      
+    END LOOP;
+    
+    --Retorno OK
+    pr_des_erro:= 'OK';  
+  
+  END pc_busca_gncdocp;                             
+  
+  PROCEDURE pc_busca_gncdocp_web(pr_cdocupa   IN gncdocp.cdocupa%TYPE  -- Código da ocupação
+                                ,pr_cdocpttl  IN gncdnto.cdnatocp%TYPE --Código da natureza
+                                ,pr_cdocpcje  IN gncdnto.cdnatocp%TYPE --Código da natureza
+                                ,pr_rsdocupa  IN gncdocp.rsdocupa%TYPE -- Descrição da ocupação
+                                ,pr_dsocpttl  IN gncdocp.rsdocupa%TYPE -- Descrição da ocupação
+                                ,pr_nrregist  IN INTEGER               -- Quantidade de registros                            
+                                ,pr_nriniseq  IN INTEGER               -- Qunatidade inicial
+                                ,pr_xmllog    IN VARCHAR2              --XML com informações de LOG
+                                ,pr_cdcritic  OUT PLS_INTEGER          --Código da crítica
+                                ,pr_dscritic  OUT VARCHAR2             --Descrição da crítica
+                                ,pr_retxml    IN OUT NOCOPY XMLType    --Arquivo de retorno do XML
+                                ,pr_nmdcampo  OUT VARCHAR2             --Nome do Campo
+                                ,pr_des_erro  OUT VARCHAR2)IS          --Saida OK/NOK
+                                    
+  /*---------------------------------------------------------------------------------------------------------------
+    
+    Programa : pc_busca_gncdocp_web                            antiga: b1wgen0059\busca-gncdocp
+    Sistema  : Conta-Corrente - Cooperativa de Credito
+    Sigla    : CRED
+    Autor    : Adriano  
+    Data     : Fevereiro/2017                          Ultima atualizacao: 08/03/2017
+    
+    Dados referentes ao programa:
+    
+    Frequencia: -----
+    Objetivo   : Pesquisa de ocupação
+    
+    Alterações : 08/03/2017 - Ajuste para enviar corretamente o campo cdocupa no xml de retorno
+			                  (Adriano - SD 614408).
+
+    -------------------------------------------------------------------------------------------------------------*/                                    
+    --Variaveis de Criticas
+    vr_cdcritic INTEGER;
+    vr_dscritic VARCHAR2(4000);
+    vr_des_reto VARCHAR2(3); 
+
+    --Tabela de Erros
+    vr_tab_erro gene0001.typ_tab_erro;
+    
+    --Tabela de ocupação
+    vr_tab_ocupacoes typ_tab_ocupacoes;
+
+    -- Variaveis de log
+    vr_cdcooper crapcop.cdcooper%TYPE;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+    
+    --Variaveis Locais
+    vr_qtregist INTEGER := 0;   
+    vr_clob     CLOB;   
+    vr_xml_temp VARCHAR2(32726) := ''; 
+    
+    vr_cdocupa gncdocp.cdocupa%TYPE;
+    vr_rsdocupa gncdocp.rsdocupa%TYPE;
+        
+    --Variaveis de Indice
+    vr_index PLS_INTEGER;
+    
+    --Variaveis de Excecoes
+    vr_exc_ok    EXCEPTION;                                       
+    vr_exc_erro  EXCEPTION;    
+  
+  BEGIN
+    --limpar tabela erros
+    vr_tab_erro.DELETE;
+      
+    --Limpar tabela dados
+    vr_tab_ocupacoes.DELETE;
+      
+    --Inicializar Variaveis
+    vr_cdcritic:= 0;                         
+    vr_dscritic:= NULL;
+      
+    -- Recupera dados de log para consulta posterior
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscritic);
+
+    -- Verifica se houve erro recuperando informacoes de log                              
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+    
+    IF pr_cdocpttl > 0 THEN
+    
+      vr_cdocupa := pr_cdocpttl;
+      
+    ELSIF pr_cdocpcje > 0 THEN
+
+      vr_cdocupa := pr_cdocpcje;
+    
+    ELSE
+          
+      vr_cdocupa := pr_cdocupa;
+          
+    END IF;
+    
+    IF trim(pr_dsocpttl) IS NOT NULL THEN
+      
+      vr_rsdocupa := pr_dsocpttl;
+      
+    ELSE
+      
+      vr_rsdocupa := pr_rsdocupa;
+    
+    END IF; 
+    
+    pc_busca_gncdocp(pr_cdocupa  => nvl(vr_cdocupa,0)  -- Código da ocupação
+                    ,pr_rsdocupa => UPPER(vr_rsdocupa) -- Descrição da ocupação
+                    ,pr_nrregist => pr_nrregist        -- Número de registro
+                    ,pr_nriniseq => pr_nriniseq        -- Número sequencial do registro
+                    ,pr_qtregist => vr_qtregist        -- Quantidade de registro
+                    ,pr_nmdcampo => pr_nmdcampo        -- Nome do campo com erro
+                    ,pr_tab_ocupacoes => vr_tab_ocupacoes -- Tabela naturezas
+                    ,pr_tab_erro => vr_tab_erro   --Tabela Erros
+                    ,pr_des_erro => vr_des_reto); --Tabela de erros 
+                           
+    --Se Ocorreu erro
+    IF vr_des_reto <> 'OK' THEN       
+       
+      --Se possuir erro na tabela
+      IF vr_tab_erro.COUNT > 0 THEN
+        
+        --Mensagem Erro
+        vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+        vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+        
+      ELSE  
+        
+        --Mensagem Erro
+        vr_dscritic:= 'Erro na pc_busca_gncdocp_web.';
+        
+      END IF;          
+      
+      --Levantar Excecao
+      RAISE vr_exc_erro;  
+            
+    END IF;
+    
+    -- Monta documento XML de ERRO
+    dbms_lob.createtemporary(vr_clob, TRUE);
+    dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);                                          
+      
+    -- Criar cabeçalho do XML
+    gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                           ,pr_texto_completo => vr_xml_temp
+                           ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><Root><gncdocp>');
+      
+    --Buscar Primeiro registro
+    vr_index:= vr_tab_ocupacoes.FIRST;
+        
+    --Percorrer todos os historicos
+    WHILE vr_index IS NOT NULL LOOP
+      
+      -- Carrega os dados           
+      gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                             ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_novo     => '<ocupacoes>'||
+                                                   '  <cdocupa>' || vr_tab_ocupacoes(vr_index).cdocupa||'</cdocupa>'||
+                                                   '  <dsdocupa>' || vr_tab_ocupacoes(vr_index).dsdocupa||'</dsdocupa>'|| 
+                                                   '  <rsdocupa>' || vr_tab_ocupacoes(vr_index).rsdocupa||'</rsdocupa>'||                                                    
+                                                   '</ocupacoes>'); 
+                                                              
+      --Proximo Registro
+      vr_index:= vr_tab_ocupacoes.NEXT(vr_index); 
+    
+    END LOOP;
+    -- Encerrar a tag raiz
+    gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                           ,pr_texto_completo => vr_xml_temp
+                           ,pr_texto_novo     => '</gncdocp></Root>'
+                           ,pr_fecha_xml      => TRUE);
+                  
+    -- Atualiza o XML de retorno
+    pr_retxml := xmltype(vr_clob);
+
+    -- Insere atributo na tag banco com a quantidade de registros
+    gene0007.pc_gera_atributo(pr_xml   => pr_retxml           --> XML que irá receber o novo atributo
+                             ,pr_tag   => 'gncdocp'            --> Nome da TAG XML
+                             ,pr_atrib => 'qtregist'          --> Nome do atributo
+                             ,pr_atval => vr_qtregist         --> Valor do atributo
+                             ,pr_numva => 0                   --> Número da localização da TAG na árvore XML
+                             ,pr_des_erro => vr_dscritic);    --> Descrição de erros
+                             
+    -- Libera a memoria do CLOB
+    dbms_lob.close(vr_clob);  
+                                   
+    --Se ocorreu erro
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF; 
+                                      
+    --Retorno
+    pr_des_erro:= 'OK'; 
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      -- Retorno não OK          
+      pr_des_erro:= 'NOK';
+        
+      -- Erro
+      pr_cdcritic:= vr_cdcritic;
+      pr_dscritic:= vr_dscritic;
+        
+      -- Existe para satisfazer exigência da interface. 
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');                                                            
+    WHEN OTHERS THEN
+      -- Retorno não OK
+      pr_des_erro:= 'NOK';
+        
+      -- Erro
+      pr_cdcritic:= 0;
+      pr_dscritic:= 'Erro na pc_busca_gncdocp_web --> '|| SQLERRM;
+        
+      -- Existe para satisfazer exigência da interface. 
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');                     
+  
+  END pc_busca_gncdocp_web;                             
+    
+  PROCEDURE pc_busca_gncdocp_car( pr_cdocupa  IN gncdocp.cdocupa%TYPE -- Código da ocupação
+                                 ,pr_rsdocupa IN gncdocp.rsdocupa%TYPE -- Descrição da ocupação
+                                 ,pr_nrregist IN INTEGER               -- Quantidade de registros                            
+                                 ,pr_nriniseq IN INTEGER               -- Qunatidade inicial
+                                 ,pr_nmdcampo OUT VARCHAR2             -- Nome do Campo
+                                 ,pr_des_erro OUT VARCHAR2             -- Saida OK/NOK
+                                 ,pr_clob_ret OUT CLOB                 -- Tabela clob                                 
+                                 ,pr_cdcritic OUT PLS_INTEGER          -- Codigo Erro
+                                 ,pr_dscritic OUT VARCHAR2)IS          -- Descricao Erro  
+                                     
+  /*---------------------------------------------------------------------------------------------------------------
+    
+    Programa : pc_busca_gncdocp_car                            antiga: b1wgen0059\busca-gncdocp
+    Sistema  : Conta-Corrente - Cooperativa de Credito
+    Sigla    : CRED
+    Autor    : Adriano 
+    Data     : Fevereiro2017                           Ultima atualizacao:
+    
+    Dados referentes ao programa:
+    
+    Frequencia: -----
+    Objetivo   : Pesquisa de ocupação
+    
+    Alterações : 
+    -------------------------------------------------------------------------------------------------------------*/                                    
+  
+    --Variaveis de Criticas
+    vr_cdcritic INTEGER;
+    vr_dscritic VARCHAR2(4000);
+    vr_des_reto VARCHAR2(3); 
+
+    --Tabela de Erros
+    vr_tab_erro gene0001.typ_tab_erro;
+    
+    --Tabela de ocupação
+    vr_tab_ocupacoes typ_tab_ocupacoes;
+    
+    --Variaveis Arquivo Dados
+    vr_dstexto VARCHAR2(32767);
+    vr_string  VARCHAR2(32767);
+            
+    --Variaveis de Indice
+    vr_index PLS_INTEGER;
+        
+    --Variaveis auxiliares
+    vr_qtregist INTEGER := 0;
+    
+    --Variaveis de Excecoes
+    vr_exc_ok    EXCEPTION;                                       
+    vr_exc_erro  EXCEPTION;      
+
+  BEGIN
+    --limpar tabela erros
+    vr_tab_erro.DELETE;
+      
+    --Limpar tabela dados
+    vr_tab_ocupacoes.DELETE;
+          
+    pc_busca_gncdocp(pr_cdocupa    => nvl(pr_cdocupa,0)
+                    ,pr_rsdocupa   => UPPER(pr_rsdocupa)
+                    ,pr_nrregist   => pr_nrregist
+                    ,pr_nriniseq   => pr_nriniseq
+                    ,pr_qtregist   => vr_qtregist
+                    ,pr_nmdcampo   => pr_nmdcampo
+                    ,pr_tab_ocupacoes => vr_tab_ocupacoes
+                    ,pr_tab_erro   => vr_tab_erro
+                    ,pr_des_erro   => vr_des_reto);
+                      
+    --Se Ocorreu erro
+    IF vr_des_reto <> 'OK' THEN  
+            
+      --Se possuir erro na tabela
+      IF vr_tab_erro.COUNT > 0 THEN
+        
+        --Mensagem Erro
+        vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+        vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+        
+      ELSE  
+        --Mensagem Erro
+        vr_dscritic:= 'Erro na pc_busca_gncdocp_car.';
+      END IF; 
+               
+      --Levantar Excecao
+      RAISE vr_exc_erro; 
+             
+    END IF;
+    
+    -- Criar documento XML
+    dbms_lob.createtemporary(pr_clob_ret, TRUE);
+    dbms_lob.open(pr_clob_ret, dbms_lob.lob_readwrite);
+
+    -- Insere o cabeçalho do XML
+    gene0002.pc_escreve_xml(pr_xml            => pr_clob_ret
+                           ,pr_texto_completo => vr_dstexto
+                           ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><root qtregist="'|| vr_qtregist || '">');
+
+    --Buscar Primeiro registro
+    vr_index:= vr_tab_ocupacoes.FIRST;
+        
+    --Percorrer todos as regionais
+    WHILE vr_index IS NOT NULL LOOP
+      vr_string:= '<ocupacoes>'||
+                  '  <cdocupa>' || vr_tab_ocupacoes(vr_index).cdocupa||'</cdocupa>'||
+                  '  <dsdocupa>' || vr_tab_ocupacoes(vr_index).dsdocupa||'</dsdocupa>'||
+                  '  <rsdocupa>' || vr_tab_ocupacoes(vr_index).rsdocupa||'</rsdocupa>'||                                       
+                  '</ocupacoes>';
+                  
+       -- Escrever no XML
+      gene0002.pc_escreve_xml(pr_xml            => pr_clob_ret
+                             ,pr_texto_completo => vr_dstexto
+                             ,pr_texto_novo     => vr_string
+                             ,pr_fecha_xml      => FALSE);
+
+      --Proximo Registro
+      vr_index:= vr_tab_ocupacoes.NEXT(vr_index);
+      
+    END LOOP;     
+    
+    -- Encerrar a tag raiz
+    gene0002.pc_escreve_xml(pr_xml            => pr_clob_ret
+                           ,pr_texto_completo => vr_dstexto
+                           ,pr_texto_novo     => '</root>'
+                           ,pr_fecha_xml      => TRUE);
+                                                                                                                   
+    --Retorno
+    pr_des_erro:= 'OK';         
+
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      -- Retorno não OK          
+      pr_des_erro:= 'NOK';
+        
+      --Erro
+      pr_cdcritic:= vr_cdcritic;
+      pr_dscritic:= vr_dscritic;                  
+    WHEN OTHERS THEN
+      -- Retorno não OK
+      pr_des_erro:= 'NOK';
+        
+      pr_cdcritic:= 0;
+      -- Chamar rotina de gravação de erro
+      pr_dscritic:= 'Erro na pc_busca_gncdocp_car --> '|| SQLERRM;
+      
+  END pc_busca_gncdocp_car; 
+
 END ZOOM0001;
 /

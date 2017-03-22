@@ -290,15 +290,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                             ,dsageban   VARCHAR2(100)
                             ,nrctafav   VARCHAR2(100)
                             ,nmfavore   VARCHAR2(100)
+						               	,nmconven   VARCHAR2(100)
                             ,nrcpffav   VARCHAR2(100)
                             ,dsfinali   VARCHAR2(100)
                             ,dstransf   VARCHAR2(100)
                             ,dsispbif   VARCHAR2(100)
-							,dspacote   VARCHAR2(100)
-							,dtdiadeb   NUMBER
-							,dtinivig   DATE
-							--DARF/DAS
-							,tpcaptur   NUMBER
+														,dspacote   VARCHAR2(100)
+														,dtdiadeb   NUMBER
+                            ,dtinivig   DATE
+                            --DARF/DAS
+                            ,tpcaptur   NUMBER
                             ,dsagtare   VARCHAR2(100)
                             ,dsagenci   VARCHAR2(100)
                             ,tpdocmto   VARCHAR2(100)
@@ -1731,6 +1732,86 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
 
   END pc_impressao_darf_das;   
   
+  -- Rotina para impressão de comprovante de pagamento do deb automatico
+  PROCEDURE pc_impressao_debaut(pr_xmldata  IN typ_xmldata
+                               ,pr_nmrescop IN VARCHAR2) IS
+    -- ..........................................................................
+    --
+    --  Programa : impressao_debaut 
+    --  Sistema  : Rotinas para impressão de dados
+    --  Sigla    : VERPRO
+    --  Autor    : Aline Baramarchi
+    --  Data     : Março/2017.                   Ultima atualizacao: --/--/----
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Agrupa os dados e monta o layout para impressão de 
+    --               comprovante de pagamentos em débito automático
+    --
+    --   Alteracoes: 
+    --
+    -- .............................................................................
+    
+    -- Variáveis
+    vr_nrdlinha     NUMBER := 0;  
+                          
+  BEGIN
+
+    -- IMPRIMIR O CABEÇALHO
+    pc_escreve_xml('--------------------------------------------------------------------------------'    ,1);
+    pc_escreve_xml('     '||pr_nmrescop||' - Comprovante Pag Deb Aut - '||
+                   'Emissao: '||to_char(SYSDATE,'DD/MM/YY')||' as '||to_char(SYSDATE,'HH24:MI:SS')||' Hr',2); 
+    pc_escreve_xml('           Conta/DV: '||to_char(pr_xmldata.nrdconta)||' - '||pr_xmldata.nmprimtl     ,4);
+    pc_escreve_xml('--------------------------------------------------------------------------------'    ,5);
+    -- IMPRIMIR O CONTEÚDO
+    -- Contador de linha - Iniciando na sexta linha do XML
+    vr_nrdlinha := 6;
+
+    
+    -- Imprime o nome do convenio
+    pc_escreve_xml('           Convenio: '||pr_xmldata.nmconven,vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    
+    -- Imprime o numero identificador 
+    pc_escreve_xml('  Nro Identificador: '||pr_xmldata.nrdocmto,vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    
+    -- Imprime a data de transação
+    pc_escreve_xml('     Data Transacao: '||to_char(pr_xmldata.dttransa,'dd/mm/yy'),vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+
+    -- Imprime a hora da transação
+    pc_escreve_xml('               Hora: '||to_char(to_date(pr_xmldata.hrautent,'SSSSS'),'hh24:mi:ss'),vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+
+    -- Imprime a data da transferencia
+    pc_escreve_xml('      Dt. Pagamento: '||to_char(pr_xmldata.dtmvtolx,'dd/mm/yy'),vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+
+    -- Imprime o valor
+    pc_escreve_xml('              Valor: '||to_char(pr_xmldata.valor,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.'),vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+
+    -- Imprime protocolo
+    pc_escreve_xml('          Protocolo: '||pr_xmldata.dsprotoc,vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    
+    -- Imprimir documento e sequencia de autenticação
+    pc_escreve_xml('      Nr. Documento: '||pr_xmldata.nrdocmto,vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+        
+    pc_escreve_xml('  Seq. Autenticacao: '||pr_xmldata.nrseqaut,vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    
+    
+    pc_escreve_xml('--------------------------------------------------------------------------------',18);
+    
+
+  END pc_impressao_debaut; 
+
+  
+  
   -- TELA: VERPRO - Verificação de Protocolos
   PROCEDURE pc_verpro(pr_cdcooper IN NUMBER                --> Código da cooperativa
                      ,pr_idorigem IN NUMBER                --> ID da origem
@@ -2308,7 +2389,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
      Sistema : Rotinas acessadas pelas telas de cadastros Web
      Sigla   : CADA
      Autor   : Renato Darosci - Supero
-     Data    : Julho/2014.                  Ultima atualizacao: 05/04/2016
+     Data    : Julho/2014.                  Ultima atualizacao: 09/03/2017
 
      Dados referentes ao programa:
 
@@ -2322,6 +2403,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                               
                  05/04/2016 - Ajuste para retirar o "*" ao remover o arquivo
                              (Adriano).             
+                             
+                 09/03/2017 - Ajuste para incluir informações referentes a comprovante
+                              de pagamento em debito automatico (Aline).                      
     ..............................................................................*/ 
     -- CURSORES
     -- Buscar as informações da cooperativa
@@ -2449,6 +2533,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
     rw_xmldata.dsageban := fn_extract('/Root/Dados/dsageban/text()');
     rw_xmldata.nrctafav := fn_extract('/Root/Dados/nrctafav/text()');
     rw_xmldata.nmfavore := fn_extract('/Root/Dados/nmfavore/text()');
+	  rw_xmldata.nmconven := fn_extract('/Root/Dados/nmconven/text()');
     rw_xmldata.nrcpffav := fn_extract('/Root/Dados/nrcpffav/text()');
     rw_xmldata.dsfinali := fn_extract('/Root/Dados/dsfinali/text()');
     rw_xmldata.dstransf := fn_extract('/Root/Dados/dstransf/text()');
@@ -2575,7 +2660,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                          ,pr_cdcooper => pr_cdcooper
                          ,pr_nmrescop => rw_crapcop.nmrescop);  
     ELSIF rw_xmldata.cdtippro = 12 THEN
-
+      
       -- Guardar o nome da rotina chamada para exibir em caso de erro
       vr_nmrotina := 'PC_IMPRESSAO_RESG_APLICA';
     
@@ -2592,6 +2677,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
       -- Imprimir comprovante de Aplicação
       pc_impressao_pac_tar(pr_xmldata  => rw_xmldata
                           ,pr_nmrescop => rw_crapcop.nmrescop);  
+    
+    ELSIF rw_xmldata.cdtippro = 15 THEN
+
+     -- Guardar o nome da rotina chamada para exibir em caso de erro
+      vr_nmrotina := 'PC_IMPRESSAO_DEBAUT';
+    
+      -- Imprimir comprovante
+      pc_impressao_debaut(pr_xmldata  => rw_xmldata
+                         ,pr_nmrescop => rw_crapcop.nmrescop);    
       
     ELSIF rw_xmldata.cdtippro IN (16,17,18,19) THEN --DARF/DAS
       -- Guardar o nome da rotina chamada para exibir em caso de erro
@@ -2869,8 +2963,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
     vr_rowid_craplgm ROWID;
 	vr_crapsnhFound BOOLEAN:=FALSE;
     
-    BEGIN
-        
+  BEGIN
+  
     IF pr_flgerlog = 1 /*1 = TRUE*/ THEN
       vr_dsorigem :=  gene0001.vr_vet_des_origens(pr_idorigem);
       vr_dstransa := 'Inclusao de Conta para Transferencia.';
@@ -2956,25 +3050,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
           vr_crapsnhFound:=TRUE;
         END IF;
         ELSE
-        
-        -- Verificar cadastro de senha
-        OPEN cr_crapsnh (pr_cdcooper => pr_cdcooper,
-                         pr_nrdconta => pr_nrdconta,
+      
+      -- Verificar cadastro de senha
+      OPEN cr_crapsnh (pr_cdcooper => pr_cdcooper,
+                       pr_nrdconta => pr_nrdconta,
                          pr_idseqttl => pr_idseqttl,
                          pr_cdsitsnh => 1); 
         
-        FETCH cr_crapsnh INTO rw_crapsnh;
+      FETCH cr_crapsnh INTO rw_crapsnh;
         
-        IF cr_crapsnh%NOTFOUND THEN
+      IF cr_crapsnh%NOTFOUND THEN
                                       
-          CLOSE cr_crapsnh;
+        CLOSE cr_crapsnh;
           
-          vr_dscritic := 'Senha para conta on-line nao cadastrada';
-          RAISE vr_exec_inclui;
+        vr_dscritic := 'Senha para conta on-line nao cadastrada';
+        RAISE vr_exec_inclui;
         ELSE
-          CLOSE cr_crapsnh;
+      CLOSE cr_crapsnh;
           vr_crapsnhFound:=TRUE;
-          END IF;    
+          END IF;
         
       END IF;
 
@@ -3091,9 +3185,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
             vr_dscritic := 'Não foi possivel inserir registro de tranferencia: '||SQLERRM;
             RAISE vr_exec_inclui; 
         END;
+        
+          END IF;
           
-      END IF;
-      
       IF vr_crapsnhFound THEN
         -- Verificar limites do cooperado
         IF pr_intipdif = 1       AND  
