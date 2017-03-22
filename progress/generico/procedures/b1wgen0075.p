@@ -2,7 +2,7 @@
 
     Programa: b1wgen0075.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Maio/2010                   Ultima atualizacao: 17/01/2017
+    Data    : Maio/2010                   Ultima atualizacao: 08/03/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - COMERCIAL
 
@@ -87,6 +87,9 @@
                17/01/2017 - Adicionado chamada a procedure de replicacao do 
                             endereco para o CDC. (Reinert Prj 289)
                              
+			   08/03/2017 - Ajuste na rotina Busca_Dados_PPE para pegar o nome completo
+			                da coupacao para as informacoes do PEP
+							(Adriano - SD 614408).
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -2252,10 +2255,10 @@ PROCEDURE Busca_Dados_PPE:
                     STRING(YEAR(TODAY)) + ".".
                 
 
-                FOR FIRST gncdocp FIELDS(rsdocupa)
+                FOR FIRST gncdocp FIELDS(dsdocupa)
                     WHERE gncdocp.cdocupa = tbcadast_politico_exposto.cdocupacao
                     NO-LOCK:
-                    ASSIGN tt-ppe.rsdocupa = gncdocp.rsdocupa.
+                    ASSIGN tt-ppe.rsdocupa = gncdocp.dsdocupa.
                 END.
 
                 FOR FIRST craptab

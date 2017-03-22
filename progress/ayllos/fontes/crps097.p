@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Outubro/94.                     Ultima atualizacao: 28/11/2016
+   Data    : Outubro/94.                     Ultima atualizacao: 03/03/2017
 
    Dados referentes ao programa:
 
@@ -115,6 +115,9 @@
                28/11/2016 - Somente vamos atualizar a situaçao da devolucao caso 
                             nao seja alinea de cheque ja entrou, caso contrario 
                             daremos um next (Lucas Ranghetti/Elton)
+                            
+               03/03/2017 - Se não encontrar conta vamos apenas dar um NEXT e não abortar
+                            o processo como fazia antes (Lucas Ranghetti #620581)
 ............................................................................. */
 
 { includes/var_batch.i }
@@ -257,12 +260,12 @@ FOR EACH crapdev WHERE crapdev.cdcooper = glb_cdcooper   AND
               UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
                                 " - " + glb_cdprogra + "' --> '" +
                                 STRING(crapdev.nrdconta,"zzzz,zz9,9") +
-                                glb_dscritic + " >> log/proc_batch.log").
+                                " " + glb_dscritic + " >> log/proc_batch.log").
               
               IF  VALID-HANDLE(h-b1wgen0153) THEN
                    DELETE OBJECT h-b1wgen0153. 
               
-              UNDO TRANS_1, RETURN.
+              NEXT.
                
          END.
 

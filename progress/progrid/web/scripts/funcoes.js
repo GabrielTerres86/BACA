@@ -1332,7 +1332,7 @@ function layoutPadrao() {
 	$('input.kmetros'		).setMask("p,d");	
 	//$('input.data'			).dateEntry({useMouseWheel:true,spinnerImage:''});   
 	$('input.data'			).setMask("DATE","","","");
-	$('input.monetario'		).attr('alt','n9p3c2D').css('text-align','right').autoNumeric().trigger('blur');
+	$('input.monetario'		).attr('alt','n15p3c2D').css('text-align','right').autoNumeric().trigger('blur');
 	$('input.moeda'			).attr('alt','p9p3c2D').css('text-align','right').autoNumeric().trigger('blur');
 	$('input.moeda_3'   	).attr('alt','p9p3c3D').css('text-align','right').autoNumeric().trigger('blur');
 	$('input.moeda_6'		).attr('alt','p6p3c2D').css('text-align','right').autoNumeric().trigger('blur');
@@ -1345,7 +1345,7 @@ function layoutPadrao() {
 	$('input.email'			).css({'text-transform':'lowercase'}).alphanumeric({ichars: caracSuperEspeciais+caracAcentuacao+caracEspeciaisEmail});
   $('input.emailVarios'			).css({'text-transform':'lowercase'}).alphanumeric({ichars: caracSuperEspeciais+caracAcentuacao+caracEspeciaisEmailVarios});
 	$('input.alpha'			).css({'text-transform':'uppercase'});
-	$('input.alphanum'		).css({'text-transform':'uppercase'});		
+	/*$('input.alphanum'		).css({'text-transform':'uppercase'});		*/
 	$('input.alphanumlower'	).css({'text-transform':'lowercase'});		
 	$('input.alpha'			).alpha({ichars: caracAcentuacao+caracEspeciais});
 	$('input.alphanum'		).alphanumeric({ichars: caracSuperEspeciais+caracAcentuacao});

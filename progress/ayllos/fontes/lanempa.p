@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Janeiro/94.                         Ultima atualizacao: 23/09/2016
+   Data    : Janeiro/94.                         Ultima atualizacao: 16/02/2017
 
    Dados referentes ao programa:
 
@@ -76,7 +76,9 @@
                           no momento da liquidaçao do mesmo. (Renato Darosci - M176)
                           
              23/09/2016 - Inclusao da verificacao de contrato de acordo (Jean Michel).
-             
+
+             16/02/2017 - Alteracao de aux_flgativo para aux_flgretativo. (Jaison/James)
+
 ............................................................................. */
 
 { includes/var_online.i }
@@ -180,7 +182,7 @@ DO WHILE TRUE:
              glb_dscritic = ""
              glb_cdcritic = pc_verifica_acordo_ativo.pr_cdcritic WHEN pc_verifica_acordo_ativo.pr_cdcritic <> ?
              glb_dscritic = pc_verifica_acordo_ativo.pr_dscritic WHEN pc_verifica_acordo_ativo.pr_dscritic <> ?
-             aux_flgativo = INT(pc_verifica_acordo_ativo.pr_flgativo).
+             aux_flgretativo = INT(pc_verifica_acordo_ativo.pr_flgativo).
       
       IF glb_cdcritic > 0 THEN
         DO:
@@ -197,7 +199,7 @@ DO WHILE TRUE:
           NEXT.
         END.
         
-      IF aux_flgativo = 1 THEN
+      IF aux_flgretativo = 1 THEN
         DO:
           MESSAGE "Alteracao nao permitida, emprestimo em acordo.".
           PAUSE 3 NO-MESSAGE.

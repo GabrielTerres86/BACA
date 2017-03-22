@@ -2,7 +2,7 @@
 
    Programa  : b1wgen0028i.p
    Autor     : Sandro (GATI)
-   Data      : Novembro/2010                    Ultima Atualizacao: 09/10/2015
+   Data      : Novembro/2010                    Ultima Atualizacao: 14/02/2017
 
    Dados referentes ao programa:
 
@@ -60,6 +60,9 @@
                05/08/2014 - Alteração da Nomeclatura para PA (Vanessa).           
                
                09/10/2015 - Desenvolvimento do projeto 126. (James)
+               
+			   14/02/2017 - Ajustando o format do campo nrctrcrd nos relatórios que o utilizam.
+							SD 594718 (Kelvin).
                
 ..............................................................................*/
 
@@ -137,7 +140,7 @@ PROCEDURE gera_impressao_proposta_cartao:
          "PROPOSTA DE CARTAO DE CREDITO"
          tt-dados_prp_ccr.dsadicio FORMAT "X(35)"
          SKIP(1)
-         "Numero da proposta:" AT 50 tt-dados_prp_ccr.nrctrcrd FORMAT "zzz,zz9"
+         "Numero da proposta:" AT 50 tt-dados_prp_ccr.nrctrcrd FORMAT "zzz,zzz,zz9"
          "\033\120\033\106"                          
          WITH NO-BOX COLUMN 1 NO-LABELS WIDTH 80 FRAME f_cooperativa.    
     
@@ -151,7 +154,7 @@ PROCEDURE gera_impressao_proposta_cartao:
          SKIP
          "PESSOA JURIDICA"  AT 28
          SKIP(1)
-         "Numero da proposta:\033\120\033\106" AT 50 tt-dados_prp_ccr.nrctrcrd FORMAT "zzz,zz9"
+         "Numero da proposta:\033\120\033\106" AT 50 tt-dados_prp_ccr.nrctrcrd FORMAT "zzz,zzz,zz9"
     /*      "\033\120\033\106" */
          WITH NO-BOX COLUMN 1 NO-LABELS WIDTH 80 FRAME f_cooperativa_pj.    
     
@@ -3580,7 +3583,7 @@ PROCEDURE gera_impressao_emissao_cartao:
          SKIP(1)
          "CONTRATO PESSOA JURIDICA" AT 27
          SKIP(1)
-         "Numero Da Proposta:\033\120\033\106"      AT 50 par_nrctrcrd FORMAT "zzz,zz9"     
+         "Numero Da Proposta:\033\120\033\106"      AT 50 par_nrctrcrd FORMAT "zzz,zzz,zz9"    
          SKIP(3)
          "\0330\033x0\033\017"
          WITH COLUMN 5 NO-ATTR-SPACE WIDTH 150 NO-LABELS NO-BOX FRAME f_titulo_pj.
@@ -5110,7 +5113,7 @@ PROCEDURE imprimi_limite_pf:
      tt-dados_prp_ccr.dsadicio FORMAT "X(35)"
      SKIP(1)
      "\033\016Numero da proposta:" AT 41 
-     tt-dados_prp_ccr.nrctrcrd FORMAT "999,999"
+     tt-dados_prp_ccr.nrctrcrd FORMAT "zzz,zzz,zz9"
      "\024\022\033\120"
      SKIP
      WITH NO-BOX COLUMN 1 NO-LABELS WIDTH 125 FRAME f_cooperativa.

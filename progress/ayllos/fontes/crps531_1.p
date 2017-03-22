@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Setembro/2009.                     Ultima atualizacao: 17/01/2017
+   Data    : Setembro/2009.                     Ultima atualizacao: 15/02/2017
    
    Dados referentes ao programa: Fonte extraido e adaptado para execucao em
                                  paralelo. Fonte original crps531.p.
@@ -165,11 +165,11 @@
 			   05/07/2016 - Ajuste para considerar inpessoa > 1 ao validar contas
 							juridicas (Adriano - SD 480514).
                
-               
+
 			   14/09/2016 - Ajuste para utilizar uma sequence na geracao do numero
 			                de controle, garantindo sua unicidade
 						   (Adriano - SD 518645).
-    
+
 	           01/12/2016 - Tratamento credito TED/TEC Transposul (Diego). 
 
 			   05/01/2017 - Ajuste para retirada de caracterer especiais
@@ -178,6 +178,9 @@
 			   17/01/2017 - Ajuste para retirada de caracterer especiais
 							(Adriano - SD 594482)
 			   
+			   15/02/2017 - Ajuste para devolver mensagem STR00010 para mensagens
+							STR0006R2, PAG0142R2
+							(Adriano - SD 553778).
 							
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento, 
@@ -667,6 +670,26 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
              IF   RETURN-VALUE <> "OK"   THEN
                   NEXT.
 
+			 /*Mensagem nao tratada pelo sistema CECRED e devemos enviar uma mensagem
+			   STR0010 como resposta. SD 553778 */	  
+			 IF CAN-DO("STR0006R2,PAG0142R2",aux_CodMsg) THEN
+			    DO:
+					/* Busca cooperativa de destino */ 
+                    FIND crabcop WHERE crabcop.cdagectl = INT(aux_AgCredtd)
+							           NO-LOCK NO-ERROR.
+
+					/* Mensagem Invalida para o Tipo de Transacao ou Finalidade*/  
+                    ASSIGN aux_codierro = 4
+                           aux_dsdehist = "Mensagem Invalida para o Tipo de Transacao ou Finalidade.".
+
+                    RUN gera_erro_xml (INPUT aux_dsdehist).
+				    RUN salva_arquivo.                   
+                    RUN deleta_objetos.
+
+				    NEXT.
+
+			    END.
+				
              /* CECRED */
              RUN trata_cecred (INPUT "").
              RUN salva_arquivo.                   
@@ -1148,7 +1171,7 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
 						   DO:
                                ASSIGN aux_cdageinc = INT(aux_AgCredtd)
                                       aux_AgCredtd = "0108".
-
+             
 							   /* Busca cooperativa de destino (nova) */ 
                                FIND crabcop WHERE crabcop.cdagectl = INT(aux_AgCredtd)
 							        NO-LOCK NO-ERROR.
@@ -1539,8 +1562,7 @@ PROCEDURE gera_erro_xml:
          aux_textoxml[8] = "</SEGCAB>".
                                                 
   
-  IF   CAN-DO("STR0005R2,STR0007R2,STR0008R2,STR0026R2,STR0037R2",aux_CodMsg)
-         THEN
+  IF   CAN-DO("STR0005R2,STR0007R2,STR0008R2,STR0026R2,STR0037R2,STR0006R2,PAG0142R2",aux_CodMsg) THEN
        ASSIGN aux_textoxml[9]  = "<STR0010>"
               aux_textoxml[10] = "<CodMsg>STR0010</CodMsg>"
               aux_textoxml[11] = "<NumCtrlIF>" + aux_NumCtrlIF + "</NumCtrlIF>"
@@ -1689,7 +1711,7 @@ PROCEDURE importa_xml.
         
         /* Substituir caracter especial 216 e 248 por "O" */
         ASSIGN aux_setlinha = REPLACE(REPLACE(aux_setlinha,CHR(216),"O"),CHR(248),"o").
-		
+        
 		/* Substituir caracter especial 230,207 e 168 por "" (Vazio) */
         ASSIGN aux_setlinha = REPLACE(REPLACE(REPLACE(aux_setlinha,CHR(230),""),CHR(207),""),CHR(168),"").
         
@@ -1933,13 +1955,13 @@ PROCEDURE verifica_conta.
            ELSE
 		        DO:
 				   /* -----  VALIDA CONTA MIGRADA ------- */
-
+            
 				   FIND craptco WHERE craptco.cdcopant = val_cdcooper AND
 									  craptco.nrctaant = val_nrdconta AND
 									  craptco.flgativo = TRUE         AND
 									  craptco.tpctatrf = 1   
 									  NO-LOCK NO-ERROR.
-            
+ 
 				   IF  AVAIL(craptco) THEN
 				   DO:  
 					   /* Verificar se conta foi migrada ACREDI >> VIACREDI */
@@ -1949,7 +1971,7 @@ PROCEDURE verifica_conta.
 						   ASSIGN aux_codierro = 1. /* Conta encerrada */
 						   RETURN "NOK".
 					   END.
- 
+
 					   /* Verificar se conta foi migrada VIACREDI >> ALTO VALE */
 					   IF  craptco.cdcooper = 16 AND   /* ALTO VALE */
 						   craptco.cdcopant = 1  THEN  /* VIACREDI */
@@ -1965,18 +1987,18 @@ PROCEDURE verifica_conta.
 					   /* Busca cooperativa onde a conta foi transferida */ 
 					   FIND b-crapcop WHERE b-crapcop.cdcooper = val_cdcooper
 											NO-LOCK NO-ERROR.
-
+               
 					   IF  NOT AVAIL(b-crapcop) THEN
 					   DO:
 						   ASSIGN aux_codierro = 99
 								  aux_dsdehist = "Cooperativa migrada nao encontrada.".
 						   RETURN "NOK".
 					   END.
-               
+    
 					   /* Busca data na cooperativa onde a conta foi transferida */ 
 					   FIND b-crapdat WHERE b-crapdat.cdcooper = val_cdcooper
 											NO-LOCK NO-ERROR.
-    
+
 					   IF  NOT AVAIL(b-crapdat) THEN
 					   DO:
 						   ASSIGN aux_codierro = 99
@@ -1984,22 +2006,22 @@ PROCEDURE verifica_conta.
 												 "nao encontrada.".
 						   RETURN "NOK".
 					   END.
-
+    
 					   /* Verifica se conta transferida existe */ 
 					   FIND crapass WHERE crapass.cdcooper = val_cdcooper  AND
 										  crapass.nrdconta = val_nrdconta
 										  NO-LOCK NO-ERROR.
-    
+
 					   IF   NOT AVAIL crapass THEN
 					   DO:
 						   ASSIGN aux_codierro = 99
 								   aux_dsdehist = "Conta migrada nao encontrada.".
 						   RETURN "NOK".
 					   END.
-
+               
 					   ASSIGN val_tppessoa = IF crapass.inpessoa = 1 THEN "F" ELSE "J"
 							  val_nrcpfcgc = crapass.nrcpfcgc.
-               
+           
 					   /* Verifica cpf da TED com o cpf da conta */
 					   FIND FIRST b-crapttl WHERE b-crapttl.cdcooper = val_cdcooper
 											  AND b-crapttl.nrdconta = val_nrdconta
@@ -2019,7 +2041,7 @@ PROCEDURE verifica_conta.
 						   END.
 					   END. 
 				   END. /* IF avail craptco */
-           
+               
 				   /*-----  FIM CONTA MIGRADA -------*/
 				END.
                

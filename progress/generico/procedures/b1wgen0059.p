@@ -11,6 +11,8 @@
   | busca-craplrt					    | ZOOM0001.pc_busca_craplrt			     | 
   | busca-craplcr                       | ZOOM0001.pc_busca_craplcr              | 
   | busca-crapfin						| ZOOM0001.pc_busca_finalidades_empr_web |
+  | busca-gncdnto                       | ZOOM0001.pc_busca_gncdnto              |
+  | busca-gncdocp                       | ZOOM0001.pc_busca_gncdocp              |
   +-------------------------------------+----------------------------------------+
 
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
@@ -27,7 +29,7 @@
 
     Programa: b1wgen0059.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Marco/2010                   Ultima atualizacao:  06/10/2016
+    Data    : Marco/2010                   Ultima atualizacao:  22/02/2017
 
     Objetivo  : Buscar os dados p/ telas de pesquisas ou zoom's
 
@@ -184,6 +186,10 @@
 				06/10/2016 - Inclusao de tratamento de origem "ACORDO" na
 							 procedure busca-crapcco, prj. 302 (Jean Michel).
 							 				
+			    22/02/2017 - Removido as rotinas busca_nat_ocupacao, busca_ocupacao devido a conversao 
+				             da busca_gncdnto e da busca-gncdocp
+							 (Adriano - SD 614408).
+							 				
 .............................................................................*/
 
 
@@ -287,119 +293,6 @@ PROCEDURE busca-gncdfrm:
                         DO:
                            CREATE tt-gncdfrm.
                            BUFFER-COPY gncdfrm TO tt-gncdfrm.
-                        END.
-                END.
-
-             ASSIGN aux_nrregist = aux_nrregist - 1.
-        END.
-
-        LEAVE.
-    END.
-
-    RETURN "OK".
-
-END PROCEDURE.
-
-PROCEDURE busca-gncdnto:
-    /* Pesquisa para NATUREZA OCUPACAO */
-
-    DEF  INPUT PARAM par_cdnatocp AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_rsnatocp AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_nrregist AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_nriniseq AS INTE                           NO-UNDO.
-    
-    DEF OUTPUT PARAM par_qtregist AS INTE                           NO-UNDO.
-    DEF OUTPUT PARAM TABLE FOR tt-gncdnto.
-
-    ASSIGN aux_nrregist = par_nrregist.
-
-    DO ON ERROR UNDO, RETURN:
-        EMPTY TEMP-TABLE tt-gncdnto. 
-
-        ASSIGN par_rsnatocp = TRIM(par_rsnatocp).
-
-        FOR EACH gncdnto WHERE (IF par_cdnatocp <> 0 THEN 
-                                gncdnto.cdnatocp = par_cdnatocp ELSE TRUE) AND
-                               gncdnto.rsnatocp MATCHES("*" + par_rsnatocp + 
-                                                        "*") NO-LOCK:
-
-            IF  gncdnto.rsnatocp = "" THEN
-                NEXT.
-
-            IF  gncdnto.cdnatocp = 99  THEN
-                NEXT.
-
-            ASSIGN par_qtregist = par_qtregist + 1.
-
-            /* controles da paginaçao */
-            IF  (par_qtregist < par_nriniseq) OR
-                (par_qtregist > (par_nriniseq + par_nrregist)) THEN
-                NEXT.
-
-            IF  aux_nrregist > 0 THEN
-                DO: 
-                   FIND tt-gncdnto OF gncdnto NO-ERROR.
-    
-                   IF   NOT AVAILABLE tt-gncdnto THEN
-                        DO:
-                           CREATE tt-gncdnto.
-                           BUFFER-COPY gncdnto TO tt-gncdnto
-                               ASSIGN 
-                                  tt-gncdnto.cdnatopc = tt-gncdnto.cdnatocp.
-                        END.
-                END.
-
-             ASSIGN aux_nrregist = aux_nrregist - 1.
-        END.
-
-        LEAVE.
-    END.
-
-    RETURN "OK".
-
-END PROCEDURE.
-
-PROCEDURE busca-gncdocp:
-    /* Pesquisa para OCUPACAO */
-
-    DEF  INPUT PARAM par_cdocupa  AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_rsdocupa AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_nrregist AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_nriniseq AS INTE                           NO-UNDO.
-    
-    DEF OUTPUT PARAM par_qtregist AS INTE                           NO-UNDO.
-    DEF OUTPUT PARAM TABLE FOR tt-gncdocp.
-
-    ASSIGN aux_nrregist = par_nrregist.
-
-    DO ON ERROR UNDO, RETURN:
-        EMPTY TEMP-TABLE tt-gncdocp. 
-
-        ASSIGN par_rsdocupa = TRIM(par_rsdocupa).
-
-        FOR EACH gncdocp WHERE (IF par_cdocupa <> 0 THEN 
-                                gncdocp.cdocupa = par_cdocupa ELSE TRUE) AND
-                               gncdocp.rsdocupa MATCHES("*" + par_rsdocupa + 
-                                                        "*") NO-LOCK:
-
-            IF  gncdocp.rsdocupa = "" THEN
-                NEXT.
-
-            ASSIGN par_qtregist = par_qtregist + 1.
-
-            /* controles da paginaçao */
-            IF  (par_qtregist < par_nriniseq) OR
-                (par_qtregist > (par_nriniseq + par_nrregist)) THEN
-                NEXT.
-
-            IF  aux_nrregist > 0 THEN
-                DO: 
-                   FIND tt-gncdocp OF gncdocp NO-ERROR.
-    
-                   IF   NOT AVAILABLE tt-gncdocp THEN
-                        DO:
-                           CREATE tt-gncdocp.
-                           BUFFER-COPY gncdocp TO tt-gncdocp.
                         END.
                 END.
 
