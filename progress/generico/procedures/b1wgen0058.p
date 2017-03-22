@@ -153,6 +153,10 @@
 
 	             25/08/2016 - Ajustes na procedure valida_responsaveis, SD 510426 (Jean Michel).
 
+				 22/03/2017 - Ajustes na procedure valida_responsaveis, para nao considerar quando 
+				              a regra do poder 10 quando a exigencia de assinatura estiver com nao 
+							  SD 630546 (Rafael Monteiro).
+
 .....................................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -4619,8 +4623,8 @@ PROCEDURE Busca_Dados_Poderes:
                             IF AVAIL crappod THEN
                                DO:
                                     
-                                  FOR EACH crappod WHERE crappod.cdcooper = crapavt.cdcooper  AND
-                                                         crappod.nrdconta = crapavt.nrdconta  AND
+                                  FOR EACH crappod WHERE crappod.cdcooper = crapavt.cdcooper AND
+                                                         crappod.nrdconta = crapavt.nrdconta AND
                                                          crappod.nrctapro = crapavt.nrdctato AND
                                                          crappod.nrcpfpro = crapavt.nrcpfcgc NO-LOCK:
                                       CREATE tt-crappod.
@@ -5352,17 +5356,17 @@ PROCEDURE valida_responsaveis:
 		  
 	IF par_nmdatela = "CONTAS" THEN
 		DO:
-			FOR FIRST crapass FIELDS(qtminast) WHERE crapass.cdcooper = par_cdcooper
+			FOR FIRST crapass FIELDS(qtminast idastcjt) WHERE crapass.cdcooper = par_cdcooper
                                            AND crapass.nrdconta = par_nrdconta NO-LOCK. END.
 												 
-			IF AVAILABLE crapass AND crapass.qtminast >= 2 THEN
+			IF AVAILABLE crapass AND crapass.qtminast >= 2 AND crapass.idastcjt = 1 THEN
 				DO:
 					ASSIGN aux_contarep = 0.
 
 					FOR EACH crappod WHERE crappod.cdcooper = par_cdcooper
 									   AND crappod.nrdconta = par_nrdconta
-									   AND crappod.cddpoder = 10
-									   AND crappod.flgconju = TRUE NO-LOCK:
+									   AND crappod.cddpoder = 10 NO-LOCK:
+									 /*AND crappod.flgconju = TRUE NO-LOCK:*/
 				
 						ASSIGN aux_contarep = aux_contarep + 1.
 
