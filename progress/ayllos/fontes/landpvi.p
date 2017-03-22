@@ -3882,8 +3882,10 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                              AND craxlcm.vllanmto =  tel_vllanmto
                                              AND craxlcm.cdagenci =  1
                                              AND craxlcm.cdbccxlt =  100
-                                             AND (craxlcm.nrdolote = 4500 
-                                              OR craxlcm.nrdolote =  4501)
+                                             AND ((craxlcm.nrdolote = 4500 
+                                             AND craxlcm.cdhistor = 21) 
+                                              OR (craxlcm.nrdolote =  4501 
+                                             AND craxlcm.cdhistor = 521))
                                              NO-LOCK NO-ERROR.
                                              
                         IF  AVAILABLE craxlcm THEN
