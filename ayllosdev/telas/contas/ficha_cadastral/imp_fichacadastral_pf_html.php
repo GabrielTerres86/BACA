@@ -1,6 +1,6 @@
 <?
 /*!
- * FONTE        : imp_fichacadastral_pf_html.php
+ * FONTE        : imp_fichacadastral_pf_html.php						Última alteração: 15/03/2017
  * CRIAÇÃO      : Rodolpho Telmo (DB1)
  * DATA CRIAÇÃO : 06/04/2010 
  * OBJETIVO     : Responsável por buscar as informações que serão apresentadas no PDF da Ficha Cadastral 
@@ -44,6 +44,12 @@
 				  23/12/2015 - Inclusão de impressão de PEP (Carlos)
 
 				  01/12/2016 - Definir a não obrigatoriedade do PEP (Tiago/Thiago SD532690)
+
+				  08/03/2017 - Ajuste para apresentar novas informações para o PEP (Adriano - SD 614408).
+
+				  15/03/2017 - Ajuste para corrigir quebra de página devido aos ajustes realizados
+				               para a inclusão de novas informações na declaração PEP
+							   (Adriano - SD 614408).
  */	 
 ?>
 <?
@@ -826,7 +832,11 @@
 				escreve('Data Início do Exercício: ' . getByTagName($comercial,'dtinicio'));			
 				escreve('Data Fim do Exercício: '    . getByTagName($comercial,'dttermino'));			
 				escreve('Empresa/Órgão Público: '    . getByTagName($comercial,'nmempresa'));			
-				escreve('CNPJ: '                     . formatar(getByTagName($comercial,'nrcnpj_empresa'),'cnpj',true));			
+				
+				if(getByTagName($comercial,'nrcnpj_empresa') != "0"){
+					escreve('CNPJ: '                     . formatar(getByTagName($comercial,'nrcnpj_empresa'),'cnpj',true));			
+				}
+				
 				pulaLinha(4);
 				escreveCidadeData(getByTagName($registros,'dscidade')); // Blumenau, 20 de janeiro de 2016.
 				pulaLinha(4);
@@ -857,6 +867,7 @@
 				escreve('Nome do Relacionado: ' . getByTagName($comercial,'nmpolitico'));			
 				escreve('CPF: ' . formatar(getByTagName($comercial,'nrcpf_politico'),'cpf',true));			
 				escreve('Cargo ou Função: ' . getByTagName($comercial,'dsdocupa'));			
+				escreve('Empresa: '    . getByTagName($comercial,'nmempresa'));	
 				escreve('Tipo de Relacionamento/Ligação: ' . getByTagName($comercial,'dsrelacionamento'));			
 
 				pulaLinha(4);
@@ -865,7 +876,7 @@
 				escreve('                      ________________________________                      ');			
 				escreveLinha(preencheString(getByTagName($comercial,'nmextttl'), 76, ' ', 'C'));
 				
-				pulaLinha(38 - $qtdLinhas);
+				pulaLinha(37 - $qtdLinhas);
 				escreveRodape();
 			}
 

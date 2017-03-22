@@ -5,8 +5,9 @@
  * DATA CRIAÇÃO : 12/07/2016
  * OBJETIVO     : Rotina para inclusao/alteracao da tela CADPAC
  * --------------
- * ALTERAÇÕES   : 
- * -------------- 
+ * ALTERAÇÕES   : 09/02/2017 - Adicionar a funcao utf8_decode para as informacoes do cheque 
+ * --------------			   conforme ja faz pro endereço (Lucas Ranghetti #610360)
+ *  
  */
     session_start();
 	require_once('../../includes/config.php');
@@ -130,9 +131,9 @@
     $xml .= "   <cdufdcop>".$cdufdcop."</cdufdcop>";
     $xml .= "   <dsdemail>".$dsdemail."</dsdemail>";
     $xml .= "   <dsmailbd>".$dsmailbd."</dsmailbd>";
-    $xml .= "   <dsinform1>".$dsinform1."</dsinform1>";
-    $xml .= "   <dsinform2>".$dsinform2."</dsinform2>";
-    $xml .= "   <dsinform3>".$dsinform3."</dsinform3>";
+    $xml .= "   <dsinform1>".utf8_decode($dsinform1)."</dsinform1>";
+    $xml .= "   <dsinform2>".utf8_decode($dsinform2)."</dsinform2>";
+    $xml .= "   <dsinform3>".utf8_decode($dsinform3)."</dsinform3>";
     $xml .= "   <hhsicini>".$hhsicini."</hhsicini>";
     $xml .= "   <hhsicfim>".$hhsicfim."</hhsicfim>";
     $xml .= "   <hhtitini>".$hhtitini."</hhtitini>";

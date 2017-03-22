@@ -3,7 +3,7 @@
 	/************************************************************************
 	 Fonte: titulos_bordero_liberaranalisar.php                       
 	 Autor: Guilherme                                                 
-	 Data : Novembro/2008                Última Alteração: 27/06/2016
+	 Data : Novembro/2008                Última Alteração: 09/03/2017
 	                                                                  
 	 Objetivo  : Liberar um bordero de desconto de títulos            
 	                                                                  
@@ -22,6 +22,9 @@
                       passar o CDPACTRA (Rafael Maciel - RKAM) 
 			
                  27/06/2016 - Passagem da aux_inconfi6. (Jaison/James)
+							  
+				 09/03/2017 - Ajuste para tratar titulo já incluso em outro borderô
+							 (Adriano - SD 603451).
 							  
 	************************************************************************/
 	
@@ -204,7 +207,47 @@
 			exit();
 		
 		}else{
+			
+			$msgAlertas = $xmlObjLiberacao->roottag->tags[0]->tags;
+
+			if (count($msgAlertas) > 1){
+				?>
+			    
+				strHTML = '';		 
+				
+				strHTML += '<div class="divRegistros">';
+				strHTML += '  <table>';
+				strHTML += '    <thead>';
+				strHTML += '       <tr>';
+				strHTML += '          <th>Sequ&ecirc;ncia</th>';
+				strHTML += '          <th>Descri&ccedil;&atilde;o</th>';
+				strHTML += '       </tr>';
+				strHTML += '    </thead>';
+				strHTML += '    <tbody>';
+
+				<? for ($i = 0; $i < count($msgAlertas); $i++) {?>
+				
+					strHTML += '     	       <tr>'; 	
+					strHTML += '     	   	     <td><? echo $msgAlertas[$i]->tags[2]->cdata; ?> </td>';
+					strHTML += '     	   	     <td><? echo $msgAlertas[$i]->tags[4]->cdata; ?> </td>';
+					strHTML += '     	       </tr>';	
+				
+				<? } ?>
+
+				strHTML += '     </tbody>';	
+				strHTML += '  </table>';
+				strHTML += '</div>';
+				
+				mostraMsgsGenericas();
+
+				
+			<?
+				exit();
+
+			}else{
 			exibeErro($xmlObjLiberacao->roottag->tags[0]->tags[0]->tags[4]->cdata);
+			}
+
 		
 		}
 						

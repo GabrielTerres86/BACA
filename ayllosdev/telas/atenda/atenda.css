@@ -1,20 +1,24 @@
-/***************************************************************************/
-/*** Fonte: atenda.css                                                   ***/
-/*** Autor: David                                                        ***/
-/*** Data : Dezembro/2007                Última Alteração: 12/11/2012    ***/
-/***                                                                     ***/
-/*** Objetivo  : Arquivos com estilos css da tela Atenda                 ***/
-/***                                                                     ***/	 
-/*** Alterações: 12/01/2010 - Retirar #divConsultaAssociado (David).     ***/
-/***             27/04/2011 - Alterado z-index do divRotina de 100       ***/
-/***             			  para 98. ( Gabriel / DB1 ).                ***/
-/***             			 							                 ***/
-/***             30/08/2011 - Incluida divImpressaoCartao                ***/
-/***             			  (Guilherme - Supero)                       ***/
-/***																	 ***/
-/***			 12/11/2012 - Incluído css para o divMsgsGrupoEconomico  ***/
-/***						  (Adriano)									 ***/
-/***************************************************************************/
+/*******************************************************************************
+ Fonte: atenda.css                                                   
+ Autor: David                                                        
+ Data : Dezembro/2007                Última Alteração: 10/03/2017    
+                                                                     
+ Objetivo  : Arquivos com estilos css da tela Atenda                 
+                                                                     	 
+ Alterações: 12/01/2010 - Retirar #divConsultaAssociado (David).     
+             27/04/2011 - Alterado z-index do divRotina de 100       
+             			  para 98. ( Gabriel / DB1 ).                
+             			 							                 
+             30/08/2011 - Incluida divImpressaoCartao                
+             			  (Guilherme - Supero)                       
+																	 
+			 12/11/2012 - Incluído css para o divMsgsGrupoEconomico  
+						  (Adriano)									 
+                                                                     
+             09/03/2017 - Incluído css para o divMsgsGenericasAjuste
+                          (Adriano - SD 603451 ).
+
+***************************************************************************/
 
 #divRotina {
 	position: absolute;
@@ -52,6 +56,14 @@
 
 
 #divMsgsGrupoEconomico {
+	position: absolute;
+	width: 545px;
+	z-index: 100;
+	visibility: hidden;
+}
+
+
+#divMsgsGenericas {
 	position: absolute;
 	width: 545px;
 	z-index: 100;

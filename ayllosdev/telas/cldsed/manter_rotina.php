@@ -1,6 +1,6 @@
 <? 
 /*!
- * FONTE        : manter_rotina.php							Última alteração: 08/08/2016
+ * FONTE        : manter_rotina.php							Última alteração: 10/
  * CRIAÇÃO      : Cristian Filipe Fernandes        
  * DATA CRIAÇÃO : 21/11/2013
  * OBJETIVO     : Rotina para manter as operações da tela CLDSED
@@ -10,6 +10,8 @@
 				  08/08/2016 - Ajuste para inclusão de controle de paginação
 							  (Adriano - SD 495725).
 
+				  10/02/2017 - Adicionando funcao para elimitar caracteres invalidos ao carregar informacoes
+							   conforme solicitado no chamado 582636.
  * -------------- 
  */
  
@@ -268,7 +270,7 @@
 	
 	$xmlResult = getDataXML($xml);
 	
-	$xmlObjeto = getObjectXML($xmlResult);
+	$xmlObjeto = getObjectXML(removeCaracteresInvalidos($xmlResult));
 
 	$qtregist  = $xmlObjeto->roottag->tags[0]->attributes["QTREGIST"];
 

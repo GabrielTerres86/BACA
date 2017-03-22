@@ -13,6 +13,7 @@
  *                             SD347594 (Odirlei-AMcom)
  *                19/01/2017 - PRJ 432 - Melhorias Envio CYber - incluída validação para verificar se assessoria estiver preenchida,
                                os campos flgjudic e flextjud não podem er nulos (Jean/Mout´S).
+ *                15/02/2017 - Alteracao para habilitar btnOk quando chamado funcao estadoInicial. (Jaison/James)
  * -----------------------------------------------------------------------
  */
 
@@ -65,6 +66,8 @@ function estadoInicial() {
 	$('#btExclusao','#divBotoes').hide();
 	$('#btImportar','#divBotoes').hide();
 	$("#cddopcao","#frmCab").focus();
+
+    $("#btnOk","#frmCab").prop('disabled',false);
 
 }	
 

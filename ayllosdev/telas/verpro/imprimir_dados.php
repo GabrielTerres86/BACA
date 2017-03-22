@@ -10,6 +10,8 @@
 				  19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS 
 							   pelo InternetBanking (Projeto 338 - Lucas Lunelli)
 							   
+				 09/03/2017 - Alteraçoes referente a impressao do comprovante de pagamento dos debitos
+							  automaticos na Verpro (Aline)			   
  */ 
 ?>
 
@@ -44,7 +46,6 @@
 	
 	// Recebe as variaveis
 	$nrdconta 	  = $_POST['nrdconta'];
-	$nrdconta 	  = $_POST['nrdconta'];
 	$nmprimtl 	  = $_POST['nmprimtl'];
 	$cdtippro 	  = $_POST['cdtippro'];
 	$nrdocmto 	  = $_POST['nrdocmto'];
@@ -76,6 +77,7 @@
 	$dspacote     = $_POST['dspacote'];
 	$dtdiadeb     = $_POST['dtdiadeb'];
 	$dtinivig     = $_POST['dtinivig'];
+	$dslinha3     = $_POST['dslinha3'];
 	//DARF/DAS
 	$tpcaptur	  = $_POST['tpcaptur'];
 	$dsagtare	  = $_POST['dsagtare'];
@@ -103,6 +105,10 @@
 	
 	$dsiduser 	= session_id();	
 
+	$aux_dslinha3 = explode('#', $dslinha3);
+	$aux_dslinha3 = $aux_dslinha3[0];
+	$nmconven = substr($aux_dslinha3,11);
+	
 	if ( $cdtippro == '2' ) {
 		$cdbarras   = $_POST['cdbarrax'];
 		$lndigita   = $_POST['lndigitx'];
@@ -164,6 +170,7 @@
 	$xml .= '		<dsageban>'.$dsageban.'</dsageban>';
 	$xml .= '		<nrctafav>'.$nrctafav.'</nrctafav>';
 	$xml .= '		<nmfavore>'.$nmfavore.'</nmfavore>';
+	$xml .= '		<nmconven>'.$nmconven.'</nmconven>';
 	$xml .= '		<nrcpffav>'.$nrcpffav.'</nrcpffav>';
 	$xml .= '		<dsfinali>'.$dsfinali.'</dsfinali>';
 	$xml .= '		<dstransf>'.$dstransf.'</dstransf>';	

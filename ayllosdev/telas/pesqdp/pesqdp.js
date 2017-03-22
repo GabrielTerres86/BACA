@@ -10,6 +10,8 @@
  *							   Data do Deposito e Valor do cheque. Adicionado novos campos
  *							   para filtro, numero de conta e numero de cheque, conforme
  *							   solicitado na melhoria 300189 (Kelvin)	
+ *                15/02/2017 - Zerar os tabindex quando busca um cheque e clica no botão
+                               voltar. Andrey Formigari (Mouts) SD 612621.
  * --------------
  */
 
@@ -607,6 +609,7 @@ function Gera_ImpressaoTXT() {
 // botoes
 function btnVoltar() {
 	estadoInicial();
+    zerarTabIndex();
 	return false;
 }
 
@@ -898,4 +901,8 @@ function validaArquivo(){
 	Gera_ImpressaoTXT();
 
 	return false;
+}
+
+function zerarTabIndex() {
+    $('.formulario input').removeAttr('tabindex');
 }
