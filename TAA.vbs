@@ -18,6 +18,9 @@
 ' --------------------------------------------------------------------------------
 '     03/06/2016 - Retornada a versão do arquivo para a 
 '                  anterior (Elton)
+'
+'     03/02/2017 - #561094 Inclusão da verificação do processo OSD_BR.exe (diagnóstico Diebold)
+'                  e melhoria de performance movendo a consulta dos processos P32* de lugar (Carlos)
 ' ----------------------------------------------------------------
 
 Set WshShell = WScript.CreateObject("WScript.Shell")
@@ -25,9 +28,8 @@ Set objWMIService = GetObject("winmgmts:\\.\root\cimv2")
 
 DO WHILE 1 = 1
 	' Busca os processos.
-	Set colPro =  objWMIService.Execquery ("SELECT * FROM Win32_Process WHERE caption = 'prowc.exe'")
-	Set colP32 =  objWMIService.Execquery ("SELECT * FROM Win32_Process WHERE caption = 'P32*'")
-	
+	Set colPro =  objWMIService.Execquery ("SELECT * FROM Win32_Process WHERE caption = 'prowc.exe' OR caption = 'OSD_BR.exe'")	
+
 	verifica = FALSE
 	' Verifica se o processo prowc está em execução.
 	For each processo in colPro
@@ -37,6 +39,7 @@ DO WHILE 1 = 1
 	' Caso o prowc estiver fechado, finaliza os processos dos dispositivos 
 	' e inicializa o sistema.
 	IF NOT verifica THEN
+	    Set colP32 =  objWMIService.Execquery ("SELECT * FROM Win32_Process WHERE caption = 'P32*'")
 		FOR EACH diebold IN colP32
 			diebold.Terminate()
 		Next
@@ -59,4 +62,4 @@ DO WHILE 1 = 1
 	
 	' Aguarda 1 minuto para executar novamente.
 	WScript.sleep 60000	
-	LOOP
+LOOP
