@@ -25,7 +25,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Margarete/Mirtes
-   Data    : Junho/2004.                     Ultima atualizacao: 27/06/2014
+   Data    : Junho/2004.                     Ultima atualizacao: 01/02/2017
 
    Dados referentes ao programa:
 
@@ -197,6 +197,9 @@
                             para chamar a store-procedure do oracle (Odirlei - AMcom)
                             
                25/08/2014 - Liberação do fonte hibrido para produção (Odirlei-AMcom)             
+               
+               01/02/2017 - Ajustes para consultar dados da tela PROCES de todas as cooperativas
+                            (Lucas Ranghetti #491624)
 ........................................................................................*/
 
 { includes/var_online.i }
@@ -283,7 +286,8 @@ FOR EACH wt_critica_proces
       BY nrsequen:
 
    CREATE w_criticas.
-   ASSIGN w_criticas.nrsequen = wt_critica_proces.nrsequen
+   ASSIGN w_criticas.cdcooper = wt_critica_proces.cdcooper
+          w_criticas.nrsequen = wt_critica_proces.nrsequen
           w_criticas.cdsitexc = wt_critica_proces.cdsitexc
           w_criticas.dscritic = wt_critica_proces.dscritic
           w_criticas.cdagenci = wt_critica_proces.cdagenci.
