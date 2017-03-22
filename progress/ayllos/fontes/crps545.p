@@ -602,7 +602,7 @@ PROCEDURE enviar_email_devolucoes_matera:
   RUN sistema/generico/procedures/b1wgen0011.p PERSISTENT SET h-b1wgen0011.
 
   RUN enviar_email_completo IN h-b1wgen0011
-                (INPUT 1,
+                (INPUT glb_cdcooper,
                  INPUT glb_cdprogra,
                  INPUT "cecred@cecred.coop.br",                   
                  INPUT "contasapagar@cecred.coop.br,spb@cecred.coop.br",
