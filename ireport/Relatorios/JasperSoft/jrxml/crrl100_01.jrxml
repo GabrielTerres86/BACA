@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2016-09-20T10:40:32 -->
+<!-- 2017-02-20T14:58:44 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl100_01" language="groovy" pageWidth="480" pageHeight="924" whenNoDataType="AllSectionsNoDetail" columnWidth="480" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="0.9558924531310722"/>
 	<property name="ireport.x" value="0"/>
@@ -665,7 +665,7 @@
 				</textElement>
 				<text><![CDATA[<u>2. Empréstimo</u> - O crédito ora aberto e aceito pelo Emitente é um empréstimo em dinheiro, tendo como origem recursos de fontes do BNDES, com pagamento em parcelas, na quantidade e valor contratados pelo Emitente, pelo que o Emitente, na pretensão de contratar operação de microcrédito e na forma da legislação em vigor, declara expressamente que: <br>
 a) Tem a obrigação de não utilizar os recursos recebidos para microcrédito produtivo em finalidade diversa da estipulada contratualmente.<br>
-b) Tem a obrigação de não utilizar os recursos recebidos em medidas ou ações que causem danos ao meio ambiente, segurança e medida do trabalho.<br>
+b) Tem a obrigação de não utilizar os recursos recebidos em medidas ou ações que causem danos ao meio ambiente, segurança e medicina do trabalho.<br>
 c) O crédito objeto desse contrato encontra-se cedido fiduciariamente ao BNDES, devendo o(s) microempreendedor(es) realizar pagamentos em conta indicada pelo BNDES, caso seja notificado para tanto.<br>
 d) O descumprimento das obrigações previstas nas alíneas “a” e “b” do “caput” desta cláusula acarretará o vencimento antecipado da integralidade do saldo remanescente do débito.<br>
 <u> 3. Valor Contratado</u> -  A <b> Cooperativa </b> entregará ao <b> Emitente </b> o valor indicado nas condições específicas da contratação mediante crédito na conta corrente indicada no subitem 1.1, que o mesmo, na qualidade de associado,

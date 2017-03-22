@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2016-09-13T16:08:31 -->
+<!-- 2017-03-20T09:42:34 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl519_contrato_limite" language="groovy" pageWidth="480" pageHeight="842" whenNoDataType="AllSectionsNoDetail" columnWidth="480" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.0"/>
 	<property name="ireport.x" value="0"/>
@@ -38,8 +38,7 @@
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
-					<printWhenExpression><![CDATA[/* 1-COMPLETA */            /* 2- CONTRATO */
-$F{idimpres} == "1" || $F{idimpres} == "2"]]></printWhenExpression>
+					<printWhenExpression><![CDATA[$F{idimpres} == "1" || $F{idimpres} == "2"]]></printWhenExpression>
 				</reportElement>
 				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//Contrato")]]></dataSourceExpression>
 				<subreportExpression><![CDATA["crrl519_dados_contrato_limite.jasper"]]></subreportExpression>
@@ -52,8 +51,7 @@ $F{idimpres} == "1" || $F{idimpres} == "2"]]></printWhenExpression>
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
-					<printWhenExpression><![CDATA[/* 1-COMPLETA */            /* 4- PROMISSORIA */
-$F{idimpres} == "1" || $F{idimpres} == "4"]]></printWhenExpression>
+					<printWhenExpression><![CDATA[$F{idimpres} == "1" || $F{idimpres} == "4"]]></printWhenExpression>
 				</reportElement>
 				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//Promissoria")]]></dataSourceExpression>
 				<subreportExpression><![CDATA["nota_promissoria.jasper"]]></subreportExpression>
@@ -67,8 +65,7 @@ $F{idimpres} == "1" || $F{idimpres} == "4"]]></printWhenExpression>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
-					<printWhenExpression><![CDATA[/* 1-COMPLETA */            /* 2- CONTRATO */
-$F{idimpres} == "1" || $F{idimpres} == "2"]]></printWhenExpression>
+					<printWhenExpression><![CDATA[$F{idimpres} == "1"]]></printWhenExpression>
 				</reportElement>
 				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//cet")]]></dataSourceExpression>
 				<subreportExpression><![CDATA["cet_limites_demonstrativo.jasper"]]></subreportExpression>
