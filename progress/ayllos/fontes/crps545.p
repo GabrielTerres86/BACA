@@ -3,7 +3,7 @@
    Programa: fontes/crps545.p
    Sigla   : CRED
    Autor   : Guilherme
-   Data    : Dezembro/2009.                     Ultima atualizacao: 23/05/2016
+   Data    : Dezembro/2009.                     Ultima atualizacao: 02/02/2017
                                                                           
    Dados referentes ao programa:
 
@@ -78,6 +78,23 @@
                23/05/2016 - Ajustado tratamento para validacao das contas
                             migradas VIACREDI >> VIACREDI ALTO VALE
                             (Douglas - Chamado 406267)
+
+               26/12/2016 - Tratamento incorporação Transposul (Diego).
+
+               13/01/2017 - Incorporacao - Tratado recebimento de TED para 
+                            agencia antiga e conta de destino invalida, para 
+                            criar registro na gnmvspb com cdcooper da coop.
+                            nova, pois estava criando com a coop. antiga e nao
+                            ocorria centralizacao (Diego).
+                  
+               02/02/2017 - Ajustado para que seja possivel importar os arquivos 
+                            do SPB para quando o Bacen estiver em crise 
+                            (Douglas - Chamado 536015)
+                            
+               07/03/2017 - Na mensagem STR0010R2 originada pelo sistema MATERA
+                            foi adicionado tratamento para enviar por e-mail.
+                            (Ricardo Linhares - Chamado 625310)
+                                             
 ............................................................................. */
 
 { includes/var_batch.i } 
@@ -89,6 +106,10 @@ DEF STREAM str_1.
 
 DEF TEMP-TABLE crawarq NO-UNDO
     FIELD nmarquiv AS CHAR.
+    
+DEF TEMP-TABLE devolucoes_matera NO-UNDO
+    FIELD data AS date
+    FIELD valor AS DECI.
     
 DEF TEMP-TABLE crawint NO-UNDO
     FIELD nrseqreg AS INTE
@@ -121,6 +142,7 @@ DEF TEMP-TABLE crawint NO-UNDO
 
 DEF BUFFER b-crapcop FOR crapcop.
     
+DEF VAR aux_nmarqfind AS CHAR  NO-UNDO. 
 DEF VAR aux_nmarquiv AS CHAR   NO-UNDO.
 DEF VAR aux_nmarqimp AS CHAR   NO-UNDO.
 DEF VAR aux_setlinha AS CHAR   NO-UNDO.
@@ -146,12 +168,27 @@ RUN fontes/iniprg.p.
 IF  glb_cdcritic > 0  THEN
     RETURN.
 
-ASSIGN aux_codiispb = "05463212_" + STRING(YEAR(glb_dtmvtolt),"9999") + 
+/*
+  Conforme informado pela Juliana e pela Karoline do Financeiro (SPB)
+  o nome do arquivo é composto da seguinte forma:
+      - ISPB da Instituicao Financeira
+      - Data inicial do estado de crise
+      - Data final do estado de crise
+      
+  Dessa forma a mascara do arquivo que vamo procurar é:
+  ISPB + QUALQUER DATA + DATA FINAL
+  
+  Assim o arquivo sempre vai conter a data atual do sistema no campo de DATA FINAL
+*/
+
+ASSIGN aux_codiispb  = "05463212"
+       aux_nmarqfind = aux_codiispb + "_*_" + 
+                       STRING(YEAR(glb_dtmvtolt),"9999") + 
                       STRING(MONTH(glb_dtmvtolt),"99") +
                       STRING(DAY(glb_dtmvtolt),"99").
 
-INPUT STREAM str_1 THROUGH VALUE("ls /micros/cecred/spb/" + aux_codiispb 
-                                 + "_*.txt 2> /dev/null") NO-ECHO.
+INPUT STREAM str_1 THROUGH VALUE("ls /micros/cecred/spb/" + aux_nmarqfind 
+                                 + ".txt 2> /dev/null") NO-ECHO.
 
 DO WHILE TRUE ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
 
@@ -278,8 +315,23 @@ FOR EACH crawarq NO-LOCK:
                     TRIM(SUBSTR(aux_setlinha,71,11)) = "PAG0111R2" OR
                     TRIM(SUBSTR(aux_setlinha,71,11)) = "STR0010"   OR
                     TRIM(SUBSTR(aux_setlinha,71,11)) = "PAG0111"   THEN
-                    /* Codigo da Agencia(debito ou credito) nas mensagens de devolucao */
-                    ASSIGN aux_cdagectl = INT(SUBSTR(aux_setlinha,21,4)).
+                    DO:
+                    
+                      /* Se veio do MATERA */
+                      IF SUBSTRING(aux_setlinha,21,6) = "MATERA"  THEN
+                      DO:
+                        CREATE devolucoes_matera.
+                        ASSIGN devolucoes_matera.data = DATE(INTE(SUBSTR(aux_setlinha,16,2)),
+                                                             INTE(SUBSTR(aux_setlinha,18,2)),
+                                                             INTE(SUBSTR(aux_setlinha,12,4)))
+                               devolucoes_matera.valor = DECI(REPLACE(SUBSTR(aux_setlinha, 324,22),".",",")).
+                        NEXT.
+                      END.
+                      
+                      /* Codigo da Agencia(debito ou credito) nas mensagens de devolucao */
+                      ASSIGN aux_cdagectl = INT(SUBSTR(aux_setlinha,21,4)).
+                    
+                    END.
                 ELSE
                 IF  TRIM(SUBSTR(aux_setlinha,71,11)) = "STR0026R2" THEN
                     DO:
@@ -353,13 +405,12 @@ FOR EACH crawarq NO-LOCK:
                         IF  AVAIL crapass  THEN
                             DO:
                                 ASSIGN aux_cdagenci = crapass.cdagenci.
-
-                                IF   SUBSTR(aux_setlinha,20,1) = "C"  THEN
-                                     RUN verifica_conta_transferida.
-
                             END.
                         ELSE
                             ASSIGN aux_cdagenci = 0.
+
+                        IF  SUBSTR(aux_setlinha,20,1) = "C"  THEN
+						    RUN verifica_conta_transferida.
                     END.
 
                            
@@ -513,6 +564,11 @@ FOR EACH crawarq NO-LOCK:
     END. /*** Fim do FOR EACH crawint ***/
 
     
+    /* Enviar e-mail Matera */
+    
+    IF AVAILABLE devolucoes_matera THEN
+      RUN enviar_email_devolucoes_matera.
+    
     UNIX SILENT VALUE("mv " + crawarq.nmarquiv + " salvar").
     
 END. /*** Fim do FOR EACH crawarq ***/
@@ -524,6 +580,44 @@ IF  VALID-HANDLE(h-b1wgen0046) THEN
 RUN fontes/fimprg.p.
 
 /*................................ PROCEDURES ................................*/
+
+PROCEDURE enviar_email_devolucoes_matera:
+
+  DEFINE VARIABLE corpo AS CHAR NO-UNDO.
+  DEF VAR h-b1wgen0011 AS HANDLE NO-UNDO.
+                          
+  ASSIGN corpo = "Foram identificadas <b>devoluções</b> de TED do legado <b>Matera:</b> \n\n".
+  
+  FOR EACH devolucoes_matera NO-LOCK:
+    ASSIGN corpo = corpo + "Valor: " + TRIM(STRING(devolucoes_matera.valor,"zzz,zzz,zzz,zz9.99")) + 
+                           "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" +
+                           "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" +
+                           " Data: " + STRING(DAY(devolucoes_matera.data),"99") + "/" + 
+                                             STRING(MONTH(devolucoes_matera.data),"99") +  "/" +
+                                             STRING(YEAR(devolucoes_matera.data),"9999") + "\n".
+  END.
+  
+  ASSIGN corpo = corpo + "\n Deverá ser efetuado crédito de devolução na conta da Cooperativa Filiada (histórico 2218)".
+  
+  RUN sistema/generico/procedures/b1wgen0011.p PERSISTENT SET h-b1wgen0011.
+
+  RUN enviar_email_completo IN h-b1wgen0011
+                (INPUT glb_cdcooper,
+                 INPUT glb_cdprogra,
+                 INPUT "cecred@cecred.coop.br",                   
+                 INPUT "contasapagar@cecred.coop.br,spb@cecred.coop.br",
+                 INPUT "Devoluções de TED - MATERA",
+                 INPUT "",
+                 INPUT "",
+                 INPUT corpo,
+                 INPUT FALSE). 
+
+
+  DELETE PROCEDURE h-b1wgen0011.
+
+  RETURN "OK".
+
+END PROCEDURE.
 
 PROCEDURE proc_critica_header:
 
@@ -564,8 +658,8 @@ PROCEDURE verifica_conta_transferida.
         END.
 
    IF   aux_ctavalid = TRUE /*** OR Tratamento incorporadas
-        aux_cdcooper = 4    OR
-        aux_cdcooper = 15 ***/ THEN
+        aux_cdcooper = 4 OR aux_cdcooper = 15 ***/  OR
+		aux_cdcooper = 9 OR aux_cdcooper = 17 THEN
         DO:
             /* De-Para das incorporadas foi desativado em 25/08/2015.
                Os registros continuarao sendo criados na gnmvspb para
@@ -574,14 +668,39 @@ PROCEDURE verifica_conta_transferida.
                 .
             ELSE
                 DO:
-                   /* Verifica se eh conta transferida */ 
+				   /* - Verifica se eh conta transferida */ 
+				   
+				   /* - Mensagem recebida para Agencia Antiga e conta Antiga.
+					  - Neste caso ocorre DE-PARA do credito para coop NOVA, e a 
+					    centralizacao deve ocorrer na conta da coop. NOVA  */  
                    FIND craptco WHERE craptco.cdcopant = aux_cdcooper AND
                                       craptco.nrctaant = aux_nrdconta AND
                                       craptco.flgativo = TRUE         AND
                                       craptco.tpctatrf = 1
                                       NO-LOCK NO-ERROR.
              
-                   IF  AVAIL craptco THEN
+                   IF  NOT AVAIL craptco  THEN DO:
+				       /* - Mensagem recebida para Agencia Antiga e conta Nova.
+						  - Neste caso ocorre DEVOLUCAO da mensagem na coop. NOVA, e a 
+							centralizacao deve ocorrer na conta da coop. NOVA */ 
+                   FIND craptco WHERE craptco.cdcopant = aux_cdcooper AND
+                                          craptco.nrdconta = aux_nrdconta AND
+                                          craptco.flgativo = TRUE         AND
+                                          craptco.tpctatrf = 1
+                                          NO-LOCK NO-ERROR. 
+
+		               IF  NOT AVAIL craptco  THEN
+					       /* - Mensagem recebida para Agencia Nova e conta Antiga.
+							  - Neste caso ocorre DEVOLUCAO da mensagem na coop. NOVA, e a 
+							    centralizacao deve ocorrer na conta da coop. NOVA */ 
+					       FIND craptco WHERE craptco.cdcooper = aux_cdcooper AND
+                                      craptco.nrctaant = aux_nrdconta AND
+                                      craptco.flgativo = TRUE         AND
+                                      craptco.tpctatrf = 1
+                                      NO-LOCK NO-ERROR.
+                   END.
+             
+				   IF  AVAIL craptco THEN
                        DO:
                            /* Verificar se a conta migrada ACREDI >> VIACREDI */
                            IF  craptco.cdcooper = 1 AND craptco.cdcopant = 2 THEN 
@@ -589,7 +708,9 @@ PROCEDURE verifica_conta_transferida.
                            /* Verificar se a conta migrada VIACREDI >> ALTO VALE*/
                            ELSE IF craptco.cdcooper = 16 AND craptco.cdcopant = 1 THEN 
                                .
-                           ELSE
+                           ELSE IF craptco.cdcopant = 17 AND glb_dtmvtolt > 03/20/2017  THEN
+						       .
+						   ELSE
                                DO:
                                    FIND b-crapcop WHERE 
                                         b-crapcop.cdcooper = craptco.cdcooper
@@ -600,6 +721,16 @@ PROCEDURE verifica_conta_transferida.
                                           aux_nrctacre = DEC(craptco.nrdconta)
                                           aux_cdagencr = b-crapcop.cdagectl.
                                END.
+                       END.
+				   ELSE
+				       DO:  /* Quando vier mensagem para a agencia antiga e conta de destino invalida,
+					           a mesma sera devolvida pela coop. singular nova. Para que ocorra a centralizacao
+							   corretamente devera gravar registro na gnmvspb com o codigo da coop. nova. Nesta
+							   situacao nao encontrara o registro na craptco. */
+					        IF   aux_cdcooper = 17  THEN
+							     IF  glb_dtmvtolt > 03/20/2017  THEN
+							         .
+								 ELSE ASSIGN aux_cdcooper = 9.
                        END.
                 END.        
         END.
