@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Margarete
-   Data    : Junho/2004.                     Ultima atualizacao: 21/12/2010
+   Data    : Junho/2004.                     Ultima atualizacao: 01/02/2017
 
    Dados referentes ao programa:
 
@@ -39,7 +39,10 @@
                16/09/2010 - Incluido parametro glb_cdcooper na chamada da 
                             procedure limpa_arquivos_proces (Elton).
                             
-               21/12/2011 - Corrigido warnings (Tiago).             
+               21/12/2011 - Corrigido warnings (Tiago).       
+               
+               01/02/2017 - Ajustes para consultar dados da tela PROCES de todas as cooperativas
+                            (Lucas Ranghetti #491624)
 ............................................................................. */
 
 { includes/var_online.i }
@@ -54,11 +57,15 @@ ASSIGN cmd[1] = "1. Consultar as pendencias ref. " +
                  STRING(glb_dtmvtolt,"99/99/9999") + "."
        cmd[2] = "2. Solicitar o processo ref. " +
                  STRING(glb_dtmvtolt,"99/99/9999") + "."
-       cmd[3] = "3. Cancelar o processo ja solicitado.".
+       cmd[3] = "3. Cancelar o processo ja solicitado."
+       cmd[4] = "4. Consultar as pendencias de todas cooperativas ref. " +
+                 STRING(glb_dtmvtolt,"99/99/9999") + ".".
 
+  
 DISPLAY cmd WITH ROW 4 FRAME f-cmd.
 
 COLOR DISPLAY MESSAGES cmd[choice] WITH FRAME f-cmd.
+
 
 glb_cddopcao = "C".
 glb_cdcritic = 0.
@@ -164,7 +171,8 @@ REPEAT:
                         QUIT.
                      END.
 
-                 IF   choice <> 1   THEN
+                 IF   choice <> 1 AND 
+                      choice <> 4 THEN
                       DO:                     
                           FIND craptab WHERE             
                                craptab.cdcooper = glb_cdcooper      AND
@@ -248,9 +256,13 @@ REPEAT:
                                END.
                       END.         
                  
-                 IF   choice = 1   THEN
+                 IF  choice = 1 OR 
+                     choice = 4 THEN
                       DO:  
-                          RUN fontes/criticas_proces.p. /* Verifica processo */
+                          IF  choice = 4 AND glb_cdcooper <> 3 THEN
+                              MESSAGE "Opcao disponivel somente para CECRED.".
+                          ELSE
+                              RUN fontes/criticas_proces.p. /* Verifica processo */
                       END.
                  ELSE
                  IF  choice = 2 THEN DO:       
@@ -342,7 +354,8 @@ REPEAT:
                                     " cancelou '  'o processo. " +
                                     " >> log/proces.log").
                                                                           END.
-                 IF   choice <> 1   THEN
+                 IF   choice <> 1 AND
+                      choice <> 4 THEN
                       DO:
                           FIND craptab WHERE 
                                craptab.cdcooper = glb_cdcooper       AND 
