@@ -2,23 +2,21 @@
 &ANALYZE-RESUME
 &Scoped-define WINDOW-NAME w_cartao_extrato_meses
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS w_cartao_extrato_meses 
-/*------------------------------------------------------------------------
+/* ..............................................................................
 
-  File: 
+Procedure: cartao_extrato_meses.w
+Objetivo : Visualização EM TELA
+Autor    : 
+Data     : 
 
-  Description: 
+Ultima alteração: 
 
-  Input Parameters:
-      <none>
+01/02/2017 #566765 Mudanca do tipo de dado da variavel tmp_tximpres, de char 
+           para longchar (Carlos)
 
-  Output Parameters:
-      <none>
+............................................................................... */
 
-  Author: 
-
-  Created: 
-
-------------------------------------------------------------------------*/
+/*------------------------------------------------------------------------*/
 /*          This .W file was created with the Progress AppBuilder.      */
 /*----------------------------------------------------------------------*/
 
@@ -52,7 +50,7 @@ DEFINE VARIABLE aux_nomedmes        AS CHAR
 
 DEFINE VARIABLE tmp_dtiniext        AS DATE         NO-UNDO.
 DEFINE VARIABLE tmp_dtfimext        AS DATE         NO-UNDO.
-DEFINE VARIABLE tmp_tximpres        AS CHAR         NO-UNDO.
+DEFINE VARIABLE tmp_tximpres        AS LONGCHAR         NO-UNDO.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME

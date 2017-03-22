@@ -6,13 +6,37 @@ Autor    : Lenilson Mouts
 Data     : Dezembro 2016
 
 
-Ultima alteração: 
+Ultimas alterações: 
+
+15/10/2010 - Ajustes para TAA compartilhado (Evandro).
+                  
+10/10/2012 - Tratamento para novo campo da 'craphis' de descrição
+           do histórico em extratos (Lucas) [Projeto Tarifas].
+           
+18/07/2013 - Correção número da agencia da cooperativa (Lucas).
+
+07/11/2013 - Alterado Posto de Atendimento ao Cooperado para
+           Posto de Atendimento "PA". (Jorge)
+           
+20/08/2015 - Adicionado SAC e OUVIDORIA nos comprovantes
+           (Lucas Lunelli - Melhoria 83 [SD 279180])
+           
+27/01/2016 - Exibir valor disponível de pré-aprovado
+           (Lucas Lunelli - PRJ261)
+           
+08/11/2016 - Alteracoes referentes a melhoria 165 - Lancamentos
+           Futuros. Lenilson (Mouts)
+
+07/12/2016 - alteracao chamado  564807 Heitor Schmitt (Mouts)
+                    
+01/02/2017 #566765 Aumento das variaveis par_tximpres e aux_tximpres de char 
+           para longchar (Carlos)
 ............................................................................... */
 
 DEFINE  INPUT PARAMETER par_dtiniext    AS DATE                     NO-UNDO.
 DEFINE  INPUT PARAMETER par_dtfimext    AS DATE                     NO-UNDO.
 DEFINE  INPUT PARAMETER par_inisenta    AS INTEGER                  NO-UNDO.
-DEFINE OUTPUT PARAMETER par_tximpres    AS CHAR                     NO-UNDO.
+DEFINE OUTPUT PARAMETER par_tximpres    AS LONGCHAR                 NO-UNDO.
 DEFINE OUTPUT PARAMETER par_flgderro    AS LOGICAL      INIT NO     NO-UNDO.
 
 
@@ -29,7 +53,7 @@ DEFINE VARIABLE aux_vlsdchsl            AS DECIMAL                  NO-UNDO.
 DEFINE VARIABLE aux_vllimcre            AS DECIMAL                  NO-UNDO.
 DEFINE VARIABLE aux_vldiscrd            AS DECIMAL   INIT 0         NO-UNDO.
 DEFINE VARIABLE aux_vlstotal            AS DECIMAL                  NO-UNDO.
-DEFINE VARIABLE aux_tximpres            AS CHARACTER                NO-UNDO.
+DEFINE VARIABLE aux_tximpres            AS LONGCHAR                 NO-UNDO.
 DEFINE VARIABLE aux_idastcjt        	AS INTEGER      			NO-UNDO.
 
 /* para controle de deposito TAA */

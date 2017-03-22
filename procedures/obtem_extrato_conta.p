@@ -25,12 +25,16 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
                   08/11/2016 - Alteracoes referentes a melhoria 165 - Lancamentos
                                Futuros. Lenilson (Mouts)
 
-..................07/12/2016 - alteracao chamado  564807............................................................. */
+                  07/12/2016 - alteracao chamado  564807 Heitor Schmitt (Mouts)
+
+                  01/02/2017 - #566765 Aumento das variaveis par_tximpres e aux_tximpres
+                               de char para longchar (Carlos)
+.............................................................................................. */
 
 DEFINE  INPUT PARAMETER par_dtiniext    AS DATE                     NO-UNDO.
 DEFINE  INPUT PARAMETER par_dtfimext    AS DATE                     NO-UNDO.
 DEFINE  INPUT PARAMETER par_inisenta    AS INTEGER                  NO-UNDO.
-DEFINE OUTPUT PARAMETER par_tximpres    AS CHAR                     NO-UNDO.
+DEFINE OUTPUT PARAMETER par_tximpres    AS LONGCHAR                 NO-UNDO.
 DEFINE OUTPUT PARAMETER par_flgderro    AS LOGICAL      INIT NO     NO-UNDO.
 
 
@@ -47,7 +51,7 @@ DEFINE VARIABLE aux_vlsdchsl            AS DECIMAL                  NO-UNDO.
 DEFINE VARIABLE aux_vllimcre            AS DECIMAL                  NO-UNDO.
 DEFINE VARIABLE aux_vldiscrd            AS DECIMAL   INIT 0         NO-UNDO.
 DEFINE VARIABLE aux_vlstotal            AS DECIMAL                  NO-UNDO.
-DEFINE VARIABLE aux_tximpres            AS CHARACTER                NO-UNDO.
+DEFINE VARIABLE aux_tximpres            AS LONGCHAR                 NO-UNDO.
 DEFINE VARIABLE aux_idastcjt        	AS INTEGER      			NO-UNDO.
 
 /* para controle de deposito TAA */
@@ -56,7 +60,6 @@ DEFINE VARIABLE aux_fldeptaa            AS LOGICAL      INIT NO     NO-UNDO.
 DEF TEMP-TABLE tt-dados-cpa NO-UNDO
     FIELD vldiscrd AS DECI
     FIELD txmensal AS DECI.
-
 
 
 
@@ -125,8 +128,7 @@ par_tximpres = par_tximpres +
                " ATE " + STRING(par_dtfimext,"99/99/9999") +
                                                  "              " +
                "                                                " +
-               "DIA HISTORICO         DOCUMENTO D/C        VALOR".
-
+               "DIA HISTORICO         DOCUMENTO D/C        VALOR". 
 
 
 

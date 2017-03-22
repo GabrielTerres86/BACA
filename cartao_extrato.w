@@ -22,12 +22,14 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
                               desabilitar os botoes de extratos, menos o extrato
                               dos ultimos 30 dias pois este eh exibido em tela
                               (Carlos)
-			     
+
 				 08/11/2016 - Alteracoes referentes a melhoria 165 - Lancamentos
                               Futuros. Lenilson (Mouts)	  
 				 07/12/2016 - alteracao ajustes TAA chamado 564807 Futuros. Lenilson (Mouts)
  
 
+                 01/02/2017 - #566765 Aumento da variavel tmp_tximpres de char para
+                              longchar (Carlos)
 ............................................................................... */
 
 /*----------------------------------------------------------------------*/
@@ -62,7 +64,7 @@ DEFINE VARIABLE aux_nomedmes        AS CHAR
 
 DEFINE VARIABLE tmp_dtiniext        AS DATE         NO-UNDO.
 DEFINE VARIABLE tmp_dtfimext        AS DATE         NO-UNDO.
-DEFINE VARIABLE tmp_tximpres        AS CHAR         NO-UNDO.
+DEFINE VARIABLE tmp_tximpres        AS LONGCHAR     NO-UNDO.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
