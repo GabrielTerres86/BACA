@@ -31,10 +31,18 @@
                18/12/2015 - Inclusao de nova temp-table tt-vlrdat, Prj.
                             Assinatura Conjunta (Jean Michel).
 
-			   04/05/2016 - Incluido novo campo na tabela tt-dados-agendamento
-							(Adriano - M117).
+               04/05/2016 - Incluido novo campo na tabela tt-dados-agendamento
+							              (Adriano - M117).
               
-         24/05/2016 - Incluido o campo flmntage na tabela tt-parmon (Carlos)
+               24/05/2016 - Incluido o campo flmntage na tabela tt-parmon (Carlos)
+               
+               21/07/2016 - Incluso da TEMP-TABLE tt-tbpagto_darf_das_trans_pend (Jean Michel).
+               
+               27/07/2016 - Inclusao de novos campos na TEMP-TABLE tt-dados-agendamento, Prj.338
+                            Pagamento DARF-DAS via Internet (Jean Michel).
+
+               19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS pelo 
+                            InternetBanking (Projeto 338 - Lucas Lunelli)
 
 ..............................................................................*/
 
@@ -60,8 +68,6 @@ DEF TEMP-TABLE tt-dados-agendamento NO-UNDO
     FIELD dtvencto AS DATE
     FIELD dsageban AS CHAR
     FIELD nrctadst AS CHAR
-    FIELD cdtiptra AS INTE
-    FIELD dstiptra AS CHAR
     FIELD incancel AS INTE
     FIELD nmprimtl AS CHAR
     FIELD nmprepos AS CHAR
@@ -69,7 +75,25 @@ DEF TEMP-TABLE tt-dados-agendamento NO-UNDO
     FIELD nmoperad AS CHAR
     FIELD nrcpfope AS DECI
     FIELD idtitdda AS DECI
-	FIELD cdageban AS CHAR.
+	  FIELD cdageban AS CHAR  
+    FIELD tpcaptur AS INTE    /* Prj. 338 */
+    FIELD cdtiptra AS INTE
+    FIELD dstiptra AS CHAR
+    FIELD dtvendrf AS DATE    /* Prj. 338 */
+    FIELD dtagenda AS DATE    /* Prj. 338 */
+    FIELD dstipcat AS CHAR    /* Prj. 338 */
+    FIELD dsidpgto AS CHAR    /* Prj. 338 */
+    FIELD dsnomfon AS CHAR    /* Prj. 338 */
+    FIELD dtperiod AS DATE    /* Prj. 338 */
+    FIELD nrcpfcgc AS CHAR    /* Prj. 338 */
+    FIELD cdreceit AS INT     /* Prj. 338 */
+    FIELD nrrefere AS DECIMAL /* Prj. 338 */
+    FIELD vlprinci AS DECIMAL /* Prj. 338 */
+    FIELD vlrmulta AS DECIMAL /* Prj. 338 */
+    FIELD vlrjuros AS DECIMAL /* Prj. 338 */
+    FIELD vlrtotal AS DECIMAL /* Prj. 338 */
+    FIELD vlrrecbr AS DECIMAL /* Prj. 338 */
+    FIELD vlrperce AS DECIMAL.    /* Prj. 338 */
 
 DEF TEMP-TABLE tt-transacoes_operadores NO-UNDO
     FIELD dtmvtolt AS DATE
@@ -114,7 +138,8 @@ DEF TEMP-TABLE tt-criticas_transacoes_oper NO-UNDO
     FIELD dstiptra AS CHAR
     FIELD dscritic AS CHAR
     FIELD flgtrans AS LOGICAL
-    FIELD nrdrowid AS CHAR.
+    FIELD nrdrowid AS CHAR
+    FIELD cdtransa AS INTE.
 
 DEF TEMP-TABLE tt-parmon
     FIELD vlinimon LIKE crapcop.vlinimon
@@ -135,7 +160,7 @@ DEF TEMP-TABLE tt-parmon
 DEF TEMP-TABLE tt-vlrdat NO-UNDO
     FIELD dattrans AS DATE
     FIELD vlronlin AS DEC.
-                       
+
 DEF TEMP-TABLE tt-tbpagto_darf_das_trans_pend NO-UNDO
   FIELD cdtransacao_pendente AS DECIMAL
   FIELD cdcooper             AS DECIMAL
@@ -148,7 +173,7 @@ DEF TEMP-TABLE tt-tbpagto_darf_das_trans_pend NO-UNDO
   FIELD dslinha_digitavel    AS CHAR
   FIELD dtapuracao           AS DATE
   FIELD nrcpfcgc             AS CHAR
-  FIELD cdtributo            AS CHAR
+  FIELD cdtributo            AS DECIMAL
   FIELD nrrefere             AS DECIMAL
   FIELD vlprincipal          AS DECIMAL
   FIELD vlmulta              AS DECIMAL
