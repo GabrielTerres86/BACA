@@ -5825,7 +5825,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
          vr_vlmaxdeb := ' '; vr_dtdebfat := ' '; vr_nrdocfat := ' '; vr_nrqtlnac := ' '; 
          vr_solestou := ' '; vr_xml_auxi := ' '; vr_dtmvttra := ' '; vr_nmagenda := ' ';
          vr_tpcaptura := 0; vr_dstipcapt := ''; vr_dsnomfone := ''; vr_dscod_barras := ''; vr_dslinha_digitavel := '';
-         vr_dtapuracao := null; vr_cdtributo := 0; vr_nrrefere := 0; vr_vlprincipal := 0; vr_vlmulta := 0; vr_vljuros := 0;
+         vr_dtapuracao := null; vr_cdtributo := '0'; vr_nrrefere := 0; vr_vlprincipal := 0; vr_vlmulta := 0; vr_vljuros := 0;
          vr_vlrtotal := 0; vr_vlreceita_bruta := 0; vr_vlpercentual := 0; vr_idagendamento := 0; 
 
          --Atribuicao de variaveis genericas
@@ -6611,7 +6611,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
                ELSIF vr_tpcaptura = 2 THEN 
                  vr_dtapuracao      := rw_tbpagto_darf_das_trans_pend.dtapuracao;
                  vr_nrcpfgui        := rw_tbpagto_darf_das_trans_pend.nrcpfcgc;
-                 vr_cdtributo       := NVL(rw_tbpagto_darf_das_trans_pend.cdtributo,0);
+                 vr_cdtributo       := NVL(rw_tbpagto_darf_das_trans_pend.cdtributo,'0');
                  vr_nrrefere        := NVL(rw_tbpagto_darf_das_trans_pend.nrrefere,0);
                  vr_dtvencto        := TO_CHAR(rw_tbpagto_darf_das_trans_pend.dtvencto,'dd/mm/RRRR');
                  vr_vlprincipal     := NVL(rw_tbpagto_darf_das_trans_pend.vlprincipal,0);
@@ -6874,7 +6874,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
               vr_xml_auxi := vr_xml_auxi
               || '<dados_campo><label>Período de Apuração</label><valor>'||TO_CHAR(vr_dtapuracao,'dd/mm/RRRR')||'</valor></dados_campo>'
               || '<dados_campo><label>Número do CPF ou CNPJ</label><valor>'||TO_CHAR(vr_nrcpfgui)||'</valor></dados_campo>'
-              || '<dados_campo><label>Código da Receita</label><valor>'||vr_cdtributo||'</valor></dados_campo>';
+              || '<dados_campo><label>Código da Receita</label><valor>'|| TO_CHAR(vr_cdtributo) ||'</valor></dados_campo>';
               
               vr_xml_auxi := vr_xml_auxi   
               || '<dados_campo><label>Valor do Principal</label><valor>'||TO_CHAR(vr_vlprincipal,'fm999g999g990d00')||'</valor></dados_campo>'
@@ -6885,7 +6885,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
             vr_xml_auxi := vr_xml_auxi || '<dados_campo><label>Valor Total</label><valor>'||TO_CHAR(vr_vlrtotal,'fm999g999g990d00')||'</valor></dados_campo>';           
 
             IF vr_tpcaptura = 2 THEN
-              IF vr_cdtributo = 6106 THEN
+              IF vr_cdtributo = '6106' THEN
                 vr_xml_auxi := vr_xml_auxi || '<dados_campo><label>Receita Bruta Acumulada</label><valor>'||TO_CHAR(vr_vlreceita_bruta,'fm999g999g990d00')||'</valor></dados_campo>'
                                            || '<dados_campo><label>Percentual</label><valor>'||TO_CHAR(vr_vlpercentual,'fm999g999g990d00')||'</valor></dados_campo>';
               ELSE

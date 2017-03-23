@@ -173,7 +173,7 @@ DEF TEMP-TABLE tt-tbpagto_darf_das_trans_pend NO-UNDO
   FIELD dslinha_digitavel    AS CHAR
   FIELD dtapuracao           AS DATE
   FIELD nrcpfcgc             AS CHAR
-  FIELD cdtributo            AS DECIMAL
+  FIELD cdtributo            AS CHAR
   FIELD nrrefere             AS DECIMAL
   FIELD vlprincipal          AS DECIMAL
   FIELD vlmulta              AS DECIMAL
