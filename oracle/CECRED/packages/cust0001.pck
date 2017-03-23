@@ -348,7 +348,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
 --  Sistema  : Rotinas genericas focando nas funcionalidades da custodia de cheque
 --  Sigla    : CUST
 --  Autor    : Daniel Zimmermann
---  Data     : Abril/2014.                   Ultima atualizacao: 25/04/2016
+--  Data     : Abril/2014.                   Ultima atualizacao: 23/03/2017
 --
 -- Dados referentes ao programa:
 --
@@ -414,6 +414,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
 --              25/04/2016 - Incluido chamada à procedure TARI0001.pc_verifica_tarifa_operacao em 
 --                           pc_custodias_cheques, alteração feita para o Projeto de Tarifas - 218 fase 2 
 --                           (Reinert).
+--
+--              23/03/2017 - Incluir cdcopant na leitura do cursor craptco_chq da procedure 
+--                           pc_ver_cheque (Lucas Ranghetti #600109)
 ---------------------------------------------------------------------------------------------------------------
 
   -- Descricao e codigo da critica 
@@ -4440,6 +4443,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
                            ,pr_cdagectl IN crapcop.cdagectl%TYPE
                            ,pr_nrctaant IN crapcst.nrctachq%TYPE) IS
       SELECT tco.nrdconta
+            ,tco.cdcopant
         FROM crapcop cop, craptco tco
        WHERE cop.cdagectl = pr_cdagectl
          AND tco.cdcooper = pr_cdcooper
@@ -4825,7 +4829,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
          
          IF (pr_cdcooper = 1 AND pr_cdagechq = 102)  OR    /* migracao */
             pr_cdcooper = 16 THEN
-             OPEN cr_crapfdc(pr_cdcooper => rw_craptco.cdcopant,
+             OPEN cr_crapfdc(pr_cdcooper => rw_craptco_chq.cdcopant,
                              pr_cdbanchq => pr_cdbanchq,
                              pr_cdagechq => pr_cdagechq,
                              pr_nrctachq => pr_nrctachq,
