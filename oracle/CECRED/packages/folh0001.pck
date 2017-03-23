@@ -877,7 +877,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
   -- Objetivo  : Procedure para realizar o alerta e/ou cancelamento automático de empresas sem uso
   -- Alterações:
   --             25/01/2016 - Melhorias nas mensagens de log de erro (Marcos-Supero)
-  --
+  -- 
+  --             23/03/2017 - Ajuste para poder habilitar folha para empresas com
+  --                          movimento de pagamento maior que 12 meses, conforme solicitado
+  --                          no chamado 628488 (Kelvin)
   ---------------------------------------------------------------------------------------------------------------
 
     -- Busca email da empresa
@@ -887,6 +890,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
            , emp.nrdconta
            , emp.dtultufp -- data do ultimo credito do produto folha
            , emp.dtavsufp -- data do ultimo alerta da falta de uso do produto folha
+           , emp.flgpgtib
+           , emp.dtinccan
            , ROWID  dsdrowid
         FROM crapemp emp
        WHERE emp.cdcooper = pr_cdcooper
@@ -896,6 +901,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
     vr_qtmescan   crapprm.dsvlrprm%TYPE;
     vr_qtultpag   NUMBER;
     vr_dsmensag   VARCHAR2(4000);
+    vr_qtultlib   NUMBER;
 
     -- Variaveis de Erro
     vr_cdcritic   crapcri.cdcritic%TYPE;
@@ -917,14 +923,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
       BEGIN
         -- Define a quantidade de meses entre a data do ultimo lançamento e a atual
         vr_qtultpag := trunc(MONTHS_BETWEEN(SYSDATE,NVL(rw_crapemp.dtultufp, SYSDATE)));
-
-        -- Se a quantidade de meses é igual ou superior a de cancelamento
-        IF vr_qtultpag >= vr_qtmescan THEN
-
+        
+        --Define a quantidade de meses entre a data de cancelamento ou liberação da folha e a atual
+        vr_qtultlib := trunc(MONTHS_BETWEEN(SYSDATE,NVL(rw_crapemp.dtinccan, SYSDATE)));
+        
+        /* 1 - Se a quantidade de meses é igual ou superior a de cancelamento
+           2 - se a quantidade de meses da ultima data de liberação da folha
+           é maior ou igual a data parametrizada para cancelamento.
+           3 - Se a folha está liberada*/
+        IF vr_qtultpag >= vr_qtmescan AND            
+           vr_qtultlib >= vr_qtmescan AND 
+           rw_crapemp.flgpgtib = 1 THEN
+                    
           BEGIN
             -- Atualizar o flag de acesso ao folha para não liberado
             UPDATE crapemp
                SET flgpgtib = 0 -- Não liberado
+                  ,dtinccan = TRUNC(SYSDATE)
              WHERE ROWID    = rw_crapemp.dsdrowid;
           EXCEPTION
             WHEN OTHERS THEN
@@ -962,7 +977,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           END IF;
 
           -- Adicionar mensagem nas anotações da atenda
-          CADA0001 .pc_grava_dados(pr_cdcooper => pr_cdcooper
+          CADA0001.pc_grava_dados(pr_cdcooper => pr_cdcooper
                                  ,pr_cdoperad => '1' -- Operador principal - super-usuario
                                  ,pr_cdagenci => 0
                                  ,pr_nrdcaixa => 0
