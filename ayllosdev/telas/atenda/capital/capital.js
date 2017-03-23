@@ -20,6 +20,9 @@
 			  30/09/2015 - Ajuste para inclusão das novas telas "Produtos"
 				           (Gabriel - Rkam -> Projeto 217).			  
 					
+		      25/07/2016 - Alterado função controlaFoco.
+		                   (Evandro - RKAM)	.	  						   
+					
 *************************************************************************/
 
 var callafterCapital = '';
@@ -31,7 +34,7 @@ var glb_opcao = "";
 var vintegra = 0;
 
 // Fun&ccedil;&atilde;o para acessar op&ccedil;&otilde;es da rotina
-function acessaOpcaoAba(nrOpcoes,id,opcao) {  
+function acessaOpcaoAba(nrOpcoes, id, opcao) {
 		
 	glb_opcao = opcao;
 	
@@ -64,29 +67,29 @@ function acessaOpcaoAba(nrOpcoes,id,opcao) {
 	// Atribui cor de destaque para aba da op&ccedil;&atilde;o
 	for (var i = 0; i < nrOpcoes; i++) {
 		if (id == i) { // Atribui estilos para foco da op&ccedil;&atilde;o
-			$("#linkAba" + id).attr("class","txtBrancoBold");
-			$("#imgAbaEsq" + id).attr("src",UrlImagens + "background/mnu_sle.gif");				
-			$("#imgAbaDir" + id).attr("src",UrlImagens + "background/mnu_sld.gif");
-			$("#imgAbaCen" + id).css("background-color","#969FA9");
+            $("#linkAba" + id).attr("class", "txtBrancoBold");
+            $("#imgAbaEsq" + id).attr("src", UrlImagens + "background/mnu_sle.gif");
+            $("#imgAbaDir" + id).attr("src", UrlImagens + "background/mnu_sld.gif");
+            $("#imgAbaCen" + id).css("background-color", "#969FA9");
 			
 			if (id == 5) {
-				$('#divIntegralizacao').css({'display': 'block'});
+				$('#divIntegralizacao').css({'display': 'block', 'height': '142px'});
 				$('#divEstorno').css({'display': 'none'});
 			} else
 			if (id == 6) {
 				lstLancamentos = "";
 				lstEstorno = "";
-				$('#divIntegralizacao').css({'display': 'none'});
-				$('#divEstorno').css({'display': 'block'});
+                    $('#divIntegralizacao').css({ 'display': 'none' });
+                    $('#divEstorno').css({ 'display': 'block' });
 			}
 			
 			continue;			
 		}
 		
-		$("#linkAba" + i).attr("class","txtNormalBold");
-		$("#imgAbaEsq" + i).attr("src",UrlImagens + "background/mnu_nle.gif");			
-		$("#imgAbaDir" + i).attr("src",UrlImagens + "background/mnu_nld.gif");
-		$("#imgAbaCen" + i).css("background-color","#C6C8CA");
+        $("#linkAba" + i).attr("class", "txtNormalBold");
+        $("#imgAbaEsq" + i).attr("src", UrlImagens + "background/mnu_nle.gif");
+        $("#imgAbaDir" + i).attr("src", UrlImagens + "background/mnu_nld.gif");
+        $("#imgAbaCen" + i).css("background-color", "#C6C8CA");
 	}
 
 	if (opcao == "E") { // Opção Extrato
@@ -99,16 +102,17 @@ function acessaOpcaoAba(nrOpcoes,id,opcao) {
 			url: UrlOperacao,
 			data: {
 				nrdconta: nrdconta,
-				dtiniper: $("#dtiniper","#frmExtCapital").val(),
-				dtfimper: $("#dtfimper","#frmExtCapital").val(),				
+                dtiniper: $("#dtiniper", "#frmExtCapital").val(),
+                dtfimper: $("#dtfimper", "#frmExtCapital").val(),
 				redirect: "html_ajax"
 			},
-			error: function(objAjax,responseError,objExcept) {
+            error: function (objAjax, responseError, objExcept) {
 				hideMsgAguardo();
-				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 			},
-			success: function(response) {
+            success: function (response) {
 				$("#divConteudoOpcao").html(response);
+                controlaFoco(opcao);
 			}				
 		});
 	} else if (opcao != "") { // Demais Opções		
@@ -121,11 +125,11 @@ function acessaOpcaoAba(nrOpcoes,id,opcao) {
 				nrdconta: nrdconta,
 				redirect: "html_ajax"
 			},
-			error: function(objAjax,responseError,objExcept) {
+            error: function (objAjax, responseError, objExcept) {
 				hideMsgAguardo();
-				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 			},
-			success: function(response) {
+            success: function (response) {
 				if (opcao == "L")
 					eval(response);
 				else
@@ -136,16 +140,100 @@ function acessaOpcaoAba(nrOpcoes,id,opcao) {
 	}					
 }
 
-function controlaFoco(opcao) {
-	
-	if (opcao == "I") {
-		controlaFocoEnter("divIntegralizacao");
-		$("#vintegra","#divIntegralizacao").focus();
-	} else if (opcao == "P") {
-		controlaFocoEnter("frmNovoPlano");	
-	}
 
+//Função para controle de navegação
+function controlaFoco(opcao) {
+    var IdForm = '';
+    var formid;
+
+    if (opcao == "@") { //Principal
+        $('.FirstInput:first ').focus();
+	}
+    if (opcao == "P") { //Plano de capital
+        $('#divConteudoOpcao').each(function () {
+            formid = $('#divConteudoOpcao form');
+            IdForm = $(formid).attr('id');//Seleciona o id do formulario
+            if (IdForm == "frmNovoPlano") {
+                $(this).find("#frmNovoPlano > :input").first().addClass("FirstInputModal").focus();
+                $(this).find("#divBotoes > :input[type=image]").addClass("FluxoNavega");
+                $(this).find("#divBotoes > :input[type=image]").last().addClass("LastInputModal");
+            };
+
+            //Se estiver com foco na classe FluxoNavega
+            $(".FluxoNavega").focus(function () {
+                $(this).bind('keydown', function (e) {
+                    if (e.keyCode == 13) {
+                        $(this).click();
+                        e.stopPropagation();
+                        e.preventDefault();
+	}
+                });
+            });
+
+
+            //Fechar mensagem de erro
+            $("#divError > :input[type=image]").focus(function () {
+                $(this).bind('keydown', function (e) {
+                    if (e.keyCode == 13) {
+                        $(this).click();
+                        return false;
+                    };
+                });
+            });
+
+            $(".FirstInputModal").focus();
+        });
 }	
+
+    if (opcao == "E") { //Extrato
+        $('#divConteudoOpcao').each(function () {
+            formid = $('#divConteudoOpcao form');
+            IdForm = $(formid).attr('id');//Seleciona o id do formulario
+            if (IdForm == "frmExtCapital") {
+                $(this).find("#frmExtCapital > :input").first().addClass("FirstInputModal").focus();
+                $(this).find("#frmExtCapital > :input").addClass("FluxoNavega");
+                $(this).find("#frmExtCapital > :input").last().addClass("LastInputModal");
+            };
+
+            //Se estiver com foco na classe FluxoNavega
+            $(".FluxoNavega").focus(function () {
+                $(this).bind('keydown', function (e) {
+                    if (e.keyCode == 13) {
+                        $(this).click();
+                    }
+                });
+            });
+
+            $(".FirstInputModal").focus();
+        });
+    }
+
+    if (opcao == "I") { //Integralizar Cotas
+        $('#divConteudoOpcao').each(function () {
+            formid = $('#divConteudoOpcao form');
+            IdForm = $(formid).attr('id');//Seleciona o id do formulario
+            if (IdForm == "frmIntegraliza") {
+                $(this).find("#frmIntegraliza > :input").first().addClass("FirstInputModal").focus();
+                $(this).find("#frmIntegraliza > :input").last().addClass("LastInputModal");
+            };
+
+            //Se estiver com foco na classe LastInputModal
+            $(".LastInputModal").focus(function () {
+                $(this).bind('keydown', function (e) {
+                    if (e.keyCode == 13) {
+                        $(this).click();
+                    }
+                });
+            });
+
+            $(".FirstInputModal").focus();
+        });
+    }
+}
+
+
+
+
 
 // Fun&ccedil;&atilde;o para validar novo plano de capital
 function validaNovoPlano(altera) {
@@ -157,30 +245,30 @@ function validaNovoPlano(altera) {
 		showMsgAguardo("Aguarde, validando dados do plano ...");
 	
 	// Valida valor do plano
-	if ($("#vlprepla","#frmNovoPlano").val() == "" || !validaNumero($("#vlprepla","#frmNovoPlano").val(),true,0,0) || ($("#vlprepla","#frmNovoPlano").val() == "0,00")) {
+    if ($("#vlprepla", "#frmNovoPlano").val() == "" || !validaNumero($("#vlprepla", "#frmNovoPlano").val(), true, 0, 0) || ($("#vlprepla", "#frmNovoPlano").val() == "0,00")) {
 		hideMsgAguardo();
-		showError("error","Valor do plano inv&aacute;lido.","Alerta - Ayllos","$('#vlprepla','#frmNovoPlano').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+        showError("error", "Valor do plano inv&aacute;lido.", "Alerta - Ayllos", "$('#vlprepla','#frmNovoPlano').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
 	} 
 	
 	// Valida valor da correcao, caso informado correcao por valor fixo
-	if (($("#cdtipcor","#frmNovoPlano").val() == 2) && ($("#vlcorfix","#frmNovoPlano").val() == "0,00")) {
+    if (($("#cdtipcor", "#frmNovoPlano").val() == 2) && ($("#vlcorfix", "#frmNovoPlano").val() == "0,00")) {
 		hideMsgAguardo();
-		showError("error","Valor de corre&ccedil;&atilde;o inv&aacute;lido.","Alerta - Ayllos","$('#vlcorfix','#frmNovoPlano').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+        showError("error", "Valor de corre&ccedil;&atilde;o inv&aacute;lido.", "Alerta - Ayllos", "$('#vlcorfix','#frmNovoPlano').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
 	}
 
 	// Valida quantidade de presta&ccedil;&otilde;es do plano
-	if ($("#qtpremax","#frmNovoPlano").val() == "" || !validaNumero($("#qtpremax","#frmNovoPlano").val(),true,0,0)) {
+    if ($("#qtpremax", "#frmNovoPlano").val() == "" || !validaNumero($("#qtpremax", "#frmNovoPlano").val(), true, 0, 0)) {
 		hideMsgAguardo();
-		showError("error","Quantidade presta&ccedil;&otilde;es inv&aacute;lida.","Alerta - Ayllos","$('#qtpremax','#frmNovoPlano').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+        showError("error", "Quantidade presta&ccedil;&otilde;es inv&aacute;lida.", "Alerta - Ayllos", "$('#qtpremax','#frmNovoPlano').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
 	} 	
 	
 	// Valida data de in&iacute;cio do pagamento do plano
-	if ($("#dtdpagto","#frmNovoPlano").val() == "" || !validaData($("#dtdpagto","#frmNovoPlano").val())) {
+    if ($("#dtdpagto", "#frmNovoPlano").val() == "" || !validaData($("#dtdpagto", "#frmNovoPlano").val())) {
 		hideMsgAguardo();
-		showError("error","Data de in&iacute;cio do plano inv&aacute;lida.","Alerta - Ayllos","$('#dtdpagto','#frmNovoPlano').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+        showError("error", "Data de in&iacute;cio do plano inv&aacute;lida.", "Alerta - Ayllos", "$('#dtdpagto','#frmNovoPlano').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
 	}
 	
@@ -190,25 +278,25 @@ function validaNovoPlano(altera) {
 		url: UrlSite + "telas/atenda/capital/validar_novo_plano.php",
 		data: {
 			nrdconta: nrdconta,
-			vlprepla: $("#vlprepla","#frmNovoPlano").val().replace(/\./g,""),
-			cdtipcor: $("#cdtipcor","#frmNovoPlano").val(),
-			vlcorfix: $("#vlcorfix","#frmNovoPlano").val().replace(/\./g,""),
-			flgpagto: $("#flgpagto","#frmNovoPlano").val(),
-			qtpremax: $("#qtpremax","#frmNovoPlano").val(),
-			dtdpagto: $("#dtdpagto","#frmNovoPlano").val(),
+            vlprepla: $("#vlprepla", "#frmNovoPlano").val().replace(/\./g, ""),
+            cdtipcor: $("#cdtipcor", "#frmNovoPlano").val(),
+            vlcorfix: $("#vlcorfix", "#frmNovoPlano").val().replace(/\./g, ""),
+            flgpagto: $("#flgpagto", "#frmNovoPlano").val(),
+            qtpremax: $("#qtpremax", "#frmNovoPlano").val(),
+            dtdpagto: $("#dtdpagto", "#frmNovoPlano").val(),
 			flcancel: altera,
 			redirect: "script_ajax"
 		},	
-		error: function(objAjax,responseError,objExcept) {
+        error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
-		success: function(response) {
+        success: function (response) {
 			try {
 				eval(response);
-			} catch(error) {
+            } catch (error) {
 				hideMsgAguardo();
-				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 			}
 		}				
 	}); 
@@ -224,30 +312,30 @@ function cadastraNovoPlano(altera) {
 		showMsgAguardo("Aguarde, alterando dados do plano ...");
 	
 	// Valida valor do plano
-	if ($("#vlprepla","#frmNovoPlano").val() == "" || !validaNumero($("#vlprepla","#frmNovoPlano").val(),true,0,0)) {
+    if ($("#vlprepla", "#frmNovoPlano").val() == "" || !validaNumero($("#vlprepla", "#frmNovoPlano").val(), true, 0, 0)) {
 		hideMsgAguardo();
-		showError("error","Valor do plano inv&aacute;lido.","Alerta - Ayllos","$('#vlprepla','#frmNovoPlano').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+        showError("error", "Valor do plano inv&aacute;lido.", "Alerta - Ayllos", "$('#vlprepla','#frmNovoPlano').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
 	} 
 	
 	// Valida valor da correcao, caso informado correcao por valor fixo
-	if ($("#cdtipcor","#frmNovoPlano").val() == 2 && $("#vlcorfix","#frmNovoPlano").val() == 0) {
+    if ($("#cdtipcor", "#frmNovoPlano").val() == 2 && $("#vlcorfix", "#frmNovoPlano").val() == 0) {
 		hideMsgAguardo();
-		showError("error","Valor de corre&ccedil;&atilde;o inv&aacute;lido.","Alerta - Ayllos","$('#vlcorfix','#frmNovoPlano').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+        showError("error", "Valor de corre&ccedil;&atilde;o inv&aacute;lido.", "Alerta - Ayllos", "$('#vlcorfix','#frmNovoPlano').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
 	}
 
 	// Valida quantidade de presta&ccedil;&otilde;es do plano
-	if ($("#qtpremax","#frmNovoPlano").val() == "" || !validaNumero($("#qtpremax","#frmNovoPlano").val(),true,0,0)) {
+    if ($("#qtpremax", "#frmNovoPlano").val() == "" || !validaNumero($("#qtpremax", "#frmNovoPlano").val(), true, 0, 0)) {
 		hideMsgAguardo();
-		showError("error","Quantidade presta&ccedil;&otilde;es inv&aacute;lida.","Alerta - Ayllos","$('#qtpremax','#frmNovoPlano').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+        showError("error", "Quantidade presta&ccedil;&otilde;es inv&aacute;lida.", "Alerta - Ayllos", "$('#qtpremax','#frmNovoPlano').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
 	} 	
 	
 	// Valida data de in&iacute;cio do pagamento do plano
-	if ($("#dtdpagto","#frmNovoPlano").val() == "" || !validaData($("#dtdpagto","#frmNovoPlano").val())) {
+    if ($("#dtdpagto", "#frmNovoPlano").val() == "" || !validaData($("#dtdpagto", "#frmNovoPlano").val())) {
 		hideMsgAguardo();
-		showError("error","Data de in&iacute;cio do plano inv&aacute;lida.","Alerta - Ayllos","$('#dtdpagto','#frmNovoPlano').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+        showError("error", "Data de in&iacute;cio do plano inv&aacute;lida.", "Alerta - Ayllos", "$('#dtdpagto','#frmNovoPlano').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
 	}
 	
@@ -257,26 +345,26 @@ function cadastraNovoPlano(altera) {
 		url: UrlSite + "telas/atenda/capital/cadastrar_novo_plano.php",
 		data: {
 			nrdconta: nrdconta,
-			vlprepla: $("#vlprepla","#frmNovoPlano").val().replace(/\./g,""),
-			cdtipcor: $("#cdtipcor","#frmNovoPlano").val(),
-			vlcorfix: $("#vlcorfix","#frmNovoPlano").val().replace(/\./g,""),
-			flgpagto: $("#flgpagto","#frmNovoPlano").val(),
-			qtpremax: $("#qtpremax","#frmNovoPlano").val(),
-			dtdpagto: $("#dtdpagto","#frmNovoPlano").val(),
+            vlprepla: $("#vlprepla", "#frmNovoPlano").val().replace(/\./g, ""),
+            cdtipcor: $("#cdtipcor", "#frmNovoPlano").val(),
+            vlcorfix: $("#vlcorfix", "#frmNovoPlano").val().replace(/\./g, ""),
+            flgpagto: $("#flgpagto", "#frmNovoPlano").val(),
+            qtpremax: $("#qtpremax", "#frmNovoPlano").val(),
+            dtdpagto: $("#dtdpagto", "#frmNovoPlano").val(),
 			flcancel: altera,
-			executandoProdutos : executandoProdutos, 
+            executandoProdutos: executandoProdutos,
 			redirect: "script_ajax"
 		},		
-		error: function(objAjax,responseError,objExcept) {
+        error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
-		success: function(response) {
+        success: function (response) {
 			try {
 				eval(response);
-			} catch(error) {
+            } catch (error) {
 				hideMsgAguardo();
-				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 			}
 		}				
 	}); 
@@ -287,20 +375,20 @@ function cancelarPlanoAtual() {
 	
 	// Bloqueia conte&uacute;do que est&aacute; &aacute;tras do div da rotina
 	blockBackground(parseInt($('#divRotina').css('z-index')));
-	$("#nrdconta","#frmTermoCancela").val(nrdconta);
+    $("#nrdconta", "#frmTermoCancela").val(nrdconta);
 	
 	var action = $("#frmTermoCancela").attr("action");
 	var callafter = "blockBackground(parseInt($('#divRotina').css('z-index')));";
 	
-	carregaImpressaoAyllos("frmTermoCancela",action,callafter);
+    carregaImpressaoAyllos("frmTermoCancela", action, callafter);
 }
 
 // Fun&ccedil;&atilde;o para imprimir termo de autoriza&ccedil;&atilde;o do novo plano de capital em PDF
 function imprimeNovoPlano() {
 	
-	$("#nrdconta","#frmTermoAutoriza").val(nrdconta);
+    $("#nrdconta", "#frmTermoAutoriza").val(nrdconta);
 	
-	var action    = $("#frmTermoAutoriza").attr("action");	
+    var action = $("#frmTermoAutoriza").attr("action");
 	var callafter = "blockBackground(parseInt($('#divRotina').css('z-index')));";
 	
 	if (executandoProdutos) { 
@@ -311,25 +399,25 @@ function imprimeNovoPlano() {
 		}	
 	}
 	
-	carregaImpressaoAyllos("frmTermoAutoriza",action,callafter);
+    carregaImpressaoAyllos("frmTermoAutoriza", action, callafter);
 }	
 
 //
 function controlaLayout(operacao) {	
 		
-	altura  = '170px';
+    altura = '170px';
 	largura = '425px';
 	
 	// Operação consultando
-	if ( in_array(operacao,['SUBS_INICIAL']) ) {	
+    if (in_array(operacao, ['SUBS_INICIAL'])) {
 	
 		var divRegistro = $('div.divRegistros');		
-		var tabela      = $('table', divRegistro );
+        var tabela = $('table', divRegistro);
 		
-		divRegistro.css('height','149px');
+        divRegistro.css('height', '149px');
 		
 		var ordemInicial = new Array();
-		ordemInicial = [[0,0]];
+        ordemInicial = [[0, 0]];
 		
 		var arrayLargura = new Array();
 		arrayLargura[0] = '100px';
@@ -343,106 +431,106 @@ function controlaLayout(operacao) {
 		arrayAlinha[2] = 'right';
 		arrayAlinha[3] = 'right';
 		
-		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '');
+        tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, '');
 		
-	} else if ( in_array(operacao,['PRINCIPAL']) ) {
+    } else if (in_array(operacao, ['PRINCIPAL'])) {
 
 		nomeForm = 'frmDadosCapital';		
-		altura   = '133px';
-		largura  = '425px';
+        altura = '133px';
+        largura = '425px';
 
-		$('#'+nomeForm).css('margin-top','2px')
+        $('#' + nomeForm).css('margin-top', '2px')
 		
-		var rRotulos     = $('label[for="vlcaptal"],label[for="vldcotas"],label[for="vlblqjud"],label[for="dspagcap"],label[for="vlmoefix"],label[for="cdagenci"]','#'+nomeForm);
-		var rBanco       = $('label[for="cdbccxlt"]','#'+nomeForm);
-		var rLote        = $('label[for="nrdolote"]','#'+nomeForm);
-		var rRotuloLinha = $('label[for="nrctrpla"],label[for="vlprepla"],label[for="qtprepag"],label[for="dtinipla"]','#'+nomeForm); 
+        var rRotulos = $('label[for="vlcaptal"],label[for="vldcotas"],label[for="vlblqjud"],label[for="dspagcap"],label[for="vlmoefix"],label[for="cdagenci"]', '#' + nomeForm);
+        var rBanco = $('label[for="cdbccxlt"]', '#' + nomeForm);
+        var rLote = $('label[for="nrdolote"]', '#' + nomeForm);
+        var rRotuloLinha = $('label[for="nrctrpla"],label[for="vlprepla"],label[for="qtprepag"],label[for="dtinipla"]', '#' + nomeForm);
 		
-		var cTodos       = $('select,input','#'+nomeForm);
+        var cTodos = $('select,input', '#' + nomeForm);
 
-		var cPacBcLot    = $('#cdagenci,#cdbccxlt,#nrdolote','#'+nomeForm);
+        var cPacBcLot = $('#cdagenci,#cdbccxlt,#nrdolote', '#' + nomeForm);
 				
 
-		cTodos.addClass('campo').css('width','100px');
-		cPacBcLot.addClass('campo').css('width','55px');
+        cTodos.addClass('campo').css('width', '100px');
+        cPacBcLot.addClass('campo').css('width', '55px');
 	
-		rRotulos.addClass('rotulo').css('width','115px');
-		rRotuloLinha.addClass('rotulo-linha').css('width','95px');
-		rBanco.addClass('rotulo-linha').css('width','80px');
-		rLote.addClass('rotulo-linha').css('width','44px');
+        rRotulos.addClass('rotulo').css('width', '115px');
+        rRotuloLinha.addClass('rotulo-linha').css('width', '95px');
+        rBanco.addClass('rotulo-linha').css('width', '80px');
+        rLote.addClass('rotulo-linha').css('width', '44px');
 		
 		cTodos.desabilitaCampo();
 	
-	} 	else if ( in_array(operacao,['PLANO_CAPITAL']) ) {
+    } else if (in_array(operacao, ['PLANO_CAPITAL'])) {
 	
 		nomeForm = 'frmNovoPlano';		
-		altura   = '220px';
-		largura  = '425px';
+        altura = '220px';
+        largura = '425px';
 
-		$('#'+nomeForm).css('margin-top','4px')
+        $('#' + nomeForm).css('margin-top', '4px')
 		
-		var cTodos       = $('select,input','#'+nomeForm);
-		cTodos.addClass('').css('width','195px');
+        var cTodos = $('select,input', '#' + nomeForm);
+        cTodos.addClass('').css('width', '195px');
 		
-		var rRotulos  = $('label[for="vlprepla"],label[for="cdtipcor"],label[for="vlcorfix"],label[for="flgpagto"],label[for="qtpremax"],label[for="dtdpagto"],label[for="dtultatu"],label[for="dtproatu"]','#'+nomeForm);
-		var cDeb      = $('#flgpagto','#'+nomeForm);
-		var cData     = $('#dtdpagto,#dtultatu,#dtproatu','#'+nomeForm);
-		var cQtpremax = $('#qtpremax','#'+nomeForm);
-		var cCdtipcor = $('#cdtipcor','#'+nomeForm);
-		var cDtdpagto = $("#dtdpagto",'#'+nomeForm);
+        var rRotulos = $('label[for="vlprepla"],label[for="cdtipcor"],label[for="vlcorfix"],label[for="flgpagto"],label[for="qtpremax"],label[for="dtdpagto"],label[for="dtultatu"],label[for="dtproatu"]', '#' + nomeForm);
+        var cDeb = $('#flgpagto', '#' + nomeForm);
+        var cData = $('#dtdpagto,#dtultatu,#dtproatu', '#' + nomeForm);
+        var cQtpremax = $('#qtpremax', '#' + nomeForm);
+        var cCdtipcor = $('#cdtipcor', '#' + nomeForm);
+        var cDtdpagto = $("#dtdpagto", '#' + nomeForm);
 
-		cDeb.addClass('campo').css('width','195px');
-		cData.addClass('data').css('width','195px');
+        cDeb.addClass('campo').css('width', '195px');
+        cData.addClass('data').css('width', '195px');
 
-		rRotulos.addClass('rotulo').css('width','160px');
+        rRotulos.addClass('rotulo').css('width', '160px');
 		
-		cCdtipcor.unbind('keydown').bind('keydown',function(e) {
+        cCdtipcor.unbind('keydown').bind('keydown', function (e) {
 			if (e.keyCode == 13) {
 				cDeb.focus();
 				return false;
 			}
 		}); 
 		
-		cDeb.unbind('keydown').bind('keydown',function(e) {
+        cDeb.unbind('keydown').bind('keydown', function (e) {
 			if (e.keyCode == 13) {
 				cQtpremax.focus();
 				return false;
 			}
 		}); 
 				
-		cDtdpagto.unbind('keydown').bind('keydown',function(e) {
+        cDtdpagto.unbind('keydown').bind('keydown', function (e) {
 			if (e.keyCode == 13) {
 				validaNovoPlano(false);
 				return false;
 			}
 		}); 
 
-	} else if (in_array(operacao,['EXTRATO']) ) {
+    } else if (in_array(operacao, ['EXTRATO'])) {
 
 		nomeForm = 'frmExtCapital';
-		altura  = '195px';
+        altura = '195px';
 		largura = '425px';
 
-		if ( $.browser.msie ) {
-			$('#'+nomeForm).css('margin-bottom','-10px')
+        if ($.browser.msie) {
+            $('#' + nomeForm).css('margin-bottom', '-10px')
 		}		
 		
-		var rPeriodo   = $('label[for="dtperiod"]','#'+nomeForm);
-		rPeriodo.addClass('rotulo').css('width','50px');
+        var rPeriodo = $('label[for="dtperiod"]', '#' + nomeForm);
+        rPeriodo.addClass('rotulo').css('width', '50px');
 		
-		var cDatas     = $('#dtiniper,#dtfimper','#'+nomeForm);
-		cDatas.addClass('data campo').css('width','70px');
+        var cDatas = $('#dtiniper,#dtfimper', '#' + nomeForm);
+        cDatas.addClass('data campo').css('width', '70px');
 		
-		var rPerioMe   = $('label[for="dtperime"]','#'+nomeForm);
-		rPerioMe.addClass('rotulo-linha').css('width','7px');
+        var rPerioMe = $('label[for="dtperime"]', '#' + nomeForm);
+        rPerioMe.addClass('rotulo-linha').css('width', '7px');
 	
 		var divRegistro = $('div.divRegistros');		
-		var tabela      = $('table', divRegistro );
+        var tabela = $('table', divRegistro);
 		
-		divRegistro.css('height','149px');
+        divRegistro.css('height', '149px');
 		
 		var ordemInicial = new Array();
-		ordemInicial = [[0,0]];
+        ordemInicial = [[0, 0]];
 		
 		var arrayLargura = new Array();
 		arrayLargura[0] = '55px';
@@ -459,36 +547,39 @@ function controlaLayout(operacao) {
 		arrayAlinha[4] = 'right';
 		arrayAlinha[5] = 'right';
 		
-		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '');
+        tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, '');
 				
-	} else if (in_array(operacao,['INTEGRALIZA'])) {
+    } else if (in_array(operacao, ['INTEGRALIZA'])) {
+				
+        altura = '190px';
 	
-		altura  = '190px';
+		$('div.divIntegralizacao').css('height','142px');
 		
 		var rVintegra = $('label[for="vintegra"]','#frmIntegraliza');
 	
-		var cVlintegra = $('#vintegra','#divIntegralizacao');
+        var cVlintegra = $('#vintegra', '#divIntegralizacao');
 		
-		rVintegra.addClass('rotulo').css({'width':'130px','margin-left':'40px'});
+        rVintegra.addClass('rotulo').css({ 'width': '130px', 'margin-left': '40px' });
 		
-		cVlintegra.addClass('rotulo-linha').css('width','90px');
+        cVlintegra.addClass('rotulo-linha').css('width', '90px');
 		cVlintegra.habilitaCampo();
 		
-		cVlintegra.unbind('keypress').bind('keypress', function(e) { 	
+        cVlintegra.unbind('keypress').bind('keypress', function (e) {
 			
 			if (e.keyCode == 13)
 				return false;
 		});
 		
-	} else if (in_array(operacao,['ESTORNO']) ) {
+    } else if (in_array(operacao, ['ESTORNO'])) {
 	
 		var divRegistro = $('div.divRegistros');		
-		var tabela      = $('table', divRegistro );
+        var tabela = $('table', divRegistro);
 		
-		divRegistro.css('height','120px');
+		divRegistro.css('height','93px');
+		$('#divEstorno').css('height','115px');
 		
 		var ordemInicial = new Array();
-		ordemInicial = [[0,0]];
+        ordemInicial = [[0, 0]];
 		
 		var arrayLargura = new Array();
 		arrayLargura[0] = '20px';
@@ -501,12 +592,14 @@ function controlaLayout(operacao) {
 		arrayAlinha[2] = 'right';
 		
 		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '');
+
+		$('th.ordemInicial').css({'width':'6px'});
 	}
 	
 	callafterCapital = '';
 	
-	divRotina.css('width',largura);	
-	$('#divConteudoOpcao').css({'height':altura,'width':largura});
+    divRotina.css('width', largura);
+    $('#divConteudoOpcao').css({ 'height': altura, 'width': largura });
 
 	layoutPadrao();
 
@@ -524,13 +617,13 @@ function integralizaCotas(flgsaldo) {
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, realizando integraliza&ccedil;&atilde;o de cotas ...");
 	
-	if (!flgsaldo)
+	if (flgsaldo) // flgsaldo indica se é para validar ou não o limite de crédito	
 		vintegra = $('#vintegra','#divIntegralizacao').val().replace(/\./g,"");
 	
 	// Valida valor de integralizacao
-	if (vintegra == "" || !validaNumero(vintegra,true,0,0)) {
+    if (vintegra == "" || !validaNumero(vintegra, true, 0, 0)) {
 		hideMsgAguardo();
-		showError("error","Valor inv&aacute;lido para integraliza&ccedil;&atilde;o.","Alerta - Ayllos","$('#vintegra','#divIntegralizacao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+        showError("error", "Valor inv&aacute;lido para integraliza&ccedil;&atilde;o.", "Alerta - Ayllos", "$('#vintegra','#divIntegralizacao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
 	}
 	
@@ -544,16 +637,16 @@ function integralizaCotas(flgsaldo) {
 			executandoProdutos: executandoProdutos,
 			redirect: "script_ajax"
 		},		
-		error: function(objAjax,responseError,objExcept) {
+        error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
-		success: function(response) {
+        success: function (response) {
 			try {
 				eval(response);
-			} catch(error) {			
+            } catch (error) {
 				hideMsgAguardo();
-				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 			}
 		}				
 	});
@@ -566,31 +659,24 @@ function selecionaIntegralizacao(id) {
 	if (lstEstorno == "")
 		lstEstorno = new Array();
 	
-	lstLancamentos[id].nrdocmto = retiraCaracteres(lstLancamentos[id].nrdocmto,"0123456789",true);
-	
 	if($("#appest" + id).is(":checked")){
-		
 		var campos = new Object();
 		campos["auxidest"] = id;
-		campos["nrdocmto"] = lstLancamentos[id].nrdocmto;
-		campos["vllanmto"] = lstLancamentos[id].vllanmto;
-			
+		campos["lctrowid"] = lstLancamentos[id].lctrowid;
 		lstEstorno.push(campos);
-	}else{
-		for(i=0; i < lstEstorno.length; i++){
-			
+	} else {
+		for(i=0; i < lstEstorno.length; i++) {
 			if(lstEstorno[i]["auxidest"] == id)
 				lstEstorno.splice(i,1);
 		}
 	}
-
 }
 
 function estornaIntegralizacao() {
 
 	if (lstEstorno == "") {
 		hideMsgAguardo();
-		showError("error","Nenhum lan&ccedil;amento selecionado!","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+        showError("error", "Nenhum lan&ccedil;amento selecionado!", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
 	}
 	
@@ -613,16 +699,16 @@ function estornaIntegralizacao() {
 			dadosPrc: dadosPrc,
 			redirect: "script_ajax"
 		},		
-		error: function(objAjax,responseError,objExcept) {
+        error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
-		success: function(response) {
+        success: function (response) {
 			try {
 				eval(response);
-			} catch(error) {			
+            } catch (error) {
 				hideMsgAguardo();
-				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 			}
 		}				
 	});
@@ -633,7 +719,7 @@ function mostraSenha() {
 
 	if (glb_opcao == "L" && lstEstorno == "") {
 		hideMsgAguardo();
-		showError("error","Nenhum lan&ccedil;amento selecionado!","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+        showError("error", "Nenhum lan&ccedil;amento selecionado!", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
 	}
 
@@ -647,11 +733,11 @@ function mostraSenha() {
 		data: {
 			redirect: 'html_ajax'			
 			}, 
-		error: function(objAjax,responseError,objExcept) {
+        error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-			showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground()");
+            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "unblockBackground()");
 		},
-		success: function(response) {
+        success: function (response) {
 			$('#divConteudoOpcao').html(response);
 			exibeRotina($('#divConteudoOpcao'));
 			formataSenha();
@@ -667,19 +753,19 @@ function formataSenha() {
 
 	highlightObjFocus($('#frmSenha'));
 
-	rOperador 	= $('label[for="operauto"]', '#frmSenha');
-	rSenha		= $('label[for="codsenha"]', '#frmSenha');	
+    rOperador = $('label[for="operauto"]', '#frmSenha');
+    rSenha = $('label[for="codsenha"]', '#frmSenha');
 	
-	rOperador.addClass('rotulo').css({'width':'165px'});
-	rSenha.addClass('rotulo').css({'width':'165px'});
+    rOperador.addClass('rotulo').css({ 'width': '165px' });
+    rSenha.addClass('rotulo').css({ 'width': '165px' });
 
-	cOperador	= $('#operauto', '#frmSenha');
-	cSenha		= $('#codsenha', '#frmSenha');
+    cOperador = $('#operauto', '#frmSenha');
+    cSenha = $('#codsenha', '#frmSenha');
 	
-	cOperador.addClass('campo').css({'width':'100px'}).attr('maxlength','10');		
-    cSenha.addClass('campo').css({'width':'100px'}).attr('maxlength','10');		
+    cOperador.addClass('campo').css({ 'width': '100px' }).attr('maxlength', '10');
+    cSenha.addClass('campo').css({ 'width': '100px' }).attr('maxlength', '10');
 	
-	$('#divConteudoSenha').css({'width':'400px', 'height':'120px'});	
+    $('#divConteudoSenha').css({ 'width': '400px', 'height': '120px' });
 
 	hideMsgAguardo();		
 	cOperador.focus();
@@ -691,32 +777,32 @@ function validarSenha() {
 	hideMsgAguardo();		
 	
 	// Situacao
-	operauto 		= $('#operauto','#frmSenha').val();
-	var codsenha 	= $('#codsenha','#frmSenha').val();
+    operauto = $('#operauto', '#frmSenha').val();
+    var codsenha = $('#codsenha', '#frmSenha').val();
 
-	showMsgAguardo( 'Aguarde, validando dados ...' );	
+    showMsgAguardo('Aguarde, validando dados ...');
 
 	$.ajax({		
-			type  : 'POST',
-			async : true ,
-			url   : UrlSite + 'telas/atenda/capital/valida_senha.php', 		
+        type: 'POST',
+        async: true,
+        url: UrlSite + 'telas/atenda/capital/valida_senha.php',
 			data: {
-				operauto	: operauto,		
-				codsenha	: codsenha,
-				opcao       : glb_opcao,
-				redirect	: 'script_ajax'
+            operauto: operauto,
+            codsenha: codsenha,
+            opcao: glb_opcao,
+            redirect: 'script_ajax'
 			}, 
-			error: function(objAjax,responseError,objExcept) {
+        error: function (objAjax, responseError, objExcept) {
 				hideMsgAguardo();
-				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground()');
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
 			},
-			success: function(response) {
+        success: function (response) {
 				try {
 					eval(response);
 					return false;
-				} catch(error) {
+            } catch (error) {
 					hideMsgAguardo();
-					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground()');
+                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
 				}
 			}
 		});
@@ -727,10 +813,10 @@ function validarSenha() {
 
 function habilitaValor() {
 
-	if ($('#cdtipcor','#frmNovoPlano').val() == 2)
-		$('#divValorCorrecao').css({'display':'block'});
+    if ($('#cdtipcor', '#frmNovoPlano').val() == 2)
+        $('#divValorCorrecao').css({ 'display': 'block' });
 	else
-		$('#divValorCorrecao').css({'display':'none'});
+        $('#divValorCorrecao').css({ 'display': 'none' });
 
 }
 
