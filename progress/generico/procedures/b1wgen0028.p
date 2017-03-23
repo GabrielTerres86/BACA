@@ -23,7 +23,7 @@
 
     Programa  : b1wgen0028.p
     Autor     : Guilherme
-    Data      : Marco/2008                    Ultima Atualizacao: 28/04/2016
+    Data      : Marco/2008                    Ultima Atualizacao: 23/03/2017
     
     Dados referentes ao programa:
 
@@ -500,6 +500,9 @@
 
 				07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
                              departamento passando a considerar o código (Renato Darosci)
+							 
+				23/03/2017 - Removendo a possibilidade de solicitar novo cartão com vencimento para o dia	
+						     27, conforme solicitado no chamado 636445. (Kelvin)
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -17866,8 +17869,9 @@ PROCEDURE busca_dddebito:
   IF f_verifica_adm(par_cdadmcrd) = 2 THEN
       DO:
         FOR EACH craptlc WHERE craptlc.cdcooper = par_cdcooper   AND
-                         craptlc.cdadmcrd = par_cdadmcrd   AND
-                         craptlc.dddebito > 0 NO-LOCK:
+                         craptlc.cdadmcrd = par_cdadmcrd AND						 
+                         craptlc.dddebito > 0 AND
+						 craptlc.dddebito <> 27 /*Removido vencimento para o dia 27 SD: 636445*/ NO-LOCK:
 
             ASSIGN aux[craptlc.dddebito] = craptlc.dddebito.
           
