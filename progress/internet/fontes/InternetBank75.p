@@ -14,6 +14,9 @@
    
    Alteracoes: 13/01/2016 - Alteracoes para o projeto de Assinatura Conjunta
                             Prj. 131 (Jean Michel).
+                            
+               30/01/2017 - Adicionado o codigo da transacao no xml de resposta
+                            (Dionathan).
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -96,11 +99,24 @@ END.
 /* Efetivacao */
 IF  par_indvalid = 1  THEN
 DO:
-    ASSIGN aux_dscritic = "Transacoes aprovadas com sucesso.".
-    IF  out_flgaviso  THEN
-        ASSIGN aux_dscritic = aux_dscritic + "\nVerifique as transacoes nao aprovadas.".
+    FOR FIRST tt-criticas_transacoes_oper WHERE tt-criticas_transacoes_oper.flgtrans = TRUE NO-LOCK. END.
+	
+	IF  AVAIL tt-criticas_transacoes_oper  THEN 
+	    DO:	
+            ASSIGN aux_dscritic = "Transacoes aprovadas com sucesso.".
+			
+			IF  out_flgaviso  THEN
+				ASSIGN aux_dscritic = aux_dscritic + "\nVerifique as transacoes nao aprovadas.".
 
-    ASSIGN xml_dsmsgerr = "<dsmsgsuc>" + aux_dscritic + "</dsmsgsuc>".
+			ASSIGN xml_dsmsgerr = "<dsmsgsuc>" + aux_dscritic + "</dsmsgsuc>".
+		END.
+	ELSE
+		DO:
+			ASSIGN aux_dscritic = "As transacoes nao foram aprovadas com sucesso.\nVerifique a critica gerada no detalhamento da transacao."
+			       xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
+				   
+			RETURN "NOK".
+		END.
 END.
 ELSE /* Validacao */
 DO:
@@ -152,7 +168,9 @@ DO:
                               tt-criticas_transacoes_oper.dstiptra +
                               "</dstiptra><dscritic>" +
                               tt-criticas_transacoes_oper.dscritic +
-                              "</dscritic></TRANSACAO>".
+                              "</dscritic><cdtransa>"+
+                              STRING(tt-criticas_transacoes_oper.cdtransa) +
+                              "</cdtransa></TRANSACAO>".
     END.
                               
     ASSIGN aux_dslinxml = aux_dslinxml + "</APROVADAS><DESAPROVADAS>"
@@ -189,7 +207,9 @@ DO:
                               tt-criticas_transacoes_oper.dstiptra +
                               "</dstiptra><dscritic>" +
                               tt-criticas_transacoes_oper.dscritic +
-                              "</dscritic></TRANSACAO>".
+                              "</dscritic><cdtransa>"+
+                              STRING(tt-criticas_transacoes_oper.cdtransa) +
+                              "</cdtransa></TRANSACAO>".
     
     END.
     
