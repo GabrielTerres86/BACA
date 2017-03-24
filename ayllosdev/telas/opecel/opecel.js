@@ -161,6 +161,7 @@ function controlaFoco() {
 		// Exibir a tela de pesquisa
 		mostraPesquisa(bo,procedure,titulo,qtReg,filtros,colunas, '', '$(\'#cdhisdebcop\',\'#frmOpecel\').val(); $(\'#cdhisdebcop\',\'#frmOpecel\').removeClass( \'campoErro\' )');
 		$('#cdhisdebcopPesquisa', '#formPesquisa').attr('maxlength','4').addClass('codigo');
+		$('#dshisdebcopPesquisa', '#formPesquisa').attr('maxlength','50');
 		layoutPadrao();
 		return false;
      });
@@ -191,6 +192,7 @@ function controlaFoco() {
 		// Exibir a tela de pesquisa
 		mostraPesquisa(bo,procedure,titulo,qtReg,filtros,colunas, '', '$(\'#cdhisdebcnt\',\'#frmOpecel\').val(); $(\'#cdhisdebcnt\',\'#frmOpecel\').removeClass( \'campoErro\' )');
 		$('#cdhisdebcntPesquisa', '#formPesquisa').attr('maxlength','4').addClass('codigo');
+		$('#dshisdebcntPesquisa', '#formPesquisa').attr('maxlength','50');
 		layoutPadrao();
 		return false;
      });
@@ -389,12 +391,12 @@ function validaOperadora(){
 		}
 		if (cCdhisdebcop.val() > 0 && (cDshisdebcop.val() == '' || cDshisdebcop.val() == 'undefined' || cDshisdebcop.val() == ' ')){
 			hideMsgAguardo();
-			showError("error","Hist&oacute;rico de d&eacute;bito inv&aacute;lido.","Alerta - Ayllos","focaCampoErro('cdhisdebcop', 'frmOpecel');",false);
+			showError("error","N&atilde;o h&aacute; hist&oacute;rico com o c&oacute;digo informado.","Alerta - Ayllos","focaCampoErro('cdhisdebcop', 'frmOpecel');",false);
 			return false;			
 		}
 		if (cCdhisdebcnt.val() > 0 && (cDshisdebcnt.val() == '' || cDshisdebcnt.val() == 'undefined' || cDshisdebcnt.val() == ' ')){
 			hideMsgAguardo();
-			showError("error","Hist&oacute;rico de d&eacute;bito inv&aacute;lido.","Alerta - Ayllos","focaCampoErro('cdhisdebcnt', 'frmOpecel');",false);
+			showError("error","N&atilde;o h&aacute; hist&oacute;rico com o c&oacute;digo informado.","Alerta - Ayllos","focaCampoErro('cdhisdebcnt', 'frmOpecel');",false);
 			return false;			
 		}
 	}
