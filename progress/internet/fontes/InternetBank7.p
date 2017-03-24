@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2007                        Ultima atualizacao: 03/08/2016
+   Data    : Marco/2007                        Ultima atualizacao: 24/03/2017
 
    Dados referentes ao programa:
 
@@ -53,9 +53,10 @@
 			                e de sobras na Conta Corrente (Marcos-Supero).
                       
                18/01/2017 - SD595294 - Retorno dos valores pagos em emprestimos
-                            (Marcos-Supero)             
+                            (Marcos-Supero)      
 
-
+               24/03/2017 - SD638033 - Envio dos Rendimentos de Cotas Capital 
+			                sem desconto IR (Marcos-Supero) 
 ............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -285,7 +286,7 @@ PROCEDURE proc_ir_fisica:
 
     ASSIGN aux_vlirfcot = crapdir.vlirfcot
            aux_vlprepag = crapdir.vlprepag
-           aux_vlrencot = (crapdir.vlrencot - crapdir.vlirfcot)
+           aux_vlrencot = crapdir.vlrencot
            aux_dtrefere = DATE(12,31,YEAR(crapdir.dtmvtolt))
            aux_vlsdapli = crapdir.vlsdapli + crapdir.vlsdrdpp  
            aux_vlsdccdp = crapdir.vlsdccdp + 
