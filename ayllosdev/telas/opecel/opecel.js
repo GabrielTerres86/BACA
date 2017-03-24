@@ -123,7 +123,6 @@ function controlaFoco() {
 	$('#flgsituacao','#frmOpecel').unbind('change').bind('change', function(e) {
 		if ($(this).val() == 0){
 			$('input', '#frmOpecel').desabilitaCampo();
-			$('input', '#frmOpecel').limpaFormulario();
 			$('input', '#frmOpecel').removeClass('campoErro');
 		}else{
 			$('#cdhisdebcop', '#frmOpecel').habilitaCampo();
@@ -154,7 +153,7 @@ function controlaFoco() {
 		// Informacoes para pesquisa
 		bo        = 'b1wgen0153.p'; 
 		procedure = 'lista-historicos';
-		titulo    = 'Historicos';
+		titulo    = 'histórico';
 		qtReg	  = '20';
 		filtros   = 'C&oacutedigo;cdhisdebcop;80px;S;;S|Hist&oacuterico;dshisdebcop;280px;S;;S';
 		colunas   = 'C&oacutedigo;cdhistor;20%;right|Hist&oacuterico;dshistor;50%;left';
@@ -184,7 +183,7 @@ function controlaFoco() {
 		// Informacoes para pesquisa
 		bo        = 'b1wgen0153.p'; 
 		procedure = 'lista-historicos';
-		titulo    = 'Historicos';
+		titulo    = 'histórico';
 		qtReg	  = '20';
 		filtros   = 'C&oacutedigo;cdhisdebcnt;80px;S;;S|Hist&oacuterico;dshisdebcnt;280px;S;;S';
 		colunas   = 'C&oacutedigo;cdhistor;20%;right|Hist&oacuterico;dshistor;50%;left';
@@ -204,7 +203,7 @@ function controlaFoco() {
 		}	
 	});
 
-	 
+	
 }
 
 function formataCabecalho(){
@@ -355,7 +354,7 @@ function buscaHistoricoDebCop(cdhistor){
 	// Busca descrição do historico
 	bo        = 'b1wgen0153.p'; 
 	procedure = 'lista-historicos';
-	titulo    = 'Historicos';
+	titulo    = 'histórico';
 	buscaDescricao(bo, procedure, titulo, 'cdhisdebcop', 'dshisdebcop', cdhistor, 'dshistor', '', 'frmOpecel');
 	
 	return false;
@@ -367,7 +366,7 @@ function buscaHistoricoDebCnt(cdhistor){
 	// Busca descrição do historico
 	bo        = 'b1wgen0153.p'; 
 	procedure = 'lista-historicos';
-	titulo    = 'Historicos';
+	titulo    = 'histórico';
 	buscaDescricao(bo, procedure, titulo, 'cdhisdebcnt', 'dshisdebcnt', cdhistor, 'dshistor', '', 'frmOpecel');
 	
 	return false;
