@@ -2,7 +2,7 @@
  * FONTE        : verpro.js
  * CRIAÇÃO      : Rogerius Militão (DB1) 
  * DATA CRIAÇÃO : 25/10/2011
- * OBJETIVO     : Biblioteca de funções da tela VERPRO       Última alteração: 19/09/2016
+ * OBJETIVO     : Biblioteca de funções da tela VERPRO       Última alteração: 23/03/2017
  * --------------
  * ALTERAÇÕES   :
  * 001: 02/07/2012 - Jorge (CECRED) : Alterado funcao Gera_Impressao(), novo esquema para impressao.
@@ -14,6 +14,7 @@
  * 007: 16/11/2015 - Andre Santos (SUPERO) : Aumento do campo Lin.Digitavel e Cod.Barras 
  * 008: 05/07/2016 - Odirlei (AMcom) : Exibir protocolo 15 - pagamento debaut - PRJ320 - Oferta Debaut
  * 009: 19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS pelo InternetBanking (Projeto 338 - Lucas Lunelli)
+ * 010: 23/03/2017 - Alterações referente a recarga de celular. (PRJ321 - Reinert)
  * --------------
  */
 
@@ -756,7 +757,26 @@ function formataVerpro() {
     cDspacote.css({ 'width': '440px' });
     cDtdiadeb.css({ 'width': '440px' });
     cDtinivig.css({ 'width': '440px' });
-
+	
+	// Campos Recarga de Celular: Inicio
+	rVlrecarga   = $('label[for="vlrecarga"]', 	 '#' + frmDados).addClass('rotulo').css({'width': '130px'});
+	rNmoperadora = $('label[for="nmoperadora"]', '#' + frmDados).addClass('rotulo').css({'width': '130px'});
+	rNrtelefo 	 = $('label[for="nrtelefo"]', 	 '#' + frmDados).addClass('rotulo').css({'width': '130px'});
+	rDtrecarga 	 = $('label[for="dtrecarga"]', 	 '#' + frmDados).addClass('rotulo').css({'width': '130px'});
+	rHrrecarga 	 = $('label[for="hrrecarga"]', 	 '#' + frmDados).addClass('rotulo-linha').css({'width': '45px'});
+	rDtdebito 	 = $('label[for="dtdebito"]', 	 '#' + frmDados).addClass('rotulo').css({'width': '130px'});
+	rNsuopera 	 = $('label[for="nsuopera"]', 	 '#' + frmDados).addClass('rotulo').css({'width': '130px'});		
+	
+	cVlrecarga	 = $('#vlrecarga', 	 '#' + frmDados).css({'width': '425px'});
+	cNmoperadora = $('#nmoperadora', '#' + frmDados).css({'width': '425px'});
+	cNrtelefo 	 = $('#nrtelefo', 	 '#' + frmDados).css({'width': '425px'});
+	cDtrecarga 	 = $('#dtrecarga', 	 '#' + frmDados).css({'width': '200px'});
+	cHrrecarga 	 = $('#hrrecarga', 	 '#' + frmDados).css({'width': '174px'});
+	cDtdebito 	 = $('#dtdebito', 	 '#' + frmDados).css({'width': '425px'});
+	cNsuopera 	 = $('#nsuopera', 	 '#' + frmDados).css({'width': '425px'});
+	
+	// Campos Recarga de Celular: Fim
+	
     if ($.browser.msie) {
         rTpdpagto.css({'width': '48px'});
         rHrautenx.css({'width': '48px'});
@@ -1286,8 +1306,48 @@ function formataVerpro() {
        
 		rDsprotoc.css({'display': 'block'});
 		cDsprotoc.css({'display': 'block'});
-				
-    } else {
+	// Recarga de celular			
+    } else if (cdtippro == '20'){
+		// Esconder Labels
+		rDsdbanco.css({'display': 'none'});
+		rDscedent.css({'display': 'none'});
+		rDttransa.css({'display': 'none'});
+		rHrautenx.css({'display': 'none'});
+		rDtmvtolt.css({'display': 'none'});
+		rVldocmto.css({'display': 'none'});
+		rNrdocmto.css({'display': 'none'});
+		rNrseqaut.css({'display': 'none'});
+		
+		// Esconder Campos
+		cDsdbanco.css({'display': 'none'});
+		cDscedent.css({'display': 'none'});
+		cDttransa.css({'display': 'none'});
+		cHrautenx.css({'display': 'none'});
+		cDtmvtolt.css({'display': 'none'});
+		cVldocmto.css({'display': 'none'});
+		cNrdocmto.css({'display': 'none'});
+		cNrseqaut.css({'display': 'none'});
+		
+		// Exibir Labels
+		rVlrecarga.css({'display': 'block'});
+		rNmoperadora.css({'display': 'block'});
+		rNrtelefo.css({'display': 'block'});
+		rDtrecarga.css({'display': 'block'});
+		rHrrecarga.css({'display': 'block'});
+		rDtdebito.css({'display': 'block'});
+		rNsuopera.css({'display': 'block'});
+		rDsprotoc.css({'display': 'block'}).css('width', '130px');
+
+		// Exibir Campos
+		cVlrecarga.css({'display': 'block'});
+		cNmoperadora.css({'display': 'block'});
+		cNrtelefo.css({'display': 'block'});
+		cDtrecarga.css({'display': 'block'});
+		cHrrecarga.css({'display': 'block'});
+		cDtdebito.css({'display': 'block'});
+		cNsuopera.css({'display': 'block'});
+		cDsprotoc.css({'display': 'block'}).css('width', '425px');
+	}else {
 
         if (cdtippro == '3') {
             rDsdbanco.html('Nr. do Plano:');

@@ -3,7 +3,7 @@
  * FONTE        : form_verpro.php
  * CRIAÇÃO      : Rogérius Militão - DB1 Informatica
  * DATA CRIAÇÃO : 28/10/2011 
- * OBJETIVO     : Tela com o detalhes do protocolo		última alteração: 19/09/2016
+ * OBJETIVO     : Tela com o detalhes do protocolo		última alteração: 23/03/2017
  * --------------
  * ALTERAÇÕES   :
  * 001: [30/11/2012] David (CECRED) : Validar session
@@ -19,6 +19,7 @@
  * 010: [05/07/2016] - Odirlei Busana (AMcom) : Exibir protocolo 15 - pagamento debaut - PRJ320 - Oferta Debaut
  * 011: [29/07/2016] - Corrigi o uso da funcao split depreciada. SD 480705 (Carlos R.)
  * 012: [19/09/2016] - Alteraçoes pagamento/agendamento de DARF/DAS pelo InternetBanking (Projeto 338 - Lucas Lunelli) 
+ * 013: [23/03/2017] - Inclusão do protocolo de Recarga de celular (PRJ321 - Reinert)
  */
 
 session_start();
@@ -120,6 +121,14 @@ if ($cdtippro >= 16 && $cdtippro <= 19) {
 		$vltotfat = trim(substr($aux_dslinha3[14], strpos($aux_dslinha3[14], ":") + 1));
 		$dsidepag = trim(substr($aux_dslinha3[15], strpos($aux_dslinha3[15], ":") + 1));
 	}
+}else if($cdtippro == 20){ // Recarga de celular
+	$vlrecarga 	 = formataMoeda($vldocmto);
+	$nmoperadora = $aux_dslinha2[0];
+	$nrtelefo	 = $aux_dslinha2[1];
+	$dtrecarga	 = $dttransa;
+	$hrrecarga	 = $hrautenx;	
+	$dtdebito	 = $dtmvtolt;
+	$nsuopera	 = $aux_dslinha2[3];
 }
 
 ?>
@@ -476,7 +485,30 @@ if ($cdtippro >= 16 && $cdtippro <= 19) {
                                                         }
                                                     } 
                                                     echo $htmlLinhas;
-												} ?>
+												}  elseif ($cdtippro == 20) { ?>
+
+                                                    <label for="vlrecarga">Valor:</label>
+                                                    <input name="vlrecarga" id="vlrecarga" type="text" value="<? echo $vlrecarga ?>" />
+
+                                                    <label for="nmoperadora">Operadora:</label>
+                                                    <input name="nmoperadora" id="nmoperadora" type="text" value="<? echo $nmoperadora ?>" />
+
+                                                    <label for="nrtelefo">DDD/Telefone:</label>
+                                                    <input name="nrtelefo" id="nrtelefo" type="text" value="<? echo $nrtelefo ?>" />
+
+                                                    <label for="dtrecarga">Data da Recarga:</label>
+                                                    <input name="dtrecarga" id="dtrecarga" type="text" value="<? echo $dtrecarga ?>" />																																	
+
+                                                    <label for="hrrecarga">Hora:</label>
+                                                    <input name="hrrecarga" id="hrrecarga" type="text" value="<? echo $hrrecarga ?>" />
+													
+                                                    <label for="dtdebito">Data do Lan&ccedil;amento:</label>
+                                                    <input name="dtdebito" id="dtdebito" type="text" value="<? echo $dtdebito ?>" />
+													
+                                                    <label for="nsuopera">NSU Operadora:</label>
+                                                    <input name="nsuopera" id="nsuopera" type="text" value="<? echo $nsuopera ?>" />
+												<? } ?>
+
 												
 												<label for="nrdocmto">Nr. Documento:</label>
                                                 <input name="nrdocmto" id="nrdocmto" type="text" value="<? echo $nrdocmto ?>" />
@@ -485,7 +517,7 @@ if ($cdtippro >= 16 && $cdtippro <= 19) {
 												
 												<label for="nrseqaut">Seq. Autentica&ccedil;&atilde;o:</label>
                                                 <input name="nrseqaut" id="nrseqaut" type="text" value="<? echo $nrseqaut ?>" />
-
+												
                                                 <label for="dsprotoc">Protocolo:</label>
                                                 <input name="dsprotoc" id="dsprotoc" type="text" value="<? echo $dsprotoc ?>" />
                                             </fieldset>		

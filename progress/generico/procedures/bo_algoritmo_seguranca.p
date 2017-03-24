@@ -41,7 +41,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Agosto/2006                   Ultima Atualizacao: 19/05/2016 
+   Data    : Agosto/2006                   Ultima Atualizacao: 23/03/2017
    Dados referentes ao programa:
 
    Frequencia: Diario (internet)
@@ -93,6 +93,9 @@
                     
                 19/05/2016 - Ajuste para exibir protocolos 15 - pagamento convenio
 				             PRJ320 - Oferta DebAut (Odirlei-AMcom)
+
+				23/03/2017 - Adicionado tratamento para o protocolo 20 - Recarga
+							 de celular. (PRJ321 - Reinert)
 ............................................................................. */
 
 { sistema/generico/includes/var_internet.i }
@@ -465,6 +468,15 @@ PROCEDURE lista_protocolos:
            crappro.cdtippro = 1 AND
            SUBSTR(crappro.dsinform[3],1,3) <> "TAA" THEN
            NEXT.
+           
+        IF par_cdorigem = 3 AND /* InternetBank */
+           crappro.cdtippro = 20 AND
+           SUBSTR(crappro.dsinform[3],1,3) = "TAA" THEN
+           NEXT.
+        IF par_cdorigem = 4 AND /* TAA */
+           crappro.cdtippro = 20 AND
+           SUBSTR(crappro.dsinform[3],1,3) <> "TAA" THEN
+           NEXT.           
                
         ASSIGN aux_nmoperad = "".
         FIND FIRST crapopi WHERE crapopi.cdcooper = par_cdcooper 
@@ -500,12 +512,14 @@ PROCEDURE lista_protocolos:
                                                         OR crappro.cdtippro = 9
                                                         OR crappro.cdtippro = 11
                                                         OR crappro.cdtippro = 15
+                                                        OR crappro.cdtippro = 20
                cratpro.cdagectl    = crapcop.cdagectl WHEN (crappro.cdtippro = 1 AND par_cdorigem = 3)
                                                         OR crappro.cdtippro = 2
                                                         OR crappro.cdtippro = 6
                                                         OR crappro.cdtippro = 9
                                                         OR crappro.cdtippro = 11
-                                                        OR crappro.cdtippro = 15.
+                                                        OR crappro.cdtippro = 15
+                                                        OR crappro.cdtippro = 20.
 
         IF   par_cdorigem = 4   THEN /* TAA */
              DO:
@@ -513,6 +527,13 @@ PROCEDURE lista_protocolos:
                  IF   cratpro.cdtippro = 1   THEN
                       ASSIGN cratpro.dscedent  = 
                          SUBSTR(ENTRY(2,crappro.dsinform[2],"#"),19) NO-ERROR.
+                 ELSE
+                 IF   cratpro.cdtippro = 20   THEN
+                      ASSIGN cratpro.dscedent = IF   crappro.dscedent = ""   THEN 
+                                                     ENTRY(2,cratpro.dsinform[2],"#") + " - " + 
+                                                     ENTRY(1,cratpro.dsinform[2],"#") /* Telefone - Operadora */
+                                                ELSE
+                                                     crappro.dscedent.  
                  ELSE
                       ASSIGN cratpro.dscedent = IF   crappro.dscedent = ""   THEN 
                                                      "PAGAMENTO TAA"

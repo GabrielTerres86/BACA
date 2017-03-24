@@ -183,6 +183,17 @@ CREATE OR REPLACE PACKAGE CECRED.gene0005 IS
                              ,pr_des_erro  OUT VARCHAR2                    --> Status erro
                              ,pr_dscritic  OUT VARCHAR2);
 
+  FUNCTION fn_calc_qtd_dias_uteis(pr_cdcooper IN crapcop.cdcooper%TYPE
+		                             ,pr_dtinical IN DATE  --> Data de inicio do cálculo
+		                             ,pr_dtfimcal IN DATE) --> Data final do cálculo
+																 RETURN INTEGER;
+
+  FUNCTION fn_valida_depart_operad(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cooperativa
+		                              ,pr_cdoperad IN crapope.cdoperad%TYPE --> Operador
+		                              ,pr_dsdepart IN VARCHAR2              --> Lista de departamentos separados por ;
+																	,pr_flgnegac IN INTEGER DEFAULT 0)    --> Flag de negação dos departamentos parametrizados (NOT IN pr_dsdepart)
+																  RETURN INTEGER;
+																	
   END GENE0005;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
@@ -192,7 +203,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
   --  Sistema  : Rotinas auxiliares para busca de informacões do negocio
   --  Sigla    : GENE
   --  Autor    : Marcos Ernani Martini - Supero
-  --  Data     : Maio/2013.                   Ultima atualizacao: 10/06/2016
+  --  Data     : Maio/2013.                   Ultima atualizacao: 16/12/2016
   --
   -- Dados referentes ao programa:
   --
@@ -210,7 +221,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
   --                          crapass em campos de indice que possuem UPPER
   --                          (Adriano - SD 463762).
   --
+  --			 16/12/2016 - Alterações Referentes ao projeto 300. (Reinert)
   --
+  --             23/03/2017 - Criado procedure para verificar departamento do operador. (Reinert)
   ---------------------------------------------------------------------------------------------------------------
 
    -- Variaveis utilizadas na PC_CONSULTA_ITG_DIGITO_X
@@ -2471,6 +2484,157 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
         pr_dscritic := 'Problemas ao buscar Tabela de Motivos '||pr_cdproduto||'. Erro na GENE0005.pc_busca_motivos: '||sqlerrm;
     END;
   END pc_busca_motivos;
+
+  FUNCTION fn_calc_qtd_dias_uteis(pr_cdcooper IN crapcop.cdcooper%TYPE
+		                             ,pr_dtinical IN DATE  --> Data de inicio do cálculo
+		                             ,pr_dtfimcal IN DATE) --> Data final do cálculo
+																 RETURN INTEGER IS
+	BEGIN
+		/* .............................................................................
+   Programa: fn_calc_qtd_dias_uteis       Antigo B1wgen0009.p/calc_qtd_dias_uteis
+   Sistema : Conta-Corrente - Cooperativa de Credito
+   Sigla   : CRED
+   Autor   : Lucas Reinert
+   Data    : Dezembro/2016                       Ultima Atualizacao:
+
+   Dados referentes ao programa:
+
+   Frequencia: Diario (on-line)
+   Objetivo  : Calcular a quantidade de dias úteis entre a data inicial e final
+
+   Alteracoes: 
+
+
+   ............................................................................. */
+    DECLARE
+		  -- Quantidade de dias úteis
+		  vr_qtdiasut NUMBER := -1; -- Consideramos a data atual D-0
+			vr_dtrefere DATE;
+		
+		  -- Verificar se a data é um feriado
+			CURSOR cr_crapfer(pr_cdcooper IN crapfer.cdcooper%TYPE
+			                 ,pr_dtrefere IN crapdat.dtmvtolt%TYPE) IS
+        SELECT 1
+				  FROM crapfer fer
+				 WHERE fer.cdcooper = pr_cdcooper
+				   AND fer.dtferiad = pr_dtrefere;
+			rw_crapfer cr_crapfer%ROWTYPE;
+    BEGIN
+			-- Atribuir data de referência
+			vr_dtrefere := pr_dtinical;
+		  LOOP
+			  EXIT WHEN vr_dtrefere > pr_dtfimcal;
+			
+				-- Se for sábado ou domingo
+				IF to_char(vr_dtrefere, 'D') = 1 OR
+					 to_char(vr_dtrefere, 'D') = 7 THEN
+				  vr_dtrefere := vr_dtrefere + 1; -- Busca próxima data
+					CONTINUE;
+			  END IF;
+				
+				-- Verificar se a data é um feriado
+				OPEN cr_crapfer(pr_cdcooper => pr_cdcooper
+				               ,pr_dtrefere => vr_dtrefere);
+				FETCH cr_crapfer INTO rw_crapfer;
+				
+			  IF cr_crapfer%FOUND THEN
+					-- Fechar cursor
+					CLOSE cr_crapfer;
+				  vr_dtrefere := vr_dtrefere + 1; -- Busca próxima data
+					CONTINUE;					
+				END IF;
+				-- Fechar cursor
+				CLOSE cr_crapfer;				
+				
+				vr_qtdiasut := vr_qtdiasut + 1; -- Incrementa quantidade de dias úteis
+			  vr_dtrefere := vr_dtrefere + 1; -- Busca próxima data
+				
+			END LOOP;
+			
+			RETURN vr_qtdiasut;
+		
+		END;																 
+  END fn_calc_qtd_dias_uteis;
+	
+  FUNCTION fn_valida_depart_operad(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cooperativa
+		                              ,pr_cdoperad IN crapope.cdoperad%TYPE --> Operador
+		                              ,pr_dsdepart IN VARCHAR2              --> Lista de departamentos separados por ;
+																	,pr_flgnegac IN INTEGER DEFAULT 0)    --> Flag de negação dos departamentos parametrizados (NOT IN pr_dsdepart)
+																  RETURN INTEGER IS
+	BEGIN
+		/* .............................................................................
+   Programa: fn_valida_depart_operad      
+   Sistema : Conta-Corrente - Cooperativa de Credito
+   Sigla   : CRED
+   Autor   : Lucas Reinert
+   Data    : Fevereiro/2017                       Ultima Atualizacao:
+
+   Dados referentes ao programa:
+
+   Frequencia: Diario (on-line)
+   Objetivo  : Verificar se operador pertence a algum departamento parametrizado
+
+   Alteracoes: 
+
+
+   ............................................................................. */
+    DECLARE
+		  -- Retorno do cursor
+      vr_result NUMBER;
+
+      -- Cursor para verificar se o operador está em algum dos departamentos parametrizados
+			CURSOR cr_crapope(pr_cdcooper IN crapope.cdcooper%TYPE
+											 ,pr_cdoperad IN crapope.cdoperad%TYPE
+											 ,pr_dsdepart IN crapdpo.dsdepart%TYPE) IS
+				SELECT 1
+				FROM crapope ope
+						,crapdpo dpo
+				WHERE ope.cdcooper = pr_cdcooper
+					AND upper(ope.cdoperad) = upper(pr_cdoperad)
+					AND dpo.cdcooper = ope.cdcooper
+					AND dpo.cddepart = ope.cddepart
+					AND upper(dpo.dsdepart) IN (SELECT regexp_substr(upper(pr_dsdepart),'[^;]+', 1, LEVEL) FROM dual
+													 CONNECT BY regexp_substr(upper(pr_dsdepart), '[^;]+', 1, LEVEL) IS NOT NULL);
+
+      -- Cursor para verificar se o operador não está em algum dos departamentos parametrizados
+			CURSOR cr_crapope_neg(pr_cdcooper IN crapope.cdcooper%TYPE
+													 ,pr_cdoperad IN crapope.cdoperad%TYPE
+													 ,pr_dsdepart IN crapdpo.dsdepart%TYPE) IS
+				SELECT 1
+				FROM crapope ope
+						,crapdpo dpo
+				WHERE ope.cdcooper = pr_cdcooper
+					AND upper(ope.cdoperad) = upper(pr_cdoperad)
+					AND dpo.cdcooper = ope.cdcooper
+					AND dpo.cddepart = ope.cddepart
+					AND upper(dpo.dsdepart) NOT IN (SELECT regexp_substr(upper(pr_dsdepart),'[^;]+', 1, LEVEL) FROM dual
+													 CONNECT BY regexp_substr(upper(pr_dsdepart), '[^;]+', 1, LEVEL) IS NOT NULL);
+
+
+    BEGIN
+			-- Buscar por departamentos listados
+      IF pr_flgnegac = 0 THEN
+				-- Se retornou algum registro, operador está em algum departamento listado
+				OPEN cr_crapope(pr_cdcooper => pr_cdcooper
+											 ,pr_cdoperad => pr_cdoperad
+											 ,pr_dsdepart => pr_dsdepart);
+				FETCH cr_crapope INTO vr_result;
+				-- Fechar cursor
+				CLOSE cr_crapope;
+				
+			ELSE -- Buscar por departamentos NÃO listados
+				-- Se retornou algum registro, operador NÃO está nos departamentos listados
+				OPEN cr_crapope_neg(pr_cdcooper => pr_cdcooper
+													 ,pr_cdoperad => pr_cdoperad
+													 ,pr_dsdepart => pr_dsdepart);
+				FETCH cr_crapope_neg INTO vr_result;
+				-- Fechar cursor
+				CLOSE cr_crapope_neg;
+			END IF;
+      
+      RETURN NVL(vr_result, 0);
+		END;																 
+  END fn_valida_depart_operad;
 
 END GENE0005;
 /

@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/98                     Ultima atualizacao: 16/11/2016
+   Data    : Novembro/98                     Ultima atualizacao: 21/03/2017
 
    Dados referentes ao programa:
 
@@ -533,7 +533,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                      
 			   30/11/2016 - Correção para buscar corretamente registro da crapstn
 			                de acordo com o tipo de arrecadação (Lucas Lunelli - Projeto 338)
-                     
+
+         21/03/2017 - Adicionado tratamento de recarga de celular no arquivo 
+				              contábil - PRJ321. (Reinert)
 ............................................................................ */
 
   -- Constantes para geração de arquivos contábeis                                                                          
@@ -1365,7 +1367,53 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
        AND craplcm.dtmvtolt = pr_dtmvtolt
        AND craplcm.cdhistor = pr_cdhistor
      GROUP BY cdcooper; 	 
-
+		 
+	-- Buscar operadoras ativas
+	CURSOR cr_operadora (pr_cdcooper IN craplcm.cdcooper%TYPE
+	                    ,pr_dtmvtolt IN craplcm.dtmvtolt%TYPE) IS
+	  SELECT tope.cdoperadora
+		      ,topr.nmoperadora
+					,topr.perreceita
+		      ,SUM(tope.vlrecarga) totrecarga
+		  FROM tbrecarga_operacao tope
+			    ,tbrecarga_operadora topr
+		 WHERE tope.cdcooper = pr_cdcooper
+		   AND tope.insit_operacao = 2
+			 AND tope.dtdebito = pr_dtmvtolt
+			 AND topr.cdoperadora = tope.cdoperadora
+			GROUP BY tope.cdoperadora
+		          ,topr.nmoperadora
+					    ,topr.perreceita;
+		 		 
+	-- Recarga de celular
+  CURSOR cr_recargas (pr_cdcooper IN craplcm.cdcooper%TYPE
+	                   ,pr_dtmvtolt IN craplcm.dtmvtolt%TYPE
+										 ,pr_cdoperadora IN tbrecarga_operadora.cdoperadora%TYPE) IS
+    SELECT ass.cdagenci
+		      ,SUM(nvl(tope.vlrecarga, 0)) totrecpa
+		  FROM tbrecarga_operacao tope
+			    ,crapass ass
+		 WHERE tope.cdcooper = pr_cdcooper
+		   AND tope.insit_operacao = 2
+			 AND tope.dtdebito = pr_dtmvtolt			 
+			 AND tope.cdoperadora = pr_cdoperadora
+			 AND ass.cdcooper = tope.cdcooper
+			 AND ass.nrdconta = tope.nrdconta
+  GROUP BY ass.cdagenci;
+	
+	-- Repasse recarga de celular
+	CURSOR cr_craptvl_recarg (pr_cdcooper IN crapcop.cdcooper%TYPE
+	                         ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS
+	  SELECT tvl.vldocrcb
+		  FROM craptvl tvl
+		 WHERE tvl.cdcooper = pr_cdcooper
+		   AND tvl.dtmvtolt = pr_dtmvtolt
+			 AND tvl.nrdolote = 600037
+			 AND tvl.cdagenci = 1
+			 AND tvl.cdbccxlt = 85
+			 AND tvl.tpdoctrf = 3;
+	rw_craptvl_recarg cr_craptvl_recarg%ROWTYPE;
+	
   cursor cr_crapcon (pr_cdcooper in crapcon.cdcooper%type) is
     select crapcon.cdempcon,
            crapcon.cdsegmto,
@@ -10327,8 +10375,56 @@ BEGIN
     -- gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
   END LOOP;
   
-  --  Fim da contabilizacao da COMP. ELETRONICA ...............................
+  -- Fim da contabilizacao da COMP. ELETRONICA ...............................
+	
+	-- RECEITA RECARGA DE CELULAR ..............................................
 
+  FOR rw_operadora IN cr_operadora(pr_cdcooper => pr_cdcooper
+		                              ,pr_dtmvtolt => vr_dtmvtolt) LOOP
+		/* Linha 1 - Cabecalho*/
+		vr_cdestrut := '55';
+		vr_linhadet := trim(vr_cdestrut)||
+                   trim(vr_dtmvtolt_yymmdd)||','||
+                   trim(to_char(vr_dtmvtolt,'ddmmyy'))||','||
+                   '4340,'|| 
+                   '7543,'||
+                   trim(to_char((rw_operadora.totrecarga * (rw_operadora.perreceita / 100)), '999999990.00'))||','||
+                   '5210,'||
+                   '"(crps249) RECEITA RECARGA DE CELULAR - ' ||
+                   rw_operadora.nmoperadora || '"';
+    gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);																	
+		
+		-- Listar o total de recargas por pa
+		FOR rw_recargas_pa IN cr_recargas(pr_cdcooper => pr_cdcooper
+			                               ,pr_dtmvtolt => vr_dtmvtolt
+																		 ,pr_cdoperadora => rw_operadora.cdoperadora) LOOP
+			vr_linhadet := to_char(rw_recargas_pa.cdagenci, 'fm000')|| ',' ||
+											trim(to_char((rw_recargas_pa.totrecpa * (rw_operadora.perreceita / 100)),
+											'999999990.00'));
+      gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+		END LOOP;
+	END LOOP;
+	
+  -- Fim RECEITA RECARGA DE CELULAR ...........................................	
+
+  IF pr_cdcooper = 3 THEN
+		-- REPASSE RECARGA DE CELULAR .............................................
+		OPEN cr_craptvl_recarg(pr_cdcooper => pr_cdcooper
+		                      ,pr_dtmvtolt => vr_dtmvtolt);
+	  FETCH cr_craptvl_recarg INTO rw_craptvl_recarg;
+		CLOSE cr_craptvl_recarg;
+		
+		vr_cdestrut := 50;
+		vr_linhadet := trim(vr_cdestrut)||
+									 trim(vr_dtmvtolt_yymmdd)||','||
+									 trim(to_char(vr_dtmvtolt,'ddmmyy'))||','||
+									 '4340,'|| 
+									 '1425,'|| 
+									 TRIM(TO_CHAR(nvl(rw_craptvl_recarg.vldocrcb, 0),'99999999999990.00')) || ','||
+									 '5210,'||
+									 '"(crps249) REPASSE RECARGA DE CELULAR"';
+		gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+  END IF;
   --  Contabilizacao mensal ...................................................
   if to_char(vr_dtmvtolt, 'mm') <> to_char(vr_dtmvtopr, 'mm') then
 
