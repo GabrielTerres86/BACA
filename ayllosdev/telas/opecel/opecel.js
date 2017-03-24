@@ -38,6 +38,7 @@ function estadoInicial() {
 	$('#divBotoes').css({'display':'none'});
 	$('#btProsseguir','#divBotoes').text('Prosseguir');
 	$('input,select', '#frmCab').removeClass('campoErro');	
+	$('input,select', '#frmOpecel').removeClass('campoErro');	
 	
 	formataCabecalho();
 
