@@ -10154,7 +10154,7 @@ END pc_consulta_ir_pj_trim;
   --  Sistema  : 
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2014                           Ultima atualizacao: 03/08/2016
+  --  Data     : Julho/2014                           Ultima atualizacao: 24/03/2017
   --
   -- Dados referentes ao programa:
   --
@@ -10168,6 +10168,7 @@ END pc_consulta_ir_pj_trim;
   --
   --              03/08/2016 - M360 - Inclusão de novas buscas de Sobras ao Cooperado (Marcos-Supero)
   --
+  --              24/03/2017 - SD638033 - Envio dos Rendimentos de Cotas Capital sem desconto IR (Marcos-Supero)
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
         -- Busca dos dados da cooperativa
@@ -10501,7 +10502,7 @@ END pc_consulta_ir_pj_trim;
             vr_flganter:= vr_tab_extrato_ir(vr_index).flganter;
             vr_nrdconta:= to_char(vr_tab_extrato_ir(vr_index).nrdconta,'fm9999g999g0');
             vr_cdagectl:= to_char(vr_tab_extrato_ir(vr_index).cdagectl,'fm90000');
-            vr_rel_vlrencot:= vr_tab_extrato_ir(vr_index).vlrencot - vr_tab_extrato_ir(vr_index).vlirfcot;
+            vr_rel_vlrencot:= vr_tab_extrato_ir(vr_index).vlrencot;
             vr_rel_vlirfcot:= vr_tab_extrato_ir(vr_index).vlirfcot;
             vr_ant_vlirfcot:= vr_tab_extrato_ir(vr_index).anirfcot;
             vr_rel_vlprepag:= vr_tab_extrato_ir(vr_index).vlprepag;
