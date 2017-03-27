@@ -606,7 +606,7 @@ PROCEDURE busca-devolucoes-cheque:
                         OR  par_cdcooper = 9  THEN DO:
 
                             FIND FIRST craptco
-							                   WHERE craptco.cdcooper = craplcm.cdcooper
+							     WHERE craptco.cdcooper = craplcm.cdcooper
                                    AND craptco.nrdconta = craplcm.nrdconta
                                    AND craptco.tpctatrf = 1
                                    AND craptco.flgativo = TRUE
@@ -670,12 +670,6 @@ PROCEDURE busca-devolucoes-cheque:
                         END.
                     END. /* FIM -> IF  NOT AVAIL crapfdc */
 
-                     /* Se for um formulario migrado da acredi para a viacredi, iremos criar a crapdev
-                        com a cooperativa da craplcm */
-                    IF  craplcm.cdcooper = 1 AND 
-                        aux_cdagechq = 102 THEN 
-                        ASSIGN aux_cdcooper = craplcm.cdcooper.
-                    
                     IF  NOT AVAILABLE crabcop THEN DO:
                         ASSIGN aux_cdcritic = 244
                                aux_dscritic = "".
@@ -1480,18 +1474,6 @@ PROCEDURE verifica-folha-cheque:
 
     EMPTY TEMP-TABLE tt-erro.                                          
 
-        
-    FOR EACH crapcop WHERE crapcop.cdagectl = par_cdagechq NO-LOCK,
-        FIRST craptco WHERE  craptco.cdcopant = crapcop.cdcooper
-                         AND craptco.nrctaant = par_nrctachq
-                         AND craptco.tpctatrf = 1         
-                         AND craptco.flgativo = TRUE 
-                         NO-LOCK:
-    
-        ASSIGN par_cdcooper = craptco.cdcopant.        
-    END.
-
-
     /* Leitura da tabela com o valor definido para cheque VLB */ 
     RUN busca-valor-cheque(INPUT par_cdcooper,
                            INPUT "CRED"      , /* par_nmsistem */
@@ -1679,17 +1661,6 @@ PROCEDURE verifica_alinea:
 
         RETURN "NOK".
 
-    END.
-
-       
-    FOR EACH crapcop WHERE crapcop.cdagectl = par_cdagechq NO-LOCK,
-        FIRST craptco WHERE  craptco.cdcopant = crapcop.cdcooper
-                         AND craptco.nrctaant = par_nrctachq
-                         AND craptco.tpctatrf = 1         
-                         AND craptco.flgativo = TRUE 
-                         NO-LOCK:
-    
-        ASSIGN par_cdcooper = craptco.cdcopant.        
     END.
 
     aux_nrcalcul = INT(SUBSTR(STRING(par_nrdocmto,"9999999"),1,6)).
