@@ -1,10 +1,14 @@
 /*!
  * FONTE        : ppe.js
- * CRIAÇÃO      : Carlos Henrique
+ * CRIAÇÃO      : Carlos Henrique                               Última alteração: 08/03/2017
  * DATA CRIAÇÃO : 21/12/2015 
  * OBJETIVO     : Biblioteca de funções na rotina COMERCIAL PPE da tela de CONTAS
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 01/12/2016 - Definir a não obrigatoriedade do PEP (Tiago/Thiago SD532690)
+
+                  21/02/2017 - Ajustes para inclusão de novos campos (Adriano - SD 614408).
+
+                  08/03/2017 - Ajuste devido a troca de nome do campo nmempresa para nmemporg (Adriano - SD 614408).
  * --------------
  */
 
@@ -28,6 +32,7 @@ var cdrelacionamento = '';
 var dtinicio         = '';
 var dttermino        = '';
 var nmempresa        = '';
+var nmemporg        = '';
 var nrcnpj_empresa   = '';
 var nmpolitico       = '';
 var nrcpf_politico   = '';
@@ -36,6 +41,12 @@ var flgAlterando = false;
 var opcao = '';
 
 function atualizaTipoExposto(tipo) {
+
+    ($('#tpexposto', '#frmDadosPpe').val() == '1') ? altura = '180px' : altura = '200px';
+    largura = '580px';
+    divRotina.css('width', largura);
+    $('#divConteudoOpcao').css('height', altura);
+
 	var tipoExposto = tipo.value;
 	var divExposto1 = $('#divExposto1','#'+nomeForm);
 	var divExposto2 = $('#divExposto2','#'+nomeForm);
@@ -179,10 +190,8 @@ function controlaOperacao(operacao, flgConcluir) {
 }
 
 function manterRotina(operacao) {	
-	hideMsgAguardo();		
+			
 	var mensagem = '';
-	
-//alert('chw operacao manterrotina ppe.js: ' + operacao);
 	
 	switch (operacao) {	
 		case 'AV': mensagem = 'Aguarde, validando ...'; break;
@@ -190,7 +199,7 @@ function manterRotina(operacao) {
 				   cTodos_1.habilitaCampo(); 
 				   cRsocupa.desabilitaCampo();
 				   cDsrelacionamento.desabilitaCampo();
-				   
+				   $('#tpexposto', '#frmDadosPpe').focus();
 				   flgAlterando = true;
 				   
 				   return false; break;
@@ -199,9 +208,10 @@ function manterRotina(operacao) {
 		default: return false; break;
 	}	
 	
+	hideMsgAguardo();
+
 	showMsgAguardo( mensagem );
 
-	
 	tpexposto = $('#tpexposto','#'+nomeForm).val();
 		
 	cdocpttl = $('#cdocpttl','#'+nomeForm).val();	
@@ -242,21 +252,61 @@ function manterRotina(operacao) {
 
 function controlaLayout(operacao) {	
 
-	altura  = '160px';
-	largura = '580px';
+    ($('#tpexposto', '#frmDadosPpe').val() == '1') ? altura = '180px' : altura = '200px';
+    largura = '580px';
 	divRotina.css('width',largura);	
 	$('#divConteudoOpcao').css('height',altura);
 
-    // FIELDSET INF. PROFISSIONAIS
-	var rotulos_1 = $('label[for="tpexposto"],label[for="nmpolitico"],label[for="cdrelacionamento"],label[for="nmempresa"],label[for="dtinicio"]','#'+nomeForm );
-	var rotulos_2 = $('label[for="nrcpf_politico"]','#'+nomeForm );
-	var rotulos_3 = $('label[for="cdocpttl"]','#'+nomeForm );
-	
-	rotulos_1.css('width','110px');
-	rotulos_2.css('width','36px');
-	rotulos_3.css('width','60px');
+    //Label do frmDadosPpe
+	rTpexposto = $('label[for="tpexposto"]', '#frmDadosPpe');
+	rCdocpttl = $('label[for="cdocpttl"]', '#frmDadosPpe');
+	rNmempresa = $('label[for="nmempresa"]', '#divExposto1');
+	rNrCnpjEmpresa = $('label[for="nrcnpj_empresa"]', '#divExposto1');
+	rDtinicio = $('label[for="dtinicio"]', '#divExposto1');
+	rDttermino = $('label[for="dttermino"]', '#divExposto1');
+	rNmpolitico = $('label[for="nmpolitico"]', '#divExposto2');
+	rNrCpfPolitico = $('label[for="nrcpf_politico"]', '#divExposto2');
+	rNmemporg = $('label[for="nmemporg"]', '#divExposto2');
+	rCdrelacionamento = $('label[for="cdrelacionamento"]', '#divExposto2');
 
-	
+	rTpexposto.css('width', '130px').addClass('rotulo');
+	rCdocpttl.css('width', '130px').addClass('rotulo');
+	rNmempresa.css('width', '130px').addClass('rotulo');
+	rNrCnpjEmpresa.css('width', '50px').addClass('rotulo-linha');
+	rDtinicio.css('width', '130px').addClass('rotulo');
+	rDttermino.css('width', '70px').addClass('rotulo-linha');
+	rNmpolitico.css('width', '130px').addClass('rotulo');
+	rNrCpfPolitico.css('width', '45px').addClass('rotulo-linha');
+	rNmemporg.css('width', '130px').addClass('rotulo');
+	rCdrelacionamento.css('width', '130px').addClass('rotulo');
+
+    //Campos do frmDadosPpe
+	cTpexposto = $('#tpexposto', '#frmDadosPpe');
+	cCdocpttl = $('#cdocpttl', '#frmDadosPpe');
+	cRsocupa = $('#rsocupa', '#frmDadosPpe');
+	cNmempresa = $('#nmempresa', '#divExposto1');
+	cNrCnpjEmpresa = $('#nrcnpj_empresa', '#divExposto1');
+	cDtinicio = $('#dtinicio', '#divExposto1');
+	cDttermino = $('#dttermino', '#divExposto1');
+	cNmpolitico = $('#nmpolitico', '#divExposto2');
+	cNrCpfPolitico = $('#nrcpf_politico', '#divExposto2');
+	cNmemporg = $('#nmemporg', '#divExposto2');
+	cCdrelacionamento = $('#cdrelacionamento', '#divExposto2');
+	cDsrelacionamento = $('#dsrelacionamento', '#divExposto2');
+
+	cTpexposto.css('width', '140px');
+	cCdocpttl.css('width', '80px').addClass('inteiro').attr('maxlength', '5');
+	cRsocupa.css('width', '300px').addClass('alpha');
+	cNmempresa.css('width', '225px').addClass('alpha').attr('maxlength', '35');
+	cNrCnpjEmpresa.css('width', '120px').addClass('cnpj');
+	cDtinicio.css({ 'width': '75px' }).addClass('data');
+	cDttermino.css({ 'width': '75px' }).addClass('data');
+	cNmpolitico.css('width', '250px').addClass('alpha').attr('maxlength', '60');
+	cNrCpfPolitico.css('width', '100px').addClass('cpf');
+	cNmemporg.css('width', '400px').addClass('alpha').attr('maxlength', '35');
+	cCdrelacionamento.css('width', '80px').addClass('inteiro').attr('maxlength', '5');
+	cDsrelacionamento.css('width', '295px').addClass('alphanum');
+    	
 	cTodos_1          = $('input,select','#'+nomeForm+' fieldset:eq(0)');
 	var cCodigo_1     = $('#cdocpttl','#'+nomeForm );
 	
@@ -264,25 +314,20 @@ function controlaLayout(operacao) {
 	cDsrelacionamento = $('#dsrelacionamento','#'+nomeForm );	
 
 	var cInpolexp     = $('#inpolexp','#'+nomeForm );
-
-
+    
 	cTodos_1.desabilitaCampo();
-	
-	
-//alert('chw opcao ppe.js operacao:' + operacao + ' op:' + opcao + ' inpolexp: ' + cInpolexp.val());
 
-if ((opcao == 'A' || operacao == 'CA' /* || opcao == '' */) && cInpolexp.val() == 1) {	
-	cTodos_1.habilitaCampo();	
-	flgAlterando = true;	
-} else {	
-	cTodos_1.desabilitaCampo();
-}
+    if ((opcao == 'A' || operacao == 'CA' /* || opcao == '' */) && cInpolexp.val() == 1) {	
+	    cTodos_1.habilitaCampo();	
+	    flgAlterando = true;	
+    } else {	
+	    cTodos_1.desabilitaCampo();
+    }
 
 	// Campos que ficam SEMPRE desabilitados:
 	cRsocupa.desabilitaCampo();
 	cDsrelacionamento.desabilitaCampo();
-	
-	
+		
     controlaPesquisas();
 	
     $('#cdocpttl').trigger('change');
@@ -349,12 +394,11 @@ function controlaPesquisas() {
 				
 				// Ocupacao
 				if ( campoAnterior == 'cdocpttl' ) {
-					procedure	= 'busca_ocupacao';
-					titulo      = 'Ocupa&ccedil;&atilde;o';
-					qtReg		= '30';
-					filtrosPesq	= 'Cód. Ocupação;cdocpttl;30px;S;0|Ocupação;rsocupa;200px;S;';
-					colunas 	= 'Código;cdocupa;20%;right|Ocupação;dsdocupa;80%;left';
-					mostraPesquisa(bo,procedure,titulo,qtReg,filtrosPesq,colunas,divRotina);
+					
+					filtrosPesq = 'Cód. Ocupação;cdocpttl;30px;S;0|Ocupação;rsocupa;200px;S;';
+					colunas = 'Código;cdocupa;20%;right|Ocupação;dsdocupa;80%;left';
+					mostraPesquisa("ZOOM0001", "BUSCOCUPACAO", "Ocupa&ccedil;&atilde;o", "30", filtrosPesq, colunas, divRotina);
+
 					return false;
 
 				// Busca relacionamento
@@ -379,11 +423,11 @@ function controlaPesquisas() {
 	 
 	// Ocupação
 	$('#cdocpttl','#'+nomeForm).unbind('change').bind('change',function() {
-		titulo      = 'Ocupação';
-		procedure   = 'busca_ocupacao';
-		filtrosDesc = '';
-		buscaDescricao(bo,procedure,titulo,$(this).attr('name'),'rsocupa',$(this).val(),'dsdocupa',filtrosDesc,nomeForm);
+
+	    filtrosDesc = '';
+		buscaDescricao("ZOOM0001", "BUSCOCUPACAO", "Ocupação", $(this).attr('name'), 'rsocupa', $(this).val(), 'dsdocupa', filtrosDesc, nomeForm);
 		return false;
+
 	});	
 
 	// Relacionamento
@@ -405,9 +449,9 @@ function voltarRotina() {
 
 function salvarPpe() {
 	
-//alert('salvarPpe chw opcao operacao flgAlterando: ' + opcao + operacao + flgAlterando);	
-	
-	if (validarPpe()) {
+    if (validarPpe()) {
+
+        showMsgAguardo('Aguarde, alterando ...');
 
 		tpexposto        = $('#tpexposto',       '#'+nomeForm).val();		
 		cdocpttl         = $('#cdocpttl',        '#'+nomeForm).val();
@@ -415,12 +459,11 @@ function salvarPpe() {
 		dtinicio         = $('#dtinicio',        '#'+nomeForm).val();
 		dttermino        = $('#dttermino',       '#'+nomeForm).val();
 		nmempresa        = $('#nmempresa',       '#'+nomeForm).val();
+        nmemporg         = $('#nmemporg',        '#'+nomeForm).val();
 		nrcnpj_empresa   = normalizaNumero($('#nrcnpj_empresa',  '#'+nomeForm).val());
 		nmpolitico       = $('#nmpolitico',      '#'+nomeForm).val();
 		nrcpf_politico   = normalizaNumero($('#nrcpf_politico',  '#'+nomeForm).val());
 				
-//alert('chw salvarppe ' + nrdconta + ' seqttl ' + idseqttl + ' tpexposto ' + tpexposto);
-			
 		$.ajax({		
 			type: 'POST',
 			url: UrlSite + 'telas/contas/ppe/manter_rotina.php', 		
@@ -433,7 +476,8 @@ function salvarPpe() {
 				cdrelacionamento:	cdrelacionamento, 
 				dtinicio: 			dtinicio,				
 				dttermino: 			dttermino, 	
-				nmempresa: 			nmempresa, 
+			    nmempresa:          nmempresa,
+			    nmemporg:           nmemporg,
 				nrcnpj_empresa: 	nrcnpj_empresa, 
 				nmpolitico: 		nmpolitico, 
 				nrcpf_politico: 	nrcpf_politico,			
@@ -459,9 +503,6 @@ function salvarPpe() {
 				}
 			}				
 		});	
-
-	    //imprimirDeclaracao();
-		//setTimeout(acessaAbaBens, 5000); // aguardar 5 segundos para a tela nao mudar repentinamente enquanto faz a requisicao de impressao
 
 	}
 	
@@ -506,22 +547,15 @@ function validarPpe() {
 	cdocpttl         = $('#cdocpttl',        '#'+nomeForm).val();
 	cdrelacionamento = $('#cdrelacionamento','#'+nomeForm).val();
 	dtinicio         = $('#dtinicio',        '#'+nomeForm).val();
-	dttermino        = $('#dttermino',       '#'+nomeForm).val();
-	nmempresa        = $('#nmempresa',       '#'+nomeForm).val();
 	nrcnpj_empresa   = $('#nrcnpj_empresa',  '#'+nomeForm).val();
 	nmpolitico       = $('#nmpolitico',      '#'+nomeForm).val();
 	nrcpf_politico   = $('#nrcpf_politico',  '#'+nomeForm).val();
 	inpolexp         = $('#inpolexp',        '#'+nomeForm).val();
-	nmextttl         = $('#nmextttl',        '#'+nomeForm).val();
-	rsocupa          = $('#rsocupa',         '#'+nomeForm).val();
-
-// alert(tpexposto + '|' + cdocpttl + '|' +  cdrelacionamento + '|' + dtinicio + '|' + dttermino + '|' + nmempresa 
-// + '|' + nrcnpj_empresa + '|' + nmpolitico + '|' + nrcpf_politico + '|' + inpolexp + '|' + nmextttl + '|' + rsocupa);
 	
 	if (tpexposto == 1) { // exerce/exerceu
 	
 		nrcnpj_empresa = normalizaNumero(nrcnpj_empresa);
-		if (!validaCpfCnpj(nrcnpj_empresa,2)) {
+		if (nrcnpj_empresa != '' && !validaCpfCnpj(nrcnpj_empresa,2)) {
 			showError('error','CNPJ inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nrcnpj_empresa\',\''+nomeForm+'\');');
 			return false;
 		}
@@ -578,10 +612,15 @@ function proximaRotina () {
 						'function foo() { return false }',
 						'sim.gif','nao.gif');
 	} else if(opcao == 'A' || operacao == 'CA') {
+	    if (inpolexp == 1) {
 		imprimirDeclaracao();
 		setTimeout(acessaAbaBens, 5000); // aguardar 5 segundos para a tela nao mudar repentinamente enquanto faz a requisicao de impressao					
 	} else {
 		acessaAbaBens();
 	}
+	} else {
+		acessaAbaBens();
+	}
 
 }
+
