@@ -15,7 +15,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Deborah/Margarete
-     Data    : Maio/2001                       Ultima atualizacao: 27/04/2016
+     Data    : Maio/2001                       Ultima atualizacao: 23/03/2017
      
      Dados referentes ao programa:
 
@@ -257,6 +257,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
 
                  11/05/2016 - Leitura do risco soberano da tbrisco_cadastro_conta
                               e nao mais da crapprm. (Jaison/James)
+
+                 25/08/2016 - Ajustar calculo de prazo de vencido/vencimento dos borderos de cheque/titulo
+        				              SD488220 (Odirlei-AMcom)
+                              
+                 23/03/2017 - Ajustes PRJ343 - Cessão Cartão de Credito.
+                              (Odirlei-AMcom)
 
   ............................................................................ */
 
@@ -621,6 +627,19 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
            AND dtvencto <= pr_rw_crapdat.dtmvtoan
          GROUP BY nrdconta
                  ,nrctremp;
+      
+      --> Buscar vencimentos daos emprestimos de cessao de cartao
+      CURSOR cr_cessao_carga IS
+        SELECT ces.nrdconta
+              ,ces.nrctremp
+              ,ces.dtvencto
+          FROM tbcrd_cessao_credito ces
+          JOIN crapepr epr
+            ON epr.cdcooper = ces.cdcooper
+           AND epr.nrdconta = ces.nrdconta
+           AND epr.nrctremp = ces.nrctremp
+         WHERE ces.cdcooper = 1
+           AND epr.inliquid = 0;
                                                  
       -------- Tipos e registros genéricos ------------
 
@@ -1219,7 +1238,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                                ,pr_vet_vlavence OUT typ_tab_vlparcel) IS
       BEGIN
         -- Inicializar a temp-table
-        FOR vr_ind IN 1..11 LOOP
+        FOR vr_ind IN 1..23 LOOP
           pr_vet_vlavence(vr_ind) := 0;
         END LOOP;
         -- Prever null
@@ -1330,7 +1349,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                                 ,pr_vet_vlvencid OUT typ_tab_vlparcel) IS
       BEGIN
         -- Inicializar a temp-table
-        FOR vr_ind IN 1..12 LOOP
+        FOR vr_ind IN 1..23 LOOP
           pr_vet_vlvencid(vr_ind) := 0;
         END LOOP;
         -- Prever problemas de null
@@ -1980,7 +1999,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                            ,pr_vet_vlavence => vr_tab_vlavence);
           ELSE
             -- Limpar o vetor
-            FOR vr_ind IN 1..11 LOOP
+            FOR vr_ind IN 1..23 LOOP
               vr_tab_vlavence(vr_ind) := 0;
             END LOOP;
           END IF;
@@ -2211,7 +2230,18 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
              AND lem.nrctremp = pr_rw_crapepr.nrctremp
              AND lem.cdhistor IN (1037,1038)
              AND lem.dtmvtolt > pr_rw_crapdat.dtmvtolt - (pr_qtdiaatr - 59);       
-
+             
+        --> Buscar data de vencimento do emprestimo de cessao
+        CURSOR cr_cessao_vecto (pr_cdcooper crapepr.cdcooper%TYPE,
+                                pr_nrdconta crapepr.nrdconta%TYPE,
+                                pr_nrctremp crapepr.nrctremp%TYPE ) IS  
+          SELECT ces.dtvencto
+            FROM tbcrd_cessao_credito ces
+           WHERE ces.cdcooper = pr_cdcooper
+             AND ces.nrdconta = pr_nrdconta
+             AND ces.nrctremp = pr_nrctremp;
+         rw_cessao_vecto cr_cessao_vecto%ROWTYPE;
+         
       BEGIN
         -- Se existe informação na tabela de linhas de crédito cfme a linha do empréstimo
         IF vr_tab_craplcr.EXISTS(pr_rw_crapepr.cdlcremp) THEN
@@ -2458,9 +2488,22 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               END IF;              
             END IF;          
           END IF;
-        
-          -- Calcular diferença de dias entre a parcela e o dia atual
-          vr_diasvenc := rw_crappep.dtvencto - pr_rw_crapdat.dtmvtolt;
+          
+          --> Buscar data de vencimento do emprestimo de cessao
+          OPEN cr_cessao_vecto (pr_cdcooper => pr_cdcooper,
+                                pr_nrdconta => pr_rw_crapass.nrdconta,
+                                pr_nrctremp => pr_rw_crapepr.nrctremp );
+          FETCH cr_cessao_vecto INTO rw_cessao_vecto;
+          
+          IF cr_cessao_vecto%NOTFOUND THEN    
+            CLOSE cr_cessao_vecto;
+            -- Calcular diferença de dias entre a parcela e o dia atual
+            vr_diasvenc := rw_crappep.dtvencto - pr_rw_crapdat.dtmvtolt;
+          ELSE
+            -- Calcular diferença de dias entre a parcela e o dia atual
+            vr_diasvenc := rw_cessao_vecto.dtvencto - pr_rw_crapdat.dtmvtolt;
+          END IF;
+          
           -- Buscar o código do vencimento a lançar
           vr_cdvencto := fn_calc_codigo_vcto(pr_diasvenc => vr_diasvenc
                                             ,pr_qtdiapre => vr_diasvenc -- Enviar a mesma informaçao
@@ -2502,9 +2545,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
             vr_diasvenc := vr_diasvenc * -1;
             -- Acumular na variavel correspondente de acordo com a quantidade de dias
             IF vr_diasvenc <= 60 THEN
-              vr_vldiv180 := vr_vldiv180 + vr_vlsrisco;
+              vr_vldiv060 := vr_vldiv060 + vr_vlsrisco;
             ELSIF vr_diasvenc <= 180 THEN
-              vr_vldiv360 := vr_vldiv360 + vr_vlsrisco;
+              vr_vldiv180 := vr_vldiv180 + vr_vlsrisco;
             ELSIF vr_diasvenc <= 360 THEN
               vr_vldiv360 := vr_vldiv360 + vr_vlsrisco;
             ELSE
@@ -3550,6 +3593,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         vr_tab_crappep_maior(vr_idxpep) := rw_crappep_maior.dtvencto;
       END LOOP;
       
+      --> Buscar vencimentos daos emprestimos de cessao de cartao
+      FOR rw_cessao_carga IN cr_cessao_carga LOOP
+        vr_idxpep := lpad(pr_cdcooper,5,'0')||lpad(rw_cessao_carga.nrdconta,10,'0')||lpad(rw_cessao_carga.nrctremp,10,'0');
+        vr_tab_crappep_maior(vr_idxpep) := rw_cessao_carga.dtvencto;
+      END LOOP;
+      
+      
       --> Carrega Temp-Table contendo as contas com risco soberano
  	    pc_cria_table_risco_soberano(pr_cdcooper                  => pr_cdcooper
                                   ,pr_tab_contas_risco_soberano => vr_tab_contas_risco_soberano);
@@ -4021,12 +4071,17 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                 vr_vldes180 := 0;
                 vr_vldes360 := 0;
                 vr_vldes999 := 0;
+                vr_vldiv060 := 0;
+                vr_vldiv180 := 0;
+                vr_vldiv360 := 0;
+                vr_vldiv999 := 0;
+                vr_qtdiaatr := 0;
                 vr_dtprxpar := null;
                 vr_vlprxpar := 0;
                 vr_dtvencop := NULL;
                 vr_qtparcel := 0;
                 -- Limpar a temp-table de vencimentos
-                FOR vr_ind IN 1..11 LOOP
+                FOR vr_ind IN 1..23 LOOP
                   vr_tab_vlavence(vr_ind) := 0;
                 END LOOP;                
                 -- Buscar todos os cheques contidos no bordero passado
@@ -4040,9 +4095,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                   vr_aux_reg_cdb := vr_tab_bord_cdb(vr_nrborder).tbcrapcdb(vr_dschave_crapcdb);
                   -- Acumular no valor do risco o valor líquido do cheque
                   vr_vlsrisco := vr_aux_reg_cdb.vlliquid;
-                  -- Calcular o prazo com base nas datas de liberação do cheque para crédito
+                  
+                  -- Calcular prazo de vencimento do bordero do cheque para crédito
                   -- em conta e da data de liberação do borderô para crédito em conta
-                  vr_qtdprazo := vr_aux_reg_cdb.dtlibera - vr_aux_reg_cdb.dtlibbdc;
+                  vr_qtdprazo := vr_aux_reg_cdb.dtlibera - pr_rw_crapdat.dtmvtolt;
                   -- Armazenar a data mais próxima de vencimento para o Fluxo Financeiro
                   -- Desde que seja superior a data de referência
                   IF vr_aux_reg_cdb.dtlibera > vr_dtrefere THEN
@@ -4077,6 +4133,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                                                  AND last_day(add_months(vr_dtrefere,1)) THEN
                     vr_vlprxpar := vr_vlprxpar + vr_vlsrisco;
                   END IF;
+                  
                   -- Copiar o valor do risco para a variavel específica de
                   -- valores a vencer conforme o prazo calculado
                   IF vr_qtdprazo <= 180   THEN
@@ -4112,6 +4169,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                     ELSE
                       vr_tab_vlavence(11) := vr_tab_vlavence(11)  + vr_vlsrisco;
                   END CASE;
+                    
                   -- BUscar o próximo registro dos chques
                   vr_dschave_crapcdb := vr_tab_bord_cdb(vr_nrborder).tbcrapcdb.NEXT(vr_dschave_crapcdb);
                 END LOOP; -- Fim leitura cheques
@@ -4125,7 +4183,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                   pc_grava_crapris(  pr_nrdconta => rw_crapass.nrdconta                             
                                     ,pr_dtrefere => vr_dtrefere
                                     ,pr_innivris => vr_risco_rating
-                                    ,pr_qtdiaatr => 0                  
+                                    ,pr_qtdiaatr => ABS(vr_qtdiaatr)
                                     ,pr_vldivida => vr_vldeschq
                                     ,pr_vlvec180 => nvl(vr_vldes180,0)
                                     ,pr_vlvec360 => nvl(vr_vldes360,0)
@@ -4223,12 +4281,17 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                 vr_vltit180 := 0;
                 vr_vltit360 := 0;
                 vr_vltit999 := 0;
+                vr_vldiv060 := 0;
+                vr_vldiv180 := 0;
+                vr_vldiv360 := 0;
+                vr_vldiv999 := 0;
                 vr_dtprxpar := null;
                 vr_vlprxpar := 0;
+                vr_qtdiaatr := 0;
                 vr_qtparcel := 1; -- Para desconto de duplicata sempre gera 1 parcela do Fluxo Financeiro
                 vr_dtvencop := NULL;
                 -- Limpar a temp-table
-                FOR vr_ind IN 1..11 LOOP
+                FOR vr_ind IN 1..23 LOOP
                   vr_tab_vlavence(vr_ind) := 0;
                 END LOOP;
                 -- Testar origem cfme a flag
@@ -4252,7 +4315,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                 vr_vlsrisco := rw_crapbdt.vlliquid;
                 -- Calcular o prazo com base nas datas de vencimento do titulo
                 -- e da data de liberação do borderô para crédito em conta
-                vr_qtdprazo := rw_crapbdt.dtvencto - rw_crapbdt.dtlibbdt;
+
+                vr_qtdprazo := rw_crapbdt.dtvencto - pr_rw_crapdat.dtmvtolt;
                 -- Armazenar a data mais próxima de vencimento para o Fluxo Financeiro
                 -- Desde que seja superior a data de referência
                 IF rw_crapbdt.dtvencto > vr_dtrefere THEN
@@ -4303,48 +4367,83 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                                            AND last_day(add_months(vr_dtrefere,1)) THEN
                   vr_vlprxpar := vr_vlprxpar + vr_vlsrisco;
                 END IF;                
-                -- Copiar o valor do risco para a variavel específica de
-                -- valores a vencer conforme o prazo calculado
-                IF vr_qtdprazo <= 180   THEN
-                  vr_vltit180 := vr_vltit180 + vr_vlsrisco;
-                ELSIF vr_qtdprazo <= 360   THEN
-                  vr_vltit360 := vr_vltit360 + vr_vlsrisco;
-                ELSE
-                  vr_vltit999 := vr_vltit999 + vr_vlsrisco;
-                END IF;
-                -- Copiar o valor calculado para o vetor de valores
-                -- a vencer conforme o prazo encontrado
-                CASE
-                  WHEN vr_qtdprazo <= 30 THEN
-                    vr_tab_vlavence(1) := vr_tab_vlavence(1) + vr_vlsrisco;
-                  WHEN vr_qtdprazo <= 60 THEN
-                    vr_tab_vlavence(2) := vr_tab_vlavence(2) + vr_vlsrisco;
-                  WHEN vr_qtdprazo <= 90 THEN
-                    vr_tab_vlavence(3) := vr_tab_vlavence(3) + vr_vlsrisco;
-                  WHEN vr_qtdprazo <= 180 THEN
-                    vr_tab_vlavence(4) := vr_tab_vlavence(4) + vr_vlsrisco;
-                  WHEN vr_qtdprazo <= 360 THEN
-                    vr_tab_vlavence(5) := vr_tab_vlavence(5) + vr_vlsrisco;
-                  WHEN vr_qtdprazo <= 720 THEN
-                    vr_tab_vlavence(6) := vr_tab_vlavence(6) + vr_vlsrisco;
-                  WHEN vr_qtdprazo <= 1080 THEN
-                    vr_tab_vlavence(7) := vr_tab_vlavence(7) + vr_vlsrisco;
-                  WHEN vr_qtdprazo <= 1440 THEN
-                    vr_tab_vlavence(8) := vr_tab_vlavence(8) + vr_vlsrisco;
-                  WHEN vr_qtdprazo <= 1800 THEN
-                    vr_tab_vlavence(9) := vr_tab_vlavence(9)  + vr_vlsrisco;
-                  WHEN vr_qtdprazo <= 5400 THEN
-                    vr_tab_vlavence(10) := vr_tab_vlavence(10) + vr_vlsrisco;
+                
+                IF vr_qtdprazo > 0 THEN
+                  -- Copiar o valor do risco para a variavel específica de
+                  -- valores a vencer conforme o prazo calculado
+                  IF vr_qtdprazo <= 180   THEN
+                    vr_vltit180 := vr_vltit180 + vr_vlsrisco;
+                  ELSIF vr_qtdprazo <= 360   THEN
+                    vr_vltit360 := vr_vltit360 + vr_vlsrisco;
                   ELSE
-                    vr_tab_vlavence(11) := vr_tab_vlavence(11)  + vr_vlsrisco;
-                END CASE;
+                    vr_vltit999 := vr_vltit999 + vr_vlsrisco;
+                  END IF;
+                  -- Copiar o valor calculado para o vetor de valores
+                  -- a vencer conforme o prazo encontrado
+                  CASE
+                    WHEN vr_qtdprazo <= 30 THEN
+                      vr_tab_vlavence(1) := vr_tab_vlavence(1) + vr_vlsrisco;
+                    WHEN vr_qtdprazo <= 60 THEN
+                      vr_tab_vlavence(2) := vr_tab_vlavence(2) + vr_vlsrisco;
+                    WHEN vr_qtdprazo <= 90 THEN
+                      vr_tab_vlavence(3) := vr_tab_vlavence(3) + vr_vlsrisco;
+                    WHEN vr_qtdprazo <= 180 THEN
+                      vr_tab_vlavence(4) := vr_tab_vlavence(4) + vr_vlsrisco;
+                    WHEN vr_qtdprazo <= 360 THEN
+                      vr_tab_vlavence(5) := vr_tab_vlavence(5) + vr_vlsrisco;
+                    WHEN vr_qtdprazo <= 720 THEN
+                      vr_tab_vlavence(6) := vr_tab_vlavence(6) + vr_vlsrisco;
+                    WHEN vr_qtdprazo <= 1080 THEN
+                      vr_tab_vlavence(7) := vr_tab_vlavence(7) + vr_vlsrisco;
+                    WHEN vr_qtdprazo <= 1440 THEN
+                      vr_tab_vlavence(8) := vr_tab_vlavence(8) + vr_vlsrisco;
+                    WHEN vr_qtdprazo <= 1800 THEN
+                      vr_tab_vlavence(9) := vr_tab_vlavence(9)  + vr_vlsrisco;
+                    WHEN vr_qtdprazo <= 5400 THEN
+                      vr_tab_vlavence(10) := vr_tab_vlavence(10) + vr_vlsrisco;
+                    ELSE
+                      vr_tab_vlavence(11) := vr_tab_vlavence(11)  + vr_vlsrisco;
+                  END CASE;
+                ELSE
+                  -- Grava a quantidade de dias que estah mais em atraso
+                  IF vr_qtdiaatr >= vr_qtdprazo THEN
+                    IF vr_qtdprazo = 0 THEN
+                      vr_qtdiaatr := -1;
+                    ELSE
+                      vr_qtdiaatr := vr_qtdprazo;
+                    END IF;
+                  END IF;
+                  
+                  -- Negativar a diferença de dias pois o valor já está vencido
+                  -- e o calculo retornou o valor negativo
+                  vr_qtdprazo := vr_qtdprazo * -1;
+                  
+                  FOR idx IN 12..vr_tab_ddavence.last LOOP
+                    -- Vencidos a mais de 541
+                    IF idx = 23 AND vr_qtdprazo >= abs(vr_tab_ddavence(idx)) THEN
+                      vr_tab_vlavence(idx) := vr_tab_vlavence(idx) + vr_vlsrisco;
+                      EXIT;
+                    ELSIF vr_qtdprazo <= abs(vr_tab_ddavence(idx))THEN
+                      vr_tab_vlavence(idx) := vr_tab_vlavence(idx) + vr_vlsrisco;
+                      EXIT;
+                    END IF;
+                  END LOOP; 
+                   
+                  -- Acumular na variavel correspondente de acordo com a quantidade de dias
+                  IF vr_qtdprazo <= 60 THEN
+                    vr_vldiv060 := vr_vldiv060 + vr_vlsrisco;
+                  ELSIF vr_qtdprazo <= 180 THEN
+                    vr_vldiv180 := vr_vldiv180 + vr_vlsrisco;
+                  ELSIF vr_qtdprazo <= 360 THEN
+                    vr_vldiv360 := vr_vldiv360 + vr_vlsrisco;
+                  ELSE
+                    vr_vldiv999 := vr_vldiv999 + vr_vlsrisco;
+                  END IF;
+                END IF;  
+                
               END IF;
               -- Se estivermos processando o ultimo registro Boleto + TpCobrança e houver valor acumulado
               IF rw_crapbdt.seq_atu = rw_crapbdt.qtd_max AND vr_vldestit > 0 THEN
-                /* Vamos pegar o proximo dia Util, pois a situacao do titulo do bordero
-                   somente eh atualizado 2 dias apos o vencimento.                  */
-                vr_dtvencop := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,pr_dtmvtolt => vr_dtvencop);
-                vr_dtvencop := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,pr_dtmvtolt => vr_dtvencop + 1);
                 -- Gerar Informacoes Docto 3020 --
                 -- Incrementar sequencial do contrato
                 vr_nrseqctr := vr_nrseqctr + 1;
@@ -4353,15 +4452,15 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                 pc_grava_crapris(  pr_nrdconta => rw_crapass.nrdconta                             
                                   ,pr_dtrefere => vr_dtrefere
                                   ,pr_innivris => vr_risco_rating
-                                  ,pr_qtdiaatr => 0                  
+                                  ,pr_qtdiaatr => ABS(vr_qtdiaatr)
                                   ,pr_vldivida => vr_vldestit
                                   ,pr_vlvec180 => nvl(vr_vltit180,0)
                                   ,pr_vlvec360 => nvl(vr_vltit360,0)
                                   ,pr_vlvec999 => nvl(vr_vltit999,0)
-                                  ,pr_vldiv060 => 0
-                                  ,pr_vldiv180 => 0
-                                  ,pr_vldiv360 => 0
-                                  ,pr_vldiv999 => 0
+                                  ,pr_vldiv060 => nvl(vr_vldiv060,0)
+                                  ,pr_vldiv180 => nvl(vr_vldiv180,0)
+                                  ,pr_vldiv360 => nvl(vr_vldiv360,0)
+                                  ,pr_vldiv999 => nvl(vr_vldiv999,0)
                                   ,pr_vlprjano => 0                            
                                   ,pr_vlprjaan => 0
                                   ,pr_inpessoa => rw_crapass.inpessoa                             
