@@ -352,7 +352,8 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0116 IS
           FETCH cr_crapqmd INTO rw_crapqmd;
           CLOSE cr_crapqmd;
           
-           vr_dsxml_recurso := '<recurso>'||
+           vr_dsxml_recurso := vr_dsxml_recurso ||
+                               '<recurso>'||
                                   '<dsrecurs><![CDATA[Quantidade de '||gene0007.fn_acento_xml(rw_recurso.dsrecurs)
                                             ||': '||nvl(rw_crapqmd.qtrecnes,0)||
                                   ']]></dsrecurs>'||                            
