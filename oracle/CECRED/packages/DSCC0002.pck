@@ -688,11 +688,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
       CURSOR cr_crapbdc (pr_cdcooper IN crapcop.cdcooper%TYPE
                         ,pr_nrdconta IN crapass.nrdconta%TYPE
                         ,pr_nrborder IN crapbdc.nrborder%TYPE) IS
-        SELECT dtmvtolt
-              ,nrdolote
-              ,cdagenci
-              ,cdbccxlt
+        SELECT bdc.dtmvtolt
+              ,bdc.nrdolote
+              ,bdc.cdagenci
+              ,bdc.cdbccxlt
               ,bdc.insitbdc
+							,bdc.cdoperad
           FROM crapbdc bdc
          WHERE bdc.cdcooper = pr_cdcooper
            AND bdc.nrdconta = pr_nrdconta
@@ -732,6 +733,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
           vr_dscritic := '';
           RAISE vr_exc_erro;
         END IF;
+				
+				-- Exclusão permitida somente para operações no IB
+				IF rw_crapbdc.cdoperad <> '996' THEN
+					vr_dscritic := 'Bordero incluso no PA. Não permitido exclusão.';
+					RAISE vr_exc_erro;
+				END IF;
         
         -- Exclui o resgitro
         BEGIN
