@@ -3869,6 +3869,9 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                     END.
                ELSE 
                     DO:
+                        /* Limpar variavel global */
+                        glb_nrdrecid = 0.
+                        
                         /*************************************************************************************
                          * Verifica se lançamento de devolução se refere a cheque de custodia/desconto e     *
                          * nesse caso grava a informação desse lançamento na glb_nrdrecid para que a         *
