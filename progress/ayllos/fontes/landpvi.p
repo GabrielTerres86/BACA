@@ -3977,10 +3977,8 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                         crapdev.nrctachq = crapfdc.nrctachq.
                                  
                                  /* Se glb_nrdrecid for diferente de zero quer dizer que encontrou craxlcm */
-                                 IF  glb_nrdrecid <> 0 THEN 
-                                     IF (craxlcm.nrdolote = 4500 OR 
-                                        craxlcm.nrdolote = 4501) THEN
-                                        crapdev.cdpesqui = craxlcm.cdpesqbb.
+                                 IF  glb_nrdrecid <> 0 AND AVAILABLE craxlcm THEN 
+                                     ASSIGN crapdev.cdpesqui = craxlcm.cdpesqbb.
                                      
                                  VALIDATE crapdev.
 
