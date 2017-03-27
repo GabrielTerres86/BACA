@@ -1670,7 +1670,9 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
                                  pr_ind_tipo_log => 2, --> erro tratado
                                  pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                     ' - PRGD0001.pc_envia_email_evento_local --> ' || pr_dscritic,
-                                 pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
+                                 pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'),
+                                 pr_dstiplog     => 'E',
+                                 pr_cdprograma   => vr_nomdojob);
     END pc_gera_log;
   
     --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
@@ -1680,7 +1682,6 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
       --> Controlar geração de log de execução dos jobs 
       BTCH0001.pc_log_exec_job( pr_cdcooper  => 3              --> Cooperativa
                                ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
-
                                ,pr_nomdojob  => vr_nomdojob    --> Nome do job
                                ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
                                ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
@@ -1889,9 +1890,6 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
             IF vr_dscritic IS NOT NULL THEN
               vr_dscritic := 'Não foi possivel enviar email sobre o evento '||rw_evento.cdevento||': '||vr_dscritic;
               pc_gera_log (pr_dscritic => vr_dscritic);
-
-              pc_controla_log_batch('E', vr_dscritic);
-
               vr_dscritic := NULL;
               continue;
             END IF;
@@ -1903,8 +1901,6 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
 
             vr_dscritic := 'Não foi possivel enviar email sobre o evento '||rw_evento.cdevento||': '||vr_dscritic;
             pc_gera_log (pr_dscritic => vr_dscritic);
-            
-            pc_controla_log_batch('E', vr_dscritic);
             
             vr_dscritic := NULL;
             continue; 
