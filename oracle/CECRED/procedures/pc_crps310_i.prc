@@ -15,7 +15,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Deborah/Margarete
-     Data    : Maio/2001                       Ultima atualizacao: 23/03/2017
+     Data    : Maio/2001                       Ultima atualizacao: 25/08/2016
      
      Dados referentes ao programa:
 
@@ -259,10 +259,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                               e nao mais da crapprm. (Jaison/James)
 
                  25/08/2016 - Ajustar calculo de prazo de vencido/vencimento dos borderos de cheque/titulo
-        				              SD488220 (Odirlei-AMcom)
-                              
-                 23/03/2017 - Ajustes PRJ343 - Cessão Cartão de Credito.
-                              (Odirlei-AMcom)
+				              SD488220 (Odirlei-AMcom)
 
   ............................................................................ */
 
@@ -627,19 +624,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
            AND dtvencto <= pr_rw_crapdat.dtmvtoan
          GROUP BY nrdconta
                  ,nrctremp;
-      
-      --> Buscar vencimentos daos emprestimos de cessao de cartao
-      CURSOR cr_cessao_carga IS
-        SELECT ces.nrdconta
-              ,ces.nrctremp
-              ,ces.dtvencto
-          FROM tbcrd_cessao_credito ces
-          JOIN crapepr epr
-            ON epr.cdcooper = ces.cdcooper
-           AND epr.nrdconta = ces.nrdconta
-           AND epr.nrctremp = ces.nrctremp
-         WHERE ces.cdcooper = 1
-           AND epr.inliquid = 0;
                                                  
       -------- Tipos e registros genéricos ------------
 
@@ -2230,18 +2214,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
              AND lem.nrctremp = pr_rw_crapepr.nrctremp
              AND lem.cdhistor IN (1037,1038)
              AND lem.dtmvtolt > pr_rw_crapdat.dtmvtolt - (pr_qtdiaatr - 59);       
-             
-        --> Buscar data de vencimento do emprestimo de cessao
-        CURSOR cr_cessao_vecto (pr_cdcooper crapepr.cdcooper%TYPE,
-                                pr_nrdconta crapepr.nrdconta%TYPE,
-                                pr_nrctremp crapepr.nrctremp%TYPE ) IS  
-          SELECT ces.dtvencto
-            FROM tbcrd_cessao_credito ces
-           WHERE ces.cdcooper = pr_cdcooper
-             AND ces.nrdconta = pr_nrdconta
-             AND ces.nrctremp = pr_nrctremp;
-         rw_cessao_vecto cr_cessao_vecto%ROWTYPE;
-         
+
       BEGIN
         -- Se existe informação na tabela de linhas de crédito cfme a linha do empréstimo
         IF vr_tab_craplcr.EXISTS(pr_rw_crapepr.cdlcremp) THEN
@@ -2488,22 +2461,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               END IF;              
             END IF;          
           END IF;
-          
-          --> Buscar data de vencimento do emprestimo de cessao
-          OPEN cr_cessao_vecto (pr_cdcooper => pr_cdcooper,
-                                pr_nrdconta => pr_rw_crapass.nrdconta,
-                                pr_nrctremp => pr_rw_crapepr.nrctremp );
-          FETCH cr_cessao_vecto INTO rw_cessao_vecto;
-          
-          IF cr_cessao_vecto%NOTFOUND THEN    
-            CLOSE cr_cessao_vecto;
-            -- Calcular diferença de dias entre a parcela e o dia atual
-            vr_diasvenc := rw_crappep.dtvencto - pr_rw_crapdat.dtmvtolt;
-          ELSE
-            -- Calcular diferença de dias entre a parcela e o dia atual
-            vr_diasvenc := rw_cessao_vecto.dtvencto - pr_rw_crapdat.dtmvtolt;
-          END IF;
-          
+        
+          -- Calcular diferença de dias entre a parcela e o dia atual
+          vr_diasvenc := rw_crappep.dtvencto - pr_rw_crapdat.dtmvtolt;
           -- Buscar o código do vencimento a lançar
           vr_cdvencto := fn_calc_codigo_vcto(pr_diasvenc => vr_diasvenc
                                             ,pr_qtdiapre => vr_diasvenc -- Enviar a mesma informaçao
@@ -3592,13 +3552,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         vr_idxpep := lpad(pr_cdcooper,5,'0')||lpad(rw_crappep_maior.nrdconta,10,'0')||lpad(rw_crappep_maior.nrctremp,10,'0');
         vr_tab_crappep_maior(vr_idxpep) := rw_crappep_maior.dtvencto;
       END LOOP;
-      
-      --> Buscar vencimentos daos emprestimos de cessao de cartao
-      FOR rw_cessao_carga IN cr_cessao_carga LOOP
-        vr_idxpep := lpad(pr_cdcooper,5,'0')||lpad(rw_cessao_carga.nrdconta,10,'0')||lpad(rw_cessao_carga.nrctremp,10,'0');
-        vr_tab_crappep_maior(vr_idxpep) := rw_cessao_carga.dtvencto;
-      END LOOP;
-      
       
       --> Carrega Temp-Table contendo as contas com risco soberano
  	    pc_cria_table_risco_soberano(pr_cdcooper                  => pr_cdcooper

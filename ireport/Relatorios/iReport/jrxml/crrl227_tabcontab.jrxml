@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="modrel234" language="groovy" pageWidth="842" pageHeight="700" orientation="Landscape" columnWidth="842" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.0"/>
-	<property name="ireport.x" value="0"/>
+	<property name="ireport.x" value="365"/>
 	<property name="ireport.y" value="0"/>
 	<parameter name="PR_NMRESCOP" class="java.lang.String">
 		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
@@ -37,9 +37,6 @@
 	<field name="vldivfis" class="java.lang.Double">
 		<fieldDescription><![CDATA[vldivfis]]></fieldDescription>
 	</field>
-	<field name="idcessao" class="java.lang.String">
-		<fieldDescription><![CDATA[idcessao]]></fieldDescription>
-	</field>
 	<variable name="tot_vlprovis" class="java.lang.Double" calculation="Sum">
 		<variableExpression><![CDATA[$F{vlprovis}]]></variableExpression>
 		<initialValueExpression><![CDATA[new Double(0)]]></initialValueExpression>
@@ -64,62 +61,6 @@
 		<variableExpression><![CDATA[$F{vldivjur}]]></variableExpression>
 		<initialValueExpression><![CDATA[new Double(0)]]></initialValueExpression>
 	</variable>
-	<group name="cessao">
-		<groupExpression><![CDATA[$F{idcessao}]]></groupExpression>
-		<groupFooter>
-			<band height="24">
-				<staticText>
-					<reportElement uuid="493de2ed-9389-4278-8915-dbc9a6954059" x="0" y="8" width="115" height="8"/>
-					<textElement textAlignment="Right">
-						<font fontName="Courier New" size="6"/>
-					</textElement>
-					<text><![CDATA[TOTAIS]]></text>
-				</staticText>
-				<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
-					<reportElement uuid="f79181b7-3045-4f06-a9d0-cd9e10c4f8ff" x="247" y="8" width="63" height="8"/>
-					<textElement textAlignment="Right">
-						<font fontName="Courier New" size="6"/>
-					</textElement>
-					<textFieldExpression><![CDATA[$V{tot_vlprovis}]]></textFieldExpression>
-				</textField>
-				<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
-					<reportElement uuid="f79181b7-3045-4f06-a9d0-cd9e10c4f8ff" x="471" y="8" width="63" height="8"/>
-					<textElement textAlignment="Right">
-						<font fontName="Courier New" size="6"/>
-					</textElement>
-					<textFieldExpression><![CDATA[$V{tot_vldivida}]]></textFieldExpression>
-				</textField>
-				<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
-					<reportElement uuid="f79181b7-3045-4f06-a9d0-cd9e10c4f8ff" x="184" y="8" width="63" height="8"/>
-					<textElement textAlignment="Right">
-						<font fontName="Courier New" size="6"/>
-					</textElement>
-					<textFieldExpression><![CDATA[$V{tot_vlprvjur}]]></textFieldExpression>
-				</textField>
-				<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
-					<reportElement uuid="f79181b7-3045-4f06-a9d0-cd9e10c4f8ff" x="121" y="8" width="63" height="8"/>
-					<textElement textAlignment="Right">
-						<font fontName="Courier New" size="6"/>
-					</textElement>
-					<textFieldExpression><![CDATA[$V{tot_vlprvfis}]]></textFieldExpression>
-				</textField>
-				<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
-					<reportElement uuid="f79181b7-3045-4f06-a9d0-cd9e10c4f8ff" x="408" y="8" width="63" height="8"/>
-					<textElement textAlignment="Right">
-						<font fontName="Courier New" size="6"/>
-					</textElement>
-					<textFieldExpression><![CDATA[$V{tot_vldivjur}]]></textFieldExpression>
-				</textField>
-				<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
-					<reportElement uuid="f79181b7-3045-4f06-a9d0-cd9e10c4f8ff" x="345" y="8" width="63" height="8"/>
-					<textElement textAlignment="Right">
-						<font fontName="Courier New" size="6"/>
-					</textElement>
-					<textFieldExpression><![CDATA[$V{tot_vldivfis}]]></textFieldExpression>
-				</textField>
-			</band>
-		</groupFooter>
-	</group>
 	<background>
 		<band splitType="Stretch"/>
 	</background>
@@ -292,4 +233,57 @@
 			</textField>
 		</band>
 	</detail>
+	<summary>
+		<band height="16">
+			<staticText>
+				<reportElement uuid="493de2ed-9389-4278-8915-dbc9a6954059" x="0" y="8" width="115" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<text><![CDATA[TOTAIS]]></text>
+			</staticText>
+			<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
+				<reportElement uuid="f79181b7-3045-4f06-a9d0-cd9e10c4f8ff" x="247" y="8" width="63" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$V{tot_vlprovis}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
+				<reportElement uuid="f79181b7-3045-4f06-a9d0-cd9e10c4f8ff" x="471" y="8" width="63" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$V{tot_vldivida}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
+				<reportElement uuid="f79181b7-3045-4f06-a9d0-cd9e10c4f8ff" x="184" y="8" width="63" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$V{tot_vlprvjur}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
+				<reportElement uuid="f79181b7-3045-4f06-a9d0-cd9e10c4f8ff" x="121" y="8" width="63" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$V{tot_vlprvfis}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
+				<reportElement uuid="f79181b7-3045-4f06-a9d0-cd9e10c4f8ff" x="408" y="8" width="63" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$V{tot_vldivjur}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
+				<reportElement uuid="f79181b7-3045-4f06-a9d0-cd9e10c4f8ff" x="345" y="8" width="63" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$V{tot_vldivfis}]]></textFieldExpression>
+			</textField>
+		</band>
+	</summary>
 </jasperReport>
