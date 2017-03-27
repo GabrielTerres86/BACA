@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl044" language="groovy" pageWidth="442" pageHeight="881" whenNoDataType="AllSectionsNoDetail" columnWidth="442" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.0"/>
-	<property name="ireport.x" value="0"/>
-	<property name="ireport.y" value="1392"/>
+	<property name="ireport.x" value="232"/>
+	<property name="ireport.y" value="187"/>
 	<subDataset name="dataset1" uuid="0695e938-6a20-48a5-9cc2-5c0937dbf294"/>
 	<parameter name="PR_NMRESCOP" class="java.lang.String">
 		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
@@ -421,7 +421,7 @@
 				<textElement>
 					<font fontName="Courier New" size="9" isUnderline="false"/>
 				</textElement>
-				<text><![CDATA[COTAS CAPITAL]]></text>
+				<text><![CDATA[RENDIMENTOS DE COTAS CAPITAL]]></text>
 			</staticText>
 			<textField>
 				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="353" y="321" width="57" height="11"/>
@@ -477,25 +477,18 @@
 				<text><![CDATA[SALDO EM]]></text>
 			</staticText>
 			<textField>
-				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="173" y="188" width="62" height="11"/>
-				<textElement textAlignment="Right">
-					<font fontName="Courier New" size="9"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$F{ant_vlttccap}]]></textFieldExpression>
-			</textField>
-			<textField>
 				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="269" y="188" width="62" height="11"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="9"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{sol_vlttccap}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{rel_vlrencot}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="353" y="188" width="57" height="11"/>
+				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="351" y="188" width="57" height="11"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="9"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{rel_vlrencot}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{rel_vlirfcot}]]></textFieldExpression>
 			</textField>
 			<staticText>
 				<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="0" y="344" width="428" height="11"/>
@@ -713,14 +706,14 @@
 				<textElement>
 					<font fontName="Courier New" size="9" isUnderline="false"/>
 				</textElement>
-				<text><![CDATA[IRRF SOBRE JUROS AO CAPITAL]]></text>
+				<text><![CDATA[COTAS CAPITAL]]></text>
 			</staticText>
 			<textField>
 				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="271" y="532" width="62" height="11"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="9"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{ant_vlirfcot}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{ant_vlttccap}]]></textFieldExpression>
 			</textField>
 			<textField>
 				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="353" y="521" width="62" height="11"/>
@@ -734,7 +727,7 @@
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="9"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{rel_vlirfcot}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{sol_vlttccap}]]></textFieldExpression>
 			</textField>
 			<textField>
 				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="0" y="510" width="206" height="11"/>
@@ -947,20 +940,13 @@
 				<text><![CDATA[MINISTERIO DA FAZENDA]]></text>
 			</staticText>
 			<staticText>
-				<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="351" y="155" width="62" height="11"/>
-				<textElement textAlignment="Center">
-					<font fontName="Courier New" size="9" isUnderline="false"/>
-				</textElement>
-				<text><![CDATA[RENDIMENTOS]]></text>
-			</staticText>
-			<staticText>
-				<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="271" y="155" width="62" height="11">
+				<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="271" y="166" width="62" height="11">
 					<printWhenExpression><![CDATA[new Boolean($F{sol_dtrefere}.trim().equals("") ? Boolean.FALSE : Boolean.TRUE)]]></printWhenExpression>
 				</reportElement>
 				<textElement textAlignment="Center">
 					<font fontName="Courier New" size="9" isUnderline="false"/>
 				</textElement>
-				<text><![CDATA[SALDO EM]]></text>
+				<text><![CDATA[RENDIMENTOS]]></text>
 			</staticText>
 			<staticText>
 				<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="0" y="177" width="428" height="11"/>
@@ -969,35 +955,12 @@
 				</textElement>
 				<text><![CDATA[--------------------------------------------------------------------------------------------------------]]></text>
 			</staticText>
-			<textField>
-				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="271" y="166" width="62" height="11"/>
-				<textElement textAlignment="Center">
-					<font fontName="Courier New" size="9"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$F{sol_dtrefere}]]></textFieldExpression>
-			</textField>
-			<textField>
-				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="175" y="166" width="62" height="11"/>
-				<textElement textAlignment="Center">
-					<font fontName="Courier New" size="9"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$F{ant_dtrefere}]]></textFieldExpression>
-			</textField>
 			<staticText>
-				<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="351" y="166" width="62" height="11"/>
-				<textElement textAlignment="Center">
+				<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="351" y="166" width="57" height="11"/>
+				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="9" isUnderline="false"/>
 				</textElement>
-				<text><![CDATA[LIQUIDOS]]></text>
-			</staticText>
-			<staticText>
-				<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="175" y="155" width="62" height="11">
-					<printWhenExpression><![CDATA[new Boolean($F{ant_dtrefere}.trim().equals("") ? Boolean.FALSE : Boolean.TRUE)]]></printWhenExpression>
-				</reportElement>
-				<textElement textAlignment="Center">
-					<font fontName="Courier New" size="9" isUnderline="false"/>
-				</textElement>
-				<text><![CDATA[SALDO EM]]></text>
+				<text><![CDATA[IRRF]]></text>
 			</staticText>
 			<staticText>
 				<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="0" y="166" width="84" height="11"/>
