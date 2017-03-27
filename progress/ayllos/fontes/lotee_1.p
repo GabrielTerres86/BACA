@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Outubro/91.                         Ultima atualizacao: 07/06/2016
+   Data    : Outubro/91.                         Ultima atualizacao: 14/02/2017
 
    Dados referentes ao programa:
 
@@ -185,7 +185,14 @@
                07/12/2015 - #367740 Criado o tratamento para o historico 1874 
                             assim como eh feito com o historico 1873 (Carlos)
 
-               07/06/2016 - Melhoria 195 folha pagamento (Tiago/Thiago).
+			   07/06/2016 - Melhoria 195 folha pagamento (Tiago/Thiago).
+
+               03/10/2016 - Incluido verificacao de acordos de contratos, Prj. 302
+                            (Jean Michel).
+
+               14/02/2017 - Alteracao para chamar pc_verifica_situacao_acordo. 
+                            (Jaison/James - PRJ302)
+
 ............................................................................. */
 
 { includes/var_online.i }
@@ -244,6 +251,8 @@ DEF VAR h-b1wgen0014          AS HANDLE                                   NO-UND
 DEF VAR h-b1wgen0043          AS HANDLE                                   NO-UNDO.
 DEF VAR h-b1wgen9998          AS HANDLE                                   NO-UNDO.
 
+DEF VAR aux_flgretativo       AS INTEGER                                  NO-UNDO.
+DEF VAR aux_flgretquitado     AS INTEGER                                  NO-UNDO.
 
 /*   Leitura da tabela de parametros para indentificar o Nro. da conta do
      tipo de registro 2   */
@@ -430,6 +439,7 @@ DO WHILE TRUE:
                      END.
             END.
 
+        
        IF   craplcm.cdhistor = 354   OR    /* credito cotas */
             craplcm.cdhistor = 451   OR    /* credito de estorno de cotas */
             craplcm.cdhistor = 275   OR    /* pagto emprestimo */
@@ -703,6 +713,59 @@ DO WHILE TRUE:
                                    RUN p_atualiza_dtdpagto(INPUT FALSE,
                                                            INPUT craplcm.vllanmto).
                                
+                         /* Verifica se ha contratos de acordo */            
+                        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                        
+                        RUN STORED-PROCEDURE pc_verifica_situacao_acordo
+                          aux_handproc = PROC-HANDLE NO-ERROR (INPUT glb_cdcooper    
+                                                              ,INPUT crapepr.nrdconta
+                                                              ,INPUT crapepr.nrctremp
+                                                              ,0 /* pr_flgretativo */
+                                                              ,0 /* pr_flgretquitado */
+                                                              ,0 /* pr_flgretcancelado */
+                                                              ,0
+                                                              ,"").
+
+                        CLOSE STORED-PROC pc_verifica_situacao_acordo
+                                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                        ASSIGN glb_cdcritic      = 0
+                               glb_dscritic      = ""
+                               glb_cdcritic      = pc_verifica_situacao_acordo.pr_cdcritic WHEN pc_verifica_situacao_acordo.pr_cdcritic <> ?
+                               glb_dscritic      = pc_verifica_situacao_acordo.pr_dscritic WHEN pc_verifica_situacao_acordo.pr_dscritic <> ?
+                               aux_flgretativo   = INT(pc_verifica_situacao_acordo.pr_flgretativo)
+                               aux_flgretquitado = INT(pc_verifica_situacao_acordo.pr_flgretquitado).
+                        
+                        IF glb_cdcritic > 0 THEN
+                          DO:
+                              RUN fontes/critic.p.
+                              BELL.
+                              MESSAGE glb_dscritic.
+                              ASSIGN glb_cdcritic = 0
+								     par_situacao = FALSE.
+                              LEAVE.
+                          END.
+                        ELSE IF glb_dscritic <> ? AND glb_dscritic <> "" THEN
+                          DO:
+                            MESSAGE glb_dscritic.
+                            ASSIGN glb_cdcritic = 0
+								   par_situacao = FALSE.
+                            LEAVE.
+                          END.
+                          
+                        /* Se estiver ATIVO ou QUITADO */
+                        IF aux_flgretativo = 1 OR aux_flgretquitado = 1 THEN
+                          DO:
+                            ASSIGN par_situacao = FALSE.
+                            MESSAGE "Nao e possivel excluir o lote, contem lancamentos de emprestimo em acordo.".
+                            PAUSE 3 NO-MESSAGE.
+                            LEAVE.
+                          END.            
+                        
+                        /* Fim verifica se ha contratos de acordo */   
+
                          FIND  craplem WHERE
                                craplem.cdcooper = glb_cdcooper       AND 
                                craplem.dtmvtolt = glb_dtmvtolt       AND
@@ -1513,7 +1576,7 @@ DO WHILE TRUE:
 									WHEN pc_excluir_lanaut.pr_dscritic <> ?.
 
 
-                IF  glb_dscritic = "" THEN
+                IF  glb_dscritic = "" OR glb_dscritic = ? THEN
 				    DO:
 
 						/* Buscar nome do supervisor */
@@ -1653,3 +1716,4 @@ PROCEDURE elimina_lancamentos_craplci_ted:
 END PROCEDURE.
 
 /* .......................................................................... */
+
