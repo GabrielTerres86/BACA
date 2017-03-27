@@ -14,6 +14,16 @@ CREATE OR REPLACE PACKAGE PROGRID.PRGD0001 IS
   --
   --        Alteracoes: 29/10/2015 - Incluido nova condicao na busca de Regionais,
   --                                 "AND reg.cddregio NOT IN (9,999)" (Jean Michel). 
+  --                                 
+  --                    19/10/2016 - Incluido chamada da pc_informa_acesso_progrid na
+  --                                 procedure pc_redir_acao_prgd para registro de LOG 
+  --                                 em qualquer acesso as rotinas (Jean Michel)
+  --
+  --                    29/11/2016 - P341 - Automatização BACENJUD - Alterado para validar 
+  --                                 o departamento à partir do código e não mais pela 
+  --                                 descrição (Renato Darosci - Supero)
+  --
+  --                    06/03/2017 - Inclusao da procedure pc_lista_pa_ead (Jean Michel)
   ---------------------------------------------------------------------------------------------------------------
 
   -- Procedure que será a interface entre o Oracle e sistema Web
@@ -74,7 +84,7 @@ CREATE OR REPLACE PACKAGE PROGRID.PRGD0001 IS
                               ,
                                pr_des_erro OUT VARCHAR2); --> Descricao do Erro
 
-  -- Procedure para listar as cooperativas do sistema
+  -- Procedure para listar os PA's
   PROCEDURE pc_lista_pa(pr_cdcooper IN VARCHAR2 --> Codigo da Cooperativa
                        ,pr_cddregio IN crapreg.cddregio%TYPE --> Codigo da Regional      
                        ,pr_cdagenci IN crapage.cdagenci%TYPE --> Codigo do PA
@@ -84,6 +94,16 @@ CREATE OR REPLACE PACKAGE PROGRID.PRGD0001 IS
                        ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
                        ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
                        ,pr_des_erro OUT VARCHAR2); --> Descricao do Erro
+
+  /* Procedure para listar os PA's de EAD */
+  PROCEDURE pc_lista_pa_ead(pr_cdcooper IN VARCHAR2              --> Codigo da Cooperativa
+                           ,pr_dtanoage IN crapadp.dtanoage%TYPE --> Ano da agenda informado
+                           ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                           ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                           ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                           ,pr_retxml   IN OUT NOCOPY xmltype    --> Arquivo de retorno do XML
+                           ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                           ,pr_des_erro OUT VARCHAR2);           --> Descricao do Erro 
 
   /* Procedure para listar os eixos do sistema */
   PROCEDURE pc_lista_eixo(pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo da Cooperativa
@@ -116,11 +136,11 @@ CREATE OR REPLACE PACKAGE PROGRID.PRGD0001 IS
                            ,pr_retxml   IN OUT NOCOPY xmltype    --> Arquivo de retorno do XML
                            ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                            ,pr_des_erro OUT VARCHAR2);           --> Descricao do Erro    
-                           
-  /* Procedure Envio Email de Evento sem Local */
-  --PROCEDURE pc_envia_email_evento_local(pr_dscritic OUT VARCHAR2);                                                                     
+                          
+  --> Rotina de envio de email de eventos sem local de realização
+  PROCEDURE pc_envia_email_evento_local(pr_dscritic OUT VARCHAR2);                        
   
-  /* Procedure para retornar data base da agenda da cooperativa */
+  --> Procedure para retornar data base da agenda da cooperativa
   PROCEDURE pc_retanoage(pr_cdcooper IN VARCHAR2     --> Codigo da Cooperativa
                         ,pr_idevento IN VARCHAR2     --> Ide do evento
                         ,pr_dtanoage IN VARCHAR2     --> Ano agenda
@@ -130,9 +150,24 @@ CREATE OR REPLACE PACKAGE PROGRID.PRGD0001 IS
                         ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
                         ,pr_nmdcampo OUT VARCHAR2    --> Nome do campo com erro
                         ,pr_des_erro OUT VARCHAR2);  --> Descricao do Erro
-                        
-  --> Rotina de envio de email de eventos sem local de realização
-  PROCEDURE pc_envia_email_evento_local(pr_dscritic OUT VARCHAR2);                        
+                   
+  --> Informação do modulo em execução na sessão do Progrid
+  PROCEDURE pc_informa_acesso_progrid(pr_module IN VARCHAR2
+                                     ,pr_action IN VARCHAR2 DEFAULT NULL);                             
+      
+  --> Validacao de data
+  PROCEDURE pc_valida_data(pr_idevento IN crapidp.idevento%TYPE --> Indicador do Evento(1-Progrid/2-Assembleia)
+                          ,pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo da Cooperativa
+                          ,pr_dtanoage IN crapadp.dtanoage%TYPE --> Data do ano da agenda
+                          ,pr_cdagenci IN crapage.cdagenci%TYPE --> Codigo da Agencia
+                          ,pr_cdoperad IN crapope.cdoperad%TYPE --> Codigo do Operador
+                          ,pr_dtvalida IN VARCHAR2              --> Data para Validar
+                          ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                          ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                          ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                          ,pr_retxml   IN OUT NOCOPY xmltype    --> Arquivo de retorno do XML
+                          ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                          ,pr_des_erro OUT VARCHAR2);           --> Descricao do Erro                   
 END PRGD0001;
 /
 CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
@@ -142,7 +177,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
   --  Sistema  : Rotinas de tratamento e interface para intercambio de dados com sistema Web PROGRID
   --  Sigla    : PRGD0001
   --  Autor    : Jean Michel
-  --  Data     : Agosto/2015.                   Ultima atualizacao: 29/10/2015
+  --  Data     : Agosto/2015.                   Ultima atualizacao: 24/03/2017
   --
   --  Dados referentes ao programa:
   --
@@ -166,6 +201,19 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
   --        Alteracoes: 29/10/2015 - Incluido nova condicao na busca de Regionais,
   --                                 "AND reg.cddregio NOT IN (9,999)" (Jean Michel).
   --
+  --                    19/10/2016 - Incluido chamada da pc_informa_acesso_progrid na
+  --                                 procedure pc_redir_acao_prgd para registro de LOG 
+  --                                 em qualquer acesso as rotinas (Jean Michel)
+  --
+  --                    29/11/2016 - P341 - Automatização BACENJUD - Alterado para validar 
+  --                                 o departamento à partir do código e não mais pela 
+  --                                 descrição (Renato Darosci - Supero)
+  --
+  --                    06/03/2017 - Inclusao da procedure pc_lista_pa_ead (Jean Michel)
+  --
+  --                    24/03/2017 - #551231 Padronização do nome do job e inclusão dos logs
+  --                                 de controle de início, erro e fim de execução na rotina 
+  --                                 pc_envia_email_evento_local (Carlos)
   ---------------------------------------------------------------------------------------------------------------
 
   -- Procedure para validar ID do cookie da sessao
@@ -232,7 +280,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
       -- Consulta registro de sessao aberta
       OPEN cr_gnapses(pr_cdcooper => pr_cdcooper,
                       pr_cdoperad => pr_cdoperad,
-                      pr_dtmvtolt => to_date(SYSDATE, 'dd/mm/RRRR'),
+                      pr_dtmvtolt => TRUNC(SYSDATE),
                       pr_idcokses => pr_idcokses);
     
       FETCH cr_gnapses
@@ -262,7 +310,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
                                          ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Código do operador
                                          ,pr_idsistem IN craptel.idsistem%TYPE  --> Identificador do sistema
                                          ,pr_nmdatela IN craptel.nmdatela%TYPE  --> Nome da tela
-                                         ,pr_dsdepart OUT crapope.dsdepart%TYPE --> Descrição do departamento
+                                         ,pr_cddepart OUT crapope.cddepart%TYPE --> Descrição do departamento
                                          ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Código de retorno
                                          ,pr_dscritic OUT VARCHAR2) IS          --> Descrição do retorno
     -- ..........................................................................
@@ -271,14 +319,14 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
     --  Sistema  : Rotinas de tratamento e interface para intercambio de dados com sistema Web
     --  Sigla    : GENE
     --  Autor    : Petter R. Villa Real  - Supero
-    --  Data     : Maio/2014.                   Ultima atualizacao:
+    --  Data     : Maio/2014.                   Ultima atualizacao: 06/12/2016
     --
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Valida permissão para os objetos envolvidos na execução.
     --
-    --   Alteracoes:
+    --   Alteracoes: 06/12/2016 - Retirado controle de arquivo do processo batch, Prj. 229 (Jean Michel)
     -- .............................................................................
   BEGIN
     DECLARE
@@ -299,7 +347,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
       CURSOR cr_crapope(pr_cdcooper IN crapope.cdcooper%TYPE --> Código da cooperativa
                        ,
                         pr_cdoperad IN crapope.cdoperad%TYPE) IS --> Código do operador
-        SELECT pe.dsdepart
+        SELECT pe.cddepart
           FROM crapope pe
          WHERE pe.cdcooper = pr_cdcooper
            AND upper(pe.cdoperad) = upper(pr_cdoperad);
@@ -353,7 +401,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
         RAISE vr_exc_saida;
       ELSE
-        pr_dsdepart := rw_crapope.dsdepart;
+        pr_cddepart := rw_crapope.cddepart;
         CLOSE cr_crapope;
       END IF;
     
@@ -386,50 +434,10 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
         CLOSE cr_crapprg;
       END IF;
     
-       /* Pega o caminho absoluto */
-      vr_dsdircop:= gene0001.fn_diretorio (pr_tpdireto => 'C' --> Usr/Coop
-                                          ,pr_cdcooper => rw_crapcop.cdcooper);
-                             
-      -- Verifica se encontrou o caminho
-      IF vr_dsdircop IS NULL THEN
-        pr_dscritic := 'Caminho invalido.';
-        RAISE vr_exc_saida;
-      END IF;
-                     
-      -- Monta caminho para localizar restrição de uso
-      gene0001.pc_lista_arquivos(pr_path => vr_dsdircop || '/arquivos'
-                                ,pr_pesq => 'cred_bloq'
-                                ,pr_listarq => vr_arquivo
-                                ,pr_des_erro => pr_dscritic);
-    
-      -- Verifica se ocorreram erros ao pesquisar por arquivo
-      IF pr_dscritic IS NOT NULL THEN
-        pr_cdcritic := 999;
-        RAISE vr_exc_saida;
-      END IF;
-    
-      -- Pesquisar pasta por arquivo de liberação
-      gene0001.pc_lista_arquivos(pr_path     => vr_dsdircop || '/arquivos'
-                                ,pr_pesq     => 'so_consulta'
-                                ,pr_listarq  => vr_arquivo_so
-                                ,pr_des_erro => pr_dscritic);
-    
-      -- Verifica se ocorreram erros ao pesquisar por arquivo
-      IF pr_dscritic IS NOT NULL THEN
-        pr_cdcritic := 999;
-        RAISE vr_exc_saida;
-      END IF;
-    
-      -- Verifica se existe arquivo para controle de bloqueio
-      IF vr_arquivo IS NOT NULL THEN
-        pr_cdcritic := 999;
-        pr_dscritic := 'Sistema Bloqueado. Tente mais tarde!!!';
-        RAISE vr_exc_saida;
-      END IF;
-    
       -- Se não gerar consistência limpa críticas
       pr_dscritic := NULL;
       pr_cdcritic := 0;
+
     EXCEPTION
       WHEN vr_exc_saida THEN
         pr_dscritic := 'Erro em PRGD0001.PC_VALIDA_ACESSO_SISTEMA_PRGD. Erro: ' || pr_dscritic;
@@ -464,7 +472,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
   BEGIN
     DECLARE
       vr_exc_saida EXCEPTION; --> Controle de erros
-      vr_dsdepart crapope.dsdepart%TYPE; --> Descrição do departamento
+      vr_cddepart crapope.cddepart%TYPE; --> Descrição do departamento
       vr_dscritic VARCHAR2(4000);
       vr_cdcritic crapcri.cdcritic%TYPE;
     
@@ -476,9 +484,10 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
         SELECT ce.nmdatela
           FROM crapace ce
          WHERE ce.cdcooper = pr_cdcooper
-           AND upper(ce.cdoperad) = upper(pr_cdoperad)
-           AND upper(ce.nmdatela) = upper(pr_nmdatela)
-           AND ce.cddopcao = pr_cddopcao
+           AND UPPER(ce.cdoperad) = UPPER(pr_cdoperad)
+           AND UPPER(ce.nmdatela) = UPPER(pr_nmdatela)
+           AND UPPER(ce.cddopcao) = UPPER(pr_cddopcao)
+           AND UPPER(ce.nmrotina) IN('PROGRID','ASSEMBLEIA')
            AND ce.idambace = 3;
     
       vr_nmdatela crapace.nmdatela%TYPE;
@@ -490,7 +499,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
                                    ,pr_cdoperad => pr_cdoperad
                                    ,pr_idsistem => pr_idsistem
                                    ,pr_nmdatela => pr_nmdatela
-                                   ,pr_dsdepart => vr_dsdepart
+                                   ,pr_cddepart => vr_cddepart
                                    ,pr_cdcritic => vr_cdcritic
                                    ,pr_dscritic => vr_dscritic);
     
@@ -500,7 +509,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
       END IF;
     
       -- Verifica qual é o departamento de operação
-      IF vr_dsdepart <> 'TI' THEN
+      IF vr_cddepart <> 20 THEN
         -- Verifica as permissões de execução no cadastro
         OPEN cr_crapace(pr_cdcooper, pr_cdoperad, pr_nmdatela, pr_cddopcao);
         FETCH cr_crapace
@@ -568,7 +577,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
         CLOSE btch0001.cr_crapdat;
       END IF;
     
-      IF gene0007.fn_valor_tag(pr_xml => pr_xml, pr_pos_exc => 0, pr_nomtag  => 'nmdeacao') NOT IN('LISTA_COOPER','LISTA_REGIONAIS','LISTA_PA') THEN
+      IF gene0007.fn_valor_tag(pr_xml => pr_xml, pr_pos_exc => 0, pr_nomtag  => 'nmdeacao') NOT IN('LISTA_COOPER','LISTA_REGIONAIS','LISTA_PA','LISTA_PA_EAD') THEN
         -- Valida permissão de execução
         pc_verifica_permis_oper_prgd(pr_cdcooper => gene0007.fn_valor_tag(pr_xml => pr_xml, pr_pos_exc => 0, pr_nomtag  => 'cdcooper')
                                     ,pr_cdoperad => gene0007.fn_valor_tag(pr_xml => pr_xml, pr_pos_exc => 0, pr_nomtag  => 'cdoperad')
@@ -678,7 +687,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
     --  Sistema  : Rotinas de tratamento e interface para intercambio de dados com sistema Web
     --  Sigla    : GENE
     --  Autor    : Petter R. Villa Real  - Supero
-    --  Data     : Maio/2013.                   Ultima atualizacao: 03/03/2015
+    --  Data     : Maio/2013.                   Ultima atualizacao: 19/10/2016
     --
     --  Dados referentes ao programa:
     --
@@ -691,6 +700,9 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
     --                            do tipo varchar2 (Tiago).                                       
     --
     --               09/12/2015 - Inclusao das acoes de listagem de eixo,tema,evento (Carlos Rafael Tanholi).                               
+    --
+    --               19/10/2016 - Incluido chamada da pc_informa_acesso_progrid para registro de LOG
+    --                            (Jean Michel) 
     -- .............................................................................
   BEGIN
     DECLARE
@@ -777,8 +789,9 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
         RAISE vr_exc_null;
       END IF;
     
-      IF vr_nmdeacao IN ('LISTA_PA', 'LISTA_REGIONAIS', 'LISTA_COOPER', 'LISTA_EIXO',
-                         'LISTA_TEMA', 'LISTA_EVENTO','RETANOAGE') THEN
+      IF vr_nmdeacao IN ('LISTA_PA','LISTA_PA_EAD', 'LISTA_REGIONAIS', 'LISTA_COOPER', 'LISTA_EIXO',
+                         'LISTA_TEMA', 'LISTA_EVENTO','RETANOAGE','LISTA_FORNECEDORES',
+                         'VALIDA_DATA') THEN
         vr_nmdatela := 'GENERICO';
       END IF;
     
@@ -796,6 +809,11 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
     
       vr_sql := vr_sql || rw_craprdr.nmproced || '(';
     
+      pc_informa_acesso_progrid(pr_module => vr_nmdatela || '|' || vr_cdcooper || '|' ||
+                                             vr_cdoperad || '|' || vr_nmdeacao || '|'
+                                            ||vr_idsistem || '|' || vr_cddopcao
+                               ,pr_action => rw_craprdr.nmpackag || '.' || rw_craprdr.nmproced);
+
       -- Verifica se existem parâmetros adicionais criados
       IF rw_craprdr.lstparam IS NOT NULL THEN
         -- Quebra a string de parametros
@@ -1172,7 +1190,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
     --  Sistema  : Rotinas para listar os pa's do sistema por cooperativa ou regional
     --  Sigla    : GENE
     --  Autor    : Jean Michel
-    --  Data     : Julho/2015.                   Ultima atualizacao: --/--/----
+    --  Data     : Julho/2015.                   Ultima atualizacao: 02/08/2016
     --
     --  Dados referentes ao programa:
     --
@@ -1184,6 +1202,9 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
     --
     --              Conforme solicitacao do Marcio implementei a consistencia para o carregamento de agencias
     --              com a flag de habilitadas para o PROGRID igual a 1 (Carlos Rafael Tanholi - 17/12/2015)
+    --
+    --              02/08/2016 - Inclusao insitage 3-Temporariamente Indisponivel. (Jaison/Anderson)
+    --
     -- .............................................................................
   BEGIN
     DECLARE
@@ -1197,7 +1218,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
            AND (age.cdagenci = pr_cdagenci OR pr_cdagenci = 0)
            AND age.cdagenci NOT IN (90, 91)
            AND age.flgdopgd = 1
-           AND age.insitage = 1
+           AND age.insitage IN (1,3) -- 1-Ativo ou 3-Temporariamente Indisponivel
          ORDER BY age.nmresage;
     
       rw_crapage cr_crapage%ROWTYPE;
@@ -1237,6 +1258,75 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
     END;
   END pc_lista_pa;
 
+  /* Procedure para listar os PA's de EAD */
+  PROCEDURE pc_lista_pa_ead(pr_cdcooper IN VARCHAR2              --> Codigo da Cooperativa
+                           ,pr_dtanoage IN crapadp.dtanoage%TYPE --> Ano da agenda informado
+                           ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                           ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                           ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                           ,pr_retxml   IN OUT NOCOPY xmltype    --> Arquivo de retorno do XML
+                           ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                           ,pr_des_erro OUT VARCHAR2) IS         --> Descricao do Erro
+    -- ..........................................................................
+    --
+    --  Programa : pc_lista_pa_ead
+    --  Sistema  : Rotinas para listar os pa's de eventos EAD
+    --  Sigla    : GENE
+    --  Autor    : Jean Michel
+    --  Data     : Março/2017.                   Ultima atualizacao:
+    --
+    --  Dados referentes ao programa:
+    --
+    --  Frequencia: Sempre que for chamado
+    --  Objetivo  : Retornar a lista de pa's de eventos EAD.
+    --
+    --  Alteracoes:
+    --
+    -- .............................................................................
+  BEGIN
+    DECLARE
+    
+      -- Cursores
+      CURSOR cr_crapage(pr_cdcooper IN crapcop.cdcooper%TYPE
+                       ,pr_dtanoage IN crapidp.dtanoage%TYPE) IS
+
+        SELECT DISTINCT c.cdagenci,ca.nmresage
+          FROM crapidp c
+              ,crapage ca
+         WHERE c.dtanoage = pr_dtanoage
+           AND c.cdcooper = pr_cdcooper
+           AND c.cdevento >= 50000 -- Eventos EAD
+           AND ca.cdcooper = c.cdcooper
+           AND ca.cdagenci = c.cdagenci
+      ORDER BY 2;
+    
+      rw_crapage cr_crapage%ROWTYPE;
+    
+      -- Variaveis locais
+      vr_contador INTEGER := 0;
+    
+      -- Variaveis de critica
+      vr_dscritic crapcri.dscritic%TYPE;
+    
+    BEGIN
+    
+      FOR rw_crapage IN cr_crapage(pr_cdcooper => pr_cdcooper
+                                  ,pr_dtanoage => pr_dtanoage) LOOP
+      
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'cdagenci', pr_tag_cont => rw_crapage.cdagenci, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nmresage', pr_tag_cont => rw_crapage.nmresage, pr_des_erro => vr_dscritic);
+        vr_contador := vr_contador + 1;
+      
+      END LOOP;
+        
+    EXCEPTION
+      WHEN OTHERS THEN
+        pr_cdcritic := 0;
+        pr_des_erro := 'Erro geral em PRGD0001.PC_LISTA_PA_EAD: ' || SQLERRM;
+        pr_dscritic := 'Erro geral em PRGD0001.PC_LISTA_PA_EAD: ' || SQLERRM;
+    END;
+  END pc_lista_pa_ead;
 
   /* Procedure para listar os eixos do sistema */
   PROCEDURE pc_lista_eixo(pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo da Cooperativa
@@ -1298,8 +1388,6 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
     END;
 
   END pc_lista_eixo;
-
-
 
   /* Procedure para listar os temas do sistema */
   PROCEDURE pc_lista_tema(pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo da Cooperativa
@@ -1364,8 +1452,6 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
 
   END pc_lista_tema;
 
-
-
   /* Procedure para listar os eventos do sistema */
   PROCEDURE pc_lista_evento(pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo da Cooperativa
                            ,pr_cdagenci IN VARCHAR2            	 --> Codigo da Agencia (PA)    
@@ -1408,7 +1494,6 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
         
       rw_crapedp cr_crapedp%ROWTYPE;
       
-      
       -- Cursor sobre os eventos da agenda 
       CURSOR cr_crapedp_age IS
       SELECT DISTINCT edp.cdevento, edp.nmevento
@@ -1435,7 +1520,6 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
        ORDER BY edp.nmevento;
         
       rw_crapedp_coop_age cr_crapedp_coop_age%ROWTYPE;   
-      
       
       -- Variaveis locais
       vr_contador INTEGER := 0;
@@ -1501,7 +1585,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
     END;
 
   END pc_lista_evento;
-  
+    
   --> Rotina de envio de email de eventos sem local de realização
   PROCEDURE pc_envia_email_evento_local(pr_dscritic OUT VARCHAR2)  IS
     -- ..........................................................................
@@ -1518,9 +1602,6 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
     --  Objetivo  : Procedure envio de email de eventos sem local de realização
     --
     --  Alteracoes: 
-    --              
-    --
-    --              
     --              
     -- .............................................................................
 
@@ -1571,15 +1652,16 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
 
     -- Variável de críticas
     vr_dscritic      VARCHAR2(10000);
-
-    -- Tratamento de erros
-    vr_exc_saida     EXCEPTION;
     
     -- Variaveis gerais
     vr_dstexto  VARCHAR2(5000); --> Texto que sera enviado no email
     vr_emaildst VARCHAR2(400);  --> Endereco do e-mail de destino
     vr_assunto  VARCHAR2(200);  --> Assunto do email
     vr_dscorpo  VARCHAR2(5000); --> Corpo que sera enviado no email  
+
+    vr_cdprogra  CONSTANT crapprg.cdprogra%TYPE := 'pc_envia_email_evento_local';
+    vr_nomdojob  CONSTANT VARCHAR2(50)          := 'jbpgd_email_evento';
+    vr_flgerlog  BOOLEAN := FALSE; 
   
     -- Gerar log
     PROCEDURE pc_gera_log (pr_dscritic IN VARCHAR2) IS
@@ -1591,7 +1673,24 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
                                  pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
     END pc_gera_log;
   
+    --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
+    PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
+                                    pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
+    BEGIN
+      --> Controlar geração de log de execução dos jobs 
+      BTCH0001.pc_log_exec_job( pr_cdcooper  => 3              --> Cooperativa
+                               ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
+
+                               ,pr_nomdojob  => vr_nomdojob    --> Nome do job
+                               ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
+                               ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
+                               ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
+    END pc_controla_log_batch;
+  
   BEGIN
+
+    -- Início de execução do programa
+    pc_controla_log_batch('I');
 
     -------------------------------------------------------------
     -- Esta Rotina deverá ser executada a 01:00 horas da manha --
@@ -1653,6 +1752,9 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
           END IF;  
         EXCEPTION
           WHEN OTHERS THEN
+            
+            cecred.pc_internal_exception(3);
+          
             vr_dscritic := 'Não foi possivel enviar email sobre o evento '||rw_evento.cdevento||': '||vr_dscritic;
             pc_gera_log (pr_dscritic => vr_dscritic);
             vr_dscritic := NULL;
@@ -1722,6 +1824,9 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
           END IF;
         EXCEPTION
           WHEN OTHERS THEN
+
+            cecred.pc_internal_exception(3);
+
             vr_dscritic := 'Não foi possivel enviar email sobre o evento '||rw_evento.cdevento||': '||vr_dscritic;
             pc_gera_log (pr_dscritic => vr_dscritic);
             vr_dscritic := NULL;
@@ -1784,14 +1889,23 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
             IF vr_dscritic IS NOT NULL THEN
               vr_dscritic := 'Não foi possivel enviar email sobre o evento '||rw_evento.cdevento||': '||vr_dscritic;
               pc_gera_log (pr_dscritic => vr_dscritic);
+
+              pc_controla_log_batch('E', vr_dscritic);
+
               vr_dscritic := NULL;
               continue;
             END IF;
           END IF;  
         EXCEPTION
           WHEN OTHERS THEN
+
+            cecred.pc_internal_exception(3);
+
             vr_dscritic := 'Não foi possivel enviar email sobre o evento '||rw_evento.cdevento||': '||vr_dscritic;
             pc_gera_log (pr_dscritic => vr_dscritic);
+            
+            pc_controla_log_batch('E', vr_dscritic);
+            
             vr_dscritic := NULL;
             continue; 
         END;
@@ -1800,18 +1914,23 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
     END LOOP;
     
     COMMIT;
-      
+    
+    -- Log de final de execução do job
+    pc_controla_log_batch('F');
+    
   EXCEPTION
-    WHEN vr_exc_saida THEN
-      -- Atualiza variavel de retorno
-      pr_dscritic := vr_dscritic;
-      pc_gera_log (pr_dscritic => vr_dscritic);
     WHEN OTHERS THEN
+      
+      cecred.pc_internal_exception(3);
+
       -- Efetuar retorno do erro não tratado
       pr_dscritic := sqlerrm;
-      pc_gera_log (pr_dscritic => vr_dscritic);    
+      pc_gera_log (pr_dscritic => vr_dscritic);
+      
+      pc_controla_log_batch('E', vr_dscritic);
+      
   END pc_envia_email_evento_local;
-  ----------------*/
+
 
   /* Procedure para retornar data base da agenda da cooperativa */
   PROCEDURE pc_retanoage(pr_cdcooper IN VARCHAR2     --> Codigo da Cooperativa
@@ -1836,7 +1955,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
     --  Frequencia: Sempre que for chamado
     --  Objetivo  : Procedure para retornar data base da agenda da cooperativa
     --
-    --  Alteracoes: 
+    --  Alteracoes: 13/03/2017 - Ajustes Prj. 229-5 (Jean Michel).
     --              
     --
     --              
@@ -1847,16 +1966,16 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
     --> Buscar agenda da cooperativa
     CURSOR cr_gnpapgd IS
       SELECT /*+index_desc (gnpapgd GNPAPGD##GNPAPGD1 )*/
-             dtanonov,
-             dtanoage
+             MAX(dtanonov) AS dtanonov,
+             MAX(dtanoage) AS dtanoage,
+             DECODE(pr_cdcooper,99,99,cdcooper) AS cdcooper
         FROM gnpapgd 
        WHERE gnpapgd.idevento = pr_idevento
-         AND gnpapgd.cdcooper = pr_cdcooper     
+         AND (gnpapgd.cdcooper = pr_cdcooper OR pr_cdcooper = 99)    
          AND ( pr_dtanoage IS NULL OR
               (pr_dtanoage IS NOT NULL AND 
                gnpapgd.dtanonov = pr_dtanoage)
-             )
-             ;
+             ) GROUP BY DECODE(pr_cdcooper,99,99,cdcooper);
     
     rw_gnpapgd cr_gnpapgd%ROWTYPE;    
     
@@ -1893,5 +2012,212 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
 
   END pc_retanoage;
 
+	/* Informação do modulo em execução na sessão */
+	PROCEDURE pc_informa_acesso_progrid(pr_module IN VARCHAR2
+																		 ,pr_action IN VARCHAR2 DEFAULT NULL) IS
+	BEGIN
+		CECRED.GENE0001.pc_informa_acesso(pr_module => pr_module
+																		 ,pr_action => pr_action);
+
+		EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_DATE_FORMAT = ''DD/MM/YYYY''';
+		EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_NUMERIC_CHARACTERS = ''.,''';
+
+	END pc_informa_acesso_progrid;
+
+  /* Procedure para validar data informada */
+  PROCEDURE pc_valida_data(pr_idevento IN crapidp.idevento%TYPE --> Indicador do Evento(1-Progrid/2-Assembleia)
+                          ,pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo da Cooperativa
+                          ,pr_dtanoage IN crapadp.dtanoage%TYPE --> Data do ano da agenda
+                          ,pr_cdagenci IN crapage.cdagenci%TYPE --> Codigo da Agencia
+                          ,pr_cdoperad IN crapope.cdoperad%TYPE --> Codigo do Operador
+                          ,pr_dtvalida IN VARCHAR2              --> Data para Validar
+                          ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                          ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                          ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                          ,pr_retxml   IN OUT NOCOPY xmltype    --> Arquivo de retorno do XML
+                          ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                          ,pr_des_erro OUT VARCHAR2) IS         --> Descricao do Erro
+    -- ..........................................................................
+    --
+    --  Programa : pc_valida_data
+    --  Sistema  : Rotinas gerais
+    --  Sigla    : GENE
+    --  Autor    : Jean Michel
+    --  Data     : Janeiro/2017.                   Ultima atualizacao: --/--/----
+    --
+    --  Dados referentes ao programa:
+    --
+    --  Frequencia: Sempre que for chamado
+    --  Objetivo  : Procedure para validar se data informada é feriado, pré ou pós feriado 
+    --              ou fim de semana
+    --
+    --  Alteracoes: 
+    --
+    -- .............................................................................
+    
+    -- Cursores
+    -- Buscar Feriados Nacionais
+    CURSOR cr_crapfer(pr_cdcooper crapfer.cdcooper%TYPE
+                     ,pr_dtvalida crapfer.dtferiad%TYPE) IS
+      SELECT fer.dtferiad
+        FROM crapfer fer
+       WHERE fer.cdcooper = pr_cdcooper
+         AND fer.dtferiad = pr_dtvalida;
+
+    rw_crapfer cr_crapfer%ROWTYPE;
+    
+    -- Feriado Municipal
+    CURSOR cr_crapfsf(pr_cdcidade crapfsf.cdcidade%TYPE
+                     ,pr_dtvalida crapfsf.dtferiad%TYPE) IS
+      SELECT fsf.dtferiad
+        FROM crapfsf fsf
+       WHERE fsf.cdcidade = pr_cdcidade
+         AND fsf.dtferiad = pr_dtvalida;
+
+    rw_crapfsf cr_crapfsf%ROWTYPE;
+
+    -- Codigo da Cidade do PA
+    CURSOR cr_crapagb(pr_cdcooper crapcop.cdcooper%TYPE
+                     ,pr_cdagenci crapage.cdagenci%TYPE) IS
+
+      SELECT agb.cdcidade
+        FROM crapcop cop
+            ,crapban ban
+            ,crapage age
+            ,crapagb agb
+       WHERE cop.cdcooper = pr_cdcooper
+         AND age.cdagenci = pr_cdagenci
+         AND age.cdcooper = cop.cdcooper
+         AND ban.cdbccxlt = cop.cdbcoctl
+         AND agb.cddbanco = ban.cdbccxlt
+         AND agb.cdageban = age.cdagepac;        
+
+    rw_crapagb cr_crapagb%ROWTYPE;
+     
+    -- Variaveis de critica
+    vr_cdcritic crapcri.cdcritic%TYPE := 0;
+    vr_dscritic crapcri.dscritic%TYPE := '';    
+    vr_exc_erro EXCEPTION;
+
+    -- Variaveis Locais
+    vr_cdcidade crapagb.cdcidade%TYPE := 0; -- Codigo da Cidade
+
+  BEGIN
+    
+    -- Consulta de codigo de cidade 
+    OPEN cr_crapagb(pr_cdcooper => pr_cdcooper
+                   ,pr_cdagenci => pr_cdagenci);
+
+    FETCH cr_crapagb INTO rw_crapagb;
+
+    IF cr_crapagb%NOTFOUND THEN
+      CLOSE cr_crapagb;
+      vr_dscritic := 'Cidade não cadastrada.';
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_crapagb;
+      vr_cdcidade := rw_crapagb.cdcidade;
+    END IF;
+
+    -- Feriado Nacional
+    OPEN cr_crapfer(pr_cdcooper => pr_cdcooper
+                   ,pr_dtvalida => TO_DATE(pr_dtvalida,'dd/mm/RRRR'));
+
+    FETCH cr_crapfer INTO rw_crapfer;
+
+    IF cr_crapfer%NOTFOUND THEN      
+      CLOSE cr_crapfer;
+    ELSE
+      CLOSE cr_crapfer;
+      vr_dscritic := 'Data do evento é feriado nacional.';
+    END IF;
+
+    -- Feriado Municipal
+    OPEN cr_crapfsf(pr_cdcidade => vr_cdcidade
+                   ,pr_dtvalida => TO_DATE(pr_dtvalida,'dd/mm/RRRR'));
+
+    FETCH cr_crapfsf INTO rw_crapfer;
+
+    IF cr_crapfsf%NOTFOUND THEN      
+      CLOSE cr_crapfsf;
+    ELSE
+      CLOSE cr_crapfsf;
+      vr_dscritic := 'Data do evento é feriado municipal.';
+    END IF;     
+
+    -- Pre Feriado Nacional
+    OPEN cr_crapfer(pr_cdcooper => pr_cdcooper
+                   ,pr_dtvalida => TO_DATE(pr_dtvalida,'dd/mm/RRRR') + 1);
+
+    FETCH cr_crapfer INTO rw_crapfer;
+
+    IF cr_crapfer%NOTFOUND THEN      
+      CLOSE cr_crapfer;
+    ELSE
+      CLOSE cr_crapfer;
+      vr_dscritic := 'Data do evento antecede um feriado nacional.';
+    END IF;
+
+    -- Pre Feriado Municipal
+    OPEN cr_crapfsf(pr_cdcidade => vr_cdcidade
+                   ,pr_dtvalida => TO_DATE(pr_dtvalida,'dd/mm/RRRR') + 1);
+
+    FETCH cr_crapfsf INTO rw_crapfer;
+
+    IF cr_crapfsf%NOTFOUND THEN      
+      CLOSE cr_crapfsf;
+    ELSE
+      CLOSE cr_crapfsf;
+      vr_dscritic := 'Data do evento antecede um feriado municipal.';
+    END IF;
+
+    -- Pre Feriado Nacional
+    OPEN cr_crapfer(pr_cdcooper => pr_cdcooper
+                   ,pr_dtvalida => TO_DATE(pr_dtvalida,'dd/mm/RRRR') - 1);
+
+    FETCH cr_crapfer INTO rw_crapfer;
+
+    IF cr_crapfer%NOTFOUND THEN      
+      CLOSE cr_crapfer;
+    ELSE
+      CLOSE cr_crapfer;
+      vr_dscritic := 'Data do evento precede um feriado nacional.';
+    END IF;
+
+    -- Pós Feriado Municipal
+    OPEN cr_crapfsf(pr_cdcidade => vr_cdcidade
+                   ,pr_dtvalida => TO_DATE(pr_dtvalida,'dd/mm/RRRR') - 1);
+
+    FETCH cr_crapfsf INTO rw_crapfer;
+
+    IF cr_crapfsf%NOTFOUND THEN      
+      CLOSE cr_crapfsf;
+    ELSE
+      CLOSE cr_crapfsf;
+      vr_dscritic := 'Data do evento precede um feriado municipal.';
+    END IF;
+
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+
+      IF NVL(vr_cdcritic,0) > 0 AND TRIM(vr_dscritic) IS NULL THEN
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+      END IF;
+   
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+      pr_des_erro := vr_dscritic;
+
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_des_erro := 'Erro geral em PRGD0001.pc_valida_data: ' || SQLERRM;
+      pr_dscritic := 'Erro geral em PRGD0001.pc_valida_data: ' || SQLERRM;
+
+  END pc_valida_data;
+	
 END PRGD0001;
 /
