@@ -16410,7 +16410,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --  Sistema  : Cred
     --  Sigla    : PAGA0001
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Novembro/2013.                   Ultima atualizacao: 22/09/2016
+    --  Data     : Novembro/2013.                   Ultima atualizacao: 23/03/2017
     --
     --  Dados referentes ao programa:
     --
@@ -16468,6 +16468,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --                            (Adriano - SD 391157).
     --
     --		         22/09/2016 - Ajuste nos cursores que buscam títulos em aberto para arquivo de retorno (Rodrigo)
+    --
+    --               23/03/2017 - Adicionar NVL no campo de nosso numero (Douglas - Chamado 629181)
     -- .........................................................................
 
   BEGIN
@@ -16923,7 +16925,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                       gene0002.fn_mask(vr_cdageman,'999999')||        /* 08.3T / 09.3T */
                       gene0002.fn_mask(rw_craprtc.nrdconta,'9999999999999')|| /* 10.3T / 11.3T */
                       '0'||                                            /* 12.3T */
-                      SUBSTR(rpad(rw_craprtc.nrnosnum,20,' '),1,20)||         /* 13.3T */
+                      SUBSTR(rpad(NVL(rw_craprtc.nrnosnum, ' '),20,' '),1,20)||         /* 13.3T */
                       gene0002.fn_mask(SubStr(to_char(vr_cdcartei),1,1),'9')|| /* Cod. Carteira */
                       gene0002.fn_mask(vr_dsdoccop,'999999999999999')|| /* Nr Doc Cobr. */
                       substr(rpad(vr_dsvencto,8,' '),1,8)||           /* Dt Vencto */
@@ -17289,7 +17291,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --  Sistema  : Cred
     --  Sigla    : PAGA0001
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Novembro/2013.                   Ultima atualizacao: 22/09/2016
+    --  Data     : Novembro/2013.                   Ultima atualizacao: 23/03/2017
     --
     --  Dados referentes ao programa:
     --
@@ -17328,6 +17330,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --                            (Adriano - SD 391157).
     --
     --		         22/09/2016 - Ajuste nos cursores que buscam títulos em aberto para arquivo de retorno (Rodrigo)
+    --
+    --               23/03/2017 - Adicionar NVL no campo de nosso numero (Douglas - Chamado 629181)
     -- .........................................................................
 
   BEGIN
@@ -17927,7 +17931,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                       gene0002.fn_mask(rw_craprtc.nrdconta,'999999999')|| /* Nr Conta/DV */
                       gene0002.fn_mask(rw_craprtc.nrcnvcob,'9999999')||   /* Nr do Convenio */
                       SubStr(RPad(nvl(vr_dsusoemp,' '),25,' '),1,25)||             /* Numero de controle do participante */
-                      SubStr(RPad(rw_craprtc.nrnosnum,17,' '),1,17)||     /* Nosso numero */
+                      SubStr(RPad(NVL(rw_craprtc.nrnosnum, ' '),17,' '),1,17)||     /* Nosso numero */
                       '1'||                                      /* Tipo de cobranca Nota 02 Layout */
                       '0'||                                      /* Tipo de cobranca para cod. 72 */
                       '0000'||                                   /* Dias p/ calculo (nao utilizado) */
