@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Junior
-   Data    : Julho/2004.                       Ultima atualizacao: 19/09/2016
+   Data    : Julho/2004.                       Ultima atualizacao: 06/03/2017
 
    Dados referentes ao programa:
 
@@ -134,6 +134,9 @@
                             
               19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS 
                            pelo InternetBanking (Projeto 338 - Lucas Lunelli)
+                           
+              22/02/2017 - Alteraçoes para compor comprovantes DARF/DAS 
+                           Modelo Sicredi (Lucas Lunelli)
                            
               06/03/2017 - Adicionados campos nrddd, nrcelular e nmoperadora em 
                            xml_operacao38 (Projeto 321 - Lombardi).
@@ -276,6 +279,7 @@ DEF TEMP-TABLE xml_operacao25                                           NO-UNDO
     FIELD nrcpfope AS CHAR
     FIELD cdbcoctl AS CHAR
     FIELD cdagectl AS CHAR
+    FIELD cdagesic AS CHAR
     FIELD dscabfim AS CHAR.
 
 DEF TEMP-TABLE xml_operacao26                                           NO-UNDO
@@ -433,6 +437,7 @@ DEF TEMP-TABLE xml_operacao88                                           NO-UNDO
     FIELD nrcpfope AS CHAR
     FIELD cdbcoctl AS CHAR
     FIELD cdagectl AS CHAR
+    FIELD cdagesic AS CHAR
     FIELD dscabfim AS CHAR.
 
 
