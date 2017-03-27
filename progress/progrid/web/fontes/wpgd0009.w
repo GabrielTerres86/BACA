@@ -95,8 +95,9 @@ Alteraçoes:  27/11/2007 - Incluidas atribuiçoes dos campos "cratidp.nrdconta" e
              18/01/2017 - Inclusao de novo filtro e conversao da listagem
                           de inscritos para PLSQL (Jean Michel).
 
-						 27/03/2017 - Ajustes de cadastro de inscricoes para eventos de
-												  mes fechados (Jean Michel).								
+						 27/03/2017 - Ajustes de cadastro de inscricoes para eventos de mes fechados e
+                          verificacao de contas duplicadas, SD 639085  e SD 637565
+                          (Jean Michel).							
 													
 ......................................................................... */
 
@@ -1731,14 +1732,17 @@ PROCEDURE local-assign-record :
                                crabidp.dtanoage = INT(ab_unmap.aux_dtanoage) AND
                                crabidp.nrdconta = aux_nrdconta               AND
                                crabidp.idseqttl = aux_idseqttl               AND
-                               crabidp.cdevento = tmp_cdevento               AND
-                               crapidp.cdageins = INTEGER(ab_unmap.cdageins)
+                               crabidp.nrseqeve = INT(ab_unmap.nrseqeve)     AND
+                               crabidp.cdageins = INTEGER(ab_unmap.cdageins)
                                NO-LOCK NO-ERROR.
                     
                     /* Se ja tiver cadastro para cooperado da um next */
                     IF AVAILABLE crabidp THEN
-                        NEXT.
-
+                      DO:
+                        ASSIGN msg-erro = 'Cooperado ja cadastrado para este evento.'.
+                        RETURN "NOK".
+                      END.
+                    
                     FIND FIRST crapadp WHERE crapadp.nrseqdig = INT(ab_unmap.nrseqeve)
                                          AND crapadp.cdcooper = INT(ab_unmap.aux_cdcooper) NO-LOCK NO-ERROR.
 
@@ -1824,6 +1828,7 @@ PROCEDURE local-assign-record :
                 END.
              ELSE  /* alteracao */
                 DO:
+                  
                     FIND FIRST crapadp WHERE
                                crapadp.nrseqdig = INT(ab_unmap.nrseqeve) AND
                                crapadp.cdcooper = INT(ab_unmap.aux_cdcooper)
@@ -1841,9 +1846,9 @@ PROCEDURE local-assign-record :
                     IF  crapadp.idstaeve = 4 AND crapadp.dtfineve > TODAY THEN
                         ASSIGN aux_idstains = 1. /* pendente */ 
                     
-				    /* cria a temp-table e joga o novo valor digitado 
+                    /* cria a temp-table e joga o novo valor digitado 
                        para o campo */
-                 /*    CREATE cratidp.
+                    /*    CREATE cratidp.
                      BUFFER-COPY crapidp TO cratidp. */
      
                      ASSIGN 
