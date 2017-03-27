@@ -1912,13 +1912,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
     BEGIN
       
       -- Se o dia para busca é superior ao dia corrente
-      IF pr_dtrefere > trunc(sysdate) THEN
+     /* IF pr_dtrefere > trunc(sysdate) THEN
         -- Utilizar o dia corrente para busca
         vr_dtrefere := trunc(sysdate);
       ELSE
         -- Utilizar o dia passado
         vr_dtrefere := pr_dtrefere;
-      END IF;
+      END IF;*/
+      -- Jean .. verificar teste
+      vr_dtrefere := pr_dtrefere;
+      -- (retirar se necessario)
       -- Verificar qual data usar para acessar crapsda
       CASE pr_tipo_busca
         WHEN 'I' THEN --Mesmo Dia
@@ -2129,7 +2132,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
           vr_cdhishcb := vr_cdhishcb || ',' || rw_craphcb.cdhistor;
         END LOOP;
 
-        vr_lscdhist_ret := '15,316,375,376,377,450,530,537,538,539,767,771,772,918,920,1109,1110,1009,1011,527,472,478,497,499,501,530,108,1060,1070,1071,1072,'||vr_tab_tarifa_transf(vr_tariidx).cdhisint||','||vr_tab_tarifa_transf(vr_tariidx).cdhistaa || vr_cdhishcb; --> Lista com códigos de histórico a retornar         
+        vr_lscdhist_ret := '15,316,375,376,377,450,530,537,538,539,767,771,772,918,920,1109,1110,1009,1011,527,472,478,497,499,501,108,1060,1070,1071,1072,'||vr_tab_tarifa_transf(vr_tariidx).cdhisint||','||vr_tab_tarifa_transf(vr_tariidx).cdhistaa || vr_cdhishcb; --> Lista com códigos de histórico a retornar         
         -- Buscar lançamentos no dia apenas dos historicos listados acima
         FOR rw_craplcm_olt IN cr_craplcm_olt(pr_cdcooper => pr_cdcooper    --> Cooperativa conectada
                                     ,pr_nrdconta => pr_nrdconta            --> Número da conta
@@ -3353,9 +3356,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       --Flag valida se estar rodando no batch
       vr_flgcrass BOOLEAN;
 
-      vr_idorigem number; -- Melhoria 119 - Jean / Mout´S
  
-
       /* Tabelas de memória para guardar registros cfme estrutura das Temp Tables */
       vr_tab_extr typ_tab_extrato_conta;    --> tt-extrato_conta
       vr_tab_depo typ_tab_dep_identificado; --> tt-dep-identificado
@@ -3486,16 +3487,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       END IF;
 
       
-      -- 22/02/2017 - Melhoria 119 - se a data do systema, for inferior à data de movimento (fim de semana ou feriado), 
-      --              E maior que a data anterior, considerar a origem como 5 - Intranet - Jean / Mout´S
---      if  sysdate < pr_rw_crapdat.dtmvtolt then
---          vr_idorigem := 5;
---      else 
-          vr_idorigem := pr_idorigem;
---      end if;
-      
       -- Para caixa ON_LINE - pr_idorigem = 2
-      IF vr_idorigem = 2 THEN -- pr_idorigem
+      IF pr_idorigem = 2 THEN 
         -- A data inicial não pode ser inferior ao
         -- primeiro dia do mês anterior ao movimento
         IF vr_dtiniper < ADD_MONTHS(TRUNC(pr_rw_crapdat.dtmvtolt,'mm'),-1) THEN
@@ -3504,7 +3497,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         END IF;
       END IF;
       -- Para Internet ou TAA (pr_idorigem 3 ou 4) THEN
-      IF vr_idorigem IN (3,4) THEN
+      IF pr_idorigem IN (3,4) THEN
         -- DAta final não pode ser superior a hoje
         IF pr_dtfimper > trunc(sysdate) THEN
           -- Usar o dia de hoje como data final
@@ -3637,7 +3630,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         FOR rw_craplcm_olt IN cr_craplcm_olt(pr_cdcooper => pr_cdcooper            --> Cooperativa conectada
                                     ,pr_nrdconta => pr_nrdconta            --> Número da conta
                                     ,pr_dtmvtolt => pr_rw_crapdat.dtmvtocd --> Data do movimento utilizada no cash dispenser.                                    
-                                    ,pr_lsthistor_ret => '15,316,375,376,377,450,530,537,538,539,767,771,772,918,920,1109,1110,1009,1011,527,472,478,497,499,501,530,108,1060,1070,1071,1072,'||vr_tab_tarifa_transf(vr_tariidx).cdhisint||','||vr_tab_tarifa_transf(vr_tariidx).cdhistaa || vr_cdhishcb) LOOP --> Lista com códigos de histórico a retornar
+                                    ,pr_lsthistor_ret => '15,316,375,376,377,450,530,537,538,539,767,771,772,918,920,1109,1110,1009,1011,527,472,478,497,499,501,108,1060,1070,1071,1072,'||vr_tab_tarifa_transf(vr_tariidx).cdhisint||','||vr_tab_tarifa_transf(vr_tariidx).cdhistaa || vr_cdhishcb) LOOP --> Lista com códigos de histórico a retornar
           -- Se for uma transferencia agendada, nao compor saldo
           IF NOT( (rw_craplcm_olt.cdhistor IN(375,376,377,537,538,539,771,772) AND NVL(SUBSTR(rw_craplcm_olt.cdpesqbb,54,8),' ') = 'AGENDADO')
                  OR
@@ -3755,7 +3748,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         -- Se for o ultimo registro da data ou do vetor
         IF vr_ind_tab = vr_tab_extr.LAST OR vr_tab_extr(vr_ind_tab).dtmvtolt <> vr_tab_extr(vr_tab_extr.NEXT(vr_ind_tab)).dtmvtolt THEN
           -- Para origens 3,4,5 ('INTERNET','CASH','INTRANET') e na primeira interação
-          IF vr_idorigem IN(3,4,5) AND vr_flgfirst THEN -- pr_idorigem
+          IF pr_idorigem IN(3,4,5) AND vr_flgfirst THEN -- pr_idorigem
             -- Desativa flag de primeiro encontro
             vr_flgfirst := FALSE;
             -- Chamar rotina para busca do saldo
@@ -3860,7 +3853,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
             END IF;
           END IF;
           -- Para origem 4 - Cash
-          IF vr_idorigem = 4  THEN -- pr_idorigem
+          IF pr_idorigem = 4  THEN
             -- Inserir este registro no final dos lançamentos deste dia
             vr_ind_tab_new := to_char(vr_tab_extr(vr_ind_tab).dtmvtolt,'yymmdd')||LPAD(vr_tab_extr(vr_ind_tab).nrsequen + 1,6,'0');
             -- Cria um registro de Saldo do Dia
