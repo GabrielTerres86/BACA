@@ -5,7 +5,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Janeiro/2010.                    Ultima atualizacao: 14/12/2015
+   Data    : Janeiro/2010.                    Ultima atualizacao: 24/03/2017
 
    Dados referentes ao programa:
 
@@ -157,15 +157,21 @@
                02/10/2015 - Criado procedures pi_processa_tit_sua_epr e 
                             pi_processa_tit_sua_epr_dda. (Reinert)
 
-			   14/12/2015 - Ajustes referente ao projeto estado de crise. 
-			                Utilizar a gnmvspb.dtmvtolt ao inves da 
-							gnmvspb.dtmensag (Andrino-RKAM)
+                           14/12/2015 - Ajustes referente ao projeto estado de crise. 
+                                        Utilizar a gnmvspb.dtmvtolt ao inves da 
+                                                        gnmvspb.dtmensag (Andrino-RKAM)
+                            
+               24/03/2017 - Lancar debito de devolucao de titulos 085
+                            na conta da filiada na central.
+                            (Projeto 340 - Fase SILOC - Rafael).
+
 ............................................................................. */
 
 DEF STREAM str_1.   /* Relatorio */
 
 { includes/var_batch.i }
 { sistema/generico/includes/var_internet.i }
+{ sistema/generico/includes/var_oracle.i }
 
 DEF        VAR rel_nmempres AS CHAR    FORMAT "x(15)"                NO-UNDO.
 DEF        VAR rel_nmrelato AS CHAR    FORMAT "x(40)" EXTENT 5       NO-UNDO.
@@ -344,6 +350,9 @@ DO TRANSACTION ON ERROR UNDO TRANS_1, RETURN:
         RUN pi_processa_tit_sua_epr_dda(INPUT aux_temassoc).
 
         /* Leitura de DEVOLUCOES */
+        
+        /* Sua remessa - Dev boletos 085 */
+        RUN pi_processa_tit_dev_sua.
 
         /* Sua Remessa - gera tarifa ref. devolucoes */
         RUN pi_processa_dev_sua (INPUT aux_temassoc).
@@ -1554,6 +1563,42 @@ END PROCEDURE.
 
 /*............................................................................*/
 
+/* Sua remessa - Dev boletos 085 */
+PROCEDURE pi_processa_tit_dev_sua:
+
+  DEF VAR aux_ponteiro    AS INT                                      NO-UNDO.
+  DEF VAR vlr_totdevol    AS DEC INIT 0                               NO-UNDO.
+
+  { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                
+  RUN STORED-PROC {&sc2_dboraayl}.send-sql-statement
+     aux_ponteiro = PROC-HANDLE
+             ("SELECT NVL(sum(dvc.vlliquid),0) 
+                 FROM gncpdvc dvc
+                WHERE dvc.cdcooper = " + STRING(crapcop.cdcooper) + "
+                  AND dvc.dtmvtolt = TO_DATE('" + 
+                            STRING(glb_dtmvtolt,'99/99/9999') + "','DD/MM/RRRR')
+                  AND dvc.flgconci = 1
+                  AND dvc.flgpcctl = 0").
+            
+  FOR EACH {&sc2_dboraayl}.proc-text-buffer WHERE PROC-HANDLE = aux_ponteiro:
+      ASSIGN vlr_totdevol = DEC(proc-text). 
+  END.
+                                            
+  CLOSE STORED-PROC {&sc2_dboraayl}.send-sql-statement
+        WHERE PROC-HANDLE = aux_ponteiro.
+                               
+  { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+   IF   vlr_totdevol <> 0  THEN
+        /* Criando LCM para Debitar os títulos 085 devolvidos no dia anterior */
+        RUN pi_cria_craplcm (INPUT vlr_totdevol,
+                             INPUT 2270).
+
+END PROCEDURE.
+
+/*............................................................................*/
+
 PROCEDURE pi_processa_dev_sua:
    /* SUA REMESSA - Cheques das cooperativas depositados em outros bancos.
                     Conta do associado nao possui saldo e coop. gera 
@@ -1893,7 +1938,7 @@ PROCEDURE pi_processa_ted_tec:
    IF   tot_strdebit <> 0  THEN
         RUN pi_cria_craplcm (INPUT tot_strdebit,
                              INPUT 795).
-                             
+                                                     
    /* Devolucoes enviadas */ 
    IF   tot_strdevdb <> 0 THEN   
         RUN pi_cria_craplcm (INPUT tot_strdevdb,
@@ -2332,6 +2377,8 @@ END.
 
 PROCEDURE atualiza_registros:
 
+    DEF VAR aux_ponteiro    AS INT                                      NO-UNDO.
+
     /* Atualiza todas cooperativas ativas, exceto 3 [Cecred] */
      FOR EACH crapcop  WHERE crapcop.cdcooper <> 3 AND 
                              crapcop.flgativo      NO-LOCK:
@@ -2403,6 +2450,23 @@ PROCEDURE atualiza_registros:
 
              ASSIGN gncpdev.flgpcctl = TRUE.
          END.
+         
+         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                        
+         RUN STORED-PROC {&sc2_dboraayl}.send-sql-statement
+             aux_ponteiro = PROC-HANDLE
+                     ("UPDATE gncpdvc dvc SET dvc.flgpcctl = 1
+                        WHERE dvc.cdcooper = " + STRING(crapcop.cdcooper) + "
+                          AND dvc.dtmvtolt = TO_DATE('" + 
+                                    STRING(glb_dtmvtolt,'99/99/9999') + "','DD/MM/RRRR')
+                          AND dvc.flgconci = 1
+                          AND dvc.flgpcctl = 0").                    
+                                                    
+         CLOSE STORED-PROC {&sc2_dboraayl}.send-sql-statement
+               WHERE PROC-HANDLE = aux_ponteiro.
+                                       
+         { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+         
      END.
 END.
 
