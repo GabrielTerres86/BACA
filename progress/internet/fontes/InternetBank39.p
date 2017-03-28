@@ -54,7 +54,6 @@ IF par_cdtiptra = 11 THEN
                          ,INPUT par_idseqttl
                          ,INPUT 3
                          ,INPUT par_nrdocmto
-                         ,OUTPUT "" 
                          ,OUTPUT 0
                          ,OUTPUT "").
                          
