@@ -95,6 +95,10 @@ Alteraçoes:  27/11/2007 - Incluidas atribuiçoes dos campos "cratidp.nrdconta" e
              18/01/2017 - Inclusao de novo filtro e conversao da listagem
                           de inscritos para PLSQL (Jean Michel).
 
+						 27/03/2017 - Ajustes de cadastro de inscricoes para eventos de mes fechados e
+                          verificacao de contas duplicadas, SD 639085  e SD 637565
+                          (Jean Michel).							
+													
 ......................................................................... */
 
 { sistema/generico/includes/var_log_progrid.i }
@@ -938,7 +942,7 @@ PROCEDURE CriaListaEventos:
      
         IF NOT AVAIL crapagp AND ab_unmap.aux_idevento = "1" THEN NEXT. 
                 
-		IF INT(ab_unmap.aux_idevento) = 1 THEN
+        IF INT(ab_unmap.aux_idevento) = 1 THEN
           DO:
             IF AVAILABLE craptab   THEN
               ASSIGN aux_tppartic = ENTRY(LOOKUP(STRING(crapedp.tppartic), craptab.dstextab) - 1, craptab.dstextab).
@@ -975,9 +979,9 @@ PROCEDURE CriaListaEventos:
         
 		IF crapeap.idevento = 1 THEN
           DO:
-            IF crapedp.nridamin <> 0 THEN
+        IF   crapedp.nridamin <> 0   THEN
               ASSIGN aux_idademin = "IDADE MÍNIMA DE " + STRING(crapedp.nridamin) + " ANOS".
-            ELSE
+        ELSE
               ASSIGN aux_idademin = "SEM RESTRIÇAO DE IDADE".
           END.
         ELSE
@@ -1074,43 +1078,43 @@ PROCEDURE CriaListaEventos:
 	              LEAVE.
 	           END.
        END.              
-              
+      
       ASSIGN aux_idstaeve = crapadp.idstaeve.
       
-      IF aux_idstaeve <> 4 THEN
-        DO:
+      /*IF aux_idstaeve <> 4 THEN
+        DO:*/
           IF AVAILABLE gnpapgd THEN
             DO:
               IF CAN-DO(STRING(gnpapgd.lsmesctb),STRING(crapadp.nrmeseve)) THEN
                 DO:
-                  ASSIGN aux_idstaeve = 4.
+                  ASSIGN aux_fechamen = "Sim".
                 END.
             END.
-        END.
+        /*END.*/
        
        ASSIGN vetorevento = "~{cdagenci:'" +  STRING(crapeap.cdagenci) + "'," + 
-                     "cdcooper:'" +  STRING(crapeap.cdcooper) + "'," +
-                     "cdevento:'" +  STRING(crapeap.cdevento) + "'," +
-                     "nmevento:'" +  STRING(aux_nmevento)     + "'," + 
+                            "cdcooper:'" +  STRING(crapeap.cdcooper) + "'," +
+                            "cdevento:'" +  STRING(crapeap.cdevento) + "'," +
+                            "nmevento:'" +  STRING(aux_nmevento)     + "'," + 
                             "idstaeve:'" +  STRING(aux_idstaeve)     + "'," +
-                     "flgcompr:'" +  STRING(aux_flgcompr)     + "'," +
-                     "prfreque:'" +  STRING(aux_prfreque)     + "'," +
-                     "flgrest:'"  +  STRING(aux_flgrest)      + "'," +
-                     "qtmaxtur:'" +  STRING(aux_qtmaxtur)     + "'," +
-                     "nrinscri:'" +  STRING(aux_nrinscri)     + "'," +
-                     "nrconfir:'" +  STRING(aux_nrconfir)     + "'," +
-                     "nrcompar:'" +  STRING(aux_nrcompar)     + "'," +
-                     "nrfaltan:'" +  STRING(aux_nrfaltan)     + "'," +
-                     "nrseqeve:'" +  STRING(aux_nrseqeve)     + "'," +
-                     "idademin:'" +  STRING(aux_idademin)     + "'," +
-                     "tppartic:'" +  STRING(aux_tppartic)     + "'," +
-                     "dtfineve:'" + (IF  crapadp.dtfineve = ? THEN "" ELSE STRING(crapadp.dtfineve))                                                               + "'," +    
-                     /* facilitar validacao no javascript, enviar
-                       S se ja finalizou o evento */                                         
-                     "dsfineve:'" + (IF  crapadp.dtfineve <= TODAY THEN "N" ELSE "S" )               + "'," +                                          
-                     "dtmvtolt:'" +  STRING(TODAY)            + "'," + 
-                     "fechamen:'" +  STRING(aux_fechamen)     +  "'"  + "~}".
-				
+                            "flgcompr:'" +  STRING(aux_flgcompr)     + "'," +
+                            "prfreque:'" +  STRING(aux_prfreque)     + "'," +
+                            "flgrest:'"  +  STRING(aux_flgrest)      + "'," +
+                            "qtmaxtur:'" +  STRING(aux_qtmaxtur)     + "'," +
+                            "nrinscri:'" +  STRING(aux_nrinscri)     + "'," +
+                            "nrconfir:'" +  STRING(aux_nrconfir)     + "'," +
+                            "nrcompar:'" +  STRING(aux_nrcompar)     + "'," +
+                            "nrfaltan:'" +  STRING(aux_nrfaltan)     + "'," +
+                            "nrseqeve:'" +  STRING(aux_nrseqeve)     + "'," +
+                            "idademin:'" +  STRING(aux_idademin)     + "'," +
+                            "tppartic:'" +  STRING(aux_tppartic)     + "'," +
+                            "dtfineve:'" + (IF  crapadp.dtfineve = ? THEN "" ELSE STRING(crapadp.dtfineve))                                                               + "'," +    
+                            /* facilitar validacao no javascript, enviar
+                            S se ja finalizou o evento */                                         
+                            "dsfineve:'" + (IF  crapadp.dtfineve <= TODAY THEN "N" ELSE "S" )               + "'," +                                          
+                            "dtmvtolt:'" +  STRING(TODAY)            + "'," + 
+                            "fechamen:'" +  STRING(aux_fechamen)     +  "'"  + "~}".				
+						
            RUN RodaJavaScript("mevento.push("  + vetorevento + ");").    
 
            ASSIGN vetorevento = "".
@@ -1728,14 +1732,17 @@ PROCEDURE local-assign-record :
                                crabidp.dtanoage = INT(ab_unmap.aux_dtanoage) AND
                                crabidp.nrdconta = aux_nrdconta               AND
                                crabidp.idseqttl = aux_idseqttl               AND
-                               crabidp.cdevento = tmp_cdevento               AND
-                               crapidp.cdageins = INTEGER(ab_unmap.cdageins)
+                               crabidp.nrseqeve = INT(ab_unmap.nrseqeve)     AND
+                               crabidp.cdageins = INTEGER(ab_unmap.cdageins)
                                NO-LOCK NO-ERROR.
                     
                     /* Se ja tiver cadastro para cooperado da um next */
                     IF AVAILABLE crabidp THEN
-                        NEXT.
-
+                      DO:
+                        ASSIGN msg-erro = 'Cooperado ja cadastrado para este evento.'.
+                        RETURN "NOK".
+                      END.
+                    
                     FIND FIRST crapadp WHERE crapadp.nrseqdig = INT(ab_unmap.nrseqeve)
                                          AND crapadp.cdcooper = INT(ab_unmap.aux_cdcooper) NO-LOCK NO-ERROR.
 
@@ -1821,6 +1828,7 @@ PROCEDURE local-assign-record :
                 END.
              ELSE  /* alteracao */
                 DO:
+                  
                     FIND FIRST crapadp WHERE
                                crapadp.nrseqdig = INT(ab_unmap.nrseqeve) AND
                                crapadp.cdcooper = INT(ab_unmap.aux_cdcooper)
@@ -1838,9 +1846,9 @@ PROCEDURE local-assign-record :
                     IF  crapadp.idstaeve = 4 AND crapadp.dtfineve > TODAY THEN
                         ASSIGN aux_idstains = 1. /* pendente */ 
                     
-				    /* cria a temp-table e joga o novo valor digitado 
+                    /* cria a temp-table e joga o novo valor digitado 
                        para o campo */
-                 /*    CREATE cratidp.
+                    /*    CREATE cratidp.
                      BUFFER-COPY crapidp TO cratidp. */
      
                      ASSIGN 

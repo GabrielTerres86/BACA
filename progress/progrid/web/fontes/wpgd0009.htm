@@ -62,6 +62,9 @@ Alterações:  27/11/2007 - Incluídas verificações sobre Conta e Titularidade na
              24/08/2016 - Correção para permitir salvar somente um inscrito(Jean Michel)             
              
              16/12/2016 - Melhorias, Prj. 229-5 (Jean Michel)
+						 
+						 27/03/2017 - Ajustes de cadastro de inscricoes para eventos de mes fechados e
+                          verificacao de contas duplicadas, SD 639085  e SD 637565 (Jean Michel).
              
 ----------------------------------------------------------------------------------------------------------->
 
@@ -846,10 +849,15 @@ function ValidaDados(form) {
   var msg = "";
   // verifica se as inscrições já estão encerradas.
   if (document.form.aux_idstaeve.value == "4") {
-    //if (!confirm("Evento com inscrições encerradas. Deseja prosseguir com a pré-inscrição?")) 
-    alert("Evento com inscrições encerradas e/ou mês do evento fechado para contabilizaação.")
-    return false; 
+    if (!confirm("Evento com inscrições encerradas. Deseja prosseguir com a pré-inscrição?")) 
+    //alert("Evento com inscrições encerradas e/ou mês do evento fechado para contabilização.")
+      return false; 
   }
+  
+  if (document.form.aux_fechamen.value == 'Sim') {
+      alert("Mês do evento fechado para contabilização.")
+      return false;
+  }    
         
    // já possui inscrição
             if (document.form.aux_flginscr.value == "S") {
@@ -2050,5 +2058,5 @@ function unchecked(campo) {
     LimparCampos();
   }
 
-</script>
+  </script>
 </body>
