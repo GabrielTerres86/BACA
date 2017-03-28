@@ -3,7 +3,7 @@
 	/************************************************************************
 	  Fonte: principal.php
 	  Autor: Guilherme
-	  Data : Marco/2008                 Última Alteração: 29/07/2015
+	  Data : Marco/2008                 Última Alteração: 09/12/2016
 
 	  Objetivo  : Mostrar opcao Principal da rotina de Cartões de Crédito
 				  da tela ATENDA
@@ -29,10 +29,14 @@
 				  28/07/2014 - Novo tratamento para exibição parcial do
 							   número do cartão (Lunelli).
 
-				  29/07/2015 - Incluir a opcao TAA. (James)			
-				  
+				  29/07/2015 - Incluir a opcao TAA. (James)			   
+
+				  09/12/2016 - (CECRED) : Ajuste realizado conforme solicitado no chamado 574068. (Kelvin)										  				  
+				  				  
 				  29/11/2016 - P341-Automatização BACENJUD - Alterado a validação 
 					           pelo DSDEPART passando a utilizar o CDDEPART (Renato Darosci)   
+							   
+				  27/03/2017 - Adicionado botão "Dossiê DigiDOC". (Projeto 357 - Reinert)							   
 	************************************************************************/
 	
 	session_start();
@@ -171,13 +175,14 @@
 			
 			<input type="image" id="btncons" src="<?php echo $UrlImagens; ?>botoes/consultar.gif" <?php if (!in_array("C",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='consultaCartao();return false;'"; } ?>>
 			
-			<input type="image" id="btnnovo" src="<?php echo $UrlImagens; ?>botoes/novo.gif"      <?php if (!in_array("N",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='opcaoNovo();return false;'"; } ?>>
+			<input type="image" id="btnnovo" src="<?php echo $UrlImagens; ?>botoes/novo.gif"      <?php if (!in_array("N",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='opcaoNovo(" . $glbvars["cdcooper"] . "); return false;'"; } ?>>
 			<input type="image" id="btnimpr" src="<?php echo $UrlImagens; ?>botoes/imprimir.gif"  <?php if (!in_array("M",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='opcaoImprimir();return false;'"; } ?>>
 			<input type="image" id="btnentr" src="<?php echo $UrlImagens; ?>botoes/entregar.gif"  <?php if (!in_array("F",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='opcaoEntregar();return false;'"; } ?>>
 			<input type="image" id="btnaltr" src="<?php echo $UrlImagens; ?>botoes/alterar.gif"   <?php if (!in_array("A",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='opcaoAlterar();return false;'"; } ?>>
 			<input type="image" id="btnnseg" src="<?php echo $UrlImagens; ?>botoes/2via.gif"      <?php if (!in_array("2",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='opcao2via();return false;'"; } ?>>
 			<input type="image" id="btnreno" src="<?php echo $UrlImagens; ?>botoes/renovar.gif"   <?php if (!in_array("R",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='opcaoRenovar();return false;'"; } ?>>
 			<input type="image" id="btntaa"  src="<?php echo $UrlImagens; ?>botoes/taa.gif"   <?php if (!in_array("U",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='opcaoTAA();return false;'"; } ?>>
+			<input class="FluxoNavega" id="btndossie" onclick="dossieDigdoc(1);return false;" type="image" src="http://aylloshomol2.cecred.coop.br/imagens/botoes/dossie.gif">
 			
 			<br style="clear:both;" />
 			

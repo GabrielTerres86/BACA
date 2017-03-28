@@ -73,5 +73,6 @@
 
 <div id="divBotoes">
 	<input type="image" id="btVoltar" src="<? echo $UrlImagens; ?>botoes/voltar.gif" onClick="encerraRotina(true);return false;" />
-  <input type="image" id="btConsultar" src="<? echo $UrlImagens; ?>botoes/consultar.gif" onClick="btConsultar();" /> 
+	<input class="FluxoNavega" id="btndossie" style="margin-left: 3px;" onclick="dossieDigdoc(3);return false;" type="image" src="http://aylloshomol2.cecred.coop.br/imagens/botoes/dossie.gif">
+	<input type="image" id="btConsultar" src="<? echo $UrlImagens; ?>botoes/consultar.gif" onClick="btConsultar();" /> 
 </div>

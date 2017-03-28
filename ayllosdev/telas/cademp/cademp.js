@@ -51,6 +51,12 @@
 
      25/10/2016 - SD542975 - Tratamento correto do Nrdconta e validação (Guilherme/SUPERO)
 
+	 06/01/2017 - SD588833 - No cadastro das empresas, não pode haver outra empresa na mesma 
+				  cooperativa com a mesma NRDCONTA. A validação não estava funcionando quando 
+				  a conta era selecionada via opção zoom. Ajuste realizado! (Renato - Supero)
+				  
+	 27/03/2017 - Incluido botão "Acessa DigiDOC" e adicionado function "dossieDigdoc".
+				  (Projeto 357 - Reinert)
 ************************************************************************************************/
 
 
@@ -888,6 +894,13 @@ function controlaFocoFormulariosEmpresa() {
 
                         if (normalizaNumero(cNrdconta.val()) > 0){
                             buscaContaEmp(1);
+					} else {
+
+						showError('error','N&uacute;mero de conta d&eacute;bito inv&aacute;lida!',
+                              'Campo Obrigat&oacute;rio!',
+                              '$("#nrdconta","#frmInfEmpresa").focus();');
+						cNrdconta.val("");
+						return false;
                         }
                 cNmcontat.focus();
                 return false;
@@ -1124,7 +1137,8 @@ function dataParaNumero(data) {
 function trocaBotao(botao) {
     $('#divBotoes', '#divTela').html('');
     $('#divBotoes', '#divTela').append('<a href="#" class="botao" id="btVoltar" onclick="btnVoltar(); return false;">Voltar</a>');
-
+	if (cddopcao == 'C')
+		$('#divBotoes', '#divTela').append('&nbsp;<a href="#" class="botao" id="btndossie" onClick="dossieDigdoc(5);return false;">Dossi&ecirc; DigiDOC</a>');
     if (botao != '') {
         $('#divBotoes', '#divTela').append('&nbsp;<a href="#" class="botao"  id="btSalvar" onClick="controlaOperacao(); return false;" >' + botao + '</a>');
     }
@@ -1177,11 +1191,11 @@ function btnVoltar() {
 
 
 function alteraInclui() {
-	
+
 	//Variaveis para tratamento de caracteres invalidos
     var nmextemp, nmresemp, nmcontat, dsendemp, dscomple, nmbairro, nmcidade, cdufdemp, nrfonemp, nrfaxemp, dsdemail;
 		
-	var cnpj;
+    var cnpj;
 
     /* Altera valor nos campos Checkbox */
     cIndescsg.is(':checked') ? cIndescsg.val(2) : cIndescsg.val(1);
@@ -1192,7 +1206,7 @@ function alteraInclui() {
 
     cNrdocnpj = $('#nrdocnpj', '#frmInfEmpresa');
     cnpj = normalizaNumero(cNrdocnpj.val());
-	
+
 	//Substitui/Remove os caracteres invalidos dos campos ao inserer ou alterar
 	nmextemp = removeCaracteresInvalidos(cNmextemp.val().toUpperCase()); // Razao social
 	nmresemp = removeCaracteresInvalidos(cNmresemp.val().toUpperCase()); // Nome fantazia
@@ -1205,7 +1219,7 @@ function alteraInclui() {
 	nrfonemp = removeCaracteresInvalidos(cNrfonemp.val());				 // Telefone
 	nrfaxemp = removeCaracteresInvalidos(cNrfaxemp.val());				 // Fax
 	dsdemail = removeCaracteresInvalidos(cDsdemail.val());				 // Email
-	
+
     /* Altera valor nos campos Checkbox */
     if (cddopcao == "A") {
         showMsgAguardo("Aguarde, alterando empresa...");
@@ -1423,7 +1437,7 @@ function buscaEmpresas() {
                     if (cdempres == '') {
 
                         if ($.trim(response).substring(1,4) == 'div') {
-                            $('#divConteudo').html(response);
+                            $('#divConteudo', '#divPesquisaEmpresa').html(response);
                             fechaRotina($('#divCabecalhoPesquisaEmpresa'));
                             exibeRotina($('#divPesquisaEmpresa'));
                             exibeRotina($('#divTabEmpresas'));
@@ -1438,7 +1452,8 @@ function buscaEmpresas() {
                             $('#cdempres','#frmInfEmpresa').val('');
                         } else {
                             $('input,select', '#frmInfEmpresa').removeClass('campoErro');
-                            $('#divConteudo').html(response);
+                            
+							$('#divConteudo', '#divPesquisaEmpresa').html(response);
                             exibeRotina($('#divPesquisaEmpresa'));
                             exibeRotina($('#divTabEmpresas'));
                             formataTabEmpresas();
@@ -1952,7 +1967,8 @@ function selecionaAvalista() {
                 cNrdconta.val( $('#nrdconta', $(this) ).val() );
                 cNmextttl.val( $('#nmfuncio', $(this) ).val() );
                 cNrdconta.trigger('blur');
-                buscaDadosCooperado();
+                //buscaDadosCooperado();
+				buscaContaEmp(1);
                 return false;
             }
         });
@@ -2255,4 +2271,49 @@ function validaEmailCademp(emailAddress) {
     var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))|(\",;+\")$/;
 	var registro = new RegExp(re);
     return registro.test(emailAddress);
+}
+
+function dossieDigdoc(cdproduto){
+
+	var mensagem = 'Aguarde, acessando dossie...';
+	showMsgAguardo( mensagem );
+
+	// Carrega dados da conta através de ajax
+	$.ajax({
+		type	: 'POST',
+		dataType: 'html',
+		url		: UrlSite + 'telas/digdoc.php',
+		data    :
+				{
+					nrdconta	: nrdconta,
+					cdproduto	: cdproduto, // Codigo do produto
+ 					redirect	: 'script_ajax'
+				},
+		error   : function(objAjax,responseError,objExcept) {
+					hideMsgAguardo();
+					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
+				},
+		success : function(response) {
+					hideMsgAguardo();
+					if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
+						try {
+							eval( response );
+							return false;
+						} catch(error) {
+							hideMsgAguardo();							
+							showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground()');
+						}
+					} else {
+						try {
+							eval( response );							
+							blockBackground(parseInt($('#divRotina').css('z-index')));
+						} catch(error) {
+							hideMsgAguardo();
+							showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground()');
+						}
+					}
+				}
+	});
+
+	return false;
 }
