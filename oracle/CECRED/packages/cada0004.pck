@@ -21,7 +21,11 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
   --                            fn_situacao_senha. (Jorge/David)
   --
   --               12/04/2016 - Incluido rotina PC_GERA_LOG_OPE_CARTAO (Andrino - Projeto 290
-  --                            Caixa OnLine)
+  --                            Caixa OnLine) 
+  --
+  --               29/09/2019 - Inclusao de verificacao de contratos de acordos de
+  --                            empréstimos na procedure pc_obtem_mensagens_alerta,
+  --                            Prj. 302 (Jean Michel).
   --
   --               14/11/2016 - M172 - Atualização Telefone no Auto Atendimento (Guilherme/SUPERO)
   --
@@ -491,7 +495,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                                      ,pr_dslicenca  IN tbcc_cnae_bloqueado.dslicenca%TYPE      --> licencas necessarias
                                      ,pr_cdcritic   OUT crapcri.cdcritic%TYPE                  --> Codigo de critica
                                      ,pr_dscritic   OUT crapcri.dscritic%TYPE);
-                                     
+
   PROCEDURE pc_excluir_cnae_bloqueado(pr_cdcnae     IN tbcc_cnae_bloqueado.cdcnae%TYPE         --> Codigo do CNAE 
                                      ,pr_cdcritic   OUT crapcri.cdcritic%TYPE                  --> Codigo de critica
                                      ,pr_dscritic   OUT crapcri.dscritic%TYPE);                --> Descricao da critica                                     
@@ -656,9 +660,8 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                                 ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
                                 ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
                                 ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
-                                ,pr_des_erro OUT VARCHAR2);            --> Erros do processo                               
-                                     
-
+                                ,pr_des_erro OUT VARCHAR2);            --> Erros do processo      
+								
   PROCEDURE pc_atualiz_data_manut_fone(pr_cdcooper IN crapttl.cdcooper%TYPE  --> Codigo da cooperativa
                                       ,pr_nrdconta IN crapttl.nrdconta%TYPE  --> Numero da Conta
                                       ,pr_cdcritic OUT INTEGER
@@ -721,9 +724,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   --               21/06/2016 - Correcao para o uso correto do indice da CRAPTAB em procedures 
   --                            desta package.(Carlos Rafael Tanholi).    
   --
-  --               14/07/2016 - Correcao na procedure pc_envia_email_alerta sobre o cursor da 
-  --                            craptab que estava com a logica errada. (Carlos Rafael Tanholi).
+  --              29/09/2019 - Inclusao de verificacao de contratos de acordos de
+  --                           empréstimos na procedure pc_obtem_mensagens_alerta,
+  --                           Prj. 302 (Jean Michel).
   --
+  --               14/07/2016 - Correcao na procedure pc_envia_email_alerta sobre o cursor da 
+  --                            craptab que estava com a logica errada. (Carlos Rafael Tanholi).      
+  --       
   --               14/11/2016 - M172 - Atualização Telefone no Auto Atendimento (Guilherme/SUPERO)
   --
   ---------------------------------------------------------------------------------------------------------------
@@ -3861,6 +3868,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --                           Dessa forma permite que as demais condições (else e elsif) sejam validadas
     --                           #487823 (AJFink)
     --
+    --                          
+    --              29/09/2019 - Inclusao de verificacao de contratos de acordos de
+    --                           empréstimos, Prj. 302 (Jean Michel).
+    --
     -- ..........................................................................*/
     
     ---------------> CURSORES <----------------
@@ -4322,6 +4333,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     vr_tab_crapavt CADA0001.typ_tab_crapavt_58; --Tabela Avalistas
     vr_tab_bens CADA0001.typ_tab_bens;          --Tabela bens
 
+    vr_flgativo INTEGER := 0;
   BEGIN
   
     vr_dsorigem := gene0001.vr_vet_des_origens(pr_idorigem);
@@ -5214,20 +5226,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     
     vr_idxcpa := vr_tab_dados_cpa.first;
     
-    IF vr_tab_dados_cpa.exists(vr_idxcpa) THEN
+    IF vr_tab_dados_cpa.exists(vr_idxcpa) AND 
+       vr_tab_dados_cpa(vr_idxcpa).vldiscrd > 0 THEN
       IF vr_tab_dados_cpa(vr_idxcpa).msgmanua IS NOT NULL THEN
-        --> Incluir na temptable
+      --> Incluir na temptable
         pc_cria_registro_msg(pr_dsmensag             => vr_tab_dados_cpa(vr_idxcpa).msgmanua
                             ,pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);    
        
       ELSE
-        IF vr_tab_dados_cpa(vr_idxcpa).vldiscrd > 0 THEN
-          --> Incluir na temptable
-          pc_cria_registro_msg(pr_dsmensag             => 'Atencao: Cooperado possui Credito Pre-Aprovado, limite '||
-                                                          'maximo de R$ '||to_char(vr_tab_dados_cpa(vr_idxcpa).vldiscrd,'FM999G999G990D00MI'),
-                               pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);    
-        END IF;
-      END IF;
+        --> Incluir na temptable
+      pc_cria_registro_msg(pr_dsmensag             => 'Atencao: Cooperado possui Credito Pre-Aprovado, limite '||
+                                                      'maximo de R$ '||to_char(vr_tab_dados_cpa(vr_idxcpa).vldiscrd,'FM999G999G990D00MI'),
+                           pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);    
+    END IF;   
     END IF;
     
     -- Verificar Cyber
@@ -5347,6 +5358,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 
       END LOOP;
 
+    END IF;
+    
+    -- Verifica contratos de acordos
+    RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => pr_cdcooper
+                                     ,pr_nrdconta => pr_nrdconta
+                                     ,pr_nrctremp => 0
+                                     ,pr_flgativo => vr_flgativo
+                                     ,pr_cdcritic => vr_cdcritic
+                                     ,pr_dscritic => vr_dscritic);
+
+    IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+    
+    IF vr_flgativo = 1 THEN
+      pc_cria_registro_msg(pr_dsmensag             => 'Atencao! Cooperado possui contrato em acordo.',
+                           pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
     END IF;
     
     pr_des_reto := 'OK';
@@ -11436,5 +11464,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                                     
   END pc_ib_verif_atualiz_fone;
 
+  
 END CADA0004;
 /
