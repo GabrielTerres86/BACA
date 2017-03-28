@@ -36,6 +36,14 @@
               
          24/05/2016 - Incluido o campo flmntage na tabela tt-parmon (Carlos)
 
+               21/07/2016 - Incluso da TEMP-TABLE tt-tbpagto_darf_das_trans_pend (Jean Michel).
+               
+               27/07/2016 - Inclusao de novos campos na TEMP-TABLE tt-dados-agendamento, Prj.338
+                            Pagamento DARF-DAS via Internet (Jean Michel).
+
+               19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS pelo 
+                            InternetBanking (Projeto 338 - Lucas Lunelli)
+
 ..............................................................................*/
 
 DEF TEMP-TABLE tt-convenios_aceitos NO-UNDO
@@ -69,7 +77,25 @@ DEF TEMP-TABLE tt-dados-agendamento NO-UNDO
     FIELD nmoperad AS CHAR
     FIELD nrcpfope AS DECI
     FIELD idtitdda AS DECI
-	FIELD cdageban AS CHAR.
+	  FIELD cdageban AS CHAR  
+    FIELD tpcaptur AS INTE    /* Prj. 338 */
+    FIELD cdtiptra AS INTE
+    FIELD dstiptra AS CHAR
+    FIELD dtvendrf AS DATE    /* Prj. 338 */
+    FIELD dtagenda AS DATE    /* Prj. 338 */
+    FIELD dstipcat AS CHAR    /* Prj. 338 */
+    FIELD dsidpgto AS CHAR    /* Prj. 338 */
+    FIELD dsnomfon AS CHAR    /* Prj. 338 */
+    FIELD dtperiod AS DATE    /* Prj. 338 */
+    FIELD nrcpfcgc AS CHAR    /* Prj. 338 */
+    FIELD cdreceit AS INT     /* Prj. 338 */
+    FIELD nrrefere AS DECIMAL /* Prj. 338 */
+    FIELD vlprinci AS DECIMAL /* Prj. 338 */
+    FIELD vlrmulta AS DECIMAL /* Prj. 338 */
+    FIELD vlrjuros AS DECIMAL /* Prj. 338 */
+    FIELD vlrtotal AS DECIMAL /* Prj. 338 */
+    FIELD vlrrecbr AS DECIMAL /* Prj. 338 */
+    FIELD vlrperce AS DECIMAL.    /* Prj. 338 */
 
 DEF TEMP-TABLE tt-transacoes_operadores NO-UNDO
     FIELD dtmvtolt AS DATE
@@ -136,4 +162,30 @@ DEF TEMP-TABLE tt-vlrdat NO-UNDO
     FIELD dattrans AS DATE
     FIELD vlronlin AS DEC.
                        
+DEF TEMP-TABLE tt-tbpagto_darf_das_trans_pend NO-UNDO
+  FIELD cdtransacao_pendente AS DECIMAL
+  FIELD cdcooper             AS DECIMAL
+  FIELD nrdconta             AS DECIMAL
+  FIELD tppagamento          AS DECIMAL
+  FIELD tpcaptura            AS DECIMAL
+  FIELD dsidentif_pagto      AS CHAR
+  FIELD dsnome_fone          AS CHAR
+  FIELD dscod_barras         AS CHAR
+  FIELD dslinha_digitavel    AS CHAR
+  FIELD dtapuracao           AS DATE
+  FIELD nrcpfcgc             AS CHAR
+  FIELD cdtributo            AS DECIMAL
+  FIELD nrrefere             AS DECIMAL
+  FIELD vlprincipal          AS DECIMAL
+  FIELD vlmulta              AS DECIMAL
+  FIELD vljuros              AS DECIMAL
+  FIELD vlreceita_bruta      AS DECIMAL
+  FIELD vlpercentual         AS DECIMAL
+  FIELD dtvencto             AS DATE
+  FIELD tpleitura_docto      AS DECIMAL
+  FIELD vlpagamento          AS DECIMAL
+  FIELD dtdebito             AS DATE
+  FIELD idagendamento        AS DECIMAL
+  FIELD idrowid              AS CHAR.  
+
 /*............................................................................*/
