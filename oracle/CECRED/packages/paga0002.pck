@@ -334,6 +334,7 @@ create or replace package cecred.PAGA0002 is
                                ,pr_xml_msgofatr OUT VARCHAR2            --> Retorno XML com mensagem para fatura
                                ,pr_xml_cdempcon OUT VARCHAR2            --> Retorno XML com cod empresa convenio
                                ,pr_xml_cdsegmto OUT VARCHAR2            --> Retorno XML com segmto convenio
+							   ,pr_xml_dsprotoc OUT VARCHAR2            --> Retorno XML com protocolo do comprovante gerado
                                ,pr_dsretorn     OUT VARCHAR2);          --> Retorno de critica (OK ou NOK)
   
   /* Gerar registro de Retorno = 02 - Entrada Confirmada */
@@ -2172,7 +2173,8 @@ create or replace package body cecred.PAGA0002 is
     
     IF TRIM(vr_dscritic) IS NOT NULL THEN
       pr_xml_dsmsgerr := '<dsmsgsuc>'|| vr_dscritic ||'</dsmsgsuc>'||
-                         '<idastcjt>'|| vr_idastcjt ||'</idastcjt>';
+                         '<idastcjt>'|| vr_idastcjt ||'</idastcjt>'||
+						 '<dsprotoc>'|| NVL(TRIM(vr_dsprotoc),'0') ||'</dsprotoc>';
     END IF;  
     
     pc_proc_geracao_log(pr_flgtrans => 1 /*TRUE*/);
@@ -2723,6 +2725,7 @@ create or replace package body cecred.PAGA0002 is
                                ,pr_xml_msgofatr OUT VARCHAR2            --> Retorno XML com mensagem para fatura
                                ,pr_xml_cdempcon OUT VARCHAR2            --> Retorno XML com cod empresa convenio
                                ,pr_xml_cdsegmto OUT VARCHAR2            --> Retorno XML com segmto convenio                               
+							   ,pr_xml_dsprotoc OUT VARCHAR2            --> Retorno XML com protocolo do comprovante gerado
                                ,pr_dsretorn     OUT VARCHAR2) IS        --> Retorno de critica (OK ou NOK)
 
     /* ..........................................................................
@@ -3594,6 +3597,7 @@ create or replace package body cecred.PAGA0002 is
     pr_xml_msgofatr := '<msgofatr>'|| vr_msgofatr ||'</msgofatr>';
     pr_xml_cdempcon := '<cdempcon>'|| to_char(vr_cdempcon,'fm0000')||'</cdempcon>';
     pr_xml_cdsegmto := '<cdsegmto>'|| to_char(vr_cdsegmto)||'</cdsegmto>';    
+	pr_xml_dsprotoc := '<dsprotoc>'|| NVL(TRIM(vr_dsprotoc),'0') ||'</dsprotoc>';
     
     pc_proc_geracao_log(pr_flgtrans => 1 /* TRUE*/);
     pr_dsretorn := 'OK';

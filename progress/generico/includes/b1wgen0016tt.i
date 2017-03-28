@@ -140,7 +140,9 @@ DEF TEMP-TABLE tt-criticas_transacoes_oper NO-UNDO
     FIELD dstiptra AS CHAR
     FIELD dscritic AS CHAR
     FIELD flgtrans AS LOGICAL
-    FIELD nrdrowid AS CHAR.
+    FIELD nrdrowid AS CHAR
+    FIELD cdtransa AS INTE
+    FIELD dsprotoc AS CHAR.
 
 DEF TEMP-TABLE tt-parmon
     FIELD vlinimon LIKE crapcop.vlinimon

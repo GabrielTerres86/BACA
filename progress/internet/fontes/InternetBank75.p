@@ -108,6 +108,21 @@ DO:
 				ASSIGN aux_dscritic = aux_dscritic + "\nVerifique as transacoes nao aprovadas.".
 
 			ASSIGN xml_dsmsgerr = "<dsmsgsuc>" + aux_dscritic + "</dsmsgsuc>".
+            
+            
+            IF  NOT out_flgaviso  THEN
+                DO:
+                    xml_dsmsgerr = xml_dsmsgerr + "<PROTOCOLOS>".
+                    
+                    FOR EACH tt-criticas_transacoes_oper WHERE  tt-criticas_transacoes_oper.flgtrans = TRUE NO-LOCK:
+                        ASSIGN xml_dsmsgerr = xml_dsmsgerr + 
+                                              "<dsprotoc>" + tt-criticas_transacoes_oper.dsprotoc + "</dsprotoc>".            
+                    END.
+                    
+                    xml_dsmsgerr = xml_dsmsgerr + "</PROTOCOLOS>".
+                END.
+                        
+            
 		END.
 	ELSE
 		DO:
@@ -116,6 +131,7 @@ DO:
 				   
 			RETURN "NOK".
 		END.
+      
 END.
 ELSE /* Validacao */
 DO:

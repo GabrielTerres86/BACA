@@ -1065,6 +1065,7 @@ DEF VAR aux_flmensag AS INT                                            NO-UNDO.
 DEF VAR aux_msgofatr AS CHAR                                           NO-UNDO.
 DEF VAR xml_cdempcon AS CHAR                                           NO-UNDO.
 DEF VAR xml_cdsegmto AS CHAR                                           NO-UNDO.
+DEF VAR xml_dsprotoc AS CHAR                                           NO-UNDO.
 
 /*Parametros para a operacao 142 */
 
@@ -3401,9 +3402,10 @@ PROCEDURE proc_operacao27:
                                                  OUTPUT aux_dsmsgerr,
                                                  OUTPUT aux_msgofatr,
                                                  OUTPUT xml_cdempcon,
-                                                 OUTPUT xml_cdsegmto).
+                                                 OUTPUT xml_cdsegmto,
+                                                 OUTPUT xml_dsprotoc).
                                                  
-    {&out} aux_dsmsgerr aux_msgofatr xml_cdempcon xml_cdsegmto aux_tgfimprg.
+    {&out} aux_dsmsgerr aux_msgofatr xml_cdempcon xml_cdsegmto xml_dsprotoc aux_tgfimprg.
 
 END PROCEDURE.
 
