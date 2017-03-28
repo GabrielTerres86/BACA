@@ -11,6 +11,8 @@ Alteracoes.....:
                 29/09/2016 - Adicionado atributo onkeyDown para o form (Lucas Ranghetti #463572)
                 02/12/2016 - Trocar a chamada callBLass(event); por callBlass(event); pq o js
                              é casesensitive e bugava a chamada dos BLs (Tiago/Elton SD563166).
+				28/03/2017 - Função para que se for clicado mais que uma vez no confirmar, vamos 
+							 desabilitar o botao para nao permitir a requisição dupla (Lucas Ranghetti #634500)
 
 -->
 <html>
@@ -24,9 +26,9 @@ Alteracoes.....:
         <meta http-equiv="cache-control" content="no-cache" />
         <meta http-equiv="Pragma" content="No-Cache" />
         <meta http-equiv="Expires" content="0" />
-        <script language=JavaScript src="/script/jquery.js"></script>
-        <script language=JavaScript src="/script/jquery.mask.mv.js"></script>
-		<script language="JavaScript" src="/script/formatadadosie.js"></script>
+        <script language=JavaScript src="/script/formatadadosie.js"></script>
+		<script language=JavaScript src="/script/jquery.js"></script>
+        <script language=JavaScript src="/script/jquery.mask.mv.js"></script>		
         <link rel="StyleSheet" type="text/css" href="/script/viacredi.css" />
         <title>PAGAMENTO GPS SICREDI</title>
     </head>
@@ -228,7 +230,7 @@ Alteracoes.....:
                                     <td width="61%"></td>
                                 </tr>
                                 <tr>
-                                    <td width="101%" align="center" class="linhaform" colspan="2">
+                                    <td width="101%" align="center" class="linhaform" colspan="2">                                        
                                         <input type="submit" id="b_confirmar" value="Confirmar" name="b_confirmar" class="button" />
                                         <input type="submit" id="b_cancelar"  value="Cancelar"  name="b_cancelar"  class="button" />
                                     </td>
@@ -262,6 +264,8 @@ Alteracoes.....:
             var	fim     = false;
             var flmask  = false;
             var leitora = false;
+			var b_confirmar = "#b_confirmar";	
+			var clicks = 0;
 
             if (document.getElementById('v_conta').value=="") {
                  document.getElementById("b_confirmar").disabled = true;
@@ -270,9 +274,20 @@ Alteracoes.....:
                 document.getElementById("b_confirmar").disabled = false;
                 document.getElementById("b_cancelar").disabled  = false;
             }
-
+			
             $( document ).ready(function() {
-
+				
+				// Função para que se for clicado mais que uma vez no confirmar, vamos desabilitar o botao para nao permitir a requisição dupla
+				$(b_confirmar).click( 
+					function(){
+						clicks++;
+						if(clicks > 1 ){							
+							$(b_confirmar).prop('disabled', true);
+						}else{ 
+							document.forms[0].submit();							
+						}
+					});
+				
                 $(cCodBarras).attr("maxlength","57");
 
                 var end_counter = function() {
@@ -291,7 +306,7 @@ Alteracoes.....:
         		};
 
                 $(cCodBarras).keypress(function(e) {
-
+										
                     if (!fim) {
 
         				if (running) {
@@ -389,7 +404,7 @@ Alteracoes.....:
                 var lstBlq  = "";
                 var lstLib  = "";
                 var vcampos;
-
+				
                 for (var i=0;i<document.forms[0].length;i++){
                      vcampos+= i + ' - ' + document.forms[0].elements[i].name + '\n\r';
                 }
@@ -425,7 +440,7 @@ Alteracoes.....:
                         habilitaDesabilita(0,lstBlq,'15');  // 0 - Desabilita
 
                         lstLib = "v_conta,vh_foco,tpdpagto1,tpdpagto2";
-                        habilitaDesabilita(1,lstLib,"15");  // 1 - Habilita
+                        habilitaDesabilita(1,lstLib,"15");  // 1 - Habilita						
                         return true;
                     }
 
@@ -440,7 +455,7 @@ Alteracoes.....:
                     }else {
                         habilitaManual();
                     }
-
+					
                 }else if (proximo == 997) {
 
                     if (document.getElementById('h_tpdpagto').value==1) {
@@ -1019,9 +1034,7 @@ Alteracoes.....:
                         return true;
                 }
             }
-
+		
     </script>
     </body>
 </html>
-
-
