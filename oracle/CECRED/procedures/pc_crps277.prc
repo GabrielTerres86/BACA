@@ -66,7 +66,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps277(pr_cdcooper IN crapcop.cdcooper%TY
 
                20/05/2016 - Incluido nas consultas da craplau
                             craplau.dsorigem <> "TRMULTAJUROS". (Jaison/James)
-
+                            
+               02/03/2017 - Incluido nas consultas da craplau 
+                            craplau.dsorigem <> "ADIOFJUROS" (Lucas Ranghetti M338.1)
   ............................................................................. */
   
   ------------------------------- CURSORES ---------------------------------
@@ -135,16 +137,24 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps277(pr_cdcooper IN crapcop.cdcooper%TY
            ,lau.nrdconta
            ,lau.nrdocmto
            ,lau.nrcrcard
-           ,lau.ROWID
+           ,lau.rowid
        FROM craplau lau
       WHERE lau.cdcooper = pr_cdcooper
-        AND lau.dtmvtolt = pr_dtmvtolt      
-        AND lau.cdagenci = pr_cdagenci      
-        AND lau.cdbccxlt = pr_cdbccxlt      
-        AND lau.nrdolote = pr_nrdolote      
-        AND lau.nrseqlan > to_number(nvl(pr_dsrestar,'0')) 
-        AND lau.dsorigem NOT IN('CAIXA','INTERNET','TAA','PG555','CARTAOBB','BLOQJUD','DAUT BANCOOB','TRMULTAJUROS')
-        ORDER BY lau.cdhistor;
+        AND lau.dtmvtolt = pr_dtmvtolt
+        AND lau.cdagenci = pr_cdagenci
+        AND lau.cdbccxlt = pr_cdbccxlt
+        AND lau.nrdolote = pr_nrdolote
+        AND lau.nrseqlan > to_number(NVL(pr_dsrestar, '0'))
+        AND lau.dsorigem NOT IN ('CAIXA'
+                                ,'INTERNET'
+                                ,'TAA'
+                                ,'PG555'
+                                ,'CARTAOBB'
+                                ,'BLOQJUD'
+                                ,'DAUT BANCOOB'
+                                ,'TRMULTAJUROS'
+                                ,'ADIOFJUROS')
+      ORDER BY lau.cdhistor;
   
   -- Cursor Lote
   CURSOR cr_craplot(pr_cdcooper IN craplot.cdcooper%TYPE,

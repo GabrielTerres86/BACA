@@ -520,7 +520,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
 
     Programa: EXTR0002                           Antigo: sistema/generico/procedures/b1wgen0112.p
     Autor   : Gabriel Capoia dos Santos (DB1)
-    Data    : Agosto/2011                        Ultima atualizacao: 17/01/2017
+    Data    : Agosto/2011                        Ultima atualizacao: 01/03/2017
 
     Objetivo  : Tranformacao BO tela IMPRES
 
@@ -757,6 +757,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         17/01/2017 - Ajuste na pc_consulta_lancamento que nao estava passando a critica
                      para frente. SD 594506 (Kelvin).
 
+        01/03/2017 - Adicionar origem ADIOFJUROS para podermos debitar estes agendamentos
+                     na procedure pc_consulta_lancamento (Lucas Ranghetti M338.1)                    
   ---------------------------------------------------------------------------------------------------------------
 ..............................................................................*/
 
@@ -3567,7 +3569,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --  Sistema  :
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2014                           Ultima atualizacao: 27/05/2016
+  --  Data     : Julho/2014                           Ultima atualizacao: 01/03/2017
   --
   -- Dados referentes ao programa:
   --
@@ -3630,6 +3632,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --              
   --              08/08/2016 - Incluído tratamento para pagamento de DARF/DAS (Dionathan)
   -- 
+  --              01/03/2017 - Adicionar origem ADIOFJUROS para podermos debitar estes agendamentos
+  --                           (Lucas Ranghetti M338.1)
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
       -- Busca dos dados do associado
@@ -4578,12 +4582,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         pr_tab_lancamento_futuro(vr_index).dstabela := 'craplau';
         pr_tab_lancamento_futuro(vr_index).cdhistor := rw_craplau.cdhistor;
 
-        -- Se for origem TRMULTAJUROS
-        IF rw_craplau.dsorigem = 'TRMULTAJUROS' THEN
+        -- Se for origem TRMULTAJUROS e ADIOFJUROS
+        IF rw_craplau.dsorigem IN('TRMULTAJUROS','ADIOFJUROS') THEN
           pr_tab_lancamento_futuro(vr_index).genrecid := 0;
           pr_tab_lancamento_futuro(vr_index).fldebito := 1;
         ELSE
-        pr_tab_lancamento_futuro(vr_index).genrecid := rw_craplau.progress_recid;
+          pr_tab_lancamento_futuro(vr_index).genrecid := rw_craplau.progress_recid;
           pr_tab_lancamento_futuro(vr_index).fldebito := 0;
         END IF;
 
