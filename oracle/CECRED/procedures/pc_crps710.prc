@@ -410,20 +410,19 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710 (pr_cdcooper IN crapcop.cdcooper%T
          
         CURSOR cr_craplim_crapsld(pr_cdcooper IN crapass.cdcooper%TYPE,
                                   pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS
-          SELECT craplim.cdcooper
-                ,craplim.nrdconta
-                ,craplim.insitblq
-                ,craplim.rowid
-                ,crapsld.qtdriclq
-            FROM craplim
-                ,crapsld
+          SELECT craplim.cdcooper,
+                 craplim.nrdconta,
+                 craplim.insitblq,
+                 craplim.rowid,
+                 (SELECT crapsld.qtdriclq
+                    FROM crapsld
            WHERE crapsld.cdcooper = craplim.cdcooper
-             AND crapsld.nrdconta = craplim.nrdconta
-             AND craplim.cdcooper = pr_cdcooper
-             AND crapsld.cdcooper = pr_cdcooper
-             AND craplim.dtfimvig >= pr_dtmvtolt 
+                     AND crapsld.nrdconta = craplim.nrdconta) qtdriclq
+            FROM craplim
+           WHERE craplim.cdcooper = pr_cdcooper
+             AND craplim.tpctrlim = 2
              AND craplim.insitlim = 2
-             AND craplim.tpctrlim = 2;
+             AND craplim.dtfimvig >= pr_dtmvtolt;
         --rw_craplim cr_craplim%ROWTYPE;
         
         CURSOR cr_craplcm(pr_cdcooper IN crapass.cdcooper%TYPE
@@ -550,7 +549,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710 (pr_cdcooper IN crapcop.cdcooper%T
         vr_vltarifa crapfco.vltarifa%TYPE;
         vr_cdbattar VARCHAR2(10);
         
-        vr_fliseope INTEGER;
         vr_rowid         ROWID;
         
       BEGIN                
@@ -1010,7 +1008,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710 (pr_cdcooper IN crapcop.cdcooper%T
             -- Atualiza motivo da nao renovacao do limite de desconto de cheque
             pc_nao_renovar(pr_craplim_crapass => rw_craplim_crapass
                           ,pr_dsnrenov        => 'Liquidez no produto de desconto de cheques'
-                          ,pr_dsvlrmot        => nvl(vr_liquidez,0));
+                          ,pr_dsvlrmot        => ROUND(nvl(vr_liquidez,0),2));
             
             CONTINUE;
           END IF;
@@ -1071,7 +1069,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710 (pr_cdcooper IN crapcop.cdcooper%T
                                ,pr_stprogra => pr_stprogra);
 
       -- Salvar informações atualizadas
-      --COMMIT;
+      COMMIT;
 
     EXCEPTION
       WHEN vr_exc_fimprg THEN
@@ -1093,7 +1091,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710 (pr_cdcooper IN crapcop.cdcooper%T
                                  ,pr_infimsol => pr_infimsol
                                  ,pr_stprogra => pr_stprogra);
         -- Efetuar commit
-        --COMMIT;
+        COMMIT;
       WHEN vr_exc_saida THEN
         -- Se foi retornado apenas código
         IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN

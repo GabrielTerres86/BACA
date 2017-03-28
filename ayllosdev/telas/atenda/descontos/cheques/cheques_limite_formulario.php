@@ -42,7 +42,7 @@
 			<label></label>
 			<br />
 			
-			<label for="vllimite"><? echo utf8ToHtml('Valor do LImite:') ?></label>
+			<label for="vllimite"><? echo utf8ToHtml('Valor do Limite:') ?></label>
 			<input type="text" name="vllimite" id="vllimite" value="0,00" class="campo">
 			
 			<label for="qtdiavig"><? echo utf8ToHtml('Vigência:') ?></label>

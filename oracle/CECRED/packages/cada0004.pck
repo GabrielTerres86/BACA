@@ -3786,7 +3786,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(Amcom)
-    --  Data     : Outubro/2015.                   Ultima atualizacao: 04/10/2016
+    --  Data     : Outubro/2015.                   Ultima atualizacao: 03/03/2017
     --
     --  Dados referentes ao programa:
     --
@@ -3820,6 +3820,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --              22/09/2016 - Alterado para buscar a qtd de dias da renovacao do limite de cheque
     --                           da tabela craprli e nao mais da craptab.
     --                           PRJ-300 - Desconto de Cheque (Odirlei-AMcom) 
+    --
+	--              03/03/2017 - Ajustado geração da mensagem de limite de desconto vencido.
+    --                           PRJ-300 Desconto de Cheque (Daniel)
+	--
     -- ..........................................................................*/
     
     ---------------> CURSORES <----------------
@@ -4532,7 +4536,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                      pr_inpessoa => rw_crapass.inpessoa);
     FETCH cr_craprli INTO rw_craprli;
     IF cr_craprli%FOUND THEN
-      IF pr_rw_crapdat.dtmvtolt >= (rw_craprli.dtinivig + (rw_craprli.qtdiavig * nvl(rw_craprli.qtmaxren,0))) THEN
+      
+      IF rw_craprli.dtfimvig IS NOT NULL THEN
+          IF rw_craprli.dtfimvig < pr_rw_crapdat.dtmvtolt THEN
+            -- Incluir na temptable
+            pc_cria_registro_msg(pr_dsmensag             => 'Contrato de Desconto de Cheques Vencido.',
+                                 pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
+          END IF;
+      ELSIF (rw_craplim.dtinivig + rw_craplim.qtdiavig) < pr_rw_crapdat.dtmvtolt  THEN
         -- Incluir na temptable
         pc_cria_registro_msg(pr_dsmensag             => 'Contrato de Desconto de Cheques Vencido.',
                              pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);

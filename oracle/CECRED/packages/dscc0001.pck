@@ -950,13 +950,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     IF pr_cddopcao IN ('N','E') THEN
       IF rw_crapbdc.insitbdc > 2 THEN
         vr_cdcritic := 0;
-        vr_dscritic := 'O bordero deve estar na situacao EM ESTUDO ou ANALISADO.';
+        vr_dscritic := 'O bordero deve estar na situacao EM ESTUDO ou ANALISE.';
         RAISE vr_exc_erro;
       END IF;
     ELSIF pr_cddopcao = 'L' THEN
       IF rw_crapbdc.insitbdc <> 2 THEN
         vr_cdcritic := 0;
-        vr_dscritic := 'O bordero deve estar na situacao ANALISADO.';
+        vr_dscritic := 'O bordero deve estar na situacao ANALISE.';
         RAISE vr_exc_erro;
       END IF;
     ELSIF pr_cddopcao = 'I' THEN

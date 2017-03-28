@@ -54,7 +54,7 @@
 		exibirErro('error',$msgErro,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
 		exit();
 	}else{
-		$msgErro = 'Cheques resgatos com sucesso';
+		$msgErro = 'Cheque(s) resgatado(s) com sucesso.';
 		exibirErro('inform',$msgErro,'Alerta - Ayllos','voltaDiv(3,2,4,\'DESCONTO DE CHEQUES - BORDERÔS\'); carregaBorderosCheques();',false);
 	}	
 ?>

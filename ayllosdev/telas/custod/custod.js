@@ -4611,7 +4611,7 @@ function validaCustodiaCheque(){
 }
 
 function solicitaImpressaoCustodiaEmitida(){
-	showConfirmacao('Deseja imprimir a custódia de cheques?','Confirma&ccedil;&atilde;o - Ayllos','geraImpressaoCustodia();','controlaBotao("C")','sim.gif','nao.gif');
+    showConfirmacao('Deseja imprimir a custódia de cheques?', 'Confirma&ccedil;&atilde;o - Ayllos', 'geraImpressaoCustodia();', 'estadoInicial();', 'sim.gif', 'nao.gif');
 }
 
 function geraImpressaoCustodia(){
