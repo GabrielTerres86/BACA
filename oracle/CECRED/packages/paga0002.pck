@@ -4,7 +4,7 @@ create or replace package cecred.PAGA0002 is
 
    Programa: PAGA0002                          Antiga: b1wgen0089.p
    Autor   : Guilherme/Supero
-   Data    : 13/04/2011                        Ultima atualizacao: 06/09/2016
+   Data    : 13/04/2011                        Ultima atualizacao: 22/02/2017
 
    Dados referentes ao programa:
 
@@ -159,6 +159,8 @@ create or replace package cecred.PAGA0002 is
                                         
        06/09/2016 - Ajuste para apresentar o horario limite para debito de ted's agendadas
                           (Adriano - SD509480).    
+                                        
+							 22/02/2017 - Ajustes para correçao de crítica de pagamento DARF/DAS (Lucas Lunelli - P.349.2)
                                         
 ..............................................................................*/
   -- Antigo tt-agenda-recorrente
@@ -682,7 +684,7 @@ create or replace package body cecred.PAGA0002 is
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Odirlei Busana - Amcom
-  --  Data     : Março/2014.                   Ultima atualizacao: 30/11/2016
+  --  Data     : Março/2014.                   Ultima atualizacao: 22/02/2017
   --
   -- Dados referentes ao programa:
   --
@@ -761,6 +763,13 @@ create or replace package body cecred.PAGA0002 is
   --             21/11/2016 - Rotina pc_internetbank22 - Inclusao de parametros na chamada da rotina pc_executa_envio_ted.
   --                        - Removido pc_monitora_ted, rotina será utilizada na AFRA0001 
   --                          PRJ335 - Analise de fraudes (Odirlei-AMcom)                     
+  --
+  --             07/02/2017 - #604294 Log de exception others na rotina pc_proc_agendamento_recorrente e
+  --                          aumento do tamanho das variáveis vr_dslinxml_desaprov e vr_dslinxml_aprov
+  --                          para evitar possível repetição do problema relatado no chamado (Carlos)
+  --
+  --             22/02/2017 - Ajustes para correçao de crítica de pagamento DARF/DAS (Lucas Lunelli - P.349.2)
+  --
   ---------------------------------------------------------------------------------------------------------------*/
   
   ----------------------> CURSORES <----------------------
@@ -838,7 +847,7 @@ create or replace package body cecred.PAGA0002 is
       Sistema : Internet - Cooperativa de Credito
       Sigla   : CRED
       Autor   : David
-      Data    : Abril/2007.                       Ultima atualizacao: 18/01/2016
+      Data    : Abril/2007.                       Ultima atualizacao: 06/09/2016
    
       Dados referentes ao programa:
        
@@ -1130,8 +1139,8 @@ create or replace package body cecred.PAGA0002 is
           INDEX BY VARCHAR2(4000);
       vr_tab_dscritic typ_tab_critica;
       
-      vr_dslinxml_desaprov VARCHAR2(4000) := NULL;
-      vr_dslinxml_aprov    VARCHAR2(4000) := NULL;
+      vr_dslinxml_desaprov VARCHAR2(32000) := NULL;
+      vr_dslinxml_aprov    VARCHAR2(32000) := NULL;
       vr_exiscrit          VARCHAR2(50)   := 'no';
       vr_idxcriti          VARCHAR2(4000) := NULL;
           
@@ -1218,6 +1227,9 @@ create or replace package body cecred.PAGA0002 is
       WHEN vr_exc_erro THEN
         NULL; -- apenas repassar a critica
       WHEN OTHERS THEN
+        
+        pc_internal_exception(pr_cdcooper);
+      
         pr_dscritic := 'Nao foi possivel montar xml de agendamentos recorrentes: '||SQLERRM;
     END pc_proc_agendamento_recorrente;
     
@@ -2429,6 +2441,7 @@ create or replace package body cecred.PAGA0002 is
                          ,pr_dtagenda => vr_dtmvtopg  --> Data agendamento
                          ,pr_idorigem => 3 /*INTERNET*/ --> Indicador de origem
                          ,pr_indvalid => 0            --> Nao validar horario limite
+						 	           ,pr_flmobile => pr_flmobile  --> Indicador Mobile
                          ,pr_nmextcon => vr_nmconban  --> Nome do banco
                          ,pr_cdseqfat => vr_cdseqfat  --> Codigo Sequencial fatura
                          ,pr_vlfatura => vr_vlrdocum  --> Valor fatura
@@ -2486,6 +2499,7 @@ create or replace package body cecred.PAGA0002 is
                                  ,pr_dtagenda => vr_dtmvtopg           --> Data agendamento
                                  ,pr_idorigem => 3 /* INTERNET */      --> Indicador de origem
                                  ,pr_indvalid => 0                     --> Validar
+								                 ,pr_flmobile => pr_flmobile           --> Indicador Mobile
                                  ,pr_nmextbcc => vr_nmconban           --> Nome do banco
                                  ,pr_vlfatura => vr_vlrdocum           --> Valor fatura
                                  ,pr_dtdifere => vr_dtdifere           --> Indicador data diferente
@@ -3151,6 +3165,7 @@ create or replace package body cecred.PAGA0002 is
                          ,pr_dtagenda => vr_dtmvtopg  --> Data agendamento
                          ,pr_idorigem => 3 /*INTERNET*/ --> Indicador de origem
                          ,pr_indvalid => 0            --> Nao validar horario limite
+						             ,pr_flmobile => pr_flmobile  --> Indicador Mobile
                          ,pr_nmextcon => vr_nmconban  --> Nome do banco
                          ,pr_cdseqfat => vr_cdseqfat  --> Codigo Sequencial fatura
                          ,pr_vlfatura => vr_vlrdocum  --> Valor fatura
@@ -3311,6 +3326,7 @@ create or replace package body cecred.PAGA0002 is
                                  ,pr_dtagenda => vr_dtmvtopg           --> Data agendamento
                                  ,pr_idorigem => 3 /* INTERNET */      --> Indicador de origem
                                  ,pr_indvalid => 0                     --> Validar
+								                 ,pr_flmobile => pr_flmobile           --> Indicador Mobile
                                  ,pr_nmextbcc => vr_nmconban           --> Nome do banco
                                  ,pr_vlfatura => vr_vlrdocum           --> Valor fatura
                                  ,pr_dtdifere => vr_dtdifere           --> Indicador data diferente
@@ -7320,7 +7336,7 @@ create or replace package body cecred.PAGA0002 is
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Vanessa Klein
-    --  Data     : Agosto/2015.                   Ultima atualizacao: 03/08/2015
+    --  Data     : Agosto/2015.                   Ultima atualizacao: 27/01/2016
     --
     --  Dados referentes ao programa:
     --
@@ -7329,7 +7345,9 @@ create or replace package body cecred.PAGA0002 is
     --
     --  Alteração : 03/08/2015 - Conversão Progress -> Oracle (Vanessa)
     --
-    --
+    --              27/01/2016 - Ajuste no problema que gerava chave duplicada ao inserir
+    --                           na craplcm. Problema do chamado 518911 resolvido na melhoria
+    --                           342. (Kelvin)
     -- ..........................................................................*/
     
     ---------------> CURSORES <----------------- 
@@ -7432,6 +7450,8 @@ create or replace package body cecred.PAGA0002 is
     --Variaveis de erro    
     vr_cdcritic crapcri.cdcritic%TYPE;
     vr_dscritic VARCHAR2(4000);    
+    vr_flgerror INTEGER;
+    
     --Variaveis de Excecao
     vr_exc_erro EXCEPTION;
     vr_tab_erro gene0001.typ_tab_erro;
@@ -7642,6 +7662,11 @@ create or replace package body cecred.PAGA0002 is
        
        CLOSE cr_craplcm;
         
+       FOR i IN 1..100 LOOP
+         vr_flgerror := 0;
+             
+         rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
+          
        BEGIN
           INSERT INTO craplcm
                      (cdcooper, 
@@ -7670,7 +7695,7 @@ create or replace package body cecred.PAGA0002 is
                        rw_craplcs.nrdocmto,
                        gene0001.fn_param_sistema('CRED',rw_crapcop.cdcooper,'FOLHAIB_HIST_CRE_TEC_B85'),            
                        rw_craplcs.vllanmto,
-                       rw_craplot.nrseqdig + 1,
+                         rw_craplot.nrseqdig,
                        vr_dadosdeb, /* Remetente */
                        pr_cdoperad,
                        TO_CHAR(SYSDATE, 'SSSSS'),
@@ -7683,16 +7708,32 @@ create or replace package body cecred.PAGA0002 is
                        rw_craplcm.nrdocmto;
 
         EXCEPTION
+            WHEN dup_val_on_index THEN
+              vr_flgerror := 1;              
+              CONTINUE;
+              
           WHEN OTHERS THEN
             vr_cdcritic := 0;  
-            vr_dscritic := 'Erro ao inserir craplcm: ' || rw_craplcm.nrdconta || SQLERRM;
+              vr_dscritic := 'Erro ao inserir craplcm: ' || rw_crapccs.nrdconta || SQLERRM;
             RAISE vr_exc_erro;
+              
         END;
         
+          EXIT;
+          
+        END LOOP;
+        
+        IF vr_flgerror = 1 THEN
+          vr_cdcritic := 0;  
+          vr_dscritic := 'Erro ao inserir craplcm: ' || rw_crapccs.nrdconta || SQLERRM;
+          RAISE vr_exc_erro; 
+        END IF; 
+       
+       
         BEGIN
             UPDATE craplot
                -- se o numero for maior que o ja existente atualiza
-               SET nrseqdig = rw_craplot.nrseqdig + 1,
+               SET nrseqdig = rw_craplot.nrseqdig,
                    qtcompln = rw_craplot.qtcompln + 1,
                    qtinfoln = rw_craplot.qtinfoln + 1, 
                    vlcompdb = rw_craplot.vlcompdb + rw_craplcm.vllanmto,                         
