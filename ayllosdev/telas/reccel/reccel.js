@@ -245,6 +245,8 @@ function formataOpcaoC(){
 	layoutPadrao();
 	cDtinirec.attr('tabindex', 1);
 	cDtfimrec.attr('tabindex', 2);
+	$('#btProsseguir','#divBotoes').attr('tabindex', 3);
+	
 }
 
 function formataOpcaoR(){

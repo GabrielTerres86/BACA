@@ -24,7 +24,7 @@ isPostMethod();
 // Classe para leitura do xml de retorno
 require_once("../../class/xmlfile.php");
 
-if (($msgError = validaPermissao($glbvars["nmdatela"], $glbvars["nmrotina"], $_POST['cddopcao'])) <> "") {
+if (($msgError = validaPermissao($glbvars["nmdatela"], $glbvars["nmrotina"], 'R')) <> "") {
 	exibirErro('error',$msgError,'Alerta - Ayllos','',false);
 }
 
