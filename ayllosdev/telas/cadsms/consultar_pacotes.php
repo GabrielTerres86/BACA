@@ -33,7 +33,7 @@ $xml .= "   <tamanho_pagina>".$tamanho_pagina."</tamanho_pagina>";
 $xml .= " </Dados>";
 $xml .= "</Root>";
 
-$xmlResult = mensageria($xml, "CADSMS", "CONSULTAR_PACOTES", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+$xmlResult = mensageria($xml, "CADSMS", "LISTAR_PACOTES", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 $xmlObj = getObjectXML($xmlResult);
 
 if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
