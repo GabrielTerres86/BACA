@@ -1089,6 +1089,7 @@ PROCEDURE proc_cria_critica_transacao_oper:
     DEF VAR aux_dstptran AS CHAR NO-UNDO INIT "APLICACAO".
     DEF VAR aux_sldresga AS DEC  NO-UNDO.
     DEF VAR aux_dstiptra AS CHAR  NO-UNDO.
+    DEF VAR aux_resposta AS CHAR NO-UNDO.
     
     DEF VAR h-b1wgen9999 AS HANDLE NO-UNDO.
     DEF VAR h-b1wgen0081 AS HANDLE NO-UNDO.
