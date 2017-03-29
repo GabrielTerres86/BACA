@@ -25,8 +25,7 @@ isPostMethod();
 require_once("../../class/xmlfile.php");
 
 if (($msgError = validaPermissao($glbvars["nmdatela"], $glbvars["nmrotina"], $_POST['cddopcao'])) <> "") {
-    ?><script language="javascript">alert('<?php echo $msgError; ?>');</script><?php
-    exit();
+	exibirErro('error',$msgError,'Alerta - Ayllos','',false);
 }
 
 $xmlreq = new XmlMensageria();
@@ -36,9 +35,8 @@ $xmlResult = mensageria($xmlreq, "TELA_RECCEL", "BUSCA_OPERADORAS", $glbvars["cd
    
 // Se ocorrer um erro, mostra crítica
 if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
-    $msg = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
-    ?><script language="javascript">alert('<?php echo $msg; ?>');</script><?php
-    exit();
+    $msg = utf8_encode($xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata);
+	exibirErro('error',$msg,'Alerta - Ayllos','',false);
 }
 
 if(strtoupper($xmlObj->roottag->tags[0]->name == 'DADOS')){	    

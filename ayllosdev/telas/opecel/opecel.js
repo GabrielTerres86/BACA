@@ -222,7 +222,7 @@ function formataCabecalho(){
 	rCdoperadora.css({'width':'70px'}).addClass('rotulo');	
 	
 	cCddopcao	 = $('#cddopcao','#frmCab').css({'width':'445px'}); 
-	cCdoperadora = $('#cdoperadora','#frmCab').addClass('campo pesquisa codigo').css('width','50px').attr('maxlength','5');
+	cCdoperadora = $('#cdoperadora','#frmCab').addClass('campo codigo pesquisa').css('width','50px').attr('maxlength','5');
 	cNmoperadora = $('#nmoperadora','#frmCab').addClass('campo').css('width','372px');
 	btLupaOpe 	 = $('#btLupaOpe','#frmCab');
 	btnCab		 = $('#btOK','#frmCab');
@@ -232,6 +232,7 @@ function formataCabecalho(){
 	
 	cCddopcao.focus();
 	
+	layoutPadrao();
 }
 
 function formataLayout() {

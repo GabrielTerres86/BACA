@@ -31,9 +31,9 @@
 					</a>
 					<a href="#" class="botao" id="btnOKC" name="btnOKC" style = "text-align:right;">OK</a>	
 					<label for="dtinirec">Data Inicial:</label>		
-					<input id="dtinirec" name="dtinirec" type="text"/>
+					<input id="dtinirec" name="dtinirec" type="text" tabindex="100"/>
 					<label for="dtfimrec">Data Final:</label>		
-					<input id="dtfimrec" name="dtfimrec" type="text"/>					
+					<input id="dtfimrec" name="dtfimrec" type="text" tabindex="101"/>					
 					</br>
 					<label for="nmprimtl">Titular:</label>		
 					<input id="nmprimtl" name="nmprimtl" type="text"/>

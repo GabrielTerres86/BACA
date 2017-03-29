@@ -25,7 +25,7 @@
 	$cdhisdebcnt = (isset($_POST['cdhisdebcnt'])) ? $_POST['cdhisdebcnt'] : 0 ; 
 	$perreceita  = (isset($_POST['perreceita']))  ? $_POST['perreceita'] : 0 ; 
 	
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
+	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'A')) <> '') {		
 		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
 	}
 

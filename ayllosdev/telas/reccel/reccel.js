@@ -1,17 +1,17 @@
 /*!
  * FONTE        : opecel.js
- * CRIA??O      : Lucas Reinert
- * DATA CRIA??O : 21/02/2013
- * OBJETIVO     : Biblioteca de fun??es da tela OPECEL
+ * CRIAÇÃO      : Lucas Reinert
+ * DATA CRIAÇÃO : 21/02/2013
+ * OBJETIVO     : Biblioteca de funções da tela OPECEL
  * --------------
- * ALTERA??ES   : 
+ * ALTERAÇÕES   : 
  * --------------
  */
 
-// Defini??o de algumas vari?veis globais 
+// Definição de algumas variáveis globais 
 var cddopcao		= 'C';
 
-//Labels/Campos do cabe?alho
+//Labels/Campos do cabeçalho
 var cCddopcao, cNrdconta, cNmprimtl, cDtinirec, cDtfimrec, btnCab, btLupaConta,
 	cNrdddtel, cNrtelefo, cNrdddtel2, cNrtelfo2, cNmopetel, cVlrecarg, btLupaTelefone,
 	nomeForm, cdoperadora;
@@ -212,21 +212,13 @@ function formataOpcaoC(){
 
 	cDtinirec.unbind('keypress').bind('keypress', function(e){
 		if (e.keyCode == 13) {
-			if (!validaData($(this).val())) {
-                $(this).val('');
-            }else{
-				cDtfimrec.focus();
-			}
+			cDtfimrec.focus();
 		}
 	});
 
 	cDtfimrec.unbind('keypress').bind('keypress', function(e){
 		if (e.keyCode == 13) {
-			if (!validaData($(this).val())) {
-                $(this).val('');
-            }else{			
-				btnContinuar();
-			}
+			btnContinuar();
 		}
 	});
 
@@ -251,7 +243,8 @@ function formataOpcaoC(){
 	});
 
 	layoutPadrao();
-
+	cDtinirec.attr('tabindex', 1);
+	cDtfimrec.attr('tabindex', 2);
 }
 
 function formataOpcaoR(){
@@ -331,12 +324,10 @@ function formataOpcaoR(){
 		cdoperadora = $(this).val().split(";");
 		var valor = valores[cdoperadora[1]].valor;
 		for(var i in valor) {
-			// alert(valor[i]);
 			$('#vlrecarga', '#frmOpcaoR').append($('<option>', {
 				value: valor[i].replace(',','.'),
 				text: valor[i]
 			}));
-			// alert($('#vlrecarga option').val());
 		}
 		return false;
 	});
@@ -468,7 +459,7 @@ function buscaRecarga(nriniseq, nrregist){
 			}, 
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();           
-			showError('error','N?o foi poss?vel concluir a requisi??o.','Alerta - Ayllos',"unblockBackground()");
+			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos',"unblockBackground()");
 		},
 		success: function(response) {
 			hideMsgAguardo();
@@ -497,7 +488,7 @@ function buscaRecarga(nriniseq, nrregist){
 }
 
 function trocaBotoes(){
-	// Mostrar boto?es
+	// Mostrar botões
 	if ($('#divBotoes', '#divTela').css('display') == 'none'){
 		$('#divBotoes', '#divTela').css({'display':'block'});
 		$('#btVoltar','#divBotoes').show();
@@ -548,18 +539,18 @@ function formataTabelaRecargas(){
 			.append($('<tr>') // Linha
 			.attr('class','corImpar')
 			.attr('style', 'text-align: center')
-			.text('N?o foram encontrados registros com os par?metros informados.'));
+			.text('Não foram encontrados registros com os parâmetros informados.'));
 	}else{	
-		// Ordena??o da tabela
+		// Ordenação da tabela
 		$('table.tituloRegistros > thead > tr', '#divRecargas').click( function() {
 			glbTabIdoperacao = undefined;
-			// Devemos atribuir o evento de click novamente, pois o mesmo ? removido ao ordenar a tabela
+			// Devemos atribuir o evento de click novamente, pois o mesmo é removido ao ordenar a tabela
 			$('table.tituloRegistros > tbody > tr', '#divRecargas').click( function() {
 				glbTabIdoperacao = $('#idoperacao' ,$(this)).val();
 			});
 
 		});
-		// seleciona o registro que ? clicado
+		// seleciona o registro que é clicado
 		$('table.tituloRegistros > tbody > tr', '#divRecargas').click( function() {
 			glbTabIdoperacao = $('#idoperacao' ,$(this)).val();
 		});
@@ -578,7 +569,7 @@ function imprimeRecarga(){
 
 	$('#formImpres').html('');
 
-	// Insiro input do tipo hidden do formul?rio para envi?-los posteriormente
+	// Insiro input do tipo hidden do formulário para enviá-los posteriormente
 	$('#formImpres').append('<input type="hidden" id="cddopcao" name="cddopcao" />');
 	$('#formImpres').append('<input type="hidden" id="nrdconta" name="nrdconta" />');
 	$('#formImpres').append('<input type="hidden" id="idoperacao" name="idoperacao" />');
@@ -621,15 +612,16 @@ function buscaInformacoesOperadoras(){
 			}, 
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();           
-			showError('error','N?o foi poss?vel concluir a requisi??o.','Alerta - Ayllos',"unblockBackground()");
+			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos',"unblockBackground()");
 		},
 		success: function(response) {
 			hideMsgAguardo();
 			if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
 				try{
 					var obj = jQuery.parseJSON(response);
+					var qtdopera = obj.Dados.qtdopera;
 					operadora = obj.Dados.operadora;
-					mostraOperadoras(operadora);
+					mostraOperadoras(operadora, qtdopera);
 				} catch(error){
 					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground();');
 				}
@@ -644,14 +636,23 @@ function buscaInformacoesOperadoras(){
 	});
 }
 
-function mostraOperadoras(operadora){
-	for(var i in operadora) {
+function mostraOperadoras(operadora, qtdopera){
+	if (qtdopera == '1'){
 		$('#nmoperadora').append($('<option>', {
-			value: operadora[i].cdproduto + ';' + operadora[i].cdoperadora,
-			text: operadora[i].nmproduto
+			value: operadora.cdproduto + ';' + operadora.cdoperadora,
+			text: operadora.nmproduto
 		}));
-		// Utilizamos o c?digo da operadora como indice dos valores
-		valores[operadora[i].cdoperadora] = operadora[i].valores;
+		// Utilizamos o código da operadora como indice dos valores
+		valores[operadora.cdoperadora] = operadora.valores;
+	}else{
+		for(var i in operadora) {
+			$('#nmoperadora').append($('<option>', {
+				value: operadora[i].cdproduto + ';' + operadora[i].cdoperadora,
+				text: operadora[i].nmproduto
+			}));
+			// Utilizamos o código da operadora como indice dos valores
+			valores[operadora[i].cdoperadora] = operadora[i].valores;
+		}
 	}
 }
 
@@ -725,7 +726,7 @@ function efetuaRecarga(){
 			}, 
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();           
-			showError('error','N?o foi poss?vel concluir a requisi??o.','Alerta - Ayllos',"unblockBackground()");
+			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos',"unblockBackground()");
 		},
 		success: function(response) {
 			hideMsgAguardo();

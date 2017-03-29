@@ -701,7 +701,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 			OPEN cr_valores_dat(pr_cdoperadora => pr_cdoperadora
                          ,pr_cdproduto => pr_cdproduto);
 			FETCH cr_valores_dat INTO vr_dtmvtolt;
-														 											 
+			-- Fechar cursor
+			CLOSE cr_valores_dat;									
+					 											 
 			-- Buscar telefones favoritos
 			FOR rw_valores IN cr_valores(pr_cdoperadora => pr_cdoperadora
 				                          ,pr_cdproduto => pr_cdproduto
@@ -1491,7 +1493,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 				                        ,pr_nrdconta    IN crapass.nrdconta%TYPE
 				                        ,pr_idorigem    IN INTEGER
 																,pr_idseqttl    IN INTEGER
-																,pr_nmoperadora IN VARCHAR2
+																,pr_cdoperadora IN tbrecarga_operadora.cdoperadora%TYPE
 																,pr_nrdddtel    IN tbrecarga_favorito.nrddd%TYPE
 																,pr_nrtelefo    IN tbrecarga_favorito.nrcelular%TYPE
 																,pr_vlrecarga   IN tbrecarga_valor.vlrecarga%TYPE
@@ -1509,15 +1511,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 						   FROM tbrecarga_operacao tope
 							WHERE tope.idoperacao = pr_idoperacao;
 					 vr_sitoperac INTEGER;
+					 
+					 -- Buscar nome da operadora
+					 CURSOR cr_operadora(pr_cdoperadora IN tbrecarga_operadora.cdoperadora%TYPE) IS
+					   SELECT topr.nmoperadora
+						   FROM tbrecarga_operadora topr
+							WHERE topr.cdoperadora = pr_cdoperadora;
+					 vr_nmoperadora tbrecarga_operadora.nmoperadora%TYPE;
 				BEGIN
 				  OPEN cr_operacao(pr_idoperacao => pr_idoperacao);
 				  FETCH cr_operacao INTO vr_sitoperac;
+					-- Fechar cursor
+					CLOSE cr_operacao;
 					-- Verificar se é agendemanto
 					IF vr_sitoperac = 1 THEN
 					   vr_dstransa := 'Efetua agendamento para recarga de celular';
 					ELSE
 					   vr_dstransa := 'Recarga de celular';
 					END IF;						
+					
+					-- Buscar nome da operadora
+					OPEN cr_operadora(pr_cdoperadora => pr_cdoperadora);
+					FETCH cr_operadora INTO vr_nmoperadora;
+					-- Fechar cursor
+					CLOSE cr_operadora;
+					
 					-- Gerar log
 					gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
 															,pr_cdoperad => CASE 
@@ -1541,7 +1559,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 					GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
 																	 ,pr_nmdcampo => 'Operadora'
 																	 ,pr_dsdadant => ' '
-																	 ,pr_dsdadatu => pr_nmoperadora);
+																	 ,pr_dsdadatu => vr_nmoperadora);
 					-- Telefone												 
 					GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
 																	 ,pr_nmdcampo => 'Telefone'
@@ -1585,7 +1603,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 												,pr_nrdconta => pr_nrdconta
 												,pr_idorigem => pr_idorigem
 												,pr_idseqttl => pr_idseqttl
-												,pr_nmoperadora => ' '
+												,pr_cdoperadora => pr_cdopetel
 												,pr_nrdddtel => pr_nrdddtel
 												,pr_nrtelefo => pr_nrtelefo
 												,pr_vlrecarga => pr_vlrecarga
@@ -1630,7 +1648,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 												,pr_nrdconta => pr_nrdconta
 												,pr_idorigem => pr_idorigem
 												,pr_idseqttl => pr_idseqttl
-												,pr_nmoperadora => ' '
+												,pr_cdoperadora => pr_cdopetel
 												,pr_nrdddtel => pr_nrdddtel
 												,pr_nrtelefo => pr_nrtelefo
 												,pr_vlrecarga => pr_vlrecarga
@@ -1656,7 +1674,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 												  ,pr_nrdconta => pr_nrdconta
 												  ,pr_idorigem => pr_idorigem
 												  ,pr_idseqttl => pr_idseqttl
-												  ,pr_nmoperadora => ' '
+												  ,pr_cdoperadora => pr_cdopetel
 												  ,pr_nrdddtel => pr_nrdddtel
 												  ,pr_nrtelefo => pr_nrtelefo
 												  ,pr_vlrecarga => pr_vlrecarga
@@ -1679,7 +1697,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 												  ,pr_nrdconta => pr_nrdconta
 												  ,pr_idorigem => pr_idorigem
 												  ,pr_idseqttl => pr_idseqttl
-												  ,pr_nmoperadora => ' '
+												  ,pr_cdoperadora => pr_cdopetel
 												  ,pr_nrdddtel => pr_nrdddtel
 												  ,pr_nrtelefo => pr_nrtelefo
 												  ,pr_vlrecarga => pr_vlrecarga
@@ -1723,7 +1741,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 												 ,pr_nrdconta => pr_nrdconta
 												 ,pr_idorigem => pr_idorigem
 												 ,pr_idseqttl => pr_idseqttl
-												 ,pr_nmoperadora => ' '
+												 ,pr_cdoperadora => pr_cdopetel
 												 ,pr_nrdddtel => pr_nrdddtel
 												 ,pr_nrtelefo => pr_nrtelefo
 												 ,pr_vlrecarga => pr_vlrecarga
@@ -1751,7 +1769,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 												,pr_nrdconta => pr_nrdconta
 												,pr_idorigem => pr_idorigem
 												,pr_idseqttl => pr_idseqttl
-												,pr_nmoperadora => ' '
+												,pr_cdoperadora => pr_cdopetel
 												,pr_nrdddtel => pr_nrdddtel
 												,pr_nrtelefo => pr_nrtelefo
 												,pr_vlrecarga => pr_vlrecarga
@@ -1761,6 +1779,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 				-- Levantar exceção
 				RAISE vr_exc_erro;
 			END IF;
+			-- Fechar cursor
+			CLOSE cr_inf_rec;
 			
 			vr_recarga.put('Fornecedor', rw_inf_rec.nmoperadora); -- Nome da operadora
 			vr_recarga.put('TipoProduto', rw_inf_rec.tpoperacao); -- Tipo produto FIXO
@@ -1788,7 +1808,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 												,pr_nrdconta => pr_nrdconta
 												,pr_idorigem => pr_idorigem
 												,pr_idseqttl => pr_idseqttl
-												,pr_nmoperadora => rw_inf_rec.nmoperadora
+												,pr_cdoperadora => pr_cdopetel
 												,pr_nrdddtel => pr_nrdddtel
 												,pr_nrtelefo => pr_nrtelefo
 												,pr_vlrecarga => pr_vlrecarga
@@ -1814,7 +1834,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 												,pr_nrdconta => pr_nrdconta
 												,pr_idorigem => pr_idorigem
 												,pr_idseqttl => pr_idseqttl
-												,pr_nmoperadora => rw_inf_rec.nmoperadora
+												,pr_cdoperadora => pr_cdopetel
 												,pr_nrdddtel => pr_nrdddtel
 												,pr_nrtelefo => pr_nrtelefo
 												,pr_vlrecarga => pr_vlrecarga
@@ -1836,7 +1856,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 												,pr_nrdconta => pr_nrdconta
 												,pr_idorigem => pr_idorigem
 												,pr_idseqttl => pr_idseqttl
-												,pr_nmoperadora => rw_inf_rec.nmoperadora
+												,pr_cdoperadora => pr_cdopetel
 												,pr_nrdddtel => pr_nrdddtel
 												,pr_nrtelefo => pr_nrtelefo
 												,pr_vlrecarga => pr_vlrecarga
@@ -1984,7 +2004,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 														 ,pr_nrdconta => pr_nrdconta
 														 ,pr_idorigem => pr_idorigem
 														 ,pr_idseqttl => pr_idseqttl
-														 ,pr_nmoperadora => rw_inf_rec.nmoperadora
+												     ,pr_cdoperadora => pr_cdopetel
 														 ,pr_nrdddtel => pr_nrdddtel
 														 ,pr_nrtelefo => pr_nrtelefo
 														 ,pr_vlrecarga => pr_vlrecarga
@@ -2026,7 +2046,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 														 ,pr_nrdconta => pr_nrdconta
 														 ,pr_idorigem => pr_idorigem
 														 ,pr_idseqttl => pr_idseqttl
-														 ,pr_nmoperadora => rw_inf_rec.nmoperadora
+												     ,pr_cdoperadora => pr_cdopetel
 														 ,pr_nrdddtel => pr_nrdddtel
 														 ,pr_nrtelefo => pr_nrtelefo
 														 ,pr_vlrecarga => pr_vlrecarga
@@ -2043,6 +2063,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 						OPEN cr_craptfn(pr_cdcoptfn => pr_cdcoptfn
 						               ,pr_nrterfin => pr_nrterfin);
 						FETCH cr_craptfn INTO vr_cdopetfn;
+						-- Fechar cursor
+						CLOSE cr_craptfn;
 						
 						-- Inserir log de transação no TAA
 						INSERT INTO crapltr(cdcooper

@@ -25,8 +25,7 @@ isPostMethod();
 require_once("../../class/xmlfile.php");
 
 if (($msgError = validaPermissao($glbvars["nmdatela"], $glbvars["nmrotina"], 'R')) <> "") {
-    ?><script language="javascript">alert('<?php echo $msgError; ?>');</script><?php
-    exit();
+	exibirErro('error',$msgError,'Alerta - Ayllos','',false);
 }
 
 $nrdconta = !isset($_POST["nrdconta"]) ? 0  : $_POST["nrdconta"];
@@ -49,9 +48,8 @@ $xmlResult = mensageria($xmlReq, "TELA_RECCEL", "EFETUA_RECARGA", $glbvars["cdco
    
 // Se ocorrer um erro, mostra crítica
 if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
-    $msg = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
-    ?><script language="javascript">alert('<?php echo $msg; ?>');</script><?php
-    exit();
+    $msg = utf8_encode($xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata);
+    exibirErro('error',$msg,'Alerta - Ayllos','',false);
 }
 if(strtoupper($xmlObj->roottag->tags[0]->name == 'DADOS')){	    
     $dsnsuope = $xmlObj->roottag->tags[0]->tags[0]->cdata;

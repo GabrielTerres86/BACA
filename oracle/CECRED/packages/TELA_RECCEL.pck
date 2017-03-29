@@ -988,6 +988,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_RECCEL AS
 		-- Variáveis auxiliares
     vr_clob CLOB;
 		vr_dtmvtolt DATE;
+		vr_qtdopera NUMBER := 0;
 		
 		-- Cursor para listar os produtos de recarga
 		CURSOR cr_produtos IS
@@ -1062,7 +1063,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_RECCEL AS
         -- Fechar tags				
 				vr_clob := vr_clob ||
 				           '</valores></operadora>';
+				-- Incrementa quantidade de operadoras
+        vr_qtdopera	:= vr_qtdopera + 1;
 			END LOOP;
+			-- Quantidade de operadoras encontradas
+			vr_clob := vr_clob ||
+			           '<qtdopera>' || to_char(vr_qtdopera) || '</qtdopera>';
+			
       -- Fechar tags
       vr_clob := vr_clob ||
 			           '</Dados></Root>';

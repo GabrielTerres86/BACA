@@ -27,8 +27,9 @@
 		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
 	}
 	
-	// Verifica se os parâmetros necessários foram informados
+	// Verifica se os parâmetros necessários foram informados	
 	if (!validaInteiro($nrdconta)) exibirErro('error','Conta inv&aacute;lida.','Alerta - Ayllos','$(\'#nrdconta\', \'#frmOpcaoC\').focus();',false);
+	if ($nrdconta == 0) exibirErro('error','Informe o n&uacute;mero da conta.','Alerta - Ayllos','$(\'#nrdconta\', \'#frmOpcaoC\').focus();',false);
 	if ($dtinirec == "" || $dtfimrec == "") exibirErro('error','Informe as datas inicial e final do período.','Alerta - Ayllos','$(\'#dtinirec\', \'#frmOpcaoC\').focus();',false);
 		
 	// Montar o xml de Requisicao

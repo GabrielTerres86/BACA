@@ -359,12 +359,12 @@ function formataLayoutCecred() {
 	rNrdocnpj = $('label[for="nrdocnpj"]','#frmParrec');
 	rDsdonome = $('label[for="dsdonome"]','#frmParrec');
 
-	rNrispbif.addClass('rotulo').css({'width':'150px'});
-	rCdbccxlt.addClass('rotulo').css({'width':'150px'});
-	rCdageban.addClass('rotulo').css({'width':'150px'});
-	rNrdconta.addClass('rotulo').css({'width':'150px'});
-	rNrdocnpj.addClass('rotulo').css({'width':'150px'});
-	rDsdonome.addClass('rotulo').css({'width':'150px'});
+	rNrispbif.addClass('rotulo').css({'width':'160px'});
+	rCdbccxlt.addClass('rotulo').css({'width':'160px'});
+	rCdageban.addClass('rotulo').css({'width':'160px'});
+	rNrdconta.addClass('rotulo').css({'width':'160px'});
+	rNrdocnpj.addClass('rotulo').css({'width':'160px'});
+	rDsdonome.addClass('rotulo').css({'width':'160px'});
 	
 	cNrispbif = $('#nrispbif','#frmParrec').addClass('campo pesquisa inteiro').css({'width':'80px'}).attr('maxlength', '8'); // ,'text-align':'right'
 	cCdbccxlt = $('#cdbccxlt','#frmParrec').addClass('campo inteiro').css({'width':'50px'});
