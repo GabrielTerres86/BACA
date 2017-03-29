@@ -172,6 +172,8 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
                25/10/2016 - #524279 Ajustado para que os pedidos sejam acumulados e enviados ao fornecedor 
                             quinzenalmente (todo dia 1º e todo dia 15 de cada mês, quando se tratar de finais 
                             de semana ou feriados devem ser enviados no primeiro dia útil posterior). (Carlos)
+	         
+			   21/03/2017 - Ajuste para gerar número de pedido distinto por tipo de requisição (Rafael Monteiro)
 
 ............................................................................. */
 
@@ -288,7 +290,8 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
                               pr_nmarqui3     IN VARCHAR2,
                               pr_nmarqui4     IN VARCHAR2,
                               pr_flg_impri    IN VARCHAR2,
-                              pr_cdempres     IN gnsequt.cdsequtl%TYPE) IS
+                              pr_cdempres     IN gnsequt.cdsequtl%TYPE,
+                              pr_tprequis     IN crapreq.tprequis%type) IS
 
     -- Cursor sobre arquivo de controle
     CURSOR cr_gnsequt IS
@@ -303,7 +306,8 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
     CURSOR cr_crapreq(pr_cdcooper     IN crapreq.cdcooper%TYPE,
                       pr_cdbanchq     IN crapcop.cdbcoctl%TYPE,
                       pr_cdtipcta_ini IN crapreq.cdtipcta%TYPE,
-                      pr_cdtipcta_fim IN crapreq.cdtipcta%TYPE) IS
+                      pr_cdtipcta_fim IN crapreq.cdtipcta%TYPE,
+                      pr_tprequis     in crapreq.tprequis%TYPE) IS
       SELECT crapreq.ROWID,
              crapreq.cdagenci,
              crapreq.nrdconta,
@@ -323,6 +327,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
          AND crapass.nrdconta = crapreq.nrdconta
          AND crapass.cdbcochq = pr_cdbanchq
          AND crapreq.qtreqtal > 0 -- Somente quando tiver solicitacao de talao
+         AND crapreq.tprequis = pr_tprequis
        ORDER BY crapreq.cdagenci,
                 crapreq.nrdconta;
 
@@ -619,7 +624,8 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
     FOR rw_crapreq IN cr_crapreq(pr_cdcooper,
                                  pr_cdbanchq,
                                  pr_cdtipcta_ini,
-                                 pr_cdtipcta_fim) LOOP
+                                 pr_cdtipcta_fim,
+                                 pr_tprequis) LOOP
 
       -- Verifica se é o primeiro dia útil do mês ou primeiro dia útil a partir do dia 15, pois as
       -- solicitações de formulário continuo só acontecerão de 15 em 15 dias, apenas para a empresa RR Donnelley
@@ -1366,56 +1372,59 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
                      '</pedido>'||
                    '</crps408>',4);
     dbms_lob.append(vr_des_xml_fc,vr_des_xml_fc_rej);
-
-    -- Chamada do iReport para gerar o arquivo de saida
-    gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper,         --> Cooperativa conectada
-                                pr_cdprogra  => vr_cdprogra,         --> Programa chamador
-                                pr_dtmvtolt  => vr_dtmvtolt,         --> Data do movimento atual
-                                pr_dsxml     => vr_des_xml,          --> Arquivo XML de dados (CLOB)
-                                pr_dsxmlnode => '/crps408/pedido',    --> No base do XML para leitura dos dados
-                                pr_dsjasper  => 'crrl392.jasper',    --> Arquivo de layout do iReport
-                                pr_dsparams  => 'PR_NMEMPRES##'||vr_nmempres, --> Enviar como parametro apenas a agencia
-                                pr_dsarqsaid => vr_nom_diretorio||'/rl/'||pr_nmarqui1||'.lst', --> Arquivo final
-                                pr_flg_gerar => 'N',                 --> Não gerar o arquivo na hora
-                                pr_qtcoluna  => 132,
-                                pr_sqcabrel  => 1,
-                                pr_flg_impri => pr_flg_impri,       --> Indicador se imprimira o relatorio
-                                pr_nrcopias  => 1,                  --> Numero de copias
-                                pr_dsextmail => 'pdf', 
-                                pr_dsmailcop => vr_email_dest, --> Lista sep. por ';' de emails para envio do arquivo
-                                pr_dsassmail => 'PEDIDO DE TALONARIOS - ' || rw_crapcop.nmrescop, --> Assunto do e-mail que enviará o arquivo
-                                pr_dscormail => NULL, --> HTML corpo do email que enviará o arquivo
-                                pr_fldosmail => 'S', --> Flag para converter o arquivo gerado em DOS antes do e-mail
-                                pr_des_erro  => pr_dscritic);       --> Saida com erro
-    IF pr_dscritic IS NOT NULL THEN
-      RAISE vr_exc_saida;
-    END IF;
-
-
-    IF vr_qttotgerreq_fc > 0 THEN -- Gerar relatorio de FC somente se existir dados
+    --
+    IF pr_nmarqui1 IS NOT NULL THEN
+      -- Chamada do iReport para gerar o arquivo de saida
       gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper,         --> Cooperativa conectada
                                   pr_cdprogra  => vr_cdprogra,         --> Programa chamador
                                   pr_dtmvtolt  => vr_dtmvtolt,         --> Data do movimento atual
-                                  pr_dsxml     => vr_des_xml_fc,       --> Arquivo XML de dados (CLOB)
-                                  pr_dsxmlnode => '/crps408/pedido',   --> No base do XML para leitura dos dados
-                                  pr_dsjasper  => 'crrl572.jasper',    --> Arquivo de layout do iReport
+                                  pr_dsxml     => vr_des_xml,          --> Arquivo XML de dados (CLOB)
+                                  pr_dsxmlnode => '/crps408/pedido',    --> No base do XML para leitura dos dados
+                                  pr_dsjasper  => 'crrl392.jasper',    --> Arquivo de layout do iReport
                                   pr_dsparams  => 'PR_NMEMPRES##'||vr_nmempres, --> Enviar como parametro apenas a agencia
-                                  pr_dsarqsaid => vr_nom_diretorio||'/rl/'||pr_nmarqui3||'.lst', --> Arquivo final
+                                  pr_dsarqsaid => vr_nom_diretorio||'/rl/'||pr_nmarqui1||'.lst', --> Arquivo final
                                   pr_flg_gerar => 'N',                 --> Não gerar o arquivo na hora
                                   pr_qtcoluna  => 132,
-                                  pr_sqcabrel  => 3,
+                                  pr_sqcabrel  => 1,
                                   pr_flg_impri => pr_flg_impri,       --> Indicador se imprimira o relatorio
                                   pr_nrcopias  => 1,                  --> Numero de copias
-                                  
                                   pr_dsextmail => 'pdf', 
                                   pr_dsmailcop => vr_email_dest, --> Lista sep. por ';' de emails para envio do arquivo
-                                  pr_dsassmail => 'REQUISICAO DE FORMULARIO CONTINUO - ' || rw_crapcop.nmrescop, --> Assunto do e-mail que enviará o arquivo
+                                  pr_dsassmail => 'PEDIDO DE TALONARIOS - ' || rw_crapcop.nmrescop, --> Assunto do e-mail que enviará o arquivo
                                   pr_dscormail => NULL, --> HTML corpo do email que enviará o arquivo
                                   pr_fldosmail => 'S', --> Flag para converter o arquivo gerado em DOS antes do e-mail
-
                                   pr_des_erro  => pr_dscritic);       --> Saida com erro
       IF pr_dscritic IS NOT NULL THEN
         RAISE vr_exc_saida;
+      END IF;
+    END IF;
+
+    IF vr_qttotgerreq_fc > 0 THEN -- Gerar relatorio de FC somente se existir dados
+      IF pr_nmarqui3 IS NOT NULL THEN      
+        gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper,         --> Cooperativa conectada
+                                    pr_cdprogra  => vr_cdprogra,         --> Programa chamador
+                                    pr_dtmvtolt  => vr_dtmvtolt,         --> Data do movimento atual
+                                    pr_dsxml     => vr_des_xml_fc,       --> Arquivo XML de dados (CLOB)
+                                    pr_dsxmlnode => '/crps408/pedido',   --> No base do XML para leitura dos dados
+                                    pr_dsjasper  => 'crrl572.jasper',    --> Arquivo de layout do iReport
+                                    pr_dsparams  => 'PR_NMEMPRES##'||vr_nmempres, --> Enviar como parametro apenas a agencia
+                                    pr_dsarqsaid => vr_nom_diretorio||'/rl/'||pr_nmarqui3||'.lst', --> Arquivo final
+                                    pr_flg_gerar => 'N',                 --> Não gerar o arquivo na hora
+                                    pr_qtcoluna  => 132,
+                                    pr_sqcabrel  => 3,
+                                    pr_flg_impri => pr_flg_impri,       --> Indicador se imprimira o relatorio
+                                    pr_nrcopias  => 1,                  --> Numero de copias
+                                    
+                                    pr_dsextmail => 'pdf', 
+                                    pr_dsmailcop => vr_email_dest, --> Lista sep. por ';' de emails para envio do arquivo
+                                    pr_dsassmail => 'REQUISICAO DE FORMULARIO CONTINUO - ' || rw_crapcop.nmrescop, --> Assunto do e-mail que enviará o arquivo
+                                    pr_dscormail => NULL, --> HTML corpo do email que enviará o arquivo
+                                    pr_fldosmail => 'S', --> Flag para converter o arquivo gerado em DOS antes do e-mail
+
+                                    pr_des_erro  => pr_dscritic);       --> Saida com erro
+        IF pr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_saida;
+        END IF;
       END IF;
     END IF;
 
@@ -1567,31 +1576,31 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
                        '<nrdocnpj>'|| TO_CHAR(gene0002.fn_mask_cpf_cnpj(rw_crapcop.nrdocnpj,2)) ||'</nrdocnpj>'||
                      '</pedido>'||
                    '</crps408>',1);
-
-    -- Chamada do iReport para gerar o arquivo de saida
-    gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper,         --> Cooperativa conectada
-                                pr_cdprogra  => vr_cdprogra,         --> Programa chamador
-                                pr_dtmvtolt  => vr_dtmvtolt,         --> Data do movimento atual
-                                pr_dsxml     => vr_des_xml,          --> Arquivo XML de dados (CLOB)
-                                pr_dsxmlnode => '/crps408/pedido',    --> No base do XML para leitura dos dados
-                                pr_dsjasper  => 'crrl393.jasper',    --> Arquivo de layout do iReport
-                                pr_dsparams  => 'PR_NMEMPRES##'||vr_nmempres, --> Enviar como parametro apenas a agencia
-                                pr_dsarqsaid => vr_nom_diretorio||'/rl/'||pr_nmarqui2||'.lst', --> Arquivo final
-                                pr_flg_gerar => 'N',                 --> Não gerar o arquivo na hora
-                                pr_qtcoluna  => 132,
-                                pr_sqcabrel  => 2,
-                                pr_flg_impri => pr_flg_impri,       --> Indicador se imprimira o relatorio
-                                pr_nrcopias  => 2,                  --> Numero de copias
-                                pr_dsextmail => 'pdf', 
-                                pr_dsmailcop => vr_email_dest, --> Lista sep. por ';' de emails para envio do arquivo
-                                pr_dsassmail => 'RESUMO PEDIDO DE TALONARIOS - ' || rw_crapcop.nmrescop, --> Assunto do e-mail que enviará o arquivo
-                                pr_dscormail => NULL, --> HTML corpo do email que enviará o arquivo
-                                pr_fldosmail => 'S', --> Flag para converter o arquivo gerado em DOS antes do e-mail
-                                pr_des_erro  => pr_dscritic);       --> Saida com erro
-    IF pr_dscritic IS NOT NULL THEN
-      RAISE vr_exc_saida;
+    IF pr_nmarqui2 IS NOT NULL THEN
+      -- Chamada do iReport para gerar o arquivo de saida
+      gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper,         --> Cooperativa conectada
+                                  pr_cdprogra  => vr_cdprogra,         --> Programa chamador
+                                  pr_dtmvtolt  => vr_dtmvtolt,         --> Data do movimento atual
+                                  pr_dsxml     => vr_des_xml,          --> Arquivo XML de dados (CLOB)
+                                  pr_dsxmlnode => '/crps408/pedido',    --> No base do XML para leitura dos dados
+                                  pr_dsjasper  => 'crrl393.jasper',    --> Arquivo de layout do iReport
+                                  pr_dsparams  => 'PR_NMEMPRES##'||vr_nmempres, --> Enviar como parametro apenas a agencia
+                                  pr_dsarqsaid => vr_nom_diretorio||'/rl/'||pr_nmarqui2||'.lst', --> Arquivo final
+                                  pr_flg_gerar => 'N',                 --> Não gerar o arquivo na hora
+                                  pr_qtcoluna  => 132,
+                                  pr_sqcabrel  => 2,
+                                  pr_flg_impri => pr_flg_impri,       --> Indicador se imprimira o relatorio
+                                  pr_nrcopias  => 2,                  --> Numero de copias
+                                  pr_dsextmail => 'pdf', 
+                                  pr_dsmailcop => vr_email_dest, --> Lista sep. por ';' de emails para envio do arquivo
+                                  pr_dsassmail => 'RESUMO PEDIDO DE TALONARIOS - ' || rw_crapcop.nmrescop, --> Assunto do e-mail que enviará o arquivo
+                                  pr_dscormail => NULL, --> HTML corpo do email que enviará o arquivo
+                                  pr_fldosmail => 'S', --> Flag para converter o arquivo gerado em DOS antes do e-mail
+                                  pr_des_erro  => pr_dscritic);       --> Saida com erro
+      IF pr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
     END IF;
-
 
     -- Liberando a memoria alocada para os CLOBs
     dbms_lob.close(vr_des_xml);
@@ -1599,50 +1608,52 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
 
     -- Escreve o resumo para Formulario continuo
     IF vr_qttotgerreq_fc > 0 THEN
-      vr_des_xml_fc := NULL;
-      dbms_lob.createtemporary(vr_des_xml_fc, true);
-      dbms_lob.open(vr_des_xml_fc, dbms_lob.lob_readwrite);
+      IF pr_nmarqui4 IS NOT NULL THEN
+        vr_des_xml_fc := NULL;
+        dbms_lob.createtemporary(vr_des_xml_fc, true);
+        dbms_lob.open(vr_des_xml_fc, dbms_lob.lob_readwrite);
 
-      pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?>'||
-                     '<crps408>'||
-                       '<pedido>'||
-                         '<vlsequtl>'||rw_gnsequt.vlsequtl              ||'</vlsequtl>'||
-                         '<dtmvtolt>'||to_char(vr_dtmvtolt,'DD/MM/YYYY')||'</dtmvtolt>'||
-                         '<nmbanco>' ||vr_nmbanco                       ||'</nmbanco>'||
-                         '<qttotchq>'||vr_qttottal_fc                   ||'</qttotchq>'||
-                         '<qttotreq>'||vr_qttotgerreq_fc                ||'</qttotreq>'||
-                       '</pedido>'||
-                     '</crps408>',3);
+        pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?>'||
+                       '<crps408>'||
+                         '<pedido>'||
+                           '<vlsequtl>'||rw_gnsequt.vlsequtl              ||'</vlsequtl>'||
+                           '<dtmvtolt>'||to_char(vr_dtmvtolt,'DD/MM/YYYY')||'</dtmvtolt>'||
+                           '<nmbanco>' ||vr_nmbanco                       ||'</nmbanco>'||
+                           '<qttotchq>'||vr_qttottal_fc                   ||'</qttotchq>'||
+                           '<qttotreq>'||vr_qttotgerreq_fc                ||'</qttotreq>'||
+                         '</pedido>'||
+                       '</crps408>',3);
 
-      -- Gerar arquivos XML
-      gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper,         --> Cooperativa conectada
-                                  pr_cdprogra  => vr_cdprogra,         --> Programa chamador
-                                  pr_dtmvtolt  => vr_dtmvtolt,         --> Data do movimento atual
-                                  pr_dsxml     => vr_des_xml_fc,       --> Arquivo XML de dados (CLOB)
-                                  pr_dsxmlnode => '/crps408/pedido',   --> No base do XML para leitura dos dados
-                                  pr_dsjasper  => 'crrl573.jasper',    --> Arquivo de layout do iReport
-                                  pr_dsparams  => 'PR_NMEMPRES##'||vr_nmempres, --> Enviar como parametro apenas a agencia
-                                  pr_dsarqsaid => vr_nom_diretorio||'/rl/'||pr_nmarqui4||'.lst', --> Arquivo final
-                                  pr_flg_gerar => 'N',                 --> Não gerar o arquivo na hora
-                                  pr_qtcoluna  => 132,
-                                  pr_sqcabrel  => 3,
-                                  pr_flg_impri => pr_flg_impri,       --> Indicador se imprimira o relatorio
-                                  pr_nrcopias  => 2,                  --> Numero de copias
-                                  
-                                  pr_dsextmail => 'pdf', 
-                                  pr_dsmailcop => vr_email_dest, --> Lista sep. por ';' de emails para envio do arquivo
-                                  pr_dsassmail => 'RESUMO REQUISICOES DE FORMULARIO CONTINUO - ' || rw_crapcop.nmrescop, --> Assunto do e-mail que enviará o arquivo
-                                  pr_dscormail => NULL, --> HTML corpo do email que enviará o arquivo
-                                  pr_fldosmail => 'S', --> Flag para converter o arquivo gerado em DOS antes do e-mail
-                                  
-                                  pr_des_erro  => pr_dscritic);       --> Saida com erro
-      IF pr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_saida;
+        -- Gerar arquivos XML
+        gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper,         --> Cooperativa conectada
+                                    pr_cdprogra  => vr_cdprogra,         --> Programa chamador
+                                    pr_dtmvtolt  => vr_dtmvtolt,         --> Data do movimento atual
+                                    pr_dsxml     => vr_des_xml_fc,       --> Arquivo XML de dados (CLOB)
+                                    pr_dsxmlnode => '/crps408/pedido',   --> No base do XML para leitura dos dados
+                                    pr_dsjasper  => 'crrl573.jasper',    --> Arquivo de layout do iReport
+                                    pr_dsparams  => 'PR_NMEMPRES##'||vr_nmempres, --> Enviar como parametro apenas a agencia
+                                    pr_dsarqsaid => vr_nom_diretorio||'/rl/'||pr_nmarqui4||'.lst', --> Arquivo final
+                                    pr_flg_gerar => 'N',                 --> Não gerar o arquivo na hora
+                                    pr_qtcoluna  => 132,
+                                    pr_sqcabrel  => 3,
+                                    pr_flg_impri => pr_flg_impri,       --> Indicador se imprimira o relatorio
+                                    pr_nrcopias  => 2,                  --> Numero de copias
+                                    
+                                    pr_dsextmail => 'pdf', 
+                                    pr_dsmailcop => vr_email_dest, --> Lista sep. por ';' de emails para envio do arquivo
+                                    pr_dsassmail => 'RESUMO REQUISICOES DE FORMULARIO CONTINUO - ' || rw_crapcop.nmrescop, --> Assunto do e-mail que enviará o arquivo
+                                    pr_dscormail => NULL, --> HTML corpo do email que enviará o arquivo
+                                    pr_fldosmail => 'S', --> Flag para converter o arquivo gerado em DOS antes do e-mail
+                                    
+                                    pr_des_erro  => pr_dscritic);       --> Saida com erro
+        IF pr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_saida;
+        END IF;
+
+        -- Liberando a memoria alocada para os CLOBs
+        dbms_lob.close(vr_des_xml_fc);
+        dbms_lob.freetemporary(vr_des_xml_fc);
       END IF;
-
-      -- Liberando a memoria alocada para os CLOBs
-      dbms_lob.close(vr_des_xml_fc);
-      dbms_lob.freetemporary(vr_des_xml_fc);
     END IF;
 
     -- Acumula o arquivo de cabecalho com o arquivo de dados no arquivo principal
@@ -1829,10 +1840,25 @@ BEGIN
                     pr_nrdserie     => 1,
                     pr_nmarqui1     => 'crrl392_03',
                     pr_nmarqui2     => 'crrl393_03',
+                    pr_nmarqui3     => NULL, --'crrl572_03',
+                    pr_nmarqui4     => NULL, --'crrl573_03',
+                    pr_flg_impri    => 'S',
+                    pr_cdempres     => vr_cdempres,
+                    pr_tprequis     => 1);
+  -- CECRED
+  Pc_Gera_Talonario(pr_cdcooper     => pr_cdcooper,
+                    pr_cdtipcta_ini => 08, --NORMAL CONVENIO
+                    pr_cdtipcta_fim => 11, --CONJ.ESP.CONV.
+                    pr_cdbanchq     => rw_crapcop.cdbcoctl,
+                    pr_nrcontab     => 0,
+                    pr_nrdserie     => 1,
+                    pr_nmarqui1     => NULL, --'crrl392_03',
+                    pr_nmarqui2     => NULL, --'crrl393_03',
                     pr_nmarqui3     => 'crrl572_03',
                     pr_nmarqui4     => 'crrl573_03',
                     pr_flg_impri    => 'S',
-                    pr_cdempres     => vr_cdempres);
+                    pr_cdempres     => vr_cdempres,
+                    pr_tprequis     => 3);   
 
 
   -- Testar se houve erro
@@ -1886,4 +1912,3 @@ EXCEPTION
     -- Efetuar rollback
     ROLLBACK;
 END;
-/
