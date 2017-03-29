@@ -223,6 +223,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
                06/03/2017 - Regra para gerar lançamento do histórico 622 deve ser a mesma
                             utilizada para gerar o lançamento do histórico 2.(AJFink-SD#622251)
 
+               29/03/2017 - Estava sendo utilizado variavel rw_craplot.dtmvtolt indevidamente
+                            na abertura do cursor cr_craplot.(AJFink-SD#641111)
+
   ............................................................................. */
   
   ------------------------------- CURSORES ---------------------------------
@@ -2633,7 +2636,7 @@ BEGIN
         END IF;
         
         OPEN cr_craplot(pr_cdcooper => pr_cdcooper
-                       ,pr_dtmvtolt => rw_craplot.dtmvtolt
+                       ,pr_dtmvtolt => rw_crapdat.dtmvtolt --SD#641111
                        ,pr_cdagenci => 1
                        ,pr_cdbccxlt => 100
                        ,pr_nrdolote => 10027);
