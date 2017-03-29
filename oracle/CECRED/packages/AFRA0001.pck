@@ -313,9 +313,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
              
              --> Holder
              decode(tvl.flgpesdb,1,'F','J') dspesemi,
-             decode(tvl.flgpesdb,1,lpad(tvl.cpfcgemi,11,'0'),
-                                   lpad(tvl.cpfcgemi,14,'0')) ds_cpfcgemi,             
-             --tvl.cpfcgemi,
+             tvl.cpfcgemi,
              tvl.nrdconta,
              tvl.nmpesemi,
              
@@ -325,9 +323,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
              decode(flgpescr,1,'F','J') dspescrd,
              tvl.cdbccrcb,
              tvl.cdagercb,
-             --tvl.cpfcgrcb,
-             decode(tvl.flgpescr,1,lpad(tvl.cpfcgrcb,11,'0'),
-                                   lpad(tvl.cpfcgrcb,14,'0')) ds_cpfcgrcb,
+             tvl.cpfcgrcb,
              tvl.nmpesrcb,
              
              -- transaction
@@ -467,7 +463,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     
     ----> HOLDER
     vr_ted.put('DBT_Hldr_Type'       , rw_craptvl.dspesemi);
-    vr_ted.put('DBT_Hldr_Document'   , rw_craptvl.ds_cpfcgemi);        
+    vr_ted.put('DBT_Hldr_Document'   , rw_craptvl.cpfcgemi);        
     vr_ted.put('DBT_Hldr_Name'       , rw_craptvl.nmpesemi);
     
     --> carregar os telefones do cooperado  
@@ -490,7 +486,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     vr_ted.put('CDT_Acct_Number'     , rw_craptvl.nrcctrcb);
     vr_ted.put('CDT_Acct_CreditUnion', '');
     vr_ted.put('CDT_Hldr_Type'       , rw_craptvl.dspescrd);
-    vr_ted.put('CDT_Hldr_Document'   , rw_craptvl.ds_cpfcgrcb);
+    vr_ted.put('CDT_Hldr_Document'   , rw_craptvl.cpfcgrcb);
     vr_ted.put('CDT_Hldr_Name'       , rw_craptvl.nmpesrcb);
     
     ----> TRANSACTION
@@ -1042,9 +1038,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
           
           IF nvl(vr_cdcritic,0) > 0 OR
              TRIM(vr_dscritic) IS NOT NULL THEN
-            --> Notificar monitoração 
-            pc_monitora_ted ( pr_idanalis => rw_fraude.idanalise_fraude); 
-            
             RAISE vr_exc_envio; 
           END IF; 
           
@@ -1076,6 +1069,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
         WHEN vr_exc_erro THEN
           RAISE vr_exc_erro;          
         WHEN vr_exc_envio THEN          
+          vr_dscritic_aux := vr_dscritic;
           vr_flgerro := TRUE;
         WHEN OTHERS THEN
           vr_dscritic := 'Erro ao enviar analise de fraude: '||SQLERRM;
@@ -1104,6 +1098,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
            vr_cdcritic := NULL;
          END IF;
 
+        vr_dscritic := 'Falha na entrega ao Middleware: '||vr_dscritic_aux;
+
         --> Verificar se deve notificar area de segurança
         IF rw_fraude.flgemail_entrega = 1 THEN
           pc_notificar_seguranca (pr_idanalis   => rw_fraude.idanalise_fraude,
@@ -1111,7 +1107,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                                   pr_dscritic   => vr_dscritic_aux); 
         END IF;
         
-        vr_dscritic := 'Falha na entrega ao Middleware: '||vr_dscritic;
+        
         
         --> Atualizar analise e gerar log 
         pc_atualizar_analise ( pr_rowid => rw_fraude.rowid,
@@ -1135,8 +1131,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       
         IF TRIM(vr_dscritic) IS NOT NULL OR 
            nvl(vr_cdcritic,0) > 0 THEN          
-          RAISE vr_exc_erro;
+           
+          --> Caso não consiga aprovar, tentará reprovar a analise
+          ROLLBACK; 
+          
+          --> Atualizar analise e gerar log 
+          pc_atualizar_analise ( pr_rowid => rw_fraude.rowid,
+                                 pr_dhdenvio => NULL,
+                                 pr_cdstatus => 2,                --> erro comuicação midleware
+                                 pr_cdparece => 2,                --> Aprovado
+                                 pr_cdcanal  => 1, -- Ayllos      --> Canal do parecer da analise  
+                                 pr_dstransa => vr_dstransa,      --> Descrição da trasaçao para log                                            
+                                 pr_dscrilog => vr_dscritic,      --> Em caso de status de erro, apresentar critica para log
+                                 pr_dscritic => vr_dscritic_aux);
+          
+          IF TRIM(vr_dscritic_aux) IS NOT NULL THEN
+            vr_dscritic := vr_dscritic_aux;
+            RAISE vr_exc_erro;
+          END IF; 
+          
+          --> Excecutar rotinas referentes a reprovação da analise de fraude
+          pc_reprovacao_analise (pr_idanalis  => rw_fraude.idanalise_fraude,    --> Indicador da analise de fraude
+                                 pr_cdcritic  => vr_cdcritic,
+                                 pr_dscritic  => vr_dscritic );
+          
+          IF TRIM(vr_dscritic) IS NOT NULL OR 
+             nvl(vr_cdcritic,0) > 0 THEN    
+            RAISE vr_exc_erro;
+          END IF;
+        ELSE
+        
+          --> Verificar se o produto for TED
+          IF rw_fraude.cdproduto = 30 THEN
+            --> Notificar monitoração 
+            pc_monitora_ted ( pr_idanalis => rw_fraude.idanalise_fraude); 
+          END IF;
         END IF; 
+        
         
       END IF;
       
@@ -2870,12 +2901,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
          AND ass.nrdconta = pr_nrdconta;
          
     --> Buscar nome do titular
-    CURSOR cr_crapttl IS
+    CURSOR cr_crapttl( pr_cdcooper crapttl.cdcooper%TYPE,
+                       pr_nrdconta crapttl.nrdconta%TYPE,
+                       pr_idseqttl crapttl.idseqttl%TYPE) IS
       SELECT ttl.nmextttl
         FROM crapttl ttl 
        WHERE ttl.cdcooper = pr_cdcooper
          AND ttl.nrdconta = pr_nrdconta
          AND ttl.idseqttl = pr_idseqttl;    
+    
+    --Selecionar titulares com senhas ativas
+    CURSOR cr_crapsnh (pr_cdcooper IN crapsnh.cdcooper%type
+                      ,pr_nrdconta IN crapsnh.nrdconta%TYPE) IS
+      SELECT crapsnh.nrcpfcgc
+            ,crapsnh.cdcooper
+            ,crapsnh.nrdconta
+            ,crapsnh.idseqttl
+        FROM crapsnh
+       WHERE crapsnh.cdcooper = pr_cdcooper
+         AND crapsnh.nrdconta = pr_nrdconta
+         AND crapsnh.cdsitsnh = 1
+         AND crapsnh.tpdsenha = 1;
+    rw_crapsnh cr_crapsnh%ROWTYPE;
+    
     
     -----------> VARIAVEIS <-----------
     -- Tratamento de erros
@@ -2923,43 +2971,50 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       END IF;
     END IF; 
     
-    IF pr_inpessoa = 1 AND pr_idseqttl > 0 THEN
-      OPEN cr_crapttl;
-      FETCH cr_crapttl INTO vr_nmprimtl;
-      CLOSE cr_crapttl;
-    ELSE
-      OPEN cr_crapass;
-      FETCH cr_crapass INTO vr_nmprimtl;
-      CLOSE cr_crapass;    
-    END IF;
+    --> Buscar pessoas que possuem acesso a conta
+    FOR rw_crapsnh IN cr_crapsnh (pr_cdcooper  => pr_cdcooper
+                                 ,pr_nrdconta  => pr_nrdconta) LOOP
+                                   
+      IF pr_inpessoa = 1 AND rw_crapsnh.idseqttl > 0 THEN
+        OPEN cr_crapttl(pr_cdcooper => pr_cdcooper,
+                        pr_nrdconta => pr_nrdconta,
+                        pr_idseqttl => rw_crapsnh.idseqttl);
+        FETCH cr_crapttl INTO vr_nmprimtl;
+        CLOSE cr_crapttl;
+      ELSE
+        OPEN cr_crapass;
+        FETCH cr_crapass INTO vr_nmprimtl;
+        CLOSE cr_crapass;    
+      END IF;
     
-    vr_vldinami := '#NOME#='||vr_nmprimtl||';'||
-                   pr_vldinami;
+      vr_vldinami := '#NOME#='||vr_nmprimtl||';'||
+                     pr_vldinami;
     
-    --> buscar mensagem 
-    vr_dsdmensg := gene0003.fn_buscar_mensagem(pr_cdcooper          => pr_cdcooper
-                                              ,pr_cdproduto         => pr_cdproduto
-                                              ,pr_cdtipo_mensagem   => vr_cdtipmsg
-                                              ,pr_sms               => 0             -- Indicador se mensagem é SMS (pois deve cortar em 160 caracteres)
-                                              ,pr_valores_dinamicos => vr_vldinami); -- Máscara #Cooperativa#=1;#Convenio#=123    
+      --> buscar mensagem 
+      vr_dsdmensg := gene0003.fn_buscar_mensagem(pr_cdcooper          => pr_cdcooper
+                                                ,pr_cdproduto         => pr_cdproduto
+                                                ,pr_cdtipo_mensagem   => vr_cdtipmsg
+                                                ,pr_sms               => 0             -- Indicador se mensagem é SMS (pois deve cortar em 160 caracteres)
+                                                ,pr_valores_dinamicos => vr_vldinami); -- Máscara #Cooperativa#=1;#Convenio#=123    
     
-    --> Criar mensagem
-    GENE0003.pc_gerar_mensagem ( pr_cdcooper => pr_cdcooper
-                                ,pr_nrdconta => pr_nrdconta
-                                ,pr_idseqttl => pr_idseqttl
-                                ,pr_cdprogra => 'AFRA0001'
-                                ,pr_inpriori => 1
-                                ,pr_dsdmensg => vr_dsdmensg
-                                ,pr_dsdassun => vr_dsdassun
-                                ,pr_dsdremet => rw_crapcop.nmrescop
-                                ,pr_dsdplchv => vr_dsdplchv
-                                ,pr_cdoperad => ''
-                                ,pr_cdcadmsg => 0
-                                ,pr_dscritic => vr_dscritic);
+      --> Criar mensagem
+      GENE0003.pc_gerar_mensagem ( pr_cdcooper => pr_cdcooper
+                                  ,pr_nrdconta => pr_nrdconta
+                                  ,pr_idseqttl => rw_crapsnh.idseqttl
+                                  ,pr_cdprogra => 'AFRA0001'
+                                  ,pr_inpriori => 1
+                                  ,pr_dsdmensg => vr_dsdmensg
+                                  ,pr_dsdassun => vr_dsdassun
+                                  ,pr_dsdremet => rw_crapcop.nmrescop
+                                  ,pr_dsdplchv => vr_dsdplchv
+                                  ,pr_cdoperad => ''
+                                  ,pr_cdcadmsg => 0
+                                  ,pr_dscritic => vr_dscritic);
      
-    IF TRIM(vr_dscritic) IS NOT NULL THEN
-      RAISE vr_exc_erro;
-    END IF;
+      IF TRIM(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+    END LOOP;
   
   EXCEPTION
     WHEN vr_exc_erro THEN
@@ -3026,6 +3081,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     vr_dsassunt tbgen_analise_fraude_param.dsassunto_retorno%TYPE;
     vr_dsdcorpo tbgen_analise_fraude_param.dscorpo_retorno%TYPE;
     
+    PRAGMA AUTONOMOUS_TRANSACTION;
     
   BEGIN
     
@@ -3068,12 +3124,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     
     END IF;
   
+    COMMIT;
   
   EXCEPTION
     WHEN vr_exc_erro THEN      
+      ROLLBACK;
       pr_dscritic := vr_dscritic;
     
     WHEN OTHERS THEN
+      ROLLBACK;
       pr_dscritic := 'Não foi possivel enviar notificacao: '||SQLERRM;
   END pc_notificar_seguranca; 
   
@@ -3509,7 +3568,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     vr_intipcta crapcti.intipcta%TYPE;   --> Tipo da conta
     vr_idagenda INTEGER;                 --> Tipo de agendamento
     
-    
+    PRAGMA AUTONOMOUS_TRANSACTION;
       
   BEGIN
   
@@ -3828,13 +3887,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       RAISE vr_exc_erro;
     END IF;
     
+    COMMIT;
     
   EXCEPTION
     -- sair sem gerar monitoracao
     WHEN vr_exc_naomonit THEN
       NULL;
+      COMMIT;
     WHEN vr_exc_erro THEN
-    
+      ROLLBACK;
       -- Gerar log
       btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
                                  pr_ind_tipo_log => 2, 
@@ -3844,7 +3905,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       
 
     WHEN OTHERS THEN
-    
+      ROLLBACK;
       vr_dscritic := SQLerrm;  
     
       -- Gerar log
