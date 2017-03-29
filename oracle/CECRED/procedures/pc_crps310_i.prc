@@ -261,6 +261,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                  25/08/2016 - Ajustar calculo de prazo de vencido/vencimento dos borderos de cheque/titulo
 				              SD488220 (Odirlei-AMcom)
 
+				 15/03/2017 - Ajuste na regra da classificação de qual nivel de risco do produto de Adiantamento a 
+				              Depositante (AD) se encontra, onde para o nível "A" o 15 dia de atraso estava sendo considerado, 
+							  sendo que o correto para este nível é até o 14 dia de atraso. (Rafael Monteiro).
+
   ............................................................................ */
 
     DECLARE
@@ -3850,7 +3854,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               vr_dtrisclq := nvl(vr_tab_crapsld(rw_crapass.nrdconta).dtrisclq,pr_rw_crapdat.dtmvtolt);
               -- Verificar qual nivel de risco o AD se encontra
               CASE
-                WHEN vr_qtdiaatr <= 15 THEN
+			    -- Regra alterada, considerar para o risco igual a dois somente até o 14 dias de atraso
+                WHEN vr_qtdiaatr < 15 THEN 
                   vr_risco_aux := 2;
                 WHEN vr_qtdiaatr <= 30 THEN
                   vr_risco_aux := 3;
@@ -4322,41 +4327,41 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                 END IF;                
                 
                 IF vr_qtdprazo > 0 THEN
-                  -- Copiar o valor do risco para a variavel específica de
-                  -- valores a vencer conforme o prazo calculado
-                  IF vr_qtdprazo <= 180   THEN
-                    vr_vltit180 := vr_vltit180 + vr_vlsrisco;
-                  ELSIF vr_qtdprazo <= 360   THEN
-                    vr_vltit360 := vr_vltit360 + vr_vlsrisco;
+                -- Copiar o valor do risco para a variavel específica de
+                -- valores a vencer conforme o prazo calculado
+                IF vr_qtdprazo <= 180   THEN
+                  vr_vltit180 := vr_vltit180 + vr_vlsrisco;
+                ELSIF vr_qtdprazo <= 360   THEN
+                  vr_vltit360 := vr_vltit360 + vr_vlsrisco;
+                ELSE
+                  vr_vltit999 := vr_vltit999 + vr_vlsrisco;
+                END IF;
+                -- Copiar o valor calculado para o vetor de valores
+                -- a vencer conforme o prazo encontrado
+                CASE
+                  WHEN vr_qtdprazo <= 30 THEN
+                    vr_tab_vlavence(1) := vr_tab_vlavence(1) + vr_vlsrisco;
+                  WHEN vr_qtdprazo <= 60 THEN
+                    vr_tab_vlavence(2) := vr_tab_vlavence(2) + vr_vlsrisco;
+                  WHEN vr_qtdprazo <= 90 THEN
+                    vr_tab_vlavence(3) := vr_tab_vlavence(3) + vr_vlsrisco;
+                  WHEN vr_qtdprazo <= 180 THEN
+                    vr_tab_vlavence(4) := vr_tab_vlavence(4) + vr_vlsrisco;
+                  WHEN vr_qtdprazo <= 360 THEN
+                    vr_tab_vlavence(5) := vr_tab_vlavence(5) + vr_vlsrisco;
+                  WHEN vr_qtdprazo <= 720 THEN
+                    vr_tab_vlavence(6) := vr_tab_vlavence(6) + vr_vlsrisco;
+                  WHEN vr_qtdprazo <= 1080 THEN
+                    vr_tab_vlavence(7) := vr_tab_vlavence(7) + vr_vlsrisco;
+                  WHEN vr_qtdprazo <= 1440 THEN
+                    vr_tab_vlavence(8) := vr_tab_vlavence(8) + vr_vlsrisco;
+                  WHEN vr_qtdprazo <= 1800 THEN
+                    vr_tab_vlavence(9) := vr_tab_vlavence(9)  + vr_vlsrisco;
+                  WHEN vr_qtdprazo <= 5400 THEN
+                    vr_tab_vlavence(10) := vr_tab_vlavence(10) + vr_vlsrisco;
                   ELSE
-                    vr_vltit999 := vr_vltit999 + vr_vlsrisco;
-                  END IF;
-                  -- Copiar o valor calculado para o vetor de valores
-                  -- a vencer conforme o prazo encontrado
-                  CASE
-                    WHEN vr_qtdprazo <= 30 THEN
-                      vr_tab_vlavence(1) := vr_tab_vlavence(1) + vr_vlsrisco;
-                    WHEN vr_qtdprazo <= 60 THEN
-                      vr_tab_vlavence(2) := vr_tab_vlavence(2) + vr_vlsrisco;
-                    WHEN vr_qtdprazo <= 90 THEN
-                      vr_tab_vlavence(3) := vr_tab_vlavence(3) + vr_vlsrisco;
-                    WHEN vr_qtdprazo <= 180 THEN
-                      vr_tab_vlavence(4) := vr_tab_vlavence(4) + vr_vlsrisco;
-                    WHEN vr_qtdprazo <= 360 THEN
-                      vr_tab_vlavence(5) := vr_tab_vlavence(5) + vr_vlsrisco;
-                    WHEN vr_qtdprazo <= 720 THEN
-                      vr_tab_vlavence(6) := vr_tab_vlavence(6) + vr_vlsrisco;
-                    WHEN vr_qtdprazo <= 1080 THEN
-                      vr_tab_vlavence(7) := vr_tab_vlavence(7) + vr_vlsrisco;
-                    WHEN vr_qtdprazo <= 1440 THEN
-                      vr_tab_vlavence(8) := vr_tab_vlavence(8) + vr_vlsrisco;
-                    WHEN vr_qtdprazo <= 1800 THEN
-                      vr_tab_vlavence(9) := vr_tab_vlavence(9)  + vr_vlsrisco;
-                    WHEN vr_qtdprazo <= 5400 THEN
-                      vr_tab_vlavence(10) := vr_tab_vlavence(10) + vr_vlsrisco;
-                    ELSE
-                      vr_tab_vlavence(11) := vr_tab_vlavence(11)  + vr_vlsrisco;
-                  END CASE;
+                    vr_tab_vlavence(11) := vr_tab_vlavence(11)  + vr_vlsrisco;
+                END CASE;
                 ELSE
                   -- Grava a quantidade de dias que estah mais em atraso
                   IF vr_qtdiaatr >= vr_qtdprazo THEN
