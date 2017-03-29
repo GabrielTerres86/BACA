@@ -2,7 +2,7 @@
 /*******************************************************************************
  Fonte: atenda.php                                                
  Autor: David                                                     
- Data : Julho/2007                   Última Alteração: 24/08/2015 
+ Data : Julho/2007                   Última Alteração: 21/03/2017
                                                                   
  Objetivo  : Mostrar tela ATENDA                                  
                                                                   
@@ -46,11 +46,18 @@
 				          (Gabriel - Rkam -> Projeto 217).					   
 										    					   
 			 24/08/2015 - Projeto Reformulacao cadastral		   
-						  (Tiago Castro - RKAM)
+						  (Tiago Castro - RKAM)					   
 
 			 07/06/2016 - M195 Melhoria de folha de pagamento (Tiago/Thiago)
 
-			 12/07/2015 - Adicionado controle de navegação por teclado(ALT/ENTER) - (Evandro - RKAM)			  
+			 12/07/2015 - Adicionado controle de navegação por teclado(ALT/ENTER) - (Evandro - RKAM)	
+			 
+			 10/03/2017 - Ajuste para incluir a chamada da include alertas_genericos (Adriano - SD 603451).
+
+			 21/03/2017 - Ajuste para incluir o controle mt_rand na chamada do atenda.css (Adriano - SD 603451).
+
+
+
 //**************************************************************************/
 session_start();
 // Includes para controle da session, variáveis globais de controle, e biblioteca de funções
@@ -78,7 +85,7 @@ setVarSession("rotinasTela", $rotinasTela);
         <link href="../../css/estilo2.css" rel="stylesheet" type="text/css">
         <link href="../../css/estilo.css" rel="stylesheet" type="text/css">
         <link href="../../css/tooltip.css" rel="stylesheet" type="text/css">
-        <link href="atenda.css" rel="stylesheet" type="text/css">
+        <link href="atenda.css?keyrand=<?php echo mt_rand(); ?>" rel="stylesheet" type="text/css">
         <link rel="stylesheet" href="../../css/base/jquery.ui.all.css">
         <script type="text/javascript" src="../../scripts/scripts.js"></script>
         <script type="text/javascript" src="../../scripts/dimensions.js"></script>
@@ -102,7 +109,7 @@ setVarSession("rotinasTela", $rotinasTela);
                 .table {display:block;}
                 .td    {display:block;}
             }
-			
+
 
 			div.bloco_full{float:left; width:100%;}
 			div.bloco_line{float:left; width:268px; height:22px; text-align:center; position:relative;top:0; overflow:hidden;}
@@ -169,6 +176,9 @@ setVarSession("rotinasTela", $rotinasTela);
 
                                                                                 <!-- INCLUDE COM AS MENSAGEM GE -->
                                                                                 <? require_once("../../includes/grupo_economico/msg_grupo_economico.php"); ?>	
+
+																				<!-- INCLUDE COM AS MENSAGENS GENERICAS -->
+                                                                                <? require_once("../../includes/alertas_genericos/alertas_genericos.php"); ?>	
 
                                                                                 <!-- INCLUDE COM AS ANOTACOES -->
                                                                                 <? include('anotacoes.php') ?>
@@ -467,5 +477,4 @@ setVarSession("rotinasTela", $rotinasTela);
 		 $("#nrdconta","#frmCabAtenda").val(nrdconta);
 		 flgProdutos = true;		 
 	}
-
 </script>
