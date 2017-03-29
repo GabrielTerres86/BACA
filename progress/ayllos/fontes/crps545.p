@@ -108,7 +108,8 @@ DEF TEMP-TABLE crawarq NO-UNDO
     FIELD nmarquiv AS CHAR.
     
 DEF TEMP-TABLE devolucoes_matera NO-UNDO
-    FIELD data AS date
+    FIELD ispb  AS CHAR
+    FIELD data  AS DATE
     FIELD valor AS DECI.
     
 DEF TEMP-TABLE crawint NO-UNDO
@@ -324,7 +325,8 @@ FOR EACH crawarq NO-LOCK:
                         ASSIGN devolucoes_matera.data = DATE(INTE(SUBSTR(aux_setlinha,16,2)),
                                                              INTE(SUBSTR(aux_setlinha,18,2)),
                                                              INTE(SUBSTR(aux_setlinha,12,4)))
-                               devolucoes_matera.valor = DECI(REPLACE(SUBSTR(aux_setlinha, 324,22),".",",")).
+                               devolucoes_matera.valor = DECI(REPLACE(SUBSTR(aux_setlinha, 324,22),".",","))
+                               devolucoes_matera.ispb  = SUBSTR(aux_setlinha,203,8).
                         NEXT.
                       END.
                       
@@ -583,13 +585,16 @@ RUN fontes/fimprg.p.
 
 PROCEDURE enviar_email_devolucoes_matera:
 
-  DEFINE VARIABLE corpo AS CHAR NO-UNDO.
+  DEF VAR corpo        AS CHAR NO-UNDO.
   DEF VAR h-b1wgen0011 AS HANDLE NO-UNDO.
                           
   ASSIGN corpo = "Foram identificadas <b>devoluções</b> de TED do legado <b>Matera:</b> \n\n".
   
   FOR EACH devolucoes_matera NO-LOCK:
     ASSIGN corpo = corpo + "Valor: " + TRIM(STRING(devolucoes_matera.valor,"zzz,zzz,zzz,zz9.99")) + 
+                           "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" +
+                           "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" +
+                           " ISPB: " + STRING(devolucoes_matera.ispb) +
                            "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" +
                            "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" +
                            " Data: " + STRING(DAY(devolucoes_matera.data),"99") + "/" + 
