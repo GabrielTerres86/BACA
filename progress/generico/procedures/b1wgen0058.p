@@ -24,7 +24,7 @@
 
     Programa: b1wgen0058.p
     Autor   : Jose Luis (DB1)
-    Data    : Marco/2010                   Ultima atualizacao: 25/08/2016
+    Data    : Marco/2010                   Ultima atualizacao: 28/03/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - PROCURADORES/REPRESENTANTES
 
@@ -156,6 +156,9 @@
 				 22/03/2017 - Ajustes na procedure valida_responsaveis, para nao considerar quando 
 				              a regra do poder 10 quando a exigencia de assinatura estiver com nao 
 							  SD 630546 (Rafael Monteiro).
+							  
+				 28/03/2017 - Realizado ajuste para que quando filtrar procurador pelo CPF, busque
+							  apenas contas ativas, coforme solicitado no chamado 566363. (Kelvin)
 
 .....................................................................................*/
 
@@ -656,16 +659,25 @@ PROCEDURE Busca_Dados_Cto:
         IF  par_nrcpfcto <> 0  THEN
             FOR FIRST crabass FIELDS(cdcooper nrdconta nrcpfcgc inpessoa)
                               WHERE crabass.cdcooper = par_cdcooper AND
-                                    crabass.nrcpfcgc = par_nrcpfcto NO-LOCK:
+                                    crabass.nrcpfcgc = par_nrcpfcto AND 
+									crabass.dtdemiss = ? NO-LOCK:
             END.
             
         IF  NOT AVAILABLE crabass THEN
             DO:
                IF  par_nrdctato <> 0 THEN
                    ASSIGN par_cdcritic = 9.
-
                LEAVE BuscaCto.
             END.
+		ELSE
+			DO:
+				IF  par_nrdctato <> 0 AND 
+				    crabass.dtdemiss <> ? THEN
+					DO:
+						ASSIGN par_cdcritic = 64.
+						LEAVE BuscaCto.
+					END.
+			END.
 
         IF  par_nrdconta = crabass.nrdconta  THEN
             DO:
