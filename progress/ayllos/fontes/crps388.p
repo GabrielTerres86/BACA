@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Abril/2004                          Ultima atualizacao: 28/12/2016
+   Data    : Abril/2004                          Ultima atualizacao: 19/01/2017
 
    Dados referentes ao programa:
 
@@ -223,6 +223,10 @@
               28/12/2016 - Ajustes para incorporaçao da Transulcred (SD585459 Tiago/Elton) 
 
 			  17/01/2016 - Ajustes para incorporação da Transulcred (SD593672 Tiago/Elton)
+               
+               
+               19/01/2017 - Validar se referencia existe atraves do campo nrcrcard da craplau com a
+                            tabela crapatr (Lucas Ranghetti #533520)
 ............................................................................. */
  
 { includes/var_batch.i {1} }
@@ -266,6 +270,7 @@ DEF  VAR aux_dtmvtolt    AS CHAR                                    NO-UNDO.
 DEF  VAR aux_dtmvtolt_aux AS CHAR                                   NO-UNDO.
 DEF  VAR aux_dtmvtopr    AS DATE                                    NO-UNDO.
 DEF  VAR aux_cdrefere    AS CHAR                                    NO-UNDO.
+DEF  VAR aux_cdrefori    AS DEC                                     NO-UNDO.
 DEF  VAR aux_anomovto    AS CHAR     FORMAT "x(05)"                 NO-UNDO.
 DEF  VAR aux_diamovto    AS INT      FORMAT "99"                    NO-UNDO.
 DEF  VAR aux_mesmovto    AS CHAR     FORMAT "x(09)"                 NO-UNDO.
@@ -299,6 +304,7 @@ DEF  VAR  aux_nrsequni   AS INTEGER                                 NO-UNDO.
 DEF  VAR  aux_nmcidade   AS CHAR  EXTENT 2                          NO-UNDO.
 DEF  VAR  aux_nmempres   AS CHAR  FORMAT "x(20)"                    NO-UNDO.
 DEF  VAR  aux_nrseqret   AS INTEGER                                 NO-UNDO.
+DEF  VAR  aux_dtiniatr   AS DATE                                    NO-UNDO.
 
 DEF  VAR  tot_vlfatura   AS DECIMAL                                 NO-UNDO.
 DEF  VAR  tot_vltarifa   AS DECIMAL                                 NO-UNDO.
@@ -596,29 +602,17 @@ FOR EACH gncvcop NO-LOCK WHERE
                    
                 END.
                                             
-            IF  gnconve.cdconven = 1  OR     /* OI SA (BRASIL TELECOM) */
-                gnconve.cdconven = 22 OR     /* UNIMED */  
-                gnconve.cdconven = 32 OR     /* UNIODONTO */
-                gnconve.cdconven = 38 OR     /* UNIM.PLAN.NORTE */  
-                gnconve.cdconven = 46 OR     /* UNIODONTO FEDERACAO */
-                gnconve.cdconven = 47 OR     /* UNIMED CREDCREA */
-                gnconve.cdconven = 48 OR     /* TIM CELULAR */
-                gnconve.cdconven = 50 OR     /* HDI */ 
-                gnconve.cdconven = 55 OR     /* LIBERTY */
-                gnconve.cdconven = 57 OR     /* RBS - JORNAL SC */ 
-                gnconve.cdconven = 58 OR     /* PORTO SEGURO */
-                gnconve.cdconven = 64 OR     /* AZUL SEGUROS */ 
-                gnconve.cdconven = 66 THEN   /* PREVISUL */
-                DO: 
-                IF  CAN-DO("31,288,505,509,553,697,834,993",
-                           STRING(craplau.cdhistor)) THEN
+             /* Verificar se referencia(novas) ainda existe */
                        FIND crapatr WHERE
                             crapatr.cdcooper = glb_cdcooper      AND
                             crapatr.nrdconta = craplcm.nrdconta  AND
                             crapatr.cdhistor = craplau.cdhistor  AND
                             crapatr.cdrefere = craplau.nrcrcard  
                             NO-LOCK NO-ERROR.
-                   ELSE
+             
+             IF  NOT AVAILABLE crapatr THEN
+                 DO:
+                     /* Verificar referencias antigas */
                        FIND crapatr WHERE 
                             crapatr.cdcooper = glb_cdcooper     AND
                             crapatr.nrdconta = craplcm.nrdconta AND
@@ -640,8 +634,9 @@ FOR EACH gncvcop NO-LOCK WHERE
                                 " >> log/proc_message.log").
                            NEXT.
                        END.
+                 END.
 
-                   IF gnconve.cdconven = 1 THEN  
+            IF  gnconve.cdconven = 1 THEN  
                       DO:
                          IF LENGTH(TRIM(STRING(crapatr.cdrefere,
                                               "zzzzzzzzzzzzzz9"))) > 11  THEN
@@ -661,14 +656,15 @@ FOR EACH gncvcop NO-LOCK WHERE
                             END.
                       END.
                 
+             ASSIGN aux_dtiniatr = crapatr.dtiniatr
+                    aux_cdrefori = crapatr.cdrefere.
+             
                    IF gnconve.cdconven = 1 THEN 
                       aux_cdrefere = STRING(crapatr.cdrefere,"999,999,999,9").
                    ELSE
                       aux_cdrefere =
                    TRIM(STRING(crapatr.cdrefere,"zzzzzzzzzzzzzzzzzzzzzzzz9")).
-                END.
-            ELSE 
-                DO:
+                 
                    IF  gnconve.cdconven = 9  OR
                        gnconve.cdconven = 16 OR
                        gnconve.cdconven = 24 OR
@@ -677,33 +673,7 @@ FOR EACH gncvcop NO-LOCK WHERE
                        gnconve.cdconven = 34 OR   /* SEMASA Itajai */
                        gnconve.cdconven = 53 OR   /* Foz do Brasil */
                        gnconve.cdconven = 54 THEN /* Aguas de Massaranduba */
-                       aux_cdrefere = STRING(craplau.nrdocmto,"9999,999,9").
-                   ELSE
-                       ASSIGN aux_cdrefere = 
-                       STRING(craplau.nrdocmto,"zzzzzzzzzzzzzzzzzzzzzzzz9").
-
-			FIND crapatr WHERE 
-				crapatr.cdcooper = glb_cdcooper     AND
-				crapatr.nrdconta = craplcm.nrdconta AND
-				crapatr.cdhistor = craplau.cdhistor AND
-				crapatr.cdrefere = craplau.nrdocmto 
-				NO-LOCK NO-ERROR.
-
-				 IF  NOT AVAILABLE crapatr THEN
-                       DO:
-                           glb_cdcritic = 453.
-                           RUN fontes/critic.p.
-                           UNIX SILENT
-                                VALUE("echo " + STRING(TODAY,"99/99/9999") + " " 
-                                + STRING(TIME,"HH:MM:SS") +
-                                " - " + glb_cdprogra + "' --> '" +
-                                glb_dscritic + "Conta = " +
-                                STRING(craplcm.nrdconta,"zzzz,zz9,9") +
-                                " Documento = " + STRING(craplcm.nrdocmto) +
-                                " >> log/proc_message.log").
-                           NEXT.
-                END.                                   
-                END.       
+                  aux_cdrefere = STRING(crapatr.cdrefere,"9999,999,9").
 
             ASSIGN aux_nrseqdig = aux_nrseqdig + 1
                    tot_vlfatura = tot_vlfatura + craplcm.vllanmto.
@@ -716,7 +686,7 @@ FOR EACH gncvcop NO-LOCK WHERE
             IF  (gnconve.cdcooper = crabcop.cdcooper  OR
                  crabcop.cdcooper = 1                 OR
                  gnconve.flgagenc = TRUE              OR
-        				 crapatr.dtiniatr > date("01/09/2013")) AND
+        				 aux_dtiniatr   > date("01/09/2013")) AND
                  gnconve.cdconven <> 22               AND
                  gnconve.cdconven <> 32               AND  /*UNIODONTO*/ 
                  gnconve.cdconven <> 38               AND  /*UNIM.PLAN.NORTE*/
@@ -850,7 +820,7 @@ FOR EACH gncvcop NO-LOCK WHERE
                 gnconve.cdconven = 45 THEN   /* Aguas Pres.Getulio */
                 
                 aux_dslinreg = "F" +
-                               STRING(craplau.nrdocmto,"999999999") +
+                               STRING(aux_cdrefori,"999999999") +
                                FILL(" ",16) +
                                STRING(aux_nragenci,"9999") +
                                STRING(aux_nrdconta,"x(14)") +
@@ -869,7 +839,7 @@ FOR EACH gncvcop NO-LOCK WHERE
                 gnconve.cdconven = 54  THEN  /* AGUAS DE MASSARANDUBA */
 
                 aux_dslinreg = "F" +
-                               STRING(craplau.nrdocmto,"99999999") +
+                               STRING(aux_cdrefori,"99999999") +
                                FILL(" ",17) +
                                STRING(aux_nragenci,"9999") +
                                STRING(aux_nrdconta,"x(14)") +
@@ -887,7 +857,7 @@ FOR EACH gncvcop NO-LOCK WHERE
                 gnconve.cdconven = 66 THEN  /* PREVISUL */
                                  
                 aux_dslinreg = "F" +
-                               STRING(crapatr.cdrefere,"99999999999999999999")
+                               STRING(aux_cdrefori,"99999999999999999999")
                                + FILL(" ",5) +
                                STRING(aux_nragenci,"9999") +
                                STRING(aux_nrdconta,"x(14)") +
@@ -905,7 +875,7 @@ FOR EACH gncvcop NO-LOCK WHERE
                 gnconve.cdconven = 57 THEN  /* RBS */
 
                 aux_dslinreg = "F" +
-                               STRING(crapatr.cdrefere,"99999999999999999") +
+                               STRING(aux_cdrefori,"99999999999999999") +
                                FILL(" ",8) +
                                STRING(aux_nragenci,"9999") +
                                STRING(aux_nrdconta,"x(14)") +
@@ -925,7 +895,7 @@ FOR EACH gncvcop NO-LOCK WHERE
                 gnconve.cdconven = 46 OR     /* UNIODONTO FEDERACAO */
                 gnconve.cdconven = 64 THEN   /* AZUL SEGUROS */   
                 aux_dslinreg = "F" +
-                          STRING(crapatr.cdrefere,"9999999999999999999999999")
+                          STRING(aux_cdrefori,"9999999999999999999999999")
                                +
                                STRING(aux_nragenci,"9999") +
                                STRING(aux_nrdconta,"x(14)") +
@@ -941,7 +911,7 @@ FOR EACH gncvcop NO-LOCK WHERE
             IF  gnconve.cdconven = 15   THEN /* VIVO */
 
                 aux_dslinreg = "F" +
-                               STRING(craplau.nrdocmto,"99999999999") +
+                               STRING(aux_cdrefori,"99999999999") +
                                FILL(" ",14) +
                                STRING(aux_nragenci,"9999") +
                                STRING(aux_nrdconta,"x(14)") +
@@ -958,7 +928,7 @@ FOR EACH gncvcop NO-LOCK WHERE
                 gnconve.cdconven = 16 OR    /*SAMAE Timbo CECRED*/
                 gnconve.cdconven = 49 THEN  /*SAMAE Rio Negrinho*/
                 aux_dslinreg = "F" +
-                               STRING(craplau.nrdocmto,"999999") +
+                               STRING(aux_cdrefori,"999999") +
                                FILL(" ",19) +
                                STRING(aux_nragenci,"9999") +
                                STRING(aux_nrdconta,"x(14)") +
@@ -977,7 +947,7 @@ FOR EACH gncvcop NO-LOCK WHERE
                 gnconve.cdconven = 43 OR /* SERVMED */
                 gnconve.cdconven = 62 THEN /* AGUAS DE ITAPOCOROY */ 
                 aux_dslinreg = "F" +
-                             STRING(craplau.nrdocmto, "9999999999") +
+                             STRING(aux_cdrefori, "9999999999") +
                              FILL(" ", 15) + 
                              STRING(aux_nragenci, "9999")  +
                              STRING(aux_nrdconta, "x(14)") + 
@@ -994,7 +964,7 @@ FOR EACH gncvcop NO-LOCK WHERE
             IF  gnconve.cdconven = 74 OR /* MAPFRE VERA CRUZ SEG */
                 gnconve.cdconven = 75 THEN
                 aux_dslinreg = "F" +
-                               STRING(craplau.nrdocmto)
+                               STRING(aux_cdrefori)
                                + FILL(" ",25 - LENGTH(STRING(craplau.nrdocmto)))  +
                                STRING(aux_nragenci,"9999") +
                                STRING(aux_nrdconta,"99999999999999") +
@@ -1005,7 +975,7 @@ FOR EACH gncvcop NO-LOCK WHERE
                                FILL(" ",20) + "0".
             ELSE
                  aux_dslinreg = "F" +
-                               STRING(craplau.nrdocmto,"9999999999999999999999")
+                               STRING(aux_cdrefori,"9999999999999999999999")
                                + FILL(" ",3) +
                                STRING(aux_nragenci,"9999") +
                                STRING(aux_nrdconta,"x(14)") +
