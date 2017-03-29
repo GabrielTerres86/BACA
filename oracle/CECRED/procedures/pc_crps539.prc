@@ -13,7 +13,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme / Supero
-   Data    : Novembro/2009.                   Ultima atualizacao: 09/03/2017
+   Data    : Novembro/2009.                   Ultima atualizacao: 22/11/2013
 
    Dados referentes ao programa:
 
@@ -55,9 +55,6 @@ BEGIN
                             ser acionada em caso de saída para continuação da cadeia,
                             e não em caso de problemas na execução (Marcos-Supero)
 
-               09/03/2017 - Altarar o comando tail -2 para tail -1, pois no servidor
-                            "_AIX" nao consideramos a linha em branco do final do arquivo
-                            como fazia no servidor "UNIX" (Lucas Ranghetti #620474).
 ............................................................................. */
   DECLARE
     -- Codigo do programa
@@ -387,7 +384,7 @@ BEGIN
     --Processa cada arquivo lido
     FOR idx IN 1..vr_contador LOOP
       -- Comando para listar a ultima linha do arquivo
-      vr_comando:= 'tail -1 ' || vr_nmdirconv|| '/' || vr_vet_nmarquiv(idx);
+      vr_comando:= 'tail -2 ' || vr_nmdirconv|| '/' || vr_vet_nmarquiv(idx);
 
       --Executar o comando no unix
       GENE0001.pc_OScommand(pr_typ_comando => 'S'
@@ -837,3 +834,4 @@ BEGIN
   END;
 END;
 /
+

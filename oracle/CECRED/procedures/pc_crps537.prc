@@ -15,7 +15,7 @@ AS
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Guilherme / Supero
-    Data    : Novembro/2009.                   Ultima atualizacao: 09/03/2017
+    Data    : Novembro/2009.                   Ultima atualizacao: 02/10/2013
 
     Dados referentes ao programa:
 
@@ -63,10 +63,7 @@ AS
                             informações dos cheques, pois estava sendo realizado 
                             a liquidação no registro errado, causando problemas 
                             como relatado no chamado 264379 ( Renato - Supero )
-                            
-               09/03/2017 - Altarar o comando tail -2 para tail -1, pois no servidor
-                            "_AIX" nao consideramos a linha em branco do final do arquivo
-                            como fazia no servidor "UNIX" (Lucas Ranghetti #620474).
+
     ........................................................................ */
     DECLARE
       -- Identificacao do programa
@@ -251,8 +248,8 @@ AS
 
               -- Verifica se o arquivo esta completo
               -- Monta comando
-              -- -1 Para ler a ultima linha do arquivo
-              vr_des_comando := 'tail -1 ' || vr_nmarquiv;
+              -- -2 Para ler a penultima linha do arquivo, pois a ultima é em branco.
+              vr_des_comando := 'tail -2 ' || vr_nmarquiv;
               -- Executa comando para abrir arquivo
               gene0001.pc_OScommand_Shell(pr_des_comando => vr_des_comando
                                          ,pr_typ_saida   => vr_typ_saida
@@ -965,3 +962,4 @@ AS
     END;
   END PC_CRPS537;
 /
+

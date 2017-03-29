@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Dezembro/2009                   Ultima atualizacao: 09/03/2017
+   Data    : Dezembro/2009                   Ultima atualizacao: 16/02/2017
 
    Dados referentes ao programa:
 
@@ -249,7 +249,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
 
                03/12/2016 - Incorporação Transulcred (Guilherme/SUPERO)
 
-			         07/12/2016 - Ajustes referentes a M69, alinea 49 e leitura da crapneg
+			   07/12/2016 - Ajustes referentes a M69, alinea 49 e leitura da crapneg
                             (Lucas Ranghetti/Elton)
                             
                12/01/2017 - Limpar crapdev com situacao devolvido, jogar as 
@@ -259,10 +259,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                             
                16/02/2017 - Adicionar cooperativa migrada na verificacao do saldo
                             (Lucas Ranghetti #609838)
-                            
-               09/03/2017 - Altarar o comando tail -2 para tail -1, pois no servidor
-                            "_AIX" nao consideramos a linha em branco do final do arquivo
-                            como fazia no servidor "UNIX" (Lucas Ranghetti #620474).
 ............................................................................. */
 
      DECLARE
@@ -1586,7 +1582,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
               vr_setlinha := NULL;
 
               -- Comando para listar a ultima linha do arquivo
-              vr_comando:= 'tail -1 ' || pr_caminho|| '/' || vr_vet_nmarquiv(idx);
+              vr_comando:= 'tail -2 ' || pr_caminho|| '/' || vr_vet_nmarquiv(idx);
 
               --Executar o comando no unix
               GENE0001.pc_OScommand(pr_typ_comando => 'S'
@@ -2326,7 +2322,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                 vr_tab_chqtco.DELETE;
 
                 -- Comando para listar a ultima linha do arquivo
-                vr_comando:= 'tail -1 ' || pr_caminho|| '/' || vr_vet_nmarquiv(idx);
+                vr_comando:= 'tail -2 ' || pr_caminho|| '/' || vr_vet_nmarquiv(idx);
                 --Executar o comando no unix
                 GENE0001.pc_OScommand(pr_typ_comando => 'S'
                                      ,pr_des_comando => vr_comando
