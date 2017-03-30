@@ -1324,10 +1324,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
                     ,ret.dtcredit 
                     ,ret.nrcnvcob
                     ,ceb.qtdfloat
-            ORDER BY ret.dtocorre
+            ORDER BY ceb.qtdfloat
+                    ,ret.dtocorre
                     ,ret.dtcredit 
-                    ,ret.nrcnvcob
-                    ,ceb.qtdfloat;
+                    ,ret.nrcnvcob;
 
           vr_dtdpagto_rel DATE;
           vr_aux_float INTEGER;
@@ -1392,22 +1392,22 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
            gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'</float>');
          END IF;
 
-         vr_dtcredit := NULL;
+         vr_aux_float := NULL;
 
          --Buscar saldo pendente dopfloat para o relatorio
          FOR rw_crapret IN cr_crapret_sld (pr_cdcooper => pr_cdcooper
                                           ,pr_dtdpagto => vr_dtdpagto_rel            
                                           ,pr_dtmvtopr => rw_crapdat.dtmvtopr) LOOP
 
-           IF (vr_dtcredit IS NOT NULL) AND (rw_crapret.dtcredit <> vr_dtcredit) THEN
+           IF (vr_aux_float IS NOT NULL) AND (rw_crapret.qtdfloat <> vr_aux_float) THEN
               gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'</float>');
            END IF;
 
-           IF (rw_crapret.dtcredit <> vr_dtcredit) OR ( vr_dtcredit IS NULL) THEN
+           IF (rw_crapret.qtdfloat <> vr_aux_float) OR ( vr_aux_float IS NULL) THEN
              gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,
              '<float qtdddias="' || to_char(rw_crapret.qtdfloat) ||
              '" flsldpen="S" >');
-             vr_dtcredit := rw_crapret.dtcredit;
+             vr_aux_float := rw_crapret.qtdfloat;
            END IF;
 
            gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,
@@ -1432,7 +1432,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
           </convenio>');
 
          -- Finalizar tag XML
-         IF (vr_dtcredit IS NOT NULL) THEN
+         IF (vr_aux_float IS NOT NULL) THEN
            -- finalizar apenas se a variavel recebeu valor dentro do cursor
            gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'</float>');
          END IF;

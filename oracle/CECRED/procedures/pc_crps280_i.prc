@@ -14,7 +14,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Evandro
-     Data    : Fevereiro/2006                  Ultima atualizacao: 22/12/2016
+     Data    : Fevereiro/2006                  Ultima atualizacao: 22/02/2017
 
      Dados referentes ao programa:
 
@@ -874,7 +874,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
       rw_craplim cr_craplim%ROWTYPE;
       
       CURSOR cr_crapris_reccaixa IS
-        SELECT LTRIM(gene0002.fn_mask(epr.nrctremp,'zz.zzz.zz9')) nrctremp,
+        SELECT cop.nmrescop,
+               LTRIM(gene0002.fn_mask(epr.nrctremp,'zz.zzz.zz9')) nrctremp,
                ris.dtinictr,
                epr.vlemprst,
                epr.vlsdeved
@@ -887,12 +888,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
            AND epr.nrdconta = cop.nrctactl
            AND ris.nrdconta = epr.nrdconta
            AND ris.nrctremp = epr.nrctremp           
-           AND ris.cdcooper = 3
            and epr.vlsdeved > 0
            AND epr.cdfinemp = 1
            AND ris.cdorigem = 3
            AND ris.dtrefere = pr_dtrefere           
-           AND cop.cdcooper = pr_cdcooper;
+           AND ris.cdcooper = pr_cdcooper
+        ORDER BY cop.nmrescop,
+                 epr.nrctremp;
       
       -- Variaveis para o retorno da pc_obtem_dados_empresti
       vr_tab_dados_epr empr0001.typ_tab_dados_epr;
@@ -3429,7 +3431,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                CLOSE cr_craplim; 
                --
                IF rw_craplim.existe_contrato_finame > 0 THEN
-                  vr_tot_libctnfiname   := vr_tot_libctnfiname + vr_vldivida;
+                  
+                  IF vr_tab_crapris(vr_des_chave_crapris).dtinictr >= TRUNC(pr_rw_crapdat.dtmvtolt,'mm') AND
+                     vr_tab_crapris(vr_des_chave_crapris).dtinictr <= pr_rw_crapdat.dtmvtolt THEN
+                    
+                    vr_tot_libctnfiname   := vr_tot_libctnfiname + vr_vldivida;
+                    
+                  END IF;
+                  
                   vr_tot_prvperdafiname := vr_tot_prvperdafiname + vr_vlpreatr;
                   
                   --Agrupar valores de finame por nível de risco
@@ -3709,20 +3718,24 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
 
       vr_des_xml_gene := vr_des_xml_gene || '</tabmicrocredito>';  
       
-      --Abrir tag reccaixa
-      vr_des_xml_gene := vr_des_xml_gene || '<tabreccaixa>';
-      
-      FOR rw_reccaixa in cr_crapris_reccaixa loop
-        vr_des_xml_gene := vr_des_xml_gene
-                          ||'<reccaixa>'
-                          ||'  <nrctremp_caixa>'||rw_reccaixa.nrctremp||'</nrctremp_caixa>'
-                          ||'  <dtinictr_caixa>'||to_char(rw_reccaixa.dtinictr,'dd/mm/rrrr')||'</dtinictr_caixa>'
-                          ||'  <vlemprst_caixa>'||to_char(rw_reccaixa.vlemprst,'fm999g999g999g990d00')||'</vlemprst_caixa>'
-                          ||'  <vlsdeved_caixa>'||to_char(rw_reccaixa.vlsdeved,'fm999g999g999g990d00')||'</vlsdeved_caixa>'
-                          ||'</reccaixa>';     
-      END LOOP;
-      
-      vr_des_xml_gene := vr_des_xml_gene || '</tabreccaixa>';   
+      --Gerar quadro de recursos captados da caixa apenas no crrl227 da central
+      IF pr_cdcooper = 3 THEN 
+        --Abrir tag reccaixa
+        vr_des_xml_gene := vr_des_xml_gene || '<tabreccaixa>';
+        
+        FOR rw_reccaixa in cr_crapris_reccaixa loop
+          vr_des_xml_gene := vr_des_xml_gene
+                            ||'<reccaixa>'
+                            ||'  <nmrescop_caixa>'||rw_reccaixa.nmrescop||'</nmrescop_caixa>'
+                            ||'  <nrctremp_caixa>'||rw_reccaixa.nrctremp||'</nrctremp_caixa>'
+                            ||'  <dtinictr_caixa>'||to_char(rw_reccaixa.dtinictr,'dd/mm/rrrr')||'</dtinictr_caixa>'
+                            ||'  <vlemprst_caixa>'||to_char(rw_reccaixa.vlemprst,'fm999g999g999g990d00')||'</vlemprst_caixa>'
+                            ||'  <vlsdeved_caixa>'||to_char(rw_reccaixa.vlsdeved,'fm999g999g999g990d00')||'</vlsdeved_caixa>'
+                            ||'</reccaixa>';     
+        END LOOP;
+        
+        vr_des_xml_gene := vr_des_xml_gene || '</tabreccaixa>';   
+      END IF;
       
       -- Zerar totalizadores para Limite não Utilizado (Dados para Bacen)
       vr_vldivida := 0;

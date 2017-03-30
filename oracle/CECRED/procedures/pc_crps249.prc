@@ -543,11 +543,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
 
 ............................................................................ */
 
-  -- Constantes para geração de arquivos contábeis                                                                          
-  vc_dsdircont CONSTANT VARCHAR(30) := 'arquivos_contabeis/ayllos'; 
-  vc_cdacesso CONSTANT VARCHAR(24) := 'ROOT_SISTEMAS';
-  vc_cdtodascooperativas INTEGER := 0; 
-
   -- Buscar os dados da cooperativa
   cursor cr_crapcop(pr_cdcooper in craptab.cdcooper%type) is
     select cdbcoctl,
@@ -2148,7 +2143,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         ||pr_origem||','                    --> Conta Origem
         ||pr_destino||','                   --> Conta Destino
         ||TRIM(TO_CHAR(pr_vltotal,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','
-        ||'1434'||','
+        ||'5210'||','
         ||pr_dsconta;
   END;
        
@@ -2969,7 +2964,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                      '3813,'||
                      '9184,'||
                      trim(to_char(vr_tab_agencia(1).vr_vlaprjur, '99999999999990.00'))||','||
-                     '1434,'||
+                     '5210,'||
                      '"(crps249) LIMITES CONCEDIDOS PARA DESCONTO DE CHEQUES."';
       gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
       -- Reversao
@@ -2979,7 +2974,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                      '9184,'||
                      '3813,'||
                      trim(to_char(vr_tab_agencia(1).vr_vlaprjur, '99999999999990.00'))||','||
-                     '1434,'||
+                     '5210,'||
                      '"(crps249) LIMITES CONCEDIDOS PARA DESCONTO DE CHEQUES."';
       gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
     end if;
@@ -3220,7 +3215,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                      '3815,'||
                      '9186,'||
                      trim(to_char(vr_tab_agencia(1).vr_vlaprjur, '99999999999990.00'))||','||
-                     '1434,'||
+                     '5210,'||
                      '"(crps249) LIMITES CONCEDIDOS PARA DESCONTO DE TITULOS."';
       gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
       -- Reversao
@@ -3230,7 +3225,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                      '9186,'||
                      '3815,'||
                      trim(to_char(vr_tab_agencia(1).vr_vlaprjur, '99999999999990.00'))||','||
-                     '1434,'||
+                     '5210,'||
                      '"(crps249) LIMITES CONCEDIDOS PARA DESCONTO DE TITULOS."';
       gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
     end if;
@@ -3262,7 +3257,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                      '6112,'||
                      '4782,'||
                      trim(to_char(vr_vlcompel, '99999999999990.00'))||','||
-                     '1434,'||
+                     '5210,'||
                      '"(crps249) CAPITAL DE ASSOCIADOS INATIVOS."';
       gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
       --
@@ -3275,7 +3270,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                      '4782,'||
                      '6112,'||
                      trim(to_char(vr_vlcompel, '99999999999990.00'))||','||
-                     '1434,'||
+                     '5210,'||
                      '"(crps249) CAPITAL DE ASSOCIADOS INATIVOS."';
       gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
       --
@@ -3325,7 +3320,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := false; -- Normal
     vr_lsctaorc := ',6112,';
     vr_dshstorc := '"(crps249) CAPITAL REALIZADO."';
-    vr_dshcporc := ',2938,';
+    vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
     --
     vr_flgrvorc := true;  -- Lancamento de reversao
@@ -3333,7 +3328,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := false; -- Normal
     vr_lsctaorc := ',6112,';
     vr_dshstorc := '"(crps249) REVERSAO DO CAPITAL REALIZADO."';
-    vr_dshcporc := ',2938,';
+    vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
     -- Capital a realizar ..................................................
     vr_tab_cratorc.delete;
@@ -3356,7 +3351,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := true;  -- Redutora
     vr_lsctaorc := ',6122,';
     vr_dshstorc := '"(crps249) CAPITAL A REALIZAR."';
-    vr_dshcporc := ',2938,';
+    vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
     --
     vr_flgrvorc := true;  -- Lancamento de reversao
@@ -3364,7 +3359,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := true;  -- Redutora
     vr_lsctaorc := ',6122,';
     vr_dshstorc := '"(crps249) REVERSAO DO CAPITAL A REALIZAR."';
-    vr_dshcporc := ',2938,';
+    vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
     -- Emprestimos 0229 ....................................................
     pc_cria_agencia_pltable(999,3);
@@ -3410,7 +3405,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := false; -- Normal
     vr_lsctaorc := ',1621,';
     vr_dshstorc := '"(crps249) EMPRESTIMOS REALIZADOS."';
-    vr_dshcporc := ',2938,';
+    vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
     --
     vr_flgrvorc := true;  -- Lancamento de reversao
@@ -3418,7 +3413,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := false; -- Normal
     vr_lsctaorc := ',1621,';
     vr_dshstorc := '"(crps249) REVERSAO DOS EMPRESTIMOS REALIZADOS."';
-    vr_dshcporc := ',2938,';
+    vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
     -- Financiamentos ......................................................
     pc_cria_agencia_pltable(999,4);
@@ -3478,7 +3473,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := false; -- Normal
     vr_lsctaorc := ',1662,';
     vr_dshstorc := '"(crps249) FINANCIAMENTOS REALIZADOS."';
-    vr_dshcporc := ',2938,';
+    vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
     --
     vr_flgrvorc := true;  -- Lancamento de reversao
@@ -3486,7 +3481,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := false; -- Normal
     vr_lsctaorc := ',1662,';
     vr_dshstorc := '"(crps249) REVERSAO DOS FINANCIAMENTOS REALIZADOS."';
-    vr_dshcporc := ',2938,';
+    vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
     -- Saldo Financiamentos
     if vr_vltotorc > 0 then
@@ -3496,7 +3491,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                      '1662,'||
                      '1621,'||
                      trim(to_char(vr_vltotorc, '99999999999990.00'))||','||
-                     '2938,'||
+                     '5210,'||
                      '"(crps249) SALDO FINANCIAMENTOS."';
       gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
       --
@@ -3510,7 +3505,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                      '1621,'||
                      '1662,'||
                      trim(to_char(vr_vltotorc, '99999999999990.00'))||','||
-                     '2938,'||
+                     '5210,'||
                      '"(crps249) REVERSAO SALDO FINANCIAMENTOS."';
       gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
       --
@@ -3562,7 +3557,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := false; -- Normal
     vr_lsctaorc := ',1664,';
     vr_dshstorc := '"(crps249) EMPRESTIMOS PREFIXADO REALIZADOS."';
-    vr_dshcporc := ',2938,';
+    vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
     --
     vr_flgrvorc := true;  -- Lancamento de reversao
@@ -3570,7 +3565,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := false; -- Normal
     vr_lsctaorc := ',1664,';
     vr_dshstorc := '"(crps249) REVERSAO DOS EMPRESTIMOS PREFIXADO REALIZADOS."';
-    vr_dshcporc := ',2938,';
+    vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
 
     /* Financiamentos - PREFIXADO .............................................. */
@@ -3629,7 +3624,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := false; -- Normal
     vr_lsctaorc := ',1667,';
     vr_dshstorc := '"(crps249) FINANCIAMENTOS PREFIXADO REALIZADOS."';
-    vr_dshcporc := ',2938,';
+    vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
     --
     vr_flgrvorc := true;  -- Lancamento de reversao
@@ -3637,7 +3632,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := false; -- Normal
     vr_lsctaorc := ',1667,';
     vr_dshstorc := '"(crps249) REVERSAO DOS FINANCIAMENTOS PREFIXADO REALIZADOS."';
-    vr_dshcporc := ',2938,';
+    vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
 
     -- Sobras de emprestimos ...............................................
@@ -3662,7 +3657,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := false; -- Normal
     vr_lsctaorc := ',4191,';
     vr_dshstorc := '"(crps249) SOBRAS DE EMPRESTIMOS."';
-    vr_dshcporc := ',2938,';
+    vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
     --
     vr_flgrvorc := true;  -- Lancamento de reversao
@@ -3670,7 +3665,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := false; -- Normal
     vr_lsctaorc := ',4191,';
     vr_dshstorc := '"(crps249) REVERSAO DAS SOBRAS DE EMPRESTIMOS."';
-    vr_dshcporc := ',2938,';
+    vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
     -- Exclusao de cooperados .............................................
     vr_tab_cratorc.delete;
@@ -3695,7 +3690,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := false; -- Normal
     vr_lsctaorc := ',4113,';
     vr_dshstorc := '"(crps249) DEBITO EXCLUSAO DISPONIVEL."';
-    vr_dshcporc := ',2938,';
+    vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
     --
     vr_flgrvorc := true;  -- Lancamento de reversao
@@ -3703,7 +3698,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := false; -- Normal
     vr_lsctaorc := ',4113,';
     vr_dshstorc := '"(crps249) REVERSAO DEBITO EXCLUSAO DISPONIVEL."';
-    vr_dshcporc := ',2938,';
+    vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
     
     -- Procapcred  .............................................
@@ -3729,7 +3724,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := false; -- Normal
     vr_lsctaorc := ',6114,';
     vr_dshstorc := '"(crps249) PROCAPCRED."';
-    vr_dshcporc := ',2938,';
+    vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
     --
     vr_flgrvorc := true;  -- Lancamento de reversao
@@ -3737,7 +3732,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := false; -- Normal
     vr_lsctaorc := ',6114,';
     vr_dshstorc := '"(crps249) REVERSAO PROCAPCRED."';
-    vr_dshcporc := ',2938,';
+    vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
 
     vr_vltotorc := 0;
@@ -3758,7 +3753,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := false; -- Normal
     vr_lsctaorc := ',4112,';
     vr_dshstorc := '"(crps249) DEPOSITO A VISTA PESSOA FISICA."';
-    vr_dshcporc := ',2938,';
+    vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
     --
     vr_flgrvorc := true;  -- Lancamento de reversao
@@ -3766,7 +3761,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := false; -- Normal
     vr_lsctaorc := ',4112,';
     vr_dshstorc := '"(crps249) REVERSAO DO DEPOSITO A VISTA PESSOA FISICA."';
-    vr_dshcporc := ',2938,';
+    vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
 
     vr_vltotorc := 0;
@@ -3786,7 +3781,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := false; -- Normal
     vr_lsctaorc := ',4120,';
     vr_dshstorc := '"(crps249) DEPOSITO A VISTA PESSOA JURIDICA."';
-    vr_dshcporc := ',2938,';
+    vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
     --
     vr_flgrvorc := true;  -- Lancamento de reversao
@@ -3794,7 +3789,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := false; -- Normal
     vr_lsctaorc := ',4120,';
     vr_dshstorc := '"(crps249) REVERSAO DO DEPOSITO A VISTA PESSOA JURIDICA."';
-    vr_dshcporc := ',2938,';
+    vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
     -- Saldos em Contas Investimento .......................................
     vr_tab_cratorc.delete;
@@ -3816,7 +3811,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := false; -- Normal
     vr_lsctaorc := ',4292,';
     vr_dshstorc := '"(crps249) CONTA INVESTIMENTO."';
-    vr_dshcporc := ',2938,';
+    vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
     --
     vr_flgrvorc := true;  -- Lancamento de reversao
@@ -3824,7 +3819,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := false; -- Normal
     vr_lsctaorc := ',4292,';
     vr_dshstorc := '"(crps249) REVERSAO DA CONTA INVESTIMENTO."';
-    vr_dshcporc := ',2938,';
+    vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
     -- Desconto de Cheques .................................................
     pc_cria_agencia_pltable(999,2);
@@ -3859,7 +3854,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := false; -- Normal
     vr_lsctaorc := ',1641,';
     vr_dshstorc := '"(crps249) DESCONTO DE CHEQUE."';
-    vr_dshcporc := ',2938,';
+    vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
     --
     vr_flgrvorc := true;  -- Lancamento de reversao
@@ -3867,7 +3862,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := false; -- Normal
     vr_lsctaorc := ',1641,';
     vr_dshstorc := '"(crps249) REVERSAO DO DESCONTO DE CHEQUES."';
-    vr_dshcporc := ',2938,';
+    vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
     -- Provisao de Receita com Desconto de Cheques .........................
     vr_tab_cratorc.delete;
@@ -3890,7 +3885,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := true;  -- Redutora
     vr_lsctaorc := ',1642,';
     vr_dshstorc := '"(crps249) RECEITA DE DESCONTO DE CHEQUE."';
-    vr_dshcporc := ',2938,';
+    vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
     --
     vr_flgrvorc := true;  -- Lancamento de reversao
@@ -3898,7 +3893,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := true;  -- Redutora
     vr_lsctaorc := ',1642,';
     vr_dshstorc := '"(crps249) REVERSAO DA RECEITA DE DESCONTO DE CHEQUE."';
-    vr_dshcporc := ',2938,';
+    vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
     -- RECEITA DE DESCONTO DE CHEQUE -- Dados para contabilidade
     -- Inicializa a Pl-Table
@@ -3987,7 +3982,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := false; -- Normal
     vr_lsctaorc := ',1643,';
     vr_dshstorc := '"(crps249) DESCONTO DE TITULO S/ REGISTRO."';
-    vr_dshcporc := ',2938,';
+    vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
     --
     vr_flgrvorc := true;  -- Lancamento de reversao
@@ -3995,7 +3990,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := false; -- Normal
     vr_lsctaorc := ',1643,';
     vr_dshstorc := '"(crps249) REVERSAO DO DESCONTO DE TITULOS S/ REGISTRO."';
-    vr_dshcporc := ',2938,';
+    vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
     -- DESCONTO DE TITULO S/ REGISTRO - Dados para contabilidade
     -- Inicializando a Pl-Table
@@ -4023,7 +4018,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := false; -- Normal
     vr_lsctaorc := ',1645,';
     vr_dshstorc := '"(crps249) DESCONTO DE TITULO C/ REGISTRO."';
-    vr_dshcporc := ',2938,';
+    vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
     --
     vr_flgrvorc := true;  -- Lancamento de reversao
@@ -4031,7 +4026,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := false; -- Normal
     vr_lsctaorc := ',1645,';
     vr_dshstorc := '"(crps249) REVERSAO DO DESCONTO DE TITULOS C/ REGISTRO."';
-    vr_dshcporc := ',2938,';
+    vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
     -- DESCONTO DE TITULO C/ REGISTRO - Dados para contabilidade
     -- Inicializando a Pl-Table
@@ -4064,7 +4059,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := true;  -- Redutora
     vr_lsctaorc := ',1644,';
     vr_dshstorc := '"(crps249) RENDA DE DESCONTO DE TITULO S/ REGISTRO."';
-    vr_dshcporc := ',2938,';
+    vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
     --
     vr_flgrvorc := true;  -- Lancamento de reversao
@@ -4072,7 +4067,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := true;  -- Redutora
     vr_lsctaorc := ',1644,';
     vr_dshstorc := '"(crps249) REVERSAO DA RENDA DE DESCONTO DE TITULO S/ REGISTRO."';
-    vr_dshcporc := ',2938,';
+    vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
     -- Separacao por agencia e por tipo de pessoa -- Dados para contabilidade
     -- Inicializando a Pl-Table
@@ -4106,7 +4101,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := true;  -- Redutora
     vr_lsctaorc := ',1646,';
     vr_dshstorc := '"(crps249) RENDA DE DESCONTO DE TITULO C/ REGISTRO."';
-    vr_dshcporc := ',2938,';
+    vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento; 
     --
     vr_flgrvorc := true;  -- Lancamento de reversao
@@ -4114,7 +4109,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := true;  -- Redutora
     vr_lsctaorc := ',1646,';
     vr_dshstorc := '"(crps249) REVERSAO DA RENDA DE DESCONTO DE TITULO C/ REGISTRO."';
-    vr_dshcporc := ',2938,';
+    vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
     -- Separacao por agencia e por tipo de pessoa -- Dados para contabilidade
     -- Inicializando a Pl-Table
@@ -4147,7 +4142,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := false; -- Normal
     vr_lsctaorc := ',4232,';
     vr_dshstorc := '"(crps249) DEPOSITOS RDCA30."';
-    vr_dshcporc := ',2938,';
+    vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
     --
     vr_flgrvorc := true;  -- Lancamento de reversao
@@ -4155,7 +4150,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := false; -- Normal
     vr_lsctaorc := ',4232,';
     vr_dshstorc := '"(crps249) REVERSAO DOS DEPOSITOS RDCA30."';
-    vr_dshcporc := ',2938,';
+    vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
     -- Aplicacao RDCA60 ....................................................
     vr_tab_cratorc.delete;
@@ -4178,7 +4173,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := false; -- Normal
     vr_lsctaorc := ',4237,';
     vr_dshstorc := '"(crps249) DEPOSITOS RDCA60."';
-    vr_dshcporc := ',2938,';
+    vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
     --
     vr_flgrvorc := true;  -- Lancamento de reversao
@@ -4186,7 +4181,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := false; -- Normal
     vr_lsctaorc := ',4237,';
     vr_dshstorc := '"(crps249) REVERSAO DOS DEPOSITOS RDCA60."';
-    vr_dshcporc := ',2938,';
+    vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
     -- Aplicacao RDCPRE ....................................................
     vr_tab_cratorc.delete;
@@ -4209,7 +4204,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := false; -- Normal
     vr_lsctaorc := ',4253,';
     vr_dshstorc := '"(crps249) DEPOSITOS RDCPRE."';
-    vr_dshcporc := ',2938,';
+    vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
     --
     vr_flgrvorc := true;  -- Lancamento de reversao
@@ -4217,7 +4212,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := false; -- Normal
     vr_lsctaorc := ',4253,';
     vr_dshstorc := '"(crps249) REVERSAO DOS DEPOSITOS RDCPRE."';
-    vr_dshcporc := ',2938,';
+    vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
     -- Magui, no mensal precisamos limpar os campos craprda.vlslfmes de
     -- aplicacoes finalizadas pelo crps495 e craps481. Nao podemos zerar
@@ -4258,7 +4253,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := false; -- Normal
     vr_lsctaorc := ',4254,';
     vr_dshstorc := '"(crps249) DEPOSITOS RDCPOS."';
-    vr_dshcporc := ',2938,';
+    vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
     --
     vr_flgrvorc := true;  -- Lancamento de reversao
@@ -4266,7 +4261,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := false; -- Normal
     vr_lsctaorc := ',4254,';
     vr_dshstorc := '"(crps249) REVERSAO DOS DEPOSITOS RDCPOS."';
-    vr_dshcporc := ',2938,';
+    vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
     -- Magui, no mensal precisamos limpar os campos craprda.vlslfmes de
     -- aplicacoes finalizadas pelo crps495 e craps481. Nao podemos zerar
@@ -4306,7 +4301,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := false; -- Normal
     vr_lsctaorc := ',4257,';
     vr_dshstorc := '"(crps249) DEPOSITOS POUPANCA PROGRAMADA."';
-    vr_dshcporc := ',2938,';
+    vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
     --
     vr_flgrvorc := true;  -- Lancamento de reversao
@@ -4314,7 +4309,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := false; -- Normal
     vr_lsctaorc := ',4257,';
     vr_dshstorc := '"(crps249) REVERSAO DOS DEPOSITOS POUPANCA PROGRAMADA."';
-    vr_dshcporc := ',2938,';
+    vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
     --
    
@@ -4365,7 +4360,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
       vr_flgctred := false; -- Normal
       vr_lsctaorc := ',' || Lpad(vr_nrctacre,4,'0') || ',';
       vr_dshstorc := '"(crps249) DEPOSITOS ' || rw_crapcpc.nmprodut || '."';
-      vr_dshcporc := ',2938,';
+      vr_dshcporc := ',5210,';
       pc_proc_lista_orcamento;
       --
       vr_flgrvorc := true;  -- Lancamento de reversao
@@ -4373,7 +4368,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
       vr_flgctred := false; -- Normal
       vr_lsctaorc := ',' || Lpad(vr_nrctacre,4,'0') || ',';
       vr_dshstorc := '"(crps249) REVERSAO DOS DEPOSITOS ' || rw_crapcpc.nmprodut || '."';
-      vr_dshcporc := ',2938,';
+      vr_dshcporc := ',5210,';
       pc_proc_lista_orcamento;  
       --
     END LOOP;
@@ -10100,7 +10095,7 @@ BEGIN
                                  vr_dtmvtolt,
                                  vr_cdhistor) LOOP
                                  
-    -- 50141211,111214,1632,4451,34000000.00,1434,"LIBERACAO CONTRATO DE FINAME BNDES"
+    -- 50141211,111214,1632,4451,34000000.00,5210,"LIBERACAO CONTRATO DE FINAME BNDES"
     -- 999,34000000.00
     vr_vllanmto := rw_craplcm.vllanmto;
     --
@@ -10111,7 +10106,7 @@ BEGIN
                    '1432,'||
                    '4451,'||
                    TRIM(to_char(vr_vllanmto, '999999990.00'))||','||
-                   '1434,'||
+                   '5210,'||
                    '"LIBERACAO CONTRATO DE FINAME BNDES"';
     gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
     --
@@ -10128,7 +10123,7 @@ BEGIN
                                  vr_dtmvtolt,
                                  vr_cdhistor) LOOP
                                  
-    -- 50141211,111214,4451,1632,15000000.00,1434,"ESTORNO LIBERACAO CONTRATO DE FINAME BNDES"
+    -- 50141211,111214,4451,1632,15000000.00,5210,"ESTORNO LIBERACAO CONTRATO DE FINAME BNDES"
     -- 999,15000000.00
     vr_vllanmto := rw_craplcm.vllanmto;
     --
@@ -10139,7 +10134,7 @@ BEGIN
                    '4451,'||
                    '1432,'||
                    TRIM(to_char(vr_vllanmto, '999999990.00'))||','||
-                   '1434,'||
+                   '5210,'||
                    '"ESTORNO LIBERACAO CONTRATO DE FINAME BNDES"';
     gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
     --
@@ -10157,7 +10152,7 @@ BEGIN
                                  vr_dtmvtolt,
                                  vr_cdhistor) LOOP
                                  
-    -- 50141211,111214,1632,4451,3540000.00,1434,"JUROS SOBRE CONTRATO DE FINAME BNDES"
+    -- 50141211,111214,1632,4451,3540000.00,5210,"JUROS SOBRE CONTRATO DE FINAME BNDES"
     -- 999,3540000.00
     vr_vllanmto := rw_craplcm.vllanmto;
     --
@@ -10168,7 +10163,7 @@ BEGIN
                    '1432,'||
                    '1631,'||
                    TRIM(to_char(vr_vllanmto, '999999990.00'))||','||
-                   '1434,'||
+                   '5210,'||
                    '"JUROS SOBRE CONTRATO DE FINAME BNDES"';
     gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
     --
@@ -10185,7 +10180,7 @@ BEGIN
                                  vr_dtmvtolt,
                                  vr_cdhistor) LOOP
                                  
-    -- 50141211,111214,4451,1632,2330000.00,1434,"ESTORNO DE JUROS SOBRE CONTRATO DE FINAME BNDES"
+    -- 50141211,111214,4451,1632,2330000.00,5210,"ESTORNO DE JUROS SOBRE CONTRATO DE FINAME BNDES"
     -- 999,2330000.00
     vr_vllanmto := rw_craplcm.vllanmto;
     --
@@ -10196,7 +10191,7 @@ BEGIN
                    '1631,'||
                    '1432,'||
                    TRIM(to_char(vr_vllanmto, '999999990.00'))||','||
-                   '1434,'||
+                   '5210,'||
                    '"ESTORNO DE JUROS SOBRE CONTRATO DE FINAME BNDES"';
     gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
     --
@@ -10214,7 +10209,7 @@ BEGIN
                                  vr_dtmvtolt,
                                  vr_cdhistor) LOOP
                                  
-    -- 50141211,111214,4451,1432,10000.00,1434,"PAGAMENTO PARCELA FINAME"
+    -- 50141211,111214,4451,1432,10000.00,5210,"PAGAMENTO PARCELA FINAME"
     -- 999,10000.00
     vr_vllanmto := rw_craplcm.vllanmto;
     --
@@ -10225,7 +10220,7 @@ BEGIN
                    '4451,'||
                    '1432,'||
                    TRIM(to_char(vr_vllanmto, '999999990.00'))||','||
-                   '1434,'||
+                   '5210,'||
                    '"PAGAMENTO PARCELA FINAME"';
     gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
     --
@@ -10252,8 +10247,9 @@ BEGIN
   END IF;
     
   -- Busca o diretório final para copiar o relatório
-  vr_dsdircop := gene0001.fn_param_sistema('CRED', vc_cdtodascooperativas, vc_cdacesso);                                                
-  vr_dsdircop := vr_dsdircop || vc_dsdircont;
+  vr_dsdircop := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                          ,pr_cdcooper => 0
+                                          ,pr_cdacesso => 'DIR_ARQ_CONTAB_X');
                                         
   vr_nmarqdat_ope_cred_nov := vr_dtmvtolt_yymmdd||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_OPCRED.txt';
 
@@ -10284,8 +10280,9 @@ BEGIN
   gene0001.pc_fecha_arquivo(vr_arquivo_txt);
 
   -- Busca o diretório final para copiar o relatório
-  vr_dsdircop := gene0001.fn_param_sistema('CRED', vc_cdtodascooperativas, vc_cdacesso);        
-  vr_dsdircop := vr_dsdircop || vc_dsdircont;
+  vr_dsdircop := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                          ,pr_cdcooper => 0
+                                          ,pr_cdacesso => 'DIR_ARQ_CONTAB_X');
                                                                                 
   vr_nmarqnov := vr_dtmvtolt_yymmdd||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'.txt';                        
                                                         
