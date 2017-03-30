@@ -1146,6 +1146,10 @@ function formataOpcaoM() {
 
     layoutPadrao();
     controlaPesquisas();
+	
+	cDtlibini.attr('tabindex', 1);
+	cDtlibfim.attr('tabindex', 2);
+	
     return false;
 
 }
@@ -2670,6 +2674,7 @@ function formataOpcaoL() {
 	rNmarquiv = $('label[for="nmarquiv"]', '#' + frmOpcao);	
 	rInsithc2 = $('label[for="insithc2"]', '#' + frmOpcao);	
 	rNrremret = $('label[for="nrremret"]', '#' + frmOpcao);	
+	rDsorigem = $('label[for="dsorigem"]', '#' + frmOpcao);	
 	rDsdocmc7 = $('label[for="dsdocmc7"]', '#' + frmOpcao);	
 	rDsmsgcmc7 = $('#dsmsgcmc7','#'+frmOpcao);        
 	
@@ -2681,6 +2686,7 @@ function formataOpcaoL() {
     rNmarquiv.css({'width': '100px'}).addClass('rotulo');	
     rInsithc2.css({'width': '75px'}).addClass('rotulo-linha');
 	rNrremret.css({'width': '75px'}).addClass('rotulo-linha');
+	rDsorigem.css({'width': '75px'}).addClass('rotulo-linha');
     rDsdocmc7.css({'width': '100px'}).addClass('rotulo');	
 	rDsmsgcmc7.css({'width':'200px','text-align':'left','margin-left':'3px'}).addClass('rotulo-linha');
 	
@@ -2695,6 +2701,7 @@ function formataOpcaoL() {
     cNmarquiv = $('#nmarquiv', '#' + frmOpcao);
     cInsithc2 = $('#insithc2', '#' + frmOpcao);
     cNrremret = $('#nrremret', '#' + frmOpcao);
+    cDsorigem = $('#dsorigem', '#' + frmOpcao);
     cDsdocmc7 = $('#dsdocmc7', '#' + frmOpcao);	
 	btnBscrem = $('#btBscrem','#'+frmOpcao);
 	
@@ -2708,6 +2715,7 @@ function formataOpcaoL() {
     cNmarquiv.css({'width': '290px'});
     cInsithc2.css({'width': '110px'});
 	cNrremret.css({'width': '50px'}).addClass('inteiro');
+	cDsorigem.css({'width': '181px'});
 	cDsdocmc7.css({'width':'290px'}).attr('maxlength','34');
 
     // Outros	
@@ -2796,6 +2804,11 @@ function formataOpcaoL() {
     layoutPadrao();
     controlaPesquisas();
 	
+	cDtinicst.attr('tabindex', 1);
+	cDtfimcst.attr('tabindex', 2);
+	cInsithcc.attr('tabindex', 3);
+	btnBscrem.attr('tabindex', 4);
+	
     return false;
 
 }
@@ -2819,6 +2832,7 @@ function formataTabelaL(){
 	glbTabNrconven = undefined;
 	glbTabIntipmvt = undefined;
 	glbTabNmprimtl = undefined;
+	glbTabDsorigem = undefined;
 	
     $('#' + frmOpcao).css({'margin-top': '5px'});
     divRegistro.css({'height': '207px', 'padding-bottom': '2px'});
@@ -2866,6 +2880,7 @@ function formataTabelaL(){
 		glbTabNrconven = $(this).find('#nrconven').val();
 		glbTabIntipmvt = $(this).find('#intipmvt').val();
 		glbTabNmprimtl = $(this).find('#nmprimtl').val();
+		glbTabDsorigem = $(this).find('#dsorigem').val();
 	});
 	
 	$('table > tbody > tr:eq(0)', divRegistro).click();	
@@ -3458,6 +3473,7 @@ function mostraChequesRemessa(){
 	cNmarquiv.val(glbTabNmarquiv);
 	cInsithc2.val(glbTabInsithcc);
 	cNrremret.val(glbTabNrremret);
+	cDsorigem.val(glbTabDsorigem);
 	
 	if (glbTabInsithcc == 'Pendente'){
 		cDsdocmc7.habilitaCampo();
@@ -4320,6 +4336,12 @@ function adicionaChequeI(){
 		return false;
 	}
 	
+	if (!validaCmc7(cmc7)){
+		showError('error','CMC-7 Inválido!','Alerta - Ayllos','cDsdocmc7.limpaFormulario();cDsdocmc7.focus();');
+		return false;
+	}
+
+	
 	var idCriar = "id_".concat(cmc7_sem_format);
 
 	//Desmontar o CMC-7 para exibir os campos
@@ -4336,11 +4358,11 @@ function adicionaChequeI(){
 		conta = mascara(normalizaNumero(cmc7_sem_format.substr(19,10)),'######.###-#');
 	}
 	
-	if(!document.getElementById(idCriar)) {
+	if(!document.getElementById(idCriar)) {				
 		
 		// Criar a linha na tabela
 		$("#tbCheques > tbody")
-			.append($('<tr>') // Linha
+			.prepend($('<tr>') // Linha
 			    .attr('id',idCriar)
 				.attr('class',corLinha)
 				.append($('<td>') // Coluna: Data Boa
@@ -4450,7 +4472,7 @@ function adicionaChequeI(){
 					.text('')
 				)
 			);
-		
+
 		atualizaMensagemQtdRegistros();
 		//Utiliza o Botão Novo após incluir um cheque na custódia
 		novoCheque();
@@ -4468,7 +4490,7 @@ function atualizaMensagemQtdRegistros(){
 		// Somar Todos
 		vlTotal += converteMoedaFloat(normalizaNumero($("#aux_vlcheque",this).val()));
 	});
-	$('#qtdChequeCustodiar').html('Exibindo ' + qtTotal + ' cheques para custodiar. Valor Total R$ ' + number_format(vlTotal,2,',','.'));
+	$('#qtdChequeCustodiar').html('<span style="font-size: 12px">Exibindo ' + qtTotal + ' cheques para custodiar. Valor Total R$ ' + number_format(vlTotal,2,',','.') + '</span>');
 }
 
 function novoCheque(){
@@ -4917,4 +4939,73 @@ function mostraMsgErro(){
 
 function mostraMsgCmc7(){
 	$('#dsmsgcmc7','#' + frmOpcao).css('display','none');
+}
+
+function validaCmc7(typedValue) {
+	if(typedValue === undefined || typedValue === null){
+        return false;
+	  }
+	  typedValue      = typedValue.replace(/\s/g, "");
+	  if(!typedValue){
+		return false;
+	  }
+	  
+	  var pieces = {
+		firstPiece  : typedValue.substr(1,7)
+		, secondPiece : typedValue.substr(10,10)
+		, thirdPiece  : typedValue.substr(22,10)
+	  };
+
+	  var digits = {
+		  firstDigit : parseInt(typedValue.substr(8,1))
+		, secondDigit :  parseInt(typedValue.substr(21,1))
+		, thirdDigit : parseInt(typedValue.substr(32,1))
+	  };
+
+	  var calculatedDigits = {
+		firstDigit : module10(pieces.firstPiece)
+		, secondDigit :  module10(pieces.secondPiece)
+		, thirdDigit : module10(pieces.thirdPiece)
+	  };
+
+	  if ( (calculatedDigits.secondDigit != digits.firstDigit)
+		|| (calculatedDigits.firstDigit != digits.secondDigit)
+		|| (calculatedDigits.thirdDigit != digits.thirdDigit) ) {
+		  return false;
+	  }
+	  return true;
+}	  
+
+function module10(str) {
+
+        if(str === undefined || str === null){
+          return 0;
+        }
+        var size = str.length - 1;
+        var result = 0;
+        var weight = 2;
+
+        for (var i = size; i >= 0; i--) {
+            total = str.substr(i, 1) * weight;
+            if (total > 9) {
+                result = result + 1 + (total - 10);
+            } else {
+                result = result + total;
+            }
+            if (weight == 1) {
+                weight = 2;
+            } else {
+                weight = 1;
+            }
+        }
+        var dv = 10 - mod(result, 10);
+        if (dv == 10) {
+            dv = 0;
+        }
+        return dv;
+}
+	
+function mod(dividend, divisor) {	
+	
+     return Math.round(dividend - (Math.floor(dividend/divisor)*divisor));
 }

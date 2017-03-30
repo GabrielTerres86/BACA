@@ -1277,6 +1277,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSTOD IS
 							,decode(hcc.insithcc,1,'Pendente',2,'Processado') insithcc
 							,to_char(hcc.dtcustod,'dd/mm/rrrr') dtcustod
 							,hcc.intipmvt
+							,hcc.idorigem
 							,rownum rnum
 					FROM craphcc hcc
 				 WHERE hcc.cdcooper = pr_cdcooper
@@ -1411,7 +1412,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSTOD IS
  									 || '<nmarquiv>'|| rw_craphcc.nmarquiv || '</nmarquiv>' 
 									 || '<nrconven>'|| rw_craphcc.nrconven || '</nrconven>'
 									 || '<intipmvt>'|| rw_craphcc.intipmvt || '</intipmvt>'
-									 || '<nmprimtl>'|| rw_crapass.nmprimtl || '</nmprimtl>'||									 
+									 || '<nmprimtl>'|| rw_crapass.nmprimtl || '</nmprimtl>'
+									 ||	'<dsorigem>'|| gene0001.vr_vet_des_origens(rw_craphcc.idorigem) ||'</dsorigem>' ||
 									 '</inf>';
 			END LOOP;			
 			-- Fechar tag de dados do xml de retorno

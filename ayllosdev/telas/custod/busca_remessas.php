@@ -96,6 +96,7 @@
 					$aux_nrconven = $infoRemessa->tags[9]->cdata; // Convênio
 					$aux_intipmvt = $infoRemessa->tags[10]->cdata; // Tipo de movimento (1 - Remessa, 2 - Retorno, 3 - Tela)
 					$aux_nmprimtl = $infoRemessa->tags[11]->cdata; // Nome do titular da conta
+					$aux_dsorigem = $infoRemessa->tags[12]->cdata; // Descrição da origem
 					?>
 					<tr>
 						<td id="nrdconta" ><span><? echo $aux_nrdconta ?></span><? echo $aux_nrdconta ?></td>
@@ -110,6 +111,7 @@
 						<input type="hidden" id="nrconven" value="<? echo $aux_nrconven ?>"/>
 						<input type="hidden" id="intipmvt" value="<? echo $aux_intipmvt ?>"/>
 						<input type="hidden" id="nmprimtl" value="<? echo $aux_nmprimtl ?>"/>
+						<input type="hidden" id="dsorigem" value="<? echo $aux_dsorigem ?>"/>
 					</tr>
 					<?
 				}		

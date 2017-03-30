@@ -47,7 +47,10 @@
 			<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif" /></a>
 			
 			<input type="text" id="nmttlrem" name="nmttlrem" />
-
+			
+			<label for="nrremret">Remessa:</label>
+			<input type="text" id="nrremret" name="nrremret" />
+			
 			</br>
 			
 			<label for="nmarquiv" >Arquivo:</label>
@@ -58,9 +61,9 @@
 				<option value="Pendente" >Pendente</option>
 				<option value="Processado" >Processado</option>
 			</select>
-			
-			<label for="nrremret">Remessa</label>
-			<input type="text" id="nrremret" name="nrremret" />
+
+			<label for="dsorigem" >Origem:</label>
+			<input type="text" id="dsorigem" name="dsorigem" />
 			
 			<br/>
 		</fieldset>		

@@ -82,7 +82,9 @@
 			<table>	
 				<tr>
 					<td id="qtdChequeCustodiar">
+						<span style="font-size: 12px">
 						Exibindo 0 cheques para custodiar. Valor Total R$ 0,00
+						</span>
 					</td>
 				</tr>
 			</table>
