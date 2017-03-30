@@ -682,7 +682,7 @@ create or replace package body cecred.PAGA0002 is
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Odirlei Busana - Amcom
-  --  Data     : Março/2014.                   Ultima atualizacao: 30/11/2016
+  --  Data     : Março/2014.                   Ultima atualizacao: 07/02/2017
   --
   -- Dados referentes ao programa:
   --
@@ -757,8 +757,12 @@ create or replace package body cecred.PAGA0002 is
   --                          
   --             30/11/2016 - Alterado query do sumario da tela debnet pra trazer corretamente 
   --                          os resultados (Tiago/Elton SD566237)
-  --               
+  --
   --              29/12/2016 - Tratamento Nova Plataforma de cobrança PRJ340 - NPC (Odirlei-AMcom)  
+  --
+ --             07/02/2017 - #604294 Log de exception others na rotina pc_proc_agendamento_recorrente e
+  --                          aumento do tamanho das variáveis vr_dslinxml_desaprov e vr_dslinxml_aprov
+  --                          para evitar possível repetição do problema relatado no chamado (Carlos)
   ---------------------------------------------------------------------------------------------------------------*/
   
   ----------------------> CURSORES <----------------------
@@ -1121,8 +1125,8 @@ create or replace package body cecred.PAGA0002 is
           INDEX BY VARCHAR2(4000);
       vr_tab_dscritic typ_tab_critica;
       
-      vr_dslinxml_desaprov VARCHAR2(4000) := NULL;
-      vr_dslinxml_aprov    VARCHAR2(4000) := NULL;
+      vr_dslinxml_desaprov VARCHAR2(32000) := NULL;
+      vr_dslinxml_aprov    VARCHAR2(32000) := NULL;
       vr_exiscrit          VARCHAR2(50)   := 'no';
       vr_idxcriti          VARCHAR2(4000) := NULL;
           
@@ -1209,6 +1213,9 @@ create or replace package body cecred.PAGA0002 is
       WHEN vr_exc_erro THEN
         NULL; -- apenas repassar a critica
       WHEN OTHERS THEN
+        
+        pc_internal_exception(pr_cdcooper);
+      
         pr_dscritic := 'Nao foi possivel montar xml de agendamentos recorrentes: '||SQLERRM;
     END pc_proc_agendamento_recorrente;
     
@@ -2418,6 +2425,16 @@ create or replace package body cecred.PAGA0002 is
        RAISE vr_exc_erro; 
     END IF;
 
+    --> Montar xml de retorno dos dados <---
+    -- Criar documento XML
+    dbms_lob.createtemporary(pr_xml_operacao26, TRUE); 
+    dbms_lob.open(pr_xml_operacao26, dbms_lob.lob_readwrite);       
+
+    -- Insere o cabeçalho do XML 
+    gene0002.pc_escreve_xml(pr_xml            => pr_xml_operacao26 
+                           ,pr_texto_completo => vr_xml_temp 
+                           ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><raiz>'); 
+    
     /** Procedure para validar limites para transacoes (Transf./Pag./Cob.) **/
     INET0001.pc_verifica_operacao 
                          (pr_cdcooper     => pr_cdcooper         --> Codigo Cooperativa
@@ -2474,6 +2491,7 @@ create or replace package body cecred.PAGA0002 is
                          ,pr_dtagenda => vr_dtmvtopg  --> Data agendamento
                          ,pr_idorigem => 3 /*INTERNET*/ --> Indicador de origem
                          ,pr_indvalid => 0            --> Nao validar horario limite
+						 	           ,pr_flmobile => pr_flmobile  --> Indicador Mobile
                          ,pr_nmextcon => vr_nmconban  --> Nome do banco
                          ,pr_cdseqfat => vr_cdseqfat  --> Codigo Sequencial fatura
                          ,pr_vlfatura => vr_vlrdocum  --> Valor fatura
@@ -2495,7 +2513,7 @@ create or replace package body cecred.PAGA0002 is
         END IF;        
         
         IF TRIM(pr_dscedent) IS NOT NULL THEN
-          vr_dscritic := vr_dscritic||' - '||pr_dscedent;
+          vr_dscritic := vr_dscritic;
         END IF;
       
         -- Se retornou critica , deve abortar
@@ -2531,6 +2549,7 @@ create or replace package body cecred.PAGA0002 is
                                  ,pr_dtagenda => vr_dtmvtopg           --> Data agendamento
                                  ,pr_idorigem => 3 /* INTERNET */      --> Indicador de origem
                                  ,pr_indvalid => 0                     --> Validar
+                                 ,pr_flmobile => pr_flmobile           --> Indicador Mobile
                                  ,pr_cdctrlcs => pr_cdctrlcs           --> Numero de controle da consulta no NPC
                                  ,pr_nmextbcc => vr_nmconban           --> Nome do banco
                                  ,pr_vlfatura => vr_vlrdocum           --> Valor fatura
@@ -2565,7 +2584,7 @@ create or replace package body cecred.PAGA0002 is
           vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
              
         END IF;
-        vr_dscritic := vr_dscritic||' - '||pr_dscedent;
+        vr_dscritic := vr_dscritic;
         
         -- Se retornou critica , deve abortar
         RAISE vr_exc_erro; 
@@ -2578,15 +2597,7 @@ create or replace package body cecred.PAGA0002 is
                                                pr_dtmvtolt  => pr_dtmvtopg, 
                                                pr_tipo      => 'P', 
                                                pr_feriado   => TRUE);
-    --> Montar xml de retorno dos dados <---
-    -- Criar documento XML
-    dbms_lob.createtemporary(pr_xml_operacao26, TRUE); 
-    dbms_lob.open(pr_xml_operacao26, dbms_lob.lob_readwrite);       
 
-    -- Insere o cabeçalho do XML 
-    gene0002.pc_escreve_xml(pr_xml            => pr_xml_operacao26 
-                           ,pr_texto_completo => vr_xml_temp 
-                           ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><raiz>'); 
     
     -- Insere dados
     gene0002.pc_escreve_xml(pr_xml            => pr_xml_operacao26 
@@ -3198,6 +3209,7 @@ create or replace package body cecred.PAGA0002 is
                          ,pr_dtagenda => vr_dtmvtopg  --> Data agendamento
                          ,pr_idorigem => 3 /*INTERNET*/ --> Indicador de origem
                          ,pr_indvalid => 0            --> Nao validar horario limite
+						             ,pr_flmobile => pr_flmobile  --> Indicador Mobile
                          ,pr_nmextcon => vr_nmconban  --> Nome do banco
                          ,pr_cdseqfat => vr_cdseqfat  --> Codigo Sequencial fatura
                          ,pr_vlfatura => vr_vlrdocum  --> Valor fatura
@@ -3358,6 +3370,7 @@ create or replace package body cecred.PAGA0002 is
                                  ,pr_dtagenda => vr_dtmvtopg           --> Data agendamento
                                  ,pr_idorigem => 3 /* INTERNET */      --> Indicador de origem
                                  ,pr_indvalid => 0                     --> Validar
+                                 ,pr_flmobile => pr_flmobile           --> Indicador Mobile
                                  ,pr_cdctrlcs => pr_cdctrlcs           --> Numero de controle da consulta no NPC
                                  ,pr_nmextbcc => vr_nmconban           --> Nome do banco
                                  ,pr_vlfatura => vr_vlrdocum           --> Valor fatura

@@ -504,6 +504,16 @@ PROCEDURE pc_retorna_vlr_tit_vencto (pr_cdcooper      IN INTEGER    -- Cooperati
                                     ,pr_des_erro      OUT VARCHAR2  -- Indicador erro OK/NOK   
                                     ,pr_dscritic      OUT VARCHAR2);                 
    
+  /* Procedure para verificar vencimento titulo */
+  PROCEDURE pc_verifica_vencimento_titulo (pr_cod_cooper     IN INTEGER  --Codigo Cooperativa
+                                          ,pr_cod_agencia     IN INTEGER  --Codigo da Agencia
+                                          ,pr_dt_agendamento  IN DATE     --Data Agendamento
+                                          ,pr_dt_vencto       IN DATE     --Data Vencimento
+                                          ,pr_critica_data    OUT BOOLEAN --Critica na validacao
+                                          ,pr_cdcritic        OUT INTEGER --Codigo da Critica
+                                          ,pr_dscritic        OUT VARCHAR2 --Descricao do erro
+                                          ,pr_tab_erro        OUT GENE0001.typ_tab_erro);  --Tabela retorno erro
+
 END CXON0014;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
@@ -603,7 +613,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
       FROM crapass
      WHERE crapass.cdcooper = pr_cdcooper
      AND   crapass.nrdconta = pr_nrdconta;
-  rw_crapass cr_crapass%ROWTYPE;
+  rw_crapass     cr_crapass%ROWTYPE;
   rw_crapass_pag cr_crapass%ROWTYPE;
 
   --Selecionar informacoes dos bancos
@@ -1999,13 +2009,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
       
       --> Caso possua numero de consulta da Nova Plataforma de cobrança
       --> Deve efetuar as validações
-      IF nvl(pr_cdctrlcs,0) <> 0 THEN
+      IF pr_cdctrlcs IS NOT NULL THEN
       
         --> Validação do pagamento do boleto na Nova plataforma de cobrança 
         NPCB0001.pc_valid_pagamento_npc 
                           ( pr_cdcooper  => rw_crapcop.cdcooper --> Codigo da cooperativa
                            ,pr_dtmvtolt  => rw_crapdat.dtmvtolt --> Data de movimento                                   
                            ,pr_cdctrlcs  => pr_cdctrlcs         --> Numero de controle da consulta no NPC
+                           ,pr_dtagenda  => NULL                --> Data de agendamento
                            ,pr_vldpagto  => pr_valor_informado  --> Valor a ser pago
                            ,pr_tpdbaixa  => vr_tpdbaixa         --> Retornar tipo de baixa
                            ,pr_cdcritic  => vr_cdcritic         --> Codigo da critico
@@ -2220,7 +2231,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
           ,pr_cdagetfn                       -- cdagetfn
           ,pr_nrterfin                       -- nrterfin
           ,pr_tpcptdoc                       -- tpcptdoc
-          ,nvl(pr_cdctrlcs,0)                -- cdctrlcs
+          ,pr_cdctrlcs                       -- cdctrlcs
           ,nvl(pr_idtitdda,0)                -- nrdident
           ,nvl(rw_crapban.nrispbif,0)        -- nrispbds
           ,nvl(vr_inpessoa,0)                -- inpessoa
@@ -5034,29 +5045,7 @@ END pc_gera_titulos_iptu_prog;
         -- Apenas fechar o cursor
         CLOSE BTCH0001.cr_crapdat;
       END IF;
-      
-      --> Caso possua numero de consulta da Nova Plataforma de cobrança
-      --> Deve efetuar as validações
-      IF nvl(pr_cdctrlcs,0) <> 0 THEN
-      
-        --> Validação do pagamento do boleto na Nova plataforma de cobrança 
-        NPCB0001.pc_valid_pagamento_npc 
-                          ( pr_cdcooper  => rw_crapcop.cdcooper --> Codigo da cooperativa
-                           ,pr_dtmvtolt  => rw_crapdat.dtmvtolt --> Data de movimento                                   
-                           ,pr_cdctrlcs  => pr_cdctrlcs         --> Numero de controle da consulta no NPC
-                           ,pr_vldpagto  => pr_valor_informado  --> Valor a ser pago
-                           ,pr_tpdbaixa  => vr_tpdbaixa         --> Retornar tipo de baixa
-                           ,pr_cdcritic  => vr_cdcritic         --> Codigo da critico
-                           ,pr_dscritic  => vr_dscritic );      --> Descrição da critica
-                           
-        --> Verificar se retornou critica                             
-        IF nvl(vr_cdcritic,0) <> 0 OR
-           TRIM(vr_dscritic) IS NOT NULL THEN
-          --> Abortar programa
-          RAISE vr_exc_erro; 
-        END IF;
-      END IF;
-      
+
       --Se for iptu
       IF pr_iptu = 1 THEN
         --Numero lote
@@ -5393,6 +5382,7 @@ END pc_gera_titulos_iptu_prog;
                 RAISE vr_exc_erro;
               END IF;
             END IF;
+
             --Colocar o cadastro no codigo barras
             pr_codigo_barras:= SubStr(pr_codigo_barras,1,30)||
                                gene0002.fn_mask(pr_cadastro,'9999999999')||
@@ -6156,6 +6146,33 @@ END pc_gera_titulos_iptu_prog;
           CLOSE cr_crapcco;
         END IF;
       END IF;
+      
+      --> Caso possua numero de consulta da Nova Plataforma de cobrança
+      --> Deve efetuar as validações
+      IF TRIM(pr_cdctrlcs) IS NOT NULL THEN
+
+        --> Validação do pagamento do boleto na Nova plataforma de cobrança 
+        NPCB0001.pc_valid_pagamento_npc 
+                          ( pr_cdcooper  => rw_crapcop.cdcooper --> Codigo da cooperativa
+                           ,pr_dtmvtolt  => rw_crapdat.dtmvtolt --> Data de movimento                                   
+                           ,pr_cdctrlcs  => pr_cdctrlcs         --> Numero de controle da consulta no NPC
+                           ,pr_dtagenda  => pr_dt_agendamento   --> Data agendada para pagmento do boleto
+                           ,pr_vldpagto  => pr_valor_informado  --> Valor a ser pago
+                           ,pr_tpdbaixa  => vr_tpdbaixa         --> Retornar tipo de baixa
+                           ,pr_cdcritic  => vr_cdcritic         --> Codigo da critico
+                           ,pr_dscritic  => vr_dscritic );      --> Descrição da critica
+                           
+        --> Verificar se retornou critica                             
+        IF nvl(vr_cdcritic,0) <> 0 OR
+           TRIM(vr_dscritic) IS NOT NULL THEN
+          --> Abortar programa
+          RAISE vr_exc_erro; 
+        END IF;
+        
+        -- Se for um titulo CIP, encerra as validações
+        RETURN;
+        
+      END IF;
 
       /********************************************************/
       /***********FAZER CALCULO DO VALOR DO TITULO*************/
@@ -6199,7 +6216,7 @@ END pc_gera_titulos_iptu_prog;
               RAISE vr_exc_erro;
             ELSE
               vr_cdcritic:= 11;
-              vr_dscritic:= NULL;
+              vr_dscritic:= '*ABA6*'; -- NULL;
               --Levantar Excecao
               RAISE vr_exc_erro;
             END IF;
@@ -6261,7 +6278,7 @@ END pc_gera_titulos_iptu_prog;
                 RAISE vr_exc_erro;
               ELSE
                 vr_cdcritic:= 0;
-                vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+                vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic||'*ABA5*';
                 --Levantar Excecao
                 RAISE vr_exc_erro;
               END IF;
@@ -6301,12 +6318,12 @@ END pc_gera_titulos_iptu_prog;
                 RAISE vr_exc_erro;
               ELSE
                 vr_cdcritic:= 0;
-                vr_dscritic:= vr_des_erro;
+                vr_dscritic:= vr_des_erro||'*ABA4*';
                 --Levantar Excecao
                 RAISE vr_exc_erro;
               END IF;            
             END IF;              
-          
+
            CXON0014.pc_calcula_vlr_titulo_vencido(pr_vltitulo      => pr_vlfatura
                                                  ,pr_tpdmulta      => rw_crapcob.tpdmulta
                                                  ,pr_vlrmulta      => rw_crapcob.vlrmulta
@@ -6326,6 +6343,7 @@ END pc_gera_titulos_iptu_prog;
               pr_vlfatura:= Nvl(pr_vlfatura,0) - pr_vldescto;
             END IF;
           END IF;
+
           /* Para cobranca registrada nao permite pagar valor menor que o valor do docto
              calculando desconto juros abatimento e multa */
           IF ROUND(pr_valor_informado,2) < ROUND(pr_vlfatura,2) AND
@@ -6363,7 +6381,7 @@ END pc_gera_titulos_iptu_prog;
                 RAISE vr_exc_erro;
               ELSE
                 vr_cdcritic:= 0;
-                vr_dscritic:= vr_des_erro;
+                vr_dscritic:= vr_des_erro||'*ABA3*';
                 --Levantar Excecao
                 RAISE vr_exc_erro;
               END IF;
@@ -6395,7 +6413,7 @@ END pc_gera_titulos_iptu_prog;
               RAISE vr_exc_erro;
             ELSE
               vr_cdcritic:= 0;
-              vr_dscritic:= vr_des_erro;
+              vr_dscritic:= vr_des_erro||'*ABA2*';
               --Levantar Excecao
               RAISE vr_exc_erro;
             END IF;            
@@ -6418,7 +6436,6 @@ END pc_gera_titulos_iptu_prog;
       END IF;
       /********* FIM FAZER CALCULO DO VALOR DO TITULO *********/
       /********************************************************/
-
       IF pr_vlfatura <> pr_valor_informado AND pr_vlfatura <> 0 THEN
         --Retonar indicacao outro valor
         pr_outro_valor:= 1;
@@ -6456,6 +6473,17 @@ END pc_gera_titulos_iptu_prog;
        WHEN vr_exc_erro THEN
          pr_cdcritic:= vr_cdcritic;
          pr_dscritic:= vr_dscritic;
+         
+         --Criar registro de erro -- para garantir que todos os erros
+         -- estejam na tabela
+         CXON0000.pc_cria_erro(pr_cdcooper => pr_cooper
+                              ,pr_cdagenci => pr_cod_agencia
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_cod_erro => pr_cdcritic
+                              ,pr_dsc_erro => pr_dscritic
+                              ,pr_flg_erro => TRUE
+                              ,pr_cdcritic => vr_cdcritic
+                              ,pr_dscritic => vr_dscritic);
        WHEN OTHERS THEN
          pr_cdcritic:= 0;
          pr_dscritic:= 'Erro na rotina CXON0014.pc_retorna_vlr_titulo_iptu. '||SQLERRM;
@@ -6826,6 +6854,7 @@ END pc_gera_titulos_iptu_prog;
         vr_dttolera:= CXON0014.fn_retorna_data_dias(pr_nrdedias => To_Number(SUBSTR(pr_codigo_barras,22,3)) --Numero de Dias
                                                    ,pr_inanocal => vr_inanocal); --Indicador do Ano
       END IF;
+			/* lunelli -- ver renato -- Deverá ser removido o comentário
       --Data agendamento maior tolerancia
       IF pr_dtmvtopg > vr_dttolera THEN
         --Montar mensagem erro
@@ -6833,6 +6862,7 @@ END pc_gera_titulos_iptu_prog;
         pr_dscritic:= 'Prazo para pagamento apos o vencimento excedido.';
         RAISE vr_exc_erro;
       END IF;
+			*/
     ELSE  /* Nao é DARF/DAS */
       BEGIN
         vr_dttolera:= TO_DATE(gene0002.fn_mask(SUBSTR(pr_codigo_barras,26,2),'99')|| '/'||
@@ -6878,6 +6908,7 @@ END pc_gera_titulos_iptu_prog;
             vr_dttolera:= vr_dttolera + 1;
           END LOOP;
         END IF;
+				/* lunelli -- ver renato -- Deverá ser removido o comentário
         --Se for maior igual a 2010 e data agendamento maior tolerancia
         IF To_Number(TO_CHAR(vr_dttolera,'YYYY')) >= 2010 AND
            pr_dtmvtopg > vr_dttolera THEN
@@ -6886,6 +6917,7 @@ END pc_gera_titulos_iptu_prog;
           pr_dscritic := 'Prazo para pagamento apos o vencimento excedido.';
           RAISE vr_exc_erro;
         END IF;
+				*/
       EXCEPTION
       WHEN OTHERS THEN
         NULL;
