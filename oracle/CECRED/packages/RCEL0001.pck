@@ -877,6 +877,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 		  -- Variavel de criticas
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic VARCHAR2(10000);
+      vr_nrdrowid ROWID;
 
       -- Tratamento de erros
       vr_exc_erro EXCEPTION;
@@ -1023,10 +1024,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
         END IF;
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
+        
+        -- Gerar log
+				GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+														,pr_cdoperad => '996' 
+														,pr_dscritic => vr_dscritic
+														,pr_dsorigem => gene0001.vr_vet_des_origens(pr_idorigem)
+														,pr_dstransa => 'Recarga de celular'
+														,pr_dttransa => TRUNC(SYSDATE)
+														,pr_flgtrans => 1
+														,pr_hrtransa => gene0002.fn_busca_time
+														,pr_idseqttl => pr_idseqttl
+														,pr_nmdatela => CASE WHEN pr_idorigem = 3 THEN 'INTERNETBANK' 
+													                       ELSE 'TAA' END
+														,pr_nrdconta => pr_nrdconta
+														,pr_nrdrowid => vr_nrdrowid);
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral na rotina da tela RCEL0001: ' || SQLERRM;
+        
+        -- Gerar log
+				GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+														,pr_cdoperad => '996' 
+														,pr_dscritic => vr_dscritic
+														,pr_dsorigem => gene0001.vr_vet_des_origens(pr_idorigem)
+														,pr_dstransa => 'Recarga de celular'
+														,pr_dttransa => TRUNC(SYSDATE)
+														,pr_flgtrans => 1
+														,pr_hrtransa => gene0002.fn_busca_time
+														,pr_idseqttl => pr_idseqttl
+														,pr_nmdatela => CASE WHEN pr_idorigem = 3 THEN 'INTERNETBANK' 
+													                       ELSE 'TAA' END
+														,pr_nrdconta => pr_nrdconta
+														,pr_nrdrowid => vr_nrdrowid);
     END;																							
 	END pc_valida_recarga;
 
