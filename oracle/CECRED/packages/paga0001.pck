@@ -11072,50 +11072,50 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
           --Valor Lancamento automatico
           vr_vllanaut:= rw_craplau.vllanaut;
           --Executar verificacao do convenio
-          pc_verifica_convenio (pr_cdcooper => pr_cdcooper          --Codigo da cooperativa
-                               ,pr_nrdconta => rw_craplau.nrdconta  --Numero da conta
-                               ,pr_idseqttl => rw_craplau.idseqttl  --Sequencial titular
-                               ,pr_idagenda => 1                    --Indicador agendamento
-                               ,pr_lindigi1 => vr_lindigi1          --Linha digitavel 1
-                               ,pr_lindigi2 => vr_lindigi2          --Linha digitavel 2
-                               ,pr_lindigi3 => vr_lindigi3          --Linha digitavel 3
-                               ,pr_lindigi4 => vr_lindigi4          --Linha digitavel 4
-                               ,pr_cdbarras => vr_dscodbar          --Codigo de Barras
-                               ,pr_dtvencto => vr_dtvencto          --Data Vencimento
-                               ,pr_vllanmto => vr_vllanaut          --Valor Lancamento
-                               ,pr_dtagenda => rw_craplau.dtmvtopg  --Data agendamento
-                               ,pr_idorigem => pr_idorigem          --Indicador de origem
-                               ,pr_indvalid => 2                    --Nao validar horario limite
+          pc_verifica_convenio (pr_cdcooper => pr_cdcooper            --Codigo da cooperativa
+                               ,pr_nrdconta => rw_craplau.nrdconta    --Numero da conta
+                               ,pr_idseqttl => rw_craplau.idseqttl    --Sequencial titular
+                               ,pr_idagenda => 1                      --Indicador agendamento
+                               ,pr_lindigi1 => vr_lindigi1            --Linha digitavel 1
+                               ,pr_lindigi2 => vr_lindigi2            --Linha digitavel 2
+                               ,pr_lindigi3 => vr_lindigi3            --Linha digitavel 3
+                               ,pr_lindigi4 => vr_lindigi4            --Linha digitavel 4
+                               ,pr_cdbarras => vr_dscodbar            --Codigo de Barras
+                               ,pr_dtvencto => vr_dtvencto            --Data Vencimento
+                               ,pr_vllanmto => vr_vllanaut            --Valor Lancamento
+                               ,pr_dtagenda => rw_craplau.dtmvtopg    --Data agendamento
+                               ,pr_idorigem => pr_idorigem            --Indicador de origem
+                               ,pr_indvalid => 2                      --Nao validar horario limite
 							   ,pr_flmobile => 0                    --Indicador Mobile
-                               ,pr_nmextcon => vr_nmconban          --Nome do banco
-                               ,pr_cdseqfat => vr_cdseqfat          --Codigo Sequencial fatura
-                               ,pr_vlfatura => vr_vlrdocum          --Valor fatura
-                               ,pr_nrdigfat => vr_nrdigfat          --Numero Digito Fatura
-                               ,pr_dstransa => vr_dstrans1          --Descricao transacao
-                               ,pr_cdcritic => vr_cdcritic          --C-odigo da critica
-                               ,pr_dscritic => vr_dscritic);        --Descricao critica
+                               ,pr_nmextcon => vr_nmconban            --Nome do banco
+                               ,pr_cdseqfat => vr_cdseqfat            --Codigo Sequencial fatura
+                               ,pr_vlfatura => vr_vlrdocum            --Valor fatura
+                               ,pr_nrdigfat => vr_nrdigfat            --Numero Digito Fatura
+                               ,pr_dstransa => vr_dstrans1            --Descricao transacao
+                               ,pr_cdcritic => vr_cdcritic            --C-odigo da critica
+                               ,pr_dscritic => vr_dscritic);          --Descricao critica
           --Se nao ocorreu erro
           IF NVL(vr_cdcritic,0) = 0 AND TRIM(vr_dscritic) IS NULL THEN
             --Executar rotina paga_convenio
-            pc_paga_convenio (pr_cdcooper => pr_cdcooper          --Codigo da cooperativa
-                             ,pr_nrdconta => rw_craplau.nrdconta  --Numero da conta
-                             ,pr_idseqttl => rw_craplau.idseqttl  --Sequencial titular
-                             ,pr_cdbarras => vr_dscodbar          --Codigo de Barras
+            pc_paga_convenio (pr_cdcooper => pr_cdcooper            --Codigo da cooperativa
+                             ,pr_nrdconta => rw_craplau.nrdconta    --Numero da conta
+                             ,pr_idseqttl => rw_craplau.idseqttl    --Sequencial titular
+                             ,pr_cdbarras => vr_dscodbar            --Codigo de Barras
                              ,pr_cdseqfat => TO_NUMBER(vr_cdseqfat) --Codigo Sequencial fatura
-                             ,pr_vlfatura => vr_vllanaut          --Valor fatura
-                             ,pr_nrdigfat => vr_nrdigfat          --Numero Digito Fatura
-                             ,pr_flgagend => 1 /*TRUE*/                 --Flag agendado
-                             ,pr_idorigem => pr_idorigem          --Indicador de origem
-                             ,pr_cdcoptfn => 0                    --Codigo cooperativa transacao
-                             ,pr_cdagetfn => 0                    --Codigo Agencia transacao
-                             ,pr_nrterfin => 0                    --Numero terminal financeiro
-                             ,pr_nrcpfope => rw_craplau.nrcpfope  --Numero cpf operador
-                             ,pr_dstransa => vr_dstrans1          --Descricao transacao
-                             ,pr_dsprotoc => vr_dsprotoc          --Descricao Protocolo
-                             ,pr_cdbcoctl => vr_cdbcoctl          --Codigo Banco Centralizador
-                             ,pr_cdagectl => vr_cdagectl          --Codigo Agencia Centralizadora
-                             ,pr_cdcritic => vr_cdcritic          --Codigo da critica
-                             ,pr_dscritic => vr_dscritic          --Descricao critica
+                             ,pr_vlfatura => vr_vllanaut            --Valor fatura
+                             ,pr_nrdigfat => vr_nrdigfat            --Numero Digito Fatura
+                             ,pr_flgagend => 1 /*TRUE*/             --Flag agendado
+                             ,pr_idorigem => pr_idorigem            --Indicador de origem
+                             ,pr_cdcoptfn => 0                      --Codigo cooperativa transacao
+                             ,pr_cdagetfn => 0                      --Codigo Agencia transacao
+                             ,pr_nrterfin => 0                      --Numero terminal financeiro
+                             ,pr_nrcpfope => rw_craplau.nrcpfope    --Numero cpf operador
+                             ,pr_dstransa => vr_dstrans1            --Descricao transacao
+                             ,pr_dsprotoc => vr_dsprotoc            --Descricao Protocolo
+                             ,pr_cdbcoctl => vr_cdbcoctl            --Codigo Banco Centralizador
+                             ,pr_cdagectl => vr_cdagectl            --Codigo Agencia Centralizadora
+                             ,pr_cdcritic => vr_cdcritic            --Codigo da critica
+                             ,pr_dscritic => vr_dscritic            --Descricao critica
                              ,pr_msgofatr => vr_msgofatr
                              ,pr_cdempcon => vr_cdempcon
 							 ,pr_cdsegmto => vr_cdsegmto);        
@@ -14400,7 +14400,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
           END IF;
 
             CLOSE cr_acordo_parcela;
-        END IF;
+          END IF;
 
         END IF;
         --Fechar Cursor
