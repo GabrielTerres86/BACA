@@ -520,7 +520,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
 
     Programa: EXTR0002                           Antigo: sistema/generico/procedures/b1wgen0112.p
     Autor   : Gabriel Capoia dos Santos (DB1)
-    Data    : Agosto/2011                        Ultima atualizacao: 08/11/2016
+    Data    : Agosto/2011                        Ultima atualizacao: 17/01/2017
 
     Objetivo  : Tranformacao BO tela IMPRES
 
@@ -753,6 +753,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
 
         29/11/2016 - P341 - Automatização BACENJUD - Alterado para validar o departamento à partir
                      do código e não mais pela descrição (Renato Darosci - Supero)
+
+        17/01/2017 - Ajuste na pc_consulta_lancamento que nao estava passando a critica
+                     para frente. SD 594506 (Kelvin).
+										 
+				22/03/2017 - Adicionado tratamento na pc_consulta_lancamento para listar
+				             reacarga de celular. (PRJ321 Reinert)
 
   ---------------------------------------------------------------------------------------------------------------
 ..............................................................................*/
@@ -4117,7 +4123,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
          AND tdb.insittit = 4
          AND tdb.dtvencto < pr_dtmvtolt
          AND tdb.dtdpagto IS NULL;
-
+				 
+		 -- Buscar recargas pendentes
+		 CURSOR cr_recargas(pr_cdcooper IN crapcop.cdcooper%TYPE
+		                   ,pr_nrdconta IN crapass.nrdconta%TYPE
+											 ,pr_dtinirec IN tbrecarga_operacao.dtrecarga%TYPE
+											 ,pr_dtfimrec IN tbrecarga_operacao.dtrecarga%TYPE) IS
+		   SELECT topr.idoperacao
+			       ,topr.dtrecarga
+						 ,topr.vlrecarga
+						 ,tope.cdhisdeb_cooperado
+			   FROM tbrecarga_operacao topr
+				     ,tbrecarga_operadora tope
+        WHERE topr.cdcooper = pr_cdcooper
+				  AND topr.nrdconta = pr_nrdconta
+					AND topr.insit_operacao = 1
+					AND (topr.dtrecarga BETWEEN pr_dtinirec AND pr_dtfimrec
+					 OR pr_dtinirec IS NULL AND pr_dtfimrec IS NULL)
+					AND tope.cdoperadora = topr.cdoperadora;
+		 rw_recargas cr_recargas%ROWTYPE;
+					
      CURSOR cr_crapcob(pr_cdcooper crapcop.cdcooper%TYPE,
                        pr_cdbandoc crapcob.cdbandoc%TYPE,
                        pr_nrdctabb crapcob.nrdctabb%TYPE,
@@ -5863,7 +5888,46 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         END IF;                                                 
 
       END LOOP;
-                                                                                        
+
+			-- Buscar recargas pendentes
+			FOR rw_recarga IN cr_recargas(pr_cdcooper => pr_cdcooper
+				                           ,pr_nrdconta => pr_nrdconta
+																	 ,pr_dtinirec => pr_dtiniper
+																	 ,pr_dtfimrec => pr_dtfimper) LOOP
+				--Selecionar Historico de débito de recarga da operadora em c/c
+        OPEN cr_craphis (pr_cdcooper => pr_cdcooper
+                        ,pr_cdhistor => rw_recarga.cdhisdeb_cooperado); 
+        FETCH cr_craphis INTO rw_craphis;
+        --Se nao encontrou
+        IF cr_craphis%NOTFOUND THEN
+          --Fechar Cursor
+          CLOSE cr_craphis;
+          --Codigo Erro
+          vr_cdcritic:= 80;
+          vr_dscritic:= NULL;
+					--Levantar Excecao
+          RAISE vr_exc_erro;
+        END IF;
+				--Fechar Cursor
+				CLOSE cr_craphis;
+				
+				--Incrementar contador lancamentos na tabela
+        vr_index:= pr_tab_lancamento_futuro.COUNT+1;
+        --Criar Lancamento Futuro na tabela
+        pr_tab_lancamento_futuro(vr_index).dtmvtolt:= rw_recarga.dtrecarga;
+        pr_tab_lancamento_futuro(vr_index).dsmvtolt:= to_char(rw_recarga.dtrecarga,'DD/MM/RRRR');
+        pr_tab_lancamento_futuro(vr_index).dshistor:= rw_craphis.dshistor;
+        pr_tab_lancamento_futuro(vr_index).nrdocmto:= to_char(rw_recarga.idoperacao, 
+                                                              'fm9999999999999999999999999');
+        pr_tab_lancamento_futuro(vr_index).indebcre:= rw_craphis.indebcre;
+        pr_tab_lancamento_futuro(vr_index).vllanmto:= rw_recarga.vlrecarga;
+        --Acumular valor automatico
+        vr_vllautom:= nvl(vr_vllautom,0) - rw_recarga.vlrecarga;
+        --Acumular valor Credito
+        vr_vllaudeb:= nvl(vr_vllaudeb,0) + rw_recarga.vlrecarga;
+				
+			END LOOP;
+			                                                                                        
       --Diminuir valor lancamento automatico do debito
       vr_vllandeb:= vr_vllandeb - vr_vllautom;
       --Se valor debito eh positivo
@@ -5924,7 +5988,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                              ,pr_cdagenci => pr_cdagenci
                              ,pr_nrdcaixa => pr_nrdcaixa
                              ,pr_nrsequen => 1 --> Fixo
-                             ,pr_cdcritic => 0 --> Critica 0
+                             ,pr_cdcritic => vr_cdcritic --> Critica 0
                              ,pr_dscritic => vr_dscritic
                              ,pr_tab_erro => pr_tab_erro);
         -- Se foi solicitado geração de LOG
@@ -8823,7 +8887,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       END;
     END pc_consulta_imposto_renda;  
       
-
  PROCEDURE pc_consulta_ir_pj_trim (pr_cdcooper IN crapcop.cdcooper%TYPE       --Codigo Cooperativa
                                   ,pr_cdagenci IN crapass.cdagenci%TYPE       --Codigo Agencia
                                   ,pr_nrdcaixa IN INTEGER                     --Numero do Caixa
@@ -8846,7 +8909,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --  Sistema  :
   --  Sigla    : CRED
   --  Autor    : Guilherme/SUPERO
-  --  Data     : Julho/2016                           Ultima atualizacao: 17/08/2016
+  --  Data     : Julho/2016                           Ultima atualizacao: 23/02/2017
   --
   -- Dados referentes ao programa:
   --
@@ -8856,7 +8919,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   -- Alterações :
   --
   --              17/08/2016 - M360 - Inclusão de novas buscas de Sobras ao Cooperado (Marcos-Supero)
-
+  --              23/02/2017 - SD618188 - Inclusao do formato na conversao de data para aplicacoes (Marcos-Supero)
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
     -- Busca dos dados da cooperativa
@@ -8927,7 +8990,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       FROM crapdir crapdir
       WHERE crapdir.cdcooper = pr_cdcooper
       AND   crapdir.nrdconta = pr_nrdconta
-      AND   to_number(to_char(crapdir.dtmvtolt,'YYYY')) = pr_nranoref
+      AND   to_char(crapdir.dtmvtolt,'RRRR') = pr_nranoref
       order by cdcooper,nrdconta,dtmvtolt,progress_recid;
     rw_crapdir cr_crapdir%ROWTYPE;
 
@@ -8977,6 +9040,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
          AND lct.cdhistor IN (sobr0001.vr_cdhisopc_cot,sobr0001.vr_cdhisdpp_cot
                              ,sobr0001.vr_cdhisdpa_cot,sobr0001.vr_cdhistar_cot
                              ,sobr0001.vr_cdhisaut_cot,sobr0001.vr_cdhisdep_cot);
+                             
     -- Selecionar Credito Retorno de Sobras em CC
     CURSOR cr_craplcm (pr_cdcooper IN craplcm.cdcooper%type
                       ,pr_anorefer IN INTEGER
@@ -9035,7 +9099,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         FROM craplap lap
        WHERE lap.cdcooper = pr_cdcooper
          AND lap.nrdconta = pr_nrdconta
-         AND lap.dtmvtolt < last_day(to_date('01/'|| pr_nrmesref ||'/' || pr_nranoref))
+         AND lap.dtmvtolt <= last_day(to_date('01/'|| pr_nrmesref ||'/' || pr_nranoref,'dd/mm/rrrr'))
        GROUP BY lap.nrdconta;
     rw_aplica  cr_aplica%ROWTYPE;
 
