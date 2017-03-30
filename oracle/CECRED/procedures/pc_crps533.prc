@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Dezembro/2009                   Ultima atualizacao: 07/12/2016
+   Data    : Dezembro/2009                   Ultima atualizacao: 16/02/2017
 
    Dados referentes ao programa:
 
@@ -246,10 +246,20 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                             
                24/11/2016 - Limpar variavel de critica auxiliar vr_cdcritic_aux para 
                             cada conta do arquivo - Melhoria 69 (Lucas Ranghetti/Elton)
-                            
-               07/12/2016 - Ajustes referentes a M69, alinea 49 e leitura da crapneg
+
+               03/12/2016 - Incorporação Transulcred (Guilherme/SUPERO)
+
+			         07/12/2016 - Ajustes referentes a M69, alinea 49 e leitura da crapneg
                             (Lucas Ranghetti/Elton)
-     ............................................................................. */
+                            
+               12/01/2017 - Limpar crapdev com situacao devolvido, jogar as 
+                            criticas 717 para o fim do relatorio e considerar
+                            cheques que serao liberados saldo no dia como 
+                            parte do saldo (Tiago/Elton SD584627)
+                            
+               16/02/2017 - Adicionar cooperativa migrada na verificacao do saldo
+                            (Lucas Ranghetti #609838)
+............................................................................. */
 
      DECLARE
 
@@ -278,6 +288,17 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
        TYPE typ_tab_craprej IS
          TABLE OF typ_reg_craprej
          INDEX BY VARCHAR2(300);
+
+       TYPE typ_reg_critica IS 
+       RECORD(dscritic VARCHAR2(4000)
+             ,nrdconta craprej.nrdconta%TYPE
+             ,nrseqdig craprej.nrseqdig%TYPE
+             ,nrdocmto craprej.nrdocmto%TYPE
+             ,vllanmto craprej.vllanmto%TYPE
+             ,dspesqbb VARCHAR2(100) 
+             ,cdtipdoc NUMBER);
+             
+       TYPE typ_tab_critica IS TABLE OF typ_reg_critica INDEX BY PLS_INTEGER;
 
        --Vetor para armazenar os arquivos para processamento
        vr_vet_nmarquiv GENE0002.typ_split;
@@ -339,6 +360,10 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
 
        -- Vetor do tipo typ_tab_craprej
        vr_tab_craprej typ_tab_craprej;
+
+       -- Vetor de criticas que vao para o final do relatorio
+       vr_tab_critica typ_tab_critica;
+       vr_idx_cri INTEGER;
 
        --Tipo de Tabela de memoria para associados
        TYPE typ_reg_crapass IS
@@ -482,6 +507,7 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
        vr_tplotmov        NUMBER:= 1;
        vr_numlotebco      NUMBER;
        vr_vlsddisp        NUMBER;
+       vr_vldeplib        NUMBER;
        
        -- Código do programa
        vr_cdprogra crapprg.cdprogra%TYPE;
@@ -2147,6 +2173,25 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                         rej.cdcritic,
                         rej.nrdocmto;
 
+            CURSOR cr_crapdpb(pr_cdcooper IN crapcop.cdcooper%TYPE
+                             ,pr_dtlibban IN crapdat.dtmvtolt%TYPE
+                             ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+              SELECT dpb.vllanmto
+                FROM crapdpb dpb, craplcm lcm
+               WHERE dpb.cdcooper = pr_cdcooper
+                 AND dpb.dtliblan = pr_dtlibban
+                 AND dpb.nrdconta = pr_nrdconta
+                 AND dpb.cdcooper = lcm.cdcooper
+                 AND dpb.dtmvtolt = lcm.dtmvtolt
+                 AND dpb.cdagenci = lcm.cdagenci
+                 AND dpb.cdbccxlt = lcm.cdbccxlt
+                 AND dpb.nrdolote = lcm.nrdolote
+                 AND dpb.nrdconta = lcm.nrdconta
+                 AND dpb.nrdocmto = lcm.nrdocmto
+                 AND dpb.cdhistor = lcm.cdhistor
+                 AND dpb.inlibera = 1;
+            rw_crapdpb cr_crapdpb%ROWTYPE;
+
             /* Variaveis Locais pc_integra_todas_coop */
             vr_input_file utl_file.file_type;
             vr_flgrejei   BOOLEAN;
@@ -2194,6 +2239,7 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
             vr_nrctadep   NUMBER:= 0;
             vr_cdageapr   NUMBER:= 0;
             vr_cdcoptfn   NUMBER:= 0;
+            vr_cdcooper   NUMBER:= NULL;
 
             vr_comando    VARCHAR2(100);
             vr_nmarqimp   VARCHAR2(100);
@@ -2411,6 +2457,7 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                 vr_cdcritic:= 0;
                 vr_dscritic:= NULL;
                 vr_des_erro:= NULL;
+                vr_tab_critica.DELETE;
 
                 --Determinar o nome do arquivo para processamento
                 vr_nmarquiv:= vr_vet_nmarquiv(idx)||'.q';
@@ -2804,14 +2851,19 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                           --Se Encontrou registros
                           IF cr_craptco%FOUND THEN
                             vr_flctamig:= TRUE;
+                            vr_cdcooper := rw_craptco.cdcooper;
                           ELSE
                             vr_flctamig:= FALSE;
+                            vr_cdcooper := pr_cdcooper;
                           END IF;
                           --Fechar Cursor
                           CLOSE cr_craptco;
                         ELSE
                           vr_flctamig:= FALSE;
+                          vr_cdcooper := pr_cdcooper;                          
                         END IF;
+                      ELSE
+                        vr_cdcooper := pr_cdcooper;
                       END IF;
 
                       --Atribuir zero para variavel de erro
@@ -3788,12 +3840,12 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                       -- Se não tiver critica
                       IF vr_cdcritic = 0 AND 
                          vr_cdcritic_aux = 0 THEN                        
-                        
+                      
                         IF cr_tbchq_param_conta%ISOPEN THEN
                           CLOSE cr_tbchq_param_conta;  
-                        END IF;  
-                            
-                        OPEN cr_tbchq_param_conta(pr_cdcooper => pr_cdcooper
+                        END IF;                         
+                        
+                        OPEN cr_tbchq_param_conta(pr_cdcooper => vr_cdcooper
                                                  ,pr_nrdconta => nvl(vr_nrdconta_incorp,vr_nrdconta));
                         FETCH cr_tbchq_param_conta INTO rw_tbchq_param_conta;                                      
                           
@@ -3801,10 +3853,10 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                         IF cr_tbchq_param_conta%FOUND THEN
                           -- se for devolucao automatica
                           IF rw_tbchq_param_conta.flgdevolu_autom = 1 THEN
-                            extr0001.pc_obtem_saldo_dia(pr_cdcooper => pr_cdcooper, 
+                            extr0001.pc_obtem_saldo_dia(pr_cdcooper => vr_cdcooper, 
                                                         pr_rw_crapdat => rw_crapdat, 
                                                         pr_cdagenci => vr_tab_crapass(nvl(vr_nrdconta_incorp,vr_nrdconta)).cdagenci, 
-                                                        pr_nrdcaixa => 0, -- Verificar elton
+                                                        pr_nrdcaixa => 0, 
                                                         pr_cdoperad => '1', 
                                                         pr_nrdconta => nvl(vr_nrdconta_incorp,vr_nrdconta), 
                                                         pr_vllimcre => vr_tab_crapass(nvl(vr_nrdconta_incorp,vr_nrdconta)).vllimcre, 
@@ -3852,6 +3904,18 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                               vr_vlsddisp := nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vlsddisp,0) +
                                              nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vllimcre,0);
                             END IF; 
+                            
+                            /*considerar cheques que terao o valor desbloqueado 
+                              no dia seguinte como parte do saldo*/
+                            vr_vldeplib := 0;
+                              
+                            FOR rw_crapdpb IN cr_crapdpb(pr_cdcooper => vr_cdcooper
+                                                        ,pr_nrdconta => nvl(vr_nrdconta_incorp,vr_nrdconta)
+                                                        ,pr_dtlibban => pr_dtmvtolt) LOOP
+                              vr_vldeplib := nvl(vr_vldeplib,0) + nvl(rw_crapdpb.vllanmto,0);
+                            END LOOP;
+                            
+                            vr_vlsddisp := nvl(vr_vlsddisp,0) + nvl(vr_vldeplib,0);                            
                             
                             -- Caso o saldo seja insuficiente
                             IF vr_vllanmto > vr_vlsddisp THEN
@@ -4780,6 +4844,9 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                 dbms_lob.createtemporary(vr_clobcri, TRUE, dbms_lob.CALL);
                 dbms_lob.open(vr_clobcri, dbms_lob.lob_readwrite);
 
+                -- Zerar a tabela de criticas que irao para o fim do relatorio
+                vr_tab_critica.DELETE;
+
                 --Imprimir demais informações
                 FOR rw_craprej IN cr_craprej (pr_cdcooper => pr_cdcooper
                                              ,pr_dtrefere => pr_dtauxili) LOOP
@@ -4833,12 +4900,14 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
 
                     IF vr_cdcritic <> 999 THEN
                       -- Lógica para adição de sufixo para cooperativas incorporadas / migradas
-                      IF pr_cdcooper IN (1,2,13) THEN
+                      IF pr_cdcooper IN (1,2,13,9) THEN
                         -- Se houve incorporação
                         IF vr_cdcooper_incorp = 4 THEN
                           vr_dscritic:= LTrim(RTRIM(vr_dscritic)) || ' - Ass. CONCREDI ';
                         ELSIF vr_cdcooper_incorp = 15 THEN
                           vr_dscritic:= LTrim(RTRIM(vr_dscritic)) || ' - Ass. CREDIMILSUL ';
+                        ELSIF vr_cdcooper_incorp = 17 THEN
+                          vr_dscritic:= LTrim(RTRIM(vr_dscritic)) || ' - Ass. TRANSULCRED ';
                         ELSE
                           -- Testar migração comum
                           OPEN cr_craptco (pr_cdcopant => pr_cdcooper
@@ -4878,6 +4947,20 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
 
                     END IF;  --vr_cdcritic IN (811,757)
 
+                    -- Por as criticas 717 dentro de uma temp-table 
+                    -- para apresentar apenas no final do relatorio
+                    IF vr_cdcritic = 717 THEN
+                       vr_idx_cri := vr_tab_critica.count;
+                       vr_tab_critica(vr_idx_cri).dscritic := vr_dscritic;
+                       vr_tab_critica(vr_idx_cri).nrdconta := rw_craprej.nrdconta;
+                       vr_tab_critica(vr_idx_cri).nrseqdig := rw_craprej.nrseqdig;
+                       vr_tab_critica(vr_idx_cri).nrdocmto := rw_craprej.nrdocmto;
+                       vr_tab_critica(vr_idx_cri).vllanmto := rw_craprej.vllanmto;
+                       vr_tab_critica(vr_idx_cri).dspesqbb := vr_rel_dspesqbb;
+                       vr_tab_critica(vr_idx_cri).cdtipdoc := vr_rel_cdtipdoc;
+                       CONTINUE;
+                    END IF;
+
                     gene0002.pc_escreve_xml(pr_xml            => vr_xml_rel
                                            ,pr_texto_completo => vr_chr_rel
                                            ,pr_texto_novo     => '<rejeitados>
@@ -4893,6 +4976,26 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                   END IF; --rw_craprej.nrdconta < 999999999
 
                 END LOOP; --cr_craprej
+
+                --Processar a tabela de criticas de fim de relatorio
+                IF vr_tab_critica.count > 0 THEN
+                  
+                   FOR vr_idx_cri IN vr_tab_critica.FIRST..vr_tab_critica.LAST LOOP
+                     
+                      gene0002.pc_escreve_xml(pr_xml            => vr_xml_rel
+                                             ,pr_texto_completo => vr_chr_rel
+                                             ,pr_texto_novo     => '<rejeitados>
+                                                                       <nrseqdig>'||gene0002.fn_mask(vr_tab_critica(vr_idx_cri).nrseqdig,'zzz.zz9')  ||'</nrseqdig>
+                                                                       <nrdconta>'||gene0002.fn_mask_conta(vr_tab_critica(vr_idx_cri).nrdconta)      ||'</nrdconta>
+                                                                       <nrdocmto>'||gene0002.fn_mask(vr_tab_critica(vr_idx_cri).nrdocmto,'zzz.zzz.z')||'</nrdocmto>
+                                                                       <vllanmto>'||vr_tab_critica(vr_idx_cri).vllanmto                              ||'</vllanmto>
+                                                                       <dspesqbb>'||vr_tab_critica(vr_idx_cri).dspesqbb                              ||'</dspesqbb>
+                                                                       <cdtipdoc>'||To_Char(vr_tab_critica(vr_idx_cri).cdtipdoc,'FM999')             ||'</cdtipdoc>
+                                                                       <dscritic>'||vr_tab_critica(vr_idx_cri).dscritic                              ||'</dscritic>
+                                                                    </rejeitados>');
+                   END LOOP; --vr_tab_critica
+                   
+                END IF;
 
                 -- Incluir tag caso não gerar nenhum rejeitado, para que funcione corretamente no ireport
                 IF NOT vr_flgrejei THEN
@@ -5328,14 +5431,18 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
        END IF;
 
        -- Buscar informações das Cooperativas Incorporadas a
-       -- Viacredi (Concredi) e ScrCred (Credimilsul)
-       IF pr_cdcooper IN(1,13) THEN
+       -- 1-Viacredi (4-Concredi) e 13-ScrCred (15-Credimilsul) 9-Transpocred(17-Transulcred)
+       IF pr_cdcooper IN(1,9,13) THEN
          -- Buscar informações da cooperativa Incorporada
-         IF pr_cdcooper = 1 THEN
+         CASE pr_cdcooper
+            WHEN  1 THEN -- Viacredi
            vr_cdcooper_incorp := 4;  --> Concredi
-         ELSE
+            WHEN  9 THEN -- Transpocred
+              vr_cdcooper_incorp := 17; --> Transulcred
+            WHEN 13 THEN -- ScrCred
            vr_cdcooper_incorp := 15; --> CredimilSul
-         END IF;
+         END CASE;
+
          -- Buscar informações da mesma
          OPEN cr_crapcop(pr_cdcooper => vr_cdcooper_incorp);
          FETCH cr_crapcop INTO rw_crapcop_incorp;
@@ -5440,13 +5547,13 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
        IF rw_crapcop.cdcooper = 3 THEN
          vr_nmarquiv        := '1%.RET';
          vr_nmarquiv_incorp := NULL;
-       -- Validar incorporação Concredi > Via e Credimilsul > SCRCred
-       ELSIF rw_crapcop.cdcooper IN(1,13) THEN
-         vr_nmarquiv       := '1'|| TO_CHAR(vr_cdagectl,'FM0009') || '%.RET';
+       -- Validar incorporação: 1-Viacredi (4-Concredi) e 13-ScrCred (15-Credimilsul) 9-Transpocred(17-Transulcred)
+       ELSIF rw_crapcop.cdcooper IN(1,9,13) THEN
+         vr_nmarquiv        := '1'|| TO_CHAR(vr_cdagectl,'FM0009')        || '%.RET';
          vr_nmarquiv_incorp := '1'|| TO_CHAR(vr_cdagectl_incorp,'FM0009') || '%.RET';
        ELSE
          -- As demais cooperativas, executa o processo atual (Guilherme/Supero)
-         vr_nmarquiv       := '1'|| TO_CHAR(vr_cdagectl,'FM0009') || '%.RET';
+         vr_nmarquiv        := '1'|| TO_CHAR(vr_cdagectl,'FM0009') || '%.RET';
          vr_nmarquiv_incorp := NULL;
        END IF;
 
@@ -5528,6 +5635,19 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
        FOR rw_crapneg IN cr_crapneg (pr_cdcooper => pr_cdcooper) LOOP
          vr_tab_crapneg(lpad(rw_crapneg.nrdconta,10,'0')||lpad(rw_crapneg.nrdocmto,10,'0')):= 0;
        END LOOP;
+
+       IF nvl(TRIM(pr_nmtelant),' ') <> 'COMPEFORA' THEN
+         BEGIN 
+           DELETE 
+             FROM crapdev 
+            WHERE crapdev.cdcooper = pr_cdcooper
+              AND crapdev.insitdev = 1;
+         EXCEPTION
+           WHEN OTHERS THEN
+             vr_des_erro := 'Erro na hora de deletar registros da CRAPDEV com a Coop '||TO_CHAR(pr_cdcooper);
+             RAISE vr_exc_saida;  
+         END;
+       END IF;
 
        -- Se CECRED, integra todos os demais arquivos que nao foram identificadas a Agencia e a Coop.
        -- As demais cooperativas, executa o processo atual (Guilherme/Supero)     */
