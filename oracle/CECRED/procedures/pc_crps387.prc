@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Abril/2004                        Ultima atualizacao: 28/12/2016
+   Data    : Abril/2004                        Ultima atualizacao: 29/03/2017
 
    Dados referentes ao programa:
 
@@ -394,6 +394,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
 	           30/01/2017 - Implementado join no cursor que verifica coop migrada (Tiago/Facricio)
                
                02/03/2017 - Adicionar dtmvtopg no filtro do cursor cr_craplau_dup (Lucas Ranghetti #618379)
+			   
+			   29/03/2017 - Para casos em que a conta for migrada e a cooperativa ainda estiver
+                            ativa e convenio usar agencia vamos dar um continue e somente irá 
+                            ser agendado o pagamento uma vez na cooperativa em que a conta foi 
+                            migrada (Lucas Ranghetti #640199)
 ............................................................................ */
 
 
@@ -2647,6 +2652,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                       OPEN cr_craptco(vr_nrdconta);
                       FETCH cr_craptco INTO rw_craptco;
                       IF cr_craptco%FOUND THEN -- Se for uma conta transferida
+                        CONTINUE;
+                        /* comentado trexo pois somente vamos criar o agendamento na coop
+                           que foi migrada
                         -- Busca o numero do lote
                         vr_dstextab_2 := TABE0001.fn_busca_dstextab(pr_cdcooper => rw_craptco.cdcooper
                                                                    ,pr_nmsistem => 'CRED'
@@ -2660,7 +2668,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                         vr_cdcooper := rw_craptco.cdcooper;
                         vr_cdcoptab := rw_craptco.cdcooper;
                         vr_nrdconta := rw_craptco.nrdconta;
-                        vr_nrdolote := vr_dstextab_2;
+                        vr_nrdolote := vr_dstextab_2; */
                       ELSE -- Se nao for uma conta transferida
                         vr_cdcooper := pr_cdcooper;
                         vr_nrdolote := vr_dstextab;
