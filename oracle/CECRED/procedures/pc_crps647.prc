@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autora  : Lucas R.
-  Data    : Setembro/2013                        Ultima atualizacao: 13/03/2017
+  Data    : Setembro/2013                        Ultima atualizacao: 30/03/2017
 
   Dados referentes ao programa:
 
@@ -137,6 +137,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
                            
               13/03/2017 - Alterado para no registro 'C' quando cancelamento, gravar a data
                            do processamento e nao do inicio da autorização (Lucas Ranghetti #628127)
+                           
+              30/03/2017 - Somente enviar e-mail caso nao for a critica de arquivo nao existe (182)
+                           e nao for na Cecred, as demais criticas seguem enviando normalmente
+                           (Lucas Ranghetti #635894)
    ............................................................................. */
   -- Constantes do programa
   vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'CRPS647';
@@ -1644,17 +1648,22 @@ EXCEPTION
                              ,pr_infimsol => pr_infimsol
                              ,pr_stprogra => pr_stprogra);
                              
-    vr_texto_email := '<b>Abaixo os erros encontrados no processo de importacao do debito SICREDI:</b><br><br>'||
-                        to_char(SYSDATE,'dd/mm/yyyy HH24:MI:SS') || ' --> ' || vr_dscritic;
+    -- somente enviar e-mail caso nao for a critica de arquivo nao existe e nao for na cecred
+    IF vr_cdcritic <> 182 AND pr_cdcooper = 3 OR
+       pr_cdcooper <> 3 THEN    
+                               
+      vr_texto_email := '<b>Abaixo os erros encontrados no processo de importacao do debito SICREDI:</b><br><br>'||
+                          to_char(SYSDATE,'dd/mm/yyyy HH24:MI:SS') || ' --> ' || vr_dscritic;
 
-    -- Por fim, envia o email
-    gene0003.pc_solicita_email(pr_cdprogra    => vr_cdprogra
-                              ,pr_des_destino => vr_emaildst
-                              ,pr_des_assunto => 'Critica importacao debito - SICREDI'
-                              ,pr_des_corpo   => vr_texto_email
-                              ,pr_des_anexo   => NULL
-                              ,pr_flg_enviar  => 'N'
-                              ,pr_des_erro    => vr_dscritic);                         
+      -- Por fim, envia o email
+      gene0003.pc_solicita_email(pr_cdprogra    => vr_cdprogra
+                                ,pr_des_destino => vr_emaildst
+                                ,pr_des_assunto => 'Critica importacao debito - SICREDI'
+                                ,pr_des_corpo   => vr_texto_email
+                                ,pr_des_anexo   => NULL
+                                ,pr_flg_enviar  => 'N'
+                                ,pr_des_erro    => vr_dscritic);                         
+    END IF;
                              
     -- Efetuar commit pois gravaremos o que foi processo até então
     COMMIT;
