@@ -103,7 +103,8 @@ CREATE OR REPLACE PACKAGE CECRED.RCEL0001 AS
 														 ,pr_nrsequni  IN INTEGER               -- Nr. sequencial único (Apenas TAA)														 
 														 ,pr_idorigem  IN INTEGER               -- Id. origem (3-IB / 4-TAA)
 														 ,pr_inaprpen  IN NUMBER                -- Indicador de aprovação de transacao pendente
-														 ,pr_idastcjt OUT INTEGER               -- Se possui assinatura														 
+														 ,pr_idoperac  IN tbrecarga_operacao.idoperacao%TYPE -- Id. operação (Somente na efetivação do agendamento e aprovação de transação pendente)
+                             ,pr_idastcjt OUT INTEGER               -- Se possui assinatura														 
 														 ,pr_dsprotoc OUT VARCHAR2              -- Protocolo
 														 ,pr_dsnsuope OUT tbrecarga_operacao.dsnsu_operadora%TYPE -- NSU Operadora														 
 														 ,pr_cdcritic OUT PLS_INTEGER           -- Cód. da crítica
@@ -1081,7 +1082,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 														 ,pr_nrsequni  IN INTEGER               -- Nr. sequencial único (Apenas TAA)
 														 ,pr_idorigem  IN INTEGER               -- Id. origem (3-IB / 4-TAA)
 														 ,pr_inaprpen  IN NUMBER                -- Indicador de aprovação de transacao pendente
-														 ,pr_idastcjt OUT INTEGER               -- Se possui assinatura
+														 ,pr_idoperac  IN tbrecarga_operacao.idoperacao%TYPE -- Id. operação (Somente na efetivação do agendamento e aprovação de transação pendente)
+                             ,pr_idastcjt OUT INTEGER               -- Se possui assinatura
 														 ,pr_dsprotoc OUT VARCHAR2              -- Protocolo
 														 ,pr_dsnsuope OUT tbrecarga_operacao.dsnsu_operadora%TYPE -- NSU Operadora
 														 ,pr_cdcritic OUT PLS_INTEGER           -- Cód. da crítica
@@ -1325,7 +1327,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 																			,pr_nrtelefo  => pr_nrtelefo
 																			,pr_cdproduto => pr_cdprodut
 																			,pr_cdopetel  => pr_cdopetel
-																			,pr_idoperac  => 0
+																			,pr_idoperac  => pr_idoperac
 																			,pr_nrcpfope  => pr_nrcpfope
 																			,pr_cdcoptfn  => pr_cdcoptfn
 																			,pr_nrterfin  => pr_nrterfin
@@ -1356,7 +1358,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 																						,pr_dtrecarga => pr_dtrecarga
 																						,pr_lsdatagd => pr_lsdatagd
 																						,pr_idorigem => pr_idorigem
-																						,pr_idoperac => 0
+																						,pr_idoperac => pr_idoperac
 																						,pr_cdcritic => vr_cdcritic
 																						,pr_dscritic => vr_dscritic);
 																						
@@ -3018,7 +3020,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 			-- Gerar log
 			GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
 													,pr_cdoperad => '996'
-													,pr_dscritic => ''
+													,pr_dscritic => ' '
 													,pr_dsorigem => GENE0001.vr_vet_des_origens(pr_origem)
 													,pr_dstransa => vr_dstransa
 													,pr_dttransa => TRUNC(SYSDATE)
@@ -3540,8 +3542,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                                   ,pr_idorigem  => 3
                                   ,pr_inaprpen  => pr_inaprpen
                                   ,pr_idastcjt  => pr_idastcjt
+                                  ,pr_idoperac  => pr_idoperacao
                                   ,pr_dsprotoc  => vr_dsprotoc
-                                  ,pr_dsnsuope  => vr_dsnsuope 
+                                  ,pr_dsnsuope  => vr_dsnsuope
                                   ,pr_cdcritic  => vr_cdcritic
                                   ,pr_dscritic  => vr_dscritic);
         -- Se ocorreu erro                                             

@@ -9933,7 +9933,8 @@ PROCEDURE efetua_recarga:
               INPUT aux_nrsequni,        /* Nr. sequencial unico */
 						  INPUT 4,             /* Id origem (4-TAA)*/
               INPUT 0,             /* Indicador de aprovacao de transacao pendente */
-						  OUTPUT 0,            /* Indicador de assinatura conjunta */
+						  INPUT 0,             /* Indicador de operacao (transacao pendente) */
+              OUTPUT 0,            /* Indicador de assinatura conjunta */
               OUTPUT "",           /* Protocolo */
               OUTPUT "",           /* NSU Operadora */
 						  OUTPUT 0,            /* Código da crítica.*/
