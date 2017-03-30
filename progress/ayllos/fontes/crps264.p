@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Elton/Ze Eduardo
-    Data    : Marco/07.                       Ultima atualizacao: 16/12/2016
+    Data    : Marco/07.                       Ultima atualizacao: 03/02/2017
     
     Dados referentes ao programa:
 
@@ -203,6 +203,9 @@
                            
               16/12/2016 - Substituido o histórico 399 pelo 351 na devoluçao de 
                            cheques de custódia para a conta do beneficiario (Elton).             
+                           
+              03/02/2017 - Incluir dtlibera para as consultas de cheques em custodia/desconto
+                           (Lucas Ranghetti #600012)
 ..............................................................................*/
 
 DEF INPUT  PARAM p-cdcooper AS INT                                   NO-UNDO.
@@ -547,7 +550,7 @@ PROCEDURE gera_lancamento:
                aux_nrdconta_tco = 0
                aux_cdagectl = 0
                aux_cdcopant = 0.
-
+            
         IF  crapdev.cdpesqui = "TCO" THEN
             DO:
                 FIND craptco WHERE craptco.cdcopant = p-cdcooper       AND
@@ -555,7 +558,7 @@ PROCEDURE gera_lancamento:
                                    craptco.tpctatrf = 1                AND
                                    craptco.flgativo = TRUE
                                    NO-LOCK NO-ERROR.
-            
+                                        
                 IF   AVAILABLE craptco THEN
                      ASSIGN aux_cdcooper = craptco.cdcooper
                             aux_nrdconta = craptco.nrdconta
@@ -673,9 +676,9 @@ PROCEDURE gera_lancamento:
                                    DELETE OBJECT h-b1wgen0153.
                 
                                UNDO TRANS_1, RETURN "NOK".
-            END.
-                
-        END.
+                            END.
+                        
+                    END.
 
                 CASE p-cddevolu:
 
@@ -689,13 +692,13 @@ PROCEDURE gera_lancamento:
                                          NEXT.
 
                                     ASSIGN aux_ctpsqitg = crapdev.nrdctabb.
-
+                     
                                     RUN existe_conta_integracao.
-
+                                    
                                     IF   aux_nrdctitg <> ""   THEN
                                          NEXT.
                                 END.
-
+                                    
                     /*  CONTA INTEGRACAO  */
                     WHEN 3 THEN DO:
                                     IF   crapdev.cdbanchq <> 1  THEN
@@ -705,7 +708,7 @@ PROCEDURE gera_lancamento:
                                                     f_ver_contaitg(crapdev.nrdctitg).
 
                                     RUN existe_conta_integracao.
-
+                                    
                                     IF   aux_nrdctitg = ""   THEN
                                          NEXT.
                                 END.                
@@ -716,13 +719,13 @@ PROCEDURE gera_lancamento:
 
                                     IF   crapdev.cdbanchq <> crapcop.cdbcoctl THEN
                                          NEXT.
-
+                    
                                     IF   crapdev.vllanmto < aux_valorvlb THEN
                                          NEXT.
                                 END.
-
+                      
                     WHEN 5 OR WHEN 6 THEN DO:
-
+                                    
                             IF   crapdev.cdbanchq <> crapcop.cdbcoctl THEN
                                 NEXT.
 
@@ -732,12 +735,12 @@ PROCEDURE gera_lancamento:
 
                 /* Historicos que indicam cheque devolvido */
                 IF   CAN-DO("47,191,338,573",STRING(crapdev.cdhistor))  THEN
-                              DO:
+                     DO:
                         glb_nrcalcul = 
                             INT(SUBSTR(STRING(crapdev.nrcheque,"9999999"),1,6)).
                         
                         DO WHILE TRUE:
-
+                        
                            FIND crapfdc WHERE crapfdc.cdcooper = p-cdcooper        AND
                                               crapfdc.cdbanchq = crapdev.cdbanchq  AND
                                               crapfdc.cdagechq = crapdev.cdagechq  AND
@@ -756,8 +759,8 @@ PROCEDURE gera_lancamento:
                                      DO:
                                          glb_cdcritic = 268. 
                                          LEAVE.
-                              END.
-
+                                     END.
+                                
                            LEAVE.
                         
                         END.  /*  Fim do DO WHILE TRUE  */
@@ -852,7 +855,7 @@ PROCEDURE gera_lancamento:
                             e nao faria esta devolucao */ 
 
                          DO aux_verifloc = 1 TO 10:
-
+                                                              
                             /* VIACON - aux_nrctalcm deve conter a nova conta se for conta incorporada  */ 
                             FIND craplcm WHERE craplcm.cdcooper = aux_cdcooper     AND
                                                craplcm.dtmvtolt = craplot.dtmvtolt AND
@@ -862,7 +865,7 @@ PROCEDURE gera_lancamento:
                                                craplcm.nrdctabb = aux_nrctalcm     AND
                                                craplcm.nrdocmto = crapdev.nrcheque  
                                                EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-
+                                               
                             IF   NOT AVAIL craplcm THEN
                                  DO:
                                      IF   LOCKED craplcm THEN
@@ -883,7 +886,7 @@ PROCEDURE gera_lancamento:
                                      LEAVE.
                                  END.
                          END.
-                        
+
                          IF   glb_cdcritic <> 0 THEN
                               DO:
                                   RUN fontes/critic.p.
@@ -906,7 +909,7 @@ PROCEDURE gera_lancamento:
 
                                   UNDO, RETURN "NOK".
                               END.
-
+                                                     
                          /* VIACON - cria lancamento na coop atual */
                          CREATE craplcm.
                          ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
@@ -927,7 +930,7 @@ PROCEDURE gera_lancamento:
                                 craplcm.cdbanchq = crapdev.cdbanchq
                                 craplcm.cdagechq = crapdev.cdagechq
                                 craplcm.nrctachq = crapdev.nrctachq
-
+                                
                                 craplot.vlinfocr = craplot.vlinfocr + craplcm.vllanmto
                                 craplot.vlcompcr = craplot.vlcompcr + craplcm.vllanmto
                                 craplot.qtinfoln = craplot.qtinfoln + 1
@@ -947,7 +950,7 @@ PROCEDURE gera_lancamento:
                                      crapfdc.nrctatic = 0
                                      crapfdc.dtlibtic = ?
                                      crapfdc.dtatutic = ?.
-                               
+
                          IF   p-cddevolu = 2  OR   /* Conta Base */
                               p-cddevolu = 3  THEN /* Conta Integracao */
                               craplcm.nrdctitg = crapdev.nrdctitg.
@@ -958,7 +961,7 @@ PROCEDURE gera_lancamento:
                          IF   p-cddevolu = 4 OR p-cddevolu = 5 OR p-cddevolu = 6 THEN
                               DO:
                                   ASSIGN craplcm.nrdctitg = "".
-
+                                  
                                   /* Atribui Valor para Alinea na GNCPCHQ */
                                   FIND LAST gncpchq WHERE 
                                                gncpchq.cdcooper = aux_cdcooper     AND
@@ -980,13 +983,13 @@ PROCEDURE gera_lancamento:
                                                  gncpchq.cdalinea = crapdev.cdalinea.
                                             ELSE 
                                                  gncpchq.cdalinea = 21.
-                           END.
+                                        END.
                                         
                                   IF    p-cddevolu = 4 THEN  /* Devolucao VLB - 9:00* */
                                         crapdev.indevarq = 2.  /* Envia */ 
                                   ELSE
                                   IF    p-cddevolu = 5 THEN  /* 1a devolucao - 11:00* */
-                           DO:
+                                        DO:
                                             /*  Interior e VLB Truncado */
                                             IF   crapcop.flgdsirc  = NO           AND  
                                                  crapdev.vllanmto >= aux_vldevolu THEN
@@ -1005,7 +1008,7 @@ PROCEDURE gera_lancamento:
                               craplcm.dsidenti = "2".
 
                         VALIDATE craplcm.                       
-
+                        
                      END.
                 ELSE             /*  taxa de devolucao de cheque  */
                 IF   crapdev.cdhistor = 46  AND
@@ -1038,7 +1041,7 @@ PROCEDURE gera_lancamento:
                                                          INPUT aux_cdfvlcop,
                                                          INPUT glb_inproces,
                                                          OUTPUT TABLE tt-erro).
-
+                                                      
                                 IF  RETURN-VALUE = "NOK"  THEN
                                     DO:
                                        FIND FIRST tt-erro NO-LOCK NO-ERROR.
@@ -1128,6 +1131,8 @@ PROCEDURE gera_lancamento:
                                            AND crapcdb.nrctachq = crapfdc.nrctachq
                                            AND crapcdb.nrcheque = crapfdc.nrcheque
                                            AND CAN-DO("0,2",STRING(crapcdb.insitchq))
+                                           AND crapcdb.dtlibera >= glb_dtmvtoan
+                                           AND crapcdb.dtlibera <= glb_dtmvtolt
                                            NO-LOCK:
                        END.                        
                        
@@ -1256,6 +1261,8 @@ PROCEDURE gera_lancamento:
                                                   AND crapcst.nrctachq = crapfdc.nrctachq
                                                   AND crapcst.nrcheque = crapfdc.nrcheque
                                                   AND CAN-DO("0,2",STRING(crapcst.insitchq))
+                                                  AND crapcst.dtlibera >= glb_dtmvtoan
+                                                  AND crapcst.dtlibera <= glb_dtmvtolt
                                                   NO-LOCK:
                               END.
                         
@@ -2852,6 +2859,8 @@ PROCEDURE gera_arquivo_cecred:
                                            AND crapcdb.nrctachq = crapfdc.nrctachq
                                            AND crapcdb.nrcheque = crapfdc.nrcheque
                                            AND CAN-DO("0,2",STRING(crapcdb.insitchq))
+                                           AND crapcdb.dtlibera >= glb_dtmvtoan
+                                           AND crapcdb.dtlibera <= glb_dtmvtolt
                                            NO-LOCK:
                        END.                        
                        
@@ -2868,6 +2877,8 @@ PROCEDURE gera_arquivo_cecred:
                                                   AND crapcst.nrctachq = crapfdc.nrctachq
                                                   AND crapcst.nrcheque = crapfdc.nrcheque
                                                   AND CAN-DO("0,2",STRING(crapcst.insitchq))
+                                                  AND crapcst.dtlibera >= glb_dtmvtoan
+                                                  AND crapcst.dtlibera <= glb_dtmvtolt
                                                   NO-LOCK:
                               END.
                         
