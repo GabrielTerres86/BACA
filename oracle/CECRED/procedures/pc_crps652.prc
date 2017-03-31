@@ -354,7 +354,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
              ,crapcyb.vlsdeved
              ,crapcyb.vljura60
              ,crapcyb.vlpreemp      
-             ,crapcyb.qtdiaatr /*+ nvl(crapcyb.qtdiaaap,0)*/ qtdiaatr
+             ,crapcyb.qtdiaatr
              ,crapcyb.dtdrisan
              ,crapcyb.vlpreapg
              ,crapcyb.vldespes
@@ -525,16 +525,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
             AND craplem.nrctremp = pr_nrctremp
             AND craplem.dtmvtolt = pr_dtmvtolt
             AND craphis.indcalem = 'S'
-        GROUP BY 
-                  craplem.cdhistor
-                , craphis.dshistor
+        GROUP BY craplem.cdhistor,craphis.dshistor
         
          --Melhoria 155
          UNION
-         SELECT SUM(craplcm.vllanmto) vllanmto
-                 /*,decode(nvl(craphis.cdtrscyb,'PA'), ' ',
-                       to_char(craphis.cdhistor,'99999'),
-                       nvl(craphis.cdtrscyb,'PA')) cdhistor*/
+         SELECT SUM(craplcm.vllanmto) vllanmto                
                ,craplcm.cdhistor
                ,craphis.dshistor
            FROM craplcm, craphis, crapepr
@@ -549,12 +544,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
             AND craplcm.dtmvtolt = pr_dtmvtolt
             --Multa e juros de mora
             AND craphis.cdhistor in (1070, 1060, 1071, 1072)
-   GROUP BY craplcm.cdhistor
-   /*decode(nvl(craphis.cdtrscyb,'PA'), ' ',
-                       to_char(craphis.cdhistor,'99999'),
-                       nvl(craphis.cdtrscyb,'PA'))
-*/
-                , craphis.dshistor;
+  GROUP BY craplcm.cdhistor,craphis.dshistor;
+
        --Registro do tipo calendario
        rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
       
