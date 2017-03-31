@@ -14,6 +14,9 @@
    
    Alteracoes: 13/01/2016 - Alteracoes para o projeto de Assinatura Conjunta
                             Prj. 131 (Jean Michel).
+                            
+               30/01/2017 - Adicionado o codigo da transacao no xml de resposta
+                            (Dionathan).
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -100,13 +103,13 @@ DO:
 	
 	IF  AVAIL tt-criticas_transacoes_oper  THEN 
 	    DO:	
-            ASSIGN aux_dscritic = "Transacoes aprovadas com sucesso.".
+    ASSIGN aux_dscritic = "Transacoes aprovadas com sucesso.".
 			
-			IF  out_flgaviso  THEN
-				ASSIGN aux_dscritic = aux_dscritic + "\nVerifique as transacoes nao aprovadas.".
+    IF  out_flgaviso  THEN
+        ASSIGN aux_dscritic = aux_dscritic + "\nVerifique as transacoes nao aprovadas.".
 
-			ASSIGN xml_dsmsgerr = "<dsmsgsuc>" + aux_dscritic + "</dsmsgsuc>".
-		END.
+    ASSIGN xml_dsmsgerr = "<dsmsgsuc>" + aux_dscritic + "</dsmsgsuc>".
+END.
 	ELSE
 		DO:
 			ASSIGN aux_dscritic = "As transacoes nao foram aprovadas com sucesso.\nVerifique a critica gerada no detalhamento da transacao."
@@ -165,7 +168,9 @@ DO:
                               tt-criticas_transacoes_oper.dstiptra +
                               "</dstiptra><dscritic>" +
                               tt-criticas_transacoes_oper.dscritic +
-                              "</dscritic></TRANSACAO>".
+                              "</dscritic><cdtransa>"+
+                              STRING(tt-criticas_transacoes_oper.cdtransa) +
+                              "</cdtransa></TRANSACAO>".
     END.
                               
     ASSIGN aux_dslinxml = aux_dslinxml + "</APROVADAS><DESAPROVADAS>"
@@ -202,7 +207,9 @@ DO:
                               tt-criticas_transacoes_oper.dstiptra +
                               "</dstiptra><dscritic>" +
                               tt-criticas_transacoes_oper.dscritic +
-                              "</dscritic></TRANSACAO>".
+                              "</dscritic><cdtransa>"+
+                              STRING(tt-criticas_transacoes_oper.cdtransa) +
+                              "</cdtransa></TRANSACAO>".
     
     END.
     

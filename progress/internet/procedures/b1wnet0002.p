@@ -366,7 +366,7 @@ PROCEDURE carrega-titulares.
     DEF VAR aux_inbloque AS INTE INIT 0                             NO-UNDO.
     DEF VAR aux_incadsen AS INTE INIT 0                             NO-UNDO.
     DEF VAR aux_qtdiaace AS INTE                                    NO-UNDO.
-    DEF VAR aux_qtminast AS INTE									NO-UNDO.
+    DEF VAR aux_qtminast AS INTE                                                                        NO-UNDO.
     
     DEF VAR h-b1wgen0058 AS HANDLE                                  NO-UNDO.
 
@@ -399,8 +399,8 @@ PROCEDURE carrega-titulares.
                 ASSIGN aux_dscritic = "Sistema indisponivel. Tente " +
                                       "novamente mais tarde!".
                 LEAVE.
-            END.
-            
+            END.        
+        
         FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
                            crapass.nrdconta = par_nrdconta NO-LOCK NO-ERROR.
                                  
@@ -2734,6 +2734,18 @@ PROCEDURE permissoes-menu-mobile:
               tt-itens-menu-mobile.flcreate = TRUE.
             END.
         END.
+    
+    CREATE tt-itens-menu-mobile.
+    ASSIGN tt-itens-menu-mobile.cditemmn = 204. /*TRANSAÇÕES PENDENTES*/
+           tt-itens-menu-mobile.flcreate = FALSE.
+    
+    FIND FIRST crapopi WHERE crapopi.cdcooper = par_cdcooper AND
+							 crapopi.nrdconta = par_nrdconta NO-LOCK NO-ERROR. 
+    
+    IF crapass.idastcjt = 1 OR AVAILABLE crapopi THEN
+      DO:
+          tt-itens-menu-mobile.flcreate = TRUE.
+      END.
     
   RETURN "OK".
     
