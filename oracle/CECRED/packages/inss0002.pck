@@ -311,7 +311,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
   /*---------------------------------------------------------------------------------------------------------------
    Programa : INSS0002
    Autor    : Dionathan
-   Data     : 27/08/2015                        Ultima atualizacao: 06/03/2017
+   Data     : 27/08/2015                        Ultima atualizacao: 13/03/2017
 
    Dados referentes ao programa:
 
@@ -338,7 +338,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                06/03/2017 - Ajustado no cursor da craplgp na procedure pc_gps_agmto_novo para
                             converter cddidenti para numero antes de realizar a clausula where
                             pois a autoconversao do oracle nao convertia de forma adequada
-                            (Tiago/Fabricio SD616352).             
+                            (Tiago/Fabricio SD616352).            
+                            
+               13/03/2017 - Removi a gravacao de lote 11900 da procedure pc_gps_agmto_novo 
+                            utilizando a funcao fn_sequence no lugar. (Carlos Rafael Tanholi)
   ---------------------------------------------------------------------------------------------------------------*/
 
   --Buscar informacoes de lote
@@ -2657,22 +2660,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
            AND craplgp.flgativo  = 1;
      rw_craplgp cr_craplgp%ROWTYPE;
 
-     -- Buscar os dados do lote
-     CURSOR cr_craplot(pr_cdcooper  craplot.cdcooper%TYPE
-                      ,pr_dtmvtolt  craplot.dtmvtolt%TYPE
-                      ,pr_cdagenci  craplot.cdagenci%TYPE
-                      ,pr_nrdolote  craplot.nrdolote%TYPE) IS
-        SELECT lot.rowid     dsdrowid
-              ,lot.nrseqdig
-          FROM craplot     lot
-         WHERE lot.cdcooper = pr_cdcooper
-           AND lot.dtmvtolt = pr_dtmvtolt
-           AND lot.cdagenci = pr_cdagenci
-           AND lot.cdbccxlt = 100   /* Fixo */
-           AND lot.nrdolote = pr_nrdolote
-           FOR UPDATE; -- Lock do registro, para preservar sequencia de NRSEQDIG
-     rw_craplot    cr_craplot%ROWTYPE;
-
      -- Variáveis
      rw_crapdat    btch0001.cr_crapdat%ROWTYPE;
 
@@ -2725,6 +2712,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
      vr_nrseqaut   NUMBER;
      vr_cdcritic   NUMBER;
      vr_des_reto   VARCHAR2(500);
+
+     -- variavel para armazenar sequencia do lote 
+     vr_nrseqdig craplot.nrseqdig%TYPE;
 
      FUNCTION fn_centraliza(pr_frase IN VARCHAR2, pr_tamlinha IN PLS_INTEGER) RETURN VARCHAR2 IS
        vr_contastr PLS_INTEGER;
@@ -3141,54 +3131,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
           RAISE vr_exc_saida;
     END;
 
-
-
-    /*******************************************************************/
-
-    -- Buscar os dados do lote
-    OPEN  cr_craplot(pr_cdcooper         -- pr_cdcooper
-                    ,rw_crapdat.dtmvtocd -- pr_dtmvtolt
-                    ,pr_cdagenci         -- pr_cdagenci
-                    ,vr_nrdolote);       -- pr_nrdolote
-    FETCH cr_craplot INTO rw_craplot;
-
-    -- Se não encontrar registro, deve criar o registro de lote
-    IF cr_craplot%NOTFOUND THEN
-       -- Inserir a capa do LOTE
-       BEGIN
-          INSERT INTO craplot(cdcooper
-                             ,nrdcaixa
-                             ,cdopecxa
-                             ,dtmvtolt
-                             ,cdhistor
-                             ,cdagenci
-                             ,cdbccxlt
-                             ,nrdolote
-                             ,tplotmov
-                             ,cdoperad)
-                      VALUES (pr_cdcooper   -- cdcooper
-                             ,pr_nrdcaixa   -- nrdcaixa
-                             ,pr_cdoperad   -- cdopecxa
-                             ,rw_crapdat.dtmvtocd -- dtmvtolt
-                             ,1414          -- cdhistor
-                             ,pr_cdagenci   -- cdagenci
-                             ,100           -- cdbccxlt - Fixo
-                             ,vr_nrdolote   -- nrdolote
-                             ,30            -- tplotmov
-                             ,vr_cdoperad)  -- cdoperad
-              RETURNING ROWID, nrseqdig
-                         INTO rw_craplot.dsdrowid
-                             ,rw_craplot.nrseqdig;
-       EXCEPTION
-          WHEN OTHERS THEN
-             pr_dscritic := 'Erro na inclusão do agendamento! (Erro e02: '|| to_char(SQLCODE) || ')';
-             vr_dsmsglog := 'Erro ao criar LOTE! ' ||SQLERRM;
-             RAISE vr_exc_saida;
-       END;
-    END IF;
-
-    -- Fechar o cursor do lote
-    CLOSE cr_craplot;
+    -- recupera a sequencia do lote
+    vr_nrseqdig := fn_sequence(pr_nmtabela => 'CRAPLOT',
+                               pr_nmdcampo => 'NRSEQDIG', 
+                               pr_dsdchave => TO_CHAR(pr_cdcooper)|| ';' ||
+                                              TO_CHAR(rw_crapdat.dtmvtocd)|| ';' ||
+                                              TO_CHAR(pr_cdagenci)|| ';' ||
+                                              TO_CHAR(100)|| ';' ||
+                                              TO_CHAR(vr_nrdolote));    
 
     -- Verificar se o registro existe na CRAPLGP
     OPEN  cr_craplgp(pr_cdcooper            -- pr_cdcooper
@@ -3215,9 +3165,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
 
     -- Fechar o cursor
     CLOSE cr_craplgp;
-
-    -- Atualizar o Digito sequencial do lote
-    rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
 
     -- Criar registro de agendamento na tabela CRAPLGP
     BEGIN
@@ -3268,7 +3215,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                          ,pr_vloutent             -- vlrouent
                          ,pr_vlatmjur             -- vlrjuros
                          ,pr_vlrtotal             -- vlrtotal
-                         ,rw_craplot.nrseqdig     -- nrseqdig
+                         ,vr_nrseqdig     -- nrseqdig
                          ,GENE0002.fn_busca_time  -- hrtransa
                          ,1        /* SIM */      -- flgenvio
                          ,vr_cdbarras             -- cdbarras
@@ -3292,24 +3239,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
         RAISE vr_exc_saida;
     END;
 
-    -- Atualizar registro da LOTE
-    BEGIN
-
-      UPDATE craplot lot
-         SET lot.nrseqdig = rw_craplot.nrseqdig
-           , lot.qtcompln = NVL(lot.qtcompln,0) + 1
-           , lot.qtinfoln = NVL(lot.qtinfoln,0) + 1
-           , lot.vlcompdb = NVL(lot.vlcompdb,0) + pr_vlrtotal
-           , lot.vlinfodb = NVL(lot.vlinfodb,0) + pr_vlrtotal
-       WHERE ROWID = rw_craplot.dsdrowid;
-
-    EXCEPTION
-      WHEN OTHERS THEN
-        -- retornar a exception
-        pr_dscritic := 'Erro na inclusão do agendamento! (Erro e04: '|| to_char(SQLCODE) || ')';
-        vr_dsmsglog := 'Erro ao atualizar CRAPLOT! ' ||SQLERRM;
-        RAISE vr_exc_saida;
-    END;
 
     -- Criar registro na CRAPLAU
     BEGIN
@@ -3348,8 +3277,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                          ,pr_cdagenci                              -- cdagenci
                          ,100                                      -- cdbccxlt - fixo
                          ,vr_nrdolote                              -- nrdolote
-                         ,rw_craplot.nrseqdig                      -- nrseqdig
-                         ,rw_craplot.nrseqdig                      -- nrdocmto
+                         ,vr_nrseqdig                      -- nrseqdig
+                         ,vr_nrseqdig                      -- nrdocmto
 
                          ,pr_nrdconta                              -- nrdconta
                          ,1                -- FIXO                 -- idseqttl
@@ -3440,7 +3369,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                                   ,pr_dtmvtolt => rw_crapdat.dtmvtocd
                                   ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
                                   ,pr_nrdconta => pr_nrdconta
-                                  ,pr_nrdocmto => rw_craplot.nrseqdig
+                                  ,pr_nrdocmto => vr_nrseqdig
                                   ,pr_nrseqaut => vr_sequen_pro
                                   ,pr_vllanmto => pr_vlrtotal
                                   ,pr_nrdcaixa => pr_nrdcaixa

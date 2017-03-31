@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS006
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Deborah/Edson
-    Data    : Novembro/91.                      Ultima atualizacao: 07/06/2016
+    Data    : Novembro/91.                      Ultima atualizacao: 31/03/2017
 
     Dados referentes ao programa:
 
@@ -180,11 +180,17 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS006
                             para considerar os lotes 10301, 6902 
                             (Adriano - SD 428923).
                             
+               26/09/2016 - Ajuste para incluir lotes da M211 (Jonata - RKAM)
 
-			   26/07/2016 - Ajuste para implementar sequencial (segundos) ao gerar relatorio crrl011
-			                que esta apresentando critica ao gerar mais de um relatorio com cdagenci 
-							nula (Daniel)
+			         26/07/2016 - Ajuste para implementar sequencial (segundos) ao gerar relatorio crrl011
+			                      que esta apresentando critica ao gerar mais de um relatorio com cdagenci 
+							              nula (Daniel)
 
+              12/09/2016 - SD520894 - Correcao na chamada ao relatorio 011, pois está ocorrendo erro 
+                           na geracao devido a varios relatorios com o mesmo nome (Marcos-Supero)
+                           
+              31/03/2017 - Implementei o lote 11900 na query que carrega os lotes para possibilitar
+                           a listagem do relatorio. SD 639259 (Carlos Rafael Tanholi)             
     ............................................................................. */
     DECLARE
       TYPE typ_reg_craphis_res IS
@@ -361,6 +367,144 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS006
               ,1
               ,1
         FROM DUAL
+     UNION
+        SELECT pr_dtmvtolt
+              ,NULL
+              ,100
+              ,8482
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,TRUNC(SYSDATE)
+              ,0
+              ,'0'
+              ,0
+              ,0
+              ,0
+              ,'0'
+              ,1
+              ,1
+        FROM DUAL
+      UNION
+        SELECT pr_dtmvtolt
+              ,NULL
+              ,100
+              ,8483
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,TRUNC(SYSDATE)
+              ,0
+              ,'0'
+              ,0
+              ,0
+              ,0
+              ,'0'
+              ,1
+              ,1
+        FROM DUAL
+      UNION
+        SELECT pr_dtmvtolt
+              ,NULL
+              ,100
+              ,8484
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,TRUNC(SYSDATE)
+              ,0
+              ,'0'
+              ,0
+              ,0
+              ,0
+              ,'0'
+              ,1
+              ,1
+        FROM DUAL
+      UNION
+        SELECT pr_dtmvtolt
+              ,NULL
+              ,100
+              ,8485
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,TRUNC(SYSDATE)
+              ,0
+              ,'0'
+              ,0
+              ,0
+              ,0
+              ,'0'
+              ,1
+              ,1
+        FROM DUAL
+      UNION
+        SELECT pr_dtmvtolt
+              ,NULL
+              ,100
+              ,8486
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,TRUNC(SYSDATE)
+              ,0
+              ,'0'
+              ,0
+              ,0
+              ,0
+              ,'0'
+              ,1
+              ,1
+        FROM DUAL
+      UNION
+        SELECT pr_dtmvtolt
+              ,NULL
+              ,100
+              ,11900
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,TRUNC(SYSDATE)
+              ,0
+              ,'0'
+              ,0
+              ,0
+              ,0
+              ,'0'
+              ,1
+              ,1
+        FROM DUAL        
      ORDER BY 2;
 
       CURSOR cr_crapage (pr_cdcooper IN crapage.cdcooper%TYPE
@@ -782,14 +926,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS006
               vr_dsagenci := rw_craplot.cdagenci||
                              ' - '||
                              rw_crapage.nmresage;
-
 			  vr_cdagenci := LPAD(rw_craplot.cdagenci,3,'0');
             -- se não encontrar preenche com "*"
             ELSE
               vr_dsagenci := lpad(rw_craplot.cdagenci,3,'0')||
                              ' - '||
                              '***************';
-			  vr_cdagenci := to_char(SYSDATE,'SSSSSSS');
+              vr_cdagenci := lpad(ROUND(DBMS_RANDOM.VALUE(1,99999999)),8,0);
             END IF;
             CLOSE cr_crapage;
 

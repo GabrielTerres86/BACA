@@ -37,7 +37,7 @@
 
     Programa: b1wgen0016.p
     Autor   : Evandro/David
-    Data    : Abril/2006                     Ultima Atualizacao: 22/02/2017
+    Data    : Abril/2006                     Ultima Atualizacao: 19/12/2016
     
     Dados referentes ao programa:
 
@@ -465,7 +465,7 @@
                            acarretando em problemas no IB (Tiago/Elton SD 521667).             
               
               19/12/2016 - Inclusao da aprovacao de Desconto de Cheque. Projeto 300 (Lombardi).
-
+              
 28/11/2016 - Incluido tratamento de transaçoes pendentes 16 e 17.
 PRJ319 - SMS Cobrança (Odirlei - AMcom)
 
@@ -477,6 +477,8 @@ PRJ319 - SMS Cobrança (Odirlei - AMcom)
               
 			  22/11/2016 - Inclusao do parametro pr_iptransa na chamada da rotina pc_cadastrar_agendamento.
                            PRJ335 - Analise de Fraude (Odirlei-AMcom ) 
+                           
+              21/03/2017 - Removi a gravacao de lotes 11900, assim utilizando a sequence do Oracle.(Carlos Rafael Tanholi)
  .....................................................................................................*/
 { sistema/internet/includes/var_ibank.i }
 
@@ -496,7 +498,6 @@ PRJ319 - SMS Cobrança (Odirlei - AMcom)
 { sistema/internet/includes/b1wnet0002tt.i }
 
 DEF TEMP-TABLE crataut NO-UNDO LIKE crapaut.
-DEF TEMP-TABLE cratlot NO-UNDO LIKE craplot.
 DEF TEMP-TABLE cratlcm NO-UNDO LIKE craplcm.
 DEF TEMP-TABLE cratmvi NO-UNDO LIKE crapmvi.
 
@@ -1517,7 +1518,7 @@ PROCEDURE proc_cria_critica_transacao_oper:
                               ASSIGN aux_dstptran = "Adesao Serviço SMS de Cobrança".
                               ELSE
                               ASSIGN aux_dstptran = "Cancelamento do Serviço SMS de Cobrança".
-                
+                  
                               END.
                 IF tbgen_trans_pend.tptransacao = 2 THEN
                     aux_dstiptra= (IF tbpagto_trans_pend.tppagamento = 1 THEN "Pagamento de Convenio" ELSE "Pagamento de Boletos Diversos").
@@ -1650,6 +1651,7 @@ PROCEDURE paga_convenio:
     DEF VAR aux_cdagenci                  AS INT                     NO-UNDO.
     DEF VAR aux_flgerlog                  AS CHAR                    NO-UNDO.  
 	  DEF VAR aux_des_log                   AS CHAR                    NO-UNDO.
+    DEF VAR aux_nrseqdig                  AS INTE                    NO-UNDO.
     
     DEF VAR h_b1crap00                    AS HANDLE                  NO-UNDO.
     DEF VAR h_b1crap14                    AS HANDLE                  NO-UNDO.
@@ -1947,125 +1949,28 @@ PROCEDURE paga_convenio:
                        SUBSTR(STRING(aux_lindigi4,"999999999999"),1,11) + "-" +
                        SUBSTR(STRING(aux_lindigi4,"999999999999"),12,1).
         
-        RUN sistema/generico/procedures/b1wgen0153.p 
-            PERSISTENT SET h-b1wgen0153.
+       { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
     
-        /* Gerar log lote */       
-        ASSIGN aux_des_log  = "Alocando lote -> " +
-                              "cdcooper: " +  string(crapaut.cdcooper) + " " +
-                              "dtmvtolt: " +  string(crapaut.dtmvtolt,"99/99/9999") + " " +
-                              "cdagenci: " +  string(aux_cdagenci)     + " " +
-                              "cdbccxlt: 11 " +
-                              "nrdolote: 11900 " +
-                              "nrdconta: " +  string(par_nrdconta) + " " +
-                              "cdhistor: " +  string(aux_cdhisdeb) + " " +
-                              "rotina: b1wgen0016.paga_convenio ".
+       /* Busca a proxima sequencia do campo crapldt.nrsequen */
+       RUN STORED-PROCEDURE pc_sequence_progress
+       aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
+                                           ,INPUT "NRSEQDIG"
+                                           ,INPUT STRING(crapaut.cdcooper) + ";" +
+                                                  STRING(crapaut.dtmvtolt,"99/99/9999") + ";" +
+                                                  STRING(crapaut.cdagenci) + ";" +
+                                                  STRING(11) + ";" +
+                                                  STRING(11900)
+                                           ,INPUT "N"
+                                           ,"").
 
-            RUN gera_log_lote_uso IN h-b1wgen0153
-                                ( INPUT crapaut.cdcooper,
-                                  INPUT par_nrdconta,
-                                  INPUT 11900,
-                                  INPUT-OUTPUT aux_flgerlog,
-                                  INPUT aux_des_log).	
+       CLOSE STORED-PROC pc_sequence_progress
+       aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
         
-        /* Leitura do lote */
-        DO aux_contador = 1 TO 10:
+       { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
     
-            par_dscritic = "".
-            
-            FIND craplot WHERE craplot.cdcooper = crapaut.cdcooper   AND
-                               craplot.dtmvtolt = crapaut.dtmvtolt   AND
-                               craplot.cdagenci = crapaut.cdagenci   AND
-                               craplot.cdbccxlt = 11                 AND
-                               craplot.nrdolote = 11000 + 900
-                               USE-INDEX craplot1
-                               EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-
-            IF   NOT AVAILABLE craplot   THEN
-                 IF   LOCKED craplot   THEN
-                      DO:
-                      
-                          /* Gerar log lote */       
-                          ASSIGN aux_des_log  = "Lote ja Alocado -> " +
-                                                "cdcooper: " +  string(crapaut.cdcooper) + " " +
-                                                "dtmvtolt: " +  string(crapaut.dtmvtolt,"99/99/9999") + " " +
-                                                "cdagenci: " +  string(aux_cdagenci)     + " " +
-                                                "cdbccxlt: 11 " +
-                                                "nrdolote: 11900 " +
-                                                "nrdconta: " +  string(par_nrdconta) + " " +
-                                                "cdhistor: " +  string(aux_cdhisdeb) + " " +
-                                                "rotina: b1wgen0016.paga_convenio ".
-
-                              RUN gera_log_lote_uso IN h-b1wgen0153
-                                                  ( INPUT crapaut.cdcooper,
-                                                    INPUT par_nrdconta,
-                                                    INPUT 11900,
-                                                    INPUT-OUTPUT aux_flgerlog,
-                                                    INPUT aux_des_log).	
-                      
-                          par_dscritic = "Lote ja esta sendo alterado. " +
-                                         "Tente novamente.".
-                          PAUSE 1 NO-MESSAGE.
-                          NEXT.
-                      END.
-                 ELSE
-                      DO:
-                          EMPTY TEMP-TABLE cratlot.
-                       
-                          CREATE cratlot.
-                          ASSIGN cratlot.cdcooper = crapaut.cdcooper
-                                 cratlot.dtmvtolt = crapaut.dtmvtolt
-                                 cratlot.cdagenci = crapaut.cdagenci
-                                 cratlot.cdbccxlt = 11
-                                 cratlot.nrdolote = 11000 + crapaut.nrdcaixa
-                                 cratlot.nrdcaixa = crapaut.nrdcaixa
-                                 cratlot.cdoperad = "996"
-                                 cratlot.cdopecxa = "996"
-                                 cratlot.tplotmov = 1.
-                               
-                          RUN sistema/generico/procedures/b1craplot.p
-                              PERSISTENT SET h-b1craplot.
-                            
-                          IF   VALID-HANDLE(h-b1craplot)   THEN
-                               DO:
-                                   RUN inclui-registro IN h-b1craplot
-                                                         (INPUT  TABLE cratlot,
-                                                          OUTPUT par_dscritic).
-                       
-                                   DELETE PROCEDURE h-b1craplot.
-                 
-                                   IF   RETURN-VALUE = "NOK"   THEN
-                                        UNDO, RETURN "NOK".
-                               END.
-                               
-                          NEXT. /* Para pegar o novo registro */
-                      END.
-                    
-            LEAVE.
-            
-        END. /* Fim do DO ... TO */
+       ASSIGN aux_nrseqdig = INTE(pc_sequence_progress.pr_sequence)
+                             WHEN pc_sequence_progress.pr_sequence <> ?.    
         
-        IF  VALID-HANDLE(h-b1wgen0153) THEN                                        
-            DELETE PROCEDURE h-b1wgen0153. 
-        
-        IF   par_dscritic <> ""   THEN
-             UNDO, RETURN "NOK".
-
-        EMPTY TEMP-TABLE cratlot.
-        BUFFER-COPY craplot TO cratlot.
-              
-        /* Atualiza o lote do debito na TEMP-TABLE */
-        ASSIGN cratlot.qtinfoln = cratlot.qtinfoln + 1
-               cratlot.qtcompln = cratlot.qtcompln + 1
-               cratlot.nrseqdig = cratlot.nrseqdig + 1
-               /* DEBITO */
-               cratlot.vlinfodb = cratlot.vlinfodb + crapaut.vldocmto
-               cratlot.vlcompdb = cratlot.vlcompdb + crapaut.vldocmto.
-
-        /* Evitar Problemas de LOCK */
-        FIND CURRENT craplot NO-LOCK NO-ERROR.
-        RELEASE craplot.
-
         /* Gera um protocolo para o pagamento */
         RUN sistema/generico/procedures/bo_algoritmo_seguranca.p
             PERSISTENT SET h-bo_algoritmo_seguranca.
@@ -2131,7 +2036,7 @@ PROCEDURE paga_convenio:
                                        INPUT crapaut.dtmvtolt,
                                        INPUT crapaut.hrautent,
                                        INPUT par_nrdconta,
-                                       INPUT cratlot.nrseqdig,
+                                       INPUT aux_nrseqdig,
                                        INPUT crapaut.nrsequen,
                                        INPUT crapaut.vldocmto,
                                        INPUT crapaut.nrdcaixa,
@@ -2189,7 +2094,7 @@ PROCEDURE paga_convenio:
                                                  INPUT crapaut.nrdcaixa,
                                                  INPUT crapaut.cdopecxa,
                                                  INPUT crapaut.vldocmto,
-                                                 INPUT cratlot.nrseqdig,
+                                                 INPUT aux_nrseqdig,
                                                  INPUT YES,             /* Debito    */
                                                  INPUT "1",             /* On-Line   */
                                                  INPUT NO,              /* Estorno   */
@@ -2256,9 +2161,9 @@ PROCEDURE paga_convenio:
                cratlcm.nrdconta = par_nrdconta
                cratlcm.nrdctabb = par_nrdconta
                cratlcm.nrdctitg = STRING(par_nrdconta,"99999999")
-               cratlcm.nrdocmto = cratlot.nrseqdig
-               cratlcm.nrsequni = cratlot.nrseqdig
-               cratlcm.nrseqdig = cratlot.nrseqdig
+               cratlcm.nrdocmto = aux_nrseqdig
+               cratlcm.nrsequni = aux_nrseqdig
+               cratlcm.nrseqdig = aux_nrseqdig
                cratlcm.cdhistor = crapaut.cdhistor
                cratlcm.vllanmto = crapaut.vldocmto
                cratlcm.nrautdoc = crapaut.nrsequen
@@ -2290,21 +2195,6 @@ PROCEDURE paga_convenio:
  
                  DELETE PROCEDURE h-b1craplcm.
         
-                 IF   RETURN-VALUE = "NOK"   THEN
-                      UNDO, RETURN "NOK".
-             END.
-
-        /* Atualiza o registro do lote */
-        RUN sistema/generico/procedures/b1craplot.p
-            PERSISTENT SET h-b1craplot.
-                            
-        IF   VALID-HANDLE(h-b1craplot)   THEN
-             DO:
-                 RUN altera-registro IN h-b1craplot (INPUT  TABLE cratlot,
-                                                     OUTPUT par_dscritic).
-                                 
-                 DELETE PROCEDURE h-b1craplot.
-             
                  IF   RETURN-VALUE = "NOK"   THEN
                       UNDO, RETURN "NOK".
              END.
@@ -2949,6 +2839,7 @@ PROCEDURE paga_titulo:
     DEF VAR ret_dsinserr                  AS CHAR                   NO-UNDO.
     DEF VAR aux_flgerlog                  AS CHAR                   NO-UNDO.  
 	  DEF VAR aux_des_log                   AS CHAR                   NO-UNDO.
+    DEF VAR aux_nrseqdig                  AS INTE                   NO-UNDO.
 
     DEF VAR h-b1wgen0153                  AS HANDLE                 NO-UNDO.
     DEF VAR h_b1crap00                    AS HANDLE                 NO-UNDO.
@@ -3192,122 +3083,29 @@ PROCEDURE paga_titulo:
         RUN sistema/generico/procedures/b1wgen0153.p 
             PERSISTENT SET h-b1wgen0153.
     
-        /* Gerar log lote */       
-        ASSIGN aux_des_log  = "Alocando lote -> " +
-                              "cdcooper: " +  string(crapaut.cdcooper) + " " +
-                              "dtmvtolt: " +  string(crapaut.dtmvtolt,"99/99/9999") + " " +
-                              "cdagenci: " +  string(aux_cdagenci)     + " " +
-                              "cdbccxlt: 11 " +
-                              "nrdolote: 11900 " +
-                              "nrdconta: " +  string(par_nrdconta) + " " +
-                              "cdhistor: " +  string(aux_cdhisdeb) + " " +
-                              "rotina: b1wgen0016.paga_titulo ".
+       { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
-            RUN gera_log_lote_uso IN h-b1wgen0153
-                                ( INPUT crapaut.cdcooper,
-                                  INPUT par_nrdconta,
-                                  INPUT 11900,
-                                  INPUT-OUTPUT aux_flgerlog,
-                                  INPUT aux_des_log).	
-        
-        /* Leitura do lote */
-        DO aux_contador = 1 TO 10:
-                             
-            par_dscritic = "".
+       /* Busca a proxima sequencia do campo crapldt.nrsequen */
+       RUN STORED-PROCEDURE pc_sequence_progress
+       aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
+                                           ,INPUT "NRSEQDIG"
+                                           ,INPUT STRING(crapaut.cdcooper) + ";" +
+                                                  STRING(crapaut.dtmvtolt,"99/99/9999") + ";" +
+                                                  STRING(crapaut.cdagenci) + ";" +
+                                                  STRING(11) + ";" +
+                                                  STRING(11900)
+                                           ,INPUT "N"
+                                           ,"").
 
-            FIND craplot WHERE craplot.cdcooper = crapaut.cdcooper   AND
-                               craplot.dtmvtolt = crapaut.dtmvtolt   AND
-                               craplot.cdagenci = crapaut.cdagenci   AND
-                               craplot.cdbccxlt = 11                 AND
-                               craplot.nrdolote = 11000 + 900
-                               USE-INDEX craplot1
-                               EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+       CLOSE STORED-PROC pc_sequence_progress
+       aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
-            IF   NOT AVAILABLE craplot   THEN
-                 IF   LOCKED craplot   THEN
-                      DO:
-                          /* Gerar log lote */       
-                          ASSIGN aux_des_log  = "Lote ja Alocado -> " +
-                                                "cdcooper: " +  string(crapaut.cdcooper) + " " +
-                                                "dtmvtolt: " +  string(crapaut.dtmvtolt,"99/99/9999") + " " +
-                                                "cdagenci: " +  string(aux_cdagenci)     + " " +
-                                                "cdbccxlt: 11 " +
-                                                "nrdolote: 11900 " +
-                                                "nrdconta: " +  string(par_nrdconta) + " " +
-                                                "cdhistor: " +  string(aux_cdhisdeb) + " " +
-                                                "rotina: b1wgen0016.paga_titulo ".
-
-                              RUN gera_log_lote_uso IN h-b1wgen0153
-                                                  ( INPUT crapaut.cdcooper,
-                                                    INPUT par_nrdconta,
-                                                    INPUT 11900,
-                                                    INPUT-OUTPUT aux_flgerlog,
-                                                    INPUT aux_des_log).	
+       { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
                       
-                          par_dscritic = "Lote ja esta sendo alterado. " +
-                                         "Tente novamente.".
-                          PAUSE 1 NO-MESSAGE.
-                          NEXT.
-                      END.
-                 ELSE
-                      DO:
-                          EMPTY TEMP-TABLE cratlot.
-                          ASSIGN par_dscritic = "".
+       ASSIGN aux_nrseqdig = INTE(pc_sequence_progress.pr_sequence)
+                             WHEN pc_sequence_progress.pr_sequence <> ?.    
 
-                          CREATE cratlot.
-                          ASSIGN cratlot.cdcooper = crapaut.cdcooper
-                                 cratlot.dtmvtolt = crapaut.dtmvtolt
-                                 cratlot.cdagenci = crapaut.cdagenci
-                                 cratlot.cdbccxlt = 11
-                                 cratlot.nrdolote = 11000 + crapaut.nrdcaixa
-                                 cratlot.nrdcaixa = crapaut.nrdcaixa
-                                 cratlot.cdoperad = "996"
-                                 cratlot.cdopecxa = "996"
-                                 cratlot.tplotmov = 1.
                           
-                          RUN sistema/generico/procedures/b1craplot.p
-                              PERSISTENT SET h-b1craplot.
-       
-                          IF   VALID-HANDLE(h-b1craplot)   THEN
-                               DO:
-                                   RUN inclui-registro IN h-b1craplot
-                                                         (INPUT  TABLE cratlot,
-                                                          OUTPUT par_dscritic).
-                           
-                                   DELETE PROCEDURE h-b1craplot.
-            
-                                   IF   RETURN-VALUE = "NOK"   THEN
-                                        UNDO, RETURN "NOK".
-                               END.
-                          
-                          NEXT. /* Para pegar o novo registro */
-                      END.
-
-            LEAVE.
-           
-        END. /* Fim do DO ... TO */
-        
-        IF VALID-HANDLE(h-b1wgen0153) THEN
-           DELETE PROCEDURE h-b1wgen0153.
-        
-        IF   par_dscritic <> ""   THEN
-             UNDO, RETURN "NOK".
-        
-        EMPTY TEMP-TABLE cratlot.
-        BUFFER-COPY craplot TO cratlot.
-                        
-        /* Atualiza o lote do debito na TEMP-TABLE */
-        ASSIGN cratlot.qtinfoln = cratlot.qtinfoln + 1
-               cratlot.qtcompln = cratlot.qtcompln + 1
-               cratlot.nrseqdig = cratlot.nrseqdig + 1
-               /* DEBITO */
-               cratlot.vlinfodb = cratlot.vlinfodb + crapaut.vldocmto
-               cratlot.vlcompdb = cratlot.vlcompdb + crapaut.vldocmto.
- 
-	    /* desalocar registro de lote */
-		FIND CURRENT craplot NO-LOCK NO-ERROR.
-        RELEASE craplot.
-
         /* Gera um protocolo para o pagamento */
         RUN sistema/generico/procedures/bo_algoritmo_seguranca.p
             PERSISTENT SET h-bo_algoritmo_seguranca.
@@ -3374,7 +3172,7 @@ PROCEDURE paga_titulo:
                                        INPUT crapaut.dtmvtolt,
                                        INPUT crapaut.hrautent,
                                        INPUT par_nrdconta,
-                                       INPUT cratlot.nrseqdig,
+                                       INPUT aux_nrseqdig,
                                        INPUT crapaut.nrsequen,
                                        INPUT crapaut.vldocmto,
                                        INPUT crapaut.nrdcaixa,
@@ -3432,7 +3230,7 @@ PROCEDURE paga_titulo:
                                                  INPUT crapaut.nrdcaixa,
                                                  INPUT crapaut.cdopecxa,
                                                  INPUT crapaut.vldocmto,
-                                                 INPUT cratlot.nrseqdig,
+                                                 INPUT aux_nrseqdig,
                                                  INPUT YES,             /* Debito */
                                                  INPUT "1",             /* On-Line */
                                                  INPUT NO,              /* Estorno */
@@ -3498,9 +3296,9 @@ PROCEDURE paga_titulo:
                cratlcm.nrdconta = par_nrdconta
                cratlcm.nrdctabb = par_nrdconta
                cratlcm.nrdctitg = STRING(par_nrdconta,"99999999")
-               cratlcm.nrdocmto = cratlot.nrseqdig
-               cratlcm.nrsequni = cratlot.nrseqdig
-               cratlcm.nrseqdig = cratlot.nrseqdig
+               cratlcm.nrdocmto = aux_nrseqdig
+               cratlcm.nrsequni = aux_nrseqdig
+               cratlcm.nrseqdig = aux_nrseqdig
                cratlcm.cdhistor = crapaut.cdhistor
                cratlcm.vllanmto = crapaut.vldocmto
                cratlcm.nrautdoc = crapaut.nrsequen
@@ -3531,21 +3329,6 @@ PROCEDURE paga_titulo:
                       UNDO, RETURN "NOK".
              END.
              
-        /* Atualiza o registro do lote */
-        RUN sistema/generico/procedures/b1craplot.p
-            PERSISTENT SET h-b1craplot.
-                            
-        IF   VALID-HANDLE(h-b1craplot)   THEN
-             DO:
-                 RUN altera-registro IN h-b1craplot (INPUT  TABLE cratlot,
-                                                     OUTPUT par_dscritic).
-                                 
-                 DELETE PROCEDURE h-b1craplot.
-                 
-                 IF   RETURN-VALUE = "NOK"   THEN
-                      UNDO, RETURN "NOK".
-             END.
-        
         /* Cria o registro do movimento da internet */
         IF  par_idorigem <> 4  THEN /* TAA */
             DO:
@@ -4966,6 +4749,7 @@ PROCEDURE estorna_convenio:
     DEF VAR aux_vlfatura                  AS DEC                     NO-UNDO.
     DEF VAR aux_nrdigfat                  AS INT                     NO-UNDO.
     DEF VAR aux_iptu                      AS LOG                     NO-UNDO.
+    DEF VAR aux_nrseqdig                  AS INTE                    NO-UNDO.
 
     DEF BUFFER crabaut FOR crapaut.
 
@@ -5114,48 +4898,29 @@ PROCEDURE estorna_convenio:
                  UNDO, RETURN "NOK".
              END.
 
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
         
-        /* Leitura do lote */
-        DO WHILE TRUE:
+        /* Busca a proxima sequencia do campo crapldt.nrsequen */
+        RUN STORED-PROCEDURE pc_sequence_progress
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
+                                           ,INPUT "NRSEQDIG"
+                                           ,INPUT STRING(crapaut.cdcooper) + ";" +
+                                                  STRING(crapaut.dtmvtolt,"99/99/9999") + ";" +
+                                                  STRING(crapaut.cdagenci) + ";" +
+                                                  STRING(11) + ";" +
+                                                  STRING(11900)
+                                           ,INPUT "N"
+                                           ,"").
     
-           FIND craplot WHERE craplot.cdcooper = crapaut.cdcooper   AND
-                              craplot.dtmvtolt = crapaut.dtmvtolt   AND
-                              craplot.cdagenci = crapaut.cdagenci   AND
-                              craplot.cdbccxlt = 11                 AND
-                              craplot.nrdolote = 11000 + 900
-                              USE-INDEX craplot1
-                              EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+        CLOSE STORED-PROC pc_sequence_progress
+        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
-           IF   NOT AVAILABLE craplot   THEN
-                IF   LOCKED craplot   THEN
-                     DO:
-                         PAUSE 1 NO-MESSAGE.
-                         NEXT.
-                     END.
-                ELSE
-                     DO:
-                         par_dscritic = "Lote nao encontrado.".
-                         UNDO, RETURN "NOK".
-                     END.
-           LEAVE.
-        END. /* Fim do WHILE */
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-        EMPTY TEMP-TABLE cratlot.
-        BUFFER-COPY craplot TO cratlot.
-              
-        /* Atualiza o lote na TEMP-TABLE */
-        ASSIGN cratlot.qtinfoln = cratlot.qtinfoln + 1
-               cratlot.qtcompln = cratlot.qtcompln + 1
-               cratlot.nrseqdig = cratlot.nrseqdig + 1
-               /* CREDITO */
-               cratlot.vlinfocr = cratlot.vlinfocr + crapaut.vldocmto
-               cratlot.vlcompcr = cratlot.vlcompcr + crapaut.vldocmto.
+        ASSIGN aux_nrseqdig = INTE(pc_sequence_progress.pr_sequence)
+                             WHEN pc_sequence_progress.pr_sequence <> ?.    
 
-		FIND CURRENT craplot NO-LOCK NO-ERROR.
-        RELEASE craplot.
-
-        /* Coloca a informacao de estorno no protocolo, usando os dados da
-           autenticacao do debito em conta */
+        /* Coloca a informacao de estorno no protocolo, usando os dados da autenticacao do debito em conta */
         RUN sistema/generico/procedures/bo_algoritmo_seguranca.p
             PERSISTENT SET h-bo_algoritmo_seguranca.
             
@@ -5254,9 +5019,9 @@ PROCEDURE estorna_convenio:
                cratlcm.nrdconta = par_nrdconta
                cratlcm.nrdctabb = par_nrdconta
                cratlcm.nrdctitg = STRING(par_nrdconta,"99999999")
-               cratlcm.nrdocmto = cratlot.nrseqdig
-               cratlcm.nrsequni = cratlot.nrseqdig
-               cratlcm.nrseqdig = cratlot.nrseqdig
+               cratlcm.nrdocmto = aux_nrseqdig
+               cratlcm.nrsequni = aux_nrseqdig
+               cratlcm.nrseqdig = aux_nrseqdig
                cratlcm.cdhistor = aux_cdhisest /* Historico do Estorno */
                cratlcm.vllanmto = crapaut.vldocmto
                cratlcm.nrautdoc = crapaut.nrsequen
@@ -5284,22 +5049,6 @@ PROCEDURE estorna_convenio:
                       UNDO, RETURN "NOK".
              END.
                                                     
-        
-        /* Atualiza o registro do lote */
-        RUN sistema/generico/procedures/b1craplot.p
-            PERSISTENT SET h-b1craplot.
-                            
-        IF   VALID-HANDLE(h-b1craplot)   THEN
-             DO:
-                 RUN altera-registro IN h-b1craplot (INPUT  TABLE cratlot,
-                                                     OUTPUT par_dscritic).
-                                                     
-                 DELETE PROCEDURE h-b1craplot.
-
-                 IF   RETURN-VALUE <> "OK"   THEN
-                      UNDO, RETURN "NOK".
-             END.
-
         IF  par_idorigem <> 4  THEN /* TAA */
             DO:
 
@@ -5474,6 +5223,7 @@ PROCEDURE estorna_titulo:
     DEF VAR h-b1craplot                   AS HANDLE                  NO-UNDO.
     DEF VAR h-b1crapmvi                   AS HANDLE                  NO-UNDO.
     DEF VAR h-bo_algoritmo_seguranca      AS HANDLE                  NO-UNDO.
+    DEF VAR aux_nrseqdig                  AS INTE                    NO-UNDO.    
 
     DEF BUFFER crabaut FOR crapaut.
 
@@ -5589,48 +5339,29 @@ PROCEDURE estorna_titulo:
                  UNDO, RETURN "NOK".
              END.
 
-        
-        /* Leitura do lote */
-        DO WHILE TRUE:
-    
-           FIND craplot WHERE craplot.cdcooper = crapaut.cdcooper   AND
-                              craplot.dtmvtolt = crapaut.dtmvtolt   AND
-                              craplot.cdagenci = crapaut.cdagenci   AND
-                              craplot.cdbccxlt = 11                 AND
-                              craplot.nrdolote = 11000 + 900
-                              USE-INDEX craplot1
-                              EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+       { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
-           IF   NOT AVAILABLE craplot   THEN
-                IF   LOCKED craplot   THEN
-                     DO:
-                         PAUSE 1 NO-MESSAGE.
-                         NEXT.
-                     END.
-                ELSE
-                     DO:
-                         par_dscritic = "Lote nao encontrado.".
-                         UNDO, RETURN "NOK".
-                     END.
-           LEAVE.
-        END. /* Fim do WHILE */
+       /* Busca a proxima sequencia do campo crapldt.nrsequen */
+       RUN STORED-PROCEDURE pc_sequence_progress
+       aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
+                                           ,INPUT "NRSEQDIG"
+                                           ,INPUT STRING(crapaut.cdcooper) + ";" +
+                                                  STRING(crapaut.dtmvtolt,"99/99/9999") + ";" +
+                                                  STRING(crapaut.cdagenci) + ";" +
+                                                  STRING(11) + ";" +
+                                                  STRING(11900)
+                                           ,INPUT "N"
+                                           ,"").
 
-        EMPTY TEMP-TABLE cratlot.
-        BUFFER-COPY craplot TO cratlot.
+       CLOSE STORED-PROC pc_sequence_progress
+       aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
               
-        /* Atualiza o lote na TEMP-TABLE */
-        ASSIGN cratlot.qtinfoln = cratlot.qtinfoln + 1
-               cratlot.qtcompln = cratlot.qtcompln + 1
-               cratlot.nrseqdig = cratlot.nrseqdig + 1
-               /* CREDITO */
-               cratlot.vlinfocr = cratlot.vlinfocr + crapaut.vldocmto
-               cratlot.vlcompcr = cratlot.vlcompcr + crapaut.vldocmto.
+       { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-		FIND CURRENT craplot NO-LOCK NO-ERROR.
-        RELEASE craplot.
+       ASSIGN aux_nrseqdig = INTE(pc_sequence_progress.pr_sequence)
+                             WHEN pc_sequence_progress.pr_sequence <> ?.        
 
-        /* Coloca a informacao de estorno no protocolo, usando os dados da
-           autenticacao do debito em conta */
+        /* Coloca a informacao de estorno no protocolo, usando os dados da autenticacao do debito em conta */
         RUN sistema/generico/procedures/bo_algoritmo_seguranca.p
             PERSISTENT SET h-bo_algoritmo_seguranca.
             
@@ -5725,9 +5456,9 @@ PROCEDURE estorna_titulo:
                cratlcm.nrdconta = par_nrdconta
                cratlcm.nrdctabb = par_nrdconta
                cratlcm.nrdctitg = STRING(par_nrdconta,"99999999")
-               cratlcm.nrdocmto = cratlot.nrseqdig
-               cratlcm.nrsequni = cratlot.nrseqdig
-               cratlcm.nrseqdig = cratlot.nrseqdig
+               cratlcm.nrdocmto = aux_nrseqdig
+               cratlcm.nrsequni = aux_nrseqdig
+               cratlcm.nrseqdig = aux_nrseqdig
                cratlcm.cdhistor = aux_cdhisest /* Historico do Estorno */
                cratlcm.vllanmto = crapaut.vldocmto
                cratlcm.nrautdoc = crapaut.nrsequen
@@ -5754,24 +5485,7 @@ PROCEDURE estorna_titulo:
                  IF   RETURN-VALUE = "NOK"   THEN
                       UNDO, RETURN "NOK".
              END.
-                                                    
-        
-        /* Atualiza o registro do lote */
-        RUN sistema/generico/procedures/b1craplot.p
-            PERSISTENT SET h-b1craplot.
-                            
-        IF   VALID-HANDLE(h-b1craplot)   THEN
-             DO:
-                 RUN altera-registro IN h-b1craplot (INPUT  TABLE cratlot,
-                                                     OUTPUT par_dscritic).
-                                                     
-                 DELETE PROCEDURE h-b1craplot.
 
-                 IF   RETURN-VALUE = "NOK"   THEN
-                      UNDO, RETURN "NOK".
-             END.
-
-        
         IF  par_idorigem <> 4  THEN /* TAA */
             DO:
                 IF crapass.idastcjt = 0 THEN
@@ -7517,7 +7231,7 @@ PROCEDURE aprova_trans_pend:
                     BUFFER-COPY tbcobran_sms_trans_pend TO tt-tbcobran_sms_trans_pend.
                                                                                                                                       
                     ASSIGN tt-tbgen_trans_pend.idmovimento_conta  = IdentificaMovCC(tbgen_trans_pend.tptransacao,1,0).
-                  END.
+            END.    
               END.
                 ELSE IF tbgen_trans_pend.tptransacao = 12 THEN /* Desconto de Cheque */
                   DO:
@@ -12118,7 +11832,7 @@ PROCEDURE aprova_trans_pend:
                                     INPUT tt-tbcobran_sms_trans_pend.vlservico,
                                     INPUT aux_conttran).
                                                                                                                                                                   
-                                END.
+                    END.
                  ELSE IF tt-tbgen_trans_pend.tptransacao = 11 THEN /* Pagamento DARF/DAS */
                   DO: 
                     FOR FIRST tt-tbpagto_darf_das_trans_pend WHERE tt-tbpagto_darf_das_trans_pend.cdtransacao_pendente = tt-tbgen_trans_pend.cdtransacao_pendente NO-LOCK. END.
@@ -13036,7 +12750,7 @@ ELSE IF tt-tbgen_trans_pend.tptransacao = 11 THEN /* Pagamentos DARF/DAS */
               ASSIGN tt-vlrdat.vlronlin = tt-vlrdat.vlronlin + tt-tbpagto_darf_das_trans_pend.vlpagamento.
           ELSE IF tt-tbgen_trans_pend.idmovimento_conta = 3 THEN /* Agendamento */
               ASSIGN tt-vlrdat.vlronlin = tt-vlrdat.vlronlin + tt-tbpagto_darf_das_trans_pend.vlpagamento.
-      END.						
+      END.						 
 	/* Contrato SMS */
 ELSE IF tt-tbgen_trans_pend.tptransacao = 16 OR
         tt-tbgen_trans_pend.tptransacao = 17  THEN
