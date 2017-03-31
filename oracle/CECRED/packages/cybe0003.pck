@@ -106,7 +106,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0003 AS
 --
   --  Objetivo  : Package referente aos cadastros do CYBER
 --
---    Alteracoes: 
+--    Alteracoes: 01/03/2017 - Alteracoes projeto 432 - Jean (Mout´S)
 --    
 ---------------------------------------------------------------------------------------------------------------
 
