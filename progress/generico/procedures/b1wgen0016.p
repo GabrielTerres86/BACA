@@ -447,9 +447,14 @@
 			  28/07/2016 - #483548 Merge da PROD. Correcao de cpf passado para procedure 
                            pc_verifica_operacao_prog nas operacoes de transferencias (Carlos)
 			
+              04/08/2016 - Conversao das procedures obtem-agendamentos, parametros-cancelamento p/
+						   PLSQL e ajustes na aprova_trans_pend, Pjr. 338 (Jean Michel).
+
               01/09/2016 - Alteracao da procedure aprova_trans_pend para aprovacao de
 						   transacoes com quantidade minima de assinaturas, SD 514239 (Jean Michel).
         
+              19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS pelo InternetBanking (Projeto 338 - Lucas Lunelli)
+
 			  06/09/2016 - Ajuste no horario de permissao de cancelamento de agendamento de TED
 						   (Adriano - SD 509480).
                            
@@ -1499,7 +1504,7 @@ PROCEDURE proc_cria_critica_transacao_oper:
                               ASSIGN aux_dtdebito = "Nesta Data"
                               aux_dscedent = "SMS INDIVIDUAL"
                               aux_vllantra = tbcobran_sms_trans_pend.vlservico.
-                              
+                
                               IF tbgen_trans_pend.tptransacao = 16 THEN
                               ASSIGN aux_dstptran = "Adesao Serviço SMS de Cobrança".
                               ELSE
@@ -1514,26 +1519,26 @@ PROCEDURE proc_cria_critica_transacao_oper:
                 ELSE
                 IF tbgen_trans_pend.tptransacao = 4 THEN
                     aux_dstiptra = "TED".
-            ELSE
+                ELSE
                 IF tbgen_trans_pend.tptransacao = 1 OR
-                 tbgen_trans_pend.tptransacao = 5 THEN
+                    tbgen_trans_pend.tptransacao = 5 THEN
                     aux_dstiptra = "Transferencia".
-                    ELSE
+                ELSE
                 IF tbgen_trans_pend.tptransacao = 6 THEN
                     aux_dstiptra = "Credito Pre-Aprovado".
-                    ELSE
-                                                              IF tbgen_trans_pend.tptransacao = 7 THEN
-                 aux_dstiptra = aux_dstptran.
+                ELSE
+                IF tbgen_trans_pend.tptransacao = 7 THEN
+                    aux_dstiptra = aux_dstptran.
                 ELSE
                 IF tbgen_trans_pend.tptransacao = 8 THEN
                     aux_dstiptra = (IF tbconv_trans_pend.tpoperacao = 1 THEN "Autorizacao" ELSE (IF tbconv_trans_pend.tpoperacao = 2 THEN "Bloqueio" ELSE "Desbloqueio")) + " Debito Automatico".
-            ELSE
+                ELSE
                 IF tbgen_trans_pend.tptransacao = 9 THEN
                     aux_dstiptra = "Folha de Pagamento".
-                                                          ELSE
+                ELSE
                 IF tbgen_trans_pend.tptransacao = 10  THEN /** PACOTE DE TARIFAS **/ 
                     aux_dstiptra = "Servicos Cooperativos".                    
-                                                          ELSE
+                ELSE
                 IF tbgen_trans_pend.tptransacao = 11 THEN
                     DO:
                         IF tt-tbpagto_darf_das_trans_pend.tppagamento = 1 THEN 
@@ -1554,8 +1559,9 @@ PROCEDURE proc_cria_critica_transacao_oper:
                        tt-criticas_transacoes_oper.vllantra = aux_vllantra
                        tt-criticas_transacoes_oper.dscedent = aux_dscedent
                        tt-criticas_transacoes_oper.dstiptra = aux_dstiptra
-                   tt-criticas_transacoes_oper.flgtrans = par_aprovada
-                       tt-criticas_transacoes_oper.dscritic = par_dscritic.
+                       tt-criticas_transacoes_oper.flgtrans = par_aprovada
+                       tt-criticas_transacoes_oper.dscritic = par_dscritic
+                       tt-criticas_transacoes_oper.cdtransa = tbgen_trans_pend.cdtransacao_pendente.
     END.
 
             DELETE PROCEDURE h-b1wgen9999.
@@ -7418,7 +7424,7 @@ PROCEDURE aprova_trans_pend:
                                 BUFFER-COPY tbtarif_pacote_trans_pend TO tt-tbtarif_pacote_trans_pend. 
 
                                 ASSIGN tt-tbgen_trans_pend.idmovimento_conta  = IdentificaMovCC(tbgen_trans_pend.tptransacao,1,0).
-                            END.                                                                                                                                
+            END.        
                                                                                                                           
                         ELSE
                             DO:
@@ -7444,7 +7450,7 @@ PROCEDURE aprova_trans_pend:
                                                             INPUT par_nmdatela,
                                                             INPUT par_nrdconta,
                                                            OUTPUT aux_nrdrowid).
-                                    END.
+    END.
 
                                 RETURN "NOK".
                             END.
@@ -7459,13 +7465,13 @@ PROCEDURE aprova_trans_pend:
                       
                     ASSIGN aux_trandarf = aux_trandarf + STRING(aux_cddoitem).
                     
-                  END.				  
+                  END.
 				/* Contrato SMS */
 				ELSE IF tbgen_trans_pend.tptransacao = 16 OR
 				        tbgen_trans_pend.tptransacao = 17 THEN
 				DO:
 					FOR FIRST tbcobran_sms_trans_pend WHERE tbcobran_sms_trans_pend.cdtransacao_pendente = aux_cddoitem NO-LOCK. END.
-                                                                                                                            
+       
 					IF AVAIL tbcobran_sms_trans_pend THEN
 					DO:
 						CREATE tt-tbcobran_sms_trans_pend.
