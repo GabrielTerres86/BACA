@@ -5,7 +5,6 @@
 	 * DATA CRIAÇÃO : 25/08/2015
 	 * OBJETIVO     : Consulta de Assessorias para a tela CADCAS
 	 * --------------
-	 * ALTERAÇÕES   : 
 	 * --------------
 	 */
 ?>
@@ -16,8 +15,8 @@
 				<thead>
 					<tr>
 						<th><? echo utf8ToHtml("C&oacute;digo");?></th>
+
 						<th><? echo utf8ToHtml("Nome da Assessoria");?></th>
-					</tr>
 				</thead>
 				<tbody>
 				</tbody>
