@@ -20,12 +20,16 @@ isPostMethod();
 $idpacote = (isset($_POST['idpacote'])) ? $_POST['idpacote'] : 0;
 $cdcooper = (isset($_POST['cdcooper'])) ? $_POST['cdcooper'] : 0;
 $flgstatus = (isset($_POST['flgstatus'])) ? $_POST['flgstatus'] : 0;
+$perdesconto = $_POST['perdesconto'];
+$qtdsms = $_POST['qtdsms'];
 
 $xml = "<Root>";
 $xml .= " <Dados>";
 $xml .= "   <idpacote>".$idpacote."</idpacote>";
 $xml .= "   <cooper>".$cdcooper."</cooper>";
 $xml .= "   <flgstatus>".$flgstatus."</flgstatus>";
+$xml .= "   <perdesconto>".converteFloat($perdesconto)."</perdesconto>";
+$xml .= "   <qtdsms>".$qtdsms."</qtdsms>";
 $xml .= " </Dados>";
 $xml .= "</Root>";
 

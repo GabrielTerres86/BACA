@@ -165,7 +165,7 @@ function Grid() {
 
         if(existeRegistros(divRegistro)) {
             var primeiroRegistro = getTodosRegistros()[0];
-            selecionarRegistro(primeiroRegistro.Id);
+            selecionarRegistro(primeiroRegistro.id);
         }
     }
 
@@ -351,12 +351,65 @@ function PopupPacote() {
         var opcaoSelecionada = cabecalho.getOpcaoSelecionada();
 
         if(opcaoSelecionada == "A") {
-            $("#btPopupAlterar").show();
-            getComponenteFlgStatus().habilitaCampo();
+            habilitarAlteracoes();
         } else {
             $("#btPopupAlterar").hide();
         }
-        $("#divRotina").css("left","453px");
+        $("#divRotina").css("left", "453px");
+
+        $("#qtdsms").setMask('INTEGER', 'zzzzzzzz', '', '');
+        $("#perdesconto").setMask('DECIMAL', 'zzz.zzz.zzz.zz9,99', ',', '');
+
+    }
+
+    var habilitarAlteracoes = function () {
+
+        $("#btPopupAlterar").show();
+        getComponenteFlgStatus().habilitaCampo();
+        getComponentePercentualDesconto().habilitaCampo();
+        getComponenteQuantidadeSMS().habilitaCampo();
+
+        $("#perdesconto").change(function() {
+            calcularTarifa();
+        });
+
+        $("#qtdsms").change(function () {
+            calcularTarifa();
+        });
+    }
+
+    var calcularTarifa = function () {
+
+        $.ajax({
+            type: "POST",
+            dataType: 'json',
+            url: UrlSite + "telas/cadsms/calcular_tarifa.php",
+            data: {
+                cdcooper: cabecalho.getCooperativaSelecionada(),
+                cdtarifa: popup.getIdTarifa(),
+                qtdsms: popup.getQuantidadeSMS(),
+                perdesconto: popup.getPercentualDesconto(),
+                redirect: "script_ajax"
+            },
+            error: function (objAjax, responseError, objExcept) {
+                hideMsgAguardo();
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#cddopcao','#frmCab').focus()");
+            },
+            beforeSend: function () {
+                showMsgAguardo("Aguarde, carregando informa&ccedil;&otilde;es ...");
+            },
+            success: function (response) {
+                hideMsgAguardo();
+                if (response.erro == undefined) {
+                    $("#vlsms").val(response.vlsms);
+                    $("#vlsmsad").val(response.vlsmsad);
+                    $("#vlpacote").val(response.vlpacote);
+                } else {
+                    showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + response.erro + ".", "Alerta - Ayllos", "$('#cddopcao','#frmCab').focus()");
+                }
+            }
+        });
+
     }
 
     var desabilitarCampos = function() {
@@ -369,6 +422,26 @@ function PopupPacote() {
 
     this.getFlgStatusSelecionado = function() {
         return getComponenteFlgStatus().val();
+    }
+
+    this.getIdTarifa = function () {
+        return $("#cdtarifa").val();
+    }
+
+    this.getPercentualDesconto = function () {
+        return getComponentePercentualDesconto().val();
+    }
+
+    this.getQuantidadeSMS = function () {
+        return getComponenteQuantidadeSMS().val();
+    }
+
+    var getComponentePercentualDesconto = function () {
+        return $("#perdesconto");
+    }
+
+    var getComponenteQuantidadeSMS = function () {
+        return $("#qtdsms");
     }
 
     var getComponenteFlgStatus = function() {
@@ -386,6 +459,8 @@ function PopupPacote() {
                 idpacote: grid.getRegistroSelecionado(),
                 cdcooper: cabecalho.getCooperativaSelecionada(),
                 flgstatus: popup.getFlgStatusSelecionado(),
+                perdesconto: popup.getPercentualDesconto(),
+                qtdsms: popup.getQuantidadeSMS(),
                 redirect: "script_ajax" // Tipo de retorno do ajax
             },
             error: function(objAjax, responseError, objExcept) {
@@ -597,8 +672,12 @@ function estadoInicial() {
     cDtiniofe.datepicker('disable');
     cDtfimofe.val("");
     cDtfimofe.datepicker('disable');
-	cddopcao = "M";
+    /*
+    cddopcao = "M";
     cCddopcao.val(cddopcao);
+    */
+
+    Cabecalho.inicializarComponenteOpcao($('#cddopcao', '#frmCab')[0]);
     
     controlaLayout();
 	
@@ -1031,7 +1110,7 @@ function confirmaOpcaoO() {
     var dsconfir = "";
     
     if (cNmrescop.val() == 0){
-        dsconfir = ', dados ser�o replicados para todas as cooperativas';     
+        dsconfir = ', dados ser&atilde;o replicados para todas as cooperativas';
     }
     
     showConfirmacao('Confirma a grava&ccedil;&atilde;o dos parametros' + dsconfir + '?', 'Confirma&ccedil;&atilde;o - Ayllos', 'manterRotina(\'GO\');', '', 'sim.gif', 'nao.gif');
@@ -1042,7 +1121,7 @@ function confirmaOpcaoM() {
     var dsconfir = "";
     
     if (cNmrescop.val() == 0){
-        dsconfir = ', dados ser�o replicados para todas as cooperativas';     
+        dsconfir = ', dados ser&atilde;o replicados para todas as cooperativas';
     }
     
     showConfirmacao('Confirma a grava&ccedil;&atilde;o dos parametros' + dsconfir + '?', 'Confirma&ccedil;&atilde;o - Ayllos', 'manterRotina(\'GM\');', '', 'sim.gif', 'nao.gif');
@@ -1053,7 +1132,7 @@ function confirmaOpcaoP() {
     var dsconfir = "";
     
     if (cNmrescop.val() == 0){
-        dsconfir = ', dados ser�o replicados para todas as cooperativas';     
+        dsconfir = ', dados ser&atilde;o replicados para todas as cooperativas';
     }
     
     showConfirmacao('Confirma a grava&ccedil;&atilde;o dos parametros' + dsconfir + '?', 'Confirma&ccedil;&atilde;o - Ayllos', 'manterRotina(\'GP\');', '', 'sim.gif', 'nao.gif');

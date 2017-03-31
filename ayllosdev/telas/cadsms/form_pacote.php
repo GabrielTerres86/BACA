@@ -108,7 +108,7 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
                                             <br style="clear:both" />	   
                                             
                                             <label for="dspacote" class="labelFormPacote"><? echo utf8ToHtml('Descrição:') ?></label>                        
-                                            <input name="dspacote" id="dspacote" style='width:388px' maxlength="300" type="text" style="margin-right: 5px" value=<? echo utf8ToHtml($dspacote) ?> />
+                                            <input name="dspacote" id="dspacote" style='width:388px' maxlength="300" type="text" style="margin-right: 5px" value="<? echo utf8ToHtml($dspacote) ?>" />
                                             
                                             <br style="clear:both" />	   
 

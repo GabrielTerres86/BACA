@@ -176,15 +176,17 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADSMS IS
                                    );
                                    
   PROCEDURE pc_alterar_pacote_web(pr_idpacote IN tbcobran_sms_pacotes.idpacote%TYPE
-                             ,pr_cooper IN tbcobran_sms_pacotes.cdcooper%TYPE
-                             ,pr_flgstatus IN tbcobran_sms_pacotes.flgstatus%TYPE    
-                             ,pr_xmllog   IN VARCHAR2                    --> XML com informacoes de LOG
-                             ,pr_cdcritic OUT PLS_INTEGER                --> Codigo da critica
-                             ,pr_dscritic OUT VARCHAR2                   --> Descricao da critica
-                             ,pr_retxml   IN OUT NOCOPY xmltype          --> Arquivo de retorno do XML
-                             ,pr_nmdcampo OUT VARCHAR2                   --> Nome do campo com erro
-                             ,pr_des_erro OUT VARCHAR2);                                
-                                                                                          
+                                 ,pr_cooper IN tbcobran_sms_pacotes.cdcooper%TYPE
+                                 ,pr_flgstatus IN tbcobran_sms_pacotes.flgstatus%TYPE    
+                                 ,pr_qtdsms      IN NUMBER
+                                 ,pr_perdesconto IN NUMBER                                     
+                                 ,pr_xmllog   IN VARCHAR2                    --> XML com informacoes de LOG
+                                 ,pr_cdcritic OUT PLS_INTEGER                --> Codigo da critica
+                                 ,pr_dscritic OUT VARCHAR2                   --> Descricao da critica
+                                 ,pr_retxml   IN OUT NOCOPY xmltype          --> Arquivo de retorno do XML
+                                 ,pr_nmdcampo OUT VARCHAR2                   --> Nome do campo com erro
+                                 ,pr_des_erro OUT VARCHAR2);                                
+                                                                                              
 END TELA_CADSMS;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADSMS IS
@@ -1999,6 +2001,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADSMS IS
   PROCEDURE pc_alterar_pacote_web(pr_idpacote IN tbcobran_sms_pacotes.idpacote%TYPE
                              ,pr_cooper IN tbcobran_sms_pacotes.cdcooper%TYPE
                              ,pr_flgstatus IN tbcobran_sms_pacotes.flgstatus%TYPE    
+                             ,pr_qtdsms      IN NUMBER
+                             ,pr_perdesconto IN NUMBER                                 
                              ,pr_xmllog   IN VARCHAR2                    --> XML com informacoes de LOG
                              ,pr_cdcritic OUT PLS_INTEGER                --> Codigo da critica
                              ,pr_dscritic OUT VARCHAR2                   --> Descricao da critica
@@ -2056,6 +2060,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADSMS IS
       -- atualiza o pacote de sms
       UPDATE tbcobran_sms_pacotes
          SET flgstatus = pr_flgstatus
+            ,perdesconto = pr_perdesconto
+            ,qtdsms = pr_qtdsms
             ,dhultima_atu = SYSDATE
        WHERE cdcooper = pr_cooper
          AND idpacote = pr_idpacote;
