@@ -35,7 +35,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Agosto/98.                        Ultima atualizacao: 27/07/2016
+   Data    : Agosto/98.                        Ultima atualizacao: 31/03/2017
 
    Dados referentes ao programa:
 
@@ -119,6 +119,8 @@
                             
               27/07/2016 - Adicionar historico 900 do Samae Rio Negrinho para 6 posicoes 
                            (Lucas Ranghetti #486565)
+                           
+              31/03/2017 - Incluir PREVISC para fazer como faz a SULAMERICA (Lucas Ranghetti #637882)
 ............................................................................ */
 
 FUNCTION verificaUltDia RETURNS DATE
@@ -231,7 +233,8 @@ DO:
                                         STRING(crapatr.cdrefere,"99999999") + 
                                         "                 ".
           ELSE
-          IF craplau.cdhistor = 1517 THEN /* SULAMERICA */
+          IF  craplau.cdhistor = 1517 OR   /* SULAMERICA */
+              craplau.cdhistor = 2039 THEN /* PREVISC    */
               ASSIGN crapndb.dstexarq = crapndb.dstexarq +
                           STRING(crapatr.cdrefere,"9999999999999999999999") +
                           "   ".
