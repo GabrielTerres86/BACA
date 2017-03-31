@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Abril/2004                        Ultima atualizacao: 08/03/2017
+   Data    : Abril/2004                        Ultima atualizacao: 31/03/2017
 
    Dados referentes ao programa:
 
@@ -398,6 +398,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                08/03/2017 - Ajustes para quando vier caracter especial na posicao do arquivo
                             que se refere a numero de conta criticar apenas para a cooperativa
                             correspondente (Tiago/Fabricio SD620952)
+                            
+               31/03/2017 - Ajustes para quando vier a conta > 9000000000 e usar agencia, gravar 
+                            o numero da conta completo inclusive com o 900+coop a frente da conta
+                            (Lucas Ranghetti #636973)
 ............................................................................ */
 
 
@@ -729,7 +733,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
       ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
       -- Criacao de temp/table para os dados do relatorio
       TYPE typ_reg_relato IS
-        RECORD(nrdconta   craprej.nrdconta%TYPE,
+        RECORD(nrdconta   NUMBER(15),
                contrato   VARCHAR2(25),
                ocorrencia VARCHAR2(40),
                dtmvtolt   craprej.dtmvtolt%TYPE,
@@ -859,6 +863,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
       vr_inserir_lancamento  varchar2(1);                             --> Inserir Lancamento
       vr_dstexarq VARCHAR2(150);                                      --> Texto arquivo
       vr_nrdolote_sms NUMBER := NULL;                                 --> Numero de lote do SMS
+      vr_nrdconta_relato VARCHAR2(15);                                --> Conta para exibir no relatorio
       
       -- Variaveis totalizadoras
       vr_doc_gravado PLS_INTEGER := 0;                                --> Quantidade de documentos gravados
@@ -3291,7 +3296,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                                 lpad(vr_cdrefere*100,27,'0') || lpad(vr_nrseq,5,'0');
 
                       vr_tab_relato(vr_ind).nmarquiv := vr_tab_nmarquiv(i);
-                      vr_tab_relato(vr_ind).nrdconta := vr_nrdconta;
+                      vr_tab_relato(vr_ind).nrdconta := vr_nro_conta_dec;
                       vr_tab_relato(vr_ind).contrato := vr_cdrefere;
                       vr_tab_relato(vr_ind).cdcritic := vr_cdcritic_tmp;
                       vr_tab_relato(vr_ind).tpintegr := vr_tpintegr;
@@ -4539,10 +4544,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                     vr_dslanmto := ' ';
                   END IF;
 
+                  -- nao formatar para numeros acima de 9000000000 pois vai estourar 
+                  -- o campo no ireport
+                  IF vr_tab_relato(vr_ind).nrdconta < 9000000000 THEN
+                    vr_nrdconta_relato := gene0002.fn_mask_conta(vr_tab_relato(vr_ind).nrdconta);
+                  ELSE
+                    vr_nrdconta_relato := vr_tab_relato(vr_ind).nrdconta;
+                  END IF;
+
                   -- Escreve a linha do contrato com a operacao
                   gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo,
                                         '<conta>'||
-                                          '<nrdconta>'||gene0002.fn_mask_conta(vr_tab_relato(vr_ind).nrdconta)||'</nrdconta>'||
+                                          '<nrdconta>'||vr_nrdconta_relato||'</nrdconta>'||
                                           '<contrato>'||vr_tab_relato(vr_ind).contrato||'</contrato>'||
                                           '<dsmovmto>'||vr_dsmovmto||'</dsmovmto>'||
                                           '<ocorrencia>'||gene0007.fn_caract_controle(nvl(substr(vr_tab_relato(vr_ind).ocorrencia,1,30),' '))||'</ocorrencia>'||
