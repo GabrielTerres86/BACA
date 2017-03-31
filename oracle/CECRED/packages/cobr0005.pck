@@ -8469,6 +8469,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                          AND rownum <= 1);
     rw_smsparam cr_smsparam%ROWTYPE;
     
+    CURSOR cr_msg (pr_cdcooper IN crapcco.cdcooper%TYPE) IS
+      SELECT dsmensagem 
+        FROM tbgen_mensagem 
+       WHERE cdproduto = 19 
+         AND cdtipo_mensagem = 7 
+         AND cdcooper = pr_cdcooper; 
+    rw_msg cr_msg%ROWTYPE;         
     
     
     -------------->> VARIAVEIS <<----------------
@@ -8492,6 +8499,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     
     pr_flofesms := nvl(rw_smsparam.flgoferta_sms,0);
     
+    rw_msg := NULL;
+    OPEN cr_msg(pr_cdcooper);
+    FETCH cr_msg INTO rw_msg;
+    CLOSE cr_msg;    
+
+    pr_dsmensag := nvl(rw_msg.dsmensagem,'');    
     
   EXCEPTION
     WHEN vr_exc_erro THEN
