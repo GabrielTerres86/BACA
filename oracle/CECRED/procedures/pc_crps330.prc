@@ -6,17 +6,31 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
   --
   --  Programa: PC_CRPS330
   --  Autor   : Andrino Carlos de Souza Junior (RKAM)
-  --  Data    : Novembro/2015                     Ultima Atualizacao: - 20/06/2016
+  --  Data    : Novembro/2015                     Ultima Atualizacao: - 30/03/2017
   --
   --  Dados referentes ao programa:
   --
   --  Objetivo  : Envio de negativacoes para a Serasa
   --
-  --  Alteracoes: 20/06/2016 - Enviar todos os dados na primeira linha de cada registro. Antes o 
+  --  Alteracoes: 13/03/2016 - Ajustes decorrente a mudança de algumas rotinas da PAGA0001 
+  --						   para a COBR0006 em virtude da conversão das rotinas de arquivos CNAB
+  --						   (Andrei - RKAM). 
+  --
+  --              20/06/2016 - Enviar todos os dados na primeira linha de cada registro. Antes o 
   --                           numero da conta ia somente na segunda linha
   --
   --              04/07/2016 - Nao enviar para o Serasa automaticamente se ja foi enviado uma vez
   --                           (Chamado 480923 - Andrino - RKAM)
+  --
+  --              21/11/2016 - Ajustado cursor do cr_crapsab para retornar espaço em branco caso o campo possua
+  --                           valor NULL (Douglas - Chamado 560819)
+  --
+  --              30/01/2017 - Ajustado para que seja enviado ao Serasa a informacao de conta e documento que estao
+  --                           no campo nosso numero, para que os boletos que sao de contas migradas sejam enviados
+  --                           com a conta antiga (Douglas - Chamado 602825)
+  --
+  --              30/03/2017 - #551229 Job ENVIO_SERASA excluído para a criação dos jobs JBCOBRAN_ENVIO_SERASA e JBCOBRAN_RECEBE_SERASA.
+  --                           Log de início, fim e erros na execução do job. (Carlos)
   ---------------------------------------------------------------------------------------------------------------
   
   -- Atualiza a situacao do boleto como enviada
@@ -114,15 +128,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
       END IF;
     EXCEPTION
        WHEN vr_exc_saida THEN
-         -- Se foi retornado apenas código
-         IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-           -- Buscar a descrição
-           vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-         END IF;
          -- Devolvemos código e critica encontradas
          pr_cdcritic := NVL(vr_cdcritic,0);
-         pr_dscritic := vr_dscritic;
+         pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
        WHEN OTHERS THEN
+         cecred.pc_internal_exception(3);
          -- Efetuar retorno do erro não tratado
          pr_cdcritic := 0;
          pr_dscritic := SQLERRM;
@@ -140,6 +150,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
        
        -- Cursor sobre data
        rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+
+       vr_idprglog tbgen_prglog.idprglog%TYPE := 0;
 
        -- Loop sobre as cooperativas ativas
        CURSOR cr_crapcop IS
@@ -242,13 +254,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
                          pr_nrinssac crapsab.nrinssac%TYPE) IS                  
         SELECT cdtpinsc, --> Tipo de pessoa do Devedor (F - Fisica / J - Juridica)
                nrinssac, --> Documento do Devedor (CPF ou CNPJ)
-               gene0007.fn_caract_acento(pr_texto => nmdsacad) nmdsacad, --> Nome do Devedor
-               gene0007.fn_caract_acento(pr_texto => dsendsac) dsendsac, --> Endereço do Devedor
-               gene0007.fn_caract_acento(pr_texto => complend) complend, --> Complemento do Endereço do Devedor
-               gene0007.fn_caract_acento(pr_texto => nmbaisac) nmbaisac, --> Bairro do Devedor
-               gene0007.fn_caract_acento(pr_texto => nmcidsac) nmcidsac, --> Município do Devedor
-               cdufsaca, --> Sigla Unidade Federativa do Devedor
-               nrcepsac  --> CEP do Devedor
+               NVL(gene0007.fn_caract_acento(pr_texto => nmdsacad), ' ') nmdsacad, --> Nome do Devedor
+               NVL(gene0007.fn_caract_acento(pr_texto => dsendsac), ' ') dsendsac, --> Endereço do Devedor
+               NVL(gene0007.fn_caract_acento(pr_texto => complend), ' ') complend, --> Complemento do Endereço do Devedor
+               NVL(gene0007.fn_caract_acento(pr_texto => nmbaisac), ' ') nmbaisac, --> Bairro do Devedor
+               NVL(gene0007.fn_caract_acento(pr_texto => nmcidsac), ' ') nmcidsac, --> Município do Devedor
+               NVL(cdufsaca, ' ') cdufsaca, --> Sigla Unidade Federativa do Devedor
+               NVL(nrcepsac, 0) nrcepsac  --> CEP do Devedor
           FROM crapsab
           WHERE cdcooper = pr_cdcooper 
             AND nrdconta = pr_nrdconta 
@@ -283,6 +295,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
        vr_nrseqarq    PLS_INTEGER; -- NUmero sequencial do arquivo
        vr_tab_lcm     PAGA0001.typ_tab_lcm_consolidada; -- Tabela de lancamentos para cobranda da tarifa
 
+       -- Job de envio de negativação
+       vr_nomdojob VARCHAR2(40) := 'JBCOBRAN_ENVIO_SERASA';
 
        --Variaveis de controle do programa
        vr_cdcritic    NUMBER:= 0;
@@ -297,7 +311,18 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
        vr_exc_saida  EXCEPTION;
 
      BEGIN
-             
+
+        -- Executar apenas em dias úteis
+        IF trunc(SYSDATE) <> gene0005.fn_valida_dia_util(3, trunc(SYSDATE)) THEN
+          RETURN;
+        END IF;
+
+        -- Gera log de início de execução
+        cecred.pc_log_programa(PR_DSTIPLOG   => 'I'                                
+                              ,PR_CDPROGRAMA => vr_nomdojob
+                              ,pr_tpexecucao => 2
+                              ,PR_IDPRGLOG   => vr_idprglog);
+
         -- Busca diretorio que o arquivo devera ser gerado
         vr_dsdireto := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
                                                  pr_cdacesso => 'DIR_ENVIO_SERASA');
@@ -491,8 +516,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
                                            pr_vltitulo => rw_crapcob.vltitulo+vr_vlrjuros+vr_vlrmulta,
                                            pr_nrcnvcob => rw_crapcob.nrcnvcob,
                                            pr_nrcnvceb => 0, -- Utilizado somente para convenios do BB
-                                           pr_nrdconta => rw_crapcob.nrdconta,
-                                           pr_nrdocmto => rw_crapcob.nrdocmto,
+                                           pr_nrdconta => to_number(SUBSTR(rw_crapcob.nrnosnum,1,8)),
+                                           pr_nrdocmto => to_number(SUBSTR(rw_crapcob.nrnosnum,9,9)),
                                            pr_cdcartei => rw_crapcob.cdcartei,
                                            pr_cdbarras => vr_cdbarras);
 
@@ -723,7 +748,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
             END IF;
             
             --Prepara retorno cooperado
-            PAGA0001.pc_prep_retorno_cooper_90 (pr_idregcob => rw_crapcob_2.rowid --ROWID da cobranca
+            COBR0006.pc_prep_retorno_cooper_90 (pr_idregcob => rw_crapcob_2.rowid --ROWID da cobranca
                                                ,pr_cdocorre => 93 -- Negativacao Serasa
                                                ,pr_cdmotivo => 'S3' -- Negativado na Serasa
                                                ,pr_vltarifa => 0
@@ -785,19 +810,39 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
 
         END LOOP;
 
+      -- Gera log fim do processo
+      cecred.pc_log_programa(PR_DSTIPLOG   => 'F'
+                            ,PR_CDPROGRAMA => vr_nomdojob
+                            ,PR_IDPRGLOG   => vr_idprglog);
+
      EXCEPTION
        WHEN vr_exc_saida THEN
-         -- Se foi retornado apenas código
-         IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-           -- Buscar a descrição
-           vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-         END IF;
+
+         -- Buscar a descrição
+         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_cdcritic);
+
          -- Devolvemos código e critica encontradas
          pr_cdcritic := NVL(vr_cdcritic,0);
          pr_dscritic := vr_dscritic;
+ 
+         -- Logar fim de execução sem sucesso
+         cecred.pc_log_programa(PR_DSTIPLOG   => 'E'
+                               ,PR_CDPROGRAMA => vr_nomdojob
+                               ,pr_tpocorrencia => 1
+                               ,pr_dsmensagem => vr_dscritic
+                               ,PR_IDPRGLOG   => vr_idprglog);
+         -- Logar fim de execução sem sucesso
+         cecred.pc_log_programa(PR_DSTIPLOG   => 'F'
+                               ,PR_CDPROGRAMA => vr_nomdojob
+                               ,pr_flgsucesso => 0
+                               ,PR_IDPRGLOG   => vr_idprglog);
+         
          -- Efetuar rollback
          ROLLBACK;
        WHEN OTHERS THEN
+         
+         cecred.pc_internal_exception(3);
+       
          -- Efetuar retorno do erro não tratado
          pr_cdcritic := 0;
          pr_dscritic := SQLERRM;
