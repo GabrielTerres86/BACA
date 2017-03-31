@@ -50,7 +50,8 @@
 			<a href="#" style="padding: 3px 0 0 3px;" id="btLupaTelefo">
 				<img src="<?php echo $UrlImagens; ?>geral/ico_lupa.gif" width="14" height="14" border="0" />
 			</a>
-			<a href="#" onclick="$('#btLupaTelefo', '#frmOpcaoR').click();" style="margin-left: 1px">Buscar Favoritos</a>
+			<a href="#" onclick="mostraPesquisaTelefone(); return false;" style="margin-left: 1px">Buscar Favoritos</a>
+			</br>
 
 			<label for="nrdddtel2">Confirme DDD/Telefone:</label>		
 			<input id="nrdddtel2" name="nrdddtel" type="text"/>
@@ -58,11 +59,15 @@
 			<label for="nrtelefo2">-</label>		
 			<input id="nrtelefo2" name="nrtelefo" type="text"/>
 
+			</br>
+			
 			<label for="nmoperadora">Operadora:</label>		
 			<select id="nmoperadora" name="nmoperadora">
 				<option value="0;0" selected>Selecione a operadora</option> 
 			</select>
-
+			
+			</br>
+			
 			<label for="vlrecarga">Valor:</label>		
 			<select id="vlrecarga" name="vlrecarga">
 				

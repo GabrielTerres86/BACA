@@ -1033,7 +1033,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 														,pr_dsorigem => gene0001.vr_vet_des_origens(pr_idorigem)
 														,pr_dstransa => 'Recarga de celular'
 														,pr_dttransa => TRUNC(SYSDATE)
-														,pr_flgtrans => 1
+														,pr_flgtrans => 0
 														,pr_hrtransa => gene0002.fn_busca_time
 														,pr_idseqttl => pr_idseqttl
 														,pr_nmdatela => CASE WHEN pr_idorigem = 3 THEN 'INTERNETBANK' 
@@ -1052,7 +1052,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 														,pr_dsorigem => gene0001.vr_vet_des_origens(pr_idorigem)
 														,pr_dstransa => 'Recarga de celular'
 														,pr_dttransa => TRUNC(SYSDATE)
-														,pr_flgtrans => 1
+														,pr_flgtrans => 0
 														,pr_hrtransa => gene0002.fn_busca_time
 														,pr_idseqttl => pr_idseqttl
 														,pr_nmdatela => CASE WHEN pr_idorigem = 3 THEN 'INTERNETBANK' 

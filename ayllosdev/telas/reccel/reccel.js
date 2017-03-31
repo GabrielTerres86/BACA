@@ -13,7 +13,7 @@ var cddopcao		= 'C';
 
 //Labels/Campos do cabeçalho
 var cCddopcao, cNrdconta, cNmprimtl, cDtinirec, cDtfimrec, btnCab, btLupaConta,
-	cNrdddtel, cNrtelefo, cNrdddtel2, cNrtelfo2, cNmopetel, cVlrecarg, btLupaTelefone,
+	cNrdddtel, cNrtelefo, cNrdddtel2, cNrtelefo2, cNmopetel, cVlrecarg, btLupaTelefo,
 	nomeForm, cdoperadora;
 
 var valores = [];
@@ -254,14 +254,14 @@ function formataOpcaoR(){
 	$('#'+nomeForm, '#divTela').css({'display':'block'});
 	highlightObjFocus( $('#'+nomeForm) );
 
-	rNrdconta = $('label[for="nrdconta"]','#'+nomeForm); 
-	rNmprintl = $('label[for="nmprimtl"]','#'+nomeForm); 
-	rNrdddtel = $('label[for="nrdddtel"]','#'+nomeForm); 
-	rNrtelefo = $('label[for="nrtelefo"]','#'+nomeForm); 
-	rNrdddtel2 = $('label[for="nrdddtel2"]','#'+nomeForm); 
-	rNrtelefo2 = $('label[for="nrtelefo2"]','#'+nomeForm); 
-	rNmopetel = $('label[for="nmoperadora"]','#'+nomeForm); 
-	rVlrecarg = $('label[for="vlrecarga"]','#'+nomeForm); 
+	var rNrdconta = $('label[for="nrdconta"]','#'+nomeForm); 
+	var rNmprintl = $('label[for="nmprimtl"]','#'+nomeForm); 
+	var rNrdddtel = $('label[for="nrdddtel"]','#'+nomeForm); 
+	var rNrtelefo = $('label[for="nrtelefo"]','#'+nomeForm); 
+	var rNrdddtel2 = $('label[for="nrdddtel2"]','#'+nomeForm); 
+	var rNrtelefo2 = $('label[for="nrtelefo2"]','#'+nomeForm); 
+	var rNmopetel = $('label[for="nmoperadora"]','#'+nomeForm); 
+	var rVlrecarg = $('label[for="vlrecarga"]','#'+nomeForm); 
 
 	rNrdconta.css({'width':'70px'}).addClass('rotulo');	
 	rNmprintl.css({'width':'45px'}).addClass('rotulo-linha');	
@@ -322,14 +322,16 @@ function formataOpcaoR(){
     });	
 
 	cNmopetel.unbind('change').bind('change', function() {
-		$('#vlrecarga option', '#frmOpcaoR').remove();
+		$('#vlrecarga option', '#frmOpcaoR').remove();		
 		cdoperadora = $(this).val().split(";");
-		var valor = valores[cdoperadora[1]].valor;
-		for(var i in valor) {
-			$('#vlrecarga', '#frmOpcaoR').append($('<option>', {
-				value: valor[i].replace(',','.'),
-				text: valor[i]
-			}));
+		if (cdoperadora[1] != 0){
+			var valor = valores[cdoperadora[1]].valor;
+			for(var i in valor) {
+				$('#vlrecarga', '#frmOpcaoR').append($('<option>', {
+					value: valor[i].replace(',','.'),
+					text: valor[i]
+				}));
+			}
 		}
 		return false;
 	});
@@ -427,12 +429,16 @@ function btnContinuar(){
 		}
 		trocaBotoes();
 	}else if (cddopcao == 'C'){
-		buscaRecarga(1, 50);
+		if (cNrdconta.hasClass('campoTelaSemBorda')){
+			buscaRecarga(1, 50);
+		}else{
+			buscaConta();
+		}
 	}else if (cddopcao == 'R' ){
 		if (cNrdconta.hasClass('campoTelaSemBorda')){
 			efetuaRecarga();
 		}else{
-			liberaCampos();
+			buscaConta();
 		}
 	}
 }
@@ -540,8 +546,16 @@ function formataTabelaRecargas(){
 		$("#tbRecargas > tbody")
 			.append($('<tr>') // Linha
 			.attr('class','corImpar')
+			.append($('<td>')
+			.attr('rowspan','6')			
 			.attr('style', 'text-align: center')
-			.text('Não foram encontrados registros com os parâmetros informados.'));
+			.text("N\u00e3o foram encontrados registros com os par\u00e2metros informados.")));
+			
+/*		$('table.tituloRegistros > tbody > tr', '#divRecargas')
+			.append($('<tr>') // Linha
+			.attr('class','corImpar')
+			.attr('style', 'text-align: center')
+			.text("N\u00e3o foram encontrados registros com os par\u00e2metros informados."));*/
 	}else{	
 		// Ordenação da tabela
 		$('table.tituloRegistros > thead > tr', '#divRecargas').click( function() {
