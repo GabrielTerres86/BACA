@@ -19,6 +19,7 @@
 	$nrdconta = !isset($_POST["nrdconta"]) ? 0  : $_POST["nrdconta"];
 	$dtinicst = !isset($_POST["dtinicst"]) ? "" : $_POST["dtinicst"];
 	$dtfimcst = !isset($_POST["dtfimcst"]) ? "" : $_POST["dtfimcst"];
+	$cdagenci = !isset($_POST["cdagenci"]) ? 0  : $_POST["cdagenci"];
 	$insithcc = !isset($_POST["insithcc"]) ? 0  : $_POST["insithcc"];
 	$nriniseq = (isset($_POST['nriniseq'])) ? $_POST['nriniseq'] : 1;
 	$nrregist = (isset($_POST['nrregist'])) ? $_POST['nrregist'] : 50;
@@ -38,6 +39,7 @@
 	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
 	$xml .= "   <dtinicst>".$dtinicst."</dtinicst>";
 	$xml .= "   <dtfimcst>".$dtfimcst."</dtfimcst>";
+	$xml .= "   <cdagenci>".$cdagenci."</cdagenci>";
 	$xml .= "   <insithcc>".$insithcc."</insithcc>";
 	$xml .= "	<nriniseq>".$nriniseq."</nriniseq>";
 	$xml .= "	<nrregist>".$nrregist."</nrregist>";

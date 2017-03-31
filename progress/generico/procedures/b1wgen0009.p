@@ -9354,7 +9354,10 @@ PROCEDURE busca_borderos:
                tt-bordero_chq.nrctrlim = crapbdc.nrctrlim
                tt-bordero_chq.qtcompln = aux_qtcompln 
                tt-bordero_chq.vlcompcr = aux_vlcompcr
-               tt-bordero_chq.dssitbdc = IF crapbdc.insitbdc = 1 THEN
+               tt-bordero_chq.dssitbdc = IF crapbdc.dtrejeit <> ? THEN
+                                            "REJEITADO"
+                                         ELSE
+                                         IF crapbdc.insitbdc = 1 THEN
                                             "EM ESTUDO"
                                          ELSE 
                                          IF crapbdc.insitbdc = 2 THEN
@@ -10063,7 +10066,14 @@ PROCEDURE efetua_exclusao_bordero:
                            aux_cdcritic = 0.
                     LEAVE.
                 END.
-                  
+            
+            IF crapbdc.dtrejeit <> ? THEN
+            DO:
+                ASSIGN aux_dscritic = "Operacao nao permitida. Bordero Rejeitado."
+                       aux_cdcritic = 0.
+                LEAVE.
+            END.
+            
             IF  crapbdc.insitbdc > 2  THEN 
             DO:
                 ASSIGN aux_dscritic = "Bordero ja LIBERADO."

@@ -47,7 +47,7 @@
 			<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif" /></a>
 			
 			<input type="text" id="nmttlrem" name="nmttlrem" />
-			
+
 			<label for="nrremret">Remessa:</label>
 			<input type="text" id="nrremret" name="nrremret" />
 			
@@ -61,7 +61,7 @@
 				<option value="Pendente" >Pendente</option>
 				<option value="Processado" >Processado</option>
 			</select>
-
+			
 			<label for="dsorigem" >Origem:</label>
 			<input type="text" id="dsorigem" name="dsorigem" />
 			
@@ -93,6 +93,9 @@
 			<label for="dtfimcst">At&eacute;:</label>
 			<input type="text" id="dtfimcst" name="dtfimcst" />
 			
+      <label for="cdagenci">PA:</label>
+      <input type="text" id="cdagenci" name="cdagenci" />
+
 			<label for="insithcc">Situa&ccedil;&atilde;o:</label>
 			<select id="insithcc" name="insithcc">
 				<option value="0" >Todos</option>

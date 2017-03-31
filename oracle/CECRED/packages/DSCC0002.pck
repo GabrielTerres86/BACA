@@ -161,6 +161,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
               ,bdc.insitbdc
               ,to_char(bdc.dtlibbdc,'DD/MM/RRRR') dtlibbdc
               ,bdc.nrctrlim
+              ,(CASE WHEN bdc.dtrejeit IS NOT NULL THEN 1 ELSE 0 END) rejeitad
           from crapbdc bdc
          where bdc.cdcooper = pr_cdcooper
            AND bdc.nrdconta = pr_nrdconta
@@ -316,6 +317,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
                                                   || '<insitbdc>'||rw_crapbdc.insitbdc||'</insitbdc>'
                                                   || '<dtlibbdc>'||rw_crapbdc.dtlibbdc||'</dtlibbdc>'
                                                   || '<nrctrlim>'||rw_crapbdc.nrctrlim||'</nrctrlim>'
+                                                  || '<rejeitad>'||rw_crapbdc.rejeitad||'</rejeitad>'
                                                   || '</bordero>');
         
       END LOOP;
@@ -733,7 +735,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
           vr_dscritic := '';
           RAISE vr_exc_erro;
         END IF;
-				
+        
 				-- Exclusão permitida somente para operações no IB
 				IF rw_crapbdc.cdoperad <> '996' THEN
 					vr_dscritic := 'Bordero incluso no PA. Não permitido exclusão.';

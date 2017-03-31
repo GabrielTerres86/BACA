@@ -156,10 +156,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB019 IS
       --> Buscar dados operador    
       CURSOR cr_crapope(pr_cdcooper IN crapope.cdcooper%TYPE
                        ,pr_cdoperad IN crapope.cdoperad%TYPE) IS
-        SELECT ope.dsdepart
+        SELECT dpo.dsdepart
           FROM crapope ope
+              ,crapdpo dpo
          WHERE ope.cdcooper = pr_cdcooper
-           AND ope.cdoperad = pr_cdoperad;
+           AND ope.cdoperad = pr_cdoperad
+           AND dpo.cddepart = ope.cddepart
+           AND dpo.cdcooper = ope.cdcooper;
       rw_crapope cr_crapope%ROWTYPE;
     
     BEGIN
@@ -742,10 +745,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB019 IS
     
     CURSOR cr_crapope(pr_cdcooper IN crapope.cdcooper%TYPE
                      ,pr_cdoperad IN crapope.cdoperad%TYPE) IS
-      SELECT ope.dsdepart
+      SELECT dpo.dsdepart
         FROM crapope ope
+            ,crapdpo dpo
        WHERE ope.cdcooper = pr_cdcooper
-         AND ope.cdoperad = pr_cdoperad;
+         AND ope.cdoperad = pr_cdoperad
+         AND dpo.cddepart = ope.cddepart
+         AND dpo.cdcooper = ope.cdcooper;
     rw_crapope cr_crapope%ROWTYPE;
     
     

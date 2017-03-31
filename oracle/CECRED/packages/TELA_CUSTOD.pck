@@ -74,6 +74,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CUSTOD IS
 	PROCEDURE pc_busca_remessas(pr_nrdconta IN crapass.nrdconta%TYPE  --> Nr. da conta
 														 ,pr_dtinicst IN VARCHAR2               --> Lista de CMC7s
 														 ,pr_dtfimcst IN VARCHAR2               --> Lista de CMC7s
+														 ,pr_cdagenci IN PLS_INTEGER            --> PA da da Custodia
 														 ,pr_insithcc IN NUMBER                 --> Lista de CMC7s														 
 														 ,pr_nriniseq IN NUMBER                 --> Número inicial da sequência
 														 ,pr_nrregist IN NUMBER                 --> Número de registros a retornar														 
@@ -1209,8 +1210,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSTOD IS
 	END pc_efetua_canc_resgate;
 	
 	PROCEDURE pc_busca_remessas(pr_nrdconta IN crapass.nrdconta%TYPE  --> Nr. da conta
-														 ,pr_dtinicst IN VARCHAR2           	  --> Lista de CMC7s
-														 ,pr_dtfimcst IN VARCHAR2               --> Lista de CMC7s
+														 ,pr_dtinicst IN VARCHAR2           	  --> Data inicio
+														 ,pr_dtfimcst IN VARCHAR2               --> Data final
+														 ,pr_cdagenci IN PLS_INTEGER            --> PA da da Custodia
 														 ,pr_insithcc IN NUMBER                 --> Lista de CMC7s														 
 														 ,pr_nriniseq IN NUMBER                 --> Número inicial da sequência
 														 ,pr_nrregist IN NUMBER                 --> Número de registros a retornar
@@ -1267,6 +1269,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSTOD IS
 			                 ,pr_nrdconta IN craphcc.nrdconta%TYPE
 											 ,pr_dtinicst IN craphcc.dtmvtolt%TYPE
 											 ,pr_dtfimcst IN craphcc.dtmvtolt%TYPE
+                       ,pr_cdagenci IN crapass.cdagenci%TYPE
 											 ,pr_insithcc IN craphcc.insithcc%TYPE) IS
 			  SELECT * FROM (SELECT hcc.cdcooper
 				      ,hcc.nrdconta
@@ -1279,13 +1282,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSTOD IS
 							,hcc.intipmvt
 							,hcc.idorigem
 							,rownum rnum
-					FROM craphcc hcc
+                FROM craphcc hcc, crapass ass
 				 WHERE hcc.cdcooper = pr_cdcooper
 				   AND(hcc.nrdconta = pr_nrdconta OR pr_nrdconta = 0)
 					 AND hcc.dtmvtolt BETWEEN pr_dtinicst AND pr_dtfimcst
 					 AND(hcc.insithcc = pr_insithcc OR pr_insithcc = 0)
 					 AND hcc.intipmvt IN (1,3)
            AND rownum <= (pr_nriniseq + pr_nrregist)
+                 AND ass.cdcooper = hcc.cdcooper
+                 AND ass.nrdconta = hcc.nrdconta
+                 AND (ass.cdagenci = pr_cdagenci OR nvl(pr_cdagenci, 0) = 0)
            ORDER BY hcc.nrremret DESC)
 					 WHERE rnum >= pr_nriniseq;
 
@@ -1294,14 +1300,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSTOD IS
 													 ,pr_nrdconta IN craphcc.nrdconta%TYPE
 													 ,pr_dtinicst IN craphcc.dtmvtolt%TYPE
 													 ,pr_dtfimcst IN craphcc.dtmvtolt%TYPE
+                           ,pr_cdagenci IN crapass.cdagenci%TYPE
 													 ,pr_insithcc IN craphcc.insithcc%TYPE) IS
 			  SELECT COUNT(1)
-					FROM craphcc hcc
+					FROM craphcc hcc, crapass ass
 				 WHERE hcc.cdcooper = pr_cdcooper
 				   AND(hcc.nrdconta = pr_nrdconta OR pr_nrdconta = 0)
 					 AND hcc.dtmvtolt BETWEEN pr_dtinicst AND pr_dtfimcst
 					 AND(hcc.insithcc = pr_insithcc OR pr_insithcc = 0)
-					 AND hcc.intipmvt IN (1,3);					 
+					 AND hcc.intipmvt IN (1,3)
+           AND ass.cdcooper = hcc.cdcooper
+           AND ass.nrdconta = hcc.nrdconta
+           AND (ass.cdagenci = pr_cdagenci OR nvl(pr_cdagenci, 0) = 0);
 			
       -- Busca informações gerais dos detalhes de cheque da remessa
       CURSOR cr_crapdcc(pr_cdcooper IN crapdcc.cdcooper%TYPE
@@ -1383,6 +1393,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSTOD IS
 				                          ,pr_nrdconta => pr_nrdconta
 																	,pr_dtinicst => vr_dtinicst
 																	,pr_dtfimcst => vr_dtfimcst
+                                  ,pr_cdagenci => pr_cdagenci
 																	,pr_insithcc => pr_insithcc) LOOP
 																	
         -- Busca informações gerais dos detalhes de cheque da remessa			
@@ -1424,6 +1435,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSTOD IS
 												 ,pr_nrdconta => pr_nrdconta
 												 ,pr_dtinicst => vr_dtinicst
 												 ,pr_dtfimcst => vr_dtfimcst
+                         ,pr_cdagenci => pr_cdagenci
 												 ,pr_insithcc => pr_insithcc);
       FETCH cr_craphcc_tot INTO vr_qtregist;
 			

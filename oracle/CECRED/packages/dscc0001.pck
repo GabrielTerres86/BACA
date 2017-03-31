@@ -4653,6 +4653,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 	vr_vltotdsc NUMBER;               -- Valor total desconto
 	vr_vlperliq NUMBER;               -- Valor percentual de liquidez
 	vr_vlrendim NUMBER;               -- Valor de rendimento do cooperado
+	vr_przmxcmp NUMBER;               -- Data prazo máximo
 	
 	-- Buscar todas as ocorrencias cadastradas
 	CURSOR cr_ocorrencias IS
@@ -5105,6 +5106,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     -- Atribui prazo máximo
     vr_dtprzmax := rw_crapdat.dtmvtolt + vr_tab_lim_desconto(vr_inpessoa).qtprzmax;
 		
+    vr_przmxcmp := vr_tab_lim_desconto(vr_inpessoa).Przmxcmp;
+		
 		-- Busca último dia do ano
 		OPEN cr_dtultdia;
 		FETCH cr_dtultdia INTO vr_dtdialim;
@@ -5170,6 +5173,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 															 ,pr_dsdetres =>  to_char(vr_tab_lim_desconto(vr_inpessoa).qtprzmax) || ' dias.');
 			END IF;
 		
+      -- Prazo máximo de compensação excedido
+      IF (pr_tab_cheques(vr_index).dtlibera - nvl(pr_tab_cheques(vr_index).dtdcaptu, pr_tab_cheques(vr_index).dtmvtolt)) > vr_przmxcmp THEN
+		    -- Gerar ocorrencia 5 - Data de liberacao fora do limite
+				pc_gerar_ocorrencia_chq(pr_tab_cheques => pr_tab_cheques
+				                       ,pr_idx_cheques => vr_index
+															 ,pr_cdocorre => 12
+															 ,pr_dsrestri => NULL
+															 ,pr_dsdetres => NULL);
+			END IF;
+			
 		  -- Não permite data de pagamento para o último dia do ano
 		  IF pr_tab_cheques(vr_index).dtlibera = vr_dtdialim THEN
          -- Gerar ocorrencia 16 - Data de liberacao ultimo dia do ano
