@@ -1,3 +1,4 @@
+CREATE OR REPLACE PACKAGE CECRED.CYBE0001 AS
 
   ---------------------------------------------------------------------------------------------------------------
   --
@@ -6668,7 +6669,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
            
 			     gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_input_file
                                        ,pr_des_text => vr_linha_arq);
-
+                                        
 
                   
 				  -- Verifica registro Header
