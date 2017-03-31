@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : CYBER - GERACAO DE ARQUIVO
    Sigla   : CRED
    Autor   : Lucas Reinert
-    Data    : AGOSTO/2013                      Ultima atualizacao: 10/01/2016
+   Data    : AGOSTO/2013                      Ultima atualizacao: 06/03/2017
 
    Dados referentes ao programa:
 
@@ -142,32 +142,48 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                             Melhoria 155 (Heitor - RKAM)
 
                15/01/2016 - Alteracoes para o Prj. 131 - Assinatura conjunta (Jean Michel)
-         
+
                01/02/2016 - Melhoria 147 - Adicionar Campos e Aprovacao de
                             Transferencia entre PAs (Heitor - RKAM)
 
                23/02/2016 - Chamado 374738 - Alteracao na busca das informacoes de pagamentos em
                             conta corrente. Estava buscando indevidamente da tabela craplem, quando
                             o correto deveria ser craplcm (Heitor - RKAM)
-               
+
                18/03/2016 - Chamado 374738 - Alteracao na busca das informacoes de pagamentos de
                             multa e juros de mora em emprestimos. Estava buscando indevidamente da
                             tabela craplem, quando o correto deveria ser craplcm (Heitor - RKAM)
 
                             
-               26/07/2016 - Correção não estava trazendo o nome da assessoria de cobrança
-                            na manutenção cadastral. (Oscar)  
-               
+               26/07/2016 - Correção não estava trazendo o nome da acessoria de cobrança
+                            na manutenção cadastral. (Oscar)
                27/09/2016 - Correcao na chamada da gene0007 para remocao de caracteres especiais.
-                      Nao deve remover o @ devido ao campo de email.
-              Heitor (RKAM) - Chamado 521909
+			                Nao deve remover o @ devido ao campo de email.
+							Heitor (RKAM) - Chamado 521909
 
                20/09/2016 - Inclusao do arquivo de acordo de pagamentos,
                             Prj. 302 (Jean Michel)  
 
-         10/10/2016 - 449436 - Alterações Envio Cyber - Alterado para acrescetar a mora e juros ao valor devedor
-                            do cyber. (Gil - Mouts)                        
-                            
+               10/10/2016 - 449436 - Alterações Envio Cyber - Alterado para acrescetar a mora e juros ao valor devedor
+                            do cyber. (Gil - Mouts)
+
+               06/12/2016 - Incorporação alteração no cursor "cr_crapcop" para retirar o filtro
+                            das cooperativas ativas campo "flgativo". (Oscar)
+
+			   
+			   30/11/2016 - Ajuste na busca de multa e juros de mora para so trazer o valor caso a origem seja 2 ou 3.
+			                Antes, poderia causar problema se um numero de contrato tiver a mesma numeracao da conta.
+							Gil (Mouts)
+              
+               05/01/2017 - Ajuste para força o uso do indice 2 da tabela craplcm problemas
+                           de performance  Oracle usa o indice 1. (Oscar)
+                           
+               06/01/2017 - Ajuste no hint da craplcm, retirar espaço entre o index. 
+                Voltar a flgativo nos cursor da cooperativas.(Oscar)            
+                           
+               06/03/2017 - Ajuste no hint cr_valor_pago_emprestimo mover para baixo
+               do primeiro union. (Oscar)
+                           
                10/01/2017 - Ajustado campo valor do arquivo de acordo de pagamentos,
                             Prj. 302 (Odirlei-AMcom)                                    
                             
@@ -228,7 +244,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
        -- Informações do conjugue
        ,nmconjug crapcje.nmconjug%TYPE   -- Nome Conjugue
        ,dtnasccj crapcje.dtnasccj%TYPE); -- Data Nascimento Conjugue
-      
+
      /* Tipos de Dados para vetores e tabelas de memoria */
      TYPE typ_tab_crapass  IS TABLE OF typ_reg_crapass INDEX BY PLS_INTEGER;
      TYPE typ_tab_crapctt  IS TABLE OF typ_reg_crapctt INDEX BY PLS_INTEGER;
@@ -353,7 +369,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
              ,crapcyb.cdlcremp
              ,crapcyb.vlsdeved
              ,crapcyb.vljura60
-             ,crapcyb.vlpreemp      
+             ,crapcyb.vlpreemp
              ,crapcyb.qtdiaatr
              ,crapcyb.dtdrisan
              ,crapcyb.vlpreapg
@@ -393,17 +409,19 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
              ,crapcyb.ROWID
              ,crapass.cdagenci cdagenci_ass
              ,crapass.nrcpfcgc
-       ,(select sum(x.vlmtapar)
+			 ,(select sum(x.vlmtapar)
                  from crappep x
                 where x.cdcooper = crapcyb.cdcooper
                   and x.nrdconta = crapcyb.nrdconta
                   and x.nrctremp = crapcyb.nrctremp
+                  and crapcyb.cdorigem IN (2,3)
                   and x.inliquid = 0) vlmtapar
              ,(select sum(x.vlmrapar)
                  from crappep x
                 where x.cdcooper = crapcyb.cdcooper
                   and x.nrdconta = crapcyb.nrdconta
                   and x.nrctremp = crapcyb.nrctremp
+				  and crapcyb.cdorigem IN (2,3)
                   and x.inliquid = 0) vlmrapar
               ,crapcyb.flgjudic
               ,crapcyb.flextjud
@@ -514,7 +532,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                                        ,pr_nrdconta  IN crapcyb.nrdconta%type
                                        ,pr_nrctremp  IN crapcyb.nrctremp%type
                                        ,pr_dtmvtolt  IN crapdat.dtmvtolt%type) IS
-         SELECT SUM(craplem.vllanmto) vllanmto               
+         SELECT SUM(craplem.vllanmto) vllanmto
                ,craplem.cdhistor
                ,craphis.dshistor
            FROM craplem, craphis
@@ -525,11 +543,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
             AND craplem.nrctremp = pr_nrctremp
             AND craplem.dtmvtolt = pr_dtmvtolt
             AND craphis.indcalem = 'S'
-        GROUP BY craplem.cdhistor,craphis.dshistor
-        
+         GROUP BY craplem.cdhistor,craphis.dshistor
          --Melhoria 155
          UNION
-         SELECT SUM(craplcm.vllanmto) vllanmto                
+         SELECT /*+ index(craplcm CRAPLCM##CRAPLCM2) */ 
+               SUM(craplcm.vllanmto) vllanmto
                ,craplcm.cdhistor
                ,craphis.dshistor
            FROM craplcm, craphis, crapepr
@@ -544,11 +562,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
             AND craplcm.dtmvtolt = pr_dtmvtolt
             --Multa e juros de mora
             AND craphis.cdhistor in (1070, 1060, 1071, 1072)
-  GROUP BY craplcm.cdhistor,craphis.dshistor;
-
+         GROUP BY craplcm.cdhistor,craphis.dshistor;
        --Registro do tipo calendario
        rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
-      
+
 
        -- 27/01/2017 -- Melhoria 432 - envio informações CYBER
        -- Verifica se é contrato de refinancimamento para envio do campo código transacao CYBER
@@ -660,7 +677,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
        vr_des_xml6        CLOB;
        vr_des_xml7        CLOB;
        vr_des_xml8        CLOB;
-
 
        --Procedure para Inicializar os CLOBs
        PROCEDURE pc_inicializa_clob IS
@@ -1637,8 +1653,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                                           ,pr_nrctremp IN crapcyb.nrctremp%TYPE    --Numero Contrato Emprestimo
                                           ,pr_vlrpagto IN NUMBER                   --Valor Pagamento
                                           ,pr_dtmvtlt2 IN VARCHAR2                 --Data Movimento
-                                          ,pr_cdhistor IN VARCHAR2                  --Codigo Historico
-                                         ,pr_dshistor IN VARCHAR2                 --Descticao Historico
+                                          ,pr_cdhistor IN INTEGER                  --Codigo Historico
+                                          ,pr_dshistor IN VARCHAR2                 --Descticao Historico
                                           ,pr_cdcritic OUT INTEGER                 --Codigo Critica
                                           ,pr_dscritic OUT VARCHAR2) IS            --Descricao Critica
        BEGIN
@@ -1780,7 +1796,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
            --Limpar parametros erro
            pr_cdcritic:= NULL;
            pr_dscritic:= NULL;
-           
+
            vr_cdindice := LPAD(pr_rw_crapcyb.cdcooper,10,'0') || LPAD(pr_rw_crapcyb.cdorigem,10,'0') ||
                           LPAD(pr_rw_crapcyb.nrdconta,10,'0') || LPAD(pr_rw_crapcyb.nrctremp,10,'0');
 
@@ -2190,7 +2206,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
              pc_monta_linha(rpad(rw_craplcr.dslcremp,29,' '),110,pr_idarquivo);
            END IF;
 
-           pc_monta_linha(to_char(pr_rw_crapcyb.vlsdeved*100,'00000000000000'),139,pr_idarquivo);
+           pc_monta_linha(to_char((pr_rw_crapcyb.vlsdeved + nvl(pr_rw_crapcyb.vlmrapar, 0) + nvl(pr_rw_crapcyb.vlmtapar, 0))*100,'00000000000000'),139,pr_idarquivo);
            pc_monta_linha(to_char(pr_rw_crapcyb.vljura60*100,'00000000000000'),154,pr_idarquivo);
            pc_monta_linha(to_char(pr_rw_crapcyb.vlpreemp*100,'00000000000000'),169,pr_idarquivo);
            pc_monta_linha(lpad(pr_rw_crapcyb.qtpreatr,3,' '),184,pr_idarquivo);
@@ -3693,8 +3709,19 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
            -- Variaveis locais
            vr_nmassessoria tbcobran_assessorias.nmassessoria%TYPE;
            vr_cdmotivo_cin tbcobran_motivos_cin.cdmotivo%TYPE;
+           vr_dsendere     crapenc.dsendere%TYPE;
+           vr_nmbairro     crapenc.nmbairro%TYPE;
+           vr_nmcidade     crapenc.nmcidade%TYPE;
+           vr_cdufende     crapenc.cdufende%TYPE;
+           vr_nrcepend     crapenc.nrcepend%TYPE;
+           vr_nrendere     crapenc.nrendere%TYPE;
+           vr_complend     crapenc.complend%TYPE;
+           vr_incasprp     crapenc.incasprp%TYPE;
+           vr_nrdoapto     crapenc.nrdoapto%TYPE;
+           vr_cddbloco     crapenc.cddbloco%TYPE;
+           vr_nrcxapst     crapenc.nrcxapst%TYPE;
            vr_cdorigem     crapcyc.cdorigem%TYPE;
-           
+
            /* Cursores Locais */
            --Selecionar Cadastro Cyber
            CURSOR cr_crapcyc (pr_cdcooper IN crapcyc.cdcooper%type
@@ -4507,9 +4534,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
        END IF;
 
        --Data Movimento
-
-
-
        vr_dtmvtolt:= TO_CHAR(rw_crapdat.dtmvtolt,'YYYYMMDD');
        vr_dtmvtlt2:= TO_CHAR(rw_crapdat.dtmvtolt,'MMDDYYYY');
        vr_dtmvtopr:= TO_CHAR(rw_crapdat.dtmvtopr,'YYYYMMDD');
@@ -4641,7 +4665,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                                ,pr_cdcritic   => vr_cdcritic     --Codigo Critica
                                ,pr_dscritic   => vr_dscritic     --Descricao Critica
                                ,pr_tab_erro   => vr_tab_erro);   --Tabela Erro
-
            --Se ocorreu erro
            IF vr_des_erro = 'NOK' THEN
              --Buscar Indice primeiro elemento
@@ -4658,8 +4681,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
 
            --Data Movimento Cyber igual atual
            IF rw_crapcyb.dtmvtolt = rw_crapdat.dtmvtolt THEN
-             -- gera carga campos obrigatorios 
-             pc_gera_campos_obrig (pr_idarquivo => 1 -- str_1             --Id do arquivo
+             /* gera carga campos obrigatorios */
+             pc_gera_campos_obrig (pr_idarquivo => 1 /*str_1*/             --Id do arquivo
                                   ,pr_cdcooper  => rw_crapcyb.cdcooper     --Cooperativa
                                   ,pr_cdorigem  => rw_crapcyb.cdorigem     --Origem
                                   ,pr_nrdconta  => rw_crapcyb.nrdconta     --Numero Conta
@@ -4673,7 +4696,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                RAISE vr_exc_saida;
              END IF;
              --Gerar Carga Financeira
-             pc_gera_carga_MF (pr_idarquivo  => 1 -- str_1                --Id do arquivo
+             pc_gera_carga_MF (pr_idarquivo  => 1 /*str_1*/               --Id do arquivo
                               ,pr_cdcooper   => rw_crapcyb.cdcooper       --Cooperativa
                               ,pr_nrdconta   => rw_crapcyb.nrdconta       --Numero Conta
                               ,pr_cdfinemp   => rw_crapcyb.cdfinemp       --Financiamento
@@ -4692,7 +4715,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                RAISE vr_exc_saida;
              END IF;
              --Gerar Carga
-             pc_gera_carga_MC (pr_idarquivo  => 1 --str_1               --Id do arquivo
+             pc_gera_carga_MC (pr_idarquivo  => 1 /*str_1*/             --Id do arquivo
                               ,pr_cdcooper   => rw_crapcyb.cdcooper     --Cooperativa
                               ,pr_nrdconta   => rw_crapcyb.nrdconta     --Numero Conta
                               ,pr_posicini   => 857                     --Posicao Inicial de Escrita
@@ -4703,7 +4726,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                RAISE vr_exc_saida;
              END IF;
              --Após gerar a Carga, deve gerar as informações complementares para a Carga Financeira
-             pc_gera_carga_MF_complem(pr_idarquivo  => 1 --str_1                 --Id do arquivo
+             pc_gera_carga_MF_complem(pr_idarquivo  => 1 /*str_1*/               --Id do arquivo
                                      ,pr_cdcooper   => rw_crapcyb.cdcooper       --Cooperativa
                                      ,pr_nrdconta   => rw_crapcyb.nrdconta       --Numero Conta
                                      ,pr_nrctremp   => rw_crapcyb.nrctremp       --Numero Contrato Emprestimo
@@ -4716,7 +4739,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
              END IF;
 
              --Após gerar a Carga Complementar, deve gerar as informações complementares para a Carga Cadastral
-             pc_gera_carga_MC_complem(pr_idarquivo => 1 --str_1           -- Id do arquivo
+             pc_gera_carga_MC_complem(pr_idarquivo => 1 /*str_1*/         -- Id do arquivo
                                      ,pr_cdcooper  => rw_crapcyb.cdcooper -- Cooperativa
                                      ,pr_cdorigem  => rw_crapcyb.cdorigem -- Origem
                                      ,pr_nrdconta  => rw_crapcyb.nrdconta -- Numero Conta
@@ -4729,17 +4752,17 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                RAISE vr_exc_saida;
              END IF;
 
-             -- Vamos escrever no arquivo a linha que foi gerada em:
-                      -- pc_gera_carga_MF
-                      -- pc_gera_carga_MC
-                      -- pc_gera_carga_MF_complem
-                      -- pc_gera_carga_MC_complem
-
+             /* Vamos escrever no arquivo a linha que foi gerada em:
+                      - pc_gera_carga_MF
+                      - pc_gera_carga_MC
+                      - pc_gera_carga_MF_complem
+                      - pc_gera_carga_MC_complem
+             */
              pc_escreve_xml(NULL,1);
 
-             -- gera carga relations
+             /* gera carga relations */
              pc_gera_aval (pr_idarquivo  => 5                          --Id do arquivo
-                          ,pr_opccarga   => 'R'  -- Relations          --Tipo de Carga
+                          ,pr_opccarga   => 'R'  /* Relations */       --Tipo de Carga
                           ,pr_cdcooper   => rw_crapcyb.cdcooper        --Cooperativa
                           ,pr_nrdconta   => rw_crapcyb.nrdconta        --Numero Conta
                           ,pr_nrctremp   => rw_crapcyb.nrctremp        --Contrato Emprestimo
@@ -4754,7 +4777,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
              IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
                RAISE vr_exc_saida;
              END IF;
-             -- gerar a carga de garantias
+             /* gerar a carga de garantias */
              pc_gera_carga_garantias (pr_cdcooper   => rw_crapcyb.cdcooper   --Cooperativa
                                      ,pr_nrdconta   => rw_crapcyb.nrdconta   --Numero Conta
                                      ,pr_nrctremp   => rw_crapcyb.nrctremp   --Contrato Emprestimo
@@ -4770,8 +4793,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
 
              --Data Manutencao Cadastro
              IF rw_crapcyb.dtmancad = rw_crapdat.dtmvtolt THEN
-               -- gera carga campos obrigatorios
-               pc_gera_campos_obrig (pr_idarquivo => 2 --str_2--           --Id do arquivo
+               /* gera carga campos obrigatorios */
+               pc_gera_campos_obrig (pr_idarquivo => 2 /*str_2*/           --Id do arquivo
                                     ,pr_cdcooper  => rw_crapcyb.cdcooper   --Cooperativa
                                     ,pr_cdorigem  => rw_crapcyb.cdorigem   --Origem
                                     ,pr_nrdconta  => rw_crapcyb.nrdconta   --Numero Conta
@@ -4786,7 +4809,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                END IF;
 
                --Gerar Carga
-               pc_gera_carga_MC (pr_idarquivo  => 2 --str_2--            --Id do arquivo
+               pc_gera_carga_MC (pr_idarquivo  => 2 /*str_2*/            --Id do arquivo
                                 ,pr_cdcooper   => rw_crapcyb.cdcooper    --Cooperativa
                                 ,pr_nrdconta   => rw_crapcyb.nrdconta    --Numero Conta
                                 ,pr_posicini   => 55                     --Posicao Inicial de Escrita
@@ -4798,7 +4821,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                END IF;
 
                --Após gerar a Carga, deve gerar as informações complementares para a Carga Cadastral
-               pc_gera_carga_MC_complem(pr_idarquivo => 2 --str_1--          -- Id do arquivo
+               pc_gera_carga_MC_complem(pr_idarquivo => 2 /*str_1*/          -- Id do arquivo
                                        ,pr_cdcooper  => rw_crapcyb.cdcooper  -- Cooperativa
                                        ,pr_cdorigem  => rw_crapcyb.cdorigem  -- Origem
                                        ,pr_nrdconta  => rw_crapcyb.nrdconta  -- Numero Conta
@@ -4810,10 +4833,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
                  RAISE vr_exc_saida;
                END IF;
-               -- Vamos escrever no arquivo a linha que foi gerada em:
-                        -- pc_gera_carga_MC
-                        -- pc_gera_carga_MC_complem
-               
+               /* Vamos escrever no arquivo a linha que foi gerada em:
+                        - pc_gera_carga_MC
+                        - pc_gera_carga_MC_complem
+               */
                pc_escreve_xml(NULL,2);
 
              END IF;
@@ -4821,7 +4844,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
              IF rw_crapcyb.dtmanavl = rw_crapdat.dtmvtolt THEN
                --Gera Avalista
                pc_gera_aval (pr_idarquivo  => 5                        --Id do arquivo
-                            ,pr_opccarga   => 'R'  -- Relations --     --Tipo de Carga
+                            ,pr_opccarga   => 'R'  /* Relations */     --Tipo de Carga
                             ,pr_cdcooper   => rw_crapcyb.cdcooper      --Cooperativa
                             ,pr_nrdconta   => rw_crapcyb.nrdconta      --Numero Conta
                             ,pr_nrctremp   => rw_crapcyb.nrctremp      --Contrato Emprestimo
@@ -4851,8 +4874,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                  RAISE vr_exc_saida;
                END IF;
              END IF;
-             
-             -- Desconto ou Emprestimo
+             /* Desconto ou Emprestimo */
              IF rw_crapcyb.cdorigem IN (2,3) THEN
                --Buscar valor Pago Emprestimo
                FOR rw_valor_pago_emprestimo IN cr_valor_pago_emprestimo(pr_cdcooper => rw_crapcyb.cdcooper       -- Cooperativa
@@ -4946,7 +4968,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
              ELSE
                -- Precisamos gerar arquivo de pagamento e baixa para os registros que nao fizeram atualizacao
                -- financeira no crps280.i (Foram liquidados)
-
                IF rw_crapcyb.dtmvtolt < rw_crapdat.dtmvtolt AND rw_crapcyb.dtatufin < rw_crapdat.dtmvtolt THEN
                  -- Verifica se houve pagamento
                  IF rw_crapcyb.vlpreapg > 0 THEN
@@ -5001,7 +5022,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                      --Se ocorreu erro
                      IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
                       RAISE vr_exc_saida;
-                     END IF;
+                 END IF;
                  end IF;
                  
 --                END IF;
@@ -5075,8 +5096,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                END IF;
              END IF;
 
-             -- gera carga campos obrigatorios
-             pc_gera_campos_obrig (pr_idarquivo => 3 --str_3--              --Id do arquivo
+             /* gera carga campos obrigatorios */
+             pc_gera_campos_obrig (pr_idarquivo => 3 /*str_3*/              --Id do arquivo
                                   ,pr_cdcooper  => rw_crapcyb.cdcooper      --Cooperativa
                                   ,pr_cdorigem  => rw_crapcyb.cdorigem      --Origem
                                   ,pr_nrdconta  => rw_crapcyb.nrdconta      --Numero Conta
@@ -5093,7 +5114,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
              END IF;
 
              --Gerar Carga Financeira
-             pc_gera_carga_MF (pr_idarquivo  => 3 --str_3--              --Id do arquivo
+             pc_gera_carga_MF (pr_idarquivo  => 3 /*str_3*/              --Id do arquivo
                               ,pr_cdcooper   => rw_crapcyb.cdcooper      --Cooperativa
                               ,pr_nrdconta   => rw_crapcyb.nrdconta      --Numero Conta
                               ,pr_cdfinemp   => rw_crapcyb.cdfinemp      --Financiamento
@@ -5114,7 +5135,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
              END IF;
 
              --Gerar Carga Financeira complementar
-             pc_gera_carga_MF_complem (pr_idarquivo  => 3 --str_3--              --Id do arquivo
+             pc_gera_carga_MF_complem (pr_idarquivo  => 3 /*str_3*/              --Id do arquivo
                                       ,pr_cdcooper   => rw_crapcyb.cdcooper      --Cooperativa
                                       ,pr_nrdconta   => rw_crapcyb.nrdconta      --Numero Conta
                                       ,pr_nrctremp   => rw_crapcyb.nrctremp      --Numero Contrato Emprestimo
@@ -5126,10 +5147,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                RAISE vr_exc_saida;
              END IF;
 
-             -- Vamos escrever no arquivo a linha que foi gerada em:
-                      -- pc_gera_carga_MF
-                      -- pc_gera_carga_MF_complem
-
+             /* Vamos escrever no arquivo a linha que foi gerada em:
+                      - pc_gera_carga_MF
+                      - pc_gera_carga_MF_complem
+             */
              pc_escreve_xml(NULL,3);
 
            END IF;
@@ -5275,7 +5296,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
 
        --Salvar informacoes no banco de dados
        COMMIT;
-       
+
      EXCEPTION
        WHEN vr_exc_fimprg THEN
          -- Se foi retornado apenas codigo
@@ -5318,7 +5339,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
        WHEN OTHERS THEN
          -- Efetuar retorno do erro nao tratado
          pr_cdcritic := 0;
-         pr_dscritic := SQLERRM;
+         pr_dscritic := sqlerrm;
          -- Efetuar rollback
          ROLLBACK;
          --Zerar tabela de memoria auxiliar
