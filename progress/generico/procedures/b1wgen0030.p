@@ -12,6 +12,14 @@
   |   busca_total_descto_lim        | DSCT0001.pc_busca_total_descto_lim      |
   |   busca_total_descontos         | DSCT0001.pc_busca_total_descontos       |
   |   efetua_resgate_tit_bordero    | DSCT0001.pc_efetua_resgate_tit_bord     |
+  |   busca_parametros_dsctit       | DSCT0002.pc_busca_parametros_dsctit     |
+  |   busca_dados_limite            | DSCT0002.pc_busca_dados_limite          |
+  |   busca_dados_limite_consulta   | DSCT0002.pc_busca_dados_limite_cons     |
+  |   busca_restricoes              | DSCT0002.pc_busca_restricoes            |
+  |   busca_dados_bordero           | DSCT0002.pc_busca_dados_bordero         |
+  |   busca_titulos_bordero         | DSCT0002.pc_busca_titulos_bordero       |
+  |   carrega_dados_bordero_titulos | DSCT0002.pc_carrega_dados_bordero_tit   |
+  |   busca_dados_impressao_dsctit  | DSCT0002.pc_busca_dados_imp_descont     |
   +---------------------------------+-----------------------------------------+
 
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
@@ -28,7 +36,7 @@
 
     Programa: b1wgen0030.p
     Autor   : Guilherme
-    Data    : Julho/2008                     Ultima Atualizacao: 27/06/2016
+    Data    : Julho/2008                     Ultima Atualizacao: 09/03/2017
            
     Dados referentes ao programa:
                 
@@ -453,16 +461,27 @@
                             (carencia debito titulos vencidos) 
                             (Tiago/Rodrigo Melhoria 116).
 
-              16/05/2016 - Ajustado rotina efetua_resgate_tit_bordero para gerar
-			               tarifa de resgate na data de resgate e não na data na qual
-						   foi criado o bordero de desconto de titulo.
+               16/05/2016 - Ajustado rotina efetua_resgate_tit_bordero para gerar
+			                tarifa de resgate na data de resgate e não na data na qual
+				  		   foi criado o bordero de desconto de titulo.
 						   PRJ318 - Nova plataforma de cobrança (Odirlei-AMcom)
 
+			   28/04/2016 - Adicionado verificacao para tratar isencao de cobranca
+                            de tarifa na procedure efetua_liber_anali_bordero. 
+                            (Reinert)
                17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
 
                27/06/2016 - Criacao dos parametros inconfi6, cdopcoan e cdopcolb na
                             efetua_liber_anali_bordero. Inclusao de funcionamento
                             de pedir senha do coordenador. (Jaison/James)
+
+               02/08/2016 - Inclusao insitage 3-Temporariamente Indisponivel.
+                            (Jaison/Anderson)
+
+               25/10/2016 - Validacao de CNAE restrito Melhoria 310 (Tiago/Thiago)
+
+			   09/03/2017 - Ajuste para validar se o titulo ja esta incluso em um bordero
+					       (Adriano - SD 603451).
 
 ..............................................................................*/
 
@@ -954,6 +973,39 @@ PROCEDURE efetua_liber_anali_bordero:
                                     INPUT par_nmdatela,
                                     INPUT par_nrdconta,
                                    OUTPUT aux_nrdrowid).
+
+            RETURN "NOK".
+
+        END.    
+    
+	RUN valida_titulos_bordero(INPUT par_cdcooper,
+							   INPUT par_cdagenci,
+							   INPUT par_nrdcaixa,
+							   INPUT par_cdoperad,
+							   INPUT par_dtmvtolt,
+							   INPUT par_idorigem,
+							   INPUT par_nrdconta,
+							   INPUT par_nrborder,
+							   INPUT 1, /*tpvalida*/
+							   INPUT TABLE tt-titulos,
+							   OUTPUT TABLE tt-erro).
+
+    IF RETURN-VALUE <> "OK" THEN
+	   DO:
+	      FIND FIRST tt-erro NO-LOCK NO-ERROR.
+
+		  IF NOT AVAIL tt-erro THEN
+		     DO:
+		        ASSIGN aux_dscritic = "Nao foi possivel validar o bordero.".
+            
+                RUN gera_erro (INPUT par_cdcooper,
+                               INPUT par_cdagenci,
+                               INPUT par_nrdcaixa,
+                               INPUT 1,            /** Sequencia **/
+                               INPUT aux_cdcritic,
+                               INPUT-OUTPUT aux_dscritic).    
+
+            END.
 
             RETURN "NOK".
 
@@ -1560,7 +1612,7 @@ PROCEDURE efetua_liber_anali_bordero:
                   VALIDATE tt-msg-confirma.
                   RETURN "OK".
              END.
-             
+
       END.
    
    /*  Calculo do juros sobre o desconto do titulo .......................... */
@@ -3043,6 +3095,7 @@ PROCEDURE busca_dados_limite_incluir:
     DEF VAR aux_dsdidade         AS CHAR                    NO-UNDO.
     DEF VAR aux_dsoperac         AS CHAR                    NO-UNDO.
     DEF VAR aux_nriniseq 	     AS INTE					NO-UNDO.
+	DEF VAR aux_flgrestrito      AS INTE                    NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-risco.
@@ -3115,6 +3168,34 @@ PROCEDURE busca_dados_limite_incluir:
 
         END.
     
+		/*Se tem cnae verificar se e um cnae restrito*/
+		IF  crapass.cdclcnae > 0 THEN
+			DO:
+
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                /* Busca a se o CNAE eh restrito */
+                RUN STORED-PROCEDURE pc_valida_cnae_restrito
+                aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.cdclcnae
+                                                    ,0).
+
+                CLOSE STORED-PROC pc_valida_cnae_restrito
+                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                ASSIGN aux_flgrestrito = INTE(pc_valida_cnae_restrito.pr_flgrestrito)
+                                            WHEN pc_valida_cnae_restrito.pr_flgrestrito <> ?.
+
+				IF  aux_flgrestrito = 1 THEN
+					DO:
+    						CREATE tt-msg-confirma.
+							ASSIGN tt-msg-confirma.inconfir = par_inconfir + 1
+								   tt-msg-confirma.dsmensag = "CNAE restrito, conforme previsto na Política de Responsabilidade <br> Socioambiental do Sistema CECRED. Necessário apresentar Licença Regulatória.<br><br>Deseja continuar?".
+        END.
+    
+			END.
+
         /* rotina para buscar o crapttl.inhabmen */
     FIND FIRST crapttl WHERE crapttl.cdcooper = par_cdcooper   AND
                              crapttl.nrdconta = par_nrdconta   AND
@@ -6728,7 +6809,7 @@ PROCEDURE grava_parametros_dsctit:
                                + ";" + STRING(tt-dados_cecred_dsctit.qtnaopag,"9999")
                                + ";" + STRING(tt-dados_cecred_dsctit.qtprotes,"9999").
 
-     
+
         DO aux_contador = 1 TO 10:
 
             FIND b-craptab WHERE b-craptab.cdcooper = par_cdcooper    AND
@@ -8063,6 +8144,39 @@ PROCEDURE efetua_inclusao_bordero:
                            INPUT-OUTPUT aux_dscritic).    
 
             RETURN "NOK".
+        END.
+		
+	RUN valida_titulos_bordero(INPUT par_cdcooper,
+							   INPUT par_cdagenci,
+							   INPUT par_nrdcaixa,
+							   INPUT par_cdoperad,
+							   INPUT par_dtmvtolt,
+							   INPUT par_idorigem,
+							   INPUT par_nrdconta,
+							   INPUT 0, /*nrborder*/
+							   INPUT 2, /*tpvalida*/
+							   INPUT TABLE tt-titulos,
+							   OUTPUT TABLE tt-erro).
+
+    IF RETURN-VALUE <> "OK" THEN
+	   DO:
+	      FIND FIRST tt-erro NO-LOCK NO-ERROR.
+
+		  IF NOT AVAIL tt-erro THEN
+		     DO:
+		        ASSIGN aux_dscritic = "Nao foi possivel validar o bordero.".
+            
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).    
+
+            END.
+
+            RETURN "NOK".
+
         END.
 
     INCLUIR:
@@ -15325,7 +15439,7 @@ PROCEDURE analisar-titulo-bordero:
                 ((aux_vltotsac_sr / aux_vltotbdt_sr) * 100) > tt-dados_dsctit.pctitemi     THEN
                 DO:
                     ASSIGN aux_dsrestri = "Percentual de titulo do " +
-                                          "pagador excedido no contrato"
+                                          "pagador excedido no bordero"
                            aux_nrseqdig = IF crapcob.flgregis = TRUE THEN 52
                                           ELSE 2.
 
@@ -16101,7 +16215,8 @@ PROCEDURE valida_situacao_pa:
     IF  NOT AVAILABLE crapage   THEN
         ASSIGN aux_cdcritic = 15.
     ELSE    
-    IF  crapage.insitage <> 1   THEN
+    IF  crapage.insitage <> 1   AND   /* Ativo */
+        crapage.insitage <> 3   THEN  /* Temporariamente Indisponivel */
         ASSIGN aux_cdcritic = 856.
 
     IF  aux_cdcritic <> 0 THEN
@@ -16518,6 +16633,158 @@ PROCEDURE busca_restricoes_coordenador:
                tt-dsctit_bordero_restricoes.dsdetres = crapabt.dsdetres.
 
     END.
+
+    RETURN "OK".
+
+END PROCEDURE.
+
+/*****************************************************************************/
+/*                  Verifica se os titulos ja estao em algum bordero         */
+/*****************************************************************************/
+PROCEDURE valida_titulos_bordero:
+
+    DEF INPUT PARAM par_cdcooper AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_cdagenci AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_nrdcaixa AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_cdoperad AS CHAR                    NO-UNDO.
+    DEF INPUT PARAM par_dtmvtolt AS DATE                    NO-UNDO.
+    DEF INPUT PARAM par_idorigem AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_nrdconta AS INTE                    NO-UNDO.
+	DEF INPUT PARAM par_nrborder AS INTE				    NO-UNDO.
+	DEF INPUT PARAM par_tpvalida AS INTE                    NO-UNDO.
+    
+    DEF INPUT PARAM TABLE FOR tt-titulos.
+         
+    DEF OUTPUT PARAM TABLE FOR tt-erro.
+
+    DEF VAR aux_contador AS INTE NO-UNDO.
+    DEF VAR aux_flgtrans AS LOGI NO-UNDO.
+
+	DEF BUFFER b-craptdb FOR craptdb.
+
+    EMPTY TEMP-TABLE tt-erro.
+
+    ASSIGN aux_contador = 0
+		   aux_flgtrans = TRUE
+		   aux_cdcritic = 0
+           aux_dscritic = "".
+
+    IF par_tpvalida = 1 THEN
+	   DO:
+	     FOR EACH craptdb WHERE craptdb.cdcooper = par_cdcooper AND
+								craptdb.nrborder = par_nrborder 
+								NO-LOCK:
+
+	       /* Se este titulo ja esta em um bordero e ele estiver pago, 
+			  a ser pago(liberado no bordero ou nao) */ 
+		   FIND FIRST b-craptdb WHERE b-craptdb.cdcooper = craptdb.cdcooper  AND
+			 					      b-craptdb.cdbandoc = craptdb.cdbandoc  AND
+								      b-craptdb.nrdctabb = craptdb.nrdctabb  AND
+					 			      b-craptdb.nrcnvcob = craptdb.nrcnvcob  AND
+								      b-craptdb.nrdconta = craptdb.nrdconta  AND
+								      b-craptdb.nrborder <> craptdb.nrborder AND
+								      b-craptdb.nrdocmto = craptdb.nrdocmto  AND
+								      b-craptdb.insittit = 0 
+								      NO-LOCK NO-ERROR.
+								                    
+		   IF NOT AVAIL b-craptdb THEN									      
+		      FIND FIRST b-craptdb WHERE b-craptdb.cdcooper = craptdb.cdcooper  AND
+										 b-craptdb.cdbandoc = craptdb.cdbandoc  AND
+										 b-craptdb.nrdctabb = craptdb.nrdctabb  AND
+										 b-craptdb.nrcnvcob = craptdb.nrcnvcob  AND
+										 b-craptdb.nrdconta = craptdb.nrdconta  AND
+										 b-craptdb.nrborder <> craptdb.nrborder AND
+										 b-craptdb.nrdocmto = craptdb.nrdocmto  AND
+										 b-craptdb.insittit = 2
+										 NO-LOCK NO-ERROR.
+
+           IF NOT AVAIL b-craptdb THEN
+		      FIND FIRST b-craptdb WHERE b-craptdb.cdcooper = craptdb.cdcooper  AND
+				   						 b-craptdb.cdbandoc = craptdb.cdbandoc  AND
+										 b-craptdb.nrdctabb = craptdb.nrdctabb  AND
+										 b-craptdb.nrcnvcob = craptdb.nrcnvcob  AND
+										 b-craptdb.nrdconta = craptdb.nrdconta  AND
+										 b-craptdb.nrborder <> craptdb.nrborder AND
+										 b-craptdb.nrdocmto = craptdb.nrdocmto  AND
+										 b-craptdb.insittit = 4
+										 NO-LOCK NO-ERROR.
+
+		   IF AVAIL b-craptdb THEN
+		      DO:
+			     ASSIGN aux_contador = aux_contador + 1
+			 	    	aux_dscritic = "Titulo " + string(b-craptdb.nrdocmto) + " ja incluso no bordero " + 
+									   string(b-craptdb.nrborder) + "."
+					    aux_flgtrans = FALSE.
+
+			     RUN gera_erro (INPUT par_cdcooper,
+				 			    INPUT par_cdagenci,
+							    INPUT par_nrdcaixa,
+							    INPUT aux_contador,      /** Sequencia **/
+							    INPUT aux_cdcritic,
+							    INPUT-OUTPUT aux_dscritic). 
+
+		      END.
+
+		 END.
+
+	  END.
+	ELSE
+	  DO:
+	     FOR EACH tt-titulos WHERE tt-titulos.flgstats = 1 NO-LOCK:
+            
+		   /* Se este titulo ja esta em um bordero e ele estiver pago, 
+			  a ser pago(liberado no bordero ou nao) */ 
+		   FIND FIRST craptdb WHERE craptdb.cdcooper = par_cdcooper        AND
+							        craptdb.cdbandoc = tt-titulos.cdbandoc AND
+							        craptdb.nrdctabb = tt-titulos.nrdctabb AND
+							        craptdb.nrcnvcob = tt-titulos.nrcnvcob AND
+							        craptdb.nrdconta = par_nrdconta        AND
+							        craptdb.nrdocmto = tt-titulos.nrdocmto AND
+							        craptdb.insittit = 0
+							        NO-LOCK NO-ERROR.
+			
+		   IF NOT AVAIL craptdb THEN				                            
+		      FIND FIRST craptdb WHERE craptdb.cdcooper = par_cdcooper        AND
+				 			           craptdb.cdbandoc = tt-titulos.cdbandoc AND
+							           craptdb.nrdctabb = tt-titulos.nrdctabb AND
+							           craptdb.nrcnvcob = tt-titulos.nrcnvcob AND
+							           craptdb.nrdconta = par_nrdconta        AND
+							           craptdb.nrdocmto = tt-titulos.nrdocmto AND
+							           craptdb.insittit = 2
+							           NO-LOCK NO-ERROR.
+
+           IF NOT AVAIL craptdb THEN
+		      FIND FIRST craptdb WHERE craptdb.cdcooper = par_cdcooper        AND
+				  			           craptdb.cdbandoc = tt-titulos.cdbandoc AND
+							           craptdb.nrdctabb = tt-titulos.nrdctabb AND
+							           craptdb.nrcnvcob = tt-titulos.nrcnvcob AND
+							           craptdb.nrdconta = par_nrdconta        AND
+							           craptdb.nrdocmto = tt-titulos.nrdocmto AND
+							           craptdb.insittit = 4
+							           NO-LOCK NO-ERROR.
+
+          IF AVAIL craptdb THEN
+		     DO:
+			    ASSIGN aux_contador = aux_contador + 1
+			           aux_dscritic = "Titulo " + string(craptdb.nrdocmto) + " ja incluso no bordero " + 
+					  			      string(craptdb.nrborder) + "."
+					   aux_flgtrans = FALSE.
+
+			    RUN gera_erro (INPUT par_cdcooper,
+							   INPUT par_cdagenci,
+							   INPUT par_nrdcaixa,
+							   INPUT aux_contador,      /** Sequencia **/
+							   INPUT aux_cdcritic,
+							   INPUT-OUTPUT aux_dscritic). 
+
+    END.
+
+		END. /* Final do FOR EACH */
+
+	  END.
+    
+	IF aux_flgtrans = FALSE THEN
+	   RETURN "NOK".
 
     RETURN "OK".
 
