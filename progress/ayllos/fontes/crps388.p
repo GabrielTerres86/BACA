@@ -816,358 +816,178 @@ FOR EACH gncvcop NO-LOCK WHERE
 
             DOWN STREAM str_1 WITH FRAME f_lancto.
 
-			IF gnconve.vslayout = 5 THEN
-			   DO:
-			      IF  gnconve.cdconven = 30 OR     /* Celesc Distribuicao*/
-						gnconve.cdconven = 45 THEN   /* Aguas Pres.Getulio */
-						
-						aux_dslinreg = "F" +
-									   STRING(aux_cdrefori,"999999999") +
-									   FILL(" ",16) +
-									   STRING(aux_nragenci,"9999") +
-									   STRING(aux_nrdconta,"x(14)") +
-									   STRING(aux_dtmvtolt_aux,"x(08)") +
-									   STRING((craplcm.vllanmto * 100),"999999999999999")
-									   + "00" +
-									   STRING(craplau.cdseqtel,"x(60)") +
-									   STRING(tbdebaut.cdidentifi,"9") +
-									   STRING(tbdebaut.dsidentifi,"999999999999999") +
-									   FILL(" ",4) + "0".
-					ELSE
-					IF  gnconve.cdconven = 4   OR    /* CASAN */
-						gnconve.cdconven = 24  OR    /* AGUAS ITAPEMA */
-						gnconve.cdconven = 31  OR    /* DAE NAVEGANTES */
-						gnconve.cdconven = 33  OR    /* AGUAS JOINVILLE */
-						gnconve.cdconven = 34  OR    /* SEMASA ITAJAI */
-						gnconve.cdconven = 53  OR   /* Foz do Brasil */
-						gnconve.cdconven = 54  THEN  /* AGUAS DE MASSARANDUBA */
+            IF  gnconve.cdconven = 30 OR     /* Celesc Distribuicao*/
+                gnconve.cdconven = 45 THEN   /* Aguas Pres.Getulio */
+                
+                aux_dslinreg = "F" +
+                               STRING(aux_cdrefori,"999999999") +
+                               FILL(" ",16) +
+                               STRING(aux_nragenci,"9999") +
+                               STRING(aux_nrdconta,"x(14)") +
+                               STRING(aux_dtmvtolt_aux,"x(08)") +
+                               STRING((craplcm.vllanmto * 100),"999999999999999")
+                               + "00" +
+                               STRING(craplau.cdseqtel,"x(60)") +
+                               FILL(" ",20) + "0".
+            ELSE
+            IF  gnconve.cdconven = 4   OR    /* CASAN */
+                gnconve.cdconven = 24  OR    /* AGUAS ITAPEMA */
+                gnconve.cdconven = 31  OR    /* DAE NAVEGANTES */
+                gnconve.cdconven = 33  OR    /* AGUAS JOINVILLE */
+                gnconve.cdconven = 34  OR    /* SEMASA ITAJAI */
+                gnconve.cdconven = 53  OR   /* Foz do Brasil */
+                gnconve.cdconven = 54  THEN  /* AGUAS DE MASSARANDUBA */
 
-						aux_dslinreg = "F" +
-									   STRING(aux_cdrefori,"99999999") +
-									   FILL(" ",17) +
-									   STRING(aux_nragenci,"9999") +
-									   STRING(aux_nrdconta,"x(14)") +
-									   STRING(aux_dtmvtolt,"x(08)") +
-									   STRING((craplcm.vllanmto * 100),"999999999999999")
-									   + "00" +
-									   STRING(craplau.cdseqtel,"x(60)") +
-									   STRING(tbdebaut.cdidentifi,"9") +
-									   STRING(tbdebaut.dsidentifi,"999999999999999") +
-									   FILL(" ",4) + "0".
+                aux_dslinreg = "F" +
+                               STRING(aux_cdrefori,"99999999") +
+                               FILL(" ",17) +
+                               STRING(aux_nragenci,"9999") +
+                               STRING(aux_nrdconta,"x(14)") +
+                               STRING(aux_dtmvtolt,"x(08)") +
+                               STRING((craplcm.vllanmto * 100),"999999999999999")
+                               + "00" +
+                               STRING(craplau.cdseqtel,"x(60)") +
+                               FILL(" ",20) + "0".
 
-					ELSE
-					IF  gnconve.cdconven = 48 OR    /* TIM Celular */
-						gnconve.cdconven = 50 OR    /* HDI */
-						gnconve.cdconven = 55 OR    /* LIBERTY */
-						gnconve.cdconven = 58 OR    /* PORTO SEGURO */
-						gnconve.cdconven = 66 THEN  /* PREVISUL */
-										 
-						aux_dslinreg = "F" +
-									   STRING(aux_cdrefori,"99999999999999999999")
-									   + FILL(" ",5) +
-									   STRING(aux_nragenci,"9999") +
-									   STRING(aux_nrdconta,"x(14)") +
-									   STRING(aux_dtmvtolt,"x(08)") +
-									   STRING((craplcm.vllanmto * 100),"999999999999999")
-									   + "00" +
-									   STRING(craplau.cdseqtel,"x(60)") +
-									   STRING(tbdebaut.cdidentifi,"9") +
-									   STRING(tbdebaut.dsidentifi,"999999999999999") +
-									   FILL(" ",4) + "0".
+            ELSE
+            IF  gnconve.cdconven = 48 OR    /* TIM Celular */
+                gnconve.cdconven = 50 OR    /* HDI */
+                gnconve.cdconven = 55 OR    /* LIBERTY */
+                gnconve.cdconven = 58 OR    /* PORTO SEGURO */
+                gnconve.cdconven = 66 THEN  /* PREVISUL */
+                                 
+                aux_dslinreg = "F" +
+                               STRING(aux_cdrefori,"99999999999999999999")
+                               + FILL(" ",5) +
+                               STRING(aux_nragenci,"9999") +
+                               STRING(aux_nrdconta,"x(14)") +
+                               STRING(aux_dtmvtolt,"x(08)") +
+                               STRING((craplcm.vllanmto * 100),"999999999999999")
+                               + "00" +
+                               STRING(craplau.cdseqtel,"x(60)") +
+                               STRING(aux_anovecto,"9999") +
+                               STRING(aux_mesvecto,"99")   +
+                               STRING(aux_diavecto,"99")   +
+                               FILL(" ",12) + "0".
 
-					ELSE
-					IF  gnconve.cdconven = 47 OR    /* UNIMED CREDCREA */
-						gnconve.cdconven = 57 THEN  /* RBS */
+            ELSE
+            IF  gnconve.cdconven = 47 OR    /* UNIMED CREDCREA */
+                gnconve.cdconven = 57 THEN  /* RBS */
 
-						aux_dslinreg = "F" +
-									   STRING(aux_cdrefori,"99999999999999999") +
-									   FILL(" ",8) +
-									   STRING(aux_nragenci,"9999") +
-									   STRING(aux_nrdconta,"x(14)") +
-									   STRING(aux_dtmvtolt,"x(08)") +
-									   STRING((craplcm.vllanmto * 100),"999999999999999")
-									   + "00" +
-									   STRING(craplau.cdseqtel,"x(60)") +
-									   STRING(tbdebaut.cdidentifi,"9") +
-									   STRING(tbdebaut.dsidentifi,"999999999999999") +
-									   FILL(" ",4) + "0".
+                aux_dslinreg = "F" +
+                               STRING(aux_cdrefori,"99999999999999999") +
+                               FILL(" ",8) +
+                               STRING(aux_nragenci,"9999") +
+                               STRING(aux_nrdconta,"x(14)") +
+                               STRING(aux_dtmvtolt,"x(08)") +
+                               STRING((craplcm.vllanmto * 100),"999999999999999")
+                               + "00" +
+                               STRING(craplau.cdseqtel,"x(60)") +
+                               STRING(aux_anovecto,"9999") +
+                               STRING(aux_mesvecto,"99")   +
+                               STRING(aux_diavecto,"99")   +
+                               FILL(" ",12) + "0".
 
-					ELSE
-					IF  gnconve.cdconven = 22 OR     /* UNIMED */
-						gnconve.cdconven = 32 OR     /* UNIODONTO */
-						gnconve.cdconven = 38 OR     /* UNIM.PLAN.NORTE */ 
-						gnconve.cdconven = 46 OR     /* UNIODONTO FEDERACAO */
-						gnconve.cdconven = 64 THEN   /* AZUL SEGUROS */   
-						aux_dslinreg = "F" +
-								  STRING(aux_cdrefori,"9999999999999999999999999")
-									   +
-									   STRING(aux_nragenci,"9999") +
-									   STRING(aux_nrdconta,"x(14)") +
-									   STRING(aux_dtmvtolt,"x(08)") +
-									STRING((craplcm.vllanmto * 100),"999999999999999")
-									   + "00" +
-									   STRING(craplau.cdseqtel,"x(60)") +
-									   STRING(tbdebaut.cdidentifi,"9") +
-									   STRING(tbdebaut.dsidentifi,"999999999999999") +
-									   FILL(" ",4) + "0".
-					ELSE
-					IF  gnconve.cdconven = 15   THEN /* VIVO */
+            ELSE
+            IF  gnconve.cdconven = 22 OR     /* UNIMED */
+                gnconve.cdconven = 32 OR     /* UNIODONTO */
+                gnconve.cdconven = 38 OR     /* UNIM.PLAN.NORTE */ 
+                gnconve.cdconven = 46 OR     /* UNIODONTO FEDERACAO */
+                gnconve.cdconven = 64 THEN   /* AZUL SEGUROS */   
+                aux_dslinreg = "F" +
+                          STRING(aux_cdrefori,"9999999999999999999999999")
+                               +
+                               STRING(aux_nragenci,"9999") +
+                               STRING(aux_nrdconta,"x(14)") +
+                               STRING(aux_dtmvtolt,"x(08)") +
+                            STRING((craplcm.vllanmto * 100),"999999999999999")
+                               + "00" +
+                               STRING(craplau.cdseqtel,"x(60)") +
+                               STRING(aux_anovecto,"9999") +
+                               STRING(aux_mesvecto,"99")   +
+                               STRING(aux_diavecto,"99")   +
+                               FILL(" ",12) + "0".
+            ELSE
+            IF  gnconve.cdconven = 15   THEN /* VIVO */
 
-						aux_dslinreg = "F" +
-									   STRING(aux_cdrefori,"99999999999") +
-									   FILL(" ",14) +
-									   STRING(aux_nragenci,"9999") +
-									   STRING(aux_nrdconta,"x(14)") +
-									   STRING(aux_dtmvtolt_aux,"x(08)") +
-									STRING((craplcm.vllanmto * 100),"999999999999999")
-									   + "00" +
-									   STRING(craplau.cdseqtel,"x(60)") +
-									   STRING(tbdebaut.cdidentifi,"9") +
-									   STRING(tbdebaut.dsidentifi,"999999999999999") +
-									   FILL(" ",4) + "0".
+                aux_dslinreg = "F" +
+                               STRING(aux_cdrefori,"99999999999") +
+                               FILL(" ",14) +
+                               STRING(aux_nragenci,"9999") +
+                               STRING(aux_nrdconta,"x(14)") +
+                               STRING(aux_dtmvtolt_aux,"x(08)") +
+                            STRING((craplcm.vllanmto * 100),"999999999999999")
+                               + "00" +
+                               STRING(craplau.cdseqtel,"x(60)") +
+                               FILL(" ",20) + "0".
 
-					ELSE
-					IF  gnconve.cdconven = 9  OR    /*SAMAE Jaragua*/
-						gnconve.cdconven = 19 OR    /*SAMAE Gaspar */
-						gnconve.cdconven = 20 OR    /*SAMAE Blumenau CECRED*/
-						gnconve.cdconven = 16 OR    /*SAMAE Timbo CECRED*/
-						gnconve.cdconven = 49 THEN  /*SAMAE Rio Negrinho*/
-						aux_dslinreg = "F" +
-									   STRING(aux_cdrefori,"999999") +
-									   FILL(" ",19) +
-									   STRING(aux_nragenci,"9999") +
-									   STRING(aux_nrdconta,"x(14)") +
-									   STRING(aux_dtmvtolt_aux,"x(08)") +
-									   STRING((craplcm.vllanmto * 100),"999999999999999")
-									   + "00" +
-									   STRING(craplau.cdseqtel,"x(60)") +
-									   STRING(tbdebaut.cdidentifi,"9") +
-									   STRING(tbdebaut.dsidentifi,"999999999999999") +
-									   FILL(" ",4) + "0".
-					ELSE
-					IF  gnconve.cdconven = 1  OR /* BRASIL TELECOM/SC */
-						gnconve.cdconven = 25 OR /* SAMAE BRUSQUE */
-						gnconve.cdconven = 26 OR /* SAMAE POMERODE */
-						gnconve.cdconven = 33 OR /* AGUAS DE JOINVILLE */
-						gnconve.cdconven = 39 OR /* SEGURO AUTO */
-						gnconve.cdconven = 41 OR /* SAMAE SAO BENTO */
-						gnconve.cdconven = 43 OR /* SERVMED */
-						gnconve.cdconven = 62 THEN /* AGUAS DE ITAPOCOROY */ 
-						aux_dslinreg = "F" +
-									 STRING(aux_cdrefori, "9999999999") +
-									 FILL(" ", 15) + 
-									 STRING(aux_nragenci, "9999")  +
-									 STRING(aux_nrdconta, "x(14)") + 
-									 STRING(aux_dtmvtolt, "x(8)")  + 
-									 STRING(craplcm.vllanmto * 100,"999999999999999")
-									 + "00" +
-									 STRING(craplau.cdseqtel, "x(60)") + 
-								     STRING(tbdebaut.cdidentifi,"9") +
-									 STRING(tbdebaut.dsidentifi,"999999999999999") +
-									 FILL(" ",4) + "0".
-					ELSE
-					IF  gnconve.cdconven = 74 OR /* MAPFRE VERA CRUZ SEG */
-						gnconve.cdconven = 75 THEN
-						aux_dslinreg = "F" +
-									   STRING(aux_cdrefori)
-									   + FILL(" ",25 - LENGTH(STRING(craplau.nrdocmto)))  +
-									   STRING(aux_nragenci,"9999") +
-									   STRING(aux_nrdconta,"99999999999999") +
-									   STRING(aux_dtmvtolt,"x(08)") +
-									   STRING((craplcm.vllanmto * 100),"999999999999999")
-									   + "00" +
-									   STRING(craplau.cdseqtel,"x(60)") +
-									    STRING(tbdebaut.cdidentifi,"9") +
-									   STRING(tbdebaut.dsidentifi,"999999999999999") +
-									   FILL(" ",4) + "0".
-					ELSE
-						 aux_dslinreg = "F" +
-									   STRING(aux_cdrefori,"9999999999999999999999")
-									   + FILL(" ",3) +
-									   STRING(aux_nragenci,"9999") +
-									   STRING(aux_nrdconta,"x(14)") +
-									   STRING(aux_dtmvtolt,"x(08)") +
-									   STRING((craplcm.vllanmto * 100),"999999999999999")
-									   + "00" +
-									   STRING(craplau.cdseqtel,"x(60)") +
-									    STRING(tbdebaut.cdidentifi,"9") +
-									   STRING(tbdebaut.dsidentifi,"999999999999999") +
-									   FILL(" ",4) + "0".
-			   END.
-			ELSE
-			   DO:
-					IF  gnconve.cdconven = 30 OR     /* Celesc Distribuicao*/
-						gnconve.cdconven = 45 THEN   /* Aguas Pres.Getulio */
-						
-						aux_dslinreg = "F" +
-									   STRING(aux_cdrefori,"999999999") +
-									   FILL(" ",16) +
-									   STRING(aux_nragenci,"9999") +
-									   STRING(aux_nrdconta,"x(14)") +
-									   STRING(aux_dtmvtolt_aux,"x(08)") +
-									   STRING((craplcm.vllanmto * 100),"999999999999999")
-									   + "00" +
-									   STRING(craplau.cdseqtel,"x(60)") +
-									   FILL(" ",20) + "0".
-					ELSE
-					IF  gnconve.cdconven = 4   OR    /* CASAN */
-						gnconve.cdconven = 24  OR    /* AGUAS ITAPEMA */
-						gnconve.cdconven = 31  OR    /* DAE NAVEGANTES */
-						gnconve.cdconven = 33  OR    /* AGUAS JOINVILLE */
-						gnconve.cdconven = 34  OR    /* SEMASA ITAJAI */
-						gnconve.cdconven = 53  OR   /* Foz do Brasil */
-						gnconve.cdconven = 54  THEN  /* AGUAS DE MASSARANDUBA */
+            ELSE
+            IF  gnconve.cdconven = 9  OR    /*SAMAE Jaragua*/
+                gnconve.cdconven = 19 OR    /*SAMAE Gaspar */
+                gnconve.cdconven = 20 OR    /*SAMAE Blumenau CECRED*/
+                gnconve.cdconven = 16 OR    /*SAMAE Timbo CECRED*/
+                gnconve.cdconven = 49 THEN  /*SAMAE Rio Negrinho*/
+                aux_dslinreg = "F" +
+                               STRING(aux_cdrefori,"999999") +
+                               FILL(" ",19) +
+                               STRING(aux_nragenci,"9999") +
+                               STRING(aux_nrdconta,"x(14)") +
+                               STRING(aux_dtmvtolt_aux,"x(08)") +
+                               STRING((craplcm.vllanmto * 100),"999999999999999")
+                               + "00" +
+                               STRING(craplau.cdseqtel,"x(60)") +
+                               FILL(" ",20) + "0".
+            ELSE
+            IF  gnconve.cdconven = 1  OR /* BRASIL TELECOM/SC */
+                gnconve.cdconven = 25 OR /* SAMAE BRUSQUE */
+                gnconve.cdconven = 26 OR /* SAMAE POMERODE */
+                gnconve.cdconven = 33 OR /* AGUAS DE JOINVILLE */
+                gnconve.cdconven = 39 OR /* SEGURO AUTO */
+                gnconve.cdconven = 41 OR /* SAMAE SAO BENTO */
+                gnconve.cdconven = 43 OR /* SERVMED */
+                gnconve.cdconven = 62 THEN /* AGUAS DE ITAPOCOROY */ 
+                aux_dslinreg = "F" +
+                             STRING(aux_cdrefori, "9999999999") +
+                             FILL(" ", 15) + 
+                             STRING(aux_nragenci, "9999")  +
+                             STRING(aux_nrdconta, "x(14)") + 
+                             STRING(aux_dtmvtolt, "x(8)")  + 
+                             STRING(craplcm.vllanmto * 100,"999999999999999")
+                             + "00" +
+                             STRING(craplau.cdseqtel, "x(60)") + 
+                             STRING(aux_anovecto, "x(4)")  +
+                             STRING(aux_mesvecto, "x(2)")  +
+                             STRING(aux_diavecto, "x(2)")  +
+                             FILL(" ", 12) +
+                             "0".
+            ELSE
+            IF  gnconve.cdconven = 74 OR /* MAPFRE VERA CRUZ SEG */
+                gnconve.cdconven = 75 THEN
+                aux_dslinreg = "F" +
+                               STRING(aux_cdrefori)
+                               + FILL(" ",25 - LENGTH(STRING(craplau.nrdocmto)))  +
+                               STRING(aux_nragenci,"9999") +
+                               STRING(aux_nrdconta,"99999999999999") +
+                               STRING(aux_dtmvtolt,"x(08)") +
+                               STRING((craplcm.vllanmto * 100),"999999999999999")
+                               + "00" +
+                               STRING(craplau.cdseqtel,"x(60)") +
+                               FILL(" ",20) + "0".
+            ELSE
+                 aux_dslinreg = "F" +
+                               STRING(aux_cdrefori,"9999999999999999999999")
+                               + FILL(" ",3) +
+                               STRING(aux_nragenci,"9999") +
+                               STRING(aux_nrdconta,"x(14)") +
+                               STRING(aux_dtmvtolt,"x(08)") +
+                               STRING((craplcm.vllanmto * 100),"999999999999999")
+                               + "00" +
+                               STRING(craplau.cdseqtel,"x(60)") +
+                               STRING(aux_anovecto,"9999") +
+                               STRING(aux_mesvecto,"99")   +
+                               STRING(aux_diavecto,"99")   +
+                               FILL(" ",12) + "0".
 
-						aux_dslinreg = "F" +
-									   STRING(aux_cdrefori,"99999999") +
-									   FILL(" ",17) +
-									   STRING(aux_nragenci,"9999") +
-									   STRING(aux_nrdconta,"x(14)") +
-									   STRING(aux_dtmvtolt,"x(08)") +
-									   STRING((craplcm.vllanmto * 100),"999999999999999")
-									   + "00" +
-									   STRING(craplau.cdseqtel,"x(60)") +
-									   FILL(" ",20) + "0".
-
-					ELSE
-					IF  gnconve.cdconven = 48 OR    /* TIM Celular */
-						gnconve.cdconven = 50 OR    /* HDI */
-						gnconve.cdconven = 55 OR    /* LIBERTY */
-						gnconve.cdconven = 58 OR    /* PORTO SEGURO */
-						gnconve.cdconven = 66 THEN  /* PREVISUL */
-										 
-						aux_dslinreg = "F" +
-									   STRING(aux_cdrefori,"99999999999999999999")
-									   + FILL(" ",5) +
-									   STRING(aux_nragenci,"9999") +
-									   STRING(aux_nrdconta,"x(14)") +
-									   STRING(aux_dtmvtolt,"x(08)") +
-									   STRING((craplcm.vllanmto * 100),"999999999999999")
-									   + "00" +
-									   STRING(craplau.cdseqtel,"x(60)") +
-									   STRING(aux_anovecto,"9999") +
-									   STRING(aux_mesvecto,"99")   +
-									   STRING(aux_diavecto,"99")   +
-									   FILL(" ",12) + "0".
-
-					ELSE
-					IF  gnconve.cdconven = 47 OR    /* UNIMED CREDCREA */
-						gnconve.cdconven = 57 THEN  /* RBS */
-
-						aux_dslinreg = "F" +
-									   STRING(aux_cdrefori,"99999999999999999") +
-									   FILL(" ",8) +
-									   STRING(aux_nragenci,"9999") +
-									   STRING(aux_nrdconta,"x(14)") +
-									   STRING(aux_dtmvtolt,"x(08)") +
-									   STRING((craplcm.vllanmto * 100),"999999999999999")
-									   + "00" +
-									   STRING(craplau.cdseqtel,"x(60)") +
-									   STRING(aux_anovecto,"9999") +
-									   STRING(aux_mesvecto,"99")   +
-									   STRING(aux_diavecto,"99")   +
-									   FILL(" ",12) + "0".
-
-					ELSE
-					IF  gnconve.cdconven = 22 OR     /* UNIMED */
-						gnconve.cdconven = 32 OR     /* UNIODONTO */
-						gnconve.cdconven = 38 OR     /* UNIM.PLAN.NORTE */ 
-						gnconve.cdconven = 46 OR     /* UNIODONTO FEDERACAO */
-						gnconve.cdconven = 64 THEN   /* AZUL SEGUROS */   
-						aux_dslinreg = "F" +
-								  STRING(aux_cdrefori,"9999999999999999999999999")
-									   +
-									   STRING(aux_nragenci,"9999") +
-									   STRING(aux_nrdconta,"x(14)") +
-									   STRING(aux_dtmvtolt,"x(08)") +
-									STRING((craplcm.vllanmto * 100),"999999999999999")
-									   + "00" +
-									   STRING(craplau.cdseqtel,"x(60)") +
-									   STRING(aux_anovecto,"9999") +
-									   STRING(aux_mesvecto,"99")   +
-									   STRING(aux_diavecto,"99")   +
-									   FILL(" ",12) + "0".
-					ELSE
-					IF  gnconve.cdconven = 15   THEN /* VIVO */
-
-						aux_dslinreg = "F" +
-									   STRING(aux_cdrefori,"99999999999") +
-									   FILL(" ",14) +
-									   STRING(aux_nragenci,"9999") +
-									   STRING(aux_nrdconta,"x(14)") +
-									   STRING(aux_dtmvtolt_aux,"x(08)") +
-									STRING((craplcm.vllanmto * 100),"999999999999999")
-									   + "00" +
-									   STRING(craplau.cdseqtel,"x(60)") +
-									   FILL(" ",20) + "0".
-
-					ELSE
-					IF  gnconve.cdconven = 9  OR    /*SAMAE Jaragua*/
-						gnconve.cdconven = 19 OR    /*SAMAE Gaspar */
-						gnconve.cdconven = 20 OR    /*SAMAE Blumenau CECRED*/
-						gnconve.cdconven = 16 OR    /*SAMAE Timbo CECRED*/
-						gnconve.cdconven = 49 THEN  /*SAMAE Rio Negrinho*/
-						aux_dslinreg = "F" +
-									   STRING(aux_cdrefori,"999999") +
-									   FILL(" ",19) +
-									   STRING(aux_nragenci,"9999") +
-									   STRING(aux_nrdconta,"x(14)") +
-									   STRING(aux_dtmvtolt_aux,"x(08)") +
-									   STRING((craplcm.vllanmto * 100),"999999999999999")
-									   + "00" +
-									   STRING(craplau.cdseqtel,"x(60)") +
-									   FILL(" ",20) + "0".
-					ELSE
-					IF  gnconve.cdconven = 1  OR /* BRASIL TELECOM/SC */
-						gnconve.cdconven = 25 OR /* SAMAE BRUSQUE */
-						gnconve.cdconven = 26 OR /* SAMAE POMERODE */
-						gnconve.cdconven = 33 OR /* AGUAS DE JOINVILLE */
-						gnconve.cdconven = 39 OR /* SEGURO AUTO */
-						gnconve.cdconven = 41 OR /* SAMAE SAO BENTO */
-						gnconve.cdconven = 43 OR /* SERVMED */
-						gnconve.cdconven = 62 THEN /* AGUAS DE ITAPOCOROY */ 
-						aux_dslinreg = "F" +
-									 STRING(aux_cdrefori, "9999999999") +
-									 FILL(" ", 15) + 
-									 STRING(aux_nragenci, "9999")  +
-									 STRING(aux_nrdconta, "x(14)") + 
-									 STRING(aux_dtmvtolt, "x(8)")  + 
-									 STRING(craplcm.vllanmto * 100,"999999999999999")
-									 + "00" +
-									 STRING(craplau.cdseqtel, "x(60)") + 
-									 STRING(aux_anovecto, "x(4)")  +
-									 STRING(aux_mesvecto, "x(2)")  +
-									 STRING(aux_diavecto, "x(2)")  +
-									 FILL(" ", 12) +
-									 "0".
-					ELSE
-					IF  gnconve.cdconven = 74 OR /* MAPFRE VERA CRUZ SEG */
-						gnconve.cdconven = 75 THEN
-						aux_dslinreg = "F" +
-									   STRING(aux_cdrefori)
-									   + FILL(" ",25 - LENGTH(STRING(craplau.nrdocmto)))  +
-									   STRING(aux_nragenci,"9999") +
-									   STRING(aux_nrdconta,"99999999999999") +
-									   STRING(aux_dtmvtolt,"x(08)") +
-									   STRING((craplcm.vllanmto * 100),"999999999999999")
-									   + "00" +
-									   STRING(craplau.cdseqtel,"x(60)") +
-									   FILL(" ",20) + "0".
-					ELSE
-						 aux_dslinreg = "F" +
-									   STRING(aux_cdrefori,"9999999999999999999999")
-									   + FILL(" ",3) +
-									   STRING(aux_nragenci,"9999") +
-									   STRING(aux_nrdconta,"x(14)") +
-									   STRING(aux_dtmvtolt,"x(08)") +
-									   STRING((craplcm.vllanmto * 100),"999999999999999")
-									   + "00" +
-									   STRING(craplau.cdseqtel,"x(60)") +
-									   STRING(aux_anovecto,"9999") +
-									   STRING(aux_mesvecto,"99")   +
-									   STRING(aux_diavecto,"99")   +
-									   FILL(" ",12) + "0".
-				END.
 
 
             PUT STREAM str_2 aux_dslinreg FORMAT "x(150)" SKIP.
@@ -1214,60 +1034,31 @@ FOR EACH gncvcop NO-LOCK WHERE
                    aux_flgfirst = FALSE.
                 END.
 
-			--Se convênvio utiliza versão 5 do layout fefraban
-            IF gnconve.vslayout = 5 THEN
-			  DO: 
-				  IF  gnconve.cdconven = 19 THEN
+            
+            IF  gnconve.cdconven = 19 THEN
 
-						aux_dslinreg = STRING(SUBSTR(crapndb.dstexarq,1,127),"x(127)") +
-									   FILL(" ",2) +
-									   SUBSTR(crapndb.dstexarq,130,1) +
-									   SUBSTR(crapndb.dstexarq,131,15) +
-									   FILL(" ",4) + "0".
+                aux_dslinreg = STRING(SUBSTR(crapndb.dstexarq,1,127),"x(127)") +
+                               FILL(" ",22) + "0".
 
-					ELSE
-					IF  gnconve.cdconven = 4 OR   
-						gnconve.cdconven = 15 OR /** VIVO **/
-						gnconve.cdconven = 16 OR
-						gnconve.cdconven = 45 OR /** Aguas Pres.Getulio **/
-						gnconve.cdconven = 50 OR /** HDI **/
-						gnconve.cdconven = 9  OR 
-						gnconve.cdconven = 74 OR 
-						gnconve.cdconven = 75 THEN
-						aux_dslinreg = STRING(crapndb.dstexarq,"x(150)").
-					ELSE
-						/* Gravar o gncvuni */
-						aux_dslinreg = STRING(SUBSTR(crapndb.dstexarq,1,129),"x(129)") +
-									   SUBSTR(crapndb.dstexarq,130,1) +
-									   SUBSTR(crapndb.dstexarq,131,15) +							   
-									   FILL(" ",4) + "0".
-			  END.
-			ELSE
-			  DO:
-				IF  gnconve.cdconven = 19 THEN
+            ELSE
+            IF  gnconve.cdconven = 4 OR   
+                gnconve.cdconven = 15 OR /** VIVO **/
+                gnconve.cdconven = 16 OR
+                gnconve.cdconven = 45 OR /** Aguas Pres.Getulio **/
+                gnconve.cdconven = 50 OR /** HDI **/
+                gnconve.cdconven = 9  OR 
+                gnconve.cdconven = 74 OR 
+                gnconve.cdconven = 75 THEN
+                aux_dslinreg = STRING(crapndb.dstexarq,"x(150)").
+            ELSE
+                /* Gravar o gncvuni */
+                aux_dslinreg = STRING(SUBSTR(crapndb.dstexarq,1,129),"x(129)") +
+                               STRING(aux_anovecto, "x(4)")  +
+                               STRING(aux_mesvecto, "x(2)")  +
+                               STRING(aux_diavecto, "x(2)")  +
+                               FILL(" ",12) + "0".
 
-					aux_dslinreg = STRING(SUBSTR(crapndb.dstexarq,1,127),"x(127)") +
-								   FILL(" ",22) + "0".
 
-				ELSE
-				IF  gnconve.cdconven = 4 OR   
-					gnconve.cdconven = 15 OR /** VIVO **/
-					gnconve.cdconven = 16 OR
-					gnconve.cdconven = 45 OR /** Aguas Pres.Getulio **/
-					gnconve.cdconven = 50 OR /** HDI **/
-					gnconve.cdconven = 9  OR 
-					gnconve.cdconven = 74 OR 
-					gnconve.cdconven = 75 THEN
-					aux_dslinreg = STRING(crapndb.dstexarq,"x(150)").
-				ELSE
-					/* Gravar o gncvuni */
-					aux_dslinreg = STRING(SUBSTR(crapndb.dstexarq,1,129),"x(129)") +
-								   STRING(aux_anovecto, "x(4)")  +
-								   STRING(aux_mesvecto, "x(2)")  +
-								   STRING(aux_diavecto, "x(2)")  +
-								   FILL(" ",12) + "0".
-
-			  END.
 
             PUT STREAM str_2 aux_dslinreg FORMAT "x(150)" SKIP.
 

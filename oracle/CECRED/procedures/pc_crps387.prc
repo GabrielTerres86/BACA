@@ -1346,7 +1346,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
               WHEN OTHERS THEN
                  vr_cdcritic := 474; -- Codigo e/ou numero do convenio invalido.
             END;
-            IF SUBSTR(vr_tab_crawarq(vr_ind_arq).setlinha,80,2) NOT IN (4,5) THEN
+            IF SUBSTR(vr_tab_crawarq(vr_ind_arq).setlinha,80,2) <> 4 THEN
               vr_cdcritic := 477; -- Versao invalida.
             END IF;
 
@@ -3047,61 +3047,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
 
                       continue; -- Vai para a proxima linha do arquivo
                     END IF;
-                  
-                  ELSIF rw_gnconve = 5 THEN
-                    
-                    /*** Tratamento para codigo de identificação zerado ***/
-                    IF to_number(SUBSTR(vr_setlinha,131,15)) = 0 THEN
-                      
-                      -- Caso a referencia do arquivo vier zerada, devera gerar crapndb
-                      vr_dtultdia := fn_verifica_ult_dia(vr_cdcooper, rw_crapdat.dtmvtopr);
-                      
-                      -- Arquivo com os registros de debito com referencia zeradas
-                      BEGIN
-                        INSERT INTO crapndb
-                          (dtmvtolt,
-                           nrdconta,
-                           cdhistor,
-                           flgproce,
-                           dstexarq,
-                           cdcooper)
-                         VALUES
-                          (vr_dtultdia,
-                           vr_nrdconta,
-                           rw_gnconve.cdhisdeb,
-                           0,
-                           'F'||SUBSTR(vr_setlinha,2,66)||'19'||SUBSTR(vr_setlinha,70,81),
-                           vr_cdcooper);
-                      EXCEPTION
-                        WHEN OTHERS THEN
-                          vr_dscritic := 'Erro ao inserir crapndb: '||SQLERRM;
-                          RAISE vr_exc_saida;
-                      END;
-
-                      -- monta a chave para a pl_table vr_tab_relato
-                      vr_nrseq := vr_nrseq + 1;
-                      vr_ind := lpad(vr_cdcritic,5,'0')||'00003'|| lpad(vr_nrdconta,10,'0') ||
-                                lpad(vr_cdrefere*100,27,'0') || lpad(vr_nrseq,5,'0');
-
-                      vr_tab_relato(vr_ind).nmarquiv := vr_tab_nmarquiv(i);
-                      vr_tab_relato(vr_ind).nrdconta := vr_nrdconta;
-                      vr_tab_relato(vr_ind).contrato := SUBSTR(vr_setlinha,02,25);
-                      IF vr_cdcritic <> 13 THEN
-                        vr_tab_relato(vr_ind).dtmvtolt := vr_dtrefere;
-                  END IF;
-                      vr_tab_relato(vr_ind).nrdctabb := 0;
-                      vr_tab_relato(vr_ind).cdcritic := 1002;
-                      vr_tab_relato(vr_ind).tpintegr := 3;  /* fatura rejeitada */
-                      vr_tab_relato(vr_ind).vllanmto := SUBSTR(vr_setlinha,53,15) / 100;
-                      vr_tab_relato(vr_ind).ocorrencia := SUBSTR(vr_setlinha,70,40);
-                      vr_tab_relato(vr_ind).descrica := SUBSTR(vr_setlinha,110,20);
-
-                      vr_flgrejei     := TRUE;
-
-                      continue; -- Vai para a proxima linha do arquivo
-                    END IF;
-                    
-                    
                   END IF;
                                     
                   -- Cadastro das autorizacoes de debito em conta
