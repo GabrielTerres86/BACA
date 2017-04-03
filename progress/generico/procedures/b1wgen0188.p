@@ -1111,6 +1111,7 @@ PROCEDURE grava_dados:
                               INPUT par_cdcoptfn,
                               INPUT par_cdagetfn,
                               INPUT par_nrterfin,
+                              INPUT par_qtpreemp,
                               OUTPUT aux_vltarifa,
                               OUTPUT aux_vltaxiof,
                               OUTPUT aux_vltariof,
@@ -1220,6 +1221,7 @@ PROCEDURE grava_dados_conta PRIVATE:
     DEF  INPUT PARAM par_cdcoptfn AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdagetfn AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrterfin AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_qtpreemp AS INTE                           NO-UNDO.
 
     DEF OUTPUT PARAM par_vltottar AS DECI                           NO-UNDO.
     DEF OUTPUT PARAM par_vltaxiof AS DECI                           NO-UNDO.
@@ -1466,6 +1468,8 @@ PROCEDURE grava_dados_conta PRIVATE:
                          INPUT par_cdlcremp,
                          INPUT par_vlemprst,
                          INPUT par_dtmvtolt,
+                         INPUT par_qtpreemp,
+                         INPUT par_dtdpagto,
                          OUTPUT par_vltaxiof,
                          OUTPUT par_vltariof,
                          OUTPUT TABLE tt-erro).
@@ -1601,6 +1605,8 @@ PROCEDURE calcula_iof:
     DEF  INPUT PARAM par_cdlcremp AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_vlemprst AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrparepr AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_dtvencto AS DATE                           NO-UNDO.
 
     DEF OUTPUT PARAM par_vltaxiof AS DECI                           NO-UNDO.
     DEF OUTPUT PARAM par_vltariof AS DECI                           NO-UNDO.
@@ -1610,6 +1616,7 @@ PROCEDURE calcula_iof:
     DEF VAR h-b1wgen0159 AS HANDLE                                  NO-UNDO.
     DEF VAR aux_flgimune AS LOGI                                    NO-UNDO.
     DEF VAR aux_flgtaiof AS LOGI                                    NO-UNDO.
+    DEF VAR aux_qtdiaiof AS INTE                                    NO-UNDO.
 
     FOR craplcr FIELDS(flgtaiof) WHERE craplcr.cdcooper = par_cdcooper AND
                                        craplcr.cdlcremp = par_cdlcremp
@@ -1666,8 +1673,25 @@ PROCEDURE calcula_iof:
                   /* Caso for imune, nao podemos cobrar IOF */
                   IF NOT aux_flgimune THEN
                      DO:
-                         ASSIGN par_vltaxiof = tt-iof.txccdiof
-                                par_vltariof = ROUND(par_vlemprst * par_vltaxiof,2).
+                         ASSIGN par_vltaxiof = 0.
+                         
+                         FOR FIRST crapass FIELDS(inpessoa)
+                                           WHERE crapass.cdcooper = par_cdcooper AND
+                                                 crapass.nrdconta = par_nrdconta
+                                                 NO-LOCK: END.
+                         IF AVAILABLE crapass THEN
+                            DO:
+                                ASSIGN par_vltariof = ROUND(par_vlemprst * tt-iof.txccdiof,2).
+                                ASSIGN aux_qtdiaiof = ADD-INTERVAL(par_dtvencto,par_nrparepr - 1,"MONTH") - par_dtmvtolt.
+                                
+                                IF aux_qtdiaiof > 365 THEN
+                                   ASSIGN aux_qtdiaiof = 365.
+                                
+                                IF crapass.inpessoa = 1 THEN
+                                   ASSIGN par_vltariof = par_vltariof + ROUND((par_vlemprst * aux_qtdiaiof * 0.000082),2).
+                                ELSE
+                                   ASSIGN par_vltariof = par_vltariof + ROUND((par_vlemprst * aux_qtdiaiof * 0.000041),2).
+                            END.
 
                      END. /* END IF NOT aux_flgimune */
 
@@ -1994,6 +2018,8 @@ PROCEDURE calcula_taxa_emprestimo:
                      INPUT crapcpa.cdlcremp,
                      INPUT par_vlemprst,
                      INPUT par_dtmvtolt,
+                     INPUT par_nrparepr,
+                     INPUT par_dtvencto,
                      OUTPUT par_vltaxiof,
                      OUTPUT par_vltariof,
                      OUTPUT TABLE tt-erro).
@@ -2216,8 +2242,8 @@ PROCEDURE imprime_previa_demonstrativo:
                               INPUT aux_cdcritic,
                               INPUT-OUTPUT aux_dscritic).
                RETURN "NOK".
-           END.
-
+               END.
+               
             ASSIGN aux_cdlcremp = crapcpa.cdlcremp.
           END. /*IF par_nrctremp = 0 THEN*/
         ELSE 
@@ -2438,8 +2464,7 @@ PROCEDURE imprime_previa_demonstrativo:
                    "CET de " 
                    par_percetop FORMAT "zz9.99" "% a.a, IOF de "
                    "R$ "
-                   par_vltariof FORMAT "zz9.99" "("
-                   (par_vltaxiof * 100) FORMAT "zz9.99" "%) "
+                   par_vltariof FORMAT "zz9.99"
                    "(" aux_dsvlriof1 FORMAT "x(42)"
                    SKIP
                    aux_dsvlriof2 FORMAT "x(28)" ") "
@@ -2529,8 +2554,7 @@ PROCEDURE imprime_previa_demonstrativo:
                    "% a.a,  IOF "
                    SKIP
                    "de R$ "
-                   par_vltariof FORMAT "zz9.99" 
-                   "(" (par_vltaxiof * 100) FORMAT "zz9.99" "%)("
+                   par_vltariof FORMAT "zz9.99" "("
                    aux_dsvlriof1 FORMAT "x(66)"
                    ") "
                    SKIP
