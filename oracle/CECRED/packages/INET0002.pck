@@ -20,7 +20,7 @@ CREATE OR REPLACE PACKAGE CECRED.INET0002 AS
                             (Lucas Lunelli - PROJ290 Cartao CECRED no CaixaOnline)
     
                 20/06/2016 - Correcao para o uso da function fn_busca_dstextab da TABE0001 em 
-                             varias procedures desta package.(Carlos Rafael Tanholi). 
+                             varias procedures desta package.(Carlos Rafael Tanholi).     
                 
                 18/07/2016 - Criação da procedure pc_cria_trans_pend_darf_das para o
                              Prj. 338, Pagamento de DARF e DAS (Jean Michel) 
@@ -464,7 +464,7 @@ CREATE OR REPLACE PACKAGE CECRED.INET0002 AS
                                ,pr_clobxmlc OUT CLOB                  --> XML com informações
                                ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
                                ,pr_dscritic OUT VARCHAR2);            --> Descricao da crítica
-
+   
   --> Rotina responsavel pela criacao de transacoes pendentes de DARF/DAS
   PROCEDURE pc_cria_trans_pend_darf_das(pr_cdcooper  IN crapcop.cdcooper%TYPE                 --> Código da cooperativa
                                        ,pr_nrdcaixa  IN craplot.nrdcaixa%TYPE                 --> Numero do Caixa
@@ -506,7 +506,7 @@ CREATE OR REPLACE PACKAGE CECRED.INET0002 AS
                                        ,pr_tpleitur  IN NUMBER                                --> Tipo da leitura do documento (1 – Leitora de Código de Barras / 2 - Manual)
                                        ,pr_cdcritic OUT INTEGER 						                  --> Código do erro
                                        ,pr_dscritic OUT VARCHAR2);      	                    --> Descriçao do erro
-
+                                 
   /******************************************************************************/
   /**     Procedure para carregar titulares/operadores para acesso a conta     **/
   /******************************************************************************/
@@ -2341,7 +2341,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 															TO_CHAR(rw_tbfolha_trans_pend.vlfolha,'fm999g999g990d00') || 
 															'</b> com débito programado para <b>' || 
 															TO_CHAR(rw_tbfolha_trans_pend.dtdebito,'DD/MM/RRRR') || '</b>.<br>';
-WHEN pr_tptransa = 10 THEN --Pacote de tarifas
+			    WHEN pr_tptransa = 10 THEN --Pacote de tarifas
 						OPEN cr_pactar;
 						FETCH cr_pactar INTO rw_pactar;
 								 
@@ -2468,7 +2468,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
     vr_auxditem gene0002.typ_split;
     -- Rowid tabela de log
     vr_nrdrowid ROWID;
-	  
+
     --Variaveis de Erro
     vr_cdcritic crapcri.cdcritic%TYPE;
     vr_dscritic VARCHAR2(4000);
@@ -3100,13 +3100,13 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
     --
     ---------------------------------------------------------------------------------------------------------------
     BEGIN
-      DECLARE
-      -- Variáveis
-      vr_cdcritic crapcri.cdcritic%TYPE := 0;
-      vr_dscritic crapcri.dscritic%TYPE := '';
-      vr_exec_saida EXCEPTION;
-      vr_cdtranpe tbgen_trans_pend.cdtransacao_pendente%TYPE;
-      vr_tab_crapavt CADA0001.typ_tab_crapavt_58; --Tabela Avalistas    
+    DECLARE
+    -- Variáveis
+    vr_cdcritic crapcri.cdcritic%TYPE := 0;
+    vr_dscritic crapcri.dscritic%TYPE := '';
+    vr_exec_saida EXCEPTION;
+    vr_cdtranpe tbgen_trans_pend.cdtransacao_pendente%TYPE;
+    vr_tab_crapavt CADA0001.typ_tab_crapavt_58; --Tabela Avalistas    
 
     BEGIN
     
@@ -4324,7 +4324,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
       ROLLBACK; 
   END pc_cria_trans_pend_folha;
 
-   PROCEDURE pc_cria_trans_pend_pacote_tar (pr_cdagenci  IN crapage.cdagenci%TYPE                      --> Codigo do PA
+  PROCEDURE pc_cria_trans_pend_pacote_tar (pr_cdagenci  IN crapage.cdagenci%TYPE                      --> Codigo do PA
 																					,pr_nrdcaixa  IN craplot.nrdcaixa%TYPE                      --> Numero do Caixa
 																					,pr_cdoperad  IN crapope.cdoperad%TYPE                      --> Codigo do Operados
 																					,pr_nmdatela  IN craptel.nmdatela%TYPE                      --> Nome da Tela
@@ -4892,7 +4892,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
      WHEN OTHERS THEN
        pr_dscritic := 'Erro no procedimento INET0002.pc_obtem_rowid_folha: ' || SQLERRM;      
    END pc_obtem_rowid_folha; 
-         
+      
    PROCEDURE pc_busca_trans_pend(pr_cdcooper IN  crapcop.cdcooper%TYPE --> Código da Cooperativa
                                 ,pr_nrdconta IN  crapass.nrdconta%TYPE --> Numero conta
                                 ,pr_idseqttl IN  crapsnh.idseqttl%TYPE --> Sequencia de Titularidade
@@ -4917,7 +4917,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
      Sistema : Transacoes Pendentes
      Sigla   : INET
      Autor   : Jorge Hamaguchi
-     Data    : Dezembro/2015.                  Ultima atualizacao: 02/09/2016
+     Data    : Dezembro/2015.                  Ultima atualizacao: 01/04/2017
 
      Dados referentes ao programa:
 
@@ -4933,21 +4933,23 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
 							               (Adriano).
                              
                  29/06/2016 - Utilizar rotina generico para busca registro na craptab
-                              (Adriano).             
-
+                              (Adriano).
+                 
                  19/07/2016 - Ajustes para o Prj. 338 - Pagamento de DARF/DAS (Jean Michel).             
 
-	               04/08/2016 - Ajustes realizado na tela conforme solicitado no chamado
-                              442860 (Kelvin).
+                 04/08/2016 - Ajustes realizado na tela conforme solicitado no chamado
+                              442860 (Kelvin).             
 
                  02/09/2016 - Ajustada para retornar os aprovadores da transação que
-                              está sendo consultada., SD 514239 (Jean Michel).
-                              
-				 28/11/2016 - Inclusao dos transaçoes pendentes 16 e 17. 
+                              está sendo consultada., SD 514239 (Jean Michel).                          
+                 
+                 28/11/2016 - Inclusao dos transaçoes pendentes 16 e 17. 
                               PRJ319 - SMS Cobrança (Odirlei-AMcom)                                   
 
                  30/01/2017 - Adição do campo idsituacao_transacao no xml de retorno para utilização no
                               Cecred Mobile (Dionathan)
+                              
+                 01/04/2017 - Remover o campo Percentual do IOF. (James)              
     ..............................................................................*/
     DECLARE
      
@@ -5187,7 +5189,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
       WHERE  tbfolha_trans_pend.cdtransacao_pendente = pr_cddoitem
         AND  tbfolha_trans_pend.dtdebito BETWEEN pr_dtiniper AND pr_dtfimper;
       rw_tbfolha_trans_pend cr_tbfolha_trans_pend%ROWTYPE;
-
+           
       --Tipo Transacao 10 - Cursor para buscar a transação de adesão de pacote de tarifa pendente
 			CURSOR cr_pactar (pr_cdtranpe IN tbtarif_pacote_trans_pend.cdtransacao_pendente%TYPE)IS
 			  SELECT tpend.vlpacote
@@ -5311,7 +5313,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
          WHERE cdtransacao_pendente = pr_cdtransa;
 
       rw_tbaprova_rep cr_tbaprova_rep%ROWTYPE;
-
+		
       --> Contrato de SMS - Transacao 16
       CURSOR cr_sms_trans_pend (pr_cdtransa IN tbcobran_sms_trans_pend.cdtransacao_pendente%TYPE) IS
         SELECT pen.vlservico
@@ -5448,13 +5450,13 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
       --Folha de Pagamento
       vr_nrqtlnac VARCHAR2(100);
       vr_solestou VARCHAR2(100);
-
-      -- Pacote de tarifas
+			
+			-- Pacote de tarifas
 			vr_dspacote VARCHAR2(100);
 			vr_vlpacote VARCHAR2(100);
 			vr_dtdiadeb VARCHAR2(100);
 			vr_dtinivig VARCHAR2(100);
-
+        
       --DARF/DAS
       vr_tpcaptura INTEGER := 0;
       vr_dstipcapt VARCHAR2(50);
@@ -5808,7 +5810,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
                                                      ,pr_dtiniper => pr_dtiniper
                                                      ,pr_dtfimper => pr_dtfimper
                                                      ,pr_insittra => pr_insittra) LOOP
-                  
+      
          --Zerando Variaveis
          vr_indiacao := 0;   vr_cddbanco := 0;   vr_vlasomar := 0;   vr_vlaplica := 0;   vr_vllanaut := 0;
          vr_cdcopdes := ' '; vr_nrcondes := ' '; vr_dtdebito := ' '; vr_nmcednte := ' '; vr_nrcodbar := ' ';
@@ -5827,7 +5829,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
          vr_tpcaptura := 0; vr_dstipcapt := ''; vr_dsnomfone := ''; vr_dscod_barras := ''; vr_dslinha_digitavel := '';
          vr_dtapuracao := null; vr_cdtributo := '0'; vr_nrrefere := 0; vr_vlprincipal := 0; vr_vlmulta := 0; vr_vljuros := 0;
          vr_vlrtotal := 0; vr_vlreceita_bruta := 0; vr_vlpercentual := 0; vr_idagendamento := 0; 
-
+         
          --Atribuicao de variaveis genericas
          vr_tptranpe := rw_tbgen_trans_pend.tptransacao;
          vr_cdtranpe := rw_tbgen_trans_pend.cdtransacao_pendente;
@@ -5937,7 +5939,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
                     END IF;
 
                  END IF;
-                 
+
                  OPEN cr_crapcop (pr_cdagectl => rw_tbtransf_trans_pend.cdagencia_coop_destino);
                  FETCH cr_crapcop INTO rw_crapcop;
 
@@ -6186,7 +6188,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
                        CONTINUE;
                     END IF;
                  END IF;
-                 
+                
                  vr_tpopeapl := rw_tbcapt_trans_pend.tpoperacao; -- Tipo de Operacao (da Aplicacao)
                  vr_nraplica := rw_tbcapt_trans_pend.nraplicacao; --Número da Aplicacao
                  vr_tpagenda := rw_tbcapt_trans_pend.tpagendamento; --Tipo do Agendamento: 
@@ -6313,7 +6315,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
                                vr_dsdtefet := TO_CHAR(TO_DATE(LPAD(NVL(rw_tbcapt_trans_pend.nrdia_agendamento,1),2,0) || '/' || to_CHAR(ADD_MONTHS(pr_dtmvtolt,1),'mm/RRRR'),'dd/mm/RRRR'),'DD/MM/RRRR');
                             END IF;                    
                           END IF;
-
+                          
                           IF to_date(vr_dsdtefet,'dd/mm/rrrr') NOT BETWEEN pr_dtiniper AND pr_dtfimper THEN
                             CONTINUE;                                                               
                           END IF;
@@ -6356,7 +6358,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
                               
                               EXIT;
                           END LOOP; 
-
+                          
                           IF to_date(vr_dsdtefet,'dd/mm/rrrr') NOT BETWEEN pr_dtiniper AND pr_dtfimper THEN
                             CONTINUE;                                                               
                           END IF;                    
@@ -6410,7 +6412,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
                              vr_dsdtefet := TO_CHAR(vr_tab_agen_det(vr_nrindice).dtmvtopg,'DD/MM/RRRR'); -- Data efetivacao                               
                              
                              EXIT;
-                          END LOOP;  
+                          END LOOP;
                           
                           IF to_date(vr_dsdtefet,'dd/mm/rrrr') NOT BETWEEN pr_dtiniper AND pr_dtfimper THEN
                             CONTINUE;                                                               
@@ -6437,7 +6439,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
                        CONTINUE;
                     END IF;
                  END IF;
-                 
+                
                  vr_tpopconv := rw_tbconv_trans_pend.tpoperacao;
                  
                  IF rw_tbconv_trans_pend.tpoperacao = 1 THEN --Autorizacao Debito Automatico
@@ -6535,7 +6537,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
                  vr_solestou := CASE WHEN rw_tbfolha_trans_pend.idestouro = 0 THEN 'NÃO' ELSE 'SIM' END; --Solicitado Estouro
                  vr_vltarifa := TO_CHAR(rw_tbfolha_trans_pend.vltarifa,'fm999g999g990d00'); --Valor da Tarifa
 
-            WHEN vr_tptranpe = 10 THEN --Pacote de tarifas
+						WHEN vr_tptranpe = 10 THEN --Pacote de tarifas
 							
 						     OPEN cr_pactar(vr_cdtranpe);
 								 FETCH cr_pactar INTO rw_pactar;
@@ -6566,7 +6568,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
 								 vr_vlpacote := to_char(rw_pactar.vlpacote,'fm999g999g990d00');
 								 vr_dspacote := rw_pactar.dspacote;
 								 vr_dtinivig := to_char(rw_pactar.dtinivig, 'dd/mm/rrrr');
-								 vr_dtdiadeb := rw_pactar.dtdiadeb;     
+								 vr_dtdiadeb := rw_pactar.dtdiadeb;
             
             WHEN vr_tptranpe = 11 THEN -- DARF/DAS                 
                OPEN cr_tbpagto_darf_das_trans_pend (pr_cddoitem => vr_cdtranpe);
@@ -6575,7 +6577,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
                   --Fechar Cursor
                   CLOSE cr_tbpagto_darf_das_trans_pend;
                   CONTINUE;
-               ELSE
+            ELSE
                   --Fechar Cursor
                   CLOSE cr_tbpagto_darf_das_trans_pend;
 				          --Controle de paginação
@@ -6744,8 +6746,8 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
             || '<dados_campo><label>CET</label><valor>'                   ||vr_vlpercet||'</valor></dados_campo>'
             || '<dados_campo><label>Tarifa</label><valor>'                ||vr_vltarifa||'</valor></dados_campo>'
             || '<dados_campo><label>Taxa Mensal</label><valor>'           ||vr_vltaxmen||'</valor></dados_campo>'
-            || '<dados_campo><label>IOF</label><valor>'                   ||vr_vlrdoiof||'</valor></dados_campo>'
-            || '<dados_campo><label>Percentual IOF</label><valor>'        ||vr_vlperiof||'</valor></dados_campo>';            
+            || '<dados_campo><label>IOF</label><valor>'                   ||vr_vlrdoiof||'</valor></dados_campo>';
+         /*   || '<dados_campo><label>Percentual IOF</label><valor>'        ||vr_vlperiof||'</valor></dados_campo>';  */
          ELSIF vr_tptranpe = 7 THEN --Aplicacao
             IF vr_tpopeapl = 1 THEN --Cancelamento Aplicacao
                vr_xml_auxi := vr_xml_auxi
@@ -6848,7 +6850,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
             || '<dados_campo><label>Solicitado Estouro</label><valor>'       ||vr_solestou||'</valor></dados_campo>'
             || '<dados_campo><label>Data de Débito</label><valor>'           ||vr_dsdtefet||'</valor></dados_campo>'
             || '<dados_campo><label>Valor da Tarifa</label><valor>'          ||vr_vltarifa||'</valor></dados_campo>';
-		     ELSIF vr_tptranpe = 10 THEN --Pacote de Tarifas
+				ELSIF vr_tptranpe = 10 THEN --Pacote de Tarifas
             vr_xml_auxi := vr_xml_auxi
             || '<dados_campo><label>Serviço</label><valor>'           ||vr_dspacote||'</valor></dados_campo>'
             || '<dados_campo><label>Valor</label><valor>'             ||vr_vlpacote||'</valor></dados_campo>'
@@ -6859,9 +6861,9 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
             vr_xml_auxi := vr_xml_auxi || '<dados_campo><label>Tipo de Captura</label><valor>'||vr_dstipcapt||'</valor></dados_campo>';
             
             IF TRIM(vr_dsdescri) IS NOT NULL THEN
-              vr_xml_auxi := vr_xml_auxi || '<dados_campo><label>Identificação do Pagamento</label><valor>'||vr_dsdescri||'</valor></dados_campo>';
+              vr_xml_auxi := vr_xml_auxi || '<dados_campo><label>Identificação do Pagamento</label><valor>'||vr_dsdescri||'</valor></dados_campo>';         
             END IF;
-            
+         
             IF TRIM(vr_dsnomfone) IS NOT NULL THEN
               vr_xml_auxi := vr_xml_auxi|| '<dados_campo><label>Nome e Telefone</label><valor>'||vr_dsnomfone||'</valor></dados_campo>';
             END IF;
@@ -6903,11 +6905,11 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
             vr_xml_auxi := vr_xml_auxi            
             || '<dados_campo><label>Serviço</label><valor>'  || rw_sms_trans_pend.dspacote ||'</valor></dados_campo>'
             || '<dados_campo><label>Início</label><valor>'   || to_char(rw_sms_trans_pend.dtassinatura,'DD/MM/RRRR')      ||'</valor></dados_campo>';
-         END IF;
+		 END IF;
          
          vr_xml_auxi := vr_xml_auxi || '</dados_detalhe>';
          
-				 vr_xml_auxi := vr_xml_auxi || '<aprovadores>';
+         vr_xml_auxi := vr_xml_auxi || '<aprovadores>';
          vr_nmagenda := '';
 
          FOR rw_tbaprova_rep IN cr_tbaprova_rep (pr_cdtransa  => vr_cdtranpe) LOOP
@@ -6918,7 +6920,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
              IF vr_tab_crapavt(vr_ind).nrcpfcgc = rw_tbaprova_rep.cpf_responsavel THEN
                vr_nmagenda := vr_tab_crapavt(vr_ind).nmdavali;
                EXIT;
-             END IF;
+         END IF;
              vr_ind := vr_tab_crapavt.NEXT(vr_ind);
            END LOOP;
 
@@ -6927,15 +6929,15 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
                                       || '<idsituacao>' || rw_tbaprova_rep.idsituacao || '</idsituacao></aprovador>';
 
          END LOOP;
-
-         vr_xml_auxi := vr_xml_auxi || '</aprovadores></transacao>';	
-				 
+         
+         vr_xml_auxi := vr_xml_auxi || '</aprovadores></transacao>';
+         
          --Dados Detalhados da transacao
          gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
                                 ,pr_texto_completo => vr_xml_temp 
                                 ,pr_texto_novo     => vr_xml_auxi);
-                           
-			END LOOP;
+         
+      END LOOP;
       --Fim loop de transacoes
       
       --Montar Tag de fechamento das transacoes pendentes
