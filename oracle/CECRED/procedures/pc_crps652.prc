@@ -8,7 +8,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
   BEGIN
 
   /* .............................................................................
-
+  
    Programa: PC_CRPS652                      Antigo: Fontes/CRPS652.p
    Sistema : CYBER - GERACAO DE ARQUIVO
    Sigla   : CRED
@@ -1653,7 +1653,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                                           ,pr_nrctremp IN crapcyb.nrctremp%TYPE    --Numero Contrato Emprestimo
                                           ,pr_vlrpagto IN NUMBER                   --Valor Pagamento
                                           ,pr_dtmvtlt2 IN VARCHAR2                 --Data Movimento
-                                          ,pr_cdhistor IN INTEGER                  --Codigo Historico
+                                          ,pr_cdhistor IN VARCHAR2                 --Codigo Historico
                                           ,pr_dshistor IN VARCHAR2                 --Descticao Historico
                                           ,pr_cdcritic OUT INTEGER                 --Codigo Critica
                                           ,pr_dscritic OUT VARCHAR2) IS            --Descricao Critica
