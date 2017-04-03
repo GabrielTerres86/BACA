@@ -140,7 +140,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Jean Michel
-    Data     : Maio/2013                   Ultima atualizacao: 11/07/2016
+    Data     : Maio/2013                   Ultima atualizacao: 03/04/2017
   
     Dados referentes ao programa:
   
@@ -179,7 +179,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
                             de 34 posições do campo cdseqfat (Lunelli - SD. 328945)
 
                11/07/2016 - Conversão das rotinas valida-pagamento-darf e paga-darf,
-                            Prj. 338 - Arrecadação DARF/DAS via Internet (Jean Michel).            
+                            Prj. 338 - Arrecadação DARF/DAS via Internet (Jean Michel).    
+                            
+               03/04/2017 - Retirar a soma do nrseqdig do craplot desta rotina pois ja esta
+                            sendo efetuado na LOTE0001.pc_insere_lote (Lucas Ranghetti #633737)
     
   ---------------------------------------------------------------------------------------------------------------*/
   
@@ -1107,14 +1110,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
   --  Sistema  : Procedure de pagamento da DARF
   --  Sigla    : CRED
   --  Autor    : Jean Michel
-  --  Data     : Julho/2016.                   Ultima atualizacao: --/--/----
+  --  Data     : Julho/2016.                   Ultima atualizacao: 03/04/2017
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Procedure de pagamento da DARF
   --
-  -- Alteracoes:
+  -- Alteracoes: 03/04/2017 - Retirar a soma do nrseqdig do craplot desta rotina pois ja esta
+  --                          sendo efetuado na LOTE0001.pc_insere_lote (Lucas Eduardo Ranghetti #633737)
   --
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
@@ -1141,7 +1145,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
       rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
 
       -- Variaveis Locais
-	  vr_cdrefere craplft.nrrefere%TYPE;
+	    vr_cdrefere craplft.nrrefere%TYPE;
       vr_vlrtotal NUMBER(20,5) := 0;
       vr_cdseqfat NUMBER       := 0;
       vr_nrdolote craplot.nrdolote%TYPE := 0;
@@ -1255,14 +1259,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
         END IF;
       END IF;
 	  
-	  IF pr_cdrefere = '0' THEN
+	   IF pr_cdrefere = '0' THEN
 	     vr_cdrefere := '';
-      ELSE
-         vr_cdrefere := pr_cdrefere;  
-	  END IF;
+     ELSE
+       vr_cdrefere := pr_cdrefere;  
+	   END IF;
 
      INSERT INTO craplft(cdcooper
-		                ,nrdconta
+		                    ,nrdconta
                         ,dtapurac
                         ,nrcpfcgc
                         ,cdtribut
@@ -1287,7 +1291,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
                         ,cdhistor
                         ,dsnomfon)
             VALUES(pr_cdcooper
-				  ,pr_nrdconta
+				          ,pr_nrdconta
                   ,pr_dtapurac
                   ,pr_nrcpfcgc
                   ,LPAD(pr_cdtribut,4,'0')
@@ -1306,7 +1310,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
                   ,rw_craplot.cdbccxlt
                   ,rw_craplot.nrdolote
                   ,rw_crapdat.dtmvtocd
-                  ,rw_craplot.nrseqdig + 1
+                  ,rw_craplot.nrseqdig
                   ,vr_cdseqfat
                   ,1
                   ,1154
@@ -1314,8 +1318,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
         RETURNING progress_recid INTO vr_progress_recid_lft;
 
       UPDATE craplot
-         SET craplot.nrseqdig = rw_craplot.nrseqdig + 1
-            ,craplot.qtcompln = rw_craplot.qtcompln + 1
+         SET craplot.qtcompln = rw_craplot.qtcompln + 1
             ,craplot.qtinfoln = rw_craplot.qtinfoln + 1
             ,craplot.vlcompcr = rw_craplot.vlcompcr + (pr_vllanmto + pr_vlrmulta + pr_vlrjuros)
             ,craplot.vlinfocr = rw_craplot.vlinfocr + (pr_vllanmto + pr_vlrmulta + pr_vlrjuros)
@@ -1328,7 +1331,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
                                              ,pr_nro_caixa => pr_nrdcaixa
                                              ,pr_cod_operador => pr_cdoperad
                                              ,pr_valor => vr_vlrtotal
-                                             ,pr_docto => rw_craplot.nrseqdig + 1 -- = craplft.nrseqdig
+                                             ,pr_docto => rw_craplot.nrseqdig
                                              ,pr_operacao => FALSE
                                              ,pr_status => '1'
                                              ,pr_estorno => FALSE
