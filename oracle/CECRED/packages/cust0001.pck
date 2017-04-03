@@ -7006,7 +7006,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
       vr_inemiten INTEGER;			
 			vr_inpessoa INTEGER;
       			
+			-- Verificar se existe emitente
+			CURSOR cr_crapcec (pr_cdcooper IN crapcec.cdcooper%TYPE
+												,pr_cdcmpchq IN crapcec.cdcmpchq%TYPE
+			                  ,pr_cdbanchq IN crapcec.cdbanchq%TYPE
+			                  ,pr_cdagechq IN crapcec.cdagechq%TYPE
+												,pr_nrctachq IN crapcec.nrctachq%TYPE) IS
+        SELECT 1
+				  FROM crapcec cec
+				 WHERE cec.cdcooper = pr_cdcooper
+					 AND cec.cdcmpchq = pr_cdcmpchq
+				   AND cec.cdbanchq = pr_cdbanchq
+				   AND cec.cdagechq = pr_cdagechq
+					 AND cec.nrctachq = pr_nrctachq
+					 AND cec.nrdconta = 0;
+			
     BEGIN      
+			-- Verificar se possui emitente cadastrado
+			OPEN cr_crapcec(pr_cdcooper => pr_cdcooper
+										 ,pr_cdcmpchq => pr_cdcmpchq
+										 ,pr_cdbanchq => pr_cdbanchq
+										 ,pr_cdagechq => pr_cdagechq
+										 ,pr_nrctachq => pr_nrctachq);
+			FETCH cr_crapcec INTO vr_inemiten;
+			
+			-- Se já existe emitente
+			IF cr_crapcec%FOUND THEN
+				-- Fecha cursor
+				CLOSE cr_crapcec;
+				-- Emitente já cadastrado
+				RAISE vr_exc_null;
+			END IF;
+			-- Fecha cursor
+			CLOSE cr_crapcec;
 
       -- Validar Emitente
 			pc_validar_emitente(pr_cdcooper => pr_cdcooper --> Cooperativa
@@ -7016,7 +7048,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
 												 ,pr_nrctachq => pr_nrctachq --> Número da conta do cheque
 												 ,pr_nrcpfcgc => pr_nrcpfcgc --> Número do cpf do emitente
 												 ,pr_nmcheque => pr_nmcheque --> Nome do emitente
-												 ,pr_cdcritic => vr_cdcritic --> Cód da crítica
+												 ,pr_cdcritic => vr_cdcritic --> Cód da crítica												 
 												 ,pr_dscritic => vr_dscritic --> Descrição da crítica
 												 ,pr_des_erro => vr_des_erro); --> Retorno "OK"/"NOK"
 
