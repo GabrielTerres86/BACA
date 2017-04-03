@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2016-09-06T08:40:41 -->
+<!-- 2017-04-01T12:12:03 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="cet" language="groovy" pageWidth="595" pageHeight="670" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="1.5026296018031553"/>
 	<property name="ireport.x" value="0"/>
@@ -214,7 +214,7 @@
 				</textElement>
 				<textFieldExpression><![CDATA["3.3. VALOR IOF (FINANCIADO)"]]></textFieldExpression>
 			</textField>
-			<textField pattern="¤ #,##0.00" isBlankWhenNull="false">
+			<textField pattern="¤ #,##0.00" isBlankWhenNull="true">
 				<reportElement mode="Transparent" x="265" y="302" width="110" height="13" uuid="c066302c-0f3d-464d-883b-41fc276284bb"/>
 				<textElement textAlignment="Right" verticalAlignment="Bottom">
 					<font fontName="Courier New" pdfFontName="Courier"/>
@@ -223,7 +223,9 @@
 				<patternExpression><![CDATA[$F{vlrdoiof}]]></patternExpression>
 			</textField>
 			<textField pattern="">
-				<reportElement mode="Transparent" x="380" y="302" width="70" height="13" uuid="86fec71d-88b6-46fb-9e1a-1908664cd9ab"/>
+				<reportElement mode="Transparent" x="380" y="302" width="70" height="13" uuid="86fec71d-88b6-46fb-9e1a-1908664cd9ab">
+					<printWhenExpression><![CDATA[$F{txjuriof} != null]]></printWhenExpression>
+				</reportElement>
 				<textElement textAlignment="Right" verticalAlignment="Bottom">
 					<font fontName="Courier New" pdfFontName="Courier"/>
 				</textElement>
