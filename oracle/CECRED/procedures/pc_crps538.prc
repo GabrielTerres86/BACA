@@ -2678,7 +2678,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
        BEGIN
        
          --> Definir sigra do mes
-         vr_cddomes := replace(to_char(pr_dtmvtolt,'MM'),'0','');
+         vr_cddomes := replace(to_char(rw_crapdat.dtmvtopr,'MM'),'0','');
          IF vr_cddomes >= 10 THEN
            CASE vr_cddomes
              WHEN 10 THEN            
