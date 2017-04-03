@@ -3224,6 +3224,9 @@ PROCEDURE grava_efetivacao_proposta:
        RUN consulta_iof IN h-b1wgen0097 (INPUT par_cdcooper,
                                          INPUT par_dtmvtolt,
                                          INPUT crawepr.vlemprst,
+                                         INPUT par_nrdconta,
+                                         INPUT par_dtdpagto,
+                                         INPUT crawepr.qtpreemp,
                                         OUTPUT aux_vliofepr,
                                         OUTPUT TABLE tt-erro).
 
