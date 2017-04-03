@@ -10115,6 +10115,12 @@ PROCEDURE efetua_liber_anali_bordero:
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-risco.
     EMPTY TEMP-TABLE tt-msg-confirma.
+
+    DEFINE VARIABLE aux_qtdiaiof AS INTEGER NO-UNDO.
+    DEFINE VARIABLE aux_periofop AS DECIMAL NO-UNDO.
+    DEFINE VARIABLE aux_vliofcal AS DECIMAL NO-UNDO.
+    DEFINE VARIABLE aux_vltotiof AS DECIMAL NO-UNDO.
+    DEFINE VARIABLE aux_inpessoa AS INTEGER NO-UNDO.
     
     ASSIGN aux_dscritic = ""
            aux_cdcritic = 0.
@@ -10158,6 +10164,8 @@ PROCEDURE efetua_liber_anali_bordero:
               UNDO TRANS_LIBERA , LEAVE TRANS_LIBERA.
                
           END.
+
+       ASSIGN aux_inpessoa = crapass.inpessoa.
 
 
        DO aux_contador = 1 TO 10:
@@ -11576,7 +11584,8 @@ PROCEDURE efetua_liber_anali_bordero:
        ASSIGN aux_txdiaria = ROUND((EXP(1 + (crapbdc.txmensal / 100), 1 / 30) - 1),7)
               aux_vlborder = 0
               aux_contamsg = 0
-              aux_contareg = 0.
+              aux_contareg = 0
+              aux_vltotiof = 0.
 
        FOR EACH crabcdb WHERE crabcdb.cdcooper = par_cdcooper       AND
                               crabcdb.nrborder = crapbdc.nrborder   AND
@@ -11719,9 +11728,31 @@ PROCEDURE efetua_liber_anali_bordero:
                   crapcdb.insitchq = IF par_cddopcao = "N"   
                                         THEN crapcdb.insitchq
                                         ELSE 2 /*  Processado  */
-                  
                   aux_vlborder     = aux_vlborder + crapcdb.vlliquid.
-                           
+                  
+           /* Daniel */
+           IF par_cddopcao = "L" THEN 
+           DO:
+             ASSIGN aux_qtdiaiof = crapcdb.dtlibera - par_dtmvtolt.
+
+             IF aux_qtdiaiof > 365 THEN
+               aux_qtdiaiof = 365.
+             
+             IF aux_inpessoa = 1 THEN
+               /* IOF Operacacao PF */
+               aux_periofop = aux_qtdiaiof * 0.0082.
+             ELSE
+               /* IOF Operacacao PJ */
+               aux_periofop = aux_qtdiaiof * 0.0041.
+
+             /* Calculo IOF */
+             ASSIGN aux_vliofcal = (crapcdb.vlliquid * aux_periofop) / 100.
+
+             /* Acumula Total IOF */
+             ASSIGN aux_vltotiof = aux_vltotiof + aux_vliofcal.
+
+           END.
+
        END.  /*  Fim do FOR EACH crapcdb  */
 
 
@@ -11786,7 +11817,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                                  INPUT ROUND(aux_vlborder *
                                                        tt-iof.txccdiof,2),
                                                 OUTPUT aux_flgimune,
-                                                OUTPUT TABLE tt-erro).
+                                                OUTPUT TABLE tt-erro).  
                                                 
                     DELETE PROCEDURE h-b1wgen0159.
 
@@ -11853,7 +11884,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                  craplcm.cdhistor = 324
                                  craplcm.nrseqdig = craplot.nrseqdig + 1
                                  craplcm.cdpesqbb = STRING(aux_vlborder,"999,999,999.99")
-                                 craplcm.vllanmto = ROUND(aux_vlborder * tt-iof.txccdiof,2)
+                                 craplcm.vllanmto = ROUND( ( ROUND(aux_vlborder * tt-iof.txccdiof,2) + aux_vltotiof ),2) 
                                  craplcm.cdcooper = par_cdcooper
                                  craplot.vlinfodb = craplot.vlinfodb + craplcm.vllanmto
                                  craplot.vlcompdb = craplot.vlcompdb + craplcm.vllanmto

@@ -4917,7 +4917,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
      Sistema : Transacoes Pendentes
      Sigla   : INET
      Autor   : Jorge Hamaguchi
-     Data    : Dezembro/2015.                  Ultima atualizacao: 02/09/2016
+     Data    : Dezembro/2015.                  Ultima atualizacao: 01/04/2017
 
      Dados referentes ao programa:
 
@@ -4945,6 +4945,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                  
                  28/11/2016 - Inclusao dos transaçoes pendentes 16 e 17. 
                               PRJ319 - SMS Cobrança (Odirlei-AMcom)                                   
+
+                 30/01/2017 - Adição do campo idsituacao_transacao no xml de retorno para utilização no
+                              Cecred Mobile (Dionathan)
+                              
+                 01/04/2017 - Remover o campo Percentual do IOF. (James)              
     ..............................................................................*/
     DECLARE
      
@@ -5302,6 +5307,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       CURSOR cr_tbaprova_rep(pr_cdtransa IN tbgen_aprova_trans_pend.cdtransacao_pendente%TYPE) IS
         SELECT apr.cdtransacao_pendente
               ,apr.nrcpf_responsavel_aprov AS cpf_responsavel
+              ,apr.idsituacao_aprov idsituacao
               ,DECODE(apr.idsituacao_aprov,1,'Pendente',2,'Aprovada',3,'Reprovada',4,'Expirada','Sem Situacao') AS situacao
           FROM tbgen_aprova_trans_pend apr
          WHERE cdtransacao_pendente = pr_cdtransa;
@@ -5347,6 +5353,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       vr_hrtranpe VARCHAR2(8);
       vr_dsoritra VARCHAR2(50);
       vr_dtmvttra VARCHAR2(10);
+      vr_idsittra NUMBER;
       vr_dssittra VARCHAR2(50);
       vr_dtreptra VARCHAR2(10);
       vr_dtexctra VARCHAR2(10);
@@ -5830,6 +5837,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
          vr_hrtranpe := TO_CHAR(to_date(rw_tbgen_trans_pend.hrregistro_transacao,'sssss'),'hh24:mi:ss');
          vr_dsoritra := gene0001.vr_vet_des_origens(rw_tbgen_trans_pend.idorigem_transacao);
          vr_dtmvttra := TO_CHAR(rw_tbgen_trans_pend.dtmvtolt,'DD/MM/RRRR');
+         vr_idsittra := rw_tbgen_trans_pend.idsituacao_transacao;
          vr_dssittra := CASE WHEN rw_tbgen_trans_pend.idsituacao_transacao = 1 THEN 'Pendente'
                              WHEN rw_tbgen_trans_pend.idsituacao_transacao = 2 THEN 'Aprovada'
                              WHEN rw_tbgen_trans_pend.idsituacao_transacao = 3 THEN 'Excluida'
@@ -6221,6 +6229,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                                            ,pr_saldo_rdca => vr_saldo_rdca);                             
                           END IF;    
                           
+							--Filtro data
+							IF rw_tbgen_trans_pend.dtregistro_transacao NOT BETWEEN pr_dtiniper AND pr_dtfimper THEN
+								CONTINUE;                                                               
+							END IF;
+                          
                           --Valor a somar
                           vr_vlasomar := vr_vlaplica;
                           
@@ -6564,7 +6577,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                   --Fechar Cursor
                   CLOSE cr_tbpagto_darf_das_trans_pend;
                   CONTINUE;
-
             ELSE
                   --Fechar Cursor
                   CLOSE cr_tbpagto_darf_das_trans_pend;
@@ -6671,6 +6683,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                                    || '   <situacao_transacao>' ||vr_dssittra||'</situacao_transacao>'
                                                    || '   <data_alteracao_sit>' ||vr_dtaltera||'</data_alteracao_sit>'
                                                    || '   <pode_alterar>'       ||vr_indiacao||'</pode_alterar>'
+                                                   || '   <idsituacao_transacao>' ||vr_idsittra||'</idsituacao_transacao>'
                                                    || '</dados_resumo>');
          
          --Detalhes da Transacao
@@ -6733,8 +6746,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
             || '<dados_campo><label>CET</label><valor>'                   ||vr_vlpercet||'</valor></dados_campo>'
             || '<dados_campo><label>Tarifa</label><valor>'                ||vr_vltarifa||'</valor></dados_campo>'
             || '<dados_campo><label>Taxa Mensal</label><valor>'           ||vr_vltaxmen||'</valor></dados_campo>'
-            || '<dados_campo><label>IOF</label><valor>'                   ||vr_vlrdoiof||'</valor></dados_campo>'
-            || '<dados_campo><label>Percentual IOF</label><valor>'        ||vr_vlperiof||'</valor></dados_campo>';            
+            || '<dados_campo><label>IOF</label><valor>'                   ||vr_vlrdoiof||'</valor></dados_campo>';
+         /*   || '<dados_campo><label>Percentual IOF</label><valor>'        ||vr_vlperiof||'</valor></dados_campo>';  */
          ELSIF vr_tptranpe = 7 THEN --Aplicacao
             IF vr_tpopeapl = 1 THEN --Cancelamento Aplicacao
                vr_xml_auxi := vr_xml_auxi
@@ -6912,7 +6925,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
            END LOOP;
 
            vr_xml_auxi := vr_xml_auxi || '<aprovador><nmaprova>' || TO_CHAR(NVL(vr_nmagenda,TO_CHAR(rw_tbaprova_rep.cpf_responsavel) || '-' || 'APROVADOR NAO CADASTRADO')) || '</nmaprova>'
-                                      || '<situacao>' || rw_tbaprova_rep.situacao || '</situacao></aprovador>';
+                                      || '<situacao>' || rw_tbaprova_rep.situacao || '</situacao>'
+                                      || '<idsituacao>' || rw_tbaprova_rep.idsituacao || '</idsituacao></aprovador>';
 
          END LOOP;
          
