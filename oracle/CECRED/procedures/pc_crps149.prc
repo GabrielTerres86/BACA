@@ -9,7 +9,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Marco/96.                       Ultima atualizacao: 06/03/2017
+   Data    : Marco/96.                       Ultima atualizacao: 01/04/2017
 
    Dados referentes ao programa:
 
@@ -223,6 +223,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
                06/03/2017 - Regra para gerar lançamento do histórico 622 deve ser a mesma
                             utilizada para gerar o lançamento do histórico 2.(AJFink-SD#622251)
 
+               01/04/2017 - Ajuste no calculo do IOF. (James)             
   ............................................................................. */
   
   ------------------------------- CURSORES ---------------------------------
@@ -259,6 +260,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
           ,epr.nrdconta
           ,epr.vlemprst
           ,epr.nrctremp
+          ,epr.dtdpagto
+          ,epr.qtpreemp
           ,epr.rowid
           ,epr.nrdolote
           ,epr.cdbccxlt
@@ -605,6 +608,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
   vr_dtiniiof DATE;
   vr_dtfimiof DATE;
   vr_txccdiof NUMBER := 0;
+  vr_qtdiaiof INTEGER;
    
   -- Variaveis do CPMF
   vr_dtinipmf	DATE;
@@ -2728,16 +2732,32 @@ BEGIN
       END IF; --vr_valor_total > 0
     END IF;
 
+    vr_vliofaux := 0;
+    
     /*  Cobranca do IOF de emprestimo  */
     IF nvl(vr_txccdiof,0) > 0 AND vr_flgtaiof = 1 THEN -- TRUE
+      --Calcular Valor IOF
+      vr_vliofaux := ROUND(nvl(vr_vlrsaldo,0) * nvl(vr_txccdiof,0),2);
+      vr_qtdiaiof := add_months(rw_crabepr.dtdpagto,rw_crabepr.qtpreemp - 1) - rw_crapdat.dtmvtolt;
       
+      IF vr_qtdiaiof > 365 THEN
+        vr_qtdiaiof := 365;       
+      END IF;
+      
+      -- Condicao para verificar o tipo de pessoa
+      IF rw_crapass.inpessoa = 1 THEN
+        vr_vliofaux := NVL(vr_vliofaux,0) + (vr_vlrsaldo * (vr_qtdiaiof * 0.000082));
+      ELSE
+        vr_vliofaux := NVL(vr_vliofaux,0) + (vr_vlrsaldo * (vr_qtdiaiof * 0.000041));
+      END IF;   
+          
       -- Verificar a imunidade tributária
       IMUT0001.pc_verifica_imunidade_trib(pr_cdcooper => pr_cdcooper
                                          ,pr_nrdconta => rw_crabepr.nrdconta
                                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                          ,pr_flgrvvlr => TRUE
                                          ,pr_cdinsenc => 1
-                                         ,pr_vlinsenc => round((vr_vlrsaldo * vr_txccdiof),2)
+                                         ,pr_vlinsenc => vr_vliofaux
                                          ,pr_flgimune => vr_flgimune
                                          ,pr_dsreturn => vr_dsreturn
                                          ,pr_tab_erro => vr_tab_erro);
@@ -2768,10 +2788,6 @@ BEGIN
         
         --Tem Saldo
         IF nvl(vr_vlrsaldo,0) > 0  THEN
-          
-          --Calcular Valor IOF
-          vr_vliofaux:= ROUND(nvl(vr_vlrsaldo,0) * nvl(vr_txccdiof,0),2);
-          
           BEGIN
             --Inserir Lancamento          
             INSERT INTO craplcm

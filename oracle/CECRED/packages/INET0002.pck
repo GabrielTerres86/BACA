@@ -4917,7 +4917,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
      Sistema : Transacoes Pendentes
      Sigla   : INET
      Autor   : Jorge Hamaguchi
-     Data    : Dezembro/2015.                  Ultima atualizacao: 02/09/2016
+     Data    : Dezembro/2015.                  Ultima atualizacao: 01/04/2017
 
      Dados referentes ao programa:
 
@@ -4948,6 +4948,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 
                  30/01/2017 - Adição do campo idsituacao_transacao no xml de retorno para utilização no
                               Cecred Mobile (Dionathan)
+                              
+                 01/04/2017 - Remover o campo Percentual do IOF. (James)              
     ..............................................................................*/
     DECLARE
      
@@ -6744,8 +6746,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
             || '<dados_campo><label>CET</label><valor>'                   ||vr_vlpercet||'</valor></dados_campo>'
             || '<dados_campo><label>Tarifa</label><valor>'                ||vr_vltarifa||'</valor></dados_campo>'
             || '<dados_campo><label>Taxa Mensal</label><valor>'           ||vr_vltaxmen||'</valor></dados_campo>'
-            || '<dados_campo><label>IOF</label><valor>'                   ||vr_vlrdoiof||'</valor></dados_campo>'
-            || '<dados_campo><label>Percentual IOF</label><valor>'        ||vr_vlperiof||'</valor></dados_campo>';            
+            || '<dados_campo><label>IOF</label><valor>'                   ||vr_vlrdoiof||'</valor></dados_campo>';
+         /*   || '<dados_campo><label>Percentual IOF</label><valor>'        ||vr_vlperiof||'</valor></dados_campo>';  */
          ELSIF vr_tptranpe = 7 THEN --Aplicacao
             IF vr_tpopeapl = 1 THEN --Cancelamento Aplicacao
                vr_xml_auxi := vr_xml_auxi
