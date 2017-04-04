@@ -10,7 +10,7 @@ begin
     -- Sistema : Conta-Corrente - Cooperativa de Credito
     -- Sigla   : CRED
     -- Autor   : Marcos (Supero)
-    -- Data    : Março/2014.                     Ultima atualizacao: 20/01/2016
+    -- Data    : Março/2014.                     Ultima atualizacao: 24/03/2017
 
     -- Dados referentes ao programa:
 
@@ -33,6 +33,9 @@ begin
     --
     --             20/01/2016 - Incluido o upper nos campos que compoem um index e possuem upper
     --                         (Adriano).
+    --
+    --             24/03/2017 - Inclui validacao para tirar espacos sobre o campo rw_crapsqt.dstxterr
+    --                          e melhorei a descricao do log gerado. SD 637585.
     -- .............................................................................
   declare
     -- Busca dos dados da configuração
@@ -156,12 +159,14 @@ begin
           -- Se a sequencia não for ciclica
           if rw_crapsqt.flgciclo = 0 then
             -- Caso existe texto de erro cadastrado
-            IF rw_crapsqt.dstxterr IS NOT NULL THEN
+            IF TRIM(rw_crapsqt.dstxterr) IS NOT NULL THEN
               -- Usá-lo
               vr_des_erro := rw_crapsqt.dstxterr;
             ELSE
               -- Gerar erro default
-              vr_des_erro := 'Valor máximo '||rw_crapsqt.qtmaxseq||' alcançado para sequencia não cíclica';
+              vr_des_erro := 'Valor máximo '||rw_crapsqt.qtmaxseq||' alcançado para sequencia não cíclica.'
+                          || ' Parâmetros: dsdchave = '||pr_dsdchave||', NMTABELA = '||pr_nmtabela
+                          || ', NMDCAMPO = '||pr_nmdcampo;
             END IF;
             -- Sair
             raise vr_exc_saida;
@@ -236,4 +241,3 @@ begin
   end;
 end fn_sequence;
 /
-
