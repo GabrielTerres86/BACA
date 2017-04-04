@@ -6150,6 +6150,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
             END IF;            
             
             vr_dsdmensa := NULL;
+
+            vr_dslindig := REPLACE(vr_dslindig,'.','');
+            vr_dslindig := REPLACE(vr_dslindig,' ','');    
+
             --> Retornar mensagem 
             vr_dsdmensa := fn_mensagem_vencto 
                                      ( pr_cdcooper => rw_crapcop.cdcooper    --> Codigo da cooperativa

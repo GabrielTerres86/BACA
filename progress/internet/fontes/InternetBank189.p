@@ -299,8 +299,8 @@ ELSE IF par_cddopcao = "OF" THEN
     
     CREATE xml_operacao.
     ASSIGN xml_operacao.dslinxml = '<dados><flofesms>' + STRING(aux_flofesms) + 
-                                   '</flofesms><dsmensag><![CDATA[' + aux_dsmensag + 
-                                   ']]></dsmensag></dados>'.
+                                   '</flofesms><dsmensag>' + aux_dsmensag + 
+                                   '</dsmensag></dados>'.
     
   END.
   
