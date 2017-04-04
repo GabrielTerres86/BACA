@@ -4503,13 +4503,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
          -- Apenas fechar o cursor
          CLOSE BTCH0001.cr_crapdat;
        END IF;
-	    rw_crapdat.dtmvtolt := '03/04/2017';
+	    rw_crapdat.dtmvtolt := to_date('03/04/2017','dd/mm/yyyy');
 	    rw_crapdat.dtmvtoan := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper, pr_dtmvtolt => rw_crapdat.dtmvtolt-1, pr_tipo => 'A');
 		rw_crapdat.dtmvtopr := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper, pr_dtmvtolt => rw_crapdat.dtmvtolt+1);
         rw_crapdat.dtmvtocd := rw_crapdat.dtmvtolt;
-        rw_crapdat.dtultdia := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper, pr_dtmvtolt => last_day( rw_crapdat.dtmvtolt), pr_tipo => 'A');
-        rw_crapdat.dtultdma := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper, pr_dtmvtolt => last_day(add_months(rw_crapdat.dtmvtolt,-1)), pr_tipo => 'A');
-   
+        
        -- Validacoes iniciais do programa
        BTCH0001.pc_valida_iniprg (pr_cdcooper => pr_cdcooper
                                  ,pr_flgbatch => vr_flgbatch
