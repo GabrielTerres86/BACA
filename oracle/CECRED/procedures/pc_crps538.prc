@@ -317,6 +317,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                           
                24/02/2017 - Ajustado relatório 618 em função do novo layout COB615 (Rafael);
                
+               15/03/2017 - Removido a inicialição da variavel de multa e juros após inclusão do boleto na
+                            PL Table do relatório 618. Estava sendo zerado de forma incorreta, fazendo com 
+                            que o boleto tivesse o valor de multa/juros pago zerado (Douglas - Chamado 624683)
+
                17/03/2017 - Ajustes devolução. PRJ340 - NPC (Odirlei-AMcom)
 
    .............................................................................*/
@@ -2574,7 +2578,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                       pr_cdagerem,      --> cdagerem
                       pr_dslinarq,      --> dslinarq
                       0);      --> flgenvia 
-       
+         
        EXCEPTION
          WHEN OTHERS THEN
            pr_dscritic := 'Nao foi possivel inserir devolucao: '||SQLERRM;
@@ -5251,11 +5255,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
 
                    END IF;
 
-                   --Inicializar variaveis
-                   vr_cdcritic:= 0;
-                   vr_dscritic:= NULL;
-                   vr_vlrmulta:= 0;
-                   vr_vlrjuros:= 0;
                  ELSIF ROUND(vr_vlliquid,2) > ROUND(vr_vlfatura,2) THEN
                    /* se o valor foi pago acima, entao colocar o valor excedente em juros */
                    vr_vlrmulta:= 0;
