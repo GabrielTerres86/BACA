@@ -32,8 +32,8 @@
 	$xml .= '<Root>';
 	$xml .= '	<Dados>';
 	$xml .= '		<cddopcao>'. $cddopcao .'</cddopcao>';
-	$xml .= '		<dsmsgsaldo>'. $dsmsgsaldo .'</dsmsgsaldo>';
-	$xml .= '		<dsmsgoperac>'. $dsmsgoperac .'</dsmsgoperac>';
+	$xml .= '		<dsmsgsaldo>'. utf8_decode($dsmsgsaldo) .'</dsmsgsaldo>';
+	$xml .= '		<dsmsgoperac>'. utf8_decode($dsmsgoperac) .'</dsmsgoperac>';
 	$xml .= '	</Dados>';
 	$xml .= '</Root>';
 

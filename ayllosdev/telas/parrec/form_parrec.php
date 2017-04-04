@@ -111,14 +111,14 @@
 
 				<textarea name="dsmsgsaldo" id="dsmsgsaldo" rows="4" cols="56" style="margin-left: 15px; margin-top: 10px; margin-bottom: 10px;" ></textarea>
 			
-				<p style=" margin-left: 10px; font-family:Arial, Helvetica, sans-serif; font-size:11px;">Obs.: "#Operadora#", "#DDD#", "#Celular#", "#Data#" e "#Valor#" s&atilde;o preenchidos automaticamente pelo sistema.</p>
+				<p style=" margin-left: 10px; font-family:Arial, Helvetica, sans-serif; font-size:11px;">Obs.: #Operadora#, #DDD#, #Celular#, #Data# e #Valor# s&atilde;o preenchidos automaticamente pelo sistema.</p>
 			</fieldset>
 			<fieldset>
 				<legend> Opera&ccedil;&atilde;o n&atilde;o autorizada </legend>
 
 				<textarea name="dsmsgoperac" id="dsmsgoperac" rows="4" cols="56" style="margin-left: 15px; margin-top: 10px; margin-bottom: 10px;" ></textarea>
 			
-				<p style=" margin-left: 10px; font-family:Arial, Helvetica, sans-serif; font-size:11px;">Obs.: "#Operadora#", "#DDD#", "#Celular#", "#Data#", "#Valor#" e #Motivo# s&atilde;o preenchidos automaticamente pelo sistema.</p>
+				<p style=" margin-left: 10px; font-family:Arial, Helvetica, sans-serif; font-size:11px;">Obs.: #Operadora#, #DDD#, #Celular#, #Data#, #Valor# e #Motivo# s&atilde;o preenchidos automaticamente pelo sistema.</p>
 			</fieldset>
 			<br/>
 		</fieldset>

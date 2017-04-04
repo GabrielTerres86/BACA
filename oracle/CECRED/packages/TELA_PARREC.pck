@@ -1098,7 +1098,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARREC AS
 			FETCH cr_mensagem INTO vr_dsmsgsaldo;
 			CLOSE cr_mensagem;
 		  -- Texto Minhas Mensagens Operação não autorizada
-		  OPEN cr_mensagem(pr_cdtipomsg => 21);
+		  OPEN cr_mensagem(pr_cdtipomsg => 7);
 			FETCH cr_mensagem INTO vr_dsmsgoperac;
 			CLOSE cr_mensagem;
 			
@@ -1254,7 +1254,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARREC AS
 		  CLOSE cr_mensagem;
 			
 		  -- Texto Minhas Mensagens Operação não autorizada
-		  OPEN cr_mensagem(pr_cdtipomsg => 21);
+		  OPEN cr_mensagem(pr_cdtipomsg => 7);
 			FETCH cr_mensagem INTO vr_dsmsgoperac;
 			
 			-- Cria mensagem

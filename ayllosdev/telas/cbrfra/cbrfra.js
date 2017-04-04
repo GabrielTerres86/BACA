@@ -113,12 +113,12 @@ function formataLayout() {
 	cCddopcao.css({'width':'440px'});
 	rCddopcao.css('width','44px');
 	
-	$('#lblTipo, #lblCodigo, #lblCpf, #lblCnpj, #lblTelCel, #lblDataini, #lblData').css({'width':'85px'});	
+	$('#lblTipo, #lblCodigo, #lblCpf, #lblCnpj, #lblTelCel, #lblDataini, #lblData').css({'width':'90px'});	
 	
-	$("#nrdcodigo").css({'width':'455px'});
-	$(".clsdata").css({'width':'153px'});
+	$("#nrdcodigo").css({'width':'450px'});
+	$(".clsdata").css({'width':'75px'});
 	$(".clspadding").css({'padding-left':'10px'});
-	$(".clsbotao").css({'margin-left':'20px'});
+	$(".clsbotao").css({'right':'0'});
 	
 	$('#tipo').css({'width':'140px'});
 
@@ -126,8 +126,8 @@ function formataLayout() {
 
 	layoutPadrao();
 
-	$("#nrcpf").css({'width':'455px', 'text-align':'left'});
-	$("#nrcnpj").css({'width':'455px','text-align':'left'});
+	$("#nrcpf").css({'width':'450px', 'text-align':'left'});
+	$("#nrcnpj").css({'width':'450px','text-align':'left'});
 	$("#nrdddcel").css({'width':'25px','text-align':'left'}).setMask('INTEGER','99','','');
 	$("#nrtelcel").css({'width':'125px','text-align':'left'}).setMask('INTEGER','99999-9999','-','');
 

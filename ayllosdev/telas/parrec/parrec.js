@@ -393,8 +393,8 @@ function formataLayoutMensagens(){
 	cDsmsgsaldo  = $('#dsmsgsaldo', '#frmParrec');	
 	cDsmsgoperac = $('#dsmsgoperac', '#frmParrec');	
 	
-	cDsmsgsaldo.css('width', '580px').addClass('alphanum textarea').attr('maxlength','1000');
-	cDsmsgoperac.css('width', '580px').addClass('alphanum textarea').attr('maxlength','1000');
+	cDsmsgsaldo.css('width', '580px').addClass('alpha textarea').attr('maxlength','1000');
+	cDsmsgoperac.css('width', '580px').addClass('alpha textarea').attr('maxlength','1000');
 	
 	layoutPadrao();
 	return false;	
