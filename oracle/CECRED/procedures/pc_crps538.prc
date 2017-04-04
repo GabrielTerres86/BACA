@@ -323,6 +323,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
 
                17/03/2017 - Ajustes devolução. PRJ340 - NPC (Odirlei-AMcom)
 
+               22/03/2017 - Alteração SILOC - Gerar registro na gncpdvc após inserir 
+                            o registro na tabela tbcobran_devolucao (Renato Darosci)
    .............................................................................*/
 
      DECLARE
@@ -2527,6 +2529,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
        --> Procedimento para grava registro de devolucao
        PROCEDURE pc_grava_devolucao ( pr_cdcooper   IN tbcobran_devolucao.cdcooper%TYPE  --> codigo da cooperativa
                                      ,pr_dtmvtolt   IN tbcobran_devolucao.dtmvtolt%TYPE  --> data do movimento
+                                     ,pr_dtmvtopr   IN tbcobran_devolucao.dtmvtolt%TYPE  --> data do próximo movimento 
                                      ,pr_nrseqarq   IN tbcobran_devolucao.nrseqarq%TYPE  --> numero sequencial do arquivo da devolucao (cob615)
                                      ,pr_dscodbar   IN tbcobran_devolucao.dscodbar%TYPE  --> codigo de barras
                                      ,pr_nrispbif   IN tbcobran_devolucao.nrispbif%TYPE  --> numero do ispb recebedora
@@ -2578,6 +2581,43 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                       pr_cdagerem,      --> cdagerem
                       pr_dslinarq,      --> dslinarq
                       0);      --> flgenvia 
+         
+         INSERT INTO gncpdvc(cdcooper
+                            ,dtmvtolt
+                            ,nmarquiv
+                            ,nrseqarq
+                            ,dscodbar
+                            ,nrispbif
+                            ,vlliquid
+                            ,dtocorre
+                            ,nrdconta
+                            ,nrcnvcob
+                            ,nrdocmto
+                            ,cdmotdev
+                            ,tpcaptura
+                            ,tpdocmto
+                            ,cdagerem
+                            ,flgconci
+                            ,flgpcctl
+                            ,dslinarq)
+                     VALUES (pr_cdcooper -- cdcooper
+                            ,pr_dtmvtopr -- dtmvtolt  -> PRÓXIMO MOVIMENTO <-
+                            ,' '         -- nmarquiv
+                            ,pr_nrseqarq -- nrseqarq
+                            ,pr_dscodbar -- dscodbar
+                            ,pr_nrispbif -- nrispbif
+                            ,pr_vlliquid -- vlliquid
+                            ,pr_dtocorre -- dtocorre
+                            ,pr_nrdconta -- nrdconta
+                            ,pr_nrcnvcob -- nrcnvcob
+                            ,pr_nrdocmto -- nrdocmto
+                            ,pr_cdmotdev -- cdmotdev
+                            ,pr_tpcaptur -- tpcaptura
+                            ,pr_tpdocmto -- tpdocmto
+                            ,pr_cdagerem -- cdagerem
+                            ,0           -- flgconci
+                            ,0           -- flgpcctl
+                            ,NULL);      -- dslinarq
          
        EXCEPTION
          WHEN OTHERS THEN
@@ -2638,7 +2678,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
        BEGIN
        
          --> Definir sigra do mes
-         vr_cddomes := replace(to_char(pr_dtmvtolt,'MM'),'0','');
+         vr_cddomes := replace(to_char(rw_crapdat.dtmvtopr,'MM'),'0','');
          IF vr_cddomes >= 10 THEN
            CASE vr_cddomes
              WHEN 10 THEN            
@@ -3394,6 +3434,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                    --> Procedimento para grava registro de devolucao
                    pc_grava_devolucao ( pr_cdcooper   => rw_crapcop.cdcooper  --> codigo da cooperativa
                                        ,pr_dtmvtolt   => rw_crapdat.dtmvtolt  --> data do movimento
+                                       ,pr_dtmvtopr   => rw_crapdat.dtmvtopr  --> data do próximo movimento
                                        ,pr_nrseqarq   => vr_nrseqarq          --> numero sequencial do arquivo da devolucao (cob615)
                                        ,pr_dscodbar   => vr_dscodbar_ori      --> codigo de barras
                                        ,pr_nrispbif   => vr_nrispbif_rec      --> numero do ispb recebedora
@@ -3592,6 +3633,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                      --> Procedimento para grava registro de devolucao
                      pc_grava_devolucao ( pr_cdcooper   => rw_crapcop.cdcooper  --> codigo da cooperativa
                                          ,pr_dtmvtolt   => rw_crapdat.dtmvtolt  --> data do movimento
+                                         ,pr_dtmvtopr   => rw_crapdat.dtmvtopr  --> data do próximo movimento
                                          ,pr_nrseqarq   => vr_nrseqarq          --> numero sequencial do arquivo da devolucao (cob615)
                                          ,pr_dscodbar   => vr_dscodbar_ori      --> codigo de barras
                                          ,pr_nrispbif   => vr_nrispbif_rec      --> numero do ispb recebedora
@@ -3802,6 +3844,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                    --> Procedimento para grava registro de devolucao
                    pc_grava_devolucao ( pr_cdcooper   => rw_crapcop.cdcooper  --> codigo da cooperativa
                                        ,pr_dtmvtolt   => rw_crapdat.dtmvtolt  --> data do movimento
+                                       ,pr_dtmvtopr   => rw_crapdat.dtmvtopr  --> data do próximo movimento
                                        ,pr_nrseqarq   => vr_nrseqarq          --> numero sequencial do arquivo da devolucao (cob615)
                                        ,pr_dscodbar   => vr_dscodbar_ori      --> codigo de barras
                                        ,pr_nrispbif   => vr_nrispbif_rec      --> numero do ispb recebedora
@@ -3992,6 +4035,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                      --> Procedimento para grava registro de devolucao
                      pc_grava_devolucao ( pr_cdcooper   => rw_crapcop.cdcooper  --> codigo da cooperativa
                                          ,pr_dtmvtolt   => rw_crapdat.dtmvtolt  --> data do movimento
+                                         ,pr_dtmvtopr   => rw_crapdat.dtmvtopr  --> data do próximo movimento
                                          ,pr_nrseqarq   => vr_nrseqarq          --> numero sequencial do arquivo da devolucao (cob615)
                                          ,pr_dscodbar   => vr_dscodbar_ori      --> codigo de barras
                                          ,pr_nrispbif   => vr_nrispbif_rec      --> numero do ispb recebedora
@@ -4174,6 +4218,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                    --> Procedimento para grava registro de devolucao
                    pc_grava_devolucao ( pr_cdcooper   => rw_crapcop.cdcooper  --> codigo da cooperativa
                                        ,pr_dtmvtolt   => rw_crapdat.dtmvtolt  --> data do movimento
+                                       ,pr_dtmvtopr   => rw_crapdat.dtmvtopr  --> data do próximo movimento
                                        ,pr_nrseqarq   => vr_nrseqarq          --> numero sequencial do arquivo da devolucao (cob615)
                                        ,pr_dscodbar   => vr_dscodbar_ori      --> codigo de barras
                                        ,pr_nrispbif   => vr_nrispbif_rec      --> numero do ispb recebedora
@@ -4351,6 +4396,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                      --> Procedimento para grava registro de devolucao
                      pc_grava_devolucao ( pr_cdcooper   => rw_crapcop.cdcooper  --> codigo da cooperativa
                                          ,pr_dtmvtolt   => rw_crapdat.dtmvtolt  --> data do movimento
+                                         ,pr_dtmvtopr   => rw_crapdat.dtmvtopr  --> data do próximo movimento
                                          ,pr_nrseqarq   => vr_nrseqarq          --> numero sequencial do arquivo da devolucao (cob615)
                                          ,pr_dscodbar   => vr_dscodbar_ori      --> codigo de barras
                                          ,pr_nrispbif   => vr_nrispbif_rec      --> numero do ispb recebedora
@@ -4449,6 +4495,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                    --> Procedimento para grava registro de devolucao
                    pc_grava_devolucao ( pr_cdcooper   => rw_crapcop.cdcooper  --> codigo da cooperativa
                                        ,pr_dtmvtolt   => rw_crapdat.dtmvtolt  --> data do movimento
+                                       ,pr_dtmvtopr   => rw_crapdat.dtmvtopr  --> data do próximo movimento
                                        ,pr_nrseqarq   => vr_nrseqarq          --> numero sequencial do arquivo da devolucao (cob615)
                                        ,pr_dscodbar   => vr_dscodbar_ori      --> codigo de barras
                                        ,pr_nrispbif   => vr_nrispbif_rec      --> numero do ispb recebedora
@@ -4547,6 +4594,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                    --> Procedimento para grava registro de devolucao
                    pc_grava_devolucao ( pr_cdcooper   => rw_crapcop.cdcooper  --> codigo da cooperativa
                                        ,pr_dtmvtolt   => rw_crapdat.dtmvtolt  --> data do movimento
+                                       ,pr_dtmvtopr   => rw_crapdat.dtmvtopr  --> data do próximo movimento
                                        ,pr_nrseqarq   => vr_nrseqarq          --> numero sequencial do arquivo da devolucao (cob615)
                                        ,pr_dscodbar   => vr_dscodbar_ori      --> codigo de barras
                                        ,pr_nrispbif   => vr_nrispbif_rec      --> numero do ispb recebedora
@@ -5035,6 +5083,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                    --> Procedimento para grava registro de devolucao
                    pc_grava_devolucao ( pr_cdcooper   => rw_crapcop.cdcooper  --> codigo da cooperativa
                                        ,pr_dtmvtolt   => rw_crapdat.dtmvtolt  --> data do movimento
+                                       ,pr_dtmvtopr   => rw_crapdat.dtmvtopr  --> data do próximo movimento
                                        ,pr_nrseqarq   => vr_nrseqarq          --> numero sequencial do arquivo da devolucao (cob615)
                                        ,pr_dscodbar   => vr_dscodbar_ori      --> codigo de barras
                                        ,pr_nrispbif   => vr_nrispbif_rec      --> numero do ispb recebedora
@@ -5130,6 +5179,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                    --> Procedimento para grava registro de devolucao
                    pc_grava_devolucao ( pr_cdcooper   => rw_crapcop.cdcooper  --> codigo da cooperativa
                                        ,pr_dtmvtolt   => rw_crapdat.dtmvtolt  --> data do movimento
+                                       ,pr_dtmvtopr   => rw_crapdat.dtmvtopr  --> data do próximo movimento
                                        ,pr_nrseqarq   => vr_nrseqarq          --> numero sequencial do arquivo da devolucao (cob615)
                                        ,pr_dscodbar   => vr_dscodbar_ori      --> codigo de barras
                                        ,pr_nrispbif   => vr_nrispbif_rec      --> numero do ispb recebedora
