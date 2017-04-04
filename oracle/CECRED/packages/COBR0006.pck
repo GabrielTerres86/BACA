@@ -10496,7 +10496,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                 (Andrei - RKAM).
 
                    13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
-								(Andrei - Mouts). 
+								                (Andrei - Mouts). 
+
+                   04/04/2017 - Inclusão da busca do parâmetro DIASVCTOCEE, pois fazia atribuição
+                                da variável vr_diasvcto sem buscar o parâmetro (AJFink-SD#643179). 
 
     ............................................................................ */   
     
@@ -10582,12 +10585,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       -- Apenas fechar o cursor
       CLOSE cr_crapcop;
     END IF;
-    
+
     --> buscar diretorio da cooperativa
     vr_dsdircop := gene0001.fn_diretorio(pr_tpdireto => 'C', 
                                          pr_cdcooper => pr_cdcooper, 
                                          pr_nmsubdir => NULL);    
-    
+
+    --> Buscar parametro de vencimento
+    vr_dstextab := TABE0001.fn_busca_dstextab( pr_cdcooper => 3, 
+                                               pr_nmsistem => 'CRED', 
+                                               pr_tptabela => 'GENERI', 
+                                               pr_cdempres => 0, 
+                                               pr_cdacesso => 'DIASVCTOCEE', 
+                                               pr_tpregist => 0);
+    IF TRIM(vr_dstextab) IS NULL THEN
+      vr_dscritic := 'Tabela com parametro vencimento nao encontrado.';
+      RAISE vr_exc_erro;
+    END IF;
+
     vr_diasvcto := SUBSTR(vr_dstextab,1,2);
     
     -- separa diretorio e nmarquivo
