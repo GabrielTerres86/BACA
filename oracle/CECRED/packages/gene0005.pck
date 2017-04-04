@@ -1,21 +1,25 @@
 CREATE OR REPLACE PACKAGE CECRED.gene0005 IS
-  ---------------------------------------------------------------------------------------------------------------
-  --
-  --  Programa : GENE0005
-  --  Sistema  : Rotinas auxiliares para busca de informacõees do negocio
-  --  Sigla    : GENE
-  --  Autor    : Marcos Ernani Martini - Supero
-  --  Data     : Maio/2013.                   Ultima atualizacao: 11/02/2016
-  --
-  -- Dados referentes ao programa:
-  --
-  -- Frequencia: -----
-  -- Objetivo  : Centralizar rotinas auxiliares para buscas de informacões do negocio
-  --
-  -- Observacoes: Conversao da function B1wgen0055.ValidaNome para PL/SQL -> pc_valida_nome
-  --              (Jean Michel).
-  --
-  ---------------------------------------------------------------------------------------------------------------
+  /*---------------------------------------------------------------------------------------------------------------
+
+    Programa : GENE0005
+    Sistema  : Rotinas auxiliares para busca de informacõees do negocio
+    Sigla    : GENE
+    Autor    : Marcos Ernani Martini - Supero
+    Data     : Maio/2013.                   Ultima atualizacao: 20/03/2017
+  
+   Dados referentes ao programa:
+  
+   Frequencia: -----
+   Objetivo  : Centralizar rotinas auxiliares para buscas de informacões do negocio
+  
+   Observacoes: Conversao da function B1wgen0055.ValidaNome para PL/SQL -> pc_valida_nome
+                (Jean Michel).
+                
+   Alterações: 20/03/2017 - Ajuste para disponibilizar as rotinas de validação de cpf e cnpj como públicas
+                           (Adriano - SD 620221).
+
+  
+  ---------------------------------------------------------------------------------------------------------------*/
 
   -- Tipo tabela para comportar um registro com os dados de feriado
   TYPE typ_tab_feriado IS
@@ -127,6 +131,14 @@ CREATE OR REPLACE PACKAGE CECRED.gene0005 IS
                                pr_feriado   IN INTEGER DEFAULT 1,         --> Considerar feriados ( 0-False, 1-True)
                                pr_excultdia IN INTEGER DEFAULT 0 );       --> Desconsiderar Feriado 31/12 ( 0-False, 1-True)
 
+  --Validar o cpf
+  PROCEDURE pc_valida_cpf (pr_nrcalcul IN NUMBER --Numero a ser verificado
+                          ,pr_stsnrcal OUT BOOLEAN); --Situacao
+                          
+  --Validar o cnpj
+  PROCEDURE pc_valida_cnpj (pr_nrcalcul IN NUMBER  --Numero a ser verificado
+                           ,pr_stsnrcal OUT BOOLEAN); --Situacao
+                           
   /* Procedure para validar cpf ou cnpj */
   PROCEDURE pc_valida_cpf_cnpj (pr_nrcalcul IN NUMBER       --Numero a ser verificado
                                ,pr_stsnrcal OUT BOOLEAN     --Situacao
@@ -186,32 +198,34 @@ CREATE OR REPLACE PACKAGE CECRED.gene0005 IS
   END GENE0005;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
-  ---------------------------------------------------------------------------------------------------------------
-  --
-  --  Programa : GENE0005
-  --  Sistema  : Rotinas auxiliares para busca de informacões do negocio
-  --  Sigla    : GENE
-  --  Autor    : Marcos Ernani Martini - Supero
-  --  Data     : Maio/2013.                   Ultima atualizacao: 10/06/2016
-  --
-  -- Dados referentes ao programa:
-  --
-  -- Frequencia: -----
-  -- Objetivo  : Centralizar rotinas auxiliares para buscas de informacões do negocio
-  -- Alteracoes: 
-  --             04/01/2016 - Alteração na chamada da rotina extr0001.pc_obtem_saldo_dia
-  --                          para passagem do parâmetro pr_tipo_busca, para melhoria
-  --                          de performance.
-  --                          Chamado 291693 (Heitor - RKAM)
-  --
-  --             30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
-  --
-  --             10/06/2016 - Ajuste para inlcuir UPPER na leitura da tabela
-  --                          crapass em campos de indice que possuem UPPER
-  --                          (Adriano - SD 463762).
-  --
-  --
-  ---------------------------------------------------------------------------------------------------------------
+  /*---------------------------------------------------------------------------------------------------------------
+  
+    Programa : GENE0005
+    Sistema  : Rotinas auxiliares para busca de informacões do negocio
+    Sigla    : GENE
+    Autor    : Marcos Ernani Martini - Supero
+    Data     : Maio/2013.                   Ultima atualizacao: 20/03/2017
+  
+   Dados referentes ao programa:
+  
+   Frequencia: -----
+   Objetivo  : Centralizar rotinas auxiliares para buscas de informacões do negocio
+   Alteracoes: 
+               04/01/2016 - Alteração na chamada da rotina extr0001.pc_obtem_saldo_dia
+                            para passagem do parâmetro pr_tipo_busca, para melhoria
+                            de performance.
+                            Chamado 291693 (Heitor - RKAM)
+  
+               30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
+  
+               10/06/2016 - Ajuste para inlcuir UPPER na leitura da tabela
+                            crapass em campos de indice que possuem UPPER
+                            (Adriano - SD 463762).
+  
+               20/03/2017 - Ajuste para disponibilizar as rotinas de validação de cpf e cnpj como públicas
+                            (Adriano - SD 620221).
+                            
+  ---------------------------------------------------------------------------------------------------------------*/
 
    -- Variaveis utilizadas na PC_CONSULTA_ITG_DIGITO_X
    vr_nrctacef       crapprm.dsvlrprm%TYPE;
@@ -1468,36 +1482,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
                                
   END pc_valida_dia_util;  
   
-  /* Procedure para validar cpf ou cnpj */
-  PROCEDURE pc_valida_cpf_cnpj (pr_nrcalcul IN NUMBER       --Numero a ser verificado
-                               ,pr_stsnrcal OUT BOOLEAN     --Situacao
-                               ,pr_inpessoa OUT INTEGER) IS --Tipo Inscricao Cedente
-  BEGIN
-    -- ..........................................................................
-    --
-    --  Programa : pc_valida_cpf_cnpj            Antigo: b1wgen9999.p/valida-cpf-cnpj
-    --  Sistema  : Rotinas genericas
-    --  Sigla    : GENE
-    --  Autor    : Alisson C. Berrido - Amcom
-    --  Data     : Julho/2013.                   Ultima atualizacao: --/--/----
-    --
-    --  Dados referentes ao programa:
-    --
-    --   Frequencia: Sempre que for chamado
-    --   Objetivo  : Validar cpf e cnpj informado
-    --
-    --   Alteracoes: 19/07/2013 - Conversao Progress para Oracle - Alisson (AMcom)
-    -- .............................................................................
-    DECLARE
-      --Variavel erro
-      vr_flgok BOOLEAN;
-      -- Variavel de retorno de erro
-      vr_des_erro VARCHAR2(4000);
-      -- Variavel de Excecao
-      vr_exc_erro EXCEPTION;
-
       --Validar o cpf
-      FUNCTION fn_valida_cpf (pr_nrcalcul IN NUMBER) RETURN BOOLEAN IS --Numero a ser verificado
+  PROCEDURE pc_valida_cpf (pr_nrcalcul IN NUMBER --Numero a ser verificado
+                          ,pr_stsnrcal OUT BOOLEAN) IS --Situacao
       BEGIN
         DECLARE
           --Variaveis Locais
@@ -1512,20 +1499,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
              pr_nrcalcul IN (11111111111,22222222222,33333333333,44444444444,55555555555,
                              66666666666,77777777777,88888888888,99999999999) THEN
             --Retornar com erro
-            RETURN(FALSE);
+        pr_stsnrcal := FALSE;
           ELSE
             --Inicializar variaveis calculo
             vr_vlrdpeso:= 9;
             vr_nrposica:= 0;
             vr_vlcalcul:= 0;
+        
             --Calcular digito
             FOR vr_nrposica IN REVERSE 1..LENGTH(pr_nrcalcul) - 2 LOOP
               vr_vlcalcul:= vr_vlcalcul + (TO_NUMBER(SUBSTR(pr_nrcalcul,vr_nrposica,1)) * vr_vlrdpeso);
               --Diminuir peso
               vr_vlrdpeso:= vr_vlrdpeso-1;
             END LOOP;
+        
             --Calcular resto modulo 11
             vr_vldresto:= Mod(vr_vlcalcul,11);
+        
             IF  vr_vldresto = 10 THEN
               --Digito recebe zero
               vr_nrdigito:= 0;
@@ -1543,8 +1533,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
               --Diminuir peso
               vr_vlrdpeso:= vr_vlrdpeso-1;
             END LOOP;
+        
             --Calcular resto modulo 11
             vr_vldresto:= Mod(vr_vlcalcul,11);
+        
             IF  vr_vldresto = 10 THEN
               --Digito multiplicado 10
               vr_nrdigito:= vr_nrdigito * 10;
@@ -1555,16 +1547,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
 
             --Comparar digito calculado com informado
             IF TO_NUMBER(SUBSTR(pr_nrcalcul,LENGTH(pr_nrcalcul) - 1,2)) <> vr_nrdigito  THEN
-              RETURN(FALSE);
+          pr_stsnrcal := FALSE;
             ELSE
-              RETURN(TRUE);
+          pr_stsnrcal := TRUE;
             END IF;
+        
           END IF;
         END;
-      END fn_valida_cpf;
+  END pc_valida_cpf;
 
       --Validar o cnpj
-      FUNCTION fn_valida_cnpj (pr_nrcalcul IN NUMBER) RETURN BOOLEAN IS --Numero a ser verificado
+  PROCEDURE pc_valida_cnpj (pr_nrcalcul IN NUMBER  --Numero a ser verificado
+                           ,pr_stsnrcal OUT BOOLEAN) IS --Situacao
       BEGIN
         DECLARE
           --Variaveis Locais
@@ -1577,7 +1571,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
         BEGIN
           IF LENGTH(pr_nrcalcul) < 3 THEN
             --Retornar com erro
-            RETURN(FALSE);
+        pr_stsnrcal := FALSE;
           ELSE
             vr_vlcalcul:= TO_NUMBER(SUBSTR(TO_CHAR(pr_nrcalcul,'fm00000000000000'),1,1)) * 2;
             vr_vlresult:= TO_NUMBER(SUBSTR(TO_CHAR(pr_nrcalcul,'fm00000000000000'),2,1)) +
@@ -1619,8 +1613,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
                 vr_vlrdpeso:= 2;
               END IF;
             END LOOP;
+        
             --Calcular resto modulo 11
             vr_vldresto:= Mod(vr_vlcalcul,11);
+        
             IF  vr_vldresto < 2  THEN
               --Digito recebe zero
               vr_nrdigito:= 0;
@@ -1628,13 +1624,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
               --Digito recebe 11 menos resto
               vr_nrdigito:= 11 - vr_vldresto;
             END IF;
+        
             --Comparar digito calculado com informado
             IF TO_NUMBER(SUBSTR(pr_nrcalcul,LENGTH(pr_nrcalcul) - 1,1)) <> vr_nrdigito  THEN
-              RETURN(FALSE);
+          pr_stsnrcal := FALSE;
             END IF;
 
             vr_vlrdpeso:= 2;
             vr_vlcalcul:= 0;
+        
             --Calcular digito
             FOR vr_nrposica IN REVERSE 1..LENGTH(pr_nrcalcul) - 1 LOOP
               vr_vlcalcul:= vr_vlcalcul + (TO_NUMBER(SUBSTR(pr_nrcalcul,vr_nrposica,1)) * vr_vlrdpeso);
@@ -1645,8 +1643,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
                 vr_vlrdpeso:= 2;
               END IF;
             END LOOP;
+        
             --Calcular resto modulo 11
             vr_vldresto:= Mod(vr_vlcalcul,11);
+        
             IF  vr_vldresto < 2  THEN
               --Digito recebe zero
               vr_nrdigito:= 0;
@@ -1654,16 +1654,53 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
               --Digito recebe 11 menos resto
               vr_nrdigito:= 11 - vr_vldresto;
             END IF;
+        
             --Comparar digito calculado com informado
             IF TO_NUMBER(SUBSTR(pr_nrcalcul,LENGTH(pr_nrcalcul),1)) <> vr_nrdigito  THEN
-              RETURN(FALSE);
+          pr_stsnrcal := FALSE;
             ELSE
               --Retornar Verdadeiro
-              RETURN(TRUE);
+          pr_stsnrcal := TRUE;
             END IF;
+        
           END IF;
+      
         END;
-      END fn_valida_cnpj;
+    
+  END pc_valida_cnpj;
+      
+  /* Procedure para validar cpf ou cnpj */
+  PROCEDURE pc_valida_cpf_cnpj (pr_nrcalcul IN NUMBER       --Numero a ser verificado
+                               ,pr_stsnrcal OUT BOOLEAN     --Situacao
+                               ,pr_inpessoa OUT INTEGER) IS --Tipo Inscricao Cedente
+  BEGIN
+    /* ..........................................................................
+    
+      Programa : pc_valida_cpf_cnpj            Antigo: b1wgen9999.p/valida-cpf-cnpj
+      Sistema  : Rotinas genericas
+      Sigla    : GENE
+      Autor    : Alisson C. Berrido - Amcom
+      Data     : Julho/2013.                   Ultima atualizacao: 20/03/2017
+    
+      Dados referentes ao programa:
+    
+       Frequencia: Sempre que for chamado
+       Objetivo  : Validar cpf e cnpj informado
+    
+       Alteracoes: 19/07/2013 - Conversao Progress para Oracle - Alisson (AMcom)
+       
+                   20/03/2017 - Ajuste para disponibilizar as rotinas de validação de 
+                                cpf e cnpj como públicas
+                               (Adriano - SD 620221).
+
+     .............................................................................*/
+    DECLARE
+      --Variavel erro
+      vr_flgok BOOLEAN;
+      -- Variavel de retorno de erro
+      vr_des_erro VARCHAR2(4000);
+      -- Variavel de Excecao
+      vr_exc_erro EXCEPTION;
 
     BEGIN
       --Inicializar variaveis retorno
@@ -1673,17 +1710,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
       IF LENGTH(pr_nrcalcul) > 11 THEN
         --Pessoa juridica
         pr_inpessoa:= 2;
+        
         --Validar CNPJ
-        pr_stsnrcal:= fn_valida_cnpj (pr_nrcalcul => pr_nrcalcul);
+        pc_valida_cnpj (pr_nrcalcul => pr_nrcalcul
+                       ,pr_stsnrcal => pr_stsnrcal);
+                       
       ELSE
         --Pessoa Fisica
         pr_inpessoa:= 1;
-        --Validar CNPJ
-        pr_stsnrcal:= fn_valida_cpf (pr_nrcalcul => pr_nrcalcul);
+
+        --Validar CPF
+        pc_valida_cpf (pr_nrcalcul => pr_nrcalcul
+                      ,pr_stsnrcal => pr_stsnrcal);
+
         --Se nao validou tentar como cnpj
         IF NOT pr_stsnrcal THEN
           --Validar CNPJ
-          pr_stsnrcal:= fn_valida_cnpj (pr_nrcalcul => pr_nrcalcul);
+          pc_valida_cnpj (pr_nrcalcul => pr_nrcalcul
+                         ,pr_stsnrcal => pr_stsnrcal);
           --Se validou
           IF pr_stsnrcal THEN
             --Pessoa Juridica
