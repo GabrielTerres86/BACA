@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : David
-    Data    : Dezembro/2009                     Ultima atualizacao: 01/04/2013
+    Data    : Dezembro/2009                     Ultima atualizacao: 27/03/2017
 
     Dados referentes ao programa:
 
@@ -57,12 +57,16 @@
                 22/06/2012 - Substituido gncoper por crapcop (Tiago).
                 
                 01/04/2013 - Incluir TD 433 e 439 no FAC - Trf. 50563 (Ze)          
+
+				27/03/2017 - Ajuste na DEV COB REM. (P340 - Fase SILOC - Rafael)
+
 ..............................................................................*/
 
 DEF STREAM str_1.
 DEF STREAM str_2.
 
 { includes/var_batch.i }
+{ sistema/generico/includes/var_oracle.i }
 
 DEF VAR rel_nmempres AS CHAR FORMAT "x(15)"                            NO-UNDO.
 DEF VAR rel_nmresemp AS CHAR FORMAT "x(11)"                            NO-UNDO.
@@ -130,6 +134,10 @@ DEF VAR tot_vlgerfac AS DEC                                            NO-UNDO.
 DEF VAR tot_vlgerroc AS DEC                                            NO-UNDO.
 
 DEF VAR h-b1wgen0011 AS HANDLE                                         NO-UNDO.
+
+/* Devolucao boletos 085 */
+DEF VAR aux_ponteiro    AS INT                                         NO-UNDO.
+DEF VAR vlr_totdevol    AS DEC INIT 0                                  NO-UNDO.
 
 DEF TEMP-TABLE w-relatorio                                             NO-UNDO
     FIELD cdcooper  AS INT
@@ -570,7 +578,6 @@ FORM SKIP
      WITH WIDTH 132 NO-BOX NO-LABELS FRAME f_total_tarifa.    
 
 
-
 ASSIGN glb_cdprogra = "crps548".
        glb_flgbatch = FALSE.
  
@@ -697,7 +704,8 @@ ASSIGN aux_vlcobvlb = IF  AVAILABLE craptab  THEN
                     rel_srddainf[1] = rel_srddainf[1] + gnfcomp.vlrecdoc.
         ELSE
         IF   CAN-DO("41,46",STRING(gnfcomp.cdtipdoc))  THEN
-             ASSIGN rel_devcobrc[1] = rel_devcobrc[1] + gnfcomp.vlrecdoc.
+             ASSIGN rel_devcobrc[1] = rel_devcobrc[1] + gnfcomp.vlrecdoc
+                    rel_devcobrm[1] = rel_devcobrm[1] + gnfcomp.vlremdoc.
         ELSE
         IF   CAN-DO("43,45,47",STRING(gnfcomp.cdtipdoc))  THEN
              ASSIGN rel_nrdedocs[1] = rel_nrdedocs[1] + gnfcomp.vlremdoc
@@ -719,6 +727,7 @@ ASSIGN aux_vlcobvlb = IF  AVAILABLE craptab  THEN
          rel_srddainf[1] <> 0 OR
 
          rel_devcobrc[1] <> 0 OR
+         rel_devcobrm[1] <> 0 OR
          rel_nrdedocs[1] <> 0 OR
          rel_srdedocs[1] <> 0 OR
          rel_devdocrc[1] <> 0 OR
@@ -742,6 +751,7 @@ ASSIGN aux_vlcobvlb = IF  AVAILABLE craptab  THEN
                     w-relatorio.srddainf = rel_srddainf[1]
 
                     w-relatorio.devcobrc = rel_devcobrc[1]
+                    w-relatorio.devcobrm = rel_devcobrm[1]
                     w-relatorio.nrdedocs = rel_nrdedocs[1]
                     w-relatorio.srdedocs = rel_srdedocs[1]
                     w-relatorio.devdocrc = rel_devdocrc[1]
@@ -758,6 +768,7 @@ ASSIGN aux_vlcobvlb = IF  AVAILABLE craptab  THEN
                     rel_srddainf[1] = 0
 
                     rel_devcobrc[1] = 0
+                    rel_devcobrm[1] = 0
                     rel_nrdedocs[1] = 0
                     rel_srdedocs[1] = 0
                     rel_devdocrc[1] = 0
@@ -1178,6 +1189,140 @@ FOR EACH crapcop WHERE crapcop.cdcooper <> 3 NO-LOCK
             END.
 
     END. /** Fim do FOR EACH gncptit **/
+
+/*...................... DEVOLUCAO BOLETOS 085 ............................. */
+        
+    ASSIGN vlr_totdevol = 0.    
+    
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                
+    RUN STORED-PROC {&sc2_dboraayl}.send-sql-statement
+       aux_ponteiro = PROC-HANDLE
+               ("SELECT NVL(sum(dvc.vlliquid),0) 
+                   FROM gncpdvc dvc
+                  WHERE dvc.cdcooper = " + STRING(crapcop.cdcooper) + "
+                    AND dvc.dtmvtolt = TO_DATE('" + 
+                              STRING(glb_dtmvtolt,'99/99/9999') + "','DD/MM/RRRR')
+                    AND TRIM(dvc.nmarquiv) IS NOT NULL").
+              
+    FOR EACH {&sc2_dboraayl}.proc-text-buffer WHERE PROC-HANDLE = aux_ponteiro:
+        ASSIGN vlr_totdevol = DEC(proc-text). 
+    END.
+                                              
+    CLOSE STORED-PROC {&sc2_dboraayl}.send-sql-statement
+          WHERE PROC-HANDLE = aux_ponteiro.
+                                 
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+    /** Processado ABBC **/
+    RUN cria_tt_relatorio (INPUT crapcop.cdcooper,
+                           INPUT "3 - PROCESSADO ABBC",
+                           OUTPUT aux_rowid).
+    FIND w-relatorio WHERE ROWID(w-relatorio) = aux_rowid
+                           EXCLUSIVE-LOCK NO-ERROR.
+
+    ASSIGN w-relatorio.devcobrm = w-relatorio.devcobrm + vlr_totdevol.
+    
+/*................................................ */    
+
+    ASSIGN vlr_totdevol = 0.    
+
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                
+    RUN STORED-PROC {&sc2_dboraayl}.send-sql-statement
+       aux_ponteiro = PROC-HANDLE
+               ("SELECT NVL(sum(dvc.vlliquid),0) 
+                   FROM gncpdvc dvc
+                  WHERE dvc.cdcooper = " + STRING(crapcop.cdcooper) + "
+                    AND dvc.dtmvtolt = TO_DATE('" + 
+                              STRING(glb_dtmvtolt,'99/99/9999') + "','DD/MM/RRRR')
+                    AND dvc.flgconci = 1
+                    AND dvc.flgpcctl = 1").
+              
+    FOR EACH {&sc2_dboraayl}.proc-text-buffer WHERE PROC-HANDLE = aux_ponteiro:
+        ASSIGN vlr_totdevol = DEC(proc-text). 
+    END.
+                                              
+    CLOSE STORED-PROC {&sc2_dboraayl}.send-sql-statement
+          WHERE PROC-HANDLE = aux_ponteiro.
+                                 
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                                
+    /** Integrado CECRED **/                                
+    RUN cria_tt_relatorio (INPUT crapcop.cdcooper,
+                           INPUT "4 - INTEGRADO CECRED",
+                           OUTPUT aux_rowid).
+    FIND w-relatorio WHERE ROWID(w-relatorio) = aux_rowid
+                           EXCLUSIVE-LOCK NO-ERROR.
+
+    ASSIGN w-relatorio.devcobrm = w-relatorio.devcobrm + vlr_totdevol.
+    
+/*................................................ */    
+
+    ASSIGN vlr_totdevol = 0.    
+    
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                
+    RUN STORED-PROC {&sc2_dboraayl}.send-sql-statement
+       aux_ponteiro = PROC-HANDLE
+               ("SELECT NVL(sum(dvc.vlliquid),0) 
+                   FROM gncpdvc dvc
+                  WHERE dvc.cdcooper = " + STRING(crapcop.cdcooper) + "
+                    AND dvc.dtmvtolt = TO_DATE('" + 
+                              STRING(glb_dtmvtolt,'99/99/9999') + "','DD/MM/RRRR')
+                    AND dvc.flgconci = 0
+                    AND dvc.flgpcctl = 0").
+              
+    FOR EACH {&sc2_dboraayl}.proc-text-buffer WHERE PROC-HANDLE = aux_ponteiro:
+        ASSIGN vlr_totdevol = DEC(proc-text). 
+    END.
+                                              
+    CLOSE STORED-PROC {&sc2_dboraayl}.send-sql-statement
+          WHERE PROC-HANDLE = aux_ponteiro.
+                                 
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                                       
+    /* Gerado Coop */                                       
+    RUN cria_tt_relatorio (INPUT crapcop.cdcooper,
+                           INPUT "5 - GERADO COOP",
+                           OUTPUT aux_rowid).
+    FIND w-relatorio WHERE ROWID(w-relatorio) = aux_rowid
+                           EXCLUSIVE-LOCK NO-ERROR.
+                            
+    ASSIGN w-relatorio.devcobrm = w-relatorio.devcobrm + vlr_totdevol.
+
+/*................................................ */    
+
+    ASSIGN vlr_totdevol = 0.    
+    
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                
+    RUN STORED-PROC {&sc2_dboraayl}.send-sql-statement
+       aux_ponteiro = PROC-HANDLE
+               ("SELECT NVL(sum(dvc.vlliquid),0) 
+                   FROM gncpdvc dvc
+                  WHERE dvc.cdcooper = " + STRING(crapcop.cdcooper) + "
+                    AND dvc.dtmvtolt = TO_DATE('" + 
+                              STRING(glb_dtmvtolt,'99/99/9999') + "','DD/MM/RRRR')
+                    AND dvc.flgpcctl = 1").
+              
+    FOR EACH {&sc2_dboraayl}.proc-text-buffer WHERE PROC-HANDLE = aux_ponteiro:
+        ASSIGN vlr_totdevol = DEC(proc-text). 
+    END.
+                                              
+    CLOSE STORED-PROC {&sc2_dboraayl}.send-sql-statement
+          WHERE PROC-HANDLE = aux_ponteiro.
+                                 
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                                    
+    /* Integrado Coop */
+    RUN cria_tt_relatorio (INPUT crapcop.cdcooper,
+                           INPUT "6 - INTEGRADO COOP",
+                           OUTPUT aux_rowid).
+    FIND w-relatorio WHERE ROWID(w-relatorio) = aux_rowid
+                           EXCLUSIVE-LOCK NO-ERROR.
+
+    ASSIGN w-relatorio.devcobrm = w-relatorio.devcobrm + vlr_totdevol.    
 
 /*........................... GNCPDOC ....................................... */
     FOR EACH gncpdoc WHERE gncpdoc.cdcooper = crapcop.cdcooper AND

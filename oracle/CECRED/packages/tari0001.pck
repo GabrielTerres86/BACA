@@ -512,7 +512,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
   --  Sistema  : Procedimentos envolvendo tarifas bancarias
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 15/09/2016
+  --  Data     : Junho/2013.                   Ultima atualizacao: 29/03/2017
   --
   -- Dados referentes ao programa:
   --
@@ -558,6 +558,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                               
                  15/09/2016 - #519899 Criação de log de controle de início, erros e fim de execução
                               do job pc_deb_tarifa_pend (Carlos)
+                              
+                 29/03/2017 - #640389 Alterada a forma como era feito o insert na lcm, na rotina
+                              pc_lan_tarifa_conta_corrente, passando a tratar com DUP_VAL_ON_INDEX,
+                              dispensando a consulta do mesmo antes da inserção (Carlos)
   */
  
   ---------------------------------------------------------------------------------------------------------------
@@ -2881,170 +2885,139 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
           vr_nrdocmto:= Nvl(rw_craplot.nrseqdig,0);
         END IF;
 
-        /* Responsavel por criar lancamento em conta corrente */
-        OPEN cr_craplcm (pr_cdcooper => rw_craplot.cdcooper
-                        ,pr_dtmvtolt => rw_craplot.dtmvtolt
-                        ,pr_cdagenci => rw_craplot.cdagenci
-                        ,pr_cdbccxlt => rw_craplot.cdbccxlt
-                        ,pr_nrdolote => rw_craplot.nrdolote
-                        ,pr_nrdctabb => pr_nrdctabb
-                        ,pr_nrdocmto => vr_nrdocmto);
-        --Posicionar no primeiro registro
-        FETCH cr_craplcm INTO rw_craplcm;
-        --Se nao encontrou
-        IF cr_craplcm%NOTFOUND THEN
-          --Fechar Cursor
-          CLOSE cr_craplcm;
+        --Determinar Sequencial Unico
+        IF pr_nrsequni = 0 THEN
+          vr_nrsequni:= Nvl(rw_craplot.nrseqdig,0);
+        ELSE
+          vr_nrsequni:= pr_nrsequni;
+        END IF;
 
-          --Determinar Sequencial Unico
-          IF pr_nrsequni = 0 THEN
-            vr_nrsequni:= Nvl(rw_craplot.nrseqdig,0);
-          ELSE
-            vr_nrsequni:= pr_nrsequni;
-          END IF;
-
-          --Inserir Lancamento
-          BEGIN
-            INSERT INTO craplcm
-               (craplcm.cdcooper
-               ,craplcm.dtmvtolt
-               ,craplcm.cdagenci
-               ,craplcm.cdbccxlt
-               ,craplcm.nrdolote
-               ,craplcm.dtrefere
-               ,craplcm.hrtransa
-               ,craplcm.cdoperad
-               ,craplcm.nrdconta
-               ,craplcm.nrdctabb
-               ,craplcm.nrdctitg
-               ,craplcm.nrseqdig
-               ,craplcm.nrsequni
-               ,craplcm.nrdocmto
-               ,craplcm.cdhistor
-               ,craplcm.vllanmto
-               ,craplcm.cdpesqbb
-               ,craplcm.cdbanchq
-               ,craplcm.cdagechq
-               ,craplcm.nrctachq
-               ,craplcm.cdcoptfn
-               ,craplcm.cdagetfn
-               ,craplcm.nrterfin
-               ,craplcm.nrautdoc
-               ,craplcm.dsidenti)
-            VALUES (pr_cdcooper
-                   ,rw_craplot.dtmvtolt
-                   ,pr_cdagenci
-                   ,pr_cdbccxlt
-                   ,pr_nrdolote
-                   ,rw_craplot.dtmvtolt
-                   ,GENE0002.fn_busca_time
-                   ,pr_cdoperad
-                   ,pr_nrdconta
-                   ,pr_nrdctabb
-                   ,pr_nrdctitg
-                   ,rw_craplot.nrseqdig
-                   ,vr_nrsequni
-                   ,vr_nrdocmto
-                   ,pr_cdhistor
-                   ,pr_vltarifa
-                   ,pr_cdpesqbb
-                   ,pr_cdbanchq
-                   ,pr_cdagechq
-                   ,pr_nrctachq
-                   ,pr_cdcoptfn
-                   ,pr_cdagetfn
-                   ,pr_nrterfin
-                   ,pr_nrautdoc
-                   ,pr_dsidenti)
-             RETURNING
-                craplcm.cdcooper
-               ,craplcm.dtmvtolt
-               ,craplcm.nrdconta
-               ,craplcm.cdhistor
-               ,craplcm.nrdocmto
-               ,craplcm.nrseqdig
-               ,craplcm.dtmvtolt
-               ,craplcm.vllanmto
-             INTO rw_craplcm.cdcooper
-               ,rw_craplcm.dtmvtolt
-               ,rw_craplcm.nrdconta
-               ,rw_craplcm.cdhistor
-               ,rw_craplcm.nrdocmto
-               ,rw_craplcm.nrseqdig
-               ,rw_craplcm.dtmvtolt
-               ,rw_craplcm.vllanmto;
-          EXCEPTION
-            WHEN Others THEN
-              vr_cdcritic:= 0;
-              vr_dscritic:= 'Erro ao inserir lancamento. '||sqlerrm;
-              --Levantar Excecao
-              RAISE vr_exc_erro;
-          END;
-        ELSE /* Encontrou Lancamento */
-          --Fechar Cursor
-          CLOSE cr_craplcm;
-          --Se o numero documento igual zero
-          IF pr_nrdocmto = 0 THEN
+        --Inserir Lancamento
+        BEGIN
+          INSERT INTO craplcm
+             (craplcm.cdcooper
+             ,craplcm.dtmvtolt
+             ,craplcm.cdagenci
+             ,craplcm.cdbccxlt
+             ,craplcm.nrdolote
+             ,craplcm.dtrefere
+             ,craplcm.hrtransa
+             ,craplcm.cdoperad
+             ,craplcm.nrdconta
+             ,craplcm.nrdctabb
+             ,craplcm.nrdctitg
+             ,craplcm.nrseqdig
+             ,craplcm.nrsequni
+             ,craplcm.nrdocmto
+             ,craplcm.cdhistor
+             ,craplcm.vllanmto
+             ,craplcm.cdpesqbb
+             ,craplcm.cdbanchq
+             ,craplcm.cdagechq
+             ,craplcm.nrctachq
+             ,craplcm.cdcoptfn
+             ,craplcm.cdagetfn
+             ,craplcm.nrterfin
+             ,craplcm.nrautdoc
+             ,craplcm.dsidenti)
+          VALUES (pr_cdcooper
+                 ,rw_craplot.dtmvtolt
+                 ,pr_cdagenci
+                 ,pr_cdbccxlt
+                 ,pr_nrdolote
+                 ,rw_craplot.dtmvtolt
+                 ,GENE0002.fn_busca_time
+                 ,pr_cdoperad
+                 ,pr_nrdconta
+                 ,pr_nrdctabb
+                 ,pr_nrdctitg
+                 ,rw_craplot.nrseqdig
+                 ,vr_nrsequni
+                 ,vr_nrdocmto
+                 ,pr_cdhistor
+                 ,pr_vltarifa
+                 ,pr_cdpesqbb
+                 ,pr_cdbanchq
+                 ,pr_cdagechq
+                 ,pr_nrctachq
+                 ,pr_cdcoptfn
+                 ,pr_cdagetfn
+                 ,pr_nrterfin
+                 ,pr_nrautdoc
+                 ,pr_dsidenti)
+           RETURNING
+              craplcm.cdcooper
+             ,craplcm.dtmvtolt
+             ,craplcm.nrdconta
+             ,craplcm.cdhistor
+             ,craplcm.nrdocmto
+             ,craplcm.nrseqdig
+             ,craplcm.dtmvtolt
+             ,craplcm.vllanmto
+           INTO rw_craplcm.cdcooper
+             ,rw_craplcm.dtmvtolt
+             ,rw_craplcm.nrdconta
+             ,rw_craplcm.cdhistor
+             ,rw_craplcm.nrdocmto
+             ,rw_craplcm.nrseqdig
+             ,rw_craplcm.dtmvtolt
+             ,rw_craplcm.vllanmto;
+        EXCEPTION
             
-            -- Gerar novo nrseqdig que será utilizado como numero de documento
-            pc_insere_lote (pr_cdcooper => pr_cdcooper,
-                            pr_dtmvtolt => pr_dtmvtolt,
-                            pr_cdagenci => pr_cdagenci,
-                            pr_cdbccxlt => pr_cdbccxlt,
-                            pr_nrdolote => pr_nrdolote,
-                            pr_tplotmov => pr_tplotmov,
-                            pr_cdhistor => 0,
-                            pr_cdoperad => pr_cdoperad,
-                            pr_nrdcaixa => 0,
-                            pr_cdopecxa => 0,
-                            pr_dscritic => vr_dscritic,
-                            pr_craplot  => rw_craplot);
-            
-            IF vr_dscritic IS NOT NULL THEN
-              RAISE vr_exc_erro;
-            END IF;
-            
-            /*BEGIN
-              UPDATE craplot SET craplot.nrseqdig = Nvl(craplot.nrseqdig,0) + 1
-              WHERE craplot.ROWID = rw_craplot.ROWID
-              RETURNING craplot.nrseqdig INTO rw_craplot.nrseqdig;
-            EXCEPTION
-              WHEN Others THEN
-                vr_cdcritic:= 0;
-                vr_dscritic:= 'Erro ao atualizar tabela craplot. '||sqlerrm;
-                --Levantar Excecao
+          WHEN DUP_VAL_ON_INDEX THEN
+            --Se o numero documento igual zero
+            IF pr_nrdocmto = 0 THEN
+              
+              -- Gerar novo nrseqdig que será utilizado como numero de documento
+              pc_insere_lote (pr_cdcooper => pr_cdcooper,
+                              pr_dtmvtolt => pr_dtmvtolt,
+                              pr_cdagenci => pr_cdagenci,
+                              pr_cdbccxlt => pr_cdbccxlt,
+                              pr_nrdolote => pr_nrdolote,
+                              pr_tplotmov => pr_tplotmov,
+                              pr_cdhistor => 0,
+                              pr_cdoperad => pr_cdoperad,
+                              pr_nrdcaixa => 0,
+                              pr_cdopecxa => 0,
+                              pr_dscritic => vr_dscritic,
+                              pr_craplot  => rw_craplot);
+              
+              IF vr_dscritic IS NOT NULL THEN
                 RAISE vr_exc_erro;
-            END;*/
+              END IF;
+              
+              --Proximo registro loop
+              CONTINUE;
+            END IF;
+            --Montar Numero Aplicacao
+            vr_nraplica:= vr_tab_ctrdocmt(vr_contapli)||vr_nraplica;
+            --Verificar se eh numerico
+            vr_errnumber:= FALSE;
+            BEGIN
+              vr_nraplica2:= To_Number(vr_nraplica);
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_errnumber:= TRUE;
+            END;
+            --Se ocorreu erro na conversao number
+            IF vr_errnumber OR NOT GENE0002.fn_numerico(vr_nraplica) THEN
+              --Diminuir conta aplicacao
+              vr_contapli:= Nvl(vr_contapli,0) - 1;
+              --Montar Numero Aplicacao Funcionario
+              vr_nraplica:= vr_tab_ctrdocmt(vr_contapli)||vr_nraplfun;
+              --Proximo registro loop
+              CONTINUE;
+            END IF;
             --Proximo registro loop
             CONTINUE;
-          END IF;
-          --Montar Numero Aplicacao
-          vr_nraplica:= vr_tab_ctrdocmt(vr_contapli)||vr_nraplica;
-          --Verificar se eh numerico
-          vr_errnumber:= FALSE;
-          BEGIN
-            vr_nraplica2:= To_Number(vr_nraplica);
-          EXCEPTION
-            WHEN OTHERS THEN
-              vr_errnumber:= TRUE;
-          END;
-          --Se ocorreu erro na conversao number
-          IF vr_errnumber OR NOT GENE0002.fn_numerico(vr_nraplica) THEN
-            --Diminuir conta aplicacao
-            vr_contapli:= Nvl(vr_contapli,0) - 1;
-            --Montar Numero Aplicacao Funcionario
-            vr_nraplica:= vr_tab_ctrdocmt(vr_contapli)||vr_nraplfun;
-            --Proximo registro loop
-            CONTINUE;
-          END IF;
-          --Proximo registro loop
-          CONTINUE;
-        END IF;
-        --Fechar Cursor
-        IF cr_craplcm%ISOPEN THEN
-          CLOSE cr_craplcm;
-        END IF;
-        --Sair Loop
+          
+          WHEN Others THEN
+            vr_cdcritic:= 0;
+            vr_dscritic:= 'Erro ao inserir lancamento. '||sqlerrm;
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+        END;
+
         EXIT;
       END LOOP;
       /* Cria aviso de debito em CC se necessario */

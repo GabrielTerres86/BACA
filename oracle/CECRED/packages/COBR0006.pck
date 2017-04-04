@@ -491,6 +491,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 						    > Utilizar NOCOPY na passagem de PLTABLEs como parâmetro;
 							> Alterado diretório para mover os arquivos rejeitados;
 							(Andrei - Mouts).
+
+                17/03/2017 - Removido a validação que verificava se o CEP do pagador do boleto existe no Ayllos
+                             Solicitado pelo Leomir e aprovado pelo Victor (cobrança)
+                             (Douglas - Chamado 601436)
   ---------------------------------------------------------------------------------------------------------------*/
   
   ------------------------------- CURSORES ---------------------------------    
@@ -532,6 +536,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
      AND cob.nrdocmto = pr_nrdocmto;
   rw_crapcob cr_crapcob%ROWTYPE;
 
+/* Remover o cursor, nao sera mais validado se o CEP existe no sistema
+   Chamado 601436 -> Solicitado por Leomir e autorizado pelo Victor Hugo Zimmerman
   --> Buscar as informacoes do cadastro de endereco
   CURSOR cr_crapdne (pr_nrceplog crapdne.nrceplog%TYPE,
                      pr_idoricad crapdne.idoricad%TYPE) IS
@@ -540,6 +546,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
    WHERE dne.nrceplog = pr_nrceplog
      AND dne.idoricad = pr_idoricad;
   rw_crapdne cr_crapdne%ROWTYPE;
+*/  
 
   --> Busca informacoes do Controle de Remessa/Retorno de Titulos do Cooperado
   CURSOR cr_craprtc (pr_cdcooper craprtc.cdcooper%TYPE,
@@ -1558,7 +1565,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana - AMcom
-       Data    : Novembro/2015.                   Ultima atualizacao: 27/05/2016
+       Data    : Novembro/2015.                   Ultima atualizacao: 17/03/2016
 
        Dados referentes ao programa:
 
@@ -1575,6 +1582,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 								a rotina de validação de caracteres para endereços
 								(Andrei). 
 
+                   17/03/2017 - Removido a validação que verificava se o CEP do pagador do boleto existe no Ayllos. 
+                                Solicitado pelo Leomir e aprovado pelo Victor (cobrança)
+                               (Douglas - Chamado 601436)
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -1775,6 +1785,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         RAISE vr_exc_motivo;
       END IF;
       
+      -- Validar se o CEP do Sacado foi informado, ou está zerado
+      IF TRIM(pr_tab_linhas('NRCEPSAC').numero) IS NULL OR 
+         NVL(pr_tab_linhas('NRCEPSAC').numero, 0) = 0 THEN
+        
+        --  CEP Invalido
+        pr_cdmotivo := '48';
+        RAISE vr_exc_motivo;
+        
+      END IF;
+      
+      -- Validar os caracteres do cep do sacado
+      IF fn_valida_caracteres(pr_flgnumer => TRUE   -- Validar Numeros
+                             ,pr_flgletra => FALSE  -- Validar Letras
+                             ,pr_listaesp => ''     -- Lista Caracteres Validos
+                             ,pr_dsvalida => pr_tab_linhas('NRCEPSAC').numero ) THEN -- CEP do Sacado
+                              
+        -- CEP invalido
+        pr_cdmotivo := '48';
+        RAISE vr_exc_motivo;
+        
+      END IF;
+      
+      
+      
+/* Nao sera mais validado se o CEP existe no sistema
+   Chamado 601436 -> Solicitado por Leomir e autorizado pelo Victor Hugo Zimmerman
+   
       -- Valida CEP do Sacado
       -- Pesquisar a Origem = CORREIOS
       OPEN cr_crapdne (pr_nrceplog => pr_tab_linhas('NRCEPSAC').numero,
@@ -1802,6 +1839,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       IF cr_crapdne%ISOPEN THEN
         CLOSE cr_crapdne;
       END IF;
+*/
       
       /*
       IF pr_tab_linhas('CDUFSACA').texto <> rw_crapdne.cduflogr THEN
@@ -5233,7 +5271,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Douglas Quisinski
-       Data    : Novembro/2015.                   Ultima atualizacao: 13/02/2017
+       Data    : Novembro/2015.                   Ultima atualizacao: 17/03/2017
 
        Dados referentes ao programa:
 
@@ -5252,6 +5290,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
 				  13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
 							   (Andrei - Mouts).
+                               
+                   17/03/2017 - Removido a validação que verificava se o CEP do pagador do boleto existe no Ayllos. 
+                                Solicitado pelo Leomir e aprovado pelo Victor (cobrança)
+                               (Douglas - Chamado 601436)
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -5426,6 +5468,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       RAISE vr_exc_reje;
     END IF;
 
+    -- 13.3Q e 14.3Q Valida CEP do Sacado, ou está zerado
+    IF TRIM(pr_rec_cobranca.nrcepsac) IS NULL OR 
+       NVL(pr_rec_cobranca.nrcepsac, 0) = 0 THEN
+       
+      --  CEP Invalido
+      vr_rej_cdmotivo := '48';
+      RAISE vr_exc_reje;
+      
+    END IF;
+    
+    -- Validar os caracteres do cep do sacado
+    IF fn_valida_caracteres(pr_flgnumer => TRUE   -- Validar Numeros
+                           ,pr_flgletra => FALSE  -- Validar Letras
+                           ,pr_listaesp => ''     -- Lista Caracteres Validos
+                           ,pr_dsvalida => pr_rec_cobranca.nrcepsac ) THEN -- Nome do Sacado
+                            
+      -- CEP invalido
+      vr_rej_cdmotivo := '48';
+      RAISE vr_exc_reje;
+      
+    END IF;
+
+
+/* Nao sera mais validado se o CEP existe no sistema
+   Chamado 601436 -> Solicitado por Leomir e autorizado pelo Victor Hugo Zimmerman
+   
     -- 13.3Q e 14.3Q Valida CEP do Sacado
     -- Pesquisar a Origem = CORREIOS
     OPEN cr_crapdne (pr_nrceplog => pr_rec_cobranca.nrcepsac,
@@ -5461,6 +5529,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     IF cr_crapdne%ISOPEN THEN
       CLOSE cr_crapdne;
     END IF;
+*/
 
     -- 16.3Q Valida UF do Sacado
 	/*
@@ -7397,7 +7466,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Andrei - RKAM
-       Data    : Marco/2016.                   Ultima atualizacao: 13/02/2017
+       Data    : Marco/2016.                   Ultima atualizacao: 17/03/2017
 
        Dados referentes ao programa:
 
@@ -7419,6 +7488,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
 				   13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
 								(Andrei - Mouts).
+                                
+                   17/03/2017 - Removido a validação que verificava se o CEP do pagador do boleto existe no Ayllos. 
+                                Solicitado pelo Leomir e aprovado pelo Victor (cobrança)
+                               (Douglas - Chamado 601436)
     ............................................................................ */   
     
     --> Buscar dados do associado
@@ -8087,8 +8160,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
     END IF;
   
-    -- 44.7 CEP do Sacado
-    IF TRIM(pr_rec_cobranca.nrcepsac) IS NULL THEN
+    -- 44.7 CEP do Sacado nao informado, ou zerado
+    IF TRIM(pr_rec_cobranca.nrcepsac) IS NULL OR 
+       NVL(pr_rec_cobranca.nrcepsac, 0) = 0 THEN
       
       --  CEP Invalido
       vr_rej_cdmotivo := '48';
@@ -8108,6 +8182,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
     END IF;
   
+/* Nao sera mais validado se o CEP existe no sistema
+   Chamado 601436 -> Solicitado por Leomir e autorizado pelo Victor Hugo Zimmerman
+     
     -- 44.7 Valida CEP do Sacado
     -- Pesquisar a Origem = CORREIOS
     OPEN cr_crapdne (pr_nrceplog => pr_rec_cobranca.nrcepsac,
@@ -8143,6 +8220,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     IF cr_crapdne%ISOPEN THEN
       CLOSE cr_crapdne;
     END IF;
+*/
   
     -- 46.7 UF do Sacado
     /*

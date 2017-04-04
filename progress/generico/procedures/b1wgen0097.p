@@ -2,7 +2,7 @@
     
     Programa: sistema/generico/procedures/b1wgen0097.p
     Autor   : Gabriel, GATI - Diego
-    Data    : Maio/2011               Ultima Atualizacao: 25/06/2015
+    Data    : Maio/2011               Ultima Atualizacao: 03/04/2017
     
     Dados referentes ao programa:
     
@@ -96,6 +96,8 @@
                 07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
                              departamento passando a considerar o código (Renato Darosci)
 
+                             
+                03/04/2017 - Ajuste no calculo do IOF. (James)             
 ............................................................................*/
 
 { sistema/generico/includes/var_internet.i }
@@ -656,6 +658,9 @@ PROCEDURE grava_simulacao:
             RUN consulta_iof(INPUT  par_cdcooper,
                              INPUT  par_dtmvtolt,
                              INPUT  par_vlemprst,
+                             INPUT  par_nrdconta,
+                             INPUT  par_dtdpagto,
+                             INPUT  par_qtparepr,                             
                              OUTPUT var_vliofepr,
                              OUTPUT TABLE tt-erro).
         
@@ -1663,10 +1668,14 @@ PROCEDURE consulta_iof:
     DEF INPUT        PARAM par_cdcooper AS INT                      NO-UNDO.
     DEF INPUT        PARAM par_dtmvtolt AS DATE                     NO-UNDO.
     DEF INPUT        PARAM par_vlemprst AS DEC                      NO-UNDO.
-    DEF OUTPUT       PARAM par_vliofepr AS DEC                      NO-UNDO.
+    DEF INPUT        PARAM par_nrdconta AS INTE                     NO-UNDO.
+    DEF INPUT        PARAM par_dtdpagto AS DATE                     NO-UNDO.
+    DEF INPUT        PARAM par_nrparepr AS INTE                     NO-UNDO.    
+    DEF OUTPUT       PARAM par_vliofepr AS DEC                      NO-UNDO.    
     DEF OUTPUT       PARAM  TABLE   FOR tt-erro.
     
-    DEF VAR                h-b1wgen9999 AS HANDLE                   NO-UNDO.
+    DEF VAR          h-b1wgen9999 AS HANDLE                         NO-UNDO.
+    DEF VAR          aux_qtdiaiof AS INTEGER                        NO-UNDO.
 
     RUN sistema/generico/procedures/b1wgen9999.p 
                     PERSISTENT SET h-b1wgen9999.
@@ -1693,6 +1702,24 @@ PROCEDURE consulta_iof:
     IF   AVAIL tt-iof THEN
          DO:
              ASSIGN  par_vliofepr = par_vlemprst * tt-iof.txccdiof.
+             
+             FOR FIRST crapass FIELDS(inpessoa)
+                               WHERE crapass.cdcooper = par_cdcooper AND
+                                     crapass.nrdconta = par_nrdconta
+                                     NO-LOCK: END.
+             IF AVAILABLE crapass THEN
+                DO:
+                    ASSIGN aux_qtdiaiof = ADD-INTERVAL(par_dtdpagto,par_nrparepr - 1,"MONTH") - par_dtmvtolt.
+                    
+                    IF aux_qtdiaiof > 365 THEN
+                       ASSIGN aux_qtdiaiof = 365.
+                    
+                    IF crapass.inpessoa = 1 THEN
+                       ASSIGN par_vliofepr = par_vliofepr + ROUND((par_vlemprst * aux_qtdiaiof * 0.000082),2).
+                    ELSE
+                       ASSIGN par_vliofepr = par_vliofepr + ROUND((par_vlemprst * aux_qtdiaiof * 0.000041),2).
+                END.    
+             
          END.
     ELSE
          DO:

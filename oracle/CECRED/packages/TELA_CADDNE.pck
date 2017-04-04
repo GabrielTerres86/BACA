@@ -90,6 +90,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
     Alteracoes: 04/11/2016 - Adicionar NVL para os campos de texto no cadastro 
                              de endereço ao importar os arquivos do correio
                              (Douglas - Chamado 542799)
+                             
+                16/03/2017 - Adicionar UPPER para os campos de texto no cadastro 
+                             de endereço ao importar os arquivos do correio
+                             (Douglas - Chamado 601436)
     ..............................................................................*/
     BEGIN
       --Inserir dados do endereco na tabela em um unico momento
@@ -108,15 +112,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
                              ,idoricad
                              ,idtipdne)
                        VALUES(pr_tab_logradouro(idx).cep
-                             ,NVL(TRIM(pr_tab_logradouro(idx).nome_rua),' ')
-                             ,NVL(TRIM(pr_tab_logradouro(idx).nome_rua_res),' ')
-                             ,NVL(TRIM(pr_tab_logradouro(idx).complemento),' ')
-                             ,NVL(TRIM(pr_tab_logradouro(idx).tipo),' ')
-                             ,NVL(TRIM(pr_tab_logradouro(idx).bairro_nome),' ')
-                             ,NVL(TRIM(pr_tab_logradouro(idx).bairro_res),' ')
-                             ,NVL(TRIM(pr_tab_logradouro(idx).cidade_nome),' ')
-                             ,NVL(TRIM(pr_tab_logradouro(idx).cidade_res),' ')
-                             ,NVL(TRIM(pr_tab_logradouro(idx).estado),' ')
+                             ,NVL(UPPER(TRIM(pr_tab_logradouro(idx).nome_rua)),' ')
+                             ,NVL(UPPER(TRIM(pr_tab_logradouro(idx).nome_rua_res)),' ')
+                             ,NVL(UPPER(TRIM(pr_tab_logradouro(idx).complemento)),' ')
+                             ,NVL(UPPER(TRIM(pr_tab_logradouro(idx).tipo)),' ')
+                             ,NVL(UPPER(TRIM(pr_tab_logradouro(idx).bairro_nome)),' ')
+                             ,NVL(UPPER(TRIM(pr_tab_logradouro(idx).bairro_res)),' ')
+                             ,NVL(UPPER(TRIM(pr_tab_logradouro(idx).cidade_nome)),' ')
+                             ,NVL(UPPER(TRIM(pr_tab_logradouro(idx).cidade_res)),' ')
+                             ,NVL(UPPER(TRIM(pr_tab_logradouro(idx).estado)),' ')
                              ,const_origem_cadastro   -- Origem do Cadastro (1 - CORREIOS)
                              ,pr_idtipdne); -- Tipo de Enderecao
       EXCEPTION

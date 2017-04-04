@@ -5,9 +5,6 @@
 	 * DATA CRIAÇÃO : 25/08/2015
 	 * OBJETIVO     : Rotina para manter as operações da tela de Assessorias
 	 * --------------
-	 * ALTERAÇÕES   : 19/09/2016 - Inclusao do campo de codigo de acessoria do CYBER, Prj. 302 (Jean Michel)
-   *
-   *                17/01/2017 - Inclusao campos flgjudic e flextjud, Prj. 432 (Jean Calão / Mout´S)
 	 * -------------- 
 	 */		
 
@@ -27,6 +24,7 @@
 	$cdasscyb      = (isset($_POST["cdasscyb"]))  ? $_POST["cdasscyb"]  : "";		  // Código da Assessoria CYBER
     $flgjudic      = (isset($_POST["flgjudic"]))  ? $_POST["flgjudic"]  : "";		  // flag de cobrança judicial
     $flextjud      = (isset($_POST["flextjud"]))  ? $_POST["flextjud"]  : "";		  // flag de cobrança extra judicial
+	$cdsigcyb      = (isset($_POST["cdsigcyb"]))  ? $_POST["cdsigcyb"]  : "";		  // flag de cobrança extra judicial
 
 	//Validar permissão do usuário
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],$cddopcao)) <> "") {
@@ -80,9 +78,7 @@
 		$xml .= "		<cddopcao>".$cddopcao."</cddopcao>";
 		$xml .= "		<cdassess>".$cdassessoria."</cdassess>";
 		$xml .= "		<dsassess>".$nmassessoria."</dsassess>";
-		$xml .= "		<cdasscyb>".$cdasscyb."</cdasscyb>";
-        $xml .= "		<flgjudic>".$flgjudic."</flgjudic>";
-        $xml .= "		<flextjud>".$flextjud."</flextjud>";
+
 	}
 	$xml .= "  </Dados>";
 	$xml .= "</Root>";
@@ -112,27 +108,11 @@
 				if ($xmlObjeto->roottag->tags[0]->name == "ASSESSORIAS") {
 					$cdassess = getByTagName($xmlObjeto->roottag->tags[0]->tags[0]->tags,'cdassessoria');
 					$nmassess = getByTagName($xmlObjeto->roottag->tags[0]->tags[0]->tags,'nmassessoria');
-					$cdasscyb = getByTagName($xmlObjeto->roottag->tags[0]->tags[0]->tags,'cdasscyb');
-					$flgjudic = getByTagName($xmlObjeto->roottag->tags[0]->tags[0]->tags,'flgjudic');
-					$flextjud = getByTagName($xmlObjeto->roottag->tags[0]->tags[0]->tags,'flextjud');
+
 					// Verificar se foi encontrada a assessoria para o código informado
 					if ($cdassess != "" && $nmassess != "") {
 						//Se existir preenche na tela
 						$command .= "$('#cdassessoria').val('" . $cdassess . "');";
-						$command .= "$('#cdasscyb').val('" . $cdasscyb . "').focus();";
-						$command .= "$('#nmassessoria').val('" . $nmassess . "');";
-					    $command .= "$('#flgjudic').val('" . $flgjudic . "');";
-                        $command .= "$('#flextjud').val('" . $flextjud . "');";						
-						if ($flgjudic == 1) {
-							$command .= "$('#flgjudic').attr('checked','checked');";							
-						} else {
-							$command .= "$('#flgjudic').removeAttr('checked','checked');";
-						}
-						if ($flextjud == 1) {
-							$command .= "$('#flextjud').attr('checked','checked');";
-					} else {
-							$command .= "$('#flextjud').removeAttr('checked','checked');";
-						}
 					} else {
 						//Se não existir exibe o erro
 						$command .= "showError('error','Assessoria n&atilde;o encontrada!','Alerta - Ayllos','$(\'#cdassessoria\').val(\'\').focus();')";
@@ -143,10 +123,6 @@
 				if ($xmlObjeto->roottag->tags[0]->name == "ASSESSORIAS") {
 					foreach($xmlObjeto->roottag->tags[0]->tags as $assessoria){
 						$command .=  "criaLinhaAssessoriaConsulta('" . getByTagName($assessoria->tags,'cdassessoria') . 
-															   "','" . getByTagName($assessoria->tags,'nmassessoria') . 
-						                                       "','" . getByTagName($assessoria->tags,'cdasscyb') .
-                                                               "','" . getByTagName($assessoria->tags,'flgjudic') .
-                                                               "','" . getByTagName($assessoria->tags,'flextjud') . "');";
 					}
 				}
 				//Alternar a cor das linhas
@@ -155,7 +131,7 @@
 		break;
 		
 		case "IA" :
-			//Exibir confirmação da inclusão
+			//Exibir confirmação da inclusão			
 			$command .= "showError('inform','Inclu&iacute;do com sucesso.','Alerta - Ayllos','estadoInicialAssessorias();')";
 		break;
 		
@@ -173,10 +149,6 @@
 				if ($xmlObjeto->roottag->tags[0]->name == "ASSESSORIAS") {
 					foreach($xmlObjeto->roottag->tags[0]->tags as $assessoria){
 						$command .=  "criaLinhaAssessoria('" . getByTagName($assessoria->tags,'cdassessoria') . 
-						                               "','" . getByTagName($assessoria->tags,'nmassessoria') .
-													   "','" . getByTagName($assessoria->tags,'cdasscyb') . 
-                                                       "','" . getByTagName($assessoria->tags,'flgjudic') . 
-													   "','" . getByTagName($assessoria->tags,'flextjud') . "');";
 					}
 				}
 				//Alternar a cor das linhas

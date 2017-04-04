@@ -209,6 +209,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS171 (pr_cdcooper IN crapcop.cdcooper%T
                    23/02/2016 - Incluída verificação de contas e contratos específicos com
                                 bloqueio judicial para não debitar parcelas - AJFink SD#618307
 
+				   31/03/2017 - Alterado calculo de saldo do cooperado para nao considerar valores
+				                bloqueados.
+								Heitor (Mouts) - Melhoria 440
+
     ............................................................................ */
 
     DECLARE
@@ -1242,13 +1246,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS171 (pr_cdcooper IN crapcop.cdcooper%T
           END IF;
 
           -- Calcular o saldo total --
-          vr_vlsldtot := NVL(vr_tab_crapsld(rw_crapepr.nrdconta).vlsdblfp,0) + NVL(vr_tab_crapsld(rw_crapepr.nrdconta).vlsdbloq,0)
-                       + NVL(vr_tab_crapsld(rw_crapepr.nrdconta).vlsdblpr,0) + NVL(vr_tab_crapsld(rw_crapepr.nrdconta).vlsddisp,0)
+          vr_vlsldtot := NVL(vr_tab_crapsld(rw_crapepr.nrdconta).vlsddisp,0)
                        + NVL(vr_tab_crapass(rw_crapepr.nrdconta).vllimcre,0) - NVL(vr_tab_crapsld(rw_crapepr.nrdconta).vlipmfap,0) - NVL(vr_tab_crapsld(rw_crapepr.nrdconta).vlipmfpg,0);
 
           -- Calcular o saldo a cobrar --
-          vr_vlcalcob := NVL(vr_tab_crapsld(rw_crapepr.nrdconta).vlsdblfp,0) + NVL(vr_tab_crapsld(rw_crapepr.nrdconta).vlsdbloq,0)
-                       + NVL(vr_tab_crapsld(rw_crapepr.nrdconta).vlsdblpr,0) + NVL(vr_tab_crapsld(rw_crapepr.nrdconta).vlsddisp,0)
+          vr_vlcalcob := NVL(vr_tab_crapsld(rw_crapepr.nrdconta).vlsddisp,0)
                        + NVL(vr_tab_crapsld(rw_crapepr.nrdconta).vlsdchsl,0) - NVL(vr_tab_crapsld(rw_crapepr.nrdconta).vlipmfap,0)
                        - NVL(vr_tab_crapsld(rw_crapepr.nrdconta).vlipmfpg,0);
 
@@ -1310,7 +1312,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS171 (pr_cdcooper IN crapcop.cdcooper%T
               END IF;
 
               -- Se tivermos um lançamento de crédito da data atual --
-              IF vr_tab_craphis(vr_tab_craplcm(rw_crapepr.nrdconta).tab_craplcm(vr_ind_lcm).cdhistor).inhistor IN (1,3,4,5) AND rw_crapdat.dtmvtolt = vr_tab_craplcm(rw_crapepr.nrdconta).tab_craplcm(vr_ind_lcm).dtmvtolt THEN
+              IF vr_tab_craphis(vr_tab_craplcm(rw_crapepr.nrdconta).tab_craplcm(vr_ind_lcm).cdhistor).inhistor IN (1) AND rw_crapdat.dtmvtolt = vr_tab_craplcm(rw_crapepr.nrdconta).tab_craplcm(vr_ind_lcm).dtmvtolt THEN
                 -- Tratamento de CPMF --
                 IF vr_indoipmf = 2 THEN
                   -- Acumular ao saldo o valor do lançamento aplicando a taxa de CPMF +1 do teste de histórico acima

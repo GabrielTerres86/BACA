@@ -517,7 +517,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
   --  Sistema  : Procedimentos e funcoes das transacoes do caixa online
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 07/02/2017
+  --  Data     : Julho/2013.                   Ultima atualizacao: 20/03/2017
   --
   -- Dados referentes ao programa:
   --
@@ -579,6 +579,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
   --              13/01/2017 - Criar procedure/function ret_ano_barras_darf
   --                           para a nova regra de validacao das DARFs
   --                           (Lucas Ranghetti #588835)
+  --
+  --              20/03/2017 - Ajuste para verificar vencimento da P.M. TIMBO, DEFESA CIVIL TIMBO 
+  --                           MEIO AMBIENTE DE TIMBO, TRANSITO DE TIMBO (Lucas Ranghetti #630176)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Busca dos dados da cooperativa */
@@ -7457,7 +7460,7 @@ END pc_gera_titulos_iptu_prog;
   --  Sistema  : Procedure para retornar valores fatura
   --  Sigla    : CXON
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 27/07/2015
+  --  Data     : Julho/2013.                   Ultima atualizacao: 20/03/2017
   --
   -- Dados referentes ao programa:
   --
@@ -7466,6 +7469,9 @@ END pc_gera_titulos_iptu_prog;
   --
   -- Alteracoes: 27/07/2015 - Na chamada da CXON0014.pc_validacoes_sicredi adicionado validacao
   --                          de critica (Lucas Ranghetti #312583 )
+  --
+  --             20/03/2017 - Ajuste para verificar vencimento da P.M. TIMBO, DEFESA CIVIL TIMBO 
+  --                          MEIO AMBIENTE DE TIMBO, TRANSITO DE TIMBO (Lucas Ranghetti #630176)
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -7786,7 +7792,11 @@ END pc_gera_titulos_iptu_prog;
       
       IF ((rw_crapcon.cdempcon = 2044 AND rw_crapcon.cdsegmto = 1)  OR   /* P.M. ITAJAI */
           (rw_crapcon.cdempcon = 3493 AND rw_crapcon.cdsegmto = 1)  OR   /* P.M. PRES GETULIO */
-          (rw_crapcon.cdempcon = 1756 AND rw_crapcon.cdsegmto = 1)) THEN /* P.M. GUARAMIRIM */
+          (rw_crapcon.cdempcon = 1756 AND rw_crapcon.cdsegmto = 1)  OR   /* P.M. GUARAMIRIM */
+          (rw_crapcon.cdempcon = 4539 AND rw_crapcon.cdsegmto = 1)  OR   /* P.M. TIMBO */
+          (rw_crapcon.cdempcon = 0562 AND rw_crapcon.cdsegmto = 5)  OR   /* DEFESA CIVIL TIMBO */
+          (rw_crapcon.cdempcon = 0563 AND rw_crapcon.cdsegmto = 5)  OR   /* MEIO AMBIENTE DE TIMBO */
+          (rw_crapcon.cdempcon = 0564 AND rw_crapcon.cdsegmto = 5)) THEN /* TRANSITO DE TIMBO */
         --Data movimento anterior
         vr_dtmvtoan:= To_Char(rw_crapdat.dtmvtoan,'YYYYMMDD');
         IF To_Number(SUBSTR(pr_codigo_barras,20,8)) <= To_Number(vr_dtmvtoan) THEN
@@ -10518,7 +10528,7 @@ END pc_gera_titulos_iptu_prog;
 	  Sistema  : Conta-Corrente - Cooperativa de Credito
 	  Sigla    : CRED
 	  Autor    : Kelvin Souza Ott 
-	  Data     : Setembro/2016.                   Ultima atualizacao: 22/02/2017
+	  Data     : Setembro/2016.                   Ultima atualizacao: 27/03/2017
 	
 	  Dados referentes ao programa:
 	
@@ -10542,6 +10552,12 @@ END pc_gera_titulos_iptu_prog;
                   22/02/2017 - Adicionado o calculo do valor do desconto do boleto.
                                Nao estava sendo calculado para exibir em tela
                                (Douglas - Chamado 611514)
+
+                  27/03/2017 - Ajustado a pc_verifica_vencimento_titulo para utilizar o codigo 
+                               da cooperativa que está realizando a busca do valor, ao invés da cooperativa
+                               do boleto. 
+                             - Ajustado o tratamento de erro na chamada da pc_verifica_vencimento_titulo 
+                             (Douglas - Chamado 628306)
     ...........................................................................*/      
     --Selecionar informacoes cobranca
     CURSOR cr_crapcob (pr_nrcnvcob IN crapcob.nrcnvcob%type
@@ -10798,8 +10814,11 @@ END pc_gera_titulos_iptu_prog;
         vr_vlfatura:= Nvl(vr_vlfatura,0) - vr_vlabatim;
       END IF;
 
+      -- Limpar a tabela de erros
+      vr_tab_erro.DELETE;
+
       --Verificar vencimento do titulo
-      pc_verifica_vencimento_titulo (pr_cod_cooper      => rw_crapcob.cdcooper  --Codigo Cooperativa
+      pc_verifica_vencimento_titulo (pr_cod_cooper      => pr_cdcooper          --Codigo Cooperativa
                                     ,pr_cod_agencia     => pr_cdagenci          --Codigo da Agencia
                                     ,pr_dt_agendamento  => NULL                 --Data Agendamento
                                     ,pr_dt_vencto       => rw_crapcob.dtvencto  --Data Vencimento
@@ -10810,28 +10829,16 @@ END pc_gera_titulos_iptu_prog;
       --Se ocorreu erro
       IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
         IF vr_tab_erro.Count > 0 THEN
-
-          --Se ocorreu erro
-          IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-              
-            IF vr_cdcritic IS NOT NULL AND
-               TRIM(vr_dscritic) IS NULL THEN
-              vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-            END IF;
-            --Levantar Excecao
-            RAISE vr_exc_erro;
-          ELSE
-            vr_cdcritic:= 0;
-            vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-            --Levantar Excecao
-            RAISE vr_exc_erro;
-          END IF;
-        ELSE
-          vr_cdcritic:= 0;
-          vr_dscritic:= 'Nao foi possivel realizar o pagamento.';
-          RAISE vr_exc_erro;
+          vr_dscritic:= vr_dscritic || ' ' || vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+        ELSIF TRIM(vr_dscritic) IS NULL THEN
+          vr_dscritic:= gene0001.fn_busca_critica(vr_cdcritic);
         END IF;
-      END IF;
+
+        vr_dscritic:= 'Nao foi possivel verificar o vencimento do boleto. Erro: ' || vr_dscritic;
+              
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+        END IF;
         
       --Retorna se está vencido ou não        
       IF vr_critica_data = TRUE THEN

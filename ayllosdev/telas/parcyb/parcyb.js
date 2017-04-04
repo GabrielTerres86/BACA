@@ -139,7 +139,7 @@ function controlaVoltar(){
 		case "H": // Parametrização de Históricos
 			controlaVoltarParametrizarHistorico();
 		break;
-		
+
 		default:
 			// Por padrão volta para o estado inicial da tela
 			estadoInicial();
@@ -252,12 +252,14 @@ function formataCadastroAssessoria(){
 	$('label[for="cdasscyb"]', "#frmAssessoria").addClass("rotulo").css({ "width": "150px" });
 	$('label[for="flgjudic"]', "#frmAssessoria").addClass("rotulo").css({ "width": "150px" });
 	$('label[for="flextjud"]', "#frmAssessoria").addClass("rotulo").css({ "width": "150px" });
+	$('label[for="cdsigcyb"]', "#frmAssessoria").addClass("rotulo").css({ "width": "150px" });
 	// campo
 	$("#cdassessoria","#frmAssessoria").css("width","100px").habilitaCampo();
 	$("#nmassessoria","#frmAssessoria").addClass("alphanum").css("width","500px").attr("maxlength","50").habilitaCampo();
 	$("#cdasscyb", "#frmAssessoria").css("width", "100px").habilitaCampo();
 	$("#flgjudic", "#frmAssessoria").css("width", "50px").habilitaCampo();
 	$("#flextjud", "#frmAssessoria").css("width", "50px").habilitaCampo();
+	$("#cdsigcyb", "#frmAssessoria").css("width", "100px").habilitaCampo();
 
 	$('input[type="text"],select','#frmAssessoria').limpaFormulario().removeClass('campoErro');
 	layoutPadrao();
@@ -270,7 +272,7 @@ function formataCadastroAssessoria(){
 			return false;
 		}
 	});
-
+	
     //Define ação para o campo de código da assessoria CYBER
 	$("#cdasscyb", "#frmAssessoria").unbind('keypress').bind('keypress', function (e) {
 	    if (e.keyCode == 9 || e.keyCode == 13) {
@@ -337,7 +339,8 @@ function formataConsultaAssessoria() {
 	arrayLargura[2] = "200px";
 	arrayLargura[3] = "80px";
 	arrayLargura[4] = "80px";
-
+	arrayLargura[5] = "100px";
+	
 	//Define a posição dos elementos nas células da linha
     var arrayAlinha = new Array();
 	arrayAlinha[0] = "left";
@@ -345,6 +348,7 @@ function formataConsultaAssessoria() {
 	arrayAlinha[2] = "center";
 	arrayAlinha[3] = "center";
 	arrayAlinha[4] = "center";
+	arrayAlinha[5] = "left";
 
 	//Aplica as informações na tabela
 	tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha);
@@ -473,10 +477,10 @@ function confirmouOperacaoAssessoria(){
 														  .replace(/[ÿ]/g,"y")
 														  .replace(/[Ñ]/g,"N")
 														  .replace(/[ñ]/g,"n")
-														  .replace(/[^A-z0-9\s\!\@\$\%\*\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/\>\<]/g,"");
+														  .replace(/[^A-z0-9\s\!\@\$\%\*\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/\>\<]/g,"");														  														 
 
 
-	manterAssessoria(cddopcao, $("#cdassessoria", "#frmAssessoria").val(), nmassessoria, $("#cdasscyb", "#frmAssessoria").val(), vflgjudic, vflextjud);
+	manterAssessoria(cddopcao, $("#cdassessoria", "#frmAssessoria").val(), nmassessoria, $("#cdasscyb", "#frmAssessoria").val(), vflgjudic, vflextjud, $("#cdsigcyb", "#frmAssessoria").val());
 }
 
 // Função para executar a busca de todas as acessorias
@@ -508,9 +512,9 @@ function executaConsultaAssessoriasExclusao(){
 }
 
 // Função para criar a linha com as assessorias cadastradas
-function criaLinhaAssessoria(cdassessoria, nmassessoria, cdasscyb, flgjudic, flextjud) {
+function criaLinhaAssessoria(cdassessoria, nmassessoria, cdasscyb, flgjudic, flextjud, cdsigcyb) {
 	var field_flgjudic = $('<input>', { type:"checkbox", name: "flgjudic_a", id: "flgjudic_a"});
-	var field_flextjud = $('<input>', { type:"checkbox", name: "flextjud_a", id: "flextjud_a"});
+	var field_flextjud = $('<input>', { type:"checkbox", name: "flextjud_a", id: "flextjud_a"});	
 	
 	if (flgjudic == 1) {
 		field_flgjudic.attr("checked","checked");
@@ -533,27 +537,14 @@ function criaLinhaAssessoria(cdassessoria, nmassessoria, cdasscyb, flgjudic, fle
 		.append($('<tr>') // Linha
 			.attr('id',"id_".concat(cdassessoria))
 			.append($('<td>') // Coluna: Código da Assessoria
-				.attr('style','width: 112px; text-align:right') //13%
 				.text(cdassessoria)
 			)
-            .append($('<td>') // Coluna: Código da Assessoria CYBER
-				.attr('style', 'width: 112px; text-align:right') // 22%
-				.text(cdasscyb)
-			)
+
 			.append($('<td>') // Coluna: Nome da Assessoria
-				.attr('style', 'width: 223px; text-align:left') // 45%
 				.text(nmassessoria)
 			)
-        	.append($('<td>') // Coluna: Flag Cobranca Judicial
-				.attr('style', 'width: 90px; text-align:right') //10%
-				.append(field_flgjudic)			
-			)
-            .append($('<td>') // Coluna: Flag Cobranca Judicial
-				.attr('style', 'width: 60px; text-align:right') //10%
-				.append(field_flextjud)				
-			)
+
 			.append($('<td>') // Coluna: Botão para REMOVER
-				.attr('style', ' text-align:center')
 				.append($('<img onclick="solicitarMensagemExclusaoAssessoria(' + cdassessoria + ')">')
 					.attr('src', UrlImagens + 'geral/btn_excluir.gif')
 				)
@@ -561,7 +552,7 @@ function criaLinhaAssessoria(cdassessoria, nmassessoria, cdasscyb, flgjudic, fle
 		);
 }
 
-function criaLinhaAssessoriaConsulta(cdassessoria, nmassessoria, cdasscyb, flgjudic, flextjud) {
+function criaLinhaAssessoriaConsulta(cdassessoria, nmassessoria, cdasscyb, flgjudic, flextjud, cdsigcyb) {
 	var field_flgjudic = $('<input>', { type:"checkbox", name: "flgjudic_a", id: "flgjudic_a"});
 	var field_flextjud = $('<input>', { type:"checkbox", name: "flextjud_a", id: "flextjud_a"});
 	
@@ -580,35 +571,19 @@ function criaLinhaAssessoriaConsulta(cdassessoria, nmassessoria, cdasscyb, flgju
 		field_flextjud.removeAttr("checked","checked");
 		field_flextjud.attr("disabled","disabled");
 	}
-	
-		
+
 	// Criar a linha na tabela
-	
 	$("#tbCadcas > tbody")
 		.append($('<tr>') // Linha
 			.attr('id',"id_".concat(cdassessoria))
 			.append($('<td>') // Coluna: Código da Assessoria
-				.attr('style','width: 100px; text-align:right')
 				.text(cdassessoria)
 			)
-            .append($('<td>') // Coluna: Código da Assessoria CYBER
-				.attr('style', 'width: 100px; text-align:right')
-				.text(cdasscyb)
-			)
+
 			.append($('<td>') // Coluna: Nome da Assessoria
-				.attr('style','width: 200px; text-align:left')
 				.text(nmassessoria)
 			)
-            .append($('<td>') // Coluna: Flag cobranca judicial
-			    .attr('style', 'width: 80px; text-align:center')
-				.append(field_flgjudic)
-				//.text(flgjudic)
-			)
-            .append($('<td>') // Coluna: Flag cobranca extra judicial
-				.attr('style', 'width: 80px; text-align:center')		
-                .append(field_flextjud)				
-				//.text(flextjud)
-			)
+
 		);
 }
 
@@ -629,9 +604,7 @@ function excluirAssessoria(cdassessoria){
 }
 
 // Função para manter rotina (Consultar/Incluir/Alterar/Excluir)
-function manterAssessoria(cddopcao, cdassessoria, nmassessoria, cdasscyb, flgjudic, flextjud) {
     //Requisição para processar a opção que foi selecionada
-	
 	$.ajax({
         type: "POST",
         url: UrlSite + "telas/parcyb/manter_rotina_assessoria.php",
@@ -639,9 +612,7 @@ function manterAssessoria(cddopcao, cdassessoria, nmassessoria, cdasscyb, flgjud
             cddopcao:     cddopcao,
 			cdassessoria: cdassessoria,
 			nmassessoria: nmassessoria,
-			cdasscyb:     cdasscyb,
-			flgjudic:     flgjudic,
-            flextjud:     flextjud,
+
             redirect:     "script_ajax"
         },
         error: function(objAjax,responseError,objExcept) {
@@ -676,7 +647,6 @@ function mostrarPesquisaAssessoria(){
 	//Definição dos filtros
 	var filtros	= "Código Assessoria;cdassessoria;50px;N;;N;|Nome Assessoria;nmassessoria;200px;S;;S;descricao";
 	//Campos que serão exibidos na tela
-	var colunas = 'Código;cdassessoria;15%;right|Código CYBER;cdasscyb;15%;right|Nome Assessoria;nmassessoria;45%;left|Judicial;flgjudic;10%;center|Extra Judicial;flextjud;10%;center';
 	//Exibir a pesquisa
 	mostraPesquisa("PARCYB", "PARCYB_BUSCAR_ASSESSORIAS", "Assessorias","100",filtros,colunas);
 }
@@ -1160,27 +1130,20 @@ function formataConsultaParametrizarHistorico(){
 	var linha       = $("table > tbody > tr", divRegistro );
 
     $("#tabParhis").css({"margin-top":"5px"});
-	divRegistro.css({"height":"290px","width":"720px","padding-bottom":"2px"});
 
 	var ordemInicial = new Array();
 	
 	//Define a largura dos campos
 	var arrayLargura = new Array();
     arrayLargura[0] = "70px";
-    arrayLargura[1] = "180px"; 
-    arrayLargura[2] = "100px"; 
-    arrayLargura[3] = "100px";
-    arrayLargura[4] = "100px";
-	arrayLargura[5] = "100px";
     
 	//Define a posição dos elementos nas células da linha
     var arrayAlinha = new Array();
-	arrayAlinha[0] = "right";
 	arrayAlinha[1] = "left";
 	arrayAlinha[2] = "left";
 	arrayAlinha[3] = "center";
 	arrayAlinha[4] = "center";
-	arrayAlinha[5] = "left";
+
 
 	//Aplica as informações na tabela
 	tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha);
@@ -1232,48 +1195,27 @@ function controlaVoltarParametrizarHistorico(){
 // Função para o botão Concluir
 function controlaConcluirParametrizarHistorico(){
 	var historicos = "";
-	var werro = 0;
+
 	
 	$('#tbParhis tbody tr').each(function(){
 
 		var indcalem_ant = $("#indcalem_h",this).val();
-		var indcalcc_ant = $("#indcalcc_h", this).val();
-		var cdtrscyb_ant = $("#cdtrscyb_h", this).val();
 		var indcalem_atu = ($("#indcalem_a",this).prop("checked")) ? "S" : "N";
-		var indcalcc_atu = ($("#indcalcc_a", this).prop("checked")) ? "S" : "N";
-		var cdtrscyb_atu = $("#cdtrscyb_a", this).val();
 	
-		if (indcalem_ant != indcalem_atu || indcalcc_ant != indcalcc_atu || cdtrscyb_ant != cdtrscyb_atu) {
 			if( historicos != "" ){
 				// Separador dos históricos
 				historicos += "|";
 			}
 			historicos += $("#cdhistor_h",this).val() + ";" ; // Código do Histórico
 			historicos += indcalem_atu  + ";" ;               // Cálculo de Empréstimo
-			historicos += indcalcc_atu + ";";                 // Cálculo de Conta Corrente
-			historicos += cdtrscyb_atu;                       // código da transação Cyber
-			
-			if (cdtrscyb_atu != "PA" && cdtrscyb_atu != "ES" && cdtrscyb_atu != "RF" && cdtrscyb_atu != " ") {
-			    showError("error","Opcao invalida para o campo codigo transacao CYBER!","Alerta - Ayllos","$('#cdtrscyb_a', this).focus();");
-				werro = 1;
-		        return false;
-	        }
-		}
-		
-		
 	});
 
 	if(historicos == ""){
 		showError("error","Nenhum historico foi alterado.","Alerta - Ayllos","");
 		return false;
 	}
-	
+		
 	//Mensagem de alteração de Parametrização
-	if (werro == 0) {
-		showMsgAguardo( "Aguarde, atualizando parametriza&ccedil;&atilde;o dos hist&oacute;ricos...");
-	
-	manterParametrizacaoHistorico("AH","","","","",historicos);
-}
 }
 
 // Função para pesquisar os históricos por código/descrição
@@ -1358,23 +1300,14 @@ function manterParametrizacaoHistorico(cddopcao,pesquisa,cdfiltro,cdhistor,dshis
     return false;	
 }
 
-function criaLinhaParametrizarHistorico(cdhistor,dshistor,indebcre,indcalem,indcalcc,cdtrscyb){
 	
 	var field_indcalem = $('<input>', { type:"checkbox", name: "indcalem_a", id: "indcalem_a"});
 	var field_indcalcc = $('<input>', { type:"checkbox", name: "indcalcc_a", id: "indcalcc_a"});
-	var field_cdtrscyb = $('<input>', { type:"text", name: "cdtrscyb_a", id: "cdtrscyb_a", value: cdtrscyb});
-	
+
 	if($("#cddopcao_parametrizar_historico","#frmCabParametrizarHistorico").val() == "CH"){
 		field_indcalem.attr("disabled","disabled");
 		field_indcalcc.attr("disabled","disabled");
-		field_cdtrscyb.attr("type","hidden");
-		
-		var vtexto  = cdtrscyb;
-	}
-	else
-	{		
-        var vtexto  = "";
-		
+
 	}
 	
 	if(indcalem == "S"){
@@ -1384,7 +1317,7 @@ function criaLinhaParametrizarHistorico(cdhistor,dshistor,indebcre,indcalem,indc
 	if(indcalcc == "S"){
 		field_indcalcc.attr("checked","checked");
 	}
-	
+			
 	// Criar a linha na tabela
 	$("#tbParhis > tbody")
 		.append($("<tr>") // Linha
@@ -1400,15 +1333,12 @@ function criaLinhaParametrizarHistorico(cdhistor,dshistor,indebcre,indcalem,indc
 				)
 			)
 			.append($("<td>") // Coluna: Descrição do Histórico
-				.attr("style","width: 177px; text-align:left")
 				.text(dshistor)
 			)
 			.append($("<td>") // Coluna: Indicador de Débito e Crédito do Histórico
-				.attr("style","width: 100px; text-align:left")
 				.text(indebcre)
 			)
 			.append($("<td>") // Coluna: Cálculo do Empréstimo
-				.attr("style","width: 100px; text-align:center")
 				.append(field_indcalem)
 				.append($("<input>")
 					.attr("type","hidden")
@@ -1418,28 +1348,15 @@ function criaLinhaParametrizarHistorico(cdhistor,dshistor,indebcre,indcalem,indc
 				)
 			)
 			.append($("<td>") // Coluna: Cálculo de Conta Corrente
-				.attr("style","width: 102px; text-align:center")
 				.append(field_indcalcc)
 				.append($("<input>")
-					.attr("type","hidden")
+					.attr("type","hidden")					
 					.attr("name","indcalcc_h")
 					.attr("id","indcalcc_h")
 					.attr("value",indcalcc)
 				)
 			)
-		
-			.append($("<td id='cpotrscyb'>") // 13/01/2017 - Jean Calão - criação da Coluna: Código transação CYBER
-				.attr("style","width: 127px; text-align:left")
-				.text(vtexto)
-				.append(field_cdtrscyb)			
-                .append($("<input>")
-					.attr("type","hidden")					
-					.attr("name","cdtrscyb_h")
-					.attr("id","cdtrscyb_h")
-					.attr("value",cdtrscyb)			
-                )					
-			) 
-     		
+
 		);
 }
 /***********************************************************************************************************

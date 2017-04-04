@@ -52,7 +52,7 @@ DEF INPUT  PARAM  par_vlrtotal  AS DECIMAL                                NO-UND
 DEF INPUT  PARAM  par_dsnomfon  AS CHAR                                   NO-UNDO.
 DEF INPUT  PARAM  par_dtapurac  AS DATE                                   NO-UNDO.
 DEF INPUT  PARAM  par_nrcpfcgc  AS CHAR                                   NO-UNDO.
-DEF INPUT  PARAM  par_cdtribut  AS INTE                                   NO-UNDO.
+DEF INPUT  PARAM  par_cdtribut  AS CHAR                                   NO-UNDO.
 DEF INPUT  PARAM  par_nrrefere  AS DECI                                   NO-UNDO.
 DEF INPUT  PARAM  par_dtvencto  AS DATE                                   NO-UNDO.
 DEF INPUT  PARAM  par_vlrprinc  AS DECIMAL                                NO-UNDO.

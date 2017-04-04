@@ -19,12 +19,19 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
   --             12/06/2015 - Adicao de campos para geracao do extrato da portabilidade de credito. 
   --                          (Jaison/Diego - SD: 290027)
   --
-  --             17/12/2015 - Ajustado precisão dos campos numericos SD375985 (Odirlei-AMcom)
-  --
+  --             17/12/2015 - Ajustado precisão dos campos numericos SD375985 (Odirlei-AMcom)  --
   --             11/05/2016 - Criacao do FIELD vlatraso na typ_reg_dados_epr. (Jaison/James)
   --
   --             26/09/2016 - Adicionado validacao de contratos de acordo na procedure
   --                          pc_valida_pagamentos_geral, Prj. 302 (Jean Michel).
+  --
+  --             31/03/2017 - Ajustado calculo de saldo para nao considerar valores bloqueados.
+  --                          Heitor (Mouts) - Melhoria 440
+  --
+  --
+  --
+  --
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tipo com as informacoes do registro de emprestimo. Antiga: tt-dados-epr */
@@ -764,6 +771,15 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
                                  ,pr_cdcritic OUT PLS_INTEGER           --> Codigo da critica
                                  ,pr_dscritic OUT VARCHAR2);            --> Descricão da critica
                                      
+ PROCEDURE pc_gera_arq_saldo_devedor(pr_arquivo_ent in varchar2
+                                     ,pr_arquivo_sai in varchar2
+                                     ,pr_xmllog   IN VARCHAR2              --> XML com informac?es de LOG
+                                     ,pr_cdcritic OUT PLS_INTEGER          --> Codigo da critica
+                                     ,pr_dscritic OUT VARCHAR2             --> Descric?o da critica
+                                     ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                     ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                     ,pr_des_erro OUT VARCHAR2);                                      
+                                        
 END empr0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
@@ -7948,9 +7964,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           --Acumular Saldo
           pr_vlsomato := ROUND( nvl(vr_tab_saldos(vr_index_saldo).vlsddisp, 0) +
                                 nvl(vr_tab_saldos(vr_index_saldo).vlsdchsl, 0) +
-                                nvl(vr_tab_saldos(vr_index_saldo).vlsdbloq, 0) +
-                                nvl(vr_tab_saldos(vr_index_saldo).vlsdblpr, 0) +
-                                nvl(vr_tab_saldos(vr_index_saldo).vlsdblfp, 0) +
+                                --nvl(vr_tab_saldos(vr_index_saldo).vlsdbloq, 0) +
+                                --nvl(vr_tab_saldos(vr_index_saldo).vlsdblpr, 0) +
+                                --nvl(vr_tab_saldos(vr_index_saldo).vlsdblfp, 0) +
                                 nvl(vr_tab_saldos(vr_index_saldo).vllimcre, 0),2);
         END IF;
       
@@ -14366,6 +14382,283 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     
   END pc_valida_alt_valor_prop_web;  
   
+  PROCEDURE pc_gera_arq_saldo_devedor(pr_arquivo_ent in varchar2
+                                     ,pr_arquivo_sai in varchar2
+                                     ,pr_xmllog   IN VARCHAR2              --> XML com informac?es de LOG
+                                     ,pr_cdcritic OUT PLS_INTEGER          --> Codigo da critica
+                                     ,pr_dscritic OUT VARCHAR2             --> Descric?o da critica
+                                     ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                     ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                     ,pr_des_erro OUT VARCHAR2)    IS
+    /* Rotina: pc_gera_arq_saldo_devedor
+       Autor:  Jean (Mout´s)
+       Data:   03/03/2017
+       Objetivo: gerar o arquivo de exportação de saldo devedor, com base nas contas importadas via CSV
+       
+    
+    */
+    vr_nm_arquivo varchar2(2000);
+    vr_nm_arqsai  varchar2(2000);
+    vr_nm_arqlog  varchar2(2000);  
+
+    vr_handle_arq utl_file.file_type;
+    vr_handle_sai utl_file.file_type;
+    vr_handle_log utl_file.file_type; 
+     
+    vr_linha_arq     varchar2(2000);
+    vr_linha_arq_sai varchar2(2000);
+    vr_linha_arq_log varchar2(2000);
+  
+    vr_nrlinha   number;
+    vr_nrdconta  number;
+    vr_nrctremp  number;
+    vr_cdcooper  number;
+    vr_cdcooperx varchar2(10);
+    vr_nrdcontax varchar2(10);
+    vr_nrctrempx varchar2(10);
+    vr_indice    number;
+    vr_indiceant number;
+    vr_vlsdeved  number;
+    vr_cdcritic  number;
+    vr_des_erro  varchar2(2000);
+    vr_qtdprecal number;      
+    
+    vr_rw_crapdat btch0001.rw_crapdat%type;
+    vr_qtregist   number;
+    vr_index      number;
+    vr_tab_dados_epr empr0001.typ_tab_dados_epr;
+    vr_tab_erro gene0001.typ_tab_erro;
+    vr_endarqui varchar2(100);
+  BEGIN
+    
+     vr_endarqui:= gene0001.fn_diretorio(pr_tpdireto => 'M' -- /micros/coop
+                                          ,pr_cdcooper => 3
+                                          ,pr_nmsubdir => '/relsdv/'); 
+   
+    IF pr_arquivo_ent is null then      
+        vr_nm_arquivo := vr_endarqui || '/cecred.csv';
+    else
+       vr_nm_arquivo := pr_arquivo_ent;
+    END IF;
+  
+    IF pr_arquivo_sai is null then
+       vr_nm_arqsai := vr_endarqui || '/relsaida.csv';
+    else
+       vr_nm_arqsai  := pr_arquivo_sai;
+    END IF;
+  
+    open btch0001.cr_crapdat(pr_cdcooper => 1);
+    fetch btch0001.cr_crapdat into vr_rw_crapdat;
+    close btch0001.cr_crapdat;  
+   
+    
+   -- vr_nm_arqlog  := pr_arquivo_sai || '_log';
+    vr_nm_arqlog  := vr_endarqui || '/relsaida_log';
+  
+    /* verificar se o arquivo existe */
+    if not gene0001.fn_exis_arquivo(pr_caminho => vr_nm_arquivo) then
+      vr_des_erro := 'Erro rotina pc_gera_arq_saldo_devedor: Arquivo inexistente!' ||
+                     sqlerrm;
+            pr_cdcritic := 3;
+      raise vr_exc_erro;
+    end if;
+  
+    /* Abrir o arquivo de importação */
+    gene0001.pc_abre_arquivo(pr_nmcaminh => vr_nm_arquivo
+                            ,pr_tipabert => 'R' --> Modo de abertura (R,W,A)
+                            ,pr_utlfileh => vr_handle_arq --> Handle do arquivo aberto
+                            ,pr_des_erro => vr_des_erro);
+  
+    if vr_des_erro is not null then
+      vr_des_erro := 'Rotina pc_gera_arq_saldo_devedor: Erro abertura arquivo importaçao!' ||
+                     sqlerrm;
+      pr_cdcritic := 4;
+      raise vr_exc_erro;
+    end if;
+  
+    /* Abrir o arquivo de saida */
+    gene0001.pc_abre_arquivo(pr_nmcaminh => vr_nm_arqsai
+                            ,pr_tipabert => 'W' --> Modo de abertura (R,W,A)
+                            ,pr_utlfileh => vr_handle_sai --> Handle do arquivo aberto
+                            ,pr_des_erro => vr_des_erro);
+  
+    if vr_des_erro is not null then
+       vr_des_erro := 'Rotina pc_gera_arq_saldo_devedor: Erro abertura arquivo saida!' || sqlerrm;
+       pr_cdcritic := 5;
+       raise vr_exc_erro;
+    end if;
+    
+    /* Abrir o arquivo de LOG */
+    gene0001.pc_abre_arquivo(pr_nmcaminh => vr_nm_arqlog
+                            ,pr_tipabert => 'W' --> Modo de abertura (R,W,A)
+                            ,pr_utlfileh => vr_handle_log --> Handle do arquivo aberto
+                            ,pr_des_erro => vr_des_erro);
+  
+    if vr_des_erro is not null then
+       vr_des_erro := 'Rotina pc_gera_arq_saldo_devedor: Erro abertura arquivo LOG!' || sqlerrm;
+       pr_cdcritic := 6;
+       raise vr_exc_erro;
+    end if;    
+  
+    gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle_log,
+                                           pr_des_text => 'Inicio da geracao Arquivo LOG');
+                                           
+     gene0001.pc_fecha_arquivo(pr_utlfileh => vr_handle_log);  
+                                           
+    /* Processar linhas do arquivo */
+    vr_nrlinha := 1;
+     
+    IF utl_file.IS_OPEN(vr_handle_arq) then
+      -- gravar linha de cabecalho do arquivo de saida
+       gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle_sai,
+                                      pr_des_text => 'Cooperativa;Nro. Conta; Contrato; Saldo Devedor');
+  
+      BEGIN
+        LOOP
+         -- exit when vr_nrlinha = 1019;
+          
+          gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_handle_arq,
+                                       pr_des_text => vr_linha_arq);
+        
+          -- valida a partir da linha 2, linha 1 é cabeçalho
+          if vr_nrlinha >= 2 then
+            -- busca cooperativa
+            vr_indice    := instr(vr_linha_arq, ';');
+            vr_cdcooperx := substr(vr_linha_arq, 1, vr_indice - 1);
+            vr_indiceant := vr_indice;
+            vr_cdcooper  := to_number(rtrim(vr_cdcooperx));
+          
+            --busca conta
+            vr_indice    := instr(vr_linha_arq, ';', vr_indice + 1);
+            vr_nrdcontax  := substr(vr_linha_arq,
+                                   vr_indiceant + 1,
+                                   vr_indice - vr_indiceant - 1);
+            vr_indiceant := vr_indice;
+            vr_nrdconta  := to_number(rtrim(vr_nrdcontax));
+          
+            --busca contrato
+            vr_indice := instr(vr_linha_arq, ';', vr_indice + 1);
+            
+            if vr_indice = 0 then
+              vr_indice := length(vr_linha_arq) + 1;
+            end if;
+            vr_nrctrempx := substr(vr_linha_arq,
+                                  vr_indiceant + 1,
+                                  vr_indice - vr_indiceant - 1);
+            vr_nrctrempx := replace(vr_nrctrempx,chr(13),null);
+
+            vr_nrctremp := to_number(rtrim(vr_nrctrempx));
+            
+            if vr_nrctremp is null then
+              vr_des_erro := 'Erro no arquivo, campo número do contrato não está preenchido!';
+              pr_cdcritic := 7;
+              raise vr_exc_erro;
+            end if;
+            
+            -- valida campos do arquivo de importaçao
+          
+            if vr_cdcooper is null then
+              vr_des_erro := 'cooperativa não informada!';
+              pr_cdcritic := 8;
+              raise vr_exc_erro;
+            end if;
+          
+            if vr_nrdconta is null then
+              vr_des_erro := 'Conta não informada!';
+              pr_cdcritic := 9;
+              raise vr_exc_erro;
+            end if;
+          
+            if vr_nrctremp is null then
+              vr_des_erro := 'Contrato não informado!';
+              pr_cdcritic := 10;
+              raise vr_exc_erro;
+            end if;
+          
+            vr_linha_arq_sai := vr_cdcooper || ';' || vr_nrdconta || ';' || vr_nrctremp;
+
+            -- busca saldo devedor atualizado
+            pc_obtem_dados_empresti(pr_cdcooper       => vr_cdcooper --> Cooperativa conectada
+                                   ,pr_cdagenci       				=> 0 --> Código da agência
+                                   ,pr_nrdcaixa       				=> 0 --> Número do caixa
+                                   ,pr_cdoperad       				=> 1 --> Código do operador
+                                   ,pr_nmdatela       				=> 'RELSDV'--> Nome datela conectada
+                                   ,pr_idorigem       				=> 5       --> Indicador da origem da chamada
+                                   ,pr_nrdconta       				=> vr_nrdconta --> Conta do associado
+                                   ,pr_idseqttl       				=> 1 --> Sequencia de titularidade da conta
+                                   ,pr_rw_crapdat     			=> vr_rw_crapdat --> Vetor com dados de parâmetro (CRAPDAT)
+                                   ,pr_dtcalcul       				=> vr_rw_crapdat.dtmvtolt --> Data solicitada do calculo
+                                   ,pr_nrctremp       				=> vr_nrctremp  --> Número contrato empréstimo
+                                   ,pr_cdprogra       				=> 'EMPR0001'   --> Programa conectado
+                                   ,pr_inusatab       				=> false        --> Indicador de utilização da tabela
+                                   ,pr_flgerlog       				=> 'N'          --> Gerar log S/N
+                                   ,pr_flgcondc       				=> true         --> Mostrar emprestimos liquidados sem prejuizo
+                                   ,pr_nmprimtl       				=> ''           --> Nome Primeiro Titular
+                                   ,pr_tab_parempctl  			=> ''           --> Dados tabela parametro
+                                   ,pr_tab_digitaliza 				=> ''           --> Dados tabela parametro
+                                   ,pr_nriniseq       				=> 0            --> Numero inicial da paginacao
+                                   ,pr_nrregist       				=> 0            --> Numero de registros por pagina
+                                   ,pr_qtregist       				=> vr_qtregist  --> Qtde total de registros
+                                   ,pr_tab_dados_epr  			=> vr_tab_dados_epr --> Saida com os dados do empréstimo
+                                   ,pr_des_reto       				=> vr_des_reto  --> Retorno OK / NOK
+                                   ,pr_tab_erro       				=> vr_tab_erro);  --> Tabela com possíves erros
+  
+            if vr_des_reto = 'NOK' then
+               vr_des_erro := 'Erro na rotina pc_obtem_dados_empresti';
+               pr_cdcritic := 11;
+               raise vr_exc_erro;
+            end if;
+            
+            vr_index := vr_tab_dados_epr.first;
+            vr_vlsdeved := 0;
+ 
+            WHILE vr_index IS NOT NULL LOOP
+                          
+                  /*vr_vlsdeved := vr_tab_dados_epr(vr_index).vlsdeved + 
+                                  nvl(vr_tab_dados_epr(vr_index).vlmrapar,0) +
+                                  nvl(vr_tab_dados_epr(vr_index).vlmtapar,0);*/
+                  -- de acordo com Luana, não ira calcular mais Multas e Juros
+                   vr_vlsdeved := vr_tab_dados_epr(vr_index).vlsdeved ;
+                                  
+              -- buscar proximo
+              vr_index := vr_tab_dados_epr.next(vr_index);
+            END LOOP;                      
+            
+            vr_linha_arq_sai := vr_linha_arq_sai || ';' || vr_vlsdeved;
+          
+            gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle_sai,
+                                           pr_des_text => vr_Linha_arq_sai);
+          end if;
+          vr_nrlinha := vr_nrlinha + 1;
+        END LOOP;
+      EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+          -- Fim das linhas do arquivo
+          NULL;
+      END;
+    END IF;
+  
+    -- Fecha arquivos
+    gene0001.pc_fecha_arquivo(pr_utlfileh => vr_handle_arq);
+    gene0001.pc_fecha_arquivo(pr_utlfileh => vr_handle_sai);
+    --gene0001.pc_fecha_arquivo(pr_utlfileh => vr_handle_log);  
+    commit;
+  EXCEPTION
+  
+    WHEN vr_exc_erro THEN
+        pr_des_erro := vr_des_erro;
+        pr_dscritic := pr_cdcritic || '-Erro na empr0001: ' || PR_DES_ERRO ;
+        
+        pr_retxml := XMLType.createXML('<?xml version="1.0"  encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');        
+    
+    WHEN OTHERS THEN
+      raise_application_error(-20150,
+                              'erro na rotina pc_gera_arq_saldo_devedor: ' ||
+                              sqlerrm);
+    
+  END;
+
   PROCEDURE pc_valida_imoveis_epr(pr_cdcooper  IN crapepr.cdcooper%TYPE --> Cooperativa conectada
                                  ,pr_nrdconta  IN crapepr.nrdconta%TYPE --> Conta do associado
                                  ,pr_nrctremp  IN crapepr.nrctremp%TYPE --> Numero Contrato

@@ -664,6 +664,11 @@
 			  20/02/2017 - Ajuste para validaçao de Capital de Giro na procedure valida-dados-gerais. 
 			               Nao permitir utilizacao de Capital de Giro por pessoa fisica. 
 						   (Daniel - Chamado 581906).
+               
+        22/03/2017 - Incluido tratamento para emprestimos PP quando a carencia da linha de credito for nula.
+                     Nesses casos ira seguir as mesmas regras de carencia = 0 dias.
+                     Hoje esta considerando fixo 60 dias nesses casos.
+                     Heitor (Mouts) - Chamado 629653.
              
  ..............................................................................*/
 
@@ -8814,7 +8819,7 @@ PROCEDURE valida-dados-proposta-completa:
              DO:
                  ASSIGN aux_qtdiacar = craplcr.qtcarenc.
 
-                 IF   aux_qtdiacar <> 0   THEN
+                 IF   aux_qtdiacar <> 0 AND aux_qtdiacar <> ? THEN
                       DO:
                           IF   par_dtdpagto - par_dtlibera > aux_qtdiacar   THEN
                                DO:

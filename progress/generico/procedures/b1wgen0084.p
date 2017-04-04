@@ -258,7 +258,7 @@
                            (Jaison/Anderson)
 
               16/02/2016 - Adicionado verificacao se chassi informado ja se encontra em outro
-                           emprestimo em aberto. (Jorge/Gielow) - SD 391096       
+                           emprestimo em aberto. (Jorge/Gielow) - SD 391096             
 						         
               17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
 
@@ -2227,7 +2227,7 @@ PROCEDURE valida_dados_efetivacao_proposta:
     DEF VAR aux_nrctrliq AS CHAR    NO-UNDO.
     DEF VAR aux_flgativo AS INTEGER NO-UNDO.
 	  /* DEF VAR aux_flimovel AS INTEGER NO-UNDO. 17/02/2017 - Validaçao removida */
-    
+
     DEF BUFFER crabbpr FOR crapbpr.
     
      ASSIGN aux_cdcritic = 0
@@ -2479,7 +2479,7 @@ PROCEDURE valida_dados_efetivacao_proposta:
                        crawepr.nrctremp = par_nrctremp   NO-LOCK NO-ERROR.
 
     IF   NOT AVAILABLE crawepr   THEN
-        DO:
+         DO:
             ASSIGN aux_cdcritic = 535
                    aux_dscritic = "".
 
@@ -2491,38 +2491,38 @@ PROCEDURE valida_dados_efetivacao_proposta:
                            INPUT-OUTPUT aux_dscritic).
 
             RETURN "NOK".
-        END.
+         END.
     ELSE DO:
         IF crawepr.insitapr <> 1  AND   /* Aprovado */
            crawepr.insitapr <> 3  THEN DO:  /* Aprovado com Restricao */
     
-            ASSIGN aux_cdcritic = 0
-                   aux_dscritic = "A proposta deve estar aprovada.".
+              ASSIGN aux_cdcritic = 0
+                     aux_dscritic = "A proposta deve estar aprovada.".
          
-            RUN gera_erro (INPUT par_cdcooper,
-                           INPUT par_cdagenci,
-                           INPUT par_nrdcaixa,
-                           INPUT 1,
-                           INPUT aux_cdcritic,
-                           INPUT-OUTPUT aux_dscritic).
+              RUN gera_erro (INPUT par_cdcooper,
+                             INPUT par_cdagenci,
+                             INPUT par_nrdcaixa,
+                             INPUT 1,
+                             INPUT aux_cdcritic,
+                             INPUT-OUTPUT aux_dscritic).
         
-            RETURN "NOK".
+              RETURN "NOK".
         END.
      
-	      /* Verificar se a analise foi finalizada */
+	 /* Verificar se a analise foi finalizada */
         IF crawepr.insitest <> 3 THEN DO:
-            ASSIGN aux_cdcritic = 0
-                   aux_dscritic = " A proposta nao pode ser efetivada, "
+         ASSIGN aux_cdcritic = 0
+                aux_dscritic = " A proposta nao pode ser efetivada, "
                                 + " verifique a situacao da proposta".
         
-            RUN gera_erro (INPUT par_cdcooper,
-                           INPUT par_cdagenci,
-                           INPUT par_nrdcaixa,
-                           INPUT 1,
-                           INPUT aux_cdcritic,
-                           INPUT-OUTPUT aux_dscritic).
-       
-            RETURN "NOK".
+              RUN gera_erro (INPUT par_cdcooper,
+                             INPUT par_cdagenci,
+                             INPUT par_nrdcaixa,
+                             INPUT 1,
+                             INPUT aux_cdcritic,
+                             INPUT-OUTPUT aux_dscritic).
+        
+              RETURN "NOK".
         END.
 
         /** Verificar "inliquid" do contrato relacionado a ser liquidado **/
@@ -2620,7 +2620,7 @@ PROCEDURE valida_dados_efetivacao_proposta:
                                    INPUT-OUTPUT aux_dscritic).
             
                     RETURN "NOK".
-                END.
+    END.
             END.
         END.
     END.
@@ -2642,7 +2642,7 @@ PROCEDURE valida_dados_efetivacao_proposta:
 
            RETURN "NOK".
         END.
-    
+
     /* 17/02/2017 - Retirado a validaçao conforme solicitaçao 
     ELSE DO:  /* Se encontrar linha de crédito */
     
@@ -2756,8 +2756,8 @@ PROCEDURE valida_dados_efetivacao_proposta:
                            INPUT-OUTPUT aux_dscritic).
 
             RETURN "NOK".
-          END.        
-          
+        END.
+
         IF aux_flgativo = 1 THEN
           DO:
             
@@ -3077,7 +3077,7 @@ PROCEDURE grava_efetivacao_proposta:
     DEF VAR aux_flgportb AS LOGI INIT FALSE                           NO-UNDO.
     DEF VAR aux_idcarga  AS INTE                                      NO-UNDO.
     DEF VAR aux_flgativo AS INTE                                      NO-UNDO.
-    
+
     DEF VAR h-b1wgen0097 AS HANDLE                                    NO-UNDO.
     DEF VAR h-b1wgen0134 AS HANDLE                                    NO-UNDO.
     DEF VAR h-b1wgen0110 AS HANDLE                                    NO-UNDO.
@@ -3104,18 +3104,18 @@ PROCEDURE grava_efetivacao_proposta:
 
     IF  aux_flgportb = FALSE THEN
         DO:
-          /** GRAVAMES **/
-          RUN sistema/generico/procedures/b1wgen0171.p PERSISTENT SET h-b1wgen0171.
+    /** GRAVAMES **/
+    RUN sistema/generico/procedures/b1wgen0171.p PERSISTENT SET h-b1wgen0171.
 
-          RUN valida_bens_alienados IN h-b1wgen0171 (INPUT par_cdcooper,
-                                                     INPUT par_nrdconta,
-                                                     INPUT par_nrctremp,
-                                                     INPUT "",
-                                                    OUTPUT TABLE tt-erro).
-          DELETE PROCEDURE h-b1wgen0171.
+    RUN valida_bens_alienados IN h-b1wgen0171 (INPUT par_cdcooper,
+                                               INPUT par_nrdconta,
+                                               INPUT par_nrctremp,
+                                               INPUT "",
+                                              OUTPUT TABLE tt-erro).
+    DELETE PROCEDURE h-b1wgen0171.
 
-          IF  RETURN-VALUE <> "OK"   THEN
-              RETURN "NOK".
+    IF  RETURN-VALUE <> "OK"   THEN
+        RETURN "NOK".
 
         END.
 
@@ -3345,17 +3345,20 @@ PROCEDURE grava_efetivacao_proposta:
 
 
        IF aux_flgportb = FALSE THEN
-         DO:
-           RUN sistema/generico/procedures/b1wgen0097.p PERSISTENT SET h-b1wgen0097.
+            DO:
+       RUN sistema/generico/procedures/b1wgen0097.p PERSISTENT SET h-b1wgen0097.
 
-           RUN consulta_iof IN h-b1wgen0097 (INPUT par_cdcooper,
-                                             INPUT par_dtmvtolt,
-                                             INPUT crawepr.vlemprst,
-                                            OUTPUT aux_vliofepr,
-                                            OUTPUT TABLE tt-erro).
+       RUN consulta_iof IN h-b1wgen0097 (INPUT par_cdcooper,
+                                         INPUT par_dtmvtolt,
+                                         INPUT crawepr.vlemprst,
+                                         INPUT par_nrdconta,
+                                         INPUT par_dtdpagto,
+                                         INPUT crawepr.qtpreemp,
+                                        OUTPUT aux_vliofepr,
+                                        OUTPUT TABLE tt-erro).
 
-           DELETE PROCEDURE h-b1wgen0097.
-         END.
+       DELETE PROCEDURE h-b1wgen0097.
+            END.
 
        CREATE crapepr.
        ASSIGN crapepr.dtmvtolt = par_dtmvtolt
@@ -3399,7 +3402,7 @@ PROCEDURE grava_efetivacao_proposta:
               crapepr.vltarifa = par_vltarifa
               crapepr.vltaxiof = par_vltaxiof
               crapepr.vltariof = par_vltariof
-              crapepr.iddcarga = aux_idcarga.
+			  crapepr.iddcarga = aux_idcarga.
 
        IF   crapepr.cdlcremp = 100   THEN
             DO:
@@ -4248,7 +4251,7 @@ PROCEDURE transf_contrato_prejuizo.
     DEF VAR aux_diarefju     AS INTE                                NO-UNDO.
     DEF VAR aux_mesrefju     AS INTE                                NO-UNDO.
     DEF VAR aux_anorefju     AS INTE                                NO-UNDO.
-    
+
     DEF VAR aux_flgativo     AS DEC                                 NO-UNDO.
   
     EMPTY TEMP-TABLE tt-erro.
@@ -4318,17 +4321,17 @@ PROCEDURE transf_contrato_prejuizo.
             ASSIGN aux_cdcritic = 0
                    aux_dscritic = "Transferencia para prejuizo nao permitida, emprestimo em acordo.".
 
-            RUN gera_erro (INPUT par_cdcooper,
-                           INPUT par_cdagenci,
-                           INPUT 1, /* nrdcaixa  */
-                           INPUT 1, /* sequencia */
-                           INPUT aux_cdcritic,
-                           INPUT-OUTPUT aux_dscritic).
+           RUN gera_erro (INPUT par_cdcooper,
+                          INPUT par_cdagenci,
+                          INPUT 1, /* nrdcaixa  */
+                          INPUT 1, /* sequencia */
+                          INPUT aux_cdcritic,
+                          INPUT-OUTPUT aux_dscritic).
 
-            RETURN "NOK".
+           RETURN "NOK".
              
-          END.
-       
+       END.
+          
        /* Fim verificacao contrato acordo */     
           
           
@@ -4839,7 +4842,7 @@ PROCEDURE desfaz_transferencia_prejuizo.
     ASSIGN aux_flgtrans = FALSE.
 
     TRANSFERE:
-    DO ON ENDKEY UNDO , LEAVE ON ERROR UNDO , LEAVE:   
+    DO ON ENDKEY UNDO , LEAVE ON ERROR UNDO , LEAVE:
 
         FOR FIRST crapepr
             WHERE crapepr.cdcooper = par_cdcooper
@@ -4948,16 +4951,16 @@ PROCEDURE desfaz_transferencia_prejuizo.
       
 			IF aux_cdcritic > 0 OR (aux_dscritic <> ? AND aux_dscritic <> "") THEN
 			DO:
-				RUN gera_erro (INPUT par_cdcooper,
-								INPUT par_cdagenci,
-								INPUT 1, /* nrdcaixa  */
-								INPUT 1, /* sequencia */
-								INPUT aux_cdcritic,
-								INPUT-OUTPUT aux_dscritic).
+                RUN gera_erro (INPUT par_cdcooper,
+                               INPUT par_cdagenci,
+                               INPUT 1, /* nrdcaixa  */
+                               INPUT 1, /* sequencia */
+                               INPUT aux_cdcritic,
+                               INPUT-OUTPUT aux_dscritic).
 
-				RETURN "NOK".
-			END.        
-        
+                RETURN "NOK".
+            END.
+
 			IF aux_flgativo = 1 THEN
 			DO:
 				ASSIGN aux_cdcritic = 0

@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Abril/2004                        Ultima atualizacao: 02/03/2017
+   Data    : Abril/2004                        Ultima atualizacao: 29/03/2017
 
    Dados referentes ao programa:
 
@@ -368,7 +368,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                             a situacao de Agencia Invalida. (Chamados 564779/565655) - (Fabricio)
                             
                28/12/2016 - Ajustes para incorporação da Transulcred (SD585459 Tiago/Elton)             
-			   
+
       			   05/01/2016 - Incluido NVL para tratar agencia e conta do arquivo
 			                      pois recebia NULL e as tratativas subsequentes nao
                  	      		funcionavam da forma esperada, incluido tbem tratamentos
@@ -394,6 +394,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
 	           30/01/2017 - Implementado join no cursor que verifica coop migrada (Tiago/Facricio)
                
                02/03/2017 - Adicionar dtmvtopg no filtro do cursor cr_craplau_dup (Lucas Ranghetti #618379)
+			   
+			   29/03/2017 - Para casos em que a conta for migrada e a cooperativa ainda estiver
+                            ativa e convenio usar agencia vamos dar um continue e somente irá 
+                            ser agendado o pagamento uma vez na cooperativa em que a conta foi 
+                            migrada (Lucas Ranghetti #640199)
 ............................................................................ */
 
 
@@ -2647,6 +2652,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                       OPEN cr_craptco(vr_nrdconta);
                       FETCH cr_craptco INTO rw_craptco;
                       IF cr_craptco%FOUND THEN -- Se for uma conta transferida
+                        CONTINUE;
+                        /* comentado trexo pois somente vamos criar o agendamento na coop
+                           que foi migrada
                         -- Busca o numero do lote
                         vr_dstextab_2 := TABE0001.fn_busca_dstextab(pr_cdcooper => rw_craptco.cdcooper
                                                                    ,pr_nmsistem => 'CRED'
@@ -2660,7 +2668,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                         vr_cdcooper := rw_craptco.cdcooper;
                         vr_cdcoptab := rw_craptco.cdcooper;
                         vr_nrdconta := rw_craptco.nrdconta;
-                        vr_nrdolote := vr_dstextab_2;
+                        vr_nrdolote := vr_dstextab_2; */
                       ELSE -- Se nao for uma conta transferida
                         vr_cdcooper := pr_cdcooper;
                         vr_nrdolote := vr_dstextab;
@@ -2816,7 +2824,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                        IF cr_craptco_conta_incorporada%FOUND THEN -- Se for uma conta transferida
                          vr_flg_ctamigra := TRUE;
                          vr_nrdconta := rw_craptco_conta_incorporada.nrdconta;
-                       ELSE                         
+                       ELSE
                          OPEN cr_craptco_coop(pr_cdcooper => pr_cdcooper,
                                               pr_cdcopant => vr_cdcooper);                                              
                          FETCH cr_craptco_coop INTO rw_craptco_coop;
@@ -3564,31 +3572,31 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                       IF SUBSTR(vr_setlinha,150,1) = 0 THEN
 
                         IF (rw_gnconve.cdconven = 22 OR      /** UNIMED **/
-                            rw_gnconve.cdconven = 55)   THEN  /** LIBERTY **/
-                          LOOP
-                            -- Busca os lancamentos automaticos
-                            IF cr_craplau%ISOPEN THEN
-                              CLOSE cr_craplau;
-                            END IF;
-                            OPEN cr_craplau(vr_cdcooper, vr_nrdconta, rw_craplot.dtmvtolt, vr_dtrefere, rw_gnconve.cdhisdeb, vr_nrdocmto_int);
-                            FETCH cr_craplau INTO rw_craplau;
+                         rw_gnconve.cdconven = 55)   THEN  /** LIBERTY **/
+                        LOOP
+                          -- Busca os lancamentos automaticos
+                          IF cr_craplau%ISOPEN THEN
+                            CLOSE cr_craplau;
+                          END IF;
+                          OPEN cr_craplau(vr_cdcooper, vr_nrdconta, rw_craplot.dtmvtolt, vr_dtrefere, rw_gnconve.cdhisdeb, vr_nrdocmto_int);
+                          FETCH cr_craplau INTO rw_craplau;
 
                             -- somente adicionar um zero a mais para a cooperativa que tiver rodando
                             IF cr_craplau%FOUND AND 
                               vr_cdcooper = pr_cdcooper THEN 
-                              vr_nrdocmto_int :=  to_char(vr_nrdocmto_int) || '0';
-                            ELSE
-                              CLOSE cr_craplau;
-                              EXIT;
-                            END IF;
+                            vr_nrdocmto_int :=  to_char(vr_nrdocmto_int) || '0';
+                          ELSE
                             CLOSE cr_craplau;
-                          END LOOP;
+                            EXIT;
+                          END IF;
+                          CLOSE cr_craplau;
+                        END LOOP;
                         ELSE
                           LOOP
                             -- Busca os lancamentos automaticos
                             IF cr_craplau_dup%ISOPEN THEN
                               CLOSE cr_craplau_dup;
-                            END IF;
+                      END IF;
                             
                             -- Caso o convenio enviar mais que uma referencia no mesmo dia para a mesma
                             -- conta e valor do debito ou data de pagamento forem diferentes, vamos
@@ -3618,7 +3626,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                           END LOOP;
                         END IF; 
                       END IF; -- fim IF SUBSTR(vr_setlinha,150,1) = 0 THEN
-                      
+
                       -- Busca os lancamentos automaticos
                       IF cr_craplau%ISOPEN THEN
                         CLOSE cr_craplau;
@@ -3703,33 +3711,33 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                                END IF;
                                vr_ind_deb := vr_tab_debcancel.next(vr_ind_deb);
                           END LOOP;
-                          IF vr_ind_debcancel = 'N' THEN                            
-                            vr_cdcritic := 092; -- Lancamento ja existe
+                          IF vr_ind_debcancel = 'N' THEN
+                          vr_cdcritic := 092; -- Lancamento ja existe
                             -- Criar retorno para o convenio somente se tiver o lançamento 
                             -- tiver rodando na cooperativa em questão
                             IF vr_cdcooper = pr_cdcooper THEN
-                              -- Retorna ao convenio com a critica 13 caso lancamento seja duplicado
-                              BEGIN
-                                INSERT INTO crapndb
-                                  (dtmvtolt,
-                                   nrdconta,
-                                   cdhistor,
-                                   flgproce,
-                                   dstexarq,
-                                   cdcooper)
-                                VALUES
-                                  (vr_dtultdia,
-                                   vr_nrdconta,
-                                   rw_gnconve.cdhisdeb,
-                                   0,
-                                   'F' ||SUBSTR(vr_setlinha,2,66) || '13' || SUBSTR(vr_setlinha,70,81),
-                                   vr_cdcooper);
-                              EXCEPTION
-                                WHEN OTHERS THEN
-                                  vr_cdcritic := 0;
-                                  vr_dscritic := 'Erro ao inserir crapndb: '||SQLERRM;
-                                  RAISE vr_exc_saida;
-                              END;
+                          -- Retorna ao convenio com a critica 13 caso lancamento seja duplicado
+                          BEGIN
+                            INSERT INTO crapndb
+                              (dtmvtolt,
+                               nrdconta,
+                               cdhistor,
+                               flgproce,
+                               dstexarq,
+                               cdcooper)
+                            VALUES
+                              (vr_dtultdia,
+                               vr_nrdconta,
+                               rw_gnconve.cdhisdeb,
+                               0,
+                               'F' ||SUBSTR(vr_setlinha,2,66) || '13' || SUBSTR(vr_setlinha,70,81),
+                               vr_cdcooper);
+                          EXCEPTION
+                            WHEN OTHERS THEN
+                              vr_cdcritic := 0;
+                              vr_dscritic := 'Erro ao inserir crapndb: '||SQLERRM;
+                              RAISE vr_exc_saida;
+                          END;
                             END IF;
                           ELSE
                             vr_inserir_lancamento := 'S';

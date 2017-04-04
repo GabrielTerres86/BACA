@@ -5,7 +5,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
   --
   --  Programa: PC_CRPS331
   --  Autor   : Andrino Carlos de Souza Junior (RKAM)
-  --  Data    : Novembro/2015                     Ultima Atualizacao: - 23/02/2017
+  --  Data    : Novembro/2015                     Ultima Atualizacao: - 08/03/2017
   --
   --  Dados referentes ao programa:
   --
@@ -23,6 +23,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
   --              23/02/2017 - #602584 Implementado na rotina que trata os retornos da Serasa, algumas condições para 
   --						   que o sistema consiga identificar corretamente quando ocorreu erro na Serasa e salvar 
   --						   o log na Cecred (Andrey Formigari - Mouts).
+  --
+  --			  08/03/2017 - #611513 Validação para identificar uma inclusão de registro já existente e não alterar
+  --						  seu statis. (Andrey Formigari - Mouts).
   ---------------------------------------------------------------------------------------------------------------
 
   -- Atualiza a situacao do boleto
@@ -151,8 +154,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
       ELSIF pr_intipret = 1 AND -- Se for Inclusao
          vr_inreterr = 1 AND -- E houver erro de recebimento
          rw_crapcob.inserasa IN (1,2) THEN -- E o tipo da solicitacao for pendente de envio ou enviada
+        IF vr_erros_temp <> 59 THEN -- INCLUSAO PARA REGISTRO JA EXISTENTE
         vr_inserasa := 6; -- Recusada Serasa
         vr_dtretser := NULL; -- Nao recebida
+        ELSE
+          vr_inserasa := rw_crapcob.inserasa; -- Nao muda a situacao. Deixa a anterior
+          vr_dtretser := rw_crapcob.dtretser; -- Manter a mesma data
+        END IF;
         vr_dslog := 'Serasa - Erro no recebimento da solicitacao da negativacao';
         
       ELSIF pr_intipret = 1 AND -- Se for Inclusao

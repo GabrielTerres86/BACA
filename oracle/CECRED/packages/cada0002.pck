@@ -199,58 +199,62 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0002 is
 END CADA0002;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
-  ---------------------------------------------------------------------------------------------------------------
-  --
-  --  Programa : CADA0002
-  --  Sistema  : Rotinas acessadas pelas telas de cadastros Web
-  --  Sigla    : CADA
-  --  Autor    : Renato Darosci - Supero
-  --  Data     : Julho/2014.                   Ultima atualizacao: 11/11/2016
-  --
-  -- Dados referentes ao programa:
-  --
-  -- Frequencia: -----
-  -- Objetivo  : Rotinas para manutenção (cadastro) dos dados para sistema Web/genérico
-  --
-  -- Alteracoes: 05/03/2015 - #261634 Inclusão da função lower() no cursor cr_crapope da procedure pc_mudsen para localizar 
-  --                          operadores cadastrados com, por exemplo, o "f" maiúsculo (Carlos)
-	--
-	--             13/04/2015 - Adicionado nome do produto junto ao nr da aplicação para os novos produtos de 
-  --	                        captação na procedure pc_impressao_aplica (Reinert)
-  --
-  --             10/06/2015 - Adicionado o campo dsispbif na typ_xmldata e na pc_ver_pro_imp e na pc_impressao_ted
-  --                          SD271603 FDR041 (Venessa).
-  --
-  --             05/08/2015 - Adicionar os parametros para gravar o campo craptoj.idtitdda quando 
-  --                          realizar o agendamento (Douglas - Chamado 291387)  
-  --
-  --             11/02/2016 - Conversao da rotina b1wgen0015.valida-inclusao-conta-transferencia,
-  --                           (Jean Michel).
-  --
-  --             05/04/2016 - Ajuste para retirar o "*" ao remover o arquivo
-  --                          (Adriano).
-  --
-  --		     10/05/2016 - Ajustes devido ao projeto M118 para cadastrar o favorecido de forma automatica
-  --					     (Adriano - M117).
-  --
-  --             19/05/2016 - Ajsute na inclusão do registro crapcti para tratar quando o número do ISPB vier nulo 
-  --                          e incluir a verificação de senha para contas com assinatura conjunta
-  --						              (Adriano - M117).
-  --
-  --             23/06/2016 - Correcao no indice sobre a tabela crapope da pc_mudsen para comparar os campo
-  --                          cdoperad com o comando UPPER. (Carlos Rafael Tanholi).
-  --
-  --             20/07/2016 - #475267 Inclusão da exception DUP_VAL_ON_INDEX na rotina pc_inclui_conta_transf
-  --                          para criticar contas já cadastradas. (Carlos)
-  --
-  --             30/08/2016 - Criar rotina para impressão de resgate de aplicação 
-  --                          pc_impressao_resg_aplica (Lucas Ranghetti #490678)
-  --              19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS pelo 
-  --						   InternetBanking (Projeto 338 - Lucas Lunelli)
-  --
-  --	         11/11/2016 - Ajuste para efetuar log no arquivo internal_exception.log
-  --	                      (Adriano - SD 552561)
-  ---------------------------------------------------------------------------------------------------------------------------
+  /*---------------------------------------------------------------------------------------------------------------
+  
+    Programa : CADA0002
+    Sistema  : Rotinas acessadas pelas telas de cadastros Web
+    Sigla    : CADA
+    Autor    : Renato Darosci - Supero
+    Data     : Julho/2014.                   Ultima atualizacao: 20/03/2017
+  
+   Dados referentes ao programa:
+  
+   Frequencia: -----
+   Objetivo  : Rotinas para manutenção (cadastro) dos dados para sistema Web/genérico
+  
+   Alteracoes: 05/03/2015 - #261634 Inclusão da função lower() no cursor cr_crapope da procedure pc_mudsen para localizar 
+                            operadores cadastrados com, por exemplo, o "f" maiúsculo (Carlos)
+	
+	             13/04/2015 - Adicionado nome do produto junto ao nr da aplicação para os novos produtos de 
+  	                        captação na procedure pc_impressao_aplica (Reinert)
+  
+               10/06/2015 - Adicionado o campo dsispbif na typ_xmldata e na pc_ver_pro_imp e na pc_impressao_ted
+                            SD271603 FDR041 (Venessa).
+  
+               05/08/2015 - Adicionar os parametros para gravar o campo craptoj.idtitdda quando 
+                            realizar o agendamento (Douglas - Chamado 291387)  
+  
+               11/02/2016 - Conversao da rotina b1wgen0015.valida-inclusao-conta-transferencia,
+                             (Jean Michel).
+  
+               05/04/2016 - Ajuste para retirar o "*" ao remover o arquivo
+                            (Adriano).
+  
+  		         10/05/2016 - Ajustes devido ao projeto M118 para cadastrar o favorecido de forma automatica
+  					                (Adriano - M117).
+  
+               19/05/2016 - Ajsute na inclusão do registro crapcti para tratar quando o número do ISPB vier nulo 
+                            e incluir a verificação de senha para contas com assinatura conjunta
+  						              (Adriano - M117).
+  
+               23/06/2016 - Correcao no indice sobre a tabela crapope da pc_mudsen para comparar os campo
+                            cdoperad com o comando UPPER. (Carlos Rafael Tanholi).
+  
+               20/07/2016 - #475267 Inclusão da exception DUP_VAL_ON_INDEX na rotina pc_inclui_conta_transf
+                            para criticar contas já cadastradas. (Carlos)
+  
+               30/08/2016 - Criar rotina para impressão de resgate de aplicação 
+                            pc_impressao_resg_aplica (Lucas Ranghetti #490678)
+  
+               19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS pelo 
+  						              InternetBanking (Projeto 338 - Lucas Lunelli)
+  
+  	           11/11/2016 - Ajuste para efetuar log no arquivo internal_exception.log
+  	                      (Adriano - SD 552561)
+  
+               20/03/2017 - Ajuste para validar o cpf/cnpj de acordo com o inpessoa informado             
+                           (Adriano - SD 620221).
+  ---------------------------------------------------------------------------------------------------------------------------*/
 
   /****************** OBJETOS COMUNS A SEREM UTILIZADOS PELAS ROTINAS DA PACKAGE *******************/
   
@@ -290,16 +294,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                             ,dsageban   VARCHAR2(100)
                             ,nrctafav   VARCHAR2(100)
                             ,nmfavore   VARCHAR2(100)
-						               	,nmconven   VARCHAR2(100)
                             ,nrcpffav   VARCHAR2(100)
                             ,dsfinali   VARCHAR2(100)
                             ,dstransf   VARCHAR2(100)
                             ,dsispbif   VARCHAR2(100)
 														,dspacote   VARCHAR2(100)
 														,dtdiadeb   NUMBER
-                            ,dtinivig   DATE
-                            --DARF/DAS
-                            ,tpcaptur   NUMBER
+							,dtinivig   DATE
+							--DARF/DAS
+							,tpcaptur   NUMBER
                             ,dsagtare   VARCHAR2(100)
                             ,dsagenci   VARCHAR2(100)
                             ,tpdocmto   VARCHAR2(100)
@@ -1732,86 +1735,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
 
   END pc_impressao_darf_das;   
   
-  -- Rotina para impressão de comprovante de pagamento do deb automatico
-  PROCEDURE pc_impressao_debaut(pr_xmldata  IN typ_xmldata
-                               ,pr_nmrescop IN VARCHAR2) IS
-    -- ..........................................................................
-    --
-    --  Programa : impressao_debaut 
-    --  Sistema  : Rotinas para impressão de dados
-    --  Sigla    : VERPRO
-    --  Autor    : Aline Baramarchi
-    --  Data     : Março/2017.                   Ultima atualizacao: --/--/----
-    --
-    --  Dados referentes ao programa:
-    --
-    --   Frequencia: Sempre que for chamado
-    --   Objetivo  : Agrupa os dados e monta o layout para impressão de 
-    --               comprovante de pagamentos em débito automático
-    --
-    --   Alteracoes: 
-    --
-    -- .............................................................................
-    
-    -- Variáveis
-    vr_nrdlinha     NUMBER := 0;  
-                          
-  BEGIN
-
-    -- IMPRIMIR O CABEÇALHO
-    pc_escreve_xml('--------------------------------------------------------------------------------'    ,1);
-    pc_escreve_xml('     '||pr_nmrescop||' - Comprovante Pag Deb Aut - '||
-                   'Emissao: '||to_char(SYSDATE,'DD/MM/YY')||' as '||to_char(SYSDATE,'HH24:MI:SS')||' Hr',2); 
-    pc_escreve_xml('           Conta/DV: '||to_char(pr_xmldata.nrdconta)||' - '||pr_xmldata.nmprimtl     ,4);
-    pc_escreve_xml('--------------------------------------------------------------------------------'    ,5);
-    -- IMPRIMIR O CONTEÚDO
-    -- Contador de linha - Iniciando na sexta linha do XML
-    vr_nrdlinha := 6;
-
-    
-    -- Imprime o nome do convenio
-    pc_escreve_xml('           Convenio: '||pr_xmldata.nmconven,vr_nrdlinha);
-    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
-    
-    -- Imprime o numero identificador 
-    pc_escreve_xml('  Nro Identificador: '||pr_xmldata.nrdocmto,vr_nrdlinha);
-    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
-    
-    -- Imprime a data de transação
-    pc_escreve_xml('     Data Transacao: '||to_char(pr_xmldata.dttransa,'dd/mm/yy'),vr_nrdlinha);
-    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
-
-    -- Imprime a hora da transação
-    pc_escreve_xml('               Hora: '||to_char(to_date(pr_xmldata.hrautent,'SSSSS'),'hh24:mi:ss'),vr_nrdlinha);
-    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
-
-    -- Imprime a data da transferencia
-    pc_escreve_xml('      Dt. Pagamento: '||to_char(pr_xmldata.dtmvtolx,'dd/mm/yy'),vr_nrdlinha);
-    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
-
-    -- Imprime o valor
-    pc_escreve_xml('              Valor: '||to_char(pr_xmldata.valor,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.'),vr_nrdlinha);
-    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
-
-    -- Imprime protocolo
-    pc_escreve_xml('          Protocolo: '||pr_xmldata.dsprotoc,vr_nrdlinha);
-    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
-    
-    -- Imprimir documento e sequencia de autenticação
-    pc_escreve_xml('      Nr. Documento: '||pr_xmldata.nrdocmto,vr_nrdlinha);
-    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
-        
-    pc_escreve_xml('  Seq. Autenticacao: '||pr_xmldata.nrseqaut,vr_nrdlinha);
-    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
-    
-    
-    pc_escreve_xml('--------------------------------------------------------------------------------',18);
-    
-
-  END pc_impressao_debaut; 
-
-  
-  
   -- TELA: VERPRO - Verificação de Protocolos
   PROCEDURE pc_verpro(pr_cdcooper IN NUMBER                --> Código da cooperativa
                      ,pr_idorigem IN NUMBER                --> ID da origem
@@ -2389,7 +2312,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
      Sistema : Rotinas acessadas pelas telas de cadastros Web
      Sigla   : CADA
      Autor   : Renato Darosci - Supero
-     Data    : Julho/2014.                  Ultima atualizacao: 09/03/2017
+     Data    : Julho/2014.                  Ultima atualizacao: 05/04/2016
 
      Dados referentes ao programa:
 
@@ -2403,9 +2326,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                               
                  05/04/2016 - Ajuste para retirar o "*" ao remover o arquivo
                              (Adriano).             
-                             
-                 09/03/2017 - Ajuste para incluir informações referentes a comprovante
-                              de pagamento em debito automatico (Aline).                      
     ..............................................................................*/ 
     -- CURSORES
     -- Buscar as informações da cooperativa
@@ -2533,7 +2453,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
     rw_xmldata.dsageban := fn_extract('/Root/Dados/dsageban/text()');
     rw_xmldata.nrctafav := fn_extract('/Root/Dados/nrctafav/text()');
     rw_xmldata.nmfavore := fn_extract('/Root/Dados/nmfavore/text()');
-	  rw_xmldata.nmconven := fn_extract('/Root/Dados/nmconven/text()');
     rw_xmldata.nrcpffav := fn_extract('/Root/Dados/nrcpffav/text()');
     rw_xmldata.dsfinali := fn_extract('/Root/Dados/dsfinali/text()');
     rw_xmldata.dstransf := fn_extract('/Root/Dados/dstransf/text()');
@@ -2677,15 +2596,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
       -- Imprimir comprovante de Aplicação
       pc_impressao_pac_tar(pr_xmldata  => rw_xmldata
                           ,pr_nmrescop => rw_crapcop.nmrescop);  
-    
-    ELSIF rw_xmldata.cdtippro = 15 THEN
-
-     -- Guardar o nome da rotina chamada para exibir em caso de erro
-      vr_nmrotina := 'PC_IMPRESSAO_DEBAUT';
-    
-      -- Imprimir comprovante
-      pc_impressao_debaut(pr_xmldata  => rw_xmldata
-                         ,pr_nmrescop => rw_crapcop.nmrescop);    
       
     ELSIF rw_xmldata.cdtippro IN (16,17,18,19) THEN --DARF/DAS
       -- Guardar o nome da rotina chamada para exibir em caso de erro
@@ -3329,24 +3239,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                                       ,pr_nmdcampo OUT VARCHAR2
                                       ,pr_cdcritic OUT crapcri.cdcritic%TYPE
                                       ,pr_dscritic OUT crapcri.dscritic%TYPE) IS
-    -- ..........................................................................
-    --
-    --  Programa : Antigo /generico/procedures/b1wgen0015.p -> valida-inclusao-conta-transferencia
-    --  Sistema  : Rotinas para validacao de inclusao de contas para transferencia
-    --  Sigla    : CRED
-    --  Autor    : Jean Michel
-    --  Data     : Fevereiro/2016.                   Ultima atualizacao: 11/11/2016
-    --
-    --  Dados referentes ao programa:
-    --
-    --   Frequencia: Sempre que for chamado
-    --   Objetivo  : Valida inclusao de contas para transferencias
-    --
-    --   Alteracoes: 11/02/2016 - Conversão Progress >>> PL/SQL (Jean Michel)
-    --
-	--  		     11/11/2016 - Ajuste para efetuar log no arquivo internal_exception.log
-  	--	                          (Adriano - SD 552561)
-    -- .............................................................................
+    /* ..........................................................................
+    
+      Programa : Antigo /generico/procedures/b1wgen0015.p -> valida-inclusao-conta-transferencia
+      Sistema  : Rotinas para validacao de inclusao de contas para transferencia
+      Sigla    : CRED
+      Autor    : Jean Michel
+      Data     : Fevereiro/2016.                   Ultima atualizacao: 20/03/2017
+    
+      Dados referentes ao programa:
+    
+       Frequencia: Sempre que for chamado
+       Objetivo  : Valida inclusao de contas para transferencias
+    
+       Alteracoes: 11/02/2016 - Conversão Progress >>> PL/SQL (Jean Michel)
+    
+	  		           11/11/2016 - Ajuste para efetuar log no arquivo internal_exception.log
+  		                          (Adriano - SD 552561)
+                                
+                   20/03/2017 - Ajuste para validar o cpf/cnpj de acordo com o inpessoa informado             
+                                (Adriano - SD 620221).
+     ...................................................................................*/
 
     -- CURSORES
   
@@ -3484,7 +3397,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
     -- Variaveis gerais
     vr_stsnrcal BOOLEAN;
     vr_flsitreg BOOLEAN;
-    vr_inpessoa INTEGER;    
     vr_cddbanco INTEGER := pr_cddbanco;
     vr_cdispbif NUMBER;
     vr_dstextab craptab.dstextab%TYPE;    
@@ -3713,25 +3625,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
         RAISE vr_exc_saida;
       END IF;
 
-      -- Valida CPF/CNPJ enviado
-      GENE0005.pc_valida_cpf_cnpj(pr_nrcalcul => pr_nrcpfcgc   --Numero a ser verificado
-                                 ,pr_stsnrcal => vr_stsnrcal   --Situacao
-                                 ,pr_inpessoa => vr_inpessoa); -- Tipo de Pessoa
+      IF pr_inpessoa = 1 THEN 
         
-      IF NOT vr_stsnrcal THEN
-        vr_cdcritic := 0;
-        vr_dscritic := 'CPF/CNPJ invalido.';
-        pr_nmdcampo := 'nrcpfcgc';
-        RAISE vr_exc_saida;
+        -- Valida CPF enviado
+        GENE0005.pc_valida_cpf(pr_nrcalcul => pr_nrcpfcgc   --Numero a ser verificado
+                              ,pr_stsnrcal => vr_stsnrcal);   --Situacao
+        
+        IF NOT vr_stsnrcal THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'CPF invalido.';
+          pr_nmdcampo := 'nrcpfcgc';
+          RAISE vr_exc_saida;
+        END IF;
+        
+      ELSE
+        
+        -- Valida CPF/CNPJ enviado
+        GENE0005.pc_valida_cnpj(pr_nrcalcul => pr_nrcpfcgc   --Numero a ser verificado
+                               ,pr_stsnrcal => vr_stsnrcal);   --Situacao
+          
+        IF NOT vr_stsnrcal THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'CNPJ invalido.';
+          pr_nmdcampo := 'nrcpfcgc';
+          RAISE vr_exc_saida;
+        END IF;
+        
       END IF;
-
-      IF vr_inpessoa <> pr_inpessoa THEN
-        vr_cdcritic := 0;
-        vr_dscritic := 'Tipo de pessoa incorreto.';
-        pr_nmdcampo := 'nrcpfcgc';
-        RAISE vr_exc_saida;
-      END IF;
-
+      
     ELSE -- Validaçao para conta da cooperativa
               
       IF pr_nrdconta = TO_NUMBER(pr_nrctatrf) AND 

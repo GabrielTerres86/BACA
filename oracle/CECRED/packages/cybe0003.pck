@@ -42,6 +42,7 @@ CREATE OR REPLACE PACKAGE CECRED.CYBE0003 AS
                                  ,pr_cdasscyb   IN INTEGER            --> Código da Assessoria Cyber
 								                 ,pr_flgjudic   IN NUMBER			        --> flag cobrança judicial (0 ou 1)
 								                 ,pr_flextjud	IN NUMBER			          --> flag cobrança extrajudicial (0 ou 1)
+                                 ,pr_cdsigcyb   IN VARCHAR2           --> Sigla da assessoria no Cyber
                                  ,pr_xmllog     IN VARCHAR2           --> XML com informações de LOG
                                  ,pr_cdcritic  OUT PLS_INTEGER        --> Código da crítica
                                  ,pr_dscritic  OUT VARCHAR2           --> Descrição da crítica
@@ -146,6 +147,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0003 AS
       -- Variáveis de erro
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic crapcri.dscritic%TYPE;
+      vr_cdsigcyb varchar2(10);
 
       CURSOR cr_assessorias(pr_cdassessoria IN tbcobran_assessorias.cdassessoria%TYPE) IS
       SELECT tbcobran_assessorias.cdassessoria
@@ -153,15 +155,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0003 AS
             ,tbcobran_assessorias.cdassessoria_cyber
 			      ,tbcobran_assessorias.flgjudicial
 			      ,tbcobran_assessorias.flgextra_judicial
+          --  ,tbcobran_assessorias.cdsigla_cyber
         FROM tbcobran_assessorias
        WHERE tbcobran_assessorias.cdassessoria = NVL(pr_cdassessoria,tbcobran_assessorias.cdassessoria)
        ORDER BY tbcobran_assessorias.cdassessoria;
       
     BEGIN
-      -- Criar cabecalho do XML
+      -- Criar cabecalho do XML                
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><assessorias></assessorias></Root>');
       FOR rw_assessoria IN cr_assessorias(pr_cdassess) LOOP
         -- Criar nodo filho
+        BEGIN
+          select  DSVLRPRM
+          into    vr_cdsigcyb
+          from    crapprm
+          where   NMSISTEM = 'CRED'
+           and    CDACESSO = 'CYBER_CD_SIGLA'||lpad(rw_assessoria.cdassessoria,2,'0')
+           and    dstexprm = lpad(rw_assessoria.cdassessoria,2,'0');
+        exception
+           when no_data_found then
+                vr_cdsigcyb := null;
+        end;
         pr_retxml := XMLTYPE.appendChildXML(pr_retxml
                                             ,'/Root/assessorias'
                                             ,XMLTYPE('<assessoria>'
@@ -170,6 +184,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0003 AS
                                                    ||'  <cdasscyb>'||UPPER(rw_assessoria.cdassessoria_cyber)||'</cdasscyb>'
 												                           ||'  <flgjudic>'||UPPER(rw_assessoria.flgjudicial)||'</flgjudic>'
 												                           ||'  <flextjud>'||UPPER(rw_assessoria.flgextra_judicial)||'</flextjud>'
+                                                  -- ||'  <cdsigcyb>'||UPPER(rw_assessoria.cdsigla_cyber)||'</cdsigcyb>'
+                                                   ||'  <cdsigcyb>'||UPPER(vr_cdsigcyb)||'</cdsigcyb>'
                                                    ||'</assessoria>'));
       END LOOP;
       
@@ -221,13 +237,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0003 AS
       -- Variáveis de erro
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic crapcri.dscritic%TYPE;
-
+      vr_cdsigcyb varchar2(10);
+      
       CURSOR cr_assessorias(pr_nmassessoria IN tbcobran_assessorias.nmassessoria%TYPE) IS
       SELECT tbcobran_assessorias.cdassessoria
             ,tbcobran_assessorias.nmassessoria
             ,tbcobran_assessorias.cdassessoria_cyber
 			      ,decode(tbcobran_assessorias.flgjudicial, 1, 'S','N')        flgjudicial
 			      ,decode(tbcobran_assessorias.flgextra_judicial, 1, 'S', 'N') flgextra_judicial
+            --,tbcobran_assessorias.cdsigla_cyber
         FROM tbcobran_assessorias
        WHERE UPPER(tbcobran_assessorias.nmassessoria) LIKE UPPER('%' || pr_nmassessoria || '%')
        ORDER BY tbcobran_assessorias.cdassessoria;
@@ -238,6 +256,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0003 AS
       
       FOR rw_assessoria IN cr_assessorias(NVL(pr_nmassessoria,'')) LOOP
         -- Criar nodo filho
+        -- retirar este select após alteracao da estrutura da tabela
+        begin
+          select  DSVLRPRM
+          into    vr_cdsigcyb
+          from    crapprm
+          where   NMSISTEM = 'CRED'
+           and    CDACESSO = 'CYBER_CD_SIGLA'||lpad(rw_assessoria.cdassessoria,2,'0')
+           and    dstexprm = lpad(rw_assessoria.cdassessoria,2,'0');
+        exception
+           when no_data_found then
+                vr_cdsigcyb := null;
+        end;
+         
         pr_retxml := XMLTYPE.appendChildXML(pr_retxml
                                             ,'/Root/assessorias'
                                             ,XMLTYPE('<assessoria>'
@@ -246,7 +277,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0003 AS
                                                    ||'  <cdasscyb>'||UPPER(rw_assessoria.cdassessoria_cyber)||'</cdasscyb>'
 												                           ||'  <flgjudic>'||UPPER(rw_assessoria.flgjudicial)||'</flgjudic>'
 												                           ||'  <flextjud>'||UPPER(rw_assessoria.flgextra_judicial)||'</flextjud>'
-                                                   ||'</assessoria>'));
+                                                  -- ||'  <cdsigcyb>'||UPPER(rw_assessoria.cdsigla_cyber)||'</cdsigcyb>'
+												                           ||'  <cdsigcyb>'||UPPER(vr_cdsigcyb)||'</cdsigcyb>'
+												                           ||'</assessoria>'));
       END LOOP;
       
     EXCEPTION
@@ -273,6 +306,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0003 AS
                                  ,pr_cdasscyb   IN INTEGER            --> Código da Assessoria Cyber
 								                 ,pr_flgjudic   IN NUMBER			        --> flag cobrança judicial (0 ou 1)
 								                 ,pr_flextjud	IN NUMBER			          --> flag cobrança extrajudicial (0 ou 1)
+                                 ,pr_cdsigcyb in varchar2             --> sigla da assessoria no Cyber
                                  ,pr_xmllog     IN VARCHAR2           --> XML com informações de LOG
                                  ,pr_cdcritic  OUT PLS_INTEGER        --> Código da crítica
                                  ,pr_dscritic  OUT VARCHAR2           --> Descrição da crítica
@@ -304,6 +338,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0003 AS
       
       -- Variávies
       vr_cdassess INTEGER;  
+      vr_existe   integer;
       
       CURSOR cr_crapcyc(pr_cdassessoria IN crapcyc.cdassess%TYPE) IS
       SELECT 1
@@ -325,20 +360,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0003 AS
                NMASSESSORIA,
                CDASSESSORIA_CYBER,
                FLGJUDICIAL,
-               FLGEXTRA_JUDICIAL)
+               FLGEXTRA_JUDICIAL/*,
+               CDSIGLA_CYBER*/)
             VALUES
               (VR_CDASSESS,
                UPPER(PR_DSASSESS),
                PR_CDASSCYB,
                PR_FLGJUDIC,
                PR_FLEXTJUD);
+               --, UPPER(pr_cdsigcyb));
           EXCEPTION
             WHEN OTHERS THEN
             -- Descricao do erro na insercao de registros
             vr_dscritic := 'Problema ao incluir Assessoria: ' || SQLERRM;
             RAISE vr_exc_erro;
           END;
-
+          -- Cadastro temporario
+          BEGIN
+            insert into CRAPPRM 
+                (NMSISTEM
+               , CDCOOPER
+               , CDACESSO
+               , DSTEXPRM
+               , DSVLRPRM)
+            VALUES ('CRED'
+                    ,0
+                    ,'CYBER_CD_SIGLA' || LPAD(VR_CDASSESS,2,'0')
+                    ,LPAD(VR_CDASSESS,2,'0')
+                    ,UPPER(pr_cdsigcyb));
+          EXCEPTION
+             WHEN OTHERS THEN
+                   -- Descricao do erro na insercao de registros
+                vr_dscritic := 'Problema ao incluir Assessoria: ' || SQLERRM;
+                RAISE vr_exc_erro;
+          END;
         WHEN 'AA' THEN -- Alterar Assessoria
           BEGIN
             UPDATE tbcobran_assessorias 
@@ -346,14 +401,58 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0003 AS
                  , cdassessoria_cyber = pr_cdasscyb
                  , flgjudicial = pr_flgjudic
                  , flgextra_judicial = pr_flextjud
+                 --, cdsigla_cyber = UPPER(pr_cdsigcyb)
              WHERE cdassessoria = pr_cdassess;
           EXCEPTION
             WHEN OTHERS THEN
             -- Descricao do erro na alteração de registros
             vr_dscritic := 'Problema ao alterar Assessoria: ' || sqlerrm;
             RAISE vr_exc_erro;
-          END;          
-          
+          END;        
+          BEGIN
+            SELECT 1
+            INTO   vr_existe
+            from   crapprm
+            where  NMSISTEM = 'CRED'
+              and    CDACESSO = 'CYBER_CD_SIGLA' || lpad(pr_cdassess,2,'0')
+              and    dstexprm = lpad(pr_cdassess,2,'0');
+          EXCEPTION
+            WHEN NO_DATA_FOUND THEN
+               vr_existe :=0;
+          END;
+          if nvl(vr_existe,0) = 0 then
+             BEGIN
+              insert into CRAPPRM 
+                  (NMSISTEM
+                 , CDCOOPER
+                 , CDACESSO
+                 , DSTEXPRM
+                 , DSVLRPRM)
+              VALUES ('CRED'
+                      ,0
+                      ,'CYBER_CD_SIGLA'||lpad(pr_cdassess,2,'0')
+                      ,LPAD(pr_cdassess,2,'0')
+                      ,UPPER(pr_cdsigcyb));
+             EXCEPTION
+               WHEN OTHERS THEN
+                     -- Descricao do erro na insercao de registros
+                  vr_dscritic := 'Problema ao incluir Assessoria: ' || SQLERRM;
+                  RAISE vr_exc_erro;
+             END;
+          else
+            BEGIN  
+              UPDATE CRAPPRM
+              SET    DSVLRPRM = UPPER(pr_cdsigcyb)
+              where  NMSISTEM = 'CRED'
+              and    CDACESSO = 'CYBER_CD_SIGLA'||lpad(pr_cdassess,2,'0')
+              and    dstexprm = lpad(pr_cdassess,2,'0');
+            EXCEPTION
+               WHEN OTHERS THEN
+              -- Descricao do erro na alteração de registros
+                  vr_dscritic := 'Problema ao alterar Assessoria: ' || sqlerrm;
+                  RAISE vr_exc_erro;
+            END;
+          end if;
         WHEN 'EA' THEN -- Excluir Assessoria
           OPEN cr_crapcyc(pr_cdassessoria => pr_cdassess);
           FETCH cr_crapcyc INTO rw_crapcyc;
@@ -372,9 +471,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0003 AS
           EXCEPTION
             WHEN OTHERS THEN
             -- Descricao do erro na exclusão de registros
-            vr_dscritic := 'Problema ao excluir Assessoria: ' || sqlerrm;
-            RAISE vr_exc_erro;
+                vr_dscritic := 'Problema ao excluir Assessoria: ' || sqlerrm;
+                RAISE vr_exc_erro;
           END;          
+          begin
+            DELETE CRAPPRM
+            where  NMSISTEM = 'CRED'
+            and    CDACESSO = 'CYBER_CD_SIGLA'||lpad(pr_cdassess,2,'0')
+            and    dstexprm = lpad(pr_cdassess,2,'0');  
+          exception
+            WHEN OTHERS THEN
+            -- Descricao do erro na exclusão de registros
+                vr_dscritic := 'Problema ao excluir Assessoria: ' || sqlerrm;
+                RAISE vr_exc_erro;
+          end;
       END CASE;                              
 
     EXCEPTION
@@ -664,7 +774,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0003 AS
     Frequencia: Sempre que for chamado
     Objetivo  : Rotina para consultar a parametrização dos histórico
 
-    Alteracoes:
+    Alteracoes: 
 	     13/01/2017 - Jean Calão - Mout´S - inclusão campo cdtrscyb na craphis
     ............................................................................. */
     DECLARE

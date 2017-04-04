@@ -37,7 +37,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 07/02/2017
+   Data    : Marco/2001                      Ultima atualizacao: 20/03/2017
 
    Dados referentes ao programa:
 
@@ -201,13 +201,15 @@
               05/05/2016 - Incluir transacao na criacao da craplft na procedure
                            gera-faturas (Lucas Ranghetti #436077)
 
-			  13/01/2017 - Incluir chamada da procedure pc_ret_ano_barras_darf_car
+			        13/01/2017 - Incluir chamada da procedure pc_ret_ano_barras_darf_car
                            para a nova regra de validacao das DARFs
                            (Lucas Ranghetti #588835)
 
               07/02/2017 - Ajustes para verificar vencimento da P.M. PRES GETULIO, 
-			               P.M. GUARAMIRIM e SANEPAR (Tiago/Fabricio SD593203)                           
-			  
+			                     P.M. GUARAMIRIM e SANEPAR (Tiago/Fabricio SD593203)    
+                           
+             20/03/2017 - Ajuste para verificar vencimento da P.M. TIMBO, DEFESA CIVIL TIMBO  
+                          MEIO AMBIENTE DE TIMBO, TRANSITO DE TIMBO (Lucas Ranghetti #630176)
 ............................................................................ */
 
 {dbo/bo-erro1.i}
@@ -617,9 +619,13 @@ PROCEDURE retorna-valores-fatura.
                  END.
          END.      
 
-    IF  ((crapcon.cdempcon = 2044 AND crapcon.cdsegmto = 1)  OR   /* P.M. ITAJAI */
-	     (crapcon.cdempcon = 3493 AND crapcon.cdsegmto = 1)  OR   /* P.M. PRES GETULIO */
-	     (crapcon.cdempcon = 1756 AND crapcon.cdsegmto = 1)) THEN /* P.M. GUARAMIRIM */
+    IF  ((crapcon.cdempcon = 2044 AND crapcon.cdsegmto = 1) OR    /* P.M. ITAJAI */
+	      (crapcon.cdempcon = 3493 AND crapcon.cdsegmto = 1)  OR    /* P.M. PRES GETULIO */
+	      (crapcon.cdempcon = 1756 AND crapcon.cdsegmto = 1)  OR    /* P.M. GUARAMIRIM */
+        (crapcon.cdempcon = 4539 AND crapcon.cdsegmto = 1)  OR    /* P.M. TIMBO */
+        (crapcon.cdempcon = 0562 AND crapcon.cdsegmto = 5)  OR    /* DEFESA CIVIL TIMBO */
+        (crapcon.cdempcon = 0563 AND crapcon.cdsegmto = 5)  OR    /* MEIO AMBIENTE DE TIMBO */
+        (crapcon.cdempcon = 0564 AND crapcon.cdsegmto = 5)) THEN  /* TRANSITO DE TIMBO */
          DO:
              aux_dtmvtoan = STRING(YEAR(crapdat.dtmvtoan),"9999") +
                             STRING(MONTH(crapdat.dtmvtoan),"99")  +
