@@ -25,6 +25,14 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
   --
   --             26/09/2016 - Adicionado validacao de contratos de acordo na procedure
   --                          pc_valida_pagamentos_geral, Prj. 302 (Jean Michel).
+  --
+  --             31/03/2017 - Ajustado calculo de saldo para nao considerar valores bloqueados.
+  --                          Heitor (Mouts) - Melhoria 440
+  --
+  --
+  --
+  --
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tipo com as informacoes do registro de emprestimo. Antiga: tt-dados-epr */
@@ -7948,9 +7956,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           --Acumular Saldo
           pr_vlsomato := ROUND( nvl(vr_tab_saldos(vr_index_saldo).vlsddisp, 0) +
                                 nvl(vr_tab_saldos(vr_index_saldo).vlsdchsl, 0) +
-                                nvl(vr_tab_saldos(vr_index_saldo).vlsdbloq, 0) +
-                                nvl(vr_tab_saldos(vr_index_saldo).vlsdblpr, 0) +
-                                nvl(vr_tab_saldos(vr_index_saldo).vlsdblfp, 0) +
+                                --nvl(vr_tab_saldos(vr_index_saldo).vlsdbloq, 0) +
+                                --nvl(vr_tab_saldos(vr_index_saldo).vlsdblpr, 0) +
+                                --nvl(vr_tab_saldos(vr_index_saldo).vlsdblfp, 0) +
                                 nvl(vr_tab_saldos(vr_index_saldo).vllimcre, 0),2);
         END IF;
       
