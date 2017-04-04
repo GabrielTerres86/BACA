@@ -9,33 +9,39 @@
  */
 	session_start();
 
-	// Includes para controle da session, vari�veis globais de controle, e biblioteca de fun��es
+	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções
 	require_once("../../../../includes/config.php");
 	require_once("../../../../includes/funcoes.php");
 	require_once("../../../../includes/controla_secao.php");
 
-	// Verifica se tela foi chamada pelo m�todo POST
+	// Verifica se tela foi chamada pelo método POST
 	isPostMethod();
 
 	// Classe para leitura do xml de retorno
 	require_once("../../../../class/xmlfile.php");
 
 
-	// Verifica se o n�mero da conta foi informado
-	if (!isset($_POST["nrborder"])) {
+	// Verifica se o número da conta foi informado
+	if (!isset($_POST["nrborder"]) || !isset($_POST["nrdconta"])) {
 		exibeErro("Par&acirc;metros incorretos.");
 	}
 
+	$nrdconta = (isset($_POST["nrdconta"])) ? $_POST["nrdconta"] : 0;
 	$nrborder = (isset($_POST["nrborder"])) ? $_POST["nrborder"] : 0;
 
-	// Verifica se o n�mero do bordero � um inteiro v�lido
+	// Verifica se o número do bordero é um inteiro válido
 	if (!validaInteiro($nrborder)) {
 		exibeErro("N&uacute;mero do border&ocirc; inv&aacute;lida.");
+	}
+	// Verifica se o número da conta é um inteiro válido
+	if (!validaInteiro($nrdconta)) {
+		exibeErro("N&uacute;mero da conta inv&aacute;lida.");
 	}
 
 	// Montar o xml de Requisicao
 	$xml  = "<Root>";
 	$xml .= " <Dados>";
+	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
 	$xml .= "   <nrborder>".$nrborder."</nrborder>";
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
@@ -63,12 +69,10 @@
 	// Recarrega os bordero
 	echo 'carregaBorderosCheques();';
 
-	// Função para exibir erros na tela atrav�s de javascript
+	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) {
-		//echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
 		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
-		//echo '</script>';
 		exit();
 	}
 ?>

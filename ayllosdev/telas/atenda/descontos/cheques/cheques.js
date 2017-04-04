@@ -2866,6 +2866,7 @@ function rejeitaBorderoDscChq(){
 		url: UrlSite + "telas/atenda/descontos/cheques/cheques_bordero_rejeitar.php",
 		dataType: "html",
 		data: {
+			nrdconta: nrdconta,
 			nrborder: nrbordero,
 			redirect: "html_ajax"
 		},

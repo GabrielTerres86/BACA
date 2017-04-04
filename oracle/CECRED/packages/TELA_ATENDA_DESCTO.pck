@@ -126,7 +126,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_DESCTO IS
 															,pr_nmdcampo  OUT VARCHAR2              --> Nome do campo com erro
 															,pr_des_erro  OUT VARCHAR2);            --> Erros do processo
 	
-  PROCEDURE pc_rejeitar_bordero(pr_nrborder  IN crapcdb.nrborder%TYPE  --> Bordero
+  PROCEDURE pc_rejeitar_bordero(pr_nrdconta  IN crapcdb.nrdconta%TYPE  --> Conta
+                               ,pr_nrborder  IN crapcdb.nrborder%TYPE  --> Bordero
 														   ,pr_xmllog    IN VARCHAR2               --> XML com informacoes de LOG
 														   ,pr_cdcritic  OUT PLS_INTEGER           --> Codigo da critica
 														   ,pr_dscritic  OUT VARCHAR2              --> Descricao da critica
@@ -2972,7 +2973,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 
   END pc_efetuar_resgate;
 
-  PROCEDURE pc_rejeitar_bordero(pr_nrborder  IN crapcdb.nrborder%TYPE  --> Bordero
+  PROCEDURE pc_rejeitar_bordero(pr_nrdconta  IN crapcdb.nrdconta%TYPE  --> Conta
+                               ,pr_nrborder  IN crapcdb.nrborder%TYPE  --> Bordero
 														   ,pr_xmllog    IN VARCHAR2               --> XML com informacoes de LOG
 														   ,pr_cdcritic  OUT PLS_INTEGER           --> Codigo da critica
 														   ,pr_dscritic  OUT VARCHAR2              --> Descricao da critica
@@ -3012,11 +3014,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
     vr_idorigem VARCHAR2(100);
 		
     CURSOR cr_crapbdc (pr_cdcooper IN crapcop.cdcooper%TYPE
+                      ,pr_nrdconta IN crapass.nrdconta%TYPE
                       ,pr_nrborder IN crapbdc.nrborder%TYPE) IS
       SELECT 1
         FROM crapbdc
        WHERE cdcooper = pr_cdcooper
          AND nrborder = pr_nrborder
+         AND nrdconta = pr_nrdconta
          AND crapbdc.dtlibbdc IS NOT NULL;
     rw_crapbdc cr_crapbdc%ROWTYPE;
     
@@ -3047,7 +3051,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 		CLOSE BTCH0001.cr_crapdat;
 	
     -- Verifica se o bordero esta liberado
-		OPEN cr_crapbdc(vr_cdcooper, pr_nrborder);
+		OPEN cr_crapbdc(pr_cdcooper => vr_cdcooper,
+                    pr_nrdconta => pr_nrdconta,
+                    pr_nrborder => pr_nrborder);
 		FETCH cr_crapbdc INTO rw_crapbdc;
 		
     IF cr_crapbdc%FOUND THEN
@@ -3063,15 +3069,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
          SET dtrejeit = rw_crapdat.dtmvtolt
             ,cdoperej = vr_cdoperad
        WHERE cdcooper = vr_cdcooper
+         AND nrdconta = pr_nrdconta
          AND nrborder = pr_nrborder;
          
       UPDATE crapcdb
          SET insitana = 2
             ,cdopeana = vr_cdoperad
             ,dtsitana = rw_crapdat.dtmvtolt
-       WHERE cdcooper = 1
-         AND nrdconta = 620
-         AND nrborder = 1397236;
+       WHERE cdcooper = vr_cdcooper
+         AND nrdconta = pr_nrdconta
+         AND nrborder = pr_nrborder;
     END;
     
 		-- Efetuar commit
