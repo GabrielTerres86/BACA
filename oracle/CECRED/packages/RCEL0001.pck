@@ -3465,7 +3465,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
       
 		BEGIN
       
-      IF pr_inaprpen = 1 THEN
+      IF pr_inaprpen > 0 THEN
         -- Busca registro de recarga pendente
         OPEN cr_tbrecarga_operacao(pr_idoperacao);
         FETCH cr_tbrecarga_operacao INTO rw_tbrecarga_operacao;
