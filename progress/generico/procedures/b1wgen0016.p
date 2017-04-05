@@ -12566,7 +12566,7 @@ PROCEDURE aprova_trans_pend:
                                                      ,INPUT IF par_indvalid = 1 AND 
                                                                aux_conttran = 1 THEN 1 
                                                             ELSE  3        /* pr_aprvpend */
-                                                     ,OUTPUT 0
+                                                     ,OUTPUT ""
                                                      ,OUTPUT 0
                                                      ,OUTPUT "").
                                 CLOSE STORED-PROC pc_confirma_regarca_ib 
