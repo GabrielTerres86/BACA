@@ -7835,7 +7835,7 @@ PROCEDURE proc_operacao181:
            aux_vlrecarga   = DECI(GET-VALUE("aux_vlrecarga"))          
            aux_cdopcaodt   = INT(GET-VALUE("aux_cddopcao"))
            aux_dtrecarga   = DATE(GET-VALUE("aux_dtrecarga"))
-           aux_qtmesagd    = INT(GET-VALUE("aux_qtmesagd")).
+           aux_qtmesagd    = INT(GET-VALUE("aux_qtdmeses")).
            
     RUN sistema/internet/fontes/InternetBank181.p (INPUT aux_operacao,
                                                    INPUT aux_cdcooper,
