@@ -2,7 +2,7 @@
 	/**************************************************************************
 	      Fonte: cadastrar_novo_plano.php                                  
 	      Autor: David                                                     
-	      Data : Outubro/2007                 Ultima Alteracao: 04/10/2015 
+	      Data : Outubro/2007                 Ultima Alteracao: 22/03/2017
 	                                                                  
 		  Objetivo  : Cadastrar Novo Plano de Capital - rotina de Capital da tela ATENDA                                       
 	                                                                  	 
@@ -11,6 +11,10 @@
 					  04/10/2015 - Reformulacao cadastral (Gabriel-RKAM).						
 							   17/06/2016 - M181 - Alterar o CDAGENCI para passar o CDPACTRA (Rafael Maciel - RKAM) 
 							   18/07/2016 - Correcao no retorno das informacoes do XML. SD 479874. (Carlos R)
+
+							   22/03/2017 - Ajuste para solicitar a senha do cooperado e n√£o gerar o termo
+                                            para coleta da assinatura 
+                                           (Jonata - RKAM / M294). 
 	**************************************************************************/
 	
 	session_start();
@@ -44,6 +48,7 @@
 	$dtdpagto = $_POST["dtdpagto"];	
 	$flcancel = $_POST["flcancel"];
 	$executandoProdutos = $_POST['executandoProdutos'];
+	$tpautori = $_POST["tpautori"];
 
 	// Verifica se n&uacute;mero da conta &eacute; um inteiro v&aacute;lido
 	if (!validaInteiro($nrdconta)) {
@@ -74,6 +79,11 @@
 		exibeErro("Data de In&iacute;cio do pagamento inv&aacute;lida.");
 	}
 	
+	// Verifica o tipo de autoriza&ccedil;&atilde;o
+	if ($tpautori != "1" && $tpautori != "2") {
+		exibeErro("Tipo de autoriza&ccedil;&atilde;o inv&aacute;lido.");
+	}
+
 	// Monta o xml de requisi&ccedil;&atilde;o
 	$xmlSetPlano  = "";
 	$xmlSetPlano .= "<Root>";
@@ -133,8 +143,25 @@
 	
 	echo "callafterCapital = \"".$metodo."\";";
 	
-	// Chama funÁ„o para gerar termo de autorizaÁ„o do novo plano			
+	if($tpautori == "1" ){
+	 
+	  if ($flcancel == "true"){
+			
+		 echo 'showError("inform","Plano alterado com sucesso.","Notifica&ccedil;&atilde;o - Ayllos","hideMsgAguardo();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));'.$metodo.'");';
+    
+	  }else{
+		
+		  echo 'showError("inform","Plano aderido com sucesso.","Notifica&ccedil;&atilde;o - Ayllos","hideMsgAguardo();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));'.$metodo.'");';
+    
+	  }
+
+
+	}else{
+  
+	// Chama fun√ß√£o para gerar termo de autoriza√ß√£o do novo plano			
 	echo 'showConfirmacao("Deseja visualizar a impress&atilde;o?","Confirma&ccedil;&atilde;o - Ayllos","hideMsgAguardo();imprimeNovoPlano();","hideMsgAguardo();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));'.$metodo.'","sim.gif","nao.gif");';
+	
+	}
 	
 	// Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript
 	function exibeErro($msgErro) { 

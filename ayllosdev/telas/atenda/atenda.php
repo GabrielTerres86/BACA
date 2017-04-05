@@ -2,7 +2,7 @@
 /*******************************************************************************
  Fonte: atenda.php                                                
  Autor: David                                                     
- Data : Julho/2007                   Última Alteração: 21/03/2017
+ Data : Julho/2007                   Última Alteração: 28/03/2017
                                                                   
  Objetivo  : Mostrar tela ATENDA                                  
                                                                   
@@ -56,6 +56,7 @@
 
 			 21/03/2017 - Ajuste para incluir o controle mt_rand na chamada do atenda.css (Adriano - SD 603451).
 
+			 28/03/2017 - Ajuste para incluir o controle mt_rand na chamada do funcoes.js (Jonata - RKAM / M294).   
 
 
 //**************************************************************************/
@@ -89,7 +90,7 @@ setVarSession("rotinasTela", $rotinasTela);
         <link rel="stylesheet" href="../../css/base/jquery.ui.all.css">
         <script type="text/javascript" src="../../scripts/scripts.js"></script>
         <script type="text/javascript" src="../../scripts/dimensions.js"></script>
-        <script type="text/javascript" src="../../scripts/funcoes.js"></script>
+        <script type="text/javascript" src="../../scripts/funcoes.js?keyrand=<?php echo mt_rand(); ?>"></script>
         <script type="text/javascript" src="../../scripts/mascara.js"></script>
         <script type="text/javascript" src="../../scripts/menu.js"></script>
         <script type="text/javascript" src="../../includes/pesquisa/pesquisa.js"></script>
@@ -394,7 +395,7 @@ setVarSession("rotinasTela", $rotinasTela);
 																						     <p id="valueRot29" class="txtNormal">&nbsp;</p>
 																							</div>																						    
 																						  </div>
-
+																						  
 																						  
 																						  <div class="bloco_full">
 
