@@ -122,8 +122,8 @@ function controlaFoco() {
 		}	
 	});
 	
-	$('#vlrmaxpj','#frmParrec').unbind('keydown').bind('keydown', function(e) {
-		if ( e.keyCode == 9 || e.keyCode == 13 ) {	
+	$('#vlrmaxpj','#frmParrec').unbind('keypress').bind('keypress', function(e) {
+		if ( e.keyCode == 13 ) {	
 			$('#btProsseguir','#divBotoes').click();
 			return false;
 		}	

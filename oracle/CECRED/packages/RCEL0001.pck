@@ -942,7 +942,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 				CLOSE cr_crapcbf;
 				-- Gerar crítica													 
 				vr_cdcritic := 0;
-				vr_dscritic := 'Número inválido.';
+				vr_dscritic := 'Número de telefone inválido.';
 				-- Levantar exceção
 				RAISE vr_exc_erro;
 			END IF;
@@ -971,7 +971,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 		     IF pr_qtmesagd > 24 THEN
 					 -- Gerar crítica
 					 vr_cdcritic := 0;
-					 vr_dscritic := 'A quantidade máxima de meses é 24';
+					 vr_dscritic := 'Quantidade máxima de 24 meses permitida.';
 					 -- Levantar exceção
 					 RAISE vr_exc_erro;
 				 END IF;
@@ -1040,6 +1040,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 													                       ELSE 'TAA' END
 														,pr_nrdconta => pr_nrdconta
 														,pr_nrdrowid => vr_nrdrowid);
+						
+				-- Se crítica for número de telefone inválido devemos logar como Número de telefone fraudulento								
+			  IF vr_dscritic = 'Número de telefone inválido.' THEN
+					-- Telefone												 
+					GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+																	 ,pr_nmdcampo => 'Telefone'
+																	 ,pr_dsdadant => ' '
+																	 ,pr_dsdadatu => '('||to_char(pr_nrdddtel, 'fm00')||')' ||
+																									 to_char(pr_nrtelefo,'fm00000g0000','nls_numeric_characters=.-'));
+					-- Erro
+					GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+																	 ,pr_nmdcampo => 'Erro'
+																	 ,pr_dsdadant => ' '
+																	 ,pr_dsdadatu => 'Número de telefone fraudulento');
+			END IF;														
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
