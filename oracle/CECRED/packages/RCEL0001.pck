@@ -210,7 +210,7 @@ CREATE OR REPLACE PACKAGE CECRED.RCEL0001 AS
                                   ,pr_qtmesagd   IN INTEGER    
                                   ,pr_idoperacao IN tbrecarga_operacao.idoperacao%TYPE
                                   ,pr_inaprpen   IN NUMBER
-                                  ,pr_idastcjt  OUT INTEGER
+                                  ,pr_msg_retor OUT VARCHAR2
                                   ,pr_cdcritic  OUT PLS_INTEGER
                                   ,pr_dscritic  OUT VARCHAR2);
   
@@ -3411,7 +3411,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                                   ,pr_qtmesagd   IN INTEGER    
                                   ,pr_idoperacao IN tbrecarga_operacao.idoperacao%TYPE
                                   ,pr_inaprpen   IN NUMBER
-                                  ,pr_idastcjt  OUT INTEGER
+                                  ,pr_msg_retor OUT VARCHAR2
                                   ,pr_cdcritic  OUT PLS_INTEGER
                                   ,pr_dscritic  OUT VARCHAR2) IS
   BEGIN
@@ -3436,6 +3436,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
       vr_lsdatagd  VARCHAR2(10000);
       vr_dsprotoc  VARCHAR2(10000);
       vr_dsnsuope  tbrecarga_operacao.dsnsu_operadora%TYPE;
+      vr_idastcjt  INTEGER;
       
       vr_nrddd     tbrecarga_favorito.nrddd%TYPE;
       vr_nrcelular tbrecarga_favorito.nrcelular%TYPE;
@@ -3541,7 +3542,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                                   ,pr_nrsequni  => 0
                                   ,pr_idorigem  => 3
                                   ,pr_inaprpen  => pr_inaprpen
-                                  ,pr_idastcjt  => pr_idastcjt
+                                  ,pr_idastcjt  => vr_idastcjt
                                   ,pr_idoperac  => pr_idoperacao
                                   ,pr_dsprotoc  => vr_dsprotoc
                                   ,pr_dsnsuope  => vr_dsnsuope
@@ -3552,6 +3553,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
           RAISE vr_exc_erro;                                            
         END IF;
       END IF;
+      
+      IF vr_idastcjt = 0  AND pr_nrcpfope = 0 THEN
+        IF pr_cddopcao = 1 THEN
+          pr_msg_retor := 'Recarga de celular efetuada com sucesso.';
+        ELSE
+          pr_msg_retor := 'Recarga de celular agendada com sucesso.';
+        END IF;
+      ELSE
+        IF pr_cddopcao = 1 THEN
+          pr_msg_retor := 'Recarga de celular registrada com sucesso. Aguardando aprova&ccedil;&atilde;o dos demais respons&aacute;veis.';
+        ELSE
+          pr_msg_retor := 'Agendamento de recarga de celular registrada com sucesso. Aguardando aprova&ccedil;&atilde;o dos demais respons&aacute;veis.';
+        END IF;
+      END IF;
+      
     EXCEPTION
       WHEN vr_exc_erro THEN
         IF vr_cdcritic <> 0 THEN

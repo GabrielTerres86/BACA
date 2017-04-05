@@ -23,7 +23,7 @@ CREATE WIDGET-POOL.
 DEF VAR aux_dscritic AS CHAR                         NO-UNDO.
 DEF VAR xml_req      AS LONGCHAR                     NO-UNDO.
 DEF VAR aux_dsxmlout AS CHAR                         NO-UNDO.
-DEF VAR aux_idastcjt AS INT                          NO-UNDO.
+DEF VAR aux_msgretor AS CHAR                         NO-UNDO.
 
 DEF  INPUT PARAM par_operacao AS INT                 NO-UNDO.
 DEF  INPUT PARAM par_cdcooper    LIKE crapass.cdcooper  NO-UNDO.
@@ -228,7 +228,7 @@ ELSE IF par_operacao = 6 THEN
                          ,INPUT par_qtmesagd
                          ,INPUT 0
                          ,INPUT 0
-                         ,OUTPUT 0
+                         ,OUTPUT ""
                          ,OUTPUT 0
                          ,OUTPUT "").
                          
@@ -237,13 +237,13 @@ ELSE IF par_operacao = 6 THEN
          WHERE PROC-HANDLE = aux_handproc.
     
     ASSIGN aux_dscritic = ""
-           aux_idastcjt = 0
+           aux_msgretor = ""
            aux_dscritic = pc_confirma_regarca_ib.pr_dscritic 
                           WHEN pc_confirma_regarca_ib.pr_dscritic <> ?
-           aux_idastcjt = pc_confirma_regarca_ib.pr_idastcjt 
+           aux_msgretor = pc_confirma_regarca_ib.pr_idastcjt 
                           WHEN pc_confirma_regarca_ib.pr_idastcjt <> ?.
     
-    xml_req = "<idastcjt>" + STRING(aux_idastcjt) + "</idastcjt>".
+    xml_req = "<msgretor>" + STRING(aux_msgretor) + "</msgretor>".
     
     { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
