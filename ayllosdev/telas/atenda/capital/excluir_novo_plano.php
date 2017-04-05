@@ -1,15 +1,21 @@
 <?php 
 
-	//************************************************************************//
-	//*** Fonte: excluir_novo_plano.php                                    ***//
-	//*** Autor: David                                                     ***//
-	//*** Data : Outubro/2007                 &Uacute;ltima Altera&ccedil;&atilde;o: 00/00/0000 ***//
-	//***                                                                  ***//
-	//*** Objetivo  : Excluir Novo Plano de Capital - rotina de Capital da ***//
-	//***             tela ATENDA                                          ***//
-	//***                                                                  ***//	 
-	//*** Altera&ccedil;&otilde;es:                                                      ***//
-	//************************************************************************//
+	/************************************************************************
+	 Fonte: excluir_novo_plano.php                                    
+	 Autor: David                                                     
+	 Data : Outubro/2007                       Última alteração: 22/03/2017
+	                                                                  
+	 Objetivo  : Excluir Novo Plano de Capital - rotina de Capital da 
+	             tela ATENDA                                          
+	                                                                  
+	 Alterações: 22/03/2017 - Ajuste para solicitar a senha do cooperado e não gerar o termo
+                            para coleta da assinatura 
+                           (Jonata - RKAM / M294).                             
+                           
+                           
+                           
+                           
+	************************************************************************/
 	
 	session_start();
 	
@@ -45,7 +51,7 @@
 	$xmlExcluirPlano .= "<Root>";
 	$xmlExcluirPlano .= "	<Cabecalho>";
 	$xmlExcluirPlano .= "		<Bo>b1wgen0021.p</Bo>";
-	$xmlExcluirPlano .= "		<Proc>exclui-plano</Proc>";
+	$xmlExcluirPlano .= "		<Proc>cancelar-plano-atual</Proc>";
 	$xmlExcluirPlano .= "	</Cabecalho>";
 	$xmlExcluirPlano .= "	<Dados>";
 	$xmlExcluirPlano .= "		<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
@@ -75,16 +81,16 @@
 	echo 'blockBackground(parseInt($("#divRotina").css("z-index")));';	
 	
 	// Procura ind&iacute;ce da op&ccedil;&atilde;o "P"
-	$idPrincipal = array_search("P",$glbvars["opcoesTela"]);
-	
-	// Se &iacute;ndice da op&ccedil;&atilde;o "P" foi encontrado
+	$idPrincipal = array_search("P",$glbvars["opcoesTela"]);	
+  
+  // Se &iacute;ndice da op&ccedil;&atilde;o "P" foi encontrado
 	if (!($idPrincipal === false)) {
-		echo 'acessaOpcaoAba('.count($glbvars["opcoesTela"]).','.$idPrincipal.',"'.$glbvars["opcoesTela"][$idPrincipal].'");';
+		echo 'acessaOpcaoAba('.count($glbvars["opcoesTela"]).','.$idPrincipal.',\''.$glbvars["opcoesTela"][$idPrincipal].'\');';	
 	} else {
-		echo 'acessaOpcaoAba('.count($glbvars["opcoesTela"]).',0,"'.$glbvars["opcoesTela"][0].'");';
+		echo 'acessaOpcaoAba('.count($glbvars["opcoesTela"]).',0,\''.$glbvars["opcoesTela"][0].'\');';	
 	}
 	
-	// Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript
+  // Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript
 	function exibeErro($msgErro) { 
 		echo 'hideMsgAguardo();';
 		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';

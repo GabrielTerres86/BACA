@@ -99,7 +99,7 @@
  * 080: [18/10/2016] Kelvin			  (CECRED) : Funcao removeCaracteresInvalidos nao estava removendo os caracteres ">" e "<", ajustado 
 												 para remover os mesmos e criado uma flag para identificar se deve remover os acentos ou nao.
  * 081: [08/02/2017] Kelvin		      (CECRED) : Adicionado na funcao removeCaracteresInvalidos os caracteres ("º","°","ª") para ajustar o chamado 562089.
-
+ * 086: [24/03/2017] JOnata           (RKAM)   : Ajuste devido a inclusão da include para soliticar senha do cartão magnético (M294).
  */ 	 
 
 var UrlSite     = parent.window.location.href.substr(0,parent.window.location.href.lastIndexOf("/") + 1); // Url do site
@@ -2746,6 +2746,121 @@ function validaSenhaInternet(){
 		data: {
 			nrdconta: nrdconta,
             idseqttl: idseqttl,
+            cddsenha: cddsenha,
+            retorno: retorno,
+			redirect: 'html_ajax' // Tipo de retorno do ajax
+		},		
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".","Alerta - Ayllos","return false;");							
+		},
+		success: function(response) {			
+				hideMsgAguardo();
+				if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
+					try {
+						if(response.indexOf(""))
+                          $('#divUsoGenerico').html(response);
+                        else
+                          eval(response);
+						  return false;
+					} catch(error) {						
+						showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground();');
+					}
+				} else {
+					try {
+						eval( response );						
+					} catch(error) {						
+						showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground();');
+					}
+				}
+		}				
+	});
+		
+	return false;
+}
+
+
+function formataVerificaSenhaMagnetico() {
+
+
+    // label
+    rCddsenha = $('label[for="cddsenha"]', '#divSolicitaSenhaMagnetico');
+    rCddsenha.css('width', '150px').css('font-weight', 'bold').addClass('rotulo-linha');
+
+    //Campo
+    cCddsenha = $('#cddsenha', '#divSolicitaSenhaMagnetico');
+    cCddsenha.css('width', '100px').attr('maxlength', '8');
+    cCddsenha.addClass('campo');
+    cCddsenha.focus();
+
+    ajustarCentralizacao();
+
+    layoutPadrao();
+
+    return false;
+}
+
+//Solicita senha do cartao magnetico ao cooperado
+function solicitaSenhaMagnetico(retorno, nrdconta){
+    
+    // Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, carregando tela de senha...");   
+    
+    // Carrega conteúdo da opção através de ajax
+	$.ajax({		
+		type: 'POST', 
+		url: UrlSite + 'includes/senha_magnetico/form_senha_magnetico.php',
+		data: {
+           nrdconta: nrdconta,
+           retorno: retorno,
+           redirect: 'html_ajax' // Tipo de retorno do ajax
+		},		
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".","Alerta - Ayllos","return false;");							
+		},
+		success: function(response) {			
+				hideMsgAguardo();
+				if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
+					try {
+                            exibeRotina($('#divUsoGenerico'));
+                            $('#divUsoGenerico').html(response);
+                            $('#divUsoGenerico').css({'width':'410px'});//css({'left':'340px','top':'91px'});
+                            
+                            bloqueiaFundo($('#divUsoGenerico'));                            
+                            formataVerificaSenhaMagnetico();
+                          
+                            return false;
+					} catch(error) {						
+						showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground();');
+					}
+				} else {
+					try {
+						eval( response );						
+					} catch(error) {						
+						showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground();');
+					}
+				}
+		}				
+	});
+		
+	return false;
+}
+//Valida se a senha está correta
+function validaSenhaMagnetico(){
+    
+    // Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, Validando senha cooperado...");    
+    
+    var cddsenha = $('#cddsenha', '#divSolicitaSenhaMagnetico').val();
+    var retorno  = $('#retorno', '#divSolicitaSenhaMagnetico').val();
+    var nrdconta = $('#nrdconta', '#divSolicitaSenhaMagnetico').val();
+          
+	$.ajax({		
+		type: 'POST', 
+		url: UrlSite + 'includes/senha_magnetico/valida_senha_magnetico.php',
+		data: {
+			nrdconta: nrdconta,            
             cddsenha: cddsenha,
             retorno: retorno,
 			redirect: 'html_ajax' // Tipo de retorno do ajax
