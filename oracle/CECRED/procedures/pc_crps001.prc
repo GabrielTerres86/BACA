@@ -1774,11 +1774,24 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                --> calcular a quantidade de dias corridos
                vr_qtdiaiof := vr_dtmvtolt - vr_dtmvtoan;
                    
-               --> calcular valor adicional do IOF
+               IF vr_qtdiaiof > 1 THEN
+                 -- Diminuir um dia que será calcularo com o saldo atual
+                 vr_qtdiaiof := vr_qtdiaiof -1;
+                 --> Calcular valor adicional do IOF dos dias não uteis(final de semana e feriado)
+                 --> considerando o saldo anterior
+                 IF vr_tab_crapass(rw_crapsld.nrdconta).inpessoa = 1 THEN
+                   vr_vltariof_adic := (vr_vliofant * vr_qtdiaiof * 0.000082);
+                 ELSE
+                   vr_vltariof_adic := (vr_vliofant * vr_qtdiaiof * 0.000041);
+                 END IF;
+               
+               END IF;
+                   
+               --> Calcular valor adicional do IOF
                IF vr_tab_crapass(rw_crapsld.nrdconta).inpessoa = 1 THEN
-                 vr_vltariof_adic := (vr_vliofatu * vr_qtdiaiof * 0.000082);
+                 vr_vltariof_adic := vr_vltariof_adic + (vr_vliofatu * 1 * 0.000082);
                ELSE
-                 vr_vltariof_adic := (vr_vliofatu * vr_qtdiaiof * 0.000041);
+                 vr_vltariof_adic := vr_vltariof_adic + (vr_vliofatu * 1 * 0.000041);
                END IF;
              END IF;
            END IF;
