@@ -13,8 +13,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
   --  Objetivo  : Envio de negativacoes para a Serasa
   --
   --  Alteracoes: 13/03/2016 - Ajustes decorrente a mudança de algumas rotinas da PAGA0001 
-  --						   para a COBR0006 em virtude da conversão das rotinas de arquivos CNAB
-  --						   (Andrei - RKAM). 
+  --               para a COBR0006 em virtude da conversão das rotinas de arquivos CNAB
+  --               (Andrei - RKAM). 
   --
   --              20/06/2016 - Enviar todos os dados na primeira linha de cada registro. Antes o 
   --                           numero da conta ia somente na segunda linha
@@ -31,6 +31,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
   --
   --              30/03/2017 - #551229 Job ENVIO_SERASA excluído para a criação dos jobs JBCOBRAN_ENVIO_SERASA e JBCOBRAN_RECEBE_SERASA.
   --                           Log de início, fim e erros na execução do job. (Carlos)
+  --
+  --              05/04/2017 - #638856 Remessa Serasa - Correção de formatação de campos no registros 1 e 2, quando vinham nulos,
+  --                           não obedeciam formatação das linhas (Everton - Mouts)
   ---------------------------------------------------------------------------------------------------------------
   
   -- Atualiza a situacao do boleto como enviada
@@ -564,12 +567,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
                                                          RPad(' ',70,' ')                 || --> Nome do Pai do Devedor
                                                          RPad(' ',70,' ')                 || --> Nome da Mãe do Devedor
                                                          RPad(' ',8,' ')                  || --> Data de Nascimento do Devedor
-                                                         RPad(rw_crapcob.nrnosnum,15,' ') || --> Nosso número – da Instituição Conveniada
+                                                         RPad(nvl(rw_crapcob.nrnosnum,' '),15,' ') || --> Nosso número – da Instituição Conveniada
                                                          RPad(vr_dsdespec,3,' ')          || --> Espécie do Titulo
                                                          RPad(rw_crapjur.nmcidade,40,' ') || -- Cidade que Originou a Anotação
                                                          RPad(rw_crapjur.cdufende,2,' ')  || --> UF que Originou a Anotação
                                                          
-                                                         RPad(rw_crapcob.nrdocmto,16,' ') || --> Número do titulo ou contrato
+                                                         RPad(nvl(to_char(rw_crapcob.nrdocmto),' '),16,' ') || --> Número do titulo ou contrato
                                                          RPad(rw_crapcob.dtdocmto,8,' ')  || --> Data da Emissão do Título 
                                                          to_char(rw_crapcob.dtvencto,'YYYYMMDD')  || --> Data de Vencimento do Título
                                                          '001'                            || --> Tipo de Moeda ( 001 – Real )
@@ -580,7 +583,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
                                                          '1'                              || --> Número de Controle(s) do(s) Devedor(es)
                                                          RPad(' ',1,' ')                  || --> Tipo de Anotação 
                                                          RPad(rw_crapcob.nrcnvcob,10,' ') || --> Uso Reservado da Instituição Conveniada (na inclusão)
-                                                         RPad(rw_crapcob.nrdconta,10,' ') || --> Uso Reservado da Instituição Conveniada (na inclusão)
+                                                         RPad(nvl(to_char(rw_crapcob.nrdconta),' '),10,' ') || --> Uso Reservado da Instituição Conveniada (na inclusão)
                                                          RPad(' ',2,' ')                  || --> Motivo de Baixa
                                                          'B'                              || --> Indicativo do Tipo de Comunicado ao Devedor
                                                          RPad(' ',1,' ')                  || --> Indicador de Melhor Endereço
@@ -630,7 +633,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
                                                          RPad(' ',17,' ')                 || --> Para uso do banco 
                                                          RPad(' ',3,' ')                  || --> Deixar em branco
                                                          to_char(rw_crapdat.dtmvtolt,'yyyymmdd') || --> Data do Processamento – AAAAMMDD
-                                                         RPad(rw_crapcob.nrnosnum,25,' ') || --> Nosso número
+                                                         RPad(nvl(rw_crapcob.nrnosnum,' '),25,' ') || --> Nosso número
                                                          RPad('01',5,' ')                 || --> Número da Carteira
                                                          RPad('R$',3,' ')                 || --> Espécie de Moeda (R$) 
                                                          RPad(' ',9,' ')                  || --> Quantidade de Moeda 
