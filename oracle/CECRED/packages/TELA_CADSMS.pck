@@ -186,6 +186,22 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADSMS IS
                                  ,pr_retxml   IN OUT NOCOPY xmltype          --> Arquivo de retorno do XML
                                  ,pr_nmdcampo OUT VARCHAR2                   --> Nome do campo com erro
                                  ,pr_des_erro OUT VARCHAR2);                                
+                                 
+  PROCEDURE pc_buscar_prox_id_pacote_web(pr_cdcooper IN tbcobran_sms_pacotes.cdcooper%TYPE
+                                        ,pr_xmllog   IN VARCHAR2                    --> XML com informacoes de LOG
+                                        ,pr_cdcritic OUT PLS_INTEGER                --> Codigo da critica
+                                        ,pr_dscritic OUT VARCHAR2                   --> Descricao da critica
+                                        ,pr_retxml   IN OUT NOCOPY xmltype          --> Arquivo de retorno do XML
+                                        ,pr_nmdcampo OUT VARCHAR2                   --> Nome do campo com erro
+                                        ,pr_des_erro OUT VARCHAR2);
+
+  PROCEDURE pc_buscar_tipo_pessoa_web(pr_cdtarifa IN craptar.cdtarifa%TYPE
+                                     ,pr_xmllog   IN VARCHAR2                    --> XML com informacoes de LOG
+                                     ,pr_cdcritic OUT PLS_INTEGER                --> Codigo da critica
+                                     ,pr_dscritic OUT VARCHAR2                   --> Descricao da critica
+                                     ,pr_retxml   IN OUT NOCOPY xmltype          --> Arquivo de retorno do XML
+                                     ,pr_nmdcampo OUT VARCHAR2                   --> Nome do campo com erro
+                                     ,pr_des_erro OUT VARCHAR2);                                 
                                                                                               
 END TELA_CADSMS;
 /
@@ -1692,19 +1708,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADSMS IS
     Alteracoes: -----
     ..............................................................................*/                                   
                                    
-     CURSOR cr_crapfco(pr_cdcooper crapcop.cdcooper%TYPE
-                      ,pr_cdtarifa craptar.cdtarifa%TYPE) IS
-
-       SELECT fco.vltarifa
-         FROM crapfco fco
-             ,crapfvl fvl
-        WHERE fco.cdcooper = pr_cdcooper
-          AND fco.flgvigen = 1 -- ativa
-          AND fco.cdfaixav = fvl.cdfaixav
-          AND fvl.cdtarifa = pr_cdtarifa;
- 
-      rw_crapfco cr_crapfco%ROWTYPE;
-      
+    
       -- Variável de críticas
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic VARCHAR2(1000);       
@@ -1951,25 +1955,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADSMS IS
       vr_idx := vr_tab_pacote.first;
       
       WHILE vr_idx IS NOT NULL LOOP
-      
-      vr_retxml := '<?xml version="1.0" encoding="ISO-8859-1" ?>';
-      vr_retxml := vr_retxml || '<Root><Dados>';
-      vr_retxml := vr_retxml || '<idpacote>'     || vr_tab_pacote(vr_idx).idpacote                                || '</idpacote>';
-      vr_retxml := vr_retxml || '<cdcooper>'     || vr_tab_pacote(vr_idx).cdcooper                                || '</cdcooper>';
-      vr_retxml := vr_retxml || '<dspacote>'     || vr_tab_pacote(vr_idx).dspacote                                || '</dspacote>';
-      vr_retxml := vr_retxml || '<flgstatus>'    || vr_tab_pacote(vr_idx).flgstatus                               || '</flgstatus>';
-      vr_retxml := vr_retxml || '<cdtarifa>'     || vr_tab_pacote(vr_idx).cdtarifa                                || '</cdtarifa>';
-      vr_retxml := vr_retxml || '<perdesconto>'  || TO_CHAR(NVL(vr_tab_pacote(vr_idx).perdesconto,0),'fm999g999g990d00') || '</perdesconto>';
-      vr_retxml := vr_retxml || '<dspessoa>'     || vr_tab_pacote(vr_idx).dspessoa                                || '</dspessoa>';
-      vr_retxml := vr_retxml || '<qtdsms>'       || vr_tab_pacote(vr_idx).qtdsms                                  || '</qtdsms>';
-      vr_retxml := vr_retxml || '<dhinclusao>'   || vr_tab_pacote(vr_idx).dhinclusao                              || '</dhinclusao>';
-      vr_retxml := vr_retxml || '<dhultima_atu>' || TO_CHAR(vr_tab_pacote(vr_idx).dhultima_atu,'DD/MM/YYYY')      || '</dhultima_atu>';      
-      vr_retxml := vr_retxml || '<cdoperad>'     || vr_tab_pacote(vr_idx).cdoperad                                        || '</cdoperad>';
-      vr_retxml := vr_retxml || '<vlsms>'        || TO_CHAR(NVL(vr_tab_pacote(vr_idx).vlsms,0),'fm999g999g990d00')           ||'</vlsms>';
-      vr_retxml := vr_retxml || '<vlsmsad>'      || TO_CHAR(NVL(vr_tab_pacote(vr_idx).vlsmsad,0),'fm999g999g990d00')         ||'</vlsmsad>';
-      vr_retxml := vr_retxml || '<vlpacote>'     || TO_CHAR(NVL(vr_tab_pacote(vr_idx).vlpacote,0),'fm999g999g990d00')        ||'</vlpacote>';
-      vr_retxml := vr_retxml || '</Dados></Root>';
-      
+        vr_retxml := '<?xml version="1.0" encoding="ISO-8859-1" ?>';
+        vr_retxml := vr_retxml || '<Root><Dados>';
+        vr_retxml := vr_retxml || '<idpacote>'     || vr_tab_pacote(vr_idx).idpacote                                || '</idpacote>';
+        vr_retxml := vr_retxml || '<cdcooper>'     || vr_tab_pacote(vr_idx).cdcooper                                || '</cdcooper>';
+        vr_retxml := vr_retxml || '<dspacote>'     || vr_tab_pacote(vr_idx).dspacote                                || '</dspacote>';
+        vr_retxml := vr_retxml || '<flgstatus>'    || vr_tab_pacote(vr_idx).flgstatus                               || '</flgstatus>';
+        vr_retxml := vr_retxml || '<cdtarifa>'     || vr_tab_pacote(vr_idx).cdtarifa                                || '</cdtarifa>';
+        vr_retxml := vr_retxml || '<perdesconto>'  || TO_CHAR(NVL(vr_tab_pacote(vr_idx).perdesconto,0),'fm999g999g990d00') || '</perdesconto>';
+        vr_retxml := vr_retxml || '<dspessoa>'     || vr_tab_pacote(vr_idx).dspessoa                                || '</dspessoa>';
+        vr_retxml := vr_retxml || '<qtdsms>'       || vr_tab_pacote(vr_idx).qtdsms                                  || '</qtdsms>';
+        vr_retxml := vr_retxml || '<dhinclusao>'   || vr_tab_pacote(vr_idx).dhinclusao                              || '</dhinclusao>';
+        vr_retxml := vr_retxml || '<dhultima_atu>' || TO_CHAR(vr_tab_pacote(vr_idx).dhultima_atu,'DD/MM/YYYY')      || '</dhultima_atu>';      
+        vr_retxml := vr_retxml || '<cdoperad>'     || vr_tab_pacote(vr_idx).cdoperad                                        || '</cdoperad>';
+        vr_retxml := vr_retxml || '<vlsms>'        || TO_CHAR(NVL(vr_tab_pacote(vr_idx).vlsms,0),'fm999g999g990d00')           ||'</vlsms>';
+        vr_retxml := vr_retxml || '<vlsmsad>'      || TO_CHAR(NVL(vr_tab_pacote(vr_idx).vlsmsad,0),'fm999g999g990d00')         ||'</vlsmsad>';
+        vr_retxml := vr_retxml || '<vlpacote>'     || TO_CHAR(NVL(vr_tab_pacote(vr_idx).vlpacote,0),'fm999g999g990d00')        ||'</vlpacote>';
+        vr_retxml := vr_retxml || '</Dados></Root>';
         vr_idx := vr_tab_pacote.next(vr_idx);
       END LOOP;
       
@@ -2162,9 +2164,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADSMS IS
              AND flgstatus = pr_flgstatus
         )a WHERE rownum < ((pr_pagina * pr_tamanho_pagina) + 1)
         ) WHERE r__ >= (((pr_pagina-1) * pr_tamanho_pagina) + 1);
-
-        
-     rw_pacote_sms cr_pacote_sms%ROWTYPE;
         
     vr_cdcritic crapcri.cdcritic%TYPE;
     vr_dscritic VARCHAR2(10000);
@@ -2322,45 +2321,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADSMS IS
     
     Alteracoes: -----
     ..............................................................................*/                                 
-   
-     CURSOR cr_pacote_sms(pr_cdcooper tbcobran_sms_pacotes.cdcooper%TYPE
-                         ,pr_flgstatus tbcobran_sms_pacotes.flgstatus%TYPE) IS
-
-
-      SELECT * FROM 
-      (
-       SELECT a.*, rownum r__
-       FROM (
-          SELECT idpacote
-                ,dspacote
-                ,decode(flgstatus, 0, 'Inativo', 1, 'Ativo') flgstatus
-                ,cdtarifa
-                ,perdesconto
-                ,inpessoa
-                ,qtdsms
-                ,dhinclusao
-                ,cdoperad
-            FROM tbcobran_sms_pacotes
-           WHERE cdcooper = pr_cdcooper
-             AND idpacote > 2
-             AND flgstatus = pr_flgstatus
-        )a WHERE rownum < ((pr_pagina * pr_tamanho_pagina) + 1)
-        ) WHERE r__ >= (((pr_pagina-1) * pr_tamanho_pagina) + 1);
-
-        
-     rw_pacote_sms cr_pacote_sms%ROWTYPE;
-        
+       
     vr_cdcritic crapcri.cdcritic%TYPE;
     vr_dscritic VARCHAR2(10000);
     vr_exc_saida EXCEPTION;    
-    vr_contador PLS_INTEGER := 0;
-    vr_vlsms    NUMBER(15,2) := 0; -- Valor da SMS do Pacote
-    vr_vlsmsad  NUMBER(15,2) := 0; --Valor da SMS/Adicional
-    vr_vlpacote NUMBER(15,2) := 0; --Valor do Pacote
-    vr_vltarifa NUMBER(15,2) := 0; --Valor Tarifa    
-    vr_flgstatus PLS_INTEGER := 0; 
-    vr_total_registros INTEGER := 0;
     vr_retxml          CLOB;
+    vr_flgstatus NUMBER;
 
   BEGIN
     
@@ -2372,18 +2338,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADSMS IS
       vr_flgstatus := NULL;
     ELSE
       vr_flgstatus := pr_flgstatus;
-
     END IF;    
     
-    -- Conta quantos registros
-    SELECT COUNT(*) INTO vr_total_registros
-      FROM tbcobran_sms_pacotes
-     WHERE cdcooper = pr_cdcooper
-       AND flgstatus = pr_flgstatus;
-
-    
     pc_listar_pacotes_prog (pr_cdcooper  => pr_cdcooper             --> Codigo da cooperativa
-                           ,pr_flgstatus => pr_flgstatus            --> Situação pacote 
+                           ,pr_flgstatus => vr_flgstatus            --> Situação pacote 
                            ,pr_pagina    => pr_pagina               --> Numero inicial do registro para enviar
                            ,pr_tamanho_pagina  => pr_tamanho_pagina --> Numero de registros que deverao ser retornados                                   
                            ,pr_retxml    => vr_retxml               --> Arquivo de retorno do XML
@@ -2410,18 +2368,97 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADSMS IS
 
         END IF;
 
-
         -- Carregar XML padrao para variavel de retorno
         pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral na rotina da tela TAB098: ' || SQLERRM;
+        pr_dscritic := 'Erro geral na rotina da tela TELACADSMS: ' || SQLERRM;
 
         -- Carregar XML padrão para variavel de retorno
         pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
   END;  
+  
+  PROCEDURE pc_buscar_prox_id_pacote_web(pr_cdcooper IN tbcobran_sms_pacotes.cdcooper%TYPE
+                                        ,pr_xmllog   IN VARCHAR2                    --> XML com informacoes de LOG
+                                        ,pr_cdcritic OUT PLS_INTEGER                --> Codigo da critica
+                                        ,pr_dscritic OUT VARCHAR2                   --> Descricao da critica
+                                        ,pr_retxml   IN OUT NOCOPY xmltype          --> Arquivo de retorno do XML
+                                        ,pr_nmdcampo OUT VARCHAR2                   --> Nome do campo com erro
+                                        ,pr_des_erro OUT VARCHAR2) IS
+                                        
+    CURSOR cr_id(pr_cdcooper IN tbcobran_sms_pacotes.cdcooper%TYPE) IS
+      SELECT MAX(idpacote) + 1 id
+        FROM tbcobran_sms_pacotes
+       WHERE cdcooper = pr_cdcooper;
+    rw_id cr_id%ROWTYPE;
+    
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_retxml     VARCHAR2(4000);
+    
+    BEGIN
+      
+      rw_id := NULL;
+      OPEN cr_id(pr_cdcooper);
+      FETCH cr_id INTO rw_id;
+      CLOSE cr_id;
+
+      vr_retxml := '<?xml version="1.0" encoding="ISO-8859-1" ?>';
+      vr_retxml := vr_retxml || '<Root><Dados>';
+      vr_retxml := vr_retxml || '<proximo_id>' || NVL(rw_id.id,3) || '</proximo_id>';
+      vr_retxml := vr_retxml || '</Dados></Root>';
+      
+      pr_retxml := xmltype.createxml(vr_retxml);
+
+      EXCEPTION
+
+        WHEN OTHERS THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := 'Erro geral na rotina da tela CADSMS: ' || SQLERRM;
+          pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                         '<Root><Erro>' || pr_dscritic || '</Erro></Root>');      
+    END;
+    
+  PROCEDURE pc_buscar_tipo_pessoa_web(pr_cdtarifa IN craptar.cdtarifa%TYPE
+                                     ,pr_xmllog   IN VARCHAR2                    --> XML com informacoes de LOG
+                                     ,pr_cdcritic OUT PLS_INTEGER                --> Codigo da critica
+                                     ,pr_dscritic OUT VARCHAR2                   --> Descricao da critica
+                                     ,pr_retxml   IN OUT NOCOPY xmltype          --> Arquivo de retorno do XML
+                                     ,pr_nmdcampo OUT VARCHAR2                   --> Nome do campo com erro
+                                     ,pr_des_erro OUT VARCHAR2) IS
+    
+    CURSOR cr_craptar(pr_cdtarifa IN craptar.cdtarifa%TYPE) IS
+      SELECT inpessoa
+        FROM craptar
+       WHERE cdtarifa = pr_cdtarifa;
+    rw_craptar cr_craptar%ROWTYPE;
+    
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_retxml     VARCHAR2(4000);
+    
+    BEGIN
+      
+      rw_craptar := NULL;
+      OPEN cr_craptar(pr_cdtarifa);
+      FETCH cr_craptar INTO rw_craptar;
+      CLOSE cr_craptar;
+
+      vr_retxml := '<?xml version="1.0" encoding="ISO-8859-1" ?>';
+      vr_retxml := vr_retxml || '<Root><Dados>';
+      vr_retxml := vr_retxml || '<inpessoa>' || NVL(rw_craptar.inpessoa,1) || '</inpessoa>';
+      vr_retxml := vr_retxml || '</Dados></Root>';
+      
+      pr_retxml := xmltype.createxml(vr_retxml);
+
+      EXCEPTION
+
+        WHEN OTHERS THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := 'Erro geral na rotina da tela CADSMS: ' || SQLERRM;
+          pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                         '<Root><Erro>' || pr_dscritic || '</Erro></Root>');      
+    END;       
   
 END TELA_CADSMS;
 /
