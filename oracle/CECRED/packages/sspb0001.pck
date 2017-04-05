@@ -3328,7 +3328,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 			END IF;
     END IF;
 		
-    IF vr_flpagmax AND vr_flgutpag = FALSE THEN
+    IF vr_flpagmax AND vr_flgutpag = FALSE AND vr_flgutstr = FALSE THEN
       vr_cdcritic := 0;
       vr_dscritic := 'Limite máximo por operação: R$ ' || to_char(rw_crapcop.vlmaxpag, '99g999g990d00');
       --Gerar erro
