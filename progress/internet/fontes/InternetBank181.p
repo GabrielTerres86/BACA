@@ -240,8 +240,8 @@ ELSE IF par_operacao = 6 THEN
            aux_msgretor = ""
            aux_dscritic = pc_confirma_regarca_ib.pr_dscritic 
                           WHEN pc_confirma_regarca_ib.pr_dscritic <> ?
-           aux_msgretor = pc_confirma_regarca_ib.pr_idastcjt 
-                          WHEN pc_confirma_regarca_ib.pr_idastcjt <> ?.
+           aux_msgretor = pc_confirma_regarca_ib.pr_msg_retor 
+                          WHEN pc_confirma_regarca_ib.pr_msg_retor <> ?.
     
     xml_req = "<msgretor>" + STRING(aux_msgretor) + "</msgretor>".
     
