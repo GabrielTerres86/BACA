@@ -298,6 +298,14 @@
                             debito automatico.
                             PRJ320 - Oferta debito automatico (Odirlei-AMcom)
                             
+               09/02/2016 - Chamado 605092 - não permitir estorno ou exclusão se
+                            a conta esta vinculada a um contrato de alienação de 
+                            veículo cujo gravame está em uma das situações abaixo:
+                            1 - Em processamento
+                            3 - Baixado
+                            5 - Cancelado
+                            Jean ( Mout´S)
+                            
                22/09/2016 - Incluido tratamento para verificacao de contrato de 
                             acordo, Prj. 302 (Jean Michel).
 
@@ -629,6 +637,30 @@ DO WHILE TRUE:
                               "fora do estabelecido na tela CADPAC".
                       NEXT.
                   END.
+          END.
+
+      /*** 10/02/2016 - tratamento Gravame - Jean (Mout´S) ***/
+      IF  glb_cdcritic     = 0  THEN
+          DO:
+              FIND FIRST crapbpr WHERE 
+                         crapbpr.cdcooper = glb_cdcooper AND 
+                         crapbpr.nrdconta = craplcm.nrdconta AND
+                         (crapbpr.dscatbem = "AUTOMOVEL" OR
+						  crapbpr.dscatbem = "CAMINHAO" OR
+						  crapbpr.dscatbem = "MOTO") AND
+                         (crapbpr.cdsitgrv = 1 OR
+						  crapbpr.cdsitgrv = 4 OR
+						  crapbpr.cdsitgrv = 5)
+                         NO-LOCK NO-ERROR.
+
+              IF AVAILABLE crapbpr THEN
+              DO:
+                  MESSAGE "Exclusao invalida! Conta com " +
+                          "Gravame Baixado, Cancelado ou " +
+                          "                    Em processamento.".
+                  NEXT.
+              END.
+
           END.
 
       /*** Tratamento da Compensacao Eletronica ***/
