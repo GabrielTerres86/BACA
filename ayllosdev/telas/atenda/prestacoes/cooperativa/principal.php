@@ -37,6 +37,8 @@
  * 027: [23/11/2015] Carlos Rafael Tanholi: Merge de implementacoes de Portabilidade.
  * 028: [04/01/2016] Heitor             (RKAM): Inclusao do tipo de risco na tela de prejuizo
  * 029:  17/06/2016 - M181 - Alterar o CDAGENCI para passar o CDPACTRA (Rafael Maciel - RKAM)
+ * 030: [03/04/2017] - Jean             (MOut´S): Chamado 643208 - tratamento de caracteres especiais dos campos descritivos, pois estava
+ *                                                causando travamento na tela
  */
 ?>
 
