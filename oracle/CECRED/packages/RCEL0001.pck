@@ -3481,6 +3481,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
       
 		BEGIN
       
+      vr_idastcjt := 0;
+      
       IF pr_inaprpen > 0 THEN
         -- Busca registro de recarga pendente
         OPEN cr_tbrecarga_operacao(pr_idoperacao);
@@ -3577,11 +3579,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
         END IF;
       ELSE
         IF pr_cddopcao = 1 THEN
-          pr_msg_retor := 'Recarga de celular registrada com sucesso. Aguardando aprova&ccedil;&atilde;o dos demais respons&aacute;veis.';
+          pr_msg_retor := 'Recarga de celular registrada com sucesso. Aguardando aprovação dos demais responsáveis.';
         ELSE
-          pr_msg_retor := 'Agendamento de recarga de celular registrada com sucesso. Aguardando aprova&ccedil;&atilde;o dos demais respons&aacute;veis.';
+          pr_msg_retor := 'Agendamento de recarga de celular registrada com sucesso. Aguardando aprovação dos demais responsáveis.';
         END IF;
       END IF;
+--      pr_msg_retor := '0';
       
     EXCEPTION
       WHEN vr_exc_erro THEN
