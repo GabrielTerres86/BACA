@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Deborah/Edson
-     Data    : Abril/96.                       Ultima atualizacao: 26/07/2016
+     Data    : Abril/96.                       Ultima atualizacao: 05/04/2017
 
      Dados referentes ao programa:
 
@@ -84,7 +84,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
                               (Douglas - Chamado 454248)
 
                  26/07/2016 - Finalizacao da conversao (Jonata-Rkam)
-                   
+
+                 05/04/2017 - #455742 Melhorias de performance. Ajuste de passagem dos parâmetros inpessoa
+                              e nrcpfcgc para não consultar novamente o associado no pkg apli0001 (Carlos)
   ............................................................................ */
 
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -121,12 +123,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
             ,craplrg.flgcreci
             ,craplrg.dtmvtolt
             ,craplrg.rowid
-        FROM craplrg
+            ,crapass.inpessoa
+            ,crapass.nrcpfcgc
+        FROM craplrg, crapass
        WHERE craplrg.cdcooper  = pr_cdcooper
          AND craplrg.dtresgat <= pr_dtmvtopr
          AND craplrg.inresgat  = 0
          AND craplrg.tpaplica  = 4
          AND craplrg.tpresgat IN (1,2,3)
+         AND craplrg.cdcooper = crapass.cdcooper
+         AND craplrg.nrdconta = crapass.nrdconta
        ORDER BY craplrg.tpresgat;
        
     -- Buscar cadastro da poupanca programada.
@@ -140,7 +146,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
             ,craprpp.vlabcpmf
             ,craprpp.flgctain
             ,craprpp.dtfimper
-            ,craprpp.rowid            
+            ,craprpp.rowid
         FROM craprpp
        WHERE craprpp.cdcooper = pr_cdcooper
          AND craprpp.nrdconta = pr_nrdconta
@@ -658,6 +664,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
                                       pr_dtmvtolt  => rw_crapdat.dtmvtolt,--> Data do processo
                                       pr_dtmvtopr  => rw_crapdat.dtmvtopr,--> Proximo dia util
                                       pr_rpp_rowid => rw_craprpp.rowid,   --> Identificador do registro da tabela CRAPRPP em processamento
+                                      pr_inpessoa  => rw_craplrg.inpessoa,
+                                      pr_nrcpfcgc  => rw_craplrg.nrcpfcgc,
                                       pr_vlsdrdpp  => vr_vlsdrdppe,       --> Saldo da poupanca programada
                                       -- conforme codigo original do progress, informações sempre são retornadas zeradas
                                       -- para esse programa
@@ -727,6 +735,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
                                                  ,pr_flgrvvlr  => FALSE        --> Identificador se deve gravar valor
                                                  ,pr_cdinsenc  => 5            --> Codigo da insenção
                                                  ,pr_vlinsenc  => 0            --> Valor insento
+                                                 ,pr_inpessoa  => rw_craplrg.inpessoa
+                                                 ,pr_nrcpfcgc  => rw_craplrg.nrcpfcgc
                                                  ,pr_flgimune  => vr_flgimune  --> Identificador se é imune
                                                  ,pr_dsreturn  => vr_des_reto  --> Descricao Critica
                                                  ,pr_tab_erro  => vr_tab_erro);--> Tabela erros
@@ -1208,11 +1218,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
 
   EXCEPTION
     WHEN vr_exc_fimprg THEN
-      -- Se foi retornado apenas código
-      IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-        -- Buscar a descrição
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-      END IF;
+
+      -- Buscar a descrição
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
+
       -- Envio centralizado de log de erro
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                 ,pr_ind_tipo_log => 2 -- Erro tratato
@@ -1227,14 +1236,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
       -- Efetuar commit
       COMMIT;
     WHEN vr_exc_saida THEN
-      -- Se foi retornado apenas código
-      IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-        -- Buscar a descrição
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-      END IF;
+
       -- Devolvemos código e critica encontradas das variaveis locais
       pr_cdcritic := NVL(vr_cdcritic,0);
-      pr_dscritic := vr_dscritic;
+      pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
       -- Efetuar rollback
       ROLLBACK;
     WHEN OTHERS THEN

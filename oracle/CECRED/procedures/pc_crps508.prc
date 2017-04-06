@@ -1,5 +1,4 @@
-CREATE OR REPLACE PROCEDURE CECRED.
-         pc_crps508 (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
+CREATE OR REPLACE PROCEDURE CECRED.pc_crps508 (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
                     ,pr_flgresta  IN PLS_INTEGER            --> Flag padrão para utilização de restart
                     ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
                     ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação
@@ -12,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Gabriel
-       Data    : Abril/2008                     Ultima atualizacao: 28/04/2014
+       Data    : Abril/2008                     Ultima atualizacao: 05/04/2017
 
        Dados referentes ao programa:
 
@@ -36,6 +35,8 @@ CREATE OR REPLACE PROCEDURE CECRED.
                                 
                    28/04/2014 - Conversão Progress >> Oracle PLSQL (Tiago Castro - RKAM)
 
+                   05/04/2017 - #455742 Melhorias de performance. Ajuste de passagem dos parâmetros inpessoa
+                                e nrcpfcgc para não consultar novamente o associado no pkg apli0001 (Carlos)
     ............................................................................ */
 
     DECLARE
@@ -76,18 +77,23 @@ CREATE OR REPLACE PROCEDURE CECRED.
       
       -- Buscar dados do cadastro de poupança programada
       CURSOR cr_craprpp IS
-        SELECT  craprpp.cdagenci
-               ,craprpp.nrdconta
-               ,craprpp.nrctrrpp
-               ,craprpp.rowid
-               ,craprpp.dtvctopp
-        FROM    craprpp 
-        WHERE   craprpp.cdcooper =  pr_cdcooper   
-        AND     craprpp.dtvctopp >  vr_dtvenini   
-        AND     craprpp.dtvctopp <= vr_dtvenfim 
-        ORDER BY  craprpp.cdagenci,
-                  craprpp.nrdconta,
-                  craprpp.nrctrrpp;
+        SELECT craprpp.cdagenci
+              ,craprpp.nrdconta
+              ,craprpp.nrctrrpp
+              ,craprpp.rowid
+              ,craprpp.dtvctopp
+              ,crapass.inpessoa
+              ,crapass.nrcpfcgc
+          FROM craprpp
+              ,crapass
+         WHERE craprpp.cdcooper = pr_cdcooper
+           AND craprpp.dtvctopp > vr_dtvenini
+           AND craprpp.dtvctopp <= vr_dtvenfim
+           AND craprpp.cdcooper = crapass.cdcooper
+           AND craprpp.nrdconta = crapass.nrdconta
+         ORDER BY craprpp.cdagenci
+                 ,craprpp.nrdconta
+                 ,craprpp.nrctrrpp;
       
       --Busca informações do PA
       CURSOR cr_crapage(pr_cdagenci IN craprpp.cdagenci%TYPE)  IS
@@ -102,6 +108,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
                ,crapass.nrdconta
                ,crapass.cdagenci
                ,crapass.nmprimtl
+               ,crapass.nrcpfcgc
         FROM    crapass 
         WHERE   crapass.cdcooper = pr_cdcooper       
         AND     crapass.nrdconta = pr_nrdconta;
@@ -256,33 +263,14 @@ CREATE OR REPLACE PROCEDURE CECRED.
       LOOP
         EXIT WHEN cr_craprpp%NOTFOUND;
         vr_nrtelefo := NULL;
-        OPEN cr_crapass(rw_craprpp.nrdconta);
-        FETCH cr_crapass INTO rw_crapass;
-        IF cr_crapass%NOTFOUND THEN-- verifica se encontrou cadastro do associado
-          CLOSE cr_crapass;
-          --gera critica
-          pr_cdcritic := 9;
-          -- Buscar a descrição
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);          
-          -- Envio centralizado de log de erro
-          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 2 -- Erro tratato
-                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                       || vr_cdprogra || ' --> '
-                                                       || vr_dscritic||' Conta/dv: '
-                                                       || gene0002 .fn_mask_conta(pr_nrdconta => rw_craprpp.nrdconta)
-                                                       ||' Nr.Poupanca: '||gene0002.fn_mask(pr_dsorigi => rw_craprpp.nrctrrpp
-                                                                                           ,pr_dsforma => 'zzz.zz9'));
-          continue;--proximo registro
-        END IF;
-        CLOSE cr_crapass;
-        IF rw_crapass.inpessoa = 1   THEN -- verifica se pessoa é fisica
+        
+        IF rw_craprpp.inpessoa = 1   THEN -- verifica se pessoa é fisica
           vr_tptelefo := 1;-- Tipo telefone residencial
         ELSE
           vr_tptelefo := 3;-- Tipo telefone Comercial
         END IF;
         -- Busca cadastro de telefones do associado
-        OPEN cr_craptfc(rw_crapass.nrdconta,vr_tptelefo );
+        OPEN cr_craptfc(rw_craprpp.nrdconta,vr_tptelefo );
         FETCH cr_craptfc INTO rw_craptfc;
         IF cr_craptfc%FOUND THEN --verifica se existe telefone cadastrado
           vr_nrtelefo := rw_craptfc.nrdddtfc||rw_craptfc.nrtelefo;-- DDD + nro telefone
@@ -324,10 +312,11 @@ CREATE OR REPLACE PROCEDURE CECRED.
                                  ,pr_dtmvtolt  => rw_crapdat.dtmvtolt
                                  ,pr_dtmvtopr  => rw_crapdat.dtmvtopr
                                  ,pr_rpp_rowid => rw_craprpp.rowid
+                                 ,pr_inpessoa  => rw_craprpp.inpessoa
+                                 ,pr_nrcpfcgc  => rw_craprpp.nrcpfcgc 
                                  ,pr_vlsdrdpp  => vr_vlsdpoup 
                                  ,pr_cdcritic  => vr_cdcritic
-                                 ,pr_des_erro  => vr_dscritic
-                                 );
+                                 ,pr_des_erro  => vr_dscritic);
         -- Verificar se ocorreram erros no cálculo de poupança
         IF vr_dscritic IS NOT NULL OR vr_cdcritic IS NOT NULL THEN
           --gera critica
@@ -474,4 +463,3 @@ CREATE OR REPLACE PROCEDURE CECRED.
 
   END pc_crps508;
 /
-

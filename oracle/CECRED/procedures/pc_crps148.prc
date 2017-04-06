@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS148" (pr_cdcooper in crapcop.cdcooper
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Abril/96.                      Ultima atualizacao: 25/11/2013
+   Data    : Abril/96.                      Ultima atualizacao: 05/04/2017
 
    Dados referentes ao programa:
 
@@ -35,20 +35,27 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS148" (pr_cdcooper in crapcop.cdcooper
                27/05/2015 - Realizando a retirada dos tratamentos de restart, pois o programa
                             apresentou erros no processo batch. Os códigos foram comentados e 
                             podem ser removidos em futuras alterações do fonte. (Renato - Supero)
+                            
+               05/04/2017 - #455742 Melhorias de performance. Ajuste de passagem dos parâmetros inpessoa e 
+                            nrcpfcgc para não consultar novamente o associado no pkg apli0001 (Carlos)
 ............................................................................. */
   -- Poupança programada
   cursor cr_craprpp (pr_cdcooper in craprpp.cdcooper%type,
                      pr_dtmvtopr in craprpp.dtfimper%type) is
-    select nrdconta,
-           nrctrrpp,
-           rowid
-      from craprpp
+    select craprpp.nrdconta,
+           craprpp.nrctrrpp,
+           craprpp.rowid,
+           crapass.inpessoa,
+           crapass.nrcpfcgc
+      from craprpp, crapass
      where craprpp.cdcooper  = pr_cdcooper
        and craprpp.dtfimper <= pr_dtmvtopr
        and craprpp.incalmes  = 0
        and craprpp.cdsitrpp <> 5
-     order by nrdconta,
-              nrctrrpp;
+       AND craprpp.cdcooper = crapass.cdcooper
+       AND craprpp.nrdconta = crapass.nrdconta
+     order by craprpp.nrdconta,
+              craprpp.nrctrrpp;
   -- Registro para armazenar as datas
   rw_crapdat     btch0001.cr_crapdat%rowtype;
   -- Exception para tratamento de erros tratáveis sem abortar a execução
@@ -142,6 +149,8 @@ begin
                                pr_dtmvtopr => vr_dtmvtopr,          --> Próximo dia útil
                                pr_rpp_rowid => rw_craprpp.rowid,    --> Identificador do registro da tabela CRAPRPP em processamento
                                pr_vlsdrdpp => vr_vlsdrdpp,          --> Saldo da poupança programada
+                               pr_inpessoa => rw_craprpp.inpessoa,
+                               pr_nrcpfcgc => rw_craprpp.nrcpfcgc,
                                pr_cdcritic => pr_cdcritic,          --> Código da critica de erro
                                pr_des_erro => pr_dscritic);         --> Descrição do erro encontrado
     if pr_dscritic is not null or pr_cdcritic is not null then
@@ -200,4 +209,3 @@ exception
     rollback;
 END;
 /
-

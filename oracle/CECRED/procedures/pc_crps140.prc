@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS140(pr_cdcooper  IN NUMBER         -->
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/95                      Ultima atualizacao: 07/12/2015
+   Data    : Novembro/95                      Ultima atualizacao: 21/03/2017
 
    Dados referentes ao programa:
 
@@ -123,6 +123,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS140(pr_cdcooper  IN NUMBER         -->
 
                07/12/2015 - Adicionado validacao para limpar o buffer da string de xml
                             quando montar as tags com os totais. (Douglas - Chamado 368794)
+                            
+               21/03/2017 - #455742 Ajuste de passagem dos parâmetros inpessoa e nrcpfcgc para não
+                            consultar novamente o associado no pkg apli0001 (Carlos)
 ............................................................................. */
 BEGIN
 
@@ -203,6 +206,9 @@ BEGIN
 		TYPE typ_tab_vlsldtot IS TABLE OF typ_reg_vlsldtot INDEX BY VARCHAR2(25);
 		vr_tab_vlsldtot typ_tab_vlsldtot;
 
+    -- Definicao do tipo para a tabela de aplicações
+    vr_craprda_rdcpos apli0001.typ_tab_craprda;
+    
     -- Busca dos dados da cooperativa
     CURSOR cr_crapcop(pr_cdcooper IN craptab.cdcooper%TYPE) IS   --> Código da cooperativa
       SELECT cop.nmrescop
@@ -244,6 +250,8 @@ BEGIN
 		CURSOR cr_crapass_rac(pr_cdcooper IN crapass.cdcooper%TYPE     --> Código da cooperativa
 		                     ,pr_nrdconta IN crapass.nrdconta%TYPE) IS --> Nr. da conta
 			SELECT ass.cdagenci
+            ,ass.inpessoa
+            ,ass.nrcpfcgc
 			  FROM crapass ass
 			 WHERE ass.cdcooper = pr_cdcooper
 			   AND ass.nrdconta = pr_nrdconta;
@@ -251,15 +259,33 @@ BEGIN
 
     -- Buscar dados do cadastro das aplicações RDCA
     CURSOR cr_craprda(pr_cdcooper IN craptab.cdcooper%TYPE) IS    --> Código da cooperativa
-      SELECT cd.tpaplica
-            ,cd.vlslfmes
-            ,cd.cdageass
-            ,cd.nrdconta
-            ,cd.nraplica
-      FROM craprda cd
-      WHERE cd.cdcooper = pr_cdcooper
-        AND cd.insaqtot = 0
-      ORDER BY cd.nrdconta, cd.nraplica;
+      SELECT rda.tpaplica
+            ,rda.vlslfmes
+            ,rda.cdageass
+            ,rda.nrdconta
+            ,rda.nraplica
+            ,rda.dtvencto
+            ,rda.dtmvtolt
+            ,rda.vlsdrdca
+            ,rda.qtdiauti
+            ,rda.vlsltxmm
+            ,rda.dtatslmm
+            ,rda.vlsltxmx
+            ,rda.dtatslmx
+            ,lap.txaplica
+            ,lap.txaplmes            
+      FROM craprda rda
+          ,craplap lap
+      WHERE rda.cdcooper = pr_cdcooper
+        AND rda.insaqtot = 0
+        AND lap.cdcooper = rda.cdcooper 
+        AND lap.dtmvtolt = rda.dtmvtolt
+        AND lap.cdagenci = rda.cdagenci
+        AND lap.cdbccxlt = rda.cdbccxlt
+        AND lap.nrdolote = rda.nrdolote
+        AND lap.nrdconta = rda.nrdconta 
+        AND lap.nrdocmto = rda.nraplica
+      ORDER BY rda.nrdconta, rda.nraplica;
 
     -- PL Table para armazenar dados de cadastro de aplicações RDCA
     TYPE typ_reg_craprda IS
@@ -267,7 +293,19 @@ BEGIN
             ,vlslfmes  craprda.vlslfmes%TYPE
             ,cdageass  craprda.cdageass%TYPE
             ,nrdconta  craprda.nrdconta%TYPE
-            ,nraplica  craprda.nraplica%TYPE);
+            ,nraplica  craprda.nraplica%TYPE
+            ,inpessoa  crapass.inpessoa%TYPE
+            ,nrcpfcgc  crapass.nrcpfcgc%TYPE
+            ,dtvencto  craprda.dtvencto%TYPE
+            ,dtmvtolt  craprda.dtmvtolt%TYPE
+            ,vlsdrdca  craprda.vlsdrdca%TYPE
+            ,qtdiauti  craprda.qtdiauti%TYPE
+            ,vlsltxmm  craprda.vlsltxmm%TYPE            
+            ,dtatslmm  craprda.dtatslmm%TYPE
+            ,vlsltxmx  craprda.vlsltxmx%TYPE
+            ,dtatslmx  craprda.dtatslmx%TYPE
+            ,txaplica  craplap.txaplica%TYPE
+            ,txaplmes  craplap.txaplmes%TYPE);
 
     -- Instancia e indexa o tipo da PL TABLE para liberar para uso
     TYPE typ_tab_craprda IS TABLE OF typ_reg_craprda INDEX BY VARCHAR2(25);
@@ -816,6 +854,18 @@ BEGIN
       vr_tab_craprda(vr_idxrda).vlslfmes := vr_craprda.vlslfmes;
       vr_tab_craprda(vr_idxrda).cdageass := vr_craprda.cdageass;
       vr_tab_craprda(vr_idxrda).nraplica := vr_craprda.nraplica;
+      vr_tab_craprda(vr_idxrda).dtvencto := vr_craprda.dtvencto;
+      vr_tab_craprda(vr_idxrda).dtmvtolt := vr_craprda.dtmvtolt;
+      vr_tab_craprda(vr_idxrda).vlsdrdca := vr_craprda.vlsdrdca;
+      vr_tab_craprda(vr_idxrda).qtdiauti := vr_craprda.qtdiauti;
+      vr_tab_craprda(vr_idxrda).vlsltxmm := vr_craprda.vlsltxmm;
+      vr_tab_craprda(vr_idxrda).dtatslmm := vr_craprda.dtatslmm;
+      vr_tab_craprda(vr_idxrda).tpaplica := vr_craprda.tpaplica;
+      vr_tab_craprda(vr_idxrda).vlsltxmx := vr_craprda.vlsltxmx;
+      vr_tab_craprda(vr_idxrda).dtatslmx := vr_craprda.dtatslmx;
+      vr_tab_craprda(vr_idxrda).txaplica := vr_craprda.txaplica;
+      vr_tab_craprda(vr_idxrda).txaplmes := vr_craprda.txaplmes;
+      
     END LOOP;
 		
 		FOR vr_craprac IN cr_craprac(pr_cdcooper => pr_cdcooper) LOOP
@@ -944,6 +994,11 @@ BEGIN
       vr_tab_craprda(vr_idxrda).vlslfmes := vr_craprac.vlslfmes;
       vr_tab_craprda(vr_idxrda).cdageass := rw_crapass_rac.cdagenci;
       vr_tab_craprda(vr_idxrda).nraplica := vr_craprac.nraplica;
+      
+      vr_tab_craprda(vr_idxrda).inpessoa := rw_crapass_rac.inpessoa;
+      vr_tab_craprda(vr_idxrda).nrcpfcgc := rw_crapass_rac.nrcpfcgc;
+      
+      
 			vr_tab_vlsldtot(vr_idxrda).vlsldtot := vr_vlsldtot;
 		
 		END LOOP;
@@ -1072,22 +1127,24 @@ BEGIN
 							vr_tab_craterr.delete;
 							vr_vlaplrdc := 0;
 
-							-- Para RDCPRE
-							IF vr_tab_crapdtc(vr_tab_craprda(vr_idxrda).tpaplica).tpaplrdc = 1 THEN
-								apli0001.pc_saldo_rdc_pre(pr_cdcooper    => pr_cdcooper
-																				 ,pr_nrdconta    => vr_tab_craprda(vr_idxrda).nrdconta
-																				 ,pr_nraplica    => vr_tab_craprda(vr_idxrda).nraplica
-																				 ,pr_dtmvtolt    => rw_crapdat.dtmvtolt
-																				 ,pr_dtiniper    => NULL
-																				 ,pr_dtfimper    => NULL
-																				 ,pr_txaplica    => 0
-																				 ,pr_flggrvir    => FALSE
-																				 ,pr_tab_crapdat => rw_crapdat
-																				 ,pr_vlsdrdca    => vr_vlaplrdc
-																				 ,pr_vlrdirrf    => vr_vlrdirrf
-																				 ,pr_perirrgt    => vr_perirrgt
-																				 ,pr_des_reto    => vr_desc_erro
-																				 ,pr_tab_erro    => vr_tab_craterr);
+              -- Para RDCPRE
+              IF vr_tab_crapdtc(vr_tab_craprda(vr_idxrda).tpaplica).tpaplrdc = 1 THEN
+                apli0001.pc_saldo_rdc_pre(pr_cdcooper    => pr_cdcooper
+                                         ,pr_nrdconta    => vr_tab_craprda(vr_idxrda).nrdconta
+                                         ,pr_nraplica    => vr_tab_craprda(vr_idxrda).nraplica
+                                         ,pr_dtmvtolt    => rw_crapdat.dtmvtolt
+                                         ,pr_dtiniper    => NULL
+                                         ,pr_dtfimper    => NULL
+                                         ,pr_txaplica    => 0
+                                         ,pr_flggrvir    => FALSE
+                                         ,pr_tab_crapdat => rw_crapdat
+                                         ,pr_inpessoa    => vr_tab_craprda(vr_idxrda).inpessoa
+                                         ,pr_nrcpfcgc    => vr_tab_craprda(vr_idxrda).nrcpfcgc
+                                         ,pr_vlsdrdca    => vr_vlaplrdc
+                                         ,pr_vlrdirrf    => vr_vlrdirrf
+                                         ,pr_perirrgt    => vr_perirrgt
+                                         ,pr_des_reto    => vr_desc_erro
+                                         ,pr_tab_erro    => vr_tab_craterr);
 
 								-- Caso encontre erros
 								IF vr_desc_erro = 'NOK' THEN
@@ -1102,23 +1159,45 @@ BEGIN
 								END IF;
 							-- Para RDCPOS
 							ELSIF vr_tab_crapdtc(vr_tab_craprda(vr_idxrda).tpaplica).tpaplrdc = 2 THEN
+                --Limpa a tabela
+                vr_craprda_rdcpos.delete;
+
+                --Alimenta PLTABLE com as informações da aplicação
+                vr_craprda_rdcpos(1).dtvencto:= vr_tab_craprda(vr_idxrda).dtvencto;
+                vr_craprda_rdcpos(1).dtmvtolt:= vr_tab_craprda(vr_idxrda).dtmvtolt;
+                vr_craprda_rdcpos(1).vlsdrdca:= vr_tab_craprda(vr_idxrda).vlsdrdca;
+                vr_craprda_rdcpos(1).qtdiauti:= vr_tab_craprda(vr_idxrda).qtdiauti;
+                vr_craprda_rdcpos(1).vlsltxmm:= vr_tab_craprda(vr_idxrda).vlsltxmm;
+                vr_craprda_rdcpos(1).dtatslmm:= vr_tab_craprda(vr_idxrda).dtatslmm;
+                vr_craprda_rdcpos(1).vlsltxmx:= vr_tab_craprda(vr_idxrda).vlsltxmx;
+                vr_craprda_rdcpos(1).dtatslmx:= vr_tab_craprda(vr_idxrda).dtatslmx;
+                vr_craprda_rdcpos(1).txaplica:= vr_tab_craprda(vr_idxrda).txaplica;
+                vr_craprda_rdcpos(1).txaplmes:= vr_tab_craprda(vr_idxrda).txaplmes;
+
+
 								apli0001.pc_saldo_rdc_pos(pr_cdcooper => pr_cdcooper
 																				 ,pr_dtmvtolt => rw_crapdat.dtmvtolt
 																				 ,pr_dtmvtopr => rw_crapdat.dtmvtopr
 																				 ,pr_nrdconta => vr_tab_craprda(vr_idxrda).nrdconta
-																				 ,pr_nraplica => vr_tab_craprda(vr_idxrda).nraplica
+																				 ,pr_craprda  => vr_craprda_rdcpos
 																				 ,pr_dtmvtpap => rw_crapdat.dtmvtolt
 																				 ,pr_dtcalsld => rw_crapdat.dtmvtolt
 																				 ,pr_flantven => FALSE
 																				 ,pr_flggrvir => FALSE
 																				 ,pr_dtinitax => vr_dtinitax
 																				 ,pr_dtfimtax => vr_dtfimtax
+                                                                                 ,pr_cdprogra => vr_cdprogra
+                                                                                 ,pr_inpessoa    => vr_tab_craprda(vr_idxrda).inpessoa
+                                                                                 ,pr_nrcpfcgc    => vr_tab_craprda(vr_idxrda).nrcpfcgc
 																				 ,pr_vlsdrdca => vr_vlaplrdc
 																				 ,pr_vlrentot => vr_vlrentot
 																				 ,pr_vlrdirrf => vr_vlrdirrf
 																				 ,pr_perirrgt => vr_perirrgt
 																				 ,pr_des_reto => vr_desc_erro
 																				 ,pr_tab_erro => vr_tab_craterr);
+
+								--Limpa a tabela
+							    vr_craprda_rdcpos.delete;
 
 								-- Verifica se ocorreram erros na execução
 								IF vr_desc_erro = 'NOK' THEN
@@ -1558,12 +1637,11 @@ BEGIN
     COMMIT;
   EXCEPTION
     WHEN vr_exc_fimprg THEN
-      -- Se foi retornado apenas código
-      IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-        -- Buscar a descrição
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-      END IF;
-      IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+
+      -- Buscar a descrição
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
+
+      IF vr_dscritic IS NOT NULL THEN
         -- Envio centralizado de log de erro
         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                   ,pr_ind_tipo_log => 2 -- Erro tratato
@@ -1577,11 +1655,6 @@ BEGIN
       -- Efetuar commit
       COMMIT;
     WHEN vr_exc_saida THEN
-      -- Se foi retornado apenas código
-      IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-        -- Buscar a descrição
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-      END IF;
       -- Devolvemos código e critica encontradas
       pr_cdcritic := NVL(vr_cdcritic,0);
       pr_dscritic := vr_desc_erro;
@@ -1589,6 +1662,9 @@ BEGIN
       ROLLBACK;
 
     WHEN OTHERS THEN
+
+      cecred.pc_internal_exception(pr_cdcooper);
+    
       -- Efetuar retorno do erro não tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
@@ -1597,4 +1673,3 @@ BEGIN
   END;
 END PC_CRPS140;
 /
-

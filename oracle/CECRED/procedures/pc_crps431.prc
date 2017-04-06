@@ -12,7 +12,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Janeiro/2005                      Ultima atualizacao: 26/08/2014
+   Data    : Janeiro/2005                      Ultima atualizacao: 04/04/2017
 
    Dados referentes ao programa:
 
@@ -70,6 +70,9 @@ BEGIN
                             
                26/08/2014 - Adicionado tratamento para produtos de captação.
 							              (Reinert)                
+                            
+               04/04/2017 - #455742 Melhorias de performance. Ajuste de passagem dos parâmetros inpessoa e 
+                            nrcpfcgc para não consultar novamente o associado no pkg apli0001 (Carlos)
   ............................................................................. */
 
   DECLARE
@@ -154,15 +157,18 @@ BEGIN
     -- Selecionar Aplicacoes RDA
     CURSOR cr_craprda (pr_cdcooper IN crapcop.cdcooper%TYPE
                       ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
-      SELECT  /*+ INDEX (craprda craprda##craprda6) */ 
-              craprda.nrdconta
+      SELECT  craprda.nrdconta
              ,craprda.nraplica
              ,craprda.tpaplica
              ,craprda.vlsdrdca                
-      FROM craprda craprda
+             ,crapass.inpessoa
+             ,crapass.nrcpfcgc
+      FROM craprda, crapass
       WHERE craprda.cdcooper = pr_cdcooper
       AND   craprda.nrdconta = pr_nrdconta
-      AND   craprda.insaqtot = 0;
+      AND   craprda.insaqtot = 0
+      AND   craprda.cdcooper = crapass.cdcooper
+      AND   craprda.nrdconta = crapass.nrdconta;
 			
 		-- Selecionar aplicações de captação
 		CURSOR cr_craprac_conta (pr_cdcooper IN craprac.cdcooper%TYPE) IS
@@ -204,18 +210,26 @@ BEGIN
     --Selecionar as contas que possuem RPP
     CURSOR cr_craprpp_conta (pr_cdcooper IN craprpp.cdcooper%TYPE) IS
       SELECT craprpp.nrdconta
-      FROM craprpp craprpp
-      WHERE craprpp.cdcooper = pr_cdcooper;
+            ,craprpp.cdsitrpp
+            ,craprpp.vlprerpp
+            ,craprpp.nrctrrpp
+            ,craprpp.dtmvtolt
+            ,crapass.inpessoa
+            ,crapass.nrcpfcgc            
+        FROM craprpp, crapass
+       WHERE craprpp.cdcooper = pr_cdcooper
+      AND   craprpp.cdcooper = crapass.cdcooper
+      AND   craprpp.nrdconta = crapass.nrdconta;
+
+    --Tipo do Cursor de craprpp para Bulk Collect
+    TYPE typ_craprpp_bulk IS TABLE of cr_craprpp_conta%ROWTYPE;
+    vr_tab_craprpp_bulk typ_craprpp_bulk;      
              
     -- Buscar dados do cadastro de poupança programada
     CURSOR cr_craprpp(pr_cdcooper  IN crapcob.cdcooper%TYPE         --> Código da cooperativa
                      ,pr_nrdconta  IN craprpp.nrdconta%TYPE) IS     --> Número da conta
-      SELECT craprpp.cdsitrpp
-            ,craprpp.vlprerpp
-            ,craprpp.nrctrrpp
-            ,craprpp.dtmvtolt
-            ,craprpp.rowid
-      FROM craprpp craprpp
+      SELECT craprpp.rowid
+      FROM craprpp
       WHERE craprpp.cdcooper = pr_cdcooper
       AND   craprpp.nrdconta = pr_nrdconta;
     rw_craprpp cr_craprpp%rowtype;
@@ -255,7 +269,21 @@ BEGIN
     vr_tab_crapsld typ_tab_crapsld;         --Armazenar Saldo da Conta
     vr_tab_crapdtc typ_tab_crapdtc;         --Armazenar Tipo de Aplicacao
     vr_tab_conta   typ_tab_conta;           --Armazenar dados para relatorio
-    vr_tab_craprpp typ_tab_craprpp;         --Armazenar Saldo Poupanca Programada   
+
+    
+    --Type para armazenar as os associados
+    TYPE typ_reg_craprpp IS RECORD (nrdconta craprpp.nrdconta%TYPE,
+                                    cdsitrpp craprpp.cdsitrpp%TYPE,
+                                    vlprerpp craprpp.vlprerpp%TYPE,
+                                    nrctrrpp craprpp.nrctrrpp%TYPE,
+                                    dtmvtolt craprpp.dtmvtolt%TYPE,
+                                    inpessoa crapass.inpessoa%TYPE,
+                                    nrcpfcgc crapass.nrcpfcgc%TYPE);
+    TYPE typ_tab_reg_craprpp IS TABLE OF typ_reg_craprpp
+                           INDEX BY BINARY_INTEGER; 
+    vr_tab_craprpp typ_tab_reg_craprpp; --Armazenar Saldo Poupanca Programada       
+    
+    
     vr_tab_crapsli typ_tab_crapsli;         --Armazenar Saldo Investimento
     vr_tab_saldo_cotas APLI0002.typ_tab_saldo_cotas; --Armazenar Saldo das Cotas
     vr_tab_craprda typ_tab_craprpp;         --Armazenar Contas com Rendimentos  
@@ -467,6 +495,8 @@ BEGIN
                                               ,pr_flggrvir => FALSE               --> Identificador se deve gravar valor insento
                                               ,pr_dtinitax => vr_dtinitax         --> Data Inicial da Utilizacao da taxa da poupanca
                                               ,pr_dtfimtax => vr_dtfimtax         --> Data Final da Utilizacao da taxa da poupanca
+                                              ,pr_inpessoa => rw_craprda.inpessoa
+                                              ,pr_nrcpfcgc => rw_craprda.nrcpfcgc                                              
                                               ,pr_vlsddrgt => vr_sldpresg         --> Valor do resgate total sem irrf ou o solicitado
                                               ,pr_vlrenrgt => vr_vlrenrgt         --> Rendimento total a ser pago quando resgate total
                                               ,pr_vlrdirrf => vr_vlrdirrf         --> IRRF do que foi solicitado
@@ -558,6 +588,8 @@ BEGIN
                                      ,pr_dtmvtolt  => rw_crapdat.dtmvtolt
                                      ,pr_dtmvtopr  => rw_crapdat.dtmvtopr
                                      ,pr_rpp_rowid => rw_craprpp.rowid
+                                     ,pr_inpessoa  => vr_tab_craprpp(pr_nrdconta).inpessoa
+                                     ,pr_nrcpfcgc  => vr_tab_craprpp(pr_nrdconta).nrcpfcgc
                                      ,pr_vlsdrdpp  => vr_vlsdrdpp
                                      ,pr_cdcritic  => vr_cdcritic
                                      ,pr_des_erro  => vr_dscritic);
@@ -700,9 +732,19 @@ BEGIN
     END LOOP;  
 
     --Carregar tabela memoria com dados da tabela CRAPRPP
-    FOR rw_craprpp IN cr_craprpp_conta (pr_cdcooper => pr_cdcooper) LOOP
-      vr_tab_craprpp(rw_craprpp.nrdconta):= 0;
-    END LOOP;
+    OPEN cr_craprpp_conta (pr_cdcooper => pr_cdcooper);
+    --Carregar Bulk Collect
+    FETCH cr_craprpp_conta BULK COLLECT INTO vr_tab_craprpp_bulk;
+    --Fechar Cursor
+    CLOSE cr_craprpp_conta;
+    
+    IF vr_tab_craprpp_bulk.COUNT > 0 THEN
+      FOR idx IN vr_tab_craprpp_bulk.FIRST..vr_tab_craprpp_bulk.LAST LOOP      
+        vr_tab_craprpp(vr_tab_craprpp_bulk(idx).nrdconta).nrdconta := vr_tab_craprpp_bulk(idx).nrdconta;
+        vr_tab_craprpp(vr_tab_craprpp_bulk(idx).nrdconta).inpessoa := vr_tab_craprpp_bulk(idx).inpessoa;
+        vr_tab_craprpp(vr_tab_craprpp_bulk(idx).nrdconta).nrcpfcgc := vr_tab_craprpp_bulk(idx).nrcpfcgc;
+      END LOOP;
+    END IF;
 
     --Carregar tabela memoria com Saldo Conta Investimento
     FOR rw_crapsli IN cr_crapsli (pr_cdcooper => pr_cdcooper
@@ -929,4 +971,3 @@ BEGIN
 
 END pc_crps431;
 /
-
