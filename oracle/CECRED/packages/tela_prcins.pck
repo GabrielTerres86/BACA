@@ -84,6 +84,15 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_PRCINS AS
                                 ,pr_nmdcampo  OUT VARCHAR2           --> Nome do campo com erro
                                 ,pr_des_erro  OUT VARCHAR2);         --> Erros do processo
 
+
+  /* Rotina para processar a planilha de prova de vida dos beneficiarios do INSS */
+  PROCEDURE pc_importar_prova_vida(pr_nmdatela   IN VARCHAR2           --> Nome da tela                                  
+                                  ,pr_xmllog     IN VARCHAR2           --> XML com informações de LOG
+                                  ,pr_cdcritic  OUT PLS_INTEGER        --> Código da crítica
+                                  ,pr_dscritic  OUT VARCHAR2           --> Descrição da crítica
+                                  ,pr_retxml     IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                                  ,pr_nmdcampo  OUT VARCHAR2           --> Nome do campo com erro
+                                  ,pr_des_erro  OUT VARCHAR2);         --> Erros do processo
 END TELA_PRCINS;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PRCINS AS
@@ -1474,6 +1483,128 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PRCINS AS
         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || pr_dscritic || '</Erro></Root>');
         ROLLBACK;
   END pc_processa_planilha;
+
+
+  /* Rotina para processar a planilha de pagamento dos beneficios do INSS */
+  PROCEDURE pc_importar_prova_vida(pr_nmdatela   IN VARCHAR2           --> Nome da tela                                  
+                                  ,pr_xmllog     IN VARCHAR2           --> XML com informações de LOG
+                                  ,pr_cdcritic  OUT PLS_INTEGER        --> Código da crítica
+                                  ,pr_dscritic  OUT VARCHAR2           --> Descrição da crítica
+                                  ,pr_retxml     IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                                  ,pr_nmdcampo  OUT VARCHAR2           --> Nome do campo com erro
+                                  ,pr_des_erro  OUT VARCHAR2)IS            --> Erros do processo
+    /* .............................................................................
+    Programa: pc_importar_prova_vida
+    Sistema : Conta-Corrente - Cooperativa de Credito
+    Sigla   : CRED
+    Autor   : Douglas Quisinski
+    Data    : 22/03/2017                        Ultima atualizacao: 
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+    Objetivo  : Rotina para processar a planilha de prova de vida dos beneficiaros do INSS
+
+    Alteracoes: 
+    ............................................................................. */
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic crapcri.dscritic%TYPE;
+      
+      -- Variaveis de log
+      vr_cdcooper NUMBER;
+      vr_cdoperad VARCHAR2(100);
+      vr_cdprogra VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+      vr_nmdireto VARCHAR2(100);
+      
+      vr_exc_erro EXCEPTION;
+      
+    BEGIN
+      
+      -- Incluir nome do módulo logado
+      GENE0001.pc_informa_acesso(pr_module => 'PRCINS'
+                                ,pr_action => null);
+
+      /* Extrai os dados */
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_cdprogra
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+    
+      -- Verifica se houve erro                      
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF; 
+      
+      --Buscar Diretorio Micros da Cooperativa
+      vr_nmdireto:= gene0001.fn_diretorio (pr_tpdireto => 'M' --> Usr/micros
+                                          ,pr_cdcooper => 3
+                                          ,pr_nmsubdir => 'inss');      
+      
+      --Escrever No LOG
+      btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
+                                ,pr_ind_tipo_log => 2 -- Erro tratato
+                                ,pr_nmarqlog     => 'prcins.log'
+                                ,pr_des_log      => to_char(SYSDATE,'DD/MM/YYYY hh24:mi:ss') ||
+                                                    ' --> INICIO DO PROCESSO DE IMPORTACAO DA PROVA DE VIDA DO INSS' ||
+                                                    ' - Operador: ' || vr_cdoperad); 
+      
+      INSS0003.pc_importar_prova_vida(pr_cdprogra => pr_nmdatela
+                                     ,pr_dsdireto => vr_nmdireto
+                                     ,pr_cdcritic => vr_cdcritic
+                                     ,pr_dscritic => vr_dscritic);
+      
+      IF NVL(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+
+      --Escrever No LOG
+      btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
+                                ,pr_ind_tipo_log => 2 -- Erro tratato
+                                ,pr_nmarqlog     => 'prcins.log'
+                                ,pr_des_log      => to_char(SYSDATE,'DD/MM/YYYY hh24:mi:ss') ||
+                                                    ' --> FIM DO PROCESSO DE IMPORTACAO DA PROVA DE VIDA DO INSS' ||
+                                                    ' - Operador: ' || vr_cdoperad); 
+      
+      -- Retorna o nome do cooperado      
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Dados>' ||
+                                     '</Dados></Root>');
+      
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+        --Escrever No LOG
+        btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
+                                  ,pr_ind_tipo_log => 2 -- Erro tratato
+                                  ,pr_nmarqlog     => 'prcins.log'
+                                  ,pr_des_log      => to_char(SYSDATE,'DD/MM/YYYY hh24:mi:ss') ||
+                                                      ' --> ERRO DURANTE O PROCESSO DE IMPORTACAO DA PROVA DE VIDA DO INSS' ||
+                                                      ' - Erro: ' || vr_dscritic ||
+                                                      ' - Operador: ' || vr_cdoperad); 
+        
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || pr_dscritic || '</Erro></Root>');
+        ROLLBACK;
+      WHEN OTHERS THEN
+        pr_cdcritic := 0;
+        pr_dscritic := 'Erro geral (TELA_PRCINS.pc_importar_prova_vida): ' || 
+                       REPLACE(REPLACE(SQLERRM, '''', NULL), '"', NULL);
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || pr_dscritic || '</Erro></Root>');
+        ROLLBACK;
+  END pc_importar_prova_vida;
 
 END TELA_PRCINS;
 /

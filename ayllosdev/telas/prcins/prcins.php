@@ -10,6 +10,9 @@
                   16/02/2016 - Ajustes para corrigir o problema de não conseguir carregar
                                corretamente as informações para opção "E"
                                (Adriano - SD 402006)
+							   
+
+                  22/03/2017 - Adicionado form para a opção de importar a planilha de prova de vida (Douglas - Chamado 618510)
  */
  
 	session_start();
@@ -102,6 +105,9 @@
 																			
 																			<!-- Formulário para solicitação de créditos -->
 																			<? include('form_solicitar.php'); ?>
+																			
+																			<!-- Formulário para Importar a planilha de prova de vida -->
+																			<? include('form_importar_prova_vida.php'); ?>
 																			
 																			<div id="divBotoes" style="display:none;">
 																			
