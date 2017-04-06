@@ -34,7 +34,7 @@
 
     Programa  : b1wgen9999.p
     Autor     : Guilherme/David
-    Data      : Marco/2008                    Ultima Atualizacao: 08/10/2015.
+    Data      : Marco/2008                    Ultima Atualizacao: 26/09/2016.
     
     Dados referentes ao programa:
 
@@ -261,6 +261,9 @@
                             
                08/10/2015 - Alterar a procedure idade para chamar a rotina do Oracle
                             (Lucas Ranghetti #340156)
+                            
+               26/09/2016 - Incluir lotes da M211 para nao exclusao (Jonata-RKAM)
+                            
 .............................................................................*/
 
 { sistema/generico/includes/b1wgen9999tt.i }
@@ -4818,7 +4821,7 @@ PROCEDURE critica_numero_lote:
          par_nrdolote = 6651   OR    /* Debitos nao efetuados no processo noturno */
          par_nrdolote = 6650   OR    /* Numero do lote reservado para o sistema.*/
          par_nrdolote = 6400   OR    /* Agendamento de debito automatico */
-  		 par_nrdolote = 8500   OR    /* Credito de nova aplicacao            */
+  		   par_nrdolote = 8500   OR    /* Credito de nova aplicacao            */
          par_nrdolote = 8501   OR    /* Debito de nova aplicacao             */
          par_nrdolote = 8502   OR    /* Debito de resgate de aplicacao       */
          par_nrdolote = 8503   OR    /* Credito de resgate de aplicacao      */
@@ -4826,7 +4829,13 @@ PROCEDURE critica_numero_lote:
          par_nrdolote = 8505   OR    /* Credito de vencimento de aplicacao   */
          par_nrdolote = 8506   OR    /* Credito de provisão de aplicacao     */
          par_nrdolote = 6651   OR    /* Debitos nao efetuados no processo noturno (e efetuados pela DEBCON) */
-         par_nrdolote = 7050   THEN  /* Debitos automaticos nao efetuados no processo noturno (apenas convenios CECRED; efetuados pela DEBNET).*/
+         par_nrdolote = 7050   OR    /* Debitos automaticos nao efetuados no processo noturno (apenas convenios CECRED; efetuados pela DEBNET).*/
+         par_nrdolote = 650001 OR	 /* Acordos do CYBER */
+		 par_nrdolote = 650002 OR    /* Acordos do CYBER */
+		 par_nrdolote = 10119  OR    /* Lote devolução - Melhoria 69 */
+		(par_nrdolote >= 8482   AND  /* TEDS Sicredi */
+         par_nrdolote <= 8486)  THEN  
+		 
          DO:
              ASSIGN aux_cdcritic = 261
                     aux_dscritic = "".
