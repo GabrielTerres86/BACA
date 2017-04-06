@@ -206,11 +206,11 @@
 			arrayRegistros['cdpesqui'] = '<? echo getByTagName($registros,'cdpesqui'); ?>';
 			arrayRegistros['dspreapg'] = '<? echo getByTagName($registros,'dspreapg'); ?>';
 			arrayRegistros['cdlcremp'] = '<? echo getByTagName($registros,'cdlcremp'); ?>';
-			arrayRegistros['dslcremp'] = '<? echo getByTagName($registros,'dslcremp'); ?>';
+			arrayRegistros['dslcremp'] = '<? echo retiraCharEsp(getByTagName($registros,'dslcremp')); ?>';
 			arrayRegistros['cdfinemp'] = '<? echo getByTagName($registros,'cdfinemp'); ?>';
-			arrayRegistros['dsfinemp'] = '<? echo getByTagName($registros,'dsfinemp'); ?>';
-			arrayRegistros['dsdaval1'] = '<? echo getByTagName($registros,'dsdaval1'); ?>';
-			arrayRegistros['dsdaval2'] = '<? echo getByTagName($registros,'dsdaval2'); ?>';
+			arrayRegistros['dsfinemp'] = '<? echo retiraCharEsp(getByTagName($registros,'dsfinemp')); ?>';
+			arrayRegistros['dsdaval1'] = '<? echo retiraCharEsp(getByTagName($registros,'dsdaval1')); ?>';
+			arrayRegistros['dsdaval2'] = '<? echo retiraCharEsp(getByTagName($registros,'dsdaval2')); ?>';
 			arrayRegistros['vlpreapg'] = '<? echo formataMoeda(getByTagName($registros,'vlpreapg')); ?>';
 			arrayRegistros['qtmesdec'] = '<? echo getByTagName($registros,'qtmesdec'); ?>';
 			arrayRegistros['qtprecal'] = '<? echo getByTagName($registros,'qtprecal'); ?>';
@@ -306,20 +306,20 @@
 			arrayProposta['flgimpnp'] = '<? echo getByTagName($proposta,'flgimpnp'); ?>';     
 			arrayProposta['flgpagto'] = '<? echo getByTagName($proposta,'flgpagto'); ?>';     
 			arrayProposta['dtdpagto'] = '<? echo getByTagName($proposta,'dtdpagto'); ?>';     
-			arrayProposta['dsctrliq'] = '<? echo getByTagName($proposta,'dsctrliq'); ?>';     
+			arrayProposta['dsctrliq'] = '<? echo retiraCharEsp(getByTagName($proposta,'dsctrliq')); ?>';     
 			arrayProposta['qtpromis'] = '<? echo getByTagName($proposta,'qtpromis'); ?>';     
 			arrayProposta['nrseqrrq'] = '<? echo getByTagName($proposta,'nrseqrrq'); ?>'; 
 			arrayProposta['nmchefia'] = '<? echo getByTagName($proposta,'nmchefia'); ?>';     
 			arrayProposta['vlsalari'] = '<? echo getByTagName($proposta,'vlsalari'); ?>';    
 			arrayProposta['vlsalcon'] = '<? echo getByTagName($proposta,'vlsalcon'); ?>';
 			arrayProposta['vldrendi'] = '<? echo getByTagName($proposta,'vldrendi'); ?>';
-			arrayProposta['dsobserv'] = '<? echo getByTagName($proposta,'dsobserv'); ?>';
-			arrayProposta['dsrelbem'] = '<? echo getByTagName($proposta,'dsrelbem'); ?>';
+			arrayProposta['dsobserv'] = '<? echo retiraCharEsp(getByTagName($proposta,'dsobserv')); ?>';
+			arrayProposta['dsrelbem'] = '<? echo retiraCharEsp(getByTagName($proposta,'dsrelbem')); ?>';
 			arrayProposta['tplcremp'] = '<? echo getByTagName($proposta,'tplcremp'); ?>';
-			arrayProposta['dslcremp'] = '<? echo getByTagName($proposta,'dslcremp'); ?>';
-			arrayProposta['dsfinemp'] = '<? echo getByTagName($proposta,'dsfinemp'); ?>';
+			arrayProposta['dslcremp'] = '<? echo retiraCharEsp(getByTagName($proposta,'dslcremp')); ?>';
+			arrayProposta['dsfinemp'] = '<? echo retiraCharEsp(getByTagName($proposta,'dsfinemp')); ?>';
 			arrayProposta['idquapro'] = '<? echo getByTagName($proposta,'idquapro'); ?>';
-			arrayProposta['dsquapro'] = '<? echo getByTagName($proposta,'dsquapro'); ?>';
+			arrayProposta['dsquapro'] = '<? echo retiraCharEsp(getByTagName($proposta,'dsquapro')); ?>';
 			arrayProposta['percetop'] = '<? echo getByTagName($proposta,'percetop'); ?>';
 			arrayProposta['dtmvtolt'] = '<? echo getByTagName($proposta,'dtmvtolt'); ?>';
 			arrayProposta['nrctremp'] = '<? echo getByTagName($proposta,'nrctremp'); ?>';
@@ -332,7 +332,7 @@
 			arrayProposta['flgcrcta'] = '<? echo getByTagName($proposta,'flgcrcta'); ?>';
 			arrayProposta['tpemprst'] = '<? echo getByTagName($proposta,'tpemprst'); ?>';
 			arrayProposta['cdtpempr'] = '<? echo getByTagName($proposta,'cdtpempr'); ?>';
-			arrayProposta['dstpempr'] = '<? echo getByTagName($proposta,'dstpempr'); ?>';
+			arrayProposta['dstpempr'] = '<? echo retiraCharEsp(getByTagName($proposta,'dstpempr')); ?>';
 			arrayProposta['dtlibera'] = '<? echo getByTagName($proposta,'dtlibera'); ?>';
 
 			
