@@ -1720,7 +1720,7 @@ PROCEDURE consulta_iof:
            aux_dscritic = pc_calcula_iof_epr.pr_dscritic
                              WHEN pc_calcula_iof_epr.pr_dscritic <> ?.
  
-    IF aux_dscritic <> "" OR aux_dscritic <> ? THEN
+    IF aux_dscritic <> "" THEN
        DO:
            ASSIGN aux_cdcritic = 0.
            RUN gera_erro (INPUT par_cdcooper,
