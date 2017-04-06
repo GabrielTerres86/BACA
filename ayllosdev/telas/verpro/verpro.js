@@ -1337,7 +1337,8 @@ function formataVerpro() {
 		rDtdebito.css({'display': 'block'});
 		rNsuopera.css({'display': 'block'});
 		rDsprotoc.css({'display': 'block'}).css('width', '130px');
-        rNmprepos.css('width', '130px');
+		rNmprepos.css('width', '130px');
+		rNmoperad.css('width', '130px');
 
 		// Exibir Campos
 		cVlrecarga.css({'display': 'block'});
@@ -1348,7 +1349,8 @@ function formataVerpro() {
 		cDtdebito.css({'display': 'block'});
 		cNsuopera.css({'display': 'block'});
 		cDsprotoc.css({'display': 'block'}).css('width', '425px');
-        cNmprepos.css('width', '425px');
+		cNmprepos.css('width', '425px');
+		cNmoperad.css('width', '425px');
 	}else {
 
         if (cdtippro == '3') {

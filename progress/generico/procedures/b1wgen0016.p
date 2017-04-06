@@ -1566,6 +1566,7 @@ PROCEDURE proc_cria_critica_transacao_oper:
                                                STRING(tbrecarga_operacao.dtrecarga,"99/99/9999"))
                                aux_vllantra = tbrecarga_operacao.vlrecarga
                                aux_dstptran = aux_resposta
+                               aux_dscedent = aux_resposta
                         	   aux_dstiptra = "Recarga de Celular".
                     END.
 
