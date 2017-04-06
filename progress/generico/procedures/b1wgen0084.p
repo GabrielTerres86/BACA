@@ -3354,6 +3354,9 @@ PROCEDURE grava_efetivacao_proposta:
                                          INPUT par_nrdconta,
                                          INPUT par_dtdpagto,
                                          INPUT crawepr.qtpreemp,
+                                         INPUT crawepr.cdlcremp,
+                                         INPUT crawepr.vlpreemp,
+                                         INPUT crawepr.dtlibera,
                                         OUTPUT aux_vliofepr,
                                         OUTPUT TABLE tt-erro).
 

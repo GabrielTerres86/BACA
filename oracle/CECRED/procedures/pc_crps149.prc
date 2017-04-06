@@ -262,6 +262,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
           ,epr.cdlcremp  
           ,epr.nrdconta
           ,epr.vlemprst
+          ,epr.vlpreemp
           ,epr.nrctremp
           ,epr.dtdpagto
           ,epr.qtpreemp
@@ -531,6 +532,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
   vr_valor_total NUMBER := 0;
   vr_totliqui NUMBER := 0;
   vr_vlrsaldo NUMBER := 0;
+  vr_vlmultip NUMBER := 0;
   vr_dtultdia DATE;
   vr_dtliblan DATE;
   
@@ -607,12 +609,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
   -- Indicador de Liquidação
   --vr_inliquid INTEGER:= 0;
   
-  -- Variaveis do IOF
-  vr_dtiniiof DATE;
-  vr_dtfimiof DATE;
-  vr_txccdiof NUMBER := 0;
-  vr_qtdiaiof INTEGER;
-   
   -- Variaveis do CPMF
   vr_dtinipmf	DATE;
   vr_dtfimpmf	DATE;
@@ -996,20 +992,6 @@ BEGIN
     RAISE vr_exc_saida;
   END IF;
   
-  -- Procedimento padrão de busca de informações de IOF { includes/iof.i }
-  gene0005.pc_busca_iof (pr_cdcooper => pr_cdcooper
-                        ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                        ,pr_dtiniiof => vr_dtiniiof
-                        ,pr_dtfimiof => vr_dtfimiof
-                        ,pr_txccdiof => vr_txccdiof
-                        ,pr_cdcritic => vr_cdcritic
-                        ,pr_dscritic => vr_dscritic);
-  -- Se retornou erro
-  IF vr_dscritic IS NOT NULL THEN
-    -- Gerar raise
-    RAISE vr_exc_saida;
-  END IF;
-
   --Carga Linhas Credito
   FOR rw_craplcr IN cr_craplcr(pr_cdcooper => pr_cdcooper) LOOP
     vr_tab_craplcr(rw_craplcr.cdlcremp).flgtarif := rw_craplcr.flgtarif;  
@@ -2738,21 +2720,24 @@ BEGIN
     vr_vliofaux := 0;
     
     /*  Cobranca do IOF de emprestimo  */
-    IF nvl(vr_txccdiof,0) > 0 AND vr_flgtaiof = 1 THEN -- TRUE
-      --Calcular Valor IOF
-      vr_vliofaux := ROUND(nvl(vr_vlrsaldo,0) * nvl(vr_txccdiof,0),2);
-      vr_qtdiaiof := add_months(rw_crabepr.dtdpagto,rw_crabepr.qtpreemp - 1) - rw_crapdat.dtmvtolt;
+    IF vr_flgtaiof = 1 THEN -- TRUE
       
-      IF vr_qtdiaiof > 365 THEN
-        vr_qtdiaiof := 365;       
+      EMPR0001.pc_calcula_iof_epr(pr_cdcooper => pr_cdcooper
+                                 ,pr_nrdconta => rw_crabepr.nrdconta
+                                 ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                 ,pr_inpessoa => rw_crapass.inpessoa
+                                 ,pr_cdlcremp => rw_crabepr.cdlcremp
+                                 ,pr_qtpreemp => rw_crabepr.qtpreemp
+                                 ,pr_vlpreemp => rw_crabepr.vlpreemp
+                                 ,pr_vlemprst => rw_crabepr.vlemprst
+                                 ,pr_dtdpagto => rw_crabepr.dtdpagto
+                                 ,pr_dtlibera => rw_crapdat.dtmvtolt
+                                 ,pr_valoriof => vr_vliofaux
+                                 ,pr_dscritic => vr_dscritic);
+                                
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
       END IF;
-      
-      -- Condicao para verificar o tipo de pessoa
-      IF rw_crapass.inpessoa = 1 THEN
-        vr_vliofaux := NVL(vr_vliofaux,0) + (vr_vlrsaldo * (vr_qtdiaiof * 0.000082));
-      ELSE
-        vr_vliofaux := NVL(vr_vliofaux,0) + (vr_vlrsaldo * (vr_qtdiaiof * 0.000041));
-      END IF;   
       
       -- Verificar a imunidade tributária
       IMUT0001.pc_verifica_imunidade_trib(pr_cdcooper => pr_cdcooper
@@ -2764,9 +2749,25 @@ BEGIN
                                          ,pr_flgimune => vr_flgimune
                                          ,pr_dsreturn => vr_dsreturn
                                          ,pr_tab_erro => vr_tab_erro);
-
+      
+      -- 05/04/2017 - Renato Darosci - Quando for refinanciamento devera ajustar os valores de IOF
+      -- Se há valor de liquidação de contratos
+      IF NVL(vr_totliqui,0) > 0 THEN
+        -- Calcular o multiplo de ajuste para o IOF
+        vr_vlmultip := (1 - (vr_totliqui / rw_crabepr.vlemprst));
+        
+        -- Se o valor calculado para o multiplo for menor ou igual a zero
+        IF vr_vlmultip <= 0 THEN
+          -- Nao devera cobrar IOF
+          vr_vliofaux := 0;
+        ELSE
+          -- Aplicar o multiplo sobre o valor de IOF calculado para o emprestimo
+          vr_vliofaux := ROUND((vr_vliofaux * vr_vlmultip),2);
+        END IF;
+      END IF;
+      
       --  Cobranca do IOF de emprestimo
-      IF NOT vr_flgimune AND nvl(vr_txccdiof,0) > 0 AND vr_flgtaiof = 1 THEN
+      IF NOT vr_flgimune AND vr_flgtaiof = 1 AND vr_vliofaux > 0 THEN
          
         --Criar os Lotes usados pelo Programa 
         pc_cria_lote (pr_cdcooper => pr_cdcooper
@@ -2849,7 +2850,7 @@ BEGIN
           
           -- Atualiza o emprestimo 
           BEGIN
-            UPDATE crapepr SET crapepr.vltaxiof = vr_txccdiof
+            UPDATE crapepr SET crapepr.vltaxiof = 0
                               ,crapepr.vltariof = vr_vliofaux
             WHERE crapepr.ROWID = rw_crabepr.ROWID;
           EXCEPTION

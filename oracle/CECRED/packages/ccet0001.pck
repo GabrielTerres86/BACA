@@ -166,7 +166,6 @@ PROCEDURE pc_juros_cet(pr_nro_parcelas   IN NUMBER
                                       
 END CCET0001;
 /
-
 create or replace package body cecred.CCET0001 is
 
   ---------------------------------------------------------------------------------------------------------------
@@ -1913,21 +1912,22 @@ create or replace package body cecred.CCET0001 is
         -- Quantidade de dias de vigencia
         vr_qtdiavig := add_months(pr_dtdpagto,pr_qtpreemp - 1) - pr_dtmvtolt;      
         -- Buscar iof
-        pc_calcula_iof(pr_cdcooper => pr_cdcooper
-                      ,pr_dtmvtolt => pr_dtmvtolt
-                      ,pr_vlemprst => pr_vlemprst
-                      ,pr_cdprogra => pr_cdprogra
-                      ,pr_cdlcremp => pr_cdlcremp
-                      ,pr_inpessoa => pr_inpessoa
-                      ,pr_dtinivig => pr_dtlibera
-                      ,pr_qtdiavig => vr_qtdiavig
-                      ,pr_vllanmto => vr_vlrdoiof
-                      ,pr_txccdiof => vr_txjuriof
-                      ,pr_cdcritic => vr_cdcritic
-                      ,pr_dscritic => vr_dscritic);
-         -- VERIFICA SE OCORREU UMA CRITICA
+        EMPR0001.pc_calcula_iof_epr(pr_cdcooper => pr_cdcooper
+                                   ,pr_nrdconta => pr_nrdconta
+                                   ,pr_dtmvtolt => pr_dtmvtolt
+                                   ,pr_inpessoa => pr_inpessoa
+                                   ,pr_cdlcremp => pr_cdlcremp
+                                   ,pr_qtpreemp => pr_qtpreemp
+                                   ,pr_vlpreemp => pr_vlpreemp
+                                   ,pr_vlemprst => pr_vlemprst
+                                   ,pr_dtdpagto => pr_dtdpagto
+                                   ,pr_dtlibera => pr_dtlibera
+                                   ,pr_valoriof => vr_vlrdoiof
+                                   ,pr_dscritic => vr_dscritic);
+                                   
+        -- VERIFICA SE OCORREU UMA CRITICA
         IF vr_dscritic IS NOT NULL THEN
-          RAISE vr_exc_erro;        
+          RAISE vr_exc_erro;
         END IF;
       
       END IF;
@@ -2481,22 +2481,20 @@ create or replace package body cecred.CCET0001 is
           vr_tpfinali := rw_crapfin.tpfinali;
         END IF;
     
-      vr_qtdiavig := add_months(pr_dtdpagto,pr_qtpreemp - 1) - pr_dtmvtolt;
-         
-      -- Buscar iof
-      pc_calcula_iof(pr_cdcooper => pr_cdcooper
-                    ,pr_dtmvtolt => pr_dtmvtolt
-                    ,pr_vlemprst => pr_vlemprst
-                    ,pr_cdprogra => pr_cdprogra
-                    ,pr_cdlcremp => pr_cdlcremp
-                    ,pr_inpessoa => pr_inpessoa
-                    ,pr_dtinivig => pr_dtlibera
-                    ,pr_qtdiavig => vr_qtdiavig
-                    ,pr_vllanmto => vr_vlrdoiof
-                    ,pr_txccdiof => vr_txjuriof
-                    ,pr_cdcritic => vr_cdcritic
-                    ,pr_dscritic => vr_dscritic);
-       -- VERIFICA SE OCORREU UMA CRITICA
+      EMPR0001.pc_calcula_iof_epr(pr_cdcooper => pr_cdcooper
+                                 ,pr_nrdconta => pr_nrdconta
+                                 ,pr_dtmvtolt => pr_dtmvtolt
+                                 ,pr_inpessoa => pr_inpessoa
+                                 ,pr_cdlcremp => pr_cdlcremp
+                                 ,pr_qtpreemp => pr_qtpreemp
+                                 ,pr_vlpreemp => pr_vlpreemp
+                                 ,pr_vlemprst => pr_vlemprst
+                                 ,pr_dtdpagto => pr_dtdpagto
+                                 ,pr_dtlibera => pr_dtlibera
+                                 ,pr_valoriof => vr_vlrdoiof
+                                 ,pr_dscritic => vr_dscritic);
+                                   
+      -- VERIFICA SE OCORREU UMA CRITICA
       IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_erro;        
       END IF;             
@@ -2630,4 +2628,3 @@ create or replace package body cecred.CCET0001 is
                          
 end CCET0001;
 /
-

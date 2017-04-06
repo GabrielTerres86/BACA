@@ -780,6 +780,19 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
                                      ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                      ,pr_des_erro OUT VARCHAR2);                                      
                                         
+ PROCEDURE pc_calcula_iof_epr(pr_cdcooper  IN crapepr.cdcooper%TYPE
+                             ,pr_nrdconta  IN crapepr.nrdconta%TYPE
+                             ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE
+                             ,pr_inpessoa  IN crapass.inpessoa%TYPE
+                             ,pr_cdlcremp  IN crapepr.cdlcremp%TYPE
+                             ,pr_qtpreemp  IN crapepr.qtpreemp%TYPE
+                             ,pr_vlpreemp  IN crapepr.vlpreemp%TYPE
+                             ,pr_vlemprst  IN crapepr.vlemprst%TYPE                            
+                             ,pr_dtdpagto  IN crapepr.dtdpagto%TYPE
+                             ,pr_dtlibera  IN crawepr.dtlibera%TYPE
+                             ,pr_valoriof OUT craplcm.vllanmto%TYPE
+                             ,pr_dscritic OUT VARCHAR2);
+                                                                   
 END empr0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
@@ -14735,6 +14748,149 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       pr_dscritic := 'Erro não tratado na EMPR0001.pc_valida_imoveis_epr --> ' || SQLERRM;
   END pc_valida_imoveis_epr;
   
+  PROCEDURE pc_calcula_iof_epr(pr_cdcooper  IN crapepr.cdcooper%TYPE --> Cooperativa conectada
+                              ,pr_nrdconta  IN crapepr.nrdconta%TYPE --> Conta do associado
+                              ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE
+                              ,pr_inpessoa  IN crapass.inpessoa%TYPE
+                              ,pr_cdlcremp  IN crapepr.cdlcremp%TYPE
+                              ,pr_qtpreemp  IN crapepr.qtpreemp%TYPE
+                              ,pr_vlpreemp  IN crapepr.vlpreemp%TYPE
+                              ,pr_vlemprst  IN crapepr.vlemprst%TYPE
+                              ,pr_dtdpagto  IN crapepr.dtdpagto%TYPE
+                              ,pr_dtlibera  IN crawepr.dtlibera%TYPE
+                              ,pr_valoriof OUT craplcm.vllanmto%TYPE -- Valor calculado com o iof
+                              ,pr_dscritic OUT VARCHAR2) IS          --> Descricão da critica
+  /* .............................................................................
+     Programa: pc_calcula_iof_epr                
+     Sistema : Conta-Corrente - Cooperativa de Credito
+     Sigla   : CRED
+     Autor   : James Prust Junior
+     Data    : Abril/2017                        Ultima atualizacao: 
+    
+     Dados referentes ao programa:
+    
+     Frequencia: Sempre que for chamada
+     Objetivo  : Calcular IOF para emprestimo/financiamento
+    
+     Alteracoes:     
+  ............................................................................. */
+
+    -- Tipo para armazenar as informações das parcelas
+    TYPE typ_reg_parcela IS
+      RECORD(nrparepr       crappep.nrparepr%TYPE
+            ,dtvencto       crappep.dtvencto%TYPE
+            ,qtdias         PLS_INTEGER
+            ,vlparepr       NUMBER(25,2)
+            ,vljuros        NUMBER(25,2)
+            ,vlprincipal    NUMBER(25,2)
+            ,vlsaldodevedor NUMBER(25,2)
+            ,vliof          NUMBER(25,2));
+          
+    -- Tabela para armazenar registros do tipo acima
+    TYPE typ_tab_parcela IS TABLE OF typ_reg_parcela INDEX BY PLS_INTEGER;
+    vr_tab_parcela       typ_tab_parcela;  
+  
+    vr_saldo_devedor     NUMBER(25,2) := 0;  
+    vr_txmensal          craplcr.txmensal%TYPE;
+    vr_dtvencto          DATE;
+    vr_dtiniiof          DATE;
+    vr_dtfimiof          DATE;
+    vr_qtdias            PLS_INTEGER;
+    vr_taxaiof           NUMBER(25,6);
+    vr_dstextab          VARCHAR2(500);
+    
+    -- Busca os dados da linha de credito
+    CURSOR cr_craplcr IS
+      SELECT txmensal 
+        FROM craplcr 
+       WHERE cdcooper = pr_cdcooper
+         AND cdlcremp = pr_cdlcremp;
+    rw_craplcr cr_craplcr%ROWTYPE;    
+     
+  BEGIN
+    vr_tab_parcela.DELETE;
+    vr_taxaiof := 0;
+    
+    ------------------------------------------------------------------------------------------------
+    --                                 CALCULO DO IOF ANTIGO    
+    ------------------------------------------------------------------------------------------------    
+    -- Buscar a taxa do IOF "0,038"
+    vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                                             ,pr_nmsistem => 'CRED'
+                                             ,pr_tptabela => 'USUARI'
+                                             ,pr_cdempres => 11
+                                             ,pr_cdacesso => 'VLIOFOPFIN'
+                                             ,pr_tpregist => 1);
+
+    IF vr_dstextab IS NOT NULL THEN
+      -- Povoar as informacões conforme as regras da versão anterior
+      vr_dtiniiof := TO_DATE(SUBSTR(vr_dstextab,1,10),'DD/MM/YYYY');
+      vr_dtfimiof := TO_DATE(SUBSTR(vr_dstextab,12,10),'DD/MM/YYYY');
+      IF pr_dtmvtolt BETWEEN vr_dtiniiof AND vr_dtfimiof THEN
+        vr_taxaiof := GENE0002.fn_char_para_number(SUBSTR(vr_dstextab,23,14));
+      END IF;
+    END IF;
+          
+    -- Calcula o IOF para a taxa "0,038"
+    pr_valoriof := ROUND(pr_vlemprst * vr_taxaiof,2);
+    
+    IF pr_dtlibera < to_date('25/01/2017','DD/MM/RRRR') THEN
+      RETURN;
+    END IF;
+    
+    -- Buscar a taxa de juros
+    OPEN cr_craplcr;
+    FETCH cr_craplcr INTO rw_craplcr;
+    -- se achou registro
+    IF cr_craplcr%FOUND THEN
+      CLOSE cr_craplcr;
+      -- Taxa de juros remunerados mensal
+      vr_txmensal := ROUND((POWER(1 + (nvl(rw_craplcr.txmensal,0) / 100),1) - 1) * 100,2);
+    ELSE
+      CLOSE cr_craplcr;
+    END IF; 
+      
+    ------------------------------------------------------------------------------------------------
+    --                                 CALCULO DO NOVO IOF
+    ------------------------------------------------------------------------------------------------        
+    -- Condicao Pessoa Fisica
+    IF pr_inpessoa = 1 THEN
+      vr_taxaiof := 0.000082;
+    ELSE
+      vr_taxaiof := 0.000041;
+    END IF;
+    
+    FOR vr_ind IN 1..pr_qtpreemp LOOP
+      IF vr_ind = 1 THEN
+        vr_saldo_devedor := pr_vlemprst;
+      ELSE
+        vr_saldo_devedor := vr_tab_parcela(vr_ind - 1).vlsaldodevedor;
+      END IF;
+      
+      -- Data de Vencimento da Parcela
+      vr_dtvencto := ADD_MONTHS(pr_dtdpagto,vr_ind - 1);  
+      
+      -- Somente eh permitido calcular o IOF para 365 dias
+      vr_qtdias   := vr_dtvencto - pr_dtmvtolt;
+      IF vr_qtdias > 365 THEN
+        vr_qtdias := 365;
+      END IF;
+    
+      -- Valor do Juros
+      vr_tab_parcela(vr_ind).vljuros        := (vr_txmensal / 100) * vr_saldo_devedor;
+      -- Valor Amortizacao/Principal
+      vr_tab_parcela(vr_ind).vlprincipal    := pr_vlpreemp - vr_tab_parcela(vr_ind).vljuros;
+      -- Valor Saldo Devedor
+      vr_tab_parcela(vr_ind).vlsaldodevedor := vr_saldo_devedor - vr_tab_parcela(vr_ind).vlprincipal;
+      -- Valor do IOF
+      pr_valoriof := pr_valoriof + ROUND(vr_qtdias * vr_tab_parcela(vr_ind).vlprincipal * vr_taxaiof,2);
+    END LOOP;
+      
+  EXCEPTION
+    WHEN OTHERS THEN
+      -- Montar descrição de erro não tratado
+      pr_dscritic := 'Erro não tratado na EMPR0001.pc_calcula_iof_epr --> ' || SQLERRM;
+  END pc_calcula_iof_epr;
 
 END empr0001;
 /
