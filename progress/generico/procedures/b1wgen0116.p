@@ -37,7 +37,9 @@
                              listar-mensagens independente do tipo de 
                              consulta (David).
                              
-                12/12/2013 - Adicionado VALIDATE para o CREATE. (Jorge)        
+                12/12/2013 - Adicionado VALIDATE para o CREATE. (Jorge)
+                             
+                16/01/2017 - Chamada da procedure do Oracle para evitar lock (Dionathan)
    
 ............................................................................*/
 
@@ -45,6 +47,7 @@
 
 { sistema/generico/includes/b1wgen0116tt.i }
 { sistema/generico/includes/var_internet.i }
+{ sistema/generico/includes/var_oracle.i }
 { sistema/generico/includes/gera_erro.i }
 { sistema/generico/includes/gera_log.i }
 
@@ -331,7 +334,7 @@ PROCEDURE cadastrar-cadmsg:
                 DO:
                     DO  WHILE AVAIL(crapsnh):
                         
-                        /* gerar mensagem para o cooperado */
+                        /* gerar zmensagem para o cooperado */
                         RUN gerar-mensagem (
                                         INPUT tt-dsidpara.cdcooper,
                                         INPUT crapsnh.nrdconta,
@@ -346,13 +349,13 @@ PROCEDURE cadastrar-cadmsg:
                                         INPUT aux_ultimcdm,
                                        OUTPUT par_dsrterro).
         
-                        IF  RETURN-VALUE = "NOK" THEN
+                        IF  RETURN-VALUE = "NOK" THEN						
                         DO:
                             ASSIGN aux_cdcritic = 1
-                                   aux_dscritic = 
+							       aux_dscritic = "Erro de envio: "
+                                   aux_dscritic = aux_dscritic +
                                    "(" + STRING(tt-dsidpara.cdcooper) + ";" + 
-                                   STRING(crapsnh.nrdconta) + ") " + 
-                                   par_dsrterro.
+                                   STRING(crapsnh.nrdconta) + ") " .								  
 
                             PUT STREAM str_1 
                                        aux_dscritic FORMAT "X(80)" SKIP.
@@ -364,7 +367,7 @@ PROCEDURE cadastrar-cadmsg:
                         END.
                         ELSE
                             ASSIGN aux_totenvia = aux_totenvia + 1.
-                        
+                         
                         GET NEXT q_crapmsg.
                     END. /* Do while avail */
                 END.
@@ -427,7 +430,7 @@ PROCEDURE cadastrar-cadmsg:
                aux_nrseqerr = aux_nrseqerr + 1.
     END.
                    
-    IF  aux_dscritic <> "" OR aux_cdcritic <> 0 THEN
+    IF  aux_dscritic <> ? OR aux_cdcritic <> 0 THEN
         DO:
             ASSIGN aux_returnvl = "NOK".
            
@@ -473,89 +476,38 @@ PROCEDURE gerar-mensagem:
     DEF  INPUT PARAM par_cdcadmsg AS INTE                           NO-UNDO.
 
     DEF OUTPUT PARAM par_retrerro AS CHAR                           NO-UNDO.
+    
+    DEF VAR aux_nrsequen          AS INTE                           NO-UNDO.
 
     ASSIGN aux_dscritic = ""
-           aux_cdcritic = 0
            aux_returnvl = "NOK".
     
-    Gerar: DO TRANSACTION
-           ON ERROR  UNDO Gerar, LEAVE Gerar
-           ON QUIT   UNDO Gerar, LEAVE Gerar
-           ON STOP   UNDO Gerar, LEAVE Gerar
-           ON ENDKEY UNDO Gerar, LEAVE Gerar:
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    RUN STORED-PROCEDURE pc_gerar_mensagem aux_handproc = PROC-HANDLE NO-ERROR
+                         (INPUT par_cdcooper,
+                          INPUT par_nrdconta,
+                          INPUT par_idseqttl,
+                          INPUT par_cdprogra,
+                          INPUT par_inpriori,
+                          INPUT par_dsdmensg,
+                          INPUT par_dsdassun,
+                          INPUT par_dsdremet,
+                          INPUT par_dsdplchv,
+                          INPUT par_cdoperad,
+                          INPUT par_cdcadmsg,
+                          OUTPUT "").
+                          
+    CLOSE STORED-PROC pc_gerar_mensagem aux_statproc = PROC-STATUS
+          WHERE PROC-HANDLE = aux_handproc.
 
-        DO  aux_contador = 1 TO 10:
-            FIND LAST crapmsg WHERE cdcooper = par_cdcooper
-                                AND nrdconta = par_nrdconta
-                                EXCLUSIVE-LOCK NO-WAIT NO-ERROR.
-            
-            IF  NOT AVAIL crapmsg THEN
-                IF LOCKED crapmsg THEN DO:
-                   aux_dscritic = "Ultimo registro de mensagem esta " +
-                                  "sendo alterado. Tente novamente.".
-                   PAUSE 1 NO-MESSAGE.
-                   NEXT.
-                END.
-                ELSE  
-                    ASSIGN aux_ultnrmsg = 1.
-            ELSE
-                ASSIGN aux_ultnrmsg = crapmsg.nrdmensg + 1.
-            LEAVE.
-        END.
-        
-        FIND FIRST crapcop WHERE crapcop.cdcooper = par_cdcooper
-                           NO-LOCK NO-ERROR.
+    ASSIGN aux_dscritic = pc_gerar_mensagem.pr_dscritic.	
 
-        FIND FIRST crapass WHERE crapass.cdcooper = par_cdcooper
-                             AND crapass.nrdconta = par_nrdconta
-                             NO-LOCK NO-ERROR.
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-        /* trocando "#cooperado#" pelo nome do cooperado,
-           trocando #cooperativa# pelo nome fantasia da cooperativa,
-           trocando caracteres especiais */
-        ASSIGN par_dsdmensg = 
-               REPLACE(par_dsdmensg,"%23cooperado%23",crapass.nmprimtl)
-               par_dsdmensg = 
-               REPLACE(par_dsdmensg,"%23cooperativa%23",crapcop.nmrescop)
-               par_dsdmensg = REPLACE(par_dsdmensg,"<","%3C")
-               par_dsdmensg = REPLACE(par_dsdmensg,">","%3E")
-               par_dsdmensg = REPLACE(par_dsdmensg,"&","%26").
-
-        CREATE  crapmsg.
-        ASSIGN  crapmsg.cdcooper = par_cdcooper
-        		crapmsg.nrdconta = par_nrdconta
-        		crapmsg.idseqttl = par_idseqttl
-        		crapmsg.nrdmensg = aux_ultnrmsg
-        		crapmsg.cdprogra = par_cdprogra
-        		crapmsg.dtdmensg = TODAY
-        		crapmsg.hrdmensg = TIME
-        		crapmsg.dsdremet = par_dsdremet
-        	    crapmsg.dsdassun = par_dsdassun	
-                crapmsg.dsdmensg = par_dsdmensg
-        		crapmsg.flgleitu = FALSE
-        	    crapmsg.inpriori = par_inpriori	
-                crapmsg.dsdplchv = par_dsdplchv
-        		crapmsg.cdoperad = par_cdoperad
-                crapmsg.cdcadmsg = par_cdcadmsg.
-        VALIDATE crapmsg.
-                
-
-    END. /* Gerar */
-
-    IF  aux_dscritic <> "" OR aux_cdcritic <> 0 THEN
-        DO:
-            ASSIGN aux_returnvl = "NOK"
-                   par_retrerro = aux_dscritic.
-
-            RUN gera_erro (INPUT par_cdcooper,
-                           INPUT 90,
-                           INPUT 900,
-                           INPUT 1,
-                           INPUT aux_cdcritic,
-                           INPUT-OUTPUT aux_dscritic).
-        END.
-    ELSE
-        ASSIGN aux_returnvl = "OK".
+    IF   aux_dscritic = ? 
+	OR aux_dscritic = "" THEN DO:
+         ASSIGN aux_returnvl = "OK".	  
+    END.
     
     RETURN aux_returnvl.
 
