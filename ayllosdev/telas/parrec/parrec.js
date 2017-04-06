@@ -115,8 +115,8 @@ function controlaFoco() {
 	
 	/* --- Opções A,C (Coop Singulares) - INICIO --- */
 	
-	$('#vlrmaxpf','#frmParrec').unbind('keydown').bind('keydown', function(e) {
-		if ( e.keyCode == 9 || e.keyCode == 13 ) {	
+	$('#vlrmaxpf','#frmParrec').unbind('keypress').bind('keypress', function(e) {
+		if ( e.keyCode == 13 ) {	
 			$('#vlrmaxpj','#frmParrec').select();
 			return false;
 		}	
@@ -128,6 +128,10 @@ function controlaFoco() {
 			return false;
 		}	
 	});
+	
+	$('#vlrmaxpf','#frmParrec').attr('tabindex', 1);
+	$('#vlrmaxpj','#frmParrec').attr('tabindex', 2);
+	$('#btProsseguir','#divBotoes').attr('tabindex', 3);
 	
 	/* ---- Opções A,C (Coop Singulares) - FIM ---- */
 	
