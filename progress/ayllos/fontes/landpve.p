@@ -298,7 +298,13 @@
                             debito automatico.
                             PRJ320 - Oferta debito automatico (Odirlei-AMcom)
                             
-               09/02/2016 - Chamado 605092 - não permitir estorno ou exclusão se
+               22/09/2016 - Incluido tratamento para verificacao de contrato de 
+                            acordo, Prj. 302 (Jean Michel).
+
+               14/02/2017 - Alteracao para chamar pc_verifica_situacao_acordo. 
+                            (Jaison/James - PRJ302)
+
+			   09/02/2017 - Chamado 605092 - não permitir estorno ou exclusão se
                             a conta esta vinculada a um contrato de alienação de 
                             veículo cujo gravame está em uma das situações abaixo:
                             1 - Em processamento
@@ -306,12 +312,6 @@
                             5 - Cancelado
                             Jean ( Mout´S)
                             
-               22/09/2016 - Incluido tratamento para verificacao de contrato de 
-                            acordo, Prj. 302 (Jean Michel).
-
-               14/02/2017 - Alteracao para chamar pc_verifica_situacao_acordo. 
-                            (Jaison/James - PRJ302)
-
 ............................................................................. */
 
 { includes/var_online.i }
@@ -639,7 +639,7 @@ DO WHILE TRUE:
                   END.
           END.
 
-      /*** 10/02/2016 - tratamento Gravame - Jean (Mout´S) ***/
+      /*** 10/02/2017 - tratamento Gravame - Jean (Mout´S) ***/
       IF  glb_cdcritic     = 0  THEN
           DO:
               FIND FIRST crapbpr WHERE 
