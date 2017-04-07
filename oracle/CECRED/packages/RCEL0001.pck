@@ -1430,6 +1430,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 														 ,pr_dsprotoc  OUT VARCHAR2                                -- Protocolo
 														 ,pr_cdcritic  OUT PLS_INTEGER -- Cód. crítica
 														 ,pr_dscritic  OUT VARCHAR2) IS -- Desc. crítica
+  
+  PRAGMA AUTONOMOUS_TRANSACTION;
+  
   BEGIN
   /* .............................................................................
     Programa: pc_efetua_recarga
