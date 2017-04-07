@@ -57,7 +57,9 @@
                             <div id="addInterv">
                                 <label for="hrretencao2">Aguardar análise por</label>
                                 <select id="qtdminutos_retencao" name="qtdminutos_retencao">
+                                    <option value="05">05</option>
                                     <option value="10">10</option>
+                                    <option value="15">15</option>
                                     <option value="20">20</option>
                                     <option value="30">30</option>
                                     <option value="40">40</option>
