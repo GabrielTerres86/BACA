@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Novembro/91.                    Ultima atualizacao: 06/10/2016
+   Data    : Novembro/91.                    Ultima atualizacao: 03/04/2017
 
    Dados referentes ao programa:
 
@@ -192,6 +192,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
 
                06/10/2016 - Incluido consulta de valor de acordo de emprestimo bloqueado,
                             Prj. 302 (Jean Michel)                         
+
+               03/04/2017 - Ajuste no calculo do IOF, incluir calculo da taxa adicional do IOF.
+                            (Odirlei-AMcom)
+
      ............................................................................. */
 
      DECLARE
@@ -678,6 +682,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
        vr_vlipmfpg  NUMBER:= 0;
        vr_vlbasipm  NUMBER:= 0;
        vr_vlbasiof  NUMBER:= 0;
+       vr_vltariof_adic NUMBER := 0;
+       vr_qtdiaiof  INTEGER;
        vr_flgimune  BOOLEAN;
 
        --Variaveis diversas
@@ -1077,7 +1083,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                                          ,99999323
                                          ,323
                                          ,Nvl(rw_craplot.nrseqdig,0) + 1
-                                         ,rw_crapsld.vliofmes
+                                         ,round(rw_crapsld.vliofmes,2)
                                          ,to_char(rw_crapsld.vlbasiof,'fm000g000g000d00')
                                          ,0)
                                  RETURNING vllanmto
@@ -1376,6 +1382,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
            vr_vlbasipm:= 0;  --base de calculo do ipmf
            vr_qtlanmes:= 0;  --quantidade de lancamentos no mes
            vr_vlbasiof:= 0;  --valor base de iof
+           vr_vltariof_adic := 0; --Valor do IOF adicional
 
            --Verificar se a conta possui lancamentos no dia
            IF vr_tab_craplcm.EXISTS(rw_crapsld.nrdconta) THEN
@@ -1761,12 +1768,43 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                --valor base iof recebe valor iof atual menos valor iof anterior
                vr_vlbasiof:= vr_vliofatu - vr_vliofant;
              END IF;
+             
+             vr_vltariof_adic := 0;
+             
+             --> calcular a quantidade de dias corridos
+             vr_qtdiaiof := vr_dtmvtolt - vr_dtmvtoan;
+                   
+             IF vr_qtdiaiof > 1 THEN
+               -- Diminuir um dia que será calcularo com o saldo atual
+               vr_qtdiaiof := vr_qtdiaiof -1;
+               --> Calcular valor adicional do IOF dos dias não uteis(final de semana e feriado)
+               --> considerando o saldo anterior
+               IF vr_tab_crapass(rw_crapsld.nrdconta).inpessoa = 1 THEN
+                 vr_vltariof_adic := (vr_vliofant * vr_qtdiaiof * 0.000082);
+               ELSE
+                 vr_vltariof_adic := (vr_vliofant * vr_qtdiaiof * 0.000041);
+               END IF;
+             
+             END IF;
+                   
+             IF vr_vliofatu > 0 THEN               
+                   
+               --> Calcular valor adicional do IOF
+               IF vr_tab_crapass(rw_crapsld.nrdconta).inpessoa = 1 THEN
+                 vr_vltariof_adic := vr_vltariof_adic + (vr_vliofatu * 1 * 0.000082);
+               ELSE
+                 vr_vltariof_adic := vr_vltariof_adic + (vr_vliofatu * 1 * 0.000041);
+               END IF;
+             END IF;
            END IF;
+          
 
            --Valor base iof recebe valor base iof existente + valor base iof calculado
            rw_crapsld.vlbasiof:= Nvl(rw_crapsld.vlbasiof,0) + Nvl(vr_vlbasiof,0);
            --Valor iod no mes recebe valor iof mes + valor base iof multiplicado pela taxa de iof
            rw_crapsld.vliofmes:= Nvl(rw_crapsld.vliofmes,0) + ROUND(vr_vlbasiof * vr_txccdiof,2);
+           -- Incrementar com valor de tarifa de IOF adicional
+           rw_crapsld.vliofmes := rw_crapsld.vliofmes  + vr_vltariof_adic;
 
             --Se deve calcular cpmf
            IF vr_flgdcpmf THEN  --linha(905)

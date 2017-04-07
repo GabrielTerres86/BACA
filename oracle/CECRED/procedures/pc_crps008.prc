@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Janeiro/92.                     Ultima atualizacao: 05/07/2016
+   Data    : Janeiro/92.                     Ultima atualizacao: 03/04/2017
 
    Dados referentes ao programa:
 
@@ -133,6 +133,10 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
                05/07/2016 - Tratamento na rotina de validação do limite de credito, removendo
                             o raise e gerando apenas erro no log, conforme solicitacao do Daniel
                             (Carlos Rafael Tanholi).             
+                            
+               03/04/2017 - Ajuste no calculo do IOF, incluir calculo da taxa adicional do IOF.
+                            (Odirlei-AMcom)
+                                                
      ............................................................................. */
 
      DECLARE
@@ -489,6 +493,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
 
        --Variaveis do iof
        vr_vlbasiof  NUMBER:= 0;
+       vr_vltariof_adic NUMBER(25,2);
+       vr_qtdiaiof  INTEGER;
        vr_txccdiof  NUMBER:= 0;
        vr_dtiniiof  DATE;
        vr_dtfimiof  DATE;
@@ -1003,6 +1009,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
            vr_vlajuipm:= 0;
            --Zerar valor base do iof
            vr_vlbasiof:= 0;
+           --Zerar valor base do iof adicional
+           vr_vltariof_adic := 0;
            --Flag ajuste recebe false
            vr_flgajust:= FALSE;
 
@@ -1057,18 +1065,18 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
                  
              ELSE  --Selecionar Cadastro de linhas de credito rotativos
 
-             --Se nao encontrar mostra erro e aborta programa
-             IF NOT vr_tab_craplrt.EXISTS(rw_craplim.cddlinha) THEN
-               --Buscar mensagem de erro da critica
-               vr_cdcritic := 363;
-               vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || ' CONTA = '||gene0002.fn_mask_conta(rw_crapsld.nrdconta);
-               --Sair do programa
-               RAISE vr_exc_saida;
+                --Se nao encontrar mostra erro e aborta programa
+                IF NOT vr_tab_craplrt.EXISTS(rw_craplim.cddlinha) THEN
+                   --Buscar mensagem de erro da critica
+                   vr_cdcritic := 363;
+                   vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || ' CONTA = '||gene0002.fn_mask_conta(rw_crapsld.nrdconta);
+                   --Sair do programa
+                   RAISE vr_exc_saida;
              END IF;
 
-             --Valor juros cheque especial recebe valor juros * txmensal /100 * -1
-             rw_crapsld.vljuresp:= (rw_crapsld.vlsmnesp * (vr_tab_craplrt(rw_craplim.cddlinha) / 100)) * -1;
-           END IF;
+                --Valor juros cheque especial recebe valor juros * txmensal /100 * -1
+                rw_crapsld.vljuresp:= (rw_crapsld.vlsmnesp * (vr_tab_craplrt(rw_craplim.cddlinha) / 100)) * -1;
+             END IF;
 
            END IF;
 
@@ -2020,7 +2028,22 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
                rw_crapsld.vlbasiof:= Nvl(rw_crapsld.vlbasiof,0) + Nvl(vr_vlbasiof,0);
                --Atualizar valor do iof no mes na tabela de saldo
                rw_crapsld.vliofmes:= Nvl(rw_crapsld.vliofmes,0) + ROUND(Nvl(vr_vlbasiof,0) * Nvl(vr_txccdiof,0),2);
+               
              END IF;
+             
+             vr_vltariof_adic := 0;
+                   
+             --> Calcular valor adicional do IOF apenas da diferença 
+             IF rw_crapsld.ass_inpessoa = 1 THEN
+               vr_vltariof_adic := vr_vltariof_adic + (vr_vlbasiof * 1 * 0.000082);
+             ELSE
+               vr_vltariof_adic := vr_vltariof_adic + (vr_vlbasiof * 1 * 0.000041);
+             END IF;
+
+             -- Incrementar com valor de tarifa de IOF adicional
+             --> não deve arredondar 
+             rw_crapsld.vliofmes := rw_crapsld.vliofmes  + vr_vltariof_adic;
+             
 
            END IF;
 
