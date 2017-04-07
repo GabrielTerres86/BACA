@@ -517,7 +517,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
   --  Sistema  : Procedimentos e funcoes das transacoes do caixa online
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 07/02/2017
+  --  Data     : Julho/2013.                   Ultima atualizacao: 20/03/2017
   --
   -- Dados referentes ao programa:
   --
@@ -579,6 +579,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
   --              13/01/2017 - Criar procedure/function ret_ano_barras_darf
   --                           para a nova regra de validacao das DARFs
   --                           (Lucas Ranghetti #588835)
+  --
+  --              20/03/2017 - Ajuste para verificar vencimento da P.M. TIMBO, DEFESA CIVIL TIMBO 
+  --                           MEIO AMBIENTE DE TIMBO, TRANSITO DE TIMBO (Lucas Ranghetti #630176)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Busca dos dados da cooperativa */
@@ -7457,7 +7460,7 @@ END pc_gera_titulos_iptu_prog;
   --  Sistema  : Procedure para retornar valores fatura
   --  Sigla    : CXON
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 27/07/2015
+  --  Data     : Julho/2013.                   Ultima atualizacao: 20/03/2017
   --
   -- Dados referentes ao programa:
   --
@@ -7466,6 +7469,9 @@ END pc_gera_titulos_iptu_prog;
   --
   -- Alteracoes: 27/07/2015 - Na chamada da CXON0014.pc_validacoes_sicredi adicionado validacao
   --                          de critica (Lucas Ranghetti #312583 )
+  --
+  --             20/03/2017 - Ajuste para verificar vencimento da P.M. TIMBO, DEFESA CIVIL TIMBO 
+  --                          MEIO AMBIENTE DE TIMBO, TRANSITO DE TIMBO (Lucas Ranghetti #630176)
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -7786,7 +7792,11 @@ END pc_gera_titulos_iptu_prog;
       
       IF ((rw_crapcon.cdempcon = 2044 AND rw_crapcon.cdsegmto = 1)  OR   /* P.M. ITAJAI */
           (rw_crapcon.cdempcon = 3493 AND rw_crapcon.cdsegmto = 1)  OR   /* P.M. PRES GETULIO */
-          (rw_crapcon.cdempcon = 1756 AND rw_crapcon.cdsegmto = 1)) THEN /* P.M. GUARAMIRIM */
+          (rw_crapcon.cdempcon = 1756 AND rw_crapcon.cdsegmto = 1)  OR   /* P.M. GUARAMIRIM */
+          (rw_crapcon.cdempcon = 4539 AND rw_crapcon.cdsegmto = 1)  OR   /* P.M. TIMBO */
+          (rw_crapcon.cdempcon = 0562 AND rw_crapcon.cdsegmto = 5)  OR   /* DEFESA CIVIL TIMBO */
+          (rw_crapcon.cdempcon = 0563 AND rw_crapcon.cdsegmto = 5)  OR   /* MEIO AMBIENTE DE TIMBO */
+          (rw_crapcon.cdempcon = 0564 AND rw_crapcon.cdsegmto = 5)) THEN /* TRANSITO DE TIMBO */
         --Data movimento anterior
         vr_dtmvtoan:= To_Char(rw_crapdat.dtmvtoan,'YYYYMMDD');
         IF To_Number(SUBSTR(pr_codigo_barras,20,8)) <= To_Number(vr_dtmvtoan) THEN
@@ -10803,7 +10813,7 @@ END pc_gera_titulos_iptu_prog;
         --Diminuir valor abatimento do Valor Fatura
         vr_vlfatura:= Nvl(vr_vlfatura,0) - vr_vlabatim;
       END IF;
-    
+
       -- Limpar a tabela de erros
       vr_tab_erro.DELETE;
 
@@ -10826,9 +10836,9 @@ END pc_gera_titulos_iptu_prog;
 
         vr_dscritic:= 'Nao foi possivel verificar o vencimento do boleto. Erro: ' || vr_dscritic;
         
-        --Levantar Excecao
-        RAISE vr_exc_erro;
-      END IF;
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+        END IF;
         
       --Retorna se está vencido ou não        
       IF vr_critica_data = TRUE THEN
