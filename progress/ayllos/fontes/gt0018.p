@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Lucas Lunelli
-   Data    : Março/2013                        Ultima Atualizacao: 05/03/2015
+   Data    : Março/2013                        Ultima Atualizacao: 27/03/2017
 
    Dados referentes ao programa:
 
@@ -21,6 +21,9 @@
               30/11/2016 - Correçao para buscar corretamente registro da crapstn
                            de acordo com o tipo de arrecadaçao (Lucas Lunelli - Projeto 338)
                            
+                            
+               27/03/2017 - Adiçao do cmapo Nome Resumido
+                            (SD - 547566 - Ricardo Linhares)
 .............................................................................*/
 
 { includes/var_online.i  }
@@ -28,6 +31,7 @@
 DEF  VAR  tel_dsempcnv    AS CHAR    FORMAT "x(05)"                   NO-UNDO.
 DEF  VAR  tel_dsnomcnv    AS CHAR    FORMAT "x(35)"                   NO-UNDO.
 DEF  VAR  tel_cdempcon    AS CHAR    FORMAT "x(4)"                    NO-UNDO.
+DEF  VAR  tel_dsnomres    LIKE CRAPSCN.dsnomres                       NO-UNDO.
 
 DEF  VAR  tel_vltarint    AS DECI    FORMAT "zz9.99"                  NO-UNDO.
 DEF  VAR  tel_vltartaa    AS DECI    FORMAT "zz9.99"                  NO-UNDO.
@@ -47,6 +51,7 @@ DEF  VAR aux_msgdolog  AS CHAR                                        NO-UNDO.
 
 DEF TEMP-TABLE tt-convenios NO-UNDO
     FIELD cdempcon AS CHAR 
+    FIELD dsnomres AS CHAR
     FIELD cdsegmto AS CHAR
     FIELD dsempcnv AS CHAR
     FIELD dsnomcnv AS CHAR.
@@ -79,10 +84,11 @@ FORM SKIP(1)
      WITH NO-LABELS ROW 5 OVERLAY COLUMN 2 FRAME f_gt0018 NO-BOX SIDE-LABELS.
 
 FORM tel_cdempcon   AT 12  LABEL "Cod.Empresa"
-     tel_cdsegmto   AT 58 LABEL "Segmento"
+     tel_dsnomres   AT 35 LABEL "Nome Resumido"
      SKIP(1)
      tel_vltarcxa   AT 5  LABEL "Valor Tarifa Caixa"
-     tel_vltardeb   AT 42 LABEL "Valor Tarifa Deb. Autom."
+     tel_cdsegmto   AT 35 LABEL "Seg"
+     tel_vltardeb   AT 44 LABEL "Valor Tarifa Deb. Aut."
      SKIP(1)
      tel_vltarint   AT 2  LABEL "Valor Tarifa Internet"
      tel_vltarcor   AT 36 LABEL "Valor Tarifa Corresp. Bancario"
@@ -158,6 +164,7 @@ DO WHILE TRUE:
     VIEW FRAME f_gt0018.
 
     ASSIGN tel_cdempcon = ""
+           tel_dsnomres = ""
            tel_cdsegmto = ""
            tel_vltarint = 0
            tel_vltartaa = 0
@@ -246,6 +253,7 @@ DO WHILE TRUE:
            tel_dtcancel = crapscn.dtencemp
            tel_dsnomcnv = crapscn.dsnomcnv
            tel_nrtolera = crapscn.nrtolera
+		   tel_dsnomres = crapscn.dsnomres
            tel_cdsegmto = crapscn.cdsegmto.
     
     DISPLAY tel_dsnomcnv WITH FRAME f_gt0018.
@@ -306,6 +314,7 @@ DO WHILE TRUE:
                 ASSIGN tel_vltararq = crapstn.vltrfuni.
            
             DISPLAY tel_cdempcon
+                    tel_dsnomres
                     tel_cdsegmto
                     tel_vltarint
                     tel_vltartaa
@@ -353,6 +362,7 @@ DO WHILE TRUE:
                 END.
 
             UPDATE tel_cdempcon
+                   tel_dsnomres
                    tel_cdsegmto
                    WITH FRAME f_tarifas.
             
@@ -374,6 +384,7 @@ DO WHILE TRUE:
                         DO: 
                             CREATE tt-convenios.
                             ASSIGN tt-convenios.cdempcon = STRING(crapscn.cdempcon)
+                                   tt-convenios.dsnomres = STRING(crapscn.dsnomres)
                                    tt-convenios.cdsegmto = STRING(crapscn.cdsegmto)
                                    tt-convenios.dsempcnv = tel_dsempcnv.
                         END.
@@ -429,7 +440,22 @@ DO WHILE TRUE:
                              ". >> /usr/coop/" + TRIM(crapcop.dsdircop)  +
                              "/log/gt0018.log").
 
+                    IF  tel_dsnomres <> STRING(crapscn.dsnomres) THEN
+                        UNIX SILENT VALUE 
+                            ("echo " + STRING(glb_dtmvtolt,"99/99/9999") +
+                             " - " +   STRING(TIME,"HH:MM:SS")           +
+                             " Operador: "  + glb_cdoperad               +  
+                             " alterou para o convenio "                 +
+                             STRING(tel_dsnomres)                         +
+                             " - " + TRIM(tel_dsnomcnv)                  + 
+                             " o nome resumido"                          + 
+                             TRIM(tt-convenios.dsnomres)                 +
+                             " para " + TRIM(tel_dsnomres)               +
+                             ". >> /usr/coop/" + TRIM(crapcop.dsdircop)  +
+                             "/log/gt0018.log").                             
+
                     ASSIGN crapscn.cdempcon = INTE(tel_cdempcon)
+                           crapscn.dsnomres = tel_dsnomres
                            crapscn.cdsegmto = tel_cdsegmto.
 
                 END.
