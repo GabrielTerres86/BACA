@@ -305,7 +305,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     Sistema  : Procedimentos e funcoes das transacoes do caixa online
     Sigla    : CRED
     Autor    : Alisson C. Berrido - Amcom
-    Data     : Junho/2013.                   Ultima atualizacao: 22/07/2016
+    Data     : Junho/2013.                   Ultima atualizacao: 20/03/2017 
   
     Dados referentes ao programa:
   
@@ -320,9 +320,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     
                 14/06/2016 - Ajuste para incluir o UPPER em campos de indice ao ler a tabela craptvl
                              (Adriano - SD 469449).
-    
+                             
                 22/07/2016 - Correção de xml sendo limpo após execução da rotina pc_executa_envio_ted_prog (Carlos)
     
+                25/07/2016 - Ajuste para retornar corretamente o xml pois estava gerando problemas para
+                             o progress receber os valores de data e nome de tags com o caracter "#"
+                             (Adriano).
+                               
+                29/08/2016 - #456682 Inclusão de verificação de fraude na rotina pc_validar_ted (Carlos)
+                
+                05/10/2016 - Implementei correcoes e alteracoes na pc_enviar_ted SD 535051. (Carlos Rafael Tanholi).
+                
+                20/03/2017 - Ajuste para validar o cpf/cnpj de acordo com o inpessoa informado             
+                            (Adriano - SD 620221).
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Busca dos dados da cooperativa */
@@ -573,7 +583,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       Sistema  : Rotinas acessadas pelas telas de cadastros Web
       Sigla    : CRED
       Autor    : Odirlei Busana - Amcom
-      Data     : Junho/2015.                   Ultima atualizacao: 08/06/2015
+      Data     : Junho/2015.                   Ultima atualizacao: 20/03/2017
   
       Dados referentes ao programa:
   
@@ -581,6 +591,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       Objetivo  : Procedure para validar TED
     
       Alteração : 08/06/2015 - Conversão Progress -> Oracle (Odirlei-Amcom)
+    
+                  20/03/2017 - Ajuste para validar o cpf/cnpj de acordo com o inpessoa informado             
+                              (Adriano - SD 620221).
     
   ---------------------------------------------------------------------------------------------------------------*/
     ---------------> CURSORES <-----------------        
@@ -605,6 +618,45 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
          OR  (crapban.cdbccxlt = pr_cdbccxlt AND pr_cdbccxlt > 0);
     rw_crapban cr_crapban%ROWTYPE;
        
+    -- Verificacao de cpf/cnpj fraudulento
+    CURSOR cr_crapcbf(pr_tpfraude crapcbf.tpfraude%TYPE,
+                      pr_dsfraude crapcbf.dsfraude%TYPE) IS
+      SELECT 1
+        FROM crapcbf
+       WHERE tpfraude = pr_tpfraude 
+         AND UPPER(dsfraude) = UPPER(pr_dsfraude);
+    rw_crapcbf cr_crapcbf%ROWTYPE;
+
+    --Selecionar informacoes log transacoes no sistema
+    CURSOR cr_craplgm(pr_cdcooper IN craplgm.cdcooper%type,
+                      pr_nrdconta IN craplgm.nrdconta%type,
+                      pr_idseqttl IN craplgm.idseqttl%type,
+                      pr_dttransa IN craplgm.dttransa%type,
+                      pr_dsorigem IN craplgm.dsorigem%type,
+                      pr_cdoperad IN craplgm.cdoperad%type,
+                      pr_flgtrans IN craplgm.flgtrans%type,
+                      pr_dstransa IN craplgm.dstransa%TYPE) IS
+      SELECT m.hrtransa
+            ,i.dsdadatu
+        FROM craplgm m
+            ,craplgi i
+       WHERE m.cdcooper = pr_cdcooper
+         AND m.nrdconta = pr_nrdconta
+         AND m.idseqttl = pr_idseqttl
+         AND m.dsorigem = 'INTERNET'
+         AND m.cdoperad = '996'
+         AND m.dttransa = pr_dttransa
+         AND i.nmdcampo = 'IP'
+         AND m.cdcooper = i.cdcooper
+         AND m.nrdconta = i.nrdconta
+         AND m.idseqttl = i.idseqttl
+         AND m.dttransa = i.dttransa
+         AND m.hrtransa = i.hrtransa
+         AND m.nrsequen = i.nrsequen
+         AND m.dstransa = pr_dstransa
+       ORDER BY m.progress_recid DESC;
+
+      
     ------------> ESTRUTURAS DE REGISTRO <-----------
     
     --Tabela de memória de limites de horario
@@ -616,6 +668,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     vr_cdcritic crapcri.cdcritic%TYPE;
     vr_dscritic VARCHAR2(4000);
     rw_crapdat  btch0001.cr_crapdat%ROWTYPE;
+    vr_tpfraude crapcbf.tpfraude%TYPE;
+    vr_nrdipatu  VARCHAR2(1000);
+    vr_des_corpo VARCHAR2(1000);
+    vr_cpfcnpj   VARCHAR2(40);
       
     --Variaveis de Excecao
     vr_exc_erro EXCEPTION;
@@ -768,7 +824,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     -- Verificar se banco esta em operação no SPB
     IF rw_crapban.flgdispb = 0 /*FALSE*/ THEN
       vr_cdcritic := 0;
-      vr_dscritic := 'Banco do favorecido nao opera no SPB.';
+      vr_dscritic := 'Banco do favorecido não opera no SPB.';
       RAISE vr_exc_erro;
     END IF;
     -- Validar agencia
@@ -790,10 +846,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       RAISE vr_exc_erro;
     END IF;
     
-    -- Validar cpf ou cnpj
-    GENE0005.pc_valida_cpf_cnpj (pr_nrcalcul => pr_nrcpffav  --> Numero a ser verificado
-                                ,pr_stsnrcal => vr_flgretor  --> Situacao
-                                ,pr_inpessoa => vr_tppessoa);--> Tipo Inscricao Cedente
+    IF pr_inpesfav = 1 THEN 
+        
+      -- Valida CPF enviado
+      GENE0005.pc_valida_cpf(pr_nrcalcul => pr_nrcpffav   --Numero a ser verificado
+                            ,pr_stsnrcal => vr_flgretor);   --Situacao
     
     IF vr_flgretor = FALSE THEN 
       vr_cdcritic := 27; --> 027 - CPF/CNPJ com erro.
@@ -801,12 +858,76 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       RAISE vr_exc_erro;            
     END IF;    
     
-    -- Validar tipo de pessoa
-    IF pr_inpesfav <> vr_tppessoa THEN
-      vr_cdcritic := 0;
-      vr_dscritic := 'Tipo de pessoa do favorecido e incorreto.';
+    ELSE
+        
+      -- Valida CPF/CNPJ enviado
+      GENE0005.pc_valida_cnpj(pr_nrcalcul => pr_nrcpffav   --Numero a ser verificado
+                             ,pr_stsnrcal => vr_flgretor);   --Situacao
+          
+      IF vr_flgretor = FALSE THEN
+        vr_cdcritic := 27; --> 027 - CPF/CNPJ com erro.
+        vr_dscritic := NULL;
       RAISE vr_exc_erro;
     END IF;
+
+    END IF;
+      
+    IF pr_inpesfav = 1 THEN
+      vr_tpfraude := 2;
+    ELSE
+      vr_tpfraude := 3;
+    END IF;
+    
+    vr_cpfcnpj := gene0002.fn_mask_cpf_cnpj(pr_nrcpffav, pr_inpesfav);
+
+    -- Verifica se o cpf/cnpj eh fraudulento
+    OPEN cr_crapcbf(vr_tpfraude, vr_cpfcnpj);
+    FETCH cr_crapcbf INTO rw_crapcbf;
+
+    IF cr_crapcbf%FOUND THEN
+
+      CLOSE cr_crapcbf;
+
+      -- Pegar ultimo ip de acesso
+      FOR rw_craplgm IN cr_craplgm(pr_cdcooper => pr_cdcooper
+                                  ,pr_nrdconta => pr_nrdconta
+                                  ,pr_idseqttl => pr_idseqttl
+                                  ,pr_dttransa => trunc(SYSDATE)
+                                  ,pr_dsorigem => 'INTERNET'
+                                  ,pr_cdoperad => '996'
+                                  ,pr_flgtrans => 1
+                                  ,pr_dstransa => 'Efetuado login de acesso a conta on-line.') LOOP
+        vr_nrdipatu := rw_craplgm.dsdadatu;
+        exit;
+      END LOOP;
+
+      -- monta o corpo do email
+      vr_des_corpo := '<b>Atencao! Houve tentativa de TED fraudulento.<br>'||
+                      'IP: ' || vr_nrdipatu || '<br>' ||
+                      'Conta: </b>'||gene0002.fn_mask_conta(pr_nrdconta)||'<br>'||
+                      '<b>CPF/CNPJ destino: </b>'|| vr_cpfcnpj;
+      -- Envio de e-mail informando que houve a tentativa
+      gene0003.pc_solicita_email(pr_cdcooper => pr_cdcooper,
+                                 pr_cdprogra => 'CXON0020',
+                                 pr_des_destino => 'monitoracaodefraudes@cecred.coop.br',
+                                 pr_des_assunto => 'Atencao - Tentativa de TED para CPF/CNPJ em restritivo',
+                                 pr_des_corpo => vr_des_corpo,
+                                 pr_des_anexo => NULL,
+                                 pr_flg_enviar => 'S',
+                                 pr_des_erro => vr_dscritic);
+
+      --Se ocorreu erro
+      IF nvl(vr_cdcritic,0)<> 0 OR vr_dscritic IS NOT NULL THEN
+        --Levantar Excecao
+        RAISE vr_exc_erro;
+      ELSE
+        vr_dscritic := 'Dados inconsistentes. Impossibilidade de realizar a transação.';
+        RAISE vr_exc_erro;
+    END IF;
+    
+    END IF;
+    CLOSE cr_crapcbf;
+
     
     -- Ler tabela generica -  Tipo de conta
     vr_dstextab := tabe0001.fn_busca_dstextab( pr_cdcooper => rw_crapcop.cdcooper 
@@ -1110,7 +1231,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       Sistema  : Rotinas acessadas pelas telas de cadastros Web
       Sigla    : CRED
       Autor    : Odirlei Busana - Amcom
-      Data     : Junho/2015.                   Ultima atualizacao: 14/06/2016
+      Data     : Junho/2015.                   Ultima atualizacao: 05/10/2016
   
       Dados referentes ao programa:
   
@@ -1136,7 +1257,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                   14/06/2016 - Ajuste para incluir o UPPER em campos de indice ao ler a tabela craptvl
                               (Adriano - SD 469449).
                                
-  
+                  05/10/2016 - Removi as chamadas para gera_log_lote_uso, ajustei os campos do insert na craptvl
+                               movi a chamada da procedure gera_log_ope_cartao para antes do UPDATE na craplot.
+                               SD 535051. (Carlos Rafael Tanholi).
   ---------------------------------------------------------------------------------------------------------------*/
     ---------------> CURSORES <-----------------        
     -- Buscar dados do associado
@@ -1328,20 +1451,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     BEGIN
       vr_nrdolote := pr_nrdolote;
       
-      TARI0001.pc_gera_log_lote_uso(pr_cdcooper => pr_cdcooper,
-                                    pr_nrdconta => pr_nrdconta,
-                                    pr_nrdolote => vr_nrdolote,
-                                    pr_flgerlog => vr_flgerlog,
-                                    pr_des_log  =>'Alocando lote -> '||
-                                                   'cdcooper: '|| pr_cdcooper ||' '||           
-                                                   'dtmvtolt: '|| to_char(pr_dtmvtolt,'DD/MM/RRRR')||' '||           
-                                                   'cdagenci: '|| pr_cdageope||' '||           
-                                                   'cdbccxlt: '|| pr_cdbccxlt||' '||           
-                                                   'nrdolote: '|| vr_nrdolote||' '|| 
-                                                   'nrdconta: '|| pr_nrdconta||' '|| 
-                                                   'cdhistor: '|| pr_cdhistor||' '|| 
-                                                   'rotina: CXON0020.pc_enviar_ted ');
-      
       FOR vr_contador IN 1..100 LOOP
         BEGIN         
           -- verificar lote
@@ -1359,20 +1468,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
             IF cr_craplot%ISOPEN THEN
               CLOSE cr_craplot;
             END IF;
-            
-            TARI0001.pc_gera_log_lote_uso (pr_cdcooper => pr_cdcooper,
-                                           pr_nrdconta => pr_nrdconta,
-                                           pr_nrdolote => vr_nrdolote,
-                                           pr_flgerlog => vr_flgerlog,
-                                           pr_des_log  => 'Lote ja alocado('||vr_contador||') -> '||
-                                                           'cdcooper: '||pr_cdcooper ||' '||           
-                                                           'dtmvtolt: '|| to_char(pr_dtmvtolt,'DD/MM/RRRR') ||' '||           
-                                                           'cdagenci: '|| pr_cdageope||' '||           
-                                                           'cdbccxlt: '|| pr_cdbccxlt||' '||           
-                                                           'nrdolote: '|| vr_nrdolote||' '|| 
-                                                           'nrdconta: '|| pr_nrdconta||' '|| 
-                                                           'cdhistor: '|| pr_cdhistor||' '|| 
-                                                           'rotina: CXON0020.pc_enviar_ted');
             
             -- se for a ultima tentativa, guardar a critica
             IF vr_contador = 100 THEN
@@ -1673,9 +1768,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                 ,craptvl.flgtitul
                 ,craptvl.flgenvio
                 ,craptvl.nrispbif
+                ,craptvl.nrautdoc                
                 ,craptvl.flgpesdb
-                ,craptvl.flgpescr
-                ,craptvl.nrautdoc)
+                ,craptvl.flgpescr)
          VALUES (rw_crapcop.cdcooper     --> craptvl.cdcooper
                 ,3                       --> craptvl.tpdoctrf
                 ,vr_nrctrlif             --> craptvl.idopetrf     
@@ -2119,36 +2214,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       RAISE vr_exc_erro;
     END IF; 
     
-    tari0001.pc_gera_log_lote_uso( pr_cdcooper => pr_cdcooper,
-                                   pr_nrdconta => pr_nrdconta,
-                                   pr_nrdolote => vr_nrdolote,
-                                   pr_flgerlog => vr_flgerlog,
-                                   pr_des_log  => 'Alocando lote -> '||
-                                                   'cdcooper: '|| pr_cdcooper ||' '||           
-                                                   'dtmvtolt: '|| to_char(rw_craplot_tvl.dtmvtolt,'DD/MM/RRRR')||' '||           
-                                                   'cdagenci: '|| rw_craplot_tvl.cdagenci||' '||           
-                                                   'cdbccxlt: '|| rw_craplot_tvl.cdbccxlt||' '||           
-                                                   'nrdolote: '|| rw_craplot_tvl.nrdolote||' '|| 
-                                                   'nrdconta: '|| pr_nrdconta||' '|| 
-                                                   'cdhistor: '|| rw_craplot_tvl.cdhistor||' '|| 
-                                                   'rotina: CXON0020.pc_enviar_ted');
-    
     -- verificar se lote esta lockado
     IF fn_verifica_lote_uso(pr_rowid => rw_craplot_tvl.rowid ) = 1 THEN
       vr_dscritic:= 'Registro de lote '||rw_craplot_tvl.nrdolote||' em uso. Tente novamente.';  
-      tari0001.pc_gera_log_lote_uso( pr_cdcooper => pr_cdcooper,
-                                     pr_nrdconta => pr_nrdconta,
-                                     pr_nrdolote => vr_nrdolote,
-                                     pr_flgerlog => vr_flgerlog,
-                                     pr_des_log  => 'ERRO: Lote já alocado -> '||
-                                                     'cdcooper: '|| pr_cdcooper ||' '||           
-                                                     'dtmvtolt: '|| to_char(rw_craplot_tvl.dtmvtolt,'DD/MM/RRRR')||' '||           
-                                                     'cdagenci: '|| rw_craplot_tvl.cdagenci||' '||           
-                                                     'cdbccxlt: '|| rw_craplot_tvl.cdbccxlt||' '||           
-                                                     'nrdolote: '|| rw_craplot_tvl.nrdolote||' '|| 
-                                                     'nrdconta: '|| pr_nrdconta||' '|| 
-                                                     'cdhistor: '|| rw_craplot_tvl.cdhistor||' '|| 
-                                                     'rotina: CXON0020.pc_enviar_ted');
       -- apensa jogar critica em log
       RAISE vr_exc_log;
     END IF;
@@ -2168,55 +2236,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
         RAISE vr_exc_log;
     END;
     
-    tari0001.pc_gera_log_lote_uso( pr_cdcooper => pr_cdcooper,
-                                   pr_nrdconta => pr_nrdconta,
-                                   pr_nrdolote => vr_nrdolote,
-                                   pr_flgerlog => vr_flgerlog,
-                                   pr_des_log  => 'Alocando lote -> '||
-                                                   'cdcooper: '|| pr_cdcooper ||' '||           
-                                                   'dtmvtolt: '|| to_char(rw_craplot_lcm.dtmvtolt,'DD/MM/RRRR')||' '||           
-                                                   'cdagenci: '|| rw_craplot_lcm.cdagenci||' '||           
-                                                   'cdbccxlt: '|| rw_craplot_lcm.cdbccxlt||' '||           
-                                                   'nrdolote: '|| rw_craplot_lcm.nrdolote||' '|| 
-                                                   'nrdconta: '|| pr_nrdconta||' '|| 
-                                                   'cdhistor: '|| rw_craplot_lcm.cdhistor||' '|| 
-                                                   'rotina: CXON0020.pc_enviar_ted');
-                                                 
     -- verificar se lote esta lockado
     IF fn_verifica_lote_uso(pr_rowid => rw_craplot_lcm.rowid ) = 1 THEN
       vr_dscritic:= 'Registro de lote '||rw_craplot_lcm.nrdolote||' em uso. Tente novamente.';  
-      tari0001.pc_gera_log_lote_uso( pr_cdcooper => pr_cdcooper,
-                                     pr_nrdconta => pr_nrdconta,
-                                     pr_nrdolote => vr_nrdolote,
-                                     pr_flgerlog => vr_flgerlog,
-                                     pr_des_log  => 'ERRO: Lote ja alocado -> '||
-                                                     'cdcooper: '|| pr_cdcooper ||' '||           
-                                                     'dtmvtolt: '|| to_char(rw_craplot_lcm.dtmvtolt,'DD/MM/RRRR')||' '||           
-                                                     'cdagenci: '|| rw_craplot_lcm.cdagenci||' '||           
-                                                     'cdbccxlt: '|| rw_craplot_lcm.cdbccxlt||' '||           
-                                                     'nrdolote: '|| rw_craplot_lcm.nrdolote||' '|| 
-                                                     'nrdconta: '|| pr_nrdconta||' '|| 
-                                                     'cdhistor: '|| rw_craplot_lcm.cdhistor||' '|| 
-                                                     'rotina: CXON0020.pc_enviar_ted');
       -- apensa jogar critica em log
       RAISE vr_exc_log;
     END IF;
     
-    -- Atualizar lote para craplcm
-    BEGIN
-      UPDATE craplot
-         SET craplot.qtcompln = nvl(craplot.qtcompln,0) + 1,
-             craplot.vlcompdb = nvl(craplot.vlcompdb,0) + pr_vldocmto,
-             craplot.qtinfoln = nvl(craplot.qtinfoln,0) + 1,
-             craplot.vlinfodb = nvl(craplot.vlinfodb,0) + pr_vldocmto
-       WHERE craplot.rowid = rw_craplot_lcm.rowid; 
-    EXCEPTION 
-      WHEN OTHERS THEN
-        vr_dscritic := 'Não foi possivel atualizar lote '||rw_craplot_lcm.nrdolote||' :'||SQLERRM;
-        -- apensa jogar critica em log
-        RAISE vr_exc_log;
-    END;   
-                          
 		IF pr_flmobile = 1 THEN
 			vr_idorigem := 9;
 		ELSE
@@ -2252,8 +2278,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       RAISE vr_exc_erro;
     END IF;		  
                           
+    -- Atualizar lote para craplcm
+    BEGIN
+      UPDATE craplot
+         SET craplot.qtcompln = nvl(craplot.qtcompln,0) + 1,
+             craplot.vlcompdb = nvl(craplot.vlcompdb,0) + pr_vldocmto,
+             craplot.qtinfoln = nvl(craplot.qtinfoln,0) + 1,
+             craplot.vlinfodb = nvl(craplot.vlinfodb,0) + pr_vldocmto
+       WHERE craplot.rowid = rw_craplot_lcm.rowid; 
+    EXCEPTION 
+      WHEN OTHERS THEN
+        vr_dscritic := 'Não foi possivel atualizar lote '||rw_craplot_lcm.nrdolote||' :'||SQLERRM;
+        -- apensa jogar critica em log
+        RAISE vr_exc_log;
+    END;   
+                          
     COMMIT;
     pr_des_erro := 'OK';
+    
   EXCEPTION
     --> exception para apenas gerar log e não abortar envio de TED, pois 
      -- script já foi executado 
@@ -3160,6 +3202,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                           ,pr_tab_protocolo_ted OUT CLOB --> dados do protocolo
                           ,pr_cdcritic OUT INTEGER               --> Codigo do erro
                           ,pr_dscritic OUT VARCHAR2) IS          --> Descricao do erro
+  /*---------------------------------------------------------------------------------------------------------------
+  
+      Programa : pc_executa_envio_ted_prog             
+      Sistema  : Rotinas acessadas pelo Progress
+      Sigla    : CRED
+      Autor    : Carlos Henrique W.
+      Data     : Abril/2016.                   Ultima atualizacao: 25/07/2016
+  
+      Dados referentes ao programa:
+  
+      Frequencia: Sempre que for chamado
+      Objetivo  : Procedure para envio do TED
+    
+      Alteração : 25/07/2016 - Ajuste para retornar corretamente o xml pois estava gerando problemas para
+                               o progress receber os valores de data e nome de tags com o caracter "#"
+                               (Adriano).
+                               
+  
+  ---------------------------------------------------------------------------------------------------------------*/                          
   BEGIN
     DECLARE
     -- Variaveis de XML 
@@ -3197,6 +3258,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                 pr_tab_protocolo_ted => vr_tab_protocolo_ted, 
                 pr_cdcritic => pr_cdcritic, 
                 pr_dscritic => pr_dscritic);
+                
     -- se possui codigo, porém não possui descrição                     
     IF nvl(pr_cdcritic,0) > 0 AND 
        TRIM(pr_dscritic) IS NULL THEN
@@ -3215,20 +3277,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                            ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><raiz>'); 
 
     FOR vr_contador IN nvl(vr_tab_protocolo_ted.FIRST,0)..nvl(vr_tab_protocolo_ted.LAST,-1) LOOP
+      
       -- Montar XML com registros de carencia
       gene0002.pc_escreve_xml(pr_xml            => pr_tab_protocolo_ted 
                              ,pr_texto_completo => vr_xml_temp 
                              ,pr_texto_novo     => '<protocolo>' 
                                                 ||   '<cdtippro>'||vr_tab_protocolo_ted(vr_contador).cdtippro    ||'</cdtippro>'
-                                                ||   '<dtmvtolt>'||vr_tab_protocolo_ted(vr_contador).dtmvtolt    ||'</dtmvtolt>'
-                                                ||   '<dttransa>'||vr_tab_protocolo_ted(vr_contador).dttransa    ||'</dttransa>'
+                                                ||   '<dtmvtolt>'||NVL(TO_CHAR(vr_tab_protocolo_ted(vr_contador).dtmvtolt,'DD/MM/RRRR'),' ') ||'</dtmvtolt>'                                                
+                                                ||   '<dttransa>'||NVL(TO_CHAR(vr_tab_protocolo_ted(vr_contador).dttransa,'DD/MM/RRRR'),' ') ||'</dttransa>'
                                                 ||   '<hrautent>'||vr_tab_protocolo_ted(vr_contador).hrautent    ||'</hrautent>'
                                                 ||   '<vldocmto>'||vr_tab_protocolo_ted(vr_contador).vldocmto    ||'</vldocmto>'
                                                 ||   '<nrdocmto>'||vr_tab_protocolo_ted(vr_contador).nrdocmto    ||'</nrdocmto>'
                                                 ||   '<nrseqaut>'||vr_tab_protocolo_ted(vr_contador).nrseqaut    ||'</nrseqaut>'
-                                                ||   '<dsinform##1>'||vr_tab_protocolo_ted(vr_contador).dsinform##1 ||'</dsinform##1>'
-                                                ||   '<dsinform##2>'||vr_tab_protocolo_ted(vr_contador).dsinform##2 ||'</dsinform##2>'
-                                                ||   '<dsinform##3>'||vr_tab_protocolo_ted(vr_contador).dsinform##3 ||'</dsinform##3>'
+                                                ||   '<dsinform1>'||vr_tab_protocolo_ted(vr_contador).dsinform##1 ||'</dsinform1>'
+                                                ||   '<dsinform2>'||vr_tab_protocolo_ted(vr_contador).dsinform##2 ||'</dsinform2>'
+                                                ||   '<dsinform3>'||vr_tab_protocolo_ted(vr_contador).dsinform##3 ||'</dsinform3>'
                                                 ||   '<dsprotoc>'||vr_tab_protocolo_ted(vr_contador).dsprotoc ||'</dsprotoc>'
                                                 ||   '<nmprepos>'||vr_tab_protocolo_ted(vr_contador).nmprepos ||'</nmprepos>'
                                                 ||   '<nrcpfpre>'||vr_tab_protocolo_ted(vr_contador).nrcpfpre ||'</nrcpfpre>'
@@ -3245,7 +3308,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                            ,pr_texto_novo     => '</raiz>' 
                            ,pr_fecha_xml      => TRUE);
 
-    vr_xml_temp := NULL;     
+    vr_xml_temp := NULL;
 
     EXCEPTION 
       WHEN OTHERS THEN
