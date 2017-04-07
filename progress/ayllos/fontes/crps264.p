@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Elton/Ze Eduardo
-    Data    : Marco/07.                       Ultima atualizacao: 03/02/2017
+    Data    : Marco/07.                       Ultima atualizacao: 04/04/2017
     
     Dados referentes ao programa:
 
@@ -206,6 +206,9 @@
                            
               03/02/2017 - Incluir dtlibera para as consultas de cheques em custodia/desconto
                            (Lucas Ranghetti #600012)
+                           
+              04/04/2017 - Incluir validacao para contas migradas na procedure gera_lancamento 
+                           (Lucas Ranghetti #620180)
 ..............................................................................*/
 
 DEF INPUT  PARAM p-cdcooper AS INT                                   NO-UNDO.
@@ -298,7 +301,10 @@ DEF        VAR vr_nrdconta  AS INTE                                  NO-UNDO.
 DEF        VAR vr_cdcooper  AS INTE                                  NO-UNDO. 
 DEF        VAR vr_cdagectl  AS INTE                                  NO-UNDO. 
 
+DEF        VAR aux_flcraptco AS LOGICAL                              NO-UNDO.
+
 DEF BUFFER crabcop FOR crapcop.
+DEF BUFFER crabtco FOR craptco.
 
 DEF TEMP-TABLE tt-relchdv NO-UNDO
     FIELD nrdconta LIKE crapass.nrdconta     
@@ -523,26 +529,66 @@ PROCEDURE gera_lancamento:
         /* Se conta for maior que zero */
         IF  crapdev.nrdconta > 0 THEN
             DO:
+                ASSIGN aux_flcraptco = FALSE.
+                
         FIND FIRST crapass WHERE crapass.cdcooper = crapdev.cdcooper AND
                                  crapass.nrdconta = crapdev.nrdconta
                                  NO-LOCK NO-ERROR.
 
         IF  NOT AVAILABLE crapass THEN
-            DO:
-                glb_cdcritic = 251.
-                RUN fontes/critic.p. 
-                UNIX SILENT VALUE
-                         ("echo " + STRING(TIME,"HH:MM:SS") +
-                         " - " + glb_cdprogra + "' --> '"  +
-                         "Coop: "  + STRING(crapdev.cdcooper) +
-                         "Conta: " + STRING(crapdev.nrdconta,"zzzz,zz9,9") +
-                         glb_dscritic + 
-                         " >> log/proc_message.log").
+            DO:  
+                /* Tratamento para cheques migrados aonde o formulário do cheque 
+                   encontra-se na cooperativa antiga. */
+                FIND crabtco WHERE crabtco.cdcopant = crapdev.cdcooper AND
+                                   crabtco.nrctaant = crapdev.nrdctabb AND
+                                   crabtco.nrdconta = crapdev.nrdconta AND
+                                   crabtco.tpctatrf = 1                AND
+                                   crabtco.flgativo = TRUE
+                                   NO-LOCK NO-ERROR.
+                                  
+                IF  NOT AVAILABLE crabtco THEN
+                    DO:
+                        glb_cdcritic = 251.
+                        RUN fontes/critic.p. 
+                        UNIX SILENT VALUE
+                                 ("echo " + STRING(TIME,"HH:MM:SS") +
+                                 " - " + glb_cdprogra + "' --> '"  +
+                                 "Coop: "  + STRING(crapdev.cdcooper) +
+                                 "Conta: " + STRING(crapdev.nrdconta,"zzzz,zz9,9") +
+                                 glb_dscritic + 
+                                 " >> log/proc_message.log").
 
-                IF  VALID-HANDLE(h-b1wgen0153) THEN
-                    DELETE OBJECT h-b1wgen0153.
+                        IF  VALID-HANDLE(h-b1wgen0153) THEN
+                            DELETE OBJECT h-b1wgen0153.
 
-                UNDO TRANS_1, RETURN "NOK".
+                        UNDO TRANS_1, RETURN "NOK".
+                    END.
+                ELSE
+                    DO:
+                         ASSIGN aux_flcraptco = TRUE.
+                         
+                         FIND crapass WHERE crapass.cdcooper = crabtco.cdcopant 
+                                        AND crapass.nrdconta = crabtco.nrctaant
+                                        NO-LOCK NO-ERROR.
+                         
+                         IF  NOT AVAILABLE crapass THEN
+                             DO:
+                                 glb_cdcritic = 251.
+                                 RUN fontes/critic.p. 
+                                 UNIX SILENT VALUE
+                                          ("echo " + STRING(TIME,"HH:MM:SS") +
+                                          " - " + glb_cdprogra + "' --> '"  +
+                                          "Coop: "  + STRING(crapdev.cdcooper) +
+                                          "Conta: " + STRING(crapdev.nrdconta,"zzzz,zz9,9") +
+                                          glb_dscritic + 
+                                          " >> log/proc_message.log").
+                             
+                                 IF  VALID-HANDLE(h-b1wgen0153) THEN
+                                     DELETE OBJECT h-b1wgen0153.
+                             
+                                 UNDO TRANS_1, RETURN "NOK".
+                             END.
+                    END.
             END.
 
         ASSIGN glb_cdcritic = 0    
@@ -570,10 +616,14 @@ PROCEDURE gera_lancamento:
             END.
         ELSE
         DO:
-
-            ASSIGN aux_cdcooper = p-cdcooper
-                   aux_nrdconta = crapdev.nrdconta
-                   aux_nrctalcm = crapdev.nrdctabb.
+            IF  aux_flcraptco THEN
+                ASSIGN aux_cdcooper = crabtco.cdcooper
+                       aux_nrdconta = crapdev.nrdconta
+                       aux_nrctalcm = crapdev.nrdconta.
+            ELSE
+                ASSIGN aux_cdcooper = p-cdcooper
+                       aux_nrdconta = crapdev.nrdconta
+                       aux_nrctalcm = crapdev.nrdctabb.
 
             /* VIACON - Se for conta migrada das cooperativas 4 ou 15 devera
             tratar aux_nrctalcm para receber a nova conta. O campo
@@ -750,20 +800,20 @@ PROCEDURE gera_lancamento:
                                        EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 
                     IF   NOT AVAILABLE crapfdc   THEN
-                         IF   LOCKED crapfdc   THEN
-                              DO:
-                                  PAUSE 1 NO-MESSAGE.
-                                  NEXT.
-                              END.
+                         IF  LOCKED crapfdc   THEN
+                             DO:
+                                PAUSE 1 NO-MESSAGE.
+                                NEXT.
+                            END.
                          ELSE
-                              DO:
-                                  glb_cdcritic = 268. 
-                                  LEAVE.
-                              END.
-                         
-                    LEAVE.
-
-                 END.  /*  Fim do DO WHILE TRUE  */
+                            DO:
+                               glb_cdcritic = 268. 
+                               LEAVE.
+                            END.
+                                     
+                      LEAVE.         
+					                
+                 END.  /*  Fim do DO WHILE TRUE  */                                               
 
                  IF   glb_cdcritic > 0   THEN
                       DO:
@@ -2646,29 +2696,35 @@ PROCEDURE gera_arquivo_cecred:
                                    crapass.nrdconta = crapdev.nrdconta
                                    NO-LOCK NO-ERROR.
 
-                IF   AVAIL crapass THEN
-                     DO:
-                         FIND craptip WHERE craptip.cdcooper = p-cdcooper   AND
-                                            craptip.cdtipcta = crapass.cdtipcta
-                                            NO-LOCK NO-ERROR.
-                          
-                         IF   AVAILABLE craptip THEN
-                              aux_dstipcta = craptip.dstipcta.
-                         ELSE
-                              aux_dstipcta = "NAO ENCONTRADO".
-                     END.
-                ELSE
-                     ASSIGN aux_dstipcta = "NAO ENCONTRADO".
+                /* Tratamento para cheques migrados aonde o formulário do cheque 
+                   encontra-se na cooperativa antiga. */
+                IF   NOT AVAILABLE crapass THEN                     
+                     FIND crapass WHERE crapass.cdcooper = p-cdcooper     AND
+                                        crapass.nrdconta = crapdev.nrdctabb
+                                        NO-LOCK NO-ERROR.
        
-           
+                IF  AVAILABLE crapass  THEN
+                    DO:                             
+                        FIND craptip WHERE craptip.cdcooper = p-cdcooper   AND
+                                           craptip.cdtipcta = crapass.cdtipcta
+                                           NO-LOCK NO-ERROR.
+                         
+                        IF  AVAILABLE craptip THEN
+                            aux_dstipcta = craptip.dstipcta.
+                        ELSE
+                            aux_dstipcta = "NAO ENCONTRADO".
+                    END.  
+                ELSE 
+                    aux_dstipcta = "NAO ENCONTRADO".
+            
                 CREATE tt-relchdv.
-                ASSIGN tt-relchdv.nrdconta = crapass.nrdconta
-                       tt-relchdv.nmprimtl = crapass.nmprimtl
+                ASSIGN tt-relchdv.nrdconta = crapass.nrdconta WHEN AVAILABLE crapass
+                       tt-relchdv.nmprimtl = crapass.nmprimtl WHEN AVAILABLE crapass
                        tt-relchdv.cdpesqui = crapdev.cdpesqui
                        tt-relchdv.nrcheque = crapdev.nrcheque
                        tt-relchdv.vllanmto = crapdev.vllanmto
                        tt-relchdv.cdalinea = crapdev.cdalinea
-                       tt-relchdv.cdagenci = crapass.cdagenci
+                       tt-relchdv.cdagenci = crapass.cdagenci WHEN AVAILABLE crapass
                        tt-relchdv.cdoperad = crapdev.cdoperad
                        tt-relchdv.dstipcta = aux_dstipcta.
             END.
@@ -2720,6 +2776,32 @@ PROCEDURE gera_arquivo_cecred:
                           gncpchq.cdtipreg = 4)               AND
                           gncpchq.vlcheque = crapdev.vllanmto
                           NO-LOCK NO-ERROR.
+                                   
+                IF  NOT AVAILABLE gncpchq THEN                   
+                    DO:
+                        /* Tratamento para cheques migrados aonde o formulário do cheque 
+                           encontra-se na cooperativa antiga. */
+                        FIND craptco WHERE craptco.cdcopant = p-cdcooper
+                                       AND craptco.nrctaant = crapdev.nrdctabb
+                                       AND craptco.nrdconta = crapdev.nrdconta
+                                       AND craptco.flgativo = TRUE
+                                       NO-LOCK NO-ERROR.
+                                       
+                        IF  AVAILABLE craptco THEN
+                            DO:
+                                FIND LAST gncpchq WHERE 
+                                          gncpchq.cdcooper = craptco.cdcooper AND
+                                          gncpchq.dtmvtolt = glb_dtmvtoan     AND
+                                          gncpchq.cdbanchq = crapcop.cdbcoctl AND
+                                          gncpchq.cdagechq = crapcop.cdagectl AND
+                                          gncpchq.nrctachq = crapdev.nrdctabb AND
+                                          gncpchq.nrcheque = crapdev.nrcheque AND
+                                         (gncpchq.cdtipreg = 3                OR
+                                          gncpchq.cdtipreg = 4)               AND
+                                          gncpchq.vlcheque = crapdev.vllanmto
+                                          NO-LOCK NO-ERROR.
+                            END.
+                    END.
                                    
                 IF   NOT AVAILABLE gncpchq THEN
                      DO:
@@ -2837,8 +2919,8 @@ PROCEDURE gera_arquivo_cecred:
      
        tt-relchdv.dsorigem = aux_dsorigem.
        
-       IF   crapdev.cdpesqui <> ""    AND
-            crapdev.cdpesqui <> "TCO" THEN
+       IF  crapdev.cdpesqui <> ""    AND
+           crapdev.cdpesqui <> "TCO" THEN
            DO:                
                glb_nrcalcul = INT(SUBSTRING(STRING(crapdev.nrcheque,"9999999"),1,6)).
                
@@ -2848,9 +2930,9 @@ PROCEDURE gera_arquivo_cecred:
                               AND crapfdc.nrctachq = crapdev.nrctachq
                               AND crapfdc.nrcheque = INT(glb_nrcalcul)
                               USE-INDEX crapfdc1 NO-LOCK NO-ERROR.
-                              
+                                                              
                 IF  AVAILABLE crapfdc THEN
-                    DO:
+                    DO:                       
                        /* Desconto */
                        FOR LAST crapcdb FIELDS(nrdconta) 
                                          WHERE crapcdb.cdcooper = crapfdc.cdcooper
@@ -2868,7 +2950,7 @@ PROCEDURE gera_arquivo_cecred:
                        IF  AVAILABLE crapcdb THEN          
                            ASSIGN tt-relchdv.benefici = STRING(crapcdb.nrdconta,"zzzz,zzz,9").
                        ELSE
-                           DO:
+                           DO:                              
                               /* Custodia */
                               FOR LAST crapcst FIELDS(nrdconta) 
                                                 WHERE crapcst.cdcooper = crapfdc.cdcooper
@@ -2892,7 +2974,7 @@ PROCEDURE gera_arquivo_cecred:
                            END.                                 
                     END.       
                    
-            NEXT.
+                NEXT.
            END.           
        
        IF   p-cddevolu = 4 THEN
@@ -3743,7 +3825,7 @@ PROCEDURE verifica_locks:
                                   " >> log/proc_message.log").
                 RETURN "NOK".
             END.
-      ELSE
+       ELSE
             DO:
                 IF   CAN-DO("47,191,338,573",STRING(crapdev.cdhistor))  THEN
                      DO:
@@ -3758,50 +3840,50 @@ PROCEDURE verifica_locks:
                               crapfdc.nrcheque = INT(glb_nrcalcul)
                               USE-INDEX crapfdc1 NO-LOCK NO-ERROR.
 
-                         IF   NOT AVAILABLE crapfdc   THEN
-                              DO:
+                         IF  NOT AVAILABLE crapfdc   THEN
+                             DO:                            
                                   glb_cdcritic = 268. 
                                   RUN fontes/critic.p.
                                   UNIX SILENT VALUE("echo " +
-                                       STRING(TIME,"HH:MM:SS") +
-                                       " - " + glb_cdprogra + "' --> '"  +
-                                       glb_dscritic +
-                                       " Coop: " + STRING(p-cdcooper) +
-                                       " CTA: " + STRING(crapdev.nrdconta) +
-                                       " CBS: " + STRING(crapdev.nrdctabb) +
-                                       " DOC: " + STRING(crapdev.nrcheque) +
-                                       " Avise a Equipe de Suporte da CECRED" +
-                                       " >> log/proc_message.log").
+                                     STRING(TIME,"HH:MM:SS") +
+                                     " - " + glb_cdprogra + "' --> '"  +
+                                     glb_dscritic +
+                                     " Coop: " + STRING(p-cdcooper) +
+                                     " CTA: " + STRING(crapdev.nrdconta) +
+                                     " CBS: " + STRING(crapdev.nrdctabb) +
+                                     " DOC: " + STRING(crapdev.nrcheque) +
+                                     " Avise a Equipe de Suporte da CECRED" +
+                                     " >> log/proc_message.log").
                                   glb_cdcritic = 0.
                                   RETURN "NOK".
                               END.
-                         ELSE
-                              DO:
+                         ELSE 
+                              DO:                                            
                                   aux_nrdrecid = RECID(crapfdc).
                    
                                   FIND CURRENT crapfdc EXCLUSIVE-LOCK 
                                                        NO-WAIT NO-ERROR.
 
-                                  IF   LOCKED crapfdc   THEN
-                                       DO:
-                                           RUN acha_lock (INPUT  aux_nrdrecid, 
-                                                          INPUT  "crapfdc",
-                                                          OUTPUT aux_nmusuari). 
+                                  IF  LOCKED crapfdc   THEN
+                                      DO:
+                                          RUN acha_lock (INPUT  aux_nrdrecid, 
+                                                         INPUT  "crapfdc",
+                                                         OUTPUT aux_nmusuari). 
 
-                                           UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + " - " +
-                                                             glb_cdprogra + "' --> '" +
-                                                             " Registro utilizando por " + aux_nmusuari +
-                                                             " Avise a Equipe de Suporte da CECRED" +
-                                                             " Coop: " + STRING(p-cdcooper) +
-                                                             " CTA: " + STRING(crapdev.nrdconta) +
-                                                             " CBS: " + STRING(crapdev.nrdctabb) +
-                                                             " DOC: " + STRING(crapdev.nrcheque) +
-                                                             " Tabela: crapfdc " +
-                                                             " RECID: " + STRING(aux_nrdrecid) +
-                                                             " >> log/proc_message.log").
-                                           RETURN "NOK".
-                                       END.
-                              END.         
+                                          UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + " - " +
+                                                            glb_cdprogra + "' --> '" +
+                                                            " Registro utilizando por " + aux_nmusuari +
+                                                            " Avise a Equipe de Suporte da CECRED" +
+                                                            " Coop: " + STRING(p-cdcooper) +
+                                                            " CTA: " + STRING(crapdev.nrdconta) +
+                                                            " CBS: " + STRING(crapdev.nrdctabb) +
+                                                            " DOC: " + STRING(crapdev.nrcheque) +
+                                                            " Tabela: crapfdc " +
+                                                            " RECID: " + STRING(aux_nrdrecid) +
+                                                            " >> log/proc_message.log").
+                                          RETURN "NOK".
+                                      END.
+                              END.
                      END.
             END.
    END.                       
