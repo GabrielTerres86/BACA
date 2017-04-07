@@ -132,6 +132,20 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBRECARGACEL(pr_cdcooper in crapc
       END LOOP;  
     ELSE
       
+      -- Verificação do calendário
+      OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+      IF BTCH0001.cr_crapdat%NOTFOUND THEN
+        CLOSE BTCH0001.cr_crapdat;
+        -- Montar mensagem de critica
+        vr_cdcritic:= 1;
+        vr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        RAISE vr_exc_erro;
+      ELSE
+        -- Apenas fechar o cursor
+        CLOSE BTCH0001.cr_crapdat;
+      END IF;
+      
       -- Valida se executa o job( testar de esta rodando o batch)
       gene0004.pc_executa_job( pr_cdcooper => pr_cdcooper   --> Codigo da cooperativa
                               ,pr_fldiautl => 0             --> Flag se deve validar dia util
