@@ -2302,8 +2302,7 @@ PROCEDURE busca_convenios_codbarras:
                     NEXT.
                 ELSE 
                     IF gnconve.cdconven <> 87 THEN
-						ASSIGN aux_nmempcon = gnconve.nmempres
-							   aux_nmresumi = crapscn.dsnomres. 
+						ASSIGN aux_nmempcon = gnconve.nmempres.
             END.
             
         IF aux_nmresumi <> "" THEN
