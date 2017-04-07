@@ -166,7 +166,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
 
                10/10/2016 - 449436 - Alterações Envio Cyber - Alterado para acrescetar a mora e juros ao valor devedor
                             do cyber. (Gil - Mouts)
-			   
+
                06/12/2016 - Incorporação alteração no cursor "cr_crapcop" para retirar o filtro
                             das cooperativas ativas campo "flgativo". (Oscar)
 
@@ -184,6 +184,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                06/03/2017 - Ajuste no hint cr_valor_pago_emprestimo mover para baixo
                do primeiro union. (Oscar)
                            
+
+      
+
+
+         16/01/2017 - Prj 432 - Melhorias envio Cyber - Alterações diversas referente projeto 432. (Jean - Mout´S)   
+
+
+
+
+
      ............................................................................. */
 
      DECLARE
@@ -411,6 +421,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                   and x.nrctremp = crapcyb.nrctremp
 				  and crapcyb.cdorigem IN (2,3)
                   and x.inliquid = 0) vlmrapar
+              ,crapcyb.flgjudic
+              ,crapcyb.flextjud
+              ,crapcyb.flgehvip              
        FROM crapcyb
            ,crapass
        WHERE crapass.cdcooper = crapcyb.cdcooper
@@ -551,6 +564,49 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
        --Registro do tipo calendario
        rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
 
+
+       -- 27/01/2017 -- Melhoria 432 - envio informações CYBER
+       -- Verifica se é contrato de refinancimamento para envio do campo código transacao CYBER
+       CURSOR c_refinanciamento (pr_cdcooper  IN crapcyb.cdcooper%type
+                                ,pr_nrdconta  IN crapcyb.nrdconta%type
+                                ,pr_nrctremp  IN crapcyb.nrctremp%type) IS
+         
+         SELECT DECODE(CRAWEPR.IDQUAPRO,1,'RF',2,'RN',3,'RG',4,'CP','PA') CDTRSCYB
+           FROM   crawepr
+           WHERE  crawepr.cdcooper = pr_cdcooper
+           AND    crawepr.nrdconta = pr_nrdconta
+		   AND    crawepr.insitapr = 1 -- aprovado
+           AND   pr_nrctremp IN (crawepr.nrctrliq##1 ,
+                   crawepr.nrctrliq##2 ,
+                   crawepr.nrctrliq##3 , 
+                   crawepr.nrctrliq##4 ,
+                   crawepr.nrctrliq##5 ,
+                   crawepr.nrctrliq##6 ,
+                   crawepr.nrctrliq##7 ,
+                   crawepr.nrctrliq##8 ,
+                   crawepr.nrctrliq##9 ,
+                   crawepr.nrctrliq##10 );
+        -- Jean Calao - Melhoria 432 - Envio informacoes CYBER
+        
+        CURSOR cr_crapcyc1 (pr_cdcooper IN crapcop.cdcooper%type,
+                            pr_nrdconta in crapcyc.nrdconta%type,
+                            pr_cdorigem in crapcyc.cdorigem%type,
+                            pr_nrctremp in crapcyc.nrctremp%type) IS  
+                            
+           select flextjud
+           ,      flgjudic
+           ,      flgehvip
+           from   crapcyc
+           where  cdcooper = pr_cdcooper
+           and    cdorigem = pr_cdorigem
+           and    nrdconta = pr_nrdconta
+           and    nrctremp = pr_nrctremp;
+           
+         rw_crapcyc1 cr_crapcyc1%rowtype;
+         
+         vr_cdtrscyb VARCHAR2(6);
+                                
+
        --Constantes
        vr_cdprogra CONSTANT crapprg.cdprogra%TYPE:= 'CRPS652';
 
@@ -597,7 +653,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
        vr_flgbatch        INTEGER:= 0;
        vr_index           INTEGER;
        vr_idindice        VARCHAR2(40) := ''; -- Indice da tabela de acordos
-
 
        --Tabela de Erros
        vr_tab_erro       gene0001.typ_tab_erro;
@@ -1597,7 +1652,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                                           ,pr_nrctremp IN crapcyb.nrctremp%TYPE    --Numero Contrato Emprestimo
                                           ,pr_vlrpagto IN NUMBER                   --Valor Pagamento
                                           ,pr_dtmvtlt2 IN VARCHAR2                 --Data Movimento
-                                          ,pr_cdhistor IN INTEGER                  --Codigo Historico
+                                          ,pr_cdhistor IN VARCHAR2                  --Codigo Historico
                                           ,pr_dshistor IN VARCHAR2                 --Descticao Historico
                                           ,pr_cdcritic OUT INTEGER                 --Codigo Critica
                                           ,pr_dscritic OUT VARCHAR2) IS            --Descricao Critica
@@ -1667,7 +1722,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
              pc_monta_linha(RPAD('PC',6,' '),91,6);
            ELSE  
              pc_monta_linha(SUBSTR(NVL(pr_dshistor,' '),1,15),76,6);
-           pc_monta_linha(gene0002.fn_mask(NVL(pr_cdhistor,0),'999999'),91,6);
+             --pc_monta_linha(gene0002.fn_mask(NVL(pr_cdhistor,0),'999999'),91,6);
+             pc_monta_linha(NVL(pr_cdhistor,'PA'),91,6);
            END IF;          
 
            pc_monta_linha(gene0002.fn_mask(NVL(vr_asscyber,0),'99999999'),97,6); -- Codigo de Assessoria CYBER
@@ -4593,7 +4649,15 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
 
          --Selecionar Contratos em Cobranca no Cyber
          FOR rw_crapcyb IN cr_crapcyb (pr_cdcooper => rw_crapcop.cdcooper) LOOP
-
+           
+           -- Melhoria 432 - envio informacoes CYBEr - Jean (Mout´S)
+           open cr_crapcyc1(pr_cdcooper => rw_crapcyb.cdcooper
+                           ,pr_cdorigem => rw_crapcyb.cdorigem
+                           ,pr_nrdconta => rw_crapcyb.nrdconta
+                           ,pr_nrctremp => rw_crapcyb.nrctremp);
+           fetch cr_crapcyc1 into rw_crapcyc1;
+           close cr_crapcyc1;
+           
            --Atualizar agencia
            pc_atualiza_agencia (pr_rw_crapcyb => rw_crapcyb      --Registro Cyber
                                ,pr_des_erro   => vr_des_erro     --Retorno Erro
@@ -4816,6 +4880,20 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                                                                        ,pr_nrdconta => rw_crapcyb.nrdconta       -- Numero Conta
                                                                        ,pr_nrctremp => rw_crapcyb.nrctremp       -- Contrato Emprestimo
                                                                        ,pr_dtmvtolt => rw_crapdat.dtmvtolt) LOOP -- Data Movimento
+                
+                 -- Melhoria 432 - verifica se é refinanciamento - Jean / Mout´S
+                 vr_cdtrscyb := NULL;
+                 
+                 OPEN c_refinanciamento(pr_cdcooper => rw_crapcyb.cdcooper       -- Cooperativa
+                                       ,pr_nrdconta => rw_crapcyb.nrdconta       -- Numero Conta
+                                       ,pr_nrctremp => rw_crapcyb.nrctremp);       -- Contrato Emprestimo
+                 FETCH c_refinanciamento INTO vr_cdtrscyb;
+                 CLOSE c_refinanciamento;
+                 
+                 IF vr_cdtrscyb IS NULL THEN
+                    vr_cdtrscyb := 'PA'; --rw_valor_pago_emprestimo.cdhistor;
+                 END IF;                      
+                 
                  --Gerar Carga Pagamentos
                  pc_gera_carga_pagamentos (pr_cdcooper => rw_crapcyb.cdcooper    --Codigo Cooperativa
                                           ,pr_cdorigem => rw_crapcyb.cdorigem    --Codigo Origem
@@ -4823,7 +4901,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                                           ,pr_nrctremp => rw_crapcyb.nrctremp    --Numero Contrato Emprestimo
                                           ,pr_vlrpagto => rw_valor_pago_emprestimo.vllanmto -- Valor Lancamento
                                           ,pr_dtmvtlt2 => vr_dtmvtlt2            --Data Movimento
-                                          ,pr_cdhistor => rw_valor_pago_emprestimo.cdhistor -- Codigo Historico
+                                          ,pr_cdhistor => vr_cdtrscyb -- Codigo Historico
                                           ,pr_dshistor => rw_valor_pago_emprestimo.dshistor --Descricao Historico
                                           ,pr_cdcritic => vr_cdcritic            --Codigo Erro
                                           ,pr_dscritic => vr_dscritic);          --Descricao Erro
@@ -4837,32 +4915,55 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                IF rw_crapcyb.dtmvtolt < rw_crapdat.dtmvtolt AND
                   rw_crapcyb.flgpreju = 0 AND
                   rw_crapcyb.dtatufin < rw_crapdat.dtmvtolt THEN
-                 --Gerar carga de Baixa
-                 pc_gera_carga_baixa (pr_rw_crapcyb => rw_crapcyb             --Registro Cyber
-                                     ,pr_dtmvtolt   => rw_crapdat.dtmvtolt    --Data Movimento
-                                     ,pr_dtmvtlt2   => vr_dtmvtlt2            --Data Movimento formatada
-                                     ,pr_cdcritic   => vr_cdcritic            --Codigo Erro
-                                     ,pr_dscritic   => vr_dscritic);          --Descricao Erro
-                 --Se ocorreu erro
-                 IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                   RAISE vr_exc_saida;
-                 END IF;
+
+                  -- 16/01/2017 - PRJ 432 - Só pode gerar baixas para o Cyber se os flags cobranca judicial,
+                  --              cobranca extra-judicial e vip estiverem como Não e existir atrasos. (Jean Calao / Mout'S) 
+                  if  /*nvl(rw_crapcyb.flgjudic,0) = 0
+                  and nvl(rw_crapcyb.5,0) = 0
+                  and */nvl(rw_crapcyc1.flgehvip,0) = 0 then
+
+                      --Gerar carga de Baixa
+                      pc_gera_carga_baixa (pr_rw_crapcyb => rw_crapcyb             --Registro Cyber
+                                          ,pr_dtmvtolt   => rw_crapdat.dtmvtolt    --Data Movimento
+                                          ,pr_dtmvtlt2   => vr_dtmvtlt2            --Data Movimento formatada
+                                          ,pr_cdcritic   => vr_cdcritic            --Codigo Erro
+                                          ,pr_dscritic   => vr_dscritic);          --Descricao Erro
+                      --Se ocorreu erro
+                      IF vr_cdcritic IS NOT NULL OR 
+                         vr_dscritic IS NOT NULL THEN
+                       RAISE vr_exc_saida;
+                     END IF;
+
+                end IF; -- 16/01/2017 - Prj 432 (Jean Calão/Mout'S)
+
                ELSE
                  -- Verifica se o saldo a regularizar e o saldo do prejuizo estao liquidados para
                  -- gerar a baixa ou se for residuo o saldo devedor deve estar liquidado para gerar uma baixa
                  IF ((rw_crapcyb.vlpreapg <= 0 AND rw_crapcyb.flgpreju = 0) OR
                      (rw_crapcyb.flgpreju = 1 AND Nvl(rw_crapcyb.vlsdprej,0) <= 0))  OR
                      ((rw_crapcyb.flgresid = 1) AND (Nvl(rw_crapcyb.vlsdeved,0) <= 0) AND rw_crapcyb.flgpreju = 0) THEN
-                   --Gerar carga de Baixa
-                   pc_gera_carga_baixa (pr_rw_crapcyb => rw_crapcyb              --Registro Cyber
-                                       ,pr_dtmvtolt   => rw_crapdat.dtmvtolt     --Data Movimento
-                                       ,pr_dtmvtlt2   => vr_dtmvtlt2             --Data Movimento formatada
-                                       ,pr_cdcritic   => vr_cdcritic             --Codigo Erro
-                                       ,pr_dscritic   => vr_dscritic);           --Descricao Erro
-                   --Se ocorreu erro
-                   IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                     RAISE vr_exc_saida;
-                   END IF;
+
+                     -- 16/01/2017 - PRJ 432 - Só pode gerar baixas para o Cyber se os flags cobranca judicial,
+                     --              cobranca extra-judicial e vip estiverem como Não e existir atrasos. (Jean Calao / Mout'S) 
+                     if /* nvl(rw_crapcyb.flgjudic,0) = 0
+                     and nvl(rw_crapcyb.flextjud,0) = 0
+                     and */nvl(rw_crapcyc1.flgehvip,0) = 0 then
+
+                         --Gerar carga de Baixa
+                         pc_gera_carga_baixa (pr_rw_crapcyb => rw_crapcyb              --Registro Cyber
+                                         ,pr_dtmvtolt   => rw_crapdat.dtmvtolt     --Data Movimento
+                                         ,pr_dtmvtlt2   => vr_dtmvtlt2             --Data Movimento formatada
+                                         ,pr_cdcritic   => vr_cdcritic             --Codigo Erro
+                                         ,pr_dscritic   => vr_dscritic);           --Descricao Erro
+                         --Se ocorreu erro
+                         IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+                           RAISE vr_exc_saida;
+                         END IF;
+                     end if;
+
+               END IF;
+
+               END IF;
                  END IF;
                END IF;
              ELSE
@@ -4872,33 +4973,60 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                  -- Verifica se houve pagamento
                  IF rw_crapcyb.vlpreapg > 0 THEN
                    
-                 --Gerar Carga Pagamentos
-                 pc_gera_carga_pagamentos (pr_cdcooper => rw_crapcyb.cdcooper    --Codigo Cooperativa
-                                          ,pr_cdorigem => rw_crapcyb.cdorigem    --Codigo Origem
-                                          ,pr_nrdconta => rw_crapcyb.nrdconta    --Numero Conta
-                                          ,pr_nrctremp => rw_crapcyb.nrctremp    --Numero Contrato Emprestimo
-                                          ,pr_vlrpagto => rw_crapcyb.vlpreapg    --Valor A pagar emprestimo
-                                          ,pr_dtmvtlt2 => vr_dtmvtlt2            --Data Movimento formatada
-                                          ,pr_cdhistor => 999999                 --Codigo Historico (Genérico)
-                                          ,pr_dshistor => NULL                   --Descricao Historico
-                                          ,pr_cdcritic => vr_cdcritic            --Codigo Erro
-                                          ,pr_dscritic => vr_dscritic);          --Descricao Erro
-                 --Se ocorreu erro
-                 IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                   RAISE vr_exc_saida;
-                 END IF;
+                   -- Melhoria 432 - verifica se é refinanciamento - Jean / Mout´S
+                   vr_cdtrscyb := NULL;
+                   
+                   OPEN c_refinanciamento(pr_cdcooper => rw_crapcyb.cdcooper       -- Cooperativa
+                                         ,pr_nrdconta => rw_crapcyb.nrdconta       -- Numero Conta
+                                         ,pr_nrctremp => rw_crapcyb.nrctremp);       -- Contrato Emprestimo
+                   FETCH c_refinanciamento INTO vr_cdtrscyb;
+                   CLOSE c_refinanciamento;
+                   
+                   IF vr_cdtrscyb IS NULL THEN
+                      vr_cdtrscyb := 'PA';
+                   END IF;   
+                
+
+                   --Gerar Carga Pagamentos
+                   pc_gera_carga_pagamentos (pr_cdcooper => rw_crapcyb.cdcooper    --Codigo Cooperativa
+                                            ,pr_cdorigem => rw_crapcyb.cdorigem    --Codigo Origem
+                                            ,pr_nrdconta => rw_crapcyb.nrdconta    --Numero Conta
+                                            ,pr_nrctremp => rw_crapcyb.nrctremp    --Numero Contrato Emprestimo
+                                            ,pr_vlrpagto => rw_crapcyb.vlpreapg    --Valor A pagar emprestimo
+                                            ,pr_dtmvtlt2 => vr_dtmvtlt2            --Data Movimento formatada
+                      -- 16/01/2017  - deve gerar historico parametrizado, se generico, gera "PA" (Jean/Mout´S)
+                                           -- ,pr_cdhistor => 999999               --Codigo Historico (Genérico)
+                                            ,pr_cdhistor => vr_cdtrscyb            --Codigo Historico (Genérico)
+
+                                            ,pr_dshistor => NULL                   --Descricao Historico
+                                            ,pr_cdcritic => vr_cdcritic            --Codigo Erro
+                                            ,pr_dscritic => vr_dscritic);          --Descricao Erro
+                   --Se ocorreu erro
+                   IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+                     RAISE vr_exc_saida;
+                   END IF;
 
                  END IF;
-                 --Gerar carga de Baixa
-                 pc_gera_carga_baixa (pr_rw_crapcyb => rw_crapcyb            --Registro Cyber
-                                     ,pr_dtmvtolt => rw_crapdat.dtmvtolt     --Data Movimento
-                                     ,pr_dtmvtlt2 => vr_dtmvtlt2             --Data Movimento formatada
-                                     ,pr_cdcritic => vr_cdcritic             --Codigo Erro
-                                     ,pr_dscritic => vr_dscritic);           --Descricao Erro
-                 --Se ocorreu erro
-                 IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                   RAISE vr_exc_saida;
+
+                 -- 16/01/2017 - PRJ 432 - Só pode gerar baixas para o Cyber se os flags cobranca judicial,
+                 --              cobranca extra-judicial e vip estiverem como Não e existir atrasos. (Jean Calao / Mout'S) 
+                 if  /*nvl(rw_crapcyb.flgjudic,0) = 0
+                 and nvl(rw_crapcyb.flextjud,0) = 0
+                 and */nvl(rw_crapcyc1.flgehvip,0) = 0 then
+
+                     --Gerar carga de Baixa
+                     pc_gera_carga_baixa (pr_rw_crapcyb => rw_crapcyb            --Registro Cyber
+                                             ,pr_dtmvtolt => rw_crapdat.dtmvtolt     --Data Movimento
+                                             ,pr_dtmvtlt2 => vr_dtmvtlt2             --Data Movimento formatada
+                                             ,pr_cdcritic => vr_cdcritic             --Codigo Erro
+                                             ,pr_dscritic => vr_dscritic);           --Descricao Erro
+                     --Se ocorreu erro
+                     IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+                      RAISE vr_exc_saida;
                  END IF;
+                 end IF;
+                 
+--                END IF;
                ELSE
                  -- Quando for normal verificar o saldo a regulalizar para ver se houve pagamento
                  -- Buscar o valor do lançamento dos históricos parametrizados para cálculo de conta corrente
@@ -4911,14 +5039,32 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                  vr_vlrpagto:= Nvl(rw_crapcyb.vlprapga,0) - Nvl(rw_crapcyb.vlpreapg,0) - Nvl(vr_vllammto,0);
 
                  IF nvl(vr_vlrpagto,0) > 0 THEN
-                   --Gerar Carga Pagamentos
+                  
+
+                   -- Melhoria 432 - verifica se é refinanciamento - Jean / Mout´S
+                   vr_cdtrscyb := NULL;
+                   
+                   OPEN c_refinanciamento(pr_cdcooper => rw_crapcyb.cdcooper       -- Cooperativa
+                                         ,pr_nrdconta => rw_crapcyb.nrdconta       -- Numero Conta
+                                         ,pr_nrctremp => rw_crapcyb.nrctremp);       -- Contrato Emprestimo
+                   FETCH c_refinanciamento INTO vr_cdtrscyb;
+                   CLOSE c_refinanciamento;
+                   
+                   IF vr_cdtrscyb IS NULL THEN
+                      vr_cdtrscyb := 'PA';
+                   END IF; 
+                   
+                    --Gerar Carga Pagamentos
                    pc_gera_carga_pagamentos (pr_cdcooper => rw_crapcyb.cdcooper    --Codigo Cooperativa
                                             ,pr_cdorigem => rw_crapcyb.cdorigem    --Codigo Origem
                                             ,pr_nrdconta => rw_crapcyb.nrdconta    --Numero Conta
                                             ,pr_nrctremp => rw_crapcyb.nrctremp    --Numero Contrato Emprestimo
                                             ,pr_vlrpagto => vr_vlrpagto            --Valor saldo a regularizar
                                             ,pr_dtmvtlt2 => vr_dtmvtlt2            --Data Movimento Formatada
-                                            ,pr_cdhistor => 999999                 --Codigo Historico (Genérico)
+                                            -- 16/01/2017  - deve gerar historico parametrizado, se generico, gera "PA" (Jean/Mout´S)
+                                            --,pr_cdhistor => 999999               --Codigo Historico (Genérico)
+                                            ,pr_cdhistor => vr_cdtrscyb            --Codigo Historico (Genérico)
+
                                             ,pr_dshistor => NULL                   --Descricao Historico
                                             ,pr_cdcritic => vr_cdcritic            --Codigo Erro
                                             ,pr_dscritic => vr_dscritic);          --Descricao Erro
@@ -4930,16 +5076,23 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                  -- Verifica se o saldo a regularizar e o saldo do prejuizo estao liquidados para gerar a baixa,
                  -- ou se for residuo o saldo devedor deve estar liquidado para gerar uma baixa
                  IF Nvl(rw_crapcyb.vlpreapg,0) <= 0 THEN
-                   --Gerar carga de Baixa
-                   pc_gera_carga_baixa (pr_rw_crapcyb => rw_crapcyb             --Registro Cyber
-                                       ,pr_dtmvtolt   => rw_crapdat.dtmvtolt      --Data Movimento
-                                       ,pr_dtmvtlt2   => vr_dtmvtlt2              --Data Movimento Formatada
-                                       ,pr_cdcritic   => vr_cdcritic              --Codigo Erro
-                                       ,pr_dscritic   => vr_dscritic);            --Descricao Erro
-                   --Se ocorreu erro
-                   IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                     RAISE vr_exc_saida;
-                   END IF;
+
+                   -- 16/01/2017 - PRJ 432 - Só pode gerar baixas para o Cyber se os flags cobranca judicial,
+                   --              cobranca extra-judicial e vip estiverem como Não e existir atrasos. (Jean Calao / Mout'S) 
+                   if  /*nvl(rw_crapcyb.flgjudic,0) = 0
+                   and nvl(rw_crapcyb.flextjud,0) = 0
+                   and */nvl(rw_crapcyc1.flgehvip,0) = 0 then
+                       --Gerar carga de Baixa
+                       pc_gera_carga_baixa (pr_rw_crapcyb => rw_crapcyb             --Registro Cyber
+                                 ,pr_dtmvtolt   => rw_crapdat.dtmvtolt      --Data Movimento
+                                 ,pr_dtmvtlt2   => vr_dtmvtlt2              --Data Movimento Formatada
+                                 ,pr_cdcritic   => vr_cdcritic              --Codigo Erro
+                                 ,pr_dscritic   => vr_dscritic);            --Descricao Erro
+                       --Se ocorreu erro
+                       IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+                          RAISE vr_exc_saida;
+                       END IF;
+                   end if;
                  END IF;
                END IF;
              END IF;
@@ -5132,6 +5285,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                                  ,pr_infimsol => pr_infimsol
                                  ,pr_stprogra => pr_stprogra);
 
+       -- M432 - envio Cyber. no fim do processo, chamar a carga de importação cyber
+       CYBE0001.pc_importa_arquivo_cyber(pr_dtmvto => SYSDATE
+                                        ,pr_des_reto => vr_typ_saida
+                                        ,pr_des_erro => vr_dscritic );
+       
+       IF vr_typ_saida = 'NOK' then
+          vr_dscritic := 'Erro na chamada da importacao arquivo CYBER: ' || vr_dscritic;
+          raise vr_exc_fimprg;
+       end if;
+
        --Salvar informacoes no banco de dados
        COMMIT;
 
@@ -5161,7 +5324,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
          pr_dscritic:= NULL;
          -- Efetuar commit pois gravaremos o que foi processado ate entao
          COMMIT;
-
        WHEN vr_exc_saida THEN
          -- Se foi retornado apenas codigo
          IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
