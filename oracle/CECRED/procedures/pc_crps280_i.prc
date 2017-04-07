@@ -331,7 +331,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                               realizar a validação atráves do nível do risco.
                               
                  22/12/2016 - Alteracoes para melhorar a performance deste programa. SD 573847.
-                              (Carlos R. Tanholi)                              
+                              (Carlos R. Tanholi)
+                              
+                 07/04/2017 - Ajustada informacao que constara na coluna de Risco Atual (Que foi renomeada
+				              para Risco Crto). Antes estava aparecendo o risco da conta, e agora devera
+							  aparecer o risco do contrato.
+							  Heitor (Mouts) - Chamado 631951
+                                                     
   ............................................................................. */
 
    DECLARE
@@ -510,8 +516,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
         IS TABLE OF crapass.nrdconta%TYPE
           INDEX BY PLS_INTEGER;
 
-      vr_tab_craptco typ_tab_craptco;      
-
+      vr_tab_craptco typ_tab_craptco;  
+      
       ---------- Cursores específicos do processo ----------
 
       -- Busca do arquivo para controle de informaçõs da central de risco
@@ -781,7 +787,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
         WHERE craplcr.cdcooper = pr_cdcooper
         AND   craplcr.cdlcremp = pr_cdlcremp;
       rw_craplcr cr_craplcr%ROWTYPE;
-
+      
       -- Variaveis para o retorno da pc_obtem_dados_empresti
       vr_tab_dados_epr empr0001.typ_tab_dados_epr;
 
@@ -944,8 +950,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
       -- Configuração para mês novo
       vr_tab_ddmesnov INTEGER;
       vr_flgconsg     INTEGER;
-
-
+      
+      
       -- SobRotina que cria registros contab no arquivo texto
       PROCEDURE pc_cria_node_contab(pr_des_xml    IN OUT VARCHAR2
                                    ,pr_des_contab IN VARCHAR2
@@ -969,7 +975,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                       ||'</contab>';
       END;
       
-      
+
       -- Inicializa Pl-Table
       PROCEDURE pc_inicializa_pltable IS
       BEGIN
@@ -996,8 +1002,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
             vr_tab_contab(vr_vladtdep)(vr_divida)(idx).vladtdep := 0;
             vr_tab_contab(vr_vlchqesp)(vr_divida)(idx).vlchqesp := 0;
          END LOOP;
-      END;
-
+        END;
+        
       /* Processar conta de migração entre cooperativas */
       FUNCTION fn_verifica_conta_migracao(pr_nrdconta  IN crapass.nrdconta%TYPE) --> Número da conta
                                                                                  RETURN BOOLEAN IS
@@ -1427,7 +1433,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                      vr_tab_dados_epr(vr_indice).cdfinemp := rw_crapepr.cdfinemp;
                      vr_tab_dados_epr(vr_indice).dtmvtolt := rw_crapepr.dtmvtolt;
                      vr_tab_dados_epr(vr_indice).vlemprst := rw_crapepr.vlemprst;
-                     vr_tab_dados_epr(vr_indice).tpdescto := rw_crapepr.tpdescto;                
+                     vr_tab_dados_epr(vr_indice).tpdescto := rw_crapepr.tpdescto; 
 
                      -- Para empréstimo pré-fixado
                      IF rw_crapepr.tpemprst = 1 THEN
@@ -2289,7 +2295,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
 
             -- Não enviar nivel em caso de ser AA
             IF vr_dsnivris <> 'AA' THEN
-               vr_des_xml_gene := vr_des_xml_gene || '<dsnivris>'||vr_dsnivris||'</dsnivris>';
+               vr_des_xml_gene := vr_des_xml_gene || '<dsnivris>'||vr_tab_risco(vr_tab_crapris(vr_des_chave_crapris).innivris).dsdrisco||'</dsnivris>';
             ELSE
                vr_des_xml_gene := vr_des_xml_gene || '<dsnivris/>';
             END IF;
@@ -2642,12 +2648,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                vr_tot_vlatrfis_geral := vr_tot_vlatrfis_geral + vr_tot_vlatrfis;
                vr_tot_vlatrjur_geral := vr_tot_vlatrjur_geral + vr_tot_vlatrjur;
             END IF;
-         END IF;
-        
+                  END IF;
+                  
          -- Buscar o próximo registro
          vr_des_chave_crapris := vr_tab_crapris.NEXT(vr_des_chave_crapris);
       END LOOP;
-
+      
       -- Agora iremos enviar o PAC 99 como totalizador das informações
       gene0002.pc_escreve_xml(pr_xml            => vr_clobxml_227
                              ,pr_texto_completo => vr_txtauxi_227
@@ -2984,7 +2990,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
          -- Gerar exceção
          RAISE vr_exc_erro;
       END IF;
-
+      
       -- Solicitar a geração do relatório crrl227
       gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper                          --> Cooperativa conectada
                                  ,pr_cdprogra  => pr_cdprogra                          --> Programa chamador
