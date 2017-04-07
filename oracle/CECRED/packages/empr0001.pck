@@ -790,6 +790,7 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
                              ,pr_vlemprst  IN crapepr.vlemprst%TYPE                            
                              ,pr_dtdpagto  IN crapepr.dtdpagto%TYPE
                              ,pr_dtlibera  IN crawepr.dtlibera%TYPE
+                             ,pr_tpemprst  IN crawepr.tpemprst%TYPE
                              ,pr_valoriof OUT craplcm.vllanmto%TYPE
                              ,pr_dscritic OUT VARCHAR2);
                                                                    
@@ -14758,6 +14759,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                               ,pr_vlemprst  IN crapepr.vlemprst%TYPE
                               ,pr_dtdpagto  IN crapepr.dtdpagto%TYPE
                               ,pr_dtlibera  IN crawepr.dtlibera%TYPE
+                              ,pr_tpemprst  IN crawepr.tpemprst%TYPE
                               ,pr_valoriof OUT craplcm.vllanmto%TYPE -- Valor calculado com o iof
                               ,pr_dscritic OUT VARCHAR2) IS          --> Descricão da critica
   /* .............................................................................
@@ -14772,7 +14774,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
      Frequencia: Sempre que for chamada
      Objetivo  : Calcular IOF para emprestimo/financiamento
     
-     Alteracoes:     
+     Alteracoes: 07/04/2017 - Implementar tratamento e calculo para empréstimos do
+                              tipo PP. ( Renato Darosci )
   ............................................................................. */
 
     -- Tipo para armazenar as informações das parcelas
@@ -14849,42 +14852,58 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     ELSE
       CLOSE cr_craplcr;
     END IF; 
-      
+    
     ------------------------------------------------------------------------------------------------
     --                                 CALCULO DO NOVO IOF
     ------------------------------------------------------------------------------------------------        
-    -- Condicao Pessoa Fisica
-    IF pr_inpessoa = 1 THEN
-      vr_taxaiof := 0.000082;
-    ELSE
-      vr_taxaiof := 0.000041;
-    END IF;
-    
-    FOR vr_ind IN 1..pr_qtpreemp LOOP
-      IF vr_ind = 1 THEN
-        vr_saldo_devedor := pr_vlemprst;
+    -- Se o empréstimo for do tipo PP 
+    IF pr_tpemprst = 1 THEN
+      -- Condicao Pessoa Fisica
+      IF pr_inpessoa = 1 THEN
+        vr_taxaiof := 0.000082;
       ELSE
-        vr_saldo_devedor := vr_tab_parcela(vr_ind - 1).vlsaldodevedor;
+        vr_taxaiof := 0.000041;
       END IF;
       
-      -- Data de Vencimento da Parcela
-      vr_dtvencto := ADD_MONTHS(pr_dtdpagto,vr_ind - 1);  
+      FOR vr_ind IN 1..pr_qtpreemp LOOP
+        IF vr_ind = 1 THEN
+          vr_saldo_devedor := pr_vlemprst;
+        ELSE
+          vr_saldo_devedor := vr_tab_parcela(vr_ind - 1).vlsaldodevedor;
+        END IF;
+        
+        -- Data de Vencimento da Parcela
+        vr_dtvencto := ADD_MONTHS(pr_dtdpagto,vr_ind - 1);  
+        
+        -- Somente eh permitido calcular o IOF para 365 dias
+        vr_qtdias   := vr_dtvencto - pr_dtmvtolt;
+        IF vr_qtdias > 365 THEN
+          vr_qtdias := 365;
+        END IF;
       
-      -- Somente eh permitido calcular o IOF para 365 dias
-      vr_qtdias   := vr_dtvencto - pr_dtmvtolt;
-      IF vr_qtdias > 365 THEN
-        vr_qtdias := 365;
-      END IF;
+        -- Valor do Juros
+        vr_tab_parcela(vr_ind).vljuros        := (vr_txmensal / 100) * vr_saldo_devedor;
+        -- Valor Amortizacao/Principal
+        vr_tab_parcela(vr_ind).vlprincipal    := pr_vlpreemp - vr_tab_parcela(vr_ind).vljuros;
+        -- Valor Saldo Devedor
+        vr_tab_parcela(vr_ind).vlsaldodevedor := vr_saldo_devedor - vr_tab_parcela(vr_ind).vlprincipal;
+        -- Valor do IOF
+        pr_valoriof := pr_valoriof + ROUND(vr_qtdias * vr_tab_parcela(vr_ind).vlprincipal * vr_taxaiof,2);
+      END LOOP;
     
-      -- Valor do Juros
-      vr_tab_parcela(vr_ind).vljuros        := (vr_txmensal / 100) * vr_saldo_devedor;
-      -- Valor Amortizacao/Principal
-      vr_tab_parcela(vr_ind).vlprincipal    := pr_vlpreemp - vr_tab_parcela(vr_ind).vljuros;
-      -- Valor Saldo Devedor
-      vr_tab_parcela(vr_ind).vlsaldodevedor := vr_saldo_devedor - vr_tab_parcela(vr_ind).vlprincipal;
+    ELSE  -- Se o tipo do empréstimo for TR
+      
+      -- Condicao Pessoa Fisica
+      IF pr_inpessoa = 1 THEN
+        vr_taxaiof := 0.03;
+      ELSE -- Se PJ
+        vr_taxaiof := 0.015;
+      END IF;
+      
       -- Valor do IOF
-      pr_valoriof := pr_valoriof + ROUND(vr_qtdias * vr_tab_parcela(vr_ind).vlprincipal * vr_taxaiof,2);
-    END LOOP;
+      pr_valoriof := pr_valoriof + ROUND(pr_vlemprst * vr_taxaiof,2);
+    
+    END IF;
       
   EXCEPTION
     WHEN OTHERS THEN

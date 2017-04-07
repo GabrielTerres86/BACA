@@ -1922,6 +1922,7 @@ create or replace package body cecred.CCET0001 is
                                    ,pr_vlemprst => pr_vlemprst
                                    ,pr_dtdpagto => pr_dtdpagto
                                    ,pr_dtlibera => pr_dtlibera
+                                   ,pr_tpemprst => pr_tpemprst
                                    ,pr_valoriof => vr_vlrdoiof
                                    ,pr_dscritic => vr_dscritic);
                                    
@@ -2491,6 +2492,7 @@ create or replace package body cecred.CCET0001 is
                                  ,pr_vlemprst => pr_vlemprst
                                  ,pr_dtdpagto => pr_dtdpagto
                                  ,pr_dtlibera => pr_dtlibera
+                                 ,pr_tpemprst => pr_tpemprst
                                  ,pr_valoriof => vr_vlrdoiof
                                  ,pr_dscritic => vr_dscritic);
                                    
