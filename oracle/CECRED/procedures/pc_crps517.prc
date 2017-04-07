@@ -99,7 +99,7 @@ DECLARE
       vr_desdolog     VARCHAR2(500);
       vr_tempo        NUMBER;
             
-      vr_nomdojob CONSTANT VARCHAR2(26) := 'jblimi_limite_desconto';
+      vr_nomdojob CONSTANT VARCHAR2(26) := 'jbdsct_limite_desconto';
       vr_cdcooper crapcop.cdcooper%TYPE := 3;
       
       ------------------------------- CURSORES ---------------------------------
