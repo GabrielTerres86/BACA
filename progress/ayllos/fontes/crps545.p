@@ -590,17 +590,24 @@ PROCEDURE enviar_email_devolucoes_matera:
                           
   ASSIGN corpo = "Foram identificadas <b>devoluções</b> de TED do legado <b>Matera:</b> \n\n".
   
+  ASSIGN corpo = corpo + "<table>".
+  
   FOR EACH devolucoes_matera NO-LOCK:
-    ASSIGN corpo = corpo + "Valor: " + TRIM(STRING(devolucoes_matera.valor,"zzz,zzz,zzz,zz9.99")) + 
-                           "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" +
-                           "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" +
-                           " ISPB: " + STRING(devolucoes_matera.ispb) +
-                           "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" +
-                           "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" +
-                           " Data: " + STRING(DAY(devolucoes_matera.data),"99") + "/" + 
-                                             STRING(MONTH(devolucoes_matera.data),"99") +  "/" +
-                                             STRING(YEAR(devolucoes_matera.data),"9999") + "\n".
+  
+    ASSIGN corpo = corpo + "<tr>" +
+                           "<td>Valor:</td>" +
+                           "<td width='130px'>" + TRIM(STRING(devolucoes_matera.valor,"zzz,zzz,zzz,zz9.99")) + "</td>" +
+                           "<td>ISPB:</td>" +
+                           "<td width='130px'>" + STRING(devolucoes_matera.ispb) + "</td>" +
+                           "<td>Data:</td>" +
+                           "<td width='130px'>" + STRING(DAY(devolucoes_matera.data),"99") + "/" + 
+                                                  STRING(MONTH(devolucoes_matera.data),"99") +  "/" +
+                                                  STRING(YEAR(devolucoes_matera.data),"9999") + "</td>".
+      ASSIGN corpo = corpo + "</tr>".                                             
+                                             
   END.
+  
+  ASSIGN corpo = corpo + "</table>".
   
   ASSIGN corpo = corpo + "\n Deverá ser efetuado crédito de devolução na conta da Cooperativa Filiada (histórico 2218)".
   
