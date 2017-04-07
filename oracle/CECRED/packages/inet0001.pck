@@ -453,7 +453,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 12/12/2016
+  --  Data     : Junho/2013.                   Ultima atualizacao: 22/02/2017
   --
   -- Dados referentes ao programa:
   --
@@ -483,12 +483,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --                          (SD 428886 - Carlos Rafael Tanholi)          
   --            
   --             06/05/2016 - Ajuste para validar o banco e agencia da conta destino em operações
-  --			    	      de TED
-  --						  (Adriano - M117).
+  --			    	              de TED (Adriano - M117).
   --
-  --		     10/05/2016 - Ajuste para retirar a criação do xml com as informações consultas. O 
-  --						  xml será criado pela rotina origem
-  --						 (Adriano - M117).
+  --		         10/05/2016 - Ajuste para retirar a criação do xml com as informações consultas. O 
+  --						              xml será criado pela rotina origem (Adriano - M117).
   --
   --             13/05/2016 - Projeto 117 No procedimento pc_con_contas_cadastradas, passagem de upper() 
   --                          e trim() (campo nmtitula) para a consulta de crapcti diretamente na chamada 
@@ -509,7 +507,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --                         para ficar do tamanho do campo crapass.nmsentl;
   --                         - Retirada a validação de existência de agência. (Carlos)
   --
-  --			      31/05/2016 - Ajuste para colocar a validação de saldo disponível (Adriano).
+  --			  31/05/2016 - Ajuste para colocar a validação de saldo disponível (Adriano).
   --
   --            18/07/2016 - Incluido pr_tpoperac = 11 -> DARF, Prj. 338, nas procedure
   --                         pc_horario_operacao, pc_busca_limites e pc_verifica_operacao
@@ -523,6 +521,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --                          - Contabilizar corretamente o limite diário de TED
   --                            (Adriano - SD 563147 / 482831)
   --
+	--        22/02/2017 - Ajuste retorno horário estourado pagamento DARF/DAS (Lucas Lunelli - P.349.2)
+	--
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Busca dos dados da cooperativa */
@@ -1785,10 +1785,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
               IF pr_tab_internet(pr_idseqttl).vldspted > pr_tab_internet(1).vldspted THEN
                  --Atualizar valor disponivel ted
                  pr_tab_internet(pr_idseqttl).vldspted:= pr_tab_internet(1).vldspted;
+              END IF;
+
             END IF;
-
-          END IF;
-
+          
           END IF;
        
       END IF;
@@ -2072,8 +2072,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
 			        17/02/2016 - Excluido validacao de conta nao cadastrada para TED (Jean Michel).
 
 			  06/05/2016 - Ajuste para validar o banco e agencia da conta destino em operações
-						   de TED
-						  (Adriano - M117).
+						               de TED (Adriano - M117).
 
               10/05/2016 - Adicionado validacao de conta cadastrada no cr_crapcti.
 						               (Jaison/Marcos - SUPERO)
@@ -2430,6 +2429,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
         vr_dscritic:= 'Limite para internet nao cadastrado. Entre em contato com seu PA.';
         --Levantar Excecao
         RAISE vr_exc_erro;
+      END IF;
+
+	IF pr_tpoperac = 10 AND -- DARF/DAS 
+		 pr_tab_limite(pr_tab_limite.FIRST).iddiauti = 2 THEN
+		 	pr_tab_limite(pr_tab_limite.FIRST).idesthor := 1;
       END IF;
 
       --Se nao for para validar retorna
@@ -3247,7 +3251,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --  Sistema  : Procedure para consulta de contas de trnsf cadastradas 
   --  Sigla    : CRED
   --  Autor    : Carlos Henrique
-  --  Data     : março/2016.                   Ultima atualizacao: 25/05/2016
+  --  Data     : março/2016.                   Ultima atualizacao: 20/02/2017
   --
   -- Dados referentes ao programa:
   --
@@ -3260,6 +3264,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --                             possibilitar a ordenação por nome de favorecido;
   --                          -> Utilizar rotina genérica para consultar registro da craptab;
   --                          (Adriano - M117).
+  --
+  --             20/02/2017 - Ajuste no problema que não filtrava os favorecidos, conforme
+  --                          relatado no chamado 605338. (Kelvin)
   --
   ---------------------------------------------------------------------------------------------------------------
   -------------------------> VARIAVEIS <-------------------------
@@ -3467,6 +3474,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           
           vr_aux_dsctatrf := to_char(rw_crapass.nrdconta);
           vr_aux_dstipcta := '';
+          
+          IF TRIM(pr_nmtitula) IS NOT NULL AND
+            vr_aux_nmprimtl NOT LIKE '%' || pr_nmtitula || '%' THEN              
+            CONTINUE;
+          END IF;
           
         ELSE /* Outras instituições financeiras */
           
