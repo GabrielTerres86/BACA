@@ -130,5 +130,5 @@
 		break;
 	}
 	//Esconde a mensagem de aguardo do processo e executa o comando criado pelas opções
-	echo "hideMsgAguardo();" . $command;
+	echo "hideMsgAguardo();" . $command;	
 ?>

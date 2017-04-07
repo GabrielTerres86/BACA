@@ -41,7 +41,7 @@
 					<td id="tdFiltrarHistorico">
 						<input type="radio" id="rdfiltro1" class="campo" name="rdfiltro" value="1"/> <label for="rdfiltro1"><? echo utf8ToHtml("C&aacute;lculo Empr&eacute;stimo");?></label>
 						<input type="radio" id="rdfiltro2" class="campo" name="rdfiltro" value="2"/> <label for="rdfiltro2"><? echo utf8ToHtml("C&aacute;lculo Conta Corrente");?></label>
-						<input type="radio" id="rdfiltro3" class="campo" name="rdfiltro" value="3"/> <label for="rdfiltro3"><? echo utf8ToHtml("Ambos");?></label>
+						<input type="radio" id="rdfiltro3" class="campo" name="rdfiltro" value="3"/> <label for="rdfiltro3"><? echo utf8ToHtml("Ambos");?></label>					
 						<a href="#" class="botao" id="btnFiltrarHistorico" name="btnFiltrarHistorico" style="text-align:right;">Pesquisar</a>
 					</td>
 				</tr>

@@ -139,7 +139,7 @@ function controlaVoltar(){
 		case "H": // Parametrização de Históricos
 			controlaVoltarParametrizarHistorico();
 		break;
-		
+
 		default:
 			// Por padrão volta para o estado inicial da tela
 			estadoInicial();
@@ -252,12 +252,14 @@ function formataCadastroAssessoria(){
 	$('label[for="cdasscyb"]', "#frmAssessoria").addClass("rotulo").css({ "width": "150px" });
 	$('label[for="flgjudic"]', "#frmAssessoria").addClass("rotulo").css({ "width": "150px" });
 	$('label[for="flextjud"]', "#frmAssessoria").addClass("rotulo").css({ "width": "150px" });
+	$('label[for="cdsigcyb"]', "#frmAssessoria").addClass("rotulo").css({ "width": "150px" });
 	// campo
 	$("#cdassessoria","#frmAssessoria").css("width","100px").habilitaCampo();
 	$("#nmassessoria","#frmAssessoria").addClass("alphanum").css("width","500px").attr("maxlength","50").habilitaCampo();
 	$("#cdasscyb", "#frmAssessoria").css("width", "100px").habilitaCampo();
 	$("#flgjudic", "#frmAssessoria").css("width", "50px").habilitaCampo();
 	$("#flextjud", "#frmAssessoria").css("width", "50px").habilitaCampo();
+	$("#cdsigcyb", "#frmAssessoria").css("width", "100px").habilitaCampo();
 
 	$('input[type="text"],select','#frmAssessoria').limpaFormulario().removeClass('campoErro');
 	layoutPadrao();
@@ -337,7 +339,8 @@ function formataConsultaAssessoria() {
 	arrayLargura[2] = "200px";
 	arrayLargura[3] = "80px";
 	arrayLargura[4] = "80px";
-
+	arrayLargura[5] = "100px";
+	
 	//Define a posição dos elementos nas células da linha
     var arrayAlinha = new Array();
 	arrayAlinha[0] = "left";
@@ -345,6 +348,7 @@ function formataConsultaAssessoria() {
 	arrayAlinha[2] = "center";
 	arrayAlinha[3] = "center";
 	arrayAlinha[4] = "center";
+	arrayAlinha[5] = "left";
 
 	//Aplica as informações na tabela
 	tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha);
@@ -473,10 +477,10 @@ function confirmouOperacaoAssessoria(){
 														  .replace(/[ÿ]/g,"y")
 														  .replace(/[Ñ]/g,"N")
 														  .replace(/[ñ]/g,"n")
-														  .replace(/[^A-z0-9\s\!\@\$\%\*\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/\>\<]/g,"");
+														  .replace(/[^A-z0-9\s\!\@\$\%\*\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/\>\<]/g,"");														  														 
+												  
 
-
-	manterAssessoria(cddopcao, $("#cdassessoria", "#frmAssessoria").val(), nmassessoria, $("#cdasscyb", "#frmAssessoria").val(), vflgjudic, vflextjud);
+	manterAssessoria(cddopcao, $("#cdassessoria", "#frmAssessoria").val(), nmassessoria, $("#cdasscyb", "#frmAssessoria").val(), vflgjudic, vflextjud, $("#cdsigcyb", "#frmAssessoria").val());
 }
 
 // Função para executar a busca de todas as acessorias
@@ -508,9 +512,9 @@ function executaConsultaAssessoriasExclusao(){
 }
 
 // Função para criar a linha com as assessorias cadastradas
-function criaLinhaAssessoria(cdassessoria, nmassessoria, cdasscyb, flgjudic, flextjud) {
+function criaLinhaAssessoria(cdassessoria, nmassessoria, cdasscyb, flgjudic, flextjud, cdsigcyb) {
 	var field_flgjudic = $('<input>', { type:"checkbox", name: "flgjudic_a", id: "flgjudic_a"});
-	var field_flextjud = $('<input>', { type:"checkbox", name: "flextjud_a", id: "flextjud_a"});
+	var field_flextjud = $('<input>', { type:"checkbox", name: "flextjud_a", id: "flextjud_a"});	
 	
 	if (flgjudic == 1) {
 		field_flgjudic.attr("checked","checked");
@@ -548,9 +552,13 @@ function criaLinhaAssessoria(cdassessoria, nmassessoria, cdasscyb, flgjudic, fle
 				.attr('style', 'width: 90px; text-align:right') //10%
 				.append(field_flgjudic)			
 			)
-            .append($('<td>') // Coluna: Flag Cobranca Judicial
+            .append($('<td>') // Coluna: Flag Cobranca Extra Judicial
 				.attr('style', 'width: 60px; text-align:right') //10%
 				.append(field_flextjud)				
+			)
+			.append($('<td>') // Coluna: Código da Sigla Cyber
+				.attr('style', 'width: 60px; text-align:left') //10%
+				.text(cdsigcyb)				
 			)
 			.append($('<td>') // Coluna: Botão para REMOVER
 				.attr('style', ' text-align:center')
@@ -561,7 +569,7 @@ function criaLinhaAssessoria(cdassessoria, nmassessoria, cdasscyb, flgjudic, fle
 		);
 }
 
-function criaLinhaAssessoriaConsulta(cdassessoria, nmassessoria, cdasscyb, flgjudic, flextjud) {
+function criaLinhaAssessoriaConsulta(cdassessoria, nmassessoria, cdasscyb, flgjudic, flextjud, cdsigcyb) {
 	var field_flgjudic = $('<input>', { type:"checkbox", name: "flgjudic_a", id: "flgjudic_a"});
 	var field_flextjud = $('<input>', { type:"checkbox", name: "flextjud_a", id: "flextjud_a"});
 	
@@ -609,6 +617,10 @@ function criaLinhaAssessoriaConsulta(cdassessoria, nmassessoria, cdasscyb, flgju
                 .append(field_flextjud)				
 				//.text(flextjud)
 			)
+			.append($('<td>') // Coluna: Sigla no Cyber
+				.attr('style', 'width: 80px; text-align:center')		
+                .text(cdsigcyb)
+			)
 		);
 }
 
@@ -629,7 +641,7 @@ function excluirAssessoria(cdassessoria){
 }
 
 // Função para manter rotina (Consultar/Incluir/Alterar/Excluir)
-function manterAssessoria(cddopcao, cdassessoria, nmassessoria, cdasscyb, flgjudic, flextjud) {
+function manterAssessoria(cddopcao, cdassessoria, nmassessoria, cdasscyb, flgjudic, flextjud, cdsigcyb) {
     //Requisição para processar a opção que foi selecionada
 	
 	$.ajax({
@@ -642,6 +654,7 @@ function manterAssessoria(cddopcao, cdassessoria, nmassessoria, cdasscyb, flgjud
 			cdasscyb:     cdasscyb,
 			flgjudic:     flgjudic,
             flextjud:     flextjud,
+			cdsigcyb:	  cdsigcyb,
             redirect:     "script_ajax"
         },
         error: function(objAjax,responseError,objExcept) {
@@ -1258,7 +1271,7 @@ function controlaConcluirParametrizarHistorico(){
 				werro = 1;
 		        return false;
 	        }
-		}
+		}		
 		
 		
 	});
@@ -1267,13 +1280,13 @@ function controlaConcluirParametrizarHistorico(){
 		showError("error","Nenhum historico foi alterado.","Alerta - Ayllos","");
 		return false;
 	}
-	
+		
 	//Mensagem de alteração de Parametrização
 	if (werro == 0) {
 		showMsgAguardo( "Aguarde, atualizando parametriza&ccedil;&atilde;o dos hist&oacute;ricos...");
-	
-	manterParametrizacaoHistorico("AH","","","","",historicos);
-}
+		
+		manterParametrizacaoHistorico("AH","","","","",historicos);  
+	}
 }
 
 // Função para pesquisar os históricos por código/descrição
@@ -1384,7 +1397,7 @@ function criaLinhaParametrizarHistorico(cdhistor,dshistor,indebcre,indcalem,indc
 	if(indcalcc == "S"){
 		field_indcalcc.attr("checked","checked");
 	}
-	
+			
 	// Criar a linha na tabela
 	$("#tbParhis > tbody")
 		.append($("<tr>") // Linha
@@ -1421,7 +1434,7 @@ function criaLinhaParametrizarHistorico(cdhistor,dshistor,indebcre,indcalem,indc
 				.attr("style","width: 102px; text-align:center")
 				.append(field_indcalcc)
 				.append($("<input>")
-					.attr("type","hidden")
+					.attr("type","hidden")					
 					.attr("name","indcalcc_h")
 					.attr("id","indcalcc_h")
 					.attr("value",indcalcc)

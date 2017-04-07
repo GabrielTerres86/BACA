@@ -27,6 +27,7 @@
 	$cdasscyb      = (isset($_POST["cdasscyb"]))  ? $_POST["cdasscyb"]  : "";		  // Código da Assessoria CYBER
     $flgjudic      = (isset($_POST["flgjudic"]))  ? $_POST["flgjudic"]  : "";		  // flag de cobrança judicial
     $flextjud      = (isset($_POST["flextjud"]))  ? $_POST["flextjud"]  : "";		  // flag de cobrança extra judicial
+	$cdsigcyb      = (isset($_POST["cdsigcyb"]))  ? $_POST["cdsigcyb"]  : "";		  // flag de cobrança extra judicial
 
 	//Validar permissão do usuário
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],$cddopcao)) <> "") {
@@ -81,8 +82,9 @@
 		$xml .= "		<cdassess>".$cdassessoria."</cdassess>";
 		$xml .= "		<dsassess>".$nmassessoria."</dsassess>";
 		$xml .= "		<cdasscyb>".$cdasscyb."</cdasscyb>";
-        $xml .= "		<flgjudic>".$flgjudic."</flgjudic>";
-        $xml .= "		<flextjud>".$flextjud."</flextjud>";
+    $xml .= "		<flgjudic>".$flgjudic."</flgjudic>";
+    $xml .= "		<flextjud>".$flextjud."</flextjud>";
+		$xml .= "		<cdsigcyb>".$cdsigcyb."</cdsigcyb>";
 	}
 	$xml .= "  </Dados>";
 	$xml .= "</Root>";
@@ -115,14 +117,16 @@
 					$cdasscyb = getByTagName($xmlObjeto->roottag->tags[0]->tags[0]->tags,'cdasscyb');
 					$flgjudic = getByTagName($xmlObjeto->roottag->tags[0]->tags[0]->tags,'flgjudic');
 					$flextjud = getByTagName($xmlObjeto->roottag->tags[0]->tags[0]->tags,'flextjud');
+					$cdsigcyb = getByTagName($xmlObjeto->roottag->tags[0]->tags[0]->tags,'cdsigcyb');
 					// Verificar se foi encontrada a assessoria para o código informado
 					if ($cdassess != "" && $nmassess != "") {
 						//Se existir preenche na tela
 						$command .= "$('#cdassessoria').val('" . $cdassess . "');";
 						$command .= "$('#cdasscyb').val('" . $cdasscyb . "').focus();";
 						$command .= "$('#nmassessoria').val('" . $nmassess . "');";
-					    $command .= "$('#flgjudic').val('" . $flgjudic . "');";
-                        $command .= "$('#flextjud').val('" . $flextjud . "');";						
+					  $command .= "$('#flgjudic').val('" . $flgjudic . "');";
+            $command .= "$('#flextjud').val('" . $flextjud . "');";						
+						$command .= "$('#cdsigcyb').val('" . $cdsigcyb . "');";		
 						if ($flgjudic == 1) {
 							$command .= "$('#flgjudic').attr('checked','checked');";							
 						} else {
@@ -130,7 +134,7 @@
 						}
 						if ($flextjud == 1) {
 							$command .= "$('#flextjud').attr('checked','checked');";
-					} else {
+						} else {
 							$command .= "$('#flextjud').removeAttr('checked','checked');";
 						}
 					} else {
@@ -146,7 +150,8 @@
 															   "','" . getByTagName($assessoria->tags,'nmassessoria') . 
 						                                       "','" . getByTagName($assessoria->tags,'cdasscyb') .
                                                                "','" . getByTagName($assessoria->tags,'flgjudic') .
-                                                               "','" . getByTagName($assessoria->tags,'flextjud') . "');";
+                                                               "','" . getByTagName($assessoria->tags,'flextjud') .
+                                                               "','" . getByTagName($assessoria->tags,'cdsigcyb') .	"');";
 					}
 				}
 				//Alternar a cor das linhas
@@ -155,7 +160,7 @@
 		break;
 		
 		case "IA" :
-			//Exibir confirmação da inclusão
+			//Exibir confirmação da inclusão			
 			$command .= "showError('inform','Inclu&iacute;do com sucesso.','Alerta - Ayllos','estadoInicialAssessorias();')";
 		break;
 		
@@ -176,7 +181,8 @@
 						                               "','" . getByTagName($assessoria->tags,'nmassessoria') .
 													   "','" . getByTagName($assessoria->tags,'cdasscyb') . 
                                                        "','" . getByTagName($assessoria->tags,'flgjudic') . 
-													   "','" . getByTagName($assessoria->tags,'flextjud') . "');";
+													   "','" . getByTagName($assessoria->tags,'flextjud') .
+													   "','" . getByTagName($assessoria->tags,'cdsigcyb') . "');";
 					}
 				}
 				//Alternar a cor das linhas

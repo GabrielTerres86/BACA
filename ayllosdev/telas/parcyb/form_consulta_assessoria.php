@@ -22,7 +22,8 @@
 						<th><? echo utf8ToHtml("Nome da Assessoria");?></th>
 					    <th><? echo utf8ToHtml("Judicial");?></th>
 						<th><? echo utf8ToHtml("Extra Judicial");?></th>
-					</tr>
+						<th><? echo utf8ToHtml("Sigla Cyber");?></th>
+                   </tr>
 				</thead>
 				<tbody>
 				</tbody>
