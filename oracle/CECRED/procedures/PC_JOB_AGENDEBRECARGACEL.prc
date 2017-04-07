@@ -11,10 +11,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBRECARGACEL(pr_cdcooper in crapc
    Dados referentes ao programa:
 
    Frequencia: Diário.
-   Objetivo  : Controlar a execução dos programas CRPS705 que efetivam os agendamentos de TED.
-               Rotina cria novos jobs para execução paralela dos programas para cada cooperativa, 
-               a primeira execução do dia ocorre de forma imediata, logo após o job ser criado, 
-               caso o processo batch da cooperativa esteja rodando o job é reagendado para 
+   Objetivo  : Efetivar os agendamentos de recarga de celular em todas as cooperativas.
+               Rotina cria novos jobs para execução paralela dos programas para cada cooperativa.
+               Caso o processo batch da cooperativa esteja rodando o job é reagendado para 
                a proxima hora. 
               
    Alteracoes:
@@ -34,7 +33,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBRECARGACEL(pr_cdcooper in crapc
     vr_jobname     VARCHAR2(200);
     
     vr_dtmvtolt    DATE;
-    
+    vr_flultexe    INTEGER;
+    vr_qtdexec     INTEGER;
+      
     vr_email_dest  VARCHAR2(1000); 
     vr_conteudo    VARCHAR2(4000);
     
@@ -142,6 +143,21 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBRECARGACEL(pr_cdcooper in crapc
       
       -- se nao retornou critica  chama rotina
       IF TRIM(vr_dscritic) IS NULL THEN
+        
+        /* Procedimento para verificar/controlar a execução da DEBNET e DEBSIC */
+        SICR0001.pc_controle_exec_deb (pr_cdcooper => pr_cdcooper         --> Código da coopertiva
+                                      ,pr_cdtipope => 'I'                 --> Tipo de operacao I-incrementar e C-Consultar
+                                      ,pr_dtmvtolt => rw_crapdat.dtmvtolt --> Data do movimento 
+                                      ,pr_cdprogra => 'JOBAGERCEL'        --> Codigo do programa 
+                                      ,pr_flultexe => vr_flultexe         --> Retorna se é a ultima execução do procedimento
+                                      ,pr_qtdexec  => vr_qtdexec          --> Retorna a quantidade
+                                      ,pr_cdcritic => vr_cdcritic         --> Codigo da critica de erro
+                                      ,pr_dscritic => vr_dscritic);       --> descrição do erro se ocorrer
+        
+        IF nvl(vr_cdcritic,0) > 0 OR
+          TRIM(vr_dscritic) IS NOT NULL THEN
+          RAISE vr_exc_erro; 
+        END IF;
         
         --> Executar programa
         RCEL0001.pc_proces_agendamentos_recarga (pr_cdcooper => pr_cdcooper

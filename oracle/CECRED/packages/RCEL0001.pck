@@ -3584,7 +3584,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
           pr_msg_retor := 'Agendamento de recarga de celular registrada com sucesso. Aguardando aprovação dos demais responsáveis.';
         END IF;
       END IF;
---      pr_msg_retor := '0';
       
     EXCEPTION
       WHEN vr_exc_erro THEN
@@ -3833,7 +3832,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
         
         -- Efetuar solicitacao de geracao de relatorio --
         gene0002.pc_solicita_relato (pr_cdcooper  => pr_cdcooper         --> Cooperativa conectada
-                                    ,pr_cdprogra  => pr_nmdatela         --> Programa chamador
+                                    ,pr_cdprogra  => 'CRPS482'         --> Programa chamador
                                     ,pr_dtmvtolt  => pr_crapdat.dtmvtolt --> Data do movimento atual
                                     ,pr_dsxml     => vr_des_xml          --> Arquivo XML de dados
                                     ,pr_dsxmlnode => '/crrl482/contas/origem/titulo/conta'       --> No base do XML para leitura dos dados
@@ -4105,201 +4104,182 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
         --Se houve criticas
         IF nvl(vr_cdcritic,0) > 0 OR
            vr_dscritic IS NOT NULL THEN
-           
-           -- Verifica se tem codigo da critica
-           IF vr_cdcritic <> 0 THEN
-             vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-           END IF;
-           
-           vr_tab_critic(vr_index).situacao   := 0;
-           vr_tab_critic(vr_index).cdcritic   := nvl(vr_cdcritic,0);
-           vr_tab_critic(vr_index).dscritic   := nvl(vr_dscritic,'');
+          
+          -- Verifica se tem codigo da critica
+          IF vr_cdcritic <> 0 THEN
+            vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+          END IF;
+          
+          vr_tab_critic(vr_index).situacao   := 0;
+          vr_tab_critic(vr_index).cdcritic   := nvl(vr_cdcritic,0);
+          vr_tab_critic(vr_index).dscritic   := nvl(vr_dscritic,'');
         
-           -- Se for critica de saldo insuficiente
-           IF vr_dscritic = 'Não há saldo suficiente para a operação.' THEN
-             -- Verifica se é a ultima execução do JOB
-             IF vr_flultexe = 1 THEN
-               BEGIN
-                 -- Atualiza registro de recarga
-                 UPDATE tbrecarga_operacao
-                    SET insit_operacao = 5 -- Não efetivada.
-                  WHERE idoperacao = rw_tbrecarga.idoperacao;
-               EXCEPTION
-                 WHEN OTHERS THEN
-                   vr_dscritic := 'Erro ao atualizar registro de recarga. ' || SQLERRM;
-                   RAISE vr_exc_saida;
-               END;
-             ELSE -- Se não for a ultima execução do JOB
-               
-               vr_vldinami := '#Operadora#='||rw_tbrecarga.nmoperadora||';'||
-                              '#DDD#='      ||rw_tbrecarga.nrddd||';'||
-                              '#Celular#='  ||gene0002.fn_mask(rw_tbrecarga.nrcelular,'99999-9999')||';'||
-                              '#Data#='     ||rw_tbrecarga.dtrecarga||';'||
-                              '#Valor#='    ||to_char(rw_tbrecarga.vlrecarga,'fm999g999d00');
-               
-               --> buscar mensagem 
-               vr_dsdmensg := gene0003.fn_buscar_mensagem(pr_cdcooper          => 3
-                                                         ,pr_cdproduto         => 32
-                                                         ,pr_cdtipo_mensagem   => 3
-                                                         ,pr_sms               => 0             -- Indicador se mensagem é SMS (pois deve cortar em 160 caracteres)
-                                                         ,pr_valores_dinamicos => vr_vldinami); -- Máscara #Cooperativa#=1;#Convenio#=123    
-               
-               -- Busca todos os usuarios ativos com senha no IB
-               FOR rw_crapsnh2 IN cr_crapsnh2 (pr_cdcooper  => pr_cdcooper
-                                              ,pr_nrdconta  => rw_tbrecarga.nrdconta
-                                              ,pr_cdsitsnh  => 1
-                                              ,pr_tpdsenha  => 1) LOOP
+          -- Se for critica de saldo insuficiente
+          IF vr_dscritic = 'Não há saldo suficiente para a operação.' THEN
+            -- Verifica se é a ultima execução do JOB
+            IF vr_flultexe = 1 THEN
+              BEGIN
+                -- Atualiza registro de recarga
+                UPDATE tbrecarga_operacao
+                   SET insit_operacao = 5 -- Não efetivada.
+                 WHERE idoperacao = rw_tbrecarga.idoperacao;
+              EXCEPTION
+                WHEN OTHERS THEN
+                  vr_dscritic := 'Erro ao atualizar registro de recarga. ' || SQLERRM;
+                  RAISE vr_exc_saida;
+              END;
+            ELSE
+              vr_vldinami := '#Operadora#='||rw_tbrecarga.nmoperadora||';'||
+                             '#DDD#='      ||rw_tbrecarga.nrddd||';'||
+                             '#Celular#='  ||gene0002.fn_mask(rw_tbrecarga.nrcelular,'99999-9999')||';'||
+                             '#Data#='     ||rw_tbrecarga.dtrecarga||';'||
+                             '#Valor#='    ||to_char(rw_tbrecarga.vlrecarga,'fm999g999d00');
                 
-                 IF rw_crapass.inpessoa = 1 THEN
-									
-                   OPEN cr_crapttl (pr_cdcooper  => rw_crapsnh2.cdcooper
-                                   ,pr_nrdconta  => rw_crapsnh2.nrdconta
-                                   ,pr_idseqttl  => rw_crapsnh2.idseqttl);
-                   FETCH cr_crapttl INTO rw_crapttl;
+              --> buscar mensagem 
+              vr_dsdmensg := gene0003.fn_buscar_mensagem(pr_cdcooper          => 3
+                                                        ,pr_cdproduto         => 32
+                                                        ,pr_cdtipo_mensagem   => 3
+                                                        ,pr_sms               => 0             -- Indicador se mensagem é SMS (pois deve cortar em 160 caracteres)
+                                                        ,pr_valores_dinamicos => vr_vldinami); -- Máscara #Cooperativa#=1;#Convenio#=123
+            END IF;
+          ELSE
+            BEGIN
+              -- Atualiza registro de recarga
+              UPDATE tbrecarga_operacao
+                 SET insit_operacao = 5 -- Não efetivada.
+               WHERE idoperacao = rw_tbrecarga.idoperacao;
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_dscritic := 'Erro ao atualizar registro de recarga. ' || SQLERRM;
+                RAISE vr_exc_saida;
+            END;
+            
+            vr_vldinami := '#Operadora#='||rw_tbrecarga.nmoperadora||';'||
+                           '#DDD#='      ||rw_tbrecarga.nrddd||';'||
+                           '#Celular#='  ||gene0002.fn_mask(rw_tbrecarga.nrcelular,'99999-9999')||';'||
+                           '#Data#='     ||rw_tbrecarga.dtrecarga||';'||
+                           '#Valor#='    ||to_char(rw_tbrecarga.vlrecarga,'fm999g999d00')||';'||
+                           '#Motivo#='   ||vr_dscritic;
+              
+            --> buscar mensagem 
+            vr_dsdmensg := gene0003.fn_buscar_mensagem(pr_cdcooper          => 3
+                                                      ,pr_cdproduto         => 32
+                                                      ,pr_cdtipo_mensagem   => 17
+                                                      ,pr_sms               => 0             -- Indicador se mensagem é SMS (pois deve cortar em 160 caracteres)
+                                                      ,pr_valores_dinamicos => vr_vldinami); -- Máscara #Cooperativa#=1;#Convenio#=123    
+             
+          END IF;
+          
+          vr_dscritic := '';
+          
+          IF vr_dscritic <> 'Não há saldo suficiente para a operação.' OR
+             vr_flultexe <> 1 THEN
+            -- Busca todos os usuarios ativos com senha no IB
+            FOR rw_crapsnh2 IN cr_crapsnh2 (pr_cdcooper  => pr_cdcooper
+                                           ,pr_nrdconta  => rw_tbrecarga.nrdconta
+                                           ,pr_cdsitsnh  => 1
+                                           ,pr_tpdsenha  => 1) LOOP
+                 
+              IF rw_crapass.inpessoa = 1 THEN
+  									
+                 OPEN cr_crapttl (pr_cdcooper  => rw_crapsnh2.cdcooper
+                                 ,pr_nrdconta  => rw_crapsnh2.nrdconta
+                                 ,pr_idseqttl  => rw_crapsnh2.idseqttl);
+                 FETCH cr_crapttl INTO rw_crapttl;
 
-                   IF cr_crapttl%FOUND THEN
+                 IF cr_crapttl%FOUND THEN
+
+                   -- Manda mensagem na conta do cooperado
+                   GENE0003.pc_gerar_mensagem(pr_cdcooper => pr_cdcooper
+                                             ,pr_nrdconta => rw_tbrecarga.nrdconta
+                                             ,pr_idseqttl => rw_crapsnh2.idseqttl
+                                             ,pr_cdprogra => pr_nmdatela
+                                             ,pr_inpriori => 0
+                                             ,pr_dsdmensg => vr_dsdmensg
+                                             ,pr_dsdassun => 'Transação não efetivada'
+                                             ,pr_dsdremet => rw_crapcop.nmrescop
+                                             ,pr_dsdplchv => 'Sem Saldo'
+                                             ,pr_cdoperad => 0
+                                             ,pr_cdcadmsg => 0
+                                             ,pr_dscritic => vr_dscritic);
+                   
+                   -- Se ocorrer erro
+                   IF vr_dscritic IS NOT NULL THEN
+                     RAISE vr_exc_saida;
+                   END IF;
+                        
+                 END IF;
+
+                 CLOSE cr_crapttl;
+               ELSE									
+                 IF rw_crapass.idastcjt = 0 THEN
+                   -- Manda mensagem na conta do cooperado
+                   GENE0003.pc_gerar_mensagem(pr_cdcooper => pr_cdcooper
+                                             ,pr_nrdconta => rw_tbrecarga.nrdconta
+                                             ,pr_idseqttl => rw_crapsnh2.idseqttl
+                                             ,pr_cdprogra => pr_nmdatela
+                                             ,pr_inpriori => 0
+                                             ,pr_dsdmensg => vr_dsdmensg
+                                             ,pr_dsdassun => 'Transação não efetivada'
+                                             ,pr_dsdremet => rw_crapcop.nmrescop
+                                             ,pr_dsdplchv => 'Sem Saldo'
+                                             ,pr_cdoperad => 0
+                                             ,pr_cdcadmsg => 0
+                                             ,pr_dscritic => vr_dscritic);
+                        
+                   -- Se ocorrer erro
+                   IF vr_dscritic IS NOT NULL THEN
+                     RAISE vr_exc_saida;
+                   END IF;
+                 ELSE
+                   FOR rw_crapsnh3 IN cr_crapsnh3(pr_cdcooper => pr_cdcooper
+                                                 ,pr_nrdconta => rw_tbrecarga.nrdconta) LOOP
 
                      -- Manda mensagem na conta do cooperado
                      GENE0003.pc_gerar_mensagem(pr_cdcooper => pr_cdcooper
                                                ,pr_nrdconta => rw_tbrecarga.nrdconta
-                                               ,pr_idseqttl => 0 
+                                               ,pr_idseqttl => rw_crapsnh3.idseqttl
                                                ,pr_cdprogra => pr_nmdatela
                                                ,pr_inpriori => 0
                                                ,pr_dsdmensg => vr_dsdmensg
-                                               ,pr_dsdassun => 'Trnasação não efetivada'
+                                               ,pr_dsdassun => 'Transação não efetivada'
                                                ,pr_dsdremet => rw_crapcop.nmrescop
                                                ,pr_dsdplchv => 'Sem Saldo'
                                                ,pr_cdoperad => 0
                                                ,pr_cdcadmsg => 0
                                                ,pr_dscritic => vr_dscritic);
-                       
+                     
                      -- Se ocorrer erro
                      IF vr_dscritic IS NOT NULL THEN
                        RAISE vr_exc_saida;
                      END IF;
                        
-                   END IF;
-
-                   CLOSE cr_crapttl;
-								 ELSE									
-								   IF rw_crapass.idastcjt = 0 THEN
-
-										 -- Manda mensagem na conta do cooperado
-                     GENE0003.pc_gerar_mensagem(pr_cdcooper => pr_cdcooper
-                                               ,pr_nrdconta => rw_tbrecarga.nrdconta
-                                               ,pr_idseqttl => 0 
-                                               ,pr_cdprogra => pr_nmdatela
-                                               ,pr_inpriori => 0
-                                               ,pr_dsdmensg => vr_dsdmensg
-                                               ,pr_dsdassun => 'Trnasação não efetivada'
-                                               ,pr_dsdremet => rw_crapcop.nmrescop
-                                               ,pr_dsdplchv => 'Sem Saldo'
-                                               ,pr_cdoperad => 0
-                                               ,pr_cdcadmsg => 0
-                                               ,pr_dscritic => vr_dscritic);
-                       
-                     -- Se ocorrer erro
-                     IF vr_dscritic IS NOT NULL THEN
-                       RAISE vr_exc_saida;
-                     END IF;
-                   ELSE
-										 
-									   FOR rw_crapsnh3 IN cr_crapsnh3(pr_cdcooper => pr_cdcooper
-											                            ,pr_nrdconta => rw_tbrecarga.nrdconta) LOOP
-
-                       -- Manda mensagem na conta do cooperado
-                       GENE0003.pc_gerar_mensagem(pr_cdcooper => pr_cdcooper
-                                                 ,pr_nrdconta => rw_tbrecarga.nrdconta
-                                                 ,pr_idseqttl => 0 
-                                                 ,pr_cdprogra => pr_nmdatela
-                                                 ,pr_inpriori => 0
-                                                 ,pr_dsdmensg => vr_dsdmensg
-                                                 ,pr_dsdassun => 'Trnasação não efetivada'
-                                                 ,pr_dsdremet => rw_crapcop.nmrescop
-                                                 ,pr_dsdplchv => 'Sem Saldo'
-                                                 ,pr_cdoperad => 0
-                                                 ,pr_cdcadmsg => 0
-                                                 ,pr_dscritic => vr_dscritic);
-                         
-                       -- Se ocorrer erro
-                       IF vr_dscritic IS NOT NULL THEN
-                         RAISE vr_exc_saida;
-                       END IF;
-                      
-                     END LOOP;
-									 END IF;
-                   EXIT;
+                   END LOOP;
                  END IF;
-               END LOOP;
-             END IF;
-           ELSE -- IF vr_dscritic = 'Não há saldo suficiente para a operação.' THEN
-             
-             vr_vldinami := '#Operadora#='||rw_tbrecarga.nmoperadora||';'||
-                            '#DDD#='      ||rw_tbrecarga.nrddd||';'||
-                            '#Celular#='  ||gene0002.fn_mask(rw_tbrecarga.nrcelular,'99999-9999')||';'||
-                            '#Data#='     ||rw_tbrecarga.dtrecarga||';'||
-                            '#Valor#='    ||to_char(rw_tbrecarga.vlrecarga,'fm999g999d00')||';'||
-                            '#Motivo#='   ||vr_dscritic;
-               
-             --> buscar mensagem 
-             vr_dsdmensg := gene0003.fn_buscar_mensagem(pr_cdcooper          => 3
-                                                       ,pr_cdproduto         => 32
-                                                       ,pr_cdtipo_mensagem   => 17
-                                                       ,pr_sms               => 0             -- Indicador se mensagem é SMS (pois deve cortar em 160 caracteres)
-                                                       ,pr_valores_dinamicos => vr_vldinami); -- Máscara #Cooperativa#=1;#Convenio#=123    
-               
-             -- Manda mensagem na conta do cooperado
-             GENE0003.pc_gerar_mensagem(pr_cdcooper => pr_cdcooper
-                                       ,pr_nrdconta => rw_tbrecarga.nrdconta
-                                       ,pr_idseqttl => 0 
-                                       ,pr_cdprogra => pr_nmdatela
-                                       ,pr_inpriori => 0
-                                       ,pr_dsdmensg => ''
-                                       ,pr_dsdassun => 'Trnasação não efetivada'
-                                       ,pr_dsdremet => rw_crapcop.nmrescop
-                                       ,pr_dsdplchv => 'Sem Saldo'
-                                       ,pr_cdoperad => 0
-                                       ,pr_cdcadmsg => 0
-                                       ,pr_dscritic => vr_dscritic);
-                         
-             -- Se ocorrer erro
-             IF vr_dscritic IS NOT NULL THEN
-               RAISE vr_exc_saida;          
-             END IF;
-             
-             BEGIN
-               -- Atualiza registro de recarga
-               UPDATE tbrecarga_operacao
-                  SET insit_operacao = 5 -- Não efetivada.
-                WHERE idoperacao = rw_tbrecarga.idoperacao;
-             EXCEPTION
-               WHEN OTHERS THEN
-                 vr_dscritic := 'Erro ao atualizar registro de recarga. ' || SQLERRM;
-                 RAISE vr_exc_saida;
-             END;
-             
-           END IF;
-           
+                 EXIT;
+               END IF;
+             END LOOP;
+           END IF;   
+          
            -- Limpa variaveis de critica
            vr_cdcritic := 0;
            vr_dscritic := '';
-        ELSE 
-          vr_tab_critic(vr_index).situacao   := 1; -- Efetuado 
-        END IF;
-        
-      END LOOP;
+         ELSE 
+           vr_tab_critic(vr_index).situacao   := 1; -- Efetuado 
+         END IF;
+       END LOOP;
       
-      pc_gera_rel_criticas(pr_cdcooper   => pr_cdcooper
-                          ,pr_tab_critic => vr_tab_critic
-                          ,pr_crapdat    => rw_crapdat
-                          ,pr_nmdatela   => pr_nmdatela
-                          ,pr_cdcritic   => vr_cdcritic
-                          ,pr_dscritic   => vr_dscritic);
+       pc_gera_rel_criticas(pr_cdcooper   => pr_cdcooper
+                           ,pr_tab_critic => vr_tab_critic
+                           ,pr_crapdat    => rw_crapdat
+                           ,pr_nmdatela   => pr_nmdatela
+                           ,pr_cdcritic   => vr_cdcritic
+                           ,pr_dscritic   => vr_dscritic);
       
-      IF vr_cdcritic <> 0 OR
-         vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_saida;
-      END IF;
+       IF vr_cdcritic <> 0 OR
+          vr_dscritic IS NOT NULL THEN
+         RAISE vr_exc_saida;
+       END IF;
       
        --Zerar tabela de memoria auxiliar
        vr_tab_critic.DELETE;
