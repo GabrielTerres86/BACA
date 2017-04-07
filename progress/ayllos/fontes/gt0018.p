@@ -47,8 +47,8 @@ DEF  VAR aux_msgdolog  AS CHAR                                        NO-UNDO.
 
 DEF TEMP-TABLE tt-convenios NO-UNDO
     FIELD cdempcon AS CHAR 
-    FIELD cdsegmto AS CHAR
     FIELD dsnomres AS CHAR
+	FIELD cdsegmto AS CHAR
     FIELD dsempcnv AS CHAR
     FIELD dsnomcnv AS CHAR.
 
@@ -160,7 +160,8 @@ DO WHILE TRUE:
     VIEW FRAME f_gt0018.
 
     ASSIGN tel_cdempcon = ""
-           tel_cdsegmto = ""
+           tel_dsnomres = ""
+		   tel_cdsegmto = ""
            tel_vltarint = 0
            tel_vltartaa = 0
            tel_vltarcxa = 0
@@ -170,8 +171,7 @@ DO WHILE TRUE:
            tel_nrrenorm = 0
            tel_dsdianor = ""
            tel_dtcancel = ?
-           tel_nrtolera = 0
-           tel_dsnomres = "".
+           tel_nrtolera = 0.
     
     UPDATE tel_dsempcnv
            WITH FRAME f_gt0018
@@ -249,8 +249,8 @@ DO WHILE TRUE:
            tel_dtcancel = crapscn.dtencemp
            tel_dsnomcnv = crapscn.dsnomcnv
            tel_nrtolera = crapscn.nrtolera
-           tel_cdsegmto = crapscn.cdsegmto
-           tel_dsnomres = crapscn.dsnomres.
+		   tel_dsnomres = crapscn.dsnomres
+           tel_cdsegmto = crapscn.cdsegmto.
     
     DISPLAY tel_dsnomcnv WITH FRAME f_gt0018.
     
@@ -307,8 +307,8 @@ DO WHILE TRUE:
                 ASSIGN tel_vltararq = crapstn.vltrfuni.
            
             DISPLAY tel_cdempcon
-                    tel_cdsegmto
-                    tel_dsnomres                    
+                    tel_dsnomres
+					tel_cdsegmto
                     tel_vltarint
                     tel_vltartaa
                     tel_vltarcxa
@@ -355,8 +355,8 @@ DO WHILE TRUE:
                 END.
 
             UPDATE tel_cdempcon
-                   tel_cdsegmto
                    tel_dsnomres
+				   tel_cdsegmto
                    WITH FRAME f_tarifas.
             
             FIND crapscn WHERE crapscn.cdempres = tel_dsempcnv 
@@ -377,8 +377,8 @@ DO WHILE TRUE:
                         DO: 
                             CREATE tt-convenios.
                             ASSIGN tt-convenios.cdempcon = STRING(crapscn.cdempcon)
-                                   tt-convenios.cdsegmto = STRING(crapscn.cdsegmto)
                                    tt-convenios.dsnomres = STRING(crapscn.dsnomres)
+								   tt-convenios.cdsegmto = STRING(crapscn.cdsegmto)
                                    tt-convenios.dsempcnv = tel_dsempcnv.
                         END.
                 END.
@@ -448,8 +448,8 @@ DO WHILE TRUE:
                              "/log/gt0018.log").                             
 
                     ASSIGN crapscn.cdempcon = INTE(tel_cdempcon)
-                           crapscn.cdsegmto = tel_cdsegmto
-                           crapscn.dsnomres = tel_dsnomres.
+                           crapscn.dsnomres = tel_dsnomres
+						   crapscn.cdsegmto = tel_cdsegmto.
 
                 END.
         END. /* Fim da opcao A */
