@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0003 AS
   --  Sistema  : Impressão de contratos de emprestimos
   --  Sigla    : EMPR
   --  Autor    : Andrino Carlos de Souza Junior (RKAM)
-  --  Data     : agosto/2014.                   Ultima atualizacao: 20/06/2016
+  --  Data     : agosto/2014.                   Ultima atualizacao: 07/04/2017
   --
   -- Dados referentes ao programa:
   --
@@ -30,6 +30,9 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0003 AS
   --                        - Adicionada varíavel para verificação de  versão para 
   --                          impressão de novos parágros nos contratos de forma condicional; 
   --                          (Ricardo Linhares)    
+  --
+  --             07/04/2017 - #644056 - Formato CPF Incorreto - Alterado cursor cr_crapavt - Busca avalista
+  --                          desta package.(Everton).
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -116,7 +119,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
   --  Sistema  : Impressão de contratos de emprestimos
   --  Sigla    : EMPR
   --  Autor    : Andrino Carlos de Souza Junior (RKAM)
-  --  Data     : agosto/2014.                   Ultima atualizacao: 20/06/2016
+  --  Data     : agosto/2014.                   Ultima atualizacao: 07/04/2017
   --
   -- Dados referentes ao programa:
   --
@@ -139,6 +142,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
   --
   --             20/06/2016 - Correcao para o uso correto do indice da CRAPTAB na function fn_verifica_interv 
   --                          desta package.(Carlos Rafael Tanholi).
+  --
+  --             07/04/2017 - #644056 - Formato CPF Incorreto - Alterado cursor cr_crapavt - Busca avalista
+  --                          desta package.(Everton).
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -330,7 +336,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
     -- busca nome do avalista
     CURSOR cr_crapavt IS
        SELECT 'Nome Proprietário (interveniente garantidor): '||crapavt.nmdavali nmdavali,
-              DECODE(NVL(crapass.inpessoa,1),1,
+              DECODE(NVL(crapass.inpessoa,nvl(crapavt.inpessoa,1)),1,
                   'CPF n.º'||gene0002.fn_mask_cpf_cnpj(crapavt.nrcpfcgc, 1)||
                       ' RG n.º '||crapavt.nrdocava||decode(nvl(trim(gnetcvl.dsestcvl),trim(gnetcvl_2.dsestcvl))
                                   ,NULL, NULL, ', com o estado civil ')||nvl(trim(gnetcvl.dsestcvl),trim(gnetcvl_2.dsestcvl)),
@@ -1202,11 +1208,11 @@ BEGIN
         vr_nmarqim := '/crrl100_04_'||pr_nrdconta||pr_nrctremp||'.pdf';   -- nome do relatorio + nr contrato
         -- titulo do relatorio
         vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO - EMPRÉSTIMO AO COOPERADO No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999') ;
-		-- Se for um contrato de portabilidade
+    -- Se for um contrato de portabilidade
         IF vr_portabilidade = TRUE THEN
           vr_dsjasper := 'crrl100_18_portab.jasper'; -- nome do jasper
         ELSE
-		    vr_dsjasper := 'crrl100_18.jasper'; -- nome do jasper
+        vr_dsjasper := 'crrl100_18.jasper'; -- nome do jasper
         END IF;
      -- relatorios crrl100_11 / crrl100_10 ou crrl100_14
      ELSIF rw_craplcr.tpctrato = 1 AND -- MODELO: = 1 NORMAL
@@ -1267,7 +1273,7 @@ BEGIN
             vr_bens := NULL;
            ELSE -- Se for veiculos
              vr_nmarqim := '/crrl100_09_'||pr_nrdconta||pr_nrctremp||'.pdf'; -- nome do relatorio + nr contrato
-			 -- Se for de portabilidade
+       -- Se for de portabilidade
              IF vr_portabilidade THEN
              -- Titulo do relatorio
                 vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO-EMPRÉSTIMO COM ALIENAÇÃO FIDUCIÁRIA DE VEÍCULO No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999');
@@ -1434,7 +1440,7 @@ BEGIN
 
           -- Incluir nome do modulo logado
           GENE0001.pc_informa_acesso(pr_module => 'ATENDA'
-						                        ,pr_action => 'EMPR0003.pc_imprime_contrato_xml'
+                                    ,pr_action => 'EMPR0003.pc_imprime_contrato_xml'
                                     );
 
           -- busca primeiro registro quando houver bem
@@ -1970,7 +1976,7 @@ BEGIN
         -- Fechar o arquivo
         GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_arquivo);        
         
-      	  -- Gera relatório 711
+          -- Gera relatório 711
         gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper                   --> Cooperativa conectada
                                    ,pr_cdprogra  => pr_cdprogra                   --> Programa chamador
                                    ,pr_dtmvtolt  => pr_dtmvtolt                   --> Data do movimento atual
