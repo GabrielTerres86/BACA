@@ -3307,7 +3307,7 @@ PROCEDURE cadastra_novo_cartao:
         IF  crapass.inpessoa = 2  THEN
             DO:
                 ASSIGN aux_nrempcrd = 0.
-
+    
                 FOR FIRST crabass FIELDS(nrempcrd)
                                 WHERE crabass.cdcooper = crapass.cdcooper   AND
                                       crabass.nrdconta = crapass.nrdconta   AND

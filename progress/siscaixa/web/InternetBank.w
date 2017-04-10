@@ -14,7 +14,7 @@
    Sistema : Internet - aux_cdcooper de Credito
    Sigla   : CRED
    Autor   : Junior
-   Data    : Julho/2004.                       Ultima atualizacao: 22/02/2017
+   Data    : Julho/2004.                       Ultima atualizacao: 17/03/2017
 
    Dados referentes ao programa:
 
@@ -623,7 +623,7 @@
 
                  14/07/2016 - M325 Informe de Rendimentos - Novos parametros
                               operacao7. (Guilherme/SUPERO)
-				 04/08/2016 - Adicionado tratamento para envio de arquivos de 
+                  04/08/2016 - Adicionado tratamento para envio de arquivos de 
 							  cobranca por e-mail nas operacoes 36 e 59. (Reinert)
 
 				 17/08/2016 - Adição da coluna nomconta e remoção da tabela
@@ -636,8 +636,8 @@
 		         21/09/2016 -  P169 Integralização de cotas no IB
                                 adição das funções 176 e 177 (Ricardo Linhares)   
 
-		         03/10/2016 - Ajustes referente a melhoria M271 (Operacao 174, 175, 186). (Kelvin)
-                              
+				 03/10/2016 - Ajustes referente a melhoria M271 (Operacao 174, 175, 186). (Kelvin)
+				 
                  11/10/2016 - Ajustes para permitir Aviso cobrança por SMS.
                               operacao4 e 66 - PRJ319 - SMS Cobrança(Odirlei-AMcom)       
                               
@@ -649,6 +649,8 @@
                             - Alteraçoes para composiçao de comprovante DARF/DAS Modelo Sicredi
                             (Lucas Lunelli)
                               
+				 13/03/2017 - Adicionando paginacao na tela de folha, conforme 
+				              solicitado no chamado 626091 (Kelvin).
 ------------------------------------------------------------------------------*/
 
 /*----------------------------------------------------------------*/
@@ -2238,7 +2240,7 @@ PROCEDURE proc_operacao2:
 
             {&out} xml_operacao.dslinxml. 
                 
-        END.	
+        END.
 
     RETURN "OK".
         
@@ -4245,7 +4247,7 @@ PROCEDURE proc_operacao59:
             {&out} xml_operacao.dslinxml.
         
         END.
-    END.
+        END.
     
     {&out} aux_tgfimprg.
 
@@ -5095,7 +5097,7 @@ PROCEDURE proc_operacao88:
 
      ASSIGN aux_cdtippro = INT(GET-VALUE("cdtippro"))
             aux_nrdocpro = GET-VALUE("nrdocmto").         
-            
+
     IF GET-VALUE('dtmvtpro') <> '' THEN
 	   aux_dtmvtpro = DATE(GET-VALUE('dtmvtpro')).
 	ELSE
@@ -6673,12 +6675,16 @@ END PROCEDURE.
 PROCEDURE proc_operacao140:
 
     ASSIGN aux_dtiniper = DATE(GET-VALUE("dtiniper"))
-           aux_dtfimper = DATE(GET-VALUE("dtfimper")).
+           aux_dtfimper = DATE(GET-VALUE("dtfimper"))
+		   aux_nrregist = INTEGER(GET-VALUE("nrregist"))
+           aux_nriniseq = INTEGER(GET-VALUE("nriniseq")).
 
     RUN sistema/internet/fontes/InternetBank140.p (INPUT aux_cdcooper,
                                                    INPUT aux_nrdconta,
                                                    INPUT aux_dtiniper,
                                                    INPUT aux_dtfimper,
+												   INPUT aux_nrregist,
+												   INPUT aux_nriniseq,												   
                                                   OUTPUT aux_dsmsgerr,
                                                   OUTPUT TABLE xml_operacao).
 
@@ -7680,7 +7686,7 @@ PROCEDURE proc_operacao173:
 
     {&out} aux_tgfimprg.        
 
-END PROCEDURE.
+END PROCEDURE.	
 
 /* Operação de configurações */
 PROCEDURE proc_operacao174:	
@@ -7792,7 +7798,7 @@ PROCEDURE proc_operacao180:
             {&out} aux_dsmsgerr aux_tgfimprg.
             RETURN.
         END.
-        
+    
     FIND FIRST xml_operacao NO-LOCK NO-ERROR.
 
     IF  AVAILABLE xml_operacao  THEN

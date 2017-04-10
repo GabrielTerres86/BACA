@@ -10,7 +10,7 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Julio/Mirtes
-   Data    : Abril/2004                    Ultima atualizacao: 08/12/2016
+   Data    : Abril/2004                    Ultima atualizacao: 07/03/2017
 
    Dados referentes ao programa:
 
@@ -172,6 +172,10 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
                             
                08/12/2016 - Tratamento para enviar agencia no formato antigo ou novo 
                             dependendo da data da autorizacao (Lucas Ranghetti #549795)  
+                            
+               07/03/2017 - Tratamento para evitar que cancelamentos de convênios antigos
+                            nao desloquem as linhas do arquivo, conforme problema relatado
+                            no chamado 619304. (Kelvin)  
 ............................................................................. */
   -- Buscar os dados da cooperativa
   cursor cr_crapcop (pr_cdcooper in craptab.cdcooper%type) is
@@ -633,7 +637,7 @@ begin
       elsif vr_cdcooperativa <> ' ' then
         vr_dslinreg := 'B'||
                        vr_cdidenti||
-                       to_char(vr_nragenci, 'fm0000')||
+                       to_char(nvl(trim(vr_nragenci),'0000'), 'fm0000')||
                        rpad(vr_cdcooperativa, 4, ' ')||
                        to_char(rw_crapatr.nrdconta, 'fm0000000000')||
                        vr_dtautori||
