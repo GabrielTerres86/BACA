@@ -1317,7 +1317,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 																									 to_char(pr_dtrecarga, 'DD/MM/RRRR'));
 				END IF;
 				--Se conta exigir Assinatura Multipla
-				IF vr_idastcjt = 1 THEN
+				IF vr_idastcjt = 1 AND pr_nrcpfope = 0 THEN
 					-- Nome do representante/procurador
 					gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid 
 																	 ,pr_nmdcampo => 'Nome do Representante/Procurador'
