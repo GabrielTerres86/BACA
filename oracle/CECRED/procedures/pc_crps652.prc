@@ -577,6 +577,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
            FROM   crawepr
            WHERE  crawepr.cdcooper = pr_cdcooper
            AND    crawepr.nrdconta = pr_nrdconta
+		   AND    crawepr.insitapr = 1 -- aprovado
            AND   pr_nrctremp IN (crawepr.nrctrliq##1 ,
                    crawepr.nrctrliq##2 ,
                    crawepr.nrctrliq##3 , 
@@ -5289,10 +5290,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                                         ,pr_des_reto => vr_typ_saida
                                         ,pr_des_erro => vr_dscritic );
        
-       IF vr_typ_saida = 'NOK' then
-          vr_dscritic := 'Erro na chamada da importacao arquivo CYBER: ' || vr_dscritic;
-          raise vr_exc_fimprg;
-       end if;
+       --IF vr_typ_saida = 'NOK' then
+       --   vr_dscritic := 'Erro na chamada da importacao arquivo CYBER: ' || vr_dscritic;
+       --   raise vr_exc_fimprg;
+       --end if;
 
        --Salvar informacoes no banco de dados
        COMMIT;
