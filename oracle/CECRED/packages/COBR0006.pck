@@ -473,24 +473,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 				             Por estar utilizando o campo indevido, nao estava enviando a info para a PG
 							 Heitor (Mouts) - Chamado 564818
 
-               02/12/2016 - Ajustes efetuados:
-						                 > Levantar exception (NOK) quando for encontrado registro de rejeição;
-                             > Tratar nome da cidade, nome do bairro e uf nulos ; 
-							              (Andrei - RKAM).
+                02/12/2016 - Ajustes efetuados:
+                              > Levantar exception (NOK) quando for encontrado registro de rejeição;
+                              > Tratar nome da cidade, nome do bairro e uf nulos ; 
+                             (Andrei - RKAM).
                             
-               22/12/2016 - Ajuste para utilizar a sequence na geração do registro na craprtc 
+                22/12/2016 - Ajuste para utilizar a sequence na geração do registro na craprtc 
                             (Douglas - Chamado 547357)
 
-			   06/01/2017 - Ajuste na forma como sao feitas as atribuicoes dos campos de protesto e serasa, estava
-			                gerando problemas com protesto e negativacao automaticos e exibicao na COBRAN.
-							Heitor (Mouts) - Chamado 574161
+                06/01/2017 - Ajuste na forma como sao feitas as atribuicoes dos campos de protesto e serasa, estava
+                             gerando problemas com protesto e negativacao automaticos e exibicao na COBRAN.
+                             Heitor (Mouts) - Chamado 574161
 
-         07/02/2017 - Projeto 319 - Envio de SMS para boletos de cobranca (Andrino - Mout's)
+                07/02/2017 - Projeto 319 - Envio de SMS para boletos de cobranca (Andrino - Mout's)
 
-		       13/02/2017 - Ajustes realizados: 
-						    > Utilizar NOCOPY na passagem de PLTABLEs como parâmetro;
-							> Alterado diretório para mover os arquivos rejeitados;
-							(Andrei - Mouts).
+                13/02/2017 - Ajustes realizados: 
+                              > Utilizar NOCOPY na passagem de PLTABLEs como parâmetro;
+                              > Alterado diretório para mover os arquivos rejeitados;
+                            (Andrei - Mouts).
 
                 17/03/2017 - Removido a validação que verificava se o CEP do pagador do boleto existe no Ayllos
                              Solicitado pelo Leomir e aprovado pelo Victor (cobrança)
@@ -1840,7 +1840,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         CLOSE cr_crapdne;
       END IF;
 */
-      
+
       /*
       IF pr_tab_linhas('CDUFSACA').texto <> rw_crapdne.cduflogr THEN
         --  CEP incompativel com a Unidade da Federacao
@@ -5284,11 +5284,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 								a rotina de validação de caracteres para endereços
 								(Andrei). 
                 
-               26/10/2016 - Ajuste na validacao do nome do sacado para considerar 
-                            o caracter ':' como valido.
-                            (Chamado 535830) - (Fabricio)
+                   26/10/2016 - Ajuste na validacao do nome do sacado para considerar 
+                                o caracter ':' como valido.
+                               (Chamado 535830) - (Fabricio)
 
-				  13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
+                   13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
 							   (Andrei - Mouts).
                                
                    17/03/2017 - Removido a validação que verificava se o CEP do pagador do boleto existe no Ayllos. 
@@ -5489,7 +5489,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       RAISE vr_exc_reje;
       
     END IF;
-
+    
 
 /* Nao sera mais validado se o CEP existe no sistema
    Chamado 601436 -> Solicitado por Leomir e autorizado pelo Victor Hugo Zimmerman
@@ -8181,10 +8181,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       RAISE vr_exc_reje;
       
     END IF;
-  
+
 /* Nao sera mais validado se o CEP existe no sistema
    Chamado 601436 -> Solicitado por Leomir e autorizado pelo Victor Hugo Zimmerman
-  
+     
     -- 44.7 Valida CEP do Sacado
     -- Pesquisar a Origem = CORREIOS
     OPEN cr_crapdne (pr_nrceplog => pr_rec_cobranca.nrcepsac,
@@ -8221,7 +8221,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       CLOSE cr_crapdne;
     END IF;
 */
-  
+
     -- 46.7 UF do Sacado
     /*
     IF pr_rec_cobranca.cdufsaca <> rw_crapdne.cduflogr THEN
@@ -10498,6 +10498,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                    13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
 								(Andrei - Mouts). 
 
+                   04/04/2017 - Inclusão da busca do parâmetro DIASVCTOCEE, pois fazia atribuição
+                                da variável vr_diasvcto sem buscar o parâmetro (AJFink-SD#643179). 
+
     ............................................................................ */   
     
     ------------------------------- CURSORES ---------------------------------
@@ -10588,6 +10591,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                          pr_cdcooper => pr_cdcooper, 
                                          pr_nmsubdir => NULL);    
     
+    --> Buscar parametro de vencimento
+    vr_dstextab := TABE0001.fn_busca_dstextab( pr_cdcooper => 3, 
+                                               pr_nmsistem => 'CRED', 
+                                               pr_tptabela => 'GENERI', 
+                                               pr_cdempres => 0, 
+                                               pr_cdacesso => 'DIASVCTOCEE', 
+                                               pr_tpregist => 0);
+    IF TRIM(vr_dstextab) IS NULL THEN
+      vr_dscritic := 'Tabela com parametro vencimento nao encontrado.';
+      RAISE vr_exc_erro;
+    END IF;
+
     vr_diasvcto := SUBSTR(vr_dstextab,1,2);
     
     -- separa diretorio e nmarquivo
