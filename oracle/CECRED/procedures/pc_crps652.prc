@@ -5290,10 +5290,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                                         ,pr_des_reto => vr_typ_saida
                                         ,pr_des_erro => vr_dscritic );
        
-       IF vr_typ_saida = 'NOK' then
-          vr_dscritic := 'Erro na chamada da importacao arquivo CYBER: ' || vr_dscritic;
-          raise vr_exc_fimprg;
-       end if;
+	   -- erros da importacao Cyber não serão tratados aqui, serão tratados no LOG do programa CYBE0001
+       --IF vr_typ_saida = 'NOK' then
+       --   vr_dscritic := 'Erro na chamada da importacao arquivo CYBER: ' || vr_dscritic;
+       --   raise vr_exc_fimprg;
+       --end if;
 
        --Salvar informacoes no banco de dados
        COMMIT;
