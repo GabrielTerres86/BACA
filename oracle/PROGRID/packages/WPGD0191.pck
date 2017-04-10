@@ -55,6 +55,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
   --
   --              15/03/2017 - #551227 Padronização do nome do job e inclusão dos logs de controle de início, erro e fim 
   --                           de execução do programa pc_recebe_cursos_aprovados (Carlos)
+  --              23/03/2017 - Ajustes referente a Melhoria 399 - Simplificar Inscricao no Progrid (Márcio - Mouts)
   --
   ---------------------------------------------------------------------------------------------------------------
  -- Rotina para buscar o conteudo do campo com base no xml enviado
@@ -236,7 +237,9 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
                     pr_dtanoage IN NUMBER,
                     pr_nrdconta IN NUMBER,
                     pr_idseqttl IN NUMBER,
-                    pr_dtconins IN DATE) IS
+                    pr_dtconins IN DATE,
+                    pr_nrdcpf   IN NUMBER -- Melhoria 399 
+                    ) IS
   SELECT idevento
     FROM crapidp
    WHERE idevento = pr_idevento
@@ -247,7 +250,9 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
      AND nrdconta = pr_nrdconta 
      AND idseqttl = pr_idseqttl
      AND dtpreins = pr_dtconins
-     AND dtconins = pr_dtconins;
+     AND dtconins = pr_dtconins
+     and nrcpfcgc = pr_nrdcpf -- Melhoria 399 
+     ;
   rw_crapidp cr_crapidp%ROWTYPE;
   
   -- Buscar a informação da CRAPLDP - Locais dos Eventos
@@ -311,7 +316,35 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
       vr_nrseqtem PLS_INTEGER;
       vr_nrseqdig NUMBER := 0;
       vr_lsigneve VARCHAR2(4000) := NULL;
-
+      -- Incluir variáveis novas conforme Melhoria M399
+      --23/02/2017
+      vr_nrdcpf              VARCHAR2(1000);
+      vr_dseml               VARCHAR2(1000);
+      vr_dslogin             VARCHAR2(1000);
+      vr_nomeusuario         VARCHAR2(1000);
+      vr_ceplog              VARCHAR2(1000);
+      vr_endereco            VARCHAR2(1000);
+      vr_numlog              VARCHAR2(1000);
+      vr_complog             VARCHAR2(1000);
+      vr_bairro              VARCHAR2(1000);
+      vr_cidade              VARCHAR2(1000);
+      vr_estado              VARCHAR2(1000);
+      vr_pais                VARCHAR2(1000);
+      vr_telefonecomercial   VARCHAR2(1000);
+      vr_telefoneresidencial VARCHAR2(1000);
+      vr_telefonecelular     VARCHAR2(1000);
+      vr_numeroconta         VARCHAR2(1000);
+      vr_codCooperativa      VARCHAR2(1000);
+      vr_tipocooperado       VARCHAR2(1000);
+      vr_inpessoa            NUMBER(1):=0;
+      vr_idseqttl            NUMBER(1):=0;  
+      vr_nrdddtfc            NUMBER;
+      vr_nrtelefo            NUMBER;          
+      vr_cdcopavl            NUMBER;
+      vr_tpctrato            NUMBER;
+      vr_nrctremp            NUMBER;
+      vr_nrdctato            NUMBER;          
+      
     vr_cdprogra  CONSTANT crapprg.cdprogra%TYPE := 'pc_recebe_cursos_aprovados';
     vr_nomdojob  CONSTANT VARCHAR2(50)          := 'jbpgr_rec_cursos_aprovados';
     vr_flgerlog  BOOLEAN := FALSE; 
@@ -332,7 +365,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
 
       
     BEGIN
-     
+      
       -- Início do programa
       pc_controla_log_batch('I');
       
@@ -907,6 +940,12 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
       -- Inicializa o contador de consultas de eventos - PA
       vr_contador_login:= 1;                             
       LOOP
+        vr_idseqttl:=0;
+        vr_inpessoa:=0;
+        vr_nrdctato:=0;
+        vr_cdcopavl:=0;
+        vr_tpctrato:=0;
+        vr_nrctremp:=0;
         -- Caminho base para o node de Cursos
         vr_nmtagaux := '//LISTA_APROVADOS/LISTA_EVENTO_COOPERADO/EVENTO['||vr_contador_login||']/';
         
@@ -926,6 +965,26 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
         pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'DTFIMEVT', 'N', vr_dtfimevt, vr_dscritic);
         pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'NOMLOGIN', 'S', vr_nomlogin, vr_dscritic);
         pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'DTCONINS', 'S', vr_dtconins, vr_dscritic);
+        -- Buscar informação de campos adicionados no XML que retorna as informações do curso
+        --23/02/2017
+        pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'CPF'                 , 'S', vr_nrdcpf  , vr_dscritic);
+        pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'Email'               , 'S', vr_dseml   , vr_dscritic);
+        pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'Login'               , 'S', vr_dslogin , vr_dscritic);
+        pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'Nome'                , 'S', vr_nomeusuario , vr_dscritic);
+        pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'CEP'                 , 'S', vr_ceplog  , vr_dscritic);
+        pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'Endereco'            , 'S', vr_endereco, vr_dscritic);
+        pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'Numero'              , 'S', vr_numlog  , vr_dscritic);
+        pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'Complemento'         , 'S', vr_complog , vr_dscritic);
+        pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'Bairro'              , 'S', vr_bairro  , vr_dscritic);
+        pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'Cidade'              , 'S', vr_cidade  , vr_dscritic);
+        pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'Estado'              , 'S', vr_estado  , vr_dscritic);
+        pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'Pais'                , 'S', vr_pais    , vr_dscritic);                        
+        pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'TelefoneComercial'   , 'S', vr_telefonecomercial    , vr_dscritic);                        
+        pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'TelefoneResidencial' , 'S', vr_telefoneresidencial   , vr_dscritic);                        
+        pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'TelefoneCelular'     , 'S', vr_telefonecelular       , vr_dscritic);                        
+        pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'NumeroConta'         , 'S', vr_numeroconta           , vr_dscritic);                                                
+        pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'CODCooperativa'      , 'S', vr_codCooperativa        , vr_dscritic);                                                
+        pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'TipoCooperado'       , 'S', vr_tipocooperado         , vr_dscritic);                                                        
         
         --> Verificar se deve ignorar o evento
         IF instr(vr_lsigneve,','||vr_cdevento||',') > 0 THEN
@@ -933,12 +992,349 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
           continue;
         END IF;
         
+        --Se a conta veio como nula, atribui 0
+        IF vr_numeroconta is null THEN
+           vr_numeroconta:= 0;
+        END IF;
+        
         -- Busca as informações da TBEAD_INSCRICAO_PARTICIPANTE
-        OPEN  cr_tbeadip(pr_nomlogin => vr_nomlogin);                 
-        FETCH cr_tbeadip INTO rw_tbeadip;
+--        OPEN  cr_tbeadip(pr_nomlogin => vr_nomlogin);  --Melhoria 399
+--        FETCH cr_tbeadip INTO rw_tbeadip; --Melhoria 399
 
         -- Caso não encontre registros
-        IF cr_tbeadip%FOUND THEN
+--        IF cr_tbeadip%FOUND THEN --Melhoria 399
+
+          -- Início Melhoria 399
+          -- Se o tipo de cooperado na variável vr_tipocooperado não for zero, Considerar como comunidade
+          IF NVL(trim(vr_tipocooperado),0) = 0 THEN  -- Comunidade
+            --Se é comunidade, grava zero na conta
+            vr_numeroconta:=0;
+            -- Decompor o número do telefone
+            IF NVL(trim(vr_telefonecelular),0) <> 0 THEN
+              vr_nrdddtfc := substr(vr_telefonecelular,1,2);
+              vr_nrtelefo := substr(vr_telefonecelular,3,9);        
+            ELSE
+              IF NVL(trim(vr_telefoneresidencial),0) <> 0 THEN
+                vr_nrdddtfc := substr(vr_telefoneresidencial,1,2);
+                vr_nrtelefo := substr(vr_telefoneresidencial,3,9);        
+              ELSE
+                IF NVL(trim(vr_telefonecomercial),0) <> 0 THEN
+                  vr_nrdddtfc := substr(vr_telefonecomercial,1,2);
+                  vr_nrtelefo := substr(vr_telefonecomercial,3,9);        
+                ELSE
+                  vr_nrdddtfc := 0;
+                  vr_nrtelefo := 0;        
+                END IF;
+              END IF;
+            END IF;
+          -- Se o tipo de cooperado na variável vr_tipocooperado não for zero, verifica se a conta é de pessoa física ou jurídica
+          ELSIF NVL(trim(vr_tipocooperado),0) <> 0 THEN -- Cooperado
+            BEGIN
+              SELECT 
+                     c.inpessoa
+                INTO
+                     vr_inpessoa
+                FROM
+                     crapass c
+               WHERE
+                    c.cdcooper = vr_cdcooper
+                and c.nrdconta = vr_numeroconta;
+            EXCEPTION
+              WHEN NO_DATA_FOUND THEN      
+                vr_cdcritic := 0; 
+                vr_dscritic := 'Conta não encontrada ' 
+                               ||vr_contador_login||':' 
+                               ||'\r\nLogin: '||vr_nomlogin; 
+            
+                RAISE vr_exc_saida;
+              WHEN OTHERS THEN
+                vr_cdcritic := 0; 
+                vr_dscritic := 'Erro ao selecionar na tabela crapass: '||SQLERRM;
+                RAISE vr_exc_saida;
+            END;
+            -- Verificar sequencia da titularidade para Pessoa Física
+            IF vr_inpessoa = 1 THEN -- Pessoa Física
+            --busca na CRAPTEL a sequencia da titularidade
+              BEGIN
+                SELECT
+                       ct.idseqttl,
+                       decode(vr_nomeusuario,null,ct.nmextttl,vr_nomeusuario)
+                INTO
+                       vr_idseqttl,
+                       vr_nomeusuario
+                FROM
+                       crapttl ct
+                WHERE
+                       ct.cdcooper = vr_cdcooper
+                   and ct.nrdconta = vr_numeroconta
+                   and ct.nrcpfcgc = vr_nrdcpf;
+              EXCEPTION
+                WHEN NO_DATA_FOUND THEN
+                  vr_cdcritic := 0; 
+                  vr_dscritic := 'Titular da conta não encontrada ' 
+                                 ||vr_contador_login||':' 
+                                 ||'\r\nLogin: '||vr_nomlogin; 
+            
+                  RAISE vr_exc_saida;                        
+               WHEN OTHERS THEN
+                 vr_cdcritic := 0; 
+                 vr_dscritic := 'Erro ao selecionar na tabela crapttl: '||SQLERRM;
+                 RAISE vr_exc_saida;          
+              END;
+              -- Busca o número do telefone -- Celular
+              BEGIN
+                SELECT
+                       cf.nrdddtfc,
+                       cf.nrtelefo
+                INTO
+                       vr_nrdddtfc,
+                       vr_nrtelefo
+                FROM
+                       craptfc cf
+                WHERE
+                       cf.cdcooper = vr_cdcooper
+                   and cf.nrdconta = vr_numeroconta
+                   and cf.idseqttl = vr_idseqttl
+                   and cf.tptelefo = 2 -- Celular
+                   and rownum = 1;
+              EXCEPTION
+                WHEN NO_DATA_FOUND THEN
+                  -- Residencial
+                  BEGIN
+                    SELECT
+                           cf.nrdddtfc,
+                           cf.nrtelefo
+                    INTO
+                           vr_nrdddtfc,
+                           vr_nrtelefo
+                    FROM
+                           craptfc cf
+                    WHERE
+                           cf.cdcooper = vr_cdcooper
+                       and cf.nrdconta = vr_numeroconta
+                       and cf.idseqttl = vr_idseqttl
+                       and cf.tptelefo = 1 -- Residencial
+                       and rownum = 1;
+                  EXCEPTION
+                    WHEN NO_DATA_FOUND THEN
+                      BEGIN
+                        SELECT
+                               cf.nrdddtfc,
+                               cf.nrtelefo
+                        INTO
+                               vr_nrdddtfc,
+                               vr_nrtelefo
+                        FROM
+                               craptfc cf
+                        WHERE
+                               cf.cdcooper = vr_cdcooper
+                           and cf.nrdconta = vr_numeroconta
+                           and cf.idseqttl = vr_idseqttl
+                           and cf.tptelefo = 3 -- Residencial
+                           and rownum = 1;                           
+                      EXCEPTION
+                        WHEN NO_DATA_FOUND THEN
+                          vr_nrdddtfc :=0;
+                          vr_nrtelefo :=0;                          
+                      END;                  
+                  END;
+               WHEN OTHERS THEN
+                 vr_cdcritic := 0; 
+                 vr_dscritic := 'Erro ao selecionar na tabela crapttl: '||SQLERRM;
+                 RAISE vr_exc_saida;          
+              END;            
+              -- Buscar o email
+              BEGIN
+                SELECT
+                      cc.dsdemail
+                  INTO
+                       vr_dseml
+                  FROM
+                       CRAPCEM CC
+                 WHERE
+                       CC.CDCOOPER = vr_cdcooper
+                   AND CC.NRDCONTA = vr_numeroconta
+                   AND CC.IDSEQTTL = vr_idseqttl
+                   AND ROWNUM = 1;
+              EXCEPTION
+                WHEN NO_DATA_FOUND THEN
+                  vr_dseml:='';
+                 WHEN OTHERS THEN
+                   vr_cdcritic := 0; 
+                   vr_dscritic := 'Erro ao selecionar na tabela CRAPCEM: '||SQLERRM;
+                   RAISE vr_exc_saida;          
+              END;
+          
+            ELSIF vr_inpessoa = 2 THEN --Pessoa Jurídica
+              vr_idseqttl:=0;
+              
+              --validar na CRAPAVT se o CPF informado existe para tipo 6  
+              BEGIN
+                SELECT
+                       ca.nrdctato,
+                       ca.cdcooper,
+                       ca.tpctrato,
+                       ca.nrctremp
+                INTO
+                       vr_nrdctato,
+                       vr_cdcopavl,
+                       vr_tpctrato,
+                       vr_nrctremp
+                       
+                FROM
+                       crapavt ca
+                WHERE
+                       ca.cdcooper = vr_cdcooper
+                   and ca.nrdconta = vr_numeroconta
+                   and ca.nrcpfcgc = vr_nrdcpf
+                   and ca.tpctrato = 6; -- PJ
+                   --CDCOOPER, TPCTRATO, NRDCONTA, NRCTREMP, NRCPFCGC
+              EXCEPTION
+                WHEN NO_DATA_FOUND THEN
+                  vr_cdcritic := 0; 
+                  vr_dscritic := 'Avalista da conta não encontrado ' 
+                                 ||vr_contador_login||':' 
+                                 ||'\r\nLogin: '||vr_nomlogin; 
+              
+                  RAISE vr_exc_saida;
+                WHEN OTHERS THEN
+                  vr_cdcritic := 0;                   
+                  vr_dscritic := 'Erro ao selecionar na tabela crapavt: '||SQLERRM;
+                  RAISE vr_exc_saida;            
+              END;
+              IF nvl(vr_nrdctato,0) <> 0 THEN
+              --busca na CRAPTEL a sequencia da titularidade
+                BEGIN
+                  SELECT
+                         ct.idseqttl,
+                         decode(vr_nomeusuario,null,ct.nmextttl,vr_nomeusuario)
+                  INTO
+                         vr_idseqttl,
+                         vr_nomeusuario
+                  FROM
+                         crapttl ct
+                  WHERE
+                         ct.cdcooper = vr_cdcooper
+                     and ct.nrdconta = vr_nrdctato
+                     and ct.nrcpfcgc = vr_nrdcpf;
+                EXCEPTION
+                  WHEN NO_DATA_FOUND THEN
+                    vr_cdcritic := 0; 
+                    vr_dscritic := 'Titular da conta não encontrada ' 
+                                   ||vr_contador_login||':' 
+                                   ||'\r\nLogin: '||vr_nomlogin; 
+            
+                    RAISE vr_exc_saida;                        
+                 WHEN OTHERS THEN
+                   vr_cdcritic := 0; 
+                   vr_dscritic := 'Erro ao selecionar na tabela crapttl: '||SQLERRM;
+                   RAISE vr_exc_saida;          
+                END;
+                -- Busca o número do telefone -- Celular
+                BEGIN
+                  SELECT
+                         cf.nrdddtfc,
+                         cf.nrtelefo
+                  INTO
+                         vr_nrdddtfc,
+                         vr_nrtelefo
+                  FROM
+                         craptfc cf
+                  WHERE
+                         cf.cdcooper = vr_cdcooper
+                     and cf.nrdconta = vr_nrdctato
+                     and cf.idseqttl = vr_idseqttl
+                     and cf.tptelefo = 2 -- Celular
+                     and rownum = 1;
+                EXCEPTION
+                  WHEN NO_DATA_FOUND THEN
+                    -- Residencial
+                    BEGIN
+                      SELECT
+                             cf.nrdddtfc,
+                             cf.nrtelefo
+                      INTO
+                             vr_nrdddtfc,
+                             vr_nrtelefo
+                      FROM
+                             craptfc cf
+                      WHERE
+                             cf.cdcooper = vr_cdcooper
+                         and cf.nrdconta = vr_nrdctato
+                         and cf.idseqttl = vr_idseqttl
+                         and cf.tptelefo = 1 -- Residencial
+                         and rownum = 1;
+                    EXCEPTION
+                      WHEN NO_DATA_FOUND THEN
+                        BEGIN
+                          SELECT
+                                 cf.nrdddtfc,
+                                 cf.nrtelefo
+                          INTO
+                                 vr_nrdddtfc,
+                                 vr_nrtelefo
+                          FROM
+                                 craptfc cf
+                          WHERE
+                                 cf.cdcooper = vr_cdcooper
+                             and cf.nrdconta = vr_nrdctato
+                             and cf.idseqttl = vr_idseqttl
+                             and cf.tptelefo = 3 -- Residencial
+                             and rownum = 1;                           
+                        EXCEPTION
+                          WHEN NO_DATA_FOUND THEN
+                            vr_nrdddtfc :=0;
+                            vr_nrtelefo :=0;                          
+                        END;                  
+                    END;
+                 WHEN OTHERS THEN
+                   vr_cdcritic := 0; 
+                   vr_dscritic := 'Erro ao selecionar na tabela crapttl: '||SQLERRM;
+                   RAISE vr_exc_saida;          
+                END;            
+                -- Buscar o email
+                BEGIN
+                  SELECT
+                        cc.dsdemail
+                    INTO
+                         vr_dseml
+                    FROM
+                         CRAPCEM CC
+                   WHERE
+                         CC.CDCOOPER = vr_cdcooper
+                     AND CC.NRDCONTA = vr_nrdctato
+                     AND CC.IDSEQTTL = vr_idseqttl
+                     AND ROWNUM = 1;
+                EXCEPTION
+                  WHEN NO_DATA_FOUND THEN
+                    vr_dseml:='';
+                   WHEN OTHERS THEN
+                     vr_cdcritic := 0; 
+                     vr_dscritic := 'Erro ao selecionar na tabela CRAPCEM: '||SQLERRM;
+                     RAISE vr_exc_saida;          
+                END;
+              ELSE
+                vr_idseqttl:=0;  
+                vr_dseml   :='';
+                vr_nrdddtfc:=0;  
+                vr_nrtelefo:=0;  
+                vr_cdcopavl:=0;
+                vr_tpctrato:=0;
+                vr_nrctremp:=0;
+              END IF;
+----------------------------------------------------
+-------------------------------------------------------              
+            ELSE -- Considera como sequencia de titular 0
+             vr_idseqttl:=0;  
+             vr_dseml   :='';
+             vr_nrdddtfc:=0;  
+             vr_nrtelefo:=0;  
+             vr_cdcopavl:=0;
+             vr_tpctrato:=0;
+             vr_nrctremp:=0;
+            END IF;
+          END IF;        
+          -- Fim Melhoria 399                
             
           -- Busca as informações da CRAPIDP
           OPEN cr_crapidp(pr_idevento => vr_idevento,
@@ -946,9 +1342,13 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
                           pr_cdcooper => vr_cdcooper,
                           pr_cdagenci => vr_cdagenci,
                           pr_dtanoage => vr_dtanoage,
-                          pr_nrdconta => rw_tbeadip.nrdconta,
-                          pr_idseqttl => rw_tbeadip.idseqttl,
-                          pr_dtconins => vr_dtconins);                 
+--                          pr_nrdconta => rw_tbeadip.nrdconta, --Melhoria 399
+                          pr_nrdconta => vr_numeroconta,
+--                          pr_idseqttl => rw_tbeadip.idseqttl, --Melhoria 399
+                          pr_idseqttl => vr_idseqttl,
+                          pr_dtconins => vr_dtconins,
+                          pr_nrdcpf   => vr_nrdcpf --Melhoria 399
+                          );                 
           FETCH cr_crapidp INTO rw_crapidp;
 
           -- Caso não encontre registros
@@ -991,28 +1391,41 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
               flgdispe,
               cdageins,
               nrseqdig,
-              nrseqeve
+              nrseqeve,
+              dsobsins, -- Melhoria 399
+              nrdddins, -- Melhoria 399
+              nrtelins, -- Melhoria 399
+              nrcpfcgc, -- Melhoria 399
+              cdcopavl, -- Melhoria 399
+              tpctrato, -- Melhoria 399
+              nrctremp  -- Melhoria 399
             ) VALUES (
               vr_idevento,
               vr_cdcooper,
               vr_dtanoage,
               vr_cdevento,
               vr_cdagenci,
-              rw_tbeadip.nrdconta,
+              vr_numeroconta, --              rw_tbeadip.nrdconta, --Melhoria 399
               9,
-              substr(rw_tbeadip.nmparticip,1,50),
-              substr(rw_tbeadip.dsemail_particip,1,50),
+              vr_nomeusuario, --substr(rw_tbeadip.nmparticip,1,50), --Melhoria 399
+              vr_dseml, --substr(rw_tbeadip.dsemail_particip,1,50), --Melhoria 399
               vr_dtconins,
               vr_dtconins,
               2,
-              rw_tbeadip.idseqttl,
+              vr_idseqttl, --rw_tbeadip.idseqttl, --Melhoria 399
               1,
               1,
               vr_cdagenci,
               vr_nrseqdig,
-              NVL(rw_crapadp_segdig.nrseqdig, 0)    
+              NVL(rw_crapadp_segdig.nrseqdig, 0),
+              rtrim(ltrim(vr_endereco||' '||vr_numlog||' '||vr_complog||' '||vr_ceplog||' '||vr_bairro||' '||vr_cidade||' '||vr_estado ||' '||vr_pais ||' Tipo de Cooperado: '||vr_tipocooperado)), -- Melhoria 399
+              vr_nrdddtfc, -- Melhoria 399
+              vr_nrtelefo, -- Melhoria 399
+              vr_nrdcpf,   -- Melhoria 399
+              vr_cdcopavl,   -- Melhoria 399
+              vr_tpctrato,   -- Melhoria 399
+              vr_nrctremp   -- Melhoria 399
             );
-                
             EXCEPTION
               WHEN OTHERS THEN
                 vr_cdcritic := 0;
@@ -1032,17 +1445,17 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
           -- Fecha o cursor
           CLOSE cr_crapidp;
             
-        ELSE
-          vr_cdcritic := 0;
-          vr_dscritic := 'Participante não encontrado '
-                         ||vr_contador_login||':'
-                         ||'\r\nLogin: '||vr_nomlogin;
+--        ELSE --Melhoria 399
+--          vr_cdcritic := 0; --Melhoria 399
+--          vr_dscritic := 'Participante não encontrado ' --Melhoria 399
+--                         ||vr_contador_login||':' --Melhoria 399
+--                         ||'\r\nLogin: '||vr_nomlogin; --Melhoria 399
             
-          RAISE vr_exc_saida;
-        END IF;
+--          RAISE vr_exc_saida; --Melhoria 399
+--        END IF; --Melhoria 399
           
         -- Fecha o cursor
-        CLOSE cr_tbeadip;
+--        CLOSE cr_tbeadip; --Melhoria 399
         
         vr_contador_login := vr_contador_login + 1;
       END LOOP;
@@ -1076,14 +1489,14 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
       
       -- INSERE DADOS NAS TABELAS
       COMMIT;
-
+      
       -- Fim do programa
       pc_controla_log_batch('F');
 
     EXCEPTION
       WHEN vr_exc_saida THEN
 
-        -- Buscar a descrição        
+          -- Buscar a descrição
         vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic, 
                                                  pr_dscritic => vr_dscritic);
 
@@ -1117,7 +1530,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
         
         -- Retorna o erro para a procedure chamadora
         pr_dscritic := 'Erro na Rotina WPGD0191.pc_recebe_cursos_aprovados --> '||SQLERRM; 
-
+        
         -- Logar erro no programa
         pc_controla_log_batch('E', pr_dscritic);
         
