@@ -219,6 +219,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
                             Projeto de Tarifas-218(Lombardi)
              
                16/05/2016 - Alteracao para chamar a nova pc_leitura_lem_car. (Jaison/James)
+			   
+               23/03/2017 - Alterada chamada da procedure de imunidade tributária para
+                            evitar nova leitura na crapass (Rodrigo)
 
   ............................................................................. */
   
@@ -241,7 +244,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
            ass.nrdconta,
            ass.cdsecext,
            ass.cdagenci,
-           ass.cdtipsfx
+           ass.cdtipsfx,
+		   ass.nrcpfcgc
       FROM crapass ass
      WHERE ass.cdcooper = pr_cdcooper
        AND ass.nrdconta = pr_nrdconta;
@@ -2733,6 +2737,8 @@ BEGIN
                                          ,pr_flgrvvlr => TRUE
                                          ,pr_cdinsenc => 1
                                          ,pr_vlinsenc => round((vr_vlrsaldo * vr_txccdiof),2)
+										 ,pr_inpessoa => rw_crapass.inpessoa
+										 ,pr_nrcpfcgc => rw_crapass.nrcpfcgc
                                          ,pr_flgimune => vr_flgimune
                                          ,pr_dsreturn => vr_dsreturn
                                          ,pr_tab_erro => vr_tab_erro);
