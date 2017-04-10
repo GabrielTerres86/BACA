@@ -42,7 +42,7 @@
    Programa: b1wgen0010.p                  
    Autora  : Ze Eduardo
    
-   Data    : 12/09/2005                     Ultima atualizacao: 07/02/2017
+   Data    : 12/09/2005                     Ultima atualizacao: 30/03/2017
 
    Dados referentes ao programa:
 
@@ -414,6 +414,8 @@
 			   07/02/2017 - Alterei a proc. consulta-bloqueto opcao 14 - Relatorio Francesa, obrigando
 						    informar a conta para filtro sobre a craprtc. SD 560911 (Carlos Rafael Tanholi)
                             
+               30/03/2017 - Adicionado o parametro par_idseqttl na procedure  busca-nome-imp-blt
+                            e ajustado as procedures que a utilizam (Douglas - Chamado 637660)
 ........................................................................... */
 
 { sistema/generico/includes/var_internet.i }
@@ -770,6 +772,7 @@ PROCEDURE consulta-boleto-2via.
     /*Busca nome impresso no boleto*/
     RUN busca-nome-imp-blt(INPUT  crapcob.cdcooper
                           ,INPUT  crapcob.nrdconta
+                          ,INPUT  crapcob.idseqttl
                           ,INPUT  "consulta-boleto-2via" /*nmprogra*/
                           ,OUTPUT aux_nmdobnfc
                           ,OUTPUT aux_dscritic).
@@ -923,9 +926,10 @@ PROCEDURE consulta-bloqueto.
     DEF VAR aux_cdmensut               AS INTE             NO-UNDO.
     DEF VAR aux_critdata               AS LOGI             NO-UNDO.
     DEF VAR aux_dscritic               AS CHAR             NO-UNDO.
-	DEF VAR aux_nmdobnfc			   AS CHAR			   NO-UNDO.
-	DEF VAR aux_des_erro			   AS CHAR			   NO-UNDO.
+    DEF VAR aux_nmdobnfc               AS CHAR             NO-UNDO.
+    DEF VAR aux_des_erro               AS CHAR             NO-UNDO.
     DEF VAR aux_contaant             LIKE crapass.nrdconta NO-UNDO.
+    DEF VAR aux_sqttlant             LIKE crapttl.idseqttl NO-UNDO.
 
  /******************************** CONSULTAS *********************************/
  /*                                                                          */
@@ -1024,31 +1028,9 @@ PROCEDURE consulta-bloqueto.
                 ASSIGN aux_nmprimtl = REPLACE(crapass.nmprimtl,"&","%26").
         END.
     
-    /*Busca nome impresso no boleto*/
-    RUN busca-nome-imp-blt(INPUT  p-cdcooper
-                          ,INPUT  p-nro-conta
-                          ,INPUT  "consulta-bloqueto" /*nmprogra*/
-                          ,OUTPUT aux_nmdobnfc
-                          ,OUTPUT aux_dscritic).
-    
-    IF  RETURN-VALUE <> "OK" OR
-        aux_dscritic <> ""   THEN 
-        DO: 
-            IF  aux_dscritic = "" THEN 
-            DO:   
-                ASSIGN aux_dscritic =  "Nao foi possivel buscar o nome do beneficiario para ser impresso no boleto".
-            END.
-
-            ASSIGN i-cod-erro = 0 
-                   c-dsc-erro = aux_dscritic.
-
-            {sistema/generico/includes/b1wgen0001.i}
-
-            RETURN "NOK".
-        END.
-	
     /*Guarda a conta que pode estar zerada*/
-    ASSIGN aux_contaant = p-nro-conta.
+    ASSIGN aux_contaant = p-nro-conta
+           aux_sqttlant = 0.
 
     CASE p-consulta:
          WHEN 1 THEN                                   /* Por Conta */
@@ -1113,6 +1095,7 @@ PROCEDURE consulta-bloqueto.
                                              INPUT p-ini-sequencia,
                                              INPUT-OUTPUT aux_nmdobnfc,
                                              INPUT-OUTPUT aux_contaant,
+                                             INPUT-OUTPUT aux_sqttlant,
                                       INPUT-OUTPUT par_qtregist,
                                             OUTPUT TABLE tt-consulta-blt).
                     END.
@@ -1191,6 +1174,35 @@ PROCEDURE consulta-bloqueto.
                                  IF  p-flgregis <> ? THEN
                                      IF crapcob.flgregis <> p-flgregis THEN NEXT.
 
+                                 /*Se mudou a conta devo busca o beneficiario*/
+                                 RUN controla-busca-nmdobnfc(INPUT crapcob.cdcooper
+                                                            ,INPUT crapcob.nrdconta
+                                                            ,INPUT crapcob.idseqttl
+                                                            ,INPUT "consulta-bloqueto"
+                                                            ,INPUT-OUTPUT aux_contaant /* Conta anterior */ 
+                                                            ,INPUT-OUTPUT aux_sqttlant /* Sequencia do titular anterior */ 
+                                                            ,INPUT-OUTPUT aux_nmdobnfc
+                                                            ,OUTPUT aux_dscritic).
+
+                                 IF  RETURN-VALUE <> "OK" THEN
+                                     DO:             
+                                        IF  aux_dscritic = "" THEN DO:   
+                                            ASSIGN aux_dscritic =  "Nao foi possivel buscar o nome do beneficiario.".
+                                        END.
+                                              
+                                        RUN valida_caracteres(INPUT  aux_dscritic,
+                                                              OUTPUT aux_dscritic).
+                                              
+                                        FIND FIRST crapcop WHERE crapcop.cdcooper = p-cdcooper NO-LOCK NO-ERROR.
+                                               
+                                        UNIX SILENT VALUE("echo " + 
+                                                        STRING(TIME,"HH:MM:SS") + " - B1WGEN0010.consulta-bloqueto por documento ' --> '" + aux_dscritic + 
+                                                        " >> /usr/coop/" + TRIM(crapcop.dsdircop) +
+                                                        "/log/proc_message.log").
+
+                                        RETURN "NOK".
+                                     END.
+                                 
                                  RUN proc_nosso_numero(INPUT p-cdcooper,
                                                        INPUT p-cod-agencia,
                                                        INPUT p-nro-caixa,
@@ -1309,6 +1321,7 @@ PROCEDURE consulta-bloqueto.
                                                       INPUT p-ini-sequencia,
                                                       INPUT-OUTPUT aux_nmdobnfc,
                                                       INPUT-OUTPUT aux_contaant,
+                                                      INPUT-OUTPUT aux_sqttlant,
                                                INPUT-OUTPUT par_qtregist,
                                                      OUTPUT TABLE tt-consulta-blt).
                              END.    
@@ -1384,6 +1397,35 @@ PROCEDURE consulta-bloqueto.
                                   
                                   IF  p-flgregis <> ? THEN
                                      IF crapcob.flgregis <> p-flgregis THEN NEXT.
+
+                                 /*Se mudou a conta devo busca o beneficiario*/
+                                 RUN controla-busca-nmdobnfc(INPUT crapcob.cdcooper
+                                                            ,INPUT crapcob.nrdconta
+                                                            ,INPUT crapcob.idseqttl
+                                                            ,INPUT "consulta-bloqueto"
+                                                            ,INPUT-OUTPUT aux_contaant /* Conta anterior */ 
+                                                            ,INPUT-OUTPUT aux_sqttlant /* Sequencia do titular anterior */ 
+                                                            ,INPUT-OUTPUT aux_nmdobnfc
+                                                            ,OUTPUT aux_dscritic).
+
+                                 IF  RETURN-VALUE <> "OK" THEN
+                                     DO:             
+                                        IF  aux_dscritic = "" THEN DO:   
+                                            ASSIGN aux_dscritic =  "Nao foi possivel buscar o nome do beneficiario.".
+                                        END.
+                                              
+                                        RUN valida_caracteres(INPUT  aux_dscritic,
+                                                              OUTPUT aux_dscritic).
+                                              
+                                        FIND FIRST crapcop WHERE crapcop.cdcooper = p-cdcooper NO-LOCK NO-ERROR.
+                                               
+                                        UNIX SILENT VALUE("echo " + 
+                                                        STRING(TIME,"HH:MM:SS") + " - B1WGEN0010.consulta-bloqueto por data emissao ' --> '" + aux_dscritic + 
+                                                        " >> /usr/coop/" + TRIM(crapcop.dsdircop) +
+                                                        "/log/proc_message.log").
+
+                                        RETURN "NOK".
+                                     END.
 
                                   RUN proc_nosso_numero(INPUT p-cdcooper,
                                                         INPUT p-cod-agencia,
@@ -1499,6 +1541,7 @@ PROCEDURE consulta-bloqueto.
                                                       INPUT p-ini-sequencia,
                                                       INPUT-OUTPUT aux_nmdobnfc,
                                                       INPUT-OUTPUT aux_contaant,
+                                                      INPUT-OUTPUT aux_sqttlant,
                                                INPUT-OUTPUT par_qtregist,
                                                      OUTPUT TABLE tt-consulta-blt).
                                  
@@ -1580,6 +1623,35 @@ PROCEDURE consulta-bloqueto.
                                  IF  p-flgregis <> ? THEN
                                      IF crapcob.flgregis <> p-flgregis THEN NEXT.
                                               
+                                 /*Se mudou a conta devo busca o beneficiario*/
+                                 RUN controla-busca-nmdobnfc(INPUT crapcob.cdcooper
+                                                            ,INPUT crapcob.nrdconta
+                                                            ,INPUT crapcob.idseqttl
+                                                            ,INPUT "consulta-bloqueto"
+                                                            ,INPUT-OUTPUT aux_contaant /* Conta anterior */ 
+                                                            ,INPUT-OUTPUT aux_sqttlant /* Sequencia do titular anterior */ 
+                                                            ,INPUT-OUTPUT aux_nmdobnfc
+                                                            ,OUTPUT aux_dscritic).
+
+                                 IF  RETURN-VALUE <> "OK" THEN
+                                     DO:             
+                                        IF  aux_dscritic = "" THEN DO:   
+                                            ASSIGN aux_dscritic =  "Nao foi possivel buscar o nome do beneficiario.".
+                                        END.
+                                              
+                                        RUN valida_caracteres(INPUT  aux_dscritic,
+                                                              OUTPUT aux_dscritic).
+                                              
+                                        FIND FIRST crapcop WHERE crapcop.cdcooper = p-cdcooper NO-LOCK NO-ERROR.
+                                               
+                                        UNIX SILENT VALUE("echo " + 
+                                                        STRING(TIME,"HH:MM:SS") + " - B1WGEN0010.consulta-bloqueto por data pagto ' --> '" + aux_dscritic + 
+                                                        " >> /usr/coop/" + TRIM(crapcop.dsdircop) +
+                                                        "/log/proc_message.log").
+
+                                        RETURN "NOK".
+                                     END.
+
                                  RUN proc_nosso_numero(INPUT p-cdcooper,
                                                        INPUT p-cod-agencia,
                                                        INPUT p-nro-caixa,
@@ -1694,6 +1766,7 @@ PROCEDURE consulta-bloqueto.
                                                           INPUT p-ini-sequencia,
                                                           INPUT-OUTPUT aux_nmdobnfc,
                                                           INPUT-OUTPUT aux_contaant,
+                                                          INPUT-OUTPUT aux_sqttlant,
                                                    INPUT-OUTPUT par_qtregist,
                                                          OUTPUT TABLE tt-consulta-blt).
                                    END.
@@ -1778,6 +1851,35 @@ PROCEDURE consulta-bloqueto.
                                  IF  p-flgregis <> ? THEN
                                      IF crapcob.flgregis <> p-flgregis THEN NEXT.
                                      
+                                 /*Se mudou a conta devo busca o beneficiario*/
+                                 RUN controla-busca-nmdobnfc(INPUT crapcob.cdcooper
+                                                            ,INPUT crapcob.nrdconta
+                                                            ,INPUT crapcob.idseqttl
+                                                            ,INPUT "consulta-bloqueto"
+                                                            ,INPUT-OUTPUT aux_contaant /* Conta anterior */ 
+                                                            ,INPUT-OUTPUT aux_sqttlant /* Sequencia do titular anterior */ 
+                                                            ,INPUT-OUTPUT aux_nmdobnfc
+                                                            ,OUTPUT aux_dscritic).
+
+                                 IF  RETURN-VALUE <> "OK" THEN
+                                     DO:             
+                                        IF  aux_dscritic = "" THEN DO:   
+                                            ASSIGN aux_dscritic =  "Nao foi possivel buscar o nome do beneficiario.".
+                                        END.
+                                              
+                                        RUN valida_caracteres(INPUT  aux_dscritic,
+                                                              OUTPUT aux_dscritic).
+                                              
+                                        FIND FIRST crapcop WHERE crapcop.cdcooper = p-cdcooper NO-LOCK NO-ERROR.
+                                               
+                                        UNIX SILENT VALUE("echo " + 
+                                                        STRING(TIME,"HH:MM:SS") + " - B1WGEN0010.consulta-bloqueto por data vencto ' --> '" + aux_dscritic + 
+                                                        " >> /usr/coop/" + TRIM(crapcop.dsdircop) +
+                                                        "/log/proc_message.log").
+
+                                        RETURN "NOK".
+                                     END.
+
                                  RUN proc_nosso_numero(INPUT p-cdcooper,
                                                        INPUT p-cod-agencia,
                                                        INPUT p-nro-caixa,
@@ -1889,6 +1991,7 @@ PROCEDURE consulta-bloqueto.
                                                       INPUT p-ini-sequencia,
                                                       INPUT-OUTPUT aux_nmdobnfc,
                                                       INPUT-OUTPUT aux_contaant,
+                                                      INPUT-OUTPUT aux_sqttlant,
                                                INPUT-OUTPUT par_qtregist,
                                                      OUTPUT TABLE tt-consulta-blt).
                                 END.
@@ -1964,6 +2067,7 @@ PROCEDURE consulta-bloqueto.
                                                  INPUT p-ini-sequencia,
                                                  INPUT-OUTPUT aux_nmdobnfc,
                                                  INPUT-OUTPUT aux_contaant,
+                                                 INPUT-OUTPUT aux_sqttlant,
                                           INPUT-OUTPUT par_qtregist,
                                                 OUTPUT TABLE tt-consulta-blt).
                     END.
@@ -2102,6 +2206,7 @@ PROCEDURE consulta-bloqueto.
                                                  INPUT p-ini-sequencia,
                                                  INPUT-OUTPUT aux_nmdobnfc,
                                                  INPUT-OUTPUT aux_contaant,
+                                                 INPUT-OUTPUT aux_sqttlant,
                                           INPUT-OUTPUT par_qtregist,
                                                 OUTPUT TABLE tt-consulta-blt).
 
@@ -2157,6 +2262,34 @@ PROCEDURE consulta-bloqueto.
                                 ELSE
                                      aux_dsorgarq = "".
 
+                                 /*Se mudou a conta devo busca o beneficiario*/
+                                 RUN controla-busca-nmdobnfc(INPUT crapcob.cdcooper
+                                                            ,INPUT crapcob.nrdconta
+                                                            ,INPUT crapcob.idseqttl
+                                                            ,INPUT "consulta-bloqueto"
+                                                            ,INPUT-OUTPUT aux_contaant /* Conta anterior */ 
+                                                            ,INPUT-OUTPUT aux_sqttlant /* Sequencia do titular anterior */ 
+                                                            ,INPUT-OUTPUT aux_nmdobnfc
+                                                            ,OUTPUT aux_dscritic).
+
+                                 IF  RETURN-VALUE <> "OK" THEN
+                                     DO:             
+                                        IF  aux_dscritic = "" THEN DO:   
+                                            ASSIGN aux_dscritic =  "Nao foi possivel buscar o nome do beneficiario.".
+                                        END.
+                                              
+                                        RUN valida_caracteres(INPUT  aux_dscritic,
+                                                              OUTPUT aux_dscritic).
+                                              
+                                        FIND FIRST crapcop WHERE crapcop.cdcooper = p-cdcooper NO-LOCK NO-ERROR.
+                                               
+                                        UNIX SILENT VALUE("echo " + 
+                                                        STRING(TIME,"HH:MM:SS") + " - B1WGEN0010.consulta-bloqueto por nro docto ' --> '" + aux_dscritic + 
+                                                        " >> /usr/coop/" + TRIM(crapcop.dsdircop) +
+                                                        "/log/proc_message.log").
+
+                                        RETURN "NOK".
+                                     END.
 
                                 RUN proc_nosso_numero(INPUT p-cdcooper,
                                                       INPUT p-cod-agencia,
@@ -2272,6 +2405,7 @@ PROCEDURE consulta-bloqueto.
                                              INPUT p-ini-sequencia,
                                              INPUT-OUTPUT aux_nmdobnfc,
                                              INPUT-OUTPUT aux_contaant,
+                                             INPUT-OUTPUT aux_sqttlant,
                                       INPUT-OUTPUT par_qtregist,
                                             OUTPUT TABLE tt-consulta-blt).
                     END.
@@ -2327,6 +2461,7 @@ PROCEDURE consulta-bloqueto.
                                              INPUT p-ini-sequencia,
                                              INPUT-OUTPUT aux_nmdobnfc,
                                              INPUT-OUTPUT aux_contaant,
+                                             INPUT-OUTPUT aux_sqttlant,
                                       INPUT-OUTPUT par_qtregist,
                                             OUTPUT TABLE tt-consulta-blt).
 
@@ -2389,6 +2524,7 @@ PROCEDURE consulta-bloqueto.
                                              INPUT p-ini-sequencia,
                                              INPUT-OUTPUT aux_nmdobnfc,
                                              INPUT-OUTPUT aux_contaant,
+                                             INPUT-OUTPUT aux_sqttlant,
                                       INPUT-OUTPUT par_qtregist,
                                             OUTPUT TABLE tt-consulta-blt).
 
@@ -2450,6 +2586,7 @@ PROCEDURE consulta-bloqueto.
                                                  INPUT p-ini-sequencia,
                                                  INPUT-OUTPUT aux_nmdobnfc,
                                                  INPUT-OUTPUT aux_contaant,
+                                                 INPUT-OUTPUT aux_sqttlant,
                                           INPUT-OUTPUT par_qtregist,
                                                 OUTPUT TABLE tt-consulta-blt).
                             ASSIGN aux_nrregist = aux_nrregist + 1.
@@ -2512,6 +2649,7 @@ PROCEDURE consulta-bloqueto.
                                              INPUT p-ini-sequencia,
                                              INPUT-OUTPUT aux_nmdobnfc,
                                              INPUT-OUTPUT aux_contaant,
+                                             INPUT-OUTPUT aux_sqttlant,
                                       INPUT-OUTPUT par_qtregist,
                                             OUTPUT TABLE tt-consulta-blt).
 
@@ -2571,6 +2709,7 @@ PROCEDURE consulta-bloqueto.
                                              INPUT p-ini-sequencia,
                                              INPUT-OUTPUT aux_nmdobnfc,
                                              INPUT-OUTPUT aux_contaant,
+                                             INPUT-OUTPUT aux_sqttlant,
                                       INPUT-OUTPUT par_qtregist,
                                             OUTPUT TABLE tt-consulta-blt).
                         ASSIGN aux_nrregist = aux_nrregist + 1.
@@ -2640,6 +2779,7 @@ PROCEDURE consulta-bloqueto.
                                                      INPUT p-ini-sequencia,
                                                          INPUT-OUTPUT aux_nmdobnfc,
                                                          INPUT-OUTPUT aux_contaant,
+                                                         INPUT-OUTPUT aux_sqttlant,
                                               INPUT-OUTPUT par_qtregist,
                                                     OUTPUT TABLE tt-consulta-blt).
 									
@@ -2662,6 +2802,7 @@ PROCEDURE consulta-bloqueto.
                                                      INPUT p-ini-sequencia,
                                                               INPUT-OUTPUT aux_nmdobnfc,     
                                                               INPUT-OUTPUT aux_contaant,
+                                                              INPUT-OUTPUT aux_sqttlant,
                                               INPUT-OUTPUT par_qtregist,
                                                     OUTPUT TABLE tt-consulta-blt).
     
@@ -2783,6 +2924,7 @@ PROCEDURE consulta-bloqueto.
                                                      INPUT p-ini-sequencia,
                                                      INPUT-OUTPUT aux_nmdobnfc,
                                                      INPUT-OUTPUT aux_contaant,
+                                                     INPUT-OUTPUT aux_sqttlant,
                                               INPUT-OUTPUT par_qtregist,
                                                     OUTPUT TABLE tt-consulta-blt).
 
@@ -2795,7 +2937,8 @@ PROCEDURE consulta-bloqueto.
                         BUFFER-COPY tt-consulta-blt TO btt-consulta-blt.
                     END.
  
-                    ASSIGN aux_contaant = 0.
+                    ASSIGN aux_contaant = 0
+                           aux_sqttlant = 0.
 
                     /* Liquidados */
                     FOR EACH crapcob WHERE crapcob.cdcooper  = p-cdcooper    AND
@@ -2821,6 +2964,7 @@ PROCEDURE consulta-bloqueto.
                                              INPUT p-ini-sequencia,
                                              INPUT-OUTPUT aux_nmdobnfc,
                                              INPUT-OUTPUT aux_contaant,
+                                             INPUT-OUTPUT aux_sqttlant,
                                       INPUT-OUTPUT par_qtregist,
                                             OUTPUT TABLE tt-consulta-blt).
                     END.
@@ -3045,6 +3189,7 @@ PROCEDURE p_grava_bloqueto:
 
    DEF INPUT-OUTPUT PARAM par_nmprimtl AS CHAR                     NO-UNDO.
    DEF INPUT-OUTPUT PARAM par_contaant LIKE crapass.nrdconta       NO-UNDO.
+   DEF INPUT-OUTPUT PARAM par_sqttlant LIKE crapttl.idseqttl       NO-UNDO.
    DEF INPUT-OUTPUT PARAM par_qtregist AS INTE                     NO-UNDO.
 
    DEF OUTPUT PARAM TABLE FOR tt-consulta-blt.
@@ -3066,13 +3211,12 @@ PROCEDURE p_grava_bloqueto:
                                           INPUT par_dtlimite,
                                           INPUT-OUTPUT par_nmprimtl,
                                           INPUT-OUTPUT par_contaant,
+                                          INPUT-OUTPUT par_sqttlant,
                                          OUTPUT TABLE tt-consulta-blt).
 
 				IF RETURN-VALUE = "NOK" THEN
 					RETURN RETURN-VALUE.
             END.
-    
-		
     
         ASSIGN aux_nrregis1 = aux_nrregis1 - 1.
     
@@ -3095,6 +3239,7 @@ PROCEDURE p_grava_bloqueto_rej:
 
    DEF INPUT-OUTPUT PARAM par_nmprimtl AS CHAR                     NO-UNDO.
    DEF INPUT-OUTPUT PARAM par_contaant LIKE crapass.nrdconta       NO-UNDO.
+   DEF INPUT-OUTPUT PARAM par_sqttlant LIKE crapttl.idseqttl       NO-UNDO.
    DEF INPUT-OUTPUT PARAM par_qtregist AS INTE                     NO-UNDO.
 
    DEF OUTPUT PARAM TABLE FOR tt-consulta-blt.
@@ -3115,6 +3260,7 @@ PROCEDURE p_grava_bloqueto_rej:
                                               INPUT par_dtlimite,
                                               INPUT-OUTPUT par_nmprimtl,
                                               INPUT-OUTPUT par_contaant,
+                                              INPUT-OUTPUT par_sqttlant,
                                              OUTPUT TABLE tt-consulta-blt).
 
 				IF RETURN-VALUE = "NOK" THEN
@@ -3651,6 +3797,7 @@ PROCEDURE cria_tt-consulta-blt.
    DEF INPUT        PARAM p-data-limite    AS DATE.
    DEF INPUT-OUTPUT PARAM p-nmprimtl       AS CHAR.
    DEF INPUT-OUTPUT PARAM p-contaant       LIKE crapass.nrdconta.
+   DEF INPUT-OUTPUT PARAM p-sqttlant       LIKE crapttl.idseqttl.
 
    DEF OUTPUT       PARAM TABLE FOR tt-consulta-blt.
 
@@ -3835,8 +3982,10 @@ PROCEDURE cria_tt-consulta-blt.
      /*Se mudou a conta devo busca o beneficiario*/
      RUN controla-busca-nmdobnfc(INPUT crapcob.cdcooper
                                 ,INPUT crapcob.nrdconta
+                                ,INPUT crapcob.idseqttl
                                 ,INPUT "cria_tt-consulta-blt"
-                                ,INPUT-OUTPUT p-contaant
+                                ,INPUT-OUTPUT p-contaant /* Conta anterior */ 
+                                ,INPUT-OUTPUT p-sqttlant /* Sequencia do titular anterior */ 
                                 ,INPUT-OUTPUT p-nmprimtl
                                 ,OUTPUT aux_dscritic).
 
@@ -4272,6 +4421,7 @@ PROCEDURE cria_tt-consulta-blt_rej.
 
    DEF INPUT-OUTPUT PARAM p-nmprimtl       AS CHAR.
    DEF INPUT-OUTPUT PARAM p-contaant       LIKE crapass.nrdconta.
+   DEF INPUT-OUTPUT PARAM p-sqttlant       LIKE crapttl.idseqttl.
 
    DEF OUTPUT       PARAM TABLE FOR tt-consulta-blt.
 
@@ -4353,8 +4503,10 @@ PROCEDURE cria_tt-consulta-blt_rej.
           /*Se mudou a conta devo busca o beneficiario*/
      RUN controla-busca-nmdobnfc(INPUT crapret.cdcooper
                                 ,INPUT crapret.nrdconta
+                                ,INPUT 0 /* idseqttl -- esta ZERO no campo da tt-consulta-blt abaixo */ 
                                 ,INPUT "cria_tt-consulta-blt_rej"
                                 ,INPUT-OUTPUT p-contaant
+                                ,INPUT-OUTPUT p-sqttlant
                                 ,INPUT-OUTPUT p-nmprimtl
                                 ,OUTPUT aux_dscritic).
 
@@ -8687,6 +8839,7 @@ PROCEDURE busca-nome-imp-blt:
 
     DEF INPUT PARAM par_cdcooper    LIKE    crapcop.cdcooper    NO-UNDO.
     DEF INPUT PARAM par_nrdconta    LIKE    crapass.nrdconta    NO-UNDO.
+    DEF INPUT PARAM par_idseqttl    LIKE    crapttl.idseqttl    NO-UNDO.
     DEF INPUT PARAM par_nmprogra    AS      CHAR                NO-UNDO.
 
     DEF OUTPUT PARAM par_nmprimtl   AS      CHAR                NO-UNDO.
@@ -8703,6 +8856,7 @@ PROCEDURE busca-nome-imp-blt:
       aux_handproc = PROC-HANDLE NO-ERROR
                          (INPUT deci(par_cdcooper),
                           INPUT deci(par_nrdconta),
+                          INPUT deci(par_idseqttl),
                           OUTPUT "",
                           OUTPUT "",
                           OUTPUT "").
@@ -8767,17 +8921,22 @@ PROCEDURE controla-busca-nmdobnfc:
 
     DEF INPUT PARAM par_cdcooper    LIKE    crapcop.cdcooper        NO-UNDO.
     DEF INPUT PARAM par_nrdconta    LIKE    crapass.nrdconta        NO-UNDO.
+    DEF INPUT PARAM par_idseqttl    LIKE    crapttl.idseqttl        NO-UNDO.
     DEF INPUT PARAM par_nmrotina    AS      CHAR                    NO-UNDO.
+    
     DEF INPUT-OUTPUT PARAM par_contaant LIKE crapass.nrdconta       NO-UNDO.
+    DEF INPUT-OUTPUT PARAM par_sqttlant LIKE crapttl.idseqttl       NO-UNDO.
 
     DEF INPUT-OUTPUT PARAM par_nmdobnfc AS  CHAR                    NO-UNDO.
     DEF OUTPUT PARAM par_dscritic   AS      CHAR                    NO-UNDO.
 
-    IF par_nrdconta <> par_contaant THEN
+    IF par_nrdconta <> par_contaant OR 
+       par_idseqttl <> par_sqttlant THEN
     DO: 
         /*Busca nome impresso no boleto*/
         RUN busca-nome-imp-blt(INPUT  par_cdcooper
                               ,INPUT  par_nrdconta
+                              ,INPUT  par_idseqttl
                               ,INPUT  par_nmrotina
                               ,OUTPUT par_nmdobnfc
                               ,OUTPUT aux_dscritic).
@@ -8798,7 +8957,9 @@ PROCEDURE controla-busca-nmdobnfc:
                 RETURN "NOK".
             END.
 
-        par_contaant = par_nrdconta.
+        /* Armazenar o numero da conta e a Seq do titular */ 
+        ASSIGN par_contaant = par_nrdconta
+               par_sqttlant = par_idseqttl.
     END.
 
     RETURN "OK".

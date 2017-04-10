@@ -14,6 +14,7 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0009 IS
 
   PROCEDURE pc_busca_nome_imp_blt(pr_cdcooper IN crapass.cdcooper%TYPE -- Cód. cooperativa
                                  ,pr_nrdconta IN crapass.nrdconta%TYPE -- Nr da conta
+                                 ,pr_idseqttl IN crapttl.idseqttl%TYPE -- Seq do Titular
                                  ,pr_nmprimtl OUT VARCHAR2             -- Nome do cooperado será impresso no boleto
                                  ,pr_des_erro OUT VARCHAR2             -- Indicador erro OK/NOK
                                  ,pr_dscritic OUT VARCHAR2);           -- Descrição da crí
@@ -378,13 +379,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0009 is
 	  Alteração : 26/01/2017 - Ajustar where do cursor que carrega o nome, deve ser na tabela 
                                crapass, ao inves de crapjur (Douglas - Chamado 601478)
 	
+                  30/03/2017 - Adicionado parametro pr_idseqttl, para buscar o nome do 
+                               titular, para imprimir como beneficiário do boleto
+                               (Douglas - Chamado 637660)
 	...........................................................................*/
   
-  PROCEDURE pc_busca_nome_imp_blt(pr_cdcooper       IN crapass.cdcooper%TYPE                      -- Cód. cooperativa
-                                 ,pr_nrdconta       IN crapass.nrdconta%TYPE                      -- Nr da conta
-                                 ,pr_nmprimtl       OUT VARCHAR2                                      -- XML com informações     
-                                 ,pr_des_erro       OUT VARCHAR2                                  -- Indicador erro OK/NOK
-                                 ,pr_dscritic       OUT VARCHAR2) IS                              -- Descrição da crítica  
+  PROCEDURE pc_busca_nome_imp_blt(pr_cdcooper       IN crapass.cdcooper%TYPE   -- Cód. cooperativa
+                                 ,pr_nrdconta       IN crapass.nrdconta%TYPE   -- Nr da conta
+                                 ,pr_idseqttl       IN crapttl.idseqttl%TYPE   -- Seq do Titular
+                                 ,pr_nmprimtl       OUT VARCHAR2               -- XML com informações     
+                                 ,pr_des_erro       OUT VARCHAR2               -- Indicador erro OK/NOK
+                                 ,pr_dscritic       OUT VARCHAR2) IS           -- Descrição da crítica  
   
     CURSOR cr_config(p_cdcooper IN tbcobran_config_boleto.cdcooper%TYPE     -- Cód. cooperativa
                     ,p_nrdconta IN tbcobran_config_boleto.nrdconta%TYPE) IS
@@ -407,6 +412,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0009 is
        WHERE ass.cdcooper = p_cdcooper
          AND ass.nrdconta = p_nrdconta ;
     rw_nome_benef cr_nome_benef%ROWTYPE;
+
+    CURSOR cr_nome_titular(p_cdcooper IN crapttl.cdcooper%TYPE     -- Cód. cooperativa
+                          ,p_nrdconta IN crapttl.nrdconta%TYPE     -- Nr da conta 
+                          ,p_idseqttl IN crapttl.idseqttl%TYPE) IS -- Seq. Titular da Conta
+      SELECT ttl.nmextttl
+        FROM crapttl ttl 
+       WHERE ttl.cdcooper = p_cdcooper
+         AND ttl.nrdconta = p_nrdconta
+         AND ttl.idseqttl = p_idseqttl;
+    rw_nome_titular cr_nome_titular%ROWTYPE;
     
     --Variaveis de erro
     vr_dscritic  VARCHAR2(1000);
@@ -464,7 +479,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0009 is
     
       --Pessoa física
       IF rw_nome_benef.inpessoa = 1 THEN
-        vr_nmvistit := rw_nome_benef.nmprimtl;      
+        -- Quando o boleto é de pessoa física, buscar o nome do titular que gerou o boleto
+        OPEN cr_nome_titular(p_cdcooper => pr_cdcooper
+                            ,p_nrdconta => pr_nrdconta
+                            ,p_idseqttl => pr_idseqttl);
+        FETCH cr_nome_titular INTO rw_nome_titular;
+        -- Verificar se encontrou o titular
+        IF cr_nome_titular%FOUND THEN
+          -- Retornar o nome do titular da conta de acordo com a Seq do Titular
+          vr_nmvistit := rw_nome_titular.nmextttl;
+        ELSE 
+          -- Se não encontrou, retorna o nome do titular da conta da ASS
+          vr_nmvistit := rw_nome_benef.nmprimtl;
+        END IF;
+        
+        CLOSE cr_nome_titular;
       --Pessoa juridica
       ELSE
         --Nome razao social
