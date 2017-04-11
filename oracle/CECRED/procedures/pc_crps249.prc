@@ -534,8 +534,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
 			   30/11/2016 - Correção para buscar corretamente registro da crapstn
 			                de acordo com o tipo de arrecadação (Lucas Lunelli - Projeto 338)
                       
-         06/03/2017 - Alterações Projeto 307 - Automatização Arquivos Contábeis Ayllos
-                      Inclusão de novos históricos e retirada de lançamentos de reversão (Jontas-Supero)
+               06/03/2017 - Alterações Projeto 307 - Automatização Arquivos Contábeis Ayllos
+                            Inclusão de novos históricos e retirada de lançamentos de reversão (Jontas-Supero)
                      
                17/03/2017 - Ajustes referente ao projeto M338.1, não estourar a conta corrente com cobrança 
 			                de juros e IOF de Limite de Crédito e Adiantamento a Depositante - Somente Lautom
@@ -4683,7 +4683,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_tab_historico(2094).dsrefere_jur := 'JURO MORA FINANCIAM. POS-FIXADO PAGO PELO AVALISTA - PESSOA JURIDICA';
    END;  
 
-     BEGIN
+  BEGIN
      -- Inicia Variavel
      pr_dscritic := NULL;
      
@@ -4724,7 +4724,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
           pc_set_linha(pr_cdarquiv => 2   -- DESCONTO DE CHEQUE - PESSOA FISICA
                       ,pr_inpessoa => 1 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
-
+  
        END IF;
 
        IF vr_arq_op_cred(2)(999)(1) > 0 THEN
@@ -4809,7 +4809,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
           pc_set_linha(pr_cdarquiv => 3   -- EMPRESTIMOS REALIZADOS. - PESSOA FISICA
                       ,pr_inpessoa => 1 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
-
+  
        END IF;
 
        IF vr_arq_op_cred(3)(999)(2) > 0 THEN
@@ -5433,7 +5433,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
           pc_set_linha(pr_cdarquiv => 13  -- APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO C/ REGISTRO - PESSOA FISICA
                     ,pr_inpessoa => 1 -- Tipo de Pessoa
                     ,pr_inputfile => vr_input_file); 
-
+                    
           pc_set_linha(pr_cdarquiv => 13  -- APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO C/ REGISTRO - PESSOA FISICA
                       ,pr_inpessoa => 1 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
@@ -10003,6 +10003,8 @@ BEGIN
   -- Fecha cursor
   CLOSE cr_craplcm_tot;
 
+  IF rw_craplcm_tot.vllanmto > 0 THEN
+    
   -- Cabecalho
   vr_cdestrut := 50;
   vr_linhadet := trim(vr_cdestrut)||
@@ -10086,6 +10088,8 @@ BEGIN
                   ,pr_inputfile => vr_arquivo_txt); -- Tipo de Pessoa
 
    END IF;
+  
+  END IF;
   
   -- LIBERACAO CONTRATO DE FINAME BNDES"
   vr_cdhistor := 1529;
