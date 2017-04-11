@@ -74,7 +74,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps712 (pr_cdcooper IN crapcop.cdcooper%T
 											  ,pr_cdagenci IN craplot.cdagenci%TYPE
 											  ,pr_cdbccxlt IN craplot.cdbccxlt%TYPE
 											  ,pr_nrdolote IN craplot.nrdolote%TYPE)  IS
-			  SELECT craplot.dtmvtolt
+			  SELECT craplot.cdcooper
+				      ,craplot.dtmvtolt
 				 			,craplot.cdagenci
 							,craplot.cdbccxlt
 							,craplot.nrdolote
@@ -107,24 +108,24 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps712 (pr_cdcooper IN crapcop.cdcooper%T
         -- Envio centralizado de log de erro
         RAISE vr_exc_fimprg;
       END IF;
+
+			-- Leitura do calendário da cooperativa
+			OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+			FETCH btch0001.cr_crapdat
+			 INTO rw_crapdat;
+			-- Se não encontrar
+			IF btch0001.cr_crapdat%NOTFOUND THEN
+				-- Fechar o cursor pois efetuaremos raise
+				CLOSE btch0001.cr_crapdat;
+				-- Montar mensagem de critica
+				vr_cdcritic := 1;
+				RAISE vr_exc_saida;
+			ELSE
+				-- Apenas fechar o cursor
+				CLOSE btch0001.cr_crapdat;
+			END IF;
       
       FOR rw_crapcop IN cr_crapcop LOOP
-        
-        -- Leitura do calendário da cooperativa
-        OPEN btch0001.cr_crapdat(pr_cdcooper => rw_crapcop.cdcooper);
-        FETCH btch0001.cr_crapdat
-         INTO rw_crapdat;
-        -- Se não encontrar
-        IF btch0001.cr_crapdat%NOTFOUND THEN
-          -- Fechar o cursor pois efetuaremos raise
-          CLOSE btch0001.cr_crapdat;
-          -- Montar mensagem de critica
-          vr_cdcritic := 1;
-          RAISE vr_exc_saida;
-        ELSE
-          -- Apenas fechar o cursor
-          CLOSE btch0001.cr_crapdat;
-        END IF;
         
         FOR rw_tbrecarga IN cr_tbrecarga (pr_cdcooper => rw_crapcop.cdcooper
                                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt) LOOP
@@ -161,19 +162,21 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps712 (pr_cdcooper IN crapcop.cdcooper%T
                                ,cdagenci
                                ,dtmvtolt
                                ,tplotmov)
-                         VALUES(rw_crapcop.cdcooper
+                         VALUES(pr_cdcooper
                                ,6000036
                                ,85
                                ,1
-                               ,rw_crapdat.dtmvtocd
+                               ,rw_crapdat.dtmvtolt
                                ,1)
                       RETURNING ROWID
+											         ,cdcooper
                                ,dtmvtolt
                                ,cdagenci
                                ,cdbccxlt
                                ,nrdolote
                                ,nrseqdig
                            INTO rw_craplot.rowid
+													     ,rw_craplot.cdcooper
                                ,rw_craplot.dtmvtolt
                                ,rw_craplot.cdagenci
                                ,rw_craplot.cdbccxlt
@@ -199,7 +202,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps712 (pr_cdcooper IN crapcop.cdcooper%T
                               ,vllanmto
                               ,hrtransa
                               ,cdpesqbb)
-                       VALUES (rw_crapcop.cdcooper
+                       VALUES (rw_craplot.cdcooper
                               ,rw_craplot.dtmvtolt
                               ,rw_craplot.cdagenci
                               ,rw_craplot.cdbccxlt
