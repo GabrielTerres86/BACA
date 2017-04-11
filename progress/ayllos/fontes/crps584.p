@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Novembro/2010                      Ultima atualizacao: 26/03/2012.
+   Data    : Novembro/2010                      Ultima atualizacao: 05/04/2017.
 
    Dados referentes ao programa:
 
@@ -27,6 +27,13 @@
 
 			   20/07/2016 - Alteracao do caminho onde serao salvos os arquivos
 							de truncagem de cheque. SD 476097. Carlos R.	
+
+               04/11/2016 - Cheques custodiados deverao ter o numero do bordero
+                            igual a zero. (Projeto 300 - Rafael)
+
+               23/01/2017 - Realizado merge com a PROD ref ao projeto 300 (Rafael)
+               
+               05/04/2017 - Incluir dtdevolu na leitura da crapcdb (Lucas Ranghetti #621301)
 ..............................................................................*/
 
 { includes/var_batch.i "NEW" }
@@ -270,7 +277,8 @@ PROCEDURE pi_processa_registros:
                                              crapcdb.cdbanchq = aux_cdbanchq     AND
                                              crapcdb.cdagechq = aux_cdagechq     AND 
                                              crapcdb.nrctachq = aux_nrctachq     AND
-                                             crapcdb.nrcheque = aux_nrcheque
+                                                  crapcdb.nrcheque = aux_nrcheque     AND
+                                                  crapcdb.dtdevolu = ?
                                              EXCLUSIVE-LOCK NO-ERROR.
                                         
                                         IF AVAIL crapcdb THEN
@@ -288,7 +296,8 @@ PROCEDURE pi_processa_registros:
                                                      crapcdb.cdbanchq = aux_cdbanchq     AND
                                                      crapcdb.cdagechq = aux_cdagechq     AND 
                                                      crapcdb.nrctachq = aux_nrctachq     AND
-                                                     crapcdb.nrcheque = aux_nrcheque
+                                                          crapcdb.nrcheque = aux_nrcheque     AND
+                                                          crapcdb.dtdevolu = ?
                                                      EXCLUSIVE-LOCK NO-ERROR.
                                                   
                                                 IF   AVAILABLE crapcdb THEN
