@@ -28,7 +28,7 @@
 
    Programa: b1wgen0002.p
    Autora  : Mirtes.
-   Data    : 14/09/2005                        Ultima atualizacao: 06/07/2016
+   Data    : 14/09/2005                        Ultima atualizacao: 20/02/2017
 
    Dados referentes ao programa:
 
@@ -596,19 +596,40 @@
               20/01/2016 - Inclusao de mensagem de aviso apos a confirmacao da garantia 
                            no emprestimo. (Chamado: 380129). (James)
                            
-              03/02/2016 - Adicionado tratamento para permitir a exclusao de propostas 
-						   de portabilidade que foram canceladas no JDCTC. (Reinert)                          
+              01/03/2016 - Alteracoes ao projeto de esteira de credito (Oscar).
 
-			  12/04/2016 - Adicionado nova situacao "SI8" para permitir a exclusao de
-						   propostas de portabilidade. (Reinert)
+              01/03/2016 - PRJ Esteira de Credito. (Jaison/Oscar/Odirlei)
 
-			  18/04/2016 - Conforme solicitacao, agora sera mantido o operador inicial
-						   das propostas de Portabilidade nao sendo alterado com a 
-						   aprovacao automatica.(SD 432942 - Carlos Rafael Tanholi)	
+             11/03/2016 - inclusao do campo cdpactra na rotina grava-proposta-completa 
+                          PRJ Esteira de Credito. (Odirlei-Amcom)
 
-              11/05/2016 - Calculo vlatraso na chamada pc_calcula_atraso_tr.
-                           Criacao da leitura_lem. (Jaison/James)
+             23/03/2016 - Projeto Esteira de Credito. (Daniel/Oscar)
+             
+             14/04/2016 - Incluir chamada pc_alter_nrctrprp_aciona para atualizar numero da proposta
+                          no acionamento PRJ207 Esteira de Credito. (Odirlei-Amcom)
 
+             05/05/2016 - Incluir a regra quando o valor da proposta for alterado para menos e já foi enviada 
+                          para esteira e a análise nao foi finalizada deverá obrigar a reenviar a proposta.  (Oscar)         
+ 
+             03/02/2016 - Adicionado tratamento para permitir a exclusao de propostas 
+                          de portabilidade que foram canceladas no JDCTC. (Reinert)                          
+
+			       12/04/2016 - Adicionado nova situacao "SI8" para permitir a exclusao de
+                          propostas de portabilidade. (Reinert)
+
+             18/04/2016 - Conforme solicitacao, agora sera mantido o operador inicial
+                          das propostas de Portabilidade nao sendo alterado com a 
+                          aprovacao automatica.(SD 432942 - Carlos Rafael Tanholi)	
+
+			 11/05/2016 - Calculo vlatraso na chamada pc_calcula_atraso_tr.
+                          Criacao da leitura_lem. (Jaison/James)
+						   							
+		     09/06/2016 - Ajuste na rotina obtem-dados-conta-contrato para retirar a leitura da 
+                          tabela craplcm, a rotina em Progress nao e chamada pelo emprestimo novo,
+                          dessa forma nao sera mais necessario verificar se o credito do emprestimo foi efetuado
+                          efetuado para permitir a liquidação no dia.
+                          (Adriano - SD 467073).
+                          
               21/06/2016 - Alterado a rotina altera-numero-proposta para nao permitir 
                            alterar o numero do contrato caso ele seja uma proposta de 
                            portabilidade conforme solicitado no chamado 466077. (Kelvin)
@@ -617,6 +638,38 @@
 			               ver na tabela de finalidade se eh realmente uma
 						   portabilidade de credito para ai entao bloquear
 						   a alteracao do numero da proposta (Tiago/Thiago SD466077)
+              
+             13/07/2016 - Ajuste na validaçao da Linha de credito na procedure valida-dados-gerais. Agora
+                          valida pelo metodo EMPR0002.pc_busca_linha_credito_prog.
+
+              07/09/2016 - Alterada forma de calculo do atraso na rotina proc_qualif_operacao
+                           pois estava somando 2x o numero calculado de parcelas, impactando
+                           na qualificacao da operacao
+                           Andrey (RKAM) - Chamado 473364
+
+              23/09/2016 - Correçao deletar o Handle da b1wgen0114 esta gerando erro na geraçao
+                           do PDF para envio da esteira (Oscar).
+
+			  23/09/2016 - Inclusao de validacao de contratos de acordos,
+                           Prj. 302 (Jean Michel).
+
+			  25/10/2016 - Verificar CNAE restrito Melhoria 310 (Tiago/Thiago).
+
+			  19/10/2016 - Incluido registro de log sobre liberacao de alienacao de bens 10x maior que 
+						   o valor do emprestimo, SD-507761 (Jean Michel).
+						  	               
+			  26/10/2016 - Chamado 537058 - Correcao referente a linhas de creditos inativas.
+						   (Gil - MOUTS)
+
+			  20/02/2017 - Ajuste para validaçao de Capital de Giro na procedure valida-dados-gerais. 
+			               Nao permitir utilizacao de Capital de Giro por pessoa fisica. 
+						   (Daniel - Chamado 581906).
+               
+        22/03/2017 - Incluido tratamento para emprestimos PP quando a carencia da linha de credito for nula.
+                     Nesses casos ira seguir as mesmas regras de carencia = 0 dias.
+                     Hoje esta considerando fixo 60 dias nesses casos.
+                     Heitor (Mouts) - Chamado 629653.
+             
  ..............................................................................*/
 
 /*................................ DEFINICOES ................................*/
@@ -1256,6 +1309,7 @@ PROCEDURE valida-liquidacao-emprestimos:
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
     DEF VAR aux_returnvl AS CHAR                                    NO-UNDO.
+    DEF VAR aux_flgativo AS INT                                     NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
 
@@ -1296,6 +1350,44 @@ PROCEDURE valida-liquidacao-emprestimos:
                                LEAVE Valida.
                            END.
                     END.
+                    
+                /* Verifica se ha contratos de acordo */            
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                
+                RUN STORED-PROCEDURE pc_verifica_acordo_ativo
+                  aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                                      ,INPUT par_nrdconta
+                                                      ,INPUT par_nrctremp
+                                                      ,0
+                                                      ,0
+                                                      ,"").
+
+                CLOSE STORED-PROC pc_verifica_acordo_ativo
+                          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                ASSIGN aux_cdcritic = 0
+                       aux_dscritic = ""
+                       aux_cdcritic = pc_verifica_acordo_ativo.pr_cdcritic WHEN pc_verifica_acordo_ativo.pr_cdcritic <> ?
+                       aux_dscritic = pc_verifica_acordo_ativo.pr_dscritic WHEN pc_verifica_acordo_ativo.pr_dscritic <> ?
+                       aux_flgativo = INT(pc_verifica_acordo_ativo.pr_flgativo).
+                
+                IF aux_cdcritic > 0 THEN
+                  DO:
+                      RUN fontes/critic.p.
+                      LEAVE Valida.
+             END.
+                ELSE IF aux_dscritic <> ? AND aux_dscritic <> "" THEN
+                  DO:
+                    LEAVE Valida.
+                  END.
+
+                IF aux_flgativo = 1 THEN
+                  DO:
+                    ASSIGN aux_dscritic = "Nao e possivel marcar o contrato " + STRING(par_nrctremp) + " para liquidar, contrato esta em acordo.".
+                    LEAVE Valida.
+                  END.  
              END.
 
         /* Validar Data do Emprestimo */
@@ -1325,7 +1417,7 @@ PROCEDURE valida-liquidacao-emprestimos:
                    ASSIGN par_tpdretor = "M".
 
               ASSIGN par_msgretor =
-                            "Saldo a liquidar e' maior que o valor a " +
+                            "Saldo a liquidar e maior que o valor a " +
                             "emprestar. Confirme (S/N):".
               LEAVE Valida.
            END.
@@ -2954,6 +3046,7 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                                                     INPUT par_nrdconta,
                                                     INPUT aux_tpemprst,
                                                     INPUT aux_cdfinemp,
+                                                    INPUT tt-proposta-epr.cdlcremp,
                                                     INPUT FALSE,
                                                     INPUT tt-proposta-epr.dsctrliq,
                                                    OUTPUT TABLE tt-erro,
@@ -2997,6 +3090,7 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                                          INPUT par_nmdatela,
                                          INPUT FALSE,
                                          INPUT aux_cdfinemp,
+                                         INPUT tt-proposta-epr.cdlcremp,
                                          INPUT aux_nrctrliq,
                                          INPUT tt-proposta-epr.dsctrliq,
                                          OUTPUT TABLE tt-erro,
@@ -3111,11 +3205,15 @@ PROCEDURE valida-dados-gerais:
     DEF   VAR        aux_permnovo AS LOGI                           NO-UNDO.
     DEF   VAR        aux_dsoperac AS CHAR                           NO-UNDO.
     DEF   VAR        aux_inlcrmcr AS CHAR                           NO-UNDO.
+    DEF   VAR        aux_lslcremp AS CHAR                           NO-UNDO.
     DEF   VAR        aux_nrctrliq LIKE crawepr.nrctrliq             NO-UNDO.
     DEF   VAR        h-b1wgen0110 AS HANDLE                         NO-UNDO.
     DEF   VAR        h-b1wgen0188 AS HANDLE                         NO-UNDO.
     DEF   VAR        h-b1wgen0043 AS HANDLE                         NO-UNDO.
 
+    DEF   VAR        aux_flgativo AS INTEGER                        NO-UNDO.
+    DEF   VAR        aux_contaliq AS INTEGER                        NO-UNDO.
+		
     ASSIGN aux_cdcritic = 0
            aux_dscritic = "".
 
@@ -3221,13 +3319,43 @@ PROCEDURE valida-dados-gerais:
             NOT CAN-FIND(craplcr WHERE
                          craplcr.cdcooper = par_cdcooper AND
                          craplcr.cdlcremp = par_cdlcremp AND
+						             craplcr.flgstlcr AND
                          craplcr.cdmodali = SUBSTRING(par_cdmodali,1,2) AND 
                          craplcr.cdsubmod = SUBSTRING(par_cdmodali,3,2)) THEN
             DO:
                 ASSIGN aux_dscritic =
                        "Linha de credito nao permitida para esta modalidade.".
                 LEAVE.
-            END.        
+            END.   
+                
+		IF crapass.inpessoa = 1  THEN
+		DO:
+
+			IF CAN-FIND(craplcr WHERE
+						 craplcr.cdcooper = par_cdcooper AND
+						 craplcr.cdlcremp = par_cdlcremp AND
+						 craplcr.cdmodali = "02" AND 
+						 craplcr.cdsubmod = "15") THEN
+			DO:	   
+				ASSIGN aux_cdcritic = 0
+					   aux_dscritic = "Capital de giro apenas permito para conta pessoa juridica.".
+
+				LEAVE.
+			END.
+
+			IF CAN-FIND(craplcr WHERE
+						 craplcr.cdcooper = par_cdcooper AND
+						 craplcr.cdlcremp = par_cdlcremp AND
+						 craplcr.cdmodali = "02" AND 
+						 craplcr.cdsubmod = "16") THEN
+			DO:	   
+				ASSIGN aux_cdcritic = 0
+					   aux_dscritic = "Capital de giro apenas permito para conta pessoa juridica.".
+
+				LEAVE.
+			END.
+
+		END.	     
                 
 
         IF   par_vlemprst = 0   THEN
@@ -3368,17 +3496,75 @@ PROCEDURE valida-dados-gerais:
              END.
         ELSE /* Senao pegar data do emprestimo */
              DO:
-                 FIND crawepr WHERE
-                      crawepr.cdcooper = par_cdcooper   AND
-                      crawepr.nrdconta = par_nrdconta   AND
-                      crawepr.nrctremp = par_nrctremp
-                      NO-LOCK NO-ERROR.
+        ASSIGN aux_flgativo = 0.
 
-                 IF   AVAIL crawepr   THEN
+				FIND crawepr WHERE crawepr.cdcooper = par_cdcooper
+                       AND crawepr.nrdconta = par_nrdconta
+                       AND crawepr.nrctremp = par_nrctremp NO-LOCK NO-ERROR.
+
+        IF AVAILABLE crawepr   THEN
+          DO:
                       ASSIGN aux_dtmvtolt = crawepr.dtmvtolt.
+              
+            IF par_dsctrliq <> "Sem liquidacoes"   THEN
+					ASSIGN aux_contaliq = NUM-ENTRIES(par_dsctrliq).
+				ELSE
+          ASSIGN aux_contaliq = 0.               
+        
+          DO aux_contador = 1 TO aux_contaliq:
+
+            IF NUM-ENTRIES(par_dsctrliq) > 0 THEN
+              DO:
+
+              { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+              /* Verifica se ha contratos de acordo */
+              RUN STORED-PROCEDURE pc_verifica_acordo_ativo
+              aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                        ,INPUT par_nrdconta
+                        ,INPUT INTEGER(ENTRY(aux_contador,par_dsctrliq))
+                        ,0
+                        ,0
+                        ,"").
+
+              CLOSE STORED-PROC pc_verifica_acordo_ativo
+                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+              { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+              ASSIGN aux_cdcritic = 0
+                  aux_dscritic = ""
+                  aux_cdcritic = INT(pc_verifica_acordo_ativo.pr_cdcritic) WHEN pc_verifica_acordo_ativo.pr_cdcritic <> ?
+                  aux_dscritic = pc_verifica_acordo_ativo.pr_dscritic WHEN pc_verifica_acordo_ativo.pr_dscritic <> ?
+                  aux_flgativo = INT(pc_verifica_acordo_ativo.pr_flgativo) WHEN pc_verifica_acordo_ativo.pr_flgativo <> ?.
+                              
+              IF aux_cdcritic > 0 THEN
+              DO:
+                LEAVE.
+              END.
+              ELSE IF aux_dscritic <> ? AND aux_dscritic <> "" THEN
+              DO:
+                LEAVE.
+              END.
+                            
+              IF aux_flgativo = 1 THEN
+                DO:
+				ASSIGN aux_dscritic = "Nao e possivel marcar o contrato " + ENTRY(aux_contador,par_dsctrliq) + " para liquidar, contrato esta em acordo.".	
+                LEAVE.
+                END.
+              END.
+                                  
+          END. /* DO TO aux_contaliq */  
+          END.
+        
+				IF aux_flgativo = 1 THEN
+				  DO:
+            LEAVE.
+          END.
+
              END.
         
-        IF   par_tpemprst = 0 THEN
+        IF par_tpemprst = 0 THEN
              DO:
 
                  /* validar finalidade de portabilidade(crapfin.tpfinali=2) para produto "PRICE TR" */
@@ -3531,13 +3717,36 @@ PROCEDURE valida-dados-gerais:
                       RETURN "NOK".
 
              END.
-
-        FOR EACH crappre WHERE crappre.cdcooper = par_cdcooper NO-LOCK:
         
-            /* InternetBank e TAA nao pode validar a linha de credito */ 
-            IF par_idorigem <> 3 AND par_idorigem <> 4 THEN
-               DO:
-                   IF par_cdlcremp = crappre.cdlcremp THEN
+        /* InternetBank e TAA nao pode validar a linha de credito */ 
+        IF par_idorigem <> 3 AND par_idorigem <> 4 THEN
+           DO:
+               { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+               
+               /* Efetuar a chamada a rotina Oracle  */
+               RUN STORED-PROCEDURE pc_busca_linha_credito_prog
+                   aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, 
+                                                        INPUT ?,
+                                                        INPUT ?,
+                                                       OUTPUT "",  /* Cdigos dos riscos */
+                                                       OUTPUT ""). /* Descrição da crítica */  
+
+               /* Fechar o procedimento para buscarmos o resultado */ 
+               CLOSE STORED-PROC pc_busca_linha_credito_prog
+                      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+               { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+               
+               /* Busca resultado e possiveis erros */ 
+               ASSIGN aux_cdcritic = 0
+                      aux_lslcremp = ""
+                      aux_dscritic = ""
+                      aux_lslcremp = pc_busca_linha_credito_prog.pr_lslcremp
+                                     WHEN pc_busca_linha_credito_prog.pr_lslcremp <> ?
+                      aux_dscritic = pc_busca_linha_credito_prog.pr_dscritic
+                                     WHEN pc_busca_linha_credito_prog.pr_dscritic <> ?.
+                                     
+               IF INDEX (aux_lslcremp, STRING(par_cdlcremp)) > 0 THEN
                       DO:
                           ASSIGN aux_dscritic = "Linha de credito nao permitida".
                           LEAVE.
@@ -3545,6 +3754,8 @@ PROCEDURE valida-dados-gerais:
 
                END. /* END IF par_idorigem <> 3 AND par_idorigem <> 4 */
 
+        FOR EACH crappre WHERE crappre.cdcooper = par_cdcooper NO-LOCK:
+        
             IF par_cdfinemp     = crappre.cdfinemp AND 
                crapass.inpessoa = crappre.inpessoa THEN
                DO:
@@ -3598,6 +3809,7 @@ PROCEDURE valida-dados-gerais:
                                  INPUT par_nmdatela,
                                  INPUT par_flgerlog,
                                  INPUT par_cdfinemp,
+                                 INPUT par_cdlcremp,
                                  INPUT aux_nrctrliq,
                                  INPUT par_dsctrliq,
                                  OUTPUT TABLE tt-erro,
@@ -3678,7 +3890,7 @@ PROCEDURE proc_qualif_operacao:
         IF  NOT CAN-DO(par_dsctrliq, aux_nrctremp)   THEN
             NEXT.
 
-        aux_qtprecal =  crabepr.qtprecal.
+        aux_qtprecal = 0.
 
         RUN saldo-devedor-epr (INPUT par_cdcooper,
                                INPUT par_cdagenci,
@@ -5040,10 +5252,12 @@ PROCEDURE verifica-outras-propostas:
     DEF  VAR aux_vltotemp AS DECI                                   NO-UNDO.
     DEF  VAR aux_vlemprst AS DECI                                   NO-UNDO.
     DEF  VAR aux_qtprecal AS DECI                                   NO-UNDO.
+	DEF  VAR aux_flgrestrito AS DECI                                NO-UNDO.
     DEF  VAR h-b1wgen0147 AS HANDLE                                 NO-UNDO.
     
     DEF  BUFFER b1-craplcr FOR craplcr.
     DEF  BUFFER b2-craplcr FOR craplcr.
+	DEF  BUFFER b1-crapass FOR crapass.
 
     EMPTY TEMP-TABLE tt-grupo.
     EMPTY TEMP-TABLE tt-erro.
@@ -5171,6 +5385,42 @@ PROCEDURE verifica-outras-propostas:
                                                    "PRESTAMISTA!".
         
               END.
+        
+	      FIND b1-crapass WHERE b1-crapass.cdcooper = par_cdcooper
+		                    AND b1-crapass.nrdconta = par_nrdconta
+							NO-LOCK NO-ERROR.  
+
+		  IF  AVAIL(b1-crapass) THEN
+			  DO:
+			    /*Se tem cnae verificar se e um cnae restrito*/
+			    IF  b1-crapass.cdclcnae > 0 THEN
+				    DO:
+
+                        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                        /* Busca a se o CNAE eh restrito */
+                        RUN STORED-PROCEDURE pc_valida_cnae_restrito
+                        aux_handproc = PROC-HANDLE NO-ERROR (INPUT b1-crapass.cdclcnae
+                                                            ,0).
+
+                        CLOSE STORED-PROC pc_valida_cnae_restrito
+                        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                        ASSIGN aux_flgrestrito = INTE(pc_valida_cnae_restrito.pr_flgrestrito)
+                                                 WHEN pc_valida_cnae_restrito.pr_flgrestrito <> ?.
+
+						IF  aux_flgrestrito = 1 THEN
+						    DO:
+    							 CREATE tt-msg-confirma.
+								 ASSIGN aux_contador = aux_contador + 1				  
+										tt-msg-confirma.inconfir = aux_contador
+										tt-msg-confirma.dsmensag = "CNAE restrito, conforme previsto na Política de Responsabilidade Socioambiental do Sistema CECRED. Necessário apresentar Licença Regulatória.".
+					END.
+        
+			  END.
+			  END.
         
           /* Existe outra proposta de emprestimo */
           IF aux_contaepr > 0 THEN
@@ -6238,6 +6488,21 @@ PROCEDURE grava-proposta-completa:
                                     INPUT par_nrctremp,
                                     INPUT par_nrctremp).
 
+
+           /* Bens alienados separados por pipe JMD*/
+           DO aux_contador = 1 TO NUM-ENTRIES(par_dsdalien,"|"):
+
+             ASSIGN reg_dsdregis = ENTRY(aux_contador,par_dsdalien,"|").
+			 
+			 if ENTRY(16,reg_dsdregis,";") <> "0" AND
+				ENTRY(16,reg_dsdregis,";") <> "" THEN
+				DO:
+			      RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                           INPUT "Garantia: "+ STRING(aux_contador), /*ENTRY(15,reg_dsdregis,";"),*/
+                                           INPUT "",
+                                           INPUT "Aprovado Coordenador: " + ENTRY(16,reg_dsdregis,";")).
+		        END.
+	       END.	
         END.                   
     
     RETURN "OK".
@@ -6337,7 +6602,6 @@ PROCEDURE altera-valor-proposta:
                           INPUT-OUTPUT aux_dscritic).
 
            RETURN "NOK".
-
        END.
 
     /* Verificar se a Esteira esta em contigencia para a cooperativa*/
@@ -6418,8 +6682,7 @@ PROCEDURE altera-valor-proposta:
        END.
 
     Grava_valor:
-    DO WHILE TRUE TRANSACTION
-       ON ERROR UNDO Grava_valor, LEAVE Grava_valor:
+    DO WHILE TRUE TRANSACTION ON ERROR UNDO Grava_valor, LEAVE Grava_valor:
 
         DO  aux_contador = 1 TO 10:
 
@@ -6470,6 +6733,7 @@ PROCEDURE altera-valor-proposta:
 
                /* Busca a carga ativa */
                RUN busca_carga_ativa IN h-b1wgen0188(INPUT par_cdcooper,
+                                                     INPUT par_nrdconta,
                                                     OUTPUT aux_idcarga).
     
                IF VALID-HANDLE(h-b1wgen0188) THEN
@@ -6516,7 +6780,7 @@ PROCEDURE altera-valor-proposta:
                      ASSIGN tt-msg-confirma.inconfir = 1
                             tt-msg-confirma.dsmensag =
                                        "Essa proposta foi aprovada automaticamente.".
-                  END.
+                  END. /* IF AVAIL craplcr AND craplcr.flgdisap THEN */
                ELSE
                   DO:
         /* Verificar se é contrato de portabilidade */
@@ -6525,97 +6789,97 @@ PROCEDURE altera-valor-proposta:
                            crapfin.cdfinemp = crawepr.cdfinemp
                       NO-LOCK: END.
 
-        IF  AVAIL crapfin AND crapfin.tpfinali = 2 THEN
-            DO:            
-               IF  crawepr.insitapr = 1 OR
-                   crawepr.insitapr = 3 THEN
-                   DO:                        
-                        /* Calcula percentual de aumento do novo valor de emprestimo */
-                        ASSIGN aux_percamnt = ((par_vlemprst - crawepr.vlemprst) * 100)
-                                               / crawepr.vlemprst.            
-        
-                        /* Busca percentual de atualizacao de portabilidade */
-                        FIND craptab WHERE craptab.cdcooper = 3             AND
-                                           craptab.nmsistem = "CRED"        AND
-                                           craptab.tptabela = "USUARI"      AND
-                                           craptab.cdacesso = "PAREMPCTL"   AND
-                                           craptab.cdempres = 11
-                                           NO-LOCK NO-ERROR.
-        
-                        IF  AVAIL craptab THEN
-                            DO:
-                                ASSIGN aux_percatua = DECI(SUBSTRING(craptab.dstextab, 13, 6)).
-        
-                                IF  aux_percamnt < aux_percatua AND
-                                    aux_percamnt > (aux_percatua * (-1)) THEN
-                                    DO:
-                                        ASSIGN /*crawepr.cdopeapr = mantera operador da CMAPRV*/
-                                               crawepr.dtaprova = par_dtmvtolt
-                                                             crawepr.hraprova = TIME
-                                                             crawepr.insitest = 3.
-                                        
-                                        CREATE tt-msg-confirma.
-                                        ASSIGN tt-msg-confirma.inconfir = 1
-                                               tt-msg-confirma.dsmensag =
-                                                       "Proposta de portabilidade aprovada " + 
-                                                       "automaticamente.".
-                                    END.
-                                ELSE
-                                    DO:
-                                       CREATE tt-msg-confirma.
-                                       ASSIGN tt-msg-confirma.inconfir = 1
-                                              tt-msg-confirma.dsmensag =
-                                                                        IF aux_contigen THEN
-                                              "Essa proposta deve ser" +
-                                                                           " aprovada na tela CMAPRV"
-                                                                        ELSE 
-                                              "Essa proposta deve ser" +
-                                                                           " aprovada pela Esteira de Credito".
+                    IF AVAIL crapfin AND crapfin.tpfinali = 2 THEN
+                       DO:            
+                           IF  crawepr.insitapr = 1 OR
+                               crawepr.insitapr = 3 THEN
+                               DO:                        
+                                    /* Calcula percentual de aumento do novo valor de emprestimo */
+                                    ASSIGN aux_percamnt = ((par_vlemprst - crawepr.vlemprst) * 100)
+                                                           / crawepr.vlemprst.            
+                    
+                                    /* Busca percentual de atualizacao de portabilidade */
+                                    FIND craptab WHERE craptab.cdcooper = 3             AND
+                                                       craptab.nmsistem = "CRED"        AND
+                                                       craptab.tptabela = "USUARI"      AND
+                                                       craptab.cdacesso = "PAREMPCTL"   AND
+                                                       craptab.cdempres = 11
+                                                       NO-LOCK NO-ERROR.
+                    
+                                    IF  AVAIL craptab THEN
+                                        DO:
+                                            ASSIGN aux_percatua = DECI(SUBSTRING(craptab.dstextab, 13, 6)).
+                    
+                                            IF  aux_percamnt < aux_percatua AND
+                                                aux_percamnt > (aux_percatua * (-1)) THEN
+                                                DO:
+                                                    ASSIGN /*crawepr.cdopeapr = mantera operador da CMAPRV*/
+                                                           crawepr.dtaprova = par_dtmvtolt
+                                                           crawepr.hraprova = TIME
+                                                           crawepr.insitest = 3.
+                                                    
+                                                    CREATE tt-msg-confirma.
+                                                    ASSIGN tt-msg-confirma.inconfir = 1
+                                                           tt-msg-confirma.dsmensag =
+                                                           "Proposta de portabilidade aprovada " + 
+                                                           "automaticamente.".
+                                                END.
+                                            ELSE
+                                                DO:
+                                                   CREATE tt-msg-confirma.
+                                                   ASSIGN tt-msg-confirma.inconfir = 1
+                                                          tt-msg-confirma.dsmensag =
+                                                          IF aux_contigen THEN
+                                                             "Essa proposta deve ser" +
+                                                             " aprovada na tela CMAPRV"
+                                                          ELSE 
+                                                             "Essa proposta deve ser" +
+                                                             " aprovada pela Esteira de Credito".
 
-                                        ASSIGN crawepr.insitapr = 0
-                                               crawepr.cdopeapr = ""
-                                               crawepr.dtaprova = ?
-                                                             crawepr.hraprova = 0
-                                                             crawepr.insitest = 0.
-                                    END.
-                            END.                        
-                        ELSE
-                            DO:
-                                ASSIGN /*crawepr.cdopeapr = mantera operador da CMAPRV*/
-                                       crawepr.dtaprova = par_dtmvtolt
-                                                     crawepr.hraprova = TIME
-                                                     crawepr.insitest = 3.
-                                
-                                       CREATE tt-msg-confirma.
-                                       ASSIGN tt-msg-confirma.inconfir = 1
-                                              tt-msg-confirma.dsmensag =
-                                               "Proposta de portabilidade aprovada " + 
-                                               "automaticamente.".
-                                    END.                                                                        
-                            END.                        
-               ELSE
-                   DO:
-                      CREATE tt-msg-confirma.
-                      ASSIGN tt-msg-confirma.inconfir = 1
-                             tt-msg-confirma.dsmensag =
-                                                       IF aux_contigen THEN
-                             "Essa proposta deve ser" +
-                                                          " aprovada na tela CMAPRV"
-                                                       ELSE 
-                             "Essa proposta deve ser" +
-                                                          " aprovada pela Esteira de Credito".
+                                                    ASSIGN crawepr.insitapr = 0
+                                                           crawepr.cdopeapr = ""
+                                                           crawepr.dtaprova = ?
+                                                           crawepr.hraprova = 0
+                                                           crawepr.insitest = 0.
+                                                END.
+                                        END.                        
+                                    ELSE
+                                        DO:
+                                            ASSIGN /*crawepr.cdopeapr = mantera operador da CMAPRV*/
+                                                   crawepr.dtaprova = par_dtmvtolt
+                                                   crawepr.hraprova = TIME
+                                                   crawepr.insitest = 3.
 
-                       ASSIGN crawepr.insitapr = 0
-                              crawepr.cdopeapr = ""
-                              crawepr.dtaprova = ?
-                                            crawepr.hraprova = 0
-                                            crawepr.insitest = 0.
-            END.                
-           END.
-        ELSE
-             DO:
-                             IF  par_dsdopcao = "SVP" THEN
-                 DO:
+                                                   CREATE tt-msg-confirma.
+                                                   ASSIGN tt-msg-confirma.inconfir = 1
+                                                          tt-msg-confirma.dsmensag =
+                                                          "Proposta de portabilidade aprovada " + 
+                                                          "automaticamente.".
+                                        END.                                                                        
+                               END.                        
+                           ELSE
+                               DO:
+                                  CREATE tt-msg-confirma.
+                                  ASSIGN tt-msg-confirma.inconfir = 1
+                                         tt-msg-confirma.dsmensag =
+                                         IF aux_contigen THEN
+                                            "Essa proposta deve ser" +
+                                            " aprovada na tela CMAPRV"
+                                         ELSE 
+                                            "Essa proposta deve ser" +
+                                            " aprovada pela Esteira de Credito".
+
+                                   ASSIGN crawepr.insitapr = 0
+                                          crawepr.cdopeapr = ""
+                                          crawepr.dtaprova = ?
+                                          crawepr.hraprova = 0
+                                          crawepr.insitest = 0.
+                               END.                
+                       END. /* IF AVAIL crapfin AND crapfin.tpfinali = 2 THEN */
+        ELSE            
+            DO:
+                           IF par_dsdopcao = "SVP" THEN
+           DO:
                  /** Novo valor maior que valor original da proposta **/
                                     IF  par_vlemprst > par_vleprori THEN
                                         DO:
@@ -6631,14 +6895,17 @@ PROCEDURE altera-valor-proposta:
                                                                     IF aux_contigen THEN
                                           "Essa proposta deve ser" +
                                                                        " aprovada na tela CMAPRV"
-                          ELSE
+                                            ELSE
                                                     "Essa proposta deve ser " +
                                                                        " aprovada pela Esteira de Credito".      
                       END.
                  ELSE
                                         DO: /* Dimuniu o valor da proposta e ja foi para esteira perde aprovaçao */
-                                          IF  (crawepr.insitest <> 3) /* Análise nao finalizada */
-                                          AND (crawepr.dtenvest <> ?) THEN /* Enviada para esteira */
+                                        IF  ( (crawepr.insitest <> 3) /* Nao finalizou analise */
+                                         /* OU Finalizou analise como "2 - Nao aprovado" ou "4 - Refazer" */
+                                         OR ( (crawepr.insitest =  3) AND CAN-DO("2,4", STRING(crawepr.insitapr)) ) ) 
+                                         /* E Enviada para esteira */
+                                        AND (crawepr.dtenvest <> ?) THEN 
              DO:
                  ASSIGN crawepr.insitapr = 0
                         crawepr.cdopeapr = ""
@@ -6658,11 +6925,11 @@ PROCEDURE altera-valor-proposta:
 
                                         END.
                                         END.
-                               END.
+                              END. /* IF par_dsdopcao = "SVP" THEN */
                  ELSE
                       DO:
               IF NOT aux_contigen THEN
-                               DO:
+              DO:
                                                                    ASSIGN crawepr.insitapr = 0
                                           crawepr.cdopeapr = ""
                                           crawepr.dtaprova = ?
@@ -6673,11 +6940,12 @@ PROCEDURE altera-valor-proposta:
                                    ASSIGN tt-msg-confirma.inconfir = 1
                        tt-msg-confirma.dsmensag = "Essa proposta deve ser" +
                                                              " aprovada pela Esteira de Credito".      
-                               END.
-                               END.
+                                     END. /* IF NOT aux_contigen THEN */
                       END.
              END.
             END.
+        END.
+
 
         ASSIGN aux_vlemprst     = crawepr.vlemprst
                aux_vlpreemp     = crawepr.vlpreemp
@@ -6812,6 +7080,7 @@ PROCEDURE altera-valor-proposta:
                                         INPUT par_nmdatela,
                                         INPUT par_flgerlog,
                                         INPUT crawepr.cdfinemp,
+                                        INPUT crawepr.cdlcremp,
                                         INPUT crawepr.nrctrliq,
                                         INPUT "",
                                         OUTPUT TABLE tt-erro,
@@ -7668,6 +7937,9 @@ PROCEDURE excluir-proposta:
 														   OUTPUT aux_dscritic,                                  /* Descrição da crítica  */ 
 														   OUTPUT TABLE tt-dados-portabilidade).                 /* TT com dados de portabilidade */   
                                 
+					IF VALID-HANDLE(h-b1wgen0114) THEN
+             DELETE PROCEDURE h-b1wgen0114.
+          
 					FIND FIRST tt-dados-portabilidade.
                 
 					/* Se nao encontrou portabilidade ou houve algum erro */
@@ -8547,7 +8819,7 @@ PROCEDURE valida-dados-proposta-completa:
              DO:
                  ASSIGN aux_qtdiacar = craplcr.qtcarenc.
 
-                 IF   aux_qtdiacar <> 0   THEN
+                 IF   aux_qtdiacar <> 0 AND aux_qtdiacar <> ? THEN
                       DO:
                           IF   par_dtdpagto - par_dtlibera > aux_qtdiacar   THEN
                                DO:
@@ -10964,6 +11236,7 @@ PROCEDURE carrega_dados_proposta_finalidade:
     DEF  INPUT PARAM par_nrdconta AS INTE                             NO-UNDO.
     DEF  INPUT PARAM par_tpemprst AS INTE                             NO-UNDO.
     DEF  INPUT PARAM par_cdfinemp AS INTE                             NO-UNDO.
+    DEF  INPUT PARAM par_cdlcremp AS INTE                             NO-UNDO.
     DEF  INPUT PARAM par_flgatual AS LOG                              NO-UNDO.
     DEF  INPUT PARAM par_dsctrliq AS CHAR                             NO-UNDO.
 
@@ -11004,6 +11277,7 @@ PROCEDURE carrega_dados_proposta_finalidade:
                                 INPUT par_nmdatela,
                                 INPUT FALSE, /* par_flgerlog */
                                 INPUT par_cdfinemp,
+                                INPUT par_cdlcremp,
                                 INPUT aux_nrctrliq,
                                 INPUT par_dsctrliq,
                                 OUTPUT TABLE tt-erro,
@@ -11318,6 +11592,59 @@ PROCEDURE carrega_dados_proposta_finalidade:
 
 END PROCEDURE.
 
+PROCEDURE carrega_dados_proposta_linha_credito:
+
+    DEF  INPUT PARAM par_cdcooper AS INTE                             NO-UNDO.
+    DEF  INPUT PARAM par_cdagenci AS INTE                             NO-UNDO.
+    DEF  INPUT PARAM par_nrdcaixa AS INTE                             NO-UNDO.
+    DEF  INPUT PARAM par_cdoperad AS CHAR                             NO-UNDO.
+    DEF  INPUT PARAM par_nmdatela AS CHAR                             NO-UNDO.
+    DEF  INPUT PARAM par_idorigem AS INTE                             NO-UNDO.
+    DEF  INPUT PARAM par_dtmvtolt AS DATE                             NO-UNDO.
+    DEF  INPUT PARAM par_nrdconta AS INTE                             NO-UNDO.
+    DEF  INPUT PARAM par_cdfinemp AS INTE                             NO-UNDO.
+    DEF  INPUT PARAM par_cdlcremp AS INTE                             NO-UNDO.
+    
+    DEF OUTPUT PARAM TABLE FOR tt-erro.
+    DEF OUTPUT PARAM par_dsnivris AS CHAR                             NO-UNDO.
+
+    DEF VAR aux_nrctrliq LIKE crawepr.nrctrliq                        NO-UNDO.
+    DEF VAR h-b1wgen0043 AS HANDLE                                    NO-UNDO.
+    
+    EMPTY TEMP-TABLE tt-erro.
+
+    IF NOT VALID-HANDLE(h-b1wgen0043) THEN
+       RUN sistema/generico/procedures/b1wgen0043.p
+           PERSISTENT SET h-b1wgen0043.
+
+    /* Calcula o Risco */
+    RUN obtem_emprestimo_risco 
+        IN h-b1wgen0043 (INPUT par_cdcooper,
+                         INPUT par_cdagenci,
+                         INPUT par_nrdcaixa,
+                         INPUT par_cdoperad,
+                         INPUT par_nrdconta,
+                         INPUT 1, /* par_idseqttl */
+                         INPUT par_idorigem,
+                         INPUT par_nmdatela,
+                         INPUT FALSE, /* par_flgerlog */
+                         INPUT par_cdfinemp,
+                         INPUT par_cdlcremp,
+                         INPUT aux_nrctrliq,
+                         INPUT "",
+                         OUTPUT TABLE tt-erro,
+                         OUTPUT par_dsnivris).
+                         
+    IF VALID-HANDLE(h-b1wgen0043) THEN
+       DELETE PROCEDURE h-b1wgen0043.
+     
+    IF RETURN-VALUE <> "OK" THEN
+       RETURN "NOK".
+
+    RETURN "OK".
+
+END PROCEDURE.
+
 PROCEDURE atualiza_risco_proposta:
 
     DEF  INPUT PARAM par_cdcooper AS INTE                             NO-UNDO.
@@ -11385,6 +11712,7 @@ PROCEDURE atualiza_risco_proposta:
                                 INPUT par_nmdatela,
                                 INPUT FALSE, /* par_flgerlog */
                                 INPUT crawepr.cdfinemp,
+                                INPUT crawepr.cdlcremp,
                                 INPUT crawepr.nrctrliq,
                                 INPUT "",    /* par_dsctrliq */
                                 OUTPUT TABLE tt-erro,
@@ -11646,6 +11974,7 @@ PROCEDURE recalcular_emprestimo:
                                                    INPUT par_nmdatela,
                                                    INPUT TRUE,
                                                    INPUT crawepr.cdfinemp,
+                                                   INPUT crawepr.cdlcremp,
                                                    INPUT crawepr.nrctrliq,
                                                    INPUT "",
                                                    OUTPUT TABLE tt-erro,
@@ -12137,6 +12466,92 @@ PROCEDURE atualiza_dados_avalista_proposta:
                             INPUT par_nrdconta,
                            OUTPUT aux_nrdrowid).
     
+    RETURN "OK".
+    
+END PROCEDURE.
+
+PROCEDURE leitura_lem:
+
+    DEF INPUT        PARAM par_cdcooper AS INTE         NO-UNDO.
+    DEF INPUT        PARAM par_cdprogra AS CHAR         NO-UNDO.
+    DEF INPUT        PARAM par_nrdconta AS INTE         NO-UNDO.
+    DEF INPUT        PARAM par_nrctremp AS INTE         NO-UNDO.
+    DEF INPUT        PARAM par_dtcalcul AS DATE         NO-UNDO.
+    DEF INPUT        PARAM par_qtprecal AS DECI         NO-UNDO.
+
+    DEF INPUT-OUTPUT PARAM par_diapagto AS INTE         NO-UNDO.
+    DEF INPUT-OUTPUT PARAM par_txdjuros AS DECI         NO-UNDO.
+    DEF INPUT-OUTPUT PARAM par_qtprepag AS INTE         NO-UNDO.
+    DEF INPUT-OUTPUT PARAM par_vlprepag AS DECI         NO-UNDO.
+    DEF INPUT-OUTPUT PARAM par_vljurmes AS DECI         NO-UNDO.
+    DEF INPUT-OUTPUT PARAM par_vljuracu AS DECI         NO-UNDO.
+    DEF INPUT-OUTPUT PARAM par_vlsdeved AS DECI         NO-UNDO.
+    DEF INPUT-OUTPUT PARAM par_dtultpag AS DATE         NO-UNDO.
+
+    DEF OUTPUT       PARAM par_qtmesdec AS INTE         NO-UNDO.
+    DEF OUTPUT       PARAM par_vlpreapg AS DECI         NO-UNDO.
+    DEF OUTPUT       PARAM par_cdcritic AS INTE         NO-UNDO.
+    DEF OUTPUT       PARAM par_dscritic AS CHAR         NO-UNDO.
+
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+    /* Efetuar a chamada a rotina Oracle */ 
+    RUN STORED-PROCEDURE pc_leitura_lem_car
+      aux_handproc = PROC-HANDLE NO-ERROR (INPUT        par_cdcooper, /* Cooperativa conectada */
+                                           INPUT        par_cdprogra, /* Codigo do programa corrente */
+                                           INPUT        par_nrdconta, /* Conta do associado */
+                                           INPUT        par_nrctremp, /* Numero Contrato */
+                                           INPUT        par_dtcalcul, /* Data para calculo do emprestimo */
+                                           INPUT-OUTPUT par_diapagto, /* Dia para pagamento */
+                                           INPUT-OUTPUT par_txdjuros, /* Taxa de juros aplicada */
+                                           INPUT        par_qtprecal, /* Quantidade de prestacoes calculadas ate momento */
+                                           INPUT-OUTPUT par_qtprepag, /* Quantidade de prestacoes paga ate momento */
+                                           INPUT-OUTPUT par_vlprepag, /* Valor acumulado pago no mes */
+                                           INPUT-OUTPUT par_vljurmes, /* Juros no mes corrente */
+                                           INPUT-OUTPUT par_vljuracu, /* Juros acumulados total */
+                                           INPUT-OUTPUT par_vlsdeved, /* Saldo devedor acumulado */
+                                           INPUT-OUTPUT par_dtultpag, /* Ultimo dia de pagamento das prestacoes */
+                                           OUTPUT 0,                  /* Quantidade de meses decorridos */
+                                           OUTPUT 0,                  /* Valor a pagar */
+                                           OUTPUT 0,                  /* Codigo da critica  */
+                                           OUTPUT "").                /* Descricao da critica */
+                                    
+    /* Fechar o procedimento para buscarmos o resultado */ 
+    CLOSE STORED-PROC pc_leitura_lem_car
+        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+    ASSIGN par_cdcritic = 0
+           par_dscritic = ""
+           par_cdcritic = pc_leitura_lem_car.pr_cdcritic
+                             WHEN pc_leitura_lem_car.pr_cdcritic <> ?
+           par_dscritic = pc_leitura_lem_car.pr_dscritic
+                             WHEN pc_leitura_lem_car.pr_dscritic <> ?
+           par_diapagto = pc_leitura_lem_car.pr_diapagto
+                             WHEN pc_leitura_lem_car.pr_diapagto <> ?
+           par_txdjuros = pc_leitura_lem_car.pr_txdjuros
+                             WHEN pc_leitura_lem_car.pr_txdjuros <> ?
+           par_qtprepag = pc_leitura_lem_car.pr_qtprepag
+                             WHEN pc_leitura_lem_car.pr_qtprepag <> ?
+           par_vlprepag = pc_leitura_lem_car.pr_vlprepag
+                             WHEN pc_leitura_lem_car.pr_vlprepag <> ?
+           par_vljurmes = pc_leitura_lem_car.pr_vljurmes
+                             WHEN pc_leitura_lem_car.pr_vljurmes <> ?
+           par_vljuracu = pc_leitura_lem_car.pr_vljuracu
+                             WHEN pc_leitura_lem_car.pr_vljuracu <> ?
+           par_vlsdeved = pc_leitura_lem_car.pr_vlsdeved
+                             WHEN pc_leitura_lem_car.pr_vlsdeved <> ?
+           par_dtultpag = pc_leitura_lem_car.pr_dtultpag
+                             WHEN pc_leitura_lem_car.pr_dtultpag <> ?
+           par_qtmesdec = pc_leitura_lem_car.pr_qtmesdec
+                             WHEN pc_leitura_lem_car.pr_qtmesdec <> ?
+           par_vlpreapg = pc_leitura_lem_car.pr_vlpreapg
+                             WHEN pc_leitura_lem_car.pr_vlpreapg <> ?.
+
+    IF par_cdcritic <> 0 OR par_dscritic <> "" THEN
+       RETURN "NOK".
+
     RETURN "OK".
     
 END PROCEDURE.
