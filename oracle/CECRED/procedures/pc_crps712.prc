@@ -147,7 +147,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps712 (pr_cdcooper IN crapcop.cdcooper%T
           
           --Verificar se o lote existe
           OPEN cr_craplot (pr_cdcooper => rw_crapcop.cdcooper
-                          ,pr_dtmvtolt => rw_crapdat.dtmvtocd
+                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                           ,pr_cdagenci => 1
                           ,pr_cdbccxlt => 85
                           ,pr_nrdolote => 6000036);
