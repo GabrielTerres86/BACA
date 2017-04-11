@@ -1391,8 +1391,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
            -- 3ª linha
            vr_txt_compmicro := '50'||to_char(rw_crapdat.dtmvtopr,'YYMMDD')                  || ','
                             || to_char(rw_crapdat.dtmvtopr,'DDMMYY')                        || ','
-                            || '3967'                                                           || ','
                             || '9264'                                                           || ','
+                            || '3967'                                                           || ','
                             || TRIM(TO_CHAR(vr_tot_vltttlcr_dim - vr_totatraso59_dim,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,')) || ','
                             || '5210'                                                           || ','
                             || '"REVERSAO SALDO DAS OPERACOES DE MICROCREDITO APLICADOS AOS COOPERADOS COM RECURSOS ORIUNDOS DE DIM - VENCIDOS ATE 59 DIAS."';
@@ -1403,8 +1403,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
            -- 4ª linha                                  
            vr_txt_compmicro := '50'||to_char(rw_crapdat.dtmvtopr,'YYMMDD')       || ','
                             || to_char(rw_crapdat.dtmvtopr,'DDMMYY')             || ','
-                            || '3972'                                            || ','
                             || '9264'                                            || ','
+                            || '3972'                                            || ','
                             || TRIM(TO_CHAR(vr_totatraso59_dim,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,')) || ','
                             || '5210'                                            || ','
                             || '"REVERSAO SALDO DAS OPERACOES DE MICROCREDITO APLICADOS AOS COOPERADOS COM RECURSOS ORIUNDOS DE DIM - VENCIDOS A MAIS DE 59 DIAS."';                                                              
@@ -1448,8 +1448,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
          -- 3ª linha
          vr_txt_compmicro := '50'||to_char(rw_crapdat.dtmvtopr,'YYMMDD')                              || ','
                           || to_char(rw_crapdat.dtmvtopr,'DDMMYY')                                    || ','
-                          || '3965'                                                                       || ','
                           || '9264'                                                                       || ','
+                          || '3965'                                                                       || ','
                           || TRIM(TO_CHAR(vr_tot_vltttlcr_dim_outros - vr_totatraso59_dim_outros,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,')) || ','                                                    
                           || '5210'                                                                       || ','
                           || '"REVERSAO DO SALDO DAS OPERACOES DE MICROCREDITO APLICADOS AOS COOPERADOS COM RECURSOS ORIUNDOS DE DIM PNMPO E DIM PNMPO CAIXA – VENCIDOS ATE 59 DIAS."';       
@@ -1461,8 +1461,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
          -- 4ª linha
          vr_txt_compmicro := '50'||to_char(rw_crapdat.dtmvtopr,'YYMMDD')                 || ','
                           || to_char(rw_crapdat.dtmvtopr,'DDMMYY')                       || ','
-                          || '3968'                                                      || ','
                           || '9264'                                                      || ','
+                          || '3968'                                                      || ','
                           || TRIM(TO_CHAR(vr_totatraso59_dim_outros,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,')) || ','                                                    
                           || '5210'                                                      || ','
                           || '"REVERSAO DO SALDO DAS OPERACOES DE MICROCREDITO APLICADOS AOS COOPERADOS COM RECURSOS ORIUNDOS DE DIM PNMPO E DIM PNMPO CAIXA – VENCIDOS A MAIS DE 59 DIAS."';                                 
@@ -1519,8 +1519,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
            -- 2ª linha
            vr_txt_compmicro := '50'||to_char(rw_crapdat.dtmvtolt,'YYMMDD')                              || ','
                             || to_char(rw_crapdat.dtmvtopr,'DDMMYY')                                    || ','
-                            || '3957'                                                                   || ','
                             || '9264'                                                                   || ','
+                            || '3957'                                                                   || ','
                             || TRIM(TO_CHAR(vr_vlsdeved,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,')) || ','   
                             || '5210' || ','
                             || '"CAIXA – REVERSAO DOS CREDITOS CAPTADOS POR COOPERATIVAS REF. MES DE ' || TRIM(UPPER(to_char(rw_crapdat.dtmvtolt,'month'))) || '/' || to_char(rw_crapdat.dtmvtolt,'yyyy') || '"';                          
