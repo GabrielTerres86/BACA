@@ -185,6 +185,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
   --
   -- Alteracoes: 10/08/2016 - Ajuste referente a homologação da área de negócio
   --                          (Andrei - RKAM)
+  --
+  --             11/04/2017 - Alteração para gerar log na tela Logtel para os campos cdmodali 
+  --                          e cdsubmod em alterações
+  --                          Rafael (Mouts) - Chamado 638849
   ---------------------------------------------------------------------------------------------------------------
 
   -- Variaveis de log
@@ -1033,6 +1037,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
            , c.flgcobmu
            , c.flgsegpr
            , c.cdhistor
+           , c.cdmodali -- modalidade
+           , c.cdsubmod -- sub-modalidade
         FROM craplcr c
        WHERE c.cdcooper = pr_cdcooper
          AND c.cdlcremp = pr_cdlcremp
@@ -1567,6 +1573,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
         vr_dscritic := 'Erro ao tentar atualizar a craplcr - '||sqlerrm;
         RAISE vr_exc_saida;
     END;
+    --
+    -- Valida alteracao na modalidade, se sim, gerar log tela logtel
+    IF NVL(TRIM(pr_cdmodali),'-1') <> NVL(TRIM(rw_craplcr.cdmodali),'-1') THEN
+      -- logtel
+      btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
+                                ,pr_ind_tipo_log => 2 -- Erro tratato
+                                ,pr_nmarqlog     => 'lcredi.log'
+                                ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                    ' -->  Operador '|| vr_cdoperad || ' - ' || 
+                                                    'Alterou a Modalidade da Linha de Credito ' || trim(to_char(rw_craplcr.cdlcremp,'99990')) ||
+                                                    ' de ' || nvl(rw_craplcr.cdmodali,'ND') || ' para ' || nvl(pr_cdmodali,'ND') || '.');
+    END IF;
+    --
+    -- Valida alteracao na submodalidade, se sim, gerar log tela logtel
+    IF NVL(TRIM(pr_cdsubmod),'-1') <> NVL(TRIM(rw_craplcr.cdsubmod),'-1') THEN
+      -- logtel
+      btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
+                                ,pr_ind_tipo_log => 2 -- Erro tratato
+                                ,pr_nmarqlog     => 'lcredi.log'
+                                ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                    ' -->  Operador '|| vr_cdoperad || ' - ' || 
+                                                    'Alterou a Submodalidade da Linha de Credito ' || trim(to_char(rw_craplcr.cdlcremp,'99990')) ||
+                                                    ' de ' || nvl(rw_craplcr.cdsubmod,'ND') || ' para ' || nvl(pr_cdsubmod,'ND') || '.');      
+    END IF;    
+    --
 
     IF TRIM(pr_dslcremp) <> TRIM(rw_craplcr.dslcremp) THEN    
       -- Gera log
