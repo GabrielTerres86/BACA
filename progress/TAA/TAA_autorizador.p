@@ -5924,6 +5924,7 @@ PROCEDURE verifica_comprovantes:
                                       INPUT aux_nrdconta,
                                       INPUT aux_dtinipro,
                                       INPUT aux_dtfimpro,
+                                      INPUT "",
                                       INPUT 0,
                                       INPUT 50, /* Ate 50 registros */
                                       INPUT 1,  /* Tipo Transferencia*/
@@ -5946,6 +5947,7 @@ PROCEDURE verifica_comprovantes:
                                       INPUT aux_nrdconta,
                                       INPUT aux_dtinipro,
                                       INPUT aux_dtfimpro,
+                                      INPUT "",
                                       INPUT 0,
                                       INPUT 50, /* Ate 50 registros */
                                       INPUT 6,  /* Tipo Pagamento */

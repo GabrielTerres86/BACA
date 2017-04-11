@@ -881,6 +881,7 @@ DEF VAR aux_dsretorn AS CHAR                                           NO-UNDO.
 DEF VAR aux_dtdiadeb AS CHAR                                           NO-UNDO.
 DEF VAR aux_tpvalida AS CHAR                                           NO-UNDO.
 DEF VAR aux_dstpcons AS CHAR                                           NO-UNDO.
+DEF VAR aux_dsprotoc AS CHAR                                           NO-UNDO.
 
 DEF VAR aux_nrcpfapr AS DECI                                           NO-UNDO.
 DEF VAR aux_vltitulo AS DECI                                           NO-UNDO.
@@ -3234,6 +3235,7 @@ PROCEDURE proc_operacao25:
 
     ASSIGN aux_dtiniper = DATE(GET-VALUE("aux_dtinipro"))
            aux_dtfimper = DATE(GET-VALUE("aux_dtfimpro"))
+           aux_dsprotoc = GET-VALUE("aux_dsprotoc")
            aux_nriniseq = INTE(GET-VALUE("aux_iniconta"))
            aux_nrregist = INTE(GET-VALUE("aux_nrregist")).
 
@@ -3244,6 +3246,7 @@ PROCEDURE proc_operacao25:
                                                  INPUT aux_dtmvtolt,
                                                  INPUT aux_dtiniper,
                                                  INPUT aux_dtfimper,
+                                                 INPUT aux_dsprotoc,
                                                  INPUT aux_nriniseq,
                                                  INPUT aux_nrregist,
                                                 OUTPUT aux_dsmsgerr,

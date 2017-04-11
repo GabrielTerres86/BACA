@@ -74,9 +74,10 @@ IF  VALID-HANDLE(h-bo_algoritmo_seguranca)  THEN
                                               INPUT par_nrdconta,
                                               INPUT par_dtinipro,
                                               INPUT par_dtfimpro,
+                                              INPUT "",
                                               INPUT par_iniconta,
                                               INPUT par_nrregist,
-                                                INPUT par_cdtippro,
+                                              INPUT par_cdtippro,
                                               INPUT 3, /** Internet **/
                                               OUTPUT aux_dstransa,
                                               OUTPUT aux_dscritic,

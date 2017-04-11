@@ -57,6 +57,7 @@ DEF INPUT  PARAM par_idseqttl LIKE crapttl.idseqttl                    NO-UNDO.
 DEF INPUT  PARAM par_dtmvtolt LIKE crapdat.dtmvtolt                    NO-UNDO.
 DEF INPUT  PARAM par_dtinipro LIKE crappro.dtmvtolt                    NO-UNDO.
 DEF INPUT  PARAM par_dtfimpro LIKE crappro.dtmvtolt                    NO-UNDO.
+DEF INPUT  PARAM par_dsprotoc AS CHAR                                  NO-UNDO.
 DEF INPUT  PARAM par_iniconta AS INTE                                  NO-UNDO.
 DEF INPUT  PARAM par_nrregist AS INTE                                  NO-UNDO.
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
@@ -72,6 +73,7 @@ IF  VALID-HANDLE(h-bo_algoritmo_seguranca)  THEN
                                               INPUT par_nrdconta,
                                               INPUT par_dtinipro,
                                               INPUT par_dtfimpro,
+                                              INPUT par_dsprotoc,
                                               INPUT par_iniconta,
                                               INPUT par_nrregist,
                                               INPUT 0, /** Todos os tipos **/

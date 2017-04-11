@@ -93,6 +93,10 @@
                     
                 19/05/2016 - Ajuste para exibir protocolos 15 - pagamento convenio
 				             PRJ320 - Oferta DebAut (Odirlei-AMcom)
+                    
+                24/03/2017 - Adicionado parametro na lista_protocolos para que posssa
+                             ser filtrado por uma lista fixa de protocolos. PR354.1
+                             (Dionathan)
 ............................................................................. */
 
 { sistema/generico/includes/var_internet.i }
@@ -370,6 +374,7 @@ PROCEDURE lista_protocolos:
     DEF INPUT  PARAM par_nrdconta LIKE crappro.nrdconta             NO-UNDO.
     DEF INPUT  PARAM par_dtinipro LIKE crappro.dtmvtolt             NO-UNDO.
     DEF INPUT  PARAM par_dtfimpro LIKE crappro.dtmvtolt             NO-UNDO.
+    DEF INPUT  PARAM par_dsprotoc AS CHAR                           NO-UNDO.
     DEF INPUT  PARAM par_iniconta AS INTE                           NO-UNDO.
     DEF INPUT  PARAM par_nrregist AS INTE                           NO-UNDO.
     DEF INPUT  PARAM par_cdtippro AS INTE                           NO-UNDO.
@@ -384,6 +389,9 @@ PROCEDURE lista_protocolos:
     DEF OUTPUT PARAM TABLE FOR cratpro.
 
     DEF VAR aux_nmoperad LIKE crapopi.nmoperad                      NO-UNDO.
+    DEF VAR aux_splitqtd AS INTEGER                                 NO-UNDO.
+    DEF VAR aux_splititm AS INTEGER                                 NO-UNDO.
+    DEF VAR aux_dsprotoc AS CHAR                                    NO-UNDO.
 
     /**********************************************************************/
     /** Parametros para Internet: dtinipro, dtfimpro, iniconta, nrregist **/
@@ -417,116 +425,183 @@ PROCEDURE lista_protocolos:
     IF  par_dtfimpro > aux_datdodia  THEN
         ASSIGN par_dtfimpro = aux_datdodia.
 
-
     FIND FIRST crapdat
 	     WHERE crapdat.cdcooper = par_cdcooper
 		 NO-LOCK NO-ERROR.
 
     EMPTY TEMP-TABLE cratpro.
-
-    FOR EACH crappro WHERE crappro.cdcooper  = par_cdcooper  AND
-                           crappro.nrdconta  = par_nrdconta  AND
-                           crappro.dtmvtolt <= par_dtfimpro  AND
-                           crappro.dttransa >= par_dtinipro  AND
-                           crappro.dttransa <= par_dtfimpro  AND
-                          (par_cdtippro      = 0             OR
-                           crappro.cdtippro  = par_cdtippro) NO-LOCK
-                           BY crappro.dttransa DESC BY crappro.hrautent DESC:
-
-        IF  par_cdorigem = 3  AND 
-           (crappro.cdtippro = 5 OR crappro.cdtippro = 6)  THEN /* TAA */
-            NEXT.
-
-        IF  par_cdtippro <> 8     AND 
-            crappro.cdtippro = 8  THEN /** Protocolo Favorecido **/
-            NEXT.
-
-        /** Nao carregar Protocolo pagamento fatura 
-		    caso seje o dia de geracao, devido o pagamento
-			ainda poder ser extornado. **/
-        IF crappro.cdtippro = 15  AND
-		   crappro.dtmvtolt = crapdat.dtmvtolt THEN 
-		   NEXT.
-                           
-        ASSIGN par_qttotreg = par_qttotreg + 1.
+    
+    IF par_dsprotoc <> "" THEN
+    DO:
+      ASSIGN aux_splitqtd = NUM-ENTRIES(par_dsprotoc,";").
+      
+      DO aux_splititm = 1 TO aux_splitqtd:
+        aux_dsprotoc = ENTRY(aux_splititm,par_dsprotoc,";").
         
-        IF  par_nrregist > 0                              AND 
-           (par_qttotreg <= par_iniconta                  OR
-            par_nrregist < (par_qttotreg - par_iniconta)) THEN
-            NEXT.
+        FIND FIRST crappro
+             WHERE crappro.cdcooper = par_cdcooper  AND
+                   crappro.dsprotoc = aux_dsprotoc NO-LOCK.
         
-        IF par_cdorigem = 3 AND /* InternetBank */
-           crappro.cdtippro = 1 AND
-           SUBSTR(crappro.dsinform[3],1,3) = "TAA" THEN
-           NEXT.
-        
-        IF par_cdorigem = 4 AND /* TAA */
-           crappro.cdtippro = 1 AND
-           SUBSTR(crappro.dsinform[3],1,3) <> "TAA" THEN
-           NEXT.
-               
-        ASSIGN aux_nmoperad = "".
-        FIND FIRST crapopi WHERE crapopi.cdcooper = par_cdcooper 
-                             AND crapopi.nrdconta = par_nrdconta
-                             AND crapopi.nrcpfope = crappro.nrcpfope
-                             NO-LOCK NO-ERROR.
-        IF  AVAIL crapopi  THEN
-            ASSIGN aux_nmoperad = crapopi.nmoperad.
+        /* Registra os dados do associado */
+        RUN lista_protocolo
+            (INPUT par_cdcooper,
+             INPUT par_nrdconta,
+             INPUT par_cdorigem,
 
-        /** Se incluir novo campo para protocolo de TED, verificar a procedure
-            executa-envio-ted na BO b1wgen0015, onde o protocolo criado eh
-            retornado para o InternetBank sem passar por aqui **/
-        CREATE cratpro.
-        ASSIGN cratpro.cdtippro    = crappro.cdtippro
-               cratpro.dtmvtolt    = crappro.dtmvtolt
-               cratpro.dttransa    = crappro.dttransa
-               cratpro.hrautent    = crappro.hrautent
-               cratpro.vldocmto    = crappro.vldocmto
-               cratpro.nrdocmto    = crappro.nrdocmto
-               cratpro.nrseqaut    = crappro.nrseqaut
-               cratpro.dsinform[1] = crappro.dsinform[1]
-               cratpro.dsinform[2] = crappro.dsinform[2]
-               cratpro.dsinform[3] = crappro.dsinform[3]
-               cratpro.dsprotoc    = crappro.dsprotoc
-               cratpro.flgagend    = crappro.flgagend
-               cratpro.nmprepos    = crappro.nmprepos
-               cratpro.nrcpfpre    = crappro.nrcpfpre
-               cratpro.nmoperad    = aux_nmoperad
-               cratpro.nrcpfope    = crappro.nrcpfope
-               cratpro.cdbcoctl    = crapcop.cdbcoctl WHEN (crappro.cdtippro = 1 AND par_cdorigem = 3)
-                                                        OR crappro.cdtippro = 2
-                                                        OR crappro.cdtippro = 6
-                                                        OR crappro.cdtippro = 9
-                                                        OR crappro.cdtippro = 11
-                                                        OR crappro.cdtippro = 15
-               cratpro.cdagectl    = crapcop.cdagectl WHEN (crappro.cdtippro = 1 AND par_cdorigem = 3)
-                                                        OR crappro.cdtippro = 2
-                                                        OR crappro.cdtippro = 6
-                                                        OR crappro.cdtippro = 9
-                                                        OR crappro.cdtippro = 11
-                                                        OR crappro.cdtippro = 15.
+             BUFFER crappro,
+             
+             INPUT-OUTPUT par_iniconta,
+             INPUT-OUTPUT par_nrregist,
+             INPUT-OUTPUT par_qttotreg,
+             INPUT-OUTPUT TABLE cratpro,
 
-        IF   par_cdorigem = 4   THEN /* TAA */
-             DO:
-                 /* Transferencia */
-                 IF   cratpro.cdtippro = 1   THEN
-                      ASSIGN cratpro.dscedent  = 
-                         SUBSTR(ENTRY(2,crappro.dsinform[2],"#"),19) NO-ERROR.
-                 ELSE
-                      ASSIGN cratpro.dscedent = IF   crappro.dscedent = ""   THEN 
-                                                     "PAGAMENTO TAA"
-                                                ELSE
-                                                     crappro.dscedent.  
-                                                                 
-             END.
-        ELSE
-             DO:
-                 ASSIGN cratpro.dscedent = crappro.dscedent.
-             END.                                                   
+             OUTPUT par_dscritic
+            ).
+      END.
     END.
+    ELSE
+      FOR EACH crappro WHERE crappro.cdcooper  = par_cdcooper  AND
+                             crappro.nrdconta  = par_nrdconta  AND
+                             crappro.dtmvtolt <= par_dtfimpro  AND
+                             crappro.dttransa >= par_dtinipro  AND
+                             crappro.dttransa <= par_dtfimpro  AND
+                            (par_cdtippro      = 0             OR
+                             crappro.cdtippro  = par_cdtippro) NO-LOCK
+                             BY crappro.dttransa DESC BY crappro.hrautent DESC:
+          
+          IF  par_cdorigem = 3  AND 
+             (crappro.cdtippro = 5 OR crappro.cdtippro = 6)  THEN /* TAA */
+              NEXT.
 
+          IF  par_cdtippro <> 8     AND 
+              crappro.cdtippro = 8  THEN /** Protocolo Favorecido **/
+              NEXT.
+              
+          /* Registra os dados do associado */
+          RUN lista_protocolo
+              (INPUT par_cdcooper,
+               INPUT par_nrdconta,
+               INPUT par_cdorigem,
+
+               BUFFER crappro,
+
+               INPUT-OUTPUT par_iniconta,
+               INPUT-OUTPUT par_nrregist,
+               INPUT-OUTPUT par_qttotreg,
+               INPUT-OUTPUT TABLE cratpro,
+
+               OUTPUT par_dscritic
+              ).
+      END.
+    
     RETURN "OK".
  
+END PROCEDURE.
+
+PROCEDURE lista_protocolo:
+
+    DEF INPUT  PARAM par_cdcooper LIKE crappro.cdcooper             NO-UNDO.
+    DEF INPUT  PARAM par_nrdconta LIKE crappro.nrdconta             NO-UNDO.
+    /*par_cdorigem -> 1-ayllos, 3-internet, 4-TAA*/
+    DEF INPUT  PARAM par_cdorigem AS INTE                           NO-UNDO.
+    
+    DEF PARAM BUFFER crabpro FOR crappro.
+    
+    DEF INPUT-OUTPUT  PARAM par_iniconta AS INTE                    NO-UNDO.
+    DEF INPUT-OUTPUT  PARAM par_nrregist AS INTE                    NO-UNDO.
+    DEF INPUT-OUTPUT  PARAM par_qttotreg AS INTE                    NO-UNDO.
+    DEF INPUT-OUTPUT  PARAM TABLE FOR cratpro.
+
+    DEF OUTPUT PARAM par_dscritic LIKE crapcri.dscritic             NO-UNDO.
+    
+
+    DEF VAR aux_nmoperad LIKE crapopi.nmoperad                      NO-UNDO.
+
+    /** Nao carregar Protocolo pagamento fatura 
+    caso seja o dia de geracao, devido o pagamento
+    ainda poder ser estornado. **/
+    IF crabpro.cdtippro = 15  AND
+      crabpro.dtmvtolt = crapdat.dtmvtolt THEN 
+    NEXT.
+    
+    ASSIGN par_qttotreg = par_qttotreg + 1.
+    
+    IF  par_nrregist > 0                              AND 
+       (par_qttotreg <= par_iniconta                  OR
+        par_nrregist < (par_qttotreg - par_iniconta)) THEN
+        NEXT.
+    
+    IF par_cdorigem = 3 AND /* InternetBank */
+       crabpro.cdtippro = 1 AND
+       SUBSTR(crabpro.dsinform[3],1,3) = "TAA" THEN
+       NEXT.
+    
+    IF par_cdorigem = 4 AND /* TAA */
+       crabpro.cdtippro = 1 AND
+       SUBSTR(crabpro.dsinform[3],1,3) <> "TAA" THEN
+       NEXT.
+           
+    ASSIGN aux_nmoperad = "".
+    FIND FIRST crapopi WHERE crapopi.cdcooper = par_cdcooper 
+                         AND crapopi.nrdconta = par_nrdconta
+                         AND crapopi.nrcpfope = crabpro.nrcpfope
+                         NO-LOCK NO-ERROR.
+    IF  AVAIL crapopi  THEN
+        ASSIGN aux_nmoperad = crapopi.nmoperad.
+
+    /** Se incluir novo campo para protocolo de TED, verificar a procedure
+        executa-envio-ted na BO b1wgen0015, onde o protocolo criado eh
+        retornado para o InternetBank sem passar por aqui **/
+    CREATE cratpro.
+    ASSIGN cratpro.cdtippro    = crabpro.cdtippro
+           cratpro.dtmvtolt    = crabpro.dtmvtolt
+           cratpro.dttransa    = crabpro.dttransa
+           cratpro.hrautent    = crabpro.hrautent
+           cratpro.vldocmto    = crabpro.vldocmto
+           cratpro.nrdocmto    = crabpro.nrdocmto
+           cratpro.nrseqaut    = crabpro.nrseqaut
+           cratpro.dsinform[1] = crabpro.dsinform[1]
+           cratpro.dsinform[2] = crabpro.dsinform[2]
+           cratpro.dsinform[3] = crabpro.dsinform[3]
+           cratpro.dsprotoc    = crabpro.dsprotoc
+           cratpro.flgagend    = crabpro.flgagend
+           cratpro.nmprepos    = crabpro.nmprepos
+           cratpro.nrcpfpre    = crabpro.nrcpfpre
+           cratpro.nmoperad    = aux_nmoperad
+           cratpro.nrcpfope    = crabpro.nrcpfope
+           cratpro.cdbcoctl    = crapcop.cdbcoctl WHEN (crabpro.cdtippro = 1 AND par_cdorigem = 3)
+                                                    OR crabpro.cdtippro = 2
+                                                    OR crabpro.cdtippro = 6
+                                                    OR crabpro.cdtippro = 9
+                                                    OR crabpro.cdtippro = 11
+                                                    OR crabpro.cdtippro = 15
+           cratpro.cdagectl    = crapcop.cdagectl WHEN (crabpro.cdtippro = 1 AND par_cdorigem = 3)
+                                                    OR crabpro.cdtippro = 2
+                                                    OR crabpro.cdtippro = 6
+                                                    OR crabpro.cdtippro = 9
+                                                    OR crabpro.cdtippro = 11
+                                                    OR crabpro.cdtippro = 15.
+
+    IF   par_cdorigem = 4   THEN /* TAA */
+         DO:
+             /* Transferencia */
+             IF   cratpro.cdtippro = 1   THEN
+                  ASSIGN cratpro.dscedent  = 
+                     SUBSTR(ENTRY(2,crabpro.dsinform[2],"#"),19) NO-ERROR.
+             ELSE
+                  ASSIGN cratpro.dscedent = IF   crabpro.dscedent = ""   THEN 
+                                                 "PAGAMENTO TAA"
+                                            ELSE
+                                                 crabpro.dscedent.  
+                                                             
+         END.
+    ELSE
+         DO:
+             ASSIGN cratpro.dscedent = crabpro.dscedent.
+         END.
+
+    RETURN "OK".
+
 END PROCEDURE.
 
 
