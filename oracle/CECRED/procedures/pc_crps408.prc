@@ -166,12 +166,14 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
                22/01/2016 - Inclusao do CNPJ da Cooperativa no resumo de Pedido
                             (Daniel)      
 							
-			   01/09/2016 - Geração de arquivos de formularios continuos para
+			         01/09/2016 - Geração de arquivos de formularios continuos para
                             RRD (Elton - SD 511158)			                   
                             
                25/10/2016 - #524279 Ajustado para que os pedidos sejam acumulados e enviados ao fornecedor 
                             quinzenalmente (todo dia 1º e todo dia 15 de cada mês, quando se tratar de finais 
                             de semana ou feriados devem ser enviados no primeiro dia útil posterior). (Carlos)
+
+			   21/03/2017 - Ajuste para gerar número de pedido distinto por tipo de requisição (Rafael Monteiro)
 
 ............................................................................. */
 
@@ -288,7 +290,8 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
                               pr_nmarqui3     IN VARCHAR2,
                               pr_nmarqui4     IN VARCHAR2,
                               pr_flg_impri    IN VARCHAR2,
-                              pr_cdempres     IN gnsequt.cdsequtl%TYPE) IS
+                              pr_cdempres     IN gnsequt.cdsequtl%TYPE,
+                              pr_tprequis     IN crapreq.tprequis%type) IS
 
     -- Cursor sobre arquivo de controle
     CURSOR cr_gnsequt IS
@@ -303,7 +306,8 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
     CURSOR cr_crapreq(pr_cdcooper     IN crapreq.cdcooper%TYPE,
                       pr_cdbanchq     IN crapcop.cdbcoctl%TYPE,
                       pr_cdtipcta_ini IN crapreq.cdtipcta%TYPE,
-                      pr_cdtipcta_fim IN crapreq.cdtipcta%TYPE) IS
+                      pr_cdtipcta_fim IN crapreq.cdtipcta%TYPE,
+                      pr_tprequis     in crapreq.tprequis%TYPE) IS
       SELECT crapreq.ROWID,
              crapreq.cdagenci,
              crapreq.nrdconta,
@@ -316,13 +320,14 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
        WHERE crapreq.cdcooper  = pr_cdcooper
          AND (crapreq.tprequis  = 1
           OR  (crapreq.tprequis = 3
-         AND   crapreq.tpformul = 999))
+         AND   crapreq.tpformul = 999))         
          AND crapreq.cdtipcta BETWEEN pr_cdtipcta_ini and pr_cdtipcta_fim         
          AND crapreq.insitreq IN (1,4,5)
          AND crapass.cdcooper = crapreq.cdcooper
          AND crapass.nrdconta = crapreq.nrdconta
          AND crapass.cdbcochq = pr_cdbanchq
          AND crapreq.qtreqtal > 0 -- Somente quando tiver solicitacao de talao
+         AND crapreq.tprequis = pr_tprequis
        ORDER BY crapreq.cdagenci,
                 crapreq.nrdconta;
 
@@ -496,7 +501,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
 
     -- Variável que indica se foi gerado arquivo de requisicao de talao/formulario de cheque
     vr_flggerou        boolean;
-
+    
     -- variavel para verificacao do dia de processamento de envio da requisicao
     vr_dtcalcul        DATE;
 
@@ -619,7 +624,8 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
     FOR rw_crapreq IN cr_crapreq(pr_cdcooper,
                                  pr_cdbanchq,
                                  pr_cdtipcta_ini,
-                                 pr_cdtipcta_fim) LOOP
+                                 pr_cdtipcta_fim,
+                                 pr_tprequis) LOOP
 
       -- Verifica se é o primeiro dia útil do mês ou primeiro dia útil a partir do dia 15, pois as
       -- solicitações de formulário continuo só acontecerão de 15 em 15 dias, apenas para a empresa RR Donnelley
@@ -627,9 +633,9 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
           rw_crapreq.tpformul = 999) THEN
         
         IF pr_cdempres <> 2 THEN
-        CONTINUE;
-      END IF;                           
-
+          CONTINUE;
+        END IF;
+        
         -- Definindo a data do calculo
         -- se for primeira quinzena
         IF vr_dtmvtolt < to_date('15/' || to_char(vr_dtmvtolt,'MM/RRRR'),'DD/MM/RRRR') THEN
@@ -1366,7 +1372,8 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
                      '</pedido>'||
                    '</crps408>',4);
     dbms_lob.append(vr_des_xml_fc,vr_des_xml_fc_rej);
-
+    --
+    IF pr_nmarqui1 IS NOT NULL THEN
     -- Chamada do iReport para gerar o arquivo de saida
     gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper,         --> Cooperativa conectada
                                 pr_cdprogra  => vr_cdprogra,         --> Programa chamador
@@ -1390,9 +1397,10 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
     IF pr_dscritic IS NOT NULL THEN
       RAISE vr_exc_saida;
     END IF;
-
+    END IF;
 
     IF vr_qttotgerreq_fc > 0 THEN -- Gerar relatorio de FC somente se existir dados
+      IF pr_nmarqui3 IS NOT NULL THEN      
       gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper,         --> Cooperativa conectada
                                   pr_cdprogra  => vr_cdprogra,         --> Programa chamador
                                   pr_dtmvtolt  => vr_dtmvtolt,         --> Data do movimento atual
@@ -1417,6 +1425,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
       IF pr_dscritic IS NOT NULL THEN
         RAISE vr_exc_saida;
       END IF;
+    END IF;
     END IF;
 
     -- Liberando a memoria alocada para os CLOBs
@@ -1567,7 +1576,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
                        '<nrdocnpj>'|| TO_CHAR(gene0002.fn_mask_cpf_cnpj(rw_crapcop.nrdocnpj,2)) ||'</nrdocnpj>'||
                      '</pedido>'||
                    '</crps408>',1);
-
+    IF pr_nmarqui2 IS NOT NULL THEN
     -- Chamada do iReport para gerar o arquivo de saida
     gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper,         --> Cooperativa conectada
                                 pr_cdprogra  => vr_cdprogra,         --> Programa chamador
@@ -1591,7 +1600,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
     IF pr_dscritic IS NOT NULL THEN
       RAISE vr_exc_saida;
     END IF;
-
+    END IF;
 
     -- Liberando a memoria alocada para os CLOBs
     dbms_lob.close(vr_des_xml);
@@ -1599,6 +1608,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
 
     -- Escreve o resumo para Formulario continuo
     IF vr_qttotgerreq_fc > 0 THEN
+      IF pr_nmarqui4 IS NOT NULL THEN
       vr_des_xml_fc := NULL;
       dbms_lob.createtemporary(vr_des_xml_fc, true);
       dbms_lob.open(vr_des_xml_fc, dbms_lob.lob_readwrite);
@@ -1643,6 +1653,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
       -- Liberando a memoria alocada para os CLOBs
       dbms_lob.close(vr_des_xml_fc);
       dbms_lob.freetemporary(vr_des_xml_fc);
+    END IF;
     END IF;
 
     -- Acumula o arquivo de cabecalho com o arquivo de dados no arquivo principal
@@ -1829,10 +1840,25 @@ BEGIN
                     pr_nrdserie     => 1,
                     pr_nmarqui1     => 'crrl392_03',
                     pr_nmarqui2     => 'crrl393_03',
+                    pr_nmarqui3     => NULL, --'crrl572_03',
+                    pr_nmarqui4     => NULL, --'crrl573_03',
+                    pr_flg_impri    => 'S',
+                    pr_cdempres     => vr_cdempres,
+                    pr_tprequis     => 1);
+  -- CECRED
+  Pc_Gera_Talonario(pr_cdcooper     => pr_cdcooper,
+                    pr_cdtipcta_ini => 08, --NORMAL CONVENIO
+                    pr_cdtipcta_fim => 11, --CONJ.ESP.CONV.
+                    pr_cdbanchq     => rw_crapcop.cdbcoctl,
+                    pr_nrcontab     => 0,
+                    pr_nrdserie     => 1,
+                    pr_nmarqui1     => NULL, --'crrl392_03',
+                    pr_nmarqui2     => NULL, --'crrl393_03',
                     pr_nmarqui3     => 'crrl572_03',
                     pr_nmarqui4     => 'crrl573_03',
                     pr_flg_impri    => 'S',
-                    pr_cdempres     => vr_cdempres);
+                    pr_cdempres     => vr_cdempres,
+                    pr_tprequis     => 3);   
 
 
   -- Testar se houve erro
