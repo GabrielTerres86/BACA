@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odair
-       Data    : Abril/97.                      Ultima atualizacao: 20/05/2016
+       Data    : Abril/97.                      Ultima atualizacao: 02/03/2017
 
        Dados referentes ao programa:
 
@@ -111,6 +111,8 @@ CREATE OR REPLACE PROCEDURE CECRED.
                    20/05/2016 - Incluido nas consultas da craplau
                                 craplau.dsorigem <> "TRMULTAJUROS". (Jaison/James)
 
+                   02/03/2017 - Incluido nas consultas da craplau 
+                                craplau.dsorigem <> "ADIOFJUROS" (Lucas Ranghetti M338.1)
     ............................................................................ */
 
     DECLARE
@@ -158,32 +160,33 @@ CREATE OR REPLACE PROCEDURE CECRED.
                        ,pr_cdagenci IN craplot.cdagenci%TYPE
                        ,pr_cdbccxlt IN craplot.cdbccxlt%TYPE
                        ,pr_nrdolote IN craplot.nrdolote%TYPE ) IS
-        SELECT  nrdconta,
-                nrcrcard,
-                cdhistor,
-                vllanaut,
-                nrseqdig,
-                nrdocmto,
-                dtmvtolt,
-                dtmvtopg,
-                nrseqlan,
-                nrdolote
-        FROM    craplau
-        WHERE   craplau.cdcooper  = pr_cdcooper
-        AND     craplau.dtmvtolt  = pr_dtmvtolt
-        AND     craplau.cdagenci  = pr_cdagenci
-        AND     craplau.cdbccxlt  = pr_cdbccxlt
-        AND     craplau.nrdolote  = pr_nrdolote
-        AND     craplau.nrseqlan  > nvl(TRIM(vr_dsrestar),'0')
+SELECT nrdconta
+      ,nrcrcard
+      ,cdhistor
+      ,vllanaut
+      ,nrseqdig
+      ,nrdocmto
+      ,dtmvtolt
+      ,dtmvtopg
+      ,nrseqlan
+      ,nrdolote
+  FROM craplau
+ WHERE craplau.cdcooper = pr_cdcooper
+   AND craplau.dtmvtolt = pr_dtmvtolt
+   AND craplau.cdagenci = pr_cdagenci
+   AND craplau.cdbccxlt = pr_cdbccxlt
+   AND craplau.nrdolote = pr_nrdolote
+   AND craplau.nrseqlan > NVL(TRIM(vr_dsrestar), '0')
         -- sistemas que foi originada a operaçao
-        AND     craplau.dsorigem <> 'CAIXA'
-        AND     craplau.dsorigem <> 'INTERNET'
-        AND     craplau.dsorigem <> 'TAA'
-        AND     craplau.dsorigem <> 'PG555'
-        AND     craplau.dsorigem <> 'CARTAOBB'
-        AND     craplau.dsorigem <> 'BLOQJUD'
-				AND     craplau.dsorigem <> 'DAUT BANCOOB'
-        AND     craplau.dsorigem <> 'TRMULTAJUROS';
+   AND craplau.dsorigem NOT IN ('CAIXA'
+                               ,'INTERNET'
+                               ,'TAA'
+                               ,'PG555'
+                               ,'CARTAOBB'
+                               ,'BLOQJUD'
+                               ,'DAUT BANCOOB'
+                               ,'TRMULTAJUROS'
+                               ,'ADIOFJUROS');
 
       -- busca cadastro de associados
       CURSOR cr_crapass(pr_nrdconta IN craplau.nrdconta%TYPE)  IS
