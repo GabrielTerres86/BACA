@@ -1,6 +1,6 @@
 /*!
  * FONTE        : ppe.js
- * CRIAÇÃO      : Carlos Henrique                               Última alteração: 08/03/2017
+ * CRIAÇÃO      : Carlos Henrique                               Última alteração: 27/03/2017
  * DATA CRIAÇÃO : 21/12/2015 
  * OBJETIVO     : Biblioteca de funções na rotina COMERCIAL PPE da tela de CONTAS
  * --------------
@@ -9,6 +9,8 @@
                   21/02/2017 - Ajustes para inclusão de novos campos (Adriano - SD 614408).
 
                   08/03/2017 - Ajuste devido a troca de nome do campo nmempresa para nmemporg (Adriano - SD 614408).
+				  
+				  27/03/2017 - Ajuste realizado para corrigir o filtro da ocupação. (Kelvin - SD 636559)	
  * --------------
  */
 
@@ -395,7 +397,7 @@ function controlaPesquisas() {
 				// Ocupacao
 				if ( campoAnterior == 'cdocpttl' ) {
 					
-					filtrosPesq = 'Cód. Ocupação;cdocpttl;30px;S;0|Ocupação;rsocupa;200px;S;';
+					filtrosPesq = 'Cód. Ocupação;cdocpttl;30px;S;0|Ocupação;rsdocupa;200px;S;';
 					colunas = 'Código;cdocupa;20%;right|Ocupação;dsdocupa;80%;left';
 					mostraPesquisa("ZOOM0001", "BUSCOCUPACAO", "Ocupa&ccedil;&atilde;o", "30", filtrosPesq, colunas, divRotina);
 
