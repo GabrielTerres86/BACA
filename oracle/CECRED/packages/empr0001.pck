@@ -26,6 +26,8 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
   --             26/09/2016 - Adicionado validacao de contratos de acordo na procedure
   --                          pc_valida_pagamentos_geral, Prj. 302 (Jean Michel).
   --
+  --             22/02/2017 - Criacao dos FIELDs dsorgrec e dtinictr na typ_reg_dados_epr. (Jonatas-Supero)  
+  --
   --             31/03/2017 - Ajustado calculo de saldo para nao considerar valores bloqueados.
   --                          Heitor (Mouts) - Melhoria 440
   --
@@ -124,7 +126,9 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
     ,qtpreapg NUMBER
     ,liquidia INTEGER
     ,qtimpctr crapepr.qtimpctr%TYPE
-    ,portabil VARCHAR2(100));
+    ,portabil VARCHAR2(100)
+    ,dsorgrec craplcr.dsorgrec%TYPE
+    ,dtinictr DATE);
 
   /* Definicao de tabela que compreende os registros acima declarados */
   TYPE typ_tab_dados_epr IS TABLE OF typ_reg_dados_epr INDEX BY VARCHAR2(100);
