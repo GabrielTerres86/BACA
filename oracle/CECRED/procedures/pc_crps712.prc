@@ -146,7 +146,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps712 (pr_cdcooper IN crapcop.cdcooper%T
           vr_vrreceita :=  rw_tbrecarga.total_vlrecarga * (rw_operadora.perreceita / 100);
           
           --Verificar se o lote existe
-          OPEN cr_craplot (pr_cdcooper => rw_crapcop.cdcooper
+          OPEN cr_craplot (pr_cdcooper => pr_cdcooper
                           ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                           ,pr_cdagenci => 1
                           ,pr_cdbccxlt => 85
