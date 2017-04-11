@@ -25,15 +25,15 @@
                26/03/2012 - Faz primeiro a verificacao dos cheques da crapcdb e 
                             depois a verificacao dos cheques da crapcst (Elton).
 
-			   20/07/2016 - Alteracao do caminho onde serao salvos os arquivos
-							de truncagem de cheque. SD 476097. Carlos R.	
+			         20/07/2016 - Alteracao do caminho onde serao salvos os arquivos
+							              de truncagem de cheque. SD 476097. Carlos R.	
 
                04/11/2016 - Cheques custodiados deverao ter o numero do bordero
                             igual a zero. (Projeto 300 - Rafael)
 
                23/01/2017 - Realizado merge com a PROD ref ao projeto 300 (Rafael)
                
-               05/04/2017 - Incluir dtdevolu na leitura da crapcdb (Lucas Ranghetti #621301)
+               05/04/2017 - Incluir dtdevolu na leitura da crapcdb e crapcst (Lucas Ranghetti #621301)
 ..............................................................................*/
 
 { includes/var_batch.i "NEW" }
@@ -272,14 +272,14 @@ PROCEDURE pi_processa_registros:
                                               aux_nrctachq = DEC(SUBSTR(aux_setlinha,16,08)).
 
                                         FIND LAST crapcdb WHERE 
-                                             crapcdb.cdcooper = crapcop.cdcooper AND
-                                             crapcdb.cdcmpchq = aux_cdcmpchq     AND
-                                             crapcdb.cdbanchq = aux_cdbanchq     AND
-                                             crapcdb.cdagechq = aux_cdagechq     AND 
-                                             crapcdb.nrctachq = aux_nrctachq     AND
+                                                  crapcdb.cdcooper = crapcop.cdcooper AND
+                                                  crapcdb.cdcmpchq = aux_cdcmpchq     AND
+                                                  crapcdb.cdbanchq = aux_cdbanchq     AND
+                                                  crapcdb.cdagechq = aux_cdagechq     AND 
+                                                  crapcdb.nrctachq = aux_nrctachq     AND
                                                   crapcdb.nrcheque = aux_nrcheque     AND
                                                   crapcdb.dtdevolu = ?
-                                             EXCLUSIVE-LOCK NO-ERROR.
+                                                  EXCLUSIVE-LOCK NO-ERROR.
                                         
                                         IF AVAIL crapcdb THEN
                                             crapcdb.insitprv = 3.
@@ -291,14 +291,14 @@ PROCEDURE pi_processa_registros:
                                                     aux_nrctachq = DEC(SUBSTR(aux_setlinha,12,12)).
 
                                                 FIND LAST crapcdb WHERE 
-                                                     crapcdb.cdcooper = crapcop.cdcooper AND
-                                                     crapcdb.cdcmpchq = aux_cdcmpchq     AND
-                                                     crapcdb.cdbanchq = aux_cdbanchq     AND
-                                                     crapcdb.cdagechq = aux_cdagechq     AND 
-                                                     crapcdb.nrctachq = aux_nrctachq     AND
+                                                          crapcdb.cdcooper = crapcop.cdcooper AND
+                                                          crapcdb.cdcmpchq = aux_cdcmpchq     AND
+                                                          crapcdb.cdbanchq = aux_cdbanchq     AND
+                                                          crapcdb.cdagechq = aux_cdagechq     AND 
+                                                          crapcdb.nrctachq = aux_nrctachq     AND
                                                           crapcdb.nrcheque = aux_nrcheque     AND
                                                           crapcdb.dtdevolu = ?
-                                                     EXCLUSIVE-LOCK NO-ERROR.
+                                                          EXCLUSIVE-LOCK NO-ERROR.
                                                   
                                                 IF   AVAILABLE crapcdb THEN
                                                      crapcdb.insitprv = 3.
@@ -313,7 +313,8 @@ PROCEDURE pi_processa_registros:
                                                                      crapcst.cdbanchq = aux_cdbanchq     AND
                                                                      crapcst.cdagechq = aux_cdagechq     AND
                                                                      crapcst.nrctachq = aux_nrctachq     AND
-                                                                     crapcst.nrcheque = aux_nrcheque
+                                                                     crapcst.nrcheque = aux_nrcheque     AND
+                                                                     crapcst.dtdevolu = ?
                                                                      EXCLUSIVE-LOCK NO-ERROR.
                                                         
                                                         IF   AVAILABLE crapcst THEN
@@ -331,7 +332,8 @@ PROCEDURE pi_processa_registros:
                                                                           crapcst.cdbanchq = aux_cdbanchq     AND
                                                                           crapcst.cdagechq = aux_cdagechq     AND
                                                                           crapcst.nrctachq = aux_nrctachq     AND
-                                                                          crapcst.nrcheque = aux_nrcheque
+                                                                          crapcst.nrcheque = aux_nrcheque     AND
+                                                                          crapcst.dtdevolu = ?
                                                                           EXCLUSIVE-LOCK NO-ERROR.
                                                                                          
                                                                 IF   AVAILABLE crapcst THEN
