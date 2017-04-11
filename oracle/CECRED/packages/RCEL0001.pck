@@ -1525,6 +1525,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 			-- Buscar operação
 			CURSOR cr_operacao(pr_idoperacao IN tbrecarga_operacao.idoperacao%TYPE) IS
 			  SELECT tope.idoperacao
+				      ,tope.insit_operacao
 				  FROM tbrecarga_operacao tope
 				 WHERE tope.idoperacao = pr_idoperacao;
 			rw_operacao cr_operacao%ROWTYPE;
@@ -1576,7 +1577,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 					CLOSE cr_operacao;
 					-- Verificar se é agendemanto
 					IF vr_sitoperac = 1 THEN
-					   vr_dstransa := 'Efetua agendamento para recarga de celular';
+					   vr_dstransa := 'Processa agendamento de recarga de celular';
 					ELSE
 					   vr_dstransa := 'Recarga de celular';
 					END IF;						
@@ -1963,7 +1964,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 																			 ,pr_cdproduto
 																			 ,rw_crapdat.dtmvtocd)
 															RETURNING idoperacao
-																	 INTO rw_operacao.idoperacao;
+															         ,insit_operacao
+																	 INTO rw_operacao.idoperacao
+																	     ,rw_operacao.insit_operacao;
 				END IF;
 				-- Fechar cursor
 				CLOSE cr_operacao;
@@ -2109,7 +2112,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 					END IF;                        
 					      								
 					-- Se operação foi feita no TAA
-					IF pr_idorigem = 4 THEN
+					IF pr_idorigem = 4  AND 
+						 -- Garantir que o processamento dos agendamentos de recarga não crie ltr
+						 pr_nrsequni <> 0 AND
+						 pr_nrterfin <> 0 AND
+						 pr_cdcoptfn <> 0 AND
+						 pr_nrcartao <> 0 THEN
 						-- Busca operador do TAA
 						OPEN cr_craptfn(pr_cdcoptfn => pr_cdcoptfn
 						               ,pr_nrterfin => pr_nrterfin);
@@ -2152,9 +2160,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 															 ,' ');
 						
 					END IF;
-				END IF;
+				END IF;				
 				-- Tratamento de log
-				vr_dstransa := 'Recarga de celular';
+				IF rw_operacao.insit_operacao = 1 THEN
+           vr_dstransa := 'Processa agendamento de recarga de celular';					
+				ELSE
+           vr_dstransa := 'Recarga de celular';
+				END IF;
 				vr_dscritic := 'Recarga de celular efetuada com sucesso.';
 				-- Gerar log
 				gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
@@ -3794,7 +3806,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 
           pc_escreve_xml('<conta>' ||
                            '<cdagenci>'  || vr_tab_critic(vr_index).cdagenci  || '</cdagenci>' ||
-                           '<nrdconta>'  || vr_tab_critic(vr_index).nrdconta  || '</nrdconta>' ||
+                           '<nrdconta>'  || gene0002.fn_mask_conta(vr_tab_critic(vr_index).nrdconta)  || '</nrdconta>' ||
                            '<nmprimtl>'  || vr_tab_critic(vr_index).nmprimtl  || '</nmprimtl>' ||
                            '<nrcelular>' || vr_tab_critic(vr_index).nrcelular || '</nrcelular>' ||
                            '<operadora>' || vr_tab_critic(vr_index).operadora || '</operadora>' ||
@@ -3835,7 +3847,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
         
         -- Efetuar solicitacao de geracao de relatorio --
         gene0002.pc_solicita_relato (pr_cdcooper  => pr_cdcooper         --> Cooperativa conectada
-                                    ,pr_cdprogra  => 'CRPS482'         --> Programa chamador
+                                    ,pr_cdprogra  => 'CRPS509'           --> Programa chamador
                                     ,pr_dtmvtolt  => pr_crapdat.dtmvtolt --> Data do movimento atual
                                     ,pr_dsxml     => vr_des_xml          --> Arquivo XML de dados
                                     ,pr_dsxmlnode => '/crrl482/contas/origem/titulo/conta'       --> No base do XML para leitura dos dados
