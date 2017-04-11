@@ -84,10 +84,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps405 (pr_cdcooper IN crapcop.cdcooper%T
                22/07/2016 - Correcao para exibicao correta das operacoes.
                             SoftDesk 481860 (Gil - RKAM)             
 
-               21/02/2017 - Ajustes de performance: removida leitura e carga de tabela em memória 
-			                desnecessaria da crapass (Rodrigo)
-
-			   03/04/2017 - Chamado 598515 - Ao emitir relatório 368 não está desconsiderando valores de risco abaixo de 50000 
+              03/04/2017 - Chamado 598515 - Ao emitir relatório 368 não está desconsiderando valores de risco abaixo de 50000 
 			                (Jean / Mout´S)
      ............................................................................. */
 
