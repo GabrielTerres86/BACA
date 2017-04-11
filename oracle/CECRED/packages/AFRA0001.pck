@@ -1805,7 +1805,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     WHEN OTHERS THEN
       pr_dscritic := 'Não foi possivel criar analise de fraude: '||SQLERRM;
 
-  END pc_Criar_Analise_Antifraude;
+  END pc_criar_analise_antifraude;
   
   --> Rotina responsavel por registrar o parecer de retorno da análise do sistema antifraude
   PROCEDURE pc_reg_reto_analise_antifraude(pr_idanalis    IN  NUMBER,       --> Id Unico da transação 
@@ -1872,6 +1872,60 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     vr_nmarqlog VARCHAR2(200);
     
     ----------> SUB-ROTINAS <----------
+    PROCEDURE pc_tratar_erro_aprovacao IS
+    BEGIN
+        --> Verificar se deve notificar area de segurança
+        IF rw_fraude.flgemail_retorno = 1 THEN
+          pc_notificar_seguranca (pr_idanalis   => pr_idanalis,
+                                  pr_tpalerta   => 2, --> Tipo de alerta 1 - Entrega midware, 2 - Retorno falha  Entrega OFFSA
+                                  pr_dsalerta   => vr_dscritic,
+                                  pr_dscritic   => vr_dscritic_aux); 
+        END IF;
+
+        vr_dscritic_aux := NULL;
+        
+        pc_log_analise_fraude(pr_cdcooper => rw_fraude.cdcooper,
+                              pr_nrdconta => rw_fraude.nrdconta,
+                              pr_idorigem => pr_cdcanal,
+                              pr_dstransa => vr_dstransa,
+                              pr_idanalis => rw_fraude.idanalise_fraude,
+                              pr_dscrilog => 'Falha ao enviar TED para o SPB na procedure AFRA0001.pc_reg_reto_analise_antifraude: '||vr_dsdetcri,
+                              pr_campoalt => vr_campoalt);
+          
+         --> Atualizar analise e gerar log 
+        pc_atualizar_analise ( pr_rowid => rw_fraude.rowid,
+                               pr_dhdenvio => NULL,
+                               pr_cdstatus => NULL,                --> erro comuicação midleware
+                               pr_cdparece => 2,                --> Reprovado
+                               pr_cdcanal  => 1, -- Ayllos      --> Canal do parecer da analise  
+                               pr_dstransa => vr_dstransa,      --> Descrição da trasaçao para log                                            
+                               pr_dscrilog => vr_dscritic,      --> Em caso de status de erro, apresentar critica para log
+                               pr_dscritic => vr_dscritic_aux);
+         
+        IF TRIM(vr_dscritic_aux) IS NOT NULL THEN
+            vr_dscritic := vr_dscritic_aux;
+            ROLLBACK;
+            RAISE vr_exc_erro;
+        END IF;
+
+        --> Excecutar rotinas referentes a reprovação da analise de fraude
+        pc_reprovacao_analise (pr_idanalis  => rw_fraude.idanalise_fraude,    --> Indicador da analise de fraude
+                               pr_cdcritic  => vr_cdcritic,
+                               pr_dscritic  => vr_dscritic_aux );
+             
+        IF TRIM(vr_dscritic) IS NOT NULL OR 
+           nvl(vr_cdcritic,0) > 0 THEN    
+           vr_dscritic := vr_dscritic_aux;
+           ROLLBACK;
+           RAISE vr_exc_erro;
+        END IF;
+        
+        COMMIT;
+    
+    END pc_tratar_erro_aprovacao;
+    
+    --> Tratar erro na aprovação
+    
     --> Tratar erro caso seja requisição da fila exception
     PROCEDURE pc_tratar_erro_fila_excep(pr_dscritic IN VARCHAR2) IS
     
@@ -2067,6 +2121,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                        nvl(vr_cdcritic,0) > 0 THEN
                       vr_cdcritic := 996; 
                       RAISE vr_exc_erro;
+                    END IF;
+                    
+                    --> Verificar se deve notificar area de segurança
+                    IF rw_fraude.flgemail_retorno = 1 THEN
+                       pc_notificar_seguranca (pr_idanalis   => pr_idanalis,
+                                               pr_tpalerta   => 2, --> Tipo de alerta 1 - Entrega midware, 2 - Retorno falha  Entrega OFFSA
+                                               pr_dsalerta   => pr_dscritic,
+                                               pr_dscritic   => vr_dscritic); 
                     END IF;
                
              END IF;
@@ -2280,6 +2342,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       END IF;
      
       COMMIT;
+
+    WHEN vr_exc_apro THEN
+        --> Caso não consiga aprovar, tentará reprovar a analise
+        ROLLBACK; 
+        pc_tratar_erro_aprovacao;
       
     WHEN OTHERS THEN
       pr_cdcritic := 996;
@@ -2317,64 +2384,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       END IF;
      
       COMMIT;
-      
      
      END;        
-    EXCEPTION
-       WHEN vr_exc_apro THEN
-        
+  EXCEPTION
+     WHEN vr_exc_apro THEN
         --> Caso não consiga aprovar, tentará reprovar a analise
         ROLLBACK; 
-         
-         --> Verificar se deve notificar area de segurança
-        IF rw_fraude.flgemail_retorno = 1 THEN
-          pc_notificar_seguranca (pr_idanalis   => pr_idanalis,
-                                  pr_tpalerta   => 2, --> Tipo de alerta 1 - Entrega midware, 2 - Retorno falha  Entrega OFFSA
-                                  pr_dsalerta   => vr_dscritic,
-                                  pr_dscritic   => vr_dscritic_aux); 
-        END IF;
-
-        vr_dscritic_aux := NULL;
-        
-        pc_log_analise_fraude(pr_cdcooper => rw_fraude.cdcooper,
-                              pr_nrdconta => rw_fraude.nrdconta,
-                              pr_idorigem => pr_cdcanal,
-                              pr_dstransa => vr_dstransa,
-                              pr_idanalis => rw_fraude.idanalise_fraude,
-                              pr_dscrilog => 'Falha ao enviar TED para o SPB na procedure AFRA0001.pc_reg_reto_analise_antifraude: '||vr_dsdetcri,
-                              pr_campoalt => vr_campoalt);
-          
-         --> Atualizar analise e gerar log 
-        pc_atualizar_analise ( pr_rowid => rw_fraude.rowid,
-                               pr_dhdenvio => NULL,
-                               pr_cdstatus => NULL,                --> erro comuicação midleware
-                               pr_cdparece => 2,                --> Reprovado
-                               pr_cdcanal  => 1, -- Ayllos      --> Canal do parecer da analise  
-                               pr_dstransa => vr_dstransa,      --> Descrição da trasaçao para log                                            
-                               pr_dscrilog => vr_dscritic,      --> Em caso de status de erro, apresentar critica para log
-                               pr_dscritic => vr_dscritic_aux);
-         
-        IF TRIM(vr_dscritic_aux) IS NOT NULL THEN
-            vr_dscritic := vr_dscritic_aux;
-            ROLLBACK;
-            RAISE vr_exc_erro;
-        END IF;
-
-        --> Excecutar rotinas referentes a reprovação da analise de fraude
-        pc_reprovacao_analise (pr_idanalis  => rw_fraude.idanalise_fraude,    --> Indicador da analise de fraude
-                               pr_cdcritic  => vr_cdcritic,
-                               pr_dscritic  => vr_dscritic_aux );
-             
-        IF TRIM(vr_dscritic) IS NOT NULL OR 
-           nvl(vr_cdcritic,0) > 0 THEN    
-           vr_dscritic := vr_dscritic_aux;
-           ROLLBACK;
-           RAISE vr_exc_erro;
-        END IF;
-        
-        COMMIT;
-        
-
+        pc_tratar_erro_aprovacao;
   END pc_reg_reto_analise_antifraude; 
   
   --> Rotina responsavel por registrar a confirmação de entrega da análise ao sistema antifraude
