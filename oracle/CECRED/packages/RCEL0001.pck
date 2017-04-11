@@ -3647,7 +3647,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
       vr_exc_erro EXCEPTION;
       				 
 	    CURSOR cr_tbrecarga (pr_idoperacao IN tbrecarga_operacao.idoperacao%TYPE) IS
-        SELECT ('(' || ope.nrddd || ')' ||
+        SELECT ('(' || ope.nrddd || ') ' ||
                gene0002.fn_mask(ope.nrcelular,'99999-9999') || ' - ' || 
                opr.nmoperadora) dstptran
           FROM tbrecarga_operacao ope

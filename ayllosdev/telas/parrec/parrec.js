@@ -665,9 +665,9 @@ function alteraMensagens(){
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, efetuando opera&ccedil;&atilde;o...");	
 	
-	var dsmsgsaldo = cDsmsgsaldo.val();
-	var dsmsgoperac = cDsmsgoperac.val();
-
+	var dsmsgsaldo = removeCaracteresInvalidos(cDsmsgsaldo.val());
+	var dsmsgoperac = removeCaracteresInvalidos(cDsmsgoperac.val());
+	
 	// Executa script de bloqueio através de ajax
 	$.ajax({		
 		type: "POST",

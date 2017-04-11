@@ -10412,18 +10412,21 @@ BEGIN
 		OPEN cr_craptvl_recarg(pr_cdcooper => pr_cdcooper
 		                      ,pr_dtmvtolt => vr_dtmvtolt);
 	  FETCH cr_craptvl_recarg INTO rw_craptvl_recarg;
+
+    IF cr_craptvl_recarg%FOUND THEN		
+			vr_cdestrut := 50;
+			vr_linhadet := trim(vr_cdestrut)||
+										 trim(vr_dtmvtolt_yymmdd)||','||
+										 trim(to_char(vr_dtmvtolt,'ddmmyy'))||','||
+										 '4340,'|| 
+										 '1425,'|| 
+										 TRIM(TO_CHAR(nvl(rw_craptvl_recarg.vldocrcb, 0),'99999999999990.00')) || ','||
+										 '5210,'||
+										 '"(crps249) REPASSE RECARGA DE CELULAR"';
+			gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+		END IF;
+		-- Fechar cursor
 		CLOSE cr_craptvl_recarg;
-		
-		vr_cdestrut := 50;
-		vr_linhadet := trim(vr_cdestrut)||
-									 trim(vr_dtmvtolt_yymmdd)||','||
-									 trim(to_char(vr_dtmvtolt,'ddmmyy'))||','||
-									 '4340,'|| 
-									 '1425,'|| 
-									 TRIM(TO_CHAR(nvl(rw_craptvl_recarg.vldocrcb, 0),'99999999999990.00')) || ','||
-									 '5210,'||
-									 '"(crps249) REPASSE RECARGA DE CELULAR"';
-		gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
   END IF;
   --  Contabilizacao mensal ...................................................
   if to_char(vr_dtmvtolt, 'mm') <> to_char(vr_dtmvtopr, 'mm') then
