@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Abril/2004                        Ultima atualizacao: 29/03/2017
+   Data    : Abril/2004                        Ultima atualizacao: 11/04/2017
 
    Dados referentes ao programa:
 
@@ -391,14 +391,17 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                              final seja verificado se cooperativa que esta rodando 
                              é igual ao que iremos crirar o registro (Lucas Ranghetti #591560)
     
-	           30/01/2017 - Implementado join no cursor que verifica coop migrada (Tiago/Facricio)
+	             30/01/2017 - Implementado join no cursor que verifica coop migrada (Tiago/Facricio)
                
                02/03/2017 - Adicionar dtmvtopg no filtro do cursor cr_craplau_dup (Lucas Ranghetti #618379)
 			   
-			   29/03/2017 - Para casos em que a conta for migrada e a cooperativa ainda estiver
+			         29/03/2017 - Para casos em que a conta for migrada e a cooperativa ainda estiver
                             ativa e convenio usar agencia vamos dar um continue e somente irá 
                             ser agendado o pagamento uma vez na cooperativa em que a conta foi 
                             migrada (Lucas Ranghetti #640199)
+                            
+               11/04/2017 - Fechar cursor da craptco quando estiver aberto, tambem verificar
+                            se estiver aberto e caso estiver, fechar (Lucas Ranghetti/Fabricio)
 ............................................................................ */
 
 
@@ -2648,10 +2651,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                         vr_nrdconta := vr_nro_conta_dec;
                       END IF;
 
+                      -- Verificar se cursor esta aberto
+                      IF cr_craptco%ISOPEN THEN
+                        CLOSE cr_craptco;
+                      END IF;
+                      
                       /**** Tratamento migracao ****/
                       OPEN cr_craptco(vr_nrdconta);
                       FETCH cr_craptco INTO rw_craptco;
                       IF cr_craptco%FOUND THEN -- Se for uma conta transferida
+                        CLOSE cr_craptco;
                         CONTINUE;
                         /* comentado trexo pois somente vamos criar o agendamento na coop
                            que foi migrada
@@ -4228,7 +4237,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                     vr_tab_erro(vr_tab_erro.count+1) := 'Convenio: '||rw_gnconve.cdconven||'-'||rw_gnconve.nmempres||
                                                         '. Erro na linha '|| to_char(vr_contlinh)||
                                                         ' do aquivo ' ||vr_tab_nmarquiv(i)||
-                                                        '. Caracter invalido.';
+                                                        '. Critica: '||SQLERRM;
 
                     -- Envio centralizado de log de erro
                     btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
