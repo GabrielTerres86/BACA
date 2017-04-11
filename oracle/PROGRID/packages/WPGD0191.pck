@@ -26,7 +26,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
   --  Sistema  : PROGRID
   --  Sigla    : WPGD
   --  Autor    : Jonathan Cristiano da Silva - RKAM
-  --  Data     : Setembro/2015.                   Ultima atualizacao: 17/11/2016
+  --  Data     : Setembro/2015.                   Ultima atualizacao: 15/03/2017
   --
   -- Dados referentes ao programa:
   --
@@ -53,6 +53,8 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
   --              17/11/2016 - Incluido upper na leitura da tbead_inscricao_participante.nmlogin_particip
   --                           para garantir a busca e utilizar o index correto da tabela. SD558339 (Odirlei-AMcom)
   --
+  --              15/03/2017 - #551227 Padronização do nome do job e inclusão dos logs de controle de início, erro e fim 
+  --                           de execução do programa pc_recebe_cursos_aprovados (Carlos)
     --              23/03/2017 - Ajustes referente a Melhoria 399 - Simplificar Inscricao no Progrid (Márcio - Mouts)
   --
   ---------------------------------------------------------------------------------------------------------------
@@ -342,9 +344,31 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
       vr_tpctrato            NUMBER;
       vr_nrctremp            NUMBER;
       vr_nrdctato            NUMBER;          
-
+      
+    vr_cdprogra  CONSTANT crapprg.cdprogra%TYPE := 'pc_recebe_cursos_aprovados';
+    vr_nomdojob  CONSTANT VARCHAR2(50)          := 'jbpgr_rec_cursos_aprovados';
+    vr_flgerlog  BOOLEAN := FALSE; 
+    
+    --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
+    PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
+                                    pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
     BEGIN
-     
+      --> Controlar geração de log de execução dos jobs 
+      BTCH0001.pc_log_exec_job( pr_cdcooper  => 3              --> Cooperativa
+                               ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
+
+                               ,pr_nomdojob  => vr_nomdojob    --> Nome do job
+                               ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
+                               ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
+                               ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
+    END pc_controla_log_batch;
+
+      
+    BEGIN
+      
+      -- Início do programa
+      pc_controla_log_batch('I');
+      
       -- Variavel com o caminho do arquivo xml
       vr_caminho_xml := gene0001.fn_diretorio(pr_tpdireto => 'C' -- /usr/coopd/cecred ou /microsd/cecred
                                              ,pr_cdcooper => 3);
@@ -1465,14 +1489,17 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
       
       -- INSERE DADOS NAS TABELAS
       COMMIT;
+      
+      -- Fim do programa
+      pc_controla_log_batch('F');
 
     EXCEPTION
       WHEN vr_exc_saida THEN
-        -- Se foi retornado apenas código
-        IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-        -- Buscar a descrição        
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-        END IF;
+
+          -- Buscar a descrição
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic, 
+                                                 pr_dscritic => vr_dscritic);
+
         -- Devolvemos código e critica encontradas das variaveis locais
         pr_dscritic := vr_dscritic;
         
@@ -1503,7 +1530,10 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
         
         -- Retorna o erro para a procedure chamadora
         pr_dscritic := 'Erro na Rotina WPGD0191.pc_recebe_cursos_aprovados --> '||SQLERRM; 
-
+        
+        -- Logar erro no programa
+        pc_controla_log_batch('E', pr_dscritic);
+        
         IF UPPER(TRIM(vr_dscritic)) <> 'RETORNO DO XML VAZIO' THEN
           -- Comando para enviar e-mail a OQS
           GENE0003.pc_solicita_email(pr_cdcooper        => 1 --> Cooperativa conectada

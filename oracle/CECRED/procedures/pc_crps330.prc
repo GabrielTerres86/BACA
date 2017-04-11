@@ -29,8 +29,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
   --                           no campo nosso numero, para que os boletos que sao de contas migradas sejam enviados
   --                           com a conta antiga (Douglas - Chamado 602825)
   --
-  --              05/04/2017 - #638856 Remessa Serasa - Correção de formatação de campos no registros 1 e 2, quando vinham nulos,
-  --                           não obedeciam formatação das linhas (Everton - Mouts)
+  --              30/03/2017 - #551229 Job ENVIO_SERASA excluído para a criação dos jobs JBCOBRAN_ENVIO_SERASA e JBCOBRAN_RECEBE_SERASA.
+  --                           Log de início, fim e erros na execução do job. (Carlos)
   ---------------------------------------------------------------------------------------------------------------
   
   -- Atualiza a situacao do boleto como enviada
@@ -128,15 +128,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
       END IF;
     EXCEPTION
        WHEN vr_exc_saida THEN
-         -- Se foi retornado apenas código
-         IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-           -- Buscar a descrição
-           vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-         END IF;
          -- Devolvemos código e critica encontradas
          pr_cdcritic := NVL(vr_cdcritic,0);
-         pr_dscritic := vr_dscritic;
+         pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
        WHEN OTHERS THEN
+         cecred.pc_internal_exception(3);
          -- Efetuar retorno do erro não tratado
          pr_cdcritic := 0;
          pr_dscritic := SQLERRM;
@@ -154,6 +150,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
        
        -- Cursor sobre data
        rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+
+       vr_idprglog tbgen_prglog.idprglog%TYPE := 0;
 
        -- Loop sobre as cooperativas ativas
        CURSOR cr_crapcop IS
@@ -297,6 +295,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
        vr_nrseqarq    PLS_INTEGER; -- NUmero sequencial do arquivo
        vr_tab_lcm     PAGA0001.typ_tab_lcm_consolidada; -- Tabela de lancamentos para cobranda da tarifa
 
+       -- Job de envio de negativação
+       vr_nomdojob VARCHAR2(40) := 'JBCOBRAN_ENVIO_SERASA';
 
        --Variaveis de controle do programa
        vr_cdcritic    NUMBER:= 0;
@@ -311,6 +311,17 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
        vr_exc_saida  EXCEPTION;
 
      BEGIN
+             
+        -- Executar apenas em dias úteis
+        IF trunc(SYSDATE) <> gene0005.fn_valida_dia_util(3, trunc(SYSDATE)) THEN
+          RETURN;
+        END IF;
+
+        -- Gera log de início de execução
+        cecred.pc_log_programa(PR_DSTIPLOG   => 'I'                                
+                              ,PR_CDPROGRAMA => vr_nomdojob
+                              ,pr_tpexecucao => 2
+                              ,PR_IDPRGLOG   => vr_idprglog);
 
         -- Busca diretorio que o arquivo devera ser gerado
         vr_dsdireto := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
@@ -786,7 +797,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
               IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
                 --Levantar Excecao
                 RAISE vr_exc_saida;
-              END IF;
+            END IF;
             END IF;
             
           END LOOP;
@@ -799,19 +810,39 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
 
         END LOOP;
 
+      -- Gera log fim do processo
+      cecred.pc_log_programa(PR_DSTIPLOG   => 'F'
+                            ,PR_CDPROGRAMA => vr_nomdojob
+                            ,PR_IDPRGLOG   => vr_idprglog);
+
      EXCEPTION
        WHEN vr_exc_saida THEN
-         -- Se foi retornado apenas código
-         IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-         -- Buscar a descrição
-           vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-         END IF;
+
+           -- Buscar a descrição
+         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_cdcritic);
+
          -- Devolvemos código e critica encontradas
          pr_cdcritic := NVL(vr_cdcritic,0);
          pr_dscritic := vr_dscritic;
+ 
+         -- Logar fim de execução sem sucesso
+         cecred.pc_log_programa(PR_DSTIPLOG   => 'E'
+                               ,PR_CDPROGRAMA => vr_nomdojob
+                               ,pr_tpocorrencia => 1
+                               ,pr_dsmensagem => vr_dscritic
+                               ,PR_IDPRGLOG   => vr_idprglog);
+         -- Logar fim de execução sem sucesso
+         cecred.pc_log_programa(PR_DSTIPLOG   => 'F'
+                               ,PR_CDPROGRAMA => vr_nomdojob
+                               ,pr_flgsucesso => 0
+                               ,PR_IDPRGLOG   => vr_idprglog);
+         
          -- Efetuar rollback
          ROLLBACK;
        WHEN OTHERS THEN
+         
+         cecred.pc_internal_exception(3);
+       
          -- Efetuar retorno do erro não tratado
          pr_cdcritic := 0;
          pr_dscritic := SQLERRM;
