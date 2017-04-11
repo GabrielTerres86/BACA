@@ -363,21 +363,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     
     -----------> VARIAVEIS <-----------
     -- Tratamento de erros
-    vr_cdcritic   NUMBER;
-    vr_dscritic   VARCHAR2(4000);
-    vr_exc_erro   EXCEPTION;    
+    vr_cdcritic      NUMBER;
+    vr_dscritic      VARCHAR2(4000);
+    vr_cdcritic_aux  NUMBER;
+    vr_dscritic_aux  VARCHAR2(4000);
+    vr_exc_erro      EXCEPTION;    
     
     --> variaveis para comunicacao AYmaru
     vr_resposta   AYMA0001.typ_http_response_aymaru;
     vr_parametros WRES0001.typ_tab_http_parametros;
     vr_ted        json := json();
-    vr_clob       CLOB;
     vr_code       VARCHAR2(10);
     vr_Message    VARCHAR2(1000);
-    vr_Detail     VARCHAR2(4000);    
     vr_qtsegret   NUMBER;
     
     vr_basecnpj   VARCHAR2(20);
+    vr_nmarqlog   VARCHAR2(500);
+    vr_cdprogra   VARCHAR2(50) := 'pc_enviar_ted_analise';
     
     
   BEGIN
@@ -533,13 +535,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     
       vr_code    := vr_resposta.conteudo.get('Code').to_char();
       vr_Message := vr_resposta.conteudo.get('Message').get_string();
-      vr_Detail  := vr_resposta.conteudo.get('Detail').get_string();
         
       IF TRIM(vr_code) IS NOT NULL THEN
          vr_dscritic := gene0007.fn_convert_web_db(vr_Message);
          vr_dscritic := REPLACE(vr_dscritic,CHR(14));
-         RAISE vr_exc_erro;
       END IF;
+
+      RAISE vr_exc_erro;
     ELSE
       --> se retornou Sucesso, buscar fingerprint
       pr_Fingerprint  := vr_resposta.conteudo.get('Fingerprint').get_string();
@@ -548,6 +550,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     
   EXCEPTION
     WHEN vr_exc_erro THEN
+      
+      --> Excluir analise na fila  
+      AFRA0002.pc_remover_analise_fila (pr_idanalis => rw_fraude.idanalise_fraude, --> Identificador da analise 
+                                        pr_cdcritic => vr_cdcritic_aux,
+                                        pr_dscritic => vr_dscritic_aux);
+                
+      IF TRIM(vr_dscritic_aux) IS NOT NULL OR
+         nvl(vr_cdcritic_aux,0) > 0 THEN
+                
+        --> Se apresentar erro, deve apenas logar e garantir que seja aprovada a analise          
+        vr_nmarqlog := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
+        btch0001.pc_gera_log_batch( pr_cdcooper     => 3,
+                                    pr_ind_tipo_log => 2, --> erro tratado
+                                    pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                       ' - '||vr_cdprogra ||' --> ' || vr_dscritic_aux,
+                                    pr_nmarqlog     => vr_nmarqlog);
+             
+      END IF;
       
       --> Buscar critica
       IF nvl(vr_cdcritic,0) > 0 AND 
@@ -689,23 +709,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     -- Tratamento de erros
     vr_cdcritic   NUMBER;
     vr_dscritic   VARCHAR2(4000);
+    vr_cdcritic_aux  NUMBER;
+    vr_dscritic_aux  VARCHAR2(4000);
     vr_exc_erro   EXCEPTION;    
     
     --> variaveis para comunicacao AYmaru
     vr_resposta   AYMA0001.typ_http_response_aymaru;
     vr_parametros WRES0001.typ_tab_http_parametros;
     vr_ted        json := json();
-    vr_clob       CLOB;
     vr_code       VARCHAR2(10);
     vr_Message    VARCHAR2(1000);
-    vr_Detail     VARCHAR2(4000);
     
     vr_basecnpj      VARCHAR2(20);
     vr_nmextttl      crapass.nmprimtl%TYPE;
     vr_ds_nrcpfcgc   VARCHAR2(25);
     vr_nrctrlif      VARCHAR2(80);
     vr_qtsegret      NUMBER;
-    
+    vr_nmarqlog   VARCHAR2(500);
+    vr_cdprogra   VARCHAR2(50) := 'pc_enviar_agend_ted_analise';
     
   BEGIN
     
@@ -898,22 +919,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     
       vr_code    := vr_resposta.conteudo.get('Code').to_char();
       vr_Message := vr_resposta.conteudo.get('Message').get_string();
-      vr_Detail  := vr_resposta.conteudo.get('Detail').get_string();
         
       IF TRIM(vr_code) IS NOT NULL THEN
         vr_dscritic := gene0007.fn_convert_web_db(vr_Message);
         vr_dscritic := REPLACE(vr_dscritic,CHR(14));
-        RAISE vr_exc_erro;
       END IF;
+
+      RAISE vr_exc_erro;
     ELSE
       --> se retornou Sucesso, buscar fingerprint
       pr_Fingerprint  := vr_resposta.conteudo.get('Fingerprint').get_string();
     END IF;
   
   
-  
   EXCEPTION
     WHEN vr_exc_erro THEN
+      
+      --> Excluir analise na fila  
+      AFRA0002.pc_remover_analise_fila (pr_idanalis => rw_fraude.idanalise_fraude, --> Identificador da analise 
+                                        pr_cdcritic => vr_cdcritic_aux,
+                                        pr_dscritic => vr_dscritic_aux);
+                
+      IF TRIM(vr_dscritic_aux) IS NOT NULL OR
+         nvl(vr_cdcritic_aux,0) > 0 THEN
+                
+        --> Se apresentar erro, deve apenas logar e garantir que seja aprovada a analise          
+        vr_nmarqlog := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
+        btch0001.pc_gera_log_batch( pr_cdcooper     => 3,
+                                    pr_ind_tipo_log => 2, --> erro tratado
+                                    pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                       ' - '||vr_cdprogra ||' --> ' || vr_dscritic_aux,
+                                    pr_nmarqlog     => vr_nmarqlog);
+             
+      END IF;
       
       --> Buscar critica
       IF nvl(vr_cdcritic,0) > 0 AND 
@@ -1066,42 +1104,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                                pr_dscrilog => NULL,                       --> Em caso de status de erro, apresentar critica para log
                                pr_dscritic => vr_dscritic);
         IF TRIM(vr_dscritic) IS NOT NULL THEN
-          RAISE vr_exc_erro;
+          RAISE vr_exc_envio;
         END IF;
       
       EXCEPTION
-        WHEN vr_exc_erro THEN
-          RAISE vr_exc_erro;          
         WHEN vr_exc_envio THEN          
           vr_dscritic_aux := vr_dscritic;
           vr_flgerro := TRUE;
         WHEN OTHERS THEN
-          vr_dscritic := 'Erro ao enviar analise de fraude: '||SQLERRM;
+          vr_dscritic_aux := 'Erro ao enviar analise de fraude: '||SQLERRM;
           vr_flgerro := TRUE;
        END;
       
       IF vr_flgerro = TRUE THEN
         
-         --> Excluir analise na fila  
-         AFRA0002.pc_remover_analise_fila (pr_idanalis => rw_fraude.idanalise_fraude, --> Identificador da analise 
-                                           pr_cdcritic => vr_dscritic,
-                                           pr_dscritic => vr_dscritic);
-            
-         IF TRIM(vr_dscritic) IS NOT NULL OR
-            nvl(vr_cdcritic,0) > 0 THEN
-            
-           --> Se apresentar erro, deve apenas logar e garantir que seja aprovada a analise          
-           vr_nmarqlog := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
-           btch0001.pc_gera_log_batch( pr_cdcooper     => 3,
-                                       pr_ind_tipo_log => 2, --> erro tratado
-                                       pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                          ' - '||vr_cdprogra ||' --> ' || vr_dscritic,
-                                       pr_nmarqlog     => vr_nmarqlog);
-         
-           vr_dscritic := NULL;
-           vr_cdcritic := NULL;
-         END IF;
-
         vr_dscritic := 'Falha na entrega ao Middleware: '||vr_dscritic_aux;
 
         --> Verificar se deve notificar area de segurança
@@ -1143,7 +1159,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
           pc_atualizar_analise ( pr_rowid => rw_fraude.rowid,
                                  pr_dhdenvio => NULL,
                                  pr_cdstatus => 2,                --> erro comuicação midleware
-                                 pr_cdparece => 2,                --> Aprovado
+                                 pr_cdparece => 2,                --> Reprovado
                                  pr_cdcanal  => 1, -- Ayllos      --> Canal do parecer da analise  
                                  pr_dstransa => vr_dstransa,      --> Descrição da trasaçao para log                                            
                                  pr_dscrilog => vr_dscritic,      --> Em caso de status de erro, apresentar critica para log
@@ -1330,7 +1346,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     
     -----------> VARIAVEIS <-----------
     -- Tratamento de erros
-    vr_cdcritic NUMBER;
     vr_dscritic VARCHAR2(4000);
     vr_exc_erro EXCEPTION;    
                       
@@ -1445,41 +1460,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     CURSOR cr_craptvl (pr_idanalis  craplau.idanafrd%TYPE,
                        pr_cdcooper  craplau.cdcooper%TYPE,
                        pr_nrdconta  craplau.nrdconta%TYPE) IS
-      SELECT tvl.*/*,
-             cop.cdagectl,
-             decode(tvl.tpdctadb,2,'PP','CC') dstpctdb,
-             ass.cdagenci,             
-             
-             --> Holder
-             decode(tvl.flgpesdb,1,'F','J') dspesemi,
-             tvl.cpfcgemi,
-             tvl.nrdconta,
-             tvl.nmpesemi,
-             
-             -- account credit
-             decode(tvl.tpdctacr,2,'PP','CC')  dstpctcr,
-             to_char(tvl.nrcctrcb, 'fm9999999999999') nrcctrcb,
-             decode(flgpescr,1,'F','J') dspescrd,
-             tvl.cdbccrcb,
-             tvl.cdagercb,
-             tvl.cpfcgrcb,
-             tvl.nmpesrcb,
-             
-             -- transaction
-             tvl.progress_recid,
-             tvl.idopetrf,
-             decode(substr(tvl.idopetrf, length(tvl.idopetrf), 1), 'M','10','3') dsdcanal,
-             (CASE
-               WHEN cop.flgoppag = 1 AND cop.inioppag <= tvl.hrtransa AND
-                    cop.fimoppag >= tvl.hrtransa AND ban.FLGOPPAG = 1 THEN
-                'PAG0108'
-               ELSE
-                'STR0008'
-              END) dscodmsg,
-              tvl.vldocrcb,
-              tvl.cdfinrcb,
-              tvl.dshistor*/
-              
+      SELECT tvl.*
         FROM craptvl tvl,
              crapcop cop,
              crapass ass,
@@ -1520,7 +1501,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     ELSE
       CLOSE cr_fraude;
     END IF;
-    
+
     --> TED
     IF rw_fraude.cdproduto = 30 THEN
       --> Online
@@ -1778,12 +1759,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     
     -----------> VARIAVEIS <-----------
     -- Tratamento de erros
-    vr_cdcritic NUMBER;
     vr_dscritic VARCHAR2(4000);
     vr_exc_erro EXCEPTION;    
-    
-    vr_dhlimana TIMESTAMP;
-    vr_qtsegret NUMBER;
     
   BEGIN
      
@@ -1885,8 +1862,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     -- Tratamento de erros
     vr_cdcritic NUMBER;
     vr_dscritic VARCHAR2(4000);
+    vr_dscritic_aux VARCHAR2(4000);
     vr_dsdetcri VARCHAR2(4000);
-    vr_exc_erro EXCEPTION;  
+    vr_exc_erro EXCEPTION;
+    vr_exc_apro EXCEPTION;    
     
     vr_dstransa craplgm.dstransa%TYPE;  
     vr_campoalt typ_tab_campo_alt;
@@ -1900,7 +1879,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     
       IF pr_cdcanal = 1 AND   
          pr_fingerpr = 'NOFINGERPRINT' AND   
-         pr_cdcanal = 1  THEN
+         pr_flganama = 1  THEN
 
         --> Armazenar valores antes da alteração
         vr_campoalt('dhenvio_analise'  ).dsdadant := to_char(rw_fraude.dhenvio_analise  ,'DD/MM/RRRR HH24:MI:SS');  
@@ -1922,11 +1901,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                               pr_campoalt => vr_campoalt);
 
 
-        IF rw_fraude.cdproduto = 30 THEN                
-          --> Notificar monitoração 
-          pc_monitora_ted ( pr_idanalis => pr_idanalis);
-        END IF;   
-                     
         --> Verificar se deve notificar area de segurança
         IF rw_fraude.flgemail_retorno = 1 THEN
           pc_notificar_seguranca (pr_idanalis   => pr_idanalis,
@@ -1960,25 +1934,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                 
         IF TRIM(vr_dsdetcri) IS NOT NULL OR 
            nvl(vr_cdcritic,0) > 0 THEN
-          
-          
-          pc_log_analise_fraude(pr_cdcooper => rw_fraude.cdcooper,
-                                pr_nrdconta => rw_fraude.nrdconta,
-                                pr_idorigem => pr_cdcanal,
-                                pr_dstransa => vr_dstransa,
-                                pr_idanalis => rw_fraude.idanalise_fraude,
-                                pr_dscrilog => 'Falha ao enviar TED para o SPB na procedure AFRA0001.pc_reg_reto_analise_antifraude: '||vr_dsdetcri,
-                                pr_campoalt => vr_campoalt);
-          
-          
-                  
+          RAISE vr_exc_apro;
+        ELSE
+           
+           IF rw_fraude.cdproduto = 30 THEN                
+              --> Notificar monitoração 
+              pc_monitora_ted ( pr_idanalis => pr_idanalis);
+           END IF;   
+
          END IF; 
       
       END IF;    
+    
     END pc_tratar_erro_fila_excep;
     
     
   BEGIN
+    BEGIN
+    
     vr_campoalt.delete;
     vr_dstransa := 'Retorno paracer da Analise de Fraude';
     
@@ -2015,7 +1988,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       RAISE vr_exc_erro;    
     END IF;
     
-    IF (pr_flganama = 1) THEN /*  É analise manual */
+     IF (pr_flganama = 1) THEN /*  É analise manual */
       
       IF (rw_fraude.cdparecer_analise IN (0,2) AND rw_fraude.flganalise_manual = 0) THEN /* Está 0-Pendente ou 2-Reprovada */
         
@@ -2050,8 +2023,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                 IF TRIM(vr_dsdetcri) IS NOT NULL OR 
                    nvl(vr_cdcritic,0) > 0 THEN
                    vr_cdcritic := 996;  
-                   RAISE vr_exc_erro;
+                   RAISE vr_exc_apro;
                 END IF;
+                
+                --> Verificar se deve notificar area de segurança
+                IF rw_fraude.flgemail_retorno = 1 THEN
+                   pc_notificar_seguranca (pr_idanalis   => pr_idanalis,
+                                           pr_tpalerta   => 2, --> Tipo de alerta 1 - Entrega midware, 2 - Retorno falha  Entrega OFFSA
+                                           pr_dsalerta   => pr_dscritic,
+                                           pr_dscritic   => vr_dscritic); 
+                END IF;
+                
+                IF rw_fraude.cdproduto = 30 THEN                
+                   --> Notificar monitoração 
+                   pc_monitora_ted ( pr_idanalis => pr_idanalis);
+                END IF; 
                
              ELSIF rw_fraude.cdparecer_analise = 2 THEN /* Reprovar */
                
@@ -2123,7 +2109,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
             IF TRIM(vr_dsdetcri) IS NOT NULL OR 
                nvl(vr_cdcritic,0) > 0 THEN
                vr_cdcritic := 996;  
-               RAISE vr_exc_erro;
+               RAISE vr_exc_apro;
             END IF;
         
         ELSIF (pr_cdparece = 2) THEN /* Atualizar para 2-Reprovado */   
@@ -2221,7 +2207,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                   IF TRIM(vr_dsdetcri) IS NOT NULL OR 
                      nvl(vr_cdcritic,0) > 0 THEN
                      vr_cdcritic := 996;  
-                     RAISE vr_exc_erro;
+                     RAISE vr_exc_apro;
                   END IF;
         
               END IF;
@@ -2267,29 +2253,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       --> Caso for fila de exception
       IF pr_cdcanal = 1 AND   
          pr_fingerpr = 'NOFINGERPRINT' AND   
-         pr_cdcanal = 1  THEN
+         pr_flganama = 1  THEN
          
          pc_tratar_erro_fila_excep(pr_dscritic => vr_dsdetcri);
          
       ELSIF rw_fraude.nrdconta IS NOT NULL THEN
       
-      --> Apos rollback, gerar log e commitar
-      --> Gerar log de analise de fraude
-      pc_log_analise_fraude(pr_cdcooper => rw_fraude.cdcooper,
-                            pr_nrdconta => rw_fraude.nrdconta,
-                            pr_idorigem => pr_cdcanal,
-                            pr_dstransa => vr_dstransa,
-                            pr_idanalis => pr_idanalis,
-                            pr_dscrilog => pr_dsdetcri,
-                            pr_campoalt => vr_campoalt);
+         --> Apos rollback, gerar log e commitar
+         --> Gerar log de analise de fraude
+         pc_log_analise_fraude(pr_cdcooper => rw_fraude.cdcooper,
+         	                     pr_nrdconta => rw_fraude.nrdconta,
+         	                     pr_idorigem => pr_cdcanal,
+                               pr_dstransa => vr_dstransa,
+                               pr_idanalis => pr_idanalis,
+                               pr_dscrilog => pr_dsdetcri,
+                               pr_campoalt => vr_campoalt);
       
       ELSE
-        vr_nmarqlog := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
-        btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
-                                   pr_ind_tipo_log => 2, --> erro tratado
-                                   pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                      ' - AFRA0001.pc_reg_reto_analise_antifraude --> ' || pr_dscritic,
-                                   pr_nmarqlog     => vr_nmarqlog);
+         vr_nmarqlog := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
+         btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
+                                    pr_ind_tipo_log => 2, --> erro tratado
+                                    pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                       ' - AFRA0001.pc_reg_reto_analise_antifraude --> ' || pr_dscritic,
+                                    pr_nmarqlog     => vr_nmarqlog);
       
       END IF;
      
@@ -2305,21 +2291,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       --> Caso for fila de exception
       IF pr_cdcanal = 1 AND   
          pr_fingerpr = 'NOFINGERPRINT' AND   
-         pr_cdcanal = 1  THEN
+         pr_flganama = 1  THEN
          
          pc_tratar_erro_fila_excep(pr_dscritic => vr_dsdetcri);
          
       --> Apos rollback, gerar log e commitar
       --> Gerar log de analise de fraude
       ELSIF rw_fraude.nrdconta IS NOT NULL THEN
-      pc_log_analise_fraude(pr_cdcooper => rw_fraude.cdcooper,
-                            pr_nrdconta => rw_fraude.nrdconta,
-                            pr_idorigem => pr_cdcanal,
-                            pr_dstransa => vr_dstransa,
-                            pr_idanalis => pr_idanalis,
-                            pr_dscrilog => pr_dsdetcri,
-                            pr_campoalt => vr_campoalt);
-     
+          pc_log_analise_fraude(pr_cdcooper => rw_fraude.cdcooper,
+                                pr_nrdconta => rw_fraude.nrdconta,
+                                pr_idorigem => pr_cdcanal,
+                                pr_dstransa => vr_dstransa,
+                                pr_idanalis => pr_idanalis,
+                                pr_dscrilog => pr_dsdetcri,
+                                pr_campoalt => vr_campoalt);
+         
       ELSE
         vr_nmarqlog := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
         btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
@@ -2332,6 +2318,63 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
      
       COMMIT;
       
+     
+     END;        
+    EXCEPTION
+       WHEN vr_exc_apro THEN
+        
+        --> Caso não consiga aprovar, tentará reprovar a analise
+        ROLLBACK; 
+         
+         --> Verificar se deve notificar area de segurança
+        IF rw_fraude.flgemail_retorno = 1 THEN
+          pc_notificar_seguranca (pr_idanalis   => pr_idanalis,
+                                  pr_tpalerta   => 2, --> Tipo de alerta 1 - Entrega midware, 2 - Retorno falha  Entrega OFFSA
+                                  pr_dsalerta   => vr_dscritic,
+                                  pr_dscritic   => vr_dscritic_aux); 
+        END IF;
+
+        vr_dscritic_aux := NULL;
+        
+        pc_log_analise_fraude(pr_cdcooper => rw_fraude.cdcooper,
+                              pr_nrdconta => rw_fraude.nrdconta,
+                              pr_idorigem => pr_cdcanal,
+                              pr_dstransa => vr_dstransa,
+                              pr_idanalis => rw_fraude.idanalise_fraude,
+                              pr_dscrilog => 'Falha ao enviar TED para o SPB na procedure AFRA0001.pc_reg_reto_analise_antifraude: '||vr_dsdetcri,
+                              pr_campoalt => vr_campoalt);
+          
+         --> Atualizar analise e gerar log 
+        pc_atualizar_analise ( pr_rowid => rw_fraude.rowid,
+                               pr_dhdenvio => NULL,
+                               pr_cdstatus => NULL,                --> erro comuicação midleware
+                               pr_cdparece => 2,                --> Reprovado
+                               pr_cdcanal  => 1, -- Ayllos      --> Canal do parecer da analise  
+                               pr_dstransa => vr_dstransa,      --> Descrição da trasaçao para log                                            
+                               pr_dscrilog => vr_dscritic,      --> Em caso de status de erro, apresentar critica para log
+                               pr_dscritic => vr_dscritic_aux);
+         
+        IF TRIM(vr_dscritic_aux) IS NOT NULL THEN
+            vr_dscritic := vr_dscritic_aux;
+            ROLLBACK;
+            RAISE vr_exc_erro;
+        END IF;
+
+        --> Excecutar rotinas referentes a reprovação da analise de fraude
+        pc_reprovacao_analise (pr_idanalis  => rw_fraude.idanalise_fraude,    --> Indicador da analise de fraude
+                               pr_cdcritic  => vr_cdcritic,
+                               pr_dscritic  => vr_dscritic_aux );
+             
+        IF TRIM(vr_dscritic) IS NOT NULL OR 
+           nvl(vr_cdcritic,0) > 0 THEN    
+           vr_dscritic := vr_dscritic_aux;
+           ROLLBACK;
+           RAISE vr_exc_erro;
+        END IF;
+        
+        COMMIT;
+        
+
   END pc_reg_reto_analise_antifraude; 
   
   --> Rotina responsavel por registrar a confirmação de entrega da análise ao sistema antifraude
@@ -2383,16 +2426,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     -- Tratamento de erros
     vr_cdcritic NUMBER;
     vr_dscritic VARCHAR2(4000);
+    vr_dscritic_aux VARCHAR2(4000);
     vr_dsdetcri VARCHAR2(4000);
     vr_exc_erro EXCEPTION;  
+   
     
     vr_dstransa craplgm.dstransa%TYPE;  
     vr_campoalt typ_tab_campo_alt;
     vr_cdparece tbgen_analise_fraude.cdparecer_analise%TYPE;
     
-    vr_emaildst VARCHAR2(500)   := NULL;
-    vr_dsassunt VARCHAR2(500)   := NULL;
-    vr_conteudo VARCHAR2(32000) := NULL;
     vr_nmarqlog VARCHAR2(500)   := NULL;
     vr_dscrilog VARCHAR2(500)   := NULL;
     vr_cdcanal  INTEGER         := NULL;
@@ -2444,33 +2486,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     --> se retornou como não entregue
     --> e o parecer ainda esta como pendente
     IF pr_cdentreg = 4 AND rw_fraude.cdparecer_analise = 0 THEN
-        
+      
       --> Excluir analise na fila  
       AFRA0002.pc_remover_analise_fila (pr_idanalis => rw_fraude.idanalise_fraude, --> Identificador da analise 
                                         pr_cdcritic => vr_dscritic,
                                         pr_dscritic => vr_dscritic);
-                
+                    
       IF TRIM(vr_dscritic) IS NOT NULL OR
          nvl(vr_cdcritic,0) > 0 THEN
         vr_cdcritic := 996;  
         RAISE vr_exc_erro; 
       END IF;
-      
-      --> TED 
-      IF rw_fraude.cdproduto = 30 THEN
         
-        --> Notificar monitoração 
-        pc_monitora_ted ( pr_idanalis => pr_idanalis);
-                            
-      END IF;   
-             
       --> Verificar se deve notificar area de segurança
       IF rw_fraude.flgemail_retorno = 1 THEN
         pc_notificar_seguranca (pr_idanalis   => pr_idanalis,
                                 pr_tpalerta   => 2, --> Tipo de alerta 1 - Entrega midware, 2 - Retorno falha  Entrega OFFSA
                                 pr_dscritic   => vr_dscritic); 
       END IF;
-        
+      
       --> Caso não conseguiu enviar para o sistema de analise de fraude, 
       --> deve tratar operacao como aprovada
       pc_aprovacao_analise (pr_idanalis  => pr_idanalis,    --> Indicador da analise de fraude
@@ -2479,16 +2513,47 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
         
       IF TRIM(vr_dsdetcri) IS NOT NULL OR 
          nvl(vr_cdcritic,0) > 0 THEN
-        vr_cdcritic := 996;  
-        RAISE vr_exc_erro;
-      END IF; 
-        
-        
-    END IF;
+         
+         ROLLBACK;
+         
+         --> Atualizar analise e gerar log 
+         pc_atualizar_analise ( pr_rowid => rw_fraude.rowid,
+                                pr_dhdenvio => NULL,
+                                pr_cdstatus => pr_cdentreg,      --> erro comuicação midleware
+                                pr_cdparece => 2,                --> Reprovado
+                                pr_cdcanal  => 1, -- Ayllos      --> Canal do parecer da analise  
+                                pr_dstransa => vr_dstransa,      --> Descrição da trasaçao para log                                            
+                                pr_dscrilog => vr_dscritic,      --> Em caso de status de erro, apresentar critica para log
+                                pr_dscritic => vr_dscritic_aux);
+          
+         IF TRIM(vr_dscritic_aux) IS NOT NULL THEN
+            vr_dscritic := vr_dscritic_aux;
+            RAISE vr_exc_erro;
+         END IF; 
+          
+         --> Excecutar rotinas referentes a reprovação da analise de fraude
+         pc_reprovacao_analise (pr_idanalis  => rw_fraude.idanalise_fraude,    --> Indicador da analise de fraude
+                                pr_cdcritic  => vr_cdcritic,
+                                pr_dscritic  => vr_dscritic );
     
+         IF TRIM(vr_dscritic) IS NOT NULL OR 
+            nvl(vr_cdcritic,0) > 0 THEN    
+           RAISE vr_exc_erro;
+         END IF;
+         
+      ELSE
+        --> TED 
+        IF rw_fraude.cdproduto = 30 THEN
+           --> Notificar monitoração 
+           pc_monitora_ted ( pr_idanalis => pr_idanalis);
+
+        END IF;   
+      
+      END IF;
+      
+    END IF; 
+        
     COMMIT;
-    
-    
     
   EXCEPTION
     WHEN vr_exc_erro THEN
@@ -2509,13 +2574,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       --> Apos rollback, gerar log e commitar
       --> Gerar log de analise de fraude
       IF rw_fraude.nrdconta IS NOT NULL THEN
-      pc_log_analise_fraude(pr_cdcooper => rw_fraude.cdcooper,
-                            pr_nrdconta => rw_fraude.nrdconta,
-                            pr_idorigem => 12, -- OFFSA
-                            pr_dstransa => vr_dstransa,
-                            pr_idanalis => pr_idanalis,
-                            pr_dscrilog => pr_dsdetcri,
-                            pr_campoalt => vr_campoalt);
+         pc_log_analise_fraude(pr_cdcooper => rw_fraude.cdcooper,
+                               pr_nrdconta => rw_fraude.nrdconta,
+                               pr_idorigem => 12, -- OFFSA
+                               pr_dstransa => vr_dstransa,
+                               pr_idanalis => pr_idanalis,
+                               pr_dscrilog => pr_dsdetcri,
+                               pr_campoalt => vr_campoalt);
      
       ELSE
         vr_nmarqlog := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
@@ -3104,7 +3169,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     
     -----------> VARIAVEIS <-----------
     -- Tratamento de erros
-    vr_cdcritic NUMBER;
     vr_dscritic VARCHAR2(4000);
     vr_exc_erro EXCEPTION;  
     
@@ -3258,7 +3322,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     
     -----------> VARIAVEIS <-----------
     -- Tratamento de erros
-    vr_cdcritic NUMBER;
     vr_dscritic VARCHAR2(4000);
     vr_exc_erro EXCEPTION;    
   BEGIN

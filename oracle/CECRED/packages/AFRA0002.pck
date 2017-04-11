@@ -180,7 +180,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0002 is
     vr_msghandl        RAW(16);
   BEGIN
     vr_nmfilfra  := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',  
-                                                      pr_cdacesso => 'NOME_FILA_ANALISE_FRAUDE' );
+                                              pr_cdacesso => 'NOME_FILA_ANALISE_FRAUDE' );
     IF vr_nmfilfra IS NULL THEN
       vr_dscritic := 'Parametro na tabela crapprm NOME_FILA_ANALISE_FRAUDE nao encontrado.';
       RAISE vr_exc_erro;
@@ -189,7 +189,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0002 is
     vr_denqopti.navigation    := DBMS_AQ.FIRST_MESSAGE;
     vr_denqopti.CONSUMER_NAME := NULL;
     vr_denqopti.DEQUEUE_MODE  := DBMS_AQ.REMOVE;
-    vr_denqopti.VISIBILITY    := DBMS_AQ.ON_COMMIT;
+    vr_denqopti.VISIBILITY    := DBMS_AQ.IMMEDIATE;
     vr_denqopti.WAIT          := DBMS_AQ.NO_WAIT;
     vr_denqopti.DELIVERY_MODE := DBMS_AQ.PERSISTENT;
     vr_denqopti.MSGID         := NULL;
