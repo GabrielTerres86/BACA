@@ -18,7 +18,7 @@
   05/01/2016 - Jonathan         (RKAM): Ajsutes para inclusão do relatorio de juros e encargos - M273
 
   08/08/2016 - Guilherme      (SUPERO): M325 - Informe de Rendimentos Trimestral PJ
-
+ * 10/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
  * --------------
  */
 
@@ -182,6 +182,10 @@ function estadoCabecalho() {
     cNrdconta.val('');
     cTpextrat.val('');
 
+    // Seta os valores caso tenha vindo do CRM
+    if ($("#crm_inacesso","#frmCab").val() == 1) {
+        $("#nrdconta","#frmCab").val($("#crm_nrdconta","#frmCab").val());
+    }
 
     cTodosDados.limpaFormulario().desabilitaCampo();
     cFlgtarif.val('');

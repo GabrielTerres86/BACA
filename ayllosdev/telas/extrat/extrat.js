@@ -13,6 +13,7 @@
 							   pois ao fazer download do arquivo não estava vindo com a extensão. (Kelvin - SD 218243)
  * -------------- 08/06/2016 - Ajuste na LOV para busca de cooperados pois não estava atualizando o campo
                                de conta com o valor escolhido, conforme solicitado no chamado 460148. (Kelvin)
+ *                10/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
  */
 
 //Formulários e Tabela
@@ -63,6 +64,11 @@ function estadoInicial() {
 	$('#cddopcao','#'+frmCab).focus();
 	
 	removeOpacidade('divTela');
+
+    // Seta os valores caso tenha vindo do CRM
+    if ($("#crm_inacesso","#frmOpcao").val() == 1) {
+        $("#nrdconta","#frmOpcao").val($("#crm_nrdconta","#frmOpcao").val());
+    }
 }
 
 function atualizaSeletor(){

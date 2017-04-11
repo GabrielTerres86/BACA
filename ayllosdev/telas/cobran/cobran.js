@@ -21,6 +21,7 @@
  *              5 - Data de Vencimento, 6 - Nome do Pagador (Douglas - Chamado 441759)
  * [11/10/2016] Odirlei Busana(AMcom)  : Inclusao dos campos de aviso por SMS. PRJ319 - SMS Cobrança.
  * 08/01/2017 - Adicionar o campo flgdprot para definir label e informacao a mostrar (Protesto x Negativacao (Heitor - Mouts) - Chamado 574161
+ * 10/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
  */
 
 //Formulários e Tabela
@@ -404,6 +405,11 @@ function buscaOpcao() {
                 formataOpcaoR();
             } else if (cddopcao == 'S'){
                 formataOpcaoS();
+            }
+
+            // Seta os valores caso tenha vindo do CRM
+            if ($("#crm_inacesso","#frmCab").val() == 1) {
+                $("#nrdconta","#frmOpcao").val($("#crm_nrdconta","#frmCab").val());
             }
 
             hideMsgAguardo();

@@ -8,6 +8,7 @@
  * --------------
  * [29/03/2012] Rogérius Militão   (DB1) : Ajuste no layout padrão
  * [29/06/2012] Jorge Hamaguchi (CEBRED) : Ajuste para novo esquema de impressao em  imprimeFichaCadastralCF(), e confirmacao para impressao na chamada da funcao Gera_Impressao() 
+ * [11/04/2017] Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
  */
 
 //Formulários e Tabela
@@ -293,6 +294,11 @@ function buscaOpcao() {
             $('#divPesquisaRodape', '#divTela').remove();
 
             formataOpcao();
+
+            // Seta os valores caso tenha vindo do CRM
+            if ($("#crm_inacesso","#frmCab").val() == 1 && cddopcao != 'S') {
+                $("#nrdconta","#frmOpcao").val($("#crm_nrdconta","#frmCab").val());
+            }
 
             hideMsgAguardo();
             return false;
@@ -1653,6 +1659,10 @@ function formataOpcaoS() {
             if ($(this).val() == 3) {
                 $(this).desabilitaCampo();
                 cNrdconta.habilitaCampo().select();
+                // Seta os valores caso tenha vindo do CRM
+                if ($("#crm_inacesso","#frmCab").val() == 1) {
+                    $("#nrdconta","#frmOpcao").val($("#crm_nrdconta","#frmCab").val());
+                }
             } else if ($(this).val() > 0) {
                 $(this).desabilitaCampo();
                 cDtlibera.habilitaCampo().select();

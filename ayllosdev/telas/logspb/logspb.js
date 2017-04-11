@@ -1,7 +1,7 @@
 //************************************************************************//
 //*** Fonte: logspb.js                                                 ***//
 //*** Autor: David                                                     ***//
-//*** Data : Novembro/2009                Última Alteração: 05/12/2016 ***//
+//*** Data : Novembro/2009                Última Alteração: 11/04/2017 ***//
 //***                                                                  ***//
 //*** Objetivo  : Biblioteca de funções da tela LOGSPB                 ***//
 //***                                                                  ***//
@@ -39,6 +39,9 @@
 //***                                                                  ***//
 //***             05/12/2016 - Incorporação Transulcred                ***//
 //***                          (Guilherme/SUPERO)                      ***//
+//***																   ***//	
+//***             11/04/2017 - Permitir acessar o Ayllos mesmo vindo   ***//
+//***                          do CRM. (Jaison/Andrino)				   ***//
 //***                                                                  ***//
 //************************************************************************//
 
@@ -56,6 +59,11 @@ $(document).ready(function () {
 
     if (!carregouOpcoes)
         carregaOpcoes();
+
+    // Seta os valores caso tenha vindo do CRM
+    if ($("#crm_inacesso","#frmLogSPB").val() == 1) {
+        $("#nrdconta","#frmLogSPB").val($("#crm_nrdconta","#frmLogSPB").val());
+    }
 
     highlightObjFocus($('#frmLogSPB'));
 

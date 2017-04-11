@@ -13,7 +13,7 @@
  *                15/03/2016 - Projeto 316 - Buscar "certificado" e novo botão para gerar zip para download
  *                           - Passado 'cdcooper' para cobra_tarifa.php. (Guilherme/SUPERO)
  *                01/12/2016 - Incorporacao Transulcred - Novo campo CDAGECHQ quando SR (Guilherme/SUPERO)
- *
+ *                10/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
  * --------------
  */
 
@@ -166,6 +166,11 @@ function mostraCamposChq() {
             cAgencchq.css({ 'width': '100px' });
 
             cDtcompen.focus();
+
+            // Seta os valores caso tenha vindo do CRM
+            if ($("#crm_inacesso","#frmConsultaImagem").val() == 1) {
+                $("#contachq","#frmConsultaImagem").val($("#crm_nrdconta","#frmConsultaImagem").val());
+            }
         } else {
             $('#divDadosChq').css({ 'display': 'none' });
 

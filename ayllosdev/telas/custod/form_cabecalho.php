@@ -6,6 +6,7 @@
  * OBJETIVO     : Cabeçalho para a tela CUSTOD
  * --------------
  * ALTERAÇÕES   : 01/08/2016 - Corrigi o uso desnecessario da funcao session_start. SD 491672 (Carlos R.)
+ *                11/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
  * --------------
  */
 
@@ -18,6 +19,8 @@
 ?>
 
 <form id="frmCab" name="frmCab" class="formulario cabecalho" onSubmit="return false;">
+	<input type="hidden" name="crm_inacesso" id="crm_inacesso" value="<?php echo $_SESSION["glbvars"][$glbvars["sidlogin"]]['CRM_INACESSO']; ?>" />
+	<input type="hidden" name="crm_nrdconta" id="crm_nrdconta" value="<?php echo $_SESSION["glbvars"][$glbvars["sidlogin"]]['CRM_NRDCONTA']; ?>" />
 
 	<label for="cddopcao">Op&ccedil;&atilde;o:</label>
 	<select id="cddopcao" name="cddopcao">

@@ -3,12 +3,16 @@
 	//************************************************************************//
 	//*** Fonte: home.php                                                  ***//
 	//*** Autor: David                                                     ***//
-	//*** Data : Julho/2007                   Última Alteração: 30/07/2010 ***//
+	//*** Data : Julho/2007                   Última Alteração: 07/04/2017 ***//
 	//***                                                                  ***//
 	//*** Objetivo  : Script com frames para carregar páginas do sistema   ***//
 	//***                                                                  ***//	 
 	//*** Alterações: 30/07/2010 - Verificar se a home foi acionada pelo   ***//
 	//***                          Login do sistema (David).               ***//
+    //***                                                                  ***//
+    //***             07/04/2017 - Permitir acessar o Ayllos mesmo vindo   ***//
+    //***                          do CRM. (Jaison/Andrino)                ***//
+    //***                                                                  ***//
 	//************************************************************************//
 	
 	session_start();
@@ -20,6 +24,15 @@
 	
 	// Verifica se tela foi chamada pelo método POST
 	isPostMethod();
+	
+    // Verifica se veio do CRM
+    if ($_POST['CRM_INACESSO'] == 1) {
+        // Seta as variveis vindas do CRM
+        setVarSession("CRM_INACESSO",$_POST['CRM_INACESSO']);
+        setVarSession("CRM_NMDATELA",$_POST['CRM_NMDATELA']);
+        setVarSession("CRM_NRDCONTA",$_POST['CRM_NRDCONTA']);
+        setVarSession("CRM_NRCPFCGC",$_POST['CRM_NRCPFCGC']);
+    }
 
 ?>
 <html>
