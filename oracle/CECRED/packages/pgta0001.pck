@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.PGTA0001 IS
 --  Sistema  : Rotinas genericas focando nas funcionalidades de Pagamento de Titulos Lote
 --  Sigla    : PGTA
 --  Autor    : Daniel Zimmermann
---  Data     : Abril/2014.                   Ultima atualizacao:  22/02/2016
+--  Data     : Abril/2014.                   Ultima atualizacao:  21/03/2017
 --
 -- Dados referentes ao programa:
 --
@@ -24,6 +24,8 @@ CREATE OR REPLACE PACKAGE CECRED.PGTA0001 IS
 --                          varias procedures desta package.(Carlos Rafael Tanholi). 
 --
 --             22/02/2017 - Ajustes para correçao de crítica de pagamento DARF/DAS (Lucas Lunelli - P.349.2)
+--
+--             21/03/2017 - Incluido DECODE para tratamento de inpessoa > 2 (Diego).
 --
 ---------------------------------------------------------------------------------------------------------------
 
@@ -1115,7 +1117,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
      SELECT crapass.nrdconta
            ,crapass.cdagenci
            ,crapass.nrcpfcgc
-           ,crapass.inpessoa
+          -- ,crapass.inpessoa
+		   ,DECODE(crapass.inpessoa,1,1,2,2,2) inpessoa
        FROM crapass crapass
       WHERE crapass.cdcooper = pr_cdcooper
         AND crapass.nrdconta = pr_nrdconta;
@@ -1333,7 +1336,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
   END;
 
   END pc_efetua_aceite_cancel;
-
+  
   -- Procedure para identificar se o titulo eh da cooperativa, ou se eh de outra IF
   PROCEDURE pc_identifica_interbancario(pr_cdcooper  IN INTEGER      --Codigo Cooperativa
                                        ,pr_codbarra  IN VARCHAR2     --Codigo Barras
@@ -2034,7 +2037,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
     --  Sistema  : Rotinas genericas focando nas funcionalidades do pagamento por arquivo
     --  Sigla    : PGTA
     --  Autor    : Desconhecido (Nao colocou cabeçalho quando criou a procedure)
-    --  Data     : Desconhecido                     Ultima atualizacao: 16/03/2017
+    --  Data     : Desconhecido                     Ultima atualizacao: 21/03/2017
     --
     -- Dados referentes ao programa:
     --
@@ -2047,6 +2050,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
     --                        - Ajustado para quando a data de pagamento do titulo for anterior a data de 
     --                          movimento, assumir que a data de pagamento será a data de movimento    
     --                       (Douglas - Chamado 629635)
+	--           
+	--             21/03/2017 - Incluido DECODE para tratamento de inpessoa > 2 (Diego).
     ---------------------------------------------------------------------------------------------------------------
   DECLARE
 
@@ -2058,7 +2063,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
        SELECT crapass.nrdconta
              ,crapass.cdagenci
              ,crapass.nrcpfcgc
-             ,crapass.inpessoa
+             --,crapass.inpessoa
+			 ,DECODE(crapass.inpessoa,1,1,2,2,2) inpessoa
         FROM crapass crapass
        WHERE crapass.cdcooper = pr_cdcooper
          AND crapass.nrdconta = pr_nrdconta;
