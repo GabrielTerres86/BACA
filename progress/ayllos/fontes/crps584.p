@@ -25,13 +25,9 @@
                26/03/2012 - Faz primeiro a verificacao dos cheques da crapcdb e 
                             depois a verificacao dos cheques da crapcst (Elton).
 
-			         20/07/2016 - Alteracao do caminho onde serao salvos os arquivos
-							              de truncagem de cheque. SD 476097. Carlos R.	
+			   20/07/2016 - Alteracao do caminho onde serao salvos os arquivos
+							de truncagem de cheque. SD 476097. Carlos R.	
 
-               04/11/2016 - Cheques custodiados deverao ter o numero do bordero
-                            igual a zero. (Projeto 300 - Rafael)
-
-               23/01/2017 - Realizado merge com a PROD ref ao projeto 300 (Rafael)
                
                05/04/2017 - Incluir dtdevolu na leitura da crapcdb e crapcst (Lucas Ranghetti #621301)
 ..............................................................................*/
