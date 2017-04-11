@@ -210,7 +210,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps712 (pr_cdcooper IN crapcop.cdcooper%T
                               ,rw_crapcop.nrctactl
                               ,rw_crapcop.nrctactl
                               ,to_char(rw_crapcop.nrctactl,'fm00000000')
-                              ,rw_craplot.nrseqdig
+                              ,Nvl(rw_craplot.nrseqdig,0) + 1
                               ,rw_operadora.cdhisdeb_centralizacao
                               ,Nvl(rw_craplot.nrseqdig,0) + 1
                               ,Nvl(rw_craplot.nrseqdig,0) + 1
