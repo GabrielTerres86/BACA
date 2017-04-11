@@ -11,7 +11,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_job_paga_adiofjuros IS
    Frequencia: Diário.
    Objetivo  : Efetuar os debitos de agendamentos de AD, IOF e Juros.
 
-   Alteracoes: 
+   Alteracoes: 03/04/2017 - Alterações implementadas:
+                             *retirado conta fixa;
+                             *mudado parametro da obtem_saldo_dia de I para A;
+                             *adicionado commit na ultima linha do programa;
+                             *retirado +1 do nrseqdig antes de inserir a craplcm;
+                             (Tiago/Thiago).
   ..........................................................................*/
 
 BEGIN
@@ -53,7 +58,6 @@ BEGIN
          AND ctrl.cdhistor IN (323, 38, 37)
          AND ctrl.insit_lancto = 1
          AND lau.insitlau = 1
-         AND ctrl.nrdconta = 28673
          AND ctrl.nrdconta = lau.nrdconta
          AND ctrl.cdcooper = lau.cdcooper
        ORDER BY ctrl.dtmvtolt;        
@@ -294,8 +298,6 @@ BEGIN
          RAISE vr_exc_erro;
       END IF;
 
-      rw_craplot.nrseqdig := NVL(rw_craplot.nrseqdig,0) + 1;
-
       /* Cria o lancamento do DEBITO */
       BEGIN
         INSERT INTO craplcm (cdcooper
@@ -494,7 +496,7 @@ BEGIN
                                     ,pr_cdoperad   => 1
                                     ,pr_nrdconta   => rw_lautom_ctrl.nrdconta
                                     ,pr_vllimcre   => rw_crapass.vllimcre
-                                    ,pr_tipo_busca => 'I' --> tipo de busca(I-dtmvtolt)
+                                    ,pr_tipo_busca => 'A' --> tipo de busca(I-dtmvtolt)
                                     ,pr_flgcrass   => FALSE
                                     ,pr_dtrefere   => rw_crapdat.dtmvtolt
                                     ,pr_des_reto   => vr_dscritic
@@ -641,6 +643,8 @@ BEGIN
                    ,pr_tpexecucao => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
                     -- Parametros para Ocorrencia
                    ,PR_IDPRGLOG   => vr_idprglog); --> Identificador unico da tabela (sequence)                    
+    
+    COMMIT;                 
     
   EXCEPTION
     WHEN vr_exc_erro THEN
