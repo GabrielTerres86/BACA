@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE CCET0001 IS
+CREATE OR REPLACE PACKAGE CECRED.CCET0001 IS
 
 -- contaMeses
 FUNCTION fn_qtd_meses(pr_data_1 IN DATE
@@ -166,7 +166,7 @@ PROCEDURE pc_juros_cet(pr_nro_parcelas   IN NUMBER
                                       
 END CCET0001;
 /
-create or replace package body CCET0001 is
+create or replace package body cecred.CCET0001 is
 
   ---------------------------------------------------------------------------------------------------------------
   --
@@ -948,7 +948,7 @@ create or replace package body CCET0001 is
 
       -- Calcula o valor emprestado com a taxa de IOF
       pr_vllanmto := ROUND(pr_vlemprst * vr_txccdiof,2);
-      
+     
       IF pr_dtinivig >= to_date('03/04/2017','DD/MM/YYYY') AND pr_vllanmto > 0 THEN
       
         IF pr_qtdiavig > 365 THEN
@@ -1477,7 +1477,7 @@ create or replace package body CCET0001 is
       -- VERIFICA SE OCORREU UMA CRITICA
       IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_erro;        
-      END IF;                                                               
+      END IF;                                                          
       
       -- gravar codigo da tarifa e historico de lançamento
       IF pr_inpessoa = 1 THEN -- Fisica
@@ -1602,7 +1602,7 @@ create or replace package body CCET0001 is
       END IF;
       
       pc_escreve_xml('<cet>');
-
+      
       -- informacoes para impressao
       pc_escreve_xml('<cdcooper>' || pr_cdcooper || '</cdcooper>' ||
                      '<nrdconta>' || gene0002.fn_mask_conta(pr_nrdconta) || '</nrdconta>' ||
@@ -1634,37 +1634,37 @@ create or replace package body CCET0001 is
 
       --> Verificar se é apenas para gerar o XML
       IF pr_flretxml = 0 THEN
-        -- buscar time da operacao
-        vr_nmarqimp := gene0002.fn_busca_time;
-        pr_nmarqimp := vr_nmarqimp;
+      -- buscar time da operacao
+      vr_nmarqimp := gene0002.fn_busca_time;
+      pr_nmarqimp := vr_nmarqimp;
            
-        -- Busca do diretório base da cooperativa e a subpasta de relatórios
-        vr_path_arquivo := gene0001.fn_diretorio( pr_tpdireto => 'C' -- /usr/coop
-                                                 ,pr_cdcooper => pr_cdcooper
-                                                 ,pr_nmsubdir => '/rl'); --> Gerado no diretorio /rl        
+      -- Busca do diretório base da cooperativa e a subpasta de relatórios
+      vr_path_arquivo := gene0001.fn_diretorio( pr_tpdireto => 'C' -- /usr/coop
+                                               ,pr_cdcooper => pr_cdcooper
+                                               ,pr_nmsubdir => '/rl'); --> Gerado no diretorio /rl        
                                              
-        -- Gerando o relatório nas pastas /rl                                              
-        gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper
-                                   ,pr_cdprogra  => 'atenda'
-                                   ,pr_dtmvtolt  => pr_dtmvtolt
-                                   ,pr_dsxml     => vr_des_xml
-                                   ,pr_dsxmlnode => '/cet'
-                                   ,pr_dsjasper  => 'cet_limites.jasper'
-                                   ,pr_dsparams  => NULL
-                                   ,pr_dsarqsaid => vr_path_arquivo || '/' || vr_nmarqimp || '.ex'
-                                   ,pr_flg_gerar => 'S'
-                                   ,pr_cdrelato  => '663'
-                                   ,pr_qtcoluna  => 80
-                                   ,pr_sqcabrel  => 1
-                                   ,pr_flg_impri => 'N'
-                                   ,pr_nmformul  => '80col'
-                                   ,pr_nrcopias  => 1
+      -- Gerando o relatório nas pastas /rl                                              
+      gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper
+                                 ,pr_cdprogra  => 'atenda'
+                                 ,pr_dtmvtolt  => pr_dtmvtolt
+                                 ,pr_dsxml     => vr_des_xml
+                                 ,pr_dsxmlnode => '/cet'
+                                 ,pr_dsjasper  => 'cet_limites.jasper'
+                                 ,pr_dsparams  => NULL
+                                 ,pr_dsarqsaid => vr_path_arquivo || '/' || vr_nmarqimp || '.ex'
+                                 ,pr_flg_gerar => 'S'
+                                 ,pr_cdrelato  => '663'
+                                 ,pr_qtcoluna  => 80
+                                 ,pr_sqcabrel  => 1
+                                 ,pr_flg_impri => 'N'
+                                 ,pr_nmformul  => '80col'
+                                 ,pr_nrcopias  => 1
                                    ,pr_nrvergrl  => 1
-                                   ,pr_des_erro  => vr_dscritic);
+                                 ,pr_des_erro  => vr_dscritic);
 
-        -- VERIFICA SE OCORREU UMA CRITICA
-        IF vr_dscritic IS NOT NULL THEN
-          RAISE vr_exc_erro;        
+      -- VERIFICA SE OCORREU UMA CRITICA
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;        
         END IF;
       ELSE
         pr_des_xml := vr_des_xml;
@@ -1908,25 +1908,26 @@ create or replace package body CCET0001 is
       END IF;                
 
       -- calcula IOF apenas para emprestimos que nao sao de portabilidade
-      IF vr_des_reto = 'N' THEN
+      IF vr_des_reto = 'N' THEN      
         -- Quantidade de dias de vigencia
         vr_qtdiavig := add_months(pr_dtdpagto,pr_qtpreemp - 1) - pr_dtmvtolt;      
         -- Buscar iof
-        pc_calcula_iof(pr_cdcooper => pr_cdcooper
-                      ,pr_dtmvtolt => pr_dtmvtolt
-                      ,pr_vlemprst => pr_vlemprst
-                      ,pr_cdprogra => pr_cdprogra
-                      ,pr_cdlcremp => pr_cdlcremp
-                      ,pr_inpessoa => pr_inpessoa
-                      ,pr_dtinivig => pr_dtlibera
-                      ,pr_qtdiavig => vr_qtdiavig
-                      ,pr_vllanmto => vr_vlrdoiof
-                      ,pr_txccdiof => vr_txjuriof
-                      ,pr_cdcritic => vr_cdcritic
-                      ,pr_dscritic => vr_dscritic);
-         -- VERIFICA SE OCORREU UMA CRITICA
+        EMPR0001.pc_calcula_iof_epr(pr_cdcooper => pr_cdcooper
+                                   ,pr_nrdconta => pr_nrdconta
+                                   ,pr_dtmvtolt => pr_dtmvtolt
+                                   ,pr_inpessoa => pr_inpessoa
+                                   ,pr_cdlcremp => pr_cdlcremp
+                                   ,pr_qtpreemp => pr_qtpreemp
+                                   ,pr_vlpreemp => pr_vlpreemp
+                                   ,pr_vlemprst => pr_vlemprst
+                                   ,pr_dtdpagto => pr_dtdpagto
+                                   ,pr_dtlibera => pr_dtlibera
+                                   ,pr_valoriof => vr_vlrdoiof
+                                   ,pr_dscritic => vr_dscritic);
+                                   
+        -- VERIFICA SE OCORREU UMA CRITICA
         IF vr_dscritic IS NOT NULL THEN
-          RAISE vr_exc_erro;        
+          RAISE vr_exc_erro;
         END IF;
       
       END IF;
@@ -2474,28 +2475,26 @@ create or replace package body CCET0001 is
                      ,pr_cdfinemp => pr_cdfinemp);
         FETCH cr_crapfin INTO rw_crapfin;          
                          
-      IF cr_crapfin%FOUND THEN
-        CLOSE cr_crapfin;
-        -- tipo da finalidade
-        vr_tpfinali := rw_crapfin.tpfinali;
-      END IF;
+        IF cr_crapfin%FOUND THEN
+          CLOSE cr_crapfin;
+          -- tipo da finalidade
+          vr_tpfinali := rw_crapfin.tpfinali;
+        END IF;
     
-      vr_qtdiavig := add_months(pr_dtdpagto,pr_qtpreemp - 1) - pr_dtmvtolt;
-         
-      -- Buscar iof
-      pc_calcula_iof(pr_cdcooper => pr_cdcooper
-                    ,pr_dtmvtolt => pr_dtmvtolt
-                    ,pr_vlemprst => pr_vlemprst
-                    ,pr_cdprogra => pr_cdprogra
-                    ,pr_cdlcremp => pr_cdlcremp
-                    ,pr_inpessoa => pr_inpessoa
-                    ,pr_dtinivig => pr_dtlibera
-                    ,pr_qtdiavig => vr_qtdiavig
-                    ,pr_vllanmto => vr_vlrdoiof
-                    ,pr_txccdiof => vr_txjuriof
-                    ,pr_cdcritic => vr_cdcritic
-                    ,pr_dscritic => vr_dscritic);
-       -- VERIFICA SE OCORREU UMA CRITICA
+      EMPR0001.pc_calcula_iof_epr(pr_cdcooper => pr_cdcooper
+                                 ,pr_nrdconta => pr_nrdconta
+                                 ,pr_dtmvtolt => pr_dtmvtolt
+                                 ,pr_inpessoa => pr_inpessoa
+                                 ,pr_cdlcremp => pr_cdlcremp
+                                 ,pr_qtpreemp => pr_qtpreemp
+                                 ,pr_vlpreemp => pr_vlpreemp
+                                 ,pr_vlemprst => pr_vlemprst
+                                 ,pr_dtdpagto => pr_dtdpagto
+                                 ,pr_dtlibera => pr_dtlibera
+                                 ,pr_valoriof => vr_vlrdoiof
+                                 ,pr_dscritic => vr_dscritic);
+                                   
+      -- VERIFICA SE OCORREU UMA CRITICA
       IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_erro;        
       END IF;             

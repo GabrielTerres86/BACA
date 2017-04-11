@@ -9,7 +9,7 @@ create or replace procedure cecred.pc_crps172(pr_cdcooper  in craptab.cdcooper%t
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/96                     Ultima atualizacao: 28/07/2015
+   Data    : Novembro/96                     Ultima atualizacao: 06/04/2017
 
    Dados referentes ao programa:
 
@@ -98,6 +98,9 @@ create or replace procedure cecred.pc_crps172(pr_cdcooper  in craptab.cdcooper%t
                             Adicionado na insercao da craplcm o campo hrtransa e 
                             nome do programa no campo cdpesqbb.
                             (Jorge/Thiago) - SD 294256
+                            
+               06/04/2017 - Forçar o índice do cursor cr_craplcm para 
+                            INDEX(lcm craplcm##craplcm2) (Carlos)
 ............................................................................. */
   -- Buscar os dados da cooperativa
   cursor cr_crapcop (pr_cdcooper in craptab.cdcooper%type) is
@@ -154,7 +157,8 @@ create or replace procedure cecred.pc_crps172(pr_cdcooper  in craptab.cdcooper%t
   cursor cr_craplcm (pr_cdcooper in crapcop.cdcooper%type,
                      pr_nrdconta in craplcm.nrdconta%type,
                      pr_dtmvtolt in crapdat.dtmvtolt%type) is
-    select lcm.cdhistor,
+    select /*+ INDEX(lcm craplcm##craplcm2) */
+           lcm.cdhistor,
            lcm.dtrefere,
            sum(lcm.vllanmto) vllanmto,
            his.cdhistor cdhistor_his,
@@ -807,4 +811,3 @@ exception
     rollback;
 end;
 /
-

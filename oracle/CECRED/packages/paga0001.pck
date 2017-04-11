@@ -1160,7 +1160,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 22/02/2017
+  --  Data     : Junho/2013.                   Ultima atualizacao: 05/04/2017
   --
   -- Dados referentes ao programa:
   --
@@ -1487,6 +1487,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                     conforme o programa crps509 ja faz (Lucas Ranghetti #590601) 
 
        22/02/2017 - Ajustes para correçao de crítica de pagamento DARF/DAS (Lucas Lunelli - P.349.2)      
+
+       05/04/2017 - Adicionado tratamento para que os boletos a serem creditados na conta da Access devem ser
+                    transferidos para a conta da Acredicoop - Conforme determinação judicial
+                    (Douglas- Chamado 643859)
 
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -19122,6 +19126,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
              cob.cdmensag,
              cob.vldescto,
              cob.tpjurmor,
+             cob.nrdocmto,
              cob.rowid rowid_cob,
              ret.rowid rowid_ret
         FROM crapret ret
@@ -19156,6 +19161,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 
       vr_cdcritic INTEGER;
       vr_dscritic VARCHAR2(4000);
+      vr_des_erro VARCHAR2(4000);
       vr_cdhistor INTEGER;
       --Variaveis de Excecao
       vr_exc_erro    EXCEPTION;
@@ -19167,6 +19173,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
       vr_vlrmulta NUMBER;
       vr_vlfatura NUMBER;
       vr_flgvenci BOOLEAN;
+
+      -- Variaveis para o valor que deve ser transferido para outra conta
+      vr_dstextab_new_lcto craptab.dstextab%TYPE;
+      vr_index_deb VARCHAR2(100);
+      vr_index_cre VARCHAR2(100);
 
       PROCEDURE pc_verifica_vencto (pr_cdcooper IN INTEGER  --Codigo da cooperativa
                                    ,pr_dtmvtolt IN DATE     --Data para verificacao
@@ -19531,6 +19542,125 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                                 ,pr_cdcritic => vr_cdcritic          -- Codigo Critica
                                                 ,pr_dscritic => vr_dscritic);        -- Descricao Critica
 
+            
+            -- Verificar se o boleto se enquadra na relação de titulos que devem ter o valor
+            -- transferido para outra conta
+            -- será pesquisado com a seguinte regra (definido por Douglas e Cechet)
+            --      CDCOOPER = Coperativa
+            --      NMSISTEM = "CRED"
+            --      TPTABELA = "COBRAN"
+            --      CDEMPRES = Nº Conta
+            --      CDACESSO = "TRANSFCOB" + "0000000" -> Convenio
+            --      TPREGIST = Nº Boleto
+            --
+            -- O campo DSTEXTAB terá o seguinte valor 
+            --  Posição 1: Cooperativa de destino
+            --  Posição 2: Conta de Destino
+            --  Posição 3: Histórico de Crédito
+            --  Posição 4: Histórico de Débito
+            --
+            vr_dstextab_new_lcto := TABE0001.fn_busca_dstextab(pr_cdcooper => rw_cursor1.cdcooper
+                                                              ,pr_nmsistem => 'CRED'
+                                                              ,pr_tptabela => 'COBRAN'
+                                                              ,pr_cdempres => rw_cursor1.nrdconta
+                                                              ,pr_cdacesso => 'TRANSFCOB' || to_char(rw_cursor1.nrcnvcob,'fm0000000') 
+                                                              ,pr_tpregist => rw_cursor1.nrdocmto);
+            -- verificar se existe
+            IF TRIM(vr_dstextab_new_lcto) IS NOT NULL THEN 
+              -- Montar indice para acessar tabela
+              -- Valor que deve ser debitado da conta que emitiu o boleto
+              vr_index_deb:= LPad(rw_cursor1.cdcooper,3,'0')||
+                             LPad(rw_cursor1.nrdconta,10,'0')||
+                             LPad(rw_cursor1.nrcnvcob,7,'0')||
+                             Lpad(rw_cursor1.nrdocmto,10,'0')||
+                             LPad(gene0002.fn_busca_entrada(pr_postext => 4
+                                                           ,pr_dstext => vr_dstextab_new_lcto
+                                                           ,pr_delimitador => ';'),5,'0');    -- Histórico para transferencia
+
+              --Verificar se a chave existe na tabela
+              IF NOT pr_tab_lcm_consolidada.EXISTS(vr_index_deb) THEN
+                --Criar registro tabela lancamentos consolidada
+                pr_tab_lcm_consolidada(vr_index_deb).cdcooper:= rw_cursor1.cdcooper;
+                pr_tab_lcm_consolidada(vr_index_deb).nrdconta:= rw_cursor1.nrdconta;
+                pr_tab_lcm_consolidada(vr_index_deb).nrconven:= rw_cursor1.nrcnvcob;
+                pr_tab_lcm_consolidada(vr_index_deb).cdocorre:= rw_cursor1.cdocorre;
+                pr_tab_lcm_consolidada(vr_index_deb).cdhistor:= gene0002.fn_busca_entrada(pr_postext => 4
+                                                                                         ,pr_dstext => vr_dstextab_new_lcto
+                                                                                         ,pr_delimitador => ';'); -- Historico de tranferencia
+                pr_tab_lcm_consolidada(vr_index_deb).vllancto:= rw_cursor1.vlrpagto; -- Valor que está sendo PAGO
+                pr_tab_lcm_consolidada(vr_index_deb).tplancto:= 'L'; -- Verificar QUISINSKI
+                pr_tab_lcm_consolidada(vr_index_deb).qtdregis:= 1;
+                pr_tab_lcm_consolidada(vr_index_deb).cdfvlcop:= 0;
+              ELSE
+                --Incrementar valor que está sendo pago
+                pr_tab_lcm_consolidada(vr_index_deb).vllancto:= Nvl(pr_tab_lcm_consolidada(vr_index_deb).vllancto,0) + rw_cursor1.vlrpagto;
+                --Incrementar quantidade registros
+                pr_tab_lcm_consolidada(vr_index_deb).qtdregis:= Nvl(pr_tab_lcm_consolidada(vr_index_deb).qtdregis,0) + 1;
+              END IF;        
+              
+              -- Montar indice para acessar tabela
+              -- Valor que deve ser creditado na conta de destino
+              vr_index_cre:= LPad(gene0002.fn_busca_entrada(pr_postext => 1
+                                                           ,pr_dstext => vr_dstextab_new_lcto
+                                                           ,pr_delimitador => ';'),3,'0')|| -- Cooperativa
+                             LPad(gene0002.fn_busca_entrada(pr_postext => 2
+                                                           ,pr_dstext => vr_dstextab_new_lcto
+                                                           ,pr_delimitador => ';'),10,'0')|| -- Conta
+                             LPad(rw_cursor1.nrcnvcob,7,'0')||
+                             Lpad(rw_cursor1.nrdocmto,10,'0')||
+                             LPad(gene0002.fn_busca_entrada(pr_postext => 3
+                                                           ,pr_dstext => vr_dstextab_new_lcto
+                                                           ,pr_delimitador => ';'),5,'0'); -- Histórico para transferencia
+
+              --Verificar se a chave existe na tabela
+              IF NOT pr_tab_lcm_consolidada.EXISTS(vr_index_cre) THEN
+                --Criar registro tabela lancamentos consolidada
+                pr_tab_lcm_consolidada(vr_index_cre).cdcooper:= gene0002.fn_busca_entrada(pr_postext => 1
+                                                                                         ,pr_dstext => vr_dstextab_new_lcto
+                                                                                         ,pr_delimitador => ';');
+                pr_tab_lcm_consolidada(vr_index_cre).nrdconta:= gene0002.fn_busca_entrada(pr_postext => 2
+                                                                                         ,pr_dstext => vr_dstextab_new_lcto
+                                                                                         ,pr_delimitador => ';');
+                pr_tab_lcm_consolidada(vr_index_cre).nrconven:= rw_cursor1.nrcnvcob;
+                pr_tab_lcm_consolidada(vr_index_cre).cdocorre:= rw_cursor1.cdocorre;
+                pr_tab_lcm_consolidada(vr_index_cre).cdhistor:= gene0002.fn_busca_entrada(pr_postext => 3
+                                                                                         ,pr_dstext => vr_dstextab_new_lcto
+                                                                                         ,pr_delimitador => ';'); -- Historico de tranferencia
+                pr_tab_lcm_consolidada(vr_index_cre).vllancto:= rw_cursor1.vlrpagto; -- Valor que está sendo PAGO
+                pr_tab_lcm_consolidada(vr_index_cre).tplancto:= 'L';
+                pr_tab_lcm_consolidada(vr_index_cre).qtdregis:= 1;
+                pr_tab_lcm_consolidada(vr_index_cre).cdfvlcop:= 0;
+              ELSE
+                --Incrementar valor que está sendo pago
+                pr_tab_lcm_consolidada(vr_index_cre).vllancto:= Nvl(pr_tab_lcm_consolidada(vr_index_cre).vllancto,0) + rw_cursor1.vlrpagto;
+                --Incrementar quantidade registros
+                pr_tab_lcm_consolidada(vr_index_cre).qtdregis:= Nvl(pr_tab_lcm_consolidada(vr_index_cre).qtdregis,0) + 1;
+              END IF;        
+           
+              -- Gerar LOG no boleto para identificar que o valor foi transferido
+              PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_cursor1.rowid_cob   --ROWID da Cobranca
+                                           ,pr_cdoperad => '1'   --Operador
+                                           ,pr_dtmvtolt => pr_dtmvtolt   --Data movimento
+                                           ,pr_dsmensag => 'Valor Transferido para' ||
+                                                           ' Coop: ' || gene0002.fn_busca_entrada(pr_postext => 1
+                                                                                                 ,pr_dstext => vr_dstextab_new_lcto
+                                                                                                 ,pr_delimitador => ';') || 
+                                                           ' Conta: ' || gene0002.fn_busca_entrada(pr_postext => 2
+                                                                                                  ,pr_dstext => vr_dstextab_new_lcto
+                                                                                                  ,pr_delimitador => ';') || 
+                                                           ' - C: ' || gene0002.fn_busca_entrada(pr_postext => 3
+                                                                                                ,pr_dstext => vr_dstextab_new_lcto
+                                                                                                ,pr_delimitador => ';') || 
+                                                           ' D: ' || gene0002.fn_busca_entrada(pr_postext => 4
+                                                                                              ,pr_dstext => vr_dstextab_new_lcto
+                                                                                              ,pr_delimitador => ';')
+                                                              --Descricao Mensagem
+                                           ,pr_des_erro => vr_des_erro   --Indicador erro
+                                           ,pr_dscritic => vr_dscritic); --Descricao erro
+
+            END IF; -- Fim da validação de boleto para creditar o valor em outra conta
+            
+            
             -- Marcar registro da crapret como "Credito realizado" (flcredit)
             BEGIN
               UPDATE crapret set flcredit = 1
@@ -19593,6 +19723,127 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                               ,pr_tab_lcm_consolidada => pr_tab_lcm_consolidada --Tabela de Lancamentos
                                               ,pr_cdcritic => vr_cdcritic   --Codigo Critica
                                               ,pr_dscritic => vr_dscritic); --Descricao Critica
+
+            
+          -- Verificar se o boleto se enquadra na relação de titulos que devem ter o valor
+          -- transferido para outra conta
+          -- será pesquisado com a seguinte regra (definido por Douglas e Cechet)
+          --      CDCOOPER = Coperativa
+          --      NMSISTEM = "CRED"
+          --      TPTABELA = "COBRAN"
+          --      CDEMPRES = Nº Conta
+          --      CDACESSO = "TRANSFCOB" + "0000000" -> Convenio
+          --      TPREGIST = Nº Boleto
+          --
+          -- O campo DSTEXTAB vai conter a seguinte informação
+          --     1 - Cooperativa de destino
+          --     2 - Conta de destino
+          --     3 - Histórico de Crédito
+          --     4 - Histórico de Débito
+          vr_dstextab_new_lcto := TABE0001.fn_busca_dstextab(pr_cdcooper => rw_cursor2.cdcooper
+                                                            ,pr_nmsistem => 'CRED'
+                                                            ,pr_tptabela => 'COBRAN'
+                                                            ,pr_cdempres => rw_cursor2.nrdconta
+                                                            ,pr_cdacesso => 'TRANSFCOB' || to_char(rw_cursor2.nrcnvcob,'fm0000000') 
+                                                            ,pr_tpregist => rw_cursor2.nrdocmto);
+          -- verificar se existe
+          IF TRIM(vr_dstextab_new_lcto) IS NOT NULL THEN 
+            -- Montar indice para acessar tabela
+            -- Valor que deve ser debitado da conta que emitiu o boleto
+            vr_index_deb:= LPad(rw_cursor2.cdcooper,3,'0')||
+                           LPad(rw_cursor2.nrdconta,10,'0')||
+                           LPad(rw_cursor2.nrcnvcob,7,'0')||
+                           Lpad(rw_cursor2.nrdocmto,10,'0')||
+                           -- Histórico de débito para transferencia
+                           LPad(gene0002.fn_busca_entrada(pr_postext => 4
+                                                         ,pr_dstext => vr_dstextab_new_lcto
+                                                         ,pr_delimitador => ';'),5,'0');
+
+            --Verificar se a chave existe na tabela
+            IF NOT pr_tab_lcm_consolidada.EXISTS(vr_index_deb) THEN
+              --Criar registro tabela lancamentos consolidada
+              pr_tab_lcm_consolidada(vr_index_deb).cdcooper:= rw_cursor2.cdcooper;
+              pr_tab_lcm_consolidada(vr_index_deb).nrdconta:= rw_cursor2.nrdconta;
+              pr_tab_lcm_consolidada(vr_index_deb).nrconven:= rw_cursor2.nrcnvcob;
+              pr_tab_lcm_consolidada(vr_index_deb).cdocorre:= rw_cursor2.cdocorre;
+              pr_tab_lcm_consolidada(vr_index_deb).cdhistor:= gene0002.fn_busca_entrada(pr_postext => 4
+                                                                                       ,pr_dstext => vr_dstextab_new_lcto
+                                                                                       ,pr_delimitador => ';'); -- Historico de tranferencia
+              pr_tab_lcm_consolidada(vr_index_deb).vllancto:= rw_cursor2.vlrpagto; -- Valor que está sendo PAGO
+              pr_tab_lcm_consolidada(vr_index_deb).tplancto:= 'L'; -- Verificar QUISINSKI
+              pr_tab_lcm_consolidada(vr_index_deb).qtdregis:= 1;
+              pr_tab_lcm_consolidada(vr_index_deb).cdfvlcop:= 0;
+            ELSE
+              --Incrementar valor que está sendo pago
+              pr_tab_lcm_consolidada(vr_index_deb).vllancto:= Nvl(pr_tab_lcm_consolidada(vr_index_deb).vllancto,0) + rw_cursor2.vlrpagto;
+              --Incrementar quantidade registros
+              pr_tab_lcm_consolidada(vr_index_deb).qtdregis:= Nvl(pr_tab_lcm_consolidada(vr_index_deb).qtdregis,0) + 1;
+            END IF;        
+              
+            -- Montar indice para acessar tabela
+            -- Valor que deve ser creditado na conta de destino
+            vr_index_cre:= LPad(gene0002.fn_busca_entrada(pr_postext => 1
+                                                         ,pr_dstext => vr_dstextab_new_lcto
+                                                         ,pr_delimitador => ';'),3,'0')|| -- Cooperativa
+                           -- Conta de destino do valor do boleto
+                           LPad(gene0002.fn_busca_entrada(pr_postext => 2
+                                                         ,pr_dstext => vr_dstextab_new_lcto
+                                                         ,pr_delimitador => ';'),10,'0')||
+                           LPad(rw_cursor2.nrcnvcob,7,'0')||
+                           Lpad(rw_cursor2.nrdocmto,10,'0')||
+                           -- Histórico para crédito do valor
+                           LPad(gene0002.fn_busca_entrada(pr_postext => 3
+                                                         ,pr_dstext => vr_dstextab_new_lcto
+                                                         ,pr_delimitador => ';'),5,'0');
+
+            --Verificar se a chave existe na tabela
+            IF NOT pr_tab_lcm_consolidada.EXISTS(vr_index_cre) THEN
+              --Criar registro tabela lancamentos consolidada
+              pr_tab_lcm_consolidada(vr_index_cre).cdcooper:= gene0002.fn_busca_entrada(pr_postext => 1
+                                                                                       ,pr_dstext => vr_dstextab_new_lcto
+                                                                                       ,pr_delimitador => ';');
+              pr_tab_lcm_consolidada(vr_index_cre).nrdconta:= gene0002.fn_busca_entrada(pr_postext => 2
+                                                                                       ,pr_dstext => vr_dstextab_new_lcto
+                                                                                       ,pr_delimitador => ';');
+              pr_tab_lcm_consolidada(vr_index_cre).nrconven:= rw_cursor2.nrcnvcob;
+              pr_tab_lcm_consolidada(vr_index_cre).cdocorre:= rw_cursor2.cdocorre;
+              pr_tab_lcm_consolidada(vr_index_cre).cdhistor:= gene0002.fn_busca_entrada(pr_postext => 3
+                                                                                       ,pr_dstext => vr_dstextab_new_lcto
+                                                                                       ,pr_delimitador => ';'); -- Historico de tranferencia
+              pr_tab_lcm_consolidada(vr_index_cre).vllancto:= rw_cursor2.vlrpagto; -- Valor que está sendo PAGO
+              pr_tab_lcm_consolidada(vr_index_cre).tplancto:= 'L';
+              pr_tab_lcm_consolidada(vr_index_cre).qtdregis:= 1;
+              pr_tab_lcm_consolidada(vr_index_cre).cdfvlcop:= 0;
+            ELSE
+              --Incrementar valor que está sendo pago
+              pr_tab_lcm_consolidada(vr_index_cre).vllancto:= Nvl(pr_tab_lcm_consolidada(vr_index_cre).vllancto,0) + rw_cursor2.vlrpagto;
+              --Incrementar quantidade registros
+              pr_tab_lcm_consolidada(vr_index_cre).qtdregis:= Nvl(pr_tab_lcm_consolidada(vr_index_cre).qtdregis,0) + 1;
+            END IF;        
+           
+            -- Gerar LOG no boleto para identificar que o valor foi transferido
+            PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_cursor2.rowid_cob   --ROWID da Cobranca
+                                         ,pr_cdoperad => '1'   --Operador
+                                         ,pr_dtmvtolt => pr_dtmvtolt   --Data movimento
+                                         ,pr_dsmensag => 'Valor Transferido para' ||
+                                                         ' Coop: ' || gene0002.fn_busca_entrada(pr_postext => 1
+                                                                                               ,pr_dstext => vr_dstextab_new_lcto
+                                                                                               ,pr_delimitador => ';') || 
+                                                         ' Conta: ' || gene0002.fn_busca_entrada(pr_postext => 2
+                                                                                                ,pr_dstext => vr_dstextab_new_lcto
+                                                                                                ,pr_delimitador => ';') || 
+                                                         ' - C: ' || gene0002.fn_busca_entrada(pr_postext => 3
+                                                                                              ,pr_dstext => vr_dstextab_new_lcto
+                                                                                              ,pr_delimitador => ';') || 
+                                                         ' D: ' || gene0002.fn_busca_entrada(pr_postext => 4
+                                                                                            ,pr_dstext => vr_dstextab_new_lcto
+                                                                                            ,pr_delimitador => ';')
+                                                            --Descricao Mensagem
+                                         ,pr_des_erro => vr_des_erro   --Indicador erro
+                                         ,pr_dscritic => vr_dscritic); --Descricao erro
+           
+          END IF; -- Fim da validação de boleto para creditar o valor em outra conta
+            
 
           -- Marcar registro da crapret como "Credito realizado" (flcredit)
           BEGIN
