@@ -1,3 +1,4 @@
+<?php
 /*!
  * FONTE        : principal.php
  * CRIAÇÃO      : André Socoloski - DB1
