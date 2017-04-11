@@ -9315,7 +9315,7 @@ END pc_gera_titulos_iptu_prog;
   --  Sistema  : Procedure para identificar titulo cooperativa
   --  Sigla    : CXON
   --  Autor    : Rafael Cechet
-  --  Data     : Agosto/2014.                   Ultima atualizacao: 24/07/2015
+  --  Data     : Agosto/2014.                   Ultima atualizacao: 07/04/2017
   --
   -- Dados referentes ao programa:
   --
@@ -9337,6 +9337,10 @@ END pc_gera_titulos_iptu_prog;
   --
   --               13/05/2016 - Inclusao da critica '980 - Convenio do cooperado bloqueado'
   --                            PRJ318 - Nova Plataforma de cobrança (Odirlei-AMcom)             
+  --
+  --               07/04/2017 - Ajustado para quando nao encontrar CEB e TCO rejeitar o pagamento com a 
+  --                            mensagem "911 - Beneficiario nao cadastrado.", ao invés de aceitar o 
+  --                            pagamento como sendo "Liquidação Interbancária" (Douglas - Chamado 619274)
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -10146,9 +10150,26 @@ END pc_gera_titulos_iptu_prog;
                    CLOSE cr_crapceb1;
                 END IF;
 
-                /* liq interbancaria (nesse caso, de outra cooperativa) */
-                RAISE vr_exc_saida;
-
+                -- Se nao encontrou CEB e TCO, então a conta não existe
+                CXON0000.pc_cria_erro(pr_cdcooper => pr_cooper
+                                     ,pr_cdagenci => pr_cod_agencia
+                                     ,pr_nrdcaixa => vr_nrdcaixa
+                                     ,pr_cod_erro => 911
+                                     ,pr_dsc_erro => NULL
+                                     ,pr_flg_erro => TRUE
+                                     ,pr_cdcritic => vr_cdcritic
+                                     ,pr_dscritic => vr_dscritic);
+                --Se ocorreu erro
+                IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+                  --Levantar Excecao
+                  RAISE vr_exc_erro;
+                ELSE
+                  vr_cdcritic:= 911;
+                  vr_dscritic:= gene0001.fn_busca_critica(vr_cdcritic);
+                  --Levantar Excecao
+                  RAISE vr_exc_erro;
+                END IF;
+                
              END IF; -- craptco%FOUND
           END IF; -- cr_crapceb1%FOUND
 
