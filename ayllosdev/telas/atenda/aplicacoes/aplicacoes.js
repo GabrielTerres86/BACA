@@ -1,7 +1,7 @@
 /******************************************************************************
  Fonte: aplicacoes.js                                             
  Autor: David                                                     
- Data : Setembro/2009                Última Alteração: 08/10/2015
+ Data : Setembro/2009                Última Alteração: 29/03/2017
                                                                   
  Objetivo  : Biblioteca de funções da rotina Aplicações da tela   
              ATENDA                                               
@@ -79,6 +79,8 @@
 			     	      da aplicação SD - 266191 (Kelvin)
 						  
 			 08/10/2015 - Reformulacao cadastral (Gabriel-RKAM)  
+
+             29/03/2017 - Inclui validacao para uso da senha do operador para o resgate de aplicacoes. SD 632578
 ***************************************************************************/
 
 var nraplica = 0;     // Variável para armazenar número da aplicação selecionada
@@ -154,9 +156,58 @@ function acessaOpcaoAba(nrOpcoes,id,opcao) {
 			if (executandoProdutos) {
 				buscaDadosAplicacao('I');
 			}
-			
+            controlaFoco();
 		}				
 	}); 		
+}
+
+//Função para controle de navegação
+function controlaFoco() {
+    $('#divConteudoOpcao #divAplicacoesPrincipal').each(function () {
+        $(this).find("#divBotoes > a").addClass("FluxoNavega");
+        $(this).find("#divBotoes > a").first().addClass("FirstInputModal").focus();
+        $(this).find("#divBotoes > a").last().addClass("LastInputModal");
+    });
+
+    //Se estiver com foco na classe FluxoNavega
+    $(".FluxoNavega").focus(function () {
+    $(this).bind('keydown', function (e) {
+        if (e.keyCode == 27) {
+                encerraRotina(true).click();
+        }
+        });
+    });
+
+    //Se estiver com foco na classe LastInputModal
+    $(".LastInputModal").focus(function () {
+        var pressedShift = false;
+
+        $(this).bind('keyup', function (e) {
+            if (e.keyCode == 16) {
+                pressedShift = false;//Quando tecla shift for solta passa valor false 
+            }
+        })
+
+        $(this).bind('keydown', function (e) {
+            e.stopPropagation();
+            e.preventDefault();
+
+            if (e.keyCode == 13) {
+                $(".LastInputModal").click();
+            }
+            if (e.keyCode == 16) {
+                pressedShift = true;//Quando tecla shift for pressionada passa valor true 
+            }
+            if ((e.keyCode == 9) && pressedShift == true) {
+                return setFocusCampo($(target), e, false, 0);
+            }
+            else if (e.keyCode == 9) {
+                $(".FirstInputModal").focus();
+            }
+        });
+    });
+
+    $(".FirstInputModal").focus();
 }
 
 // Função para seleção da aplicação
@@ -465,8 +516,9 @@ function cadastrarResgate(flmensag) {
 	var vlresgat = $("#vlresgat","#frmResgate").val().replace(/\./g,"");
 	var dtresgat = $("#dtresgat","#frmResgate").val();
 	var flgctain = $("#flgctain","#frmResgate").val();	
-	var cdopera2 = $("#cdopera2","#frmResgate").val();
-	var cddsenha = $("#cddsenha","#frmResgate").val();
+    // consiste check "Autorizar operação" 
+    var cdopera2 = ( $("#flautori").is(':checked') ) ? $("#cdopera2", "#frmResgate").val() : '';
+    var cddsenha = ( $("#flautori").is(':checked') ) ? $("#cddsenha", "#frmResgate").val() : '';
 		
 	if (tpresgat == "P" || tpresgat == 1) {
 		// Valida valor do resgate
@@ -3090,8 +3142,10 @@ function acessaOpcaoAgendamento() {
 	$.ajax({		
 		type: "POST",		
 		url: UrlSite + "telas/atenda/aplicacoes/principal_agendamento.php", 
-		data: {nrdconta: nrdconta,
-			   redirect: "script_ajax"}, 
+        data: {
+            nrdconta: nrdconta,
+            redirect: "script_ajax"
+        },
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
 			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
