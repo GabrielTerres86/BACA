@@ -33,7 +33,7 @@
 
                23/01/2017 - Realizado merge com a PROD ref ao projeto 300 (Rafael)
                
-               05/04/2017 - Incluir dtdevolu na leitura da crapcdb (Lucas Ranghetti #621301)
+               05/04/2017 - Incluir dtdevolu na leitura da crapcdb e crapcst (Lucas Ranghetti #621301)
 ..............................................................................*/
 
 { includes/var_batch.i "NEW" }
@@ -314,7 +314,8 @@ PROCEDURE pi_processa_registros:
                                                                      crapcst.cdagechq = aux_cdagechq     AND
                                                                      crapcst.nrctachq = aux_nrctachq     AND
                                                                      crapcst.nrcheque = aux_nrcheque     AND
-																	                                   crapcst.nrborder = 0
+                                                                     crapcst.nrborder = 0                AND 
+                                                                     crapcst.dtdevolu = ?
                                                                      EXCLUSIVE-LOCK NO-ERROR.
                                                         
                                                         IF   AVAILABLE crapcst THEN
@@ -333,7 +334,8 @@ PROCEDURE pi_processa_registros:
                                                                           crapcst.cdagechq = aux_cdagechq     AND
                                                                           crapcst.nrctachq = aux_nrctachq     AND
                                                                           crapcst.nrcheque = aux_nrcheque     AND
-																		                                      crapcst.nrborder = 0
+                                                                          crapcst.nrborder = 0                AND 
+                                                                          crapcst.dtdevolu = ?
                                                                           EXCLUSIVE-LOCK NO-ERROR.
                                                                                          
                                                                 IF   AVAILABLE crapcst THEN
