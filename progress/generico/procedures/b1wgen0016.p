@@ -37,7 +37,7 @@
 
     Programa: b1wgen0016.p
     Autor   : Evandro/David
-    Data    : Abril/2006                     Ultima Atualizacao: 27/09/2016
+    Data    : Abril/2006                     Ultima Atualizacao: 14/04/2017
     
     Dados referentes ao programa:
 
@@ -464,6 +464,9 @@ PRJ319 - SMS Cobrança (Odirlei - AMcom)
 
 			  07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
                            departamento passando a considerar o código (Renato Darosci)             
+                           
+        12/04/2017 - Incluido tratamento de transaçoes pendentes 13. 
+                     PRJ319 - Recarga de Celular (Lombardi)
  .............................................................................*/
 { sistema/internet/includes/var_ibank.i }
 
@@ -12557,6 +12560,7 @@ PROCEDURE aprova_trans_pend:
                                                      ,INPUT tt-tbgen_trans_pend.nrcpf_operador
                                                      ,INPUT 0
                                                      ,INPUT 0
+                                                     ,INPUT ""
                                                      ,INPUT 0
                                                      ,INPUT 0
                                                      ,INPUT 0

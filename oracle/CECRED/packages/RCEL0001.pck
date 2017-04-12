@@ -202,6 +202,7 @@ CREATE OR REPLACE PACKAGE CECRED.RCEL0001 AS
                                   ,pr_nrcpfope   IN crapsnh.nrcpfcgc%TYPE
                                   ,pr_nrddd      IN tbrecarga_favorito.nrddd%TYPE
                                   ,pr_nrcelular  IN tbrecarga_favorito.nrcelular%TYPE
+                                  ,pr_nmcontato  IN tbrecarga_favorito.nmcontato%TYPE
                                   ,pr_vlrecarga  IN tbrecarga_valor.vlrecarga%TYPE
                                   ,pr_operadora  IN tbrecarga_operadora.cdoperadora%TYPE
                                   ,pr_produto    IN tbrecarga_produto.cdproduto%TYPE
@@ -3433,6 +3434,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                                   ,pr_nrcpfope   IN crapsnh.nrcpfcgc%TYPE
                                   ,pr_nrddd      IN tbrecarga_favorito.nrddd%TYPE
                                   ,pr_nrcelular  IN tbrecarga_favorito.nrcelular%TYPE
+                                  ,pr_nmcontato  IN tbrecarga_favorito.nmcontato%TYPE
                                   ,pr_vlrecarga  IN tbrecarga_valor.vlrecarga%TYPE
                                   ,pr_operadora  IN tbrecarga_operadora.cdoperadora%TYPE
                                   ,pr_produto    IN tbrecarga_produto.cdproduto%TYPE
@@ -3578,6 +3580,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                                   ,pr_idoperac  => pr_idoperacao
                                   ,pr_dsprotoc  => vr_dsprotoc
                                   ,pr_dsnsuope  => vr_dsnsuope
+                                  ,pr_cdcritic  => vr_cdcritic
+                                  ,pr_dscritic  => vr_dscritic);
+        -- Se ocorreu erro                                             
+        IF vr_cdcritic <> 0 OR vr_dscritic IS NOT NULL THEN            
+          RAISE vr_exc_erro;                                            
+        END IF;
+      END IF;
+      -- Commit para garantir que o cadastro de favorito não 
+      -- interfira no cadastro de recarga
+      COMMIT;
+      
+      IF pr_inaprpen = 0 THEN
+        pc_cadastra_favorito(pr_cdcooper  => pr_cdcooper
+                            ,pr_nrdconta  => pr_nrdconta
+                            ,pr_nrddd     => vr_nrddd
+                            ,pr_nrcelular => vr_nrcelular
+                            ,pr_nmcontato => pr_nmcontato
                                   ,pr_cdcritic  => vr_cdcritic
                                   ,pr_dscritic  => vr_dscritic);
         -- Se ocorreu erro                                             

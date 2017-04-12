@@ -175,7 +175,7 @@ ELSE IF par_operacao = 4 THEN
     END.
 
   END.
-
+/*
 ELSE IF par_operacao = 5 THEN
   DO:
 
@@ -206,7 +206,7 @@ ELSE IF par_operacao = 5 THEN
     END.
 
   END.
-
+*/
 
 ELSE IF par_operacao = 6 THEN
   DO:
@@ -220,6 +220,7 @@ ELSE IF par_operacao = 6 THEN
                          ,INPUT par_nrcpfope
                          ,INPUT par_nrddd
                          ,INPUT par_nrcelular
+                         ,INPUT par_nmcontato
                          ,INPUT par_vlrecarga
                          ,INPUT par_cdoperadora
                          ,INPUT par_cdproduto
