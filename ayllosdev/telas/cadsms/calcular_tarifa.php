@@ -38,7 +38,7 @@ require_once('../../includes/controla_secao.php');
 require_once('../../class/xmlfile.php');
 isPostMethod();
 
-// Guardo os parâmetos do POST em variáveis	
+// Guardo os parâmetos do POST em variáveis
 
 $cdcooper = (isset($_POST['cdcooper'])) ? $_POST['cdcooper'] : 0;
 $cdtarifa = (isset($_POST['cdtarifa'])) ? $_POST['cdtarifa'] : 0;
@@ -62,7 +62,7 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
     if ($msgErro == "") {
         $msgErro = $xmlObj->roottag->tags[0]->cdata;
     }
-    
+
     $erro = new Error($msgErro);
 
     echo json_encode($erro);
@@ -71,9 +71,9 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 
     $registro = $xmlObj->roottag->tags[0];
 
-    $vlsms =   getByTagName($registro->tags,'vlsms');
-    $vlsmsad =   getByTagName($registro->tags,'vlsmsad');
-    $vlpacote =  getByTagName($registro->tags,'vlpacote');
+    $vlsms =   converteFloat(getByTagName($registro->tags,'vlsms'));
+    $vlsmsad =   converteFloat(getByTagName($registro->tags,'vlsmsad'));
+    $vlpacote =  converteFloat(getByTagName($registro->tags,'vlpacote'));
 
     $tarifas = new TarifaPacoteSMS($vlsms, $vlsmsad, $vlpacote);
 
@@ -81,4 +81,3 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 }
 
 ?>
-

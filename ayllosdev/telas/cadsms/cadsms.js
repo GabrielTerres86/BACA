@@ -358,7 +358,7 @@ function PopupPacote() {
 
         $("#divRotina").css("left", "453px");
         $("#qtdsms").setMask('INTEGER', 'zzzzzzzz', '', '');
-        ("#perdesconto").addClass('moeda');
+        $("#perdesconto").addClass('moeda');
         //$("#perdesconto").setMask('DECIMAL', 'zzz.zzz.zzz.zz9,99', ',', '');
 
     }
@@ -561,7 +561,7 @@ function FormularioPacote() {
    }
 
    var setIdPacote = function(id) {
-       $("#idpacote").val(id);
+       $("#frmOpcaoI #idpacote").val(id);
    }
 
    FormularioPacote.onClick_Prosseguir = function() {
@@ -710,9 +710,9 @@ function FormularioPacote() {
    }
 
    var atualizarValoresTarifa = function(valorSms, valorSmsAdicional, valorPacote) {
-        $("#vlsms").val(valorSms);
-        $("#vlsmsad").val(valorSmsAdicional);
-        $("#vlpacote").val(valorPacote);
+        $("#frmOpcaoI #vlsms").val(valorSms);
+        $("#frmOpcaoI #vlsmsad").val(valorSmsAdicional);
+        $("#frmOpcaoI #vlpacote").val(valorPacote);
    }
 
    this.toDictionary = function() {
