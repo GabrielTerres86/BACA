@@ -96,11 +96,18 @@
                 07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
                              departamento passando a considerar o código (Renato Darosci)
 
+                             
+                03/04/2017 - Ajuste no calculo do IOF. (James)     
+				
+				07/04/2017 - Passar o tipo de emprestimo fixo como 1-PP na chamada da 
+				             rotina pc_calcula_iof_epr, pois todas as simulações são 
+							 empréstimos PP  ( Renato Darosci )
 ............................................................................*/
 
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/gera_erro.i }
 { sistema/generico/includes/gera_log.i }
+{ sistema/generico/includes/var_oracle.i }
 { sistema/generico/includes/b1wgen0084tt.i }
 { sistema/generico/includes/b1wgen0097tt.i }
 { sistema/generico/includes/b1wgen9999tt.i }
@@ -645,7 +652,8 @@ PROCEDURE grava_simulacao:
          
     DELETE OBJECT hb1wgen0084.
     
-
+    FIND FIRST tt-parcelas-epr NO-ERROR.
+  
     ASSIGN aux_cdcritic = 0
            aux_dscritic = ""
            var_vliofepr = 0.
@@ -656,9 +664,17 @@ PROCEDURE grava_simulacao:
             RUN consulta_iof(INPUT  par_cdcooper,
                              INPUT  par_dtmvtolt,
                              INPUT  par_vlemprst,
+                             INPUT  par_nrdconta,
+                             INPUT  par_dtdpagto,
+                             INPUT  par_qtparepr,
+                             INPUT  par_cdlcremp,
+                             INPUT  IF AVAIL tt-parcelas-epr THEN 
+                                             tt-parcelas-epr.vlparepr
+                                    ELSE 0, 
+                             INPUT  par_dtlibera,
                              OUTPUT var_vliofepr,
                              OUTPUT TABLE tt-erro).
-        
+
             IF  RETURN-VALUE = "NOK" THEN
                 RETURN "NOK".
         END.
@@ -738,8 +754,6 @@ PROCEDURE grava_simulacao:
              RETURN "NOK".
          END.
 
-    FIND FIRST tt-parcelas-epr NO-ERROR.
-    
     RUN sistema/generico/procedures/b1wgen0002.p 
         PERSISTENT SET h-b1wgen0002.
 
@@ -1663,43 +1677,68 @@ PROCEDURE consulta_iof:
     DEF INPUT        PARAM par_cdcooper AS INT                      NO-UNDO.
     DEF INPUT        PARAM par_dtmvtolt AS DATE                     NO-UNDO.
     DEF INPUT        PARAM par_vlemprst AS DEC                      NO-UNDO.
-    DEF OUTPUT       PARAM par_vliofepr AS DEC                      NO-UNDO.
-    DEF OUTPUT       PARAM  TABLE   FOR tt-erro.
+    DEF INPUT        PARAM par_nrdconta AS INTE                     NO-UNDO.
+    DEF INPUT        PARAM par_dtdpagto AS DATE                     NO-UNDO.
+    DEF INPUT        PARAM par_qtpreemp AS INTE                     NO-UNDO.        
+    DEF INPUT        PARAM par_cdlcremp AS INTEGER                  NO-UNDO.
+    DEF INPUT        PARAM par_vlpreemp AS DECI                     NO-UNDO.
+    DEF INPUT        PARAM par_dtlibera AS DATE                     NO-UNDO.
+    DEF OUTPUT       PARAM par_vliofepr AS DEC                      NO-UNDO.        
+    DEF OUTPUT       PARAM TABLE FOR tt-erro.
     
-    DEF VAR                h-b1wgen9999 AS HANDLE                   NO-UNDO.
-
-    RUN sistema/generico/procedures/b1wgen9999.p 
-                    PERSISTENT SET h-b1wgen9999.
+    DEF VAR aux_inpessoa AS INTEGER INIT 0                          NO-UNDO.
     
-    IF  NOT VALID-HANDLE(h-b1wgen9999)  THEN
-           DO: 
-               ASSIGN aux_dscritic = "Handle invalido para h-b1wgen9999.".
-               LEAVE.
-           END.
+    FOR FIRST crapass FIELDS(inpessoa)
+                      WHERE crapass.cdcooper = par_cdcooper AND
+                            crapass.nrdconta = par_nrdconta
+                            NO-LOCK: END.
+    
+    IF AVAILABLE crapass THEN
+       ASSIGN aux_inpessoa = crapass.inpessoa.
        
-    RUN busca_iof IN h-b1wgen9999 (INPUT par_cdcooper,
-                                  INPUT 0, /* agenci */
-                                  INPUT 0, /* caixa  */
-                                  INPUT par_dtmvtolt,
-                                  OUTPUT TABLE tt-erro,
-                                  OUTPUT TABLE tt-iof). 
-    DELETE PROCEDURE h-b1wgen9999.
-   
-    IF  RETURN-VALUE = "NOK"  THEN
-        RETURN "NOK".
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
-    FIND FIRST tt-iof NO-LOCK NO-ERROR.
-   
-    IF   AVAIL tt-iof THEN
-         DO:
-             ASSIGN  par_vliofepr = par_vlemprst * tt-iof.txccdiof.
-         END.
-    ELSE
-         DO:
-             ASSIGN  par_vliofepr = 0.
-         END.
+    /* Efetuar a chamada a rotina Oracle */ 
+    RUN STORED-PROCEDURE pc_calcula_iof_epr
+     aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper,
+                                          INPUT par_nrdconta,
+                                          INPUT par_dtmvtolt,
+                                          INPUT aux_inpessoa,
+                                          INPUT par_cdlcremp,
+                                          INPUT par_qtpreemp,
+                                          INPUT par_vlpreemp,
+                                          INPUT par_vlemprst,
+                                          INPUT par_dtdpagto,
+                                          INPUT par_dtlibera,
+										  INPUT 1, /* tpemprst -> 1-PP */
+                                         OUTPUT 0,
+                                         OUTPUT "").
     
+    /* Fechar o procedimento para buscarmos o resultado */ 
+    CLOSE STORED-PROC pc_calcula_iof_epr
+        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+    ASSIGN par_vliofepr = pc_calcula_iof_epr.pr_valoriof
+                             WHEN pc_calcula_iof_epr.pr_valoriof <> ?           
+           aux_dscritic = pc_calcula_iof_epr.pr_dscritic
+                             WHEN pc_calcula_iof_epr.pr_dscritic <> ?.
+ 
+    IF aux_dscritic <> "" THEN
+       DO:
+           ASSIGN aux_cdcritic = 0.
+           RUN gera_erro (INPUT par_cdcooper,
+                          INPUT 1,
+                          INPUT 1,
+                          INPUT 1,
+                          INPUT aux_cdcritic,
+                          INPUT-OUTPUT aux_dscritic).
+					RETURN "NOK".	
+       END.    
+          
     RETURN "OK".
+    
 END.
 
 /*****************************************************************************
