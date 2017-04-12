@@ -120,6 +120,8 @@ DEF VAR tel_vllimpgo AS DECI FORMAT "zzz,zzz,zz9.99"    EXTENT 2        NO-UNDO.
 DEF VAR tel_vllimted AS DECI FORMAT "zzz,zzz,zz9.99"    EXTENT 2        NO-UNDO.
 DEF VAR tel_vlvrbole AS DECI FORMAT "zzz,zzz,zz9.99"    EXTENT 2        NO-UNDO.
 
+DEF VAR tel_vlvrflpg AS DECI FORMAT "zzz,zzz,zz9.99"    EXTENT 2        NO-UNDO.
+
 DEF VAR tel_vlmaxapl AS DECI FORMAT "z,zzz,zz9.99"    EXTENT 2        NO-UNDO.
 DEF VAR tel_vlminapl AS DECI FORMAT "z,zzz,zz9.99"    EXTENT 2        NO-UNDO.
 DEF VAR tel_vlmaxres AS DECI FORMAT "z,zzz,zz9.99"    EXTENT 2        NO-UNDO.
@@ -185,6 +187,12 @@ FORM "Operacional"   AT 48
          HELP "Informe o valor maximo para operacoes com VR Boleto."
      tel_vlvrbole[2] AT 61 NO-LABEL
          HELP "Informe o valor maximo para operacoes com VR Boleto."
+     SKIP
+	 "Valor Limite VR Boletos:" AT 19
+     tel_vlvrflpg[1] AT 45 NO-LABEL
+         HELP "Informe o valor maximo para operacoes com Folha de Pgto."
+     tel_vlvrflpg[2] AT 61 NO-LABEL
+         HELP "Informe o valor maximo para operacoes com Folha de Pgto."
      SKIP
      "Limite de dias para primeiro acesso:"  AT 07
      tel_qtdiaace[1] AT 54 NO-LABEL 
@@ -262,6 +270,12 @@ FORM "Operacional"   AT 47
         HELP "Informe o valor maximo para operacoes com VR Boleto."
      tel_vlvrbole[2] AT 60 NO-LABEL
         HELP "Informe o valor maximo para operacoes com VR Boleto."
+     SKIP
+	 "Valor Limite VR Boletos:" AT 18
+     tel_vlvrflpg[1] AT 44 NO-LABEL
+        HELP "Informe o valor maximo para operacoes com Folha de Pgto."
+     tel_vlvrflpg[2] AT 60 NO-LABEL
+        HELP "Informe o valor maximo para operacoes com Folha de Pgto."
      SKIP
      "Limite de dias para primeiro acesso:"  AT 06
      tel_qtdiaace[1] AT 55 NO-LABEL 
@@ -455,6 +469,7 @@ DO WHILE TRUE:
              tel_qtmesagd[1] = INTE(ENTRY(05,aux_dstextab,";"))
              tel_vllimted[1] = DECI(ENTRY(13,aux_dstextab,";"))
              tel_vlvrbole[1] = DECI(ENTRY(15,aux_dstextab,";"))
+			 tel_vlvrflpg[1] = DECI(ENTRY(37,aux_dstextab,";"))
              tel_qtdiatro[1] = INTE(ENTRY(17,aux_dstextab,";"))
              tel_qtdiaaso[1] = INTE(ENTRY(18,aux_dstextab,";"))
              tel_qtdiablo[1] = INTE(ENTRY(19,aux_dstextab,";"))
@@ -465,6 +480,7 @@ DO WHILE TRUE:
              tel_qtmesagd[2] = INTE(ENTRY(11,aux_dstextab,";"))
              tel_vllimted[2] = DECI(ENTRY(14,aux_dstextab,";"))
              tel_vlvrbole[2] = DECI(ENTRY(16,aux_dstextab,";"))
+			 tel_vlvrflpg[2] = DECI(ENTRY(38,aux_dstextab,";"))
              tel_qtdiatro[2] = INTE(ENTRY(20,aux_dstextab,";"))
              tel_qtdiaaso[2] = INTE(ENTRY(21,aux_dstextab,";"))
              tel_qtdiablo[2] = INTE(ENTRY(22,aux_dstextab,";"))
@@ -491,6 +507,7 @@ DO WHILE TRUE:
              tel_vllimpgo[1] = DECI(ENTRY(06,aux_dstextab,";"))
              tel_vllimted[1] = DECI(ENTRY(13,aux_dstextab,";"))
              tel_vlvrbole[1] = DECI(ENTRY(15,aux_dstextab,";"))
+			 tel_vlvrflpg[1] = DECI(ENTRY(37,aux_dstextab,";"))
              tel_qtdiatro[1] = INTE(ENTRY(17,aux_dstextab,";"))
              tel_qtdiaaso[1] = INTE(ENTRY(18,aux_dstextab,";"))
              tel_qtdiablo[1] = INTE(ENTRY(19,aux_dstextab,";"))
@@ -502,6 +519,7 @@ DO WHILE TRUE:
              tel_vllimpgo[2] = DECI(ENTRY(12,aux_dstextab,";"))  
              tel_vllimted[2] = DECI(ENTRY(14,aux_dstextab,";"))
              tel_vlvrbole[2] = DECI(ENTRY(16,aux_dstextab,";"))
+			 tel_vlvrflpg[2] = DECI(ENTRY(38,aux_dstextab,";"))
              tel_qtdiatro[2] = INTE(ENTRY(20,aux_dstextab,";"))
              tel_qtdiaaso[2] = INTE(ENTRY(21,aux_dstextab,";"))
              tel_qtdiablo[2] = INTE(ENTRY(22,aux_dstextab,";"))
@@ -527,10 +545,12 @@ DO WHILE TRUE:
                 DISPLAY tel_vllimweb[1] tel_nrderros[1] tel_qtdiaace[1] 
                         tel_vlpconfe[1] tel_qtmesagd[1] tel_vllimted[1]
                         tel_vlvrbole[1] 
+						tel_vlvrflpg[1]
                         tel_qtdiatro[1] tel_qtdiaaso[1] tel_qtdiablo[1]
                         tel_vllimweb[2] tel_nrderros[2] tel_qtdiaace[2]
                         tel_vlpconfe[2] tel_qtmesagd[2] tel_vllimted[2]
                         tel_vlvrbole[2]
+						tel_vlvrflpg[2]
                         tel_qtdiatro[2] tel_qtdiaaso[2] tel_qtdiablo[2]
                         WITH FRAME f_dados_fisica.
              
@@ -567,11 +587,11 @@ DO WHILE TRUE:
             DO:                                                    
                DISPLAY tel_vllimtrf[1] tel_vllimpgo[1] tel_nrderros[1]
                        tel_qtdiaace[1] tel_vlpconfe[1] tel_qtmesagd[1]
-                       tel_vllimted[1] tel_vlvrbole[1]
+                       tel_vllimted[1] tel_vlvrbole[1] tel_vlvrflpg[1]
                        tel_qtdiatro[1] tel_qtdiaaso[1] tel_qtdiablo[1]
                        tel_vllimtrf[2] tel_vllimpgo[2] tel_nrderros[2] 
                        tel_qtdiaace[2] tel_vlpconfe[2] tel_qtmesagd[2] 
-                       tel_vllimted[2] tel_vlvrbole[2]
+                       tel_vllimted[2] tel_vlvrbole[2] tel_vlvrflpg[2]
                        tel_qtdiatro[2] tel_qtdiaaso[2] tel_qtdiablo[2]
                        WITH FRAME f_dados_juridica.
               
@@ -622,6 +642,7 @@ DO WHILE TRUE:
                      DISPLAY tel_vllimweb[2]
                              tel_vllimted[2]
                              tel_vlvrbole[2]
+							 tel_vlvrflpg[2]
                              tel_qtdiaace[2]
                              tel_qtdiatro[2]
                              tel_qtdiaaso[2]
@@ -634,6 +655,7 @@ DO WHILE TRUE:
                      UPDATE tel_vllimweb[1]
                             tel_vllimted[1]
                             tel_vlvrbole[1]
+							tel_vlvrflpg[1]
                             tel_qtdiatro[1] 
                             tel_qtdiaaso[1] 
                             tel_qtdiablo[1]
@@ -668,6 +690,18 @@ DO WHILE TRUE:
                                    "ao estipulado pela CECRED.".
       
                            NEXT-PROMPT tel_vlvrbole[1]
+                                       WITH FRAME f_dados_fisica.
+      
+                           NEXT.
+      
+                        END.
+					
+					IF tel_vlvrflpg[1] > tel_vlvrflpg[2]  THEN
+                        DO:
+                           MESSAGE "O valor deve ser inferior ou igual " +
+                                   "ao estipulado pela CECRED.".
+      
+                           NEXT-PROMPT tel_vlvrflpg[1]
                                        WITH FRAME f_dados_fisica.
       
                            NEXT.
@@ -719,6 +753,7 @@ DO WHILE TRUE:
                              tel_vllimpgo[2]  
                              tel_vllimted[2]  
                              tel_vlvrbole[2]
+							 tel_vlvrflpg[2]
                              tel_qtdiaace[2]
                              tel_qtdiatro[2]
                              tel_qtdiaaso[2]
@@ -732,6 +767,7 @@ DO WHILE TRUE:
                             tel_vllimpgo[1]
                             tel_vllimted[1]
                             tel_vlvrbole[1]
+							tel_vlvrflpg[1]
                             tel_qtdiatro[1] 
                             tel_qtdiaaso[1] 
                             tel_qtdiablo[1]
@@ -779,6 +815,18 @@ DO WHILE TRUE:
                                    "ao estipulado pela CECRED.".
       
                            NEXT-PROMPT tel_vlvrbole[1]
+                                       WITH FRAME f_dados_juridica.
+      
+                           NEXT.
+      
+                        END.
+					
+					IF tel_vlvrflpg[1] > tel_vlvrflpg[2]  THEN
+                        DO:
+                           MESSAGE "O valor deve ser inferior ou igual " +
+                                   "ao estipulado pela CECRED.".
+      
+                           NEXT-PROMPT tel_vlvrflpg[1]
                                        WITH FRAME f_dados_juridica.
       
                            NEXT.
@@ -837,6 +885,7 @@ DO WHILE TRUE:
                               UPDATE tel_vllimweb[2]
                                      tel_vllimted[2]
                                      tel_vlvrbole[2]
+									 tel_vlvrflpg[2]
                                      tel_qtdiaace[2]
                                      tel_qtdiatro[2]
                                      tel_qtdiaaso[2]
@@ -879,6 +928,19 @@ DO WHILE TRUE:
                                             "para o Operacional.".
       
                                     NEXT-PROMPT tel_vlvrbole[2]
+                                         WITH FRAME f_dados_fisica.
+      
+                                    NEXT.
+      
+                                 END.
+							
+							IF tel_vlvrflpg[1] > tel_vlvrflpg[2]  THEN
+                                 DO:
+                                    MESSAGE "O valor deve ser maior"
+                                            "ou igual ao estipulado"
+                                            "para o Operacional.".
+      
+                                    NEXT-PROMPT tel_vlvrflpg[2]
                                          WITH FRAME f_dados_fisica.
       
                                     NEXT.
@@ -931,6 +993,7 @@ DO WHILE TRUE:
                                      tel_vllimpgo[2]  
                                      tel_vllimted[2]  
                                      tel_vlvrbole[2]
+									 tel_vlvrflpg[2]
                                      tel_qtdiaace[2]
                                      tel_qtdiatro[2]
                                      tel_qtdiaaso[2]
@@ -986,6 +1049,19 @@ DO WHILE TRUE:
                                             "para o Operacional.".
       
                                     NEXT-PROMPT tel_vlvrbole[2]
+                                         WITH FRAME f_dados_juridica.
+      
+                                    NEXT.
+      
+                                 END.
+							
+							IF tel_vlvrflpg[1] > tel_vlvrflpg[2]  THEN
+                                 DO:
+                                    MESSAGE "O valor deve ser maior"
+                                            "ou igual ao estipulado"
+                                            "para o Operacional.".
+      
+                                    NEXT-PROMPT tel_vlvrflpg[2]
                                          WITH FRAME f_dados_juridica.
       
                                     NEXT.
@@ -1333,6 +1409,7 @@ DO WHILE TRUE:
                             INPUT tel_vllimpgo, 
                             INPUT tel_vllimted, 
                             INPUT tel_vlvrbole, 
+							INPUT tel_vlvrflpg,
                             INPUT tel_vlmaxapl, 
                             INPUT tel_vlminapl, 
                             INPUT tel_vlmaxres, 
@@ -1443,6 +1520,7 @@ PROCEDURE grava_dados:
    DEF INPUT PARAM par_vllimpgo AS DECI EXTENT 2                    NO-UNDO.
    DEF INPUT PARAM par_vllimted AS DECI EXTENT 2                    NO-UNDO.
    DEF INPUT PARAM par_vlvrbole AS DECI EXTENT 2                    NO-UNDO.
+   DEF INPUT PARAM par_vlvrflpg AS DECI EXTENT 2                    NO-UNDO.
    DEF INPUT PARAM par_vlmaxapl AS DECI EXTENT 2                    NO-UNDO.
    DEF INPUT PARAM par_vlminapl AS DECI EXTENT 2                    NO-UNDO.
    DEF INPUT PARAM par_vlmaxres AS DECI EXTENT 2                    NO-UNDO.
