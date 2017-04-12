@@ -280,8 +280,8 @@ Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
                          (Guilherme/SUPERO)
 
             08/11/2016 - Alteracoes referentes a melhoria 165 - Lancamentos Futuros. 
-                         Lenilson (Mouts)	 
-
+                         Lenilson (Mouts)
+                         
             19/01/2017 - Ajuste na validação de agendamentos/pagamentos no último
                          dia do ano (Rodrigo - SD 587328)
             02/02/2017 - #566765 Mudanca do tipo da variavel xml_resp de char para 
@@ -5914,6 +5914,7 @@ PROCEDURE verifica_comprovantes:
                                       INPUT aux_nrdconta,
                                       INPUT aux_dtinipro,
                                       INPUT aux_dtfimpro,
+                                      INPUT "",
                                       INPUT 0,
                                       INPUT 50, /* Ate 50 registros */
                                       INPUT 1,  /* Tipo Transferencia*/
@@ -5936,6 +5937,7 @@ PROCEDURE verifica_comprovantes:
                                       INPUT aux_nrdconta,
                                       INPUT aux_dtinipro,
                                       INPUT aux_dtfimpro,
+                                      INPUT "",
                                       INPUT 0,
                                       INPUT 50, /* Ate 50 registros */
                                       INPUT 6,  /* Tipo Pagamento */

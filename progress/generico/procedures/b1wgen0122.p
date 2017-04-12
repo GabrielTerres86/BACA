@@ -250,6 +250,7 @@ PROCEDURE Busca_Protocolos:
                                           INPUT par_nrdconta, 
                                           INPUT par_dataini,  
                                           INPUT par_datafin,  
+                                          INPUT "",
                                           INPUT 0, 
                                           INPUT 0, 
                                           INPUT par_cdtippro,
