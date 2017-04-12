@@ -4558,10 +4558,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
 
         vr_tab_historico(1713).nrctaori_fis := 7030;
         vr_tab_historico(1713).nrctades_fis := 7136;
-        vr_tab_historico(1713).dsrefere_fis := 'MULTA CONTRATO FINANCIAMENTO TX. PRE-FIXADA - PESSOA FISICA';
+        vr_tab_historico(1713).dsrefere_fis := 'ESTORNO JUROS FINANCIAMENTO PRE-FIXADO - PESSOA FISICA';
         vr_tab_historico(1713).nrctaori_jur := 7031;
         vr_tab_historico(1713).nrctades_jur := 7136;
-        vr_tab_historico(1713).dsrefere_jur := 'MULTA CONTRATO FINANCIAMENTO TX. PRE-FIXADA - PESSOA JURIDICA';
+        vr_tab_historico(1713).dsrefere_jur := 'ESTORNO JUROS FINANCIAMENTO PRE-FIXADO - PESSOA JURIDICA';
 
         vr_tab_historico(1721).nrctaori_fis := 7018;
         vr_tab_historico(1721).nrctades_fis := 7123;
