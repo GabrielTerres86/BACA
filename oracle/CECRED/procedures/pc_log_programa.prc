@@ -182,14 +182,10 @@ BEGIN
           
           -- Se não encontrar a última execuçao, cria tbgen_prglog
           IF cr_ultima_execucao%NOTFOUND THEN
-            
-            IF (instr(lower(pr_cdprograma), '.log', 1) > 0) THEN
-              vr_cdprograma := pr_cdprograma;              
-            ELSE 
-              vr_cdprograma := 'LOG_BATCH';
-              vr_dsmensagem := 'Crítica fora do padrão: ' || pr_dsmensagem;
-            END IF;
 
+            vr_cdprograma := pr_cdprograma;
+            vr_dsmensagem := pr_dsmensagem;
+            
             PR_IDPRGLOG := fn_insert_tbgen_prglog(pr2_dhfim      => SYSDATE,
                                                   pr2_flgsucesso => 0);
           ELSE
