@@ -1122,7 +1122,7 @@ DEF VAR aux_inconsul AS INTE										   NO-UNDO.
 
 /* Operacoes DARF */
 DEF VAR aux_dtapurac AS DATE                                           NO-UNDO.
-DEF VAR aux_cdtribut AS INTE                                           NO-UNDO.
+DEF VAR aux_cdtribut AS CHAR                                           NO-UNDO.
 DEF VAR aux_idefetiv AS INTE                                           NO-UNDO.
 DEF VAR aux_vlrecbru AS DECI                                           NO-UNDO.
 DEF VAR aux_vlpercen AS DECI                                           NO-UNDO.
@@ -7920,7 +7920,7 @@ PROCEDURE proc_operacao188:
             aux_nrcpfdrf = GET-VALUE("aux_nrcpfcgc")
             aux_nrrefere = DECI(GET-VALUE("aux_nrrefere"))
             aux_dtvencto = DATE(GET-VALUE("aux_dtvencto"))
-            aux_cdtribut = INTE(GET-VALUE("aux_cdtribut"))
+            aux_cdtribut = GET-VALUE("aux_cdtribut")
             aux_vlrecbru = DECI(GET-VALUE("aux_vlrecbru"))
             aux_vlpercen = DECI(GET-VALUE("aux_vlpercen"))
             aux_vlprinci = DECI(GET-VALUE("aux_vlprinci"))
