@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme / Supero
-   Data    : Novembro/2009.                   Ultima atualizacao: 17/03/2017
+   Data    : Novembro/2009.                   Ultima atualizacao: 12/04/2017
 
    Dados referentes ao programa:
 
@@ -325,6 +325,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
 
                22/03/2017 - Alteração SILOC - Gerar registro na gncpdvc após inserir 
                             o registro na tabela tbcobran_devolucao (Renato Darosci)
+                            
+               12/04/2017 - Cooperado importou o boleto corretamente e imprimiu atraves do software proprio
+                            porém na impressão ele utilizou o numero da conta sem o digito verificador e todos 
+                            os pagamentos estao sendo rejeitados (Douglas - Chamado 650122)
    .............................................................................*/
 
      DECLARE
@@ -3238,6 +3242,17 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                  vr_nrdocmto:= TO_NUMBER(TRIM(SUBSTR(vr_setlinha,34,9)));
                  vr_liqaposb:= FALSE;
                  vr_vltitulo:= to_number(TRIM(SUBSTR(vr_setlinha,10,10))) / 100;
+                 
+                 -- Cooperado importou o boleto corretamente e imprimiu atraves do software proprio
+                 -- porém na impressão ele utilizou o numero da conta sem o digito verificador
+                 -- e todos os pagamentos estao sendo rejeitados
+                 -- Chamado 650122
+                 IF pr_cdcooper = 10     AND   -- Credicomin
+                    vr_nrdconta = 5814   AND   -- Numero da Conta sem o digito (utilizado pelo cooperado na impressao)
+                    vr_nrcnvcob = 109061 THEN  -- Convenio Impresso pelo Software
+                   -- Ajustar numero da conta para o cooperado
+                   vr_nrdconta := 58149;
+                 END IF;
                  
                  --ISPB da recebedora
                  vr_nrispbif_rec := SUBSTR(vr_setlinha,132,8);
