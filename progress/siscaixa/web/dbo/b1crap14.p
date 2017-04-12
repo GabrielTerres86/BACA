@@ -37,7 +37,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 05/05/2016
+   Data    : Marco/2001                      Ultima atualizacao: 20/03/2017
 
    Dados referentes ao programa:
 
@@ -200,7 +200,16 @@
                            
               05/05/2016 - Incluir transacao na criacao da craplft na procedure
                            gera-faturas (Lucas Ranghetti #436077)
+
+			        13/01/2017 - Incluir chamada da procedure pc_ret_ano_barras_darf_car
+                           para a nova regra de validacao das DARFs
+                           (Lucas Ranghetti #588835)
+
+              07/02/2017 - Ajustes para verificar vencimento da P.M. PRES GETULIO, 
+			                     P.M. GUARAMIRIM e SANEPAR (Tiago/Fabricio SD593203)    
                            
+             20/03/2017 - Ajuste para verificar vencimento da P.M. TIMBO, DEFESA CIVIL TIMBO  
+                          MEIO AMBIENTE DE TIMBO, TRANSITO DE TIMBO (Lucas Ranghetti #630176)
 ............................................................................ */
 
 {dbo/bo-erro1.i}
@@ -610,11 +619,38 @@ PROCEDURE retorna-valores-fatura.
                  END.
          END.      
 
-    IF   crapcon.cdempcon = 2044 AND crapcon.cdsegmto = 1   THEN /* P.M. ITAJAI */
+    IF  ((crapcon.cdempcon = 2044 AND crapcon.cdsegmto = 1) OR    /* P.M. ITAJAI */
+	      (crapcon.cdempcon = 3493 AND crapcon.cdsegmto = 1)  OR    /* P.M. PRES GETULIO */
+	      (crapcon.cdempcon = 1756 AND crapcon.cdsegmto = 1)  OR    /* P.M. GUARAMIRIM */
+        (crapcon.cdempcon = 4539 AND crapcon.cdsegmto = 1)  OR    /* P.M. TIMBO */
+        (crapcon.cdempcon = 0562 AND crapcon.cdsegmto = 5)  OR    /* DEFESA CIVIL TIMBO */
+        (crapcon.cdempcon = 0563 AND crapcon.cdsegmto = 5)  OR    /* MEIO AMBIENTE DE TIMBO */
+        (crapcon.cdempcon = 0564 AND crapcon.cdsegmto = 5)) THEN  /* TRANSITO DE TIMBO */
          DO:
              aux_dtmvtoan = STRING(YEAR(crapdat.dtmvtoan),"9999") +
                             STRING(MONTH(crapdat.dtmvtoan),"99")  +
                             STRING(DAY(crapdat.dtmvtoan),"99").
+                          
+             IF  SUBSTR(p-codigo-barras,20,8) <= aux_dtmvtoan  THEN
+                 DO:
+                     ASSIGN i-cod-erro  = 0           
+                            c-desc-erro = "Nao eh possivel efetuar esta " +
+                                        "operacao, pois a fatura esta vencida.".                                          
+                     RUN cria-erro (INPUT p-cooper,
+                                    INPUT p-cod-agencia,
+                                    INPUT aux_nrdcaixa,
+                                    INPUT i-cod-erro,
+                                    INPUT c-desc-erro,
+                                    INPUT YES).
+                     RETURN "NOK".
+                 END.
+         END.
+
+    IF   crapcon.cdempcon = 0109 AND crapcon.cdsegmto = 2   THEN /* SANEPAR */
+         DO:
+             aux_dtmvtoan = STRING(YEAR(crapdat.dtmvtocd - 25),"9999") +
+                            STRING(MONTH(crapdat.dtmvtocd - 25),"99")  +
+                            STRING(DAY(crapdat.dtmvtocd - 25),"99").
                           
              IF  SUBSTR(p-codigo-barras,20,8) <= aux_dtmvtoan  THEN
                  DO:
@@ -920,10 +956,22 @@ PROCEDURE validacoes-sicredi:
                                (crapcon.cdempcon = 153 AND  /* DARFC0153 */
                                 crapcon.cdsegmto = 5 ) THEN
                                 DO:
-                                    RUN retorna-ano-cdbarras (INPUT INT(SUBSTR(p-codigo-barras,20,1)),
-                                                              INPUT FALSE, /* DARF PRETO EUROPA */
-                                                             OUTPUT aux_inanocal).
+                                    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
+                                    /* Efetuar a chamada a rotina Oracle CXON0014.pc_ret_ano_barras_darf_car */ 
+                                    RUN STORED-PROCEDURE pc_ret_ano_barras_darf_car
+                                     aux_handproc = PROC-HANDLE NO-ERROR (INPUT INT(SUBSTR(p-codigo-barras,20,1)), /* pr_innumano*/
+                                                                         OUTPUT 0).                /* pr_outnumano */                                                                         
+                                    
+                                    /* Fechar o procedimento para buscarmos o resultado */ 
+                                    CLOSE STORED-PROC pc_ret_ano_barras_darf_car
+                                        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+                                    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                                    ASSIGN aux_inanocal = pc_ret_ano_barras_darf_car.pr_outnumano
+                                                             WHEN pc_ret_ano_barras_darf_car.pr_outnumano <> ?.       
+  
                                     RUN retorna-data-dias (INPUT INT(SUBSTR(p-codigo-barras,21,3)),
                                                            INPUT aux_inanocal,
                                                           OUTPUT aux_dttolera).
@@ -1427,18 +1475,42 @@ PROCEDURE gera-faturas.
         crapcon.cdsegmto = 5 ) THEN
         DO:
             /* Calculo da Data Limite */
-            RUN retorna-ano-cdbarras (INPUT INT(SUBSTR(p-codigo-barras,20,1)),
-                                      INPUT FALSE, /* DARF PRETO EUROPA */
-                                     OUTPUT aux_inanocal).
+            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+            /* Efetuar a chamada a rotina Oracle CXON0014.pc_ret_ano_barras_darf_car */ 
+            RUN STORED-PROCEDURE pc_ret_ano_barras_darf_car
+             aux_handproc = PROC-HANDLE NO-ERROR (INPUT INT(SUBSTR(p-codigo-barras,20,1)), /* pr_innumano*/
+                                                 OUTPUT 0).                /* pr_outnumano */                                                                         
+            
+            /* Fechar o procedimento para buscarmos o resultado */ 
+            CLOSE STORED-PROC pc_ret_ano_barras_darf_car
+                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+            ASSIGN aux_inanocal = pc_ret_ano_barras_darf_car.pr_outnumano
+                                     WHEN pc_ret_ano_barras_darf_car.pr_outnumano <> ?.
 
             RUN retorna-data-dias (INPUT INT(SUBSTR(p-codigo-barras,21,3)),
                                    INPUT aux_inanocal,
                                   OUTPUT aux_dtlimite).
 
             /* Calculo do Periodo de Apuracao */
-            RUN retorna-ano-cdbarras (INPUT INT(SUBSTR(p-codigo-barras,41,1)),
-                                      INPUT FALSE, /* DARF PRETO EUROPA */
-                                     OUTPUT aux_inanocal).
+            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+            /* Efetuar a chamada a rotina Oracle CXON0014.pc_ret_ano_barras_darf_car */ 
+            RUN STORED-PROCEDURE pc_ret_ano_barras_darf_car
+             aux_handproc = PROC-HANDLE NO-ERROR (INPUT INT(SUBSTR(p-codigo-barras,41,1)), /* pr_innumano*/
+                                                 OUTPUT 0).                /* pr_outnumano */                                                                         
+            
+            /* Fechar o procedimento para buscarmos o resultado */ 
+            CLOSE STORED-PROC pc_ret_ano_barras_darf_car
+                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+            ASSIGN aux_inanocal = pc_ret_ano_barras_darf_car.pr_outnumano
+                                     WHEN pc_ret_ano_barras_darf_car.pr_outnumano <> ?.
 
             RUN retorna-data-dias (INPUT INT(SUBSTR(p-codigo-barras,42,3)),
                                    INPUT aux_inanocal,
