@@ -521,7 +521,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_OPECEL AS
 			 btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
 																 ,pr_ind_tipo_log => 2 -- Erro tratato
 																 ,pr_nmarqlog     => 'opecel.log'
-																 ,pr_des_log      => rtrim(vr_dslogtel,chr(10)));
+																 ,pr_des_log      => rtrim(vr_dslogtel,chr(10))
+																 ,pr_cdprograma   => 'OPECEL');
       END IF;						
 			-- Efetuar commit
 			COMMIT;

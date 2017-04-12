@@ -403,7 +403,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARREC AS
 			  btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
 																  ,pr_ind_tipo_log => 2 -- Erro tratato
 																  ,pr_nmarqlog     => 'parrec.log'
-																  ,pr_des_log      => rtrim(vr_dslogtel,chr(10)));
+																  ,pr_des_log      => rtrim(vr_dslogtel,chr(10))
+																	,pr_cdprograma   => 'PARREC');
       END IF;					 	
 		  -- Efetuar commit
 		  COMMIT;
@@ -984,7 +985,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARREC AS
 				 btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
 																	 ,pr_ind_tipo_log => 2 -- Erro tratato
 																	 ,pr_nmarqlog     => 'parrec.log'
-																	 ,pr_des_log      => rtrim(vr_dslogtel,chr(10)));
+																	 ,pr_des_log      => rtrim(vr_dslogtel,chr(10))
+																	 ,pr_cdprograma   => 'PARREC');
       END IF;						
 			
 			-- Efetuar commit
@@ -1301,7 +1303,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARREC AS
 				 btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
 																	 ,pr_ind_tipo_log => 2 -- Erro tratato
 																	 ,pr_nmarqlog     => 'parrec.log'
-																	 ,pr_des_log      => rtrim(vr_dslogtel,chr(10)));
+																	 ,pr_des_log      => rtrim(vr_dslogtel,chr(10))
+																	 ,pr_cdprograma   => 'PARREC');
       END IF;						
 			
 			-- Efetuar commit
