@@ -225,7 +225,7 @@ create or replace package cecred.PAGA0002 is
            ,dsidpgto VARCHAR2(100)
            ,dsnomfon VARCHAR2(100)
            ,dtperiod DATE    
-           ,cdreceit INTEGER
+           ,cdreceit VARCHAR2(10)
            ,nrrefere INTEGER
            ,vlprinci NUMBER 
            ,vlrmulta NUMBER 
