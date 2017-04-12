@@ -3129,6 +3129,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 														                        <DADOS_PAGAMENTO>
 																										      <dsmsgope>'|| nvl(vr_dsmsgope,' ') ||'</dsmsgope>
 																													<idastcjt>'|| nvl(TO_CHAR(vr_idastcjt),' ') ||'</idastcjt>
+																													<dsprotoc>'|| NVL(TRIM(vr_dsprotoc),'0')    ||'</dsprotoc>
 																									  </DADOS_PAGAMENTO>');
 			-- Encerrar a tag raiz
 			gene0002.pc_escreve_xml(pr_xml            => pr_xml_operacao188

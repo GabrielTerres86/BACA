@@ -147,6 +147,7 @@ DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 DEF OUTPUT PARAM xml_msgofatr AS CHAR                                  NO-UNDO.
 DEF OUTPUT PARAM xml_cdempcon AS CHAR                                  NO-UNDO.
 DEF OUTPUT PARAM xml_cdsegmto AS CHAR                                  NO-UNDO.
+DEF OUTPUT PARAM xml_dsprotoc AS CHAR                                  NO-UNDO.
 
 DEF VAR aux_cdcoptfn AS INTE                                           NO-UNDO.
 DEF VAR aux_cdagetfn AS INTE                                           NO-UNDO.
@@ -226,6 +227,7 @@ ASSIGN aux_dstransa = (IF  par_idagenda = 1  THEN
       ,OUTPUT ""             /* pr_xml_msgofatr */
       ,OUTPUT ""             /* pr_xml_cdempcon */ 
       ,OUTPUT ""             /* pr_xml_cdsegmto */ 
+      ,OUTPUT ""             /* pr_xml_dsprotoc */ 
       ,OUTPUT ""       ).    /* pr_dsretorn     */ 
 
   IF  ERROR-STATUS:ERROR  THEN DO:
@@ -266,7 +268,9 @@ ASSIGN aux_dstransa = (IF  par_idagenda = 1  THEN
          xml_cdempcon = pc_InternetBank27.pr_xml_cdempcon 
                         WHEN pc_InternetBank27.pr_xml_cdempcon <> ?
          xml_cdsegmto = pc_InternetBank27.pr_xml_cdsegmto 
-                        WHEN pc_InternetBank27.pr_xml_cdsegmto <> ?.
+                        WHEN pc_InternetBank27.pr_xml_cdsegmto <> ?
+         xml_dsprotoc = pc_InternetBank27.pr_xml_dsprotoc 
+                        WHEN pc_InternetBank27.pr_xml_dsprotoc <> ?.
 
   /* Verificar se retornou critica */
   IF aux_dsretorn = "NOK" THEN

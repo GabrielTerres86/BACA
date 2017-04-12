@@ -514,6 +514,8 @@ DEF TEMP-TABLE tt-pagtos-mon NO-UNDO
     FIELD nrsequen AS INTE
     FIELD dslinhas AS CHAR.
 
+DEF VAR glb_dsprotoc   AS CHAR                                      NO-UNDO.
+
 DEF VAR aux_tab_limite AS LONGCHAR                                  NO-UNDO.
 DEF VAR xml_dsmsgerr   AS CHAR                                      NO-UNDO.
 
@@ -1561,7 +1563,11 @@ PROCEDURE proc_cria_critica_transacao_oper:
                        tt-criticas_transacoes_oper.dstiptra = aux_dstiptra
                    tt-criticas_transacoes_oper.flgtrans = par_aprovada
                        tt-criticas_transacoes_oper.dscritic = par_dscritic
-                       tt-criticas_transacoes_oper.cdtransa = tbgen_trans_pend.cdtransacao_pendente.
+					   tt-criticas_transacoes_oper.cdtransa = tbgen_trans_pend.cdtransacao_pendente
+                       tt-criticas_transacoes_oper.dsprotoc = IF  par_indvalid = 1    AND 
+                                                                  par_aprovada = TRUE THEN 
+                                                                    glb_dsprotoc 
+                                                              ELSE "".
     END.
 
             DELETE PROCEDURE h-b1wgen9999.
@@ -7538,7 +7544,8 @@ PROCEDURE aprova_trans_pend:
                 
                 ASSIGN aux_conttran = 0
                        aux_cdcritic = 0
-                       aux_dscritic = "".
+                       aux_dscritic = ""
+                       glb_dsprotoc = "". 
                 
                 /* LOCK DO REGISTRO PAI */
                 FOR FIRST tbgen_trans_pend WHERE tbgen_trans_pend.cdtransacao_pendente = tt-tbgen_trans_pend.cdtransacao_pendente EXCLUSIVE-LOCK. END.
@@ -7940,7 +7947,7 @@ PROCEDURE aprova_trans_pend:
                                                                                          OUTPUT aux_dscritic,
                                                                                          OUTPUT aux_nrdocdeb,
                                                                                          OUTPUT aux_nrdoccre,
-                                                                                         OUTPUT aux_dsprotoc).
+                                                                                         OUTPUT glb_dsprotoc).
     
                                                 IF  RETURN-VALUE <> "OK"  THEN
                                                     DO:
@@ -8100,7 +8107,7 @@ PROCEDURE aprova_trans_pend:
                                                                                                             INPUT tt-tbtransf_trans_pend.indmobile,
                                                                                                             INPUT tt-tbtransf_trans_pend.indtipo_cartao,
                                                                                                             INPUT tt-tbtransf_trans_pend.nrcartao,
-                                                                                                           OUTPUT aux_dsprotoc,
+                                                                                                           OUTPUT glb_dsprotoc,
                                                                                                            OUTPUT aux_dscritic,
                                                                                                            OUTPUT aux_nrdocmto, /* Docmto Debt. */
                                                                                                            OUTPUT aux_nrdoccre, /* Docmto Cred. */
@@ -8548,7 +8555,7 @@ PROCEDURE aprova_trans_pend:
 																		   INPUT tt-tbspb_trans_pend.nrispb_banco_favorecido,
 																		   INPUT FALSE, /* flgmobile */
 																		   INPUT tt-tbspb_trans_pend.idagendamento,
-																		  OUTPUT aux_dsprotoc,
+																		  OUTPUT glb_dsprotoc,
 																		  OUTPUT aux_dscritic,
 																		  OUTPUT TABLE tt-protocolo-ted).
                                                  
@@ -8929,7 +8936,7 @@ PROCEDURE aprova_trans_pend:
                                                            INPUT tt-tbpagto_trans_pend.tpcaptura, /* tpcptdoc */
                                                           OUTPUT aux_dstransa,
                                                           OUTPUT aux_dscritic,
-                                                          OUTPUT aux_dsprotoc,
+                                                          OUTPUT glb_dsprotoc,
                                                           OUTPUT aux_cdbcoctl,
                                                           OUTPUT aux_cdagectl,
                                                           OUTPUT aux_msgofatr,
@@ -9216,7 +9223,7 @@ PROCEDURE aprova_trans_pend:
                                                          INPUT tt-tbpagto_trans_pend.tpcaptura,
                                                         OUTPUT aux_dstransa,
                                                         OUTPUT aux_dscritic,
-                                                        OUTPUT aux_dsprotoc,
+                                                        OUTPUT glb_dsprotoc,
                                                         OUTPUT aux_cdbcoctl,
                                                         OUTPUT aux_cdagectl).
     
@@ -12283,7 +12290,7 @@ PROCEDURE aprova_trans_pend:
                                                                   INPUT aux_vldocmto,
                                                                   INPUT tt-tbpagto_darf_das_trans_pend.idagendamento,   /* Indicador de agendamento (1 – Nesta Data / 2 – Agendamento) */
                                                                   INPUT tt-tbpagto_darf_das_trans_pend.tpleitura_docto,       /* Indicador de captura através de leitora de código de barras (1 – Leitora / 2 – Manual) */
-                                                                  OUTPUT ?,                                              /* Descricao do protocolo */
+                                                                 OUTPUT glb_dsprotoc,                                   /* Descricao do protocolo */
                                                                  OUTPUT 0,                                              /* Código do erro */
                                                                  OUTPUT ?).                                             /* Descriçao do erro */ 
                                                         
