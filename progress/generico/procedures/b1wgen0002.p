@@ -28,7 +28,7 @@
 
    Programa: b1wgen0002.p
    Autora  : Mirtes.
-   Data    : 14/09/2005                        Ultima atualizacao: 20/02/2017
+   Data    : 14/09/2005                        Ultima atualizacao: 12/04/2017
 
    Dados referentes ao programa:
 
@@ -665,11 +665,14 @@
 			               Nao permitir utilizacao de Capital de Giro por pessoa fisica. 
 						   (Daniel - Chamado 581906).
                
-        22/03/2017 - Incluido tratamento para emprestimos PP quando a carencia da linha de credito for nula.
-                     Nesses casos ira seguir as mesmas regras de carencia = 0 dias.
-                     Hoje esta considerando fixo 60 dias nesses casos.
-                     Heitor (Mouts) - Chamado 629653.
-             
+			  22/03/2017 - Incluido tratamento para emprestimos PP quando a carencia da linha de credito for nula.
+				 		   Nesses casos ira seguir as mesmas regras de carencia = 0 dias.
+				  		   Hoje esta considerando fixo 60 dias nesses casos.
+						   Heitor (Mouts) - Chamado 629653.
+			  
+			  12/04/2017 - Realizado ajuste onde não estava sendo possível lançar contratos 
+                           de emprestimos com a linha 70, conforme solicitado no chamado 644168. (Kelvin)
+				 
  ..............................................................................*/
 
 /*................................ DEFINICOES ................................*/
@@ -3746,7 +3749,7 @@ PROCEDURE valida-dados-gerais:
                       aux_dscritic = pc_busca_linha_credito_prog.pr_dscritic
                                      WHEN pc_busca_linha_credito_prog.pr_dscritic <> ?.
                                      
-               IF INDEX (aux_lslcremp, STRING(par_cdlcremp)) > 0 THEN
+               IF INDEX (aux_lslcremp, ";" + STRING(par_cdlcremp) + ";") > 0 THEN
                  DO:
                      ASSIGN aux_dscritic = "Linha de credito nao permitida".
                      LEAVE.

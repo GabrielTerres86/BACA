@@ -2625,13 +2625,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
     --  Sistema  : Emprestimo Pre-Aprovado - Cooperativa de Credito
     --  Sigla    : EMPR
     --  Autor    : Lombardi
-    --  Data     : Julho/2016                   Ultima atualizacao: 
+    --  Data     : Julho/2016                   Ultima atualizacao: 12/04/2017
     --
     -- Dados referentes ao programa:
     --
     -- Frequencia: -----
     -- Objetivo  : Buscar as linhas de crédito usadas pelos riscos da CADPRE.
-    -- Alteracoes:
+    --
+    -- Alteracoes: 12/04/2017 - Realizado ajuste onde não estava sendo possível lançar contratos 
+    --                          de emprestimos com a linha 70, conforme solicitado no chamado 644168. (Kelvin)
     --
     ---------------------------------------------------------------------------------------------------------------
     DECLARE
@@ -2662,14 +2664,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                                          ,'H',9
                                          ,'HH',10),lin.cdrisco);
     BEGIN
-      pr_lslcremp := '';
+      pr_lslcremp := ';';
       FOR rw_linha_pre_aprv IN cr_linha_pre_aprv(pr_cdcooper
                                                 ,pr_inpessoa
                                                 ,pr_cdrisco) LOOP
         pr_lslcremp := pr_lslcremp || rw_linha_pre_aprv.cdlcremp || ';';
-      END LOOP;
-      
-      pr_lslcremp := TRIM(';' FROM pr_lslcremp);
+      END LOOP;      
       
     EXCEPTION
       WHEN OTHERS THEN
