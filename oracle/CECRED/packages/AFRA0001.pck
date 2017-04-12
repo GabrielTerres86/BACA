@@ -2123,14 +2123,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                       RAISE vr_exc_erro;
                     END IF;
                     
-                    --> Verificar se deve notificar area de segurança
-                    IF rw_fraude.flgemail_retorno = 1 THEN
-                       pc_notificar_seguranca (pr_idanalis   => pr_idanalis,
-                                               pr_tpalerta   => 2, --> Tipo de alerta 1 - Entrega midware, 2 - Retorno falha  Entrega OFFSA
-                                               pr_dsalerta   => pr_dscritic,
-                                               pr_dscritic   => vr_dscritic); 
-                    END IF;
-               
              END IF;
         
          ELSIF (pr_cdparece = 1) THEN /* Atualizar para 1-Aprovado */
