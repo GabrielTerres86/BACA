@@ -1246,16 +1246,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0007 IS
   --  Programa : fn_remove_cdata
   --  Sigla    : GENE
   --  Autor    : Jaison
-  --  Data     : Agosto/2016                   Ultima atualizacao: --/--/----
+  --  Data     : Agosto/2016                   Ultima atualizacao: 16/02/2017
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Remover o CDATA da string recebida.
+  --
+  -- Alteracoes: 16/02/2017 - Remover CDATA mesmo quando tem nova linha. (Jaison/Oscar)
+  --
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     BEGIN
-      RETURN regexp_substr(pr_texto, '<!\[CDATA\[(.*)\]\]>', 1, 1, '', 1);
+      RETURN regexp_substr(pr_texto, '<!\[CDATA\[(.*)\]\]>', 1, 1, 'n', 1);
     END;
   END fn_remove_cdata;
   

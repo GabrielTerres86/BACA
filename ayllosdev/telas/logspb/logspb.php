@@ -37,6 +37,8 @@
     //***                          durante a homologação da área		   ***//
 	//***                          (Adriano - M211)				           ***//
 	//***														           ***//
+    //***             27/01/2016 - Permitir exibir TEDs Extornadas         ***//
+    //***                          PRJ335 - Analise de Fraude(Odirlei-AMcom) ***//
 	/************************************************************************/
 	
 	session_start();
@@ -180,6 +182,7 @@
 																										  <option value="P" selected>Processadas</option>
 																										  <option value="D">Devolvidas</option>
 																										  <option value="R" id="optRejeitada">Rejeitadas</option>
+                                                                                                          <option value="E" id="optEstornada">Estornadas</option>
 																										  <option value="T">Todos</option>
 																									  </select>																												
 																							  </div>																								

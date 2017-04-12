@@ -66,6 +66,9 @@
 
                07/01/2016 - Incluir novos codigos de origem  (Oscar)
                             
+			   11/11/2016 - Inclusao da origem MOBILE e ACORDO na lista de origens. 
+			                PRJ335 - Analise Fraudes(Odirlei-AMcom)
+                            
 ..............................................................................*/
 
 DEF TEMP-TABLE tt-erro NO-UNDO LIKE craperr.
@@ -88,10 +91,13 @@ DEF VAR aux_srvintra AS CHAR                                           NO-UNDO.
 /** -> Origem = 5 - INTRANET (AYLLOS WEB)                     **/
 /** -> Origem = 7 - PROCESSO (PROCESSO BATCH)                 **/
 /** -> Origem = 8 - MENSAGERIA (DEBITO ONLINE CARTAO BANCOOB) **/
-/** -> Origem = 9 - ESTEIRA (ESTEIRA DE CREDITO IBRATAN)      **/
+/** -> Origem = 9 - ESTEIRA (WEBSERVICE ESTEIRA DE CREDITO)   **/
+/** -> Origem = 10 - MOBILE                                   **/
+/** -> Origem = 11 - ACORDO (WEBSERVICE DE ACORDOS)           **/  
+/** -> Origem = 12 - ANTIFRAUDE (WEBSERVICE ANALISE ANTIFRAUDE) **/
 /** --------------------------------------------------------- **/
 
-ASSIGN des_dorigens = "AYLLOS,CAIXA,INTERNET,CASH,INTRANET,URA,PROCESSO,MENSAGERIA,ESTEIRA".
+ASSIGN des_dorigens = "AYLLOS,CAIXA,INTERNET,CASH,AYLLOS WEB,URA,PROCESSO,MENSAGERIA,ESTEIRA,MOBILE,ACORDO,ANTIFRAUDE".
 
 /** Armazenar data do servidor **/
 ASSIGN aux_datdodia = TODAY.

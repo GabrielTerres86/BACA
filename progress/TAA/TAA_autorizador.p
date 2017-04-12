@@ -281,6 +281,10 @@ Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
 
             08/11/2016 - Alteracoes referentes a melhoria 165 - Lancamentos Futuros. 
                          Lenilson (Mouts)
+
+            22/11/2016 - Inclusao do parametro pr_iptransa na chamada da rotina 
+                         pc_cadastrar_agendamento.
+                         PRJ335 - Analise de Fraude (Odirlei-AMcom ) 
                          
             19/01/2017 - Ajuste na validação de agendamentos/pagamentos no último
                          dia do ano (Rodrigo - SD 587328)
@@ -3745,6 +3749,7 @@ PROCEDURE efetua_transferencia:
                                  INPUT 0,   /* cdfinali */
                                  INPUT ' ', /* dstransf */
                                  INPUT ' ', /* dshistor */
+                                 INPUT "",  /* pr_iptransa */
                                 OUTPUT "",  /* pr_dstransa */
                                 OUTPUT "",
                                 OUTPUT 0,
@@ -4626,6 +4631,7 @@ PROCEDURE paga_titulo:
                                                    INPUT 0,   /* cdfinali */
                                                    INPUT ' ', /* dstransf */
                                                    INPUT ' ', /* dshistor */
+                                                   INPUT "",   /* pr_iptransa */
                                                    OUTPUT "",  /* pr_dstransa */
                                                    OUTPUT "",
                                                    OUTPUT 0,
@@ -5154,6 +5160,7 @@ PROCEDURE paga_convenio:
                                                   INPUT 0,   /* cdfinali */
                                                   INPUT ' ', /* dstransf */
                                                   INPUT ' ', /* dshistor */
+                                                  INPUT '',  /* pr_iptransa */
                                                  OUTPUT "",  /* pr_dstransa */
                                                  OUTPUT "",
                                                  OUTPUT 0,
@@ -5644,6 +5651,7 @@ PROCEDURE efetua_agendamento_mensal:
                                     INPUT 0,   /* cdfinali */
                                     INPUT ' ', /* dstransf */
                                     INPUT ' ', /* dshistor */
+                                    INPUT '',  /* iptransa */
                                     OUTPUT "",  /* pr_dstransa */        
                                     OUTPUT "",  /* pr_cdcritic */        
                                     OUTPUT ""). /* pr_dscritic */        

@@ -651,6 +651,8 @@
                               
 				 13/03/2017 - Adicionando paginacao na tela de folha, conforme 
 			        	      solicitado no chamado 626091 (Kelvin). 
+                 17/03/2017 - Incluido IP da transacao na proc_operacao75.
+                            PRJ335 - OFSAA (Odirlei-AMcom)
 ------------------------------------------------------------------------------*/
 
 /*----------------------------------------------------------------*/
@@ -4687,6 +4689,7 @@ PROCEDURE proc_operacao75:
                                                   INPUT aux_indvalid,
                                                   INPUT aux_idseqttl,
                                                   INPUT aux_nrcpfope,
+                                                  INPUT aux_nripuser,
                                                  OUTPUT aux_dsmsgerr,
                                                  OUTPUT TABLE xml_operacao).
 

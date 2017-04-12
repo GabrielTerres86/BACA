@@ -85,9 +85,9 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
     ,flgstfin crapfin.flgstfin%TYPE
     ,tpfinali crapfin.tpfinali%TYPE);
        
-  /* Tabela para guardar as finalidades de empréstimos */
+   /* Tabela para guardar as finalidades de empréstimos */
   TYPE typ_tab_finalidades_empr IS TABLE OF typ_finalidades_empr INDEX BY PLS_INTEGER;
-  
+              
   /* Tabela para guardar as naturezas de ocupação */
   TYPE typ_natureza_ocupacao IS RECORD 
     (cdnatocp gncdnto.cdnatocp%TYPE
@@ -301,8 +301,8 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
                                           ,pr_des_erro OUT VARCHAR2             -- Saida OK/NOK
                                           ,pr_clob_ret OUT CLOB                 -- Tabela clob                                 
                                           ,pr_cdcritic OUT PLS_INTEGER          -- Codigo Erro
-                                          ,pr_dscritic OUT VARCHAR2);          -- Descricao Erro   
-                                                                                  
+                                          ,pr_dscritic OUT VARCHAR2);          -- Descricao Erro                                           
+                                                                                                        
   PROCEDURE pc_busca_gncdnto_car( pr_cdnatocp IN gncdnto.cdnatocp%TYPE -- Código da finalidade
                                  ,pr_rsnatocp IN gncdnto.rsnatocp%TYPE -- Descrição da finalidade
                                  ,pr_nrregist IN INTEGER               -- Quantidade de registros                            
@@ -349,6 +349,17 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
                                  ,pr_cdcritic OUT PLS_INTEGER          -- Codigo Erro
                                  ,pr_dscritic OUT VARCHAR2);          -- Descricao Erro                                                                                          
                                                                                                                                          
+  PROCEDURE pc_busca_operacao_conta(pr_cdoperacao IN tbcc_operacao.cdoperacao%TYPE --> Codigo da operacao
+                                   ,pr_dsoperacao IN tbcc_operacao.dsoperacao%TYPE --> Descricao da operacao
+                                   ,pr_nrregist   IN INTEGER                       --> Quantidade de registros                            
+                                   ,pr_nriniseq   IN INTEGER                       --> Qunatidade inicial
+                                   ,pr_xmllog     IN VARCHAR2                      --> XML com informacoes de LOG
+                                   ,pr_cdcritic  OUT PLS_INTEGER                   --> Codigo da critica
+                                   ,pr_dscritic  OUT VARCHAR2                      --> Descricao da critica
+                                   ,pr_retxml    IN OUT NOCOPY XMLType             --> Arquivo de retorno do XML
+                                   ,pr_nmdcampo  OUT VARCHAR2                      --> Nome do Campo
+                            	     ,pr_des_erro  OUT VARCHAR2);                   --> Saida OK/NOK
+                                                                                                        
 END ZOOM0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
@@ -374,7 +385,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
                                                     
                12/06/2016 - Criação das rotinas para consulta de linhas de crédito e finalidades de empréstimo
                             (Andrei - RKAM).
-                    
+                                                 
+               07/02/2017 - Criacao da pc_busca_operacao_conta. (Jaison/Oscar - PRJ335)
                22/02/2017 - Conversão da rotina busca-gncdnto (Adriano - SD 614408).
                                                    
 			   08/03/2017 - Ajuste para enviar corretamente o campo cdocupa no xml de retorno

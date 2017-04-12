@@ -48,6 +48,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_AGENET AS
       ,vljuros           tbpagto_agend_darf_das.vljuros%TYPE           -- Valor dos Juros
       ,vlreceita_bruta   tbpagto_agend_darf_das.vlreceita_bruta%TYPE   -- Receita Bruta Acumulada
       ,vlpercentual      tbpagto_agend_darf_das.vlpercentual%TYPE      -- Percentual
+      ,dsobserv          VARCHAR2(500)                                 -- Observacao/comentario
       );
       
   --Tipo de Tabela de Beneficiario
@@ -127,7 +128,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_AGENET AS
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Jonathan
-    Data    : Novembro/2015                       Ultima atualizacao: 25/04/2016
+    Data    : Novembro/2015                       Ultima atualizacao: 31/01/2016
 
     Dados referentes ao programa:
 
@@ -143,6 +144,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_AGENET AS
                              -> Ajustes para tratar a nova opção "C - Cancelamento de TED";
                              -> Ajuste para retornar a data e número do documento dos agendamentos;
                              (Adriano - M117).
+                                
+                31/01/2017 - Exibir agendamentos cancelados por fraude.
+                             PRJ335 - Analise de fraude (Odirlei-AMcom)
                                 
     ............................................................................. */
     
@@ -175,6 +179,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_AGENET AS
             ,lau.cddbanco
             ,lau.dtmvtolt
             ,lau.nrdocmto
+            ,lau.idanafrd
             ,ass.cdagenci
             ,darf_das.tppagamento -- Tipo pagamento (1-DARF, 2-DAS)
             ,darf_das.tpcaptura -- Tipo de Captura (1 – Com Código de Barras / 2 – Sem Código de Barras)
@@ -198,7 +203,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_AGENET AS
          AND lau.nrdconta = ass.nrdconta
          AND lau.idlancto = darf_das.idlancto(+)
          AND (NVL(pr_nrdconta, 0) = 0 OR lau.nrdconta = pr_nrdconta)
-         AND (NVL(pr_insitlau, 0) = 0 OR lau.insitlau = pr_insitlau)
+                                                        -- Qnd situacao do filtro for 31(cancelado por fraude, 
+                                                        -- deve buscar cancelados)
+         AND (NVL(pr_insitlau, 0) = 0 OR lau.insitlau = DECODE(pr_insitlau,31,3,pr_insitlau))
          AND lau.dtmvtopg BETWEEN pr_dtiniper AND pr_dtfimper
          AND (NVL(pr_cdtiptra, 0) = 0 OR lau.cdtiptra = pr_cdtiptra)
          AND lau.cdcooper = pr_cdcooper
@@ -270,6 +277,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_AGENET AS
       AND   crapcti.nrctatrf = pr_nrctatrf;
       rw_crapcti_dst cr_crapcti_dst%ROWTYPE;
      
+     --> Verificar situação analise de fraude  
+     CURSOR cr_anafra (pr_idanalis craplau.idanafrd%TYPE)IS
+       SELECT afr.cdparecer_analise
+         FROM tbgen_analise_fraude afr
+        WHERE afr.idanalise_fraude = pr_idanalis
+          AND afr.cdparecer_analise = 2;  
+     rw_anafra cr_anafra%ROWTYPE;	
+
      --Tabela de beneficiarios
      vr_tab_agendamentos TELA_AGENET.typ_tab_agendamentos;
 
@@ -315,6 +330,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_AGENET AS
     
      --Variaveis de Indice
      vr_index PLS_INTEGER := 0;
+     
+     vr_flanafra BOOLEAN;
      
      --Controle de erro
      vr_exc_erro EXCEPTION;      
@@ -453,6 +470,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_AGENET AS
                                   ,pr_cdagenci => pr_cdagesel
                                   ,pr_cdtiptra => pr_cdtiptra) LOOP                                  
                                                                       
+        vr_flanafra := FALSE;
+        rw_anafra   := NULL;
+        
+        --> Se estiver cancelado
+        IF rw_craplau.insitlau = 3 AND rw_craplau.idanafrd IS NOT NULL THEN
+          
+          --> Verificar situação analise de fraude  
+          OPEN cr_anafra (pr_idanalis => rw_craplau.idanafrd);
+          FETCH cr_anafra INTO rw_anafra;
+          vr_flanafra := cr_anafra%FOUND;
+          CLOSE cr_anafra;
+        END IF;
+        
+        --> Caso selecionou cancelamento por suspeita de fraude 3.1
+        --> e nao encontrou a analise de fraude reprovada
+        IF pr_insitlau = 31  AND vr_flanafra = FALSE THEN
+          --> buscar proximo
+          continue;
+        END IF;
+      
+      
         --Incrementar contador
         vr_qtregist:= nvl(vr_qtregist,0) + 1;
         
@@ -628,6 +666,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_AGENET AS
            
            vr_tab_agendamentos(vr_index).dssitlau:= 'CANCELADO'; 
          
+           --> Verificar se é TED
+           IF vr_flanafra = TRUE      AND 
+              rw_craplau.cdtiptra = 4 AND --TED
+              rw_craplau.idanafrd IS NOT NULL THEN 
+                        
+               vr_tab_agendamentos(vr_index).dssitlau:= 'CANCELADO FRAUDE'; 
+               vr_tab_agendamentos(vr_index).dsobserv:= 'TED agendada foi cancelada por suspeita e/ou fraude comprovada.';
+             
+           END IF;
          ELSE
            
            vr_tab_agendamentos(vr_index).dssitlau:= 'NAO EFETIVADO'; 
@@ -897,6 +944,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_AGENET AS
           gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'agendamentos', pr_posicao => vr_auxconta, pr_tag_nova => 'vljuros', pr_tag_cont => vr_tab_agendamentos(vr_index).vljuros, pr_des_erro => vr_dscritic);                      -- Valor dos Juros
           gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'agendamentos', pr_posicao => vr_auxconta, pr_tag_nova => 'vlreceita_bruta', pr_tag_cont => vr_tab_agendamentos(vr_index).vlreceita_bruta, pr_des_erro => vr_dscritic);      -- Receita Bruta Acumulada
           gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'agendamentos', pr_posicao => vr_auxconta, pr_tag_nova => 'vlpercentual', pr_tag_cont => vr_tab_agendamentos(vr_index).vlpercentual, pr_des_erro => vr_dscritic);            -- Percentual
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'agendamentos', pr_posicao => vr_auxconta, pr_tag_nova => 'dsobserv', pr_tag_cont => vr_tab_agendamentos(vr_index).dsobserv, pr_des_erro => vr_dscritic);            -- Percentual
   				
           -- Incrementa contador p/ posicao no XML
           vr_auxconta := nvl(vr_auxconta,0) + 1;

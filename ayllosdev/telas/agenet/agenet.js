@@ -1,5 +1,5 @@
 /*!
- * FONTE        : agenet.js                             Última altração: 19/07/2016
+ * FONTE        : agenet.js                             Última altração: 31/11/2017
  * CRIAÇÃO      : Jonathan - RKAM
  * DATA CRIAÇÃO : 17/11/2015
  * OBJETIVO     : Biblioteca de funções da tela AGENET
@@ -12,6 +12,8 @@
  29/06/2016 - m117 Inclusao do campo tipo de transacao no filtro (Carlos)
 
  19/07/2016 - Ajuste para controlar corretamente as div ao escolher uma opção (Adriano).
+ 
+ 31/11/2017 - Exibir TEDs Canceladas devido a fraude PRJ335 - Analise de fraude(Odirlei-AMcom)
  
  */
 
@@ -637,6 +639,7 @@ function selecionaAgendamentos(tr){
 		$('#dttransa','#fsetAgendamentoContaDestino').val( $('#dttransa', tr ).val() );
 		$('#hrtransa','#fsetAgendamentoContaDestino').val( $('#hrtransa', tr ).val() );
 		$('#dstitdda','#fsetAgendamentoContaDestino').val( $('#dstitdda', tr ).val() );
+        $('#dsobserv','#fsetAgendamentoContaDestino').val( $('#dsobserv', tr ).val() );
 		
 		//label
 		$('label[for="dstransa"]',"#fsetAgendamentoContaDestino").addClass("rotulo").css({"width":"115px"}); 
@@ -648,6 +651,16 @@ function selecionaAgendamentos(tr){
 		$("#dttransa","#fsetAgendamentoContaDestino").css('width','100px').desabilitaCampo();
 		$("#hrtransa","#fsetAgendamentoContaDestino").css('width','100px').desabilitaCampo();
 		$("#dstitdda","#fsetAgendamentoContaDestino").css('width','190px').desabilitaCampo();
+        
+        if ($('#dsobserv','#fsetAgendamentoContaDestino').val() == "" ) {            
+            $("#dsobserv","#fsetAgendamentoContaDestino").css('display','none');
+            $('label[for="dsobserv"]',"#fsetAgendamentoContaDestino").css('display','none');
+        }else{
+            $("#dsobserv","#fsetAgendamentoContaDestino").css('display','block'); 
+            $('label[for="dsobserv"]',"#fsetAgendamentoContaDestino").css('display','block');
+            $('label[for="dsobserv"]',"#fsetAgendamentoContaDestino").addClass("rotulo").css({"width":"115px"}); 
+            $("#dsobserv","#fsetAgendamentoContaDestino").css('width','500px').desabilitaCampo();            
+        }                    
 				
 		$('#fsetAgendamentoConta').css('display','none'); 
 		$('#fsetAgendamentoLinhaDig').css('display','none');
