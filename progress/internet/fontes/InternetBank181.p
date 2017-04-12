@@ -175,38 +175,6 @@ ELSE IF par_operacao = 4 THEN
     END.
 
   END.
-/*
-ELSE IF par_operacao = 5 THEN
-  DO:
-
-    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-    
-    RUN STORED-PROCEDURE pc_cadastra_favorito aux_handproc = PROC-HANDLE NO-ERROR
-                         (INPUT par_cdcooper
-                         ,INPUT par_nrdconta
-                         ,INPUT par_nrddd
-                         ,INPUT par_nrcelular
-                         ,INPUT par_nmcontato
-                         ,OUTPUT 0
-                         ,OUTPUT "").
-
-    CLOSE STORED-PROC pc_cadastra_favorito aux_statproc = PROC-STATUS 
-         WHERE PROC-HANDLE = aux_handproc.
-    
-    ASSIGN aux_dsxmlout = ""
-           aux_dscritic = ""
-           aux_dscritic = pc_cadastra_favorito.pr_dscritic 
-                          WHEN pc_cadastra_favorito.pr_dscritic <> ?.
-    
-    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-
-    IF  aux_dscritic <> "" THEN DO:
-        ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
-        RETURN "NOK".
-    END.
-
-  END.
-*/
 
 ELSE IF par_operacao = 6 THEN
   DO:
