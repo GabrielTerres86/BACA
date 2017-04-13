@@ -1162,7 +1162,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 30/03/2017
+  --  Data     : Junho/2013.                   Ultima atualizacao: 12/04/2017
   --
   -- Dados referentes ao programa:
   --
@@ -1493,6 +1493,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
        10/03/2017 - Removi a gravacao do novo lote, assim utilizando a sequence sobre a CRAPLOT.
                     Procedures: pc_executa_transferencia,pc_paga_convenio,pc_paga_titulo.(Carlos Rafael Tanholi)       
 
+       12/04/2017 - Incluir validacao para faturas vencidas para agendamentos conforme
+                    ja faz a rotina de pagamento PM.AGROLANDIA (Tiago #647174)    
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Cursores da Package */
@@ -8932,6 +8934,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --
     --               30/03/2017 - Incluir validacao para faturas vencidas para agendamentos conforme
     --                            ja faz a rotina de pagamento (Lucas Ranghetti #637996)
+    --
+    --               12/04/2017 - Incluir validacao para faturas vencidas para agendamentos conforme
+    --                            ja faz a rotina de pagamento PM.AGROLANDIA (Tiago #647174)    
     -- ..........................................................................
 
   BEGIN
@@ -9396,6 +9401,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
           (rw_crapcon.cdempcon = 3493 AND rw_crapcon.cdsegmto = 1)  OR   --P.M. PRES GETULIO 
           (rw_crapcon.cdempcon = 1756 AND rw_crapcon.cdsegmto = 1)  OR   -- P.M. GUARAMIRIM 
           (rw_crapcon.cdempcon = 4539 AND rw_crapcon.cdsegmto = 1)  OR  -- P.M. TIMBO 
+          (rw_crapcon.cdempcon = 0040 AND rw_crapcon.cdsegmto = 1)  OR  -- P.M. AGROLANDIA
           (rw_crapcon.cdempcon = 0562 AND rw_crapcon.cdsegmto = 5)  OR  -- DEFESA CIVIL TIMBO 
           (rw_crapcon.cdempcon = 0563 AND rw_crapcon.cdsegmto = 5)  OR  -- MEIO AMBIENTE DE TIMBO 
           (rw_crapcon.cdempcon = 0564 AND rw_crapcon.cdsegmto = 5)) THEN -- TRANSITO DE TIMBO 
