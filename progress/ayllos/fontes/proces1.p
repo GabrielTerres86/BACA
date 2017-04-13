@@ -19,7 +19,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Margarete
-   Data    : Julho/2004.                     Ultima atualizacao: 01/07/2016
+   Data    : Julho/2004.                     Ultima atualizacao: 13/04/2017
 
    Dados referentes ao programa:
 
@@ -161,6 +161,9 @@
 						   se houver algum erro, este, deve ser jogado para o dev/null.
 						   (Adriano - SD 469376).
 
+			  13/04/2017 - Validacao do arquivo de log na pasta destino evitando assim a 
+						   perda de informacoes com a solicitacao manual do processo. 
+						   (Carlos Rafael Tanholi - SD 650409)
 ............................................................................ */
 
 DEF    VAR aux_dtref072   AS DATE                              NO-UNDO.
@@ -1633,26 +1636,36 @@ ELSE
     END.
      
 /***** Copia os Logs de Email/Geração de Relatórios e Jobs *****/
+/***** Valida a nao existencia do arquivo destino para criacao do novo. SD 650409 *****/
+IF SEARCH(aux_nmlogbat) = ? THEN
+DO:
+	UNIX SILENT VALUE ("cp log/proc_batch.log " + aux_nmlogbat + " 2> /dev/null" ).
+	UNIX SILENT VALUE ("> log/proc_batch.log 2>/dev/null").
+END. 
 
-UNIX SILENT VALUE ("cp log/proc_batch.log " + aux_nmlogbat + " 2> /dev/null" ).
+IF SEARCH(aux_nmlogmes) = ? THEN
+DO:
+	UNIX SILENT VALUE ("cp log/proc_message.log " + aux_nmlogmes + " 2> /dev/null" ).
+	UNIX SILENT VALUE ("> log/proc_message.log 2>/dev/null").
+END. 
 
-UNIX SILENT VALUE ("cp log/proc_message.log " + aux_nmlogmes + " 2> /dev/null" ).
+IF SEARCH(aux_nmlogrel) = ? THEN
+DO:
+	UNIX SILENT VALUE ("cp log/proc_gerac_relato.log " + aux_nmlogrel + " 2> /dev/null" ).
+	UNIX SILENT VALUE ("> log/proc_gerac_relato.log 2>/dev/null").
+END. 
 
-UNIX SILENT VALUE ("cp log/proc_gerac_relato.log " + aux_nmlogrel + " 2> /dev/null" ).
+IF SEARCH(aux_nmlogeml) = ? THEN
+DO:
+	UNIX SILENT VALUE ("cp log/proc_envio_email.log " + aux_nmlogeml + " 2> /dev/null" ).
+	UNIX SILENT VALUE ("> log/proc_envio_email.log 2>/dev/null").
+END. 
 
-UNIX SILENT VALUE ("cp log/proc_envio_email.log " + aux_nmlogeml + " 2> /dev/null" ).
-
-UNIX SILENT VALUE ("cp log/proc_job.log " + aux_nmlogjob + " 2> /dev/null" ).
-
-UNIX SILENT VALUE ("> log/proc_batch.log 2>/dev/null").
-
-UNIX SILENT VALUE ("> log/proc_message.log 2>/dev/null").
-
-UNIX SILENT VALUE ("> log/proc_gerac_relato.log 2>/dev/null").
-
-UNIX SILENT VALUE ("> log/proc_envio_email.log 2>/dev/null").
-
-UNIX SILENT VALUE ("> log/proc_job.log 2>/dev/null").
+IF SEARCH(aux_nmlogjob) = ? THEN
+DO:
+	UNIX SILENT VALUE ("cp log/proc_job.log " + aux_nmlogjob + " 2> /dev/null" ).
+	UNIX SILENT VALUE ("> log/proc_job.log 2>/dev/null").
+END. 
 
 UNIX SILENT VALUE ("rm -f /usr/coop/cecred/gener/controles/.proc_noturno_ok " +
                    "2>/dev/null").
