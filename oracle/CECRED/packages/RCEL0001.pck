@@ -4401,7 +4401,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
       vr_nom_arquivo VARCHAR2(200);
       vr_nom_direto  VARCHAR2(200);
       vr_idprglog    tbgen_prglog.idprglog%TYPE := 0;
-      vr_cdprogra    VARCHAR2(100) := 'JBRCEL_REPASSE_VALOR_FORNECEDOR';
+      vr_cdprogra    VARCHAR2(100) := 'JBRCEL_REPASSE';
       vr_jobname     VARCHAR2(100) := 'JBRCEL_REPASSE_$ ';
       vr_email_dest  VARCHAR2(1000); 
       vr_conteudo    VARCHAR2(4000);
@@ -4530,7 +4530,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
         /***** Reagendamento *****/
         -- Faz a chamada ao programa paralelo atraves de JOB
         gene0001.pc_submit_job(pr_cdcooper => 3                                           --> Código da cooperativa
-                              ,pr_cdprogra => 'JBRCEL_REPASSE_VALOR_FORNECEDOR'           --> Código do programa
+                              ,pr_cdprogra => vr_cdprogra                                 --> Código do programa
                               ,pr_dsplsql  => 'begin RCEL0001.pc_job_efetua_repasse; end;'--> Bloco PLSQL a executar
                               ,pr_dthrexe  => TO_TIMESTAMP_TZ(to_char(rw_crapdat.dtmvtopr, 'DD/MM/RRRR') || 
                                               ' 09:00 America/Sao_Paulo','DD/MM/RRRR HH24:MI TZR') --> Executar nesta hora
