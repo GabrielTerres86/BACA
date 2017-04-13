@@ -91,7 +91,8 @@ CREATE OR REPLACE PACKAGE CECRED.btch0001 AS
                              ,pr_dstiplog     IN VARCHAR2 DEFAULT 'O'      --> Tipo do log: I - início; F - fim; O || E - ocorrênci
                              ,pr_cdprograma   IN VARCHAR2 DEFAULT NULL     --> Programa/job
                              ,pr_tpexecucao    IN tbgen_prglog.tpexecucao%TYPE DEFAULT 1 -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                             ,pr_cdcriticidade IN tbgen_prglog_ocorrencia.cdcriticidade%type DEFAULT 0); -- Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+                             ,pr_cdcriticidade IN tbgen_prglog_ocorrencia.cdcriticidade%TYPE DEFAULT 0 -- Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+                             ,pr_flgsucesso    IN tbgen_prglog.flgsucesso%TYPE DEFAULT 1); -- Indicador de sucesso da execução
 
   /* Controlar geração de log de execução dos jobs */
   PROCEDURE pc_log_exec_job(pr_cdcooper     IN crapcop.cdcooper%TYPE     --> Cooperativa
@@ -482,6 +483,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
                              ,pr_cdprograma   IN VARCHAR2 DEFAULT NULL     --> Programa/job
                              ,pr_tpexecucao    IN tbgen_prglog.tpexecucao%type DEFAULT 1 -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
                              ,pr_cdcriticidade IN tbgen_prglog_ocorrencia.cdcriticidade%TYPE DEFAULT 0 -- Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+                             ,pr_flgsucesso    IN tbgen_prglog.flgsucesso%TYPE DEFAULT 1 -- Indicador de sucesso da execução
                              ) IS
   BEGIN
     -- ..........................................................................
@@ -596,9 +598,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
                              PR_CDPROGRAMA => vr_cdprograma,    -- tbgen_prglog
                              pr_cdcooper   => pr_cdcooper,      -- tbgen_prglog
                              pr_tpexecucao => pr_tpexecucao,    -- tbgen_prglog
-                             pr_tpocorrencia  => vr_tipomensagem,
-                             pr_cdcriticidade => pr_cdcriticidade,
-                             pr_dsmensagem   => vr_des_log,
+                             pr_tpocorrencia  => vr_tipomensagem,  -- tbgen_prglog_ocorrencia
+                             pr_cdcriticidade => pr_cdcriticidade, -- tbgen_prglog_ocorrencia
+                             pr_dsmensagem   => vr_des_log,        -- tbgen_prglog_ocorrencia
+                             pr_flgsucesso   => pr_flgsucesso,  -- tbgen_prglog
                              pr_nmarqlog     => vr_nmarqlog,
                              PR_IDPRGLOG     => vr_idprglog);
   
