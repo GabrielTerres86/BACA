@@ -3526,10 +3526,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 
       /* Format da data deve ser AAAA-MM-DD */
       IF  pr_nmpesemi = 'CECRED-RECARGA' THEN
-        vr_dtmvtolt := to_char(rw_crapdat.dtmvtocd,'RRRR-MM-DD');
-      ELSE
-      vr_dtmvtolt := to_char(rw_crapdat.dtmvtolt,'RRRR-MM-DD');
+        vr_dtmvtopr := to_char(rw_crapdat.dtmvtocd,'RRRR-MM-DD');
       END IF;
+      
+      vr_dtmvtolt := to_char(rw_crapdat.dtmvtolt,'RRRR-MM-DD');
       
       vr_dtagendt := to_char(pr_dtagendt,'RRRR-MM-DD');
 

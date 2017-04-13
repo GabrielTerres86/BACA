@@ -4465,6 +4465,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
       CURSOR cr_craptvl (pr_cdcooper IN crapcop.cdcooper%TYPE
                         ,pr_nrctrlif IN craptvl.idopetrf%TYPE) IS
         SELECT tvl.idopetrf
+              ,tvl.cpfcgrcb
           FROM craptvl tvl
          WHERE tvl.cdcooper = pr_cdcooper
            AND tvl.tpdoctrf = 3 /* TED SPB */
@@ -4521,7 +4522,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
       END IF;
       
       --> Verificar se a data do sistema eh o dia de hoje
-      IF SYSDATE <> vr_dtmvtolt THEN
+      IF TRUNC(SYSDATE) <> vr_dtmvtolt THEN
         --> O JOB esta confirgurado para toda quinta-feira
         --> Nao pode executar em feriado, por isso que validamos se o dia de
         --> hoje eh o dia do sistema 
@@ -4550,30 +4551,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
         
         FOR rw_lista_cop IN cr_lista_cop LOOP
           
-          -- Leitura do calendário da cooperativa
-          OPEN btch0001.cr_crapdat(pr_cdcooper => rw_lista_cop.cdcooper);
-          FETCH btch0001.cr_crapdat INTO rw_crapdat;
-          -- Se não encontrar
-          IF btch0001.cr_crapdat%NOTFOUND THEN
-            -- Fechar o cursor pois efetuaremos raise
-            CLOSE btch0001.cr_crapdat;
-            -- Montar mensagem de critica
-            vr_cdcritic := 1;
-            RAISE vr_exc_saida;
-          ELSE
-            -- Apenas fechar o cursor
-            CLOSE btch0001.cr_crapdat;
-          END IF;
-          
           -- busca periodo da ultima semana
           -- data atual - (dia da semana atual + (5 ou 12))     --> Segunda Feira
           -- data atual - (dia da semana atual + (5 ou 12)) + 4 --> Sexta Feira
           IF to_char((SYSDATE), 'd') > 4 THEN -- Se for Quinta ou Sexta
             vr_inperiod := TRUNC((SYSDATE) - (to_char((SYSDATE), 'd') + 5));
-            vr_fiperiod := TRUNC((SYSDATE) - (to_char((SYSDATE), 'd') + 5)) + 4;
+            vr_fiperiod := TRUNC((SYSDATE) - (to_char((SYSDATE), 'd') + 5)) + 6;
           ELSE -- Se for na Segunda da outra semana
             vr_inperiod := TRUNC((SYSDATE) - (to_char((SYSDATE), 'd') + 12));
-            vr_fiperiod := TRUNC((SYSDATE) - (to_char((SYSDATE), 'd') + 12)) + 4;
+            vr_fiperiod := TRUNC((SYSDATE) - (to_char((SYSDATE), 'd') + 12)) + 6;
           END IF;
           
           FOR rw_tbrecarga IN cr_tbrecarga (pr_cdcooper => rw_lista_cop.cdcooper
@@ -4742,6 +4728,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                              ,tpdctacr
                              ,cpfcgemi
                              ,nmpesrcb
+                             ,cpfcgrcb
                          INTO rw_flgtitul
                              ,rw_vldocrcb
                              ,rw_idopetrf
@@ -4752,7 +4739,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                              ,rw_tpdctadb
                              ,rw_tpdctacr
                              ,rw_cpfcgemi
-                             ,rw_nmpesrcb;
+                             ,rw_nmpesrcb
+                             ,rw_cpfcgrcb;
         EXCEPTION
           WHEN OTHERS THEN
             vr_dscritic := 'Erro ao criar registro na tabela craptvl: ' || SQLERRM;
@@ -4807,7 +4795,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
         END IF;
         
         --***** Relatorio *****
-        vr_nom_arquivo := 'crrl732' || to_char( gene0002.fn_busca_time );
+        vr_nom_arquivo := 'crrl732';
           
         -- Inicializar o CLOB
         dbms_lob.createtemporary(vr_des_xml, TRUE);
