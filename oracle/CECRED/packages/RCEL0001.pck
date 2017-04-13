@@ -4532,7 +4532,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
         gene0001.pc_submit_job(pr_cdcooper => 3                                           --> Código da cooperativa
                               ,pr_cdprogra => 'JBRCEL_REPASSE_VALOR_FORNECEDOR'           --> Código do programa
                               ,pr_dsplsql  => 'begin RCEL0001.pc_job_efetua_repasse; end;'--> Bloco PLSQL a executar
-                              ,pr_dthrexe  => TO_TIMESTAMP_TZ(to_char(SYSDATE + 1, 'DD/MM/RRRR') || 
+                              ,pr_dthrexe  => TO_TIMESTAMP_TZ(to_char(rw_crapdat.dtmvtopr, 'DD/MM/RRRR') || 
                                               ' 09:00 America/Sao_Paulo','DD/MM/RRRR HH24:MI TZR') --> Executar nesta hora
                               ,pr_interva  => NULL                                        --> apenas uma vez
                               ,pr_jobname  => vr_jobname                                  --> Nome randomico criado
