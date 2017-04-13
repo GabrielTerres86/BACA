@@ -870,22 +870,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARREC AS
 										|| to_char(SYSDATE, 'hh24:mi:ss') 
 										|| ' -->  Operador '|| vr_cdoperad || ' '
 										|| ' inseriu a AGENCIA ' 
-                    || pr_cdageban || ' para a cooperativa CECRED.' || chr(10);																 																 
+                    || NVL(pr_cdageban,'NULO') || ' para a cooperativa CECRED.' || chr(10);																 																 
 															 
 			ELSE -- Se existir valor, atualizar
 				-- Se valor informado for diferente da base
-				IF vr_cdageban <> nvl(pr_cdageban, ' ') THEN
+				IF vr_cdageban <> pr_cdageban THEN
           -- Atualizar parâmetro
 					pc_altera_param_sistema(pr_cdacesso => 'RECCEL_AGENCIA_REPASSE'
-																 ,pr_dsvlrprm => nvl(pr_cdageban, ' '));
+																 ,pr_dsvlrprm => pr_cdageban);
           -- Gerar log																 
 					vr_dslogtel := vr_dslogtel
 					            || to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR') || ' '
 											|| to_char(SYSDATE, 'hh24:mi:ss') 
 											|| ' -->  Operador '|| vr_cdoperad || ' '
 										  || ' alterou a AGENCIA ' 
-											|| ' de ' || vr_cdageban
-											|| ' para ' || pr_cdageban || ' para a cooperativa CECRED.' || chr(10);																 																 
+											|| ' de ' || nvl(vr_cdageban, 'NULO')
+											|| ' para ' || nvl(pr_cdageban, 'NULO') || ' para a cooperativa CECRED.' || chr(10);																 																 
 				END IF;															 
 			END IF;
 			

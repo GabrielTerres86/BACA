@@ -38,7 +38,7 @@
 	$xml .= '		<cdageban>'. $cdageban .'</cdageban>';
 	$xml .= '		<nrdconta>'. $nrdconta .'</nrdconta>';
 	$xml .= '		<nrdocnpj>'. $nrdocnpj .'</nrdocnpj>';
-	$xml .= '		<dsdonome>'. $dsdonome .'</dsdonome>';
+	$xml .= '		<dsdonome>'. utf8_decode($dsdonome) .'</dsdonome>';
 	$xml .= '	</Dados>';
 	$xml .= '</Root>';
 

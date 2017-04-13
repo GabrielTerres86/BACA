@@ -4617,9 +4617,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                                                 ,pr_cdcooper => 3
                                                 ,pr_cdacesso => 'RECCEL_ISPB_REPASSE'); 
         -- Agência
-        vr_cdageban := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
-                                                ,pr_cdcooper => 3
-                                                ,pr_cdacesso => 'RECCEL_AGENCIA_REPASSE'); 																							
+        vr_cdageban := nvl(GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+																										,pr_cdcooper => 3
+																										,pr_cdacesso => 'RECCEL_AGENCIA_REPASSE'),0);
         -- Número do CNPJ
         vr_nrdocnpj := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
                                                 ,pr_cdcooper => 3

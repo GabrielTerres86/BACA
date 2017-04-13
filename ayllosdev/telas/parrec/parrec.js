@@ -145,7 +145,8 @@ function controlaFoco() {
 	});
 	
 	$('#cdageban','#frmParrec').unbind('focusout').bind('focusout', function(e) {
-		$(this).removeClass('campoErro');
+		$(this).removeClass('campoErro campoFocusIn');
+		$(this).addClass('campo');
 	});
 	
 	
@@ -193,7 +194,8 @@ function controlaPesquisa(){
 			$("#divResultadoPesquisa > table").css("width","600px");
 			$("#divCabecalhoPesquisa").css("width","600px");
 			$("#divResultadoPesquisa").css("width","600px");
-			$("#divCabecalhoPesquisa > table > thead > tr").append('<td style="width:2%;">&nbsp;</td>');		
+			$("#divCabecalhoPesquisa > table > thead > tr").append('<td style="width:2%;">&nbsp;</td>');
+			$('#nmresbccPesquisa', '#formPesquisa').attr('maxlength','20');			
 			$('#divPesquisa').centralizaRotinaH();
 			
 		return false;
@@ -215,6 +217,7 @@ function controlaPesquisa(){
 			$("#divCabecalhoPesquisa > table > thead > tr").append('<td style="width:2%;">&nbsp;</td>');		
 			$('#divPesquisa').centralizaRotinaH();
 			$("#nrispbifPesquisa").val('');
+			$('#nmresbccPesquisa', '#formPesquisa').attr('maxlength','20');									
 			return false;			
 		}
 	});
@@ -231,7 +234,8 @@ function controlaPesquisa(){
 		$("#divResultadoPesquisa > table").css("width","600px");
 		$("#divCabecalhoPesquisa").css("width","600px");
 		$("#divResultadoPesquisa").css("width","600px");
-		$("#divCabecalhoPesquisa > table > thead > tr").append('<td style="width:2%;">&nbsp;</td>');		
+		$("#divCabecalhoPesquisa > table > thead > tr").append('<td style="width:2%;">&nbsp;</td>');	
+		$('#nmresbccPesquisa', '#formPesquisa').attr('maxlength','20');					
 		$('#divPesquisa').centralizaRotinaH();
 		$("#nrispbifPesquisa").val('');
 		return false;
