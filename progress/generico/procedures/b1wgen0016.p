@@ -465,7 +465,7 @@
                            acarretando em problemas no IB (Tiago/Elton SD 521667).             
               
               19/12/2016 - Inclusao da aprovacao de Desconto de Cheque. Projeto 300 (Lombardi).
-              
+
 28/11/2016 - Incluido tratamento de transaçoes pendentes 16 e 17.
 PRJ319 - SMS Cobrança (Odirlei - AMcom)
 
@@ -1518,7 +1518,7 @@ PROCEDURE proc_cria_critica_transacao_oper:
                               ASSIGN aux_dstptran = "Adesao Serviço SMS de Cobrança".
                               ELSE
                               ASSIGN aux_dstptran = "Cancelamento do Serviço SMS de Cobrança".
-                  
+                
                               END.
                 IF tbgen_trans_pend.tptransacao = 2 THEN
                     aux_dstiptra= (IF tbpagto_trans_pend.tppagamento = 1 THEN "Pagamento de Convenio" ELSE "Pagamento de Boletos Diversos").
@@ -7231,7 +7231,7 @@ PROCEDURE aprova_trans_pend:
                     BUFFER-COPY tbcobran_sms_trans_pend TO tt-tbcobran_sms_trans_pend.
                                                                                                                                       
                     ASSIGN tt-tbgen_trans_pend.idmovimento_conta  = IdentificaMovCC(tbgen_trans_pend.tptransacao,1,0).
-            END.    
+                  END.
               END.
                 ELSE IF tbgen_trans_pend.tptransacao = 12 THEN /* Desconto de Cheque */
                   DO:
@@ -8966,21 +8966,6 @@ PROCEDURE aprova_trans_pend:
                                         UNDO TRANSACAO, LEAVE TRANSACAO.
                                     END.
                                 
-                                RUN gera_erro_transacao(INPUT par_cdcooper,
-                                                        INPUT par_cdoperad,
-                                                        INPUT aux_dscritic,
-                                                        INPUT aux_dsorigem,
-                                                        INPUT aux_dstransa,
-                                                        INPUT FALSE,
-                                                        INPUT par_nmdatela,
-                                                        INPUT par_nrdconta,
-                                                        INPUT STRING(ROWID(tbgen_trans_pend)),
-                                                        INPUT TRUE,
-                                                        INPUT par_indvalid,
-                                                        INPUT tt-tbpagto_trans_pend.dtdebito,
-                                                        INPUT tt-tbpagto_trans_pend.vlpagamento,
-                                                        INPUT aux_conttran).
-
                                 IF par_indvalid = 1 AND aux_conttran = 1 AND
                                    tt-tbpagto_trans_pend.idagendamento = 1 THEN /* Agendamento */
                                     DO:
@@ -9599,21 +9584,6 @@ PROCEDURE aprova_trans_pend:
                                 UNDO TRANSACAO, LEAVE TRANSACAO.
                             END.
                     
-                        RUN gera_erro_transacao(INPUT par_cdcooper,
-                                                INPUT par_cdoperad,
-                                                INPUT aux_dscritic,
-                                                INPUT aux_dsorigem,
-                                                INPUT aux_dstransa,
-                                                INPUT FALSE,
-                                                INPUT par_nmdatela,
-                                                INPUT par_nrdconta,
-                                                INPUT STRING(ROWID(tbgen_trans_pend)),
-                                                INPUT TRUE,
-                                                INPUT par_indvalid,
-                                                INPUT tt-tbgen_trans_pend.dtmvtolt,
-                                                INPUT tt-tbepr_trans_pend.vlemprestimo,
-                                                INPUT aux_conttran).
-
                         IF par_indvalid = 1 AND aux_conttran = 1 THEN
                             DO: 
                                 IF NOT VALID-HANDLE(h-b1wgen0188) THEN
@@ -9705,6 +9675,21 @@ PROCEDURE aprova_trans_pend:
                                 FIND FIRST tt-vlrdat WHERE tt-vlrdat.dattrans = tt-tbgen_trans_pend.dtmvtolt EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
                                 ASSIGN tt-vlrdat.vlronlin = tt-vlrdat.vlronlin + tt-tbepr_trans_pend.vliof + tt-tbepr_trans_pend.vltarifa.
                             END.
+                            
+                        RUN gera_erro_transacao(INPUT par_cdcooper,
+                                                INPUT par_cdoperad,
+                                                INPUT aux_dscritic,
+                                                INPUT aux_dsorigem,
+                                                INPUT aux_dstransa,
+                                                INPUT FALSE,
+                                                INPUT par_nmdatela,
+                                                INPUT par_nrdconta,
+                                                INPUT STRING(ROWID(tbgen_trans_pend)),
+                                                INPUT TRUE,
+                                                INPUT par_indvalid,
+                                                INPUT tt-tbgen_trans_pend.dtmvtolt,
+                                                INPUT tt-tbepr_trans_pend.vlemprestimo,
+                                                INPUT aux_conttran).
                 	END.
                 ELSE IF tt-tbgen_trans_pend.tptransacao = 7 THEN /* Aplicações */
                 	DO:
@@ -11832,7 +11817,7 @@ PROCEDURE aprova_trans_pend:
                                     INPUT tt-tbcobran_sms_trans_pend.vlservico,
                                     INPUT aux_conttran).
                                                                                                                                                                   
-                    END.
+                                END.
                  ELSE IF tt-tbgen_trans_pend.tptransacao = 11 THEN /* Pagamento DARF/DAS */
                   DO: 
                     FOR FIRST tt-tbpagto_darf_das_trans_pend WHERE tt-tbpagto_darf_das_trans_pend.cdtransacao_pendente = tt-tbgen_trans_pend.cdtransacao_pendente NO-LOCK. END.
@@ -12750,7 +12735,7 @@ ELSE IF tt-tbgen_trans_pend.tptransacao = 11 THEN /* Pagamentos DARF/DAS */
               ASSIGN tt-vlrdat.vlronlin = tt-vlrdat.vlronlin + tt-tbpagto_darf_das_trans_pend.vlpagamento.
           ELSE IF tt-tbgen_trans_pend.idmovimento_conta = 3 THEN /* Agendamento */
               ASSIGN tt-vlrdat.vlronlin = tt-vlrdat.vlronlin + tt-tbpagto_darf_das_trans_pend.vlpagamento.
-      END.						 
+      END.						
 	/* Contrato SMS */
 ELSE IF tt-tbgen_trans_pend.tptransacao = 16 OR
         tt-tbgen_trans_pend.tptransacao = 17  THEN
