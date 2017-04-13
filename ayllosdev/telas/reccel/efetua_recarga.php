@@ -49,7 +49,7 @@ $xmlResult = mensageria($xmlReq, "TELA_RECCEL", "EFETUA_RECARGA", $glbvars["cdco
 // Se ocorrer um erro, mostra crítica
 if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
     $msg = utf8_encode($xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata);
-    exibirErro('error',$msg,'Alerta - Ayllos','',false);
+    exibirErro('error',$msg,'Alerta - Ayllos','btnVoltar();',false);
 }
 if(strtoupper($xmlObj->roottag->tags[0]->name == 'DADOS')){	    
     $dsnsuope = $xmlObj->roottag->tags[0]->tags[0]->cdata;

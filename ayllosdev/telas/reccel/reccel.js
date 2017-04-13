@@ -339,17 +339,35 @@ function formataOpcaoR(){
 	cNrdddtel.unbind('keypress').bind('keypress', function(e){
 		if (e.keyCode == 13 ) {
 			cNrtelefo.focus();
-		}
+		}		
 	});
 
+	cNrdddtel.unbind('keyup').bind('keyup', function(e){
+		if ($(this).val().length == 2){
+			cNrtelefo.focus();
+		}
+	});
+	
 	cNrtelefo.unbind('keypress').bind('keypress', function(e){
 		if (e.keyCode == 13 ) {
 			cNrdddtel2.focus();
 		}
 	});
 
+	cNrtelefo.unbind('keyup').bind('keyup', function(e){
+		if ($(this).val().length == 10){
+			cNrdddtel2.focus();
+		}
+	});
+	
 	cNrdddtel2.unbind('keypress').bind('keypress', function(e){
 		if (e.keyCode == 13 ) {
+			cNrtelefo2.focus();
+		}
+	});
+
+	cNrdddtel2.unbind('keyup').bind('keyup', function(e){
+		if ($(this).val().length == 2){
 			cNrtelefo2.focus();
 		}
 	});
@@ -360,6 +378,12 @@ function formataOpcaoR(){
 		}
 	});
 
+	cNrtelefo2.unbind('keyup').bind('keyup', function(e){
+		if ($(this).val().length == 10){
+			cNmopetel.focus();
+		}
+	});	
+	
 	cNmopetel.unbind('keydown').bind('keydown', function(e){
 		if (e.keyCode == 13 ) {
 			cVlrecarg.focus();
@@ -374,6 +398,13 @@ function formataOpcaoR(){
 
 	layoutPadrao();
 
+	cNrdddtel.attr('tabindex',1);
+	cNrtelefo.attr('tabindex',2); 
+	cNrdddtel2.attr('tabindex',3);
+	cNrtelefo2.attr('tabindex',4);
+	cNmopetel.attr('tabindex',5);
+	cVlrecarg.attr('tabindex',6);
+	$('#btProsseguir','#divBotoes').attr('tabindex',7);
 }
 
 function validaPermissao(){
@@ -753,8 +784,9 @@ function efetuaRecarga(){
 					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground();');
 				}
 			}else{
-				try {
-					eval(response);
+				try {				
+					eval(response);	
+					$('#btnError').prop('src',UrlImagens + "botoes/fechar.gif");					
 				} catch(error) {						
 					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground();');
 				}

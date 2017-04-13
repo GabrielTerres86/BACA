@@ -837,7 +837,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_RECCEL AS
                to_char(tfav.nrcelular,'fm00000g0000','nls_numeric_characters=.-') ||
 							 decode(trim(tfav.nmcontato), NULL,'', ' / ' || tfav.nmcontato ) dstelefo
 							,tfav.nrddd
-							,tfav.nrcelular
+							,to_char(tfav.nrcelular,'fm00000g0000','nls_numeric_characters=.-') nrcelular
               ,count(1) over() retorno
           FROM tbrecarga_favorito tfav
          WHERE tfav.cdcooper = pr_cdcooper
@@ -1159,9 +1159,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_RECCEL AS
 														,pr_cdoperad => vr_cdoperad
 														,pr_dscritic => vr_dscritic);
 
-/*		-- Incluir nome do módulo logado
+		-- Incluir nome do módulo logado
 		GENE0001.pc_informa_acesso(pr_module => 'TELA_RECCEL'
-															,pr_action => null); */
+															,pr_action => null); 
 
     -- Chamar rotina para validar a recarga
 		RCEL0001.pc_valida_recarga(pr_cdcooper => vr_cdcooper
