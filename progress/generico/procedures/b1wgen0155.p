@@ -1152,7 +1152,8 @@ PROCEDURE consulta-bloqueio-jud:
     
     GET FIRST q_crapblj.
     DO WHILE AVAILABLE(crapblj):
-       aux_vltotblq = aux_vltotblq + (crapblj.vlbloque + crapblj.vlresblq).
+       IF crapblj.dtblqfim = ? THEN
+          aux_vltotblq = aux_vltotblq + (crapblj.vlbloque + crapblj.vlresblq).
        GET NEXT q_crapblj.
     END.
 
