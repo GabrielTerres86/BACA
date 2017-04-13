@@ -2,7 +2,7 @@
 
     Programa: b1wgen0075.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Maio/2010                   Ultima atualizacao: 16/11/2016
+    Data    : Maio/2010                   Ultima atualizacao: 08/03/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - COMERCIAL
 
@@ -83,6 +83,13 @@
                 16/11/2016 - Ajuste para nao gerar mais pendencia no digidoc com
                              tpdocmto = 37 e criar o campo inpolexp sempre como
                              nao inpolexp = 0 (Tiago/Thiago SD532690)
+
+               17/01/2017 - Adicionado chamada a procedure de replicacao do 
+                            endereco para o CDC. (Reinert Prj 289)
+                             
+			   08/03/2017 - Ajuste na rotina Busca_Dados_PPE para pegar o nome completo
+			                da coupacao para as informacoes do PEP
+							(Adriano - SD 614408).
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -92,6 +99,7 @@
 { sistema/generico/includes/gera_log.i}
 { sistema/generico/includes/gera_erro.i}
 { sistema/generico/includes/b1wgenvlog.i &VAR-GERAL=SIM &SESSAO-BO=SIM }
+{ sistema/generico/includes/var_oracle.i }
 
 DEF VAR aux_cdcritic AS INTE                                        NO-UNDO.
 DEF VAR aux_dscritic AS CHAR                                        NO-UNDO.
@@ -1138,7 +1146,7 @@ PROCEDURE Grava_Dados:
                        crapdoc.idseqttl = par_idseqttl
                        crapdoc.cdoperad = par_cdoperad.
                 VALIDATE crapdoc.
-                END.
+            END.
 
             END.
         END.   
@@ -1544,6 +1552,43 @@ PROCEDURE Grava_Dados:
 
     IF VALID-HANDLE(h-b1wgen0021) THEN
         DELETE PROCEDURE h-b1wgen0021.
+
+    IF  par_idseqttl = 1 THEN
+      DO:
+        FOR FIRST crapcdr WHERE crapcdr.cdcooper = par_cdcooper
+                            AND crapcdr.nrdconta = par_nrdconta
+                            AND crapcdr.flgconve = TRUE NO-LOCK:
+
+          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+          
+          RUN STORED-PROCEDURE pc_replica_cdc
+            aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                                ,INPUT par_nrdconta
+                                                ,INPUT par_cdoperad
+                                                ,INPUT par_idorigem
+                                                ,INPUT par_nmdatela
+                                                ,INPUT 1
+                                                ,INPUT 0
+                                                ,INPUT 0
+                                                ,INPUT 0
+                                                ,0
+                                                ,"").
+
+          CLOSE STORED-PROC pc_replica_cdc
+                    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+          ASSIGN aux_cdcritic = 0
+                 aux_dscritic = ""
+                 aux_cdcritic = pc_replica_cdc.pr_cdcritic 
+                                  WHEN pc_replica_cdc.pr_cdcritic <> ?
+                 aux_dscritic = pc_replica_cdc.pr_dscritic 
+                                  WHEN pc_replica_cdc.pr_dscritic <> ?.
+                                  
+        END.
+      END.
+
 
     IF  aux_dscritic <> "" OR aux_cdcritic <> 0 THEN
         DO:
@@ -2210,10 +2255,10 @@ PROCEDURE Busca_Dados_PPE:
                     STRING(YEAR(TODAY)) + ".".
                 
 
-                FOR FIRST gncdocp FIELDS(rsdocupa)
+                FOR FIRST gncdocp FIELDS(dsdocupa)
                     WHERE gncdocp.cdocupa = tbcadast_politico_exposto.cdocupacao
                     NO-LOCK:
-                    ASSIGN tt-ppe.rsdocupa = gncdocp.rsdocupa.
+                    ASSIGN tt-ppe.rsdocupa = gncdocp.dsdocupa.
                 END.
 
                 FOR FIRST craptab

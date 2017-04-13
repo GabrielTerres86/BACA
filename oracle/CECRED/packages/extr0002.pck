@@ -3570,7 +3570,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --  Sistema  : 
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2014                           Ultima atualizacao: 27/05/2016
+  --  Data     : Julho/2014                           Ultima atualizacao: 21/02/2017
   --
   -- Dados referentes ao programa:
   --
@@ -3633,6 +3633,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --              
   --              08/08/2016 - Incluído tratamento para pagamento de DARF/DAS (Dionathan)
   -- 
+  --              21/02/2017 - Ajuste na listagem de titulos em bordero de desconto, para considerar
+  --                           a data de vencimento util do titulo. (Douglas - Chamado 587261)
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
       -- Busca dos dados do associado
@@ -4123,7 +4125,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
          AND tdb.insittit = 4
          AND tdb.dtvencto < pr_dtmvtolt
          AND tdb.dtdpagto IS NULL;
-				 
+
 		 -- Buscar recargas pendentes
 		 CURSOR cr_recargas(pr_cdcooper IN crapcop.cdcooper%TYPE
 		                   ,pr_nrdconta IN crapass.nrdconta%TYPE
@@ -4274,6 +4276,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       
       -- Historicos 'de-para' Cabal
       vr_cdhishcb VARCHAR2(4000);
+      
+      -- data de vencimento do titulo em dia util
+      vr_dtvencto_titulo DATE;
+      vr_dt_ultimo_dia   DATE;
     BEGIN
       --Inicializar tabelas memoria
       pr_tab_erro.DELETE;
@@ -5833,14 +5839,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         END IF;
       END LOOP;
                                                                                         
-      FOR rw_craptdb IN cr_craptdb(pr_cdcooper => pr_cdcooper,
-                                   pr_nrdconta => pr_nrdconta,
-                                   pr_dtmvtolt => rw_crapdat.dtmvtolt) LOOP
-
-        IF  (rw_craptdb.dtvencto >= pr_dtiniper AND
-             rw_craptdb.dtvencto <= pr_dtfimper) OR
-            (pr_dtiniper IS NULL AND pr_dtfimper IS NULL) THEN
-          --Selecionar Historico
+      --Selecionar Historico de débito de titulo vencido
+      --Alterado de lugar para não buscar o mesmo histórico em cada registro do LOOP de titulos descontados
           OPEN cr_craphis (pr_cdcooper => pr_cdcooper
                           ,pr_cdhistor => 591); --DEB.TIT.VENC
           FETCH cr_craphis INTO rw_craphis;
@@ -5857,6 +5857,55 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           --Fechar Cursor
           CLOSE cr_craphis;
 
+      -- Borderos de desconto de titulos
+      FOR rw_craptdb IN cr_craptdb(pr_cdcooper => pr_cdcooper,
+                                   pr_nrdconta => pr_nrdconta,
+                                   pr_dtmvtolt => rw_crapdat.dtmvtolt) LOOP
+
+        -- Verificar a data de vencimento util do titulo
+        vr_dtvencto_titulo := gene0005.fn_valida_dia_util(pr_cdcooper => rw_craptdb.cdcooper, 
+                                                          pr_dtmvtolt => rw_craptdb.dtvencto, 
+                                                          pr_tipo     => 'P'); --proximo dia util
+
+        -- Se o titulo vencer em um feriado, ele ainda pode ser pago no proximo dia util
+        -- dessa forma o titulo nao deve ser listado como lancamento futuro
+        IF vr_dtvencto_titulo >= rw_crapdat.dtmvtolt THEN
+          CONTINUE;
+        END IF;
+        
+        -- Tratamento para nao listar no primeiro dia util do ano 
+        -- os titulos vencidos no ultimo dia util do ano anterior 
+        IF to_char(vr_dtvencto_titulo,'YYYY') <> to_char(rw_crapdat.dtmvtocd,'YYYY') THEN
+          -- Se o ano de vencmento do titulo eh diferente do ano da data do sistema
+          -- Ultimo dia do ano do vencimetno do titulo
+          vr_dt_ultimo_dia:= TO_DATE('31/12/'||to_char(vr_dtvencto_titulo,'YYYY'),'DD/MM/YYYY');
+          -- Buscar o ultimo dia util do ano
+          vr_dt_ultimo_dia:= gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
+                                                        ,pr_dtmvtolt => vr_dt_ultimo_dia
+                                                        ,pr_tipo     => 'A');
+
+          -- Apenas se o vencimento for no ultimo dia util do ano
+          IF vr_dtvencto_titulo = vr_dt_ultimo_dia THEN
+            -- Ultimo dia do ano do vencimetno do titulo
+            vr_dt_ultimo_dia:= TO_DATE('31/12/'||to_char(vr_dtvencto_titulo,'YYYY'),'DD/MM/YYYY');
+            -- Buscar o primeiro dia util após o ultimo dia do ano
+            vr_dtvencto_titulo:= gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper, 
+                                                             pr_dtmvtolt => vr_dt_ultimo_dia,
+                                                             pr_tipo     => 'P'); -- Proximo dia util
+            -- Tambem deve ser ignorado o titulo que vencer no ultimo dia util do ano
+            -- pois essa data nao possui movimentacao bancaria
+            -- Ex.: Titulo vence em 30/12/2016 e pode ser pago em 02/01/2017
+            --      portanto nao deve ser exibido como lancamento futuro
+            IF vr_dtvencto_titulo >= rw_crapdat.dtmvtolt THEN
+              CONTINUE;
+            END IF;
+          END IF;
+        END IF;
+        
+        IF  (rw_craptdb.dtvencto >= pr_dtiniper AND
+             rw_craptdb.dtvencto <= pr_dtfimper) OR
+            (pr_dtiniper IS NULL AND pr_dtfimper IS NULL) THEN
+            
           OPEN cr_crapcob( pr_cdcooper => rw_craptdb.cdcooper,
                            pr_cdbandoc => rw_craptdb.cdbandoc,
                            pr_nrdctabb => rw_craptdb.nrdctabb,
@@ -5907,10 +5956,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           vr_dscritic:= NULL;
 					--Levantar Excecao
           RAISE vr_exc_erro;
-        END IF;
+        END IF;                                                 
 				--Fechar Cursor
 				CLOSE cr_craphis;
-				
+
 				--Incrementar contador lancamentos na tabela
         vr_index:= pr_tab_lancamento_futuro.COUNT+1;
         --Criar Lancamento Futuro na tabela
@@ -5926,8 +5975,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         --Acumular valor Credito
         vr_vllaudeb:= nvl(vr_vllaudeb,0) + rw_recarga.vlrecarga;
 				
-			END LOOP;
-			                                                                                        
+      END LOOP;
+                                                                                        
       --Diminuir valor lancamento automatico do debito
       vr_vllandeb:= vr_vllandeb - vr_vllautom;
       --Se valor debito eh positivo
@@ -10166,7 +10215,7 @@ END pc_consulta_ir_pj_trim;
   --  Sistema  : 
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2014                           Ultima atualizacao: 03/08/2016
+  --  Data     : Julho/2014                           Ultima atualizacao: 24/03/2017
   --
   -- Dados referentes ao programa:
   --
@@ -10180,6 +10229,7 @@ END pc_consulta_ir_pj_trim;
   --
   --              03/08/2016 - M360 - Inclusão de novas buscas de Sobras ao Cooperado (Marcos-Supero)
   --
+  --              24/03/2017 - SD638033 - Envio dos Rendimentos de Cotas Capital sem desconto IR (Marcos-Supero)
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
         -- Busca dos dados da cooperativa
@@ -10513,7 +10563,7 @@ END pc_consulta_ir_pj_trim;
             vr_flganter:= vr_tab_extrato_ir(vr_index).flganter;
             vr_nrdconta:= to_char(vr_tab_extrato_ir(vr_index).nrdconta,'fm9999g999g0');
             vr_cdagectl:= to_char(vr_tab_extrato_ir(vr_index).cdagectl,'fm90000');
-            vr_rel_vlrencot:= vr_tab_extrato_ir(vr_index).vlrencot - vr_tab_extrato_ir(vr_index).vlirfcot;
+            vr_rel_vlrencot:= vr_tab_extrato_ir(vr_index).vlrencot;
             vr_rel_vlirfcot:= vr_tab_extrato_ir(vr_index).vlirfcot;
             vr_ant_vlirfcot:= vr_tab_extrato_ir(vr_index).anirfcot;
             vr_rel_vlprepag:= vr_tab_extrato_ir(vr_index).vlprepag;

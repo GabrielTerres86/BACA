@@ -457,6 +457,10 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0003 is
                             ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                             ,pr_des_erro OUT VARCHAR2);           --> Erros do processo 
 
+	-- Function para retornar código da cidade
+	FUNCTION fn_busca_codigo_cidade(pr_cdestado IN crapmun.cdestado%TYPE
+		                             ,pr_dscidade IN crapmun.dscidade%TYPE) RETURN INTEGER;
+
 END CADA0003;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
@@ -466,7 +470,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --  Sistema  : Rotinas acessadas pelas telas de cadastros Web
   --  Sigla    : CADA
   --  Autor    : Andrino Carlos de Souza Junior - RKAM
-  --  Data     : Julho/2014.                   Ultima atualizacao: 29/11/2016
+  --  Data     : Julho/2014.                   Ultima atualizacao: 21/02/2017
   --
   -- Dados referentes ao programa:
   --
@@ -514,6 +518,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --             29/11/2016 - Retirado COMMIT da procedure pc_grava_tbchq_param_conta
   --                          pois estava ocasionando problemas na abertura de contas 
   --                          na MATRIC criando registros com PA zerado (Tiago/Thiago).
+  --
+  --			 19/01/2016 - Adicionada function fn_busca_codigo_cidade. (Reinert)
+  --
+  --             21/02/2017 - Removido um dos meses exibido pela rotina pc_lista_cred_recebidos,
+  --                          pois a tela é semestral e estava sendo exibido 7 meses, conforme 
+  --                          solicitadono chamado 599051. (Kelvin)                            
+  --                          
+  --
+  --             21/02/2017 - Ajuste para tratar os valores a serem enviados para
+  --                          geração do relatório
+  --                          (Adriano - SD 614408).
   ---------------------------------------------------------------------------------------------------------------
 
   CURSOR cr_tbchq_param_conta(pr_cdcooper crapcop.cdcooper%TYPE
@@ -4747,10 +4762,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                            ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><Dados>');
 
     -- Atualiza a data de inicio da busca
-    vr_dtinicio := TRUNC(ADD_MONTHS(rw_crapdat.dtmvtolt,-7),'MM');
+    vr_dtinicio := TRUNC(ADD_MONTHS(rw_crapdat.dtmvtolt,-6),'MM');
 
     -- Efetua loop sobre os meses de busca
-    FOR x IN 1..7 LOOP
+    FOR x IN 1..6 LOOP
 
       -- Busca o valor do do mes solicitado
       OPEN cr_craplcm(pr_dtinicio => vr_dtinicio
@@ -4769,7 +4784,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       END IF;
 
       -- Efetua a somatoria do semestre
-      IF x < 7 THEN
+      IF x <= 6 THEN
         vr_vlsemestre := NVL(vr_vlsemestre,0) + NVL(rw_craplcm.valor,0);
       END IF;
 
@@ -6153,7 +6168,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Carlos Henrique
-    Data    : Dezembro/15.                    Ultima atualizacao: 
+    Data    : Dezembro/15.                    Ultima atualizacao: 21/02/2017
     
     Dados referentes ao programa:
     
@@ -6162,7 +6177,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
     Objetivo  : Rotina para gerar impressao de declaração de pessoa exposta politicamente.
     Observacao: -----
     
-    Alteracoes: 
+    Alteracoes: 21/02/2017 - Ajuste para tratar os valores a serem enviados para
+                             geração do relatório
+                             (Adriano - SD 614408).
     ..............................................................................*/
     DECLARE
     
@@ -6183,6 +6200,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       -- Variaveis para a geracao do relatorio
       vr_nom_direto VARCHAR2(500);
       vr_nmarqimp   VARCHAR2(100);
+      vr_nrcnpj_empresa VARCHAR2(25);
+      
       -- contador de controle
       vr_auxqtd NUMBER;
       -- Cursor genérico de calendário
@@ -6212,27 +6231,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                               ,pr_cdoperad => vr_cdoperad
                               ,pr_dscritic => vr_dscritic);
     
-      -- Buscar nome da cooperativa
-/*      OPEN cr_crapcop(vr_cdcooper);
-      FETCH cr_crapcop
-        INTO rw_crapcop;
-      CLOSE cr_crapcop;
-    */
     
-      -- Ler dados do operador
-/*      OPEN cr_crapope(pr_cdcooper => vr_cdcooper
-                     ,pr_cdoperad => vr_cdoperad);
-      FETCH cr_crapope
-        INTO rw_crapope;
-      -- Se não encontrar
-      IF cr_crapope%NOTFOUND THEN
-        -- Fechar o cursor pois haverá raise
-        CLOSE cr_crapope;
-      ELSE
-        -- Apenas fechar o cursor
-        CLOSE cr_crapope;
-      END IF;
-*/    
       -- Leitura do calendário da cooperativa
       OPEN btch0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
       FETCH btch0001.cr_crapdat
@@ -6243,23 +6242,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       dbms_lob.createtemporary(vr_xml, TRUE);
       dbms_lob.open(vr_xml, dbms_lob.lob_readwrite);
     
+      IF to_number(pr_nrcnpj_empresa) = 0 OR pr_nrcnpj_empresa IS NULL THEN
+        
+        vr_nrcnpj_empresa := NULL;
+                                
+      ELSE
+        
+        vr_nrcnpj_empresa := gene0002.fn_mask_cpf_cnpj(pr_nrcnpj_empresa,2);
+                                 
+      END IF;
+    
       vr_strbuffer := '<?xml version="1.0" encoding="utf-8"?><declaracao>';
       vr_strbuffer := vr_strbuffer || 
-      '<tpexposto>'        || to_char(pr_tpexposto)               || '</tpexposto>' || 
-      '<cdocpttl>'         || to_char(pr_cdocpttl)                || '</cdocpttl>'  || 
-      '<cdrelacionamento>' || to_char(pr_cdrelacionamento)        || '</cdrelacionamento>' ||
-      '<dtinicio>'         || pr_dtinicio                         || '</dtinicio>'  ||
-      '<dttermino>'        || pr_dttermino                        || '</dttermino>' || 
-      '<nmempresa>'        || pr_nmempresa                        || '</nmempresa>' || 
-      '<nrcnpj_empresa>'   || pr_nrcnpj_empresa                   || '</nrcnpj_empresa>' ||
-      '<nmpolitico>'       || pr_nmpolitico                       || '</nmpolitico>' ||
-      '<nrcpf_politico>'   || pr_nrcpf_politico                   || '</nrcpf_politico>' || 
-      '<nmextttl>'         || pr_nmextttl                         || '</nmextttl>' || 
-      '<rsocupa>'          || pr_rsocupa                          || '</rsocupa>' || 
-      '<nrcpfcgc>'         || pr_nrcpfcgc                         || '</nrcpfcgc>' || 
-      '<dsrelacionamento>' || pr_dsrelacionamento                 || '</dsrelacionamento>' ||
-      '<nrdconta>'         || pr_nrdconta                         || '</nrdconta>' ||
-      '<cidade>'           || pr_cidade                           || '</cidade>' ||
+      '<tpexposto>'        || to_char(pr_tpexposto)                           || '</tpexposto>' || 
+      '<cdocpttl>'         || to_char(pr_cdocpttl)                            || '</cdocpttl>'  || 
+      '<cdrelacionamento>' || to_char(pr_cdrelacionamento)                    || '</cdrelacionamento>' ||
+      '<dtinicio>'         || pr_dtinicio                                     || '</dtinicio>'  ||
+      '<dttermino>'        || pr_dttermino                                    || '</dttermino>' || 
+      '<nmempresa>'        || NVL(TRIM(pr_nmempresa), ' ')                    || '</nmempresa>' || 
+      '<nrcnpj_empresa>'   || vr_nrcnpj_empresa                               || '</nrcnpj_empresa>' ||
+      '<nmpolitico>'       || NVL(TRIM(pr_nmpolitico), ' ')                   || '</nmpolitico>' ||
+      '<nrcpf_politico>'   || gene0002.fn_mask_cpf_cnpj(pr_nrcpf_politico,1)  || '</nrcpf_politico>' || 
+      '<nmextttl>'         || NVL(TRIM(pr_nmextttl), ' ')                     || '</nmextttl>' || 
+      '<rsocupa>'          || pr_rsocupa                                      || '</rsocupa>' || 
+      '<nrcpfcgc>'         || gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc,1)        || '</nrcpfcgc>' || 
+      '<dsrelacionamento>' || pr_dsrelacionamento                             || '</dsrelacionamento>' ||
+      '<nrdconta>'         || pr_nrdconta                                     || '</nrdconta>' ||
+      '<cidade>'           || pr_cidade                                       || '</cidade>' ||
       '</declaracao>';
 
       -- Enviar ao CLOB
@@ -6930,6 +6939,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                                      '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
 
   END pc_lista_cidades;
+
+	-- Function para retornar código da cidade
+	FUNCTION fn_busca_codigo_cidade(pr_cdestado IN crapmun.cdestado%TYPE
+		                             ,pr_dscidade IN crapmun.dscidade%TYPE) RETURN INTEGER IS
+	  CURSOR cr_crapmun IS
+			SELECT mun.idcidade
+				FROM crapmun mun
+			 WHERE upper(mun.cdestado) = upper(pr_cdestado)
+				 AND (upper(mun.dscidade) = upper(pr_dscidade)
+					OR  upper(GENE0007.fn_caract_acento(mun.dscidesp)) = upper(pr_dscidade));
+	  rw_crapmun cr_crapmun%ROWTYPE;
+	BEGIN
+		OPEN cr_crapmun;
+		FETCH cr_crapmun INTO rw_crapmun;
+		CLOSE cr_crapmun;
+		RETURN nvl(rw_crapmun.idcidade, 0);
+  END fn_busca_codigo_cidade;
 
 END CADA0003;
 /

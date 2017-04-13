@@ -305,7 +305,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     Sistema  : Procedimentos e funcoes das transacoes do caixa online
     Sigla    : CRED
     Autor    : Alisson C. Berrido - Amcom
-    Data     : Junho/2013.                   Ultima atualizacao: 05/10/2016
+    Data     : Junho/2013.                   Ultima atualizacao: 20/03/2017 
   
     Dados referentes ao programa:
   
@@ -330,6 +330,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                 29/08/2016 - #456682 Inclusão de verificação de fraude na rotina pc_validar_ted (Carlos)
                 
                 05/10/2016 - Implementei correcoes e alteracoes na pc_enviar_ted SD 535051. (Carlos Rafael Tanholi).
+                
+                20/03/2017 - Ajuste para validar o cpf/cnpj de acordo com o inpessoa informado             
+                            (Adriano - SD 620221).
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Busca dos dados da cooperativa */
@@ -580,7 +583,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       Sistema  : Rotinas acessadas pelas telas de cadastros Web
       Sigla    : CRED
       Autor    : Odirlei Busana - Amcom
-      Data     : Junho/2015.                   Ultima atualizacao: 08/06/2015
+      Data     : Junho/2015.                   Ultima atualizacao: 20/03/2017
   
       Dados referentes ao programa:
   
@@ -588,6 +591,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       Objetivo  : Procedure para validar TED
     
       Alteração : 08/06/2015 - Conversão Progress -> Oracle (Odirlei-Amcom)
+      
+                  20/03/2017 - Ajuste para validar o cpf/cnpj de acordo com o inpessoa informado             
+                              (Adriano - SD 620221).
     
   ---------------------------------------------------------------------------------------------------------------*/
     ---------------> CURSORES <-----------------        
@@ -840,31 +846,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       RAISE vr_exc_erro;
     END IF;
     
-    -- Validar cpf ou cnpj
-    GENE0005.pc_valida_cpf_cnpj (pr_nrcalcul => pr_nrcpffav  --> Numero a ser verificado
-                                ,pr_stsnrcal => vr_flgretor  --> Situacao
-                                ,pr_inpessoa => vr_tppessoa);--> Tipo Inscricao Cedente
-    
-    IF vr_flgretor = FALSE THEN 
-      vr_cdcritic := 27; --> 027 - CPF/CNPJ com erro.
-      vr_dscritic := NULL;
-      RAISE vr_exc_erro;            
-    END IF;    
-    
-    -- Validar tipo de pessoa
-    IF pr_inpesfav <> vr_tppessoa THEN
-      vr_cdcritic := 0;
-      vr_dscritic := 'Tipo de pessoa do favorecido e incorreto.';
-      RAISE vr_exc_erro;
+    IF pr_inpesfav = 1 THEN 
+        
+      -- Valida CPF enviado
+      GENE0005.pc_valida_cpf(pr_nrcalcul => pr_nrcpffav   --Numero a ser verificado
+                            ,pr_stsnrcal => vr_flgretor);   --Situacao
+        
+      IF vr_flgretor = FALSE THEN
+        vr_cdcritic := 27; --> 027 - CPF/CNPJ com erro.
+        vr_dscritic := NULL;
+        RAISE vr_exc_erro;
+      END IF;
+        
+    ELSE
+        
+      -- Valida CPF/CNPJ enviado
+      GENE0005.pc_valida_cnpj(pr_nrcalcul => pr_nrcpffav   --Numero a ser verificado
+                             ,pr_stsnrcal => vr_flgretor);   --Situacao
+          
+      IF vr_flgretor = FALSE THEN
+        vr_cdcritic := 27; --> 027 - CPF/CNPJ com erro.
+        vr_dscritic := NULL;
+        RAISE vr_exc_erro;
+      END IF;
+        
     END IF;
-
-    IF vr_tppessoa = 1 THEN
+      
+    IF pr_inpesfav = 1 THEN
       vr_tpfraude := 2;
     ELSE
       vr_tpfraude := 3;
     END IF;
 
-    vr_cpfcnpj := gene0002.fn_mask_cpf_cnpj(pr_nrcpffav, vr_tppessoa);
+    vr_cpfcnpj := gene0002.fn_mask_cpf_cnpj(pr_nrcpffav, pr_inpesfav);
 
     -- Verifica se o cpf/cnpj eh fraudulento
     OPEN cr_crapcbf(vr_tpfraude, vr_cpfcnpj);
