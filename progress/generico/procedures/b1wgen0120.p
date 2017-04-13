@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0120.p
     Autor   : Gabriel Capoia dos Santos (DB1)
-    Data    : Outubro/2011                     Ultima atualizacao: 10/01/2017
+    Data    : Outubro/2011                     Ultima atualizacao: 13/04/2017
 
     Objetivo  : Tranformacao BO tela BCAIXA
 
@@ -107,6 +107,8 @@
                              
                 10/01/2016 - #587076 aumento de formats para o boletim de caixa (Carlos)
 
+				13/04/2017 - Inserido o campo nrsequen no create da tt-estorno
+				             #625135 (Tiago/Elton)
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -2248,7 +2250,8 @@ PROCEDURE Gera_Boletim:
             CREATE tt-estorno.
             ASSIGN tt-estorno.cdagenci = crapbcx.cdagenci    
                    tt-estorno.nrdcaixa = crapbcx.nrdcaixa     
-                   tt-estorno.nrseqaut = crapaut.nrseqaut.
+                   tt-estorno.nrseqaut = crapaut.nrseqaut
+				   tt-estorno.nrsequen = crapaut.nrsequen.
 
             IF  LAST(crapaut.nrsequen) THEN
                 DO:
