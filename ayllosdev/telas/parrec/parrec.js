@@ -147,6 +147,10 @@ function controlaFoco() {
 	$('#cdageban','#frmParrec').unbind('focusout').bind('focusout', function(e) {
 		$(this).removeClass('campoErro campoFocusIn');
 		$(this).addClass('campo');
+		if ($(this).val() == '' || $(this).val() == 'undefined'){
+			$(this).val(0);
+			$(this).trigger('change');
+		}
 	});
 	
 	
@@ -201,8 +205,8 @@ function controlaPesquisa(){
 		return false;
     });
 	
-	$('#nrispbif','#frmParrec').unbind('keypress').bind('keypress', function (e) {
-		if ( e.keyCode == 9 || e.keyCode == 13 ) {	
+	$('#nrispbif','#frmParrec').unbind('keyup').bind('keyup', function (e) {
+		if (e.keyCode == 13 ) {	
 			bo			= 'BANCOS';
 			procedure	= 'PESQUISABANCO';
 			titulo      = 'Institui&ccedil;&atilde;o Financeira';
@@ -215,9 +219,9 @@ function controlaPesquisa(){
 			$("#divCabecalhoPesquisa").css("width","600px");
 			$("#divResultadoPesquisa").css("width","600px");
 			$("#divCabecalhoPesquisa > table > thead > tr").append('<td style="width:2%;">&nbsp;</td>');		
+			$('#nmresbccPesquisa', '#formPesquisa').attr('maxlength','20');									
 			$('#divPesquisa').centralizaRotinaH();
 			$("#nrispbifPesquisa").val('');
-			$('#nmresbccPesquisa', '#formPesquisa').attr('maxlength','20');									
 			return false;			
 		}
 	});
@@ -243,6 +247,10 @@ function controlaPesquisa(){
 	
 	$('#btLupaAge','#frmParrec').css('cursor', 'pointer').unbind('click').bind('click', function () {
 		if ($('#cdageban','#frmParrec').hasClass('campoTelaSemBorda')) { return false; }	
+		if ($('#cdbccxlt','#frmParrec').val() == '') {
+			showError('error','Informe o banco','Alerta - Ayllos', 'unblockBackground()');			
+			return false;
+		}		
 		bo			= 'b1wgen0059.p';
 		procedure	= 'busca_agencia';
 		titulo      = 'Agência';
@@ -261,7 +269,7 @@ function controlaPesquisa(){
 		// Agencia
 	$('#cdageban','#frmParrec').unbind('change').bind('change', function() {	
 		if ($('#cdbccxlt','#frmParrec').val() == '') {
-			showError('error','Informe o banco','Alerta - Ayllos', 'bloqueiaFundo(divRotina)');			
+			showError('error','Informe o banco','Alerta - Ayllos', 'unblockBackground()');			
 			return false;
 		}		
 		bo			= 'b1wgen0059.p';
@@ -290,7 +298,7 @@ function retornoPesquisaISPB(){
 		cNmresbcc.val('');
 	}
 	// Focar no próximo campo do form
-	$('#cdageban', '#frmParrec').focus();
+	$('#cdageban', '#frmParrec').focus();	
 
 }
 
@@ -631,6 +639,10 @@ function alteraParamCecred(){
 		blockBackground(parseInt($('#divRotina').css('z-index')));
 		showError("error","Informe o nome.","Alerta - Ayllos","hideMsgAguardo(); $('#dsdonome', '#frmParrec').focus();");
 		return false;
+	}
+	
+	if (cdageban == '' || cdageban == 'undefined'){
+		cdageban = 0;
 	}
 	
 	// Executa script de bloqueio através de ajax

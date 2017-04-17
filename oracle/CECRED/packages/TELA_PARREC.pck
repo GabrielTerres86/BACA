@@ -588,7 +588,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARREC AS
 								 || '<cdbccxlt>' || vr_cdbccxlt || '</cdbccxlt>'
 								 || '<nmresbcc>' || vr_nmresbcc || '</nmresbcc>'
 								 || '<cdageban>' || trim(vr_cdageban) || '</cdageban>'
-								 || '<nmageban>' || vr_nmageban || '</nmageban>'
+								 || '<nmageban>' || NVL(vr_nmageban,'NAO INFORMADO') || '</nmageban>'
 								 || '<nrdconta>' || vr_nrdconta || '</nrdconta>'
 								 || '<nrdocnpj>' || vr_nrdocnpj || '</nrdocnpj>'
 								 || '<dsdonome>' || vr_dsdonome || '</dsdonome>'
