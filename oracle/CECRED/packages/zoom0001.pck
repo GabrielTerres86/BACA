@@ -3843,6 +3843,148 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
       pr_dscritic:= 'Erro na pc_busca_finalidades_empr_car --> '|| SQLERRM;
       
   END pc_busca_finalidades_empr_car; 
+
+  PROCEDURE pc_busca_operacao_conta(pr_cdoperacao IN tbcc_operacao.cdoperacao%TYPE --> Codigo da operacao
+                                   ,pr_dsoperacao IN tbcc_operacao.dsoperacao%TYPE --> Descricao da operacao
+                                   ,pr_nrregist   IN INTEGER                       --> Quantidade de registros                            
+                                   ,pr_nriniseq   IN INTEGER                       --> Qunatidade inicial
+                                   ,pr_xmllog     IN VARCHAR2                      --> XML com informacoes de LOG
+                                   ,pr_cdcritic  OUT PLS_INTEGER                   --> Codigo da critica
+                                   ,pr_dscritic  OUT VARCHAR2                      --> Descricao da critica
+                                   ,pr_retxml    IN OUT NOCOPY XMLType             --> Arquivo de retorno do XML
+                                   ,pr_nmdcampo  OUT VARCHAR2                      --> Nome do Campo
+                            	     ,pr_des_erro  OUT VARCHAR2) IS                  --> Saida OK/NOK
+                                  
+  /*---------------------------------------------------------------------------------------------------------------
+    
+    Programa : pc_busca_operacao_conta              Antiga: 
+    Sistema  : Conta-Corrente - Cooperativa de Credito
+    Sigla    : CRED
+    Autor    : Jaison Fernando
+    Data     : Fevereiro/2017                       Ultima atualizacao:
+    
+    Dados referentes ao programa:
+    
+    Frequencia : -----
+    Objetivo   : Pesquisa Operacoes de Conta Corrente.
+    
+    Alteracoes : 
+    -------------------------------------------------------------------------------------------------------------*/                                    
+    CURSOR cr_operacao(pr_cdoperacao IN tbcc_operacao.cdoperacao%TYPE
+                      ,pr_dsoperacao IN tbcc_operacao.dsoperacao%TYPE) IS
+      SELECT ope.cdoperacao
+            ,upper(ope.dsoperacao) dsoperacao
+        FROM tbcc_operacao ope
+       WHERE ope.cdoperacao = DECODE(pr_cdoperacao, 0, ope.cdoperacao, pr_cdoperacao)
+         AND(TRIM(pr_dsoperacao) IS NULL
+          OR upper(ope.dsoperacao) LIKE '%' || upper(pr_dsoperacao) || '%');
+
+    -- Variaveis de Criticas
+    vr_cdcritic INTEGER;
+    vr_dscritic VARCHAR2(4000);
+
+    -- Variaveis Locais
+    vr_qtregist INTEGER := 0;
+    vr_clob     CLOB;
+    vr_xml_temp VARCHAR2(32726) := '';
+
+    -- Variaveis de Excecoes
+    vr_exc_erro  EXCEPTION;
+
+    vr_nrregist INTEGER := pr_nrregist;
+
+  BEGIN
+    -- Inicializar Variaveis
+    vr_cdcritic := 0;
+    vr_dscritic := NULL;
+
+    -- Monta documento XML de ERRO
+    dbms_lob.createtemporary(vr_clob, TRUE);
+    dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
+
+    -- Criar cabeçalho do XML
+    gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                           ,pr_texto_completo => vr_xml_temp
+                           ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><Root><operacoes>');
+
+    FOR rw_operacao IN cr_operacao(pr_cdoperacao => nvl(pr_cdoperacao,0)
+                                  ,pr_dsoperacao => pr_dsoperacao) LOOP
+
+      vr_qtregist := nvl(vr_qtregist,0) + 1;
+
+      -- controles da paginacao
+      IF (vr_qtregist < pr_nriniseq) OR
+         (vr_qtregist > (pr_nriniseq + pr_nrregist)) THEN
+         -- Proximo
+          CONTINUE;
+      END IF;
+
+      -- Numero Registros
+      IF vr_nrregist > 0 THEN
+
+        -- Carrega os dados
+        gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                               ,pr_texto_completo => vr_xml_temp
+                               ,pr_texto_novo     => '<operacao>'||
+                                                     '  <cdoperacao>' || rw_operacao.cdoperacao ||'</cdoperacao>'||
+                                                     '  <dsoperacao>' || rw_operacao.dsoperacao ||'</dsoperacao>'||
+                                                     '</operacao>');
+       END IF;
+
+       -- Diminuir registros
+       vr_nrregist:= nvl(vr_nrregist,0) - 1;
+
+    END LOOP;
+
+    -- Encerrar a tag raiz
+    gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                           ,pr_texto_completo => vr_xml_temp
+                           ,pr_texto_novo     => '</operacoes></Root>'
+                           ,pr_fecha_xml      => TRUE);
+
+    -- Atualiza o XML de retorno
+    pr_retxml := xmltype(vr_clob);
+
+    -- Insere atributo na tag banco com a quantidade de registros
+    gene0007.pc_gera_atributo(pr_xml   => pr_retxml           --> XML que ira receber o novo atributo
+                             ,pr_tag   => 'operacoes'         --> Nome da TAG XML
+                             ,pr_atrib => 'qtregist'          --> Nome do atributo
+                             ,pr_atval => vr_qtregist         --> Valor do atributo
+                             ,pr_numva => 0                   --> Numero da localizacao da TAG na arvore XML
+                             ,pr_des_erro => vr_dscritic);    --> Descricao de erros
+
+    -- Libera a memoria do CLOB
+    dbms_lob.close(vr_clob);
+
+    -- Se ocorreu erro
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+
+    -- Retorno
+    pr_des_erro:= 'OK';
+
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      pr_des_erro:= 'NOK';
+
+      pr_cdcritic:= vr_cdcritic;
+      pr_dscritic:= vr_dscritic;
+
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
+    WHEN OTHERS THEN
+      pr_des_erro:= 'NOK';
+
+      pr_cdcritic:= 0;
+      pr_dscritic:= 'Erro na pc_busca_operacao_conta --> '|| SQLERRM;
+
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
+
+  END pc_busca_operacao_conta;
   
   PROCEDURE pc_busca_gncdnto(pr_cdnatocp IN gncdnto.cdnatocp%TYPE -- Código da natureza
                             ,pr_rsnatocp IN gncdnto.rsnatocp%TYPE -- Descrição da natureza
