@@ -36,7 +36,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0153.p
     Autor   : Tiago Machado/Daniel Zimmermann
-    Data    : Fevereiro/2013                Ultima Atualizacao: 07/07/2016    
+    Data    : Fevereiro/2013                Ultima Atualizacao: 17/04/2017
     Dados referentes ao programa:
    
     Objetivo  : BO referente ao projeto tarifas
@@ -131,16 +131,17 @@
 
                16/02/2016 - Migraçao das rotinas da CADCAT para Oracle. (Dionathan)
 
-                01/03/2016 - Incluido log de monitoramento de lote em uso para TED.
-                             Odirlei-AMcom
+               01/03/2016 - Incluido log de monitoramento de lote em uso para TED.
+                            Odirlei-AMcom
 
-				08/03/2016 - Inclusao da procedure consulta-pacotes-tarifas,
-                             Prj. 218 - Pacotes de Tarifas (Jean Michel).
+				       08/03/2016 - Inclusao da procedure consulta-pacotes-tarifas,
+                            Prj. 218 - Pacotes de Tarifas (Jean Michel).
 				
-				14/04/2016 - Alterada procedure buscar-cadtar para buscar também
-							 o campo flutlpct. Prj. 218 - Pacotes de Tarifas (Lombardi).
+				       14/04/2016 - Alterada procedure buscar-cadtar para buscar também
+							              o campo flutlpct. Prj. 218 - Pacotes de Tarifas (Lombardi).
 							        
-                           
+               17/04/2017 - Alterar for each com last-off por find last na busca-novo-cdfvlcop
+                            (Lucas Ranghetti #633002)
               
 
 ............................................................................*/
@@ -6088,12 +6089,10 @@ PROCEDURE busca-novo-cdfvlcop:
 
     ASSIGN par_cdfvlcop = 1.
 
-    FOR EACH crapfco NO-LOCK BREAK BY crapfco.cdfvlcop:
+    FIND LAST crapfco NO-LOCK NO-ERROR NO-WAIT.
 
-        IF  LAST-OF(crapfco.cdfvlcop) THEN
-            par_cdfvlcop = crapfco.cdfvlcop + 1.
-            
-    END.
+    IF  AVAILABLE crapfco THEN
+        ASSIGN par_cdfvlcop = crapfco.cdfvlcop + 1.
 
 END PROCEDURE.
 
