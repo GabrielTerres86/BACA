@@ -4,7 +4,7 @@
    Sistema : MITRA - GERACAO DE ARQUIVO
    Sigla   : CRED
    Autor   : Lucas Reinert
-   Data    : JULHO/2013                      Ultima atualizacao: 05/05/2015
+   Data    : JULHO/2013                      Ultima atualizacao: 17/04/2017
    
    Dados referentes ao programa:
 
@@ -34,6 +34,9 @@
                             do arquivo. Conforme solicitado pela Jessica, nao
                             devem aparecer contratos liquidados.
                             Chamado 415453 (Heitor - RKAM)
+
+			   17/04/2017 - Adequacao da rotina para uma nova linha de
+							credito. Chamado 595673 (Andrey - MOUTS)
  .......................................................................... */
 
 CREATE WIDGET-POOL.
@@ -988,6 +991,9 @@ PROCEDURE carrega_dados:
         ELSE IF crapepr.cdlcremp = 5 THEN
            ASSIGN aux_dsidendi = "REPASSE BNDES"
                   aux_dsnomeli = "BNDES - PROCAPCRED_TJLP - RF".
+		ELSE IF crapepr.cdlcremp = 6 THEN
+           ASSIGN aux_dsidendi = "REPASSE CAIXA"
+                  aux_dsnomeli = "BNDES_PRE_360 - RF".
         ELSE 
            ASSIGN aux_dsidendi = " "
                   aux_dsnomeli = "NAO CADASTRADA".
@@ -998,6 +1004,8 @@ PROCEDURE carrega_dados:
           aux_dstratam = "Correção CDI - Diária_d.c./360 % Cmp_1".
        ELSE IF crapepr.cdlcremp = 4 THEN
           aux_dstratam = "Correção CDI - Diária_d.c./360 % Cmp_1".
+	   ELSE IF crapepr.cdlcremp = 6 THEN
+          aux_dstratam = "Prefixado_d.c./360 % Cmp_0".
        ELSE
           aux_dstratam = "".
       
@@ -1017,9 +1025,11 @@ PROCEDURE carrega_dados:
                   tt-dados-mitra.quantidade = "1"
                   tt-dados-mitra.pu = STRING(crapepr.vlemprst)
                   tt-dados-mitra.taxa = IF crapepr.cdlcremp = 1 OR crapepr.cdlcremp = 2 THEN
-                                          STRING(crawepr.percetop)
+                                           STRING(crawepr.percetop)
+                                        ELSE IF crapepr.cdlcremp = 6 THEN
+                                             "8,73"
                                         ELSE
-                                           " "
+											 " "
                   tt-dados-mitra.contraparte = STRING(aux_nmconpar)
                   tt-dados-mitra.tipo_marcacao = "C"
                   tt-dados-mitra.codigo = STRING(crapass.nrmatric) + "_"
@@ -1063,15 +1073,22 @@ PROCEDURE carrega_dados:
                   tt-dados-mitra.valor = STRING(crapepr.vlemprst)
                   tt-dados-mitra.taxa = IF crapepr.cdlcremp = 5 THEN
                                            "0,1"
-                                       ELSE
-                                            " "
-                  tt-dados-mitra.porc_index = "100"
+                                        ELSE IF crapepr.cdlcremp = 6 THEN
+                                             "8,73"
+                                        ELSE
+                                             " "
+                  tt-dados-mitra.porc_index = IF crapepr.cdlcremp = 6 THEN
+                                                 " "
+                                              ELSE
+                                                 "100"
                   tt-dados-mitra.contraparte =  STRING(aux_nmconpar)
                   tt-dados-mitra.contrato = tt-dados-mitra.identificacao
                   tt-dados-mitra.parcela = STRING(aux_contador)
                   tt-dados-mitra.amortizacao = IF (aux_contador <= aux_qtcarenc) THEN
                                                   "0"
-                                               ELSE
+											   ELSE IF crapepr.cdlcremp = 6 THEN
+                                                  STRING(ROUND(aux_vlamorti, 9))
+											   ELSE
                                                  STRING(aux_vlamorti)
                   tt-dados-mitra.tratamento = aux_dstratam
                   tt-dados-mitra.estrategia_1 = aux_dsidendi
