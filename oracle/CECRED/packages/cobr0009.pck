@@ -631,14 +631,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0009 is
 	  Sistema  : Conta-Corrente - Cooperativa de Credito
 	  Sigla    : CRED
 	  Autor    : Kelvin Souza Ott 
-	  Data     : Outubro/2016.                   Ultima atualizacao: --/--/----
+	  Data     : Outubro/2016.                   Ultima atualizacao: 07/04/2017
 	
 	  Dados referentes ao programa:
 	
 	  Frequencia: Sempre que for chamado
 	  Objetivo  : Procedure para inserir emai-l do pagador
 	
-	  Alteração :
+	  Alteração : 07/04/2017 - Remover os caracteres especiais e os espaços em 
+                               branco do e-mail (Douglas - Chamado 638939)
 	
 	...........................................................................*/    
   PROCEDURE pc_grava_email_pagador(pr_cdcooper  IN  tbcobran_email_pagador.cdcooper%TYPE
@@ -668,19 +669,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0009 is
     vr_dscritic  VARCHAR2(1000);
     vr_exc_saida EXCEPTION;
     
+    -- Email
+    vr_dsdemail tbcobran_email_pagador.dsdemail%TYPE;
+    
   BEGIN
+    
+    vr_dsdemail := pr_dsdemail;
+    -- Remover os caracteres acentuados
+    vr_dsdemail := GENE0007.fn_caract_acento(pr_texto    => vr_dsdemail
+                                            ,pr_insubsti => 1
+                                            ,pr_dssubsin => '#$&%¹²³ªº°*!?<>/\|'
+                                            ,pr_dssubout => '                  ');
+    -- Remover os espaços em branco
+    vr_dsdemail := REPLACE (vr_dsdemail, ' ', NULL);
 
     OPEN cr_tbcobran_email_pagador(pr_cdcooper
                                   ,pr_nrdconta
                                   ,pr_nrinssac
-                                  ,pr_dsdemail);
+                                  ,vr_dsdemail);
       FETCH cr_tbcobran_email_pagador 
        INTO rw_tbcobran_email_pagador;     
     
     --Verifica se o e-mail já existe
     IF cr_tbcobran_email_pagador%NOTFOUND THEN
       BEGIN
-        IF gene0003.fn_valida_email(pr_dsdemail => pr_dsdemail) = 1 THEN
+        IF gene0003.fn_valida_email(pr_dsdemail => vr_dsdemail) = 1 THEN
           --Se não existe insere
           INSERT INTO tbcobran_email_pagador
             (cdcooper
@@ -755,6 +768,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0009 is
     vr_dscritic  VARCHAR2(1000);    
     vr_exc_saida EXCEPTION;
     
+    -- Email
+    vr_dsdemail tbcobran_email_pagador.dsdemail%TYPE;
+    
   BEGIN
     BEGIN
       --Se passou algum email
@@ -765,10 +781,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0009 is
          WHERE pag.cdcooper = pr_cdcooper
            AND pag.nrdconta = pr_nrdconta
            AND pag.nrinssac = pr_nrinssac;
+        
         --Percorre os e-mails passados por ele  
         FOR rw_dsdemail IN cr_dsdemail(pr_dsdemail) LOOP          
           
-	        IF gene0003.fn_valida_email(pr_dsdemail => rw_dsdemail.dsdemail) = 1 THEN
+          vr_dsdemail := rw_dsdemail.dsdemail;
+          -- Remover os caracteres acentuados
+          vr_dsdemail := GENE0007.fn_caract_acento(pr_texto    => vr_dsdemail
+                                                  ,pr_insubsti => 1
+                                                  ,pr_dssubsin => '#$&%¹²³ªº°*!?<>/\|'
+                                                  ,pr_dssubout => '                  ');
+          -- Remover os espaços em branco
+          vr_dsdemail := REPLACE (vr_dsdemail, ' ', NULL);    
+        
+          IF gene0003.fn_valida_email(pr_dsdemail => vr_dsdemail) = 1 THEN
           
             --Insere cada e-mail passado separados por ponto e virgula
             INSERT INTO tbcobran_email_pagador
@@ -786,7 +812,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0009 is
                  WHERE pag.cdcooper = pr_cdcooper
                    AND pag.nrdconta = pr_nrdconta
                    AND pag.nrinssac = pr_nrinssac) 
-              ,rw_dsdemail.dsdemail);  
+              ,vr_dsdemail);  
           END IF;
         END LOOP;
         
