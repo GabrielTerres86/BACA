@@ -359,6 +359,7 @@ function PopupPacote() {
         $("#divRotina").css("left", "453px");
         $("#qtdsms").setMask('INTEGER', 'zzzzzzzz', '', '');
         $("#perdesconto").addClass('moeda');
+        $("#perdesconto").setMask('INTEGER', 'zzzzzzzz', '', '');
         //$("#perdesconto").setMask('DECIMAL', 'zzz.zzz.zzz.zz9,99', ',', '');
 
     }
@@ -453,7 +454,35 @@ function PopupPacote() {
         return $("#flgstatus");
     }
 
+    this.isValid = function() {
+
+        var obj = new Object();
+        obj.isValid = true;
+        obj.Message = "";
+
+        if(popup.getPercentualDesconto() == '') {
+            obj.Message = "Campo Percentual de Desconto deve ser informado.";
+            obj.isValid = false;
+            return obj;
+        }
+
+        if(popup.getQuantidadeSMS() == '') {
+            obj.Message = "Campo Quantidade de SMSs deve ser informado.";
+            obj.isValid = false;
+            return obj;
+        }
+        return obj;
+
+    }
+
     PopupPacote.onClick_Alterar = function() {
+
+        var validator = popup.isValid();
+
+        if(!validator.isValid) {
+            showError("error", validator.Message, "Alerta - Ayllos", "");
+            return;
+        }
 
         $.ajax({
             type: "POST",
@@ -545,7 +574,8 @@ function FormularioPacote() {
         $("#vlpacote").setMask('DECIMAL','zzz.zzz.zzz.zz9,99',',','');
         $("#vlsmsad").setMask('DECIMAL','zzz.zzz.zzz.zz9,99',',','');
         $("#vlsms").setMask('DECIMAL','zzz.zzz.zzz.zz9,99',',','');
-        $("#perdesconto").addClass('moeda');
+        //$("#perdesconto").addClass('moeda');
+        $("#perdesconto").setMask('INTEGER', 'zzzzzzzz', '', '');
         $("#qtdsms").setMask('INTEGER', 'zzzzzzzz', '', '');
         $("#cdtarifa").setMask('INTEGER', 'zzzzzzzz', '', '');
     }
@@ -554,6 +584,23 @@ function FormularioPacote() {
         this.exibir();
         formatarCamposNumericos();
         configurarIdPacote();
+        configurarEventos();
+   }
+
+   var configurarEventos = function() {
+
+       $("#frmOpcaoI #cdtarifa").unbind('blur').bind('blur', function() {
+           FormularioPacote.calcularTarifa();
+           FormularioPacote.configurarTipoPessoa();
+       });
+
+       $("#frmOpcaoI #perdesconto").unbind('blur').bind('blur', function() {
+           FormularioPacote.calcularTarifa();
+       });
+
+       $("#frmOpcaoI #qtdsms").unbind('blur').bind('blur', function() {
+           FormularioPacote.calcularTarifa();
+       });
    }
 
    var getFormulario = function() {
@@ -564,9 +611,41 @@ function FormularioPacote() {
        $("#frmOpcaoI #idpacote").val(id);
    }
 
+   this.isValid = function(pacote) {
+
+       var obj = new Object();
+       obj.isValid = true;
+       obj.Message = "";
+
+       if(pacote.dspacote == '') {
+           obj.Message = "Campo Descri&ccedil;&atilde;o do Pacote deve ser informado.";
+           obj.isValid = false;
+           return obj;
+       }
+
+       if(pacote.cdtarifa == '') {
+           obj.Message = "Campo C&oacute;digo da tarifa deve ser informado.";
+           obj.isValid = false;
+           return obj;
+       }
+
+       if(pacote.qtdsms == '') {
+           obj.Message = "Campo Quantidade de SMSs deve ser informado.";
+           obj.isValid = false;
+           return obj;
+       }
+       return obj;
+   }
+
    FormularioPacote.onClick_Prosseguir = function() {
 
         var pacote = formulario.toDictionary();
+        var validator = formulario.isValid(pacote);
+
+        if(!validator.isValid) {
+            showError("error",validator.Message, "Alerta - Ayllos", "$('#cddopcao','#frmCab').focus()");
+            return;
+        }
 
         $.ajax({
             type: "POST",
@@ -574,12 +653,12 @@ function FormularioPacote() {
             url: UrlSite + "telas/cadsms/inserir_pacote.php",
             data: {
                 cdcooper: cabecalho.getCooperativaSelecionada(),
-                idpacote: $("#idpacote").val(), //como está desabilitado na tela, não serializa
+                idpacote: $("#frmOpcaoI #idpacote").val(), //como está desabilitado na tela, não serializa
                 dspacote: pacote.dspacote,
                 flgstatus: pacote.flgstatus,
                 cdtarifa: pacote.cdtarifa,
                 perdesconto: pacote.perdesconto,
-                inpessoa: $("#inpessoa").val(), //como está desabilitado na tela, não serializa
+                inpessoa: $("#frmOpcaoI #inpessoa").val(), //como está desabilitado na tela, não serializa
                 qtdsms: pacote.qtdsms,
                 redirect: "script_ajax"
             },

@@ -48,7 +48,7 @@ $registros = $xmlObj->roottag->tags;
 <style>
     .labelFormPacote {
         width:150px;
-    } 
+    }
 
 	.registroinput {
 		width: 115px;
@@ -58,7 +58,7 @@ $registros = $xmlObj->roottag->tags;
 
     <!-- Grid -->
         <div id="divPacotes">
-            <div class="divRegistros">	
+            <div class="divRegistros">
                 <table>
                     <thead>
                         <tr>
@@ -79,7 +79,7 @@ $registros = $xmlObj->roottag->tags;
                                     <?php echo getByTagName($r->tags, 'idpacote') ?>
                                 </td>
                                 <td>
-                                    <?php echo getByTagName($r->tags, 'dspacote') ?>
+                                    <?php echo utf8ToHtml(getByTagName($r->tags, 'dspacote')) ?>
                                 </td>
                                 <td>
                                     <?php echo getByTagName($r->tags, 'qtdsms') ?>
@@ -88,22 +88,22 @@ $registros = $xmlObj->roottag->tags;
                                     <?php echo getByTagName($r->tags, 'vlpacote') ?>
                                 </td>
                             </tr>
-                        <?php } ?>	
+                        <?php } ?>
                     </tbody>
                 </table>
-            </div>	
+            </div>
         </div>
 
         <div id="divPesquisaRodape" class="divPesquisaRodape">
-            <table>	
+            <table>
                 <tr>
                     <td>
-                        <?			
+                        <?
                             if (isset($qtregist) and $qtregist == 0) $pagina = 0;
-                            
+
                             // Se a paginação não está na primeira, exibe botão voltar
-                            if ($pagina > 1) { 
-                                ?> <a class='paginacaoAnt'><<< Anterior</a> <? 
+                            if ($pagina > 1) {
+                                ?> <a class='paginacaoAnt'><<< Anterior</a> <?
                             } else {
                                 ?> &nbsp; <?
                             }
@@ -111,10 +111,10 @@ $registros = $xmlObj->roottag->tags;
                     </td>
                     <td>
                         <?
-                            if (isset($pagina) && $pagina > 0 && $qtregist > 0) { 
-                                ?> Exibindo <? 
-                                    echo ($pagina * $tamanho_pagina) - ($tamanho_pagina - 1); ?> 
-                                    at&eacute; <? 
+                            if (isset($pagina) && $pagina > 0 && $qtregist > 0) {
+                                ?> Exibindo <?
+                                    echo ($pagina * $tamanho_pagina) - ($tamanho_pagina - 1); ?>
+                                    at&eacute; <?
 
                                     if($pagina == 1) {
                                         if ($qtregist > $tamanho_pagina) {
@@ -122,11 +122,11 @@ $registros = $xmlObj->roottag->tags;
                                         } else {
                                             echo $qtregist;
                                         }
-                                    } else if (($pagina * $tamanho_pagina) > $qtregist) { 
-                                        echo $qtregist; 
-                                    } else { 
-                                        echo (($pagina * $tamanho_pagina) - ($tamanho_pagina) + $tamanho_pagina); 
-                                    } ?> 
+                                    } else if (($pagina * $tamanho_pagina) > $qtregist) {
+                                        echo $qtregist;
+                                    } else {
+                                        echo (($pagina * $tamanho_pagina) - ($tamanho_pagina) + $tamanho_pagina);
+                                    } ?>
                                     de <? echo $qtregist; ?>
                         <?
                             }
@@ -140,7 +140,7 @@ $registros = $xmlObj->roottag->tags;
                             } else {
                                 ?> &nbsp; <?
                             }
-                        ?>			
+                        ?>
                     </td>
                 </tr>
             </table>
@@ -159,8 +159,8 @@ $registros = $xmlObj->roottag->tags;
 	});
 	$('a.paginacaoProx').unbind('click').bind('click', function() {
 		Grid.carregar(<? echo "'".($pagina + 1)."'"; ?>);
-	});	
+	});
 
 	$('#divPesquisaRodape').formataRodapePesquisa();
 
-</script> 
+</script>

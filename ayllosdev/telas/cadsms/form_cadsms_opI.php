@@ -33,22 +33,22 @@
     <br style="clear:both" />
 
     <label for="dspacote" class="labelNomeParametro"><? echo utf8ToHtml('Descrição do Pacote:') ?></label>
-	<input name="dspacote" id="dspacote" style='width:300px' maxlength="300" type="text" style="margin-right: 5px" />
+	<input name="dspacote" id="dspacote" style='width:300px' maxlength="30" type="text" style="margin-right: 5px" />
 
     <br style="clear:both" />
 
     <label for="cdtarifa" class="labelNomeParametro"><? echo utf8ToHtml('Código do Tarifa:') ?></label>
-	<input name="cdtarifa" id="cdtarifa" class="registroinput" type="text" style="margin-right: 5px" onchange="FormularioPacote.calcularTarifa(); FormularioPacote.configurarTipoPessoa();" />
+	<input name="cdtarifa" id="cdtarifa" class="registroinput" type="text" style="margin-right: 5px" />
 
     <br style="clear:both" />
 
     <label for="perdesconto" class="labelNomeParametro"><? echo utf8ToHtml('% de Desconto:') ?></label>
-	<input name="perdesconto" id="perdesconto" class="registroinput" type="text"  style="margin-right: 5px" onchange="FormularioPacote.calcularTarifa();" />
+	<input name="perdesconto" id="perdesconto" class="registroinput" type="text"  style="margin-right: 5px" />
 
     <br style="clear:both" />
 
     <label for="qtdsms" class="labelNomeParametro"><? echo utf8ToHtml('Quantidade de SMSs:') ?></label>
-	<input name="qtdsms" id="qtdsms" class="registroinput" type="text" style="margin-right: 5px" onchange="FormularioPacote.calcularTarifa();"; />
+	<input name="qtdsms" id="qtdsms" class="registroinput" type="text" style="margin-right: 5px" />
 
     <br style="clear:both" />
 
