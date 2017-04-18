@@ -192,6 +192,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
 
          16/01/2017 - Prj 432 - Melhorias envio Cyber - Alterações diversas referente projeto 432. (Jean - Mout´S)   
 
+               04/04/2017 - Alterado a forma de como o programa acumula as datas iniciais
+                            para que ele possa ser chamado por JOB fora do processo
+                            noturno (Tiago/Rodrigo SD588601).
 
 
 
@@ -623,6 +626,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
        vr_rsdocupa        VARCHAR2(1000);
        vr_flgaval1        BOOLEAN;
        vr_flgaval2        BOOLEAN;
+       vr_dtatual         DATE;
        vr_dtmvtolt        VARCHAR2(10);
        vr_dtmvtopr        VARCHAR2(10);
        vr_dtmvtlt2        VARCHAR2(10);
@@ -3153,7 +3157,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                                       ,pr_nrdconta => pr_nrdconta         --Numero da Conta
                                       ,pr_idseqttl => 1                   --Sequencial Titular
                                       ,pr_flgerlog => FALSE               --Erro no Log
-                                      ,pr_dtmvtolt => rw_crapdat.dtmvtolt --Data Movimento
+                                      ,pr_dtmvtolt => vr_dtatual --Data Movimento
                                       ,pr_cddopcao => 'C'                 --Codigo opcao
                                       ,pr_nrdctato => 0                   --Numero Contato
                                       ,pr_nrdrowid => vr_nrdrowid         --Rowid Empresa participante
@@ -3360,7 +3364,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
 
            --Buscar Idade
            CADA0001.pc_busca_idade (pr_dtnasctl => vr_tab_crapass(pr_nrdconta).dtnasctl   --Data de Nascimento
-                                   ,pr_dtmvtolt => rw_crapdat.dtmvtolt                    --Data da utilizacao atual
+                                   ,pr_dtmvtolt => vr_dtatual                    --Data da utilizacao atual
                                    ,pr_flcomple => 0                                  --Controle para validar o m?todo de c?lculo de datas
                                    ,pr_nrdeanos => vr_nrdeanos                            --Numero de Anos
                                    ,pr_nrdmeses => vr_nrdmeses                            --Numero de meses
@@ -3386,7 +3390,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                                         ,pr_nrdconta => pr_nrdconta         --Numero da Conta
                                         ,pr_idseqttl => 1                   --Sequencial Titular
                                         ,pr_flgerlog => FALSE               --Erro no Log
-                                        ,pr_dtmvtolt => rw_crapdat.dtmvtolt --Data Movimento
+                                        ,pr_dtmvtolt => vr_dtatual --Data Movimento
                                         ,pr_cddopcao => 'C'                 --Codigo opcao
                                         ,pr_nrdctato => 0                   --Numero Contato
                                         ,pr_nrcpfcto => 0                   --Numero Cpf Contato
@@ -4533,10 +4537,18 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
          RAISE vr_exc_saida;
        END IF;
 
-       --Data Movimento
-       vr_dtmvtolt:= TO_CHAR(rw_crapdat.dtmvtolt,'YYYYMMDD');
-       vr_dtmvtlt2:= TO_CHAR(rw_crapdat.dtmvtolt,'MMDDYYYY');
+
+       IF rw_crapdat.inproces = 1 THEN
+          vr_dtatual := rw_crapdat.dtmvtoan;
+          vr_dtmvtopr:= TO_CHAR(rw_crapdat.dtmvtolt,'YYYYMMDD');
+       ELSE
+          vr_dtatual := rw_crapdat.dtmvtolt;
        vr_dtmvtopr:= TO_CHAR(rw_crapdat.dtmvtopr,'YYYYMMDD');
+       END IF;  
+       
+       --Data Movimento
+       vr_dtmvtolt:= TO_CHAR(vr_dtatual,'YYYYMMDD');
+       vr_dtmvtlt2:= TO_CHAR(vr_dtatual,'MMDDYYYY');       
        vr_tempoatu:= TO_CHAR(SYSDATE,'HH24MISS');
        vr_nrdrowid:= NULL;
 
@@ -4680,7 +4692,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
            END IF;
 
            --Data Movimento Cyber igual atual
-           IF rw_crapcyb.dtmvtolt = rw_crapdat.dtmvtolt THEN
+           IF rw_crapcyb.dtmvtolt = vr_dtatual THEN
              /* gera carga campos obrigatorios */
              pc_gera_campos_obrig (pr_idarquivo => 1 /*str_1*/             --Id do arquivo
                                   ,pr_cdcooper  => rw_crapcyb.cdcooper     --Cooperativa
@@ -4704,7 +4716,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                               ,pr_nrctremp   => rw_crapcyb.nrctremp       --Numero Contrato Emprestimo
                               ,pr_cdorigem   => rw_crapcyb.cdorigem       --Origem
                               ,pr_nrdocnpj   => rw_crapcop.nrdocnpj       --Cpf/cnpj
-                              ,pr_dtmvtolt   => rw_crapdat.dtmvtolt       --Data Movimento
+                              ,pr_dtmvtolt   => vr_dtatual       --Data Movimento
                               ,pr_nmrescop   => rw_crapcop.nmrescop       --Nome Cooperativa
                               ,pr_rw_crapcyb => rw_crapcyb                --Registro Cyber
                               ,pr_flgtemlcr  => vr_tem_craplcr            --Encontrou craplcr
@@ -4768,7 +4780,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                           ,pr_nrctremp   => rw_crapcyb.nrctremp        --Contrato Emprestimo
                           ,pr_cdorigem   => rw_crapcyb.cdorigem        --Origem
                           ,pr_nrdocnpj   => rw_crapcop.nrdocnpj        --Cnpj da Cooperativa
-                          ,pr_dtmvtolt   => rw_crapdat.dtmvtolt        --Data Movimento
+                          ,pr_dtmvtolt   => vr_dtatual        --Data Movimento
                           ,pr_flgtemlcr  => vr_tem_craplcr             --Flag possui craplcr
                           ,pr_rw_craplcr => rw_craplcr                 --Tabela Memoria Representantes
                           ,pr_cdcritic   => vr_cdcritic                --Codigo Erro
@@ -4792,7 +4804,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
            ELSE
 
              --Data Manutencao Cadastro
-             IF rw_crapcyb.dtmancad = rw_crapdat.dtmvtolt THEN
+             IF rw_crapcyb.dtmancad = vr_dtatual THEN
                /* gera carga campos obrigatorios */
                pc_gera_campos_obrig (pr_idarquivo => 2 /*str_2*/           --Id do arquivo
                                     ,pr_cdcooper  => rw_crapcyb.cdcooper   --Cooperativa
@@ -4841,7 +4853,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
 
              END IF;
              --Data Manutencao Avalista igual movimento atual
-             IF rw_crapcyb.dtmanavl = rw_crapdat.dtmvtolt THEN
+             IF rw_crapcyb.dtmanavl = vr_dtatual THEN
                --Gera Avalista
                pc_gera_aval (pr_idarquivo  => 5                        --Id do arquivo
                             ,pr_opccarga   => 'R'  /* Relations */     --Tipo de Carga
@@ -4850,7 +4862,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                             ,pr_nrctremp   => rw_crapcyb.nrctremp      --Contrato Emprestimo
                             ,pr_cdorigem   => rw_crapcyb.cdorigem      --Origem
                             ,pr_nrdocnpj   => rw_crapcop.nrdocnpj      --Cnpj da Cooperativa
-                            ,pr_dtmvtolt   => rw_crapdat.dtmvtolt      --Data Movimento
+                            ,pr_dtmvtolt   => vr_dtatual      --Data Movimento
                             ,pr_rw_craplcr => rw_craplcr               --Tabela Memoria Representantes
                             ,pr_flgtemlcr  => vr_tem_craplcr           --Flag possui craplcr
                             ,pr_cdcritic   => vr_cdcritic              --Codigo Erro
@@ -4861,7 +4873,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                END IF;
              END IF;
              --Data Manutencao Garantia igual movimento atual
-             IF rw_crapcyb.dtmangar = rw_crapdat.dtmvtolt THEN
+             IF rw_crapcyb.dtmangar = vr_dtatual THEN
                pc_gera_carga_garantias (pr_cdcooper   => rw_crapcyb.cdcooper     --Cooperativa
                                        ,pr_nrdconta   => rw_crapcyb.nrdconta     --Numero Conta
                                        ,pr_nrctremp   => rw_crapcyb.nrctremp     --Contrato Emprestimo
@@ -4880,7 +4892,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                FOR rw_valor_pago_emprestimo IN cr_valor_pago_emprestimo(pr_cdcooper => rw_crapcyb.cdcooper       -- Cooperativa
                                                                        ,pr_nrdconta => rw_crapcyb.nrdconta       -- Numero Conta
                                                                        ,pr_nrctremp => rw_crapcyb.nrctremp       -- Contrato Emprestimo
-                                                                       ,pr_dtmvtolt => rw_crapdat.dtmvtolt) LOOP -- Data Movimento
+                                                                       ,pr_dtmvtolt => vr_dtatual) LOOP -- Data Movimento
                 
                  -- Melhoria 432 - verifica se é refinanciamento - Jean / Mout´S
                  vr_cdtrscyb := NULL;
@@ -4913,9 +4925,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                END LOOP;
                -- Precisamos gerar arquivo de pagamento e baixa para os registros que nao fizeram
                -- atualizacao financeira no crps280.i (Foram liquidados)
-               IF rw_crapcyb.dtmvtolt < rw_crapdat.dtmvtolt AND
+               IF rw_crapcyb.dtmvtolt < vr_dtatual AND
                   rw_crapcyb.flgpreju = 0 AND
-                  rw_crapcyb.dtatufin < rw_crapdat.dtmvtolt THEN
+                  rw_crapcyb.dtatufin < vr_dtatual THEN
 
                   -- 16/01/2017 - PRJ 432 - Só pode gerar baixas para o Cyber se os flags cobranca judicial,
                   --              cobranca extra-judicial e vip estiverem como Não e existir atrasos. (Jean Calao / Mout'S) 
@@ -4925,7 +4937,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
 
                       --Gerar carga de Baixa
                       pc_gera_carga_baixa (pr_rw_crapcyb => rw_crapcyb             --Registro Cyber
-                                          ,pr_dtmvtolt   => rw_crapdat.dtmvtolt    --Data Movimento
+                                     ,pr_dtmvtolt   => vr_dtatual    --Data Movimento
                                           ,pr_dtmvtlt2   => vr_dtmvtlt2            --Data Movimento formatada
                                           ,pr_cdcritic   => vr_cdcritic            --Codigo Erro
                                           ,pr_dscritic   => vr_dscritic);          --Descricao Erro
@@ -4952,7 +4964,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
 
                          --Gerar carga de Baixa
                          pc_gera_carga_baixa (pr_rw_crapcyb => rw_crapcyb              --Registro Cyber
-                                         ,pr_dtmvtolt   => rw_crapdat.dtmvtolt     --Data Movimento
+                                       ,pr_dtmvtolt   => vr_dtatual     --Data Movimento
                                          ,pr_dtmvtlt2   => vr_dtmvtlt2             --Data Movimento formatada
                                          ,pr_cdcritic   => vr_cdcritic             --Codigo Erro
                                          ,pr_dscritic   => vr_dscritic);           --Descricao Erro
@@ -4968,7 +4980,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
              ELSE
                -- Precisamos gerar arquivo de pagamento e baixa para os registros que nao fizeram atualizacao
                -- financeira no crps280.i (Foram liquidados)
-               IF rw_crapcyb.dtmvtolt < rw_crapdat.dtmvtolt AND rw_crapcyb.dtatufin < rw_crapdat.dtmvtolt THEN
+               IF rw_crapcyb.dtmvtolt < vr_dtatual AND rw_crapcyb.dtatufin < vr_dtatual THEN
                  -- Verifica se houve pagamento
                  IF rw_crapcyb.vlpreapg > 0 THEN
                    
@@ -5015,7 +5027,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
 
                      --Gerar carga de Baixa
                      pc_gera_carga_baixa (pr_rw_crapcyb => rw_crapcyb            --Registro Cyber
-                                             ,pr_dtmvtolt => rw_crapdat.dtmvtolt     --Data Movimento
+                                     ,pr_dtmvtolt => vr_dtatual     --Data Movimento
                                              ,pr_dtmvtlt2 => vr_dtmvtlt2             --Data Movimento formatada
                                              ,pr_cdcritic => vr_cdcritic             --Codigo Erro
                                              ,pr_dscritic => vr_dscritic);           --Descricao Erro
@@ -5032,7 +5044,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                  vr_vllammto:= fn_valor_pago_conta_corrente(pr_cdcooper => rw_crapcyb.cdcooper   --Cooperativa
                                                            ,pr_nrdconta => rw_crapcyb.nrdconta   --Numero Conta
                                                            ,pr_nrctremp => rw_crapcyb.nrctremp   --Contrato Emprestimo
-                                                           ,pr_dtmvtolt => rw_crapdat.dtmvtolt); --Data Movimento
+                                                           ,pr_dtmvtolt => vr_dtatual); --Data Movimento
 
                  --Valor a regularizar anterior menos valor a regularizar menos o valor parametrizado
                  vr_vlrpagto:= Nvl(rw_crapcyb.vlprapga,0) - Nvl(rw_crapcyb.vlpreapg,0) - Nvl(vr_vllammto,0);
@@ -5083,7 +5095,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                    and */nvl(rw_crapcyc1.flgehvip,0) = 0 then
                        --Gerar carga de Baixa
                        pc_gera_carga_baixa (pr_rw_crapcyb => rw_crapcyb             --Registro Cyber
-                                 ,pr_dtmvtolt   => rw_crapdat.dtmvtolt      --Data Movimento
+                                       ,pr_dtmvtolt   => vr_dtatual      --Data Movimento
                                  ,pr_dtmvtlt2   => vr_dtmvtlt2              --Data Movimento Formatada
                                  ,pr_cdcritic   => vr_cdcritic              --Codigo Erro
                                  ,pr_dscritic   => vr_dscritic);            --Descricao Erro
@@ -5122,7 +5134,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                               ,pr_nrctremp   => rw_crapcyb.nrctremp      --Numero Contrato Emprestimo
                               ,pr_cdorigem   => rw_crapcyb.cdorigem      --Origem
                               ,pr_nrdocnpj   => rw_crapcop.nrdocnpj      --Cpf/cnpj
-                              ,pr_dtmvtolt   => rw_crapdat.dtmvtolt      --Data Movimento
+                              ,pr_dtmvtolt   => vr_dtatual      --Data Movimento
                               ,pr_nmrescop   => rw_crapcop.nmrescop      --Nome Cooperativa
                               ,pr_rw_crapcyb => rw_crapcyb               --Registro Cyber
                               ,pr_flgtemlcr  => vr_tem_craplcr           --Flag possui craplcr
@@ -5159,7 +5171,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
          -- Gera carga de pagamentos de acordos
          pc_gera_carga_pagto_acordo (pr_idarquivo => 8 /*str_8*/         --Id do arquivo
                                     ,pr_cdcooper  => rw_crapcop.cdcooper --Cooperativa
-                                    ,pr_dtmvtolt  => rw_crapdat.dtmvtolt --Data de Movimentac         
+                                    ,pr_dtmvtolt  => vr_dtatual --Data de Movimentac         
                                     ,pr_cdcritic  => vr_cdcritic         --Codigo Erro
                                     ,pr_dscritic  => vr_dscritic);       --Descricao erro
 
