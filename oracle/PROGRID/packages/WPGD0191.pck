@@ -26,7 +26,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
   --  Sistema  : PROGRID
   --  Sigla    : WPGD
   --  Autor    : Jonathan Cristiano da Silva - RKAM
-  --  Data     : Setembro/2015.                   Ultima atualizacao: 15/03/2017
+  --  Data     : Setembro/2015.                   Ultima atualizacao: 18/04/2017
   --
   -- Dados referentes ao programa:
   --
@@ -55,8 +55,10 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
   --
   --              15/03/2017 - #551227 Padronização do nome do job e inclusão dos logs de controle de início, erro e fim 
   --                           de execução do programa pc_recebe_cursos_aprovados (Carlos)
+  --
   --              23/03/2017 - Ajustes referente a Melhoria 399 - Simplificar Inscricao no Progrid (Márcio - Mouts)
   --
+  --              18/04/2017 - #551227 Ajuste do nome da var vr_cdprogra para o tipo crapprg.cdprogra (Carlos)
   ---------------------------------------------------------------------------------------------------------------
  -- Rotina para buscar o conteudo do campo com base no xml enviado
  PROCEDURE pc_busca_conteudo_campo(pr_retxml    IN OUT NOCOPY XMLType,    --> XML de retorno da operadora
@@ -345,7 +347,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
       vr_nrctremp            NUMBER;
       vr_nrdctato            NUMBER;          
       
-    vr_cdprogra  CONSTANT crapprg.cdprogra%TYPE := 'pc_recebe_cursos_aprovados';
+    vr_cdprogra  CONSTANT crapprg.cdprogra%TYPE := 'WPGD0191';
     vr_nomdojob  CONSTANT VARCHAR2(50)          := 'jbpgr_rec_cursos_aprovados';
     vr_flgerlog  BOOLEAN := FALSE; 
     
