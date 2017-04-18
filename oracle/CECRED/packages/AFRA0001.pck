@@ -3062,7 +3062,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     --> Online
     IF pr_tptransacao = 1 THEN
       IF pr_inpessoa = 1 THEN
-        vr_cdtipmsg := 17;
+        vr_cdtipmsg := 21;
       ELSE
         vr_cdtipmsg := 18;
       END IF;
