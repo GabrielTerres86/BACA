@@ -1208,6 +1208,7 @@ BEGIN
             --Proximo registro
             CONTINUE;
           END IF;
+		END IF;
 
         --Se retornou dados Buscar primeiro registro
         vr_index_pgto_parcel:= vr_tab_pgto_parcel.FIRST;
