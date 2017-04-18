@@ -6,7 +6,7 @@
  * DATA CRIAÇÃO : 22/03/2016 
  * OBJETIVO     : Rotina para controlar a busca de acionamentos
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 18/04/2017 - Alterações referentes ao projeto 337 - Motor de Crédito. (Reinert)
  * -------------- 
  */
  
@@ -45,7 +45,7 @@ foreach ($registros as $r) {
 		<td><?= getByTagName($r->tags, 'acionamento'); ?></td>
 		<td><?= getByTagName($r->tags, 'nmagenci'); ?></td>
 		<td><?= getByTagName($r->tags, 'cdoperad'); ?></td>
-		<td><?= wordwrap(getByTagName($r->tags, 'operacao'),40, "<br />\n"); ?></td>
+		<td><?if (getByTagName($r->tags, 'dslinklg') == '-'){ echo wordwrap(getByTagName($r->tags, 'operacao'),40, "<br />\n"); }else{ echo '<a href="'.getByTagName($r->tags, 'dslinklg').'" target="_blank" style="font-size: inherit">'.wordwrap(getByTagName($r->tags, 'operacao'),40, "<br />\n").'</a>'; }?></td>
 		<td><?= getByTagName($r->tags, 'dtmvtolt'); ?></td>
 		<td><?= wordwrap(getByTagName($r->tags, 'retorno'),40, "<br />\n"); ?></td>
 	

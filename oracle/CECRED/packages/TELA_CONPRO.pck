@@ -48,7 +48,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CONPRO IS
     -- dtmvtolt'); ?></td>
     retorno VARCHAR2(150),
     nrctrprp NUMBER,
-    dslinklg VARCHAR2(100)
+    dslinklg VARCHAR2(1000)
     );
 
   TYPE typ_reg_crapope IS RECORD(
@@ -157,7 +157,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
   -- Frequencia: -----
   -- Objetivo  : Centralizar rotinas relacionadas a Tela CONPRO
   --
-  -- Alteracoes:
+  -- Alteracoes: 18/04/2017 - Alterações referentes ao projeto 337 - Motor de Crédito. (Reinert)
   --
   ---------------------------------------------------------------------------
 
@@ -1604,8 +1604,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
 							DECODE(A.DSPROTOCOLO
 										,NULL,'-'
 										, Replace(
-												gene0001.fn_param_sistema('CRED',a.cdcooper, 'HOST_WEBSRV_MOTOR_IBRA') ||
-												gene0001.fn_param_sistema('CRED',a.cdcooper, 'URI_WEBSRV_MOTOR_IBRALOG')
+												gene0001.fn_param_sistema('CRED',0, 'HOST_WEBSRV_MOTOR_IBRA') ||
+												gene0001.fn_param_sistema('CRED',0, 'URI_WEBSRV_MOTOR_IBRALOG')
 														 ,'[@@dsprotocolo@@]',a.dsprotocolo)
 										) dslinkmotor
         
