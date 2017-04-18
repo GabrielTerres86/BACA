@@ -329,6 +329,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                12/04/2017 - Cooperado importou o boleto corretamente e imprimiu atraves do software proprio
                             porém na impressão ele utilizou o numero da conta sem o digito verificador e todos 
                             os pagamentos estao sendo rejeitados (Douglas - Chamado 650122)
+
+               12/04/2017 - Ajuste para incluir a diferença entre o valor pago e o valor do boleto atualizado
+                            com multa e juros, no campo de juros pago. Boleto foi pago com valor maior
+                            que o calculado pelo sistema, porem grava apenas a diferença dos valores no campo
+                            de juros pago, dessa forma vai gravar o valor correto de juros pago.
+                            (Douglas - Chamado 635796)
    .............................................................................*/
 
      DECLARE
@@ -5321,10 +5327,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                    END IF;
 
                  ELSIF ROUND(vr_vlliquid,2) > ROUND(vr_vlfatura,2) THEN
-                   /* se o valor foi pago acima, entao colocar o valor excedente em juros */
-                   vr_vlrmulta:= 0;
                    --Juros recebe valor liquidacao menos o valor fatura
-                   vr_vlrjuros:= nvl(vr_vlliquid,0) - nvl(vr_vlfatura,0);
+                   vr_vlrjuros:= nvl(vr_vlrjuros,0) + (nvl(vr_vlliquid,0) - nvl(vr_vlfatura,0));
                  END IF;
                  --Determinar o tipo de liquidacao
                  CASE SUBSTR(vr_setlinha,50,1)
