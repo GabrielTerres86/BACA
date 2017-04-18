@@ -22,6 +22,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_PAREST IS
     cdcooper crapcop.cdcooper%TYPE,
     contigen VARCHAR2(10),
     incomite VARCHAR2(10),
+		nmregmot VARCHAR2(250),
+		qtsstime NUMBER(3),
     nmrescop VARCHAR2(30));
 
   -- Definicao de tabela que compreende os registros acima declarados
@@ -56,6 +58,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_PAREST IS
                                ,pr_flgativo IN crapcop.flgativo%TYPE --> Flag Ativo  
                                ,pr_incomite IN NUMBER
                                ,pr_contigen IN NUMBER
+															 ,pr_nmregmot IN VARCHAR2
+															 ,pr_qtsstime IN NUMBER															 
                                ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
                                ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
                                ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
@@ -298,7 +302,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
                                    pr_tag_nova => 'contigen',
                                    pr_tag_cont => vr_tab_crapcop(vr_ind_crapcop).contigen,
                                    pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                                   pr_tag_pai  => 'inf',
+                                   pr_posicao  => vr_auxconta,
+                                   pr_tag_nova => 'nmregmot',
+                                   pr_tag_cont => vr_tab_crapcop(vr_ind_crapcop).nmregmot,
+                                   pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                                   pr_tag_pai  => 'inf',
+                                   pr_posicao  => vr_auxconta,
+                                   pr_tag_nova => 'qtsstime',
+                                   pr_tag_cont => vr_tab_crapcop(vr_ind_crapcop).qtsstime,
+                                   pr_des_erro => vr_dscritic);
           
+					
             -- Sai do loop se for o último registro ou se chegar no número de registros solicitados
             EXIT WHEN(vr_ind_crapcop = vr_tab_crapcop.LAST);
           
@@ -403,6 +420,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
                       1,
                       'SIM',
                       0,'NAO') comite,
+               GENE0001.fn_param_sistema(pr_nmsistem => 'CRED',
+																				 pr_cdcooper => cop.cdcooper,
+																				 pr_cdacesso => 'REGRA_ANALISE_MOTOR_IBRA') nmregmot,
+               GENE0001.fn_param_sistema(pr_nmsistem => 'CRED',
+																				 pr_cdcooper => cop.cdcooper,
+																				 pr_cdacesso => 'TIME_RESP_MOTOR_IBRA') qtsstime,
                cdcooper,
                nmrescop
         
@@ -430,6 +453,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
         pr_tab_crapcop(vr_ind_crapcop).nmrescop := rw_crapcop.nmrescop;
         pr_tab_crapcop(vr_ind_crapcop).incomite := rw_crapcop.comite;
         pr_tab_crapcop(vr_ind_crapcop).contigen := rw_crapcop.contigencia;
+        pr_tab_crapcop(vr_ind_crapcop).nmregmot := rw_crapcop.nmregmot;
+        pr_tab_crapcop(vr_ind_crapcop).qtsstime := rw_crapcop.qtsstime;								
       
       END LOOP;
     
@@ -458,6 +483,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
                                ,pr_flgativo IN crapcop.flgativo%TYPE --> Flag Ativo  
                                ,pr_incomite IN NUMBER
                                ,pr_contigen IN NUMBER
+															 ,pr_nmregmot IN VARCHAR2
+															 ,pr_qtsstime IN NUMBER
                                ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
                                ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
                                ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
@@ -539,7 +566,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
             --Sair do programa
             RAISE vr_exc_saida;
         END;
+				
+				BEGIN
+          UPDATE crapprm prm
+             SET prm.dsvlrprm = pr_nmregmot
+           WHERE prm.nmsistem = 'CRED'
+             AND prm.cdcooper = rw_crapcop.cdcooper
+             AND prm.cdacesso = 'REGRA_ANALISE_MOTOR_IBRA';
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao atualizar tabela crapprm (3). ' || SQLERRM;
+            --Sair do programa
+            RAISE vr_exc_saida;
+        END;
       
+				BEGIN
+          UPDATE crapprm prm
+             SET prm.dsvlrprm = pr_qtsstime
+           WHERE prm.nmsistem = 'CRED'
+             AND prm.cdcooper = rw_crapcop.cdcooper
+             AND prm.cdacesso = 'TIME_RESP_MOTOR_IBRA';
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao atualizar tabela crapprm (4). ' || SQLERRM;
+            --Sair do programa
+            RAISE vr_exc_saida;
+        END;
+
       END LOOP;
     
       COMMIT;

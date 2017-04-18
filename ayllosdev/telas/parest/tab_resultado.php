@@ -20,6 +20,8 @@ $tabela .= "<tr>";
 $tabela .= "<th>Cooperativa</th>";
 $tabela .= "<th>Contigencia</th>";
 $tabela .= "<th>Comite</th>";
+$tabela .= "<th>Timeout An&aacute;lise Autom&aacute;tica</th>";
+$tabela .= "<th>Regra An&aacute;lise Autom&aacute;tica</th>";
 $tabela .= "</tr>";
 
 $tabela .= "</thead>";
@@ -33,6 +35,8 @@ foreach ($registros as $r) {
     $tabela .= "<td>" . getByTagName($r->tags, 'nmrescop') . "</td>";
     $tabela .= "<td>" . getByTagName($r->tags, 'contigen') . "</td>";
     $tabela .= "<td>" . getByTagName($r->tags, 'incomite') . "</td>";
+    $tabela .= "<td>" . getByTagName($r->tags, 'qtsstime') . "</td>";
+    $tabela .= "<td>" . getByTagName($r->tags, 'nmregmot') . "</td>";
 
     $tabela .= "</tr>";
 }

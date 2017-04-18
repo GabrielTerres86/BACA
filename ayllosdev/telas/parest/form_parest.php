@@ -35,6 +35,17 @@
 
 
             <br style="clear:both" />	
+			
+            <label for="nmregmot">Regra An&aacute;lise Autom&aacute;tica:</label>
+			<input type="text" id="nmregmot" name="nmregmot" title="Somente letras, n&uacute;meros e '_' neste campo">
+			
+            <br style="clear:both" />	
+			
+            <label for="qtsstime">Timeout An&aacute;lise Autom&aacute;tica:</label>
+			<input type="text" id="qtsstime" name="qtsstime">
+			<label class="rotulo-linha">segundos</label>
+			
+            <br style="clear:both" />	
 
         </fieldset>	
     </div>

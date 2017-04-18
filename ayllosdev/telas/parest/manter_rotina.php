@@ -20,13 +20,14 @@ require_once('../../includes/controla_secao.php');
 require_once('../../class/xmlfile.php');
 isPostMethod();
 
-
 // Recebe a operação que está sendo realizada
 $cddopcao = (isset($_POST['cddopcao'])) ? $_POST['cddopcao'] : '';
 
 $tlcooper = (isset($_POST['tlcooper'])) ? $_POST['tlcooper'] : 0;
 $contigen = (isset($_POST['contigen'])) ? $_POST['contigen'] : 0;
 $incomite = (isset($_POST['incomite'])) ? $_POST['incomite'] : 0;
+$nmregmot = (isset($_POST['nmregmot'])) ? $_POST['nmregmot'] : '';
+$qtsstime = (isset($_POST['qtsstime'])) ? $_POST['qtsstime'] : 0;
 
 $cdopcao  = '';
 
@@ -34,6 +35,26 @@ if ( $cddopcao == 'X' ) {
 	$cdopcao = 'C';
 } else {
 	$cdopcao = $cddopcao;
+}
+
+if ($cdopcao == 'A'){
+	if ((!isset($_POST['nmregmot'])) || $_POST['nmregmot'] == ''){
+		echo 'hideMsgAguardo();';
+		echo 'showError("error","Regra An&aacute;lise Autom&aacute;tica &eacute; obrigat&oacute;ria! Favor preench&ecirc;-la","Alerta - Ayllos","$(\'#nmregmot\', \'#frmParest\').focus()");';
+		exit();
+	}
+
+	if ((!isset($_POST['qtsstime'])) || $_POST['qtsstime'] == ''){
+		echo 'hideMsgAguardo();';
+		echo 'showError("error","Timeout An&aacute;lise Autom&aacute;tica &eacute; obrigat&oacute;ria! Favor preench&ecirc;-la","Alerta - Ayllos","$(\'#qtsstime\', \'#frmParest\').focus()");';
+		exit();
+	}
+
+	if (preg_match('/[^a-zA-Z0-9_]/',$nmregmot) == 1){
+		echo 'hideMsgAguardo();';
+		echo 'showError("error","Informe somente letras, n&uacute;meros e \'_\' neste campo! O preenchimento de \"Espa&ccedil;os\" n&atilde;o &eacute; permitido!","Alerta - Ayllos","$(\'#nmregmot\', \'#frmParest\').focus()");';
+		exit();
+	}
 }
 
 if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cdopcao)) <> '') {		
@@ -60,6 +81,8 @@ if ( $cdopcao == 'C') {
 	$xml .= "   <flgativo>1</flgativo>";
 	$xml .= "   <incomite>" . $incomite . "</incomite>";
 	$xml .= "   <contigen>" . $contigen . "</contigen>";
+	$xml .= "   <nmregmot>" . $nmregmot . "</nmregmot>";
+	$xml .= "   <qtsstime>" . $qtsstime . "</qtsstime>";
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 
@@ -99,6 +122,9 @@ if ( $cddopcao == 'C') {
 			} else {
 				echo '$("#incomite", "#divAlteracao").val("0");';
 			}
+			echo '$("#nmregmot", "#divAlteracao").val("'.getByTagName($r->tags, 'nmregmot').'");';
+			echo '$("#qtsstime", "#divAlteracao").val("'.getByTagName($r->tags, 'qtsstime').'");';
+			
 		//	echo '$("#incomite", "#divAlteracao").val("'. getByTagName($r->tags, 'incomite') .'");';
 		}
 		echo '$("#divBotoes").css({ "display": "block" });';
