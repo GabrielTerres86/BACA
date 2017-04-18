@@ -464,12 +464,12 @@
                            qdo o corpo do email ultrapassar 25 titulos pois estava
                            acarretando em problemas no IB (Tiago/Elton SD 521667).             
               
-28/11/2016 - Incluido tratamento de transaçoes pendentes 16 e 17.
-PRJ319 - SMS Cobrança (Odirlei - AMcom)
+              28/11/2016 - Incluido tratamento de transaçoes pendentes 16 e 17.
+                           PRJ319 - SMS Cobrança (Odirlei - AMcom)
               
 			  22/11/2016 - Inclusao do parametro pr_iptransa na chamada da rotina pc_cadastrar_agendamento.
                            PRJ335 - Analise de Fraude (Odirlei-AMcom ) 
- .....................................................................................................*/
+ 
 			  07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
                            departamento passando a considerar o código (Renato Darosci)           
 
@@ -1088,6 +1088,7 @@ PROCEDURE proc_cria_critica_transacao_oper:
 
     DEFINE INPUT  PARAMETER par_nrdrowid AS CHARACTER   NO-UNDO.
     DEFINE INPUT  PARAMETER par_aprovada AS LOGICAL     NO-UNDO.
+	DEFINE INPUT  PARAMETER par_indvalid AS INTE        NO-UNDO.
     DEFINE INPUT  PARAMETER par_dscritic AS CHARACTER   NO-UNDO.
 
     DEF BUFFER crabcop FOR crapcop.
@@ -12942,6 +12943,7 @@ PROCEDURE gera_erro_transacao:
 
     RUN proc_cria_critica_transacao_oper (INPUT par_nrdrowid,
                                           INPUT par_aprovada,
+										  INPUT par_indvalid,
                                           INPUT par_dscritic).
     
     RETURN "OK".
