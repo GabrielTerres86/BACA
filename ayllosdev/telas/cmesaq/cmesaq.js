@@ -15,7 +15,10 @@
  *
  *				  27/06/2016 - Removido a classe inteiro do campo do operador para que
  *							   seja permitido letras no campo para ajustar o problema do		
- *							   do chamado 467402. (Kelvin)						
+ *							   do chamado 467402. (Kelvin)		
+ *				  
+ *				  18/04/2017 - Ajuste para que não seja possível informar caracteres especiais
+ *							   SD 574441. (Kelvin)											  
  * --------------
  */
 
@@ -352,15 +355,15 @@ function manterRotina() {
 				tpdocmto : tpdocmto,
 				nrdconta : nrdconta,
 				nrccdrcb : nrccdrcb, 
-				nmpesrcb : nmpesrcb, 
+				nmpesrcb : removeCaracteresInvalidos(nmpesrcb), 
 				nridercb : nridercb, 
 				dtnasrcb : dtnasrcb, 
-				desenrcb : desenrcb, 
-				nmcidrcb : nmcidrcb, 
+				desenrcb : removeCaracteresInvalidos(desenrcb), 
+				nmcidrcb : removeCaracteresInvalidos(nmcidrcb), 
 				nrceprcb : nrceprcb, 
 				cdufdrcb : cdufdrcb, 
 				flinfdst : flinfdst, 
-				dstrecur : dstrecur, 
+				dstrecur : removeCaracteresInvalidos(dstrecur), 
 				cpfcgrcb : cpfcgrcb, 
 				flgimpri : flgimpri,
 				vlretesp : vlretesp,
