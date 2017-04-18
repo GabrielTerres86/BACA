@@ -35,7 +35,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Agosto/98.                        Ultima atualizacao: 21/06/2016
+   Data    : Agosto/98.                        Ultima atualizacao: 27/07/2016
 
    Dados referentes ao programa:
 
@@ -116,6 +116,9 @@
                             
                21/06/2016 - Adicionar historico 690 do Samae Sao Bento para 10 posicoes 
                             (Lucas Ranghetti #467618)
+                            
+              27/07/2016 - Adicionar historico 900 do Samae Rio Negrinho para 6 posicoes 
+                           (Lucas Ranghetti #486565)
 ............................................................................ */
 
 FUNCTION verificaUltDia RETURNS DATE
@@ -251,6 +254,10 @@ DO:
           IF  craplau.cdhistor = 453 THEN /* VIVO/TELEFONICA */              
               ASSIGN crapndb.dstexarq = crapndb.dstexarq + 
                            STRING(crapatr.cdrefere,"99999999999") + FILL(" ",14).
+          ELSE
+          IF  craplau.cdhistor = 900 THEN /* SAMAE RIO NEGRINHO */              
+              ASSIGN crapndb.dstexarq = crapndb.dstexarq + 
+                           STRING(crapatr.cdrefere,"999999") + FILL(" ",19).
           ELSE
               IF  NOT aux_flgsicre THEN 
                   ASSIGN crapndb.dstexarq = crapndb.dstexarq +
