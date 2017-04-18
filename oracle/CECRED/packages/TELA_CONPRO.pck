@@ -47,8 +47,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CONPRO IS
     operacao    VARCHAR2(100),
     -- dtmvtolt'); ?></td>
     retorno VARCHAR2(150),
-    nrctrprp NUMBER
-    
+    nrctrprp NUMBER,
+    dslinklg VARCHAR2(100)
     );
 
   TYPE typ_reg_crapope IS RECORD(
@@ -543,18 +543,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
                        epr.hrenvest
                        -- Situação Ayllos
                       ,
-                       DECODE(epr.insitest,
-                              0,
-                              'Nao enviada',
-                              1,
-                              'Enviada @ para Analise',
-                              2,
-                              'Reenviado@para Analise',
-                              3,
-                              'Analise@Finalizada',
-                              4,
-                              'Expirado',
-                              '') situacao_ayllos
+                       DECODE(epr.insitest,0,'Nao enviada'
+														 ,1,'Enviada @ para Analise Autom.'
+														 ,2,'Reenviado@para Analise Manual'
+														 ,3,'Analise@Finalizada'
+														 ,4,'Expirado','') situacao_ayllos
                        -- Parecer esteira
                       ,
                        DECODE(epr.insitapr,
@@ -671,8 +664,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
       
         vr_tab_crapope(UPPER(rw_crapope.cdoperad)).cdoperad := rw_crapope.cdoperad;
         
-        IF UPPER(rw_crapope.nmoperad) LIKE '%ESTEIRA%' THEN
-          vr_tab_crapope(UPPER(rw_crapope.cdoperad)).nmoperad := 'Esteira';
+        IF UPPER(rw_crapope.nmoperad) IN('MOTOR','ESTEIRA') THEN
+          vr_tab_crapope(UPPER(rw_crapope.cdoperad)).nmoperad := INITCAP(rw_crapope.nmoperad);
         ELSE
           vr_tab_crapope(UPPER(rw_crapope.cdoperad)).nmoperad := rw_crapope.nmoperad;
         END IF;  
@@ -1455,6 +1448,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
                                    pr_tag_nova => 'nmagenci',
                                    pr_tag_cont => vr_tab_crawepr(vr_ind_crawepr).nmagenci,
                                    pr_des_erro => vr_dscritic);
+																	 
+            gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                                   pr_tag_pai  => 'inf',
+                                   pr_posicao  => vr_auxconta,
+                                   pr_tag_nova => 'dslinklg',
+                                   pr_tag_cont => vr_tab_crawepr(vr_ind_crawepr).dslinklg,
+                                   pr_des_erro => vr_dscritic);																	 																	 
+																	 
             -- Sai do loop se for o último registro ou se chegar no número de registros solicitados
             EXIT WHEN(vr_ind_crawepr = vr_tab_crawepr.LAST);
           
@@ -1568,31 +1569,45 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
                A.CDSTATUS_HTTP,
                
                nvl(ESTE0001.fn_retorna_critica(a.DSRESPOSTA_REQUISICAO),
-              CASE
-                 WHEN (A.CDSTATUS_HTTP = 200)  AND (INSTR(a.dsuriservico, 'cancelar') > 0) THEN   
-                  'Cancelamento da proposta enviado com sucesso para esteira.' 
-                 WHEN (A.CDSTATUS_HTTP = 200)  AND (INSTR(a.dsuriservico, 'efetivar') > 0) THEN   
-                  'Proposta efetivada foi enviada para esteira com sucesso.' 
-                 WHEN (A.CDSTATUS_HTTP = 200)  AND (INSTR(a.dsuriservico, 'numeroProposta') > 0) THEN   
-                  'Numero da proposta foi enviado para esteira com sucesso.'
-                 WHEN (A.CDSTATUS_HTTP = 200) THEN
-                  'Proposta reenviada para esteira com sucesso.'
-                 WHEN (A.CDSTATUS_HTTP = 201) THEN
-                  'Proposta enviada para esteira com sucesso.'
-                 WHEN (A.CDSTATUS_HTTP = 401) THEN
-                  'Credencias de acesso ao WebService Ibratan invalidas.'
-                 WHEN (A.CDSTATUS_HTTP = 403) THEN
-                  'Sem permissao de acesso ao Webservice Ibratan.'
-                 WHEN (A.CDSTATUS_HTTP = 404) THEN
-                  'Recurso nao encontrado no WebService Ibratan nao existe.'
-                 WHEN (A.CDSTATUS_HTTP = 412) THEN
-                  'Parametros do WebService Ibratan invalidos.'
-                 WHEN (A.CDSTATUS_HTTP BETWEEN 400 AND 499) THEN
-                  'Valor do(s) parametro(s) WebService invalidos.'
-                 WHEN (A.CDSTATUS_HTTP BETWEEN 500 AND 599) THEN
-                  'Falha na comunicacao com servico Ibratan.'
-               END) retorno
-
+							 CASE
+							 WHEN (A.CDSTATUS_HTTP = 200)  AND (INSTR(a.dsuriservico, 'cancelar') > 0) THEN   
+								'Cancelamento da proposta enviado com sucesso para esteira.' 
+							 WHEN (A.CDSTATUS_HTTP = 200)  AND (INSTR(a.dsuriservico, 'efetivar') > 0) THEN   
+								'Proposta efetivada foi enviada para esteira com sucesso.' 
+							 WHEN (A.CDSTATUS_HTTP = 200)  AND (INSTR(a.dsuriservico, 'numeroProposta') > 0) THEN   
+							 'Numero da proposta foi enviado para esteira com sucesso.'
+							 WHEN (A.CDSTATUS_HTTP = 200) AND (INSTR(a.dsuriservico, 'ibracred-workflow') > 0) THEN   
+								'Proposta analisada automaticamente pela esteira com sucesso.'
+							 WHEN (A.CDSTATUS_HTTP = 200) THEN
+								'Proposta reenviada para esteira com sucesso.'
+							 WHEN (A.CDSTATUS_HTTP = 201) THEN
+								'Proposta enviada para esteira com sucesso.'
+							 WHEN (A.CDSTATUS_HTTP = 202) THEN
+								'Proposta enviada para analise automatica da esteira com sucesso.'
+							 WHEN (A.CDSTATUS_HTTP = 204) THEN
+								'Proposta ainda em processo de analise automatica da esteira.'
+							 WHEN (A.CDSTATUS_HTTP = 401) THEN
+								'Credencias de acesso ao WebService Ibratan invalidas.'
+							 WHEN (A.CDSTATUS_HTTP = 403) THEN
+								'Sem permissao de acesso ao Webservice Ibratan.'
+							 WHEN (A.CDSTATUS_HTTP = 404) THEN
+								'Recurso nao encontrado no WebService Ibratan nao existe.'
+							 WHEN (A.CDSTATUS_HTTP = 412) THEN
+								'Parametros do WebService Ibratan invalidos.'
+							 WHEN (A.CDSTATUS_HTTP = 429) THEN
+								'Muitas requisicoes de retorno da Analise Automatica da esteira.'
+							 WHEN (A.CDSTATUS_HTTP BETWEEN 400 AND 499) THEN
+								'Valor do(s) parametro(s) WebService invalidos.'
+							 WHEN (A.CDSTATUS_HTTP BETWEEN 500 AND 599) THEN
+								'Falha na comunicacao com servico Ibratan.'
+							END) retorno,
+							DECODE(A.DSPROTOCOLO
+										,NULL,'-'
+										, Replace(
+												gene0001.fn_param_sistema('CRED',a.cdcooper, 'HOST_WEBSRV_MOTOR_IBRA') ||
+												gene0001.fn_param_sistema('CRED',a.cdcooper, 'URI_WEBSRV_MOTOR_IBRALOG')
+														 ,'[@@dsprotocolo@@]',a.dsprotocolo)
+										) dslinkmotor
         
           FROM tbepr_acionamento a
         
@@ -1668,6 +1683,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
         END IF;
         
         pr_tab_crawepr(vr_ind_crawepr).nrctrprp := rw_crawepr.nrctrprp;
+        pr_tab_crawepr(vr_ind_crawepr).dslinklg := rw_crawepr.dslinkmotor;
         
       
       END LOOP;
