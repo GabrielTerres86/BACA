@@ -1,18 +1,18 @@
-<?php
+﻿<?php
 
 /*************************************************************************
 	Fonte: log_conveio.php
-	Autor: Odirlei Busana - AMcom			Ultima atualizacao: 26/04/2016
+	Autor: Odirlei Busana - AMcom			Ultima atualizacao: 29/03/2017
 	Data : Abril/2016
 	
 	Objetivo: Apresentar os logs do convenio selecionado .
 	
-	Alteracoes: 
+	Alteracoes: 29/03/2017 - Remover validação de permissão (Douglas - Chamado 641296)
 
 *************************************************************************/
 session_start();
 
-// Includes para controle da session, vari&aacute;veis globais de controle, e biblioteca de fun&ccedil;&otilde;es
+// Includes para controle da session, vari&aacute;veis globais de controle, e biblioteca de funções
 require_once("../../../includes/config.php");
 require_once("../../../includes/funcoes.php");		
 require_once("../../../includes/controla_secao.php");
@@ -22,10 +22,6 @@ isPostMethod();
 
 // Classe para leitura do xml de retorno
 require_once("../../../class/xmlfile.php");	
-
-if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"L")) <> "") {
-	exibirErro('error',$msgError,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);
-}	
 
 $nrdconta    = $_POST["nrdconta"];
 $inpessoa    = $_POST["inpessoa"];

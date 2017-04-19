@@ -41,15 +41,15 @@
                   27/04/2016 - Ajuste para que departamento CANAIS possa ter acesso 
                                a todas as funções da tela, conforme solicitadono
                                chamado 441903. (Kelvin)
-                               
+
                   04/08/2016 - Adicionado campo de forma de envio de arquivo de cobrança. (Reinert)
 
                   28/04/2016 - PRJ 318 - Ajustes projeto Nova Plataforma de cobrança (Odirlei/AMcom)
 
                   11/07/2016 - Ajustes para apenas solicitar senha para as alterações
                                de desconto manuais.
-                               PRJ213 - Reciprocidade (odirlei-AMcom)                  
-
+                               PRJ213 - Reciprocidade (odirlei-AMcom)    
+                               
 
                   18/08/2016  - Adicionado função controlaFoco.(Evandro - RKAM).
 
@@ -99,6 +99,7 @@ function habilitaSetor(setorLogado) {
             $("#divOpcaoInternet").css('display', 'none');
             $("#divTestemunhas").css('display', 'none');
             $("#divLogCeb").css('display', 'none');
+            $("#divServSMS").css('display', 'none');
 		
 			$("#divConteudoOpcao").html(response);
             controlaFoco();
@@ -121,7 +122,7 @@ function habilitaSetor(setorLogado) {
          $(this).bind('keyup', function (e) {
              if (e.keyCode == 16) {
                  pressedShift = false;//Quando tecla shift for solta passa valor false 
-             }
+		}				
          })
 
          $(this).bind('keydown', function (e) {
@@ -139,7 +140,7 @@ function habilitaSetor(setorLogado) {
              }
          });
 
-     });
+	});
 
      //Se estiver com foco na classe FluxoNavega
      $(".FluxoNavega").focus(function () {
@@ -148,10 +149,10 @@ function habilitaSetor(setorLogado) {
                  e.stopPropagation();
                  e.preventDefault();
                  $(this).click();
-		}				
+ }
 	});
      });
-
+ 
      $(".FirstInputModal").focus();
  }
  
@@ -1034,6 +1035,85 @@ function controlaLayout(nomeForm) {
 
 		ajustarCentralizacao();	
 		
+	} else if (nomeForm == 'frmServSMS'){
+        
+        
+        
+        var Ltpnommis_razao = $('label[for="tpnommis_razao"]', '#' + nomeForm);
+        var Ltpnommis_fansia = $('label[for="tpnommis_fansia"]', '#' + nomeForm);
+        var Ltpnommis_outro = $('label[for="tpnommis_outro"]', '#' + nomeForm);        
+        var Lnmprimtl       = $('label[for="nmprimtl"]',       '#' + nomeForm);
+        var Lnmfansia       = $('label[for="nmfansia"]',       '#' + nomeForm);
+        var Lnmemisms       = $('label[for="nmemisms"]',       '#' + nomeForm);
+        
+        var Ldspacote       = $('label[for="dspacote"]',       '#' + nomeForm);
+        var Ldhadesao       = $('label[for="dhadesao"]',       '#' + nomeForm);
+        var Lidcontrato     = $('label[for="idcontrato"]',     '#' + nomeForm);
+        var Ldssituac       = $('label[for="dssituac"]',       '#' + nomeForm);
+        var Lvltarifa       = $('label[for="vltarifa"]',       '#' + nomeForm);
+        
+        var Ccddopcao       = $('#cddopcao',       '#' + nomeForm);
+        var Ctpnommis_razao = $('#tpnommis_razao', '#' + nomeForm);
+        var Ctpnommis_fansia = $('#tpnommis_fansia', '#' + nomeForm);
+        var Ctpnommis_outro = $('#tpnommis_outro', '#' + nomeForm);
+        var Cnmprimtl       = $('#nmprimtl',       '#' + nomeForm);
+        var Cnmfansia       = $('#nmfansia',       '#' + nomeForm);
+        var Cnmemisms       = $('#nmemisms',       '#' + nomeForm);
+        
+        var Cdspacote       = $('#dspacote',       '#' + nomeForm);
+        var Cdhadesao       = $('#dhadesao',       '#' + nomeForm);
+        var Cidcontrato     = $('#idcontrato',     '#' + nomeForm);
+        var Cvltarifa       = $('#vltarifa',        '#' + nomeForm);
+        var Cdssituac       = $('#dssituac',        '#' + nomeForm);
+        
+        $('#' + nomeForm).addClass('formulario');
+		
+        //Remetente
+        Ltpnommis_razao.addClass('rotulo-linha').css('width', '90px');
+        Ltpnommis_fansia.addClass('rotulo-linha').css('width', '90px');
+        Ltpnommis_outro.addClass('rotulo-linha').css('width', '90px');        
+        Cnmprimtl.addClass('campo').css('width', '200px').desabilitaCampo();
+        Cnmfansia.addClass('campo').css('width', '200px').desabilitaCampo();
+        Cnmemisms.addClass('campo').css('width', '200px').setMask("STRING","15",charPermitido(),"");
+        
+        
+        //Pacote
+        Ldspacote.addClass('rotulo').css('width', '100');
+        Ldhadesao.addClass('rotulo-linha').css('width', '80px');
+        
+        Lvltarifa.addClass('rotulo').css('width', '100');
+        Lidcontrato.addClass('rotulo-linha').css('width', '60px');
+        Ldssituac.addClass('rotulo-linha').css('width' , '80px');        
+
+        Cdspacote.addClass('campo').css('width', '170px').desabilitaCampo();
+        Cdhadesao.addClass('campo').css('width', '70px').desabilitaCampo();
+        
+        Cvltarifa.addClass('campo').css('width', '40px').desabilitaCampo();
+        Cidcontrato.addClass('campo').css('width', '65px').desabilitaCampo();
+        Cdssituac.addClass('campo').css('width', '70px').desabilitaCampo();
+                
+        // Se estiver com opcao cancelado ou consultando inativo, desabilitar campos
+        if (Ccddopcao.val() == 'CA' ||
+            Ccddopcao.val() == 'CI' ){
+            
+            Ctpnommis_razao.desabilitaCampo();
+            Ctpnommis_fansia.desabilitaCampo();
+            Ctpnommis_outro.desabilitaCampo();            
+            
+            $('#btCancelServSMS').trocaClass('botao','botaoDesativado').css('cursor','default').attr("onClick","return false;");;
+            $('#btImpCtrSMS').trocaClass('botao','botaoDesativado').css('cursor','default').attr("onClick","return false;");;
+            $('#btnAltRemSMS').trocaClass('botao','botaoDesativado').css('cursor','default').attr("onClick","return false;");;
+            
+        }
+        
+        if (Ctpnommis_outro.prop("checked") == true){
+            Cnmemisms.habilitaCampo();
+        }else{
+            Cnmemisms.desabilitaCampo();
+        }
+        
+        
+       
 	} else if (nomeForm == 'frmLogConv'){
         formataLogConv();
 	}
@@ -1254,8 +1334,8 @@ function abrirReciprocidadeCalculo() {
 
     showMsgAguardo('Aguarde, carregando ...');
 
-    exibeRotina($('#divUsoGenerico'));  
-    
+    exibeRotina($('#divUsoGenerico'));
+
     var cddopcao = $('#cddopcao','#frmConsulta').val();
     var idrecipr = $('#idrecipr','#frmConsulta').val();
     var idprmrec = $('#idprmrec','#frmConsulta').val();
@@ -1371,7 +1451,7 @@ function verificaSenhaCoordenador() {
         // Acumular categorias conforme reciprocidade ou não
         var tot_percdesc_campo = 0;        
         $(".clsCatFlrecipr0").each(function (index) {
-            tot_percdesc_campo = tot_percdesc_campo + converteMoedaFloat($(this).val());
+           tot_percdesc_campo = tot_percdesc_campo + converteMoedaFloat($(this).val());
         });
         var tot_percdesc_recipr_campo = 0;
         $(".clsCatFlrecipr1").each(function (index) {
@@ -1380,7 +1460,7 @@ function verificaSenhaCoordenador() {
 
         // Se foi alterado o valor de descontos manuais ou de Reciprocidade
         if (tot_percdesc_campo != tot_percdesc || tot_percdesc_recipr_campo != tot_percdesc_recipr) {
-            flsolicita = true;
+          flsolicita = true;
         }
 
     }
@@ -1538,4 +1618,147 @@ function formataLogConv() {
     tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, metodoTabela);
 	
     return false;
+}
+
+function consultaServicoSMS(opcao){    
+
+    
+    var idseqttl   = $("#idseqttl", "#divServSMS").val();
+    var flimpctr   = 0;
+    var nmemisms   = $("#nmemisms", "#divServSMS").val();    
+    var idcontrato = $("#idcontrato", "#divServSMS").val();    
+    var tpnmemis   = 0;      
+    
+    if (opcao == 'AR'){
+        // Mostra mensagem de aguardo
+        showMsgAguardo("Aguarde, alterando remetente de envio de SMS ...");
+        
+        if ($("#tpnommis_razao", "#divServSMS").prop("checked") == true) {
+            tpnmemis = 1;
+        }else if ($("#tpnommis_fansia", "#divServSMS").prop("checked") == true) {
+            tpnmemis = 2;
+        }else if ($("#tpnommis_outro", "#divServSMS").prop("checked") == true) {
+            tpnmemis = 3;
+        }
+    }else if (opcao == 'A'){
+        idseqttl = idseqttl_senha_internet;
+        if (possui_senha_internet ==  false){
+            flimpctr = 1; 
+        }
+        // Mostra mensagem de aguardo
+        showMsgAguardo("Aguarde, ativando servi&ccedil;o de SMS ...");
+    }else if (opcao == 'CA'){
+        if (possui_senha_internet ==  false){
+            flimpctr = 1; 
+        } 
+        // Mostra mensagem de aguardo
+        showMsgAguardo("Aguarde, cancelando servi&ccedil;o de SMS ...");    
+    }else if (opcao == 'IA'){
+        // Mostra mensagem de aguardo
+        showMsgAguardo("Aguarde, gerando Impress&atilde;o de contrato de servi&ccedil;o de SMS ...");        
+    }else{
+        // Mostra mensagem de aguardo
+        showMsgAguardo("Aguarde, carregando ...");
+    }
+    
+    // Carrega conteudo da tela atraves de ajax
+ 	$.ajax({        
+		dataType: "html",
+		type: "POST",
+		url: UrlSite + "telas/atenda/cobranca/consulta_servico_sms.php",
+		data: {            
+            nrdconta: nrdconta,
+            idseqttl: idseqttl,
+            flimpctr: flimpctr,
+            cddopcao: opcao,
+            nmemisms: nmemisms,
+            tpnmemis: tpnmemis,      
+            idcontrato : idcontrato,
+            inpessoa: inpessoa,
+			redirect: "script_ajax"
+		},
+        error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')) )");
+		},
+        success: function (response) {
+			$("#divServSMS").html(response);
+            hideMsgAguardo();
+            blockBackground($("#divRotina"));
+		}		
+	});
+    
+    return false;
+}
+
+function confirmaServSMS() {
+    
+    showConfirmacao('Deseja ativar servi&ccedil;o de SMS de Cobran&ccedil;a?', 'Confirma&ccedil;&atilde;o - Ayllos', 'verificaSenhaInternet("habilitarServSMS();", ' + nrdconta + ', 1);', ' acessaOpcaoAba(); return false;', 'sim.gif', 'nao.gif');
+}
+
+function habilitarServSMS(){    
+    
+    // Verificar se conta possui senha de internet
+    if (possui_senha_internet){
+        $("#idseqttl", "#divServSMS").val(idseqttl_senha_internet);
+    }else{
+        $("#idseqttl", "#divServSMS").val(1);
+    }
+    
+    consultaServicoSMS('A');
+}
+
+// Confirma Cancelamento de Servico
+function confirmaCancelServSMS() {
+    showConfirmacao('Ser&atilde;o canceladas todas as instru&ccedil;&otilde;es programadas para envio de SMS. Confirma cancelamento do servi&ccedil;o de SMS de Cobran&ccedil;a?', 'Confirma&ccedil;&atilde;o - Ayllos', 'verificaSenhaInternet("CancelarServSMS();", ' + nrdconta + ', 1);', 'return false;', 'sim.gif', 'nao.gif');
+}
+function CancelarServSMS(){
+    consultaServicoSMS('CA');
+}
+
+// Função para carregar impressao de servico de SMS em PDF
+function imprimirServSMS(cddopcao) {
+	 showMsgAguardo("Aguarde, gerando impress&atilde;o ...");
+    var idcontrato = normalizaNumero($("#idcontrato", "#divServSMS").val());
+    
+    $("#nrdconta"  , "#frmImprimirSMS").val(nrdconta);
+    $("#idcontrato", "#frmImprimirSMS").val(idcontrato);
+    $("#cddopcao"  , "#frmImprimirSMS").val(cddopcao);
+
+	var action = $("#frmImprimirSMS").attr("action");
+	var callafter = "";	
+	
+    carregaImpressaoAyllos("frmImprimirSMS", action, callafter);
+}
+
+// Confirma alteracao do remetente de envio de SMS
+function confirmaAltReme() {
+    
+    var nmemisms = $("#nmemisms", "#divServSMS").val();    
+    var tpnmemis = 3;
+    
+    if ($("#tpnommis_razao", "#divServSMS").prop("checked") == true) {
+        tpnmemis = 1;
+    }else if ($("#tpnommis_fansia", "#divServSMS").prop("checked") == true) {
+        tpnmemis = 2;
+    }else if ($("#tpnommis_outro", "#divServSMS").prop("checked") == true) {
+        tpnmemis = 3;
+    }
+    
+    if (tpnmemis == 3 && nmemisms == ""){
+        showError("error", 'Favor informe o nome para remetente ou marque outra op&ccedil;&atilde;o.', "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')) )");
+        return false;
+    }
+    
+    showConfirmacao('Confirma altera&ccedil;&atilde;o do remetente?', 'Confirma&ccedil;&atilde;o - Ayllos', 'consultaServicoSMS("AR")', 'return false;', 'sim.gif', 'nao.gif');
+}
+
+function habilitaOutro(flghabit) {
+    Cnmemisms       = $('#nmemisms',  '#frmServSMS');
+    
+    if (flghabit == true){
+        Cnmemisms.habilitaCampo();
+    }else{
+        Cnmemisms.desabilitaCampo();
+    }
 }
