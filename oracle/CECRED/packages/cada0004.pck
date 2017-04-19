@@ -733,7 +733,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   --       
   --               14/11/2016 - M172 - Atualização Telefone no Auto Atendimento (Guilherme/SUPERO)
   --
-  ---------------------------------------------------------------------------------------------------------------
+  --               08/12/2016 - Alterado a mensagem de bloqueio judicial na rotina pc_obtem_mensagens_alerta
+  --                            (Andrino - Projeto 341 - Bacenjud)
+---------------------------------------------------------------------------------------------------------------
 
 
   
@@ -4282,7 +4284,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
          AND snh.nrcpfcgc = pr_nrcpfcgc;
 
     rw_crapsnh_2 cr_crapsnh_2%ROWTYPE;     
-      
+
+    -- Cursor para buscar os bloqueios judiciais
+    CURSOR cr_crapblj IS
+      SELECT DISTINCT a.nrproces,
+             a.dsjuizem
+        FROM crapblj a
+       WHERE cdcooper = pr_cdcooper
+         AND nrdconta = pr_nrdconta
+         AND dtblqfim IS NULL
+       ORDER BY 1,2;
+	
     --------------> VARIAVEIS <----------------
     vr_cdcritic INTEGER;
     vr_dscritic VARCHAR2(1000);
@@ -5188,6 +5200,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       END IF;      
     END IF;
     
+	/*
     --> Busca Saldo Bloqueado Judicial
     GENE0005.pc_retorna_valor_blqjud (pr_cdcooper => pr_cdcooper      --> Cooperativa
                                      ,pr_nrdconta => pr_nrdconta      --> Conta
@@ -5208,7 +5221,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       pc_cria_registro_msg(pr_dsmensag             => 'Conta Possui Valor Bloqueado Judicialmente.',
                            pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);    
     END IF;
-    
+    */
+
+    -- Busca os processos judiciais
+    FOR rw_crapblj IN cr_crapblj LOOP
+      pc_cria_registro_msg(pr_dsmensag             => 'Bloqueio judicial. Processo '||rw_crapblj.nrproces||'. '||rw_crapblj.dsjuizem||'.',
+                           pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);    
+    END LOOP;
+	
     --> Procedimento para buscar dados do credito pré-aprovado (crapcpa)
     EMPR0002.pc_busca_dados_cpa (pr_cdcooper  => pr_cdcooper   --> Codigo da cooperativa
                                 ,pr_cdagenci  => pr_cdagenci   --> Código da agencia

@@ -3,7 +3,7 @@
 	//************************************************************************//
 	//*** Fonte: incluir_bloqueio.php                                      ***//
 	//*** Autor: Guilherme/SUPERO                                          ***//
-	//*** Data : Março/2013                   Última Alteração: 29/07/2016 ***//
+	//*** Data : Março/2013                   Última Alteração:            ***//
 	//***                                                                  ***//
 	//*** Objetivo  : Funcoes relativas ao Bloqueio Judicial               ***//	
 	//***                                                                  ***//
@@ -11,6 +11,9 @@
 	//*** Alterações: 29/07/2016 - Ajuste para controle de permissão sobre ***//
 	//***                          as subrotinas de cada opção	           ***//
     //***                         (Adriano - SD 492902).				   ***//
+	//***			 31/10/2016 - Realizar a chamada da rotina INCLUI-     ***//
+	//***					      BLOQUEIO-JUD diretamente do oracle via   ***//
+	//***					      mensageria (Renato Darosci - Supero)     ***//
 	//***                          									       ***//
 	//************************************************************************//
 	
@@ -50,7 +53,6 @@
     $cdtipmov = $_POST["cdtipmov"];     // LISTA
     $cdmodali = $_POST["cdmodali"];     // LISTA
     $vlbloque = $_POST["vlbloque"];     // LISTA
-    $vlresblq = $_POST["vlresblq"];     // LISTA
     $nroficio = $_POST["nroficio"];
     $nrproces = $_POST["nrproces"];
     $dsjuizem = $_POST["dsjuizem"];
@@ -59,21 +61,17 @@
     $dtenvres = $_POST["dtenvres"];
     $vlrsaldo = $_POST["vlrsaldo"];
 	$dsinfadc = $_POST["dsinfadc"];
+	$cddopcao = $_POST["cddopcao"];
 
 	// Monta o xml de requisição
 	$xmlRegistro  = "";
 	$xmlRegistro .= "<Root>";
-	$xmlRegistro .= "	<Cabecalho>";
-	$xmlRegistro .= "		<Bo>b1wgen0155.p</Bo>";
-	$xmlRegistro .= "		<Proc>inclui-bloqueio-jud</Proc>";
-	$xmlRegistro .= "	</Cabecalho>";
 	$xmlRegistro .= "	<Dados>";
 	$xmlRegistro .= "		<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
 	$xmlRegistro .= "		<nrdconta>".$nrdconta."</nrdconta>";
 	$xmlRegistro .= "		<cdtipmov>".$cdtipmov."</cdtipmov>";
 	$xmlRegistro .= "		<cdmodali>".$cdmodali."</cdmodali>";	
 	$xmlRegistro .= "		<vlbloque>".$vlbloque."</vlbloque>";
-	$xmlRegistro .= "		<vlresblq>".$vlresblq."</vlresblq>";
 	$xmlRegistro .= "		<nroficio>".$nroficio."</nroficio>";
     $xmlRegistro .= "		<nrproces>".$nrproces."</nrproces>";
     $xmlRegistro .= "		<dsjuizem>".$dsjuizem."</dsjuizem>";
@@ -81,17 +79,14 @@
     $xmlRegistro .= "		<flblcrft>".$flblcrft."</flblcrft>";
     $xmlRegistro .= "		<dtenvres>".$dtenvres."</dtenvres>";    
     $xmlRegistro .= "		<vlrsaldo>".$vlrsaldo."</vlrsaldo>";
-	$xmlRegistro .= "		<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
     $xmlRegistro .= "		<cdoperad>".$glbvars['cdoperad']."</cdoperad>";
     $xmlRegistro .= "       <dsinfadc>".$dsinfadc."</dsinfadc>";
 	$xmlRegistro .= "	</Dados>";
 	$xmlRegistro .= "</Root>";
 		
 	// Executa script para envio do XML
-	$xmlResult = getDataXML($xmlRegistro);
+	$xmlResult = mensageria($xmlRegistro, "BLQJUD", "INCLUI_BLOQUEIO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 		
-	$glbvars["nmrotina"] = $nmrotina;
-
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjRegistro = getObjectXML($xmlResult);
 

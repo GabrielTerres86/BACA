@@ -195,6 +195,14 @@ CREATE OR REPLACE PACKAGE CECRED.gene0005 IS
                              ,pr_des_erro  OUT VARCHAR2                    --> Status erro
                              ,pr_dscritic  OUT VARCHAR2);
 
+  PROCEDURE pc_gera_inconsistencia(pr_cdcooper IN tbgen_inconsist.cdcooper%TYPE --> Codigo Cooperativa
+                                  ,pr_iddgrupo IN tbgen_inconsist.idinconsist_grp%TYPE --> Codigo do Grupo
+                                  ,pr_tpincons IN tbgen_inconsist.tpinconsist%TYPE --> Tipo (1-Aviso, 2-Erro)
+                                  ,pr_dsregist IN tbgen_inconsist.dsregistro_referencia%TYPE --> Desc. do registro de referencia
+                                  ,pr_dsincons IN tbgen_inconsist.dsinconsist%TYPE --> Descricao da inconsistencia
+                                  ,pr_des_erro OUT VARCHAR2 --> Status erro
+                                  ,pr_dscritic OUT VARCHAR2); --> Retorno de erro
+
   END GENE0005;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
@@ -2516,5 +2524,149 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
     END;
   END pc_busca_motivos;
 
+
+  PROCEDURE pc_gera_inconsistencia(pr_cdcooper IN tbgen_inconsist.cdcooper%TYPE --> Codigo Cooperativa
+                                  ,pr_iddgrupo IN tbgen_inconsist.idinconsist_grp%TYPE --> Codigo do Grupo
+                                  ,pr_tpincons IN tbgen_inconsist.tpinconsist%TYPE --> Tipo (1-Aviso, 2-Erro)
+                                  ,pr_dsregist IN tbgen_inconsist.dsregistro_referencia%TYPE --> Desc. do registro de referencia
+                                  ,pr_dsincons IN tbgen_inconsist.dsinconsist%TYPE --> Descricao da inconsistencia
+                                  ,pr_des_erro OUT VARCHAR2 --> Status erro
+                                  ,pr_dscritic OUT VARCHAR2) IS --> Retorno de erro
+  BEGIN
+    -- ..........................................................................
+    --
+    --  Programa : pc_gera_inconsistencia
+    --   Sistema : Conta-Corrente - Cooperativa de Credito
+    --   Sigla   : CRED
+    --   Autor   : Jaison Fernando
+    --   Data    : Novembro/2016                      Ultima atualizacao:           
+    --
+    --   Dados referentes ao programa:
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Procedimento para cadastrar as inconsistencias.
+    --
+    --   Alteracoes:                                                                     
+    -- .............................................................................
+    DECLARE
+
+      -- Cursor para verificar se deve enviar email online
+      CURSOR cr_inconsist_grp IS
+        SELECT decode(pr_tpincons,1,'Alerta: ', 'Erro: ') || a.nminconsist_grp dscabecalho
+          FROM tbgen_inconsist_grp a
+         WHERE a.idinconsist_grp = pr_iddgrupo
+           AND a.tpconfig_email <> 0 -- Deve ser diferente de NAO ENVIAR EMAIL
+           AND a.tpconfig_email = decode(pr_tpincons,1, 2, -- Se o erro for de alerta, enviar somente se estiver configurado para ERROS E ALERTAS
+                                                        a.tpperiodicidade_email)
+           AND a.tpperiodicidade_email = 1; -- Enviar email Online
+      rw_inconsist_grp cr_inconsist_grp%ROWTYPE;
+      
+      -- Cursor para buscar o grupo de pessoas para recebimento do email
+      CURSOR cr_inconsist_email IS
+        SELECT a.dsendereco_email
+          FROM tbgen_inconsist_email_grp a
+         WHERE a.idinconsist_grp = pr_iddgrupo
+           AND a.cdcooper = pr_cdcooper;
+      
+		  -- Cursor da data
+      rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+
+      -- Variavel de criticas
+      vr_dscritic crapcri.dscritic%TYPE;
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+
+      -- Variaveis Gerais
+      vr_idincons tbgen_inconsist_grp.idinconsist_grp%TYPE;
+      vr_dsdesti VARCHAR2(4000);
+      vr_dscorpo VARCHAR2(4000);
+
+    BEGIN
+      -- Busca a data do sistema
+      OPEN  BTCH0001.cr_crapdat(pr_cdcooper);
+      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+      CLOSE BTCH0001.cr_crapdat;
+
+      -- Busca o proximo ID
+      vr_idincons := fn_sequence(pr_nmtabela => 'tbgen_inconsist'
+                                ,pr_nmdcampo => 'idinconsist'
+                                ,pr_dsdchave => '0');
+
+      BEGIN
+        INSERT INTO tbgen_inconsist
+                   (idinconsist
+                   ,cdcooper
+                   ,idinconsist_grp
+                   ,tpinconsist
+                   ,dhinconsist
+                   ,dtmvtolt
+                   ,dsregistro_referencia
+                   ,tbgen_inconsist.dsinconsist)
+             VALUES(vr_idincons
+                   ,pr_cdcooper
+                   ,pr_iddgrupo
+                   ,pr_tpincons
+                   ,SYSDATE
+                   ,rw_crapdat.dtmvtolt
+                   ,pr_dsregist
+                   ,pr_dsincons);
+      EXCEPTION
+        WHEN OTHERS THEN
+        vr_dscritic := 'Problema ao incluir inconsistencia: ' || SQLERRM;
+        RAISE vr_exc_saida;
+      END;
+
+      -- Rotina para verificacao de envio de email
+      OPEN cr_inconsist_grp;
+      FETCH cr_inconsist_grp INTO rw_inconsist_grp;
+      IF cr_inconsist_grp%FOUND THEN
+        
+        -- Busca as pessoas para envio do email
+        FOR rw_inconsist_email IN cr_inconsist_email LOOP
+          IF vr_dsdesti IS NULL THEN
+            vr_dsdesti := rw_inconsist_email.dsendereco_email;
+          ELSE
+            vr_dsdesti := vr_dsdesti ||';'||rw_inconsist_email.dsendereco_email;
+          END IF;
+        END LOOP;
+
+        -- Se possuir destinatario deve enviar email
+        IF vr_dsdesti IS NOT NULL THEN    
+          -- Monta o corpo do email
+          vr_dscorpo := '<html><body>'||
+                        '<b>Inconsistencia:</b> '|| pr_dsincons||'<br>'||
+                        '<b>Registro de Referencia:</b> '||pr_dsregist||'<br>'||
+                        '<b>Data/Hora Ocorrencia:</b> '||to_char(SYSDATE,'DD/MM/YYYY HH24:MI:SS')||
+                        '</body></html>';
+          
+          -- Chama rotina para envio do e-mail
+          gene0003.pc_solicita_email(pr_cdprogra        => 'GENE0005'
+                                    ,pr_des_destino     => vr_dsdesti
+                                    ,pr_des_assunto     => rw_inconsist_grp.dscabecalho
+                                    ,pr_des_corpo       => vr_dscorpo
+                                    ,pr_des_anexo       => NULL
+                                    ,pr_flg_enviar      => 'N'
+                                    ,pr_des_erro        => vr_dscritic);
+          
+          IF vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_saida;
+          END IF;
+        END IF; -- Fim da verificacao se possui destinatario
+      END IF;
+      CLOSE cr_inconsist_grp;
+
+			pr_des_erro := 'OK';
+
+    EXCEPTION
+			WHEN vr_exc_saida THEN
+        pr_des_erro := 'NOK';
+        pr_dscritic := vr_dscritic;
+      WHEN OTHERS THEN
+        pr_des_erro := 'NOK';
+        pr_dscritic := 'Erro na GENE0005.pc_gera_inconsistencia: ' || SQLERRM;
+    END;
+
+  END pc_gera_inconsistencia;
+  
 END GENE0005;
 /

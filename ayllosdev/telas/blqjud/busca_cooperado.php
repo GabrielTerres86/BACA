@@ -23,6 +23,18 @@
 	//***            26/07/2016 - Subtrair os valores bloqueados           ***//
 	//***						  do valor total apresentado para bloqueio ***//
 	//***						  judicial. Chamado 491832 (Heitor - RKAM) ***//
+	//***					                                               ***//
+	//***			 31/10/2016 - Realizar a chamada da rotina busca-contas-**//
+	//***					      cooperado diretamente do oracle via      ***//
+	//***					      mensageria (Renato Darosci - Supero)     ***//
+	//***					    - Alterado html de retorno, para que o     ***//
+	//***					      mesmo apresente cores nas linhas e um    ***//
+	//***					      cabeçalho destacado (Renato Darosci)     ***//
+	//***					                                               ***//
+	//***			 04/11/2016 - Retirar os parametros fixos e as datas   ***//
+	//***					      que deverão ser lidas da crapdat na      ***//
+	//***					      rotina (Renato Darosci - Supero)         ***//
+	//***					                                               ***//
 	//************************************************************************//
 	
 	session_start();
@@ -46,32 +58,20 @@
 	// Monta o xml de requisição
 	$xmlRegistro  = "";
 	$xmlRegistro .= "<Root>";
-	$xmlRegistro .= "	<Cabecalho>";
-	$xmlRegistro .= "		<Bo>b1wgen0155.p</Bo>";
-	$xmlRegistro .= "		<Proc>busca-contas-cooperado</Proc>";
-	$xmlRegistro .= "	</Cabecalho>";
 	$xmlRegistro .= "	<Dados>";
     $xmlRegistro .= "		<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
 	$xmlRegistro .= "		<cdagenci>".$glbvars["cdagenci"]."</cdagenci>";
 	$xmlRegistro .= "		<nrdcaixa>".$glbvars["nrdcaixa"]."</nrdcaixa>";
 	$xmlRegistro .= "		<cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
-	$xmlRegistro .= "		<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
-	$xmlRegistro .= "		<dtmvtopr>".$glbvars["dtmvtopr"]."</dtmvtopr>";
-	$xmlRegistro .= "		<dtmvtoan>".$glbvars["dtmvtoan"]."</dtmvtoan>";	
-	$xmlRegistro .= "		<dtiniper>".date("d/m/Y")."</dtiniper>";
-	$xmlRegistro .= "		<dtfimper>".date("d/m/Y")."</dtfimper>";
 	$xmlRegistro .= "		<nmdatela>".$glbvars["nmdatela"]."</nmdatela>";
 	$xmlRegistro .= "		<idorigem>".$glbvars["idorigem"]."</idorigem>";
-	$xmlRegistro .= "		<idseqttl>1</idseqttl>";
 	$xmlRegistro .= "		<inproces>".$glbvars["inproces"]."</inproces>";
-
 	$xmlRegistro .= "		<cooperad>".$cooperad."</cooperad>";
 	$xmlRegistro .= "	</Dados>";
 	$xmlRegistro .= "</Root>";
-		
-	// Executa script para envio do XML
-	$xmlResult = getDataXML($xmlRegistro);
-		
+	
+	$xmlResult = mensageria($xmlRegistro, "BLQJUD", "CONTAS_COOPERADO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjRegistro = getObjectXML($xmlResult);
 		
@@ -99,12 +99,12 @@
         $tabela .=  "<input id=\'vlsaldo\' name=\'vlsaldo\' type=\'text\' maxlength=\'12\' disabled /> <br /><br />";
 		$tabela .= 	"<table WIDTH=\'100%\'>";
 		$tabela .=		"<thead>";
-		$tabela .=			"<tr>";
-		$tabela .=				"<th align=\'CENTER\'>CONTA/DV</th>";
+		$tabela .=			"<tr style=\'background-color:#f7d3ce;\'>";
+		$tabela .=				"<th rowspan=\'2\' align=\'CENTER\'>CONTA/DV</th>";
 		$tabela .=				"<th colspan=\'" . $cdtppesq . "\' align=\'CENTER\'>MODALIDADES</th>";
 		$tabela .=			"</tr>";
-        $tabela .=			"<tr>";
-        $tabela .=				"<td>&nbsp;</td>";
+        $tabela .=			"<tr style=\'background-color:#f7d3ce;\'>";
+        //$tabela .=				"<td>&nbsp;</td>";
 		if ($cdtppesq == 1) { $tabela .=				"<th align=\'CENTER\'>Capital</th>";}
 		if ($cdtppesq == 4) { $tabela .=				"<th align=\'CENTER\'>Aplica&ccedil;&atilde;o</th>";
                               $tabela .=				"<th align=\'CENTER\'>Conta Corrente</th>";
