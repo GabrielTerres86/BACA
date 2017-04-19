@@ -33,10 +33,6 @@ $xml .= "   <qtdsms>".$qtdsms."</qtdsms>";
 $xml .= " </Dados>";
 $xml .= "</Root>";
 
-if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
-	exibeErroNew($msgError);
-}
-
 $xmlResult = mensageria($xml, "CADSMS", "ALTERAR_PACOTE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 $xmlObj = getObjectXML($xmlResult);
 
