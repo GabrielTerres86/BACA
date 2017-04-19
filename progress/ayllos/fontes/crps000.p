@@ -1229,6 +1229,7 @@ PROCEDURE proc_roda_exclusivo:
                     input 0,
                     input "",
                     input 1,
+                    INPUT "", /* nmarqlog */
                     INPUT 0).
                 CLOSE STORED-PROCEDURE pc_log_programa WHERE PROC-HANDLE = aux_handproc.
                 { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
@@ -1247,6 +1248,7 @@ PROCEDURE proc_roda_exclusivo:
                     input 0,
                     input "",
                     input 1,
+                    INPUT "", /* nmarqlog */
                     INPUT 0).
                 CLOSE STORED-PROCEDURE pc_log_programa WHERE PROC-HANDLE = aux_handproc.
                 { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
@@ -1362,6 +1364,7 @@ PROCEDURE proc_roda_paralelo:
            input 0,
            input "",
            input 1,
+           INPUT "", /* nmarqlog */
            INPUT 0).
        CLOSE STORED-PROCEDURE pc_log_programa WHERE PROC-HANDLE = aux_handproc.
        { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
@@ -1387,6 +1390,7 @@ PROCEDURE proc_roda_paralelo:
            input 0,
            input "",
            input 1,
+           INPUT "", /* nmarqlog */
            INPUT 0).
        CLOSE STORED-PROCEDURE pc_log_programa WHERE PROC-HANDLE = aux_handproc.
        { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }

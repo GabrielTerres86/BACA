@@ -89,7 +89,9 @@ CREATE OR REPLACE PACKAGE CECRED.btch0001 AS
                              ,pr_flfinmsg     IN VARCHAR2 DEFAULT 'S'      --> Flag S/N  para informar ao fim da msg [PL/SQL]
                              ,pr_dsdirlog     IN VARCHAR2 DEFAULT NULL     --> Diretorio onde será gerado o log
                              ,pr_dstiplog     IN VARCHAR2 DEFAULT 'O'      --> Tipo do log: I - início; F - fim; O || E - ocorrênci
-                             ,pr_cdprograma   IN VARCHAR2 DEFAULT NULL);   --> Programa/job
+                             ,pr_cdprograma   IN VARCHAR2 DEFAULT NULL     --> Programa/job
+                             ,pr_tpexecucao    IN tbgen_prglog.tpexecucao%TYPE DEFAULT 1 -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                             ,pr_cdcriticidade IN tbgen_prglog_ocorrencia.cdcriticidade%type DEFAULT 0); -- Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
 
   /* Controlar geração de log de execução dos jobs */
   PROCEDURE pc_log_exec_job(pr_cdcooper     IN crapcop.cdcooper%TYPE     --> Cooperativa
@@ -470,7 +472,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
 
   /* Incluir log de execução. */
   PROCEDURE pc_gera_log_batch(pr_cdcooper     IN crapcop.cdcooper%TYPE     --> Cooperativa
-                             ,pr_ind_tipo_log IN NUMBER                    --> Nivel criticidade do log
+                             ,pr_ind_tipo_log IN NUMBER                    --> Tipo de mensagem do log
                              ,pr_des_log      IN VARCHAR2                  --> Descrição do log em si
                              ,pr_nmarqlog     IN VARCHAR2 DEFAULT NULL     --> Nome para gravação de log em arquivo específico
                              ,pr_flnovlog     IN VARCHAR2 DEFAULT 'N'      --> Flag S/N para criar um arquivo novo
@@ -478,6 +480,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
                              ,pr_dsdirlog     IN VARCHAR2 DEFAULT NULL     --> Diretorio onde será gerado o log
                              ,pr_dstiplog     IN VARCHAR2 DEFAULT 'O'      --> Tipo do log: I - início; F - fim; O || E - ocorrência
                              ,pr_cdprograma   IN VARCHAR2 DEFAULT NULL     --> Programa/job
+                             ,pr_tpexecucao    IN tbgen_prglog.tpexecucao%type DEFAULT 1 -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                             ,pr_cdcriticidade IN tbgen_prglog_ocorrencia.cdcriticidade%TYPE DEFAULT 0 -- Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
                              ) IS
   BEGIN
     -- ..........................................................................
@@ -578,14 +582,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
           vr_cdprograma := NVL(gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_BATCH'),'proc_batch.log');
         END IF;
       ELSE          
-        vr_cdprograma := NVL(gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_BATCH'),'proc_batch.log');
+        IF INSTR(pr_des_log, '-->', 1, 1) > 0 THEN
+          vr_tab_erro := gene0002.fn_quebra_string(
+                        pr_string => TRIM(SUBSTR(pr_des_log, 1, INSTR(pr_des_log, '-->', 1, 1) -1)),
+                        pr_delimit => ' ');
+          vr_cdprograma := vr_tab_erro(vr_tab_erro.count());     
+        ELSE          
+          vr_cdprograma := '';
+      END IF;
       END IF;
 
-      cecred.pc_log_programa(PR_DSTIPLOG   => pr_dstiplog, 
-                             PR_CDPROGRAMA => vr_cdprograma, 
-                             pr_cdcooper   => pr_cdcooper, 
-                             pr_tpexecucao => 0, 
-                             pr_tpocorrencia => vr_tipomensagem,
+      cecred.pc_log_programa(PR_DSTIPLOG   => pr_dstiplog,      -- tbgen_prglog
+                             PR_CDPROGRAMA => vr_cdprograma,    -- tbgen_prglog
+                             pr_cdcooper   => pr_cdcooper,      -- tbgen_prglog
+                             pr_tpexecucao => pr_tpexecucao,    -- tbgen_prglog
+                             pr_tpocorrencia  => vr_tipomensagem,
+                             pr_cdcriticidade => pr_cdcriticidade,
                              pr_dsmensagem   => vr_des_log,
                              pr_nmarqlog     => vr_nmarqlog,
                              PR_IDPRGLOG     => vr_idprglog);
@@ -593,10 +605,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
       IF pr_dsdirlog IS NOT NULL THEN
         vr_dircop_log := pr_dsdirlog;
       ELSE
-      -- Buscar o diretório log da cooperativa conectada
-      vr_dircop_log := gene0001.fn_diretorio(pr_tpdireto => 'C' --> Usr/Coop
-                                            ,pr_cdcooper => pr_cdcooper
-                                            ,pr_nmsubdir => 'log');
+        -- Buscar o diretório log da cooperativa conectada
+        vr_dircop_log := gene0001.fn_diretorio(pr_tpdireto => 'C' --> Usr/Coop
+                                              ,pr_cdcooper => pr_cdcooper
+                                              ,pr_nmsubdir => 'log');
       END IF;
       -- Se foi enviado nome de arquivo específico
       IF pr_nmarqlog IS NOT NULL THEN
@@ -691,7 +703,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
        WHERE cdcooper = pr_cdcooper
          AND upper(cdprogra) = pr_cdprogra;
     rw_crapprg cr_crapprg%ROWTYPE;    
-    
+
     ------------------------------- VARIAVEIS -------------------------------
     vr_dscdolog VARCHAR2(4000);
     vr_dslogmes VARCHAR2(400);
@@ -715,7 +727,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
       END IF;
       
       IF pr_dscritic IS NOT NULL THEN
-        vr_dscdolog := vr_dscdolog || pr_dscritic;
+        vr_dscdolog := vr_dscdolog || ' ' || pr_dscritic;
       END IF;
       
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
@@ -724,11 +736,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
                                                     ' - JOB --> '|| vr_dscdolog,
                                  pr_dstiplog     => pr_dstiplog,
                                  pr_nmarqlog     => pr_nmarqlog,
-                                 pr_cdprograma   => pr_nomdojob);
+                                 pr_cdprograma   => pr_nomdojob,
+                                 pr_tpexecucao   => 2);
       pr_flgerlog := TRUE;
     --> Log de final da execução
-    ELSIF pr_dstiplog = 'F' AND pr_flgerlog THEN
-    
+    ELSIF pr_dstiplog = 'F' AND pr_flgerlog THEN    
+
       vr_dscdolog := pr_nomdojob ||' --> Execucao ok';
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                  pr_ind_tipo_log => 1, 
@@ -736,7 +749,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
                                                     ' - '|| vr_dscdolog,
                                  pr_dstiplog     => pr_dstiplog,
                                  pr_cdprograma   => pr_nomdojob,
-                                 pr_nmarqlog     => pr_nmarqlog);
+                                 pr_nmarqlog     => pr_nmarqlog,
+                                 pr_tpexecucao   => 2);
 
     --> Log Final com erro
     ELSIF pr_dstiplog = 'E' AND pr_flgerlog THEN
@@ -747,7 +761,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
                                                     ' - '|| vr_dscdolog,
                                  pr_dstiplog     => pr_dstiplog,
                                  pr_cdprograma   => pr_nomdojob,
-                                 pr_nmarqlog     => pr_nmarqlog);        
+                                 pr_nmarqlog     => pr_nmarqlog,
+                                 pr_tpexecucao   => 2);
 
     --> Caso passado critica e nao caiu em nenhuma situalção acima
     ELSIF pr_dscritic IS NOT NULL THEN
@@ -760,7 +775,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
                                                     ' - '|| vr_dscdolog,
                                  pr_nmarqlog     => vr_dslogmes,
                                  pr_dstiplog     => 'E',
-                                 pr_cdprograma   => pr_nomdojob);
+                                 pr_cdprograma   => pr_nomdojob,
+                                 pr_tpexecucao   => 2);
      
     END IF; 
   
@@ -772,7 +788,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
                                  pr_ind_tipo_log => 2, 
                                  pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
                                                     ' - '|| vr_dscdolog,
-                                 pr_nmarqlog     => vr_dslogmes);
+                                 pr_nmarqlog     => vr_dslogmes,
+                                 pr_tpexecucao   => 2);
     
   END pc_log_exec_job;
   
