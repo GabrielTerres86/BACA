@@ -12564,6 +12564,7 @@ PROCEDURE aprova_trans_pend:
                                                      ,INPUT 0
                                                      ,INPUT 0
                                                      ,INPUT 0
+                                                     ,INPUT 0
                                                      ,INPUT tt-tbrecarga_trans_pend.tprecarga
                                                      ,INPUT ?
                                                      ,INPUT 0

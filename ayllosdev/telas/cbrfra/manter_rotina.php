@@ -84,11 +84,7 @@
 		//rotina da consulta de codigos com fraude	
 		// caso a consulta seja no modo exclusao ativa a opcao de exclusao na tabela
 		$strdisabled = ($stropcao == 'E') ? '' : 'display:none';
-
-		if ($dsfraude == '000.000.000-00' || $dsfraude == '0000000-0000') {
-			$dsfraude = '';
-		}
-
+		
 		$xml = new XmlMensageria();
 		$xml->add('cdcooper',$glbvars["cdcooper"])
 		    ->add('tpfraude',$tipo)

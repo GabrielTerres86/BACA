@@ -33,6 +33,7 @@ DEF  INPUT PARAM par_cdproduto   AS INT                 NO-UNDO.
 DEF  INPUT PARAM par_nrddd       AS INT                            NO-UNDO.
 DEF  INPUT PARAM par_nrcelular   AS INT                            NO-UNDO.
 DEF  INPUT PARAM par_nmcontato   AS CHAR               NO-UNDO.
+DEF  INPUT PARAM par_flgfavori   AS INT                NO-UNDO.
 DEF  INPUT PARAM par_idseqttl    AS INT                            NO-UNDO.
 DEF  INPUT PARAM par_nrcpfope    LIKE crapopi.nrcpfope NO-UNDO.
 DEF  INPUT PARAM par_vlrecarga   AS DECIMAL            NO-UNDO.
@@ -189,6 +190,7 @@ ELSE IF par_operacao = 6 THEN
                          ,INPUT par_nrddd
                          ,INPUT par_nrcelular
                          ,INPUT par_nmcontato
+                         ,INPUT par_flgfavori
                          ,INPUT par_vlrecarga
                          ,INPUT par_cdoperadora
                          ,INPUT par_cdproduto

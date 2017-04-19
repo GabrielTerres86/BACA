@@ -755,6 +755,7 @@ DEF VAR aux_cdproduto   AS INT                                         NO-UNDO.
 DEF VAR aux_nrddd       AS INT                                         NO-UNDO.
 DEF VAR aux_nrcelular   AS INT                                         NO-UNDO.
 DEF VAR aux_nmcontato   AS CHAR                                        NO-UNDO.
+DEF VAR aux_flgfavori   AS INT                                         NO-UNDO.
 DEF VAR aux_vlrecarga   AS DECI                                        NO-UNDO.
 DEF VAR aux_cdopcaodt   AS INT                                         NO-UNDO.
 DEF VAR aux_dtrecarga   AS DATE                                        NO-UNDO.
@@ -7832,11 +7833,21 @@ PROCEDURE proc_operacao181:
            aux_nrddd       = INT(GET-VALUE("aux_nrddd"))            
            aux_nrcelular   = INT(GET-VALUE("aux_nrcelular"))
            aux_nmcontato   = GET-VALUE("aux_nmcontato")
+           aux_flgfavori   = INT(GET-VALUE("aux_flgfavori"))
            aux_vlrecarga   = DECI(GET-VALUE("aux_vlrecarga"))          
            aux_cdopcaodt   = INT(GET-VALUE("aux_cddopcao"))
-           aux_dtrecarga   = DATE(GET-VALUE("aux_dtrecarga"))
            aux_qtmesagd    = INT(GET-VALUE("aux_qtdmeses")).
            
+           
+    ASSIGN aux_dtrecarga   = DATE(GET-VALUE("aux_dtrecarga")) NO-ERROR.
+      
+    IF  ERROR-STATUS:ERROR THEN
+      DO:
+          {&out} "<dsmsgerr>Data de início do agendamento nao é uma data válida.</dsmsgerr>".
+          
+      END.      
+    ELSE 
+      DO:       
     RUN sistema/internet/fontes/InternetBank181.p (INPUT aux_operacao,
                                                    INPUT aux_cdcooper,
                                                    INPUT aux_nrdconta,
@@ -7845,6 +7856,7 @@ PROCEDURE proc_operacao181:
                                                    INPUT aux_nrddd,
                                                    INPUT aux_nrcelular,
                                                    INPUT aux_nmcontato,
+                                                       INPUT aux_flgfavori,
                                                    INPUT aux_idseqttl,
                                                    INPUT aux_nrcpfope,
                                                    INPUT aux_vlrecarga,
@@ -7863,7 +7875,9 @@ PROCEDURE proc_operacao181:
         
         END.
     
-    {&out} aux_tgfimprg.      
+      END.
+      
+      {&out} aux_tgfimprg.      
 
 END PROCEDURE.                 
 

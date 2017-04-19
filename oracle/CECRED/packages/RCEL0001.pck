@@ -203,6 +203,7 @@ CREATE OR REPLACE PACKAGE CECRED.RCEL0001 AS
                                   ,pr_nrddd      IN tbrecarga_favorito.nrddd%TYPE
                                   ,pr_nrcelular  IN tbrecarga_favorito.nrcelular%TYPE
                                   ,pr_nmcontato  IN tbrecarga_favorito.nmcontato%TYPE
+                                  ,pr_flgfavori  IN INTEGER
                                   ,pr_vlrecarga  IN tbrecarga_valor.vlrecarga%TYPE
                                   ,pr_operadora  IN tbrecarga_operadora.cdoperadora%TYPE
                                   ,pr_produto    IN tbrecarga_produto.cdproduto%TYPE
@@ -1207,7 +1208,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 																					                      ELSE 'TAA' END
 																					 ,pr_idorigem => pr_idorigem
 																					 ,pr_idseqttl => pr_idseqttl
-																					 ,pr_nrcpfope => pr_nrcpfope /* Quando idorigem <> 3-Internet virá zerado */ 
+																					 ,pr_nrcpfope => pr_nrcpfope -- Quando idorigem <> 3-Internet virá zerado 
 																					 ,pr_nrcpfrep => CASE WHEN pr_nrcpfope > 0 THEN 0
 																					                      ELSE NVL(vr_nrcpfcgc,0) END
 																					 ,pr_cdcoptfn => pr_cdcoptfn
@@ -1219,7 +1220,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 																					 ,pr_vlrecarga => pr_vlrecarga
 																					 ,pr_dtrecarga => pr_dtrecarga
 																					 ,pr_lsdatagd => pr_lsdatagd 
-																					 /* Indicador de agendamento */
+																					 -- Indicador de agendamento 
 																					 ,pr_tprecarga => CASE WHEN pr_cddopcao > 1 THEN 2 
 																					                       ELSE 1 END
 																					 ,pr_nrdddtel => pr_nrdddtel
@@ -3435,6 +3436,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                                   ,pr_nrddd      IN tbrecarga_favorito.nrddd%TYPE
                                   ,pr_nrcelular  IN tbrecarga_favorito.nrcelular%TYPE
                                   ,pr_nmcontato  IN tbrecarga_favorito.nmcontato%TYPE
+                                  ,pr_flgfavori  IN INTEGER
                                   ,pr_vlrecarga  IN tbrecarga_valor.vlrecarga%TYPE
                                   ,pr_operadora  IN tbrecarga_operadora.cdoperadora%TYPE
                                   ,pr_produto    IN tbrecarga_produto.cdproduto%TYPE
@@ -3591,7 +3593,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
       -- interfira no cadastro de recarga
       COMMIT;
       
-      IF pr_inaprpen = 0 THEN
+      IF pr_inaprpen = 0 AND pr_flgfavori = 1 THEN
         pc_cadastra_favorito(pr_cdcooper  => pr_cdcooper
                             ,pr_nrdconta  => pr_nrdconta
                             ,pr_nrddd     => vr_nrddd
@@ -4463,13 +4465,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
       rw_operadora cr_operadora%ROWTYPE;
       
       CURSOR cr_craptvl (pr_cdcooper IN crapcop.cdcooper%TYPE
-                        ,pr_nrctrlif IN craptvl.idopetrf%TYPE) IS
+                        ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
+                        ,pr_nrdocmto IN craptvl.nrdocmto%TYPE) IS
         SELECT tvl.idopetrf
               ,tvl.cpfcgrcb
           FROM craptvl tvl
          WHERE tvl.cdcooper = pr_cdcooper
+           AND tvl.dtmvtolt = pr_dtmvtolt
+           AND tvl.cdagenci = 1
+           AND tvl.cdbccxlt = 85
+           AND tvl.nrdolote = 600037
            AND tvl.tpdoctrf = 3 /* TED SPB */
-           AND tvl.idopetrf = pr_nrctrlif;
+           AND tvl.nrdocmto = pr_nrdocmto;
       rw_craptvl cr_craptvl%ROWTYPE;
       
       CURSOR cr_crapban (pr_nrispbif IN crapban.nrispbif%TYPE) IS
@@ -4645,7 +4652,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
         
         -- Verifica se lançamento ja existe
         OPEN cr_craptvl (pr_cdcooper => rw_crapcop.cdcooper 
-                        ,pr_nrctrlif => vr_nrctrlif);
+                        ,pr_dtmvtolt => rw_crapdat.dtmvtocd
+                        ,pr_nrdocmto => vr_nrdocmto);
         FETCH cr_craptvl into rw_craptvl;
         IF cr_craptvl%FOUND THEN
           vr_dscritic := 'Lançamento CRAPTVL já existe. IDOPETRF =' || rw_craptvl.idopetrf;

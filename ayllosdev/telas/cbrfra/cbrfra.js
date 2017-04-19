@@ -128,8 +128,8 @@ function formataLayout() {
 
 	$("#nrcpf").css({'width':'450px', 'text-align':'left'});
 	$("#nrcnpj").css({'width':'450px','text-align':'left'});
-	$("#nrdddcel").css({'width':'25px','text-align':'left'}).setMask('INTEGER','99','','');
-	$("#nrtelcel").css({'width':'125px','text-align':'left'}).setMask('INTEGER','99999-9999','-','');
+	$("#nrdddcel").css({'width':'25px','text-align':'left'}).setMask('INTEGER','zz','','');
+	$("#nrtelcel").css({'width':'125px','text-align':'left'}).setMask("INTEGER","zzzzz-zzzz",".-","");
 
 	return false;	
 }
@@ -344,17 +344,31 @@ function confirma(cddopcao) {
 	else {
 		strCodigo = $("#nrdddcel").val() + $("#nrtelcel").val();
 	}
-	
-	if (cddopcao == 'I' && (strCodigo == '' || strdata == '' || ($("#tipo").val() == 4 && ($("#nrdddcel").val() == '' || $("#nrtelcel").val() == '')))){
-	    showError("error","Todos os campos devem ser prenchidos.","Alerta - Ayllos","");
-		return false;
+	if(cddopcao == 'I') {
+		if ((strCodigo == '' || strdata == '')){
+			showError("error","Todos os campos devem ser prenchidos.","Alerta - Ayllos","");
+			return false;
+		}
+		//TELEFONE CELULAR
+		if ($("#tipo").val() == 4) { 
+			
+			if ($("#nrdddcel").val() == '' || $("#nrtelcel").val() == '') {
+				showError("error","Todos os campos devem ser prenchidos.","Alerta - Ayllos","");
+				return false;
+			}
+			
+			if ($("#nrdddcel").val().lenght < 2) {
+				showError("error","DDD inv&aacute;lido","Alerta - Ayllos","");
+				return false;
+			}
+			
+			if ($("#nrtelcel").val().lenght < 10) {
+				showError("error","Telefone inv&aacute;lido.","Alerta - Ayllos","");
+				return false;
+			}
+		}
 	}
 	
-	if ($("#tipo").val() == 4 && cddopcao == "I" && ($("#nrdddcel").val() == '00' || $("#nrtelcel").val() == '00000-0000')) {
-		showError("error","DDD/Telefone inv&aacute;lido.","Alerta - Ayllos","$('#nrdddcel').focus()");
-		return false;
-	}
-		
 	var mensagem;
 	
 	// Monta mensagem de confirmacao
@@ -426,7 +440,7 @@ function realizaOperacao(cddopcao, nriniseq , nrregist) {
 		showMsgAguardo("Aguarde, excluindo registros de fraude...");  
 	}
 
-	if (cddopcao == "I"){
+	if (cddopcao == "I" || cddopcao == "E"){
 		$("#nrdcodigo").val('');
 		$("#nrcpf").val('');
 		$("#nrcnpj").val('');
