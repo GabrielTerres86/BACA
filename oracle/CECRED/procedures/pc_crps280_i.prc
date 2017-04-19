@@ -336,11 +336,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                  22/02/2017 - Ajustes referente ao Prj.307 Automatização Arquivos Contábeis Ayllos 
                               Inclusão de informações no crrl227 e criçãode novos arquivos para o
                               Radar e Matera (Jonatas-Supero)   
-                              
-                 07/04/2017 - Ajustada informacao que constara na coluna de Risco Atual (Que foi renomeada
-				              para Risco Crto). Antes estava aparecendo o risco da conta, e agora devera
-							  aparecer o risco do contrato.
-							  Heitor (Mouts) - Chamado 631951
+
                                                      
   ............................................................................. */
 
@@ -3023,7 +3019,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
 
             -- Não enviar nivel em caso de ser AA
             IF vr_dsnivris <> 'AA' THEN
-               vr_des_xml_gene := vr_des_xml_gene || '<dsnivris>'||vr_tab_risco(vr_tab_crapris(vr_des_chave_crapris).innivris).dsdrisco||'</dsnivris>';
+               vr_des_xml_gene := vr_des_xml_gene || '<dsnivris>'||vr_dsnivris||'</dsnivris>';
             ELSE
                vr_des_xml_gene := vr_des_xml_gene || '<dsnivris/>';
             END IF;
