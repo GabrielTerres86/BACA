@@ -13,7 +13,9 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0002 AS
   -- Frequencia: -----
   -- Objetivo  : Agrupar rotinas genericas refente a tela PARPRE
 
-  -- Alteracoes:
+  -- Alteracoes: 03/08/2016 - Alterada estrutura da tela cadpre e outras rotinas
+  --                          do pre aprovado para fase 3 do Projeto 299 
+  --                          Pre aprovado.(Lombardi)
   --
   ---------------------------------------------------------------------------------------------------------------
    
@@ -24,51 +26,70 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0002 AS
        inpessoa crapass.inpessoa%TYPE,
        vldiscrd crapcpa.vllimdis%TYPE,
        txmensal craplcr.txmensal%TYPE,
-       vllimctr crappre.vllimctr%TYPE
+       vllimctr crappre.vllimctr%TYPE,
+       msgmanua VARCHAR2(1000)
        );
   TYPE typ_tab_dados_cpa IS TABLE OF typ_rec_dados_cpa 
       INDEX BY PLS_INTEGER;
        
        
+  PROCEDURE pc_valida_operador(pr_cdcooper  IN crapope.cdcooper%TYPE --> Codigo da Carga
+                              ,pr_cdoperad  IN crapope.cdoperad%TYPE --> Descrição da crítica
+                              ,pr_dscritic OUT VARCHAR2);            --> Descrição da crítica
   
   /* Rotina referente as acoes da tela PARPRE */
-  PROCEDURE pc_tela_cadpre(pr_cddopcao IN VARCHAR2              --> Tipo de acao que sera executada (C - Consulta / A - Alteracao)
-                          ,pr_inpessoa IN crappre.inpessoa%TYPE --> Codigo do tipo de pessoa
-                          ,pr_nrmcotas IN crappre.nrmcotas%TYPE --> Numero de vezes que as cotas serao multiplicadas
-                          ,pr_vllimcra IN crappre.vllimcra%TYPE --> Limite contas risco A
-                          ,pr_vllimcrb IN crappre.vllimcrb%TYPE --> Limite contas risco B
-                          ,pr_vllimcrc IN crappre.vllimcrc%TYPE --> Limite contas risco C
-                          ,pr_vllimcrd IN crappre.vllimcrd%TYPE --> Limite contas risco D
-                          ,pr_vllimcre IN crappre.vllimcre%TYPE --> Limite contas risco E
-                          ,pr_vllimcrf IN crappre.vllimcrf%TYPE --> Limite contas risco F
-                          ,pr_vllimcrg IN crappre.vllimcrg%TYPE --> Limite contas risco G
-                          ,pr_vllimcrh IN crappre.vllimcrh%TYPE --> Limite contas risco H
-                          ,pr_dssitdop IN crappre.dssitdop%TYPE --> Situação das Contas separados por (;)
-                          ,pr_nrrevcad IN crappre.nrrevcad%TYPE --> Numero de meses da revisao cadastral
-                          ,pr_vllimmin IN crappre.vllimmin%TYPE --> Limite minimo
-                          ,pr_vlpercom IN crappre.vlpercom%TYPE --> Porcentagem de comprometimento da Renda
-                          ,pr_vlmaxleg IN crappre.vlmaxleg%TYPE --> Porcentagem de Valor Maximo Legal
-                          ,pr_vllimctr IN crappre.vllimctr%TYPE --> Limite minimo para contratacao
-                          ,pr_vlmulpli IN crappre.vlmulpli%TYPE --> Valor multiplo
-                          ,pr_cdfinemp IN crappre.cdfinemp%TYPE --> Codigo da Finalidade
-                          ,pr_cdlcremp IN crappre.cdlcremp%TYPE --> Codigo da Linha de Credito
-                          ,pr_qtmescta IN crappre.qtmescta%TYPE --> Tempo de abertura da conta
-                          ,pr_qtmesadm IN crappre.qtmesadm%TYPE --> Tempo de admissao no emprego atual
-                          ,pr_qtmesemp IN crappre.qtmesemp%TYPE --> Tempo do fundacao da empresa
-                          ,pr_dslstali IN crappre.dslstali%TYPE --> Lista com codigos de alineas de devolucao de cheque
-                          ,pr_qtdevolu IN crappre.qtdevolu%TYPE --> Quantidade de devolucoes de cheque
-                          ,pr_qtdiadev IN crappre.qtdiadev%TYPE --> Quantidade de dias para calc. devolucao de cheque
-                          ,pr_qtctaatr IN crappre.qtctaatr%TYPE --> Quantidade de dias de conta corrente em atraso
-                          ,pr_qtepratr IN crappre.qtepratr%TYPE --> Quantidade de dias de emprestimo em atraso
-                          ,pr_qtestour IN crappre.qtestour%TYPE --> Quantidade de estouros de conta
-                          ,pr_qtdiaest IN crappre.qtdiaest%TYPE --> Quantidade de dias para calc. estouro de conta
-                          ,pr_flgconsu IN NUMBER                --> Flag para consulta
-                          ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
-                          ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
-                          ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
-                          ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
-                          ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
-                          ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
+  PROCEDURE pc_tela_cadpre(pr_cddopcao   IN VARCHAR2              --> Tipo de acao que sera executada (C - Consulta / A - Alteracao)
+                          ,pr_inpessoa   IN crappre.inpessoa%TYPE --> Codigo do tipo de pessoa
+                          ,pr_nrmcotas   IN crappre.nrmcotas%TYPE --> Numero de vezes que as cotas serao multiplicadas
+                          ,pr_vllimite_a IN tbepr_linha_pre_aprv.vllimite%TYPE  --> Limite contas risco A
+                          ,pr_vllimite_b IN tbepr_linha_pre_aprv.vllimite%TYPE  --> Limite contas risco B
+                          ,pr_vllimite_c IN tbepr_linha_pre_aprv.vllimite%TYPE  --> Limite contas risco C
+                          ,pr_vllimite_d IN tbepr_linha_pre_aprv.vllimite%TYPE  --> Limite contas risco D
+                          ,pr_vllimite_e IN tbepr_linha_pre_aprv.vllimite%TYPE  --> Limite contas risco E
+                          ,pr_vllimite_f IN tbepr_linha_pre_aprv.vllimite%TYPE  --> Limite contas risco F
+                          ,pr_vllimite_g IN tbepr_linha_pre_aprv.vllimite%TYPE  --> Limite contas risco G
+                          ,pr_vllimite_h IN tbepr_linha_pre_aprv.vllimite%TYPE  --> Limite contas risco H
+                          ,pr_cdlcremp_a IN tbepr_linha_pre_aprv.cdlcremp%TYPE  --> Limite contas risco A
+                          ,pr_cdlcremp_b IN tbepr_linha_pre_aprv.cdlcremp%TYPE  --> Limite contas risco B
+                          ,pr_cdlcremp_c IN tbepr_linha_pre_aprv.cdlcremp%TYPE  --> Limite contas risco C
+                          ,pr_cdlcremp_d IN tbepr_linha_pre_aprv.cdlcremp%TYPE  --> Limite contas risco D
+                          ,pr_cdlcremp_e IN tbepr_linha_pre_aprv.cdlcremp%TYPE  --> Limite contas risco E
+                          ,pr_cdlcremp_f IN tbepr_linha_pre_aprv.cdlcremp%TYPE  --> Limite contas risco F
+                          ,pr_cdlcremp_g IN tbepr_linha_pre_aprv.cdlcremp%TYPE  --> Limite contas risco G
+                          ,pr_cdlcremp_h IN tbepr_linha_pre_aprv.cdlcremp%TYPE  --> Limite contas risco H
+                          ,pr_dssitdop   IN crappre.dssitdop%TYPE --> Situação das Contas separados por (;)
+                          ,pr_nrrevcad   IN crappre.nrrevcad%TYPE --> Numero de meses da revisao cadastral
+                          ,pr_vllimmin   IN crappre.vllimmin%TYPE --> Limite minimo
+                          ,pr_vlpercom   IN crappre.vlpercom%TYPE  --> Porcentagem de comprometimento da Renda
+                          ,pr_qtdiaver   IN crappre.qtdiaver%TYPE  --> Porcentagem de comprometimento da Renda
+                          ,pr_vlmaxleg   IN crappre.vlmaxleg%TYPE  --> Porcentagem de Valor Maximo Legal
+                          ,pr_qtmesblq   IN crappre.qtmesblq%TYPE  --> Porcentagem de Valor Maximo Legal
+                          ,pr_vllimctr   IN crappre.vllimctr%TYPE --> Limite minimo para contratacao
+                          ,pr_vlmulpli   IN crappre.vlmulpli%TYPE --> Valor multiplo
+                          ,pr_cdfinemp   IN crappre.cdfinemp%TYPE --> Codigo da Finalidade
+                          ,pr_qtmescta   IN crappre.qtmescta%TYPE --> Tempo de abertura da conta
+                          ,pr_qtmesadm   IN crappre.qtmesadm%TYPE --> Tempo de admissao no emprego atual
+                          ,pr_qtmesemp   IN crappre.qtmesemp%TYPE --> Tempo do fundacao da empresa
+                          ,pr_dslstali   IN crappre.dslstali%TYPE --> Lista com codigos de alineas de devolucao de cheque
+                          ,pr_qtdevolu   IN crappre.qtdevolu%TYPE --> Quantidade de devolucoes de cheque
+                          ,pr_qtdiadev   IN crappre.qtdiadev%TYPE --> Quantidade de dias para calc. devolucao de cheque
+                          ,pr_qtctaatr   IN crappre.qtctaatr%TYPE --> Quantidade de dias de conta corrente em atraso
+                          ,pr_qtepratr   IN crappre.qtepratr%TYPE --> Quantidade de dias de emprestimo em atraso
+                          ,pr_qtestour   IN crappre.qtestour%TYPE --> Quantidade de estouros de conta
+                          ,pr_qtdiaest   IN crappre.qtdiaest%TYPE --> Quantidade de dias para calc. estouro de conta
+                          ,pr_qtavlatr   IN crappre.qtavlatr%TYPE  --> Operações como avalista Quantidade de dias em atraso
+                          ,pr_vlavlatr   IN crappre.vlavlatr%TYPE --> Operações como avalista Valor em atraso
+                          ,pr_qtavlope   IN crappre.qtavlope%TYPE  --> Operações como avalista Quantidade de operações em atraso
+                          ,pr_qtcjgatr   IN crappre.qtcjgatr%TYPE  --> Conjuge Quantidade de dias em atraso
+                          ,pr_vlcjgatr   IN crappre.vlcjgatr%TYPE  --> Conjuge Valor em atraso
+                          ,pr_qtcjgope   IN crappre.qtcjgope%TYPE  --> Conjuge Quantidade de operações em atraso 
+                          ,pr_flgconsu   IN NUMBER                --> Flag para consulta
+                          ,pr_xmllog     IN VARCHAR2              --> XML com informações de LOG
+                          ,pr_cdcritic  OUT PLS_INTEGER          --> Código da crítica
+                          ,pr_dscritic  OUT VARCHAR2             --> Descrição da crítica
+                          ,pr_retxml     IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                          ,pr_nmdcampo  OUT VARCHAR2             --> Nome do campo com erro
+                          ,pr_des_erro  OUT VARCHAR2);           --> Erros do processo
 
   PROCEDURE pc_consultar_carga (pr_xmllog   IN VARCHAR2           --> XML com informações de LOG
                                ,pr_cdcritic OUT PLS_INTEGER       --> Código da crítica
@@ -78,6 +99,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0002 AS
                                ,pr_des_erro OUT VARCHAR2);
   
   PROCEDURE pc_busca_carga_ativa (pr_cdcooper  IN tbepr_carga_pre_aprv.cdcooper%TYPE    --> Codigo da cooperativa
+                                 ,pr_nrdconta  IN crapcpa.nrdconta%TYPE                 --> Numero da conta
                                  ,pr_idcarga  OUT tbepr_carga_pre_aprv.idcarga%TYPE);   --> Codigo da carga
   
   PROCEDURE pc_exclui_carga_bloqueada (pr_cdcooper IN  tbepr_carga_pre_aprv.cdcooper%TYPE --> Codigo Cooperativa
@@ -114,9 +136,9 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0002 AS
                                     ,pr_nrdconta  IN crapass.nrdconta%TYPE    --> Numero da conta do cooperado
                                     ,pr_idseqttl  IN crapttl.idseqttl%TYPE    --> Sequencial do titular
                                     ,pr_nrcpfope  IN crapopi.nrcpfope%TYPE    --> CPF do operador juridico
-                                    ,pr_clob_cpa  OUT CLOB                --> Retorna dados do credito pre aprovado
+                                    ,pr_clob_cpa  OUT VARCHAR2            --> Retorna dados do credito pre aprovado
                                     ,pr_des_reto  OUT VARCHAR2            --> Retorno OK/NOK
-                                    ,pr_clob_erro OUT CLOB);              --> Retorna os erros
+                                    ,pr_clob_erro OUT VARCHAR2);              --> Retorna os erros
   
   PROCEDURE pc_busca_alinea(pr_xmllog   IN VARCHAR2           --> XML com informações de LOG
                            ,pr_cdcritic OUT PLS_INTEGER       --> Código da crítica
@@ -141,6 +163,51 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0002 AS
   PROCEDURE pc_limpeza_diretorio(pr_nmdireto IN VARCHAR2      --> Diretorio para limpeza
                                 ,pr_dscritic OUT VARCHAR2);   --> Retorno de critica
                                
+  -- Buscar as linhas de crédito.
+  PROCEDURE pc_busca_linha_credito_prog(pr_cdcooper  IN crapcop.cdcooper%TYPE              --> Diretorio para limpeza
+                                       ,pr_inpessoa  IN crapass.inpessoa%TYPE DEFAULT NULL --> Tipo de pessoa
+                                       ,pr_cdrisco   IN craplcr.cdlcremp%TYPE DEFAULT NULL --> Codigo do risco
+                                       ,pr_lslcremp OUT VARCHAR2                           --> Cdigos dos riscos
+                                       ,pr_dscritic OUT VARCHAR2);                         --> Descricao da critica
+  
+  -- Busca período de bloqueio de limite por refinanceamento.
+  PROCEDURE pc_busca_periodo_bloq_refin(pr_inpessoa IN crappre.inpessoa%TYPE --> Tipo de pessoa
+                                       ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                                       ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                       ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                                       ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                       ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                       ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
+  
+  -- Mantem status do pre aprovado do cooperado
+  PROCEDURE pc_mantem_param_conta (pr_cdcooper              IN crapcop.cdcooper%TYPE
+                                  ,pr_nrdconta              IN crapass.nrdconta%TYPE
+                                  ,pr_flgrenli              IN crapass.flgrenli%TYPE
+                                  ,pr_flglibera_pre_aprv    IN NUMBER
+                                  ,pr_dtatualiza_pre_aprv   IN DATE DEFAULT SYSDATE
+                                  ,pr_idmotivo              IN NUMBER DEFAULT 0
+                                  ,pr_cdoperad              IN VARCHAR2
+                                  ,pr_idorigem              IN VARCHAR2
+                                  ,pr_nmdatela              IN VARCHAR2
+                                  ,pr_dtmvtolt              IN DATE
+                                  ,pr_dscritic             OUT VARCHAR2             --> Descrição da crítica
+                                  ,pr_des_erro             OUT VARCHAR2);           --> Erros do processo
+
+  -- Bloqueio de limite do pre aprovado por refinanceamento.
+  PROCEDURE pc_bloqueia_pre_aprv_por_refin(pr_nrdconta IN crapass.nrdconta%TYPE --> Conta do cooperado
+                                          ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                                          ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                          ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                                          ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                          ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                          ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
+  
+  -- Habilitar as contas bloqueadas por refinanciamento
+  PROCEDURE pc_habilita_contas_suspensas(pr_cdcooper IN crapcop.cdcooper%TYPE --> Conta do cooperado
+                                        ,pr_inpessoa IN crappre.inpessoa%TYPE --> Tipo de pessoa
+                                        ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data do movimento
+                                        ,pr_dscritic OUT VARCHAR2);           --> Descrição da crítica
+
   END EMPR0002;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
@@ -171,6 +238,49 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
    WHERE cdcooper = pr_cdcooper;
   rw_crapcop cr_crapcop%ROWTYPE;
   
+  /* Mostrar o texto dos motivos na tela de acordo com o ocorrido. */
+  FUNCTION fn_busca_motivo(pr_idmotivo IN tbgen_motivo.idmotivo%TYPE) RETURN VARCHAR2 IS
+  BEGIN
+    -- ..........................................................................
+    --
+    --  Programa : fn_busca_motivo
+    --  Sistema  : Conta-Corrente - Cooperativa de Credito
+    --  Sigla    : CRED
+    --  Autor    : Lombardi
+    --  Data     : Outubro/2016.                   Ultima atualizacao: --/--/----
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que chamado por outros programas.
+    --   Objetivo  : Mostrar o texto dos motivos na tela de acordo com o ocorrido.
+    --
+    --   Alteracoes: 
+    -- .............................................................................
+
+    DECLARE
+      -- Efetuar a busca da descrição na tabela
+      CURSOR cr_tbgen_motivo IS
+        SELECT mot.dsmotivo
+          FROM tbgen_motivo mot
+         WHERE mot.idmotivo = pr_idmotivo;
+      vr_dsmotivo tbgen_motivo.dsmotivo%TYPE;
+    BEGIN
+      -- Busca descrição da critica cfme parâmetro passado
+      OPEN cr_tbgen_motivo;
+      FETCH cr_tbgen_motivo
+       INTO vr_dsmotivo;
+      -- Se não encontrou nenhum registro
+      IF cr_tbgen_motivo%NOTFOUND THEN
+        -- Montar descrição padrão
+        vr_dsmotivo := pr_idmotivo || ' - Critica nao cadastrada!';
+      END IF;
+      -- Apenas fechar o cursor
+      CLOSE cr_tbgen_motivo;
+      -- Retornar a string montada
+      RETURN vr_dsmotivo;
+    END;
+  END fn_busca_motivo;
+  
   PROCEDURE pc_valida_operador(pr_cdcooper  IN crapope.cdcooper%TYPE --> Codigo da Carga
                               ,pr_cdoperad  IN crapope.cdoperad%TYPE --> Descrição da crítica
                               ,pr_dscritic OUT VARCHAR2) IS          --> Descrição da crítica
@@ -190,14 +300,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
 
      Objetivo  : Valida o operador.
 
-     Alteracoes: 
+     Alteracoes: 29/11/2016 - P341 - Automatização BACENJUD - Alterado para validar o departamento à partir
+                              do código e não mais pela descrição (Renato Darosci - Supero)
 
      ..............................................................................*/ 
     DECLARE
       -- Busca o operador
       CURSOR cr_crapope(pr_cdcooper IN crapope.cdcooper%TYPE
                        ,pr_cdoperad IN crapope.cdoperad%TYPE) IS
-        SELECT dsdepart
+        SELECT cddepart
           FROM crapope
          WHERE crapope.cdcooper = pr_cdcooper
            AND UPPER(crapope.cdoperad) = UPPER(pr_cdoperad);
@@ -229,7 +340,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
       END IF;
 
       -- Somente o departamento credito irá ter acesso para alterar as informacoes
-      IF rw_crapope.dsdepart <> 'PRODUTOS' AND rw_crapope.dsdepart <> 'TI'  THEN
+      IF rw_crapope.cddepart NOT IN (14,20) THEN
         vr_cdcritic := 36;
         vr_dscritic := NULL;
         RAISE vr_exc_saida;
@@ -249,43 +360,58 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
   END pc_valida_operador;
 
   /* Rotina referente as acoes da tela CADPRE */
-  PROCEDURE pc_tela_cadpre(pr_cddopcao IN VARCHAR2              --> Tipo de acao que sera executada (C - Consulta / A - Alteracao)
-                          ,pr_inpessoa IN crappre.inpessoa%TYPE --> Codigo do tipo de pessoa
-                          ,pr_nrmcotas IN crappre.nrmcotas%TYPE --> Numero de vezes que as cotas serao multiplicadas
-                          ,pr_vllimcra IN crappre.vllimcra%TYPE --> Limite contas risco A
-                          ,pr_vllimcrb IN crappre.vllimcrb%TYPE --> Limite contas risco B
-                          ,pr_vllimcrc IN crappre.vllimcrc%TYPE --> Limite contas risco C
-                          ,pr_vllimcrd IN crappre.vllimcrd%TYPE --> Limite contas risco D
-                          ,pr_vllimcre IN crappre.vllimcre%TYPE --> Limite contas risco E
-                          ,pr_vllimcrf IN crappre.vllimcrf%TYPE --> Limite contas risco F
-                          ,pr_vllimcrg IN crappre.vllimcrg%TYPE --> Limite contas risco G
-                          ,pr_vllimcrh IN crappre.vllimcrh%TYPE --> Limite contas risco H
-                          ,pr_dssitdop IN crappre.dssitdop%TYPE --> Situação das Contas separados por (;)
-                          ,pr_nrrevcad IN crappre.nrrevcad%TYPE --> Numero de meses da revisao cadastral
-                          ,pr_vllimmin IN crappre.vllimmin%TYPE --> Limite minimo
-                          ,pr_vlpercom IN crappre.vlpercom%TYPE --> Porcentagem de comprometimento da Renda
-                          ,pr_vlmaxleg IN crappre.vlmaxleg%TYPE --> Porcentagem de Valor Maximo Legal
-                          ,pr_vllimctr IN crappre.vllimctr%TYPE --> Limite minimo para contratacao
-                          ,pr_vlmulpli IN crappre.vlmulpli%TYPE --> Valor multiplo
-                          ,pr_cdfinemp IN crappre.cdfinemp%TYPE --> Codigo da Finalidade
-                          ,pr_cdlcremp IN crappre.cdlcremp%TYPE --> Codigo da Linha de Credito
-                          ,pr_qtmescta IN crappre.qtmescta%TYPE --> Tempo de abertura da conta
-                          ,pr_qtmesadm IN crappre.qtmesadm%TYPE --> Tempo de admissao no emprego atual
-                          ,pr_qtmesemp IN crappre.qtmesemp%TYPE --> Tempo do fundacao da empresa
-                          ,pr_dslstali IN crappre.dslstali%TYPE --> Lista com codigos de alineas de devolucao de cheque
-                          ,pr_qtdevolu IN crappre.qtdevolu%TYPE --> Quantidade de devolucoes de cheque
-                          ,pr_qtdiadev IN crappre.qtdiadev%TYPE --> Quantidade de dias para calc. devolucao de cheque
-                          ,pr_qtctaatr IN crappre.qtctaatr%TYPE --> Quantidade de dias de conta corrente em atraso
-                          ,pr_qtepratr IN crappre.qtepratr%TYPE --> Quantidade de dias de emprestimo em atraso
-                          ,pr_qtestour IN crappre.qtestour%TYPE --> Quantidade de estouros de conta
-                          ,pr_qtdiaest IN crappre.qtdiaest%TYPE --> Quantidade de dias para calc. estouro de conta
-                          ,pr_flgconsu IN NUMBER                --> Flag para consulta
-                          ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
-                          ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
-                          ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
-                          ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
-                          ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
-                          ,pr_des_erro OUT VARCHAR2) IS         --> Erros do processo
+  PROCEDURE pc_tela_cadpre(pr_cddopcao   IN VARCHAR2               --> Tipo de acao que sera executada (C - Consulta / A - Alteracao)
+                          ,pr_inpessoa   IN crappre.inpessoa%TYPE  --> Codigo do tipo de pessoa
+                          ,pr_nrmcotas   IN crappre.nrmcotas%TYPE  --> Numero de vezes que as cotas serao multiplicadas
+                          ,pr_vllimite_a IN tbepr_linha_pre_aprv.vllimite%TYPE  --> Limite contas risco A
+                          ,pr_vllimite_b IN tbepr_linha_pre_aprv.vllimite%TYPE  --> Limite contas risco B
+                          ,pr_vllimite_c IN tbepr_linha_pre_aprv.vllimite%TYPE  --> Limite contas risco C
+                          ,pr_vllimite_d IN tbepr_linha_pre_aprv.vllimite%TYPE  --> Limite contas risco D
+                          ,pr_vllimite_e IN tbepr_linha_pre_aprv.vllimite%TYPE  --> Limite contas risco E
+                          ,pr_vllimite_f IN tbepr_linha_pre_aprv.vllimite%TYPE  --> Limite contas risco F
+                          ,pr_vllimite_g IN tbepr_linha_pre_aprv.vllimite%TYPE  --> Limite contas risco G
+                          ,pr_vllimite_h IN tbepr_linha_pre_aprv.vllimite%TYPE  --> Limite contas risco H
+                          ,pr_cdlcremp_a IN tbepr_linha_pre_aprv.cdlcremp%TYPE  --> Limite contas risco A
+                          ,pr_cdlcremp_b IN tbepr_linha_pre_aprv.cdlcremp%TYPE  --> Limite contas risco B
+                          ,pr_cdlcremp_c IN tbepr_linha_pre_aprv.cdlcremp%TYPE  --> Limite contas risco C
+                          ,pr_cdlcremp_d IN tbepr_linha_pre_aprv.cdlcremp%TYPE  --> Limite contas risco D
+                          ,pr_cdlcremp_e IN tbepr_linha_pre_aprv.cdlcremp%TYPE  --> Limite contas risco E
+                          ,pr_cdlcremp_f IN tbepr_linha_pre_aprv.cdlcremp%TYPE  --> Limite contas risco F
+                          ,pr_cdlcremp_g IN tbepr_linha_pre_aprv.cdlcremp%TYPE  --> Limite contas risco G
+                          ,pr_cdlcremp_h IN tbepr_linha_pre_aprv.cdlcremp%TYPE  --> Limite contas risco H
+                          ,pr_dssitdop   IN crappre.dssitdop%TYPE  --> Situação das Contas separados por (;)
+                          ,pr_nrrevcad   IN crappre.nrrevcad%TYPE  --> Numero de meses da revisao cadastral
+                          ,pr_vllimmin   IN crappre.vllimmin%TYPE  --> Limite minimo
+                          ,pr_vlpercom   IN crappre.vlpercom%TYPE  --> Porcentagem de comprometimento da Renda
+                          ,pr_qtdiaver   IN crappre.qtdiaver%TYPE  --> Porcentagem de comprometimento da Renda
+                          ,pr_vlmaxleg   IN crappre.vlmaxleg%TYPE  --> Porcentagem de Valor Maximo Legal
+                          ,pr_qtmesblq   IN crappre.qtmesblq%TYPE  --> Porcentagem de Valor Maximo Legal
+                          ,pr_vllimctr   IN crappre.vllimctr%TYPE  --> Limite minimo para contratacao
+                          ,pr_vlmulpli   IN crappre.vlmulpli%TYPE  --> Valor multiplo
+                          ,pr_cdfinemp   IN crappre.cdfinemp%TYPE  --> Codigo da Finalidade
+                          ,pr_qtmescta   IN crappre.qtmescta%TYPE  --> Tempo de abertura da conta
+                          ,pr_qtmesadm   IN crappre.qtmesadm%TYPE  --> Tempo de admissao no emprego atual
+                          ,pr_qtmesemp   IN crappre.qtmesemp%TYPE  --> Tempo do fundacao da empresa
+                          ,pr_dslstali   IN crappre.dslstali%TYPE  --> Lista com codigos de alineas de devolucao de cheque
+                          ,pr_qtdevolu   IN crappre.qtdevolu%TYPE  --> Quantidade de devolucoes de cheque
+                          ,pr_qtdiadev   IN crappre.qtdiadev%TYPE  --> Quantidade de dias para calc. devolucao de cheque
+                          ,pr_qtctaatr   IN crappre.qtctaatr%TYPE  --> Quantidade de dias de conta corrente em atraso
+                          ,pr_qtepratr   IN crappre.qtepratr%TYPE  --> Quantidade de dias de emprestimo em atraso
+                          ,pr_qtestour   IN crappre.qtestour%TYPE  --> Quantidade de estouros de conta
+                          ,pr_qtdiaest   IN crappre.qtdiaest%TYPE  --> Quantidade de dias para calc. estouro de conta
+                          ,pr_qtavlatr   IN crappre.qtavlatr%TYPE  --> Operações como avalista Quantidade de dias em atraso
+                          ,pr_vlavlatr   IN crappre.vlavlatr%TYPE --> Operações como avalista Valor em atraso
+                          ,pr_qtavlope   IN crappre.qtavlope%TYPE  --> Operações como avalista Quantidade de operações em atraso
+                          ,pr_qtcjgatr   IN crappre.qtcjgatr%TYPE  --> Conjuge Quantidade de dias em atraso
+                          ,pr_vlcjgatr   IN crappre.vlcjgatr%TYPE  --> Conjuge Valor em atraso
+                          ,pr_qtcjgope   IN crappre.qtcjgope%TYPE  --> Conjuge Quantidade de operações em atraso 
+                          ,pr_flgconsu   IN NUMBER                 --> Flag para consulta
+                          ,pr_xmllog     IN VARCHAR2               --> XML com informações de LOG
+                          ,pr_cdcritic  OUT PLS_INTEGER           --> Código da crítica
+                          ,pr_dscritic  OUT VARCHAR2              --> Descrição da crítica
+                          ,pr_retxml     IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
+                          ,pr_nmdcampo  OUT VARCHAR2              --> Nome do campo com erro
+                          ,pr_des_erro  OUT VARCHAR2) IS          --> Erros do processo
   BEGIN
 
     /* .............................................................................
@@ -310,18 +436,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                  08/01/2016 - Inclusao/Exclusao de campos PRJ261 - Pre-Aprovado fase II.
                               (Jaison/Anderson)
 
+                 07/07/2016 - Inclusao/Exclusao de campos PRJ299 - Pre-Aprovado fase III.
+                              (Lombardi)
+
      ..............................................................................*/ 
     DECLARE
 
       -- Selecionar os dados
       CURSOR cr_crappre(pr_cdcooper IN crappre.cdcooper%TYPE
                        ,pr_inpessoa IN crappre.inpessoa%TYPE) IS
-        SELECT inpessoa, nrmcotas, dsrisdop, dssitdop, nrrevcad,
-               vllimmin, vlpercom, vllimcra, vllimcrb, vllimcrc,
-               vllimcrd, vllimcre, vllimcrf, vllimcrg, vllimcrh,
-               vlmaxleg, vllimctr, vlmulpli, cdfinemp, cdlcremp,
-               qtmescta, qtmesadm, qtmesemp, dslstali, qtdevolu,
-               qtdiadev, qtctaatr, qtepratr, qtestour, qtdiaest
+        SELECT inpessoa, nrmcotas, dssitdop, nrrevcad, vllimmin,
+               vlpercom, qtdiaver, vlmaxleg, qtmesblq, vllimctr,
+               vlmulpli, cdfinemp, cdlcremp, qtmescta, qtmesadm,
+               qtmesemp, dslstali, qtdevolu, qtdiadev, qtctaatr,
+               qtepratr, qtestour, qtdiaest, qtavlatr, vlavlatr,
+               qtavlope, qtcjgatr, vlcjgatr, qtcjgope
           FROM crappre 
          WHERE cdcooper = pr_cdcooper
            AND inpessoa = pr_inpessoa;
@@ -370,6 +499,55 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
            AND ROWNUM = 1
         ORDER BY carga.idcarga DESC;
       
+      CURSOR cr_riscos(pr_cdcooper IN tbepr_carga_pre_aprv.cdcooper%TYPE
+                      ,pr_inpessoa IN NUMBER) IS
+        SELECT ris.dsrisco
+              ,nvl(epr.vllimite,0) vllimite
+              ,nvl(epr.cdlcremp,0) cdlcremp
+              ,lcr.dslcremp
+              ,lcr.txmensal
+          FROM (SELECT LEVEL AS cdrisco
+                       ,decode(level
+                               ,1,'AA'
+                               ,2,'A'
+                               ,3,'B'
+                               ,4,'C'
+                               ,5,'D'
+                               ,6,'E'
+                               ,7,'F'
+                               ,8,'G'
+                               ,9,'H'
+                               ,10,'HH') as dsrisco
+                   FROM dual
+                  WHERE LEVEL NOT IN (1,10)
+                CONNECT BY LEVEL <= 10) ris
+      LEFT JOIN tbepr_linha_pre_aprv epr
+             ON epr.cdrisco = ris.cdrisco
+            AND epr.cdcooper = pr_cdcooper
+            AND epr.inpessoa = pr_inpessoa
+      LEFT JOIN craplcr lcr
+             ON lcr.cdcooper = epr.cdcooper
+            AND lcr.cdlcremp = epr.cdlcremp ORDER BY dsrisco;
+      
+      CURSOR cr_risco(pr_cdcooper IN tbepr_carga_pre_aprv.cdcooper%TYPE
+                     ,pr_inpessoa IN NUMBER
+                     ,pr_dsrisco  IN VARCHAR2) IS      
+        SELECT cdrisco
+          FROM tbepr_linha_pre_aprv 
+         WHERE cdcooper = pr_cdcooper
+           AND inpessoa = pr_inpessoa
+           AND cdrisco = decode(pr_dsrisco,'AA',1
+                                           ,'A',2
+                                           ,'B',3
+                                           ,'C',4
+                                           ,'D',5
+                                           ,'E',6
+                                           ,'F',7
+                                           ,'G',8
+                                           ,'H',9
+                                           ,'HH',10);
+      rw_risco cr_risco%ROWTYPE;
+      
       -- Variável de críticas
       vr_cdcritic      crapcri.cdcritic%TYPE;
       vr_dscritic      VARCHAR2(10000);
@@ -388,12 +566,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
       vr_idorigem      VARCHAR2(100);
 
       vr_vlmaximo      crapcop.vlmaxleg%TYPE; --> Valor Maximo Legal
-      vr_dsrisdop      crappre.dsrisdop%TYPE; --> Riscos da Operacao
       vr_dtaltcad      VARCHAR2(20);          --> Data de alteracao do cadastro
       vr_dsclinha      VARCHAR2(4000);        --> Linha a ser inserida no LOG
       vr_dsdireto      VARCHAR2(400);         --> Diretório do arquivo de LOG
       vr_utlfileh      utl_file.file_type;    --> Handle para arquivo de LOG
       vr_vlsomado      NUMBER;                --> Valor total calculado
+      vr_contador      NUMBER;                --> Contador auxiliar
+      vr_vllimite      NUMBER(15,2);
+      vr_cdlcremp      NUMBER;
 
       BEGIN
         GENE0004.pc_extrai_dados(pr_xml      => pr_retxml 
@@ -451,19 +631,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados'   , pr_posicao => 0          , pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'inpessoa', pr_tag_cont => rw_crappre.inpessoa, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'nrmcotas', pr_tag_cont => rw_crappre.nrmcotas, pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'vllimcra', pr_tag_cont => rw_crappre.vllimcra, pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'vllimcrb', pr_tag_cont => rw_crappre.vllimcrb, pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'vllimcrc', pr_tag_cont => rw_crappre.vllimcrc, pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'vllimcrd', pr_tag_cont => rw_crappre.vllimcrd, pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'vllimcre', pr_tag_cont => rw_crappre.vllimcre, pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'vllimcrf', pr_tag_cont => rw_crappre.vllimcrf, pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'vllimcrg', pr_tag_cont => rw_crappre.vllimcrg, pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'vllimcrh', pr_tag_cont => rw_crappre.vllimcrh, pr_des_erro => vr_dscritic);
+
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'riscos', pr_tag_cont => '', pr_des_erro => vr_dscritic);
+        
+        vr_contador := 0;
+        FOR rw_riscos IN cr_riscos(vr_cdcooper, pr_inpessoa) LOOP
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'riscos', pr_posicao => 0, pr_tag_nova => 'risco', pr_tag_cont => '', pr_des_erro => vr_dscritic);
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'risco', pr_posicao => vr_contador, pr_tag_nova => 'dsrisco',  pr_tag_cont => rw_riscos.dsrisco,  pr_des_erro => vr_dscritic);
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'risco', pr_posicao => vr_contador, pr_tag_nova => 'vllimite', pr_tag_cont => rw_riscos.vllimite, pr_des_erro => vr_dscritic);
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'risco', pr_posicao => vr_contador, pr_tag_nova => 'cdlcremp', pr_tag_cont => rw_riscos.cdlcremp, pr_des_erro => vr_dscritic);
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'risco', pr_posicao => vr_contador, pr_tag_nova => 'dslcremp', pr_tag_cont => rw_riscos.dslcremp, pr_des_erro => vr_dscritic);
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'risco', pr_posicao => vr_contador, pr_tag_nova => 'txmensal', pr_tag_cont => rw_riscos.txmensal, pr_des_erro => vr_dscritic);
+          vr_contador := vr_contador + 1;
+        END LOOP;
+        
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'dssitdop', pr_tag_cont => rw_crappre.dssitdop, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'nrrevcad', pr_tag_cont => rw_crappre.nrrevcad, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'vllimmin', pr_tag_cont => rw_crappre.vllimmin, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'vlpercom', pr_tag_cont => rw_crappre.vlpercom, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'qtdiaver', pr_tag_cont => rw_crappre.qtdiaver, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'vlmaxleg', pr_tag_cont => rw_crappre.vlmaxleg, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'qtmesblq', pr_tag_cont => rw_crappre.qtmesblq, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'vlmaximo', pr_tag_cont => vr_vlmaximo, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'vllimctr', pr_tag_cont => rw_crappre.vllimctr, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'vlmulpli', pr_tag_cont => rw_crappre.vlmulpli, pr_des_erro => vr_dscritic);
@@ -479,6 +667,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'qtepratr', pr_tag_cont => rw_crappre.qtepratr, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'qtestour', pr_tag_cont => rw_crappre.qtestour, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'qtdiaest', pr_tag_cont => rw_crappre.qtdiaest, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'qtavlatr', pr_tag_cont => rw_crappre.qtavlatr, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'vlavlatr', pr_tag_cont => rw_crappre.vlavlatr, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'qtavlope', pr_tag_cont => rw_crappre.qtavlope, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'qtcjgatr', pr_tag_cont => rw_crappre.qtcjgatr, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'vlcjgatr', pr_tag_cont => rw_crappre.vlcjgatr, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'qtcjgope', pr_tag_cont => rw_crappre.qtcjgope, pr_des_erro => vr_dscritic);
 
         -- Cursor com o valor total gerado
         OPEN cr_carga(pr_cdcooper => vr_cdcooper
@@ -528,8 +722,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
             END IF;
           END IF;
 
+          FOR vr_risco IN 1..8 LOOP
+            CASE vr_risco
+                    WHEN 1 THEN 
+                      vr_cdlcremp := pr_cdlcremp_a;
+                    WHEN 2 THEN 
+                      vr_cdlcremp := pr_cdlcremp_b;
+                    WHEN 3 THEN 
+                      vr_cdlcremp := pr_cdlcremp_c;
+                    WHEN 4 THEN 
+                      vr_cdlcremp := pr_cdlcremp_d;
+                    WHEN 5 THEN 
+                      vr_cdlcremp := pr_cdlcremp_e;
+                    WHEN 6 THEN 
+                      vr_cdlcremp := pr_cdlcremp_f;
+                    WHEN 7 THEN 
+                      vr_cdlcremp := pr_cdlcremp_g;
+                    WHEN 8 THEN 
+                      vr_cdlcremp := pr_cdlcremp_h;
+            END CASE;
+            IF vr_cdlcremp > 0 THEN
           -- Cursor com os dados da Linha de Credito
-          OPEN cr_craplcr(pr_cdlcremp => pr_cdlcremp);
+              OPEN cr_craplcr(pr_cdlcremp => vr_cdlcremp);
           FETCH cr_craplcr 
            INTO rw_craplcr;
 
@@ -550,7 +764,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
               -- Verifica se a Linha de Credito pertence a Finalidade
               OPEN cr_craplch(pr_cdcooper => vr_cdcooper
                              ,pr_cdfinemp => pr_cdfinemp
-                             ,pr_cdlcrhab => pr_cdlcremp);
+                                 ,pr_cdlcrhab => vr_cdlcremp);
               FETCH cr_craplch 
                INTO rw_craplch;
 
@@ -565,43 +779,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
               CLOSE cr_craplch;
             END IF;
           END IF;
-
-          vr_dsrisdop := '';
-
-          IF pr_vllimcra > 0 THEN
-            vr_dsrisdop := vr_dsrisdop || 'A;';
           END IF;
-
-          IF pr_vllimcrb > 0 THEN
-            vr_dsrisdop := vr_dsrisdop || 'B;';
-          END IF;
-
-          IF pr_vllimcrc > 0 THEN
-            vr_dsrisdop := vr_dsrisdop || 'C;';
-          END IF;
-
-          IF pr_vllimcrd > 0 THEN
-            vr_dsrisdop := vr_dsrisdop || 'D;';
-          END IF;
-
-          IF pr_vllimcre > 0 THEN
-            vr_dsrisdop := vr_dsrisdop || 'E;';
-          END IF;
-
-          IF pr_vllimcrf > 0 THEN
-            vr_dsrisdop := vr_dsrisdop || 'F;';
-          END IF;
-
-          IF pr_vllimcrg > 0 THEN
-            vr_dsrisdop := vr_dsrisdop || 'G;';
-          END IF;
-
-          IF pr_vllimcrh > 0 THEN
-            vr_dsrisdop := vr_dsrisdop || 'H;';
-          END IF;
-
-          -- Seta os tipos de risco sem o ultimo ';'
-          vr_dsrisdop := SUBSTR(vr_dsrisdop,1,(LENGTH(vr_dsrisdop) - 1));
+          END LOOP;
 
           -- Alteracao
           IF pr_cddopcao = 'A' THEN
@@ -628,15 +807,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                   vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
                                  || ' alterou o campo Codigo da Finalidade de ' 
                                  || rw_crappre.cdfinemp || ' para ' || pr_cdfinemp;
-                  -- Gravar linha no arquivo
-                  gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
-                                                ,pr_des_text => vr_dsclinha);
-                END IF;
-
-                IF rw_crappre.cdlcremp <> pr_cdlcremp THEN
-                  vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
-                                 || ' alterou o campo Codigo da Linha Credito de ' 
-                                 || rw_crappre.cdlcremp || ' para ' || pr_cdlcremp;
                   -- Gravar linha no arquivo
                   gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
                                                 ,pr_des_text => vr_dsclinha);
@@ -732,6 +902,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                                                 ,pr_des_text => vr_dsclinha);
                 END IF;
 
+
+                IF rw_crappre.qtdiaver <> pr_qtdiaver THEN
+                  vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
+                                 || ' alterou o campo Verificar operacoes inclusas de ' 
+                                 || rw_crappre.qtdiaver || ' para ' || pr_qtdiaver;
+                  -- Gravar linha no arquivo
+                  gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
+                                                ,pr_des_text => vr_dsclinha);
+                END IF;
+                
                 IF rw_crappre.vlmaxleg <> pr_vlmaxleg THEN
                   vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
                                  || ' alterou o campo Multiplicar Valor Max. Legal de ' 
@@ -740,78 +920,237 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                   gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
                                                 ,pr_des_text => vr_dsclinha);
                 END IF;
+                
+                IF rw_crappre.qtmesblq <> pr_qtmesblq THEN
+                  vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
+                                 || ' alterou o campo Período de Bloqueio de Limite por Refinanciamento de ' 
+                                 || rw_crappre.qtmesblq || ' para ' || pr_qtmesblq;
+                  -- Gravar linha no arquivo
+                  gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
+                                                ,pr_des_text => vr_dsclinha);
+                END IF;
 
-                IF rw_crappre.vllimcra <> pr_vllimcra THEN
+                -- dsrisco, vllimite, cdlcremp, dslcremp, txmensal
+                FOR rw_riscos IN cr_riscos(vr_cdcooper, pr_inpessoa) LOOP
+                  
+                  vr_vllimite := 0.00;
+                  vr_cdlcremp := 0;
+                  
+                  CASE rw_riscos.dsrisco
+                    WHEN 'A' THEN 
+                      IF rw_riscos.vllimite <> pr_vllimite_a THEN
                   vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
                                  || ' alterou o campo Limite Operacao Risco A de ' 
-                                 || rw_crappre.vllimcra || ' para ' || pr_vllimcra;
+                                       || rw_riscos.vllimite || ' para ' || pr_vllimite_a;
+                        -- Gravar linha no arquivo
+                        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
+                                                      ,pr_des_text => vr_dsclinha);
+                      END IF;
+                      IF rw_riscos.cdlcremp <> pr_cdlcremp_a THEN
+                        vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
+                                       || ' alterou o campo Codigo da Linha Credito de ' 
+                                       || rw_riscos.cdlcremp || ' para ' || pr_cdlcremp_a;
                   -- Gravar linha no arquivo
                   gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
                                                 ,pr_des_text => vr_dsclinha);
                 END IF;
+                      vr_vllimite := pr_vllimite_a;
+                      vr_cdlcremp := pr_cdlcremp_a;
 
-                IF rw_crappre.vllimcrb <> pr_vllimcrb THEN
+                    WHEN 'B' THEN 
+                      IF rw_riscos.vllimite <> pr_vllimite_b THEN
                   vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
                                  || ' alterou o campo Limite Operacao Risco B de ' 
-                                 || rw_crappre.vllimcrb || ' para ' || pr_vllimcrb;
+                                       || rw_riscos.vllimite || ' para ' || pr_vllimite_b;
+                        -- Gravar linha no arquivo
+                        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
+                                                      ,pr_des_text => vr_dsclinha);
+                      END IF;
+                      IF rw_riscos.cdlcremp <> pr_cdlcremp_b THEN
+                        vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
+                                       || ' alterou o campo Codigo da Linha Credito de ' 
+                                       || rw_riscos.cdlcremp || ' para ' || pr_cdlcremp_b;
                   -- Gravar linha no arquivo
                   gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
                                                 ,pr_des_text => vr_dsclinha);
                 END IF;
+                      vr_vllimite := pr_vllimite_b;
+                      vr_cdlcremp := pr_cdlcremp_b;
 
-                IF rw_crappre.vllimcrc <> pr_vllimcrc THEN
+                    WHEN 'C' THEN 
+                      IF rw_riscos.vllimite <> pr_vllimite_c THEN
                   vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
                                  || ' alterou o campo Limite Operacao Risco C de ' 
-                                 || rw_crappre.vllimcrc || ' para ' || pr_vllimcrc;
+                                       || rw_riscos.vllimite || ' para ' || pr_vllimite_c;
+                        -- Gravar linha no arquivo
+                        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
+                                                      ,pr_des_text => vr_dsclinha);
+                      END IF;
+                      IF rw_riscos.cdlcremp <> pr_cdlcremp_c THEN
+                        vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
+                                       || ' alterou o campo Codigo da Linha Credito de ' 
+                                       || rw_riscos.cdlcremp || ' para ' || pr_cdlcremp_c;
                   -- Gravar linha no arquivo
                   gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
                                                 ,pr_des_text => vr_dsclinha);
                 END IF;
+                      vr_vllimite := pr_vllimite_c;
+                      vr_cdlcremp := pr_cdlcremp_c;
 
-                IF rw_crappre.vllimcrd <> pr_vllimcrd THEN
+                    WHEN 'D' THEN 
+                      IF rw_riscos.vllimite <> pr_vllimite_d THEN
                   vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
                                  || ' alterou o campo Limite Operacao Risco D de ' 
-                                 || rw_crappre.vllimcrd || ' para ' || pr_vllimcrd;
+                                       || rw_riscos.vllimite || ' para ' || pr_vllimite_d;
+                        -- Gravar linha no arquivo
+                        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
+                                                      ,pr_des_text => vr_dsclinha);
+                      END IF;
+                      IF rw_riscos.cdlcremp <> pr_cdlcremp_d THEN
+                        vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
+                                       || ' alterou o campo Codigo da Linha Credito de ' 
+                                       || rw_riscos.cdlcremp || ' para ' || pr_cdlcremp_d;
                   -- Gravar linha no arquivo
                   gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
                                                 ,pr_des_text => vr_dsclinha);
                 END IF;
+                      vr_vllimite := pr_vllimite_d;
+                      vr_cdlcremp := pr_cdlcremp_d;
 
-                IF rw_crappre.vllimcre <> pr_vllimcre THEN
+                    WHEN 'E' THEN
+                      IF rw_riscos.vllimite <> pr_vllimite_e THEN
                   vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
                                  || ' alterou o campo Limite Operacao Risco E de ' 
-                                 || rw_crappre.vllimcre || ' para ' || pr_vllimcre;
+                                       || rw_riscos.vllimite || ' para ' || pr_vllimite_e;
+                        -- Gravar linha no arquivo
+                        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
+                                                      ,pr_des_text => vr_dsclinha);
+                      END IF;
+                      IF rw_riscos.cdlcremp <> pr_cdlcremp_e THEN
+                        vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
+                                       || ' alterou o campo Codigo da Linha Credito de ' 
+                                       || rw_riscos.cdlcremp || ' para ' || pr_cdlcremp_e;
                   -- Gravar linha no arquivo
                   gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
                                                 ,pr_des_text => vr_dsclinha);
                 END IF;
+                      vr_vllimite := pr_vllimite_e;
+                      vr_cdlcremp := pr_cdlcremp_e;
 
-                IF rw_crappre.vllimcrf <> pr_vllimcrf THEN
+                    WHEN 'F' THEN 
+                      IF rw_riscos.vllimite <> pr_vllimite_f THEN
                   vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
                                  || ' alterou o campo Limite Operacao Risco F de ' 
-                                 || rw_crappre.vllimcrf || ' para ' || pr_vllimcrf;
+                                       || rw_riscos.vllimite || ' para ' || pr_vllimite_f;
+                        -- Gravar linha no arquivo
+                        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
+                                                      ,pr_des_text => vr_dsclinha);
+                      END IF;
+                      IF rw_riscos.cdlcremp <> pr_cdlcremp_f THEN
+                        vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
+                                       || ' alterou o campo Codigo da Linha Credito de ' 
+                                       || rw_riscos.cdlcremp || ' para ' || pr_cdlcremp_f;
                   -- Gravar linha no arquivo
                   gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
                                                 ,pr_des_text => vr_dsclinha);
                 END IF;
+                      vr_vllimite := pr_vllimite_f;
+                      vr_cdlcremp := pr_cdlcremp_f;
 
-                IF rw_crappre.vllimcrg <> pr_vllimcrg THEN
+                    WHEN 'G' THEN 
+                      IF rw_riscos.vllimite <> pr_vllimite_g THEN
                   vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
                                  || ' alterou o campo Limite Operacao Risco G de ' 
-                                 || rw_crappre.vllimcrg || ' para ' || pr_vllimcrg;
+                                       || rw_riscos.vllimite || ' para ' || pr_vllimite_g;
+                        -- Gravar linha no arquivo
+                        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
+                                                      ,pr_des_text => vr_dsclinha);
+                      END IF;
+                      IF rw_riscos.cdlcremp <> pr_cdlcremp_g THEN
+                        vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
+                                       || ' alterou o campo Codigo da Linha Credito de ' 
+                                       || rw_riscos.cdlcremp || ' para ' || pr_cdlcremp_g;
                   -- Gravar linha no arquivo
                   gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
                                                 ,pr_des_text => vr_dsclinha);
                 END IF;
+                      vr_vllimite := pr_vllimite_g;
+                      vr_cdlcremp := pr_cdlcremp_g;
 
-                IF rw_crappre.vllimcrh <> pr_vllimcrh THEN
+                    WHEN 'H' THEN 
+                      IF rw_riscos.vllimite <> pr_vllimite_h THEN
                   vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
                                  || ' alterou o campo Limite Operacao Risco H de ' 
-                                 || rw_crappre.vllimcrh || ' para ' || pr_vllimcrh;
+                                       || rw_riscos.vllimite || ' para ' || pr_vllimite_h;
+                        -- Gravar linha no arquivo
+                        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
+                                                      ,pr_des_text => vr_dsclinha);
+                      END IF;
+                      IF rw_riscos.cdlcremp <> pr_cdlcremp_h THEN
+                        vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
+                                       || ' alterou o campo Codigo da Linha Credito de ' 
+                                       || rw_riscos.cdlcremp || ' para ' || pr_cdlcremp_h;
                   -- Gravar linha no arquivo
                   gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
                                                 ,pr_des_text => vr_dsclinha);
                 END IF;
+                      vr_vllimite := pr_vllimite_h;
+                      vr_cdlcremp := pr_cdlcremp_h;
+                      
+                  END CASE;
+                  
+                  IF rw_riscos.vllimite <> vr_vllimite OR
+                     rw_riscos.cdlcremp <> vr_cdlcremp THEN
+                    
+                    OPEN cr_risco(pr_cdcooper => vr_cdcooper
+                                 ,pr_inpessoa => pr_inpessoa
+                                 ,pr_dsrisco  => rw_riscos.dsrisco);
+                    FETCH cr_risco INTO rw_risco;
+                    IF cr_risco%FOUND THEN
+                      IF vr_vllimite > 0 THEN
+                        BEGIN
+                          UPDATE tbepr_linha_pre_aprv
+                             SET vllimite = vr_vllimite
+                                ,cdlcremp = vr_cdlcremp
+                           WHERE cdcooper = vr_cdcooper
+                             AND inpessoa = pr_inpessoa
+                             AND cdrisco  = rw_risco.cdrisco;
+                        EXCEPTION
+                          WHEN OTHERS THEN
+                            vr_dscritic := 'Problema ao atualizar limite de risco ' || rw_riscos.dsrisco || ': ' || sqlerrm;
+                            RAISE vr_exc_saida;
+                        END;
+                      ELSE
+                        BEGIN
+                          DELETE FROM tbepr_linha_pre_aprv
+                           WHERE cdcooper = vr_cdcooper
+                             AND inpessoa = pr_inpessoa
+                             AND cdrisco  = rw_risco.cdrisco;
+                        EXCEPTION
+                          WHEN OTHERS THEN
+                            vr_dscritic := 'Problema ao deletar limite de risco ' || rw_riscos.dsrisco || ': ' || sqlerrm;
+                            RAISE vr_exc_saida;
+                        END;
+                      END IF;
+                    ELSE
+                      IF vr_vllimite > 0 THEN
+                        BEGIN
+                          INSERT INTO tbepr_linha_pre_aprv
+                                 (idlinha,cdcooper,inpessoa,cdrisco,vllimite,cdlcremp)
+                          VALUES (nvl((SELECT MAX(pre.idlinha) FROM tbepr_linha_pre_aprv pre),0) + 1
+                                 ,vr_cdcooper,pr_inpessoa,decode(rw_riscos.dsrisco,'AA',1
+                                 ,'A',2,'B',3,'C',4,'D',5,'E',6,'F',7,'G',8,'H',9,'HH',10)
+                                 ,vr_vllimite,vr_cdlcremp);
+                        EXCEPTION
+                          WHEN OTHERS THEN
+                            vr_dscritic := 'Problema ao criar limite de risco ' || rw_riscos.dsrisco || ': ' || sqlerrm;
+                            RAISE vr_exc_saida;
+                        END;
+                      END IF;
+                    END IF;
+                    CLOSE cr_risco;
+                  END IF;
+                END LOOP;
 
                 IF rw_crappre.dslstali <> pr_dslstali THEN
                   vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
@@ -876,20 +1215,79 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                                                 ,pr_des_text => vr_dsclinha);
                 END IF;
 
+                IF rw_crappre.qtavlatr <> pr_qtavlatr THEN
+                  vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
+                                 || ' alterou o campo Qtd. dias em Atraso em Operacoes como Avalista de ' 
+                                 || rw_crappre.qtavlatr || ' para ' || pr_qtavlatr;
+                  -- Gravar linha no arquivo
+                  gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
+                                                ,pr_des_text => vr_dsclinha);
+                END IF;
+                
+
+                IF rw_crappre.vlavlatr <> pr_vlavlatr THEN
+                  vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
+                                 || ' alterou o campo Valor em Atraso em Operacoes como Avalista de ' 
+                                 || rw_crappre.vlavlatr || ' para ' || pr_vlavlatr;
+                  -- Gravar linha no arquivo
+                  gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
+                                                ,pr_des_text => vr_dsclinha);
+                END IF;
+                
+
+                IF rw_crappre.qtavlope <> pr_qtavlope THEN
+                  vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
+                                 || ' alterou o campo Qtd. Operacoes em Atraso em Operacoes como Avalista  de ' 
+                                 || rw_crappre.qtavlope || ' para ' || pr_qtavlope;
+                  -- Gravar linha no arquivo
+                  gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
+                                                ,pr_des_text => vr_dsclinha);
+                END IF;
+                
+
+                IF rw_crappre.qtcjgatr <> pr_qtcjgatr THEN
+                  vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
+                                 || ' alterou o campo Qtd. dias em Atraso em Operacoes de Conjuge de ' 
+                                 || rw_crappre.qtcjgatr || ' para ' || pr_qtcjgatr;
+                  -- Gravar linha no arquivo
+                  gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
+                                                ,pr_des_text => vr_dsclinha);
+                END IF;
+                
+
+                IF rw_crappre.vlcjgatr <> pr_vlcjgatr THEN
+                  vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
+                                 || ' alterou o campo Valor em Atraso em Operacoes de Conjuge de ' 
+                                 || rw_crappre.vlcjgatr || ' para ' || pr_vlcjgatr;
+                  -- Gravar linha no arquivo
+                  gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
+                                                ,pr_des_text => vr_dsclinha);
+                END IF;
+                
+
+                IF rw_crappre.qtcjgope <> pr_qtcjgope THEN
+                  vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
+                                 || ' alterou o campo Qtd. Operacoes em Atraso em Operacoes de Conjuge de ' 
+                                 || rw_crappre.qtcjgope || ' para ' || pr_qtcjgope;
+                  -- Gravar linha no arquivo
+                  gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
+                                                ,pr_des_text => vr_dsclinha);
+                END IF;
+                
                 -- Fechar arquivo
                 gene0001.pc_fecha_arquivo(pr_utlfileh => vr_utlfileh);
 
                 UPDATE crappre SET 
-                  cdfinemp = pr_cdfinemp, cdlcremp = pr_cdlcremp, nrmcotas = pr_nrmcotas, 
-                  dssitdop = pr_dssitdop, qtmescta = pr_qtmescta, qtmesadm = pr_qtmesadm, 
-                  qtmesemp = pr_qtmesemp, nrrevcad = pr_nrrevcad, vllimmin = pr_vllimmin, 
-                  vllimctr = pr_vllimctr, vlmulpli = pr_vlmulpli, vlpercom = pr_vlpercom, 
-                  vlmaxleg = pr_vlmaxleg, dsrisdop = vr_dsrisdop, vllimcra = pr_vllimcra, 
-                  vllimcrb = pr_vllimcrb, vllimcrc = pr_vllimcrc, vllimcrd = pr_vllimcrd, 
-                  vllimcre = pr_vllimcre, vllimcrf = pr_vllimcrf, vllimcrg = pr_vllimcrg, 
-                  vllimcrh = pr_vllimcrh, dslstali = pr_dslstali, qtdevolu = pr_qtdevolu, 
-                  qtdiadev = pr_qtdiadev, qtctaatr = pr_qtctaatr, qtepratr = pr_qtepratr,
-                  qtestour = pr_qtestour, qtdiaest = pr_qtdiaest
+                  cdfinemp = pr_cdfinemp, nrmcotas = pr_nrmcotas, dssitdop = pr_dssitdop,
+                  qtmescta = pr_qtmescta, qtmesadm = pr_qtmesadm, qtmesemp = pr_qtmesemp, 
+                  nrrevcad = pr_nrrevcad, vllimmin = pr_vllimmin, vllimctr = pr_vllimctr, 
+                  vlmulpli = pr_vlmulpli, vlpercom = pr_vlpercom, qtdiaver = pr_qtdiaver,
+                  vlmaxleg = pr_vlmaxleg, qtmesblq = pr_qtmesblq, 
+                  dslstali = pr_dslstali, qtdevolu = pr_qtdevolu, qtdiadev = pr_qtdiadev, 
+                  qtctaatr = pr_qtctaatr, qtepratr = pr_qtepratr, qtestour = pr_qtestour, 
+                  qtdiaest = pr_qtdiaest, qtavlatr = pr_qtavlatr, vlavlatr = pr_vlavlatr, 
+                  qtavlope = pr_qtavlope, qtcjgatr = pr_qtcjgatr, vlcjgatr = pr_vlcjgatr, 
+                  qtcjgope = pr_qtcjgope
                 WHERE cdcooper = vr_cdcooper
                   AND inpessoa = pr_inpessoa;
 
@@ -1102,6 +1500,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
   END pc_consultar_carga;
   
   PROCEDURE pc_busca_carga_ativa (pr_cdcooper  IN tbepr_carga_pre_aprv.cdcooper%TYPE    --> Codigo da cooperativa
+                                 ,pr_nrdconta  IN crapcpa.nrdconta%TYPE                 --> Numero da conta
                                  ,pr_idcarga  OUT tbepr_carga_pre_aprv.idcarga%TYPE) IS --> Codigo da carga
   BEGIN
 
@@ -1121,18 +1520,47 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
 
      Observacao: -----
 
-     Alteracoes: 
+     Alteracoes: 29/07/2016 - Inclusao do parâmetro pr_nrdconta na chamada 
+                              da procedure e alterado cursor cr_carga.
 
      ..............................................................................*/
 
     DECLARE
       -- Selecionar os dados
       CURSOR cr_carga (pr_cdcooper IN tbepr_carga_pre_aprv.cdcooper%TYPE) IS
-        SELECT carga.idcarga
+        SELECT carga.tpcarga
+              ,carga.dtcalculo
+              ,carga.idcarga
           FROM tbepr_carga_pre_aprv carga
-         WHERE carga.cdcooper = pr_cdcooper
-           AND carga.indsituacao_carga = 1 -- Gerada
-           AND carga.flgcarga_bloqueada = 0; -- Liberada
+         WHERE carga.cdcooper           = pr_cdcooper
+           AND carga.indsituacao_carga  = 1 -- Gerada
+           AND carga.flgcarga_bloqueada = 0 -- Liberada
+           AND carga.tpcarga            = 2 -- Automática
+           AND (carga.dtfinal_vigencia IS NULL
+            OR  carga.dtfinal_vigencia >= TRUNC(SYSDATE))
+           AND EXISTS (SELECT 1 -- Cargas que a conta está relacionada
+                         FROM crapcpa cpa
+                        WHERE cpa.cdcooper = carga.cdcooper
+                          AND cpa.nrdconta = pr_nrdconta
+                          AND cpa.iddcarga = carga.idcarga)
+         UNION
+        SELECT carga.tpcarga
+              ,carga.dtcalculo
+              ,carga.idcarga
+          FROM tbepr_carga_pre_aprv carga
+         WHERE carga.cdcooper           = 3
+           AND carga.indsituacao_carga  = 1 -- Gerada
+           AND carga.flgcarga_bloqueada = 0 -- Liberada
+           AND carga.tpcarga            = 1 -- Manual
+           AND (carga.dtfinal_vigencia IS NULL
+            OR  carga.dtfinal_vigencia >= TRUNC(SYSDATE))
+           AND EXISTS (SELECT 1 -- Cargas que a conta está relacionada
+                         FROM crapcpa cpa
+                        WHERE cpa.cdcooper = pr_cdcooper
+                          AND cpa.nrdconta = pr_nrdconta
+                          AND cpa.iddcarga = carga.idcarga)
+      ORDER BY tpcarga   ASC  -- Priorizar as cargas 1 - Manual
+              ,dtcalculo DESC; -- Priorizar as cargas recentes
       rw_carga cr_carga%ROWTYPE;
 
       -- Variaveis
@@ -1192,7 +1620,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
            /* Vamos apagar apenas os registros que tenham mais do que 20 dias 
               para evitar apagar dados que ainda não foram importados para o BI */
            AND carga.dtcalculo <= trunc(sysdate - 20)
-           AND carga.flgcarga_bloqueada = 1; -- Bloqueada
+           AND carga.flgcarga_bloqueada = 1
+           AND carga.tpcarga = 2; -- automática
 
       -- Tratamento de erros
       vr_exc_saida EXCEPTION;
@@ -1322,7 +1751,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
 
         -- Se achou
         IF vr_blnfound THEN
-          pr_dscritic := 'Geracao nao permitida, pois existe carga Solicitada ou Executando.';
+          pr_dscritic := 'Geração não permitida, pois existe carga Solicitada ou Executando.';
           RAISE vr_exc_saida;
         END IF;
 
@@ -1444,17 +1873,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
       SELECT cpa.vllimdis
             ,cpa.vlcalpre
             ,cpa.vlctrpre
+            ,cpa.cdlcremp
         FROM crapcpa cpa
        WHERE cpa.cdcooper = pr_cdcooper
          AND cpa.nrdconta = pr_nrdconta
          AND cpa.iddcarga = pr_idcarga;
     rw_crapcpa cr_crapcpa%rowtype;
 
+    CURSOR cr_carga_manual(pr_iddcarga IN crapcpa.iddcarga%TYPE) IS
+      SELECT to_char(carga.dsmensagem_aviso) || ' Limite: R$ ' mensagem
+        FROM tbepr_carga_pre_aprv carga 
+       WHERE carga.idcarga = pr_iddcarga
+         AND carga.tpcarga = 1 -- Manual
+       ORDER BY carga.dtcalculo DESC;
+    rw_carga_manual cr_carga_manual%ROWTYPE;
+    
+    CURSOR cr_param_conta (pr_cdcooper IN crapcpa.cdcooper%TYPE
+                          ,pr_nrdconta IN crapcpa.nrdconta%TYPE) IS 
+      SELECT conta.flglibera_pre_aprv
+        FROM tbepr_param_conta conta
+       WHERE conta.cdcooper  = pr_cdcooper
+         AND conta.nrdconta  = pr_nrdconta;
+    rw_param_conta cr_param_conta%ROWTYPE;
+    
     --> Verifica se o associado pode obter o credido pre-aprovado
     CURSOR cr_crapass IS
       SELECT ass.cdcooper
             ,ass.nrdconta
-            ,ass.flgcrdpa
             ,ass.inpessoa
         FROM crapass ass
        WHERE ass.cdcooper = pr_cdcooper
@@ -1465,7 +1910,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
     CURSOR cr_crappre (pr_cdcooper IN crappre.cdcooper%TYPE,
                        pr_inpessoa IN crappre.inpessoa%TYPE)IS
       SELECT pre.cdcooper
-            ,pre.cdlcremp
             ,pre.vllimctr
         FROM crappre pre
        WHERE pre.cdcooper = pr_cdcooper
@@ -1484,12 +1928,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
     ---------------> VARIAVEIS <----------------       
 
     --> Tratamento de erros
-    vr_exc_erro EXCEPTION;
-    vr_cdcritic crapcri.cdcritic%TYPE;
-    vr_dscritic VARCHAR2(4000);
+    vr_exc_erro  EXCEPTION;
+    vr_cdcritic  crapcri.cdcritic%TYPE;
+    vr_dscritic  VARCHAR2(4000);
 
-    vr_idx      PLS_INTEGER;
-    vr_idcarga  tbepr_carga_pre_aprv.idcarga%TYPE;
+    vr_idx       PLS_INTEGER;
+    vr_idcarga   tbepr_carga_pre_aprv.idcarga%TYPE;
+    vr_flgmanual BOOLEAN;
+    vr_flgfound  BOOLEAN;
 
   BEGIN
 
@@ -1505,6 +1951,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
 
     -- Busca a carga ativa
     EMPR0002.pc_busca_carga_ativa(pr_cdcooper => pr_cdcooper
+                                 ,pr_nrdconta => pr_nrdconta
                                  ,pr_idcarga  => vr_idcarga);
     --  Caso nao possua carga ativa
     IF vr_idcarga = 0 THEN
@@ -1540,13 +1987,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
       CLOSE cr_crapass;
     END IF;
 
-    --> Na tela de contas nao podemos verificar a flag 
-    IF pr_nmdatela <> 'CONTAS'AND
-       rw_crapass.flgcrdpa = 0 /* FALSE */ THEN
+    -- Na tela de contas nao podemos verificar a flag 
+    IF pr_nmdatela <> 'CONTAS' THEN
+      
+      --> Verifica se esta o pre-aprovado esta liberado
+      OPEN cr_param_conta(pr_cdcooper => pr_cdcooper
+                         ,pr_nrdconta => pr_nrdconta);
+      FETCH cr_param_conta INTO rw_param_conta;
+      vr_flgfound := cr_param_conta%FOUND;
+      CLOSE cr_param_conta;
+      
+      -- Caso nao exista registro, conta como liberado
+      IF vr_flgfound AND
+         rw_param_conta.flglibera_pre_aprv = 0 THEN
       pr_des_reto := 'OK';
       RETURN; 
     END IF;
 
+    END IF;
+    
     --> Verifica se esta bloqueado o pre-aprovado 
     OPEN cr_crappre(pr_cdcooper => rw_crapass.cdcooper,
                     pr_inpessoa => rw_crapass.inpessoa);
@@ -1563,7 +2022,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
 
     --> Buscar linha de credito
     OPEN cr_craplcr (pr_cdcooper => rw_crappre.cdcooper,
-                     pr_cdlcremp => rw_crappre.cdlcremp);
+                     pr_cdlcremp => rw_crapcpa.cdlcremp);
     FETCH cr_craplcr INTO rw_craplcr;
 
     IF cr_craplcr%NOTFOUND THEN
@@ -1575,6 +2034,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
       CLOSE cr_craplcr;
     END IF;
 
+     --> Buscar carga manual
+    OPEN cr_carga_manual (pr_iddcarga => vr_idcarga);
+    FETCH cr_carga_manual INTO rw_carga_manual;
+    vr_flgmanual := cr_carga_manual%FOUND;
+    CLOSE cr_carga_manual;
+    
     --> Carregar temptable
     vr_idx := pr_tab_dados_cpa.count + 1;
     pr_tab_dados_cpa(vr_idx).cdcooper := rw_crapass.cdcooper;
@@ -1583,6 +2048,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
     pr_tab_dados_cpa(vr_idx).vldiscrd := rw_crapcpa.vllimdis;
     pr_tab_dados_cpa(vr_idx).txmensal := rw_craplcr.txmensal;
     pr_tab_dados_cpa(vr_idx).vllimctr := rw_crappre.vllimctr;
+
+    IF vr_flgmanual THEN
+      pr_tab_dados_cpa(vr_idx).msgmanua := rw_carga_manual.mensagem || to_char(rw_crapcpa.vllimdis,'FM999G999G990D00MI');
+    END IF;
 
   EXCEPTION
     WHEN vr_exc_erro THEN
@@ -1621,9 +2090,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                                     ,pr_nrdconta  IN crapass.nrdconta%TYPE    --> Numero da conta do cooperado
                                     ,pr_idseqttl  IN crapttl.idseqttl%TYPE    --> Sequencial do titular
                                     ,pr_nrcpfope  IN crapopi.nrcpfope%TYPE    --> CPF do operador juridico
-                                    ,pr_clob_cpa  OUT CLOB                --> Retorna dados do credito pre aprovado
+                                    ,pr_clob_cpa  OUT VARCHAR2            --> Retorna dados do credito pre aprovado
                                     ,pr_des_reto  OUT VARCHAR2            --> Retorno OK/NOK
-                                    ,pr_clob_erro OUT CLOB) IS            --> Retorna os erros
+                                    ,pr_clob_erro OUT VARCHAR2) IS            --> Retorna os erros
   BEGIN
 
     /* .............................................................................
@@ -1651,6 +2120,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
       vr_dscritic      VARCHAR2(4000);
       vr_idx           PLS_INTEGER;
       vr_xml_temp      VARCHAR2(32767);
+      vr_clob_cpa      CLOB;
+      vr_clob_erro     CLOB;
 
     BEGIN
       -- Procedimento para buscar dados do credito pré-aprovado (crapcpa)
@@ -1670,10 +2141,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
 
       -- Gerar xml a partir da temptable
       IF vr_tab_erro.count > 0 THEN
+        
         GENE0001.pc_xml_tab_erro(pr_tab_erro => vr_tab_erro, --> TempTable de erro
-                                 pr_xml_erro => pr_clob_erro, --> XML dos registros da temptable de erro
+                                 pr_xml_erro => vr_clob_erro, --> XML dos registros da temptable de erro
                                  pr_tipooper => 1,           --> Tipo de operação, 1 - Gerar XML, 2 --Gerar pltable
                                  pr_dscritic => vr_dscritic);
+                                 
       END IF;
       
       -- Chave inicial
@@ -1683,16 +2156,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
          vr_tab_dados_cpa(vr_idx).vldiscrd > 0 THEN
 
         -- Criar documento XML
-        dbms_lob.createtemporary(pr_clob_cpa, TRUE);
-        dbms_lob.open(pr_clob_cpa, dbms_lob.lob_readwrite);
+        dbms_lob.createtemporary(vr_clob_cpa, TRUE);
+        dbms_lob.open(vr_clob_cpa, dbms_lob.lob_readwrite);
 
         -- Insere o cabeçalho do XML 
-        GENE0002.pc_escreve_xml(pr_xml            => pr_clob_cpa 
+        GENE0002.pc_escreve_xml(pr_xml            => vr_clob_cpa 
                                ,pr_texto_completo => vr_xml_temp 
                                ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><raiz>');
                                
         -- Escreve o registro
-        GENE0002.pc_escreve_xml(pr_xml            => pr_clob_cpa
+        GENE0002.pc_escreve_xml(pr_xml            => vr_clob_cpa
                                ,pr_texto_completo => vr_xml_temp
                                ,pr_texto_novo => '<registro>'||
                                                    '<cdcooper>'||vr_tab_dados_cpa(vr_idx).cdcooper||'</cdcooper>'||
@@ -1704,13 +2177,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                                                  '</registro>');
 
         -- Encerrar a tag raiz 
-        GENE0002.pc_escreve_xml(pr_xml            => pr_clob_cpa 
+        GENE0002.pc_escreve_xml(pr_xml            => vr_clob_cpa 
                                ,pr_texto_completo => vr_xml_temp 
                                ,pr_texto_novo     => '</raiz>' 
                                ,pr_fecha_xml      => TRUE);
 
       END IF;
-
+      pr_clob_cpa := to_char(vr_clob_cpa);
+      pr_clob_erro := to_char(vr_clob_erro);
     END;
 
   END pc_busca_dados_cpa_prog;
@@ -1815,103 +2289,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
     
   END pc_busca_alinea;
   
-  PROCEDURE pc_atualiza_flag_credito(pr_cdcooper IN crapcop.cdcooper%TYPE             --> Codigo da cooperativa
-                                    ,pr_idcarga  IN tbepr_carga_pre_aprv.idcarga%TYPE --> Codigo da Carga
-                                    ,pr_dscritic OUT VARCHAR2) IS                     --> Descricao da critica
-  BEGIN
-
-    /* .............................................................................
-
-     Programa: pc_atualiza_flag_credito
-     Sistema : Emprestimo Pre-Aprovado - Cooperativa de Credito
-     Sigla   : EMPR
-     Autor   : Jaison Fernando
-     Data    : Janeiro/2015.                    Ultima atualizacao: 
-
-     Dados referentes ao programa:
-
-     Frequencia: Sempre que for chamado
-
-     Objetivo  : Atualiza a flag de credito flgcrdpa na tabela crapass.
-
-     Alteracoes: 
-
-     ..............................................................................*/ 
-    DECLARE
-      -- Registros atualizaveis
-      CURSOR cr_crapass(pr_cdcooper IN crapcop.cdcooper%TYPE
-                       ,pr_idcarga  IN tbepr_carga_pre_aprv.idcarga%TYPE) IS
-        SELECT crapass.cdcooper
-              ,crapass.nrdconta
-              ,crapass.cdoplcpa
-              ,NVL(crapass.flgcrdpa,0) flgcrdpa
-              ,CASE WHEN EXISTS (SELECT 1
-                                   FROM crapcpa
-                                  WHERE crapcpa.cdcooper = crapass.cdcooper                               
-                                    AND crapcpa.nrdconta = crapass.nrdconta
-                                    AND crapcpa.iddcarga = pr_idcarga)
-                 THEN 1
-                 ELSE 0
-              END flgcrdpa_novo
-          FROM crapass
-         WHERE crapass.cdcooper = pr_cdcooper
-           AND( (crapass.flgcrdpa = 1) -- Tem pre-aprovado
-            OR  (crapass.flgcrdpa = 0 AND 
-                TRIM(crapass.cdoplcpa) IS NULL) ); -- Nao tem pre-aprovado e nao foi setado manualmente
-      rw_crapass cr_crapass%ROWTYPE;
-
-      -- Variaveis
-      vr_idx       PLS_INTEGER;
-      vr_idcarga   tbepr_carga_pre_aprv.idcarga%TYPE;
-
-      -- PL Table
-      TYPE typ_reg_crapass IS
-           RECORD (cdcooper crapass.cdcooper%TYPE
-                  ,nrdconta crapass.nrdconta%TYPE
-                  ,cdoplcpa crapass.cdoplcpa%TYPE
-                  ,flgcrdpa crapass.flgcrdpa%TYPE
-                  ,cd_rowid ROWID);
-      TYPE typ_tab_crapass IS 
-           TABLE OF typ_reg_crapass INDEX BY PLS_INTEGER;
-      vr_tab_crapass typ_tab_crapass;
-
-    BEGIN
-      -- Busca a carga ativa
-      EMPR0002.pc_busca_carga_ativa(pr_cdcooper => pr_cdcooper
-                                   ,pr_idcarga  => vr_idcarga);
-
-      -- Carrega os registros
-      FOR rw_crapass IN cr_crapass(pr_cdcooper => pr_cdcooper
-                                  ,pr_idcarga  => vr_idcarga) LOOP
-        -- Se nova flag for diferente ou operador setou manualmente, adicionar para update
-        IF rw_crapass.flgcrdpa <> rw_crapass.flgcrdpa_novo 
-        OR TRIM(rw_crapass.cdoplcpa) IS NOT NULL THEN
-          vr_idx := vr_tab_crapass.COUNT + 1;
-          vr_tab_crapass(vr_idx).cdcooper := rw_crapass.cdcooper;
-          vr_tab_crapass(vr_idx).nrdconta := rw_crapass.nrdconta;
-          vr_tab_crapass(vr_idx).flgcrdpa := rw_crapass.flgcrdpa_novo;
-          -- Vamos zerar o operador, pois se a nova flag de pre-aprovado for FALSE e
-          -- tiver preenchido o operador, o usuario conseguira alterar manualmente
-          vr_tab_crapass(vr_idx).cdoplcpa := ' ';
-        END IF;
-      END LOOP;
-        
-      BEGIN
-        FORALL idx IN 1..vr_tab_crapass.COUNT SAVE EXCEPTIONS
-          UPDATE crapass
-             SET crapass.cdoplcpa = vr_tab_crapass(idx).cdoplcpa,
-                 crapass.flgcrdpa = vr_tab_crapass(idx).flgcrdpa
-           WHERE crapass.cdcooper = vr_tab_crapass(idx).cdcooper
-             AND crapass.nrdconta = vr_tab_crapass(idx).nrdconta;
-      EXCEPTION
-        WHEN OTHERS THEN
-          pr_dscritic := 'Erro ao atualizar CRAPASS com Merge. ' || SQLERRM(-SQL%BULK_EXCEPTIONS(1).ERROR_CODE);
-      END;
-
-    END;
-    
-  END pc_atualiza_flag_credito;
-  
   PROCEDURE pc_altera_carga(pr_idcarga  IN tbepr_carga_pre_aprv.idcarga%TYPE --> Codigo da Carga
                            ,pr_acao     IN VARCHAR2                          --> Acao: B-Bloquear / L-Liberar
                            ,pr_xmllog   IN VARCHAR2                          --> XML com informações de LOG
@@ -1997,7 +2374,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
 
       -- Se nao achou
       IF NOT vr_blnfound THEN
-        vr_dscritic := 'Carga nao encontrada.';
+        vr_dscritic := 'Carga não encontrada.';
         RAISE vr_exc_saida;
       END IF;
       
@@ -2010,16 +2387,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
       -- Se ja estiver bloqueada(1) / liberada(0)
       IF rw_carga.flgcarga_bloqueada = vr_flbloque THEN
         IF pr_acao = 'B' THEN
-          vr_dscritic := 'Carga selecionada ja esta Bloqueada.';
+          vr_dscritic := 'Carga selecionada já esta Bloqueada.';
         ELSE
-          vr_dscritic := 'Carga selecionada ja esta Liberada.';
+          vr_dscritic := 'Carga selecionada já esta Liberada.';
         END IF;
         RAISE vr_exc_saida;
       END IF;
 
       -- Se nao estiver gerada(1)
       IF rw_carga.indsituacao_carga > 1 THEN
-        vr_dscritic := 'A carga selecionada nao foi Gerada.';
+        vr_dscritic := 'Liberação não permitida, sistema esta calculando o pré-aprovado, aguarde o término da execução.';
         RAISE vr_exc_saida;
       END IF;
       
@@ -2040,15 +2417,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
         vr_dscritic := 'Problema ao atualizar carga: ' || SQLERRM;
         RAISE vr_exc_saida;
       END;
-
-      -- Atualiza a flag de credito flgcrdpa na tabela crapass
-      EMPR0002.pc_atualiza_flag_credito(pr_cdcooper => vr_cdcooper
-                                       ,pr_idcarga  => rw_carga.idcarga
-                                       ,pr_dscritic => vr_dscritic);
-      -- Se possui critica
-      IF vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_saida;
-      END IF;
 
       COMMIT;
         
@@ -2101,8 +2469,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
         SELECT carga.idcarga
           FROM tbepr_carga_pre_aprv carga
          WHERE carga.cdcooper = pr_cdcooper
-           AND carga.indsituacao_carga = 2 -- Solicitada
-           AND carga.flgcarga_bloqueada = 1; -- Bloqueada
+           AND carga.indsituacao_carga = 2  -- Solicitada
+           AND carga.flgcarga_bloqueada = 1 -- Bloqueada
+           AND carga.tpcarga = 2;           -- Automatica
 
       -- Variaveis
       vr_blnfound BOOLEAN;
@@ -2129,11 +2498,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                      (cdcooper
                      ,dtcalculo
                      ,indsituacao_carga
-                     ,flgcarga_bloqueada)
+                     ,flgcarga_bloqueada
+                     ,tpcarga)
               VALUES (pr_cdcooper
                      ,SYSDATE
                      ,2 -- Solicitada
-                     ,1) -- Bloqueada
+                     ,1 -- Bloqueada
+                     ,2)-- Automatica
            RETURNING idcarga 
                 INTO vr_idcarga;
         EXCEPTION
@@ -2241,6 +2612,576 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
     END;
   END pc_limpeza_diretorio;
   
+  -- Buscar as linhas de crédito.
+  PROCEDURE pc_busca_linha_credito_prog(pr_cdcooper  IN crapcop.cdcooper%TYPE              --> Diretorio para limpeza
+                                       ,pr_inpessoa  IN crapass.inpessoa%TYPE DEFAULT NULL --> Tipo de pessoa
+                                       ,pr_cdrisco   IN craplcr.cdlcremp%TYPE DEFAULT NULL --> Codigo do risco
+                                       ,pr_lslcremp OUT VARCHAR2                           --> Cdigos dos riscos
+                                       ,pr_dscritic OUT VARCHAR2) IS                       --> Descricao da critica
+  BEGIN
+    ---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_busca_linha_credito_prog
+    --  Sistema  : Emprestimo Pre-Aprovado - Cooperativa de Credito
+    --  Sigla    : EMPR
+    --  Autor    : Lombardi
+    --  Data     : Julho/2016                   Ultima atualizacao: 
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: -----
+    -- Objetivo  : Buscar as linhas de crédito usadas pelos riscos da CADPRE.
+    -- Alteracoes:
+    --
+    ---------------------------------------------------------------------------------------------------------------
+    DECLARE
+      vr_typ_said VARCHAR2(3);        -- Saida da rotina de chamada ao OS
+      vr_dslista  VARCHAR2(4000);     -- Lista de arquivos do diretorio
+      vr_lstarqre GENE0002.typ_split; -- Lista de arquivos
+      vr_lstnome  GENE0002.typ_split; -- Lista de nomes
+      vr_dtlimite DATE;
+      vr_dtarquiv DATE;
+
+      -- Cursor generico de calendario
+      CURSOR cr_linha_pre_aprv (pr_cdcooper IN crapcop.cdcooper%TYPE
+                               ,pr_inpessoa IN crapass.inpessoa%TYPE
+                               ,pr_cdrisco  IN VARCHAR2) IS
+        SELECT DISTINCT cdlcremp
+          FROM tbepr_linha_pre_aprv lin
+         WHERE lin.cdcooper = pr_cdcooper
+           AND lin.inpessoa = NVL(pr_inpessoa,lin.inpessoa)
+           AND lin.cdrisco  = nvl(decode(pr_cdrisco
+                                         ,'AA',1
+                                         ,'A',2
+                                         ,'B',3
+                                         ,'C',4
+                                         ,'D',5
+                                         ,'E',6
+                                         ,'F',7
+                                         ,'G',8
+                                         ,'H',9
+                                         ,'HH',10),lin.cdrisco);
+    BEGIN
+      pr_lslcremp := '';
+      FOR rw_linha_pre_aprv IN cr_linha_pre_aprv(pr_cdcooper
+                                                ,pr_inpessoa
+                                                ,pr_cdrisco) LOOP
+        pr_lslcremp := pr_lslcremp || rw_linha_pre_aprv.cdlcremp || ';';
+      END LOOP;
+      
+      pr_lslcremp := TRIM(';' FROM pr_lslcremp);
+      
+    EXCEPTION
+      WHEN OTHERS THEN
+        -- Retorna o erro para a procedure chamadora
+        pr_dscritic := 'Erro --> na rotina EMPR0002.pc_busca_linha_credito_prog -->  '||SQLERRM;
+    END;
+  END pc_busca_linha_credito_prog;
+  
+  -- Busca período de bloqueio de limite por refinanceamento.
+  PROCEDURE pc_busca_periodo_bloq_refin(pr_inpessoa IN crappre.inpessoa%TYPE --> Tipo de pessoa
+                                       ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                                       ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                       ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                                       ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                       ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                       ,pr_des_erro OUT VARCHAR2) IS         --> Erros do processo
+
+  BEGIN
+    ---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_busca_periodo_bloq_refin 
+    --  Sistema  : Emprestimo Pre-Aprovado - Cooperativa de Credito
+    --  Sigla    : EMPR
+    --  Autor    : Lombardi
+    --  Data     : Julho/2016                   Ultima atualizacao: 
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: -----
+    -- Objetivo  : Busca período de bloqueio de limite por refinanceamento da CADPRE.
+    -- Alteracoes:
+    --
+    ---------------------------------------------------------------------------------------------------------------
+    DECLARE
+      
+      -- Variaveis de log
+      vr_cdcooper      NUMBER;
+      vr_cdoperad      VARCHAR2(100);
+      vr_nmdatela      VARCHAR2(100);
+      vr_nmeacao       VARCHAR2(100);
+      vr_cdagenci      VARCHAR2(100);
+      vr_nrdcaixa      VARCHAR2(100);
+      vr_idorigem      VARCHAR2(100);
+      
+      --Variaveis auxiliares
+      vr_qtmesblq crappre.qtmesblq%TYPE;
+      
+      -- Variaveis de Erro
+      vr_dscritic  VARCHAR2(1000);
+      vr_exc_saida EXCEPTION;
+      
+      -- Busca período de bloqueio de limite por refinanceamento
+      CURSOR cr_crappre (pr_cdcooper IN crapcop.cdcooper%TYPE
+                        ,pr_inpessoa IN crappre.inpessoa%TYPE) IS
+        SELECT qtmesblq
+          FROM crappre
+         WHERE cdcooper = pr_cdcooper
+           AND inpessoa = pr_inpessoa;
+      
+    BEGIN
+      
+      GENE0004.pc_extrai_dados(pr_xml      => pr_retxml 
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao 
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+      
+      -- Inicializa variavel
+      vr_qtmesblq := 0;
+      
+      -- Busca período de bloqueio de limite por refinanceamento
+      OPEN cr_crappre(vr_cdcooper, pr_inpessoa);
+      FETCH cr_crappre INTO vr_qtmesblq;
+      CLOSE cr_crappre;
+      
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Dados>' || vr_qtmesblq || '</Dados></Root>');
+      
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        pr_dscritic := vr_dscritic;
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      WHEN OTHERS THEN
+        pr_dscritic := 'Erro --> na rotina EMPR0002.pc_busca_periodo_bloq_refin -->  '||SQLERRM;
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    END;
+  END pc_busca_periodo_bloq_refin;
+  
+  -- Mantem status do pre aprovado do cooperado
+  PROCEDURE pc_mantem_param_conta (pr_cdcooper              IN crapcop.cdcooper%TYPE
+                                  ,pr_nrdconta              IN crapass.nrdconta%TYPE
+                                  ,pr_flgrenli              IN crapass.flgrenli%TYPE
+                                  ,pr_flglibera_pre_aprv    IN NUMBER
+                                  ,pr_dtatualiza_pre_aprv   IN DATE DEFAULT SYSDATE
+                                  ,pr_idmotivo              IN NUMBER DEFAULT 0
+                                  ,pr_cdoperad              IN VARCHAR2
+                                  ,pr_idorigem              IN VARCHAR2
+                                  ,pr_nmdatela              IN VARCHAR2
+                                  ,pr_dtmvtolt              IN DATE
+                                  ,pr_dscritic             OUT VARCHAR2             --> Descrição da crítica
+                                  ,pr_des_erro             OUT VARCHAR2) IS         --> Erros do processo
+
+  BEGIN
+    ---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_mantem_param_conta 
+    --  Sistema  : Emprestimo Pre-Aprovado - Cooperativa de Credito
+    --  Sigla    : EMPR
+    --  Autor    : Lombardi
+    --  Data     : Julho/2016                   Ultima atualizacao: 
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: -----
+    -- Objetivo  : Mantem status do pre aprovado do cooperado
+    -- Alteracoes:
+    --
+    ---------------------------------------------------------------------------------------------------------------
+    DECLARE
+      
+    -- buscar parametros de emprestimo da conta
+      CURSOR cr_param_conta (pr_cdcooper crapcop.cdcooper%TYPE
+                            ,pr_nrdconta crapass.nrdconta%TYPE) IS
+        SELECT flglibera_pre_aprv
+              ,dtatualiza_pre_aprv
+              ,idmotivo
+          FROM tbepr_param_conta
+         WHERE cdcooper = pr_cdcooper
+           AND nrdconta = pr_nrdconta;
+      rw_param_conta cr_param_conta%ROWTYPE;
+      
+      -- buscar parametros de emprestimo da conta
+      CURSOR cr_crapass (pr_cdcooper crapcop.cdcooper%TYPE
+                        ,pr_nrdconta crapass.nrdconta%TYPE) IS
+        SELECT flgrenli
+          FROM crapass
+         WHERE cdcooper = pr_cdcooper
+           AND nrdconta = pr_nrdconta;
+      rw_crapass cr_crapass%ROWTYPE;
+      
+      --Variaveis Auxiliares
+      vr_nrdrowid            ROWID;
+      vr_dtatualiza_pre_aprv DATE;
+      vr_flgrenli            crapass.flgrenli%TYPE;
+      
+      -- Variaveis de Erro
+      vr_dscritic  VARCHAR2(1000);
+      vr_exc_saida EXCEPTION;
+      
+    BEGIN
+      pr_des_erro := 'OK';
+      
+      IF pr_dtatualiza_pre_aprv IS NULL THEN
+        vr_dtatualiza_pre_aprv := trunc(SYSDATE);
+      ELSE
+        vr_dtatualiza_pre_aprv := pr_dtatualiza_pre_aprv;
+      END IF;
+      
+      OPEN cr_crapass (pr_cdcooper, pr_nrdconta);
+      FETCH cr_crapass INTO rw_crapass;
+      CLOSE cr_crapass;
+      
+      IF pr_flgrenli IS NOT NULL THEN
+        vr_flgrenli := pr_flgrenli;
+      ELSE
+        vr_flgrenli := rw_crapass.flgrenli;
+      END IF;
+      
+      -- Cria registro para bloquear pre aprovado do cooperado
+      BEGIN
+        
+        INSERT INTO tbepr_param_conta (cdcooper
+                                      ,nrdconta
+                                      ,flglibera_pre_aprv
+                                      ,dtatualiza_pre_aprv
+                                      ,idmotivo)
+                                  VALUES (pr_cdcooper
+                                         ,pr_nrdconta
+                                         ,pr_flglibera_pre_aprv
+                                         ,vr_dtatualiza_pre_aprv
+                                         ,pr_idmotivo);
+
+        /* Inclusão de log com retorno do rowid */
+        gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                            ,pr_cdoperad => pr_cdoperad
+                            ,pr_dscritic => ''
+                            ,pr_dsorigem => gene0001.vr_vet_des_origens(pr_idorigem) --> Origem enviada
+                            ,pr_dstransa => 'Criacao dos parametros de emprestimo da conta'
+                            ,pr_dttransa => TRUNC(SYSDATE)
+                            ,pr_flgtrans => 1 --> TRUE
+                            ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+                            ,pr_idseqttl => 0
+                            ,pr_nmdatela => pr_nmdatela
+                            ,pr_nrdconta => pr_nrdconta
+                            ,pr_nrdrowid => vr_nrdrowid);
+        
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                 ,pr_nmdcampo => 'Codigo da cooperativa'
+                                 ,pr_dsdadant => NULL
+                                 ,pr_dsdadatu => pr_cdcooper);
+                                  
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                 ,pr_nmdcampo => 'Numero da conta'
+                                 ,pr_dsdadant => NULL
+                                 ,pr_dsdadatu => pr_nrdconta);
+                                  
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                 ,pr_nmdcampo => 'Liberacao de pre-aprovado'
+                                 ,pr_dsdadant => NULL
+                                 ,pr_dsdadatu => CASE pr_flglibera_pre_aprv
+                                                   WHEN 1 THEN 'Liberado'
+                                                   ELSE 'Bloqueado'
+                                                 END);
+                                  
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                 ,pr_nmdcampo => 'Data da atualizacao da flag pre-aprovado'
+                                 ,pr_dsdadant => NULL
+                                 ,pr_dsdadatu => to_char(vr_dtatualiza_pre_aprv,'DD/MM/RRRR'));
+                                  
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                 ,pr_nmdcampo => 'Motivo do bloqueio do pre-aprovado.'
+                                 ,pr_dsdadant => NULL
+                                 ,pr_dsdadatu => fn_busca_motivo(pr_idmotivo));
+                                 
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                 ,pr_nmdcampo => 'Renova Limite Credito Automatico.'
+                                 ,pr_dsdadant => CASE rw_crapass.flgrenli
+                                                   WHEN 1 THEN 'Sim'
+                                                   ELSE 'Nao'
+                                                 END
+                                 ,pr_dsdadatu => CASE vr_flgrenli
+                                                   WHEN 1 THEN 'Sim'
+                                                   ELSE 'Nao'
+                                                 END);
+        
+      EXCEPTION
+        WHEN dup_val_on_index THEN
+          
+          OPEN cr_param_conta (pr_cdcooper, pr_nrdconta);
+          FETCH cr_param_conta INTO rw_param_conta;
+          CLOSE cr_param_conta;
+          
+          -- Se já existir registro, faz update 
+          BEGIN 
+            UPDATE tbepr_param_conta
+               SET flglibera_pre_aprv  = pr_flglibera_pre_aprv
+                  ,dtatualiza_pre_aprv = vr_dtatualiza_pre_aprv
+                  ,idmotivo            = pr_idmotivo
+             WHERE cdcooper = pr_cdcooper
+               AND nrdconta = pr_nrdconta;
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_dscritic := 'Erro --> na rotina EMPR0002.pc_mantem_param_conta -->  '||SQLERRM;
+              RAISE vr_exc_saida;
+          END;
+          
+          /* Inclusão de log com retorno do rowid */
+          gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                              ,pr_cdoperad => pr_cdoperad
+                              ,pr_dscritic => ''
+                              ,pr_dsorigem => gene0001.vr_vet_des_origens(pr_idorigem) --> Origem enviada
+                              ,pr_dstransa => 'Alteracao dos parametros de emprestimo da conta'
+                              ,pr_dttransa => TRUNC(SYSDATE)
+                              ,pr_flgtrans => 1 --> TRUE
+                              ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+                              ,pr_idseqttl => 0
+                              ,pr_nmdatela => pr_nmdatela
+                              ,pr_nrdconta => pr_nrdconta
+                              ,pr_nrdrowid => vr_nrdrowid);
+          
+          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                   ,pr_nmdcampo => 'Liberacao de pre-aprovado'
+                                   ,pr_dsdadant => CASE rw_param_conta.flglibera_pre_aprv
+                                                     WHEN 1 THEN 'Liberado'
+                                                     ELSE 'Bloqueado'
+                                                   END
+                                   ,pr_dsdadatu => CASE pr_flglibera_pre_aprv
+                                                     WHEN 1 THEN 'Liberado'
+                                                     ELSE 'Bloqueado'
+                                                   END);
+          
+          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                   ,pr_nmdcampo => 'Data da atualizacao da flag pre-aprovado'
+                                   ,pr_dsdadant => to_char(rw_param_conta.dtatualiza_pre_aprv,'DD/MM/RRRR')
+                                   ,pr_dsdadatu => to_char(vr_dtatualiza_pre_aprv,'DD/MM/RRRR'));
+          
+          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                   ,pr_nmdcampo => 'Motivo do bloqueio do pre-aprovado.'
+                                   ,pr_dsdadant => fn_busca_motivo(rw_param_conta.idmotivo)
+                                   ,pr_dsdadatu => fn_busca_motivo(pr_idmotivo));
+                                   
+          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                   ,pr_nmdcampo => 'Renova Limite Credito Automatico.'
+                                   ,pr_dsdadant => CASE rw_crapass.flgrenli
+                                                     WHEN 1 THEN 'Sim'
+                                                     ELSE 'Nao'
+                                                   END
+                                   ,pr_dsdadatu => CASE vr_flgrenli
+                                                     WHEN 1 THEN 'Sim'
+                                                     ELSE 'Nao'
+                                                   END);
+      END;
+      
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        pr_des_erro := 'NOK';
+        pr_dscritic := vr_dscritic;
+      WHEN OTHERS THEN
+        pr_des_erro := 'NOK';
+        pr_dscritic := 'Erro --> na rotina EMPR0002.pc_mantem_param_conta -->  '||SQLERRM;
+    END;
+  END pc_mantem_param_conta;
+  
+  -- Bloqueio de limite do pre aprovado por refinanceamento.
+  PROCEDURE pc_bloqueia_pre_aprv_por_refin(pr_nrdconta IN crapass.nrdconta%TYPE --> Conta do cooperado
+                                          ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                                          ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                          ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                                          ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                          ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                          ,pr_des_erro OUT VARCHAR2) IS         --> Erros do processo
+
+  BEGIN
+    ---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_busca_periodo_bloq_refin 
+    --  Sistema  : Emprestimo Pre-Aprovado - Cooperativa de Credito
+    --  Sigla    : EMPR
+    --  Autor    : Lombardi
+    --  Data     : Julho/2016                   Ultima atualizacao: 
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: -----
+    -- Objetivo  : Bloqueio de limite do pre aprovado por refinanceamento.
+    -- Alteracoes:
+    --
+    ---------------------------------------------------------------------------------------------------------------
+    DECLARE
+      
+      -- Variaveis de log
+      vr_cdcooper      NUMBER;
+      vr_cdoperad      VARCHAR2(100);
+      vr_nmdatela      VARCHAR2(100);
+      vr_nmeacao       VARCHAR2(100);
+      vr_cdagenci      VARCHAR2(100);
+      vr_nrdcaixa      VARCHAR2(100);
+      vr_idorigem      VARCHAR2(100);
+      vr_idseqttl      VARCHAR2(100);
+      
+      -- Variaveis de Erro
+      vr_dscritic  VARCHAR2(1000);
+      vr_exc_saida EXCEPTION;
+      
+      -- Busca período de bloqueio de limite por refinanceamento
+      CURSOR cr_crappre (pr_cdcooper IN crapcop.cdcooper%TYPE
+                        ,pr_inpessoa IN crappre.inpessoa%TYPE) IS
+        SELECT qtmesblq
+          FROM crappre
+         WHERE cdcooper = pr_cdcooper
+           AND inpessoa = pr_inpessoa;
+      rw_crappre cr_crappre%ROWTYPE;
+      
+      -- Cursor generico de calendario
+      rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+      
+    BEGIN
+      
+      GENE0004.pc_extrai_dados(pr_xml      => pr_retxml 
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao 
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+      
+      -- Leitura do calendario da CECRED
+      OPEN BTCH0001.cr_crapdat(pr_cdcooper => 3);
+      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+      CLOSE BTCH0001.cr_crapdat;
+      
+      -- Bloqueia pre aprovado na conta do cooperado
+      EMPR0002.pc_mantem_param_conta (pr_cdcooper => vr_cdcooper
+                                     ,pr_nrdconta => pr_nrdconta
+                                     ,pr_flgrenli => NULL
+                                     ,pr_flglibera_pre_aprv =>  0
+                                     ,pr_dtatualiza_pre_aprv => NULL
+                                     ,pr_idmotivo => 32 -- Refinanciamento
+                                     ,pr_cdoperad => vr_cdoperad
+                                     ,pr_idorigem => vr_idorigem
+                                     ,pr_nmdatela => vr_nmdatela
+                                     ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                     ,pr_dscritic => vr_dscritic
+                                     ,pr_des_erro => pr_des_erro);
+      
+      IF pr_des_erro = 'NOK' THEN
+        RAISE vr_exc_saida;
+      END IF;
+      
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        pr_dscritic := vr_dscritic;
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      WHEN OTHERS THEN
+        pr_dscritic := 'Erro --> na rotina EMPR0002.pc_busca_periodo_bloq_refin -->  '||SQLERRM;
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    END;
+  END pc_bloqueia_pre_aprv_por_refin;
+  
+  -- Habilitar as contas bloqueadas por refinanciamento
+  PROCEDURE pc_habilita_contas_suspensas(pr_cdcooper IN crapcop.cdcooper%TYPE --> Conta do cooperado
+                                        ,pr_inpessoa IN crappre.inpessoa%TYPE --> Tipo de pessoa
+                                        ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data do movimento
+                                        ,pr_dscritic OUT VARCHAR2) IS         --> Descrição da crítica
+
+  BEGIN
+    ---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_habilita_contas_suspensas 
+    --  Sistema  : Emprestimo Pre-Aprovado - Cooperativa de Credito
+    --  Sigla    : EMPR
+    --  Autor    : Lombardi
+    --  Data     : Julho/2016                   Ultima atualizacao: 
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: -----
+    -- Objetivo  : Habilitar as contas bloqueadas por refinanciamento, quando o
+    --             tempo configurado para bloqueio acabar.
+    -- Alteracoes:
+    --
+    ---------------------------------------------------------------------------------------------------------------
+    DECLARE
+      -- Busca período de bloqueio de limite por refinanceamento
+      CURSOR cr_crappre (pr_cdcooper IN crapcop.cdcooper%TYPE
+                        ,pr_inpessoa IN crappre.inpessoa%TYPE) IS
+        SELECT qtmesblq
+          FROM crappre
+         WHERE cdcooper = pr_cdcooper
+           AND inpessoa = pr_inpessoa;
+      rw_crappre cr_crappre%ROWTYPE;
+      
+      -- Variaveis auxiliares
+      vr_qtd_mes INTEGER;
+      
+      -- Variaveis de Erro
+      vr_dscritic  VARCHAR2(1000);
+      vr_exc_saida EXCEPTION;
+      
+    BEGIN
+      
+      -- Busca o mes do parametro da cadpre
+      OPEN cr_crappre(pr_cdcooper, pr_inpessoa);
+      FETCH cr_crappre INTO rw_crappre;
+      IF cr_crappre%NOTFOUND THEN
+        vr_dscritic := 'Parametros pre-aprovado nao cadastrados.';
+        RAISE vr_exc_saida;
+      END IF;
+      CLOSE cr_crappre;
+      
+      -- Recebe o mes do parametro da cadpre
+      vr_qtd_mes := rw_crappre.qtmesblq;
+      
+      BEGIN
+        -- Habilita as contas
+        UPDATE tbepr_param_conta prm
+           SET flglibera_pre_aprv  = 1
+              ,dtatualiza_pre_aprv = pr_dtmvtolt
+              ,idmotivo            = null
+           WHERE prm.cdcooper = pr_cdcooper
+             AND prm.flglibera_pre_aprv  = 0
+             AND prm.idmotivo            IS NOT NULL -- Indica que é por refinanciamento 
+             AND prm.dtatualiza_pre_aprv IS NOT NULL
+             AND ADD_MONTHS(TRUNC(prm.dtatualiza_pre_aprv), vr_qtd_mes) <= pr_dtmvtolt
+             AND EXISTS(SELECT 1 
+                          FROM crapass ass
+                         WHERE ass.cdcooper = prm.cdcooper
+                           AND ass.nrdconta = prm.nrdconta
+                           AND ass.inpessoa = pr_inpessoa);
+        COMMIT;
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao habilitar as contas bloqueadas por refinanciamento. ' || SQLERRM;
+          RAISE vr_exc_saida;
+      END;
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        pr_dscritic := vr_dscritic;
+        ROLLBACK;
+      WHEN OTHERS THEN
+        pr_dscritic := 'Erro --> na rotina EMPR0002.pc_habilita_contas_suspensas -->  '||SQLERRM;
+        ROLLBACK;
+    END;
+  END pc_habilita_contas_suspensas;
 
 END EMPR0002;
 /
