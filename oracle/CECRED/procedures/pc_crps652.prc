@@ -22,7 +22,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                (Carga, Carga Manutencao Cadastral, Carga Manutencao Financeira,
                Carga Relations, Carga Garantias, Carga Pagamentos, Carga
                Baixas) e controlar as baixas e pagamentos para os contratos
-               que estao na cobranÃ§a do sistema CYBER.
+               que estao na cobrança do sistema CYBER.
 
    Alteracoes: 26/09/2013 - Ajuste para gerar pagamento e baixa para os
                             registros que nao fizeram atualizacao financeira
@@ -78,22 +78,22 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                16/06/2014 - Ajuste no campo cdestcvl e dsestcvl, foram removidos da
                             crapass e adicionados na crapttl. (Douglas - Chamado 131253)
 
-               25/06/2014 - Ajustar os cursores que realizam a busca das informaÃ§Ãµes do
+               25/06/2014 - Ajustar os cursores que realizam a busca das informações do
                             estado civil. (Douglas - Chamado 131253)
 
-               25/07/2014 - Incluso ajustes geraÃ§Ã£o arquivo Cyber (Daniel)
+               25/07/2014 - Incluso ajustes geração arquivo Cyber (Daniel)
 
-               03/10/2014 - AlteraÃ§Ã£o do fone comercial (tptelefo: 3)
+               03/10/2014 - Alteração do fone comercial (tptelefo: 3)
                             para celular (tptelefo: 2) na procedure "pc_gera_aval"
                             na chamada do cursor "cr_craptfc". (Jaison)
 
-               23/10/2014 - AlteraÃ§Ã£o no cursor "cr_crapcop" para filtrar somente
+               23/10/2014 - Alteração no cursor "cr_crapcop" para filtrar somente
                             as cooperativas ativas campo "flgativo". (Jaison)
 
                01/12/2014 - Ajuste para gerar as baixas para a Concredi e Credimilsul
                             quando o contrato for prejuizo. (James)
 
-               02/12/2014 - AlteraÃ§Ã£o no cursor "cr_crapcop" para filtrar somente
+               02/12/2014 - Alteração no cursor "cr_crapcop" para filtrar somente
                             as cooperativas ativas campo "flgativo". (James)
 
                12/12/2014 - Ajustado para nao enviar nos arquivos acentuacao. (James)
@@ -102,12 +102,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                             Chamado 235518.
 
                27/07/2015 - Nos avalistas que tenham o tpctrato = 1 ou 9, deve enviar o
-                            campo dsendres##2 ao invÃ©s de enviar o nmbairro. Foi cortado o
-                            campo dsendres##2 em 40 posiÃ§Ãµes, para respeitar o tamanho mÃ¡ximo
+                            campo dsendres##2 ao invés de enviar o nmbairro. Foi cortado o
+                            campo dsendres##2 em 40 posições, para respeitar o tamanho máximo
                             do nmbairro. Chamado 307644 (Heitor - RKAM)
 
                17/08/2015 - Complementar envio de dados cadastrais e financeiros ao sistema Cyber,
-                            adicionando cursores novos e ajustando os existes, alÃ©m de adicionar os
+                            adicionando cursores novos e ajustando os existes, além de adicionar os
                             campos aos arquivos correspondentes na procedures pr_gera_carga_MC e
                             adicionar procedure complementar para pc_gera_carga_MF (Douglas - Melhoria 13)
 
@@ -117,9 +117,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                11/09/2015 - Inclusao dos nomes dos parametros na chamada da
                             pc_clob_para_arquivo. (Jaison/Marcos-Supero)
 
-               11/09/2015 - Adicionar os campos de assessoria e motivo CIN para geraÃ§Ã£o da carga
-                            de manutenÃ§Ã£o cadastral, alÃ©m dos ajustes no envio dos pagamentos detalhados
-                            por histÃ³rico (Douglas - Melhoria 12)
+               11/09/2015 - Adicionar os campos de assessoria e motivo CIN para geração da carga
+                            de manutenção cadastral, além dos ajustes no envio dos pagamentos detalhados
+                            por histórico (Douglas - Melhoria 12)
 
                08/10/2015 - Adicionado condicao AND rw_crapcyb.flgpreju = 0) em if de efetuar
                             Baixa. (Jorge/Gielow) - SD 326766
@@ -130,14 +130,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                27/10/2015 - Alterar o pr_flcomple de FALSE para 0 na chamada da procedure
                             CADA0001.pc_busca_idade (Lucas Ranghetti $340156)
 
-               12/11/2015 - Aumentado o espaÃ§o destinado Ã  linha de crÃ©dito nos arquivos de carga
-                            Completa e Financeira. O cÃ³digo ocuparÃ¡ uma posiÃ§Ã£o extra (de 3 para 4),
-                            enquanto o campo seguinte (DescriÃ§Ã£o Linha CrÃ©dito) ocuparÃ¡ uma posiÃ§Ã£o
-                            a menos (De 30 para 29). Foi adotada essa soluÃ§Ã£o para que nÃ£o seja
-                            necessÃ¡rio alteraÃ§Ã£o em todo o layout dos arquivos.
+               12/11/2015 - Aumentado o espaço destinado à linha de crédito nos arquivos de carga
+                            Completa e Financeira. O código ocupará uma posição extra (de 3 para 4),
+                            enquanto o campo seguinte (Descrição Linha Crédito) ocupará uma posição
+                            a menos (De 30 para 29). Foi adotada essa solução para que não seja
+                            necessário alteração em todo o layout dos arquivos.
                             Melhoria 19 (Heitor - RKAM)
 
-               12/11/2015 - Para os contratos PrÃ©-Fixados (tpemprst = 1), deve enviar ao Cyber
+               12/11/2015 - Para os contratos Pré-Fixados (tpemprst = 1), deve enviar ao Cyber
                             o valor de multa e juros de mora juntamente com o valor da parcela.
                             Melhoria 155 (Heitor - RKAM)
 
@@ -155,8 +155,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                             tabela craplem, quando o correto deveria ser craplcm (Heitor - RKAM)
 
                             
-               26/07/2016 - CorreÃ§Ã£o nÃ£o estava trazendo o nome da acessoria de cobranÃ§a
-                            na manutenÃ§Ã£o cadastral. (Oscar)
+               26/07/2016 - Correção não estava trazendo o nome da acessoria de cobrança
+                            na manutenção cadastral. (Oscar)
                27/09/2016 - Correcao na chamada da gene0007 para remocao de caracteres especiais.
 			                Nao deve remover o @ devido ao campo de email.
 							Heitor (RKAM) - Chamado 521909
@@ -164,10 +164,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                20/09/2016 - Inclusao do arquivo de acordo de pagamentos,
                             Prj. 302 (Jean Michel)  
 
-               10/10/2016 - 449436 - AlteraÃ§Ãµes Envio Cyber - Alterado para acrescetar a mora e juros ao valor devedor
+               10/10/2016 - 449436 - Alterações Envio Cyber - Alterado para acrescetar a mora e juros ao valor devedor
                             do cyber. (Gil - Mouts)
 
-               06/12/2016 - IncorporaÃ§Ã£o alteraÃ§Ã£o no cursor "cr_crapcop" para retirar o filtro
+               06/12/2016 - Incorporação alteração no cursor "cr_crapcop" para retirar o filtro
                             das cooperativas ativas campo "flgativo". (Oscar)
 
 			   
@@ -175,10 +175,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
 			                Antes, poderia causar problema se um numero de contrato tiver a mesma numeracao da conta.
 							Gil (Mouts)
               
-               05/01/2017 - Ajuste para forÃ§a o uso do indice 2 da tabela craplcm problemas
+               05/01/2017 - Ajuste para força o uso do indice 2 da tabela craplcm problemas
                            de performance  Oracle usa o indice 1. (Oscar)
                            
-               06/01/2017 - Ajuste no hint da craplcm, retirar espaÃ§o entre o index. 
+               06/01/2017 - Ajuste no hint da craplcm, retirar espaço entre o index. 
                 Voltar a flgativo nos cursor da cooperativas.(Oscar)            
                            
                06/03/2017 - Ajuste no hint cr_valor_pago_emprestimo mover para baixo
@@ -188,7 +188,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
       
 
 
-         16/01/2017 - Prj 432 - Melhorias envio Cyber - AlteraÃ§Ãµes diversas referente projeto 432. (Jean - MoutÂ´S)   
+         16/01/2017 - Prj 432 - Melhorias envio Cyber - Alterações diversas referente projeto 432. (Jean - Mout´S)   
 
 
 
@@ -224,22 +224,22 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
        ,dtnasctl crapass.dtnasctl%TYPE   -- Data Nascimento
        ,nmprimtl crapass.nmprimtl%TYPE   -- Nome Primeiro Titular
        ,tpdocptl crapass.tpdocptl%TYPE   -- Tipo Documento Primeiro Titular
-       ,nrdocptl crapass.nrdocptl%TYPE   -- NÃºmero Documento Primeiro Titular
+       ,nrdocptl crapass.nrdocptl%TYPE   -- Número Documento Primeiro Titular
        ,dtemdptl crapass.dtemdptl%TYPE   -- Data de emissao do documento do titular.
        ,cdsexotl crapass.cdsexotl%TYPE   -- Sexo
        ,inhabmen crapass.inhabmen%TYPE   -- Indicador de habilitacao de menor
-       ,cdsitdct crapass.cdsitdct%TYPE   -- SituaÃ§Ã£o da Conta
+       ,cdsitdct crapass.cdsitdct%TYPE   -- Situação da Conta
        ,nrcpfcgc crapass.nrcpfcgc%TYPE   -- CPF
-       ,dtadmiss crapass.dtadmiss%TYPE   -- Data de AdmissÃ£o
-       ,dtdemiss crapass.dtdemiss%TYPE   -- Data de DemissÃ£o
+       ,dtadmiss crapass.dtadmiss%TYPE   -- Data de Admissão
+       ,dtdemiss crapass.dtdemiss%TYPE   -- Data de Demissão
        ,inlbacen crapass.inlbacen%TYPE   -- CCF
        ,inrisctl crapass.inrisctl%TYPE   -- Risco do Cooperado
        ,idastcjt crapass.idastcjt%TYPE   -- Indicador de Ass. Conjunta
-       -- InformaÃ§Ãµes do estado civil
+       -- Informações do estado civil
        ,cdestcvl gnetcvl.cdestcvl%TYPE   -- Codigo Estado Civil
        ,dsestcvl gnetcvl.dsestcvl%TYPE   -- Descricao Estado Civil
        ,rsestcvl gnetcvl.rsestcvl%TYPE   -- Descricao Resumida Estado Civil
-       -- InformaÃ§Ãµes do conjugue
+       -- Informações do conjugue
        ,nmconjug crapcje.nmconjug%TYPE   -- Nome Conjugue
        ,dtnasccj crapcje.dtnasccj%TYPE); -- Data Nascimento Conjugue
 
@@ -565,8 +565,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
        rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
 
 
-       -- 27/01/2017 -- Melhoria 432 - envio informaÃ§Ãµes CYBER
-       -- Verifica se Ã© contrato de refinancimamento para envio do campo cÃ³digo transacao CYBER
+       -- 27/01/2017 -- Melhoria 432 - envio informações CYBER
+       -- Verifica se é contrato de refinancimamento para envio do campo código transacao CYBER
        CURSOR c_refinanciamento (pr_cdcooper  IN crapcyb.cdcooper%type
                                 ,pr_nrdconta  IN crapcyb.nrdconta%type
                                 ,pr_nrctremp  IN crapcyb.nrctremp%type) IS
@@ -724,7 +724,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
        --Escrever no arquivo CLOB
        PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2
                                ,pr_nro_clob  IN INTEGER
-                               ,pr_flmsmlin  IN BOOLEAN DEFAULT FALSE) --identifica se deve inclui informaÃ§Ãµes na mesma linha
+                               ,pr_flmsmlin  IN BOOLEAN DEFAULT FALSE) --identifica se deve inclui informações na mesma linha
                                IS
           vr_linha VARCHAR2(5000);
        BEGIN
@@ -866,14 +866,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
          vr_qtd_brancos integer;
        BEGIN
          vr_linha := vr_tab_linha(pr_arquivo);
-         -- Verifica quantos caracteres jÃ¡ existem na linha
+         -- Verifica quantos caracteres já existem na linha
          vr_tam_linha := nvl(length(vr_linha), 0);
-         -- Calcula quantidade de espaÃ§os a incluir na linha
+         -- Calcula quantidade de espaços a incluir na linha
          vr_qtd_brancos := pr_nrposic - vr_tam_linha - 1;
-         -- Concatena os espaÃ§os em branco e o novo texto
+         -- Concatena os espaços em branco e o novo texto
          vr_linha := vr_linha || rpad(' ', vr_qtd_brancos, ' ') || pr_text;
          --Modificar vetor com a linha atualizada
-         vr_tab_linha(pr_arquivo) := gene0007.fn_caract_acento(GENE0007.fn_caract_acento(vr_linha,0),1,'`Â´#$&%Â¹Â²Â³ÂªÂºÂ°*!?<>/\|','                    ');
+         vr_tab_linha(pr_arquivo) := gene0007.fn_caract_acento(GENE0007.fn_caract_acento(vr_linha,0),1,'`´#$&%¹²³ªº°*!?<>/\|','                    ');
        END pc_monta_linha;
 
        --Procedure para incrementar contador linha
@@ -1021,8 +1021,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                    ,crapavt.nmdavali
                    ,crapavt.dsendres##1
                    ,crapavt.dsendres##2
-                   ,decode(crapavt.tpctrato,1,substr(crapavt.dsendres##2,1,40) --Cortado em 40 posiÃ§Ãµes
-                                           ,9,substr(crapavt.dsendres##2,1,40) --Tamanho mÃ¡ximo do campo nmbairro
+                   ,decode(crapavt.tpctrato,1,substr(crapavt.dsendres##2,1,40) --Cortado em 40 posições
+                                           ,9,substr(crapavt.dsendres##2,1,40) --Tamanho máximo do campo nmbairro
                                              ,crapavt.nmbairro) nmbairro       --Chamado 307644
                    ,crapavt.nmcidade
                    ,crapavt.cdufresd
@@ -1391,7 +1391,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
              pc_monta_linha(vr_avalist2,725,pr_idarquivo);
              --Escrever Linha Arquivo
              IF pr_idarquivo NOT IN (1,3) THEN
-               -- escrever somente se nÃ£o for o arquivo de carga ou carga financeira, pois para este a escrita serÃ¡ na pc_gera_carga_mc
+               -- escrever somente se não for o arquivo de carga ou carga financeira, pois para este a escrita será na pc_gera_carga_mc
                pc_escreve_xml(NULL,pr_idarquivo);
              END IF;
            ELSIF pr_opccarga = 'R' THEN /*Relations*/
@@ -2396,7 +2396,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
        BEGIN
          DECLARE
            /* Cursores Locais */
-           --InformaÃ§Ãµes do Emprestimo
+           --Informações do Emprestimo
            CURSOR cr_crapepr(pr_cdcooper IN crapepr.cdcooper%TYPE
                             ,pr_nrdconta IN crapepr.nrdconta%TYPE
                             ,pr_nrctremp IN crapepr.nrctremp%TYPE) IS
@@ -2414,7 +2414,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                 AND crapepr.nrctremp = pr_nrctremp;
            rw_crapepr cr_crapepr%ROWTYPE;
 
-           --InformaÃ§Ãµes do Rating
+           --Informações do Rating
            CURSOR cr_crapnrc(pr_cdcooper IN crapnrc.cdcooper%TYPE
                             ,pr_nrdconta IN crapnrc.nrdconta%TYPE) IS
              SELECT crapnrc.indrisco
@@ -2424,7 +2424,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                 AND crapnrc.insitrat = 2;
            rw_crapnrc cr_crapnrc%ROWTYPE;
 
-           --InformaÃ§Ãµes de DevoluÃ§Ãµes
+           --Informações de Devoluções
            CURSOR cr_crapneg(pr_cdcooper IN crapneg.cdcooper%TYPE
                             ,pr_nrdconta IN crapneg.nrdconta%TYPE) IS
              SELECT COUNT(*) qtdevolu
@@ -2435,7 +2435,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                 AND crapneg.cdobserv IN(11,12,13);
            rw_crapneg cr_crapneg%ROWTYPE;
 
-           --InformaÃ§Ãµes de Estouros
+           --Informações de Estouros
            CURSOR cr_crapsld(pr_cdcooper IN crapsld.cdcooper%TYPE
                             ,pr_nrdconta IN crapsld.nrdconta%TYPE) IS
              SELECT crapsld.qtddtdev
@@ -2444,7 +2444,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                 AND crapsld.nrdconta = pr_nrdconta;
            rw_crapsld cr_crapsld%ROWTYPE;
 
-           --InformaÃ§Ãµes de Estouros
+           --Informações de Estouros
            CURSOR cr_crapgrp(pr_cdcooper IN crapgrp.cdcooper%TYPE
                             ,pr_nrctasoc IN crapgrp.nrctasoc%TYPE) IS
              SELECT crapgrp.dsdrisgp
@@ -2467,15 +2467,15 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                AND crapcyc.nrctremp = pr_nrctremp;
            rw_crapcyc cr_crapcyc%ROWTYPE;
 
-           --InformaÃ§Ãµes
+           --Informações
            vr_cdagenci crapepr.cdagenci%TYPE; -- PA onde foi digitado o contrato de emprestimo
-           vr_idquapro crawepr.idquapro%TYPE; -- QualificaÃ§Ã£o da OperaÃ§Ã£o
+           vr_idquapro crawepr.idquapro%TYPE; -- Qualificação da Operação
            vr_indrisco crapnrc.indrisco%TYPE; -- Rating
-           vr_qtdevolu INTEGER;               -- DevoluÃ§Ãµes
+           vr_qtdevolu INTEGER;               -- Devoluções
            vr_qtddtdev crapsld.qtddtdev%TYPE; -- Estouros
            vr_inlbacen crapass.inlbacen%TYPE; -- CCF
            vr_inrisctl crapass.inrisctl%TYPE; -- Risco do Cooperado
-           vr_dsdrisgp crapgrp.dsdrisgp%TYPE; -- Risco do Grupo EconÃ´mico
+           vr_dsdrisgp crapgrp.dsdrisgp%TYPE; -- Risco do Grupo Econômico
            vr_dtdpagto crapepr.dtdpagto%TYPE; -- Data de Pagamento
            vr_tpemprst crapepr.tpemprst%TYPE; -- Produto
            vr_vldocet  crawepr.percetop%TYPE; -- CET
@@ -2496,7 +2496,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
              vr_inrisctl:= vr_tab_crapass(pr_nrdconta).inrisctl;
            END IF;
 
-           -- Buscar as informaÃ§Ãµes do emprestimo
+           -- Buscar as informações do emprestimo
            OPEN cr_crapepr(pr_cdcooper => pr_cdcooper
                           ,pr_nrdconta => pr_nrdconta
                           ,pr_nrctremp => pr_nrctremp);
@@ -2510,7 +2510,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
            END IF;
            CLOSE cr_crapepr;
 
-           -- Buscar as informaÃ§Ãµes do Rating
+           -- Buscar as informações do Rating
            OPEN cr_crapnrc(pr_cdcooper => pr_cdcooper
                           ,pr_nrdconta => pr_nrdconta);
            FETCH cr_crapnrc INTO rw_crapnrc;
@@ -2523,7 +2523,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
            END IF;
            CLOSE cr_crapnrc;
 
-           -- Buscar as informaÃ§Ãµes do Rating
+           -- Buscar as informações do Rating
            OPEN cr_crapneg(pr_cdcooper => pr_cdcooper
                           ,pr_nrdconta => pr_nrdconta);
            FETCH cr_crapneg INTO rw_crapneg;
@@ -2532,7 +2532,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
            END IF;
            CLOSE cr_crapneg;
 
-           -- Buscar as informaÃ§Ãµes de Estouros
+           -- Buscar as informações de Estouros
            OPEN cr_crapsld(pr_cdcooper => pr_cdcooper
                           ,pr_nrdconta => pr_nrdconta);
            FETCH cr_crapsld INTO rw_crapsld;
@@ -2541,7 +2541,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
            END IF;
            CLOSE cr_crapsld;
 
-           -- Buscar as informaÃ§Ãµes do Risco do Grupo economico
+           -- Buscar as informações do Risco do Grupo economico
            OPEN cr_crapgrp(pr_cdcooper => pr_cdcooper
                           ,pr_nrctasoc => pr_nrdconta);
            FETCH cr_crapgrp INTO rw_crapgrp;
@@ -2569,13 +2569,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
            IF pr_idarquivo = 3 THEN
              -- Quando for o arquivo _financeiro_in (pr_idarquivo = 3)
              pc_monta_linha(RPad(NVL(vr_cdagenci,0),5,' '),857,pr_idarquivo); -- Pa onde o contrato foi digitado
-             pc_monta_linha(RPad(NVL(vr_idquapro,0),2,' '),862,pr_idarquivo); -- QualificaÃ§Ã£o da OperaÃ§Ã£o
+             pc_monta_linha(RPad(NVL(vr_idquapro,0),2,' '),862,pr_idarquivo); -- Qualificação da Operação
              pc_monta_linha(RPad(NVL(vr_indrisco,' '),3,' '),864,pr_idarquivo); -- Rating
-             pc_monta_linha(gene0002.fn_mask(vr_qtdevolu,'999'),867,pr_idarquivo); -- DevoluÃ§Ãµes
+             pc_monta_linha(gene0002.fn_mask(vr_qtdevolu,'999'),867,pr_idarquivo); -- Devoluções
              pc_monta_linha(gene0002.fn_mask(vr_qtddtdev,'99999'),870,pr_idarquivo); -- Estouros
              pc_monta_linha(RPad(NVL(vr_inlbacen,0),1,' '),875,pr_idarquivo); -- No CCF
              pc_monta_linha(RPad(NVL(vr_inrisctl,' '),3,' '),876,pr_idarquivo); -- Risco Cooperado
-             pc_monta_linha(RPad(NVL(vr_dsdrisgp,' '),3,' '),879,pr_idarquivo); -- Risco Grupo EconÃ´mico
+             pc_monta_linha(RPad(NVL(vr_dsdrisgp,' '),3,' '),879,pr_idarquivo); -- Risco Grupo Econômico
              pc_monta_linha(RPad(to_char(vr_dtdpagto,'MMDDYYYY'),8,' '),882,pr_idarquivo);-- Data pagamento
              pc_monta_linha(RPad(NVL(vr_tpemprst,0),1,' '),890,pr_idarquivo); -- Produto
              pc_monta_linha(gene0002.fn_mask(NVL(vr_vldocet,0) * 100,'99999'),891,pr_idarquivo); -- CET
@@ -2583,13 +2583,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
            ELSIF pr_idarquivo = 1 THEN
              -- Quando for o arquivo _carga_in (pr_idarquivo = 1)
              pc_monta_linha(RPad(NVL(vr_cdagenci,0),5,' '),4493,pr_idarquivo); -- Pa onde o contrato foi digitado
-             pc_monta_linha(RPad(NVL(vr_idquapro,0),2,' '),4498,pr_idarquivo); -- QualificaÃ§Ã£o da OperaÃ§Ã£o
+             pc_monta_linha(RPad(NVL(vr_idquapro,0),2,' '),4498,pr_idarquivo); -- Qualificação da Operação
              pc_monta_linha(RPad(NVL(vr_indrisco,' '),3,' '),4500,pr_idarquivo); -- Rating
-             pc_monta_linha(gene0002.fn_mask(vr_qtdevolu,'999'),4503,pr_idarquivo); -- DevoluÃ§Ãµes
+             pc_monta_linha(gene0002.fn_mask(vr_qtdevolu,'999'),4503,pr_idarquivo); -- Devoluções
              pc_monta_linha(gene0002.fn_mask(vr_qtddtdev,'99999'),4506,pr_idarquivo); -- Estouros
              pc_monta_linha(RPad(NVL(vr_inlbacen,0),1,' '),4511,pr_idarquivo); -- No CCF
              pc_monta_linha(RPad(NVL(vr_inrisctl,' '),3,' '),4512,pr_idarquivo); -- Risco Cooperado
-             pc_monta_linha(RPad(NVL(vr_dsdrisgp,' '),3,' '),4515,pr_idarquivo); -- Risco Grupo EconÃ´mico
+             pc_monta_linha(RPad(NVL(vr_dsdrisgp,' '),3,' '),4515,pr_idarquivo); -- Risco Grupo Econômico
              pc_monta_linha(RPad(to_char(vr_dtdpagto,'MMDDYYYY'),8,' '),4518,pr_idarquivo);-- Data pagamento
              pc_monta_linha(RPad(NVL(vr_tpemprst,0),1,' '),4526,pr_idarquivo); -- Produto
              pc_monta_linha(gene0002.fn_mask(NVL(vr_vldocet,0) * 100,'99999'),4527,pr_idarquivo); -- CET
@@ -2661,7 +2661,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
            pr_cdcritic:= NULL;
            pr_dscritic:= NULL;
 
-           -- Localizar convenio de cobranÃ§a
+           -- Localizar convenio de cobrança
            vr_nrcnvcob := gene0001.fn_param_sistema(pr_cdcooper => pr_cdcooper
                                                    ,pr_nmsistem => 'CRED'
                                                    ,pr_cdacesso => 'ACORDO_NRCONVEN');
@@ -2673,15 +2673,15 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
              pc_incrementa_linha(pr_nrolinha => pr_idarquivo);
              pc_monta_linha(RPAD('',3,' '),1,pr_idarquivo);                                           -- Tipo de Registro 
              pc_monta_linha(RPAD(rw_crapret.nrnosnum,20,' '),4,pr_idarquivo);                         -- Nosso Numero
-             pc_monta_linha(GENE0002.fn_mask(rw_crapret.nracordo,'9999999999999'),24,pr_idarquivo);   -- NÃºmero do Acordo
-             pc_monta_linha(GENE0002.fn_mask(rw_crapret.nrparcela,'99999'),37,pr_idarquivo);          -- NÃºmero da Parcela do Acordo
+             pc_monta_linha(GENE0002.fn_mask(rw_crapret.nracordo,'9999999999999'),24,pr_idarquivo);   -- Número do Acordo
+             pc_monta_linha(GENE0002.fn_mask(rw_crapret.nrparcela,'99999'),37,pr_idarquivo);          -- Número da Parcela do Acordo
              pc_monta_linha(RPAD(rw_crapret.dsocorre,2,' '),42,pr_idarquivo);                         -- Identificacao de Ocorrencia           
              pc_monta_linha(GENE0002.fn_mask(rw_crapret.vlrpagto*100,'999999999999999'),44,pr_idarquivo); -- Valor pago
              pc_monta_linha(GENE0002.fn_mask(rw_crapret.vltitulo*100,'999999999999999'),59,pr_idarquivo); -- Valor do Boleto
              pc_monta_linha(RPAD(TO_CHAR(rw_crapret.dtocorre,'MMDDYYYY'),8,' '),74,pr_idarquivo);     -- Data de entrada de pagamento
              pc_monta_linha(RPAD(TO_CHAR(rw_crapret.dtocorre,'MMDDYYYY'),8,' '),82,pr_idarquivo);     -- Data de Transacao
              pc_monta_linha(RPAD('Acordo:' || GENE0002.fn_mask(rw_crapret.nracordo,'9999999999999') ||
-                                 ', Parcela:' || GENE0002.fn_mask(rw_crapret.nrparcela,'99999'),100,' '),90,pr_idarquivo); -- DescriÃ§Ã£o do Pagamento                                 
+                                 ', Parcela:' || GENE0002.fn_mask(rw_crapret.nrparcela,'99999'),100,' '),90,pr_idarquivo); -- Descrição do Pagamento                                 
              --Escrever no arquivo
              pc_escreve_xml(NULL,pr_idarquivo);             
            END LOOP;
@@ -2813,7 +2813,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                FROM gngresc
               WHERE gngresc.grescola = pr_grescola;
            rw_gngresc cr_gngresc%ROWTYPE;
-           --SituaÃ§Ã£o do CartÃ£o CECRED
+           --Situação do Cartão CECRED
            CURSOR cr_crawcrd(pr_cdcooper IN crawcrd.cdcooper%TYPE
                             ,pr_nrdconta IN crawcrd.nrdconta%TYPE) IS
              SELECT insitcrd
@@ -2825,7 +2825,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                       ORDER BY decode(crawcrd.insitcrd, 4, 1, 3, 2, 1, 3, 2, 4, 0, 5, 6))
               WHERE rownum = 1;
            rw_crawcrd cr_crawcrd%ROWTYPE;
-             --Quantidade de CartÃµes
+             --Quantidade de Cartões
            CURSOR cr_crapcrm(pr_cdcooper IN crapcrm.cdcooper%TYPE
                             ,pr_nrdconta IN crapcrm.nrdconta%TYPE) IS
              SELECT COUNT(*) qtd
@@ -2835,7 +2835,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                 and c.cdadmcrd BETWEEN 10 AND 80
                 AND c.dtcancel IS NULL;
            rw_crapcrm cr_crapcrm%ROWTYPE;
-           --InformaÃ§Ãµes de Acesso ao Internet Bank
+           --Informações de Acesso ao Internet Bank
            CURSOR cr_crapsnh(pr_cdcooper IN crapsnh.cdcooper%TYPE
                             ,pr_nrdconta IN crapsnh.nrdconta%TYPE
                             ,pr_idseqttl IN crapsnh.idseqttl%TYPE) IS
@@ -2848,7 +2848,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
 
            rw_crapsnh cr_crapsnh%ROWTYPE;
 
-           --InformaÃ§Ãµes de Acesso ao Internet Bank
+           --Informações de Acesso ao Internet Bank
            CURSOR cr_crapsnh_astcjt(pr_cdcooper IN crapsnh.cdcooper%TYPE
                                    ,pr_nrdconta IN crapsnh.nrdconta%TYPE) IS
              SELECT crapsnh.cdsitsnh
@@ -2937,15 +2937,15 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
            vr_faturamento NUMBER(15);
            -- Quantidade de Bens Adicionados no arquivo
            vr_qtd_bens    INTEGER;
-           -- SituaÃ§Ã£o do CartÃ£o CECRED
+           -- Situação do Cartão CECRED
            vr_insitcrd    INTEGER;
-           -- SituaÃ§Ã£o do acesso ao internet bank
+           -- Situação do acesso ao internet bank
            vr_cdsitsnh    INTEGER;
            -- Escolaridade
            vr_dsescola gngresc.dsescola%TYPE;
            -- Ramo de Atividade
            vr_nmrmativ gnrativ.nmrmativ%TYPE;
-           -- PosiÃ§Ã£o Inicial Auxiliar
+           -- Posição Inicial Auxiliar
            vr_posicini_aux INTEGER;
          BEGIN
            --Limpar parametros erro
@@ -2958,7 +2958,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
            vr_tab_bens.DELETE;
            vr_tab_erro.DELETE;
 
-           -- Limpar variÃ¡veis
+           -- Limpar variáveis
            vr_buscocup := false;
            vr_rsdocupa := null;
 
@@ -3034,7 +3034,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                                                         ,pr_rsdocupa => vr_rsdocupa
                                                         ,pr_cdcritic => vr_cdcritic
                                                         ,pr_dscritic => vr_dscritic);
-               --Nao Ã© verificado se ocorreu erro
+               --Nao é verificado se ocorreu erro
              END IF;
            ELSE
              --Selecionar Endereco
@@ -3483,7 +3483,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                                       ,pr_tab_erro => vr_tab_erro                --Tabela Erro
                                       ,pr_cdcritic => vr_cdcritic                --Codigo de erro
                                       ,pr_dscritic => vr_dscritic);              --Retorno de Erro
-           --Se ocorreu erro e o erro nÃ£o for NOK
+           --Se ocorreu erro e o erro não for NOK
            IF (vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL) AND vr_dscritic <> 'NOK' THEN
              --Levantar Excecao
              RAISE vr_exc_erro;
@@ -3557,7 +3557,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
              FETCH cr_busca_faturamento INTO rw_faturamento;
              IF cr_busca_faturamento%FOUND THEN
                IF rw_faturamento.valor > 0 THEN
-                 -- Somente atualiza o valor se o rendimento Ã© maior que zero
+                 -- Somente atualiza o valor se o rendimento é maior que zero
                  vr_faturamento:= rw_faturamento.valor;
                END IF;
              END IF;
@@ -3565,7 +3565,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
            -- Gera o faturamento do cooperado
            pc_monta_linha(gene0002.fn_mask(vr_faturamento *100,'999999999999999'),pr_posicini+3178,pr_idarquivo);-- Faturamento PJ
 
-           -- PosiÃ§Ã£o Inicial para colocar a descriÃ§Ã£o do bem
+           -- Posição Inicial para colocar a descrição do bem
            -- Quantidade de Bens Adicionados no arquivo
            vr_qtd_bens:= 0;
            vr_posicini_aux:= 3193;
@@ -3574,39 +3574,39 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                                        ,pr_nrdconta => pr_nrdconta
                                        ,pr_idseqttl => 1) LOOP
 
-             pc_monta_linha(RPad(NVL(SUBSTR(rw_crapbem.dsrelbem,1,60), ' '),60,' '),pr_posicini+vr_posicini_aux,pr_idarquivo); -- DescriÃ§Ã£o do Bem
-             -- Incrementar a posiÃ§Ã£o inicial auxiliar com o tamanho da descriÃ§Ã£o do bem
+             pc_monta_linha(RPad(NVL(SUBSTR(rw_crapbem.dsrelbem,1,60), ' '),60,' '),pr_posicini+vr_posicini_aux,pr_idarquivo); -- Descrição do Bem
+             -- Incrementar a posição inicial auxiliar com o tamanho da descrição do bem
              vr_posicini_aux:= vr_posicini_aux + 60;
              pc_monta_linha(gene0002.fn_mask(NVL(rw_crapbem.vlrdobem * 100,0),'999999999999999'),pr_posicini+vr_posicini_aux,pr_idarquivo); -- Valor do Bem
-             -- Incrementar a posiÃ§Ã£o inicial auxiliar com o tamanho do valor do bem
+             -- Incrementar a posição inicial auxiliar com o tamanho do valor do bem
              vr_posicini_aux:= vr_posicini_aux + 15;
-             -- Totalizamos a quantidade de bens que estÃ¡ sendo adicionada no arquivo
+             -- Totalizamos a quantidade de bens que está sendo adicionada no arquivo
              vr_qtd_bens:= vr_qtd_bens + 1;
            END LOOP;
 
-           -- LOOP da quantidade adicionada atÃ© os 5 bens que temos que adicionar
+           -- LOOP da quantidade adicionada até os 5 bens que temos que adicionar
            WHILE vr_qtd_bens < 5 LOOP
-             pc_monta_linha(RPad(' ',60,' '),pr_posicini+vr_posicini_aux,pr_idarquivo); -- DescriÃ§Ã£o do Bem
-             -- Incrementar a posiÃ§Ã£o inicial auxiliar com o tamanho da descriÃ§Ã£o do bem
+             pc_monta_linha(RPad(' ',60,' '),pr_posicini+vr_posicini_aux,pr_idarquivo); -- Descrição do Bem
+             -- Incrementar a posição inicial auxiliar com o tamanho da descrição do bem
              vr_posicini_aux:= vr_posicini_aux + 60;
              pc_monta_linha(gene0002.fn_mask(0,'999999999999999'),pr_posicini+vr_posicini_aux,pr_idarquivo); -- Valor do Bem
-             -- Incrementar a posiÃ§Ã£o inicial auxiliar com o tamanho do valor do bem
+             -- Incrementar a posição inicial auxiliar com o tamanho do valor do bem
              vr_posicini_aux:= vr_posicini_aux + 15;
-             -- Totalizamos a quantidade de bens que estÃ¡ sendo adicionada no arquivo
+             -- Totalizamos a quantidade de bens que está sendo adicionada no arquivo
              vr_qtd_bens:= vr_qtd_bens + 1;
            END LOOP;
 
-           -- Data de AdmissÃ£o do cooperado
+           -- Data de Admissão do cooperado
            IF vr_tab_crapass(pr_nrdconta).dtadmiss IS NOT NULL THEN
-             pc_monta_linha(to_char(vr_tab_crapass(pr_nrdconta).dtadmiss,'MMDDYYYY'),pr_posicini+3568,pr_idarquivo); -- AdmissÃ£o
+             pc_monta_linha(to_char(vr_tab_crapass(pr_nrdconta).dtadmiss,'MMDDYYYY'),pr_posicini+3568,pr_idarquivo); -- Admissão
            END IF;
 
-           -- Data de DemissÃ£o do cooperado
+           -- Data de Demissão do cooperado
            IF vr_tab_crapass(pr_nrdconta).dtdemiss IS NOT NULL THEN
-             pc_monta_linha(to_char(vr_tab_crapass(pr_nrdconta).dtdemiss,'MMDDYYYY'),pr_posicini+3576,pr_idarquivo); -- DemissÃ£o
+             pc_monta_linha(to_char(vr_tab_crapass(pr_nrdconta).dtdemiss,'MMDDYYYY'),pr_posicini+3576,pr_idarquivo); -- Demissão
            END IF;
 
-           -- SituaÃ§Ã£o do CartÃ£o CECRED
+           -- Situação do Cartão CECRED
            vr_insitcrd:= 0;
            OPEN cr_crawcrd(pr_cdcooper => pr_cdcooper
                           ,pr_nrdconta => pr_nrdconta);
@@ -3615,21 +3615,21 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
              vr_insitcrd:= NVL(rw_crawcrd.insitcrd,0);
            END IF;
            CLOSE cr_crawcrd;
-           pc_monta_linha(gene0002.fn_mask(vr_insitcrd,'99'),pr_posicini+3584,pr_idarquivo); -- SituaÃ§Ã£o CartÃ£o CECRED
+           pc_monta_linha(gene0002.fn_mask(vr_insitcrd,'99'),pr_posicini+3584,pr_idarquivo); -- Situação Cartão CECRED
 
-           -- Quantidade de cartÃµes magnÃ©ticos ativos
+           -- Quantidade de cartões magnéticos ativos
            OPEN cr_crapcrm(pr_cdcooper => pr_cdcooper
                           ,pr_nrdconta => pr_nrdconta);
            FETCH cr_crapcrm INTO rw_crapcrm;
            IF cr_crapcrm%FOUND THEN
-             -- Adiciona a quantidade de cartÃµes magnÃ©tico ativos que o cooperado possui
-             pc_monta_linha(gene0002.fn_mask(rw_crapcrm.qtd,'999'),pr_posicini+3586,pr_idarquivo); -- Quantidade de cartÃµes magnÃ©ticos ativos
+             -- Adiciona a quantidade de cartões magnético ativos que o cooperado possui
+             pc_monta_linha(gene0002.fn_mask(rw_crapcrm.qtd,'999'),pr_posicini+3586,pr_idarquivo); -- Quantidade de cartões magnéticos ativos
            END IF;
            CLOSE cr_crapcrm;
 
            IF ( vr_tab_crapass(pr_nrdconta).idastcjt = 0) THEN
 
-             -- SituaÃ§Ã£o Internet
+             -- Situação Internet
              vr_cdsitsnh:= 0;
              OPEN cr_crapsnh(pr_cdcooper => pr_cdcooper
                             ,pr_nrdconta => pr_nrdconta
@@ -3640,7 +3640,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
              END IF;
              CLOSE cr_crapsnh;
            ELSE
-             -- SituaÃ§Ã£o Internet
+             -- Situação Internet
              vr_cdsitsnh:= 0;
 
              OPEN cr_crapsnh_astcjt(pr_cdcooper => pr_cdcooper
@@ -3653,7 +3653,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
 
            END IF;
 
-           pc_monta_linha(gene0002.fn_mask(vr_cdsitsnh,'99'),pr_posicini+3589,pr_idarquivo); -- SituaÃ§Ã£o Internet
+           pc_monta_linha(gene0002.fn_mask(vr_cdsitsnh,'99'),pr_posicini+3589,pr_idarquivo); -- Situação Internet
 
            -- Escolaridade do cooperado
            vr_dsescola:= NULL;
@@ -3700,7 +3700,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                                           ,pr_cdorigem   IN crapcyb.cdorigem%type -- Origem
                                           ,pr_nrdconta   IN crapcyb.nrdconta%type -- Conta
                                           ,pr_nrctremp   IN crapcyb.nrctremp%type -- Contrato de Emprestimo
-                                          ,pr_posicini   IN INTEGER               -- PosiÃ§Ã£o Inicial da InformaÃ§Ã£o
+                                          ,pr_posicini   IN INTEGER               -- Posição Inicial da Informação
                                           ,pr_cdcritic  OUT INTEGER               -- Codigo do Erro
                                           ,pr_dscritic  OUT VARCHAR2) IS          -- Descricao do Erro
        BEGIN
@@ -3761,7 +3761,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
            CLOSE cr_crapcyc;
 
            pc_monta_linha(rpad(vr_nmassessoria,50,' '),pr_posicini,pr_idarquivo);-- Nome da Assessoria
-           pc_monta_linha(gene0002.fn_mask(vr_cdmotivo_cin,'999'),pr_posicini+50,pr_idarquivo);-- CÃ³digo do Motivo CIN
+           pc_monta_linha(gene0002.fn_mask(vr_cdmotivo_cin,'999'),pr_posicini+50,pr_idarquivo);-- Código do Motivo CIN
 
            OPEN cr_crapenc(pr_cdcooper => pr_cdcooper
                           ,pr_nrdconta => pr_nrdconta
@@ -4617,10 +4617,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
            vr_tab_crapass(rw_crapass.nrdconta).inlbacen:= rw_crapass.inlbacen;
            vr_tab_crapass(rw_crapass.nrdconta).inrisctl:= rw_crapass.inrisctl;
            vr_tab_crapass(rw_crapass.nrdconta).idastcjt:= rw_crapass.idastcjt;
-           -- InformaÃ§Ãµes do Conjugue
+           -- Informações do Conjugue
            vr_tab_crapass(rw_crapass.nrdconta).dtnasccj:= rw_crapcje1.dtnasccj;
            vr_tab_crapass(rw_crapass.nrdconta).nmconjug:= rw_crapcje1.nmconjug;
-           -- Vamos carregar as informaÃ§Ãµes do estado civil apenas quando for pessoa fÃ­sica
+           -- Vamos carregar as informações do estado civil apenas quando for pessoa física
            IF rw_crapass.inpessoa = 1 THEN
              OPEN cr_gnetcvl (pr_cdcooper => rw_crapcop.cdcooper
                              ,pr_nrdconta => rw_crapass.nrdconta);
@@ -4650,7 +4650,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
          --Selecionar Contratos em Cobranca no Cyber
          FOR rw_crapcyb IN cr_crapcyb (pr_cdcooper => rw_crapcop.cdcooper) LOOP
            
-           -- Melhoria 432 - envio informacoes CYBEr - Jean (MoutÂ´S)
+           -- Melhoria 432 - envio informacoes CYBEr - Jean (Mout´S)
            open cr_crapcyc1(pr_cdcooper => rw_crapcyb.cdcooper
                            ,pr_cdorigem => rw_crapcyb.cdorigem
                            ,pr_nrdconta => rw_crapcyb.nrdconta
@@ -4724,7 +4724,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
              IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
                RAISE vr_exc_saida;
              END IF;
-             --ApÃ³s gerar a Carga, deve gerar as informaÃ§Ãµes complementares para a Carga Financeira
+             --Após gerar a Carga, deve gerar as informações complementares para a Carga Financeira
              pc_gera_carga_MF_complem(pr_idarquivo  => 1 /*str_1*/               --Id do arquivo
                                      ,pr_cdcooper   => rw_crapcyb.cdcooper       --Cooperativa
                                      ,pr_nrdconta   => rw_crapcyb.nrdconta       --Numero Conta
@@ -4737,13 +4737,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                RAISE vr_exc_saida;
              END IF;
 
-             --ApÃ³s gerar a Carga Complementar, deve gerar as informaÃ§Ãµes complementares para a Carga Cadastral
+             --Após gerar a Carga Complementar, deve gerar as informações complementares para a Carga Cadastral
              pc_gera_carga_MC_complem(pr_idarquivo => 1 /*str_1*/         -- Id do arquivo
                                      ,pr_cdcooper  => rw_crapcyb.cdcooper -- Cooperativa
                                      ,pr_cdorigem  => rw_crapcyb.cdorigem -- Origem
                                      ,pr_nrdconta  => rw_crapcyb.nrdconta -- Numero Conta
                                      ,pr_nrctremp  => rw_crapcyb.nrctremp -- Contrato Emprestimo
-                                     ,pr_posicini  => 4532                -- PosiÃ§Ã£o Inicial da InformaÃ§Ã£o
+                                     ,pr_posicini  => 4532                -- Posição Inicial da Informação
                                      ,pr_cdcritic  => vr_cdcritic         -- Codigo Erro
                                      ,pr_dscritic  => vr_dscritic);       -- Descricao Erro
              --Se ocorreu erro
@@ -4819,13 +4819,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                  RAISE vr_exc_saida;
                END IF;
 
-               --ApÃ³s gerar a Carga, deve gerar as informaÃ§Ãµes complementares para a Carga Cadastral
+               --Após gerar a Carga, deve gerar as informações complementares para a Carga Cadastral
                pc_gera_carga_MC_complem(pr_idarquivo => 2 /*str_1*/          -- Id do arquivo
                                        ,pr_cdcooper  => rw_crapcyb.cdcooper  -- Cooperativa
                                        ,pr_cdorigem  => rw_crapcyb.cdorigem  -- Origem
                                        ,pr_nrdconta  => rw_crapcyb.nrdconta  -- Numero Conta
                                        ,pr_nrctremp  => rw_crapcyb.nrctremp  -- Contrato Emprestimo
-                                       ,pr_posicini  => 3691                 -- PosiÃ§Ã£o Inicial da InformaÃ§Ã£o
+                                       ,pr_posicini  => 3691                 -- Posição Inicial da Informação
                                        ,pr_cdcritic  => vr_cdcritic          -- Codigo Erro
                                        ,pr_dscritic  => vr_dscritic);        -- Descricao Erro
                --Se ocorreu erro
@@ -4881,7 +4881,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                                                                        ,pr_nrctremp => rw_crapcyb.nrctremp       -- Contrato Emprestimo
                                                                        ,pr_dtmvtolt => rw_crapdat.dtmvtolt) LOOP -- Data Movimento
                 
-                 -- Melhoria 432 - verifica se Ã© refinanciamento - Jean / MoutÂ´S
+                 -- Melhoria 432 - verifica se é refinanciamento - Jean / Mout´S
                  vr_cdtrscyb := NULL;
                  
                  OPEN c_refinanciamento(pr_cdcooper => rw_crapcyb.cdcooper       -- Cooperativa
@@ -4916,8 +4916,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                   rw_crapcyb.flgpreju = 0 AND
                   rw_crapcyb.dtatufin < rw_crapdat.dtmvtolt THEN
 
-                  -- 16/01/2017 - PRJ 432 - SÃ³ pode gerar baixas para o Cyber se os flags cobranca judicial,
-                  --              cobranca extra-judicial e vip estiverem como NÃ£o e existir atrasos. (Jean Calao / Mout'S) 
+                  -- 16/01/2017 - PRJ 432 - Só pode gerar baixas para o Cyber se os flags cobranca judicial,
+                  --              cobranca extra-judicial e vip estiverem como Não e existir atrasos. (Jean Calao / Mout'S) 
                   if  /*nvl(rw_crapcyb.flgjudic,0) = 0
                   and nvl(rw_crapcyb.5,0) = 0
                   and */nvl(rw_crapcyc1.flgehvip,0) = 0 then
@@ -4934,7 +4934,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                        RAISE vr_exc_saida;
                      END IF;
 
-                end IF; -- 16/01/2017 - Prj 432 (Jean CalÃ£o/Mout'S)
+                end IF; -- 16/01/2017 - Prj 432 (Jean Calão/Mout'S)
 
                ELSE
                  -- Verifica se o saldo a regularizar e o saldo do prejuizo estao liquidados para
@@ -4943,8 +4943,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                      (rw_crapcyb.flgpreju = 1 AND Nvl(rw_crapcyb.vlsdprej,0) <= 0))  OR
                      ((rw_crapcyb.flgresid = 1) AND (Nvl(rw_crapcyb.vlsdeved,0) <= 0) AND rw_crapcyb.flgpreju = 0) THEN
 
-                     -- 16/01/2017 - PRJ 432 - SÃ³ pode gerar baixas para o Cyber se os flags cobranca judicial,
-                     --              cobranca extra-judicial e vip estiverem como NÃ£o e existir atrasos. (Jean Calao / Mout'S) 
+                     -- 16/01/2017 - PRJ 432 - Só pode gerar baixas para o Cyber se os flags cobranca judicial,
+                     --              cobranca extra-judicial e vip estiverem como Não e existir atrasos. (Jean Calao / Mout'S) 
                      if /* nvl(rw_crapcyb.flgjudic,0) = 0
                      and nvl(rw_crapcyb.flextjud,0) = 0
                      and */nvl(rw_crapcyc1.flgehvip,0) = 0 then
@@ -4971,7 +4971,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                  -- Verifica se houve pagamento
                  IF rw_crapcyb.vlpreapg > 0 THEN
                    
-                   -- Melhoria 432 - verifica se Ã© refinanciamento - Jean / MoutÂ´S
+                   -- Melhoria 432 - verifica se é refinanciamento - Jean / Mout´S
                    vr_cdtrscyb := NULL;
                    
                    OPEN c_refinanciamento(pr_cdcooper => rw_crapcyb.cdcooper       -- Cooperativa
@@ -4992,9 +4992,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                                             ,pr_nrctremp => rw_crapcyb.nrctremp    --Numero Contrato Emprestimo
                                             ,pr_vlrpagto => rw_crapcyb.vlpreapg    --Valor A pagar emprestimo
                                             ,pr_dtmvtlt2 => vr_dtmvtlt2            --Data Movimento formatada
-                      -- 16/01/2017  - deve gerar historico parametrizado, se generico, gera "PA" (Jean/MoutÂ´S)
-                                           -- ,pr_cdhistor => 999999               --Codigo Historico (GenÃ©rico)
-                                            ,pr_cdhistor => vr_cdtrscyb            --Codigo Historico (GenÃ©rico)
+                      -- 16/01/2017  - deve gerar historico parametrizado, se generico, gera "PA" (Jean/Mout´S)
+                                           -- ,pr_cdhistor => 999999               --Codigo Historico (Genérico)
+                                            ,pr_cdhistor => vr_cdtrscyb            --Codigo Historico (Genérico)
 
                                             ,pr_dshistor => NULL                   --Descricao Historico
                                             ,pr_cdcritic => vr_cdcritic            --Codigo Erro
@@ -5006,8 +5006,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
 
                  END IF;
 
-                 -- 16/01/2017 - PRJ 432 - SÃ³ pode gerar baixas para o Cyber se os flags cobranca judicial,
-                 --              cobranca extra-judicial e vip estiverem como NÃ£o e existir atrasos. (Jean Calao / Mout'S) 
+                 -- 16/01/2017 - PRJ 432 - Só pode gerar baixas para o Cyber se os flags cobranca judicial,
+                 --              cobranca extra-judicial e vip estiverem como Não e existir atrasos. (Jean Calao / Mout'S) 
                  if  /*nvl(rw_crapcyb.flgjudic,0) = 0
                  and nvl(rw_crapcyb.flextjud,0) = 0
                  and */nvl(rw_crapcyc1.flgehvip,0) = 0 then
@@ -5027,7 +5027,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
 --                END IF;
                ELSE
                  -- Quando for normal verificar o saldo a regulalizar para ver se houve pagamento
-                 -- Buscar o valor do lanÃ§amento dos histÃ³ricos parametrizados para cÃ¡lculo de conta corrente
+                 -- Buscar o valor do lançamento dos históricos parametrizados para cálculo de conta corrente
                  vr_vllammto:= fn_valor_pago_conta_corrente(pr_cdcooper => rw_crapcyb.cdcooper   --Cooperativa
                                                            ,pr_nrdconta => rw_crapcyb.nrdconta   --Numero Conta
                                                            ,pr_nrctremp => rw_crapcyb.nrctremp   --Contrato Emprestimo
@@ -5039,7 +5039,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                  IF nvl(vr_vlrpagto,0) > 0 THEN
                   
 
-                   -- Melhoria 432 - verifica se Ã© refinanciamento - Jean / MoutÂ´S
+                   -- Melhoria 432 - verifica se é refinanciamento - Jean / Mout´S
                    vr_cdtrscyb := NULL;
                    
                    OPEN c_refinanciamento(pr_cdcooper => rw_crapcyb.cdcooper       -- Cooperativa
@@ -5059,9 +5059,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                                             ,pr_nrctremp => rw_crapcyb.nrctremp    --Numero Contrato Emprestimo
                                             ,pr_vlrpagto => vr_vlrpagto            --Valor saldo a regularizar
                                             ,pr_dtmvtlt2 => vr_dtmvtlt2            --Data Movimento Formatada
-                                            -- 16/01/2017  - deve gerar historico parametrizado, se generico, gera "PA" (Jean/MoutÂ´S)
-                                            --,pr_cdhistor => 999999               --Codigo Historico (GenÃ©rico)
-                                            ,pr_cdhistor => vr_cdtrscyb            --Codigo Historico (GenÃ©rico)
+                                            -- 16/01/2017  - deve gerar historico parametrizado, se generico, gera "PA" (Jean/Mout´S)
+                                            --,pr_cdhistor => 999999               --Codigo Historico (Genérico)
+                                            ,pr_cdhistor => vr_cdtrscyb            --Codigo Historico (Genérico)
 
                                             ,pr_dshistor => NULL                   --Descricao Historico
                                             ,pr_cdcritic => vr_cdcritic            --Codigo Erro
@@ -5075,8 +5075,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                  -- ou se for residuo o saldo devedor deve estar liquidado para gerar uma baixa
                  IF Nvl(rw_crapcyb.vlpreapg,0) <= 0 THEN
 
-                   -- 16/01/2017 - PRJ 432 - SÃ³ pode gerar baixas para o Cyber se os flags cobranca judicial,
-                   --              cobranca extra-judicial e vip estiverem como NÃ£o e existir atrasos. (Jean Calao / Mout'S) 
+                   -- 16/01/2017 - PRJ 432 - Só pode gerar baixas para o Cyber se os flags cobranca judicial,
+                   --              cobranca extra-judicial e vip estiverem como Não e existir atrasos. (Jean Calao / Mout'S) 
                    if  /*nvl(rw_crapcyb.flgjudic,0) = 0
                    and nvl(rw_crapcyb.flextjud,0) = 0
                    and */nvl(rw_crapcyc1.flgehvip,0) = 0 then
@@ -5283,12 +5283,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                                  ,pr_infimsol => pr_infimsol
                                  ,pr_stprogra => pr_stprogra);
 
-       -- M432 - envio Cyber. no fim do processo, chamar a carga de importaÃ§Ã£o cyber
+       -- M432 - envio Cyber. no fim do processo, chamar a carga de importação cyber
        CYBE0001.pc_importa_arquivo_cyber(pr_dtmvto => SYSDATE
                                         ,pr_des_reto => vr_typ_saida
                                         ,pr_des_erro => vr_dscritic );
        
-	   -- erros da importacao Cyber nÃ£o serÃ£o tratados aqui, serÃ£o tratados no LOG do programa CYBE0001
+	   -- erros da importacao Cyber não serão tratados aqui, serão tratados no LOG do programa CYBE0001
        --IF vr_typ_saida = 'NOK' then
        --   vr_dscritic := 'Erro na chamada da importacao arquivo CYBER: ' || vr_dscritic;
        --   raise vr_exc_fimprg;
@@ -5346,3 +5346,4 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
          pc_limpa_tabela;
      END;
    END PC_CRPS652;
+/
