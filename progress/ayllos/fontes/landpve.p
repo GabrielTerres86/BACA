@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Outubro/91.                     Ultima atualizacao: 14/02/2017
+   Data    : Outubro/91.                     Ultima atualizacao: 18/04/2017
 
    Dados referentes ao programa:
 
@@ -304,6 +304,8 @@
                14/02/2017 - Alteracao para chamar pc_verifica_situacao_acordo. 
                             (Jaison/James - PRJ302)
 
+               18/04/2017 - Incluir chamada da rotina do Oracle pc_gerandb ao inves
+                            de chamar a include do PROGRESS (Lucas Ranghetti #652806)
 ............................................................................. */
 
 { includes/var_online.i }
@@ -1231,9 +1233,33 @@ DO WHILE TRUE:
                         NEXT.
                     END.
 
-               { includes/gerandb.i } 
-               
-               RUN p_desconectagener.
+              { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }              
+              /* GERAR REGISTROS NA CRAPNDB PARA DEVOLUCAO DE DEBITOS AUTOMATICOS CONV0001.pc_gerandb */
+              RUN STORED-PROCEDURE pc_gerandb
+                aux_handproc = PROC-HANDLE NO-ERROR (INPUT glb_cdcooper
+                                                    ,INPUT craplau.cdhistor
+                                                    ,INPUT craplau.nrdconta
+                                                    ,INPUT craplau.nrdocmto
+                                                    ,INPUT craplau.vllanaut                                                    
+                                                    ,INPUT craplau.cdseqtel
+                                                    ,INPUT craplau.nrdocmto
+                                                    ,INPUT crapcop.cdagesic
+                                                    ,INPUT crapass.nrctacns
+                                                    ,INPUT craplau.cdagenci
+                                                    ,INPUT craplau.cdempres
+                                                    ,INPUT glb_cdcritic
+                                                    ,OUTPUT 0
+                                                    ,OUTPUT "").
+
+              CLOSE STORED-PROC pc_gerandb
+                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+              { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+              
+              ASSIGN glb_cdcritic = 0
+                     glb_dscritic = ""
+                     glb_cdcritic = INT(pc_gerandb.pr_cdcritic) WHEN pc_gerandb.pr_cdcritic <> ?
+                     glb_dscritic = TRIM(pc_gerandb.pr_dscritic) WHEN pc_gerandb.pr_dscritic <> ?.
                
                IF   glb_cdcritic <> 0 THEN
                     DO:
