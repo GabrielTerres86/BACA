@@ -464,9 +464,9 @@
                            qdo o corpo do email ultrapassar 25 titulos pois estava
                            acarretando em problemas no IB (Tiago/Elton SD 521667).             
               
-              28/11/2016 - Incluido tratamento de transaçoes pendentes 16 e 17.
-                           PRJ319 - SMS Cobrança (Odirlei - AMcom)
-              
+28/11/2016 - Incluido tratamento de transaçoes pendentes 16 e 17.
+PRJ319 - SMS Cobrança (Odirlei - AMcom)
+
 			  22/11/2016 - Inclusao do parametro pr_iptransa na chamada da rotina pc_cadastrar_agendamento.
                            PRJ335 - Analise de Fraude (Odirlei-AMcom ) 
  
@@ -1506,7 +1506,7 @@ PROCEDURE proc_cria_critica_transacao_oper:
                               FIND tbcobran_sms_trans_pend
                               WHERE  tbcobran_sms_trans_pend.cdtransacao_pendente = tbgen_trans_pend.cdtransacao_pendente
                               NO-LOCK NO-ERROR NO-WAIT.
-                  
+                              
                               ASSIGN aux_dtdebito = "Nesta Data"
                               aux_dscedent = "SMS INDIVIDUAL"
                               aux_vllantra = tbcobran_sms_trans_pend.vlservico.
@@ -1515,7 +1515,7 @@ PROCEDURE proc_cria_critica_transacao_oper:
                               ASSIGN aux_dstptran = "Adesao Serviço SMS de Cobrança".
                               ELSE
                               ASSIGN aux_dstptran = "Cancelamento do Serviço SMS de Cobrança".
-                  
+                
                               END.
                 IF tbgen_trans_pend.tptransacao = 2 THEN
                     aux_dstiptra= (IF tbpagto_trans_pend.tppagamento = 1 THEN "Pagamento de Convenio" ELSE "Pagamento de Boletos Diversos").
@@ -1556,7 +1556,7 @@ PROCEDURE proc_cria_critica_transacao_oper:
                      aux_dstiptra = "Adesao SMS Cobrança".
                 ELSE IF tbgen_trans_pend.tptransacao = 17 THEN /*OK*/
                      aux_dstiptra = "Cancelamento SMS Cobrança".
-                ELSE   
+                ELSE
                     aux_dstiptra = "Transacao".
                 
                 CREATE tt-criticas_transacoes_oper.
@@ -1955,7 +1955,7 @@ PROCEDURE paga_convenio:
         DO aux_contador = 1 TO 10:
     
             par_dscritic = "".
-            
+        
             FIND craplot WHERE craplot.cdcooper = crapaut.cdcooper   AND
                                craplot.dtmvtolt = crapaut.dtmvtolt   AND
                                craplot.cdagenci = crapaut.cdagenci   AND
@@ -3269,16 +3269,16 @@ PROCEDURE paga_titulo:
             LEAVE.
            
         END. /* Fim do DO ... TO */
-        
+
         IF VALID-HANDLE(h-b1wgen0153) THEN
            DELETE PROCEDURE h-b1wgen0153.
-        
+
         IF   par_dscritic <> ""   THEN
              UNDO, RETURN "NOK".
-        
+
         EMPTY TEMP-TABLE cratlot.
         BUFFER-COPY craplot TO cratlot.
-                        
+                      
         /* Atualiza o lote do debito na TEMP-TABLE */
         ASSIGN cratlot.qtinfoln = cratlot.qtinfoln + 1
                cratlot.qtcompln = cratlot.qtcompln + 1
@@ -3286,11 +3286,11 @@ PROCEDURE paga_titulo:
                /* DEBITO */
                cratlot.vlinfodb = cratlot.vlinfodb + crapaut.vldocmto
                cratlot.vlcompdb = cratlot.vlcompdb + crapaut.vldocmto.
- 
+
 	    /* desalocar registro de lote */
 		FIND CURRENT craplot NO-LOCK NO-ERROR.
         RELEASE craplot.
-
+                          
         /* Gera um protocolo para o pagamento */
         RUN sistema/generico/procedures/bo_algoritmo_seguranca.p
             PERSISTENT SET h-bo_algoritmo_seguranca.
@@ -5122,10 +5122,10 @@ PROCEDURE estorna_convenio:
                      END.
            LEAVE.
         END. /* Fim do WHILE */
-
+    
         EMPTY TEMP-TABLE cratlot.
         BUFFER-COPY craplot TO cratlot.
-              
+
         /* Atualiza o lote na TEMP-TABLE */
         ASSIGN cratlot.qtinfoln = cratlot.qtinfoln + 1
                cratlot.qtcompln = cratlot.qtcompln + 1
@@ -5282,7 +5282,7 @@ PROCEDURE estorna_convenio:
                  IF   RETURN-VALUE <> "OK"   THEN
                       UNDO, RETURN "NOK".
              END.
-
+                                                    
         IF  par_idorigem <> 4  THEN /* TAA */
             DO:
 
@@ -5572,10 +5572,10 @@ PROCEDURE estorna_titulo:
                  UNDO, RETURN "NOK".
              END.
 
-        
+
         /* Leitura do lote */
         DO WHILE TRUE:
-    
+
            FIND craplot WHERE craplot.cdcooper = crapaut.cdcooper   AND
                               craplot.dtmvtolt = crapaut.dtmvtolt   AND
                               craplot.cdagenci = crapaut.cdagenci   AND
@@ -7479,21 +7479,21 @@ PROCEDURE aprova_trans_pend:
                       
                     ASSIGN aux_trandarf = aux_trandarf + STRING(aux_cddoitem).
                     
-            END.    
+                  END.    
                 /* Contrato SMS */
               ELSE IF tbgen_trans_pend.tptransacao = 16 OR
                       tbgen_trans_pend.tptransacao = 17 THEN
-                  DO:
+              DO:
                   FOR FIRST tbcobran_sms_trans_pend WHERE tbcobran_sms_trans_pend.cdtransacao_pendente = aux_cddoitem NO-LOCK. END.
-                      
+                                                                                                                                    
                   IF AVAIL tbcobran_sms_trans_pend THEN
                   DO:
                     CREATE tt-tbcobran_sms_trans_pend.
                     BUFFER-COPY tbcobran_sms_trans_pend TO tt-tbcobran_sms_trans_pend.
-                      
+                                                                                                                                      
                           ASSIGN tt-tbgen_trans_pend.idmovimento_conta  = IdentificaMovCC(tbgen_trans_pend.tptransacao,1,0).
+                                END.
                           END.
-                  END.    
             END. /*IF AVAILABLE tbgen_trans_pend THEN*/
              
     END. /*DO aux_contador = 1 */
@@ -7902,21 +7902,6 @@ PROCEDURE aprova_trans_pend:
                                 
                             END.
 
-                        RUN gera_erro_transacao(INPUT par_cdcooper,
-                                                INPUT par_cdoperad,
-                                                INPUT aux_dscritic,
-                                                INPUT aux_dsorigem,
-                                                INPUT aux_dstransa,
-                                                INPUT FALSE,
-                                                INPUT par_nmdatela,
-                                                INPUT par_nrdconta,
-                                                INPUT STRING(ROWID(tbgen_trans_pend)),
-                                                INPUT TRUE,
-                                                INPUT par_indvalid,
-                                                INPUT tt-tbtransf_trans_pend.dtdebito,
-                                                INPUT tt-tbtransf_trans_pend.vltransferencia,
-                                                INPUT aux_conttran).
-
                         /* EFETIVACAO */    
                         IF aux_conttran = 1 AND par_indvalid = 1 THEN
                             DO:
@@ -8261,6 +8246,21 @@ PROCEDURE aprova_trans_pend:
                         IF VALID-HANDLE(h-b1wgen0015) THEN
                             DELETE PROCEDURE h-b1wgen0015.
 
+                        RUN gera_erro_transacao(INPUT par_cdcooper,
+                                                INPUT par_cdoperad,
+                                                INPUT aux_dscritic,
+                                                INPUT aux_dsorigem,
+                                                INPUT aux_dstransa,
+                                                INPUT FALSE,
+                                                INPUT par_nmdatela,
+                                                INPUT par_nrdconta,
+                                                INPUT STRING(ROWID(tbgen_trans_pend)),
+                                                INPUT TRUE,
+                                                INPUT par_indvalid,
+                                                INPUT tt-tbtransf_trans_pend.dtdebito,
+                                                INPUT tt-tbtransf_trans_pend.vltransferencia,
+                                                INPUT aux_conttran).
+                                                    
                 	END.
                 ELSE IF tt-tbgen_trans_pend.tptransacao = 4 THEN /* TED */
                 	DO:
@@ -8518,21 +8518,6 @@ PROCEDURE aprova_trans_pend:
                                 UNDO TRANSACAO, LEAVE TRANSACAO.
                             END.
 
-                        RUN gera_erro_transacao(INPUT par_cdcooper,
-                                                INPUT par_cdoperad,
-                                                INPUT aux_dscritic,
-                                                INPUT aux_dsorigem,
-                                                INPUT aux_dstransa,
-                                                INPUT FALSE,
-                                                INPUT par_nmdatela,
-                                                INPUT par_nrdconta,
-                                                INPUT STRING(ROWID(tbgen_trans_pend)),
-                                                INPUT TRUE,
-                                                INPUT par_indvalid,
-                                                INPUT tt-tbspb_trans_pend.dtdebito,
-                                                INPUT tt-tbspb_trans_pend.vlted,
-                                                INPUT aux_conttran).
-
 					    IF aux_conttran = 1 AND par_indvalid = 1 THEN
 						   DO:
                         /* Confirmando a efetivacao */
@@ -8719,6 +8704,22 @@ PROCEDURE aprova_trans_pend:
 
                         IF VALID-HANDLE(h-b1wgen0015) THEN
                             DELETE PROCEDURE h-b1wgen0015.
+                            
+                        RUN gera_erro_transacao(INPUT par_cdcooper,
+                                                INPUT par_cdoperad,
+                                                INPUT aux_dscritic,
+                                                INPUT aux_dsorigem,
+                                                INPUT aux_dstransa,
+                                                INPUT FALSE,
+                                                INPUT par_nmdatela,
+                                                INPUT par_nrdconta,
+                                                INPUT STRING(ROWID(tbgen_trans_pend)),
+                                                INPUT TRUE,
+                                                INPUT par_indvalid,
+                                                INPUT tt-tbspb_trans_pend.dtdebito,
+                                                INPUT tt-tbspb_trans_pend.vlted,
+                                                INPUT aux_conttran).
+                                                
                 	END.
                 ELSE IF tt-tbgen_trans_pend.tptransacao = 2 THEN /* Pagamentos */
                 	DO: 
@@ -8914,21 +8915,6 @@ PROCEDURE aprova_trans_pend:
                                         UNDO TRANSACAO, LEAVE TRANSACAO.
                                     END.
                                 
-                                RUN gera_erro_transacao(INPUT par_cdcooper,
-                                                        INPUT par_cdoperad,
-                                                        INPUT aux_dscritic,
-                                                        INPUT aux_dsorigem,
-                                                        INPUT aux_dstransa,
-                                                        INPUT FALSE,
-                                                        INPUT par_nmdatela,
-                                                        INPUT par_nrdconta,
-                                                        INPUT STRING(ROWID(tbgen_trans_pend)),
-                                                        INPUT TRUE,
-                                                        INPUT par_indvalid,
-                                                        INPUT tt-tbpagto_trans_pend.dtdebito,
-                                                        INPUT tt-tbpagto_trans_pend.vlpagamento,
-                                                        INPUT aux_conttran).
-
                                 IF par_indvalid = 1 AND aux_conttran = 1 AND
                                    tt-tbpagto_trans_pend.idagendamento = 1 THEN /* pagamento na data */
                                     DO:
@@ -9363,6 +9349,22 @@ PROCEDURE aprova_trans_pend:
 
                         IF VALID-HANDLE(h-b1wgen0015) THEN
                             DELETE PROCEDURE h-b1wgen0015. 
+                            
+                        RUN gera_erro_transacao(INPUT par_cdcooper,
+                                                INPUT par_cdoperad,
+                                                INPUT aux_dscritic,
+                                                INPUT aux_dsorigem,
+                                                INPUT aux_dstransa,
+                                                INPUT FALSE,
+                                                INPUT par_nmdatela,
+                                                INPUT par_nrdconta,
+                                                INPUT STRING(ROWID(tbgen_trans_pend)),
+                                                INPUT TRUE,
+                                                INPUT par_indvalid,
+                                                INPUT tt-tbpagto_trans_pend.dtdebito,
+                                                INPUT tt-tbpagto_trans_pend.vlpagamento,
+                                                INPUT aux_conttran).
+                            
                 	END.
                 ELSE IF tt-tbgen_trans_pend.tptransacao = 6 THEN /* Pré-Aprovado */
                 	DO:
@@ -12034,7 +12036,7 @@ PROCEDURE aprova_trans_pend:
                                     INPUT tt-tbcobran_sms_trans_pend.vlservico,
                                     INPUT aux_conttran).
                                                                                                                                                                   
-                    END.
+                                END.
                  ELSE IF tt-tbgen_trans_pend.tptransacao = 11 THEN /* Pagamento DARF/DAS */
                   DO: 
                     FOR FIRST tt-tbpagto_darf_das_trans_pend WHERE tt-tbpagto_darf_das_trans_pend.cdtransacao_pendente = tt-tbgen_trans_pend.cdtransacao_pendente NO-LOCK. END.
@@ -12484,7 +12486,7 @@ PROCEDURE aprova_trans_pend:
                                                 
                   
                   END. /* = 11 */
-                     
+                    
                 IF par_indvalid = 1 THEN
                     DO: 
                         FOR FIRST tbgen_aprova_trans_pend WHERE tbgen_aprova_trans_pend.cdtransacao_pendente = tt-tbgen_trans_pend.cdtransacao_pendente
@@ -12854,22 +12856,22 @@ ELSE IF tt-tbgen_trans_pend.tptransacao = 11 THEN /* Pagamentos DARF/DAS */
               ASSIGN tt-vlrdat.vlronlin = tt-vlrdat.vlronlin + tt-tbpagto_darf_das_trans_pend.vlpagamento.
           ELSE IF tt-tbgen_trans_pend.idmovimento_conta = 3 THEN /* Agendamento */
               ASSIGN tt-vlrdat.vlronlin = tt-vlrdat.vlronlin + tt-tbpagto_darf_das_trans_pend.vlpagamento.
-      END.						 
+      END.						
 	  
 	/* Contrato SMS */
 ELSE IF tt-tbgen_trans_pend.tptransacao = 16 OR
         tt-tbgen_trans_pend.tptransacao = 17  THEN
-      DO:
-          
-          FIND FIRST tt-vlrdat WHERE tt-vlrdat.dattrans = tt-tbgen_trans_pend.dtmvtolt EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-
+    DO:
+                                                                                                                                                                                    
+      FIND FIRST tt-vlrdat WHERE tt-vlrdat.dattrans = tt-tbgen_trans_pend.dtmvtolt EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+                                                                                                                                                                                      
       IF NOT AVAIL tt-vlrdat THEN
-              DO:
-                  CREATE tt-vlrdat.
-                  ASSIGN tt-vlrdat.dattrans = tt-tbgen_trans_pend.dtmvtolt.
+        DO:
+          CREATE tt-vlrdat.
+          ASSIGN tt-vlrdat.dattrans = tt-tbgen_trans_pend.dtmvtolt.
       
-              END.
-      END. 
+        END.
+    END.      
 END PROCEDURE.
 
 PROCEDURE pc_estorno_aprova:
