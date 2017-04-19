@@ -1,7 +1,7 @@
 /***********************************************************************
       Fonte: cobranca.js
       Autor: Gabriel
-      Data : Dezembro/2010             Ultima atualizacao : 04/08/2016
+      Data : Dezembro/2010             Ultima atualizacao : 19/04/2017
 
       Objetivo  : Biblioteca de funcoes da rotina CONBRANCA tela ATENDA.
 
@@ -56,12 +56,20 @@
                   29/11/2016 - P341-Automatização BACENJUD - Realizar as validações pelo código
 				               do departamento ao invés da descrição (Renato Darosci - Supero)
 
+                  19/04/2017 - Ajuste para imprimir o termo corretamente (adesão/cancelamento)
+				               (Douglas - Chamado 641198)
  ***********************************************************************/
 
 var dsdregis = "";  // Variavel para armazenar os valores dos titulares 
 var nrconven = 0;   // Variavel para guardar o convenio no inclui-altera.php
 var mensagem = "Deseja efetuar impress&atilde;o do termo de ades&atilde;o ?"; // Mensagem de confirmacao de impressao
 var callafterCobranca = '';
+
+// Numero do convenio que deve ser impresso
+var nrconven_imprimir = 0; 
+// Tipo de Impressao do Termo (1 - Adesão / 2 - Cancelamento)
+var tpdtermo_imprimir = 1;
+
 
 function habilitaSetor(setorLogado) {
     // Se o setor logado não for 1-CANAIS, 18-SUPORTE ou 20-TI
@@ -184,6 +192,10 @@ function selecionaConvenio(idLinha, nrconven, dsorgarq, nrcnvceb, insitceb, dtca
     $("#idrecipr", "#divConteudoOpcao").val(idrecipr);
 	$("#inenvcob", "#divConteudoOpcao").val(inenvcob);
 
+	// Numero do convenio selecionado
+	nrconven_imprimir = normalizaNumero(nrconven);
+	// Se o convenio esta ativo, imprimir termo de adesão, caso contrário o de cancelamento
+	tpdtermo_imprimir = (insitceb == 1) ? 1 : 2;
  }
 
 // Confirmar a exclusao do convenio CEB
@@ -225,6 +237,10 @@ function realizaExclusao(inapurac) {
 		},
         success: function (response) {
 			try {
+			    // Atualizar o convenio e o tipo de termo que deve ser impresso
+				nrconven_imprimir = normalizaNumero(nrconven);
+				tpdtermo_imprimir = 2; // Termo de cancelamento
+				
 				eval(response);
             } catch (error) {
 				hideMsgAguardo();					
@@ -313,6 +329,10 @@ function consulta(cddopcao, nrconven, dsorgarq, flginclu, flgregis, cddbanco) {
         cddbanco = $("#cddbanco", "#divConteudoOpcao").val();
 	}
 
+	// Limpar os campos
+	nrconven_imprimir = 0; 
+	tpdtermo_imprimir = 1;
+	
     // Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, carregando ...");
 
@@ -500,6 +520,11 @@ function validaDadosLimites(flgconti, titulares, cddopcao) {
 function confirmaHabilitacao(cddopcao) {
     var insitceb = $("#insitceb", "#divOpcaoConsulta").val();
     var dsmensagem = insitceb == '1' ? "Confirma a habilita&ccedil;&atilde;o do conv&ecirc;nio?" : "Confirma a inativa&ccedil;&atilde;o do conv&ecirc;nio?";
+	
+	nrconven_imprimir = normalizaNumero($("#nrconven", "#divOpcaoConsulta").val()); 
+	// Se o convenio esta ativo, imprimir termo de adesão, caso contrario o termo de cancelamento
+	tpdtermo_imprimir = (insitceb == 1) ? 1 : 2;
+
     showConfirmacao(dsmensagem, 'Confirma&ccedil;&atilde;o - Ayllos', 'confirmaHabilitacaoSerasa("' + cddopcao + '")', ' blockBackground(parseInt($("#divRotina").css("z-index")))', 'sim.gif', 'nao.gif');
 }
 
@@ -851,6 +876,7 @@ function imprimirTermoAdesao(flgregis, dsdtitul, tpimpres) {
     var insitceb = $("#insitceb", "#divConteudoOpcao").val();
 	
     var nrconven = normalizaNumero($("#nrconven", "#divConteudoOpcao").val());
+	nrconven_imprimir = (nrconven_imprimir > 0) ? nrconven_imprimir : nrconven;
 	
     flgregis = (flgregis == "SIM") ? "yes" : "no";
 	
@@ -861,9 +887,9 @@ function imprimirTermoAdesao(flgregis, dsdtitul, tpimpres) {
     $("#cpftest1", "#frmTermo").val(cpftest1);
     $("#nmdtest2", "#frmTermo").val(nmdtest2);
     $("#cpftest2", "#frmTermo").val(cpftest2);
-    $("#nrconven", "#frmTermo").val(nrconven);
+    $("#nrconven", "#frmTermo").val(nrconven_imprimir);
 
-    $("#tpimpres", "#frmTermo").val(insitceb);//Atribuir o insitest onde 1-ativo e 2-inativo
+    $("#tpimpres", "#frmTermo").val(tpdtermo_imprimir);//Atribuir o insitest onde 1-ativo e 2-inativo
 
 	var action = $("#frmTermo").attr("action");
 	var callafter = "acessaOpcaoAba();";
@@ -875,6 +901,10 @@ function imprimirTermoAdesao(flgregis, dsdtitul, tpimpres) {
 	if (callafterCobranca != '') {
 		callafter = callafterCobranca;
 	}
+	
+	// Zerar as variáveis
+	nrconven_imprimir = 0; 
+	tpdtermo_imprimir = 1;
 	
     carregaImpressaoAyllos("frmTermo", action, callafter);
 }
@@ -1192,6 +1222,11 @@ function testemunhasCancelamento(flgregis) {
             showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
         },
         success: function (response) {
+			
+			// Numero do convenio e o termo de cancelamento
+			nrconven_imprimir = normalizaNumero($("#nrconven", "#divConteudoOpcao").val());
+			tpdtermo_imprimir = 2;// Imprimir termo de cancelamento
+			
             $("#divOpcaoIncluiAltera").css({ 'display': 'none' });
             $("#divOpcaoConsulta").css({ 'display': 'none' });
             $("#divTestemunhas").html(response);
