@@ -2,7 +2,7 @@
 
    Programa: sistema/generico/procedures/b1wgen0002i.p
    Autor   : André - DB1.
-   Data    : 23/03/2011                        Ultima atualizacao: 16/12/2015
+   Data    : 23/03/2011                        Ultima atualizacao: 07/03/2017
     
    Dados referentes ao programa:
 
@@ -225,10 +225,20 @@
                26/01/2016 - Alteracao da procedure gera-impressao-empr para gerar o
 							relatorio para o InternetBank. (Projeto Pre-Aprovado 
 							Fase 2 - Carlos Rafael Tanholi)
+              
 			   10/03/2016 - Ajuste para impressao da proposta para a Esteira
 			                PRJ207 - Esteira (Odirlei-AMcom)
 
+               23/09/2016 - Correçao nas TEMP-TABLES colocar NO-UNDO, tt-dados-epr-out (Oscar).
+                            Correçao deletar o Handle da b1wgen0001 esta gerando erro na geraçao
+                            do PDF para envio da esteira (Oscar).
+                            Correçao deletar o Handle da b1wgen0024 esta gerando erro na geraçao
+                            do PDF para envio da esteira (Oscar).
                                                    
+               10/10/2016 - Ajuste sempre gerar o PDF para esteira de credito (Oscar).                                    
+			   
+			   07/03/2017 - Ajuste na rotina impressao-prnf devido a conversao da busca-gncdocp
+						    (Adriano - SD 614408).
 .............................................................................*/
 
 /*................................ DEFINICOES ...............................*/
@@ -393,9 +403,9 @@ DEF VAR aux_vlsldrgt AS DEC                                            NO-UNDO.
 DEF VAR aux_vlsldtot AS DEC                                            NO-UNDO.
 DEF VAR aux_vlsldapl AS DEC                                            NO-UNDO.
 
-DEF TEMP-TABLE w-co-responsavel LIKE tt-dados-epr. 
+DEF TEMP-TABLE w-co-responsavel  NO-UNDO LIKE tt-dados-epr.  
 
-DEF TEMP-TABLE tt-crapavl 
+DEF TEMP-TABLE tt-crapavl NO-UNDO
     FIELD nrdconta  LIKE crapavl.nrdconta.
 
 DEF TEMP-TABLE tt-operati                                              NO-UNDO
@@ -557,11 +567,10 @@ PROCEDURE busca-dados-impressao:
                                            OUTPUT TABLE tt-medias,
                                            OUTPUT TABLE tt-comp_medias).
 
-        IF  RETURN-VALUE <> "OK"  THEN
-            DO:
                 DELETE PROCEDURE h-b1wgen0001. 
+        
+        IF  RETURN-VALUE <> "OK"  THEN
                 RETURN "NOK".
-            END.
 
         FIND FIRST tt-comp_medias NO-LOCK NO-ERROR.
        
@@ -1001,7 +1010,8 @@ PROCEDURE gera-impressao-empr:
        
             END.
 
-        IF  (crawepr.flgimppr   OR   crawepr.flgimpnp)  THEN
+        IF  (crawepr.flgimppr   OR   crawepr.flgimpnp OR  
+            (par_idorigem = 9 AND par_idimpres = 3))  THEN  /* Sempre gerar o PDF para esteira de credito */
             DO:
                 IF  par_idimpres = 1  THEN /* COMPLETA */
                     DO:
@@ -1038,7 +1048,8 @@ PROCEDURE gera-impressao-empr:
                         aux_dstransa = "Gerar impressao da proposta de " +
                                        "emprestimo.".
                 
-                         IF  NOT crawepr.flgimppr   THEN
+                         IF  (NOT crawepr.flgimppr) AND 
+                             (par_idorigem <> 9) /* Esteira */  THEN 
                              DO:
                                  ASSIGN aux_cdcritic = 14
                                         aux_dscritic = "".
@@ -1392,6 +1403,10 @@ PROCEDURE gera-impressao-empr:
                         DO:
                             ASSIGN aux_dscritic = "Handle invalido para BO " +
                                                   "b1wgen0024.".
+                                                  
+                            IF  VALID-HANDLE(h-b1wgen0024)  THEN
+                                DELETE PROCEDURE h-b1wgen0024.    
+                      
                             LEAVE Gera.
                         END.
                     
@@ -1405,6 +1420,10 @@ PROCEDURE gera-impressao-empr:
                                 DO:
                                     ASSIGN aux_dscritic = "Nao foi possivel " +
                                                           "gerar a impressao.".
+                                                          
+                                    IF  VALID-HANDLE(h-b1wgen0024)  THEN
+                                        DELETE PROCEDURE h-b1wgen0024.    
+                                                         
                                     LEAVE Gera.                      
                                 END.
 
@@ -1422,6 +1441,9 @@ PROCEDURE gera-impressao-empr:
                         DO:
                             ASSIGN aux_dscritic = "Nao foi possivel " +
                                                   "gerar a impressao.".
+                            
+                            IF  VALID-HANDLE(h-b1wgen0024)  THEN
+                                DELETE PROCEDURE h-b1wgen0024.    
                             
                             LEAVE Gera.                      
                         END.
@@ -1445,6 +1467,9 @@ PROCEDURE gera-impressao-empr:
     
                         IF  aux_dscritic <> ""  THEN
                         DO:                                
+                           IF  VALID-HANDLE(h-b1wgen0024)  THEN
+                               DELETE PROCEDURE h-b1wgen0024.    
+                            
                             LEAVE Gera.
                         END.            
                     
@@ -1483,9 +1508,15 @@ PROCEDURE gera-impressao-empr:
                                     UNIX SILENT VALUE ("rm " + aux_nmarquiv + 
                                                        "* 2>/dev/null"). 
                                    
+                                    IF  VALID-HANDLE(h-b1wgen0024)  THEN
+                                        DELETE PROCEDURE h-b1wgen0024.    
+                                    
                                     LEAVE Gera.
                                 END.
                         END.
+
+                    IF  VALID-HANDLE(h-b1wgen0024)  THEN
+                        DELETE PROCEDURE h-b1wgen0024.    
 
                     LEAVE Email.
 
@@ -3856,6 +3887,16 @@ PROCEDURE impressao-prnf:
    DEF VAR aux_cpfcgav2 AS CHAR                                      NO-UNDO.
    DEF VAR aux_dtultdma AS DATE                                      NO-UNDO.
 
+  /* Variaveis para o XML */ 
+  DEF VAR xDoc          AS HANDLE                                      NO-UNDO.   
+  DEF VAR xRoot         AS HANDLE                                      NO-UNDO.  
+  DEF VAR xRoot2        AS HANDLE                                      NO-UNDO.  
+  DEF VAR xField        AS HANDLE                                      NO-UNDO. 
+  DEF VAR xText         AS HANDLE                                      NO-UNDO. 
+  DEF VAR aux_cont_raiz AS INTEGER                                     NO-UNDO. 
+  DEF VAR aux_cont      AS INTEGER                                     NO-UNDO. 
+  DEF VAR ponteiro_xml  AS MEMPTR                                      NO-UNDO. 
+  DEF VAR xml_req       AS LONGCHAR								     NO-UNDO.
   
 
    /*  Nota Promissoria .................................................... */
@@ -4792,17 +4833,119 @@ PROCEDURE impressao-prnf:
 
             IF  AVAIL crapttl THEN
                 DO:
+				    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+ 
+					  /* Efetuar a chamada da rotina Oracle */ 
+						RUN STORED-PROCEDURE pc_busca_gncdocp_car
+							aux_handproc = PROC-HANDLE NO-ERROR(INPUT crapttl.cdocpttl, /*codigo da ocupaca*/                          
+																INPUT "", /*descricao da ocupacao*/                                                                                            
+																INPUT 1, /*nrregist*/
+																INPUT 1, /*nriniseq*/
+																OUTPUT "", /*Nome do Campo*/                
+																OUTPUT "", /*Saida OK/NOK*/                          
+																OUTPUT ?, /*Tabela Regionais*/                       
+																OUTPUT 0, /*Codigo da critica*/                      
+																OUTPUT ""). /*Descricao da critica*/ 
+    
+						/* Fechar o procedimento para buscarmos o resultado */ 
+						CLOSE STORED-PROC pc_busca_gncdocp_car
+								aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+         
+						/* Efetuar a chamada da rotina Oracle */ 
+						{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+						
+						/* Busca possíveis erros */ 
+						ASSIGN aux_cdcritic = 0
+							   aux_dscritic = ""
+							   aux_cdcritic = pc_busca_gncdocp_car.pr_cdcritic 
+											  WHEN pc_busca_gncdocp_car.pr_cdcritic <> ?
+							   aux_dscritic = pc_busca_gncdocp_car.pr_dscritic 
+											  WHEN pc_busca_gncdocp_car.pr_dscritic <> ?.
+
+						IF aux_cdcritic <> 0   OR
+						   aux_dscritic <> ""  THEN
+						DO:
+							IF aux_dscritic = "" THEN
+							   DO:
+								  FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic
+													 NO-LOCK NO-ERROR.
+    
+								  IF AVAIL crapcri THEN
+									 ASSIGN aux_dscritic = crapcri.dscritic.
+    
+							   END.
+    
+							CREATE tt-erro.
+    
+							ASSIGN tt-erro.cdcritic = aux_cdcritic
+								   tt-erro.dscritic = aux_dscritic.
+    
+						   RETURN "NOK".
+
+						END.
+
+						/*Leitura do XML de retorno da proc e criacao dos registros na tt-gncdnto
+							para visualizacao dos registros na tela */
             
-                    RUN busca-gncdocp IN h-b1wgen0059 
-                                               (INPUT crapttl.cdocpttl,
-                                                INPUT "",
-                                                INPUT 1,
-                                                INPUT 1,
-                                               OUTPUT aux_qtregist,
-                                               OUTPUT TABLE tt-gncdocp).
+						/* Buscar o XML na tabela de retorno da procedure Progress */ 
+						ASSIGN xml_req = pc_busca_gncdocp_car.pr_clob_ret.
+    
+						/* Efetuar a leitura do XML*/ 
+						SET-SIZE(ponteiro_xml) = LENGTH(xml_req) + 1. 
+						PUT-STRING(ponteiro_xml,1) = xml_req. 
+    
+						/* Inicializando objetos para leitura do XML */ 
+						CREATE X-DOCUMENT xDoc.    /* Vai conter o XML completo */ 
+						CREATE X-NODEREF  xRoot.   /* Vai conter a tag raiz em diante */ 
+						CREATE X-NODEREF  xRoot2.  /* Vai conter a tag aplicacao em diante */ 
+						CREATE X-NODEREF  xField.  /* Vai conter os campos dentro da tag INF */ 
+						CREATE X-NODEREF  xText.   /* Vai conter o texto que existe dentro da tag xField */
+     
+						IF ponteiro_xml <> ? THEN
+							DO:   
+								xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE). 
+								xDoc:GET-DOCUMENT-ELEMENT(xRoot).
+             
+								DO aux_cont_raiz = 1 TO xRoot:NUM-CHILDREN: 
+             
+									xRoot:GET-CHILD(xRoot2,aux_cont_raiz).
+     
+									IF xRoot2:SUBTYPE <> "ELEMENT" THEN 
+									NEXT. 
+           
+									IF xRoot2:NUM-CHILDREN > 0 THEN
+									DO:
+                
+										CREATE tt-gncdocp.
+    
+									END.
+     
+									DO aux_cont = 1 TO xRoot2:NUM-CHILDREN:
+               
+									xRoot2:GET-CHILD(xField,aux_cont).
+                  
+									IF xField:SUBTYPE <> "ELEMENT" THEN 
+										NEXT. 
+              
+									xField:GET-CHILD(xText,1).
+                  
+									ASSIGN tt-gncdocp.cdocupa = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdocupa"
+										   tt-gncdocp.dsdocupa = xText:NODE-VALUE WHEN xField:NAME = "dsdocupa"
+											tt-gncdocp.rsdocupa = xText:NODE-VALUE WHEN xField:NAME = "rsdocupa".							   
+                
+									END. 
+            
+								END.
+     
+								SET-SIZE(ponteiro_xml) = 0. 
+    
+							END.
                     
-                    IF VALID-HANDLE(h-b1wgen0059) THEN
-                       DELETE OBJECT h-b1wgen0059.
+						DELETE OBJECT xDoc. 
+						DELETE OBJECT xRoot. 
+						DELETE OBJECT xRoot2. 
+						DELETE OBJECT xField. 
+						DELETE OBJECT xText.
             
                     FIND tt-gncdocp WHERE tt-gncdocp.cdocupa = crapttl.cdocpttl
                           NO-LOCK NO-ERROR.
