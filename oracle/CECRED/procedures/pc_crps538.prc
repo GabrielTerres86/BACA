@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme / Supero
-   Data    : Novembro/2009.                   Ultima atualizacao: 12/04/2017
+   Data    : Novembro/2009.                   Ultima atualizacao: 17/04/2017
 
    Dados referentes ao programa:
 
@@ -335,6 +335,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                             que o calculado pelo sistema, porem grava apenas a diferença dos valores no campo
                             de juros pago, dessa forma vai gravar o valor correto de juros pago.
                             (Douglas - Chamado 635796)
+                            
+               17/04/2017 - Adicionar NVL no campo cddbanco para o armazanamento do nome do relatorio 
+                            crrl618 (Lucas Ranghetti #620567)
    .............................................................................*/
 
      DECLARE
@@ -2339,12 +2342,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
              IF vr_inreproc THEN
                -- Nome arquivo impressao
                vr_nmarqimp:= 'crrl618_'|| rw_crapcop.dsdircop ||'_'||
-                             gene0002.fn_mask(vr_tab_rel618(vr_index_rel618).cddbanco,'999') || 
+                             gene0002.fn_mask(nvl(vr_tab_rel618(vr_index_rel618).cddbanco,0),'999') || 
                            '_REP_'||GENE0002.fn_busca_time||'.lst';
              ELSE   
              --Nome arquivo Impressao
              vr_nmarqimp:= 'crrl618_'|| rw_crapcop.dsdircop ||'_'||
-                           gene0002.fn_mask(vr_tab_rel618(vr_index_rel618).cddbanco,'999') || '.lst';
+                           gene0002.fn_mask(nvl(vr_tab_rel618(vr_index_rel618).cddbanco,0),'999') || '.lst';
              END IF;
 
              --Descricao da Origem
@@ -3283,7 +3286,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                FETCH cr_crapban INTO vr_cdbanpag;
                CLOSE cr_crapban;
                               
-
                /* Quando cecred validar se o título e de uma singular
                 caso contrario cria temp-table do relatorio de titulos rejeitados */
                IF pr_cdcooper = 3 THEN
