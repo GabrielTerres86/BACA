@@ -165,6 +165,7 @@ CREATE OR REPLACE PACKAGE cecred.paga0003 IS
                                   ,pr_dtagenda IN DATE -- Data de agendamento
                                   ,pr_cdtrapen IN NUMBER -- Código de sequencial da transação pendente
 																	,pr_tpleitor IN INTEGER               -- Indicador de captura através de leitora de código de barras (1 – Leitora / 2 – Manual) 
+                                  ,pr_dsprotoc OUT VARCHAR2 --Protocolo
                                   ,pr_cdcritic OUT INTEGER -- Código do erro
                                   ,pr_dscritic OUT VARCHAR2 -- Descriçao do erro
                                    );
@@ -2961,6 +2962,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 																pr_dtagenda => vr_dtmvtopg,
 																pr_cdtrapen => 0,
 																pr_tpleitor => pr_tpleitor,
+																pr_dsprotoc => vr_dsprotoc,
 																pr_cdcritic => vr_cdcritic,
 																pr_dscritic => vr_dscritic);
 																
@@ -3024,7 +3026,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 														                        <DADOS_PAGAMENTO>
 																										      <dsmsgope>'|| nvl(vr_dsmsgope,' ') ||'</dsmsgope>
 																													<idastcjt>'|| nvl(TO_CHAR(vr_idastcjt),' ') ||'</idastcjt>
-																													<dsprotoc>'|| NVL(TRIM(vr_dsprotoc),'0')    ||'</dsprotoc>
+																													<dsprotoc>'|| NVL(TRIM(vr_dsprotoc),'')    ||'</dsprotoc>
 																									  </DADOS_PAGAMENTO>');
 			-- Encerrar a tag raiz
 			gene0002.pc_escreve_xml(pr_xml            => pr_xml_operacao188
@@ -3138,6 +3140,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                   ,pr_dtagenda IN DATE -- Data de agendamento
                                   ,pr_cdtrapen IN NUMBER -- Código de sequencial da transação pendente
 								  ,pr_tpleitor IN INTEGER               -- Indicador de captura através de leitora de código de barras (1 – Leitora / 2 – Manual)
+								,pr_dsprotoc OUT VARCHAR2 -- Protocolo
                                   ,pr_cdcritic OUT INTEGER -- Código do erro
                                   ,pr_dscritic OUT VARCHAR2 -- Descriçao do erro
                                    ) IS
@@ -3686,6 +3689,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 				 TRIM(vr_dscritic) IS NOT NULL THEN
 				RAISE vr_exc_erro;
 			END IF;
+			
+			pr_dsprotoc := vr_dsprotoc;
 						
   EXCEPTION
     WHEN vr_exc_erro THEN
