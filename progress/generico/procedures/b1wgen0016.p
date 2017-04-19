@@ -7900,7 +7900,7 @@ PROCEDURE aprova_trans_pend:
                                 
                                 UNDO TRANSACAO, LEAVE TRANSACAO.
                                 
-                            END.
+                            END.                       
 
                         /* EFETIVACAO */    
                         IF aux_conttran = 1 AND par_indvalid = 1 THEN
@@ -8516,7 +8516,7 @@ PROCEDURE aprova_trans_pend:
                                     ASSIGN par_flgaviso = TRUE.
         
                                 UNDO TRANSACAO, LEAVE TRANSACAO.
-                            END.
+                            END.                       
 
 					    IF aux_conttran = 1 AND par_indvalid = 1 THEN
 						   DO:
@@ -12388,6 +12388,7 @@ PROCEDURE aprova_trans_pend:
                                                                   INPUT tt-tbpagto_darf_das_trans_pend.dtdebito,  /* Data de agendamento */
                                                                   INPUT tt-tbgen_trans_pend.cdtransacao_pendente,  /* Código de sequencial da transaçao pendente */
                                                                   INPUT tt-tbpagto_darf_das_trans_pend.tpleitura_docto, /* Indicador de captura através de leitora de código de barras (1 – Leitora / 2 – Manual) */
+                                                                 OUTPUT glb_dsprotoc,                                   /* Descricao do protocolo */
                                                                  OUTPUT 0,  /* Código do erro */
                                                                  OUTPUT ?). /* Descriçao do erro */
                               

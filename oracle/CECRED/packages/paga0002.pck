@@ -768,9 +768,9 @@ create or replace package body cecred.PAGA0002 is
   --             07/02/2017 - #604294 Log de exception others na rotina pc_proc_agendamento_recorrente e
   --                          aumento do tamanho das variáveis vr_dslinxml_desaprov e vr_dslinxml_aprov
   --                          para evitar possível repetição do problema relatado no chamado (Carlos)
-	--
-	--             22/02/2017 - Ajustes para correçao de crítica de pagamento DARF/DAS (Lucas Lunelli - P.349.2)
-	--
+  --
+  --             22/02/2017 - Ajustes para correçao de crítica de pagamento DARF/DAS (Lucas Lunelli - P.349.2)
+  --
   ---------------------------------------------------------------------------------------------------------------*/
   
   ----------------------> CURSORES <----------------------
@@ -1774,21 +1774,21 @@ create or replace package body cecred.PAGA0002 is
       IF pr_cdtiptra = 4 THEN
         vr_dscritic := 'Transação(ões) registrada(s) com sucesso. Aguardando aprovação do(s) preposto(s).';
       ELSE      
-      IF vr_idastcjt = 1 THEN
+        IF vr_idastcjt = 1 THEN
             vr_dscritic := (CASE WHEN pr_cdtiptra = 3 THEN 'Credito de salario registrado' 
                                  ELSE 'Transferencia registrada' END) ||
-                     ' com sucesso. ' || 
-                     'Aguardando aprovacao do registro pelos demais responsaveis.';
-      ELSE
+                       ' com sucesso. ' || 
+                       'Aguardando aprovacao do registro pelos demais responsaveis.';
+        ELSE
             vr_dscritic := (CASE WHEN pr_cdtiptra = 3 THEN 'Credito de salario registrado' 
                                  ELSE 'Transferencia registrada' END) ||
-                     ' com sucesso. ' || 
-                     'Aguardando efetivacao do registro pelo preposto.';
-      END IF;
-      
-      IF pr_idagenda > 1 THEN
-        vr_dscritic := 'Agendamento de ' || vr_dscritic;
-      END IF;
+                       ' com sucesso. ' || 
+                       'Aguardando efetivacao do registro pelo preposto.';
+        END IF;
+        
+        IF pr_idagenda > 1 THEN
+          vr_dscritic := 'Agendamento de ' || vr_dscritic;
+        END IF;
       
       END IF;
       
@@ -2063,22 +2063,22 @@ create or replace package body cecred.PAGA0002 is
         IF pr_cdtiptra = 4 THEN
           vr_dscritic := 'Transação(ões) registrada(s) com sucesso.';
         ELSE
-        -- Verificar se a data é um dia util, caso não ser, retorna o proximo dia
-        vr_dtmvtopg := gene0005.fn_valida_dia_util(pr_cdcooper  => pr_cdcooper, 
-                                                   pr_dtmvtolt  => pr_dtmvtopg, 
-                                                   pr_tipo      => 'P', 
-                                                   pr_feriado   => TRUE);
+          -- Verificar se a data é um dia util, caso não ser, retorna o proximo dia
+          vr_dtmvtopg := gene0005.fn_valida_dia_util(pr_cdcooper  => pr_cdcooper, 
+                                                     pr_dtmvtolt  => pr_dtmvtopg, 
+                                                     pr_tipo      => 'P', 
+                                                     pr_feriado   => TRUE);
                                                      
-        vr_dscritic := (CASE 
-                         WHEN pr_cdtiptra IN (1,5) THEN 'Transferencia agendada'
-                         ELSE 'Credito de salario agendado'
-                        END)
-                        ||
-                        ' com sucesso para o dia '|| to_char(vr_dtmvtopg,'DD/MM/RRRR') ||                         
-                        ', mediante saldo disponivel em conta corrente ate as '        || 
+          vr_dscritic := (CASE 
+                           WHEN pr_cdtiptra IN (1,5) THEN 'Transferencia agendada'
+                           ELSE 'Credito de salario agendado'
+                          END)
+                          ||
+                          ' com sucesso para o dia '|| to_char(vr_dtmvtopg,'DD/MM/RRRR') ||                         
+                          ', mediante saldo disponivel em conta corrente ate as '        || 
                           vr_tab_limite(vr_tab_limite.first).hrfimpag || '.';
         END IF;
-                       
+                        
                        
       -- Se retornou critica
       ELSE
@@ -2156,13 +2156,13 @@ create or replace package body cecred.PAGA0002 is
         IF pr_cdtiptra = 4 THEN
           vr_dscritic := 'Transação(ões) registrada(s) com sucesso.';
         ELSE
-        vr_dscritic := (CASE 
-                         WHEN pr_cdtiptra IN (1,5) THEN 'Transferencia agendada'
-                         ELSE ' Credito de salario agendado'
-                        END)||
-                       ' com sucesso.';
+          vr_dscritic := (CASE 
+                           WHEN pr_cdtiptra IN (1,5) THEN 'Transferencia agendada'
+                           ELSE ' Credito de salario agendado'
+                          END)||
+                         ' com sucesso.';
         END IF;
-                       
+                        
       -- Se retornou critica
       ELSE
         -- Se retornou critica , deve abortar
@@ -2174,7 +2174,7 @@ create or replace package body cecred.PAGA0002 is
     IF TRIM(vr_dscritic) IS NOT NULL THEN
       pr_xml_dsmsgerr := '<dsmsgsuc>'|| vr_dscritic ||'</dsmsgsuc>'||
                          '<idastcjt>'|| vr_idastcjt ||'</idastcjt>'||
-						 '<dsprotoc>'|| NVL(TRIM(vr_dsprotoc),'0') ||'</dsprotoc>';
+						'<dsprotoc>'|| NVL(TRIM(vr_dsprotoc),'') ||'</dsprotoc>';
     END IF;  
     
     pc_proc_geracao_log(pr_flgtrans => 1 /*TRUE*/);
@@ -3597,7 +3597,7 @@ create or replace package body cecred.PAGA0002 is
     pr_xml_msgofatr := '<msgofatr>'|| vr_msgofatr ||'</msgofatr>';
     pr_xml_cdempcon := '<cdempcon>'|| to_char(vr_cdempcon,'fm0000')||'</cdempcon>';
     pr_xml_cdsegmto := '<cdsegmto>'|| to_char(vr_cdsegmto)||'</cdsegmto>';    
-	pr_xml_dsprotoc := '<dsprotoc>'|| NVL(TRIM(vr_dsprotoc),'0') ||'</dsprotoc>';
+	pr_xml_dsprotoc := '<dsprotoc>'|| NVL(TRIM(vr_dsprotoc),'') ||'</dsprotoc>';
     
     pc_proc_geracao_log(pr_flgtrans => 1 /* TRUE*/);
     pr_dsretorn := 'OK';
@@ -7921,7 +7921,7 @@ create or replace package body cecred.PAGA0002 is
      
  END pc_convenios_aceitos;
  
-    
+
   /* Auditoria das informações de Auto Atendimento para retorno de sobras posterior */  
   PROCEDURE pc_auditoria_auto_atend(pr_dtmvtoan IN crapdat.dtmvtoan%TYPE DEFAULT NULL) IS
   BEGIN
@@ -9262,7 +9262,7 @@ create or replace package body cecred.PAGA0002 is
       ROLLBACK;
 
   END pc_obtem_agendamentos_car;
-
+  
   /* Procedimento para cancelar agendamento */
   PROCEDURE pc_cancelar_agendamento (  pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
                                       ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Codigo da agencia
