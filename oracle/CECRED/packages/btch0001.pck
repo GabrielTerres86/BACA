@@ -590,7 +590,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
                         pr_delimit => ' ');
           vr_cdprograma := vr_tab_erro(vr_tab_erro.count());     
         ELSE          
-          vr_cdprograma := nvl(vr_nmarqlog,'');
+          vr_cdprograma := '';
         END IF;
       END IF;
 
