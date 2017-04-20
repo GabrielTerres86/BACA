@@ -11107,7 +11107,7 @@ PROCEDURE gera-termo-responsabilidade:
         SKIP(1)
         "\033\105\ 1.6\033\106  O cooperado reconhece que a COOPERATIVA realiza, por amostragem, de forma moderada, " 
         SKIP
-        "      generalizada e impessoal, o monitoramento das movimentaçoes, transaçoes e contratacoes "
+        "      generalizada e impessoal, o monitoramento das movimentacoes, transacoes e contratacoes "
         SKIP
         "      realizadas por meio dos canais de autoatendimento, podendo, sem aviso previo, reprovar   "
         SKIP
