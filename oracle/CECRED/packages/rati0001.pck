@@ -1032,7 +1032,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
        Objetivo  : Retornar valor parametrizado de rating na TAB036 para a Cooperativa.
 
        Alteracoes: 04/06/2013 - Conversão Progress -> Oracle - Marcos (Supero)
-                                      
+
     ............................................................................. */
     DECLARE
       /* Cursor genérico de parametrização */
@@ -3356,7 +3356,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
        Objetivo  : Direcionar a obtenção as descricoes do risco, provisao , etc ...
 
        Alteracoes: 28/08/2014 - Conversão Progress -> Oracle - Marcos (Supero)
-                   
+
                    25/10/2016 - Correção do problema relatado no chamado 541414. (Kelvin)
     ............................................................................. */
     DECLARE
@@ -3383,10 +3383,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       IF vr_tab_provisao_cl.count() = 0 THEN
         -- Busca de todos os riscos conforme chave de acesso enviada
         FOR rw_craptab IN cr_craptab(pr_nmsistem => 'CRED'
-                                    ,pr_tptabela => 'GENERI'
-                                    ,pr_cdempres => '00'
-                                    ,pr_cdacesso => 'PROVISAOCL'
-                                    ,pr_tpregist => null) LOOP
+                                             ,pr_tptabela => 'GENERI'
+                                             ,pr_cdempres => '00'
+                                             ,pr_cdacesso => 'PROVISAOCL'
+                                             ,pr_tpregist => null) LOOP
           -- Carregar na tabela
           vr_contador := to_number(SUBSTR(rw_craptab.dstextab,12,2));
           vr_tab_provisao_cl(vr_contador).dsdrisco := TRIM(SUBSTR(rw_craptab.dstextab,8,3));
@@ -3414,10 +3414,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       IF vr_tab_provisao_tl.count() = 0 THEN
         -- Busca de todos os riscos conforme chave de acesso enviada
         FOR rw_craptab IN cr_craptab(pr_nmsistem => 'CRED'
-                                    ,pr_tptabela => 'GENERI'
-                                    ,pr_cdempres => '00'
-                                    ,pr_cdacesso => 'PROVISAOTL'
-                                    ,pr_tpregist => null) LOOP
+                                             ,pr_tptabela => 'GENERI'
+                                             ,pr_cdempres => '00'
+                                             ,pr_cdacesso => 'PROVISAOTL'
+                                             ,pr_tpregist => null) LOOP
           -- Carregar na tabela
           vr_contador := to_number(SUBSTR(rw_craptab.dstextab,12,2));
           vr_tab_provisao_tl(vr_contador).dsdrisco := TRIM(SUBSTR(rw_craptab.dstextab,8,3));
@@ -4707,8 +4707,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                               Ajuste nos codigos de natureza juridica para o
                               existente na receita federal. (Tiago Castro - RKAM)
 
-		             10/05/2016 - Ajuste para iniciar corretamente a pltable
-							                (Andrei - RKAM).
+		         10/05/2016 - Ajuste para iniciar corretamente a pltable
+							  (Andrei - RKAM).
                  
                  25/10/2016 - Ajuste no calculo da quantidade de anos, permitindo
                               duas posições decimais. (Kelvin)
