@@ -194,7 +194,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                             Prj. 302 (Jean Michel)             
                             
                01/03/2017 - Incluir criação de craplau caso cooperado nao tenha saldo para 
-                            efetuar lançamentos para o historico 323 e 38 (Lucas Ranghetti M338.1)
+                            efetuar lançamentos para o historico 323 e 38.
+                          - Adicionar Round 2 para o valor vliofmes (Lucas Ranghetti M338.1)
      ............................................................................. */
 
      DECLARE
@@ -989,7 +990,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
            --Se for primeiro dia util e tiver IOF a cobrar
            IF To_Char(vr_dtmvtolt,'MM') <> To_Char(vr_dtmvtoan,'MM') THEN 
            
-             IF rw_crapsld.vliofmes > 0 THEN
+             IF round(rw_crapsld.vliofmes,2) > 0 THEN
 
                -- Verificar a imunidade tributária
                IMUT0001.pc_verifica_imunidade_trib(pr_cdcooper => pr_cdcooper
@@ -997,7 +998,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                                                   ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                                   ,pr_flgrvvlr => TRUE
                                                   ,pr_cdinsenc => 4
-                                                  ,pr_vlinsenc => rw_crapsld.vliofmes
+                                                  ,pr_vlinsenc => round(rw_crapsld.vliofmes,2)
                                                   ,pr_flgimune => vr_flgimune
                                                   ,pr_dsreturn => vr_dsreturn
                                                   ,pr_tab_erro => vr_tab_erro);
@@ -1058,7 +1059,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
 
                    -- Se saldo do cooperado não suprir o lançamento e a qtd dias corridos for > 0 
                    -- vamos agendar o lançamento na LAUTOM
-                   IF rw_crapsld.vliofmes > vr_vlsddisp AND vr_qtdiacor > 0 THEN                   
+                   IF round(rw_crapsld.vliofmes,2) > vr_vlsddisp AND vr_qtdiacor > 0 THEN                   
                       
                      vr_nrseqdig:= fn_sequence('CRAPLAU','NRSEQDIG',''||pr_cdcooper||';'||TO_CHAR(vr_dtmvtolt,'DD/MM/RRRR')||'');
                      
@@ -1093,7 +1094,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                                   ,8450                   -- craplau.nrdolote
                                   ,nvl(vr_nrseqdig,0) + 1 -- craplau.nrseqdig
                                   ,1                      -- craplau.tpdvalor
-                                  ,rw_crapsld.vliofmes    -- craplau.vllanaut
+                                  ,round(rw_crapsld.vliofmes,2)  -- craplau.vllanaut
                                   ,99999323               -- craplau.nrdocmto
                                   ,vr_dtmvtolt            -- craplau.dttransa
                                   ,gene0002.fn_busca_time -- craplau.hrtransa
@@ -1124,7 +1125,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                                                    VALUES(pr_cdcooper
                                                          ,rw_crapsld.nrdconta
                                                          ,vr_dtmvtolt
-                                                         ,rw_crapsld.vliofmes
+                                                         ,round(rw_crapsld.vliofmes,2)
                                                          ,vr_idlancto
                                                          ,1
                                                          ,323);
@@ -1214,7 +1215,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                                            ,99999323
                                            ,323
                                            ,Nvl(rw_craplot.nrseqdig,0) + 1
-                                           ,rw_crapsld.vliofmes
+                                           ,round(rw_crapsld.vliofmes,2)
                                            ,to_char(rw_crapsld.vlbasiof,'fm000g000g000d00')
                                            ,0)
                                    RETURNING vllanmto
