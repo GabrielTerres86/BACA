@@ -12075,7 +12075,7 @@ PROCEDURE aprova_trans_pend:
                                                                   INPUT aux_vldocmto,
                                                                   INPUT tt-tbpagto_darf_das_trans_pend.idagendamento,   /* Indicador de agendamento (1 – Nesta Data / 2 – Agendamento) */
                                                                   INPUT tt-tbpagto_darf_das_trans_pend.tpleitura_docto,       /* Indicador de captura através de leitora de código de barras (1 – Leitora / 2 – Manual) */
-                                                                 OUTPUT glb_dsprotoc,                                   /* Descricao do protocolo */
+                                                                 OUTPUT "",                                   /* Descricao do protocolo */
                                                                  OUTPUT 0,                                              /* Código do erro */
                                                                  OUTPUT ?).                                             /* Descriçao do erro */ 
                                                         
@@ -12087,6 +12087,8 @@ PROCEDURE aprova_trans_pend:
                             /* Busca possíveis erros */ 
                             ASSIGN aux_cdcritic = 0
                                    aux_dscritic = ""
+                                   glb_dsprotoc = pc_paga_darf_das.pr_dsprotoc 
+                                                  WHEN pc_paga_darf_das.pr_dsprotoc <> ?
                                    aux_cdcritic = pc_paga_darf_das.pr_cdcritic 
                                                   WHEN pc_paga_darf_das.pr_dscritic <> ?
                                    aux_dscritic = pc_paga_darf_das.pr_dscritic 
@@ -12171,7 +12173,7 @@ PROCEDURE aprova_trans_pend:
                                                                   INPUT tt-tbpagto_darf_das_trans_pend.dtdebito,  /* Data de agendamento */
                                                                   INPUT tt-tbgen_trans_pend.cdtransacao_pendente,  /* Código de sequencial da transaçao pendente */
                                                                   INPUT tt-tbpagto_darf_das_trans_pend.tpleitura_docto, /* Indicador de captura através de leitora de código de barras (1 – Leitora / 2 – Manual) */
-                                                                 OUTPUT glb_dsprotoc,                                   /* Descricao do protocolo */
+                                                                 OUTPUT "",                                   /* Descricao do protocolo */
                                                                  OUTPUT 0,  /* Código do erro */
                                                                  OUTPUT ?). /* Descriçao do erro */
                               
@@ -12202,6 +12204,8 @@ PROCEDURE aprova_trans_pend:
                             /* Busca possíveis erros */ 
                             ASSIGN aux_cdcritic = 0
                                    aux_dscritic = ""
+                                   glb_dsprotoc = pc_cria_agend_darf_das.pr_dsprotoc 
+                                                  WHEN pc_cria_agend_darf_das.pr_dsprotoc <> ?
                                    aux_cdcritic = pc_cria_agend_darf_das.pr_cdcritic 
                                                   WHEN pc_cria_agend_darf_das.pr_dscritic <> ?
                                    aux_dscritic = pc_cria_agend_darf_das.pr_dscritic 
