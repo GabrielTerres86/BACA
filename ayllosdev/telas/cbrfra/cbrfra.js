@@ -97,7 +97,7 @@ function estadoInicial() {
 	var strDate = date.getDate() + "/" + (dia) + "/" + date.getFullYear();
 	
 	$('#nmdata').val(strDate);
-
+	$('#nmdata').desabilitaCampo();
 }
 
 function formataLayout() {
@@ -156,7 +156,7 @@ function controlaFoco() {
 				$("#nmdatainicial").focus();
 			}
 			else {
-				$("#nmdata").focus();
+				confirma('I');
 			}
 			return false;
 		}
@@ -187,7 +187,7 @@ function controlaFoco() {
 				$("#nmdatainicial").focus();
 			}
 			else {
-				$("#nmdata").focus();
+				confirma('I');
 			}
 			return false;
 		}
@@ -199,7 +199,7 @@ function controlaFoco() {
 				$("#nmdatainicial").focus();
 			}
 			else {
-				$("#nmdata").focus();
+				confirma('I');
 			}
 			return false;
 		}
@@ -218,7 +218,7 @@ function controlaFoco() {
 				$("#nmdatainicial").focus();
 			}
 			else {
-				$("#nmdata").focus();
+				confirma('I');
 			}
 			return false;
 		}
@@ -234,13 +234,6 @@ function controlaFoco() {
 	$("#nmdatafinal").unbind('keypress').bind('keypress', function(e) {
 		if ( e.keyCode == 9 || e.keyCode == 13 ) {	
 			realizaOperacao(cCddopcao.val(), '1' , '30')
-			return false;
-		}
-	});
-	
-	$("#nmdata").unbind('keypress').bind('keypress', function(e) {
-		if ( e.keyCode == 9 || e.keyCode == 13 ) {	
-			confirma('I');
 			return false;
 		}
 	});
@@ -344,26 +337,28 @@ function confirma(cddopcao) {
 	else {
 		strCodigo = $("#nrdddcel").val() + $("#nrtelcel").val();
 	}
+		
 	if(cddopcao == 'I') {
 		if ((strCodigo == '' || strdata == '')){
 			showError("error","Todos os campos devem ser prenchidos.","Alerta - Ayllos","");
 			return false;
 		}
+		
 		//TELEFONE CELULAR
 		if ($("#tipo").val() == 4) { 
 			
 			if ($("#nrdddcel").val() == '' || $("#nrtelcel").val() == '') {
-				showError("error","Todos os campos devem ser prenchidos.","Alerta - Ayllos","");
+				showError("error","Todos os campos devem ser prenchidos.","Alerta - Ayllos","$(\"#nrdddcel\").focus();");
 				return false;
 			}
 			
-			if ($("#nrdddcel").val().lenght < 2) {
-				showError("error","DDD inv&aacute;lido","Alerta - Ayllos","");
+			if ($("#nrdddcel").val().length < 2) {
+				showError("error","DDD inv&aacute;lido","Alerta - Ayllos","$(\"#nrdddcel\").focus();");
 				return false;
 			}
 			
-			if ($("#nrtelcel").val().lenght < 10) {
-				showError("error","Telefone inv&aacute;lido.","Alerta - Ayllos","");
+			if ($("#nrtelcel").val().length < 10) {
+				showError("error","Telefone inv&aacute;lido.","Alerta - Ayllos","$(\"#nrtelcel\").focus();");
 				return false;
 			}
 		}
@@ -429,6 +424,22 @@ function realizaOperacao(cddopcao, nriniseq , nrregist) {
 			break;
 	}
 	
+	if(cddopcao == 'C' || cddopcao == 'E') {
+		
+		if ($("#nmdatainicial").val() != '' && $("#nmdatafinal").val() != '') {
+			var date1 = $("#nmdatainicial").val();
+			var date2 = $("#nmdatafinal").val();
+			var newDate1 = new Date();
+			var newDate2 = new Date();
+			newDate1.setFullYear(date1.substr(6,4),(date1.substr(3,2) - 1),date1.substr(0,2));
+			newDate2.setFullYear(date2.substr(6,4),(date2.substr(3,2) - 1),date2.substr(0,2));
+
+			if (newDate2 < newDate1) {
+				showError("error","Data final deve ser maior ou igual a Data inicial.","Alerta - Ayllos","");
+				return false;
+			}
+		}
+	}
 	// Mostra mensagem de aguardo
 	if (cddopcao == "C"){  		
 		showMsgAguardo("Aguarde, consultando registro de fraude..."); 

@@ -7836,18 +7836,9 @@ PROCEDURE proc_operacao181:
            aux_flgfavori   = INT(GET-VALUE("aux_flgfavori"))
            aux_vlrecarga   = DECI(GET-VALUE("aux_vlrecarga"))          
            aux_cdopcaodt   = INT(GET-VALUE("aux_cddopcao"))
-           aux_qtmesagd    = INT(GET-VALUE("aux_qtdmeses")).
-           
-           
-    ASSIGN aux_dtrecarga   = DATE(GET-VALUE("aux_dtrecarga")) NO-ERROR.
-      
-    IF  ERROR-STATUS:ERROR THEN
-      DO:
-          {&out} "<dsmsgerr>Data de início do agendamento nao é uma data válida.</dsmsgerr>".
-          
-      END.      
-    ELSE 
-      DO:       
+           aux_qtmesagd    = INT(GET-VALUE("aux_qtdmeses"))
+           aux_dtrecarga   = DATE(GET-VALUE("aux_dtrecarga")).
+    
     RUN sistema/internet/fontes/InternetBank181.p (INPUT aux_operacao,
                                                    INPUT aux_cdcooper,
                                                    INPUT aux_nrdconta,
@@ -7856,7 +7847,7 @@ PROCEDURE proc_operacao181:
                                                    INPUT aux_nrddd,
                                                    INPUT aux_nrcelular,
                                                    INPUT aux_nmcontato,
-                                                       INPUT aux_flgfavori,
+                                                   INPUT aux_flgfavori,
                                                    INPUT aux_idseqttl,
                                                    INPUT aux_nrcpfope,
                                                    INPUT aux_vlrecarga,
@@ -7869,15 +7860,13 @@ PROCEDURE proc_operacao181:
     IF  RETURN-VALUE = "NOK"  THEN
         {&out} aux_dsmsgerr. 
     ELSE
-        FOR EACH xml_operacao NO-LOCK: 
-
-            {&out} xml_operacao.dslinxml.
-        
-        END.
-    
-      END.
+    FOR EACH xml_operacao NO-LOCK: 
       
-      {&out} aux_tgfimprg.      
+        {&out} xml_operacao.dslinxml.
+        
+    END.
+    
+    {&out} aux_tgfimprg.      
 
 END PROCEDURE.                 
 
