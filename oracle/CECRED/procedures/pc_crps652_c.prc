@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Codigo Cooperativa
+CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652_C (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Codigo Cooperativa
                                               ,pr_nmtelant IN VARCHAR2                --> Nome tela anterior
                                               ,pr_flgresta IN PLS_INTEGER             --> Flag padrao para utilizacao de restart
                                               ,pr_stprogra OUT PLS_INTEGER            --> Saida de termino da execucao
@@ -577,6 +577,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
            FROM   crawepr
            WHERE  crawepr.cdcooper = pr_cdcooper
            AND    crawepr.nrdconta = pr_nrdconta
+		   AND    crawepr.insitapr = 1 -- aprovado
            AND   pr_nrctremp IN (crawepr.nrctrliq##1 ,
                    crawepr.nrctrliq##2 ,
                    crawepr.nrctrliq##3 , 
@@ -4503,11 +4504,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
          -- Apenas fechar o cursor
          CLOSE BTCH0001.cr_crapdat;
        END IF;
-	    rw_crapdat.dtmvtolt := to_date('03/04/2017','dd/mm/yyyy');
+
+	    rw_crapdat.dtmvtolt := to_date('19/04/2017','dd/mm/yyyy');
 	    rw_crapdat.dtmvtoan := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper, pr_dtmvtolt => rw_crapdat.dtmvtolt-1, pr_tipo => 'A');
-		rw_crapdat.dtmvtopr := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper, pr_dtmvtolt => rw_crapdat.dtmvtolt+1);
-        rw_crapdat.dtmvtocd := rw_crapdat.dtmvtolt;
-        
+		  rw_crapdat.dtmvtopr := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper, pr_dtmvtolt => rw_crapdat.dtmvtolt+1);
+      rw_crapdat.dtmvtocd := rw_crapdat.dtmvtolt;
+      
        -- Validacoes iniciais do programa
        BTCH0001.pc_valida_iniprg (pr_cdcooper => pr_cdcooper
                                  ,pr_flgbatch => vr_flgbatch
@@ -5294,10 +5296,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                                         ,pr_des_reto => vr_typ_saida
                                         ,pr_des_erro => vr_dscritic );
        
-       IF vr_typ_saida = 'NOK' then
-          vr_dscritic := 'Erro na chamada da importacao arquivo CYBER: ' || vr_dscritic;
-          raise vr_exc_fimprg;
-       end if;
+       --IF vr_typ_saida = 'NOK' then
+       --   vr_dscritic := 'Erro na chamada da importacao arquivo CYBER: ' || vr_dscritic;
+       --   raise vr_exc_fimprg;
+       --end if;
 
        --Salvar informacoes no banco de dados
        COMMIT;
@@ -5350,5 +5352,5 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
          --Zerar tabela de memoria auxiliar
          pc_limpa_tabela;
      END;
-   END PC_CRPS652;
+   END PC_CRPS652_C;
 /
