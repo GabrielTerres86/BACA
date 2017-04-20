@@ -8465,6 +8465,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 																		,pr_tab_crapavt => vr_tab_crapavt
 																		,pr_cdtranpe => vr_cdtranpe
 																		,pr_dscritic => vr_dscritic);
+                                    
+          IF vr_dscritic IS NOT NULL THEN
+            vr_cdcritic := 0;
+            RAISE vr_exc_erro;
+          END IF;
+          
           -- Cria operação de recarga para data agendada																		 
 					pc_cria_operacao_pendente(pr_cdtranpe => vr_cdtranpe
 					                         ,pr_tprecarga => pr_tprecarga
@@ -8485,6 +8491,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 																	,pr_tab_crapavt => vr_tab_crapavt
 																	,pr_cdcritic => vr_cdcritic
 																	,pr_dscritic => vr_dscritic);
+                                    
+          IF vr_cdcritic <> 0 OR vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_erro;
+          END IF;
+          
 				END LOOP;
 			ELSE
 				 -- Cria transação operador
@@ -8507,6 +8518,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 																	 ,pr_tab_crapavt => vr_tab_crapavt
 																	 ,pr_cdtranpe => vr_cdtranpe
 																	 ,pr_dscritic => vr_dscritic);
+                                    
+          IF vr_dscritic IS NOT NULL THEN
+            vr_cdcritic := 0;
+            RAISE vr_exc_erro;
+          END IF;
+          
          -- Cria operação de recarga para data agendada																		 
 				 pc_cria_operacao_pendente(pr_cdtranpe => vr_cdtranpe
 					                        ,pr_tprecarga => pr_tprecarga				 
@@ -8527,11 +8544,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 																 ,pr_tab_crapavt => vr_tab_crapavt
 																 ,pr_cdcritic => vr_cdcritic
 																 ,pr_dscritic => vr_dscritic);
+                                    
+          IF vr_cdcritic <> 0 OR vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_erro;
+			END IF;
+          
 			END IF;
 			
 		EXCEPTION
 			WHEN vr_exc_erro THEN
-	      pr_cdcritic := vr_dscritic;  
+	      pr_dscritic := vr_dscritic;  
 			
 				IF vr_cdcritic <> 0 THEN
 					 pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
