@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Elton/Ze Eduardo
-    Data    : Marco/07.                       Ultima atualizacao: 04/04/2017
+    Data    : Marco/07.                       Ultima atualizacao: 19/04/2017
     
     Dados referentes ao programa:
 
@@ -209,6 +209,9 @@
                            
               04/04/2017 - Incluir validacao para contas migradas na procedure gera_lancamento 
                            (Lucas Ranghetti #620180)
+
+              19/04/2017 - Substituir o dtlibera das consultas de cheques em custodia/desconto
+                           por dtdevolu = ? (Lucas Ranghetti #640682)
 ..............................................................................*/
 
 DEF INPUT  PARAM p-cdcooper AS INT                                   NO-UNDO.
@@ -1181,8 +1184,7 @@ PROCEDURE gera_lancamento:
                                            AND crapcdb.nrctachq = crapfdc.nrctachq
                                            AND crapcdb.nrcheque = crapfdc.nrcheque
                                            AND CAN-DO("0,2",STRING(crapcdb.insitchq))
-                                           AND crapcdb.dtlibera >= glb_dtmvtoan
-                                           AND crapcdb.dtlibera <= glb_dtmvtolt
+                                           AND crapcdb.dtdevolu = ?
                                            NO-LOCK:
                        END.                        
                        
@@ -1311,9 +1313,8 @@ PROCEDURE gera_lancamento:
                                                   AND crapcst.nrctachq = crapfdc.nrctachq
                                                   AND crapcst.nrcheque = crapfdc.nrcheque
                                                   AND CAN-DO("0,2",STRING(crapcst.insitchq))
-                                                  AND crapcst.dtlibera >= glb_dtmvtoan
-                                                  AND crapcst.dtlibera <= glb_dtmvtolt
-                                                  AND crapcst.nrborder = 0
+												  AND crapcst.nrborder = 0
+                                                  AND crapcst.dtdevolu = ?
                                                   NO-LOCK:
                               END.
                         
@@ -2942,8 +2943,7 @@ PROCEDURE gera_arquivo_cecred:
                                            AND crapcdb.nrctachq = crapfdc.nrctachq
                                            AND crapcdb.nrcheque = crapfdc.nrcheque
                                            AND CAN-DO("0,2",STRING(crapcdb.insitchq))
-                                           AND crapcdb.dtlibera >= glb_dtmvtoan
-                                           AND crapcdb.dtlibera <= glb_dtmvtolt
+                                           AND crapcdb.dtdevolu = ?
                                            NO-LOCK:
                        END.                        
                        
@@ -2960,9 +2960,8 @@ PROCEDURE gera_arquivo_cecred:
                                                   AND crapcst.nrctachq = crapfdc.nrctachq
                                                   AND crapcst.nrcheque = crapfdc.nrcheque
                                                   AND CAN-DO("0,2",STRING(crapcst.insitchq))
-                                                  AND crapcst.dtlibera >= glb_dtmvtoan
-                                                  AND crapcst.dtlibera <= glb_dtmvtolt
-                                                  AND crapcst.nrborder = 0
+												  AND crapcst.nrborder = 0
+                                                  AND crapcst.dtdevolu = ?
                                                   NO-LOCK:
                               END.
                         
