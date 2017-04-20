@@ -6409,7 +6409,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
                Este arquivo irá atualizar a tabela CRAPCYC com dados de marcação dos contratos.
          A chamada da rotina será efetuada diariamente através de DB JOB, sempre após a atualização do CYBER;
 
-
+		 20/04/2017 - colocado tratamento de excecao no INSERT da crapcyc, estava abortando o programa - Jean (Mout´s)
    */
      vr_exc_erro    EXCEPTION;
      vr_handle_log  utl_file.file_type;

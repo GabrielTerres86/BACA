@@ -576,8 +576,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
          SELECT DECODE(CRAWEPR.IDQUAPRO,1,'RF',2,'RN',3,'RG',4,'CP','PA') CDTRSCYB
            FROM   crawepr
            WHERE  crawepr.cdcooper = pr_cdcooper
-           AND    crawepr.nrdconta = pr_nrdconta
-		   AND    crawepr.insitapr = 1 -- aprovado
+           AND    crawepr.nrdconta = pr_nrdconta	
            AND   pr_nrctremp IN (crawepr.nrctrliq##1 ,
                    crawepr.nrctrliq##2 ,
                    crawepr.nrctrliq##3 , 
