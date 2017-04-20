@@ -15,7 +15,8 @@
 	* 007: [23/04/2015] Vanessa 	   (CECRED) : Tratamemnto para mostrar o nrispbif com 8 posições
 	* 008: [17/07/2015] Gabriel        (RKAM)   : Suporte para rotinas Oracle.  
 	* 009: [27/07/2016] Carlos R.	   (CECRED) : Corrigi a forma de recuperacao dos dados do XML. SD 479874.
- */ 
+	* 010: [08/11/2016] Jaison/Andrino (CECRED) : Ajuste para passar o CDOPERAD e nao NMOPERAD como parametro da mensageria.
+	*/ 
 
 	session_start();
 	require_once("../config.php");
@@ -116,7 +117,7 @@
 	if ($flgProgress) {
 		$xmlResult = getDataXML($xml,false);
 	} else {
-		$xmlResult = mensageria($xml, $businessObject, $nomeProcedure, $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["nmoperad"], "</Root>");
+		$xmlResult = mensageria($xml, $businessObject, $nomeProcedure, $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	}
 	
 	$xmlObjPesquisa = getObjectXML($xmlResult);	
