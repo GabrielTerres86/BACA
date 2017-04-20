@@ -393,7 +393,7 @@
                12/01/2017 - Ajuste para nao permitir que um favorecido de TED seja desativado
 					        caso o mesmo possua algum agendamento cadastrado
 							(Adriano - SD 593235).
-
+              
               31/01/2017 - Alteraçao dos termos na rotina gera-termo-responsabilidade.
                            Alteracao na rotina executa-envio-ted, incluido param de ip e dstransa
                            PRJ335 - Analise de fraude. (Odirlei-AMcom)
@@ -10894,7 +10894,7 @@ PROCEDURE gera-termo-responsabilidade:
         AT 9 SKIP
         "\033\105\COOPERADO\033\106, as operacoes serao canceladas e deverao ser novamente registradas "
         AT 9 SKIP
-        "e aprovadas."
+        "e aprovadas."        
         AT 9 SKIP(1)
         "\033\105\ 1.1.4\033\106  O \033\105\COOPERADO\033\106 podera cadastrar OPERADOR(ES) para utilizacao da conta online, "
         SKIP
@@ -10999,7 +10999,7 @@ PROCEDURE gera-termo-responsabilidade:
         SKIP
         "      sua contratacao, observadas as regras estipuladas pela \033\105\COOPERATIVA\033\106 para cada produto "
         SKIP
-        "      ofertado."        
+        "      ofertado."              
         SKIP(5)
         WITH WIDTH 150 NO-BOX NO-LABEL FRAME f_termo_pj.
 
@@ -11039,7 +11039,7 @@ PROCEDURE gera-termo-responsabilidade:
         SKIP
         "devendo o \033\105\COOPERADO\033\106 comparecer novamente ao Posto de Atendimento da "
         AT 9 SKIP
-        "\033\105\COOPERATIVA\033\106 para recadastramento de senha."
+        "\033\105\COOPERATIVA\033\106 para recadastramento de senha."        
         AT 9 SKIP(1)        
         "\033\105\ 1.2\033\106  O aplicativo para celular e o canal pelo qual o \033\105\COOPERADO\033\106 tem acesso a sua conta, "
         SKIP
@@ -11094,7 +11094,7 @@ PROCEDURE gera-termo-responsabilidade:
         "pela \033\105\COOPERATIVA\033\106, nao estando, no entanto, obrigado a faze-lo, podendo, "
         AT 9 SKIP
         "inclusive, utiliza-la como meio de prova valida e eficaz em juizo ou fora dele."
-        AT 9 SKIP(1)
+        AT 9 SKIP(1)        
         "\033\105\ 1.5\033\106  O \033\105\COOPERADO\033\106 assume total responsabilidade pelas movimentacoes, transacoes e "
         SKIP
         "      contratacoes realizadas por meio deste canal eletronico, isentando a "
@@ -11107,7 +11107,7 @@ PROCEDURE gera-termo-responsabilidade:
         SKIP(1)
         "\033\105\ 1.6\033\106  O cooperado reconhece que a COOPERATIVA realiza, por amostragem, de forma moderada, " 
         SKIP
-        "      generalizada e impessoal, o monitoramento das movimentaçoes, transaçoes e contratacoes "
+        "      generalizada e impessoal, o monitoramento das movimentacoes, transacoes e contratacoes "
         SKIP
         "      realizadas por meio dos canais de autoatendimento, podendo, sem aviso previo, reprovar   "
         SKIP
