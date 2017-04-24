@@ -261,9 +261,9 @@
                             
                08/10/2015 - Alterar a procedure idade para chamar a rotina do Oracle
                             (Lucas Ranghetti #340156)
-                            
+							
                26/09/2016 - Incluir lotes da M211 para nao exclusao (Jonata-RKAM)
-                            
+							
 .............................................................................*/
 
 { sistema/generico/includes/b1wgen9999tt.i }
@@ -4821,7 +4821,7 @@ PROCEDURE critica_numero_lote:
          par_nrdolote = 6651   OR    /* Debitos nao efetuados no processo noturno */
          par_nrdolote = 6650   OR    /* Numero do lote reservado para o sistema.*/
          par_nrdolote = 6400   OR    /* Agendamento de debito automatico */
-  		   par_nrdolote = 8500   OR    /* Credito de nova aplicacao            */
+  		 par_nrdolote = 8500   OR    /* Credito de nova aplicacao            */
          par_nrdolote = 8501   OR    /* Debito de nova aplicacao             */
          par_nrdolote = 8502   OR    /* Debito de resgate de aplicacao       */
          par_nrdolote = 8503   OR    /* Credito de resgate de aplicacao      */
