@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0003 AS
   --  Sistema  : Impressão de contratos de emprestimos
   --  Sigla    : EMPR
   --  Autor    : Andrino Carlos de Souza Junior (RKAM)
-  --  Data     : agosto/2014.                   Ultima atualizacao: 20/06/2016
+  --  Data     : agosto/2014.                   Ultima atualizacao: 24/04/2017
   --
   -- Dados referentes ao programa:
   --
@@ -29,7 +29,11 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0003 AS
   --             24/08/2016 - (Projeto 343)
   --                        - Adicionada varíavel para verificação de  versão para 
   --                          impressão de novos parágros nos contratos de forma condicional; 
-  --                          (Ricardo Linhares)    
+  --                          (Ricardo Linhares)
+  --
+  --			 24/04/2017 - Alterado clausula WHERE 'crapass.nrcpfcgc (+) = crapavt.nrcpfcgc' 
+  --						  para 'crapass.nrdconta (+) = crapavt.nrdconta'. (Andrey - Mouts).
+  --						  SD: 644056	    
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -353,7 +357,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
       AND   crapavt.nrctremp = pr_nrctremp
       AND   crapavt.tpctrato = 9
       AND   crapass.cdcooper (+) = crapavt.cdcooper
-      AND   crapass.nrcpfcgc (+) = crapavt.nrcpfcgc
+      AND   crapass.nrdconta (+) = crapavt.nrdconta /* Alterado clausula WHERE 'crapass.nrcpfcgc (+) = crapavt.nrcpfcgc' para 'crapass.nrdconta (+) = crapavt.nrdconta' */
       AND   crapttl.cdcooper (+) = crapass.cdcooper
       AND   crapttl.nrdconta (+) = crapass.nrdconta
       AND   crapttl.idseqttl (+) = 1;
