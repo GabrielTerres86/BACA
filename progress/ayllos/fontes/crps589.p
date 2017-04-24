@@ -28,7 +28,10 @@
                18/11/2015 - Ajustes para que o crps utilize a rotina de
                             obtem-saldo-dia do Oracle (Douglas - Chamado 285228)
 
-			   19/01/2017 - Ajuste no formato do campo Nosso Numero (Diego).
+			         19/01/2017 - Ajuste no formato do campo Nosso Numero (Diego).
+
+               24/04/2017 - Nao considerar valores bloqueados na composicao do saldo disponivel
+                            Heitor (Mouts) - Melhoria 440
 
 ............................................................................ */
 
@@ -246,8 +249,7 @@ PROCEDURE importa-arquivo-debito:
         IF AVAIL wt_saldos THEN
         DO:
             ASSIGN aux_vlsddisp = wt_saldos.vlsddisp + wt_saldos.vlsdchsl + 
-                                  wt_saldos.vlsdbloq + wt_saldos.vlsdblpr + 
-                                  wt_saldos.vlsdblfp + wt_saldos.vllimcre.
+                                  wt_saldos.vllimcre.
         END.
 
         /* Quando existir juros na parcela, o cooperado devera ter saldo para 
