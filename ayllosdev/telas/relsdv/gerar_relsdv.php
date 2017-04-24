@@ -44,7 +44,8 @@
 		if($msgErro == null || $msgErro == ''){
 			$msgErro = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		}
-		exibirErro("error",$msgErro,"Alerta - Ayllos","",false);
+		//exibirErro("error",$msgErro,"Alerta - Ayllos","",false);
+    exibirErro("error","Arquivo gerado, verifique LOG!","Alerta - Ayllos","",false);
 	}
 		
 ?>
