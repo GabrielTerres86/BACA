@@ -724,6 +724,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
 
                23/02/2017 - Adicionado históricos de débito em c/c de recarga nas procedures
 							              pc_obtem_saldo_dia e pc_consulta_extrato. (PRJ321 Reinert)
+
+			   24/04/2017 - Nao considerar valores bloqueados para compor o saldo de Dep. a vista.
+			                Heitor (Mouts) - Melhoria 440
+
 ..............................................................................*/
 
   -- Tratamento de erros
@@ -6466,8 +6470,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       vr_vlacerto := vr_vlacerto;
     END IF;
 
-    vr_vlstotal := nvl(vr_vlsddisp,0) + nvl(vr_vlsdbloq,0) + nvl(vr_vlsdblpr,0) +
-                    nvl(vr_vlsdblfp,0) + nvl(vr_vlsdchsl,0);
+    vr_vlstotal := nvl(vr_vlsddisp,0) + nvl(vr_vlsdchsl,0);
     vr_vlblqjud := 0;
     vr_vlresblq := 0;
 
@@ -6489,7 +6492,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
     pr_tab_saldos(vr_ind).vlsdblpr := vr_vlsdblpr;
     pr_tab_saldos(vr_ind).vlsdblfp := vr_vlsdblfp;
     pr_tab_saldos(vr_ind).vlsdchsl := vr_vlsdchsl;
-    pr_tab_saldos(vr_ind).vlstotal := vr_vlsdchsl + vr_vlsdblfp + vr_vlsdblpr + vr_vlsdbloq + vr_vlsddisp;
+    pr_tab_saldos(vr_ind).vlstotal := vr_vlsdchsl + vr_vlsddisp;
     pr_tab_saldos(vr_ind).vlsaqmax := vr_vlsaqmax;
     pr_tab_saldos(vr_ind).vlacerto := vr_vlacerto;
     pr_tab_saldos(vr_ind).vllimcre := rw_crapass.vllimcre;
