@@ -106,6 +106,9 @@
                             array do tipo CHAR pelo fato de estar estourado
                             o valor total de 32000, conforme solicitado no
                             chamado 459142 (Kelvin).
+               
+               24/04/2017 - Nao considerar valores bloqueados na composicao de saldo disponivel
+                            Heitor (Mouts) - Melhoria 440
 
 ............................................................................. */
 
@@ -427,9 +430,7 @@ FOR EACH craptab WHERE craptab.cdcooper        = glb_cdcooper   AND
                           RETURN.
                       END.
 
-                 aux_vlsldtot = crapsld.vlsdblfp + crapsld.vlsdbloq +
-                                crapsld.vlsdblpr + crapsld.vlsddisp +
-                                crapass.vllimcre.
+                 aux_vlsldtot = crapsld.vlsddisp + crapass.vllimcre.
 
                  IF    crapsld.vlipmfap > 0   THEN
                        ASSIGN aux_vlsldtot = aux_vlsldtot - crapsld.vlipmfap.
@@ -489,8 +490,7 @@ FOR EACH craptab WHERE craptab.cdcooper        = glb_cdcooper   AND
                         aux_vlsldtot = aux_vlsldtot -
                               (TRUNCATE((craplcm.vllanmto * tab_txcpmfcc),2)).
 
-                     IF   aux_inhistor = 1 OR aux_inhistor = 3 OR
-                          aux_inhistor = 4 OR aux_inhistor = 5 THEN
+                     IF   aux_inhistor = 1 THEN
 
                           /* Inicia tratamento CPMF */
 
@@ -503,8 +503,7 @@ FOR EACH craptab WHERE craptab.cdcooper        = glb_cdcooper   AND
 
                                aux_vlsldtot = aux_vlsldtot + craplcm.vllanmto.
 
-                     IF   aux_inhistor = 11 OR aux_inhistor = 13 OR
-                          aux_inhistor = 14 OR aux_inhistor = 15 THEN
+                     IF   aux_inhistor = 11 THEN
 
                           /* Inicia tratamento CPMF */
 
