@@ -10381,28 +10381,31 @@ BEGIN
 
   FOR rw_operadora IN cr_operadora(pr_cdcooper => pr_cdcooper
 		                              ,pr_dtmvtolt => vr_dtmvtolt) LOOP
-		/* Linha 1 - Cabecalho*/
-		vr_cdestrut := '55';
-		vr_linhadet := trim(vr_cdestrut)||
-                   trim(vr_dtmvtolt_yymmdd)||','||
-                   trim(to_char(vr_dtmvtolt,'ddmmyy'))||','||
-                   '4340,'|| 
-                   '7543,'||
-                   trim(to_char((rw_operadora.totrecarga * (rw_operadora.perreceita / 100)), '999999990.00'))||','||
-                   '5210,'||
-                   '"(crps249) RECEITA RECARGA DE CELULAR - ' ||
-                   rw_operadora.nmoperadora || '"';
-    gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);																	
-		
-		-- Listar o total de recargas por pa
-		FOR rw_recargas_pa IN cr_recargas(pr_cdcooper => pr_cdcooper
-			                               ,pr_dtmvtolt => vr_dtmvtolt
-																		 ,pr_cdoperadora => rw_operadora.cdoperadora) LOOP
-			vr_linhadet := to_char(rw_recargas_pa.cdagenci, 'fm000')|| ',' ||
-											trim(to_char((rw_recargas_pa.totrecpa * (rw_operadora.perreceita / 100)),
-											'999999990.00'));
-      gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
-		END LOOP;
+																	
+    IF rw_operadora.totrecarga > 0 AND rw_operadora.perreceita > 0 THEN																	
+			/* Linha 1 - Cabecalho*/
+			vr_cdestrut := '55';
+			vr_linhadet := trim(vr_cdestrut)||
+										 trim(vr_dtmvtolt_yymmdd)||','||
+										 trim(to_char(vr_dtmvtolt,'ddmmyy'))||','||
+										 '4340,'|| 
+										 '7543,'||
+										 trim(to_char((rw_operadora.totrecarga * (rw_operadora.perreceita / 100)), '999999990.00'))||','||
+										 '5210,'||
+										 '"(crps249) RECEITA RECARGA DE CELULAR - ' ||
+										 rw_operadora.nmoperadora || '"';
+			gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);																	
+			
+			-- Listar o total de recargas por pa
+			FOR rw_recargas_pa IN cr_recargas(pr_cdcooper => pr_cdcooper
+																			 ,pr_dtmvtolt => vr_dtmvtolt
+																			 ,pr_cdoperadora => rw_operadora.cdoperadora) LOOP
+				vr_linhadet := to_char(rw_recargas_pa.cdagenci, 'fm000')|| ',' ||
+												trim(to_char((rw_recargas_pa.totrecpa * (rw_operadora.perreceita / 100)),
+												'999999990.00'));
+				gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+			END LOOP;
+		END IF;
 	END LOOP;
 	
   -- Fim RECEITA RECARGA DE CELULAR ...........................................	
