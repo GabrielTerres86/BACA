@@ -61,7 +61,7 @@
 	$nrdconta = ( isset($_POST['nrdconta']) )  ? $_POST['nrdconta'] : 0;
 	$idseqttl   = ( isset($_POST['idseqttl']) )    ? $_POST['idseqttl']   : 0;
 	$cdgraupr = ( isset($_POST['cdgraupr']) )  ? $_POST['cdgraupr'] : '';
-	
+		
 	// Verifica se o número da conta e o titular são inteiros válidos
 	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
 	if (!validaInteiro($idseqttl)) exibirErro('error','Seq. Titular n&atilde;o foi informada.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);	
