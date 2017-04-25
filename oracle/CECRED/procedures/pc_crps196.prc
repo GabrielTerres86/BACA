@@ -387,7 +387,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps196 (pr_cdcooper IN crapcop.cdcooper%T
         END IF;
         
         -- verificar funcao do hist.
-        IF vr_inhistor IN (1,3,4,5) THEN
+        IF vr_inhistor IN (1) THEN
           /* Inicia tratamento CPMF */
           IF vr_indoipmf = 2 THEN
             -- incluir taxa
@@ -399,7 +399,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps196 (pr_cdcooper IN crapcop.cdcooper%T
           END IF;           
         END IF;
         
-        IF vr_inhistor IN (11,13,14,15) THEN
+        IF vr_inhistor IN (11) THEN
 
           /* Inicia tratamento CPMF */
           IF vr_indoipmf = 2  THEN
