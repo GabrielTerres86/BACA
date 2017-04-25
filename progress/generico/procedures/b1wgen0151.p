@@ -3,7 +3,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0151.p
     Autor   : Gabriel Capoia (DB1)
-    Data    : 07/02/2013                     Ultima atualizacao: 13/01/2017
+    Data    : 07/02/2013                     Ultima atualizacao: 25/04/2017
 
     Objetivo  : Tranformacao BO tela PESQDP.
 
@@ -42,13 +42,16 @@
                      no Oracle(pc_valida_lancto_folha) quando for banco 085
                      (Guilherme/SUPERO)
 
-		29/08/2016 - Ajuste na procedure Gera_Impressao: aumento do format
-		             do campo rel_nrctatrf, pois nao estava imprimindo o 
-					 dv do numero da conta. (Chamado 499004) - (Fabricio)
+		    29/08/2016 - Ajuste na procedure Gera_Impressao: aumento do format
+		                 do campo rel_nrctatrf, pois nao estava imprimindo o 
+					           dv do numero da conta. (Chamado 499004) - (Fabricio)
 
-		13/01/2017 - Ajustado o campo nrctatrf para DECIMAL pois 
- 					 esta estourando o format pois deixa digitar 
-					 maior que INTE na tela (Tiago/Thiago 581315).
+		    13/01/2017 - Ajustado o campo nrctatrf para DECIMAL pois 
+ 				          	 esta estourando o format pois deixa digitar 
+					           maior que INTE na tela (Tiago/Thiago 581315).
+        
+        25/04/2017 - Adicionar conta na menssage da verificacao da conta salario
+                     para mais de um cpf (Lucas Ranghetti #654576)
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -570,7 +573,8 @@ PROCEDURE Valida_Dados:
                 IF  AVAIL crapccs THEN
                     DO:
                         ASSIGN aux_cdcritic = 0
-                               aux_dscritic = "Este CPF ja possui uma conta salario."
+                               aux_dscritic = "Este CPF ja esta associado a conta salario " +
+                                              STRING(crapccs.nrdconta,"zzzz,zzz,z").
                                par_nmdcampo = "nrcpfcgc".
                         LEAVE Valida.
                     END.
