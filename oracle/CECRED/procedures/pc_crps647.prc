@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autora  : Lucas R.
-  Data    : Setembro/2013                        Ultima atualizacao: 11/04/2017
+  Data    : Setembro/2013                        Ultima atualizacao: 30/03/2017
 
   Dados referentes ao programa:
 
@@ -141,8 +141,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
               30/03/2017 - Somente enviar e-mail caso nao for a critica de arquivo nao existe (182)
                            e nao for na Cecred, as demais criticas seguem enviando normalmente
                            (Lucas Ranghetti #635894)
-                           
-              11/04/2017 - Busca o nome resumido (Ricardo Linhares #547566)                           
    ............................................................................. */
   -- Constantes do programa
   vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'CRPS647';
@@ -190,8 +188,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
   vr_vllanmto NUMBER;
   vr_cdrefere VARCHAR2(25);
   vr_nmempres crapscn.dsnomcnv%type;
-  vr_dsnomres crapscn.dsnomres%type;
-  vr_dsnomsms crapscn.dsnomres%type;
   vr_cdempres crapscn.cdempres%type;
   vr_tpdebito NUMBER(1);
   vr_cdhistor craphis.cdhistor%type;
@@ -245,7 +241,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
   CURSOR cr_crapcsn(pr_cdempres crapscn.cdempres%type) IS
     SELECT cdempres 
           ,dsnomcnv 
-		  ,dsnomres
       FROM crapscn 
      WHERE cdempres = trim(pr_cdempres);
   
@@ -362,14 +357,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
     -- Buscar empresa conveniadas
     vr_cdempres := ' ';
     vr_nmempres := ' ';
-    vr_dsnomres := ' ';
     OPEN cr_crapcsn(substr(vr_dslinharq,148,10));
     FETCH cr_crapcsn
      INTO vr_cdempres
-         ,vr_nmempres
-         ,vr_dsnomres;
+         ,vr_nmempres;
     CLOSE cr_crapcsn;     
-    
     /* Se for o convenio 14 BRT CELULAR - FEBRABAN, vamos ignorar o hifen no final da referencia caso exista */
     IF vr_cdempres = '045' THEN
       -- Remover hifen ao final caso exista
@@ -1180,21 +1172,13 @@ BEGIN
                     -- Validar valor maior que o limite parametrizado
                     IF rw_crapatr.flgmaxdb = 1 AND vr_vllanmto > rw_crapatr.vlrmaxdb THEN  
                       -- Notificar cooperado que fatura excede limite
-                      
-                      --Atribui o nome resumido se houver
-                      IF (TRIM(vr_dsnomres) IS NOT NULL) THEN  
-                        vr_dsnomsms := vr_dsnomres;
-                      ELSE
-                        vr_dsnomsms := vr_nmempres;
-                      END IF;
-                      
                       sicr0001.pc_notif_cooperado_debaut(pr_cdcritic      => 967       -- 967 - Limite ultrapassado.
                                                         ,pr_cdcooper      => pr_cdcooper
                                                         ,pr_nmrescop      => rw_crapcop.nmrescop
                                                         ,pr_cdprogra      => vr_cdprogra
                                                         ,pr_nrdconta      => vr_nrdconta
                                                         ,pr_nrdocmto      => vr_cdrefere
-                                                        ,pr_nmconven      => vr_dsnomsms
+                                                        ,pr_nmconven      => vr_nmempres
                                                         ,pr_dtmvtopg      => gene0005.fn_valida_dia_util(pr_cdcooper,vr_dtrefere)
                                                         ,pr_vllanaut      => vr_vllanmto
                                                         ,pr_vlrmaxdb      => rw_crapatr.vlrmaxdb
@@ -1668,17 +1652,17 @@ EXCEPTION
     IF vr_cdcritic <> 182 AND pr_cdcooper = 3 OR
        pr_cdcooper <> 3 THEN    
                                
-      vr_texto_email := '<b>Abaixo os erros encontrados no processo de importacao do debito SICREDI:</b><br><br>'||
-                          to_char(SYSDATE,'dd/mm/yyyy HH24:MI:SS') || ' --> ' || vr_dscritic;
+    vr_texto_email := '<b>Abaixo os erros encontrados no processo de importacao do debito SICREDI:</b><br><br>'||
+                        to_char(SYSDATE,'dd/mm/yyyy HH24:MI:SS') || ' --> ' || vr_dscritic;
 
-      -- Por fim, envia o email
-      gene0003.pc_solicita_email(pr_cdprogra    => vr_cdprogra
-                                ,pr_des_destino => vr_emaildst
-                                ,pr_des_assunto => 'Critica importacao debito - SICREDI'
-                                ,pr_des_corpo   => vr_texto_email
-                                ,pr_des_anexo   => NULL
-                                ,pr_flg_enviar  => 'N'
-                                ,pr_des_erro    => vr_dscritic);                         
+    -- Por fim, envia o email
+    gene0003.pc_solicita_email(pr_cdprogra    => vr_cdprogra
+                              ,pr_des_destino => vr_emaildst
+                              ,pr_des_assunto => 'Critica importacao debito - SICREDI'
+                              ,pr_des_corpo   => vr_texto_email
+                              ,pr_des_anexo   => NULL
+                              ,pr_flg_enviar  => 'N'
+                              ,pr_des_erro    => vr_dscritic);                         
     END IF;
                              
     -- Efetuar commit pois gravaremos o que foi processo até então
