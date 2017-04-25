@@ -72,7 +72,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps196 (pr_cdcooper IN crapcop.cdcooper%T
                  12/06/2014 - Alterado tipo da variavel aux_nrdocmto de INTE 
                               para DECI (Elton).
                               
-                 26/03/2015 - Conversão Progress -> Oracle (Odirlei-AMcom)             
+                 26/03/2015 - Conversão Progress -> Oracle (Odirlei-AMcom)
+				 
+				 24/04/2017 - Nao considerar valores bloqueados na composicao de saldo disponivel
+				              Heitor (Mouts) - Melhoria 440         
 
   ............................................................................ */
 
@@ -328,8 +331,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps196 (pr_cdcooper IN crapcop.cdcooper%T
       END IF;
       
       -- somar valores do saldo
-      vr_vlsldtot := nvl(rw_crapsld.vlsdblfp,0) + nvl(rw_crapsld.vlsdbloq,0) +
-                     nvl(rw_crapsld.vlsdblpr,0) + nvl(rw_crapsld.vlsddisp,0) +
+      vr_vlsldtot := nvl(rw_crapsld.vlsddisp,0) +
                      nvl(rw_crapass.vllimcre,0) - nvl(rw_crapsld.vlipmfap,0) -
                      nvl(rw_crapsld.vlipmfpg,0);
                
