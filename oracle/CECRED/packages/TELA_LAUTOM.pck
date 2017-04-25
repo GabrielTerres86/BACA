@@ -52,6 +52,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
   --                          Adicionar origem ADIOFJUROS para podermos efetuar o 
   --                          debito do registro na procedure pc_valida_lancamento 
   --                          (Lucas Ranghetti M338.1)
+  --
+  --             24/04/2017 - Nao considerar valores bloqueados na composicao de saldo disponivel
+  --                          Heitor (Mouts) - Melhoria 440
+  --
   ---------------------------------------------------------------------------
 
 	PROCEDURE pc_valida_lancamento(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cooperativa conectada
@@ -228,9 +232,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
         -- Saldo Disponivel
         vr_vlsldisp := ROUND(NVL(vr_tab_saldos(vr_index).vlsddisp, 0) +
                              NVL(vr_tab_saldos(vr_index).vlsdchsl, 0) +
-                             NVL(vr_tab_saldos(vr_index).vlsdbloq, 0) +
-                             NVL(vr_tab_saldos(vr_index).vlsdblpr, 0) +
-                             NVL(vr_tab_saldos(vr_index).vlsdblfp, 0) +
                              NVL(vr_tab_saldos(vr_index).vllimcre, 0),2);
       END IF;
 
