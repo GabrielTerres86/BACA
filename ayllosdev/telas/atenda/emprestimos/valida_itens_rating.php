@@ -8,7 +8,7 @@
  *				  14/10/2013 - Alterado a chamada da função buscaObs para atualizaArray (Adriano)
  *				  02/09/2014 - Projeto automatizacao de consultas (Jonata-RKAM)
  *                26/06/2015 - Validar Inf. Cadastrais quando possui consulta ao Conjuge (Gabriel-RKAM). 
- *
+ *				  25/04/2017 - Incluido tratamento para não validar o Rating quando inobriga for 'S'. Projeto 337 - Motor de crédito (Reinert)
  */
 ?>
  
@@ -36,42 +36,45 @@
 	$vlprodut = (isset($_POST['vlprodut'])) ? $_POST['vlprodut'] : '';
 	$cdfinemp = (isset($_POST['cdfinemp'])) ? $_POST['cdfinemp'] : '';
 	$cdlcremp = (isset($_POST['cdlcremp'])) ? $_POST['cdlcremp'] : '';
+	$inobriga2 = (isset($_POST['inobriga'])) ? $_POST['inobriga'] : 'N';
 		
-			
-	// Monta o xml de requisição
-	$xml  = "";
-	$xml .= "<Root>";
-	$xml .= "	<Cabecalho>";
-	$xml .= "		<Bo>b1wgen0043.p</Bo>";
-	$xml .= "		<Proc>valida-itens-rating</Proc>";
-	$xml .= "	</Cabecalho>";
-	$xml .= "	<Dados>";
-	$xml .= "		<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
-	$xml .= "		<cdagenci>".$glbvars["cdagenci"]."</cdagenci>";
-	$xml .= "		<nrdcaixa>".$glbvars["nrdcaixa"]."</nrdcaixa>";
-	$xml .= "		<cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
-	$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";	
-	$xml .= "		<nrgarope>".$nrgarope."</nrgarope>";
-	$xml .= "		<nrinfcad>".$nrinfcad."</nrinfcad>";
-	$xml .= "		<nrliquid>".$nrliquid."</nrliquid>";
-	$xml .= "		<nrpatlvr>".$nrpatlvr."</nrpatlvr>";
-	$xml .= "		<nrperger>".$nrperger."</nrperger>";	
-	$xml .= "		<idseqttl>1</idseqttl>";
-	$xml .= "		<idorigem>".$glbvars["idorigem"]."</idorigem>";
-	$xml .= "		<nmdatela>".$glbvars["nmdatela"]."</nmdatela>";
-	$xml .= "	</Dados>";
-	$xml .= "</Root>";
-			
 	
-	// Executa script para envio do XML
-	$xmlResult = getDataXML($xml);
-	
-	// Cria objeto para classe de tratamento de XML
-	$xmlObj = getObjectXML($xmlResult);
-	
-	
-	if ( strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {
-		exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo($(\'#divRotina\'))',false);
+	if ($inobriga2 == 'N'){
+		// Monta o xml de requisição
+		$xml  = "";
+		$xml .= "<Root>";
+		$xml .= "	<Cabecalho>";
+		$xml .= "		<Bo>b1wgen0043.p</Bo>";
+		$xml .= "		<Proc>valida-itens-rating</Proc>";
+		$xml .= "	</Cabecalho>";
+		$xml .= "	<Dados>";
+		$xml .= "		<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+		$xml .= "		<cdagenci>".$glbvars["cdagenci"]."</cdagenci>";
+		$xml .= "		<nrdcaixa>".$glbvars["nrdcaixa"]."</nrdcaixa>";
+		$xml .= "		<cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
+		$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";	
+		$xml .= "		<nrgarope>".$nrgarope."</nrgarope>";
+		$xml .= "		<nrinfcad>".$nrinfcad."</nrinfcad>";
+		$xml .= "		<nrliquid>".$nrliquid."</nrliquid>";
+		$xml .= "		<nrpatlvr>".$nrpatlvr."</nrpatlvr>";
+		$xml .= "		<nrperger>".$nrperger."</nrperger>";	
+		$xml .= "		<idseqttl>1</idseqttl>";
+		$xml .= "		<idorigem>".$glbvars["idorigem"]."</idorigem>";
+		$xml .= "		<nmdatela>".$glbvars["nmdatela"]."</nmdatela>";
+		$xml .= "	</Dados>";
+		$xml .= "</Root>";
+				
+		
+		// Executa script para envio do XML
+		$xmlResult = getDataXML($xml);
+		
+		// Cria objeto para classe de tratamento de XML
+		$xmlObj = getObjectXML($xmlResult);
+		
+		
+		if ( strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {
+			exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo($(\'#divRotina\'))',false);
+		}
 	}
 	
 	if ($operacao == 'A_PROT_CRED') {

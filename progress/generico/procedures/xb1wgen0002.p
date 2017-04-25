@@ -124,6 +124,8 @@
 
               01/03/2016 - PRJ Esteira de Credito. (Jaison/Oscar)
 
+			  25/04/2017 - Tratamentos para o projeto 337 - Motor de crédito. (Reinert)
+
 ..............................................................................*/
 
 DEF VAR aux_cdcooper AS INTE                                           NO-UNDO.
@@ -363,6 +365,8 @@ DEF VAR aux_vllanmto AS DECI                                           NO-UNDO.
 DEF VAR aux_txccdiof AS DECI                                           NO-UNDO.
 DEF VAR aux_flgsenha AS INTE                                           NO-UNDO.
 DEF VAR aux_dsmensag AS CHAR                                           NO-UNDO.
+
+DEF VAR aux_inobriga AS CHAR                                           NO-UNDO.
 
 { sistema/generico/includes/b1wgen0002tt.i }
 { sistema/generico/includes/b1wgen0024tt.i }
@@ -2093,6 +2097,7 @@ PROCEDURE valida_impressao:
                                   INPUT aux_idseqttl,
                                   INPUT aux_recidepr,
                                   INPUT aux_tplcremp,
+                                 OUTPUT aux_inobriga,
                                  OUTPUT TABLE tt-erro ). 
 
     IF  RETURN-VALUE = "NOK"  THEN
@@ -2112,6 +2117,7 @@ PROCEDURE valida_impressao:
     ELSE 
         DO:
             RUN piXmlNew.
+            RUN piXmlAtributo (INPUT "inobriga",INPUT aux_inobriga).
             RUN piXmlSave.
         END.                   
 
@@ -2294,7 +2300,8 @@ PROCEDURE carrega_dados_proposta_linha_credito:
                                                      INPUT aux_cdfinemp,
                                                      INPUT aux_cdlcremp,
                                                      OUTPUT TABLE tt-erro,
-                                                     OUTPUT aux_dsnivris).
+                                                     OUTPUT aux_dsnivris,
+                                                     OUTPUT aux_inobriga).
 
     IF RETURN-VALUE <> "OK"  THEN
        DO:
@@ -2313,6 +2320,7 @@ PROCEDURE carrega_dados_proposta_linha_credito:
        DO: 
            RUN piXmlNew.
            RUN piXmlAtributo (INPUT "dsnivris",INPUT aux_dsnivris).            
+           RUN piXmlAtributo (INPUT "inobriga",INPUT aux_inobriga).
            RUN piXmlSave.
        END.                   
     

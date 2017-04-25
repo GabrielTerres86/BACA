@@ -19,6 +19,7 @@
  * 009: [15/10/2015] Alteracao do nome do botao "Recalcular" para "Atualizar Data". (Jaison/Oscar)
  * 010: [16/03/2016] Inclusao da operacao ENV_ESTEIRA. PRJ207 Esteira de Credito. (Odirlei-AMcom) 
  * 011: [22/03/2016] Inclusao da operacao ACIONAMENTOS. PRJ207 Esteira de Credito. (Daniel/Oscar)
+ * 012: [25/04/2017] Alterado ordem das colunas "Ac" e "Situação" Projeto 337 - Motor de crédito. (Reinert)
  */
 ?>
 
@@ -34,8 +35,8 @@
 				<th>Pr</th>
 				<th>Lcr</th>
 				<th>Fin</th>
-				<th><? echo utf8ToHtml('Situação');?></th>
 				<th>Ac</th>
+				<th><? echo utf8ToHtml('Situação');?></th>
 				<th><? echo utf8ToHtml('Parecer Esteira');?></th></tr>
 		</thead>
 		<tbody>
@@ -57,6 +58,7 @@
                         <input type="hidden" id="err_efet" name="err_efet" value="<? echo getByTagName($registro->tags,'err_efet') ?>" />
 						<input type="hidden" id="insitapr" name="insitapr" value="<? echo getByTagName($registro->tags,'insitapr') ?>" />
 						<input type="hidden" id="cdlcremp" name="cdlcremp" value="<? echo getByTagName($registro->tags,'cdlcremp') ?>" />
+						<input type="hidden" id="dssitest" name="dssitest" value="<? echo getByTagName($registro->tags,'dssitest') ?>" />
                     </td>
 
 					<td> <? echo stringTabela($tipo,40,'maiuscula'); ?>  </td>
@@ -67,8 +69,8 @@
 					<td><? echo stringTabela(getByTagName($registro->tags,'qtpreemp'),10,'maiuscula') ?></td>
 					<td><? echo stringTabela(getByTagName($registro->tags,'cdlcremp'),10,'maiuscula') ?></td>
 					<td><? echo stringTabela(getByTagName($registro->tags,'cdfinemp'),10,'maiuscula') ?></td>
-					<td><? echo getByTagName($registro->tags,'dssitest') ?></td>
 					<td><? echo stringTabela(getByTagName($registro->tags,'cdoperad'),10,'maiuscula') ?></td>					
+					<td><? echo getByTagName($registro->tags,'dssitest') ?></td>
 					<td><? echo getByTagName($registro->tags,'dssitapr') ?></td></tr>
 			<? } ?>
 		</tbody>

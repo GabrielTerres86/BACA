@@ -670,6 +670,10 @@
                      Hoje esta considerando fixo 60 dias nesses casos.
                      Heitor (Mouts) - Chamado 629653.
              
+			  25/04/2017 - Adicionado chamada para a procedure pc_obrigacao_analise_automatic
+						   na procedure carrega_dados_proposta_linha_credito e novo parametro
+						   de saida na procedure valida_impressao. Projeto 337 - Motor de crédito. (Reinert)
+             
  ..............................................................................*/
 
 /*................................ DEFINICOES ................................*/
@@ -10347,6 +10351,7 @@ PROCEDURE valida_impressao:
     DEF  INPUT PARAM par_recidepr AS INTE                              NO-UNDO.
     DEF  INPUT PARAM par_tplcremp AS INTE                              NO-UNDO.
 
+    DEF OUTPUT PARAM par_inobriga AS CHAR                              NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
 
@@ -10377,6 +10382,7 @@ PROCEDURE valida_impressao:
                                             INPUT par_idseqttl,
                                             INPUT par_recidepr,
                                             INPUT par_tplcremp,
+                                           OUTPUT par_inobriga,
                                            OUTPUT TABLE tt-erro ).
 
     IF  RETURN-VALUE <> "OK" THEN
@@ -11607,6 +11613,7 @@ PROCEDURE carrega_dados_proposta_linha_credito:
     
     DEF OUTPUT PARAM TABLE FOR tt-erro.
     DEF OUTPUT PARAM par_dsnivris AS CHAR                             NO-UNDO.
+    DEF OUTPUT PARAM par_inobriga AS CHAR                             NO-UNDO.
 
     DEF VAR aux_nrctrliq LIKE crawepr.nrctrliq                        NO-UNDO.
     DEF VAR h-b1wgen0043 AS HANDLE                                    NO-UNDO.
@@ -11640,7 +11647,42 @@ PROCEDURE carrega_dados_proposta_linha_credito:
      
     IF RETURN-VALUE <> "OK" THEN
        RETURN "NOK".
+       
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
+    /* Efetuar a chamada a rotina Oracle */ 
+    RUN STORED-PROCEDURE pc_obrigacao_analise_automatic
+     aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Código da Cooperativa */
+                                          INPUT par_cdlcremp, /* Código da linha de crédito */
+                                         OUTPUT "",           /* Obrigaçao de análise automática (S/N) */
+                                         OUTPUT 0,            /* Código da crítica */
+                                         OUTPUT "").          /* Descrição da crítica */
+    
+    /* Fechar o procedimento para buscarmos o resultado */ 
+    CLOSE STORED-PROC pc_obrigacao_analise_automatic
+        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+
+    ASSIGN par_inobriga = pc_obrigacao_analise_automatic.pr_inobriga
+                             WHEN pc_obrigacao_analise_automatic.pr_inobriga <> ?
+           aux_cdcritic = pc_obrigacao_analise_automatic.pr_cdcritic
+                             WHEN pc_obrigacao_analise_automatic.pr_cdcritic <> ?
+           aux_dscritic = pc_obrigacao_analise_automatic.pr_dscritic
+                             WHEN pc_obrigacao_analise_automatic.pr_dscritic <> ?.
+
+    IF aux_cdcritic > 0 OR 
+       aux_dscritic <> '' THEN
+       DO:
+          CREATE tt-erro.
+          ASSIGN tt-erro.cdcritic = aux_cdcritic
+                 tt-erro.dscritic = aux_dscritic.
+
+          RETURN "NOK".
+
+       END.
+       
     RETURN "OK".
 
 END PROCEDURE.

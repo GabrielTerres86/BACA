@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 28/09/2016
  * OBJETIVO     : Carrega os dados da proposta a partir do campo Linha de Credito
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 25/04/2017 - Incluido retorno da variável inobriga
  * --------------
  */
 	session_start();
@@ -46,5 +46,6 @@
 		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',"$('#cdlcremp').val('');$('#cdlcremp').val('');$('#cdlcremp').attr('aux','');",false);
 	}else{
 		echo "$('#nivrisco').val('".$xmlObjeto->roottag->tags[0]->attributes['DSNIVRIS']."');";
+		echo "inobriga = '".$xmlObjeto->roottag->tags[0]->attributes['INOBRIGA']."';";
 	}
 ?>

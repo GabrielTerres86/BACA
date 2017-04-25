@@ -239,6 +239,11 @@
 			   
 			   07/03/2017 - Ajuste na rotina impressao-prnf devido a conversao da busca-gncdocp
 						    (Adriano - SD 614408).
+
+			  25/04/2017 - Adicionado chamada para a procedure pc_obrigacao_analise_automatic
+						   e novo parametro de saida na procedure valida_impressao. 
+						   Projeto 337 - Motor de crédito. (Reinert)
+
 .............................................................................*/
 
 /*................................ DEFINICOES ...............................*/
@@ -8634,6 +8639,7 @@ PROCEDURE valida_impressao:
     DEF  INPUT PARAM par_recidepr AS INTE                              NO-UNDO.
     DEF  INPUT PARAM par_tplcremp AS INTE                              NO-UNDO.
     
+    DEF OUTPUT PARAM par_inobriga AS CHAR                              NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
     DEF VAR aux_cdagenci AS INTE                                       NO-UNDO.
@@ -8641,7 +8647,8 @@ PROCEDURE valida_impressao:
 
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = "Valida impressao."
-           aux_returnvl = "OK".
+           aux_returnvl = "OK"
+           par_inobriga = "N".
 
     Valida: DO ON ERROR UNDO Valida, LEAVE Valida:
         EMPTY TEMP-TABLE tt-erro.
@@ -8718,6 +8725,48 @@ PROCEDURE valida_impressao:
         END.
 
     END.
+    
+    FIND crawepr WHERE RECID(crawepr) = par_recidepr NO-LOCK NO-ERROR.
+   
+    IF  AVAILABLE crawepr   THEN
+        DO:
+        IF  crawepr.insitest > 2 THEN
+            DO:
+              { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+              /* Efetuar a chamada a rotina Oracle */ 
+              RUN STORED-PROCEDURE pc_obrigacao_analise_automatic
+               aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Código da Cooperativa */
+                                                    INPUT crawepr.cdlcremp, /* Código da linha de crédito */
+                                                   OUTPUT "",           /* Obrigaçao de análise automática (S/N) */
+                                                   OUTPUT 0,            /* Código da crítica */
+                                                   OUTPUT "").          /* Descriçao da crítica */
+              
+              /* Fechar o procedimento para buscarmos o resultado */ 
+              CLOSE STORED-PROC pc_obrigacao_analise_automatic
+                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+              { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+              ASSIGN par_inobriga = pc_obrigacao_analise_automatic.pr_inobriga
+                                       WHEN pc_obrigacao_analise_automatic.pr_inobriga <> ?
+                     aux_cdcritic = pc_obrigacao_analise_automatic.pr_cdcritic
+                                       WHEN pc_obrigacao_analise_automatic.pr_cdcritic <> ?
+                     aux_dscritic = pc_obrigacao_analise_automatic.pr_dscritic
+                                       WHEN pc_obrigacao_analise_automatic.pr_dscritic <> ?.
+
+              IF aux_cdcritic > 0 OR 
+                 aux_dscritic <> '' THEN
+                 DO:
+                    CREATE tt-erro.
+                    ASSIGN tt-erro.cdcritic = aux_cdcritic
+                           tt-erro.dscritic = aux_dscritic.
+
+                    ASSIGN aux_returnvl = "NOK".
+
+                 END.
+            END.
+        END.    
 
     IF  aux_returnvl = "NOK" THEN
         RUN proc_gerar_log (INPUT par_cdcooper,

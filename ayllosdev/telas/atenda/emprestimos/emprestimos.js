@@ -104,6 +104,7 @@
  * 083: [18/08/2016] Alteração da função controlaFoco - (Evandro - RKAM)
  * 084: [19/10/2016] Incluido registro de log sobre liberacao de alienacao de bens 10x maior que o valor do emprestimo, SD-507761 (Jean Michel).
  * 085: [03/11/2016] Correcao de contagem de dias para as propostas de emprestimos, chamado 535609. (Gil Furtado - MOUTS).
+ * 086: [25/04/2017] Adicionado tratamentos para o projeto 337 - Motor de crédito. (Reinert)
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -305,6 +306,11 @@ var strHTML2 = ''; // Variável usada na criação do form onde serão mostradas
 var dsmetodo = ''; // Variável usada para manipular o método a ser executado na função encerraMsgsGrupoEconomico.
 var inconfi2 = ''; // Variável usada para controlar a exibição de que o ge está sendo formando ou não.
 var idSocio = 0;
+
+// Motor de Crédito
+var insitapr = '';
+var dssitest = '';
+var inobriga = '';
 
 $.getScript(UrlSite + "telas/atenda/emprestimos/impressao.js");
 $.getScript(UrlSite + "telas/atenda/emprestimos/simulacao/simulacao.js");
@@ -1175,8 +1181,19 @@ function controlaOperacao(operacao) {
             mensagem = 'Carregando Altera&ccedil;&atilde;o de Portabilidade...';
             break;
         case 'ENV_ESTEIRA':
-            mensagem = 'Enviando Proposta para Esteira...';
-            showConfirmacao('Confirma envio da Proposta para Esteira de Credito?', 'Confirma&ccedil;&atilde;o - Ayllos', 'manterRotina(\'ENV_ESTEIRA\');', 'controlaOperacao(\'\');', 'sim.gif', 'nao.gif');
+			insitapr = $("#divEmpres table tr.corSelecao").find("input[id='insitapr']").val();
+			dssitest = $("#divEmpres table tr.corSelecao").find("input[id='dssitest']").val();
+			if (dssitest == 'Analise Finalizada' && insitapr == 2){				
+				mensagem = 'Enviando Proposta para An&aacute;lise da Esteira...';
+				showConfirmacao('Confirma re-envio da Proposta para Esteira de Cr&eacute;dito? <br> Observa&ccedil;&atildeo: Ser&aacute; necess&aacute;ria aprova&ccedil;&atilde;o de seu Coordenador pois a mesma j&aacute; foi reprovada automaticamente!', 'Confirma&ccedil;&atilde;o - Ayllos', 'pedeSenhaCoordenador(2,\'manterRotina("ENV_ESTEIRA")\',\'divRotina\');', 'controlaOperacao(\'\');', 'sim.gif', 'nao.gif');
+			}else{
+				if (dssitest == 'Nao Enviada'){
+					mensagem = 'Enviando Proposta para Análise Automática da Esteira...';
+				}else{
+					mensagem = 'Enviando Proposta para Esteira...';
+				}
+				showConfirmacao('Confirma envio da Proposta para Esteira de Credito?', 'Confirma&ccedil;&atilde;o - Ayllos', 'manterRotina(\'ENV_ESTEIRA\');', 'controlaOperacao(\'\');', 'sim.gif', 'nao.gif');
+			}
             return false;
             break;
         default:
@@ -1340,7 +1357,13 @@ function manterRotina(operacao) {
             mensagem = 'excluindo';
             break;
         case 'ENV_ESTEIRA':
-            mensagem = 'Enviando Proposta para Esteira...';
+			if (dssitest == 'Analise Finalizada' && insitapr == 2){				
+				mensagem = 'Reenviando Proposta para Esteira...';
+			}else if (dssitest == 'Nao Enviada'){
+				mensagem = 'Enviando Proposta para An&aacute;lise Autom&aacute;tica da Esteira...';
+			} else{
+				mensagem = 'Enviando Proposta para Esteira...';
+			}
             break;
         default:
             controlaOperacao();
@@ -1730,8 +1753,8 @@ function controlaLayout(operacao) {
         arrayLargura[5] = '25px';
         arrayLargura[6] = '28px';
         arrayLargura[7] = '28px';
-        arrayLargura[8] = '127px';
-        arrayLargura[9] = '50px';
+        arrayLargura[8] = '50px';
+        arrayLargura[9] = '127px';
 
 
         var arrayAlinha = new Array();
@@ -2548,7 +2571,7 @@ function controlaLayout(operacao) {
         }
 
         // Cessao de credito nao podera alterar o campo
-        if ((aDadosPropostaFinalidade['flgcescr']) || (arrayProposta['flgcescr'])) {
+        if ((aDadosPropostaFinalidade['flgcescr']) || (arrayProposta['flgcescr']) || inobriga == 'S') {
             $('#nrinfcad', '#frmOrgaos').desabilitaCampo();
         }
 
@@ -2718,7 +2741,7 @@ function controlaLayout(operacao) {
         cPrej.addClass('moeda_6').css('width', '90px');
         c2Tit_1.css('width', '85px').setMask("DATE", "", "", "divRotina");
         c2TitEndv.addClass('moeda_6').css('width', '90px');
-
+		
         var cTodos_2 = $('input', '#' + nomeForm + ' fieldset:eq(1)');
         var rRotulo_2 = $('label[for="nrgarope"],label[for="nrpatlvr"],label[for="nrperger"]', '#' + nomeForm);
 
@@ -2756,6 +2779,15 @@ function controlaLayout(operacao) {
             cTodos_1.desabilitaCampo();
             cTodos_2.habilitaCampo();
 
+			if (inobriga == 'S'){
+				if (operacao == 'I_PROT_CRED'){
+					$('#' + nomeForm + ' fieldset:eq(1)').hide();
+					altura = '135px';
+				}else{
+					cTodos_2.desabilitaCampo();
+				}
+			}
+			
             if (arrayProtCred['flgcentr'] == 'no') {
 
                 c1Tit_1.habilitaCampo();
@@ -5175,8 +5207,8 @@ function validaAnaliseProposta() {
             dtoutspc: dtoutspc, dtdrisco: dtdrisco,
             dtoutris: dtoutris, nrgarope: nrgarope,
             nrliquid: nrliquid, nrpatlvr: nrpatlvr,
-            nrperger: nrperger, nomeform: nomeForm,
-            redirect: 'script_ajax'
+            nrperger: nrperger, inobriga: inobriga,
+			nomeform: nomeForm, redirect: 'script_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
             hideMsgAguardo();
@@ -5235,6 +5267,8 @@ function validaDados(cdcooper) {
         if (!validaDadosGerais()) {
             return false;
         }
+		
+		carregaDadosPropostaLinhaCredito();
 
     } else if (in_array(operacao, ['A_DADOS_PROP_PJ', 'I_DADOS_PROP_PJ'])) {
 
@@ -5278,11 +5312,12 @@ function validaDados(cdcooper) {
     } else if (in_array(operacao, ['A_PROT_CRED', 'I_PROT_CRED'])) {
 
         var aux_dtmvtolt = dataParaTimestamp(dtmvtolt);
-
-        if (!validaAnaliseProposta()) {
-            return false;
-        }
-
+		
+		if (inobriga == 'N'){
+			if (!validaAnaliseProposta()) {
+				return false;
+			}
+		}
     }
     else if (in_array(operacao, ['A_PROTECAO_TIT'])) {
 
@@ -7098,6 +7133,7 @@ function validaItensRating(operacao, flgarray) {
             vlprodut: arrayProposta['vlemprst'],
             cdfinemp: arrayProposta['cdfinemp'],
             cdlcremp: arrayProposta['cdlcremp'],
+            inobriga: inobriga,
             operacao: operacao,
             redirect: 'script_ajax'
         },

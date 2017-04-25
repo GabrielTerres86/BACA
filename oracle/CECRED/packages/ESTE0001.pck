@@ -179,6 +179,25 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0001 is
                                       pr_cdstatan OUT NUMBER,                   --> Retornoa status da proposta
                                       pr_cdcritic OUT NUMBER,                   --> Codigo da critica
                                       pr_dscritic OUT VARCHAR2);                --> Descricao da critica.                                    
+																			
+  PROCEDURE pc_obrigacao_analise_automatic(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cód. cooperativa
+		                                      ,pr_cdlcremp IN crawepr.cdlcremp%TYPE --> Cód. linha de crédito
+                                           ---- OUT ----
+																					,pr_inobriga OUT VARCHAR2             --> Indicador de obrigação de análisa automática ('S' - Sim / 'N' - Não)
+																					,pr_cdcritic OUT PLS_INTEGER          --> Cód. da crítica
+																					,pr_dscritic OUT VARCHAR2);           --> Desc. da crítica
+						
+  PROCEDURE pc_obrigacao_analise_autom_web(pr_cdlcremp IN crawepr.cdlcremp%TYPE  --> Cód. linha de crédito
+                                           ---- OUT ----																					
+                                          ,pr_xmllog   IN  VARCHAR2                    -- XML com informações de LOG
+                                          ,pr_cdcritic OUT PLS_INTEGER                 -- Código da crítica
+                                          ,pr_dscritic OUT VARCHAR2                    -- Descrição da crítica
+                                          ,pr_retxml   IN  OUT NOCOPY XMLType          -- Arquivo de retorno do XML
+                                          ,pr_nmdcampo OUT VARCHAR2                    -- Nome do campo com erro
+                                          ,pr_des_erro OUT VARCHAR2);                  -- Erros do processo	
+						
+
+									
 END ESTE0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
@@ -2597,6 +2616,160 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       pr_dscritic := 'Não foi possivel realizar consulta da proposta na esteira: '||SQLERRM;
   END pc_consultar_proposta_est;
 
+  PROCEDURE pc_obrigacao_analise_automatic(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cód. cooperativa
+                                          ,pr_cdlcremp IN crawepr.cdlcremp%TYPE  --> Cód. linha de crédito
+                                           ---- OUT ----																					
+                                          ,pr_inobriga OUT VARCHAR2              --> Indicador de obrigação de análisa automática ('S' - Sim / 'N' - Não)
+                                          ,pr_cdcritic OUT PLS_INTEGER           --> Cód. da crítica
+                                          ,pr_dscritic OUT VARCHAR2) IS          --> Desc. da crítica
+  BEGIN																					 
+	/* .........................................................................
     
+		Programa : pc_obrigacao_analise_automatica
+		Sistema  : Conta-Corrente - Cooperativa de Credito
+		Sigla    : CRED
+		Autor    : Lucas Reinert
+		Data     : Abril/2017                    Ultima atualizacao: --/--/----
+    
+		Dados referentes ao programa:
+    
+		Frequencia: Sempre que for chamado
+		Objetivo  : Tem como objetivo retornar positivo caso a proposta deverá passar 
+		            por análise automática ou posteriormente manual na Esteira de Crédito
+		Alteração : 
+        
+	..........................................................................*/
+		DECLARE
+		
+		-- Cursor para verificar se a linha de crédito não é de Aprovação Automática
+		CURSOR cr_craplcr(pr_cdcooper crapcop.cdcooper%TYPE
+		                 ,pr_cdlcremp craplcr.cdlcremp%TYPE) IS
+			SELECT lcr.flgdisap
+				FROM craplcr lcr
+			 WHERE lcr.cdcooper = pr_cdcooper
+				 AND lcr.cdlcremp = pr_cdlcremp;
+		vr_flgdisap craplcr.flgdisap%TYPE;
+				 
+		BEGIN	
+			
+		  -- Verificar se a linha de crédito não é de aprovação automática
+		  OPEN cr_craplcr(pr_cdcooper => pr_cdcooper
+			               ,pr_cdlcremp => pr_cdlcremp);
+			FETCH cr_craplcr INTO vr_flgdisap;
+		  CLOSE cr_craplcr;
+			
+			-- Se dispensa aprovação ou esteira está em contingência
+		  IF vr_flgdisap = 1 OR GENE0001.FN_PARAM_SISTEMA('CRED',1,'CONTIGENCIA_ESTEIRA_IBRA') = 1 THEN
+				pr_inobriga := 'N';
+			ELSE 
+			  pr_inobriga := 'S';
+			END IF;
+			
+		EXCEPTION	    
+			WHEN OTHERS THEN
+				pr_cdcritic := 0;
+				pr_dscritic := 'Erro inesperado na rotina que verifica o tipo de análise da proposta: '||SQLERRM;
+
+		END;
+	END pc_obrigacao_analise_automatic;
+	
+  PROCEDURE pc_obrigacao_analise_autom_web(pr_cdlcremp IN crawepr.cdlcremp%TYPE  --> Cód. linha de crédito
+                                           ---- OUT ----																					
+                                          ,pr_xmllog   IN  VARCHAR2                    -- XML com informações de LOG
+                                          ,pr_cdcritic OUT PLS_INTEGER                 -- Código da crítica
+                                          ,pr_dscritic OUT VARCHAR2                    -- Descrição da crítica
+                                          ,pr_retxml   IN  OUT NOCOPY XMLType          -- Arquivo de retorno do XML
+                                          ,pr_nmdcampo OUT VARCHAR2                    -- Nome do campo com erro
+                                          ,pr_des_erro OUT VARCHAR2) IS                -- Erros do processo
+  BEGIN																					 
+	/* .........................................................................
+    
+		Programa : pc_obrigacao_analise_autom_web
+		Sistema  : Conta-Corrente - Cooperativa de Credito
+		Sigla    : CRED
+		Autor    : Lucas Reinert
+		Data     : Abril/2017                    Ultima atualizacao: --/--/----
+    
+		Dados referentes ao programa:
+    
+		Frequencia: Sempre que for chamado
+		Objetivo  : Tem como objetivo retornar positivo caso a proposta deverá passar 
+		            por análise automática ou posteriormente manual na Esteira de Crédito
+								para web
+		Alteração : 
+        
+	..........................................................................*/
+		DECLARE
+		
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE := 0;
+    vr_dscritic VARCHAR2(10000)       := NULL;
+
+    -- Tratamento de erros
+    vr_exc_erro EXCEPTION;
+
+    -- Variaveis de log
+    vr_cdcooper crapcop.cdcooper%TYPE;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+
+    vr_inobriga VARCHAR2(1);
+		
+		BEGIN	
+			
+    -- Recupera dados de log para consulta posterior
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscritic);
+
+    -- Verifica se houve erro recuperando informacoes de log                              
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+    
+    pc_obrigacao_analise_automatic(pr_cdcooper => vr_cdcooper
+		                              ,pr_cdlcremp => pr_cdlcremp
+																	,pr_inobriga => vr_inobriga
+																	,pr_cdcritic => vr_cdcritic
+																	,pr_dscritic => vr_dscritic);
+    
+    IF nvl(vr_cdcritic,0) > 0 OR 
+       TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro;        
+    END IF;   
+    
+    -- Retorna OK para cadastro efetuado com sucesso
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                   '<Root><inobriga>'|| vr_inobriga || '</inobriga></Root>');   
+
+    COMMIT;
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN     
+      --> Buscar critica
+      IF nvl(vr_cdcritic,0) > 0 AND 
+        TRIM(vr_dscritic) IS NULL THEN
+        -- Busca descricao        
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);        
+      END IF;  
+      
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+    
+    WHEN OTHERS THEN
+      pr_dscritic := 'Não foi possivel verificar parametro ENVIA_EMAIL_COMITE: '||SQLERRM;
+		END;
+	END pc_obrigacao_analise_autom_web;	
+	
 END ESTE0001;
 /
