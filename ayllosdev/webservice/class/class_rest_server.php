@@ -10,6 +10,7 @@ require_once('class_rest_exception.php');
 abstract class RestServer{
     
     private $metodo;
+	private $requisicaoAutenticada = true;
     
     /**
      * Retornar os dados da requisicao
@@ -35,6 +36,14 @@ abstract class RestServer{
     
     protected function getMetodoRequisitado(){
         return $this->metodo;
+    }
+	
+    protected function setRequisicaoAutenticada($requisicaoAutenticada){
+        $this->requisicaoAutenticada = $requisicaoAutenticada;        
+    }
+    
+    protected function getRequisicaoAutenticada(){
+        return $this->requisicaoAutenticada;
     }
     
     /**
@@ -121,6 +130,21 @@ abstract class RestServer{
             throw new RestException(401,'Parecer nao foi atualizado, credencias nao foram informados.');
             return false;
         }
+		
+		// Somente para requisições privadas 
+		if ($this->getRequisicaoAutenticada()) {        
+			// Condicao para verificar se foi enviada as credenciais
+			if (!$this->getUsuario()){
+				throw new RestException(401,'Parecer nao foi atualizado, credencias nao foram informados.');
+				return false;
+			}
+			
+			// Condicao para verificar se foi enviada as credenciais
+			if (!$this->getSenha()){
+				throw new RestException(401,'Parecer nao foi atualizado, credencias nao foram informados.');
+				return false;
+			}
+		}
         return true;
     }
 }
