@@ -98,6 +98,9 @@ create or replace procedure cecred.pc_crps172(pr_cdcooper  in craptab.cdcooper%t
                             Adicionado na insercao da craplcm o campo hrtransa e 
                             nome do programa no campo cdpesqbb.
                             (Jorge/Thiago) - SD 294256
+
+               24/04/2017 - Nao considerar valores bloqueados na composicao de saldo disponivel
+			                Heitor (Mouts) - Melhoria 440
 ............................................................................. */
   -- Buscar os dados da cooperativa
   cursor cr_crapcop (pr_cdcooper in craptab.cdcooper%type) is
@@ -372,7 +375,7 @@ BEGIN
         vr_vlsldtot := vr_vlsldtot - TRUNC((rw_craplcm.vllanmto * vr_txcpmfcc),2);
       end if;
       --
-      if vr_inhistor in (1, 3, 4, 5) then
+      if vr_inhistor in (1) then
         -- 1  credito no vlsddisp
         -- 3  credito no vlsdbloq
         -- 4  credito no vlsdblpr
@@ -387,7 +390,7 @@ BEGIN
         end if;
       end if;
         --
-        if vr_inhistor in (11, 13, 14, 15) then
+        if vr_inhistor in (11) then
           -- 11  debito no vlsddisp
           -- 13  debito no vlsdbloq
           -- 14  debito no vlsdblpr
