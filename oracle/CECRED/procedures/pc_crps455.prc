@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps455 (pr_cdcooper IN crapcop.cdcooper%T
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor(a): Diego/Mirtes
-     Data    : Agosto/2005.                      Ultima atualizacao: 30/03/2015
+     Data    : Agosto/2005.                      Ultima atualizacao: 25/04/2017
      
      Dados referentes ao programa:
 
@@ -39,6 +39,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps455 (pr_cdcooper IN crapcop.cdcooper%T
                               
                  30/03/2015 - Conversão Progress -> Oracle (Odirlei-AMcom)             
 
+                 25/04/2017 - Adicionar format maior na busca do nrdocmto da craplcm
+                              (Lucas Ranghetti #627272)
   ............................................................................ */
 
 
@@ -233,7 +235,7 @@ BEGIN
     
     --buscar numero do documento do cheque
     IF rw_craplcm.nrdocmto > 999999  THEN
-      vr_nrdocmto := SUBSTR(to_char(rw_craplcm.nrdocmto,'00000000'),3,6);
+      vr_nrdocmto := SUBSTR(to_char(rw_craplcm.nrdocmto,'0000000000000000000000'),17,6);
     ELSE
       vr_nrdocmto := rw_craplcm.nrdocmto;
     END IF;
@@ -398,4 +400,3 @@ EXCEPTION
     ROLLBACK;
 END pc_crps455;
 /
-
