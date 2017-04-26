@@ -13,6 +13,7 @@
  * [30/06/2014] Reinert					: Adicionado campo cdageaco nos detalhes do cheque
  * [10/06/2016] Lucas Ranghetti         : Alterado Width da frame dos detalhes (#422753)
  * [10/04/2017] Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
+ * [26/04/2017] Lucas Ranghetti         : Limpar numero do cheque quando acionar o estado inicial.
  * --------------
  */
 
@@ -468,10 +469,10 @@ function estadoInicial() {
 	$('#btDetalhar','#divBotoes').css({'display':'none'});	
 	$('#btVoltar','#divBotoes').css({'display':''});
 	$('input',frmTipoCheque).desabilitaCampo();
-	frmCheque.css({'display':'none'}).limpaFormulario();
+	frmCheque.css({'display':'none'}).limpaFormulario();	
 	divTabela.css({'display':'block'});
 	cNrdconta.val('').focus();
-	
+	cNrcheque.val('0');
 	$('table > tbody', 'div.divRegistros').html('');
 	$('table > tbody > tr > td', 'div#divPesquisaRodape').each(function(i){ $(this).html(''); });	
 }
