@@ -15,7 +15,7 @@
 	             28/10/2010 - Alterar título da rotina Crédito Rota-  
 	                          tivo para Limite Empresarial (David).   
 																	  
-				 07/12/2010 - Incluir rotina de Cobranca (Gabriel)   
+                 07/12/2010 - Incluir rotina de Cobranca (Gabriel)   
 																	  
 				 14/01/2011 - Incluir rotina de Telefone (Gabriel)   
 																	  
@@ -77,28 +77,30 @@
                  24/11/2015 - Inclusao CDCLCNAE para o PRJ Negativacao Serasa.
                               (Jaison/Andrino)
 
-					  07/06/2016 - Melhoria 195 folha de pagamento (Tiago/Thiago)
+				 07/06/2016 - Melhoria 195 folha de pagamento (Tiago/Thiago)
+				 
 				 09/08/2016 - Adicionado format na data das anotações conforme solicitado
 							  no chamado 490482. (Kelvin)
 	
-         23/06/2016 - Alterado a formatação da opção SEGUROS para SIM/NÂO (Marcos-Supero)
+                 23/06/2016 - Alterado a formatação da opção SEGUROS para SIM/NÂO (Marcos-Supero)
 
-         28/06/2016  - Incluido Case Cartao Assinatura - (Evandro)
+                 28/06/2016  - Incluido Case Cartao Assinatura - (Evandro)
 
-         07/07/2016 - Correcao do erro apresentado no LOG sobre a utilizacao
+                 07/07/2016 - Correcao do erro apresentado no LOG sobre a utilizacao
 			                da variavel $opeProdutos.SD 479874 (Carlos Rafael Tanholi)
 
-					  11/07/2016 - Correcao do erro de indice indefinido para FLCONVEN e DSCRITIC. SD 479874 (Carlos Rafael Tanholi)
+				 11/07/2016 - Correcao do erro de indice indefinido para FLCONVEN e DSCRITIC. SD 479874 (Carlos Rafael Tanholi)
+                 
+				 13/07/2016 - Correcao geral nos erros levantados no LOG do PHP .SD 479874 (Carlos Rafael Tanholi)
 
-					  13/07/2016 - Correcao geral nos erros levantados no LOG do PHP .SD 479874 (Carlos Rafael Tanholi)
+				 14/07/2016 - Correcao na forma de recuperacao de dados do XML. SD 479874 (Carlos Rafael Tanholi)
 
-					  14/07/2016 - Correcao na forma de recuperacao de dados do XML. SD 479874 (Carlos Rafael Tanholi)
-
-                      09/08/2016 - Adicionado format na data das anotações conforme solicitado
+                 09/08/2016 - Adicionado format na data das anotações conforme solicitado
 							  no chamado 490482. (Kelvin)
 
-				18/08/2016  - adicionado parametro labelRot na chamada da rotina acessaRotina
-
+				 18/08/2016  - adicionado parametro labelRot na chamada da rotina acessaRotina
+        
+                 26/04/2017 - Incluido a tag textarea para mostrar o conteudo da mensagem de alerta (Rafael Monteiro).
 
  * ********************************************************************************** */
 
@@ -680,7 +682,7 @@ echo 'cdclcnae = "' . $vr_cdclcnae  . '";';
 																																			
             echo 'strHTML += \'<tr' . $style . '>\';';
 			$vr_txtmsg = ( isset($mensagens[$i]->tags[1]->cdata) ) ? addslashes($mensagens[$i]->tags[1]->cdata) : '';
-            echo 'strHTML += \'<td class="txtNormal">' . $vr_txtmsg . '</td>\';';
+            echo 'strHTML += \'<td class="txtNormal"><textarea style="width: 455px; height: 40px; resize: none" readonly>' . $vr_txtmsg . '</textarea></td>\';';
 				echo 'strHTML += \'</tr>\';';															
 			}
 		
