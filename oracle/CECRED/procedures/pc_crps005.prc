@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Novembro/91.                    Ultima atualizacao: 28/09/2016
+   Data    : Novembro/91.                    Ultima atualizacao: 26/04/2017
    Dados referentes ao programa:
 
    Frequencia: Diario (Batch - Background).
@@ -371,6 +371,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                             
 			   29/09/2016 - Alteração do diretório para geração de arquivo contábil.
                             P308 (Ricardo Linhares).
+                            
+               26/04/2017 - Retirado a geração do arquivo microcredito_coop_59dias
+                            (Tiago/Rodrigo #654647).
      ............................................................................. */
 
      DECLARE
@@ -1067,9 +1070,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
        vr_tab_resgate    APLI0001.typ_tab_resgate;
        vr_tab_dados_rpp  APLI0001.typ_tab_dados_rpp;
 
-       --Indices das temp-tables       
-       vr_ind PLS_INTEGER;
-       
        vr_vlsldapl NUMBER;
        vr_vlsldrgt NUMBER;
        vr_vlsldtot NUMBER;
@@ -1175,8 +1175,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
        vr_index_crat007_final VARCHAR2(15);
 
        -- Variável para armazenar as informações em XML
-       vr_des_xml   CLOB;
-       vr_des_xml2  CLOB;
+       vr_des_xml   CLOB;       
        vr_dstexto   VARCHAR2(32700);
        vr_des_chave VARCHAR2(400);
 
@@ -1471,13 +1470,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
            vr_des_erro:= 'Erro ao limpar zerar tabela de memória. Rotina pc_crps005.pc_inicializa_tabela. '||sqlerrm;
            --Sair do programa
            RAISE vr_exc_erro;
-       END;
-
-       --Escrever no arquivo CLOB
-       PROCEDURE pc_escreve_xml2(pr_des_dados IN VARCHAR2) IS
-       BEGIN
-         --Escrever no arquivo XML
-         dbms_lob.writeappend(vr_des_xml2,length(pr_des_dados||Chr(10)),pr_des_dados||Chr(10));
        END;
 
        --Geração do relatório de Maiores Depositantes (crrl055)
@@ -2817,8 +2809,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
          vr_nom_direto_cop VARCHAR2(100);
          vr_dstextab   craptab.dstextab%TYPE;
          vr_nmarqtxt   VARCHAR2(100):= 'slddev.txt';
-         vr_nmarqimp2  VARCHAR2(100):= rw_crapcop.dsdircop||'_microcredito_59dias.txt';
-
 
        BEGIN
          --Inicializar variavel de erro
@@ -3440,20 +3430,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
              --Levantar Excecao
              RAISE vr_exc_erro;
            END IF;
-
-           -- Inicializar o CLOB
-           dbms_lob.createtemporary(vr_des_xml2, TRUE);
-           dbms_lob.open(vr_des_xml2, dbms_lob.lob_readwrite);
-
-           --Escrever o cabecalho do arquivo de dados
-           vr_setlinha:= '    PA     CONTA/DV   CONTRATO   LINHA   SALDO DEVEDOR    ULTIMO PAG';
-           --Escrever o cabecalho no arquivo
-           pc_escreve_xml2(vr_setlinha);
-           --Montar a linha tracejada do cabecalho
-           vr_setlinha:= '    '||LPad('-',64,'-');
-           --Escrever o cabecalho no arquivo
-           pc_escreve_xml2(vr_setlinha);
-
+           
            /* Mostrar contas atrasadas ate 59 dias */
            -- Processar todos os registros de atrasados
            vr_des_chave := vr_tab_atrasados.FIRST;
@@ -3467,17 +3444,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
              --Acumular total por linha de credito
              vr_rel_vltotatr:= vr_rel_vltotatr + vr_tab_atrasados(vr_des_chave).vlsdeved;
 
-             --Montar linha para escrever no arquivo de dados
-             vr_setlinha:= '   '|| --3
-                           LPad(vr_tab_atrasados(vr_des_chave).cdagenci,3,' ')||'  '|| --9
-                           RPad(LTrim(gene0002.fn_mask_conta(vr_tab_atrasados(vr_des_chave).nrdconta)),10,' ')||'  '|| --20
-                           LPad(To_Char(vr_tab_atrasados(vr_des_chave).nrctremp,'fm999g999g999'),11,' ')||'     '|| --35
-                           RPad(vr_tab_atrasados(vr_des_chave).cdlcremp,4,' ')||'  '|| --39
-                           RPad(to_char(vr_tab_atrasados(vr_des_chave).vlsdeved,'fm9999g999g990d00'),17,' ')||'   '||--58
-                           to_char(vr_tab_atrasados(vr_des_chave).dtultpag,'DD/MM/YYYY');
-             --Escrever a linha no arquivo
-             pc_escreve_xml2(vr_setlinha);
-
              -- Se este for o ultimo registro do vetor, ou da agência
              IF vr_des_chave = vr_tab_atrasados.LAST OR vr_tab_atrasados(vr_des_chave).cdlcremp <> vr_tab_atrasados(vr_tab_atrasados.NEXT(vr_des_chave)).cdlcremp THEN
                --Montar arquivo XML
@@ -3487,42 +3453,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                              </conta>');
                --Montar arquivo XML com os totais
                gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'</linha>');
-               
-               vr_setlinha:= lpad(' ',25,' ')||'Total da linha:'||chr(13)||
-                             lpad(' ',41,' ')||to_char(vr_rel_vltotatr,'fm999g999g999g990d00')||chr(13)||chr(13); 
-               --Escrever a linha no arquivo
-               pc_escreve_xml2(vr_setlinha);
-               
              END IF;
              -- Buscar o próximo registro da tabela
              vr_des_chave := vr_tab_atrasados.NEXT(vr_des_chave);
            END LOOP;
-           
-           -- Enfim, agenda a geração do relatorio como txt
-           GENE0002.pc_solicita_relato_arquivo(pr_cdcooper  => pr_cdcooper    --> Cooperativa conectada
-                                              ,pr_cdprogra  => vr_cdprogra    --> Programa chamador
-                                              ,pr_dtmvtolt  => vr_dtmvtolt    --> Data do movimento atual
-                                              ,pr_dsxml     => vr_des_xml2    --> Arquivo XML de dados
-                                              ,pr_dsarqsaid => vr_nom_direto||'/'||vr_nmarqimp2 --> Path/Nome do arquivo PDF gerado
-                                              ,pr_cdrelato  => 005               --> Como não há, usamos o código do programa mesmo
-                                              ,pr_flg_impri => 'N'               --> Chamar a impress?o (Imprim.p)
-                                              ,pr_flg_gerar => 'N'               --> Gerar o arquivo na hora
-                                              ,pr_dspathcop => vr_nom_direto_cop --> Copiar apos geracao
-                                              ,pr_fldoscop  => 'S'       --> Converter para DOS após cópia
-                                              ,pr_flgremarq => 'S'       --> Flag para remover o arquivo apos copia/email
-                                              ,pr_des_erro  => vr_des_erro); --> Saida com erro
-
-           -- Testar se houve erro
-           IF vr_des_erro IS NOT NULL THEN
-             -- Gerar exceção
-             RAISE vr_exc_erro;
-           END IF;
-
-           -- Liberando a memória alocada pro CLOB
-           dbms_lob.close(vr_des_xml2);
-           dbms_lob.freetemporary(vr_des_xml2);
          END IF;
-
 
          --Finaliza agrupador de emprestimos e inicia lista pnmpo
          gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'</emprestimos><pnmpo>');
@@ -6454,4 +6389,3 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
      END;
    END PC_CRPS005;
 /
-
