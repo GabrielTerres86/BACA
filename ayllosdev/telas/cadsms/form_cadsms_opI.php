@@ -37,7 +37,7 @@
 
     <br style="clear:both" />
 
-    <label for="cdtarifa" class="labelNomeParametro"><? echo utf8ToHtml('Código do Tarifa:') ?></label>
+    <label for="cdtarifa" class="labelNomeParametro"><? echo utf8ToHtml('Código da Tarifa:') ?></label>
 	<input name="cdtarifa" id="cdtarifa" class="registroinput" type="text" style="margin-right: 5px" />
 
     <br style="clear:both" />

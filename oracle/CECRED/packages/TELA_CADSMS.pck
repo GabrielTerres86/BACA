@@ -202,6 +202,11 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADSMS IS
                                      ,pr_retxml   IN OUT NOCOPY xmltype          --> Arquivo de retorno do XML
                                      ,pr_nmdcampo OUT VARCHAR2                   --> Nome do campo com erro
                                      ,pr_des_erro OUT VARCHAR2);                                 
+                                     
+  PROCEDURE pc_possui_pacotes_prog (pr_cdcooper IN tbcobran_sms_pacotes.cdcooper%TYPE
+                                   ,pr_flgpossui OUT NUMBER
+                                   ,pr_cdcritic OUT INTEGER                    --> Retornar codigo de critica
+                                   ,pr_dscritic OUT VARCHAR2);                                       
                                                                                               
 END TELA_CADSMS;
 /
@@ -2459,6 +2464,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADSMS IS
           pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                          '<Root><Erro>' || pr_dscritic || '</Erro></Root>');      
     END;       
+    
+  PROCEDURE pc_possui_pacotes_prog (pr_cdcooper IN tbcobran_sms_pacotes.cdcooper%TYPE
+                                   ,pr_flgpossui OUT NUMBER
+                                   ,pr_cdcritic  OUT INTEGER
+                                   ,pr_dscritic  OUT VARCHAR2) IS      
+                                    
+   CURSOR cr_pacotes(pr_cdcooper IN tbcobran_sms_pacotes.cdcooper%TYPE) IS
+      SELECT nvl(max(1), 0) flgpossuipacotes
+        FROM tbcobran_sms_pacotes
+       WHERE cdcooper = pr_cdcooper
+         AND idpacote > 2;
+    rw_pacotes cr_pacotes%ROWTYPE;
+    
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    
+    BEGIN
+      
+      rw_pacotes := NULL;
+      OPEN cr_pacotes(pr_cdcooper);
+      FETCH cr_pacotes INTO rw_pacotes;
+      CLOSE cr_pacotes;
+
+      pr_flgpossui := rw_pacotes.flgpossuipacotes;
+
+      EXCEPTION
+
+        WHEN OTHERS THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := 'Erro geral na rotina da tela CADSMS: ' || SQLERRM;
+    
+    END;                                         
   
 END TELA_CADSMS;
 /

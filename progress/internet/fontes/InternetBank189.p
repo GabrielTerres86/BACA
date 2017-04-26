@@ -54,6 +54,7 @@ DEF VAR aux_qtsmspct        AS INT                                       NO-UNDO
 DEF VAR aux_qtsmsusd        AS INT                                       NO-UNDO.
 DEF VAR aux_dsmensag        AS CHAR                                      NO-UNDO.
 DEF VAR aux_flofesms        AS INT                                       NO-UNDO.
+DEF VAR aux_flpospac        AS INT                                       NO-UNDO.
 DEF VAR aux_retxml          AS LONGCHAR                                  NO-UNDO.
 DEF VAR aux_dsmsgsemlinddig AS LONGCHAR                                  NO-UNDO.
 DEF VAR aux_dsmsgcomlinddig AS LONGCHAR                                  NO-UNDO.
@@ -520,6 +521,44 @@ ELSE IF par_cddopcao = "V" THEN
     
   
   END.
+/* Possui Pacotes */
+ELSE IF par_cddopcao = "PP" THEN
+ DO:
+ 
+    /* Rotina para verificar se possui pacote SMS para a cooperativa */
+    { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }    
+
+    RUN STORED-PROCEDURE pc_possui_pacotes_prog
+        aux_handproc = PROC-HANDLE NO-ERROR
+                                ( INPUT par_cdcooper     /* pr_cdcooper  */
+                                 ,OUTPUT 0               /* pr_flgpossui */
+                                 ,OUTPUT 0               /* pr_cdcritic */
+                                 ,OUTPUT "").            /* pr_dscritic */
+
+    CLOSE STORED-PROC pc_possui_pacotes_prog
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+    { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+
+    ASSIGN aux_dscritic = ""
+           aux_flpospac = 0
+           aux_dscritic = pc_possui_pacotes_prog.pr_dscritic
+                          WHEN pc_possui_pacotes_prog.pr_dscritic <> ?
+           aux_flpospac = pc_possui_pacotes_prog.pr_flgpossui
+                          WHEN pc_possui_pacotes_prog.pr_flgpossui <> ?.
+
+    IF aux_dscritic <> "" THEN
+    DO:
+        xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".  
+        RETURN "NOK".
+    END.
+    
+    CREATE xml_operacao.
+    ASSIGN xml_operacao.dslinxml = '<dados><flpospac>' + STRING(aux_flpospac) + 
+                                   '</flpospac></dados>'.
+    
+ 
+ END.
 /* Consultar Contrato */
 ELSE IF par_cddopcao = "C" THEN
   DO: 

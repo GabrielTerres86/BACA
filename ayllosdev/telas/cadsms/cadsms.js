@@ -1177,11 +1177,11 @@ function manterRotina(cdopcao) {
         dsaguardo = 'Aguarde, gravando dados...';
         showMsgAguardo(dsaguardo);
 
-		// Gera um objeto com o conte�do das mensagens na tela
+		// Gera um objeto com o conteúdo das mensagens na tela
 		$("input","#divLotes").each(function() {
 
             if ($(this).is(':checked'))	{
-				lotesReenvio.push({ote_sms: $(this).val()});
+				lotesReenvio.push({idlote_sms: $(this).val()});
 			}
 		});
 
