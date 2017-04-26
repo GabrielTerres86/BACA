@@ -353,7 +353,7 @@ function confirma(cddopcao) {
 			}
 			
 			if ($("#nrdddcel").val().length < 2) {
-				showError("error","DDD inv&aacute;lido","Alerta - Ayllos","$(\"#nrdddcel\").focus();");
+				showError("error","DDD inv&aacute;lido.","Alerta - Ayllos","$(\"#nrdddcel\").focus();");
 				return false;
 			}
 			
