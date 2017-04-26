@@ -1249,7 +1249,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       Sistema  : Rotinas acessadas pelas telas de cadastros Web
       Sigla    : CRED
       Autor    : Odirlei Busana - Amcom
-      Data     : Junho/2015.                   Ultima atualizacao: 21/11/2016
+      Data     : Junho/2015.                   Ultima atualizacao: 26/04/2017
   
       Dados referentes ao programa:
   
@@ -1284,6 +1284,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
 
                   21/11/2016 - Tratamento para gerar analise de fraude das TEDs.
                                PRJ335 - Analise de Fraude(Odirlei-AMcom) 
+                               
+                  26/04/2017 - Ajustado para nao realizar analise de fraude para efetivações
+                               de agendamento. PRJ335 - Analise de Fraude(Odirlei-AMcom)               
   ---------------------------------------------------------------------------------------------------------------*/
     ---------------> CURSORES <-----------------        
     -- Buscar dados do associado
@@ -1771,7 +1774,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     --> Para as origens InternetBank e Mobile,
     --> Deve ser gerado o registro de analise de fraude antes de
     --> realizar a operação
-    IF pr_idorigem IN (3) THEN
+    IF pr_idorigem IN (3) AND 
+       pr_idagenda <> 2   THEN --> Nao gerar analise para agendamentos
     
       IF pr_flmobile = 1 THEN
 			  vr_idorigem := 10; --> MOBILE
@@ -1788,7 +1792,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                                           ,pr_iptransacao => pr_iptransa
                                           ,pr_dtmvtolt    => rw_crapdat.dtmvtocd   
                                           ,pr_cdproduto   => 30 --> TED 
-										  ,pr_cdoperacao  => 12 --> TED Eletronica 
+										                      ,pr_cdoperacao  => 12 --> TED Eletronica 
                                           ,pr_dstransacao => pr_dstransa
                                           ,pr_tptransacao => 1 --> Online
                                           ,pr_idanalise_fraude => vr_idanalise_fraude
