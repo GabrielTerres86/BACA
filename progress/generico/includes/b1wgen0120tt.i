@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/includes/b1wgen0120tt.i
     Autor(a): Gabriel Capoia dos Santos (DB1)
-    Data    : Outubro/2011                      Ultima atualizacao: 23/08/2016
+    Data    : Outubro/2011                      Ultima atualizacao: 13/04/2017
   
     Dados referentes ao programa:
   
@@ -10,6 +10,8 @@
   
     Alteracoes: 23/08/2016 - Agrupamento das informacoes (M36 - Kelvin).
     
+                13/04/2017 - Inserido campo nrsequen na tt-estorno #625135
+				             (Tiago/Elton).
 .............................................................................*/ 
 DEF TEMP-TABLE tt-boletimcx NO-UNDO
     FIELD cdagenci LIKE crapbcx.cdagenci
@@ -65,10 +67,12 @@ DEF TEMP-TABLE tt-estorno NO-UNDO
     FIELD cdagenci LIKE crapbcx.cdagenci
     FIELD nrdcaixa LIKE crapbcx.nrdcaixa
     FIELD nrseqaut LIKE crapaut.nrseqaut
+	FIELD nrsequen LIKE crapaut.nrsequen
     INDEX estorno AS UNIQUE PRIMARY
           cdagenci
           nrdcaixa
-          nrseqaut.
+          nrseqaut
+		  nrsequen.
 
 DEF TEMP-TABLE cratfit NO-UNDO
     FIELD nrsequen AS INT     FORMAT "zzzz9"
