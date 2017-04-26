@@ -235,7 +235,7 @@ BEGIN
     
     --buscar numero do documento do cheque
     IF rw_craplcm.nrdocmto > 999999  THEN
-      vr_nrdocmto := SUBSTR(to_char(rw_craplcm.nrdocmto,'0000000000000000000000'),17,6);
+      vr_nrdocmto := SUBSTR(to_char(rw_craplcm.nrdocmto,'fm0000000000000000000000'),17,6);
     ELSE
       vr_nrdocmto := rw_craplcm.nrdocmto;
     END IF;
