@@ -803,7 +803,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
   --  Sistema  : Rotinas genéricas focando nas funcionalidades de empréstimos
   --  Sigla    : EMPR
   --  Autor    : Marcos Ernani Martini
-  --  Data     : Fevereiro/2013.                   Ultima atualizacao: 16/11/2016
+  --  Data     : Fevereiro/2013.                   Ultima atualizacao: 25/04/2017
   --
   -- Dados referentes ao programa:
   --
@@ -854,6 +854,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
   --
   --             26/09/2016 - Adicionado validacao de contratos de acordo na procedure
   --                          pc_valida_pagamentos_geral, Prj. 302 (Jean Michel). 
+  --
+  --             25/04/2017 - na rotina pc_efetiva_pagto_parc_lem retornar valor pro rowtype da crapepr na hora 
+  --                          do update qdo cai na validacao do vr_ehmensal pois qdo ia atualizar o valor novamente 
+  --                          a crapepr estava ficando com valor incorreto (Tiago/Thiago SD644598)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tratamento de erro */
@@ -10766,6 +10770,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                    31/10/2016 - Validação dentro para identificar
                                 parcelas ja liquidadas (AJFink - SD#545719)
 
+
+                   25/04/2017 - na rotina pc_efetiva_pagto_parc_lem retornar valor pro 
+                                rowtype da crapepr na hora do update qdo cai na validacao 
+                                do vr_ehmensal pois qdo ia atualizar o valor novamente 
+                                a crapepr estava ficando com valor incorreto 
+                                (Tiago/Thiago SD644598).
     ............................................................................. */
   
     DECLARE
@@ -10938,7 +10948,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             --Atualizar Saldo Devedor Emprestimo
             UPDATE crapepr
                SET crapepr.vlsdeved = crapepr.vlsdeved - pr_vlparepr
-             WHERE crapepr.ROWID = rw_crapepr.rowid;
+             WHERE crapepr.ROWID = rw_crapepr.rowid
+             RETURNING crapepr.vlsdeved INTO rw_crapepr.vlsdeved;
           EXCEPTION
             WHEN OTHERS THEN
               --Mensagem erro
