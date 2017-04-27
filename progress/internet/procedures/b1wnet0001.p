@@ -3,7 +3,7 @@
 
    Programa: sistema/internet/procedures/b1wnet0001.p                  
    Autor   : David
-   Data    : 14/07/2006                        Ultima atualizacao: 31/01/2017
+   Data    : 14/07/2006                        Ultima atualizacao: 30/03/2017
 
    Dados referentes ao programa:
 
@@ -272,6 +272,8 @@
                11/10/2016 - Ajustes para permitir Aviso cobrança por SMS.
                             PRJ319 - SMS Cobrança(Odirlei-AMcom)
 
+               30/03/2017 - Adicionado o parametro par_idseqttl na chamada da procedure
+                            busca-nome-imp-blt (Douglas - Chamado 637660)
 .............................................................................*/
 
 
@@ -1369,6 +1371,7 @@ PROCEDURE gravar-boleto:
         /*Busca nome impresso no boleto*/
         RUN busca-nome-imp-blt IN h-b1wgen0010( INPUT par_cdcooper
                                               , INPUT par_nrdconta
+                                              , INPUT par_idseqttl
                                               , INPUT "consulta-boleto-2via" /*nmprogra*/
                                               ,OUTPUT aux_nmdobnfc
                                               ,OUTPUT aux_dscritic).

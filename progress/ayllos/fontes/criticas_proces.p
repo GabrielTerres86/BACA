@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Margarete
-   Data    : Junho/2004.                     Ultima atualizacao: 11/06/2014
+   Data    : Junho/2004.                     Ultima atualizacao: 01/02/2017
 
    Dados referentes ao programa:
 
@@ -31,6 +31,8 @@
                25/08/2014 - Removido chamada da rotina oracle temporaria 
                             para validação(Odirlei-AMcom).             
                             
+               01/02/2017 - Ajustes para consultar dados da tela PROCES de todas as cooperativas
+                            (Lucas Ranghetti #491624)
 ............................................................................*/
 
 DEF VAR aux_nmarq_parm AS CHAR.
@@ -64,7 +66,8 @@ RUN fontes/gera_criticas_proces.p (INPUT aux_nmarq_parm,
                                                                                      
 IF   glb_nmdatela = "PROCES"   THEN
      DO:       
-         IF   choice = 1 OR
+         IF  choice = 1 OR 
+             choice = 4 OR  
              (choice = 2 AND aux_nrsequen <> 0)   THEN
               DO:
                   PAUSE (0).

@@ -40,6 +40,8 @@
                 12/12/2013 - Adicionado VALIDATE para o CREATE. (Jorge)
                              
                 16/01/2017 - Chamada da procedure do Oracle para evitar lock (Dionathan)
+
+				22/03/2017 - Chamado 613121 - erro na atualização das mensagens da CADMSG - (Jean / MOut´S)
    
 ............................................................................*/
 
@@ -349,7 +351,7 @@ PROCEDURE cadastrar-cadmsg:
                                         INPUT aux_ultimcdm,
                                        OUTPUT par_dsrterro).
         
-                        IF  RETURN-VALUE = "NOK" THEN
+                        IF  RETURN-VALUE = "NOK" THEN						
                         DO:
                             ASSIGN aux_cdcritic = 1
                                    aux_dscritic = 
@@ -367,7 +369,7 @@ PROCEDURE cadastrar-cadmsg:
                         END.
                         ELSE
                             ASSIGN aux_totenvia = aux_totenvia + 1.
-                        
+                         
                         GET NEXT q_crapmsg.
                     END. /* Do while avail */
                 END.
@@ -430,7 +432,7 @@ PROCEDURE cadastrar-cadmsg:
                aux_nrseqerr = aux_nrseqerr + 1.
     END.
                    
-    IF  aux_dscritic <> "" OR aux_cdcritic <> 0 THEN
+    IF  aux_dscritic <> ? OR aux_cdcritic <> 0 THEN
         DO:
             ASSIGN aux_returnvl = "NOK".
            
@@ -500,12 +502,13 @@ PROCEDURE gerar-mensagem:
     CLOSE STORED-PROC pc_gerar_mensagem aux_statproc = PROC-STATUS
           WHERE PROC-HANDLE = aux_handproc.
 
-    ASSIGN aux_dscritic = pc_gerar_mensagem.pr_dscritic.
+    ASSIGN aux_dscritic = pc_gerar_mensagem.pr_dscritic.	
 
     { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-    IF aux_dscritic = "" THEN DO:
-      ASSIGN aux_returnvl = "OK".
+    IF   aux_dscritic = ? 
+	OR aux_dscritic = "" THEN DO:
+         ASSIGN aux_returnvl = "OK".	  
     END.
     
     RETURN aux_returnvl.

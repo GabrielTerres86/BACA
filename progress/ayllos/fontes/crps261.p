@@ -23,7 +23,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah                 
-   Data    : Maio/99                           Ultima atualizacao: 20/05/2016
+   Data    : Maio/99                           Ultima atualizacao: 02/03/2017
    
 
    Dados referentes ao programa:
@@ -108,6 +108,9 @@
 
                20/05/2016 - Incluido nas consultas da craplau
                             craplau.dsorigem <> "TRMULTAJUROS". (Jaison/James)
+
+               02/03/2017 - Incluido nas consultas da craplau 
+                            craplau.dsorigem <> "ADIOFJUROS" (Lucas Ranghetti M338.1)
 
 ********* ATENÇÃO: 28/09/2015 - Esse fonte já teve sua conversão para Oracle iniciada.
                                 A conversão seja revista quando retomada.
@@ -230,7 +233,8 @@ FOR EACH craplau WHERE craplau.cdcooper  = glb_cdcooper   AND
                        craplau.dsorigem <> "CARTAOBB"     AND
                        craplau.dsorigem <> "BLOQJUD"      AND
                        craplau.dsorigem <> "DAUT BANCOOB" AND
-                       craplau.dsorigem <> "TRMULTAJUROS" ,
+                       craplau.dsorigem <> "TRMULTAJUROS" AND
+                       craplau.dsorigem <> "ADIOFJUROS",
          crapass WHERE crapass.cdcooper  = glb_cdcooper   AND
                        crapass.nrdconta  = craplau.nrdconta
                        NO-LOCK BREAK BY craplau.cdagenci

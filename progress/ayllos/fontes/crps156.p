@@ -74,6 +74,9 @@
                
               20/04/2016 - Adicionado validacao rw_craplrg.tpresgat = 2
                            para correçao do chamado 414286. (Kelvin) 
+              
+              24/04/2017 - Adicionado parametro de conta na chamada da pc_crps156.
+                           Andrino (Mouts) - Projeto 341 - Bacenjud
 ............................................................................. */
 
 
@@ -96,6 +99,7 @@ ETIME(TRUE).
 { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
 RUN STORED-PROCEDURE pc_crps156 aux_handproc = PROC-HANDLE
      (INPUT glb_cdcooper,                                                  
+      INPUT 0,
       INPUT INT(STRING(glb_flgresta,"1/0")),
                                          INPUT 0,
       INPUT 0,
@@ -147,4 +151,3 @@ UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS")    +
 
 RUN fontes/fimprg.p.
 /* .......................................................................... */
-

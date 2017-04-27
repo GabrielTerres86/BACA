@@ -2,7 +2,7 @@
 
     Programa: b1wgen0050tt.i                  
     Autor   : David
-    Data    : Novembro/2009                   Ultima atualizacao: 10/08/2015
+    Data    : Novembro/2009                   Ultima atualizacao: 07/03/2017
 
     Dados referentes ao programa:
 
@@ -31,6 +31,10 @@
                              
                 10/08/2015 - Incluir campos nmevento, nrctrlif na temp-table
                              tt-logspb-detalhe (Lucas Ranghetti - Gestao de Teds/Tecs)
+
+                07/03/2017 - Incluir campo dsprotoc na temp-table
+				             tt-logspb-detalhe, PRJ335 - OFSSA (Odirlei-AMcom)				  
+
 ..............................................................................*/
 
 DEF TEMP-TABLE tt-logspb           NO-UNDO
@@ -66,6 +70,7 @@ DEF TEMP-TABLE tt-logspb-detalhe   NO-UNDO
     FIELD dstiptra AS CHAR
     FIELD nmevento LIKE craplmt.nmevento
     FIELD nrctrlif LIKE craplmt.nrctrlif
+	  FIELD dsprotoc AS CHAR
     INDEX tt-logspb1 AS PRIMARY hrtransa nrseqlog.
 
 DEF TEMP-TABLE tt-logspb-totais    NO-UNDO

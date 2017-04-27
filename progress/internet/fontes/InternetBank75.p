@@ -38,6 +38,7 @@ DEFINE INPUT  PARAMETER par_cdditens AS CHAR        NO-UNDO.
 DEFINE INPUT  PARAMETER par_indvalid AS INTE        NO-UNDO.
 DEFINE INPUT  PARAMETER par_idseqttl AS INTEGER     NO-UNDO.
 DEFINE INPUT  PARAMETER par_nrcpfope AS DECIMAL     NO-UNDO.
+DEFINE INPUT  PARAMETER par_iptransa AS CHAR        NO-UNDO.
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 
@@ -77,6 +78,7 @@ RUN aprova_trans_pend IN h-b1wgen0016 (INPUT par_cdcooper,
                                        INPUT par_cdditens,
                                        INPUT par_indvalid,
                                        INPUT par_nrcpfope,
+                                       INPUT par_iptransa,
                                       OUTPUT TABLE tt-erro,
                                       OUTPUT TABLE tt-criticas_transacoes_oper,
                                       OUTPUT out_flgaviso).
@@ -109,6 +111,21 @@ DO:
 				ASSIGN aux_dscritic = aux_dscritic + "\nVerifique as transacoes nao aprovadas.".
 
 			ASSIGN xml_dsmsgerr = "<dsmsgsuc>" + aux_dscritic + "</dsmsgsuc>".
+            
+            
+            IF  NOT out_flgaviso  THEN
+                DO:
+                    xml_dsmsgerr = xml_dsmsgerr + "<PROTOCOLOS>".
+                    
+                    FOR EACH tt-criticas_transacoes_oper WHERE  tt-criticas_transacoes_oper.flgtrans = TRUE NO-LOCK:
+                        ASSIGN xml_dsmsgerr = xml_dsmsgerr + 
+                                              "<dsprotoc>" + tt-criticas_transacoes_oper.dsprotoc + "</dsprotoc>".            
+		END.
+                    
+                    xml_dsmsgerr = xml_dsmsgerr + "</PROTOCOLOS>".
+                END.
+                        
+            
 		END.
 	ELSE
 		DO:
@@ -117,6 +134,7 @@ DO:
 				   
 			RETURN "NOK".
 		END.
+      
 END.
 ELSE /* Validacao */
 DO:

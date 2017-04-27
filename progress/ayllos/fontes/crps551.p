@@ -157,13 +157,19 @@
                02/10/2015 - Criado procedures pi_processa_tit_sua_epr e 
                             pi_processa_tit_sua_epr_dda. (Reinert)
 
-                           14/12/2015 - Ajustes referente ao projeto estado de crise. 
-                                        Utilizar a gnmvspb.dtmvtolt ao inves da 
-                                                        gnmvspb.dtmensag (Andrino-RKAM)
+			   14/12/2015 - Ajustes referente ao projeto estado de crise. 
+			                Utilizar a gnmvspb.dtmvtolt ao inves da 
+							gnmvspb.dtmensag (Andrino-RKAM)
                             
                24/03/2017 - Lancar debito de devolucao de titulos 085
                             na conta da filiada na central.
                             (Projeto 340 - Fase SILOC - Rafael).
+
+
+               17/11/2016 - Na procedure pi_processa_ted_tec a mensagem 
+                            STR0008 originada pelo sistema MATERA somarizar
+                            valor e lancar debito na conta da filiada.
+                            (Jaison/Diego - SD: 556800)
 
 ............................................................................. */
 
@@ -350,7 +356,7 @@ DO TRANSACTION ON ERROR UNDO TRANS_1, RETURN:
         RUN pi_processa_tit_sua_epr_dda(INPUT aux_temassoc).
 
         /* Leitura de DEVOLUCOES */
-        
+
         /* Sua remessa - Dev boletos 085 */
         RUN pi_processa_tit_dev_sua.
 
@@ -1584,7 +1590,7 @@ PROCEDURE pi_processa_tit_dev_sua:
   FOR EACH {&sc2_dboraayl}.proc-text-buffer WHERE PROC-HANDLE = aux_ponteiro:
       ASSIGN vlr_totdevol = DEC(proc-text). 
   END.
-                                            
+
   CLOSE STORED-PROC {&sc2_dboraayl}.send-sql-statement
         WHERE PROC-HANDLE = aux_ponteiro.
                                
@@ -1786,11 +1792,13 @@ PROCEDURE pi_processa_ted_tec:
    DEF         VAR tot_pagdebit AS DEC                   NO-UNDO.
    DEF         VAR tot_pagdevcr AS DEC                   NO-UNDO.
    DEF         VAR tot_pagdevdb AS DEC                   NO-UNDO.
+   DEF         VAR tot_vldebmat AS DEC                   NO-UNDO.
 
    DEF         VAR aux_cdfinmsg AS INT                   NO-UNDO.
 
    ASSIGN tot_strcredi = 0
           tot_strdebit = 0
+          tot_vldebmat = 0
           tot_strdevcr = 0   /* devolucoes recebidas */ 
           tot_strdevdb = 0   /* devolucoes enviadas */
           tot_pagcredi = 0
@@ -1877,6 +1885,9 @@ PROCEDURE pi_processa_ted_tec:
                             "STR0006,STR0025,STR0034",
                             gnmvspb.dsmensag)  THEN
                      DO:
+                         IF   gnmvspb.dsareneg = "MATERA" THEN
+                              ASSIGN tot_vldebmat = tot_vldebmat + gnmvspb.vllanmto.
+                         ELSE
                          ASSIGN tot_strdebit = tot_strdebit + gnmvspb.vllanmto.
 
                          IF   gnmvspb.dsmensag <> "STR0025" THEN
@@ -1938,7 +1949,10 @@ PROCEDURE pi_processa_ted_tec:
    IF   tot_strdebit <> 0  THEN
         RUN pi_cria_craplcm (INPUT tot_strdebit,
                              INPUT 795).
-                                                     
+                             
+   IF   tot_vldebmat <> 0  THEN
+        RUN pi_processa_matera(INPUT tot_vldebmat).
+                             
    /* Devolucoes enviadas */ 
    IF   tot_strdevdb <> 0 THEN   
         RUN pi_cria_craplcm (INPUT tot_strdevdb,
@@ -2600,6 +2614,67 @@ PROCEDURE pi_processa_portabilidade:
                  craplot.vlcompdb = craplot.vlcompdb + craplcm.vllanmto.
 
     END.
+
+END PROCEDURE.
+
+
+/* ....................................................................... */
+/*               Processa o lancamento do Sistema MATERA                   */
+/* ....................................................................... */
+PROCEDURE pi_processa_matera:
+
+   DEF INPUT PARAM par_vlrlamto AS DEC                       NO-UNDO.
+
+    ASSIGN aux_cdbccxlt = 85
+           aux_nrdolote = 600034
+           aux_cdhistor = 2217.
+
+    FIND craplot WHERE craplot.cdcooper = crabcop.cdcooper AND
+                       craplot.dtmvtolt = glb_dtmvtolt     AND
+                       craplot.cdagenci = aux_cdagenci     AND
+                       craplot.cdbccxlt = aux_cdbccxlt   AND
+                       craplot.nrdolote = aux_nrdolote
+                       USE-INDEX craplot1 NO-LOCK NO-ERROR.
+
+    IF   NOT AVAIL craplot  THEN
+         DO:
+             CREATE craplot.
+             ASSIGN craplot.cdcooper = crabcop.cdcooper
+                    craplot.dtmvtolt = glb_dtmvtolt
+                    craplot.cdagenci = aux_cdagenci
+                    craplot.cdbccxlt = aux_cdbccxlt
+                    craplot.nrdolote = aux_nrdolote
+                    craplot.tplotmov = aux_tplotmov.
+             VALIDATE craplot.
+         END.
+
+    FIND craplot WHERE craplot.cdcooper = crabcop.cdcooper AND
+                       craplot.dtmvtolt = glb_dtmvtolt     AND
+                       craplot.cdagenci = aux_cdagenci     AND
+                       craplot.cdbccxlt = aux_cdbccxlt     AND
+                       craplot.nrdolote = aux_nrdolote
+                       USE-INDEX craplot1 EXCLUSIVE-LOCK NO-ERROR.
+
+    CREATE craplcm.
+    ASSIGN craplcm.cdcooper = crabcop.cdcooper
+           craplcm.cdagenci = aux_cdagenci
+           craplcm.cdbccxlt = aux_cdbccxlt
+           craplcm.nrdolote = aux_nrdolote
+           craplcm.cdhistor = aux_cdhistor
+           craplcm.dtrefere = aux_dtleiarq
+           craplcm.vllanmto = par_vlrlamto
+           craplcm.nrdconta = INTE(gnmvspb.dscntadb)
+           craplcm.nrdctabb = INTE(gnmvspb.dscntadb)
+           craplcm.dtmvtolt = craplot.dtmvtolt
+           craplcm.nrdocmto = craplot.nrseqdig + 1
+           craplcm.nrseqdig = craplot.nrseqdig + 1.
+    VALIDATE craplcm.
+
+    ASSIGN craplot.qtinfoln = craplot.qtinfoln + 1
+           craplot.qtcompln = craplot.qtcompln + 1
+           craplot.nrseqdig = craplcm.nrseqdig
+           craplot.vlinfodb = craplot.vlinfodb + craplcm.vllanmto
+           craplot.vlcompdb = craplot.vlcompdb + craplcm.vllanmto.
 
 END PROCEDURE.
 

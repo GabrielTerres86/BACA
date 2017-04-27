@@ -31,11 +31,11 @@
                18/12/2015 - Inclusao de nova temp-table tt-vlrdat, Prj.
                             Assinatura Conjunta (Jean Michel).
 
-               04/05/2016 - Incluido novo campo na tabela tt-dados-agendamento
-							              (Adriano - M117).
+			   04/05/2016 - Incluido novo campo na tabela tt-dados-agendamento
+							(Adriano - M117).
               
-               24/05/2016 - Incluido o campo flmntage na tabela tt-parmon (Carlos)
-               
+         24/05/2016 - Incluido o campo flmntage na tabela tt-parmon (Carlos)
+
                21/07/2016 - Incluso da TEMP-TABLE tt-tbpagto_darf_das_trans_pend (Jean Michel).
                
                27/07/2016 - Inclusao de novos campos na TEMP-TABLE tt-dados-agendamento, Prj.338
@@ -139,7 +139,8 @@ DEF TEMP-TABLE tt-criticas_transacoes_oper NO-UNDO
     FIELD dscritic AS CHAR
     FIELD flgtrans AS LOGICAL
     FIELD nrdrowid AS CHAR
-    FIELD cdtransa AS INTE.
+    FIELD cdtransa AS INTE
+    FIELD dsprotoc AS CHAR.
 
 DEF TEMP-TABLE tt-parmon
     FIELD vlinimon LIKE crapcop.vlinimon
@@ -160,7 +161,7 @@ DEF TEMP-TABLE tt-parmon
 DEF TEMP-TABLE tt-vlrdat NO-UNDO
     FIELD dattrans AS DATE
     FIELD vlronlin AS DEC.
-
+                       
 DEF TEMP-TABLE tt-tbpagto_darf_das_trans_pend NO-UNDO
   FIELD cdtransacao_pendente AS DECIMAL
   FIELD cdcooper             AS DECIMAL

@@ -24,7 +24,7 @@
 
     Programa: b1wgen0058.p
     Autor   : Jose Luis (DB1)
-    Data    : Marco/2010                   Ultima atualizacao: 25/08/2016
+    Data    : Marco/2010                   Ultima atualizacao: 28/03/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - PROCURADORES/REPRESENTANTES
 
@@ -152,6 +152,13 @@
 							  assinatura (Tiago/Thiago SD438834)
 
 	             25/08/2016 - Ajustes na procedure valida_responsaveis, SD 510426 (Jean Michel).
+
+				 22/03/2017 - Ajustes na procedure valida_responsaveis, para nao considerar quando 
+				              a regra do poder 10 quando a exigencia de assinatura estiver com nao 
+							  SD 630546 (Rafael Monteiro).
+
+				 28/03/2017 - Realizado ajuste para que quando filtrar procurador pelo CPF, busque
+							  apenas contas ativas, coforme solicitado no chamado 566363. (Kelvin)
 
 .....................................................................................*/
 
@@ -652,16 +659,25 @@ PROCEDURE Busca_Dados_Cto:
         IF  par_nrcpfcto <> 0  THEN
             FOR FIRST crabass FIELDS(cdcooper nrdconta nrcpfcgc inpessoa)
                               WHERE crabass.cdcooper = par_cdcooper AND
-                                    crabass.nrcpfcgc = par_nrcpfcto NO-LOCK:
+                                    crabass.nrcpfcgc = par_nrcpfcto AND 
+									crabass.dtdemiss = ? NO-LOCK:
             END.
             
         IF  NOT AVAILABLE crabass THEN
             DO:
                IF  par_nrdctato <> 0 THEN
                    ASSIGN par_cdcritic = 9.
-
                LEAVE BuscaCto.
             END.
+		ELSE
+			DO:
+				IF  par_nrdctato <> 0 AND 
+				    crabass.dtdemiss <> ? THEN
+					DO:
+						ASSIGN par_cdcritic = 64.
+               LEAVE BuscaCto.
+            END.
+			END.
 
         IF  par_nrdconta = crabass.nrdconta  THEN
             DO:
@@ -4619,8 +4635,8 @@ PROCEDURE Busca_Dados_Poderes:
                             IF AVAIL crappod THEN
                                DO:
                                     
-                                  FOR EACH crappod WHERE crappod.cdcooper = crapavt.cdcooper  AND
-                                                         crappod.nrdconta = crapavt.nrdconta  AND
+                                  FOR EACH crappod WHERE crappod.cdcooper = crapavt.cdcooper AND
+                                                         crappod.nrdconta = crapavt.nrdconta AND
                                                          crappod.nrctapro = crapavt.nrdctato AND
                                                          crappod.nrcpfpro = crapavt.nrcpfcgc NO-LOCK:
                                       CREATE tt-crappod.
@@ -5352,17 +5368,17 @@ PROCEDURE valida_responsaveis:
 		  
 	IF par_nmdatela = "CONTAS" THEN
 		DO:
-			FOR FIRST crapass FIELDS(qtminast) WHERE crapass.cdcooper = par_cdcooper
+			FOR FIRST crapass FIELDS(qtminast idastcjt) WHERE crapass.cdcooper = par_cdcooper
                                            AND crapass.nrdconta = par_nrdconta NO-LOCK. END.
 												 
-			IF AVAILABLE crapass AND crapass.qtminast >= 2 THEN
+			IF AVAILABLE crapass AND crapass.qtminast >= 2 AND crapass.idastcjt = 1 THEN
 				DO:
 					ASSIGN aux_contarep = 0.
 
 					FOR EACH crappod WHERE crappod.cdcooper = par_cdcooper
 									   AND crappod.nrdconta = par_nrdconta
-									   AND crappod.cddpoder = 10
-									   AND crappod.flgconju = TRUE NO-LOCK:
+									   AND crappod.cddpoder = 10 NO-LOCK:
+									 /*AND crappod.flgconju = TRUE NO-LOCK:*/
 				
 						ASSIGN aux_contarep = aux_contarep + 1.
 
