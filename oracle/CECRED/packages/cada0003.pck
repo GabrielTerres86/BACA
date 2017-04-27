@@ -384,6 +384,9 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0003 is
                              ,pr_nmdcampo OUT VARCHAR2                       --> Nome do campo com erro
                              ,pr_des_erro OUT VARCHAR2);                     --> Descrição do erro
 
+  -- Procedimento para carga do arquivo Konviva para tabela com informações dos colaboradores
+  PROCEDURE pc_integra_colaboradores;
+
 END CADA0003;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
@@ -6315,5 +6318,296 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       pr_retxml   := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
   END pc_email_troca_pa;
+  
+  -- Procedimento para carga do arquivo Konviva para tabela com informações dos colaboradores
+  PROCEDURE pc_integra_colaboradores IS
+  BEGIN  
+    /* .............................................................................
+      Programa: pc_integra_colaboradores
+      Sistema : Conta-Corrente - Cooperativa de Credito
+      Sigla   : CRED
+      Autor   : Marcos Martini
+      Data    : Março/17.                    Ultima atualizacao: 
+      
+      Dados referentes ao programa:
+      
+      Frequencia: Sempre que for chamado
+      
+      Objetivo  : Rotina responsável por baixar o arquivo Konviva para diretório acessível
+                  e atualizar a tabela TBCADAST_COLABORADOR com as informações dos colaboradores
+                  do grupo Cecred e Cooperativas filiadas
+      Observacao: -----
+      
+      Alteracoes: 
+    ..............................................................................*/
+  
+    DECLARE 
+      -- Script para download do arquivo
+      vr_dscmdbai VARCHAR2(1000) := gene0001.fn_param_sistema('CRED',3,'CMD_DOWNLOAD_ARQ_KONVIVA');
+      
+      -- Caminho do arquivo Konviva
+      vr_dsarquiv VARCHAR2(255) := gene0001.fn_param_sistema('CRED',3,'PATH_ARQUIVO_KONVIVA');
+      vr_dspathar VARCHAR2(255);
+      vr_dsnomear VARCHAR2(255);
+      
+      -- Tratamento de exceção
+      vr_nmprogra VARCHAR2(1000) := 'cada0003.pc_integra_colaboradores';
+      vr_excsaida EXCEPTION;
+      vr_dscritic VARCHAR2(4000);
+      vr_typdsaid VARCHAR2(20); 
+      
+      -- Processamento do arquivo
+      vr_hutlfile utl_file.file_type;
+      vr_dstxtlid VARCHAR2(1000);
+      vr_qtdrlido NUMBER := 0;
+      vr_txtauxil VARCHAR2(200); -- Texto auxiliar
+      vr_cdcooper NUMBER(5);     -- Código da Cooperativa do Colaborador     
+      vr_nrcpfcgc NUMBER(11);    -- Código do CPF co Colaborador             
+      vr_cddcargo NUMBER(7);     -- Código do Cargo do Colaborador           
+      vr_dsdcargo VARCHAR2(100); -- Descrição do Cargo do Colaborador        
+      vr_dtadmiss DATE;          -- Data de admissão do Colaborador          
+      vr_cdusured VARCHAR2(8);   -- Código do usuário do Colaborador na rede 
+      vr_dsdemail VARCHAR2(200); -- Email do colaborador na rede             
+      vr_flgativo VARCHAR2(1);   -- Flag de Colaborador ativo (S/N)     
+      
+    BEGIN 
+      
+      -- Incluir o cd ao diretório que será efetuado o download para que o script funcione corretamente
+      vr_dscmdbai := 'cd '||SUBSTR(vr_dsarquiv,1,instr(vr_dsarquiv,'/',-1))||'; '||vr_dscmdbai;
+      -- Executar o Script para download do arquivo usuarios.txt para o diretório acessáivel ao Ayllos
+      gene0001.pc_OScommand(pr_typ_comando => 'SR'
+                           ,pr_des_comando => vr_dscmdbai
+                           ,pr_typ_saida   => vr_typdsaid
+                           ,pr_des_saida   => vr_dscritic);
+      IF NVL(vr_typdsaid,' ') = 'ERR' THEN
+        -- Desfaz alterações e inclui erro no log pois não conseguimos eliminar o arquivo antigo
+        vr_dscritic := 'Nao foi possivel buscar o arquivo original --> '||vr_dscritic;
+        RAISE vr_excsaida;
+      END IF;
+      
+      -- Verificar se o arquivo foi baixado corretamente
+      IF NOT gene0001.fn_exis_arquivo(vr_dsarquiv) THEN 
+        vr_dscritic := gene0001.fn_busca_critica(182);
+        RAISE vr_excsaida;
+      END IF;
+      
+      -- Efetuar a limpeza da tabela atual
+      BEGIN 
+        DELETE FROM tbcadast_colaborador;
+      EXCEPTION 
+        WHEN OTHERS THEN 
+          vr_dscritic := 'Erro na limpeza da tabela tbcadast_colaborador --> '||SQLERRM;
+          RAISE vr_excsaida;  
+      END;
+      
+      -- Separação do path completo do arquivo
+      gene0001.pc_separa_arquivo_path(pr_caminho => vr_dsarquiv
+                                     ,pr_direto  => vr_dspathar
+                                     ,pr_arquivo => vr_dsnomear);
+      
+      -- Efetuar abertura do arquivo para processamento
+      gene0001.pc_abre_arquivo(pr_nmdireto => vr_dspathar   --> Diretorio do arquivo
+                              ,pr_nmarquiv => vr_dsnomear   --> Nome do arquivo
+                              ,pr_tipabert => 'R'           --> Modo de abertura (R,W,A)
+                              ,pr_utlfileh => vr_hutlfile   --> Handle do arquivo aberto
+                              ,pr_des_erro => vr_dscritic); --> Erro
+      IF vr_dscritic IS NOT NULL THEN
+        --Levantar Excecao
+        vr_dscritic := 'Erro na leitura do arquivo ['||vr_dsnomear||'] --> '||vr_dscritic;
+        RAISE vr_excsaida;
+      ELSE
+        -- Enviar informação de arquivo em integração
+        btch0001.pc_gera_log_batch(pr_cdcooper     => 3
+                                  ,pr_ind_tipo_log => 2 -- Erro tratato
+                                  ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',3,'NOME_ARQ_LOG_MESSAGE')
+                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                   || vr_nmprogra || ' --> '
+                                                   || gene0001.fn_busca_critica(219) || ' --> ' || vr_dsnomear);          
+      END IF;
+          
+      --Verifica se o arquivo esta aberto
+      IF utl_file.IS_OPEN(vr_hutlfile) THEN
+        BEGIN   
+          -- Laço para efetuar leitura de todas as linhas do arquivo 
+          LOOP  
+            -- Leitura da linha x
+            gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_hutlfile --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_dstxtlid); --> Texto lido
+            
+            -- Ignorar linhas vazias
+            IF length(vr_dstxtlid) <= 3 THEN 
+              continue;
+            END IF;
+            
+            -- Incrementar a contagem
+            vr_qtdrlido := vr_qtdrlido + 1;
+            
+            -- Efetuar leitura do CPF
+            BEGIN
+              vr_txtauxil := gene0002.fn_busca_entrada(pr_postext     => 6
+                                                      ,pr_dstext      => vr_dstxtlid
+                                                      ,pr_delimitador => ';');
+              -- Converter para o campo
+              vr_nrcpfcgc := to_number(vr_txtauxil);                                        
+            EXCEPTION
+              WHEN OTHERS THEN 
+                vr_dscritic := 'Erro na leitura do CPF --> '||vr_txtauxil;  
+            END;
+            
+            -- Efetuar leitura do Cargo
+            BEGIN
+              vr_txtauxil := substr(gene0002.fn_busca_entrada(pr_postext     => 19
+                                                             ,pr_dstext      => vr_dstxtlid
+                                                             ,pr_delimitador => ';'),1,100);
+              -- Separação do código e descrição
+              vr_cddcargo := substr(vr_txtauxil,1,7);
+              vr_dsdcargo := substr(vr_txtauxil,11);                                                         
+            EXCEPTION
+              WHEN OTHERS THEN 
+                vr_dscritic := 'Erro na leitura do Cargo --> '||vr_txtauxil;  
+            END;
+            
+            -- Leitura da Data de Admissão
+            BEGIN
+              vr_txtauxil := gene0002.fn_busca_entrada(pr_postext     => 8
+                                                      ,pr_dstext      => vr_dstxtlid
+                                                      ,pr_delimitador => ';');
+              -- Converter para data
+              vr_dtadmiss := to_date(vr_txtauxil,'dd/mm/rrrr');                                        
+            EXCEPTION
+              WHEN OTHERS THEN 
+                vr_dscritic := 'Erro na leitura da Data de Admissão --> '||vr_txtauxil;  
+            END;        
+            
+            -- Leitura do usuário da rede
+            BEGIN
+              vr_txtauxil := gene0002.fn_busca_entrada(pr_postext     => 3
+                                                      ,pr_dstext      => vr_dstxtlid
+                                                      ,pr_delimitador => ';');
+              -- Copiar para o campo correto
+              vr_cdusured := vr_txtauxil;                                      
+            EXCEPTION
+              WHEN OTHERS THEN 
+                vr_dscritic := 'Erro na leitura do Usuario da Rede --> '||vr_txtauxil;  
+            END;
+            
+            -- Leitura do Email
+            BEGIN
+              vr_txtauxil := gene0002.fn_busca_entrada(pr_postext     => 5
+                                                      ,pr_dstext      => vr_dstxtlid
+                                                      ,pr_delimitador => ';');
+              -- Copiar para o campo correto
+              vr_dsdemail := vr_txtauxil;                                      
+            EXCEPTION
+              WHEN OTHERS THEN 
+                vr_dscritic := 'Erro na leitura do Email --> '||vr_txtauxil;  
+            END;        
+            
+            -- Leitura da Flag Ativa/Inativa
+            BEGIN
+              vr_txtauxil := gene0002.fn_busca_entrada(pr_postext     => 7
+                                                      ,pr_dstext      => vr_dstxtlid
+                                                      ,pr_delimitador => ';');
+              -- Copiar para o campo correto
+              vr_flgativo := vr_txtauxil;  
+            EXCEPTION
+              WHEN OTHERS THEN 
+                vr_dscritic := 'Erro na leitura da Flag Ativa --> '||vr_txtauxil;  
+            END;        
+            
+            -- Procurar a Cooperativa com base no usuário da rede
+            BEGIN
+              -- Copiar para o campo correto
+              vr_cdcooper := substr(vr_cdusured,2,3);                                      
+            EXCEPTION
+              WHEN OTHERS THEN 
+                vr_dscritic := 'Erro na leitura da Cooperativa com base no Usuario da Rede --> '||vr_cdusured;  
+            END;        
+                    
+            -- Com as informações processada, iremos gravá-las na tabela
+            BEGIN
+              INSERT INTO tbcadast_colaborador(cdcooper
+                                              ,nrcpfcgc
+                                              ,cddcargo_vetor
+                                              ,dsdcargo_vetor
+                                              ,dtadmiss
+                                              ,cdusured
+                                              ,dsdemail
+                                              ,flgativo)
+                                        VALUES(vr_cdcooper
+                                              ,vr_nrcpfcgc
+                                              ,vr_cddcargo
+                                              ,vr_dsdcargo
+                                              ,vr_dtadmiss
+                                              ,vr_cdusured
+                                              ,vr_dsdemail
+                                              ,vr_flgativo);
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_dscritic := 'Erro na gravacao na tabela TBCADAST_COLABORADOR --> '||SQLERRM;
+                RAISE vr_excsaida;
+            END;
+            
+          
+          END LOOP;
+        EXCEPTION 
+          WHEN no_data_found THEN 
+            -- fechar arquivo
+            gene0001.pc_fecha_arquivo(pr_utlfileh => vr_hutlfile);
+        END;
+      END IF;
+      
+      -- Eliminar o arquivo do diretório de processamento
+      gene0001.pc_OScommand_Shell(pr_des_comando => 'rm '||vr_dsarquiv
+                                 ,pr_typ_saida   => vr_typdsaid
+                                 ,pr_des_saida   => vr_dscritic);
+      IF NVL(vr_typdsaid,' ') = 'ERR' THEN
+        -- Desfaz alterações e inclui erro no log pois não conseguimos eliminar o arquivo
+        vr_dscritic := 'Nao foi possivel remover o arquivo original --> '||vr_dscritic;
+        RAISE vr_excsaida;
+      END IF;
+          
+      -- Enviar informação de arquivo integrado com sucesso
+      btch0001.pc_gera_log_batch(pr_cdcooper     => 3
+                                ,pr_ind_tipo_log => 2 -- Erro tratato
+                                ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',3,'NOME_ARQ_LOG_MESSAGE')
+                                ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                 || vr_nmprogra || ' --> '
+                                                 || gene0001.fn_busca_critica(190) || ' --> ' || vr_dsnomear || ' --> ' ||vr_qtdrlido ||' colaboradores integrados');          
+      -- Efetuar gravação das informações
+      COMMIT;
+      
+    EXCEPTION
+      WHEN vr_excsaida THEN
+        -- Verifica se o arquivo esta aberto
+        IF utl_file.IS_OPEN(vr_hutlfile) THEN
+          -- fechar arquivo
+          gene0001.pc_fecha_arquivo(pr_utlfileh => vr_hutlfile);
+        END IF;
+        -- Desfaz alterações
+        ROLLBACK;
+        -- Gerar log
+        btch0001.pc_gera_log_batch(pr_cdcooper     => 3
+                                  ,pr_ind_tipo_log => 2 -- Erro tratato
+                                  ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',3,'NOME_ARQ_LOG_MESSAGE')
+                                  ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')  ||
+                                                      ' - ' || vr_nmprogra || ' --> Erro tratado na integracao : ' || vr_dscritic);
+      WHEN OTHERS THEN 
+        -- Verifica se o arquivo esta aberto
+        IF utl_file.IS_OPEN(vr_hutlfile) THEN
+          -- fechar arquivo
+          gene0001.pc_fecha_arquivo(pr_utlfileh => vr_hutlfile);
+        END IF;
+        -- Desfaz alterações
+        ROLLBACK;
+        -- Gerar LOG    
+        btch0001.pc_gera_log_batch(pr_cdcooper     => 3
+                                  ,pr_ind_tipo_log => 2 -- Erro tratato
+                                  ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',3,'NOME_ARQ_LOG_MESSAGE')
+                                  ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')  ||
+                                                      ' - ' || vr_nmprogra || ' --> Erro nao tratado na integracao : ' ||SQLERRM);    
+    END;
+  END pc_integra_colaboradores;
+  
 END CADA0003;
 /
