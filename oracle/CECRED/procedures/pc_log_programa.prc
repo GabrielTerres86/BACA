@@ -9,11 +9,30 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_log_programa(
   pr_cdmensagem    IN tbgen_prglog_ocorrencia.cdmensagem%type    DEFAULT 0,    -- cdcritic
   pr_dsmensagem    IN tbgen_prglog_ocorrencia.dsmensagem%type    DEFAULT NULL, -- dscritic       
   pr_flgsucesso    IN tbgen_prglog.flgsucesso%type               DEFAULT 1,    -- Indicador de sucesso da execução
+  pr_nmarqlog      IN tbgen_prglog.nmarqlog%TYPE                 DEFAULT NULL, --  Nome do arquivo
+  pr_flabrechamado IN BOOLEAN                                    DEFAULT FALSE,-- Abre chamado sim/nao
+  pr_texto_chamado IN VARCHAR2                                   DEFAULT NULL, -- Texto do chamado
+  pr_destinatario_email IN VARCHAR2                              DEFAULT NULL, -- Destinatario do email
   PR_IDPRGLOG      IN OUT tbgen_prglog.idprglog%type                           -- Identificador unico da tabela (sequence)
   ) IS          
   PRAGMA AUTONOMOUS_TRANSACTION;
   
 BEGIN
+  /* .......................................................................................
+  Programa : pc_log_programa
+  Sistema : Todos
+  Autor   : Carlos Henrique/CECRED
+  Data    : Março/2017                   Ultima atualizacao: 17/04/2017  
+
+  Objetivo  : Logar execuções, ocorrências, erros ou mensagens dos programas.
+              Abrir chamado e enviar e-mail quando necessário.
+  
+  Alterações: 10/04/2017 - Inclusão do parâmetro pr_nmarlog (Carlos)
+              
+              17/04/2017 - Tratamento para abrir chamado quando ocorrer algum erro e 
+                           tambem enviar o numero do chamado aberto para o analista 
+                           responsavel do produto (Lucas Ranghetti #630298)
+  .......................................................................................... */
   DECLARE 
   
   vr_idprglog   tbgen_prglog.idprglog%type;
@@ -21,7 +40,18 @@ BEGIN
   
   vr_cdprograma tbgen_prglog.cdprograma%TYPE := upper(pr_cdprograma);
   vr_dsmensagem tbgen_prglog_ocorrencia.dsmensagem%TYPE := pr_dsmensagem;
-  
+  vr_texto_chamado VARCHAR2(5000);
+  vr_titulo_chamado VARCHAR2(1000);
+  vr_texto_email VARCHAR2(10000);
+  vr_chamado VARCHAR2(1000);
+  vr_comando VARCHAR2(1000);
+  vr_link_softdesk VARCHAR2(500);
+  vr_typ_saida     VARCHAR2(4000);
+  vr_dscritic VARCHAR2(4000);
+  vr_mensagem_chamado VARCHAR2(5000);
+  vr_texto_chamado1 VARCHAR2(5000);
+  vr_nrchamado NUMBER;
+  vr_usuario_sd VARCHAR2(20);
   exc_saida EXCEPTION;
   
   -- Busca última execução
@@ -30,13 +60,13 @@ BEGIN
           ,p.idprglog
       FROM tbgen_prglog p
      WHERE p.cdcooper = pr_cdcooper
-       AND p.cdprograma = pr_cdprograma
+       AND p.cdprograma = vr_cdprograma
        AND TRUNC(p.dhinicio) = TRUNC(SYSDATE)
      ORDER BY p.nrexecucao DESC;
 
   rw_ultima_execucao cr_ultima_execucao%ROWTYPE;
     
-  
+  /* Função para inserir na tabela tbgen_prglog */
   FUNCTION fn_insert_tbgen_prglog(pr2_dhfim      tbgen_prglog.dhfim%type                 DEFAULT NULL,
                                   pr2_flgsucesso tbgen_prglog.flgsucesso%type            DEFAULT 1) 
                                   RETURN tbgen_prglog.idprglog%TYPE IS    
@@ -50,7 +80,9 @@ BEGIN
         ,p.dhinicio
         ,p.dhfim
         ,p.flgsucesso
-        ,p.nrexecucao)
+        ,p.nrexecucao
+        ,p.nmarqlog
+        )
       VALUES
         (pr_cdcooper
         ,pr_tpexecucao
@@ -58,7 +90,9 @@ BEGIN
         ,SYSDATE
         ,pr2_dhfim
         ,pr2_flgsucesso
-        ,vr_nrexecucao)
+        ,vr_nrexecucao
+        ,pr_nmarqlog
+        )
       RETURNING p.idprglog INTO vr_idprglog;
       COMMIT;
     EXCEPTION
@@ -71,6 +105,7 @@ BEGIN
 
   END fn_insert_tbgen_prglog;
   
+  /* Função para inserir na tabela tbgen_prglog_ocorrencia */
   PROCEDURE insert_tbgen_prglog_ocorrencia IS 
   BEGIN   
     BEGIN
@@ -80,14 +115,16 @@ BEGIN
         ,o.tpocorrencia
         ,o.cdcriticidade
         ,o.cdmensagem
-        ,o.dsmensagem)
+        ,o.dsmensagem
+        ,o.nrchamado)
       VALUES
         (PR_IDPRGLOG
         ,SYSDATE
         ,pr_tpocorrencia
         ,pr_cdcriticidade
         ,pr_cdmensagem
-        ,vr_dsmensagem);
+        ,vr_dsmensagem
+        ,vr_nrchamado);
       COMMIT;
     EXCEPTION
       WHEN OTHERS THEN
@@ -163,13 +200,8 @@ BEGIN
           
           -- Se não encontrar a última execuçao, cria tbgen_prglog
           IF cr_ultima_execucao%NOTFOUND THEN
-            
-            IF (instr(lower(pr_cdprograma), '.log', 1) > 0) THEN
-              vr_cdprograma := pr_cdprograma;              
-            ELSE 
-              vr_cdprograma := 'LOG_BATCH';
-              vr_dsmensagem := 'Crítica fora do padrão: ' || pr_dsmensagem;
-            END IF;
+                     
+            vr_dsmensagem := pr_dsmensagem;
 
             PR_IDPRGLOG := fn_insert_tbgen_prglog(pr2_dhfim      => SYSDATE,
                                                   pr2_flgsucesso => 0);
@@ -180,6 +212,56 @@ BEGIN
           CLOSE cr_ultima_execucao;
 
         END IF;
+
+        -- Se eh para abrir chamado
+        IF pr_flabrechamado THEN
+          
+          -- Buscar caminho do softdesk (homol ou prod)
+          IF gene0001.fn_database_name = 'AYLLOSP' THEN
+            vr_link_softdesk:= 'http://softdesk.cecred.coop.br';
+          ELSE
+            vr_link_softdesk:= 'http://softdesktreina.cecred.coop.br';
+          END IF;  
+        
+          -- Substituir acentos
+          vr_mensagem_chamado:= gene0007.fn_caract_acento(pr_dsmensagem);
+          vr_texto_chamado1:= gene0007.fn_caract_acento(pr_texto_chamado);
+          
+          -- Usar o utl.escape para substituir caracteres de html para o comando entender
+          vr_texto_chamado:= utl_url.escape(vr_texto_chamado1) || utl_url.escape(vr_mensagem_chamado);
+          vr_titulo_chamado:= utl_url.escape('Evento Monitoracao');
+          vr_usuario_sd:= utl_url.escape('monitor sistemas');
+          
+          -- Comando para abrir chamado no softdesk
+          vr_comando:= 'curl ' || '"'||vr_link_softdesk||'/modulos/incidente/'
+                    || 'api.php?cd_area=2&cd_usuario='||vr_usuario_sd||'&tt_chamado='
+                    ||vr_titulo_chamado|| '&ds_chamado='|| vr_texto_chamado 
+                    || '&cd_categoria=586'||'&cd_grupo_solucao=128&cd_servico=57&cd_tipo_chamado=5"'  
+                    || ' 2> /dev/null';                  
+                    
+          --Executar o comando no unix
+          GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                               ,pr_des_comando => vr_comando
+                               ,pr_typ_saida   => vr_typ_saida
+                               ,pr_des_saida   => vr_chamado);
+                               
+          -- Irá sempre retornar a saida como: Chamado no Soft desk: numero
+          vr_nrchamado:= substr(TRIM(REPLACE(REPLACE(vr_chamado,chr(13),NULL),chr(10),NULL)),23,10);
+          
+          -- Texto do chamado + o chamado aberto
+          vr_texto_email:= pr_texto_chamado || pr_dsmensagem ||'<br><br><b>'||'Chamado no Softdesk: '||
+                           vr_nrchamado||'.</b>';                   
+
+          -- Por fim, envia o email
+          gene0003.pc_solicita_email(pr_cdprogra    => vr_cdprograma
+                                    ,pr_des_destino => pr_destinatario_email
+                                    ,pr_des_assunto => 'ERRO NA EXECUCAO DO PROGRAMA '|| vr_cdprograma
+                                    ,pr_des_corpo   => vr_texto_email
+                                    ,pr_des_anexo   => NULL
+                                    ,pr_flg_enviar  => 'N'
+                                    ,pr_des_erro    => vr_dscritic); 
+                                
+        END IF;        
 
         -- Cria a ocorrência
         insert_tbgen_prglog_ocorrencia;
@@ -215,7 +297,7 @@ BEGIN
         VALUES
           (pr_cdcooper
           ,1 --tpexecucao Batch
-          ,pr_cdprograma
+          ,vr_cdprograma
           ,vr_nrexecucao
           ,SYSDATE
           ,1)
