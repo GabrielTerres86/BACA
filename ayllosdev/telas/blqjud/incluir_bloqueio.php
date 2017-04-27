@@ -1,21 +1,26 @@
 <?php 
 	
-	//************************************************************************//
-	//*** Fonte: incluir_bloqueio.php                                      ***//
-	//*** Autor: Guilherme/SUPERO                                          ***//
-	//*** Data : Março/2013                   Última Alteração:            ***//
-	//***                                                                  ***//
-	//*** Objetivo  : Funcoes relativas ao Bloqueio Judicial               ***//	
-	//***                                                                  ***//
-	//***                          								           ***//
-	//*** Alterações: 29/07/2016 - Ajuste para controle de permissão sobre ***//
-	//***                          as subrotinas de cada opção	           ***//
-    //***                         (Adriano - SD 492902).				   ***//
-	//***			 31/10/2016 - Realizar a chamada da rotina INCLUI-     ***//
-	//***					      BLOQUEIO-JUD diretamente do oracle via   ***//
-	//***					      mensageria (Renato Darosci - Supero)     ***//
-	//***                          									       ***//
-	//************************************************************************//
+	/******************************************************************
+	 Fonte: incluir_bloqueio.php                                      
+	 Autor: Guilherme/SUPERO                                          
+	 Data : Março/2013                   Última Alteração: 31/10/2016
+	                                                                  
+	 Objetivo  : Funcoes relativas ao Bloqueio Judicial               	
+	                                                    
+	                          								           
+	 Alterações: 29/07/2016 - Ajuste para controle de permissão sobre 
+	                          as subrotinas de cada opção	           
+                             (Adriano - SD 492902).
+							 
+				 05/08/2016 - Ajuste para validar corretamente a opção 
+							  (Adriano)		
+							  
+			     31/10/2016 - Realizar a chamada da rotina INCLUI-    
+						      BLOQUEIO-JUD diretamente do oracle via 
+						      mensageria (Renato Darosci - Supero)     
+	                          						 				   
+	                          									       
+	*********************************************************************/
 	
 	session_start();
 	
@@ -38,18 +43,18 @@
 
 	$nmrotina = $glbvars["nmrotina"];
 	 
-	switch ($opcao){
+	switch ($cddopcao){
 
 		case 'B': $glbvars["nmrotina"] = "BLQ JUDICIAL"; break;
 		case 'C': $glbvars["nmrotina"] = "BLQ CAPITAL"; break;
 		case 'T': $glbvars["nmrotina"] = "TRF JUDICIAL"; break;		
-		
+
 	}
 
 	// Verifica permiss&atilde;o da subrotina
 	$msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],$cdoperac);
 
-    $nrdconta = $_POST["nrdconta"];     // LISTA
+	$nrdconta = $_POST["nrdconta"];     // LISTA
     $cdtipmov = $_POST["cdtipmov"];     // LISTA
     $cdmodali = $_POST["cdmodali"];     // LISTA
     $vlbloque = $_POST["vlbloque"];     // LISTA
@@ -61,8 +66,7 @@
     $dtenvres = $_POST["dtenvres"];
     $vlrsaldo = $_POST["vlrsaldo"];
 	$dsinfadc = $_POST["dsinfadc"];
-	$cddopcao = $_POST["cddopcao"];
-
+	
 	// Monta o xml de requisição
 	$xmlRegistro  = "";
 	$xmlRegistro .= "<Root>";
@@ -86,7 +90,10 @@
 		
 	// Executa script para envio do XML
 	$xmlResult = mensageria($xmlRegistro, "BLQJUD", "INCLUI_BLOQUEIO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	
+	$glbvars["nmrotina"] = $nmrotina;
 		
+
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjRegistro = getObjectXML($xmlResult);
 

@@ -49,7 +49,7 @@
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cdoperac,false)) <> '') {	
 		exibirErro('error',$msgError,'Alerta - Ayllos','',true);
 	}
-
+	
 	$glbvars["nmrotina"] = $nmrotina;
 
 ?>
