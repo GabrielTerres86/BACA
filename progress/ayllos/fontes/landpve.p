@@ -639,30 +639,6 @@ DO WHILE TRUE:
                   END.
           END.
 
-      /*** 10/02/2017 - tratamento Gravame - Jean (Mout´S) ***/
-      IF  glb_cdcritic     = 0  THEN
-          DO:
-              FIND FIRST crapbpr WHERE 
-                         crapbpr.cdcooper = glb_cdcooper AND 
-                         crapbpr.nrdconta = craplcm.nrdconta AND
-                         (crapbpr.dscatbem = "AUTOMOVEL" OR
-						  crapbpr.dscatbem = "CAMINHAO" OR
-						  crapbpr.dscatbem = "MOTO") AND
-                         (crapbpr.cdsitgrv = 1 OR
-						  crapbpr.cdsitgrv = 4 OR
-						  crapbpr.cdsitgrv = 5)
-                         NO-LOCK NO-ERROR.
-
-              IF AVAILABLE crapbpr THEN
-              DO:
-                  MESSAGE "Exclusao invalida! Conta com " +
-                          "Gravame Baixado, Cancelado ou " +
-                          "                    Em processamento.".
-                  NEXT.
-              END.
-
-          END.
-
       /*** Tratamento da Compensacao Eletronica ***/
       IF   glb_cdcritic     = 0   AND 
           (craplcm.cdhistor = 3   OR
