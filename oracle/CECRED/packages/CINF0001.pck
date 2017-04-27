@@ -41,7 +41,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CINF0001 AS
   --  Sistema  : Procedimentos para agendamentos na Internet (sistema/generico/procedures/b1wgen0142.p)
   --  Sigla    : CRED
   --  Autor    : Gabriel Capoia (DB1)
-  --  Data    : Novembro/2012                     Ultima atualizacao: 30/05/2016
+  --  Data     : Novembro/2012                     Ultima atualizacao: 30/05/2016
   --
   -- Dados referentes ao programa:
   --
@@ -52,8 +52,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CINF0001 AS
   --             02/09/2014 - Carregar somente cooperativas ativas na procedure
   --                          pi_carrega_cooperativas (David).
   --
-  --		     30/05/2016 - Ajuste para formatar a informação cdagectl com 4 zeros 
+  --		         30/05/2016 - Ajuste para formatar a informação cdagectl com 4 zeros 
   --                          (Adriano - M117)
+  --
+  --             11/04/2017 - Alteração do nome da cooperativa VIACREDI AV (Dionathan)
   ---------------------------------------------------------------------------------------------------------------                             
 
   PROCEDURE pc_carrega_cooperativas (pr_nmcooper     OUT VARCHAR2,
@@ -65,7 +67,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CINF0001 AS
     
       CURSOR cr_crapcop IS
         SELECT cdcooper
-              ,nmrescop
+              ,DECODE(cdcooper,16,'VIACREDI ALTO VALE', nmrescop) nmrescop
               ,cdagectl
           FROM crapcop 
          WHERE cdcooper <> 3 

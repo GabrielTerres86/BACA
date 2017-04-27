@@ -70,8 +70,8 @@ CREATE OR REPLACE PACKAGE CECRED.CONV0001 AS
                             relatorio crrl709 - Repasses Convenio DPVAT 
                             Sicredi. (Jaison/Marcos-Supero)
 
-               30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])		
-               
+               30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])														
+
                14/09/2016 - Incluir nova procedure pc_pula_seq_gt0001, irá criar registro de
                             controle na gncontr caso seja alterado o sequencial (Lucas Ranghetti #484556)
 
@@ -358,7 +358,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --  Sistema  : Procedimentos para Convenios
   --  Sigla    : CRED
   --  Autor    : Douglas Pagel
-  --  Data     : Outubro/2013.                   Ultima atualizacao: 20/02/2017
+  --  Data     : Outubro/2013.                   Ultima atualizacao: 31/03/2017
   --
   -- Dados referentes ao programa:
   --
@@ -435,6 +435,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --             20/02/2017 - #551216 Ajustes em pc_busca_concilia_transabbc para logar início, erros e
   --                          fim da execução do programa e mudança nos logs dos erros para atenderem ao 
   --                          padrão 'HH24:MI:SS - nome_programa' (Carlos)
+  --
+  --             31/03/2017 - Incluir PREVISC para fazer como faz a SULAMERICA (Lucas Ranghetti #637882)
   ---------------------------------------------------------------------------------------------------------------
 
 
@@ -1582,7 +1584,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Odair
-  --  Data     : Agosto/98.                  Ultima atualizacao: 21/11/2016
+  --  Data     : Agosto/98.                  Ultima atualizacao: 31/03/2017
   --
   -- Dados referentes ao programa:
   --
@@ -1674,6 +1676,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --             21/11/2016 - Se for o convenio 045, 14 BRT CELULAR - FEBRABAN e referencia conter 11 
   --                          posicoes, devemos incluir um hifen para completar 12 posicoes 
   --                          ex: 40151016407- (Lucas Ranghetti #560620/453337)
+  --
+  --             31/03/2017 - Incluir PREVISC para fazer como faz a SULAMERICA (Lucas Ranghetti #637882)
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -1811,7 +1815,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
           vr_dstexarq := vr_dstexarq || gene0002.fn_mask(pr_cdrefere,'9999999999') || RPAD(' ',15,' ');
         ELSIF pr_cdhistor = 48 THEN -- RECEBIMENTO CASAN AUTOMATICO
           vr_dstexarq := vr_dstexarq || gene0002.fn_mask(pr_cdrefere,'99999999') || RPAD(' ',17,' ');
-        ELSIF pr_cdhistor = 1517 THEN -- SULAMERICA
+        ELSIF pr_cdhistor IN(2039 ,1517) THEN -- PREVISC, SULAMERICA
           vr_dstexarq := vr_dstexarq || gene0002.fn_mask(pr_cdrefere,'9999999999999999999999') ||
                                         RPAD(' ',3,' ');
         ELSIF pr_cdhistor IN(834,901,993,1061,1723) THEN -- TIM Celular,HDI,LIBERTY SEGUROS,PORTO SEGURO,PREVISUL

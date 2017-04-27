@@ -477,7 +477,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
   --  Sistema  : Procedure para realizar transferencia
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 04/02/2016
+  --  Data     : Julho/2013.                   Ultima atualizacao: 14/11/2016
   --
   -- Dados referentes ao programa:
   --
@@ -503,6 +503,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
   --
   --                 04/02/2016 - Aumento no tempo de verificacao de Transferencia duplicada. 
   --                              De 30 seg. para 10 min. (Jorge/David) - SD 397867     
+  --
+  --                14/11/2016 - Alterado cdorigem 9 para 10, novo cdorigem especifico para mobile
+  --                             PRJ335 - Analise de Fraude(Odirlei-AMcom)
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -2255,7 +2258,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
       END;
       
 	IF pr_flmobile = 1 THEN
-		vr_cdorigem := 9;
+		vr_cdorigem := 10; --> MOBILE
 	ELSE 
 		vr_cdorigem := pr_idorigem;
 	END IF;

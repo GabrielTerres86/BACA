@@ -72,7 +72,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps405 (pr_cdcooper IN crapcop.cdcooper%T
 
                23/05/2014 - Ajustado para converter o relatorio(ux2dos) antes de envia-lo por e-mail(Odirlei-AMcom)
 
-			         25/06/2014 - Incluso novo parametro na chamada RATI0001.pc_obtem_risco
+               25/06/2014 - Incluso novo parametro na chamada RATI0001.pc_obtem_risco
                             SoftDesk 137892 (Daniel)
 
                01/10/2014 - Corrigido o tratamento de exceção na saida da pc_saldo_utiliza
@@ -83,6 +83,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps405 (pr_cdcooper IN crapcop.cdcooper%T
                             
                22/07/2016 - Correcao para exibicao correta das operacoes.
                             SoftDesk 481860 (Gil - RKAM)             
+
+              03/04/2017 - Chamado 598515 - Ao emitir relatório 368 não está desconsiderando valores de risco abaixo de 50000 
+			                (Jean / Mout´S)
      ............................................................................. */
 
      DECLARE
@@ -93,6 +96,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps405 (pr_cdcooper IN crapcop.cdcooper%T
        TYPE typ_reg_atualiz IS
          RECORD (nrcpfcgc crapass.nrcpfcgc%TYPE
                 ,nrdconta crapass.nrdconta%TYPE
+
                 ,nrnotrat crapnrc.nrnotrat%TYPE
                 ,indrisco crapnrc.indrisco%TYPE
                 ,dtmvtolt crapnrc.dtmvtolt%TYPE
@@ -204,6 +208,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps405 (pr_cdcooper IN crapcop.cdcooper%T
                ,crapass.nrdconta
                ,crapass.nrcpfcgc
                ,crapass.inpessoa
+
                ,Count(1) OVER (PARTITION BY crapass.nrcpfcgc) qtdreg
                ,Row_Number() OVER (PARTITION BY crapass.nrcpfcgc
                                    ORDER BY crapass.nrcpfcgc) nrseqreg
@@ -224,7 +229,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps405 (pr_cdcooper IN crapcop.cdcooper%T
          WHERE crapass.cdcooper = pr_cdcooper;
 
        --Variaveis Locais
-
        vr_inusatab     BOOLEAN;
        vr_vlrisco      NUMBER;
        vr_diarating    INTEGER;
@@ -248,7 +252,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps405 (pr_cdcooper IN crapcop.cdcooper%T
        vr_nrc_nrctrrat crapnrc.nrctrrat%TYPE;
        vr_nrc_dsdopera VARCHAR2(100);
 
-
        --Variavel usada para montar o indice da tabela de memoria
        vr_index_atualiz INTEGER;
        vr_index_salvo   INTEGER;
@@ -258,13 +261,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps405 (pr_cdcooper IN crapcop.cdcooper%T
        --Variaveis da Crapdat
        vr_dtmvtolt     DATE;
 
-	     -- Variável para armazenar as informações em XML
+	   -- Variável para armazenar as informações em XML
        vr_des_xml     CLOB;
 
        --Variaveis para retorno de erro
        vr_dstextab_bacen craptab.dstextab%TYPE;
        vr_dstextab_dias  craptab.dstextab%TYPE;
-
 
        --Variaveis de Excecao
        vr_exc_erro  EXCEPTION;
@@ -287,14 +289,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps405 (pr_cdcooper IN crapcop.cdcooper%T
            RAISE vr_exc_erro;
        END;
 
-	     --Escrever no arquivo CLOB
-	     PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2) IS
+       --Escrever no arquivo CLOB
+	   PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2) IS
        BEGIN
          --Escrever no arquivo XML
          dbms_lob.writeappend(vr_des_xml,length(pr_des_dados),pr_des_dados);
        END;
 
-	     --Geração do relatório crrl368
+	   --Geração do relatório crrl368
        PROCEDURE pc_imprime_crrl368 (pr_des_erro OUT VARCHAR2) IS
 
          --Cursores Locais
@@ -319,9 +321,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps405 (pr_cdcooper IN crapcop.cdcooper%T
          vr_nom_direto     VARCHAR2(100);
          vr_nom_arquivo    VARCHAR2(100);
 
-	     BEGIN
-	       --Inicializar variavel de erro
-		     vr_dscritic:= NULL;
+	   BEGIN
+	     --Inicializar variavel de erro
+		 vr_dscritic:= NULL;
 
          -- Busca do diretório base da cooperativa para PDF
          vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C' -- /usr/coop
@@ -456,10 +458,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps405 (pr_cdcooper IN crapcop.cdcooper%T
 
 	     EXCEPTION
 	       WHEN vr_exc_erro THEN
-		       pr_des_erro:= vr_dscritic;
-         WHEN OTHERS THEN
-           pr_des_erro:= 'Erro ao imprimir relatório crrl368. '||sqlerrm;
-	     END;
+		     pr_des_erro:= vr_dscritic;
+           WHEN OTHERS THEN
+             pr_des_erro:= 'Erro ao imprimir relatório crrl368. '||sqlerrm;
+	   END;
      ---------------------------------------
      -- Inicio Bloco Principal pc_crps405
      ---------------------------------------
@@ -638,11 +640,21 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps405 (pr_cdcooper IN crapcop.cdcooper%T
                vr_data:= vr_tab_crapnrc(rw_crapass.nrdconta).dtmvtolt + vr_diarating - 30;
                /* No proximo mes estara vencendo ... */
                IF To_Char(vr_data,'YYYYMM') = To_Char(rw_crapdat.dtmvtopr,'YYYYMM') THEN
-
+ 
+             --Se o valor utilizado for menor valor risco -- retirar esta regra se não for aprovado o conceito (Jean / Mout´S)
+             IF Nvl(vr_vlutiliz,0) < Nvl(vr_vlrisco,0) THEN
+               --Inserir na tabela de desprezados
+               vr_index_desprez:= LPad(rw_crapass.nrcpfcgc,25,'0');
+               vr_tab_desprez(vr_index_desprez):= rw_crapass.nrcpfcgc;
+               --proximo registro crapass
+               CONTINUE;
+             END IF;
+             
                  --Determinar o proximo registro
                  vr_index_atualiz:= vr_tab_atualiz.Count+1;
                  vr_tab_atualiz(vr_index_atualiz).nrcpfcgc:= rw_crapass.nrcpfcgc;
                  vr_tab_atualiz(vr_index_atualiz).nrdconta:= rw_crapass.nrdconta;
+
                  vr_tab_atualiz(vr_index_atualiz).nrnotrat:= vr_tab_crapnrc(rw_crapass.nrdconta).nrnotrat;
                  vr_tab_atualiz(vr_index_atualiz).indrisco:= vr_tab_crapnrc(rw_crapass.nrdconta).indrisco;
                  vr_tab_atualiz(vr_index_atualiz).dtmvtolt:= vr_tab_crapnrc(rw_crapass.nrdconta).dtmvtolt;
@@ -704,6 +716,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps405 (pr_cdcooper IN crapcop.cdcooper%T
              vr_index_atualiz:= vr_tab_atualiz.Count+1;
              vr_tab_atualiz(vr_index_atualiz).nrcpfcgc:= rw_crapass.nrcpfcgc;
              vr_tab_atualiz(vr_index_atualiz).nrdconta:= rw_crapass.nrdconta;
+
              vr_tab_atualiz(vr_index_atualiz).nrnotrat:= vr_nrc_nrnotrat;
              vr_tab_atualiz(vr_index_atualiz).indrisco:= vr_nrc_indrisco;
              vr_tab_atualiz(vr_index_atualiz).dtmvtolt:= vr_nrc_dtmvtolt;

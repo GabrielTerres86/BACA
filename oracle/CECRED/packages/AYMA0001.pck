@@ -281,6 +281,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AYMA0001 AS
                       ,pr_dscritic   => pr_dscritic
                       ,pr_cdcritic   => pr_cdcritic);
                       
+      IF(pr_cdcritic > 0 OR TRIM(pr_dscritic) IS NOT NULL) THEN
+        RAISE vr_exc_erro;
+      END IF;                      
+                      
       pr_resposta.status_code := vr_resposta.status_code;
       pr_resposta.status_message := vr_resposta.status_message;
 

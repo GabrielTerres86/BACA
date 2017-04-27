@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Lucas Lunelli
-    Data    : Fevereiro/2013                  Ultima Atualizacao : 13/02/2017
+    Data    : Fevereiro/2013                  Ultima Atualizacao : 05/04/2017
 
     Dados referente ao programa:
 
@@ -102,7 +102,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
                              P308 (Ricardo Linhares).
 
                  13/02/2017 - Conversão Progress para PLSQL (Jonata-MOUTs)
-
+                 
+                 05/04/2017 - Inclusão do código da Cooperativa no arquivo Contab (Jonata-Mouts)
   ..............................................................................*/
 
   --------------------- ESTRUTURAS PARA OS RELATÓRIOS ---------------------
@@ -1530,7 +1531,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
                                    ||to_char(rw_crapdat.dtmvtolt,'MM')
                                    ||to_char(rw_crapdat.dtmvtolt,'DD');
 
-            vr_aux_nmarqdat := '/contab/'||to_char(rw_crapdat.dtmvtolt,'RRMMDD')||'_CONVEN_SIC.txt';
+            vr_aux_nmarqdat := '/contab/'||to_char(rw_crapdat.dtmvtolt,'RRMMDD')||'_'||lpad(pr_cdcooper,2,'0')||'_CONVEN_SIC.txt';
 
             -- Buscare diretorio X
             vr_caminho_dirX := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'

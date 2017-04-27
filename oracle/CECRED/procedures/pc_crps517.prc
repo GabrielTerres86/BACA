@@ -99,7 +99,7 @@ DECLARE
       vr_desdolog     VARCHAR2(500);
       vr_tempo        NUMBER;
             
-      vr_nomdojob CONSTANT VARCHAR2(26) := 'JBLIMI_CRPS517';
+      vr_nomdojob CONSTANT VARCHAR2(26) := 'jbdsct_limite_desconto';
       vr_cdcooper crapcop.cdcooper%TYPE := 3;
       
       ------------------------------- CURSORES ---------------------------------
@@ -129,7 +129,7 @@ DECLARE
                                ,pr_flproces => 0   --> Flag se deve validar se esta no processo
                                ,pr_flrepjob => 1   --> Flag para reprogramar o job
                                ,pr_flgerlog => 1   --> indicador se deve gerar log
-                               ,pr_nmprogra => 'CRPS517'   --> Nome do programa que esta sendo executado no job
+                               ,pr_nmprogra => vr_nomdojob   --> Nome do programa que esta sendo executado no job
                                ,pr_dscritic => vr_dscritic);
                                
       IF vr_dscritic IS NOT NULL THEN
@@ -145,8 +145,10 @@ DECLARE
 
         btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
                                   ,pr_ind_tipo_log => 2 -- Erro tratato 
-                                  ,pr_des_log      => to_char(SYSDATE,'HH24:MI:SS')||' - '|| vr_cdprogra ||
-                                                      ' --> Inicio da execucao: '|| vr_cdprogra
+                                  ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',
+                                                      rw_crapcop.cdcooper,'NOME_ARQ_LOG_MESSAGE')
+                                  ,pr_des_log      => to_char(SYSDATE,'HH24:MI:SS')||' - '|| vr_nomdojob ||
+                                                      ' --> Inicio da execucao: '|| vr_nomdojob
                                   ,pr_dstiplog     => 'I'
                                   ,pr_cdprograma   => vr_nomdojob);
 
@@ -214,19 +216,21 @@ DECLARE
                                  ,pr_infimsol => pr_infimsol
                                  ,pr_stprogra => pr_stprogra);
         ***************************************************************************************/
-        
+
         --> Criar log de fim de execução
-        vr_desdolog := to_char(SYSDATE,'HH24:MI:SS')||' - '|| vr_cdprogra ||
+        vr_desdolog := to_char(SYSDATE,'HH24:MI:SS')||' - '|| vr_nomdojob ||
                            ' --> Stored Procedure rodou em '|| 
                            -- calcular tempo de execução
                            to_char(to_date(to_char(SYSDATE,'SSSSS') - vr_tempo,'SSSSS'),'HH24:MI:SS');
                        
-         btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
-                                   ,pr_ind_tipo_log => 1
-                                   ,pr_des_log      => vr_desdolog
-                                   ,pr_dstiplog     => 'F'
-                                   ,pr_cdprograma   => vr_nomdojob);
-        
+        btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
+                                  ,pr_ind_tipo_log => 1
+                                  ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',
+                                                      rw_crapcop.cdcooper,'NOME_ARQ_LOG_MESSAGE')
+                                  ,pr_des_log      => vr_desdolog
+                                  ,pr_dstiplog     => 'F'
+                                  ,pr_cdprograma   => vr_nomdojob);
+
         -- Commitar as alterações
         COMMIT;
       END LOOP;           
@@ -243,8 +247,10 @@ DECLARE
           -- Envio centralizado de log de erro
           btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                                     ,pr_ind_tipo_log => 2 -- Erro tratato 
+                                    ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',
+                                                        pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
                                     ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')|| ' - '
-                                                                      || vr_cdprogra || ' --> '
+                                                                      || vr_nomdojob || ' --> '
                                                                       || vr_dscritic
                                     ,pr_dstiplog     => 'E'
                                     ,pr_cdprograma   => vr_nomdojob);
@@ -270,8 +276,10 @@ DECLARE
           -- Envio centralizado de log de erro
           btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                                     ,pr_ind_tipo_log => 2 -- Erro tratato
+                                    ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,
+                                                                                  'NOME_ARQ_LOG_MESSAGE')
                                     ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')|| ' - '
-                                                                      || vr_cdprogra || ' --> '
+                                                                      || vr_nomdojob || ' --> '
                                                                       || vr_dscritic
                                     ,pr_dstiplog     => 'E'
                                     ,pr_cdprograma   => vr_nomdojob);
@@ -286,8 +294,10 @@ DECLARE
           -- Envio centralizado de log de erro
           btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                                     ,pr_ind_tipo_log => 2 -- Erro tratato
+                                    ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,
+                                                                                  'NOME_ARQ_LOG_MESSAGE')
                                     ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')|| ' - '
-                                                                      || vr_cdprogra || ' --> '
+                                                                      || vr_nomdojob || ' --> '
                                                                       || vr_dscritic
                                     ,pr_dstiplog     => 'E'
                                     ,pr_cdprograma   => vr_nomdojob);

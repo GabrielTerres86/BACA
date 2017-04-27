@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Deborah/Edson
-       Data    : Dezembro/93                         Ultima atualizacao: 22/09/2016
+       Data    : Dezembro/93                         Ultima atualizacao: 02/03/2017
 
        Dados referentes ao programa:
 
@@ -58,6 +58,9 @@ CREATE OR REPLACE PROCEDURE CECRED.
 
                    22/09/2016 - Alterei a gravacao do log 661 do proc_batch para 
                                 o proc_message SD 402979. (Carlos Rafael Tanholi)
+                                
+                   02/03/2017 - Incluido nas consultas da craplau 
+                                craplau.dsorigem <> "ADIOFJUROS" (Lucas Ranghetti M338.1)
     ............................................................................ */
 
     DECLARE
@@ -108,23 +111,24 @@ CREATE OR REPLACE PROCEDURE CECRED.
                          pr_cdagenci craplot.cdagenci%type,
                          pr_cdbccxlt craplot.cdbccxlt%type,
                          pr_nrdolote craplot.nrdolote%type) IS
-        SELECT insitlau,
-               dtmvtopg,
-               rowid
+        SELECT insitlau
+              ,dtmvtopg
+              ,ROWID
           FROM craplau
          WHERE craplau.cdcooper = pr_cdcooper
            AND craplau.dtmvtolt = pr_dtmvtolt
            AND craplau.cdagenci = pr_cdagenci
            AND craplau.cdbccxlt = pr_cdbccxlt
            AND craplau.nrdolote = pr_nrdolote
-           AND craplau.dsorigem not in ('CAIXA',
-                                        'INTERNET',
-                                        'TAA',
-                                        'PG555',
-                                        'CARTAOBB',
-                                        'BLOQJUD',
-                                        'DAUT BANCOOB',
-                                        'TRMULTAJUROS');
+           AND craplau.dsorigem NOT IN ('CAIXA'
+                                       ,'INTERNET'
+                                       ,'TAA'
+                                       ,'PG555'
+                                       ,'CARTAOBB'
+                                       ,'BLOQJUD'
+                                       ,'DAUT BANCOOB'
+                                       ,'TRMULTAJUROS'
+                                       ,'ADIOFJUROS');
                                         
       ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
 

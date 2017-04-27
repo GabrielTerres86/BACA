@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Junho/95.                       Ultima atualizacao: 20/05/2016
+   Data    : Junho/95.                       Ultima atualizacao: 02/03/2017
 
    Dados referentes ao programa:
 
@@ -219,6 +219,9 @@ BEGIN
                  20/05/2016 - Incluido nas consultas da craplau
                               craplau.dsorigem <> "TRMULTAJUROS". (Jaison/James)
 
+                 02/03/2017 - Incluido nas consultas da craplau 
+                              craplau.dsorigem <> "ADIOFJUROS" (Lucas Ranghetti M338.1)
+
   ............................................................................................*/
   
   DECLARE
@@ -313,47 +316,47 @@ BEGIN
     -- BUSCA LANCAMENTOS AUTOMATICOS
     CURSOR cr_craplau(pr_cdcooper IN crapcop.cdcooper%TYPE,
                       pr_dtmvtopr IN crapdat.dtmvtopr%TYPE) IS
-      SELECT lau.cdagenci,
-             lau.nrdconta,
-             lau.cdbccxlt,
-             lau.cdhistor,
-             lau.nrcrcard,
-             lau.nrdocmto,
-						 lau.dscodbar,
-						 lau.dtmvtopg,
-             lau.vllanaut,
-             lau.cdseqtel,
-             lau.nrdctabb,
-             lau.nrseqdig,
-             lau.dtmvtolt,
-             lau.nrdolote,
-             lau.cdcritic,
-             lau.cdempres,
-             lau.rowid,
-             lau.flgblqdb,
-             ROW_NUMBER() OVER(PARTITION BY lau.cdagenci,
-                                            lau.cdbccxlt,
-                                            lau.cdbccxpg,
-                                            lau.cdhistor
-                               ORDER BY lau.cdagenci,
-                                        lau.cdbccxlt,
-                                        lau.cdbccxpg,
-                                        lau.cdhistor,
-                                        lau.nrdocmto) AS seqlauto
+      SELECT lau.cdagenci
+            ,lau.nrdconta
+            ,lau.cdbccxlt
+            ,lau.cdhistor
+            ,lau.nrcrcard
+            ,lau.nrdocmto
+            ,lau.dscodbar
+            ,lau.dtmvtopg
+            ,lau.vllanaut
+            ,lau.cdseqtel
+            ,lau.nrdctabb
+            ,lau.nrseqdig
+            ,lau.dtmvtolt
+            ,lau.nrdolote
+            ,lau.cdcritic
+            ,lau.cdempres
+            ,lau.rowid
+            ,lau.flgblqdb
+            ,row_number() OVER(PARTITION BY lau.cdagenci, lau.cdbccxlt, lau.cdbccxpg, lau.cdhistor ORDER BY lau.cdagenci, lau.cdbccxlt, lau.cdbccxpg, lau.cdhistor, lau.nrdocmto) AS seqlauto
         FROM craplau lau
-       WHERE lau.cdcooper = pr_cdcooper                                         -- CODIGO DA COOPERATIVA
-         AND lau.dtmvtopg <= pr_dtmvtopr                                        -- DATA DE PAGAMENTO
-         AND lau.insitlau = 1                                                   -- SITUACAO DO LANCAMENTO
-         AND lau.dsorigem NOT IN ('CAIXA','INTERNET','TAA','PG555','CARTAOBB','BLOQJUD','DAUT BANCOOB','CAPTACAO','DEBAUT','TRMULTAJUROS')-- ORIGEM DA OPERACAO
+       WHERE lau.cdcooper = pr_cdcooper -- CODIGO DA COOPERATIVA
+         AND lau.dtmvtopg <= pr_dtmvtopr -- DATA DE PAGAMENTO
+         AND lau.insitlau = 1 -- SITUACAO DO LANCAMENTO
+         AND lau.dsorigem NOT IN ('CAIXA'
+                                 ,'INTERNET'
+                                 ,'TAA'
+                                 ,'PG555'
+                                 ,'CARTAOBB'
+                                 ,'BLOQJUD'
+                                 ,'DAUT BANCOOB'
+                                 ,'CAPTACAO'
+                                 ,'DEBAUT'
+                                 ,'TRMULTAJUROS'
+                                 ,'ADIOFJUROS') -- ORIGEM DA OPERACAO
          AND lau.cdhistor <> 1019 --> 1019 será processado pelo crps642
-       ORDER BY lau.cdagenci,
-                lau.cdbccxlt,
-                lau.cdbccxpg,
-                lau.cdhistor,
-                lau.nrdocmto,
-                lau.progress_recid;
-
-
+       ORDER BY lau.cdagenci
+               ,lau.cdbccxlt
+               ,lau.cdbccxpg
+               ,lau.cdhistor
+               ,lau.nrdocmto
+               ,lau.progress_recid;
     rw_craplau cr_craplau%ROWTYPE;
 
     -- BUSCA LANCAMENTOS AUTOMATICOS

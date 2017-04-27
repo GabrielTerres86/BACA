@@ -8,7 +8,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
   BEGIN
 
   /* .............................................................................
-  
+
    Programa: PC_CRPS652                      Antigo: Fontes/CRPS652.p
    Sistema : CYBER - GERACAO DE ARQUIVO
    Sigla   : CRED
@@ -184,9 +184,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                06/03/2017 - Ajuste no hint cr_valor_pago_emprestimo mover para baixo
                do primeiro union. (Oscar)
                            
-               10/01/2017 - Ajustado campo valor do arquivo de acordo de pagamentos,
-                            Prj. 302 (Odirlei-AMcom)                                    
-                            
+
       
 
 
@@ -577,6 +575,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
            FROM   crawepr
            WHERE  crawepr.cdcooper = pr_cdcooper
            AND    crawepr.nrdconta = pr_nrdconta
+		   AND    crawepr.insitapr = 1 -- aprovado
            AND   pr_nrctremp IN (crawepr.nrctrliq##1 ,
                    crawepr.nrctrliq##2 ,
                    crawepr.nrctrliq##3 , 
@@ -1653,7 +1652,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                                           ,pr_nrctremp IN crapcyb.nrctremp%TYPE    --Numero Contrato Emprestimo
                                           ,pr_vlrpagto IN NUMBER                   --Valor Pagamento
                                           ,pr_dtmvtlt2 IN VARCHAR2                 --Data Movimento
-                                          ,pr_cdhistor IN VARCHAR2                 --Codigo Historico
+                                          ,pr_cdhistor IN VARCHAR2                  --Codigo Historico
                                           ,pr_dshistor IN VARCHAR2                 --Descticao Historico
                                           ,pr_cdcritic OUT INTEGER                 --Codigo Critica
                                           ,pr_dscritic OUT VARCHAR2) IS            --Descricao Critica
@@ -5289,10 +5288,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                                         ,pr_des_reto => vr_typ_saida
                                         ,pr_des_erro => vr_dscritic );
        
-       IF vr_typ_saida = 'NOK' then
-          vr_dscritic := 'Erro na chamada da importacao arquivo CYBER: ' || vr_dscritic;
-          raise vr_exc_fimprg;
-       end if;
+	   -- erros da importacao Cyber não serão tratados aqui, serão tratados no LOG do programa CYBE0001
+       --IF vr_typ_saida = 'NOK' then
+       --   vr_dscritic := 'Erro na chamada da importacao arquivo CYBER: ' || vr_dscritic;
+       --   raise vr_exc_fimprg;
+       --end if;
 
        --Salvar informacoes no banco de dados
        COMMIT;

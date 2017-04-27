@@ -1,4 +1,5 @@
 CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
+                                              ,pr_nrdconta IN crapass.nrdconta%TYPE   --> Numero da conta (para processo da cadeia passar zeros)
                                               ,pr_flgresta  IN PLS_INTEGER            --> Flag padrão para utilização de restart
                                               ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
                                               ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação
@@ -10,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Deborah/Edson
-     Data    : Abril/96.                       Ultima atualizacao: 26/07/2016
+     Data    : Abril/96.                       Ultima atualizacao: 29/11/2016
 
      Dados referentes ao programa:
 
@@ -85,6 +86,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
 
                  26/07/2016 - Finalizacao da conversao (Jonata-Rkam)
                    
+                 29/11/2016 - Efetuar o resgate no dia quando passado uma conta especifica
+                              Utilizado pela rotina BLQJ0002 (Andrino-Mouts)
+                              
   ............................................................................ */
 
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -112,6 +116,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
         
     -- Buscar lancamentos de resgates solicitados.
     CURSOR cr_craplrg (pr_cdcooper craplrg.cdcooper%TYPE,
+                       pr_nrdconta craplrg.nrdconta%TYPE,
                        pr_dtmvtopr craplrg.dtresgat%TYPE) IS
       SELECT craplrg.nrdconta
             ,craplrg.nraplica
@@ -123,6 +128,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
             ,craplrg.rowid
         FROM craplrg
        WHERE craplrg.cdcooper  = pr_cdcooper
+         AND craplrg.nrdconta  = decode(pr_nrdconta, 0, craplrg.nrdconta, pr_nrdconta)
          AND craplrg.dtresgat <= pr_dtmvtopr
          AND craplrg.inresgat  = 0
          AND craplrg.tpaplica  = 4
@@ -602,16 +608,24 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
       CLOSE btch0001.cr_crapdat;
     END IF;
 
-    -- Validações iniciais do programa
-    BTCH0001.pc_valida_iniprg(pr_cdcooper => pr_cdcooper
-                             ,pr_flgbatch => 1
-                             ,pr_cdprogra => vr_cdprogra
-                             ,pr_infimsol => pr_infimsol
-                             ,pr_cdcritic => vr_cdcritic);
-    -- Se a variavel de erro é <> 0
-    IF nvl(vr_cdcritic,0) <> 0 THEN
-      -- Envio centralizado de log de erro
-      RAISE vr_exc_saida;
+    -- Se for informado o numero da conta nao deve-se fazer a validacao de inicio de programa,
+    -- pois refere-se a um processo do BacenJud
+    IF nvl(pr_nrdconta,0) = 0 THEN
+      -- Validações iniciais do programa
+      BTCH0001.pc_valida_iniprg(pr_cdcooper => pr_cdcooper
+                               ,pr_flgbatch => 1
+                               ,pr_cdprogra => vr_cdprogra
+                               ,pr_infimsol => pr_infimsol
+                               ,pr_cdcritic => vr_cdcritic);
+      -- Se a variavel de erro é <> 0
+      IF nvl(vr_cdcritic,0) <> 0 THEN
+        -- Envio centralizado de log de erro
+        RAISE vr_exc_saida;
+      END IF;
+    ELSE
+      -- Coloca a data do proximo processo como data atual, para o credito
+      -- entrar no mesmo dia
+      rw_crapdat.dtmvtopr := rw_crapdat.dtmvtolt;
     END IF;
 
     --------------- REGRA DE NEGOCIO DO PROGRAMA -----------------
@@ -632,6 +646,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
     END IF;
     -- Buscar lancamentos de resgates solicitados.
     FOR rw_craplrg IN cr_craplrg (pr_cdcooper => pr_cdcooper,
+                                  pr_nrdconta => nvl(pr_nrdconta,0),
                                   pr_dtmvtopr => rw_crapdat.dtmvtopr) LOOP
       vr_cdcritic := 0;
       vr_vlresgat := 0;
@@ -1066,120 +1081,124 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
                      
     END LOOP;  -- Fim Loop craplrg  -- --  Leitura dos resgates programados                   
     
-    /** Geração Relatorio crrl125 **/
+    -- Gerar relatorio somente se for o processo da cadeia
+    IF nvl(pr_nrdconta,0) = 0 THEN
     
-    -- Inicializar o CLOB
-    vr_des_xml := NULL;
-    dbms_lob.createtemporary(vr_des_xml, TRUE);
-    dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
-    
-    -- Inicilizar as informações do XML
-    vr_texto_completo := NULL;
-    pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><crrl125>');
-        
-    IF vr_regexist THEN
-      -- Buscar dados do lote
-      OPEN cr_craplot (pr_cdcooper => pr_cdcooper,
-                       pr_dtmvtopr => rw_crapdat.dtmvtopr,
-                       pr_nrdolote => 8383);
-      FETCH cr_craplot INTO rw_craplot;
-      IF cr_craplot%NOTFOUND THEN
-        CLOSE cr_craplot;
-        
-        vr_cdcritic := 60; --> 060 - Lote inexistente. 
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' Lote dos resgates: '||
-                       to_char(rw_crapdat.dtmvtopr,'DD/MM/RRRR')||'-001-100-8383';
-        -- abortar programa               
-        RAISE vr_exc_saida;               
-        
-      ELSE
-        CLOSE cr_craplot;
-        
-        pc_escreve_xml('<lote dtmvtolt="'||to_char(rw_craplot.dtmvtolt,'DD/MM/RRRR')||'"  
-                              cdagenci="'||rw_craplot.cdagenci||'"
-                              cdbccxlt="'||rw_craplot.cdbccxlt||'"  
-                              nrdolote="'||rw_craplot.nrdolote||'"
-                              tplotmov="'||rw_craplot.tplotmov||'" >');
-        
-      END IF;
-            
-    END IF;
-    
-    vr_cdcritic := 0;
-    
-    -- ler criticas
-    FOR rw_craprej  IN cr_craprej (pr_cdcooper => pr_cdcooper,
-                                   pr_dtmvtopr => rw_crapdat.dtmvtopr) LOOP
+      /** Geração Relatorio crrl125 **/
       
-      -- buscar descrição da critica
-      IF nvl(vr_cdcritic,0) <> rw_craprej.cdcritic THEN
-        vr_cdcritic := rw_craprej.cdcritic;
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+      -- Inicializar o CLOB
+      vr_des_xml := NULL;
+      dbms_lob.createtemporary(vr_des_xml, TRUE);
+      dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+      
+      -- Inicilizar as informações do XML
+      vr_texto_completo := NULL;
+      pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><crrl125>');
+          
+      IF vr_regexist THEN
+        -- Buscar dados do lote
+        OPEN cr_craplot (pr_cdcooper => pr_cdcooper,
+                         pr_dtmvtopr => rw_crapdat.dtmvtopr,
+                         pr_nrdolote => 8383);
+        FETCH cr_craplot INTO rw_craplot;
+        IF cr_craplot%NOTFOUND THEN
+          CLOSE cr_craplot;
+          
+          vr_cdcritic := 60; --> 060 - Lote inexistente. 
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' Lote dos resgates: '||
+                         to_char(rw_crapdat.dtmvtopr,'DD/MM/RRRR')||'-001-100-8383';
+          -- abortar programa               
+          RAISE vr_exc_saida;               
+          
+        ELSE
+          CLOSE cr_craplot;
+          
+          pc_escreve_xml('<lote dtmvtolt="'||to_char(rw_craplot.dtmvtolt,'DD/MM/RRRR')||'"  
+                                cdagenci="'||rw_craplot.cdagenci||'"
+                                cdbccxlt="'||rw_craplot.cdbccxlt||'"  
+                                nrdolote="'||rw_craplot.nrdolote||'"
+                                tplotmov="'||rw_craplot.tplotmov||'" >');
+          
+        END IF;
+              
       END IF;
       
-      pc_escreve_xml('<rejeitados>
-                          <nrdconta>'|| gene0002.fn_mask_conta(rw_craprej.nrdconta) ||'</nrdconta>
-                          <nraplica>'|| gene0002.fn_mask_contrato(rw_craprej.nraplica)||'</nraplica>
-                          <dtdaviso>'|| to_char(rw_craprej.dtdaviso,'DD/MM/RRRR')   ||'</dtdaviso>
-                          <vldaviso>'|| rw_craprej.vldaviso                         ||'</vldaviso>
-                          <vlsdapli>'|| rw_craprej.vlsdapli                         ||'</vlsdapli>
-                          <vllanmto>'|| rw_craprej.vllanmto                         ||'</vllanmto>
-                          <dscritic>'||         vr_dscritic                         ||'</dscritic>
-                      </rejeitados>');
-                      
-      IF rw_craprej.vllanmto = 0   THEN
-        vr_rel_qtdrejln := nvl(vr_rel_qtdrejln,0) + 1;
-        vr_rel_vldrejdb := nvl(vr_rel_vldrejdb,0) + rw_craprej.vldaviso;
-      END IF;  
+      vr_cdcritic := 0;
       
-    END LOOP;
-    
-    IF vr_regexist THEN
-      pc_escreve_xml('</lote>');
+      -- ler criticas
+      FOR rw_craprej  IN cr_craprej (pr_cdcooper => pr_cdcooper,
+                                     pr_dtmvtopr => rw_crapdat.dtmvtopr) LOOP
+        
+        -- buscar descrição da critica
+        IF nvl(vr_cdcritic,0) <> rw_craprej.cdcritic THEN
+          vr_cdcritic := rw_craprej.cdcritic;
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+        END IF;
+        
+        pc_escreve_xml('<rejeitados>
+                            <nrdconta>'|| gene0002.fn_mask_conta(rw_craprej.nrdconta) ||'</nrdconta>
+                            <nraplica>'|| gene0002.fn_mask_contrato(rw_craprej.nraplica)||'</nraplica>
+                            <dtdaviso>'|| to_char(rw_craprej.dtdaviso,'DD/MM/RRRR')   ||'</dtdaviso>
+                            <vldaviso>'|| rw_craprej.vldaviso                         ||'</vldaviso>
+                            <vlsdapli>'|| rw_craprej.vlsdapli                         ||'</vlsdapli>
+                            <vllanmto>'|| rw_craprej.vllanmto                         ||'</vllanmto>
+                            <dscritic>'||         vr_dscritic                         ||'</dscritic>
+                        </rejeitados>');
+                        
+        IF rw_craprej.vllanmto = 0   THEN
+          vr_rel_qtdrejln := nvl(vr_rel_qtdrejln,0) + 1;
+          vr_rel_vldrejdb := nvl(vr_rel_vldrejdb,0) + rw_craprej.vldaviso;
+        END IF;  
+        
+      END LOOP;
       
-      pc_escreve_xml('<total>
-                        <tot_qtcompln>'|| rw_craplot.qtcompln  ||'</tot_qtcompln>
-                        <tot_vlcompdb>'|| rw_craplot.vlcompdb  ||'</tot_vlcompdb>
-                        <tot_vlcompcr>'|| rw_craplot.vlcompcr  ||'</tot_vlcompcr>
-                        <tot_qtdrejln>'||     vr_rel_qtdrejln  ||'</tot_qtdrejln>    
-                        <tot_vldrejdb>'||     vr_rel_vldrejdb  ||'</tot_vldrejdb>    
-                        <tot_vldrejcr>'||     vr_rel_vldrejcr  ||'</tot_vldrejcr>
-                      </total>');
-    END IF;
-    
-    -- Finalizar o agrupador do relatório
-    pc_escreve_xml('</crrl125>',TRUE);
-    
-    -- Busca do diretório base da cooperativa para PDF
-    vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C' -- /usr/coop
-                                          ,pr_cdcooper => pr_cdcooper
-                                          ,pr_nmsubdir => '/rl'); --> Utilizaremos o rl
-    
-    -- Efetuar solicitação de geração de relatório --
-    gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper         --> Cooperativa conectada
-                               ,pr_cdprogra  => vr_cdprogra         --> Programa chamador
-                               ,pr_dtmvtolt  => rw_crapdat.dtmvtolt --> Data do movimento atual
-                               ,pr_dsxml     => vr_des_xml          --> Arquivo XML de dados
-                               ,pr_dsxmlnode => '/crrl125/lote/rejeitados'    --> Nó base do XML para leitura dos dados
-                               ,pr_dsjasper  => 'crrl125.jasper'    --> Arquivo de layout do iReport
-                               ,pr_dsparams  => NULL                --> Sem parametros
-                               ,pr_dsarqsaid => vr_nom_direto||'/crrl125.lst' --> Arquivo final com código da agência
-                               ,pr_qtcoluna  => 132                 --> 132 colunas
-                               ,pr_sqcabrel  => 1                   --> Sequencia do Relatorio {includes/cabrel132_5.i}
-                               ,pr_flg_impri => 'S'                 --> Chamar a impressão (Imprim.p)
-                               ,pr_nmformul  => '132col'            --> Nome do formulário para impressão
-                               ,pr_nrcopias  => 1                   --> Número de cópias
-                               ,pr_flg_gerar => 'N'                 --> gerar PDF
-                               ,pr_des_erro  => vr_dscritic);       --> Saída com erro
-    -- Testar se houve erro
-    IF vr_dscritic IS NOT NULL THEN
-      -- Gerar exceção
-      RAISE vr_exc_saida;
-    END IF;
+      IF vr_regexist THEN
+        pc_escreve_xml('</lote>');
+        
+        pc_escreve_xml('<total>
+                          <tot_qtcompln>'|| rw_craplot.qtcompln  ||'</tot_qtcompln>
+                          <tot_vlcompdb>'|| rw_craplot.vlcompdb  ||'</tot_vlcompdb>
+                          <tot_vlcompcr>'|| rw_craplot.vlcompcr  ||'</tot_vlcompcr>
+                          <tot_qtdrejln>'||     vr_rel_qtdrejln  ||'</tot_qtdrejln>    
+                          <tot_vldrejdb>'||     vr_rel_vldrejdb  ||'</tot_vldrejdb>    
+                          <tot_vldrejcr>'||     vr_rel_vldrejcr  ||'</tot_vldrejcr>
+                        </total>');
+      END IF;
+      
+      -- Finalizar o agrupador do relatório
+      pc_escreve_xml('</crrl125>',TRUE);
+      
+      -- Busca do diretório base da cooperativa para PDF
+      vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C' -- /usr/coop
+                                            ,pr_cdcooper => pr_cdcooper
+                                            ,pr_nmsubdir => '/rl'); --> Utilizaremos o rl
+      
+      -- Efetuar solicitação de geração de relatório --
+      gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper         --> Cooperativa conectada
+                                 ,pr_cdprogra  => vr_cdprogra         --> Programa chamador
+                                 ,pr_dtmvtolt  => rw_crapdat.dtmvtolt --> Data do movimento atual
+                                 ,pr_dsxml     => vr_des_xml          --> Arquivo XML de dados
+                                 ,pr_dsxmlnode => '/crrl125/lote/rejeitados'    --> Nó base do XML para leitura dos dados
+                                 ,pr_dsjasper  => 'crrl125.jasper'    --> Arquivo de layout do iReport
+                                 ,pr_dsparams  => NULL                --> Sem parametros
+                                 ,pr_dsarqsaid => vr_nom_direto||'/crrl125.lst' --> Arquivo final com código da agência
+                                 ,pr_qtcoluna  => 132                 --> 132 colunas
+                                 ,pr_sqcabrel  => 1                   --> Sequencia do Relatorio {includes/cabrel132_5.i}
+                                 ,pr_flg_impri => 'S'                 --> Chamar a impressão (Imprim.p)
+                                 ,pr_nmformul  => '132col'            --> Nome do formulário para impressão
+                                 ,pr_nrcopias  => 1                   --> Número de cópias
+                                 ,pr_flg_gerar => 'N'                 --> gerar PDF
+                                 ,pr_des_erro  => vr_dscritic);       --> Saída com erro
+      -- Testar se houve erro
+      IF vr_dscritic IS NOT NULL THEN
+        -- Gerar exceção
+        RAISE vr_exc_saida;
+      END IF;
 
-    -- Liberando a memória alocada pro CLOB
-    dbms_lob.close(vr_des_xml);
-    dbms_lob.freetemporary(vr_des_xml);                                        
+      -- Liberando a memória alocada pro CLOB
+      dbms_lob.close(vr_des_xml);
+      dbms_lob.freetemporary(vr_des_xml);                                        
+    END IF; -- Fim da verificacao de processo da cadeia
     
     -- limpar rejeitados
     BEGIN
@@ -1197,14 +1216,17 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
     END;
     ----------------- ENCERRAMENTO DO PROGRAMA -------------------
 
-    -- Processo OK, devemos chamar a fimprg
-    btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
-                             ,pr_cdprogra => vr_cdprogra
-                             ,pr_infimsol => pr_infimsol
-                             ,pr_stprogra => pr_stprogra);
+    -- efetuar o encerramento somente se for pela cadeia
+    IF nvl(pr_nrdconta,0) = 0 THEN
+      -- Processo OK, devemos chamar a fimprg
+      btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
+                               ,pr_cdprogra => vr_cdprogra
+                               ,pr_infimsol => pr_infimsol
+                               ,pr_stprogra => pr_stprogra);
 
-    -- Salvar informações atualizadas
-    COMMIT;
+      -- Salvar informações atualizadas
+      COMMIT;
+    END IF;
 
   EXCEPTION
     WHEN vr_exc_fimprg THEN
@@ -1219,13 +1241,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
                                 ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                  || vr_cdprogra || ' --> '
                                                  || vr_dscritic );
-      -- Chamamos a fimprg para encerrarmos o processo sem parar a cadeia
-      btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
-                               ,pr_cdprogra => vr_cdprogra
-                               ,pr_infimsol => pr_infimsol
-                               ,pr_stprogra => pr_stprogra);
-      -- Efetuar commit
-      COMMIT;
+      -- efetuar o encerramento somente se for pela cadeia
+      IF nvl(pr_nrdconta,0) = 0 THEN
+        -- Chamamos a fimprg para encerrarmos o processo sem parar a cadeia
+        btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
+                                 ,pr_cdprogra => vr_cdprogra
+                                 ,pr_infimsol => pr_infimsol
+                                 ,pr_stprogra => pr_stprogra);
+        -- Efetuar commit
+        COMMIT;
+      END IF;
     WHEN vr_exc_saida THEN
       -- Se foi retornado apenas código
       IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
@@ -1235,13 +1260,19 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
       -- Devolvemos código e critica encontradas das variaveis locais
       pr_cdcritic := NVL(vr_cdcritic,0);
       pr_dscritic := vr_dscritic;
-      -- Efetuar rollback
-      ROLLBACK;
+      -- efetuar o encerramento somente se for pela cadeia
+      IF nvl(pr_nrdconta,0) = 0 THEN
+        -- Efetuar rollback
+        ROLLBACK;
+      END IF;
     WHEN OTHERS THEN
       -- Efetuar retorno do erro não tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
-      -- Efetuar rollback
-      ROLLBACK;
+      -- efetuar o encerramento somente se for pela cadeia
+      IF nvl(pr_nrdconta,0) = 0 THEN
+        -- Efetuar rollback
+        ROLLBACK;
+      END IF;
   END pc_crps156;
 /

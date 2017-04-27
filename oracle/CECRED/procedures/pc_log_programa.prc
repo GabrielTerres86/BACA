@@ -9,11 +9,24 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_log_programa(
   pr_cdmensagem    IN tbgen_prglog_ocorrencia.cdmensagem%type    DEFAULT 0,    -- cdcritic
   pr_dsmensagem    IN tbgen_prglog_ocorrencia.dsmensagem%type    DEFAULT NULL, -- dscritic       
   pr_flgsucesso    IN tbgen_prglog.flgsucesso%type               DEFAULT 1,    -- Indicador de sucesso da execução
+  pr_nmarqlog      IN tbgen_prglog.nmarqlog%TYPE                 DEFAULT NULL, --  Nome do arquivo
   PR_IDPRGLOG      IN OUT tbgen_prglog.idprglog%type                           -- Identificador unico da tabela (sequence)
-  ) IS          
-  PRAGMA AUTONOMOUS_TRANSACTION;
-  
+  ) IS
+  PRAGMA AUTONOMOUS_TRANSACTION;  
 BEGIN
+  /* .......................................................................................
+  Programa : pc_log_programa
+  Sistema : Todos
+  Autor   : Carlos Henrique/CECRED
+  Data    : Março/2017                   Ultima atualizacao: 10/04/2017  
+
+  Objetivo  : Logar execuções, ocorrências, erros ou mensagens dos programas.
+              Abrir chamado e enviar e-mail quando necessário.
+  
+  Alterações:
+
+  10/04/2017 - Inclusão do parâmetro pr_nmarlog (Carlos)
+  .......................................................................................... */
   DECLARE 
   
   vr_idprglog   tbgen_prglog.idprglog%type;
@@ -36,10 +49,10 @@ BEGIN
 
   rw_ultima_execucao cr_ultima_execucao%ROWTYPE;
     
-  
+  /* Função para inserir na tabela tbgen_prglog */
   FUNCTION fn_insert_tbgen_prglog(pr2_dhfim      tbgen_prglog.dhfim%type                 DEFAULT NULL,
                                   pr2_flgsucesso tbgen_prglog.flgsucesso%type            DEFAULT 1) 
-                                  RETURN tbgen_prglog.idprglog%TYPE IS    
+                                  RETURN tbgen_prglog.idprglog%TYPE IS
   BEGIN   
     BEGIN
       	    
@@ -50,7 +63,9 @@ BEGIN
         ,p.dhinicio
         ,p.dhfim
         ,p.flgsucesso
-        ,p.nrexecucao)
+        ,p.nrexecucao
+        ,p.nmarqlog
+        )
       VALUES
         (pr_cdcooper
         ,pr_tpexecucao
@@ -58,7 +73,9 @@ BEGIN
         ,SYSDATE
         ,pr2_dhfim
         ,pr2_flgsucesso
-        ,vr_nrexecucao)
+        ,vr_nrexecucao
+        ,pr_nmarqlog
+        )
       RETURNING p.idprglog INTO vr_idprglog;
       COMMIT;
     EXCEPTION
@@ -70,7 +87,8 @@ BEGIN
     RETURN vr_idprglog;
 
   END fn_insert_tbgen_prglog;
-  
+
+  /* Função para inserir na tabela tbgen_prglog_ocorrencia */
   PROCEDURE insert_tbgen_prglog_ocorrencia IS 
   BEGIN   
     BEGIN
@@ -164,12 +182,8 @@ BEGIN
           -- Se não encontrar a última execuçao, cria tbgen_prglog
           IF cr_ultima_execucao%NOTFOUND THEN
             
-            IF (instr(lower(pr_cdprograma), '.log', 1) > 0) THEN
               vr_cdprograma := pr_cdprograma;              
-            ELSE 
-              vr_cdprograma := 'LOG_BATCH';
-              vr_dsmensagem := 'Crítica fora do padrão: ' || pr_dsmensagem;
-            END IF;
+            vr_dsmensagem := pr_dsmensagem;
 
             PR_IDPRGLOG := fn_insert_tbgen_prglog(pr2_dhfim      => SYSDATE,
                                                   pr2_flgsucesso => 0);

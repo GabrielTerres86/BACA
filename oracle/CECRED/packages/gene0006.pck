@@ -228,7 +228,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Agosto/2006                   Ultima Atualizacao: 05/10/2016
+   Data    : Agosto/2006                   Ultima Atualizacao: 13/03/2017
    Dados referentes ao programa:
 
    Frequencia: Diario (internet)
@@ -288,6 +288,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
                             
                05/10/2016 - Correcao na geracao de log de erro nas procedures de geração e listagem
                             de protocolo. SD 535051 (Carlos Rafael Tanholi)
+                            
+               13/03/2017 - Na procedure pc_gera_protocolo foi retirado pr_dscritic 
+                            da exception vr_exc_erro pois é um erro tratado 
+                            (Lucas Ranghetti #624628)
 ............................................................................. */
 
   /* Rotina para gerar um codigo identificador de sessão para ser usado na validacao de parametros na URL */
@@ -758,7 +762,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
     --  Sistema  : Processos Genéricos
     --  Sigla    : GENE
     --  Autor    : Petter Rafael - Supero
-    --  Data     : Junho/2013.                   Ultima atualização: 05/10/2016
+    --  Data     : Junho/2013.                   Ultima atualização: 13/03/2017
     --
     --  Dados referentes ao programa:
     --
@@ -782,6 +786,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
     --               
     --               05/10/2016 - Correcao no tratamento do LOG gerado "proc_agendamento". SD 535051
     --                            (Carlos Rafael Tanholi).      
+    --                
+    --               13/03/2017 - Retirado pr_dscritic da exception vr_exc_erro pois é
+    --                            um erro tratado (Lucas Ranghetti #624628)
     -- .............................................................................
   BEGIN
     DECLARE
@@ -948,7 +955,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
       END IF;
     EXCEPTION
       WHEN vr_exc_erro THEN
-        pr_dscritic := 'Erro em GENE0006.pc_gera_protocolo: ' || pr_dscritic;
         pr_des_erro := 'NOK';
       WHEN OTHERS THEN
         pr_dscritic := 'Erro em GENE0006.pc_gera_protocolo: ' || SQLERRM;

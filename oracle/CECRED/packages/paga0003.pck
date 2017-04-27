@@ -165,6 +165,7 @@ CREATE OR REPLACE PACKAGE cecred.paga0003 IS
                                   ,pr_dtagenda IN DATE -- Data de agendamento
                                   ,pr_cdtrapen IN NUMBER -- Código de sequencial da transação pendente
 																	,pr_tpleitor IN INTEGER               -- Indicador de captura através de leitora de código de barras (1 – Leitora / 2 – Manual) 
+                                  ,pr_dsprotoc OUT VARCHAR2 --Protocolo
                                   ,pr_cdcritic OUT INTEGER -- Código do erro
                                   ,pr_dscritic OUT VARCHAR2 -- Descriçao do erro
                                    );
@@ -218,11 +219,11 @@ END paga0003;
   
    Objetivo  : Package com as procedures necessárias para pagamento de guias DARF e DAS
   
-   Alteracoes:     
+   Alteracoes: 
 	             
 		   22/02/2017 - Alteraçoes para composiçao de comprovante DARF/DAS Modelo Sicredi
-					        - Ajustes para correçao de crítica de pagamento DARF/DAS (P.349.2) (Lucas Lunelli)
-							 
+					  - Ajustes para correçao de crítica de pagamento DARF/DAS (P.349.2) (Lucas Lunelli)
+							 								   
 ..............................................................................*/
 CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 
@@ -797,16 +798,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 				WHERE cop.cdcooper = pr_cdcooper;
     rw_crapcop cr_crapcop%ROWTYPE;
   
-	  vr_inpessoa INTEGER;
-	  vr_stsnrcal BOOLEAN;		
-	  vr_cdempcon crapcon.cdempcon%TYPE;
-	  vr_cdsegmto	crapcon.cdsegmto%TYPE;
+	vr_inpessoa INTEGER;
+	vr_stsnrcal BOOLEAN;		
+	vr_cdempcon crapcon.cdempcon%TYPE;
+	vr_cdsegmto	crapcon.cdsegmto%TYPE;
     vr_dsinfor1 crappro.dsinform##1%TYPE;
     vr_dsinfor2 crappro.dsinform##2%TYPE;
     vr_dsinfor3 crappro.dsinform##3%TYPE;
     vr_dsretorn VARCHAR2(500) := '';
 	  vr_dsautsic VARCHAR2(500) := '';
-	  vr_nrrefere VARCHAR2(500) := '';
+	vr_nrrefere VARCHAR2(500) := '';
     vr_exc_erro EXCEPTION;
   
   BEGIN
@@ -816,15 +817,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     FETCH cr_crapcop INTO rw_crapcop;
     CLOSE cr_crapcop;  
 	
-	  vr_cdempcon := SUBSTR(pr_cdbarras, 16, 4);
+	vr_cdempcon := SUBSTR(pr_cdbarras, 16, 4);
     vr_cdsegmto := SUBSTR(pr_cdbarras, 2, 1);
 			
-	  vr_inpessoa := 0;				
+	vr_inpessoa := 0;				
     IF LENGTH(pr_nrcpfcgc) = 11 THEN -- CPF
-			vr_inpessoa := 1;
-		ELSIF LENGTH(pr_nrcpfcgc) = 14 THEN-- CNPJ
-			vr_inpessoa := 2; 	
-		END IF;
+	   vr_inpessoa := 1;
+	ELSIF LENGTH(pr_nrcpfcgc) = 14 THEN-- CNPJ
+  	   vr_inpessoa := 2; 	
+	END IF;
 	
     --Título do comprovante
     vr_dsinfor1 := CASE pr_cdtippro
@@ -838,9 +839,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     -- Nome do Titular
     vr_dsinfor2 := pr_nmextttl;
     
-		IF pr_nrrefere <> '0' THEN
-			vr_nrrefere := pr_nrrefere;
-		END IF;
+	IF pr_nrrefere <> '0' THEN
+		vr_nrrefere := pr_nrrefere;
+	END IF;
     
     -- Busca as informações do banco/agencia arrecadador (Sicredi - Matriz)
     OPEN cr_arrec(pr_cddbanco => 748
@@ -876,7 +877,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 			 vr_cdsegmto = 5   THEN
 			 vr_dsinfor3 := vr_dsinfor3 || '#Número Documento (DARF): '	|| SUBSTR(pr_cdbarras,25,17);
  		 END IF;
-    END IF;
+      END IF;
       
     -- Se for Captura Manual
     ELSIF pr_tpcaptur = 2 THEN
@@ -1303,7 +1304,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         vr_dscritic := 'Este convênio não está habilitado para pagamento via internet.';
         RAISE vr_exc_erro;
       END IF;
-			
+      
       -- Se não for uma DARF/DAS válida
       IF vr_cdempcon NOT IN (64, 153, 154, 328, 385) OR vr_cdsegmto NOT IN (5) THEN
       
@@ -1897,7 +1898,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       --Levantar Excecao
       RAISE vr_exc_erro;
     END IF;
-    
+   
     -- tipo de guia
 		IF pr_tpdaguia = 1 THEN
 			
@@ -1939,12 +1940,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 			  -- Pega o nome do convenio
 				OPEN cr_crapscn (pr_cdempres => CASE pr_cdtribut
 																		         WHEN '6106' THEN 'D0'
-																		         ELSE 'A0' 
+																						 ELSE 'A0' 
 																	      END,
 												 pr_tpmeiarr => CASE pr_idorigem
 																		         WHEN 3 THEN 'D'
 																		         ELSE 'C'
-																	      END);
+																						 END);
 				FETCH cr_crapscn INTO rw_crapscn;
 				--Se nao encontrar
 				IF NOT cr_crapscn%FOUND THEN
@@ -2337,7 +2338,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         CLOSE lote0001.cr_craplot_rowid;
         vr_dscritic := NULL;
         EXIT;
-      EXCEPTION
+  EXCEPTION
         WHEN OTHERS THEN
            IF lote0001.cr_craplot_rowid%ISOPEN THEN
              CLOSE lote0001.cr_craplot_rowid;
@@ -3066,6 +3067,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 																pr_dtagenda => vr_dtmvtopg,
 																pr_cdtrapen => 0,
 																pr_tpleitor => pr_tpleitor,
+																pr_dsprotoc => vr_dsprotoc,
 																pr_cdcritic => vr_cdcritic,
 																pr_dscritic => vr_dscritic);
 																
@@ -3129,6 +3131,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 														                        <DADOS_PAGAMENTO>
 																										      <dsmsgope>'|| nvl(vr_dsmsgope,' ') ||'</dsmsgope>
 																													<idastcjt>'|| nvl(TO_CHAR(vr_idastcjt),' ') ||'</idastcjt>
+																													<dsprotoc>'|| NVL(TRIM(vr_dsprotoc),'')    ||'</dsprotoc>
 																									  </DADOS_PAGAMENTO>');
 			-- Encerrar a tag raiz
 			gene0002.pc_escreve_xml(pr_xml            => pr_xml_operacao188
@@ -3242,6 +3245,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                   ,pr_dtagenda IN DATE -- Data de agendamento
                                   ,pr_cdtrapen IN NUMBER -- Código de sequencial da transação pendente
 								  ,pr_tpleitor IN INTEGER               -- Indicador de captura através de leitora de código de barras (1 – Leitora / 2 – Manual)
+								,pr_dsprotoc OUT VARCHAR2 -- Protocolo
                                   ,pr_cdcritic OUT INTEGER -- Código do erro
                                   ,pr_dscritic OUT VARCHAR2 -- Descriçao do erro
                                    ) IS
@@ -3328,7 +3332,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 		CURSOR cr_crapscn2(pr_cdempres crapscn.cdempres%TYPE,
 		                   pr_tpmeiarr crapstn.tpmeiarr%TYPE)IS
 			SELECT scn.cdempres
-					  ,scn.dsnomcnv
+						,scn.dsnomcnv
 					  ,scn.dssigemp
 					  ,stn.cdtransa
 			FROM crapscn scn,
@@ -3336,7 +3340,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 		 WHERE scn.cdempres = pr_cdempres
 		   AND stn.cdempres = scn.cdempres
 			 AND stn.tpmeiarr = pr_tpmeiarr;
-		rw_crapscn2 cr_crapscn2%ROWTYPE;
+			rw_crapscn2 cr_crapscn2%ROWTYPE;
 		 
 		CURSOR cr_crapsnh (pr_cdcooper  crapsnh.cdcooper%TYPE,
                        pr_nrdconta  crapsnh.nrdconta%TYPE) IS
@@ -3463,14 +3467,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 			END IF;
 		
 		ELSE --manual				
-			OPEN cr_crapscn2 (pr_cdempres => 	CASE pr_cdtribut
+			OPEN cr_crapscn2 (pr_cdempres => CASE pr_cdtribut
 																					WHEN '6106' THEN 'D0'
-																					ELSE 'A0' 
+												ELSE 'A0' 
 																				END,
 												pr_tpmeiarr => 	CASE pr_idorigem
 																					WHEN 3 THEN 'D'
 																					ELSE 'C'
-																				END);
+												END);
 			FETCH cr_crapscn2 INTO rw_crapscn2;
 					    
 			--Se nao encontrar
@@ -3792,6 +3796,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 				 TRIM(vr_dscritic) IS NOT NULL THEN
 				RAISE vr_exc_erro;
 			END IF;
+						
+			pr_dsprotoc := vr_dsprotoc;
 						
   EXCEPTION
     WHEN vr_exc_erro THEN

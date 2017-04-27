@@ -301,6 +301,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
 					24/02/2017 - Ajuste na tratativa do campo Ident, o qual estava verificando campos incorretos para
 					             informar a baixa do gravames (Daniel - Chamado: 615103) 
 
+				    08/03/2017 - Alteracao na regra de porte cliente juridico (Daniel - Chamado: 626161) 
+
 .............................................................................................................................*/
 
     DECLARE
@@ -3152,9 +3154,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
       BEGIN  
         IF pr_fatanual <= 360000 THEN
           RETURN 1;
-        ELSIF pr_fatanual > 360000 AND pr_fatanual <= 3600000 THEN
+        ELSIF pr_fatanual > 360000 AND pr_fatanual <= 4800000 THEN
           RETURN 2;
-        ELSIF pr_fatanual > 3600000 AND pr_fatanual <= 300000000 THEN
+        ELSIF pr_fatanual > 4800000 AND pr_fatanual <= 300000000 THEN
           RETURN 3;
         ELSIF pr_fatanual > 300000000 THEN
           RETURN 4;

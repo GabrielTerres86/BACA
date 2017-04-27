@@ -5,11 +5,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
   --
   --  Programa: PC_CRPS331
   --  Autor   : Andrino Carlos de Souza Junior (RKAM)
-  --  Data    : Novembro/2015                     Ultima Atualizacao: - 08/03/2017
+  --  Data    : Novembro/2015                     Ultima Atualizacao: - 30/03/2017
   --
   --  Dados referentes ao programa:
   --
-  --  Objetivo  : Envio de negativacoes para a Serasa
+  --  Objetivo  : Recebimento de negativacoes do Serasa
   --
   --  Alteracoes: 13/03/2016 - Ajustes decorrente a mudança de algumas rotinas da PAGA0001 
   --						   para a COBR0006 em virtude da conversão das rotinas de arquivos CNAB
@@ -26,6 +26,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
   --
   --			  08/03/2017 - #611513 Validação para identificar uma inclusão de registro já existente e não alterar
   --						  seu statis. (Andrey Formigari - Mouts).
+  -- 
+  --        30/03/2017 - #551229 Job ENVIO_SERASA excluído para a criação dos jobs JBCOBRAN_ENVIO_SERASA e JBCOBRAN_RECEBE_SERASA.
+  --                     Log de início, fim e erros na execução dos jobs. (Carlos)
   ---------------------------------------------------------------------------------------------------------------
 
   -- Atualiza a situacao do boleto
@@ -155,8 +158,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
          vr_inreterr = 1 AND -- E houver erro de recebimento
          rw_crapcob.inserasa IN (1,2) THEN -- E o tipo da solicitacao for pendente de envio ou enviada
         IF vr_erros_temp <> 59 THEN -- INCLUSAO PARA REGISTRO JA EXISTENTE
-        vr_inserasa := 6; -- Recusada Serasa
-        vr_dtretser := NULL; -- Nao recebida
+          vr_inserasa := 6; -- Recusada Serasa
+          vr_dtretser := NULL; -- Nao recebida
         ELSE
           vr_inserasa := rw_crapcob.inserasa; -- Nao muda a situacao. Deixa a anterior
           vr_dtretser := rw_crapcob.dtretser; -- Manter a mesma data
@@ -472,15 +475,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
       
     EXCEPTION
        WHEN vr_exc_saida THEN
-         -- Se foi retornado apenas código
-         IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-           -- Buscar a descrição
-           vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-         END IF;
          -- Devolvemos código e critica encontradas
          pr_cdcritic := NVL(vr_cdcritic,0);
-         pr_dscritic := vr_dscritic;
+         pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
        WHEN OTHERS THEN
+         cecred.pc_internal_exception(3);
+
          -- Efetuar retorno do erro não tratado
          pr_cdcritic := 0;
          pr_dscritic := SQLERRM;
@@ -552,11 +552,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
        vr_intipreg    PLS_INTEGER;           -- Tipo de registro que esta contido na linha
        vr_qtarquiv    PLS_INTEGER;
        
+       -- Job de recebimento
+       vr_nomdojob VARCHAR2(40) := 'JBCOBRAN_RECEBE_SERASA';
+       vr_idprglog tbgen_prglog.idprglog%TYPE := 0;
+
        --Variaveis de controle do programa
        vr_cdcritic    NUMBER:= 0;
        vr_dscritic    VARCHAR2(4000);
        vr_des_erro    VARCHAR2(10);
-
 
        --Variaveis de Excecao
        vr_exc_saida  EXCEPTION;
@@ -567,7 +570,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
        btch0001.pc_gera_log_batch(pr_cdcooper     => 3 -- Cecred
                                  ,pr_ind_tipo_log => 1 -- Aviso
                                  ,pr_des_log      => to_char(sysdate,'dd/mm/yyyy hh24:mi:ss')||' - '
-                                                  || 'Incio da rotina PC_CRPS331');
+                                                  || vr_nomdojob || ' --> Inicio da rotina'
+                                 ,pr_dstiplog     => 'I'
+                                 ,pr_cdprograma   => vr_nomdojob);
 
        -- Abre o cursor de data
        OPEN btch0001.cr_crapdat(3); -- Cooperativa Cecred
@@ -751,7 +756,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
                    -- Acabou a leitura, então finaliza o loop
                    EXIT;
                  WHEN OTHERS THEN
-                   btch0001.pc_log_internal_exception(3);
+                   cecred.pc_internal_exception(3, 'Arq: ' || vr_tab_arqtmp(vr_indice) || 
+                                                   ' Linha: ' || vr_dsdlinha);
                    EXIT;
                END;
 
@@ -785,23 +791,38 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
        btch0001.pc_gera_log_batch(pr_cdcooper     => 3 -- Cecred
                                  ,pr_ind_tipo_log => 1 -- Aviso
                                  ,pr_des_log      => to_char(sysdate,'dd/mm/yyyy hh24:mi:ss')||' - '
-                                                  || 'Termino da rotina PC_CRPS331. '||to_char(vr_qtarquiv)|| ' arquivos processados com sucesso!');
+                                                  || vr_nomdojob || ' --> Termino da rotina. '||to_char(vr_qtarquiv)|| ' arquivos processados com sucesso!'
+                                 ,pr_dstiplog     => 'F'
+                                 ,pr_cdprograma   => vr_nomdojob);
 
      EXCEPTION
        WHEN vr_exc_saida THEN
-         -- Se foi retornado apenas código
-         IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
            -- Buscar a descrição
-           vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-         END IF;
+         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
+
          -- Devolvemos código e critica encontradas
          pr_cdcritic := NVL(vr_cdcritic,0);
          pr_dscritic := vr_dscritic;
+         
+         btch0001.pc_gera_log_batch(pr_cdcooper     => 3 -- Cecred
+                                   ,pr_ind_tipo_log => 2 -- erro tratado
+                                   ,pr_des_log      => to_char(sysdate,'dd/mm/yyyy hh24:mi:ss')||' - '
+                                                    || vr_nomdojob || ' --> ' || vr_dscritic
+                                   ,pr_dstiplog     => 'E'
+                                   ,pr_cdprograma   => vr_nomdojob);
+
+         -- Logar fim de execução sem sucesso
+         cecred.pc_log_programa(PR_DSTIPLOG   => 'F'
+                               ,PR_CDPROGRAMA => vr_nomdojob
+                               ,pr_cdcooper   => 3
+                               ,pr_flgsucesso => 0
+                               ,PR_IDPRGLOG   => vr_idprglog);
+         
          -- Efetuar rollback
          ROLLBACK;
        WHEN OTHERS THEN
 
-         btch0001.pc_log_internal_exception(3);
+         cecred.pc_internal_exception(3);
 
          -- Efetuar retorno do erro não tratado
          pr_cdcritic := 0;

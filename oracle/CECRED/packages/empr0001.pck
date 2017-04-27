@@ -19,17 +19,20 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
   --             12/06/2015 - Adicao de campos para geracao do extrato da portabilidade de credito. 
   --                          (Jaison/Diego - SD: 290027)
   --
-  --             17/12/2015 - Ajustado precisão dos campos numericos SD375985 (Odirlei-AMcom)  --
+  --             17/12/2015 - Ajustado precisão dos campos numericos SD375985 (Odirlei-AMcom)
+  --
   --             11/05/2016 - Criacao do FIELD vlatraso na typ_reg_dados_epr. (Jaison/James)
   --
   --             26/09/2016 - Adicionado validacao de contratos de acordo na procedure
   --                          pc_valida_pagamentos_geral, Prj. 302 (Jean Michel).
   --
+  --             22/02/2017 - Criacao dos FIELDs dsorgrec e dtinictr na typ_reg_dados_epr. (Jonatas-Supero)  
+  --
   --             31/03/2017 - Ajustado calculo de saldo para nao considerar valores bloqueados.
   --                          Heitor (Mouts) - Melhoria 440
   --
-  --
-  --
+  --             04/04/2017 - Criacao da procedure pc_gera_arq_saldo_devedor para utilizacao na tela RELSDV
+  --                          Jean (Mouts)
   --
   --
   ---------------------------------------------------------------------------------------------------------------
@@ -123,7 +126,9 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
     ,qtpreapg NUMBER
     ,liquidia INTEGER
     ,qtimpctr crapepr.qtimpctr%TYPE
-    ,portabil VARCHAR2(100));
+    ,portabil VARCHAR2(100)
+    ,dsorgrec craplcr.dsorgrec%TYPE
+    ,dtinictr DATE);
 
   /* Definicao de tabela que compreende os registros acima declarados */
   TYPE typ_tab_dados_epr IS TABLE OF typ_reg_dados_epr INDEX BY VARCHAR2(100);
@@ -790,6 +795,7 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
                              ,pr_vlemprst  IN crapepr.vlemprst%TYPE                            
                              ,pr_dtdpagto  IN crapepr.dtdpagto%TYPE
                              ,pr_dtlibera  IN crawepr.dtlibera%TYPE
+                             ,pr_tpemprst  IN crawepr.tpemprst%TYPE
                              ,pr_valoriof OUT craplcm.vllanmto%TYPE
                              ,pr_dscritic OUT VARCHAR2);
                                                                    
@@ -14758,6 +14764,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                               ,pr_vlemprst  IN crapepr.vlemprst%TYPE
                               ,pr_dtdpagto  IN crapepr.dtdpagto%TYPE
                               ,pr_dtlibera  IN crawepr.dtlibera%TYPE
+                              ,pr_tpemprst  IN crawepr.tpemprst%TYPE
                               ,pr_valoriof OUT craplcm.vllanmto%TYPE -- Valor calculado com o iof
                               ,pr_dscritic OUT VARCHAR2) IS          --> Descricão da critica
   /* .............................................................................
@@ -14772,7 +14779,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
      Frequencia: Sempre que for chamada
      Objetivo  : Calcular IOF para emprestimo/financiamento
     
-     Alteracoes:     
+     Alteracoes: 07/04/2017 - Implementar tratamento e calculo para empréstimos do
+                              tipo PP. ( Renato Darosci )
   ............................................................................. */
 
     -- Tipo para armazenar as informações das parcelas
@@ -14849,42 +14857,58 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     ELSE
       CLOSE cr_craplcr;
     END IF; 
-      
+    
     ------------------------------------------------------------------------------------------------
     --                                 CALCULO DO NOVO IOF
     ------------------------------------------------------------------------------------------------        
-    -- Condicao Pessoa Fisica
-    IF pr_inpessoa = 1 THEN
-      vr_taxaiof := 0.000082;
-    ELSE
-      vr_taxaiof := 0.000041;
-    END IF;
-    
-    FOR vr_ind IN 1..pr_qtpreemp LOOP
-      IF vr_ind = 1 THEN
-        vr_saldo_devedor := pr_vlemprst;
+    -- Se o empréstimo for do tipo PP 
+    IF pr_tpemprst = 1 THEN
+      -- Condicao Pessoa Fisica
+      IF pr_inpessoa = 1 THEN
+        vr_taxaiof := 0.000082;
       ELSE
-        vr_saldo_devedor := vr_tab_parcela(vr_ind - 1).vlsaldodevedor;
+        vr_taxaiof := 0.000041;
       END IF;
       
-      -- Data de Vencimento da Parcela
-      vr_dtvencto := ADD_MONTHS(pr_dtdpagto,vr_ind - 1);  
+      FOR vr_ind IN 1..pr_qtpreemp LOOP
+        IF vr_ind = 1 THEN
+          vr_saldo_devedor := pr_vlemprst;
+        ELSE
+          vr_saldo_devedor := vr_tab_parcela(vr_ind - 1).vlsaldodevedor;
+        END IF;
+        
+        -- Data de Vencimento da Parcela
+        vr_dtvencto := ADD_MONTHS(pr_dtdpagto,vr_ind - 1);  
+        
+        -- Somente eh permitido calcular o IOF para 365 dias
+        vr_qtdias   := vr_dtvencto - pr_dtmvtolt;
+        IF vr_qtdias > 365 THEN
+          vr_qtdias := 365;
+        END IF;
       
-      -- Somente eh permitido calcular o IOF para 365 dias
-      vr_qtdias   := vr_dtvencto - pr_dtmvtolt;
-      IF vr_qtdias > 365 THEN
-        vr_qtdias := 365;
-      END IF;
+        -- Valor do Juros
+        vr_tab_parcela(vr_ind).vljuros        := (vr_txmensal / 100) * vr_saldo_devedor;
+        -- Valor Amortizacao/Principal
+        vr_tab_parcela(vr_ind).vlprincipal    := pr_vlpreemp - vr_tab_parcela(vr_ind).vljuros;
+        -- Valor Saldo Devedor
+        vr_tab_parcela(vr_ind).vlsaldodevedor := vr_saldo_devedor - vr_tab_parcela(vr_ind).vlprincipal;
+        -- Valor do IOF
+        pr_valoriof := pr_valoriof + ROUND(vr_qtdias * vr_tab_parcela(vr_ind).vlprincipal * vr_taxaiof,2);
+      END LOOP;
     
-      -- Valor do Juros
-      vr_tab_parcela(vr_ind).vljuros        := (vr_txmensal / 100) * vr_saldo_devedor;
-      -- Valor Amortizacao/Principal
-      vr_tab_parcela(vr_ind).vlprincipal    := pr_vlpreemp - vr_tab_parcela(vr_ind).vljuros;
-      -- Valor Saldo Devedor
-      vr_tab_parcela(vr_ind).vlsaldodevedor := vr_saldo_devedor - vr_tab_parcela(vr_ind).vlprincipal;
+    ELSE  -- Se o tipo do empréstimo for TR
+      
+      -- Condicao Pessoa Fisica
+      IF pr_inpessoa = 1 THEN
+        vr_taxaiof := 0.03;
+      ELSE -- Se PJ
+        vr_taxaiof := 0.015;
+      END IF;
+      
       -- Valor do IOF
-      pr_valoriof := pr_valoriof + ROUND(vr_qtdias * vr_tab_parcela(vr_ind).vlprincipal * vr_taxaiof,2);
-    END LOOP;
+      pr_valoriof := pr_valoriof + ROUND(pr_vlemprst * vr_taxaiof,2);
+    
+    END IF;
       
   EXCEPTION
     WHEN OTHERS THEN

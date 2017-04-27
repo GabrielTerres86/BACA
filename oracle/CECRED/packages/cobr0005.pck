@@ -5821,7 +5821,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                 CLOSE cr_crapass;
                 
               --> se selecionou Nome fantasia
-              ELSIF rw_sms_cobran.tpnome_emissao = 1 THEN
+              ELSIF rw_sms_cobran.tpnome_emissao = 2 THEN
               
                 --> Buscar nome na crapjur
                 OPEN cr_crapjur(pr_cdcooper => rw_crapcop.cdcooper,

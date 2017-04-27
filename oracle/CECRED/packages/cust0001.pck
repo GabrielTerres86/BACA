@@ -37,8 +37,8 @@ CREATE OR REPLACE PACKAGE CECRED.CUST0001 IS
 --
 --             01/09/2015 - Adicionado cursor na pc_validar_cheque para utilizar a data 
 --                          da craphcc na validação de 8 dias úteis quando recebido por
---                          arquivo (Douglas - Chamado 324178)     
---
+--                          arquivo (Douglas - Chamado 324178)             
+--			  
 --	           19/12/2016 - Ajuste incorporação Transulcred (Daniel)        
 ---------------------------------------------------------------------------------------------------------------
 
@@ -167,14 +167,14 @@ CREATE OR REPLACE PACKAGE CECRED.CUST0001 IS
                               ,pr_dscritic     OUT VARCHAR2);
                               
     PROCEDURE pc_custodia_cheque_manual(pr_nrdconta  IN crapass.nrdconta%TYPE --> Codigo do Indexador
-                                       ,pr_dscheque  IN VARCHAR2              --> Codigo do Indexador 
-                                       ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
-                                       ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
-                                       ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
-                                       ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
-                                       ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
-                                       ,pr_des_erro OUT VARCHAR2);            --> Erros do processo
-
+																				 ,pr_dscheque  IN VARCHAR2              --> Codigo do Indexador 
+																				 ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
+																				 ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+																				 ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+																				 ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
+																				 ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
+																				 ,pr_des_erro OUT VARCHAR2);            --> Erros do processo															
+															
     PROCEDURE pc_valida_conta_custodiar(pr_nrdconta  IN crapass.nrdconta%TYPE --> Codigo do Indexador
                                        ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
                                        ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
@@ -201,7 +201,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
 --  Sistema  : Rotinas genericas focando nas funcionalidades da custodia de cheque
 --  Sigla    : CUST
 --  Autor    : Daniel Zimmermann
---  Data     : Abril/2014.                   Ultima atualizacao: 25/04/2016
+--  Data     : Abril/2014.                   Ultima atualizacao: 23/03/2017
 --
 -- Dados referentes ao programa:
 --
@@ -267,6 +267,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
 --              25/04/2016 - Incluido chamada à procedure TARI0001.pc_verifica_tarifa_operacao em 
 --                           pc_custodias_cheques, alteração feita para o Projeto de Tarifas - 218 fase 2 
 --                           (Reinert).
+--
+--              23/03/2017 - Incluir cdcopant na leitura do cursor craptco_chq da procedure 
+--                           pc_ver_cheque (Lucas Ranghetti #600109)
 ---------------------------------------------------------------------------------------------------------------
 
   -- Descricao e codigo da critica 
@@ -445,7 +448,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
            AND crapcdb.cdagechq = pr_cdagechq 
            AND crapcdb.nrctachq = pr_nrctachq 
            AND crapcdb.nrcheque = pr_nrcheque 
-           AND crapcdb.dtdevolu IS NULL       
+           AND crapcdb.dtdevolu IS NULL
            AND crapcdb.dtlibera >= pr_dtmvtolt     
            AND (crapcdb.insitchq = 0
              OR crapcdb.insitchq = 2);
@@ -3148,7 +3151,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
            WHERE crapope.cdcooper = pr_cdcooper
              AND crapope.cdoperad = pr_cdoperad;
        rw_crapope cr_crapope%ROWTYPE;
-
+       
        -- Cursor para tipo de pessoa
        CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE
                         ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
@@ -3156,7 +3159,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
             FROM crapass crapass
            WHERE crapass.cdcooper = pr_cdcooper
              AND crapass.nrdconta = pr_nrdconta;
-
+       
        -- typ_tab_erro Generica
        vr_tab_erro GENE0001.typ_tab_erro;                     
        
@@ -3475,9 +3478,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
              vr_flgdigok3 := GENE0005.fn_calc_digito (pr_nrcalcul => vr_nrcalcul);
                   
              vr_nrddigc3 := to_number(SUBSTR(to_char(vr_nrcalcul),LENGTH(to_char(vr_nrcalcul))));  
-                                                  
-             -- Insere registro na tabela CRAPCST
-             BEGIN
+             
+             -- Insere registro na tabela CRAPCST         
+             BEGIN                                        
                INSERT INTO crapcst
                  (cdcooper,
                   dtmvtolt,
@@ -4363,6 +4366,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
                            ,pr_cdagectl IN crapcop.cdagectl%TYPE
                            ,pr_nrctaant IN crapcst.nrctachq%TYPE) IS
       SELECT tco.nrdconta
+            ,tco.cdcopant
         FROM crapcop cop, craptco tco
        WHERE cop.cdagectl = pr_cdagectl
          AND tco.cdcooper = pr_cdcooper
@@ -4749,7 +4753,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
          
          IF (pr_cdcooper = 1 AND pr_cdagechq = 102)  OR    /* migracao */
             pr_cdcooper = 16 THEN
-             OPEN cr_crapfdc(pr_cdcooper => rw_craptco.cdcopant,
+             OPEN cr_crapfdc(pr_cdcooper => rw_craptco_chq.cdcopant,
                              pr_cdbanchq => pr_cdbanchq,
                              pr_cdagechq => pr_cdagechq,
                              pr_nrctachq => pr_nrctachq,
@@ -4758,7 +4762,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
               INTO rw_crapfdc;                                                                
          ELSIF (pr_cdcooper = 1  AND pr_cdagechq = 103) OR  /* incorporacao */              
                (pr_cdcooper = 9  AND pr_cdagechq = 116 AND ( SYSDATE > to_date('30/12/2016','DD/MM/YYYY') )) OR
-			   (pr_cdcooper = 13 AND pr_cdagechq = 114) THEN
+               (pr_cdcooper = 13 AND pr_cdagechq = 114) THEN
 
              OPEN cr_crapfdc(pr_cdcooper => pr_cdcooper,
                              pr_cdbanchq => pr_cdbanchq,
@@ -5097,7 +5101,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
 
       vr_ret_all_cheques gene0002.typ_split;
       vr_ret_cheque      gene0002.typ_split;
-      
+						
       vr_auxcont  INTEGER := 0;
       vr_inchqcop NUMBER;
       
@@ -5337,8 +5341,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
           vr_index_erro := vr_tab_custodia_erro.count + 1;  
           vr_tab_custodia_erro(vr_index_erro).dsdocmc7 := vr_dsdocmc7;
           vr_tab_custodia_erro(vr_index_erro).dscritic := vr_erro_custodia;
-        END IF;
-        
+				END IF;
+				
         -- Carrega as informações do cheque para custodiar
         vr_index_cheque := vr_tab_cheque_custodia.count + 1;  
         vr_tab_cheque_custodia(vr_index_cheque).dsdocmc7 := vr_dsdocmc7_formatado;
@@ -5352,7 +5356,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
         vr_tab_cheque_custodia(vr_index_cheque).inchqcop := vr_inchqcop;
         
       END LOOP;
-
+			
       -- Verifica se foram encontrados erros durante o processamento
       IF vr_tab_custodia_erro.count > 0 THEN
         vr_xml_erro_custodia := '';
