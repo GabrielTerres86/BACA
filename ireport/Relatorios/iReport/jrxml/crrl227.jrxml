@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="modrel234" language="groovy" pageWidth="842" pageHeight="700" orientation="Landscape" columnWidth="842" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
-	<property name="ireport.zoom" value="3.0"/>
+	<property name="ireport.zoom" value="1.5"/>
 	<property name="ireport.x" value="0"/>
-	<property name="ireport.y" value="667"/>
+	<property name="ireport.y" value="244"/>
 	<parameter name="PR_NMRESCOP" class="java.lang.String">
 		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
 	</parameter>
@@ -342,7 +342,7 @@
 				</subreport>
 			</frame>
 		</band>
-		<band height="256">
+		<band height="306">
 			<staticText>
 				<reportElement uuid="493de2ed-9389-4278-8915-dbc9a6954059" x="59" y="40" width="90" height="8"/>
 				<textElement textAlignment="Right">
@@ -524,7 +524,27 @@
 				</subreport>
 			</frame>
 			<frame>
-				<reportElement uuid="7b815da1-7a52-4580-96e0-fdd6edb166a7" positionType="Float" x="0" y="160" width="842" height="32" isRemoveLineWhenBlank="true">
+				<reportElement uuid="7b815da1-7a52-4580-96e0-fdd6edb166a7" positionType="Float" x="0" y="160" width="852" height="16" isRemoveLineWhenBlank="true">
+					<printWhenExpression><![CDATA[(($F{cdagenci}).equals("99") ? Boolean.TRUE : Boolean.FALSE)]]></printWhenExpression>
+				</reportElement>
+				<subreport>
+					<reportElement uuid="cbfc45f7-2851-41f8-8da6-3fa4221da4b3" positionType="Float" x="50" y="0" width="742" height="8"/>
+					<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//agencia/tabmicrocredito/microcredito")]]></dataSourceExpression>
+					<subreportExpression><![CDATA["crrl227_microcredito.jasper"]]></subreportExpression>
+				</subreport>
+			</frame>
+			<frame>
+				<reportElement uuid="7b815da1-7a52-4580-96e0-fdd6edb166a7" positionType="Float" x="0" y="176" width="852" height="16" isRemoveLineWhenBlank="true">
+					<printWhenExpression><![CDATA[(($F{cdagenci}).equals("99") ? Boolean.TRUE : Boolean.FALSE)]]></printWhenExpression>
+				</reportElement>
+				<subreport>
+					<reportElement uuid="cbfc45f7-2851-41f8-8da6-3fa4221da4b3" positionType="Float" x="50" y="0" width="742" height="8"/>
+					<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//agencia/tabreccaixa/reccaixa")]]></dataSourceExpression>
+					<subreportExpression><![CDATA["crrl227_reccaixa.jasper"]]></subreportExpression>
+				</subreport>
+			</frame>
+			<frame>
+				<reportElement uuid="7b815da1-7a52-4580-96e0-fdd6edb166a7" positionType="Float" x="30" y="206" width="842" height="32" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[(($F{cdagenci}).equals("99") ? Boolean.TRUE : Boolean.FALSE)]]></printWhenExpression>
 				</reportElement>
 				<staticText>
@@ -688,7 +708,7 @@
 				</textField>
 			</frame>
 			<frame>
-				<reportElement uuid="3125e34b-125a-4b89-8d8e-45a5012aae81" positionType="Float" x="0" y="192" width="842" height="64"/>
+				<reportElement uuid="3125e34b-125a-4b89-8d8e-45a5012aae81" positionType="Float" x="30" y="238" width="842" height="64"/>
 				<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
 					<reportElement uuid="f79181b7-3045-4f06-a9d0-cd9e10c4f8ff" x="463" y="40" width="56" height="8"/>
 					<textElement textAlignment="Right">

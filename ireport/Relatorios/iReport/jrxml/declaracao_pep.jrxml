@@ -2,7 +2,7 @@
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="declaracao_ppe" language="groovy" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" whenResourceMissingType="Empty" uuid="3507f05f-852a-4801-ace7-f9927a1d69bc">
 	<property name="ireport.zoom" value="1.3310000000000006"/>
 	<property name="ireport.x" value="0"/>
-	<property name="ireport.y" value="370"/>
+	<property name="ireport.y" value="194"/>
 	<queryString language="xPath">
 		<![CDATA[/declaracao]]>
 	</queryString>
@@ -99,7 +99,8 @@
 "Data Início do Exercício: " + $F{dtinicio} + "\n" +
 "Data Fim do Exercício: " + (($F{dttermino})? $F{dttermino} : "") + "\n" +
 "Empresa/Órgão Público: " + $F{nmempresa} + "\n" +
-"CNPJ: " + $F{nrcnpj_empresa}]]></textFieldExpression>
+(($F{nrcnpj_empresa})? "CNPJ: " + $F{nrcnpj_empresa} : "")
+]]></textFieldExpression>
 			</textField>
 		</band>
 		<band height="140">
