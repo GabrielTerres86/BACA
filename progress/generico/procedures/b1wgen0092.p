@@ -5510,7 +5510,7 @@ PROCEDURE valida_senha_cooperado:
                           crapcrm.nrdconta = par_nrdconta     
                           NO-LOCK:
 
-       IF  CAPS(ENCODE(STRING(par_cddsenha))) = CAPS(crapcrm.dssencar) THEN
+       IF  CAPS(ENCODE(STRING(par_cddsenha,"999999"))) = CAPS(crapcrm.dssencar) THEN
            DO:
                ASSIGN aux_flgsevld = TRUE.
                LEAVE.
@@ -5524,7 +5524,7 @@ PROCEDURE valida_senha_cooperado:
                              AND  crapcrd.nrdconta = par_nrdconta
                              NO-LOCK:                
                       
-              IF  CAPS(ENCODE(STRING(par_cddsenha))) = CAPS(crapcrd.dssentaa) THEN
+              IF  CAPS(ENCODE(STRING(par_cddsenha,"999999"))) = CAPS(crapcrd.dssentaa) THEN
                   DO:
                       ASSIGN aux_flgsevld = TRUE.
                       LEAVE.
