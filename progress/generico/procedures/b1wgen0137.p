@@ -2,7 +2,7 @@
 
     Programa  : sistema/generico/procedures/b1wgen0137.p
     Autor     : Guilherme
-    Data      : Abril/2012                      Ultima Atualizacao: 25/10/2016
+    Data      : Abril/2012                      Ultima Atualizacao: 27/04/2017
     
     Dados referentes ao programa:
 
@@ -297,11 +297,14 @@
                 14/10/2016 - Descontinuar batimento do 620_credito para todas as cooperativas 
                              (Lucas Ranghetti #510032)
 
-	            25/10/2016 - Inserido LICENCAS SOCIO AMBIENTAIS no digidoc 
-				             Melhoria 310 (Tiago/Thiago).
+	              25/10/2016 - Inserido LICENCAS SOCIO AMBIENTAIS no digidoc 
+				                     Melhoria 310 (Tiago/Thiago).
 
-			    11/11/2016 - Alterado titulo relatorio de Lic. Soc.Ambiental
-				             para Lic. Soc.Ambientais M310(Tiago/Thiago).
+			          11/11/2016 - Alterado titulo relatorio de Lic. Soc.Ambiental
+				                     para Lic. Soc.Ambientais M310(Tiago/Thiago).
+                     
+                27/04/2016 - Adicionar validacao de operador <> "1" pois significa
+                             que renovou automatico (Lucas Ranghetti #642992)
 .............................................................................*/
 
 
@@ -4655,9 +4658,10 @@ PROCEDURE retorna_docs_liberados:
             DO:    
                 FOR EACH crapepr WHERE crapepr.cdcooper = par_cdcooper      AND
                                        crapepr.dtmvtolt = par_dtlibera      AND
+                                       crapepr.cdopeefe <> "1"              AND 
                                 NOT CAN-DO("3,4", STRING(crapepr.cdorigem)) AND
                                 NOT CAN-DO("100,800,850,900,6901,6902,6903,6904,6905", 
-                                           STRING(crapepr.cdlcremp)) 
+                                           STRING(crapepr.cdlcremp))
                                 NO-LOCK:
         
                     CREATE tt-documentos-liberados.
@@ -4679,7 +4683,8 @@ PROCEDURE retorna_docs_liberados:
                 FOR EACH crapadt FIELDS(cdcooper nrdconta nrctremp nraditiv 
                                         dtmvtolt cdagenci)
                                   WHERE crapadt.cdcooper = par_cdcooper AND
-                                        crapadt.dtmvtolt = par_dtlibera NO-LOCK,
+                                        crapadt.dtmvtolt = par_dtlibera AND 
+                                        crapadt.cdoperad <> "1"         NO-LOCK,
                     FIRST crapepr WHERE crapepr.cdcooper = crapadt.cdcooper AND
                                         crapepr.nrdconta = crapadt.nrdconta AND
                                         crapepr.nrctremp = crapadt.nrctremp AND
@@ -4702,9 +4707,10 @@ PROCEDURE retorna_docs_liberados:
         /* Contrato Bordero de Cheques */
         IF  par_tpdocmto = 87 THEN
             DO:
-                FOR EACH crapbdc WHERE crapbdc.cdcooper = par_cdcooper     AND
-                                       crapbdc.insitbdc = 3                AND
-                                       crapbdc.dtlibbdc = par_dtlibera     NO-LOCK:
+                FOR EACH crapbdc WHERE crapbdc.cdcooper = par_cdcooper AND
+                                       crapbdc.insitbdc = 3            AND
+                                       crapbdc.dtlibbdc = par_dtlibera AND 
+                                       crapbdc.cdoperad <> "1"         NO-LOCK:
 
                     aux_vlchqtot = 0.
 
@@ -4733,8 +4739,9 @@ PROCEDURE retorna_docs_liberados:
         /* Contrato Bordero de Titulos */
         IF  par_tpdocmto = 88 THEN
             DO:
-                FOR EACH crapbdt WHERE crapbdt.cdcooper = par_cdcooper     AND
-                                       crapbdt.dtlibbdt = par_dtlibera     NO-LOCK:
+                FOR EACH crapbdt WHERE crapbdt.cdcooper = par_cdcooper AND
+                                       crapbdt.dtlibbdt = par_dtlibera AND 
+                                       crapbdt.cdoperad <> "1"         NO-LOCK:
 
                     aux_vltittot = 0.
 
@@ -4766,7 +4773,8 @@ PROCEDURE retorna_docs_liberados:
                 FOR EACH craplim WHERE craplim.cdcooper = par_cdcooper AND
                                        craplim.dtinivig = par_dtlibera AND
                                        craplim.tpctrlim = 1            AND
-                                       craplim.insitlim = 2           
+                                       craplim.insitlim = 2            AND
+                                       craplim.cdoperad <> "1"
                                        NO-LOCK:
                             
                     FIND FIRST crapope WHERE crapope.cdcooper = craplim.cdcooper AND
