@@ -8,6 +8,8 @@
  * -------------- 16/02/2016 - Ajustes para corrigir o problema de não conseguir carregar
                                corretamente as informações para opção "E"
                                (Adriano - SD 402006)
+
+                  22/03/2017 - Adicionado opção para importar a planilha de prova de vida (Douglas - Chamado 618510)
  */
 
 var	cdcooper = 0;
@@ -34,6 +36,7 @@ function estadoInicial() {
 	formataProcessarPlanilha();
 	formataResumo();
 	formataSolicitar();
+	formataImportarProvaVida();
 
 	removeOpacidade('divTela');
 	highlightObjFocus( $('#frmCab') ); 
@@ -284,6 +287,18 @@ function formataSolicitar(){
 	
 }
 
+function formataImportarProvaVida(){
+	
+	$('#fsetFiltroProvaVidaObs','#frmImportarProvaVida').css({'display':'block'});
+	
+	$('#frmImportarProvaVida').css({'display':'none'});	
+	highlightObjFocus( $('#frmImportarProvaVida') ); 
+	
+	layoutPadrao();
+	
+	return false;
+}
+
 function formataTabelaExcluirLancamento() {
 	$('#divExcluir').css({'width':'650px','padding-bottom':'2px','padding-left':'4px'});
 	
@@ -425,6 +440,10 @@ function liberaFormulario() {
 		case "S": // Solicitar as mensagens para o SICREDI
 			carregarListaCooperativas();
 		break;
+		
+		case "I": // Processar planilha de prova de vida
+			liberaAcaoImportarProvaVida();
+		break;
 	}
 
 }
@@ -515,6 +534,23 @@ function liberaAcaoSolicitar(){
 	$("#cdcopaux","#frmSolicitar").habilitaCampo().val("0").focus();
 }
 
+function liberaAcaoImportarProvaVida(){
+	
+	// Desabilitar a opção
+	$("#cddopcao","#frmCab").desabilitaCampo();
+	
+	// Mostrar a tela
+	$('#frmImportarProvaVida').css({'display':'block'});
+	$('#fsetFiltroProvaVidaObs','#frmImportarProvaVida').css({'display':'block'});
+	$('#divBotoes').css({'display':'block','padding-bottom':'15px'});
+	$('#btVoltar','#divBotoes').css({'display':'inline'});
+	$('#btConcluir', '#divBotoes').css({ 'display': 'inline' });
+	$('#btProsseguir', '#divBotoes').css({ 'display': 'none' });
+	
+	$('#btConcluir', '#divBotoes').focus();
+	
+}
+
 function controlaVoltar(){
 	
 	switch($("#cddopcao","#frmCab").val()) {
@@ -556,6 +592,12 @@ function controlaVoltar(){
 			}
 			
 		break;
+		
+		case "I": // Importar planilha de prova de vida
+			
+			estadoInicial();
+			
+		break;
 	}
 	
 }
@@ -584,6 +626,10 @@ function controlaConcluir() {
 		
 		case "S": // Solicitar as mensagens para o SICREDI
 			concluirSolicitar();
+		break;
+		
+		case "I": // Importar planilha de prova de vida
+			concluirImportarProvaVida();
 		break;
 	}
 }
@@ -651,6 +697,12 @@ function concluirResumo(){
 function concluirSolicitar(){
 	
 	showError('inform','Antes de efetuar a solicita&ccedil;&atilde;o, contate o SICREDI para verificar permiss&atilde;o.','Alerta - Ayllos','showConfirmacao(\'Deseja realizar a solicita&ccedil;&atilde;o?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'processaSolicitar();\',\'\',\'sim.gif\',\'nao.gif\');');
+	
+}
+
+function concluirImportarProvaVida(){
+	
+	showConfirmacao('Deseja processar o arquivo "PV_CECRED.csv" para atualizar a data da prova de vida dos benefici&aacute;rios do INSS? ','Confirma&ccedil;&atilde;o - Ayllos','processaImportarProvaVida();','','sim.gif','nao.gif');
 	
 }
 
@@ -802,6 +854,34 @@ function processaSolicitar(){
 			} catch (error) {
 					hideMsgAguardo();
 					showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "$('#cdcopaux','#frmSolicitar').focus()");
+				}
+			}
+    });
+    return false;
+}
+
+function processaImportarProvaVida(){
+	
+	showMsgAguardo( "Aguarde, processando planilha para atualizar a data da prova de vida dos benef&iacute;cios do INSS..." );
+	
+    //Requisição para processar a opção que foi selecionada
+	$.ajax({
+        type: "POST",
+        url: UrlSite + "telas/prcins/manter_rotina_importar_prova_vida.php",
+        data: {
+			redirect: "script_ajax"
+        },
+        error: function(objAjax,responseError,objExcept) {
+            hideMsgAguardo();
+            showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","");
+        },
+        success: function(response) {
+            hideMsgAguardo();
+			try {
+				eval(response);
+			} catch (error) {
+					hideMsgAguardo();
+					showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "");
 				}
 			}
     });

@@ -1,7 +1,7 @@
 /**********************************************************************
   Fonte: capital.js                                                
   Autor: David													   
-  Data : Outubro/2007                 Ultima Alteracao: 30/09/2015
+  Data : Outubro/2007                 Ultima Alteracao: 23/03/2017
                                                                    
   Objetivo  : Biblioteca de funcoes da rotina Capital da tela      
               ATENDA                                               
@@ -23,6 +23,10 @@
 		      25/07/2016 - Alterado função controlaFoco.
 		                   (Evandro - RKAM)	.	  						   
 					
+              23/03/2017 - Auste para solicitar a senha do cartão magnético do cooperado
+                           e não gerar termo 
+                           (Jonata - RKAM / M294).
+ 					
 *************************************************************************/
 
 var callafterCapital = '';
@@ -146,7 +150,7 @@ function acessaOpcaoAba(nrOpcoes, id, opcao) {
 function controlaFoco(opcao) {
     var IdForm = '';
     var formid;
-	
+
     if (opcao == "@") { //Principal
         $('.FirstInput:first ').focus();
 	}
@@ -156,8 +160,10 @@ function controlaFoco(opcao) {
             IdForm = $(formid).attr('id');//Seleciona o id do formulario
             if (IdForm == "frmNovoPlano") {
                 $(this).find("#frmNovoPlano > :input").first().addClass("FirstInputModal").focus();
-                $(this).find("#divBotoes > :input[type=image]").addClass("FluxoNavega");
-                $(this).find("#divBotoes > :input[type=image]").last().addClass("LastInputModal");
+                $(this).find("#divBotoesSenha > :input[type=image]").addClass("FluxoNavega");
+                $(this).find("#divBotoesSenha > :input[type=image]").last().addClass("LastInputModal");
+                $(this).find("#divBotoesAutorizacao > :input[type=image]").addClass("FluxoNavega");
+                $(this).find("#divBotoesAutorizacao > :input[type=image]").last().addClass("LastInputModal");
             };
 
             //Se estiver com foco na classe FluxoNavega
@@ -167,7 +173,7 @@ function controlaFoco(opcao) {
                         $(this).click();
                         e.stopPropagation();
                         e.preventDefault();
-}	
+	}
                 });
             });
 
@@ -184,7 +190,7 @@ function controlaFoco(opcao) {
 
             $(".FirstInputModal").focus();
         });
-    }
+}	
 
     if (opcao == "E") { //Extrato
         $('#divConteudoOpcao').each(function () {
@@ -286,6 +292,7 @@ function validaNovoPlano(altera) {
             qtpremax: $("#qtpremax", "#frmNovoPlano").val(),
             dtdpagto: $("#dtdpagto", "#frmNovoPlano").val(),
 			flcancel: altera,
+            tpautori: $("input[name='tpautori']:checked", "#frmNovoPlano").val(),
 			redirect: "script_ajax"
 		},	
         error: function (objAjax, responseError, objExcept) {
@@ -304,7 +311,7 @@ function validaNovoPlano(altera) {
 }
 
 // Fun&ccedil;&atilde;o para cadastrar novo plano de capital
-function cadastraNovoPlano(altera) {
+function cadastraNovoPlano(altera,tpautori) {
 
 	if (!altera)
 		// Mostra mensagem de aguardo
@@ -354,6 +361,7 @@ function cadastraNovoPlano(altera) {
             dtdpagto: $("#dtdpagto", "#frmNovoPlano").val(),
 			flcancel: altera,
             executandoProdutos: executandoProdutos,
+            tpautori: tpautori,
 			redirect: "script_ajax"
 		},		
         error: function (objAjax, responseError, objExcept) {
@@ -371,9 +379,41 @@ function cadastraNovoPlano(altera) {
 	}); 
 }
 
-// Fun&ccedil;&atilde;o para imprimir termo de cancelamento do plano de capital atual em PDF
+
+// Fun&ccedil;&atilde;o para cancelar plano de capital
 function cancelarPlanoAtual() {
 	
+    showMsgAguardo("Aguarde, cancelando plano ...");
+
+    // Executa script de cancelamento do plano atrav&eacute;s de ajax
+    $.ajax({
+        type: "POST",
+        url: UrlSite + "telas/atenda/capital/excluir_novo_plano.php",
+        data: {
+            nrdconta: nrdconta,
+            redirect: "script_ajax"
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function (response) {
+            try {
+                eval(response);
+            } catch (error) {
+                hideMsgAguardo();
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            }
+        }
+    });
+   
+
+}
+
+
+// Fun&ccedil;&atilde;o para cancelar plano de capital
+function excluirPlano() {
+    
 	// Bloqueia conte&uacute;do que est&aacute; &aacute;tras do div da rotina
 	blockBackground(parseInt($('#divRotina').css('z-index')));
     $("#nrdconta", "#frmTermoCancela").val(nrdconta);
@@ -382,6 +422,7 @@ function cancelarPlanoAtual() {
 	var callafter = "blockBackground(parseInt($('#divRotina').css('z-index')));";
 	
     carregaImpressaoAyllos("frmTermoCancela", action, callafter);
+
 }
 
 // Fun&ccedil;&atilde;o para imprimir termo de autoriza&ccedil;&atilde;o do novo plano de capital em PDF
@@ -465,7 +506,7 @@ function controlaLayout(operacao) {
     } else if (in_array(operacao, ['PLANO_CAPITAL'])) {
 	
 		nomeForm = 'frmNovoPlano';		
-        altura = '220px';
+        altura = '240px';
         largura = '425px';
 
         $('#' + nomeForm).css('margin-top', '4px')
@@ -473,18 +514,29 @@ function controlaLayout(operacao) {
         var cTodos = $('select,input', '#' + nomeForm);
         cTodos.addClass('').css('width', '195px');
 		
-        var rRotulos = $('label[for="vlprepla"],label[for="cdtipcor"],label[for="vlcorfix"],label[for="flgpagto"],label[for="qtpremax"],label[for="dtdpagto"],label[for="dtultatu"],label[for="dtproatu"]', '#' + nomeForm);
+        var rRotulos = $('label[for="vlprepla"],label[for="cdtipcor"],label[for="vlcorfix"],label[for="flgpagto"],label[for="qtpremax"],label[for="dtdpagto"],label[for="dtultatu"],label[for="dtproatu"],label[for="tpautori"]', '#' + nomeForm);
+        var rSenha = $('label[for="senha"]', '#' + nomeForm);
+        var rAutorizacao = $('label[for="autorizacao"]', '#' + nomeForm);
         var cDeb = $('#flgpagto', '#' + nomeForm);
         var cData = $('#dtdpagto,#dtultatu,#dtproatu', '#' + nomeForm);
         var cQtpremax = $('#qtpremax', '#' + nomeForm);
         var cCdtipcor = $('#cdtipcor', '#' + nomeForm);
         var cDtdpagto = $("#dtdpagto", '#' + nomeForm);
+        var cSenha = $('#senha', '#' + nomeForm);
+        var cAutorizacao = $('#autorizacao', '#' + nomeForm);
+
+        rSenha.css('width', '30px');
+        rAutorizacao.css('width', '50px');
 
         cDeb.addClass('campo').css('width', '195px');
         cData.addClass('data').css('width', '195px');
+        cSenha.css('width', '30px');
+        cAutorizacao.css('width', '30px');
 
         rRotulos.addClass('rotulo').css('width', '160px');
 		
+        cSenha.click();
+
         cCdtipcor.unbind('keydown').bind('keydown', function (e) {
 			if (e.keyCode == 13) {
 				cDeb.focus();
@@ -551,9 +603,9 @@ function controlaLayout(operacao) {
         tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, '');
 				
     } else if (in_array(operacao, ['INTEGRALIZA'])) {
-	
+				
         altura = '190px';
-		
+	
 		$('div.divIntegralizacao').css('height','142px');
 		
 		var rVintegra = $('label[for="vintegra"]','#frmIntegraliza');
@@ -822,3 +874,21 @@ function habilitaValor() {
 }
 
 
+function controlaBotoes(tipo) {
+    
+    /*Senha*/
+    if (tipo == '1') {
+        
+        $('#divBotoesAutorizacao').css('display', 'none');
+        $('#divBotoesSenha').css('display', 'inline');
+
+    /*Autorizacao*/
+    } else {
+        
+        $('#divBotoesAutorizacao').css('display', 'inline');
+        $('#divBotoesSenha').css('display', 'none');
+
+    }
+
+    
+}

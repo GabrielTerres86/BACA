@@ -1,19 +1,36 @@
 <?php 
+	//*********************************************************************************************************************************************************//
+	//*** Fonte: validar_novo_plano.php                     
+	//*** Autor: David                                                     
+	//*** Data : Dezembro/2007											  Ultima Alteracao: 18/07/2016
+	//***
+	//*** Objetivo  : Validar Novo Plano de Capital - rotina de Capital  da tela ATENDA 
+	//***                                                                  
+	//*** Alteracoes:  26/02/2014 - Adicionado atributos $cdtipcor e $vlcorfix, alem da procedure valida-dados-alteracao-plano.(Fabricio)                            
+	//***					    18/07/2016 - Correcao na forma de leitura do retorno XML. SD 479874. (Carlos R).
+	//*********************************************************************************************************************************************************//
 
-	//************************************************************************//
-	//*** Fonte: validar_novo_plano.php                                    ***//
-	//*** Autor: David                                                     ***//
-	//*** Data : Dezembro/2007                &Uacute;ltima Altera&ccedil;&atilde;o: 26/02/2014 ***//
-	//***                                                                  ***//
-	//*** Objetivo  : Validar Novo Plano de Capital - rotina de Capital    ***//
-	//***             da tela ATENDA                                       ***//
-	//***                                                                  ***//	 
-	//*** Altera&ccedil;&otilde;es:                                        ***//
-	//***				26/02/2014 - Adicionado atributos $cdtipcor e      ***//
-	//***                            $vlcorfix, alem da procedure          ***//
-	//***                            valida-dados-alteracao-plano.         ***//
-	//***                            (Fabricio)                            ***//
-	//************************************************************************//
+	/************************************************************************
+	 Fonte: validar_novo_plano.php                                   
+	 Autor: David                                                    
+	 Data : Dezembro/2007                       Última alteração: 22/03/2017
+	                                                                 
+	 Objetivo  : Validar Novo Plano de Capital - rotina de Capital   
+	             da tela ATENDA                                      
+	                                                                 
+	 Alterações: 26/02/2014 - Adicionado atributos $cdtipcor e      
+	                            $vlcorfix, alem da procedure         
+	                            valida-dados-alteracao-plano.        
+	                            (Fabricio)     
+                 18/07/2016 - Correcao na forma de leitura do retorno XML. SD 479874. (Carlos R).  
+				            
+                 22/03/2017 - Ajuste para solicitar a senha do cooperador e não gerar o termo
+                              para coleta da assinatura 
+                             (Jonata - RKAM / M294). 
+                           
+                           
+                           
+	************************************************************************/
 	
 	session_start();
 	
@@ -45,6 +62,7 @@
 	$qtpremax = $_POST["qtpremax"];
 	$dtdpagto = $_POST["dtdpagto"];	
 	$flcancel = $_POST["flcancel"];
+  $tpautori = $_POST["tpautori"];
 
 	// Verifica se n&uacute;mero da conta &eacute; um inteiro v&aacute;lido
 	if (!validaInteiro($nrdconta)) {
@@ -73,6 +91,11 @@
 	// Verifica se data de in&iacute;cio do plano &eacute; v&aacute;lida
 	if (!validaData($dtdpagto)) {
 		exibeErro("Data de In&iacute;cio do pagamento inv&aacute;lida.");
+	}
+	
+  // Verifica o tipo de autoriza&ccedil;&atilde;o
+	if ($tpautori != "1" && $tpautori != "2") {
+		exibeErro("Tipo de autoriza&ccedil;&atilde;o inv&aacute;lido.");
 	}
 	
 	// Monta o xml de requisi&ccedil;&atilde;o
@@ -118,18 +141,34 @@
 	$xmlObjPlano = getObjectXML($xmlResult);
 	
 	// Se ocorrer um erro, mostra cr&iacute;tica
-	if (strtoupper($xmlObjPlano->roottag->tags[0]->name) == "ERRO") {
+	if (isset($xmlObjPlano->roottag->tags[0]->name) && strtoupper($xmlObjPlano->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjPlano->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	} 	
 	
 	// Esconde mensagem de aguardo
 	echo 'hideMsgAguardo();';
 	
-	if ($flcancel == "false")
+  if($tpautori == "1"){
+  
+	  if ($flcancel == "false"){
+		  // Mensagem para confirmar cadastro do novo plano
+		  echo 'showConfirmacao("Deseja cadastrar o novo plano de capital?","Confirma&ccedil;&atilde;o - Ayllos","solicitaSenhaMagnetico(\'cadastraNovoPlano('.$flcancel.','.$tpautori.')\','.$nrdconta.')","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
+	  
+    }else{
+    
+		  echo 'showConfirmacao("Deseja alterar o plano de capital?","Confirma&ccedil;&atilde;o - Ayllos","solicitaSenhaMagnetico(\'cadastraNovoPlano('.$flcancel.','.$tpautori.')\','.$nrdconta.')","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
+	 
+    }
+    
+  }else{
+  
+      if ($flcancel == "false"){
 		// Mensagem para confirmar cadastro do novo plano
-		echo 'showConfirmacao("Deseja cadastrar o novo plano de capital?","Confirma&ccedil;&atilde;o - Ayllos","cadastraNovoPlano('.$flcancel.')","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
-	else
-		echo 'showConfirmacao("Deseja alterar o plano de capital?","Confirma&ccedil;&atilde;o - Ayllos","cadastraNovoPlano('.$flcancel.')","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
+		    echo 'showConfirmacao("Deseja cadastrar o novo plano de capital?","Confirma&ccedil;&atilde;o - Ayllos","cadastraNovoPlano('.$flcancel.','.$tpautori.')","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
+	    }else{
+		    echo 'showConfirmacao("Deseja alterar o plano de capital?","Confirma&ccedil;&atilde;o - Ayllos","cadastraNovoPlano('.$flcancel.','.$tpautori.')","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
+      }
+  }
 	
 	// Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript
 	function exibeErro($msgErro) { 

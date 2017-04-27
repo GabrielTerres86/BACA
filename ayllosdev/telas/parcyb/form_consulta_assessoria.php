@@ -12,34 +12,22 @@
 	 */
 ?>
 <div id="divConsultaAssessoria" name="divConsultaAssessoria">
-  <div id="tabCadcas">
-    <div class="divRegistros">
-      <table class="tituloRegistros" id="tbCadcas">
-        <thead>
-          <tr>
-            <th>
-              <? echo utf8ToHtml("C&oacute;digo");?>
-            </th>
-            <th>
-              <? echo utf8ToHtml("C&oacute;digo CYBER");?>
-            </th>
-            <th>
-              <? echo utf8ToHtml("Nome da Assessoria");?>
-            </th>
-            <th>
-              <? echo utf8ToHtml("Judicial");?>
-            </th>
-            <th>
-              <? echo utf8ToHtml("Extra Judicial");?>
-            </th>
-            <th>
-              <? echo utf8ToHtml("Sigla Cyber");?>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-        </tbody>
-      </table>
-    </div>
-  </div>
+	<div id="tabCadcas">
+		<div class="divRegistros">
+			<table class="tituloRegistros" id="tbCadcas">
+				<thead>
+					<tr>
+						<th><? echo utf8ToHtml("C&oacute;digo");?></th>
+						<th><? echo utf8ToHtml("C&oacute;digo CYBER");?></th>
+						<th><? echo utf8ToHtml("Nome da Assessoria");?></th>
+					    <th><? echo utf8ToHtml("Judicial");?></th>
+						<th><? echo utf8ToHtml("Extra Judicial");?></th>
+						<th><? echo utf8ToHtml("Sigla Cyber");?></th>
+                   </tr>
+				</thead>
+				<tbody>
+				</tbody>
+			</table>
+		</div> 
+	</div>
 </div>

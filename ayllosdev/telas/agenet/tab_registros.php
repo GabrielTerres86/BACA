@@ -8,6 +8,7 @@
  * ALTERAÇÕES   : 25/04/2016 - Ajuste para atender as solicitações do projeto M 117(Adriano - M117).
  *                15/07/2016 - Inclusao do nrdconta para ser passado por parametro para o cancelamento (Carlos)
  *				  29/07/2016 - Corrigi o uso desnecessario da funcao session_start. SD 491672 (Carlos R.)
+ *			      31/11/2017 - Exibir TEDs Canceladas devido a fraude PRJ335 - Analise de fraude(Odirlei-AMcom)
  * --------------
  */ 
 	require_once('../../includes/config.php');
@@ -69,7 +70,7 @@
 							<input type="hidden" id="vljuros" name="vljuros" value="<? echo number_format(str_replace(",",".",getByTagName($result->tags,'vljuros')),2,",","."); ?>" />
 							<input type="hidden" id="vlreceita_bruta" name="vlreceita_bruta" value="<? echo number_format(str_replace(",",".",getByTagName($result->tags,'vlreceita_bruta')),2,",","."); ?>" />
 							<input type="hidden" id="vlpercentual" name="vlpercentual" value="<? echo number_format(str_replace(",",".",getByTagName($result->tags,'vlpercentual')),2,",","."); ?>" />
-						
+						    <input type="hidden" id="dsobserv" name="dsobserv" value="<? echo getByTagName($result->tags,'dsobserv'); ?>" />
 						</tr>	
 					<? } ?>
 				</tbody>	
@@ -132,6 +133,9 @@
 		<input type="text" id="hrtransa" name="hrtransa"/>
 		
 		<input type="text" id="dstitdda" name="dstitdda"/>
+        
+        <label for="dsobserv"><? echo utf8ToHtml('Observa&ccedil;&atilde;o:') ?></label>
+		<input type="text" id="dsobserv" name="dsobserv"/>
 		
 	</fieldset>
 	

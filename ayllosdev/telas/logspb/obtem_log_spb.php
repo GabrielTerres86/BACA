@@ -3,7 +3,7 @@
 	//**************************************************************************//
 	//*** Fonte: obtem_log_spb.php                                           ***//
 	//*** Autor: David                                                       ***//
-	//*** Data : Novembro/2009                Última Alteração: 07/11/2016   ***//
+	//*** Data : Novembro/2009                Última Alteração: 31/01/2017   ***//
 	//***                                                                    ***//
 	//*** Objetivo  : Obter log das transações SPB                           ***//
 	//***                                                                    ***//	 
@@ -47,6 +47,9 @@
     //***                          durante a homologação da área		     ***//
 	//***                          (Adriano - M211)				             ***//
 	//***														             ***//
+    //***			  31/11/2017 - Ajustes para exibir TEDs estornadas		 ***//
+    //***			               devido a analise de fraude                ***//
+    //***			               PRJ335 - Analise de fraude(Odirlei-AMcom) ***//
 	//**************************************************************************//
 	
 	session_start();
@@ -104,10 +107,16 @@
 
 	// Verifica se situação é válida
 	if ($cdsitlog <> "P" && $cdsitlog <> "D" && $cdsitlog <> "T") {
-		if ($cdsitlog = "R") {
-		    if ($numedlog <> "1"  && $numedlog <> "3")
+		if ($cdsitlog == "R") {
+		    if ($numedlog <> "1"  && $numedlog <> "3"){
 				exibeErro("Situa&ccedil;&atilde;o inv&aacute;lida.");
-		} else 
+            }
+        /* opcao Estorno so podera ser utilizado para Enviadas ou Todos */    
+		} if ($cdsitlog == "E") {
+            if ($numedlog <> "1"  && $numedlog <> "4"){
+				exibeErro("Situa&ccedil;&atilde;o inv&aacute;lida.");
+            }
+        } else 
 			exibeErro("Situa&ccedil;&atilde;o inv&aacute;lida.");
 	}
 
@@ -164,7 +173,7 @@
 	
 	
 	if ($qtLogDetalhado > 0) {
-		
+
 		echo 'detalhes = new Array();';
 		
 		if ($cdsitlog == "P" && $numedlog != "4") {	
@@ -736,7 +745,8 @@
 			strHTML += '<input style="width: 100px;" class="campoTelaSemBorda" type="text" id="vlrtotal" name="vlrtotal" value="<?php echo number_format(str_replace(",", ".",$logTotais[0]->tags[10]->cdata),2,",","."); ?>" readonly ></input>';
 			<?php	 		 
 			// Fim $cdsitlog = "R"
-		 } elseif (($cdsitlog == "T") || ($numedlog == "4")){
+		 } elseif (($cdsitlog == "T") || ($cdsitlog == "E") ||($numedlog == "4")){
+             
 			?>
 			
 			strHTML += '<div id="divLogProcessadas" style="overflow-y: scroll; overflow-x: scroll; height: 300px; width: 860px;">';

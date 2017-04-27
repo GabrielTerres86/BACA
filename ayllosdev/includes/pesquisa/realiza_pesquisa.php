@@ -1,13 +1,13 @@
 <?php
    /* FONTE        : realiza_pesquisa.php
-	* CRIAÇÃO      : Rodolpho Telmo (DB1)
-	* DATA CRIAÇÃO : Janeiro/2010
-	* OBJETIVO     : Realiza a pesquisa genérica
-	* --------------
-	* ALTERAÇÕES   :
-	* --------------
+ * CRIAÇÃO      : Rodolpho Telmo (DB1)
+ * DATA CRIAÇÃO : Janeiro/2010
+ * OBJETIVO     : Realiza a pesquisa genérica
+ * --------------
+ * ALTERAÇÕES   :
+ * --------------
 	* 001: [22/10/2020] David          (CECRED) : Incluir novo parametro para a funcao getDataXML (David).
-	* 002: [17/16/2011] Gabriel Capoia (DB1) : Tratamento para retornar um valor diferente do que é exibido na busca ( Ex.: Exibe completo e retorna o resumido ).
+ * 002: [17/16/2011] Gabriel Capoia (DB1) : Tratamento para retornar um valor diferente do que é exibido na busca ( Ex.: Exibe completo e retorna o resumido ).
 	* 003: [07/08/2012] Adriano	       (CECRED) : Incluido o parametro rotina. Ajuste referente ao projeto GP - Sócios Menores.
 	* 004: [28/01/2014] Jorge   	   (CECRED) : Ajuste em popular tabela, verificando caso venha "yes" ou "no" e botando em portugues.
 	* 005: [16/05/2014] Jean Michel    (CECRED) : inclusao do parametro nmdatela na montagem do XML (Projeto de Novos Cartões Bancoob (TELA TRNBCB)).
@@ -15,6 +15,7 @@
 	* 007: [23/04/2015] Vanessa 	   (CECRED) : Tratamemnto para mostrar o nrispbif com 8 posições
 	* 008: [17/07/2015] Gabriel        (RKAM)   : Suporte para rotinas Oracle.  
 	* 009: [27/07/2016] Carlos R.	   (CECRED) : Corrigi a forma de recuperacao dos dados do XML. SD 479874.
+	* 010: [08/11/2016] Jaison/Andrino (CECRED) : Ajuste para passar o CDOPERAD e nao NMOPERAD como parametro da mensageria.
 	*/ 
 
 	session_start();
@@ -116,7 +117,7 @@
 	if ($flgProgress) {
 		$xmlResult = getDataXML($xml,false);
 	} else {
-		$xmlResult = mensageria($xml, $businessObject, $nomeProcedure, $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["nmoperad"], "</Root>");
+		$xmlResult = mensageria($xml, $businessObject, $nomeProcedure, $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	}
 	
 	$xmlObjPesquisa = getObjectXML($xmlResult);	

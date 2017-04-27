@@ -1,11 +1,11 @@
 <?php
 	/*!
 	 * FONTE          : gerar_relsdv.php
-	 * CRIAÇÃO      : Jean Calão (Mout´S)
-	 * DATA CRIAÇÃO : 24/02/2017
-	 * OBJETIVO     : Rotina para gerar o relatório de saldo devedor de empréstimo
+	 * CRIAÃ‡ÃƒO      : Jean CalÃ£o (MoutÂ´S)
+	 * DATA CRIAÃ‡ÃƒO : 24/02/2017
+	 * OBJETIVO     : Rotina para gerar o relatÃ³rio de saldo devedor de emprÃ©stimo
 	 * --------------
-	 * ALTERAÇÕES   : 
+	 * ALTERAÃ‡Ã•ES   : 
     * -------------- 
 	 */		
 
@@ -21,7 +21,7 @@
 	$nmdarqui      = (isset($_POST["nmdarqui"]))     ? $_POST["nmdarqui"]      : ""; // Nome do arquivo para importar
 	$nmdarsai      = (isset($_POST["nmdarsai"]))     ? $_POST["nmdarsai"]      : "";  // Nome do arquivo para gerar
      
-	// Identificar as operações/
+	// Identificar as operaÃ§Ãµes/
 	$procedure = "RELSDV_GERA_RELAT";
 	
 	// Monta o xml
@@ -35,18 +35,17 @@
 	
 	// Executa script para envio do XML
 	$xmlResult = mensageria($xml, "RELSDV", $procedure, $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	// Cria objeto para classe de tratamento de XML
 	$xmlObjeto = getObjectXML($xmlResult);
-		
-	// verificar a passagem de parametros
-	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO"){
-		
-		$msgErro = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		
-		if ($msgErro == "") {
-			$msgErro = $xmlObjeto->roottag->tags[0]->cdata;
+	
+	// Se ocorrer um erro, mostra crÃ­tica
+ 	if ($xmlObjeto->roottag->tags[0]->name == "ERRO") {
+		$msgErro = $xmlObj->roottag->tags[0]->cdata;
+		if($msgErro == null || $msgErro == ''){
+			$msgErro = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		}
-		exibirErro('error',$msgErro,'Alerta - Ayllos',"estadoInicial();",false);
+		//exibirErro("error",$msgErro,"Alerta - Ayllos","",false);
+    exibirErro("error","Arquivo gerado, verifique LOG!","Alerta - Ayllos","",false);
 	}
-		--
 		
 ?>
