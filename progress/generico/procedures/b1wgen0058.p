@@ -24,7 +24,7 @@
 
     Programa: b1wgen0058.p
     Autor   : Jose Luis (DB1)
-    Data    : Marco/2010                   Ultima atualizacao: 28/03/2017
+    Data    : Marco/2010                   Ultima atualizacao: 26/04/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - PROCURADORES/REPRESENTANTES
 
@@ -159,6 +159,9 @@
 
 				 28/03/2017 - Realizado ajuste para que quando filtrar procurador pelo CPF, busque
 							  apenas contas ativas, coforme solicitado no chamado 566363. (Kelvin)
+							  
+				 26/04/2017 - Ajustado o problema que não carregava os procuradores na tela contas,
+							  conforme solicitado no chamado 659095. (Kelvin)	
 
 .....................................................................................*/
 
@@ -651,13 +654,13 @@ PROCEDURE Busca_Dados_Cto:
                                 
         /* efetua a busca tanto por nr da conta como por cpf */
         IF  par_nrdctato <> 0  THEN
-            FOR FIRST crabass FIELDS(cdcooper nrdconta nrcpfcgc inpessoa)
+            FOR FIRST crabass FIELDS(cdcooper nrdconta nrcpfcgc inpessoa dtdemiss)
                               WHERE crabass.cdcooper = par_cdcooper AND
                                     crabass.nrdconta = par_nrdctato NO-LOCK:
             END.
         ELSE
         IF  par_nrcpfcto <> 0  THEN
-            FOR FIRST crabass FIELDS(cdcooper nrdconta nrcpfcgc inpessoa)
+            FOR FIRST crabass FIELDS(cdcooper nrdconta nrcpfcgc inpessoa dtdemiss)
                               WHERE crabass.cdcooper = par_cdcooper AND
                                     crabass.nrcpfcgc = par_nrcpfcto AND 
 									crabass.dtdemiss = ? NO-LOCK:
