@@ -650,6 +650,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
           -- Disparar exceção para escrita no arquivo 
           RAISE vr_excsaida;
         END IF;
+      -- Para AccessStage 
+      ELSIF pr_rw_gnconve.tpdenvio = 5 THEN
+        -- Copiar para o diretório arq 
+        gene0001.pc_OScommand_Shell(pr_des_comando => 'cp '||pr_camicoop||'/'||pr_nmarqped ||' '||pr_camicoop||'/arq'
+                                   ,pr_typ_saida   => vr_typsaida
+                                   ,pr_des_saida   => pr_dscritic);
+        IF NVL(vr_typsaida,' ') = 'ERR' THEN
+          -- Disparar exceção para escrita no arquivo 
+          RAISE vr_excsaida;
+        END IF;        
       -- Para WebService
       ELSIF pr_rw_gnconve.tpdenvio = 6 THEN  
         -- Chamar gravação do arquivo para retorno posterior via WebService
