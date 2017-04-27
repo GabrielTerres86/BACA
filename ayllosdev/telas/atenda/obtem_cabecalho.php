@@ -682,7 +682,7 @@ echo 'cdclcnae = "' . $vr_cdclcnae  . '";';
 																																			
             echo 'strHTML += \'<tr' . $style . '>\';';
 			$vr_txtmsg = ( isset($mensagens[$i]->tags[1]->cdata) ) ? addslashes($mensagens[$i]->tags[1]->cdata) : '';
-            echo 'strHTML += \'<td class="txtNormal"><textarea style="width: 455px; height: 40px; resize: none" readonly>' . $vr_txtmsg . '</textarea></td>\';';
+            echo 'strHTML += \'<td class="txtNormal"><textarea style="width: 455px; height: 40px; resize: none" readonly>' . removeCaracteresInvalidos(retiraAcentos($vr_txtmsg)) . '</textarea></td>\';';
 				echo 'strHTML += \'</tr>\';';															
 			}
 		
