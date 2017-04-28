@@ -3945,13 +3945,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
            vr_setlinha:= trim(vr_con_dtmvtolt) || ',' ||
                          trim(To_Char(vr_dtmvtolt,'DDMMYY')) ||
                          ',4112,4120,' ||
-                         REPLACE(trim(To_Char(vr_rel_vlsbtot5,'fm999999999999990d00')),',','.')||
+                         REPLACE(trim(To_Char(vr_rel_vlsbtot5 - vr_tab_rel_vlcntinv(2),'fm999999999999990d00')),',','.')||
                          ',1434,'|| chr(34) || vr_nmaux ||chr(34);
            --Escrever o cabecalho no arquivo
            gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                          ,pr_des_text => vr_setlinha); --> Texto para escrita
 
-           vr_setlinha:=  '999,' || REPLACE(trim(to_char(vr_rel_vlsbtot5,'fm9999999999990d00')),',','.');
+           vr_setlinha:=  '999,' || REPLACE(trim(to_char(vr_rel_vlsbtot5 - vr_tab_rel_vlcntinv(2),'fm9999999999990d00')),',','.');
            --Escrever o cabecalho no arquivo
            gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                          ,pr_des_text => vr_setlinha); --> Texto para escrita
@@ -3964,13 +3964,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
            vr_setlinha:= trim(vr_con_dtmvtopr) || ',' ||
                          trim(To_Char(vr_dtmvtopr,'DDMMYY')) ||
                          ',4120,4112,' ||
-                         REPLACE(trim(To_Char(vr_rel_vlsbtot5 ,'fm999999999999990d00')),',','.')||
+                         REPLACE(trim(To_Char(vr_rel_vlsbtot5 - vr_tab_rel_vlcntinv(2),'fm999999999999990d00')),',','.')||
                          ',1434,'|| chr(34) || vr_nmaux ||chr(34);
            --Escrever o cabecalho no arquivo
            gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                          ,pr_des_text => vr_setlinha); --> Texto para escrita
 
-           vr_setlinha:=  '999,' || REPLACE(trim(to_char(vr_rel_vlsbtot5,'fm999999990d00')),',','.');
+           vr_setlinha:=  '999,' || REPLACE(trim(to_char(vr_rel_vlsbtot5 - vr_tab_rel_vlcntinv(2),'fm999999990d00')),',','.');
            --Escrever o cabecalho no arquivo
            gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                          ,pr_des_text => vr_setlinha); --> Texto para escrita
