@@ -10,38 +10,40 @@
 
 <?php
 
-session_start();
-require_once('../../../includes/config.php');
-require_once('../../../includes/funcoes.php');
-require_once('../../../includes/controla_secao.php');
-require_once('../../../class/xmlfile.php');
-isPostMethod();
+    session_start();
+    require_once('../../../includes/config.php');
+    require_once('../../../includes/funcoes.php');
+    require_once('../../../includes/controla_secao.php');
+    require_once('../../../class/xmlfile.php');
+    isPostMethod();
 
-$pagina = (isset($_POST['pagina'])) ? $_POST['pagina'] : 1;
+    $inpessoa = (isset($_POST['inpessoa'])) ? $_POST['inpessoa'] : -1;
+    $pagina = (isset($_POST['pagina'])) ? $_POST['pagina'] : 1;
 
-$tamanho_pagina = 4;
+    $tamanho_pagina = 4;
 
-$xml = "<Root>";
-$xml .= " <Dados>";
-$xml .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
-$xml .= "   <flgstatus>1</flgstatus>";
-$xml .= "   <pagina>".$pagina."</pagina>";
-$xml .= "   <tamanho_pagina>".$tamanho_pagina."</tamanho_pagina>";
-$xml .= " </Dados>";
-$xml .= "</Root>";
+    $xml = "<Root>";
+    $xml .= " <Dados>";
+    $xml .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+    $xml .= "   <inpessoa>".$inpessoa."</inpessoa>";
+    $xml .= "   <flgstatus>1</flgstatus>";
+    $xml .= "   <pagina>".$pagina."</pagina>";
+    $xml .= "   <tamanho_pagina>".$tamanho_pagina."</tamanho_pagina>";
+    $xml .= " </Dados>";
+    $xml .= "</Root>";
 
-$xmlResult = mensageria($xml, "CADSMS", "LISTAR_PACOTES", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-$xmlObj = getObjectXML($xmlResult);
+    $xmlResult = mensageria($xml, "CADSMS", "LISTAR_PACOTES", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+    $xmlObj = getObjectXML($xmlResult);
 
-if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
-    $msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
-    if ($msgErro == "") {
-        $msgErro = $xmlObj->roottag->tags[0]->cdata;
+    if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
+        $msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+        if ($msgErro == "") {
+            $msgErro = $xmlObj->roottag->tags[0]->cdata;
+        }
+        exibirErro('error', $msgErro, 'Alerta - Ayllos', "", false);
     }
-    exibirErro('error', $msgErro, 'Alerta - Ayllos', "", false);
-}
 
-$registros = $xmlObj->roottag->tags;
+    $registros = $xmlObj->roottag->tags;
 
 ?>
 

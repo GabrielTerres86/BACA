@@ -96,6 +96,12 @@ aux_dstransa = 'Cancelar Servico de SMS Cobranca'.
 ELSE IF par_cddopcao = "IC"  THEN
 aux_dstransa = 'Imprimir contrato de Servico SMS Cobranca'.
 
+FIND FIRST crapass 
+        WHERE crapass.cdcooper = par_cdcooper
+        AND crapass.nrdconta = par_nrdconta 
+        NO-LOCK NO-ERROR.
+
+
 /* Alterar remetente */
 IF par_cddopcao = "AR" THEN
   DO:
@@ -173,8 +179,6 @@ ELSE IF par_cddopcao = "CA" THEN
 /* Ativar Contrato */
 ELSE IF par_cddopcao = "A" THEN
   DO:
-  
-  MESSAGE "ODIRLEI ATIVAR" par_idpacote.
   
       /* Rotina para geraçao do contrato de SMS */
       { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }    
@@ -314,6 +318,7 @@ ELSE IF par_cddopcao = "LP" THEN
     RUN STORED-PROCEDURE pc_listar_pacotes_prog
         aux_handproc = PROC-HANDLE NO-ERROR
                                 ( INPUT par_cdcooper     /* pr_cdcooper  */
+								 ,INPUT crapass.inpessoa /* pr_inpessoa */
                                  ,INPUT 1                /* pr_flgstatus */ 
                                  ,INPUT par_qtpagina     /* pr_pagina     */   
                                  ,INPUT par_qtporpag     /* pr_tamanho_pagina */
@@ -531,6 +536,7 @@ ELSE IF par_cddopcao = "PP" THEN
     RUN STORED-PROCEDURE pc_possui_pacotes_prog
         aux_handproc = PROC-HANDLE NO-ERROR
                                 ( INPUT par_cdcooper     /* pr_cdcooper  */
+								 ,INPUT crapass.inpessoa /* pr_inpessoa	 */
                                  ,OUTPUT 0               /* pr_flgpossui */
                                  ,OUTPUT 0               /* pr_cdcritic */
                                  ,OUTPUT "").            /* pr_dscritic */

@@ -156,6 +156,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADSMS IS
                                      ,pr_des_erro OUT VARCHAR2);                                                             
                                    
   PROCEDURE pc_listar_pacotes_web(pr_cdcooper IN tbcobran_sms_pacotes.cdcooper%TYPE
+                                 ,pr_inpessoa IN tbcobran_sms_pacotes.inpessoa%TYPE
                                  ,pr_flgstatus IN NUMBER
                                  ,pr_pagina IN PLS_INTEGER               -- Numero inicial do registro para enviar
                                  ,pr_tamanho_pagina IN PLS_INTEGER               -- Numero de registros que deverao ser retornados
@@ -167,6 +168,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADSMS IS
                                  ,pr_des_erro OUT VARCHAR2);                            
                                 
   PROCEDURE pc_listar_pacotes_prog (pr_cdcooper IN tbcobran_sms_pacotes.cdcooper%TYPE
+                                   ,pr_inpessoa IN tbcobran_sms_pacotes.inpessoa%TYPE
                                    ,pr_flgstatus IN NUMBER
                                    ,pr_pagina IN PLS_INTEGER                   -- Numero inicial do registro para enviar
                                    ,pr_tamanho_pagina IN PLS_INTEGER           -- Numero de registros que deverao ser retornados                                   
@@ -1908,6 +1910,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADSMS IS
 
   PROCEDURE pc_consultar_pacote_web(pr_idpacote IN tbcobran_sms_pacotes.idpacote%TYPE
                                ,pr_cdcooper IN tbcobran_sms_pacotes.cdcooper%TYPE
+                               
                                ,pr_xmllog   IN VARCHAR2                    --> XML com informacoes de LOG
                                ,pr_cdcritic OUT PLS_INTEGER                --> Codigo da critica
                                ,pr_dscritic OUT VARCHAR2                   --> Descricao da critica
@@ -2122,6 +2125,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADSMS IS
   END;                             
   
   PROCEDURE pc_listar_pacotes_prog (pr_cdcooper IN tbcobran_sms_pacotes.cdcooper%TYPE
+                                   ,pr_inpessoa IN tbcobran_sms_pacotes.inpessoa%TYPE
                                    ,pr_flgstatus IN NUMBER
                                    ,pr_pagina IN PLS_INTEGER                   -- Numero inicial do registro para enviar
                                    ,pr_tamanho_pagina IN PLS_INTEGER           -- Numero de registros que deverao ser retornados                                   
@@ -2147,6 +2151,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADSMS IS
     ..............................................................................*/                                 
    
      CURSOR cr_pacote_sms(pr_cdcooper tbcobran_sms_pacotes.cdcooper%TYPE
+                         ,pr_inpessoa tbcobran_sms_pacotes.inpessoa%TYPE
                          ,pr_flgstatus tbcobran_sms_pacotes.flgstatus%TYPE) IS
 
 
@@ -2167,6 +2172,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADSMS IS
            WHERE cdcooper = pr_cdcooper
              AND idpacote > 2
              AND flgstatus = pr_flgstatus
+             AND (inpessoa = pr_inpessoa OR pr_inpessoa IS NULL)
         )a WHERE rownum < ((pr_pagina * pr_tamanho_pagina) + 1)
         ) WHERE r__ >= (((pr_pagina-1) * pr_tamanho_pagina) + 1);
         
@@ -2178,17 +2184,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADSMS IS
     vr_vlsmsad  NUMBER(15,2) := 0; --Valor da SMS/Adicional
     vr_vlpacote NUMBER(15,2) := 0; --Valor do Pacote
     vr_vltarifa NUMBER(15,2) := 0; --Valor Tarifa    
-    vr_flgstatus PLS_INTEGER := 0; 
+    vr_inpessoa PLS_INTEGER := 0; 
     vr_total_registros INTEGER := 0;
     vr_retxml          xmltype;
 
   BEGIN
-    
-    
-    IF pr_flgstatus = -1 THEN
-      vr_flgstatus := NULL;
+        
+    IF pr_inpessoa = -1 THEN
+      vr_inpessoa := NULL;
     ELSE
-      vr_flgstatus := pr_flgstatus;
+      vr_inpessoa := pr_inpessoa;
 
     END IF;    
     
@@ -2197,14 +2202,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADSMS IS
       FROM tbcobran_sms_pacotes
      WHERE cdcooper = pr_cdcooper
        AND idpacote > 2
-       AND flgstatus = pr_flgstatus;
+       AND flgstatus = pr_flgstatus
+       AND (inpessoa = pr_inpessoa OR pr_inpessoa IS NULL);
 
     
      -- Criar cabecalho do XML
     vr_retxml := XMLTYPE.CREATEXML('<Dados/>');  
 
     FOR pacote IN cr_pacote_sms(pr_cdcooper => pr_cdcooper
-                                ,pr_flgstatus => vr_flgstatus)
+                                ,pr_inpessoa  => vr_inpessoa
+                                ,pr_flgstatus => pr_flgstatus)
     LOOP
        
         pc_calcula_valor_pacote(pr_cdcooper    => pr_cdcooper
@@ -2301,6 +2308,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADSMS IS
   END;  
   
   PROCEDURE pc_listar_pacotes_web(pr_cdcooper IN tbcobran_sms_pacotes.cdcooper%TYPE
+                                 ,pr_inpessoa IN tbcobran_sms_pacotes.inpessoa%TYPE
                                  ,pr_flgstatus IN NUMBER
                                  ,pr_pagina IN PLS_INTEGER               -- Numero inicial do registro para enviar
                                  ,pr_tamanho_pagina IN PLS_INTEGER               -- Numero de registros que deverao ser retornados
@@ -2346,6 +2354,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADSMS IS
     END IF;    
     
     pc_listar_pacotes_prog (pr_cdcooper  => pr_cdcooper             --> Codigo da cooperativa
+                           ,pr_inpessoa => pr_inpessoa
                            ,pr_flgstatus => vr_flgstatus            --> Situação pacote 
                            ,pr_pagina    => pr_pagina               --> Numero inicial do registro para enviar
                            ,pr_tamanho_pagina  => pr_tamanho_pagina --> Numero de registros que deverao ser retornados                                   
