@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps688 (pr_cdcooper IN crapcop.cdcooper%T
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Lucas Reinert
-       Data    : Julho/2014                     Ultima atualizacao: 21/01/2015
+       Data    : Julho/2014                     Ultima atualizacao: 13/04/2017
 
        Dados referentes ao programa:
 
@@ -54,6 +54,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps688 (pr_cdcooper IN crapcop.cdcooper%T
 				   29/07/2016 - Nao olhar mais inproces pra saber se eh segunda
 				                execucao e commitar o controle de execucao
 								(Tiago/Thiago SD496111)
+
+                   13/04/2017 - Correcao para nao considerar as aplicacoes diferentes de RDCPOS
+                                no agendamento do resgate de valores feitos pelo IBANK.
+                                (Carlos Rafael Tanholi SD 637453)
     ............................................................................ */
 
     DECLARE
@@ -552,7 +556,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps688 (pr_cdcooper IN crapcop.cdcooper%T
                         ' (Coop:'||pr_cdcooper||'): '||vr_dscritic;
         RAISE vr_exc_saida;
       END IF;
-
+      
       --Commit para garantir o 
       --controle de execucao do programa
       COMMIT;
@@ -733,6 +737,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps688 (pr_cdcooper IN crapcop.cdcooper%T
                 RAISE vr_controla_rejeitado;        
               
               END IF;
+              
+              -- le a pltable das aplicacoes e remove todas que nao forem do tipo 8 - RDCPOS
+              FOR idx IN vr_saldo_rdca.FIRST..vr_saldo_rdca.LAST LOOP
+                
+                IF vr_saldo_rdca(idx).tpaplica <> 8  THEN
+                  vr_saldo_rdca.DELETE(idx);
+                END IF;
+                
+              END LOOP;              
               
               apli0002.pc_filtra_aplic_resg_auto(pr_cdcooper => rw_craplau.cdcooper
                                                 ,pr_cdagenci => rw_craplau.cdagenci

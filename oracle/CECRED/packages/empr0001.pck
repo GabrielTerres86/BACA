@@ -809,7 +809,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
   --  Sistema  : Rotinas genéricas focando nas funcionalidades de empréstimos
   --  Sigla    : EMPR
   --  Autor    : Marcos Ernani Martini
-  --  Data     : Fevereiro/2013.                   Ultima atualizacao: 16/11/2016
+  --  Data     : Fevereiro/2013.                   Ultima atualizacao: 25/04/2017
   --
   -- Dados referentes ao programa:
   --
@@ -860,6 +860,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
   --
   --             26/09/2016 - Adicionado validacao de contratos de acordo na procedure
   --                          pc_valida_pagamentos_geral, Prj. 302 (Jean Michel). 
+  --
+  --             25/04/2017 - na rotina pc_efetiva_pagto_parc_lem retornar valor pro rowtype da crapepr na hora 
+  --                          do update qdo cai na validacao do vr_ehmensal pois qdo ia atualizar o valor novamente 
+  --                          a crapepr estava ficando com valor incorreto (Tiago/Thiago SD644598)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tratamento de erro */
@@ -10772,6 +10776,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                    31/10/2016 - Validação dentro para identificar
                                 parcelas ja liquidadas (AJFink - SD#545719)
 
+
+                   25/04/2017 - na rotina pc_efetiva_pagto_parc_lem retornar valor pro 
+                                rowtype da crapepr na hora do update qdo cai na validacao 
+                                do vr_ehmensal pois qdo ia atualizar o valor novamente 
+                                a crapepr estava ficando com valor incorreto 
+                                (Tiago/Thiago SD644598).
     ............................................................................. */
   
     DECLARE
@@ -10944,7 +10954,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             --Atualizar Saldo Devedor Emprestimo
             UPDATE crapepr
                SET crapepr.vlsdeved = crapepr.vlsdeved - pr_vlparepr
-             WHERE crapepr.ROWID = rw_crapepr.rowid;
+             WHERE crapepr.ROWID = rw_crapepr.rowid
+             RETURNING crapepr.vlsdeved INTO rw_crapepr.vlsdeved;
           EXCEPTION
             WHEN OTHERS THEN
               --Mensagem erro
@@ -14857,45 +14868,45 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     ELSE
       CLOSE cr_craplcr;
     END IF; 
-    
+      
     ------------------------------------------------------------------------------------------------
     --                                 CALCULO DO NOVO IOF
     ------------------------------------------------------------------------------------------------        
     -- Se o empréstimo for do tipo PP 
     IF pr_tpemprst = 1 THEN
-      -- Condicao Pessoa Fisica
-      IF pr_inpessoa = 1 THEN
-        vr_taxaiof := 0.000082;
+    -- Condicao Pessoa Fisica
+    IF pr_inpessoa = 1 THEN
+      vr_taxaiof := 0.000082;
+    ELSE
+      vr_taxaiof := 0.000041;
+    END IF;
+    
+    FOR vr_ind IN 1..pr_qtpreemp LOOP
+      IF vr_ind = 1 THEN
+        vr_saldo_devedor := pr_vlemprst;
       ELSE
-        vr_taxaiof := 0.000041;
+        vr_saldo_devedor := vr_tab_parcela(vr_ind - 1).vlsaldodevedor;
       END IF;
       
-      FOR vr_ind IN 1..pr_qtpreemp LOOP
-        IF vr_ind = 1 THEN
-          vr_saldo_devedor := pr_vlemprst;
-        ELSE
-          vr_saldo_devedor := vr_tab_parcela(vr_ind - 1).vlsaldodevedor;
-        END IF;
-        
-        -- Data de Vencimento da Parcela
-        vr_dtvencto := ADD_MONTHS(pr_dtdpagto,vr_ind - 1);  
-        
-        -- Somente eh permitido calcular o IOF para 365 dias
-        vr_qtdias   := vr_dtvencto - pr_dtmvtolt;
-        IF vr_qtdias > 365 THEN
-          vr_qtdias := 365;
-        END IF;
+      -- Data de Vencimento da Parcela
+      vr_dtvencto := ADD_MONTHS(pr_dtdpagto,vr_ind - 1);  
       
-        -- Valor do Juros
-        vr_tab_parcela(vr_ind).vljuros        := (vr_txmensal / 100) * vr_saldo_devedor;
-        -- Valor Amortizacao/Principal
-        vr_tab_parcela(vr_ind).vlprincipal    := pr_vlpreemp - vr_tab_parcela(vr_ind).vljuros;
-        -- Valor Saldo Devedor
-        vr_tab_parcela(vr_ind).vlsaldodevedor := vr_saldo_devedor - vr_tab_parcela(vr_ind).vlprincipal;
-        -- Valor do IOF
-        pr_valoriof := pr_valoriof + ROUND(vr_qtdias * vr_tab_parcela(vr_ind).vlprincipal * vr_taxaiof,2);
-      END LOOP;
+      -- Somente eh permitido calcular o IOF para 365 dias
+      vr_qtdias   := vr_dtvencto - pr_dtmvtolt;
+      IF vr_qtdias > 365 THEN
+        vr_qtdias := 365;
+      END IF;
     
+      -- Valor do Juros
+      vr_tab_parcela(vr_ind).vljuros        := (vr_txmensal / 100) * vr_saldo_devedor;
+      -- Valor Amortizacao/Principal
+      vr_tab_parcela(vr_ind).vlprincipal    := pr_vlpreemp - vr_tab_parcela(vr_ind).vljuros;
+      -- Valor Saldo Devedor
+      vr_tab_parcela(vr_ind).vlsaldodevedor := vr_saldo_devedor - vr_tab_parcela(vr_ind).vlprincipal;
+      -- Valor do IOF
+      pr_valoriof := pr_valoriof + ROUND(vr_qtdias * vr_tab_parcela(vr_ind).vlprincipal * vr_taxaiof,2);
+    END LOOP;
+      
     ELSE  -- Se o tipo do empréstimo for TR
       
       -- Condicao Pessoa Fisica
