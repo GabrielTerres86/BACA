@@ -99,7 +99,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
     Sistema : Processos Batch
     Sigla   : BTCH
     Autor   : Odirlei Busana - AMcom
-    Data    : Maio/2014.                       Ultima atualizacao: 01/02/2017
+    Data    : Maio/2014.                       Ultima atualizacao: 28/04/2017
   
    Dados referentes ao programa:
   
@@ -115,6 +115,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
                01/02/2017 - Ajustes para consultar dados da tela PROCES de todas as cooperativas
                             (Lucas Ranghetti #491624)
   
+               28/04/2017 - Adicionar chmod 666 apos a chamada do pc_clob_para_arquivo
+                            para ter permissao de exclusao do arquivo ao rodar novamente 
+                            a tela process ref ao chamado 491624(Lucas Ranghetti/Elton)
   ---------------------------------------------------------------------------------------------------------------*/
   -- Gerar criticas do processo
   PROCEDURE pc_gera_criticas_proces (pr_cdcooper       IN NUMBER,                 --> Codigo da cooperativa
@@ -145,7 +148,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Margarete/Mirtes
-   Data    : Junho/2004.                     Ultima atualizacao: 01/02/2017
+   Data    : Junho/2004.                     Ultima atualizacao: 28/04/2017
 
    Dados referentes ao programa:
 
@@ -325,6 +328,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
                														
                01/02/2017 - Ajustes para consultar dados da tela PROCES de todas as cooperativas
                             (Lucas Ranghetti #491624)
+                            
+               28/04/2017 - Adicionar chmod 666 apos a chamada do pc_clob_para_arquivo
+                            para ter permissao de exclusao do arquivo ao rodar novamente 
+                            a tela process (Lucas Ranghetti/Elton)
   ..............................................................................*/  
     ------------------------------- CURSORES ---------------------------------
 
@@ -2205,6 +2212,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
                            pr_ind_tipo_log => 2, -- Erro tratato
                            pr_des_log      => vr_dscritic);  
       END IF;  
+      
+      -- Setar privilégio para evitar falta de permissão a outros usuários
+      gene0001.pc_OScommand_Shell(pr_des_comando => 'chmod 666 '||vr_nmdireto||
+                                                    '/'||vr_nmarqimp);
+          
       
       -- Liberando a memória alocada pro CLOB
       dbms_lob.close(vr_des_clob);
