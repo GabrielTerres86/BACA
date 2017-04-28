@@ -941,7 +941,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
         pr_dscritic := fn_retorna_critica('{"Content":'||vr_response.content||'}');
         
         IF pr_dscritic IS NOT NULL THEN
-          pr_dscritic := vr_dscritic_aux||' '||pr_dscritic;            
+          -- Tratar mensagem específica de Fluxo Atacado:
+          -- "Nao sera possivel enviar a proposta para analise. Classificacao de risco e endividamento fora dos parametros da cooperativa"
+          IF pr_dscritic != 'Nao sera possivel enviar a proposta para analise. Classificacao de risco e endividamento fora dos parametros da cooperativa' THEN 
+            -- Mensagens diferentes dela terão o prefixo, somente ela não terá
+            pr_dscritic := vr_dscritic_aux||' '||pr_dscritic;            
+          END IF;  
         ELSE
           pr_dscritic := vr_dscritic_aux;            
         END IF;
@@ -1458,7 +1463,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       FETCH cr_crapjfn
        INTO rw_crapjfn;
       CLOSE cr_crapjfn;
-      vr_obj_proposta.put('faturamentoAnual ',fn_decimal_ibra(rw_crapjfn.vltotfat));
+      vr_obj_proposta.put('faturamentoAnual',fn_decimal_ibra(rw_crapjfn.vltotfat));
     END IF;
     
     -- Devolver o objeto criado
@@ -2227,7 +2232,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
          AND wepr.nrdconta = pr_nrdconta
          AND wepr.nrctremp = pr_nrctremp
          ; 
-    rw_crawepr cr_crawepr%ROWTYPE;    
+    rw_crawepr cr_crawepr%ROWTYPE;   
     
     
    CURSOR cr_craplem (pr_cdcooper craplem.cdcooper%TYPE,
@@ -2289,7 +2294,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       vr_cdcritic := 535; -- 535 - Proposta nao encontrada.
       RAISE vr_exc_erro;
     END IF;
-    CLOSE cr_crawepr;    
+    CLOSE cr_crawepr;
     
     --> Buscar dados da proposta de emprestimo
     OPEN cr_craplem(pr_cdcooper => pr_cdcooper,
