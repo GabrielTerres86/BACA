@@ -8,7 +8,7 @@
  * ALTERACOES   : 29/09/2015 - Reformulacao cadastral (Gabriel-RKAM)
  *							 13/07/2016 - Correcao do uso da variavel $op indefinida. SD 479874. Carlos R.
  */	
- 
+
 	session_start();
 	require_once('../../../includes/config.php');
 	require_once('../../../includes/funcoes.php');		
