@@ -17,6 +17,7 @@
     require_once('../../../class/xmlfile.php');
     isPostMethod();
 
+    $inpessoa = (isset($_POST['inpessoa'])) ? $_POST['inpessoa'] : 1;
     $pagina = (isset($_POST['pagina'])) ? $_POST['pagina'] : 1;
     $introca = (isset($_POST['introca'])) ? $_POST['introca'] : 0;
 
@@ -25,6 +26,7 @@
     $xml = "<Root>";
     $xml .= " <Dados>";
     $xml .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+    $xml .= "   <inpessoa>".$inpessoa."</inpessoa>";
     $xml .= "   <flgstatus>1</flgstatus>";
     $xml .= "   <pagina>".$pagina."</pagina>";
     $xml .= "   <tamanho_pagina>".$tamanho_pagina."</tamanho_pagina>";

@@ -1796,6 +1796,7 @@ function exibirHabilitacaoSmsCobranca() {
 		type: "POST",
 		url: UrlSite + "telas/atenda/cobranca/habilita_sms.php",
 		data: {
+            inpessoa: inpessoa,
             redirect: "script_ajax"
 		},
         error: function (objAjax, responseError, objExcept) {
