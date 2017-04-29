@@ -3199,7 +3199,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       CLOSE cr_crapass;
                     
     -- se selecionou Nome fantasia
-    ELSIF rw_contrato_sms.tpnome_emissao = 1 THEN
+    ELSIF rw_contrato_sms.tpnome_emissao = 2 THEN
                   
       -- Buscar nome na crapjur
       OPEN cr_crapjur;
@@ -5716,6 +5716,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
          AND cob.cdcooper = ctr.cdcooper
          AND cob.nrdconta = ctr.nrdconta
          AND ctr.dhcancela IS null
+		 AND ctr.cdcooper = pct.cdcooper
          AND ctr.idpacote = pct.idpacote 
          AND cob.cdcooper = pr_cdcooper
          AND sab.nrcelsac <> 0 --ativo
@@ -6131,7 +6132,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                 CLOSE cr_crapass;
                 
               --> se selecionou Nome fantasia
-              ELSIF rw_sms_cobran.tpnome_emissao = 1 THEN
+              ELSIF rw_sms_cobran.tpnome_emissao = 2 THEN
               
                 --> Buscar nome na crapjur
                 OPEN cr_crapjur(pr_cdcooper => rw_crapcop.cdcooper,
@@ -8025,6 +8026,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
             vr_dscritic := 'Nenhum contrato de SMS de cobrança localizado para o cooperado '||rw_sms_cobran.nrdconta;
             RAISE vr_exc_erro;
           END IF;
+		  CLOSE cr_smsctr;
           
           vr_qtsmsdis := 0;
           vr_qtdsms   := 0;

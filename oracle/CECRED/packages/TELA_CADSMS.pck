@@ -19,10 +19,11 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADSMS IS
 
   ---------------------------- ESTRUTURAS DE REGISTRO -----------------------
   TYPE typ_campo_mensagem IS
-    RECORD (dstipo_mensagem tbgen_tipo_mensagem.dstipo_mensagem%TYPE
+    RECORD (dstipo_mensagem VARCHAR2(100)
            ,cdtipo_mensagem tbgen_mensagem.cdtipo_mensagem%TYPE
            ,dsmensagem      tbgen_mensagem.dsmensagem%TYPE
            ,dsobservacao    tbgen_mensagem.dsmensagem%TYPE
+		   ,qtmaxcar        INTEGER
            ,dsareatela      VARCHAR2(255)
            );
   TYPE typ_tab_campo_mensagem IS
@@ -260,9 +261,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADSMS IS
                  , 8, 'Os campos #Nome# e #LinhaDigitavel# são preenchidos automaticamente pelo sistema.<p style="margin-left:10px">#Nome# ocupa 15 caracteres e #LinhaDigitavel# ocupa 54 caracteres.'
                  , 9, 'Os campos #Nome# e #LinhaDigitavel# são preenchidos automaticamente pelo sistema.<p style="margin-left:10px">#Nome# ocupa 15 caracteres e #LinhaDigitavel# ocupa 54 caracteres.'
                  ,10, 'Os campos #Nome# e #LinhaDigitavel# são preenchidos automaticamente pelo sistema.<p style="margin-left:10px">#Nome# ocupa 15 caracteres e #LinhaDigitavel# ocupa 54 caracteres.'
-                 ,11, 'O campos #Nome# é preenchido automaticamente pelo sistema e ocupa 15 caracteres.'
-                 ,12, 'O campos #Nome# é preenchido automaticamente pelo sistema e ocupa 15 caracteres.'
-                 ,13, 'O campos #Nome# é preenchido automaticamente pelo sistema e ocupa 15 caracteres.'
+                 ,11, 'O campo #Nome# é preenchido automaticamente pelo sistema e ocupa 15 caracteres.'
+                 ,12, 'O campo #Nome# é preenchido automaticamente pelo sistema e ocupa 15 caracteres.'
+                 ,13, 'O campo #Nome# é preenchido automaticamente pelo sistema e ocupa 15 caracteres.'
                  ) dsobservacao
           ,CASE WHEN tip.cdtipo_mensagem IN (8,9,10) THEN
                     'Texto para SMS com linha digitável'
@@ -295,6 +296,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADSMS IS
     rw_msg cr_msg%ROWTYPE;
     
     vr_idx_mensagem VARCHAR2(8);
+	vr_dstipo_mensagem VARCHAR2(100);
+    vr_qtmaxcar        INTEGER;
     
   BEGIN
     
@@ -302,12 +305,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADSMS IS
                         ,pr_cdproduto => pr_cdproduto
                         ,pr_cddopcao  => pr_cddopcao) LOOP
       
+		vr_dstipo_mensagem := rw_msg.dstipo_mensagem;
+      vr_qtmaxcar        := 0;
+      
+      IF rw_msg.cdtipo_mensagem IN (8,9,10) THEN
+        vr_dstipo_mensagem := vr_dstipo_mensagem ||' (max. 95 caracteres)';
+        vr_qtmaxcar        := 95;
+      ELSIF  rw_msg.cdtipo_mensagem IN (11,12,13) THEN
+        vr_dstipo_mensagem := vr_dstipo_mensagem ||' (max. 127 caracteres)';
+        vr_qtmaxcar        := 127;
+      END IF;
+      
       vr_idx_mensagem := lpad(rw_msg.nrordemtela,3,'0')||lpad(rw_msg.cdtipo_mensagem,5,'0');
       pr_tab_mensagens(vr_idx_mensagem).cdtipo_mensagem := rw_msg.cdtipo_mensagem;
-      pr_tab_mensagens(vr_idx_mensagem).dstipo_mensagem := rw_msg.dstipo_mensagem;
+      pr_tab_mensagens(vr_idx_mensagem).dstipo_mensagem := vr_dstipo_mensagem;
       pr_tab_mensagens(vr_idx_mensagem).dsmensagem      := rw_msg.dsmensagem;
       pr_tab_mensagens(vr_idx_mensagem).dsobservacao    := rw_msg.dsobservacao;
       pr_tab_mensagens(vr_idx_mensagem).dsareatela      := rw_msg.dsareatela;
+	  pr_tab_mensagens(vr_idx_mensagem).qtmaxcar        := vr_qtmaxcar;	
     
     END LOOP;
   
@@ -364,10 +379,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADSMS IS
         SELECT idlote_sms
               ,dhretorno
               ,dsagrupador
-          FROM tbgen_sms_lote
-         WHERE cdproduto  = 19
-           AND idsituacao = 'F'
-           AND idtpreme   = 'SMSCOBRAN';
+         FROM tbgen_sms_lote lot,
+               crapcop cop
+         WHERE lot.dsagrupador = cop.nmrescop
+           AND cop.cdcooper = decode(pr_cdcoptel,0,cop.cdcooper,pr_cdcoptel)
+           AND lot.cdproduto  = 19
+           AND lot.idsituacao = 'F'
+           AND lot.idtpreme   = 'SMSCOBRAN';
       
       ----------->>> VARIAVEIS <<<--------
       -- Variável de críticas
@@ -387,7 +405,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADSMS IS
       vr_idorigem VARCHAR2(100);
       vr_cdcoptel crapcop.cdcooper%TYPE;
       
-      vr_retxml   VARCHAR2(20000);
+      vr_retxml   CLOB;
       vr_tab_mensagens typ_tab_campo_mensagem;
       vr_idx_mensagem  VARCHAR2(20);
       
@@ -456,10 +474,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADSMS IS
             
           -- Cria a tag <MENSAGEM> no xml de retorno
           vr_retxml := vr_retxml ||   '<mensagem cdtipo_mensagem="' || vr_tab_mensagens(vr_idx_mensagem).cdtipo_mensagem || '">';
-          vr_retxml := vr_retxml ||     '<dscampo>'      || vr_tab_mensagens(vr_idx_mensagem).dstipo_mensagem||' (max. 145 caracteres)' || '</dscampo>';
+          vr_retxml := vr_retxml ||     '<dscampo>'      || vr_tab_mensagens(vr_idx_mensagem).dstipo_mensagem || '</dscampo>';
           vr_retxml := vr_retxml ||     '<dsmensagem>'   || vr_tab_mensagens(vr_idx_mensagem).dsmensagem      || '</dsmensagem>';
           vr_retxml := vr_retxml ||     '<dsobservacao><![CDATA[' || vr_tab_mensagens(vr_idx_mensagem).dsobservacao    || ']]></dsobservacao>';
           vr_retxml := vr_retxml ||     '<dsareatela>'   || vr_tab_mensagens(vr_idx_mensagem).dsareatela      || '</dsareatela>';
+          vr_retxml := vr_retxml ||     '<qtmaxcar>'     || vr_tab_mensagens(vr_idx_mensagem).qtmaxcar        || '</qtmaxcar>';
           vr_retxml := vr_retxml ||   '</mensagem>';
           
           --Encontrar o proximo registro
@@ -1012,6 +1031,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADSMS IS
     vr_json_msg json   := json();
     vr_cdtipo_mensagem tbgen_mensagem.cdtipo_mensagem%TYPE;
     vr_dsmensagem      tbgen_mensagem.dsmensagem%TYPE;
+	vr_dsmensagem_aux  tbgen_mensagem.dsmensagem%TYPE;
     vr_retxml VARCHAR2(4000);
   
     -- Variável de críticas
@@ -1029,6 +1049,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADSMS IS
     vr_cdagenci VARCHAR2(100);
     vr_nrdcaixa VARCHAR2(100);
     vr_idorigem VARCHAR2(100);
+	vr_qtd      INTEGER := 0;
     
     ---------->> CURSORES <<--------
     
@@ -1038,6 +1059,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADSMS IS
         FROM crapcop cop
        WHERE cop.flgativo = 1
          AND cop.cdcooper = decode(pr_cdcooper,0,cop.cdcooper,pr_cdcooper);
+    
+	--> Buscar descricao do tipo mensagem 
+    CURSOR cr_tpmsg(pr_cdtipo_msg  tbgen_tipo_mensagem.cdtipo_mensagem%TYPE) IS
+      SELECT tpm.dstipo_mensagem
+        FROM tbgen_tipo_mensagem tpm
+       WHERE tpm.cdtipo_mensagem = pr_cdtipo_msg;
+    rw_tpmsg cr_tpmsg%ROWTYPE; 
     
   BEGIN
     
@@ -1083,6 +1111,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADSMS IS
         vr_cdtipo_mensagem := to_number(json_ext.get_string(vr_json_msg,'cdtipo_mensagem'));
         vr_dsmensagem := json_ext.get_string(vr_json_msg,'dsmensagem');
         
+		vr_dsmensagem_aux := REPLACE(REPLACE(vr_dsmensagem,
+                                             '#Nome#',lpad('A',15,'A')),
+                                             '#LinhaDigitavel#',lpad('0',54,'0'));
+        
+        IF length(vr_dsmensagem_aux) > 160 THEN
+          --> Buscar descricao do tipo mensagem 
+          OPEN cr_tpmsg(pr_cdtipo_msg => vr_cdtipo_mensagem);
+          FETCH cr_tpmsg INTO rw_tpmsg;
+          CLOSE cr_tpmsg;
+        
+          --> Tentar alinhar as mensagens, visto que o objeto utiliza tag CENTER no Ayllos
+          vr_qtd := (74 - length(rw_tpmsg.dstipo_mensagem) )  * 12;
+          
+          vr_dscritic := '<![CDATA[<span>'|| rpad(rw_tpmsg.dstipo_mensagem||':',74 + vr_qtd,'&nbsp;')||
+                         '<br>Quantidade de caracteres maior que o '||
+                         'permitido devido aos Termos utilizados.</span>]]>';
+          RAISE vr_exc_saida;
+        END IF;
+		
         --> Gravar mensagem
         pc_gravar_mensagem (pr_cdcooper         => rw_crapcop.cdcooper --> Cooperativa informada na tela                               
                            ,pr_cdproduto        => 19                  --> codigo do produto
@@ -1406,6 +1453,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADSMS IS
           vr_dscritic := 'Não foi possivel atualizar o lote de SMS: '||SQLERRM;
       END;
           
+	  --> Necessario commit para que o Aymaru consiga consultar
+      --> as informações Atualizadas
+      COMMIT; 
+	  
       --> Enviar lote de SMS para o Aymaru
       COBR0005.pc_enviar_lote_SMS ( pr_idlotsms  => vr_idlote_sms
                                    ,pr_dscritic  => vr_dscritic
@@ -2189,7 +2240,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADSMS IS
     vr_retxml          xmltype;
 
   BEGIN
-        
+    
     IF pr_inpessoa = -1 THEN
       vr_inpessoa := NULL;
     ELSE
