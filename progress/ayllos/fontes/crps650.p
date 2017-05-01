@@ -1077,10 +1077,7 @@ PROCEDURE carrega_dados:
                                              "8,73"
                                         ELSE
                                              " "
-                  tt-dados-mitra.porc_index = IF crapepr.cdlcremp = 6 THEN
-                                                 " "
-                                              ELSE
-                                                 "100"
+                  tt-dados-mitra.porc_index = "100"
                   tt-dados-mitra.contraparte =  STRING(aux_nmconpar)
                   tt-dados-mitra.contrato = tt-dados-mitra.identificacao
                   tt-dados-mitra.parcela = STRING(aux_contador)
