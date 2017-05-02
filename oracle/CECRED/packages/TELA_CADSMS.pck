@@ -207,7 +207,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADSMS IS
                                      ,pr_des_erro OUT VARCHAR2);                                 
                                      
   PROCEDURE pc_possui_pacotes_prog (pr_cdcooper IN tbcobran_sms_pacotes.cdcooper%TYPE
-                                   ,pr_flgpossui OUT NUMBER
+                                   ,pr_inpessoa IN tbcobran_sms_pacotes.inpessoa%TYPE
+								   ,pr_flgpossui OUT NUMBER
                                    ,pr_cdcritic OUT INTEGER                    --> Retornar codigo de critica
                                    ,pr_dscritic OUT VARCHAR2);                                       
                                                                                               
@@ -2526,15 +2527,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADSMS IS
     END;       
     
   PROCEDURE pc_possui_pacotes_prog (pr_cdcooper IN tbcobran_sms_pacotes.cdcooper%TYPE
+                                   ,pr_inpessoa IN tbcobran_sms_pacotes.inpessoa%TYPE
                                    ,pr_flgpossui OUT NUMBER
                                    ,pr_cdcritic  OUT INTEGER
                                    ,pr_dscritic  OUT VARCHAR2) IS      
                                     
-   CURSOR cr_pacotes(pr_cdcooper IN tbcobran_sms_pacotes.cdcooper%TYPE) IS
+   CURSOR cr_pacotes(pr_cdcooper IN tbcobran_sms_pacotes.cdcooper%TYPE
+                    ,pr_inpessoa IN tbcobran_sms_pacotes.inpessoa%TYPE) IS
       SELECT nvl(max(1), 0) flgpossuipacotes
         FROM tbcobran_sms_pacotes
        WHERE cdcooper = pr_cdcooper
-         AND idpacote > 2;
+		 AND flgstatus = 1
+		 AND (inpessoa = pr_inpessoa or inpessoa is null)
+     AND idpacote > 2;
     rw_pacotes cr_pacotes%ROWTYPE;
     
     vr_cdcritic crapcri.cdcritic%TYPE;
@@ -2542,7 +2547,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADSMS IS
     BEGIN
       
       rw_pacotes := NULL;
-      OPEN cr_pacotes(pr_cdcooper);
+      OPEN cr_pacotes(pr_cdcooper, pr_inpessoa);
       FETCH cr_pacotes INTO rw_pacotes;
       CLOSE cr_pacotes;
 
