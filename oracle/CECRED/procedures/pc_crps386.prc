@@ -10,7 +10,7 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Julio/Mirtes
-   Data    : Abril/2004                    Ultima atualizacao: 08/12/2016
+   Data    : Abril/2004                    Ultima atualizacao: 07/03/2017
 
    Dados referentes ao programa:
 
@@ -159,19 +159,23 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
                
                23/06/2016 - P333.1 - Devolução de arquivos com tipo de envio 6 - WebService (Marcos)              
                             
-       			   13/07/2016 - Nao deve mais enviar o codigo da cooperativa na frente do campo conta.
-			                      Chamado 407247 (Heitor - RKAM)
+			   13/07/2016 - Nao deve mais enviar o codigo da cooperativa na frente do campo conta.
+			                Chamado 407247 (Heitor - RKAM)
                             
                23/08/2016 - Verificar final de semanas e feriados para verificar suspenções
                             (Lucas Ranghetti #499496)             
 				
-      			   04/10/2016 - Retirar validacao especifica para o convenio CASAN (Lucas Ranghetti #534110)         	
+			   04/10/2016 - Retirar validacao especifica para o convenio CASAN (Lucas Ranghetti #534110)         	
 			   
-			         13/10/2016 - Ajustado tratamento de critica ao efetuar insert da tabela gncvuni, estava 
-			                      efetuando gravção na pr_dscritic e o correto é vr_dscritic (Daniel) 
+			   13/10/2016 - Ajustado tratamento de critica ao efetuar insert da tabela gncvuni, estava 
+			                efetuando gravção na pr_dscritic e o correto é vr_dscritic (Daniel)        	
                             
                08/12/2016 - Tratamento para enviar agencia no formato antigo ou novo 
                             dependendo da data da autorizacao (Lucas Ranghetti #549795)  
+                            
+               07/03/2017 - Tratamento para evitar que cancelamentos de convênios antigos
+                            nao desloquem as linhas do arquivo, conforme problema relatado
+                            no chamado 619304. (Kelvin)  
 ............................................................................. */
   -- Buscar os dados da cooperativa
   cursor cr_crapcop (pr_cdcooper in craptab.cdcooper%type) is
@@ -563,12 +567,12 @@ begin
             
       -- Atribuir a data da autorização
       vr_dtautori := to_char(rw_crapatr.dtiniatr, 'yyyymmdd');
-     
+
       IF rw_gnconve.cdconven = 4 AND 
          (rw_crapatr.dtiniatr < to_date('05/10/2016','dd/mm/yyyy')) THEN -- casan
-        vr_nragenci := 1294;
+          vr_nragenci := 1294;
         vr_cdcooperativa := '9'||to_char(pr_cdcooper,'fm000');
-      ELSE
+      ELSE             
         -- Caso a data de inicio da autorização seja menor que 01/09/2013 e for um cancelamento 
         -- de debito ira gravar a agencia com formato antigo. Ex: "0001"            
         -- Caso contrario grava com novo formato. Ex: 0101
@@ -581,7 +585,7 @@ begin
         ELSE
           vr_nragenci := rw_crapcop.cdagectl;      
           vr_cdcooperativa := ' ';
-        END IF;
+        END IF;     
       END IF;
 
       if rw_gnconve.cdconven <> 1 then -- Brasil Telecom
@@ -633,7 +637,7 @@ begin
       elsif vr_cdcooperativa <> ' ' then
         vr_dslinreg := 'B'||
                        vr_cdidenti||
-                       to_char(vr_nragenci, 'fm0000')||
+                       to_char(nvl(trim(vr_nragenci),'0000'), 'fm0000')||
                        rpad(vr_cdcooperativa, 4, ' ')||
                        to_char(rw_crapatr.nrdconta, 'fm0000000000')||
                        vr_dtautori||
@@ -842,7 +846,7 @@ begin
           RAISE vr_exc_saida;
         END IF;
       END IF;
-
+      
       vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                  pr_ind_tipo_log => 2, -- Erro tratato
