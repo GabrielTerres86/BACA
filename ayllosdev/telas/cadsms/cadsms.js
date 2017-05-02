@@ -358,9 +358,9 @@ function PopupPacote() {
 
         $("#divRotina").css("left", "453px");
         $("#qtdsms").setMask('INTEGER', 'zzzzzzzz', '', '');
-        $("#perdesconto").addClass('moeda');
-        $("#perdesconto").setMask('INTEGER', 'zzzzzzzz', '', '');
-        //$("#perdesconto").setMask('DECIMAL', 'zzz.zzz.zzz.zz9,99', ',', '');
+        //$("#perdesconto").addClass('moeda');
+        //$("#perdesconto").setMask('INTEGER', 'zzzzzzzz', '', '');
+        $("#perdesconto").setMask('DECIMAL','zzz.zzz.zzz.zz9,99',',','');
 
     }
 
@@ -574,8 +574,7 @@ function FormularioPacote() {
         $("#vlpacote").setMask('DECIMAL','zzz.zzz.zzz.zz9,99',',','');
         $("#vlsmsad").setMask('DECIMAL','zzz.zzz.zzz.zz9,99',',','');
         $("#vlsms").setMask('DECIMAL','zzz.zzz.zzz.zz9,99',',','');
-        //$("#perdesconto").addClass('moeda');
-        $("#perdesconto").setMask('INTEGER', 'zzzzzzzz', '', '');
+        $("#perdesconto").setMask('DECIMAL','zzz.zzz.zzz.zz9,99',',','');
         $("#qtdsms").setMask('INTEGER', 'zzzzzzzz', '', '');
         $("#cdtarifa").setMask('INTEGER', 'zzzzzzzz', '', '');
     }
