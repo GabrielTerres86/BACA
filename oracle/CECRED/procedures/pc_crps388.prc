@@ -443,24 +443,39 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
                                        ,pr_nrseqarq OUT NUMBER 
                                        ,pr_cdcritic OUT NUMBER
                                        ,pr_dscritic OUT VARCHAR2) IS
+    -- Buscar a sequencia atual com for-update para garantir o lock na tabela
+    CURSOR cr_gnconve IS
+      SELECT nrseqatu
+        FROM gnconve
+       WHERE rowid =  pr_rw_gnconve.nrrowid
+         FOR UPDATE;   
+    rw_gnconve cr_gnconve%ROWTYPE;      
   BEGIN 
+    -- Buscar a sequencia atual com for-update para garantir o lock na tabela
+    OPEN cr_gnconve;
+    FETCH cr_gnconve
+     INTO rw_gnconve; 
+    -- Se não encontrou nenhuma linhas
+    IF cr_gnconve%NOTFOUND THEN
+      -- Geraremos critica 151 e sairemos do processo 
+      pr_cdcritic := 151;
+      CLOSE cr_gnconve;
+      RETURN;
+    END IF;   
+    
     -- Utilizar a sequencia atual 
-    pr_nrseqarq := pr_rw_gnconve.nrseqatu;
+    pr_nrseqarq := rw_gnconve.nrseqatu;
+    
     -- Se não for convênio unificado 
     IF pr_rw_gnconve.flgcvuni = 0 THEN 
-      -- Atualizar sequencial 
-      pr_rw_gnconve.nrseqatu := pr_rw_gnconve.nrseqatu + 1;
-      -- Atualizar a tabela 
+      -- Atualizar a sequencia na tabela 
       UPDATE gnconve
          SET nrseqatu = nrseqatu + 1
-       WHERE rowid =  pr_rw_gnconve.nrrowid;
-      -- Se não afetou nenhuma linhas
-      IF sql%ROWCOUNT = 0 THEN 
-        -- Geraremos critica 151 e sairemos do processo 
-        pr_cdcritic := 151;
-        RETURN;
-      END IF;
-    END IF;
+       WHERE CURRENT OF cr_gnconve;
+       -- Atualizar no retorno
+       pr_rw_gnconve.nrseqatu := rw_gnconve.nrseqatu + 1;
+    END IF;    
+    
     -- Nao cria registro de controle se convenio for unificado e a 
     -- execucao for na Cecred, pois quando roda programa que faz a 
     -- unificacao nao atualiza a sequencia do convenio 
@@ -477,8 +492,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
                           ,rw_crapdat.dtmvtolt
                           ,pr_nrseqarq);
     END IF;
+    
+    -- Fechar o cusror para liberar a tabela
+    CLOSE cr_gnconve;
+    
   EXCEPTION 
     WHEN OTHERS THEN 
+      -- Se cursor aberto, liberar a tabela
+      IF cr_gnconve%ISOPEN THEN 
+        CLOSE cr_gnconve;        
+      END IF;
       pr_cdcritic := 0;
       pr_dscritic := 'Erro nao tratado - Rotina pc_obtem_atualiza_sequencia - '||sqlerrm;
   
@@ -909,19 +932,35 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
          INTO rw_craplau;
         -- Se não encontrar 
         IF cr_craplau%NOTFOUND THEN 
-          CLOSE cr_craplau;
-          -- Buscar na Cooperativa anterior
-          OPEN cr_craplau(vr_tab_tco(rw_craplcm.nrdconta).cdcopant
-                         ,vr_tab_tco(rw_craplcm.nrdconta).nrctaant
-                         ,rw_craplcm.cdhistor
-                         ,rw_craplcm.dtmvtolt
-                         ,rw_craplcm.cdpesqbb);
-          FETCH cr_craplau
-           INTO rw_craplau;
-          -- Se não encontrar 
-          IF cr_craplau%NOTFOUND THEN 
-            CLOSE cr_craplau;
-            -- Gerar critica 501 no proc_message
+          CLOSE cr_craplau;          
+          -- Se for conta Migrada
+          IF vr_ctamigra THEN           
+            -- Buscar na Cooperativa anterior (Somente se é conta migrada)
+            OPEN cr_craplau(vr_tab_tco(rw_craplcm.nrdconta).cdcopant
+                           ,vr_tab_tco(rw_craplcm.nrdconta).nrctaant
+                           ,rw_craplcm.cdhistor
+                           ,rw_craplcm.dtmvtolt
+                           ,rw_craplcm.cdpesqbb);
+            FETCH cr_craplau
+             INTO rw_craplau;
+            -- Se não encontrar 
+            IF cr_craplau%NOTFOUND THEN 
+              CLOSE cr_craplau;
+              -- Gerar critica 501 no proc_message
+              btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                        ,pr_ind_tipo_log => 2 -- Erro tratato
+                                        ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
+                                        ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                         || vr_cdprogra || ' --> ' || gene0001.fn_busca_critica(501) 
+                                                         || ' Conta = '|| gene0002.fn_mask_conta(rw_craplcm.nrdconta)
+                                                         || ' Documento = ' || rw_craplcm.nrdocmto);
+              -- Ir ao próximo registro (Ignorar LCM)
+              CONTINUE;           
+            ELSE
+              CLOSE cr_craplau;
+            END IF;
+          ELSE 
+            -- Gerar critica 501 e ir ao proximo registro 
             btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                       ,pr_ind_tipo_log => 2 -- Erro tratato
                                       ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
@@ -930,9 +969,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
                                                        || ' Conta = '|| gene0002.fn_mask_conta(rw_craplcm.nrdconta)
                                                        || ' Documento = ' || rw_craplcm.nrdocmto);
             -- Ir ao próximo registro (Ignorar LCM)
-            CONTINUE;           
-          ELSE
-            CLOSE cr_craplau;
+            CONTINUE;
           END IF;
         ELSE 
           CLOSE cr_craplau;
