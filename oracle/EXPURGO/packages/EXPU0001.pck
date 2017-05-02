@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE CECREDDBA.EXPU0001 AUTHID CURRENT_USER  is
+CREATE OR REPLACE PACKAGE EXPURGO.EXPU0001 AUTHID CURRENT_USER  is
   /* ---------------------------------------------------------------------------------------------------------------
 
       Programa : EXPU0001
@@ -19,7 +19,7 @@ CREATE OR REPLACE PACKAGE CECREDDBA.EXPU0001 AUTHID CURRENT_USER  is
   -- da copia dos filhos
   TYPE typ_rec_comand 
         IS RECORD (dscomand VARCHAR2(32000),
-                   idcontrole cecreddba.tbhst_controle.idcontrole%TYPE,
+                   idcontrole tbhst_controle.idcontrole%TYPE,
                    nmtabela VARCHAR2(300),
                    qtdregis INTEGER);
   TYPE typ_tab_comand IS TABLE OF typ_rec_comand
@@ -52,7 +52,7 @@ CREATE OR REPLACE PACKAGE CECREDDBA.EXPU0001 AUTHID CURRENT_USER  is
                                        
 END EXPU0001;
 /
-CREATE OR REPLACE PACKAGE BODY CECREDDBA.EXPU0001  is
+CREATE OR REPLACE PACKAGE BODY EXPURGO.EXPU0001  is
   /* ---------------------------------------------------------------------------------------------------------------
 
       Programa : EXPU0001
@@ -107,7 +107,7 @@ CREATE OR REPLACE PACKAGE BODY CECREDDBA.EXPU0001  is
     
   BEGIN
   
-    INSERT INTO cecreddba.tbhst_log
+    INSERT INTO tbhst_log
                 ( idcontrole, 
                   dhoperacao, 
                   qtdreg_operacao, 
@@ -161,10 +161,10 @@ CREATE OR REPLACE PACKAGE BODY CECREDDBA.EXPU0001  is
              ctl.idcontrole,
              ctl.tpoperacao,
              ctl.rowid             
-        FROM cecreddba.tbhst_controle ctl
+        FROM tbhst_controle ctl
         --> Registro deve ser registro principal        
        WHERE NOT EXISTS (SELECT 1
-                           FROM cecreddba.tbhst_dependencia dep
+                           FROM tbhst_dependencia dep
                           WHERE dep.iddepende = ctl.idcontrole )
          AND ctl.nmtabela NOT IN ('CRAPLAU')
          --> Respeitar o inicio das execuções
@@ -192,8 +192,8 @@ CREATE OR REPLACE PACKAGE BODY CECREDDBA.EXPU0001  is
              ctl.nmcampo_refere,
              dep.iddepende
           
-        FROM cecreddba.tbhst_controle ctl,
-             cecreddba.tbhst_dependencia dep
+        FROM tbhst_controle ctl,
+             tbhst_dependencia dep
        WHERE ctl.idcontrole = dep.iddepende
          AND dep.idcontrole = pr_idcontrole;     
     
@@ -340,7 +340,7 @@ CREATE OR REPLACE PACKAGE BODY CECREDDBA.EXPU0001  is
         END IF;
         --> Atualizar controle com a data de execução
         BEGIN
-          UPDATE cecreddba.tbhst_controle ctl
+          UPDATE tbhst_controle ctl
              SET ctl.dhultima_operacao = SYSDATE
            WHERE ctl.rowid = rw_tbhstctl.rowid;
         EXCEPTION
@@ -446,9 +446,9 @@ CREATE OR REPLACE PACKAGE BODY CECREDDBA.EXPU0001  is
              dep.iddepende,
              ctl_pri.nmtabela nmtabela_pri,
              ctl_pri.nmowner nmowner_pri
-        FROM cecreddba.tbhst_controle ctl,
-             cecreddba.tbhst_controle ctl_pri,
-             cecreddba.tbhst_dependencia dep
+        FROM tbhst_controle ctl,
+             tbhst_controle ctl_pri,
+             tbhst_dependencia dep
        WHERE ctl.idcontrole = dep.iddepende
          AND dep.idcontrole = ctl_pri.idcontrole
          AND dep.idcontrole = pr_idcontrole;     
@@ -777,7 +777,7 @@ CREATE OR REPLACE PACKAGE BODY CECREDDBA.EXPU0001  is
              ctl.idcontrole,
              ctl.tpoperacao,
              ctl.rowid             
-        FROM cecreddba.tbhst_controle ctl
+        FROM tbhst_controle ctl
        WHERE ctl.nmtabela IN ('CRAPSQU')
          --> Respeitar o inicio das execuções
          AND ctl.dtinicio <= TRUNC(pr_dtdiaatu)         
@@ -1096,7 +1096,7 @@ CREATE OR REPLACE PACKAGE BODY CECREDDBA.EXPU0001  is
         END IF;*/
         --> Atualizar controle com a data de execução
         BEGIN
-          UPDATE cecreddba.tbhst_controle ctl
+          UPDATE tbhst_controle ctl
              SET ctl.dhultima_operacao = SYSDATE
            WHERE ctl.rowid = rw_tbhstctl.rowid;
         EXCEPTION
