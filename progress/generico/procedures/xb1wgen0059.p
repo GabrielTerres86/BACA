@@ -2,7 +2,7 @@
 
     Programa: xb1wgen0059.p
     Autor   : Jose Luis
-    Data    : Marco/2010                   Ultima atualizacao: 26/03/2015
+    Data    : Marco/2010                   Ultima atualizacao: 22/02/2017
 
     Objetivo  : BO de Comunicacao XML x BO Generica de Buscas (b1wgen0059.p)
 
@@ -56,7 +56,13 @@
                  
                 03/07/2015 - Criacao do novo parametro aux_cdmodali na busca_linhas_credito
                              (Carlos Rafael Tanholi - Projeto Portabilidade).   
-                                   
+                  
+				15/07/2016 - Eliminado a rotina Busca_Linha_Credito devido a conversao para PLSQL
+						    (Andrei - RKAM).                 
+							
+				22/02/2017 - Removido as rotinas busca_nat_ocupacao, busca_ocupacao devido a conversao 
+				             da busca_gncdnto e da busca-gncdocp
+							 (Adriano - SD 614408).
 .............................................................................*/
 
                                                                              
@@ -1112,84 +1118,6 @@ PROCEDURE Busca_SeqRating:
 
 END PROCEDURE.
 
-PROCEDURE busca_nat_ocupacao:
-
-    RUN carrega-objeto.
-
-    RUN busca-gncdnto IN h-b1wgen0059
-        ( INPUT aux_cdnatocp,
-          INPUT aux_rsnatocp,
-          INPUT aux_nrregist,
-          INPUT aux_nriniseq,
-         OUTPUT aux_qtregist,
-         OUTPUT TABLE tt-gncdnto ).
-
-    IF  LOOKUP(RETURN-VALUE,"OK,") = 0 THEN
-        DO:
-            FIND FIRST tt-erro NO-LOCK NO-ERROR.
-
-            IF  NOT AVAILABLE tt-erro  THEN
-                DO:
-                    CREATE tt-erro.
-                    ASSIGN tt-erro.dscritic = "Nao foi possivel concluir a " +
-                                              "busca de dados.".
-                END.
-
-            RUN piXmlSaida (INPUT TEMP-TABLE tt-erro:HANDLE,
-                            INPUT "Erro").
-        END.
-    ELSE
-        DO:
-            RUN piXmlNew.
-            RUN piXmlExport (INPUT TEMP-TABLE tt-gncdnto:HANDLE,
-                             INPUT "NatOcupacao").
-            RUN piXmlAtributo (INPUT "qtregist",INPUT STRING(aux_qtregist)).
-            RUN piXmlSave.
-        END.
-
-    RUN remove-objeto.
-
-END PROCEDURE.
-
-PROCEDURE busca_ocupacao:
-
-    RUN carrega-objeto.
-
-    RUN busca-gncdocp IN h-b1wgen0059
-        ( INPUT aux_cddocupa,
-          INPUT aux_rsdocupa,
-          INPUT aux_nrregist,
-          INPUT aux_nriniseq,
-         OUTPUT aux_qtregist,
-         OUTPUT TABLE tt-gncdocp ).
-
-    IF  LOOKUP(RETURN-VALUE,"OK,") = 0 THEN
-        DO:
-            FIND FIRST tt-erro NO-LOCK NO-ERROR.
-
-            IF  NOT AVAILABLE tt-erro  THEN
-                DO:
-                    CREATE tt-erro.
-                    ASSIGN tt-erro.dscritic = "Nao foi possivel concluir a " +
-                                              "busca de dados.".
-                END.
-
-            RUN piXmlSaida (INPUT TEMP-TABLE tt-erro:HANDLE,
-                            INPUT "Erro").
-        END.
-    ELSE
-        DO:
-            RUN piXmlNew.
-            RUN piXmlExport (INPUT TEMP-TABLE tt-gncdocp:HANDLE,
-                             INPUT "Ocupacao").
-            RUN piXmlAtributo (INPUT "qtregist",INPUT STRING(aux_qtregist)).
-            RUN piXmlSave.
-        END.
-
-    RUN remove-objeto.
-
-END PROCEDURE.
-
 
 /*
 craptab dstextab = 'CONJUGE,1,PAI/MAE,2,FILHO(A),3,COMPANHEIRO(A),4,OUTROS,5,COLABORADOR(A),6,ENTEADO(A),7,NENHUM,9'
@@ -1727,49 +1655,6 @@ PROCEDURE busca_motivo_demissao:
     RUN remove-objeto.
 
 END PROCEDURE.
-
-PROCEDURE Busca_Linha_Credito:
-
-    RUN carrega-objeto.
-
-    RUN busca-craplrt IN h-b1wgen0059
-        ( INPUT aux_cdcooper,
-          INPUT aux_cddlinha,
-          INPUT aux_dsdlinha,
-          INPUT aux_tpdlinha,
-          INPUT aux_flgstlcr,
-          INPUT (IF aux_nrregist = 0 THEN 1 ELSE aux_nrregist),
-          INPUT aux_nriniseq,
-         OUTPUT aux_qtregist,
-         OUTPUT TABLE tt-craplrt ).
-
-    IF  LOOKUP(RETURN-VALUE,"OK,") = 0 THEN
-        DO:
-            FIND FIRST tt-erro NO-LOCK NO-ERROR.
-
-            IF  NOT AVAILABLE tt-erro  THEN
-                DO:
-                    CREATE tt-erro.
-                    ASSIGN tt-erro.dscritic = "Nao foi possivel concluir a " +
-                                              "busca de dados.".
-                END.
-
-            RUN piXmlSaida (INPUT TEMP-TABLE tt-erro:HANDLE,
-                            INPUT "Erro").
-        END.
-    ELSE
-        DO:
-            RUN piXmlNew.
-            RUN piXmlExport (INPUT TEMP-TABLE tt-craplrt:HANDLE,
-                             INPUT "LINHA").
-            RUN piXmlAtributo (INPUT "qtregist",INPUT STRING(aux_qtregist)).
-            RUN piXmlSave.
-        END.
-
-    RUN remove-objeto.
-
-END PROCEDURE.
-
 
 PROCEDURE busca_convenios:
 
