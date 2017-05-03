@@ -7482,7 +7482,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                              ,pr_cdcriticidade => 2             --> Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
                              ,pr_dsmensagem    => vr_dstexto    --> dscritic       
                              ,pr_flgsucesso    => 0             --> Indicador de sucesso da execução
-                             ,pr_flabrechamado => TRUE          --> Abrir chamado (Sim=true/Nao=false)
+                             ,pr_flabrechamado => 1             --> Abrir chamado (Sim=1/Nao=0)
                              ,pr_texto_chamado => vr_titulo
                              ,pr_destinatario_email => vr_destinatario_email
                              ,PR_IDPRGLOG      => vr_idprglog); --> Identificador unico da tabela (sequence)

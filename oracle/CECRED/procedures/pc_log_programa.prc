@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_log_programa(
   pr_dsmensagem    IN tbgen_prglog_ocorrencia.dsmensagem%type    DEFAULT NULL, -- dscritic       
   pr_flgsucesso    IN tbgen_prglog.flgsucesso%type               DEFAULT 1,    -- Indicador de sucesso da execução
   pr_nmarqlog      IN tbgen_prglog.nmarqlog%TYPE                 DEFAULT NULL, --  Nome do arquivo
-  pr_flabrechamado IN BOOLEAN                                    DEFAULT FALSE,-- Abre chamado sim/nao
+  pr_flabrechamado IN INTEGER                                    DEFAULT 0,    -- Abre chamado sim/nao
   pr_texto_chamado IN VARCHAR2                                   DEFAULT NULL, -- Texto do chamado
   pr_destinatario_email IN VARCHAR2                              DEFAULT NULL, -- Destinatario do email
   PR_IDPRGLOG      IN OUT tbgen_prglog.idprglog%type                           -- Identificador unico da tabela (sequence)
@@ -214,7 +214,7 @@ BEGIN
         END IF;
 
         -- Se eh para abrir chamado
-        IF pr_flabrechamado THEN
+        IF pr_flabrechamado = 1 THEN
           
           -- Buscar caminho do softdesk (homol ou prod)
           IF gene0001.fn_database_name = 'AYLLOSP' THEN
