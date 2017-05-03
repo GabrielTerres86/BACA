@@ -1001,7 +1001,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                                - codigoCargo: Codigo do Cargo do Colaborador
                                - classificacaoRisco: Nivel de risco no momento da criacao
                                - renegociacao: Flag de renogociação ou não 
-                               - valorFaturamentoAnual: Faturamento dos ultimos 12 meses
+                               - faturamentoAnual: Faturamento dos ultimos 12 meses
     ..........................................................................*/
     -----------> CURSORES <-----------
     CURSOR cr_crapass (pr_cdcooper crapass.cdcooper%TYPE,
