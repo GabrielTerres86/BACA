@@ -1543,6 +1543,9 @@ PROCEDURE process-web-request :
 
         IF  GET-VALUE("aux_flmensag") <> ""  THEN
             ASSIGN aux_flmensag = INT(GET-VALUE("aux_flmensag")).
+        
+        IF GET-VALUE("aux_idefetiv") <> "" THEN
+            ASSIGN aux_idefetiv = INTE(GET-VALUE("aux_idefetiv")).
 
         /* Verificar senha e frase */
         IF  aux_flgcript AND NOT CAN-DO("2,11,18",STRING(aux_operacao))  OR /** Utiliza criptografia **/
@@ -1563,10 +1566,18 @@ PROCEDURE process-web-request :
                (
                   /** Nao utiliza criptografia se for confirmacao de resgate de aplicacao **/
                   CAN-DO("116",STRING(aux_operacao)) AND aux_flmensag = 0
-               )OR
+               ) OR
                (
                   /** Nao utiliza criptografia se for contratacao de pre-aprovado **/
                   CAN-DO("100",STRING(aux_operacao))
+               ) OR
+               (
+                  /** Nao utiliza criptografia se for pagamento de emprestimo **/
+                  CAN-DO("158",STRING(aux_operacao))
+               ) OR
+               (
+                  /** Nao utiliza criptografia se for pagamento de DARF e DAS **/
+                  CAN-DO("188",STRING(aux_operacao)) AND aux_idefetiv = 1
                )
            )
              THEN 
@@ -7198,6 +7209,7 @@ PROCEDURE proc_operacao156:
                                                    INPUT aux_nrctremp,
                                                    INPUT aux_dtmvtolt,
                                                    INPUT aux_dtmvtoan,
+                                                   INPUT aux_dtmvtocd,
                                                    OUTPUT aux_dsmsgerr,
                                                    OUTPUT TABLE xml_operacao).
 
@@ -7278,6 +7290,7 @@ PROCEDURE proc_operacao158:
                                                    INPUT aux_qtdprepr,
                                                    INPUT aux_listapar, 
                                                    INPUT aux_tipopgto,
+                                                   INPUT aux_flmobile,
                                                    OUTPUT aux_dsmsgerr,
                                                    OUTPUT TABLE xml_operacao).
 
