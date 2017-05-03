@@ -28,7 +28,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
   --  Sistema  : Rotinas referentes a importacao de arquivos CYBER de acordos de emprestimos
   --  Sigla    : RECP
   --  Autor    : Jean Michel Deschamps
-  --  Data     : Outubro/2016.                   Ultima atualizacao: 02/05/2017
+  --  Data     : Outubro/2016.                   Ultima atualizacao: 03/05/2017
   --
   -- Dados referentes ao programa:
   --
@@ -42,6 +42,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
   --             06/03/2017 - Foi passado o UPDATE crapcyc para dentro do LOOP. (Jaison/James)
   --
   --             02/05/2017 - Remocao do SAVEPOINT. (Jaison/James)
+  --
+  --             03/05/2017 - Salvar registros por arquivo e desfazer acoes se aconteceu erro numa linha. (Jaison/James)
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -449,11 +451,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                         ,pr_dstiplog => 'E'
                                         ,pr_dscritic => 'Acordo: ' || vr_nracordo || '. Critica: ' || vr_dscritic);
                    pr_flgemail := TRUE;
-                   CONTINUE;
+                   ROLLBACK; -- Desfaz acoes
+                   EXIT; -- Sai do loop de linhas
                  END IF;
 
                END IF; --Arquivo aberto
              END LOOP;
+             
+             COMMIT; -- Salva os dados por arquivo
 
              -- Verificar se o arquivo está aberto
              IF utl_file.IS_OPEN(vr_input_file) THEN
@@ -514,8 +519,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
         vr_nrindice:= vr_tab_arqzip.NEXT(vr_nrindice);
 
       END LOOP;
-
-      COMMIT;
 
   EXCEPTION
     WHEN OTHERS THEN
@@ -965,6 +968,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                               ,pr_dstiplog => 'E'
                                               ,pr_dscritic => 'Arquivo: ' || vr_nmarqtxt || ' ' || vr_dscritic);
                          pr_flgemail := TRUE;
+                         ROLLBACK; -- Desfaz acoes
                          EXIT LEITURA_TXT;
                        END IF;
 
@@ -1046,6 +1050,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                               ,pr_dstiplog => 'E'
                                               ,pr_dscritic => 'Arquivo: ' || vr_nmarqtxt || ' ' || vr_dscritic);
                          pr_flgemail := TRUE;
+                         ROLLBACK; -- Desfaz acoes
                          EXIT LEITURA_TXT;
                        END IF;
                         
@@ -1089,6 +1094,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                               ,pr_dstiplog => 'E'
                                               ,pr_dscritic => 'Arquivo: ' || vr_nmarqtxt || ' ' || vr_dscritic);
                          pr_flgemail := TRUE;
+                         ROLLBACK; -- Desfaz acoes
                          EXIT LEITURA_TXT;
                        END IF;
                        
@@ -1133,6 +1139,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                                ,pr_dstiplog => 'E'
                                                ,pr_dscritic => 'Arquivo: ' || vr_nmarqtxt || ' ' || vr_dscritic);
                           pr_flgemail := TRUE;
+                          ROLLBACK; -- Desfaz acoes
                           EXIT LEITURA_TXT;
                         END IF;
                        
@@ -1171,6 +1178,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                                ,pr_dstiplog => 'E'
                                                ,pr_dscritic => 'Arquivo: ' || vr_nmarqtxt || ' ' || vr_dscritic);
                           pr_flgemail := TRUE;
+                          ROLLBACK; -- Desfaz acoes
                           EXIT LEITURA_TXT;
                         END IF;
                        
@@ -1249,6 +1257,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                            ,pr_dscritic => 'Arquivo: ' || vr_nmarqtxt || ' ' || vr_dscritic);
 
                       pr_flgemail := TRUE;
+                      ROLLBACK; -- Desfaz acoes
                       EXIT LEITURA_TXT;
                     END IF;
 
@@ -1292,6 +1301,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                           ,pr_dstiplog => 'E'
                                           ,pr_dscritic => 'Arquivo: ' || vr_nmarqtxt || ' ' || vr_dscritic);
                      pr_flgemail := TRUE;
+                     ROLLBACK; -- Desfaz acoes
                      EXIT LEITURA_TXT;
                    END IF;
 
@@ -1311,11 +1321,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                           ,pr_dstiplog => 'E'
                                           ,pr_dscritic => 'Arquivo: ' || vr_nmarqtxt || ' ' || vr_dscritic);
                      pr_flgemail := TRUE;
+                     ROLLBACK; -- Desfaz acoes
                      EXIT LEITURA_TXT;                                          
                  END;   
                   
                END IF; --Arquivo aberto
              END LOOP;
+             
+             COMMIT; -- Salva os dados por arquivo
              
              -- Verificar se o arquivo está aberto
              IF utl_file.IS_OPEN(vr_input_file) THEN
@@ -1378,8 +1391,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
         vr_nrindice:= vr_tab_arqzip.NEXT(vr_nrindice);
 
       END LOOP;
-      
-      COMMIT;
 
   EXCEPTION
     WHEN OTHERS THEN
