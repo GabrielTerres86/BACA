@@ -28,7 +28,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
   --  Sistema  : Rotinas referentes a importacao de arquivos CYBER de acordos de emprestimos
   --  Sigla    : RECP
   --  Autor    : Jean Michel Deschamps
-  --  Data     : Outubro/2016.                   Ultima atualizacao: 06/03/2017
+  --  Data     : Outubro/2016.                   Ultima atualizacao: 02/05/2017
   --
   -- Dados referentes ao programa:
   --
@@ -40,6 +40,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
   --             22/02/2017 - Alteracao para passar pr_nrparcel como zero. (Jaison/James)
   --
   --             06/03/2017 - Foi passado o UPDATE crapcyc para dentro do LOOP. (Jaison/James)
+  --
+  --             02/05/2017 - Remocao do SAVEPOINT. (Jaison/James)
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -382,8 +384,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                CONTINUE;
              END IF;
 
-             SAVEPOINT SAVE_ACORDO_CANCELADO;
-
              vr_nrlinha := 0;
 
              LOOP
@@ -412,7 +412,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                         ,pr_dstiplog => 'E'
                                         ,pr_dscritic => 'ARQUIVO INCONSISTENTE');
 
-                   ROLLBACK TO SAVE_ACORDO_CANCELADO;
                    pr_flgemail := TRUE;
                    -- Fim do arquivo
                    EXIT;
@@ -854,7 +853,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                CONTINUE;
              END IF;
 
-             SAVEPOINT SAVE_ACORDO_QUITADO;
              vr_nrlinha := 0;
              <<LEITURA_TXT>>
              LOOP
@@ -883,7 +881,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                         ,pr_dstiplog => 'E'
                                         ,pr_dscritic => 'Arquivo: ' || vr_nmarqtxt || ' ' || 'ARQUIVO INCONSISTENTE');
                    --Fim do arquivo
-                   ROLLBACK TO SAVE_ACORDO_QUITADO;
                    pr_flgemail := TRUE;
                    EXIT LEITURA_TXT;
                  ELSIF SUBSTR(vr_setlinha,1,1) = 'T' THEN
@@ -932,7 +929,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                        pc_controla_log_batch(pr_cdcooper => vr_cdcooper
                                             ,pr_dstiplog => 'E'
                                             ,pr_dscritic => 'Arquivo: ' || vr_nmarqtxt || ' ' || vr_dscritic);
-                       ROLLBACK TO SAVE_ACORDO_QUITADO;
                        pr_flgemail := TRUE;
                        EXIT LEITURA_TXT;
                      END IF;
@@ -968,7 +964,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                          pc_controla_log_batch(pr_cdcooper => vr_cdcooper
                                               ,pr_dstiplog => 'E'
                                               ,pr_dscritic => 'Arquivo: ' || vr_nmarqtxt || ' ' || vr_dscritic);
-                         ROLLBACK TO SAVE_ACORDO_QUITADO;
                          pr_flgemail := TRUE;
                          EXIT LEITURA_TXT;
                        END IF;
@@ -997,7 +992,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                        pc_controla_log_batch(pr_cdcooper => vr_cdcooper
                                             ,pr_dstiplog => 'E'
                                             ,pr_dscritic => 'Arquivo: ' || vr_nmarqtxt || ' ' || vr_dscritic);
-                       ROLLBACK TO SAVE_ACORDO_QUITADO;
                        pr_flgemail := TRUE;
                        EXIT LEITURA_TXT;
                      ELSE
@@ -1051,7 +1045,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                          pc_controla_log_batch(pr_cdcooper => vr_cdcooper
                                               ,pr_dstiplog => 'E'
                                               ,pr_dscritic => 'Arquivo: ' || vr_nmarqtxt || ' ' || vr_dscritic);
-                         ROLLBACK TO SAVE_ACORDO_QUITADO;
                          pr_flgemail := TRUE;
                          EXIT LEITURA_TXT;
                        END IF;
@@ -1095,7 +1088,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                          pc_controla_log_batch(pr_cdcooper => vr_cdcooper
                                               ,pr_dstiplog => 'E'
                                               ,pr_dscritic => 'Arquivo: ' || vr_nmarqtxt || ' ' || vr_dscritic);
-                         ROLLBACK TO SAVE_ACORDO_QUITADO;
                          pr_flgemail := TRUE;
                          EXIT LEITURA_TXT;
                        END IF;
@@ -1140,7 +1132,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                           pc_controla_log_batch(pr_cdcooper => vr_cdcooper
                                                ,pr_dstiplog => 'E'
                                                ,pr_dscritic => 'Arquivo: ' || vr_nmarqtxt || ' ' || vr_dscritic);
-                          ROLLBACK TO SAVE_ACORDO_QUITADO;
                           pr_flgemail := TRUE;
                           EXIT LEITURA_TXT;
                         END IF;
@@ -1179,7 +1170,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                           pc_controla_log_batch(pr_cdcooper => vr_cdcooper
                                                ,pr_dstiplog => 'E'
                                                ,pr_dscritic => 'Arquivo: ' || vr_nmarqtxt || ' ' || vr_dscritic);
-                          ROLLBACK TO SAVE_ACORDO_QUITADO;
                           pr_flgemail := TRUE;
                           EXIT LEITURA_TXT;
                         END IF;
@@ -1258,7 +1248,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                            ,pr_dstiplog => 'E'
                                            ,pr_dscritic => 'Arquivo: ' || vr_nmarqtxt || ' ' || vr_dscritic);
 
-                      ROLLBACK TO SAVE_ACORDO_QUITADO;
                       pr_flgemail := TRUE;
                       EXIT LEITURA_TXT;
                     END IF;
@@ -1302,7 +1291,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                      pc_controla_log_batch(pr_cdcooper => vr_cdcooper
                                           ,pr_dstiplog => 'E'
                                           ,pr_dscritic => 'Arquivo: ' || vr_nmarqtxt || ' ' || vr_dscritic);
-                     ROLLBACK TO SAVE_ACORDO_QUITADO;
                      pr_flgemail := TRUE;
                      EXIT LEITURA_TXT;
                    END IF;
@@ -1322,7 +1310,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                      pc_controla_log_batch(pr_cdcooper => vr_cdcooper
                                           ,pr_dstiplog => 'E'
                                           ,pr_dscritic => 'Arquivo: ' || vr_nmarqtxt || ' ' || vr_dscritic);
-                     ROLLBACK TO SAVE_ACORDO_QUITADO;
                      pr_flgemail := TRUE;
                      EXIT LEITURA_TXT;                                          
                  END;   
