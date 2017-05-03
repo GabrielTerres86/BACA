@@ -189,8 +189,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
          26/04/2017 - Prj 432 - Melhorias envio Cyber - adequação da geração do arquivo de baixas / pagamentos,
                                                         não está atualizando corretamente se o contrato for VIP (Jean/Mout´S)
 
-
-
+		 02/05/2017 - Prj 432 - retirar regra de não enviar baixa se contrato VIP, está gerando conflitos no Cyber 
+		                        e esta regra será revista na melhoria 302. (Jean / Mout´s)
 
 
      ............................................................................. */
@@ -1850,11 +1850,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
              END;
 
            END IF;
-
-           -- 26/04/2017 - Alteraçao para tratar se contrato é VIP, somente após UPDATE da crapcyb - Jean (Mout´S)
-           if nvl(rw_crapcyc1.flgehvip,0) = 1 then
-              return;
-           end if;
 
            --Incrementar Contador
            pc_incrementa_linha(pr_nrolinha => 7);
@@ -4655,20 +4650,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
          --Selecionar Contratos em Cobranca no Cyber
          FOR rw_crapcyb IN cr_crapcyb (pr_cdcooper => rw_crapcop.cdcooper) LOOP
 
-           -- Melhoria 432 - envio informacoes CYBEr - Jean (Mout´S)
-           open cr_crapcyc1(pr_cdcooper => rw_crapcyb.cdcooper
-                           ,pr_cdorigem => rw_crapcyb.cdorigem
-                           ,pr_nrdconta => rw_crapcyb.nrdconta
-                           ,pr_nrctremp => rw_crapcyb.nrctremp);
-           fetch cr_crapcyc1 into rw_crapcyc1;
-
-       -- 26/04/2017 - Alteração:  se não localizar o arquivo crapcyc, deve assumir o flag VIP como zero - Jean (Mout´S)
-       if cr_crapcyc1%notfound then
-               rw_crapcyc1.flgehvip := 0;
-           end if;
-
-           close cr_crapcyc1;
-
            --Atualizar agencia
            pc_atualiza_agencia (pr_rw_crapcyb => rw_crapcyb      --Registro Cyber
                                ,pr_des_erro   => vr_des_erro     --Retorno Erro
@@ -4927,12 +4908,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                   rw_crapcyb.flgpreju = 0 AND
                   rw_crapcyb.dtatufin < rw_crapdat.dtmvtolt THEN
 
-                  /*-- 16/01/2017 - PRJ 432 - Só pode gerar baixas para o Cyber se os flags cobranca judicial,
-                  --              cobranca extra-judicial e vip estiverem como Não e existir atrasos. (Jean Calao / Mout'S)
-                  if  \*nvl(rw_crapcyb.flgjudic,0) = 0
-                  and nvl(rw_crapcyb.5,0) = 0
-                  and *\nvl(rw_crapcyc1.flgehvip,0) = 0 then*/
-
                  --Gerar carga de Baixa
                  pc_gera_carga_baixa (pr_rw_crapcyb => rw_crapcyb             --Registro Cyber
                                      ,pr_dtmvtolt   => rw_crapdat.dtmvtolt    --Data Movimento
@@ -4943,9 +4918,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                       IF vr_cdcritic IS NOT NULL OR
                          vr_dscritic IS NOT NULL THEN
                    RAISE vr_exc_saida;
-                 END IF;
-
-               /* end IF; -- 16/01/2017 - Prj 432 (Jean Calão/Mout'S) */
+                 END IF;              
 
                ELSE
                  -- Verifica se o saldo a regularizar e o saldo do prejuizo estao liquidados para
