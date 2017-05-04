@@ -1111,6 +1111,8 @@ PROCEDURE grava_dados:
                               INPUT par_cdcoptfn,
                               INPUT par_cdagetfn,
                               INPUT par_nrterfin,
+                              INPUT par_qtpreemp,
+                              INPUT par_vlpreemp,
                               OUTPUT aux_vltarifa,
                               OUTPUT aux_vltaxiof,
                               OUTPUT aux_vltariof,
@@ -1220,6 +1222,8 @@ PROCEDURE grava_dados_conta PRIVATE:
     DEF  INPUT PARAM par_cdcoptfn AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdagetfn AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrterfin AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_qtpreemp AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_vlpreemp AS DECI                           NO-UNDO.
 
     DEF OUTPUT PARAM par_vltottar AS DECI                           NO-UNDO.
     DEF OUTPUT PARAM par_vltaxiof AS DECI                           NO-UNDO.
@@ -1466,6 +1470,9 @@ PROCEDURE grava_dados_conta PRIVATE:
                          INPUT par_cdlcremp,
                          INPUT par_vlemprst,
                          INPUT par_dtmvtolt,
+                         INPUT par_qtpreemp,
+                         INPUT par_dtdpagto,
+                         INPUT par_vlpreemp,
                          OUTPUT par_vltaxiof,
                          OUTPUT par_vltariof,
                          OUTPUT TABLE tt-erro).
@@ -1601,6 +1608,9 @@ PROCEDURE calcula_iof:
     DEF  INPUT PARAM par_cdlcremp AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_vlemprst AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrparepr AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_dtvencto AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_vlpreemp AS DECI                           NO-UNDO.
 
     DEF OUTPUT PARAM par_vltaxiof AS DECI                           NO-UNDO.
     DEF OUTPUT PARAM par_vltariof AS DECI                           NO-UNDO.
@@ -1610,7 +1620,11 @@ PROCEDURE calcula_iof:
     DEF VAR h-b1wgen0159 AS HANDLE                                  NO-UNDO.
     DEF VAR aux_flgimune AS LOGI                                    NO-UNDO.
     DEF VAR aux_flgtaiof AS LOGI                                    NO-UNDO.
-
+    DEF VAR aux_qtdiaiof AS INTE                                    NO-UNDO.
+    DEF VAR aux_inpessoa AS INTEGER INIT 0                          NO-UNDO.
+    
+    ASSIGN par_vltaxiof = 0.
+    
     FOR craplcr FIELDS(flgtaiof) WHERE craplcr.cdcooper = par_cdcooper AND
                                        craplcr.cdlcremp = par_cdlcremp
                                        NO-LOCK: END.
@@ -1622,57 +1636,68 @@ PROCEDURE calcula_iof:
     
     IF aux_flgtaiof AND par_vlemprst > 0 THEN
        DO:
-           IF NOT VALID-HANDLE(h-b1wgen9999) THEN
-              RUN sistema/generico/procedures/b1wgen9999.p 
-                  PERSISTENT SET h-b1wgen9999.
+           ASSIGN par_vltariof = 0.
+           
+           FOR FIRST crapass FIELDS(inpessoa)
+                             WHERE crapass.cdcooper = par_cdcooper AND
+                                   crapass.nrdconta = par_nrdconta
+                                   NO-LOCK: END.
+           
+           IF AVAILABLE crapass THEN
+              ASSIGN aux_inpessoa = crapass.inpessoa.
+       
+           { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
-           RUN busca_iof IN h-b1wgen9999(INPUT par_cdcooper,
-                                         INPUT par_cdagenci,
-                                         INPUT par_nrdcaixa,
-                                         INPUT par_dtmvtolt,
-                                         OUTPUT TABLE tt-erro,
-                                         OUTPUT TABLE tt-iof).
+           /* Efetuar a chamada a rotina Oracle */ 
+           RUN STORED-PROCEDURE pc_calcula_iof_epr
+            aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper,
+                                                 INPUT par_nrdconta,
+                                                 INPUT par_dtmvtolt,
+                                                 INPUT aux_inpessoa,
+                                                 INPUT par_cdlcremp,
+                                                 INPUT par_nrparepr,
+                                                 INPUT par_vlpreemp,
+                                                 INPUT par_vlemprst,
+                                                 INPUT par_dtvencto,
+                                                 INPUT par_dtmvtolt,
+                                                OUTPUT 0,
+                                                OUTPUT "").
+           
+           /* Fechar o procedimento para buscarmos o resultado */ 
+           CLOSE STORED-PROC pc_calcula_iof_epr
+               aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
 
-           IF VALID-HANDLE(h-b1wgen9999) THEN
-              DELETE PROCEDURE h-b1wgen9999.
+           { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+           ASSIGN par_vltariof = pc_calcula_iof_epr.pr_valoriof
+                                    WHEN pc_calcula_iof_epr.pr_valoriof <> ?           
+                  aux_dscritic = pc_calcula_iof_epr.pr_dscritic
+                                    WHEN pc_calcula_iof_epr.pr_dscritic <> ?.
+                             
+           IF NOT VALID-HANDLE(h-b1wgen0159) THEN
+              RUN sistema/generico/procedures/b1wgen0159.p 
+                  PERSISTENT SET h-b1wgen0159.
+        
+           RUN verifica-imunidade-tributaria 
+               IN h-b1wgen0159(INPUT par_cdcooper,
+                               INPUT par_nrdconta,
+                               INPUT par_dtmvtolt,
+                               INPUT TRUE, /* par_flgrvvlr */
+                               INPUT 1,    /* par_cdinsenc */
+                               INPUT par_vltariof,
+                               OUTPUT aux_flgimune,
+                               OUTPUT TABLE tt-erro).
+        
+           IF VALID-HANDLE(h-b1wgen0159) THEN
+              DELETE PROCEDURE h-b1wgen0159.
 
            IF RETURN-VALUE <> "OK" THEN
               RETURN "NOK".
-           
-           FIND FIRST tt-iof NO-LOCK NO-ERROR.
-           IF tt-iof.txccdiof > 0 THEN
-              DO:
-                  IF NOT VALID-HANDLE(h-b1wgen0159) THEN
-                     RUN sistema/generico/procedures/b1wgen0159.p 
-                         PERSISTENT SET h-b1wgen0159.
-        
-                  RUN verifica-imunidade-tributaria 
-                      IN h-b1wgen0159(INPUT par_cdcooper,
-                                      INPUT par_nrdconta,
-                                      INPUT par_dtmvtolt,
-                                      INPUT TRUE, /* par_flgrvvlr */
-                                      INPUT 1,    /* par_cdinsenc */
-                                      INPUT ROUND(par_vlemprst * 
-                                                  tt-iof.txccdiof,2),
-                                      OUTPUT aux_flgimune,
-                                      OUTPUT TABLE tt-erro).
-        
-                  IF VALID-HANDLE(h-b1wgen0159) THEN
-                     DELETE PROCEDURE h-b1wgen0159.
 
-                  IF RETURN-VALUE <> "OK" THEN
-                     RETURN "NOK".
-
-                  /* Caso for imune, nao podemos cobrar IOF */
-                  IF NOT aux_flgimune THEN
-                     DO:
-                         ASSIGN par_vltaxiof = tt-iof.txccdiof
-                                par_vltariof = ROUND(par_vlemprst * par_vltaxiof,2).
-
-                     END. /* END IF NOT aux_flgimune */
-
-              END. /* END IF tt-iof.txccdiof > 0 THEN */
-
+           /* Caso for imune, nao podemos cobrar IOF */
+           IF aux_flgimune THEN
+              ASSIGN par_vltariof = 0.
+              
        END. /* IF aux_flgtaiof AND par_vlemprst > 0 THEN */
 
 END PROCEDURE. /* END calcula_iof */
@@ -1994,6 +2019,9 @@ PROCEDURE calcula_taxa_emprestimo:
                      INPUT crapcpa.cdlcremp,
                      INPUT par_vlemprst,
                      INPUT par_dtmvtolt,
+                     INPUT par_nrparepr,
+                     INPUT par_dtvencto,
+                     INPUT par_vlparepr,
                      OUTPUT par_vltaxiof,
                      OUTPUT par_vltariof,
                      OUTPUT TABLE tt-erro).
@@ -2216,8 +2244,8 @@ PROCEDURE imprime_previa_demonstrativo:
                               INPUT aux_cdcritic,
                               INPUT-OUTPUT aux_dscritic).
                RETURN "NOK".
-           END.
-
+               END.
+               
             ASSIGN aux_cdlcremp = crapcpa.cdlcremp.
           END. /*IF par_nrctremp = 0 THEN*/
         ELSE 
@@ -2438,8 +2466,7 @@ PROCEDURE imprime_previa_demonstrativo:
                    "CET de " 
                    par_percetop FORMAT "zz9.99" "% a.a, IOF de "
                    "R$ "
-                   par_vltariof FORMAT "zz9.99" "("
-                   (par_vltaxiof * 100) FORMAT "zz9.99" "%) "
+                   par_vltariof FORMAT "zz9.99"
                    "(" aux_dsvlriof1 FORMAT "x(42)"
                    SKIP
                    aux_dsvlriof2 FORMAT "x(28)" ") "
@@ -2529,8 +2556,7 @@ PROCEDURE imprime_previa_demonstrativo:
                    "% a.a,  IOF "
                    SKIP
                    "de R$ "
-                   par_vltariof FORMAT "zz9.99" 
-                   "(" (par_vltaxiof * 100) FORMAT "zz9.99" "%)("
+                   par_vltariof FORMAT "zz9.99" "("
                    aux_dsvlriof1 FORMAT "x(66)"
                    ") "
                    SKIP
