@@ -14,7 +14,7 @@
    Sistema : Internet - aux_cdcooper de Credito
    Sigla   : CRED
    Autor   : Junior
-   Data    : Julho/2004.                       Ultima atualizacao: 21/02/2017
+   Data    : Julho/2004.                       Ultima atualizacao: 04/05/2017
 
    Dados referentes ao programa:
 
@@ -651,6 +651,9 @@
                             - Criada op 180 (P.349.2)
                             - Alteraçoes para composiçao de comprovante DARF/DAS Modelo Sicredi
                             (Lucas Lunelli)
+
+				 04/05/2017 - Alterado parametro dtmvtolt para dtmvtocd na operacao 176 - 
+							  Integralizacao de cotas. (Reinert)
                               
 ------------------------------------------------------------------------------*/
 
@@ -7767,7 +7770,7 @@ PROCEDURE proc_operacao176:
                                                    INPUT 3,              /* par_idorigem */
                                                    INPUT aux_nrdconta,   /* par_nrdconta */
                                                    INPUT aux_idseqttl,
-                                                   INPUT aux_dtmvtolt,
+                                                   INPUT aux_dtmvtocd,
                                                    INPUT aux_vintegra,   /* valor integralizacao */
                                                   OUTPUT aux_dsmsgerr,
                                                   OUTPUT TABLE xml_operacao).
