@@ -27,7 +27,7 @@
 
     Programa: b1wgen0025.p
     Autor   : Ze Eduardo
-    Data    : Novembro/2007                  Ultima Atualizacao: 24/01/2017
+    Data    : Novembro/2007                  Ultima Atualizacao: 18/11/2016
     
     Dados referentes ao programa:
 
@@ -336,10 +336,6 @@
                 18/11/2016 - #559508 correção na verificação da existência do cartão
                              magnético de operador. Quando for um cartão de operador,
                              não consultar transferência de conta (Carlos)
-                             
-                24/01/2017 - #576728 modificado o procedimento efetua_saque para 
-                             salvar na craplcm e craplot o PA do cooperado, e não
-                             o PA do TAA onde ocorreu a operação (Carlos)
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0025tt.i }
@@ -2530,7 +2526,6 @@ PROCEDURE efetua_saque:
     DEFINE VARIABLE     aux_dssaqmax    AS CHAR                     NO-UNDO.
     DEFINE VARIABLE     aux_flgcompr    AS LOGICAL                  NO-UNDO.
     DEFINE VARIABLE     aux_cdhisdeb    AS INT                      NO-UNDO.
-    DEFINE VARIABLE     aux_cdagenci    AS INT                      NO-UNDO.
     DEFINE VARIABLE     h-b1craplot     AS HANDLE                   NO-UNDO.
     DEFINE VARIABLE     h-b1craplcm     AS HANDLE                   NO-UNDO.
 
@@ -2545,7 +2540,7 @@ PROCEDURE efetua_saque:
     DEFINE VARIABLE     h-b1wgen0011    AS HANDLE                   NO-UNDO.
 
     DEFINE BUFFER crabass FOR crapass.
-    DEFINE BUFFER crabass2 FOR crapass.
+
 
     /* Saque conforme a cooperativa */
     IF  par_cdcoptfn = par_cdcooper  THEN
@@ -2572,10 +2567,7 @@ PROCEDURE efetua_saque:
         par_dscritic <> ""     THEN
         RETURN "NOK".
 
-    FIND FIRST crabass2 WHERE crabass2.cdcooper = par_cdcooper AND 
-                              crabass2.nrdconta = par_nrdconta
-                              NO-LOCK NO-ERROR.
-    ASSIGN aux_cdagenci = crabass2.cdagenci.
+
 
 
     ASSIGN aux_cdbccxlt = 100
@@ -2585,7 +2577,7 @@ PROCEDURE efetua_saque:
     
         FIND craplot WHERE craplot.cdcooper = par_cdcooper  AND 
                            craplot.dtmvtolt = par_dtmvtocd  AND
-                           craplot.cdagenci = aux_cdagenci  AND
+                           craplot.cdagenci = par_cdagetfn  AND
                            craplot.cdbccxlt = aux_cdbccxlt  AND
                            craplot.nrdolote = aux_nrdolote
                            USE-INDEX craplot1 
@@ -2604,7 +2596,7 @@ PROCEDURE efetua_saque:
                     CREATE cratlot.
                     ASSIGN cratlot.cdcooper = par_cdcooper
                            cratlot.dtmvtolt = par_dtmvtocd
-                           cratlot.cdagenci = aux_cdagenci
+                           cratlot.cdagenci = par_cdagetfn
                            cratlot.cdbccxlt = aux_cdbccxlt
                            cratlot.nrdolote = aux_nrdolote
                            cratlot.tplotmov = 1.
@@ -2643,7 +2635,7 @@ PROCEDURE efetua_saque:
         CREATE cratlcm.
         ASSIGN cratlcm.cdcooper = par_cdcooper
                cratlcm.dtmvtolt = par_dtmvtocd
-               cratlcm.cdagenci = aux_cdagenci
+               cratlcm.cdagenci = par_cdagetfn
                cratlcm.cdbccxlt = aux_cdbccxlt
                cratlcm.nrdolote = aux_nrdolote
                cratlcm.dtrefere = par_dtmvtocd
