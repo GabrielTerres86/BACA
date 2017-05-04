@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --  Sistema  : Rotinas genericas referente a tela de Cartões
   --  Sigla    : CCRD
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Abril - 2014.                   Ultima atualizacao: 17/04/2017
+  --  Data     : Abril - 2014.                   Ultima atualizacao: 04/05/2017
   --
   -- Dados referentes ao programa:
   --
@@ -50,6 +50,10 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --             17/04/2017 - Incluir pc_crps672 e efetuar tratamento para abrir chamado e 
   --                          enviar email caso ocorra algum erro na importacao do arquivo 
   --                          ccr3 (Lucas Ranghetti #630298)
+  --
+  --             04/05/2017 - Inclusão dos parâmetros pr_cdmensagem e pr_flreincidente => 1 no programa
+  --                          pc_crps672 para atender a verificação de abertura de chamado; Inclusão
+  --                          das críticas na tabela crapcri (Carlos)
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de Registro para as faturas pendentes
@@ -7443,11 +7447,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       
       PROCEDURE pc_log_dados_arquivo(pr_tipodreg IN NUMBER  -- Tipo de registro: 1 - Dados conta cartao / 2- Dados do cartao
                                     ,pr_nmdarqui IN VARCHAR2 
-                                    ,pr_nmdcampo IN VARCHAR2
                                     ,pr_nrdlinha IN NUMBER
+                                    ,pr_cdmensagem IN INTEGER
                                     ,pr_dscritic IN VARCHAR2) IS
         vr_dstpdreg VARCHAR2(50);
-        vr_dstexto VARCHAR2(1000);
+        vr_dstexto VARCHAR2(2000);
         vr_texto_email VARCHAR2(5000);
         vr_texto_chamado VARCHAR2(5000);
         vr_titulo VARCHAR2(1000);
@@ -7460,13 +7464,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         ELSE
           vr_dstpdreg:= 'Nao definido';
         END IF;
-      
+
         -- Texto para utilizar na abertura do chamado e no email enviado
         vr_dstexto:= to_char(sysdate,'hh24:mi:ss') || ' - ' || vr_cdprogra || ' --> ' ||
-                     'Erro no tipo de registro ' || nvl(vr_dstpdreg,' ') || 
-                     ' no campo '|| nvl(pr_nmdcampo, ' ') || ' na linha '  ||
+                     'Erro no tipo de registro ' || nvl(vr_dstpdreg,' ') || '. ' || 
+                     gene0001.fn_busca_critica(pr_cdcritic => pr_cdmensagem) || ' Linha '  ||
                      nvl(pr_nrdlinha,0) ||', arquivo: ' || pr_nmdarqui || ', Critica: ' || nvl(pr_dscritic,' ');
-         
+
         -- Parte inicial do texto do chamado e do email        
         vr_titulo:= '<b>Abaixo os erros encontrados no processo de importacao do arquivo de retorno'||
                     ' da Solicitacao de Cartao Bancoob CABAL</b><br><br>';
@@ -7474,26 +7478,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         -- Buscar e-mails dos destinatarios do produto cartoes
         vr_destinatario_email:= gene0001.fn_param_sistema('CRED',vr_cdcooper_ori,'CRD_RESPONSAVEL');
                  
-       cecred.pc_log_programa(PR_DSTIPLOG      => 'E'           --> Tipo do log: I - início; F - fim; O - ocorrência
-                             ,PR_CDPROGRAMA    => vr_cdprogra   --> Codigo do programa ou do job
-                             ,pr_tpexecucao    => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                              -- Parametros para Ocorrencia
-                             ,pr_tpocorrencia  => 2             --> tp ocorrencia (1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem)
-                             ,pr_cdcriticidade => 2             --> Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
-                             ,pr_dsmensagem    => vr_dstexto    --> dscritic       
-                             ,pr_flgsucesso    => 0             --> Indicador de sucesso da execução
-                             ,pr_flabrechamado => 1             --> Abrir chamado (Sim=1/Nao=0)
-                             ,pr_texto_chamado => vr_titulo
-                             ,pr_destinatario_email => vr_destinatario_email
-                             ,PR_IDPRGLOG      => vr_idprglog); --> Identificador unico da tabela (sequence)
+        cecred.pc_log_programa(PR_DSTIPLOG      => 'E'           --> Tipo do log: I - início; F - fim; O - ocorrência
+                              ,PR_CDPROGRAMA    => vr_cdprogra   --> Codigo do programa ou do job
+                              ,pr_tpexecucao    => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                               -- Parametros para Ocorrencia
+                              ,pr_tpocorrencia  => 2             --> tp ocorrencia (1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem)
+                              ,pr_cdcriticidade => 2             --> Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+                              ,pr_cdmensagem    => pr_cdmensagem
+                              ,pr_dsmensagem    => vr_dstexto    --> dscritic       
+                              ,pr_flgsucesso    => 0             --> Indicador de sucesso da execução
+                              ,pr_flabrechamado => 1             --> Abrir chamado (Sim=1/Nao=0)
+                              ,pr_texto_chamado => vr_titulo
+                              ,pr_destinatario_email => vr_destinatario_email
+                              ,pr_flreincidente => 1             --> Erro pode ocorrer em dias diferentes, devendo abrir chamado
+                              ,PR_IDPRGLOG      => vr_idprglog); --> Identificador unico da tabela (sequence)
 
-       cecred.pc_log_programa(PR_DSTIPLOG   => 'F'           --> Tipo do log: I - início; F - fim; O - ocorrência
-                             ,PR_CDPROGRAMA => vr_cdprogra   --> Codigo do programa ou do job
-                             ,pr_tpexecucao => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                              -- Parametros para Ocorrencia
-                             ,PR_IDPRGLOG   => vr_idprglog); --> Identificador unico da tabela (sequence)  
+        cecred.pc_log_programa(PR_DSTIPLOG   => 'F'           --> Tipo do log: I - início; F - fim; O - ocorrência
+                              ,PR_CDPROGRAMA => vr_cdprogra   --> Codigo do programa ou do job
+                              ,pr_tpexecucao => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                               -- Parametros para Ocorrencia
+                              ,PR_IDPRGLOG   => vr_idprglog); --> Identificador unico da tabela (sequence)  
         
-        vr_dscritic:= vr_dstexto;
+        vr_dscritic := vr_dstexto;
         
       END pc_log_dados_arquivo;
 
@@ -7763,8 +7769,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                    WHEN OTHERS THEN
                    pc_log_dados_arquivo( pr_tipodreg => 1 -- Dados conta cartao
                                         ,pr_nmdarqui => vr_vet_nmarquiv(i) -- Arquivo                   
-                                        ,pr_nmdcampo => 'Tipo da Operacao'
                                         ,pr_nrdlinha => vr_linha
+                                        ,pr_cdmensagem => 1004
                                         ,pr_dscritic => SQLERRM);
                    --Levantar Excecao
                    RAISE vr_exc_saida;
@@ -7791,8 +7797,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   WHEN OTHERS THEN
                    pc_log_dados_arquivo( pr_tipodreg => 1 -- Dados conta cartao
                                         ,pr_nmdarqui => vr_vet_nmarquiv(i) -- Arquivo
-                                        ,pr_nmdcampo => 'Numero do socio'
                                         ,pr_nrdlinha => vr_linha
+                                        ,pr_cdmensagem => 1005
                                         ,pr_dscritic => SQLERRM);
                    --Levantar Excecao
                    RAISE vr_exc_saida;
@@ -7809,8 +7815,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                     WHEN OTHERS THEN
                      pc_log_dados_arquivo( pr_tipodreg => 1 -- Dados conta cartao
                                           ,pr_nmdarqui => vr_vet_nmarquiv(i) -- Arquivo
-                                          ,pr_nmdcampo => 'Numero da conta a debitar'
                                           ,pr_nrdlinha => vr_linha
+                                          ,pr_cdmensagem => 1006
                                           ,pr_dscritic => SQLERRM);
                      --Levantar Excecao
                      RAISE vr_exc_saida;
@@ -7825,8 +7831,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   WHEN OTHERS THEN
                    pc_log_dados_arquivo( pr_tipodreg => 1 -- Dados conta cartao
                                         ,pr_nmdarqui => vr_vet_nmarquiv(i) -- Arquivo
-                                        ,pr_nmdcampo => 'Numero do grupo afinidade'
                                         ,pr_nrdlinha => vr_linha
+                                        ,pr_cdmensagem => 1007
                                         ,pr_dscritic => SQLERRM);
                    --Levantar Excecao
                    RAISE vr_exc_saida;
@@ -7838,8 +7844,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   WHEN OTHERS THEN
                    pc_log_dados_arquivo( pr_tipodreg => 1 -- Dados conta cartao
                                         ,pr_nmdarqui => vr_vet_nmarquiv(i) -- Arquivo
-                                        ,pr_nmdcampo => 'Numero da operacao'
                                         ,pr_nrdlinha => vr_linha
+                                        ,pr_cdmensagem => 1008
                                         ,pr_dscritic => SQLERRM);
                    --Levantar Excecao
                    RAISE vr_exc_saida;
@@ -7853,8 +7859,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   WHEN OTHERS THEN
                    pc_log_dados_arquivo( pr_tipodreg => 1 -- Dados conta cartao
                                         ,pr_nmdarqui => vr_vet_nmarquiv(i) -- Arquivo                   
-                                        ,pr_nmdcampo => 'Canal de venda'
                                         ,pr_nrdlinha => vr_linha
+                                        ,pr_cdmensagem => 1009
                                         ,pr_dscritic => SQLERRM);
                    --Levantar Excecao
                    RAISE vr_exc_saida;
@@ -7866,8 +7872,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   WHEN OTHERS THEN
                    pc_log_dados_arquivo( pr_tipodreg => 1 -- Dados conta cartao
                                         ,pr_nmdarqui => vr_vet_nmarquiv(i) -- Arquivo                   
-                                        ,pr_nmdcampo => 'Vencimentos validos do emissor'
                                         ,pr_nrdlinha => vr_linha
+                                        ,pr_cdmensagem => 1010
                                         ,pr_dscritic => SQLERRM);
                    --Levantar Excecao
                    RAISE vr_exc_saida;
@@ -7879,8 +7885,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   WHEN OTHERS THEN
                    pc_log_dados_arquivo( pr_tipodreg => 1 -- Dados conta cartao
                                         ,pr_nmdarqui => vr_vet_nmarquiv(i) -- Arquivo                   
-                                        ,pr_nmdcampo => 'Limite de credito'
                                         ,pr_nrdlinha => vr_linha
+                                        ,pr_cdmensagem => 1011
                                         ,pr_dscritic => SQLERRM);
                    --Levantar Excecao
                    RAISE vr_exc_saida;
@@ -7892,8 +7898,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   WHEN OTHERS THEN
                    pc_log_dados_arquivo( pr_tipodreg => 1 -- Dados conta cartao
                                         ,pr_nmdarqui => vr_vet_nmarquiv(i) -- Arquivo                   
-                                        ,pr_nmdcampo => 'Porcentagem debito automatico'
                                         ,pr_nrdlinha => vr_linha
+                                        ,pr_cdmensagem => 1012
                                         ,pr_dscritic => SQLERRM);
                    --Levantar Excecao
                    RAISE vr_exc_saida;
@@ -7905,8 +7911,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   WHEN OTHERS THEN
                    pc_log_dados_arquivo( pr_tipodreg => 1 -- Dados conta cartao
                                         ,pr_nmdarqui => vr_vet_nmarquiv(i) -- Arquivo                   
-                                        ,pr_nmdcampo => 'Tipo de conta a debitar'
                                         ,pr_nrdlinha => vr_linha
+                                        ,pr_cdmensagem => 1013
                                         ,pr_dscritic => SQLERRM);
                    --Levantar Excecao
                    RAISE vr_exc_saida;
@@ -7918,8 +7924,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   WHEN OTHERS THEN
                    pc_log_dados_arquivo( pr_tipodreg => 1 -- Dados conta cartao
                                         ,pr_nmdarqui => vr_vet_nmarquiv(i) -- Arquivo                   
-                                        ,pr_nmdcampo => 'Agencia da conta a debitar'
                                         ,pr_nrdlinha => vr_linha
+                                        ,pr_cdmensagem => 1014
                                         ,pr_dscritic => SQLERRM);
                    --Levantar Excecao
                    RAISE vr_exc_saida;
@@ -7931,8 +7937,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   WHEN OTHERS THEN
                    pc_log_dados_arquivo( pr_tipodreg => 1 -- Dados conta cartao
                                         ,pr_nmdarqui => vr_vet_nmarquiv(i) -- Arquivo                   
-                                        ,pr_nmdcampo => 'Numero da conta cartao'
                                         ,pr_nrdlinha => vr_linha
+                                        ,pr_cdmensagem => 1015
                                         ,pr_dscritic => SQLERRM);
                    --Levantar Excecao
                    RAISE vr_exc_saida;
@@ -7946,8 +7952,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                     WHEN OTHERS THEN
                      pc_log_dados_arquivo( pr_tipodreg => 1 -- Dados conta cartao
                                           ,pr_nmdarqui => vr_vet_nmarquiv(i) -- Arquivo                     
-                                          ,pr_nmdcampo => 'Numero da conta cartao(agencia)'
                                           ,pr_nrdlinha => vr_linha
+                                          ,pr_cdmensagem => 1016
                                           ,pr_dscritic => SQLERRM);
                      --Levantar Excecao
                      RAISE vr_exc_saida;
@@ -7961,8 +7967,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   WHEN OTHERS THEN
                    pc_log_dados_arquivo( pr_tipodreg => 1 -- Dados conta cartao
                                         ,pr_nmdarqui => vr_vet_nmarquiv(i) -- Arquivo                   
-                                        ,pr_nmdcampo => 'Codigo de rejeicao'
                                         ,pr_nrdlinha => vr_linha
+                                        ,pr_cdmensagem => 1017
                                         ,pr_dscritic => SQLERRM);
                    --Levantar Excecao
                    RAISE vr_exc_saida;
@@ -7974,8 +7980,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   WHEN OTHERS THEN
                    pc_log_dados_arquivo( pr_tipodreg => 1 -- Dados conta cartao
                                         ,pr_nmdarqui => vr_vet_nmarquiv(i) -- Arquivo                   
-                                        ,pr_nmdcampo => 'Data da operacao'
                                         ,pr_nrdlinha => vr_linha
+                                        ,pr_cdmensagem => 1018
                                         ,pr_dscritic => SQLERRM);
                    --Levantar Excecao
                    RAISE vr_exc_saida;
@@ -8115,8 +8121,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   WHEN OTHERS THEN
                    pc_log_dados_arquivo( pr_tipodreg => 2 -- Dados do cartao
                                         ,pr_nmdarqui => vr_vet_nmarquiv(i) -- Arquivo                   
-                                        ,pr_nmdcampo => 'Conta vinculada'
                                         ,pr_nrdlinha => vr_linha
+                                        ,pr_cdmensagem => 1019
                                         ,pr_dscritic => SQLERRM);
                    --Levantar Excecao
                    RAISE vr_exc_saida;
@@ -8128,8 +8134,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   WHEN OTHERS THEN
                    pc_log_dados_arquivo( pr_tipodreg => 2 -- Dados do cartao
                                         ,pr_nmdarqui => vr_vet_nmarquiv(i) -- Arquivo                   
-                                        ,pr_nmdcampo => 'Tipo da operacao'
                                         ,pr_nrdlinha => vr_linha
+                                        ,pr_cdmensagem => 1004
                                         ,pr_dscritic => SQLERRM);
                    --Levantar Excecao
                    RAISE vr_exc_saida;
@@ -8143,8 +8149,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   WHEN OTHERS THEN
                    pc_log_dados_arquivo( pr_tipodreg => 2 -- Dados do cartao
                                         ,pr_nmdarqui => vr_vet_nmarquiv(i) -- Arquivo                   
-                                        ,pr_nmdcampo => 'Agencia da conta vinculada'
                                         ,pr_nrdlinha => vr_linha
+                                        ,pr_cdmensagem => 1020
                                         ,pr_dscritic => SQLERRM);
                    --Levantar Excecao
                    RAISE vr_exc_saida;
@@ -8158,8 +8164,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                     WHEN OTHERS THEN
                      pc_log_dados_arquivo( pr_tipodreg => 2 -- Dados do cartao
                                           ,pr_nmdarqui => vr_vet_nmarquiv(i) -- Arquivo                     
-                                          ,pr_nmdcampo => 'Numero da conta cartao(agencia)'
                                           ,pr_nrdlinha => vr_linha
+                                          ,pr_cdmensagem => 1016
                                           ,pr_dscritic => SQLERRM);
                      --Levantar Excecao
                      RAISE vr_exc_saida;
@@ -8173,8 +8179,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   WHEN OTHERS THEN
                    pc_log_dados_arquivo( pr_tipodreg => 2 -- Dados do cartao
                                         ,pr_nmdarqui => vr_vet_nmarquiv(i) -- Arquivo                   
-                                        ,pr_nmdcampo => 'Numero da operacao'
                                         ,pr_nrdlinha => vr_linha
+                                        ,pr_cdmensagem => 1008
                                         ,pr_dscritic => SQLERRM);
                    --Levantar Excecao
                    RAISE vr_exc_saida;
@@ -8186,8 +8192,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   WHEN OTHERS THEN
                    pc_log_dados_arquivo( pr_tipodreg => 2 -- Dados do cartao
                                         ,pr_nmdarqui => vr_vet_nmarquiv(i) -- Arquivo                   
-                                        ,pr_nmdcampo => 'Numero da conta vinculada'
                                         ,pr_nrdlinha => vr_linha
+                                        ,pr_cdmensagem => 1021
                                         ,pr_dscritic => SQLERRM);
                    --Levantar Excecao
                    RAISE vr_exc_saida;
@@ -8199,8 +8205,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   WHEN OTHERS THEN
                    pc_log_dados_arquivo( pr_tipodreg => 2 -- Dados do cartao
                                         ,pr_nmdarqui => vr_vet_nmarquiv(i) -- Arquivo                   
-                                        ,pr_nmdcampo => 'Numero do cartao'
                                         ,pr_nrdlinha => vr_linha
+                                        ,pr_cdmensagem => 1022
                                         ,pr_dscritic => SQLERRM);
                    --Levantar Excecao
                    RAISE vr_exc_saida;
@@ -8212,8 +8218,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   WHEN OTHERS THEN
                    pc_log_dados_arquivo( pr_tipodreg => 2 -- Dados do cartao
                                         ,pr_nmdarqui => vr_vet_nmarquiv(i) -- Arquivo                   
-                                        ,pr_nmdcampo => 'Tipo de documento'
                                         ,pr_nrdlinha => vr_linha
+                                        ,pr_cdmensagem => 1023
                                         ,pr_dscritic => SQLERRM);
                    --Levantar Excecao
                    RAISE vr_exc_saida;
@@ -8225,8 +8231,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   WHEN OTHERS THEN
                    pc_log_dados_arquivo( pr_tipodreg => 2 -- Dados do cartao
                                         ,pr_nmdarqui => vr_vet_nmarquiv(i) -- Arquivo                   
-                                        ,pr_nmdcampo => 'Codigo de rejeicao'
                                         ,pr_nrdlinha => vr_linha
+                                        ,pr_cdmensagem => 1017
                                         ,pr_dscritic => SQLERRM);
                    --Levantar Excecao
                    RAISE vr_exc_saida;
@@ -8238,8 +8244,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   WHEN OTHERS THEN
                    pc_log_dados_arquivo( pr_tipodreg => 2 -- Dados do cartao
                                         ,pr_nmdarqui => vr_vet_nmarquiv(i) -- Arquivo                   
-                                        ,pr_nmdcampo => 'Data da operacao'
                                         ,pr_nrdlinha => vr_linha
+                                        ,pr_cdmensagem => 1018
                                         ,pr_dscritic => SQLERRM);
                    --Levantar Excecao
                    RAISE vr_exc_saida;
@@ -8251,8 +8257,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   WHEN OTHERS THEN
                    pc_log_dados_arquivo( pr_tipodreg => 2 -- Dados do cartao
                                         ,pr_nmdarqui => vr_vet_nmarquiv(i) -- Arquivo                   
-                                        ,pr_nmdcampo => 'Situacao do cartao'
                                         ,pr_nrdlinha => vr_linha
+                                        ,pr_cdmensagem => 1024
                                         ,pr_dscritic => SQLERRM);
                    --Levantar Excecao
                    RAISE vr_exc_saida;
@@ -8264,8 +8270,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   WHEN OTHERS THEN
                    pc_log_dados_arquivo( pr_tipodreg => 2 -- Dados do cartao
                                         ,pr_nmdarqui => vr_vet_nmarquiv(i) -- Arquivo                   
-                                        ,pr_nmdcampo => 'CPF'
                                         ,pr_nrdlinha => vr_linha
+                                        ,pr_cdmensagem => 1025
                                         ,pr_dscritic => SQLERRM);
                    --Levantar Excecao
                    RAISE vr_exc_saida;
@@ -8277,8 +8283,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   WHEN OTHERS THEN
                    pc_log_dados_arquivo( pr_tipodreg => 2 -- Dados do cartao
                                         ,pr_nmdarqui => vr_vet_nmarquiv(i) -- Arquivo
-                                        ,pr_nmdcampo => 'Data de Nascimento'
                                         ,pr_nrdlinha => vr_linha
+                                        ,pr_cdmensagem => 1026
                                         ,pr_dscritic => SQLERRM);
                    --Levantar Excecao
                    RAISE vr_exc_saida;

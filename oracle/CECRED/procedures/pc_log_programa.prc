@@ -13,6 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_log_programa(
   pr_flabrechamado IN INTEGER                                    DEFAULT 0,    -- Abre chamado sim/nao
   pr_texto_chamado IN VARCHAR2                                   DEFAULT NULL, -- Texto do chamado
   pr_destinatario_email IN VARCHAR2                              DEFAULT NULL, -- Destinatario do email
+  pr_flreincidente IN INTEGER                                    DEFAULT 0,    -- Erro pode reincidir no prog em dias diferentes, devendo abrir chamado
   PR_IDPRGLOG      IN OUT tbgen_prglog.idprglog%type                           -- Identificador unico da tabela (sequence)
   ) IS          
   PRAGMA AUTONOMOUS_TRANSACTION;
@@ -22,7 +23,7 @@ BEGIN
   Programa : pc_log_programa
   Sistema : Todos
   Autor   : Carlos Henrique/CECRED
-  Data    : Março/2017                   Ultima atualizacao: 17/04/2017  
+  Data    : Março/2017                   Ultima atualizacao: 04/05/2017  
 
   Objetivo  : Logar execuções, ocorrências, erros ou mensagens dos programas.
               Abrir chamado e enviar e-mail quando necessário.
@@ -32,6 +33,9 @@ BEGIN
               17/04/2017 - Tratamento para abrir chamado quando ocorrer algum erro e 
                            tambem enviar o numero do chamado aberto para o analista 
                            responsavel do produto (Lucas Ranghetti #630298)
+                           
+              04/05/2017 - Verificação para não abrir vários chamados. Parametrização da quantidade
+                           de dias para pesquisa de ocorrência de erro com chamado aberto (Carlos)
   .......................................................................................... */
   DECLARE 
   
@@ -52,6 +56,8 @@ BEGIN
   vr_texto_chamado1 VARCHAR2(5000);
   vr_nrchamado NUMBER;
   vr_usuario_sd VARCHAR2(20);
+  vr_dtpesquisa DATE := SYSDATE;
+  
   exc_saida EXCEPTION;
   
   -- Busca última execução
@@ -65,6 +71,19 @@ BEGIN
      ORDER BY p.nrexecucao DESC;
 
   rw_ultima_execucao cr_ultima_execucao%ROWTYPE;
+
+  CURSOR cr_tem_chamado(pr_dtpesquisa DATE) IS 
+    SELECT 1 indexiste
+    FROM tbgen_prglog            p
+        ,tbgen_prglog_ocorrencia o
+   WHERE p.cdcooper        = pr_cdcooper
+     AND p.cdprograma      = vr_cdprograma
+     AND TRUNC(p.dhinicio) >= TRUNC(pr_dtpesquisa)
+     AND o.cdmensagem = pr_cdmensagem
+     AND o.nrchamado IS NOT NULL
+     AND p.idprglog = o.idprglog;
+
+  rw_tem_chamado cr_tem_chamado%ROWTYPE;
     
   /* Função para inserir na tabela tbgen_prglog */
   FUNCTION fn_insert_tbgen_prglog(pr2_dhfim      tbgen_prglog.dhfim%type                 DEFAULT NULL,
@@ -214,53 +233,68 @@ BEGIN
         END IF;
 
         -- Se eh para abrir chamado
-        IF pr_flabrechamado = 1 THEN
-          
-          -- Buscar caminho do softdesk (homol ou prod)
-          IF gene0001.fn_database_name = 'AYLLOSP' THEN
-            vr_link_softdesk:= 'http://softdesk.cecred.coop.br';
-          ELSE
-            vr_link_softdesk:= 'http://softdesktreina.cecred.coop.br';
-          END IF;  
-        
-          -- Substituir acentos
-          vr_mensagem_chamado:= gene0007.fn_caract_acento(pr_dsmensagem);
-          vr_texto_chamado1:= gene0007.fn_caract_acento(pr_texto_chamado);
-          
-          -- Usar o utl.escape para substituir caracteres de html para o comando entender
-          vr_texto_chamado:= utl_url.escape(vr_texto_chamado1) || utl_url.escape(vr_mensagem_chamado);
-          vr_titulo_chamado:= utl_url.escape('Evento Monitoracao');
-          vr_usuario_sd:= utl_url.escape('monitor sistemas');
-          
-          -- Comando para abrir chamado no softdesk
-          vr_comando:= 'curl ' || '"'||vr_link_softdesk||'/modulos/incidente/'
-                    || 'api.php?cd_area=2&cd_usuario='||vr_usuario_sd||'&tt_chamado='
-                    ||vr_titulo_chamado|| '&ds_chamado='|| vr_texto_chamado 
-                    || '&cd_categoria=586'||'&cd_grupo_solucao=128&cd_servico=57&cd_tipo_chamado=5"'  
-                    || ' 2> /dev/null';                  
-                    
-          --Executar o comando no unix
-          GENE0001.pc_OScommand(pr_typ_comando => 'S'
-                               ,pr_des_comando => vr_comando
-                               ,pr_typ_saida   => vr_typ_saida
-                               ,pr_des_saida   => vr_chamado);
-                               
-          -- Irá sempre retornar a saida como: Chamado no Soft desk: numero
-          vr_nrchamado:= substr(TRIM(REPLACE(REPLACE(vr_chamado,chr(13),NULL),chr(10),NULL)),23,10);
-          
-          -- Texto do chamado + o chamado aberto
-          vr_texto_email:= pr_texto_chamado || pr_dsmensagem ||'<br><br><b>'||'Chamado no Softdesk: '||
-                           vr_nrchamado||'.</b>';                   
+        IF pr_flabrechamado = 1 THEN          
 
-          -- Por fim, envia o email
-          gene0003.pc_solicita_email(pr_cdprogra    => vr_cdprograma
-                                    ,pr_des_destino => pr_destinatario_email
-                                    ,pr_des_assunto => 'ERRO NA EXECUCAO DO PROGRAMA '|| vr_cdprograma
-                                    ,pr_des_corpo   => vr_texto_email
-                                    ,pr_des_anexo   => NULL
-                                    ,pr_flg_enviar  => 'N'
-                                    ,pr_des_erro    => vr_dscritic); 
-                                
+          /* Se não for reincidente (default 0), pesquisar últimos N dias */
+          IF pr_flreincidente = 0 THEN          
+            vr_dtpesquisa := vr_dtpesquisa - NVL(GENE0001.fn_param_sistema(pr_nmsistem => 'CRED', 
+                                                                           pr_cdacesso => 'QTD_DIAS_REINCIDENTE'), 30);
+          END IF;
+          
+          rw_tem_chamado.indexiste := 0;          
+          OPEN cr_tem_chamado(vr_dtpesquisa);
+          FETCH cr_tem_chamado INTO rw_tem_chamado;
+          CLOSE cr_tem_chamado;
+
+          -- Se não encontrar chamado, abrir
+          IF rw_tem_chamado.indexiste = 0 THEN
+            
+            -- Buscar caminho do softdesk (homol ou prod)
+            IF gene0001.fn_database_name = 'AYLLOSP' THEN
+              vr_link_softdesk:= 'http://softdesk.cecred.coop.br';
+            ELSE
+              vr_link_softdesk:= 'http://softdesktreina.cecred.coop.br';
+            END IF;  
+          
+            -- Substituir acentos
+            vr_mensagem_chamado:= gene0007.fn_caract_acento(pr_dsmensagem);
+            vr_texto_chamado1:= gene0007.fn_caract_acento(pr_texto_chamado);
+            
+            -- Usar o utl.escape para substituir caracteres de html para o comando entender
+            vr_texto_chamado:= utl_url.escape(vr_texto_chamado1) || '<br><br>' || 
+                               utl_url.escape(vr_mensagem_chamado);
+            vr_titulo_chamado:= utl_url.escape('Evento Monitoracao');
+            vr_usuario_sd:= utl_url.escape('monitor sistemas');
+            
+            -- Comando para abrir chamado no softdesk
+            vr_comando:= 'curl ' || '"'||vr_link_softdesk||'/modulos/incidente/'
+                      || 'api.php?cd_area=2&cd_usuario='||vr_usuario_sd||'&tt_chamado='
+                      ||vr_titulo_chamado|| '&ds_chamado='|| vr_texto_chamado 
+                      || '&cd_categoria=586'||'&cd_grupo_solucao=128&cd_servico=57&cd_tipo_chamado=5"'  
+                      || ' 2> /dev/null';                  
+                      
+            --Executar o comando no unix
+            GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                                 ,pr_des_comando => vr_comando
+                                 ,pr_typ_saida   => vr_typ_saida
+                                 ,pr_des_saida   => vr_chamado);
+                                 
+            -- Irá sempre retornar a saida como: Chamado no Soft desk: numero
+            vr_nrchamado:= substr(TRIM(REPLACE(REPLACE(vr_chamado,chr(13),NULL),chr(10),NULL)),23,10);
+            
+            -- Texto do chamado + o chamado aberto
+            vr_texto_email:= pr_texto_chamado || pr_dsmensagem ||'<br><br><b>'||'Chamado no Softdesk: '||
+                             vr_nrchamado||'.</b>';                   
+
+            -- Por fim, envia o email
+            gene0003.pc_solicita_email(pr_cdprogra    => vr_cdprograma
+                                      ,pr_des_destino => pr_destinatario_email
+                                      ,pr_des_assunto => 'ERRO NA EXECUCAO DO PROGRAMA '|| vr_cdprograma
+                                      ,pr_des_corpo   => vr_texto_email
+                                      ,pr_des_anexo   => NULL
+                                      ,pr_flg_enviar  => 'N'
+                                      ,pr_des_erro    => vr_dscritic); 
+          END IF;
         END IF;        
 
         -- Cria a ocorrência

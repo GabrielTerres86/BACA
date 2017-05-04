@@ -1,10 +1,11 @@
+
 /* ..........................................................................
 
    Programa: Fontes/crps360.p
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Ze Eduardo        
-   Data    : Dezembro/2003                     Ultima atualizacao: 26/04/2017
+   Data    : Dezembro/2003                     Ultima atualizacao: 03/05/2017
 
    Dados referentes ao programa:
 
@@ -51,7 +52,7 @@
                             
                21/01/2014 - Incluir VALIDATE craplot, craplcm (Lucas R.)      
                
-               26/04/2017 - #643531 Correcao de criticas; Script para retirar 
+               03/05/2017 - #643531 Correcao de criticas; Script para retirar 
                             o programa da cadeia da CECRED. (Carlos)
 ............................................................................. */
 
@@ -61,8 +62,9 @@ DEF STREAM str_3.   /*  Para relatorio - 309 TOTAL  */
 DEF STREAM str_4.   /*  Para arquivo                */
 DEF STREAM str_5.   /*  Para arquivo                */
 
-{ includes/var_batch.i }   
+{ includes/var_batch.i }
 { sistema/generico/includes/var_oracle.i }
+{ includes/gera_log_batch.i }
 
 DEF TEMP-TABLE crawrel                                               NO-UNDO
     FIELD cdagenci LIKE crapass.cdagenci
@@ -421,9 +423,10 @@ DO WHILE TRUE ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
             glb_cdcritic = 013.
             RUN fontes/critic.p.
 
-            RUN pc_gera_log_batch(STRING(TIME,"HH:MM:SS") + 
-                              " - " + glb_cdprogra + " --> " +
-                              glb_dscritic + " --> " + aux_nmarquiv).
+            RUN gera_log_batch_prog("E", 2, /* 2 - erro */
+                               STRING(TIME,"HH:MM:SS") + 
+                               " - " + glb_cdprogra + " --> " +
+                               glb_dscritic + " --> " + aux_nmarquiv).
             
             UNIX SILENT VALUE("rm " + aux_nmarquiv + ".q").
             NEXT.    
@@ -440,10 +443,11 @@ INPUT STREAM str_4 CLOSE.
 
 IF   aux_contador = 0 THEN
      DO:
-         glb_cdcritic = 258.
+         glb_cdcritic = 258. /* nao ha arquivo para integrar */
          RUN fontes/critic.p.
 
-         RUN pc_gera_log_batch(STRING(TIME,"HH:MM:SS") + 
+         RUN gera_log_batch_prog("E", 1, /* 1 - mensagem */
+                            STRING(TIME,"HH:MM:SS") + 
                             " - " + glb_cdprogra + " --> " + glb_dscritic).
 
          RUN fontes/fimprg.p.
@@ -458,7 +462,8 @@ DO  i = 1 TO aux_contador:
     glb_cdcritic = 219.
     RUN fontes/critic.p.
 
-    RUN pc_gera_log_batch(STRING(TIME,"HH:MM:SS") +
+    RUN gera_log_batch_prog("E", 1, /* 1 - mensagem */
+                      STRING(TIME,"HH:MM:SS") +
                       " - " + glb_cdprogra + " --> " +
                       glb_dscritic + " --> " + tab_nmarquiv[i]).
                        
@@ -478,7 +483,8 @@ DO  i = 1 TO aux_contador:
               UNIX SILENT VALUE("rm " + tab_nmarquiv[i] + ".q 2> /dev/null").
               UNIX SILENT VALUE("mv " + tab_nmarquiv[i] + " " + aux_nmarquiv).
 
-              RUN pc_gera_log_batch(STRING(TIME,"HH:MM:SS") +
+              RUN gera_log_batch_prog("E", 2, /* 2 - erro */ 
+                                STRING(TIME,"HH:MM:SS") +
                                 " - " + glb_cdprogra + "' --> '" +
                                 glb_dscritic + " " + tab_nmarquiv[i] + " Seq." +
                                 STRING(aux_contareg, "9999")).
@@ -617,7 +623,8 @@ DO  i = 1 TO aux_contador:
                  DO:
                      RUN fontes/critic.p.
 
-                     RUN pc_gera_log_batch(STRING(TIME,"HH:MM:SS") +
+                     RUN gera_log_batch_prog("E", 2,
+                                       STRING(TIME,"HH:MM:SS") +
                                        " - " + glb_cdprogra + "' --> '" +
                                        glb_dscritic + " " + tab_nmarquiv[i] +
                                        " Seq." +  STRING(aux_contareg, "9999")).
@@ -838,7 +845,8 @@ DO  i = 1 TO aux_contador:
  
     RUN fontes/critic.p.
 
-    RUN pc_gera_log_batch(STRING(TIME,"HH:MM:SS") +
+    RUN gera_log_batch_prog("E", 1,
+                      STRING(TIME,"HH:MM:SS") +
                       " - " + glb_cdprogra + "' --> '" +
                       glb_dscritic + "' --> '" +  tab_nmarquiv[i]).                      
 
@@ -1085,7 +1093,8 @@ FOR EACH crawrel USE-INDEX crawrel2 BREAK BY crawrel.cdagenci
                       glb_cdcritic = 015.
                       RUN fontes/critic.p.
                                         
-                      RUN pc_gera_log_batch(STRING(TIME,"HH:MM:SS") +
+                      RUN gera_log_batch_prog("E", 2,
+                                        STRING(TIME,"HH:MM:SS") +
                                         " - " + glb_cdprogra + " --> " +
                                         glb_dscritic + "  " + 
                                         aux_nmarqrl2).
@@ -1157,27 +1166,4 @@ IF   tot_qtdecheq > 0 THEN
 
 RUN fontes/fimprg.p.
 
-PROCEDURE pc_gera_log_batch:
-    DEF INPUT PARAM par_des_log AS CHAR.
-
-    { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
-    RUN STORED-PROCEDURE pc_gera_log_batch aux_handproc = PROC-HANDLE
-        (INPUT glb_cdcooper,
-         INPUT 2,      /* ind_tipo_log 1-mensagem / 2-erro de negócio / 3-erro nao tratado / alerta */
-         input par_des_log, /* des_log */
-         input ?,      /* nmarqlog - nulo para proc_batch */
-         input "N",    /* flnovlog - criar novo arquivo? */
-         input "S",    /* flfinmsg - inserir string '[PL/SQL]' no final da mensagem? */
-         input ?,      /* dsdirlog - nulo para /usr/coop/nmrescop/log */
-         input "O",    /* dstiplog - I inicio, F fim, E erro */
-         input glb_cdprogra, /* cdprograma */
-         input 1,      /* tpexecucao 0-Outro/ 1-Batch/ 2-Job/ 3-Online */
-         input 1,      /* cdcriticidade 0-Baixa/1-Media/2-Alta/3-Critica */
-         input 0       /* flgsucesso 0/1 */
-         ).
-    CLOSE STORED-PROCEDURE pc_gera_log_batch WHERE PROC-HANDLE = aux_handproc.
-    { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }    
-END PROCEDURE.
-
 /* .......................................................................... */
-
