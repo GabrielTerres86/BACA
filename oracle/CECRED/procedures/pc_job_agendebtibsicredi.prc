@@ -6,7 +6,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTIBSICREDI(pr_cdcooper in crapc
    JOB: PC_JOB_AGENDEBTIBSICREDI
    Sistema : Conta-Corrente - Cooperativa de Credito
    Autor   : Evandro Guaranha 
-   Data    : Setembro/2016.                     Ultima atualizacao: 12/04/2017
+   Data    : Setembro/2016.                     Ultima atualizacao: 03/05/2017
 
    Dados referentes ao programa:
 
@@ -20,6 +20,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTIBSICREDI(pr_cdcooper in crapc
 						    (Adriano - SD 625356 ).
 
                12/04/2017 - #633306 Criação de log de controle de início, erros e fim de execução do job (Carlos)
+               
+               03/05/2017 - #633306 Retirada do valor de vr_cdprogra das rotinas pc_submit_job e 
+                            pc_log_exec_job pois o parêmetro é utilizado apenas para crps (Carlos)
 
   ..........................................................................*/
   
@@ -62,7 +65,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTIBSICREDI(pr_cdcooper in crapc
                        ' - ' || vr_nomdojob || ' - Automatizado - ' || pr_dstiplog;
         --> Controlar geração de log de execução dos jobs 
         BTCH0001.pc_log_exec_job( pr_cdcooper  => 3    --> Cooperativa
-                                 ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
+                                 ,pr_cdprogra  => ''    --> Codigo do programa
                                  ,pr_nomdojob  => vr_nomdojob    --> Nome do job
                                  ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
                                  ,pr_dscritic  => vr_desdolog    --> Critica a ser apresentada em caso de erro
@@ -71,7 +74,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTIBSICREDI(pr_cdcooper in crapc
       ELSE
         --> Controlar geração de log de execução dos jobs 
         BTCH0001.pc_log_exec_job( pr_cdcooper  => 3    --> Cooperativa
-                                 ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
+                                 ,pr_cdprogra  => ''    --> Codigo do programa
                                  ,pr_nomdojob  => vr_nomdojob    --> Nome do job
                                  ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
                                  ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
@@ -132,7 +135,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTIBSICREDI(pr_cdcooper in crapc
                     
         -- Faz a chamada ao programa paralelo atraves de JOB
         gene0001.pc_submit_job(pr_cdcooper  => pr_cdcooper       --> Código da cooperativa
-                              ,pr_cdprogra  => vr_cdprogra       --> Código do programa
+                              ,pr_cdprogra  => ''                --> Código do programa
                               ,pr_dsplsql   => vr_dsplsql        --> Bloco PLSQL a executar
                               ,pr_dthrexe   => TO_TIMESTAMP(to_char(SYSDATE+vr_qtintsom,'DD/MM/RRRR HH24:MI:SS'),'DD/MM/RRRR HH24:MI:SS') || ' AMERICA/SAO_PAULO' --> Executar nesta hora
                               ,pr_interva   => NULL                     --> apenas uma vez
@@ -157,7 +160,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTIBSICREDI(pr_cdcooper in crapc
             
         -- Faz a chamada ao programa paralelo atraves de JOB
         gene0001.pc_submit_job(pr_cdcooper  => pr_cdcooper       --> Código da cooperativa
-                              ,pr_cdprogra  => vr_cdprogra       --> Código do programa
+                              ,pr_cdprogra  => ''                --> Código do programa
                               ,pr_dsplsql   => vr_dsplsql        --> Bloco PLSQL a executar
                               ,pr_dthrexe   => TO_TIMESTAMP(to_char(SYSDATE + vr_qtintsom,'DD/MM/RRRR HH24:MI:SS'),'DD/MM/RRRR HH24:MI:SS') || ' AMERICA/SAO_PAULO' --> Executar nesta hora
                               ,pr_interva   => NULL                     --> apenas uma vez

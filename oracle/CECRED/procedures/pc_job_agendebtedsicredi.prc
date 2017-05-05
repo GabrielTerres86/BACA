@@ -4,7 +4,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTEDSICREDI(pr_cdcooper in crapc
    JOB: PC_JOB_AGENDEBTEDSICRED
    Sistema : Conta-Corrente - Cooperativa de Credito
    Autor   : Evandro Guaranha - RKAM 
-   Data    : Setembro/2016.                     Ultima atualizacao: 12/04/2017
+   Data    : Setembro/2016.                     Ultima atualizacao: 03/05/2017
 
    Dados referentes ao programa:
 
@@ -18,6 +18,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTEDSICREDI(pr_cdcooper in crapc
    Alteracoes:
    
    12/04/2017 - #633306 Criação de log de controle de início, erros e fim de execução do job (Carlos)
+
+   03/05/2017 - #633306 Retirada do valor de vr_cdprogra da rotina pc_log_exec_job pois o parêmetro 
+                é utilizado apenas para crps (Carlos)
    
   ..........................................................................*/
       ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
@@ -53,7 +56,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTEDSICREDI(pr_cdcooper in crapc
                        ' - Automatizado - ' || pr_dstiplog;
         --> Controlar geração de log de execução dos jobs 
         BTCH0001.pc_log_exec_job( pr_cdcooper  => 3             --> Cooperativa
-                                 ,pr_cdprogra  => vr_cdprogra   --> Codigo do programa
+                                 ,pr_cdprogra  => ''   --> Codigo do programa
                                  ,pr_nomdojob  => vr_nomdojob   --> Nome do job
                                  ,pr_dstiplog  => pr_dstiplog   --> Tipo de log(I-inicio,F-Fim,E-Erro)
                                  ,pr_dscritic  => vr_desdolog   --> Critica/mensagem a ser apresentada
@@ -62,7 +65,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTEDSICREDI(pr_cdcooper in crapc
       ELSE
         --> Controlar geração de log de execução dos jobs 
         BTCH0001.pc_log_exec_job( pr_cdcooper  => 3              --> Cooperativa
-                                 ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
+                                 ,pr_cdprogra  => ''    --> Codigo do programa
                                  ,pr_nomdojob  => vr_nomdojob    --> Nome do job
                                  ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
                                  ,pr_dscritic  => pr_dscritic    --> Critica/mensagem a ser apresentada
@@ -131,10 +134,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTEDSICREDI(pr_cdcooper in crapc
       
       /* Se aconteceu erro, gera o log e envia o erro por e-mail */
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                         pr_ind_tipo_log => 2, --> erro tratado
-                                         pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                            ' - '||vr_cdprogra ||' --> ' || vr_dscritic,
-                                         pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
+                                 pr_ind_tipo_log => 2, --> erro tratado
+                                 pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                    ' - '||vr_cdprogra ||' --> ' || vr_dscritic,
+                                 pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
       -- buscar destinatarios do email                           
       vr_email_dest := gene0001.fn_param_sistema('CRED',pr_cdcooper,'ERRO_EMAIL_JOB');
       
