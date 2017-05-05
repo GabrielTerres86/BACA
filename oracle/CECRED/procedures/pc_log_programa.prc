@@ -10,9 +10,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_log_programa(
   pr_dsmensagem    IN tbgen_prglog_ocorrencia.dsmensagem%type    DEFAULT NULL, -- dscritic       
   pr_flgsucesso    IN tbgen_prglog.flgsucesso%type               DEFAULT 1,    -- Indicador de sucesso da execução
   pr_nmarqlog      IN tbgen_prglog.nmarqlog%TYPE                 DEFAULT NULL, --  Nome do arquivo
-  pr_flabrechamado IN BOOLEAN                                    DEFAULT FALSE,-- Abre chamado sim/nao
+  pr_flabrechamado IN INTEGER                                    DEFAULT 0,    -- Abre chamado sim/nao
   pr_texto_chamado IN VARCHAR2                                   DEFAULT NULL, -- Texto do chamado
   pr_destinatario_email IN VARCHAR2                              DEFAULT NULL, -- Destinatario do email
+  pr_flreincidente IN INTEGER                                    DEFAULT 0,    -- Erro pode reincidir no prog em dias diferentes, devendo abrir chamado
   PR_IDPRGLOG      IN OUT tbgen_prglog.idprglog%type                           -- Identificador unico da tabela (sequence)
   ) IS          
   PRAGMA AUTONOMOUS_TRANSACTION;
@@ -21,7 +22,7 @@ BEGIN
   Programa : pc_log_programa
   Sistema : Todos
   Autor   : Carlos Henrique/CECRED
-  Data    : Março/2017                   Ultima atualizacao: 17/04/2017  
+  Data    : Março/2017                   Ultima atualizacao: 04/05/2017  
 
   Objetivo  : Logar execuções, ocorrências, erros ou mensagens dos programas.
               Abrir chamado e enviar e-mail quando necessário.
@@ -31,6 +32,9 @@ BEGIN
               17/04/2017 - Tratamento para abrir chamado quando ocorrer algum erro e 
                            tambem enviar o numero do chamado aberto para o analista 
                            responsavel do produto (Lucas Ranghetti #630298)
+                           
+              04/05/2017 - Verificação para não abrir vários chamados. Parametrização da quantidade
+                           de dias para pesquisa de ocorrência de erro com chamado aberto (Carlos)
   .......................................................................................... */
   DECLARE 
   
@@ -51,6 +55,8 @@ BEGIN
   vr_texto_chamado1 VARCHAR2(5000);
   vr_nrchamado NUMBER;
   vr_usuario_sd VARCHAR2(20);
+  vr_dtpesquisa DATE := SYSDATE;
+  
   exc_saida EXCEPTION;
   
   -- Busca última execução
@@ -64,6 +70,19 @@ BEGIN
      ORDER BY p.nrexecucao DESC;
 
   rw_ultima_execucao cr_ultima_execucao%ROWTYPE;
+    
+  CURSOR cr_tem_chamado(pr_dtpesquisa DATE) IS 
+    SELECT 1 indexiste
+    FROM tbgen_prglog            p
+        ,tbgen_prglog_ocorrencia o
+   WHERE p.cdcooper        = pr_cdcooper
+     AND p.cdprograma      = vr_cdprograma
+     AND TRUNC(p.dhinicio) >= TRUNC(pr_dtpesquisa)
+     AND o.cdmensagem = pr_cdmensagem
+     AND o.nrchamado IS NOT NULL
+     AND p.idprglog = o.idprglog;
+
+  rw_tem_chamado cr_tem_chamado%ROWTYPE;
     
   /* Função para inserir na tabela tbgen_prglog */
   FUNCTION fn_insert_tbgen_prglog(pr2_dhfim      tbgen_prglog.dhfim%type                 DEFAULT NULL,
@@ -199,7 +218,7 @@ BEGIN
           
           -- Se não encontrar a última execuçao, cria tbgen_prglog
           IF cr_ultima_execucao%NOTFOUND THEN
-            
+                     
             vr_dsmensagem := pr_dsmensagem;
 
             PR_IDPRGLOG := fn_insert_tbgen_prglog(pr2_dhfim      => SYSDATE,
@@ -213,8 +232,22 @@ BEGIN
         END IF;
 
         -- Se eh para abrir chamado
-        IF pr_flabrechamado THEN
+        IF pr_flabrechamado = 1 THEN
           
+          /* Se não for reincidente (default 0), pesquisar últimos N dias */
+          IF pr_flreincidente = 0 THEN          
+            vr_dtpesquisa := vr_dtpesquisa - NVL(GENE0001.fn_param_sistema(pr_nmsistem => 'CRED', 
+                                                                           pr_cdacesso => 'QTD_DIAS_REINCIDENTE'), 30);
+          END IF;
+          
+          rw_tem_chamado.indexiste := 0;          
+          OPEN cr_tem_chamado(vr_dtpesquisa);
+          FETCH cr_tem_chamado INTO rw_tem_chamado;
+          CLOSE cr_tem_chamado;
+
+          -- Se não encontrar chamado, abrir
+          IF rw_tem_chamado.indexiste = 0 THEN
+            
           -- Buscar caminho do softdesk (homol ou prod)
           IF gene0001.fn_database_name = 'AYLLOSP' THEN
             vr_link_softdesk:= 'http://softdesk.cecred.coop.br';
@@ -227,7 +260,8 @@ BEGIN
           vr_texto_chamado1:= gene0007.fn_caract_acento(pr_texto_chamado);
           
           -- Usar o utl.escape para substituir caracteres de html para o comando entender
-          vr_texto_chamado:= utl_url.escape(vr_texto_chamado1) || utl_url.escape(vr_mensagem_chamado);
+            vr_texto_chamado:= utl_url.escape(vr_texto_chamado1) || '<br><br>' || 
+                               utl_url.escape(vr_mensagem_chamado);
           vr_titulo_chamado:= utl_url.escape('Evento Monitoracao');
           vr_usuario_sd:= utl_url.escape('monitor sistemas');
           
@@ -259,7 +293,7 @@ BEGIN
                                     ,pr_des_anexo   => NULL
                                     ,pr_flg_enviar  => 'N'
                                     ,pr_des_erro    => vr_dscritic); 
-                                
+          END IF;
         END IF;        
 
         -- Cria a ocorrência
