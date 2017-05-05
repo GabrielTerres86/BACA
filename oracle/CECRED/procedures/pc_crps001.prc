@@ -2285,8 +2285,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                --Acumular no valor saldo negativo especial no mes o valor disponivel / quantidade dias utilizados
                rw_crapsld.vlsmnesp:= Nvl(rw_crapsld.vlsmnesp,0) + (vr_vldispon / vr_qtdiaute);
              ELSE
-               --Valor calculado recebe valor calculado + valor bloqueado
-               vr_vlcalcul:= Nvl(vr_vlcalcul,0) + Nvl(vr_vlbloque,0);
                --Se o valor calculado > 0
                IF vr_vlcalcul > 0 THEN
                  -- todo o limite e parte do bloqueado
