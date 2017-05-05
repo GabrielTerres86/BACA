@@ -996,7 +996,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
         IF vr_tb_vlr_conta.count() > 0 THEN
           -- Subtrai o total de saldo devedor dos emprestimos 
           vr_tb_vlr_conta(vr_tb_vlr_conta.FIRST).vlsldcap := 
-                         NVL(vr_tb_vlr_conta(vr_tb_vlr_conta.FIRST).vlsldcap,0) - vr_vlsdeved;
+                         NVL(vr_tb_vlr_conta(vr_tb_vlr_conta.FIRST).vlsldcap,0) - nvl(vr_vlsdeved,0);
                 
           -- Verificar valores negativo
           IF  NVL(vr_tb_vlr_conta(vr_tb_vlr_conta.FIRST).vlsldcap,0) < 0 THEN 
