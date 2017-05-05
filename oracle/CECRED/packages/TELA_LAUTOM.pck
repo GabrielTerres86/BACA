@@ -41,14 +41,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
   --  Programa : TELA_LAUTOM
   --  Sistema  : Ayllos Web
   --  Autor    : Jaison Fernando
-  --  Data     : Maio - 2016                 Ultima atualizacao:
+  --  Data     : Maio - 2016                 Ultima atualizacao: 01/03/2017
   --
   -- Dados referentes ao programa:
   --
   -- Objetivo  : Centralizar rotinas relacionadas a tela LAUTOM
   --
-  -- Alteracoes:
-  --
+  -- Alteracoes: 01/03/2017 - Adicionar update da tbcc_lautom_controle na procedure
+  --                          pc_efetua_lancamento. 
+  --                          Adicionar origem ADIOFJUROS para podermos efetuar o 
+  --                          debito do registro na procedure pc_valida_lancamento 
+  --                          (Lucas Ranghetti M338.1)
   ---------------------------------------------------------------------------
 
 	PROCEDURE pc_valida_lancamento(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cooperativa conectada
@@ -67,7 +70,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
     Programa: pc_valida_lancamento
     Sistema : Ayllos Web
     Autor   : Jaison Fernando
-    Data    : Maio/2016                 Ultima atualizacao: 
+    Data    : Maio/2016                 Ultima atualizacao: 01/03/2017
 
     Dados referentes ao programa:
 
@@ -75,7 +78,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
 
     Objetivo  : Rotina para validar os registros selecionados.
 
-    Alteracoes: 
+    Alteracoes: 01/03/2017 - Adicionar origem ADIOFJUROS para podermos efetuar o 
+                             debito do registro (Lucas Ranghetti M338.1)
     ..............................................................................*/
     DECLARE
 
@@ -182,8 +186,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
           RAISE vr_exc_erro;
         END IF;
 
-        -- Se nao for origem TRMULTAJUROS
-        IF rw_craplau.dsorigem <> 'TRMULTAJUROS' THEN
+        -- Se nao for origem TRMULTAJUROS e ADIOFJUROS
+        IF rw_craplau.dsorigem NOT IN('TRMULTAJUROS','ADIOFJUROS') THEN
           vr_dscritic := 'Débito de lançamento futuro não permitido!';
           RAISE vr_exc_erro;
         END IF;
@@ -519,7 +523,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
     Programa: pc_efetua_lancamento
     Sistema : Ayllos Web
     Autor   : Jaison Fernando
-    Data    : Maio/2016                 Ultima atualizacao: 
+    Data    : Maio/2016                 Ultima atualizacao: 01/03/2017
 
     Dados referentes ao programa:
 
@@ -527,7 +531,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
 
     Objetivo  : Rotina para efetuar os lancamentos selecionados.
 
-    Alteracoes: 
+    Alteracoes: 01/03/2017 - Adicionar update da tbcc_lautom_controle (Lucas Ranghetti M338.1)
     ..............................................................................*/
     DECLARE
 
@@ -546,6 +550,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
               ,nrctremp
               ,cdagenci
               ,cdbccxlt
+              ,idlancto
           FROM craplau      
          WHERE cdcooper = pr_cdcooper
            AND dtmvtolt = pr_dtmvtolt
@@ -675,6 +680,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
         IF vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
+
+        BEGIN 
+          UPDATE tbcc_lautom_controle tbcc
+             SET insit_lancto = 2 -- Quitado
+           WHERE tbcc.idlautom = rw_craplau.idlancto;
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Problema ao atualizar registro na tabela TBCC_LAUTOM_CONTROLE: ' || SQLERRM;
+            RAISE vr_exc_erro;
+        END;
 
         -- Geral LOG de debito efetuado
         BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
