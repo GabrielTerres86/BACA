@@ -3392,7 +3392,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
             ,nrrenovo
             ,flblqjud
             ,dstipbem)
-            SELECT rw_crapcop.dtmvtolt
+            SELECT rw_crapdat.dtultdia
                   ,bpr.cdcooper
                   ,bpr.nrdconta
                   ,bpr.tpctrpro
