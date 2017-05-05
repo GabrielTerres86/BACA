@@ -371,6 +371,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                             
 			   29/09/2016 - Alteração do diretório para geração de arquivo contábil.
                             P308 (Ricardo Linhares).
+               20/02/2017 - Ajuste no processo de emissão do relatório 006_999.
+                            P307 (Ricardo Linhares). 
                             
                26/04/2017 - Retirado a geração do arquivo microcredito_coop_59dias
                             (Tiago/Rodrigo #654647).
@@ -787,6 +789,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
        vr_tab_rel_agnsdstl   typ_reg_tot;
        vr_tab_rel_agpsdbjd   typ_reg_tot;
        vr_tab_rel_agpvlbjd   typ_reg_tot;
+       vr_tab_rel_vlcntinv   typ_reg_tot; -- P307 CONTA INVESTIMENTO
 
        /* Cursores da pc_crps005 */
 
@@ -1057,6 +1060,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
            AND crapneg.nrdocmto = pr_nrdocmto
            AND crapneg.vlestour = pr_vlestour;
 
+
        /* Variaveis Locais da pc_crps005 */
 
 
@@ -1069,6 +1073,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
        vr_tab_craplrg    APLI0001.typ_tab_craplpp;
        vr_tab_resgate    APLI0001.typ_tab_resgate;
        vr_tab_dados_rpp  APLI0001.typ_tab_dados_rpp;
+
 
        vr_vlsldapl NUMBER;
        vr_vlsldrgt NUMBER;
@@ -1266,7 +1271,47 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
            RAISE vr_exc_erro;
        END;
 
-
+       -- Função para totalizar valores da conta de Investimento
+       FUNCTION fn_totalizar_conta_inves(pr_cdcooper IN crapcop.cdcooper%TYPE             
+                                        ,pr_inpessoa IN crapass.inpessoa%TYPE) RETURN NUMBER IS
+                                                
+         vr_tot_conta NUMBER := 0;    
+         vr_exc_erro EXCEPTION;            
+         
+         -- Sumariação da Conta Investimento P307
+           CURSOR cr_crapsli2 (pr_cdcooper IN crapsli.cdcooper%TYPE
+                              ,pr_inpessoa IN crapass.inpessoa%TYPE) IS
+           SELECT ass.inpessoa
+                 ,SUM(sli.vlsddisp) vlsddisp
+             FROM crapsli sli
+                 ,crapass ass
+            WHERE ass.cdcooper = sli.cdcooper
+              AND ass.nrdconta = sli.nrdconta
+              AND ass.inpessoa = pr_inpessoa
+              AND sli.cdcooper = pr_cdcooper
+              AND sli.vlsddisp <> 0
+              AND sli.dtrefere = rw_crapdat.dtultdia
+         GROUP BY ass.inpessoa;
+         rw_crapsli2 cr_crapsli2%ROWTYPE;                                                                                
+                                                
+         BEGIN
+           
+         OPEN cr_crapsli2 (pr_cdcooper => pr_cdcooper
+                          ,pr_inpessoa => pr_inpessoa);
+         FETCH cr_crapsli2 INTO rw_crapsli2;
+         IF cr_crapsli2%FOUND THEN
+           vr_tot_conta := rw_crapsli2.vlsddisp;
+         END IF;
+         CLOSE cr_crapsli2;
+         
+         RETURN vr_tot_conta;
+         
+       EXCEPTION
+         WHEN OTHERS THEN
+           vr_des_erro:= 'Erro ao totalizar conta investimento. Rotina pc_crps005.fn_totalizar_conta_inves. '||sqlerrm;
+           RAISE vr_exc_erro;         
+       END;          
+       
        --Procedure para gravar movimentos Ci
        PROCEDURE pc_grava_movimentos_ci (pr_cdcooper IN crapass.cdcooper%TYPE
                                         ,pr_cdagenci IN crapass.cdagenci%TYPE
@@ -2768,6 +2813,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
          vr_rel_vlsbtot6 NUMBER:= 0;
          vr_rel_vltotal8 NUMBER:= 0;
          vr_rel_vltotal9 NUMBER:= 0;
+         vr_rel_vltotal10 NUMBER:= 0; -- P307 Total Conta Investimento
          vr_flgimp59     VARCHAR2(1);
          vr_con_dtmvtolt VARCHAR2(20);
          vr_con_dtmvtopr VARCHAR2(20);
@@ -3248,7 +3294,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
          vr_rel_vltotal3:= Nvl(vr_rel_vlsbtot1,0) + Nvl(vr_rel_vlsbtot2,0) + Nvl(vr_rel_vlsbtot3,0);
          --Total Limite utilizado PF + PJ + Cheque Adm
          vr_rel_vltotal4:= (vr_tab_rel_vlsutili(1) * -1) + (vr_tab_rel_vlsutili(2) * -1) + (vr_tab_rel_vlsutili(3) * -1);
-         --Total Bloqueado Judicialmente
+         --Total Bloqueado Judicialmente P307 - Não sumarizar no total geral
          vr_rel_vltotal9:= (vr_tab_rel_vlblqjud(1) * -1) + (vr_tab_rel_vlblqjud(2) * -1) + (vr_tab_rel_vlblqjud(3) * -1);
          --Total Saque Bloqueado PF + PJ + Cheque Adm.
          vr_rel_vltotal5:= (vr_tab_rel_vlsaqblq(1) * -1) + (vr_tab_rel_vlsaqblq(2) * -1) + (vr_tab_rel_vlsaqblq(3) * -1);
@@ -3256,27 +3302,34 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
          vr_rel_vltotal6:= (vr_tab_rel_vlsadian(1) * -1) + (vr_tab_rel_vlsadian(2) * -1) + (vr_tab_rel_vlsadian(3) * -1);
          --Total Credito Liquidacao PF + PJ + Cheque Adm.
          vr_rel_vltotal7:= (vr_tab_rel_vladiclq(1) * -1) + (vr_tab_rel_vladiclq(2) * -1) + (vr_tab_rel_vladiclq(3) * -1);
-         --Total Pessoa Fisica (Limite Utilizado + Saque Bloqueado + Adiant. Depositantes + Credito Liquid.)
+         --P307 - Total Conta Investimento PF + PJ + Cheque Adm.
+         vr_rel_vltotal10:= vr_tab_rel_vlcntinv(1) + vr_tab_rel_vlcntinv(2) + vr_tab_rel_vlcntinv(3);
+
+         --Total Pessoa Fisica (Limite Utilizado + Saque Bloqueado + Adiant. Depositantes + Credito Liquid. + Conta Inves.)
          vr_rel_vlsbtot4:= Nvl(vr_rel_vlsbtot1,0) +
                                  (vr_tab_rel_vlsutili(1) * -1) +
                                  (vr_tab_rel_vlsaqblq(1) * -1) + /* nesta variavel somou o aux_vlbloque */
                                  (vr_tab_rel_vlsadian(1) * -1) + /* nesta variavel somou o aux_vlbloque */
                                  (vr_tab_rel_vladiclq(1) * -1) +
-                                 (vr_tab_rel_vlblqjud(1) * -1);
-         --Total Pessoa Juridica (Limite Utilizado + Saque Bloqueado + Adiant. Depositantes + Credito Liquid.)
+                                 (vr_tab_rel_vlcntinv(1));
+
+         --Total Pessoa Juridica (Limite Utilizado + Saque Bloqueado + Adiant. Depositantes + Credito Liquid. + Conta Inves.)
          vr_rel_vlsbtot5:= Nvl(vr_rel_vlsbtot2,0) +
                                  (vr_tab_rel_vlsutili(2) * -1) +
                                  (vr_tab_rel_vlsaqblq(2) * -1) + /* nesta variavel somou o aux_vlbloque */
                                  (vr_tab_rel_vlsadian(2) * -1) + /* nesta variavel somou o aux_vlbloque */
                                  (vr_tab_rel_vladiclq(2) * -1) +
-                                 (vr_tab_rel_vlblqjud(2) * -1);
-         --Total Cheque Adm. (Limite Utilizado + Saque Bloqueado + Adiant. Depositantes + Credito Liquid.)
+                                 (vr_tab_rel_vlcntinv(2));
+
+         --Total Cheque Adm. (Limite Utilizado + Saque Bloqueado + Adiant. Depositantes + Credito Liquid. + Conta Inves.)
          vr_rel_vlsbtot6:= Nvl(vr_rel_vlsbtot3,0) +
                                  (vr_tab_rel_vlsutili(3) * -1) +
                                  (vr_tab_rel_vlsaqblq(3) * -1) +
                                  (vr_tab_rel_vlsadian(3) * -1) +
                                  (vr_tab_rel_vladiclq(3) * -1) +
-                                 (vr_tab_rel_vlblqjud(3) * -1);
+                                 (vr_tab_rel_vlcntinv(3)); 
+                                 
+                                
          --Total Geral
          vr_rel_vltotal8:= Nvl(vr_rel_vlsbtot4,0) + Nvl(vr_rel_vlsbtot5,0) + Nvl(vr_rel_vlsbtot6,0);
          --Data Movimento para Contabilização
@@ -3331,7 +3384,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                          <ttpf>'||to_char(vr_rel_vlsbtot4,'fm999g999g999g990d00')||'</ttpf>
                          <ttpj>'||to_char(vr_rel_vlsbtot5,'fm999g999g999g990d00')||'</ttpj>
                          <ttca>'||to_char(vr_rel_vlsbtot6,'fm999g999g999g990d00')||'</ttca>
-                         <tttot>'||to_char(vr_rel_vltotal8,'fm999g999g999g990d00')||'</tttot>');
+                         <ctivf>'||TO_CHAR(vr_tab_rel_vlcntinv(1),'fm999g999g999g990d00')||'</ctivf>
+                         <ctivj>'||TO_CHAR(vr_tab_rel_vlcntinv(2),'fm999g999g999g990d00')||'</ctivj>
+                         <ctiva>'||TO_CHAR(vr_tab_rel_vlcntinv(3),'fm999g999g999g990d00')||'</ctiva>                         
+                         <ctivt>'||TO_CHAR(vr_rel_vltotal10,'fm999g999g999g990d00')||'</ctivt>
+                         <tttot>'||TO_CHAR(vr_rel_vltotal8,'fm999g999g999g990d00')||'</tttot>');
          --Finaliza agrupador de saldos e inicia microcreditos
          gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'</saldos><microcreditos>');
 
@@ -3359,6 +3416,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
            --Total Linha Credito recebe total pessoa fisica + total pessoa juridica
            vr_rel_vltttlcr:= Nvl(vr_tab_totais_final(vr_des_chave).vltttfis,0) + Nvl(vr_tab_totais_final(vr_des_chave).vltttjur,0);
 
+
            --Montar arquivo XML
            gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'<micro_id id="'||vr_tab_totais_final(vr_des_chave).cdlcremp||'">
                            <linha>'||vr_tab_totais_final(vr_des_chave).cdlcremp||'</linha>
@@ -3370,7 +3428,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
            IF vr_des_chave = vr_tab_totais_final.LAST OR vr_tab_totais_final(vr_des_chave).tipo <> vr_tab_totais_final(vr_tab_totais_final.NEXT(vr_des_chave)).tipo THEN
              --Montar arquivo XML com os totais
              gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'</micro>');
+             
            END IF;
+           
            -- Buscar o próximo registro da tabela
            vr_des_chave := vr_tab_totais_final.NEXT(vr_des_chave);
          END LOOP;
@@ -3552,13 +3612,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
            vr_setlinha:= trim(vr_con_dtmvtolt) || ',' ||
                          trim(To_Char(vr_dtmvtolt,'DDMMYY')) ||
                          ',4112,4120,' ||
-                         REPLACE(trim(To_Char(vr_rel_vlsbtot5,'fm999999999999990d00')),',','.')||
+                         REPLACE(trim(To_Char(vr_rel_vlsbtot5 - vr_tab_rel_vlcntinv(2),'fm999999999999990d00')),',','.')||
                          ',1434,'|| chr(34) || vr_nmaux ||chr(34);
            --Escrever o cabecalho no arquivo
            gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                          ,pr_des_text => vr_setlinha); --> Texto para escrita
 
-           vr_setlinha:=  '999,' || REPLACE(trim(to_char(vr_rel_vlsbtot5,'fm9999999999990d00')),',','.');
+           vr_setlinha:=  '999,' || REPLACE(trim(to_char(vr_rel_vlsbtot5 - vr_tab_rel_vlcntinv(2),'fm9999999999990d00')),',','.');
            --Escrever o cabecalho no arquivo
            gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                          ,pr_des_text => vr_setlinha); --> Texto para escrita
@@ -3577,7 +3637,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
            gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                          ,pr_des_text => vr_setlinha); --> Texto para escrita
 
-           vr_setlinha:=  '999,' || REPLACE(trim(to_char(vr_rel_vlsbtot5,'fm999999990d00')),',','.');
+           vr_setlinha:=  '999,' || REPLACE(trim(to_char(vr_rel_vlsbtot5 - vr_tab_rel_vlcntinv(2),'fm999999990d00')),',','.');
            --Escrever o cabecalho no arquivo
            gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                          ,pr_des_text => vr_setlinha); --> Texto para escrita
@@ -4367,6 +4427,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
          --Ultimo dia do mes anterior
          vr_dtultdia:= rw_crapdat.dtultdia;
        END IF;
+
 
        -- Validações iniciais do programa
        BTCH0001.pc_valida_iniprg (pr_cdcooper => pr_cdcooper
@@ -6088,6 +6149,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                             vr_tab_atrasados(vr_index_atrasados).nrctremp:= rw_crapepr.nrctremp;
                             vr_tab_atrasados(vr_index_atrasados).dtultpag:= rw_crapepr.dtultpag;
                             vr_tab_atrasados(vr_index_atrasados).vlsdeved:= vr_vlsdeved;
+                            
                           END IF;
                         END IF;  --rw_crapepr.dtmvtolt < (vr_dtmvtolt - 360)
                       ELSE
@@ -6154,7 +6216,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                           vr_tab_totais(vr_index_totais).vltttfis:= nvl(vr_pessafis,0);
                           vr_tab_totais(vr_index_totais).vltttjur:= nvl(vr_pessajur,0);
                         END IF;
+                        
                       END IF;
+
                       --Fechar Cursor
                       CLOSE cr_craplcr2;
                       /* Zerar total para recomecar contagem por linha */
@@ -6164,7 +6228,17 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                       vr_ttpnmpoj:= 0;
                       vr_pessafis:= 0;
                       vr_pessajur:= 0;
+                      
+                    ELSE
+                      --Necessário abrir cursor para buscar dsorgrec
+                      OPEN cr_craplcr2 (pr_cdcooper => rw_crapepr.cdcooper
+                                       ,pr_cdlcremp => rw_crapepr.cdlcremp);
+                      --Posicionar no primeiro registro
+                      FETCH cr_craplcr2 INTO rw_craplcr2; 
+                      CLOSE cr_craplcr2;                       
+                    
                     END IF;
+                    
                   EXCEPTION
                     WHEN vr_exc_saida THEN
                       RAISE vr_exc_saida;
@@ -6192,6 +6266,18 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
           -- Buscar o próximo registro da tabela
           vr_index_crapage := vr_tab_crapage.NEXT(vr_index_crapage);
         END LOOP; --vr_tab_crapage
+        
+        
+        -- P307 Totaliza conta investimento
+        vr_tab_rel_vlcntinv(1) := fn_totalizar_conta_inves(pr_cdcooper => pr_cdcooper
+                                                          ,pr_inpessoa => 1);
+        
+        vr_tab_rel_vlcntinv(2) := fn_totalizar_conta_inves(pr_cdcooper => pr_cdcooper
+                                                          ,pr_inpessoa => 2);
+                                                          
+        vr_tab_rel_vlcntinv(3) := fn_totalizar_conta_inves(pr_cdcooper => pr_cdcooper
+                                                          ,pr_inpessoa => 3);                                                          
+
 
         --Gerar relatorio Maiores Depositantes
         pc_imprime_crrl055(pr_des_erro => vr_dscritic); 

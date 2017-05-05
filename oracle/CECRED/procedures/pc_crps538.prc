@@ -311,6 +311,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
 			              - Ajustado pasta micros/<cooperativa>/abbc;
 						  - Ajustado cláusula where dos cursores cr_devolucao; (Rafael)
 
+               15/02/2017 - Ajustes referente ao Prj.307 Automatização Arquivos Contábeis Ayllos (Jean Michel)
+
                22/02/2017 - Incluido novamente relatório 618 - CAC (Renato);
 			                    - Ajustado valor do pagto na rotina de devolução (Rafael);
 						              - Ajustado data de movimento no arquivo de devolução (Rafael);
@@ -352,12 +354,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
        /* Tipos e registros da pc_CRPS538 */
 
        TYPE typ_reg_crapcco IS
-         RECORD (cdcooper crapcco.cdcooper%type
-                ,cdagenci crapcco.cdagenci%type
-                ,cdbccxlt crapcco.cdbccxlt%type
-                ,nrdolote crapcco.nrdolote%type
-                ,nrconven crapcco.nrconven%type
-                ,flgativo crapcco.flgativo%type
+         RECORD (cdcooper crapcco.cdcooper%TYPE
+                ,cdagenci crapcco.cdagenci%TYPE
+                ,cdbccxlt crapcco.cdbccxlt%TYPE
+                ,nrdolote crapcco.nrdolote%TYPE
+                ,nrconven crapcco.nrconven%TYPE
+                ,flgativo crapcco.flgativo%TYPE
                 ,cddbanco crapcco.cddbanco%TYPE
                 ,nrdctabb crapcco.nrdctabb%TYPE
                 ,dsorgarq crapcco.dsorgarq%TYPE
@@ -1310,16 +1312,19 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
 
          /* Buscar saldo pendentes do float */
          CURSOR cr_crapret_sld (pr_cdcooper IN crapret.cdcooper%TYPE
+                               ,pr_dtdpagto IN crapret.dtocorre%TYPE
                                ,pr_dtmvtopr IN crapret.dtocorre%TYPE) IS
-           SELECT ret.nrcnvcob
+           SELECT ret.dtocorre
+                 ,ret.dtcredit 
+                 ,ret.nrcnvcob
                  ,ceb.qtdfloat
                  ,COUNT(*) qtdregis
                  ,SUM(ret.vlrpagto) vltotpag
-                 ,ret.dtcredit
              FROM crapret ret
                  ,crapceb ceb
                  ,crapcco cco
             WHERE ret.cdcooper = pr_cdcooper
+              AND ret.dtocorre < pr_dtdpagto -- Eliminar os registros mostrados acima
               AND ret.dtcredit BETWEEN pr_dtmvtopr AND (pr_dtmvtopr + 10)
               AND ret.cdocorre IN (6,17,76,77)
               AND ret.vlrpagto < 250000
@@ -1329,18 +1334,21 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
               AND ceb.nrconven = ret.nrcnvcob
               AND ceb.nrdconta = ret.nrdconta
               AND cco.cddbanco = 85
-              AND ret.flcredit = 0
-            GROUP BY ceb.qtdfloat
-                    ,ret.nrcnvcob
+           --   AND ret.flcredit = 0
+            GROUP BY ret.dtocorre
                     ,ret.dtcredit
+                    ,ret.nrcnvcob
+                    ,ceb.qtdfloat
             ORDER BY ceb.qtdfloat
+                    ,ret.dtocorre
+                    ,ret.dtcredit 
                     ,ret.nrcnvcob;
 
-
-          vr_dtdpagto_rel DATE;
-          vr_aux_float INTEGER;
-          -- vr_caminho_arq VARCHAR2(4000);
-          vr_dtvisual DATE;
+          vr_dtdpagto_rel  DATE;
+          vr_aux_float     INTEGER;
+          vr_aux_float_sld INTEGER;
+          vr_vlsldpen      crapret.vlrpagto%TYPE := 0;
+          vr_aux_contador  NUMBER := 0;
 
        BEGIN
 
@@ -1379,10 +1387,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                  vr_aux_float := rw_crapret.qtdfloat;
                END IF;
 
-               vr_dtvisual := gene0005.fn_valida_dia_util (pr_cdcooper => pr_cdcooper
-                                                          ,pr_dtmvtolt => rw_crapret.dtcredit + 1
-                                                          ,pr_tipo => 'P');
-
                gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,
                '<convenio>
                   <nrcnvcob>'||to_char(rw_crapret.nrcnvcob)||'</nrcnvcob>
@@ -1390,32 +1394,41 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                   <qtdregis>'||to_char(rw_crapret.qtdregis)||'</qtdregis>
                   <vltotpag>'||to_char(rw_crapret.vltotpag,'fm999g999g990d00')||'</vltotpag>
                   <dtcredit>'||to_char(rw_crapret.dtcredit,'DD/MM/RRRR')||'</dtcredit>
-                  <dtvisual>'||to_char(vr_dtvisual,'DD/MM/RRRR')||'</dtvisual>
+                  <dtocorre>'||to_char(vr_dtdpagto_rel,'DD/MM/RRRR')||'</dtocorre>
                 </convenio>');
+
+               if rw_crapret.qtdfloat > 0 then
+                 vr_vlsldpen := vr_vlsldpen + rw_crapret.vltotpag;
+               end if;
 
          END LOOP;
 
-         -- Finalizar tag XML
-         IF (vr_aux_float IS NOT NULL) THEN
-           -- finalizar apenas se a variavel recebeu valor dentro do cursor
-           gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'</float>');
-         END IF;
-
-         vr_aux_float := NULL;
+         vr_aux_float_sld := NULL;
 
          --Buscar saldo pendente dopfloat para o relatorio
          FOR rw_crapret IN cr_crapret_sld (pr_cdcooper => pr_cdcooper
+                                          ,pr_dtdpagto => vr_dtdpagto_rel            
                                           ,pr_dtmvtopr => rw_crapdat.dtmvtopr) LOOP
 
-           IF (vr_aux_float IS NOT NULL) AND (rw_crapret.qtdfloat <> vr_aux_float) THEN
+           vr_aux_contador := vr_aux_contador +1;
+           
+           IF vr_aux_contador = 1 THEN
+             -- Finalizar tag XML
+             IF (vr_aux_float IS NOT NULL) THEN
+               -- finalizar apenas se a variavel recebeu valor dentro do cursor
+               gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'</float>');
+             END IF;             
+           END IF;
+         
+           IF (vr_aux_float_sld IS NOT NULL) AND (rw_crapret.qtdfloat <> vr_aux_float_sld) THEN
               gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'</float>');
            END IF;
 
-           IF (rw_crapret.qtdfloat <> vr_aux_float) OR ( vr_aux_float IS NULL) THEN
+           IF (rw_crapret.qtdfloat <> vr_aux_float_sld) OR ( vr_aux_float_sld IS NULL) THEN
              gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,
              '<float qtdddias="' || to_char(rw_crapret.qtdfloat) ||
              '" flsldpen="S" >');
-             vr_aux_float := rw_crapret.qtdfloat;
+             vr_aux_float_sld := rw_crapret.qtdfloat;
            END IF;
 
            gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,
@@ -1424,14 +1437,26 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
               <qtdfloat>'||to_char(rw_crapret.qtdfloat)||'</qtdfloat>
               <qtdregis>'||to_char(rw_crapret.qtdregis)||'</qtdregis>
               <vltotpag>'||to_char(rw_crapret.vltotpag,'fm999g999g990d00')||'</vltotpag>
+              <dtcredit>'||to_char(rw_crapret.dtcredit,'DD/MM/RRRR')||'</dtcredit>
+              <dtocorre>'||to_char(rw_crapret.dtocorre,'DD/MM/RRRR')||'</dtocorre>
             </convenio>');
+
+           IF rw_crapret.qtdfloat > 0 THEN
+              vr_vlsldpen := vr_vlsldpen + rw_crapret.vltotpag;
+           END IF;            
 
          END LOOP;
 
-         -- Finalizar tag XML
-         IF (vr_aux_float IS NOT NULL) THEN
-           -- finalizar apenas se a variavel recebeu valor dentro do cursor
-           gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'</float>');
+         IF (vr_aux_contador = 0 and (vr_aux_float IS NOT NULL)) or (vr_aux_float_sld IS NOT NULL) THEN
+           -- Finalizar tag XML
+           IF (vr_aux_float IS NOT NULL) THEN
+             gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,
+             '<convenio>
+                <tot_vlsldpen>'||to_char(vr_vlsldpen,'fm999g999g990d00')||'</tot_vlsldpen>
+              </convenio>');              
+             -- finalizar apenas se a variavel recebeu valor dentro do cursor
+             gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'</float>');
+           END IF;             
          END IF;
 
          -- Finalizar tag XML
