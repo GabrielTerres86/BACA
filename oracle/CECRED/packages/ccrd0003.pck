@@ -7473,7 +7473,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
         -- Parte inicial do texto do chamado e do email        
         vr_titulo:= '<b>Abaixo os erros encontrados no processo de importacao do arquivo de retorno'||
-                    ' da Solicitacao de Cartao Bancoob CABAL</b><br><br>';
+                    ' da Solicitacao de Cartao Bancoob CABAL</b>';
                   
         -- Buscar e-mails dos destinatarios do produto cartoes
         vr_destinatario_email:= gene0001.fn_param_sistema('CRED',vr_cdcooper_ori,'CRD_RESPONSAVEL');
