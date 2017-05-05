@@ -10,7 +10,7 @@ create or replace procedure cecred.pc_crps499(pr_cdcooper  in craptab.cdcooper%t
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Novembro/2007                   Ultima atualizacao: 22/05/2015
+   Data    : Novembro/2007                   Ultima atualizacao: 12/04/2017
 
    Dados referentes ao programa:
 
@@ -97,16 +97,20 @@ create or replace procedure cecred.pc_crps499(pr_cdcooper  in craptab.cdcooper%t
 							              agora buscam informações da tabela crapcob e não 
 														mais da craplcm. (Reinert)
                
+               12/04/2017 - #642388 Inclusão tratamento no cursor da crapcop para que não seja 
+                            executado nas cooperativas inativas (Carlos)
+
 ............................................................................. */
   -- Buscar os dados das cooperativas
-  cursor cr_crapcop (pr_cdcooper in crapcop.cdcooper%type) is
-    select crapcop.cdcooper,
-           crapcop.nmrescop,
-           crapcop.dsdircop,
-           crapcop.cdbcoctl
-      from crapcop
-     where cdcooper = nvl(pr_cdcooper, cdcooper);
-  rw_crapcop     cr_crapcop%rowtype;
+  CURSOR cr_crapcop (pr_cdcooper IN crapcop.cdcooper%type) IS
+    SELECT crapcop.cdcooper
+          ,crapcop.nmrescop
+          ,crapcop.dsdircop
+          ,crapcop.cdbcoctl
+      FROM crapcop
+     WHERE cdcooper = NVL(pr_cdcooper, cdcooper)
+       AND crapcop.flgativo = 1;
+  rw_crapcop     cr_crapcop%rowtype ;
   -- Cursores para relatório BANCOOB
   --- NOSSA REMESSA - DOC ---
   cursor cr_craptvl (pr_cdcooper in crapcop.cdcooper%type,
@@ -1388,4 +1392,3 @@ exception
     rollback;
 end;
 /
-

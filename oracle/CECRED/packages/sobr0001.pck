@@ -227,6 +227,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                             Transulcred -> Transpocred, posteriormente a estrutura podera 
                             ser utilizada para outros casos de contas proibidas. (Anderson)
                             
+               23/03/2017 - Alterada chamada da procedure de imunidade tributária para
+                            evitar nova leitura na crapass (Rodrigo)
+                            
 ............................................................................. */
 
       -- Código do programa
@@ -449,6 +452,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
               ,dtelimin
               ,cdagenci
               ,substr(nmprimtl,1,22) nmprimtl
+			  ,nrcpfcgc
           FROM crapass
          WHERE cdcooper = pr_cdcooper
            AND EXISTS(SELECT 1 
@@ -1108,6 +1112,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                                                   pr_flgrvvlr => vr_inprvdef = 1, /* Se definitivo, já gravará */
                                                   pr_cdinsenc => 6,
                                                   pr_vlinsenc => vr_vldeirrf,
+                                                  pr_inpessoa => vr_tab_crapass(vr_tab_crapcot(idx).nrdconta).inpessoa,
+                                                  pr_nrcpfcgc => vr_tab_crapass(vr_tab_crapcot(idx).nrdconta).nrcpfcgc,
                                                   pr_flgimune => vr_flgimune,
                                                   pr_dsreturn => vr_dsreturn,
                                                   pr_tab_erro => vr_tab_erro);

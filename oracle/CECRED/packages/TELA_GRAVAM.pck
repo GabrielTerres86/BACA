@@ -101,7 +101,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
    Sigla   : CRED
 
    Autor   : Andrei - RKAM
-   Data    : Maio/2016                       Ultima atualizacao: 28/07/2016
+   Data    : Maio/2016                       Ultima atualizacao: 12/04/2017
 
    Dados referentes ao programa:
 
@@ -118,7 +118,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
                             para PR_CDDEPART e as consultas do fonte para utilizar o código 
                             do departamento nas validações (Renato Darosci - Supero)
                                                           
+               12/04/2017 - Inclusão da constante ct_nmdatela e correção dos logs, posicionando
+                            o nome da tela antes da seta que indica o início da mensagem (Carlos)
+                                                          
   ---------------------------------------------------------------------------------------------------------------*/
+  
+  ct_nmdatela CONSTANT VARCHAR2(6) := 'GRAVAM';
   
   /* Rotina para buscar as cooperativas */
   PROCEDURE pc_buscar_cooperativas(pr_flcecred   IN INTEGER            --> 0- Nao traz CECRED / 1 - Traz cecred 
@@ -295,7 +300,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
   BEGIN
       
     -- Incluir nome do módulo logado
-    GENE0001.pc_informa_acesso(pr_module => 'GRAVAM'
+    GENE0001.pc_informa_acesso(pr_module => ct_nmdatela
                               ,pr_action => null); 
                                    
     -- Recupera dados de log para consulta posterior
@@ -381,8 +386,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
       btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                                 ,pr_ind_tipo_log => 2 -- Erro tratato
                                 ,pr_nmarqlog     => 'gravam.log'
-                                ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                    ' -->  GRAVAM '|| vr_cdoperad || ' - ' ||
+                                ,pr_dstiplog      => 'E'
+                                ,pr_cdcriticidade => 2
+                                ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') || ' - ' ||
+                                                    ct_nmdatela || ' --> ' || vr_cdoperad || ' - ' ||
                                                     'ERRO: ' || vr_dscritic || ' [gravames_geracao_arquivo].');
                                                                                                      
     WHEN OTHERS THEN 
@@ -400,8 +407,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
       btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                                 ,pr_ind_tipo_log => 2 -- Erro tratato
                                 ,pr_nmarqlog     => 'gravam.log'
-                                ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                    ' -->  GRAVAM '|| vr_cdoperad || ' - ' ||
+                                ,pr_dstiplog      => 'E'
+                                ,pr_cdcriticidade => 2
+                                ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') || ' - ' ||
+                                                    ct_nmdatela || ' --> ' || vr_cdoperad || ' - ' ||
                                                     'ERRO: ' || vr_dscritic || ' [gravames_geracao_arquivo].');  
         
   END pc_gera_arquivo;
@@ -483,7 +492,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
     vr_nrregist := pr_nrregist;
     
     -- Incluir nome do módulo logado
-    GENE0001.pc_informa_acesso(pr_module => 'GRAVAM'
+    GENE0001.pc_informa_acesso(pr_module => ct_nmdatela
                               ,pr_action => null); 
     
     -- Recupera dados de log para consulta posterior
@@ -675,7 +684,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
     vr_nrregist := pr_nrregist;
     
     -- Incluir nome do módulo logado
-    GENE0001.pc_informa_acesso(pr_module => 'GRAVAM'
+    GENE0001.pc_informa_acesso(pr_module => ct_nmdatela
                               ,pr_action => null); 
     
     -- Recupera dados de log para consulta posterior
@@ -863,7 +872,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
   BEGIN
     
     -- Incluir nome do módulo logado
-    GENE0001.pc_informa_acesso(pr_module => 'GRAVAM'
+    GENE0001.pc_informa_acesso(pr_module => ct_nmdatela
                               ,pr_action => null); 
     
     -- Recupera dados de log para consulta posterior
@@ -1070,7 +1079,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
     BEGIN
       
       -- Incluir nome do módulo logado
-      GENE0001.pc_informa_acesso(pr_module => 'GRAVAM'
+      GENE0001.pc_informa_acesso(pr_module => ct_nmdatela
                                 ,pr_action => null); 
                                      
       -- Recupera dados de log para consulta posterior
@@ -1183,7 +1192,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
         IF vr_jobname IS NOT NULL THEN
           -- Faz a chamada ao programa paralelo atraves de JOB
           gene0001.pc_submit_job(pr_cdcooper  => vr_cdcooper  --> Código da cooperativa
-                                ,pr_cdprogra  => 'GRAVAM'     --> Código do programa
+                                ,pr_cdprogra  => ct_nmdatela  --> Código do programa
                                 ,pr_dsplsql   => vr_dsplsql   --> Bloco PLSQL a executar
                                 ,pr_dthrexe   => SYSTIMESTAMP --> Executar nesta hora
                                 ,pr_interva   => NULL         --> Sem intervalo de execução da fila, ou seja, apenas 1 vez
@@ -1299,7 +1308,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
     BEGIN
       
       -- Incluir nome do módulo logado
-      GENE0001.pc_informa_acesso(pr_module => 'GRAVAM'
+      GENE0001.pc_informa_acesso(pr_module => ct_nmdatela
                                 ,pr_action => null); 
                                      
       -- Recupera dados de log para consulta posterior
