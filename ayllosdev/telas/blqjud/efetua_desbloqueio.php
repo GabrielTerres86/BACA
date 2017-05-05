@@ -3,7 +3,7 @@
 	//***********************************************************************************//
 	//*** Fonte: efetua_desbloqueio.php                                               ***//
 	//*** Autor: Lucas R.                                                             ***//
-	//*** Data : Julho/2013                   Última Alteração:  15/09/2014           ***//
+	//*** Data : Julho/2013                   Última Alteração:  03/05/2017           ***//
 	//***                                                                             ***//
 	//*** Objetivo  : Efetua o Desbloqueio Judicial                                   ***//	
 	//***                                                                             ***//
@@ -16,6 +16,9 @@
 	//***			  03/11/2016 - Realizar a chamada da rotina EFETUA-DESBLOQUEIO-JUD***//
 	//***					       diretamente do oracle via mensageria				  ***//
 	//***						   (Renato Darosci - Supero)                          ***//
+	//***															                  ***//
+	//***			  03/05/2017 - Passagem do parametro NROFIDES para gravacao dos   ***//
+	//***					       dados. (Jaison/Andrino)                            ***//
 	//***															                  ***//
 	//***********************************************************************************//
 	
