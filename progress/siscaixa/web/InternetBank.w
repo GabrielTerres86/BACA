@@ -2094,54 +2094,57 @@ PROCEDURE process-web-request :
         ELSE
             IF  aux_operacao = 166 THEN /* Consultar permissoes dos itens do menu mobile */
                 RUN proc_operacao166. 
-	    ELSE
+        ELSE
             IF  aux_operacao = 167 THEN /* Aderir pacote de tarifas */
                 RUN proc_operacao167.
-	    ELSE
+        ELSE
             IF  aux_operacao = 168 THEN /* Consultar telefone e horários do SAC e Ouvidoria */
                 RUN proc_operacao168.
-	    ELSE
+        ELSE
             IF  aux_operacao = 170 THEN /* Termo pacote de tarifas */
                 RUN proc_operacao170. 
-		ELSE
+        ELSE
             IF  aux_operacao = 171 THEN /* Busca motivos exclusao DEBAUT */
                 RUN proc_operacao171.               
-		ELSE
-			IF  aux_operacao = 172 THEN /* Termo pacote de tarifas PDF */
-				RUN proc_operacao172.
-		ELSE
+        ELSE
+            IF  aux_operacao = 172 THEN /* Termo pacote de tarifas PDF */
+                RUN proc_operacao172.
+        ELSE
             IF  aux_operacao = 173 THEN /* Busca motivos exclusao DEBAUT */
                 RUN proc_operacao173. 
-		ELSE
+        ELSE
             IF  aux_operacao = 174 THEN /* Busca configurações para nome da emissão */
                 RUN proc_operacao174.
         ELSE
             IF  aux_operacao = 175 THEN /* Grava configurações de nome da emissão */
                 RUN proc_operacao175.
-		ELSE
+        ELSE
 		    IF  aux_operacao = 176 THEN /* Integralizar cotas de capital */
                 RUN proc_operacao176. 
         ELSE
-		    IF  aux_operacao = 177 THEN     /* Cancelar integralização */
+            IF  aux_operacao = 177 THEN     /* Cancelar integralização */
                 RUN proc_operacao177. 	
-		ELSE
+        ELSE
             IF  aux_operacao = 180 THEN /* Calcula data útil para agendamento */
                 RUN proc_operacao180.
-		ELSE
+        ELSE
             IF  aux_operacao = 181 THEN /* Mantem Recarga de Celular. */
                 RUN proc_operacao181.
-		ELSE
+        ELSE
             IF  aux_operacao = 186 THEN /* Retorna valor atualizado de titulos vencidos */
                 RUN proc_operacao186.
-		ELSE
+        ELSE
             IF  aux_operacao = 187 THEN /* Consulta Horario Limite de DARF/DAS */
                 RUN proc_operacao187.   
         ELSE
             IF  aux_operacao = 188 THEN /* Operar pagamento de DARF/DAS */
                 RUN proc_operacao188.
-    ELSE
+        ELSE
             IF  aux_operacao = 189 THEN /* Carrega dados Servico SMS Cobranca */
                 RUN proc_operacao189. 
+        ELSE
+            IF  aux_operacao = 191 THEN /* Solicitar Emprestimo */
+                RUN proc_operacao191. 
     END.
 /*....................................................................*/
     
@@ -8071,6 +8074,30 @@ PROCEDURE proc_operacao188:
     END.
     
     {&out} aux_tgfimprg.
+
+END PROCEDURE.
+
+/* Solicitar Emprestimo */
+PROCEDURE proc_operacao191:
+
+    DEF VAR aux_dsmensag AS CHAR NO-UNDO.
+	
+    ASSIGN aux_dsdemail = GET-VALUE("aux_dsdemail")
+           aux_qtpreemp = INTE(GET-VALUE("aux_qtparcel"))
+           aux_vlemprst = DECI(GET-VALUE("aux_vlemprst"))
+           aux_dsmensag = GET-VALUE("aux_dsmensag").
+
+    RUN sistema/internet/fontes/InternetBank191.p (INPUT aux_cdcooper,
+                                                   INPUT aux_nrdconta,
+                                                   INPUT aux_idseqttl,
+                                                   INPUT aux_dsdemail,
+                                                   INPUT aux_vlemprst,
+                                                   INPUT aux_qtpreemp,
+                                                   INPUT aux_dsmensag,
+                                                   INPUT IF aux_flmobile THEN 10 ELSE 3,
+                                                  OUTPUT aux_dsmsgerr). 
+                                                  
+    {&out} aux_dsmsgerr aux_tgfimprg.
 
 END PROCEDURE.
 /*............................................................................*/
