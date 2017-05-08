@@ -61,12 +61,10 @@ A PARTIR DE 10/MAI/2013, FAVOR ENTRAR EM CONTATO COM AS SEGUINTES PESSOAS:
  * 038: [11/07/2016] Carlos Rafael Tanholi: Removi o codigo da funcao mensageria que registrava as requisicoes nos arquivo da pasta xml/(in.xml | out.xml).
  * 039: [20/07/2016] Carlos Rafael Tanholi: Correcao na funcao formataMoeda que passava um parametro do tipo STRING para number_format. SD 448397.
  * 040: [25/07/2016] Carlos Rafael Tanholi: Correcao na expressao regular da funcao formatar(). SD 479874. 
- * 038: [24/08/2016] Carlos (CECRED)        : Criada a classe XmlMensageria para auxiliar a montagem do xml usado para mensageria
- 
- * 041: [22/09/2016] Carlos Rafael Tanholi: Alterei a função cecredCript e cecredDecript que usava mcrypt_cbc depreciada. SD 495858.
- * 038: [18/10/2016] Kelvin (CECRED)        : Ajustes feito na funcao RemoveCaracteresInvalidos para codificar a string antes de tratar.
+ * 031: [24/08/2016] Carlos (CECRED)        : Criada a classe XmlMensageria para auxiliar a montagem do xml usado para mensageria 
+ * 042: [22/09/2016] Carlos Rafael Tanholi: Alterei a função cecredCript e cecredDecript que usava mcrypt_cbc depreciada. SD 495858.
+ * 043: [18/10/2016] Kelvin (CECRED)        : Ajustes feito na funcao RemoveCaracteresInvalidos para codificar a string antes de tratar.
  * 044: [08/02/2016] Kelvin (CECRED)        : Adicionado na funcao removeCaracteresInvalidos os caracteres ("º","°","ª") para ajustar o chamado 562089.
- * 042: [12/04/2017] Reinert				: Ajustado funcao RemoveCaracteresInvalidos para ignorar caractere "#".
  */
 ?>
 <?php
@@ -1268,11 +1266,11 @@ function removeCaracteresInvalidos( $str, $encodeString = false ){
 	//Se passar encode como true
 	if($encodeString){
 		$str = preg_replace("/[\n]/", "", $str);
-		$str = preg_replace("/[^A-z0-9\sÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ\!\"\@\#\$\%\*\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/\>\<\°\º\ª]/", "", utf8_decode($str));	
+		$str = preg_replace("/[^A-z0-9\sÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ\!\"\@\$\%\*\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/\>\<\°\º\ª]/", "", utf8_decode($str));	
 		$str = utf8_encode($str);
 	}else{
 	$str = preg_replace("/[\n]/", "", $str);
-	$str = preg_replace("/[^A-z0-9\sÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ\!\"\@\#\$\%\*\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/\>\<\°\º\ª]/", "", $str);	
+	$str = preg_replace("/[^A-z0-9\sÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ\!\"\@\$\%\*\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/\>\<\°\º\ª]/", "", $str);	
 	}
 	return $str;
 	
@@ -1471,8 +1469,7 @@ function dbProcedure($xml){
 function mensageria($xml, $nmprogra, $nmeacao, $cdcooper, $cdagenci,$nrdcaixa, $idorigem, $cdoperad, $tag){
 
     $xml = xmlInsere($xml, $nmprogra, $nmeacao, $cdcooper, $cdagenci, $nrdcaixa, $idorigem, $cdoperad, $tag);
-		
-	$endereco = dirname(dirname(__FILE__)) . '/xml';
+    $endereco = dirname(dirname(__FILE__)) . '/xml';
 	
 	$arquivo = fopen($endereco."/in.xml","w");
 	fwrite($arquivo, $xml);
@@ -1483,7 +1480,7 @@ function mensageria($xml, $nmprogra, $nmeacao, $cdcooper, $cdagenci,$nrdcaixa, $
 	$arquivo = fopen($endereco."/out.xml", "w");
 	fwrite($arquivo, $retXML);
 	fclose($arquivo);
-
+	
 	return $retXML;
 }
 
