@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --  Sistema  : Rotinas genericas referente a tela de Cartões
   --  Sigla    : CCRD
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Abril - 2014.                   Ultima atualizacao: 04/05/2017
+  --  Data     : Abril - 2014.                   Ultima atualizacao: 08/05/2017
   --
   -- Dados referentes ao programa:
   --
@@ -54,6 +54,9 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --             04/05/2017 - Inclusão dos parâmetros pr_cdmensagem e pr_flreincidente => 1 no programa
   --                          pc_crps672 para atender a verificação de abertura de chamado; Inclusão
   --                          das críticas na tabela crapcri (Carlos)
+  --
+  --             08/05/2017 - Incluido parenteses no IF que valida se deve terminar o repique (Tiago/Fabricio)
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de Registro para as faturas pendentes
@@ -7464,13 +7467,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         ELSE
           vr_dstpdreg:= 'Nao definido';
         END IF;
-      
+
         -- Texto para utilizar na abertura do chamado e no email enviado
         vr_dstexto:= to_char(sysdate,'hh24:mi:ss') || ' - ' || vr_cdprogra || ' --> ' ||
                      'Erro no tipo de registro ' || nvl(vr_dstpdreg,' ') || '. ' || 
                      gene0001.fn_busca_critica(pr_cdcritic => pr_cdmensagem) || ' Linha '  ||
                      nvl(pr_nrdlinha,0) ||', arquivo: ' || pr_nmdarqui || ', Critica: ' || nvl(pr_dscritic,' ');
-         
+
         -- Parte inicial do texto do chamado e do email        
         vr_titulo:= '<b>Abaixo os erros encontrados no processo de importacao do arquivo de retorno'||
                     ' da Solicitacao de Cartao Bancoob CABAL</b><br><br>';
@@ -7478,26 +7481,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         -- Buscar e-mails dos destinatarios do produto cartoes
         vr_destinatario_email:= gene0001.fn_param_sistema('CRED',vr_cdcooper_ori,'CRD_RESPONSAVEL');
                  
-       cecred.pc_log_programa(PR_DSTIPLOG      => 'E'           --> Tipo do log: I - início; F - fim; O - ocorrência
-                             ,PR_CDPROGRAMA    => vr_cdprogra   --> Codigo do programa ou do job
-                             ,pr_tpexecucao    => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                              -- Parametros para Ocorrencia
-                             ,pr_tpocorrencia  => 2             --> tp ocorrencia (1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem)
-                             ,pr_cdcriticidade => 2             --> Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+        cecred.pc_log_programa(PR_DSTIPLOG      => 'E'           --> Tipo do log: I - início; F - fim; O - ocorrência
+                              ,PR_CDPROGRAMA    => vr_cdprogra   --> Codigo do programa ou do job
+                              ,pr_tpexecucao    => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                               -- Parametros para Ocorrencia
+                              ,pr_tpocorrencia  => 2             --> tp ocorrencia (1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem)
+                              ,pr_cdcriticidade => 2             --> Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
                               ,pr_cdmensagem    => pr_cdmensagem
-                             ,pr_dsmensagem    => vr_dstexto    --> dscritic       
-                             ,pr_flgsucesso    => 0             --> Indicador de sucesso da execução
+                              ,pr_dsmensagem    => vr_dstexto    --> dscritic       
+                              ,pr_flgsucesso    => 0             --> Indicador de sucesso da execução
                              ,pr_flabrechamado => TRUE          --> Abrir chamado (Sim=true/Nao=false)
-                             ,pr_texto_chamado => vr_titulo
-                             ,pr_destinatario_email => vr_destinatario_email
+                              ,pr_texto_chamado => vr_titulo
+                              ,pr_destinatario_email => vr_destinatario_email
                               ,pr_flreincidente => 1             --> Erro pode ocorrer em dias diferentes, devendo abrir chamado
-                             ,PR_IDPRGLOG      => vr_idprglog); --> Identificador unico da tabela (sequence)
+                              ,PR_IDPRGLOG      => vr_idprglog); --> Identificador unico da tabela (sequence)
 
-       cecred.pc_log_programa(PR_DSTIPLOG   => 'F'           --> Tipo do log: I - início; F - fim; O - ocorrência
-                             ,PR_CDPROGRAMA => vr_cdprogra   --> Codigo do programa ou do job
-                             ,pr_tpexecucao => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                              -- Parametros para Ocorrencia
-                             ,PR_IDPRGLOG   => vr_idprglog); --> Identificador unico da tabela (sequence)  
+        cecred.pc_log_programa(PR_DSTIPLOG   => 'F'           --> Tipo do log: I - início; F - fim; O - ocorrência
+                              ,PR_CDPROGRAMA => vr_cdprogra   --> Codigo do programa ou do job
+                              ,pr_tpexecucao => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                               -- Parametros para Ocorrencia
+                              ,PR_IDPRGLOG   => vr_idprglog); --> Identificador unico da tabela (sequence)  
         
         vr_dscritic := vr_dstexto;
         
@@ -9681,7 +9684,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
    Programa: CCDR0003
    Sigla   : APLI
    Autor   : Tiago
-   Data    : Junho/2015                          Ultima atualizacao: 01/09/2016
+   Data    : Junho/2015                          Ultima atualizacao: 08/05/2017
 
    Dados referentes ao programa:
 
@@ -9702,6 +9705,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 
    13/03/2017 - Ajuste no tratamento acima descrito para contemplar tambem o feriado de carnaval.
                 (Chamado 624482) - (Fabricio)
+                
+   08/05/2017 - Incluido parenteses no IF que valida se deve terminar o repique (Tiago/Fabricio)             
   .......................................................................................*/
   PROCEDURE pc_debita_fatura(pr_cdcooper  IN crapcop.cdcooper%TYPE
                             ,pr_cdprogra  IN crapprg.cdprogra%TYPE
@@ -10228,7 +10233,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
         --Mudar situacao da fatura para nao efetuado qdo 
         --for o ultimo dia do repique e nao conseguiu realizar o pagamento total        
-        IF ((gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
+        IF (((gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
                                         ,pr_dtmvtolt => rw_tbcrd_fatura.dtvencimento
                                         ,pr_tipo => 'P') = (pr_dtmvtolt - vr_qtddiapg) AND 
             (rw_tbcrd_fatura.vlpendente - vr_vlpagmto) > 0)  OR           
@@ -10239,7 +10244,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
              ,pr_tipo => 'P') -  (pr_dtmvtolt - vr_qtddiapg)) < (rw_crapdat.dtmvtopr - pr_dtmvtolt) AND
             (gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
                                         ,pr_dtmvtolt => pr_dtmvtolt + 1
-                                        , pr_tipo => 'P') > (pr_dtmvtolt + 1)))               AND 
+                                        , pr_tipo => 'P') > (pr_dtmvtolt + 1))))               AND 
            pr_cdprogra = 'CRPS674') THEN        
           BEGIN            
             UPDATE tbcrd_fatura
