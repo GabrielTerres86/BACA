@@ -2,7 +2,7 @@
     
     Programa: sistema/generico/procedures/b1wgen0097.p
     Autor   : Gabriel, GATI - Diego
-    Data    : Maio/2011               Ultima Atualizacao: 03/04/2017
+    Data    : Maio/2011               Ultima Atualizacao: 25/06/2015
     
     Dados referentes ao programa:
     
@@ -97,7 +97,11 @@
                              departamento passando a considerar o código (Renato Darosci)
 
                              
-                03/04/2017 - Ajuste no calculo do IOF. (James)             
+                03/04/2017 - Ajuste no calculo do IOF. (James)     
+				
+				07/04/2017 - Passar o tipo de emprestimo fixo como 1-PP na chamada da 
+				             rotina pc_calcula_iof_epr, pois todas as simulações são 
+							 empréstimos PP  ( Renato Darosci )
 ............................................................................*/
 
 { sistema/generico/includes/var_internet.i }
@@ -1706,6 +1710,7 @@ PROCEDURE consulta_iof:
                                           INPUT par_vlemprst,
                                           INPUT par_dtdpagto,
                                           INPUT par_dtlibera,
+										  INPUT 1, /* tpemprst -> 1-PP */
                                          OUTPUT 0,
                                          OUTPUT "").
     
