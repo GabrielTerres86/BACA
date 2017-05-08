@@ -3730,19 +3730,14 @@ function formataDetalheCheque(){
         }
 
     });
+	
 	// Valor do cheque
-	cVlcheque_det.unbind('keydown').bind('keydown', function(e) {
-        if (divError.css('display') == 'block') {
-            return false;
-        }
-
-        // Se é a tecla TAB ou ENTER, 
-        if (e.keyCode == 13) {
+	cVlcheque_det.unbind('keypress').bind('keypress', function(e) {
+		if ( e.keyCode == 9 || e.keyCode == 13 ) {	
             confirmaAlteraDetalhe();
             return false;
         }
-
-    });
+    }); 
 	
     hideMsgAguardo();
     bloqueiaFundo($('#divRotina'));
@@ -4473,7 +4468,7 @@ function novoCheque(){
 	cDtemissa.val('');
 	cVlcheque.val('');
 	cDsdocmc7.val('');
-	cDtchqbom.focus();
+	cDtchqbom.focus().select();
 }
 
 function finalizarCustodia(){
