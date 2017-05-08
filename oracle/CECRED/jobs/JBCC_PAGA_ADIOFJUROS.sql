@@ -1,5 +1,7 @@
 /*   Criação do Job para rodar CRPS700(INSS)
      todos os dias as 18H
+     
+     Alteração:  08/05/2017 - Alterado para rodar apenas de segunda a sexta (Tiago)
 */
 DECLARE
   vr_dsplsql  VARCHAR2(1500);
@@ -17,7 +19,7 @@ BEGIN
                         ,pr_dsplsql   => vr_dsplsql                 --> Bloco PLSQL a executar
                         ,pr_dthrexe   => TO_TIMESTAMP_TZ(to_char(SYSDATE+1,'DD/MM/RRRR')||' 07:00 America/Sao_Paulo','DD/MM/RRRR HH24:MI TZR') --> Executar nesta hora
                                          -- configurar para rodar diariamente as 18h
-                        ,pr_interva   => 'Freq=daily;ByHour=7,18;ByMinute=00;BySecond=0'
+                        ,pr_interva   => 'Freq=daily;ByDay=Mon, Tue, Wed, Thu, Fri;ByHour=7,18;ByMinute=00;BySecond=0'
                                          --'freq=Daily; interval=1;'  --> Sem intervalo de execução da fila, ou seja, apenas 1 vez
                         ,pr_jobname   => vr_jobname                   --> Nome randomico criado
                         ,pr_des_erro  => vr_dscritic);
