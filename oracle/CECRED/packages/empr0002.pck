@@ -208,6 +208,10 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0002 AS
                                         ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data do movimento
                                         ,pr_dscritic OUT VARCHAR2);           --> Descrição da crítica
 
+  -- Gerar tabela de historico dos bens das propostas de emprestimos. - JOB 
+  PROCEDURE pc_carga_hist_bpr(pr_cdcooper IN crapcop.cdcooper%TYPE); --> Codigo da cooperativa
+
+                                   
   END EMPR0002;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
@@ -2631,7 +2635,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
     --
     -- Frequencia: -----
     -- Objetivo  : Buscar as linhas de crédito usadas pelos riscos da CADPRE.
-    -- Alteracoes:
     --
     -- Alteracoes: 12/04/2017 - Realizado ajuste onde não estava sendo possível lançar contratos 
     --                          de emprestimos com a linha 70, conforme solicitado no chamado 644168. (Kelvin)
@@ -2670,7 +2673,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                                                 ,pr_inpessoa
                                                 ,pr_cdrisco) LOOP
         pr_lslcremp := pr_lslcremp || rw_linha_pre_aprv.cdlcremp || ';';
-      END LOOP;
+      END LOOP;      
       
     EXCEPTION
       WHEN OTHERS THEN
@@ -3183,6 +3186,319 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
         ROLLBACK;
     END;
   END pc_habilita_contas_suspensas;
+
+  -- Gerar tabela de historico dos bens das propostas de emprestimos. - JOB 
+  PROCEDURE pc_carga_hist_bpr(pr_cdcooper IN crapcop.cdcooper%TYPE) IS --> Codigo da cooperativa
+
+  /*---------------------------------------------------------------------------------------------------------------
+  
+    Programa : pc_carga_hist_bpr 
+    Sistema  : Emprestimo 
+    Sigla    : EMPR
+    Autor    : Odirlei Busana - AMcom
+    Data     : Abril/2017                   Ultima atualizacao: 
+  
+    Dados referentes ao programa:
+  
+    Frequencia: -----
+    Objetivo  : Gerar tabela de historico dos bens das propostas de emprestimos. - JOB 
+               
+               
+    Alteracoes:
+  
+  ---------------------------------------------------------------------------------------------------------------*/    
+  
+    --> Buscar coops ativas
+    CURSOR cr_crapcop IS
+      SELECT cop.cdcooper,
+             dat.dtmvtolt
+        FROM crapcop cop,
+             crapdat dat   
+       WHERE cop.cdcooper = dat.cdcooper
+         AND cop.flgativo = 1
+         AND cop.cdcooper = decode(nvl(pr_cdcooper,0),0,cop.cdcooper,pr_cdcooper);
+      
+    -- Variáveis de controle de calendário
+    rw_crapdat     BTCH0001.cr_crapdat%ROWTYPE;
+    vr_datdodia  DATE;  
+    
+    -- Variaveis de Erro
+    vr_dscritic  VARCHAR2(1000);
+    vr_exc_erro  EXCEPTION;
+    
+    vr_cdprogra  CONSTANT VARCHAR2(80) := 'PC_CARGA_HIST_BPR';
+    vr_nomdojob  CONSTANT VARCHAR2(80) := 'JBEPR_CARGA_HIST_BPR';
+    vr_flgerlog  BOOLEAN := FALSE;
+    
+    --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
+    PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
+                                    pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
+    BEGIN
+
+      --> Controlar geração de log de execução dos jobs
+      BTCH0001.pc_log_exec_job( pr_cdcooper  => 3              --> Cooperativa
+                               ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
+                               ,pr_nomdojob  => vr_nomdojob    --> Nome do job
+                               ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
+                               ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
+                               ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
+
+    END pc_controla_log_batch;
+    
+    
+    PROCEDURE pc_alerta_email (pr_cdcooper IN crapcop.cdcooper%TYPE,
+                               pr_dscritic IN VARCHAR2) IS
+      PRAGMA AUTONOMOUS_TRANSACTION;
+      
+      vr_conteudo   VARCHAR2(4000);
+      vr_email_dest VARCHAR2(4000);
+    BEGIN
+    
+      /* Se aconteceu erro, gera o log e envia o erro por e-mail */
+      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
+                                         pr_ind_tipo_log => 2, --> erro tratado
+                                         pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                            ' - '||vr_cdprogra ||' --> ' || pr_dscritic,
+                                         pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
+      -- buscar destinatarios do email                           
+      vr_email_dest := gene0001.fn_param_sistema('CRED',pr_cdcooper,'ERRO_EMAIL_JOB_BPR');
+    
+      -- Gravar conteudo do email, controle com substr para não estourar campo texto
+      vr_conteudo := substr('Erro ao realizar carga de base historica de  bens da proposta de emprestimo (crapbpr)' ||
+                     '<br>Cooperativa: '     || to_char(pr_cdcooper, '990')||                      
+                     '<br>Critica: '         || pr_dscritic,1,4000);
+                      
+      --/* Envia e-mail para o Operador */
+      gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
+                                ,pr_cdprogra        => vr_cdprogra
+                                ,pr_des_destino     => vr_email_dest
+                                ,pr_des_assunto     => 'Falha Carga Bens proposta' 
+                                ,pr_des_corpo       => vr_conteudo
+                                ,pr_des_anexo       => NULL
+                                ,pr_flg_remove_anex => 'N' --> Remover os anexos passados
+                                ,pr_flg_remete_coop => 'N' --> Se o envio ser¿ do e-mail da Cooperativa
+                                ,pr_flg_enviar      => 'S' --> Enviar o e-mail na hora
+                                ,pr_des_erro        => vr_dscritic);
+      
+      IF TRIM(vr_dscritic) IS NOT NULL THEN  
+        RAISE vr_exc_erro;
+      END IF;
+      COMMIT;
+      
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        /* Se aconteceu erro, gera o log e envia o erro por e-mail */
+        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
+                                           pr_ind_tipo_log => 2, --> erro tratado
+                                           pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                              ' - '||vr_cdprogra ||' --> ' || vr_dscritic,
+                                           pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
+        ROLLBACK;
+      WHEN OTHERS THEN
+      
+        vr_dscritic := 'Erro ao enviar alerta: '||SQLERRM;
+        /* Se aconteceu erro, gera o log e envia o erro por e-mail */
+        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
+                                           pr_ind_tipo_log => 2, --> erro tratado
+                                           pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                              ' - '||vr_cdprogra ||' --> ' || vr_dscritic,
+                                           pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
+        ROLLBACK;
+      
+    END pc_alerta_email;
+      
+  BEGIN
+    
+    -- Verificação do calendário
+    OPEN BTCH0001.cr_crapdat(pr_cdcooper => 3);
+    FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+
+    IF BTCH0001.cr_crapdat%NOTFOUND THEN
+      CLOSE BTCH0001.cr_crapdat;
+      -- Montar mensagem de critica
+      vr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => 1);
+      RAISE vr_exc_erro;
+    ELSE
+      -- Apenas fechar o cursor
+      CLOSE BTCH0001.cr_crapdat;
+    END IF;  
+  
+    vr_datdodia := trunc(SYSDATE);
+
+    --> Apenas realizar a copia se for o ultimo dia de processo do mês   
+    IF to_char(rw_crapdat.dtmvtolt,'MM') <> to_char(rw_crapdat.dtmvtopr,'MM') AND
+        rw_crapdat.dtmvtolt = vr_datdodia THEN
+  
+  
+      pc_controla_log_batch(pr_dstiplog => 'I');
+  
+      --> Listar coops ativas
+      FOR rw_crapcop IN cr_crapcop LOOP 
+        BEGIN
+          INSERT INTO tbepr_bens_hst
+            (dtrefere
+            ,cdcooper
+            ,nrdconta
+            ,tpctrpro
+            ,nrctrpro
+            ,flgalien
+            ,dtmvtolt
+            ,cdoperad
+            ,dsrelbem
+            ,persemon
+            ,qtprebem
+            ,vlrdobem
+            ,vlprebem
+            ,dscatbem
+            ,nranobem
+            ,nrmodbem
+            ,dscorbem
+            ,dschassi
+            ,nrdplaca
+            ,flgalfid
+            ,flgsegur
+            ,dtvigseg
+            ,flglbseg
+            ,tpchassi
+            ,ufdplaca
+            ,uflicenc
+            ,nrrenava
+            ,nrcpfbem
+            ,vlmerbem
+            ,idseqbem
+            ,dsbemfin
+            ,flgrgcar
+            ,vlperbem
+            ,cdsitgrv
+            ,nrgravam
+            ,dtatugrv
+            ,flginclu
+            ,dtdinclu
+            ,dsjstinc
+            ,tpinclus
+            ,flgalter
+            ,dtaltera
+            ,tpaltera
+            ,flcancel
+            ,dtcancel
+            ,tpcancel
+            ,flgbaixa
+            ,dtdbaixa
+            ,dsjstbxa
+            ,tpdbaixa
+            ,nrplnovo
+            ,ufplnovo
+            ,nrrenovo
+            ,flblqjud
+            ,dstipbem)
+            SELECT rw_crapdat.dtultdia
+                  ,bpr.cdcooper
+                  ,bpr.nrdconta
+                  ,bpr.tpctrpro
+                  ,bpr.nrctrpro
+                  ,bpr.flgalien
+                  ,bpr.dtmvtolt
+                  ,bpr.cdoperad
+                  ,bpr.dsrelbem
+                  ,bpr.persemon
+                  ,bpr.qtprebem
+                  ,bpr.vlrdobem
+                  ,bpr.vlprebem
+                  ,bpr.dscatbem
+                  ,bpr.nranobem
+                  ,bpr.nrmodbem
+                  ,bpr.dscorbem
+                  ,bpr.dschassi
+                  ,bpr.nrdplaca
+                  ,bpr.flgalfid
+                  ,bpr.flgsegur
+                  ,bpr.dtvigseg
+                  ,bpr.flglbseg
+                  ,bpr.tpchassi
+                  ,bpr.ufdplaca
+                  ,bpr.uflicenc
+                  ,bpr.nrrenava
+                  ,bpr.nrcpfbem
+                  ,bpr.vlmerbem
+                  ,bpr.idseqbem
+                  ,bpr.dsbemfin
+                  ,bpr.flgrgcar
+                  ,bpr.vlperbem
+                  ,bpr.cdsitgrv
+                  ,bpr.nrgravam
+                  ,bpr.dtatugrv
+                  ,bpr.flginclu
+                  ,bpr.dtdinclu
+                  ,bpr.dsjstinc
+                  ,bpr.tpinclus
+                  ,bpr.flgalter
+                  ,bpr.dtaltera
+                  ,bpr.tpaltera
+                  ,bpr.flcancel
+                  ,bpr.dtcancel
+                  ,bpr.tpcancel
+                  ,bpr.flgbaixa
+                  ,bpr.dtdbaixa
+                  ,bpr.dsjstbxa
+                  ,bpr.tpdbaixa
+                  ,bpr.nrplnovo
+                  ,bpr.ufplnovo
+                  ,bpr.nrrenovo
+                  ,bpr.flblqjud
+                  ,bpr.dstipbem
+              FROM crapbpr bpr
+             WHERE bpr.flgalien = 1
+               AND bpr.cdcooper = rw_crapcop.cdcooper;
+        
+        EXCEPTION 
+          WHEN OTHERS THEN
+            vr_dscritic := 'Não foi possivel replicar dados para a coop: '||rw_crapcop.cdcooper||' -> '||SQLERRM;
+            pc_alerta_email(pr_cdcooper => rw_crapcop.cdcooper,
+                            pr_dscritic => vr_dscritic);
+                            
+            vr_dscritic := NULL;                        
+        END;
+        
+        COMMIT;
+      END LOOP; --> Fim loop coop
+      
+      pc_controla_log_batch(pr_dstiplog => 'F');
+      
+    END IF;
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+    -- Efetuar rollback
+    ROLLBACK;
+
+    pc_controla_log_batch(pr_dstiplog => 'E',
+                          pr_dscritic => vr_dscritic);
+
+    pc_alerta_email(pr_cdcooper => 3,
+                    pr_dscritic => vr_dscritic);
+            
+    
+    COMMIT;
+    
+    raise_application_error(-20501,vr_dscritic);
+    
+  WHEN OTHERS THEN
+
+    vr_dscritic := SQLERRM;
+    -- Efetuar rollback
+    ROLLBACK;
+
+    pc_controla_log_batch(pr_dstiplog => 'E',
+                          pr_dscritic => vr_dscritic);
+
+    pc_alerta_email(pr_cdcooper => 3,
+                    pr_dscritic => vr_dscritic);
+    
+    
+    COMMIT;
+    raise_application_error(-20501,vr_dscritic); 
+                          
+  END pc_carga_hist_bpr;
 
 END EMPR0002;
 /
