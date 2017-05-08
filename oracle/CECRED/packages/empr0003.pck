@@ -29,7 +29,8 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0003 AS
   --             24/08/2016 - (Projeto 343)
   --                        - Adicionada varíavel para verificação de  versão para 
   --                          impressão de novos parágros nos contratos de forma condicional; 
-  --                          (Ricardo Linhares)
+  --                          (Ricardo Linhares)    
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   -- Verifica da TAB016 se o interveniente esta habilitado
@@ -250,8 +251,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
                    parte do contrato sendo CONTRATANTE OU INTERVENIENTE ANUENTE,
                    retorna os dados do interveniente e conjuge
 
-       Alteracoes: 08/05/2017 - Adicionado tratamento para que na impressão do contrato, imprima CPF/CNPJ
-  --                            usando a mascara correta (Andrey - Mouts) SD: 644056
+       Alteracoes:
 
     ............................................................................. */
 
@@ -330,19 +330,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
     -- busca nome do avalista
     CURSOR cr_crapavt IS
        SELECT 'Nome Proprietário (interveniente garantidor): '||crapavt.nmdavali nmdavali,
-              CASE WHEN crapavt.inpessoa <> 0 THEN /* Se estiver preenchido o inpessoa (1 ou 2) do avalista */
-                  DECODE(NVL(crapavt.inpessoa,1),1,
+              DECODE(NVL(crapass.inpessoa,1),1,
                   'CPF n.º'||gene0002.fn_mask_cpf_cnpj(crapavt.nrcpfcgc, 1)||
                       ' RG n.º '||crapavt.nrdocava||decode(nvl(trim(gnetcvl.dsestcvl),trim(gnetcvl_2.dsestcvl))
                                   ,NULL, NULL, ', com o estado civil ')||nvl(trim(gnetcvl.dsestcvl),trim(gnetcvl_2.dsestcvl)),
-                  'CNPJ n.º '||gene0002.fn_mask_cpf_cnpj(crapavt.nrcpfcgc, 2))
-              WHEN LENGTH(crapavt.nrcpfcgc) <= 11 THEN /* se não estiver preenchido (0) e for CPF length <= 11 */
-                  'CPF n.º'||gene0002.fn_mask_cpf_cnpj(crapavt.nrcpfcgc, 1)||
-                      ' RG n.º '||crapavt.nrdocava||decode(nvl(trim(gnetcvl.dsestcvl),trim(gnetcvl_2.dsestcvl))
-                                  ,NULL, NULL, ', com o estado civil ')||nvl(trim(gnetcvl.dsestcvl),trim(gnetcvl_2.dsestcvl))
-              ELSE /* Se não estiver preenchido e for CNPJ */
-                  'CNPJ n.º '||gene0002.fn_mask_cpf_cnpj(crapavt.nrcpfcgc, 2) 
-              END dados_pessoais,
+                  'CNPJ n.º '||gene0002.fn_mask_cpf_cnpj(crapavt.nrcpfcgc, 2)) dados_pessoais,
               'Endereço: '||crapavt.dsendres##1||', bairro '||crapavt.dsendres##2||
               ', da cidade de '||crapavt.nmcidade||'/'||crapavt.cdufresd||', CEP '||gene0002.fn_mask_cep(crapavt.nrcepend) dsendere,
               DECODE(TRIM(crapavt.nmconjug),NULL,NULL,'Cônjuge: '||crapavt.nmconjug) ||
