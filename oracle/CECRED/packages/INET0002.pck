@@ -210,6 +210,7 @@ CREATE OR REPLACE PACKAGE CECRED.INET0002 AS
                                     ,pr_tpcptdoc  IN tbpagto_trans_pend.tpcaptura%TYPE         --> Tipo de captura do documento
                                     ,pr_idtitdda  IN tbpagto_trans_pend.idtitulo_dda%TYPE      --> Identificador do titulo no DDA
                                     ,pr_idastcjt  IN crapass.idastcjt%TYPE                     --> Indicador de Assinatura Conjunta
+                                    ,pr_cdctrlcs  IN tbpagto_trans_pend.cdctrlcs%TYPE          --> Código de controle de consulta
                                     ,pr_cdcritic OUT crapcri.cdcritic%TYPE                     --> Codigo de Critica
                                     ,pr_dscritic OUT crapcri.dscritic%TYPE);                   --> Descricao de Critica
 
@@ -3080,6 +3081,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                     ,pr_tpcptdoc  IN tbpagto_trans_pend.tpcaptura%TYPE         --> Tipo de captura do documento
                                     ,pr_idtitdda  IN tbpagto_trans_pend.idtitulo_dda%TYPE      --> Identificador do titulo no DDA
                                     ,pr_idastcjt  IN crapass.idastcjt%TYPE                     --> Indicador de Assinatura Conjunta
+                                    ,pr_cdctrlcs  IN tbpagto_trans_pend.cdctrlcs%TYPE          --> Código de controle de consulta
                                     ,pr_cdcritic OUT crapcri.cdcritic%TYPE                     --> Codigo de Critica
                                     ,pr_dscritic OUT crapcri.dscritic%TYPE) IS                 --> Descricao de Critica
   
@@ -3150,7 +3152,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
           ,vldocumento          
           ,dtvencimento         
           ,tpcaptura            
-          ,idtitulo_dda)
+          ,idtitulo_dda
+          ,cdctrlcs)
         VALUES(
            vr_cdtranpe
           ,pr_cdcooper
@@ -3165,7 +3168,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
           ,pr_vlrdocto
           ,pr_dtvencto
           ,pr_tpcptdoc
-          ,pr_idtitdda);
+          ,pr_idtitdda
+          ,pr_cdctrlcs);
     EXCEPTION
       WHEN OTHERS THEN
         vr_cdcritic := 0;

@@ -452,7 +452,7 @@ rw_crapdat.dtmvtolt := TRUNC(SYSDATE); -- ver renato
      END IF;
      
      -- Ver renato -- Apenas para teste.... deve ser removido
-     vr_flbltcip := TRUE;
+     --vr_flbltcip := TRUE;
      
      -- Se não é um titulo CIP... não realiza a consulta via WS das informações
      IF NOT vr_flbltcip THEN
@@ -594,7 +594,7 @@ rw_crapdat.dtmvtolt := TRUNC(SYSDATE); -- ver renato
                                              ,pr_tbTituloCIP.VlrTit       -- vltitulo
                                              ,pr_tbTituloCIP.ISPBPartDestinatario -- nrispbds
                                              ,vr_xmltit                   -- dsxml
-                                             ,pr_idorigem                           -- cdcanal -- ver renato
+                                             ,NPCB0001.fn_canal_pag_NPC(pr_cdagenci,0)  -- cdcanal 
                                              ,pr_cdoperad );              -- cdoperad
        
        EXCEPTION
@@ -602,6 +602,26 @@ rw_crapdat.dtmvtolt := TRUNC(SYSDATE); -- ver renato
            vr_dscritic := 'Erro ao registrar consulta CIP: '||SQLERRM;
            RAISE vr_exc_erro;
        END;
+       
+       
+       -- Realizar as pré-validações do boleto
+       NPCB0001.pc_valid_titulo_npc(pr_cdcooper    => pr_cdcooper
+                                   ,pr_dtmvtolt    => pr_dtmvtolt
+                                   ,pr_cdctrlcs    => vr_cdctrlcs
+                                   ,pr_tbtitulocip => pr_tbTituloCIP
+                                   ,pr_cdcritic    => vr_cdcritic
+                                   ,pr_dscritic    => vr_dscritic );
+       
+       -- Se retornar erro
+       IF vr_dscritic IS NOT NULL THEN
+         -- Se encontrou critica na validação deve gravar a consulta da mesma 
+         -- forma, sendo assim, é realizado o commit para que o rollback não 
+         -- limpe as informações
+         COMMIT;  -- ATENÇÃO:  A REMOÇÃO DESDE COMMIT CAUSARÁ ERROS NA TELA 
+                  --           DE PAGAMENTO.
+       
+         RAISE vr_exc_erro;
+       END IF;
        
        -- Retornar o doc do beneficiário
        pr_nrdocbenf := TRIM(pr_tbTituloCIP.CNPJ_CPFBenfcrioOr);   -- Documento do Beneficiário Original
@@ -612,7 +632,7 @@ rw_crapdat.dtmvtolt := TRUNC(SYSDATE); -- ver renato
        -- Retornar o nome do beneficiário
        pr_dsbenefic := NVL(TRIM(pr_tbTituloCIP.NomFantsBenfcrioOr)   -- Nome Fantasia do Beneficiário Original
                           ,TRIM(pr_tbTituloCIP.Nom_RzSocBenfcrioOr));-- Razão Social do Beneficiário Original
-       
+              
        -- Se não permitir pagamento parcial e não permitir valor divergente (3-Não aceitar pagamento com o valor divergente)
        IF pr_tbTituloCIP.IndrPgtoParcl = 'N' AND pr_tbTituloCIP.TpAutcRecbtVlrDivgte = '3' THEN
          -- Definir os valores do título

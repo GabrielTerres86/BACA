@@ -130,6 +130,7 @@ CLOSE STORED-PROC pc_consultar_valor_titulo aux_statproc = PROC-STATUS
            
 { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
+
 IF  aux_des_erro <> "OK" OR
     aux_dscritic <> ""   THEN DO: 
 
@@ -137,9 +138,10 @@ IF  aux_des_erro <> "OK" OR
         ASSIGN aux_dscritic =  "Nao foi possivel concluir a busca do valor do titulo".
     END.
 
-    ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic +
-                       "</dsmsgerr>".  
-    
+    ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".  
+    /* Se houver informaçao de controle de consulta */
+    /* IF aux_cdctrlcs <> "" THEN*/
+      ASSIGN xml_dsmsgerr = xml_dsmsgerr + "<cdctrlcs>" + aux_cdctrlcs + "</cdctrlcs>".  
     RETURN "NOK".
     
 END.

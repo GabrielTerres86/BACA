@@ -918,7 +918,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
                                       ,pr_dscritic => vr_dscritic);
     
     -- Se houve retorno de erro
-    IF pr_dscritic IS NOT NULL OR vr_des_erro = 'NOK' THEN	  
+    IF vr_dscritic IS NOT NULL OR vr_des_erro = 'NOK' THEN	  
       RAISE vr_exc_erro;       
     END IF;  
      
@@ -929,11 +929,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
                          ,pr_dtmvtolt    => pr_dtmvtolt   --> Data de movimento
                          ,pr_cdctrlcs    => pr_cdctrlcs   --> Numero de controle da consulta no NPC
                          ,pr_tbtitulocip => vr_tituloCIP  --> Dados consultados na CIP
-                         ,pr_cdcritic    => pr_cdcritic   --> Codigo da critico
-                         ,pr_dscritic    => pr_dscritic); --> Descrição da critica
+                         ,pr_cdcritic    => vr_cdcritic   --> Codigo da critico
+                         ,pr_dscritic    => vr_dscritic); --> Descrição da critica
                          
-    IF pr_dscritic IS NOT NULL OR
-       nvl(pr_cdcritic,0) <> 0 THEN	  
+    IF vr_dscritic IS NOT NULL OR
+       nvl(vr_cdcritic,0) <> 0 THEN	  
       RAISE vr_exc_erro;       
     END IF;  
     

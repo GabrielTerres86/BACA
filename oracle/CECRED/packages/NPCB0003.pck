@@ -22,7 +22,7 @@ CREATE OR REPLACE PACKAGE CECRED.NPCB0003 is
   
   -- Rotina para verificar se houve retorno de erro do Webservice - Fault Packet
   PROCEDURE pc_xmlsoap_fault_packet(pr_cdcooper  IN NUMBER            --> Código da cooperativa para registro de log
-                                   ,pr_cdctrlcs  IN VARCHAR2          --> Código de controle de consulta
+                                   ,pr_cdctrlcs  IN VARCHAR2 DEFAULT NULL --> Código de controle de consulta
                                    ,pr_dsxmlreq  IN CLOB DEFAULT NULL --> XML da requisição realizada
                                    ,pr_dsxmlerr  IN CLOB              --> XML para avaliar se houve erro
                                    ,pr_cdcritic OUT NUMBER            --> Retornar o código da crítica
@@ -74,6 +74,17 @@ CREATE OR REPLACE PACKAGE CECRED.NPCB0003 is
                                   ,pr_des_erro OUT VARCHAR2        --> Indicador erro OK/NOK
                                   ,pr_cdcritic OUT NUMBER          --> Código do erro
                                   ,pr_dscritic OUT VARCHAR2);      --> Descrição do erro                               
+
+  --> Rotina para consultar os titulos CIP
+  PROCEDURE pc_wscip_requisitar_baixa(pr_cdcooper  IN NUMBER             --> Código da cooperativa
+                                     --,pr_cdctrlcs  IN VARCHAR2           --> Identificador da consulta
+                                     --,pr_nrispbif  IN VARCHAR2           --> ISPB recebedor baixa operacional
+                                     ,pr_idtitdda  IN NUMBER             --> Identificador Titulo DDA
+                                     ,pr_rowidtit  IN ROWID DEFAULT NULL --> Rowid da craptit para gerar a baixa operacional
+                                     --,pr_xml_frag OUT NOCOPY xmltype     --> Fragmento do XML de retorno
+                                     ,pr_des_erro OUT VARCHAR2           --> Indicador erro OK/NOK
+                                     ,pr_dscritic OUT VARCHAR2);         --> Descricao erro
+
 END NPCB0003;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0003 is
@@ -136,7 +147,7 @@ END;
   
   -- Rotina para verificar se houve retorno de erro do Webservice - Fault Packet
   PROCEDURE pc_xmlsoap_fault_packet(pr_cdcooper  IN NUMBER            --> Código da cooperativa para registro de log
-                                   ,pr_cdctrlcs  IN VARCHAR2          --> Código de controle de consulta
+                                   ,pr_cdctrlcs  IN VARCHAR2 DEFAULT NULL --> Código de controle de consulta
                                    ,pr_dsxmlreq  IN CLOB DEFAULT NULL --> XML da requisição realizada
                                    ,pr_dsxmlerr  IN CLOB              --> XML para avaliar se houve erro
                                    ,pr_cdcritic OUT NUMBER            --> Retornar o código da crítica
@@ -162,7 +173,7 @@ END;
     -- Extrair erros do XML
     CURSOR cr_faultpacket IS
       WITH DATA AS (SELECT pr_dsxmlerr xml FROM dual)
-      SELECT ABS(TO_NUMBER(substr(faultcode,INSTR(faultcode,':')+1))) faultcode
+      SELECT faultcode
            , faultstring
         FROM DATA
            , XMLTABLE(XMLNAMESPACES('http://schemas.xmlsoap.org/soap/envelope/' AS "SOAP-ENV"
@@ -173,6 +184,7 @@ END;
                             , faultstring VARCHAR2(1000) PATH 'faultstring');
     
     -- VARIÁVEIS
+    vr_cdauxcri     VARCHAR2(25);
     vr_cdcritic     NUMBER;
     vr_dscritic     VARCHAR2(1000);
     vr_idlogarq     crapprm.dsvlrprm%TYPE;
@@ -181,7 +193,7 @@ END;
     
     -- Buscar a critica no XML
     OPEN  cr_faultpacket;
-    FETCH cr_faultpacket INTO vr_cdcritic
+    FETCH cr_faultpacket INTO vr_cdauxcri
                             , vr_dscritic;
     
     -- Se não retornou nenhum registro
@@ -191,6 +203,15 @@ END;
       pr_dscritic := NULL;
     ELSE
       
+      BEGIN
+        -- Converter código de erro
+        vr_cdcritic := ABS(TO_NUMBER(substr(vr_cdauxcri,INSTR(vr_cdauxcri,':')+1)));
+      EXCEPTION 
+        WHEN OTHERS THEN
+          -- Caso houver erro... é porque não retornou código numerico, neste caso retornar zero
+          vr_cdcritic := 0;
+      END;
+    
       -- Buscar parametro de geração de log
       vr_idlogarq := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
                                               ,pr_cdcooper => pr_cdcooper
@@ -997,7 +1018,7 @@ END;
     vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'string';
     --
     -- Verificar se foi informado cidade
-    IF NVL(pr_cdcidade,0) > 0 THEN-- ver renato
+    IF NVL(pr_cdcidade,0) > 0 THEN
       vr_cdmetodo := 2;  -- Requisitar Título CIP Cálculo do Valor
       
       -- Adicionar a Tag de municipio
@@ -1026,9 +1047,9 @@ END;
     IF pr_des_erro = 'NOK' THEN
       RAISE vr_exc_erro;
     END IF;
-    dbms_output.put_line('--------------------------------------------'); -- ver renato
-    dbms_output.put_line(vr_xmlsoap.getClobVal()); -- ver renato
-    dbms_output.put_line('--------------------------------------------'); -- ver renato
+    --dbms_output.put_line('--------------------------------------------'); -- ver renato
+    --dbms_output.put_line(vr_xmlsoap.getClobVal()); -- ver renato
+    --dbms_output.put_line('--------------------------------------------'); -- ver renato
     -- Indicar o tipo de consulta como CIP
     pr_tpconcip := 1; 
     
@@ -1089,9 +1110,9 @@ END;
                                  ,vr_xmlsoap     
                                  ,pr_des_erro
                                  ,vr_dscritic);   
-      dbms_output.put_line('++++++++++++++++++++++++++++++++++++++++++++'); -- ver renato
-      dbms_output.put_line(vr_xmlsoap.getClobVal()); -- ver renato
-      dbms_output.put_line('++++++++++++++++++++++++++++++++++++++++++++'); -- ver renato
+      --dbms_output.put_line('++++++++++++++++++++++++++++++++++++++++++++'); -- ver renato
+      --dbms_output.put_line(vr_xmlsoap.getClobVal()); -- ver renato
+      --dbms_output.put_line('++++++++++++++++++++++++++++++++++++++++++++'); -- ver renato
       -- Se houver algum problema na execução da rotina
       IF pr_des_erro = 'NOK' THEN
         RAISE vr_exc_erro;
@@ -1237,9 +1258,9 @@ END;
     IF pr_des_erro = 'NOK' THEN
       RAISE vr_exc_erro;
     END IF;
-    dbms_output.put_line('--- REQUISIÇÃO -----------------------------'); -- ver renato
-    dbms_output.put_line(vr_xmlsoap.getClobVal()); -- ver renato
-    dbms_output.put_line('--------------------------------------------'); -- ver renato
+    --dbms_output.put_line('--- REQUISIÇÃO -----------------------------'); -- ver renato
+    --dbms_output.put_line(vr_xmlsoap.getClobVal()); -- ver renato
+    --dbms_output.put_line('--------------------------------------------'); -- ver renato
     
     /************* MONTAR O LINK DE ACESSO AO SERVIÇO DO WEBSERVICE *************/
     -- Busca o service domain conforme parâmetro NPC_SERVICE_DOMAIN
@@ -1285,9 +1306,9 @@ END;
     -- Se passou pela validação de erros sem encontrar retorno do Fault Packet, deve retornar o XML
     pr_dsxmlret := vr_dsxmltit.getClobVal();
     
-    dbms_output.put_line('--- RETORNO --------------------------------'); -- ver renato
-    dbms_output.put_line(vr_xmlsoap.getClobVal()); -- ver renato
-    dbms_output.put_line('--------------------------------------------'); -- ver renato
+    --dbms_output.put_line('--- RETORNO --------------------------------'); -- ver renato
+    --dbms_output.put_line(vr_xmlsoap.getClobVal()); -- ver renato
+    --dbms_output.put_line('--------------------------------------------'); -- ver renato
     
     -- Indica que a rotina foi executada com sucesso
     pr_des_erro := 'OK';
@@ -1303,6 +1324,258 @@ END;
       pr_dscritic := SQLERRM;
       pr_des_erro := 'NOK';
   END pc_wscip_listar_titulo;
+
+  --> Rotina para consultar os titulos CIP
+  PROCEDURE pc_wscip_requisitar_baixa(pr_cdcooper  IN NUMBER             --> Código da cooperativa
+                                     --,pr_cdctrlcs  IN VARCHAR2           --> Identificador da consulta
+                                    -- ,pr_nrispbif  IN VARCHAR2           --> ISPB recebedor baixa operacional
+                                     ,pr_idtitdda  IN NUMBER             --> Identificador Titulo DDA
+                                     ,pr_rowidtit  IN ROWID DEFAULT NULL --> Rowid da craptit para gerar a baixa operacional
+                                     --,pr_xml_frag OUT NOCOPY xmltype     --> Fragmento do XML de retorno
+                                     ,pr_des_erro OUT VARCHAR2           --> Indicador erro OK/NOK
+                                     ,pr_dscritic OUT VARCHAR2) IS       --> Descricao erro
+    ---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_wscip_requisitar_baixa     (Antigo: procedures/b1wgen0079.p/baixa-operacional)
+    --  Sistema  : Procedure para Executar Baixa Operacional
+    --  Sigla    : CRED
+    --  Autor    : Petter Rafael - Supero Tecnologia
+    --  Data     : Agosto/2013.                   Ultima atualizacao: --/--/----
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: -----
+    -- Objetivo  : Procedure para Executar Baixa Operacional
+    --
+    -- Alteracoes: 01/08/2013 - conversão Progress >> PL/SQL (Oracle). Petter - Supero.
+    --
+    --             28/04/2017 - Alterar a procedure movendo a mesma para a package do NPC 
+    ---------------------------------------------------------------------------------------------------------------
+
+    vr_xml     XMLType; --> XML de requisição
+    vr_exc_erro EXCEPTION; --> Controle de exceção
+    vr_xml_res XMLType; --> XML de resposta
+    --vr_tab_xml gene0007.typ_tab_tagxml; --> PL Table para armazenar conteúdo XML
+    vr_cdcanal_npc INTEGER;                           
+      
+    --> Buscar dados do titulo pago
+    CURSOR cr_craptit IS
+      SELECT tit.nrispbds,
+             tit.cdagenci, 
+             decode(tit.inpessoa,1,'F','J') dsinpess,
+             tit.nrdident,
+             tit.nrcpfcgc,
+             tit.tpbxoper,
+             tit.dscodbar,
+             tit.vldpagto,
+             decode(tit.flgconti,1,'S','N') flgconti,
+             tit.nrdconta,
+             tit.flgpgdda
+        FROM craptit tit
+       WHERE tit.nrdident = pr_idtitdda
+         AND tit.rowid    = pr_rowidtit; 
+    rw_craptit cr_craptit%ROWTYPE;
+    
+    vr_tbcampos      NPCB0003.typ_tab_campos_soap;
+    vr_cdCanPgt      INTEGER;
+    vr_cdmeiopg      INTEGER;
+    vr_dssrdom       VARCHAR2(1000); -- Var para retorno do Service Domain
+    vr_cdcritic      NUMBER;
+    vr_dscritic      VARCHAR2(1000);
+    
+  BEGIN
+    
+    -- Buscar registro do título
+    OPEN  cr_craptit;
+    FETCH cr_craptit INTO rw_craptit;
+    
+    -- Se o título não for encontrado
+    IF cr_craptit%NOTFOUND THEN
+      CLOSE cr_craptit;
+      vr_dscritic := 'Registro de título não encontrado.';
+      RAISE vr_exc_erro;
+    END IF;
+    
+    -- Fechar o cursor
+    CLOSE cr_craptit;
+  
+    -- Limpa a tab de campos
+    vr_tbcampos.DELETE();
+      
+    -- Chama rotina para fazer a inclusão das TAGS comuns
+    NPCB0003.pc_xmlsoap_tag_padrao(pr_tbcampos => vr_tbcampos
+                                  ,pr_des_erro => pr_des_erro
+                                  ,pr_dscritic => vr_dscritic);
+    
+    --
+    vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'NumIdentcTit';
+    vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := pr_idtitdda;
+    vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'int';
+    --
+    vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'TpBaixaOperac';
+    vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := rw_craptit.tpbxoper;
+    vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'string';
+    --
+    vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'ISPBPartRecbdrBaixaOperac';
+    vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := rw_craptit.nrispbds;
+    vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'int';
+    --
+    vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'TpPessoaPort';
+    vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := rw_craptit.dsinpess;
+    vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'string';
+    --
+    vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'CPFCNPJPort';
+    vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := rw_craptit.nrcpfcgc;
+    vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'int';          
+    --
+    vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'VlrBaixaOperacTit';
+    vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := rw_craptit.vldpagto;
+    vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'float';      
+    --
+    vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'DtHrProcBaixaOperac';
+    vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := to_char(SYSDATE,vr_datetimeformat /* 'RRRRMMDDHH24MISS'*/); --> AAAAMMDDhhmmss
+    vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'int';      
+    --
+    vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'DtProcBaixaOperac';
+    vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := to_char(SYSDATE,vr_dateformat/*'RRRRMMDD'*/);
+    vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'int';      
+    --
+    vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'NumCodBarrasBaixaOperac';
+    vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := rw_craptit.dscodbar;
+    vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'string';      
+    --
+    --> Rotina para retornar o codigo do canal de pagamento do NPC
+  /*  vr_cdcanal_npc := NPCB0001.fn_canal_pag_NPC( pr_cdagenci  => rw_craptit.cdagenci    --> Codigo da agencia
+                                                ,pr_idtitdda  => rw_craptit.nrdident ); --> Indicador se foi pago pelo sistema de DDDA
+                            
+    vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'CanPgto';
+    vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := vr_cdcanal_npc;
+    vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'string';            
+    */
+    IF rw_craptit.flgpgdda = 1 THEN
+      vr_cdCanPgt := 8; --> DDA
+    ELSE
+      CASE rw_craptit.cdagenci 
+        WHEN 90 THEN
+          vr_cdCanPgt := 3; --> Internet            
+        WHEN 91 THEN
+          vr_cdCanPgt := 2; --> Terminal de Auto-Atendimento
+        ELSE
+          vr_cdCanPgt := 1; --> Agências- Postos Tradicionai            
+      END CASE;       
+    END IF;
+        
+    IF nvl(rw_craptit.nrdconta,0) > 0 THEN
+      vr_cdmeiopg := 2; --> Débito em conta;
+    ELSE
+      vr_cdmeiopg := 1; --> Espécie
+    END IF;
+    
+    vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'CanPgto';
+    vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := vr_cdCanPgt;
+    vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'int';    
+    --
+    vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'MeioPgto';
+    vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := vr_cdmeiopg;
+    vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'int';    
+    --
+    vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'IndrOpContg';
+    vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := rw_craptit.flgconti;
+    vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'string';      
+    
+    -- Monta a estrutura principal do SOAP
+    NPCB0003.pc_xmlsoap_monta_requisicao(pr_cdservic => 4 --> RecebimentoPgtoTit
+                                        ,pr_cdmetodo => 4 --> RequisitarBaixa
+                                        ,pr_tbcampos => vr_tbcampos
+                                        ,pr_xml      => vr_xml
+                                        ,pr_des_erro => pr_des_erro
+                                        ,pr_dscritic => vr_dscritic);
+    
+    -- Verifica se ocorreu erro
+    IF pr_des_erro != 'OK' THEN
+      RAISE vr_exc_erro;
+    END IF;
+    
+    /************* MONTAR O LINK DE ACESSO AO SERVIÇO DO WEBSERVICE *************/
+    -- Busca o service domain conforme parâmetro NPC_SERVICE_DOMAIN
+    vr_dssrdom := 'http://'||gene0001.fn_param_sistema('CRED'
+                                                      ,0
+                                                      ,'NPC_SERVICE_DOMAIN');
+    vr_dssrdom := vr_dssrdom
+               || '/JDNPC_WEB/JDNPCWS_'
+               || NPCB0003.vr_wscip_services(4).dsservico
+               || '.dll/soap/IJDNPCWS_'||NPCB0003.vr_wscip_services(4).dsservico; -- wsdl
+    /************* MONTAR O LINK DE ACESSO AO SERVIÇO DO WEBSERVICE *************/
+    
+    -- Enviar requisição para webservice
+    soap0001.pc_cliente_webservice(pr_endpoint    => vr_dssrdom
+                                  ,pr_acao        => NULL
+                                  ,pr_wallet_path => NULL
+                                  ,pr_wallet_pass => NULL
+                                  ,pr_xml_req     => vr_xml
+                                  ,pr_xml_res     => vr_xml_res
+                                  ,pr_erro        => vr_dscritic);
+    
+    -- Verifica se ocorreu erro
+    IF trim(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+    
+    -- Verifica se ocorreu retorno com erro no XML
+    pc_xmlsoap_fault_packet(pr_cdcooper => pr_cdcooper
+                           --,pr_cdctrlcs => pr_cdctrlcs
+                           ,pr_dsxmlreq => vr_xml.getClobVal()
+                           ,pr_dsxmlerr => vr_xml_res.getClobVal()
+                           ,pr_cdcritic => vr_cdcritic
+                           ,pr_dscritic => vr_dscritic);
+                           
+    -- Se ocorreu crítica, deve gerar o erro e encerrar a rotina
+    IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;      
+    END IF;
+    /*
+    -- Verifica o retorno de erro
+    IF pr_des_erro = 'NOK' THEN
+      -- Envio centralizado de log de erro 
+      RAISE vr_exc_erro;
+    ELSE
+      -- Busca valor do nodo dado o xPath
+      gene0007.pc_itera_nodos(pr_xpath      => '//return'
+                             ,pr_xml        => vr_xml_res
+                             ,pr_list_nodos => vr_tab_xml
+                             ,pr_des_erro   => pr_des_erro);
+    
+      -- Verifica se a TAG existe
+      IF vr_tab_xml.count = 0 THEN
+        pr_dscritic := 'Resposta SOAP invalida (Return).';
+        pr_des_erro := 'NOK';
+      
+        RAISE vr_exc_erro;
+      END IF;
+      
+      -- Verifica se retorno conteúdo na TAG
+      IF nvl(vr_tab_xml(0).tag, ' ') = ' ' THEN
+        pr_dscritic := 'Falha na atualizacao da situacao.';
+        pr_des_erro := 'NOK';
+      
+        RAISE vr_exc_erro;
+      END IF;
+    END IF;
+    */
+    -- Retornar fragmento XML como novo documento XML
+    --Valor não utilizado
+    --pr_xml_frag := gene0007.fn_gera_xml_frag(vr_tab_xml(0).tag); 
+    
+    --Retornar OK
+    pr_des_erro := 'OK';
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      pr_des_erro := 'NOK';
+      pr_dscritic := 'Erro na rotina NPCB0003.pc_wscip_requisitar_baixa. ' ||vr_dscritic;
+    WHEN OTHERS THEN
+      pr_des_erro := 'NOK';
+      pr_dscritic := 'Erro na rotina NPCB0003.pc_wscip_requisitar_baixa. ' ||SQLERRM;
+  END pc_wscip_requisitar_baixa;
 
 
 BEGIN --> Corpo da package 
