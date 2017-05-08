@@ -20,5 +20,6 @@
 <input type="hidden" name="idimpres" id="idimpres" value="">
 <input type="hidden" name="limorbor" id="limorbor" value="">
 <input type="hidden" name="flgemail" id="flgemail" value="">
+<input type="hidden" name="flgrestr" id="flgrestr" value="">
 <input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>">
 </form>	

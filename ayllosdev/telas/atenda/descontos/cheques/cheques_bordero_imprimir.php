@@ -3,7 +3,7 @@
 	/************************************************************************
 	 Fonte: cheques_bordero_imprimir.php
 	 Autor: Guilherme
-	 Data : November/2008                   Última Alteração: 12/07/2011
+	 Data : November/2008                   Última Alteração: 12/09/2016
 
 	 Objetivo  : Mostrar opção Imprimir da rotina de Descontos de CHEQUES
 				 subrotina borderôs
@@ -12,6 +12,8 @@
 				              o PAC Sede (David).
 							  
 				 12/07/2011 - Alterado para layout padrão (Gabriel Capoia - DB1)
+
+				 12/09/2016 - Removido o botao Completa. (Jaison/Daniel)
 	************************************************************************/
 	
 	session_start();
@@ -43,15 +45,15 @@
 	
 ?>
 
-<div id="divBotoes">
+<div id="divBotoes" style="width: 500px;">
 	<form class="formulario">
 		<fieldset>
 			<legend><? echo utf8ToHtml('Impressão') ?></legend>
 			
-			<input type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="carregaBorderosCheques();return false;" />
-			<input type="image" src="<?php echo $UrlImagens; ?>botoes/completa.gif" onClick="gerarImpressao(5,2,'no');return false;"/ >
-			<input type="image" src="<?php echo $UrlImagens; ?>botoes/cheques.gif" onClick="gerarImpressao(7,2,'no');return false;" />
-			<input type="image" src="<?php echo $UrlImagens; ?>botoes/proposta.gif" onClick="gerarImpressao(6,2,'no');return false;" />
+			<a href="#" class="botao" id="btVoltar" onClick="carregaBorderosCheques();return false;">Voltar</a>
+			<a href="#" class="botao" id="btCheques" onClick="gerarImpressao(7,2,'no','',0);return false;">Border&ocirc; Cooperado</a>
+			<a href="#" class="botao" id="btCheques" onClick="gerarImpressao(7,2,'no','',1);return false;">Border&ocirc; Cooperativa</a>
+			<a href="#" class="botao" id="btProposta" onClick="gerarImpressao(6,2,'no');return false;">Proposta</a>
 			
 		</fieldset>
 	</form>

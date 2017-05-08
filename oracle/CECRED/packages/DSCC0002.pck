@@ -91,6 +91,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCC0002 AS
                                     ,pr_dtcustod  IN VARCHAR2              --> Lista Data Custodia
                                     ,pr_intipchq  IN VARCHAR2              --> Lista Tipo Cheque
                                     ,pr_dsdocmc7  IN VARCHAR2              --> Lista CMC7
+                                    ,pr_nrremret  IN VARCHAR2              --> Lista Remessa
                                     ,pr_aprvpend  IN INTEGER               --> Aprova Bordero Pendente (1 - Sim/0 - Não)
                                     ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
                                     ,pr_retxml   OUT CLOB);                --> Arquivo de retorno do XML
@@ -293,7 +294,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
                              ,pr_texto_completo => vr_xml_pgto_temp
                              ,pr_texto_novo     => '<vlmxassi>' || rw_craptab.vlmxassi || '</vlmxassi>' || -- Valor máximo dispensa assinatura
                                                    '<flglimit>' ||     vr_flglimit     || '</flglimit>' || -- Flag Possui contrato de limite
-                                                   '<insitblq>' ||     vr_insitblq     || '</insitblq>');  -- Bloqueio inclusao de novos borderos
+                                                   '<insitblq>' ||     vr_insitblq     || '</insitblq>' || -- Bloqueio inclusao de novos borderos
+                                                   '<inproces>' || rw_crapdat.inproces || '</inproces>');  -- Flag Processo Noturno
       
       -- Insere o cabeçalho do XML
       gene0002.pc_escreve_xml(pr_xml            => pr_retxml
@@ -395,8 +397,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
                 ,cdb.nrctachq
                 ,cdb.nrcheque
                 ,to_char(cdb.vlcheque,'fm999g999g999g990D00') vlcheque
-                ,cdb.insitchq
                 ,cdb.insitana
+                ,(SELECT nvl(dcc.inconcil,0)
+                    FROM crapdcc dcc
+                   WHERE dcc.cdcooper = cdb.cdcooper
+                     AND dcc.nrdconta = cdb.nrdconta
+                     AND dcc.cdbanchq = cdb.cdbanchq
+                     AND dcc.cdagechq = cdb.cdagechq
+                     AND dcc.nrctachq = cdb.nrctachq
+                     AND dcc.nrcheque = cdb.nrcheque
+                     AND dcc.nrremret = cdb.nrremret) inconcil 
                 ,translate(cdb.dsdocmc7
                           ,'[0-9]<>:'
                           ,'[0-9]') dsdocmc7
@@ -408,6 +418,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
              AND cdb.nrborder = pr_nrborder) x
          WHERE rnum >= pr_nriniseq
            AND rnum < (pr_nriniseq + pr_nrregist);
+      
+      -- Busca Bordero
+      CURSOR cr_crapbdc (pr_cdcooper IN crapcop.cdcooper%TYPE
+                        ,pr_nrdconta IN crapass.nrdconta%TYPE
+                        ,pr_nrborder IN crapbdc.nrborder%TYPE) IS
+        SELECT bdc.insitbdc
+          from crapbdc bdc
+         where bdc.cdcooper = pr_cdcooper
+           AND bdc.nrdconta = pr_nrdconta
+           AND bdc.nrborder = pr_nrborder;
+      rw_crapbdc cr_crapbdc%ROWTYPE;
       
       --------- Variaveis ---------
       -- Tratamento de erros
@@ -448,7 +469,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
                                                   || '<nrctachq>'||rw_crapcdb.nrctachq||'</nrctachq>'
                                                   || '<nrcheque>'||rw_crapcdb.nrcheque||'</nrcheque>'
                                                   || '<vlcheque>'||rw_crapcdb.vlcheque||'</vlcheque>'
-                                                  || '<insitchq>'||rw_crapcdb.insitchq||'</insitchq>'
+                                                  || '<inconcil>'||rw_crapcdb.inconcil||'</inconcil>'
                                                   || '<insitana>'||rw_crapcdb.insitana||'</insitana>'
                                                   || '<dsdocmc7>'||rw_crapcdb.dsdocmc7||'</dsdocmc7>'
                                                   || '</cheque>');
@@ -457,15 +478,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
         END IF;
       END LOOP;
       
-      -- Encerrar a tag raiz
+      -- Encerrar a tag cheques
       gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_pgto_temp
                              ,pr_texto_novo     => '</cheques>');
       
-      -- Insere o cabeçalho do XML
       gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_pgto_temp
-                             ,pr_texto_novo     =>  '<qtregist>' || vr_qtregist || '</qtregist>'
+                             ,pr_texto_novo     =>  '<qtregist>' || vr_qtregist || '</qtregist>');
+      
+      OPEN cr_crapbdc (pr_cdcooper => pr_cdcooper
+                      ,pr_nrdconta => pr_nrdconta
+                      ,pr_nrborder => pr_nrborder);
+      FETCH  cr_crapbdc INTO  rw_crapbdc;
+      IF cr_crapbdc%NOTFOUND THEN
+        CLOSE cr_crapbdc;
+        vr_dscritic := 'Borderô não encontrado.';
+        RAISE vr_exc_erro;
+      END IF;
+      CLOSE cr_crapbdc;
+      
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                             ,pr_texto_completo => vr_xml_pgto_temp
+                             ,pr_texto_novo     =>  '<insitbdc>' || rw_crapbdc.insitbdc || '</insitbdc>'
                              ,pr_fecha_xml      => TRUE);
       
     EXCEPTION
@@ -621,6 +656,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
                                                   || '<nrdocmc7>' || regexp_replace(vr_tab_cstdsc(idx).dsdocmc7,'[<>:]','')      || '</nrdocmc7>'
                                                   || '<cdcmpchq>' || vr_tab_cstdsc(idx).cdcmpchq                                 || '</cdcmpchq>'
                                                   || '<dtcustod>' || to_char(vr_tab_cstdsc(idx).dtcustod,'DD/MM/RRRR')           || '</dtcustod>'
+                                                  || '<nrremret>' || vr_tab_cstdsc(idx).nrremret                                 || '</nrremret>'																 
                                                   || '</cheque>');
 
       END LOOP;
@@ -702,6 +738,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
            OR  bdc.nrborder = pr_nrborder;
       rw_crapbdc cr_crapbdc%ROWTYPE;
       
+      -- Busca e-mail da empresa
+      CURSOR cr_crapage(pr_cdcooper IN crapage.cdcooper%TYPE
+                       ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+        SELECT age.dsmailbd
+              ,age.cdagenci
+          FROM crapass ass
+              ,crapage age
+         WHERE ass.cdcooper = pr_cdcooper
+           AND ass.nrdconta = pr_nrdconta
+           AND age.cdcooper = ass.cdcooper
+           AND age.cdagenci = ass.cdagenci
+           AND TRIM(age.dsmailbd) IS NOT NULL;
+      rw_crapage cr_crapage%ROWTYPE;
+      
       --------- Variaveis ---------
       -- Tratamento de erros
       vr_exc_saida EXCEPTION;
@@ -714,6 +764,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
       vr_rowid_log     ROWID;
       vr_retxml        XMLType;
       vr_xml_pgto_temp VARCHAR2(32726) := '';
+      
+      vr_desassun          VARCHAR2(1000);
+      vr_descorpo          VARCHAR2(1000);
       
     BEGIN
       
@@ -814,6 +867,47 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
       ELSE
         vr_dscritic := 'Bordero não localizado.';
         RAISE vr_exc_erro;
+      END IF;
+      
+      -- Busca e-mail da empresa
+      OPEN cr_crapage (pr_cdcooper
+                      ,pr_nrdconta);
+      FETCH cr_crapage INTO rw_crapage;
+      vr_flgfound := cr_crapage%FOUND;
+      -- Fecha cursor
+      CLOSE cr_crapage;
+      
+      -- Se e-mail do PA
+      IF vr_flgfound THEN
+        
+        -- Assunto do E-mail
+        vr_desassun := ' Exclusão de borderô de cheques: ' || rw_crapage.cdagenci ||
+                                                  ' - ' || pr_nrdconta || 
+                                                  ' - ' || pr_nrborder;
+        
+        -- Corpo do E-mail
+        vr_descorpo := 'PA:'                      || rw_crapage.cdagenci || '<br>' ||
+                       'Conta/DV:	'               || pr_nrdconta || '<br>' ||
+                       'Número do borderô: '      || pr_nrborder || '<br>' ||
+                       'Data/Hora: '              || to_char(SYSDATE, 'DD/MM/RRRR hh:mi:ss');
+        
+        -- Envia E-mail
+        gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
+                                  ,pr_flg_remete_coop => 'N'  --> Envio pelo e-mail da Cooperativa
+                                  ,pr_cdprogra        => 'DSCC0002'
+                                  ,pr_des_destino     => TRIM(rw_crapage.dsmailbd)
+                                  ,pr_des_assunto     => vr_desassun
+                                  ,pr_des_corpo       => vr_descorpo
+                                  ,pr_des_anexo       => NULL --> nao envia anexo
+                                  ,pr_flg_remove_anex => 'N'  --> Remover os anexos passados
+                                  ,pr_flg_enviar      => 'S'  --> Enviar o e-mail na hora
+                                  ,pr_des_erro        => vr_dscritic);
+        -- Se houver erro
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;
+        
+        
       END IF;
       
       -- Encerrar a tag raiz
@@ -1504,6 +1598,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
                                     ,pr_dtcustod  IN VARCHAR2              --> Lista Data Custodia
                                     ,pr_intipchq  IN VARCHAR2              --> Lista Tipo Cheque
                                     ,pr_dsdocmc7  IN VARCHAR2              --> Lista CMC7
+                                    ,pr_nrremret  IN VARCHAR2              --> Lista Remessa
                                     ,pr_aprvpend  IN INTEGER               --> Aprova Bordero Pendente (1 - Sim/0 - Não/3 - Validar)
                                     ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
                                     ,pr_retxml   OUT CLOB) IS              --> Arquivo de retorno do XML
@@ -1555,6 +1650,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
       vr_nrcheque NUMBER;
       vr_vlcheque NUMBER;
       vr_intipchq NUMBER;
+      vr_nrremret NUMBER;
       vr_dtlibera DATE;
       vr_dtcustod DATE;
       vr_dtdcaptu DATE;		
@@ -1565,6 +1661,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
       vr_ret_all_dtcustod gene0002.typ_split;
       vr_ret_all_intipchq gene0002.typ_split;
       vr_ret_all_dsdocmc7 gene0002.typ_split;
+      vr_ret_all_nrremret gene0002.typ_split;
       
       vr_tab_cheques         dscc0001.typ_tab_cheques;
       vr_tab_custodia_erro   cust0001.typ_erro_custodia;
@@ -1630,6 +1727,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
         CLOSE btch0001.cr_crapdat;
       END IF;
       
+      -- Não é pode cadastrar no processo noturno
+      IF rw_crapdat.inproces <> 1 THEN
+        vr_dscritic := 'Desconto de cheques indisponível no momento. Tente mais tarde.';
+        RAISE vr_exc_erro;
+      END IF;
+      
       vr_qtmaxchq := to_number(gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
                                                          pr_cdcooper => 0, /* cecred */
                                                          pr_cdacesso => 'QTD_CHQ_REM_IB'));
@@ -1643,6 +1746,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
         vr_ret_all_intipchq := gene0002.fn_quebra_string(pr_intipchq, '_');
       END IF;
       vr_ret_all_dsdocmc7 := gene0002.fn_quebra_string(pr_dsdocmc7, '_');
+      vr_ret_all_nrremret := gene0002.fn_quebra_string(pr_nrremret, '_');
       
       IF vr_ret_all_dsdocmc7.count > vr_qtmaxchq THEN
         vr_dscritic := 'A quantidade máxima de cheques foi ultrapassada.';
@@ -1666,6 +1770,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
         vr_vlcheque := to_number(vr_ret_all_vlcheque(vr_auxcont));
         -- Buscar o cmc7			
         vr_dsdocmc7 := vr_ret_all_dsdocmc7(vr_auxcont);
+  			-- Remessa
+        vr_nrremret := to_number(vr_ret_all_nrremret(vr_auxcont));
   						
         -- Desmontar as informações do CMC-7
         -- Banco
@@ -1719,6 +1825,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
         vr_tab_cheques(vr_index_cheque).cdagechq := vr_cdagechq;
         vr_tab_cheques(vr_index_cheque).nrctachq := vr_nrctachq;
         vr_tab_cheques(vr_index_cheque).nrcheque := vr_nrcheque;
+        vr_tab_cheques(vr_index_cheque).nrremret := vr_nrremret;
         
         -- Busca Emitentes
         OPEN cr_crapcec (pr_cdcooper => pr_cdcooper

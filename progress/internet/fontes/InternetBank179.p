@@ -41,6 +41,7 @@ DEF  INPUT PARAM par_vlcheque AS CHAR                NO-UNDO.
 DEF  INPUT PARAM par_dtcustod AS CHAR                NO-UNDO.
 DEF  INPUT PARAM par_intipchq AS CHAR                NO-UNDO.
 DEF  INPUT PARAM par_dsdocmc7 AS CHAR                NO-UNDO.
+DEF  INPUT PARAM par_nrremret AS CHAR                NO-UNDO.
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
@@ -193,6 +194,7 @@ ELSE IF par_operacao = 5 THEN
                          ,INPUT par_dtcustod
                          ,INPUT par_intipchq
                          ,INPUT par_dsdocmc7
+                         ,INPUT par_nrremret
                          ,0 
                          ,OUTPUT ""
                          ,OUTPUT "").

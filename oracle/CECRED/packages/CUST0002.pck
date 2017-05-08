@@ -908,6 +908,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0002 IS
            AND hcc.intipmvt = 3
          ORDER BY hcc.nrremret DESC;
       
+      -- Cursor da data
+      rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
+      
       --------- Variaveis ---------
       -- Tratamento de erros
       vr_exc_saida EXCEPTION;
@@ -920,14 +923,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0002 IS
       
     BEGIN
       
+      
+      -- Busca a data do sistema
+      OPEN  BTCH0001.cr_crapdat(pr_cdcooper);
+      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+      CLOSE BTCH0001.cr_crapdat;
+      
       -- Monta documento XML
       dbms_lob.createtemporary(pr_retxml, TRUE);
       dbms_lob.open(pr_retxml, dbms_lob.lob_readwrite);
 
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                             ,pr_texto_completo => vr_xml_pgto_temp
+                             ,pr_texto_novo     => '<inproces>' || rw_crapdat.inproces || '</inproces>');  -- Flag Processo Noturno
+      
       -- Insere o cabeçalho do XML
       gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_pgto_temp
-                             ,pr_texto_novo     => '<raiz>');
+                             ,pr_texto_novo     => '<custodias>');
 
       -- Percorre remessas
       FOR rw_craphcc IN cr_craphcc (pr_cdcooper => pr_cdcooper
@@ -955,7 +968,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0002 IS
       -- Encerrar a tag raiz
       gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_pgto_temp
-                             ,pr_texto_novo     => '</raiz>'
+                             ,pr_texto_novo     => '</custodias>'
                              ,pr_fecha_xml      => TRUE);
       
     EXCEPTION
@@ -1919,6 +1932,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0002 IS
       ELSE
         -- Apenas fechar o cursor
         CLOSE btch0001.cr_crapdat;
+      END IF;
+      
+      -- Não é pode cadastrar no processo noturno
+      IF rw_crapdat.inproces <> 1 THEN
+        vr_dscritic := 'Desconto de cheques indisponível no momento. Tente mais tarde.';
+        RAISE vr_exc_erro;
       END IF;
       
       -- Validar cheques

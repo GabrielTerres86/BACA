@@ -134,6 +134,15 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_DESCTO IS
 														   ,pr_retxml IN OUT NOCOPY xmltype        --> Arquivo de retorno do XML
 														   ,pr_nmdcampo  OUT VARCHAR2              --> Nome do campo com erro
 														   ,pr_des_erro  OUT VARCHAR2);            --> Erros do processo
+ 
+  PROCEDURE pc_valida_valor_saldo(pr_nrdconta  IN crapcdb.nrdconta%TYPE  --> Numero da conta
+                                 ,pr_vlverifi  IN NUMBER                 --> Valor para verificar
+														   ,pr_xmllog    IN VARCHAR2               --> XML com informacoes de LOG
+														   ,pr_cdcritic  OUT PLS_INTEGER           --> Codigo da critica
+														   ,pr_dscritic  OUT VARCHAR2              --> Descricao da critica
+														   ,pr_retxml IN OUT NOCOPY xmltype        --> Arquivo de retorno do XML
+														   ,pr_nmdcampo  OUT VARCHAR2              --> Nome do campo com erro
+														   ,pr_des_erro  OUT VARCHAR2);            --> Erros do processo
   
 END TELA_ATENDA_DESCTO;
 /
@@ -1098,6 +1107,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 										 ,pr_nrborder IN crapcdb.nrborder%TYPE) IS
 		  SELECT bdc.insitbdc
             ,bdc.dtrejeit
+            ,bdc.nrctrlim
 			  FROM crapbdc bdc
 			 WHERE bdc.cdcooper = pr_cdcooper
 			   AND bdc.nrdconta = pr_nrdconta
@@ -1297,6 +1307,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 		FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
 		CLOSE BTCH0001.cr_crapdat;
 					
+    IF pr_cddopcao <> 'R' THEN
+      
 		OPEN cr_craplim(pr_cdcooper => vr_cdcooper
 		               ,pr_nrdconta => pr_nrdconta
 									 ,pr_dtmvtolt => rw_crapdat.dtmvtolt);
@@ -1313,6 +1325,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 		END IF;
 		-- Fecha cursor
 		CLOSE cr_craplim;
+		END IF;
 		
 		-- Incluir
 		IF pr_cddopcao = 'I' THEN
@@ -1530,9 +1543,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 									|| '<vlcheque>' || to_char(vr_tab_cheques(idx).vlcheque, 'fm999g999g999g990d00') || '</vlcheque>'																																				 
 									|| '<dscritic>';
 									
+          -- Inicializa o bloqueio
+          vr_flbloque := 0;
+            	
 					IF vr_tab_cheques(idx).ocorrencias.count > 0 THEN
 						-- Busca primeiro indice da PlTable
 						vr_idx_ocorre := vr_tab_cheques(idx).ocorrencias.first;
+            
             LOOP
 							EXIT WHEN vr_idx_ocorre IS NULL;
 							
@@ -1607,7 +1624,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 		  FETCH cr_crapcdb_total INTO rw_crapcdb_total;
 			
 		  vr_clob := '<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-								 '<Root><Dados><nrctrlim>' || rw_craplim.nrctrlim || '</nrctrlim>' ||
+								 '<Root><Dados><nrctrlim>' || rw_crapbdc.nrctrlim || '</nrctrlim>' ||
 								 '<vlborder>' || rw_crapcdb_total.vlborder || '</vlborder><Cheques>';
 
 	    FOR rw_crapcdb_rsg IN cr_crapcdb_rsg(pr_cdcooper => vr_cdcooper
@@ -3014,13 +3031,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
     vr_idorigem VARCHAR2(100);
 		
     CURSOR cr_crapbdc (pr_cdcooper IN crapcop.cdcooper%TYPE
-                      ,pr_nrdconta IN crapass.nrdconta%TYPE
+                      ,pr_nrdconta IN crapbdc.nrdconta%TYPE 
                       ,pr_nrborder IN crapbdc.nrborder%TYPE) IS
       SELECT 1
         FROM crapbdc
        WHERE cdcooper = pr_cdcooper
-         AND nrborder = pr_nrborder
          AND nrdconta = pr_nrdconta
+         AND nrborder = pr_nrborder
          AND crapbdc.dtlibbdc IS NOT NULL;
     rw_crapbdc cr_crapbdc%ROWTYPE;
     
@@ -3079,6 +3096,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
        WHERE cdcooper = vr_cdcooper
          AND nrdconta = pr_nrdconta
          AND nrborder = pr_nrborder;
+      -- Tira vinculo com a dcc e cst
+      UPDATE crapdcc
+         SET nrborder = 0
+       WHERE cdcooper = vr_cdcooper
+         AND nrdconta = pr_nrdconta
+         AND nrborder = pr_nrborder;
+         
+      UPDATE crapcst
+         SET nrborder = 0
+       WHERE cdcooper = vr_cdcooper
+         AND nrdconta = pr_nrdconta
+         AND nrborder = pr_nrborder;
     END;
     
 		-- Efetuar commit
@@ -3107,6 +3136,162 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
 
   END pc_rejeitar_bordero;
+  
+  PROCEDURE pc_valida_valor_saldo(pr_nrdconta  IN crapcdb.nrdconta%TYPE  --> Numero da conta
+                                 ,pr_vlverifi  IN NUMBER                 --> Valor para verificar
+                                 ,pr_xmllog    IN VARCHAR2               --> XML com informacoes de LOG
+                                 ,pr_cdcritic  OUT PLS_INTEGER           --> Codigo da critica
+                                 ,pr_dscritic  OUT VARCHAR2              --> Descricao da critica
+                                 ,pr_retxml IN OUT NOCOPY xmltype        --> Arquivo de retorno do XML
+                                 ,pr_nmdcampo  OUT VARCHAR2              --> Nome do campo com erro
+                                 ,pr_des_erro  OUT VARCHAR2) IS          --> Erros do processo
+  /* .............................................................................
+    Programa: pc_valida_valor_saldo
+    Sistema : AyllosWeb
+    Sigla   : CRED
+    Autor   : Lombardi
+    Data    : 23/03/2017                        Ultima atualizacao: --/--/----
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+    Objetivo  : Rotina para rejeitar bordero de desconto de cheques
+
+    Alteracoes: 
+                                                     
+  ............................................................................. */
+	
+    -- Variavel de criticas
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(10000);
+    vr_des_reto  VARCHAR2(10000);
+    vr_tab_sald  EXTR0001.typ_tab_saldos;
+    vr_tab_erro  GENE0001.typ_tab_erro;
+  
+    -- Tratamento de erros
+    vr_exc_erro  EXCEPTION;
+
+    -- Variaveis de log
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+    
+    -- Variaveis auxiliares
+    vr_index_saldo    PLS_INTEGER;
+    vr_coordenador    BOOLEAN;
+    
+    -- Busca dos dados do associado
+    CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE
+                     ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+      SELECT ass.inpessoa
+            ,ass.vllimcre
+        FROM crapass ass
+       WHERE ass.cdcooper = pr_cdcooper
+         AND ass.nrdconta = pr_nrdconta;
+    rw_crapass cr_crapass%ROWTYPE;
+    
+		rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+		
+  BEGIN		
+    -- Incluir nome do modulo logado
+    GENE0001.pc_informa_acesso(pr_module => 'TELA_ATENDA_DESCTO'
+                              ,pr_action => NULL);	
+	  
+		gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+														,pr_cdcooper => vr_cdcooper
+														,pr_nmdatela => vr_nmdatela
+														,pr_nmeacao  => vr_nmeacao
+														,pr_cdagenci => vr_cdagenci
+														,pr_nrdcaixa => vr_nrdcaixa
+														,pr_idorigem => vr_idorigem
+														,pr_cdoperad => vr_cdoperad
+														,pr_dscritic => vr_dscritic);	  
+    
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+    
+	  -- Busca a data do sistema
+		OPEN  BTCH0001.cr_crapdat(vr_cdcooper);
+		FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+		CLOSE BTCH0001.cr_crapdat;
+	
+    --Selecionar Associado
+    OPEN cr_crapass(pr_cdcooper => vr_cdcooper
+                   ,pr_nrdconta => pr_nrdconta);
+    FETCH cr_crapass
+      INTO rw_crapass;
+    CLOSE cr_crapass;
+    
+    EXTR0001.pc_obtem_saldo_dia(pr_cdcooper   => vr_cdcooper
+                               ,pr_rw_crapdat => rw_crapdat
+                               ,pr_cdagenci   => vr_cdagenci
+                               ,pr_nrdcaixa   => vr_nrdcaixa
+                               ,pr_cdoperad   => vr_cdoperad
+                               ,pr_nrdconta   => pr_nrdconta
+                               ,pr_vllimcre   => rw_crapass.vllimcre
+                               ,pr_dtrefere   => rw_crapdat.dtmvtolt
+                               ,pr_flgcrass   => (rw_crapdat.inproces <> 1)
+                               ,pr_des_reto   => vr_des_reto
+                               ,pr_tab_sald   => vr_tab_sald
+                               ,pr_tab_erro   => vr_tab_erro);
+    
+    -- Verifica se deu erro
+    IF vr_des_reto = 'NOK' THEN
+      IF vr_tab_erro.exists(vr_tab_erro.first) THEN
+        vr_cdcritic := vr_tab_erro(vr_tab_erro.first).cdcritic;
+        vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
+      ELSE
+        vr_dscritic := 'Não foi possivel verificar Saldo.'; 
+      END IF;
+        
+      RAISE vr_exc_erro;
+    END IF; 
+
+    vr_coordenador := TRUE;
+
+    --Buscar Indice
+    vr_index_saldo := vr_tab_sald.FIRST;
+    IF vr_index_saldo IS NOT NULL THEN
+       vr_coordenador := ((nvl(vr_tab_sald(vr_index_saldo).vlsddisp, 0) +
+                           nvl(vr_tab_sald(vr_index_saldo).vllimcre, 0)) < pr_vlverifi);
+    ELSE
+      vr_dscritic := 'Não foi possivel verificar Saldo.'; 
+    END IF;
+
+    pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?>' ||
+                                   '<Root><coordenador>' ||
+                                            (CASE vr_coordenador
+                                             WHEN TRUE THEN 1 ELSE 0 END) ||
+                                         '</coordenador></Root>');
+    
+	EXCEPTION
+    WHEN vr_exc_erro THEN
+      IF vr_cdcritic <> 0 AND trim(vr_dscritic) IS NULL THEN
+        vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      END IF;
+
+      vr_dscritic := '<![CDATA['||vr_dscritic||']]>';
+      pr_dscritic := REPLACE(REPLACE(REPLACE(vr_dscritic,chr(13),' '),chr(10),' '),'''','´');
+
+      -- Carregar XML padrao para variavel de retorno
+      pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    WHEN OTHERS THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro geral na rotina da tela pc_valida_valor_saldo: ' || SQLERRM;
+      pr_dscritic := '<![CDATA['||pr_dscritic||']]>';
+      pr_dscritic := REPLACE(REPLACE(REPLACE(pr_dscritic,chr(13),' '),chr(10),' '),'''','´');
+      
+      -- Carregar XML padrao para variavel de retorno
+      pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+
+  END pc_valida_valor_saldo;
 
 END TELA_ATENDA_DESCTO;
 /

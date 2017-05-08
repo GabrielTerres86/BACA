@@ -145,6 +145,7 @@
 								<td id="nrcpfcgc" style="width: 100px"><span><? echo $aux_nrcpfcgc ?></span><? echo $aux_nrcpfcgc ?></td>
 								<td id="vlcheque" style="width: 70px" ><span><? echo $aux_vlcheque ?></span><? echo $aux_vlcheque ?></td>
 								<input type="hidden" id="aux_dsdocmc7" name="aux_dsdocmc7" value="<? echo $aux_dsdocmc7 ?>"/>
+								<input type="hidden" id="aux_vlcheque" name="aux_vlcheque" value="<? echo $aux_vlcheque ?>"/>
 							</tr>
 							<?
 						}

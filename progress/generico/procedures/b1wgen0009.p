@@ -9578,7 +9578,7 @@ PROCEDURE busca_dados_bordero:
     IF  crapbdc.insitbdc = 1  THEN  /* EM ESTUDO */ 
         DO:
             ASSIGN aux_cdcritic = 0.
-                   aux_dscritic = "O bordero deve estar na situacao ANALISADO ou LIBERADO.".
+                   aux_dscritic = "O bordero deve estar na situacao ANALISE ou LIBERADO.".
             
             RUN gera_erro (INPUT par_cdcooper,
                            INPUT par_cdagenci,

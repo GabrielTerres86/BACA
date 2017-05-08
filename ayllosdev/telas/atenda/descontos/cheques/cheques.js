@@ -259,6 +259,7 @@ function mostraImprimirBordero(){
 		},
 		success: function(response) {
 			$("#divOpcoesDaOpcao3").html(response);
+			layoutPadrao();
 		}
 	});
 
@@ -270,7 +271,7 @@ function verificaEnvioEmail(idimpres,limorbor) {
 }
 
 // Função para gerar impressão em PDF
-function gerarImpressao(idimpres,limorbor,flgemail,fnfinish) {
+function gerarImpressao(idimpres,limorbor,flgemail,fnfinish,flgrestr) {
 
 	if (idimpres == 8) {
 		imprimirRating(false,2,nrcontrato,"divOpcoesDaOpcao3",fnfinish);
@@ -280,6 +281,7 @@ function gerarImpressao(idimpres,limorbor,flgemail,fnfinish) {
 	$("#nrdconta","#frmImprimir").val(nrdconta);
 	$("#idimpres","#frmImprimir").val(idimpres);
 	$("#flgemail","#frmImprimir").val(flgemail);
+	$("#flgrestr","#frmImprimir").val(flgrestr);
 	$("#nrctrlim","#frmImprimir").val(nrcontrato);
 	$("#nrborder","#frmImprimir").val(nrbordero);
 	$("#limorbor","#frmImprimir").val(limorbor);
@@ -558,7 +560,7 @@ function carregaDadosInclusaoLimiteDscChq(inconfir) {
 function mostraTelaAltera() {
 
     showMsgAguardo('Aguarde, abrindo altera&ccedil;&atilde;o...');
-
+	$('#divUsoGenerico').html('');
     exibeRotina($('#divUsoGenerico'));
 
     if (situacao_limite != "EM ESTUDO") {
@@ -1864,7 +1866,7 @@ function adicionarChequeBordero(dtlibera, cdcmpchq, cdbanchq, cdagechq, nrctachq
 function controlaChequeBordero(idLinha){
 	var objImg, imgBtn;
 
-	if ($('#'+idLinha).css('text-decoration') == 'none'){
+	if ($('#'+idLinha).css('text-decoration').match('none')){
 		$('#'+idLinha).css('text-decoration','line-through');
 		objImg = $('#'+idLinha).find('td > img');
 		imgBtn = objImg.attr('src');
@@ -2191,7 +2193,7 @@ function atualizaValoresBordero(){
 	var vlcompcr = 0;
 
 	$('#tbChequesBordero tbody tr').each(function(){
-		if ($(this).css('text-decoration') == 'none'){
+		if ($(this).css('text-decoration').match('none')){
 			qtcompln++;
 			vlcompcr += Number($('#aux_vlcheque', this).val().replace('.','').replace(',','.'));
 		}
@@ -2572,7 +2574,7 @@ function manterBordero(){
 		flchqbor = $("#aux_flchqbor",this).val();
 
 		// Em caso de alteração do bordero, devemos ignorar os cheques que já estão inclusos
-		if (flchqbor != 1 && $(this).css('text-decoration') == 'none') {
+		if (flchqbor != 1 && $(this).css('text-decoration').match('none')) {
 
 			if( dscheque != "" ){
 				dscheque += "|";
@@ -2716,6 +2718,12 @@ function verificaAssinaturaBordero(){
 		showError("error","Nenhum border&ocirc; selecionado.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
 	}
+
+	if (flgrejei == 1) {
+		hideMsgAguardo();
+		showError("error","Opera&ccedil;&atilde;o n&atilde;o permitida. Border&ocirc; rejeitado.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		return false;
+    }
 
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, verificando se border&ocirc; necessita de assinatura...");
@@ -2907,8 +2915,63 @@ function mostraMsgCmc7(){
 
 function concluiResgate(){
 	// Mostra mensagem de aguardo
-	showMsgAguardo("Aguarde, efetuando resgate dos cheques selecionados ...");
+	showMsgAguardo("Aguarde, verificando saldo do cooperado...");
 
+	var divRegistro = $('div.divRegistros', '#divBorderoResgate');
+
+	var dscheque = "";
+	var vlcheque = 0;
+
+	$('table > tbody > tr', divRegistro).each(function(){
+
+		if ($(this).find('td > #flgresgat').val() == '1'){
+
+			if( dscheque != "" ){
+				dscheque += "|";
+			}
+
+			dscheque += $("#aux_dsdocmc7",this).val(); // CMC-7
+			vlcheque += Number($("#aux_vlcheque",this).val().replace('.','').replace(',','.'));
+			
+		}
+	});
+	
+	if (dscheque == "" ){
+		showError('error','Border&ocirc; n&atilde;o foi modificado.','Alerta - Ayllos','hideMsgAguardo();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));');
+		return false;
+	}
+
+	// Carrega conteúdo da opção através de ajax
+	$.ajax({
+		type: "POST",
+		url: UrlSite + "telas/atenda/descontos/cheques/cheques_bordero_verifica_saldo.php",
+		dataType: "html",
+		data: {
+			nrdconta: nrdconta,
+			vlcheque: vlcheque,
+			redirect: "html_ajax"
+		},
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function(response) {
+			hideMsgAguardo();
+			try {
+				eval(response);
+			} catch(error) {
+				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));');
+			}
+		}
+	});
+
+}
+
+function efetuaResgate() {
+	
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, efetuando resgate dos cheques selecionados ...");
+	
 	var divRegistro = $('div.divRegistros', '#divBorderoResgate');
 
 	var dscheque = "";
@@ -2924,12 +2987,7 @@ function concluiResgate(){
 			dscheque += $("#aux_dsdocmc7",this).val(); // CMC-7
 		}
 	});
-
-	if (dscheque == "" ){
-		showError('error','Border&ocirc; n&atilde;o foi modificado.','Alerta - Ayllos','hideMsgAguardo();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));');
-		return false;
-	}
-
+	
 	// Carrega conteúdo da opção através de ajax
 	$.ajax({
 		type: "POST",

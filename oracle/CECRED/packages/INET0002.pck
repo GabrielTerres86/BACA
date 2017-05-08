@@ -4498,7 +4498,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                            ,vlcheque
                            ,dtlibera
                            ,dtemissa
-                           ,dsdocmc7)
+                           ,dsdocmc7
+                           ,nrremret)
                      VALUES(vr_cdtranpe          
                            ,pr_cdcooper
                            ,pr_nrdconta
@@ -4510,7 +4511,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                            ,pr_tab_cheques(idx).vlcheque
                            ,pr_tab_cheques(idx).dtlibera
                            ,pr_tab_cheques(idx).dtdcaptu
-                           ,pr_tab_cheques(idx).dsdocmc7);
+                           ,pr_tab_cheques(idx).dsdocmc7
+                           ,pr_tab_cheques(idx).nrremret);
       EXCEPTION
         WHEN OTHERS THEN
           vr_cdcritic := 0;

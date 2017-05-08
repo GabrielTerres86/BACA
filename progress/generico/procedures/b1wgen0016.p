@@ -465,7 +465,7 @@
                            acarretando em problemas no IB (Tiago/Elton SD 521667).             
               
               19/12/2016 - Inclusao da aprovacao de Desconto de Cheque. Projeto 300 (Lombardi).
-
+              
 28/11/2016 - Incluido tratamento de transaçoes pendentes 16 e 17.
 PRJ319 - SMS Cobrança (Odirlei - AMcom)
 
@@ -1518,7 +1518,7 @@ PROCEDURE proc_cria_critica_transacao_oper:
                               ASSIGN aux_dstptran = "Adesao Serviço SMS de Cobrança".
                               ELSE
                               ASSIGN aux_dstptran = "Cancelamento do Serviço SMS de Cobrança".
-                
+                  
                               END.
                 IF tbgen_trans_pend.tptransacao = 2 THEN
                     aux_dstiptra= (IF tbpagto_trans_pend.tppagamento = 1 THEN "Pagamento de Convenio" ELSE "Pagamento de Boletos Diversos").
@@ -6684,6 +6684,7 @@ PROCEDURE aprova_trans_pend:
     DEF VAR aux_dtdcaptu AS CHAR                                    NO-UNDO.
     DEF VAR aux_vlcheque AS CHAR                                    NO-UNDO.
     DEF VAR aux_dsdocmc7 AS CHAR                                    NO-UNDO.
+    DEF VAR aux_nrremret AS CHAR                                    NO-UNDO.
     DEF VAR aux_vltotbdc AS DECIMAL                                 NO-UNDO.
     DEF VAR aux_flgtbdsc AS LOGICAL                                 NO-UNDO.
 
@@ -7231,7 +7232,7 @@ PROCEDURE aprova_trans_pend:
                     BUFFER-COPY tbcobran_sms_trans_pend TO tt-tbcobran_sms_trans_pend.
                                                                                                                                       
                     ASSIGN tt-tbgen_trans_pend.idmovimento_conta  = IdentificaMovCC(tbgen_trans_pend.tptransacao,1,0).
-                  END.
+            END.    
               END.
                 ELSE IF tbgen_trans_pend.tptransacao = 12 THEN /* Desconto de Cheque */
                   DO:
@@ -7683,7 +7684,7 @@ PROCEDURE aprova_trans_pend:
                                 
                                 UNDO TRANSACAO, LEAVE TRANSACAO.
                                 
-                            END.                       
+                            END.
 
                         /* EFETIVACAO */    
                         IF aux_conttran = 1 AND par_indvalid = 1 THEN
@@ -8299,7 +8300,7 @@ PROCEDURE aprova_trans_pend:
                                     ASSIGN par_flgaviso = TRUE.
         
                                 UNDO TRANSACAO, LEAVE TRANSACAO.
-                            END.                       
+                            END.
 
 					    IF aux_conttran = 1 AND par_indvalid = 1 THEN
 						   DO:
@@ -11819,7 +11820,7 @@ PROCEDURE aprova_trans_pend:
                                     INPUT tt-tbcobran_sms_trans_pend.vlservico,
                                     INPUT aux_conttran).
                                                                                                                                                                   
-                                END.
+                    END.
                  ELSE IF tt-tbgen_trans_pend.tptransacao = 11 THEN /* Pagamento DARF/DAS */
                   DO: 
                     FOR FIRST tt-tbpagto_darf_das_trans_pend WHERE tt-tbpagto_darf_das_trans_pend.cdtransacao_pendente = tt-tbgen_trans_pend.cdtransacao_pendente NO-LOCK. END.
@@ -12280,7 +12281,8 @@ PROCEDURE aprova_trans_pend:
                            ASSIGN aux_dtlibera = ""
                                   aux_dtdcaptu = ""
                                   aux_vlcheque = ""
-                                  aux_dsdocmc7 = "".
+                                  aux_dsdocmc7 = ""
+                                  aux_nrremret = "".
                                
                             FOR EACH tt-tbdscc_trans_pend WHERE tt-tbdscc_trans_pend.cdtransacao_pendente = tt-tbgen_trans_pend.cdtransacao_pendente NO-LOCK:
                             
@@ -12289,7 +12291,8 @@ PROCEDURE aprova_trans_pend:
                                   ASSIGN aux_dtlibera = aux_dtlibera + "_"
                                          aux_dtdcaptu = aux_dtdcaptu + "_"
                                          aux_vlcheque = aux_vlcheque + "_"
-                                         aux_dsdocmc7 = aux_dsdocmc7 + "_".
+                                         aux_dsdocmc7 = aux_dsdocmc7 + "_"
+                                         aux_nrremret = aux_nrremret + "_".
                                 END.
                               
                         ASSIGN aux_dtlibera = aux_dtlibera + STRING(DAY(tt-tbdscc_trans_pend.dtlibera),"99") +  "/" + 
@@ -12300,6 +12303,7 @@ PROCEDURE aprova_trans_pend:
                                                              STRING(YEAR(tt-tbdscc_trans_pend.dtemissa),"9999")
                                      aux_vlcheque = aux_vlcheque + STRING(tt-tbdscc_trans_pend.vlcheque)
                                      aux_dsdocmc7 = aux_dsdocmc7 + STRING(tt-tbdscc_trans_pend.dsdocmc7)
+                                     aux_nrremret = aux_nrremret + STRING(tt-tbdscc_trans_pend.nrremret)
                                      aux_vltotbdc = aux_vltotbdc + tt-tbdscc_trans_pend.vlcheque.
                             END.
                             
@@ -12316,6 +12320,7 @@ PROCEDURE aprova_trans_pend:
                                                  ,INPUT ''
                                                  ,INPUT ''
                                                  ,INPUT aux_dsdocmc7
+                                                 ,INPUT aux_nrremret
                                          ,INPUT IF par_indvalid = 1 AND 
                                                  aux_conttran = 1 THEN 1 
                                               ELSE  3        /* pr_aprvpend */
@@ -12742,7 +12747,7 @@ ELSE IF tt-tbgen_trans_pend.tptransacao = 11 THEN /* Pagamentos DARF/DAS */
               ASSIGN tt-vlrdat.vlronlin = tt-vlrdat.vlronlin + tt-tbpagto_darf_das_trans_pend.vlpagamento.
           ELSE IF tt-tbgen_trans_pend.idmovimento_conta = 3 THEN /* Agendamento */
               ASSIGN tt-vlrdat.vlronlin = tt-vlrdat.vlronlin + tt-tbpagto_darf_das_trans_pend.vlpagamento.
-      END.						
+      END.						 
 	/* Contrato SMS */
 ELSE IF tt-tbgen_trans_pend.tptransacao = 16 OR
         tt-tbgen_trans_pend.tptransacao = 17  THEN

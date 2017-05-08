@@ -6331,7 +6331,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
              cst.nrcheque, --> AS "Número do Cheque", 
              cst.nrctachq, --> AS "Conta corrente", 
              cst.dsdocmc7, --> AS "CMC-7",
-             hcc.idorigem  --> AS "Canal"
+             hcc.idorigem, --> AS "Canal"
+             cst.nrdolote  --> AS "Lote"
         FROM craphcc hcc,
              crapdcc dcc,
              crapcst cst
@@ -6423,7 +6424,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
     FOR rw_crapcst IN cr_crapcst LOOP
       vr_flexscst := TRUE;
       pc_escreve_xml('<cheque>
-                        <dtlibera>'||  to_char(rw_crapcst.dtlibera,'DD/MM/RRRR')    ||'</dtlibera>
+                        <dtlibera>'||  to_char(rw_crapcst.dtlibera,'DD/MM/RRRR') || ' (' || to_char(rw_crapcst.nrdolote) || ')' ||'</dtlibera>
                         <vlcheque>'||  rw_crapcst.vlcheque    ||'</vlcheque>
                         <cdbanchq>'||  rw_crapcst.cdbanchq    ||'</cdbanchq>
                         <cdagechq>'||  rw_crapcst.cdagechq    ||'</cdagechq>
