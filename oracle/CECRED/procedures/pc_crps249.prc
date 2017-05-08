@@ -536,6 +536,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
 
          21/03/2017 - Adicionado tratamento de recarga de celular no arquivo 
 				              contábil - PRJ321. (Reinert)
+                      
+               08/05/2017 - Detalhado no arquivo os registros de LIMITES CONCEDIDOS
+                            PARA DESCONTO DE CHEQUES/TITULOS (Tiago/Thiago #611703).
 ............................................................................ */
 
   -- Constantes para geração de arquivos contábeis                                                                          
@@ -1910,6 +1913,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                                nrdctabb number(10),
                                flgregis number(1));
 
+  TYPE typ_reg_limchq IS
+    RECORD(cdagenci crapris.cdagenci%TYPE
+          ,valor NUMBER(25,2));
+
+  TYPE typ_tab_limchq IS
+    TABLE OF typ_reg_limchq
+      INDEX BY PLS_INTEGER;    
+
+  vr_tab_limcon           typ_tab_limchq;
+
   -- Definição da tabela para armazenar os registros das agências
   type typ_tab_agencia is table of typ_agencia index by binary_integer;
   type typ_tab_agencia2 is table of typ_agencia2 index by binary_integer;
@@ -2465,11 +2478,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     cursor cr_craplim (pr_cdcooper in craplim.cdcooper%type,
                        pr_tpctrlim in craplim.tpctrlim%type,
                        pr_insitlim in craplim.insitlim%type) is
-      select vllimite
-        from craplim
-       where craplim.cdcooper = pr_cdcooper
-         and craplim.tpctrlim = pr_tpctrlim
-         and craplim.insitlim = pr_insitlim;
+      SELECT ass.cdagenci, lim.vllimite
+        FROM craplim lim, crapass ass
+       WHERE lim.cdcooper = ass.cdcooper
+         AND lim.nrdconta = ass.nrdconta
+         AND lim.cdcooper = pr_cdcooper
+         AND lim.tpctrlim = pr_tpctrlim
+         AND lim.insitlim = pr_insitlim
+       ORDER BY lim.cdcooper, ass.cdagenci;
     -- Títulos de borderô
     cursor cr_craptdb6 (pr_cdcooper in craptdb.cdcooper%type,
                         pr_nrdconta in craptdb.nrdconta%type,
@@ -2904,11 +2920,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     end if;
     -- Contabilizacao do saldo de limite de descontos de cheques ...........
     vr_tab_agencia(1).vr_vlaprjur := 0;
+    vr_tab_limcon.DELETE;
     for rw_craplim in cr_craplim (pr_cdcooper,
                                   2, -- tpctrlim
                                   2  -- insitlim
                                    ) loop
       vr_tab_agencia(1).vr_vlaprjur := vr_tab_agencia(1).vr_vlaprjur + rw_craplim.vllimite;
+      vr_tab_limcon(rw_craplim.cdagenci).cdagenci := rw_craplim.cdagenci;
+      vr_tab_limcon(rw_craplim.cdagenci).valor := NVL(vr_tab_limcon(rw_craplim.cdagenci).valor,0) + rw_craplim.vllimite;
     end loop;
     --
     if vr_tab_agencia(1).vr_vlaprjur > 0 then
@@ -2922,6 +2941,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                      '1434,'||
                      '"(crps249) LIMITES CONCEDIDOS PARA DESCONTO DE CHEQUES."';
       gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+      
+      -- Percorre todas as agencias e grava no arquivo
+      vr_indice := vr_tab_limcon.first;
+      WHILE vr_indice IS NOT NULL LOOP
+        vr_linhadet := TRIM(to_char(vr_tab_limcon(vr_indice).cdagenci, '009')) || ',' ||
+                       TRIM(to_char(vr_tab_limcon(vr_indice).valor, '99999999999990.00'));                       
+        -- Grava a linha no arquivo
+        gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);        -- Proximo registro               
+        
+        vr_indice := vr_tab_limcon.next(vr_indice);               
+      END LOOP;
+      
       -- Reversao
       vr_linhadet := trim(vr_cdestrut)||
                      trim(vr_dtmvtolt_yymmdd)||','||
@@ -2932,6 +2963,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                      '1434,'||
                      '"(crps249) LIMITES CONCEDIDOS PARA DESCONTO DE CHEQUES."';
       gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+      
+      -- Percorre todas as agencias e grava no arquivo
+      vr_indice := vr_tab_limcon.first;
+      WHILE vr_indice IS NOT NULL LOOP
+        vr_linhadet := TRIM(to_char(vr_tab_limcon(vr_indice).cdagenci, '009')) || ',' ||
+                       TRIM(to_char(vr_tab_limcon(vr_indice).valor, '99999999999990.00'));                       
+        -- Grava a linha no arquivo
+        gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);        -- Proximo registro               
+        
+        vr_indice := vr_tab_limcon.next(vr_indice);               
+      END LOOP;
+      
     end if;
     -- Apropriacao da receita de desconto de titulos ..................
     vr_tab_agencia.delete;
@@ -3154,12 +3197,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     end if;
     -- Contabilizacao do saldo de limite de descontos de titulos ...........
     vr_tab_agencia(1).vr_vlaprjur := 0;
+    vr_tab_limcon.DELETE;
     -- Buscar limites ativos
     for rw_craplim in cr_craplim (pr_cdcooper,
                                   3, -- tpctrlim
                                   2  -- insitlim
                                    ) loop
       vr_tab_agencia(1).vr_vlaprjur := vr_tab_agencia(1).vr_vlaprjur + rw_craplim.vllimite;
+      vr_tab_limcon(rw_craplim.cdagenci).cdagenci := rw_craplim.cdagenci;
+      vr_tab_limcon(rw_craplim.cdagenci).valor := NVL(vr_tab_limcon(rw_craplim.cdagenci).valor,0) + rw_craplim.vllimite;      
     end loop;
     --
     if vr_tab_agencia(1).vr_vlaprjur > 0 then
@@ -3173,6 +3219,19 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                      '1434,'||
                      '"(crps249) LIMITES CONCEDIDOS PARA DESCONTO DE TITULOS."';
       gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+
+      -- Percorre todas as agencias e grava no arquivo
+      vr_indice := vr_tab_limcon.first;
+      WHILE vr_indice IS NOT NULL LOOP
+        vr_linhadet := TRIM(to_char(vr_tab_limcon(vr_indice).cdagenci, '009')) || ',' ||
+                       TRIM(to_char(vr_tab_limcon(vr_indice).valor, '99999999999990.00'));                       
+        -- Grava a linha no arquivo
+        gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);        -- Proximo registro               
+        
+        vr_indice := vr_tab_limcon.next(vr_indice);               
+      END LOOP;
+      
+      
       -- Reversao
       vr_linhadet := trim(vr_cdestrut)||
                      trim(vr_dtmvtolt_yymmdd)||','||
@@ -3183,6 +3242,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                      '1434,'||
                      '"(crps249) LIMITES CONCEDIDOS PARA DESCONTO DE TITULOS."';
       gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+      
+      -- Percorre todas as agencias e grava no arquivo
+      vr_indice := vr_tab_limcon.first;
+      WHILE vr_indice IS NOT NULL LOOP
+        vr_linhadet := TRIM(to_char(vr_tab_limcon(vr_indice).cdagenci, '009')) || ',' ||
+                       TRIM(to_char(vr_tab_limcon(vr_indice).valor, '99999999999990.00'));                       
+        -- Grava a linha no arquivo
+        gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);        -- Proximo registro               
+        
+        vr_indice := vr_tab_limcon.next(vr_indice);               
+      END LOOP;
+      
     end if;
     -- Baixa do saldo do capital dos inativos ..............................
     vr_vlcompel := 0;
