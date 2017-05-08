@@ -251,7 +251,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
                    parte do contrato sendo CONTRATANTE OU INTERVENIENTE ANUENTE,
                    retorna os dados do interveniente e conjuge
 
-       Alteracoes:
+       Alteracoes: 08/05/2017 - Case When para buscar CPF e CNPJ atraves do tamanho da
+								string (Andrey - Mouts).
 
     ............................................................................. */
 
@@ -330,11 +331,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
     -- busca nome do avalista
     CURSOR cr_crapavt IS
        SELECT 'Nome Proprietário (interveniente garantidor): '||crapavt.nmdavali nmdavali,
-              DECODE(NVL(crapass.inpessoa,1),1,
+              CASE WHEN crapavt.inpessoa <> 0 THEN /* Se estiver preenchido o inpessoa (1 ou 2) do avalista */
+                  DECODE(NVL(crapavt.inpessoa,1),1,
                   'CPF n.º'||gene0002.fn_mask_cpf_cnpj(crapavt.nrcpfcgc, 1)||
                       ' RG n.º '||crapavt.nrdocava||decode(nvl(trim(gnetcvl.dsestcvl),trim(gnetcvl_2.dsestcvl))
                                   ,NULL, NULL, ', com o estado civil ')||nvl(trim(gnetcvl.dsestcvl),trim(gnetcvl_2.dsestcvl)),
-                  'CNPJ n.º '||gene0002.fn_mask_cpf_cnpj(crapavt.nrcpfcgc, 2)) dados_pessoais,
+                  'CNPJ n.º '||gene0002.fn_mask_cpf_cnpj(crapavt.nrcpfcgc, 2))
+              WHEN LENGTH(crapavt.nrcpfcgc) <= 11 THEN /* se não estiver preenchido (0) e for CPF length <= 11 */
+                  'CPF n.º'||gene0002.fn_mask_cpf_cnpj(crapavt.nrcpfcgc, 1)||
+                      ' RG n.º '||crapavt.nrdocava||decode(nvl(trim(gnetcvl.dsestcvl),trim(gnetcvl_2.dsestcvl))
+                                  ,NULL, NULL, ', com o estado civil ')||nvl(trim(gnetcvl.dsestcvl),trim(gnetcvl_2.dsestcvl))
+              ELSE /* Se não estiver preenchido e for CNPJ */
+                  'CNPJ n.º '||gene0002.fn_mask_cpf_cnpj(crapavt.nrcpfcgc, 2) 
+              END dados_pessoais,
               'Endereço: '||crapavt.dsendres##1||', bairro '||crapavt.dsendres##2||
               ', da cidade de '||crapavt.nmcidade||'/'||crapavt.cdufresd||', CEP '||gene0002.fn_mask_cep(crapavt.nrcepend) dsendere,
               DECODE(TRIM(crapavt.nmconjug),NULL,NULL,'Cônjuge: '||crapavt.nmconjug) ||
