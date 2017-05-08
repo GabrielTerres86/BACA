@@ -88,7 +88,7 @@
 	$xml .= "		<vlalugue>".$vlalugue."</vlalugue>";                
 	$xml .= "		<dsendere>".$dsendere."</dsendere>";                
 	$xml .= "		<nrendere>".$nrendere."</nrendere>";                
-	$xml .= "		<complend>".$complend."</complend>";                
+	$xml .= "		<complend>".removeCaracteresInvalidos(retiraAcentos($complend))."</complend>";
 	$xml .= "		<nrdoapto>".$nrdoapto."</nrdoapto>";  
 	$xml .= "		<cddbloco>".$cddbloco."</cddbloco>";  
 	$xml .= "		<nrcepend>".$nrcepend."</nrcepend>";                
