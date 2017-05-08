@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/98                     Ultima atualizacao: 16/11/2016
+   Data    : Novembro/98                     Ultima atualizacao: 23/03/2017
 
    Dados referentes ao programa:
 
@@ -534,6 +534,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
 			   30/11/2016 - Correção para buscar corretamente registro da crapstn
 			                de acordo com o tipo de arrecadação (Lucas Lunelli - Projeto 338)
                      
+         23/03/2017 - Ajustes PRJ343 - Emprestimo cessao de credito(Odirlei-AMcom)
+                      
 ............................................................................ */
 
   -- Constantes para geração de arquivos contábeis                                                                          
@@ -2536,8 +2538,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                        WHERE crapepr.cdcooper = crapris.cdcooper
                          AND crapepr.nrdconta = crapris.nrdconta
                          AND crapepr.nrctremp = crapris.nrctremp
-                         AND crapepr.tpemprst = pr_tpemprst);
-
+                         AND crapepr.tpemprst = pr_tpemprst)
+         --> Deve ignorar emprestimos de cessao de credito                 
+        AND NOT EXISTS (SELECT 1
+                          FROM tbcrd_cessao_credito ces
+                         WHERE ces.cdcooper = crapris.cdcooper
+                           AND ces.nrdconta = crapris.nrdconta
+                           AND ces.nrctremp = crapris.nrctremp) ;  
     -- Vencimento do risco
     cursor cr_crapvri (pr_cdcooper in crapris.cdcooper%type,
                        pr_nrdconta in crapris.nrdconta%type,

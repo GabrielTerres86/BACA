@@ -28,7 +28,7 @@
 
    Programa: b1wgen0002.p
    Autora  : Mirtes.
-   Data    : 14/09/2005                        Ultima atualizacao: 20/02/2017
+   Data    : 14/09/2005                        Ultima atualizacao: 11/04/2017
 
    Dados referentes ao programa:
 
@@ -669,7 +669,9 @@
                      Nesses casos ira seguir as mesmas regras de carencia = 0 dias.
                      Hoje esta considerando fixo 60 dias nesses casos.
                      Heitor (Mouts) - Chamado 629653.
-             
+               
+               11/04/2017 - Alterado rotina carrega_dados_proposta_finalidade para limpar temptable antes
+                            de popular. PRJ343 - Cessao de credito (Odirlei-AMcom)
  ..............................................................................*/
 
 /*................................ DEFINICOES ................................*/
@@ -11256,6 +11258,10 @@ PROCEDURE carrega_dados_proposta_finalidade:
 
     ASSIGN aux_cdcritic = 0
            aux_dscritic = "".
+
+     FOR EACH tt-dados-proposta-fin NO-LOCK:
+          DELETE tt-dados-proposta-fin.
+     END.
 
     CREATE tt-dados-proposta-fin.
 

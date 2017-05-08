@@ -3837,7 +3837,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(Amcom)
-    --  Data     : Outubro/2015.                   Ultima atualizacao: 04/10/2016
+    --  Data     : Outubro/2015.                   Ultima atualizacao: 12/04/2017
     --
     --  Dados referentes ao programa:
     --
@@ -3872,6 +3872,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --              29/09/2019 - Inclusao de verificacao de contratos de acordos de
     --                           empréstimos, Prj. 302 (Jean Michel).
     --
+    --              12/04/2017 - Exibir mensagem de fatura de cartão atrasado.
+    --                           PRJ343 - Cessao de credito(Odirlei-AMcom)    
     -- ..........................................................................*/
     
     ---------------> CURSORES <----------------
@@ -4282,6 +4284,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
          AND snh.nrcpfcgc = pr_nrcpfcgc;
 
     rw_crapsnh_2 cr_crapsnh_2%ROWTYPE;     
+      
+    --> Buscar alerta de atraso do cartao
+    CURSOR cr_crdatraso (pr_cdcooper crapsnh.cdcooper%TYPE,
+                         pr_nrdconta crapsnh.nrdconta%TYPE )IS
+      SELECT * 
+        FROM (SELECT atr.qtdias_atraso,
+                     atr.vlsaldo_devedor
+                FROM tbcrd_alerta_atraso atr
+               WHERE atr.cdcooper = pr_cdcooper
+                 AND atr.nrdconta = pr_nrdconta
+                 ORDER BY atr.qtdias_atraso DESC, atr.vlsaldo_devedor DESC)
+       WHERE rownum <= 1; 
       
     --------------> VARIAVEIS <----------------
     vr_cdcritic INTEGER;
@@ -5377,6 +5391,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                            pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
     END IF;
     
+    --> Buscar alerta de atraso do cartao
+    FOR rw_crdatraso IN cr_crdatraso( pr_cdcooper => pr_cdcooper
+                                     ,pr_nrdconta => pr_nrdconta) LOOP
+      
+      IF rw_crdatraso.qtdias_atraso > 0 THEN
+        vr_dsmensag := 'Cooperado com fatura de cartão de crédito em atraso há '||
+                       rw_crdatraso.qtdias_atraso ||
+                       ' dias no valor de R$ '|| to_char(rw_crdatraso.vlsaldo_devedor,'FM999G999G999G990D00');
+        
+        --> Incluir na temptable
+        pc_cria_registro_msg(pr_dsmensag             => vr_dsmensag,
+                             pr_tab_mensagens_atenda => pr_tab_mensagens_atenda); 
+      END IF;
+    END LOOP;
+
     pr_des_reto := 'OK';
     
   EXCEPTION    

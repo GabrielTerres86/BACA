@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Lucas Lunelli
-       Data    : Abril/2014.                     Ultima atualizacao: 06/02/2017
+       Data    : Abril/2014.                     Ultima atualizacao: 12/04/2017
 
        Dados referentes ao programa:
 
@@ -116,6 +116,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                                 
                    06/02/2017 - Ajuste para nao atualizar a wcrd em cima de um cartao ja existente
                                 quando se trata de reposicao/2a via. (Fabricio)
+                                
+                   12/04/2017 - Ajustes para gravar tabela tbcrd_conta_cartao.
+                                PRJ343-Cessao de Credito (Odirlei-AMcom)             
     ............................................................................ */
 
     DECLARE
@@ -2566,6 +2569,25 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                     vr_dscritic := 'Erro ao atualizar situacao da crawcrd: '||SQLERRM;
                     RAISE vr_exc_saida;
                 END;
+                
+                --> Gravar registro de conta cartão
+                BEGIN
+                  INSERT INTO tbcrd_conta_cartao
+                              (cdcooper, 
+                               nrdconta, 
+                               nrconta_cartao)
+                       VALUES (rw_crawcrd.cdcooper, --> cdcooper
+                               rw_crawcrd.nrdconta, --> nrdconta
+                               vr_nrdctitg);        --> nrconta_cartao
+                EXCEPTION
+                  WHEN dup_val_on_index THEN
+                    NULL; --> Caso ja exista não deve apresentar critica
+                  WHEN OTHERS THEN
+                    vr_dscritic := 'Erro ao inserir tbcrd_conta_cartao: '||SQLERRM;
+                    RAISE vr_exc_saida;
+                  
+                END;
+                
 
               END IF;
             EXCEPTION
