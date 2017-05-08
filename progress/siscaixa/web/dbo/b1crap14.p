@@ -210,6 +210,9 @@
                            
              20/03/2017 - Ajuste para verificar vencimento da P.M. TIMBO, DEFESA CIVIL TIMBO  
                           MEIO AMBIENTE DE TIMBO, TRANSITO DE TIMBO (Lucas Ranghetti #630176)
+						  
+             12/04/2017 - Ajuste para verificar vencimento da P.M. AGROLANDIA
+                          (Tiago #647174)						  
 ............................................................................ */
 
 {dbo/bo-erro1.i}
@@ -623,6 +626,7 @@ PROCEDURE retorna-valores-fatura.
 	      (crapcon.cdempcon = 3493 AND crapcon.cdsegmto = 1)  OR    /* P.M. PRES GETULIO */
 	      (crapcon.cdempcon = 1756 AND crapcon.cdsegmto = 1)  OR    /* P.M. GUARAMIRIM */
         (crapcon.cdempcon = 4539 AND crapcon.cdsegmto = 1)  OR    /* P.M. TIMBO */
+		(crapcon.cdempcon = 0040 AND crapcon.cdsegmto = 1)  OR    /* P.M. AGROLANDIA */
         (crapcon.cdempcon = 0562 AND crapcon.cdsegmto = 5)  OR    /* DEFESA CIVIL TIMBO */
         (crapcon.cdempcon = 0563 AND crapcon.cdsegmto = 5)  OR    /* MEIO AMBIENTE DE TIMBO */
         (crapcon.cdempcon = 0564 AND crapcon.cdsegmto = 5)) THEN  /* TRANSITO DE TIMBO */
