@@ -6,6 +6,8 @@
  * OBJETIVO     : Verificas conta e traz dados do associados.
  *
  * 000: [15/07/2014] Incluso novos parametros inpessoa e dtnascto (Daniel).
+ * 001: [08/05/2017] Incluso de validação para CPF/CNPJ de avalistas sem
+ *				     sem conta. (Andrey Formigari - Mouts) SD: 644056
  */
 ?>
  
@@ -37,6 +39,23 @@
 	$inpessoa = (isset($_POST['inpessoa'])) ? $_POST['inpessoa'] : '';
 	$dtnascto = (isset($_POST['dtnascto'])) ? $_POST['dtnascto'] : '';
 	$cddopcao = 'A';
+
+	/* Apenas validar CPF/CNPJ se o avalista não possuir conta.
+	   Validação feita antes da chamada Progress para evitar requisições desnecessárias. 
+	*/
+	if ($nrcpfcgc && (!$nrctaava || !$nrctaav1)) {
+		if ($inpessoa == 1)
+			$isValidCpfOrCnpj = validar_cpf( str_pad($nrcpfcgc, 11, '0', STR_PAD_LEFT) );
+		else if ($inpessoa == 2)
+			$isValidCpfOrCnpj = validar_cnpj( str_pad($nrcpfcgc, 14, '0', STR_PAD_LEFT) );
+		else
+			$isValidCpfOrCnpj = false;
+		
+		if (!$isValidCpfOrCnpj){
+			exibirErro('error', (($inpessoa==1) ? 'CPF' : 'CNPJ') . ' é inválido.','Alerta - Ayllos', 'focaCampoErro(\'nrcpfcgc\',\'frmDadosAval\');bloqueiaFundo(divRotina);', false);
+			exit();
+		}
+	}
 		
 	// Monta o xml de requisição
 	$xml .= "<Root>";
