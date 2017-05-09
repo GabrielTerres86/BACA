@@ -3148,7 +3148,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
        WHERE ass.cdcooper = pr_cdcooper
          AND ass.nrdconta = pr_nrdconta
          AND enc.cdcooper = ass.cdcooper
-         AND enc.nrdconta = ass.nrdconta;
+         AND enc.nrdconta = ass.nrdconta
+         AND enc.idseqttl = 1
+         AND enc.tpendass = DECODE(ass.inpessoa,1,10,9); -- 9 - comercial / 10 - residencial
     rw_crapass cr_crapass%ROWTYPE;
     
     -- Busca dos dados da cooperativa
@@ -4759,6 +4761,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                          '<nmoperad>'|| vr_tab_contrato_limite(vr_idxctlim).nmoperad ||'</nmoperad>'||
                          '<localpag>'|| rw_crapage.nmcidade||'/'||rw_crapage.cdufdcop||'</localpag>'||
                          '<dtcontra>'|| to_char(rw_craplim.dtinivig, 'DD/MM/RRRR') || '</dtcontra>');
+      
+      IF pr_nrctrlim = 3 THEN
       pc_escreve_xml('<avalistas>'||
                          '<aval1>'||
                            '<nrsequen>1</nrsequen>'||
@@ -4783,6 +4787,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                            '<nrfoncjq>'|| vr_nrfonres2                                 ||'</nrfoncjq>'||
                          '</aval2>
                       </avalistas>');                              
+      ELSE
+        pc_escreve_xml('<avalistas>'||
+                         '<aval>'||
+                           '<nrsequen>1</nrsequen>'||
+                           '<nmdavali>'|| vr_tab_contrato_limite(vr_idxctlim).nmdaval1 ||'</nmdavali>'||
+                           '<nmconjug>'|| vr_tab_contrato_limite(vr_idxctlim).nmdcjav1 ||'</nmconjug>'|| 
+                           '<cpfavali>'|| vr_tab_contrato_limite(vr_idxctlim).dscpfav1 ||'</cpfavali>'||
+                           '<nrcpfcjg>'|| vr_tab_contrato_limite(vr_idxctlim).dscfcav1 ||'</nrcpfcjg>'|| 
+                         '</aval>
+                          <aval>'||
+                           '<nrsequen>2</nrsequen>'|| 
+                           '<nmdavali>'|| vr_tab_contrato_limite(vr_idxctlim).nmdaval2 ||'</nmdavali>'||
+                           '<nmconjug>'|| vr_tab_contrato_limite(vr_idxctlim).nmdcjav2 ||'</nmconjug>'|| 
+                           '<cpfavali>'|| vr_tab_contrato_limite(vr_idxctlim).dscpfav2 ||'</cpfavali>'||
+                           '<nrcpfcjg>'|| vr_tab_contrato_limite(vr_idxctlim).dscfcav2 ||'</nrcpfcjg>'|| 
+                         '</aval>
+                      </avalistas>');
+      END IF;
     
       --> Gerar XML para dados do relatorio de CET   
       CCET0001.pc_imprime_limites_cet( pr_cdcooper  => pr_cdcooper                 -- Cooperativa
