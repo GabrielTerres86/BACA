@@ -2,6 +2,8 @@
      todos os dias as 18H
      
      Alteração:  08/05/2017 - Alterado para rodar apenas de segunda a sexta (Tiago)
+                 
+                 09/05/2017 - Adicionado drop do job (Tiago)
 */
 DECLARE
   vr_dsplsql  VARCHAR2(1500);
@@ -13,6 +15,9 @@ BEGIN
                    
   -- Montar o prefixo do código do programa para o jobname
   vr_jobname := 'JBCC_PAGA_ADIOFJUROS$';
+  
+  dbms_scheduler.drop_job(job_name => 'CECRED.'||vr_jobname);
+  
   -- Faz a chamada ao programa paralelo atraves de JOB
   gene0001.pc_submit_job(pr_cdcooper  => 3 /*CECRED*/               --> Código da cooperativa
                         ,pr_cdprogra  => 'JBCC_PAGA_ADIOFJUROS'     --> Código do programa
