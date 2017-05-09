@@ -198,7 +198,13 @@ IF VALID-HANDLE(h-b1wgen0084a) THEN
            DELETE PROCEDURE h-b1wgen0084b.
            IF RETURN-VALUE = "NOK" THEN
               DO:
-                  ASSIGN aux_dscritic = "Erro Saldo".
+                  FIND FIRST tt-erro NO-LOCK NO-ERROR.
+
+                  IF AVAILABLE tt-erro THEN
+                     ASSIGN aux_dscritic = tt-erro.dscritic.
+                  ELSE
+                     ASSIGN aux_dscritic = "Erro Saldo".                  
+                  
                   RUN proc_geracao_log.
                   RETURN "NOK".
               END.
@@ -284,9 +290,9 @@ ELSE
 
 PROCEDURE proc_geracao_log:
     
-    /* Gerar log(CRAPLGM) - Rotina Oracle */
-    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-    RUN STORED-PROCEDURE pc_gera_log_prog
+      /* Gerar log(CRAPLGM) - Rotina Oracle */
+      { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+      RUN STORED-PROCEDURE pc_gera_log_prog
         aux_handproc = PROC-HANDLE NO-ERROR
         (INPUT par_cdcooper    /* pr_cdcooper */
         ,INPUT "996"           /* pr_cdoperad */
@@ -301,17 +307,17 @@ PROCEDURE proc_geracao_log:
         ,INPUT par_nrdconta    /* pr_nrdconta */
         ,OUTPUT 0 ). /* pr_nrrecid  */
     
-    CLOSE STORED-PROC pc_gera_log_prog
+      CLOSE STORED-PROC pc_gera_log_prog
           aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.     
 
-    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl}}
+      { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl}}
     
     
-     ASSIGN aux_nrrecid = pc_gera_log_prog.pr_nrrecid
+      ASSIGN aux_nrrecid = pc_gera_log_prog.pr_nrrecid
                               WHEN pc_gera_log_prog.pr_nrrecid <> ?.       
                               
-     /* Gerar log item (CRAPLGI) - Rotina Oracle */
-     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+      /* Gerar log item (CRAPLGI) - Rotina Oracle */
+      { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
      
       RUN STORED-PROCEDURE pc_gera_log_item_prog
                aux_handproc = PROC-HANDLE NO-ERROR
@@ -379,13 +385,9 @@ PROCEDURE proc_geracao_log:
      { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl}}
      
 
-    IF aux_dscritic <> "" THEN DO:
-        UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
-                           " - " + aux_dscritic +  "' >> log/proc_batch.log").
-        
+     IF aux_dscritic <> "" THEN DO:               
         ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
-              RETURN "NOK".
-        
-   END.
+        RETURN "NOK".        
+     END.
     
 END PROCEDURE.
