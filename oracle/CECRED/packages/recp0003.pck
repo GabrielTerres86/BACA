@@ -933,6 +933,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                             ,pr_dstiplog => 'E'
                                             ,pr_dscritic => 'Arquivo: ' || vr_nmarqtxt || ' ' || vr_dscritic);
                        pr_flgemail := TRUE;
+                       ROLLBACK; -- Desfaz acoes
                        EXIT LEITURA_TXT;
                      END IF;
 
@@ -997,6 +998,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                             ,pr_dstiplog => 'E'
                                             ,pr_dscritic => 'Arquivo: ' || vr_nmarqtxt || ' ' || vr_dscritic);
                        pr_flgemail := TRUE;
+                       ROLLBACK; -- Desfaz acoes
                        EXIT LEITURA_TXT;
                      ELSE
                        CLOSE cr_crapepr;
