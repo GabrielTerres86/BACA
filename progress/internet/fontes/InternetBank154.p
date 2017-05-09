@@ -25,6 +25,7 @@ CREATE WIDGET-POOL.
 DEF VAR h-b1wgen0002 AS HANDLE                                         NO-UNDO.
 
 DEF VAR aux_qtregist AS INTE NO-UNDO.
+DEF VAR aux_idemprtr AS INTE NO-UNDO.
 
 DEF  INPUT PARAM par_cdcooper AS INTE                                  NO-UNDO.
 DEF  INPUT PARAM par_cdagenci AS INTE                                  NO-UNDO.
@@ -85,6 +86,8 @@ IF VALID-HANDLE(h-b1wgen0002) THEN
               RETURN "NOK".
           END.
 
+       ASSIGN aux_idemprtr = 0.
+
        CREATE xml_operacao.
        ASSIGN xml_operacao.dslinxml = "<EMPRESTIMOS>".
 
@@ -117,13 +120,22 @@ IF VALID-HANDLE(h-b1wgen0002) THEN
                    + "<tpemprst>" + STRING(tt-dados-epr.tpemprst,"9") + "</tpemprst>"
                    + "<flgpreap>" + STRING(tt-dados-epr.flgpreap) + "</flgpreap>"
                    + "<cdorigem>" + STRING(tt-dados-epr.cdorigem) + "</cdorigem>"
+                   
+                   + "<diavenct>" + STRING(DAY(tt-dados-epr.dtdpagto)) + "</diavenct>"
+                   + "<dsprodut>" + "Pré-Fixado" + "</dsprodut>"
+                   + "<qtpreres>" + STRING(tt-dados-epr.qtpreemp - tt-dados-epr.qtprecal) + "</qtpreres>"
+                   
                    + "</EMPRESTIMO>".
             END.
+
+            IF tt-dados-epr.tpemprst = 0 THEN
+            ASSIGN aux_idemprtr = 1.
 
        END.
 
        CREATE xml_operacao.
-       ASSIGN xml_operacao.dslinxml = "</EMPRESTIMOS>".
+       ASSIGN xml_operacao.dslinxml = "</EMPRESTIMOS>"
+                                    + "<idemprtr>" + STRING(aux_idemprtr) + "</idemprtr>".
        
        RETURN "OK".
        

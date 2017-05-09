@@ -21,16 +21,20 @@ CREATE WIDGET-POOL.
 { sistema/internet/includes/var_ibank.i }
 { sistema/generico/includes/b1wgen0084att.i }
 { sistema/generico/includes/var_internet.i }
+{ sistema/generico/includes/var_oracle.i }
 
 DEF VAR h-b1wgen0084a AS HANDLE                                        NO-UNDO.
 DEF VAR h-b1wgen0084b AS HANDLE                                        NO-UNDO.
 
+DEF VAR aux_dstransa  AS CHAR                                          NO-UNDO.
+DEF VAR aux_nrrecid   AS INTE                                          NO-UNDO.
 DEF VAR aux_cont      AS INT                                           NO-UNDO.   
 DEF VAR aux_excluir   AS LOGICAL                                       NO-UNDO. 
 DEF VAR aux_totatual  AS DECI                                          NO-UNDO.
 DEF VAR aux_totpagto  AS DECI                                          NO-UNDO.
 DEF VAR aux_qtddeprc  AS INT                                           NO-UNDO.
 DEF VAR aux_vlsomato  AS DECI                                          NO-UNDO.
+DEF VAR aux_dscritic  AS CHAR                                          NO-UNDO.
 
 DEF  INPUT PARAM par_cdcooper AS INTE                                  NO-UNDO.
 DEF  INPUT PARAM par_cdagenci AS INTE                                  NO-UNDO.
@@ -47,22 +51,36 @@ DEF  INPUT PARAM par_ordempgo AS CHAR                                  NO-UNDO.
 DEF  INPUT PARAM par_qtdprepr AS INTE                                  NO-UNDO.
 DEF  INPUT PARAM par_listapar AS CHAR                                  NO-UNDO. 
 DEF  INPUT PARAM par_tipopgto AS INTE                                  NO-UNDO. 
+DEF  INPUT PARAM par_flmobile AS LOGI                                  NO-UNDO.
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
+
+
+ASSIGN aux_dstransa = "Pagamento de Emprestimo".
 
 /* par_ordempgo 1 - Inicio para Final   2 - Final para Inicio 
    par_tipopgto 1 - Contrato 2 - Parcela */
 
-IF par_tipopgto = 2 THEN /* 2 - Parcela */
+IF NOT CAN-DO("1,2", STRING(par_tipopgto)) THEN
+    ASSIGN aux_dscritic = "Não foi possível efetuar a operação.".
+    
+ELSE IF par_tipopgto = 2 THEN /* 2 - Parcela */
 DO:
-    IF par_qtdprepr <> NUM-ENTRIES(par_listapar,',') THEN
-    DO:
-        ASSIGN xml_dsmsgerr = "<dsmsgerr>Não foi possível efetuar a " +
-                                         "operação.</dsmsgerr>".
-        RETURN "NOK".
-    END.
+    IF par_qtdprepr <= 0 THEN
+        ASSIGN aux_dscritic = "Não foi possível efetuar a operação.".
+        
+    ELSE IF par_qtdprepr <> NUM-ENTRIES(par_listapar,',') THEN
+        ASSIGN aux_dscritic = "Não foi possível efetuar a operação.".
+        
+    ELSE IF NOT CAN-DO("1,2", STRING(par_ordempgo)) THEN
+        ASSIGN aux_dscritic = "Não foi possível efetuar a operação.".
 END.
 
+IF aux_dscritic <> "" THEN
+    DO:
+    RUN proc_geracao_log.
+        RETURN "NOK".
+    END.
 
 RUN sistema/generico/procedures/b1wgen0084a.p PERSISTENT SET h-b1wgen0084a.
 
@@ -91,8 +109,8 @@ IF VALID-HANDLE(h-b1wgen0084a) THEN
        DELETE PROCEDURE h-b1wgen0084a.
        IF RETURN-VALUE = "NOK" THEN
           DO:
-              ASSIGN xml_dsmsgerr = "<dsmsgerr>Não foi possível consultar as " +
-                                    "parcelas do contratos.</dsmsgerr>".
+              ASSIGN aux_dscritic = "Não foi possível consultar as parcelas do contratos.".
+              RUN proc_geracao_log.
               RETURN "NOK".
           END.
 
@@ -133,8 +151,9 @@ IF VALID-HANDLE(h-b1wgen0084a) THEN
             ASSIGN xml_dsmsgerr = "<dsmsgerr>Não foi possível consultar as " +
                                     "parcelas do contratos.</dsmsgerr>".
             */                        
-            ASSIGN xml_dsmsgerr = "<dsmsgerr>Ha valores pagos na(s) parcela(s) selecionada(s), " +
-                                  "consulte o extrato do seu contrato.</dsmsgerr>".
+            ASSIGN aux_dscritic = "Ha valores pagos na(s) parcela(s) selecionada(s), " +
+                                  "consulte o extrato do seu contrato.".
+            RUN proc_geracao_log.
             RETURN "NOK".
         END.
 
@@ -179,13 +198,8 @@ IF VALID-HANDLE(h-b1wgen0084a) THEN
            DELETE PROCEDURE h-b1wgen0084b.
            IF RETURN-VALUE = "NOK" THEN
               DO:
-
-				  FIND FIRST tt-erro NO-LOCK NO-ERROR.
-
-				  IF AVAILABLE tt-erro THEN
-				    ASSIGN xml_dsmsgerr = "<dsmsgerr>" + tt-erro.dscritic + "</dsmsgerr>".
-				  ELSE
-                  ASSIGN xml_dsmsgerr = "<dsmsgerr>Erro Saldo</dsmsgerr>".
+                  ASSIGN aux_dscritic = "Erro Saldo".
+                  RUN proc_geracao_log.
                   RETURN "NOK".
               END.
            ELSE
@@ -194,7 +208,8 @@ IF VALID-HANDLE(h-b1wgen0084a) THEN
          
              IF AVAILABLE tt-msg-confirma  THEN
                  DO:
-                      ASSIGN xml_dsmsgerr = "<dsmsgerr>" + tt-msg-confirma.dsmensag + "</dsmsgerr>".
+                      ASSIGN aux_dscritic = tt-msg-confirma.dsmensag.
+                      RUN proc_geracao_log.
                       RETURN "NOK".
                  END.
 
@@ -243,22 +258,134 @@ IF VALID-HANDLE(h-b1wgen0084a) THEN
                  END.
 */
 
-              ASSIGN xml_dsmsgerr = "<dsmsgerr>Não foi possível efetuar o " +
-                                    "pagamento das parcelas do contratos.</dsmsgerr>".
+              ASSIGN aux_dscritic = "Não foi possível efetuar o " +
+                                    "pagamento das parcelas do contratos.".
+              RUN proc_geracao_log.
               RETURN "NOK".
          END.
 
       END.
       ELSE
       DO :
-        ASSIGN xml_dsmsgerr = "<dsmsgerr>Não foi possível efetuar a " +
-                                     "operação.</dsmsgerr>".
+        ASSIGN aux_dscritic = "Não foi possível efetuar a operação.".
+        RUN proc_geracao_log.
         RETURN "NOK".
       END.
   END.
 ELSE
    DO :
-        ASSIGN xml_dsmsgerr = "<dsmsgerr>Não foi possível efetuar a " +
-                                    "operação.</dsmsgerr>".
-              RETURN "NOK".
+        ASSIGN aux_dscritic = "Não foi possível efetuar a operação.".
+          RUN proc_geracao_log.
+          RETURN "NOK".
    END.
+   
+
+/*................................ PROCEDURES ................................*/
+
+PROCEDURE proc_geracao_log:
+    
+    /* Gerar log(CRAPLGM) - Rotina Oracle */
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    RUN STORED-PROCEDURE pc_gera_log_prog
+        aux_handproc = PROC-HANDLE NO-ERROR
+        (INPUT par_cdcooper    /* pr_cdcooper */
+        ,INPUT "996"           /* pr_cdoperad */
+        ,INPUT aux_dscritic    /* pr_dscritic */
+        ,INPUT "INTERNET"      /* pr_dsorigem */
+        ,INPUT aux_dstransa    /* pr_dstransa */
+        ,INPUT aux_datdodia    /* pr_dttransa */
+        ,INPUT 0 /* Operacao sem sucesso */ /* pr_flgtrans */
+        ,INPUT TIME            /* pr_hrtransa */
+        ,INPUT par_idseqttl    /* pr_idseqttl */
+        ,INPUT "INTERNETBANK"  /* pr_nmdatela */
+        ,INPUT par_nrdconta    /* pr_nrdconta */
+        ,OUTPUT 0 ). /* pr_nrrecid  */
+    
+    CLOSE STORED-PROC pc_gera_log_prog
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.     
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl}}
+    
+    
+     ASSIGN aux_nrrecid = pc_gera_log_prog.pr_nrrecid
+                              WHEN pc_gera_log_prog.pr_nrrecid <> ?.       
+                              
+     /* Gerar log item (CRAPLGI) - Rotina Oracle */
+     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+     
+      RUN STORED-PROCEDURE pc_gera_log_item_prog
+               aux_handproc = PROC-HANDLE NO-ERROR
+                  (INPUT aux_nrrecid,
+                   INPUT "Tipo Pagamento",
+                   INPUT "",
+                   INPUT STRING(par_tipopgto=1,"Pagamento Total/Pagamento Parcial")).
+
+      CLOSE STORED-PROC pc_gera_log_item_prog
+        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+      
+      RUN STORED-PROCEDURE pc_gera_log_item_prog
+               aux_handproc = PROC-HANDLE NO-ERROR
+                  (INPUT aux_nrrecid,
+                   INPUT "Contrato",
+                   INPUT "",
+                   INPUT STRING(par_nrctremp)).
+
+      CLOSE STORED-PROC pc_gera_log_item_prog
+        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+      IF par_tipopgto = 2 THEN
+      DO:
+          RUN STORED-PROCEDURE pc_gera_log_item_prog
+                   aux_handproc = PROC-HANDLE NO-ERROR
+                      (INPUT aux_nrrecid,
+                       INPUT "Ordem Pagamento",
+                       INPUT "",
+                       INPUT STRING(par_ordempgo="1","Inicio para Final/Final para Inicio")).
+
+          CLOSE STORED-PROC pc_gera_log_item_prog
+            aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+          RUN STORED-PROCEDURE pc_gera_log_item_prog
+                   aux_handproc = PROC-HANDLE NO-ERROR
+                      (INPUT aux_nrrecid,
+                       INPUT "Quantidade de Parcelas",
+                       INPUT "",
+                       INPUT STRING(par_qtdprepr)).
+
+          CLOSE STORED-PROC pc_gera_log_item_prog
+            aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+          RUN STORED-PROCEDURE pc_gera_log_item_prog
+                   aux_handproc = PROC-HANDLE NO-ERROR
+                      (INPUT aux_nrrecid,
+                       INPUT "Número das Parcelas",
+                       INPUT "",
+                       INPUT par_listapar).
+
+          CLOSE STORED-PROC pc_gera_log_item_prog
+            aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+      END.
+      
+      RUN STORED-PROCEDURE pc_gera_log_item_prog
+               aux_handproc = PROC-HANDLE NO-ERROR
+                  (INPUT aux_nrrecid,
+                   INPUT "Origem",
+                   INPUT "",
+                   INPUT STRING(par_flmobile,"MOBILE/INTERNETBANK")).
+
+      CLOSE STORED-PROC pc_gera_log_item_prog
+        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+     { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl}}
+     
+
+    IF aux_dscritic <> "" THEN DO:
+        UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+                           " - " + aux_dscritic +  "' >> log/proc_batch.log").
+        
+        ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
+              RETURN "NOK".
+        
+   END.
+    
+END PROCEDURE.
