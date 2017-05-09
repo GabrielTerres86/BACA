@@ -166,7 +166,7 @@ CREATE OR REPLACE PACKAGE BODY EXPURGO.EXPU0001  is
        WHERE NOT EXISTS (SELECT 1
                            FROM tbhst_dependencia dep
                           WHERE dep.iddepende = ctl.idcontrole )
-         AND ctl.nmtabela NOT IN ('CRAPLAU')
+         AND ctl.nmtabela NOT IN ('CRAPSQU')
          --> Respeitar o inicio das execuções
          AND ctl.dtinicio <= TRUNC(pr_dtdiaatu)
          --> Para intervalos diferentes de diario, rodarão apenas nos domingos                 
