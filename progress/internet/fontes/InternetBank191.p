@@ -37,13 +37,13 @@ DEF VAR aux_flgderro AS CHAR                                           NO-UNDO.
 /* Verificar se conta possui configuracao de boleto */
 { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
 
-RUN STORED-PROCEDURE pc_solicitar_credito
+RUN STORED-PROCEDURE pc_solicitar_emprestimo
       aux_handproc = PROC-HANDLE NO-ERROR
                               (INPUT par_cdcooper,     /* pr_cdcooper     */ 
                                INPUT 90,               /* pr_cdagenci     */
                                INPUT 900,              /* pr_nrdcaixa     */
                                INPUT "996",            /* Operador do IB  */
-                               INPUT aux_cddcanal,     /* pr_cddcanal     */ 
+                               INPUT par_idorigem,     /* pr_cddcanal     */ 
                                INPUT par_nrdconta,     /* pr_nrdconta     */
                                INPUT par_idseqttl,     /* pr_idseqttl     */
                                INPUT par_dsdemail,     /* pr_dsdemail     */
@@ -53,17 +53,17 @@ RUN STORED-PROCEDURE pc_solicitar_credito
                                OUTPUT "",              /* pr_flgderro     */
                                OUTPUT "").             /* pr_dsmsgsai     */
 
-CLOSE STORED-PROC pc_solicitar_credito
+CLOSE STORED-PROC pc_solicitar_emprestimo
         aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
 { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
 
 ASSIGN aux_flgderro = ""
        aux_dsmsgsai = ""
-       aux_flgderro = pc_solicitar_credito.pr_flgderro
-                      WHEN pc_solicitar_credito.pr_flgderro <> ?
-       aux_dsmsgsai = pc_solicitar_credito.pr_dsmsgsai
-                      WHEN pc_solicitar_credito.pr_dsmsgsai <> ?.
+       aux_flgderro = pc_solicitar_emprestimo.pr_flgderro
+                      WHEN pc_solicitar_emprestimo.pr_flgderro <> ?
+       aux_dsmsgsai = pc_solicitar_emprestimo.pr_dsmsgsai
+                      WHEN pc_solicitar_emprestimo.pr_dsmsgsai <> ?.
 
 IF  aux_flgderro = "NOK"  THEN
     DO:
