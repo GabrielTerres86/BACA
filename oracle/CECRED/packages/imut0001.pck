@@ -23,38 +23,44 @@ CREATE OR REPLACE PACKAGE CECRED.IMUT0001 AS
   ---------------------------------------------------------------------------------------------------------------
 
   /* Procedure para verificar imunidade tributaria e inserir valor de insenção */
-  PROCEDURE pc_verifica_imunidade_trib( pr_cdcooper  IN  INTEGER               --> Codigo Cooperativa
-                                       ,pr_nrdconta  IN  INTEGER               --> Numero da Conta
-                                       ,pr_dtmvtolt  IN  DATE                  --> Data movimento
-                                       ,pr_flgrvvlr  IN  BOOLEAN               --> Identificador se deve gravar valor
-                                       ,pr_cdinsenc  IN  crapvin.cdinsenc%TYPE --> Codigo da insenção
-                                       ,pr_vlinsenc  IN  crapvin.vlinsenc%TYPE --> Valor insento
-                                       ,pr_flgimune  OUT BOOLEAN               --> Identificador se é imune
-                                       ,pr_dsreturn  OUT VARCHAR2              --> Descricao retorno(NOK/OK)
-                                       ,pr_tab_erro  OUT GENE0001.typ_tab_erro);--> Tabela erros
+  PROCEDURE pc_verifica_imunidade_trib( pr_cdcooper  IN  INTEGER                          --> Codigo Cooperativa
+                                       ,pr_nrdconta  IN  INTEGER                          --> Numero da Conta
+                                       ,pr_dtmvtolt  IN  DATE                             --> Data movimento
+                                       ,pr_flgrvvlr  IN  BOOLEAN                          --> Identificador se deve gravar valor
+                                       ,pr_cdinsenc  IN  crapvin.cdinsenc%TYPE            --> Codigo da insenção
+                                       ,pr_vlinsenc  IN  crapvin.vlinsenc%TYPE            --> Valor insento
+                                       ,pr_inpessoa  IN  crapass.inpessoa%TYPE DEFAULT 0  --> Tipo de pessoa
+                                       ,pr_nrcpfcgc  IN  crapass.nrcpfcgc%TYPE DEFAULT 0  --> Número do CPF/CNPJ
+                                       ,pr_flgimune  OUT BOOLEAN                          --> Identificador se é imune
+                                       ,pr_dsreturn  OUT VARCHAR2                         --> Descricao retorno(NOK/OK)
+                                       ,pr_tab_erro  OUT GENE0001.typ_tab_erro);          --> Tabela erros
 
   /* Procedure para verificar periodo de imunidade tributaria */
-  PROCEDURE pc_verifica_periodo_imune( pr_cdcooper  IN  INTEGER   --> Codigo Cooperativa
-                                      ,pr_nrdconta  IN  INTEGER   --> Numero da Conta
-                                      ,pr_flgimune  OUT BOOLEAN   --> Identificador se é imune
-                                      ,pr_dtinicio  OUT  DATE     --> Data de inicio da imunidade
-                                      ,pr_dttermin  OUT  DATE     --> Data termino da imunidadeValor insento
-                                      ,pr_dsreturn  OUT VARCHAR2               --> Descricao retorno(NOK/OK)
-                                      ,pr_tab_erro  OUT GENE0001.typ_tab_erro);--> Tabela erros
+  PROCEDURE pc_verifica_periodo_imune( pr_cdcooper  IN  INTEGER                          --> Codigo Cooperativa
+                                      ,pr_nrdconta  IN  INTEGER                          --> Numero da Conta
+                                      ,pr_inpessoa  IN  crapass.inpessoa%TYPE DEFAULT 0  --> Tipo de pessoa
+                                      ,pr_nrcpfcgc  IN  crapass.nrcpfcgc%TYPE DEFAULT 0  --> Número do CPF/CNPJ
+                                      ,pr_flgimune  OUT BOOLEAN                          --> Identificador se é imune
+                                      ,pr_dtinicio  OUT  DATE                            --> Data de inicio da imunidade
+                                      ,pr_dttermin  OUT  DATE                            --> Data termino da imunidadeValor insento
+                                      ,pr_dsreturn  OUT VARCHAR2                         --> Descricao retorno(NOK/OK)
+                                      ,pr_tab_erro  OUT GENE0001.typ_tab_erro);          --> Tabela erros
 END IMUT0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.IMUT0001 AS
 
   /* Procedure para verificar imunidade tributaria e inserir valor de insenção */
-  PROCEDURE pc_verifica_imunidade_trib( pr_cdcooper  IN  INTEGER               --> Codigo Cooperativa
-                                       ,pr_nrdconta  IN  INTEGER               --> Numero da Conta
-                                       ,pr_dtmvtolt  IN  DATE                  --> Data movimento
-                                       ,pr_flgrvvlr  IN  BOOLEAN               --> Identificador se deve gravar valor
-                                       ,pr_cdinsenc  IN  crapvin.cdinsenc%TYPE --> Codigo da insenção
-                                       ,pr_vlinsenc  IN  crapvin.vlinsenc%TYPE --> Valor insento
-                                       ,pr_flgimune  OUT BOOLEAN               --> Identificador se é imune
-                                       ,pr_dsreturn  OUT VARCHAR2              --> Descricao retorno(NOK/OK)
-                                       ,pr_tab_erro  OUT GENE0001.typ_tab_erro)--> Tabela erros
+  PROCEDURE pc_verifica_imunidade_trib( pr_cdcooper  IN  INTEGER                          --> Codigo Cooperativa
+                                       ,pr_nrdconta  IN  INTEGER                          --> Numero da Conta
+                                       ,pr_dtmvtolt  IN  DATE                             --> Data movimento
+                                       ,pr_flgrvvlr  IN  BOOLEAN                          --> Identificador se deve gravar valor
+                                       ,pr_cdinsenc  IN  crapvin.cdinsenc%TYPE            --> Codigo da isenção
+                                       ,pr_vlinsenc  IN  crapvin.vlinsenc%TYPE            --> Valor isento
+                                       ,pr_inpessoa  IN  crapass.inpessoa%TYPE DEFAULT 0  --> Tipo de pessoa
+                                       ,pr_nrcpfcgc  IN  crapass.nrcpfcgc%TYPE DEFAULT 0  --> Número do CPF/CNPJ
+                                       ,pr_flgimune  OUT BOOLEAN                          --> Identificador se é imune
+                                       ,pr_dsreturn  OUT VARCHAR2                         --> Descricao retorno(NOK/OK)
+                                       ,pr_tab_erro  OUT GENE0001.typ_tab_erro)           --> Tabela erros
                                       IS
 
 
@@ -64,7 +70,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.IMUT0001 AS
   --  Sistema  : Credito
   --  Sigla    : CRED
   --  Autor    : Odirlei Busana - AMcom
-  --  Data     : outubro/2013.                   Ultima atualizacao: 02/08/2016
+  --  Data     : outubro/2013.                   Ultima atualizacao: 14/03/2017
   --
   -- Dados referentes ao programa:
   --
@@ -72,6 +78,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.IMUT0001 AS
   -- Objetivo  : Procedure para verificar a imunidade tributaria da conta
   --
   -- Alteracoes: 02/08/2016 - Tratar data de gravação quando IR de Cotas na Origem (Marcos-Supero)
+  --
+  --             14/03/2017 - Passagem de parâmetros da crapass para evitar leitura desnecessária (Rodrigo)
   ---------------------------------------------------------------------------------------------------------------
 
     --Buscar associados
@@ -95,6 +103,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.IMUT0001 AS
                       AND a1.nrcpfcgc = pr_nrcpfcgc);
     rw_crapimt  cr_crapimt%rowtype;
 
+    vr_inpessoa crapass.inpessoa%TYPE;
+    vr_nrcpfcgc crapass.nrcpfcgc%TYPE;
+    
     vr_exc_erro exception;
     vr_cdcritic INTEGER;         --> Codigo Critica
     vr_dscritic VARCHAR2(1000);   --> Descricao Critica
@@ -108,6 +119,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.IMUT0001 AS
       RAISE vr_exc_erro;
     END IF;
 
+    -- Caso os parâmetros não tenham sido enviados
+    IF (pr_inpessoa = 0 OR pr_nrcpfcgc = 0) THEN
     -- Buscar associados
     OPEN cr_crapass;
     FETCH cr_crapass
@@ -123,15 +136,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.IMUT0001 AS
       CLOSE cr_crapass;
     END IF;
 
+      vr_inpessoa := rw_crapass.inpessoa;
+      vr_nrcpfcgc := rw_crapass.nrcpfcgc;
+    ELSE            
+      vr_inpessoa := pr_inpessoa;
+      vr_nrcpfcgc := pr_nrcpfcgc;
+    END IF;
+
     -- Se for diferente de pessoa Juridica,
     -- Deve retornar ao programa chamador sem erro
-    IF rw_crapass.inpessoa <> 2 THEN
+    IF vr_inpessoa <> 2 THEN
        pr_dsreturn := 'OK';
        RETURN;
     END IF;
 
     -- Buscar Cadastro de Imunidade Tributaria
-    OPEN cr_crapimt(pr_nrcpfcgc => rw_crapass.nrcpfcgc);
+    OPEN cr_crapimt(pr_nrcpfcgc => vr_nrcpfcgc);
     FETCH cr_crapimt
       INTO rw_crapimt;
     IF cr_crapimt%NOTFOUND THEN
@@ -170,7 +190,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.IMUT0001 AS
                     ( pr_cdcooper -- cdcooper
                      ,pr_dtmvtolt -- dtmvtolt
                      ,pr_nrdconta -- nrdconta
-                     ,rw_crapass.nrcpfcgc -- nrcpfcgc
+                     ,vr_nrcpfcgc -- nrcpfcgc
                      ,pr_cdinsenc -- cdinsenc
                      ,pr_vlinsenc -- vlinsenc
                      );
@@ -213,13 +233,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.IMUT0001 AS
   END pc_verifica_imunidade_trib;
 
   /* Procedure para verificar periodo de imunidade tributaria */
-  PROCEDURE pc_verifica_periodo_imune( pr_cdcooper  IN  INTEGER   --> Codigo Cooperativa
-                                      ,pr_nrdconta  IN  INTEGER   --> Numero da Conta
-                                      ,pr_flgimune  OUT BOOLEAN   --> Identificador se é imune
-                                      ,pr_dtinicio  OUT  DATE     --> Data de inicio da imunidade
-                                      ,pr_dttermin  OUT  DATE     --> Data termino da imunidadeValor insento
-                                      ,pr_dsreturn  OUT VARCHAR2              --> Descricao retorno(NOK/OK)
-                                      ,pr_tab_erro  OUT GENE0001.typ_tab_erro)--> Tabela erros
+  PROCEDURE pc_verifica_periodo_imune( pr_cdcooper  IN  INTEGER                         --> Codigo Cooperativa
+                                      ,pr_nrdconta  IN  INTEGER                         --> Numero da Conta
+                                      ,pr_inpessoa  IN  crapass.inpessoa%TYPE DEFAULT 0 --> Tipo de pessoa
+                                      ,pr_nrcpfcgc  IN  crapass.nrcpfcgc%TYPE DEFAULT 0 --> Número do CPF/CNPJ
+                                      ,pr_flgimune  OUT BOOLEAN                         --> Identificador se é imune
+                                      ,pr_dtinicio  OUT  DATE                           --> Data de inicio da imunidade
+                                      ,pr_dttermin  OUT  DATE                           --> Data termino da imunidade
+                                      ,pr_dsreturn  OUT VARCHAR2                        --> Descricao retorno(NOK/OK)
+                                      ,pr_tab_erro  OUT GENE0001.typ_tab_erro)          --> Tabela erros
                                       IS
 
 
@@ -229,12 +251,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.IMUT0001 AS
   --  Sistema  : Credito
   --  Sigla    : CRED
   --  Autor    : Odirlei Busana - AMcom
-  --  Data     : outubro/2013.                   Ultima atualizacao: 24/10/2013
+  --  Data     : outubro/2013.                   Ultima atualizacao: 14/03/2017
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  :  Procedure para verificar periodo de imunidade tributaria
+  --
+  -- Alteracoes: 14/03/2017 - Passagem de parâmetros da crapass para evitar leitura desnecessária (Rodrigo)
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -264,6 +288,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.IMUT0001 AS
     vr_cdcritic INTEGER;         --> Codigo Critica
     vr_dscritic VARCHAR2(1000);  --> Descricao Critica
 
+    vr_inpessoa  crapass.inpessoa%TYPE;
+    vr_nrcpfcgc  crapass.nrcpfcgc%TYPE;
   BEGIN
 
     pr_flgimune := false;
@@ -277,6 +303,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.IMUT0001 AS
       RAISE vr_exc_erro;
     END IF;
 
+    -- Caso os parâmetros não tenham sido enviados
+    IF (pr_inpessoa = 0 OR pr_nrcpfcgc = 0) THEN
     -- Buscar associados
     OPEN cr_crapass;
     FETCH cr_crapass
@@ -292,15 +320,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.IMUT0001 AS
       CLOSE cr_crapass;
     END IF;
 
+      vr_inpessoa := rw_crapass.inpessoa;
+      vr_nrcpfcgc := rw_crapass.nrcpfcgc;
+    ELSE
+      vr_inpessoa := pr_inpessoa;
+      vr_nrcpfcgc := pr_nrcpfcgc;
+    END IF;
+
     -- Se for diferente de pessoa Juridica,
     -- Deve retornar ao programa chamador sem erro
-    IF rw_crapass.inpessoa <> 2 THEN
+    IF vr_inpessoa <> 2 THEN
        pr_dsreturn := 'OK';
        RETURN;
     END IF;
 
     -- Buscar Cadastro de Imunidade Tributaria
-    OPEN cr_crapimt(pr_nrcpfcgc => rw_crapass.nrcpfcgc);
+    OPEN cr_crapimt(pr_nrcpfcgc => vr_nrcpfcgc);
     FETCH cr_crapimt
       INTO rw_crapimt;
     IF cr_crapimt%NOTFOUND THEN
