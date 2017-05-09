@@ -211,7 +211,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0010 IS
                      '<strong>Nome</strong><br>' || vr_nmprimtl || '<br><br>' ||
                      '<strong>Email</strong><br>' || pr_dsdemail || '<br><br>' ||
                      '<strong>Telefone</strong><br>' || vr_nrtelefo || '<br><br>' ||
-                     '<strong>Valor do Empréstimo</strong><br>' || TO_CHAR(pr_vlemprst,'fm9g999g999g990d00') || '<br><br>' ||
+                     '<strong>Valor do Empréstimo</strong><br>' || TO_CHAR(pr_vlemprst,'fm999g999g999g990d00') || '<br><br>' ||
                      '<strong>Quantidade de Parcelas</strong><br>' || TO_CHAR(pr_qtparcel) || '<br><br>' ||                     
                      '<strong>Motivo da Solicitação</strong><br>' || pr_dsmensag;
                                  
@@ -255,7 +255,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0010 IS
             ,pr_vlemprst
             ,pr_qtparcel
             ,pr_dsdemail
-            ,pr_dsmotivo
+            ,pr_dsmensag
             ,pr_cddcanal);
       EXCEPTION
         WHEN OTHERS THEN
