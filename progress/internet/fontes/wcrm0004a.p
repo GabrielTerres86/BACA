@@ -7,6 +7,9 @@
  *	            17/11/2016 - Inclusão de assinatura. (Jean Michel)
  *
  *	            07/03/2017 - Alteração de diretório da cooperativa Viacredi Alto Vale. (Jean Michel)
+ *
+ *              13/04/2017 - Alterado para nao exibir assinatura de algumas coops. pois a assinatura
+ *                           estara na propria imagem de fundo SD624455 (Odirlei-Amcom)
 */
 
 	{ sistema/generico/includes/var_log_progrid.i }
@@ -55,7 +58,7 @@ FUNCTION montaCertificado RETURNS LOGICAL():
                     '   .a3            ~{ font-family: DIN-BLACK, sans-serif; color:#2d5495;font-size: 28px; font-weight: bold;}' SKIP
                     '   .a4            ~{ font-family: DIN-REGULAR, sans-serif; color:#2d5495;font-size: 26px; font-weight: bold;}' SKIP
                     '   .a5            ~{ font-family: DIN-REGULAR, sans-serif; color:#2d5495;font-size: 28px; font-weight: bold;}' SKIP
-                    '   .data          ~{ font-family: DIN-REGULAR, sans-serif; color:#2d5495;font-size: 26px; font-weight: bold;}' SKIP
+                    '   .data          ~{ font-family: DIN-REGULAR, sans-serif; color:#2d5495;font-size: 20px; font-weight: bold;}' SKIP
                     '</style><style type="text/css" media="print">@page ~{size: landscape; }</style><body onload="imprimir();">' SKIP.
                                 
        FOR EACH crapidp WHERE crapidp.cdcooper = aux_cdcooper
@@ -110,8 +113,12 @@ FUNCTION montaCertificado RETURNS LOGICAL():
             /* Verifica se a data do evento foi concluido em um unico dia para ajusta os espaçamentos entre o texto e a assinatura.
                Obs: primeira situação do if é que foi realizado em um unico dia */
             
-            {&out} '<div style="clear:both">'
-                    '<div id="assinatura_imagem" name="assinatura_imagem" style="position: absolute; padding-left: 450px; padding-top: 430px; z-index:4;">'
+            {&out} '<div style="clear:both">' SKIP.   
+            /* apenas exibir assinatura para determinadas as coops */
+            IF CAN-DO("3",STRING(aux_cdcooper)) THEN
+              DO:
+                
+                {&out}  '<div id="assinatura_imagem" name="assinatura_imagem" style="position: absolute; padding-left: 450px; padding-top: 430px; z-index:4;">'
                     '<img style=" height:400px;" src="/extrato-' + (IF aux_nmrescop <> 'VIACREDI AV' THEN LOWER(aux_nmrescop) ELSE 'viacrediav') + '/crm/images/assinaturas/moacir_krambeck.png"/>'
                     '</div>'
                     '<div id="assinatura_texto" name="assinatura_texto" style="position: absolute; padding-left: 270px; margin-top: 580px; z-index:5;">'
@@ -119,12 +126,19 @@ FUNCTION montaCertificado RETURNS LOGICAL():
                     '</br>'
                     '<a align="center" class="a4">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Moacir Krambeck - Presidente Sistema CECRED</a>' 
                     '</div><div style="clear:both">' SKIP.
+              END.
+            ELSE
+              DO:
+                {&out} '<div id="assinatura" style="border: 0px solid orange; position:relative; padding-left: 280px; padding-top: 430px; float:left; z-index:6; width: 100%; height: 20%;">' SKIP
+                       '</div><div style="clear:both">' SKIP.
+              END.    
             
-            {&out} '<div style="clear:both"><div id="data" name="data" style="position: relative; padding-left: 260px; border: 0px solid red; padding-top: 700px; z-index:3;">'
+            {&out} '<div style="clear:both"><div id="data" name="data" style="position: relative; padding-left: 260px; border: 0px solid red; padding-top: 125px; z-index:3;">'
                    '   <p align="LEFT"> <a CLASS="data">' aux_nmcidade ', ' DAY(TODAY) ' de ' ENTRY(MONTH(TODAY),aux_nommeses) ' de ' YEAR(TODAY) '.</a> </p>'
                    '</div><div style="clear:both">' SKIP.
             
             {&out} '</div></div></div>' SKIP.
+                          
                           
         END. /* for each */
 

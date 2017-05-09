@@ -503,20 +503,20 @@ FROM (
     BEGIN
       
       -- Cosnulta de inscritos em eventos do Progrid
-      WPGD0009.pc_lista_inscritos(pr_cdcooper      => pr_cdcooper      --> Codigo da Cooperativa
-                                 ,pr_cdageins      => pr_cdageins      --> Codigo do PA
-                                 ,pr_nminscri      => pr_nminscri      --> Nome do Inscrito
-                                 ,pr_nrseqeve      => pr_nrseqeve      --> Sequencial de Evento
-                                 ,pr_tpfiltro      => pr_tpfiltro      --> Tipo de Filtro
-                                 ,pr_tpordena      => pr_tpordena      --> Tipo de Ordenacao
-                                 ,pr_dtanoage      => pr_dtanoage      --> Ano Agenda
-                                 ,pr_idevento      => pr_idevento      --> ID do Evento
-                                 ,pr_nriniseq      => pr_nriniseq      --> Registro inicial para pesquisa
-                                 ,pr_qtdregis      => pr_qtdregis      --> Quantidade de Registros Existentes
-                                 ,pr_tab_status    => vr_tab_status    --> Tabela de Status
-                                 ,pr_tab_inscritos => vr_tab_inscritos --> Tabela de Inscritos
-                                 ,pr_cdcritic      => vr_cdcritic      --> Código da crítica
-                                 ,pr_dscritic      => vr_dscritic);    --> Descrição da crítica
+      WPGD0009.pc_lista_inscritos(pr_cdcooper      => pr_cdcooper       --> Codigo da Cooperativa
+                                 ,pr_cdageins      => pr_cdageins       --> Codigo do PA
+                                 ,pr_nminscri      => TRIM(pr_nminscri) --> Nome do Inscrito
+                                 ,pr_nrseqeve      => pr_nrseqeve       --> Sequencial de Evento
+                                 ,pr_tpfiltro      => pr_tpfiltro       --> Tipo de Filtro
+                                 ,pr_tpordena      => pr_tpordena       --> Tipo de Ordenacao
+                                 ,pr_dtanoage      => pr_dtanoage       --> Ano Agenda
+                                 ,pr_idevento      => pr_idevento       --> ID do Evento
+                                 ,pr_nriniseq      => pr_nriniseq       --> Registro inicial para pesquisa
+                                 ,pr_qtdregis      => pr_qtdregis       --> Quantidade de Registros Existentes
+                                 ,pr_tab_status    => vr_tab_status     --> Tabela de Status
+                                 ,pr_tab_inscritos => vr_tab_inscritos  --> Tabela de Inscritos
+                                 ,pr_cdcritic      => vr_cdcritic       --> Código da crítica
+                                 ,pr_dscritic      => vr_dscritic);     --> Descrição da crítica
       
       IF vr_dscritic IS NOT NULL OR NVL(vr_cdcritic,0) > 0 THEN
         RAISE vr_exc_saida;
