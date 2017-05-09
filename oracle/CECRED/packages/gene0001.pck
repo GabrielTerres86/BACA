@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   --  Sistema  : Rotinas genéricas
   --  Sigla    : GENE
   --  Autor    : Marcos E. Martini - Supero
-  --  Data     : Novembro/2012.                   Ultima atualizacao: 02/02/2016
+  --  Data     : Novembro/2012.                   Ultima atualizacao: 09/05/2017
   --
   -- Dados referentes ao programa:
   --
@@ -19,7 +19,10 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   -- 28/07/2013 - Inclusão do Tipo CONVENIO no array para nome origem do módulo SD154496
   -- (Vanessa Klein)
   -- 02/02/2016 - Ajustado o TYPE typ_des_dorigens incluso duas novas origens (Daniel)
-
+  --
+  -- 11/11/2016 - Inclusao da origem MOBILE e ACORDO no type de origens. PRJ335 - Analise Fraudes(Odirlei-AMcom)
+  --  
+  -- 24/01/2016 - Incluido Origem ANTIFRAUDE. PRJ335 - Analise de fraude (Odirlei-AMcom)
   ---------------------------------------------------------------------------------------------------------------
 
   /** ---------------------------------------------------- **/
@@ -50,7 +53,7 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
                                                       ,'CADASTROS'
                                                       ,'CONVENIOS');
 
-  /** ---------------------------------------------------------**/
+  /** ------------------------------------------------------------**/
   /** Variavel para geracao de log - Origem da Solicitacao     **/
   /**                                                          **/
   /** -> Origem = 1 - AYLLOS                                   **/
@@ -61,11 +64,14 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   /** -> Origem = 6 - URA                                      **/
   /** -> Origem = 7 - PROCESSO (PROCESSO BATCH)                **/
   /** -> Origem = 8 - MENSAGERIA (DEBITO ONLINE CARTAO BANCOOB)**/
-  /** -> Origem = 9 - ESTEIRA (ESTEIRA DE CREDITO IBRATAN)     **/
+  /** -> Origem = 9 - ESTEIRA (WEBSERVICE ESTEIRA DE CREDITO)     **/
+  /** -> Origem = 10 - MOBILE                                     **/
+  /** -> Origem = 11 - ACORDO (WEBSERVICE DE ACORDOS)             **/
+  /** -> Origem = 12 - ANTIFRAUDE (WEBSERVICE ANALISE ANTIFRAUDE) 	**/
   /** ---------------------------------------------------------**/
 
-  TYPE typ_des_dorigens IS VARRAY(9) OF VARCHAR2(10);
-  vr_vet_des_origens typ_des_dorigens := typ_des_dorigens('AYLLOS','CAIXA','INTERNET','CASH','INTRANET','URA','PROCESSO','MENSAGERIA','ESTEIRA');
+  TYPE typ_des_dorigens IS VARRAY(12) OF VARCHAR2(13);
+  vr_vet_des_origens typ_des_dorigens := typ_des_dorigens('AYLLOS','CAIXA','INTERNET','CASH','AYLLOS WEB','URA','PROCESSO','MENSAGERIA','ESTEIRA','MOBILE','ACORDO','ANTIFRAUDE');
 
 
   /** ---------------------------------------------------- **/
@@ -119,7 +125,8 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
                             ,pr_dsvlrprm OUT crapprm.dsvlrprm%TYPE);
 
   /* Mostrar o texto das criticas na tela de acordo com o ocorrido. */
-  FUNCTION fn_busca_critica(pr_cdcritic IN crapcri.cdcritic%TYPE) RETURN VARCHAR2;
+  FUNCTION fn_busca_critica(pr_cdcritic IN crapcri.cdcritic%TYPE DEFAULT 0
+                           ,pr_dscritic IN crapcri.dscritic%TYPE DEFAULT NULL) RETURN VARCHAR2;
 
   /* Mostrar mensagem dbms_output.put_line */
   PROCEDURE pc_print(pr_des_mensag IN VARCHAR2);
@@ -336,7 +343,7 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
 
   /* Rotina para submeter um Job ao Banco */
   PROCEDURE pc_submit_job(pr_cdcooper  IN crapcop.cdcooper%TYPE          --> Código da cooperativa
-                         ,pr_cdprogra  IN crapprg.cdprogra%TYPE          --> Código do programa
+                         ,pr_cdprogra  IN VARCHAR2                       --> Código do programa
                          ,pr_dsplsql   IN VARCHAR2                       --> Bloco PLSQL a executar
                          ,pr_dthrexe   IN TIMESTAMP WITH TIME ZONE DEFAULT SYSTIMESTAMP --> Data/Hora de execução
                          ,pr_interva   IN VARCHAR2 DEFAULT NULL          --> Função para calculo da próxima execução, ex: 'sysdate+1'
@@ -363,7 +370,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   --  Sistema  : Rotinas genéricas
   --  Sigla    : GENE
   --  Autor    : Marcos E. Martini - Supero
-  --  Data     : Novembro/2012.                   Ultima atualizacao: 09/06/2016
+  --  Data     : Novembro/2012.                   Ultima atualizacao: 09/05/2017
   --
   -- Dados referentes ao programa:
   --
@@ -378,6 +385,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   --                          ao pegar o nome do JOB a ser criado
   --                         (Adriano - SD 464856).
   --
+  --             12/01/2017 - #551192 Na função fn_busca_critica, mudança para parâmetros opcionais cd e 
+  --                          dscritic para centralizar a lógica de captura dos erros (Carlos) 
+  --
+  --             09/05/2017 - #660297 Alterado o tipo do parâmetro pr_cdprogra de crapprg.cdprogra para 
+  --                          VARCHAR2 na rotina pc_submit_job (Carlos)
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -630,7 +642,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   END pc_param_sistema;
 
   /* Mostrar o texto das criticas na tela de acordo com o ocorrido. */
-  FUNCTION fn_busca_critica(pr_cdcritic IN crapcri.cdcritic%TYPE) RETURN VARCHAR2 IS
+  FUNCTION fn_busca_critica(pr_cdcritic IN crapcri.cdcritic%TYPE DEFAULT 0,
+                            pr_dscritic IN crapcri.dscritic%TYPE DEFAULT NULL) RETURN VARCHAR2 IS
   BEGIN
     -- ..........................................................................
     --
@@ -638,7 +651,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Deborah/Edson
-    --  Data     : Setembro/1991.                   Ultima atualizacao: 13/11/2012
+    --  Data     : Setembro/1991.                   Ultima atualizacao: 12/01/2017
     --
     --  Dados referentes ao programa:
     --
@@ -651,6 +664,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     --                            do prefixo "banco" (Guilherme Maba).
     --
     --               13/11/2012 - Conversão Progress >> Oracle PLSQL
+    --
+    --               12/01/2017 - #551192 Mudança para parâmetros opcionais cd e dscritic para centralizar
+    --                            a lógica de captura dos erros (Carlos) 
     -- .............................................................................
 
     DECLARE
@@ -661,6 +677,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
          WHERE cri.cdcritic = pr_cdcritic;
       vr_dscritic crapcri.dscritic%TYPE;
     BEGIN
+      -- Se veio código de crítica e não veio descrição
+      IF pr_cdcritic > 0 AND pr_dscritic IS NULL THEN
+    
       -- Busca descrição da critica cfme parâmetro passado
       OPEN cr_crapcri;
       FETCH cr_crapcri
@@ -674,6 +693,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
       CLOSE cr_crapcri;
       -- Retornar a string montada
       RETURN vr_dscritic;
+
+      END IF;      
+      
+      -- Retorna apenas as descrição
+      RETURN pr_dscritic;
+      
     END;
   END fn_busca_critica;
 
@@ -2511,7 +2536,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 
   /* Rotina para submeter um Job ao Banco */
   PROCEDURE pc_submit_job(pr_cdcooper  IN crapcop.cdcooper%TYPE          --> Código da cooperativa
-                         ,pr_cdprogra  IN crapprg.cdprogra%TYPE          --> Código do programa
+                         ,pr_cdprogra  IN VARCHAR2                       --> Código do programa
                          ,pr_dsplsql   IN VARCHAR2                       --> Bloco PLSQL a executar
                          ,pr_dthrexe   IN TIMESTAMP WITH TIME ZONE DEFAULT SYSTIMESTAMP --> Data/Hora de execução
                          ,pr_interva   IN VARCHAR2 DEFAULT NULL          --> Função para calculo da próxima execução, ex: 'sysdate+1'
