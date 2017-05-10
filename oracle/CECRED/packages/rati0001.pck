@@ -519,6 +519,11 @@ CREATE OR REPLACE PACKAGE CECRED.rati0001 is
                           ,pr_des_reto             OUT VARCHAR2                          --> Ind. de retorno OK/NOK
                           );
 
+  PROCEDURE pc_param_valor_rating(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Código da Cooperativa
+                                 ,pr_vlrating OUT NUMBER                --> Valor parametrizado
+                                 ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Critica encontrada
+                                 ,pr_dscritic OUT VARCHAR2);          --> Descrição erro encontrado
+
 END RATI0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
@@ -528,7 +533,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
   --  Sistema  : Rotinas para Rating dos Cooperados
   --  Sigla    : RATI
   --  Autor    : Alisson C. Berrido - AMcom
-  --  Data     : Maio/2013.                   Ultima atualizacao: 16/11/2015
+  --  Data     : Maio/2013.                   Ultima atualizacao: 10/05/2017
   --
   -- Dados referentes ao programa:
   --
@@ -539,6 +544,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
   --
   --            10/05/2016 - Ajustes referente a conversão da tela ATURAT
   --                         (Andrei - RKAM).
+  --
+  --            10/05/2017 - Limpeza da pltable vr_vet_vlrating na pc_param_valor_rating - SD: 660306
+  --                         Ana Lúcia Volles (Envolti)                      
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tipo que compreende o vetor com valor do rating da TAB036 por coop */
@@ -1024,7 +1032,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Marcos Ernani Martini
-       Data    : Junho/2013.                          Ultima Atualizacao: 25/10/2016
+       Data    : Junho/2013.                          Ultima Atualizacao: 10/05/2017
 
        Dados referentes ao programa:
 
@@ -1032,7 +1040,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
        Objetivo  : Retornar valor parametrizado de rating na TAB036 para a Cooperativa.
 
        Alteracoes: 04/06/2013 - Conversão Progress -> Oracle - Marcos (Supero)
-                                      
+                   10/05/2017 - Limpeza da pltable vr_vet_vlrating - SD: 660306
+                                Ana Lúcia Volles (Envolti)                      
     ............................................................................. */
     DECLARE
       /* Cursor genérico de parametrização */
@@ -1051,6 +1060,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
            AND UPPER(tab.cdacesso) = pr_cdacesso
            AND tab.tpregist        = pr_tpregist;
     BEGIN
+      --Limpa a pltable
+--      vr_vet_vlrating.delete;
       -- Se a tabela com as informações de valor por coop estiver vazia
       IF vr_vet_vlrating.COUNT = 0 THEN
         -- Busca de todos registros para atualizar o vetor
