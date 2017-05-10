@@ -3,7 +3,7 @@
 	/************************************************************************
 	 Fonte: cheques_limite.php                                        
 	 Autor: Guilherme                                                 
-	 Data : Março/2009                Última Alteração: 11/05/2015
+	 Data : Março/2009                Última Alteração: 12/09/2016
 	                                                                  
 	 Objetivo  : Mostrar opcao Limites de descontos de cheques da rotina         
 	             Descontos da tela ATENDA                 		   	  
@@ -19,6 +19,8 @@
 							    menores nao emancipados. (Reinert)
 
 			      17/12/2015 - Edição de número do contrato de limite (Lunelli - SD 360072 [M175])
+
+				  12/09/2016 - Inclusão do campo "Confirmar Novo Limite" que vai substituir a "LANCDC". PRJ300 (Lombardi)
 
 	************************************************************************/
 	
@@ -111,7 +113,7 @@
 			<tbody>
 				<?  for ($i = 0; $i < $qtLimites; $i++) {
 												
-						$mtdClick = "selecionaLimiteCheques('".($i + 1)."','".$qtLimites."','".($limites[$i]->tags[3]->cdata)."','".($limites[$i]->tags[6]->cdata)."');";
+						$mtdClick = "selecionaLimiteCheques('".($i + 1)."','".$qtLimites."','".($limites[$i]->tags[3]->cdata)."','".($limites[$i]->tags[6]->cdata)."','".($limites[$i]->tags[10]->cdata)."','".($limites[$i]->tags[2]->cdata)."');";
 				?>
 					<tr id="trLimite<? echo $i + 1; ?>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>">
 					
@@ -149,13 +151,15 @@
 ?>
 
 <div id="divBotoes">
-	<input type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="voltaDiv(2,1,4,'DESCONTO DE CHEQUES','DSC CHQS');carregaCheques();return false;" />
-	<input type="image" src="<?php echo $UrlImagens; ?>botoes/alterar.gif"   <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispA.'" onClick="return false;"'; } else { echo 'style="'.$dispA.'" onClick="mostraTelaAltera();return false;"'; } ?> />
-	<input type="image" src="<?php echo $UrlImagens; ?>botoes/cancelar.gif"  <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispX.'" onClick="return false;"'; } else { echo 'style="'.$dispX.'" onClick="showConfirmacao(\'Deseja cancelar o limite de desconto de cheques?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'cancelaLimiteDscChq()\',\'metodoBlock()\',\'sim.gif\',\'nao.gif\');return false;"'; } ?> />
-	<input type="image" src="<?php echo $UrlImagens; ?>botoes/consultar.gif" <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispC.'" onClick="return false;"'; } else { echo 'style="'.$dispC.'" onClick="carregaDadosConsultaLimiteDscChq();return false;"'; } ?> />
-	<input type="image" src="<?php echo $UrlImagens; ?>botoes/excluir.gif"   <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispE.'" onClick="return false;"'; } else { echo 'style="'.$dispE.'" onClick="showConfirmacao(\'Deseja excluir o limite de desconto de cheques?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'excluirLimiteDscChq()\',\'metodoBlock()\',\'sim.gif\',\'nao.gif\');return false;"'; } ?> />
-	<input type="image" src="<?php echo $UrlImagens; ?>botoes/incluir.gif"   <?php if (!in_array("I",$glbvars["opcoesTela"])) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } else { echo 'onClick="carregaDadosInclusaoLimiteDscChq(1);return false;"'; } ?> />
-	<input type="image" src="<?php echo $UrlImagens; ?>botoes/imprimir.gif"  <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispM.'" onClick="return false;"'; } else { echo 'style="'.$dispM.'" onClick="mostraImprimirLimite();return false;"'; } ?> />
+	<a href="#" class="botao" name="btnVoltar" id="btnVoltar" onClick="voltaDiv(2,1,4,'DESCONTO DE CHEQUES','DSC CHQS');carregaCheques();return false;" >Voltar</a>
+	<a href="#" class="botao" name="btnAlterar" id="btnAlterar" <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispA.'" onClick="return false;"'; } else { echo 'style="'.$dispA.'" onClick="mostraTelaAltera();return false;"'; } ?> >Alterar</a>
+	<a href="#" class="botao" name="btnCancelar" id="btnCancelar" <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispX.'" onClick="return false;"'; } else { echo 'style="'.$dispX.'" onClick="showConfirmacao(\'Deseja cancelar o limite de desconto de cheques?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'cancelaLimiteDscChq()\',\'metodoBlock()\',\'sim.gif\',\'nao.gif\');return false;"'; } ?> >Cancelar</a>
+	<a href="#" class="botao" name="btnConsultar" id="btnConsultar" <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispC.'" onClick="return false;"'; } else { echo 'style="'.$dispC.'" onClick="carregaDadosConsultaLimiteDscChq();return false;"'; } ?> >Consultar</a>
+	<a href="#" class="botao" name="btnExcluir" id="btnExcluir" <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispE.'" onClick="return false;"'; } else { echo 'style="'.$dispE.'" onClick="showConfirmacao(\'Deseja excluir o limite de desconto de cheques?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'excluirLimiteDscChq()\',\'metodoBlock()\',\'sim.gif\',\'nao.gif\');return false;"'; } ?> >Excluir</a>
+	<div style="height: 3px;"></div>
+	<a href="#" class="botao" name="btnIncluir" id="btnIncluir" <?php if (!in_array("I",$glbvars["opcoesTela"])) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } else { echo 'onClick="carregaDadosInclusaoLimiteDscChq(1);return false;"'; } ?> >Incluir</a>
+	<a href="#" class="botao" name="btnImprimir" id="btnImprimir" <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispM.'" onClick="return false;"'; } else { echo 'style="'.$dispM.'" onClick="mostraImprimirLimite();return false;"'; } ?> >Imprimir</a>
+	<a href="#" class="botao" name="btnConfNovLimite" id="btnConfNovLimite" onClick="confirmaNovoLimite();">Confirmar Novo Limite</a>
 </div>
 
 <script type="text/javascript">

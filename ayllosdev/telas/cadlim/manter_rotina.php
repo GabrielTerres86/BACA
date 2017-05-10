@@ -5,7 +5,8 @@
  * DATA CRIAÇÃO : 15/12/2014
  * OBJETIVO     : Rotina para alteração cadastral da tela CADLIM
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 21/09/2016 - Inclusão do filtro "Tipo de Limite" no cabecalho. Inclusão dos campos
+ *                             "pcliqdez" e "qtdialiq" no formulario de regras. Projeto 300. (Lombardi)
  * -------------- 
  */
     session_start();
@@ -16,6 +17,7 @@
 	isPostMethod();		
 
 	$cddopcao = (isset($_POST['cddopcao'])) ? $_POST['cddopcao'] : '';
+	$tplimite = (isset($_POST['tplimite'])) ? $_POST['tplimite'] : '';
 	$inpessoa = (isset($_POST['inpessoa'])) ? $_POST['inpessoa'] : '';
 	$vlmaxren = (isset($_POST['vlmaxren'])) ? converteFloat($_POST['vlmaxren']) : '';
 	$qtdiaren = (isset($_POST['qtdiaren'])) ? $_POST['qtdiaren'] : '';
@@ -26,7 +28,9 @@
 	$nrrevcad = (isset($_POST['nrrevcad'])) ? $_POST['nrrevcad'] : '';
 	$vlsitdop = (isset($_POST['vlsitdop'])) ? $_POST['vlsitdop'] : '';	
 	$vlriscop = (isset($_POST['vlriscop'])) ? $_POST['vlriscop'] : '';
-	
+	$pcliqdez = (isset($_POST['pcliqdez'])) ? $_POST['pcliqdez'] : '';	
+	$qtdialiq = (isset($_POST['qtdialiq'])) ? $_POST['qtdialiq'] : '';
+
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {
 		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
 	}
@@ -45,7 +49,10 @@
 		$xml .= "   <qtdiaatr>".$qtdiaatr."</qtdiaatr>";
 		$xml .= "   <qtatracc>".$qtatracc."</qtatracc>";		
 		$xml .= "   <dssitdop>".$vlsitdop."</dssitdop>";
-		$xml .= "   <dsrisdop>".$vlriscop."</dsrisdop>";		
+		$xml .= "   <dsrisdop>".$vlriscop."</dsrisdop>";
+		$xml .= "   <tplimite>".$tplimite."</tplimite>";
+		$xml .= "   <pcliqdez>".$pcliqdez."</pcliqdez>";
+		$xml .= "   <qtdialiq>".$qtdialiq."</qtdialiq>";
 		$xml .= "   <idgerlog>0</idgerlog>";
 		$xml .= " </Dados>";
 		$xml .= "</Root>";

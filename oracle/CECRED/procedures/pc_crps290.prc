@@ -92,9 +92,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
                30/05/2016 - Incluir criticas 251, 695, 410, 95 no relatorio e
                             atualizar o insitlau para 3(Cancelado) (Lucas Ranghetti #449799)
                             
-               31/01/2016 - Conversão Progress para PLSQL (Jonata-MOUTS)             
-                            
-                            
+               31/01/2016 - Conversão Progress para PLSQL (Jonata-MOUTS) 
+			   
+			   04/11/2016 - Cheques custodiados deverao ter o numero do bordero
+                            igual a zero. (Projeto 300 - Rafael)
+							                            
     ............................................................................. */
 
    ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -437,7 +439,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
            and crapcst.cdbanchq = pr_cdbanchq
            and crapcst.cdagechq = pr_cdagechq
            and crapcst.nrctachq = pr_nrctachq
-           and crapcst.nrcheque = pr_nrcheque;
+           and crapcst.nrcheque = pr_nrcheque
+		   and crapcst.nrborder = 0;
       rw_crapcst cr_crapcst%ROWTYPE;
           
       --Cadastro de folhas de cheques emitidos para o cooperado.

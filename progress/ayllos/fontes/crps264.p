@@ -212,6 +212,9 @@
 
               19/04/2017 - Substituir o dtlibera das consultas de cheques em custodia/desconto
                            por dtdevolu = ? (Lucas Ranghetti #640682)
+
+              08/05/2017 - Incluso tratativa crapcst.nrborder = 0 nas duas leituras
+			               FOR LAST crapcst (Daniel - Projeto 300) 
 ..............................................................................*/
 
 DEF INPUT  PARAM p-cdcooper AS INT                                   NO-UNDO.
@@ -1314,6 +1317,7 @@ PROCEDURE gera_lancamento:
                                                   AND crapcst.nrcheque = crapfdc.nrcheque
                                                   AND CAN-DO("0,2",STRING(crapcst.insitchq))
 												  AND crapcst.dtdevolu = ?
+												  AND crapcst.nrborder = 0
                                                   NO-LOCK:
                               END.
                         
@@ -2960,6 +2964,7 @@ PROCEDURE gera_arquivo_cecred:
                                                   AND crapcst.nrcheque = crapfdc.nrcheque
                                                   AND CAN-DO("0,2",STRING(crapcst.insitchq))
 												  AND crapcst.dtdevolu = ?
+												  AND crapcst.nrborder = 0
                                                   NO-LOCK:
                               END.
                         

@@ -109,6 +109,21 @@ CREATE OR REPLACE PACKAGE CECRED.geco0001 IS
                             ,pr_gergrupo  OUT VARCHAR2             --> Retorna grupo economico
                             ,pr_dsdrisgp  OUT crapgrp.dsdrisgp%TYPE); --> retona descrição do grupo                                          
 
+  /* Procedure responsavel por calcular o endividamento do grupo  */
+  PROCEDURE pc_calc_endivid_grupo(pr_cdcooper  IN INTEGER                    --> Codigo da cooperativa
+                                 ,pr_cdagenci  IN INTEGER                    --> Codigo da agencia
+                                 ,pr_nrdcaixa  IN INTEGER                    --> Numero do caixa
+                                 ,pr_cdoperad  IN VARCHAR2                   --> Codigo do operador
+                                 ,pr_nmdatela  IN VARCHAR2                   --> Nome da tela
+                                 ,pr_idorigem  IN INTEGER                    --> Identificação de origem
+                                 ,pr_nrdgrupo  IN INTEGER                    --> Número do grupo
+                                 ,pr_tpdecons  IN BOOLEAN                    --> Tipo de consulta
+                                 ,pr_dsdrisco OUT VARCHAR2                   --> Descrição do risco
+                                 ,pr_vlendivi OUT NUMBER                     --> Valor dívida
+                                 ,pr_tab_grupo IN OUT NOCOPY typ_tab_crapgrp --> PL Table para armazenar grupos econômicos
+                                 ,pr_cdcritic OUT INTEGER                    --> Codigo da critica
+                                 ,pr_dscritic OUT VARCHAR2);                 --> Descricao da critica
+  
 END GECO0001;
 /
 
@@ -2129,6 +2144,195 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
     CLOSE cr_crapgrp;
     
   END pc_busca_grupo_associado; 
+  
+  /* Procedure responsavel por calcular o endividamento do grupo  */
+  PROCEDURE pc_calc_endivid_grupo(pr_cdcooper  IN INTEGER                    --> Codigo da cooperativa
+                                 ,pr_cdagenci  IN INTEGER                    --> Codigo da agencia
+                                 ,pr_nrdcaixa  IN INTEGER                    --> Numero do caixa
+                                 ,pr_cdoperad  IN VARCHAR2                   --> Codigo do operador
+                                 ,pr_nmdatela  IN VARCHAR2                   --> Nome da tela
+                                 ,pr_idorigem  IN INTEGER                    --> Identificação de origem
+                                 ,pr_nrdgrupo  IN INTEGER                    --> Número do grupo
+                                 ,pr_tpdecons  IN BOOLEAN                    --> Tipo de consulta
+                                 ,pr_dsdrisco OUT VARCHAR2                   --> Descrição do risco
+                                 ,pr_vlendivi OUT NUMBER                     --> Valor dívida
+                                 ,pr_tab_grupo IN OUT NOCOPY typ_tab_crapgrp --> PL Table para armazenar grupos econômicos
+                                 ,pr_cdcritic OUT INTEGER                    --> Codigo da critica
+                                 ,pr_dscritic OUT VARCHAR2) IS               --> Descricao da critica
+  BEGIN
+  /* ..........................................................................
+    --
+    --  Programa : calc_endivid_grupo              Antiga: b1wgen0138.p/calc_endivid_grupo
+    --  Sistema  : Conta-Corrente - Cooperativa de Credito
+    --  Sigla    : CRED
+    --  Autor    : Lombardi
+    --  Data     : Setembro/2016.                   Ultima atualizacao: --/--/----
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Calcula o endividamento do grupo
+    --
+    --   Alteração :
+    --
+    --
+    -- ..........................................................................*/
+    
+    DECLARE
+      
+      ---------------> CURSORES <-----------------
+      CURSOR cr_crapgrp (pr_cdcooper IN crapcop.cdcooper%TYPE
+                        ,pr_nrdgrupo IN crapgrp.nrdgrupo%TYPE
+                        ,pr_tpdecons IN INTEGER) IS
+        SELECT *
+          FROM (SELECT grp.nrcpfcgc
+                      ,grp.nrctasoc
+                      ,grp.nrdgrupo
+                      ,grp.cdcooper
+                      ,grp.nrdconta
+                      ,grp.inpessoa
+                      ,grp.innivris
+                      ,grp.dsdrisco
+                      ,grp.dsdrisgp
+                      ,grp.idseqttl
+                      ,grp.cdagenci
+                      ,grp.dtmvtolt
+                      ,grp.dtrefere
+                      ,row_number() OVER(PARTITION BY grp.nrcpfcgc ORDER BY grp.nrcpfcgc, grp.progress_recid) indice_cpf -- Ordena os registros por cpf
+                      ,row_number() OVER(PARTITION BY grp.nrctasoc ORDER BY grp.nrctasoc, grp.progress_recid) indice_conta -- Ordena os registros por conta
+                  FROM crapgrp grp
+                 WHERE grp.cdcooper = pr_cdcooper
+                   AND grp.nrdgrupo = pr_nrdgrupo)
+         WHERE DECODE(pr_tpdecons,0, indice_cpf --Se for por CPF, obtém o primeiro registro de cada cpf (ignora os repetidos)
+                                 ,1, indice_conta) = 1 --Se for por Conta, obtém o primeiro registro de cada conta (ignora os repetidos)
+        ORDER BY DECODE(pr_tpdecons,0, nrcpfcgc --Se for por CPF
+                                   ,1, nrctasoc); --Se for por Conta
+      
+      -- Informações de data do sistema
+      rw_crapdat  btch0001.rw_crapdat%TYPE; 
+      
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic crapcri.dscritic%TYPE;
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+      
+      --Variaveis auxiliares
+      vr_opt_vlendivi NUMBER; --> Sumarização do valor do endividamento
+      vr_des_erro     VARCHAR2(100);
+      vr_index        INTEGER;
+      
+    BEGIN
+    
+      -- Verifica se a data esta cadastrada
+      OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+        
+      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+        
+      -- Se não encontrar
+      IF BTCH0001.cr_crapdat%NOTFOUND THEN
+        -- Fechar o cursor pois haverá raise
+        CLOSE BTCH0001.cr_crapdat;
+        -- Montar mensagem de critica
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 1);
+        RAISE vr_exc_saida;
+      ELSE
+        -- Apenas fechar o cursor
+        CLOSE BTCH0001.cr_crapdat;
+      END IF;
+      
+      pr_vlendivi := 0;
+      
+      -- Percorre os grupos economicos
+      FOR rw_crapgrp IN cr_crapgrp(pr_cdcooper => pr_cdcooper
+                                  ,pr_nrdgrupo => pr_nrdgrupo
+                                  ,pr_tpdecons => CASE pr_tpdecons 
+                                                      WHEN TRUE THEN 1
+                                                      ELSE 0
+                                                  END) LOOP
+        IF rw_crapgrp.nrctasoc > 0  THEN
+          pc_calc_endividamento_individu(pr_cdcooper    => rw_crapgrp.cdcooper
+                                        ,pr_cdagenci    => pr_cdagenci
+                                        ,pr_nrdcaixa    => pr_nrdcaixa
+                                        ,pr_cdoperad    => pr_cdoperad
+                                        ,pr_nmdatela    => pr_nmdatela
+                                        ,pr_idorigem    => pr_idorigem
+                                        ,pr_nrctasoc    => rw_crapgrp.nrctasoc
+                                        ,pr_idseqttl    => 1
+                                        ,pr_tpdecons    => pr_tpdecons
+                                        ,pr_vlutiliz    => vr_opt_vlendivi
+                                        ,pr_cdcritic    => vr_cdcritic
+                                        ,pr_des_erro    => vr_des_erro
+                                        ,pr_tab_crapdat => rw_crapdat);
+
+          -- Verifica se ocorreram erros
+          IF vr_des_erro <> 'OK' OR nvl(vr_cdcritic, 0) > 0 THEN
+            RAISE vr_exc_saida;
+          END IF;
+          
+          -- Acumula valor do endividamento
+          pr_vlendivi := pr_vlendivi + vr_opt_vlendivi;
+          
+          -- Cria o Index
+          IF pr_tpdecons THEN
+            vr_index := lpad(pr_cdcooper, 3, '0') || lpad(pr_nrdgrupo, 10, '0') || lpad(rw_crapgrp.nrctasoc, 20, '0');
+          ELSE
+            vr_index := lpad(pr_cdcooper, 3, '0') || lpad(pr_nrdgrupo, 10, '0') || lpad(rw_crapgrp.nrcpfcgc, 20, '0');
+          END IF;
+          
+          -- cria registro de grupo
+          IF NOT pr_tab_grupo.exists(vr_index) THEN
+            pr_tab_grupo(vr_index).cdcooper := rw_crapgrp.cdcooper;
+            pr_tab_grupo(vr_index).nrdgrupo := rw_crapgrp.nrdgrupo;
+            pr_tab_grupo(vr_index).nrdconta := rw_crapgrp.nrdconta;
+            pr_tab_grupo(vr_index).nrctasoc := rw_crapgrp.nrctasoc;
+            pr_tab_grupo(vr_index).nrcpfcgc := rw_crapgrp.nrcpfcgc;
+            pr_tab_grupo(vr_index).inpessoa := rw_crapgrp.inpessoa;
+            pr_tab_grupo(vr_index).vlendivi := vr_opt_vlendivi;
+            pr_tab_grupo(vr_index).innivris := (CASE rw_crapgrp.innivris 
+                                                  WHEN 10 THEN 9
+                                                  ELSE rw_crapgrp.innivris
+                                                END);
+            pr_tab_grupo(vr_index).dsdrisco := (CASE rw_crapgrp.innivris 
+                                                  WHEN 10 THEN 'H'
+                                                  ELSE rw_crapgrp.dsdrisco
+                                                END);
+            pr_tab_grupo(vr_index).dsdrisgp := rw_crapgrp.dsdrisgp;
+            pr_tab_grupo(vr_index).idseqttl := rw_crapgrp.idseqttl;
+            pr_tab_grupo(vr_index).cdagenci := rw_crapgrp.cdagenci;
+            pr_tab_grupo(vr_index).dtmvtolt := rw_crapgrp.dtmvtolt;
+            pr_tab_grupo(vr_index).dtrefere := rw_crapgrp.dtrefere;
+            pr_dsdrisco := rw_crapgrp.dsdrisgp;
+            
+          END IF;
+          
+        END IF;
+      END LOOP;
+      
+      vr_index := pr_tab_grupo.first;
+      WHILE vr_index IS NOT NULL LOOP
+        pr_tab_grupo(vr_index).vlendigp := pr_vlendivi;
+        vr_index := pr_tab_grupo.next(vr_index);
+      END LOOP;
+      
+    EXCEPTION
+      WHEN vr_exc_saida THEN     
+        IF vr_cdcritic <> 0 THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        ELSE
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := vr_dscritic;
+        END IF;
+        ROLLBACK;
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina da tela ' || pr_nmdatela || ': ' || SQLERRM;
+        ROLLBACK;
+      END;
+    
+  END pc_calc_endivid_grupo; 
   
 END GECO0001;
 /

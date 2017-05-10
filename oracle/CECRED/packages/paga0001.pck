@@ -12039,7 +12039,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --  Sistema  : Rotinas Internet
     --  Sigla    : INET
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Junho/2013.                   Ultima atualizacao: 21/11/2016
+    --  Data     : Junho/2013.                   Ultima atualizacao: 14/12/2016
     --
     --  Dados referentes ao programa:
     --
@@ -12065,6 +12065,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --                             17 - Cancelamento Contrato SMS Cobrança
     --                            para expirar 30 dias apos criação.
     --                            PRJ319 - SMS Cobrança (Odirlei-AMcom)
+    --
+    --               14/12/2016 - Incluido tratamento para transacao: 
+    --                             12 - Desconto de Cheque
+    --                            para expirar 7 dias apos criação.
+    --                            PRJ300 - Desconto de Cheque (Lombardi)
     -----------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -12304,9 +12309,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
             vr_idagenda := rw_tbspb_trans_pend.idagendamento;
             vr_dtmvtopg := rw_tbspb_trans_pend.dtdebito;                
         ELSE
-			-- Adesão de pacote de tarifas , e contrao de SMS
+			-- Adesão de pacote de tarifas(10), contrao de SMS(16,17) e Desconto de cheque(12)
       -- não permite agendamento
-			IF vr_tptransa NOT IN (10,16,17) THEN
+			IF vr_tptransa NOT IN(10,12,16,17) THEN
 				vr_idagenda := 1;
 				vr_dtmvtopg := rw_tbgen_trans_pend.dtmvtolt;
 			END IF;
@@ -12322,6 +12327,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
         -- tptransa 8     Debito Automatico
         -- tptransa 9     Folha Pagamento
         -- tptransa 11     DARF/DAS
+        -- tptransa 12    Desconto de Cheque
+        --
         -- Codigo Horario
         -- 1 - Transferencia, 2 - Pagamento,        3 - Cobranca
         -- 4 - TED,           5 - Intercooperativa, 6 - VRBoleto
@@ -12420,6 +12427,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 								vr_flgalter := TRUE;
 								pr_flgalter := TRUE;							 
 						 END IF;							 
+          ELSIF  vr_tptransa = 12 THEN --> Desconto de Cheque
+            --> Verificar se ja se passou 7 dias desde a criação da pendencia
+            IF rw_tbgen_trans_pend.dtmvtolt + 7 < pr_dtmvtolt THEN
+              --Atualizar flag para true
+						  vr_flgalter := TRUE;
+						  pr_flgalter := TRUE;
+            END IF;           
 		  ELSIF  vr_tptransa IN (16,17) THEN --> Contrato SMS cobrança
             --> Verificar se ja se passou 30 dias desde a criação da pendencia
             IF rw_tbgen_trans_pend.dtmvtolt + 30 < pr_dtmvtolt THEN

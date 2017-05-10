@@ -4,7 +4,7 @@
  * DATA CRIAÇÃO : Março/2009
  * OBJETIVO     : Biblioteca de funções da subrotina de Descontos de cheques
  * --------------
- * ALTERAÇÕES   : 22/11/2016
+ * ALTERAÇÕES   : 16/12/2016
  * --------------
  * 000: [14/06/2010] David     (CECRED) : Adaptação para RATING
  * 000: [21/09/2010] David	   (CECRED) : Ajuste para enviar impressoes via email para o PAC Sede
@@ -16,7 +16,7 @@
  * 006: [12/05/2015] Reinert   (CECRED) : Alterado para apresentar mensagem ao realizar inclusao
  *								          de proposta de novo limite de desconto de cheque para
  *									      menores nao emancipados.
- * 007: [20/08/2015] Kelvin    (CECRED) : Ajuste feito para não inserir caracters 
+ * 007: [20/08/2015] Kelvin    (CECRED) : Ajuste feito para não inserir caracters
  *  								      especiais na observação, conforme solicitado
  *										  no chamado 315453.
  *
@@ -24,26 +24,34 @@
  * 009: [20/06/2016] Jaison/James (CECRED) : Inicializacao da aux_inconfi6.
  * 010: [18/11/2016] Jaison/James (CECRED) : Reinicializa glb_codigoOperadorLiberacao somente quando pede a senha do coordenador.
  * 011: [22/11/2016] Jaison/James (CECRED) : Zerar glb_codigoOperadorLiberacao antes da cdopcolb.
+ * 012: [06/09/2016] Lombardi  (CECRED) : Inclusao do botão "Renovação" para renovação do limite de desconto de cheque. Projeto 300.
+ * 013: [09/09/2016] Lombardi  (CECRED) : Inclusao do botão "Desbloquear Inclusao de Bordero" para desbloquear inclusao de desconto de cheque. Projeto 300.
+ * 014: [12/09/2016] Lombardi  (CECRED) : Inclusao do botão "Confirmar Novo Limite" para confirmar o novo limite que esta em estudo(Antiga LANCDC). Projeto 300.
+ * 015: [16/12/2016] Reinert   (CECRED) : Alterações referentes ao projeto 300.
  */
- 
+
 var contWin    = 0;  // Variável para contagem do número de janelas abertas para impressos
 var nrcontrato = ""; // Variável para armazenar número do contrato de descto selecionado
 var nrbordero = ""; // Variável para armazenar número do bordero de descto selecionado
+var nrdolote = ""; // Variável para armazenar número do lote de descto selecionado
+var flgrejei = 0; // Variável para armazenar se o descto selecionado está rejeitado
 var situacao_limite = ""; // Variável para armazenar a situação do limite atualmente selecionado
+var cd_situacao_lim = 0; // Variável para armazenar o código da situação do limite atualmente selecionado
+var valor_limite = 0; // Variável para armazenar o valor limite do limite atualmente selecionado
 var idLinhaB   = 0;  // Variável para armazanar o id da linha que contém o bordero selecionado
 var idLinhaL   = 0;  // Variável para armazanar o id da linha que contém o limite selecionado
 var dtrating   = 0;  // Data rating (é calculada e alimentada no cheques_limite_incluir.php)
 var diaratin   = 0;  // Dia do rating da tabela tt-risco (é alimentada no cheques_limite_incluir.php)
 var vlrrisco   = 0;  // Valor do risco (é alimentada no cheques_limite_incluir.php)
 
-// ALTERAÇÃO 001: Criação de variáveis globais 
+// ALTERAÇÃO 001: Criação de variáveis globais
 var nomeForm    	= 'frmDadosLimiteDscChq'; 	// Variável para guardar o nome do formulário corrente
 var boAvalista  	= 'b1wgen0028.p'; 			// BO para esta rotina
 var procAvalista 	= 'carrega_avalista'; 		// Nome da procedures que busca os avalistas
 var operacao		= '' 						// Operação corrente
 
 var strHTML 		= ''; // Variável usada na criação da div de alerta do grupo economico.
-var strHTML2 		= ''; // Variável usada na criação do form onde serão mostradas as mensagens de alerta do grupo economico.	
+var strHTML2 		= ''; // Variável usada na criação do form onde serão mostradas as mensagens de alerta do grupo economico.
 var dsmetodo   		= ''; // Variável usada para manipular o método a ser executado na função encerraMsgsGrupoEconomico.
 
 
@@ -54,7 +62,9 @@ var aux_inconfi4 = ""; /*Variável usada para controlar validações que serão 
 var aux_inconfi5 = ""; /*Variável usada para controlar validações que serão realizadas dentro das ptocedures valida_proposta, efetua_liber_anali_bordero.*/
 var aux_inconfi6 = ""; /*Variável usada para controlar validações que serão realizadas dentro das ptocedures valida_proposta, efetua_liber_anali_bordero.*/
 
-
+var cNrcpfcnpj = [];
+var cDsemiten = [];
+var ChqsRemovidos = [];
 
 // ALTERAÇÃO 001: Carrega biblioteca javascript referente aos AVALISTAS
 $.getScript(UrlSite + 'includes/avalistas/avalistas.js');
@@ -64,38 +74,38 @@ $.getScript(UrlSite + 'includes/avalistas/avalistas.js');
 function carregaBorderosCheques() {
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, carregando border&ocirc;s de desconto de cheques ...");
-	
+
 	// Carrega conteúdo da opção através de ajax
-	$.ajax({		
-		type: "POST", 
+	$.ajax({
+		type: "POST",
 		url: UrlSite + "telas/atenda/descontos/cheques/cheques_bordero.php",
 		dataType: "html",
 		data: {
 			nrdconta: nrdconta,
 			redirect: "html_ajax"
-		},		
+		},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
 			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
 		success: function(response) {
 			$("#divOpcoesDaOpcao2").html(response);
-		}				
-	});		
+		}
+	});
 }
 
 // Função para seleção do bordero
-function selecionaBorderoCheques(id,qtBorderos,bordero,contrato) {
+function selecionaBorderoCheques(id,qtBorderos,bordero,contrato,nrdolote, rejeitado) {
 	var cor = "";
 
 	// Formata cor da linha da tabela que lista os borderos de descto cheques
-	for (var i = 1; i <= qtBorderos; i++) {		
+	for (var i = 1; i <= qtBorderos; i++) {
 		if (cor == "#F4F3F0") {
 			cor = "#FFFFFF";
 		} else {
 			cor = "#F4F3F0";
-		}		
-		
+		}
+
 		// Formata cor da linha
 		$("#trBordero" + i).css("background-color",cor);
 
@@ -106,7 +116,9 @@ function selecionaBorderoCheques(id,qtBorderos,bordero,contrato) {
 			// Armazena número do bordero selecionado
 			nrbordero  = retiraCaracteres(bordero,"0123456789",true);
 			nrcontrato = retiraCaracteres(contrato,"0123456789",true);
-			idLinhaB  = id;		
+			nrdolote   = retiraCaracteres(nrdolote,"0123456789",true);
+      flgrejei   = rejeitado;
+			idLinhaB   = id;
 		}
 
 	}
@@ -115,12 +127,25 @@ function selecionaBorderoCheques(id,qtBorderos,bordero,contrato) {
 // OPÇÕES CONSULTA/EXCLUSÃO/IMPRIMIR/LIBERAÇÃO/ANÁLISE
 // Mostrar dados do border&ocirc; para fazer
 function mostraDadosBorderoDscChq(opcaomostra) {
+
+	if (nrbordero == 0 || nrbordero == '' || nrbordero === undefined) {
+		hideMsgAguardo();
+		showError("error","Nenhum border&ocirc; selecionado.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		return false;
+	}
+
+	if (opcaomostra == 'E' && flgrejei == 1) {
+    hideMsgAguardo();
+		showError("error","Opera&ccedil;&atilde;o n&atilde;o permitida. Border&ocirc; rejeitado.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		return false;
+	}
+
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, carregando dados do border&ocirc; ...");
-	
+
 	// Carrega conteúdo da opção através de ajax
-	$.ajax({		
-		type: "POST", 
+	$.ajax({
+		type: "POST",
 		url: UrlSite + "telas/atenda/descontos/cheques/cheques_bordero_carregadados.php",
 		dataType: "html",
 		data: {
@@ -128,15 +153,15 @@ function mostraDadosBorderoDscChq(opcaomostra) {
 			cddopcao: opcaomostra,
 			nrborder: nrbordero,
 			redirect: "html_ajax"
-		},		
+		},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
 			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
 		success: function(response) {
 			$("#divOpcoesDaOpcao3").html(response);
-		}				
-	});		
+		}
+	});
 }
 
 // OPÇÃO CONSULTAR
@@ -144,48 +169,54 @@ function mostraDadosBorderoDscChq(opcaomostra) {
 function carregaChequesBorderoDscChq() {
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, carregando cheques do border&ocirc; ...");
-	
+
 	// Carrega conteúdo da opção através de ajax
-	$.ajax({		
-		type: "POST", 
+	$.ajax({
+		type: "POST",
 		url: UrlSite + "telas/atenda/descontos/cheques/cheques_bordero_consultar_visualizacheques.php",
 		dataType: "html",
 		data: {
 			nrdconta: nrdconta,
 			nrborder: nrbordero,
 			redirect: "html_ajax"
-		},		
+		},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
 			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
 		success: function(response) {
 			$("#divOpcoesDaOpcao4").html(response);
-		}				
-	});		
+		}
+	});
 }
 
 // OPÇÃO EXCLUIR
 // Função para excluir um bordero de desconto de cheques
 function excluirBorderoDscChq() {
-	
+
+	if (flgrejei == 1) {
+    hideMsgAguardo();
+		showError("error","Opera&ccedil;&atilde;o n&atilde;o permitida. Border&ocirc; rejeitado.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		return false;
+	}
+
 	// Se não tiver nenhum bordero selecionado
 	if (nrbordero == "") {
 		return false;
 	}
-	
+
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, excluindo border&ocirc; ...");
-	
+
 	// Executa script de exclusão através de ajax
-	$.ajax({		
+	$.ajax({
 		type: "POST",
-		url: UrlSite + "telas/atenda/descontos/cheques/cheques_bordero_excluir.php", 
+		url: UrlSite + "telas/atenda/descontos/cheques/cheques_bordero_excluir.php",
 		data: {
 			nrdconta: nrdconta,
 			nrborder: nrbordero,
 			redirect: "script_ajax"
-		}, 
+		},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
 			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
@@ -197,31 +228,39 @@ function excluirBorderoDscChq() {
 				hideMsgAguardo();
 				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
 			}
-		}				
-	});				
+		}
+	});
 }
 
 // OPÇÃO IMPRIMIR
 // Função para mostrar a opção Imprimir dos borderos de desconto de cheques
 function mostraImprimirBordero(){
+
+	if (nrbordero == 0 || nrbordero == '' || nrbordero === undefined) {
+		hideMsgAguardo();
+		showError("error","Nenhum border&ocirc; selecionado.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		return false;
+	}
+
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, carregando op&ccedil;&atilde;o Imprimir ...");
-	
+
 	// Carrega conteúdo da opção através de ajax
-	$.ajax({		
-		type: "POST", 
+	$.ajax({
+		type: "POST",
 		url: UrlSite + "telas/atenda/descontos/cheques/cheques_bordero_imprimir.php",
 		dataType: "html",
 		data: {
 			redirect: "html_ajax"
-		},		
+		},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
 			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
 		success: function(response) {
 			$("#divOpcoesDaOpcao3").html(response);
-		}				
+			layoutPadrao();
+		}
 	});
 
 }
@@ -232,25 +271,26 @@ function verificaEnvioEmail(idimpres,limorbor) {
 }
 
 // Função para gerar impressão em PDF
-function gerarImpressao(idimpres,limorbor,flgemail,fnfinish) {	
-	
+function gerarImpressao(idimpres,limorbor,flgemail,fnfinish,flgrestr) {
+
 	if (idimpres == 8) {
 		imprimirRating(false,2,nrcontrato,"divOpcoesDaOpcao3",fnfinish);
-		return;		
-	}				
-	
+		return;
+	}
+
 	$("#nrdconta","#frmImprimir").val(nrdconta);
 	$("#idimpres","#frmImprimir").val(idimpres);
 	$("#flgemail","#frmImprimir").val(flgemail);
+	$("#flgrestr","#frmImprimir").val(flgrestr);
 	$("#nrctrlim","#frmImprimir").val(nrcontrato);
-	$("#nrborder","#frmImprimir").val(nrbordero);		
+	$("#nrborder","#frmImprimir").val(nrbordero);
 	$("#limorbor","#frmImprimir").val(limorbor);
-	
+
 	var action = $("#frmImprimir").attr("action");
 	var callafter = "blockBackground(parseInt($('#divRotina').css('z-index')));";
-	
+
 	carregaImpressaoAyllos("frmImprimir",action,callafter);
-	
+
 }
 
 // OPÇÃO LIBERAR
@@ -261,12 +301,12 @@ function liberaAnalisaBorderoDscChq(opcao,idconfir,idconfi2,idconfi3,idconfi4,id
     var mensagem = '';
     var cdopcoan = 0;
     var cdopcolb = 0;
-	
+
     // Reinicializa somente quando pede a senha
     if (idconfi6 == 51) {
         glb_codigoOperadorLiberacao = 0;
     }
-	
+
 	// Mostra mensagem de aguardo
 	if (opcao == "N") {
 		mensagem = "analisando";
@@ -279,8 +319,8 @@ function liberaAnalisaBorderoDscChq(opcao,idconfir,idconfi2,idconfi3,idconfi4,id
 	showMsgAguardo("Aguarde, "+mensagem+" o border&ocirc; ...");
 
 	// Carrega conteúdo da opção através de ajax
-	$.ajax({		
-		type: "POST", 
+	$.ajax({
+		type: "POST",
 		url: UrlSite + "telas/atenda/descontos/cheques/cheques_bordero_liberaranalisar.php",
 		data: {
 			nrdconta: nrdconta,
@@ -298,7 +338,7 @@ function liberaAnalisaBorderoDscChq(opcao,idconfir,idconfi2,idconfi3,idconfi4,id
             cdopcoan: cdopcoan,
             cdopcolb: cdopcolb,
 			redirect: "script_ajax"
-		},		
+		},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
 			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
@@ -310,7 +350,7 @@ function liberaAnalisaBorderoDscChq(opcao,idconfir,idconfi2,idconfi3,idconfi4,id
 				hideMsgAguardo();
 				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
 			}
-		}			
+		}
 	});
 }
 
@@ -321,48 +361,50 @@ function carregaLimitesCheques() {
 	showMsgAguardo("Aguarde, carregando limites de desconto de cheques ...");
 
 	// Carrega conteúdo da opção através de ajax
-	$.ajax({		
-		type: "POST", 
+	$.ajax({
+		type: "POST",
 		url: UrlSite + "telas/atenda/descontos/cheques/cheques_limite.php",
 		dataType: "html",
 		data: {
 			nrdconta: nrdconta,
 			redirect: "html_ajax"
-		},		
+		},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
 			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
 		success: function(response) {
 			$("#divOpcoesDaOpcao2").html(response);
-		}				
+		}
 	});
-		
+
 }
 
 // Função para seleção do limite
-function selecionaLimiteCheques(id,qtLimites,limite,dssitlim) {
+function selecionaLimiteCheques(id,qtLimites,limite,dssitlim,insitlim,vllimite) {
 	var cor = "";
-	
+
 	// Formata cor da linha da tabela que lista os limites de descto cheques
-	for (var i = 1; i <= qtLimites; i++) {		
+	for (var i = 1; i <= qtLimites; i++) {
 		if (cor == "#F4F3F0") {
 			cor = "#FFFFFF";
 		} else {
 			cor = "#F4F3F0";
-		}		
-		
+		}
+
 		// Formata cor da linha
 		$("#trLimite" + i).css("background-color",cor);
-		
+
 		if (i == id) {
 			// Atribui cor de destaque para limite selecionado
 			$("#trLimite" + id).css("background-color","#FFB9AB");
-			
+
 			// Armazena número do limite selecionado
 			nrcontrato = limite;
 			idLinhaL = id;
 			situacao_limite = dssitlim;
+			cd_situacao_lim = insitlim;
+			valor_limite = vllimite;
 		}
 	}
 }
@@ -371,44 +413,44 @@ function selecionaLimiteCheques(id,qtLimites,limite,dssitlim) {
 function mostraImprimirLimite() {
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, carregando op&ccedil;&atilde;o Imprimir ...");
-	
+
 	// Carrega conteúdo da opção através de ajax
-	$.ajax({		
-		type: "POST", 
+	$.ajax({
+		type: "POST",
 		url: UrlSite + "telas/atenda/descontos/cheques/cheques_limite_imprimir.php",
 		dataType: "html",
 		data: {
 			redirect: "html_ajax"
-		},		
+		},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
 			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
 		success: function(response) {
 			$("#divOpcoesDaOpcao3").html(response);
-		}				
+		}
 	});
 }
 
 // Função para cancelar um limite de desconto de cheques
-function cancelaLimiteDscChq() {	
+function cancelaLimiteDscChq() {
 	// Se não tiver nenhum limite selecionado
 	if (nrcontrato == "") {
 		return false;
 	}
-	
+
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, cancelando limite ...");
-	
+
 	// Executa script de cancelamento através de ajax
-	$.ajax({		
+	$.ajax({
 		type: "POST",
-		url: UrlSite + "telas/atenda/descontos/cheques/cheques_limite_cancelar.php", 
+		url: UrlSite + "telas/atenda/descontos/cheques/cheques_limite_cancelar.php",
 		data: {
 			nrdconta: nrdconta,
 			nrctrlim: nrcontrato,
 			redirect: "script_ajax"
-		}, 
+		},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
 			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
@@ -420,29 +462,29 @@ function cancelaLimiteDscChq() {
 				hideMsgAguardo();
 				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
 			}
-		}				
-	});				
+		}
+	});
 }
 
 // Função para excluir um limite de desconto de cheques
-function excluirLimiteDscChq() {	
+function excluirLimiteDscChq() {
 	// Se não tiver nenhum limite selecionado
 	if (nrcontrato == "") {
 		return false;
 	}
-	
+
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, excluindo limite ...");
-	
+
 	// Executa script de exclusão através de ajax
-	$.ajax({		
+	$.ajax({
 		type: "POST",
-		url: UrlSite + "telas/atenda/descontos/cheques/cheques_limite_excluir.php", 
+		url: UrlSite + "telas/atenda/descontos/cheques/cheques_limite_excluir.php",
 		data: {
 			nrdconta: nrdconta,
 			nrctrlim: nrcontrato,
 			redirect: "script_ajax"
-		}, 
+		},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
 			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
@@ -454,8 +496,8 @@ function excluirLimiteDscChq() {
 				hideMsgAguardo();
 				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
 			}
-		}				
-	});				
+		}
+	});
 }
 
 // OPÇÃO CONSULTAR
@@ -465,69 +507,69 @@ function carregaDadosConsultaLimiteDscChq() {
 	showMsgAguardo("Aguarde, carregando dados de desconto de cheques ...");
 
 	// Carrega conteúdo da opção através de ajax
-	$.ajax({		
-		type: "POST", 
+	$.ajax({
+		type: "POST",
 		url: UrlSite + "telas/atenda/descontos/cheques/cheques_limite_consultar.php",
 		dataType: "html",
 		data: {
 			nrdconta: nrdconta,
 			nrctrlim: nrcontrato,
 			redirect: "html_ajax"
-		},		
+		},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
 			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
 		success: function(response) {
 			$("#divOpcoesDaOpcao3").html(response);
-		}				
+		}
 	});
-		
+
 }
 
 // OPÇÃO INCLUIR
 // Carregar os dados para inclusão de limite de cheques
 function carregaDadosInclusaoLimiteDscChq(inconfir) {
-	
+
 	showMsgAguardo("Aguarde, carregando dados de desconto de cheques ...");
-	
+
 	// Carrega conteúdo da opção através de ajax
-	$.ajax({		
-		type: "POST", 
+	$.ajax({
+		type: "POST",
 		url: UrlSite + "telas/atenda/descontos/cheques/cheques_limite_incluir.php",
 		dataType: "html",
 		data: {
 			nrdconta: nrdconta,
 			inconfir: inconfir,
 			redirect: "html_ajax"
-		},		
+		},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
 			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
 		success: function(response) {
-			$("#divOpcoesDaOpcao3").html(response);		
+			$("#divOpcoesDaOpcao3").html(response);
 			$("#divConteudoOpcao").css('display','none');
 			controlaLupas();
-		}				
+		}
 	});
-		
+
 }
 
 // OPÇÃO ALTERAR
 function mostraTelaAltera() {
-    
-    showMsgAguardo('Aguarde, abrindo altera&ccedil;&atilde;o...');
 
+    showMsgAguardo('Aguarde, abrindo altera&ccedil;&atilde;o...');
+	$('#divUsoGenerico').html('');
     exibeRotina($('#divUsoGenerico'));
 
     if (situacao_limite != "EM ESTUDO") {
-        showError("error", "N&atilde;o &eacute; poss&iacute;vel alterar contrato. Situa&ccedil;&atilde;o do limite ATIVO.", "Alerta - Ayllos", "fechaRotinaAltera();");
+        showError("error", "N&atilde;o &eacute; poss&iacute;vel alterar contrato. Situa&ccedil;&atilde;o do limite DEVE estar em ESTUDO.", "Alerta - Ayllos", "fechaRotinaAltera();");
         return false;
     }
 
     limpaDivGenerica();
-    
+
     $.ajax({
         type: 'POST',
         dataType: 'html',
@@ -536,18 +578,18 @@ function mostraTelaAltera() {
             redirect: 'html_ajax'
         },
         error: function (objAjax, responseError, objExcept) {
-            hideMsgAguardo();       
+            hideMsgAguardo();
             showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function (response) {
             $('#divUsoGenerico').html(response);
             layoutPadrao();
-            hideMsgAguardo();            
-            bloqueiaFundo($('#divUsoGenerico'));            
+            hideMsgAguardo();
+            bloqueiaFundo($('#divUsoGenerico'));
         }
     });
 
-    $('#todaProp', '#frmAltera').focus();    
+    $('#todaProp', '#frmAltera').focus();
     return false;
 }
 
@@ -558,7 +600,7 @@ function exibeAlteraNumero() {
     exibeRotina($('#divUsoGenerico'));
 
     limpaDivGenerica();
-    
+
     $.ajax({
         type: 'POST',
         dataType: 'html',
@@ -601,11 +643,11 @@ function confirmaAlteraNrContrato() {
     showConfirmacao("Alterar n&uacute;mero da proposta?", "Confirma&ccedil;&atilde;o - Ayllos", "AlteraNrContrato();", "$('#new_nrctrlim','#frmNumero').focus();blockBackground(parseInt($('#divUsoGenerico').css('z-index')));", "sim.gif", "nao.gif");
 }
 
-// Função para alterar apenas o numero de contrato de limite 
+// Função para alterar apenas o numero de contrato de limite
 function AlteraNrContrato() {
-    
+
     showMsgAguardo("Aguarde, alterando n&uacute;mero do contrato ...");
-    
+
     var nrctrant = $('#nrctrlim', '#frmNumero').val().replace(/\./g, "");
     var nrctrlim = $('#new_nrctrlim', '#frmNumero').val().replace(/\./g, "");
 
@@ -618,7 +660,7 @@ function AlteraNrContrato() {
 
     $.ajax({
         type: "POST",
-        url: UrlSite + "telas/atenda/descontos/cheques/cheques_limite_alterar_numero.php",        
+        url: UrlSite + "telas/atenda/descontos/cheques/cheques_limite_alterar_numero.php",
         dataType: "html",
         data: {
             nrdconta: nrdconta,
@@ -645,15 +687,15 @@ function carregaDadosAlteraLimiteDscChq() {
 	showMsgAguardo("Aguarde, carregando dados de desconto de cheques ...");
 
 	// Carrega conteúdo da opção através de ajax
-	$.ajax({		
-		type: "POST", 
+	$.ajax({
+		type: "POST",
 		url: UrlSite + "telas/atenda/descontos/cheques/cheques_limite_alterar.php",
 		dataType: "html",
 		data: {
 			nrdconta: nrdconta,
 			nrctrlim: nrcontrato,
 			redirect: "html_ajax"
-		},		
+		},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
 			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
@@ -661,26 +703,26 @@ function carregaDadosAlteraLimiteDscChq() {
 		success: function(response) {
 			$("#divOpcoesDaOpcao3").html(response);
 			controlaLupas();
-		}				
+		}
 	});
-		
+
 }
 
 // Função para gravar dados do limite de desconto de cheques
 function gravaLimiteDscChq(cddopcao) {
 
 	var nrcpfcgc = $("#nrcpfcgc","#frmCabAtenda").val().replace(".","").replace(".","").replace("-","").replace("/","");
-	
+
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, efetuando " + (cddopcao == "A" ? "altera&ccedil;&atilde;o" : "inclus&atilde;o") + " do limite ...");
-	$.ajax({		
-		type: "POST", 
+	$.ajax({
+		type: "POST",
 		url: UrlSite + "telas/atenda/descontos/cheques/cheques_limite_grava_proposta.php",
 		data: {
 			nrdconta: nrdconta,
 			cddopcao: cddopcao,
 			nrcpfcgc: nrcpfcgc,
-			
+
 			nrctrlim: $("#nrctrlim","#frmDadosLimiteDscChq").val().replace(/\./g,""),
 			vllimite: $("#vllimite","#frmDadosLimiteDscChq").val().replace(/\./g,""),
 			dsramati: $("#dsramati","#frmDadosLimiteDscChq").val(),
@@ -690,12 +732,12 @@ function gravaLimiteDscChq(cddopcao) {
 			vlsalari: $("#vlsalari","#frmDadosLimiteDscChq").val().replace(/\./g,""),
 			vlsalcon: $("#vlsalcon","#frmDadosLimiteDscChq").val().replace(/\./g,""),
 			dsdbens1: $("#dsdbens1","#frmDadosLimiteDscChq").val(),
-			dsdbens2: $("#dsdbens2","#frmDadosLimiteDscChq").val(),            
+			dsdbens2: $("#dsdbens2","#frmDadosLimiteDscChq").val(),
 			cddlinha: $("#cddlinha","#frmDadosLimiteDscChq").val(),
 			dsobserv: removeCaracteresInvalidos(removeAcentos($("#dsobserv","#frmDadosLimiteDscChq").val())),
 			qtdiavig: $("#qtdiavig","#frmDadosLimiteDscChq").val().replace(/dias/,""),
-			
-			// 1o. Avalista 
+
+			// 1o. Avalista
 			nrctaav1: normalizaNumero($("#nrctaav1","#frmDadosLimiteDscChq").val()),
 			nmdaval1: $("#nmdaval1","#frmDadosLimiteDscChq").val(),
 			nrcpfav1: normalizaNumero($("#nrcpfav1","#frmDadosLimiteDscChq").val()),
@@ -716,7 +758,7 @@ function gravaLimiteDscChq(cddopcao) {
 			complen1: $("#complen1","#frmDadosLimiteDscChq").val(),
 			nrcxaps1: normalizaNumero($("#nrcxaps1","#frmDadosLimiteDscChq").val()),
 
-			// 2o. Avalista 
+			// 2o. Avalista
 			nrctaav2: normalizaNumero($("#nrctaav2","#frmDadosLimiteDscChq").val()),
 			nmdaval2: $("#nmdaval2","#frmDadosLimiteDscChq").val(),
 			nrcpfav2: normalizaNumero($("#nrcpfav2","#frmDadosLimiteDscChq").val()),
@@ -736,19 +778,19 @@ function gravaLimiteDscChq(cddopcao) {
 			nrender2: normalizaNumero($("#nrender2","#frmDadosLimiteDscChq").val()),
 			complen2: $("#complen2","#frmDadosLimiteDscChq").val(),
 			nrcxaps2: normalizaNumero($("#nrcxaps2","#frmDadosLimiteDscChq").val()),
-			
-			// Variáveis globais alimentadas na função validaDadosRating em rating.js 
+
+			// Variáveis globais alimentadas na função validaDadosRating em rating.js
 			nrgarope: nrgarope,
 			nrinfcad: nrinfcad,
 			nrliquid: nrliquid,
-			nrpatlvr: nrpatlvr,			
+			nrpatlvr: nrpatlvr,
 			vltotsfn: vltotsfn,
 			perfatcl: perfatcl,
-			nrperger: nrperger,	
-			
-			
+			nrperger: nrperger,
+
+
 			redirect: "script_ajax"
-		}, 
+		},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
 			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
@@ -760,8 +802,8 @@ function gravaLimiteDscChq(cddopcao) {
 				hideMsgAguardo();
 				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
 			}
-		}				
-	});	
+		}
+	});
 }
 
 // Validar os dados da proposta de limite
@@ -769,18 +811,18 @@ function validaLimiteDscChq(cddopcao,idconfir,idconfi2,idconfi5) {
 
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, validando dados do limite ...");
-	
+
 	// Carrega conteúdo da opção através de ajax
-	$.ajax({		
-		type: "POST", 
+	$.ajax({
+		type: "POST",
 		url: UrlSite + "telas/atenda/descontos/cheques/cheques_limite_valida_proposta.php",
 		data: {
 			nrdconta: nrdconta,
 			nrctrlim: $("#nrctrlim","#frmDadosLimiteDscChq").val().replace(/\./g,""),
 			cddopcao: cddopcao,
-			dtrating: dtrating, 
-			diaratin: diaratin, 
-			vlrrisco: vlrrisco, 
+			dtrating: dtrating,
+			diaratin: diaratin,
+			vlrrisco: vlrrisco,
 			vllimite: $("#vllimite","#frmDadosLimiteDscChq").val().replace(/\./g,""),
 			cddlinha: $("#cddlinha","#frmDadosLimiteDscChq").val(),
 			inconfir: idconfir,
@@ -788,8 +830,8 @@ function validaLimiteDscChq(cddopcao,idconfir,idconfi2,idconfi5) {
 			inconfi4: 71,
 			inconfi5: idconfi5,
 			redirect: "html_ajax"
-  	
-		},		
+
+		},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
 			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
@@ -801,7 +843,7 @@ function validaLimiteDscChq(cddopcao,idconfir,idconfi2,idconfi5) {
 				hideMsgAguardo();
 				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
 			}
-		}			
+		}
 	});
 }
 
@@ -809,18 +851,18 @@ function validaLimiteDscChq(cddopcao,idconfir,idconfi2,idconfi5) {
 function validaNrContrato() {
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, validando n&uacute;mero do contrato ...");
-	
+
 	var antnrctr = $("#antnrctr","#frmDadosLimiteDscChq").val().replace(/\./g,"");
-	
+
 	// Valida número do contrato
 	if (antnrctr == "" || !validaNumero(antnrctr,true,0,0)) {
 		hideMsgAguardo();
 		showError("error","Confirme o n&uacute;mero do contrato.","Alerta - Ayllos","$('#antnrctr','#frmDadosLimiteDscChq').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
-	} 
-	
-	$.ajax({		
-		type: "POST", 
+	}
+
+	$.ajax({
+		type: "POST",
 		url: UrlSite + "telas/atenda/descontos/cheques/cheques_limite_incluir_validaconfirma.php",
 		data: {
 			nrdconta: nrdconta,
@@ -829,7 +871,7 @@ function validaNrContrato() {
 			nrctaav1: 0,
 			nrctaav2: 0,
 			redirect: "script_ajax"
-		}, 
+		},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
 			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
@@ -841,80 +883,80 @@ function validaNrContrato() {
 				hideMsgAguardo();
 				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
 			}
-		}				
-	});	
+		}
+	});
 }
 
 /*!
- * OBJETIVO : Função para validar avalistas 
- * ALTERAÇÃO 001: Padronizado o recebimento de valores 
+ * OBJETIVO : Função para validar avalistas
+ * ALTERAÇÃO 001: Padronizado o recebimento de valores
  */
 function validarAvalistas() {
 
-	showMsgAguardo('Aguarde, validando dados dos avalistas ...');	
+	showMsgAguardo('Aguarde, validando dados dos avalistas ...');
 
 	var nrctaav1 = normalizaNumero( $('#nrctaav1','#'+nomeForm).val() );
 	var nrcpfav1 = normalizaNumero( $('#nrcpfav1','#'+nomeForm).val() );
 	var cpfcjav1 = normalizaNumero( $('#cpfcjav1','#'+nomeForm).val() );
 	var nrctaav2 = normalizaNumero( $('#nrctaav2','#'+nomeForm).val() );
 	var nrcpfav2 = normalizaNumero( $('#nrcpfav2','#'+nomeForm).val() );
-	var cpfcjav2 = normalizaNumero( $('#cpfcjav2','#'+nomeForm).val() );	
-	
+	var cpfcjav2 = normalizaNumero( $('#cpfcjav2','#'+nomeForm).val() );
+
 	var nmdaval1 = trim( $('#nmdaval1','#'+nomeForm).val() );
 	var ende1av1 = trim( $('#ende1av1','#'+nomeForm).val() );
 	var nrcepav1 = normalizaNumero($("#nrcepav1",'#'+nomeForm).val())
-	
+
 	var nmdaval2 = trim( $('#nmdaval2','#'+nomeForm).val() );
 	var ende1av2 = trim( $('#ende1av2','#'+nomeForm).val() );
 	var nrcepav2 = normalizaNumero($("#nrcepav2",'#'+nomeForm).val());
 
-			
-	$.ajax({		
-		type: 'POST', 
+
+	$.ajax({
+		type: 'POST',
 		url: UrlSite + 'telas/atenda/descontos/cheques/cheques_avalistas_validadados.php',
 		data: {
-			nrdconta: nrdconta,	nrctaav1: nrctaav1,	nmdaval1: nmdaval1,	
-			nrcpfav1: nrcpfav1, cpfcjav1: cpfcjav1,	ende1av1: ende1av1,	
-			nrctaav2: nrctaav2,	nmdaval2: nmdaval2, nrcpfav2: nrcpfav2,	
+			nrdconta: nrdconta,	nrctaav1: nrctaav1,	nmdaval1: nmdaval1,
+			nrcpfav1: nrcpfav1, cpfcjav1: cpfcjav1,	ende1av1: ende1av1,
+			nrctaav2: nrctaav2,	nmdaval2: nmdaval2, nrcpfav2: nrcpfav2,
 			cpfcjav2: cpfcjav2,	ende1av2: ende1av2, cddopcao: operacao,
 			nrcepav1: nrcepav1, nrcepav2: nrcepav2, redirect: 'script_ajax'
-		},		
+		},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
 			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina);');
 		},
 		success: function(response) {
 			try {
-				eval(response);				
+				eval(response);
 			} catch(error) {
 				hideMsgAguardo();
 				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. ' + error.message,'Alerta - Ayllos','bloqueiaFundo(divRotina);');
 			}
-		}				
-	});	
+		}
+	});
 }
 
 function controlaLupas(){
 
 	// Variável local para guardar o elemento anterior
 	var campoAnterior = '';
-	var bo, procedure, titulo, qtReg, filtros, colunas;	
-	
+	var bo, procedure, titulo, qtReg, filtros, colunas;
+
 	// Nome do Formulário que estamos trabalhando
 	var nomeFormulario = 'frmDadosLimiteDscChq';
-		
+
 	// Atribui a classe lupa para os links de desabilita todos
 	$('a','#'+nomeFormulario).addClass('lupa').css('cursor','auto');
-	
+
 	// Percorrendo todos os links
 	$('a','#'+nomeFormulario).each( function(i) {
-	
+
 		if ( !$(this).prev().hasClass('campoTelaSemBorda') ) $(this).css('cursor','pointer');
-				
+
 		$(this).click( function() {
 			if ( $(this).prev().hasClass('campoTelaSemBorda') ) {
 				return false;
-			} else {						
+			} else {
 				campoAnterior = $(this).prev().attr('name');
 
 				if ( campoAnterior == 'cddlinha' ) {
@@ -930,100 +972,100 @@ function controlaLupas(){
 			}
 		});
 	});
-	
-	$('#cddlinha','#'+nomeFormulario).unbind('change').bind('change',function() {		
-				
+
+	$('#cddlinha','#'+nomeFormulario).unbind('change').bind('change',function() {
+
 		//Adiciona filtro por conta para a Procedure
 		var filtrosDesc = 'nrdconta|'+ nrdconta;
-		
+
 		buscaDescricao('b1wgen0009.p','linha-desc-chq','Linhas de Desconto de Cheque',$(this).attr('name'),'cddlinh2',$(this).val(),'dsdlinha',filtrosDesc,nomeFormulario);
 		return false;
-	});	
-	
-	$('#cddlinha','#'+nomeFormulario).unbind('keypress').bind('keypress',function(e) {		
-		
+	});
+
+	$('#cddlinha','#'+nomeFormulario).unbind('keypress').bind('keypress',function(e) {
+
 		if(e.keyCode == 13){
-		
+
 			//Adiciona filtro por conta para a Procedure
 			var filtrosDesc = 'nrdconta|'+ nrdconta;
-			
+
 			buscaDescricao('b1wgen0009.p','linha-desc-chq','Linhas de Desconto de Cheque',$(this).attr('name'),'cddlinh2',$(this).val(),'dsdlinha',filtrosDesc,nomeFormulario);
-						
+
 			return false;
-			
+
 		}
-		
-	});	
-	
-	
+
+	});
+
+
 	return false;
 }
 
 
 // Função para fechar div com mensagens de alerta
 function encerraMsgsGrupoEconomico(){
-	
+
 	// Esconde div
 	$("#divMsgsGrupoEconomico").css("visibility","hidden");
-	
+
 	$("#divListaMsgsGrupoEconomico").html("&nbsp;");
-	
+
 	// Esconde div de bloqueio
 	unblockBackground();
 	blockBackground(parseInt($("#divRotina").css("z-index")));
-	
+
 	eval(dsmetodo);
-	
+
 	return false;
-	
+
 }
 
 function mostraMsgsGrupoEconomico(){
-	
-	
+
+
 	if(strHTML != ''){
-		
+
 		// Coloca conteúdo HTML no div
 		$("#divListaMsgsGrupoEconomico").html(strHTML);
 		$("#divMensagem").html(strHTML2);
-				
-		// Mostra div 
+
+		// Mostra div
 		$("#divMsgsGrupoEconomico").css("visibility","visible");
-		
+
 		exibeRotina($("#divMsgsGrupoEconomico"));
-		
+
 		// Esconde mensagem de aguardo
 		hideMsgAguardo();
-					
+
 		// Bloqueia conteúdo que está átras do div de mensagens
 		blockBackground(parseInt($("#divMsgsGrupoEconomico").css("z-index")));
-				
+
 	}
-	
+
 	return false;
-	
+
 }
 
 function formataGrupoEconomico(){
 
-	var divRegistro = $('div.divRegistros','#divMsgsGrupoEconomico');		
+	var divRegistro = $('div.divRegistros','#divMsgsGrupoEconomico');
 	var tabela      = $('table', divRegistro );
 	var linha       = $('table > tbody > tr', divRegistro );
-			
+
 	divRegistro.css({'height':'140px'});
-	
+
 	$('#divListaMsgsGrupoEconomico').css({'height':'200px'});
 	$('#divMensagem').css({'width':'250px'});
-	
+
 	var ordemInicial = new Array();
-					
+
 	var arrayAlinha = new Array();
 	arrayAlinha[0] = 'center';
-	
+
 	tabela.formataTabela( ordemInicial, '', arrayAlinha );
-	
+
 	return false;
-	
+
 }
 
 
@@ -1031,14 +1073,14 @@ function formataGrupoEconomico(){
 function buscaGrupoEconomico() {
 
 	showMsgAguardo("Aguarde, verificando grupo econ&ocirc;mico...");
-	
-	$.ajax({		
-		type: 'POST', 
+
+	$.ajax({
+		type: 'POST',
 		url: UrlSite + 'telas/atenda/descontos/titulos/busca_grupo_economico.php',
 		data: {
-			nrdconta: nrdconta,	
+			nrdconta: nrdconta,
 			redirect: 'html_ajax'
-		},		
+		},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
 			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
@@ -1050,25 +1092,25 @@ function buscaGrupoEconomico() {
 				hideMsgAguardo();
 				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
 			}
-		}							
+		}
 	});
-	
+
 	return false;
-	
+
 }
 
 function calcEndividRiscoGrupo(nrdgrupo) {
 
 	showMsgAguardo("Aguarde, calculando endividamento e risco do grupo econ&ocirc;mico...");
 
-	$.ajax({		
-		type: 'POST', 
+	$.ajax({
+		type: 'POST',
 		url: UrlSite + 'telas/atenda/descontos/titulos/calc_endivid_grupo.php',
 		data: {
-			nrdconta: nrdconta,	
+			nrdconta: nrdconta,
 			nrdgrupo: nrdgrupo,
 			redirect: 'html_ajax'
-		},		
+		},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
 			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
@@ -1080,18 +1122,18 @@ function calcEndividRiscoGrupo(nrdgrupo) {
 				hideMsgAguardo();
 				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
 			}
-		}							
+		}
 	});
-	
+
 	return false;
-	
+
 }
 function removeAcentos(str){
 	return str.replace(/[àáâãäå]/g,"a").replace(/[ÀÁÂÃÄÅ]/g,"A").replace(/[ÒÓÔÕÖØ]/g,"O").replace(/[òóôõöø]/g,"o").replace(/[ÈÉÊË]/g,"E").replace(/[èéêë]/g,"e").replace(/[Ç]/g,"C").replace(/[ç]/g,"c").replace(/[ÌÍÎÏ]/g,"I").replace(/[ìíîï]/g,"i").replace(/[ÙÚÛÜ]/g,"U").replace(/[ùúûü]/g,"u").replace(/[ÿ]/g,"y").replace(/[Ñ]/g,"N").replace(/[ñ]/g,"n");
 }
 
 function removeCaracteresInvalidos(str){
-	return str.replace(/[^A-z0-9\sÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöøÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ\!\@\$\%\*\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/\>\<]/g,"");				 
+	return str.replace(/[^A-z0-9\sÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöøÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ\!\@\$\%\*\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/\>\<]/g,"");
 }
 
 function mostraListagemRestricoes(opcao,idconfir,idconfi2,idconfi3,idconfi4,idconfi5,idconfi6,indentra,indrestr) {
@@ -1099,8 +1141,8 @@ function mostraListagemRestricoes(opcao,idconfir,idconfi2,idconfi3,idconfi4,idco
 	showMsgAguardo("Aguarde, carregando listagem ...");
 
 	// Carrega conteúdo da opção através de ajax
-	$.ajax({		
-		type: "POST", 
+	$.ajax({
+		type: "POST",
 		url: UrlSite + "telas/atenda/descontos/cheques/cheques_restricoes.php",
 		dataType: "html",
 		data: {
@@ -1116,13 +1158,1858 @@ function mostraListagemRestricoes(opcao,idconfir,idconfi2,idconfi3,idconfi4,idco
 			nrdconta: nrdconta,
 			nrborder: nrbordero,
 			redirect: "html_ajax"
-		},		
+		},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
 			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
 		success: function(response) {
 			$("#divOpcoesDaOpcao2").html(response);
-		}				
-	});		
+		}
+	});
+}
+
+function formataValorLimite() {
+
+	highlightObjFocus( $('#frmReLimite') );
+
+	var Lvllimite = $('label[for="vllimite"]','#frmReLimite');
+
+	var Cvllimite = $('#vllimite','#frmReLimite');
+	Cvllimite.css({'width':'90px','text-align':'right'}).setMask("DECIMAL","zzz.zzz.zz9,99","");
+	Cvllimite.habilitaCampo();
+	Cvllimite.focus();
+
+	Cvllimite.unbind('keypress').bind('keypress', function(e) {
+		if ( divError.css('display') == 'block' ) { return false; }
+		if ( e.keyCode == 13) {
+			renovaValorLimite();
+			return false;
+		}
+	});
+
+	$('#btRenovar').unbind('click').bind('click', function(){
+		renovaValorLimite();
+		return false;
+	});
+
+	return false;
+}
+
+function renovaValorLimite() {
+
+	showMsgAguardo('Aguarde, efetuando renovacao...');
+
+	var vllimite = converteNumero($('#vllimite','#frmReLimite').val());
+	var nrctrlim = $('#nrctrlim','#frmReLimite').val();
+
+	// Carrega conteúdo da opção através de ajax
+	$.ajax({
+		type: "POST",
+		url: UrlSite + "telas/atenda/descontos/cheques/cheques_renova_limite.php",
+		data: {
+			nrdconta: nrdconta,
+			vllimite: vllimite,
+			nrctrlim: nrctrlim.replace(/[^0-9]/g,''),
+			redirect: "script_ajax"
+		},
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function(response) {
+			try {
+				eval(response);
+			} catch(error) {
+				hideMsgAguardo();
+				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+			}
+		}
+	});
+
+	return false;
+}
+
+function desbloqueiaInclusaoBordero() {
+
+	showMsgAguardo('Aguarde, efetuando desbloqueio...');
+
+	var nrctrlim = $('#nrctrlim','#frmCheques').val();
+
+	// Carrega conteúdo da opção através de ajax
+	$.ajax({
+		type: "POST",
+		url: UrlSite + "telas/atenda/descontos/cheques/cheques_desbloqueia_bordero.php",
+		data: {
+			nrdconta: nrdconta,
+			nrctrlim: nrctrlim.replace(/\./g,''),
+			redirect: "script_ajax"
+		},
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function(response) {
+			try {
+				eval(response);
+			} catch(error) {
+				hideMsgAguardo();
+				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+			}
+		}
+	});
+
+	return false;
+}
+
+function acessaValorLimite() {
+
+    showMsgAguardo('Aguarde, carregando ...');
+
+	var vllimite = $('#vllimite','#frmCheques').val();
+	var nrctrlim = $('#nrctrlim','#frmCheques').val();
+
+    exibeRotina($('#divUsoGenerico'));
+
+	// Carrega conteúdo da opção através do Ajax
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/atenda/descontos/cheques/cheques_valor_limite.php',
+        data: {
+			vllimite: vllimite,
+			nrctrlim: nrctrlim,
+			redirect: 'html_ajax'
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+        },
+        success: function (response) {
+		    $('#divUsoGenerico').html(response);
+            layoutPadrao();
+            formataValorLimite();
+            hideMsgAguardo();
+            bloqueiaFundo($('#divUsoGenerico'));
+        }
+    });
+
+	return false;
+}
+
+function confirmaNovoLimite(cddopera) {
+
+	if (cd_situacao_lim != 1)
+		return false;
+
+	showMsgAguardo('Aguarde, efetuando renovacao...');
+
+	// Carrega conteúdo da opção através de ajax
+	$.ajax({
+		type: "POST",
+		url: UrlSite + "telas/atenda/descontos/cheques/cheques_limite_confirmar_novo_limite.php",
+		data: {
+			nrdconta: nrdconta,
+			vllimite: valor_limite,
+			nrctrlim: nrcontrato,
+			cddopera: cddopera,
+			redirect: "script_ajax"
+		},
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function(response) {
+			try {
+				hideMsgAguardo();
+				eval(response);
+			} catch(error) {
+				hideMsgAguardo();
+				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+			}
+		}
+	});
+
+	return false;
+}
+
+function verificaMensagens(mensagem_01,mensagem_02,mensagem_03,mensagem_04,qtctarel,grupo,vlutiliz,vlexcedi) {
+
+	if (mensagem_01 != '')
+		showConfirmacao(mensagem_01
+					   ,"Confirma&ccedil;&atilde;o - Ayllos"
+					   ,"verificaMensagens('','" + mensagem_02 + "','" + mensagem_03 + "','" + mensagem_04 + "','" + qtctarel + "','" + grupo + "','" + vlutiliz + "','" + vlexcedi + "')"
+					   ,"telaOperacaoNaoEfetuada()"
+					   ,"sim.gif","nao.gif");
+	else if (mensagem_02 != '')
+		showConfirmacao('<center>' + (mensagem_02 + "<br>Deseja confirmar esta operação?") + '</center>'
+					   ,"Confirma&ccedil;&atilde;o - Ayllos"
+					   ,"verificaMensagens('','','" + mensagem_03 + "','" + mensagem_04 + "','" + qtctarel + "','" + grupo + "','" + vlutiliz + "','" + vlexcedi + "')"
+					   ,"telaOperacaoNaoEfetuada()"
+					   ,"sim.gif","nao.gif");
+	else if (mensagem_03 != ''){
+
+		exibeRotina($('#divUsoGenerico'));
+
+		limpaDivGenerica();
+
+		// Carrega conteúdo da opção através do Ajax
+		$.ajax({
+			type: 'POST',
+			dataType: 'html',
+			url: UrlSite + 'telas/atenda/descontos/cheques/cheques_tabela_grupo.php',
+			data: {
+			 mensagem_03: mensagem_03,
+			 mensagem_04: mensagem_04,
+			    nrdconta: nrdconta,
+			    qtctarel: qtctarel,
+				   grupo: grupo,
+			    vlutiliz: vlutiliz,
+			    vlexcedi: vlexcedi,
+				redirect: 'html_ajax'
+			},
+			error: function (objAjax, responseError, objExcept) {
+				hideMsgAguardo();
+				showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+			},
+			success: function (response) {
+				$('#divUsoGenerico').html(response);
+				layoutPadrao();
+				formataMensagem03();
+				hideMsgAguardo();
+				bloqueiaFundo($('#divUsoGenerico'));
+			}
+		});
+	}
+	else if (mensagem_04 != '')
+		showError("inform",mensagem_04,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')));verificaMensagens('','','','','','','','');");
+	else
+		confirmaNovoLimite(1);
+	return false;
+
+}
+
+function telaOperacaoNaoEfetuada() {
+	fechaRotina($('#divUsoGenerico'),'divRotina');
+	showError('inform','Opera&ccedil;&atilde;o n&atilde;o efetuada!','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
+	return false;
+}
+
+function formataMensagem03() {
+
+	var Labels = $('label[for="vlutiliz"],label[for="vlexcedi"]','#divGrupoEconomico');
+
+	Labels.css({'width':'120px','height':'22px','float':'left','display':'block'});
+
+	var Inputs = $('input','#divGrupoEconomico');
+	Inputs.css({'width':'120px','text-align':'right','float':'left','display':'block'});
+	Inputs.desabilitaCampo();
+
+	var divRegistro = $('div.divRegistros','#divGrupoEconomico');
+	var tabela      = $('table', divRegistro );
+	var linha       = $('table > tbody > tr', divRegistro );
+
+	divRegistro.css({'height':'100px'});
+	divRegistro.css({'width':'250px'});
+
+	var ordemInicial = new Array();
+	ordemInicial = [[0,0]];
+
+	var arrayLargura = new Array();
+	arrayLargura[0] = '230px';
+
+
+	var arrayAlinha = new Array();
+	arrayAlinha[0] = 'center';
+
+	var metodoTabela = '';
+
+	tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, metodoTabela );
+
+	$('#btnContinuar').unbind('click');
+
+	return false;
+}
+
+function converteNumero (numero){
+  return numero.replace('.','').replace(',','.');
+}
+
+function mostraFormIABordero(cddopcao){
+
+	if (cddopcao == 'I' && $('#hd_insitblq','#frmCheques').val() == 1){
+		showError("error","Inclus&atilde;o de novos border&ocirc;s bloqueada.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		return false;
+	}
+
+	if (cddopcao == 'I' && $('#hd_perrenov','#frmCheques').val() == 1){
+		showError("error","Opera&ccedil;&atilde;o n&atilde;o permitida. Contrato de limite de desconto vencido.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		return false;
+	}
+
+  if (cddopcao == 'A' && flgrejei == 1) {
+    hideMsgAguardo();
+    showError("error","Opera&ccedil;&atilde;o n&atilde;o permitida. Border&ocirc; rejeitado.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+    return false;
+  }
+
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, carregando dados do border&ocirc; ...");
+
+	if (cddopcao == 'I') {
+		nrbordero = 0;
+	} else if (nrbordero == 0 || nrbordero == '' || nrbordero === undefined) {
+		hideMsgAguardo();
+		showError("error","Nenhum border&ocirc; selecionado.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		return false;
+	}
+
+	if (cddopcao == 'A' && $('#hd_perrenov','#frmCheques').val() == 1){
+		showError("error","Opera&ccedil;&atilde;o n&atilde;o permitida. Contrato de limite de desconto vencido.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		return false;
+	}
+
+	ChqsRemovidos = new Array();
+
+	// Carrega conteúdo da opção através de ajax
+	$.ajax({
+		type: "POST",
+		url: UrlSite + "telas/atenda/descontos/cheques/cheques_bordero_ia_form.php",
+		dataType: "html",
+		data: {
+			cddopcao: cddopcao,
+			nrdconta: nrdconta,
+			nrborder: nrbordero,
+			redirect: "html_ajax"
+		},
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+			return false;
+		},
+		success: function(response) {
+			$("#divOpcoesDaOpcao3").html(response);
+			layoutPadrao();
+		}
+	});
+}
+
+function mostraTelaChequesCustodia(nriniseq, nrregist, htmlDivSel){
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, buscando cheques em cust&oacute;dia ...");
+
+	var idLinha;
+	var objImg;
+	// Carrega conteúdo da opção através de ajax
+	$.ajax({
+		type: "POST",
+		url: UrlSite + "telas/atenda/descontos/cheques/cheques_bordero_custodia_selec.php",
+		dataType: "html",
+		data: {
+			nrdconta: nrdconta,
+			nrctrlim: nrcontrato,
+			nriniseq: nriniseq,
+			nrregist: nrregist,
+			redirect: "html_ajax"
+		},
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function(response) {
+			$('#divOpcoesDaOpcao4').html(response);
+			if (htmlDivSel != ''){
+				$('#divChequesSelPag').html(htmlDivSel);
+			}
+
+			$('#tbChequesSel tbody tr').each(function(){
+				idLinha = $(this).attr('id').substring(1);
+				if (document.getElementById(idLinha)){
+					objImg = $('#'+idLinha).find('td > img');
+					objImg.attr('style', 'opacity: 0.4; cursor: default');
+				}
+			});
+			$('#tbChequesBordero tbody tr').each(function(){
+				idLinha = $(this).attr('id').substring(1);
+				if (document.getElementById(idLinha)){
+					objImg = $('#'+idLinha).find('td > img');
+					objImg.attr('style', 'opacity: 0.4; cursor: default');
+				}
+			});
+		}
+	});
+}
+
+function mostraTelaChequesNovos(){
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, carregando tela de novos cheques ...");
+
+	// Carrega conteúdo da opção através de ajax
+	$.ajax({
+		type: "POST",
+		url: UrlSite + "telas/atenda/descontos/cheques/cheques_bordero_custodia_novo.php",
+		dataType: "html",
+		data: {
+			nrdconta: nrdconta,
+			nrctrlim: normalizaNumero($('#nrctrlim','#frmCheques').val()),
+			redirect: "html_ajax"
+		},
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function(response) {
+			$('#divOpcoesDaOpcao4').html(response);
+		}
+	});
+}
+
+function adicionaChequeBordero(htmlLinha, idLinha){
+
+	var objImg;
+	var imgBtn;
+	var qtdLinhas = $('#tbChequesSel tbody tr').length;
+	var corLinha  = (qtdLinhas%2 === 0) ? 'corImpar' : 'corPar';
+	var idLinhaB  = 'b' + idLinha.substring(1);
+
+	if(!document.getElementById(idLinha) && !document.getElementById(idLinhaB)) {
+		$("#tbChequesSel > tbody").append($('<tr>')
+										.attr('id', idLinha)
+										.attr('class',corLinha)
+										.append(htmlLinha)
+		);
+		objImg = $('#'+idLinha).find('td > img');
+		imgBtn = objImg.attr('src');
+		imgBtn = imgBtn.replace('servico_ativo', 'servico_nao_ativo');
+		objImg.attr('src', imgBtn);
+		objImg.attr('title', 'Remover');
+		objImg.attr('style', 'cursor: pointer');
+		objImg.attr('onclick', 'removeChequeSelecionado(\''+ idLinha + '\');');
+	}else{
+		//showError("error","Cheque j&aacute; selecionado.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		return false;
+	}
+
+	return false;
+
+}
+
+function removeChequeSelecionado(idLinha){
+
+	if (idLinha.charAt(0) == 's'){
+
+		var chequeRemove = document.getElementById(idLinha);
+		chequeRemove.parentNode.removeChild(chequeRemove);
+		zebraTabelas('tbChequesSel');
+
+		var objImg = $('#'+idLinha.substring(1)).find('td > img');
+		objImg.attr('style', 'opacity: 1; cursor: pointer');
+
+	}else{
+		var objImg = $('#'+idLinha).find('td > img');
+		objImg.attr('style', 'opacity: 0.4; cursor: default');
+
+	}
+
+	return false;
+}
+
+function adicionarChqsBordero(intipchq, idTabela){
+
+	var dtlibera, cdcmpchq, cdbanchq, cdagechq, nrctachq,
+		nrcheque, nmcheque, nrcpfcgc, vlcheque, dssithcc,
+		dsdocmc7, dtdcaptu, dtcustod, flchqbor;
+
+	var x = 0;
+
+	$('#' + idTabela + ' tbody tr').each(function(){
+		x = x + 1
+	});
+
+	if ( x == 0) {
+		showError('error','N&atilde;o foram selecionados cheques.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));');
+		return false;
+	}
+
+	if (idTabela == 'tbChequesSel'){
+		$('#' + idTabela + ' tbody tr').each(function(){
+			dtlibera = $(this).find('td:eq(0) > span').text();  // Data Boa
+			cdcmpchq = $(this).find('td:eq(1) > span').text();  // Compe
+			cdbanchq = $(this).find('td:eq(2) > span').text();  // Banco
+			cdagechq = $(this).find('td:eq(3) > span').text();  // Agência
+			nrctachq = $(this).find('td:eq(4) > span').text();  // Nr. da Conta do Cheque
+			nrcheque = $(this).find('td:eq(5) > span').text();  // Nr. do Cheque
+			nmcheque = $(this).find('td:eq(6) > span').text();  // Nome do Emitente
+			nrcpfcgc = $(this).find('td:eq(7) > span').text();  // CPF/CNPJ do Emitente
+			vlcheque = $(this).find('td:eq(8) > span').text();  // Valor do cheque
+			dssithcc = $(this).find('td:eq(9) > span').text();  // Situação
+			dsdocmc7 = $("#dsdocmc7",this).val();     			// CMC7
+			dtdcaptu = $("#dtdcaptu",this).val();     			// Data de emissão
+			dtcustod = $("#dtcustod",this).val();     			// Data custódia
+			nrremret = $("#nrremret",this).val();     			// Número da remessa
+			flchqbor = 0;
+
+			adicionarChequeBordero(dtlibera, cdcmpchq, cdbanchq, cdagechq, nrctachq, nrcheque, vlcheque, dssithcc, nmcheque, nrcpfcgc, intipchq, dsdocmc7, dtdcaptu, dtcustod, nrremret, flchqbor);
+
+		});
+	}else if(idTabela == 'tbChequesNovos'){
+		$('#' + idTabela + ' tbody tr').each(function(){
+			dtlibera = $("#aux_dtlibera",this).val();     // Data Boa
+			cdcmpchq = $("#aux_cdcmpchq",this).val();	  // Compe
+			cdbanchq = $("#aux_cdbanchq",this).val();	  // Banco
+			cdagechq = $("#aux_cdagechq",this).val();	  // Agência
+			nrctachq = $("#aux_nrctachq",this).val();	  // Nr. da Conta do Cheque
+			nrcheque = $("#aux_nrcheque",this).val();	  // Nr. do Cheque
+			vlcheque = $("#aux_vlcheque",this).val();	  // Valor do cheque
+			dssithcc = $("#aux_dssithcc",this).text();	  // Situação
+			nmcheque = $("#aux_nmcheque",this).val();     // Nome do Emitente
+			nrcpfcgc = $("#aux_nrcpfcgc",this).val();     // CPF/CNPJ do Emitente
+			dsdocmc7 = $("#aux_dsdocmc7",this).val();     // CMC7
+			dtdcaptu = $("#aux_dtdcaptu",this).val();     // Data de emissão
+			dtcustod = ' ';     						  // Data de custódia
+			nrremret = 0;
+			flchqbor = 0;
+
+			adicionarChequeBordero(dtlibera, cdcmpchq, cdbanchq, cdagechq, nrctachq, nrcheque, vlcheque, dssithcc, nmcheque, nrcpfcgc, intipchq, dsdocmc7, dtdcaptu, dtcustod, nrremret, flchqbor);
+
+		});
+	}
+	layoutPadrao();
+	voltaDiv(4,3,4,'DESCONTO DE CHEQUES');
+	blockBackground(parseInt($('#divRotina').css('z-index')))
+	return false;
+}
+
+function adicionarChequeBordero(dtlibera, cdcmpchq, cdbanchq, cdagechq, nrctachq, nrcheque, vlcheque, dssithcc, nmcheque, nrcpfcgc, intipchq, dsdocmc7, dtdcaptu, dtcustod, nrremret, flchqbor){
+
+	// Criar id único
+	var idCriar = 'b'								   +
+				  normalizaNumero(cdbanchq).toString() +
+				  normalizaNumero(cdagechq).toString() +
+				  normalizaNumero(cdcmpchq).toString() +
+				  normalizaNumero(nrcheque).toString() +
+				  normalizaNumero(nrctachq).toString();
+
+	var cmc7_sem_format = dsdocmc7.replace(/[^0-9]/g, "").substr(0,30);
+
+	var qtdLinhas = $('#tbChequesBordero tbody tr').length;
+	var corLinha  = (qtdLinhas%2 === 0) ? 'corImpar' : 'corPar';
+
+	if(!document.getElementById(idCriar)) {
+
+		$('#tbChequesBordero tbody')
+			.append($('<tr>') // Linha
+					.attr('id',idCriar)
+					.attr('class',corLinha)
+					.append($('<input>')
+							.attr('type','hidden')
+							.attr('name','aux_flchqbor')
+							.attr('id','aux_flchqbor')
+							.attr('value',flchqbor)
+					)
+					.append($('<input>')
+							.attr('type','hidden')
+							.attr('name','aux_intipchq')
+							.attr('id','aux_intipchq')
+							.attr('value',intipchq)
+					)
+					.append($('<input>')
+						.attr('type','hidden')
+						.attr('name','aux_dsdocmc7')
+						.attr('id','aux_dsdocmc7')
+						.attr('value',cmc7_sem_format)
+					)
+					.append($('<input>')
+						.attr('type','hidden')
+						.attr('name','aux_dtdcaptu')
+						.attr('id','aux_dtdcaptu')
+						.attr('value',dtdcaptu)
+					)
+					.append($('<input>')
+						.attr('type','hidden')
+						.attr('name','aux_dtcustod')
+						.attr('id','aux_dtcustod')
+						.attr('value',dtcustod)
+					)
+					.append($('<input>')
+						.attr('type','hidden')
+						.attr('name','aux_nrremret')
+						.attr('id','aux_nrremret')
+						.attr('value',nrremret)
+					)
+					.append($('<td>') // Coluna: Data Boa
+						.attr('style','width: 73px; text-align:center')
+						.text(dtlibera)
+						.append($('<input>')
+							.attr('type','hidden')
+							.attr('name','aux_dtlibera')
+							.attr('id','aux_dtlibera')
+							.attr('value',dtlibera)
+						)
+					)
+					.append($('<td>') // Coluna: Cmp
+						.attr('style','width: 30px; text-align:right')
+						.text(cdcmpchq)
+						.append($('<input>')
+							.attr('type','hidden')
+							.attr('name','aux_cdcmpchq')
+							.attr('id','aux_cdcmpchq')
+							.attr('value',normalizaNumero(cdcmpchq))
+						)
+					)
+					.append($('<td>') // Coluna: Bco
+						.attr('style','width: 30px; text-align:right')
+						.text(cdbanchq)
+						.append($('<input>')
+							.attr('type','hidden')
+							.attr('name','aux_cdbanchq')
+							.attr('id','aux_cdbanchq')
+							.attr('value',normalizaNumero(cdbanchq))
+						)
+					)
+					.append($('<td>') // Coluna: Ag.
+						.attr('style','width: 30px; text-align:right')
+						.text(cdagechq)
+						.append($('<input>')
+							.attr('type','hidden')
+							.attr('name','aux_cdagechq')
+							.attr('id','aux_cdagechq')
+							.attr('value',normalizaNumero(cdagechq))
+						)
+					)
+					.append($('<td>') // Coluna: Conta
+						.attr('style','width: 69px; text-align:right')
+						.text(nrctachq)
+						.append($('<input>')
+							.attr('type','hidden')
+							.attr('name','aux_nrctachq')
+							.attr('id','aux_nrctachq')
+							.attr('value',normalizaNumero(nrctachq))
+						)
+					)
+					.append($('<td>') // Coluna: Cheque
+						.attr('style','width: 59px; text-align:right')
+						.text(nrcheque)
+						.append($('<input>')
+							.attr('type','hidden')
+							.attr('name','aux_nrcheque')
+							.attr('id','aux_nrcheque')
+							.attr('value',normalizaNumero(nrcheque))
+						)
+					)
+					.append($('<td>') // Coluna: Nome
+						.attr('style','width: 210px; text-align:left')
+						.attr('name','aux_nmcheque_t')
+						.attr('id','aux_nmcheque_t')
+						.text(nmcheque)
+						.append($('<input>')
+							.attr('type','hidden')
+							.attr('name','aux_nmcheque')
+							.attr('id','aux_nmcheque')
+							.attr('value',nmcheque)
+						)
+					)
+					.append($('<td>') // Coluna: CPF/CNPJ
+						.attr('style','width: 100px; text-align:right')
+						.attr('name','aux_nrcpfcgc_t')
+						.attr('id','aux_nrcpfcgc_t')
+						.text(nrcpfcgc)
+						.append($('<input>')
+							.attr('type','hidden')
+							.attr('name','aux_nrcpfcgc')
+							.attr('id','aux_nrcpfcgc')
+							.attr('value',normalizaNumero(nrcpfcgc))
+						)
+					)
+					.append($('<td>') // Coluna: Valor
+						.attr('style','width: 70px; text-align:right')
+						.text(vlcheque)
+						.append($('<input>')
+							.attr('type','hidden')
+							.attr('name','aux_vlcheque')
+							.attr('id','aux_vlcheque')
+							.attr('value',vlcheque)
+						)
+					)
+					.append($('<td>') // Coluna: Situação
+						.attr('style','width: 59px; text-align:center')
+						.text(dssithcc)
+						.append($('<input>')
+							.attr('type','hidden')
+							.attr('name','aux_dssitchq')
+							.attr('id','aux_dssitchq')
+							.attr('value',dssithcc)
+						)
+					)
+					.append($('<td>') // Coluna: Botão para REMOVER
+						.attr('style','text-align:center')
+						.append($('<img>')
+							.attr('src', UrlImagens + 'geral/servico_nao_ativo.gif')
+							.attr('width', 16)
+							.attr('height', 16)
+							.attr('title', 'Remover')
+							.attr('style', 'cursor: pointer')
+							.click(function(event) {
+								controlaChequeBordero(idCriar);
+								atualizaValoresBordero();
+								armazenaChequesRemovidos(flchqbor, dtlibera, cmc7_sem_format);
+								return false;
+							})
+						)
+					)
+				);
+		atualizaValoresBordero();
+	}
+
+}
+
+function controlaChequeBordero(idLinha){
+	var objImg, imgBtn;
+
+	if ($('#'+idLinha).css('text-decoration').match('none')){
+		$('#'+idLinha).css('text-decoration','line-through');
+		objImg = $('#'+idLinha).find('td > img');
+		imgBtn = objImg.attr('src');
+		imgBtn = imgBtn.replace('servico_nao_ativo', 'servico_ativo');
+		objImg.attr('src', imgBtn);
+		objImg.attr('title', 'Adicionar');
+	}else{
+		$('#'+idLinha).css('text-decoration', 'none');
+		objImg = $('#'+idLinha).find('td > img');
+		imgBtn = objImg.attr('src');
+		imgBtn = imgBtn.replace('servico_ativo', 'servico_nao_ativo');
+		objImg.attr('src', imgBtn);
+		objImg.attr('title', 'Remover');
+	}
+}
+
+function zebraTabelas(idTabela){
+
+	var contador = 0;
+
+	$('#' + idTabela + ' tbody tr').each(function(){
+		$('#' + idTabela).zebraTabela(contador);
+		$(this).removeClass('corSelecao');
+		contador += 1;
+	});
+
+}
+
+function adicionaChequeGrid(){
+
+	var cDsdocmc7 = $('#dsdocmc7', '#frmChequesCustodiaNovo');
+	var cDtlibera = $('#dtlibera', '#frmChequesCustodiaNovo');
+	var cDtdcaptu = $('#dtdcaptu', '#frmChequesCustodiaNovo');
+	var cVlcheque = $('#vlcheque', '#frmChequesCustodiaNovo');
+
+	var cmc7  = cDsdocmc7.val();
+	// Limpa campo
+	cDsdocmc7.val('');
+	var cmc7_sem_format  = cmc7.replace(/[^0-9]/g, "").substr(0,30);
+
+	if ( cmc7 == '' ) {
+		return false;
+	}
+
+		// Validar se os campos estão preenchidos
+	if ( cDtlibera.val() == '' ) {
+		showError('error','Data boa inv&aacute;lida.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\'))); $(\'#dtlibera\', \'#frmChequesCustodiaNovo\').focus();');
+		return false;
+	}
+
+	if ( cDtdcaptu.val() == '' ) {
+		showError('error','Data de emiss&atilde;o inv&aacute;lida.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\'))); $(\'#dtdcaptu\', \'#frmChequesCustodiaNovo\').focus();');
+		return false;
+	}
+
+	if ( cVlcheque.val() == '' || cVlcheque.val() == '0,00') {
+		showError('error','Valor inv&aacute;lido.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\'))); $(\'#vlcheque\', \'#frmChequesCustodiaNovo\').focus();');
+		return false;
+	}
+
+	if ( cmc7_sem_format.length < 30 ) {
+		showError('error','CMC-7 inv&aacute;lido.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\'))); $(\'#dsdocmc7\', \'#frmChequesCustodiaNovo\').focus();');
+		return false;
+	}
+
+	var aDtlibera = cDtlibera.val().split("/");
+	var aDtdcaptu = cDtdcaptu.val().split("/");
+	var aDtmvtolt = aux_dtmvtolt.split("/");
+	var dtcompara1 = parseInt(aDtlibera[2].toString() + aDtlibera[1].toString() + aDtlibera[0].toString());
+	var dtcompara2 = parseInt(aDtdcaptu[2].toString() + aDtdcaptu[1].toString() + aDtdcaptu[0].toString());
+	var dtcompara3 = parseInt(aDtmvtolt[2].toString() + aDtmvtolt[1].toString() + aDtmvtolt[0].toString());
+
+	if ( dtcompara1 <= dtcompara3 ) {
+		showError('error','A data boa deve ser maior que a data atual.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\'))); $(\'#dtlibera\', \'#frmChequesCustodiaNovo\').focus();');
+		return false;
+	}
+
+	if ( dtcompara2 > dtcompara3 ) {
+		showError('error','A data de emiss&atilde;o deve ser menor que a data atual.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\'))); $(\'#dtdcaptu\', \'#frmChequesCustodiaNovo\').focus();');
+		return false;
+	}
+
+	var idCriar = "id_".concat(cmc7_sem_format);
+
+	var dtlibera = cDtlibera.val();
+	var dtdcaptu = cDtdcaptu.val();
+	var vlcheque = cVlcheque.val();
+	//Desmontar o CMC-7 para exibir os campos
+	var cdbanchq = normalizaNumero(cmc7_sem_format.substr(0,3));
+	var cdagechq = normalizaNumero(cmc7_sem_format.substr(3,4));
+	var cdcmpchq = normalizaNumero(cmc7_sem_format.substr(8,3));
+	var nrcheque = normalizaNumero(cmc7_sem_format.substr(11,6));
+	var nrctachq = 0;
+	var qtdLinhas = $('#tbChequesNovos tbody tr').length;
+	var corLinha  = (qtdLinhas%2 === 0) ? 'corImpar' : 'corPar';
+
+	if( cdbanchq == 1 ){
+	    nrctachq = mascara(normalizaNumero(cmc7_sem_format.substr(21,8)),'####.###-#');
+	} else {
+		nrctachq = mascara(normalizaNumero(cmc7_sem_format.substr(19,10)),'######.###-#');
+	}
+
+	if(!document.getElementById(idCriar)) {
+
+		// Criar a linha na tabela
+		$("#tbChequesNovos > tbody")
+			.append($('<tr>') // Linha
+			    .attr('id',idCriar)
+				.attr('class',corLinha)
+				.append($('<input>')
+						.attr('type','hidden')
+						.attr('name','aux_dsdocmc7')
+						.attr('id','aux_dsdocmc7')
+						.attr('value',cmc7_sem_format)
+				)
+				.append($('<input>')
+						.attr('type','hidden')
+						.attr('name','aux_nrcpfcgc')
+						.attr('id','aux_nrcpfcgc')
+				)
+				.append($('<input>')
+						.attr('type','hidden')
+						.attr('name','aux_nmcheque')
+						.attr('id','aux_nmcheque')
+				)
+				.append($('<td>') // Coluna: Data Boa
+				    .attr('style','width: 73px; text-align:center')
+					.text(dtlibera)
+					.append($('<input>')
+						.attr('type','hidden')
+						.attr('name','aux_dtlibera')
+						.attr('id','aux_dtlibera')
+						.attr('value',dtlibera)
+					)
+				)
+				.append($('<td>') // Coluna: Data Emissão
+				    .attr('style','width: 73px; text-align:center')
+					.text(dtdcaptu)
+					.append($('<input>')
+						.attr('type','hidden')
+						.attr('name','aux_dtdcaptu')
+						.attr('id','aux_dtdcaptu')
+						.attr('value',dtdcaptu)
+					)
+				)
+				.append($('<td>') // Coluna: Comp
+					.attr('style','width: 30px; text-align:right')
+					.text(cdcmpchq)
+					.append($('<input>')
+						.attr('type','hidden')
+						.attr('name','aux_cdcmpchq')
+						.attr('id','aux_cdcmpchq')
+						.attr('value',cdcmpchq)
+					)
+				)
+				.append($('<td>') // Coluna: Banco
+					.attr('style','width: 30px; text-align:right')
+					.text(cdbanchq)
+					.append($('<input>')
+						.attr('type','hidden')
+						.attr('name','aux_cdbanchq')
+						.attr('id','aux_cdbanchq')
+						.attr('value',cdbanchq)
+					)
+				)
+				.append($('<td>')  // Coluna: Agência
+					.attr('style','width: 30px; text-align:right')
+					.text(cdagechq)
+					.append($('<input>')
+						.attr('type','hidden')
+						.attr('name','aux_cdagechq')
+						.attr('id','aux_cdagechq')
+						.attr('value',cdagechq)
+					)
+				)
+				.append($('<td>') // Coluna: Número da Conta
+					.attr('style','width: 84px; text-align:right')
+					.text(nrctachq)
+					.append($('<input>')
+						.attr('type','hidden')
+						.attr('name','aux_nrctachq')
+						.attr('id','aux_nrctachq')
+						.attr('value',nrctachq)
+					)
+				)
+				.append($('<td>') // Coluna: Número do Cheque
+					.attr('style','width: 59px; text-align:right')
+					.text(nrcheque)
+					.append($('<input>')
+						.attr('type','hidden')
+						.attr('name','aux_nrcheque')
+						.attr('id','aux_nrcheque')
+						.attr('value',nrcheque)
+					)
+				)
+				.append($('<td>') // Coluna: Valor
+					.attr('style','width: 85px; text-align:right')
+					.text(vlcheque)
+					.append($('<input>')
+						.attr('type','hidden')
+						.attr('name','aux_vlcheque')
+						.attr('id','aux_vlcheque')
+						.attr('value',vlcheque)
+					)
+				)
+				.append($('<td>') // Coluna: Situação
+					.attr('style','width: 59px; text-align:center')
+					.attr('name','aux_dssithcc')
+					.attr('id','aux_dssithcc')
+					.text('Pendente Entrega')
+				)
+				.append($('<td>') // Coluna: Crítica
+				    .attr('style','width: 140px; text-align:left')
+					.attr('name','aux_dscritic')
+					.attr('id','aux_dscritic')
+					.text('')
+				)
+				.append($('<td>') // Coluna: Botão para REMOVER
+					.attr('style','text-align:center')
+					.append($('<img>')
+						.attr('src', UrlImagens + 'geral/servico_nao_ativo.gif')
+						.attr('width', 16)
+						.attr('height', 16)
+						.attr('title', 'Remover')
+						.attr('style', 'cursor: pointer')
+						.click(function(event) {
+
+							var chequeRemove = document.getElementById($(this).parent().parent().attr('id'));
+							chequeRemove.parentNode.removeChild(chequeRemove);
+							zebraTabelas('tbChequesNovos');
+							return false;
+						})
+					)
+				)
+			);
+		novoCheque();
+	}
+}
+
+function validaNovosCheques(){
+
+	showMsgAguardo('Aguarde, validando cheques ...');
+
+	var dscheque = "";
+	var corLinha  = 'corImpar';
+
+	$('#tbChequesNovos tbody tr').each(function(){
+		if( dscheque != "" ){
+			dscheque += "|";
+		}
+
+		dscheque += $("#aux_dtlibera",this).val() + ";" ; // Data Boa
+		dscheque += $("#aux_dtdcaptu",this).val() + ";" ; // Data Emissão
+		dscheque += $("#aux_vlcheque",this).val().replace(/\./g,'').replace(',','.') + ";" ; // Valor
+		dscheque += $("#aux_dsdocmc7",this).val(); // CMC-7
+
+		// Limpar a crítica
+		$("#aux_dscritic",this).text('');
+		$(this).css('background', '');
+		// Adiciona a cor Zebrado na Tabela de Cheques
+		$(this).attr('class', corLinha);
+		if( corLinha == 'corImpar' ){
+			corLinha = 'corPar';
+		} else {
+			corLinha = 'corImpar';
+		}
+	});
+
+	if( dscheque == "" ){
+		hideMsgAguardo();
+		showError('error','Nenhum cheque foi informado.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));');
+		return false;
+	}else{
+
+		$.ajax({
+			type: 'POST',
+			dataType: 'html',
+			url: UrlSite + 'telas/atenda/descontos/cheques/cheques_bordero_custodia_novo_valida.php',
+			data: {
+				nrdconta: nrdconta,
+				dscheque: dscheque,
+				redirect: 'html_ajax'
+				},
+			error: function(objAjax,responseError,objExcept) {
+				hideMsgAguardo();
+				showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));');
+			},
+			success: function(response) {
+				hideMsgAguardo();
+				try {
+					eval( response );
+				} catch(error) {
+					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));');
+				}
+			}
+		});
+	}
+}
+
+function novoCheque(){
+	var cDsdocmc7 = $('#dsdocmc7', '#frmChequesCustodiaNovo');
+	var cDtlibera = $('#dtlibera', '#frmChequesCustodiaNovo');
+	var cDtdcaptu = $('#dtdcaptu', '#frmChequesCustodiaNovo');
+	var cVlcheque = $('#vlcheque', '#frmChequesCustodiaNovo');
+	//Limpa o valor dos campos e seta foco na data
+	cDtdcaptu.val('');
+	cVlcheque.val('');
+	cDsdocmc7.val('');
+	cDtlibera.val('').focus();
+}
+
+function adicionaEmitente(idCheque, nrcpfcgc, nmcheque){
+
+	$('#aux_nrcpfcgc','#' + idCheque).val(nrcpfcgc);
+	$('#aux_nrcpfcgc_t','#' + idCheque).text(nrcpfcgc);
+	$('#aux_nmcheque','#' + idCheque).val(nmcheque);
+	$('#aux_nmcheque_t','#' + idCheque).text(nmcheque);
+
+}
+
+function atualizaValoresBordero(){
+
+	var qtcompln = 0;
+	var vlcompcr = 0;
+
+	$('#tbChequesBordero tbody tr').each(function(){
+		if ($(this).css('text-decoration').match('none')){
+			qtcompln++;
+			vlcompcr += Number($('#aux_vlcheque', this).val().replace('.','').replace(',','.'));
+		}
+	});
+	$('#qtcompln', '#frmBorderosIA').val(qtcompln);
+	$('#vlcompcr', '#frmBorderosIA').val(number_format(vlcompcr, 2, ',', '.'));
+}
+
+function atualizaValoresBorderoAnalise(){
+
+	var qtcompln = 0;
+	var vlcompcr = 0;
+
+	$('#tbChequesBordero tbody tr').each(function(){
+		qtcompln++;
+		vlcompcr += Number($(this).find('td:eq(8) > span').text().replace('.','').replace(',','.'));
+	});
+	$('#qtcompln', '#frmBorderosAnalise').val(qtcompln);
+	$('#vlcompcr', '#frmBorderosAnalise').val(number_format(vlcompcr, 2, ',', '.'));
+}
+
+function armazenaChequesRemovidos(flchqbor, dtlibera, dsdocmc7){
+
+	var idx, dschqrem, flgdispo;
+	flgdispo = 1;
+
+	if (flchqbor == 1){
+		idx = ChqsRemovidos.length;
+		dschqrem  = dtlibera + ';';
+		dschqrem += dsdocmc7;
+		for (i = 0; i < ChqsRemovidos.length; i++) {
+
+			if( ChqsRemovidos[i] == dschqrem ){
+				flgdispo = 0;
+				ChqsRemovidos.splice(i, 1);
+			}
+
+		}
+		if (flgdispo == 1){
+			ChqsRemovidos[idx] = dschqrem;
+		}
+	}
+
+}
+
+function verificarEmitentes(){
+
+	showMsgAguardo('Aguarde, verificando emitentes ...');
+
+	var dscheque = "";
+	var corLinha  = 'corImpar';
+
+	$('#tbChequesBordero tbody tr').each(function(){
+		if( dscheque != "" ){
+			dscheque += "|";
+		}
+
+		dscheque += $("#aux_dsdocmc7",this).val(); // CMC-7
+
+	});
+
+	if( dscheque == "" ){
+		hideMsgAguardo();
+		showError('error','Nenhum cheque foi informado para o border&ocirc;.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));');
+		return false;
+	}else{
+
+		$.ajax({
+			type: 'POST',
+			dataType: 'html',
+			url: UrlSite + 'telas/atenda/descontos/cheques/cheques_bordero_verifica_emitentes.php',
+			data: {
+				nrdconta: nrdconta,
+				dscheque: dscheque,
+				redirect: 'html_ajax'
+				},
+			error: function(objAjax,responseError,objExcept) {
+				hideMsgAguardo();
+				showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));');
+			},
+			success: function(response) {
+				hideMsgAguardo();
+				try {
+					eval( response );
+				} catch(error) {
+					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));');
+				}
+			}
+		});
+	}
+}
+
+function criaEmitente(cdcmpchq, cdbanchq, cdagechq, nrctachq, nrsequen){
+
+	var idCriar = "id_" + cdcmpchq + cdbanchq + cdagechq + nrctachq;
+
+	var qtdLinhas = $('#tabEmiten tbody tr').length;
+	var corLinha  = (qtdLinhas%2 === 0) ? 'corImpar' : 'corPar';
+
+	if( cdbanchq == 1 ){
+	    nrctachq = mascara(normalizaNumero(nrctachq.toString()),'####.###-#');
+	} else {
+		nrctachq = mascara(normalizaNumero(nrctachq.toString()),'######.###-#');
+	}
+
+	if(!document.getElementById(idCriar)) {
+
+		// Criar a linha na tabela
+		$("#tabEmiten > tbody")
+			.append($('<tr>') // Linha
+			    .attr('id',idCriar)
+				.attr('class',corLinha)
+				.append($('<td>') // Coluna: Banco
+					.attr('style','width: 50px; text-align:right')
+					.text(cdbanchq)
+					.append($('<input>')
+						.attr('type','hidden')
+						.attr('name','cdbanchq')
+						.attr('id','cdbanchq')
+						.attr('value',cdbanchq)
+					)
+					.append($('<input>')
+						.attr('type','hidden')
+						.attr('name','cdcmpchq')
+						.attr('id','cdcmpchq')
+						.attr('value',cdcmpchq)
+					)
+				)
+				.append($('<td>')  // Coluna: Agência
+					.attr('style','width: 50px; text-align:right')
+					.text(cdagechq)
+					.append($('<input>')
+						.attr('type','hidden')
+						.attr('name','cdagechq')
+						.attr('id','cdagechq')
+						.attr('value',cdagechq)
+					)
+				)
+				.append($('<td>') // Coluna: Número da Conta
+					.attr('style','width: 90px; text-align:right')
+					.text(nrctachq)
+					.append($('<input>')
+						.attr('type','hidden')
+						.attr('name','nrctachq')
+						.attr('id','nrctachq')
+						.attr('value',nrctachq)
+					)
+				)
+				.append($('<td>') // Coluna: CPF/CNPJ
+					.attr('style','width: 150px; text-align:center')
+					.append($('<input>')
+						.attr('type','text')
+						.attr('name','nrcpfcnpj')
+						.attr('id','nrcpfcnpj' + nrsequen)
+						.attr('style', 'width: 140px;')
+						.attr('maxlength','18')
+						.attr('class', 'campo')
+					)
+
+				)
+				.append($('<td>') // Coluna: Emitente
+					.attr('style','width: 350px; text-align:center')
+					.append($('<input>')
+						.attr('type','text')
+						.attr('name','dsemiten')
+						.attr('id','dsemiten' + nrsequen)
+						.attr('style', 'width: 340px;')
+						.attr('class', 'campo alphanum')
+					)
+				)
+				.append($('<td>') // Coluna: Crítica
+				    .attr('style','text-align:left')
+					.attr('name','dscritic')
+					.attr('id','dscritic')
+					.text('')
+				)
+			);
+
+	}
+
+	highlightObjFocus($('#frmBorderosIA'));
+	cNrcpfcnpj[nrsequen] = $('#' + 'nrcpfcnpj' + nrsequen, '#frmBorderosIA');
+	cDsemiten[nrsequen] = $('#' + 'dsemiten' + nrsequen, '#frmBorderosIA');
+	cDsemiten[nrsequen].attr('maxlength','60').setMask("STRING",60,charPermitido(),"");
+
+	cNrcpfcnpj[nrsequen].unbind('keydown').bind('keydown', function(e) {
+        if (divError.css('display') == 'block') {
+            return false;
+        }
+
+		// Se é a tecla TAB ou ENTER,
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            cDsemiten[nrsequen].focus();
+            return false;
+        }
+
+		mascaraCpfCnpj(this,cpfCnpj);
+
+   });
+
+	cDsemiten[nrsequen].unbind('keydown').bind('keydown', function(e) {
+        if (divError.css('display') == 'block') {
+            return false;
+        }
+
+		// Se é a tecla TAB ou ENTER,
+        if (e.keyCode == 9 || e.keyCode == 13) {
+			if (cNrcpfcnpj[nrsequen + 1] !== undefined){
+				cNrcpfcnpj[nrsequen + 1].focus();
+			}else{
+				prosseguirManterBordero();
+			}
+        }
+    });
+
+	layoutPadrao();
+	return false;
+}
+
+function mascaraCpfCnpj(o,f){
+    v_obj=o
+    v_fun=f
+    setTimeout('execmascara()',1)
+}
+
+function execmascara(){
+    v_obj.value=v_fun(v_obj.value)
+}
+
+function cpfCnpj(v){
+    v=v.replace(/\D/g,"")
+    if (v.length <= 11) { //CPF
+        v=v.replace(/(\d{3})(\d)/,"$1.$2")
+        v=v.replace(/(\d{3})(\d)/,"$1.$2")
+        v=v.replace(/(\d{3})(\d{1,2})$/,"$1-$2")
+
+    } else { //CNPJ
+        v=v.replace(/^(\d{2})(\d)/,"$1.$2")
+        v=v.replace(/^(\d{2})\.(\d{3})(\d)/,"$1.$2.$3")
+		v=v.replace(/\.(\d{3})(\d)/,".$1/$2")
+        v=v.replace(/(\d{4})(\d)/,"$1-$2")
+    }
+    return v
+}
+
+function mostraDivEmiten(){
+
+	$('#divChqsBordero').css({'display': 'none'});
+	$('#divBotoesBordero').css({'display': 'none'});
+	$('#divEmiten').css({'display':'block'});
+	$('#btProsseguir').attr('onclick', 'prosseguirManterBordero(); return false;');
+	blockBackground(parseInt($('#divRotina').css('z-index')));
+
+	cNrcpfcnpj = [];
+	cDsemiten = [];
+
+}
+
+function prosseguirManterBordero(){
+	var msg;
+
+	if (cddopcao == 'I') msg = 'incluir';
+	else msg = 'alterar';
+
+	if( $('#tabEmiten tbody tr').length > 0 ){
+		showConfirmacao('Deseja cadastrar os emitentes e '+ msg +' o border&ocirc; de desconto?','Confirma&ccedil;&atilde;o - Ayllos','cadastrarEmitentes();','','sim.gif','nao.gif');
+	}else if( $('#tbChequesBordero tbody tr').length > 0 ){
+		showConfirmacao('Deseja '+ msg +' o border&ocirc; de desconto?','Confirma&ccedil;&atilde;o - Ayllos','manterBordero();','','sim.gif','nao.gif');
+	} else {
+		showError('error','Nenhum cheque foi informado no border&ocirc;.','Alerta - Ayllos','');
+	}
+}
+
+function cadastrarEmitentes(){
+
+	showMsgAguardo('Aguarde, cadastrando emitentes ...');
+
+	var dscheque = "";
+	var idNrcpfcnpj, idDsemiten;
+	var corLinha  = 'corImpar';
+	var flgerro = false;
+
+	$('#tabEmiten tbody tr').each(function(){
+
+		idNrcpfcnpj = $("input[name='nrcpfcnpj']",this).attr('id');
+		idDsemiten  = $("input[name='dsemiten']",this).attr('id');
+
+		if ($("input[name='nrcpfcnpj']",this).val() == ""){
+			showError('error','Preencha todos os campos para continuar.','Alerta - Ayllos','hideMsgAguardo();$(\'#'+idNrcpfcnpj+'\').focus();');
+			flgerro = true;
+			return false;
+		}
+
+		if ($("input[name='dsemiten']",this).val() == ""){
+			showError('error','Preencha todos os campos para continuar.','Alerta - Ayllos','hideMsgAguardo(); $(\'#'+idDsemiten+'\').focus();');
+			flgerro = true;
+			return false;
+		}
+
+		if( dscheque != "" ){
+			dscheque += "|";
+		}
+
+		dscheque += normalizaNumero($("#cdcmpchq",this).val()) + ";"; // Compe
+		dscheque += normalizaNumero($("#cdbanchq",this).val()) + ";"; // Banco
+		dscheque += normalizaNumero($("#cdagechq",this).val()) + ";"; // Agencia
+		dscheque += normalizaNumero($("#nrctachq",this).val()) + ";"; // Conta
+		dscheque += $("input[name='nrcpfcnpj']",this).val().replace(/[^0-9]/g, '') + ";" ; // Nrcpfcnpj
+		dscheque += $("input[name='dsemiten']",this).val().toUpperCase(); // Emitente
+
+		// Limpar a crítica
+		$("#dscritic",this).text('');
+		$(this).css('background', '');
+		// Adiciona a cor Zebrado na Tabela de Cheques
+		$(this).attr('class', corLinha);
+		if( corLinha == 'corImpar' ){
+			corLinha = 'corPar';
+		} else {
+			corLinha = 'corImpar';
+		}
+
+	});
+
+	if (flgerro == true){
+		return false;
+	}
+
+	if (dscheque == ""){
+		showError('error','Emitentes n&atilde;o encontrados.','Alerta - Ayllos','hideMsgAguardo();');
+		return false;
+	}
+
+	$.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/atenda/descontos/cheques/cadastrar_emiten.php',
+        data: {
+			dscheque: dscheque,
+            redirect: 'html_ajax'
+            },
+        error: function(objAjax,responseError,objExcept) {
+            hideMsgAguardo();
+            showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));');
+        },
+        success: function(response) {
+			hideMsgAguardo();
+			try {
+				eval( response );
+			} catch(error) {
+				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));');
+			}
+        }
+    });
+
+}
+
+function manterBordero(){
+
+	showMsgAguardo('Aguarde, efetuando opera&ccedil;&atilde;o ...');
+
+	var dscheque = "";
+	var dscheque_exc = "";
+	var flchqbor;
+
+	if (ChqsRemovidos.length > 0){
+		for (i = 0; i < ChqsRemovidos.length; i++) {
+
+			if( dscheque_exc != "" ){
+				dscheque_exc += "|";
+			}
+
+			dscheque_exc += ChqsRemovidos[i];
+		}
+	}
+
+	$('#tbChequesBordero tbody tr').each(function(){
+
+		flchqbor = $("#aux_flchqbor",this).val();
+
+		// Em caso de alteração do bordero, devemos ignorar os cheques que já estão inclusos
+		if (flchqbor != 1 && $(this).css('text-decoration').match('none')) {
+
+			if( dscheque != "" ){
+				dscheque += "|";
+			}
+
+			dscheque += $("#aux_dtlibera",this).val() + ";" ; // Data Boa
+			dscheque += $("#aux_dtdcaptu",this).val() + ";" ; // Data Emissão
+			dscheque += $("#aux_dtcustod",this).val() + ";" ; // Data Custódia
+			dscheque += $("#aux_intipchq",this).val() + ";" ; // Tipo de Cheque
+			dscheque += $("#aux_vlcheque",this).val().replace(/\./g,'') + ";" ; // Valor
+			dscheque += $("#aux_dsdocmc7",this).val() + ";" ; // CMC-7
+			dscheque += $("#aux_nrremret",this).val(); // Número remessa
+		}
+	});
+
+	if (dscheque == "" && dscheque_exc == "" ){
+		showError('error','Border&ocirc; n&atilde;o foi modificado.','Alerta - Ayllos','hideMsgAguardo();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));');
+		return false;
+	}
+
+	$.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/atenda/descontos/cheques/manter_bordero.php',
+        data: {
+			nrdconta: nrdconta,
+			nrborder: nrbordero,
+			nrdolote: nrdolote,
+			cddopcao: cddopcao,
+			dscheque: dscheque,
+			dscheque_exc: dscheque_exc,
+            redirect: 'html_ajax'
+            },
+        error: function(objAjax,responseError,objExcept) {
+            hideMsgAguardo();
+            showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));');
+        },
+        success: function(response) {
+			hideMsgAguardo();
+			try {
+				eval( response );
+			} catch(error) {
+				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));');
+			}
+        }
+    });
+
+}
+
+function mostraFormAnaliseBordero(){
+
+	if (nrbordero == 0 || nrbordero == '' || nrbordero === undefined) {
+		hideMsgAguardo();
+		showError("error","Nenhum border&ocirc; selecionado.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		return false;
+	}
+
+  if (flgrejei == 1) {
+    hideMsgAguardo();
+    showError("error","Opera&ccedil;&atilde;o n&atilde;o permitida. Border&ocirc; rejeitado.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+    return false;
+  }
+
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, carregando dados do border&ocirc; ...");
+
+	// Carrega conteúdo da opção através de ajax
+	$.ajax({
+		type: "POST",
+		url: UrlSite + "telas/atenda/descontos/cheques/cheques_bordero_analise.php",
+		dataType: "html",
+		data: {
+			nrdconta: nrdconta,
+			nrborder: nrbordero,
+			redirect: "html_ajax"
+		},
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function(response) {
+			$("#divOpcoesDaOpcao3").html(response);
+			layoutPadrao();
+		}
+	});
+}
+
+function concluirAnaliseBordero(){
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, atualizando situa&ccedil;&atilde;o dos cheques do border&ocirc; ...");
+
+	var dscheque = "";
+
+	$('#tbChequesBordero tbody tr').each(function(){
+
+		flgaprov = $("#insitana",this).val();
+
+		if( dscheque != "" ){
+			dscheque += "|";
+		}
+
+		dscheque += $("#dsdocmc7",this).val() + ";"; // CMC-7
+		dscheque += flgaprov; // Aprovado/Reprovado
+	});
+
+	if (dscheque == "" ){
+		showError('error','Border&ocirc; n&atilde;o foi modificado.','Alerta - Ayllos','hideMsgAguardo();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));');
+		return false;
+	}
+
+	// Carrega conteúdo da opção através de ajax
+	$.ajax({
+		type: "POST",
+		url: UrlSite + "telas/atenda/descontos/cheques/cheques_bordero_conclui_analise.php",
+		dataType: "html",
+		data: {
+			nrdconta: nrdconta,
+			nrborder: nrbordero,
+			dscheque: dscheque,
+			redirect: "html_ajax"
+		},
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function(response) {
+			hideMsgAguardo();
+			try {
+				eval( response );
+			} catch(error) {
+				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));');
+			}
+		}
+	});
+}
+
+function verificaAssinaturaBordero(){
+
+	if (nrbordero == 0 || nrbordero == '' || nrbordero === undefined) {
+		hideMsgAguardo();
+		showError("error","Nenhum border&ocirc; selecionado.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		return false;
+	}
+
+	if (flgrejei == 1) {
+		hideMsgAguardo();
+		showError("error","Opera&ccedil;&atilde;o n&atilde;o permitida. Border&ocirc; rejeitado.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		return false;
+    }
+
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, verificando se border&ocirc; necessita de assinatura...");
+
+	// Carrega conteúdo da opção através de ajax
+	$.ajax({
+		type: "POST",
+		url: UrlSite + "telas/atenda/descontos/cheques/cheques_bordero_verifica_assinatura.php",
+		dataType: "html",
+		data: {
+			nrdconta: nrdconta,
+			nrborder: nrbordero,
+			redirect: "html_ajax"
+		},
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function(response) {
+			hideMsgAguardo();
+			try {
+				eval( response );
+			} catch(error) {
+				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));');
+			}
+		}
+	});
+}
+
+function efetivaBordero(){
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, verificando se border&ocirc; necessita de assinatura...");
+
+	// Carrega conteúdo da opção através de ajax
+	$.ajax({
+		type: "POST",
+		url: UrlSite + "telas/atenda/descontos/cheques/cheques_bordero_efetiva_bordero.php",
+		dataType: "html",
+		data: {
+			nrdconta: nrdconta,
+			nrborder: nrbordero,
+			cdopcolb: ' ',
+			redirect: "html_ajax"
+		},
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function(response) {
+			hideMsgAguardo();
+			try {
+				eval( response );
+			} catch(error) {
+				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));');
+			}
+		}
+	});
+}
+
+function mostraFormResgate(){
+
+	if (nrbordero == 0 || nrbordero == '' || nrbordero === undefined) {
+		hideMsgAguardo();
+		showError("error","Nenhum border&ocirc; selecionado.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		return false;
+	}
+
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, carregando dados do border&ocirc; ...");
+
+	// Carrega conteúdo da opção através de ajax
+	$.ajax({
+		type: "POST",
+		url: UrlSite + "telas/atenda/descontos/cheques/cheques_bordero_resgate.php",
+		dataType: "html",
+		data: {
+			nrdconta: nrdconta,
+			nrborder: nrbordero,
+			redirect: "html_ajax"
+		},
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function(response) {
+			$("#divOpcoesDaOpcao3").html(response);
+			layoutPadrao();
+		}
+	});
+
+}
+
+function selecionaChequeResgate(){
+
+	var cDsdocmc7 = $('#dsdocmc7','#frmBorderoResgate');
+	var divRegistro = $('div.divRegistros', '#divBorderoResgate');
+	var dsdocmc7_sf = cDsdocmc7.val().replace(/[^0-9]/g, "").substr(0,30);
+	var flgEncontrou = 0;
+
+	$('table > tbody > tr', divRegistro).each(function(){
+		if ($(this).find('#aux_dsdocmc7').val() == dsdocmc7_sf){
+			$(this).find('td > #flgresgat').prop('checked', true);
+			$(this).find('td > #flgresgat').prop('disabled', false);
+			$(this).find('td > #flgresgat').val('1');
+			mostraMsgSucesso();
+			flgEncontrou = 1;
+			return false;
+		}
+	});
+	if (flgEncontrou == 0){
+		mostraMsgErro();
+	}
+	cDsdocmc7.val('');
+}
+
+function verificaFlgresgat(flgresgat){
+	if (flgresgat.checked == false) {
+		flgresgat.disabled = true;
+		flgresgat.value = 0;
+	}
+}
+
+function confirmaRejeitaBordero() {
+  if (flgrejei == 1) {
+    hideMsgAguardo();
+    showError("error","Border&ocirc; j&aacute; rejeitado.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+    return false;
+  }
+
+  showConfirmacao('Deseja rejeitar borderô?','Confirma&ccedil;&atilde;o - Ayllos','rejeitaBorderoDscChq();','','sim.gif','nao.gif');
+  return false;
+}
+
+function rejeitaBorderoDscChq(){
+
+	if (nrbordero == 0 || nrbordero == '' || nrbordero === undefined) {
+		hideMsgAguardo();
+		showError("error","Nenhum border&ocirc; selecionado.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		return false;
+	}
+
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, rejeitando border&ocirc; de desconto...");
+
+	// Carrega conteúdo da opção através de ajax
+	$.ajax({
+		type: "POST",
+		url: UrlSite + "telas/atenda/descontos/cheques/cheques_bordero_rejeitar.php",
+		dataType: "html",
+		data: {
+			nrdconta: nrdconta,
+			nrborder: nrbordero,
+			redirect: "html_ajax"
+		},
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function(response) {
+      try {
+				eval(response);
+			} catch(error) {
+				hideMsgAguardo();
+				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+			}
+		}
+	});
+}
+
+function mostraMsgSucesso(){
+	var dsmsgcmc7 = $('#dsmsgcmc7','#frmBorderoResgate');
+	dsmsgcmc7.text('Cheque marcado para resgate');
+	dsmsgcmc7.css('display', 'block');
+	dsmsgcmc7.css('color', 'green');
+	setTimeout(mostraMsgCmc7, 2000);
+}
+
+function mostraMsgErro(){
+	var dsmsgcmc7 = $('#dsmsgcmc7','#frmBorderoResgate');
+	dsmsgcmc7.text('Cheque não encontrado');
+	dsmsgcmc7.css('display', 'block');
+	dsmsgcmc7.css('color', 'red');
+	setTimeout(mostraMsgCmc7, 2000);
+}
+
+function mostraMsgCmc7(){
+	$('#dsmsgcmc7','#frmBorderoResgate').css('display','none');
+}
+
+function concluiResgate(){
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, verificando saldo do cooperado...");
+
+	var divRegistro = $('div.divRegistros', '#divBorderoResgate');
+
+	var dscheque = "";
+	var vlcheque = 0;
+
+	$('table > tbody > tr', divRegistro).each(function(){
+
+		if ($(this).find('td > #flgresgat').val() == '1'){
+
+			if( dscheque != "" ){
+				dscheque += "|";
+			}
+
+			dscheque += $("#aux_dsdocmc7",this).val(); // CMC-7
+			vlcheque += Number($("#aux_vlcheque",this).val().replace('.','').replace(',','.'));
+			
+		}
+	});
+	
+	if (dscheque == "" ){
+		showError('error','Border&ocirc; n&atilde;o foi modificado.','Alerta - Ayllos','hideMsgAguardo();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));');
+		return false;
+	}
+
+	// Carrega conteúdo da opção através de ajax
+	$.ajax({
+		type: "POST",
+		url: UrlSite + "telas/atenda/descontos/cheques/cheques_bordero_verifica_saldo.php",
+		dataType: "html",
+		data: {
+			nrdconta: nrdconta,
+			vlcheque: vlcheque,
+			redirect: "html_ajax"
+		},
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function(response) {
+			hideMsgAguardo();
+			try {
+				eval(response);
+			} catch(error) {
+				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));');
+			}
+		}
+	});
+
+}
+
+function efetuaResgate() {
+	
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, efetuando resgate dos cheques selecionados ...");
+	
+	var divRegistro = $('div.divRegistros', '#divBorderoResgate');
+
+	var dscheque = "";
+
+	$('table > tbody > tr', divRegistro).each(function(){
+
+		if ($(this).find('td > #flgresgat').val() == '1'){
+
+			if( dscheque != "" ){
+				dscheque += "|";
+			}
+
+			dscheque += $("#aux_dsdocmc7",this).val(); // CMC-7
+		}
+	});
+	
+	// Carrega conteúdo da opção através de ajax
+	$.ajax({
+		type: "POST",
+		url: UrlSite + "telas/atenda/descontos/cheques/cheques_bordero_efetua_resgate.php",
+		dataType: "html",
+		data: {
+			nrdconta: nrdconta,
+			nrborder: nrbordero,
+			dscheque: dscheque,
+			redirect: "html_ajax"
+		},
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function(response) {
+			hideMsgAguardo();
+			try {
+				eval( response );
+			} catch(error) {
+				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));');
+			}
+		}
+	});
 }

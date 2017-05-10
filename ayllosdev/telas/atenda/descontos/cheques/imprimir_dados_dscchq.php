@@ -3,11 +3,11 @@
 	/************************************************************************  
 	  Fonte: imprimir_dados_dscchq.php                                             
 	  Autor: Guilherme                                                         
-	  Data : MarÃ§o/2009                   Ãšltima AlteraÃ§Ã£o: 23/11/2016
+	  Data : Março/2009                   Última Alteração: 23/11/2016
 																			
 	  Objetivo  : Carregar dados para impress&otilde;es de desconto de cheques       
 																				 
-	  AlteraÃ§Ãµes: 14/06/2010 - Adaptar para novo RATING (David). 
+	  Alterações: 14/06/2010 - Adaptar para novo RATING (David). 
 
                   21/09/2010 - Ajuste para enviar impressoes via email para 
 				               o PAC Sede (David).
@@ -27,25 +27,25 @@
 	session_cache_limiter("private");
 	session_start();
 	
-	// Includes para controle da session, variÃ¡veis globais de controle, e biblioteca de funÃ§Ãµes	
+	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções	
 	require_once("../../../../includes/config.php");
 	require_once("../../../../includes/funcoes.php");		
 	require_once("../../../../includes/controla_secao.php");
 
-	// Verifica se tela foi chamada pelo mÃ©todo POST
+	// Verifica se tela foi chamada pelo método POST
 	isPostMethod();	
 		
 	// Classe para leitura do xml de retorno
 	require_once("../../../../class/xmlfile.php");
 	
-	// Verifica permissÃ£o
+	// Verifica permissão
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"M")) <> "") {
 		?>
                  <script language="javascript">alert('<?php echo $msgError; ?>');</script><?php
 		exit();
 	}	
 
-	// Verifica se o nÃºmero da conta foi informado
+	// Verifica se o número da conta foi informado
 	if (!isset($_POST["nrdconta"]) || 
 		!isset($_POST["nrctrlim"]) || 
 		!isset($_POST["nrborder"]) ||
@@ -63,40 +63,41 @@
 	$idimpres = $_POST["idimpres"];
 	$limorbor = $_POST["limorbor"];
 	$flgemail = $_POST["flgemail"];
+	$flgrestr = isset($_POST["flgrestr"]) ? $_POST["flgrestr"] : 1;
 	$dsiduser = session_id();	
-  
-	// Verifica se nÃºmero da conta Ã© um inteiro vÃ¡lido
+	
+	// Verifica se número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) {
 		?>
   <script language="javascript">alert('Conta/dv inv&aacute;lida.');</script><?php
 		exit();
 	}
 	
-	// Verifica se nÃºmero do contrato Ã© um inteiro vÃ¡lido
+	// Verifica se número do contrato é um inteiro válido
 	if (!validaInteiro($nrctrlim)) {
 		?><script language="javascript">alert('Contrato inv&aacute;lido.');</script><?php
 		exit();
 	}
 	
-	// Verifica se nÃºmero do bordero Ã© um inteiro vÃ¡lido
+	// Verifica se número do bordero é um inteiro válido
 	if ((!validaInteiro($nrborder)) && ($nrborder != "")) {
 		?><script language="javascript">alert('Bordero inv&aacute;lido.');</script><?php
 		exit();
 	}	
 	
-	// Verifica se identificador de impressÃ£o Ã© um inteiro vÃ¡lido
+	// Verifica se identificador de impressão é um inteiro válido
 	if (!validaInteiro($idimpres)) {
 		?><script language="javascript">alert('Identificador de impress&atilde;o inv&aacute;lido.');</script><?php
 		exit();
 	}	
 
-	// Verifica se flag para envio de email Ã© vÃ¡lida
+	// Verifica se flag para envio de email é válida
 	if ($flgemail <> "yes" && $flgemail <> "no") {
 		?><script language="javascript">alert('Identificador de envio de e-mail inv&aacute;lido.');</script><?php
 		exit();
 	}	
 	
-	// Verifica se identificador de tipo de impressÃ£o Ã© um inteiro vÃ¡lido
+	// Verifica se identificador de tipo de impressão é um inteiro válido
 	if (!validaInteiro($limorbor)) {
 		?><script language="javascript">alert('Identificador de tipo de impress&atilde;o inv&aacute;lido.');</script><?php
 		exit();
@@ -117,6 +118,7 @@
         $xml .= "    <dsiduser>".$dsiduser."</dsiduser>";
         $xml .= "    <flgemail>".($flgemail == 'yes' ? 1 : 0)."</flgemail>";
         $xml .= "    <flgerlog>0</flgerlog>";
+		$xml .= "    <flgrestr>".$flgrestr."</flgrestr>";
         $xml .= "  </Dados>";
         $xml .= "</Root>";
 
@@ -129,10 +131,10 @@
 			exit();
 		}
 
-        // ObtÃ©m nome do arquivo PDF copiado do Servidor PROGRESS para o Servidor Web
+        // Obtém nome do arquivo PDF copiado do Servidor PROGRESS para o Servidor Web
         $nmarqpdf = $xmlObject->roottag->tags[0]->tags[0]->cdata;
 
-        // Chama funÃ§Ã£o para mostrar PDF do impresso gerado no browser
+        // Chama função para mostrar PDF do impresso gerado no browser
         visualizaPDF($nmarqpdf);
 
     } else {
@@ -145,7 +147,7 @@
 	
 	
 	
-	// Monta o xml de requisiÃ§Ã£o
+	// Monta o xml de requisição
 	$xmlDadosImpres  = "";
 	$xmlDadosImpres .= "<Root>";
 	$xmlDadosImpres .= "	<Cabecalho>";
@@ -179,33 +181,33 @@
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjDadosImpres = getObjectXML($xmlResult);
 	
-	// Se ocorrer um erro, mostra crÃ­tica
+	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjDadosImpres->roottag->tags[0]->name) == "ERRO") {
 		$msg = $xmlObjDadosImpres->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		?><script language="javascript">alert('<?php echo $msg; ?>');</script><?php
 		exit();
 	} 
 	
-	if ($idimpres <= 4 || $idimpres == 9) { // ImpressÃµes do limite
-		// ObtÃ©m nome do arquivo PDF copiado do Servidor PROGRESS para o Servidor Web
+	if ($idimpres <= 4 || $idimpres == 9) { // Impressões do limite
+		// Obtém nome do arquivo PDF copiado do Servidor PROGRESS para o Servidor Web
 		$nmarqpdf = $xmlObjDadosImpres->roottag->tags[0]->attributes["NMARQPDF"];
 		
-		// Chama funÃ§Ã£o para mostrar PDF do impresso gerado no browser
+		// Chama função para mostrar PDF do impresso gerado no browser
 		visualizaPDF($nmarqpdf);
-	} else { // ImpressÃµes do bordero
-		// Armazena dados para impressÃµes
-		$xmlTagsEmpresti = $xmlObjDadosImpres->roottag->tags[0]->tags; // Dados de emprÃ©stimo
+	} else { // Impressões do bordero
+		// Armazena dados para impressões
+		$xmlTagsEmpresti = $xmlObjDadosImpres->roottag->tags[0]->tags; // Dados de empréstimo
 		$xmlTagsPropLimi = $xmlObjDadosImpres->roottag->tags[1]->tags; // Dados da proposta de limite
 		$xmlTagsCtrLimit = $xmlObjDadosImpres->roottag->tags[2]->tags; // Dados do contrato de limite
 		$xmlTagsAvalista = $xmlObjDadosImpres->roottag->tags[3]->tags; // Dados dos Avalistas
-		$xmlTagsNotaProm = $xmlObjDadosImpres->roottag->tags[4]->tags; // Dados para nota promissÃ³ria
+		$xmlTagsNotaProm = $xmlObjDadosImpres->roottag->tags[4]->tags; // Dados para nota promissória
 		$xmlTagsPropBord = $xmlObjDadosImpres->roottag->tags[5]->tags; // Dados da proposta de bordero
 		$xmlTagsCabecTit = $xmlObjDadosImpres->roottag->tags[6]->tags; // Dados para os cheques do bordero
 		$xmlTagsTitsBord = $xmlObjDadosImpres->roottag->tags[7]->tags; // Dados dos cheques do bordero
-		$xmlTagsTBRestri = $xmlObjDadosImpres->roottag->tags[8]->tags; // Dados das restriÃ§Ãµes dos cheques do bordero
-		$xmlTagsSacadNPg = $xmlObjDadosImpres->roottag->tags[9]->tags; // Dados do sacado que nÃ£o pagou
+		$xmlTagsTBRestri = $xmlObjDadosImpres->roottag->tags[8]->tags; // Dados das restrições dos cheques do bordero
+		$xmlTagsSacadNPg = $xmlObjDadosImpres->roottag->tags[9]->tags; // Dados do sacado que não pagou
 
-		// Armazena dados de emprÃ©stimo em array
+		// Armazena dados de empréstimo em array
 		if (count($xmlTagsEmpresti) > 0) {	
 			for ($i = 0; $i < count($xmlTagsEmpresti); $i++) {
 				$xmlTags = $xmlTagsEmpresti[$i]->tags;
@@ -253,7 +255,7 @@
 			$dadosImpressos["AVALISTA"] = $dadosAvalista;
 		}		
 
-		// Armazena dados da nota promissÃ³ria em array
+		// Armazena dados da nota promissória em array
 		if (count($xmlTagsNotaProm) > 0) {	
 			$xmlTags = $xmlTagsNotaProm[0]->tags;
 			
@@ -299,7 +301,7 @@
 			$dadosImpressos["TITSBORD"] = $dadosTitsBord;
 		}	
 		
-		// Armazena dados as restriÃ§Ãµes dos cheques do bordero em array
+		// Armazena dados as restrições dos cheques do bordero em array
 		if (count($xmlTagsTBRestri) > 0) {	
 			for ($i = 0; $i < count($xmlTagsTBRestri); $i++) {
 				$xmlTags = $xmlTagsTBRestri[$i]->tags;
@@ -313,7 +315,7 @@
 			$dadosImpressos["TBRESTRI"] = $dadosTBRestri;
 		}
 		
-		// Armazena dados do sacado que nÃ£o pagou em array
+		// Armazena dados do sacado que não pagou em array
 		if (count($xmlTagsSacadNPg) > 0) {	
 			for ($i = 0; $i < count($xmlTagsSacadNPg); $i++) {
 				$xmlTags = $xmlTagsSacadNPg[$i]->tags;
@@ -326,19 +328,19 @@
 			$dadosImpressos["SACADNPG"] = $dadosSacadNPg;
 		}
 
-		// Classe para geraÃ§Ã£o dos impressos em PDF
+		// Classe para geração dos impressos em PDF
 		require_once("imprimir_pdf_dscchq.php");
 
 		// Instancia Objeto para gerar arquivo PDF
 		$pdf = new PDF("P","cm","A4");
 		
-		// Inicia geraÃ§Ã£o do impresso
+		// Inicia geração do impresso
 		$pdf->geraImpresso($dadosImpressos,$idimpres);
 		
 		$navegador = CheckNavigator();
 		$tipo = $navegador['navegador'] == 'chrome' ? "I" : "D";
 		
-		// Gera saÃ­da do PDF para o Browser
+		// Gera saída do PDF para o Browser
 		$pdf->Output("impressao_desconto_cheques.pdf",$tipo);	
 	}	
     }

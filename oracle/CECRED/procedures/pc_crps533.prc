@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%TYPE
+CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%TYPE
                                        ,pr_flgresta  IN PLS_INTEGER            --> Flag padrão para utilização de restart
                                        ,pr_nmtelant IN VARCHAR2
                                        ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
@@ -234,7 +234,6 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
          31/03/2016 - Ajuste para nao deixar alinea zerada na validação de historicos
                (Adriano - SD 426308).
 
-
                26/04/2016 - Ajuste para evitar geracao de raise quando tiver erro de 
                             conversao para numerico (vr_cdcritic:= 843) (Daniel) 
                             
@@ -243,13 +242,15 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                             
                07/10/2016 - Alteração do diretório para geração de arquivo contábil.
                             P308 (Ricardo Linhares).
-                            
+				
+               04/11/2016 - Ajustar cursor de custodia de cheques - Projeto 300 (Rafael)
+
                24/11/2016 - Limpar variavel de critica auxiliar vr_cdcritic_aux para 
                             cada conta do arquivo - Melhoria 69 (Lucas Ranghetti/Elton)
 
                03/12/2016 - Incorporação Transulcred (Guilherme/SUPERO)
 
-			         07/12/2016 - Ajustes referentes a M69, alinea 49 e leitura da crapneg
+			   07/12/2016 - Ajustes referentes a M69, alinea 49 e leitura da crapneg
                             (Lucas Ranghetti/Elton)
                             
                12/01/2017 - Limpar crapdev com situacao devolvido, jogar as 
@@ -561,7 +562,7 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
           vr_nrcheque   gncpchq.nrcheque%TYPE;
           vr_cdtipreg   gncpchq.cdtipreg%TYPE;
           vr_exc_erro   EXCEPTION;
-          
+
       
 
         BEGIN
@@ -2091,7 +2092,8 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                  AND crapcst.nrctachq = pr_nrctachq
                  AND crapcst.nrcheque = pr_nrcheque
                  AND crapcst.insitchq IN (0, 2)
-                 AND crapcst.dtlibera > pr_dtlibera;
+                 AND crapcst.dtlibera > pr_dtlibera
+                 AND crapcst.nrborder = 0;
             rw_crapcst cr_crapcst%ROWTYPE;
 
             --Selecionar Cheques Contidos do Bordero de desconto de cheques
@@ -3840,7 +3842,7 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                       -- Se não tiver critica
                       IF vr_cdcritic = 0 AND 
                          vr_cdcritic_aux = 0 THEN                        
-                      
+                        
                         IF cr_tbchq_param_conta%ISOPEN THEN
                           CLOSE cr_tbchq_param_conta;  
                         END IF;                         

@@ -201,7 +201,12 @@ CREATE OR REPLACE PACKAGE CECRED.gene0005 IS
                                   ,pr_dsregist IN tbgen_inconsist.dsregistro_referencia%TYPE --> Desc. do registro de referencia
                                   ,pr_dsincons IN tbgen_inconsist.dsinconsist%TYPE --> Descricao da inconsistencia
                                   ,pr_des_erro OUT VARCHAR2 --> Status erro
-                                  ,pr_dscritic OUT VARCHAR2); --> Retorno de erro
+                                  ,pr_dscritic OUT VARCHAR2); --> Retorno de erro	
+
+FUNCTION fn_calc_qtd_dias_uteis(pr_cdcooper IN crapcop.cdcooper%TYPE
+		                       ,pr_dtinical IN DATE  --> Data de inicio do cálculo
+		                       ,pr_dtfimcal IN DATE) --> Data final do cálculo
+							    RETURN INTEGER;
 
   END GENE0005;
 /
@@ -2666,7 +2671,78 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
         pr_dscritic := 'Erro na GENE0005.pc_gera_inconsistencia: ' || SQLERRM;
     END;
 
-  END pc_gera_inconsistencia;
+  END pc_gera_inconsistencia;  
+
+  FUNCTION fn_calc_qtd_dias_uteis(pr_cdcooper IN crapcop.cdcooper%TYPE
+		                             ,pr_dtinical IN DATE  --> Data de inicio do cálculo
+		                             ,pr_dtfimcal IN DATE) --> Data final do cálculo
+																 RETURN INTEGER IS
+	BEGIN
+		/* .............................................................................
+   Programa: fn_calc_qtd_dias_uteis       Antigo B1wgen0009.p/calc_qtd_dias_uteis
+   Sistema : Conta-Corrente - Cooperativa de Credito
+   Sigla   : CRED
+   Autor   : Lucas Reinert
+   Data    : Dezembro/2016                       Ultima Atualizacao:
+
+   Dados referentes ao programa:
+
+   Frequencia: Diario (on-line)
+   Objetivo  : Calcular a quantidade de dias úteis entre a data inicial e final
+
+   Alteracoes: 
+
+
+   ............................................................................. */
+    DECLARE
+		  -- Quantidade de dias úteis
+		  vr_qtdiasut NUMBER := -1; -- Consideramos a data atual D-0
+			vr_dtrefere DATE;
+		
+		  -- Verificar se a data é um feriado
+			CURSOR cr_crapfer(pr_cdcooper IN crapfer.cdcooper%TYPE
+			                 ,pr_dtrefere IN crapdat.dtmvtolt%TYPE) IS
+        SELECT 1
+				  FROM crapfer fer
+				 WHERE fer.cdcooper = pr_cdcooper
+				   AND fer.dtferiad = pr_dtrefere;
+			rw_crapfer cr_crapfer%ROWTYPE;
+    BEGIN
+			-- Atribuir data de referência
+			vr_dtrefere := pr_dtinical;
+		  LOOP
+			  EXIT WHEN vr_dtrefere > pr_dtfimcal;
+			
+				-- Se for sábado ou domingo
+				IF to_char(vr_dtrefere, 'D') = 1 OR
+					 to_char(vr_dtrefere, 'D') = 7 THEN
+				  vr_dtrefere := vr_dtrefere + 1; -- Busca próxima data
+					CONTINUE;
+			  END IF;
+				
+				-- Verificar se a data é um feriado
+				OPEN cr_crapfer(pr_cdcooper => pr_cdcooper
+				               ,pr_dtrefere => vr_dtrefere);
+				FETCH cr_crapfer INTO rw_crapfer;
+				
+			  IF cr_crapfer%FOUND THEN
+					-- Fechar cursor
+					CLOSE cr_crapfer;
+				  vr_dtrefere := vr_dtrefere + 1; -- Busca próxima data
+					CONTINUE;					
+				END IF;
+				-- Fechar cursor
+				CLOSE cr_crapfer;				
+				
+				vr_qtdiasut := vr_qtdiasut + 1; -- Incrementa quantidade de dias úteis
+			  vr_dtrefere := vr_dtrefere + 1; -- Busca próxima data
+				
+			END LOOP;
+			
+			RETURN vr_qtdiasut;
+		
+		END;																 
+  END fn_calc_qtd_dias_uteis;
   
 END GENE0005;
 /

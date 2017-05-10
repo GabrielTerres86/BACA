@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 15/12/2014
  * OBJETIVO     : Formulario de Regras.
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 21/09/2016 - Inclusão dos campos "pcliqdez" e "qtdialiq" no formulario de regras. Projeto 300. (Lombardi)
  * --------------
  */	
 ?>
@@ -90,6 +90,19 @@
 						<? } ?>
 					</select>
 					<label>&nbsp;Meses</label>
+				</td>
+			</tr>
+			<tr class="cmpstlim">
+				<td>
+					<label for="pcliqdez">Percentual de Liquidez:</label>	
+					<input name="pcliqdez" type="text"  id="pcliqdez" />
+					<label>&nbsp;%</label>
+				</td>
+			</tr>
+			<tr class="cmpstlim">
+				<td>
+					<label for="qtdialiq">Qtd. Dias Calculo % de Liquidez:</label>	
+					<input name="qtdialiq" type="text"  id="qtdialiq" />
 				</td>
 			</tr>
 		</table>

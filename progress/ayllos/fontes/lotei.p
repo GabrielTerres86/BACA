@@ -247,6 +247,8 @@
                04/08/2016 - Remover condicao de cooperativa igual a Viacredi para 
                             validar os dois dias minimos para custodia de cheque
                             (Douglas - Chamado 457862)
+                            
+               20/09/2016 - Nao permitir tipos de lote 19, 26 e 27 LANCDC. Projeto 300 (Lombardi).
 ............................................................................. */
 
 { includes/var_online.i }
@@ -555,7 +557,17 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
            NEXT-PROMPT tel_tplotmov WITH FRAME f_lote.
            NEXT.
        END.
-  
+    
+    IF tel_tplotmov = 19 OR /* Custodia de Cheque */
+       tel_tplotmov = 26 OR /* Bordero Desconto Cheque */
+       tel_tplotmov = 27 THEN /* Limite Desconto de Cheque */
+       DO:
+           glb_cdcritic = 62.
+           NEXT-PROMPT tel_tplotmov WITH FRAME f_lote.
+           NEXT.
+       END.
+     
+    
    /*  Comp. eletronica  */
    
    IF   tel_tplotmov = 23   OR

@@ -408,6 +408,26 @@ CREATE OR REPLACE PACKAGE CECRED.INET0002 AS
 																					,pr_cdcritic OUT crapcri.cdcritic%TYPE                      --> Codigo de Critica
 																					,pr_dscritic OUT crapcri.dscritic%TYPE);                    --> Descricao de Critica																		
   
+  -- Procedure de criacao de transacao de transferencia
+  PROCEDURE pc_cria_trans_pend_descto(pr_cdcooper    IN tbtransf_trans_pend.cdcooper%TYPE --> Codigo da cooperativa
+                                     ,pr_nrdconta    IN tbtransf_trans_pend.nrdconta%TYPE --> Numero da Conta
+                                     ,pr_idseqttl    IN crapttl.idseqttl%TYPE             --> Número do Titular
+                                     ,pr_nrcpfrep    IN crapopi.nrcpfope%TYPE             --> Numero do cpf do representante legal
+                                     ,pr_cdagenci    IN crapage.cdagenci%TYPE             --> Codigo do PA
+                                     ,pr_nrdcaixa    IN craplot.nrdcaixa%TYPE             --> Numero do Caixa
+                                     ,pr_cdoperad    IN crapope.cdoperad%TYPE             --> Codigo do Operados
+                                     ,pr_nmdatela    IN craptel.nmdatela%TYPE             --> Nome da Tela
+                                     ,pr_idorigem    IN INTEGER                           --> Origem da solicitacao
+                                     ,pr_nrcpfope    IN crapopi.nrcpfope%TYPE             --> Numero do cpf do operador juridico
+                                     ,pr_cdcoptfn    IN tbgen_trans_pend.cdcoptfn%TYPE    --> Cooperativa do Terminal
+                                     ,pr_cdagetfn    IN tbgen_trans_pend.cdagetfn%TYPE    --> Agencia do Terminal
+                                     ,pr_nrterfin    IN tbgen_trans_pend.nrterfin%TYPE    --> Numero do Terminal Financeiro
+                                     ,pr_dtmvtolt    IN DATE                              --> Data do movimento     
+                                     ,pr_idastcjt    IN crapass.idastcjt%TYPE             --> Indicador de Assinatura Conjunta
+                                     ,pr_tab_cheques IN dscc0001.typ_tab_cheques          --> Lista de Cheques
+                                     ,pr_cdcritic   OUT crapcri.cdcritic%TYPE             --> Codigo de Critica
+                                     ,pr_dscritic   OUT crapcri.dscritic%TYPE);           --> Descricao de Critica
+  
   --> Rotina responsavel por controlar criação do registro de transação de operador juridico(craptoj)
   PROCEDURE pc_cria_transacao_operador(pr_cdagenci   IN crapage.cdagenci%TYPE                        --> Codigo do PA
                                       ,pr_nrdcaixa   IN craplot.nrdcaixa%TYPE                        --> Numero do Caixa
@@ -1676,7 +1696,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
   --  Sistema  : Procedimentos para criaco de mensagens referente a Assinatura Conjunta
   --  Sigla    : CRED
   --  Autor    : Jean Michel
-  --  Data     : Dezembro/2015.                   Ultima atualizacao: 16/11/2016
+  --  Data     : Dezembro/2015.                   Ultima atualizacao: 02/12/2016
   --
   -- Dados referentes ao programa:
   --
@@ -1687,6 +1707,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
   --
   --             19/07/2016 - Inclusao da opcao de pagamento de DARF/DAS (Jean Michel)
   --
+  --             02/12/2016 - Inclusao da opcao de desconto de cheque (Lombardi)
   --
   --             16/11/2016 - Inclusao do tipo de transacao 16 e 17 --> SMS Cobrança 
   --                          PRJ319-SMS Cobrança (Odirlei-AMcom)
@@ -1813,6 +1834,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       FROM   tbpagto_darf_das_trans_pend
       WHERE  tbpagto_darf_das_trans_pend.cdtransacao_pendente = pr_cddoitem;
       rw_tbpagto_darf_das_trans_pend cr_tbpagto_darf_das_trans_pend%ROWTYPE;
+
+      --Tipo Transacao 12 (Desconto de Cheque)
+      CURSOR cr_tbdscc_trans_pend(pr_cddoitem IN tbgen_trans_pend.cdtransacao_pendente%TYPE) IS  
+        SELECT SUM(dscc.vlcheque) vltotchq
+              ,COUNT(1) qtcheque
+          FROM tbdscc_trans_pend dscc
+         WHERE dscc.cdtransacao_pendente = pr_cddoitem
+         GROUP BY dscc.cdtransacao_pendente;
+      rw_tbdscc_trans_pend cr_tbdscc_trans_pend%ROWTYPE;
 
       --Cadastro de Transferencias pela Internet.
       CURSOR cr_crapcti( pr_cdcooper IN crapcti.cdcooper%TYPE,
@@ -2385,7 +2415,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 															(CASE WHEN rw_tbpagto_darf_das_trans_pend.idagendamento = 1 THEN ' com débito em ' ELSE ' agendado para ' END) ||
 															'<b>' || TO_CHAR(rw_tbpagto_darf_das_trans_pend.dtdebito,'DD/MM/RRRR') || '</b>' || ' no valor de <b>R$ ' ||
 															TO_CHAR(rw_tbpagto_darf_das_trans_pend.vlpagamento,'fm999g999g990d00') || '</b>.<br>';
-					
+             WHEN pr_tptransa = 12 THEN -- Desconto de Cheque
+               OPEN cr_tbdscc_trans_pend (pr_cddoitem => pr_cdtranpe);
+							 FETCH cr_tbdscc_trans_pend INTO rw_tbdscc_trans_pend;
+			   IF cr_tbdscc_trans_pend%NOTFOUND THEN
+                  --Fechar Cursor
+                  CLOSE cr_tbdscc_trans_pend;      
+				  vr_cdcritic:= 0;
+				  vr_dscritic:= 'Registro de Desconto de Cheque pendente nao encontrado.';
+				  --Levantar Excecao
+				  RAISE vr_exc_erro;
+               ELSE
+                  --Fechar Cursor
+				  CLOSE cr_tbdscc_trans_pend;
+			   END IF;
+               pr_dsdmensg := pr_dsdmensg || 
+			  				  '<b>Borderô de desconto</b> no valor total de <b>R$ ' ||
+                              TO_CHAR(rw_tbdscc_trans_pend.vltotchq,'fm999g999g990d00') || 
+                              '</b> com <b>' || rw_tbdscc_trans_pend.qtcheque || '</b> cheques.<br>';			
+		
 			  WHEN pr_tptransa = 16 THEN -- SMS cobrança          
           pr_dsdmensg := pr_dsdmensg || 'Adesão ao serviço de SMS de Cobrança';
         WHEN pr_tptransa = 17 THEN -- Cancelamento SMS cobrança          
@@ -4440,6 +4488,157 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       ROLLBACK; 		
 	END pc_cria_trans_pend_pacote_tar;
 
+  -- Procedure de criacao de transacao de transferencia
+  PROCEDURE pc_cria_trans_pend_descto(pr_cdcooper    IN tbtransf_trans_pend.cdcooper%TYPE --> Codigo da cooperativa
+                                     ,pr_nrdconta    IN tbtransf_trans_pend.nrdconta%TYPE --> Numero da Conta
+                                     ,pr_idseqttl    IN crapttl.idseqttl%TYPE             --> Número do Titular
+                                     ,pr_nrcpfrep    IN crapopi.nrcpfope%TYPE             --> Numero do cpf do representante legal
+                                     ,pr_cdagenci    IN crapage.cdagenci%TYPE             --> Codigo do PA
+                                     ,pr_nrdcaixa    IN craplot.nrdcaixa%TYPE             --> Numero do Caixa
+                                     ,pr_cdoperad    IN crapope.cdoperad%TYPE             --> Codigo do Operados
+                                     ,pr_nmdatela    IN craptel.nmdatela%TYPE             --> Nome da Tela
+                                     ,pr_idorigem    IN INTEGER                           --> Origem da solicitacao
+                                     ,pr_nrcpfope    IN crapopi.nrcpfope%TYPE             --> Numero do cpf do operador juridico
+                                     ,pr_cdcoptfn    IN tbgen_trans_pend.cdcoptfn%TYPE    --> Cooperativa do Terminal
+                                     ,pr_cdagetfn    IN tbgen_trans_pend.cdagetfn%TYPE    --> Agencia do Terminal
+                                     ,pr_nrterfin    IN tbgen_trans_pend.nrterfin%TYPE    --> Numero do Terminal Financeiro
+                                     ,pr_dtmvtolt    IN DATE                              --> Data do movimento     
+                                     ,pr_idastcjt    IN crapass.idastcjt%TYPE             --> Indicador de Assinatura Conjunta
+                                     ,pr_tab_cheques IN dscc0001.typ_tab_cheques          --> Lista de Cheques
+                                     ,pr_cdcritic   OUT crapcri.cdcritic%TYPE             --> Codigo de Critica
+                                     ,pr_dscritic   OUT crapcri.dscritic%TYPE) IS         --> Descricao de Critica
+  
+    ---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_cria_trans_pend_descto
+    --  Sistema  : Procedimentos de criacao de transacao de desconto de cheque
+    --  Sigla    : CRED
+    --  Autor    : Lombardi
+    --  Data     : Novembro/2016.               Ultima atualizacao: --/--/----
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: -----
+    -- Objetivo  : Procedimentos de criacao de transacao de desconto de cheque
+    --
+    -- Alteração : 
+    --
+    ---------------------------------------------------------------------------------------------------------------
+    
+    -- Variáveis
+    vr_cdcritic crapcri.cdcritic%TYPE := 0;
+    vr_dscritic crapcri.dscritic%TYPE := '';
+    vr_exec_saida EXCEPTION;
+    vr_cdtranpe tbgen_trans_pend.cdtransacao_pendente%TYPE;
+    vr_dtmvtopg DATE;
+    vr_tab_lsdatagd gene0002.typ_split;
+    vr_idagenda INTEGER := 0;
+    vr_tab_crapavt CADA0001.typ_tab_crapavt_58; --Tabela Avalistas
+    
+  BEGIN
+    
+    INET0002.pc_cria_transacao_operador(pr_cdagenci    => pr_cdagenci
+                                       ,pr_nrdcaixa    => pr_nrdcaixa
+                                       ,pr_cdoperad    => pr_cdoperad
+                                       ,pr_nmdatela    => pr_nmdatela
+                                       ,pr_idorigem    => pr_idorigem
+                                       ,pr_idseqttl    => pr_idseqttl
+                                       ,pr_cdcooper    => pr_cdcooper
+                                       ,pr_nrdconta    => pr_nrdconta
+                                       ,pr_nrcpfope    => pr_nrcpfope
+                                       ,pr_nrcpfrep    => pr_nrcpfrep
+                                       ,pr_cdcoptfn    => pr_cdcoptfn
+                                       ,pr_cdagetfn    => pr_cdagetfn
+                                       ,pr_nrterfin    => pr_nrterfin
+                                       ,pr_dtmvtolt    => pr_dtmvtolt
+                                       ,pr_cdtiptra    => 12 -- Desconto de Cheque
+                                       ,pr_idastcjt    => pr_idastcjt
+                                       ,pr_tab_crapavt => vr_tab_crapavt
+                                       ,pr_cdtranpe    => vr_cdtranpe
+                                       ,pr_dscritic    => vr_dscritic);
+                                         
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exec_saida;
+    END IF;
+      
+    FOR idx IN pr_tab_cheques.first..pr_tab_cheques.last LOOP
+      
+      BEGIN
+        INSERT INTO
+          tbdscc_trans_pend(cdtransacao_pendente
+                           ,cdcooper
+                           ,nrdconta
+                           ,cdcmpchq
+                           ,cdbanchq
+                           ,cdagechq
+                           ,nrctachq
+                           ,nrcheque
+                           ,vlcheque
+                           ,dtlibera
+                           ,dtemissa
+                           ,dsdocmc7
+                           ,nrremret)
+                     VALUES(vr_cdtranpe          
+                           ,pr_cdcooper
+                           ,pr_nrdconta
+                           ,pr_tab_cheques(idx).cdcmpchq
+                           ,pr_tab_cheques(idx).cdbanchq
+                           ,pr_tab_cheques(idx).cdagechq
+                           ,pr_tab_cheques(idx).nrctachq
+                           ,pr_tab_cheques(idx).nrcheque
+                           ,pr_tab_cheques(idx).vlcheque
+                           ,pr_tab_cheques(idx).dtlibera
+                           ,pr_tab_cheques(idx).dtdcaptu
+                           ,pr_tab_cheques(idx).dsdocmc7
+                           ,pr_tab_cheques(idx).nrremret);
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'Erro ao incluir registro tbdscc_trans_pend. Erro: ' || SQLERRM;
+      END;
+      
+		END LOOP;
+    
+      pc_cria_aprova_transpend(pr_cdagenci => pr_cdagenci
+                              ,pr_nrdcaixa => pr_nrdcaixa
+                              ,pr_cdoperad => pr_cdoperad
+                              ,pr_nmdatela => pr_nmdatela
+                              ,pr_idorigem => pr_idorigem
+                              ,pr_idseqttl => pr_idseqttl
+                              ,pr_cdcooper => pr_cdcooper
+                              ,pr_nrdconta => pr_nrdconta
+                              ,pr_nrcpfrep => pr_nrcpfrep
+                              ,pr_dtmvtolt => pr_dtmvtolt
+                            ,pr_cdtiptra => 12 -- Desconto de Cheque
+                              ,pr_tab_crapavt => vr_tab_crapavt
+                              ,pr_cdtranpe => vr_cdtranpe
+                              ,pr_cdcritic => vr_cdcritic
+                              ,pr_dscritic => vr_dscritic);
+
+      IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+         RAISE vr_exec_saida;
+      END IF;
+    
+    COMMIT;
+
+  EXCEPTION
+    WHEN vr_exec_saida THEN
+      pr_cdcritic := vr_cdcritic;
+      
+      IF vr_cdcritic <> 0 THEN
+         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE	
+         pr_dscritic := vr_dscritic;
+      END IF;
+        
+      ROLLBACK;
+
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro geral na procedure pc_cria_trans_pend_descto. Erro: '|| SQLERRM; 
+      ROLLBACK; 
+  END pc_cria_trans_pend_descto;
+
   --> Rotina responsavel por controlar criação do registro de transação de operador juridico(craptoj)
   PROCEDURE pc_cria_transacao_operador(pr_cdagenci   IN crapage.cdagenci%TYPE                        --> Codigo do PA
                                       ,pr_nrdcaixa   IN craplot.nrdcaixa%TYPE                        --> Numero do Caixa
@@ -4673,7 +4872,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
   --            14 - Folha Pagamento (Solicitacao Estouro Conta)
   --            15 - Pagamento de tributos federais DARF/DAS
   --            16 - Contrato SMS Cobrança
-  --            17 - Cancelamento de Contrato SMS Cobrança
+  --            17 - Cancelamento de Contrato SMS Cobrança	 
+  --            18 - Desconto de Cheque
   --
   -- Alteração : 
   --
@@ -5067,6 +5267,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                       ,(SELECT 1
                           FROM tbpagto_darf_das_trans_pend darf
                          WHERE darf.cdtransacao_pendente = gtp.cdtransacao_pendente) ord9   
+                      ,(SELECT 1
+                          FROM tbdscc_trans_pend dscc
+                         WHERE dscc.cdtransacao_pendente = gtp.cdtransacao_pendente) ord10   
                   FROM tbgen_trans_pend gtp
                  WHERE gtp.cdcooper = pr_cdcooper
                    AND gtp.nrdconta = pr_nrdconta
@@ -5210,6 +5413,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
         AND  tbpagto_darf_das_trans_pend.dtdebito BETWEEN pr_dtiniper AND pr_dtfimper;
       rw_tbpagto_darf_das_trans_pend cr_tbpagto_darf_das_trans_pend%ROWTYPE;
            
+      --Tipo Transacao 12 (Desconto de Cheque)
+      CURSOR cr_tbdscc_trans_pend(pr_cddoitem IN tbgen_trans_pend.cdtransacao_pendente%TYPE) IS  
+      SELECT x.*
+        FROM (SELECT SUM(d.vlcheque) vltotchq
+                    ,count(1) qtcheque
+                    ,g.dtmvtolt
+                FROM tbdscc_trans_pend d
+                    ,tbgen_trans_pend g
+               WHERE d.cdtransacao_pendente = pr_cddoitem
+                 AND g.cdtransacao_pendente = d.cdtransacao_pendente
+                 AND g.dtmvtolt BETWEEN  pr_dtiniper AND pr_dtfimper
+            GROUP BY g.dtmvtolt) x
+           WHERE x.qtcheque > 0;
+      rw_tbdscc_trans_pend cr_tbdscc_trans_pend%ROWTYPE;
+      
+      --Tipo Transacao 12 (Desconto de Cheque)
+      CURSOR cr_tbdscc_cheques(pr_cddoitem IN tbgen_trans_pend.cdtransacao_pendente%TYPE) IS  
+      SELECT to_char(dtlibera,'DD/MM/RRRR') dtlibera
+            ,to_char(dtemissa,'DD/MM/RRRR') dtemissa
+            ,cdbanchq
+            ,cdagechq
+            ,nrctachq
+            ,nrcheque
+            ,to_char(vlcheque,'fm999g999g990d00') vlcheque
+        FROM tbdscc_trans_pend
+       WHERE cdtransacao_pendente = pr_cddoitem;
+      
       --Cadastro de Transferencias pela Internet.
       CURSOR cr_crapcti( pr_cdcooper IN crapcti.cdcooper%TYPE,
                          pr_nrdconta IN crapcti.nrdconta%TYPE,
@@ -5474,6 +5704,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       vr_vlpercentual tbpagto_darf_das_trans_pend.vlpercentual%TYPE;       -- Percentual (retornar se estiver preenchido)
       vr_idagendamento tbpagto_darf_das_trans_pend.idagendamento%TYPE;     -- Indicador de Agendamento     
 
+      -- Desconto de Cheques
+      vr_vltotchq VARCHAR2(100);
+      vr_qtcheque INTEGER := 0;
+       
       --Variavel de indice
       vr_ind NUMBER := 0;
       
@@ -6627,6 +6861,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                vr_idagendamento   := NVL(rw_tbpagto_darf_das_trans_pend.idagendamento,0); 
                vr_vlasomar        := vr_vlrtotal;            
 
+			WHEN vr_tptranpe = 12 THEN --Desconto de cheque
+							
+			 OPEN cr_tbdscc_trans_pend(vr_cdtranpe);
+			 FETCH cr_tbdscc_trans_pend INTO rw_tbdscc_trans_pend;
+								 
+			 IF cr_tbdscc_trans_pend%NOTFOUND THEN
+				--Fechar Cursor
+				CLOSE cr_tbdscc_trans_pend;
+				CONTINUE;
+             ELSE
+				--Fechar Cursor
+				CLOSE cr_tbdscc_trans_pend;
+				
+				--Controle de paginação
+				vr_qttotpen := vr_qttotpen + 1;
+				IF ((vr_qttotpen <= pr_nriniseq) OR
+				   (vr_qttotpen > (pr_nriniseq + pr_nrregist))) THEN
+				   CONTINUE;
+				END IF;
+			 END IF;
+			 
+			 vr_dsagenda := 'NÃO'; -- Agendamento
+						 vr_dsdtefet := 'Nesta Data'; -- Data Efetivacao
+			 vr_dsdescri := 'Bordero de Desconto de Cheques';
+							 vr_dstptran := 'Bordero de Desconto de Cheques';
+							 vr_dsvltran := to_char(rw_tbdscc_trans_pend.vltotchq,'fm999g999g990d00');
+			 vr_vltotchq := to_char(rw_tbdscc_trans_pend.vltotchq,'fm999g999g990d00');
+							 vr_dtdebito := to_char(rw_tbdscc_trans_pend.dtmvtolt,'DD/MM/RRRR');
+			 vr_qtcheque := rw_tbdscc_trans_pend.qtcheque;
+			 vr_vlasomar := rw_tbdscc_trans_pend.vltotchq;   
+			   
             --> CONTRATO DE SMS
             WHEN vr_tptranpe IN (16,17) THEN
             
@@ -6900,7 +7165,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                        || '<dados_campo><label>Indicador de Agendamento</label><valor>'||(CASE WHEN vr_idagendamento = 1 THEN
                                                                                                           'NAO' ELSE 'SIM' END)||'</valor></dados_campo>';
  
-         
+         ELSIF vr_tptranpe = 12 THEN -- Desconto de Cheques
+            vr_xml_auxi := vr_xml_auxi
+            || '<dados_campo><label>Valor Total</label><valor>'          ||vr_vltotchq||'</valor></dados_campo>'
+            || '<dados_campo><label>Quantidade de Cheques</label><valor>'||vr_qtcheque||'</valor></dados_campo>';
+ 
          ELSIF vr_tptranpe IN (16,17) THEN --> Contrato de SMS
             vr_xml_auxi := vr_xml_auxi            
             || '<dados_campo><label>Serviço</label><valor>'  || rw_sms_trans_pend.dspacote ||'</valor></dados_campo>'
@@ -6930,7 +7199,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 
          END LOOP;
          
-         vr_xml_auxi := vr_xml_auxi || '</aprovadores></transacao>';
+         vr_xml_auxi := vr_xml_auxi || '</aprovadores><bordero>';	
+				 
+         IF vr_tptranpe = 12 THEN -- Desconto de Cheques
+           FOR rw_tbdscc_cheques IN cr_tbdscc_cheques(vr_cdtranpe) LOOP
+             vr_xml_auxi := vr_xml_auxi || '<cheque>' ||
+                                               '<dtlibera>' || rw_tbdscc_cheques.dtlibera || '</dtlibera>' ||
+                                               '<dtemissa>' || rw_tbdscc_cheques.dtemissa || '</dtemissa>' ||
+                                               '<cdbanchq>' || rw_tbdscc_cheques.cdbanchq || '</cdbanchq>' ||
+                                               '<cdagechq>' || rw_tbdscc_cheques.cdagechq || '</cdagechq>' ||
+                                               '<nrctachq>' || rw_tbdscc_cheques.nrctachq || '</nrctachq>' ||
+                                               '<nrcheque>' || rw_tbdscc_cheques.nrcheque || '</nrcheque>' ||
+                                               '<vlcheque>' || rw_tbdscc_cheques.vlcheque || '</vlcheque>' ||
+                                           '</cheque>';	
+           END LOOP;
+         END IF;
+         
+         vr_xml_auxi := vr_xml_auxi || '</bordero></transacao>';	
          
          --Dados Detalhados da transacao
          gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 

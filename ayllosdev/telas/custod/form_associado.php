@@ -5,8 +5,9 @@
  * DATA CRIAÇÃO : 31/01/2012
  * OBJETIVO     : Formulario que apresenta os dados do associado
  * --------------
-	* ALTERAÇÕES   : 01/08/2016 - Corrigi o uso desnecessario da funcao session_start. SD 491672 (Carlos R.)
- * --------------
+ * ALTERAÇÕES   : 01/08/2016 - Corrigi o uso desnecessario da funcao session_start. SD 491672 (Carlos R.)
+ *				  16/12/2016 - Alterações referentes ao projeto 300. (Reinert)
+ * -------------- 
  */
 
 	require_once('../../includes/config.php');
@@ -19,7 +20,7 @@
 
 
 <fieldset>
-	<legend>Associado</legend>	
+	<legend> Associado </legend>	
 	
 	<label for="nrdconta">Conta:</label>
 	<input type="text" id="nrdconta" name="nrdconta" value="<?php echo formataContaDV($nrdconta) ?>"/>

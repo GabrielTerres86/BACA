@@ -1,9 +1,9 @@
 CREATE OR REPLACE PROCEDURE CECRED.pc_crps262 (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
-                    ,pr_flgresta  IN PLS_INTEGER            --> Flag padrão para utilização de restart
-                    ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
-                    ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação
-                    ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Critica encontrada
-                    ,pr_dscritic OUT VARCHAR2) IS           --> Texto de erro/critica encontrada
+                                              ,pr_flgresta  IN PLS_INTEGER            --> Flag padrão para utilização de restart
+                                              ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
+                                              ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação
+                                              ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Critica encontrada
+                                              ,pr_dscritic OUT VARCHAR2) IS           --> Texto de erro/critica encontrada
   BEGIN
 	/* ..........................................................................
 
@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps262 (pr_cdcooper IN crapcop.cdcooper%T
 		 Sistema : Conta-Corrente - Cooperativa de Credito
 		 Sigla   : CRED
 		 Autor   : Odair
-		 Data    : Maio/99.                            Ultima atualizacao: 22/06/2016
+		 Data    : Maio/99.                            Ultima atualizacao: 22/09/2016
 
 		 Dados referentes ao programa:
 
@@ -54,7 +54,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps262 (pr_cdcooper IN crapcop.cdcooper%T
 								 18/03/2015 - Conversao Progress >> Oracle. (Reinert)
                  
 								 22/06/2016 - Correcao para o uso da function fn_busca_dstextab 
-								  			  da TABE0001. (Carlos Rafael Tanholi).                   
+								  			  da TABE0001. (Carlos Rafael Tanholi).  
+											                   
+								 22/09/2016 - Alterado para buscar o qtd dias de renovacao da tabela craprli
+								  			      PRJ300 - Desconto de cheque (Odirlei-AMcom)
 	............................................................................. */
 
     DECLARE
@@ -98,23 +101,24 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps262 (pr_cdcooper IN crapcop.cdcooper%T
 							,ass.nrdconta
 							,ass.nmprimtl
 							,ass.cdagenci
+              ,rli.qtmaxren
 					FROM craplim lim
 					    ,crapass ass
+              ,craprli rli
 				 WHERE lim.cdcooper = pr_cdcooper
 				   AND lim.dtfimvig = pr_dtfimvig
-					  AND lim.cdmotcan NOT IN(1,4)
+					 AND lim.cdmotcan NOT IN(1,4)
 					 AND ass.cdcooper = lim.cdcooper
 					 AND ass.nrdconta = lim.nrdconta
+           AND lim.cdcooper = rli.cdcooper
+           AND lim.tpctrlim = rli.tplimite
+           AND rli.inpessoa = ass.inpessoa 
 				 ORDER BY ass.cdagenci;
 			rw_craplim cr_craplim%ROWTYPE;
 					 
       ---------------------------- ESTRUTURAS DE REGISTRO ---------------------		
-
+      
       ------------------------------- VARIAVEIS -------------------------------
-      -- Variaveis da tabela de parametros     
-      vr_qtrenova NUMBER;
-      -- Guardar registro dstextab
-      vr_dstextab craptab.dstextab%TYPE;      
             
 			-- Variaveis para geração do relatório
 			vr_des_xml     CLOB;            --> Buffer de dados para gerar XML de dados
@@ -185,20 +189,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps262 (pr_cdcooper IN crapcop.cdcooper%T
 																				 ,pr_cdcooper => pr_cdcooper
 																				 ,pr_nmsubdir => '/rl'); --> Utilizaremos o rl
 
-      -- Buscar configuração na tabela
-      vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
-                                               ,pr_nmsistem => 'CRED'
-                                               ,pr_tptabela => 'USUARI'
-                                               ,pr_cdempres => 11
-                                               ,pr_cdacesso => 'LIMDESCONT'
-                                               ,pr_tpregist => 0);   
-            
-      IF TRIM(vr_dstextab) IS NOT NULL THEN             
-				vr_qtrenova := to_number(substr(vr_dstextab, 19,2));
-			ELSE
-				vr_qtrenova := 0;
-			END IF;
-			
 			-- Inicializar o CLOB do relatório
 			dbms_lob.createtemporary(vr_des_xml, TRUE, dbms_lob.CALL);
 			dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
@@ -208,15 +198,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps262 (pr_cdcooper IN crapcop.cdcooper%T
 			
 			/* Contratos de limite de credito */
       FOR rw_craplim IN cr_craplim(pr_cdcooper => pr_cdcooper
-										              ,pr_dtfimvig => rw_crapdat.dtmvtolt) LOOP 
-      
-					IF rw_craplim.tpctrlim = 1 AND
+										              ,pr_dtfimvig => rw_crapdat.dtmvtolt) LOOP       
+          
+          IF rw_craplim.tpctrlim = 1 AND
 						 rw_craplim.insitlim = 2 THEN /* Situação do Ativo */
 						 -- Busca próximo registro do cursor
 						 CONTINUE;
 					END IF;
 					IF rw_craplim.tpctrlim = 2 AND
-						 rw_craplim.dtinivig + (rw_craplim.qtdiavig * vr_qtrenova) > rw_crapdat.dtmvtolt THEN
+						 rw_craplim.dtinivig + (rw_craplim.qtdiavig * rw_craplim.qtmaxren) > rw_crapdat.dtmvtolt THEN
 						 -- Busca próximo registro do cursor
 						 CONTINUE;
 					END IF;	 		

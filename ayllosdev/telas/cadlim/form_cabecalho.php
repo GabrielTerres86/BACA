@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 15/12/2014
  * OBJETIVO     : Cabeçalho para a tela CADLIM
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 21/09/2016 - Inclusão do filtro "Tipo de Limite" no cabecalho. Projeto 300. (Lombardi)
  *				  
  * --------------
  */	
@@ -26,6 +26,16 @@
 					<option value='A'>A - Alterar regra</option>					
 				</select>
 				<a href="#" class="botao" id="btnOK" name="btnOK" style = "text-align:right;">OK</a>
+			</td>
+		</tr>		
+		<tr>
+			<td>
+				<label for="tplimite">Tipo de Limite:</label>
+				<select name="tplimite" id="tplimite">
+					<option value="0">Selecione</option>
+					<option value="1">Limite de Cr&eacute;dito</option>
+					<option value="2">Limite Desconto de Cheque</option>
+				</select>			
 			</td>
 		</tr>		
 		<tr>

@@ -5,7 +5,8 @@
  * DATA CRIAÇÃO : 23/12/2014
  * OBJETIVO     : Rotina para busca da regra da tela CADPRE
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 21/09/2016 - Inclusão do filtro "Tipo de Limite" no cabecalho. Inclusão dos campos
+ *                             "pcliqdez" e "qtdialiq" no formulario de regras. Projeto 300. (Lombardi)
  * -------------- 
  */
     session_start();
@@ -17,6 +18,7 @@
 	
 	// Recebe a operação que está sendo realizada
 	$cddopcao = (isset($_POST['cddopcao'])) ? $_POST['cddopcao'] : ''; 
+	$tplimite = (isset($_POST['tplimite'])) ? $_POST['tplimite'] : ''; 	
 	$inpessoa = (isset($_POST['inpessoa'])) ? $_POST['inpessoa'] : ''; 	
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {
@@ -30,6 +32,7 @@
     $xml .= "   <inpessoa>".$inpessoa."</inpessoa>";	
 	$xml .= "   <flgdepop>".(($cddopcao == 'C') ? 0 : 1)."</flgdepop>";
 	$xml .= "   <idgerlog>0</idgerlog>";
+    $xml .= "   <tplimite>".$tplimite."</tplimite>";
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 
@@ -61,6 +64,8 @@
     $('#qtmaxren','#frmRegra').val('<?= getByTagName($regra->tags,'qtmaxren'); ?>');
     $('#qtdiaatr','#frmRegra').val('<?= getByTagName($regra->tags,'qtdiaatr'); ?>');
     $('#qtatracc','#frmRegra').val('<?= getByTagName($regra->tags,'qtatracc'); ?>');
+    $('#pcliqdez','#frmRegra').val('<?= getByTagName($regra->tags,'pcliqdez'); ?>');
+    $('#qtdialiq','#frmRegra').val('<?= getByTagName($regra->tags,'qtdialiq'); ?>');
 	
 	<?
 	$aSituacao = explode(";", getByTagName($regra->tags,'dssitdop'));
@@ -74,6 +79,6 @@
 	}
 	?>
 	
-    controlaCampos($('#cddopcao', '#frmCab').val());
+    controlaCampos($('#cddopcao', '#frmCab').val(), $('#tplimite', '#frmCab').val());
     $('#frmRegra').css('display','block');    
 </script>

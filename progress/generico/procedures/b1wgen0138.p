@@ -13,6 +13,7 @@
   | calc_endividamento_individual  | geco0001.pc_calc_endividamento_individual| 
   | calc_risco_individual          | geco0001.pc_calc_risco_individual        |
   | busca_grupo                    | GECO0001.pc_busca_grupo_associado        |
+  | calc_endivid_grupo             | GECO0001.pc_calc_endivid_grupo           |
   +--------------------------------+------------------------------------------+
 
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA

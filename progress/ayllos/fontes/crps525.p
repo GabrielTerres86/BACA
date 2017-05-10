@@ -9,10 +9,10 @@
 
     Frequencia: Diario.
 
-    Objetivo  : Gerar relatorio de limites de desconto de cheques vencidos.
+    Objetivo  : Criar tarifas de custodia de cheques custodiados no dia.
 ..............................................................................*/
 
-{ includes/var_batch.i "NEW" } 
+{ includes/var_batch.i } 
 { sistema/generico/includes/var_oracle.i }
 
   ASSIGN glb_cdprogra = "crps525"
