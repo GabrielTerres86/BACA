@@ -139,6 +139,9 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
                             
                03/04/2017 - Ajuste no calculo do IOF, incluir calculo da taxa adicional do IOF.
                             (Odirlei-AMcom)
+
+               26/04/2017 - Nao considerar valores bloqueados na composicao de saldo disponivel.
+                            Heitor (Mouts) - Melhoria 440
                                                 
      ............................................................................. */
 
@@ -1146,8 +1149,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
              --vlsddisp = valor do saldo disponivel
              --vllimcre = valor do limite de credito do associado
              vr_tot_vlsldant:= Nvl(rw_crapsld.vlsddisp,0) + Nvl(rw_crapsld.vlsdchsl,0) +
-                               Nvl(rw_crapsld.vlsdbloq,0) + Nvl(rw_crapsld.vlsdblpr,0) +
-                               Nvl(rw_crapsld.vlsdblfp,0) + Nvl(rw_crapsld.ass_vllimcre,0);
+                               Nvl(rw_crapsld.ass_vllimcre,0);
 
              --Zerar Numero sequencial tabela
              vr_nrseqneg:= 0;
@@ -1796,9 +1798,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
            --Salario liquido mes anterior recebe salario liquido
            rw_crapsld.vltsalan:= Nvl(rw_crapsld.vltsallq,0);
            --saldo final do mes anterior recebe valor disponivel + bloqueado + salario liquido + bloqueado praca + bloqueado fora praca
-           rw_crapsld.vlsdmesa:= Nvl(rw_crapsld.vlsddisp,0) + Nvl(rw_crapsld.vlsdbloq,0) +
-                                 Nvl(rw_crapsld.vlsdchsl,0) + Nvl(rw_crapsld.vlsdblpr,0) +
-                                 Nvl(rw_crapsld.vlsdblfp,0);
+           rw_crapsld.vlsdmesa:= Nvl(rw_crapsld.vlsddisp,0) + 
+                                 Nvl(rw_crapsld.vlsdchsl,0);
            --Data referencia extrato recebe o ultimo dia do mes
            rw_crapsld.dtrefext:= vr_dtultdia;         /* Para uso do sist. CASH  */
            --Referencia do saldo para extrato recebe a data referencia saldo anterior

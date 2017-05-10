@@ -74,6 +74,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps196 (pr_cdcooper IN crapcop.cdcooper%T
                               
                  26/03/2015 - Conversão Progress -> Oracle (Odirlei-AMcom)             
 
+				 24/04/2017 - Nao considerar valores bloqueados na composicao de saldo disponivel
+				              Heitor (Mouts) - Melhoria 440         
+
   ............................................................................ */
 
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -328,8 +331,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps196 (pr_cdcooper IN crapcop.cdcooper%T
       END IF;
       
       -- somar valores do saldo
-      vr_vlsldtot := nvl(rw_crapsld.vlsdblfp,0) + nvl(rw_crapsld.vlsdbloq,0) +
-                     nvl(rw_crapsld.vlsdblpr,0) + nvl(rw_crapsld.vlsddisp,0) +
+      vr_vlsldtot := nvl(rw_crapsld.vlsddisp,0) +
                      nvl(rw_crapass.vllimcre,0) - nvl(rw_crapsld.vlipmfap,0) -
                      nvl(rw_crapsld.vlipmfpg,0);
                
@@ -385,7 +387,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps196 (pr_cdcooper IN crapcop.cdcooper%T
         END IF;
         
         -- verificar funcao do hist.
-        IF vr_inhistor IN (1,3,4,5) THEN
+        IF vr_inhistor IN (1) THEN
           /* Inicia tratamento CPMF */
           IF vr_indoipmf = 2 THEN
             -- incluir taxa
@@ -397,7 +399,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps196 (pr_cdcooper IN crapcop.cdcooper%T
           END IF;           
         END IF;
         
-        IF vr_inhistor IN (11,13,14,15) THEN
+        IF vr_inhistor IN (11) THEN
 
           /* Inicia tratamento CPMF */
           IF vr_indoipmf = 2  THEN

@@ -200,6 +200,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                             (Odirlei-AMcom)
 
                           - Adicionar Round 2 para o valor vliofmes (Lucas Ranghetti M338.1)
+
+			   26/04/2017 - Nao considerar mais valores bloqueados para composicao de saldo disponivel
+			                Heitor (Mouts) - Melhoria 440
+
      ............................................................................. */
 
      DECLARE
@@ -1611,8 +1615,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
            --vlsdblpr = valor do saldo bloqueado praca
            --vlsdchsl = valor do saldo cheque salario
            --vlsddisp = valor do saldo disponivel
-           vr_vlantuti:= Nvl(rw_crapsld.vlsdblfp,0) + Nvl(rw_crapsld.vlsdbloq,0) +
-                         Nvl(rw_crapsld.vlsdblpr,0) + Nvl(rw_crapsld.vlsdchsl,0) +
+           vr_vlantuti:= Nvl(rw_crapsld.vlsdchsl,0) +
                          Nvl(rw_crapsld.vlsddisp,0);
 
            -- Inverte o sinal se o valor anterior utilizado for menor zero
@@ -2008,8 +2011,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
            --vlsdchsl = valor do saldo cheque salario
            --vlsddisp = valor do saldo disponivel
 
-           vr_vlutiliz:= Nvl(rw_crapsld.vlsdblfp,0) + Nvl(rw_crapsld.vlsdbloq,0) +
-                         Nvl(rw_crapsld.vlsdblpr,0) + Nvl(rw_crapsld.vlsdchsl,0) +
+           vr_vlutiliz:= Nvl(rw_crapsld.vlsdchsl,0) +
                          Nvl(rw_crapsld.vlsddisp,0);
 
            --Se o valor utilizado for negativo inverte sinal
@@ -2283,8 +2285,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                --Acumular no valor saldo negativo especial no mes o valor disponivel / quantidade dias utilizados
                rw_crapsld.vlsmnesp:= Nvl(rw_crapsld.vlsmnesp,0) + (vr_vldispon / vr_qtdiaute);
              ELSE
-               --Valor calculado recebe valor calculado + valor bloqueado
-               vr_vlcalcul:= Nvl(vr_vlcalcul,0) + Nvl(vr_vlbloque,0);
                --Se o valor calculado > 0
                IF vr_vlcalcul > 0 THEN
                  -- todo o limite e parte do bloqueado
@@ -2524,9 +2524,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                --vlsdblpr = valor do saldo bloqueado praca
                --vlsdchsl = valor do saldo cheque salario
                --vlsddisp = valor do saldo disponivel
-               rw_crapsld.vlsdanes:= Nvl(rw_crapsld.vlsddisp,0) + Nvl(rw_crapsld.vlsdbloq,0) +
-                                     Nvl(rw_crapsld.vlsdblpr,0) + Nvl(rw_crapsld.vlsdblfp,0) +
-                                     Nvl(rw_crapsld.vlsdchsl,0);
+               rw_crapsld.vlsdanes:= Nvl(rw_crapsld.vlsddisp,0) + Nvl(rw_crapsld.vlsdchsl,0);
              END IF;
            END IF;  --vr_flgquinz
 
@@ -2588,9 +2586,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
              --vlsdchsl = valor do saldo cheque salario
              --vlsddisp = valor do saldo disponivel
 
-             vr_vldisvar:= Nvl(rw_crapsld.vlsddisp,0) + Nvl(rw_crapsld.vlsdbloq,0) +
-                           Nvl(rw_crapsld.vlsdblpr,0) + Nvl(rw_crapsld.vlsdblfp,0) +
-                           Nvl(rw_crapsld.vlsdchsl,0);
+             vr_vldisvar:= Nvl(rw_crapsld.vlsddisp,0) + Nvl(rw_crapsld.vlsdchsl,0);
 
            END IF;  --cr_crapass_conta%NOTFOUND
 

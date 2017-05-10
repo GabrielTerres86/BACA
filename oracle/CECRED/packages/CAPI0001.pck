@@ -10,9 +10,11 @@ CREATE OR REPLACE PACKAGE CECRED.CAPI0001 IS
 --
 -- Dados referentes ao programa:
 --
--- Frequencia: -----
--- Objetivo  : Agrupar rotinas genericas referente a integralização de cotas
+-- Frequencia : -----
+-- Objetivo   : Agrupar rotinas genericas referente a integralização de cotas
 --
+-- Alteracoes : 24/04/2017 - Nao considerar valores bloqueados na composicao de saldo disponivel
+--                           Heitor (Mouts) - Melhoria 440
 ---------------------------------------------------------------------------------------------------------
   -- Rotina para integralizar as cotas
   PROCEDURE pc_integraliza_cotas(pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -390,9 +392,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
 
       pr_vlsaldoi := NVL(vr_tab_saldo(vr_tab_saldo.first).vlsddisp, 0) +
                      NVL(vr_tab_saldo(vr_tab_saldo.first).vlsdchsl, 0) +
-                     NVL(vr_tab_saldo(vr_tab_saldo.first).vlsdbloq, 0) +
-                     NVL(vr_tab_saldo(vr_tab_saldo.first).vlsdblpr, 0) +
-                     NVL(vr_tab_saldo(vr_tab_saldo.first).vlsdblfp, 0) +
                      NVL(vr_tab_saldo(vr_tab_saldo.first).vllimcre, 0);
 
     END IF;
