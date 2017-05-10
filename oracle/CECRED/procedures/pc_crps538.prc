@@ -1344,9 +1344,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                     ,ret.dtcredit
                     ,ret.nrcnvcob;
 
-          vr_dtdpagto_rel DATE;
-          vr_aux_float INTEGER;
-          vr_vlsldpen  crapret.vlrpagto%TYPE := 0;
+          vr_dtdpagto_rel  DATE;
+          vr_aux_float     INTEGER;
+          vr_aux_float_sld INTEGER;
+          vr_vlsldpen      crapret.vlrpagto%TYPE := 0;
+          vr_aux_contador  NUMBER := 0;
 
        BEGIN
 
@@ -1401,28 +1403,32 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
 
          END LOOP;
 
-         -- Finalizar tag XML
-         IF (vr_aux_float IS NOT NULL) THEN
-           -- finalizar apenas se a variavel recebeu valor dentro do cursor
-           gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'</float>');
-         END IF;
-
-         vr_aux_float := NULL;
+         vr_aux_float_sld := NULL;
 
          --Buscar saldo pendente dopfloat para o relatorio
          FOR rw_crapret IN cr_crapret_sld (pr_cdcooper => pr_cdcooper
                                           ,pr_dtdpagto => vr_dtdpagto_rel            
                                           ,pr_dtmvtopr => rw_crapdat.dtmvtopr) LOOP
 
-           IF (vr_aux_float IS NOT NULL) AND (rw_crapret.qtdfloat <> vr_aux_float) THEN
+           vr_aux_contador := vr_aux_contador +1;
+           
+           IF vr_aux_contador = 1 THEN
+         -- Finalizar tag XML
+         IF (vr_aux_float IS NOT NULL) THEN
+           -- finalizar apenas se a variavel recebeu valor dentro do cursor
+           gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'</float>');
+         END IF;
+           END IF;
+
+           IF (vr_aux_float_sld IS NOT NULL) AND (rw_crapret.qtdfloat <> vr_aux_float_sld) THEN
               gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'</float>');
            END IF;
 
-           IF (rw_crapret.qtdfloat <> vr_aux_float) OR ( vr_aux_float IS NULL) THEN
+           IF (rw_crapret.qtdfloat <> vr_aux_float_sld) OR ( vr_aux_float_sld IS NULL) THEN
              gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,
              '<float qtdddias="' || to_char(rw_crapret.qtdfloat) ||
              '" flsldpen="S" >');
-             vr_aux_float := rw_crapret.qtdfloat;
+             vr_aux_float_sld := rw_crapret.qtdfloat;
            END IF;
 
            gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,
@@ -1441,15 +1447,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
 
          END LOOP;
 
-         gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,
-         '<convenio>
-            <tot_vlsldpen>'||to_char(vr_vlsldpen,'fm999g999g990d00')||'</tot_vlsldpen>
-          </convenio>');
-
+         IF (vr_aux_contador = 0 and (vr_aux_float IS NOT NULL)) or (vr_aux_float_sld IS NOT NULL) THEN
          -- Finalizar tag XML
          IF (vr_aux_float IS NOT NULL) THEN
+             gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,
+             '<convenio>
+                <tot_vlsldpen>'||to_char(vr_vlsldpen,'fm999g999g990d00')||'</tot_vlsldpen>
+              </convenio>');              
            -- finalizar apenas se a variavel recebeu valor dentro do cursor
            gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'</float>');
+         END IF;
          END IF;
 
          -- Finalizar tag XML
