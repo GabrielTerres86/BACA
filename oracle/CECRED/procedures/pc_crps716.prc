@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps716 (pr_cdcooper IN crapcop.cdcooper%T
      Dados referentes ao programa:
 
      Frequencia: Executado via Job
-     Objetivo  : Realizar importação do arquivo de faturas atradas de cartão de credito.
+     Objetivo  : Realizar importação do arquivo de faturas atrasadas de cartão de credito.
 
      Alteracoes:
 
@@ -26,6 +26,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps716 (pr_cdcooper IN crapcop.cdcooper%T
   vr_exc_saida  EXCEPTION;
   vr_exc_erro   EXCEPTION;  
   vr_exc_prox   EXCEPTION;  
+  vr_exc_fimcoop EXCEPTION;  
   vr_cdcritic   PLS_INTEGER;
   vr_dscritic   VARCHAR2(4000);
 
@@ -91,7 +92,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps716 (pr_cdcooper IN crapcop.cdcooper%T
   BEGIN
     --> Controlar geração de log de execução dos jobs
     BTCH0001.pc_log_exec_job( pr_cdcooper  => pr_cdcooper    --> Cooperativa
-                             ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
+                             ,pr_cdprogra  => vr_nomdojob    --> Codigo do programa
                              ,pr_nomdojob  => vr_nomdojob    --> Nome do job
                              ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
                              ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
@@ -111,6 +112,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps716 (pr_cdcooper IN crapcop.cdcooper%T
     
     BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper, 
                                pr_ind_tipo_log => 1, 
+                               pr_cdprograma   => vr_nomdojob,
                                pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                     ' - '||vr_cdprogra||' --> '|| pr_dscritic, 
                                pr_nmarqlog     => vr_nmarqlog );
@@ -133,7 +135,6 @@ BEGIN
   FETCH cr_crapprg INTO rw_crapprg;
   CLOSE cr_crapprg;
 
-
   --------------- REGRA DE NEGOCIO DO PROGRAMA -----------------
   FOR rw_crapcop IN cr_crapcop LOOP
     BEGIN
@@ -143,7 +144,6 @@ BEGIN
       pc_controla_log_batch(pr_cdcooper => rw_crapcop.cdcooper,
                             pr_dstiplog => 'I');
      
-    
       --> Limpar tabela de alerta
       BEGIN
         DELETE tbcrd_alerta_atraso alt
@@ -169,12 +169,10 @@ BEGIN
         CLOSE btch0001.cr_crapdat;
       END IF;
       
-      
       -- Busca do diretório do arquivo
       vr_nmdireto := gene0001.fn_diretorio(pr_tpdireto => 'M', --> micros
                                            pr_cdcooper => rw_crapcop.cdcooper,
                                            pr_nmsubdir => '/cecred_cartoes');
-     
 
       vr_nmarqdat := '756-2011-'|| rw_crapcop.cdagebcb ||'-RELTCABALCARTOESATRASO%'||
                      to_char(rw_crapdat.dtmvtolt,'DDMMRRRR')||'.TXT';
@@ -190,8 +188,8 @@ BEGIN
       END IF;
       
       IF vr_listdarq IS NULL THEN
-        vr_dscritic := 'Nenhum Arquivo '||vr_nmarqdat||' não encontrado.';
-        RAISE vr_exc_erro;
+        vr_dscritic := 'Arquivo '||vr_nmarqdat||' não encontrado.';
+        RAISE vr_exc_fimcoop;
       END IF;
       
       --> Quebrar lista em tabela
@@ -248,7 +246,7 @@ BEGIN
                 
                 IF cr_crapcrd%NOTFOUND THEN
                   CLOSE cr_crapcrd;
-                  vr_dscritic := 'Não foi possivel identificar conta para o cartão '||vr_nrcartao;
+                  vr_dscritic := 'Não foi possivel identificar conta para a conta cartão '||vr_nrcartao;
                   RAISE vr_exc_prox;
                 END IF;
                 
@@ -308,6 +306,15 @@ BEGIN
       
       
     EXCEPTION
+    
+      WHEN vr_exc_fimcoop THEN
+        pc_gerar_log (pr_cdcooper => rw_crapcop.cdcooper,
+                      pr_dscritic => vr_dscritic);  
+      
+        -- Log de fim da execução
+        pc_controla_log_batch(pr_cdcooper => rw_crapcop.cdcooper,
+                              pr_dstiplog =>'F');
+        COMMIT;
     
       WHEN vr_exc_erro THEN
         -- Se foi retornado apenas código

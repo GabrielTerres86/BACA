@@ -671,7 +671,9 @@
                      Heitor (Mouts) - Chamado 629653.
                
                11/04/2017 - Alterado rotina carrega_dados_proposta_finalidade para limpar temptable antes
-                            de popular. PRJ343 - Cessao de credito (Odirlei-AMcom)
+                            de popular. 
+							Ajustado para exluir tbcrd_cessao_credito quando a proposta for excluida.
+                            PRJ343 - Cessao de credito (Odirlei-AMcom)
  ..............................................................................*/
 
 /*................................ DEFINICOES ................................*/
@@ -8407,6 +8409,18 @@ PROCEDURE excluir-proposta:
         IF   aux_cdcritic <> 0  OR
              aux_dscritic <> "" THEN
              UNDO, LEAVE.
+
+        
+        /* verificar se existe cessao de credito */
+        FIND FIRST tbcrd_cessao_credito
+            WHERE tbcrd_cessao_credito.cdcooper = par_cdcooper
+              AND tbcrd_cessao_credito.nrdconta = par_nrdconta
+              AND tbcrd_cessao_credito.nrctremp = par_nrctremp
+              EXCLUSIVE-LOCK NO-ERROR.
+        IF AVAILABLE tbcrd_cessao_credito THEN      
+          DO:
+             DELETE tbcrd_cessao_credito.
+          END.
 
         /* Cancelar proposta na Esteira de credito*/
         /* Somente enviar cancelamento da proposta  
