@@ -208,6 +208,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0010 IS
       END IF;                  
       
       vr_dsconteu := '<strong>Solicitação de Empréstimo</strong><br><br>' ||
+                     '<strong>Conta</strong><br>' || TO_CHAR(pr_nrdconta) || '<br><br>' ||
                      '<strong>Nome</strong><br>' || vr_nmprimtl || '<br><br>' ||
                      '<strong>Email</strong><br>' || pr_dsdemail || '<br><br>' ||
                      '<strong>Telefone</strong><br>' || vr_nrtelefo || '<br><br>' ||
