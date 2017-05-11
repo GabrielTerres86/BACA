@@ -1061,7 +1061,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
            AND tab.tpregist        = pr_tpregist;
     BEGIN
       --Limpa a pltable
---      vr_vet_vlrating.delete;
+      vr_vet_vlrating.delete;
       -- Se a tabela com as informações de valor por coop estiver vazia
       IF vr_vet_vlrating.COUNT = 0 THEN
         -- Busca de todos registros para atualizar o vetor
