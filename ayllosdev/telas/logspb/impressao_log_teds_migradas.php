@@ -56,7 +56,11 @@
 	
 	}
 	
-	if($glbvars["cdcooper"] == 1 || $glbvars["cdcooper"] == 3 || $glbvars["cdcooper"] == 13 || $glbvars["cdcooper"] == 16){
+    if ($glbvars["cdcooper"] == 1  ||
+        $glbvars["cdcooper"] == 3  ||
+        $glbvars["cdcooper"] == 13 ||
+        $glbvars["cdcooper"] == 16 ||
+        $glbvars["cdcooper"] == 9) {
 		$cdCooper = $cdcopmig;
 	}else{
 		$cdCooper = $glbvars["cdcooper"];

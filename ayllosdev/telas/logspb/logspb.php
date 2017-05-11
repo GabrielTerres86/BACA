@@ -3,11 +3,11 @@
 	//************************************************************************//
 	//*** Fonte: logspb.php                                                ***//
 	//*** Autor: David                                                     ***//
-	//*** Data : Novembro/2009                Última Alteração: 09/11/2015 ***//
+	//*** Data : Novembro/2009                Ãšltima AlteraÃ§Ã£o: 07/11/2015 ***//
 	//***                                                                  ***//
 	//*** Objetivo  : Mostrar tela LOGSPB                                  ***//
 	//***                                                                  ***//
-	//*** Alterações: 21/05/2010 - Corrigir textarea do MOTIVO (David).    ***//
+	//*** AlteraÃ§Ãµes: 21/05/2010 - Corrigir textarea do MOTIVO (David).    ***//
 	//***                                                                  ***//
 	//***             23/07/2010 - Incluido consulta de transacoes 		   ***//
 	//***                          rejeitadas (Elton).      			   ***//
@@ -17,34 +17,44 @@
 	//***			  05/07/2012 - Adicionado input sidlogin em form       ***//
 	//***						   frmLogSPB. (Jorge)                      ***//
 	//***	                                                               ***//
-    //***	          27/03/2013 - Alteração na padronização da tela para  ***//
+    //***	          27/03/2013 - AlteraÃ§Ã£o na padronizaÃ§Ã£o da tela para  ***//
 	//***                          novo layout (David Kruger).     		   ***//
 	//***																   ***//
-	//***			  18/11/2014 - Tratamento para a Incorporação Concredi ***//
+	//***			  18/11/2014 - Tratamento para a IncorporaÃ§Ã£o Concredi ***//
 	//***                          e Credimilsul SD 223543 (Vanessa).      ***//
 	//***																   ***//
-	//***             06/07/2015 - Inclusão do campo ISPB (Vanessa)	       ***//
+	//***             06/07/2015 - InclusÃ£o do campo ISPB (Vanessa)	       ***//
 	//***            													   ***//
-	//***			  07/08/2015 - Gestão de TEDs/TECs - melhoria 85 (Lucas Ranghetti)
+	//***			  07/08/2015 - GestÃ£o de TEDs/TECs - melhoria 85 (Lucas Ranghetti)
 	//***																   ***//
 	//***			  09/11/2015 - Adicionado campo "Crise" no formulario  ***//
 	//***						   (Jorge/Andrino) 						   ***//
-	//************************************************************************//
+	//***																   ***//	
+    //***             14/09/2016 - Adicionado campo Sicredi                ***//
+//***                          (Evandro - RKAM) 			           ***//
+	//***																   ***//	
+    //***             07/11/2016 - Ajustes para corrigir problemas encontrados ***//
+    //***                          durante a homologaÃ§Ã£o da Ã¡rea		   ***//
+	//***                          (Adriano - M211)				           ***//
+	//***														           ***//
+    //***             27/01/2016 - Permitir exibir TEDs Extornadas         ***//
+    //***                          PRJ335 - Analise de Fraude(Odirlei-AMcom) ***//
+	/************************************************************************/
 	
 	session_start();
 	
-	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções	
+	// Includes para controle da session, variÃ¡veis globais de controle, e biblioteca de funÃ§Ãµes	
 	require_once("../../includes/config.php");
 	require_once("../../includes/funcoes.php");	
 	require_once("../../includes/controla_secao.php");
 	
-	// Verifica se tela foi chamada pelo método POST
+	// Verifica se tela foi chamada pelo mÃ©todo POST
 	isPostMethod();
 	
 	// Classe para leitura do xml de retorno
 	require_once("../../class/xmlfile.php");	
 	
-	// Carrega permissões do operador
+	// Carrega permissÃµes do operador
 	include("../../includes/carrega_permissoes.php");	
 
 	setVarSession("opcoesTela",$opcoesTela);
@@ -66,7 +76,7 @@
 <script type="text/javascript" src="../../scripts/funcoes.js"></script>
 <script type="text/javascript" src="../../scripts/mascara.js"></script>
 <script type="text/javascript" src="../../scripts/menu.js"></script>
-<script type="text/javascript" src="logspb.js"></script>
+<script type="text/javascript" src="logspb.js?keyrand=<?php echo mt_rand(); ?>"></script>	
 </head>
 <body>
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
@@ -116,85 +126,104 @@
 																					<form name="frmLogSPB" id="frmLogSPB" class="formulario cabecalho">
 																					    <input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>">
 																						<label for="cddopcao" class="txtNormalBold"><? echo utf8ToHtml('Op&ccedil;&atilde;o:') ?></label>
+                                            
 																						<select id="cddopcao" name="cddopcao" class="campo">
-																					<!--		<option value="L" selected> L - Consultar o log das Teds</option> 
-																							<option value="R"> R - Gerar relatório de transações SPB</option> -->
-																						</select>																
+																					  <!-- <option value="L" selected> L - Consultar o log das Teds</option> 
+																						   	 <option value="R"> R - Gerar relatÃ³rio de transaÃ§Ãµes SPB</option> -->
+																						</select>
+
+                                            <div id="divBotaoOk">
+                                              <a href="#" class="botao" id="btOK" onClick="obtemLog(); return false;">OK</a>
+                                            </div>
 																						
 																						<br/>
 																						<br style="clear:both" />
+
+                                            <fieldset class="logspb">
+                                              <legend>Filtro</legend>                                                  
 																						
-																						<div id="divLog">
-																						<label for="flgidlog" class="txtNormalBold">Log:</label>
-																							<select name="flgidlog" id="flgidlog" class="campo">
-																								<option value="yes">Bancoob</option>
-																								<option value="no" selected>Cecred</option>
-																							</select>
-																						</div>
+																						  <div id="divLog">
+																						  <label for="flgidlog" class="txtNormalBold">Log:</label>
+																							  <select name="flgidlog" id="flgidlog" class="campo">
+																								  <option value="1">Bancoob</option>
+																								  <option value="2" selected>Cecred</option>
+																								  <option value="3">Sicredi</option>
+																							  </select>
+																						  </div>
+
+                                              <div id="divData">
+                                                <label for="dtmvtlog" class="txtNormalBold">Data:</label>
+                                                <input name="dtmvtlog" type="text" class="campo" id="dtmvtlog" value=""<?php echo $glbvars["dtmvtolt"]; ?>">
+                                              </div>                                          																						  
+                                            
+																						  <div id="divTipo">	
+																						  <label for="numedlog" class="txtNormalBold">Tipo:</label>
+																							  <select name="numedlog" id="numedlog" class="campo">
+																								  <option value="1" selected>Enviadas</option>
+																								  <option value="2">Recebidas</option>
+																								  <option value="3">Log</option>		
+																								  <option value="4">Todos</option>
+																							  </select>
+																						  </div>	
 																						
-																						<div id="divData">
-																							<label for="dtmvtlog" class="txtNormalBold">Data:</label>
-																							<input name="dtmvtlog" type="text" class="campo" id="dtmvtlog" value="<?php echo $glbvars["dtmvtolt"]; ?>">
-																						</div>
-																						
-																						<div id="divTipo">	
-																						<label for="numedlog" class="txtNormalBold">Tipo:</label>
-																							<select name="numedlog" id="numedlog" class="campo">
-																								<option value="1" selected>Enviadas</option>
-																								<option value="2">Recebidas</option>
-																								<option value="3">Log</option>		
-																								<option value="4">Todos</option>
-																							</select>
-																						</div>	
-																						
-																						<div id="divCoop">	
-																						 <label for="cdcopmig" class="txtNormalBold" style="width: 65px">Coop:</label>
-																							<select name="cdcopmig" id="cdcopmig" class="campo" >
+																						  <div id="divCoop">	
+																						   <label for="cdcopmig" class="txtNormalBold" style="width: 65px">Coop:</label>
+																							  <select name="cdcopmig" id="cdcopmig" class="campo" >
 																								
-																							</select>
-																						</div>		
+																							  </select>
+																						  </div>
 																						
-																						
-																						<div id="divContaOrigem">
-																							<br/>
-																							<br style="clear:both" />
-																							<div id="divSituacao">																								    
-																								<label for="cdsitlog" class="txtNormalBold">Situa&ccedil;&atilde;o:</label>
-																									<select name="cdsitlog" id="cdsitlog" class="campo" >
-																										<option value="P" selected>Processadas</option>
-																										<option value="D">Devolvidas</option>
-																										<option value="R" id="optRejeitada">Rejeitadas</option>
-																										<option value="T">Todos</option>
-																									</select>																												
-																							</div>																								
+																						  <div id="divContaOrigem">
+																							  <br/>
+																							  <br style="clear:both" />
+																							  <div id="divSituacao">																								    
+																								  <label for="cdsitlog" class="txtNormalBold">Situa&ccedil;&atilde;o:</label>
+																									  <select name="cdsitlog" id="cdsitlog" class="campo" >
+																										  <option value="P" selected>Processadas</option>
+																										  <option value="D">Devolvidas</option>
+																										  <option value="R" id="optRejeitada">Rejeitadas</option>
+                                                                                                          <option value="E" id="optEstornada">Estornadas</option>
+																										  <option value="T">Todos</option>
+																									  </select>																												
+																							  </div>																								
 																							
-																							<label for="nrdconta" class="txtNormalBold" width="62" align="left">Conta/dv:</label>
-																							<input name="nrdconta" type="text" class="campo" id="nrdconta">
+																							  <label for="nrdconta" class="txtNormalBold" width="62" align="left">Conta/dv:</label>
+																							  <input name="nrdconta" type="text" class="campo" id="nrdconta">
 																							
-																							<label for="dsorigem" class="txtNormalBold">Origem:</label>
-																							<select name="dsorigem" id="dsorigem" class="campo">
-																								<option value="1">Ayllos</option>
-																								<option value="2">Caixa Online</option>
-																								<option value="3">Internet</option>
-																								<option value="0" selected>Todos</option>
-																							</select>
+																							  <label for="dsorigem" class="txtNormalBold">Origem:</label>
+																							  <select name="dsorigem" id="dsorigem" class="campo">
+																								  <option value="1">Ayllos</option>
+																								  <option value="2">Caixa Online</option>
+																								  <option value="3">Internet</option>
+																								  <option value="0" selected>Todos</option>
+																							  </select>
 																							
-																							<br style="clear:both" />
+																							  <br style="clear:both" />
 																							
-																							<label for="inestcri" class="txtNormalBold">Somente Crise:</label>
-																							<select name="inestcri" id="inestcri" class="campo">
-																								<option value="0">N&atilde;o</option>
-																								<option value="1">Sim</option>
-																							</select>
-																							<label for="vlrdated" class="txtNormalBold">Valor:</label>
-																							<input name="vlrdated" type="text" class="campo" id="vlrdated" value="0,00">
-																						</div>
-																						
-																						<div id="divBotaoOk">
-																							<a href="#" class="botao" id="btOK" onClick="obtemLog(); return false;">OK</a>
-																						</div>
+																							  <label for="inestcri" class="txtNormalBold">Somente Crise:</label>
+																							  <select name="inestcri" id="inestcri" class="campo">
+																								  <option value="0">N&atilde;o</option>
+																								  <option value="1">Sim</option>
+																							  </select>
+                                                  
+																							  <label for="vlrdated" class="txtNormalBold">Valor:</label>
+																							  <input name="vlrdated" type="text" class="campo" id="vlrdated" value="0,00">
+                                                 
+                                                  
+																						  </div>
+                                            </fieldset>
+                                                <div class="Botoes">
+                                                  <div id="divBotaoVoltar">
+                                                    <a class="botao" id="btVoltar" onClick="VoltarLoad(); return false;">Voltar</a>
+                                                  </div>
+
+                                                  <div id="divBotaoOk">
+                                                    <a href="#" class="botao" id="btOK" onClick="obtemLog(); return false;">Concluir</a>
+                                                  </div>
+                                                </div>
 																						</br>
 																						<br style="clear:both" />
+
 																					</form>
 																					
 																					<form id="frmImpressao"></form>																					
@@ -222,7 +251,7 @@
 																											<td width="205" class="txtNormal"><input name="nmevento" type="text" class="campoTelaSemBorda" id="nmevento" style="width: 200px;"></td>
 																										</tr>
 																										<tr>
-																											<td width="150" class="txtNormalBold" height="23" align="right">Número Controle:&nbsp;</td>
+																											<td width="150" class="txtNormalBold" height="23" align="right">NÃºmero Controle:&nbsp;</td>
 																											<td width="205" class="txtNormal"><input name="nrctrlif" type="text" class="campoTelaSemBorda" id="nrctrlif" style="width: 200px;"></td>
 																										</tr>
 																										<tr>
