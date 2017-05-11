@@ -4586,7 +4586,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
             
             -- multiplicar o valor total de recargas pelo percentual de receita da operadora
             -- Para deduzir do valor total das recargas que será repassado para a Rede Tendência.
-            vr_vrreceita :=  rw_tbrecarga.total_vlrecarga * (rw_operadora.perreceita / 100);
+            vr_vrreceita := round(rw_tbrecarga.total_vlrecarga * (rw_operadora.perreceita / 100), 2);
             
             -- Soma no valor do repasse
             vr_vlrepass := vr_vlrepass + (rw_tbrecarga.total_vlrecarga - vr_vrreceita);
