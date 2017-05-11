@@ -6229,14 +6229,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                       vr_pessafis:= 0;
                       vr_pessajur:= 0;
                       
-                    ELSE
-                      --Necessário abrir cursor para buscar dsorgrec
-                      OPEN cr_craplcr2 (pr_cdcooper => rw_crapepr.cdcooper
-                                       ,pr_cdlcremp => rw_crapepr.cdlcremp);
-                      --Posicionar no primeiro registro
-                      FETCH cr_craplcr2 INTO rw_craplcr2; 
-                      CLOSE cr_craplcr2;                       
-                    
                     END IF;
                     
                   EXCEPTION
