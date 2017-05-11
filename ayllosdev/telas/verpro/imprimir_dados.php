@@ -2,7 +2,7 @@
 /*!
  * FONTE        : imprimir_dados.php
  * CRIAÇÃO      : Rogérius Militão (DB1)
- * DATA CRIAÇÃO : 01/11/2011
+ * DATA CRIAÇÃO : 23/03/2017
  * OBJETIVO     : Carregar dados para impressões do VERPRO	
  * --------------
  * ALTERAÇÕES   : 01/08/2014 - Alterar o programa para realizar as chamadas do Oracle ( Renato - Supero )
@@ -10,8 +10,10 @@
 				  19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS 
 							   pelo InternetBanking (Projeto 338 - Lucas Lunelli)
 							   
-				 09/03/2017 - Alteraçoes referente a impressao do comprovante de pagamento dos debitos
-							  automaticos na Verpro (Aline)			   
+		          09/03/2017 - Alteraçoes referente a impressao do comprovante de pagamento dos debitos
+			                   automaticos na Verpro (Aline)	
+							  		   
+				  23/03/2017 - Alterações referente a Recarga de celular (PRJ321 - Reinert)
  */ 
 ?>
 
@@ -102,6 +104,14 @@
 	$dtmvtdrf	  = $_POST['dtmvtdrf'];
 	$hrautdrf	  = $_POST['hrautdrf'];
 	$dtvencto_drf = $_POST['dtvencto_drf'];
+	// Recarga de celular
+	$vlrecarga	  = $_POST['vlrecarga'];
+	$nmoperadora  = $_POST['nmoperadora'];
+	$nrtelefo     = $_POST['nrtelefo'];
+	$dtrecarga    = $_POST['dtrecarga'];
+	$hrrecarga    = $_POST['hrrecarga'];
+	$dtdebito     = $_POST['dtdebito'];
+	$nsuopera     = $_POST['nsuopera'];
 	
 	$dsiduser 	= session_id();	
 
@@ -202,6 +212,13 @@
 	$xml .= '		<dtmvtdrf>'.$dtmvtdrf.'</dtmvtdrf>';
 	$xml .= '		<hrautdrf>'.$hrautdrf.'</hrautdrf>';
 	$xml .= '		<dtvencto_drf>'.$dtvencto_drf.'</dtvencto_drf>';
+	$xml .= '		<vlrecarga>'.$vlrecarga.'</vlrecarga>';	
+	$xml .= '		<nmoperadora>'.$nmoperadora.'</nmoperadora>';	
+	$xml .= '		<nrtelefo>'.$nrtelefo.'</nrtelefo>';	
+	$xml .= '		<dtrecarga>'.$dtrecarga.'</dtrecarga>';	
+	$xml .= '		<hrrecarga>'.$hrrecarga.'</hrrecarga>';	
+	$xml .= '		<dtdebito>'.$dtdebito.'</dtdebito>';	
+	$xml .= '		<nsuopera>'.$nsuopera.'</nsuopera>';	
 	$xml .= '	</Dados>';                                  
 	$xml .= '</Root>';
 	
