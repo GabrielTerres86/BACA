@@ -2,7 +2,7 @@
 /* !
  * FONTE        : prestacoes.php
  * CRIAÇÃO      : Lucas Reinert/Daniel Zimmermann
- * DATA CRIAÇÃO : 12/08/2015 
+ * DATA CRIAÇÃO : 12/08/2015
  * OBJETIVO     : Mostra rotina Cobranca de Emprestimos
  * --------------
  * ALTERAÇÃO    : 13/03/2017 - Criacao do form_arquivos.php. (P210.2 - Jaison/Daniel)
@@ -13,7 +13,7 @@
 <?php
 session_start();
 
-// Includes para controle da session, variáveis globais de controle, e biblioteca de funções	
+// Includes para controle da session, variáveis globais de controle, e biblioteca de funções
 require_once("../../includes/config.php");
 require_once("../../includes/funcoes.php");
 require_once("../../includes/controla_secao.php");
@@ -34,7 +34,7 @@ include('../../includes/carrega_permissoes.php');
 ?>
 <html>
     <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">	
+        <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
         <meta http-equiv="Pragma" content="no-cache">
         <title><?php echo $TituloSistema; ?></title>
         <link href="../../css/estilo2.css" rel="stylesheet" type="text/css">
@@ -61,12 +61,12 @@ include('../../includes/carrega_permissoes.php');
             <tr>
                 <td id="tdConteudo" valign="top">
                     <table width="100%" height="100%" border="0" cellpadding="0" cellspacing="0">
-                        <tr> 
+                        <tr>
                             <td width="175" valign="top">
                                 <table width="100%" border="0" cellpadding="0" cellspacing="0">
                                     <tr>
                                         <td id="tdMenu"><?php include("../../includes/menu.php"); ?></td>
-                                    </tr>  
+                                    </tr>
                                 </table>
                             </td>
                             <td id="tdTela" valign="top">
@@ -85,7 +85,7 @@ include('../../includes/carrega_permissoes.php');
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td id="tdConteudoTela" class="tdConteudoTela" align="center">								
+                                        <td id="tdConteudoTela" class="tdConteudoTela" align="center">
                                             <table width="100%" border="0" cellpadding="3" cellspacing="0">
                                                 <tr>
                                                     <td style="border: 1px solid #F4F3F0;">
@@ -102,7 +102,11 @@ include('../../includes/carrega_permissoes.php');
                                                                                 <? require_once("../../includes/pesquisa/pesquisa.php"); ?>
 
                                                                                 <div id="divRotina"></div>
-                                                                                <form id="frmImpressao"></form>																		
+                                                                                <form name="frmImprimir" id="frmImprimir" action="<?php echo $UrlSite; ?>telas/cobemp/imprimir_relatorio.php" method="post">
+                                                                                    <input type="hidden" name="idarquivo" id="idarquivo" value="">
+                                                                                    <input type="hidden" name="flgcriti" id="flgcriti" value="">
+                                                                                    <input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>">
+                                                                                </form>														
                                                                                 <div id="divTela">
                                                                                     <!-- INCLUDE DO CABEÇALHO -->
                                                                                     <?php include('form_cabecalho.php'); ?>
@@ -115,13 +119,13 @@ include('../../includes/carrega_permissoes.php');
                                                                                 </div>
                                                                             </td>
                                                                         </tr>
-                                                                    </table>					
+                                                                    </table>
                                                                 </td>
                                                             </tr>
                                                         </table>
                                                     </td>
                                                 </tr>
-                                            </table>																
+                                            </table>
                                         </td>
                                     </tr>
                                 </table>

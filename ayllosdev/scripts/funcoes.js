@@ -3,7 +3,7 @@
  * CRIAÇÃO      : David
  * DATA CRIAÇÃO : Julho/2007
  * OBJETIVO     : Biblioteca de funções JavaScript
- * --------------  
+ * --------------
  * ALTERAÇÕES   :
  * --------------
  * 000: [25/07/2008] Guilherme        (CECRED) : Incluir funções para F2
@@ -20,7 +20,7 @@
  * 008: [26/03/2010] Gabriel Santos      (DB1) : Criada função "number_format", similar á do php
  * 009: [29/03/2010] Rodolpho Telmo      (DB1) : Criada função "in_array", similar á do php
  * 010: [30/03/2010] Rodolpho Telmo      (DB1) : Criada função "layoutPadrao"
- * 011: [31/03/2010] Rodolpho Telmo      (DB1) : Plugin HotKeys aplicando padrão para acesso as funcionalidades dos botões em tela 
+ * 011: [31/03/2010] Rodolpho Telmo      (DB1) : Plugin HotKeys aplicando padrão para acesso as funcionalidades dos botões em tela
  * 012: [07/04/2010] Rodolpho Telmo      (DB1) : Criada função montaHtmlImpressao
  * 013: [16/04/2010] Rodolpho Telmo      (DB1) : Criado plugin jQuery limitaTexto
  * 014: [26/04/2010] Rodolpho Telmo      (DB1) : Criado função "revisaoCadastral" genérica
@@ -36,7 +36,7 @@
  * 024: [21/05/2010] Rodolpho Telmo      (DB1) : HotKeys F7 para abrir Telas de Pesquisas
  * 025: [25/05/2010] Rodolpho Telmo      (DB1) : Criada função selecionaRegistro
  * 026: [17/06/2010] Rodolpho Telmo      (DB1) : Criada função focaCampoErro
- * 027: [18/06/2010] Rodolpho Telmo      (DB1) : Criado nos campos cpf e cnpj 
+ * 027: [18/06/2010] Rodolpho Telmo      (DB1) : Criado nos campos cpf e cnpj
  * 028: [18/06/2010] Rodolpho Telmo      (DB1) : Criada função verificaContadorSelect
  * 029: [18/06/2010] Gabriel Santos      (DB1) : Criada função implode
  * 030: [18/06/2010] Gabriel Santos      (DB1) : Criada função exibirMensagens
@@ -57,8 +57,8 @@
  * 045: [14/05/2011] Rodolpho Telmo      (DB1) : Manutenção das funções "desabilitaCampo" e "habilitaCampo"
  * 046: [13/06/2011] Rogérius Militão    (DB1) : Criado a função "converteMoedaFloat"
  * 047: [16/06/2011] Jorge   		  (CECRED) : Alterada funcao "showError"
- * 048: [19/07/2011] Rogérius Militão 	 (DB1) : Criado a função "mascara" 
- * 049: [03/08/2011] Rogérius Militão 	 (DB1) : Manutenção da funcao "formataTabela" 
+ * 048: [19/07/2011] Rogérius Militão 	 (DB1) : Criado a função "mascara"
+ * 049: [03/08/2011] Rogérius Militão 	 (DB1) : Manutenção da funcao "formataTabela"
  * 050: [19/08/2011] Rogérius Militão 	 (DB1) : Manutenção da funcao "atalhoTeclado", adicionado a opcao btsair
  * 051: [26/08/2011] Adriano		  (CECRED) : Alterado a mascara email na funcao layoutPadrao.
  * 052: [30/08/2011] Rogérius Militão 	 (DB1) : Manutenção nas setas que percorre os registros da tabela.
@@ -72,7 +72,7 @@
  * 060: [10/02/2012] Rogérius Militão 	 (DB1) : Manutenção "desabilitaCampo", adicionado para remover as classes que tem focu.
  * 061: [17/02/2012] Rogérius Militão 	 (DB1) : Manutenção layoutPadrao, na opcao "pesquisa", alterado "hasClass('campo')" pela funcao "isHabilitado".
  * 062: [17/02/2012] Rogérius Militão 	 (DB1) : Manutenção ponteiroMouse, alterado "hasClass('campo')" pela funcao "isHabilitado".
- * 063: [29/03/2012] Rogérius Militão	 (DB1) : Manutenção layoutPadrao, alterado selector "a" para nao pegar campos botao $('a[class!="botao"]','.formulario').attr('tabindex','-1');	
+ * 063: [29/03/2012] Rogérius Militão	 (DB1) : Manutenção layoutPadrao, alterado selector "a" para nao pegar campos botao $('a[class!="botao"]','.formulario').attr('tabindex','-1');
  * 064: [26/04/2012] Rogérius Militão	 (DB1) : Manutenção layoutPadrao, no input.cpf e input.cnpj foi adicionado a "$(this).removeClass('campo').addClass('campoFocusIn');" para tratar o novo focu;
  * 065: [01/06/2012] David Kistner    (CECRED) : Criada funcao CheckNavigator()
  * 066: [03/10/2012] Adriano Marchi   (CECRED) : Incluido a classe porcento_n, moeda_15 na função layoutPadrao.
@@ -84,25 +84,25 @@
  * 072: [19/12/2014] Kelvin 		  (CECRED) : Adicionado nova mascara de contrato (z.zzz.zzz.zz9) e (zz.zzz.zz9)  (Chamado 233714).
  * 073: [17/03/2015] Jonata           (Rkam)   : Ajuste na rotina de pedir senha do coordenador.
  * 074: [18/03/2015] Carlos           (CECRED) : Criada a função trocaClass(classAnterior,classAtual) para trocar uma class css por outra.
- * 075: [13/07/2015] Gabriel          (RKAM)   : Criada funcao controlaFocoEnter() para automatizar o foco no ENTER dos campos de determinado frame. 
+ * 075: [13/07/2015] Gabriel          (RKAM)   : Criada funcao controlaFocoEnter() para automatizar o foco no ENTER dos campos de determinado frame.
  * 076: [04/09/2015] Adriano		  (CECRED) : Ajuste para corrigir o problema de formatação do arquivo.
  * 077: [15/10/2015] Kelvin			  (CECRED) : Criada funcao removeCaracteresInvalidos() e removeAcentos()
 												 para auxiliar na remoção dos caracteres que invalidam o xml.
  * 078: [28/10/2015] Heitor           (RKAM)   : Criada funcao utf8_decode para utilizacao de acentuacao php x js
- * 079: [23/12/2015] Adriano          (CECRED) : Ajuste na rotina layoutPadrao para criar o tratamento para a classe porcento_4. 
+ * 079: [23/12/2015] Adriano          (CECRED) : Ajuste na rotina layoutPadrao para criar o tratamento para a classe porcento_4.
  * 080: [23/03/2016] James            (CECRED) : Criado a classe Taxa no INPUT
  * 081: [27/06/2016] Jaison/James     (CECRED) : Criacao de glb_codigoOperadorLiberacao.
- * 082: [19/07/2016] Andrei           (RKAM)   : Ajuste na rotina layoutPadrao para incluir o tratamento para a classe porcento_6. 
+ * 082: [19/07/2016] Andrei           (RKAM)   : Ajuste na rotina layoutPadrao para incluir o tratamento para a classe porcento_6.
  * 083: [12/07/2016] Evandro          (RKAM)   : Adicionado a função atalhoTeclado condição para fechar telas (divMsgsAlerta e divAnotacoes) com ESC ou F4
  * 084: [18/08/2016] Evandro          (RKAM)   : Adicionado condição na função showConfirmacao para voltar foco a classe FirstInputModal, ao fechar janela
- * 080: [18/10/2016] Kelvin			  (CECRED) : Funcao removeCaracteresInvalidos nao estava removendo os caracteres ">" e "<", ajustado 
+ * 080: [18/10/2016] Kelvin			  (CECRED) : Funcao removeCaracteresInvalidos nao estava removendo os caracteres ">" e "<", ajustado
 												 para remover os mesmos e criado uma flag para identificar se deve remover os acentos ou nao.
  * 081: [13/03/2017] Jaison/Daniel    (CECRED) : Criada a funcao retornaDateDiff.
-												 
- */ 	 
+ * 082: [05/04/2017] Lombardi         (CECRED) : Criadas as funcoes lpad e rpad.
+ */
 
 var UrlSite     = parent.window.location.href.substr(0,parent.window.location.href.lastIndexOf("/") + 1); // Url do site
-var UrlImagens	= UrlSite + "imagens/"; // Url para imagens     
+var UrlImagens	= UrlSite + "imagens/"; // Url para imagens
 var nmrotina    = ''; // Para armazenar o nome da rotina no uso da Ajuda (F2)
 var semaforo	= 0;  // Semáforo para não permitir chamar a função controlaOperacao uma atrás da outra
 
@@ -115,7 +115,7 @@ var shift = false; 	// Variável lógica (boolean) glogal que indica se a tecla sh
 var control = false; 	// Variável lógica (boolean) glogal que indica se a tecla control está prescionada
 
 var glb_codigoOperadorLiberacao = 0; // Global com operador de liberacao
-	
+
 $(document).ready(function () {
 
 	// 053
@@ -123,40 +123,40 @@ $(document).ready(function () {
 	window.onhelp 	= new Function("return false"); // Previne a abertura do help no IE
 
 	$("body").append('<div id="divAguardo"></div><div id="divError"></div><div id="divConfirm"></div><div id="divBloqueio"></div><div id="divF2"></div><div id="divUsoGenerico"></div><iframe src="' + UrlSite + 'blank.php" id="iframeBloqueio"></iframe>');
-	
+
 	// Inicializo a variável divRotiva e divError com o respectivo seletor jQuery da div
 	// A qualquer momento pode-se alterar o valor da divRotina com a Rotina que está sendo implementada
 	// O valor do divError não tem motivos para ser alterado
 	divRotina 	= $('#divRotina');
-	divError  	= $('#divError');	
-	divConfirm  = $('#divConfirm');	
-	
+	divError  	= $('#divError');
+	divConfirm  = $('#divConfirm');
+
 	// Iniciliza tirando os eventos para posteriormente bindá-los corretamente
-	$(this).unbind('keyup').unbind('keydown').unbind('keypress');	
-	
+	$(this).unbind('keyup').unbind('keydown').unbind('keypress');
+
 	$(this).unbind("keydown.backspace").bind("keydown.backspace",function(e) {
 		if (getKeyValue(e) == 8) { // Tecla BACKSPACE
-			var targetType = e.target.tagName.toUpperCase();			
-			// Permite a tecla BACKSPACE somente em campos INPUT e TEXTAREA e se estiverem habilitados para digitação			
-			if ((targetType == "INPUT" || targetType == "TEXTAREA") && !e.target.disabled && !e.target.readonly) return true;							
-			return false; 
-		}		
+			var targetType = e.target.tagName.toUpperCase();
+			// Permite a tecla BACKSPACE somente em campos INPUT e TEXTAREA e se estiverem habilitados para digitação
+			if ((targetType == "INPUT" || targetType == "TEXTAREA") && !e.target.disabled && !e.target.readonly) return true;
+			return false;
+		}
 		return true;
 	});
-	
+
 	$.ajaxSetup({ data: { sidlogin: $("#sidlogin","#frmMenu").val() } });
-	
+
 	/*!
 	 * ALTERAÇÃO     : 022
-	 * OBJETIVO      : Prevenir o comportamento padrão do browser em relação as teclas F1 a F12, para posteriormente utilizar estas teclas para fins específicos 
+	 * OBJETIVO      : Prevenir o comportamento padrão do browser em relação as teclas F1 a F12, para posteriormente utilizar estas teclas para fins específicos
 	 * FUNCIONAMENTO : Captura o evento da tecla pressionada e associa á função previneTeclasEspeciais funcionando para IE, Chrome e FF
-	 */	
+	 */
 	$(this).keydown( previneTeclasEspeciais );
-	function previneTeclasEspeciais(event){		
-		// Essecial para funcionar no IE 
+	function previneTeclasEspeciais(event){
+		// Essecial para funcionar no IE
 		var e = (window.event) ? window.event : event;
 		// Verifica se a tecla pressionada é F1 a F12 retirando a F5
-		if ( ( e.keyCode >= 112 ) && ( e.keyCode <= 123 ) && ( e.keyCode != 116 ) ) { 
+		if ( ( e.keyCode >= 112 ) && ( e.keyCode <= 123 ) && ( e.keyCode != 116 ) ) {
 			if ( $.browser.msie ) {
 				e.returnValue	= false; // Previne o comportamento padrão no IE
 				e.cancelBubble 	= true;  // Previne o comportamento padrão no IE
@@ -169,35 +169,35 @@ $(document).ready(function () {
 			}
 		}
 	}
-	
+
 	/*!
 	 * ALTERAÇÃO     : 035
 	 * OBJETIVO      : Controle de identificação se as teclas shift e control estão pressionadas
-	 * FUNCIONAMENTO : Ao pressionar qualquer tecla, o sistema verifica se é a shift/control, caso verdadeiro seta a variável global 
+	 * FUNCIONAMENTO : Ao pressionar qualquer tecla, o sistema verifica se é a shift/control, caso verdadeiro seta a variável global
 	 *                 correspondente para TRUE. Ao liberar a tecla, o sistema verifica novamente se é shift/control, caso afirmativo
 	 *                 volta os valores das variáveiss globais correspondentes para FALSE.
-	 */		
+	 */
 	$(this).keydown( function(e) {
-		if (e.which == 16 ) { shift 	= true; } // Tecla Shift		
+		if (e.which == 16 ) { shift 	= true; } // Tecla Shift
 		if (e.which == 17 ) { control 	= true; } // Tecla Control
 	}).keyup( function(e) {
-		if (e.which == 16 ) { shift 	= false; } // Tecla Shift		
+		if (e.which == 16 ) { shift 	= false; } // Tecla Shift
 		if (e.which == 17 ) { control 	= false; } // Tecla Control
 	});
-	
+
 	/*!
 	 * ALTERAÇÃO  : 018 e 051
 	 * OBJETIVO   : Teclas de atalho para selecinar os registro nas tabelas pelo teclado, utilizando as setas direcionais "para cima" e "para baixo"
 	 * OBSERVAÇÃO : As tabelas devem estar criadas dentro do padrão adotado nas rotinas no módulo de CONTAS
-	 */	
-	$(this).keyup( function(e) { 			
-		var tecla = e.which;	
+	 */
+	$(this).keyup( function(e) {
+		var tecla = e.which;
 		if ( (tecla == 38) || (tecla == 40) ) {
-			
-			var nrLinhaSelecao;	
-			var divRegistro;	
-			var divRegistros;	
-			
+
+			var nrLinhaSelecao;
+			var divRegistro;
+			var divRegistros;
+
 			if ( divError.css('display') == 'block' || divConfirm.css('display') == 'block' ){
 				return true;
 			}else if ( $('#divUsoGenerico').css('visibility') == 'visible' ){
@@ -209,25 +209,25 @@ $(document).ready(function () {
 			}else {
 				if ( $('#divRotina').css('visibility') == 'visible') return false;
 				divRegistros = $('div.divRegistros');
-			}		
-				
+			}
+
 			divRegistros.each( function() {
 				if ( $(this).css('display') == 'block' ) {
 					divRegistro = $(this);
-				}				
-			});			
-			
+				}
+			});
+
 			var tabela = $('table', divRegistro);
-			
+
 			var qtdeRegistros = $('table > tbody > tr', divRegistro).length;
 			// Se possui um ou nenhum registro, não fazer nada
-			if ( qtdeRegistros > 1 ) { 
+			if ( qtdeRegistros > 1 ) {
 				// Descobre qual linha está selecionada
 				$('table > tbody > tr', divRegistro).each( function(i) {
 					if ( $(this).hasClass( 'corSelecao' ) ) {
 						nrLinhaSelecao = i;
-					}					
-				});	
+					}
+				});
 				// Se teclou seta para cima e não é a primeira linha, selecionar registro acima
                 if ((tecla == 38) && (nrLinhaSelecao > 0)) {
                     $('table', divRegistro).zebraTabela(nrLinhaSelecao - 1);
@@ -237,11 +237,11 @@ $(document).ready(function () {
                 if ((tecla == 40) && (nrLinhaSelecao < qtdeRegistros - 1)) {
                     $('table', divRegistro).zebraTabela(nrLinhaSelecao + 1);
                     $('tbody > tr:eq(' + (nrLinhaSelecao + 1) + ') > td', tabela).first().focus();
-				}			
+				}
 			}
 		}
-	});				
-	
+	});
+
 	/*!
 	 * ALTERAÇÃO  : 011
 	 * OBJETIVO   : Teclas de atalho (HotKeys) para os botões da tela corrente (em exibição)
@@ -257,25 +257,25 @@ $(document).ready(function () {
 	 *              (   F11  ) -> Botão Limpar
 	 *              ( DELETE ) -> Botão Excluir
 	 *              (   ESC  ) -> Botão Voltar
-	 *              ( INSERT ) -> Botão Inserir	 
+	 *              ( INSERT ) -> Botão Inserir
 	 * OBSERVAÇÃO : Para que os atalhos funcionem, os botões em tela devem estar com a propriedade "id" igual a um dos valores abaixo:
 	 *              btIncluir | btExcluir | btVoltar | btAlterar | btSalvar | btConsultar | btLimpar
-	 */	 
+	 */
     $(this).keyup(atalhoTeclado);
 	function atalhoTeclado(e) {
 
         var arrayTeclas = new Array();
-        arrayTeclas[13] = 'btEnter';		// ENTER		
+        arrayTeclas[13] = 'btEnter';		// ENTER
         arrayTeclas[45] = 'btIncluir';		// INSERT
         arrayTeclas[46] = 'btExcluir';		// DELETE
         arrayTeclas[27] = 'btVoltar';		// ESC - VOLTAR
 		arrayTeclas[112] = 'btSalvar';		// F1  - SALVAR
 		arrayTeclas[114] = 'btIncluir';		// F3  - INSERIR
-		arrayTeclas[115] = 'btVoltar';		// F4  - VOLTAR	
+		arrayTeclas[115] = 'btVoltar';		// F4  - VOLTAR
 		arrayTeclas[120] = 'btAlterar';		// F9  - ALTERAR
-		arrayTeclas[121] = 'btConsultar';   // F10 - CONSULTAR		
+		arrayTeclas[121] = 'btConsultar';   // F10 - CONSULTAR
 		arrayTeclas[122] = 'btLimpar';      // F11 - LIMPAR
-		
+
 		// Se o divAguardo estiver sendo exibido, então não aceitar atalhos do teclado
         if ($('#divAguardo').css('display') == 'block') { return true; }
 
@@ -285,11 +285,11 @@ $(document).ready(function () {
 		 *             pois caso contrário a função chama o clique o botão com o ID = 'btVoltar'
 		 */
         if (divError.css('display') == 'block') {
-			// Se teclar ENTER (13)	
+			// Se teclar ENTER (13)
 			if (e.which == 13) {
 				// $('#btnError','#divError').click();
-			}			
-			return true;				
+			}
+			return true;
 
         } else if (divConfirm.css('display') == 'block') {
 			// Se teclar ESC (27) ou F4 (115)
@@ -297,49 +297,49 @@ $(document).ready(function () {
                 $('#btnNoConfirm', '#divConfirm').click();
 			}
 			return true;
-			
-		// Se for tecla F2, abre ajuda padrão		
+
+		// Se for tecla F2, abre ajuda padrão
         } else if (e.keyCode == 113) {
 			mostraAjudaF2();
-			return true;			
-			
+			return true;
+
 
 		// Se for as teclas ENTER | INSERT | DELET | ESC | F1 | F3 | F4 | F9 | F10 | F11
         } else if (in_array(e.keyCode, [13, 35, 45, 46, 27, 112, 114, 115, 120, 121, 122])) {
-			
+
             if (typeof e.result == 'undefined') {
-			
-				// Se a pesquisa estiver aberta, e a tecla é ESC (27) ou F4, então ativar o botão fechar da pesquisa				
+
+				// Se a pesquisa estiver aberta, e a tecla é ESC (27) ou F4, então ativar o botão fechar da pesquisa
 				// ALTERAÇÃO 040
                 if ($('#divFormularioEndereco').css('visibility') == 'visible') {
                     if (e.which == 27 || e.which == 115) {
                         $('.fecharPesquisa', '#divFormularioEndereco').click();
 					} else {
                         $('#' + arrayTeclas[e.which] + ':visible', '#divFormularioEndereco').click();
-					}					
+					}
 					return true;
-				
+
 				// ALTERAÇÃO 040
                 } else if ($('#divPesquisaEndereco').css('visibility') == 'visible') {
                     if (e.which == 27 || e.which == 115) {
                         $('.fecharPesquisa', '#divPesquisaEndereco').click();
 					} else {
                         $('#' + arrayTeclas[e.which] + ':visible', '#divPesquisaEndereco').click();
-					}					
-					return true;				
-					
+					}
+					return true;
+
                 } else if ($('#divPesquisaAssociado').css('visibility') == 'visible') {
                     if (e.which == 27 || e.which == 115) {
                         $('.fecharPesquisa', '#divPesquisaAssociado').click();
-					} 
-					return true;						
-					
+					}
+					return true;
+
                 } else if ($('#divMsgsAlerta').css('visibility') == 'visible') {
                     if (e.which == 27 || e.which == 115) {
                         encerraMsgsAlerta().click();
-					} 
-					return true;														
-				
+					}
+					return true;
+
                 } else if ($('#divAnotacoes').css('visibility') == 'visible') {
                     if (e.which == 27 || e.which == 115) {
                         encerraAnotacoes().click();
@@ -352,14 +352,14 @@ $(document).ready(function () {
                     }
                     return true;
 
-				// Verifica HotKeys válidos					
+				// Verifica HotKeys válidos
                 } else if (in_array(e.which, [13, 35, 45, 46, 27, 112, 114, 115, 120, 121, 122])) {
-					
+
 					// Se a divUsoGenerico estiver visivel, então chamar os click os botões contidos nela
                     if ($('#divUsoGenerico').css('visibility') == 'visible') {
                         $('#' + arrayTeclas[e.which] + ':visible', '#divUsoGenerico').click();
-						return true; 
-					
+						return true;
+
 					// Se a divRotina estiver visivel, então chamar os click os botões contidos nela
 					// 050 - adicionado a opcao btsair
                     } else if ($('#divRotina').css('visibility') == 'visible') {
@@ -368,13 +368,13 @@ $(document).ready(function () {
                         } else if ($('#divRotina').find('#btSair').length && e.which == 27) {
                             $('#btSair:visible', '#divRotina').click();
 						}
-						return true; 	
-					
+						return true;
+
 					// Se é a tela do Matric, chamar os click dos botões contidos nela
                     } else if ($('#divMsgsAlerta').css('visibility') == 'visible') {
                         $('#' + arrayTeclas[e.which] + ':visible', '#divMsgsAlerta').click();
-						return true; 
-					
+						return true;
+
 					// Se é a tela do Matric, chamar os click dos botões contidos nela
                     } else if ($('#divAnota').css('visibility') == 'visible' || $('#divAnota').css('visibility') == 'inherit') {
                         $('#' + arrayTeclas[e.which] + ':visible', '#divAnota').click();
@@ -383,17 +383,17 @@ $(document).ready(function () {
 					// Se a divRotina estiver visivel, então chamar os click os botões contidos nela
                     } else if ($('#divTela').css('visibility') == 'visible' || $('#divTela').css('visibility') == 'inherit') {
                         $('#' + arrayTeclas[e.which] + ':visible', '#divTela').click();
-						return true; 						
-					
+						return true;
+
 					// Se é a tela do Matric, chamar os click dos botões contidos nela
                     } else if ($('#divMatric').css('visibility') == 'visible' || $('#divMatric').css('visibility') == 'inherit') {
-						
+
 						//Se é pessoa juridica verifico se é um evento do botão de procuradores
                         if ($('#frmJuridico', '#divMatric').css('visibility') == 'visible' || $('#frmJuridico', '#divMatric').css('visibility') == 'inherit') {
-							
+
                             var metodo = $('#' + arrayTeclas[e.which] + 'Proc:visible', '#divMatric').attr('onClick');
                             metodo = (typeof metodo == 'undefined') ? '' : metodo.toString();
-							
+
                             if ($.browser.msie) {
                                 metodo = metodo.replace('return false;', '');
                                 metodo = metodo.replace('function anonymous()', '');
@@ -401,45 +401,45 @@ $(document).ready(function () {
                                 metodo = metodo.replace('}', '');
                             } else {
                                 metodo = metodo.replace('return false;', '');
-							}	
-												
+							}
+
                             eval(metodo);
 						}
                         $('#' + arrayTeclas[e.which] + ':visible', '#divMatric').click();
-						return true; 
-					}						
-					return true; 				
+						return true;
+					}
+					return true;
 				}
 			}
 		}
 	}
-	
+
 	/*!
 	 * ALTERAÇÃO  : 019 | 040
 	 * OBJETIVO   : Tornar as mensagens padrão de Erro ou Confirmação "Movimentáveis", permitindo arrastar a janela para qualquer direção, com o objetivo
 	 *              de desobstruindo os dados que se encontram logo abaixo da caixa de mensagem. Funcionalidade replicada as telas de rotinas.
-	 */	 
+	 */
 	var elementosDrag = $('#divRotina, #divError, #divConfirm, #divPesquisa, #divPesquisaEndereco, #divFormularioEndereco, #divPesquisaAssociado, #divUsoGenerico, #divMsgsAlerta');
-	elementosDrag.unbind('dragstart');	
+	elementosDrag.unbind('dragstart');
     elementosDrag.bind('dragstart', function (event) {
 		return $(event.target).is('.ponteiroDrag');
 	}).bind('drag', function (event) {
         $(this).css({ top: event.offsetY, left: event.offsetX });
-    });  	
-	
+    });
+
 });
 
 
-function highlightObjFocus(parentElement) {			
+function highlightObjFocus(parentElement) {
 	// Verificar se o elemento pai é um objeto válido
 	if ($.type(parentElement) != 'object' || parentElement.size() == 0) return false;
-	
-	// Faz pre-seleção dos sub-elementos 
+
+	// Faz pre-seleção dos sub-elementos
     var subElements = $('input', parentElement);
-	
-	// Verificar se o elemento pai tem sub-elementos	
+
+	// Verificar se o elemento pai tem sub-elementos
 	if (subElements.size() == 0) return true;
-	
+
 	var validTypes = new Array();
 	validTypes[1] = 'textarea';
 	validTypes[2] = 'text';
@@ -448,10 +448,10 @@ function highlightObjFocus(parentElement) {
 	validTypes[5] = 'radio';
 	validTypes[6] = 'checkbox';
 	validTypes[7] = 'select';
-	
+
     $('input,textarea', parentElement).each(function () {
 		var typeElement = $(this).attr('type') != undefined ? $(this).attr('type') : $(this).get(0).tagName.toLowerCase();
-		
+
         if (in_array(typeElement, validTypes)) {
 			$(this).unbind('focusout.highlightfocus')
 			       .unbind('focusin.highlightfocus')
@@ -462,7 +462,7 @@ function highlightObjFocus(parentElement) {
 						} else {
 				           $(this).removeClass(function () {
 										if (typeElement == 'text' || typeElement == 'password' || typeElement == 'select') {
-											return 'campoFocusIn';											
+											return 'campoFocusIn';
 										} else {
 											return typeElement + 'FocusIn';
 										}
@@ -470,52 +470,52 @@ function highlightObjFocus(parentElement) {
                                   .addClass(function () {
 										if (typeElement == 'text' || typeElement == 'password' || typeElement == 'select') {
 											return 'campo';
-										} else {											
+										} else {
 											return typeElement;
 										}
 									})
 						}
 				    })
 				   .bind('focusin.highlightfocus', function () {
-						if (typeElement == 'image') {							
+						if (typeElement == 'image') {
 							if ($(this).attr('src') == UrlImagens + "botoes/entrar.gif")
 				               $(this).attr('src', $(this).attr('src').replace('.gif', '_focus.gif'));
-						} else {																	
+						} else {
 				           $(this).removeClass(function () {
 										if (typeElement == 'text' || typeElement == 'password' || typeElement == 'select') {
 											return 'campo';
-										} else {											
+										} else {
 											return typeElement;
 										}
 									})
 								   .addClass(function () {
 										if (typeElement == 'text' || typeElement == 'password' || typeElement == 'select') {
 											return 'campoFocusIn';
-										} else {											
+										} else {
 											return typeElement + 'FocusIn';
 										}
 								    });
 						}
 				    });
-					
+
 		}
 	});
-	
-	return true;	
+
+	return true;
 }
 
 /*!
  * OBJETIVO: Função para chamar a ajuda do sistema
  */
 function mostraAjudaF2() {
-	showMsgAguardo("Aguarde carregando dados de ajuda ...");			
-	$.ajax({		
-		type: "POST", 
+	showMsgAguardo("Aguarde carregando dados de ajuda ...");
+	$.ajax({
+		type: "POST",
 		dataType: "html",
 		url: UrlSite + "f2/busca_help.php",
 		data: {
 			redirect: "html_ajax"
-		},		
+		},
         error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
             showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "");
@@ -524,8 +524,8 @@ function mostraAjudaF2() {
 			$("#divF2").html(response);
 			// Centraliza o div na Tela
 			$("#divF2").setCenterPosition();
-		}				
-	}); 	
+		}
+	});
 }
 
 /*!
@@ -537,14 +537,14 @@ function blockBackground(zIndex) {
 		height: $(document).height() + "px",
 		zIndex: zIndex - 2,
 		display: "block"
-	}); 	
+	});
 	// Propriedados do div utilizado no bloqueio
 	$("#divBloqueio").css({
 		width: "100%",
 		height: $(document).height() + "px",
 		zIndex: zIndex - 1,
 		display: "block"
-	}); 
+	});
 }
 
 /*!
@@ -558,7 +558,7 @@ function unblockBackground() {
 		top: "0",
 		left: "0",
 		display: "none"
-	});	
+	});
 	$("#iframeBloqueio").css({
 		width: "1px",
 		height: "1px",
@@ -573,31 +573,31 @@ function unblockBackground() {
  * ALTERAÇÃO : 019 - Para permitir Movimentar a mensagem de Error, alterou-se a forma de centralização da mensagem
  * ALTERAÇÃO : 039 - Condição do tipoMsg, caso venha com 'none' não mostrará ícone.
  * ALTERAÇÃO : 047 - Parametro numWidth opcional, largura da tabela de mensagem, caso nao seja passado, pega 300 como padrao.
- */	 
+ */
 function showError(tipoMsg, msgError, titMsg, metodoMsg, numWidth) {
-	
+
 	// Construindo conteúdo da mensagem
 	var strHTML = '';
-	var display = '';	
-	
+	var display = '';
+
     if (tipoMsg == 'none')
 		display = 'display:none;';
-	
-	larg = Number(numWidth);	
-	
-	if (isNaN(larg)) {		
+
+	larg = Number(numWidth);
+
+	if (isNaN(larg)) {
 		larg = 300; // largura padrao
 	}
-		
+
 	strHTML += '<table border="0" cellpadding="0" cellspacing="0" width="' + larg + '" id="tabMsgError">';
 	strHTML += '	<tr>';
 	strHTML += '		<td id="tdTitError" class="ponteiroDrag">' + titMsg + '</td>';
 	strHTML += '	</tr>';
 	strHTML += '	<tr>';
 	strHTML += '		<td height="5"></td>';
-	strHTML += '	</tr>';	
+	strHTML += '	</tr>';
 	strHTML += '	<tr>';
-	strHTML += '		<td style="padding: 4px 6px 4px 6px;">';	
+	strHTML += '		<td style="padding: 4px 6px 4px 6px;">';
 	strHTML += '			<table border="0" cellpadding="0" cellspacing="0">';
 	strHTML += '				<tr>';
 	strHTML += '					<td valign="top" style="padding-right: 5px;' + display + '"><img src="' + UrlImagens + (tipoMsg == "inform" ? "geral/ico_inform.jpg" : "geral/ico_atencao.jpg") + '"></td>';
@@ -608,15 +608,15 @@ function showError(tipoMsg, msgError, titMsg, metodoMsg, numWidth) {
 	strHTML += '	</tr>';
 	strHTML += '	<tr>';
 	strHTML += '		<td height="5"></td>';
-	strHTML += '	</tr>';		
+	strHTML += '	</tr>';
 	strHTML += '	<tr>';
 	strHTML += '		<td align="center" style="padding-bottom: 8px;"><input type="image" id="btnError" name="btnError" src="' + UrlImagens + (tipoMsg == "inform" ? "botoes/fechar.gif" : "botoes/continuar.gif") + '"></td>';
 	strHTML += '	</tr>';
-	strHTML += '</table>';		
-	
+	strHTML += '</table>';
+
 	// Atribui o conteúdo ao div da mensagem
 	divError.html(strHTML);
-	
+
 	// Bloqueia o Fundo e Mostra a mensagem
     bloqueiaFundo(divError);
     divError.css('display', 'block').setCenterPosition();
@@ -626,28 +626,28 @@ function showError(tipoMsg, msgError, titMsg, metodoMsg, numWidth) {
     $('#btnError').unbind('click').bind('click', function () {
 		// Esconde mensagem
 		divError.escondeMensagem();
-		// Método passado por parâmetro		
+		// Método passado por parâmetro
         if (metodoMsg != '') { eval(metodoMsg); }
 		return false;
-	});	
-	
+	});
+
 	return false;
 }
 
 /*!
  * OBJETIVO  : Função para mostrar mensagem para confirmação e ações
  * ALTERAÇÃO : 019 - Para permitir Movimentar a mensagem de Confirmação, alterou-se esta função
- */	 
+ */
 function showConfirmacao(msgConfirm, titConfirm, metodoYes, metodoNo, nomeBtnYes, nomeBtnNo) {
-	
+
 	// Construindo o conteúdo da mensagem
-	var strHTML = "";	
+	var strHTML = "";
 	strHTML += '<table border="0" cellpadding="0" cellspacing="0" width="300">';
 	strHTML += '	<tr>';
 	strHTML += '		<td id="tdTitError" class="ponteiroDrag">' + titConfirm + '</td>';
 	strHTML += '	</tr>';
 	strHTML += '	<tr>';
-	strHTML += '		<td style="padding-top: 4px; padding-right: 6px; padding-left: 6px;">';	
+	strHTML += '		<td style="padding-top: 4px; padding-right: 6px; padding-left: 6px;">';
 	strHTML += '			<table border="0" cellpadding="0" cellspacing="0">';
 	strHTML += '				<tr>';
 	strHTML += '					<td style="padding-right: 5px;"><img src="' + UrlImagens + 'geral/ico_interrogacao.jpg' + '"></td>';
@@ -661,31 +661,31 @@ function showConfirmacao(msgConfirm, titConfirm, metodoYes, metodoNo, nomeBtnYes
 	strHTML += '			<table border="0" cellpadding="0" cellspacing="0">';
 	strHTML += '				<tr>';
 	strHTML += '					<td><input type="image" id="btnYesConfirm" name="btnYesConfirm" src="' + UrlImagens + "botoes/" + nomeBtnYes + '"></td>';
-	strHTML += '					<td width="25"></td>';		
-	strHTML += '					<td><input type="image" id="btnNoConfirm" name="btnNoConfirm" src="' + UrlImagens + "botoes/" + nomeBtnNo + '"></td>';	
+	strHTML += '					<td width="25"></td>';
+	strHTML += '					<td><input type="image" id="btnNoConfirm" name="btnNoConfirm" src="' + UrlImagens + "botoes/" + nomeBtnNo + '"></td>';
 	strHTML += '				</tr>';
 	strHTML += '			</table>';
 	strHTML += '		</td>';
 	strHTML += '	</tr>';
-	strHTML += '</table>';	
-	
+	strHTML += '</table>';
+
 	// Atribui o conteúdo ao divConfirm
 	divConfirm.html(strHTML);
-	
+
 	// Aplica métodos ao evento "click" do botão de confirmação
 	$("#btnYesConfirm").unbind("click");
     $("#btnYesConfirm").bind("click", function () {
 		// Esconde mensagem
 		divConfirm.escondeMensagem();
 		// Método passado por parâmetro
-		if (metodoYes != "") { 
-			eval(metodoYes); 
+		if (metodoYes != "") {
+			eval(metodoYes);
 
             if ($(".FirstInputModal")) { $(".FirstInputModal").focus(); }
-		}		
+		}
 		return false;
 	});
-	
+
 	// Aplica método ao evento "click" do botão de cancelamento
 	$("#btnNoConfirm").unbind("click");
     $("#btnNoConfirm").bind("click", function () {
@@ -699,18 +699,18 @@ function showConfirmacao(msgConfirm, titConfirm, metodoYes, metodoNo, nomeBtnYes
         }
 		return false;
 	});
-        
+
 	// Bloqueia o Fundo e Mostra a mensagem
     bloqueiaFundo(divConfirm);
     divConfirm.css('display', 'block').setCenterPosition();
-	$("#btnYesConfirm").focus(); 
+	$("#btnYesConfirm").focus();
 }
 
 /*!
  * OBJETIVO  : Função para mostrar mensagem de Aguardo
  * ALTERAÇÃO : 019 - Para permitir Movimentar a mensagem de Aguardo, alterou-se esta função
- */	 
-function showMsgAguardo(msgAguardo) {	
+ */
+function showMsgAguardo(msgAguardo) {
 	// Mensagem de espera
 	var strHTML = "";
 	strHTML += '<table border="0" cellpadding="0" cellspacing="0">';
@@ -718,11 +718,11 @@ function showMsgAguardo(msgAguardo) {
 	strHTML += '    <td><img src="' + UrlImagens + 'geral/indicator.gif" width="15" height="15"></td>';
 	strHTML += '    <td nowrap><strong class="txtCarregando">&nbsp;&nbsp;&nbsp;' + msgAguardo + '</strong></td>';
 	strHTML += '  </tr>';
-	strHTML += '</table>';		
+	strHTML += '</table>';
 
 	// Atribui conte&uacute;do ao div da mensagem
 	$('#divAguardo').html(strHTML);
-	
+
 	// Bloqueia o Fundo e Mostra a mensagem
     bloqueiaFundo($('#divAguardo'));
     $('#divAguardo').css('display', 'block').setCenterPosition();
@@ -731,52 +731,52 @@ function showMsgAguardo(msgAguardo) {
 /*!
  * OBJETIVO  : Função para esconder (ocultar) a mensagem de aguardo
  * ALTERAÇÃO : 019 - Alterou-se a função utilizando-se do novo método criado "escondeMensagem()", implementado neste arquivo
- */	
+ */
 function hideMsgAguardo() {
     $("#divAguardo").escondeMensagem();
-}	
+}
 
 /*!
  * OBJETIVO  : Retirar caracteres indesejados
  * PARÂMETROS: flgRetirar -> Se TRUE retira caracteres que não estão na variável "valid"
- *                           Se FALSE retira caracteres que estão na variável "valid"    
- */	
+ *                           Se FALSE retira caracteres que estão na variável "valid"
+ */
 function retiraCaracteres(str, valid, flgRetirar) {
-	
+
 	var result = "";	// variável que armazena os caracteres v&aacute;lidos
     var temp = "";	// variável para armazenar caracter da string
-	
+
 	for (var i = 0; i < str.length; i++) {
         temp = str.substr(i, 1);
-			
+
 		// Se for um n&uacute;mero concatena na string result
 		if ((valid.indexOf(temp) != "-1" && flgRetirar) || (valid.indexOf(temp) == "-1" && !flgRetirar)) {
 			result += temp;
 		}
 	}
-	
-	return result;		
+
+	return result;
 }
 
 /*!
  * OBJETIVO  : Função para validar o número da conta/dv
  * PARÂMETRO : conta [Obrigatário] -> Número da conta que deseja-se validar. Aceita somente números
- */	
+ */
 function validaNroConta(conta) {
 
 	// 057
 	conta = normalizaNumero(conta);
-	
+
 	if (parseInt(conta) == 0) {
 		return false;
 	}
-	
+
 	if (conta != "" && conta.length < 9) {
         var mult = 2;
         var soma = 0;
         var tam = conta.length;
 		var str_aux = 0;
-		
+
 		for (var i = tam - 2; i >= 0; i--) {
             str_aux = parseInt(conta.substr(i, 1));
 			soma = soma + (str_aux * mult);
@@ -795,59 +795,59 @@ function validaNroConta(conta) {
 			return true;
 		}
 	}
-	
+
 	return false;
 }
 
 /*!
  * OBJETIVO  : Função para retirar zeros atá encontrar outro número maior
  * PARÂMETRO : numero [Obrigatário] -> Número a ser retirado os zeros a esquerda
- */	
+ */
 function retirarZeros(numero) {
 	var flgMaior = false; // Flag para verificar se foi encontrado o primeiro n&uacute;mero maior que zero
     var result = "";    // Armazena conteudo de retorno
     var temp = "";    // Armazena caracter temporario do numero
-	
+
 	// Efetua leitura de todos os caracteres do numero e atribui a vari&aacute;vel temp
 	for (var i = 0; i < numero.length; i++) {
         temp = numero.substr(i, 1);
-		
+
         if ((temp == '0') && (numero.substr(i + 1, 1) != ',')) {
 			if (flgMaior) { // Se já foi encontrado um número maior que zero
 				result += temp;
 			}
 		} else if (!isNaN(temp)) { // Se for um número maior que zero
 			result += temp;
-			
+
 			if (!flgMaior) {
-				flgMaior = true; 
+				flgMaior = true;
 			}
 		} else if (flgMaior) { // Se não for um número
 			result += temp;
 		}
 	}
-	
+
 	return result;
 }
 
 /*!
  * OBJETIVO  : Função para retornar código da tecla pressionada
- */	
+ */
 function getKeyValue(e) {
 	// charCode para Firefox e keyCode para IE
-	var keyValue = e.charCode ? e.charCode : e.keyCode ? e.keyCode : 0;	
+	var keyValue = e.charCode ? e.charCode : e.keyCode ? e.keyCode : 0;
 	return keyValue;
 }
 
 /*!
  * OBJETIVO : Função para validar se é uma data válida
- */	
+ */
 function validaData(data) {
 	// Se string n&atilde;o conter 10 caracteres
 	if (data.length != 10) {
 		return false;
 	}
-	
+
     var dia = parseInt(data.substr(0, 2), 10);
     var mes = parseInt(data.substr(3, 2), 10);
 	var ano = parseInt(data.substr(6));
@@ -878,47 +878,47 @@ function validaData(data) {
 		}
 
 		var bissexto = false;
-		
+
 		// Calcula para verificar se &eacute; ano bissexto
 		if (ano % 100 == 0) {
-			if (ano % 400 == 0) { 
+			if (ano % 400 == 0) {
 				bissexto = true;
 			}
         } else {
-			if ((ano % 4) == 0) { 
+			if ((ano % 4) == 0) {
 				bissexto = true;
 			}
-		}		
+		}
 
 		if (bissexto) { // Se for ano bissexto
 			if (dia > 29) {
 				return false;
-			} 
+			}
         } else { // Se n&atilde;o for ano bissexto
 			if (dia > 28) {
 				return false;
 			}
 		}
 	}
-	
+
 	return true;
 }
 
 /*!
  * OBJETIVO  : Função para validar números inteiros e decimais
- */	
+ */
 function validaNumero(numero, validaFaixa, minimo, maximo) {
-	// Retirar "." e "," do numero	
+	// Retirar "." e "," do numero
     numero = numero.replace(/\./g, "").replace(/,/g, ".");
-	
+
 	// Verifica se &eacute; um n&uacute;mero inteiro ou decimal
-	numero = numero.search(".") == "-1" ? parseInt(numero) : parseFloat(numero); 
-	
+	numero = numero.search(".") == "-1" ? parseInt(numero) : parseFloat(numero);
+
 	// Se n&atilde;o for um n&uacute;mero v&aacute;lido
 	if (isNaN(numero)) {
 		return false;
 	}
-	
+
 	// Se par&acirc;metro for true, verifica se n&uacute;mero est&aacute; dentro de uma faixa v&aacute;lida
 	if (validaFaixa) {
 		if (minimo == maximo) {
@@ -931,7 +931,7 @@ function validaNumero(numero, validaFaixa, minimo, maximo) {
 			}
 		}
 	}
-	
+
 	return true;
 }
 
@@ -939,12 +939,12 @@ function validaNumero(numero, validaFaixa, minimo, maximo) {
  * OBJETIVO   : Função para validar CPF ou CNPJ
  * PARÂMETROS : cpfcnpf [String ] -> [Obrigatório] número do CPF ou CNPJ a ser validado
  *              tipo    [Integer] -> [Obrigatório] Tipos válidos: (1) para CPF e (2) para CNPJ
- */	
+ */
 function validaCpfCnpj(cpfcnpj, tipo) {
 
 	// 058
 	cpfcnpj = normalizaNumero(cpfcnpj);
-	
+
 	var strCPFCNPJ = new String(parseFloat(cpfcnpj));
 
 	if (tipo == 1) { //CPF
@@ -956,7 +956,7 @@ function validaCpfCnpj(cpfcnpj, tipo) {
 		if (strCPFCNPJ.length < 5) {
 			return false;
 		}
-		
+
 		for (var i = 1; i < 10; i++) {
 			for (var j = 0; j < 11; j++) {
 				invalid += i;
@@ -965,17 +965,17 @@ function validaCpfCnpj(cpfcnpj, tipo) {
 			if (strCPFCNPJ == invalid) {
 				return false;
 			}
-			
+
 			invalid = "";
 		}
-		
+
 		for (i = strCPFCNPJ.length - 3; i >= 0; i--) {
             calculo = parseInt(calculo) + parseInt(strCPFCNPJ.substr(i, 1)) * peso;
 			 peso--;
 		}
-		
+
 		resto = parseInt(calculo) % 11;
-		
+
 		if (resto == 10) {
 			digito = 0;
 		} else {
@@ -984,20 +984,20 @@ function validaCpfCnpj(cpfcnpj, tipo) {
 
         peso = 8;
 		calculo = digito * 9;
-		
+
 		for (i = strCPFCNPJ.length - 3; i >= 0; i--) {
             calculo = parseInt(calculo) + parseInt(strCPFCNPJ.substr(i, 1)) * peso;
 			 peso--;
-		}		
-		
+		}
+
 		resto = parseInt(calculo) % 11;
-		
+
 		if (resto == 10) {
 			digito = digito * 10;
 		} else {
 			digito = (digito * 10) + resto;
 		}
-		
+
         if (strCPFCNPJ.substr(strCPFCNPJ.length - 2, 2) != digito) {
 			return false;
 		} else {
@@ -1006,77 +1006,77 @@ function validaCpfCnpj(cpfcnpj, tipo) {
 	} else if (tipo == 2) { //CNPJ
 		if (strCPFCNPJ.length < 3)
 			return false;
-			
+
         var calculo = 0;
 		var resultado = 0;
         var peso = 2;
-		
+
 		//Calculo do digito 8 do CNPJ.
         calculo = new String(parseInt(strCPFCNPJ.substr(0, 1)) * 2);
         resultado = parseInt(strCPFCNPJ.substr(1, 1)) + parseInt(strCPFCNPJ.substr(3, 1)) + parseInt(strCPFCNPJ.substr(5, 1)) +
  							  parseInt(calculo.substr(0, 1)) + parseInt(calculo.substr(1, 1));
-		
+
         calculo = new String(parseInt(strCPFCNPJ.substr(2, 1)) * 2);
         resultado = parseInt(resultado) + parseInt(calculo.substr(0, 1)) + parseInt(calculo.substr(1, 1));
-		
+
         calculo = new String(parseInt(strCPFCNPJ.substr(4, 1)) * 2);
         resultado = parseInt(resultado) + parseInt(calculo.substr(0, 1)) + parseInt(calculo.substr(1, 1));
-									
+
         calculo = new String(parseInt(strCPFCNPJ.substr(6, 1)) * 2);
         resultado = parseInt(resultado) + parseInt(calculo.substr(0, 1)) + parseInt(calculo.substr(1, 1));
-		
+
 		var resto = parseInt(resultado) % 10;
-		
+
 		if (resto == 0) {
 			digito = resto;
 		} else {
 			digito = 10 - resto;
 		}
-		
+
 		calculo = 0;
-		
+
 		for (var i = strCPFCNPJ.length - 3; i >= 0; i--) {
             calculo = parseInt(calculo) + parseInt(strCPFCNPJ.substr(i, 1)) * peso;
 			peso++;
-		
+
 			if (peso > 9) {
 				peso = 2;
 			}
 		}
-	
+
 		resto = parseInt(calculo) % 11;
-		
+
 		if (resto < 2) {
 			digito = 0;
 		} else {
 			digito = 11 - resto;
 		}
-		
+
         if (strCPFCNPJ.substr(strCPFCNPJ.length - 2, 1) != digito) {
 			return false;
 		}
-		
-		//Calculo do digito 14 do CNPJ.		
+
+		//Calculo do digito 14 do CNPJ.
         peso = 2;
 		calculo = 0;
-		
+
 		for (var i = strCPFCNPJ.length - 2; i >= 0; i--) {
             calculo = parseInt(calculo) + parseInt(strCPFCNPJ.substr(i, 1)) * peso;
 			peso++;
-		
+
 			if (peso > 9) {
 				peso = 2;
 			}
 		}
-		
+
 		resto = parseInt(calculo) % 11;
-		
+
 		if (resto < 2) {
 	 		digito = 0;
 		} else {
 			digito = 11 - resto;
 		}
-		
+
         if (strCPFCNPJ.substr(strCPFCNPJ.length - 1, 1) != digito) {
 			return false;
 		} else {
@@ -1087,18 +1087,18 @@ function validaCpfCnpj(cpfcnpj, tipo) {
 
 /*!
  * OBJETIVO   : Função que retorna uma lista de caracteres permitidos
- */	
+ */
 function charPermitido() {
     var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789\"!@#$%*() -_=+[]{}/?;:.,\\|" + String.fromCharCode(10, 13);
 	return chars;
 }
 
 /*!
- * OBJETIVO: 
- */	
+ * OBJETIVO:
+ */
 function cancelaPedeSenhaCoordenador(divBlock) {
     $("#divUsoGenerico").css("visibility", "hidden");
-	$("#divUsoGenerico").html("");	
+	$("#divUsoGenerico").html("");
 
 	if (divBlock == '') {
 		unblockBackground();
@@ -1111,13 +1111,13 @@ function cancelaPedeSenhaCoordenador(divBlock) {
  * OBJETIVO: Função para pedir senha de Coordenador/Gerente para processo especial
  */
 function pedeSenhaCoordenador(nvopelib, nmfuncao, nmdivfnc) {
-	showMsgAguardo("Informe a senha do coordenador para continuar ...");			
-	
+	showMsgAguardo("Informe a senha do coordenador para continuar ...");
+
 	// Resetar a Global com operador de liberacao
     glb_codigoOperadorLiberacao = 0;
 
-	$.ajax({		
-		type: "POST", 
+	$.ajax({
+		type: "POST",
 		dataType: "html",
 		url: UrlSite + "includes/pede_senha.php",
 		data: {
@@ -1125,7 +1125,7 @@ function pedeSenhaCoordenador(nvopelib, nmfuncao, nmdivfnc) {
 			nmfuncao: nmfuncao,
 			nmdivfnc: nmdivfnc,
 			redirect: "html_ajax"
-		},		
+		},
         error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
             showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "");
@@ -1133,8 +1133,8 @@ function pedeSenhaCoordenador(nvopelib, nmfuncao, nmdivfnc) {
         success: function (response) {
 			$("#divUsoGenerico").html(response);
 			$("#divUsoGenerico").centralizaRotinaH();
-		}				
-	}); 	
+		}
+	});
 }
 
 /*!
@@ -1142,7 +1142,7 @@ function pedeSenhaCoordenador(nvopelib, nmfuncao, nmdivfnc) {
  */
 function confirmaSenhaCoordenador(nmfuncao) {
 	showMsgAguardo("Aguarde, validando a senha ...");
-	
+
     var nvopelib = $("#nvopelib", "#frmSenhaCoordenador").val();
     var cdopelib = $("#cdopelib", "#frmSenhaCoordenador").val();
     var cddsenha = $("#cddsenha", "#frmSenhaCoordenador").val();
@@ -1154,26 +1154,26 @@ function confirmaSenhaCoordenador(nmfuncao) {
 		return false;
     } else {
         glb_codigoOperadorLiberacao = cdopelib; // Global com operador de liberacao
-	} 
-	
+	}
+
 	// Valida senha
 	if ($.trim(cddsenha) == "") {
 		hideMsgAguardo();
         showError("erro", "Informe a Senha.", "Alerta - Ayllos", "blockBackground(parseInt($('#divUsoGenerico').css('z-index')));$('#cddsenha','#frmSenhaCoordenador').focus()");
 		return false;
-	} 	
-	
+	}
+
 	// Executa script de saque atrav&eacute;s de ajax
-	$.ajax({		
+	$.ajax({
 		type: "POST",
-		url: UrlSite + "includes/valida_senha.php", 
+		url: UrlSite + "includes/valida_senha.php",
 		data: {
 			nvopelib: nvopelib,
 			cdopelib: cdopelib,
 			cddsenha: cddsenha,
 			nmfuncao: nmfuncao,
 			redirect: "script_ajax"
-		}, 
+		},
         error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
             showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divUsoGenerico').css('z-index')))");
@@ -1185,43 +1185,43 @@ function confirmaSenhaCoordenador(nmfuncao) {
 				hideMsgAguardo();
                 showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divUsoGenerico').css('z-index')))");
 			}
-		}				
-	});				
+		}
+	});
 }
 
 /*!
  * OBJETIVO: Função para forçar TAB quando der enter no campo
  */
-function enterTab(f, e) { 
+function enterTab(f, e) {
 
-	if (getKeyValue(e) == 13) { 
-		var i; 
-		for (i = 0; i < f.form.elements.length; i++) { 
-			if (f == f.form.elements[i]) { break; } 
-		} 
+	if (getKeyValue(e) == 13) {
+		var i;
+		for (i = 0; i < f.form.elements.length; i++) {
+			if (f == f.form.elements[i]) { break; }
+		}
 
-		i = (i + 1) % f.form.elements.length; 
-		for (ii = i; ii < f.form.elements.length; ii++) { 
+		i = (i + 1) % f.form.elements.length;
+		for (ii = i; ii < f.form.elements.length; ii++) {
             if ((f.form.elements[ii].readOnly != true) && (f.form.elements[ii].type != 'button')) {
-				break; 
-			} 
-		} 
-		f.form.elements[ii].focus(); 
-		return false; 
+				break;
+			}
+		}
+		f.form.elements[ii].focus();
+		return false;
 
-	} 
-	else {
-		return true; 
 	}
-} 
- 
+	else {
+		return true;
+	}
+}
+
 /*!
  * ALTERAÇÃO : 002
  * OBJETIVO  : Função para resetar as cores zebradas das linhas de uma tabela
  * PARÂMETRO : Recebe um seletor CSS das linhas (TR) de uma tabela
  */
 function zebradoLinhaTabela(x) {
-	var cor = '#F7F3F7';	
+	var cor = '#F7F3F7';
     x.each(function (e) {
 		cor == '#F4F3F0' ? cor = '#FFFFFF' : cor = '#F4F3F0';
         $(this).css({ 'background-color': cor, 'color': '#444' });
@@ -1255,7 +1255,7 @@ function trim(str) {
  * OBJETIVO  : Função similar á mostraRotina, com a melhoria de se passar o div a ser exibido e bloquear o fundo
  * PARÂMETRO : x -> div a ser exibido
  */
-function exibeRotina(x) { 
+function exibeRotina(x) {
     x.css('visibility', 'visible');
 	x.centralizaRotinaH();
 	bloqueiaFundo(x);
@@ -1263,14 +1263,14 @@ function exibeRotina(x) {
 }
 
 /*!
- * ALTERAÇÃO : 005 
+ * ALTERAÇÃO : 005
  * OBJETIVO  : Função similar á mostraRotina, com a melhoria de se passar o seletor jQuery da div a ser exibida e desbloquear o fundo.
  *             Ao desbloquear o fundo, tudo é desbloqueado, mas existem situações que precisamos manter alguma parte do sistema bloqueado,
  *             para isso utiliza-se do segundo parâmetro da função, que bloqueia a rotina indicada neste parâmetro
  * PARÂMETRO : rotina         -> Seletor jQuery a ser fechado
  *	           bloqueiaRotina -> Seletor jQuery ao qual seu fundo será bloqueado
  */
-function fechaRotina(rotina, bloqueiaRotina, fncFechar) { 
+function fechaRotina(rotina, bloqueiaRotina, fncFechar) {
 
     //Condição para voltar foco na opção selecionada
     var CaptaIdRetornoFoco = '';
@@ -1280,12 +1280,12 @@ function fechaRotina(rotina, bloqueiaRotina, fncFechar) {
     }
 
     rotina.css('visibility', 'hidden');
-	unblockBackground();	
+	unblockBackground();
     if (typeof bloqueiaRotina == 'object') {
-		bloqueiaFundo(bloqueiaRotina);		
+		bloqueiaFundo(bloqueiaRotina);
 	}
     if (typeof fncFechar != 'undefined') {
-		eval(fncFechar);		
+		eval(fncFechar);
 	}
 	return false;
 }
@@ -1293,15 +1293,15 @@ function fechaRotina(rotina, bloqueiaRotina, fncFechar) {
 /*!
  * ALTERAÇÃO : 006
  * OBJETIVO  : Função similar á blockBackground, com a melhoria de se passar o div a ser bloqueado
- * PARÂMETRO : div       -> div ao qual o fundo será bloqueado 
+ * PARÂMETRO : div       -> div ao qual o fundo será bloqueado
  *             campoFoco -> [Opcional] id do campo ao qual será dado o foco
  *             formFoco  -> [Opcional] id do formulario ao qual o campoFoco está inserido
  *			   boErro    -> [Opcional] valores válidos (true|false), indicando se recebe a classe erro ou não
  */
-function bloqueiaFundo(div, campoFoco, formFoco, boErro) {	
+function bloqueiaFundo(div, campoFoco, formFoco, boErro) {
     if ((div.attr('id') != 'divMatric') && (div.attr('id') != 'divTela')) {
-		zIndex = parseInt(div.css('z-index'));	
-		blockBackground(zIndex);	
+		zIndex = parseInt(div.css('z-index'));
+		blockBackground(zIndex);
 	}
     if ((typeof campoFoco != 'undefined') && (typeof formFoco != 'undefined')) {
         if ((typeof boErro == 'undefined') && (boErro)) {
@@ -1309,22 +1309,22 @@ function bloqueiaFundo(div, campoFoco, formFoco, boErro) {
 		}
         $('#' + campoFoco, '#' + formFoco).focus();
 	}
-		
+
 	return true;
 }
 
 /*!
  * ALTERAÇÃO : 008
  * OBJETIVO  : Função similar á format_number do php
- * PARÂMETRO : number        -> O numero a ser formatado 
+ * PARÂMETRO : number        -> O numero a ser formatado
  *             decimals      -> Numero de casas decimais
  *             dec_point     -> [Opcional] Separador de decimal
  *             thousands_sep -> [Opcional] Separador de milhar
- * OBSERVAÇÃO: Se passado o 3º parametro, 4º é obrigatório.Se nenhum é passado, default 
+ * OBSERVAÇÃO: Se passado o 3º parametro, 4º é obrigatório.Se nenhum é passado, default
  *             é ',' e '.' respectivamento do parametro 3 e 4
  */
 function number_format(number, decimals, dec_point, thousands_sep) {
-	var n = !isFinite(+number) ? 0 : +number, 
+	var n = !isFinite(+number) ? 0 : +number,
 		prec = !isFinite(+decimals) ? 0 : Math.abs(decimals),
 		sep = (typeof thousands_sep === 'undefined') ? ',' : thousands_sep, dec = (typeof dec_point === 'undefined') ? '.' : dec_point,
 		s = '',
@@ -1358,14 +1358,14 @@ function in_array(item, array) {
 
 /*!
  * ALTERAÇÃO : 010
- * OBJETIVO  : Função que define máscaras, formatos, valores permitidos e layout de vários elementos dos formulários. 
+ * OBJETIVO  : Função que define máscaras, formatos, valores permitidos e layout de vários elementos dos formulários.
  */
 function layoutPadrao() {
-	
+
     var caracAcentuacao = 'áàäâãÁÀÄÂÃéèëêÉÈËÊíìïîÍÌÏÎóòöôõÓÒÖÔÕúùüûÚÙÜÛçÇ';
     var caracEspeciais = '!@#$%&*()-_+=§:<>;/?[]{}°ºª¬¢£³²¹\\|\',.´`¨^~';
     var caracSuperEspeciais = '¨¹²³£¢¬§ªº°´<>&\'\"';
-	var caracEspeciaisEmail = '!#$%&*()+=§:<>;/?[]{}°ºª¬¢£³²¹\\|\',´`¨^~';	
+	var caracEspeciaisEmail = '!#$%&*()+=§:<>;/?[]{}°ºª¬¢£³²¹\\|\',´`¨^~';
 
 	// Aplicando Máscaras
     $('input.conta').setMask('INTEGER', 'zzzz.zzz-z', '.-', '');
@@ -1386,7 +1386,7 @@ function layoutPadrao() {
     $('input.contrato3').setMask('INTEGER', 'zz.zzz.zz9', '.', '');
     $('input.insc_estadual').setMask('INTEGER', 'zzz.zzz.zzz.zzz', '.', '');
     $('input.dataMesAno').setMask('INTEGER', 'zz/zzzz', '/', '');
-	//$('input.data'			).dateEntry({useMouseWheel:true,spinnerImage:''});   
+	//$('input.data'			).dateEntry({useMouseWheel:true,spinnerImage:''});
     $('input.data').setMask("DATE", "", "", "");
     $('input.taxa').attr('alt', 'p2p3c2D').css('text-align', 'right').autoNumeric().trigger('blur');
     $('input.monetario').attr('alt', 'n9p3c2D').css('text-align', 'right').autoNumeric().trigger('blur');
@@ -1397,51 +1397,51 @@ function layoutPadrao() {
 	$('input.porcento_n').attr('alt', 'n3x0c2a').css('text-align', 'right').autoNumeric().trigger('blur');
 	$('input.porcento_4').attr('alt', 'p3x0c4a').autoNumeric().trigger('blur');
 	$('input.porcento_6').attr('alt', 'p3x0c6a').autoNumeric().trigger('blur');
-	$('input.porcento_7'	).attr('alt','p3x0c7a').autoNumeric().trigger('blur');	
-	$('input.porcento_8'	).attr('alt','p3x0c8a').autoNumeric().trigger('blur');	
-	$('input.indexador'	).attr('alt','p3x0c8a').autoNumeric().trigger('blur');	
+	$('input.porcento_7'	).attr('alt','p3x0c7a').autoNumeric().trigger('blur');
+	$('input.porcento_8'	).attr('alt','p3x0c8a').autoNumeric().trigger('blur');
+	$('input.indexador'	).attr('alt','p3x0c8a').autoNumeric().trigger('blur');
 	$('input.email'			).css({'text-transform':'lowercase'}).alphanumeric({ichars: caracSuperEspeciais+caracAcentuacao+caracEspeciaisEmail});
 	$('input.alpha'			).css({'text-transform':'uppercase'});
-	$('input.alphanum'		).css({'text-transform':'uppercase'});		
-	$('input.alphanumlower'	).css({'text-transform':'lowercase'});		
-	
+	$('input.alphanum'		).css({'text-transform':'uppercase'});
+	$('input.alphanumlower'	).css({'text-transform':'lowercase'});
+
 	$('input.alpha'			).alpha({ichars: caracAcentuacao+caracEspeciais});
 	$('input.alphanum'		).alphanumeric({ichars: caracSuperEspeciais+caracAcentuacao});
 	$('input.alphanumlower'	).alphanumeric({ichars: caracSuperEspeciais+caracAcentuacao});
 	$('textarea.alphanum'   ).alphanumeric({ichars: caracSuperEspeciais+caracAcentuacao});
 	$('input.inteiro'		).numeric({ichars: caracAcentuacao+caracEspeciais+'.,\"'});
 	$('input.codigo'		).numeric({ichars: caracAcentuacao+caracEspeciais+'.,\"'});
-	
+
 	$('.descricao'			).desabilitaCampo();
-	$('.campoTelaSemBorda'	).attr('tabindex','-1');	
+	$('.campoTelaSemBorda'	).attr('tabindex','-1');
 	$('label'				).addClass("txtNormalBold");
-	$('input.codigo'		).attr('maxlength','4');	
-	$('a[class!="botao"]','.formulario').attr('tabindex','-1');	
+	$('input.codigo'		).attr('maxlength','4');
+	$('a[class!="botao"]','.formulario').attr('tabindex','-1');
 
 	// Alinhando os campos para direita
-	$('.inteiro,.porcento,.numerocasa,.caixapostal,.cep,.conta,.contrato,.contrato2,.contrato3,.contaitg,.cnpj,.cpf,.matricula,.cadempresa,.insc_estadual').css('text-align','right');	
-	
+	$('.inteiro,.porcento,.numerocasa,.caixapostal,.cep,.conta,.contrato,.contrato2,.contrato3,.contaitg,.cnpj,.cpf,.matricula,.cadempresa,.insc_estadual').css('text-align','right');
+
 	/*!
 	 * ALTERAÇÃO  : 023
 	 * OBJETIVO   : Tecla de atalho F8 igual ao modo CARACTER para limpar os campos input
-	 */	
+	 */
 	/*
 	* remover esse atalho, conforme NOVO LAYOUT padrão
 	*$('input[type=\'text\'],select').keydown( function(e) {
 	*	if ( e.keyCode == 119 ) {
-	*		$(this).val(''); 
+	*		$(this).val('');
 	*		$(this).trigger('change'); // ALTERAÇÃO 040
 	*		return false;
 	*	}
 	*	return true;
 	*});
 	*/
-	
+
 	/*!
 	 * ALTERAÇÃO  : 024
 	 * OBJETIVO   : Tecla de atalho F7 igual ao modo CARACTER para abrir a Pesquisa
 	 * OBSERVAÇÃO : Aplicado somente a campos que possuem a classe "pesquisa"
-	 */	
+	 */
 	$('input.pesquisa').unbind('keydown.zoom').bind('keydown.zoom', function(e) {
 		if ( e.keyCode == 118 ) {
 			if ( isHabilitado($(this)) ) {
@@ -1451,11 +1451,11 @@ function layoutPadrao() {
 		}
 		return true;
 	});
-	
+
 	/*!
 	 * ALTERAÇÃO  : 027
 	 * OBJETIVO   : Ao entrar no campo cpf ou cnpj, verifica se não existe valor digitado, caso afirmativo limpa o campo para digitação
-	 */		
+	 */
 	$('input.cnpj').unbind('focusin').bind('focusin', function() {
 		$(this).addClass('campoFocusIn');	/*064*/
 		valorAtual = normalizaNumero( $(this).val() );
@@ -1467,8 +1467,8 @@ function layoutPadrao() {
 		valorAtual = normalizaNumero( $(this).val() );
 		valorAtual = ( valorAtual == '0' ) ? '' : valorAtual;
 		$(this).val( valorAtual );
-	});	
-	
+	});
+
 	return true;
 }
 
@@ -1505,19 +1505,19 @@ function montaHtmlImpressao( titulo ) {
  *              businobj [Obrigatório] -> Business Object da rotina que está sendo tratada
  */
 function revisaoCadastral(chavealt, tpatlcad, businobj, stringArrayMsg, metodo) {
-	
+
     if (typeof stringArrayMsg == 'undefined') stringArrayMsg = '';
     if (typeof metodo == 'undefined') metodo = 'controlaOperacao(\"\");';
-		
+
 	blockBackground(1000);
 	showMsgAguardo('Aguarde, registrando revisão cadastral ...');
-	
+
     nrdconta = normalizaNumero(nrdconta);
-			
-	$.ajax({		
+
+	$.ajax({
 		type: 'POST',
 		dataType: 'html',
-		url: UrlSite + 'telas/revisao_cadastral.php', 
+		url: UrlSite + 'telas/revisao_cadastral.php',
 		data: {
             nrdconta: nrdconta,
             idseqttl: idseqttl,
@@ -1527,7 +1527,7 @@ function revisaoCadastral(chavealt, tpatlcad, businobj, stringArrayMsg, metodo) 
             stringArrayMsg: stringArrayMsg,
             metodo: metodo,
             redirect: 'script_ajax'
-		}, 
+		},
         error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
             showError('error', 'N&atilde;o foi poss&iacute;vel concluir a revis&atilde;o cadastral.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
@@ -1538,9 +1538,9 @@ function revisaoCadastral(chavealt, tpatlcad, businobj, stringArrayMsg, metodo) 
             } catch (error) {
 				hideMsgAguardo();
                 showError('error', 'N&atilde;o foi poss&iacute;vel concluir a revis&atilde;o cadastral.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
-			}		
-		}				
-	});	 
+			}
+		}
+	});
 }
 
 /*!
@@ -1548,7 +1548,7 @@ function revisaoCadastral(chavealt, tpatlcad, businobj, stringArrayMsg, metodo) 
  * OBJETIVO   : Para trabalhar com o números sem máscaras
  * PARAMETROS : numero [String] -> número que deseja-se normalizar
  * RETORNO    : Retorna zero caso seja vazio o número passado como parâmetro, ou retorna o número sem máscara
- */	 
+ */
 function normalizaNumero(numero) {
 	var retorno;
     numero = ((typeof numero == 'undefined') || (numero == null)) ? '' : numero;
@@ -1560,24 +1560,24 @@ function normalizaNumero(numero) {
 
 /*!
  * ALTERAÇÃO  : 025 - Criada função
- * OBJETIVO   : Selecionar o registro corrente retornando a chave para ser enviada ao XML. 
- * OBSERVAÇÕES: Função utilizada no início da função "controlaOperacao" de cada rotina. 
+ * OBJETIVO   : Selecionar o registro corrente retornando a chave para ser enviada ao XML.
+ * OBSERVAÇÕES: Função utilizada no início da função "controlaOperacao" de cada rotina.
  *              Comumente utilizada para operações de Alteração ou Exclusão
  * RETORNO    : Retorna vazio caso não existam registros para serem selecionados, ou retorna a chave do registro selecionado
- */	 	
+ */
 function selecionaRegistro() {
 	var retorno = '';
     $('table > tbody > tr', 'div.divRegistros').each(function () {
         if ($(this).hasClass('corSelecao')) {
             retorno = $('input', $(this)).val();
 		}
-	});	
+	});
 	return retorno;
 }
 
 /*!
  * OBJETIVO   : Inserir comportamento no link da pesquisa associado para abrir o formulário de pesquisa
- */	 
+ */
 function controlaPesquisaAssociado(nomeForm) {
     $('a', '#' + nomeForm).addClass('lupa').css({ 'float': 'right', 'font-size': '11px', 'cursor': 'pointer' });
     $('a', '#' + nomeForm).each(function () {
@@ -1605,21 +1605,21 @@ function alerta(mensagem) {
  *             divBloqueia  [String]  -> [Opcional] nome da div que o fundo será bloqueado
  */
 function focaCampoErro(campoFoco, formFoco, desbloqueia, divBloqueia) {
-	
+
     if (typeof desbloqueia == 'undefined') {
 		unblockBackground();
 	} else {
         if (desbloqueia) unblockBackground();
 	}
-	
+
     if (typeof divBloqueia != 'undefined') {
         zIndex = parseInt($('#' + divBloqueia).css('z-index'));
-		blockBackground(zIndex); 
-	}	
-	
+		blockBackground(zIndex);
+	}
+
     $('#' + campoFoco, '#' + formFoco).addClass('campoErro');
     $('#' + campoFoco, '#' + formFoco).focus();
-	
+
 	return true;
 }
 
@@ -1628,7 +1628,7 @@ function focaCampoErro(campoFoco, formFoco, desbloqueia, divBloqueia) {
  * OBJETIVO   : Função recursiva para exibir um array de mensagens, onde cada mensagem será exibida por LIFO
  * PARÂMETROS : strArray [Obrigatorio] -> Array de strings que serãoo exibidas
  *              metodo 	 [Obrigatorio] -> Metodo que será executado após a ultima mensagem do array ser exibida
- */	
+ */
 function exibirMensagens(strArray, metodo) {
     if (strArray != '') {
 		// Definindo as variáveis
@@ -1650,17 +1650,17 @@ function exibirMensagens(strArray, metodo) {
  * ALTERAÇÃO  : 029
  * OBJETIVO   : Função semelhando ao implode do PHP, que retorna uma string contento todos os elementos de um array separados por um separador
  * PARÂMETROS : separador   [Obrigatorio] -> Separador que será utilizado na montagem da string
- *              arrayPedaco [Obrigatorio] -> Array que será implodido 
- */	
+ *              arrayPedaco [Obrigatorio] -> Array que será implodido
+ */
 function implode(separador, arrayPedaco) {
     return ((arrayPedaco instanceof Array) ? arrayPedaco.join(separador) : arrayPedaco);
-}  
+}
 
 /*!
  * ALTERAÇÃO  : 028
  * OBJETIVO   : Função para verificar se existem funções "montaSelect" sendo executadas
  * OBSERVAÇÃO : Utilizada pelos botoes das diversas rotinas, onde se essa função retornar FALSE, não é para executar a ação do botão
- */	
+ */
 function verificaContadorSelect() {
     if (contadorSelect > 0) return false;
 	return true;
@@ -1668,10 +1668,10 @@ function verificaContadorSelect() {
 
 /*!
  * ALTERAÇÃO  : 032
- * OBJETIVO   : Função para verificar se o sistema está processando alguma função "controlaOperacao", não permitindo chamá-la 
+ * OBJETIVO   : Função para verificar se o sistema está processando alguma função "controlaOperacao", não permitindo chamá-la
  *              enquanto ainda está sendo executada
  * OBSERVAÇÃO : Utilizada por todas rotinas
- */	
+ */
 function verificaSemaforo() {
     if (semaforo > 0) return false;
 	semaforo++;
@@ -1682,7 +1682,7 @@ function verificaSemaforo() {
  * ALTERAÇÃO  : 031
  * OBJETIVO   : Função para desbloquear a tela, mas a melhoria de poder setar o foco em algum campo da tela
  * OBSERVAÇÃO : Utilizada na tela MATRIC nos retornos de erro
- */	
+ */
 function desbloqueia(campoFoco, formFoco) {
 	unblockBackground();
     if ((typeof campoFoco != 'undefined') && (typeof formFoco != 'undefined')) {
@@ -1695,7 +1695,7 @@ function desbloqueia(campoFoco, formFoco) {
  * ALTERAÇÃO  : 032
  * OBJETIVO   : Função para trucar textos em javascript
  * OBSERVAÇÃO : Utilizada na tela MATRIC apresentação dos dados da tabela dos procuradores
- */	
+ */
 function truncar(texto, limite) {
 	if (texto.length > limite) {
         texto = texto.substr(0, limite - 1) + '…';
@@ -1707,7 +1707,7 @@ function truncar(texto, limite) {
  * ALTERAÇÃO  : 036
  * OBJETIVO   : Função para remover o filtro de opacidade tanto no IE quanto no FF
  * PARÂMETROS : nome [String] -> Nome da div que deseja-se voltar a visualização em 100%, sem transparencia (opacidade)
- */	
+ */
 function removeOpacidade(nome) {
     $('#' + nome).fadeTo(1000, 1, function () {
         if ($.browser.msie) {
@@ -1716,15 +1716,15 @@ function removeOpacidade(nome) {
             $(this).css({ '-moz-opacity': '100', 'filter': 'alpha(opacity=100)', 'opacity': '100' });
 		}
 	});
-	
+
 }
 
 /*!
- * ALTERAÇÃO  : 
+ * ALTERAÇÃO  :
  * OBJETIVO   : Função que dado um Array Associativo bidirecional retorna uma string contendo o nome das chaves do array separado pelo separador
  * PARÂMETROS : arrayDados  [Obrigatorio] -> Array Associativo que será implodido
  *              separador   [Obrigatorio] -> Separador que será utilizado na montagem da string
- */	
+ */
 function retornaCampos(arrayDados, separador) {
 	var str = '';
     if (arrayDados.length > 0) {
@@ -1737,7 +1737,7 @@ function retornaCampos(arrayDados, separador) {
 }
 
 /*!
- * ALTERAÇÃO  : 
+ * ALTERAÇÃO  :
  * OBJETIVO   : Função que dado um Array Associativo bidirecional retorna uma string contendo os dados de um registro implodidos com o sepValores
 				e todos os registros são implodidos com o sepRegs
  * PARÂMETROS : arrayDados  [Obrigatorio] -> Array Associativo que será implodido
@@ -1748,11 +1748,11 @@ function retornaValores(arrayDados, sepValores, sepRegs, strCampos) {
 	var str = '';
     var arrayCampos = new Array();
     arrayCampos = strCampos.split('|');
-	
+
     if (arrayDados.length > 0) {
         for (registro in arrayDados) {
             for (i in arrayCampos) {
-			
+
 			//for( dado in arrayDados[registro] ) {
                 str += arrayDados[registro][arrayCampos[i]] + sepValores;
 			}
@@ -1766,8 +1766,8 @@ function retornaValores(arrayDados, sepValores, sepRegs, strCampos) {
 
 
 /*!
- * ALTERAÇÃO  : 046 
- * OBJETIVO   :	Função que converte um valor de financeiro para float 
+ * ALTERAÇÃO  : 046
+ * OBJETIVO   :	Função que converte um valor de financeiro para float
  * PARÂMETROS : valor [String ] -> [Obrigatório] Valor financeiro
  * RETORNO    : Retorna um valor float
  */
@@ -1780,10 +1780,10 @@ function converteMoedaFloat(valor) {
 }
 
 /*!
- * ALTERAÇÃO  : 048 
- * OBJETIVO   :	Função que coloca mascara em uma string 
+ * ALTERAÇÃO  : 048
+ * OBJETIVO   :	Função que coloca mascara em uma string
  * PARÂMETROS : v [String ] -> String que vai receber a mascara. Ex.: 1111111
-			  : m [String ] -> String com o formato da mascara. Ex.: ###.###.#	
+			  : m [String ] -> String com o formato da mascara. Ex.: ###.###.#
  * RETORNO    : Retorna uma string com mascara. Ex.: 111.111.1
  */
 function mascara(v, m) {
@@ -1793,10 +1793,10 @@ function mascara(v, m) {
 	var l2 = ''; // ultima letra mascara
 	var i1 = 0; // indice string
 	var i2 = 0; // indice mascara
-	
-	var retorno = '';	
+
+	var retorno = '';
     var ultima = '';
-	
+
     for (i1 = t1; i1 >= 0; i1--) {
 		l1 = v.charAt(i1);
         while (ultima != '#' && t2 >= i2) {
@@ -1810,7 +1810,7 @@ function mascara(v, m) {
 			i2++;
 		}
 		ultima = '';
-	}	
+	}
 	return retorno;
 }
 
@@ -1818,61 +1818,61 @@ function mascara(v, m) {
 /*!
  * Várias funções criadas como plugins do jQuery
  */
-$.fn.extend({ 
-	
+$.fn.extend({
+
 	/*!
 	 * OBJETIVO: Função para centralizar objetos na tela
 	 */
     setCenterPosition: function () {
 		// Captura posi&ccedil;&atilde;o esquerda e do topo do documento onde a barra de rolagem est&aacute; posicionada
 		var curScrollX = $(window).scrollLeft();
-		var curScrollY = $(window).scrollTop(); 
+		var curScrollY = $(window).scrollTop();
 
 		// Calcula tamanho que deve sobrar ao redor do div
 		var objOffsetY = ($(window).innerHeight() - $(this).outerHeight()) / 2;
 		var objOffsetX = $.browser.msie ? ($(window).innerWidth() - $(this).outerWidth()) / 2 : ($("body").offset().width - $(this).outerWidth()) / 2;
-	
+
 		// Atribui posi&ccedil;&atilde;o ao div
 		$(this).css({
 			left: curScrollX + objOffsetX,
 			top: curScrollY + objOffsetY
-		});		
+		});
 	},
 
 	/*!
 	 * ALTERAÇÃO : 007
 	 * OBJETIVO  : Função similar á setCenterPosition, só que centraliza a Rotina na horizontal dentro de outro elemento "tdTela"
-	 */	
+	 */
     centralizaRotinaH: function () {
-	
-		// Calcula o centro da Tela ao qual o objeto será centralizado 
+
+		// Calcula o centro da Tela ao qual o objeto será centralizado
 		var larguraRotina = $("#tdConteudoTela").innerWidth();
-		var larguraObjeto = $(this).innerWidth();				
-		
+		var larguraObjeto = $(this).innerWidth();
+
         var metadeRotina = Math.floor(larguraRotina / 2);
         var metadeObjeto = Math.floor(larguraObjeto / 2);
-		
+
 		// A nova posição será o metade da largura da Tela menos (-) metade da do objeto mais (+)
-		// 177 = largura do menu (175px) + padding_left do menu (2px) 
+		// 177 = largura do menu (175px) + padding_left do menu (2px)
 		var left = metadeRotina - metadeObjeto + 178;
         $(this).css('left', left.toString());
         $(this).css('top', '91px');
 	},
-	
+
 	/*!
 	 * ALTERAÇÃO : 020 - Criação do método
 	 * OBJETIVO  : Facilitar a chamada e ocultar as mensagens padrão do sistema, onde somente um método agora é responsável por realizar tal tarefa
-	 */	
+	 */
     escondeMensagem: function () {
         $(this).css({ left: '0px', top: '0px', display: 'none' });
-		unblockBackground();	
+		unblockBackground();
 	},
-	
+
 	/*!
 	 * ALTERAÇÃO 45 - Somente trabalhar com determinados tipos e tags
 	 * ALTERAÇÃO 44 - Se possui a classe pesquisa, então controla ponteiro do mouse do próximo campo
 	 * OBJETIVO: Função para desabilitar o(s) campo(s)
-	 */		
+	 */
     desabilitaCampo: function () {
         return this.each(function () {
 			var type = this.type;
@@ -1883,14 +1883,14 @@ $.fn.extend({
                 if (type == 'textarea') $(this).prop('disabled', false);
                 if ($(this).hasClass('pesquisa')) $(this).next().ponteiroMouse();
 			}
-		});		
+		});
 	},
-	
+
 	/*!
 	 * ALTERAÇÃO 45 - Somente trabalhar com determinados tipos e tags
-	 * ALTERAÇÃO 44 - Se possui a classe pesquisa, então controla ponteiro do mouse do próximo campo	 
+	 * ALTERAÇÃO 44 - Se possui a classe pesquisa, então controla ponteiro do mouse do próximo campo
 	 * OBJETIVO: Função para habilitar o(s) campo(s)
-	 */		
+	 */
     habilitaCampo: function () {
         return this.each(function () {
 			var type = this.type;
@@ -1899,9 +1899,9 @@ $.fn.extend({
                 $(this).addClass('campo').removeClass('campoTelaSemBorda').prop('readonly', false).prop('disabled', false);
                 if ($(this).hasClass('pesquisa')) $(this).next().ponteiroMouse();
 			}
-		});		
+		});
 	},
-	
+
 	/*!
 	 * ALTERAçãO  : 034
 	 * OBJETIVO   : Função responsável por formatar o rodapé das pesquisas genéricas e pesquisa associado
@@ -1920,15 +1920,15 @@ $.fn.extend({
             $(this).css({ 'text-decoration': 'underline', 'color': '#000' });
         }, function () {
             $(this).css({ 'text-decoration': 'none', 'color': '#333' });
-		});			
+		});
 	},
-	
+
 	/*!
 	 * ALTERAÇÃO : 001
-	 * OBJETIVO  : Plugin para limpar os dados de um formulário. 
+	 * OBJETIVO  : Plugin para limpar os dados de um formulário.
 	 * UTILIZAÇÃO: Via jQuery, onde a partir de um seletor podemos disparar esta funcionalidade da seguinte forma: $('seletor').limpaFormulario
 	 * PARâMETRO : Podemos passar tanto o formulário ou algum elemento dele para ser limpado
-	 */	
+	 */
     limpaFormulario: function () {
         return this.each(function () {
 			// Obtenho o tipo do elemento
@@ -1960,7 +1960,7 @@ $.fn.extend({
 		var tabela = $(this);
 
 		// Forma personalizada de extração dos dados para ordenação, pois para números e datas os dados devem ser extraídos para serem ordenados
-		// não da forma que são apresentados na tela. Portanto adotou-se o padrão de no início da tag TD, inserir uma tag SPAN com o formato do 
+		// não da forma que são apresentados na tela. Portanto adotou-se o padrão de no início da tag TD, inserir uma tag SPAN com o formato do
 		// dado aceito para ordenação
         var textExtraction = function (node) {
             if ($('span', node).length == 1) {
@@ -1971,7 +1971,7 @@ $.fn.extend({
 		}
 
 		// Configurações para o Sorter
-		tabela.has("tbody > tr").tablesorter({ 
+		tabela.has("tbody > tr").tablesorter({
             sortList: ordemInicial,
             textExtraction: textExtraction,
             widgets: ['zebra'],
@@ -1990,13 +1990,13 @@ $.fn.extend({
 		// $('thead', tabelaTitulo ).append( $('thead', tabela ).html() );
         $('thead > tr', tabelaTitulo).append('<th class="ordemInicial"></th>');
 
-		// Formatando - Largura 
+		// Formatando - Largura
 		if (typeof larguras != 'undefined') {
             for (var i in larguras) {
                 $('td:eq(' + i + ')', tabela).css('width', larguras[i]);
                 $('th:eq(' + i + ')', tabelaTitulo).css('width', larguras[i]);
-			}		
-		}	
+			}
+		}
 
 		// Calcula o número de colunas Total da tabela
         var nrColTotal = $('thead > tr > th', tabela).length;
@@ -2007,8 +2007,8 @@ $.fn.extend({
 				var nrColAtual = i;
 				nrColAtual++;
                 $('td:nth-child(' + nrColTotal + 'n+' + nrColAtual + ')', tabela).css('text-align', alinhamento[i]);
-			}		
-		}			
+			}
+		}
 
 		// Controla Click para Ordenação
         $('th', tabelaTitulo).each(function (i) {
@@ -2021,13 +2021,13 @@ $.fn.extend({
 			});
             $(this).mouseup(function () {
 
-				tabela.zebraTabela();		
+				tabela.zebraTabela();
 
                 $('table > tbody > tr', divRegistro).each(function (i) {
                     $(this).unbind('click').bind('click', function () {
                         $('table', divRegistro).zebraTabela(i);
 					});
-				});				
+				});
 
                 $('th', tabela).each(function (i) {
 					var classes = $(this).attr('class');
@@ -2035,9 +2035,9 @@ $.fn.extend({
                         $('th:eq(' + i + ')', tabelaTitulo).removeClass('headerSort headerSortUp headerSortDown');
                         $('th:eq(' + i + ')', tabelaTitulo).addClass(classes);
 					}
-				});				
-			});			
-		});	
+				});
+			});
+		});
 
         $('table > tbody > tr', divRegistro).each(function (i) {
             $(this).bind('click', function () {
@@ -2048,7 +2048,7 @@ $.fn.extend({
         if (typeof metodoDuploClick != 'undefined') {
             $('table > tbody > tr', divRegistro).dblclick(function () {
                 eval(metodoDuploClick);
-			});	
+			});
 
             $('table > tbody > tr', divRegistro).keypress(function (e) {
                 if (e.keyCode == 13) {
@@ -2061,7 +2061,7 @@ $.fn.extend({
         $('td:nth-child(' + nrColTotal + 'n)', tabela).css('border', '0px');
 
 		// Iniciar com a primeira linha selecionado e retornar o valor da chave deste primerio registro, que se encontra no input do tipo hidden
-		tabela.zebraTabela(0);	
+		tabela.zebraTabela(0);
 		return true;
 	},
 
@@ -2072,30 +2072,30 @@ $.fn.extend({
 	 * PARÂMETROS : indice [Inteiro] -> Indica a linha que deve estar selecionada, ficando com uma cor diferenciada.
 	 */
     zebraTabela: function (indice) {
-		
+
 		var tabela = $(this);
-		
+
         $('tbody > tr', tabela).removeClass('corPar corImpar corSelecao');
         $('tbody > tr:odd', tabela).addClass('corPar');
         $('tbody > tr:even', tabela).addClass('corImpar');
-		
+
         if (typeof indice != 'undefined') {
             $('tbody > tr', tabela).removeClass('corSelecao');
             $('tbody > tr:eq(' + indice + ')', tabela).addClass('corSelecao');
 		}
-		
+
         $('tr', tabela).hover(function () {
             $(this).css({ 'cursor': 'pointer', 'outline': '1px solid #6B7984', 'color': '#000' });
         }, function () {
             $(this).css({ 'cursor': 'auto', 'outline': '0px', 'color': '#444' });
 		});
-		
+
 		return false;
 	},
 
 	/*!
 	 * ALTERAÇÃO  : 013
-	 * OBJETIVO   : Plugin para limitar a quantidade de linhas e colunas de um textarea. 
+	 * OBJETIVO   : Plugin para limitar a quantidade de linhas e colunas de um textarea.
 	 *              O número de colunas e linhas aceitos pelo "textarea" será os valores de suas propriedades "cols" e "rows" respctivamente.
 	 * UTILIZAÇÃO : Via jQuery, onde a partir de um seletor podemos disparar esta funcionalidade da seguinte forma: $('seletor').limitaTexto;
 	 */
@@ -2106,18 +2106,18 @@ $.fn.extend({
 			var arrayLinhas = x.val().split("\n");
 
             nrLinhas = x.attr('rows');
-			nrColunas = x.attr('cols');			
-			nrLinhasAtual = arrayLinhas.length;			
+			nrColunas = x.attr('cols');
+			nrLinhasAtual = arrayLinhas.length;
 
             for (var i in arrayLinhas) {
-				nrColunasAtual = arrayLinhas[i].length;			
+				nrColunasAtual = arrayLinhas[i].length;
                 if (eval(nrColunasAtual >= nrColunas)) { arrayLinhas[i] = arrayLinhas[i].substring(0, nrColunas); }
                 testoAux += (testoAux == '') ? arrayLinhas[i] : '\n' + arrayLinhas[i];
 			}
             x.val(testoAux);
 
             if (nrLinhasAtual > nrLinhas) {
-				testoAux = x.val().split("\n").slice(0, nrLinhas); 
+				testoAux = x.val().split("\n").slice(0, nrLinhas);
                 x.val(testoAux.join("\n"));
 			}
 		}
@@ -2127,12 +2127,12 @@ $.fn.extend({
             textArea.keyup(function () { limita(textArea); });
             textArea.bind('paste', function (e) { setTimeout(function () { limita(textArea) }, 75); });
 		});
-		
+
 		return this;
 	},
-	
+
 	/*!
-	 * ALTERAÇÃO  : 042 
+	 * ALTERAÇÃO  : 042
 	 * OBJETIVO   : Adicionar a classe "cpf" ou "cnpj" nos campos que possuem valores válidos de cpf ou cnpj respectivamente
 	 */
     addClassCpfCnpj: function () {
@@ -2141,35 +2141,35 @@ $.fn.extend({
 			var tag = this.tagName.toLowerCase();
 			if (tag == 'input' && type == 'text') {
                 if (verificaTipoPessoa(this.value) == 1) {
-					$(this).removeClass('cnpj').addClass('cpf'); 
+					$(this).removeClass('cnpj').addClass('cpf');
                 } else if (verificaTipoPessoa(this.value) == 2) {
-					$(this).removeClass('cpf').addClass('cnpj'); 
+					$(this).removeClass('cpf').addClass('cnpj');
 				} else {
 					$(this).removeClass('cpf').removeClass('cnpj');
 				}
-			}	
+			}
 		});
 	},
-	
+
 	/*!
 	 * ALTERAÇÃO  : 043
 	 * OBJETIVO   : Somente aplicar comportamento para links <a> que possuem a classe "lupa", onde será
 	 *              verificado se o campo anterior possui a classe "campo", e caso afirmativo coloca
 	 *              a classe "pointer", caso negativo retira esta classe.
-	 */		
+	 */
     ponteiroMouse: function () {
         return this.each(function () {
 			// Se não form TAG de link <a>, então não faz nada
-			if (this.tagName.toLowerCase() != 'a') return false;						
+			if (this.tagName.toLowerCase() != 'a') return false;
 			// Se não possuir a classe "lupa", não faz nada
-			if (!$(this).hasClass('lupa')) return false;			
+			if (!$(this).hasClass('lupa')) return false;
 			// Se o campo anterior possuir a classe "campo", então adiciona a classe "pointer"
             if (isHabilitado($(this).prev())) {
 				$(this).addClass('pointer');
 			} else {
 				$(this).removeClass('pointer');
 			}
-			return false;			
+			return false;
 		});
 	},
     removeOpacidade: function () {
@@ -2184,71 +2184,71 @@ $.fn.extend({
     trocaClass: function (classAnterior, classAtual) {
         return this.each(function () {
 			$(this).removeClass(classAnterior).addClass(classAtual);
-		});		
+		});
 	}
 });
 
 /*!
  * ALTERAÇÃO  : 037
  * OBJETIVO   : Transforma data para timestamp
- * UTILIZAÇÃO : *     example 1: mktime(14, 10, 2, 2, 1, 2008);  
-				*     returns 1: 1201871402  
-				*     example 2: mktime(0, 0, 0, 0, 1, 2008);  
-				*     returns 2: 1196463600  
-				*     example 3: make = mktime();  
-				*     example 3: td = new Date();  
-				*     example 3: real = Math.floor(td.getTime()/1000);  
-				*     example 3: diff = (real - make);  
-				*     results 3: diff < 5  
-				*     example 4: mktime(0, 0, 0, 13, 1, 1997)  
-				*     returns 4: 883609200  
-				*     example 5: mktime(0, 0, 0, 1, 1, 1998)  
-				*     returns 5: 883609200  
-				*     example 6: mktime(0, 0, 0, 1, 1, 98)  
-				*     returns 6: 883609200  
+ * UTILIZAÇÃO : *     example 1: mktime(14, 10, 2, 2, 1, 2008);
+				*     returns 1: 1201871402
+				*     example 2: mktime(0, 0, 0, 0, 1, 2008);
+				*     returns 2: 1196463600
+				*     example 3: make = mktime();
+				*     example 3: td = new Date();
+				*     example 3: real = Math.floor(td.getTime()/1000);
+				*     example 3: diff = (real - make);
+				*     results 3: diff < 5
+				*     example 4: mktime(0, 0, 0, 13, 1, 1997)
+				*     returns 4: 883609200
+				*     example 5: mktime(0, 0, 0, 1, 1, 1998)
+				*     returns 5: 883609200
+				*     example 6: mktime(0, 0, 0, 1, 1, 98)
+				*     returns 6: 883609200
  */
- function mktime() {  
-     // Get UNIX timestamp for a date    
-     //   
-     // version: 901.2514  
-     // discuss at: http://phpjs.org/functions/mktime  
-     // +   original by: Kevin van Zonneveld (http://kevin.vanzonneveld.net) 
-       
-     var no, ma = 0, mb = 0, i = 0, d = new Date(), argv = arguments, argc = argv.length;  
-   
+ function mktime() {
+     // Get UNIX timestamp for a date
+     //
+     // version: 901.2514
+     // discuss at: http://phpjs.org/functions/mktime
+     // +   original by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
+
+     var no, ma = 0, mb = 0, i = 0, d = new Date(), argv = arguments, argc = argv.length;
+
     if (argc > 0) {
         d.setHours(0, 0, 0); d.setDate(1); d.setMonth(1); d.setYear(1972);
-     }  
-    
-     var dateManip = {  
+     }
+
+     var dateManip = {
         0: function (tt) { return d.setHours(tt); },
         1: function (tt) { return d.setMinutes(tt); },
         2: function (tt) { var set = d.setSeconds(tt); mb = d.getDate() - 1; return set; },
         3: function (tt) { var set = d.setMonth(parseInt(tt) - 1); ma = d.getFullYear() - 1972; return set; },
         4: function (tt) { return d.setDate(tt + mb); },
         5: function (tt) { return d.setYear(tt + ma); }
-     };  
-       
+     };
+
     for (i = 0; i < argc; i++) {
         no = parseInt(argv[i] * 1);
-         if (isNaN(no)) {  
-             return false;  
-         } else {  
-             // arg is number, let's manipulate date object  
+         if (isNaN(no)) {
+             return false;
+         } else {
+             // arg is number, let's manipulate date object
             if (!dateManip[i](no)) {
-                 // failed  
-                 return false;  
-             }  
-         }  
-     }     
+                 // failed
+                 return false;
+             }
+         }
+     }
     return Math.floor(d.getTime() / 1000);
 }
 
 /*!
  * ALTERAÇÃO  : 038
- * OBJETIVO   : Receber uma data no formato dd/mm/aaaa , obter as substrings referentes é ao dia, mes e ao ano e passar como parametro na 
- *				função mktime.              
- * PARÂMETROS : data ->  Data no formato dd/mm/aaaa. 
+ * OBJETIVO   : Receber uma data no formato dd/mm/aaaa , obter as substrings referentes é ao dia, mes e ao ano e passar como parametro na
+ *				função mktime.
+ * PARÂMETROS : data ->  Data no formato dd/mm/aaaa.
  */
 function dataParaTimestamp(data) {
     dia = data.substr(0, 2);
@@ -2262,7 +2262,7 @@ function dataParaTimestamp(data) {
  * OBJETIVO   : Função para verificar se número passado como parâmetro é um CPF ou CNPJ
  * PARÂMETROS : numero [String ] -> [Obrigatório] número do CPF ou CNPJ a ser verificado
  * RETORNO    : Retorna o valor [1] para pessoa Física e [2] para Jurídica e [0] quando não é nenhum dos dois
- */	
+ */
 function verificaTipoPessoa(numero) {
     if (validaCpfCnpj(numero, 1)) {
 		return 1;
@@ -2274,18 +2274,18 @@ function verificaTipoPessoa(numero) {
 }
 
 function milisegundos() {
-	return Number(new Date());	
+	return Number(new Date());
 }
 
 /*!
  * ALTERAÇÃO  : 059
  * OBJETIVO   : Verifica se o campo está habilitado
- * UTILIZAÇÃO : 
+ * UTILIZAÇÃO :
 */
 function isHabilitado(objeto) {
 
 	var classes = new Array();
-	
+
 	classes[0] = 'campo';
 	classes[1] = 'campoFocusIn';
 	classes[2] = 'textareaFocusIn';
@@ -2296,7 +2296,7 @@ function isHabilitado(objeto) {
     if (typeof objeto == 'object') {
         for (var i in classes) if (objeto.hasClass(classes[i])) return true;
 	}
-	
+
 	return false;
 }
 
@@ -2305,15 +2305,15 @@ function controlaFocoEnter(frmName) {
     var cTodos = $("input[type='text'],input[type='radio'],select,textarea", '#' + frmName);
 
     cTodos.unbind('keypress').bind('keypress', function (e) {
-		
+
         if (e.keyCode == 9 || e.keyCode == 13) {
-				
-			var indice = cTodos.index(this);	
-				
+
+			var indice = cTodos.index(this);
+
 			while (true) {
-			
+
 				indice++;
-				
+
 				// Desconsiderar os que estao bloqueados
 				if (jQuery(cTodos[indice]).hasClass('campoTelaSemBorda')) {
 					continue;
@@ -2323,10 +2323,10 @@ function controlaFocoEnter(frmName) {
                 if (cTodos[indice] != null) {
 					cTodos[indice].focus();
 				}
-			
+
 				break;
 
-			}										
+			}
 			return false;
 		}
 	});
@@ -2336,12 +2336,12 @@ function controlaFocoEnter(frmName) {
 function CheckNavigator() {
 	var navegador = 'undefined';
     var versao = '0';
-	
+
     if (navigator.userAgent.search(/chrome/i) != ' -1') {
 		navegador = 'chrome';
         versao = navigator.userAgent.substr(navigator.userAgent.search(/chrome/i) + 7);
         versao = versao.substr(0, versao.search(' '));
-	} else if (navigator.userAgent.search(/firefox/i) != '-1') {		
+	} else if (navigator.userAgent.search(/firefox/i) != '-1') {
 		navegador = 'firefox';
         versao = navigator.userAgent.substr(navigator.userAgent.search(/firefox/i) + 8);
         versao = versao.substr(0, versao.search(' '));
@@ -2350,7 +2350,7 @@ function CheckNavigator() {
 		if (navigator.userAgent.search(/trident/i) != '-1') {
 			versao = navigator.userAgent.substr(navigator.userAgent.search(/trident/i) + 8);
             versao = versao.substr(0, versao.search(';'));
-			
+
 			switch (versao) {
 				case '4.0': versao = '8.0'; break;
 				default: versao = '9.0'; break;
@@ -2358,60 +2358,60 @@ function CheckNavigator() {
 		} else {
 			versao = navigator.userAgent.substr(navigator.userAgent.search(/msie/i) + 5);
             versao = versao.substr(0, versao.search(';'));
-		}		
+		}
 	}
-	
+
 	return { navegador: navegador, versao: versao };
 }
 
 //funcao pode ou nao ter parametro de retorno
-function verificaAguardoImpressao(callback) {		
+function verificaAguardoImpressao(callback) {
 	try {
-		var httpState = parent.document.getElementById("frameBlank").contentWindow.document.readyState.toUpperCase();		
-		
+		var httpState = parent.document.getElementById("frameBlank").contentWindow.document.readyState.toUpperCase();
+
 		if (httpState == undefined || httpState.toUpperCase() == "COMPLETE" || httpState.toUpperCase() == "INTERACTIVE") {
 			hideMsgAguardo();
-			
+
 			if (callback != undefined) {
-				eval(callback);			
-			}		
+				eval(callback);
+			}
 		} else {
             setTimeout(function () { verificaAguardoImpressao(callback) }, 500);
 		}
 	} catch (err) {
 		hideMsgAguardo();
         showError("error", "Erro no sistema de impress&atilde;o: " + err.message + "<br>Feche o navegador e reinicie o sistema Ayllos.", "Alerta - Ayllos", "");
-	}			
+	}
 
 	return true;
 }
 
 function carregaImpressaoAyllos(form, action, callback) {
-	
+
 	try {
 		showMsgAguardo('Aguarde, carregando impress&atilde;o ...');
-		
-		var NavVersion = CheckNavigator();	
-		
-		if (action.search(/\?/) == '-1') {	
+
+		var NavVersion = CheckNavigator();
+
+		if (action.search(/\?/) == '-1') {
 			action = action + '?';
 		} else {
 			action = action + '&';
 		}
-		
+
 		action = action + 'keylink=' + milisegundos();
-		
+
 		// Configuro o formulário para posteriormente submete-lo
         $('#' + form).attr('method', 'post');
         $('#' + form).attr('action', action);
         $('#' + form).attr("target", (NavVersion.navegador == 'chrome' ? '_blank' : 'frameBlank'));
         $('#' + form).submit();
-		verificaAguardoImpressao(callback);	
-	} catch (err) {	
+		verificaAguardoImpressao(callback);
+	} catch (err) {
 		hideMsgAguardo();
         showError("error", "Erro no sistema de impress&atilde;o: " + err.message + "<br>Feche o navegador e reinicie o sistema Ayllos.", "Alerta - Ayllos", "");
 	}
-	
+
 	return true;
 }
 
@@ -2420,7 +2420,7 @@ function normalizaTexto(strNormaliza) {
     strNormaliza = trim(strNormaliza);
     strNormaliza = strNormaliza.replace(/['"]*/g, '');
 
-	return strNormaliza;	
+	return strNormaliza;
 }
 
 /* http://stackoverflow.com/questions/46155/validate-email-address-in-javascript */
@@ -2479,7 +2479,7 @@ function base64_decode(data) {
 }
 
 function base64_encode(data) {
-  
+
   var b64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
   var o1, o2, o3, h1, h2, h3, h4, bits, i = 0,
     ac = 0,
@@ -2524,15 +2524,15 @@ function removeAcentos(str) {
 */
 
 function removeCaracteresInvalidos(str, flgRemAcentos){
-	
+
 	//Se necessario remover acentuacao
 	if (flgRemAcentos){
-		return removeAcentos(str.replace(/[^A-z0-9\sÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöøÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ\!\@\$\%\*\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/]/g,""));				 
+		return removeAcentos(str.replace(/[^A-z0-9\sÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöøÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ\!\@\$\%\*\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/]/g,""));
 	}
-		
+
 	else
-		return str.replace(/[^A-z0-9\sÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöøÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ\!\@\$\%\*\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/]/g,"");				 
-	
+		return str.replace(/[^A-z0-9\sÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöøÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ\!\@\$\%\*\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/]/g,"");
+
 }
 
 function utf8_decode(str_data) {
@@ -2628,4 +2628,18 @@ function retornaDateDiff(tipo, dtini, dtfim) {
             return DateDiff.inYears(d1, d2);
             break;
     }
+}
+
+/*! OBJETIVO: completar string a esquesrda com carcater passado por parametro */
+function lpad(numero, tamanho, caracter) {
+  caracter = caracter || '0';
+  numero = numero + '';
+  return numero.length >= tamanho ? numero : new Array(tamanho - numero.length + 1).join(caracter) + numero;
+}
+
+/*! OBJETIVO: completar string a direita com carcater passado por parametro */
+function rpad(numero, tamanho, caracter) {
+  caracter = caracter || '0';
+  numero = numero + '';
+  return numero.length >= tamanho ? numero : numero + new Array(tamanho - numero.length + 1).join(caracter);
 }

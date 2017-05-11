@@ -1,11 +1,11 @@
-<?php 
+<?php
 /*
  * FONTE        : tab_arquivos.php
  * CRIAÇÃO      : Jaison Fernando
  * DATA CRIAÇÃO : 14/03/2017
  * OBJETIVO     : Tabela que apresenta a consulta de arquivos
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   :
  * --------------
  */
 
@@ -53,6 +53,7 @@ isPostMethod();
                         </td>
                         <td><span><?php echo getByTagName($r->tags, 'situacaoarq'); ?></span>
                             <?php echo getByTagName($r->tags, 'situacaoarq'); ?>
+                            <input type="hidden" id="situacaoarq" name="situacaoarq" value="<?php echo getByTagName($r->tags, 'situacaoarq'); ?>" />
                         </td>
                     </tr>
                     <?php
@@ -64,7 +65,7 @@ isPostMethod();
 </div>
 
 <div id="divPesquisaRodape" class="divPesquisaRodape">
-    <table>	
+    <table>
         <tr>
             <td>
                 <?php
@@ -102,7 +103,7 @@ isPostMethod();
                 } else {
                     ?> &nbsp; <?php
                 }
-                ?>			
+                ?>
             </td>
         </tr>
     </table>

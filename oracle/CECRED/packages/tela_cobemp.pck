@@ -37,6 +37,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_COBEMP IS
     qtmaxbol crapprm.dsvlrprm%TYPE,
     blqrsgcc crapprm.dsvlrprm%TYPE);
 
+  tab_import tbepr_boleto_import%ROWTYPE;
+
   PROCEDURE pc_buscar_email(pr_nrdconta IN INTEGER
                            ,pr_nriniseq IN INTEGER --> Registro inicial da listagem
                            ,pr_nrregist IN INTEGER --> Numero de registros p/ paginaca
@@ -194,7 +196,71 @@ PROCEDURE pc_lista_pa(pr_cdagenci IN INTEGER
                                ,pr_retxml IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
                                ,pr_nmdcampo  OUT VARCHAR2       --> Nome do campo com erro
                                ,pr_des_erro  OUT VARCHAR2);     --> Erros do processo
-
+  
+  PROCEDURE pc_gera_relatorio(pr_idarquiv   IN INTEGER        --> Nome do arquivo
+                             ,pr_flgcriti   IN INTEGER        --> Flag somente critica (0 - Completo / 1 - Somente criticas)
+                             ,pr_xmllog     IN VARCHAR2       --> XML com informações de LOG
+                             ,pr_cdcritic  OUT PLS_INTEGER    --> Código da crítica
+                             ,pr_dscritic  OUT VARCHAR2       --> Descrição da crítica
+                             ,pr_retxml IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                             ,pr_nmdcampo  OUT VARCHAR2       --> Nome do campo com erro
+                             ,pr_des_erro  OUT VARCHAR2);     --> Erros do processo
+  
+  PROCEDURE pc_gera_boletagem(pr_idarquiv   IN INTEGER        --> Nome do arquivo
+                             ,pr_xmllog     IN VARCHAR2       --> XML com informações de LOG
+                             ,pr_cdcritic  OUT PLS_INTEGER    --> Código da crítica
+                             ,pr_dscritic  OUT VARCHAR2       --> Descrição da crítica
+                             ,pr_retxml IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                             ,pr_nmdcampo  OUT VARCHAR2       --> Nome do campo com erro
+                             ,pr_des_erro  OUT VARCHAR2);     --> Erros do processo
+                             
+  PROCEDURE pc_gera_boleto_contrato(pr_cdcooper IN  crapcob.cdcooper%TYPE   --> Código da cooperativa;
+																	 ,pr_nrdconta IN  crapcob.nrdconta%TYPE   --> Conta do cooperado do contrato;
+																	 ,pr_nrctremp IN  crapcob.nrctremp%TYPE   --> Número do contrato de empréstimo;
+																	 ,pr_dtmvtolt IN  crapcob.dtmvtolt%TYPE   --> Data do movimento;
+																	 ,pr_tpparepr IN  NUMBER                  --> Tipo de parcela 1 = Parcela Normal, 2 = Total do atraso 3 = Parcial do atraso 4 = Quitação do contrato;
+																	 ,pr_dsparepr IN  VARCHAR2 DEFAULT NULL  /* Descrição das parcelas do empréstimo “par1,par2,par..., parN”;
+																	 																						Obs: empréstimo TR => NULL;
+																	 																						Obs2: Quando for ref a várias parcelas do contrato, parcela = NULL;
+																	 																						Obs3: Quando for quitação do contrato, parcela = 0; */
+																	 ,pr_dtvencto IN  crapcob.dtvencto%TYPE   --> Vencimento do boleto;
+																	 ,pr_vlparepr IN  crappep.vlparepr%TYPE   --> Valor da parcela;
+																	 ,pr_cdoperad IN  crapcob.cdoperad%TYPE   --> Código do operador;
+																	 ,pr_nmdatela IN VARCHAR2                 --> Nome da tela
+														       ,pr_idorigem IN INTEGER                  --> ID Origem
+                                   ,pr_nrcpfava IN NUMBER DEFAULT 0         --> CPF do avalista
+																	 ,pr_idarquiv IN INTEGER DEFAULT 0        --> Id do arquivo (boletagem Massiva)
+                                   ,pr_idboleto IN INTEGER DEFAULT 0        --> Id do boleto no arquivo (boletagem Massiva)
+                                   ,pr_cdcritic OUT crapcri.cdcritic%TYPE   --> Código da crítica
+																	 ,pr_dscritic OUT crapcri.dscritic%TYPE); --> Descrição da crítica
+                                   
+  PROCEDURE pc_calcular_saldo_contrato (pr_cdcooper   IN  crapcop.cdcooper%TYPE,  --> Codigo da Cooperativa
+                                        pr_nrdconta   IN  crapass.cdcooper%TYPE,  --> Número da Conta
+                                        pr_cdorigem   IN  INTEGER,                --> Origem
+                                        pr_nrctremp   IN  crapepr.nrctremp%TYPE,  --> Numero do Contrato
+                                        pr_rw_crapdat IN  btch0001.cr_crapdat%ROWTYPE, --> Datas da cooperativa
+                                        pr_vllimcre   IN crapass.vllimcre%TYPE,   --> Limite de credito do cooperado     
+                                        pr_vlsdeved  OUT  NUMBER,                 --> Valor Saldo Devedor
+                                        pr_vlsdprej  OUT  NUMBER,                 --> Valor Saldo Prejuizo
+                                        pr_vlatraso  OUT  NUMBER,                 --> Valor Atraso
+                                        pr_cdcritic  OUT  NUMBER,                 --> Código da Crítica
+                                        pr_dscritic  OUT  VARCHAR2);                           
+  
+  PROCEDURE pc_gera_arquivo_parca_web(pr_idarquiv   IN INTEGER        --> Nome do arquivo
+                                     ,pr_xmllog     IN VARCHAR2       --> XML com informações de LOG
+                                     ,pr_cdcritic  OUT PLS_INTEGER    --> Código da crítica
+                                     ,pr_dscritic  OUT VARCHAR2       --> Descrição da crítica
+                                     ,pr_retxml IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                                     ,pr_nmdcampo  OUT VARCHAR2       --> Nome do campo com erro
+                                     ,pr_des_erro  OUT VARCHAR2);     --> Erros do processo
+	                                      
+  PROCEDURE pc_gera_arquivo_parca(pr_idarquiv   IN INTEGER               --> Nome do arquivo
+                                 ,pr_cdcooper   IN crapcop.cdcooper%TYPE --> Codigo da cooperativa
+                                 ,pr_cdoperad   IN crapope.cdoperad%TYPE --> Codigo do operador
+                                 ,pr_nmarquiv  OUT VARCHAR2              --> Nome do arquivo
+                                 ,pr_cdcritic  OUT PLS_INTEGER           --> Código da crítica
+                                 ,pr_dscritic  OUT VARCHAR2);            --> Descrição da crítica
+  
 END TELA_COBEMP;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
@@ -1997,10 +2063,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
 
 			-- Tratamento de erros
 			vr_exc_saida EXCEPTION;
-			vr_tab_erro  gene0001.typ_tab_erro;
-
-			-- PL/Table com as informações do boleto
-			vr_tab_cob cobr0005.typ_tab_cob;
 
 			 -- Variaveis de log
 			vr_cdcooper INTEGER;
@@ -2013,18 +2075,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
 
 			vr_des_reto VARCHAR2(3);
 
-			-- Variáveis para geração do relatório
-			vr_clobxml    CLOB;
-			vr_dstextorel VARCHAR2(32600);
-			vr_dstexto    VARCHAR2(32600);
-			vr_nmdireto   VARCHAR2(1000);
-			vr_dsparams   VARCHAR2(1000);
-
 			vr_nmarqpdf   VARCHAR2(1000);
 	    
-			vr_valords    NUMBER; 
-			vr_valorad    NUMBER;
-
 			---------------------------- CURSORES -----------------------------------
 		BEGIN
 
@@ -2742,18 +2794,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
         SELECT arq.idarquivo,
                arq.dtarquivo,
                arq.nmarq_import,
-               DECODE(arq.situacaoarq, 0, 'Pendente', 'Processado') situacaoarq,
+               DECODE(arq.insitarq, 0, 'Pendente', 'Processado') situacaoarq,
                (SELECT COUNT(imp.idarquivo)
                   FROM tbepr_boleto_import imp
                  WHERE imp.idarquivo = arq.idarquivo) qtd_boleto,
-               (SELECT COUNT(DISTINCT cri.idboleto)
-                  FROM tbepr_boleto_critic cri
-                 WHERE cri.idarquivo = arq.idarquivo) qtd_critica
+               DECODE(arq.insitarq, 0, 
+                     (SELECT COUNT(DISTINCT cri.idboleto)
+                        FROM tbepr_boleto_critic cri
+                       WHERE cri.idarquivo = arq.idarquivo),
+                     (SELECT COUNT(DISTINCT imp.idboleto)
+                        FROM tbepr_boleto_import imp
+                       WHERE imp.idarquivo = arq.idarquivo
+                         AND TRIM(imp.dserrger) IS NOT NULL)) qtd_critica
           FROM tbepr_boleto_arq arq
          WHERE (TRIM(pr_nmarquiv) IS NULL
             OR  UPPER(arq.nmarq_import) LIKE '%'||UPPER(pr_nmarquiv)||'%')
            AND ((TRIM(pr_dtarqini) IS NULL AND TRIM(pr_dtarqfim) IS NULL)
-            OR  TRUNC(arq.dtarquivo) BETWEEN pr_dtarqini AND pr_dtarqfim);
+            OR  TRUNC(arq.dtarquivo) BETWEEN pr_dtarqini AND pr_dtarqfim)
+          ORDER BY arq.idarquivo DESC;
 
 			BEGIN
 
@@ -2947,21 +3005,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
     vr_lin_nrdconta tbepr_boleto_import.nrdconta%TYPE;
     vr_lin_nrctremp tbepr_boleto_import.nrctremp%TYPE;
     vr_lin_nrcpfava tbepr_boleto_import.nrcpfaval%TYPE;
-    vr_lin_tipenvio tbepr_boleto_import.tipo_envio%TYPE;
-    vr_lin_per_acre tbepr_boleto_import.percent_acre%TYPE;
-    vr_lin_per_desc tbepr_boleto_import.percent_desc%TYPE;
+    vr_lin_tipenvio tbepr_boleto_import.tpenvio%TYPE;
+    vr_lin_per_acre tbepr_boleto_import.peracrescimo%TYPE;
+    vr_lin_per_desc tbepr_boleto_import.perdesconto%TYPE;
     vr_lin_dtvencto tbepr_boleto_import.dtvencto%TYPE;
     vr_lin_dsdnrddd tbepr_boleto_import.nrddd_envio%TYPE;
-    vr_lin_telefone tbepr_boleto_import.telefone_envio%TYPE;
-    vr_lin_dsdemail tbepr_boleto_import.email_envio%TYPE;
-    vr_lin_endereco tbepr_boleto_import.endereco_envio%TYPE;
+    vr_lin_telefone tbepr_boleto_import.nrfone_envio%TYPE;
+    vr_lin_dsdemail tbepr_boleto_import.dsemail_envio%TYPE;
+    vr_lin_endereco tbepr_boleto_import.dsendereco_envio%TYPE;
 
     -------------------------------- CURSORES --------------------------------------
 
 		-- Cursor para consultar arquivo
 		CURSOR cr_arquivo(pr_nmarquiv IN tbepr_boleto_arq.nmarq_import%TYPE) IS
       SELECT arq.idarquivo,
-             arq.situacaoarq
+             arq.insitarq
         FROM tbepr_boleto_arq arq
        WHERE UPPER(arq.nmarq_import) = UPPER(pr_nmarquiv);
 		rw_arquivo cr_arquivo%ROWTYPE;
@@ -2982,7 +3040,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
        WHERE cdcooper = pr_cdcooper
          AND nrdconta = pr_nrdconta;
 		rw_crapass cr_crapass%ROWTYPE;
-
+    
 		-- Cursor para consultar contrato
 		CURSOR cr_crapepr(pr_cdcooper IN crapepr.cdcooper%TYPE,
                       pr_nrdconta IN crapepr.nrdconta%TYPE,
@@ -2993,18 +3051,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
          AND nrdconta = pr_nrdconta
          AND nrctremp = pr_nrctremp;
 		rw_crapepr cr_crapepr%ROWTYPE;
-
+    
+    -- Variáveis de controle de calendário
+    rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+    
     ----------------------------- SUBROTINAS INTERNAS -------------------------------
 
     -- Inclusao da critica
     PROCEDURE pc_inclui_critica(pr_idarquivo IN tbepr_boleto_critic.idarquivo%TYPE,
                                 pr_idboleto  IN tbepr_boleto_critic.idboleto%TYPE,
                                 pr_idmotivo  IN tbepr_boleto_critic.idmotivo%TYPE,
-                                pr_vlrcampo  IN tbepr_boleto_critic.vlrcampo%TYPE) IS
+                                pr_vlrcampo  IN tbepr_boleto_critic.vlcampo%TYPE) IS
     BEGIN
 
     	BEGIN
-        INSERT INTO tbepr_boleto_critic (idarquivo,idboleto,idmotivo,vlrcampo)
+        INSERT INTO tbepr_boleto_critic (idarquivo,idboleto,idmotivo,vlcampo)
              VALUES (pr_idarquivo,pr_idboleto,pr_idmotivo,pr_vlrcampo);
       EXCEPTION
         WHEN OTHERS THEN
@@ -3026,6 +3087,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
                               ,pr_cdoperad => vr_cdoperad
                               ,pr_dscritic => vr_dscritic);
 
+      -- Leitura do calendário da cooperativa
+      OPEN btch0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
+      FETCH btch0001.cr_crapdat INTO rw_crapdat;
+      -- Se não encontrar
+      IF btch0001.cr_crapdat%NOTFOUND THEN
+        -- Fechar o cursor pois efetuaremos raise
+        CLOSE btch0001.cr_crapdat;
+        -- Montar mensagem de critica
+        vr_cdcritic := 1;
+        RAISE vr_exc_saida;
+      ELSE
+        -- Apenas fechar o cursor
+        CLOSE btch0001.cr_crapdat;
+      END IF;
+      
       -- Seta as variaveis
       vr_nmarquiv := TRIM(pr_nmarquiv);
       vr_dsdireto := GENE0001.fn_param_sistema('CRED', vr_cdcooper, 'DIR_IMP_BOL_MASSIVA');
@@ -3070,7 +3146,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
       IF vr_blnachou THEN
 
         -- Se ja estiver processado
-        IF rw_arquivo.situacaoarq = 1 THEN
+        IF rw_arquivo.insitarq = 1 THEN
           vr_cdcritic := 0;
           vr_dscritic := 'Arquivo já processado. Não permitido efetuar reimportação.';
           RAISE vr_exc_saida;
@@ -3101,7 +3177,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
 
         BEGIN
 
-          INSERT INTO tbepr_boleto_arq (idarquivo,dtarquivo,cdoperad,nmarq_import,situacaoarq)
+          INSERT INTO tbepr_boleto_arq (idarquivo,dtarquivo,cdoperad,nmarq_import,insitarq)
                VALUES ((SELECT (NVL(MAX(idarquivo), 0) + 1) FROM tbepr_boleto_arq),
                         SYSDATE,vr_cdoperad,vr_nmarquiv,0) -- 0 = Pendente
             RETURNING idarquivo INTO rw_arquivo.idarquivo;
@@ -3327,7 +3403,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
           BEGIN
             vr_blnachou     := TRUE;
             vr_lin_per_desc := TO_NUMBER(NVL(vr_vet_dado(7),0));
-            IF vr_lin_per_desc >= 100 THEN
+            IF vr_lin_per_desc >= 100 OR vr_lin_per_desc = 0 THEN
                vr_blnachou := FALSE;
             END IF;
           EXCEPTION
@@ -3348,6 +3424,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
           BEGIN
             vr_blnachou     := TRUE;
             vr_lin_dtvencto := TO_DATE(vr_vet_dado(8),'DD/MM/RRRR');
+            
+            IF vr_lin_dtvencto < rw_crapdat.dtmvtolt OR
+               vr_lin_dtvencto > (rw_crapdat.dtmvtolt + 30) THEN
+              vr_blnachou := FALSE;
+            END IF;
+            
           EXCEPTION
             WHEN OTHERS THEN
               vr_blnachou := FALSE;
@@ -3435,8 +3517,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
           BEGIN
 
             INSERT INTO tbepr_boleto_import
-              (idarquivo,idboleto,cdcooper,nrdconta,nrctremp,nrcpfaval,tipo_envio,percent_acre,
-               percent_desc,dtvencto,nrddd_envio,telefone_envio,email_envio,endereco_envio)
+              (idarquivo,idboleto,cdcooper,nrdconta,nrctremp,nrcpfaval,tpenvio,peracrescimo,
+               perdesconto,dtvencto,nrddd_envio,nrfone_envio,dsemail_envio,dsendereco_envio)
             VALUES
               (rw_arquivo.idarquivo,vr_idboleto,vr_lin_cdcooper,vr_lin_nrdconta,vr_lin_nrctremp,
                vr_lin_nrcpfava,vr_lin_tipenvio,vr_lin_per_acre,vr_lin_per_desc,vr_lin_dtvencto,
@@ -3492,6 +3574,1709 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
 		END;
 
   END pc_importar_arquivo;
+  
+  PROCEDURE pc_gera_relatorio(pr_idarquiv   IN INTEGER        --> Nome do arquivo
+                             ,pr_flgcriti   IN INTEGER        --> Flag somente critica (0 - Completo / 1 - Somente criticas)
+                             ,pr_xmllog     IN VARCHAR2       --> XML com informações de LOG
+                             ,pr_cdcritic  OUT PLS_INTEGER    --> Código da crítica
+                             ,pr_dscritic  OUT VARCHAR2       --> Descrição da crítica
+                             ,pr_retxml IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                             ,pr_nmdcampo  OUT VARCHAR2       --> Nome do campo com erro
+                             ,pr_des_erro  OUT VARCHAR2) IS   --> Erros do processo
+	  BEGIN
+ 	  /* .............................................................................
+
+      Programa: pc_gera_relatorio
+      Sistema : CECRED
+      Sigla   : EMPR
+      Autor   : Lombardi
+      Data    : Marco/2017                    Ultima atualizacao: 
+
+      Dados referentes ao programa:
+
+      Frequencia: Sempre que for chamado
+
+      Objetivo  : Rotina referente a impressao do relatorio da remessa
+                  (Pendente/Processada)
+
+      Observacao: -----
+
+      Alteracoes: 
+    ..............................................................................*/
+		DECLARE
+
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(10000);
+    vr_des_reto VARCHAR2(100);
+    vr_tab_erro GENE0001.typ_tab_erro;
+    
+    -- Variaveis de log
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+
+    -- Tratamento de erros
+    vr_exc_saida EXCEPTION;
+
+    -- Variaveis locais
+    vr_nom_direto  VARCHAR2(200);
+    vr_nom_arquivo VARCHAR2(200);
+    vr_typsaida    VARCHAR2(100);
+    vr_qtregistros INTEGER;
+    
+    -- Variável para armazenar as informações em XML
+    vr_des_xml CLOB;
+      
+    -------------------------------- CURSORES --------------------------------------
+
+		-- Cursor para consultar arquivo
+		CURSOR cr_arquivo(pr_idarquiv IN tbepr_boleto_arq.idarquivo%TYPE
+                     ,pr_cdcooper IN crapcop.cdcooper%TYPE) IS
+      SELECT arq.idarquivo
+            ,ope.nmoperad
+            ,to_char(arq.dtarquivo, 'DD/MM/RRRR') dtarquivo
+            ,to_char(arq.dtarquivo, 'HH:MI:SS') hrarquivo
+            ,arq.nmarq_import
+            ,arq.nmarq_gerado
+            ,arq.insitarq idsituacao
+            ,DECODE(arq.insitarq, 0, 'Pendente', 'Processado') dssituacao
+        FROM tbepr_boleto_arq arq
+            ,crapope ope
+       WHERE arq.idarquivo = pr_idarquiv
+         AND ope.cdcooper = pr_cdcooper
+         AND UPPER(ope.cdoperad) = UPPER(arq.cdoperad);
+		rw_arquivo cr_arquivo%ROWTYPE;
+
+    -- Busca linhas de importação do boleto
+		CURSOR cr_linha(pr_idarquiv IN tbepr_boleto_import.idarquivo%TYPE
+                   ,pr_flgcriti IN INTEGER) IS
+      SELECT imp.idarquivo
+            ,imp.idboleto
+            ,cop.nmrescop
+            ,imp.nrdconta
+            ,imp.nrctremp
+            ,imp.nrcpfaval
+            ,DECODE(imp.tpenvio,1,'E-mail',2,'SMS',3,'Carta') tpenvio
+            ,to_char(imp.peracrescimo,'fm990d00') peracrescimo
+            ,to_char(imp.perdesconto,'fm990d00') perdesconto
+            ,to_char(imp.dtvencto,'DD/MM/RRRR') dtvencto
+            ,DECODE(imp.tpenvio
+                   ,1,imp.dsemail_envio
+                   ,2,('('||imp.nrddd_envio||') '||gene0002.fn_mask(imp.nrfone_envio,'99999-9999'))
+                   ,3,imp.dsendereco_envio) destino
+        FROM tbepr_boleto_import imp
+            ,crapcop cop
+       WHERE imp.idarquivo = pr_idarquiv
+         AND (pr_flgcriti = 0
+         OR  EXISTS(SELECT 1
+                      FROM tbepr_boleto_critic cri
+                     WHERE cri.idarquivo = imp.idarquivo
+                       AND cri.idboleto  = imp.idboleto))
+         AND cop.cdcooper = imp.cdcooper;
+    
+    -- Busca qtd de linhas de importação do boleto
+		CURSOR cr_linha_reg(pr_idarquiv IN tbepr_boleto_import.idarquivo%TYPE
+                       ,pr_flgcriti IN INTEGER) IS
+      SELECT COUNT(1) qtregistros
+        FROM tbepr_boleto_import imp
+            ,crapcop cop
+       WHERE imp.idarquivo = pr_idarquiv
+         AND (pr_flgcriti = 0
+         OR  EXISTS(SELECT 1
+                      FROM tbepr_boleto_critic cri
+                     WHERE cri.idarquivo = imp.idarquivo
+                       AND cri.idboleto  = imp.idboleto))
+         AND cop.cdcooper = imp.cdcooper;
+    rw_linha_reg cr_linha_reg%ROWTYPE;
+    
+    -- Busca as criticas do boleto
+		CURSOR cr_critica(pr_idarquiv IN tbepr_boleto_critic.idarquivo%TYPE
+                     ,pr_idboleto IN tbepr_boleto_critic.idboleto%TYPE) IS
+      SELECT mot.dsmotivo
+            ,cri.vlcampo
+        FROM tbepr_boleto_critic cri
+            ,tbgen_motivo mot
+       WHERE cri.idarquivo = pr_idarquiv
+         AND cri.idboleto = pr_idboleto
+         AND mot.idmotivo = cri.idmotivo;
+    
+    --Busca boletos
+    CURSOR cr_boleto(pr_idarquiv IN tbepr_boleto_arq.idarquivo%TYPE) IS
+      SELECT cop.nmrescop
+            ,gene0002.fn_mask_conta(epr.nrdconta) nrdconta
+            ,gene0002.fn_mask_contrato(epr.nrctremp) nrctremp
+            ,DECODE(imp.nrcpfaval, 0,'Devedor','Avalista') insacado
+            ,sab.nmdsacad
+            ,DECODE(imp.tpenvio,1,'E-mail',2,'SMS',3,'Carta') tpenvio
+            ,to_char(cob.vltitulo,'fm999g999g999g990d00') vltitulo
+            ,to_char(cob.dtvencto,'DD/MM/RRRR') dtvencto
+            ,imp.dserrger
+            ,imp.nrcpfaval
+            ,ass.nrcpfcgc
+        FROM tbepr_boleto_import imp
+            ,tbepr_cobranca epr
+            ,crapcob cob
+            ,crapcop cop
+            ,crapass ass
+            ,crapsab sab
+       WHERE imp.idarquivo = pr_idarquiv
+         AND epr.idarquivo = imp.idarquivo
+         AND epr.idboleto  = imp.idboleto
+         AND cob.cdcooper = epr.cdcooper
+         AND cob.nrdconta = epr.nrdconta_cob
+         AND cob.nrcnvcob = epr.nrcnvcob
+         AND cob.nrdocmto = epr.nrboleto
+         AND cop.cdcooper = imp.cdcooper
+         AND ass.cdcooper = imp.cdcooper
+         AND ass.nrdconta = imp.nrdconta
+         AND sab.cdcooper = cob.cdcooper
+         AND sab.nrdconta = epr.nrdconta_cob
+         AND sab.nrinssac = DECODE(imp.nrcpfaval, 0,ass.nrcpfcgc,imp.nrcpfaval);
+    
+    --Busca boletos
+    CURSOR cr_boleto_reg(pr_idarquiv IN tbepr_boleto_arq.idarquivo%TYPE) IS
+      SELECT count(1) qtregistros
+        FROM tbepr_boleto_import imp
+            ,tbepr_cobranca epr
+            ,crapcob cob
+            ,crapcop cop
+            ,crapass ass
+            ,crapsab sab
+       WHERE imp.idarquivo = pr_idarquiv
+         AND epr.idarquivo = imp.idarquivo
+         AND epr.idboleto  = imp.idboleto
+         AND cob.cdcooper = epr.cdcooper
+         AND cob.nrdconta = epr.nrdconta_cob
+         AND cob.nrcnvcob = epr.nrcnvcob
+         AND cob.nrdocmto = epr.nrboleto
+         AND cop.cdcooper = imp.cdcooper
+         AND ass.cdcooper = imp.cdcooper
+         AND ass.nrdconta = imp.nrdconta
+         AND sab.cdcooper = cob.cdcooper
+         AND sab.nrdconta = epr.nrdconta_cob
+         AND sab.nrinssac = DECODE(imp.nrcpfaval, 0,ass.nrcpfcgc,imp.nrcpfaval);
+    rw_boleto_reg cr_boleto_reg%ROWTYPE;
+    
+    --Busca criticas
+    CURSOR cr_boleto_critica(pr_idarquiv IN tbepr_boleto_arq.idarquivo%TYPE) IS
+      SELECT cop.nmrescop
+            ,gene0002.fn_mask_conta(imp.nrdconta) nrdconta
+            ,gene0002.fn_mask_contrato(imp.nrctremp) nrctremp
+            ,DECODE(imp.nrcpfaval, 0,'Devedor','Avalista') insacado
+            ,DECODE(imp.tpenvio,1,'E-mail',2,'SMS',3,'Carta') tpenvio
+            ,to_char(imp.dtvencto,'DD/MM/RRRR') dtvencto
+            ,imp.dserrger
+        FROM tbepr_boleto_import imp
+            ,crapcop cop
+       WHERE imp.idarquivo = pr_idarquiv
+         AND cop.cdcooper = imp.cdcooper
+         AND TRIM(imp.dserrger) IS NOT NULL;
+    
+    --Busca criticas
+    CURSOR cr_boleto_critica_reg(pr_idarquiv IN tbepr_boleto_arq.idarquivo%TYPE) IS
+      SELECT COUNT(1) qtregistros
+        FROM tbepr_boleto_import imp
+            ,crapcop cop
+       WHERE imp.idarquivo = pr_idarquiv
+         AND cop.cdcooper = imp.cdcooper
+         AND TRIM(imp.dserrger) IS NOT NULL;
+    rw_boleto_critica_reg cr_boleto_critica_reg%ROWTYPE;
+    
+    -- Variáveis de controle de calendário
+    rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+      
+    --Escrever no arquivo CLOB
+    PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2) IS
+    BEGIN
+      dbms_lob.writeappend(vr_des_xml,length(pr_des_dados),pr_des_dados);
+    END;
+    
+    ----------------------------- SUBROTINAS INTERNAS -------------------------------
+
+    BEGIN
+            -- Incluir nome do modulo logado
+      GENE0001.pc_informa_acesso(pr_module => 'pc_gera_relatorio'
+                                ,pr_action => NULL);
+
+      -- Extrai os dados vindos do XML
+      GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+      
+      
+      -- Se houver criticas
+      IF vr_dscritic IS NOT NULL THEN
+        vr_cdcritic := 0;
+        RAISE vr_exc_saida;
+      END IF;
+      
+      -- Leitura do calendário da cooperativa
+      OPEN btch0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
+      FETCH btch0001.cr_crapdat INTO rw_crapdat;
+      -- Se não encontrar
+      IF btch0001.cr_crapdat%NOTFOUND THEN
+        -- Fechar o cursor pois efetuaremos raise
+        CLOSE btch0001.cr_crapdat;
+        -- Montar mensagem de critica
+        vr_cdcritic := 1;
+        RAISE vr_exc_saida;
+      ELSE
+        -- Apenas fechar o cursor
+        CLOSE btch0001.cr_crapdat;
+      END IF;
+      
+      OPEN cr_arquivo(pr_idarquiv => pr_idarquiv
+                     ,pr_cdcooper => vr_cdcooper);
+      FETCH cr_arquivo INTO rw_arquivo;
+      IF cr_arquivo%NOTFOUND THEN
+        CLOSE cr_arquivo;
+        vr_cdcritic := 0;
+        vr_dscritic := '';
+        RAISE vr_exc_saida;
+      END IF;
+      CLOSE cr_arquivo;
+      
+      -- Inicializar o CLOB
+      dbms_lob.createtemporary(vr_des_xml, TRUE);
+      dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+      
+      -- Inicilizar as informacoes do XML
+      pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?>' || 
+                     '<raiz><cabecalho>' ||
+                               '<idarquivo>'    || rw_arquivo.idarquivo    || '</idarquivo>'    ||
+                               '<nmoperad>'     || rw_arquivo.nmoperad     || '</nmoperad>'     ||
+                               '<dtarquivo>'    || rw_arquivo.dtarquivo    || '</dtarquivo>'    ||
+                               '<hrarquivo>'    || rw_arquivo.hrarquivo    || '</hrarquivo>'    ||
+                               '<nmarq_import>' || rw_arquivo.nmarq_import || '</nmarq_import>' ||
+                               '<nmarq_gerado>' || rw_arquivo.nmarq_gerado || '</nmarq_gerado>' ||
+                               '<dssituacao>'   || rw_arquivo.dssituacao   || '</dssituacao>'  ||
+                           '</cabecalho>');
+      
+      -- Pendente
+      IF rw_arquivo.idsituacao = 0 THEN
+        
+        --Verifica se tem registro
+        OPEN cr_linha_reg(pr_idarquiv => pr_idarquiv
+                         ,pr_flgcriti => pr_flgcriti);
+        FETCH cr_linha_reg INTO rw_linha_reg;
+        IF cr_linha_reg%FOUND THEN
+          vr_qtregistros := rw_linha_reg.qtregistros;
+        ELSE 
+          vr_qtregistros := 0;
+        END IF;
+        CLOSE cr_linha_reg;
+        
+        -- Inicia XML
+        pc_escreve_xml('<linhas qtlinhas="' || vr_qtregistros || '" >');
+        
+        FOR rw_linha IN cr_linha(pr_idarquiv => pr_idarquiv
+                                ,pr_flgcriti => pr_flgcriti) LOOP
+          
+          -- popular linhas do XML
+          pc_escreve_xml(
+                      '<linha>' ||
+                            '<idboleto>'       || rw_linha.idboleto         || '</idboleto>'     ||
+                            '<nmrescop>'       || rw_linha.nmrescop         || '</nmrescop>'     ||
+                            '<nrdconta>'       || rw_linha.nrdconta         || '</nrdconta>'     ||
+                            '<nrctremp>'       || rw_linha.nrctremp         || '</nrctremp>'     ||
+                            '<nrcpfaval>'      || rw_linha.nrcpfaval        || '</nrcpfaval>'    ||
+                            '<tipo_envio>'     || rw_linha.tpenvio          || '</tipo_envio>'   ||
+                            '<percent_acre>'   || rw_linha.peracrescimo     || '</percent_acre>' ||
+                            '<percent_desc>'   || rw_linha.perdesconto      || '</percent_desc>' ||
+                            '<dtvencto>'       || rw_linha.dtvencto         || '</dtvencto>'     ||
+                            '<destino>'        || rw_linha.destino          || '</destino>'      ||
+                            '<criticas>');
+
+                            FOR rw_critica IN cr_critica(pr_idarquiv => pr_idarquiv
+                                                        ,pr_idboleto => rw_linha.idboleto) LOOP
+                                  
+                              -- popular as criticas
+                              pc_escreve_xml('<critica>' ||
+                                                    '<dsmotivo>' || rw_critica.dsmotivo || '</dsmotivo>' ||
+                                                    '<vlrcampo>' || rw_critica.vlcampo  || '</vlrcampo>' ||
+                                             '</critica>');
+                            END LOOP;
+         
+          pc_escreve_xml('</criticas></linha>');
+          
+        END LOOP;
+      ELSE-- Processado
+      
+        --Verifica se tem registro
+        OPEN cr_boleto_reg(pr_idarquiv => pr_idarquiv);
+        FETCH cr_boleto_reg INTO rw_boleto_reg;
+        IF cr_boleto_reg%FOUND THEN
+          vr_qtregistros := rw_boleto_reg.qtregistros;
+        ELSE 
+          vr_qtregistros := 0;
+        END IF;
+        CLOSE cr_boleto_reg;
+        
+        -- Inicia XML
+        pc_escreve_xml('<linhas qtlinhas="' || vr_qtregistros || '" >');
+        
+        FOR rw_boleto IN cr_boleto(pr_idarquiv => pr_idarquiv) LOOP
+          
+          -- popular linhas do XML
+          pc_escreve_xml('<linha>' ||
+                                '<nmrescop>' || rw_boleto.nmrescop   || '</nmrescop>' ||
+                                '<nrdconta>' || rw_boleto.nrdconta   || '</nrdconta>' ||
+                                '<nrctremp>' || rw_boleto.nrctremp   || '</nrctremp>' ||
+                                '<insacado>' || rw_boleto.insacado   || '</insacado>' ||
+                                '<nmdsacad>' || rw_boleto.nmdsacad   || '</nmdsacad>' ||
+                                '<tpenvio>'  || rw_boleto.tpenvio    || '</tpenvio>'  ||
+                                '<vltitulo>' || rw_boleto.vltitulo   || '</vltitulo>' ||
+                                '<dtvencto>' || rw_boleto.dtvencto   || '</dtvencto>' ||
+                         '</linha>');
+        END LOOP;
+        
+      END IF;
+      
+      -- Fechar XML
+      pc_escreve_xml('</linhas>');
+      
+      IF rw_arquivo.idsituacao = 1 THEN
+        
+        --Verifica se tem registro
+        OPEN cr_boleto_critica_reg(pr_idarquiv => pr_idarquiv);
+        FETCH cr_boleto_critica_reg INTO rw_boleto_critica_reg;
+        IF cr_boleto_critica_reg%FOUND THEN
+          vr_qtregistros := rw_boleto_critica_reg.qtregistros;
+        ELSE 
+          vr_qtregistros := 0;
+        END IF;
+        CLOSE cr_boleto_critica_reg;
+        
+        -- Inicia XML
+        pc_escreve_xml('<criticas qtcriticas="' || vr_qtregistros || '" >');
+        
+        FOR rw_boleto_critica IN cr_boleto_critica(pr_idarquiv => pr_idarquiv) LOOP
+          
+          -- popular linhas do XML
+           pc_escreve_xml('<critica>' ||
+                                 '<nmrescop>' || rw_boleto_critica.nmrescop   || '</nmrescop>' ||
+                                 '<nrdconta>' || rw_boleto_critica.nrdconta   || '</nrdconta>' ||
+                                 '<nrctremp>' || rw_boleto_critica.nrctremp   || '</nrctremp>' ||
+                                 '<insacado>' || rw_boleto_critica.insacado   || '</insacado>' ||
+                                 '<tpenvio>'  || rw_boleto_critica.tpenvio    || '</tpenvio>'  ||
+                                 '<dtvencto>' || rw_boleto_critica.dtvencto   || '</dtvencto>' ||
+                                 '<dserrger>' || rw_boleto_critica.dserrger   || '</dserrger>' ||
+                          '</critica>');
+        END LOOP;
+        
+        -- Fechar XML	
+        pc_escreve_xml('</criticas>');
+        
+      END IF;
+      
+      pc_escreve_xml('</raiz>');
+      
+      -- Busca do diretório base da cooperativa
+      vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C' -- /usr/coop
+                                            ,pr_cdcooper => 3 -- CECRED
+                                            ,pr_nmsubdir => '/rl'); --> Utilizaremos o rl
+      -- Nome do arquivo
+      vr_nom_arquivo := 'crrl733' || to_char( gene0002.fn_busca_time) || '.pdf';
+      
+      -- Escreve o clob no arquivo físico
+      gene0002.pc_clob_para_arquivo(pr_clob => vr_des_xml
+                                   ,pr_caminho => vr_nom_direto
+                                   ,pr_arquivo => 'crrl733.xml'
+                                   ,pr_des_erro => vr_dscritic);
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+      
+      -- Efetuar solicitacao de geracao de relatorio --
+      gene0002.pc_solicita_relato (pr_cdcooper  => vr_cdcooper         --> Cooperativa conectada
+                                  ,pr_cdprogra  => 'COBEMP'        --> Programa chamador
+                                  ,pr_dtmvtolt  => rw_crapdat.dtmvtolt --> Data do movimento atual
+                                  ,pr_dsxml     => vr_des_xml          --> Arquivo XML de dados
+                                  ,pr_dsxmlnode => '/raiz'             --> No base do XML para leitura dos dados
+                                  ,pr_dsjasper  => 'crrl733.jasper'    --> Arquivo de layout do iReport
+                                  ,pr_dsparams  => NULL                --> Titulo do relatório
+                                  ,pr_dsarqsaid => vr_nom_direto||'/'||vr_nom_arquivo --> Arquivo final
+                                  ,pr_qtcoluna  => 234                 --> 132 colunas
+                                  ,pr_sqcabrel  => 1                   --> Sequencia do Relatorio {includes/cabrel132_2.i}
+                                  ,pr_flg_impri => 'N'                 --> Chamar a impressão (Imprim.p)
+                                  ,pr_nmformul  => NULL                --> Nome do formulário para impressão
+                                  ,pr_nrcopias  => 1                   --> Número de cópias
+                                  ,pr_flg_gerar => 'S'                 --> gerar PDF
+                                  ,pr_nrvergrl  => 1                   --> JasperSoft Studio
+                                  ,pr_dspathcop => ''                  --> Copiar arquivo para diretorio
+                                  ,pr_flgremarq => 'N'                 --> Remover arquivo apos copia
+                                  ,pr_des_erro  => vr_dscritic);       --> Saída com erro
+      -- Testar se houve erro
+      IF vr_dscritic IS NOT NULL THEN
+        -- Gerar excecao
+        RAISE vr_exc_saida;
+      END IF;
+      
+      -- Liberando a memoria alocada pro CLOB
+      dbms_lob.close(vr_des_xml);
+      dbms_lob.freetemporary(vr_des_xml);
+      
+      -- Copia contrato PDF do diretorio da cooperativa para servidor WEB
+      GENE0002.pc_efetua_copia_pdf(pr_cdcooper => vr_cdcooper
+                                  ,pr_cdagenci => NULL
+                                  ,pr_nrdcaixa => NULL
+                                  ,pr_nmarqpdf => vr_nom_direto ||'/'||vr_nom_arquivo
+                                  ,pr_des_reto => vr_des_reto
+                                  ,pr_tab_erro => vr_tab_erro);
+      -- Se retornou erro
+      IF NVL(vr_des_reto,'OK') <> 'OK' THEN
+        IF vr_tab_erro.COUNT > 0 THEN -- verifica pl-table se existe erros
+          vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic; -- busca primeira critica
+          vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic; -- busca primeira descricao da critica
+          RAISE vr_exc_saida; -- encerra programa
+        END IF;
+      END IF;
+
+      -- Remover relatorio do diretorio padrao da cooperativa
+      GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                           ,pr_des_comando => 'rm '||vr_nom_direto ||'/'||vr_nom_arquivo
+                           ,pr_typ_saida   => vr_typsaida
+                           ,pr_des_saida   => vr_dscritic);
+      -- Se retornou erro
+      IF vr_typsaida = 'ERR' OR vr_dscritic IS NOT NULL THEN
+        -- Concatena o erro que veio
+        vr_dscritic := 'Erro ao remover arquivo: '||vr_dscritic;
+        RAISE vr_exc_saida; -- encerra programa
+      END IF;
+      
+      -- Criar cabecalho do XML
+      pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+
+      GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'Root'
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'Dados'
+                            ,pr_tag_cont => NULL
+                            ,pr_des_erro => vr_dscritic);
+
+      GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'Dados'
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'nmarqpdf'
+                            ,pr_tag_cont => vr_nom_arquivo
+                            ,pr_des_erro => vr_dscritic);
+                    
+		EXCEPTION
+      WHEN vr_exc_saida THEN
+
+        IF vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+        END IF;
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+
+        ROLLBACK;
+
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro nao tratado na TELA_COBEMP.pc_importar_arquivo: ' || SQLERRM;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                         '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+
+        ROLLBACK;
+		END;
+
+  END pc_gera_relatorio;
+  
+  PROCEDURE pc_gera_boletagem(pr_idarquiv   IN INTEGER        --> Nome do arquivo
+                             ,pr_xmllog     IN VARCHAR2       --> XML com informações de LOG
+                             ,pr_cdcritic  OUT PLS_INTEGER    --> Código da crítica
+                             ,pr_dscritic  OUT VARCHAR2       --> Descrição da crítica
+                             ,pr_retxml IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                             ,pr_nmdcampo  OUT VARCHAR2       --> Nome do campo com erro
+                             ,pr_des_erro  OUT VARCHAR2) IS   --> Erros do processo
+	  BEGIN
+ 	  /* .............................................................................
+
+      Programa: pc_gera_boletagem
+      Sistema : CECRED
+      Sigla   : EMPR
+      Autor   : Lombardi
+      Data    : Marco/2017                    Ultima atualizacao: 
+
+      Dados referentes ao programa:
+
+      Frequencia: Sempre que for chamado
+
+      Objetivo  : Rotina referente a geracao de boletos atraves da
+                  boletagem massiva.
+
+      Observacao: -----
+
+      Alteracoes: 
+    ..............................................................................*/
+		DECLARE
+
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(10000);
+    vr_flcritic BOOLEAN := FALSE;
+    
+    -- Variaveis de log
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+    
+    -- Variáveis Auxiliares
+    vr_vlsdeved crapepr.vlsdeved%TYPE;
+    vr_vlatraso crapepr.vlsdeved%TYPE;
+		vr_vlsdprej NUMBER(25,2);
+    vr_vlparepr  NUMBER(25,2);
+    vr_vlcalculo NUMBER(25,2);
+    vr_vlorigem NUMBER(25,2);
+    vr_tpparepr NUMBER;
+    vr_dsmsg    VARCHAR2(200);
+    vr_index    PLS_INTEGER;
+    vr_nmarquiv VARCHAR2(200);
+    
+    -- Tratamento de erros
+    vr_exc_saida EXCEPTION;
+    vr_exc_critica EXCEPTION;
+    
+    vr_nrdconta_cob crapsab.nrdconta%TYPE;
+    vr_nrcnvcob     crapcob.nrcnvcob%TYPE;
+    
+    -- Retorno OK/NOK
+    vr_des_erro VARCHAR(3);            
+    
+    -- Tabela temporaria para os vencimento
+    TYPE typ_reg_crapprm IS
+     RECORD(nrctacob crapass.nrdconta%TYPE,
+            nrcnvcob crapcob.nrcnvcob%TYPE);
+    TYPE typ_tab_crapprm IS
+      TABLE OF typ_reg_crapprm
+        INDEX BY PLS_INTEGER;
+    
+    TYPE typ_reg_import IS
+     RECORD(idarquivo        tbepr_boleto_import.idarquivo%TYPE
+           ,idboleto         tbepr_boleto_import.idboleto%TYPE
+           ,cdcooper         tbepr_boleto_import.cdcooper%TYPE
+           ,nrdconta         tbepr_boleto_import.nrdconta%TYPE
+           ,nrctremp         tbepr_boleto_import.nrctremp%TYPE
+           ,nrcpfaval        tbepr_boleto_import.nrcpfaval%TYPE
+           ,tpenvio          tbepr_boleto_import.tpenvio%TYPE
+           ,peracrescimo     tbepr_boleto_import.peracrescimo%TYPE
+           ,perdesconto      tbepr_boleto_import.perdesconto%TYPE
+           ,dtvencto         tbepr_boleto_import.dtvencto%TYPE
+           ,nrddd_envio      tbepr_boleto_import.nrddd_envio%TYPE
+           ,nrfone_envio     tbepr_boleto_import.nrfone_envio%TYPE
+           ,dsemail_envio    tbepr_boleto_import.dsemail_envio%TYPE
+           ,dsendereco_envio tbepr_boleto_import.dsendereco_envio%TYPE
+           ,row_id           ROWID);
+    TYPE typ_tab_import IS
+      TABLE OF typ_reg_import
+        INDEX BY PLS_INTEGER;
+    
+    -- Vetor para armazenar os convenios e contas 
+    vr_tab_crapprm typ_tab_crapprm;
+    
+    -- Vetor para armazenar os convenios e contas 
+    vr_tab_import typ_tab_import;
+    
+    vr_flgativo INTEGER := 0;
+      
+    -------------------------------- CURSORES --------------------------------------
+
+		-- Cursor para consultar arquivo
+		CURSOR cr_arquivo(pr_idarquiv IN tbepr_boleto_arq.idarquivo%TYPE) IS
+      SELECT arq.idarquivo
+            ,to_char(arq.dtarquivo, 'DD/MM/RRRR') dtarquivo
+            ,to_char(arq.dtarquivo, 'HH:MI:SS') hrarquivo
+            ,arq.nmarq_import
+            ,arq.nmarq_gerado
+            ,arq.insitarq
+        FROM tbepr_boleto_arq arq
+       WHERE arq.idarquivo = pr_idarquiv;
+       
+		rw_arquivo cr_arquivo%ROWTYPE;
+
+    -- Busca linhas de importação do boleto
+		CURSOR cr_linha(pr_idarquiv IN tbepr_boleto_import.idarquivo%TYPE) IS
+      SELECT imp.idarquivo
+            ,imp.idboleto
+            ,imp.cdcooper
+            ,imp.nrdconta
+            ,imp.nrctremp
+            ,imp.nrcpfaval
+            ,imp.tpenvio
+            ,imp.peracrescimo
+            ,imp.perdesconto
+            ,imp.dtvencto
+            ,imp.nrddd_envio
+            ,imp.nrfone_envio
+            ,imp.dsemail_envio
+            ,imp.dsendereco_envio
+            ,imp.rowid
+        FROM tbepr_boleto_import imp
+       WHERE imp.idarquivo = pr_idarquiv;
+       
+    CURSOR cr_criticas(pr_idarquiv IN tbepr_boleto_critic.idarquivo%TYPE) IS   
+       SELECT COUNT(*) qtdcriticas
+         FROM tbepr_boleto_critic cri
+        WHERE cri.idarquivo = pr_idarquiv;
+    rw_criticas cr_criticas%ROWTYPE;
+        
+    -- Cursor cooperativas ativas 
+    CURSOR cr_crapcop IS
+      SELECT cop.cdcooper
+        FROM crapcop cop
+       WHERE cop.flgativo = 1;
+       
+    -- Cursor para localizar contrato de emprestimo
+		CURSOR cr_crapepr(pr_cdcooper IN crapepr.cdcooper%TYPE
+                     ,pr_nrdconta IN crapepr.nrdconta%TYPE
+                     ,pr_nrctremp IN crapepr.nrctremp%TYPE) IS
+			SELECT epr.tpemprst,
+             epr.inliquid,
+             epr.inprejuz
+			  FROM crapepr epr
+			 WHERE epr.cdcooper = pr_cdcooper
+				 AND epr.nrdconta = pr_nrdconta
+				 AND epr.nrctremp = pr_nrctremp;
+		rw_crapepr cr_crapepr%ROWTYPE;   
+
+    -- Variáveis de controle de calendário
+    rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+      
+    ----------------------------- SUBROTINAS INTERNAS -------------------------------
+
+    BEGIN
+      
+      -- Extrai os dados vindos do XML
+      GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+      
+      -- Se houver criticas
+      IF vr_dscritic IS NOT NULL THEN
+        vr_cdcritic := 0;
+        RAISE vr_exc_saida;
+      END IF;
+      
+      OPEN cr_arquivo(pr_idarquiv => pr_idarquiv);
+      FETCH cr_arquivo INTO rw_arquivo;
+      
+      IF cr_arquivo%NOTFOUND THEN
+        -- Fecha Cursor
+        CLOSE cr_arquivo;
+        
+        vr_cdcritic := 0;
+        vr_dscritic := 'Remessa não localizada.';
+        RAISE vr_exc_saida;
+      END IF;
+      -- Fecha Cursor
+      CLOSE cr_arquivo;
+      /*
+      -- Verifica se remessa já foi processada
+      IF rw_arquivo.insitarq = 1 THEN
+        vr_cdcritic := 0;
+        vr_dscritic := 'Remessa já Processada. Não permitido geração de boletagem.';
+        RAISE vr_exc_saida;
+      END IF;
+      */
+      -- Verifica se remessa possui criticas noa rquivo importado.
+      OPEN cr_criticas(pr_idarquiv => pr_idarquiv);
+      FETCH cr_criticas INTO rw_criticas;
+      
+      -- Fecha Cursor
+      CLOSE cr_criticas;
+      
+      IF rw_criticas.qtdcriticas > 0 THEN
+        vr_cdcritic := 0;
+        vr_dscritic := 'Remessas com criticas. Não permitido geração de boletagem.';
+        RAISE vr_exc_saida;
+      END IF;
+      
+      FOR rw_crapcop IN cr_crapcop LOOP
+        
+        -- Localizar conta do emitente do boleto, neste caso a cooperativa
+        vr_nrdconta_cob := GENE0002.fn_char_para_number(gene0001.fn_param_sistema(pr_cdcooper => rw_crapcop.cdcooper
+																										   ,pr_nmsistem => 'CRED'
+																										   ,pr_cdacesso => 'COBEMP_NRDCONTA_BNF'));
+
+        -- Localizar convenio de cobrança
+        vr_nrcnvcob := gene0001.fn_param_sistema(pr_cdcooper => rw_crapcop.cdcooper
+                                                ,pr_nmsistem => 'CRED'
+                                                ,pr_cdacesso => 'COBEMP_NRCONVEN');
+        
+        IF vr_nrdconta_cob = 0 THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'Convenio não cadastrado para cooperativa: ' || to_char(rw_crapcop.cdcooper);
+          RAISE vr_exc_saida;
+        END IF;                                        
+        
+        vr_tab_crapprm(rw_crapcop.cdcooper).nrctacob := vr_nrdconta_cob;
+        vr_tab_crapprm(rw_crapcop.cdcooper).nrcnvcob := vr_nrcnvcob;                                         
+                                                                                      
+      END LOOP; 
+      
+      vr_index := 0;
+      FOR rw_linha IN cr_linha(pr_idarquiv => pr_idarquiv) LOOP
+        vr_tab_import(vr_index).idarquivo        := rw_linha.idarquivo;
+        vr_tab_import(vr_index).idboleto         := rw_linha.idboleto;
+        vr_tab_import(vr_index).cdcooper         := rw_linha.cdcooper;
+        vr_tab_import(vr_index).nrdconta         := rw_linha.nrdconta;
+        vr_tab_import(vr_index).nrctremp         := rw_linha.nrctremp;
+        vr_tab_import(vr_index).nrcpfaval        := rw_linha.nrcpfaval;
+        vr_tab_import(vr_index).tpenvio          := rw_linha.tpenvio;
+        vr_tab_import(vr_index).peracrescimo     := rw_linha.peracrescimo;
+        vr_tab_import(vr_index).perdesconto      := rw_linha.perdesconto;
+        vr_tab_import(vr_index).dtvencto         := rw_linha.dtvencto;
+        vr_tab_import(vr_index).nrddd_envio      := rw_linha.nrddd_envio;
+        vr_tab_import(vr_index).nrfone_envio     := rw_linha.nrfone_envio;
+        vr_tab_import(vr_index).dsemail_envio    := rw_linha.dsemail_envio;
+        vr_tab_import(vr_index).dsendereco_envio := rw_linha.dsendereco_envio;
+        vr_tab_import(vr_index).row_id           := rw_linha.rowid;
+        vr_index := vr_index + 1;
+      END LOOP;
+      
+      -- Efetua limpeza das criticas de geração anterior.
+      BEGIN
+            
+        UPDATE tbepr_boleto_import imp
+           SET imp.dserrger  = ' '
+         WHERE imp.idarquivo = pr_idarquiv;
+        COMMIT;
+      EXCEPTION
+        WHEN OTHERS THEN
+        vr_dscritic := 'Problema ao atualizar boletos: ' || SQLERRM;
+        RAISE vr_exc_saida;
+      END;                      
+      
+      -- Inicializa flag de erro
+      vr_flcritic := FALSE;
+      
+      vr_index := vr_tab_import.first;
+      
+      WHILE vr_index IS NOT NULL LOOP
+        
+        BEGIN
+        
+          -- Chama procedure de validação para gerar o boleto
+          EMPR0007.pc_verifica_gerar_boleto (pr_cdcooper => vr_tab_import(vr_index).cdcooper --> Cód. cooperativa
+                                            ,pr_nrctacob => vr_tab_crapprm(vr_tab_import(vr_index).cdcooper).nrcnvcob       --> Nr. da Conta Cob.
+                                            ,pr_nrdconta => vr_tab_import(vr_index).nrdconta --> Nr. da Conta
+                                            ,pr_nrcnvcob => vr_tab_crapprm(vr_tab_import(vr_index).cdcooper).nrctacob       --> Nr. do Convênio de Cobrança
+                                            ,pr_nrctremp => vr_tab_import(vr_index).nrctremp --> Nr. do Contrato
+                                            ,pr_idarquiv => pr_idarquiv       --> Nr. do Arquivo (<> 0 = boletagem massiva)
+                                            ,pr_cdcritic => vr_cdcritic       --> Código da crítica
+                                            ,pr_dscritic => vr_dscritic       --> Descrição da crítica
+                                            ,pr_des_erro => vr_des_erro);     --> Erros do processo
+          -- Se retornou erro
+          IF vr_des_erro <> 'OK' THEN
+            
+            IF vr_dscritic IS NULL THEN
+              vr_dscritic := 'Erro na verificacao da geracao do boleto.';
+            END IF;
+
+            RAISE vr_exc_critica;
+            
+          END IF;
+        
+          -- Verifica contratos de acordo
+          RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => vr_tab_import(vr_index).cdcooper
+                                           ,pr_nrdconta => vr_tab_import(vr_index).nrdconta
+                                           ,pr_nrctremp => vr_tab_import(vr_index).nrctremp
+                                           ,pr_flgativo => vr_flgativo
+                                           ,pr_cdcritic => vr_cdcritic
+                                           ,pr_dscritic => vr_dscritic);
+
+          IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+            -- Gerar exceção
+            RAISE vr_exc_critica;
+          END IF;
+         
+          IF vr_flgativo = 1 THEN
+            vr_dscritic := 'Geração de boleto não permitido, emprestimo em acordo.';
+            -- Gerar exceção
+            RAISE vr_exc_critica;
+          END IF;
+          
+          OPEN cr_crapepr(pr_cdcooper => vr_tab_import(vr_index).cdcooper
+                         ,pr_nrdconta => vr_tab_import(vr_index).nrdconta
+                         ,pr_nrctremp => vr_tab_import(vr_index).nrctremp);
+          FETCH cr_crapepr INTO rw_crapepr;
+    			
+          IF cr_crapepr%NOTFOUND THEN
+            --Fecha cursor
+            CLOSE cr_crapepr;
+            --Atribui críticas
+            vr_cdcritic := 0;
+            vr_dscritic := 'Contrato não localizado.';
+            -- Gera exceção
+            RAISE vr_exc_critica;
+          END IF;
+          --Fecha cursor
+          CLOSE cr_crapepr;
+          
+          -- Leitura do calendário da cooperativa
+          OPEN btch0001.cr_crapdat(pr_cdcooper => vr_tab_import(vr_index).cdcooper);
+          FETCH btch0001.cr_crapdat INTO rw_crapdat;
+          -- Se não encontrar
+          IF btch0001.cr_crapdat%NOTFOUND THEN
+            -- Fechar o cursor pois efetuaremos raise
+            CLOSE btch0001.cr_crapdat;
+            -- Montar mensagem de critica
+            vr_cdcritic := 1;
+            RAISE vr_exc_saida;
+          ELSE
+            -- Apenas fechar o cursor
+            CLOSE btch0001.cr_crapdat;
+          END IF;
+          
+          --> Calcula o saldo do contrado do cooperado
+          pc_calcular_saldo_contrato (pr_cdcooper   => vr_tab_import(vr_index).cdcooper, --> Codigo da Cooperativa
+                                      pr_nrdconta   => vr_tab_import(vr_index).nrdconta, --> Número da Conta
+                                      pr_cdorigem   => 2,                                --> Origem
+                                      pr_nrctremp   => vr_tab_import(vr_index).nrctremp, --> Numero do Contrato
+                                      pr_rw_crapdat => rw_crapdat,         --> Datas da cooperativa
+                                      pr_vllimcre   => 0,                  --> Limite de credito do cooperado     
+                                      pr_vlsdeved   => vr_vlsdeved,        --> Valor Saldo Devedor
+                                      pr_vlsdprej   => vr_vlsdprej,        --> Valor Saldo Prejuizo
+                                      pr_vlatraso   => vr_vlatraso,        --> Valor Atraso
+                                      pr_cdcritic   => vr_cdcritic,        --> Código da Crítica
+                                      pr_dscritic   => vr_dscritic);       --> Descrição da Crítica
+          
+          IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN       
+            RAISE vr_exc_critica;
+          END IF;
+          
+          IF rw_crapepr.inprejuz = 1 THEN
+            vr_vlparepr := vr_vlsdprej;
+            vr_vlorigem := vr_vlsdprej;
+            vr_tpparepr := 5; -- Saldo Prejuizo
+          ELSE          
+            vr_vlparepr := vr_vlsdeved;
+            vr_vlorigem := vr_vlsdeved;
+            vr_tpparepr := 4; -- Saldo Contrato
+          END IF;   
+          
+          IF nvl(vr_tab_import(vr_index).perdesconto,0) = 0 THEN
+            vr_cdcritic := 0;
+            vr_dscritic := 'Percentual de Desconto nao Informado.';
+            RAISE vr_exc_critica;
+          END IF;
+          
+          -- Verificar Desconto e Acrescimo
+          -- 1º Desconto
+          IF nvl(vr_tab_import(vr_index).perdesconto,0) > 0 THEN
+             
+             vr_vlcalculo := ( vr_vlparepr * nvl(vr_tab_import(vr_index).perdesconto,0) ) / 100;
+             vr_vlparepr := vr_vlparepr - vr_vlcalculo;
+          END IF;  
+          
+          -- 2º Acrescimo
+          IF nvl(vr_tab_import(vr_index).peracrescimo,0) > 0 THEN
+             
+             vr_vlcalculo := ( vr_vlparepr * nvl(vr_tab_import(vr_index).peracrescimo,0) ) / 100;
+             vr_vlparepr := vr_vlparepr + vr_vlcalculo;
+          END IF;   
+          
+          IF vr_vlparepr > vr_vlorigem THEN
+            vr_cdcritic := 0;
+            vr_dscritic := 'Valor calculado superios ao saldo devedor.';
+            RAISE vr_exc_critica;
+          END IF;
+          
+          IF vr_vlparepr <= 0 THEN
+            vr_cdcritic := 0;
+            vr_dscritic := 'Contrato não possui saldo devedor.';
+            RAISE vr_exc_critica;
+          END IF;
+          
+          pc_gera_boleto_contrato(pr_cdcooper => vr_tab_import(vr_index).cdcooper
+                                 ,pr_nrdconta => vr_tab_import(vr_index).nrdconta
+                                 ,pr_nrctremp => vr_tab_import(vr_index).nrctremp
+                                 ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                 ,pr_tpparepr => vr_tpparepr
+                                 ,pr_dsparepr => NULL
+                                 ,pr_dtvencto => vr_tab_import(vr_index).dtvencto
+                                 ,pr_vlparepr => vr_vlparepr
+                                 ,pr_cdoperad => vr_cdoperad
+                                 ,pr_nmdatela => vr_nmdatela
+                                 ,pr_idorigem => vr_idorigem
+                                 ,pr_nrcpfava => vr_tab_import(vr_index).nrcpfaval
+                                 ,pr_idarquiv => pr_idarquiv
+                                 ,pr_idboleto => vr_tab_import(vr_index).idboleto
+                                 ,pr_cdcritic => vr_cdcritic
+                                 ,pr_dscritic => vr_dscritic);
+          
+          -- Se retornou alguma crítica
+          IF vr_cdcritic <> 0 OR
+             TRIM(vr_dscritic) IS NOT NULL THEN
+             -- Levanta exceção
+             RAISE vr_exc_critica;
+          END IF;
+        
+        EXCEPTION
+          WHEN vr_exc_critica THEN
+            vr_flcritic := TRUE;
+            
+            BEGIN
+              UPDATE tbepr_boleto_import imp
+                 SET imp.dserrger = vr_dscritic
+               WHERE imp.rowid = vr_tab_import(vr_index).row_id;
+               vr_dscritic := '';
+            EXCEPTION
+              WHEN OTHERS THEN
+              vr_dscritic := 'Problema ao gerar boletagem massiva: ' || SQLERRM;
+              RAISE vr_exc_saida;
+            END;
+            
+        END;
+        vr_index := vr_tab_import.next(vr_index);
+        
+      END LOOP;
+      
+      -- Atualizar a situação da remessa para "Processada"
+      BEGIN
+        UPDATE tbepr_boleto_arq arq
+           SET arq.insitarq = 1
+         WHERE arq.idarquivo = pr_idarquiv;
+      EXCEPTION
+        WHEN OTHERS THEN
+        vr_dscritic := 'Erro ao alterar a situação da remessa: ' || SQLERRM;
+        RAISE vr_exc_saida;
+      END;
+      
+      COMMIT;
+      IF vr_flcritic THEN
+        vr_dsmsg := 'Operação efetuada com críticas. Verifique relatório';
+      ELSE
+        vr_dsmsg := 'Operação efetuada com sucesso.';
+      END IF;
+      
+      -- Gera arquivo do parceiro
+      pc_gera_arquivo_parca(pr_idarquiv => pr_idarquiv
+                           ,pr_cdcooper => vr_cdcooper
+                           ,pr_cdoperad => vr_cdoperad
+                           ,pr_nmarquiv => vr_nmarquiv
+                           ,pr_cdcritic => vr_cdcritic
+                           ,pr_dscritic => vr_dscritic);
+      
+      IF vr_cdcritic <> 0 OR
+         vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+      
+      -- Criar cabecalho do XML
+      pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+
+      GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'Root'
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'Dados'
+                            ,pr_tag_cont => NULL
+                            ,pr_des_erro => vr_dscritic);
+      
+      GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'Dados'
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'msg'
+                            ,pr_tag_cont => vr_dsmsg
+                            ,pr_des_erro => vr_dscritic);
+            
+		EXCEPTION
+      WHEN vr_exc_saida THEN
+
+        IF vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+        END IF;
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+
+        ROLLBACK;
+
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro nao tratado na TELA_COBEMP.pc_importar_arquivo: ' || SQLERRM;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                         '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+
+        ROLLBACK;
+		END;
+
+  END pc_gera_boletagem;
+  
+  PROCEDURE pc_gera_boleto_contrato(pr_cdcooper IN  crapcob.cdcooper%TYPE --> Código da cooperativa;
+																	 ,pr_nrdconta IN  crapcob.nrdconta%TYPE --> Conta do cooperado do contrato;
+																	 ,pr_nrctremp IN  crapcob.nrctremp%TYPE --> Número do contrato de empréstimo;
+																	 ,pr_dtmvtolt IN  crapcob.dtmvtolt%TYPE --> Data do movimento;
+																	 ,pr_tpparepr IN  NUMBER                --> Tipo de parcela 1 = Parcela Normal, 2 = Total do atraso 3 = Parcial do atraso 4 = Quitação do contrato;
+																	 ,pr_dsparepr IN  VARCHAR2 DEFAULT NULL /* Descrição das parcelas do empréstimo “par1,par2,par..., parN”;
+																	 																						Obs: empréstimo TR => NULL;
+																	 																						Obs2: Quando for ref a várias parcelas do contrato, parcela = NULL;
+																	 																						Obs3: Quando for quitação do contrato, parcela = 0; */
+																	 ,pr_dtvencto IN  crapcob.dtvencto%TYPE --> Vencimento do boleto;
+																	 ,pr_vlparepr IN  crappep.vlparepr%TYPE --> Valor da parcela;
+																	 ,pr_cdoperad IN  crapcob.cdoperad%TYPE --> Código do operador;
+																	 ,pr_nmdatela IN VARCHAR2               --> Nome da tela
+														       ,pr_idorigem IN INTEGER                --> ID Origem
+                                   ,pr_nrcpfava IN NUMBER DEFAULT 0       --> CPF do avalista
+																	 ,pr_idarquiv IN INTEGER DEFAULT 0      --> Id do arquivo (boletagem Massiva)
+                                   ,pr_idboleto IN INTEGER DEFAULT 0      --> Id do boleto no arquivo (boletagem Massiva)
+                                   ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Código da crítica
+																	 ,pr_dscritic OUT crapcri.dscritic%TYPE --> Descrição da crítica
+																	 ) IS
+	  /* .............................................................................
+
+      Programa: pc_gera_boleto_contrato
+      Sistema : CECRED
+      Sigla   : EMPR
+      Autor   : Lombardi
+      Data    : Marco/2017                    Ultima atualizacao: 
+
+      Dados referentes ao programa:
+
+      Frequencia: Sempre que for chamado
+
+      Objetivo  : Rotina para chamar a procedure pc_gera_boleto_contrato 
+                  da EMPR0007 com pragma.
+                  
+      Observacao: -----
+
+      Alteracoes: 
+    ..............................................................................*/
+     -- Pragma - abre nova sessao para tratar a atualizacao
+     PRAGMA AUTONOMOUS_TRANSACTION;
+
+    BEGIN
+      EMPR0007.pc_gera_boleto_contrato(pr_cdcooper => pr_cdcooper
+                                      ,pr_nrdconta => pr_nrdconta
+                                      ,pr_nrctremp => pr_nrctremp
+                                      ,pr_dtmvtolt => pr_dtmvtolt
+                                      ,pr_tpparepr => pr_tpparepr
+                                      ,pr_dsparepr => pr_dsparepr
+                                      ,pr_dtvencto => pr_dtvencto
+                                      ,pr_vlparepr => pr_vlparepr
+                                      ,pr_cdoperad => pr_cdoperad
+                                      ,pr_nmdatela => pr_nmdatela
+                                      ,pr_idorigem => pr_idorigem
+                                      ,pr_nrcpfava => pr_nrcpfava
+                                      ,pr_idarquiv => pr_idarquiv
+                                      ,pr_idboleto => pr_idboleto
+                                      ,pr_cdcritic => pr_cdcritic
+                                      ,pr_dscritic => pr_dscritic);
+		EXCEPTION
+      WHEN OTHERS THEN
+        pr_cdcritic := 0;
+        pr_dscritic := 'Erro ao gerar boleto: ' || SQLERRM;
+        ROLLBACK;
+  END pc_gera_boleto_contrato;
+  
+  PROCEDURE pc_calcular_saldo_contrato (pr_cdcooper   IN  crapcop.cdcooper%TYPE,  --> Codigo da Cooperativa
+                                        pr_nrdconta   IN  crapass.cdcooper%TYPE,  --> Número da Conta
+                                        pr_cdorigem   IN  INTEGER,                --> Origem
+                                        pr_nrctremp   IN  crapepr.nrctremp%TYPE,  --> Numero do Contrato
+                                        pr_rw_crapdat IN  btch0001.cr_crapdat%ROWTYPE, --> Datas da cooperativa
+                                        pr_vllimcre   IN crapass.vllimcre%TYPE,   --> Limite de credito do cooperado     
+                                        pr_vlsdeved  OUT  NUMBER,                 --> Valor Saldo Devedor
+                                        pr_vlsdprej  OUT  NUMBER,                 --> Valor Saldo Prejuizo
+                                        pr_vlatraso  OUT  NUMBER,                 --> Valor Atraso
+                                        pr_cdcritic  OUT  NUMBER,                 --> Código da Crítica
+                                        pr_dscritic  OUT  VARCHAR2)  IS           --> Descrição da Crítica
+  /* .............................................................................
+   Programa: pc_calcula_saldo_contrato
+   Sistema : CECRED
+   Sigla   : EMPR
+   Autor   : Lombardi
+   Data    : Março/2017.                    Ultima atualizacao: --/--/----
+
+   Dados referentes ao programa:
+
+   Frequencia: Sempre que for chamado
+
+   Objetivo  : Calcula o saldo do contrado do cooperado.
+
+   Observacao: -----
+   Alteracoes: 
+
+   ..............................................................................*/                                    
+    ---------------> VARIAVEIS <------------
+    -- Tratamento de erros
+    vr_cdcritic    INTEGER;
+    vr_dscritic    VARCHAR2(10000);
+    vr_exc_erro    EXCEPTION;
+    vr_des_reto    VARCHAR2(10000);        
+    vr_tab_erro    gene0001.typ_tab_erro;
+    
+    vr_tab_saldos  extr0001.typ_tab_saldos;
+    vr_index_saldo BINARY_INTEGER := 0;
+    vr_vlsomato    NUMBER;
+    
+    vr_dstextab    craptab.dstextab%TYPE;
+    vr_inusatab    BOOLEAN;
+    vr_parempct    craptab.dstextab%TYPE;
+    vr_digitali    craptab.dstextab%TYPE;
+    vr_tab_dados_epr empr0001.typ_tab_dados_epr;
+    vr_qtregist    INTEGER;
+    
+    
+  BEGIN
+      
+    ---> ESTOURO DE CONTA <---
+    IF pr_cdorigem = 1 THEN
+      --Limpar tabela saldos
+      vr_tab_saldos.DELETE;      
+      --Obter Saldo do Dia
+      EXTR0001.pc_obtem_saldo_dia(pr_cdcooper   => pr_cdcooper
+                                 ,pr_rw_crapdat => pr_rw_crapdat
+                                 ,pr_cdagenci   => 1 
+                                 ,pr_nrdcaixa   => 1 
+                                 ,pr_cdoperad   => '1'
+                                 ,pr_nrdconta   => pr_nrdconta
+                                 ,pr_vllimcre   => pr_vllimcre
+                                 ,pr_dtrefere   => pr_rw_crapdat.dtmvtolt
+                                 ,pr_des_reto   => vr_des_reto                               
+                                 ,pr_tab_sald   => vr_tab_saldos
+                                 ,pr_tipo_busca => 'A'
+                                 ,pr_flgcrass   => FALSE
+                                 ,pr_tab_erro   => vr_tab_erro);    
+      -- Se ocorreu erro
+      IF vr_des_reto <> 'OK' THEN
+        -- Se tem erro na tabela
+        IF vr_tab_erro.COUNT > 0 THEN
+          vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+          vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+        ELSE
+          vr_cdcritic := 983; -- Não foi possivel calcular o saldo devedor
+        END IF;
+        --Sair com erro
+        RAISE vr_exc_erro;
+      END IF;
+        
+      --Buscar Indice
+      vr_index_saldo := vr_tab_saldos.FIRST;
+      IF vr_index_saldo IS NOT NULL THEN
+        -- Acumular Saldo
+        vr_vlsomato := ROUND( nvl(vr_tab_saldos(vr_index_saldo).vlsddisp, 0),2);
+      END IF;
+      
+      IF vr_vlsomato < 0 THEN
+        -- Saldo Devedor
+        pr_vlsdeved := ABS(vr_vlsomato);
+        -- Saldo Prejuizo
+        pr_vlsdprej := 0;
+        -- Valor em Atraso
+        pr_vlatraso := ABS(vr_vlsomato);
+      END IF;
+      
+    ---> EMPRESTIMO <---
+    ELSIF pr_cdorigem IN (2,3) THEN
+    
+      -- Leitura do indicador de uso da tabela de taxa de juros
+      vr_dstextab := tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                                               ,pr_nmsistem => 'CRED'
+                                               ,pr_tptabela => 'USUARI'
+                                               ,pr_cdempres => 11
+                                               ,pr_cdacesso => 'TAXATABELA'
+                                               ,pr_tpregist => 0);
+      -- Se encontrar
+      IF vr_dstextab IS NOT NULL THEN
+        -- Se a primeira posição do campo
+        -- dstextab for diferente de zero
+        IF SUBSTR(vr_dstextab,1,1) != '0' THEN
+          -- É porque existe tabela parametrizada
+          vr_inusatab := TRUE;
+        ELSE
+          -- Não existe
+          vr_inusatab := FALSE;
+        END IF;
+      ELSE
+        -- Não existe
+        vr_inusatab := FALSE;
+      END IF;
+          
+      -- Leitura do indicador de uso da tabela de taxa de juros                                                    
+      vr_parempct := tabe0001.fn_busca_dstextab(pr_cdcooper => 3 /*Fixo Cecred*/
+                                               ,pr_nmsistem => 'CRED'
+                                               ,pr_tptabela => 'USUARI'
+                                               ,pr_cdempres => 11
+                                               ,pr_cdacesso => 'PAREMPCTL'
+                                               ,pr_tpregist => 1);       
+                                                 
+      -- busca o tipo de documento GED    
+      vr_digitali := tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                                               ,pr_nmsistem => 'CRED'
+                                               ,pr_tptabela => 'GENERI'
+                                               ,pr_cdempres => 0
+                                               ,pr_cdacesso => 'DIGITALIZA'
+                                               ,pr_tpregist => 5);                                               
+                                                 
+      vr_tab_dados_epr.delete;
+      
+      -- Busca saldo total de emprestimos
+      EMPR0001.pc_obtem_dados_empresti(pr_cdcooper => pr_cdcooper         --> Cooperativa conectada
+                                      ,pr_cdagenci => 1                   --> Código da agência
+                                      ,pr_nrdcaixa => 1                   --> Número do caixa
+                                      ,pr_cdoperad => '1'                 --> Código do operador
+                                      ,pr_nmdatela => 'WEBSERVICE'        --> Nome datela conectada
+                                      ,pr_idorigem => 9                   --> Indicador da origem da chamada
+                                      ,pr_nrdconta => pr_nrdconta         --> Conta do associado
+                                      ,pr_idseqttl => 1 -- pr_idseqttl    --> Sequencia de titularidade da conta
+                                      ,pr_rw_crapdat => pr_rw_crapdat     --> Vetor com dados de parâmetro (CRAPDAT)
+                                      ,pr_dtcalcul => NULL                --> Data solicitada do calculo
+                                      ,pr_nrctremp => pr_nrctremp         --> Número contrato empréstimo
+                                      ,pr_cdprogra => 'WEBSERVICE'        --> Programa conectado
+                                      ,pr_inusatab => vr_inusatab         --> Indicador de utilização da tabela
+                                      ,pr_flgerlog => 'N'                 --> Gerar log S/N
+                                      ,pr_flgcondc => FALSE               --> Mostrar emprestimos liquidados sem prejuizo
+                                      ,pr_nmprimtl => ' '                 --> Nome Primeiro Titular
+                                      ,pr_tab_parempctl => vr_parempct    --> Dados tabela parametro
+                                      ,pr_tab_digitaliza => vr_digitali   --> Dados tabela parametro
+                                      ,pr_nriniseq => 0                   --> Numero inicial paginacao
+                                      ,pr_nrregist => 0                   --> Qtd registro por pagina
+                                      ,pr_qtregist => vr_qtregist         --> Qtd total de registros
+                                      ,pr_tab_dados_epr => vr_tab_dados_epr  --> Saida com os dados do empréstimo
+                                      ,pr_des_reto => vr_des_reto         --> Retorno OK / NOK
+                                      ,pr_tab_erro => vr_tab_erro);       --> Tabela com possíves erros
+
+      -- Se ocorreu erro
+      IF vr_des_reto <> 'OK' THEN
+        -- Se tem erro na tabela
+        IF vr_tab_erro.COUNT > 0 THEN
+          vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+          vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+        ELSE
+          vr_cdcritic := 983; -- Não foi possivel calcular o saldo devedor
+        END IF;
+        --Sair com erro
+        RAISE vr_exc_erro;
+      END IF;
+    
+      -- Condicao para verificar se encontrou contrato de emprestimo
+      IF vr_tab_dados_epr.COUNT > 0 THEN
+        -- Saldo Devedor
+        pr_vlsdeved := nvl(vr_tab_dados_epr(1).vlsdeved,0) + nvl(vr_tab_dados_epr(1).vlmtapar,0) + nvl(vr_tab_dados_epr(1).vlmrapar,0);
+        -- Saldo Prejuizo
+        pr_vlsdprej := nvl(vr_tab_dados_epr(1).vlsdprej,0);
+        -- Valor em Atraso
+        pr_vlatraso := nvl(vr_tab_dados_epr(1).vltotpag,0);
+      END IF;
+        
+    END IF;
+  EXCEPTION
+    WHEN vr_exc_erro THEN    
+      --> Buscar descrição critica
+      IF nvl(vr_cdcritic,0) > 0 AND TRIM(vr_dscritic) IS NULL THEN
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);          
+      END IF;
+      
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;      
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Nao foi possivel calcular saldo do contrato '||pr_nrctremp||': '||SQLERRM;      
+      
+  END pc_calcular_saldo_contrato; 
+  
+  PROCEDURE pc_gera_arquivo_parca_web(pr_idarquiv   IN INTEGER        --> Nome do arquivo
+                                     ,pr_xmllog     IN VARCHAR2       --> XML com informações de LOG
+                                     ,pr_cdcritic  OUT PLS_INTEGER    --> Código da crítica
+                                     ,pr_dscritic  OUT VARCHAR2       --> Descrição da crítica
+                                     ,pr_retxml IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                                     ,pr_nmdcampo  OUT VARCHAR2       --> Nome do campo com erro
+                                     ,pr_des_erro  OUT VARCHAR2) IS   --> Erros do processo
+	  BEGIN
+ 	  /* .............................................................................
+
+      Programa: pc_gera_arquivo_parca_web
+      Sistema : CECRED
+      Sigla   : EMPR
+      Autor   : Lombardi
+      Data    : Marco/2017                    Ultima atualizacao: 
+
+      Dados referentes ao programa:
+
+      Frequencia: Sempre que for chamado
+
+      Objetivo  : Rotina referente a geracao de arquivo csv para aprceiro no ayllos web.
+
+      Observacao: -----
+
+      Alteracoes: 
+    ..............................................................................*/
+		DECLARE
+
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(10000);
+    
+    -- Variaveis de log
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+    
+    -- Variáveis Auxiliares
+    vr_nmarquiv    VARCHAR2(200);
+    vr_msg_retorno VARCHAR2(500);
+    
+    -- Tratamento de erros
+    vr_exc_saida EXCEPTION;
+    vr_exc_critica EXCEPTION;
+    
+    ----------------------------- SUBROTINAS INTERNAS -------------------------------
+
+    BEGIN
+      
+      -- Extrai os dados vindos do XML
+      GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+      
+      
+      -- Se houver criticas
+      IF vr_dscritic IS NOT NULL THEN
+        vr_cdcritic := 0;
+        RAISE vr_exc_saida;
+      END IF;
+      
+      pc_gera_arquivo_parca(pr_idarquiv => pr_idarquiv
+                           ,pr_cdcooper => vr_cdcooper
+                           ,pr_cdoperad => vr_cdoperad
+                           ,pr_nmarquiv => vr_nmarquiv
+                           ,pr_cdcritic => vr_cdcritic
+                           ,pr_dscritic => vr_dscritic);
+      IF vr_cdcritic <> 0 OR
+         vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+      
+      IF vr_nmarquiv IS NOT NULL THEN 
+        vr_msg_retorno := 'Arquivo ' || vr_nmarquiv || ' gerado com sucesso!';
+      ELSE 
+        vr_msg_retorno := 'Não foram gerados boletos para essa remessa. Não foi possível gerar o arquivo!';
+      END IF;
+      
+      -- Criar cabecalho do XML
+      pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+
+      GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'Root'
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'Dados'
+                            ,pr_tag_cont => NULL
+                            ,pr_des_erro => vr_dscritic);
+      
+      GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'Dados'
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'msg'
+                            ,pr_tag_cont => vr_msg_retorno
+                            ,pr_des_erro => vr_dscritic);
+                            
+		EXCEPTION
+      WHEN vr_exc_saida THEN
+
+        IF vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+        END IF;
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+
+        ROLLBACK;
+
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro nao tratado na TELA_COBEMP.pc_importar_arquivo: ' || SQLERRM;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                         '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+
+        ROLLBACK;
+		END;
+
+  END pc_gera_arquivo_parca_web;
+  
+  PROCEDURE pc_gera_arquivo_parca(pr_idarquiv   IN INTEGER               --> Nome do arquivo
+                                 ,pr_cdcooper   IN crapcop.cdcooper%TYPE --> Codigo da cooperativa
+                                 ,pr_cdoperad   IN crapope.cdoperad%TYPE --> Codigo do operador
+                                 ,pr_nmarquiv  OUT VARCHAR2              --> Nome do arquivo
+                                 ,pr_cdcritic  OUT PLS_INTEGER           --> Código da crítica
+                                 ,pr_dscritic  OUT VARCHAR2) IS          --> Descrição da crítica
+                                 
+	  BEGIN
+ 	  /* .............................................................................
+
+      Programa: pc_gera_arquivo_parca
+      Sistema : CECRED
+      Sigla   : EMPR
+      Autor   : Lombardi
+      Data    : Marco/2017                    Ultima atualizacao: 
+
+      Dados referentes ao programa:
+
+      Frequencia: Sempre que for chamado
+
+      Objetivo  : Rotina referente a geracao de arquivo csv para aprceiro.
+
+      Observacao: -----
+
+      Alteracoes: 
+    ..............................................................................*/
+		DECLARE
+
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(10000);
+
+    -- Tratamento de erros
+    vr_exc_saida EXCEPTION;
+    vr_exc_critica EXCEPTION;
+     
+    -- Variaveis auxiliares
+    vr_tab_cob      cobr0005.typ_tab_cob;
+    vr_arquivo      CLOB;
+    vr_dsnmarq      VARCHAR2(100);
+    vr_caminho_arq  VARCHAR2(200);
+    
+    -------------------------------- CURSORES --------------------------------------
+
+		-- Cursor para consultar arquivo
+		CURSOR cr_crapcob(pr_idarquiv IN tbepr_cobranca.idarquivo%TYPE) IS       
+      SELECT epr.cdcooper
+            ,cob.nrdconta
+            ,epr.nrctremp
+            ,imp.nrcpfaval
+            ,cob.nmdsacad
+            ,DECODE(imp.tpenvio,1,'E-mail',2,'SMS',3,'Carta') tpenvio
+            ,cob.vltitulo
+            ,cob.dtvencto
+            ,cob.nrcnvcob
+            ,cob.nrdocmto
+            ,imp.nrddd_envio
+            ,imp.nrfone_envio
+            ,imp.dsemail_envio
+            ,imp.dsendereco_envio
+        FROM tbepr_boleto_import imp
+            ,tbepr_cobranca epr
+            ,crapcob cob
+       WHERE imp.idarquivo = pr_idarquiv
+         AND epr.idarquivo = imp.idarquivo
+         AND epr.idboleto  = imp.idboleto
+         AND cob.cdcooper = epr.cdcooper
+         AND cob.nrdconta = epr.nrdconta_cob
+         AND cob.nrcnvcob = epr.nrcnvcob
+         AND cob.nrdocmto = epr.nrboleto;
+    
+    CURSOR cr_arquivo(pr_idarquiv IN tbepr_cobranca.idarquivo%TYPE) IS       
+       SELECT arq.dsarq_gerado
+             ,arq.nmarq_gerado
+        FROM tbepr_boleto_arq arq
+       WHERE arq.idarquivo = pr_idarquiv;
+    rw_arquivo cr_arquivo%ROWTYPE;
+    
+    -- Variáveis de controle de calendário
+    rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+    
+    --Escrever no arquivo CLOB
+    PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2) IS
+    BEGIN
+      dbms_lob.writeappend(vr_arquivo,length(pr_des_dados),pr_des_dados);
+    END;
+    
+    ----------------------------- SUBROTINAS INTERNAS -------------------------------
+
+    BEGIN
+      
+      -- Leitura do calendário da cooperativa
+      OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH btch0001.cr_crapdat INTO rw_crapdat;
+      -- Se não encontrar
+      IF btch0001.cr_crapdat%NOTFOUND THEN
+        -- Fechar o cursor pois efetuaremos raise
+        CLOSE btch0001.cr_crapdat;
+        -- Montar mensagem de critica
+        vr_cdcritic := 1;
+        RAISE vr_exc_saida;
+      ELSE
+        -- Apenas fechar o cursor
+        CLOSE btch0001.cr_crapdat;
+      END IF;
+      
+      -- Leitura do calendário da cooperativa
+      OPEN cr_arquivo(pr_idarquiv);
+      FETCH cr_arquivo INTO rw_arquivo;
+      -- Se não encontrar
+      IF cr_arquivo%NOTFOUND THEN
+        -- Fechar o cursor pois efetuaremos raise
+        CLOSE cr_arquivo;
+        -- Montar mensagem de critica
+        vr_dscritic := 'Remessa não encontrada.';
+        RAISE vr_exc_saida;
+      ELSE
+        -- Apenas fechar o cursor
+        CLOSE cr_arquivo;
+      END IF;
+      
+      --Se tiver nulo é primeira geração
+      IF rw_arquivo.dsarq_gerado IS NULL THEN
+        
+        -- Inicializar o CLOB
+        dbms_lob.createtemporary(vr_arquivo, TRUE);
+        dbms_lob.open(vr_arquivo, dbms_lob.lob_readwrite);
+
+        FOR rw_crapcob IN cr_crapcob(pr_idarquiv => pr_idarquiv) LOOP
+          
+          COBR0005.pc_buscar_titulo_cobranca(pr_cdcooper => rw_crapcob.cdcooper
+                                            ,pr_nrdconta => rw_crapcob.nrdconta
+                                            ,pr_nrcnvcob => rw_crapcob.nrcnvcob
+                                            ,pr_nrdocmto => rw_crapcob.nrdocmto
+                                            ,pr_cdoperad => pr_cdoperad
+                                            ,pr_nriniseq => 1
+                                            ,pr_nrregist => 1
+                                            ,pr_cdcritic => vr_cdcritic
+                                            ,pr_dscritic => vr_dscritic
+                                            ,pr_tab_cob  => vr_tab_cob);
+
+          -- Verifica se retornou alguma crítica
+          IF vr_cdcritic <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+             -- Gera exceção
+             RAISE vr_exc_saida;
+          END IF;
+          
+          IF vr_tab_cob.EXISTS(vr_tab_cob.FIRST) IS NOT NULL THEN
+            
+            pc_escreve_xml(rw_crapcob.cdcooper || ';' ||
+                           rw_crapcob.nrdconta || ';' ||
+                           rw_crapcob.nrctremp || ';' ||
+                           vr_tab_cob(vr_tab_cob.FIRST).nmdsacad || ';' ||
+                           vr_tab_cob(vr_tab_cob.FIRST).lindigit || ';' ||
+                           to_char(vr_tab_cob(vr_tab_cob.FIRST).dtvencto,'DD/MM/RRRR') || ';' ||
+                           vr_tab_cob(vr_tab_cob.FIRST).dsdinstr ||
+                           vr_tab_cob(vr_tab_cob.FIRST).dsdinst1 ||
+                           vr_tab_cob(vr_tab_cob.FIRST).dsdinst2 ||
+                           vr_tab_cob(vr_tab_cob.FIRST).dsdinst3 ||
+                           vr_tab_cob(vr_tab_cob.FIRST).dsdinst4 ||
+                           vr_tab_cob(vr_tab_cob.FIRST).dsdinst5 || ';' ||
+                           '(' || rw_crapcob.nrddd_envio || ') ' || gene0002.fn_mask(rw_crapcob.nrfone_envio,'99999-9999') || ';' ||
+                           rw_crapcob.dsemail_envio || ';' ||
+                           rw_crapcob.dsendereco_envio || '|');
+          END IF;
+        END LOOP;
+        vr_dsnmarq := 'BPC_CECRED_' || lpad(pr_idarquiv,6,0) || '.csv';
+        
+        vr_arquivo := substr(vr_arquivo,1,length(vr_arquivo)-1) ;
+       
+        -- Salva arquivo na tabela da remessa
+        BEGIN
+          UPDATE tbepr_boleto_arq arq
+             SET arq.nmarq_gerado = vr_dsnmarq
+                ,arq.dsarq_gerado = vr_arquivo
+           WHERE arq.idarquivo = pr_idarquiv;
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao salvar registro do arquivo parceiro.';
+            RAISE vr_exc_saida;
+        END;
+        
+        -- Efetuar Commit
+        COMMIT;
+        
+      ELSE -- Se tiver gravado pega do registro no banco
+        vr_dsnmarq := rw_arquivo.nmarq_gerado;
+        vr_arquivo := rw_arquivo.dsarq_gerado;
+      END IF; -- dsarq_gerado IS NULL
+      
+      IF vr_arquivo IS NOT NULL THEN
+        
+        -- Busca o diretorio da cooperativa conectada
+        vr_caminho_arq := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                   ,pr_cdcooper => 0
+                                                   ,pr_cdacesso => 'DIR_EXP_BOL_MASSIVA');
+
+        -- Escreve o clob no arquivo físico
+        gene0002.pc_clob_para_arquivo(pr_clob => vr_arquivo
+                                     ,pr_caminho => vr_caminho_arq
+                                     ,pr_arquivo => vr_dsnmarq
+                                     ,pr_des_erro => vr_dscritic);
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_saida;
+        END IF;
+        
+        pr_nmarquiv := vr_dsnmarq;
+      END IF;
+      
+		EXCEPTION
+      WHEN vr_exc_saida THEN
+
+        IF vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+        END IF;
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+        ROLLBACK;
+
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro nao tratado na TELA_COBEMP.pc_importar_arquivo: ' || SQLERRM;
+         ROLLBACK;
+		END;
+
+  END pc_gera_arquivo_parca;
   
 END TELA_COBEMP;
 /

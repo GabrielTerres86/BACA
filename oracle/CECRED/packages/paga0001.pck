@@ -1502,6 +1502,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 
        12/04/2017 - Incluir validacao para faturas vencidas para agendamentos conforme
                     ja faz a rotina de pagamento PM.AGROLANDIA (Tiago #647174)    
+                    
+       10/05/2017 - Fixar na pc_valores_a_creditar os códigos de histórico 2277 e 2278, para os prejuizos 
+                    Projeto 210_2 (Lombardi).
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Cursores da Package */

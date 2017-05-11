@@ -4,7 +4,7 @@
  * DATA CRIAÇÃO : 13/08/2015
  * OBJETIVO     : Biblioteca de funções na rotina COBEMP
  * --------------
- * ALTERAÇÕES   : 04/02/2016 - Ajuste na procedure efetuaGeracaoBoleto para diferenciar 
+ * ALTERAÇÕES   : 04/02/2016 - Ajuste na procedure efetuaGeracaoBoleto para diferenciar
  *                             parcela de quitacao e atraso. (Rafael)
  *
  *                01/03/2017 - Inclusao de indicador se possui avalista, funcionamento de justificativa de baixa,
@@ -14,9 +14,9 @@
 //Labels/Campos do cabeçalho
 var cCddopcao, cTodosCabecalho, cCdagenci, cTodosFrmManutencao, cTodosFrmContratos, cTodosFrmArquivos;
 var glbNrdconta, glbNrctacob, glbNrdocmto, glbNrcnvcob, glbNrctremp, glbTipoVcto;
-var glbTipoVlr, glbLindigit, glbTpemprst,  glbAvalista, glbInprejuz, glbVlsdprej, glbIdarquivo;
+var glbTipoVlr, glbLindigit, glbTpemprst,  glbAvalista, glbInprejuz, glbVlsdprej, glbIdarquivo, glbInsitarq;
 
-// Definição de algumas variáveis globais 
+// Definição de algumas variáveis globais
 var cddopcao = 'C';
 
 //Formulários
@@ -57,8 +57,10 @@ $(document).ready(function() {
 
 // seletores
 function estadoInicial() {
-	
-	glbTipoVlr = 0;
+
+    glbTipoVlr = 0;
+    glbIdarquivo = 0;
+    glbInsitarq = 0;
 
     $('#divTela').fadeTo(0, 0.1);
     $('#frmCab').css({'display': 'block'});
@@ -409,7 +411,7 @@ function controlaFoco() {
             return false;
         }
     });
-    
+
     //frmArquivos
     $('#dtarqini', '#frmArquivos').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
@@ -603,8 +605,8 @@ function buscaContratos(nriniseq, nrregist) {
         success: function(response) {
             if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
                 try {
-					
-					
+
+
 
                     if (cddopcao == 'C') {
                         $('#divTabfrmContratos').html(response);
@@ -1005,7 +1007,7 @@ function buscarDetalheEnvio() {
             showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "unblockBackground();");
         },
         success: function(response) {
-			
+
             if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
                 try {
                     $('#divConteudoOpcao').html(response);
@@ -1042,7 +1044,7 @@ function formataEnvioEmail() {
 
     var frmEnviarEmail = "frmEnviarEmail";
 
-    // Rotulos 
+    // Rotulos
     var rDsdemail = $('label[for="dsdemail"]', '#' + frmEnviarEmail);
     rDsdemail.addClass('rotulo').css('width', '100px');
 
@@ -1284,7 +1286,7 @@ function formataFormEnvioSMS() {
 
     var frmEnviarSMS = "frmEnviarSMS";
 
-    // Rotulos 
+    // Rotulos
     var rNrdddtfc = $('label[for="nrdddtfc"]', '#' + frmEnviarSMS);
     var rNrtelefo = $('label[for="nrtelefo"]', '#' + frmEnviarSMS);
     var rNmpescto = $('label[for="nmpescto"]', '#' + frmEnviarSMS);
@@ -1770,15 +1772,15 @@ function confirmarGeracaoBoleto() {
 
 }
 
-function validaGerarBoleto() {	
-	
+function validaGerarBoleto() {
+
 	var nrdconta = glbNrdconta;
 	var nrctacob = glbNrctacob;
     var nrcnvcob = glbNrcnvcob;
     var nrctremp = glbNrctremp;
 
-	showMsgAguardo('Aguarde, validando rotina de Geracao de Boleto...');	
-	
+	showMsgAguardo('Aguarde, validando rotina de Geracao de Boleto...');
+
 	// Executa script através de ajax
     $.ajax({
         type: 'POST',
@@ -1796,11 +1798,11 @@ function validaGerarBoleto() {
             showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "unblockBackground()");
         },
         success: function(response) {
-            eval(response);          			
+            eval(response);
 			return false;
         }
-    });	   
-	
+    });
+
 	return false;
 
 }
@@ -1893,7 +1895,7 @@ function formataGerarBoletoTR() {
 
     var frmGerarBoletoTR = "frmGerarBoletoTR";
 
-    // Rotulos 
+    // Rotulos
     var rRdvencto = $('label[for="rdvencto"]', '#' + frmGerarBoletoTR);
     rRdvencto.addClass('rotulo').css('width', '120px');
 
@@ -1944,7 +1946,7 @@ function mostraValoresTR() {
         showError('error', 'Escolha uma Opcao de Vencimento!', 'Alerta - Ayllos', "bloqueiaFundo($('#divRotina'))");
         return false;
     }
-    
+
     // Se possuir avalista
     if (glbAvalista == 1) {
         var sacadoChecked = normalizaNumero($('input[name="rdsacado"]:checked').val());
@@ -1953,14 +1955,14 @@ function mostraValoresTR() {
             showError('error', 'Escolha uma Opcao de Sacado!', 'Alerta - Ayllos', "bloqueiaFundo($('#divRotina'))");
             return false;
         }
-        
+
         if (sacadoChecked == 2) {
             if ($('#nrcpfava', '#frmGerarBoletoTR').val() == '') {
                 showError('error', 'Avalista deve ser Informado!', 'Alerta - Ayllos', "bloqueiaFundo($('#divRotina'))");
                 return false;
             }
         }
-        
+
         $('#rdsacado1, #rdsacado2, #nrcpfava', '#frmGerarBoletoTR').desabilitaCampo();
     }
 
@@ -2126,11 +2128,11 @@ function confirmaGeracaoBoletoTR() {
 			}
         }
     }
-	
+
 	if ( glbTipoVlr == 0 ) {
 		showError('error', 'Selecione um tipo de pagamento!', 'Alerta - Ayllos', "bloqueiaFundo($('#divRotina'))");
 	} else {
-	
+
 		if ( valorBoleto == 0 ){
 			showError('error', 'N&atilde;o foram informados valores!', 'Alerta - Ayllos', "bloqueiaFundo($('#divRotina'))");
 		} else {
@@ -2198,7 +2200,7 @@ function formataGerarBoletoPP() {
 
     var frm = "frmGerarBoletoPP";
 
-    // Rotulos 
+    // Rotulos
     var rRdvencto = $('label[for="rdvencto"]', '#' + frm);
     rRdvencto.addClass('rotulo').css('width', '270px');
 
@@ -2292,14 +2294,14 @@ function mostraValoresPP() {
             showError('error', 'Escolha uma Opcao de Sacado!', 'Alerta - Ayllos', "bloqueiaFundo($('#divRotina'))");
             return false;
         }
-        
+
         if (sacadoChecked == 2) {
             if ($('#nrcpfava', '#frmGerarBoletoPP').val() == '') {
                 showError('error', 'Avalista deve ser Informado!', 'Alerta - Ayllos', "bloqueiaFundo($('#divRotina'))");
                 return false;
             }
         }
-        
+
         $('#rdsacado1, #rdsacado2, #nrcpfava', '#frmGerarBoletoPP').desabilitaCampo();
     }
 
@@ -2369,7 +2371,7 @@ function carregarImpressoBoleto() {
 }
 
 function confirmaGeracaoBoletoPP() {
-	
+
 	recalculaTotal();
 
     var dataVencimento;
@@ -2472,13 +2474,13 @@ function efetuaGeracaoBoleto(tpemprst) {
 				}
 			}
         }
-		
+
     } else if (tpemprst == 'PRJZ') { // PREJUIZO
 
         var nrcpfava = 0;
         var totalPagar = $('#vlquitac', '#frmGerarBoletoTR').val();
         var vldescto = converteMoedaFloat($('#vldescto', '#frmGerarBoletoTR').val());
-        
+
         if (document.getElementById("tpvlpgto1").checked == true) {
             if (vldescto > 0) {
                 tpparepr = 7; // 7 = Saldo Prejuizo Desconto
@@ -2532,11 +2534,11 @@ function efetuaGeracaoBoleto(tpemprst) {
 }
 
 function buscaValoresTR() {
-	
+
 	var dtmvtolt = '';
 
     showMsgAguardo('Aguarde, consultando contrato...');
-	
+
 	if (document.getElementById("rdvencto1").checked == true) {
         dtmvtolt = $('#dtmvtolt', '#frmGerarBoletoTR').val() ; // Data Atual
     } else {
@@ -2702,11 +2704,11 @@ function mostraValoresPrejuizo() {
 }
 
 function buscaValoresPrejuizo() {
-	
+
 	var dtmvtolt = '';
 
     showMsgAguardo('Aguarde, consultando contrato...');
-	
+
 	if (document.getElementById("rdvencto1").checked == true) {
         dtmvtolt = $('#dtmvtolt', '#frmGerarBoletoTR').val() ; // Data Atual
     } else {
@@ -2736,7 +2738,7 @@ function buscaValoresPrejuizo() {
 
                 cTpvlpgto1.css({'margin-left': '30px','padding-top': '10px'}).prop('checked', true);
                 cTpvlpgto2.css({'margin-left': '30px'});
-                
+
                 glbTipoVlr = 1;
 
                 $('#vlrpgto1', '#divValoresTR').addClass('moeda').desabilitaCampo();
@@ -2825,7 +2827,7 @@ function confirmaGeracaoBoletoPrejuizo() {
 	if ( glbTipoVlr == 0 ) {
 		showError('error', 'Selecione um tipo de pagamento!', 'Alerta - Ayllos', "bloqueiaFundo($('#divRotina'))");
 	} else {
-	
+
 		// Se percentual informado for maior que o parametrizado na TAB096
         if (vldescto > descprej) {
 			showError('error', 'Percentual de Desconto informado superior ao valor permitido!', 'Alerta - Ayllos', "bloqueiaFundo($('#divRotina'))");
@@ -2951,7 +2953,6 @@ function formataArquivos() {
     divRegistro.css({'height': '220px', 'width': '100%'});
 
     var ordemInicial = new Array();
-    ordemInicial = [[0, 0]];
 
     var arrayLargura = new Array();
     arrayLargura[0] = '100px';
@@ -2975,6 +2976,7 @@ function formataArquivos() {
     // seleciona o registro que é clicado
     $('table > tbody > tr', divRegistro).click(function() {
         glbIdarquivo = $(this).find('#idarquivo').val();
+        glbInsitarq  = $(this).find('#situacaoarq').val();
     });
 
     $('table > tbody > tr:eq(0)', divRegistro).click();
@@ -3121,4 +3123,148 @@ function confirmaImportacao() {
 function cancelarReimportacao() {
     $('#flgreimp', '#frmNomArquivo').val(0);
     showError("inform","Opera&ccedil;&atilde;o Cancelada.","Notifica&ccedil;&atilde;o - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')));fechaRotina($('#divRotina'));");
+}
+
+function formataImprimirRelatorio() {
+    // Ajusta tamanho do form
+    $('#divRotina').css({'width' : '260px', 'height' : '200px'});
+    exibeRotina($('#divRotina'));
+    bloqueiaFundo($('#divRotina'));
+    $('#divRotina').setCenterPosition();
+    highlightObjFocus($('#frmNomArquivo'));
+    layoutPadrao();
+    return false;
+}
+
+//Botao Imprimir
+function btnImprimir() {
+
+    if (glbIdarquivo == 0) {
+      showError('error', 'Nenhuma Remessa Selecionada.', 'Alerta - Ayllos', "unblockBackground()");
+      return false;
+    }
+
+    if (glbInsitarq.toUpperCase() == 'PENDENTE') {
+      showMsgAguardo('Aguarde, carregando rotina para impressao...');
+      // Executa script através de ajax
+      $.ajax({
+          type: 'POST',
+          dataType: 'html',
+          url: UrlSite + 'telas/cobemp/form_relatorio.php',
+          data: {
+              redirect: 'html_ajax'
+          },
+          error: function(objAjax, responseError, objExcept) {
+              hideMsgAguardo();
+              showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "unblockBackground()");
+          },
+          success: function(response) {
+              $('#divRotina').html(response);
+              formataImprimirRelatorio();
+          }
+      });
+
+      hideMsgAguardo();
+    } else {
+      imprimir_relatorio(0);
+    }
+
+    return false;
+
+}
+
+// Função para gerar impressão em PDF
+function imprimir_relatorio(flgcriti) {
+
+	$("#idarquivo","#frmImprimir").val(glbIdarquivo);
+	$("#flgcriti","#frmImprimir").val(flgcriti);
+
+	var action = $("#frmImprimir").attr("action");
+	var callafter = "";
+  carregaImpressaoAyllos("frmImprimir",action,callafter);
+
+  return false;
+}
+
+function btnGerarBoleto() {
+
+  if (glbIdarquivo == 0) {
+    showError('error', 'Nenhuma Remessa Selecionada.', 'Alerta - Ayllos', "unblockBackground()");
+    return false;
+  }
+  if (glbInsitarq.toUpperCase() == 'PROCESSADO') {
+    showError('error', 'N&atilde;o permitido Gera&ccedil;&atilde;o de Boletos para Remessa j&aacute; Processada.', 'Alerta - Ayllos', "unblockBackground()");
+    return false;
+  }
+  showConfirmacao('Deseja gerar boletos?', 'Confirma&ccedil;&atilde;o - Ayllos', 'gera_boletos();', 'return false;', 'sim.gif', 'nao.gif');
+
+  return false;
+}
+
+function gera_boletos() {
+
+  showMsgAguardo('Aguarde, carregando rotina para gera&ccedil;&atilde;o de boletos...');
+
+  // Executa script através de ajax
+  $.ajax({
+      type: 'POST',
+      dataType: 'html',
+      url: UrlSite + 'telas/cobemp/gerar_boletos.php',
+      data: {
+          idarquivo: glbIdarquivo,
+          redirect: 'html_ajax'
+      },
+      error: function(objAjax, responseError, objExcept) {
+          hideMsgAguardo();
+          showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "unblockBackground()");
+      },
+      success: function(response) {
+          hideMsgAguardo();
+          eval(response);
+      }
+  });
+
+  return false;
+}
+
+function btnGerarArquivoParceiro() {
+
+  if (glbIdarquivo == 0) {
+    showError('error', 'Nenhuma Remessa Selecionada.', 'Alerta - Ayllos', "unblockBackground()");
+    return false;
+  }
+  if (glbInsitarq.toUpperCase() != 'PROCESSADO') {
+    showError('error', 'N&atilde;o permitido Gera&ccedil;&atilde;o de Arquivo para Remessa Pendente.', 'Alerta - Ayllos', "unblockBackground()");
+    return false;
+  }
+  showConfirmacao('Deseja efetuar nova gera&ccedil;&atilde;o do arquivo BPC_CECRED_' + lpad(glbIdarquivo, 6) + '.csv para empresa parceira?', 'Confirma&ccedil;&atilde;o - Ayllos', 'gera_arquivo_parceiro();',
+                  'showError("inform", "Opera&ccedil;&atilde;o Cancelada.", "Alerta - Ayllos", "unblockBackground()");', 'sim.gif', 'nao.gif');
+
+  return false;
+}
+
+function gera_arquivo_parceiro() {
+
+  showMsgAguardo('Aguarde, carregando rotina para gera&ccedil;&atilde;o de arquivo...');
+
+  // Executa script através de ajax
+  $.ajax({
+      type: 'POST',
+      dataType: 'html',
+      url: UrlSite + 'telas/cobemp/gerar_arquivo_parceiro.php',
+      data: {
+          idarquivo: glbIdarquivo,
+          redirect: 'html_ajax'
+      },
+      error: function(objAjax, responseError, objExcept) {
+          hideMsgAguardo();
+          showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "unblockBackground()");
+      },
+      success: function(response) {
+          hideMsgAguardo();
+          eval(response);
+      }
+  });
+
+  return false;
 }
