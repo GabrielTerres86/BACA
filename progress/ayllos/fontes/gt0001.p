@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Marco/2004                        Ultima Atualizacao: 01/12/2016
+   Data    : Marco/2004                        Ultima Atualizacao: 29/03/2017
 
    Dados referentes ao programa:
                      
@@ -120,6 +120,8 @@
                01/12/2016 - Alterado campo dsdepart para cddepart.
                             PRJ341 - BANCENJUD (Odirlei-AMcom)
                             
+			   29/03/2017 - Ajutes devido ao tratamento da versao do layout FEBRABAN
+							(Jonata RKAM M311)
 ............................................................................. */
 
 { includes/var_online.i  }
@@ -174,6 +176,7 @@ DEF        VAR aux_confirma AS CHAR    FORMAT "!(1)"                 NO-UNDO.
 DEF        VAR aux_contador AS INT     FORMAT "z9"                   NO-UNDO.
 DEF        VAR aux_cddopcao AS CHAR                                  NO-UNDO.
 DEF        VAR tel_flgenvpa LIKE gnconve.flgenvpa                    NO-UNDO.
+DEF        VAR tel_nrlayout LIKE gnconve.nrlayout                    NO-UNDO.
 DEF        VAR tel_nrseqpar LIKE gnconve.nrseqpar                    NO-UNDO.
 DEF        VAR tel_nmarqpar LIKE gnconve.nmarqpar                    NO-UNDO.
 
@@ -217,7 +220,7 @@ FORM "Opcao:"       AT 6
      tel_flginter    AT 52  LABEL "Pagamento Internet"                         
      SKIP
      tel_flgenvpa           LABEL "Arquivo Parcial"
-                          HELP "Envia arquivo parcial ( (E)nvia / (N)ao )."
+                            HELP "Envia arquivo parcial ( (E)nvia / (N)ao )."
      SKIP 
      tel_nrseqatu           LABEL "Seq.Atualiz./Deb."
                           HELP "Informe nro sequencial arq. Atualizacao Cad."
@@ -278,7 +281,11 @@ FORM "Opcao:"       AT 6
                             HELP "Informe o nome do arquivo parcial."
      SKIP
      tel_flgcvuni           LABEL "Arquivo Unico"
-     tel_tpdenvio    AT 31  LABEL "Tipo de Envio"
+     tel_nrlayout    AT 21  LABEL "Layout"
+							VALIDATE(tel_nrlayout = 4 OR tel_nrlayout = 5,
+                              "Tipo do layout invalido.")
+                            HELP "Tipo do layout FEBRABAN ( Versao 4 / Versao 5 )."
+	 tel_tpdenvio    AT 32  LABEL "Tipo de Envio"
          HELP "1-MAIL/2-E-SALES/3-NEXXERA/4-MAIL(SENHA)/5-ACCESSTAGE/6-WEBSERVI"
                             VALIDATE (tel_tpdenvio >= 1 AND tel_tpdenvio <= 6,
                                       "380 - Numero errado")
@@ -344,6 +351,18 @@ DEF FRAME f_convenioc
     WITH NO-BOX CENTERED OVERLAY ROW 7.
 
 /**********************************************/
+
+
+ON RETURN OF tel_nrlayout IN FRAME f_convenio DO:
+
+   IF INPUT tel_nrlayout = 5 AND INPUT tel_nmarqatu <> "" THEN
+      DO:	     
+		 BELL.
+         MESSAGE "Convenio nao permite o uso deste layout.".
+         RETURN NO-APPLY.
+	  END.
+                      
+END.
 
 ON RETURN OF tel_tprepass DO:
     APPLY "GO".

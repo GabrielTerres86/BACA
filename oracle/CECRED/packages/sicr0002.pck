@@ -79,7 +79,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Lucas Ranghetti
-     Data    : Junho/2014                       Ultima atualizacao: 27/10/2016
+     Data    : Junho/2014                       Ultima atualizacao: 13/04/2017
 
      Dados referentes ao programa:
 
@@ -136,6 +136,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
                               craplau (Lucas Ranghetti #537385)
                               
                  27/10/2016 - SD509982 - Ajuste leitura registros DEBCON (Guilherme/SUPERO)
+
+				 13/04/2017 - Ajuste devido a importação de arquivos de débito automático com o layout FEBRABAN na versão 5
+				              (Jonata - RKAM / M311). 
   ......................................................................................................... */
 
   -- VARIAVEIS A UTILIZAR
@@ -200,7 +203,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
     WHERE lau.cdcooper  = pr_cdcooper
     AND   lau.dtmvtopg BETWEEN pr_dtmovini AND pr_dtmvtopg
 		AND  ((lau.insitlau  = 1  AND
-           lau.cdcritic  IN (717,964,967)
+           lau.cdcritic  IN (717,964,967,1003)
           )    OR
 		      (lau.insitlau  = 3     AND
           lau.cdcritic  = 967)

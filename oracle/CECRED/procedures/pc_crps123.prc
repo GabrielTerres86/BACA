@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Junho/95.                       Ultima atualizacao: 20/05/2016
+   Data    : Junho/95.                       Ultima atualizacao: 04/04/2017
 
    Dados referentes ao programa:
 
@@ -219,6 +219,9 @@ BEGIN
                  20/05/2016 - Incluido nas consultas da craplau
                               craplau.dsorigem <> "TRMULTAJUROS". (Jaison/James)
 
+				 04/04/2017 - Ajuste para integracao de arquivos com layout na versao 5
+				              (Jonata - RKAM M311).
+
   ............................................................................................*/
   
   DECLARE
@@ -331,6 +334,7 @@ BEGIN
              lau.cdempres,
              lau.rowid,
              lau.flgblqdb,
+             lau.idlancto,            
              ROW_NUMBER() OVER(PARTITION BY lau.cdagenci,
                                             lau.cdbccxlt,
                                             lau.cdbccxpg,
@@ -352,7 +356,6 @@ BEGIN
                 lau.cdhistor,
                 lau.nrdocmto,
                 lau.progress_recid;
-
 
     rw_craplau cr_craplau%ROWTYPE;
 
@@ -1483,6 +1486,7 @@ BEGIN
                              ,pr_nrctacns => rw_crapass.nrctacns -- CONTA DO CONSÓRCIO
                              ,pr_cdagenci => rw_crapass.cdagenci -- CODIGO DO PA
                              ,pr_cdempres => rw_craplau.cdempres -- CODIGO SICREDI
+                             ,pr_idlancto => rw_craplau.idlancto -- CÓDIGO DO LANCAMENTO
                              ,pr_codcriti => vr_auxcdcri         -- CÓDIGO DO ERRO
                              ,pr_cdcritic => vr_cdcritic         -- CÓDIGO DO ERRO
                              ,pr_dscritic => vr_dscritic);       -- DESCRICAO DO ERRO

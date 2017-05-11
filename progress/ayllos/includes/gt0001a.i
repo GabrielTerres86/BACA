@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Marco/2004                        Ultima Atualizacao: 14/09/2016
+   Data    : Marco/2004                        Ultima Atualizacao: 29/03/2017
 
    Dados referentes ao programa:
 
@@ -107,6 +107,10 @@
 
 			   08/12/2016 - P341-Automatização BACENJUD - Realizar a validação 
 			                do departamento pelo código do mesmo (Renato Darosci)
+
+			   29/03/2017 - Ajutes devido ao tratamento da versao do layout FEBRABAN
+							(Jonata RKAM M311)
+
 ............................................................................. */
 DEF VAR log_nrseqatu LIKE gnconve.nrseqatu           NO-UNDO.  
 DEF VAR log_nrseqint LIKE gnconve.nrseqint           NO-UNDO.
@@ -149,6 +153,7 @@ DEF VAR log_dsemail4 LIKE gnconve.dsenddeb           NO-UNDO.
 DEF VAR log_dsemail5 LIKE gnconve.dsenddeb           NO-UNDO.
 DEF VAR log_dsemail6 LIKE gnconve.dsenddeb           NO-UNDO.
 DEF VAR log_flgenvpa LIKE gnconve.flgenvpa           NO-UNDO.
+DEF VAR log_nrlayout LIKE gnconve.nrlayout           NO-UNDO.
 DEF VAR log_nrseqpar LIKE gnconve.nrseqpar           NO-UNDO.
 DEF VAR log_nmarqpar LIKE gnconve.nmarqpar           NO-UNDO.
 DEF VAR log_tprepass AS CHAR                         NO-UNDO.
@@ -195,6 +200,7 @@ DEF VAR aux_dsemail4 LIKE gnconve.dsenddeb           NO-UNDO.
 DEF VAR aux_dsemail5 LIKE gnconve.dsenddeb           NO-UNDO.
 DEF VAR aux_dsemail6 LIKE gnconve.dsenddeb           NO-UNDO.
 DEF VAR aux_flgenvpa LIKE gnconve.flgenvpa           NO-UNDO.
+DEF VAR aux_nrlayout LIKE gnconve.nrlayout           NO-UNDO.
 DEF VAR aux_nrseqpar LIKE gnconve.nrseqpar           NO-UNDO.
 DEF VAR aux_nmarqpar LIKE gnconve.nmarqpar           NO-UNDO.
 DEF VAR aux_tprepass AS CHAR                         NO-UNDO.
@@ -261,6 +267,7 @@ ASSIGN  tel_nrseqatu   = gnconve.nrseqatu
         tel_tpdenvio   = gnconve.tpdenvio  
         tel_dsdiracc   = gnconve.dsdiracc
         tel_flgativo   = gnconve.flgativo
+		tel_nrlayout   = gnconve.nrlayout
         tel_flgcvuni   = gnconve.flgcvuni
         tel_flgdecla   = gnconve.flgdecla
         tel_flggeraj   = gnconve.flggeraj
@@ -336,6 +343,7 @@ ASSIGN  tel_nrseqatu   = gnconve.nrseqatu
         aux_dsemail5 = ENTRY(2, gnconve.dsenddeb)
         aux_dsemail6 = ENTRY(3, gnconve.dsenddeb)
         aux_flgenvpa = gnconve.flgenvpa
+		aux_nrlayout = gnconve.nrlayout
         aux_nrseqpar = gnconve.nrseqpar
         aux_nmarqpar = gnconve.nmarqpar
         aux_flgdbssd = gnconve.flgdbssd.
@@ -367,6 +375,7 @@ DISPLAY tel_cdconven
         tel_tpdenvio
         tel_dsdiracc
         tel_flgativo
+		tel_nrlayout
         tel_flgcvuni
         tel_flgdecla
         tel_flggeraj
@@ -499,7 +508,7 @@ DO TRANSACTION ON ENDKEY UNDO, LEAVE:
       END.
 
       SET tel_nrcnvfbr
-          tel_flgativo
+          tel_flgativo		  
           tel_flginter
           tel_flgenvpa
           tel_nrseqatu  
@@ -627,9 +636,17 @@ DO TRANSACTION ON ENDKEY UNDO, LEAVE:
           tel_nmarqdeb 
           tel_nmarqpar WHEN tel_flgenvpa = TRUE
           tel_flgcvuni
+		  tel_nrlayout WHEN tel_cdhisdeb > 0
           tel_tpdenvio
           WITH FRAME f_convenio.
 
+	  IF tel_nrlayout = 5 AND tel_nmarqatu <> "" THEN
+         DO:
+            BELL.
+            MESSAGE "Convenio nao permite o uso deste layout.".
+            NEXT.
+         END.
+		 
       SET tel_dsdiracc WHEN tel_tpdenvio = 5
           tel_flgdecla
           tel_flggeraj
@@ -733,6 +750,7 @@ DO TRANSACTION ON ENDKEY UNDO, LEAVE:
               gnconve.tpdenvio = tel_tpdenvio
               gnconve.dsdiracc = tel_dsdiracc
               gnconve.flgativo = tel_flgativo
+			  gnconve.nrlayout = tel_nrlayout
               gnconve.flgcvuni = tel_flgcvuni
               gnconve.flgdecla = tel_flgdecla
               gnconve.flggeraj = tel_flggeraj
@@ -782,6 +800,7 @@ DO TRANSACTION ON ENDKEY UNDO, LEAVE:
               log_tpdenvio = gnconve.tpdenvio
               log_dsdiracc = gnconve.dsdiracc
               log_flgativo = gnconve.flgativo
+			  log_nrlayout = gnconve.nrlayout
               log_flgcvuni = gnconve.flgcvuni
               log_flgdecla = gnconve.flgdecla
               log_flggeraj = gnconve.flggeraj
@@ -881,6 +900,10 @@ PROCEDURE gera_log:
     RUN alterar_log (INPUT "envia arquivo parcial",
                      INPUT STRING(aux_flgenvpa),
                      INPUT STRING(log_flgenvpa)).
+
+    RUN alterar_log (INPUT "tipo do layout",
+                     INPUT STRING(aux_nrlayout),
+                     INPUT STRING(log_nrlayout)).
     
     RUN alterar_log (INPUT "pagamento via internet",
                      INPUT STRING(aux_flginter),

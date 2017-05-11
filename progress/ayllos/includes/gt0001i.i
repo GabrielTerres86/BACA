@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Marco/2004                    Ultima Atualizacao: 18/09/2015
+   Data    : Marco/2004                    Ultima Atualizacao: 29/03/2017
 
    Dados referentes ao programa:
 
@@ -103,6 +103,10 @@
                
 			   08/12/2016 - P341-Automatização BACENJUD - Realizar a validação 
 			                do departamento pelo código do mesmo (Renato Darosci)
+
+			  29/03/2017 - Ajutes devido ao tratamento da versao do layout FEBRABAN
+							(Jonata RKAM M311)
+
 ............................................................................. */
 
 
@@ -152,6 +156,7 @@ ASSIGN  tel_nrseqatu   = 1
         tel_dsemail4   = ""
         tel_dsemail5   = ""
         tel_dsemail6   = ""
+		tel_nrlayout   = 4
         tel_flgativo   = FALSE
         tel_flgcvuni   = FALSE
         tel_flgdecla   = FALSE
@@ -188,6 +193,7 @@ DISPLAY tel_cdconven
         tel_nmarqdeb 
         tel_tpdenvio
         tel_dsdiracc
+		tel_nrlayout
         tel_flgativo
         tel_flgcvuni
         tel_flgdecla
@@ -266,7 +272,7 @@ DO TRANSACTION ON ENDKEY UNDO, LEAVE:
       SET tel_nrcnvfbr
           tel_flgativo
           tel_flginter
-          tel_flgenvpa
+          tel_flgenvpa		  
           tel_nrseqatu  
           tel_nrseqint
           tel_nrseqcxa
@@ -390,8 +396,16 @@ DO TRANSACTION ON ENDKEY UNDO, LEAVE:
           tel_nmarqdeb
           tel_nmarqpar WHEN tel_flgenvpa = TRUE
           tel_flgcvuni
+		  tel_nrlayout WHEN tel_cdhisdeb > 0
           tel_tpdenvio
           WITH FRAME f_convenio.
+
+	  IF tel_nrlayout = 5 AND tel_nmarqatu <> "" THEN
+         DO:
+            BELL.
+            MESSAGE "Convenio nao permite o uso deste layout.".
+            NEXT.
+         END.
 
       SET tel_dsdiracc WHEN tel_tpdenvio = 5
           tel_flgdecla
@@ -513,6 +527,7 @@ DO TRANSACTION ON ENDKEY UNDO, LEAVE:
                                 TRIM(tel_dsemail5) + "," +
                                 TRIM(tel_dsemail6)
              gnconve.flgenvpa = tel_flgenvpa
+			 gnconve.nrlayout = tel_nrlayout
              gnconve.nrseqpar = tel_nrseqpar
              gnconve.nmarqpar = tel_nmarqpar
              gnconve.tprepass = IF tel_tprepass:SCREEN-VALUE = "D+1" THEN
@@ -561,6 +576,9 @@ PROCEDURE gera_incluir_log:
 
     RUN incluir_log (INPUT "envia arquivo parcial",
                      INPUT STRING(gnconve.flgenvpa)).
+
+	RUN incluir_log (INPUT "tipo do layout",
+                     INPUT STRING(gnconve.nrlayout)).
 
     RUN incluir_log (INPUT "numero sequencial do arquivo de atualizacao",
                      INPUT STRING(gnconve.nrseqatu)).

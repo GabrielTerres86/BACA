@@ -1160,7 +1160,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 22/02/2017
+  --  Data     : Junho/2013.                   Ultima atualizacao: 04/04/2017
   --
   -- Dados referentes ao programa:
   --
@@ -1487,6 +1487,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                     conforme o programa crps509 ja faz (Lucas Ranghetti #590601) 
 
        22/02/2017 - Ajustes para correçao de crítica de pagamento DARF/DAS (Lucas Lunelli - P.349.2)      
+
+	   04/04/2017 - Ajuste para integracao de arquivos com layout na versao 5
+				    (Jonata - RKAM M311).
 
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -19685,7 +19688,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --  Sistema  : CRED - Convenios
     --  Sigla    : PAGA0001
     --  Autor    : Fabrício
-    --  Data     : Janeiro/2015.                   Ultima atualizacao: 08/09/2016
+    --  Data     : Janeiro/2015.                   Ultima atualizacao: 04/04/2017
     --
     --  Dados referentes ao programa:
     --
@@ -19733,6 +19736,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --                            qdo cai nessas situações algumas vezes acabava efetivando
     --                            o debito mesmo sem protocolo por exemplo SD590929 e SD594359
     --                            (Tiago/Fabricio).
+	--
+	--               04/04/2017 - Ajuste para integracao de arquivos com layout na versao 5
+	-- 	                         (Jonata - RKAM M311).
     -- ..........................................................................
   BEGIN
     DECLARE
@@ -19757,6 +19763,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
       vr_dsdmensg  VARCHAR2(4000);
       vr_flultexe  INTEGER;
       vr_qtdexec   INTEGER;
+      vr_existettl BOOLEAN;
       
       vr_dsinfor1  crappro.dsinform##1%TYPE;
       vr_dsinfor2  crappro.dsinform##1%TYPE;
@@ -19911,14 +19918,68 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
       --Selecionar informacoes do titular
       CURSOR cr_crapttl (pr_cdcooper IN crapttl.cdcooper%TYPE
                         ,pr_nrdconta IN crapttl.nrdconta%TYPE
-                        ,pr_idseqttl IN crapttl.idseqttl%TYPE) IS
+                        ,pr_nrcpfcgc IN crapttl.nrcpfcgc%TYPE) IS
         SELECT crapttl.nmextttl
               ,crapttl.nrcpfcgc
           FROM crapttl
          WHERE crapttl.cdcooper = pr_cdcooper
            AND crapttl.nrdconta = pr_nrdconta
-           AND crapttl.idseqttl = pr_idseqttl;
+           AND crapttl.nrcpfcgc = pr_nrcpfcgc;
       rw_crapttl cr_crapttl%ROWTYPE;
+      
+	  --Selecionar informacoes dos lancamentos automaticos
+	  CURSOR cr_craplau (pr_progress_recid IN NUMBER) IS
+		SELECT craplau.nrdconta
+			  ,craplau.insitlau
+			  ,craplau.vllanaut
+			  ,craplau.idseqttl
+			  ,craplau.dtmvtopg
+			  ,craplau.cddbanco
+			  ,craplau.cdageban
+			  ,craplau.nrctadst
+			  ,craplau.cdtiptra
+			  ,craplau.nrcpfope
+			  ,craplau.dslindig
+			  ,craplau.dscodbar
+			  ,craplau.dscedent
+			  ,craplau.idtitdda
+			  ,craplau.cdhistor
+			  ,craplau.nrdocmto
+			  ,craplau.cdseqtel
+			  ,craplau.cdempres
+			  ,craplau.cdbccxlt
+			  ,craplau.cdagenci
+			  ,craplau.nrseqdig
+			  ,craplau.nrdolote
+			  ,craplau.dtmvtolt
+			  ,craplau.nrdctabb
+			  ,craplau.nrcrcard
+			  ,craplau.nrseqagp
+			  ,craplau.flgblqdb
+			  ,craplau.ROWID
+			  ,craplau.cdcooper
+			  ,craplau.cdtrapen
+			  ,craplau.dsorigem
+			  ,craplau.cdcoptfn
+			  ,craplau.cdagetfn
+			  ,craplau.nrterfin
+			  ,craplau.nrcpfpre
+			  ,craplau.nmprepos
+			  ,craplau.flmobile
+			  ,craplau.idtipcar
+			  ,craplau.nrcartao
+              ,craplau.idlancto
+		FROM craplau
+		WHERE craplau.progress_recid = pr_progress_recid;
+	  rw_craplau cr_craplau%ROWTYPE;
+
+      CURSOR cr_tbconv_det_agendamento(pr_idlancto IN craplau.idlancto%TYPE) IS
+       SELECT t.cdlayout
+             ,t.tppessoa_dest
+             ,t.nrcpfcgc_dest
+        FROM tbconv_det_agendamento t
+       WHERE t.idlancto = pr_idlancto;
+       rw_tbconv_det_agendamento cr_tbconv_det_agendamento%ROWTYPE;  
 
       PROCEDURE pc_nao_efetivado(pr_cdcooper  IN crapcop.cdcooper%TYPE
                                 ,pr_flultexe  IN INTEGER
@@ -19952,6 +20013,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                              ,pr_nrctacns => pr_nrctacns           -- CONTA DO CONSÓRCIO
                              ,pr_cdagenci => pr_rwcraplau.cdagenci -- CODIGO DO PA
                              ,pr_cdempres => pr_rwcraplau.cdempres -- CODIGO EMPRESA SICREDI
+                             ,pr_idlancto => pr_rwcraplau.idlancto -- CÓDIGO DO LANCAMENTO
                              ,pr_codcriti => vr_auxcdcri           -- CÓDIGO DO ERRO
                              ,pr_cdcritic => vr_cdcritic           -- CÓDIGO DO ERRO
                              ,pr_dscritic => vr_dscritic);         -- DESCRICAO DO ERRO
@@ -20053,7 +20115,62 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
       FETCH cr_crapass INTO rw_crapass;
       --Fechar Cursor
       CLOSE cr_crapass;
-      
+
+      IF rw_craplau.cdtiptra = 6 THEN
+
+        -- LEITURA PARA ENCONTRAR DETALHE DO AGENDAMENTO
+        OPEN cr_tbconv_det_agendamento(pr_idlancto => rw_craplau.idlancto);
+            
+        FETCH cr_tbconv_det_agendamento INTO rw_tbconv_det_agendamento;
+            
+        -- SE NÃO ENCONTRAR
+        IF cr_tbconv_det_agendamento%NOTFOUND THEN
+          
+          -- FECHAR O CURSOR POIS EFETUAREMOS RAISE
+          CLOSE cr_tbconv_det_agendamento;
+          
+          -- MONTAR MENSAGEM DE CRITICA
+          vr_cdcritic := 597;
+          
+          -- Montar mensagem de critica
+          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+          RAISE vr_exc_erro;
+          
+        ELSE
+          -- APENAS FECHAR O CURSOR
+          CLOSE cr_tbconv_det_agendamento;
+        END IF;
+          	  
+        IF rw_tbconv_det_agendamento.cdlayout = 5 THEN
+            
+          vr_existettl := TRUE;         
+               
+          IF rw_tbconv_det_agendamento.tppessoa_dest = 2 THEN
+              
+            --Selecionar informacoes do associado
+            OPEN cr_crapttl(pr_cdcooper => pr_cdcooper
+                           ,pr_nrdconta => rw_craplau.nrdconta
+                           ,pr_nrcpfcgc => rw_tbconv_det_agendamento.nrcpfcgc_dest);
+
+            FETCH cr_crapttl INTO rw_crapttl;
+                
+            IF cr_crapttl%NOTFOUND THEN
+              vr_existettl := FALSE;           
+            END IF;
+                
+            --Fechar Cursor
+            CLOSE cr_crapttl;  
+            
+          ELSIF rw_crapass.nrcpfcgc <> rw_tbconv_det_agendamento.nrcpfcgc_dest THEN
+              
+            vr_existettl := FALSE;
+                    
+          END IF;
+          
+        END IF; 
+        
+      END IF;
+
       --> Verificar a execução da DEBNET/DEBSIC 
       SICR0001.pc_controle_exec_deb ( pr_cdcooper  => pr_cdcooper        --> Código da coopertiva
                                       ,pr_cdtipope  => 'C'                         --> Tipo de operacao I-incrementar e C-Consultar
@@ -20146,6 +20263,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                              ,pr_nrctacns => rw_crapass.nrctacns -- CONTA DO CONSÓRCIO
                              ,pr_cdagenci => rw_crapass.cdagenci -- CODIGO DO PA
                              ,pr_cdempres => rw_craplau.cdempres -- CODIGO EMPRESA SICREDI
+                             ,pr_idlancto => rw_craplau.idlancto -- CÓDIGO DO LANCAMENTO
                              ,pr_codcriti => vr_auxcdcri         -- CÓDIGO DO ERRO
                              ,pr_cdcritic => vr_cdcritic         -- CÓDIGO DO ERRO
                              ,pr_dscritic => vr_dscritic);       -- DESCRICAO DO ERRO
@@ -20171,7 +20289,71 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
           END;
 
           pr_cdcritic := vr_auxcdcri;
-          pr_dscritic := vr_auxdscri;          
+          pr_dscritic := vr_auxdscri;     
+          
+        ELSIF rw_craplau.cdtiptra = 6                                       AND
+		         (rw_tbconv_det_agendamento.cdlayout = 5 AND NOT vr_existettl)  THEN
+              
+          vr_auxcdcri := 1003;  -- Titular exluído da Conta
+          
+          --> Apenas gerar critica na ultima tentativa
+          IF vr_flultexe = 1 THEN
+            -- GERAR REGISTROS NA CRAPNDB PARA DEVOLUCAO DE DEBITOS AUTOMATICOS
+            CONV0001.pc_gerandb(pr_cdcooper => pr_cdcooper         -- CÓDIGO DA COOPERATIVA
+                               ,pr_cdhistor => rw_craplau.cdhistor -- CÓDIGO DO HISTÓRICO
+                               ,pr_nrdconta => rw_craplau.nrdconta -- NUMERO DA CONTA
+                               ,pr_cdrefere => rw_crapatr.cdrefere -- CÓDIGO DE REFERÊNCIA
+                               ,pr_vllanaut => rw_craplau.vllanaut -- VALOR LANCAMENTO
+                               ,pr_cdseqtel => rw_craplau.cdseqtel -- CÓDIGO SEQUENCIAL
+                               ,pr_nrdocmto => rw_craplau.nrdocmto -- NÚMERO DO DOCUMENTO
+                               ,pr_cdagesic => rw_crapcop.cdagesic -- AGÊNCIA SICREDI
+                               ,pr_nrctacns => rw_crapass.nrctacns -- CONTA DO CONSÓRCIO
+                               ,pr_cdagenci => rw_crapass.cdagenci -- CODIGO DO PA
+                               ,pr_cdempres => rw_craplau.cdempres -- CODIGO EMPRESA SICREDI
+                               ,pr_idlancto => rw_craplau.idlancto -- CÓDIGO DO LANCAMENTO
+                               ,pr_codcriti => vr_auxcdcri         -- CÓDIGO DO ERRO
+                               ,pr_cdcritic => vr_cdcritic         -- CÓDIGO DO ERRO
+                               ,pr_dscritic => vr_dscritic);       -- DESCRICAO DO ERRO
+
+            -- VERIFICA SE HOUVE ERRO NA PROCEDURE PC_GERANDB
+            IF vr_cdcritic > 0 THEN
+              RAISE vr_exc_erro;
+            END IF;
+
+            BEGIN
+              -- ATUALIZA REGISTROS DE LANCAMENTOS AUTOMATICOS
+              UPDATE craplau
+                 SET insitlau = 3
+                    ,dtdebito = rw_crapdat.dtmvtolt
+                    ,cdcritic = vr_auxcdcri
+              WHERE craplau.rowid = rw_craplau.rowid;
+
+              -- VERIFICA SE HOUVE PROBLEMA NA ATUALIZAÇÃO DO REGISTRO
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_dscritic := 'Erro ao atualizar registro na tabela CRAPLAU: ' || sqlerrm;
+              RAISE vr_exc_erro;
+            END;          
+          
+		      -- Se for a primeira tentativa apenas grava critica
+          ELSIF vr_qtdexec < 3 THEN
+            BEGIN
+              -- ATUALIZA REGISTROS DE LANCAMENTOS AUTOMATICOS
+              UPDATE craplau
+                 SET cdcritic = vr_auxcdcri
+               WHERE craplau.rowid = rw_craplau.rowid;
+
+              -- VERIFICA SE HOUVE PROBLEMA NA ATUALIZAÇÃO DO REGISTRO
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_dscritic := 'Erro ao atualizar registro na tabela CRAPLAU: ' ||
+                               SQLERRM;
+                RAISE vr_exc_erro;
+            END;
+          END IF;
+
+          pr_cdcritic := vr_auxcdcri;
+          pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_auxcdcri);     
         
         -- Autorizacao nao encontrada
         ELSIF vr_flagatr = 0 THEN -- VERIFICA SE HA REGISTRO NA CRAPATR
@@ -20193,6 +20375,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                              ,pr_nrctacns => rw_crapass.nrctacns -- CONTA DO CONSÓRCIO
                              ,pr_cdagenci => rw_crapass.cdagenci -- CODIGO DO PA
                              ,pr_cdempres => rw_craplau.cdempres -- CODIGO EMPRESA SICREDI
+                             ,pr_idlancto => rw_craplau.idlancto -- CÓDIGO DO LANCAMENTO
                              ,pr_codcriti => vr_auxcdcri         -- CÓDIGO DO ERRO
                              ,pr_cdcritic => vr_cdcritic         -- CÓDIGO DO ERRO
                              ,pr_dscritic => vr_dscritic);       -- DESCRICAO DO ERRO
@@ -20242,6 +20425,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                              ,pr_nrctacns => rw_crapass.nrctacns -- CONTA DO CONSÓRCIO
                              ,pr_cdagenci => rw_crapass.cdagenci -- CODIGO DO PA
                              ,pr_cdempres => rw_craplau.cdempres -- CODIGO EMPRESA SICREDI
+                             ,pr_idlancto => rw_craplau.idlancto -- CÓDIGO DO LANCAMENTO
                              ,pr_codcriti => vr_auxcdcri         -- CÓDIGO DO ERRO
                              ,pr_cdcritic => vr_cdcritic         -- CÓDIGO DO ERRO
                              ,pr_dscritic => vr_dscritic);       -- DESCRICAO DO ERRO
@@ -20342,6 +20526,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                  ,pr_nrctacns => rw_crapass.nrctacns -- CONTA DO CONSÓRCIO
                                  ,pr_cdagenci => rw_crapass.cdagenci -- CODIGO DO PA
                                  ,pr_cdempres => rw_craplau.cdempres -- CODIGO SICREDI
+                                 ,pr_idlancto => rw_craplau.idlancto -- CÓDIGO DO LANCAMENTO
                                  ,pr_codcriti => vr_auxcdcri         -- CÓDIGO DO ERRO
                                  ,pr_cdcritic => vr_cdcritic         -- CÓDIGO DO ERRO
                                  ,pr_dscritic => vr_dscritic);       -- DESCRICAO DO ERRO
@@ -20392,6 +20577,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                              ,pr_nrctacns => rw_crapass.nrctacns -- CONTA DO CONSÓRCIO
                              ,pr_cdagenci => rw_crapass.cdagenci -- CODIGO DO PA
                              ,pr_cdempres => rw_craplau.cdempres -- CODIGO EMPRESA SICREDI
+                             ,pr_idlancto => rw_craplau.idlancto -- CÓDIGO DO LANCAMENTO
                              ,pr_codcriti => vr_auxcdcri         -- CÓDIGO DO ERRO
                              ,pr_cdcritic => vr_cdcritic         -- CÓDIGO DO ERRO
                              ,pr_dscritic => vr_dscritic);       -- DESCRICAO DO ERRO
@@ -20505,6 +20691,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                ,pr_nrctacns => rw_crapass.nrctacns -- CONTA DO CONSÓRCIO
                                ,pr_cdagenci => rw_crapass.cdagenci -- CODIGO DO PA
                                ,pr_cdempres => rw_craplau.cdempres -- CODIGO EMPRESA SICREDI
+                               ,pr_idlancto => rw_craplau.idlancto -- CÓDIGO DO LANCAMENTO
                                ,pr_codcriti => vr_auxcdcri         -- CÓDIGO DO ERRO
                                ,pr_cdcritic => vr_cdcritic         -- CÓDIGO DO ERRO
                                ,pr_dscritic => vr_dscritic);       -- DESCRICAO DO ERRO
