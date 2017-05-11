@@ -143,7 +143,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps712 (pr_cdcooper IN crapcop.cdcooper%T
           
           -- multiplicar o valor total de recargas pelo percentual de receita da operadora
           -- Para deduzir do valor a ser lançado na conta da filiada. 
-          vr_vrreceita :=  rw_tbrecarga.total_vlrecarga * (rw_operadora.perreceita / 100);
+          vr_vrreceita :=  round(rw_tbrecarga.total_vlrecarga * (rw_operadora.perreceita / 100),2);
           
           --Verificar se o lote existe
           OPEN cr_craplot (pr_cdcooper => pr_cdcooper
