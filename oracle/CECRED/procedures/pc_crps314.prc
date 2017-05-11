@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Junior.
-   Data    : Julho/2001                          Ultima atualizacao: 18/10/2016
+   Data    : Julho/2001                          Ultima atualizacao: 30/03/2017
 
    Dados referentes ao programa:
 
@@ -151,6 +151,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
                18/10/2016 - Quando quebrar o loop de emprestimos por troca de filial, se ainda
                             não foram incluídos os aditivos então devem ser incluídos.
                             (AJFink #539415)
+
+               30/03/2017 - Ajustado crps para não efetuar seguimentação por valores (Daniel)
 
  ............................................................................ */
   --
@@ -305,12 +307,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
   vr_dscritic            varchar2(4000);
   -- Data do movimento
   rw_crapdat             btch0001.cr_crapdat%rowtype;
-  -- Variáveis para leitura da tabela de parâmetros
-  vr_dstextab            craptab.dstextab%TYPE;
-  vr_vlfaixa1            number(10,2);
-  vr_vlfaixa2            number(10,2);
-  vr_vllimctr            number(10,2);
-  vr_vllimcre            number(10,2);
+ 
   -- Variáveis globais, utilizadas pelas procedures internas
   vr_dsrelato            varchar2(40);
   vr_desvalor            varchar2(100);
@@ -418,9 +415,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
 
   -- Inclui informações de limite de crédito na vr_tab_geral e vr_tab_geral2
   PROCEDURE pc_limite_credito (pr_cdcooper in craplim.cdcooper%type,
-                            pr_dtmvtolt in craplim.dtinivig%type,
-                            pr_vllimcre in craplim.vllimite%type) IS
-    cursor cr_craplim (pr_tipo in varchar2) is
+                            pr_dtmvtolt in craplim.dtinivig%TYPE) IS
+    cursor cr_craplim is
       select craplim.nrdconta,
              craplim.nrctrlim,
              craplim.cdoperad,
@@ -440,11 +436,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
          and craplim.nrdconta = crapass.nrdconta
          and craplim.dtinivig = pr_dtmvtolt
          and craplim.tpctrlim = 1 /*Chq.Esp.*/
-         and craplim.insitlim = 2 /*Ativo*/
-         and (   (    pr_tipo = 'MENOR'
-                  and craplim.vllimite < pr_vllimcre)
-              or (    pr_tipo = 'MAIOR'
-                  and craplim.vllimite >= pr_vllimcre));
+         and craplim.insitlim = 2 /*Ativo*/;
                   
     CURSOR cr_crapope (pr_cdcooper IN crapope.cdcooper%TYPE
                       ,pr_cdoperad IN crapope.cdoperad%TYPE) IS
@@ -460,8 +452,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
   BEGIN
     -- valores menores que a tabela
     vr_dsrelato := 'LIMITES DE CREDITO';
-    vr_desvalor := 'LIMITES ATE R$ '||to_char(pr_vllimcre - 0.01,'fm999G990D00');
-    for rw_craplim in cr_craplim ('MENOR') LOOP
+    vr_desvalor := ' ';
+    for rw_craplim in cr_craplim LOOP
     
       -- Buscar agencia de trabalho do operador
       OPEN cr_crapope(pr_cdcooper => rw_craplim.cdcooper,
@@ -509,63 +501,12 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
                                                      to_char(vr_cdagenci);
     end loop;
     
-    -- valores maiores que a tabela
-    vr_dsrelato := 'LIMITES DE CREDITO';
-    vr_desvalor := 'CONTRATOS ACIMA R$ '||to_char(pr_vllimcre,'fm999G990D00')||' INCLUSIVE';
-    for rw_craplim in cr_craplim ('MAIOR') LOOP
-      
-      -- Buscar agencia de trabalho do operador
-      OPEN cr_crapope(pr_cdcooper => rw_craplim.cdcooper,
-                      pr_cdoperad => rw_craplim.cdopelib);
-      FETCH cr_crapope INTO rw_crapope;
-      
-      -- Se encontrou operador, deverá buscar o pac de trabalho do mesmo
-      IF cr_crapope%FOUND THEN
-        CLOSE cr_crapope;
-        vr_cdagenci := rw_crapope.cdpactra;
-      ELSE
-        CLOSE cr_crapope;
-        vr_cdagenci := 0;
-      END IF;
-    
-      -- Inclui na primeira tabela, ordenada por agencia
-      vr_indice_geral := to_char(vr_cdagenci, 'fm00000')||'4'||'2'||'00000'||to_char(rw_craplim.nrdconta, 'fm0000000000')||to_char(rw_craplim.nrctrlim, 'fm0000000000')||'0000000000';
-      vr_tab_geral(vr_indice_geral).vr_cdagenci := vr_cdagenci;
-      vr_tab_geral(vr_indice_geral).vr_dtmvtolt := rw_craplim.dtinivig;
-      vr_tab_geral(vr_indice_geral).vr_nrdconta := rw_craplim.nrdconta;
-      vr_tab_geral(vr_indice_geral).vr_nrctremp := rw_craplim.nrctrlim;
-      vr_tab_geral(vr_indice_geral).vr_nmprimtl := rw_craplim.nmprimtl;
-      vr_tab_geral(vr_indice_geral).vr_vlemprst := rw_craplim.vllimite;
-      vr_tab_geral(vr_indice_geral).vr_flgcontr := 4;
-      vr_tab_geral(vr_indice_geral).vr_flgvalor := 2;
-      vr_tab_geral(vr_indice_geral).vr_cdoperad := rw_craplim.cdoperad;
-      vr_tab_geral(vr_indice_geral).vr_dsrlgera := vr_dsrelato;
-      vr_tab_geral(vr_indice_geral).vr_vlrgeral := vr_desvalor;
-      vr_tab_geral(vr_indice_geral).vr_cdpesqbb := to_char(rw_craplim.dtinivig, 'dd/mm/yy')||'-'||
-                                                   to_char(vr_cdagenci);
-      -- Inclui na segunda tabela, ordenada pelos indicadores e depois por agencia e conta
-      vr_indice_geral2 := '4'||'2'||'00000'||to_char(vr_cdagenci, 'fm00000')||to_char(rw_craplim.nrdconta, 'fm0000000000')||to_char(rw_craplim.vllimite, 'fm0000000000000000000000000')||to_char(rw_craplim.nrctrlim, 'fm0000000000')||'0000000000';
-      vr_tab_geral2(vr_indice_geral2).vr_cdagenci := vr_cdagenci;
-      vr_tab_geral2(vr_indice_geral2).vr_dtmvtolt := rw_craplim.dtinivig;
-      vr_tab_geral2(vr_indice_geral2).vr_nrdconta := rw_craplim.nrdconta;
-      vr_tab_geral2(vr_indice_geral2).vr_nrctremp := rw_craplim.nrctrlim;
-      vr_tab_geral2(vr_indice_geral2).vr_nmprimtl := rw_craplim.nmprimtl;
-      vr_tab_geral2(vr_indice_geral2).vr_vlemprst := rw_craplim.vllimite;
-      vr_tab_geral2(vr_indice_geral2).vr_flgcontr := 4;
-      vr_tab_geral2(vr_indice_geral2).vr_flgvalor := 2;
-      vr_tab_geral2(vr_indice_geral2).vr_cdoperad := rw_craplim.cdoperad;
-      vr_tab_geral2(vr_indice_geral2).vr_dsrlgera := vr_dsrelato;
-      vr_tab_geral2(vr_indice_geral2).vr_vlrgeral := vr_desvalor;
-      vr_tab_geral2(vr_indice_geral2).vr_cdpesqbb := to_char(rw_craplim.dtinivig, 'dd/mm/yy')||'-'||
-                                                     to_char(vr_cdagenci);
-    end loop;
   END pc_limite_credito;
 
   -- Inclui informações de limite de cartão de crédito na vr_tab_geral e vr_tab_geral2
   PROCEDURE pc_limite_cartao_cred (pr_cdcooper in crawcrd.cdcooper%type,
-                                pr_dtmvtolt in crawcrd.dtentreg%type,
-                                pr_vllimcre in craptlc.vllimcrd%type) IS
-    cursor cr_crawcrd (pr_tipo in varchar2) is
+                                pr_dtmvtolt in crawcrd.dtentreg%TYPE) IS
+    cursor cr_crawcrd is
       select crawcrd.nrdconta,
              crawcrd.nrctrcrd,
              crawcrd.cdoperad,
@@ -587,16 +528,13 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
          and craptlc.cdadmcrd = crawcrd.cdadmcrd
          and craptlc.tpcartao = crawcrd.tpcartao
          and craptlc.cdlimcrd = crawcrd.cdlimcrd
-         and craptlc.dddebito = 0
-         and (   (    pr_tipo = 'MENOR'
-                  and craptlc.vllimcrd < pr_vllimcre)
-              or (    pr_tipo = 'MAIOR'
-                  and craptlc.vllimcrd >= pr_vllimcre));
+         and craptlc.dddebito = 0;
   BEGIN
     -- valores menores que a tabela
     vr_dsrelato := 'LIMITES DE CARTAO DE CREDITO';
-    vr_desvalor := 'LIMITES ATE R$ '||to_char(pr_vllimcre - 0.01,'fm999G990D00');
-    for rw_crawcrd in cr_crawcrd ('MENOR') loop
+    vr_desvalor := ' ';
+    
+    for rw_crawcrd in cr_crawcrd loop
       -- Inclui na primeira tabela, ordenada por agencia
       vr_indice_geral := to_char(rw_crawcrd.cdagenci, 'fm00000')||'5'||'1'||'00000'||to_char(rw_crawcrd.nrdconta, 'fm0000000000')||to_char(rw_crawcrd.nrctrcrd, 'fm0000000000')||'0000000000';
       vr_tab_geral(vr_indice_geral).vr_cdagenci := rw_crawcrd.cdagenci;
@@ -624,49 +562,15 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
       vr_tab_geral2(vr_indice_geral2).vr_dsrlgera := vr_dsrelato;
       vr_tab_geral2(vr_indice_geral2).vr_vlrgeral := vr_desvalor;
     end loop;
-    -- valores maiores que a tabela
-    vr_dsrelato := 'LIMITES DE CARTAO DE CREDITO';
-    vr_desvalor := 'CONTRATOS ACIMA R$ '||to_char(pr_vllimcre,'fm999G990D00')||' INCLUSIVE';
-    for rw_crawcrd in cr_crawcrd ('MAIOR') loop
-      -- Inclui na primeira tabela, ordenada por agencia
-      vr_indice_geral := to_char(rw_crawcrd.cdagenci, 'fm00000')||'5'||'2'||'00000'||to_char(rw_crawcrd.nrdconta, 'fm0000000000')||to_char(rw_crawcrd.nrctrcrd, 'fm0000000000')||'0000000000';
-      vr_tab_geral(vr_indice_geral).vr_cdagenci := rw_crawcrd.cdagenci;
-      vr_tab_geral(vr_indice_geral).vr_dtmvtolt := pr_dtmvtolt;
-      vr_tab_geral(vr_indice_geral).vr_nrdconta := rw_crawcrd.nrdconta;
-      vr_tab_geral(vr_indice_geral).vr_nrctremp := rw_crawcrd.nrctrcrd;
-      vr_tab_geral(vr_indice_geral).vr_nmprimtl := rw_crawcrd.nmprimtl;
-      vr_tab_geral(vr_indice_geral).vr_vlemprst := rw_crawcrd.vllimcrd;
-      vr_tab_geral(vr_indice_geral).vr_flgcontr := 5;
-      vr_tab_geral(vr_indice_geral).vr_flgvalor := 2;
-      vr_tab_geral(vr_indice_geral).vr_cdoperad := rw_crawcrd.cdoperad;
-      vr_tab_geral(vr_indice_geral).vr_dsrlgera := vr_dsrelato;
-      vr_tab_geral(vr_indice_geral).vr_vlrgeral := vr_desvalor;
-      -- Inclui na segunda tabela, ordenada pelos indicadores e depois por agencia e conta
-      vr_indice_geral2 := '5'||'2'||'00000'||to_char(rw_crawcrd.cdagenci, 'fm00000')||to_char(rw_crawcrd.nrdconta, 'fm0000000000')||to_char(rw_crawcrd.vllimcrd, 'fm0000000000000000000000000')||to_char(rw_crawcrd.nrctrcrd, 'fm0000000000')||'0000000000';
-      vr_tab_geral2(vr_indice_geral2).vr_cdagenci := rw_crawcrd.cdagenci;
-      vr_tab_geral2(vr_indice_geral2).vr_dtmvtolt := pr_dtmvtolt;
-      vr_tab_geral2(vr_indice_geral2).vr_nrdconta := rw_crawcrd.nrdconta;
-      vr_tab_geral2(vr_indice_geral2).vr_nrctremp := rw_crawcrd.nrctrcrd;
-      vr_tab_geral2(vr_indice_geral2).vr_nmprimtl := rw_crawcrd.nmprimtl;
-      vr_tab_geral2(vr_indice_geral2).vr_vlemprst := rw_crawcrd.vllimcrd;
-      vr_tab_geral2(vr_indice_geral2).vr_flgcontr := 5;
-      vr_tab_geral2(vr_indice_geral2).vr_flgvalor := 2;
-      vr_tab_geral2(vr_indice_geral2).vr_cdoperad := rw_crawcrd.cdoperad;
-      vr_tab_geral2(vr_indice_geral2).vr_dsrlgera := vr_dsrelato;
-      vr_tab_geral2(vr_indice_geral2).vr_vlrgeral := vr_desvalor;
-    end loop;
+    
   END pc_limite_cartao_cred;
 
   -- Inclui informações de empréstimos na vr_tab_geral e vr_tab_geral2
   PROCEDURE pc_processa_emprestimos (pr_cdcooper in crapepr.cdcooper%type,
-                                  pr_dtmvtolt in crapepr.dtmvtolt%type,
-                                  pr_vlini in crapepr.vlemprst%type,
-                                  pr_vlfim in crapepr.vlemprst%type) IS
+                                  pr_dtmvtolt in crapepr.dtmvtolt%TYPE) IS
+                                  
     cursor cr_crapepr (pr_cdcooper in crapepr.cdcooper%type,
-                       pr_dtmvtolt in crapepr.dtmvtolt%type,
-                       pr_tipo in varchar2,
-                       pr_vlini in crapepr.vlemprst%type,
-                       pr_vlfim in crapepr.vlemprst%type) is
+                       pr_dtmvtolt in crapepr.dtmvtolt%TYPE) is
       select /*+ index (crapepr crapepr##crapepr1)*/
              cdcooper,
              dtmvtolt,
@@ -681,23 +585,13 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
         from crapepr
        where crapepr.cdcooper = pr_cdcooper
          and crapepr.dtmvtolt = pr_dtmvtolt
-		 and crapepr.cdorigem not in (3,4) -- (3) Internet / (4) TAA
-         and (   (    pr_tipo = 'MENOR'
-                  and crapepr.vlemprst < pr_vlini)
-              or (    pr_tipo = 'ENTRE'
-                  and crapepr.vlemprst >= pr_vlini
-                  and crapepr.vlemprst < pr_vlfim)
-              or (    pr_tipo = 'MAIOR'
-                  and crapepr.vlemprst >= pr_vlfim));
+		 and crapepr.cdorigem not in (3,4); -- (3) Internet / (4) TAA
     --
   BEGIN
     vr_dsrelato := 'CONTRATOS EMPRESTIMOS';
     --
     for rw_crapepr in cr_crapepr (pr_cdcooper,
-                                  pr_dtmvtolt,
-                                  'MENOR',
-                                  pr_vlini,
-                                  pr_vlfim) loop
+                                  pr_dtmvtolt) loop
       -- Busca as linhas de credito que nao devem possuir analise
       vr_dslinhas := ';'||
                      gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
@@ -737,7 +631,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
               continue;
             end if;
             --
-            vr_desvalor := 'CONTRATOS ATE R$ '||to_char(pr_vlini - 0.01, 'fm999G999G990D00');
+            vr_desvalor := ' ';
             -- Inclui na primeira tabela, ordenada por agencia
             vr_indice_geral := to_char(rw_crapepr.cdagenci, 'fm00000')||'1'||'1'||TO_CHAR(rw_crapepr.tpemprst,'fm00000')||to_char(rw_crapepr.nrdconta, 'fm0000000000')||to_char(rw_crapepr.nrctremp, 'fm0000000000')||'0000000000';
             vr_tab_geral(vr_indice_geral).vr_cdagenci := rw_crapepr.cdagenci;
@@ -794,223 +688,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
         end if;
       close cr_craplot;
     end loop;
-    --
-    for rw_crapepr in cr_crapepr (pr_cdcooper,
-                                  pr_dtmvtolt,
-                                  'ENTRE',
-                                  pr_vlini,
-                                  pr_vlfim) loop
       
-      -- Busca as linhas de credito que nao devem possuir analise
-      vr_dslinhas := ';'||
-                     gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
-                                               pr_cdcooper =>  0,
-                                               pr_cdacesso => 'CREDITO_BANCOOB')||
-                     ';';
-
-      -- Verifica se a linha de credito atual esta parametrizada para nao ser processada
-      IF instr(vr_dslinhas,';'||rw_crapepr.cdlcremp||';') > 0 THEN
-        -- busca proximo contrato
-        continue;
-      END IF;
-      
-      open cr_craplot (pr_cdcooper,
-                       pr_dtmvtolt,
-                       rw_crapepr.cdagenci,
-                       rw_crapepr.cdbccxlt,
-                       rw_crapepr.nrdolote,
-                       4);
-        fetch cr_craplot into rw_craplot;
-        --
-        if cr_craplot%found then
-          open cr_crapass2 (pr_cdcooper,
-                            rw_crapepr.nrdconta);
-            fetch cr_crapass2 into rw_crapass2;
-            --
-            if cr_crapass2%notfound then
-              close cr_crapass2;
-              pr_cdcritic := 9;
-              pr_dscritic := gene0001.fn_busca_critica(9);
-              btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                         pr_ind_tipo_log => 2, -- Erro tratado
-                                         pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                            || vr_cdprogra || ' --> '
-                                                            || pr_dscritic,
-                                         pr_nmarqlog     => vr_cdprogra);
-              close cr_craplot;
-              continue;
-            end if;
-            -- Define os índices das tabelas, além de alguns campos que dependem do parâmetro cadastrado.
-            if vr_vlfaixa2 = 999999.99 then
-              vr_desvalor := 'CONTRATOS ACIMA R$ '||to_char(pr_vlini, 'fm999G990D00')||' INCLUSIVE';
-              vr_indice_geral := to_char(rw_crapepr.cdagenci, 'fm00000')||'1'||'2'||TO_CHAR(rw_crapepr.tpemprst,'fm00000')||to_char(rw_crapepr.nrdconta, 'fm0000000000')||to_char(rw_crapepr.nrctremp, 'fm0000000000')||'0000000000';
-              vr_indice_geral2 := '1'||'2'||TO_CHAR(rw_crapepr.tpemprst,'fm00000')||to_char(rw_crapepr.cdagenci, 'fm00000')||to_char(rw_crapepr.nrdconta, 'fm0000000000')||to_char(rw_crapepr.vlemprst, 'fm0000000000000000000000000')||to_char(rw_crapepr.nrctremp, 'fm0000000000')||'0000000000';
-              vr_tab_geral(vr_indice_geral).vr_vlrgeral := vr_desvalor;
-              vr_tab_geral(vr_indice_geral).vr_flgvalor := 2;
-              vr_tab_geral2(vr_indice_geral2).vr_vlrgeral := vr_desvalor;
-              vr_tab_geral2(vr_indice_geral2).vr_flgvalor := 2;
-            else
-              vr_desvalor := 'CONTRATOS DE R$ '||to_char(pr_vlini, 'fm999G990D00')||' ATE '||to_char(pr_vlfim - 0.01, 'fm999G990D00');
-              vr_indice_geral := to_char(rw_crapepr.cdagenci, 'fm00000')||'1'||'3'||TO_CHAR(rw_crapepr.tpemprst,'fm00000')||to_char(rw_crapepr.nrdconta, 'fm0000000000')||to_char(rw_crapepr.nrctremp, 'fm0000000000')||'0000000000';
-              vr_indice_geral2 := '1'||'3'||TO_CHAR(rw_crapepr.tpemprst,'fm00000')||to_char(rw_crapepr.cdagenci, 'fm00000')||to_char(rw_crapepr.nrdconta, 'fm0000000000')||to_char(rw_crapepr.vlemprst, 'fm0000000000000000000000000')||to_char(rw_crapepr.nrctremp, 'fm0000000000')||'0000000000';
-              vr_tab_geral(vr_indice_geral).vr_vlrgeral := 'CONTRATOS ACIMA DE R$ '||to_char(pr_vlini, 'fm999G990D00')||' INCLUSIVE';
-              vr_tab_geral(vr_indice_geral).vr_flgvalor := 3;
-              vr_tab_geral2(vr_indice_geral2).vr_vlrgeral := 'CONTRATOS ACIMA DE R$ '||to_char(pr_vlini, 'fm999G990D00')||' INCLUSIVE';
-              vr_tab_geral2(vr_indice_geral2).vr_flgvalor := 3;
-            end if;
-            -- Inclui na primeira tabela, ordenada por agencia
-            vr_tab_geral(vr_indice_geral).vr_cdagenci := rw_crapepr.cdagenci;
-            vr_tab_geral(vr_indice_geral).vr_nrdconta := rw_crapepr.nrdconta;
-            vr_tab_geral(vr_indice_geral).vr_nrctremp := rw_crapepr.nrctremp;
-            vr_tab_geral(vr_indice_geral).vr_nmprimtl := rw_crapass2.nmprimtl;
-            vr_tab_geral(vr_indice_geral).vr_vlemprst := rw_crapepr.vlemprst;
-            vr_tab_geral(vr_indice_geral).vr_flgcontr := 1;
-            vr_tab_geral(vr_indice_geral).vr_cdoperad := rw_craplot.cdoperad;
-            vr_tab_geral(vr_indice_geral).vr_dsrlgera := vr_dsrelato;
-            vr_tab_geral(vr_indice_geral).vr_dtmvtolt := rw_crapepr.dtmvtolt;
-            vr_tab_geral(vr_indice_geral).vr_nrdolote := rw_crapepr.nrdolote;
-            vr_tab_geral(vr_indice_geral).vr_cdbccxlt := rw_crapepr.cdbccxlt;
-            vr_tab_geral(vr_indice_geral).vr_cdpesqbb := to_char(rw_crapepr.dtmvtolt, 'dd/mm/yy')||'-'||
-                                                         to_char(rw_crapepr.cdagenci)||'-'||
-                                                         to_char(rw_crapepr.cdbccxlt)||'-'||
-                                                         to_char(rw_crapepr.nrdolote);
-            vr_tab_geral(vr_indice_geral).vr_tpemprst := rw_crapepr.tpemprst;
-            -- Se o tipo do empréstimo for igual a zero
-            IF rw_crapepr.tpemprst = 0 THEN
-              vr_tab_geral(vr_indice_geral).vr_dsemprst := 'CONTRATOS PRICE TR';
-            ELSE
-              vr_tab_geral(vr_indice_geral).vr_dsemprst := 'CONTRATOS PRICE PRE FIXADO';
-            END IF;
-            -- Inclui na segunda tabela, ordenada pelos indicadores e depois por agencia e conta
-            vr_tab_geral2(vr_indice_geral2).vr_cdagenci := rw_crapepr.cdagenci;
-            vr_tab_geral2(vr_indice_geral2).vr_nrdconta := rw_crapepr.nrdconta;
-            vr_tab_geral2(vr_indice_geral2).vr_nrctremp := rw_crapepr.nrctremp;
-            vr_tab_geral2(vr_indice_geral2).vr_nmprimtl := rw_crapass2.nmprimtl;
-            vr_tab_geral2(vr_indice_geral2).vr_vlemprst := rw_crapepr.vlemprst;
-            vr_tab_geral2(vr_indice_geral2).vr_flgcontr := 1;
-            vr_tab_geral2(vr_indice_geral2).vr_cdoperad := rw_craplot.cdoperad;
-            vr_tab_geral2(vr_indice_geral2).vr_dsrlgera := vr_dsrelato;
-            vr_tab_geral2(vr_indice_geral2).vr_dtmvtolt := rw_crapepr.dtmvtolt;
-            vr_tab_geral2(vr_indice_geral2).vr_nrdolote := rw_crapepr.nrdolote;
-            vr_tab_geral2(vr_indice_geral2).vr_cdbccxlt := rw_crapepr.cdbccxlt;
-            vr_tab_geral2(vr_indice_geral2).vr_cdpesqbb := to_char(rw_crapepr.dtmvtolt, 'dd/mm/yy')||'-'||
-                                                           to_char(rw_crapepr.cdagenci)||'-'||
-                                                           to_char(rw_crapepr.cdbccxlt)||'-'||
-                                                           to_char(rw_crapepr.nrdolote);
-            vr_tab_geral2(vr_indice_geral2).vr_tpemprst := rw_crapepr.tpemprst;
-            -- Se o tipo do empréstimo for igual a zero
-            IF rw_crapepr.tpemprst = 0 THEN
-              vr_tab_geral2(vr_indice_geral2).vr_dsemprst := 'CONTRATOS PRICE TR';
-            ELSE
-              vr_tab_geral2(vr_indice_geral2).vr_dsemprst := 'CONTRATOS PRICE PRE FIXADO';
-            END IF;
-          close cr_crapass2;
-        end if;
-      close cr_craplot;
-    end loop;
-    --
-    for rw_crapepr in cr_crapepr (pr_cdcooper,
-                                  pr_dtmvtolt,
-                                  'MAIOR',
-                                  pr_vlini,
-                                  pr_vlfim) loop
-      -- Busca as linhas de credito que nao devem possuir analise
-      vr_dslinhas := ';'||
-                     gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
-                                               pr_cdcooper =>  0,
-                                               pr_cdacesso => 'CREDITO_BANCOOB')||
-                     ';';
-
-      -- Verifica se a linha de credito atual esta parametrizada para nao ser processada
-      IF instr(vr_dslinhas,';'||rw_crapepr.cdlcremp||';') > 0 THEN
-        -- busca proximo contrato
-        continue;
-      END IF;
-
-      open cr_craplot (pr_cdcooper,
-                       pr_dtmvtolt,
-                       rw_crapepr.cdagenci,
-                       rw_crapepr.cdbccxlt,
-                       rw_crapepr.nrdolote,
-                       4);
-        fetch cr_craplot into rw_craplot;
-        --
-        if cr_craplot%found then
-          open cr_crapass2 (pr_cdcooper,
-                            rw_crapepr.nrdconta);
-            fetch cr_crapass2 into rw_crapass2;
-            --
-            if cr_crapass2%notfound then
-              close cr_crapass2;
-              pr_cdcritic := 9;
-              pr_dscritic := gene0001.fn_busca_critica(9);
-              btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                         pr_ind_tipo_log => 2, -- Erro tratado
-                                         pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                            || vr_cdprogra || ' --> '
-                                                            || pr_dscritic,
-                                         pr_nmarqlog     => vr_cdprogra);
-              close cr_craplot;
-              continue;
-            end if;
-            -- Inclui na primeira tabela, ordenada por agencia
-            vr_desvalor := 'CONTRATOS ACIMA R$ '||to_char(pr_vlfim, 'fm999G999G990D00')||' INCLUSIVE';
-            vr_indice_geral := to_char(rw_crapepr.cdagenci, 'fm00000')||'1'||'4'||TO_CHAR(rw_crapepr.tpemprst,'fm00000')||to_char(rw_crapepr.nrdconta, 'fm0000000000')||to_char(rw_crapepr.nrctremp, 'fm0000000000')||'0000000000';
-            vr_tab_geral(vr_indice_geral).vr_cdagenci := rw_crapepr.cdagenci;
-            vr_tab_geral(vr_indice_geral).vr_nrdconta := rw_crapepr.nrdconta;
-            vr_tab_geral(vr_indice_geral).vr_nrctremp := rw_crapepr.nrctremp;
-            vr_tab_geral(vr_indice_geral).vr_nmprimtl := rw_crapass2.nmprimtl;
-            vr_tab_geral(vr_indice_geral).vr_vlemprst := rw_crapepr.vlemprst;
-            vr_tab_geral(vr_indice_geral).vr_flgcontr := 1;
-            vr_tab_geral(vr_indice_geral).vr_flgvalor := 4;
-            vr_tab_geral(vr_indice_geral).vr_cdoperad := rw_craplot.cdoperad;
-            vr_tab_geral(vr_indice_geral).vr_dsrlgera := vr_dsrelato;
-            vr_tab_geral(vr_indice_geral).vr_vlrgeral := vr_desvalor;
-            vr_tab_geral(vr_indice_geral).vr_dtmvtolt := rw_crapepr.dtmvtolt;
-            vr_tab_geral(vr_indice_geral).vr_nrdolote := rw_crapepr.nrdolote;
-            vr_tab_geral(vr_indice_geral).vr_cdbccxlt := rw_crapepr.cdbccxlt;
-            vr_tab_geral(vr_indice_geral).vr_cdpesqbb := to_char(rw_crapepr.dtmvtolt, 'dd/mm/yy')||'-'||
-                                                         to_char(rw_crapepr.cdagenci)||'-'||
-                                                         to_char(rw_crapepr.cdbccxlt)||'-'||
-                                                         to_char(rw_crapepr.nrdolote);
-            vr_tab_geral(vr_indice_geral).vr_tpemprst := rw_crapepr.tpemprst;
-            -- Se o tipo do empréstimo for igual a zero
-            IF rw_crapepr.tpemprst = 0 THEN
-              vr_tab_geral(vr_indice_geral).vr_dsemprst := 'CONTRATOS PRICE TR';
-            ELSE
-              vr_tab_geral(vr_indice_geral).vr_dsemprst := 'CONTRATOS PRICE PRE FIXADO';
-            END IF;
-            -- Inclui na segunda tabela, ordenada pelos indicadores e depois por agencia e conta
-            vr_desvalor := 'CONTRATOS ACIMA R$ '||to_char(pr_vlfim, 'fm999G999G990D00')||' INCLUSIVE';
-            vr_indice_geral2 := '1'||'4'||TO_CHAR(rw_crapepr.tpemprst,'fm00000')||to_char(rw_crapepr.cdagenci, 'fm00000')||to_char(rw_crapepr.nrdconta, 'fm0000000000')||to_char(rw_crapepr.vlemprst, 'fm0000000000000000000000000')||to_char(rw_crapepr.nrctremp, 'fm0000000000')||'0000000000';
-            vr_tab_geral2(vr_indice_geral2).vr_cdagenci := rw_crapepr.cdagenci;
-            vr_tab_geral2(vr_indice_geral2).vr_nrdconta := rw_crapepr.nrdconta;
-            vr_tab_geral2(vr_indice_geral2).vr_nrctremp := rw_crapepr.nrctremp;
-            vr_tab_geral2(vr_indice_geral2).vr_nmprimtl := rw_crapass2.nmprimtl;
-            vr_tab_geral2(vr_indice_geral2).vr_vlemprst := rw_crapepr.vlemprst;
-            vr_tab_geral2(vr_indice_geral2).vr_flgcontr := 1;
-            vr_tab_geral2(vr_indice_geral2).vr_flgvalor := 4;
-            vr_tab_geral2(vr_indice_geral2).vr_cdoperad := rw_craplot.cdoperad;
-            vr_tab_geral2(vr_indice_geral2).vr_dsrlgera := vr_dsrelato;
-            vr_tab_geral2(vr_indice_geral2).vr_vlrgeral := vr_desvalor;
-            vr_tab_geral2(vr_indice_geral2).vr_dtmvtolt := rw_crapepr.dtmvtolt;
-            vr_tab_geral2(vr_indice_geral2).vr_nrdolote := rw_crapepr.nrdolote;
-            vr_tab_geral2(vr_indice_geral2).vr_cdbccxlt := rw_crapepr.cdbccxlt;
-            vr_tab_geral2(vr_indice_geral2).vr_cdpesqbb := to_char(rw_crapepr.dtmvtolt, 'dd/mm/yy')||'-'||
-                                                           to_char(rw_crapepr.cdagenci)||'-'||
-                                                           to_char(rw_crapepr.cdbccxlt)||'-'||
-                                                           to_char(rw_crapepr.nrdolote);
-            vr_tab_geral2(vr_indice_geral2).vr_tpemprst := rw_crapepr.tpemprst;
-            -- Se o tipo do empréstimo for igual a zero
-            IF rw_crapepr.tpemprst = 0 THEN
-              vr_tab_geral2(vr_indice_geral2).vr_dsemprst := 'CONTRATOS PRICE TR';
-            ELSE
-              vr_tab_geral2(vr_indice_geral2).vr_dsemprst := 'CONTRATOS PRICE PRE FIXADO';
-            END IF;
-          close cr_crapass2;
-        end if;
-      close cr_craplot;
-    end loop;
   END pc_processa_emprestimos;
 
   -- Inclui informações de aditivos na vr_tab_aditivo
@@ -1120,12 +798,10 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
 
   -- Inclui informações de descontos na vr_tab_geral e vr_tab_geral2
   PROCEDURE pc_processa_limite_desconto (pr_cdcooper in crapcdc.cdcooper%type,
-                                      pr_dtmvtolt in crapcdc.dtmvtolt%type,
-                                      pr_vllimctr in crapcdc.vllimite%type) IS
+                                      pr_dtmvtolt in crapcdc.dtmvtolt%TYPE) IS
+                                      
     cursor cr_crapcdc (pr_cdcooper in crapcdc.cdcooper%type,
-                       pr_dtmvtolt in crapcdc.dtmvtolt%type,
-                       pr_vllimctr in crapcdc.vllimite%type,
-                       pr_tipo in varchar2) is
+                       pr_dtmvtolt in crapcdc.dtmvtolt%TYPE) is
       select /*+index (crapcdc crapcdc##crapcdc1)*/
              crapcdc.cdcooper,
              crapcdc.dtmvtolt,
@@ -1137,18 +813,12 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
              crapcdc.vllimite
         from crapcdc
        where crapcdc.cdcooper = pr_cdcooper
-         and crapcdc.dtmvtolt = pr_dtmvtolt
-         and (   (    pr_tipo = 'MENOR'
-                  and crapcdc.vllimite < pr_vllimctr)
-              or (    pr_tipo = 'MAIOR'
-                  and crapcdc.vllimite >= pr_vllimctr));
+         and crapcdc.dtmvtolt = pr_dtmvtolt;
     --
     vr_flgcontr     number(1);
   BEGIN
     for rw_crapcdc in cr_crapcdc (pr_cdcooper,
-                                  pr_dtmvtolt,
-                                  pr_vllimctr,
-                                  'MENOR') loop
+                                  pr_dtmvtolt) loop
       open cr_craplot (rw_crapcdc.cdcooper,
                        rw_crapcdc.dtmvtolt,
                        rw_crapcdc.cdagenci,
@@ -1191,7 +861,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
               vr_indice_geral := to_char(rw_crapcdc.cdagenci, 'fm00000')||'6'||'1'||'00000'||to_char(rw_crapcdc.nrdconta, 'fm0000000000')||to_char(rw_crapcdc.nrctrlim, 'fm0000000000')||'0000000000';
               vr_indice_geral2 := '6'||'1'||'00000'||to_char(rw_crapcdc.cdagenci, 'fm00000')||to_char(rw_crapcdc.nrdconta, 'fm0000000000')||to_char(rw_crapcdc.vllimite, 'fm0000000000000000000000000')||to_char(rw_crapcdc.nrctrlim, 'fm0000000000')||'0000000000';
             end if;
-            vr_desvalor := 'CONTRATOS ATE R$ '||to_char(pr_vllimctr, 'fm999G990D00');
+            vr_desvalor := ' ';
             -- Inclui na primeira tabela, ordenada por agencia
             vr_tab_geral(vr_indice_geral).vr_cdagenci := rw_crapcdc.cdagenci;
             vr_tab_geral(vr_indice_geral).vr_nrdconta := rw_crapcdc.nrdconta;
@@ -1232,95 +902,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
         end if;
       close cr_craplot;
     end loop;
-    --
-    for rw_crapcdc in cr_crapcdc (pr_cdcooper,
-                                  pr_dtmvtolt,
-                                  pr_vllimctr,
-                                  'MAIOR') loop
-      open cr_craplot (rw_crapcdc.cdcooper,
-                       rw_crapcdc.dtmvtolt,
-                       rw_crapcdc.cdagenci,
-                       rw_crapcdc.cdbccxlt,
-                       rw_crapcdc.nrdolote,
-                       null);
-        fetch cr_craplot into rw_craplot;
-        --
-        if cr_craplot%found then
-          if rw_craplot.tplotmov not in (27, 35) then
-            close cr_craplot;
-            continue;
-          end if;
-          --
-          open cr_crapass2 (pr_cdcooper,
-                            rw_crapcdc.nrdconta);
-            fetch cr_crapass2 into rw_crapass2;
-            --
-            if cr_crapass2%notfound then
-              close cr_crapass2;
-              pr_cdcritic := 9;
-              pr_dscritic := gene0001.fn_busca_critica(9);
-              btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                         pr_ind_tipo_log => 2, -- Erro tratado
-                                         pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                            || vr_cdprogra || ' --> '
-                                                            || pr_dscritic,
-                                         pr_nmarqlog     => vr_cdprogra);
-              close cr_craplot;
-              continue;
-            end if;
-            -- Define os índices das tabelas, além de alguns campos que dependem do parâmetro cadastrado.
-            if rw_craplot.tplotmov = 27 then
-              vr_dsrelato := 'CONTRATOS LIMITE DESCONTO DE CHEQUE';
-              vr_flgcontr := 2;
-              vr_indice_geral := to_char(rw_crapcdc.cdagenci, 'fm00000')||'2'||'2'||'00000'||to_char(rw_crapcdc.nrdconta, 'fm0000000000')||to_char(rw_crapcdc.nrctrlim, 'fm0000000000')||'0000000000';
-              vr_indice_geral2 := '2'||'2'||'00000'||to_char(rw_crapcdc.cdagenci, 'fm00000')||to_char(rw_crapcdc.nrdconta, 'fm0000000000')||to_char(rw_crapcdc.vllimite, 'fm0000000000000000000000000')||to_char(rw_crapcdc.nrctrlim, 'fm0000000000')||'0000000000';
-            else
-              vr_dsrelato := 'CONTRATOS LIMITE DESCONTO DE TITULOS';
-              vr_flgcontr := 6;
-              vr_indice_geral := to_char(rw_crapcdc.cdagenci, 'fm00000')||'6'||'2'||'00000'||to_char(rw_crapcdc.nrdconta, 'fm0000000000')||to_char(rw_crapcdc.nrctrlim, 'fm0000000000')||'0000000000';
-              vr_indice_geral2 := '6'||'2'||'00000'||to_char(rw_crapcdc.cdagenci, 'fm00000')||to_char(rw_crapcdc.nrdconta, 'fm0000000000')||to_char(rw_crapcdc.vllimite, 'fm0000000000000000000000000')||to_char(rw_crapcdc.nrctrlim, 'fm0000000000')||'0000000000';
-            end if;
-            vr_desvalor := 'CONTRATOS ACIMA R$ '||to_char(pr_vllimctr, 'fm999G990D00')||' INCLUSIVE';
-            -- Inclui na primeira tabela, ordenada por agencia
-            vr_tab_geral(vr_indice_geral).vr_cdagenci := rw_crapcdc.cdagenci;
-            vr_tab_geral(vr_indice_geral).vr_nrdconta := rw_crapcdc.nrdconta;
-            vr_tab_geral(vr_indice_geral).vr_nrctremp := rw_crapcdc.nrctrlim;
-            vr_tab_geral(vr_indice_geral).vr_nmprimtl := rw_crapass2.nmprimtl;
-            vr_tab_geral(vr_indice_geral).vr_vlemprst := rw_crapcdc.vllimite;
-            vr_tab_geral(vr_indice_geral).vr_flgcontr := vr_flgcontr;
-            vr_tab_geral(vr_indice_geral).vr_flgvalor := 2;
-            vr_tab_geral(vr_indice_geral).vr_cdoperad := rw_craplot.cdoperad;
-            vr_tab_geral(vr_indice_geral).vr_dsrlgera := vr_dsrelato;
-            vr_tab_geral(vr_indice_geral).vr_vlrgeral := vr_desvalor;
-            vr_tab_geral(vr_indice_geral).vr_dtmvtolt := rw_crapcdc.dtmvtolt;
-            vr_tab_geral(vr_indice_geral).vr_nrdolote := rw_crapcdc.nrdolote;
-            vr_tab_geral(vr_indice_geral).vr_cdbccxlt := rw_crapcdc.cdbccxlt;
-            vr_tab_geral(vr_indice_geral).vr_cdpesqbb := to_char(rw_crapcdc.dtmvtolt, 'dd/mm/yy')||'-'||
-                                                         to_char(rw_crapcdc.cdagenci)||'-'||
-                                                         to_char(rw_crapcdc.cdbccxlt)||'-'||
-                                                         to_char(rw_crapcdc.nrdolote);
-            -- Inclui na segunda tabela, ordenada pelos indicadores e depois por agencia e conta
-            vr_tab_geral2(vr_indice_geral2).vr_cdagenci := rw_crapcdc.cdagenci;
-            vr_tab_geral2(vr_indice_geral2).vr_nrdconta := rw_crapcdc.nrdconta;
-            vr_tab_geral2(vr_indice_geral2).vr_nrctremp := rw_crapcdc.nrctrlim;
-            vr_tab_geral2(vr_indice_geral2).vr_nmprimtl := rw_crapass2.nmprimtl;
-            vr_tab_geral2(vr_indice_geral2).vr_vlemprst := rw_crapcdc.vllimite;
-            vr_tab_geral2(vr_indice_geral2).vr_flgcontr := vr_flgcontr;
-            vr_tab_geral2(vr_indice_geral2).vr_flgvalor := 2;
-            vr_tab_geral2(vr_indice_geral2).vr_cdoperad := rw_craplot.cdoperad;
-            vr_tab_geral2(vr_indice_geral2).vr_dsrlgera := vr_dsrelato;
-            vr_tab_geral2(vr_indice_geral2).vr_vlrgeral := vr_desvalor;
-            vr_tab_geral2(vr_indice_geral2).vr_dtmvtolt := rw_crapcdc.dtmvtolt;
-            vr_tab_geral2(vr_indice_geral2).vr_nrdolote := rw_crapcdc.nrdolote;
-            vr_tab_geral2(vr_indice_geral2).vr_cdbccxlt := rw_crapcdc.cdbccxlt;
-            vr_tab_geral2(vr_indice_geral2).vr_cdpesqbb := to_char(rw_crapcdc.dtmvtolt, 'dd/mm/yy')||'-'||
-                                                           to_char(rw_crapcdc.cdagenci)||'-'||
-                                                           to_char(rw_crapcdc.cdbccxlt)||'-'||
-                                                           to_char(rw_crapcdc.nrdolote);
-          close cr_crapass2;
-        end if;
-      close cr_craplot;
-    end loop;
+    
   END pc_processa_limite_desconto;
 
   --
@@ -1430,57 +1012,24 @@ begin
     RAISE vr_exc_saida;
   END IF;
   CLOSE cr_crapcop;
-  -- Leitura da tabela de parametros para indentificar o valor max do contrato
-  vr_dstextab := tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
-                                           ,pr_nmsistem => 'CRED'
-                                           ,pr_tptabela => 'GENERI'
-                                           ,pr_cdempres => 0
-                                           ,pr_cdacesso => 'VLMICFEMPR'
-                                           ,pr_tpregist => 0);
-  IF NVL(vr_dstextab,' ') = ' ' THEN
-    vr_vlfaixa1 := 0;
-    vr_vlfaixa2 := 0;
-  else
-    vr_vlfaixa1 := gene0002.fn_char_para_number(substr(vr_dstextab, 1, 7));
-    vr_vlfaixa2 := gene0002.fn_char_para_number(substr(vr_dstextab, 9, 9));
-  end if;
-  -- Se não há faixa superior
-  if nvl(vr_vlfaixa2,0) = 0 then
-    vr_vlfaixa2 := 999999.99;
-  end if;
-
-  -- Leitura da tabela de parametros para buscar o limite de crédito
-  vr_dstextab := tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
-                                           ,pr_nmsistem => 'CRED'
-                                           ,pr_tptabela => 'GENERI'
-                                           ,pr_cdempres => 0
-                                           ,pr_cdacesso => 'VLMICFLIMI'
-                                           ,pr_tpregist => 0);
-  IF NVL(vr_dstextab,' ') = ' ' THEN
-    vr_vllimctr := 0;
-    vr_vllimcre := 0.01;
-  else
-    vr_vllimctr := gene0002.fn_char_para_number(vr_dstextab);
-    vr_vllimcre := gene0002.fn_char_para_number(vr_dstextab);
-  end if;
 
   -- Inclui informações de borderô na vr_tab_bordero
   pc_grava_borderos(pr_cdcooper,rw_crapdat.dtmvtolt);
 
   -- Inclui informações de limite de crédito na vr_tab_geral e vr_tab_geral2
-  pc_limite_credito(pr_cdcooper,rw_crapdat.dtmvtolt,vr_vllimcre);
+  pc_limite_credito(pr_cdcooper,rw_crapdat.dtmvtolt);
 
   -- Inclui informações de limite de cartão de crédito na vr_tab_geral e vr_tab_geral2
-  pc_limite_cartao_cred(pr_cdcooper,rw_crapdat.dtmvtolt,vr_vllimcre);
+  pc_limite_cartao_cred(pr_cdcooper,rw_crapdat.dtmvtolt);
 
   -- Inclui informações de empréstimos na vr_tab_geral e vr_tab_geral2
-  pc_processa_emprestimos(pr_cdcooper,rw_crapdat.dtmvtolt,vr_vlfaixa1,vr_vlfaixa2);
+  pc_processa_emprestimos(pr_cdcooper,rw_crapdat.dtmvtolt);
 
   -- Inclui informações de aditivos na vr_tab_aditivo
   pc_processa_aditivos(pr_cdcooper,rw_crapdat.dtmvtolt);
 
   -- Inclui informações de descontos na vr_tab_geral e vr_tab_geral2
-  pc_processa_limite_desconto(pr_cdcooper,rw_crapdat.dtmvtolt,vr_vllimctr);
+  pc_processa_limite_desconto(pr_cdcooper,rw_crapdat.dtmvtolt);
 
   -- Busca do diretório base da cooperativa
   vr_nom_diretorio := gene0001.fn_diretorio(pr_tpdireto => 'C', -- /usr/coop
@@ -1526,47 +1075,25 @@ begin
             pc_inclui_aditivos_xml(vr_tab_geral(vr_indice_geral).vr_cdagenci);
             vr_lancou_aditivos := 'S'; --SD#539415
           end if;
+          
           -- Define o cabeçalho da nova seção do relatório
           if vr_tab_geral(vr_indice_geral).vr_flgcontr = 1 then
             vr_dsrelato := 'CONTRATOS EMPRESTIMOS';
-            if vr_tab_geral(vr_indice_geral).vr_flgvalor = 1   then
-              vr_desvalor := 'CONTRATOS ATE R$ '||to_char(vr_vlfaixa1 - 0.01, 'fm999G990D00');
-            elsif vr_tab_geral(vr_indice_geral).vr_flgvalor = 2   then
-              vr_desvalor := 'CONTRATOS ACIMA R$ '||to_char(vr_vlfaixa1, 'fm999G990D00')||' INCLUSIVE';
-            elsif vr_tab_geral(vr_indice_geral).vr_flgvalor = 3   then
-              vr_desvalor := 'CONTRATOS DE R$ '||to_char(vr_vlfaixa1, 'fm999G990D00')||' ATE '||to_char(vr_vlfaixa2 - 0.01, 'fm999G990D00');
-            elsif vr_tab_geral(vr_indice_geral).vr_flgvalor = 4   then
-              vr_desvalor := 'CONTRATOS ACIMA R$ '||to_char(vr_vlfaixa2, 'fm999G990D00')||' INCLUSIVE';
-            end if;
+            vr_desvalor := ' ';
           elsif vr_tab_geral(vr_indice_geral).vr_flgcontr = 2 then
             vr_dsrelato := 'CONTRATOS LIMITE DESCONTO DE CHEQUE';
-            if vr_tab_geral(vr_indice_geral).vr_flgvalor = 1 then
-              vr_desvalor := 'CONTRATOS ATE R$ '||to_char(vr_vllimctr, 'fm999G990D00');
-            elsif vr_tab_geral(vr_indice_geral).vr_flgvalor = 2 then
-              vr_desvalor := 'CONTRATOS ACIMA R$ '||to_char(vr_vllimctr, 'fm999G990D00')||' INCLUSIVE';
-            end if;
+            vr_desvalor := ' ';
           elsif vr_tab_geral(vr_indice_geral).vr_flgcontr = 4 then
             vr_dsrelato := 'LIMITES DE CREDITO';
-            if vr_tab_geral(vr_indice_geral).vr_flgvalor = 1 then
-              vr_desvalor := 'LIMITES ATE R$ '||to_char(vr_vllimcre - 0.01, 'fm999G990D00');
-            elsif vr_tab_geral(vr_indice_geral).vr_flgvalor = 2 then
-              vr_desvalor := 'CONTRATOS ACIMA R$ '||to_char(vr_vllimcre, 'fm999G990D00')||' INCLUSIVE';
-            end if;
+            vr_desvalor := ' ';            
           elsif vr_tab_geral(vr_indice_geral).vr_flgcontr = 5 then
             vr_dsrelato := 'LIMITES DE CARTAO DE CREDITO';
-            if vr_tab_geral(vr_indice_geral).vr_flgvalor = 1 then
-              vr_desvalor := 'LIMITES ATE R$ '||to_char(vr_vllimcre - 0.01, 'fm999G990D00');
-            elsif vr_tab_geral(vr_indice_geral).vr_flgvalor = 2 then
-              vr_desvalor := 'CONTRATOS ACIMA R$ '||to_char(vr_vllimcre, 'fm999G990D00')||' INCLUSIVE';
-            end if;
+            vr_desvalor := ' ';
           elsif vr_tab_geral(vr_indice_geral).vr_flgcontr = 6 then
             vr_dsrelato := 'CONTRATOS LIMITE DESCONTO DE TITULO';
-            if vr_tab_geral(vr_indice_geral).vr_flgvalor = 1 then
-              vr_desvalor := 'CONTRATOS ATE R$ '||to_char(vr_vllimctr, 'fm999G990D00');
-            elsif vr_tab_geral(vr_indice_geral).vr_flgvalor = 2 then
-              vr_desvalor := 'CONTRATOS ACIMA R$ '||to_char(vr_vllimctr, 'fm999G990D00')||' INCLUSIVE';
-            end if;
+            vr_desvalor := '  ';
           end if;
+          
           -- Se mudou o tipo, abre o novo tipo no XML
           if vr_tab_geral(vr_indice_geral).vr_flgcontr <> vr_flgcontr then
             gene0002.pc_escreve_xml(vr_des_xml,vr_des_xml_temp,'<tipo dsrelato="'||vr_dsrelato||'">');
@@ -1679,13 +1206,10 @@ begin
           vr_flgcontr := 7;
         end if;
         --
-        if vr_tab_separados(vr_indice_separados).vr_vlemprst < 2000 then
-          vr_desvalor := 'BORDEROS ATE R$ 1.999,99';
+
+        vr_desvalor := ' ';
           vr_flgvalor := 1;
-        elsif vr_tab_separados(vr_indice_separados).vr_vlemprst >= 2000  then
-          vr_desvalor := 'BORDEROS ACIMA R$ 2.000,00  INCLUSIVE';
-          vr_flgvalor := 2;
-        end if;
+          
         -- Define o índice das tabelas gerais
         vr_indice_geral := to_char(rw_crapage.cdagenci, 'fm00000')||
                            to_char(vr_flgcontr)||
@@ -1740,15 +1264,14 @@ begin
     -- imprime_bordero_cheques - valor baixo
     --
     vr_dsrelato := 'LANCAMENTOS BORDEROS DESCONTO DE CHEQUE';
-    vr_desvalor := 'BORDEROS ATE R$ 1.999,99';
+    vr_desvalor := ' ';
     vr_flesctgvl := false;
     -- Abre o grupo TIPO
     gene0002.pc_escreve_xml(vr_des_xml,vr_des_xml_temp,'<tipo dsrelato="'||vr_dsrelato||'">');
     -- Primeira leitura dos borderôs
     vr_indice_separados := vr_tab_separados.first;
     while vr_indice_separados is not null loop
-      if vr_tab_separados(vr_indice_separados).vr_tpctrlim = 1 and
-         vr_tab_separados(vr_indice_separados).vr_vlemprst < 2000 then
+      if vr_tab_separados(vr_indice_separados).vr_tpctrlim = 1 then
         if not vr_flesctgvl then
           -- Na primeira volta do loop, deve abrir o grupo VALOR
           gene0002.pc_escreve_xml(vr_des_xml,vr_des_xml_temp
@@ -1781,61 +1304,21 @@ begin
       -- Fecha a TAG do valor
       gene0002.pc_escreve_xml(vr_des_xml,vr_des_xml_temp,'</valor>');
     end if;
-    -- imprime_bordero_cheques - valor alto
-    vr_desvalor := 'BORDEROS ACIMA R$ 2.000,00  INCLUSIVE';
-    vr_flesctgvl := false;
-    -- primeira leitura dos borderôs
-    vr_indice_separados := vr_tab_separados.first;
-    while vr_indice_separados is not null loop
-      if vr_tab_separados(vr_indice_separados).vr_tpctrlim = 1 and
-         vr_tab_separados(vr_indice_separados).vr_vlemprst >= 2000 then
-        if not vr_flesctgvl then
-          -- Na primeira volta do loop, deve abrir o grupo VALOR
-          gene0002.pc_escreve_xml(vr_des_xml,vr_des_xml_temp
-                             ,'<valor desvalor="'||vr_desvalor||'">'||
-                             '<dtmvtolt></dtmvtolt>'||
-                             '<cdbccxlt>'||vr_tab_separados(vr_indice_separados).vr_cdbccxlt||'</cdbccxlt>'||
-                             '<dtlibbdc>'||to_char(vr_tab_separados(vr_indice_separados).vr_dtlibbdc, 'dd/mm/yyyy')||'</dtlibbdc>');
-          vr_flesctgvl := true;
-        end if;
-        gene0002.pc_escreve_xml(vr_des_xml,vr_des_xml_temp
-                       ,'<conta nrdconta="'||to_char(vr_tab_separados(vr_indice_separados).vr_nrdconta, 'fm9999G999G9')||
-                            '" tplayout="3" '||
-                            ' dsemprst="" >'||
-                         '<nrctremp></nrctremp>'||
-                         '<nmprimtl>'||vr_tab_separados(vr_indice_separados).vr_nmprimtl||'</nmprimtl>'||
-                         '<vlemprst>'||vr_tab_separados(vr_indice_separados).vr_vlemprst||'</vlemprst>'||
-                         '<vlemprst_form>'||to_char(vr_tab_separados(vr_indice_separados).vr_vlemprst, 'fm999G999G990D00')||'</vlemprst_form>'||
-                         '<nrdolote>'||to_char(vr_tab_separados(vr_indice_separados).vr_nrdolote, 'fm999G999')||'</nrdolote>'||
-                         '<nrctrlim>'||to_char(vr_tab_separados(vr_indice_separados).vr_nrctrlim, 'fm99G999G999')||'</nrctrlim>'||
-                         '<nrborder>'||to_char(vr_tab_separados(vr_indice_separados).vr_nrborder, 'fm99G999G999')||'</nrborder>'||
-                         '<dtmvtolt>'||to_char(vr_tab_separados(vr_indice_separados).vr_dtmvtolt, 'dd/mm/yyyy')||'</dtmvtolt>'||
-                         '<nraditiv></nraditiv>'||
-                         '<tpaditiv></tpaditiv>'||
-                         '<dsaditiv></dsaditiv>'||
-                       '</conta>');
-      end if;
-      vr_indice_separados := vr_tab_separados.next(vr_indice_separados);
-    end loop;
-    if vr_flesctgvl then
-      -- Fecha a TAG do valor
-      gene0002.pc_escreve_xml(vr_des_xml,vr_des_xml_temp,'</valor>');
-    end if;
+    
     -- Fecha a TAG do TIPO, pois vai mudar
     gene0002.pc_escreve_xml(vr_des_xml,vr_des_xml_temp,'</tipo>');
     --
     -- imprime_bordero_titulos - valor baixo
     --
     vr_dsrelato := 'LANCAMENTOS BORDEROS DESCONTO DE TITULO';
-    vr_desvalor := 'BORDEROS ATE R$ 1.999,99';
+    vr_desvalor := ' ';
     vr_flesctgvl := false;
     -- Abre o grupo TIPO
     gene0002.pc_escreve_xml(vr_des_xml,vr_des_xml_temp,'<tipo dsrelato="'||vr_dsrelato||'">');
     -- primeira leitura dos borderôs
     vr_indice_separados := vr_tab_separados.first;
     while vr_indice_separados is not null loop
-      if vr_tab_separados(vr_indice_separados).vr_tpctrlim = 2 and
-         vr_tab_separados(vr_indice_separados).vr_vlemprst < 2000 then
+      if vr_tab_separados(vr_indice_separados).vr_tpctrlim = 2 then
         if not vr_flesctgvl then
           -- Na primeira volta do loop, deve abrir o grupo VALOR
           gene0002.pc_escreve_xml(vr_des_xml,vr_des_xml_temp
@@ -1864,50 +1347,12 @@ begin
       end if;
       vr_indice_separados := vr_tab_separados.next(vr_indice_separados);
     end loop;
+    
     if vr_flesctgvl then
       -- Fecha a TAG do valor
       gene0002.pc_escreve_xml(vr_des_xml,vr_des_xml_temp,'</valor>');
     end if;
-    -- imprime_bordero_titulos - valor alto
-    vr_desvalor := 'BORDEROS ACIMA R$ 2.000,00  INCLUSIVE';
-    vr_flesctgvl := false;
-    -- primeira leitura dos borderôs
-    vr_indice_separados := vr_tab_separados.first;
-    while vr_indice_separados is not null loop
-      if vr_tab_separados(vr_indice_separados).vr_tpctrlim = 2 and
-         vr_tab_separados(vr_indice_separados).vr_vlemprst >= 2000 then
-        if not vr_flesctgvl then
-          -- Na primeira volta do loop, deve abrir o grupo VALOR
-          gene0002.pc_escreve_xml(vr_des_xml,vr_des_xml_temp,
-                             '<valor desvalor="'||vr_desvalor||'">'||
-                             '<dtmvtolt></dtmvtolt>'||
-                             '<cdbccxlt>'||vr_tab_separados(vr_indice_separados).vr_cdbccxlt||'</cdbccxlt>'||
-                             '<dtlibbdc>'||to_char(vr_tab_separados(vr_indice_separados).vr_dtlibbdc, 'dd/mm/yyyy')||'</dtlibbdc>');
-          vr_flesctgvl := true;
-        end if;
-        gene0002.pc_escreve_xml(vr_des_xml,vr_des_xml_temp,
-                         '<conta nrdconta="'||to_char(vr_tab_separados(vr_indice_separados).vr_nrdconta, 'fm9999G999G9')||
-                            '" tplayout="7" '||
-                            ' dsemprst="" >'||
-                         '<nrctremp></nrctremp>'||
-                         '<nmprimtl>'||vr_tab_separados(vr_indice_separados).vr_nmprimtl||'</nmprimtl>'||
-                         '<vlemprst>'||vr_tab_separados(vr_indice_separados).vr_vlemprst||'</vlemprst>'||
-                         '<vlemprst_form>'||to_char(vr_tab_separados(vr_indice_separados).vr_vlemprst, 'fm999G999G990D00')||'</vlemprst_form>'||
-                         '<nrdolote>'||to_char(vr_tab_separados(vr_indice_separados).vr_nrdolote, 'fm999G999')||'</nrdolote>'||
-                         '<nrctrlim>'||to_char(vr_tab_separados(vr_indice_separados).vr_nrctrlim, 'fm99G999G999')||'</nrctrlim>'||
-                         '<nrborder>'||to_char(vr_tab_separados(vr_indice_separados).vr_nrborder, 'fm99G999G999')||'</nrborder>'||
-                         '<dtmvtolt>'||to_char(vr_tab_separados(vr_indice_separados).vr_dtmvtolt, 'dd/mm/yyyy')||'</dtmvtolt>'||
-                         '<nraditiv></nraditiv>'||
-                         '<tpaditiv></tpaditiv>'||
-                         '<dsaditiv></dsaditiv>'||
-                       '</conta>');
-      end if;
-      vr_indice_separados := vr_tab_separados.next(vr_indice_separados);
-    end loop;
-    if vr_flesctgvl then
-      -- Fecha a TAG do valor
-      gene0002.pc_escreve_xml(vr_des_xml,vr_des_xml_temp,'</valor>');
-    end if;
+    
     -- Fecha a TAG do TIPO
     gene0002.pc_escreve_xml(vr_des_xml,vr_des_xml_temp,'</tipo>');
     -- Fecha as TAGs abertas
