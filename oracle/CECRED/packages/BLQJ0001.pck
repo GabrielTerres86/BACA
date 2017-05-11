@@ -1370,7 +1370,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                              ,pr_dsjuizem                       -- dsjuizem
                              ,pr_dsresord                       -- dsresord
                              ,pr_dtenvres                       -- dtenvres
-                             ,pr_nroficio                       -- nroficio
+                             ,trim(replace(gene0007.fn_caract_acento(pr_nroficio,1,
+                                                             '@#$&%¹²³ªº°*!?<>/\|.,:-_"{}[]',
+                                                             '                             '),' ')) -- nroficio
                              ,pr_nrproces                       -- nrproces
                              ,pr_dsinfadc                       -- dsinfadc
                              ,vr_vlresblq);                     -- vlresblq
@@ -1574,7 +1576,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                                ,pr_dsjuizem                       -- dsjuizem
                                ,pr_dsresord                       -- dsresord
                                ,pr_dtenvres                       -- dtenvres
-                               ,pr_nroficio                       -- nroficio
+                               ,trim(replace(gene0007.fn_caract_acento(pr_nroficio,1,
+                                                             '@#$&%¹²³ªº°*!?<>/\|.,:-_"{}[]',
+                                                             '                             '),' ')) -- nroficio
                                ,pr_nrproces                       -- nrproces
                                ,pr_dsinfadc                       -- dsinfadc
                                ,pr_vlrsaldo);                     -- vlresblq
