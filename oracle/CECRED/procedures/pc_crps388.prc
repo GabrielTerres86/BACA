@@ -9,7 +9,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autora  : Mirtes
-  Data    : Abril/2004                          Ultima atualizacao: 29/03/2017
+  Data    : Abril/2004                          Ultima atualizacao: 11/04/2017
 
   Dados referentes ao programa:
 
@@ -234,6 +234,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
 
               29/03/2017 - Conversão Progress para PLSQL (Jonata-MOUTs)
 
+			        11/04/2017 - Ajuste para integracao de arquivos com layout na versao 5
+				                  (Jonata - RKAM M311).
+
   ..............................................................................*/
 
   ----------------------------- ESTRUTURAS de MEMORIA -----------------------------
@@ -342,6 +345,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
           ,gnconve.cddbanco
           ,replace(gnconve.dsenddeb,',,','') dsenddeb /*Remover aqueles sem email*/
           ,gnconve.rowid nrrowid
+          ,gnconve.nrlayout
       FROM gncvcop 
           ,gnconve
           ,crapcop 
@@ -380,13 +384,17 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
           ,cdcritic
           ,dscodbar
           ,cdseqtel
-      FROM craplau 
+          ,tbconv.tppessoa_dest
+          ,tbconv.nrcpfcgc_dest
+      FROM craplau
+          ,tbconv_det_agendamento tbconv
      WHERE craplau.cdcooper  = pr_cdcooper
        AND craplau.nrdconta  = pr_nrdconta 
        AND craplau.cdhistor  = pr_cdhistor  
        AND craplau.dtdebito  = pr_dtmvtolt  
        AND craplau.dsorigem NOT IN('CAIXA','INTERNET','TAA','PG555','CARTAOBB','BLOQJUD','DAUT BANCOOB')
-       AND craplau.nrdocmto  = gene0002.fn_busca_entrada(6,SUBSTR(pr_cdpesqbb,6,100),'-');
+       AND craplau.nrdocmto  = gene0002.fn_busca_entrada(6,SUBSTR(pr_cdpesqbb,6,100),'-')
+       AND tbconv.idlancto = craplau.idlancto;
   rw_craplau cr_craplau%ROWTYPE;
   
   -- Verificar se existe autorização de débito especifica para CASAN
@@ -457,11 +465,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
      INTO rw_gnconve; 
     -- Se não encontrou nenhuma linhas
     IF cr_gnconve%NOTFOUND THEN
-      -- Geraremos critica 151 e sairemos do processo 
-      pr_cdcritic := 151;
+        -- Geraremos critica 151 e sairemos do processo 
+        pr_cdcritic := 151;
       CLOSE cr_gnconve;
-      RETURN;
-    END IF;   
+        RETURN;
+      END IF;
     
     -- Utilizar a sequencia atual 
     pr_nrseqarq := rw_gnconve.nrseqatu;
@@ -474,8 +482,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
        WHERE CURRENT OF cr_gnconve;
        -- Atualizar no retorno
        pr_rw_gnconve.nrseqatu := rw_gnconve.nrseqatu + 1;
-    END IF;    
-    
+    END IF;
     -- Nao cria registro de controle se convenio for unificado e a 
     -- execucao for na Cecred, pois quando roda programa que faz a 
     -- unificacao nao atualiza a sequencia do convenio 
@@ -928,21 +935,27 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
                        ,rw_craplcm.cdhistor
                        ,rw_craplcm.dtmvtolt
                        ,rw_craplcm.cdpesqbb);
-        FETCH cr_craplau
-         INTO rw_craplau;
+                       
+        FETCH cr_craplau INTO rw_craplau;
+        
         -- Se não encontrar 
         IF cr_craplau%NOTFOUND THEN 
-          CLOSE cr_craplau;          
-          -- Se for conta Migrada
-          IF vr_ctamigra THEN           
-            -- Buscar na Cooperativa anterior (Somente se é conta migrada)
+          
+          CLOSE cr_craplau;
+
+          /** Verifica se eh conta migrada e se foi enviado 
+              para agendamento na coop. anterior ***/
+          IF vr_ctamigra THEN      
+                   
+            -- Buscar na Cooperativa anterior
             OPEN cr_craplau(vr_tab_tco(rw_craplcm.nrdconta).cdcopant
                            ,vr_tab_tco(rw_craplcm.nrdconta).nrctaant
                            ,rw_craplcm.cdhistor
                            ,rw_craplcm.dtmvtolt
                            ,rw_craplcm.cdpesqbb);
-            FETCH cr_craplau
-             INTO rw_craplau;
+                           
+            FETCH cr_craplau INTO rw_craplau;
+            
             -- Se não encontrar 
             IF cr_craplau%NOTFOUND THEN 
               CLOSE cr_craplau;
@@ -955,12 +968,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
                                                          || ' Conta = '|| gene0002.fn_mask_conta(rw_craplcm.nrdconta)
                                                          || ' Documento = ' || rw_craplcm.nrdocmto);
               -- Ir ao próximo registro (Ignorar LCM)
-              CONTINUE;           
+              CONTINUE;   
+                      
             ELSE
               CLOSE cr_craplau;
             END IF;
-          ELSE 
-            -- Gerar critica 501 e ir ao proximo registro 
+          
+          ELSE
+          
+            -- Gerar critica 501 no proc_message
             btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                       ,pr_ind_tipo_log => 2 -- Erro tratato
                                       ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
@@ -969,7 +985,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
                                                        || ' Conta = '|| gene0002.fn_mask_conta(rw_craplcm.nrdconta)
                                                        || ' Documento = ' || rw_craplcm.nrdocmto);
             -- Ir ao próximo registro (Ignorar LCM)
-            CONTINUE;
+            CONTINUE;   
+              
           END IF;
         ELSE 
           CLOSE cr_craplau;
@@ -1130,168 +1147,361 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
                                || ' <dtmvtolt>'||to_char(rw_craplcm.dtmvtolt,'dd/mm/rrrr')||'</dtmvtolt>'
                                || ' <dsobserv>'||vr_dsobserv||'</dsobserv>'
                                ||'</lcto>');
-        -- Enviar informações para o arquivo conforme especificidades do convênio
-        /* 30 - Celesc Distribuicao */
-        /* 45 - Aguas Pres.Getulio  */
-        IF rw_gnconve.cdconven IN(30,45) THEN    
-          -- Enviar linha ao arquivo 
-          vr_dslinreg := 'F'
-                      ||to_char(rw_crapatr.cdrefere,'fm000000000')
-                      ||RPAD(' ',16,' ')
-                      ||to_char(vr_nragenci,'fm0000')
-                      ||RPAD(vr_nrdconta,14,' ')
-                      ||TO_CHAR(rw_craplau.dtmvtopg,'rrrrmmdd')
-                      ||to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
-                      ||'00'
-                      ||rpad(rw_craplau.cdseqtel,60,' ')
-                      ||RPAD(' ',20,' ')||'0';       
-        /* 4  - CASAN */
-        /* 24 - AGUAS ITAPEMA */
-        /* 31 - DAE NAVEGANTES */
-        /* 33 - AGUAS JOINVILLE */
-        /* 34 - SEMASA ITAJAI */
-        /* 53 - Foz do Brasil */
-        /* 54 - AGUAS DE MASSARANDUBA */  
-        ELSIF rw_gnconve.cdconven IN(4,24,31,33,34,53,54) THEN        
-          -- Enviar linha ao arquivo 
-          vr_dslinreg := 'F'
-                      ||to_char(rw_crapatr.cdrefere,'fm00000000')
-                      ||RPAD(' ',17,' ')
-                      ||to_char(vr_nragenci,'fm0000')
-                      ||RPAD(vr_nrdconta,14,' ')
-                      ||vr_dtmvtolt
-                      ||to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
-                      ||'00'
-                      ||rpad(rw_craplau.cdseqtel,60,' ')
-                      ||RPAD(' ',20,' ')||'0';
-        /* 48 - TIM Celular */
-        /* 50 - HDI */
-        /* 55 - LIBERTY */
-        /* 58 - PORTO SEGURO */
-        /* 66 - PREVISUL */        
-        ELSIF rw_gnconve.cdconven IN(48,50,55,58,66) THEN  
-          -- Enviar linha ao arquivo 
-          vr_dslinreg := 'F'
-                      ||to_char(rw_crapatr.cdrefere,'fm00000000000000000000')
-                      ||RPAD(' ',5,' ')
-                      ||to_char(vr_nragenci,'fm0000')
-                      ||RPAD(vr_nrdconta,14,' ')
-                      ||vr_dtmvtolt
-                      ||to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
-                      ||'00'
-                      ||rpad(rw_craplau.cdseqtel,60,' ')
-                      ||TO_CHAR(vr_dtmvtopr,'rrrrmmdd')
-                      ||RPAD(' ',12,' ')||'0';
-        /* 47 - UNIMED CREDCREA */
-        /* 57 - RBS */
-        ELSIF rw_gnconve.cdconven IN(47,57) THEN     
-          -- Enviar linha ao arquivo 
-          vr_dslinreg :='F'
-                      ||to_char(rw_crapatr.cdrefere,'fm00000000000000000')
-                      ||RPAD(' ',8,' ')
-                      ||to_char(vr_nragenci,'fm0000')
-                      ||RPAD(vr_nrdconta,14,' ')
-                      ||vr_dtmvtolt
-                      ||to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
-                      ||'00'
-                      ||rpad(rw_craplau.cdseqtel,60,' ')
-                      ||TO_CHAR(vr_dtmvtopr,'rrrrmmdd')
-                      ||RPAD(' ',12,' ')||'0';
-        /* 22 - UNIMED */
-        /* 32 - UNIODONTO */
-        /* 38 - UNIM.PLAN.NORTE */ 
-        /* 46 - UNIODONTO FEDERACAO */
-        /* 64 - AZUL SEGUROS */   
-        ELSIF rw_gnconve.cdconven IN(22,32,38,46,64) THEN   
-          -- Enviar linha ao arquivo 
-          vr_dslinreg :='F'
-                      ||to_char(rw_crapatr.cdrefere,'fm0000000000000000000000000')
-                      ||to_char(vr_nragenci,'fm0000')
-                      ||RPAD(vr_nrdconta,14,' ')
-                      ||vr_dtmvtolt
-                      ||to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
-                      ||'00'
-                      ||rpad(rw_craplau.cdseqtel,60,' ')
-                      ||TO_CHAR(vr_dtmvtopr,'rrrrmmdd')
-                      ||RPAD(' ',12,' ')||'0';
-        /* 15 - VIVO */
-        ELSIF rw_gnconve.cdconven = 15 THEN 
-          -- Enviar linha ao arquivo 
-          vr_dslinreg :='F'
-                      ||to_char(rw_crapatr.cdrefere,'fm00000000000')
-                      ||LPAD(' ',14,' ')
-                      ||to_char(vr_nragenci,'fm0000')
-                      ||RPAD(vr_nrdconta,14,' ')
-                      ||TO_CHAR(rw_craplau.dtmvtopg,'rrrrmmdd')
-                      ||to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
-                      ||'00'
-                      ||rpad(rw_craplau.cdseqtel,60,' ')
-                      ||RPAD(' ',20,' ')||'0';
-        /* 9 - SAMAE Jaragua*/
-        /*19 - SAMAE Gaspar */
-        /*20 - SAMAE Blumenau CECRED*/
-        /*16 - SAMAE Timbo CECRED*/
-        /*49 - SAMAE Rio Negrinho*/
-        ELSIF rw_gnconve.cdconven IN(9,19,20,16,49) THEN  
-          -- Enviar linha ao arquivo 
-          vr_dslinreg := 'F'
-                      ||to_char(rw_crapatr.cdrefere,'fm000000')
-                      ||LPAD(' ',19,' ')
-                      ||to_char(vr_nragenci,'fm0000')
-                      ||RPAD(vr_nrdconta,14,' ')
-                      ||TO_CHAR(rw_craplau.dtmvtopg,'rrrrmmdd')
-                      ||to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
-                      ||'00'
-                      ||rpad(rw_craplau.cdseqtel,60,' ')
-                      ||RPAD(' ',20,' ')||'0';
-        /*  1 - BRASIL TELECOM/SC */
-        /* 25 - SAMAE BRUSQUE */
-        /* 26 - SAMAE POMERODE */
-        /* 33 - AGUAS DE JOINVILLE */
-        /* 39 - SEGURO AUTO */
-        /* 41 - SAMAE SAO BENTO */
-        /* 43 - SERVMED */
-        /* 62 - AGUAS DE ITAPOCOROY */ 
-        ELSIF rw_gnconve.cdconven IN(1,25,26,33,39,41,43,62) THEN 
-          -- Enviar linha ao arquivo 
-          vr_dslinreg := 'F'
-                      ||to_char(rw_crapatr.cdrefere,'fm0000000000')
-                      ||LPAD(' ',15,' ')
-                      ||to_char(vr_nragenci,'fm0000')
-                      ||RPAD(vr_nrdconta,14,' ')
-                      ||vr_dtmvtolt
-                      ||to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
-                      ||'00'
-                      ||rpad(rw_craplau.cdseqtel,60,' ')
-                      ||TO_CHAR(vr_dtmvtopr,'rrrrmmdd')
-                      ||RPAD(' ',12,' ')||'0';        
-        /* 74 e 75 - MAPFRE VERA CRUZ SEG */ 
-        ELSIF rw_gnconve.cdconven IN(74,75) THEN
-          -- Enviar linha ao arquivo 
-          vr_dslinreg := 'F'
-                      ||rw_crapatr.cdrefere
-                      ||LPAD(' ',25-length(rw_craplau.nrdocmto),' ')
-                      ||to_char(vr_nragenci,'fm0000')
-                      ||RPAD(vr_nrdconta,14,' ')
-                      ||vr_dtmvtolt
-                      ||to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
-                      ||'00'
-                      ||rpad(rw_craplau.cdseqtel,60,' ')
-                      ||RPAD(' ',20,' ')||'0';
-        ELSE
-          -- Todos outros casos 
-          -- Enviar linha ao arquivo 
-          vr_dslinreg := 'F'
-                      ||to_char(rw_crapatr.cdrefere,'fm0000000000000000000000')
-                      ||LPAD(' ',3,' ')
-                      ||to_char(vr_nragenci,'fm0000')
-                      ||RPAD(vr_nrdconta,14,' ')
-                      ||vr_dtmvtolt
-                      ||to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
-                      ||'00'
-                      ||rpad(rw_craplau.cdseqtel,60,' ')
-                      ||TO_CHAR(vr_dtmvtopr,'rrrrmmdd')
-                      ||RPAD(' ',12,' ')||'0';              
+        
+        IF rw_gnconve.nrlayout = 5 THEN
+    	
+          /* Celesc Distribuicao */  
+          /* Aguas Pres.Getulio  */
+          IF rw_gnconve.cdconven IN (30,45) THEN   
+    						
+            vr_dslinreg := 'F' 
+                    || to_char(rw_crapatr.cdrefere,'fm000000000')
+                    || RPAD(' ',16,' ')
+                    || to_char(vr_nragenci,'fm0000')
+                    || RPAD(vr_nrdconta,14,' ')
+                    || TO_CHAR(rw_craplau.dtmvtopg,'rrrrmmdd')                       
+                    || to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
+                    || '00'                                   
+                    || rpad(rw_craplau.cdseqtel,60,' ') 
+                    || to_char(rw_craplau.tppessoa_dest,'fm0') 
+                    || to_char(rw_craplau.nrcpfcgc_dest,'fm000000000000000') 
+                    || RPAD(' ',4,' ') || '0';
+                    
+          /* CASAN */           
+          /* AGUAS ITAPEMA */           
+          /* DAE NAVEGANTES */           
+          /* AGUAS JOINVILLE */           
+          /* SEMASA ITAJAI */           
+          /* Foz do Brasil */           
+          /* AGUAS DE MASSARANDUBA */ 
+          ELSIF rw_gnconve.cdconven IN (4,24,31,33,34,53,54) THEN  
+
+            vr_dslinreg := 'F' 
+                    || to_char(rw_crapatr.cdrefere,'fm00000000')
+                    || RPAD(' ',17,' ')
+                    || to_char(vr_nragenci,'fm0000')
+                    || RPAD(vr_nrdconta,14,' ')
+                    || vr_dtmvtolt                          
+                    || to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
+                    || '00'                                   
+                    || rpad(rw_craplau.cdseqtel,60,' ') 
+                    || to_char(rw_craplau.tppessoa_dest,'fm0') 
+                    || to_char(rw_craplau.nrcpfcgc_dest,'fm000000000000000') 
+                    || RPAD(' ',4,' ') || '0';
+                    
+          /* TIM Celular */          
+          /* HDI */          
+          /* LIBERTY */          
+          /* PORTO SEGURO */          
+          /* PREVISUL */          
+          ELSIF rw_gnconve.cdconven IN (48,50,55,58,66) THEN  
+    										 
+            vr_dslinreg := 'F' 
+                    || to_char(rw_crapatr.cdrefere,'fm00000000000000000000')
+                    || RPAD(' ',5,' ')
+                    || to_char(vr_nragenci,'fm0000')
+                    || RPAD(vr_nrdconta,14,' ')
+                    || vr_dtmvtolt
+                    || to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
+                    || '00'                                   
+                    || rpad(rw_craplau.cdseqtel,60,' ') 
+                    || to_char(rw_craplau.tppessoa_dest,'fm0') 
+                    || to_char(rw_craplau.nrcpfcgc_dest,'fm000000000000000') 
+                    || RPAD(' ',4,' ') || '0';
+                    
+          /* UNIMED CREDCREA */          
+          /* RBS */
+          ELSIF rw_gnconve.cdconven IN (47,57) THEN  
+
+            vr_dslinreg := 'F' 
+                    || to_char(rw_crapatr.cdrefere,'fm00000000000000000')
+                    || RPAD(' ',8,' ')
+                    || to_char(vr_nragenci,'fm0000')
+                    || RPAD(vr_nrdconta,14,' ')
+                    || vr_dtmvtolt
+                    || to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
+                    || '00'                                   
+                    || rpad(rw_craplau.cdseqtel,60,' ') 
+                    || to_char(rw_craplau.tppessoa_dest,'fm0') 
+                    || to_char(rw_craplau.nrcpfcgc_dest,'fm000000000000000') 
+                    || RPAD(' ',4,' ') || '0';
+                    
+          /* UNIMED */          
+          /* UNIODONTO */          
+          /* UNIM.PLAN.NORTE */           
+          /* UNIODONTO FEDERACAO */          
+          /* AZUL SEGUROS */   
+          ELSIF rw_gnconve.cdconven IN (22,32,38,46,64) THEN   
+                
+            vr_dslinreg := 'F' 
+                    || to_char(rw_crapatr.cdrefere,'fm0000000000000000000000000')
+                    || to_char(vr_nragenci,'fm0000')
+                    || RPAD(vr_nrdconta,14,' ')
+                    || vr_dtmvtolt
+                    || to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
+                    || '00'                                   
+                    || rpad(rw_craplau.cdseqtel,60,' ') 
+                    || to_char(rw_craplau.tppessoa_dest,'fm0') 
+                    || to_char(rw_craplau.nrcpfcgc_dest,'fm000000000000000') 
+                    || RPAD(' ',4,' ') || '0';
+             
+          /* VIVO */       
+          ELSIF rw_gnconve.cdconven IN (15)   THEN 
+
+            vr_dslinreg := 'F' 
+                    || to_char(rw_crapatr.cdrefere,'fm00000000000')
+                    || LPAD(' ',14,' ')
+                    || to_char(vr_nragenci,'fm0000')
+                    || RPAD(vr_nrdconta,14,' ')
+                    || TO_CHAR(rw_craplau.dtmvtopg,'rrrrmmdd')
+                    || to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
+                    || '00'                                   
+                    || rpad(rw_craplau.cdseqtel,60,' ') 
+                    || to_char(rw_craplau.tppessoa_dest,'fm0') 
+                    || to_char(rw_craplau.nrcpfcgc_dest,'fm000000000000000') 
+                    || RPAD(' ',4,' ') || '0';
+                    
+          /*SAMAE Jaragua*/           
+          /*SAMAE Gaspar */           
+          /*SAMAE Blumenau CECRED*/           
+          /*SAMAE Timbo CECRED*/           
+          /*SAMAE Rio Negrinho*/           
+          ELSIF rw_gnconve.cdconven IN (9,19,20,16,49) THEN  
+                
+            vr_dslinreg := 'F' 
+                    || to_char(rw_crapatr.cdrefere,'fm000000')
+                    || LPAD(' ',19,' ')
+                    || to_char(vr_nragenci,'fm0000')
+                    || RPAD(vr_nrdconta,14,' ')
+                    || TO_CHAR(rw_craplau.dtmvtopg,'rrrrmmdd')
+                    || to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
+                    ||'00'
+                    || rpad(rw_craplau.cdseqtel,60,' ') 
+                    || to_char(rw_craplau.tppessoa_dest,'fm0') 
+                    || to_char(rw_craplau.nrcpfcgc_dest,'fm000000000000000') 
+                    || RPAD(' ',4,' ') || '0';
+          
+          /* BRASIL TELECOM/SC */
+          /* SAMAE BRUSQUE */
+          /* SAMAE POMERODE */
+          /* AGUAS DE JOINVILLE */
+          /* SEGURO AUTO */
+          /* SAMAE SAO BENTO */
+          /* SERVMED */
+          /* AGUAS DE ITAPOCOROY */           
+          ELSIF rw_gnconve.cdconven IN (1,25,26,33,39,41,43,62) THEN
+                
+            vr_dslinreg := 'F' 
+                    || to_char(rw_crapatr.cdrefere,'fm0000000000')
+                    || LPAD(' ',15,' ') 
+                    || to_char(vr_nragenci,'fm0000') 
+                    || RPAD(vr_nrdconta,14,' ') 
+                    || vr_dtmvtolt 
+                    || to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
+                    || '00' 
+                    || rpad(rw_craplau.cdseqtel,60,' ') 
+                    || to_char(rw_craplau.tppessoa_dest,'fm0') 
+                    || to_char(rw_craplau.nrcpfcgc_dest,'fm000000000000000') 
+                    || RPAD(' ',4,' ') || '0';
+            
+          /* MAPFRE VERA CRUZ SEG */        
+          ELSIF rw_gnconve.cdconven IN (74,75) THEN
+                
+            vr_dslinreg := 'F' 
+                    || rw_crapatr.cdrefere 
+                    || LPAD(' ',25 - length(rw_craplau.nrdocmto),' ') 
+                    || to_char(vr_nragenci,'fm0000') 
+                    || RPAD(vr_nrdconta,14,' ') 
+                    || vr_dtmvtolt 
+                    || to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
+                    || '00' 
+                    || rpad(rw_craplau.cdseqtel,60,' ') 
+                    || to_char(rw_craplau.tppessoa_dest,'fm0') 
+                    || to_char(rw_craplau.nrcpfcgc_dest,'fm000000000000000') 
+                    || RPAD(' ',4,' ') || '0';
+                    
+          ELSE
+              vr_dslinreg := 'F'
+                    || to_char(rw_crapatr.cdrefere,'fm0000000000000000000000')
+                    || RPAD(' ',3,' ') 
+                    || to_char(vr_nragenci,'fm0000') 
+                    || RPAD(vr_nrdconta,14,' ') 
+                    || vr_dtmvtolt 
+                    || to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
+                    || '00' 
+                    || rpad(rw_craplau.cdseqtel,60,' ') 
+                    || to_char(rw_craplau.tppessoa_dest,'fm0') 
+                    || to_char(rw_craplau.nrcpfcgc_dest,'fm000000000000000') 
+                    || RPAD(' ',4,' ') || '0';
+                    
+          END IF;
+       
+       ELSE
+		
+          -- Enviar informações para o arquivo conforme especificidades do convênio
+          /* 30 - Celesc Distribuicao */
+          /* 45 - Aguas Pres.Getulio  */
+          IF rw_gnconve.cdconven IN(30,45) THEN    
+            -- Enviar linha ao arquivo 
+            vr_dslinreg := 'F'
+                        ||to_char(rw_crapatr.cdrefere,'fm000000000')
+                        ||RPAD(' ',16,' ')
+                        ||to_char(vr_nragenci,'fm0000')
+                        ||RPAD(vr_nrdconta,14,' ')
+                        ||TO_CHAR(rw_craplau.dtmvtopg,'rrrrmmdd')
+                        ||to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
+                        ||'00'
+                        ||rpad(rw_craplau.cdseqtel,60,' ')
+                        ||RPAD(' ',20,' ')||'0';       
+          /* 4  - CASAN */
+          /* 24 - AGUAS ITAPEMA */
+          /* 31 - DAE NAVEGANTES */
+          /* 33 - AGUAS JOINVILLE */
+          /* 34 - SEMASA ITAJAI */
+          /* 53 - Foz do Brasil */
+          /* 54 - AGUAS DE MASSARANDUBA */  
+          ELSIF rw_gnconve.cdconven IN(4,24,31,33,34,53,54) THEN        
+            -- Enviar linha ao arquivo 
+            vr_dslinreg := 'F'
+                        ||to_char(rw_crapatr.cdrefere,'fm00000000')
+                        ||RPAD(' ',17,' ')
+                        ||to_char(vr_nragenci,'fm0000')
+                        ||RPAD(vr_nrdconta,14,' ')
+                        ||vr_dtmvtolt
+                        ||to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
+                        ||'00'
+                        ||rpad(rw_craplau.cdseqtel,60,' ')
+                        ||RPAD(' ',20,' ')||'0';
+          /* 48 - TIM Celular */
+          /* 50 - HDI */
+          /* 55 - LIBERTY */
+          /* 58 - PORTO SEGURO */
+          /* 66 - PREVISUL */        
+          ELSIF rw_gnconve.cdconven IN(48,50,55,58,66) THEN  
+            -- Enviar linha ao arquivo 
+            vr_dslinreg := 'F'
+                        ||to_char(rw_crapatr.cdrefere,'fm00000000000000000000')
+                        ||RPAD(' ',5,' ')
+                        ||to_char(vr_nragenci,'fm0000')
+                        ||RPAD(vr_nrdconta,14,' ')
+                        ||vr_dtmvtolt
+                        ||to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
+                        ||'00'
+                        ||rpad(rw_craplau.cdseqtel,60,' ')
+                        ||TO_CHAR(vr_dtmvtopr,'rrrrmmdd')
+                        ||RPAD(' ',12,' ')||'0';
+          /* 47 - UNIMED CREDCREA */
+          /* 57 - RBS */
+          ELSIF rw_gnconve.cdconven IN(47,57) THEN     
+            -- Enviar linha ao arquivo 
+            vr_dslinreg :='F'
+                        ||to_char(rw_crapatr.cdrefere,'fm00000000000000000')
+                        ||RPAD(' ',8,' ')
+                        ||to_char(vr_nragenci,'fm0000')
+                        ||RPAD(vr_nrdconta,14,' ')
+                        ||vr_dtmvtolt
+                        ||to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
+                        ||'00'
+                        ||rpad(rw_craplau.cdseqtel,60,' ')
+                        ||TO_CHAR(vr_dtmvtopr,'rrrrmmdd')
+                        ||RPAD(' ',12,' ')||'0';
+          /* 22 - UNIMED */
+          /* 32 - UNIODONTO */
+          /* 38 - UNIM.PLAN.NORTE */ 
+          /* 46 - UNIODONTO FEDERACAO */
+          /* 64 - AZUL SEGUROS */   
+          ELSIF rw_gnconve.cdconven IN(22,32,38,46,64) THEN   
+            -- Enviar linha ao arquivo 
+            vr_dslinreg :='F'
+                        ||to_char(rw_crapatr.cdrefere,'fm0000000000000000000000000')
+                        ||to_char(vr_nragenci,'fm0000')
+                        ||RPAD(vr_nrdconta,14,' ')
+                        ||vr_dtmvtolt
+                        ||to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
+                        ||'00'
+                        ||rpad(rw_craplau.cdseqtel,60,' ')
+                        ||TO_CHAR(vr_dtmvtopr,'rrrrmmdd')
+                        ||RPAD(' ',12,' ')||'0';
+          /* 15 - VIVO */
+          ELSIF rw_gnconve.cdconven = 15 THEN 
+            -- Enviar linha ao arquivo 
+            vr_dslinreg :='F'
+                        ||to_char(rw_crapatr.cdrefere,'fm00000000000')
+                        ||LPAD(' ',14,' ')
+                        ||to_char(vr_nragenci,'fm0000')
+                        ||RPAD(vr_nrdconta,14,' ')
+                        ||TO_CHAR(rw_craplau.dtmvtopg,'rrrrmmdd')
+                        ||to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
+                        ||'00'
+                        ||rpad(rw_craplau.cdseqtel,60,' ')
+                        ||RPAD(' ',20,' ')||'0';
+          /* 9 - SAMAE Jaragua*/
+          /*19 - SAMAE Gaspar */
+          /*20 - SAMAE Blumenau CECRED*/
+          /*16 - SAMAE Timbo CECRED*/
+          /*49 - SAMAE Rio Negrinho*/
+          ELSIF rw_gnconve.cdconven IN(9,19,20,16,49) THEN  
+            -- Enviar linha ao arquivo 
+            vr_dslinreg := 'F'
+                        ||to_char(rw_crapatr.cdrefere,'fm000000')
+                        ||LPAD(' ',19,' ')
+                        ||to_char(vr_nragenci,'fm0000')
+                        ||RPAD(vr_nrdconta,14,' ')
+                        ||TO_CHAR(rw_craplau.dtmvtopg,'rrrrmmdd')
+                        ||to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
+                        ||'00'
+                        ||rpad(rw_craplau.cdseqtel,60,' ')
+                        ||RPAD(' ',20,' ')||'0';
+          /*  1 - BRASIL TELECOM/SC */
+          /* 25 - SAMAE BRUSQUE */
+          /* 26 - SAMAE POMERODE */
+          /* 33 - AGUAS DE JOINVILLE */
+          /* 39 - SEGURO AUTO */
+          /* 41 - SAMAE SAO BENTO */
+          /* 43 - SERVMED */
+          /* 62 - AGUAS DE ITAPOCOROY */ 
+          ELSIF rw_gnconve.cdconven IN(1,25,26,33,39,41,43,62) THEN 
+            -- Enviar linha ao arquivo 
+            vr_dslinreg := 'F'
+                        ||to_char(rw_crapatr.cdrefere,'fm0000000000')
+                        ||LPAD(' ',15,' ')
+                        ||to_char(vr_nragenci,'fm0000')
+                        ||RPAD(vr_nrdconta,14,' ')
+                        ||vr_dtmvtolt
+                        ||to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
+                        ||'00'
+                        ||rpad(rw_craplau.cdseqtel,60,' ')
+                        ||TO_CHAR(vr_dtmvtopr,'rrrrmmdd')
+                        ||RPAD(' ',12,' ')||'0';        
+          /* 74 e 75 - MAPFRE VERA CRUZ SEG */ 
+          ELSIF rw_gnconve.cdconven IN(74,75) THEN
+            -- Enviar linha ao arquivo 
+            vr_dslinreg := 'F'
+                        ||rw_crapatr.cdrefere
+                        ||LPAD(' ',25-length(rw_craplau.nrdocmto),' ')
+                        ||to_char(vr_nragenci,'fm0000')
+                        ||RPAD(vr_nrdconta,14,' ')
+                        ||vr_dtmvtolt
+                        ||to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
+                        ||'00'
+                        ||rpad(rw_craplau.cdseqtel,60,' ')
+                        ||RPAD(' ',20,' ')||'0';
+          ELSE
+            -- Todos outros casos 
+            -- Enviar linha ao arquivo 
+            vr_dslinreg := 'F'
+                        ||to_char(rw_crapatr.cdrefere,'fm0000000000000000000000')
+                        ||LPAD(' ',3,' ')
+                        ||to_char(vr_nragenci,'fm0000')
+                        ||RPAD(vr_nrdconta,14,' ')
+                        ||vr_dtmvtolt
+                        ||to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
+                        ||'00'
+                        ||rpad(rw_craplau.cdseqtel,60,' ')
+                        ||TO_CHAR(vr_dtmvtopr,'rrrrmmdd')
+                        ||RPAD(' ',12,' ')||'0';              
+          END IF;
+          
         END IF;
         
         -- Enviar para o arquivo 
@@ -1369,19 +1579,49 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
           vr_flgfirst := FALSE;
         END IF;
         
-        /* Convenio 19 */ 
-        IF rw_gnconve.cdconven = 19 THEN
-          -- Enviar linha ao arquivo 
-          vr_dslinreg := RPAD(SUBSTR(rw_crapndb.dstexarq,1,127),127+22,' ') ||'0';
-        -- Outros casos específicos 
-        ELSIF rw_gnconve.cdconven IN(4,15,16,45,50,9,74,75) THEN
-          -- Enviar linha ao arquivo 
-          vr_dslinreg := RPAD(rw_crapndb.dstexarq,150,' ');
-        ELSE
-          -- Todos outros casos 
-          vr_dslinreg := RPAD(SUBSTR(rw_crapndb.dstexarq,1,129),129,' ')
-                      ||to_char(vr_dtmvtopr,'rrrrmmdd')
-                      ||RPAD(' ',12,' ')||'0';              
+        --Se convênvio utiliza versão 5 do layout fefraban
+        IF rw_gnconve.nrlayout = 5 THEN
+
+				  IF rw_gnconve.cdconven = 19 THEN
+
+						vr_dslinreg := RPAD(SUBSTR(rw_crapndb.dstexarq,1,127),127,' ')
+									   || RPAD(' ',2,' ')
+									   || SUBSTR(rw_crapndb.dstexarq,130,1) 
+									   || SUBSTR(rw_crapndb.dstexarq,131,15)
+									   || RPAD(' ',4,' ') || '0';
+
+					ELSIF rw_gnconve.cdconven IN (4,15,16,45,50,9,74,75) THEN
+						
+            -- Enviar linha ao arquivo 
+            vr_dslinreg := RPAD(rw_crapndb.dstexarq,150,' ');
+            
+					ELSE
+            
+						/* Gravar o gncvuni */
+						vr_dslinreg := RPAD(SUBSTR(rw_crapndb.dstexarq,1,129),129,' ') 
+									   || SUBSTR(rw_crapndb.dstexarq,130,1) 
+									   || SUBSTR(rw_crapndb.dstexarq,131,15)
+									   || RPAD(' ',4,' ') || '0';
+                     
+			    END IF;
+          
+			  ELSE
+			         
+          /* Convenio 19 */ 
+          IF rw_gnconve.cdconven = 19 THEN
+            -- Enviar linha ao arquivo 
+            vr_dslinreg := RPAD(SUBSTR(rw_crapndb.dstexarq,1,127),127+22,' ') ||'0';
+          -- Outros casos específicos 
+          ELSIF rw_gnconve.cdconven IN(4,15,16,45,50,9,74,75) THEN
+            -- Enviar linha ao arquivo 
+            vr_dslinreg := RPAD(rw_crapndb.dstexarq,150,' ');
+          ELSE
+            -- Todos outros casos 
+            vr_dslinreg := RPAD(SUBSTR(rw_crapndb.dstexarq,1,129),129,' ')
+                        ||to_char(vr_dtmvtopr,'rrrrmmdd')
+                        ||RPAD(' ',12,' ')||'0';              
+          END IF;
+          
         END IF;
         
         -- Enviar para o arquivo 

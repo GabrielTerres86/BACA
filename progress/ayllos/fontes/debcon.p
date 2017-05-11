@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Lucas Ranghetti
-   Data    : Junho/2014                        Ultima atualizacao: 25/10/2016
+   Data    : Junho/2014                        Ultima atualizacao: 11/04/2017
 
    Dados referentes ao programa:
 
@@ -31,6 +31,11 @@
 
                25/10/2016 - SD509982 - Ajuste coluna Pendencia e Criticas
                             (Guilherme/SUPERO)
+
+			   11/04/2017 - Ajuste referente ao tratamento de arquivos de convenio 
+			                com o layout FEBRABAN 5
+							(Jonata - RKAM / M311).
+
 ............................................................................*/
 
 { sistema/generico/includes/var_internet.i }
@@ -56,7 +61,7 @@ DEF TEMP-TABLE w_convenios
     FIELD nrdocmto AS CHAR  FORMAT "x(20)"
     FIELD cdempres LIKE crapscn.cdempres
     FIELD nmempres AS CHAR FORMAT "x(21)"
-    FIELD nmpendem AS CHAR FORMAT "x(18)".
+    FIELD nmpendem AS CHAR FORMAT "x(23)".
 
 DEF QUERY q_convenios FOR w_convenios.
 
@@ -278,6 +283,8 @@ PROCEDURE consulta_convenios:
             ASSIGN w_convenios.nmpendem = "SALDO INSUFICIENTE".
           WHEN 964 THEN /*964 - Lancamento bloqueado.*/
             ASSIGN w_convenios.nmpendem = "LANCTO.BLOQUEADO".
+		   WHEN 1003 THEN /*1003 - Titular Exluido Conta.*/
+            ASSIGN w_convenios.nmpendem = "TITULAR EXCLUIDO CONTA".
         END CASE.
 
     END. 
