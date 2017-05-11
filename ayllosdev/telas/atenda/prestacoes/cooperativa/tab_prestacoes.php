@@ -1,10 +1,10 @@
-<? 
+<?php
 /*!
  * FONTE        : tab_prestacoes.php
  * CRIAÇÃO      : Jorge I. Hamaguchi
  * DATA CRIAÇÃO : 01/08/2011 
  * OBJETIVO     : Tabela que apresenta a consulta Prestacoes
- * --------------
+ * --------------------------------------------------------------------------------------------------
  * ALTERAÇÕES   : 05/06/2014 - Ajuste para armazenar o nome do avalista. (James)
  *
  *				  28/07/2014 - Ajustado campo  <th> "contato" para "contrato" (Daniel)	
@@ -19,19 +19,14 @@
  *				               (Kelvin - SD 233714)
  *
  *                27/05/2015 - Inclusao do botao "Portabilidade". (Jaison/Diego - SD: 290027)
- * --------------
+ *
+ *				  21/07/2016 - Removi o session_start desnecessario, removi a funcao utf8tohtml
+ *							   desnecessaria, corrigi o uso da variavel $opcoesTela. SD 479874 (Carlos R.)
+ * --------------------------------------------------------------------------------------------------
  */
  
-?>
-
-<?php
- 	session_start();
-	//require_once('../../includes/config.php');
-	//require_once('../../includes/funcoes.php');
-	//require_once('../../includes/controla_secao.php');	
-	//require_once('../../class/xmlfile.php');
 	isPostMethod();	
-	
+
 ?>
 
 <div id="tabPrestacao">
@@ -39,44 +34,43 @@
 		<table class="tituloRegistros">
 			<thead>
 				<tr>
-					<th><? echo utf8ToHtml('Lin'); 		  ?></th>
-					<th><? echo utf8ToHtml('Fin');        ?></th>
-					<th><? echo utf8ToHtml('Contrato');    ?></th>
-					<th><? echo utf8ToHtml('Produto');    ?></th>
-					<th><? echo utf8ToHtml('Data');  	  ?></th>
-					<th><? echo utf8ToHtml('Emprestado'); ?></th>
-					<th><? echo utf8ToHtml('Parc');  	  ?></th>
-					<th><? echo utf8ToHtml('Valor');  	  ?></th>
-					<th><? echo utf8ToHtml('Saldo');  	  ?></th>
+					<th><?php echo 'Lin'; 		 ?></th>
+					<th><?php echo 'Fin';        ?></th>
+					<th><?php echo 'Contrato';   ?></th>
+					<th><?php echo 'Produto';    ?></th>
+					<th><?php echo 'Data';  	 ?></th>
+					<th><?php echo 'Emprestado'; ?></th>
+					<th><?php echo 'Parc';  	 ?></th>
+					<th><?php echo 'Valor';  	 ?></th>
+					<th><?php echo 'Saldo';  	 ?></th>
 				</tr>
 			</thead>
 			<tbody>
-				<? foreach( $registros as $banco ) { $tipo = (getByTagName($banco->tags,'tpemprst') == "0") ? "Price TR" : "Price Pre-fixado"  ?>
+				<?php foreach( $registros as $banco ) { $tipo = (getByTagName($banco->tags,'tpemprst') == "0") ? "Price TR" : "Price Pre-fixado"  ?>
 				<tr>
-				    <td><? echo getByTagName($banco->tags,'cdlcremp') ?>
-						<input type="hidden" id="nrctremp" name="nrctremp" value="<? echo getByTagName($banco->tags,'nrctremp') ?>" />
-						<input type="hidden" id="inprejuz" name="inprejuz" value="<? echo getByTagName($banco->tags,'inprejuz') ?>" />
-						<input type="hidden" id="tplcremp" name="tplcremp" value="<? echo getByTagName($banco->tags,'tplcremp') ?>" />
-						<input type="hidden" id="nrdrecid" name="nrdrecid" value="<? echo getByTagName($banco->tags,'nrdrecid') ?>" />
-						<input type="hidden" id="qtpromis" name="qtpromis" value="<? echo getByTagName($banco->tags,'qtpromis') ?>" />
-						<input type="hidden" id="flgimppr" name="flgimppr" value="<? echo getByTagName($banco->tags,'flgimppr') ?>" />
-						<input type="hidden" id="flgimpnp" name="flgimpnp" value="<? echo getByTagName($banco->tags,'flgimpnp') ?>" />
-						<input type="hidden" id="tpemprst" name="tpemprst" value="<? echo getByTagName($banco->tags,'tpemprst') ?>" />
-						<input type="hidden" id="dsdavali" name="dsdavali" value="<? echo getByTagName($banco->tags,'dsdavali') ?>" />
-                        <input type="hidden" id="cdorigem" name="cdorigem" value="<? echo getByTagName($banco->tags,'cdorigem') ?>" />
-						<input type="hidden" id="liquidia" name="liquidia" value="<? echo getByTagName($banco->tags,'liquidia') ?>" />
-						<input type="hidden" id="vlemprst" name="vlemprst" value="<? echo number_format(str_replace(",",".",getByTagName($banco->tags,'vlemprst')),2,",",".");?>" />
-						<input type="hidden" id="portabil" name="portabil" value="<? echo getByTagName($banco->tags,'portabil') ?>" />						
+				    <td><?php echo getByTagName($banco->tags,'cdlcremp') ?>
+						<input type="hidden" id="nrctremp" name="nrctremp" value="<?php echo getByTagName($banco->tags,'nrctremp') ?>" />
+						<input type="hidden" id="inprejuz" name="inprejuz" value="<?php echo getByTagName($banco->tags,'inprejuz') ?>" />
+						<input type="hidden" id="tplcremp" name="tplcremp" value="<?php echo getByTagName($banco->tags,'tplcremp') ?>" />
+						<input type="hidden" id="nrdrecid" name="nrdrecid" value="<?php echo getByTagName($banco->tags,'nrdrecid') ?>" />
+						<input type="hidden" id="qtpromis" name="qtpromis" value="<?php echo getByTagName($banco->tags,'qtpromis') ?>" />
+						<input type="hidden" id="flgimppr" name="flgimppr" value="<?php echo getByTagName($banco->tags,'flgimppr') ?>" />
+						<input type="hidden" id="flgimpnp" name="flgimpnp" value="<?php echo getByTagName($banco->tags,'flgimpnp') ?>" />
+						<input type="hidden" id="tpemprst" name="tpemprst" value="<?php echo getByTagName($banco->tags,'tpemprst') ?>" />
+						<input type="hidden" id="dsdavali" name="dsdavali" value="<?php echo getByTagName($banco->tags,'dsdavali') ?>" />
+                        <input type="hidden" id="cdorigem" name="cdorigem" value="<?php echo getByTagName($banco->tags,'cdorigem') ?>" />
+						<input type="hidden" id="liquidia" name="liquidia" value="<?php echo getByTagName($banco->tags,'liquidia') ?>" />
+						<input type="hidden" id="vlemprst" name="vlemprst" value="<?php echo number_format(floatval(str_replace(",",".",getByTagName($banco->tags,'vlemprst'))),2,",",".");?>" />
+						<input type="hidden" id="portabil" name="portabil" value="<?php echo getByTagName($banco->tags,'portabil') ?>" />						
 					</td>
-					<td><? echo getByTagName($banco->tags,'cdfinemp') ?></td>
-					<td><? echo formataNumericos("z.zzz.zzz.zzz",getByTagName($banco->tags,'nrctremp'),"."); ?></td>
-					<td><? echo stringTabela($tipo,40,'maiuscula'); ?></td> 
-					<td><? echo getByTagName($banco->tags,'dtmvtolt') ?></td>
-					<td><? echo number_format(str_replace(",",".",getByTagName($banco->tags,'vlemprst')),2,",",".");?></td>
-					<td><? echo getByTagName($banco->tags,'qtpreemp') ?></td>
-					<td><? echo number_format(str_replace(",",".",getByTagName($banco->tags,'vlpreemp')),2,",",".");  ?></td>
-					<td><? echo number_format(str_replace(",",".",getByTagName($banco->tags,'vlsdeved')),2,",",".");  ?></td>
-					
+					<td><?php echo getByTagName($banco->tags,'cdfinemp') ?></td>
+					<td><?php echo formataNumericos("z.zzz.zzz.zzz",getByTagName($banco->tags,'nrctremp'),"."); ?></td>
+					<td><?php echo stringTabela($tipo,40,'maiuscula'); ?></td> 
+					<td><?php echo getByTagName($banco->tags,'dtmvtolt') ?></td>
+					<td><?php echo number_format(str_replace(",",".",getByTagName($banco->tags,'vlemprst')),2,",",".");?></td>
+					<td><?php echo getByTagName($banco->tags,'qtpreemp') ?></td>
+					<td><?php echo number_format(floatval(str_replace(",",".",getByTagName($banco->tags,'vlpreemp'))),2,",",".");  ?></td>
+					<td><?php echo number_format(floatval(str_replace(",",".",getByTagName($banco->tags,'vlsdeved'))),2,",",".");  ?></td>
 				</tr>				
 				<? } ?>
 			</tbody>
@@ -89,33 +83,31 @@
 	<table>	
 		<tr>
 			<td>
-				<?
-					
-					//
+				<?php
 					if (isset($qtregist) and $qtregist == 0) $nriniseq = 0;
 					
 					// Se a paginação não está na primeira, exibe botão voltar
 					if ($nriniseq > 1) { 
-						?> <a class='paginacaoAnt'><<< Anterior</a> <? 
+				?> <a class='paginacaoAnt'><<< Anterior</a> <?php
 					} else {
-						?> &nbsp; <?
+				?> &nbsp; <?php
 					}
 				?>
 			</td>
 			<td>
-				<? // jorge echo $nriniseq." | ".$nrregist." | ".$qtregist." ";
+				<?php 
 					if (isset($nriniseq)) { 
-						?> Exibindo <? echo $nriniseq; ?> at&eacute; <? if (($nriniseq + $nrregist) > $qtregist) { echo $qtregist; } else { echo ($nriniseq + $nrregist - 1); } ?> de <? echo $qtregist; ?><?
+						?> Exibindo <?php echo $nriniseq; ?> at&eacute; <?php if (($nriniseq + $nrregist) > $qtregist) { echo $qtregist; } else { echo ($nriniseq + $nrregist - 1); } ?> de <?php echo $qtregist; ?><?php
 					}
 				?>
 			</td>
 			<td>
-				<?
-					// Se a paginação não está na &uacute;ltima página, exibe botão proximo
+				<?php
+					// Se a paginação não está na ultima página, exibe botão proximo
 					if ($qtregist > ($nriniseq + $nrregist - 1)) {
-						?> <a class='paginacaoProx'>Pr&oacute;ximo >>></a> <?
+				?> <a class='paginacaoProx'>Pr&oacute;ximo >>></a> <?php
 					} else {
-						?> &nbsp; <?
+				?> &nbsp; <?php
 					}
 				?>			
 			</td>
@@ -136,10 +128,10 @@
 <script type="text/javascript">
 	
 	$('a.paginacaoAnt').unbind('click').bind('click', function() {
-		acessaOpcaoAba( qtOpcoesTela, 0, '<? echo $opcoesTela[0]; ?>', <? echo "'".($nriniseq - $nrregist)."'"; ?>, <? echo "'".$nrregist."'"; ?>);
+		acessaOpcaoAba( qtOpcoesTela, 0, '<?php echo ( isset($opcoesTela[0]) ) ? $opcoesTela[0] : ''; ?>', <? echo "'".($nriniseq - $nrregist)."'"; ?>, <? echo "'".$nrregist."'"; ?>);
 	});
 	$('a.paginacaoProx').unbind('click').bind('click', function() {
-		acessaOpcaoAba( qtOpcoesTela, 0, '<? echo $opcoesTela[0]; ?>', <? echo "'".($nriniseq + $nrregist)."'"; ?>, <? echo "'".$nrregist."'"; ?>);
+		acessaOpcaoAba( qtOpcoesTela, 0, '<?php echo ( isset($opcoesTela[0]) ) ? $opcoesTela[0] : ''; ?>', <? echo "'".($nriniseq + $nrregist)."'"; ?>, <? echo "'".$nrregist."'"; ?>);
 	});	
 	
 	$('#divPesquisaRodape','#divConteudoOpcao').formataRodapePesquisa();
