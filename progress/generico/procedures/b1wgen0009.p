@@ -2,7 +2,7 @@
 
    Programa: b1wgen0009.p
    Autor   : Guilherme
-   Data    : Marco/2009                     Última atualizacao: 07/06/2016
+   Data    : Marco/2009                     Última atualizacao: 25/10/2016
    
    Dados referentes ao programa:
 
@@ -237,6 +237,15 @@
                                              
            17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
                                              
+            20/06/2016 - Criacao dos parametros inconfi6, cdopcoan e cdopcolb na
+                         efetua_liber_anali_bordero. Inclusao de funcionamento
+                         de pedir senha do coordenador. (Jaison/James)
+
+	       25/10/2016 - Verificar CNAE restrito Melhoria 310 (Tiago/Thiago)
+
+
+          07/11/2016 - Ajuste na procedure imprime_cet para enviar novos parametros (Daniel)  
+
 ............................................................................. */
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -598,6 +607,7 @@ PROCEDURE busca_dados_limite_incluir:
     DEF VAR         aux_nrdmeses AS INTE            NO-UNDO.
     DEF VAR         aux_dsdidade AS CHAR            NO-UNDO.
     DEF VAR         aux_dsoperac AS CHAR            NO-UNDO.
+	DEF VAR      aux_flgrestrito AS INTE            NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-risco.
@@ -725,6 +735,34 @@ PROCEDURE busca_dados_limite_incluir:
 
        END.
     
+   /*Se tem cnae verificar se e um cnae restrito*/
+   IF  crapass.cdclcnae > 0 THEN
+	   DO:
+
+            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+            /* Busca a se o CNAE eh restrito */
+            RUN STORED-PROCEDURE pc_valida_cnae_restrito
+            aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.cdclcnae
+                                                ,0).
+
+            CLOSE STORED-PROC pc_valida_cnae_restrito
+            aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+            ASSIGN aux_flgrestrito = INTE(pc_valida_cnae_restrito.pr_flgrestrito)
+                                        WHEN pc_valida_cnae_restrito.pr_flgrestrito <> ?.
+
+			IF  aux_flgrestrito = 1 THEN
+				DO:
+    					CREATE tt-msg-confirma.
+						ASSIGN tt-msg-confirma.inconfir = par_inconfir + 1
+								tt-msg-confirma.dsmensag = "CNAE restrito, conforme previsto na Política de Responsabilidade <br> Socioambiental do Sistema CECRED. Necessário apresentar Licença Regulatória.<br><br>Deseja continuar?".
+				END.
+
+		END.
+
     IF NOT VALID-HANDLE(h-b1wgen0110) THEN
        RUN sistema/generico/procedures/b1wgen0110.p
            PERSISTENT SET h-b1wgen0110.
@@ -6112,6 +6150,7 @@ PROCEDURE busca_dados_impressao_dscchq:
     DEFINE VARIABLE rel_nmoperad     AS CHARACTER    NO-UNDO.
     DEFINE VARIABLE rel_vlborchq     AS DECIMAL      NO-UNDO.
     DEFINE VARIABLE rel_qtborchq     AS INTEGER      NO-UNDO.
+    DEFINE VARIABLE rel_dsopecoo     AS CHARACTER    NO-UNDO.
     
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-emprsts.
@@ -7009,7 +7048,8 @@ PROCEDURE busca_dados_impressao_dscchq:
                rel_txmensal = tt-dscchq_dados_bordero.txmensal
                rel_ddmvtolt = DAY(par_dtmvtolt)
                rel_aamvtolt = YEAR(par_dtmvtolt)
-               rel_nmextcop = TRIM(crapcop.nmextcop).
+               rel_nmextcop = TRIM(crapcop.nmextcop)
+               rel_dsopecoo = tt-dscchq_dados_bordero.dsopecoo.
 
     END.
 
@@ -7426,6 +7466,7 @@ PROCEDURE busca_dados_impressao_dscchq:
                         INPUT rel_nmrescop[2],
                         INPUT TRIM(crapcop.nmcidade),
                         INPUT rel_nmoperad,
+                        INPUT rel_dsopecoo,
                         OUTPUT TABLE tt-dados_chqs_bordero,
                        OUTPUT TABLE tt-chqs_do_bordero,
                        OUTPUT TABLE tt-dscchq_bordero_restricoes).
@@ -7520,6 +7561,7 @@ PROCEDURE busca_dados_impressao_dscchq:
                         INPUT rel_nmrescop[2],
                         INPUT TRIM(crapcop.nmcidade),
                         INPUT rel_nmoperad,
+                        INPUT rel_dsopecoo,
                        OUTPUT TABLE tt-dados_chqs_bordero,
                        OUTPUT TABLE tt-chqs_do_bordero,
                        OUTPUT TABLE tt-dscchq_bordero_restricoes).
@@ -9212,6 +9254,7 @@ PROCEDURE busca_dados_bordero:
     DEFINE OUTPUT PARAMETER TABLE FOR tt-dscchq_dados_bordero.
     
     DEFINE VARIABLE aux_cdtipdoc AS INTEGER             NO-UNDO.
+    DEFINE VARIABLE aux_cdopecoo AS CHARACTER           NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-dscchq_dados_bordero.
@@ -9578,7 +9621,31 @@ PROCEDURE busca_dados_bordero:
                                               STRING(crapbdc.hrtransa,"HH:MM:SS")
            tt-dscchq_dados_bordero.dsdlinha = STRING(crapbdc.cddlinha,"999") + "-" + crapldc.dsdlinha
            tt-dscchq_dados_bordero.flgdigit = crapbdc.flgdigit
-           tt-dscchq_dados_bordero.cdtipdoc = aux_cdtipdoc.
+           tt-dscchq_dados_bordero.cdtipdoc = aux_cdtipdoc
+
+           tt-dscchq_dados_bordero.dsopecoo = ""
+           aux_cdopecoo = "".
+
+    /* Verifica se tem operador coordenador de liberacao ou analise */
+    IF crapbdc.cdopcolb <> " " THEN
+    DO:
+       ASSIGN aux_cdopecoo = crapbdc.cdopcolb.
+    END.
+    ELSE
+    DO:
+       IF crapbdc.cdopcoan <> " " THEN
+       DO:
+          ASSIGN aux_cdopecoo = crapbdc.cdopcoan.
+       END.
+    END.
+
+    IF aux_cdopecoo <> "" THEN
+    DO:
+       FIND crapope WHERE crapope.cdcooper = par_cdcooper  AND
+                          crapope.cdoperad = aux_cdopecoo  NO-LOCK NO-ERROR.
+       IF  AVAILABLE crapope  THEN
+           ASSIGN tt-dscchq_dados_bordero.dsopecoo = aux_cdopecoo + " - " + crapope.nmoperad.
+    END.
 
     IF  par_flgerlog  THEN
     DO:
@@ -9693,7 +9760,9 @@ PROCEDURE busca_cheques_bordero:
             ASSIGN tt-dscchq_bordero_restricoes.nrborder = crapcdb.nrborder
                    tt-dscchq_bordero_restricoes.nrcheque = crapcdb.nrcheque
                    tt-dscchq_bordero_restricoes.dsrestri = crapabc.dsrestri
-                   tt-dscchq_bordero_restricoes.tprestri = 1.
+                   tt-dscchq_bordero_restricoes.tprestri = 1
+                   tt-dscchq_bordero_restricoes.flaprcoo = crapabc.flaprcoo
+                   tt-dscchq_bordero_restricoes.dsdetres = crapabc.dsdetres.
             
         END.  /*  Fim do FOR EACH -- Leitura das restricoes  */
     
@@ -9712,7 +9781,9 @@ PROCEDURE busca_cheques_bordero:
         ASSIGN tt-dscchq_bordero_restricoes.nrborder = par_nrborder
                tt-dscchq_bordero_restricoes.nrcheque = 888888
                tt-dscchq_bordero_restricoes.dsrestri = crapabc.dsrestri
-               tt-dscchq_bordero_restricoes.tprestri = 2.
+               tt-dscchq_bordero_restricoes.tprestri = 2
+               tt-dscchq_bordero_restricoes.flaprcoo = crapabc.flaprcoo
+               tt-dscchq_bordero_restricoes.dsdetres = crapabc.dsdetres.
     
     END.  /*  Fim do FOR EACH -- Leitura das restricoes GERAIS  */
                
@@ -9957,6 +10028,8 @@ PROCEDURE efetua_liber_anali_bordero:
     DEFINE INPUT  PARAMETER par_cdagenci AS INTEGER         NO-UNDO.
     DEFINE INPUT  PARAMETER par_nrdcaixa AS INTEGER         NO-UNDO.
     DEFINE INPUT  PARAMETER par_cdoperad AS CHARACTER       NO-UNDO.
+    DEFINE INPUT  PARAMETER par_cdopcoan AS CHARACTER       NO-UNDO.
+    DEFINE INPUT  PARAMETER par_cdopcolb AS CHARACTER       NO-UNDO.
     DEFINE INPUT  PARAMETER par_nmdatela AS CHARACTER       NO-UNDO.
     DEFINE INPUT  PARAMETER par_idorigem AS INTEGER         NO-UNDO.
     DEFINE INPUT  PARAMETER par_nrdconta AS INTEGER         NO-UNDO.
@@ -9971,6 +10044,7 @@ PROCEDURE efetua_liber_anali_bordero:
     DEFINE INPUT  PARAMETER par_inconfi3 AS INTEGER         NO-UNDO.
     DEFINE INPUT  PARAMETER par_inconfi4 AS INTEGER         NO-UNDO.
     DEFINE INPUT  PARAMETER par_inconfi5 AS INTEGER         NO-UNDO.
+    DEFINE INPUT  PARAMETER par_inconfi6 AS INTEGER         NO-UNDO.
     DEFINE INPUT-OUTPUT  PARAMETER par_indrestr AS INTEGER  NO-UNDO.
     DEFINE INPUT-OUTPUT  PARAMETER par_indentra AS INTEGER  NO-UNDO.
     DEFINE INPUT  PARAMETER par_flgerlog AS LOGICAL         NO-UNDO.
@@ -10027,6 +10101,7 @@ PROCEDURE efetua_liber_anali_bordero:
     DEFINE VARIABLE aux_dsdrisco AS CHAR    NO-UNDO.
     DEFINE VARIABLE aux_dsoperac AS CHAR    NO-UNDO.
     DEFINE VARIABLE aux_flgimune AS LOGICAL NO-UNDO.
+    DEFINE VARIABLE aux_flpedsen AS LOGICAL INIT "N"                 NO-UNDO.
     
     DEF VAR aux_cdpactra LIKE crapope.cdpactra                       NO-UNDO.
 
@@ -10040,6 +10115,12 @@ PROCEDURE efetua_liber_anali_bordero:
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-risco.
     EMPTY TEMP-TABLE tt-msg-confirma.
+
+    DEFINE VARIABLE aux_qtdiaiof AS INTEGER NO-UNDO.
+    DEFINE VARIABLE aux_periofop AS DECIMAL NO-UNDO.
+    DEFINE VARIABLE aux_vliofcal AS DECIMAL NO-UNDO.
+    DEFINE VARIABLE aux_vltotiof AS DECIMAL NO-UNDO.
+    DEFINE VARIABLE aux_inpessoa AS INTEGER NO-UNDO.
     
     ASSIGN aux_dscritic = ""
            aux_cdcritic = 0.
@@ -10083,6 +10164,8 @@ PROCEDURE efetua_liber_anali_bordero:
               UNDO TRANS_LIBERA , LEAVE TRANS_LIBERA.
                
           END.
+
+       ASSIGN aux_inpessoa = crapass.inpessoa.
 
 
        DO aux_contador = 1 TO 10:
@@ -10362,11 +10445,13 @@ PROCEDURE efetua_liber_anali_bordero:
                           END.        
                 
                       ASSIGN crapabc.cdoperad = par_cdoperad
-                             crapabc.dsrestri = "Maximo por emitente excedido - QTD=" + STRING(aux_qttotemi,"zz9") + " VLR=" + 
-                                                STRING(aux_vltotemi,"zzzzz,zz9.99")
+                             crapabc.dsrestri = "Valor maximo permitido por emitente excedido."
+                             crapabc.dsdetres = "Qtde: " + STRING(aux_qttotemi,"zz9") + ". Valor: " + STRING(aux_vltotemi,"zzzzz,zz9.99")
                              crapabc.nrdconta = crabcdb.nrdconta
                              crapabc.nrcpfcgc = crabcdb.nrcpfcgc
+                             crapabc.flaprcoo = TRUE
                       
+                             aux_flpedsen     = TRUE
                              par_indrestr     = 1.
 
                       VALIDATE crapabc.
@@ -10456,13 +10541,14 @@ PROCEDURE efetua_liber_anali_bordero:
                          END.        
                 
                       ASSIGN crapabc.cdoperad = par_cdoperad
-                             crapabc.dsrestri = "Quantidade de cheques "   + 
-                                                "devolvidos  do emitente " + 
-                                                "excedido"
+                             crapabc.dsrestri = "Quantidade maxima de cheques devolvidos por emitente excedida"
+                             crapabc.dsdetres = STRING(aux_qtdevchq)
                              crapabc.nrcheque = crabcdb.nrcheque
                              crapabc.nrdconta = crabcdb.nrdconta
                              crapabc.nrcpfcgc = crabcdb.nrcpfcgc
+                             crapabc.flaprcoo = TRUE
                       
+                             aux_flpedsen     = TRUE
                              par_indrestr     = 1.
 
                       VALIDATE crapabc.
@@ -11395,9 +11481,6 @@ PROCEDURE efetua_liber_anali_bordero:
 
              END.
        
-       IF par_cddopcao = "N"    THEN
-          crapbdc.insitbdc = 2. /*  Analisado  */
-              
        IF par_cddopcao <> "N"  THEN
           DO:
              IF par_indrestr = 1  AND
@@ -11428,6 +11511,23 @@ PROCEDURE efetua_liber_anali_bordero:
 
                 END.
 
+          END.
+
+       IF aux_flpedsen THEN
+          DO:
+              IF par_inconfi6 = 51 THEN
+                 DO:
+                      CREATE tt-msg-confirma.
+                      ASSIGN tt-msg-confirma.inconfir = par_inconfi6 + 1.
+                      RETURN "OK".
+                 END.
+                 
+          END.
+
+       IF par_cddopcao = "N" THEN
+          DO:
+              crapbdc.insitbdc = 2. /*  Analisado  */
+              crapbdc.cdopcoan = par_cdopcoan. /* Operador Coordenador analise */
           END.  
 
        IF par_cddopcao = "L"  THEN
@@ -11484,7 +11584,8 @@ PROCEDURE efetua_liber_anali_bordero:
        ASSIGN aux_txdiaria = ROUND((EXP(1 + (crapbdc.txmensal / 100), 1 / 30) - 1),7)
               aux_vlborder = 0
               aux_contamsg = 0
-              aux_contareg = 0.
+              aux_contareg = 0
+              aux_vltotiof = 0.
 
        FOR EACH crabcdb WHERE crabcdb.cdcooper = par_cdcooper       AND
                               crabcdb.nrborder = crapbdc.nrborder   AND
@@ -11627,9 +11728,31 @@ PROCEDURE efetua_liber_anali_bordero:
                   crapcdb.insitchq = IF par_cddopcao = "N"   
                                         THEN crapcdb.insitchq
                                         ELSE 2 /*  Processado  */
-                  
                   aux_vlborder     = aux_vlborder + crapcdb.vlliquid.
-                           
+                  
+           /* Daniel */
+           IF par_cddopcao = "L" THEN 
+           DO:
+             ASSIGN aux_qtdiaiof = crapcdb.dtlibera - par_dtmvtolt.
+
+             IF aux_qtdiaiof > 365 THEN
+               aux_qtdiaiof = 365.
+             
+             IF aux_inpessoa = 1 THEN
+               /* IOF Operacacao PF */
+               aux_periofop = aux_qtdiaiof * 0.0082.
+             ELSE
+               /* IOF Operacacao PJ */
+               aux_periofop = aux_qtdiaiof * 0.0041.
+
+             /* Calculo IOF */
+             ASSIGN aux_vliofcal = (crapcdb.vlliquid * aux_periofop) / 100.
+
+             /* Acumula Total IOF */
+             ASSIGN aux_vltotiof = aux_vltotiof + aux_vliofcal.
+
+           END.
+
        END.  /*  Fim do FOR EACH crapcdb  */
 
 
@@ -11694,7 +11817,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                                  INPUT ROUND(aux_vlborder *
                                                        tt-iof.txccdiof,2),
                                                 OUTPUT aux_flgimune,
-                                                OUTPUT TABLE tt-erro).
+                                                OUTPUT TABLE tt-erro).  
                                                 
                     DELETE PROCEDURE h-b1wgen0159.
 
@@ -11761,7 +11884,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                  craplcm.cdhistor = 324
                                  craplcm.nrseqdig = craplot.nrseqdig + 1
                                  craplcm.cdpesqbb = STRING(aux_vlborder,"999,999,999.99")
-                                 craplcm.vllanmto = ROUND(aux_vlborder * tt-iof.txccdiof,2)
+                                 craplcm.vllanmto = ROUND( ( ROUND(aux_vlborder * tt-iof.txccdiof,2) + aux_vltotiof ),2) 
                                  craplcm.cdcooper = par_cdcooper
                                  craplot.vlinfodb = craplot.vlinfodb + craplcm.vllanmto
                                  craplot.vlcompdb = craplot.vlcompdb + craplcm.vllanmto
@@ -11827,7 +11950,8 @@ PROCEDURE efetua_liber_anali_bordero:
                    crapbdc.dtinsori = TODAY
                    /* FIM - dados para o BI em caso de cancelamento - MACIEL (RKAM) */
                     crapbdc.dtlibbdc = par_dtmvtolt
-                    crapbdc.cdopelib = par_cdoperad.  
+                    crapbdc.cdopelib = par_cdoperad
+                    crapbdc.cdopcolb = par_cdopcolb. /* Operador Coordenador liberacao */
             
              FOR EACH tt-ljd_dscchq:
                      
@@ -12043,6 +12167,7 @@ PROCEDURE carrega_dados_bordero_cheques:
     DEF INPUT PARAM par_nmresco2 AS CHAR NO-UNDO.
     DEF INPUT PARAM par_nmcidade AS CHAR NO-UNDO.
     DEF INPUT PARAM par_nmoperad AS CHAR NO-UNDO.
+    DEF INPUT PARAM par_dsopecoo AS CHAR NO-UNDO.
 
     DEF OUTPUT PARAM TABLE FOR tt-dados_chqs_bordero.
     DEF OUTPUT PARAM TABLE FOR tt-chqs_do_bordero.
@@ -12075,7 +12200,8 @@ PROCEDURE carrega_dados_bordero_cheques:
            tt-dados_chqs_bordero.nmresco1 = par_nmresco1
            tt-dados_chqs_bordero.nmresco2 = par_nmresco2
            tt-dados_chqs_bordero.nmcidade = par_nmcidade
-           tt-dados_chqs_bordero.nmoperad = par_nmoperad.
+           tt-dados_chqs_bordero.nmoperad = par_nmoperad
+           tt-dados_chqs_bordero.dsopecoo = par_dsopecoo.
     
     RETURN "OK".    
 
@@ -12363,6 +12489,8 @@ PROCEDURE imprime_cet:
                           INPUT p-qtdiavig, /* Dias de vigencia */                                     
                           INPUT p-vlemprst, /* Valor emprestado */
                           INPUT p-txmensal, /* Taxa mensal/crapldc.txmensal */
+                          INPUT 0,          /* 0 - false pr_flretxml*/
+                         OUTPUT "",
                          OUTPUT "", 
                          OUTPUT 0,
                          OUTPUT "").
@@ -12908,6 +13036,38 @@ PROCEDURE altera-numero-proposta-limite:
                                          INPUT par_nrctrlim).
         END.
         
+    RETURN "OK".
+
+END PROCEDURE.
+
+/*****************************************************************************
+    Buscar cheques com suas restricoes liberada/analisada pelo coordenador
+*****************************************************************************/
+PROCEDURE busca_restricoes_coordenador:
+
+    DEFINE INPUT  PARAMETER par_cdcooper AS INTEGER     NO-UNDO.
+    DEFINE INPUT  PARAMETER par_nrborder AS INTEGER     NO-UNDO.
+    DEFINE INPUT  PARAMETER par_nrdconta AS INTEGER     NO-UNDO.
+
+    DEFINE OUTPUT PARAMETER TABLE FOR tt-dscchq_bordero_restricoes.
+
+    EMPTY TEMP-TABLE tt-dscchq_bordero_restricoes.
+
+    ASSIGN aux_cdcritic = 0
+           aux_dscritic = "".
+
+    FOR EACH crapabc WHERE crapabc.cdcooper = par_cdcooper  AND
+                           crapabc.nrborder = par_nrborder  AND
+                           crapabc.nrdconta = par_nrdconta  AND
+                           crapabc.flaprcoo = TRUE          NO-LOCK:
+
+        CREATE tt-dscchq_bordero_restricoes.
+        ASSIGN tt-dscchq_bordero_restricoes.nrcheque = crapabc.nrcheque
+               tt-dscchq_bordero_restricoes.dsrestri = crapabc.dsrestri
+               tt-dscchq_bordero_restricoes.dsdetres = crapabc.dsdetres.
+
+    END.
+
     RETURN "OK".
 
 END PROCEDURE.

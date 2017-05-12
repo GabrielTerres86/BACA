@@ -2,7 +2,7 @@
 
    Programa: b1wgen0019.p
    Autor   : Murilo/David
-   Data    : 21/06/2007                        Ultima atualizacao: 07/06/2016
+   Data    : 21/06/2007                        Ultima atualizacao: 07/02/2017
 
    Objetivo  : BO LIMITE DE CRÉDITO
 
@@ -272,6 +272,21 @@
                             nao conta como uma pagina nova (Douglas - Chamado 405904)
                             
                 17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
+
+                02/08/2016 - #480602 Melhoria de tratamentos de erros para <> "OK" no lugar de 
+                             = "NOK". Inclusao de VALIDATE na crapass. (Carlos)
+			  
+ 			    14/09/2016 - Ajuste para aceitar mais uma casa decimal nos juros anual do CET
+				 			(Andrey Formigari - RKAM)
+			  
+                15/09/2016 - Inclusao dos parametros default na rotina oracle
+				             pc_imprime_limites_cet PRJ314 (Odirlei-AMcom)
+
+		        25/10/2016 - Validacao de CNAE restrito Melhoria 310 (Tiago/Thiago)
+
+				07/02/2017 - Alterardo a forma de pegar o cdagenci na hora de 
+				             confirmar o limite de credito na procedure
+							 confirmar-novo-limite (Tiago/Ademir SD590361).
 ..............................................................................*/
 
 
@@ -793,6 +808,8 @@ PROCEDURE confirmar-novo-limite:
     DEF VAR old_cddlinha AS INTE                                    NO-UNDO.
     DEF VAR aux_dsoperac AS CHAR                                    NO-UNDO.
 
+	DEF VAR aux_cdagenci LIKE crapass.cdagenci						NO-UNDO.
+
     DEF VAR h-b1wgen9999 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0043 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0138 AS HANDLE                                  NO-UNDO.
@@ -953,7 +970,7 @@ PROCEDURE confirmar-novo-limite:
                                INPUT TRUE,
                               OUTPUT TABLE tt-erro).
 
-    IF  RETURN-VALUE = "NOK"  THEN
+    IF  RETURN-VALUE <> "OK"  THEN
         DO:
             IF  par_flgerlog  THEN
                 RUN proc_gerar_log (INPUT par_cdcooper,
@@ -1044,7 +1061,7 @@ PROCEDURE confirmar-novo-limite:
                                               OUTPUT aux_vlutiliz,
                                               OUTPUT TABLE tt-erro).
                                               
-            IF  RETURN-VALUE = "NOK"  THEN
+            IF  RETURN-VALUE <> "OK"  THEN
                 DO:
                     FIND FIRST tt-erro NO-LOCK NO-ERROR.
                     
@@ -1315,7 +1332,11 @@ PROCEDURE confirmar-novo-limite:
 
         IF  aux_dscritic <> ""  THEN
             UNDO TRANSACAO, LEAVE TRANSACAO.
-            
+         
+		FIND crapope WHERE crapope.cdcooper = par_cdcooper
+		               AND UPPER(crapope.cdoperad) = UPPER(par_cdoperad)
+					   NO-LOCK NO-ERROR.
+		
         /** Ativa proposta de limite **/
         DO aux_contador = 1 TO 10:
 
@@ -1356,13 +1377,19 @@ PROCEDURE confirmar-novo-limite:
           ASSIGN par_cdagenci = glb_cdagenci.
         /* Fim - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
 
+		ASSIGN aux_cdagenci = par_cdagenci.
+
+		IF AVAIL(crapope) THEN
+		   DO:
+		     aux_cdagenci = crapope.cdpactra.
+		   END.
 
         ASSIGN craplim.insitlim = 2
                craplim.dtinivig = par_dtmvtolt
                craplim.cdopelib = par_cdoperad
                /* Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
                craplim.cdopeori = par_cdoperad
-               craplim.cdageori = crapass.cdagenci
+               craplim.cdageori = aux_cdagenci
                craplim.dtinsori = TODAY
                /* Fim - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
                craplim.dtfimvig = craplim.dtinivig + craplim.qtdiavig.
@@ -1370,7 +1397,7 @@ PROCEDURE confirmar-novo-limite:
         FIND crapmcr WHERE crapmcr.cdcooper = par_cdcooper     AND
                            crapmcr.nrdconta = par_nrdconta     AND
                            crapmcr.dtmvtolt = par_dtmvtolt     AND
-                           crapmcr.cdagenci = crapass.cdagenci AND
+                           crapmcr.cdagenci = aux_cdagenci     AND
                            crapmcr.cdbccxlt = 0                AND
                            crapmcr.nrdolote = 0                AND
                            crapmcr.nrcontra = craplim.nrctrlim AND
@@ -1388,7 +1415,7 @@ PROCEDURE confirmar-novo-limite:
             DO:
                 CREATE crapmcr.
                 ASSIGN crapmcr.dtmvtolt = par_dtmvtolt
-                       crapmcr.cdagenci = crapass.cdagenci
+                       crapmcr.cdagenci = aux_cdagenci
                        crapmcr.cdbccxlt = 0
                        crapmcr.nrdolote = 0
                        crapmcr.nrdconta = par_nrdconta
@@ -1415,7 +1442,7 @@ PROCEDURE confirmar-novo-limite:
                                          INPUT craplim.inbaslim,
                                         OUTPUT TABLE tt-erro).
                                          
-        IF  RETURN-VALUE = "NOK"  THEN
+        IF  RETURN-VALUE <> "OK"  THEN
             UNDO TRANSACAO, LEAVE TRANSACAO.
 
         RUN sistema/generico/procedures/b1wgen0043.p 
@@ -1488,7 +1515,7 @@ PROCEDURE confirmar-novo-limite:
 
         DELETE PROCEDURE h-b1wgen0043.
 
-        IF  RETURN-VALUE = "NOK"  THEN
+        IF  RETURN-VALUE <> "OK"  THEN
             UNDO TRANSACAO, LEAVE TRANSACAO.
                 
         ASSIGN aux_flgtrans = TRUE. 
@@ -3430,6 +3457,7 @@ PROCEDURE cadastrar-novo-limite:
     DEF VAR aux_vlsldcap AS DECI                                    NO-UNDO.
     DEF VAR aux_flgtrans AS LOGI                                    NO-UNDO.
     DEF VAR aux_flmudfai AS CHAR                                    NO-UNDO.
+    DEF VAR aux_flgrestrito AS INTE                                 NO-UNDO.
     
     EMPTY TEMP-TABLE tt-erro.
     
@@ -3552,6 +3580,36 @@ PROCEDURE cadastrar-novo-limite:
                                        
         IF   crapass.inpessoa > 1   THEN
              DO:
+
+                /*Se tem cnae verificar se e um cnae restrito*/
+                IF  crapass.cdclcnae > 0 THEN
+                    DO:
+
+                      { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                      /* Busca a se o CNAE eh restrito */
+                      RUN STORED-PROCEDURE pc_valida_cnae_restrito
+                      aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.cdclcnae
+                                                          ,0).
+
+                      CLOSE STORED-PROC pc_valida_cnae_restrito
+                      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                      { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                      ASSIGN aux_flgrestrito = INTE(pc_valida_cnae_restrito.pr_flgrestrito)
+                                               WHEN pc_valida_cnae_restrito.pr_flgrestrito <> ?.
+
+                      IF  aux_flgrestrito = 1 THEN
+                          DO:
+                             CREATE tt-msg-confirma.
+                             ASSIGN aux_contador = aux_contador + 1				  
+                                    tt-msg-confirma.inconfir = aux_contador
+                                    tt-msg-confirma.dsmensag = "CNAE restrito, conforme previsto na Política de Responsabilidade Socioambiental do Sistema CECRED. Necessário apresentar Licença Regulatória.".
+                          END.
+
+                    END.
+
                  DO aux_contador = 1 TO 10:
 
                     FIND crapjfn WHERE crapjfn.cdcooper = par_cdcooper   AND
@@ -5546,7 +5604,8 @@ PROCEDURE gera-impressao-limite:
                                  OUTPUT aux_dscetan1, 
                                  OUTPUT aux_dscetan2).
                
-               ASSIGN aux_dscetan1 = STRING(tt-dados-ctr.txcetano,"zz9.99") + 
+			   /* Ajuste em (14/09/2016) Aceitar uma dígito a mais no CET */
+               ASSIGN aux_dscetan1 = STRING(tt-dados-ctr.txcetano,"zzz9.99") + 
                                      " % (" + LC(aux_dscetan1).
                
                IF   LENGTH(TRIM(aux_dscetan2)) = 0   THEN
@@ -6427,6 +6486,8 @@ PROCEDURE atualiza-registro-associado:
            crapass.dtultlcr = par_dtmvtolt
            crapass.cdtipcta = par_cdtipcta.
             
+    VALIDATE crapass.
+    
     RETURN "OK".
     
 END PROCEDURE.
@@ -8159,6 +8220,8 @@ PROCEDURE imprime_cet:
                           INPUT p-qtdiavig, /* Dias de vigencia */                                     
                           INPUT p-vlemprst, /* Valor emprestado */
                           INPUT p-txmensal, /* Taxa mensal/craplrt.txmensal */
+						  INPUT 0,          /* 0 - false pr_flretxml*/
+                         OUTPUT "", 
                          OUTPUT "", 
                          OUTPUT 0,
                          OUTPUT "").
@@ -8439,7 +8502,6 @@ PROCEDURE renovar_limite_credito_manual:
     
 END PROCEDURE.
 
-/*************************TIAGO*********************************************/
 /******************************************************************************/
 /**           Procedure para validar proposta de limite de credito           **/
 /******************************************************************************/
