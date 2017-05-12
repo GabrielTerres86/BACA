@@ -7,6 +7,7 @@
  *
  *  16/08/2016 - #456682  Adaptado para mostrar os cpfs/cnpjs bloqueados (Carlos)
  *  16/09/2016 - Melhoria nas mensagens, de "Código" para "Registro", para ficar genérico, conforme solicitado pelo Maicon (Carlos)
+ *  15/02/2016 - Inclusão do tipo  Telefone Celular. Melhoria nas mensagens. Projeto 321 - Recarga de Celular. (Lombardi)
  */
  $search  = array('.','-');
   
@@ -14,7 +15,7 @@
 	<table class="tituloRegistros" style="border: 1px solid #777; border-bottom: 0px;">
 		<thead>
 			<tr>
-                <th style="width: 60%"><?php echo ($tipo == '1')? 'C&oacute;digos':'CPF/CNPJ' ?></th>
+                <th style="width: 60%"><?php echo ($tipo == '1') ? 'C&oacute;digos': ($tipo == '4' ? 'Telefone Celular' : 'CPF/CNPJ') ?></th>
 				<th style="width: 20%">Data Inclus&atilde;o</th>
                 <th class="clsexcluir" style="width: 10%; <? echo $strdisabled;?>">A&ccedil;&atilde;o</th>
 				<th style="width: 2%; border: 0px;">&nbsp;</th>
@@ -51,7 +52,7 @@
 				$i++;
     ?>
 				<tr class="<? echo $cor; ?>">
-				<td style="width: 60%; text-align: center;"><? echo $dsfraude;?></td>
+				<td style="width: 60%; text-align: center;"><? if ($tipo == 4){ echo "(". mascara($dsfraude,"##) ##########"); } else { echo $dsfraude; } ?></td>
 				<td style="width: 20%; text-align: center;"><? echo $dtsolici;?></td>
 				<td class="clsexcluir" style="width: 10%; <? echo $strdisabled;?>;text-align: center; padding-left:5px;"><img title="Excluir registro de Fraude" style="cursor: pointer" src="../../imagens/geral/btn_excluir.gif" onclick="preencheCodExclusao('<? echo $dsfraude;?>')"/></td>
 				</tr>

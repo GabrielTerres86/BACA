@@ -8,6 +8,7 @@
  *   16/08/2016 - #456682 Adicionados os campos tipo e nrcpfcnpj nas rotinas de manutenção da tela (Carlos)
  *   22/08/2016 - #456682 Adicionados os campos nrcpf e nrcnpj nas rotinas de manutenção da tela (Carlos)
  *   16/09/2016 - Melhoria nas mensagens, de "Código" para "Registro", para ficar genérico, conforme solicitado pelo Maicon (Carlos)
+ *   15/02/2016 - Inclusão do tipo  Telefone Celular. Melhoria nas mensagens. Projeto 321 - Recarga de Celular. (Lombardi)
  */
 	session_start();
 	require_once('../../includes/config.php');
@@ -17,19 +18,8 @@
 	isPostMethod();
 	$stracao  = $_POST['cddopcao'];
 	$stropcao = $_POST['stropcao'];
-	$tipo     = $_POST['tipo'];      // 1-boleto; 2-ted pf; 3-ted pj
-
-	switch ($tipo) {
-		case 1:  $dsfraude = $_POST['nrdcodigo']; // Boleto
-		         break;
-		case 2:  $dsfraude = $_POST['nrcpf'];     // TED PF
-		         break;
-		case 3:  $dsfraude = $_POST['nrcnpj'];    // TED PJ 
-				 break;
-		default: $dsfraude = $_POST['nrdcodigo']; // Boleto
-		         $tipo = 1; 
-		         break;
-	}
+	$tipo     = $_POST['tipo'];      // 1-boleto; 2-ted pf; 3-ted pj; 4-telefone celular;
+	$dsfraude = $_POST['dsfraude'];
 
 	$strcodexc   = $_POST['nrdcodigoexc'];
 	$datinclusao = $_POST['nmdata'];
