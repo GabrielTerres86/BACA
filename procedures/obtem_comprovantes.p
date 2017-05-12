@@ -8,7 +8,10 @@ Data     : Agosto 2011
 
 Ultima alteração:   09/03/2012 - Adicionado os campos cdbcoctl e cdagectl
                                  na temp-table tt-comprovantes. (Fabricio)
-
+                                 
+                    03/03/2017 - Adicionado os campos nrtelefo, nmopetel,
+                                 dsnsuope na temp-table tt-comprovantes para
+                                 o projeto 321 - Recarga de celular. (Reinert)
 ............................................................................ */
 
 DEFINE TEMP-TABLE tt-comprovantes NO-UNDO
@@ -23,7 +26,10 @@ DEFINE TEMP-TABLE tt-comprovantes NO-UNDO
        FIELD dsprotoc AS CHAR
        FIELD cdbcoctl AS INTE  /* Banco 085 */
        FIELD cdagectl AS INTE  /* Agencia da cooperativa */
-       FIELD dsagectl AS CHAR.
+       FIELD dsagectl AS CHAR
+       FIELD nrtelefo AS CHAR  /* Nr telefone */
+       FIELD nmopetel AS CHAR  /* Nome operadora */
+       FIELD dsnsuope AS CHAR. /* NSU operadora */
 
 
 EMPTY TEMP-TABLE tt-comprovantes.
@@ -386,6 +392,12 @@ DO:
                 ELSE
                 IF   xField:NAME = "DSAGECTL"   THEN
                 ASSIGN tt-comprovantes.dsagectl = xText:NODE-VALUE.
+                IF   xField:NAME = "NMOPETEL"   THEN
+                ASSIGN tt-comprovantes.nmopetel = xText:NODE-VALUE.                
+                IF   xField:NAME = "NRTELEFO"   THEN
+                ASSIGN tt-comprovantes.nrtelefo = xText:NODE-VALUE.
+                IF   xField:NAME = "DSNSUOPE"   THEN
+                ASSIGN tt-comprovantes.dsnsuope = xText:NODE-VALUE.
 
            END.
 

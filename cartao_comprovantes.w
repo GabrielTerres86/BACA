@@ -1,7 +1,5 @@
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v10r12 GUI
 &ANALYZE-RESUME
-/* Connected Databases 
-*/
 &Scoped-define WINDOW-NAME w_cartao_agendamento_lista
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS w_cartao_agendamento_lista 
 /*------------------------------------------------------------------------
@@ -28,6 +26,9 @@
   20/08/2015 - Adicionado SAC e OUVIDORIA nos comprovantes
                e visualização de impressão
               (Lucas Lunelli - Melhoria 83 [SD 279180])
+
+  23/03/2017 - Adicionado recarga de celular nos comprovantes e 
+			   visualização de impressão. (PRJ321 - Reinert)
 
 ------------------------------------------------------------------------*/
 /*          This .W file was created with the Progress AppBuilder.      */
@@ -63,7 +64,10 @@ DEFINE TEMP-TABLE tt-comprovantes NO-UNDO
        FIELD dsprotoc AS CHAR
        FIELD cdbcoctl AS INTE
        FIELD cdagectl AS INTE
-       FIELD dsagectl AS CHAR.
+       FIELD dsagectl AS CHAR
+       FIELD nrtelefo AS CHAR  /* Nr telefone */
+       FIELD nmopetel AS CHAR  /* Nome operadora */
+       FIELD dsnsuope AS CHAR. /* NSU operadora */
 
 EMPTY TEMP-TABLE tt-comprovantes.
 
@@ -101,8 +105,8 @@ DEFINE VARIABLE aux_flgderro        AS LOGICAL                  NO-UNDO.
     ~{&OPEN-QUERY-b_comprovantes}
 
 /* Standard List Definitions                                            */
-&Scoped-Define ENABLED-OBJECTS Btn_E Btn_F IMAGE-37 IMAGE-40 IMAGE-38 ~
-IMAGE-39 RECT-149 b_comprovantes Btn_D Btn_H ed_lndigita 
+&Scoped-Define ENABLED-OBJECTS Btn_E IMAGE-37 IMAGE-40 IMAGE-38 IMAGE-39 ~
+RECT-149 b_comprovantes Btn_F Btn_D Btn_H ed_lndigita 
 &Scoped-Define DISPLAYED-OBJECTS ed_lndigita 
 
 /* Custom List Definitions                                              */
@@ -198,7 +202,7 @@ DEFINE BROWSE b_comprovantes
       tt-comprovantes.dtmvtolt  COLUMN-LABEL "Data"      FORMAT "99/99/99"
 tt-comprovantes.dscedent  COLUMN-LABEL "Descrição" FORMAT "x(28)"
 tt-comprovantes.vldocmto  COLUMN-LABEL "Valor"     FORMAT "zzz,zz9.99"  
-tt-comprovantes.dsinform  COLUMN-LABEL "Tipo"      FORMAT "x(15)"
+tt-comprovantes.dsinform  COLUMN-LABEL "Tipo"      FORMAT "x(20)"
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
     WITH NO-ROW-MARKERS SEPARATORS SIZE 134 BY 14.29
@@ -209,8 +213,8 @@ tt-comprovantes.dsinform  COLUMN-LABEL "Tipo"      FORMAT "x(15)"
 
 DEFINE FRAME f_comprovantes_lista
      Btn_E AT ROW 9.62 COL 142 WIDGET-ID 68
-     Btn_F AT ROW 14.67 COL 142 WIDGET-ID 220
      b_comprovantes AT ROW 6.29 COL 6 WIDGET-ID 200
+     Btn_F AT ROW 14.67 COL 142 WIDGET-ID 220
      Btn_D AT ROW 24.1 COL 6 WIDGET-ID 66
      Btn_H AT ROW 24.14 COL 94.4 WIDGET-ID 74
      ed_lndigita AT ROW 20.71 COL 3 COLON-ALIGNED NO-LABEL WIDGET-ID 216 NO-TAB-STOP 
@@ -412,6 +416,9 @@ DO:
                                IF   TRIM(tt-comprovantes.tpdpagto) BEGINS "Convenio" THEN
                                     RUN imprime_pagamento_convenio.         
                            END.
+                      ELSE
+                      IF   tt-comprovantes.dsinform = "Recarga de celular" THEN
+                           RUN imprime_recarga_celular.
                   END.
  
              APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.
@@ -675,8 +682,8 @@ PROCEDURE enable_UI :
   RUN control_load.
   DISPLAY ed_lndigita 
       WITH FRAME f_comprovantes_lista.
-  ENABLE Btn_E Btn_F IMAGE-37 IMAGE-40 IMAGE-38 IMAGE-39 RECT-149 
-         b_comprovantes Btn_D Btn_H ed_lndigita 
+  ENABLE Btn_E IMAGE-37 IMAGE-40 IMAGE-38 IMAGE-39 RECT-149 b_comprovantes 
+         Btn_F Btn_D Btn_H ed_lndigita 
       WITH FRAME f_comprovantes_lista.
   {&OPEN-BROWSERS-IN-QUERY-f_comprovantes_lista}
   VIEW w_cartao_agendamento_lista.
@@ -914,6 +921,92 @@ ASSIGN tmp_tximpres = tmp_tximpres +
                "                                                " +
                "                                                ".
                                                                                  
+/* se a impressora estiver habilitada e com papel */
+IF  xfs_impressora       AND
+    NOT xfs_impsempapel  THEN
+    RUN impressao_visualiza.w (INPUT "Comprovante...",
+                               INPUT  tmp_tximpres,
+                               INPUT 0, /*Comprovante*/
+                               INPUT "").
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE imprime_recarga_celular w_cartao_agendamento_lista 
+PROCEDURE imprime_recarga_celular :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+
+DEF VAR tmp_tximpres    AS CHAR                     NO-UNDO.
+DEF VAR aux_nmtitula    AS CHAR     EXTENT 2        NO-UNDO.
+DEFINE VARIABLE    aux_nrtelsac     AS CHARACTER                NO-UNDO.
+DEFINE VARIABLE    aux_nrtelouv     AS CHARACTER                NO-UNDO.
+
+
+/* Sao 48 caracteres */
+
+RUN procedures/obtem_informacoes_comprovante.p (OUTPUT aux_nrtelsac,
+                                                OUTPUT aux_nrtelouv,
+                                                OUTPUT aux_flgderro).
+
+/* centraliza o cabeçalho */
+                      /* Coop do Associado */
+ASSIGN tmp_tximpres = TRIM(glb_nmrescop) + " AUTOATENDIMENTO"
+       tmp_tximpres = FILL(" ",INT((48 - LENGTH(tmp_tximpres)) / 2)) + tmp_tximpres
+       tmp_tximpres = tmp_tximpres + FILL(" ",48 - length(tmp_tximpres))
+       tmp_tximpres = tmp_tximpres +
+                      "                                                "   +
+                      "EMISSAO: " + STRING(TODAY,"99/99/9999") + "      "  +
+                              "               " + STRING(TIME,'HH:MM:SS')  +
+                      "                                                "   +
+                      /* dados do TAA */             /* agencia na central, sem digito */
+                      "COOPERATIVA/PA/TERMINAL: " + STRING(glb_agctltfn,"9999") + "/" +
+                                                    STRING(glb_cdagetfn,"9999") + "/" +
+                                                    STRING(glb_nrterfin,"9999") +
+                                                             "         " +
+                      "                                                "
+       tmp_tximpres = tmp_tximpres +
+                      "        COMPROVANTE DE RECARGA DE CELULAR       "
+       tmp_tximpres = tmp_tximpres +
+                      "                                                " + 
+                      "CONTA: " + STRING(glb_nrdconta,"zzzz,zzz,9")      +
+                          " - " + STRING(glb_nmtitula[1],"x(28)") +
+                      "                                                " +
+                      "                  VALOR: " + STRING(tt-comprovantes.vldocmto, "zzz,zz9.99") +
+                      "             " +
+                      "              OPERADORA: " + STRING(tt-comprovantes.nmopetel, "x(23)") +
+                      "           DDD/TELEFONE: " + tt-comprovantes.nrtelefo +
+                      "         " + 
+                      "          NSU OPERADORA: " + STRING(tt-comprovantes.dsnsuope, "x(23)")
+       tmp_tximpres = tmp_tximpres +
+                      "                                                " + 
+                      "PROTOCOLO: " + STRING(tt-comprovantes.dsprotoc,"x(37)") + 
+
+                      "                                                " +
+                      " * A RESPONSABILIDADE DOS DADOS INFORMADOS E DO " +
+                      "   COOPERADO;                                   " +
+                      " * NAO HA ESTORNO APOS A REALIZACAO DA RECARGA; " +
+                      " * EM CASOS DE ERROS NA RECARGA, ENTRE EM       " +
+                      "   CONTATO COM A OPERADORA INFORMANDO O NSU.    " +
+                      "                                                " +
+                      "                                                " +
+                      "    SAC - Servico de Atendimento ao Cooperado   " +
+                      FILL(" ", 14) + STRING(aux_nrtelsac, "x(20)") + FILL(" ", 14) +
+                      "     Atendimento todos os dias das 6h as 22h    " +
+                      "                                                " +
+                      "                   OUVIDORIA                    " +
+                      FILL(" ", 14) + STRING(aux_nrtelouv, "x(20)") + FILL(" ", 14) +               
+                       "    Atendimento nos dias uteis das 8h as 17h    " +
+                       "                                                " +
+                       "            **  FIM DA IMPRESSAO  **            " +
+                       "                                                " +
+                       "                                                ".
+
 /* se a impressora estiver habilitada e com papel */
 IF  xfs_impressora       AND
     NOT xfs_impsempapel  THEN

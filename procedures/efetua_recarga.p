@@ -1,71 +1,42 @@
 /* ..............................................................................
 
-Procedure: obtem_agendamentos.p 
-Objetivo : Obter os agendamentos do associado
-Autor    : Henrique
-Data     : Abril 2011
+ Procedure: efetua_recarga.p
+ Objetivo : Efetuar recarga de celular
+ Autor    : Lucas Reinert
+ Data     : Fevereiro 2017
 
-
-Ultima alteração: 20/03/2017 - Adicionado campos para listar Recarga de celular.
-                               (PRJ321 - Reinert)
+Ultima alteração: 
 
 ............................................................................... */
 
-DEFINE TEMP-TABLE tt-dados-agendamento NO-UNDO
-       FIELD dtmvtolt AS DATE   /* Data do agendamento                   */
-       FIELD dtmvtopg AS DATE   /* Data de pagamento do agendamento      */
-       FIELD nrdocmto AS INTE   /* Descrição do agendamento              */
-       FIELD vllanaut AS DECI   /* Valor do agendamento                  */
-       FIELD cdtiptra AS INTE   /* Tipo de agendamento                   */
-       FIELD dstiptra AS CHAR   /* Tipo de agendamento                   */
-       FIELD dssitlau AS CHAR   /* 1-Pendente                            */
-       FIELD linhadig AS CHAR   /* Linha digitável do documento.         */
-       FIELD dsagenda AS CHAR   /* Cedente ou conta destino              */
-       FIELD dsageban AS CHAR   /* Cooperativa Destino                   */
-       FIELD nmoperadora AS CHAR /* Operadora (Recarga de celular)       */
-       FIELD dstelefo AS CHAR.   /* Telefone (Recarga de celular)          */
+DEFINE INPUT PARAMETER par_cdopetel  AS INTEGER                 NO-UNDO.
+DEFINE INPUT PARAMETER par_cdprodut  AS INTEGER                 NO-UNDO.
+DEFINE INPUT PARAMETER par_nrdddcel  AS INTEGER                 NO-UNDO.
+DEFINE INPUT PARAMETER par_nrcelula  AS DECIMAL                 NO-UNDO.
+DEFINE INPUT PARAMETER par_dtrecarga AS CHAR                    NO-UNDO.
+DEFINE INPUT PARAMETER par_vlrecarga AS DECIMAL                 NO-UNDO.
+DEFINE INPUT PARAMETER par_lsdatagd  AS CHAR                    NO-UNDO.
+DEFINE INPUT PARAMETER par_cddopcao  AS INTEGER                 NO-UNDO.
 
-EMPTY TEMP-TABLE tt-dados-agendamento.
+DEFINE OUTPUT PARAMETER par_flgderro    AS LOGICAL  INIT NO     NO-UNDO.
+DEFINE OUTPUT PARAMETER par_idastcjt    AS INTEGER              NO-UNDO.
+DEFINE OUTPUT PARAMETER par_dsprotoc    AS CHAR                 NO-UNDO.
+DEFINE OUTPUT PARAMETER par_dsnsuope    AS CHAR                 NO-UNDO.
 
-DEFINE OUTPUT PARAMETER par_flgderro AS LOGICAL.
-DEFINE OUTPUT PARAMETER TABLE FOR tt-dados-agendamento.
 
 { includes/var_taa.i }
-
 
 DEFINE         VARIABLE aux_dsdtoday    AS CHAR                     NO-UNDO.     
 DEFINE         VARIABLE aux_dsmvtolt    AS CHAR                     NO-UNDO.
 DEFINE         VARIABLE aux_hrtransa    AS INT                      NO-UNDO.
-  
+DEFINE         VARIABLE aux_nrsequni    AS INTEGER                  NO-UNDO.
 
-DEFINE         VARIABLE xml_req         AS CHAR                     NO-UNDO.
-DEFINE         VARIABLE xDoc            AS HANDLE                   NO-UNDO.  
-DEFINE         VARIABLE xRoot           AS HANDLE                   NO-UNDO. 
-DEFINE         VARIABLE xRoot2          AS HANDLE                   NO-UNDO. 
-DEFINE         VARIABLE xField          AS HANDLE                   NO-UNDO.
-DEFINE         VARIABLE xText           AS HANDLE                   NO-UNDO.
-
-RUN procedures/grava_log.p (INPUT "Obtendo agendamentos...").
-
-
-aux_hrtransa = TIME.
-
-
-
-/* processo que pode demorar bastante devido aos produtos que o
-   associado possui */
-RUN mensagem.w (INPUT NO,
-                INPUT "  AGUARDE...",
-                INPUT "",
-                INPUT "",
-                INPUT "Obtendo agendamentos...",
-                INPUT "",
-                INPUT "").
-
-/* para garantir a mensagem mesmo que a operacao seja rapida */
-PAUSE 1 NO-MESSAGE.
-
-
+DEFINE         VARIABLE xml_req         AS CHAR                 NO-UNDO.
+DEFINE         VARIABLE xDoc            AS HANDLE               NO-UNDO.  
+DEFINE         VARIABLE xRoot           AS HANDLE               NO-UNDO. 
+DEFINE         VARIABLE xRoot2          AS HANDLE               NO-UNDO. 
+DEFINE         VARIABLE xField          AS HANDLE               NO-UNDO.
+DEFINE         VARIABLE xText           AS HANDLE               NO-UNDO.
 
 
 /* grava no log local - FireBird */
@@ -74,10 +45,39 @@ DEFINE VARIABLE resultado               AS COM-HANDLE               NO-UNDO.
 DEFINE VARIABLE comando                 AS COM-HANDLE               NO-UNDO.
 
 
-/* Conexao com o Firebird 
-   1-Conexao ODBC criada em Ferramentas ADM do Windows
-   2-Usuario
-   3-Senha */
+RUN procedures/grava_log.p (INPUT "Efetuando recarga de celular...").
+
+aux_hrtransa = TIME.
+
+RUN procedures/obtem_nsu.p (OUTPUT aux_nrsequni,
+                            OUTPUT par_flgderro).
+
+IF  par_flgderro  THEN
+    RETURN "NOK".
+
+IF par_cddopcao = 1 THEN
+  DO:
+    RUN mensagem.w (INPUT NO,
+                    INPUT "   Aguarde...",
+                    INPUT "",
+                    INPUT "",
+                    INPUT "Efetuando recarga...",
+                    INPUT "",
+                    INPUT "").
+  END.                  
+ELSE
+  DO:
+    RUN mensagem.w (INPUT NO,
+                    INPUT "   Aguarde...",
+                    INPUT "",
+                    INPUT "",
+                    INPUT "Efetuando agendamento",
+                    INPUT "de recarga...",
+                    INPUT "").              
+  END.
+
+/* para garantir a mensagem mesmo que a operacao seja rapida */
+PAUSE 1 NO-MESSAGE.
 
 CREATE "ADODB.Connection" conexao.
 conexao:OPEN("data source=TAA;server=localhost", "taa", "taa", 0) NO-ERROR. 
@@ -101,11 +101,10 @@ IF  ERROR-STATUS:NUM-MESSAGES > 0  THEN
         RETURN "NOK".
     END.
 
+
 CREATE "ADODB.Command" comando.
 CREATE "ADODB.RecordSet" resultado.
 comando:ActiveConnection = conexao.
-
-
 
 
        /* 'MM/DD/YYYY' */
@@ -135,11 +134,11 @@ comando:CommandText = "INSERT INTO CRAPLTL ( " +
                               STRING(glb_cdcooper)  + ", " +
                               aux_dsmvtolt          + ", " +
                               STRING(glb_nrdconta)  + ", " +
-                              STRING(aux_hrtransa)  + ", " +
+                              STRING(aux_nrsequni)  + ", " +
                               STRING(aux_hrtransa)  + ", " +
                               aux_dsdtoday          + ", " +
                               STRING(aux_hrtransa)  + ", " +
-                              "15"                  + ", " +
+                              "73"                  + ", " + 
                               STRING(glb_nrcartao)  + ", " +
                               "0"                   + ", " +
                               "0)".
@@ -171,7 +170,7 @@ DO:
     CREATE X-NODEREF  xField.
     CREATE X-NODEREF  xText.
     
-    /* ---------- */
+     /* ---------- */
     xDoc:CREATE-NODE(xRoot,"TAA","ELEMENT").
     xDoc:APPEND-CHILD(xRoot).
 
@@ -204,7 +203,7 @@ DO:
     xRoot:APPEND-CHILD(xField).
     
     xDoc:CREATE-NODE(xText,"","TEXT").
-    xText:NODE-VALUE = "33".
+    xText:NODE-VALUE = "73".
     xField:APPEND-CHILD(xText).
 
     /* ---------- */
@@ -224,15 +223,85 @@ DO:
     xField:APPEND-CHILD(xText).
 
     /* ---------- */
-    xDoc:CREATE-NODE(xField,"DTMVTOLT","ELEMENT").
+    xDoc:CREATE-NODE(xField,"TPUSUCAR","ELEMENT").
     xRoot:APPEND-CHILD(xField).
     
     xDoc:CREATE-NODE(xText,"","TEXT").
-    xText:NODE-VALUE = STRING(glb_dtmvtolt).
+    xText:NODE-VALUE = STRING(glb_tpusucar).
     xField:APPEND-CHILD(xText).
     
+    /* ---------- */
+    xDoc:CREATE-NODE(xField,"CDOPERADORA","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+    
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(par_cdopetel).
+    xField:APPEND-CHILD(xText).
 
+    /* ---------- */
+    xDoc:CREATE-NODE(xField,"CDPRODUTO","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+    
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(par_cdprodut).
+    xField:APPEND-CHILD(xText).
 
+    /* ---------- */
+    xDoc:CREATE-NODE(xField,"NRDDDTEL","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+    
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(par_nrdddcel).
+    xField:APPEND-CHILD(xText).
+
+    /* ---------- */
+    xDoc:CREATE-NODE(xField,"NRCELULAR","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+    
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(par_nrcelula).
+    xField:APPEND-CHILD(xText).
+         
+    /* ---------- */
+    xDoc:CREATE-NODE(xField,"DTRECARGA","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+    
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(par_dtrecarga).
+    xField:APPEND-CHILD(xText).
+         
+    /* ---------- */
+    xDoc:CREATE-NODE(xField,"VLRECARGA","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+    
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(par_vlrecarga).
+    xField:APPEND-CHILD(xText).    
+    
+    /* ---------- */
+    xDoc:CREATE-NODE(xField,"LSDATAGD","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+    
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(par_lsdatagd).
+    xField:APPEND-CHILD(xText).    
+    
+    /* ---------- */
+    xDoc:CREATE-NODE(xField,"CDDOPCAO","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+    
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(par_cddopcao).
+    xField:APPEND-CHILD(xText).    
+    
+    /* ---------- */
+    xDoc:CREATE-NODE(xField,"NRSEQUNI","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+    
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(aux_nrsequni).
+    xField:APPEND-CHILD(xText).
+    
     xDoc:SAVE("MEMPTR",ponteiro_xml).
     
     DELETE OBJECT xDoc.
@@ -254,8 +323,8 @@ END. /* Fim REQUISICAO */
 
 RESPOSTA:
 DO:
-    DEFINE VARIABLE  aux_qtagenda AS INTEGER     NO-UNDO.
-    DEFINE VARIABLE  aux_ifagenda AS INTEGER     NO-UNDO.
+    DEFINE VARIABLE aux_qtfavori  AS INTEGER                          NO-UNDO.
+    DEFINE VARIABLE aux_contador  AS INTEGER                          NO-UNDO.
     
     CREATE X-DOCUMENT xDoc.
     CREATE X-NODEREF  xRoot.
@@ -264,21 +333,20 @@ DO:
     CREATE X-NODEREF  xText.
 
     DO  WHILE TRUE:
-
+            
         xDoc:LOAD("FILE","http://" + glb_nmserver + ".cecred.coop.br/" +
                          "cgi-bin/cgiip.exe/WService=" + glb_nmservic + "/" + 
                          "TAA_autorizador.p?xml=" + xml_req,FALSE) NO-ERROR.
-
+                         
         /* limpa a mensagem de aguarde.. */
         h_mensagem:HIDDEN = YES.
-                           
+                         
         xDoc:GET-DOCUMENT-ELEMENT(xRoot) NO-ERROR.
     
-        IF  xDoc:NUM-CHILDREN = 0  OR
-            xRoot:NAME <> "TAA"    THEN
-            DO:
-                RUN procedures/grava_log.p (INPUT "Saldo/Limite - Sem comunicação com o servidor.").
-                
+        IF xDoc:NUM-CHILDREN = 0 OR xRoot:NAME <> "TAA" THEN
+           DO:
+                RUN procedures/grava_log.p (INPUT "Efetivacao de recarga - Sem comunicação com o servidor.").
+
                 RUN mensagem.w (INPUT YES,
                                 INPUT "      ERRO!",
                                 INPUT "",
@@ -292,19 +360,21 @@ DO:
     
                 par_flgderro = YES.
                 LEAVE.
-            END.
+           END.
     
-        DO  aux_qtagenda = 1 TO xRoot:NUM-CHILDREN:
+        DO  aux_contador = 1 TO xRoot:NUM-CHILDREN:
             
-            xRoot:GET-CHILD(xRoot2,aux_qtagenda).
+            xRoot:GET-CHILD(xField,aux_contador).
             
-            IF  xRoot2:SUBTYPE <> "ELEMENT"   THEN
+            IF  xField:SUBTYPE <> "ELEMENT"  THEN
                 NEXT.
     
-            IF  xRoot2:NAME = "DSCRITIC"  THEN
+            xField:GET-CHILD(xText,1).
+                        
+            IF  xField:NAME = "DSCRITIC"  THEN
                 DO:
-                    RUN procedures/grava_log.p (INPUT "Agendamentos - " + xText:NODE-VALUE).
-
+                    RUN procedures/grava_log.p (INPUT "Efetivacao de recarga - " + xText:NODE-VALUE).
+                    
                     RUN mensagem.w (INPUT YES,
                                     INPUT "      ERRO!",
                                     INPUT "",
@@ -317,59 +387,26 @@ DO:
                     h_mensagem:HIDDEN = YES.
 
                     par_flgderro = YES.
+                    
+                    LEAVE.
                 END.
-            
-            CREATE tt-dados-agendamento.
-            ASSIGN tt-dados-agendamento.dtmvtopg = DATE(xRoot2:GET-ATTRIBUTE("DTMVTOPG"))
-                   tt-dados-agendamento.nrdocmto = INT(xRoot2:GET-ATTRIBUTE("NRDOCMTO")).
-            
-            DO aux_ifagenda = 1 TO xRoot2:NUM-CHILDREN:
+            ELSE
+            IF  xField:NAME = "IDASTCJT"  THEN
+                ASSIGN par_idastcjt = INT(xText:NODE-VALUE)
+                       par_flgderro = NO.                           
+            ELSE
+            IF  xField:NAME = "PROTOCOLO"     THEN
+                ASSIGN par_dsprotoc = xText:NODE-VALUE
+                       par_flgderro = NO.                           
+            ELSE
+            IF  xField:NAME = "DSNSUOPE"     THEN
+                ASSIGN par_dsnsuope = xText:NODE-VALUE
+                       par_flgderro = NO.                                                  
 
-                 xRoot2:GET-CHILD(xField,aux_ifagenda).
-            
-                IF  xField:SUBTYPE <> "ELEMENT"  THEN
-                    NEXT.
-
-                xField:GET-CHILD(xText,1).
-
-                IF  xField:NAME = "DTMVTOLT"  THEN
-                    tt-dados-agendamento.dtmvtolt = DATE(xText:NODE-VALUE).
-                ELSE
-                IF  xField:NAME = "VLLANAUT"  THEN
-                    tt-dados-agendamento.vllanaut = DEC(xText:NODE-VALUE).
-                ELSE
-                IF  xField:NAME = "CDTIPTRA"  THEN
-                    tt-dados-agendamento.cdtiptra = INT(xText:NODE-VALUE).
-                ELSE
-                IF  xField:NAME = "DSTIPTRA"  THEN
-                    tt-dados-agendamento.dstiptra = xText:NODE-VALUE.
-                ELSE
-                IF  xField:NAME = "DSSITLAU"  THEN
-                    tt-dados-agendamento.dssitlau = xText:NODE-VALUE.
-                ELSE
-                IF  xField:NAME = "DSAGENDA"  THEN
-                    tt-dados-agendamento.dsagenda = xText:NODE-VALUE.
-                ELSE
-                IF  xField:NAME = "DSAGEBAN"  THEN
-                    tt-dados-agendamento.dsageban = xText:NODE-VALUE.
-                ELSE
-                IF  xField:NAME = "NMOPERADORA"  THEN
-                    tt-dados-agendamento.nmoperadora = xText:NODE-VALUE.                                                        
-                ELSE
-                IF  xField:NAME = "DSTELEFO"  THEN
-                    tt-dados-agendamento.dstelefo = xText:NODE-VALUE.                    
-                ELSE
-                IF  xField:NAME = "DSLINDIG"  THEN
-                    IF xText:NODE-VALUE <> "" THEN
-                        tt-dados-agendamento.linhadig = "Linha digitável: " +
-                                                        xText:NODE-VALUE.
-                
-                
-            END.
-            
         END. /* Fim DO..TO.. */
-
+        
         LEAVE.
+
     END. /* Fim WHILE */
         
     DELETE OBJECT xDoc.
@@ -377,12 +414,11 @@ DO:
     DELETE OBJECT xRoot2.
     DELETE OBJECT xField.
     DELETE OBJECT xText.
-
+    
 END. /* Fim RESPOSTA */
 
 IF  par_flgderro  THEN
     RETURN "NOK".
-
 
 
 /* atualiza o log local */
@@ -390,11 +426,11 @@ comando:CommandText = "UPDATE CRAPLTL SET CDSITATU = 1 " +
                             "WHERE CDCOOPER = " + STRING(glb_cdcooper)  + " AND " +
                                   "DTMVTOLT = " + aux_dsmvtolt          + " AND " +
                                   "NRDCONTA = " + STRING(glb_nrdconta)  + " AND " +
-                                  "NRSEQUNI = " + STRING(aux_hrtransa)  + " AND " +
+                                  "NRSEQUNI = " + STRING(aux_nrsequni)  + " AND " +
                                   "NRDOCMTO = " + STRING(aux_hrtransa)  + " AND " +
                                   "DTTRANSA = " + aux_dsdtoday          + " AND " +
                                   "HRTRANSA = " + STRING(aux_hrtransa)  + " AND " +
-                                  "TPDTRANS = 15 "                      + " AND " +
+                                  "TPDTRANS = 73 "                      + " AND " +
                                   "NRCARTAO = " + STRING(glb_nrcartao)  + " AND " +
                                   "VLLANMTO = 0 "                       + " AND " +
                                   "CDSITATU = 0".
@@ -419,7 +455,45 @@ IF  resultado = ?  THEN
 
 
 
-RUN procedures/grava_log.p (INPUT "Agendamentos obtidos com sucesso.").
+IF par_idastcjt = 0 THEN
+	DO:
+		IF CAN-DO("2,3", STRING(par_cddopcao)) THEN
+			DO:
+				RUN procedures/grava_log.p (INPUT "Agendamento de Recarga de celular efetuado com sucesso.").
+				RUN mensagem.w (INPUT NO,
+                        INPUT "    ATENÇÃO",
+                        INPUT "",
+                        INPUT "Agendamento de Recarga de",
+                        INPUT "celular efetuado com sucesso.",
+                        INPUT "",
+                        INPUT "").
+			END.
+		ELSE
+			DO: 
+				RUN procedures/grava_log.p (INPUT "Recarga de celular efetuada com sucesso.").
+				RUN mensagem.w (INPUT NO,
+                        INPUT "    ATENÇÃO",
+                        INPUT "",
+                        INPUT "Recarga de celular",
+                        INPUT "efetuada com sucesso.",
+                        INPUT "",
+                        INPUT "").
+			END.
+	END.
+ELSE
+	DO:
+		RUN procedures/grava_log.p (INPUT "Recarga de celular registrada com sucesso. Aguardando aprovaçao dos demais responsáveis..").
+		RUN mensagem.w (INPUT NO,
+                    INPUT "    ATENÇÃO",
+                    INPUT "",
+                    INPUT "Recarga de celular registrada",
+                    INPUT "com sucesso. Aguardando",
+                    INPUT "aprovaçao dos demais",
+                    INPUT "responsáveis."). 
+	END.
+
+PAUSE 3 NO-MESSAGE.
+h_mensagem:HIDDEN = YES.
 
 RETURN "OK".
 

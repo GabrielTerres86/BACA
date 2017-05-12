@@ -23,6 +23,8 @@
   Alteracoes: 29/08/2011 - Incluir descricao de listagem maxima de 100
                            registros (Gabriel)
 
+			  23/03/2017 - Tratado para listar agendamentos de recarga de 
+						   celular. (PRJ321 - Reinert)
 ------------------------------------------------------------------------*/
 /*          This .W file was created with the Progress AppBuilder.      */
 /*----------------------------------------------------------------------*/
@@ -52,7 +54,9 @@ DEFINE TEMP-TABLE tt-dados-agendamento NO-UNDO
        FIELD dssitlau AS CHAR   /* 1-Pendente                            */
        FIELD linhadig AS CHAR   /* Linha digitável do documento.         */
        FIELD dsagenda AS CHAR   /* Cedente ou conta destino              */
-       FIELD dsageban AS CHAR.  /* Cooperativa destino                   */
+       FIELD dsageban AS CHAR   /* Cooperativa destino                   */
+       FIELD nmoperadora AS CHAR /* Operadora (Recarga de celular)      */
+       FIELD dstelefo AS CHAR. /* Telefone (Recarga de celular)      */
 
 EMPTY TEMP-TABLE tt-dados-agendamento.
 
@@ -90,7 +94,7 @@ DEFINE VARIABLE aux_flgderro        AS LOGICAL                  NO-UNDO.
     ~{&OPEN-QUERY-b_agendamentos}
 
 /* Standard List Definitions                                            */
-&Scoped-Define ENABLED-OBJECTS Btn_E Btn_F IMAGE-37 IMAGE-40 IMAGE-38 ~
+&Scoped-Define ENABLED-OBJECTS Btn_E IMAGE-37 IMAGE-40 Btn_F IMAGE-38 ~
 IMAGE-39 RECT-149 b_agendamentos Btn_D Btn_H ed_linhadig 
 &Scoped-Define DISPLAYED-OBJECTS ed_linhadig 
 
@@ -391,6 +395,14 @@ DO:
                                                          INPUT tt-dados-agendamento.nrdocmto,
                                                          INPUT tt-dados-agendamento.dsagenda,
                                                          INPUT tt-dados-agendamento.vllanaut).
+    ELSE
+    IF tt-dados-agendamento.dstiptra = "Recarga de celular" THEN
+        RUN cartao_agendamento_exclusao_recarga.w (INPUT tt-dados-agendamento.nmoperadora,
+                                                   INPUT tt-dados-agendamento.dtmvtopg,
+                                                   INPUT tt-dados-agendamento.dtmvtolt,
+                                                   INPUT tt-dados-agendamento.nrdocmto,
+                                                   INPUT tt-dados-agendamento.dstelefo,
+                                                   INPUT tt-dados-agendamento.vllanaut).
     APPLY "ENTRY" TO Btn_H.
     
     IF  RETURN-VALUE = "OK" THEN
@@ -644,7 +656,7 @@ PROCEDURE enable_UI :
   RUN control_load.
   DISPLAY ed_linhadig 
       WITH FRAME f_cartao_agendamento_lista.
-  ENABLE Btn_E Btn_F IMAGE-37 IMAGE-40 IMAGE-38 IMAGE-39 RECT-149 
+  ENABLE Btn_E IMAGE-37 IMAGE-40 Btn_F IMAGE-38 IMAGE-39 RECT-149 
          b_agendamentos Btn_D Btn_H ed_linhadig 
       WITH FRAME f_cartao_agendamento_lista.
   {&OPEN-BROWSERS-IN-QUERY-f_cartao_agendamento_lista}

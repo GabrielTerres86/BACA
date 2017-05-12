@@ -25,6 +25,9 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
                                inicializa_dispositivo (Lunelli - SD 359409)
 
                   04/11/2016 - M172 - Atualizacao Telefone (Guilherme/SUPERO)
+
+				  23/03/2017 - Adicionada opcao de Recarga de Celular. 
+							  (PRJ321 - Reinert)
 ............................................................................... */
 
 /*----------------------------------------------------------------------*/
@@ -52,6 +55,13 @@ DEF TEMP-TABLE tt-dados-cpa NO-UNDO
 
 EMPTY TEMP-TABLE tt-dados-cpa.
 
+/* Usada para exibir os telefones favoritos para recarga */
+DEFINE TEMP-TABLE tt-favoritos-recarga NO-UNDO
+       FIELD nrddd     AS INTE  /* DDD */
+       FIELD nrcelular AS DECI  /* Nr. Celular */
+       FIELD nmcontato AS CHAR  /* Nome contato */
+       FIELD cdseqfav  AS DECI. /* Cód. sequencia favoritos */       
+
 DEFINE VARIABLE aux_flgderro        AS LOGICAL              NO-UNDO.
 DEFINE VARIABLE aux_flagsair        AS LOGICAL              NO-UNDO.
 DEFINE VARIABLE aux_flgblsaq        AS LOGICAL              NO-UNDO.
@@ -63,7 +73,8 @@ DEFINE VARIABLE aux_flgretur        AS CHAR    INIT "NOK"   NO-UNDO.
 /* Nr do Telefone retornado da Procedure de Validacao Telefone **/
 DEFINE VARIABLE aux_telefone        AS CHAR                 NO-UNDO.
 DEFINE VARIABLE aux_atualiza        AS LOGICAL              NO-UNDO.
-DEFINE VARIABLE aux_continua        AS LOGICAL              NO-UNDO.
+DEFINE VARIABLE aux_continua        AS LOGICAL              NO-UNDO.  
+DEFINE VARIABLE aux_flgsitrc        AS INTEGER              NO-UNDO.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
@@ -81,7 +92,7 @@ DEFINE VARIABLE aux_continua        AS LOGICAL              NO-UNDO.
 
 /* Standard List Definitions                                            */
 &Scoped-Define ENABLED-OBJECTS IMAGE-31 IMAGE-34 IMAGE-35 IMAGE-37 IMAGE-38 ~
-IMAGE-40 IMAGE-41 IMAGE-42 Btn_A Btn_E Btn_B Btn_C Btn_D Btn_H 
+IMAGE-40 IMAGE-41 IMAGE-42 IMAGE-44 Btn_A Btn_E Btn_B Btn_C Btn_D Btn_H 
 
 /* Custom List Definitions                                              */
 /* List-1,List-2,List-3,List-4,List-5,List-6                            */
@@ -131,6 +142,11 @@ DEFINE BUTTON Btn_F
      SIZE 61 BY 3.33
      FONT 14.
 
+DEFINE BUTTON Btn_G 
+     LABEL "RECARGA DE CELULAR" 
+     SIZE 61 BY 3.33
+     FONT 8.
+
 DEFINE BUTTON Btn_H 
      LABEL "CANCELAR" 
      SIZE 61 BY 3.33
@@ -168,6 +184,10 @@ DEFINE IMAGE IMAGE-42
      FILENAME "Imagens/seta_esq.gif":U TRANSPARENT
      SIZE 5 BY 3.05.
 
+DEFINE IMAGE IMAGE-44
+     FILENAME "Imagens/seta_dir.gif":U TRANSPARENT
+     SIZE 5 BY 3.05.
+
 DEFINE RECTANGLE RECT-100
      EDGE-PIXELS 2 GRAPHIC-EDGE    
      SIZE 123 BY .24
@@ -191,6 +211,7 @@ DEFINE FRAME f_cartao_opcoes
      Btn_E AT ROW 9.1 COL 94.4 WIDGET-ID 68
      Btn_B AT ROW 14.1 COL 6 WIDGET-ID 94
      Btn_F AT ROW 14.1 COL 94.4 WIDGET-ID 156
+     Btn_G AT ROW 19.1 COL 94.2 WIDGET-ID 160
      Btn_C AT ROW 19.14 COL 6 WIDGET-ID 164
      Btn_D AT ROW 24.1 COL 6 WIDGET-ID 66
      Btn_H AT ROW 24.1 COL 94.4 WIDGET-ID 74
@@ -205,6 +226,7 @@ DEFINE FRAME f_cartao_opcoes
      IMAGE-40 AT ROW 24.24 COL 156 WIDGET-ID 154
      IMAGE-41 AT ROW 14.24 COL 156 WIDGET-ID 158
      IMAGE-42 AT ROW 19.29 COL 1 WIDGET-ID 162
+     IMAGE-44 AT ROW 19.24 COL 156 WIDGET-ID 168
     WITH 1 DOWN NO-BOX KEEP-TAB-ORDER OVERLAY 
          SIDE-LABELS NO-UNDERLINE THREE-D 
          AT COL 1 ROW 1
@@ -265,6 +287,8 @@ ASSIGN w_cartao_opcoes = CURRENT-WINDOW.
 /* SETTINGS FOR FRAME f_cartao_opcoes
    FRAME-NAME                                                           */
 /* SETTINGS FOR BUTTON Btn_F IN FRAME f_cartao_opcoes
+   NO-ENABLE                                                            */
+/* SETTINGS FOR BUTTON Btn_G IN FRAME f_cartao_opcoes
    NO-ENABLE                                                            */
 /* SETTINGS FOR RECTANGLE RECT-100 IN FRAME f_cartao_opcoes
    NO-ENABLE                                                            */
@@ -526,8 +550,8 @@ DO:
     END.
     /** FIM - VERIFICACAO DA ATUALIZACAO DE TELEFONE **/
 
-
-
+    
+    
     /* para quem nao tem letras, pede cpf */
     IF  NOT glb_idsenlet  THEN
         RUN cartao_alterar_senha_cpf.w.
@@ -582,6 +606,47 @@ DO:
        DO:
            RETURN "OK".
        END.
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&Scoped-define SELF-NAME Btn_G
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_G w_cartao_opcoes
+ON ANY-KEY OF Btn_G IN FRAME f_cartao_opcoes /* RECARGA DE CELULAR */
+DO:
+    RUN tecla.
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_G w_cartao_opcoes
+ON CHOOSE OF Btn_G IN FRAME f_cartao_opcoes /* RECARGA DE CELULAR */
+DO:
+    RUN procedures/obtem_favoritos_recarga.p(OUTPUT aux_flgderro,
+                                             OUTPUT TABLE tt-favoritos-recarga).
+ 
+    IF  NOT aux_flgderro THEN
+        DO:
+            FIND FIRST tt-favoritos-recarga NO-LOCK NO-ERROR.
+        
+            IF  AVAIL tt-favoritos-recarga THEN
+                DO:
+                    RUN cartao_favoritos_recarga.w(INPUT TABLE tt-favoritos-recarga).
+                END.
+            ELSE
+                DO:
+                    RUN cartao_numero_recarga.w.
+END.
+
+            /*IF NOT aux_continua THEN
+               DO:
+                   RETURN "NOK".
+               END.*/
+        END.
 END.
 
 /* _UIB-CODE-BLOCK-END */
@@ -658,7 +723,9 @@ DO  ON ERROR   UNDO MAIN-BLOCK, LEAVE MAIN-BLOCK
     RUN enable_UI.
 
     ASSIGN Btn_F:VISIBLE    IN FRAME f_cartao_opcoes = FALSE
-           IMAGE-41:VISIBLE IN FRAME f_cartao_opcoes = FALSE.
+           IMAGE-41:VISIBLE IN FRAME f_cartao_opcoes = FALSE
+           Btn_G:VISIBLE    IN FRAME f_cartao_opcoes = FALSE
+           IMAGE-44:VISIBLE IN FRAME f_cartao_opcoes = FALSE.
     
     /* deixa o mouse transparente */
     FRAME f_cartao_opcoes:LOAD-MOUSE-POINTER("blank.cur").
@@ -700,7 +767,7 @@ DO  ON ERROR   UNDO MAIN-BLOCK, LEAVE MAIN-BLOCK
         /* Saque bloqueado */
         aux_flgblsaq                                         THEN
         DISABLE Btn_A WITH FRAME f_cartao_opcoes.
-
+    
     IF NOT glb_flmsgtaa THEN
     DO:
         /* verifica mensagem de alerta ( operacao de credito em atraso) */
@@ -724,6 +791,17 @@ DO  ON ERROR   UNDO MAIN-BLOCK, LEAVE MAIN-BLOCK
 
                   ENABLE Btn_F WITH FRAME f_cartao_opcoes.
               END.
+       END.
+
+    /* Verificar se o TAA tem situacao ativa */
+    RUN procedures/verifica_opcao_recarga.p(OUTPUT aux_flgsitrc,
+                                            OUTPUT aux_flgderro).
+
+    IF NOT aux_flgderro AND aux_flgsitrc = 1 THEN
+       DO:
+           ASSIGN Btn_G:VISIBLE     IN FRAME f_cartao_opcoes = TRUE  /* Botão */ 
+                  IMAGE-44:VISIBLE IN FRAME f_cartao_opcoes = TRUE. /* Imagem */ 
+           ENABLE Btn_G WITH FRAME f_cartao_opcoes.
        END.
 
     chtemporizador:t_cartao_opcoes:INTERVAL = glb_nrtempor.
@@ -854,7 +932,7 @@ PROCEDURE enable_UI :
 ------------------------------------------------------------------------------*/
   RUN control_load.
   ENABLE IMAGE-31 IMAGE-34 IMAGE-35 IMAGE-37 IMAGE-38 IMAGE-40 IMAGE-41 
-         IMAGE-42 Btn_A Btn_E Btn_B Btn_C Btn_D Btn_H 
+         IMAGE-42 IMAGE-44 Btn_A Btn_E Btn_B Btn_C Btn_D Btn_H 
       WITH FRAME f_cartao_opcoes.
   {&OPEN-BROWSERS-IN-QUERY-f_cartao_opcoes}
   VIEW w_cartao_opcoes.
@@ -900,6 +978,10 @@ ASSIGN chtemporizador:t_cartao_opcoes:INTERVAL = 0
     IF  KEY-FUNCTION(LASTKEY) = "F"               AND
         Btn_F:SENSITIVE IN FRAME f_cartao_opcoes  THEN
         APPLY "CHOOSE" TO Btn_F.
+    ELSE
+    IF  KEY-FUNCTION(LASTKEY) = "G"               AND
+        Btn_G:SENSITIVE IN FRAME f_cartao_opcoes  THEN
+        APPLY "CHOOSE" TO Btn_G.
     ELSE
     IF  KEY-FUNCTION(LASTKEY) = "H"               AND
         Btn_H:SENSITIVE IN FRAME f_cartao_opcoes  THEN
