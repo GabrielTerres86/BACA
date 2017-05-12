@@ -2286,7 +2286,8 @@ function dossieDigdoc(cdproduto){
 		data    :
 				{
 					nrdconta	: nrdconta,
-					cdproduto	: cdproduto, // Codigo do produto
+					cdproduto   : cdproduto, // Codigo do produto
+                    nmdatela    : 'CADEMP',
  					redirect	: 'script_ajax'
 				},
 		error   : function(objAjax,responseError,objExcept) {

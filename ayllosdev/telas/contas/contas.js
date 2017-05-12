@@ -637,7 +637,8 @@ function dossieDigdoc(cdproduto){
 		data    :
 				{
 					nrdconta	: nrdconta,
-					cdproduto	: cdproduto, // Codigo do produto
+					cdproduto   : cdproduto, // Codigo do produto
+                    nmdatela    : 'CONTAS',
  					redirect	: 'script_ajax'
 				},
 		error   : function(objAjax,responseError,objExcept) {
