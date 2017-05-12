@@ -2,7 +2,7 @@
 
    Programa: xb1wgen0055.p
    Autor   : Jose Luis
-   Data    : Janeiro/2010                   Ultima atualizacao: 27/07/2015
+   Data    : Janeiro/2010                   Ultima atualizacao: 19/04/2017
 
    Dados referentes ao programa:
 
@@ -19,7 +19,10 @@
                20/08/2013 - Incluido parametro cdufnatu nas procedures 
                             valida_dados e grava_dados. (Reinert)
                             
-               27/07/2015 - Reformulacao cadastral (Gabriel-RKAM).             
+               27/07/2015 - Reformulacao cadastral (Gabriel-RKAM).
+               
+               19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
+                            PRJ339 - CRM (Odirlei-AMcom) 
                
 .............................................................................*/
 
@@ -227,6 +230,9 @@ PROCEDURE valores_entrada:
                     WHEN "dsnacion" THEN
                         ASSIGN tt-resp.dsnacion = 
                             tt-param-i.valorCampo.
+                    WHEN "cdnacion" THEN
+                        ASSIGN tt-resp.cdnacion = 
+                            INTE(tt-param-i.valorCampo).        
                     WHEN "dsnatura" THEN
                         ASSIGN tt-resp.dsnatura = 
                             tt-param-i.valorCampo.
@@ -368,7 +374,7 @@ PROCEDURE Valida_Dados:
                              INPUT aux_dtnasttl, 
                              INPUT aux_cdsexotl, 
                              INPUT aux_tpnacion, 
-                             INPUT aux_dsnacion, 
+                             INPUT aux_cdnacion, 
                              INPUT aux_dsnatura,
                              INPUT aux_cdufnatu, 
                              INPUT aux_inhabmen, 
@@ -458,7 +464,7 @@ PROCEDURE Grava_Dados:
                             INPUT aux_tpdocttl,
                             INPUT aux_cdufdttl,
                             INPUT aux_cdsexotl,
-                            INPUT aux_dsnacion,
+                            INPUT aux_cdnacion,
                             INPUT aux_cdestcvl,
                             INPUT aux_grescola,
                             INPUT aux_inpessoa,

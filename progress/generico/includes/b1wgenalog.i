@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Abril/2006.                      Ultima atualizacao: 29/02/2016
+   Data    : Abril/2006.                      Ultima atualizacao: 19/04/2017
 
    Dados referentes ao programa:
 
@@ -69,6 +69,9 @@
                29/02/2016 - Trocando o campo flpolexp para inpolexp conforme
                             solicitado no chamado 402159 (Kelvin).
 
+               19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
+                             PRJ339 - CRM (Odirlei-AMcom)             
+                             
 ............................................................................. */
 &IF DEFINED(TELA-MATRIC) <> 0 &THEN
     /* Variaveis de recadastramento (geram tipo de alteracao 1) */
@@ -80,7 +83,7 @@
     ASSIGN log_nmprimtl = crapass.nmprimtl
            log_dtnasctl = crapass.dtnasctl
            log_nrcpfcgc = crapass.nrcpfcgc
-           log_dsnacion = crapass.dsnacion
+           log_cdnacion = crapass.cdnacion
            log_dsproftl = crapass.dsproftl
            log_tpdocptl = crapass.tpdocptl
            log_nrdocptl = crapass.nrdocptl
@@ -301,7 +304,7 @@
                 log_dtnasttl     = crapttl.dtnasttl
                 log_cdsexotl     = crapttl.cdsexotl
                 log_tpnacion     = crapttl.tpnacion
-                log_dsnacion     = crapttl.dsnacion
+                log_cdnacion     = crapttl.cdnacion
                 log_dsnatura     = crapttl.dsnatura
                 log_cdufnatu     = crapttl.cdufnatu
                 log_inhabmen     = crapttl.inhabmen
@@ -369,7 +372,7 @@
                 log_dtnascto     = crapavt.dtnascto
                 log_cdsexcto     = crapavt.cdsexcto
                 log_cdestcvl_avt = crapavt.cdestcvl
-                log_dsnacion_avt = crapavt.dsnacion
+                log_cdnacion_avt = crapavt.cdnacion
                 log_dsnatura_avt = crapavt.dsnatura
                 log_nmmaecto     = crapavt.nmmaecto
                 log_nmpaicto     = crapavt.nmpaicto.
@@ -391,7 +394,7 @@
               log_dtnascin_crl = crapcrl.dtnascin
               log_cddosexo_crl = crapcrl.cddosexo
               log_cdestciv_crl = crapcrl.cdestciv
-              log_dsnacion_crl = crapcrl.dsnacion
+              log_cdnacion_crl = crapcrl.cdnacion
               log_dsnatura_crl = crapcrl.dsnatura
               log_cdcepres_crl = crapcrl.cdcepres
               log_dsendres_crl = crapcrl.dsendres

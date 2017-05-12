@@ -2,7 +2,7 @@
 
     Programa: b1wgen0062tt.i
     Autor   : Jose Luis
-    Data    : Marco/2010                   Ultima atualizacao: 12/08/2015
+    Data    : Marco/2010                   Ultima atualizacao: 19/04/2017
 
     Objetivo  : Definicao das Temp-Tables para impressao da FICHA CADASTRAL
 
@@ -29,6 +29,10 @@
                              
                 12/08/2015 - Projeto Reformulacao cadastral
                              Eliminado o campo nmdsecao (Tiago Castro - RKAM).
+                             
+                19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
+                             PRJ339 - CRM (Odirlei-AMcom)             
+                             
 .............................................................................*/
 
 
@@ -230,7 +234,8 @@ DEFINE TEMP-TABLE tt-fcad-respl NO-UNDO
     FIELD cddosexo AS CHAR 
     FIELD cdestciv LIKE crapcrl.cdestciv
     FIELD dsestciv AS CHAR
-    FIELD dsnacion LIKE crapcrl.dsnacion
+    FIELD cdnacion LIKE crapcrl.cdnacion
+    FIELD dsnacion LIKE crapnac.dsnacion
     FIELD dsnatura LIKE crapcrl.dsnatura
     FIELD cdcepres AS CHAR
     FIELD dsendres LIKE crapcrl.dsendres

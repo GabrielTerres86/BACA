@@ -15,6 +15,11 @@
  *                19/02/2015 - Incluir tratamento para representante com cartão, conforme SD 251759 ( Renato - Supero )
  *
  *                04/08/2015 - Reformulacao cadastral (Gabriel-RKAM).
+ *					
+ *				  23/11/2016 - Ajuste realizado para remover os caracteres invalidos no momento
+ *							   da exclusao do procurador. (SD 557425 Kelvin)	
+ *
+ *                25/04/2017 - Alterado campo dsnacion para cdnacion. (Projeto 339 - Odirlei-AMcom)
  */
 ?> 
 <?
@@ -77,7 +82,7 @@
 	$xml .= '</Root>';	
 
 	$xmlResult = getDataXML($xml);
-	$xmlObjeto = getObjectXML($xmlResult);	
+	$xmlObjeto = getObjectXML(removeCaracteresInvalidos($xmlResult));	
 	$registros = $xmlObjeto->roottag->tags[0]->tags;	
 			
 	// Se ocorrer um erro, mostra crítica
@@ -119,7 +124,7 @@
 		$xmlBens .= '</Root>';	
 		
 		$xmlResultBens 	= getDataXML($xmlBens);		
-		$xmlObjetoBens 	= getObjectXML($xmlResultBens);		
+		$xmlObjetoBens 	= getObjectXML(removeCaracteresInvalidos($xmlResultBens));		
 		$regBens 		= $xmlObjetoBens->roottag->tags[0]->tags;		
 		
 		// Se ocorrer um erro, mostra crítica
@@ -167,7 +172,7 @@
 	$xmlPerSocio .= '</Root>';	
 
 	$xmlResult = getDataXML($xmlPerSocio);
-	$xmlObjeto = getObjectXML($xmlResult);	
+	$xmlObjeto = getObjectXML(removeCaracteresInvalidos($xmlResult));	
 
 	$dscritic = "";	
 
@@ -207,6 +212,7 @@
 		$frm_cdestcvl = getByTagName($registros[0]->tags,'cdestcvl');
 		$frm_cdsexcto = getByTagName($registros[0]->tags,'cdsexcto');
 		$frm_dsnacion = getByTagName($registros[0]->tags,'dsnacion');
+        $frm_cdnacion = getByTagName($registros[0]->tags,'cdnacion');
 		$frm_dsnatura = getByTagName($registros[0]->tags,'dsnatura');
 		$frm_nrcepend = getByTagName($registros[0]->tags,'nrcepend');
 		$frm_dsendres = getByTagName($registros[0]->tags[30]->tags,'dsendres.1');

@@ -2,7 +2,7 @@
 
     Programa: b1wgen0051tt.i
     Autor   : Jose Luis
-    Data    : Janeiro/2010                   Ultima atualizacao: 24/11/2015   
+    Data    : Janeiro/2010                   Ultima atualizacao: 19/04/2017
 
     Objetivo  : Definicao das Temp-Tables
 
@@ -17,7 +17,10 @@
                 27/07/2015 - Reformulacao cadastral (Gabriel-RKAM).   
                 
                 24/11/2015 - Incluido campo idrspleg na tt-crapavt, 
-                             PRJ. Ass. Conjunta (Jean Michel).        
+                             PRJ. Ass. Conjunta (Jean Michel).       
+                             
+                19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
+                             PRJ339 - CRM (Odirlei-AMcom)             
 ..............................................................................*/
 
 
@@ -91,7 +94,8 @@ DEFINE TEMP-TABLE tt-crapavt NO-UNDO
     FIELD cdsexcto LIKE crapavt.cdsexcto
     FIELD cdestcvl LIKE crapavt.cdestcvl
     FIELD dsestcvl AS CHAR
-    FIELD dsnacion LIKE crapavt.dsnacion
+    FIELD cdnacion LIKE crapavt.cdnacion
+    FIELD dsnacion LIKE crapnac.dsnacion
     FIELD dsnatura LIKE crapavt.dsnatura
     FIELD nmmaecto LIKE crapavt.nmmaecto
     FIELD nmpaicto LIKE crapavt.nmpaicto

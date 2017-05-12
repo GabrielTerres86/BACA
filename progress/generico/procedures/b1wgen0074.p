@@ -2,7 +2,7 @@
 
     Programa: b1wgen0074.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Maio/2010                   Ultima atualizacao: 13/04/2016
+    Data    : Maio/2010                   Ultima atualizacao: 19/04/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - CONTA CORRENTE
 
@@ -182,6 +182,20 @@
                 21/03/2016 - Inclusao campos consulta boa vista.
                              PRJ207 - Esteira (Odirlei/AMcom)    
 
+
+	            01/08/2016 - Nao deixar alterar PA caso o processo do BI ainda
+				             estiver em execucao (Andrino - Chamado 495821)
+                     
+                11/11/2016 - #511290 Correcao de como o sistema verifica se eh
+                             abertura de conta ou mudanca do tipo da mesma, 
+                             para solicitar talao de cheque para o cooperado 
+                             (Carlos)
+				       02/12/2016 - Tratamento bloqueio solicitacao conta ITG
+				                   (Incorporacao Transposul). (Fabricio)
+
+               19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
+                            PRJ339 - CRM (Odirlei-AMcom)  
+                             
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -739,6 +753,8 @@ PROCEDURE Valida_Dados:
             END.
             WHEN "E" THEN DO: /* ENCERRA ITG */
                 
+				IF par_cdcooper <> 17 THEN
+				DO:
                 RUN bloqueia-opcao(INPUT par_cdcooper,
                                    INPUT par_cdagenci,
                                    INPUT par_nrdconta,
@@ -763,6 +779,18 @@ PROCEDURE Valida_Dados:
                     END.
             END.
             END.
+			    ELSE
+			    DO:
+					RUN Valida_Dados_Encerra(INPUT par_cdcooper,
+									         INPUT par_nrdconta,
+											OUTPUT par_nmdcampo,
+											OUTPUT par_tipconfi,
+											OUTPUT par_msgconfi,
+											OUTPUT aux_cdcritic,
+											OUTPUT aux_dscritic).
+			    END.
+            END.
+            
             WHEN "X" THEN DO: /* EXCLUI TITULARES */
                 RUN Valida_Dados_Exclui
                     ( INPUT par_cdcooper,
@@ -2043,6 +2071,25 @@ PROCEDURE Grava_Dados:
 
         { sistema/generico/includes/b1wgenllog.i }
 
+        /*Se o processo do BI ainda estiver rodando, nao pode-se alterar o PA */
+        IF aux_cdageant <> crapass.cdagenci THEN 
+          DO:
+          FIND crapdat WHERE crapdat.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
+          IF AVAIL crapdat THEN
+             IF crapdat.inprocbi = 2 THEN 
+                DO:
+                  ASSIGN aux_dscritic = "Processo do BI ainda em execucao. Alteracao de PA nao permitida!".
+                  RUN gera_erro (INPUT par_cdcooper,
+                                 INPUT par_cdagenci,
+                                 INPUT par_nrdcaixa,
+                                 INPUT 1,          /** Sequencia **/
+                                  INPUT 0,
+                                  INPUT-OUTPUT aux_dscritic).
+                            
+                  UNDO Grava, LEAVE Grava.
+                END.
+          END.
+
         /*Se a troca de PA ocorrer com sucesso entao, se for pessoa fisica, 
           sera enviado uma solicitacao ao SICREDI de alteracao do orgao 
           pagador de todos os beneficios do cpf em questao. Caso ocorra algum
@@ -2596,7 +2643,9 @@ PROCEDURE Grava_Dados_Altera:
           IF crabass.dtabtcct = ? THEN
             ASSIGN crabass.dtabtcct = par_dtmvtolt.
 
-        IF par_cdtipcta <> crabass.cdtipcta   THEN
+        /* Se estiver alterando o tipo de conta ou estiver cadastrando ... */
+        IF par_cdtipcta <> crabass.cdtipcta   OR
+           crabass.dtinsori = par_dtmvtolt    THEN
            DO:  
                 /* Removido a criação da doc conforme solicitado no chamado 372880*/
                 /*ContadorDoc7: DO aux_contador = 1 TO 10:
@@ -4784,7 +4833,7 @@ PROCEDURE Critica_Cadastro_Pf:
         FOR EACH craxttl FIELDS(cdcooper idseqttl nrdconta nmextttl nrcpfcgc 
                                 dtcnscpf cdsitcpf tpdocttl nrdocttl cdoedttl 
                                 cdufdttl dtemdttl dtnasttl cdsexotl tpnacion 
-                                dsnacion dsnatura inhabmen dthabmen cdgraupr 
+                                cdnacion dsnatura inhabmen dthabmen cdgraupr 
                                 cdestcvl grescola nmtalttl nmmaettl nmpaittl 
                                 cdnatopc cdocpttl tpcttrab cdempres nmextemp 
                                 dsproftl cdnvlcgo cdfrmttl cdufnatu)
@@ -4865,7 +4914,7 @@ PROCEDURE Critica_Cadastro_Pf:
                       INPUT "Tipo Nacionalidade", 
                       INPUT {&TT-IDENT} ).
 
-            IF  craxttl.dsnacion = "" THEN
+            IF  craxttl.cdnacion = "" THEN
                 RUN Trata_Critica
                     ( INPUT craxttl.idseqttl,
                       INPUT "Nacionalidade", 
@@ -5268,7 +5317,7 @@ PROCEDURE Critica_Cadastro_Pj:
                   INPUT {&TT-REGIS} ).
 
         FOR FIRST crabavt FIELDS(nrcpfcgc nmdavali tpdocava nrdocava cdoeddoc
-                                 cdufddoc dtemddoc dtnascto dsnacion dsnatura 
+                                 cdufddoc dtemddoc dtnascto cdnacion dsnatura 
                                  nrcepend dsendres nmbairro nmcidade cdufresd 
                                  nmmaecto dsproftl dtvalida)
                           WHERE crabavt.cdcooper = par_cdcooper   AND
@@ -5324,7 +5373,7 @@ PROCEDURE Critica_Cadastro_Pj:
                       INPUT "Data de Nascimento do Representante/Procurador",
                       INPUT {&TT-PROCU} ).
 
-            IF  crabavt.dsnacion = "" THEN
+            IF  crabavt.cdnacion = "" THEN
                 RUN Trata_Critica
                     ( INPUT 0,
                       INPUT "Nacionalidade do Representante/Procurador",
@@ -5726,6 +5775,11 @@ PROCEDURE bloqueia-opcao:
                 par_dtmvtolt >= 11/07/2014  THEN
                 RETURN "NOK".
 			*/
+
+			/*Migracao Transulcred -> Transpocred*/
+            IF  crabass.cdcooper = 17        AND
+                par_dtmvtolt >= 12/12/2016  THEN
+                RETURN "NOK".
         END.
     ELSE
         RETURN "NOK".

@@ -14,6 +14,7 @@
  * 004: [01/06/2012] Ajustes referente ao projeto GP - Sócios Menores. ( Adriano).
  * 005: [19/02/2015] Incluir campo hidden fltemcrd, para controle de cartões, conforme SD 251759 ( Renato - Supero )
  * 006: [22/09/2015] Reformulacao cadastral (Gabriel-RKAM).
+ * 007: [25/04/2017] Alterado campo dsnacion para cdnacion. (Projeto 339 - Odirlei-AMcom)
  */	
  
 ?>
@@ -89,11 +90,13 @@
 			<label for="sexoFem" class="radio">Fem.</label>
 			<br />
 				
-			<label for="dsnacion" class="rotulo rotulo-80">Nacional.:</label>
-			<input name="dsnacion" id="dsnacion" type="text" class="alphanum pesquisa" maxlength="15" value="<? echo $frm_dsnacion; ?>" />
+			<label for="cdnacion" class="rotulo rotulo-80">Nacional.:</label>
+            <input name="cdnacion" id="cdnacion" type="text" class="pesquisa" maxlength="15" value="<? echo $frm_cdnacion; ?>" />
 			<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
-			
-			<label for="dsnatura" style="margin-left:5px;">Natural de:</label>
+			<input name="dsnacion" id="dsnacion" type="text" class="alphanum pesquisa" maxlength="15" value="<? echo $frm_dsnacion; ?>" />			
+			<br />
+            
+			<label for="dsnatura" class="rotulo rotulo-80">Natural de:</label>
 			<input name="dsnatura" id="dsnatura" type="text" class="alphanum pesquisa" maxlength="25" value="<? echo $frm_dsnatura; ?>" />
 			<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 		</fieldset>

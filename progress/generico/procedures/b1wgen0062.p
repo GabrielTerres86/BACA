@@ -2,7 +2,7 @@
 
     Programa: b1wgen0062.p
     Autor   : Jose Luis (DB1)
-    Data    : Marco/2010                   Ultima atualizacao: 08/01/2016
+    Data    : Marco/2010                   Ultima atualizacao: 19/04/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - IMPRESSAO FICHA CADASTRAL
 
@@ -57,6 +57,12 @@
                              
                 08/01/2016 - #350828 Criacao da tela PEP (Carlos)
 
+                04/08/2016 - Ajuste para pegar o idcidade e nao mais cdcidade.
+                             (Jaison/Anderson)
+
+                19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
+                             PRJ339 - CRM (Odirlei-AMcom)  
+                             
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -156,7 +162,7 @@ PROCEDURE Busca_Impressao:
             END.
 
         /* Busca dados da agencia */
-        FOR FIRST crapage FIELDS(cdagenci nmresage cdcidade)
+        FOR FIRST crapage FIELDS(cdagenci nmresage idcidade)
                           WHERE crapage.cdcooper = par_cdcooper     AND
                                 crapage.cdagenci = crapass.cdagenci 
                                 NO-LOCK:
@@ -167,7 +173,7 @@ PROCEDURE Busca_Impressao:
         /* f_identi */
         IF AVAIL crapage THEN
         DO:
-            FIND FIRST crapmun WHERE crapmun.cdcidade = crapage.cdcidade NO-LOCK NO-ERROR.
+            FIND FIRST crapmun WHERE crapmun.idcidade = crapage.idcidade NO-LOCK NO-ERROR.
         
             ASSIGN tt-fcad.dscidade = IF AVAIL crapmun 
                                       THEN crapmun.dscidade
@@ -1004,7 +1010,7 @@ PROCEDURE Busca_PF:
                   tt-fcad-procu.dtemddoc = crapavt.dtemddoc
                   tt-fcad-procu.dtnascto = crapavt.dtnascto
                   tt-fcad-procu.cdestcvl = crapavt.cdestcvl
-                  tt-fcad-procu.dsnacion = crapavt.dsnacion
+                  tt-fcad-procu.cdnacion = crapavt.cdnacion
                   tt-fcad-procu.dsnatura = crapavt.dsnatura
                   tt-fcad-procu.nmmaecto = crapavt.nmmaecto
                   tt-fcad-procu.nmpaicto = crapavt.nmpaicto
@@ -1069,7 +1075,7 @@ PROCEDURE Busca_PF:
            /* buscar dados do contato */
            FOR FIRST crabass FIELDS(cdsexotl nmprimtl tpdocptl nrdocptl
                                     cdoedptl cdufdptl dtemdptl dsproftl
-                                    dtnasctl dsnacion
+                                    dtnasctl cdnacion
                                     nmmaeptl nmpaiptl nrdconta)
                               WHERE crabass.cdcooper = par_cdcooper     AND
                                     crabass.nrdconta = crapavt.nrdctato 
@@ -1097,7 +1103,7 @@ PROCEDURE Busca_PF:
                       tt-fcad-procu.cdufddoc = crabass.cdufdptl
                       tt-fcad-procu.dtemddoc = crabass.dtemdptl
                       tt-fcad-procu.dtnascto = crabass.dtnasctl
-                      tt-fcad-procu.dsnacion = crabass.dsnacion.
+                      tt-fcad-procu.cdnacion = crabass.cdnacion.
 
                /* Filiaçao e naturalidade, pegos da crapttl */
                            FOR FIRST crabttl FIELDS(dsnatura nmmaettl nmpaittl cdestcvl)
@@ -1191,7 +1197,7 @@ PROCEDURE Busca_PF:
                   FOR FIRST crabttl FIELDS(nrcpfcgc nmextttl tpdocttl 
                                            nrdocttl cdoedttl cdufdttl 
                                            dtemdttl dtnasttl cdsexotl 
-                                           cdestcvl dsnacion dsnatura
+                                           cdestcvl cdnacion dsnatura
                                            nmmaettl nmpaittl)
                                     WHERE crabttl.cdcooper = par_cdcooper     AND
                                           crabttl.nrdconta = crapcrl.nrdconta AND
@@ -1208,7 +1214,7 @@ PROCEDURE Busca_PF:
                              tt-fcad-respl.cddosexo = IF crabttl.cdsexotl = 1 
                                                       THEN "M" ELSE "F"
                              tt-fcad-respl.cdestciv = crabttl.cdestcvl
-                             tt-fcad-respl.dsnacion = crabttl.dsnacion
+                             tt-fcad-respl.cdnacion = crabttl.cdnacion
                              tt-fcad-respl.dsnatura = crabttl.dsnatura
                              tt-fcad-respl.nmmaersp = crabttl.nmmaettl
                              tt-fcad-respl.nmpairsp = crabttl.nmpaittl
@@ -1259,7 +1265,7 @@ PROCEDURE Busca_PF:
                          tt-fcad-respl.cddosexo = IF crapcrl.cddosexo = 1 
                                                   THEN "M" ELSE "F"
                          tt-fcad-respl.cdestciv = crapcrl.cdestciv    
-                         tt-fcad-respl.dsnacion = crapcrl.dsnacion    
+                         tt-fcad-respl.cdnacion = crapcrl.cdnacion    
                          tt-fcad-respl.dsnatura = crapcrl.dsnatura    
                          tt-fcad-respl.dsendres = crapcrl.dsendres 
                          tt-fcad-respl.nrendres = crapcrl.nrendres    
@@ -1453,7 +1459,7 @@ PROCEDURE Busca_PJ:
                   tt-fcad-procu.dsproftl = crapavt.dsproftl
                   tt-fcad-procu.dtnascto = crapavt.dtnascto
                   tt-fcad-procu.cdestcvl = crapavt.cdestcvl
-                  tt-fcad-procu.dsnacion = crapavt.dsnacion
+                  tt-fcad-procu.cdnacion = crapavt.cdnacion
                   tt-fcad-procu.dsnatura = crapavt.dsnatura
                   tt-fcad-procu.nmmaecto = crapavt.nmmaecto
                   tt-fcad-procu.nmpaicto = crapavt.nmpaicto
@@ -1520,7 +1526,7 @@ PROCEDURE Busca_PJ:
            /* buscar dados do contato */
            FOR FIRST crabass FIELDS(cdsexotl nmprimtl tpdocptl nrdocptl
                                     cdoedptl cdufdptl dtemdptl dsproftl
-                                    dtnasctl dsnacion
+                                    dtnasctl cdnacion
                                     nmmaeptl nmpaiptl nrdconta)
                               WHERE crabass.cdcooper = par_cdcooper     AND
                                     crabass.nrdconta = crapavt.nrdctato 
@@ -1549,7 +1555,7 @@ PROCEDURE Busca_PJ:
                       tt-fcad-procu.dtemddoc = crabass.dtemdptl
                       tt-fcad-procu.dsproftl = crapavt.dsproftl
                       tt-fcad-procu.dtnascto = crabass.dtnasctl
-                      tt-fcad-procu.dsnacion = crabass.dsnacion.
+                      tt-fcad-procu.cdnacion = crabass.cdnacion.
 
                /* Filiaçao, pega da crapttl */
                FIND FIRST crapttl WHERE crapttl.cdcooper = par_cdcooper     AND
@@ -1644,7 +1650,7 @@ PROCEDURE Busca_PJ:
                      FOR FIRST cracttl 
                                FIELDS(nrcpfcgc nmextttl tpdocttl nrdocttl 
                                       cdoedttl cdufdttl dtemdttl dtnasttl 
-                                      cdsexotl cdestcvl dsnacion dsnatura
+                                      cdsexotl cdestcvl cdnacion dsnatura
                                       nmmaettl nmpaittl)
                                WHERE cracttl.cdcooper = par_cdcooper     AND
                                      cracttl.nrdconta = crapcrl.nrdconta AND
@@ -1661,7 +1667,7 @@ PROCEDURE Busca_PJ:
                                 tt-fcad-respl.cddosexo = IF cracttl.cdsexotl = 1
                                                          THEN "M" ELSE "F"
                                 tt-fcad-respl.cdestciv = cracttl.cdestcvl
-                                tt-fcad-respl.dsnacion = cracttl.dsnacion
+                                tt-fcad-respl.cdnacion = cracttl.cdnacion
                                 tt-fcad-respl.dsnatura = cracttl.dsnatura
                                 tt-fcad-respl.nmmaersp = cracttl.nmmaettl
                                 tt-fcad-respl.nmpairsp = cracttl.nmpaittl
@@ -1714,7 +1720,7 @@ PROCEDURE Busca_PJ:
                             tt-fcad-respl.cddosexo = IF crapcrl.cddosexo = 1 
                                                      THEN "M" ELSE "F"
                             tt-fcad-respl.cdestciv = crapcrl.cdestciv    
-                            tt-fcad-respl.dsnacion = crapcrl.dsnacion    
+                            tt-fcad-respl.cdnacion = crapcrl.cdnacion    
                             tt-fcad-respl.dsnatura = crapcrl.dsnatura    
                             tt-fcad-respl.dsendres = crapcrl.dsendres 
                             tt-fcad-respl.nrendres = crapcrl.nrendres    

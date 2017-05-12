@@ -34,7 +34,7 @@
 
     Programa  : b1wgen9999.p
     Autor     : Guilherme/David
-    Data      : Marco/2008                    Ultima Atualizacao: 26/09/2016.
+    Data      : Marco/2008                    Ultima Atualizacao: 19/04/2017.
     
     Dados referentes ao programa:
 
@@ -264,6 +264,8 @@
 							
                26/09/2016 - Incluir lotes da M211 para nao exclusao (Jonata-RKAM)
 							
+               19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
+                            PRJ339 - CRM (Odirlei-AMcom) 
 .............................................................................*/
 
 { sistema/generico/includes/b1wgen9999tt.i }
@@ -1028,6 +1030,12 @@ PROCEDURE lista_avalistas:
                         ASSIGN aux_nmconjug = crapcje.nmconjug
                                aux_nrcpfcjg = crapcje.nrcpfcjg.
                 END.
+					
+                /* Buscar nacionalidade */
+                FIND FIRST crapnac
+                     WHERE crapnac.cdnacion = crapass.cdnacion
+                     NO-LOCK NO-ERROR.              
+
 
                 CREATE tt-dados-avais.
                 ASSIGN aux_contador            = aux_contador + 1
@@ -1055,7 +1063,8 @@ PROCEDURE lista_avalistas:
                        tt-dados-avais.nmcidade = TRIM(crapenc.nmcidade)
                        tt-dados-avais.cdufresd = TRIM(crapenc.cdufende)
                        tt-dados-avais.nrcepend = crapenc.nrcepend
-                       tt-dados-avais.dsnacion = crapass.dsnacion
+                       tt-dados-avais.cdnacion = crapass.cdnacion
+                       tt-dados-avais.dsnacion = crapnac.dsnacion
                        tt-dados-avais.vledvmto = aux_vledvmto
                        tt-dados-avais.vlrenmes = aux_vlrenmes
                        tt-dados-avais.idavalis = aux_contador
@@ -1072,6 +1081,10 @@ PROCEDURE lista_avalistas:
                                crapavt.nrctremp = par_nrctrato NO-LOCK BY ROWID(crapavt):
             
             
+            /* Buscar nacionalidade */
+            FIND FIRST crapnac
+                 WHERE crapnac.cdnacion = crapavt.cdnacion
+                 NO-LOCK NO-ERROR.  			
 
             CREATE tt-dados-avais.
             ASSIGN aux_contador            = aux_contador + 1
@@ -1096,7 +1109,8 @@ PROCEDURE lista_avalistas:
                    tt-dados-avais.nmcidade = crapavt.nmcidade
                    tt-dados-avais.cdufresd = crapavt.cdufresd
                    tt-dados-avais.nrcepend = crapavt.nrcepend
-                   tt-dados-avais.dsnacion = crapavt.dsnacion
+                   tt-dados-avais.cdnacion = crapavt.cdnacion	
+                   tt-dados-avais.dsnacion = crapnac.dsnacion
                    tt-dados-avais.vledvmto = crapavt.vledvmto
                    tt-dados-avais.vlrenmes = crapavt.vlrenmes
                    tt-dados-avais.idavalis = aux_contador
@@ -1239,6 +1253,11 @@ PROCEDURE lista_avalistas:
                         ASSIGN aux_nmconjug = crapcje.nmconjug
                                aux_nrcpfcjg = crapcje.nrcpfcjg.
                 END.
+				
+                /* Buscar nacionalidade */
+                FIND FIRST crapnac
+                     WHERE crapnac.cdnacion = crapass.cdnacion
+                     NO-LOCK NO-ERROR.  
 
                 CREATE tt-dados-avais.
                 ASSIGN aux_contador            = aux_contador + 1
@@ -1266,7 +1285,8 @@ PROCEDURE lista_avalistas:
                        tt-dados-avais.nmcidade = TRIM(crapenc.nmcidade)
                        tt-dados-avais.cdufresd = TRIM(crapenc.cdufende)
                        tt-dados-avais.nrcepend = crapenc.nrcepend
-                       tt-dados-avais.dsnacion = crapass.dsnacion
+                       tt-dados-avais.cdnacion = crapass.cdnacion
+                       tt-dados-avais.dsnacion = crapnac.dsnacion
                        tt-dados-avais.vledvmto = aux_vledvmto
                        tt-dados-avais.vlrenmes = aux_vlrenmes
                        tt-dados-avais.idavalis = aux_contador
@@ -1425,6 +1445,11 @@ PROCEDURE lista_avalistas:
                                aux_nrcpfcjg = crapcje.nrcpfcjg.
                 END.
                           
+                /* Buscar nacionalidade */
+                FIND FIRST crapnac
+                     WHERE crapnac.cdnacion = crapass.cdnacion
+                     NO-LOCK NO-ERROR. 
+
                 CREATE tt-dados-avais.
                 ASSIGN aux_contador            = aux_contador + 1
                        tt-dados-avais.nrctaava = crapass.nrdconta
@@ -1451,7 +1476,8 @@ PROCEDURE lista_avalistas:
                        tt-dados-avais.nmcidade = TRIM(crapenc.nmcidade)
                        tt-dados-avais.cdufresd = TRIM(crapenc.cdufende)
                        tt-dados-avais.nrcepend = crapenc.nrcepend
-                       tt-dados-avais.dsnacion = crapass.dsnacion
+                       tt-dados-avais.cdnacion = crapass.cdnacion 
+                       tt-dados-avais.dsnacion = crapnac.dsnacion
                        tt-dados-avais.vledvmto = aux_vledvmto
                        tt-dados-avais.vlrenmes = aux_vlrenmes
                        tt-dados-avais.idavalis = aux_contador
@@ -1467,6 +1493,11 @@ PROCEDURE lista_avalistas:
                                crapavt.tpctrato = par_tpctrato AND 
                                crapavt.nrdconta = par_nrdconta AND
                                crapavt.nrctremp = par_nrctrato NO-LOCK BY ROWID(crapavt):
+
+            /* Buscar nacionalidade */
+            FIND FIRST crapnac
+                 WHERE crapnac.cdnacion = crapavt.cdnacion
+                 NO-LOCK NO-ERROR. 
 
             CREATE tt-dados-avais.
             ASSIGN aux_contador            = aux_contador + 1
@@ -1491,7 +1522,8 @@ PROCEDURE lista_avalistas:
                    tt-dados-avais.nmcidade = crapavt.nmcidade
                    tt-dados-avais.cdufresd = crapavt.cdufresd
                    tt-dados-avais.nrcepend = crapavt.nrcepend
-                   tt-dados-avais.dsnacion = crapavt.dsnacion
+                   tt-dados-avais.cdnacion = crapavt.cdnacion
+                   tt-dados-avais.dsnacion = crapnac.dsnacion
                    tt-dados-avais.vledvmto = crapavt.vledvmto
                    tt-dados-avais.vlrenmes = crapavt.vlrenmes
                    tt-dados-avais.idavalis = aux_contador
@@ -1674,7 +1706,12 @@ PROCEDURE lista_avalistas:
                         /* Se o numero da conta não é maior que zero carrega o nome da crapcje */
                         ASSIGN aux_nmconjug = crapcje.nmconjug
                                aux_nrcpfcjg = crapcje.nrcpfcjg.
-                END.
+                END. 
+
+                /* Buscar nacionalidade */
+                FIND FIRST crapnac
+                     WHERE crapnac.cdnacion = crapass.cdnacion
+                     NO-LOCK NO-ERROR.
                           
                 CREATE tt-dados-avais.
                 ASSIGN aux_contador            = aux_contador + 1
@@ -1702,7 +1739,8 @@ PROCEDURE lista_avalistas:
                        tt-dados-avais.nmcidade = TRIM(crapenc.nmcidade)
                        tt-dados-avais.cdufresd = TRIM(crapenc.cdufende)
                        tt-dados-avais.nrcepend = crapenc.nrcepend
-                       tt-dados-avais.dsnacion = crapass.dsnacion
+                       tt-dados-avais.cdnacion = crapass.cdnacion
+                       tt-dados-avais.dsnacion = crapnac.dsnacion
                        tt-dados-avais.vledvmto = aux_vledvmto
                        tt-dados-avais.vlrenmes = aux_vlrenmes
                        tt-dados-avais.idavalis = aux_contador
@@ -1865,7 +1903,12 @@ PROCEDURE lista_avalistas:
                                 ASSIGN aux_nmconjug = crapcje.nmconjug
                                        aux_nrcpfcjg = crapcje.nrcpfcjg.
                         END.
-                                  
+                        
+                        /* Buscar nacionalidade */
+                        FIND FIRST crapnac
+                             WHERE crapnac.cdnacion = crapass.cdnacion
+                             NO-LOCK NO-ERROR.
+          
                         CREATE tt-dados-avais.
                         ASSIGN aux_contador            = aux_contador + 1
                                tt-dados-avais.nrctaava = crapass.nrdconta
@@ -1892,7 +1935,8 @@ PROCEDURE lista_avalistas:
                                tt-dados-avais.nmcidade = TRIM(crapenc.nmcidade)
                                tt-dados-avais.cdufresd = TRIM(crapenc.cdufende)
                                tt-dados-avais.nrcepend = crapenc.nrcepend
-                               tt-dados-avais.dsnacion = crapass.dsnacion
+                               tt-dados-avais.cdnacion = crapass.cdnacion
+                               tt-dados-avais.dsnacion = crapnac.dsnacion
                                tt-dados-avais.vledvmto = aux_vledvmto
                                tt-dados-avais.vlrenmes = aux_vlrenmes
                                tt-dados-avais.idavalis = aux_contador
@@ -1906,7 +1950,12 @@ PROCEDURE lista_avalistas:
                                        crapavt.tpctrato = par_tpctrato AND 
                                        crapavt.nrdconta = par_nrdconta AND
                                        crapavt.nrctremp = par_nrctrato NO-LOCK BY ROWID(crapavt):
-                    
+                    	
+                    /* Buscar nacionalidade */
+                    FIND FIRST crapnac
+                         WHERE crapnac.cdnacion = crapavt.cdnacion
+                         NO-LOCK NO-ERROR.
+
                     CREATE tt-dados-avais.
                     ASSIGN aux_contador            = aux_contador + 1
                            tt-dados-avais.nrctaava = 0
@@ -1930,7 +1979,8 @@ PROCEDURE lista_avalistas:
                            tt-dados-avais.nmcidade = crapavt.nmcidade
                            tt-dados-avais.cdufresd = crapavt.cdufresd
                            tt-dados-avais.nrcepend = crapavt.nrcepend
-                           tt-dados-avais.dsnacion = crapavt.dsnacion
+                           tt-dados-avais.cdnacion = crapavt.cdnacion
+                           tt-dados-avais.dsnacion = crapnac.dsnacion
                            tt-dados-avais.vledvmto = crapavt.vledvmto
                            tt-dados-avais.vlrenmes = crapavt.vlrenmes
                            tt-dados-avais.idavalis = aux_contador
@@ -2061,7 +2111,12 @@ PROCEDURE lista_avalistas:
                                 ASSIGN aux_nmconjug = crapcje.nmconjug
                                        aux_nrcpfcjg = crapcje.nrcpfcjg.
                         END.
-                                  
+                               
+                        /* Buscar nacionalidade */
+                        FIND FIRST crapnac
+                             WHERE crapnac.cdnacion = crapavt.cdnacion
+                             NO-LOCK NO-ERROR.
+   
                         CREATE tt-dados-avais.
                         ASSIGN aux_contador            = aux_contador + 1
                                tt-dados-avais.nrctaava = crapass.nrdconta
@@ -2088,7 +2143,8 @@ PROCEDURE lista_avalistas:
                                tt-dados-avais.nmcidade = TRIM(crapenc.nmcidade)
                                tt-dados-avais.cdufresd = TRIM(crapenc.cdufende)
                                tt-dados-avais.nrcepend = crapenc.nrcepend
-                               tt-dados-avais.dsnacion = crapass.dsnacion
+                               tt-dados-avais.cdnacion = crapass.cdnacion
+                               tt-dados-avais.dsnacion = crapnac.dsnacion 
                                tt-dados-avais.vledvmto = aux_vledvmto
                                tt-dados-avais.vlrenmes = aux_vlrenmes
                                tt-dados-avais.idavalis = aux_contador
@@ -2247,7 +2303,12 @@ PROCEDURE lista_avalistas:
                         ASSIGN aux_nmconjug = crapcje.nmconjug
                                aux_nrcpfcjg = crapcje.nrcpfcjg.
                 END.
-                
+                		  
+                /* Buscar nacionalidade */
+                FIND FIRST crapnac
+                     WHERE crapnac.cdnacion = crapass.cdnacion
+                     NO-LOCK NO-ERROR.
+
                 CREATE tt-dados-avais.
                 ASSIGN aux_contador            = aux_contador + 1
                        tt-dados-avais.nrctaava = crapass.nrdconta
@@ -2274,7 +2335,8 @@ PROCEDURE lista_avalistas:
                        tt-dados-avais.nmcidade = TRIM(crapenc.nmcidade)
                        tt-dados-avais.cdufresd = TRIM(crapenc.cdufende)
                        tt-dados-avais.nrcepend = crapenc.nrcepend
-                       tt-dados-avais.dsnacion = crapass.dsnacion
+                       tt-dados-avais.cdnacion = crapass.cdnacion
+                       tt-dados-avais.dsnacion = crapnac.dsnacion
                        tt-dados-avais.vledvmto = aux_vledvmto
                        tt-dados-avais.vlrenmes = aux_vlrenmes
                        tt-dados-avais.idavalis = aux_contador
@@ -2289,6 +2351,11 @@ PROCEDURE lista_avalistas:
                                crapavt.nrdconta = par_nrdconta AND
                                crapavt.nrctremp = par_nrctrato NO-LOCK BY ROWID(crapavt):
             
+            /* Buscar nacionalidade */
+            FIND FIRST crapnac
+                 WHERE crapnac.cdnacion = crapavt.cdnacion
+                 NO-LOCK NO-ERROR.            
+
             CREATE tt-dados-avais.
             ASSIGN aux_contador            = aux_contador + 1
                    tt-dados-avais.nrctaava = 0
@@ -2312,7 +2379,8 @@ PROCEDURE lista_avalistas:
                    tt-dados-avais.nmcidade = crapavt.nmcidade
                    tt-dados-avais.cdufresd = crapavt.cdufresd
                    tt-dados-avais.nrcepend = crapavt.nrcepend
-                   tt-dados-avais.dsnacion = crapavt.dsnacion
+                   tt-dados-avais.cdnacion = crapavt.cdnacion
+                   tt-dados-avais.dsnacion = crapnac.dsnacion
                    tt-dados-avais.vledvmto = crapavt.vledvmto
                    tt-dados-avais.vlrenmes = crapavt.vlrenmes
                    tt-dados-avais.idavalis = aux_contador
@@ -2444,6 +2512,11 @@ PROCEDURE lista_avalistas:
                         ASSIGN aux_nmconjug = crapcje.nmconjug
                                aux_nrcpfcjg = crapcje.nrcpfcjg.
                 END.
+						
+                /* Buscar nacionalidade */
+                FIND FIRST crapnac
+                     WHERE crapnac.cdnacion = crapass.cdnacion
+                   NO-LOCK NO-ERROR.
 
                 CREATE tt-dados-avais.
                 ASSIGN aux_contador            = aux_contador + 1
@@ -2471,7 +2544,8 @@ PROCEDURE lista_avalistas:
                        tt-dados-avais.nmcidade = TRIM(crapenc.nmcidade)
                        tt-dados-avais.cdufresd = TRIM(crapenc.cdufende)
                        tt-dados-avais.nrcepend = crapenc.nrcepend
-                       tt-dados-avais.dsnacion = crapass.dsnacion
+                       tt-dados-avais.cdnacion = crapass.cdnacion
+                       tt-dados-avais.dsnacion = crapnac.dsnacion
                        tt-dados-avais.vledvmto = aux_vledvmto
                        tt-dados-avais.vlrenmes = aux_vlrenmes
                        tt-dados-avais.idavalis = aux_contador
@@ -2762,6 +2836,11 @@ PROCEDURE consulta-avalista:
                            aux_nrcpfcjg = crapcje.nrcpfcjg.
             END.
 
+            /* Buscar nacionalidade */
+            FIND FIRST crapnac
+                 WHERE crapnac.cdnacion = crapass.cdnacion
+                 NO-LOCK NO-ERROR.
+
             CREATE tt-dados-avais.
             ASSIGN tt-dados-avais.nrctaava = par_nrctaava
                    tt-dados-avais.nmdavali = crapass.nmprimtl
@@ -2787,7 +2866,8 @@ PROCEDURE consulta-avalista:
                    tt-dados-avais.nmcidade = TRIM(crapenc.nmcidade)
                    tt-dados-avais.cdufresd = TRIM(crapenc.cdufende)
                    tt-dados-avais.nrcepend = crapenc.nrcepend
-                   tt-dados-avais.dsnacion = crapass.dsnacion
+                   tt-dados-avais.cdnacion = crapass.cdnacion
+                   tt-dados-avais.dsnacion = crapnac.dsnacion
                    tt-dados-avais.vlrenmes = aux_vlrenmes
                    tt-dados-avais.vledvmto = aux_vledvmto
                    tt-dados-avais.nrendere = crapenc.nrendere
@@ -2805,6 +2885,10 @@ PROCEDURE consulta-avalista:
   
             IF  AVAILABLE crapavt  THEN 
                 DO:
+                    /* Buscar nacionalidade */
+                    FIND FIRST crapnac
+                         WHERE crapnac.cdnacion = crapavt.cdnacion
+                         NO-LOCK NO-ERROR.
                     
                     CREATE tt-dados-avais.
                     ASSIGN tt-dados-avais.nrctaava = 0
@@ -2828,7 +2912,8 @@ PROCEDURE consulta-avalista:
                            tt-dados-avais.nmcidade = crapavt.nmcidade
                            tt-dados-avais.cdufresd = crapavt.cdufresd
                            tt-dados-avais.nrcepend = crapavt.nrcepend
-                           tt-dados-avais.dsnacion = CAPS(crapavt.dsnacion)
+                           tt-dados-avais.cdnacion = crapavt.cdnacion
+                           tt-dados-avais.dsnacion = crapnac.dsnacion
                            tt-dados-avais.vlrenmes = crapavt.vlrenmes
                            tt-dados-avais.vledvmto = crapavt.vledvmto
                            tt-dados-avais.nrendere = crapavt.nrendere
@@ -3276,7 +3361,7 @@ PROCEDURE cria-tabelas-avalistas.
     DEF  INPUT PARAM par_nmcidav1 AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdufava1 AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrcepav1 AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsnacio1 AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdnacio1 AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_vledvmt1 AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_vlrenme1 AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_nrender1 AS INTE                           NO-UNDO.
@@ -3302,7 +3387,7 @@ PROCEDURE cria-tabelas-avalistas.
     DEF  INPUT PARAM par_nmcidav2 AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdufava2 AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrcepav2 AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsnacio2 AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdnacio2 AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_vledvmt2 AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_vlrenme2 AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_nrender2 AS INTE                           NO-UNDO.
@@ -3521,7 +3606,7 @@ PROCEDURE cria-tabelas-avalistas.
                    crapavt.nmcidade    = CAPS(par_nmcidav1)
                    crapavt.cdufresd    = CAPS(par_cdufava1)
                    crapavt.nrcepend    = par_nrcepav1
-                   crapavt.dsnacion    = CAPS(par_dsnacio1)
+                   crapavt.cdnacion    = par_cdnacio1
                    crapavt.vledvmto    = par_vledvmt1
                    crapavt.vlrenmes    = par_vlrenme1
                    crapavt.nrendere    = par_nrender1
@@ -3574,7 +3659,7 @@ PROCEDURE cria-tabelas-avalistas.
                    crapavt.nmcidade    = CAPS(par_nmcidav2)
                    crapavt.cdufresd    = CAPS(par_cdufava2)
                    crapavt.nrcepend    = par_nrcepav2
-                   crapavt.dsnacion    = CAPS(par_dsnacio2)
+                   crapavt.cdnacion    = par_cdnacio2
                    crapavt.vledvmto    = par_vledvmt2
                    crapavt.vlrenmes    = par_vlrenme2
                    crapavt.nrendere    = par_nrender2        
@@ -3744,7 +3829,7 @@ PROCEDURE atualiza_tabela_avalistas:
     DEF  INPUT PARAM par_nmcidav1 AS CHAR                           NO-UNDO.    
     DEF  INPUT PARAM par_cdufava1 AS CHAR                           NO-UNDO.    
     DEF  INPUT PARAM par_nrcepav1 AS INTE                           NO-UNDO.    
-    DEF  INPUT PARAM par_dsnacio1 AS CHAR                           NO-UNDO.    
+    DEF  INPUT PARAM par_cdnacio1 AS INTE                           NO-UNDO.    
     DEF  INPUT PARAM par_vledvmt1 AS DECI                           NO-UNDO.    
     DEF  INPUT PARAM par_vlrenme1 AS DECI                           NO-UNDO.    
     DEF  INPUT PARAM par_nrender1 AS INTE                           NO-UNDO.    
@@ -3769,7 +3854,7 @@ PROCEDURE atualiza_tabela_avalistas:
     DEF  INPUT PARAM par_nmcidav2 AS CHAR                           NO-UNDO.    
     DEF  INPUT PARAM par_cdufava2 AS CHAR                           NO-UNDO.    
     DEF  INPUT PARAM par_nrcepav2 AS INTE                           NO-UNDO.    
-    DEF  INPUT PARAM par_dsnacio2 AS CHAR                           NO-UNDO.    
+    DEF  INPUT PARAM par_cdnacio2 AS INTE                           NO-UNDO.    
     DEF  INPUT PARAM par_vledvmt2 AS DECI                           NO-UNDO.    
     DEF  INPUT PARAM par_vlrenme2 AS DECI                           NO-UNDO.    
     DEF  INPUT PARAM par_nrender2 AS INTE                           NO-UNDO.    
@@ -3823,7 +3908,7 @@ PROCEDURE atualiza_tabela_avalistas:
                                 INPUT par_nmcidav1,
                                 INPUT par_cdufava1,
                                 INPUT par_nrcepav1,
-                                INPUT par_dsnacio1,
+                                INPUT par_cdnacio1,
                                 INPUT par_vledvmt1,
                                 INPUT par_vlrenme1,
                                 INPUT par_nrender1,
@@ -3849,7 +3934,7 @@ PROCEDURE atualiza_tabela_avalistas:
                                 INPUT par_nmcidav2,
                                 INPUT par_cdufava2,
                                 INPUT par_nrcepav2,
-                                INPUT par_dsnacio2,
+                                INPUT par_cdnacio2,
                                 INPUT par_vledvmt2,
                                 INPUT par_vlrenme2,
                                 INPUT par_nrender2,
