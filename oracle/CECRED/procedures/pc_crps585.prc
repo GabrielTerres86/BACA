@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps585 (pr_cdcooper IN crapcop.cdcooper%T
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Vitor
-       Data    : Dezembro/2010                      Ultima atualizacao: 23/06/2016
+       Data    : Dezembro/2010                      Ultima atualizacao: 12/05/2017
 
        Dados referentes ao programa:
 
@@ -22,20 +22,23 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps585 (pr_cdcooper IN crapcop.cdcooper%T
                    Relatorio 585.
 
        Alteracoes: 07/02/2011 - Alterado a chamada do fontes/imprim.p para
-                              disponibilizar todos os relatórios (Vitor).
+                                disponibilizar todos os relatórios (Vitor).
                
                    13/08/2013 - Nova forma de chamar as agências, de PAC agora 
-                            a escrita será PA (André Euzébio - Supero).              
+                                a escrita será PA (André Euzébio - Supero).              
                             
-                   13/11/2013 - Alterado totalizador de PAs de 99 para 999.
-                            (Reinert)
+                   13/11/2013 - Alterado totalizador de PAs de 99 para 999. (Reinert)
+
                    16/01/2014 - Conversão Progress >> Oracle PLSQL (Tiago Castro - RKAM)           
 									 
-									 24/11/2015 - Adicionado tratamento para validar vencimento a partir
-									              da quantidade de meses da tab045. (Reinert)
+				   24/11/2015 - Adicionado tratamento para validar vencimento a partir
+						        da quantidade de meses da tab045. (Reinert)
                                 
                    23/06/2016 - Correcao para o uso da function fn_busca_dstextab 
                                 da TABE0001. (Carlos Rafael Tanholi).
+
+				   12/05/2017 - Adicionado o relatorio final _999 para agrupar 
+                                todas as PA's em um só arquivo. (Andrey - Mouts)
     ............................................................................ */
 
     DECLARE
@@ -142,6 +145,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps585 (pr_cdcooper IN crapcop.cdcooper%T
       
       -- Variaveis para os XMLs e relatórios
       vr_clobxml     CLOB;   -- Clob para conter o XML de dados
+	  vr_des_xml_999 CLOB;   -- Clob para conter o XML de dados do relatorio 999
       vr_nom_direto  VARCHAR2(200);         -- Diretório para gravação do arquivo
       
       -- Guardar registro dstextab
@@ -150,9 +154,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps585 (pr_cdcooper IN crapcop.cdcooper%T
       --------------------------- SUBROTINAS INTERNAS --------------------------
       
        PROCEDURE pc_escreve_clob(pr_clobdado IN OUT NOCOPY CLOB
-                               ,pr_desdados IN VARCHAR2) IS
+                                ,pr_desdados IN VARCHAR2
+                                ,pr_flggeral IN NUMBER) IS
       BEGIN
-        dbms_lob.writeappend(pr_clobdado, length(pr_desdados),pr_desdados);        
+        IF pr_flggeral = 1 THEN
+          dbms_lob.writeappend(vr_des_xml_999, length(pr_desdados), pr_desdados);
+        ELSE
+          dbms_lob.writeappend(pr_clobdado, length(pr_desdados),pr_desdados); 
+        END IF;
       END;
       --------------- VALIDACOES INICIAIS -----------------      
     BEGIN
@@ -322,7 +331,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps585 (pr_cdcooper IN crapcop.cdcooper%T
       vr_des_chave := vr_tab_relato.first;
       dbms_lob.createtemporary(vr_clobxml, TRUE, dbms_lob.CALL);
       dbms_lob.open(vr_clobxml, dbms_lob.lob_readwrite);
-      pc_escreve_clob(vr_clobxml,'<?xml version="1.0" encoding="utf-8"?><raiz>');
+
+	  dbms_lob.createtemporary(vr_des_xml_999, TRUE, dbms_lob.CALL); -- relatorio 999
+      dbms_lob.open(vr_des_xml_999, dbms_lob.lob_readwrite); -- relatorio 999
+
+      pc_escreve_clob(vr_clobxml,'<?xml version="1.0" encoding="utf-8"?><raiz>', 0);
+      pc_escreve_clob(vr_des_xml_999,'<?xml version="1.0" encoding="utf-8"?><raiz>', 1); -- relatorio 999
 
       WHILE vr_des_chave IS NOT NULL LOOP -- varre a tabela temporaria para montar xml
         --verifica se é o primeiro registro ou alterou o nro do PA
@@ -333,17 +347,25 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps585 (pr_cdcooper IN crapcop.cdcooper%T
           IF vr_nmresage IS NULL THEN
             vr_nmresage := '- PA NAO CADASTRADO.';
           END IF;
-          pc_escreve_clob(vr_clobxml,'<pac cdagenci="'||lpad(vr_tab_relato(vr_des_chave).cdagenci,3,' ')||'" nmresage="'||vr_nmresage||'">');          
-          vr_nmarqim := '/crrl585_'||lpad(vr_tab_relato(vr_des_chave).cdagenci,3, '0')||'.lst';
-          pc_escreve_clob(vr_clobxml,' <cdtpdata cod="'||vr_tab_relato(vr_des_chave).cdtpdata||'" procurac="'||vr_tab_relato(vr_des_chave).procurac||'">'); 
-          pc_escreve_clob(vr_clobxml,'  <pessoa cod="'||vr_tab_relato(vr_des_chave).inpessoa||'" npessoa="'||vr_tab_relato(vr_des_chave).npessoa||'">');
+          pc_escreve_clob(vr_clobxml,'<pac cdagenci="'||lpad(vr_tab_relato(vr_des_chave).cdagenci,3,' ')||'" nmresage="'||vr_nmresage||'">', 0);
+          pc_escreve_clob(vr_des_xml_999,'<pac cdagenci="'||lpad(vr_tab_relato(vr_des_chave).cdagenci,3,' ')||'" nmresage="'||vr_nmresage||'">', 1); -- relatorio 999
+          
+		  vr_nmarqim := '/crrl585_'||lpad(vr_tab_relato(vr_des_chave).cdagenci,3, '0')||'.lst';
+
+          pc_escreve_clob(vr_clobxml,' <cdtpdata cod="'||vr_tab_relato(vr_des_chave).cdtpdata||'" procurac="'||vr_tab_relato(vr_des_chave).procurac||'">', 0); 
+          pc_escreve_clob(vr_des_xml_999,' <cdtpdata cod="'||vr_tab_relato(vr_des_chave).cdtpdata||'" procurac="'||vr_tab_relato(vr_des_chave).procurac||'">', 1); -- relatorio 999
+          
+		  pc_escreve_clob(vr_clobxml,'  <pessoa cod="'||vr_tab_relato(vr_des_chave).inpessoa||'" npessoa="'||vr_tab_relato(vr_des_chave).npessoa||'">', 0);
+          pc_escreve_clob(vr_des_xml_999,'  <pessoa cod="'||vr_tab_relato(vr_des_chave).inpessoa||'" npessoa="'||vr_tab_relato(vr_des_chave).npessoa||'">', 1); -- relatorio 999
         ELSE 
            IF vr_des_chave = vr_tab_relato.first OR vr_tab_relato(vr_des_chave).cdtpdata <> vr_tab_relato(vr_tab_relato.PRIOR(vr_des_chave)).cdtpdata THEN
-            pc_escreve_clob(vr_clobxml,' <cdtpdata cod="'||vr_tab_relato(vr_des_chave).cdtpdata||'" procurac="'||vr_tab_relato(vr_des_chave).procurac||'">'); 
+            pc_escreve_clob(vr_clobxml,' <cdtpdata cod="'||vr_tab_relato(vr_des_chave).cdtpdata||'" procurac="'||vr_tab_relato(vr_des_chave).procurac||'">', 0);
+            pc_escreve_clob(vr_des_xml_999,' <cdtpdata cod="'||vr_tab_relato(vr_des_chave).cdtpdata||'" procurac="'||vr_tab_relato(vr_des_chave).procurac||'">', 1); -- relatorio 999
           END IF;
           IF vr_des_chave = vr_tab_relato.first OR vr_tab_relato(vr_des_chave).inpessoa <> vr_tab_relato(vr_tab_relato.PRIOR(vr_des_chave)).inpessoa 
           OR vr_tab_relato(vr_des_chave).cdtpdata <> vr_tab_relato(vr_tab_relato.PRIOR(vr_des_chave)).cdtpdata THEN
-            pc_escreve_clob(vr_clobxml,'  <pessoa cod="'||vr_tab_relato(vr_des_chave).inpessoa||'" npessoa="'||vr_tab_relato(vr_des_chave).npessoa||'">');
+            pc_escreve_clob(vr_clobxml,'  <pessoa cod="'||vr_tab_relato(vr_des_chave).inpessoa||'" npessoa="'||vr_tab_relato(vr_des_chave).npessoa||'">', 0);
+			pc_escreve_clob(vr_des_xml_999,'  <pessoa cod="'||vr_tab_relato(vr_des_chave).inpessoa||'" npessoa="'||vr_tab_relato(vr_des_chave).npessoa||'">', 1); -- relatorio 999
           END IF;         
         END IF;        
         --monta xml
@@ -353,26 +375,36 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps585 (pr_cdcooper IN crapcop.cdcooper%T
                                  ||'    <avalista>'||vr_tab_relato(vr_des_chave).nmdavali||'</avalista>'
                                  ||'    <vencimento>'||to_char(vr_tab_relato(vr_des_chave).dtvalida,'dd/mm/yyyy')||'</vencimento>'
                                  ||'    <cargo>'||vr_tab_relato(vr_des_chave).dsproftl||'</cargo>'
-                                 ||'   </conta>') ;                                 
-      
+                                 ||'   </conta>', 0);
+								                 
+	    pc_escreve_clob(vr_des_xml_999,'   <conta>'   
+                                 ||'    <nrdconta>'||LTRIM(gene0002.fn_mask_conta(vr_tab_relato(vr_des_chave).nrdconta))||'</nrdconta>'
+                                 ||'    <titular>'||vr_tab_relato(vr_des_chave).nmprimtl||'</titular>'
+                                 ||'    <avalista>'||vr_tab_relato(vr_des_chave).nmdavali||'</avalista>'
+                                 ||'    <vencimento>'||to_char(vr_tab_relato(vr_des_chave).dtvalida,'dd/mm/yyyy')||'</vencimento>'
+                                 ||'    <cargo>'||vr_tab_relato(vr_des_chave).dsproftl||'</cargo>'
+                                 ||'   </conta>', 1); -- relatorio 999     
         
          -- No ultimo ou se for mudar a pessoa, fecha tag
         IF vr_des_chave = vr_tab_relato.last OR vr_tab_relato(vr_des_chave).inpessoa <> vr_tab_relato(vr_tab_relato.NEXT(vr_des_chave)).inpessoa  
         OR vr_tab_relato(vr_des_chave).cdagenci <> vr_tab_relato(vr_tab_relato.NEXT(vr_des_chave)).cdagenci  
         OR vr_tab_relato(vr_des_chave).cdtpdata <> vr_tab_relato(vr_tab_relato.NEXT(vr_des_chave)).cdtpdata THEN
-          pc_escreve_clob(vr_clobxml,'</pessoa>');
+          pc_escreve_clob(vr_clobxml,'</pessoa>', 0);
+		  pc_escreve_clob(vr_des_xml_999,'</pessoa>', 1); -- relatorio 999
         END IF;
         -- No ultimo ou se for mudar procuracao, fecha tag
         IF vr_des_chave = vr_tab_relato.last OR vr_tab_relato(vr_des_chave).cdtpdata <> vr_tab_relato(vr_tab_relato.NEXT(vr_des_chave)).cdtpdata 
         OR vr_tab_relato(vr_des_chave).cdagenci <> vr_tab_relato(vr_tab_relato.NEXT(vr_des_chave)).cdagenci THEN
-          pc_escreve_clob(vr_clobxml,'</cdtpdata>');
+          pc_escreve_clob(vr_clobxml,'</cdtpdata>', 0);
+		  pc_escreve_clob(vr_des_xml_999,'</cdtpdata>', 1); -- relatorio 999
         END IF;
         --se for ultimo ou mudar PA, fecha tag e gera solicitacao relatorio
         IF vr_des_chave = vr_tab_relato.last OR vr_tab_relato(vr_des_chave).cdagenci <> vr_tab_relato(vr_tab_relato.NEXT(vr_des_chave)).cdagenci THEN
           -- Gerar a tag do PA 
-          pc_escreve_clob(vr_clobxml,'</pac>'); 
+          pc_escreve_clob(vr_clobxml,'</pac>', 0);
+		  pc_escreve_clob(vr_des_xml_999,'</pac>', 1); -- relatorio 999 
           -- Encerrar tag raiz
-          pc_escreve_clob(vr_clobxml,'</raiz>');  
+          pc_escreve_clob(vr_clobxml,'</raiz>', 0);  
           
           --busca diretorio padrao da cooperativa
           vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/coop
@@ -406,11 +438,40 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps585 (pr_cdcooper IN crapcop.cdcooper%T
           -- Abrindo novamente para iniciar o CLOB do próximo PA     
           dbms_lob.createtemporary(vr_clobxml, TRUE, dbms_lob.CALL);
           dbms_lob.open(vr_clobxml, dbms_lob.lob_readwrite);
-          pc_escreve_clob(vr_clobxml,'<?xml version="1.0" encoding="utf-8"?><raiz>');
+          pc_escreve_clob(vr_clobxml,'<?xml version="1.0" encoding="utf-8"?><raiz>', 0);
         END IF;          
         -- Buscar o proximo
         vr_des_chave := vr_tab_relato.NEXT(vr_des_chave);  
       END LOOP;
+
+      pc_escreve_clob(vr_des_xml_999,'</raiz>', 1); -- relatorio 999
+
+	  -- Solicitando o relatório 999
+      gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper                              --> Cooperativa conectada
+                                 ,pr_cdprogra  => vr_cdprogra                          --> Programa chamador
+                                 ,pr_dtmvtolt  => rw_crapdat.dtmvtolt                  --> Data do movimento atual
+                                 ,pr_dsxml     => vr_des_xml_999                       --> Arquivo XML de dados
+                                 ,pr_dsxmlnode => '/raiz/pac/cdtpdata/pessoa/conta'    --> Nó base do XML para leitura dos dados
+                                 ,pr_dsjasper  => 'crrl585.jasper'                     --> Arquivo de layout do iReport
+                                 ,pr_dsparams  => null                                 --> Sem parâmetros
+                                 ,pr_dsarqsaid => vr_nom_direto||'/crrl585_999.lst'    --> Arquivo final com o path
+                                 ,pr_qtcoluna  => 132                                  --> 132 colunas
+                                 ,pr_flg_gerar => 'N'                                  --> Geraçao na hora
+                                 ,pr_flg_impri => 'S'                                  --> Chamar a impressão (Imprim.p)
+                                 ,pr_nmformul  => ''                                   --> Nome do formulário para impressão
+                                 ,pr_nrcopias  => 1                                    --> Número de cópias
+                                 ,pr_sqcabrel  => 1                                    --> Qual a seq do cabrel
+                                 ,pr_des_erro  => vr_dscritic);                        --> Saída com erro
+                                        
+       IF vr_dscritic IS NOT NULL THEN
+         -- Gerar exceção
+         RAISE vr_exc_saida;
+       END IF;
+      
+      
+      -- Fechando CLOB do relatorio 999
+      dbms_lob.close(vr_des_xml_999);
+      dbms_lob.freetemporary(vr_des_xml_999);
 
       ----------------- ENCERRAMENTO DO PROGRAMA -------------------
 
