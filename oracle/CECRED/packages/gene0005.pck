@@ -203,42 +203,51 @@ CREATE OR REPLACE PACKAGE CECRED.gene0005 IS
                                   ,pr_des_erro OUT VARCHAR2 --> Status erro
                                   ,pr_dscritic OUT VARCHAR2); --> Retorno de erro	
 
-FUNCTION fn_calc_qtd_dias_uteis(pr_cdcooper IN crapcop.cdcooper%TYPE
-		                       ,pr_dtinical IN DATE  --> Data de inicio do cálculo
-		                       ,pr_dtfimcal IN DATE) --> Data final do cálculo
-							    RETURN INTEGER;
-
+  FUNCTION fn_calc_qtd_dias_uteis(pr_cdcooper IN crapcop.cdcooper%TYPE
+ 		                         ,pr_dtinical IN DATE  --> Data de inicio do cálculo
+ 		                         ,pr_dtfimcal IN DATE) --> Data final do cálculo
+ 							      RETURN INTEGER;
+								 
+  FUNCTION fn_valida_depart_operad(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cooperativa
+	                              ,pr_cdoperad IN crapope.cdoperad%TYPE --> Operador
+		                          ,pr_dsdepart IN VARCHAR2              --> Lista de departamentos separados por ;
+		                          ,pr_flgnegac IN INTEGER DEFAULT 0)    --> Flag de negação dos departamentos parametrizados (NOT IN pr_dsdepart)
+								  RETURN INTEGER;
+																	
   END GENE0005;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
-  /*---------------------------------------------------------------------------------------------------------------
-  
-    Programa : GENE0005
-    Sistema  : Rotinas auxiliares para busca de informacões do negocio
-    Sigla    : GENE
-    Autor    : Marcos Ernani Martini - Supero
-    Data     : Maio/2013.                   Ultima atualizacao: 20/03/2017
-  
-   Dados referentes ao programa:
-  
-   Frequencia: -----
-   Objetivo  : Centralizar rotinas auxiliares para buscas de informacões do negocio
-   Alteracoes: 
-               04/01/2016 - Alteração na chamada da rotina extr0001.pc_obtem_saldo_dia
-                            para passagem do parâmetro pr_tipo_busca, para melhoria
-                            de performance.
-                            Chamado 291693 (Heitor - RKAM)
-  
-               30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
-  
-               10/06/2016 - Ajuste para inlcuir UPPER na leitura da tabela
-                            crapass em campos de indice que possuem UPPER
-                            (Adriano - SD 463762).
-  
-               20/03/2017 - Ajuste para disponibilizar as rotinas de validação de cpf e cnpj como públicas
-                            (Adriano - SD 620221).
-                            
-  ---------------------------------------------------------------------------------------------------------------*/
+  ---------------------------------------------------------------------------------------------------------------
+  --
+  --  Programa : GENE0005
+  --  Sistema  : Rotinas auxiliares para busca de informacões do negocio
+  --  Sigla    : GENE
+  --  Autor    : Marcos Ernani Martini - Supero
+  --  Data     : Maio/2013.                   Ultima atualizacao: 16/12/2016
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Frequencia: -----
+  -- Objetivo  : Centralizar rotinas auxiliares para buscas de informacões do negocio
+  -- Alteracoes: 
+  --             04/01/2016 - Alteração na chamada da rotina extr0001.pc_obtem_saldo_dia
+  --                          para passagem do parâmetro pr_tipo_busca, para melhoria
+  --                          de performance.
+  --                          Chamado 291693 (Heitor - RKAM)
+  --
+  --             30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
+  --
+  --             10/06/2016 - Ajuste para inlcuir UPPER na leitura da tabela
+  --                          crapass em campos de indice que possuem UPPER
+  --                          (Adriano - SD 463762).
+  --
+  --			 16/12/2016 - Alterações Referentes ao projeto 300. (Reinert)
+  --
+  --             20/03/2017 - Ajuste para disponibilizar as rotinas de validação de cpf e cnpj como públicas
+  --                          (Adriano - SD 620221).
+  --
+  --             23/03/2017 - Criado procedure para verificar departamento do operador. (Reinert)
+  ---------------------------------------------------------------------------------------------------------------
 
    -- Variaveis utilizadas na PC_CONSULTA_ITG_DIGITO_X
    vr_nrctacef       crapprm.dsvlrprm%TYPE;
@@ -1679,14 +1688,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
           END IF;
       
         END;
-    
+
   END pc_valida_cnpj;
       
   /* Procedure para validar cpf ou cnpj */
   PROCEDURE pc_valida_cpf_cnpj (pr_nrcalcul IN NUMBER       --Numero a ser verificado
                                ,pr_stsnrcal OUT BOOLEAN     --Situacao
                                ,pr_inpessoa OUT INTEGER) IS --Tipo Inscricao Cedente
-  BEGIN
+    BEGIN
     /* ..........................................................................
     
       Programa : pc_valida_cpf_cnpj            Antigo: b1wgen9999.p/valida-cpf-cnpj
@@ -2743,6 +2752,86 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
 		
 		END;																 
   END fn_calc_qtd_dias_uteis;
+
+  FUNCTION fn_valida_depart_operad(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cooperativa
+		                              ,pr_cdoperad IN crapope.cdoperad%TYPE --> Operador
+		                              ,pr_dsdepart IN VARCHAR2              --> Lista de departamentos separados por ;
+																	,pr_flgnegac IN INTEGER DEFAULT 0)    --> Flag de negação dos departamentos parametrizados (NOT IN pr_dsdepart)
+																  RETURN INTEGER IS
+	BEGIN
+		/* .............................................................................
+   Programa: fn_valida_depart_operad      
+   Sistema : Conta-Corrente - Cooperativa de Credito
+   Sigla   : CRED
+   Autor   : Lucas Reinert
+   Data    : Fevereiro/2017                       Ultima Atualizacao:
+
+   Dados referentes ao programa:
+
+   Frequencia: Diario (on-line)
+   Objetivo  : Verificar se operador pertence a algum departamento parametrizado
+
+   Alteracoes: 
+
+
+   ............................................................................. */
+    DECLARE
+		  -- Retorno do cursor
+      vr_result NUMBER;
+
+      -- Cursor para verificar se o operador está em algum dos departamentos parametrizados
+			CURSOR cr_crapope(pr_cdcooper IN crapope.cdcooper%TYPE
+											 ,pr_cdoperad IN crapope.cdoperad%TYPE
+											 ,pr_dsdepart IN crapdpo.dsdepart%TYPE) IS
+				SELECT 1
+				FROM crapope ope
+						,crapdpo dpo
+				WHERE ope.cdcooper = pr_cdcooper
+					AND upper(ope.cdoperad) = upper(pr_cdoperad)
+					AND dpo.cdcooper = ope.cdcooper
+					AND dpo.cddepart = ope.cddepart
+					AND upper(dpo.dsdepart) IN (SELECT regexp_substr(upper(pr_dsdepart),'[^;]+', 1, LEVEL) FROM dual
+													 CONNECT BY regexp_substr(upper(pr_dsdepart), '[^;]+', 1, LEVEL) IS NOT NULL);
+
+      -- Cursor para verificar se o operador não está em algum dos departamentos parametrizados
+			CURSOR cr_crapope_neg(pr_cdcooper IN crapope.cdcooper%TYPE
+													 ,pr_cdoperad IN crapope.cdoperad%TYPE
+													 ,pr_dsdepart IN crapdpo.dsdepart%TYPE) IS
+				SELECT 1
+				FROM crapope ope
+						,crapdpo dpo
+				WHERE ope.cdcooper = pr_cdcooper
+					AND upper(ope.cdoperad) = upper(pr_cdoperad)
+					AND dpo.cdcooper = ope.cdcooper
+					AND dpo.cddepart = ope.cddepart
+					AND upper(dpo.dsdepart) NOT IN (SELECT regexp_substr(upper(pr_dsdepart),'[^;]+', 1, LEVEL) FROM dual
+													 CONNECT BY regexp_substr(upper(pr_dsdepart), '[^;]+', 1, LEVEL) IS NOT NULL);
+
+
+    BEGIN
+			-- Buscar por departamentos listados
+      IF pr_flgnegac = 0 THEN
+				-- Se retornou algum registro, operador está em algum departamento listado
+				OPEN cr_crapope(pr_cdcooper => pr_cdcooper
+											 ,pr_cdoperad => pr_cdoperad
+											 ,pr_dsdepart => pr_dsdepart);
+				FETCH cr_crapope INTO vr_result;
+				-- Fechar cursor
+				CLOSE cr_crapope;
+				
+			ELSE -- Buscar por departamentos NÃO listados
+				-- Se retornou algum registro, operador NÃO está nos departamentos listados
+				OPEN cr_crapope_neg(pr_cdcooper => pr_cdcooper
+													 ,pr_cdoperad => pr_cdoperad
+													 ,pr_dsdepart => pr_dsdepart);
+				FETCH cr_crapope_neg INTO vr_result;
+				-- Fechar cursor
+				CLOSE cr_crapope_neg;
+			END IF;
+      
+      RETURN NVL(vr_result, 0);
+		END;																 
+  END fn_valida_depart_operad;
   
 END GENE0005;
 /
