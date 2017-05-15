@@ -727,10 +727,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                            na procedure pc_obtem_saldo_dia, Prj. 302 (Jean Michel).
 
                17/11/2016 - Correcao do cursor cr_crapepr removendo o comando NVL com intuito de
-               							ganho em performance. SD 516113 (Carlos Rafael Tanholi)	
-										
-			   23/02/2017 - Adicionado históricos de débito em c/c de recarga nas procedures
-							              pc_obtem_saldo_dia e pc_consulta_extrato. (PRJ321 Reinert)									  
+               							ganho em performance. SD 516113 (Carlos Rafael Tanholi)			  
+
+               23/02/2017 - Adicionado históricos de débito em c/c de recarga nas procedures
+							              pc_obtem_saldo_dia e pc_consulta_extrato. (PRJ321 Reinert)
 
                07/03/2017 - Alteracao no texto da procedure pc_envia_extrato_email informando a 
                             descontinuidade do extrato essa solicitacao partiu de uma necessidade de 
@@ -741,9 +741,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
 
 			   24/04/2017 - Nao considerar valores bloqueados para compor o saldo de Dep. a vista.
 			                Heitor (Mouts) - Melhoria 440
-
+											
 			   04/05/2017 - Incluído histórico 2139 na variável vr_lscdhist_ret da procedure
 				            pc_obtem_saldo_dia. (Reinert)
+
+			   15/05/2017 - Incluído histórico 2139 na variável vr_lscdhist_ret da procedure
+							pc_consulta_extrato. (Reinert)
 
 ..............................................................................*/
 
@@ -858,7 +861,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
        AND epr.nrdconta = pr_nrdconta
        AND epr.nrctremp = pr_nrctremp;
   rw_crapepr cr_crapepr%ROWTYPE;
-
+	
 	CURSOR cr_his_recarga(pr_cdhistor IN tbrecarga_operadora.cdhisdeb_cooperado%TYPE) IS
 	  SELECT 1
 		  FROM tbrecarga_operadora tope
@@ -3679,7 +3682,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         FOR rw_craplcm_olt IN cr_craplcm_olt(pr_cdcooper => pr_cdcooper            --> Cooperativa conectada
                                     ,pr_nrdconta => pr_nrdconta            --> Número da conta
                                     ,pr_dtmvtolt => pr_rw_crapdat.dtmvtocd --> Data do movimento utilizada no cash dispenser.                                    
-                                    ,pr_lsthistor_ret => '15,316,375,376,377,450,530,537,538,539,767,771,772,918,920,1109,1110,1009,1011,527,472,478,497,499,501,530,108,1060,1070,1071,1072,'||vr_tab_tarifa_transf(vr_tariidx).cdhisint||','||vr_tab_tarifa_transf(vr_tariidx).cdhistaa || vr_cdhishcb || vr_cdhisope) LOOP --> Lista com códigos de histórico a retornar
+                                    ,pr_lsthistor_ret => '15,316,375,376,377,450,530,537,538,539,767,771,772,918,920,1109,1110,1009,1011,527,472,478,497,499,501,530,108,1060,1070,1071,1072,2139,'||vr_tab_tarifa_transf(vr_tariidx).cdhisint||','||vr_tab_tarifa_transf(vr_tariidx).cdhistaa || vr_cdhishcb || vr_cdhisope) LOOP --> Lista com códigos de histórico a retornar
           -- Se for uma transferencia agendada, nao compor saldo
           IF NOT( (rw_craplcm_olt.cdhistor IN(375,376,377,537,538,539,771,772) AND NVL(SUBSTR(rw_craplcm_olt.cdpesqbb,54,8),' ') = 'AGENDADO')
                  OR
