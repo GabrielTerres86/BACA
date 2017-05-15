@@ -6404,7 +6404,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
    Programa: CCDR0003
    Sigla   : APLI
    Autor   : Tiago
-   Data    : Junho/2015                          Ultima atualizacao: 01/09/2016
+   Data    : Junho/2015                          Ultima atualizacao: 15/05/2017
 
    Dados referentes ao programa:
 
@@ -6427,6 +6427,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 (Chamado 624482) - (Fabricio)
                 
    15/05/2017 - Incluido parenteses no IF que valida se deve terminar o repique (Tiago/Fabricio)                
+   
+   15/05/2017 - Correções para repique contando 1 dia util para repique ao inves de dias corridos
+                (Tiago/Fabricio).
   .......................................................................................*/
   PROCEDURE pc_debita_fatura(pr_cdcooper  IN crapcop.cdcooper%TYPE
                             ,pr_cdprogra  IN crapprg.cdprogra%TYPE
@@ -6703,7 +6706,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
       -- Pegar a data de referencia do periodo    
       vr_dtmvante:= pr_dtmvtolt - vr_qtddiapg;
-      vr_dtmvante:= gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,pr_dtmvtolt => vr_dtmvante - 1, pr_tipo => 'A') + 1;
+      
+      IF (vr_dtmvante - 1) = gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,pr_dtmvtolt => vr_dtmvante - 1, pr_tipo => 'A') THEN
+          vr_dtmvante:= gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,pr_dtmvtolt => vr_dtmvante, pr_tipo => 'A');
+      ELSE
+          vr_dtmvante:= gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,pr_dtmvtolt => vr_dtmvante - 1, pr_tipo => 'A') + 1;
+      END IF;
 
       -- Leitura do calendario da cooperativa
       OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
@@ -6951,8 +6959,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
             RAISE vr_exc_saida;
         END;        
 
-        --Mudar situacao da fatura para nao efetuado qdo 
-        --for o ultimo dia do repique e nao conseguiu realizar o pagamento total        
+/* Regra comentado pois validava os dias de repique como dias corridos e passou a ser dias uteis
         IF (((gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
                                         ,pr_dtmvtolt => rw_tbcrd_fatura.dtvencimento
                                         ,pr_tipo => 'P') = (pr_dtmvtolt - vr_qtddiapg) AND 
@@ -6965,7 +6972,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
             (gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
                                         ,pr_dtmvtolt => pr_dtmvtolt + 1
                                         , pr_tipo => 'P') > (pr_dtmvtolt + 1))))               AND 
-           pr_cdprogra = 'CRPS674') THEN        
+           pr_cdprogra = 'CRPS674') THEN        */
+
+
+        --Mudar situacao da fatura para nao efetuado qdo 
+        --for o ultimo dia do repique e nao conseguiu realizar o pagamento total        
+        IF pr_cdprogra = 'CRPS674' AND          
+          (rw_tbcrd_fatura.vlpendente - vr_vlpagmto) > 0 AND
+           gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
+                                      ,pr_dtmvtolt => rw_tbcrd_fatura.dtvencimento
+                                      ,pr_tipo => 'P') = 
+           gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
+                                      ,pr_dtmvtolt => (pr_dtmvtolt - vr_qtddiapg)
+                                      ,pr_tipo => 'A') THEN
           BEGIN            
             UPDATE tbcrd_fatura
                SET tbcrd_fatura.insituacao = 4
@@ -7051,9 +7070,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                  SET tbcrd_fatura.vlpendente  = rw_tbcrd_fatura.vlpendente - vr_vlpagmto,
                      tbcrd_fatura.dtpagamento = pr_dtmvtolt,                      
                      tbcrd_fatura.dtref_pagodia = decode(vr_flmuddia,1,vr_dtultsld,tbcrd_fatura.dtref_pagodia),
-                     tbcrd_fatura.vlpagodia = decode(vr_flmuddia,1,vr_vlsomsld,tbcrd_fatura.vlpagodia + vr_vlsomsld),
-                     tbcrd_fatura.insituacao = decode(vr_dtmvante,tbcrd_fatura.dtvencimento,4,tbcrd_fatura.insituacao)
+                     tbcrd_fatura.vlpagodia = decode(vr_flmuddia,1,vr_vlsomsld,tbcrd_fatura.vlpagodia + vr_vlsomsld)
                WHERE tbcrd_fatura.idfatura    = rw_tbcrd_fatura.idfatura;
+               
+               IF pr_cdprogra = 'CRPS674' AND
+                  vr_dtmvante = rw_tbcrd_fatura.dtvencimento THEN
+                 UPDATE tbcrd_fatura
+                   SET  tbcrd_fatura.insituacao = 4
+                 WHERE  tbcrd_fatura.idfatura    = rw_tbcrd_fatura.idfatura;
+               END IF;
+               
             EXCEPTION
               WHEN OTHERS THEN
                 vr_dscritic := 'Erro ao atualizar tbcrd_fatura: '||SQLERRM;
