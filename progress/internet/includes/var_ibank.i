@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Junior
-   Data    : Julho/2004.                       Ultima atualizacao: 22/02/2017
+   Data    : Julho/2004.                       Ultima atualizacao: 06/03/2017
 
    Dados referentes ao programa:
 
@@ -137,6 +137,9 @@
                            
               22/02/2017 - Alteraçoes para compor comprovantes DARF/DAS 
                            Modelo Sicredi (Lucas Lunelli)
+                           
+              06/03/2017 - Adicionados campos nrddd, nrcelular e nmoperadora em 
+                           xml_operacao38 (Projeto 321 - Lombardi).
                            
 ..............................................................................*/
 
@@ -407,7 +410,10 @@ DEF TEMP-TABLE xml_operacao38                                           NO-UNDO
     FIELD dtagenda AS CHAR
     FIELD dtperiod AS CHAR
     FIELD nrcpfcgc AS CHAR
-    FIELD dtvendrf AS CHAR.
+    FIELD dtvendrf AS CHAR
+    FIELD nrddd    AS CHAR
+    FIELD nrcelular AS CHAR
+    FIELD nmoperadora AS CHAR.
 
 DEF TEMP-TABLE xml_operacao88                                           NO-UNDO
     FIELD dscabini AS CHAR

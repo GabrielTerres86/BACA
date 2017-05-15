@@ -100,6 +100,7 @@
 												 para remover os mesmos e criado uma flag para identificar se deve remover os acentos ou nao.
  * 081: [08/02/2017] Kelvin		      (CECRED) : Adicionado na funcao removeCaracteresInvalidos os caracteres ("º","°","ª") para ajustar o chamado 562089.
  * 086: [24/03/2017] JOnata           (RKAM)   : Ajuste devido a inclusão da include para soliticar senha do cartão magnético (M294).
+ * 086: [12/04/2017] Reinert				   : Ajustado funcao RemoveCaracteresInvalidos para ignorar caractere "#".												 
  */ 	 
 
 var UrlSite     = parent.window.location.href.substr(0,parent.window.location.href.lastIndexOf("/") + 1); // Url do site
@@ -306,7 +307,7 @@ $(document).ready(function () {
         } else if (e.keyCode == 113) {
 			mostraAjudaF2();
 			return true;			
-
+			
 
 		// Se for as teclas ENTER | INSERT | DELET | ESC | F1 | F3 | F4 | F9 | F10 | F11
         } else if (in_array(e.keyCode, [13, 35, 45, 46, 27, 112, 114, 115, 120, 121, 122])) {
@@ -429,8 +430,8 @@ $(document).ready(function () {
 		return $(event.target).is('.ponteiroDrag');
 	}).bind('drag', function (event) {
         $(this).css({ top: event.offsetY, left: event.offsetX });
-});
-
+    });  	
+	
 });
 
 
@@ -490,7 +491,7 @@ function highlightObjFocus(parentElement) {
 											return 'campo';
 										} else {											
 											return typeElement;
-}
+										}
 									})
 								   .addClass(function () {
 										if (typeElement == 'text' || typeElement == 'password' || typeElement == 'select') {
@@ -501,7 +502,7 @@ function highlightObjFocus(parentElement) {
 								    });
 						}
 				    });
-
+					
 		}
 	});
 	
@@ -528,7 +529,7 @@ function mostraAjudaF2() {
 			$("#divF2").html(response);
 			// Centraliza o div na Tela
 			$("#divF2").setCenterPosition();
-}
+		}				
 	}); 	
 }
 
@@ -756,9 +757,9 @@ function retiraCaracteres(str, valid, flgRetirar) {
 		// Se for um n&uacute;mero concatena na string result
 		if ((valid.indexOf(temp) != "-1" && flgRetirar) || (valid.indexOf(temp) == "-1" && !flgRetirar)) {
 			result += temp;
-}
+		}
 	}
-
+	
 	return result;		
 }
 
@@ -797,9 +798,9 @@ function validaNroConta(conta) {
 
         if (div == conta.substr((tam - 1), 1)) {
 			return true;
-}
+		}
 	}
-
+	
 	return false;
 }
 
@@ -819,10 +820,10 @@ function retirarZeros(numero) {
         if ((temp == '0') && (numero.substr(i + 1, 1) != ',')) {
 			if (flgMaior) { // Se já foi encontrado um número maior que zero
 				result += temp;
-}
+			}
 		} else if (!isNaN(temp)) { // Se for um número maior que zero
 			result += temp;
-
+			
 			if (!flgMaior) {
 				flgMaior = true; 
 			}
@@ -901,10 +902,10 @@ function validaData(data) {
         } else { // Se n&atilde;o for ano bissexto
 			if (dia > 28) {
 				return false;
-}
+			}
 		}
 	}
-
+	
 	return true;
 }
 
@@ -921,8 +922,8 @@ function validaNumero(numero, validaFaixa, minimo, maximo) {
 	// Se n&atilde;o for um n&uacute;mero v&aacute;lido
 	if (isNaN(numero)) {
 		return false;
-}
-
+	}
+	
 	// Se par&acirc;metro for true, verifica se n&uacute;mero est&aacute; dentro de uma faixa v&aacute;lida
 	if (validaFaixa) {
 		if (minimo == maximo) {
@@ -948,7 +949,7 @@ function validaCpfCnpj(cpfcnpj, tipo) {
 
 	// 058
 	cpfcnpj = normalizaNumero(cpfcnpj);
-
+	
 	var strCPFCNPJ = new String(parseFloat(cpfcnpj));
 
 	if (tipo == 1) { //CPF
@@ -960,7 +961,7 @@ function validaCpfCnpj(cpfcnpj, tipo) {
 		if (strCPFCNPJ.length < 5) {
 			return false;
 		}
-
+		
 		for (var i = 1; i < 10; i++) {
 			for (var j = 0; j < 11; j++) {
 				invalid += i;
@@ -977,7 +978,7 @@ function validaCpfCnpj(cpfcnpj, tipo) {
             calculo = parseInt(calculo) + parseInt(strCPFCNPJ.substr(i, 1)) * peso;
 			 peso--;
 		}
-
+		
 		resto = parseInt(calculo) % 11;
 		
 		if (resto == 10) {
@@ -1085,7 +1086,7 @@ function validaCpfCnpj(cpfcnpj, tipo) {
 			return false;
 		} else {
 			return true;
-}
+		}
 	}
 }
 
@@ -1108,7 +1109,7 @@ function cancelaPedeSenhaCoordenador(divBlock) {
 		unblockBackground();
 	} else {
 		blockBackground(parseInt($("#" + divBlock).css("z-index")));
-}
+	}
 }
 
 /*!
@@ -1137,7 +1138,7 @@ function pedeSenhaCoordenador(nvopelib, nmfuncao, nmdivfnc) {
         success: function (response) {
 			$("#divUsoGenerico").html(response);
 			$("#divUsoGenerico").centralizaRotinaH();
-}
+		}				
 	}); 	
 }
 
@@ -1188,7 +1189,7 @@ function confirmaSenhaCoordenador(nmfuncao) {
             } catch (error) {
 				hideMsgAguardo();
                 showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divUsoGenerico').css('z-index')))");
-}
+			}
 		}				
 	});				
 }
@@ -1249,7 +1250,7 @@ function trim(str) {
 		if (/\S/.test(str.charAt(i))) {
 			str = str.substring(0, i + 1);
 			break;
-}
+		}
 	}
 	return str;
 }
@@ -1312,8 +1313,8 @@ function bloqueiaFundo(div, campoFoco, formFoco, boErro) {
             $('#' + campoFoco, '#' + formFoco).addClass('campoErro');
 		}
         $('#' + campoFoco, '#' + formFoco).focus();
-}
-
+	}
+		
 	return true;
 }
 
@@ -1356,7 +1357,7 @@ function number_format(number, decimals, dec_point, thousands_sep) {
 function in_array(item, array) {
     for (var i = 0; i < array.length; i++) {
         if (item == array[i]) return true;
-}
+	}
 	return false;
 }
 
@@ -1408,7 +1409,7 @@ function layoutPadrao() {
 	$('input.alpha'			).css({'text-transform':'uppercase'});
 	$('input.alphanum'		).css({'text-transform':'uppercase'});		
 	$('input.alphanumlower'	).css({'text-transform':'lowercase'});		
-
+	
 	$('input.alpha'			).alpha({ichars: caracAcentuacao+caracEspeciais});
 	$('input.alphanum'		).alphanumeric({ichars: caracSuperEspeciais+caracAcentuacao});
 	$('input.alphanumlower'	).alphanumeric({ichars: caracSuperEspeciais+caracAcentuacao});
@@ -1424,7 +1425,7 @@ function layoutPadrao() {
 
 	// Alinhando os campos para direita
 	$('.inteiro,.porcento,.numerocasa,.caixapostal,.cep,.conta,.contrato,.contrato2,.contrato3,.contaitg,.cnpj,.cpf,.matricula,.cadempresa,.insc_estadual').css('text-align','right');	
-
+	
 	/*!
 	 * ALTERAÇÃO  : 023
 	 * OBJETIVO   : Tecla de atalho F8 igual ao modo CARACTER para limpar os campos input
@@ -1542,7 +1543,7 @@ function revisaoCadastral(chavealt, tpatlcad, businobj, stringArrayMsg, metodo) 
             } catch (error) {
 				hideMsgAguardo();
                 showError('error', 'N&atilde;o foi poss&iacute;vel concluir a revis&atilde;o cadastral.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
-}
+			}		
 		}				
 	});	 
 }
@@ -1574,7 +1575,7 @@ function selecionaRegistro() {
     $('table > tbody > tr', 'div.divRegistros').each(function () {
         if ($(this).hasClass('corSelecao')) {
             retorno = $('input', $(this)).val();
-}
+		}
 	});	
 	return retorno;
 }
@@ -1691,7 +1692,7 @@ function desbloqueia(campoFoco, formFoco) {
 	unblockBackground();
     if ((typeof campoFoco != 'undefined') && (typeof formFoco != 'undefined')) {
         $('#' + campoFoco, '#' + formFoco).focus();
-}
+	}
 	return true;
 }
 
@@ -1703,7 +1704,7 @@ function desbloqueia(campoFoco, formFoco) {
 function truncar(texto, limite) {
 	if (texto.length > limite) {
         texto = texto.substr(0, limite - 1) + '…';
-}
+	}
 	return texto;
 }
 
@@ -1718,7 +1719,7 @@ function removeOpacidade(nome) {
 			$(this).get(0).style.removeAttribute('filter');
 		} else {
             $(this).css({ '-moz-opacity': '100', 'filter': 'alpha(opacity=100)', 'opacity': '100' });
-}
+		}
 	});
 	
 }
@@ -1736,7 +1737,7 @@ function retornaCampos(arrayDados, separador) {
             str += registro + separador;
 		}
         str = str.substring(0, (str.length - 1));
-}
+	}
 	return str;
 }
 
@@ -1764,7 +1765,7 @@ function retornaValores(arrayDados, sepValores, sepRegs, strCampos) {
 			str += sepRegs;
 		}
         str = str.substring(0, (str.length - 1));
-}
+	}
 	return str;
 }
 
@@ -1835,7 +1836,7 @@ $.fn.extend({
 		// Calcula tamanho que deve sobrar ao redor do div
 		var objOffsetY = ($(window).innerHeight() - $(this).outerHeight()) / 2;
 		var objOffsetX = $.browser.msie ? ($(window).innerWidth() - $(this).outerWidth()) / 2 : ($("body").offset().width - $(this).outerWidth()) / 2;
-
+	
 		// Atribui posi&ccedil;&atilde;o ao div
 		$(this).css({
 			left: curScrollX + objOffsetX,
@@ -2299,8 +2300,8 @@ function isHabilitado(objeto) {
 
     if (typeof objeto == 'object') {
         for (var i in classes) if (objeto.hasClass(classes[i])) return true;
-}
-
+	}
+	
 	return false;
 }
 
@@ -2311,7 +2312,7 @@ function controlaFocoEnter(frmName) {
     cTodos.unbind('keypress').bind('keypress', function (e) {
 		
         if (e.keyCode == 9 || e.keyCode == 13) {
-
+				
 			var indice = cTodos.index(this);	
 				
 			while (true) {
@@ -2362,7 +2363,7 @@ function CheckNavigator() {
 		} else {
 			versao = navigator.userAgent.substr(navigator.userAgent.search(/msie/i) + 5);
             versao = versao.substr(0, versao.search(';'));
-}
+		}		
 	}
 	
 	return { navegador: navegador, versao: versao };
@@ -2414,8 +2415,8 @@ function carregaImpressaoAyllos(form, action, callback) {
 	} catch (err) {	
 		hideMsgAguardo();
         showError("error", "Erro no sistema de impress&atilde;o: " + err.message + "<br>Feche o navegador e reinicie o sistema Ayllos.", "Alerta - Ayllos", "");
-}
-
+	}
+	
 	return true;
 }
 
@@ -2483,7 +2484,7 @@ function base64_decode(data) {
 }
 
 function base64_encode(data) {
-
+  
   var b64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
   var o1, o2, o3, h1, h2, h3, h4, bits, i = 0,
     ac = 0,
@@ -2531,11 +2532,11 @@ function removeCaracteresInvalidos(str, flgRemAcentos){
 	
 	//Se necessario remover acentuacao
 	if (flgRemAcentos){
-		return removeAcentos(str.replace(/[^A-z0-9\sÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöøÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ\!\@\$\%\*\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/\°\º\ª]/g,""));				 
+		return removeAcentos(str.replace(/[^A-z0-9\sÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöøÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ\!\@\#\$\%\*\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/\°\º\ª]/g,""));				 
 	}
-
+		
 	else
-		return str.replace(/[^A-z0-9\sÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöøÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ\!\@\$\%\*\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/\°\º\ª]/g,"");				 
+	    return str.replace(/[^A-z0-9\sÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöøÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ\!\@\#\$\%\*\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/\°\º\ª]/g, "");
 	
 }
 
@@ -2732,13 +2733,13 @@ function validaSenhaInternet(){
     var idseqttl = $('#idseqttl','#divSolicitaSenha').val();
     var retorno  = $('#retorno' ,'#divSolicitaSenha').val();
     var nrdconta = $('#nrdconta','#divSolicitaSenha').val();
-
+    
     idseqttl_senha_internet = idseqttl;
-
+    
     if (idseqttl == ''){
         showError("error","Selecione um titular.","Alerta - Ayllos","blockBackground(parseInt($('#divUsoGenerico').css('z-index')));");							
     }
-
+  
   
 	$.ajax({		
 		type: 'POST', 
@@ -2779,7 +2780,6 @@ function validaSenhaInternet(){
 	return false;
 }
 
-
 function formataVerificaSenhaMagnetico() {
 
 
@@ -2801,95 +2801,95 @@ function formataVerificaSenhaMagnetico() {
 }
 
 //Solicita senha do cartao magnetico ao cooperado
-function solicitaSenhaMagnetico(retorno, nrdconta){
-    
+function solicitaSenhaMagnetico(retorno, nrdconta) {
+
     // Mostra mensagem de aguardo
-    showMsgAguardo("Aguarde, carregando tela de senha...");   
-    
+    showMsgAguardo("Aguarde, carregando tela de senha...");
+
     // Carrega conteúdo da opção através de ajax
-	$.ajax({		
-		type: 'POST', 
-		url: UrlSite + 'includes/senha_magnetico/form_senha_magnetico.php',
-		data: {
-           nrdconta: nrdconta,
-           retorno: retorno,
-           redirect: 'html_ajax' // Tipo de retorno do ajax
-		},		
-		error: function(objAjax,responseError,objExcept) {
-			hideMsgAguardo();
-			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".","Alerta - Ayllos","return false;");							
-		},
-		success: function(response) {			
-				hideMsgAguardo();
-				if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
-					try {
-                            exibeRotina($('#divUsoGenerico'));
-                            $('#divUsoGenerico').html(response);
-                            $('#divUsoGenerico').css({'width':'410px'});//css({'left':'340px','top':'91px'});
-                            
-                            bloqueiaFundo($('#divUsoGenerico'));                            
-                            formataVerificaSenhaMagnetico();
-                          
-                            return false;
-					} catch(error) {						
-						showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground();');
-					}
-				} else {
-					try {
-						eval( response );						
-					} catch(error) {						
-						showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground();');
-					}
-				}
-		}				
-	});
-		
-	return false;
+    $.ajax({
+        type: 'POST',
+        url: UrlSite + 'includes/senha_magnetico/form_senha_magnetico.php',
+        data: {
+            nrdconta: nrdconta,
+            retorno: retorno,
+            redirect: 'html_ajax' // Tipo de retorno do ajax
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "return false;");
+        },
+        success: function (response) {
+            hideMsgAguardo();
+            if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
+                try {
+                    exibeRotina($('#divUsoGenerico'));
+                    $('#divUsoGenerico').html(response);
+                    $('#divUsoGenerico').css({ 'width': '410px' });//css({'left':'340px','top':'91px'});
+
+                    bloqueiaFundo($('#divUsoGenerico'));
+                    formataVerificaSenhaMagnetico();
+
+                    return false;
+                } catch (error) {
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground();');
+                }
+            } else {
+                try {
+                    eval(response);
+                } catch (error) {
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground();');
+                }
+            }
+        }
+    });
+
+    return false;
 }
 //Valida se a senha está correta
-function validaSenhaMagnetico(){
-    
+function validaSenhaMagnetico() {
+
     // Mostra mensagem de aguardo
-    showMsgAguardo("Aguarde, Validando senha cooperado...");    
-    
+    showMsgAguardo("Aguarde, Validando senha cooperado...");
+
     var cddsenha = $('#cddsenha', '#divSolicitaSenhaMagnetico').val();
-    var retorno  = $('#retorno', '#divSolicitaSenhaMagnetico').val();
+    var retorno = $('#retorno', '#divSolicitaSenhaMagnetico').val();
     var nrdconta = $('#nrdconta', '#divSolicitaSenhaMagnetico').val();
-          
-	$.ajax({		
-		type: 'POST', 
-		url: UrlSite + 'includes/senha_magnetico/valida_senha_magnetico.php',
-		data: {
-			nrdconta: nrdconta,            
+
+    $.ajax({
+        type: 'POST',
+        url: UrlSite + 'includes/senha_magnetico/valida_senha_magnetico.php',
+        data: {
+            nrdconta: nrdconta,
             cddsenha: cddsenha,
             retorno: retorno,
-			redirect: 'html_ajax' // Tipo de retorno do ajax
-		},		
-		error: function(objAjax,responseError,objExcept) {
-			hideMsgAguardo();
-			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".","Alerta - Ayllos","return false;");							
-		},
-		success: function(response) {			
-				hideMsgAguardo();
-				if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
-					try {
-						if(response.indexOf(""))
-                          $('#divUsoGenerico').html(response);
-                        else
-                          eval(response);
-						  return false;
-					} catch(error) {						
-						showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground();');
-					}
-				} else {
-					try {
-						eval( response );						
-					} catch(error) {						
-						showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground();');
-					}
-				}
-		}				
-	});
-		
-	return false;
+            redirect: 'html_ajax' // Tipo de retorno do ajax
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "return false;");
+        },
+        success: function (response) {
+            hideMsgAguardo();
+            if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
+                try {
+                    if (response.indexOf(""))
+                        $('#divUsoGenerico').html(response);
+                    else
+                        eval(response);
+                    return false;
+                } catch (error) {
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground();');
+                }
+            } else {
+                try {
+                    eval(response);
+                } catch (error) {
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground();');
+                }
+            }
+        }
+    });
+
+    return false;
 }

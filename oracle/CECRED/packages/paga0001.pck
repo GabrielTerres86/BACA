@@ -12042,7 +12042,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --  Sistema  : Rotinas Internet
     --  Sigla    : INET
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Junho/2013.                   Ultima atualizacao: 14/12/2016
+    --  Data     : Junho/2013.                   Ultima atualizacao: 20/03/2017
     --
     --  Dados referentes ao programa:
     --
@@ -12068,6 +12068,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --                             17 - Cancelamento Contrato SMS Cobrança
     --                            para expirar 30 dias apos criação.
     --                            PRJ319 - SMS Cobrança (Odirlei-AMcom)
+    --
+    --               20/03/2017 - Ajustes para Prj. 321, Recarga de Celular (Lombardi).
     --
     --               14/12/2016 - Incluido tratamento para transacao: 
     --                             12 - Desconto de Cheque
@@ -12133,6 +12135,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
       WHERE  tbspb_trans_pend.cdtransacao_pendente = pr_cdtrapen;
       rw_tbspb_trans_pend cr_tbspb_trans_pend%ROWTYPE;
       
+      --Recarga de Celular
+      CURSOR cr_tbrecarga_trans_pend (pr_cdtrapen IN tbrecarga_trans_pend.cdtransacao_pendente%TYPE) IS
+      SELECT tbrecarga_trans_pend.tprecarga
+            ,tbrecarga_operacao.dtrecarga
+            ,tbrecarga_trans_pend.idoperacao
+      FROM   tbrecarga_trans_pend
+            ,tbrecarga_operacao
+      WHERE  tbrecarga_trans_pend.idoperacao = tbrecarga_operacao.idoperacao
+      AND    tbrecarga_trans_pend.cdtransacao_pendente = pr_cdtrapen;
+      rw_tbrecarga_trans_pend cr_tbrecarga_trans_pend%ROWTYPE;
+       
       --Tabela Aplicacao pend. (7)
       CURSOR cr_tbcapt_trans_pend (pr_cdtrapen IN tbcapt_trans_pend.cdtransacao_pendente%TYPE) IS
       SELECT tbcapt_trans_pend.tpoperacao 
@@ -12311,6 +12324,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
               
             vr_idagenda := rw_tbspb_trans_pend.idagendamento;
             vr_dtmvtopg := rw_tbspb_trans_pend.dtdebito;                
+        ELSIF vr_tptransa = 13 THEN
+            --Selecionar transacao pendente
+            OPEN cr_tbrecarga_trans_pend (pr_cdtrapen => vr_cdtransa);
+            --Posicionar no primeiro registro
+            FETCH cr_tbrecarga_trans_pend INTO rw_tbrecarga_trans_pend;
+            --Se encontrou
+            IF cr_tbrecarga_trans_pend%NOTFOUND THEN
+              --Fechar Cursor
+              CLOSE cr_tbrecarga_trans_pend;
+              --Erro
+              vr_cdcritic:= 0;
+              vr_dscritic:= 'Transacao pendente não cadastrada 2.';
+              --Levantar Excecao
+              RAISE vr_exc_erro;
+            END IF;
+            --Fechar Cursor
+            CLOSE cr_tbrecarga_trans_pend;
+              
+            vr_idagenda := rw_tbrecarga_trans_pend.tprecarga;
+            vr_dtmvtopg := rw_tbrecarga_trans_pend.dtrecarga;
         ELSE
 			-- Adesão de pacote de tarifas(10), contrao de SMS(16,17) e Desconto de cheque(12)
       -- não permite agendamento
@@ -12331,7 +12364,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
         -- tptransa 9     Folha Pagamento
         -- tptransa 11     DARF/DAS
         -- tptransa 12    Desconto de Cheque
-        --
+        -- tptransa 13    Recarga de Celular
         -- Codigo Horario
         -- 1 - Transferencia, 2 - Pagamento,        3 - Cobranca
         -- 4 - TED,           5 - Intercooperativa, 6 - VRBoleto
@@ -12464,6 +12497,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
         --Se deve alterar
         IF vr_flgalter THEN
           BEGIN
+            
+            IF vr_tptransa = 13 THEN
+              UPDATE tbrecarga_operacao
+                 SET insit_operacao = 7
+               WHERE idoperacao = rw_tbrecarga_trans_pend.idoperacao;
+               
+            END IF;
             
             UPDATE tbgen_trans_pend 
             SET    tbgen_trans_pend.idsituacao_transacao = 4 /* Expirada */
@@ -14420,7 +14460,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
           END IF;
 
             CLOSE cr_acordo_parcela;
-          END IF;
+        END IF;
 
         END IF;
         --Fechar Cursor
