@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --  Sistema  : Rotinas genericas referente a tela de Cartões
   --  Sigla    : CCRD
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Abril - 2014.                   Ultima atualizacao: 03/02/2017
+  --  Data     : Abril - 2014.                   Ultima atualizacao: 15/05/2017
   --
   -- Dados referentes ao programa:
   --
@@ -46,6 +46,9 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --                          de dia util. SD 579741. (Carlos Rafael Tanholi)
   --             03/02/2017 - #601772 Inclusão de verificação e log de erros de execução através do procedimento
   --                          pc_internal_exception no procedimento pc_crps670 (Carlos)
+  --
+  --             15/05/2017 - Incluido parenteses no IF que valida se deve terminar o repique (Tiago/Fabricio)
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de Registro para as faturas pendentes
@@ -6422,6 +6425,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 
    13/03/2017 - Ajuste no tratamento acima descrito para contemplar tambem o feriado de carnaval.
                 (Chamado 624482) - (Fabricio)
+                
+   15/05/2017 - Incluido parenteses no IF que valida se deve terminar o repique (Tiago/Fabricio)                
   .......................................................................................*/
   PROCEDURE pc_debita_fatura(pr_cdcooper  IN crapcop.cdcooper%TYPE
                             ,pr_cdprogra  IN crapprg.cdprogra%TYPE
@@ -6948,7 +6953,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
         --Mudar situacao da fatura para nao efetuado qdo 
         --for o ultimo dia do repique e nao conseguiu realizar o pagamento total        
-        IF ((gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
+        IF (((gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
                                         ,pr_dtmvtolt => rw_tbcrd_fatura.dtvencimento
                                         ,pr_tipo => 'P') = (pr_dtmvtolt - vr_qtddiapg) AND 
             (rw_tbcrd_fatura.vlpendente - vr_vlpagmto) > 0)  OR           
@@ -6959,7 +6964,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
              ,pr_tipo => 'P') -  (pr_dtmvtolt - vr_qtddiapg)) < (rw_crapdat.dtmvtopr - pr_dtmvtolt) AND
             (gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
                                         ,pr_dtmvtolt => pr_dtmvtolt + 1
-                                        , pr_tipo => 'P') > (pr_dtmvtolt + 1)))               AND 
+                                        , pr_tipo => 'P') > (pr_dtmvtolt + 1))))               AND 
            pr_cdprogra = 'CRPS674') THEN        
           BEGIN            
             UPDATE tbcrd_fatura
