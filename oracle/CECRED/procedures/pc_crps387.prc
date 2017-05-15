@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Abril/2004                        Ultima atualizacao: 11/04/2017
+   Data    : Abril/2004                        Ultima atualizacao: 15/05/2017
 
    Dados referentes ao programa:
 
@@ -391,7 +391,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                              final seja verificado se cooperativa que esta rodando 
                              é igual ao que iremos crirar o registro (Lucas Ranghetti #591560)
     
-	           30/01/2017 - Implementado join no cursor que verifica coop migrada (Tiago/Facricio)
+	             30/01/2017 - Implementado join no cursor que verifica coop migrada (Tiago/Facricio)
                
                02/03/2017 - Adicionar dtmvtopg no filtro do cursor cr_craplau_dup (Lucas Ranghetti #618379)
 			   
@@ -399,20 +399,20 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                             que se refere a numero de conta criticar apenas para a cooperativa
                             correspondente (Tiago/Fabricio SD620952)
 
-			   29/03/2017 - Para casos em que a conta for migrada e a cooperativa ainda estiver
+			         29/03/2017 - Para casos em que a conta for migrada e a cooperativa ainda estiver
                             ativa e convenio usar agencia vamos dar um continue e somente irá 
                             ser agendado o pagamento uma vez na cooperativa em que a conta foi 
                             migrada (Lucas Ranghetti #640199)
-
                             
                31/03/2017 - Ajustes para quando vier a conta > 9000000000 e usar agencia, gravar 
                             o numero da conta completo inclusive com o 900+coop a frente da conta
                             (Lucas Ranghetti #636973)
-			   
-			   
                             
                11/04/2017 - Fechar cursor da craptco quando estiver aberto, tambem verificar
                             se estiver aberto e caso estiver, fechar (Lucas Ranghetti/Fabricio)
+                            
+               15/05/2017 - Incluir tratamento para validar a ultima linha do arquivo 
+                            (Lucas Ranghetti #669962)
 ............................................................................ */
 
 
@@ -875,6 +875,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
       vr_dstexarq VARCHAR2(150);                                      --> Texto arquivo
       vr_nrdolote_sms NUMBER := NULL;                                 --> Numero de lote do SMS
       vr_nrdconta_relato VARCHAR2(15);                                --> Conta para exibir no relatorio
+      vr_des_anexo VARCHAR2(500) := NULL;                             --> Caminho do anexo do e-mail
+      vr_setlinha2 VARCHAR2(500);
+      -- variaveis para utilizacao de comando no OS
+      vr_comando       varchar2(200);
+      vr_typ_saida2     varchar2(4);
       
       -- Variaveis totalizadoras
       vr_doc_gravado PLS_INTEGER := 0;                                --> Quantidade de documentos gravados
@@ -941,7 +946,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
       PROCEDURE pc_envia_critica_email(pr_cdprogra crapprg.cdprogra%TYPE,
                                        pr_cdcooper crapcop.cdcooper%TYPE,
                                        pr_conteudo VARCHAR2,
-                                       pr_nmempres VARCHAR2) IS
+                                       pr_nmempres VARCHAR2,
+                                       pr_nmarquiv  VARCHAR2 DEFAULT NULL) IS
         vr_titemail VARCHAR2(200);
       BEGIN
         IF pr_nmempres IS NULL THEN
@@ -955,7 +961,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                                   ,pr_des_destino     => vr_emaildst
                                   ,pr_des_assunto     => vr_titemail
                                   ,pr_des_corpo       => pr_conteudo
-                                  ,pr_des_anexo       => NULL
+                                  ,pr_des_anexo       => pr_nmarquiv
+                                  ,pr_flg_remove_anex => 'N'
                                   ,pr_des_erro        => vr_dscritic);
 
       END pc_envia_critica_email;
@@ -1996,8 +2003,31 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                 END IF; --rw_gnconve.flggeraj = 1
                 EXIT; -- Sai do loop
               END IF;
+              
+              
             END LOOP;
 
+           /* Verificar se o arquivo esta completo - Ultima linha */
+           vr_comando:= 'tail -2 '||vr_nmdirdeb||'/'||vr_tab_nmarquiv(i);
+
+           --Executar o comando no unix
+           GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                                ,pr_des_comando => vr_comando
+                                ,pr_typ_saida   => vr_typ_saida2
+                                ,pr_des_saida   => vr_setlinha2);
+           --Se ocorreu erro dar RAISE
+           IF vr_typ_saida2 = 'ERR' THEN
+             vr_dscritic:= 'Nao foi possivel executar comando unix. '||vr_comando;
+             RAISE vr_exc_saida;
+           END IF;
+                      
+           --Verificar se a ultima linha é o Trailer
+           IF SUBSTR(vr_setlinha2,01,01) <> 'Z' AND -- Antigo 
+              SUBSTR(vr_setlinha2,152,01) <> 'Z' THEN  -- Servidor "_AIX"             
+             vr_cdcritic:= 999;
+             vr_dscritic:= 'Arquivo incompleto.';             
+           END IF;
+           
             -- Fechar o arquivo
             BEGIN
               gene0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file); --> Handle do arquivo aberto;
@@ -2010,8 +2040,36 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
             END;
 
             IF vr_cdcritic <> 0 THEN
-              vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
 
+              IF vr_cdcritic <> 999 THEN
+                vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+              END IF;
+
+              IF pr_cdcooper = 3 THEN -- Se for da Cecred
+                -- Montar mensagem para enviar no e-mail
+                vr_dscritic := vr_dscritic  || '<br><br>' ||
+                               'Convenio: ' || rw_gnconve.cdconven || '<br>' ||
+                               'Arquivo: '  || vr_tab_nmarquiv(i)  || '<br>' ||
+                               'NSA: '      || vr_nrseqarq;
+
+                -- Somente enviar anexo caso arquivo esteja incompleto
+                IF vr_cdcritic = 999 THEN
+                  vr_des_anexo:= vr_nmdirdeb||'/'||vr_tab_nmarquiv(i);
+                END IF;
+
+                -- Envia critica por email
+                pc_envia_critica_email('CRPS387',
+                                  pr_cdcooper,
+                                  vr_dscritic,
+                                  rw_gnconve.nmempres,
+                                  vr_des_anexo);
+                vr_des_anexo:= NULL;
+              END IF;
+              
+              IF vr_cdcritic <> 999 THEN
+                vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+              END IF;
+              
               vr_nmarquiv := vr_nmdirdeb||'/err' || vr_tab_nmarquiv(i);
 
               -- Acrescenta "err" no inicio do nome do arquivo
@@ -2024,20 +2082,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                                         ,pr_des_log      => to_char(sysdate,'dd/mm/yyyy hh24:mi:ss')||' - '
                                                          || vr_cdprogra || ' --> '
                                                          || vr_dscritic ||' '||vr_nmarquiv);
-
-              IF pr_cdcooper = 3 THEN -- Se for da Cecred
-                -- Montar mensagem para enviar no e-mail
-                vr_dscritic := vr_dscritic  || '\n' ||
-                               'Convenio: ' || rw_gnconve.cdconven || '\n' ||
-                               'Arquivo: '  || vr_tab_nmarquiv(i)  || '\n' ||
-                               'NSA: '      || vr_nrseqarq;
-
-                -- Envia critica por email
-                pc_envia_critica_email('CRPS387',
-                                  pr_cdcooper,
-                                  vr_dscritic,
-                                  rw_gnconve.nmempres);
-              END IF;
 
               -- Limpa as variaveis de erro
               vr_cdcritic := 0;
