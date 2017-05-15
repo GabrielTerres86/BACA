@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0052v.p                  
     Autor(a): Jose Luis Marchezoni (DB1)
-    Data    : Junho/2010                      Ultima atualizacao: 21/01/2016
+    Data    : Junho/2010                      Ultima atualizacao: 25/04/2017
   
     Dados referentes ao programa:
   
@@ -135,6 +135,12 @@
                 21/01/2016 - Para a opcao "X" (Alteracao do Nome) nao deve mais
                              validar as criticas de inclusao
                              (Douglas - Chamado 369449)
+
+				29/11/2016 - Incluso bloqueio de criacao de novas contas na cooperativa
+                             Transulcred (Daniel)
+
+                25/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
+
 ........................................................................*/
 
 
@@ -219,7 +225,7 @@ PROCEDURE Valida_Dados :
     DEF  INPUT PARAM par_dtnasctl AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_cdsexotl AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_tpnacion AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsnacion AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdnacion AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dsnatura AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdufnatu AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdestcvl AS INTE                           NO-UNDO.
@@ -399,7 +405,7 @@ PROCEDURE Valida_Dados :
                               INPUT par_dtnasctl,
                               INPUT par_cdsexotl,
                               INPUT par_tpnacion,
-                              INPUT par_dsnacion,
+                              INPUT par_cdnacion,
                               INPUT par_dsnatura,
                               INPUT par_cdufnatu,
                               INPUT par_cdestcvl,
@@ -625,6 +631,17 @@ PROCEDURE Valida_Inicio_Inclusao:
         IF  ( /*Credimilsul*/
             par_cdcooper  = 15                 AND
             par_dtmvtolt >= DATE("11/11/2014") )
+            THEN
+            DO:    
+                ASSIGN par_dscritic = "Operacao Invalida! " +
+                                       "Incorporacao de Cooperativa!".
+                       par_nmdcampo = "nrdconta".
+                LEAVE.
+            END.
+
+        IF  ( /*Transulcred*/
+            par_cdcooper  = 17                 AND
+            par_dtmvtolt >= DATE("12/12/2016") )
             THEN
             DO:    
                 ASSIGN par_dscritic = "Operacao Invalida! " +
@@ -2466,7 +2483,7 @@ PROCEDURE Valida_Fis PRIVATE :
     DEF  INPUT PARAM par_dtnasctl AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_cdsexotl AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_tpnacion AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsnacion AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdnacion AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dsnatura AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdufnatu AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdestcvl AS INTE                           NO-UNDO.
@@ -2604,9 +2621,9 @@ PROCEDURE Valida_Fis PRIVATE :
             END.
 
         /* Nacionalidade */
-        IF  NOT CAN-FIND(crapnac WHERE crapnac.dsnacion = par_dsnacion) THEN
+        IF  NOT CAN-FIND(crapnac WHERE crapnac.cdnacion = par_cdnacion) THEN
             DO:
-               ASSIGN par_nmdcampo = "dsnacion"
+               ASSIGN par_nmdcampo = "cdnacion"
                       par_cdcritic = 28.
                LEAVE ValidaFis.
             END.

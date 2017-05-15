@@ -470,7 +470,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --  Sistema  : Rotinas acessadas pelas telas de cadastros Web
   --  Sigla    : CADA
   --  Autor    : Andrino Carlos de Souza Junior - RKAM
-  --  Data     : Julho/2014.                   Ultima atualizacao: 21/02/2017
+  --  Data     : Julho/2014.                   Ultima atualizacao: 17/04/2017
   --
   -- Dados referentes ao programa:
   --
@@ -529,6 +529,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --             21/02/2017 - Ajuste para tratar os valores a serem enviados para
   --                          geração do relatório
   --                          (Adriano - SD 614408).
+  --
+  --             17/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
   ---------------------------------------------------------------------------------------------------------------
 
   CURSOR cr_tbchq_param_conta(pr_cdcooper crapcop.cdcooper%TYPE
@@ -1697,7 +1699,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       CURSOR cr_crapass IS
         SELECT inpessoa,
                nrcpfcgc,
-               dsnacion,
+               cdnacion,
                dtnasttl,
                dsproftl,
                nmprimtl
@@ -1886,7 +1888,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
            nrcadast,
            nmprimtl,
            dtnasctl,
-           dsnacion,
+           cdnacion,
            dsproftl,
            dtadmiss,
            dtdemiss,
@@ -1957,7 +1959,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                nrcadast,
                nmprimtl,
                dtnasctl,
-               dsnacion,
+               cdnacion,
                dsproftl,
                rw_crapdat.dtmvtolt, -- COnforme Sarah, utilizar a data atual para a data de Admissao
                dtdemiss,
@@ -2131,7 +2133,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
            cdufresd,
            dtmvtolt,
            cdcooper,
-           dsnacion,
+           cdnacion,
            nrendere,
            complend,
            nmbairro,
@@ -2219,7 +2221,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                cdufresd,
                dtmvtolt,
                cdcooper,
-               dsnacion,
+               cdnacion,
                nrendere,
                complend,
                nmbairro,
@@ -2332,7 +2334,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
              nmextttl,
              inpessoa,
              nrcpfcgc,
-             dsnacion,
+             cdnacion,
              dtnasttl,
              cdsexotl,
              cdgraupr,
@@ -2397,7 +2399,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                  nmextttl,
                  rw_crapass.inpessoa,
                  rw_crapass.nrcpfcgc,
-                 rw_crapass.dsnacion,
+                 rw_crapass.cdnacion,
                  dtnasttl,
                  cdsexotl,
                  0,
@@ -2871,7 +2873,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
            dtnascin,
            cddosexo,
            cdestciv,
-           dsnacion,
+           cdnacion,
            dsnatura,
            cdcepres,
            dsendres,
@@ -2901,7 +2903,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                dtnascin,
                cddosexo,
                cdestciv,
-               dsnacion,
+               cdnacion,
                dsnatura,
                cdcepres,
                dsendres,

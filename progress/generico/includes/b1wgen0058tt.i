@@ -2,7 +2,7 @@
 
     Programa: b1wgen0058tt.i
     Autor   : Jose Luis
-    Data    : Marco/2010                   Ultima atualizacao: 17/11/2015
+    Data    : Marco/2010                   Ultima atualizacao: 18/04/2017
 
     Objetivo  : Definicao das Temp-Tables para tela de PROCURADORES
 
@@ -21,6 +21,8 @@
                 
                 17/11/2015 - Incluido campo idrspleg na tt-crapavt, 
                              PRJ. Ass. Conjunta (Jean Michel).
+
+                18/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
 ..............................................................................*/
 
                   
@@ -50,7 +52,8 @@ DEFINE TEMP-TABLE tt-crapavt NO-UNDO
     FIELD cdsexcto LIKE crapavt.cdsexcto
     FIELD cdestcvl LIKE crapavt.cdestcvl
     FIELD dsestcvl AS CHAR
-    FIELD dsnacion LIKE crapavt.dsnacion
+    FIELD cdnacion LIKE crapnac.cdnacion
+    FIELD dsnacion LIKE crapnac.dsnacion
     FIELD dsnatura LIKE crapavt.dsnatura
     FIELD nmmaecto LIKE crapavt.nmmaecto
     FIELD nmpaicto LIKE crapavt.nmpaicto

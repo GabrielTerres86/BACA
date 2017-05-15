@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0052b.p                  
     Autor(a): Jose Luis Marchezoni (DB1)
-    Data    : Junho/2010                      Ultima atualizacao: 05/10/2015
+    Data    : Junho/2010                      Ultima atualizacao: 13/04/2017
   
     Dados referentes ao programa:
   
@@ -53,6 +53,12 @@
 
                 01/02/2016 - Melhoria 147 - Adicionar Campos e Aprovacao de
 				             Transferencia entre PAs (Heitor - RKAM)							 
+
+				09/09/2016 - Alterado procedure Busca_Dados, retorno do parametro
+						     aux_qtminast referente a quantidade minima de assinatura
+						     conjunta, SD 514239 (Jean Michel).
+
+                13/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
 
 .............................................................................*/
 
@@ -113,6 +119,7 @@ PROCEDURE Busca_Dados:
     DEF VAR aux_cdcritic AS INTE                                    NO-UNDO.
     DEF VAR aux_dscritic AS CHAR                                    NO-UNDO.
     DEF VAR aux_dtmvtolt AS DATE                                    NO-UNDO.
+	DEF VAR aux_qtminast AS INTE									NO-UNDO.
 
     ASSIGN par_dscritic = ""
            par_cdcritic = 0
@@ -226,6 +233,7 @@ PROCEDURE Busca_Dados:
              INPUT ?,
             OUTPUT TABLE tt-crapavt,
             OUTPUT TABLE tt-bens,
+			OUTPUT aux_qtminast,
             OUTPUT TABLE tt-erro) NO-ERROR.
         
         IF VALID-HANDLE(h-b1wgen0058) THEN
@@ -286,7 +294,7 @@ PROCEDURE Busca_Dados:
                           tt-crapcrl.dtnascin = crapcrl.dtnascin
                           tt-crapcrl.cddosexo = crapcrl.cddosexo
                           tt-crapcrl.cdestciv = crapcrl.cdestciv
-                          tt-crapcrl.dsnacion = crapcrl.dsnacion
+                          tt-crapcrl.cdnacion = crapcrl.cdnacion
                           tt-crapcrl.dsnatura = crapcrl.dsnatura
                           tt-crapcrl.cdcepres = crapcrl.cdcepres
                           tt-crapcrl.dsendres = crapcrl.dsendres
@@ -298,6 +306,15 @@ PROCEDURE Busca_Dados:
                           tt-crapcrl.dsdufres = crapcrl.dsdufres
                           tt-crapcrl.nmpairsp = crapcrl.nmpairsp
                           tt-crapcrl.nmmaersp = crapcrl.nmmaersp.
+
+                   /* Buscar a Nacionalidade */
+                   FOR FIRST crapnac FIELDS(dsnacion)
+                                     WHERE crapnac.cdnacion = crapcrl.cdnacion
+                                           NO-LOCK:
+
+                       ASSIGN tt-crapcrl.dsnacion = crapnac.dsnacion.
+
+                   END.
                   
                    /* Estado civil */
                    FOR FIRST gnetcvl FIELDS(rsestcvl)
@@ -404,7 +421,7 @@ PROCEDURE Busca_Impressao :
 
         FOR FIRST crapass FIELDS(inmatric nrmatric cdagenci inpessoa nrcpfcgc 
                                  nrdconta nmprimtl nrdocptl cdoedptl cdufdptl 
-                                 dtemdptl dtnasctl dsnacion nrcadast 
+                                 dtemdptl dtnasctl cdnacion nrcadast 
                                  cdsexotl dtadmiss)
                           WHERE crapass.cdcooper = par_cdcooper AND
                                 crapass.nrdconta = par_nrdconta NO-LOCK:
@@ -559,7 +576,7 @@ PROCEDURE Busca_Impressao :
                     tt-relat-fis.cdufdptl = crapass.cdufdptl
                     tt-relat-fis.dtemdptl = crapass.dtemdptl
                     tt-relat-fis.dtnasctl = crapass.dtnasctl
-                    tt-relat-fis.dsnacion = crapass.dsnacion
+                    tt-relat-fis.cdnacion = crapass.cdnacion
                     tt-relat-fis.nrcadast = (IF  crapass.nrcadast = 0 THEN "0"
                                              ELSE TRIM(STRING(
                                                        STRING(crapass.nrcadast,
@@ -571,6 +588,15 @@ PROCEDURE Busca_Impressao :
                                                           "xxx.xxx.xxx-xx")
                     tt-relat-fis.cdsexotl = IF crapass.cdsexotl = 1 
                                             THEN "M" ELSE "F".
+
+                /* Buscar a Nacionalidade */
+                FOR FIRST crapnac FIELDS(dsnacion)
+                                  WHERE crapnac.cdnacion = crapass.cdnacion
+                                        NO-LOCK:
+
+                    ASSIGN tt-relat-fis.dsnacion = crapnac.dsnacion.
+
+                END.
 
                 DO WHILE TRUE:
                     IF  TRIM(tt-relat-fis.nrcadast) BEGINS "." THEN
@@ -1201,6 +1227,16 @@ PROCEDURE Pesquisa_Associado PRIVATE :
            
             ASSIGN tt-crapass.cdufnatu = crapttl.cdufnatu
                    tt-crapass.dsnatura = crapttl.dsnatura.
+        END.
+
+        /* Buscar a Nacionalidade */
+        FOR FIRST crapnac FIELDS(dsnacion)
+                          WHERE crapnac.cdnacion = tt-crapass.cdnacion
+                                NO-LOCK:
+
+            ASSIGN tt-crapass.cdnacion = crapnac.cdnacion
+                   tt-crapass.dsnacion = crapnac.dsnacion.
+
         END.
 
         /* buscar o endereco, 10 = Residencial (PF) 9 = Comercial (PJ) */
@@ -2491,7 +2527,7 @@ PROCEDURE Busca_Dados_Cto:
 
         /* 1o. Titular */
         FOR FIRST crabttl FIELDS(nmextttl nrdocttl cdoedttl dtemdttl dtnasttl 
-                                 cdsexotl cdestcvl dsnacion dsnatura nmpaittl 
+                                 cdsexotl cdestcvl cdnacion dsnatura nmpaittl 
                                  nmmaettl tpdocttl cdufdttl)
                           WHERE crabttl.cdcooper = crabass.cdcooper AND
                                 crabttl.nrdconta = crabass.nrdconta AND
@@ -2506,11 +2542,20 @@ PROCEDURE Busca_Dados_Cto:
                    tt-crapcrl.dtnascin = crabttl.dtnasttl
                    tt-crapcrl.cddosexo = crabttl.cdsexotl
                    tt-crapcrl.cdestciv = crabttl.cdestcvl
-                   tt-crapcrl.dsnacion = crabttl.dsnacion
+                   tt-crapcrl.cdnacion = crabttl.cdnacion
                    tt-crapcrl.dsnatura = crabttl.dsnatura
                    tt-crapcrl.nmpairsp = crabttl.nmpaittl
                    tt-crapcrl.nmmaersp = crabttl.nmmaettl
                    tt-crapcrl.tpdeiden = crabttl.tpdocttl.
+
+            /* Buscar a Nacionalidade */
+            FOR FIRST crapnac FIELDS(dsnacion)
+                              WHERE crapnac.cdnacion = crabttl.cdnacion
+                                    NO-LOCK:
+
+                ASSIGN tt-crapcrl.dsnacion = crapnac.dsnacion.
+
+            END.
 
             /* validar a idade */
             IF BuscaIdade (crabttl.dtnasttl,par_dtmvtolt) < 18 THEN

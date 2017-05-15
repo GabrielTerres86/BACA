@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/includes/b1wgen0052tt.i
     Autor(a): Jose Luis Marchezoni (DB1)
-    Data    : Junho/2010                      Ultima atualizacao: 04/01/2016
+    Data    : Junho/2010                      Ultima atualizacao: 13/04/2017
   
     Dados referentes ao programa:
   
@@ -60,6 +60,8 @@
                 28/01/2016 - Incluidos campos referentes a origem do endereco
                              e licenca ambiental na tt-crapass
                              Melhoria 147 (Heitor - RKAM)
+
+                13/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
 .............................................................................*/
 
 /* DEFINICOES PARA MATRIC[N].P */
@@ -85,6 +87,7 @@ DEFINE TEMP-TABLE tt-crapass NO-UNDO LIKE crapass
     FIELD dtiniatv LIKE crapjur.dtiniatv
     FIELD cdseteco LIKE crapjur.cdseteco
     FIELD cdrmativ LIKE crapjur.cdrmativ
+    FIELD dsnacion LIKE crapnac.dsnacion
     FIELD cddconta AS CHAR
     FIELD rowidass AS ROWID
     FIELD dspessoa AS CHAR
@@ -143,7 +146,8 @@ DEFINE TEMP-TABLE tt-crapavt NO-UNDO
     FIELD cdsexcto LIKE crapavt.cdsexcto
     FIELD cdestcvl LIKE crapavt.cdestcvl
     FIELD dsestcvl AS CHAR
-    FIELD dsnacion LIKE crapavt.dsnacion
+    FIELD cdnacion LIKE crapnac.cdnacion
+    FIELD dsnacion LIKE crapnac.dsnacion
     FIELD dsnatura LIKE crapavt.dsnatura
     FIELD nmmaecto LIKE crapavt.nmmaecto
     FIELD nmpaicto LIKE crapavt.nmpaicto
@@ -234,7 +238,8 @@ DEFINE TEMP-TABLE tt-relat-fis NO-UNDO
     FIELD nmpaittl LIKE crapttl.nmpaittl        
     FIELD dtnasctl LIKE crapass.dtnasctl
     FIELD cdsexotl AS CHAR FORMAT "X"
-    FIELD dsnacion LIKE crapass.dsnacion
+    FIELD cdnacion LIKE crapnac.cdnacion
+    FIELD dsnacion LIKE crapnac.dsnacion
     FIELD dsnatura LIKE crapttl.dsnatura 
     FIELD dsendere LIKE crapenc.dsendere
     FIELD nrendere AS CHAR

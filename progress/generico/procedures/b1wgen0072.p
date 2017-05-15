@@ -2,7 +2,7 @@
 
     Programa: b1wgen0072.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Maio/2010                   Ultima atualizacao: 28/04/2016
+    Data    : Maio/2010                   Ultima atualizacao: 13/04/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - RESPONSAVEL LEGAL
 
@@ -77,7 +77,9 @@
                 
                 28/04/2016 - Removida (IF cddopcao <> "E") validacoes desnecessarias no momento da exclusao
                              do responsavel legal, para atender o chamado 430472. (Kelvin)
-                
+
+                13/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
+
  .............................................................................*/
 
 DEF STREAM str_1.
@@ -351,7 +353,7 @@ PROCEDURE Busca_Dados:
                           tt-crapcrl.dtnascin = crapcrl.dtnascin
                           tt-crapcrl.cddosexo = crapcrl.cddosexo
                           tt-crapcrl.cdestciv = crapcrl.cdestciv
-                          tt-crapcrl.dsnacion = crapcrl.dsnacion
+                          tt-crapcrl.cdnacion = crapcrl.cdnacion
                           tt-crapcrl.dsnatura = crapcrl.dsnatura
                           tt-crapcrl.cdcepres = crapcrl.cdcepres
                           tt-crapcrl.dsendres = crapcrl.dsendres
@@ -363,7 +365,15 @@ PROCEDURE Busca_Dados:
                           tt-crapcrl.dsdufres = crapcrl.dsdufres
                           tt-crapcrl.nmpairsp = crapcrl.nmpairsp
                           tt-crapcrl.nmmaersp = crapcrl.nmmaersp.
-                          
+
+                   /* Buscar a Nacionalidade */
+                   FOR FIRST crapnac FIELDS(dsnacion)
+                                     WHERE crapnac.cdnacion = crapcrl.cdnacion
+                                           NO-LOCK:
+
+                       ASSIGN tt-crapcrl.dsnacion = crapnac.dsnacion.
+
+                   END.
                   
                    /* Estado civil */
                    FOR FIRST gnetcvl FIELDS(rsestcvl)
@@ -490,7 +500,16 @@ PROCEDURE Busca_Dados_Id:
               BUFFER-COPY crapcrl TO tt-crapcrl.
 
               ASSIGN tt-crapcrl.cddopcao = par_cddopcao.
-              
+
+              /* Buscar a Nacionalidade */
+              FOR FIRST crapnac FIELDS(dsnacion)
+                                WHERE crapnac.cdnacion = tt-crapcrl.cdnacion
+                                      NO-LOCK:
+
+                  ASSIGN tt-crapcrl.dsnacion = crapnac.dsnacion.
+
+              END.
+
               /* Estado civil */
               FOR FIRST gnetcvl FIELDS(rsestcvl)
                                 WHERE gnetcvl.cdestcvl = tt-crapcrl.cdestciv
@@ -650,7 +669,7 @@ PROCEDURE Busca_Dados_Cto:
         
         /* 1o. Titular */
         FOR FIRST crabttl FIELDS(nmextttl nrdocttl cdoedttl dtemdttl dtnasttl 
-                                 cdsexotl cdestcvl dsnacion dsnatura nmpaittl 
+                                 cdsexotl cdestcvl cdnacion dsnatura nmpaittl 
                                  nmmaettl tpdocttl cdufdttl)
                           WHERE crabttl.cdcooper = crabass.cdcooper AND
                                 crabttl.nrdconta = crabass.nrdconta AND
@@ -665,11 +684,20 @@ PROCEDURE Busca_Dados_Cto:
                    tt-crapcrl.dtnascin = crabttl.dtnasttl
                    tt-crapcrl.cddosexo = crabttl.cdsexotl
                    tt-crapcrl.cdestciv = crabttl.cdestcvl
-                   tt-crapcrl.dsnacion = crabttl.dsnacion
+                   tt-crapcrl.cdnacion = crabttl.cdnacion
                    tt-crapcrl.dsnatura = crabttl.dsnatura
                    tt-crapcrl.nmpairsp = crabttl.nmpaittl
                    tt-crapcrl.nmmaersp = crabttl.nmmaettl
                    tt-crapcrl.tpdeiden = crabttl.tpdocttl.
+
+            /* Buscar a Nacionalidade */
+            FOR FIRST crapnac FIELDS(dsnacion)
+                              WHERE crapnac.cdnacion = crabttl.cdnacion
+                                    NO-LOCK:
+
+                ASSIGN tt-crapcrl.dsnacion = crapnac.dsnacion.
+
+            END.
 
             /* validar a idade */
             IF  BuscaIdade(crabttl.dtnasttl,par_dtmvtolt) < 18
@@ -778,7 +806,7 @@ PROCEDURE Valida_Dados:
   DEF  INPUT PARAM par_dtnascto AS DATE                           NO-UNDO.
   DEF  INPUT PARAM par_cdsexcto AS INTE                           NO-UNDO.
   DEF  INPUT PARAM par_cdestcvl AS INTE                           NO-UNDO.
-  DEF  INPUT PARAM par_dsnacion AS CHAR                           NO-UNDO.
+  DEF  INPUT PARAM par_cdnacion AS INTE                           NO-UNDO.
   DEF  INPUT PARAM par_dsnatura AS CHAR                           NO-UNDO.
   DEF  INPUT PARAM par_nrcepend AS INTE                           NO-UNDO.
   DEF  INPUT PARAM par_dsendere AS CHAR                           NO-UNDO.
@@ -1040,7 +1068,7 @@ PROCEDURE Valida_Dados:
           END.
 
       /* validar a nacionalidade */
-      IF  NOT CAN-FIND(crapnac WHERE crapnac.dsnacion = par_dsnacion) THEN
+      IF  NOT CAN-FIND(crapnac WHERE crapnac.cdnacion = par_cdnacion) THEN
           DO:
              ASSIGN par_nmdcampo = "dsnacion"
                     aux_cdcritic = 28.
@@ -1426,7 +1454,7 @@ PROCEDURE Grava_Dados:
     DEF  INPUT PARAM par_dtnascto AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_cdsexcto AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdestcvl AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsnacion AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdnacion AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dsnatura AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrcepend AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dsendere AS CHAR                           NO-UNDO.
@@ -1662,7 +1690,7 @@ PROCEDURE Grava_Dados:
                      crapcrl.dtnascin = par_dtnascto
                      crapcrl.cddosexo = par_cdsexcto 
                      crapcrl.cdestciv = par_cdestcvl
-                     crapcrl.dsnacion = UPPER(par_dsnacion)
+                     crapcrl.cdnacion = par_cdnacion
                      crapcrl.dsnatura = UPPER(par_dsnatura)
                      crapcrl.cdcepres = par_nrcepend
                      crapcrl.dsendres = UPPER(par_dsendere)

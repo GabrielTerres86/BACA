@@ -2,7 +2,7 @@
 
    Programa: b1wgen0009.p
    Autor   : Guilherme
-   Data    : Marco/2009                     Última atualizacao: 25/10/2016
+   Data    : Marco/2009                     Última atualizacao: 12/05/2017
    
    Dados referentes ao programa:
 
@@ -244,7 +244,9 @@
 	       25/10/2016 - Verificar CNAE restrito Melhoria 310 (Tiago/Thiago)
 
 
-          07/11/2016 - Ajuste na procedure imprime_cet para enviar novos parametros (Daniel)  
+          07/11/2016 - Ajuste na procedure imprime_cet para enviar novos parametros (Daniel)
+
+            12/05/2017 - Passagem de 0 para a nacionalidade. (Jaison/Andrino)
 
 ............................................................................. */
 
@@ -1963,7 +1965,7 @@ PROCEDURE efetua_inclusao_limite:
                                                     INPUT par_nmcidav1,
                                                     INPUT par_cdufava1,
                                                     INPUT par_nrcepav1,
-                                                    INPUT "",
+                                                    INPUT 0,
                                                     INPUT 0,
                                                     INPUT 0,
                                                     INPUT par_nrender1,
@@ -1988,7 +1990,7 @@ PROCEDURE efetua_inclusao_limite:
                                                     INPUT par_nmcidav2, 
                                                     INPUT par_cdufava2, 
                                                     INPUT par_nrcepav2,
-                                                    INPUT "",
+                                                    INPUT 0,
                                                     INPUT 0,
                                                     INPUT 0,
                                                     INPUT par_nrender2,
@@ -4055,7 +4057,7 @@ PROCEDURE efetua_alteracao_limite:
                                   INPUT par_nmcidav1, 
                                   INPUT par_cdufava1, 
                                   INPUT par_nrcepav1, 
-                                  INPUT "", /* nacionalidade*/
+                                  INPUT 0, /* nacionalidade*/
                                   INPUT 0, /* endividamento */
                                   INPUT 0, /* renda mensal */
                                   INPUT par_nrender1,
@@ -4081,7 +4083,7 @@ PROCEDURE efetua_alteracao_limite:
                                   INPUT par_nmcidav2, 
                                   INPUT par_cdufava2, 
                                   INPUT par_nrcepav2,
-                                  INPUT "",  /* nacionalidade */
+                                  INPUT 0,  /* nacionalidade */
                                   INPUT 0,  /* Endividamento */
                                   INPUT 0,
                                   INPUT par_nrender2,

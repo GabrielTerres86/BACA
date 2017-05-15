@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0052g.p                  
     Autor(a): Jose Luis Marchezoni (DB1 Informatica)
-    Data    : Junho/2010                      Ultima atualizacao: 07/06/2016
+    Data    : Junho/2010                      Ultima atualizacao: 25/04/2017
   
     Dados referentes ao programa:
   
@@ -140,9 +140,19 @@
                 29/02/2016 - Trocando o campo flpolexp para inpolexp conforme
                              solicitado no chamado 402159 (Kelvin).
 
+                12/05/2016 - Ajustado rotina Grava_Dados para verificar situaçao
+                             do novo associado na cabine JBNF apos gerar a nova
+                             matricula PRJ318. (Odirlei-AMcom)
+
                 17/06/2016 - Inclusao de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
 
+                15/07/2016 - Incluir chamada da procedure pc_grava_tbchq_param_conta - Melhoria 69
+                             (Lucas Ranghetti #484923)
 				
+                01/12/2016 - Definir a não obrigatoriedade do PEP (Tiago/Thiago SD532690)
+
+                25/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
+
 .............................................................................*/
                                                      
 
@@ -201,7 +211,7 @@ PROCEDURE Grava_Dados :
     DEF  INPUT PARAM par_dtcnscpf AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_dtnasctl AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_tpnacion AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsnacion AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdnacion AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dsnatura AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdufnatu AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdocpttl AS INTE                           NO-UNDO. 
@@ -383,6 +393,33 @@ PROCEDURE Grava_Dados :
                        IF  RETURN-VALUE <> "OK" THEN
                            UNDO Grava, LEAVE Grava.
 
+                       { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                        
+                       RUN STORED-PROCEDURE pc_grava_tbchq_param_conta 
+                            aux_handproc = PROC-HANDLE NO-ERROR
+                                             (INPUT "I",  /* Opcao, Incluir*/
+                                              INPUT par_cdcooper,  /* Cooperativa */
+                                              INPUT par_nrdconta,  /* Numero da Conta */
+                                              INPUT 1,  /* Flag devolucao automatica/ 1=sim/0=nao */
+                                              INPUT par_cdoperad,  /* Operador */  
+                                              INPUT " ", /* Operador Coordenador */
+                                             OUTPUT "").
+
+                        CLOSE STORED-PROC pc_grava_tbchq_param_conta 
+                              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                        
+                        ASSIGN aux_dscritic = ""                         
+                               aux_dscritic = pc_grava_tbchq_param_conta.pr_dscritic 
+                                              WHEN pc_grava_tbchq_param_conta.pr_dscritic <> ?.
+                            
+                        IF  aux_dscritic <> ""  THEN
+                            DO:  
+                                ASSIGN par_dscritic = aux_dscritic.
+                                UNDO Grava, LEAVE Grava.
+                            END.
+                       
                        /* Parcelamento do Capital - 'fontes/matric_pc.p' */
                        IF  par_inpessoa <> 3  THEN
                            DO:
@@ -407,6 +444,14 @@ PROCEDURE Grava_Dados :
                               IF  RETURN-VALUE <> "OK" THEN
                                   UNDO Grava, LEAVE Grava.
                            END.
+                    
+                       /* Verificar situacao do cpf/cnpj na cabine e enviar e-mail*/
+                       RUN verifica_sit_JDBNF 
+                           (INPUT par_cdcooper,
+                            INPUT par_nrdconta,
+                            INPUT par_nrcpfcgc,
+                            INPUT par_inpessoa).
+                    
                     END.
 
                 /* Procurador/Representante */
@@ -464,7 +509,7 @@ PROCEDURE Grava_Dados :
                       INPUT par_dtcnscpf,  
                       INPUT par_dtnasctl,  
                       INPUT par_tpnacion,  
-                      INPUT par_dsnacion,  
+                      INPUT par_cdnacion,  
                       INPUT par_dsnatura,
                       INPUT par_cdufnatu,
                       INPUT par_cdocpttl,
@@ -670,7 +715,7 @@ PROCEDURE Altera PRIVATE :
     DEF  INPUT PARAM par_dtcnscpf AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_dtnasctl AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_tpnacion AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsnacion AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdnacion AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dsnatura AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdufnatu AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdocpttl AS INTE                           NO-UNDO.
@@ -836,7 +881,7 @@ PROCEDURE Altera PRIVATE :
               INPUT par_dtcnscpf,
               INPUT par_dtnasctl,
               INPUT par_tpnacion,
-              INPUT par_dsnacion,
+              INPUT par_cdnacion,
               INPUT par_dsnatura,
               INPUT par_cdocpttl,
               INPUT par_cdestcvl,
@@ -907,7 +952,7 @@ PROCEDURE Altera PRIVATE :
                       INPUT crabass.dtcnscpf,
                       INPUT crabass.dtnasctl,
                       INPUT par_tpnacion,
-                      INPUT crabass.dsnacion,
+                      INPUT crabass.cdnacion,
                       INPUT par_dsnatura,
                       INPUT par_cdufnatu,
                       INPUT crabttl.cdestcvl,
@@ -1157,7 +1202,7 @@ PROCEDURE Altera_Ass PRIVATE :
     DEF  INPUT PARAM par_dtcnscpf AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_dtnasctl AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_tpnacion AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsnacion AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdnacion AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dsnatura AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdocpttl AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdestcvl AS INTE                           NO-UNDO.
@@ -1227,7 +1272,7 @@ PROCEDURE Altera_Ass PRIVATE :
                    crabass.nmmaeptl = CAPS(par_nmmaettl)
                    crabass.cdsexotl = par_cdsexotl
                    crabass.dtnasctl = par_dtnasctl
-                   crabass.dsnacion = CAPS(par_dsnacion)
+                   crabass.cdnacion = par_cdnacion
                    /* Retirado campo crabass.dsnatura */
                    crabass.dsproftl = CAPS(par_dsproftl)
                    crabass.nrcadast = par_nrcadast
@@ -2281,7 +2326,7 @@ PROCEDURE Altera_Fis PRIVATE :
     DEF  INPUT PARAM par_dtcnscpf AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_dtnasctl AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_tpnacion AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsnacion AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdnacion AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dsnatura AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdufnatu AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdestcvl AS INTE                           NO-UNDO.
@@ -2379,7 +2424,7 @@ PROCEDURE Altera_Fis PRIVATE :
                crabttl.dtcnscpf = par_dtcnscpf
                crabttl.dtnasttl = par_dtnasctl
                crabttl.tpnacion = par_tpnacion
-               crabttl.dsnacion = CAPS(par_dsnacion)
+               crabttl.cdnacion = par_cdnacion
                crabttl.dsnatura = CAPS(par_dsnatura)
                crabttl.cdufnatu = CAPS(par_cdufnatu)
                crabttl.cdestcvl = par_cdestcvl
@@ -4934,7 +4979,7 @@ PROCEDURE Inclui_Fis PRIVATE :
                               crabttl.inhabmen = par_inhabmen
                               crabttl.dthabmen = par_dthabmen
                               crabttl.flgimpri = TRUE 
-                              crabttl.inpolexp = 2
+                              crabttl.inpolexp = 0
                               NO-ERROR.
     
                           IF  ERROR-STATUS:ERROR THEN
@@ -5820,7 +5865,7 @@ PROCEDURE Procurador PRIVATE :
                                                     INPUT crapcrl.dtnascin,
                                                     INPUT crapcrl.cddosexo,
                                                     INPUT crapcrl.cdestciv,
-                                                    INPUT crapcrl.dsnacion,
+                                                    INPUT crapcrl.cdnacion,
                                                     INPUT crapcrl.dsnatura,
                                                     INPUT crapcrl.cdcepres,
                                                     INPUT crapcrl.dsendres,
@@ -5887,7 +5932,7 @@ PROCEDURE Procurador PRIVATE :
                       crapavt.dtnascto    = tt-crapavt.dtnascto
                       crapavt.cdsexcto    = tt-crapavt.cdsexcto
                       crapavt.cdestcvl    = tt-crapavt.cdestcvl
-                      crapavt.dsnacion    = UPPER(tt-crapavt.dsnacion)
+                      crapavt.cdnacion    = tt-crapavt.cdnacion
                       crapavt.dsnatura    = UPPER(tt-crapavt.dsnatura)
                       crapavt.nrcepend    = tt-crapavt.nrcepend
                       crapavt.dsendres[1] = UPPER(tt-crapavt.dsendres[1])
@@ -6184,7 +6229,7 @@ PROCEDURE atualiza_avt_crl PRIVATE:
                     crapavt.dtnascto = ? 
                     crapavt.cdsexcto = 0
                     crapavt.cdestcvl = 0 
-                    crapavt.dsnacion = "" 
+                    crapavt.cdnacion = 0
                     crapavt.dsnatura = "" 
                     crapavt.nrcepend = 0 
                     crapavt.dsendres = ""
@@ -6232,7 +6277,7 @@ PROCEDURE atualiza_avt_crl PRIVATE:
                     crapcrl.dtnascin = ?
                     crapcrl.cddosexo = 0
                     crapcrl.cdestciv = 0
-                    crapcrl.dsnacion = ""
+                    crapcrl.cdnacion = 0
                     crapcrl.dsnatura = ""
                     crapcrl.cdcepres = 0
                     crapcrl.dsendres = ""
@@ -6456,3 +6501,45 @@ PROCEDURE atualiza_nome_cooperado PRIVATE :
 
     RETURN "OK".
 END PROCEDURE.
+
+PROCEDURE verifica_sit_JDBNF: 
+    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrcpfcgc AS DECI                           NO-UNDO.
+    DEF  INPUT PARAM par_inpessoa AS INTE                           NO-UNDO.
+
+    DEF VAR aux_insitif  AS CHAR                                    NO-UNDO.
+    DEF VAR aux_insitcip AS CHAR                                    NO-UNDO. 
+	DEF VAR aux_dscritic AS CHAR                                    NO-UNDO.
+
+    /* Chamar rotina para verificar situacao do CPF/CNPJ e enviar email */
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+    RUN STORED-PROCEDURE pc_verifica_sit_JDBNF 
+          aux_handproc = PROC-HANDLE NO-ERROR
+                           (INPUT par_cdcooper,  /* Codigo da cooperativa */
+                            INPUT par_nrdconta,  /* Numero da conta do cooperado */
+                            INPUT par_inpessoa,  /* Tipo de pessoa */
+                            INPUT par_nrcpfcgc,  /* CPF/CNPJ do beneficiario */
+                           OUTPUT "",            /* pr_insitif  Retornar situaçao IF */  
+                           OUTPUT "",            /* pr_insitcip Retornar situaçao CIP */  
+                           OUTPUT "").
+
+      CLOSE STORED-PROC pc_verifica_sit_JDBNF 
+            aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+      { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+      
+      ASSIGN aux_dscritic = ""
+             aux_insitif  = ""
+             aux_insitcip = ""
+             aux_insitif  = pc_verifica_sit_JDBNF.pr_insitif 
+                            WHEN pc_verifica_sit_JDBNF.pr_insitif <> ?
+             aux_insitcip = pc_verifica_sit_JDBNF.pr_dscritic 
+                            WHEN pc_verifica_sit_JDBNF.pr_insitcip <> ?
+             aux_dscritic = pc_verifica_sit_JDBNF.pr_insitcip 
+                            WHEN pc_verifica_sit_JDBNF.pr_dscritic <> ?.
+          
+      RETURN "OK".
+
+END PROCEDURE. /* Fim procedure verifica_sit_JDBNF*/

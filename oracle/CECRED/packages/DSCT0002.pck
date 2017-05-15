@@ -98,7 +98,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                    nmcidade crapenc.nmcidade%TYPE,
                    cdufresd crapenc.cdufende%TYPE,
                    nrcepend crapenc.nrcepend%TYPE,
-                   dsnacion crapass.dsnacion%TYPE,
+                   dsnacion crapnac.dsnacion%TYPE,
                    vledvmto NUMBER,
                    vlrenmes NUMBER,
                    idavalis INTEGER,
@@ -388,7 +388,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
   --
   --  Programa: DSCT0002                       Antiga: generico/procedures/b1wgen0030.p
   --  Autor   : Odirlei Busana - AMcom
-  --  Data    : Agosto/2016                     Ultima Atualizacao: 
+  --  Data    : Agosto/2016                     Ultima Atualizacao: 17/04/2017
   --
   --  Dados referentes ao programa:
   --
@@ -396,7 +396,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
   --              titulos.
   --
   --  Alteracoes: 05/08/2016 - Conversao Progress para oracle (Odirlei - AMcom)
-  --  
+  --
+  --              17/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
+  --
   --------------------------------------------------------------------------------------------------------------*/
   --> Buscar dados do avalista
   PROCEDURE pc_busca_dados_avalista (pr_cdcooper IN crapcop.cdcooper%TYPE           --> Código da Cooperativa
@@ -423,7 +425,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
              ass.cdufdptl,
              ass.cdcooper,
              ass.nrcpfstl,
-             ass.dsnacion
+             ass.cdnacion
              
         FROM crapass ass
        WHERE ass.cdcooper = pr_cdcooper
@@ -536,7 +538,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
              avt.nmcidade,
              avt.cdufresd,
              avt.nrcepend,
-             avt.dsnacion,
+             avt.cdnacion,
              avt.vledvmto,
              avt.vlrenmes,
              avt.nrendere,
@@ -550,6 +552,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
          AND avt.tpctrato = pr_tpctrato
          AND avt.nrdconta = pr_nrdconta
          AND avt.nrctremp = pr_nrctrato;
+       
+    --> Busca a Nacionalidade
+    CURSOR cr_crapnac(pr_cdnacion IN crapnac.cdnacion%TYPE) IS
+      SELECT crapnac.dsnacion
+        FROM crapnac
+       WHERE crapnac.cdnacion = pr_cdnacion;
     
          
     --------->> VARIAVEIS <<--------
@@ -566,6 +574,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     vr_vledvmto        NUMBER;
     vr_nmconjug        crapcje.nmconjug%TYPE;
     vr_nrcpfcjg        crapcje.nrcpfcjg%TYPE;
+    vr_dsnacion        crapnac.dsnacion%TYPE;
     
   BEGIN
   
@@ -694,7 +703,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                                                     gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapass.nrcpfstl,
                                                                               pr_inpessoa => 1);
       END IF;
-      
+
+      -- Busca a Nacionalidade
+      vr_dsnacion := '';
+      OPEN  cr_crapnac(pr_cdnacion => rw_crapass.cdnacion);
+      FETCH cr_crapnac INTO vr_dsnacion;
+      CLOSE cr_crapnac;
+
       pr_tab_dados_avais(vr_idxavais).tpdoccjg := NULL;
       pr_tab_dados_avais(vr_idxavais).nrfonres := rw_craptfc.nrdddtfc||rw_craptfc.nrtelefo;
       pr_tab_dados_avais(vr_idxavais).dsdemail := rw_crapcem.dsdemail;
@@ -703,7 +718,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
       pr_tab_dados_avais(vr_idxavais).nmcidade := TRIM(rw_crapenc.nmcidade);
       pr_tab_dados_avais(vr_idxavais).cdufresd := TRIM(rw_crapenc.cdufende);
       pr_tab_dados_avais(vr_idxavais).nrcepend := rw_crapenc.nrcepend;
-      pr_tab_dados_avais(vr_idxavais).dsnacion := rw_crapass.dsnacion;
+      pr_tab_dados_avais(vr_idxavais).dsnacion := vr_dsnacion;
       pr_tab_dados_avais(vr_idxavais).vledvmto := vr_vledvmto;
       pr_tab_dados_avais(vr_idxavais).vlrenmes := vr_vlrenmes;
       pr_tab_dados_avais(vr_idxavais).idavalis := vr_idxavais;
@@ -734,8 +749,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                                                                                 pr_inpessoa => 1);
         ELSE 
            pr_tab_dados_avais(vr_idxavais).nrdoccjg := rw_crapavt.nrdoccjg;
-        END IF;  
-        
+        END IF;
+
+        -- Busca a Nacionalidade
+        vr_dsnacion := '';
+        OPEN  cr_crapnac(pr_cdnacion => rw_crapavt.cdnacion);
+        FETCH cr_crapnac INTO vr_dsnacion;
+        CLOSE cr_crapnac;
+
         pr_tab_dados_avais(vr_idxavais).dsendere := rw_crapavt.dsendres##1;
         pr_tab_dados_avais(vr_idxavais).dsendcmp := rw_crapavt.dsendres##2;
         pr_tab_dados_avais(vr_idxavais).nrfonres := rw_crapavt.nrfonres;
@@ -743,7 +764,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
         pr_tab_dados_avais(vr_idxavais).nmcidade := rw_crapavt.nmcidade;
         pr_tab_dados_avais(vr_idxavais).cdufresd := rw_crapavt.cdufresd;
         pr_tab_dados_avais(vr_idxavais).nrcepend := rw_crapavt.nrcepend;
-        pr_tab_dados_avais(vr_idxavais).dsnacion := rw_crapavt.dsnacion;
+        pr_tab_dados_avais(vr_idxavais).dsnacion := vr_dsnacion;
         pr_tab_dados_avais(vr_idxavais).vledvmto := rw_crapavt.vledvmto;
         pr_tab_dados_avais(vr_idxavais).vlrenmes := rw_crapavt.vlrenmes;
         pr_tab_dados_avais(vr_idxavais).idavalis := vr_idxavais;

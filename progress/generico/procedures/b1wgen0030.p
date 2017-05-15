@@ -36,7 +36,7 @@
 
     Programa: b1wgen0030.p
     Autor   : Guilherme
-    Data    : Julho/2008                     Ultima Atualizacao: 09/03/2017
+    Data    : Julho/2008                     Ultima Atualizacao: 12/05/2017
            
     Dados referentes ao programa:
                 
@@ -482,6 +482,8 @@
 
 			   09/03/2017 - Ajuste para validar se o titulo ja esta incluso em um bordero
 					       (Adriano - SD 603451).
+
+               12/05/2017 - Passagem de 0 para a nacionalidade. (Jaison/Andrino)
 
 ..............................................................................*/
 
@@ -4354,7 +4356,7 @@ PROCEDURE efetua_inclusao_limite:
                                                     INPUT par_nmcidav1,
                                                     INPUT par_cdufava1,
                                                     INPUT par_nrcepav1,
-                                                    INPUT "", /* Nacao*/
+                                                    INPUT 0, /* Nacao*/
                                                     INPUT 0,  /* Vl. Endiv. */
                                                     INPUT 0,  /* Vl. Rendim */
                                                     INPUT par_nrender1,
@@ -4379,7 +4381,7 @@ PROCEDURE efetua_inclusao_limite:
                                                     INPUT par_nmcidav2, 
                                                     INPUT par_cdufava2, 
                                                     INPUT par_nrcepav2,
-                                                    INPUT "", /* Nacao */
+                                                    INPUT 0, /* Nacao */
                                                     INPUT 0,  /* Vl. Endiv */
                                                     INPUT 0,  /* Vl. Rendim. */
                                                     INPUT par_nrender2,
@@ -4880,7 +4882,7 @@ PROCEDURE efetua_alteracao_limite:
                                   INPUT par_nmcidav1, 
                                   INPUT par_cdufava1, 
                                   INPUT par_nrcepav1, 
-                                  INPUT "", /* Nacao */
+                                  INPUT 0, /* Nacao */
                                   INPUT 0,  /* Vl. Endividamento */
                                   INPUT 0,  /* Vl. Renda */
                                   INPUT par_nrender1,
@@ -4905,7 +4907,7 @@ PROCEDURE efetua_alteracao_limite:
                                   INPUT par_nmcidav2, 
                                   INPUT par_cdufava2, 
                                   INPUT par_nrcepav2,
-                                  INPUT "",  /* Nacao */ 
+                                  INPUT 0,  /* Nacao */ 
                                   INPUT 0,   /* Vl. Endividamento */
                                   INPUT 0,   /* Vl. Renda*/
                                   INPUT par_nrender2,

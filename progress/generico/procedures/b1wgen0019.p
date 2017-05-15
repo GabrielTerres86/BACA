@@ -2,7 +2,7 @@
 
    Programa: b1wgen0019.p
    Autor   : Murilo/David
-   Data    : 21/06/2007                        Ultima atualizacao: 07/02/2017
+   Data    : 21/06/2007                        Ultima atualizacao: 12/05/2017
 
    Objetivo  : BO LIMITE DE CRÉDITO
 
@@ -287,6 +287,9 @@
 				07/02/2017 - Alterardo a forma de pegar o cdagenci na hora de 
 				             confirmar o limite de credito na procedure
 							 confirmar-novo-limite (Tiago/Ademir SD590361).
+
+            12/05/2017 - Passagem de 0 para a nacionalidade. (Jaison/Andrino)
+
 ..............................................................................*/
 
 
@@ -3823,7 +3826,7 @@ PROCEDURE cadastrar-novo-limite:
                                                     INPUT par_nmcidav1,
                                                     INPUT par_cdufava1,
                                                     INPUT par_nrcepav1,
-                                                    INPUT "",
+                                                    INPUT 0,
                                                     INPUT 0,
                                                     INPUT par_vlrenme1,
                                                     INPUT par_nrender1,
@@ -3848,7 +3851,7 @@ PROCEDURE cadastrar-novo-limite:
                                                     INPUT par_nmcidav2, 
                                                     INPUT par_cdufava2, 
                                                     INPUT par_nrcepav2,
-                                                    INPUT "",
+                                                    INPUT 0,
                                                     INPUT 0,
                                                     INPUT par_vlrenme2,
                                                     INPUT par_nrender2,
@@ -9544,7 +9547,7 @@ PROCEDURE alterar-novo-limite:
                                                     INPUT par_nmcidav1,
                                                     INPUT par_cdufava1,
                                                     INPUT par_nrcepav1,
-                                                    INPUT "",
+                                                    INPUT 0,
                                                     INPUT 0,
                                                     INPUT par_vlrenme1,
                                                     INPUT par_nrender1,
@@ -9569,7 +9572,7 @@ PROCEDURE alterar-novo-limite:
                                                     INPUT par_nmcidav2, 
                                                     INPUT par_cdufava2, 
                                                     INPUT par_nrcepav2,
-                                                    INPUT "",
+                                                    INPUT 0,
                                                     INPUT 0,
                                                     INPUT par_vlrenme2,
                                                     INPUT par_nrender2,

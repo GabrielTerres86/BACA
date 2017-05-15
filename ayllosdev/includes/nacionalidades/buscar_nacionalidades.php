@@ -5,7 +5,7 @@
 	* DATA CRIAÇÃO : 12/05/2016
 	* OBJETIVO     : Rotina para realizar a busca das nacionalidades
 	* --------------
-	* ALTERAÇÕES   : 
+	* ALTERAÇÕES   : 12/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
 	* -------------- 
 	*/		
  
@@ -57,10 +57,10 @@
 	echo "strHTML += '     </thead>';";
 	echo "strHTML += '     <tbody>';";		
 
-	foreach($xmlObj->roottag->tags as $nacionalidade){
+	foreach($xmlObj->roottag->tags[0]->tags as $nacionalidade){
 		
 		//Converter os campos de valores 			
-		echo "strHTML += '<tr>';";	
+		echo "strHTML += '<tr cdnacion=\'".getByTagName($nacionalidade->tags,'cdnacion')."\'>';";	
 		echo "strHTML += '   <td>".getByTagName($nacionalidade->tags,'dsnacion')."</td>';";	
 		echo "strHTML += '</tr>';";
 		

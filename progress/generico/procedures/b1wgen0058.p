@@ -24,7 +24,7 @@
 
     Programa: b1wgen0058.p
     Autor   : Jose Luis (DB1)
-    Data    : Marco/2010                   Ultima atualizacao: 01/07/2016
+    Data    : Marco/2010                   Ultima atualizacao: 18/04/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - PROCURADORES/REPRESENTANTES
 
@@ -79,7 +79,7 @@
                 05/06/2013 - Remover procedures grava_grupo_economico e
                              exclui_grupo_economico (Lucas R.)
                              
-                24/06/2013 - Inclusão da opção de poderes (Jean Michel).
+                24/06/2013 - Inclusao da opçao de poderes (Jean Michel).
                 
                 19/08/2013 - Incluido a chamada da procedure 
                              "atualiza_data_manutencao_cadastro" dentro da
@@ -88,8 +88,8 @@
                 23/08/2013 - Substituir campo crapass.dsnatura pelo campo
                              crapttl.dsnatura (David).
                 
-                04/10/2013 - Inclusão de registro na crapdoc quando há alterações
-                             de CPF, Nº e Tipo de Documento na procedure Grava_Dados
+                04/10/2013 - Inclusao de registro na crapdoc quando há alteraçoes
+                             de CPF, No e Tipo de Documento na procedure Grava_Dados
                              (Jean Michel). 
                              
                 13/12/2013 - Adicionado VALIDATE para CREATE. (Jorge) 
@@ -106,8 +106,8 @@
                 30/05/2014 - Alterado a busca do estado civil de crapass para crapttl
                              (Douglas - Chamado 131253)
                              
-                06/06/2014 - Alterado "Valida_Dados" para não validar o CPF quando estiver excluindo.
-                             Exitem procuradores com CPF zerado e não está permitindo exclui-los.
+                06/06/2014 - Alterado "Valida_Dados" para nao validar o CPF quando estiver excluindo.
+                             Exitem procuradores com CPF zerado e nao está permitindo exclui-los.
                              (Douglas - Chamado 134639)
                              
                 08/07/2014 - #176156 Correcao da exclusao de representantes/procuradores 
@@ -117,13 +117,13 @@
                              em conjunto E de forma isolada; procedure
                              Grava_Dados_Poderes. (Chamado 158762) - (Fabricio)
                         
-                09/02/2015 - Incluir regra para não permitir que representantes sejam 
-                             excluídos, caso possuam cartão Bancoob, com a situação 
+                09/02/2015 - Incluir regra para nao permitir que representantes sejam 
+                             excluídos, caso possuam cartao Bancoob, com a situaçao 
                              1 - Aprovado ou 2 - Solicitado. ( Renato - Supero )
                 
-                27/03/2015 - Ao excluir um representante é validado se existe cartões bradescos vinculados
-                             a ele, porém não estava sendo validado se era cartão bradesco, 
-                             isso é, qualquer cartão era considerado como bradesco. SD - 269861 (Kelvin)
+                27/03/2015 - Ao excluir um representante é validado se existe cartoes bradescos vinculados
+                             a ele, porém nao estava sendo validado se era cartao bradesco, 
+                             isso é, qualquer cartao era considerado como bradesco. SD - 269861 (Kelvin)
                     
                 27/07/2015 - Reformulacao cadastral (Gabriel-RKAM). 
 
@@ -148,8 +148,13 @@
 
                  01/07/2016 - Ajustes para quando um procurador que nao tinha conta
 				              na cooperativa passar a ter se for incluido poderes
-							  para ele nao duplicar as informações no cartão de 
+							  para ele nao duplicar as informaçoes no cartao de 
 							  assinatura (Tiago/Thiago SD438834)
+
+	             25/08/2016 - Ajustes na procedure valida_responsaveis, SD 510426 (Jean Michel).
+
+                18/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
+
 .....................................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -207,6 +212,7 @@ PROCEDURE Busca_Dados:
     DEF  INPUT PARAM par_nrdrowid AS ROWID                          NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-crapavt.
     DEF OUTPUT PARAM TABLE FOR tt-bens.
+	DEF OUTPUT PARAM par_qtminast AS INTE							NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
     
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
@@ -276,15 +282,17 @@ PROCEDURE Busca_Dados:
             LEAVE Busca.
 
         /* Verificacao de tipo de conta e se exige assinatura conjunta JMD */
-        FOR FIRST crapass FIELDS(inpessoa idastcjt) WHERE crapass.cdcooper = par_cdcooper
-                                                      AND crapass.nrdconta = par_nrdconta NO-LOCK. END.
+        FOR FIRST crapass FIELDS(inpessoa idastcjt qtminast) WHERE crapass.cdcooper = par_cdcooper
+                                                               AND crapass.nrdconta = par_nrdconta NO-LOCK. END.
         
         IF NOT AVAILABLE crapass then
           DO:
             ASSIGN aux_dscritic = "009 - Associado nao cadastrado.".
             UNDO Busca, LEAVE Busca.
           END.
-          
+        
+		ASSIGN par_qtminast = crapass.qtminast.
+		 
         /* Carrega a lista de procuradores */
         FOR EACH crapavt WHERE crapavt.cdcooper = par_cdcooper   AND
                                crapavt.tpctrato = 6 /*procurad*/ AND
@@ -307,7 +315,7 @@ PROCEDURE Busca_Dados:
             /* PRJ 131 - Assinatura Conjunta */
             IF crapass.idastcjt = 1 THEN
                 DO: /* Assinatura Conjunta */
-    
+				
                   FOR FIRST crappod FIELDS(flgconju) 
                                     WHERE crappod.cdcooper = crapavt.cdcooper AND
                                           crappod.nrdconta = crapavt.nrdconta AND
@@ -323,6 +331,7 @@ PROCEDURE Busca_Dados:
                 END.
             ELSE
                 DO:
+				
                   FOR FIRST crapsnh FIELDS(cdcooper) WHERE crapsnh.cdcooper = crapavt.cdcooper AND
                                                            crapsnh.nrdconta = crapavt.nrdconta AND
                                                            crapsnh.idseqttl = 1                AND
@@ -446,16 +455,16 @@ PROCEDURE Busca_Dados_Id:
            END.
        
        /*********************************************************************************
-       ** Verificar e indicar no registro se o representante possui cartão e conforme
-       ** a situação dos mesmos seta o indicado, conforme abaixo:
-       ** 1 - Se representante possui cartão liberado, em uso e cancelado
-       ** 2 - Se representante possui cartão aprovado e solicitado
+       ** Verificar e indicar no registro se o representante possui cartao e conforme
+       ** a situaçao dos mesmos seta o indicado, conforme abaixo:
+       ** 1 - Se representante possui cartao liberado, em uso e cancelado
+       ** 2 - Se representante possui cartao aprovado e solicitado
        *********************************************************************************/
 
        /* Seta variável para zero */
        ASSIGN aux_fltemcrd = 0.
 
-       /* Validar cartões bancoob em situação de liberado, em uso e cancelado */
+       /* Validar cartoes bancoob em situaçao de liberado, em uso e cancelado */
        FIND FIRST crawcrd WHERE crawcrd.cdcooper = crabavt.cdcooper     AND
                                 crawcrd.nrdconta = crabavt.nrdconta     AND
                                 crawcrd.nrcpftit = crabavt.nrcpfcgc AND
@@ -466,13 +475,13 @@ PROCEDURE Busca_Dados_Id:
                                 crawcrd.insitcrd = 5   /* cancelado */ )  
                                 NO-LOCK NO-ERROR.
             
-       /* Se encontrar cartão de crédito */
+       /* Se encontrar cartao de crédito */
        IF AVAIL crawcrd THEN
          DO:
              ASSIGN aux_fltemcrd = 1.
          END. 
                 
-       /* Validar cartões bancoob em situação de aprovado e solicitado */
+       /* Validar cartoes bancoob em situaçao de aprovado e solicitado */
        FIND FIRST crawcrd WHERE crawcrd.cdcooper = crabavt.cdcooper     AND
                                 crawcrd.nrdconta = crabavt.nrdconta     AND
                                 crawcrd.nrcpftit = crabavt.nrcpfcgc AND
@@ -482,7 +491,7 @@ PROCEDURE Busca_Dados_Id:
                                 crawcrd.insitcrd = 2   /* solicitado */    )  
                                 NO-LOCK NO-ERROR.
             
-       /* Se encontrar cartão de crédito */
+       /* Se encontrar cartao de crédito */
        IF AVAIL crawcrd THEN
          DO:
              ASSIGN aux_fltemcrd = 2.
@@ -519,6 +528,15 @@ PROCEDURE Busca_Dados_Id:
                      ASSIGN aux_dscritic = ERROR-STATUS:GET-MESSAGE(1).
                      LEAVE BuscaId.
                   END.
+
+              /* Buscar a Nacionalidade */
+              FOR FIRST crapnac FIELDS(dsnacion)
+                                WHERE crapnac.cdnacion = crabavt.cdnacion
+                                      NO-LOCK:
+
+                  ASSIGN tt-crapavt.dsnacion = crapnac.dsnacion.
+
+              END.
 
                IF NOT VALID-HANDLE(h-b1wgen9999) THEN
                   RUN sistema/generico/procedures/b1wgen9999.p
@@ -722,7 +740,7 @@ PROCEDURE Busca_Dados_Ass:
 
         FOR FIRST crabass FIELDS(cdcooper nrdconta nrcpfcgc nmprimtl tpdocptl 
                                  nrdocptl cdoedptl cdufdptl dtemdptl dsproftl 
-                                 dtnasctl cdsexotl dsnacion inpessoa)
+                                 dtnasctl cdsexotl cdnacion inpessoa)
                            WHERE crabass.cdcooper = par_cdcooper AND
                                  crabass.nrdconta = par_nrdctato 
                                  NO-LOCK,
@@ -765,7 +783,7 @@ PROCEDURE Busca_Dados_Ass:
                    tt-crapavt.dtnascto    = crabass.dtnasctl
                    tt-crapavt.cdsexcto    = crabass.cdsexotl
                    tt-crapavt.cdestcvl    = crabttl.cdestcvl
-                   tt-crapavt.dsnacion    = crabass.dsnacion
+                   tt-crapavt.cdnacion    = crabass.cdnacion
                    tt-crapavt.dsnatura    = crabttl.dsnatura
                    tt-crapavt.nmmaecto    = crabttl.nmmaettl
                    tt-crapavt.nmpaicto    = crabttl.nmpaittl
@@ -786,6 +804,15 @@ PROCEDURE Busca_Dados_Ass:
                    tt-crapavt.nrctremp    = crabttl.idseqttl
                    tt-crapavt.tpctrato    = 6 /*Procuradores*/
                    NO-ERROR.
+
+                   /* Buscar a Nacionalidade */
+                   FOR FIRST crapnac FIELDS(dsnacion)
+                                     WHERE crapnac.cdnacion = crabass.cdnacion
+                                           NO-LOCK:
+
+                       ASSIGN tt-crapavt.dsnacion = crapnac.dsnacion.
+
+                   END.
 
             IF  ERROR-STATUS:ERROR THEN
                 DO:
@@ -1022,7 +1049,7 @@ PROCEDURE Valida_Dados:
     DEF  INPUT PARAM par_dtnascto AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_cdsexcto AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdestcvl AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsnacion AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdnacion AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dsnatura AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrcepend AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dsendere AS CHAR                           NO-UNDO.
@@ -1381,7 +1408,7 @@ PROCEDURE Valida_Dados:
                LEAVE Valida.
             END.
 
-        IF  NOT CAN-FIND(crapnac WHERE crapnac.dsnacion = par_dsnacion) THEN
+        IF  NOT CAN-FIND(crapnac WHERE crapnac.cdnacion = par_cdnacion) THEN
             DO:
                ASSIGN aux_cdcritic = 28.
                LEAVE Valida.
@@ -1849,7 +1876,7 @@ PROCEDURE Valida_Dados:
                                           INPUT tt-resp.dtnascin,
                                           INPUT tt-resp.cddosexo,
                                           INPUT tt-resp.cdestciv,
-                                          INPUT tt-resp.dsnacion,
+                                          INPUT tt-resp.cdnacion,
                                           INPUT tt-resp.dsnatura,
                                           INPUT tt-resp.cdcepres,
                                           INPUT tt-resp.dsendres,
@@ -2832,7 +2859,7 @@ PROCEDURE Grava_Dados:
     DEF  INPUT PARAM par_dtnascto AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_cdsexcto AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdestcvl AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsnacion AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdnacion AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dsnatura AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrcepend AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dsendere AS CHAR                           NO-UNDO.
@@ -3538,7 +3565,7 @@ PROCEDURE Grava_Dados:
                       crapavt.dtnascto    = par_dtnascto
                       crapavt.cdsexcto    = aux_cdsexcto
                       crapavt.cdestcvl    = par_cdestcvl
-                      crapavt.dsnacion    = UPPER(par_dsnacion)
+                      crapavt.cdnacion    = par_cdnacion
                       crapavt.dsnatura    = UPPER(par_dsnatura)
                       crapavt.nrcepend    = par_nrcepend
                       crapavt.dsendres[1] = UPPER(par_dsendere)
@@ -3672,7 +3699,7 @@ PROCEDURE Grava_Dados:
                              INPUT tt-resp.dtnascin,
                              INPUT tt-resp.cddosexo,
                              INPUT tt-resp.cdestciv,
-                             INPUT tt-resp.dsnacion,
+                             INPUT tt-resp.cdnacion,
                              INPUT tt-resp.dsnatura,
                              INPUT INT(tt-resp.cdcepres),
                              INPUT tt-resp.dsendres,
@@ -3852,7 +3879,7 @@ PROCEDURE Grava_Dados:
                                                   "99999999999999")),
                                                   "xx.xxx.xxx/xxxx-xx"))      +
                                       " no " + STRING(par_idseqttl)           +
-                                      "º titular da conta "                   +
+                                      "o titular da conta "                   +
                                       STRING(crapttl.nrdconta,"zzzz,zzz,9")   +
                                       " - CPF/CNPJ "                          +
                                       STRING((STRING(crapttl.nrcpfcgc,
@@ -4183,7 +4210,7 @@ Exclui: DO TRANSACTION
                                             INPUT crapcrl.dtnascin,
                                             INPUT crapcrl.cddosexo,
                                             INPUT crapcrl.cdestciv,
-                                            INPUT crapcrl.dsnacion,
+                                            INPUT crapcrl.cdnacion,
                                             INPUT crapcrl.dsnatura,
                                             INPUT crapcrl.cdcepres,
                                             INPUT crapcrl.dsendres,
@@ -4879,7 +4906,7 @@ PROCEDURE Grava_Dados_Poderes:
                                                                                                              INPUT crapsnh.nrdconta,
                                                                                                              INPUT crapsnh.idseqttl,
                                                                                                              INPUT par_dtmvtolt,
-                                                                                                             INPUT 3, /* Confirmação 3 */
+                                                                                                             INPUT 3, /* Confirmaçao 3 */
                                                                                                              INPUT FALSE, /* Log */
                                                                                                             OUTPUT TABLE tt-msg-confirma,
                                                                                                             OUTPUT TABLE tt-erro).
@@ -5232,46 +5259,223 @@ FUNCTION ListaPoderes RETURNS CHAR
 END FUNCTION.
 
 PROCEDURE valida_responsaveis:
-    DEF  INPUT PARAM par_cdcooper AS INTE NO-UNDO.
-    DEF  INPUT PARAM par_nrdcaixa AS INTE NO-UNDO.
-    DEF  INPUT PARAM par_cdoperad AS CHAR NO-UNDO.
-    DEF  INPUT PARAM par_nmdatela AS CHAR NO-UNDO.    
-    DEF  INPUT PARAM par_idorigem AS INTE NO-UNDO.
-    DEF  INPUT PARAM par_cdagenci AS INTE NO-UNDO.
-    DEF  INPUT PARAM par_dtmvtolt AS DATE NO-UNDO.
-    DEF  INPUT PARAM par_nrdconta AS INTE NO-UNDO.
-    DEF  INPUT PARAM par_dscpfcgc AS CHAR NO-UNDO.
-    DEF OUTPUT PARAM TABLE FOR tt-erro.
+
+  DEF  INPUT PARAM par_cdcooper AS INTE NO-UNDO.
+  DEF  INPUT PARAM par_nrdcaixa AS INTE NO-UNDO.
+  DEF  INPUT PARAM par_cdoperad AS CHAR NO-UNDO.
+  DEF  INPUT PARAM par_nmdatela AS CHAR NO-UNDO.    
+  DEF  INPUT PARAM par_idorigem AS INTE NO-UNDO.
+  DEF  INPUT PARAM par_cdagenci AS INTE NO-UNDO.
+  DEF  INPUT PARAM par_dtmvtolt AS DATE NO-UNDO.
+  DEF  INPUT PARAM par_nrdconta AS INTE NO-UNDO.
+  DEF  INPUT PARAM par_dscpfcgc AS CHAR NO-UNDO.
+  DEF  INPUT PARAM par_flgconju AS CHAR NO-UNDO.
+  DEF  INPUT PARAM par_qtminast AS INTE NO-UNDO.
+  DEF OUTPUT PARAM par_flgpende AS INTE NO-UNDO.
+  DEF OUTPUT PARAM TABLE FOR tt-erro.
  
-    EMPTY TEMP-TABLE tt-erro.
+  EMPTY TEMP-TABLE tt-erro.
     
-    DEF VAR aux_nrcpfcgc AS INT NO-UNDO.
-    DEF VAR aux_contador AS INT NO-UNDO.
+  DEF VAR aux_nrcpfcgc AS INT INIT 0 NO-UNDO.
+  DEF VAR aux_contador AS INT INIT 0 NO-UNDO.
+  DEF VAR aux_contarep AS INT INIT 0 NO-UNDO.
     
-    Contador: DO aux_contador = 1 TO NUM-ENTRIES(par_dscpfcgc,'#'):
-        FOR FIRST crapavt FIELDS(cdcooper nrdconta) WHERE crapavt.cdcooper = par_cdcooper
-                                               AND crapavt.nrdconta = par_nrdconta
-                                               AND crapavt.nrcpfcgc = DEC(ENTRY(aux_contador,par_dscpfcgc,'#')) NO-LOCK. END.
+  DEF VAR aux_dscpfcgc AS CHAR INIT "" NO-UNDO.
+  DEF VAR aux_dscpftel AS CHAR INIT "" NO-UNDO.
 
-        IF AVAIL crapavt THEN
-            NEXT.
-        ELSE
-            DO:
-                RUN gera_erro (INPUT par_cdcooper,
-                               INPUT par_cdagenci,
-                               INPUT par_nrdcaixa,
-                               INPUT 1,           
-                               INPUT "Responsavel Inexistente.",
-                               INPUT-OUTPUT aux_dscritic).
+  DEF VAR aux_flgretir AS LOGI INIT FALSE NO-UNDO.
+  DEF VAR aux_flgreadi as LOGI INIT FALSE NO-UNDO.
+  
+  ASSIGN par_flgpende = 0
+		 aux_dscpftel = REPLACE(par_dscpfcgc,"#",",").
+    
+  /* Busca CPF dos Representantes atuais */
+  FOR EACH crappod WHERE crappod.cdcooper = par_cdcooper
+                     AND crappod.nrdconta = par_nrdconta
+                     AND crappod.cddpoder = 10
+                     AND crappod.flgconju = TRUE NO-LOCK:
 
-                RETURN "NOK".
-            END.
+    IF TRIM(aux_dscpfcgc) <> ? AND TRIM(aux_dscpfcgc) <> "" THEN
+		  ASSIGN aux_dscpfcgc = aux_dscpfcgc + ",".
+
+    ASSIGN aux_dscpfcgc = aux_dscpfcgc + STRING(crappod.nrcpfpro).
+
+  END.
+  
+  IF par_nmdatela = "ATENDA" THEN
+    DO:
+      /* Verifica se esta excluindo representantes */
+      RepresentantesExcluir: DO aux_contador = 1 TO NUM-ENTRIES(aux_dscpfcgc,','):
+      IF NOT CAN-DO(aux_dscpftel,STRING(ENTRY(aux_contador,aux_dscpfcgc,','))) THEN
+        ASSIGN aux_flgretir = TRUE.		
+      END.
+      
+      RepresentantesAdicionar: DO aux_contador = 1 TO NUM-ENTRIES(aux_dscpftel,','):
+      IF NOT CAN-DO(aux_dscpfcgc,STRING(ENTRY(aux_contador,aux_dscpftel,','))) THEN
+        ASSIGN aux_flgreadi = TRUE.		
+      END.
     END.
+  ELSE IF par_nmdatela = "CONTAS" THEN
+    DO:
+      /* Verifica se esta incluindo/excluindo representantes */
+      FOR FIRST crappod FIELDS(flgconju) WHERE crappod.cdcooper = par_cdcooper
+                                           AND crappod.nrdconta = par_nrdconta
+                                           AND crappod.nrcpfpro = DEC(par_dscpfcgc)
+                                           AND crappod.cddpoder = 10  NO-LOCK. END.	
+
+      IF AVAILABLE crappod THEN
+        DO:
+          IF (LOGICAL(par_flgconju) <> crappod.flgconju) AND LOGICAL(par_flgconju) THEN
+            DO:
+              ASSIGN aux_flgreadi = TRUE.
+            END.
+          ELSE IF LOGICAL(par_flgconju) <> crappod.flgconju THEN
+            DO:
+              ASSIGN aux_flgretir = TRUE.
+            END.
+        END.
+    END.
+     
+	Contador: DO aux_contador = 1 TO NUM-ENTRIES(par_dscpfcgc,'#'):
+
+	FOR FIRST tbgen_trans_pend FIELDS(cdcooper) WHERE tbgen_trans_pend.cdcooper             = par_cdcooper 
+                                                AND tbgen_trans_pend.nrdconta			         = par_nrdconta
+                                                AND (tbgen_trans_pend.idsituacao_transacao = 1 OR 
+                                                   tbgen_trans_pend.idsituacao_transacao   = 5) NO-LOCK. END.	
+   
+	IF AVAILABLE tbgen_trans_pend THEN
+		DO:		
+			ASSIGN par_flgpende = 1.
+		END.
+
+	FOR FIRST crapavt FIELDS(cdcooper nrdconta) WHERE crapavt.cdcooper = par_cdcooper
+													AND crapavt.nrdconta = par_nrdconta
+													AND crapavt.nrcpfcgc = DEC(ENTRY(aux_contador,par_dscpfcgc,'#')) NO-LOCK. END.
+
+	IF AVAILABLE crapavt THEN
+		DO:
+			ASSIGN aux_contarep = aux_contarep + 1.
+			NEXT.
+		END.
+	ELSE
+		DO:
+			RUN gera_erro (INPUT par_cdcooper,
+							INPUT par_cdagenci,
+							INPUT par_nrdcaixa,
+							INPUT 1,           
+							INPUT "Responsavel Inexistente.",
+							INPUT-OUTPUT aux_dscritic).
+
+			RETURN "NOK".
+		END.
+	END. /* CONTADOR */
+		  
+	IF par_nmdatela = "CONTAS" THEN
+		DO:
+			FOR FIRST crapass FIELDS(qtminast) WHERE crapass.cdcooper = par_cdcooper
+                                           AND crapass.nrdconta = par_nrdconta NO-LOCK. END.
+												 
+			IF AVAILABLE crapass AND crapass.qtminast >= 2 THEN
+				DO:
+					ASSIGN aux_contarep = 0.
+
+					FOR EACH crappod WHERE crappod.cdcooper = par_cdcooper
+									   AND crappod.nrdconta = par_nrdconta
+									   AND crappod.cddpoder = 10
+									   AND crappod.flgconju = TRUE NO-LOCK:
+				
+						ASSIGN aux_contarep = aux_contarep + 1.
+
+					END.
+	
+					FOR FIRST crappod FIELDS(flgconju) WHERE crappod.cdcooper = par_cdcooper
+														 AND crappod.nrdconta = par_nrdconta
+														 AND crappod.nrcpfpro = DEC(ENTRY(1,par_dscpfcgc,'#'))
+														 AND crappod.cddpoder = 10  NO-LOCK. END.	
+
+					IF AVAILABLE crappod THEN
+						DO:
+							IF LOGICAL(par_flgconju) <> crappod.flgconju THEN
+								DO:
+									IF LOGICAL(par_flgconju) then
+										ASSIGN aux_contarep = aux_contarep + 1.
+									ELSE
+										ASSIGN aux_contarep = aux_contarep - 1.	
+								END.
+						END.
+					ELSE
+						DO:
+					
+							EMPTY TEMP-TABLE tt-erro.
+							CREATE tt-erro.
+							ASSIGN tt-erro.dscritic = "Registro de poder nao encontrado.".
+					
+							RETURN "NOK".
+						END.
+				
+			
+					IF crapass.qtminast > aux_contarep THEN
+						DO:
+							EMPTY TEMP-TABLE tt-erro.
+							CREATE tt-erro.
+							ASSIGN tt-erro.dscritic = "A quantidade minima de assinaturas nao pode ser superior a quantidade de responsaveis selecionados para assinatura conjunta.".
+
+							RETURN "NOK".
+						END.
+				END. /*IF AVAIL CRAPASS */
+			ELSE IF NOT AVAIL crapass THEN
+				DO:
+					EMPTY TEMP-TABLE tt-erro.
+					CREATE tt-erro.
+					ASSIGN tt-erro.dscritic = "Cooperado Inexistente.".
+								   
+					RETURN "NOK".
+				END.
+		END.
+	ELSE /* ATENDA */
+		DO:	
+			IF par_qtminast < 2 THEN
+				DO:
+					EMPTY TEMP-TABLE tt-erro.
+					CREATE tt-erro.
+					ASSIGN tt-erro.dscritic = "A quantidade minima de assinaturas deve ser maior ou igual a 2.".
+
+					RETURN "NOK".
+				END.
+			ELSE IF par_qtminast > aux_contarep THEN
+				DO:
+					EMPTY TEMP-TABLE tt-erro.
+					CREATE tt-erro.
+					ASSIGN tt-erro.dscritic = "A quantidade minima de assinaturas nao pode ser superior a quantidade de responsaveis selecionados para assinatura conjunta.".
+
+					RETURN "NOK".
+				END.
+		END.
+	
+	IF aux_flgretir AND par_flgpende = 1 THEN
+	DO:
+		ASSIGN par_flgpende = 0.
+		/*Há transaçoes pendentes de aprovaçao. Deseja alterar os responsáveis pela assinatura?*/
+	END.
+  ELSE IF aux_flgretir AND par_flgpende = 0 THEN
+    DO:
+		ASSIGN par_flgpende = 1.
+		/* Deseja alterar os responsáveis pela assinatura? */
+	END.
+  ELSE IF NOT aux_flgretir AND NOT aux_flgreadi THEN
+    DO:
+		ASSIGN par_flgpende = 1.
+		/* Deseja alterar os responsáveis pela assinatura? */
+	END.
+  ELSE IF aux_flgreadi THEN
+    DO:
+		ASSIGN par_flgpende = 2.
+		/* Revise as senhas de acesso a Conta Online para os novos responsáveis. Deseja alterar as permissoes de assinatura? */
+	END.
     
-    RETURN "OK".
+  RETURN "OK".
 
 END PROCEDURE.
-
 
 PROCEDURE grava_resp_ass_conjunta:
     DEF  INPUT PARAM par_cdcooper AS INTE NO-UNDO.
@@ -5284,11 +5488,13 @@ PROCEDURE grava_resp_ass_conjunta:
     DEF  INPUT PARAM par_nrdconta AS INTE NO-UNDO.
     DEF  INPUT PARAM par_idseqttl AS CHAR NO-UNDO.
     DEF  INPUT PARAM par_responsa AS CHAR NO-UNDO.
+	DEF  INPUT PARAM par_qtminast AS INTE NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
  
-    DEF VAR aux_poderres AS CHAR                                           NO-UNDO.
-    DEF VAR aux_contares AS INT                                            NO-UNDO.
-    
+    DEF VAR aux_poderres AS CHAR NO-UNDO.
+    DEF VAR aux_contares AS INT  NO-UNDO.
+    DEF VAR aux_qtminast AS INT  NO-UNDO.
+
     EMPTY TEMP-TABLE tt-erro.
     
     Contador: DO aux_contares = 1 TO NUM-ENTRIES(par_responsa,'#'):
@@ -5336,6 +5542,50 @@ PROCEDURE grava_resp_ass_conjunta:
          
     END.
    
+	FOR FIRST crapass FIELDS(qtminast) WHERE crapass.cdcooper = par_cdcooper
+								         AND crapass.nrdconta = par_nrdconta EXCLUSIVE-LOCK. END.
+
+    IF AVAIL crapass THEN
+		DO:
+			IF crapass.qtminast <> par_qtminast THEN
+				DO:
+					ASSIGN aux_qtminast = crapass.qtminast
+						   crapass.qtminast = par_qtminast
+						   aux_dstransa = "Alteracao Quantidade Minima de Assinaturas Conjunta"
+						   aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,",")).
+					
+					VALIDATE crapass.
+
+					RUN proc_gerar_log (INPUT par_cdcooper,
+										INPUT par_cdoperad,
+										INPUT "",
+										INPUT aux_dsorigem,
+										INPUT aux_dstransa,
+										INPUT TRUE,
+										INPUT par_idseqttl,
+										INPUT par_nmdatela,
+										INPUT par_nrdconta,
+									   OUTPUT aux_nrdrowid).
+                                        
+					RUN proc_gerar_log_item(INPUT aux_nrdrowid,
+											INPUT "Quantidade Minima de Assinaturas Conjunta",
+											INPUT aux_qtminast,
+											INPUT par_qtminast).
+				END.
+		END.
+	ELSE
+		DO:
+			FIND FIRST tt-erro NO-LOCK NO-ERROR NO-WAIT.
+        
+            IF  NOT AVAILABLE tt-erro  THEN
+                DO:
+					CREATE tt-erro.
+                    ASSIGN tt-erro.dscritic = "Nao foi possivel concluir a operacao.".
+                END.
+				
+            RETURN "NOK".
+		END.
+
     RETURN "OK".
 
 END PROCEDURE.

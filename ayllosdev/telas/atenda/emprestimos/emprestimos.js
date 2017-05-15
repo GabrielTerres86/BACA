@@ -1,5 +1,5 @@
 /*!
- * FONTE        : emprestimos.js                            Última alteração: 29/03/2017
+ * FONTE        : emprestimos.js                            Última alteração: 08/05/2017
  * CRIAÇÃO      : Gabriel Capoia (DB1)
  * DATA CRIAÇÃO : 08/02/2011
  * OBJETIVO     : Biblioteca de funções na rotina Emprestimos da tela ATENDA
@@ -105,6 +105,7 @@
  * 084: [19/10/2016] Incluido registro de log sobre liberacao de alienacao de bens 10x maior que o valor do emprestimo, SD-507761 (Jean Michel).
  * 085: [03/11/2016] Correcao de contagem de dias para as propostas de emprestimos, chamado 535609. (Gil Furtado - MOUTS).
  * 086: [29/03/2017] Ajustado para nao permitir selecionar finalidade de tipo 2 - cessao de credito( PRJ343 - Cessao de credito - Odirlei-AMcom)
+ * 087: [08/05/2017] Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -209,7 +210,7 @@ var aux_emailav1 = '';
 var aux_nmcidav1 = '';
 var aux_cdufava1 = '';
 var aux_nrcepav1 = '';
-var aux_dsnacio1 = '';
+var aux_cdnacio1 = '';
 var aux_vledvmt1 = '';
 var aux_vlrenme1 = '';
 var aux_nrender1 = '';
@@ -234,7 +235,7 @@ var aux_emailav0 = '';
 var aux_nmcidav0 = '';
 var aux_cdufava0 = '';
 var aux_nrcepav0 = '';
-var aux_dsnacio0 = '';
+var aux_cdnacio0 = '';
 var aux_vledvmt0 = '';
 var aux_vlrenme0 = '';
 var aux_nrender0 = '';
@@ -1444,7 +1445,7 @@ function manterRotina(operacao) {
     var nmcidav1 = (typeof aux_nmcidav0 == 'undefined') ? '' : aux_nmcidav0;
     var cdufava1 = (typeof aux_cdufava0 == 'undefined') ? '' : aux_cdufava0;
     var nrcepav1 = (typeof aux_nrcepav0 == 'undefined') ? '' : aux_nrcepav0;
-    var dsnacio1 = (typeof aux_dsnacio0 == 'undefined') ? '' : aux_dsnacio0;
+    var cdnacio1 = (typeof aux_cdnacio0 == 'undefined') ? '' : aux_cdnacio0;
     var vledvmt1 = (typeof aux_vledvmt0 == 'undefined') ? '' : aux_vledvmt0;
     var vlrenme1 = (typeof aux_vlrenme0 == 'undefined') ? '' : aux_vlrenme0;
     var nrender1 = (typeof aux_nrender0 == 'undefined') ? '' : aux_nrender0;
@@ -1470,7 +1471,7 @@ function manterRotina(operacao) {
     var nmcidav2 = (typeof aux_nmcidav1 == 'undefined') ? '' : aux_nmcidav1;
     var cdufava2 = (typeof aux_cdufava1 == 'undefined') ? '' : aux_cdufava1;
     var nrcepav2 = (typeof aux_nrcepav1 == 'undefined') ? '' : aux_nrcepav1;
-    var dsnacio2 = (typeof aux_dsnacio1 == 'undefined') ? '' : aux_dsnacio1;
+    var cdnacio2 = (typeof aux_cdnacio1 == 'undefined') ? '' : aux_cdnacio1;
     var vledvmt2 = (typeof aux_vledvmt1 == 'undefined') ? '' : aux_vledvmt1;
     var vlrenme2 = (typeof aux_vlrenme1 == 'undefined') ? '' : aux_vlrenme1;
     var nrender2 = (typeof aux_nrender1 == 'undefined') ? '' : aux_nrender1;
@@ -1562,14 +1563,14 @@ function manterRotina(operacao) {
             cpfcjav1: cpfcjav1, tdccjav1: tdccjav1, doccjav1: doccjav1,
             ende1av1: ende1av1, ende2av1: ende2av1, nrfonav1: nrfonav1,
             emailav1: emailav1, nmcidav1: nmcidav1, cdufava1: cdufava1,
-            nrcepav1: nrcepav1, dsnacio1: dsnacio1, vledvmt1: vledvmt1,
+            nrcepav1: nrcepav1, cdnacio1: cdnacio1, vledvmt1: vledvmt1,
             nrender1: nrender1, complen1: complen1, nrcxaps1: nrcxaps1,
             nmdaval2: nmdaval2, nrcpfav2: nrcpfav2, tpdocav2: tpdocav2,
             dsdocav2: dsdocav2, nmdcjav2: nmdcjav2, cpfcjav2: cpfcjav2,
             tdccjav2: tdccjav2, doccjav2: doccjav2, ende1av2: ende1av2,
             ende2av2: ende2av2, nrfonav2: nrfonav2, emailav2: emailav2,
             nmcidav2: nmcidav2, cdufava2: cdufava2, nrcepav2: nrcepav2,
-            dsnacio2: dsnacio2, vlrenme1: vlrenme1, vledvmt2: vledvmt2,
+            cdnacio2: cdnacio2, vlrenme1: vlrenme1, vledvmt2: vledvmt2,
             vlrenme2: vlrenme2, nrender2: nrender2, complen2: complen2,
             nrcxaps2: nrcxaps2, dsdbeavt: dsdbeavt, dsdopcao: dsdopcao,
             vlpreant: vlpreant, nrctrant: nrctrant, operacao: operacao,
@@ -2283,10 +2284,8 @@ function controlaLayout(operacao) {
 
         var rConta = $('label[for="nrctaava"]', '#' + nomeForm);
         var rCpf = $('label[for="nrcpfcgc"]', '#' + nomeForm);
-        var rNacio = $('label[for="dsnacion"]', '#' + nomeForm);
-
-        // Daniel
         var rInpessoa = $('label[for="inpessoa"]', '#' + nomeForm);
+        var rNacio = $('label[for="cdnacion"]', '#' + nomeForm);
         var rDtnascto = $('label[for="dtnascto"]', '#' + nomeForm);
 
         var cQntd = $('#qtpromis', '#' + nomeForm);
@@ -2295,19 +2294,17 @@ function controlaLayout(operacao) {
         var cNome = $('#nmdavali', '#' + nomeForm);
         var cDoc = $('#tpdocava', '#' + nomeForm);
         var cNrDoc = $('#nrdocava', '#' + nomeForm);
-        var cNacio = $('#dsnacion', '#' + nomeForm);
-
-        // Daniel
         var cInpessoa = $('#inpessoa', '#' + nomeForm);
+        var cNacio = $('#cdnacion', '#' + nomeForm);
+        var cDsnacio = $('#dsnacion', '#' + nomeForm);
         var cDtnascto = $('#dtnascto', '#' + nomeForm);
 
         rRotulo.addClass('rotulo').css('width', '40px');
         rConta.css('width', '241px');
         rCpf.css('width', '45px');
-        rNacio.css('width', '45px');
-
-        // Daniel
-        rDtnascto.css('width', '200px');
+        rInpessoa.css('width', '45px');
+        rNacio.addClass('rotulo').css('width', '40px');
+        rDtnascto.css('width', '72px');
 
         cQntd.css('width', '60px').setMask('INTEGER', 'zz9', '', '');
         cConta.addClass('conta pesquisa').css('width', '115px');
@@ -2315,11 +2312,10 @@ function controlaLayout(operacao) {
         cNome.addClass('alphanum').css('width', '255px').attr('maxlength', '40');
         cDoc.css('width', '50px');
         cNrDoc.addClass('alphanum').css('width', '202px').attr('maxlength', '37');
-        cNacio.addClass('pesquisa alphanum').css('width', '114px').attr('maxlength', '13');
-
-        // Daniel
         cInpessoa.css({'width': '100px'});
-        cDtnascto.addClass('data').css({'width': '80px'});
+        cNacio.addClass('codigo pesquisa').css('width', '50px');
+        cDsnacio.css('width', '155px');
+        cDtnascto.addClass('data').css({'width': '100px'});
 
         cConta.unbind('change').bind('change', function() {
 
@@ -2369,7 +2365,7 @@ function controlaLayout(operacao) {
                     cConta.desabilitaCampo().val(nrctaava);
                     cQntd.desabilitaCampo().val(arrayProposta['qtpromis']);
 
-                    $('#dsendre1,#cdufresd,#dsendre2,#nmcidade', '#' + nomeForm).desabilitaCampo();
+                    $('#dsendre1,#cdufresd,#dsendre2,#nmcidade,#dsnacion', '#' + nomeForm).desabilitaCampo();
                     controlaPesquisas();
                     cNome.focus();
                 }
@@ -2998,7 +2994,7 @@ function controlaLayout(operacao) {
     } else if (in_array(operacao, ['C_INTEV_ANU', 'A_INTEV_ANU', 'AI_INTEV_ANU', 'I_INTEV_ANU', 'IA_INTEV_ANU'])) {
 
         nomeForm = 'frmIntevAnuente';
-        altura = '385px';
+        altura = '415px';
         largura = '498px';
 
         var cTodos = $('input,select', '#' + nomeForm + ' fieldset:eq(0)');
@@ -3006,19 +3002,20 @@ function controlaLayout(operacao) {
         var rRotulo = $('label[for="nrctaava"],label[for="nmdavali"],label[for="tpdocava"]', '#' + nomeForm);
 
         var rCpf = $('label[for="nrcpfcgc"]', '#' + nomeForm);
-        var rNacio = $('label[for="dsnacion"]', '#' + nomeForm);
+        var rNacio = $('label[for="cdnacion"]', '#' + nomeForm);
 
         var cConta = $('#nrctaava', '#' + nomeForm);
         var cCPF = $('#nrcpfcgc', '#' + nomeForm);
         var cNome = $('#nmdavali', '#' + nomeForm);
         var cDoc = $('#tpdocava', '#' + nomeForm);
         var cNrDoc = $('#nrdocava', '#' + nomeForm);
-        var cNacio = $('#dsnacion', '#' + nomeForm);
+        var cNacio = $('#cdnacion', '#' + nomeForm);
+        var cDsnacio = $('#dsnacion', '#' + nomeForm);
         var cInpessoa = $('#inpessoa', '#' + nomeForm);
 
         rRotulo.addClass('rotulo').css('width', '40px');
         rCpf.css('width', '45px');
-        rNacio.css('width', '45px');
+        rNacio.addClass('rotulo').css('width', '40px');
 
         cConta.addClass('conta pesquisa').css('width', '115px');
         cCPF.css('width', '134px');
@@ -3026,7 +3023,8 @@ function controlaLayout(operacao) {
         cNome.addClass('alphanum').css('width', '255px').attr('maxlength', '40');
         cDoc.css('width', '50px');
         cNrDoc.addClass('alphanum').css('width', '202px').attr('maxlength', '37');
-        cNacio.addClass('pesquisa alphanum').css('width', '114px').attr('maxlength', '13');
+        cNacio.addClass('codigo pesquisa').css('width', '50px');
+        cDsnacio.css('width', '182px');
 
         cConta.unbind('change').bind('change', function() {
 
@@ -3073,7 +3071,7 @@ function controlaLayout(operacao) {
                     cTodos_3.habilitaCampo();
                     cConta.desabilitaCampo();
                     //Projeto CEP
-                    $('#dsendre1,#cdufresd,#dsendre2,#nmcidade', '#' + nomeForm).desabilitaCampo();
+                    $('#dsendre1,#cdufresd,#dsendre2,#nmcidade,#dsnacion', '#' + nomeForm).desabilitaCampo();
 
                     controlaPesquisas();
 
@@ -3767,6 +3765,7 @@ function attArray(novaOp, cdcooper) {
         atual = contAvalistas - 1;
 
         arrayAvalistas[atual]['nrctaava'] = $('#nrctaava', '#frmDadosAval').val();
+        arrayAvalistas[atual]['cdnacion'] = $('#cdnacion', '#frmDadosAval').val();
         arrayAvalistas[atual]['dsnacion'] = $('#dsnacion', '#frmDadosAval').val();
         arrayAvalistas[atual]['tpdocava'] = $('#tpdocava', '#frmDadosAval').val();
         arrayAvalistas[atual]['nmconjug'] = $('#nmconjug', '#frmDadosAval').val();
@@ -3820,6 +3819,7 @@ function attArray(novaOp, cdcooper) {
         atual = contIntervis - 1;
 
         arrayIntervs[atual]['nrctaava'] = $('#nrctaava', '#frmIntevAnuente').val();
+        arrayIntervs[atual]['cdnacion'] = $('#cdnacion', '#frmIntevAnuente').val();
         arrayIntervs[atual]['dsnacion'] = $('#dsnacion', '#frmIntevAnuente').val();
         arrayIntervs[atual]['tpdocava'] = $('#tpdocava', '#frmIntevAnuente').val();
         arrayIntervs[atual]['nmconjug'] = $('#nmconjug', '#frmIntevAnuente').val();
@@ -4044,6 +4044,7 @@ function atualizaTela() {
     } else if (in_array(operacao, ['C_DADOS_AVAL', 'A_DADOS_AVAL', 'IA_DADOS_AVAL'])) {
 
         $('#nrctaava', '#frmDadosAval').val(arrayAvalistas[contAvalistas]['nrctaava']);
+        $('#cdnacion', '#frmDadosAval').val(arrayAvalistas[contAvalistas]['cdnacion']);
         $('#dsnacion', '#frmDadosAval').val(arrayAvalistas[contAvalistas]['dsnacion']);
         $('#tpdocava', '#frmDadosAval').val(arrayAvalistas[contAvalistas]['tpdocava']);
         $('#nmconjug', '#frmDadosAval').val(arrayAvalistas[contAvalistas]['nmconjug']);
@@ -4112,6 +4113,7 @@ function atualizaTela() {
     } else if (in_array(operacao, ['C_INTEV_ANU', 'A_INTEV_ANU', 'IA_INTEV_ANU'])) {
 
         $('#nrctaava', '#frmIntevAnuente').val(arrayIntervs[contIntervis]['nrctaava']);
+        $('#cdnacion', '#frmIntevAnuente').val(arrayIntervs[contIntervis]['cdnacion']);
         $('#dsnacion', '#frmIntevAnuente').val(arrayIntervs[contIntervis]['dsnacion']);
         $('#tpdocava', '#frmIntevAnuente').val(arrayIntervs[contIntervis]['tpdocava']);
         $('#nmconjug', '#frmIntevAnuente').val(arrayIntervs[contIntervis]['nmconjug']);
@@ -4231,6 +4233,7 @@ function insereAvalista(OpContinua) {
 
     eval('var arrayAvalista' + i + ' = new Object();');
     eval('arrayAvalista' + i + '["nrctaava"] = $("#nrctaava","#frmDadosAval").val();');
+    eval('arrayAvalista' + i + '["cdnacion"] = $("#cdnacion","#frmDadosAval").val();');
     eval('arrayAvalista' + i + '["dsnacion"] = $("#dsnacion","#frmDadosAval").val();');
     eval('arrayAvalista' + i + '["tpdocava"] = $("#tpdocava","#frmDadosAval").val();');
     eval('arrayAvalista' + i + '["nmconjug"] = $("#nmconjug","#frmDadosAval").val();');
@@ -4425,6 +4428,7 @@ function insereIntervente(operacao, opContinua) {
 
     eval('var arrayInterv' + i + ' = new Object();');
     eval('arrayInterv' + i + '["nrctaava"] = $("#nrctaava","#frmIntevAnuente").val();');
+    eval('arrayInterv' + i + '["cdnacion"] = $("#cdnacion","#frmIntevAnuente").val();');
     eval('arrayInterv' + i + '["dsnacion"] = $("#dsnacion","#frmIntevAnuente").val();');
     eval('arrayInterv' + i + '["tpdocava"] = $("#tpdocava","#frmIntevAnuente").val();');
     eval('arrayInterv' + i + '["nmconjug"] = $("#nmconjug","#frmIntevAnuente").val();');
@@ -4636,6 +4640,7 @@ function carregaBusca() {
     if (formBusca != '') {
 
         $('#nrctaava', '#' + formBusca).val(arrayAvalBusca['nrctaava']);
+        $('#cdnacion', '#' + formBusca).val(arrayAvalBusca['cdnacion']);
         $('#dsnacion', '#' + formBusca).val(arrayAvalBusca['dsnacion']);
         $('#tpdocava', '#' + formBusca).val(arrayAvalBusca['tpdocava']);
         $('#nmconjug', '#' + formBusca).val(arrayAvalBusca['nmconjug']);
@@ -4887,7 +4892,7 @@ function validaDadosInterv() {
     $('input,select', '#' + nomeForm).removeClass('campoErro').removeClass('campoErro');
 
     var nrctaava = normalizaNumero($("#nrctaava", "#frmIntevAnuente").val());
-    var dsnacion = $("#dsnacion", "#frmIntevAnuente").val();
+    var cdnacion = $("#cdnacion", "#frmIntevAnuente").val();
     var tpdocava = $("#tpdocava", "#frmIntevAnuente").val();
     var nmconjug = $("#nmconjug", "#frmIntevAnuente").val();
     var tpdoccjg = $("#tpdoccjg", "#frmIntevAnuente").val();
@@ -4912,7 +4917,7 @@ function validaDadosInterv() {
         async: false,
         url: UrlSite + 'telas/atenda/emprestimos/valida_interveniente.php',
         data: {
-            nrctaava: nrctaava, dsnacion: dsnacion, tpdocava: tpdocava,
+            nrctaava: nrctaava, cdnacion: cdnacion, tpdocava: tpdocava,
             nmconjug: nmconjug, tpdoccjg: tpdoccjg, dsendre1: dsendre1,
             nrfonres: nrfonres, nmcidade: nmcidade, nrcepend: nrcepend,
             nmdavali: nmdavali, nrcpfcgc: nrcpfcgc, nrdocava: nrdocava,
@@ -5417,7 +5422,7 @@ function geraRegsDinamicos() {
         eval('aux_nmcidav' + i + ' = arrayAvalistas[' + i + '][\'nmcidade\'];');
         eval('aux_cdufava' + i + ' = arrayAvalistas[' + i + '][\'cdufresd\'];');
         eval('aux_nrcepav' + i + ' = arrayAvalistas[' + i + '][\'nrcepend\'];');
-        eval('aux_dsnacio' + i + ' = arrayAvalistas[' + i + '][\'dsnacion\'];');
+        eval('aux_cdnacio' + i + ' = arrayAvalistas[' + i + '][\'cdnacion\'];');
         eval('aux_vledvmt' + i + ' = arrayAvalistas[' + i + '][\'vledvmto\'];');
         eval('aux_vlrenme' + i + ' = arrayAvalistas[' + i + '][\'vlrenmes\'];');
         eval('aux_nrender' + i + ' = arrayAvalistas[' + i + '][\'nrendere\'];');
@@ -5593,7 +5598,7 @@ function montaString() {
                 arrayIntervs[i]['nmcidade'] + ';' +
                 arrayIntervs[i]['cdufresd'] + ';' +
                 normalizaNumero(arrayIntervs[i]['nrcepend']) + ';' +
-                arrayIntervs[i]['dsnacion'] + ';' +
+                arrayIntervs[i]['cdnacion'] + ';' +
                 normalizaNumero(arrayIntervs[i]['nrendere']) + ';' +
                 arrayIntervs[i]['complend'] + ';' +
                 normalizaNumero(arrayIntervs[i]['nrcxapst']);
@@ -7788,13 +7793,13 @@ function controlaPesquisas() {
                 campoAnterior = $(this).prev().attr('name');
 
                 // Nacionalidade
-                if (campoAnterior == 'dsnacion') {
+                if (campoAnterior == 'cdnacion') {
                     bo = 'b1wgen0059.p';
                     procedure = 'busca_nacionalidade';
                     titulo = 'Nacionalidade';
                     qtReg = '50';
-                    filtros = 'Nacionalidade;dsnacion;200px;S;';
-                    colunas = 'Nacionalidade;dsnacion;100%;left';
+                    filtros = 'Codigo;cdnacion;30px;N;|Nacionalidade;dsnacion;200px;S;';
+                    colunas = 'Codigo;cdnacion;15%;left|Descrição;dsnacion;85%;left';
                     mostraPesquisa(bo, procedure, titulo, qtReg, filtros, colunas, divRotina);
                     return false;
                     // Naturalidade
@@ -8101,6 +8106,7 @@ function limpaForm(form) {
         if (operacao == 'A_DADOS_AVAL' || operacao == 'IA_DADOS_AVAL') {
             var atual = contAvalistas - 1;
             arrayAvalistas[atual]['nrctaava'] = '';
+            arrayAvalistas[atual]['cdnacion'] = '';
             arrayAvalistas[atual]['dsnacion'] = '';
             arrayAvalistas[atual]['tpdocava'] = '';
             arrayAvalistas[atual]['nmconjug'] = '';

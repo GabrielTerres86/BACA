@@ -1171,7 +1171,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Abril/2006.                    Ultima atualizacao: 27/10/2015
+   Data    : Abril/2006.                    Ultima atualizacao: 17/04/2017
 
    Dados referentes ao programa:
 
@@ -1248,6 +1248,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
 
                27/10/2015 - Incluido a verificacao do campo crapass.idastcjt, Prj. 131 - 
                             Assinatura Conjunta. (Jean Michel).
+
+               17/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
     ............................................................................. */
       DECLARE
 
@@ -1569,7 +1571,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
               END IF;
             END IF;
             --Nacionalidade
-            IF rw_crapass.dsnacion <> pr_tab_log(vr_index).crapass(1).dsnacion THEN
+            IF rw_crapass.cdnacion <> pr_tab_log(vr_index).crapass(1).cdnacion THEN
               --Nome do campo
               vr_log_nmdcampo:= 'nacion. 1.ttl';
               vr_log_flgrecad:= TRUE;
@@ -3571,7 +3573,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
               END IF;
             END IF;
             --Nacionalidade
-            IF rw_crapttl.dsnacion <> pr_tab_log(vr_index).crapttl(1).dsnacion THEN
+            IF rw_crapttl.cdnacion <> pr_tab_log(vr_index).crapttl(1).cdnacion THEN
               --Nome do campo
               vr_log_nmdcampo:= 'nacion.';
               --Recadastramento
@@ -4390,7 +4392,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
               END IF;
             END IF;
             --nacionalidade
-            IF rw_crapcrl.dsnacion <> pr_tab_log(vr_index).crapcrl(1).dsnacion THEN
+            IF rw_crapcrl.cdnacion <> pr_tab_log(vr_index).crapcrl(1).cdnacion THEN
               --Nome do campo
               vr_log_nmdcampo:= 'nacionalidade. '||pr_tab_log(vr_index).crapcrl(1).idseqmen||'.ttl';
               --Verificar se o campo já estah na alteracao

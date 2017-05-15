@@ -22,7 +22,7 @@
 
     Programa  : b1wgen0188.p
     Autor     : James Prust Junior
-    Data      : Julho/2014                Ultima Atualizacao: 05/05/2016
+    Data      : Julho/2014                Ultima Atualizacao: 12/05/2017
     
     Dados referentes ao programa:
 
@@ -90,7 +90,9 @@
                 01/08/2016 - Agora podem existir mais de uma carga ativa em caso de cargas manuais. Portanto
                              agora é preciso passar nrdconta na procedure "busca_carga_ativa" para buscar a 
                              carga ativa mais atual. Projeto 299/3 Pre aprovado fase 3 (Lombardi).
-                
+
+                12/05/2017 - Passagem de 0 para a nacionalidade. (Jaison/Andrino)
+
 ..............................................................................*/
 
 /*................................ DEFINICOES ............................... */
@@ -1049,7 +1051,7 @@ PROCEDURE grava_dados:
                                                    INPUT "", /* par_nmcidav1 */
                                                    INPUT "", /* par_cdufava1 */
                                                    INPUT 0,  /* par_nrcepav1 */
-                                                   INPUT "", /* par_dsnacio1 */
+                                                   INPUT 0,  /* par_cdnacio1 */
                                                    INPUT 0,  /* par_vledvmt1 */
                                                    INPUT 0,  /* par_vlrenme1 */
                                                    INPUT 0,  /* par_nrender1 */
@@ -1073,7 +1075,7 @@ PROCEDURE grava_dados:
                                                    INPUT "", /* aux_nmcidav2 */
                                                    INPUT "", /* aux_cdufava2 */
                                                    INPUT 0,  /* aux_nrcepav2 */
-                                                   INPUT "", /* aux_dsnacio2 */
+                                                   INPUT 0,  /* aux_cdnacio2 */
                                                    INPUT 0,  /* aux_vledvmt2 */
                                                    INPUT 0,  /* aux_vlrenme2 */
                                                    INPUT 0,  /* aux_nrender2 */

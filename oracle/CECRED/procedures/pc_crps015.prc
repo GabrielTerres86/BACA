@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS015 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Fevereiro/92.                       Ultima atualizacao: 12/08/2015
+   Data    : Fevereiro/92.                       Ultima atualizacao: 13/04/2017
 
    Dados referentes ao programa:
 
@@ -69,7 +69,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS015 (pr_cdcooper IN crapcop.cdcooper%T
                
                12/08/2015 - Projeto Reformulacao cadastral
                             Eliminado o campo nmdsecao (Tiago Castro - RKAM).
-               
+
+               13/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
+
      ............................................................................. */
 
      DECLARE
@@ -146,12 +148,18 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS015 (pr_cdcooper IN crapcop.cdcooper%T
                ,crapass.tpdocptl
                ,crapass.nrdocptl
                ,crapass.dtnasctl
-               ,crapass.dsnacion
+               ,crapass.cdnacion
                ,crapass.dsproftl
          FROM crapass
          WHERE crapass.cdcooper = pr_cdcooper
          AND   crapass.nrdconta = pr_nrdconta;
        rw_crapass cr_crapass%ROWTYPE;
+       
+       -- Busca a Nacionalidade
+       CURSOR cr_crapnac(pr_cdnacion IN crapnac.cdnacion%TYPE) IS
+         SELECT crapnac.dsnacion
+           FROM crapnac
+          WHERE crapnac.cdnacion = pr_cdnacion;
 
        --Selecionar Lancamentos Cota Capital
        CURSOR cr_craplct (pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -199,6 +207,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS015 (pr_cdcooper IN crapcop.cdcooper%T
        vr_caminho      VARCHAR2(100);
        vr_dsendres     VARCHAR2(200);
        vr_des_xml      CLOB;
+       vr_dsnacion     crapnac.dsnacion%TYPE;
        
        --Variaveis para retorno de erro
        vr_cdcritic     INTEGER:= 0;
@@ -420,7 +429,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS015 (pr_cdcooper IN crapcop.cdcooper%T
                          TRIM(gene0002.fn_mask(rw_crapenc.nrendere,'ZZZ.ZZZ'));
          END IF;  
          --Fechar Cursor
-         CLOSE cr_crapenc;                  
+         CLOSE cr_crapenc;
+
+         -- Busca a Nacionalidade
+         vr_dsnacion := '';
+         OPEN  cr_crapnac(pr_cdnacion => rw_crapass.cdnacion);
+         FETCH cr_crapnac INTO vr_dsnacion;
+         CLOSE cr_crapnac;
 
          /* Nome do titular que fez a transferencia */
          OPEN cr_crapttl (pr_cdcooper => pr_cdcooper
@@ -442,7 +457,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS015 (pr_cdcooper IN crapcop.cdcooper%T
                 <tpdocptl>'||gene0002.fn_mask(rw_crapass.tpdocptl,'ZZ')||'</tpdocptl>
                 <nrdocptl>'||SUBSTR(rw_crapass.nrdocptl,1,15)||'</nrdocptl>
                 <dtnasctl>'||to_char(rw_crapass.dtnasctl,'DD/MM/YYYY')||'</dtnasctl>                                                                
-                <dsnacion>'||SUBSTR(rw_crapass.dsnacion,1,13)||'</dsnacion>                                                                
+                <dsnacion>'||SUBSTR(vr_dsnacion,1,13)||'</dsnacion>                                                                
                 <dsproftl>'||SUBSTR(rw_crapass.dsproftl,1,20)||'</dsproftl>
                 <cdempres>'||gene0002.fn_mask(vr_cdempres,'ZZZ99')||'</cdempres>
                 <cdturnos>'||gene0002.fn_mask(rw_crapttl.cdturnos,'99')||'</cdturnos>
@@ -475,7 +490,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS015 (pr_cdcooper IN crapcop.cdcooper%T
                 <tpdocptl>'||gene0002.fn_mask(rw_crapass.tpdocptl,'ZZ')||'</tpdocptl>
                 <nrdocptl>'||SUBSTR(rw_crapass.nrdocptl,1,15)||'</nrdocptl>
                 <dtnasctl>'||to_char(rw_crapass.dtnasctl,'DD/MM/YYYY')||'</dtnasctl>                                                                
-                <dsnacion>'||SUBSTR(rw_crapass.dsnacion,1,13)||'</dsnacion>                                                                
+                <dsnacion>'||SUBSTR(vr_dsnacion,1,13)||'</dsnacion>                                                                
                 <dsproftl>'||SUBSTR(rw_crapass.dsproftl,1,20)||'</dsproftl>
                 <cdempres>'||gene0002.fn_mask(vr_cdempres,'ZZZ99')||'</cdempres>
                 <cdturnos></cdturnos>
@@ -578,4 +593,3 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS015 (pr_cdcooper IN crapcop.cdcooper%T
      END;
    END PC_CRPS015;
 /
-
