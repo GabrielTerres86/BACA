@@ -268,6 +268,63 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                               ) RETURN VARCHAR2; --> returnar descricao da situacao(dssitura)
   
   /******************************************************************************/
+  /**            Procedure para listar cartoes do cooperado                    **/
+  /******************************************************************************/
+  PROCEDURE pc_lista_cartoes(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
+                            ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Codigo de agencia
+                            ,pr_nrdcaixa IN crapbcx.nrdcaixa%TYPE  --> Numero do caixa
+                            ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Codigo do operador
+                            ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Numero da conta
+                            ,pr_idorigem IN INTEGER                --> Identificado de oriem
+                            ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> sequencial do titular
+                            ,pr_nmdatela IN craptel.nmdatela%TYPE  --> Nome da tela
+                            ,pr_flgerlog IN VARCHAR2               --> identificador se deve gerar log S-Sim e N-Nao
+                            ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data da cooperativa
+                            ------ OUT ------
+                            ,pr_flgativo     OUT INTEGER           --> Retorna situação 1-ativo 2-inativo
+                            ,pr_nrctrhcj     OUT NUMBER            --> Retorna numero do contrato
+                            ,pr_flgliber     OUT INTEGER           --> Retorna se esta liberado 1-sim 2-nao
+                            ,pr_vltotccr     OUT NUMBER            --> retorna total de limite do cartao 
+                            ,pr_tab_cartoes  OUT typ_tab_cartoes   --> retorna temptable com os dados dos convenios
+                            ,pr_des_reto     OUT VARCHAR2                    --> OK ou NOK
+                            ,pr_tab_erro     OUT gene0001.typ_tab_erro);
+                            
+  /******************************************************************************/
+  /**            Procedure para listar ocorrencias do cooperado                **/
+  /******************************************************************************/
+  PROCEDURE pc_lista_ocorren(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
+                            ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Codigo de agencia
+                            ,pr_nrdcaixa IN crapbcx.nrdcaixa%TYPE  --> Numero do caixa
+                            ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Codigo do operador
+                            ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Numero da conta
+                            ,pr_rw_crapdat IN btch0001.cr_crapdat%ROWTYPE --> Data da cooperativa
+                            ,pr_idorigem IN INTEGER                --> Identificado de oriem
+                            ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> sequencial do titular
+                            ,pr_nmdatela IN craptel.nmdatela%TYPE  --> Nome da tela
+                            ,pr_flgerlog IN VARCHAR2               --> identificador se deve gerar log S-Sim e N-Nao
+                            ------ OUT ------
+                            ,pr_tab_ocorren  OUT typ_tab_ocorren   --> retorna temptable com os dados dos convenios
+                            ,pr_des_reto     OUT VARCHAR2          --> OK ou NOK
+                            ,pr_tab_erro     OUT gene0001.typ_tab_erro);
+                            
+   /******************************************************************************/
+  /**    Procedure para listar ocorrencias do cooperado - Chamada PROGRESS     **/
+  /******************************************************************************/
+  PROCEDURE pc_lista_ocorren_prog( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
+                                  ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Codigo de agencia
+                                  ,pr_nrdcaixa IN crapbcx.nrdcaixa%TYPE  --> Numero do caixa
+                                  ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Codigo do operador
+                                  ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Numero da conta                            
+                                  ,pr_idorigem IN INTEGER                --> Identificado de oriem
+                                  ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> sequencial do titular
+                                  ,pr_nmdatela IN craptel.nmdatela%TYPE  --> Nome da tela
+                                  ,pr_flgerlog IN VARCHAR2               --> identificador se deve gerar log S-Sim e N-Nao
+                                  ------ OUT ------
+                                  ,pr_xml_ocorren  OUT CLOB              --> retorna xml com os dados dos convenios
+                                  ,pr_dscritic     OUT VARCHAR2          --> Descrição da critica
+                                  ,pr_cdcritic     OUT INTEGER) ;       --> Codigo da critica
+                                  
+  /******************************************************************************/
   /**             Funcao para obter saldo da conta investimento                **/
   /******************************************************************************/
   FUNCTION fn_saldo_invetimento( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
@@ -2553,6 +2610,168 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       END IF;
       pr_des_reto := 'NOK';      
   END pc_lista_ocorren;
+  
+  /******************************************************************************/
+  /**    Procedure para listar ocorrencias do cooperado - Chamada PROGRESS     **/
+  /******************************************************************************/
+  PROCEDURE pc_lista_ocorren_prog( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
+                                  ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Codigo de agencia
+                                  ,pr_nrdcaixa IN crapbcx.nrdcaixa%TYPE  --> Numero do caixa
+                                  ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Codigo do operador
+                                  ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Numero da conta                            
+                                  ,pr_idorigem IN INTEGER                --> Identificado de oriem
+                                  ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> sequencial do titular
+                                  ,pr_nmdatela IN craptel.nmdatela%TYPE  --> Nome da tela
+                                  ,pr_flgerlog IN VARCHAR2               --> identificador se deve gerar log S-Sim e N-Nao
+                                  ------ OUT ------
+                                  ,pr_xml_ocorren  OUT CLOB              --> retorna temptable com os dados dos convenios
+                                  ,pr_dscritic     OUT VARCHAR2          --> Descrição da critica
+                                  ,pr_cdcritic     OUT INTEGER) IS       --> Codigo da critica
+     
+  /* ..........................................................................
+    --
+    --  Programa : pc_lista_ocorren_prog        Antiga: b1wgen0027.p/lista_ocorren
+    --  Sistema  : Conta-Corrente - Cooperativa de Credito
+    --  Sigla    : CRED
+    --  Autor    : Odirlei Busana(Amcom)
+    --  Data     : Abril/2017.                   Ultima atualizacao: 
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Procedure para listar ocorrencias do cooperado - Chamada progress 
+    --
+    --  Alteração : 
+    --
+    -- ..........................................................................*/
+    
+    ---------------> CURSORES <----------------- 
+    rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+                          
+    --------------> VARIAVEIS <-----------------
+    vr_cdcritic     INTEGER;
+    vr_dscritic     VARCHAR2(1000);
+    vr_des_reto     VARCHAR2(10);
+    vr_exc_erro     EXCEPTION;
+    vr_tab_erro     gene0001.typ_tab_erro;
+    
+    vr_tab_ocorren  typ_tab_ocorren;
+    vr_dstexto      VARCHAR2(32767);
+    vr_string       VARCHAR2(32767);    
+    vr_index        PLS_INTEGER;
+    
+  BEGIN
+    
+    -- DATA DA COOPERATIVA
+    OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+    FETCH btch0001.cr_crapdat INTO rw_crapdat;
+
+    IF btch0001.cr_crapdat%NOTFOUND THEN
+
+      -- FECHAR CR_CRAPDAT CURSOR POIS HAVERÁ RAISE
+      CLOSE btch0001.cr_crapdat;
+
+      -- MONTAR MENSAGEM DE CRITICA
+      vr_cdcritic := 1;
+      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        
+      RAISE vr_exc_erro;
+    ELSE
+      -- APENAS FECHAR O CURSOR
+      CLOSE btch0001.cr_crapdat;
+    END IF;
+  
+    pc_lista_ocorren(  pr_cdcooper   => pr_cdcooper  --> Codigo da cooperativa
+                      ,pr_cdagenci   => pr_cdagenci  --> Codigo de agencia
+                      ,pr_nrdcaixa   => pr_nrdcaixa  --> Numero do caixa
+                      ,pr_cdoperad   => pr_cdoperad  --> Codigo do operador
+                      ,pr_nrdconta   => pr_nrdconta  --> Numero da conta
+                      ,pr_rw_crapdat => rw_crapdat   --> Data da cooperativa
+                      ,pr_idorigem   => pr_idorigem  --> Identificado de oriem
+                      ,pr_idseqttl   => pr_idseqttl  --> sequencial do titular
+                      ,pr_nmdatela   => pr_nmdatela  --> Nome da tela
+                      ,pr_flgerlog   => pr_flgerlog  --> identificador se deve gerar log S-Sim e N-Nao
+                      ------ OUT ------
+                      ,pr_tab_ocorren  => vr_tab_ocorren  --> retorna temptable com os dados dos convenios
+                      ,pr_des_reto     => vr_des_reto     --> OK ou NOK
+                      ,pr_tab_erro     => vr_tab_erro);
+  
+    IF vr_des_reto = 'NOK' THEN 
+      IF vr_tab_erro.exists(vr_tab_erro.first)  THEN
+        vr_cdcritic := vr_tab_erro(vr_tab_erro.first).cdcritic;
+        vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
+      ELSE
+        vr_dscritic := 'Não foi possivel listar ocorrencias';        
+      END IF;
+      RAISE vr_exc_erro;    
+    END IF;
+    
+    --Montar CLOB
+    IF vr_tab_ocorren.COUNT > 0 THEN
+        
+      -- Criar documento XML
+      dbms_lob.createtemporary(pr_xml_ocorren, TRUE); 
+      dbms_lob.open(pr_xml_ocorren, dbms_lob.lob_readwrite);
+        
+      -- Insere o cabeçalho do XML 
+      gene0002.pc_escreve_xml(pr_xml            => pr_xml_ocorren 
+                             ,pr_texto_completo => vr_dstexto 
+                             ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><root>');
+         
+      --Buscar Primeiro beneficiario
+      vr_index := vr_tab_ocorren.FIRST;
+        
+      --Percorrer todos os beneficiarios
+      WHILE vr_index IS NOT NULL LOOP
+        vr_string := '<ocorren>'||
+                         '<qtctrord>'|| vr_tab_ocorren(vr_index).qtctrord  ||'</qtctrord>'||
+                         '<qtdevolu>'|| vr_tab_ocorren(vr_index).qtdevolu  ||'</qtdevolu>'||
+                         '<dtcnsspc>'|| to_char(vr_tab_ocorren(vr_index).dtcnsspc,'MM/DD/RRRR')  ||'</dtcnsspc>'||
+                         '<dtdsdsps>'|| to_char(vr_tab_ocorren(vr_index).dtdsdsps,'MM/DD/RRRR')  ||'</dtdsdsps>'||
+                         '<qtddsdev>'|| vr_tab_ocorren(vr_index).qtddsdev  ||'</qtddsdev>'||
+                         '<dtdsdclq>'|| to_char(vr_tab_ocorren(vr_index).dtdsdclq,'MM/DD/RRRR')  ||'</dtdsdclq>'||
+                         '<qtddtdev>'|| vr_tab_ocorren(vr_index).qtddtdev  ||'</qtddtdev>'||
+                         '<flginadi>'|| vr_tab_ocorren(vr_index).flginadi  ||'</flginadi>'||
+                         '<flglbace>'|| vr_tab_ocorren(vr_index).flglbace  ||'</flglbace>'||
+                         '<flgeprat>'|| vr_tab_ocorren(vr_index).flgeprat  ||'</flgeprat>'||
+                         '<indrisco>'|| vr_tab_ocorren(vr_index).indrisco  ||'</indrisco>'||
+                         '<nivrisco>'|| vr_tab_ocorren(vr_index).nivrisco  ||'</nivrisco>'||
+                         '<flgpreju>'|| vr_tab_ocorren(vr_index).flgpreju  ||'</flgpreju>'||
+                         '<flgjucta>'|| vr_tab_ocorren(vr_index).flgjucta  ||'</flgjucta>'||
+                         '<flgocorr>'|| vr_tab_ocorren(vr_index).flgocorr  ||'</flgocorr>'||
+                         '<dtdrisco>'|| to_char(vr_tab_ocorren(vr_index).dtdrisco,'MM/DD/RRRR')  ||'</dtdrisco>'||
+                         '<qtdiaris>'|| vr_tab_ocorren(vr_index).qtdiaris  ||'</qtdiaris>'||
+                         '<inrisctl>'|| vr_tab_ocorren(vr_index).inrisctl  ||'</inrisctl>'||
+                         '<dtrisctl>'|| to_char(vr_tab_ocorren(vr_index).dtrisctl,'MM/DD/RRRR')  ||'</dtrisctl>'||
+                         '<dsdrisgp>'|| vr_tab_ocorren(vr_index).dsdrisgp  ||'</dsdrisgp>'||
+                         '<innivris>'|| vr_tab_ocorren(vr_index).innivris  ||'</innivris>'||
+                     '<ocorren>';
+        
+        -- Escrever no XML
+        gene0002.pc_escreve_xml(pr_xml            => pr_xml_ocorren 
+                               ,pr_texto_completo => vr_dstexto 
+                               ,pr_texto_novo     => vr_string
+                               ,pr_fecha_xml      => FALSE);   
+                                      
+        vr_index := vr_tab_ocorren.next(vr_index);
+      END LOOP;
+      
+      -- Encerrar a tag raiz 
+      gene0002.pc_escreve_xml(pr_xml            => pr_xml_ocorren 
+                             ,pr_texto_completo => vr_dstexto 
+                             ,pr_texto_novo     => '</root>' 
+                             ,pr_fecha_xml      => TRUE);
+      
+    END IF;   
+  EXCEPTION    
+    WHEN vr_exc_erro THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro CADA0004.pc_lista_ocorren:'||SQLERRM;
+          
+  END pc_lista_ocorren_prog;
   
   /******************************************************************************/
   /**             Funcao para obter saldo da conta investimento                **/

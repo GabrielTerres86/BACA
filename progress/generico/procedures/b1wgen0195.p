@@ -2,13 +2,13 @@
 
    Programa: b1wgen0195.p
    Autora  : Odirlei Busana - AMcom.
-   Data    : 09/03/2016                        Ultima atualizacao: 09/03/2016
+   Data    : 09/03/2016                        Ultima atualizacao: 02/05/2017
 
    Dados referentes ao programa:
 
    Objetivo  : BO - Rotinas para envio de informacoes para a Esteira de Credito
 
-   Alteracoes:
+   Alteracoes: 02/05/2017 - Ajustes PRJ337 - Motor de Credito (Odirlei-Amcom)
 
  ..............................................................................*/
 
@@ -207,14 +207,16 @@ PROCEDURE Enviar_proposta_esteira:
     DEF VAR aux_nmarqpdf          AS CHAR                           NO-UNDO.   
     DEF VAR aux_flcontes          AS CHAR                           NO-UNDO.   
     
-    /* Verificar se é inclusao ou se ja foi enviado 
-	   deve ser considerado como alteracao */
+    /* Caso a proposta já tenha sido enviada para
+      a Esteira iremos considerar uma Alteracao */
 	IF par_tpenvest = "I" THEN
 	DO:
 		FIND FIRST crawepr 
-		   WHERE crawepr.cdcooper = par_cdcooper
-			 AND crawepr.nrdconta = par_nrdconta
-			 AND crawepr.nrctremp = par_nrctremp
+		     WHERE crawepr.cdcooper = par_cdcooper
+			     AND crawepr.nrdconta = par_nrdconta
+			     AND crawepr.nrctremp = par_nrctremp
+           AND crawepr.insitest >= 2 
+           AND crawepr.cdopeapr <> "MOTOR"
 			 NO-LOCK NO-ERROR.
     
 		IF AVAIL crawepr and 

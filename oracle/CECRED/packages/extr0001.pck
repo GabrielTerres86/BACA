@@ -425,6 +425,22 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0001 AS
                                     ,pr_cdcritic OUT PLS_INTEGER           --> Codigo Erro
                                     ,pr_dscritic OUT VARCHAR2);            --> Descricao Erro
 
+  --> Rotina para carregar as medias dos cooperados
+  PROCEDURE pc_carrega_medias ( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Código da Cooperativa
+                               ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Código da agencia
+                               ,pr_nrdcaixa IN crapbcx.nrdcaixa%TYPE  --> Numero do caixa do operador
+                               ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Código do Operador
+                               ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Número da Conta
+                               ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> Data de Movimento
+                               ,pr_idorigem IN INTEGER                --> Identificador de Origem                               
+                               ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> Sequencial do titular
+                               ,pr_nmdatela IN craptel.nmdatela%TYPE  --> Nome da Tela
+                               ,pr_flgerlog IN INTEGER                --> Indicador se deve gerar log(0-nao, 1-sim)
+                               --------> OUT <--------                                   
+                               ,pr_tab_medias      OUT typ_tab_medias      --> Retornar valores das medias
+                               ,pr_tab_comp_medias OUT typ_tab_comp_medias --> Retorna complemento medias
+                               ,pr_cdcritic        OUT PLS_INTEGER         --> Código da crítica
+                               ,pr_dscritic        OUT VARCHAR2);          --> Descrição da crítica
 END EXTR0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
@@ -6955,7 +6971,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                        sld.vlsmstre##3,
                        sld.vlsmstre##4,
                        sld.vlsmstre##5,
-                       sld.vlsmstre##6
+                       sld.vlsmstre##6,
+                       sld.vlsmpmes
                 FROM   crapsld sld 
                 WHERE sld.cdcooper = pr_cdcooper
                   AND sld.nrdconta = pr_nrdconta)
@@ -6964,7 +6981,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                                  vlsmstre##3,
                                  vlsmstre##4,
                                  vlsmstre##5,
-                                 vlsmstre##6));
+                                 vlsmstre##6,
+                                 VLSMPMES));
     
     TYPE typ_tab_vlsmstre IS TABLE OF NUMBER
          INDEX BY PLS_INTEGER;
@@ -7093,13 +7111,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
     --> Buscar media de saldo do mês
     CURSOR cr_crapsda (pr_cdcooper crapsda.cdcooper%TYPE,
                        pr_nrdconta crapsda.nrdconta%TYPE,
-                       pr_dtmvtolt crapsda.dtmvtolt%TYPE) IS
+                       pr_dtmvtolt crapsda.dtmvtolt%TYPE,
+                       pr_dtmvtoan crapdat.dtmvtoan%TYPE) IS
       SELECT SUM(sda.vlsddisp) / COUNT(sda.nrdconta) vltsddis
             ,COUNT(sda.nrdconta) qtdiauti
         FROM crapsda sda
        WHERE sda.cdcooper = pr_cdcooper
          AND sda.nrdconta = pr_nrdconta
-         AND sda.dtmvtolt BETWEEN trunc(pr_dtmvtolt,'MM') AND last_day(pr_dtmvtolt);
+         AND sda.dtmvtolt BETWEEN trunc(pr_dtmvtolt,'MM') AND pr_dtmvtoan;
     rw_crapsda cr_crapsda%ROWTYPE;
     
          
@@ -7202,7 +7221,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
     --> Buscar media de saldo do mês
     OPEN cr_crapsda (pr_cdcooper => pr_cdcooper,
                      pr_nrdconta => pr_nrdconta,
-                     pr_dtmvtolt => rw_crapdat.dtmvtolt);
+                     pr_dtmvtolt => rw_crapdat.dtmvtolt,
+                     pr_dtmvtoan => rw_crapdat.dtmvtoan);
     FETCH cr_crapsda INTO rw_crapsda;
     CLOSE cr_crapsda;
     

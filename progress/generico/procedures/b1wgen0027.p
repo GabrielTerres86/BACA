@@ -5,6 +5,7 @@
 | Rotina Progress                        | Rotina Oracle PLSQL                 |
 +----------------------------------------+-------------------------------------+
 | lista_estouros                         | EMPR0001.pc_lista_estouros          |
+| lista_ocorren                          | CADA0004.pc_lista_ocorren           |
 +----------------------------------------+-------------------------------------+
 
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
@@ -86,7 +87,10 @@
                              obtem-dados-emprestimos em BO 0002.(Jorge)
                 
                 19/06/2015 - Ajuste para alimentar o campo tt-ocorren.innivris
-                             na procedure lista_ocorren. (James)             
+                             na procedure lista_ocorren. (James) 
+                
+                25/04/2017 - Alterado rotina lista_ocorren para chamada da rotina oracle.
+                             PRJ337 - Motor de Credito (Odirlei-Amcom)
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0027tt.i }
@@ -95,6 +99,7 @@
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/gera_erro.i }
 { sistema/generico/includes/gera_log.i }
+{ sistema/generico/includes/var_oracle.i }
 
 DEF VAR aux_cdcritic AS INTE                                           NO-UNDO.
 DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
@@ -119,456 +124,169 @@ PROCEDURE lista_ocorren:
     DEF  INPUT  PARAM  par_flgerlog  AS  LOGI                          NO-UNDO.
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
-    DEF OUTPUT PARAM TABLE FOR tt-ocorren.
-
-    DEF VAR aux_qtctrord AS INTE                                       NO-UNDO.
-    DEF VAR aux_qtdevolu AS INTE                                       NO-UNDO.
-    DEF VAR aux_flginadi AS LOGI                                       NO-UNDO.
-    DEF VAR aux_flglbace AS LOGI                                       NO-UNDO.
-    DEF VAR aux_flgeprat AS LOGI                                       NO-UNDO.
-    DEF VAR aux_indrisco AS INTE                                       NO-UNDO.
-    DEF VAR aux_nivrisco AS CHAR                                       NO-UNDO.
-    DEF VAR aux_flgpreju AS LOGI                                       NO-UNDO.
-    DEF VAR aux_flgjucta AS LOGI                                       NO-UNDO.
-    DEF VAR aux_flgocorr AS LOGI                                       NO-UNDO.
-    DEF VAR aux_dtdrisco AS DATE                                       NO-UNDO.
-    DEF VAR aux_qtdiaris AS INTE                                       NO-UNDO.
-    DEF VAR aux_dtrefere AS DATE                                       NO-UNDO.
-    DEF VAR aux_nrdgrupo AS INT                                        NO-UNDO.
-    DEF VAR aux_gergrupo AS CHAR                                       NO-UNDO.
-    DEF VAR aux_dsdrisgp AS CHAR                                       NO-UNDO.
-
-
-    DEF VAR aux_contador    AS INTE                                    NO-UNDO.
-    DEF VAR aux_vlr_arrasto AS DECIMAL                                 NO-UNDO.
-    DEF VAR aux_dsdrisco    AS CHAR   FORMAT "x(02)" EXTENT 20         NO-UNDO.
-    DEF VAR aux_qtregist    AS INTE                                    NO-UNDO.
-    DEF VAR aux_innivris    LIKE crapris.innivris                      NO-UNDO.
+    DEF OUTPUT PARAM TABLE FOR tt-ocorren. 
     
-    DEF VAR h-b1wgen0002    AS HANDLE                                  NO-UNDO.
-    DEF VAR h-b1wgen0138    AS HANDLE                                  NO-UNDO.
-
+    
+    /* Variaveis para o XML */ 
+    DEF VAR xDoc          AS HANDLE                                 NO-UNDO.   
+    DEF VAR xRoot         AS HANDLE                                 NO-UNDO.  
+    DEF VAR xRoot2        AS HANDLE                                 NO-UNDO.  
+    DEF VAR xField        AS HANDLE                                 NO-UNDO. 
+    DEF VAR xText         AS HANDLE                                 NO-UNDO. 
+    DEF VAR aux_cont_raiz AS INTEGER                                NO-UNDO. 
+    DEF VAR aux_cont      AS INTEGER                                NO-UNDO. 
+    DEF VAR ponteiro_xml  AS MEMPTR                                 NO-UNDO. 
+    DEF VAR xml_req       AS LONGCHAR                               NO-UNDO. 
+    
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-ocorren.
 
-    /** Atribui descricao da origem e da transacao **/
-    ASSIGN aux_cdcritic = 0
-           aux_dscritic = ""
-           aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
-           aux_dstransa = "Listar ocorrencias.".
+   { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
-    FIND FIRST crapdat WHERE crapdat.cdcooper = par_cdcooper
-                             NO-LOCK NO-ERROR.
+    /* Efetuar a chamada a rotina Oracle */ 
+    RUN STORED-PROCEDURE pc_lista_ocorren_prog
+     aux_handproc = PROC-HANDLE NO-ERROR 
+                  (  INPUT par_cdcooper /* pr_cdcooper   --> Codigo da cooperativa */
+                    ,INPUT par_cdagenci /* pr_cdagenci   --> Codigo de agencia */
+                    ,INPUT par_nrdcaixa /* pr_nrdcaixa   --> Numero do caixa */
+                    ,INPUT par_cdoperad /* pr_cdoperad   --> Codigo do operador */
+                    ,INPUT par_nrdconta /* pr_nrdconta   --> Numero da conta       */                                    
+                    ,INPUT par_idorigem /* pr_idorigem   --> Identificado de oriem */
+                    ,INPUT par_idseqttl /* pr_idseqttl   --> sequencial do titular */
+                    ,INPUT par_nmdatela /* pr_nmdatela   --> Nome da tela          */
+                    ,INPUT (IF par_flgerlog THEN  "S" ELSE "N") /* pr_flgerlog   --> identificador se deve gerar log S-Sim e N-Nao  */                                    
+                                                                                                        
+                      /* ------ OUT ------                         */              
+                    ,OUTPUT ""           /* pr_xml_ocorren --> retorna lista de ocorrencias */  
+                    ,OUTPUT ""           /* pr_dscritic --> Descriçao da critica */
+                    ,OUTPUT 0 ).         /* pr_cdcritic --> Codigo da critica */
     
-    IF   NOT AVAIL crapdat   THEN
-         DO:
-             ASSIGN aux_cdcritic = 1
-                    aux_dscritic = "".
+    /* Fechar o procedimento para buscarmos o resultado */ 
+    CLOSE STORED-PROC pc_lista_ocorren_prog
+        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
 
-             RUN gera_erro (INPUT par_cdcooper,
-                            INPUT par_cdagenci,
-                            INPUT par_nrdcaixa,
-                            INPUT 1,            /** Sequencia **/
-                            INPUT aux_cdcritic,
-                            INPUT-OUTPUT aux_dscritic).        
-                 
-             RUN proc_gerar_log (INPUT par_cdcooper,
-                                 INPUT par_cdoperad,
-                                 INPUT aux_cdcritic,
-                                 INPUT aux_dsorigem,
-                                 INPUT aux_dstransa,
-                                 INPUT FALSE,
-                                 INPUT par_idseqttl,
-                                 INPUT par_nmdatela,
-                                 INPUT par_nrdconta,
-                                OUTPUT aux_nrdrowid).              
-                           
-             RETURN "NOK".
-         END.
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-    
-    FIND FIRST crapass WHERE crapass.cdcooper = par_cdcooper AND
-                             crapass.nrdconta = par_nrdconta
-                             NO-LOCK NO-ERROR.
-    
-    IF   NOT AVAIL crapass   THEN
-         DO:
-             ASSIGN aux_cdcritic = 9
-                    aux_dscritic = "".
 
-             RUN gera_erro (INPUT par_cdcooper,
-                            INPUT par_cdagenci,
-                            INPUT par_nrdcaixa,
-                            INPUT 1,            /** Sequencia **/
-                            INPUT aux_cdcritic,
-                            INPUT-OUTPUT aux_dscritic).        
-                 
-             RUN proc_gerar_log (INPUT par_cdcooper,
-                                 INPUT par_cdoperad,
-                                 INPUT aux_cdcritic,
-                                 INPUT aux_dsorigem,
-                                 INPUT aux_dstransa,
-                                 INPUT FALSE,
-                                 INPUT par_idseqttl,
-                                 INPUT par_nmdatela,
-                                 INPUT par_nrdconta,
-                                OUTPUT aux_nrdrowid).              
-                           
-             RETURN "NOK".
+    ASSIGN aux_cdcritic = pc_lista_ocorren_prog.pr_cdcritic
+                             WHEN pc_lista_ocorren_prog.pr_cdcritic <> ?
+           aux_dscritic = pc_lista_ocorren_prog.pr_dscritic
+                             WHEN pc_lista_ocorren_prog.pr_dscritic <> ?.
 
-         END.
-    
-    ASSIGN aux_flginadi = IF   crapass.inadimpl = 0 THEN
-                               FALSE
-                          ELSE 
-                               TRUE
-           aux_flglbace = IF   crapass.inlbacen = 0  THEN
-                               FALSE
-                          ELSE 
-                               TRUE
-           aux_flgjucta = IF   CAN-DO("5,6,7,8",STRING(crapass.cdsitdtl)) THEN
-                               TRUE
-                          ELSE 
-                               FALSE
-           aux_qtctrord = 0
-           aux_qtdevolu = 0.
-    
-    FIND FIRST crapsld WHERE crapsld.cdcooper = par_cdcooper AND 
-                             crapsld.nrdconta = crapass.nrdconta
-                             NO-LOCK NO-ERROR.
-    
-    IF   NOT AVAILABLE crapsld   THEN
-         DO:
-            ASSIGN aux_cdcritic = 10
-                   aux_dscritic = "".
-
-            RUN gera_erro (INPUT par_cdcooper,
-                           INPUT par_cdagenci,
-                           INPUT par_nrdcaixa,
-                           INPUT 1,            /** Sequencia **/
-                           INPUT aux_cdcritic,
-                           INPUT-OUTPUT aux_dscritic).        
-
-            RUN proc_gerar_log (INPUT par_cdcooper,
-                                INPUT par_cdoperad,
-                                INPUT aux_cdcritic,
-                                INPUT aux_dsorigem,
-                                INPUT aux_dstransa,
-                                INPUT FALSE,
-                                INPUT par_idseqttl,
-                                INPUT par_nmdatela,
-                                INPUT par_nrdconta,
-                               OUTPUT aux_nrdrowid).
-                           
-            RETURN "NOK".
-
-         END.
-
-    FOR EACH crapcor WHERE crapcor.cdcooper = par_cdcooper      AND
-                           crapcor.nrdconta = par_nrdconta      AND 
-                           crapcor.flgativo = TRUE              
-                           NO-LOCK:
-
-        ASSIGN aux_qtctrord = aux_qtctrord + 1.
-
-    END.
-
-    FOR EACH crapneg WHERE crapneg.cdcooper = par_cdcooper             AND
-                           crapneg.nrdconta = par_nrdconta             AND
-                           crapneg.cdhisest = 1                        AND
-                           CAN-DO("11,12,13",STRING(crapneg.cdobserv))
-                           NO-LOCK USE-INDEX crapneg2:
-
-        ASSIGN aux_qtdevolu = aux_qtdevolu + 1.
-
-    END.
-    
-    ASSIGN aux_flglbace = IF   crapass.inlbacen = 0  THEN
-                               FALSE
-                          ELSE 
-                               TRUE
-           aux_flgeprat = FALSE.
-    
-                               
-    RUN sistema/generico/procedures/b1wgen0002.p 
-        PERSISTENT SET h-b1wgen0002.
-        
-    IF   NOT VALID-HANDLE(h-b1wgen0002)   THEN
-         DO:
-             ASSIGN aux_cdcritic = 0
-                    aux_dscritic = "Handle invalido para h-b1wgen0002.".
-
-             RUN gera_erro (INPUT par_cdcooper,
-                            INPUT par_cdagenci,
-                            INPUT par_nrdcaixa,
-                            INPUT 1,            /** Sequencia **/
-                            INPUT aux_cdcritic,
-                            INPUT-OUTPUT aux_dscritic).        
-                              
-             RUN proc_gerar_log (INPUT par_cdcooper,
-                                 INPUT par_cdoperad,
-                                 INPUT aux_dscritic,
-                                 INPUT aux_dsorigem,
-                                 INPUT aux_dstransa,
-                                 INPUT FALSE,
-                                 INPUT par_idseqttl,
-                                 INPUT par_nmdatela,
-                                 INPUT par_nrdconta,
-                                OUTPUT aux_nrdrowid).
-                                              
-             RETURN "NOK".    
-
-         END.
-   
-         
-    RUN obtem-dados-emprestimos IN h-b1wgen0002 (INPUT par_cdcooper,
-                                                 INPUT par_cdagenci,
-                                                 INPUT par_nrdcaixa,
-                                                 INPUT par_cdoperad,
-                                                 INPUT par_nmdatela,
-                                                 INPUT par_idorigem,
-                                                 INPUT par_nrdconta,
-                                                 INPUT par_idseqttl,
-                                                 INPUT par_dtmvtolt,
-                                                 INPUT par_dtmvtopr,
-                                                 INPUT ?,
-                                                 INPUT 0,
-                                                 INPUT "b1wgen0027",
-                                                 INPUT par_inproces,
-                                                 INPUT FALSE,
-                                                 INPUT FALSE, /*par_flgcondc*/
-                                                 INPUT 0, /** nriniseq **/
-                                                 INPUT 0, /** nrregist **/
-                                                OUTPUT aux_qtregist,
-                                                OUTPUT TABLE tt-erro,
-                                                OUTPUT TABLE tt-dados-epr).
-    
-    DELETE PROCEDURE h-b1wgen0002.
-    
-   
-    IF   RETURN-VALUE = "NOK" THEN
-         DO:
-             ASSIGN aux_cdcritic = 0
-                    aux_dscritic = "Conta: " + STRING(par_nrdconta) +
-                                   " nao possui emprestimo.".
-
-             RUN gera_erro (INPUT par_cdcooper,
-                            INPUT par_cdagenci,
-                            INPUT par_nrdcaixa,
-                            INPUT 1,            /** Sequencia **/
-                            INPUT aux_cdcritic,
-                            INPUT-OUTPUT aux_dscritic).        
-                                       
-             RUN proc_gerar_log (INPUT par_cdcooper,
-                                 INPUT par_cdoperad,
-                                 INPUT aux_dscritic,
-                                 INPUT aux_dsorigem,
-                                 INPUT aux_dstransa,
-                                 INPUT FALSE,
-                                 INPUT par_idseqttl,
-                                 INPUT par_nmdatela,
-                                 INPUT par_nrdconta,
-                                OUTPUT aux_nrdrowid).               
-
-             RETURN "NOK".    
-    END.
-                
-    FIND FIRST tt-dados-epr WHERE (tt-dados-epr.tpemprst = 0   AND
-                                   tt-dados-epr.vlpreapg > 0)  OR
-
-                                  (tt-dados-epr.tpemprst = 1   AND
-                                   tt-dados-epr.flgatras)      AND                              
-
-                                   tt-dados-epr.inprejuz = 0  
-                                   NO-LOCK NO-ERROR.
-
-    IF   AVAIL tt-dados-epr   THEN
-         ASSIGN aux_flgeprat = TRUE.
-    
-    /* Obtem risco */
-    FOR EACH craptab WHERE craptab.cdcooper = par_cdcooper AND
-                           craptab.nmsistem = "CRED"       AND 
-                           craptab.tptabela = "GENERI"     AND 
-                           craptab.cdempres = 00           AND
-                           craptab.cdacesso = "PROVISAOCL" NO-LOCK:
-                                       
-        ASSIGN aux_contador = INT(SUBSTR(craptab.dstextab,12,2))
-               aux_dsdrisco[aux_contador] = TRIM(SUBSTR(craptab.dstextab,8,3)).
-    END.
-                              
-    /* Alimentar variavel para nao ser preciso criar registro na PROVISAOCL */
-    ASSIGN aux_dsdrisco[10] = "H".
-                                
-    ASSIGN aux_nivrisco = ""
-           aux_dtdrisco = ?   
-           aux_qtdiaris = 0. 
-
-    FIND craptab WHERE craptab.cdcooper = par_cdcooper AND
-                       craptab.nmsistem = "CRED"       AND
-                       craptab.tptabela = "USUARI"     AND
-                       craptab.cdempres = 11           AND
-                       craptab.cdacesso = "RISCOBACEN" AND
-                       craptab.tpregist = 000 
-                       NO-LOCK NO-ERROR.
-
-    IF   NOT AVAIL craptab   THEN 
-         DO:
-             ASSIGN aux_cdcritic = 0
-                    aux_dscritic = 
-                    "NOT AVAIL craptab;CRED;USUARI;11;RISCOBACEN'".
-
-             RUN gera_erro (INPUT par_cdcooper,
-                            INPUT par_cdagenci,
-                            INPUT par_nrdcaixa,
-                            INPUT 1,            /** Sequencia **/
-                            INPUT aux_cdcritic,
-                            INPUT-OUTPUT aux_dscritic).        
-                                       
-             RUN proc_gerar_log (INPUT par_cdcooper,
-                                 INPUT par_cdoperad,
-                                 INPUT aux_dscritic,
-                                 INPUT aux_dsorigem,
-                                 INPUT aux_dstransa,
-                                 INPUT FALSE,
-                                 INPUT par_idseqttl,
-                                 INPUT par_nmdatela,
-                                 INPUT par_nrdconta,
-                                OUTPUT aux_nrdrowid).               
-
-             RETURN "NOK".   
-
-    END.
- 
-    FIND FIRST crapdat WHERE crapdat.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
-
-    ASSIGN aux_dtrefere    = crapdat.dtultdma
-           aux_innivris    = 2
-           aux_vlr_arrasto = DEC(SUBSTRING(craptab.dstextab,3,9)).
-
-    FIND LAST crapris WHERE crapris.cdcooper = par_cdcooper AND
-                            crapris.nrdconta = par_nrdconta AND 
-                            crapris.dtrefere = aux_dtrefere AND 
-                            crapris.inddocto = 1            AND 
-                            crapris.vldivida > aux_vlr_arrasto /*Valor arrasto*/
-                            NO-LOCK NO-ERROR.
-                            
-    IF AVAIL crapris THEN
-       ASSIGN aux_innivris = crapris.innivris.
-    ELSE
+    IF aux_cdcritic > 0 OR aux_dscritic <> '' THEN
       DO:
-          FIND LAST crapris WHERE crapris.cdcooper = par_cdcooper AND
-                                  crapris.nrdconta = par_nrdconta AND
-                                  crapris.dtrefere = aux_dtrefere AND
-                                  crapris.inddocto = 1 
-                                  NO-LOCK NO-ERROR.
-                                  
-          /* Quando possuir operacao em Prejuizo, o risco da central sera H */
-          IF AVAIL crapris AND crapris.innivris = 10 THEN
-             ASSIGN aux_innivris = crapris.innivris.
-      END.
-                                
-    IF  AVAIL crapris THEN
+         RUN gera_erro (INPUT par_cdcooper,
+                        INPUT par_cdagenci,
+                        INPUT par_nrdcaixa,
+                        INPUT 1, /*sequencia*/
+                        INPUT aux_cdcritic,
+                        INPUT-OUTPUT aux_dscritic). 
+          RETURN "NOK".
+      END. 
+      
+    
+    /*Leitura do XML de retorno da proc e criacao dos registros na tt-ocorren */
+
+    /* Buscar o XML na tabela de retorno da procedure Progress */ 
+    ASSIGN xml_req = pc_lista_ocorren_prog.pr_xml_ocorren. 
+
+    /* Efetuar a leitura do XML*/ 
+    SET-SIZE(ponteiro_xml) = LENGTH(xml_req) + 1. 
+    PUT-STRING(ponteiro_xml,1) = xml_req. 
+
+    /* Inicializando objetos para leitura do XML */ 
+    CREATE X-DOCUMENT xDoc.    /* Vai conter o XML completo */ 
+    CREATE X-NODEREF  xRoot.   /* Vai conter a tag DADOS em diante */ 
+    CREATE X-NODEREF  xRoot2.  /* Vai conter a tag INF em diante */ 
+    CREATE X-NODEREF  xField.  /* Vai conter os campos dentro da tag INF */ 
+    CREATE X-NODEREF  xText.   /* Vai conter o texto que existe dentro da tag xField */ 
+
+    IF ponteiro_xml <> ? THEN
         DO:
-           ASSIGN  aux_nivrisco = aux_dsdrisco[aux_innivris]
-                   aux_dtdrisco = crapris.dtdrisco     
-                   aux_qtdiaris = par_dtmvtolt - crapris.dtdrisco.
+            xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE). 
+            xDoc:GET-DOCUMENT-ELEMENT(xRoot).
 
-           IF  aux_nivrisco = "AA" THEN
-               ASSIGN aux_nivrisco = "". /* Contratos Antigos */
+            DO aux_cont_raiz = 1 TO xRoot:NUM-CHILDREN: 
 
-        END.                               
-    ELSE
-      ASSIGN aux_nivrisco = aux_dsdrisco[aux_innivris].     
-    
-    ASSIGN aux_flgpreju = FALSE.    
-    
+                xRoot:GET-CHILD(xRoot2,aux_cont_raiz).
 
-    FOR EACH crapepr WHERE crapepr.cdcooper = par_cdcooper AND
-                           crapepr.nrdconta = par_nrdconta AND 
-                           crapepr.inprejuz = 1            
-                           NO-LOCK:
+                IF xRoot2:SUBTYPE <> "ELEMENT" THEN 
+                    NEXT. 
 
-        ASSIGN aux_flgpreju = TRUE.
+                IF xRoot2:NUM-CHILDREN > 0 THEN
+                    CREATE tt-ocorren.
 
-    END.    
+                DO aux_cont = 1 TO xRoot2:NUM-CHILDREN:
 
-    /* Rating efetivo */
-    FIND crapnrc WHERE crapnrc.cdcooper = par_cdcooper   AND
-                       crapnrc.nrdconta = par_nrdconta   AND
-                       crapnrc.insitrat = 2     
-                       NO-LOCK NO-ERROR.
+                    xRoot2:GET-CHILD(xField,aux_cont).
 
-    IF   aux_qtctrord      > 0   OR
-         aux_qtdevolu      > 0   OR
-         crapass.dtdsdspc <> ?   OR
-         crapsld.qtddsdev  > 0   OR
-         crapsld.qtddtdev  > 0   OR
-         aux_flginadi            OR
-         aux_flglbace            OR
-         aux_flgeprat            OR
-         aux_flgpreju            OR
-        
-        (AVAIL crapnrc          AND
-         crapnrc.indrisco <> "" AND  
-         crapnrc.indrisco <> "A")  OR
-        
-        (aux_nivrisco     <> ""    AND
-         aux_nivrisco     <> "A")  THEN
-         ASSIGN aux_flgocorr = TRUE.
-    ELSE
-         ASSIGN aux_flgocorr = FALSE.
-    
-    IF NOT VALID-HANDLE(h-b1wgen0138) THEN
-       RUN sistema/generico/procedures/b1wgen0138.p
-           PERSISTENT SET h-b1wgen0138.
+                    IF xField:SUBTYPE <> "ELEMENT" THEN 
+                        NEXT. 
 
-    DYNAMIC-FUNCTION("busca_grupo" IN h-b1wgen0138, INPUT par_cdcooper,
-                                                    INPUT par_nrdconta,
-                                                    OUTPUT aux_nrdgrupo,
-                                                    OUTPUT aux_gergrupo,
-                                                    OUTPUT aux_dsdrisgp).
+                    xField:GET-CHILD(xText,1).
 
-    IF VALID-HANDLE(h-b1wgen0138) THEN
-       DELETE OBJECT h-b1wgen0138.
+                    ASSIGN tt-ocorren.qtctrord = INT(xText:NODE-VALUE) WHEN xField:NAME = "qtctrord". 
+                    ASSIGN tt-ocorren.qtdevolu = INT(xText:NODE-VALUE) WHEN xField:NAME = "qtdevolu". 
+                    ASSIGN tt-ocorren.dtcnsspc = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtcnsspc". 
+                    ASSIGN tt-ocorren.dtdsdsps = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtdsdsps". 
+                    ASSIGN tt-ocorren.qtddsdev = INT(xText:NODE-VALUE) WHEN xField:NAME = "qtddsdev". 
+                    ASSIGN tt-ocorren.dtdsdclq = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtdsdclq". 
+                    ASSIGN tt-ocorren.qtddtdev = INT(xText:NODE-VALUE) WHEN xField:NAME = "qtddtdev". 
+                    
+                    IF xField:NAME = "flginadi" AND INT(xText:NODE-VALUE) = 1 THEN
+                      ASSIGN tt-ocorren.flginadi = TRUE. 
+                    ELSE
+                      ASSIGN tt-ocorren.flginadi = FALSE.
+                                          
+                    IF xField:NAME = "flglbace" AND INT(xText:NODE-VALUE) = 1 THEN
+                      ASSIGN tt-ocorren.flglbace = TRUE. 
+                    ELSE
+                      ASSIGN tt-ocorren.flglbace = FALSE.
+                    
+                    IF xField:NAME = "flgeprat" AND INT(xText:NODE-VALUE) = 1 THEN
+                      ASSIGN tt-ocorren.flgeprat = TRUE. 
+                    ELSE
+                      ASSIGN tt-ocorren.flgeprat = FALSE.
+                      
+                    ASSIGN tt-ocorren.indrisco = xText:NODE-VALUE WHEN xField:NAME = "indrisco". 
+                    ASSIGN tt-ocorren.nivrisco = xText:NODE-VALUE WHEN xField:NAME = "nivrisco". 
+                    
+                    IF xField:NAME = "flgpreju" AND INT(xText:NODE-VALUE) = 1 THEN
+                      ASSIGN tt-ocorren.flgpreju = TRUE. 
+                    ELSE
+                      ASSIGN tt-ocorren.flgpreju = FALSE.
+                    
+                    IF xField:NAME = "flgjucta" AND INT(xText:NODE-VALUE) = 1 THEN
+                      ASSIGN tt-ocorren.flgjucta = TRUE. 
+                    ELSE
+                      ASSIGN tt-ocorren.flgjucta = FALSE.
+                    
+                    IF xField:NAME = "flgocorr" AND INT(xText:NODE-VALUE) = 1 THEN
+                      ASSIGN tt-ocorren.flgocorr = TRUE. 
+                    ELSE
+                      ASSIGN tt-ocorren.flgocorr = FALSE.  
+                    ASSIGN tt-ocorren.dtdrisco = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtdrisco". 
+                    ASSIGN tt-ocorren.qtdiaris = INT(xText:NODE-VALUE) WHEN xField:NAME = "qtdiaris". 
+                    ASSIGN tt-ocorren.inrisctl = xText:NODE-VALUE WHEN xField:NAME = "inrisctl". 
+                    ASSIGN tt-ocorren.dtrisctl = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtrisctl". 
+                    ASSIGN tt-ocorren.dsdrisgp = xText:NODE-VALUE WHEN xField:NAME = "dsdrisgp". 
+                    ASSIGN tt-ocorren.innivris = INT(xText:NODE-VALUE) WHEN xField:NAME = "innivris". 
 
-    CREATE tt-ocorren.
+                END. 
 
-    ASSIGN tt-ocorren.qtctrord = aux_qtctrord
-           tt-ocorren.qtdevolu = aux_qtdevolu
-           tt-ocorren.dtcnsspc = crapass.dtcnsspc
-           tt-ocorren.dtdsdsps = crapass.dtdsdspc
-           tt-ocorren.qtddsdev = crapsld.qtddsdev
-           tt-ocorren.dtdsdclq = crapsld.dtdsdclq
-           tt-ocorren.qtddtdev = crapsld.qtddtdev
-           tt-ocorren.flginadi = aux_flginadi
-           tt-ocorren.flglbace = aux_flglbace
-           tt-ocorren.flgeprat = aux_flgeprat
-           tt-ocorren.indrisco = crapnrc.indrisco WHEN AVAIL crapnrc
-           tt-ocorren.nivrisco = aux_nivrisco
-           tt-ocorren.flgpreju = aux_flgpreju
-           tt-ocorren.flgjucta = aux_flgjucta
-           tt-ocorren.flgocorr = aux_flgocorr
-           tt-ocorren.dtdrisco = aux_dtdrisco
-           tt-ocorren.qtdiaris = aux_qtdiaris
-           tt-ocorren.inrisctl = IF crapass.inrisctl = "AA" THEN
-                                    "A"
-                                 ELSE
-                                    crapass.inrisctl
-           tt-ocorren.dtrisctl = crapass.dtrisctl
-           tt-ocorren.dsdrisgp = aux_dsdrisgp
-           tt-ocorren.innivris = aux_innivris. 
-     
-    IF  par_flgerlog  THEN
-        RUN proc_gerar_log (INPUT par_cdcooper,
-                            INPUT par_cdoperad,
-                            INPUT "",
-                            INPUT aux_dsorigem,
-                            INPUT aux_dstransa,
-                            INPUT TRUE,
-                            INPUT par_idseqttl,
-                            INPUT par_nmdatela,
-                            INPUT par_nrdconta,
-                           OUTPUT aux_nrdrowid).
+            END.
+
+            SET-SIZE(ponteiro_xml) = 0. 
+
+        END.
+
+    /*Elimina os objetos criados*/
+    DELETE OBJECT xDoc. 
+    DELETE OBJECT xRoot. 
+    DELETE OBJECT xRoot2. 
+    DELETE OBJECT xField. 
+    DELETE OBJECT xText.
+      
 
     RETURN "OK".
 

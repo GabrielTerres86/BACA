@@ -519,6 +519,15 @@ CREATE OR REPLACE PACKAGE CECRED.rati0001 is
                           ,pr_des_reto             OUT VARCHAR2                          --> Ind. de retorno OK/NOK
                           );
 
+  /* Obter as descricoes do risco, provisao , etc ...  */
+  PROCEDURE pc_descricoes_risco(pr_cdcooper    IN crapcop.cdcooper%TYPE --> Cooperativa conectada
+                               ,pr_inpessoa    IN crapass.inpessoa%TYPE --> Tipo de pessoa
+                               ,pr_nrnotrat    IN NUMBER                --> Valor baseado no calculo do rating
+                               ,pr_nrnotatl    IN NUMBER                --> Valor baseado no calculo do risco
+                               ,pr_nivrisco    IN pls_integer           --> Nivel do Risco
+                               ,pr_tab_impress_risco_cl OUT rati0001.typ_tab_impress_risco --> Registro Nota e risco do cooperado naquele Rating - PROVISAOCL
+                               ,pr_tab_impress_risco_tl OUT rati0001.typ_tab_impress_risco --> Registro Nota e risco do cooperado naquele Rating - PROVISAOTL
+                               ,pr_des_reto             OUT VARCHAR2);          --> Indicador erro IS
 END RATI0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS

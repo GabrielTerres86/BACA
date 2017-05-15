@@ -44,6 +44,7 @@
 |   valida-itens-rating				     | RATI0001.pc_valida_itens_rating     |
 |   verifica_rating                      | RATI0001.pc_verifica_rating         |
 |   gera_rating                          | RATI0001.pc_gera_rating             |
+|   obtem_emprestimo_risco               | RATI0002.pc_obtem_emprestimo_risco  |
 +----------------------------------------+-------------------------------------+
 
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
@@ -226,6 +227,8 @@
 			               assumir a nota referente ao risco A.
 						   Chamado 431839 (Andrey - RKAM)
 
+              25/04/2017 - Alterado rotina pc_obtem_emprestimo_risco para chamada da rotina oracle.
+                           PRJ337 - Motor de Credito (Odirlei-Amcom)
 .............................................................................*/
   
   
@@ -236,6 +239,7 @@
 { sistema/generico/includes/b1wgen0043tt.i }
 { sistema/generico/includes/b1wgen9999tt.i }
 { sistema/generico/includes/b1wgen0027tt.i }
+{ sistema/generico/includes/var_oracle.i }
 
 
 DEF VAR aux_nrdrowid AS ROWID                                        NO-UNDO.
@@ -4078,196 +4082,71 @@ PROCEDURE obtem_emprestimo_risco:
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
     DEF OUTPUT PARAM par_nivrisco AS CHAR                            NO-UNDO.
-
-    DEF  VAR aux_contador    AS INTE                                 NO-UNDO.
-    DEF  VAR aux_flgrefin    AS LOG                                  NO-UNDO.
-    DEF  VAR aux_vlr_arrasto AS DECIMAL                              NO-UNDO.
-    DEF  VAR aux_innivris LIKE crapris.innivris                      NO-UNDO.    
-
-    DEF  BUFFER b1-crapfin FOR crapfin.
-
-    EMPTY TEMP-TABLE tt-erro.
-    EMPTY TEMP-TABLE tt-ocorren.
-
-    /* Risco A */
-    ASSIGN aux_innivris = 2
-           aux_flgrefin = FALSE.
-
-    FIND craptab WHERE craptab.cdcooper = par_cdcooper AND
-                       craptab.nmsistem = "CRED"       AND
-                       craptab.tptabela = "USUARI"     AND
-                       craptab.cdempres = 11           AND
-                       craptab.cdacesso = "RISCOBACEN" AND
-                       craptab.tpregist = 000 
-                       NO-LOCK NO-ERROR.
-
-    IF NOT AVAILABLE craptab THEN 
-       DO:
-           ASSIGN aux_cdcritic = 0
-                  aux_dscritic = 
-                  "NOT AVAIL craptab;CRED;USUARI;11;RISCOBACEN'".
-
-           RUN gera_erro (INPUT par_cdcooper,
-                          INPUT par_cdagenci,
-                          INPUT par_nrdcaixa,
-                          INPUT 1,            /** Sequencia **/
-                          INPUT aux_cdcritic,
-                          INPUT-OUTPUT aux_dscritic).        
-                                     
-           RETURN "NOK".   
-       END.
+    
+    DEF VAR aux_nrctrliq AS CHAR                                     NO-UNDO.
+    DEF VAR aux_contador AS INTE                                     NO-UNDO.
+    
+    
+    /* Percorre todos os contratos  */
+    DO aux_contador = 1 TO EXTENT(par_nrctrliq):
+       IF par_nrctrliq[aux_contador] = 0 THEN
+           NEXT.
+              
+       IF aux_nrctrliq <> "" THEN
+          ASSIGN aux_nrctrliq = aux_nrctrliq + ";".
        
-    ASSIGN aux_vlr_arrasto = DEC(SUBSTRING(craptab.dstextab,3,9)).
-           
-    FOR FIRST crapdat FIELDS(dtmvtoan dtmvtolt dtmvtopr inproces) 
-                      WHERE crapdat.cdcooper = par_cdcooper
-                            NO-LOCK: END.
-
-    IF NOT VALID-HANDLE(h-b1wgen0027) THEN
-       RUN sistema/generico/procedures/b1wgen0027.p
-           PERSISTENT SET h-b1wgen0027.
-    
-    /* Buscar o pior risco da ultima central */
-    RUN lista_ocorren IN h-b1wgen0027(INPUT par_cdcooper,
-                                      INPUT par_cdagenci,
-                                      INPUT par_nrdcaixa,
-                                      INPUT par_cdoperad,
-                                      INPUT par_nrdconta,
-                                      INPUT crapdat.dtmvtolt,
-                                      INPUT crapdat.dtmvtopr,
-                                      INPUT crapdat.inproces,
-                                      INPUT par_idorigem,
-                                      INPUT par_idseqttl,
-                                      INPUT par_nmdatela,
-                                      INPUT FALSE,
-                                      OUTPUT TABLE tt-erro,
-                                      OUTPUT TABLE tt-ocorren).
-    
-    IF RETURN-VALUE <> "OK" THEN
-       DO:
-           DELETE PROCEDURE h-b1wgen0027.
-           RETURN "NOK".
-       END.
-    
-    IF VALID-HANDLE(h-b1wgen0027) THEN
-       DELETE PROCEDURE h-b1wgen0027.    
-
-    FIND tt-ocorren NO-LOCK NO-ERROR.
-    IF AVAIL tt-ocorren AND tt-ocorren.innivris <> 0 THEN
-       ASSIGN aux_innivris = tt-ocorren.innivris.
- 
-    IF TRIM(par_dsctrliq)        <> ""                AND 
-       UPPER(TRIM(par_dsctrliq)) <> "SEM LIQUIDACOES" THEN
-       ASSIGN aux_flgrefin = TRUE.
-    ELSE
-    DO:
-        /* Percorre todos os contratos  */
-        DO aux_contador = 1 TO EXTENT(par_nrctrliq):
-    
-           IF par_nrctrliq[aux_contador] = 0 THEN
-              NEXT.
-
-           ASSIGN aux_flgrefin = TRUE.
-           LEAVE.
-    
-        END.
+       ASSIGN aux_nrctrliq = aux_nrctrliq + STRING(par_nrctrliq[aux_contador]).
     END.
 
-    /* Verificacao para saber se eh refinancimento */
-    IF aux_flgrefin THEN
-       DO:
-           FOR LAST crapris FIELDS(innivris)
-                            WHERE crapris.cdcooper = par_cdcooper     AND
-                                  crapris.nrdconta = par_nrdconta     AND 
-                                  crapris.dtrefere = crapdat.dtmvtoan AND 
-                                  crapris.inddocto = 1                AND 
-                                  crapris.cdorigem = 3                AND
-                                  crapris.vldivida > aux_vlr_arrasto
-                                  NO-LOCK: END.
-                            
-           IF AVAILABLE crapris THEN
-              DO:
-                  IF crapris.innivris > aux_innivris THEN
-                     ASSIGN aux_innivris = crapris.innivris.
-              END.      
-           ELSE
-              DO:
-                  FOR LAST crapris FIELDS(innivris)
-                                   WHERE crapris.cdcooper = par_cdcooper     AND
-                                         crapris.nrdconta = par_nrdconta     AND
-                                         crapris.dtrefere = crapdat.dtmvtoan AND
-                                         crapris.inddocto = 1                AND
-                                         crapris.cdorigem = 3
-                                         NO-LOCK: END.
-                                        
-                  IF AVAILABLE crapris THEN
-                     DO:
-                         /* Caso possuir Prejuizo para as operacoes abaixo do 
-                            valor de arrasto, o Risco sera "H".
-                            Senao o Risco sera "A" e nao precisamos verificar 
-                            o pior risco entre as operacoes                   */
-                         IF crapris.innivris = 10 THEN
-                            DO:
-                                IF crapris.innivris > aux_innivris THEN
-                                   ASSIGN aux_innivris = crapris.innivris.
-                            END.
-                            
-                     END. /* END IF AVAILABLE crapris THEN */
-              END.
-            
-       END. /* END IF aux_flgrefin THEN */
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
-    /* Somente vamos verificar a cessao de credito, caso possui a finalidade */
-    IF par_cdfinemp > 0 THEN
-       DO:
-          FOR FIRST b1-crapfin FIELDS(tpfinali)
-                               WHERE b1-crapfin.cdcooper = par_cdcooper AND 
-                                     b1-crapfin.cdfinemp = par_cdfinemp
-                                     NO-LOCK: END.
-        
-          IF AVAIL b1-crapfin AND b1-crapfin.tpfinali = 1 THEN
-             DO:
-                 /* Risco D */
-                 IF aux_innivris < 5 THEN
-                    ASSIGN aux_innivris = 5.
-
-             END. /* END IF AVAIL crapfin THEN */
-
-       END. /* END IF par_cdfinemp > 0 THEN */
-
-    /* Chamado: 522658 */
-    IF par_cdlcremp > 0 THEN
-       DO:
-           IF par_cdcooper = 2 AND CAN-DO("800,850,900",STRING(par_cdlcremp)) THEN
-              DO:
-                  /* Risco E */
-                  IF aux_innivris < 6 THEN
-                     ASSIGN aux_innivris = 6.
-              END.
-           ELSE 
-           IF par_cdcooper <> 2 AND CAN-DO("800,900",STRING(par_cdlcremp)) THEN
-              DO:
-                  /* Risco E */
-                  IF aux_innivris < 6 THEN
-                     ASSIGN aux_innivris = 6.
-              END.
-              
-       END. /* END IF par_cdfinemp > 0 THEN */
-
-    IF aux_innivris = 10 THEN
-      ASSIGN aux_innivris = 9.    
-
-    RUN descricoes_risco(INPUT par_cdcooper,
-                         INPUT 0,
-                         INPUT 0,
-                         INPUT 0,
-                         INPUT aux_innivris,
-                         OUTPUT TABLE tt-impressao-risco,
-                         OUTPUT TABLE tt-impressao-risco-tl).
+    /* Efetuar a chamada a rotina Oracle */ 
+    RUN STORED-PROCEDURE pc_obtem_emprestimo_risco
+     aux_handproc = PROC-HANDLE NO-ERROR 
+                 ( INPUT par_cdcooper /* pr_cdcooper --> Codigo da cooperativa */
+                  ,INPUT par_cdagenci /* pr_cdagenci --> Codigo de agencia */
+                  ,INPUT par_nrdcaixa /* pr_nrdcaixa --> Numero do caixa */
+                  ,INPUT par_cdoperad /* pr_cdoperad --> Codigo do operador */
+                  ,INPUT par_nrdconta /* pr_nrdconta --> Numero da conta */
+                  ,INPUT par_idseqttl /* pr_idseqttl --> Sequencial do titular */
+                  ,INPUT par_idorigem /* pr_idorigem --> Identificado de oriem */
+                  ,INPUT par_nmdatela /* pr_nmdatela --> Nome da tela */
+                  ,INPUT (IF par_flgerlog THEN  "S" ELSE "N") /* pr_flgerlog --> identificador se deve gerar log S-Sim e N-Nao */
+                  ,INPUT par_cdfinemp /* pr_cdfinemp --> Finalidade do emprestimo */
+                  ,INPUT par_cdlcremp /* pr_cdlcremp --> Linha de credito do emprestimo */
+                  ,INPUT aux_nrctrliq /* pr_nrctrliq --> Lista de contratos liquidados */
+                  ,INPUT par_dsctrliq /* pr_dsctrliq --> Lista de descriçoes de situaçao dos contratos */
+                  /* --------- OUT --------- */
+                  ,OUTPUT ""          /* pr_nivrisco --> Retorna nivel do risco  */
+                  ,OUTPUT ""          /* pr_dscritic --> Descriçao da critica    */
+                  ,OUTPUT 0 ).        /* pr_cdcritic --> Codigo da critica).     */
     
-    FIND FIRST tt-impressao-risco NO-LOCK NO-ERROR.
-    IF AVAIL tt-impressao-risco  THEN
-       ASSIGN par_nivrisco = tt-impressao-risco.dsdrisco.
+    /* Fechar o procedimento para buscarmos o resultado */ 
+    CLOSE STORED-PROC pc_obtem_emprestimo_risco
+        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+
+    ASSIGN aux_cdcritic = pc_obtem_emprestimo_risco.pr_cdcritic
+                             WHEN pc_obtem_emprestimo_risco.pr_cdcritic <> ?
+           aux_dscritic = pc_obtem_emprestimo_risco.pr_dscritic
+                             WHEN pc_obtem_emprestimo_risco.pr_dscritic <> ?.
+
+    IF aux_cdcritic > 0 OR aux_dscritic <> '' THEN
+      DO:
+         RUN gera_erro (INPUT par_cdcooper,
+                        INPUT par_cdagenci,
+                        INPUT par_nrdcaixa,
+                        INPUT 1, /*sequencia*/
+                        INPUT aux_cdcritic,
+                        INPUT-OUTPUT aux_dscritic).  
+      
+         RETURN "NOK".
+      END.    
+      
+    ASSIGN par_nivrisco = pc_obtem_emprestimo_risco.pr_nivrisco
+                          WHEN pc_obtem_emprestimo_risco.pr_nivrisco <> ?.
 
     RETURN "OK".
 
