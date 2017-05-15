@@ -24,6 +24,9 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_PAREST IS
     incomite VARCHAR2(10),
 		nmregmot VARCHAR2(250),
 		qtsstime NUMBER(3),
+		qtmeschq NUMBER(2),
+		qtmesest NUMBER(2),
+		qtmesemp NUMBER(2),
     nmrescop VARCHAR2(30));
 
   -- Definicao de tabela que compreende os registros acima declarados
@@ -59,13 +62,17 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_PAREST IS
                                ,pr_incomite IN NUMBER
                                ,pr_contigen IN NUMBER
 															 ,pr_nmregmot IN VARCHAR2
-															 ,pr_qtsstime IN NUMBER															 
+															 ,pr_qtsstime IN NUMBER
+															 ,pr_qtmeschq IN NUMBER
+                               ,pr_qtmesest IN NUMBER
+                               ,pr_qtmesemp IN NUMBER
                                ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
                                ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
                                ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
                                ,pr_retxml   IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
                                ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
-                               ,pr_des_erro OUT VARCHAR2);
+                               ,pr_des_erro OUT VARCHAR2); --> Pl/Table com os dados de cobrança de emprestimos
+
 END TELA_PAREST;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
@@ -314,6 +321,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
                                    pr_tag_nova => 'qtsstime',
                                    pr_tag_cont => vr_tab_crapcop(vr_ind_crapcop).qtsstime,
                                    pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                                   pr_tag_pai  => 'inf',
+                                   pr_posicao  => vr_auxconta,
+                                   pr_tag_nova => 'qtmeschq',
+                                   pr_tag_cont => vr_tab_crapcop(vr_ind_crapcop).qtmeschq,
+                                   pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                                   pr_tag_pai  => 'inf',
+                                   pr_posicao  => vr_auxconta,
+                                   pr_tag_nova => 'qtmesest',
+                                   pr_tag_cont => vr_tab_crapcop(vr_ind_crapcop).qtmesest,
+                                   pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                                   pr_tag_pai  => 'inf',
+                                   pr_posicao  => vr_auxconta,
+                                   pr_tag_nova => 'qtmesemp',
+                                   pr_tag_cont => vr_tab_crapcop(vr_ind_crapcop).qtmesemp,
+                                   pr_des_erro => vr_dscritic);
+
           
 					
             -- Sai do loop se for o último registro ou se chegar no número de registros solicitados
@@ -426,6 +452,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
                GENE0001.fn_param_sistema(pr_nmsistem => 'CRED',
 																				 pr_cdcooper => cop.cdcooper,
 																				 pr_cdacesso => 'TIME_RESP_MOTOR_IBRA') qtsstime,
+               GENE0001.fn_param_sistema(pr_nmsistem => 'CRED',
+																				 pr_cdcooper => cop.cdcooper,
+																				 pr_cdacesso => 'QTD_MES_HIST_DEV_CHEQUES') qtmeschq,
+               GENE0001.fn_param_sistema(pr_nmsistem => 'CRED',
+																				 pr_cdcooper => cop.cdcooper,
+																				 pr_cdacesso => 'QTD_MES_HIST_ESTOUROS') qtmesest,																				 
+               GENE0001.fn_param_sistema(pr_nmsistem => 'CRED',
+																				 pr_cdcooper => cop.cdcooper,
+																				 pr_cdacesso => 'QTD_MES_HIST_ESTOUROS') qtmesemp,
                cdcooper,
                nmrescop
         
@@ -455,6 +490,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
         pr_tab_crapcop(vr_ind_crapcop).contigen := rw_crapcop.contigencia;
         pr_tab_crapcop(vr_ind_crapcop).nmregmot := rw_crapcop.nmregmot;
         pr_tab_crapcop(vr_ind_crapcop).qtsstime := rw_crapcop.qtsstime;								
+        pr_tab_crapcop(vr_ind_crapcop).qtmeschq := rw_crapcop.qtmeschq;								
+        pr_tab_crapcop(vr_ind_crapcop).qtmesest := rw_crapcop.qtmesest;								
+        pr_tab_crapcop(vr_ind_crapcop).qtmesemp := rw_crapcop.qtmesemp;																				
       
       END LOOP;
     
@@ -485,6 +523,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
                                ,pr_contigen IN NUMBER
 															 ,pr_nmregmot IN VARCHAR2
 															 ,pr_qtsstime IN NUMBER
+															 ,pr_qtmeschq IN NUMBER
+                               ,pr_qtmesest IN NUMBER
+                               ,pr_qtmesemp IN NUMBER
                                ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
                                ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
                                ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
@@ -589,6 +630,45 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
         EXCEPTION
           WHEN OTHERS THEN
             vr_dscritic := 'Erro ao atualizar tabela crapprm (4). ' || SQLERRM;
+            --Sair do programa
+            RAISE vr_exc_saida;
+        END;
+
+				BEGIN
+          UPDATE crapprm prm
+             SET prm.dsvlrprm = pr_qtmeschq
+           WHERE prm.nmsistem = 'CRED'
+             AND prm.cdcooper = rw_crapcop.cdcooper
+             AND prm.cdacesso = 'QTD_MES_HIST_DEV_CHEQUES';
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao atualizar tabela crapprm (5). ' || SQLERRM;
+            --Sair do programa
+            RAISE vr_exc_saida;
+        END;
+
+				BEGIN
+          UPDATE crapprm prm
+             SET prm.dsvlrprm = pr_qtmesest
+           WHERE prm.nmsistem = 'CRED'
+             AND prm.cdcooper = rw_crapcop.cdcooper
+             AND prm.cdacesso = 'QTD_MES_HIST_ESTOUROS';
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao atualizar tabela crapprm (6). ' || SQLERRM;
+            --Sair do programa
+            RAISE vr_exc_saida;
+        END;
+
+				BEGIN
+          UPDATE crapprm prm
+             SET prm.dsvlrprm = pr_qtmesemp
+           WHERE prm.nmsistem = 'CRED'
+             AND prm.cdcooper = rw_crapcop.cdcooper
+             AND prm.cdacesso = 'QTD_MES_HIST_EMPREST';
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao atualizar tabela crapprm (7). ' || SQLERRM;
             --Sair do programa
             RAISE vr_exc_saida;
         END;

@@ -22,17 +22,13 @@
 				<option value="0"><? echo utf8ToHtml(' Não') ?></option>
 			</select>
 			
-						
 			<br style="clear:both" />
 
-            
-            
             <label for="incomite"><?php echo utf8ToHtml('Valida envio de e-mail comite sede:') ?></label>
 			<select id="incomite" name="incomite">
 				<option value="1"><? echo utf8ToHtml(' Sim') ?></option> 
 				<option value="0"><? echo utf8ToHtml(' Não') ?></option>
 			</select>
-
 
             <br style="clear:both" />	
 			
@@ -44,6 +40,25 @@
             <label for="qtsstime">Timeout An&aacute;lise Autom&aacute;tica:</label>
 			<input type="text" id="qtsstime" name="qtsstime">
 			<label class="rotulo-linha">segundos</label>
+			
+            <br style="clear:both" />	
+			
+            <label class="rotulo" style="width:300px">Quantidade de meses para:</label>
+			
+			<br style="clear:both" />	
+
+            <label for="qtmeschq">Dev. Cheques:</label>
+			<input type="text" id="qtmeschq" name="qtmeschq">
+			
+            <br style="clear:both" />	
+			
+            <label for="qtmesest">Estouros:</label>
+			<input type="text" id="qtmesest" name="qtmesest">
+			
+            <br style="clear:both" />	
+			
+            <label for="qtmesemp">Atraso Empr&eacute;stimos:</label>
+			<input type="text" id="qtmesemp" name="qtmesemp">
 			
             <br style="clear:both" />	
 

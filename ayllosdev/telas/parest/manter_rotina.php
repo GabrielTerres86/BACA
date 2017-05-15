@@ -28,6 +28,9 @@ $contigen = (isset($_POST['contigen'])) ? $_POST['contigen'] : 0;
 $incomite = (isset($_POST['incomite'])) ? $_POST['incomite'] : 0;
 $nmregmot = (isset($_POST['nmregmot'])) ? $_POST['nmregmot'] : '';
 $qtsstime = (isset($_POST['qtsstime'])) ? $_POST['qtsstime'] : 0;
+$qtmeschq = (isset($_POST['qtmeschq'])) ? $_POST['qtmeschq'] : 0;
+$qtmesest = (isset($_POST['qtmesest'])) ? $_POST['qtmesest'] : 0;
+$qtmesemp = (isset($_POST['qtmesemp'])) ? $_POST['qtmesemp'] : 0;
 
 $cdopcao  = '';
 
@@ -47,6 +50,22 @@ if ($cdopcao == 'A'){
 	if ((!isset($_POST['qtsstime'])) || $_POST['qtsstime'] == ''){
 		echo 'hideMsgAguardo();';
 		echo 'showError("error","Timeout An&aacute;lise Autom&aacute;tica &eacute; obrigat&oacute;ria! Favor preench&ecirc;-la","Alerta - Ayllos","$(\'#qtsstime\', \'#frmParest\').focus()");';
+		exit();
+	}
+	
+	if ((!isset($_POST['qtmeschq'])) || $_POST['qtmeschq'] == ''){
+		echo 'hideMsgAguardo();';
+		echo 'showError("error","Qtde de meses para Dev. Cheques &eacute; obrigat&oacute;ria! Favor preench&ecirc;-la","Alerta - Ayllos","$(\'#qtmeschq\', \'#frmParest\').focus()");';
+		exit();
+	}
+	if ((!isset($_POST['qtmesest'])) || $_POST['qtmesest'] == ''){
+		echo 'hideMsgAguardo();';
+		echo 'showError("error","Qtde de meses para Estouros &eacute; obrigat&oacute;ria! Favor preench&ecirc;-la","Alerta - Ayllos","$(\'#qtmesest\', \'#frmParest\').focus()");';
+		exit();
+	}
+	if ((!isset($_POST['qtmesemp'])) || $_POST['qtmesemp'] == ''){
+		echo 'hideMsgAguardo();';
+		echo 'showError("error","Qtde de meses para Atraso de Empr&eacute;stimos &eacute; obrigat&oacute;ria! Favor preench&ecirc;-la","Alerta - Ayllos","$(\'#qtmesemp\', \'#frmParest\').focus()");';
 		exit();
 	}
 
@@ -83,6 +102,9 @@ if ( $cdopcao == 'C') {
 	$xml .= "   <contigen>" . $contigen . "</contigen>";
 	$xml .= "   <nmregmot>" . $nmregmot . "</nmregmot>";
 	$xml .= "   <qtsstime>" . $qtsstime . "</qtsstime>";
+	$xml .= "   <qtmeschq>" . $qtmeschq . "</qtmeschq>";
+	$xml .= "   <qtmesest>" . $qtmesest . "</qtmesest>";
+	$xml .= "   <qtmesemp>" . $qtmesemp . "</qtmesemp>";
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 
@@ -124,8 +146,10 @@ if ( $cddopcao == 'C') {
 			}
 			echo '$("#nmregmot", "#divAlteracao").val("'.getByTagName($r->tags, 'nmregmot').'");';
 			echo '$("#qtsstime", "#divAlteracao").val("'.getByTagName($r->tags, 'qtsstime').'");';
+			echo '$("#qtmeschq", "#divAlteracao").val("'.getByTagName($r->tags, 'qtmeschq').'");';
+			echo '$("#qtmesest", "#divAlteracao").val("'.getByTagName($r->tags, 'qtmesest').'");';
+			echo '$("#qtmesemp", "#divAlteracao").val("'.getByTagName($r->tags, 'qtmesemp').'");';
 			
-		//	echo '$("#incomite", "#divAlteracao").val("'. getByTagName($r->tags, 'incomite') .'");';
 		}
 		echo '$("#divBotoes").css({ "display": "block" });';
 		echo '$("#divAlteracao").css({ "display": "block" });';

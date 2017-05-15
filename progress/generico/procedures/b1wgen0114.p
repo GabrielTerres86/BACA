@@ -388,45 +388,50 @@ PROCEDURE Valida_Dados:
 	     IF ( par_cddopcao = "A" ) THEN
        DO:
        
-          FIND FIRST crapprp WHERE crapprp.cdcooper = par_cdcooper AND 
-                                   crapprp.nrdconta = par_nrdcont1 AND 
-                                   crapprp.nrctrato = par_nrctremp NO-LOCK NO-ERROR.
-          IF  NOT AVAIL crapprp THEN
-          DO:
-              ASSIGN aux_dscritic = "Registro de Cadastro de Propostas nao encontrado.".
-              LEAVE Valida.
-          END.
-          
-          IF crapprp.nrgarope = 0 THEN
-          DO:
-              ASSIGN aux_dscritic = "Favor Preencher a Garantia na Proposta - tela ATENDA.".
-              LEAVE Valida.
-          END.
+          IF par_nrdcont1 <> 0 AND
+             par_nrctremp <> 0 THEN
+            DO:
+              FIND FIRST crapprp WHERE crapprp.cdcooper = par_cdcooper AND 
+                                       crapprp.nrdconta = par_nrdcont1 AND 
+                                       crapprp.nrctrato = par_nrctremp NO-LOCK NO-ERROR.
+              IF  NOT AVAIL crapprp THEN
+              DO:
+                  ASSIGN aux_dscritic = "Registro de Cadastro de Propostas nao encontrado.".
+                  LEAVE Valida.
+              END.
+              
+              IF crapprp.nrgarope = 0 THEN
+              DO:
+                  ASSIGN aux_dscritic = "Favor Preencher a Garantia na Proposta - tela ATENDA.".
+                  LEAVE Valida.
+              END.
 
-          IF crapprp.nrliquid = 0 THEN
-          DO:
-              ASSIGN aux_dscritic = "Favor Preencher a Liquidez na Proposta - tela ATENDA.".
-                                    LEAVE Valida.
-          END.
+              IF crapprp.nrliquid = 0 THEN
+              DO:
+                  ASSIGN aux_dscritic = "Favor Preencher a Liquidez na Proposta - tela ATENDA.".
+                                        LEAVE Valida.
+              END.
 
-          IF crapprp.nrpatlvr = 0 THEN
-          DO:
-              ASSIGN aux_dscritic = "Favor Preencher Patr. Pessoal Livre na Proposta - tela ATENDA.".
-              LEAVE Valida.
-          END.
+              IF crapprp.nrpatlvr = 0 THEN
+              DO:
+                  ASSIGN aux_dscritic = "Favor Preencher Patr. Pessoal Livre na Proposta - tela ATENDA.".
+                  LEAVE Valida.
+              END.
 
-          IF crapprp.nrinfcad = 0 THEN
-          DO:
-              ASSIGN aux_dscritic = "Favor Preencher Inf. Cadastrais na Proposta - tela ATENDA.".
-              LEAVE Valida.
-          END.
+              IF crapprp.nrinfcad = 0 THEN
+              DO:
+                  ASSIGN aux_dscritic = "Favor Preencher Inf. Cadastrais na Proposta - tela ATENDA.".
+                  LEAVE Valida.
+              END.
 
-          IF crapprp.nrperger = 0 THEN
-          DO:
-              ASSIGN aux_dscritic = "Favor Preencher a Percep. Geral Empresa na Proposta - tela ATENDA.".
-              LEAVE Valida.
-          END.          
-          
+              IF crapprp.nrperger = 0 THEN
+              DO:
+                  ASSIGN aux_dscritic = "Favor Preencher a Percep. Geral Empresa na Proposta - tela ATENDA.".
+                  LEAVE Valida.
+              END.          
+              
+            END.
+                                
           /* Verificar se a Esteira esta em contigencia para a cooperativa*/
           { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
           RUN STORED-PROCEDURE pc_param_sistema aux_handproc = PROC-HANDLE
