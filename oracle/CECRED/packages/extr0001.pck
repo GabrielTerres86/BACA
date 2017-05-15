@@ -727,7 +727,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                            na procedure pc_obtem_saldo_dia, Prj. 302 (Jean Michel).
 
                17/11/2016 - Correcao do cursor cr_crapepr removendo o comando NVL com intuito de
-               							ganho em performance. SD 516113 (Carlos Rafael Tanholi)			  
+               							ganho em performance. SD 516113 (Carlos Rafael Tanholi)	
+										
+			   23/02/2017 - Adicionado históricos de débito em c/c de recarga nas procedures
+							              pc_obtem_saldo_dia e pc_consulta_extrato. (PRJ321 Reinert)									  
 
                07/03/2017 - Alteracao no texto da procedure pc_envia_extrato_email informando a 
                             descontinuidade do extrato essa solicitacao partiu de uma necessidade de 
@@ -855,7 +858,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
        AND epr.nrdconta = pr_nrdconta
        AND epr.nrctremp = pr_nrctremp;
   rw_crapepr cr_crapepr%ROWTYPE;
-	
+
 	CURSOR cr_his_recarga(pr_cdhistor IN tbrecarga_operadora.cdhisdeb_cooperado%TYPE) IS
 	  SELECT 1
 		  FROM tbrecarga_operadora tope
@@ -1926,8 +1929,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       vr_tariidx varchar2(11);
       -- Historicos 'de-para' Cabal
       vr_cdhishcb VARCHAR2(4000);
-	  -- Históricos operadoras de celular
-	  vr_cdhisope VARCHAR2(4000);
+			-- Históricos operadoras de celular
+			vr_cdhisope VARCHAR2(4000);
       -- Flag selecionar crapsda
       vr_crapsda BOOLEAN;
       vr_lscdhist_ret     VARCHAR2(1000);
@@ -2152,11 +2155,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
           vr_cdhishcb := vr_cdhishcb || ',' || rw_craphcb.cdhistor;
         END LOOP;
 
-		 -- Buscar os históricas de operadoras de celular
+        -- Buscar os históricas de operadoras de celular
         FOR rw_operadoras IN cr_operadoras LOOP
-			vr_cdhisope := vr_cdhisope || ',' || rw_operadoras.cdhisdeb_cooperado;
-		END LOOP;
-        vr_lscdhist_ret := '15,316,375,376,377,450,530,537,538,539,767,771,772,918,920,1109,1110,1009,1011,527,472,478,497,499,501,530,108,1060,1070,1071,1072,2139,'||vr_tab_tarifa_transf(vr_tariidx).cdhisint||','||vr_tab_tarifa_transf(vr_tariidx).cdhistaa || vr_cdhishcb; --> Lista com códigos de histórico a retornar         
+					vr_cdhisope := vr_cdhisope || ',' || rw_operadoras.cdhisdeb_cooperado;
+				END LOOP;
+
+        vr_lscdhist_ret := '15,316,375,376,377,450,530,537,538,539,767,771,772,918,920,1109,1110,1009,1011,527,472,478,497,499,501,530,108,1060,1070,1071,1072,2139,'||vr_tab_tarifa_transf(vr_tariidx).cdhisint||','||vr_tab_tarifa_transf(vr_tariidx).cdhistaa || vr_cdhishcb || vr_cdhisope; --> Lista com códigos de histórico a retornar         
         -- Buscar lançamentos no dia apenas dos historicos listados acima
         FOR rw_craplcm_olt IN cr_craplcm_olt(pr_cdcooper => pr_cdcooper    --> Cooperativa conectada
                                     ,pr_nrdconta => pr_nrdconta            --> Número da conta
@@ -3231,6 +3235,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                               ,pr_tab_extr  => pr_tab_extr
                               ,pr_des_chave => vr_ind_tab
                               ,pr_seq_reg   => vr_nrsequen);
+																														
         -- Finalmente cria o novo registro
         pr_tab_extr(vr_ind_tab).nrdconta := vr_nrdconta;
         pr_tab_extr(vr_ind_tab).dtmvtolt := vr_dtmvtolt;
@@ -3388,8 +3393,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       vr_tariidx varchar2(11);
       -- Historicos 'de-para' Cabal
       vr_cdhishcb VARCHAR2(4000);
-	  -- Históricos operadoras de celular
-	  vr_cdhisope VARCHAR2(4000);			
+			-- Históricos operadoras de celular
+			vr_cdhisope VARCHAR2(4000);			
       --Flag valida se estar rodando no batch
       vr_flgcrass BOOLEAN;
 
@@ -3668,13 +3673,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
 
         -- Buscar os históricas de operadoras de celular
         FOR rw_operadoras IN cr_operadoras LOOP
-			vr_cdhisope := vr_cdhisope || ',' || rw_operadoras.cdhisdeb_cooperado;
-		END LOOP;
+					vr_cdhisope := vr_cdhisope || ',' || rw_operadoras.cdhisdeb_cooperado;
+				END LOOP;
 
         FOR rw_craplcm_olt IN cr_craplcm_olt(pr_cdcooper => pr_cdcooper            --> Cooperativa conectada
                                     ,pr_nrdconta => pr_nrdconta            --> Número da conta
                                     ,pr_dtmvtolt => pr_rw_crapdat.dtmvtocd --> Data do movimento utilizada no cash dispenser.                                    
-                                    ,pr_lsthistor_ret => '15,316,375,376,377,450,530,537,538,539,767,771,772,918,920,1109,1110,1009,1011,527,472,478,497,499,501,530,108,1060,1070,1071,1072,'||vr_tab_tarifa_transf(vr_tariidx).cdhisint||','||vr_tab_tarifa_transf(vr_tariidx).cdhistaa || vr_cdhishcb) LOOP --> Lista com códigos de histórico a retornar
+                                    ,pr_lsthistor_ret => '15,316,375,376,377,450,530,537,538,539,767,771,772,918,920,1109,1110,1009,1011,527,472,478,497,499,501,530,108,1060,1070,1071,1072,'||vr_tab_tarifa_transf(vr_tariidx).cdhisint||','||vr_tab_tarifa_transf(vr_tariidx).cdhistaa || vr_cdhishcb || vr_cdhisope) LOOP --> Lista com códigos de histórico a retornar
           -- Se for uma transferencia agendada, nao compor saldo
           IF NOT( (rw_craplcm_olt.cdhistor IN(375,376,377,537,538,539,771,772) AND NVL(SUBSTR(rw_craplcm_olt.cdpesqbb,54,8),' ') = 'AGENDADO')
                  OR
