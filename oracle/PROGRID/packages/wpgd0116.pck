@@ -71,14 +71,15 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0116 IS
     --  Sistema  : Rotinas para tela cadastro de sugestão de produto
     --  Sigla    : WPGD
     --  Autor    : Odirlei Busana - AMcom
-    --  Data     : Junho/2016.                   Ultima atualizacao: --/--/----
+    --  Data     : Junho/2016.                   Ultima atualizacao: 27/03/2017
     --
     --  Dados referentes ao programa:
     --
     --  Frequencia: Sempre que for chamado
     --  Objetivo  : Rotina geração do relatorio da tela WPGD0116 - Relatório de Material de Divulgação 
     --
-    --  Alteracoes: 
+    --  Alteracoes: 27/03/2017 - Ajustado a ordenação da consulta principal e exibir
+    --                           codigo do PA. SD632319 (Odirlei-AMcom) 
     -- .............................................................................*/
 
       -- Buscar eventos
@@ -97,7 +98,8 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0116 IS
                                   7,' ASSEMBLEIA',
                                   8,' PRE-ASSEMBLEIA',
                                   9,' PROGRAMA',ce.tpevento) 
-                                  || ': ' || ce.nmevento || ' - <b>' || ca.nmresage|| '</b>' Evento
+                                  || ': ' || ce.nmevento || ' - <b>' ||
+                                  ca.cdagenci||' - '||ca.nmresage|| '</b>' Evento
               ,ca.cdagenci
               ,c.dtinieve
               ,replace(
@@ -178,9 +180,9 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0116 IS
            AND gf.nrcpfcgc(+) = gc.nrcpfcgc
            AND gf.cdfacili(+) = gc.cdfacili
          ORDER BY ct.dseixtem
+                 ,c.dtinieve
                  ,ce.nmevento
-                 ,ca.nmresage
-                 ,c.dtinieve;
+                 ,ca.nmresage;
                  
       --> Buscar recursos 
       CURSOR cr_recurso( pr_idevento   IN craprpe.idevento%TYPE, 
