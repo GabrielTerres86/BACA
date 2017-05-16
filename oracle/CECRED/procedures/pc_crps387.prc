@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Abril/2004                        Ultima atualizacao: 04/04/2017
+   Data    : Abril/2004                        Ultima atualizacao: 16/05/2017
 
    Dados referentes ao programa:
 
@@ -393,10 +393,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
     
 	           30/01/2017 - Implementado join no cursor que verifica coop migrada (Tiago/Facricio)
                
-               02/03/2017 - Adicionar dtmvtopg no filtro do cursor cr_craplau_dup (Lucas Ranghetti #618379)
+             02/03/2017 - Adicionar dtmvtopg no filtro do cursor cr_craplau_dup (Lucas Ranghetti #618379)
 
-			   04/04/2017 - Ajuste para integracao de arquivos com layout na versao 5
-				            (Jonata - RKAM M311).
+			       04/04/2017 - Ajuste para integracao de arquivos com layout na versao 5
+				                  (Jonata - RKAM M311).
+                          
+             16/05/2017 - Ajuste para alterar o format da variável vr_nrconta_cancel
+				                  (Jonata - RKAM M311).
 
 ............................................................................ */
 
@@ -868,7 +871,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
       vr_dtultdia DATE;                                               --> ira conter a data de ref ou prox dia util se for 31/12/2xxx
       vr_semmovto BOOLEAN;                                            --> Flag para caso nenhuma singular tenha processado
       vr_ind_debcancel VARCHAR2(1);                                   --> Indicador para validar se tem cancelamento debito em conta ou não.
-      vr_nrconta_cancel  craptco.nrdconta%TYPE;                       --> Numero da conta para registro debito em conta cacelado
+      vr_nrconta_cancel NUMBER(15);                                   --> Numero da conta para registro debito em conta cacelado
       vr_dsrefere_cancel VARCHAR2(25);                                --> Registro de referencia dentro do arquivo para registro de debito em conta cancelado
       vr_nrdocmto_cancel craplau.nrdocmto%TYPE;                       --> Numero do documento para debito em conta cancelado
       vr_dtrefere_cancel DATE;                                        --> Data de referencia
