@@ -148,7 +148,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
 											,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
 											,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
 											,pr_des_erro OUT VARCHAR2);           --> Erros do processo
-
+                      
   /* Procedimento para o CRPS672 */
   PROCEDURE pc_crps672(pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
 											,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
@@ -7467,13 +7467,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         ELSE
           vr_dstpdreg:= 'Nao definido';
         END IF;
-
+      
         -- Texto para utilizar na abertura do chamado e no email enviado
         vr_dstexto:= to_char(sysdate,'hh24:mi:ss') || ' - ' || vr_cdprogra || ' --> ' ||
                      'Erro no tipo de registro ' || nvl(vr_dstpdreg,' ') || '. ' || 
                      gene0001.fn_busca_critica(pr_cdcritic => pr_cdmensagem) || ' Linha '  ||
                      nvl(pr_nrdlinha,0) ||', arquivo: ' || pr_nmdarqui || ', Critica: ' || nvl(pr_dscritic,' ');
-
+         
         -- Parte inicial do texto do chamado e do email        
         vr_titulo:= '<b>Abaixo os erros encontrados no processo de importacao do arquivo de retorno'||
                     ' da Solicitacao de Cartao Bancoob CABAL</b><br><br>';
@@ -7481,26 +7481,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         -- Buscar e-mails dos destinatarios do produto cartoes
         vr_destinatario_email:= gene0001.fn_param_sistema('CRED',vr_cdcooper_ori,'CRD_RESPONSAVEL');
                  
-        cecred.pc_log_programa(PR_DSTIPLOG      => 'E'           --> Tipo do log: I - início; F - fim; O - ocorrência
-                              ,PR_CDPROGRAMA    => vr_cdprogra   --> Codigo do programa ou do job
-                              ,pr_tpexecucao    => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                               -- Parametros para Ocorrencia
-                              ,pr_tpocorrencia  => 2             --> tp ocorrencia (1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem)
-                              ,pr_cdcriticidade => 2             --> Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+       cecred.pc_log_programa(PR_DSTIPLOG      => 'E'           --> Tipo do log: I - início; F - fim; O - ocorrência
+                             ,PR_CDPROGRAMA    => vr_cdprogra   --> Codigo do programa ou do job
+                             ,pr_tpexecucao    => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                              -- Parametros para Ocorrencia
+                             ,pr_tpocorrencia  => 2             --> tp ocorrencia (1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem)
+                             ,pr_cdcriticidade => 2             --> Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
                               ,pr_cdmensagem    => pr_cdmensagem
-                              ,pr_dsmensagem    => vr_dstexto    --> dscritic       
-                              ,pr_flgsucesso    => 0             --> Indicador de sucesso da execução
-                             ,pr_flabrechamado => TRUE          --> Abrir chamado (Sim=true/Nao=false)
-                              ,pr_texto_chamado => vr_titulo
-                              ,pr_destinatario_email => vr_destinatario_email
+                             ,pr_dsmensagem    => vr_dstexto    --> dscritic       
+                             ,pr_flgsucesso    => 0             --> Indicador de sucesso da execução
+                             ,pr_flabrechamado => 1             --> Abrir chamado (Sim=1/Nao=0)
+                             ,pr_texto_chamado => vr_titulo
+                             ,pr_destinatario_email => vr_destinatario_email
                               ,pr_flreincidente => 1             --> Erro pode ocorrer em dias diferentes, devendo abrir chamado
-                              ,PR_IDPRGLOG      => vr_idprglog); --> Identificador unico da tabela (sequence)
+                             ,PR_IDPRGLOG      => vr_idprglog); --> Identificador unico da tabela (sequence)
 
-        cecred.pc_log_programa(PR_DSTIPLOG   => 'F'           --> Tipo do log: I - início; F - fim; O - ocorrência
-                              ,PR_CDPROGRAMA => vr_cdprogra   --> Codigo do programa ou do job
-                              ,pr_tpexecucao => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                               -- Parametros para Ocorrencia
-                              ,PR_IDPRGLOG   => vr_idprglog); --> Identificador unico da tabela (sequence)  
+       cecred.pc_log_programa(PR_DSTIPLOG   => 'F'           --> Tipo do log: I - início; F - fim; O - ocorrência
+                             ,PR_CDPROGRAMA => vr_cdprogra   --> Codigo do programa ou do job
+                             ,pr_tpexecucao => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                              -- Parametros para Ocorrencia
+                             ,PR_IDPRGLOG   => vr_idprglog); --> Identificador unico da tabela (sequence)  
         
         vr_dscritic := vr_dstexto;
         
