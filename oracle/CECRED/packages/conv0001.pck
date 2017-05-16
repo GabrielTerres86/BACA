@@ -358,7 +358,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --  Sistema  : Procedimentos para Convenios
   --  Sigla    : CRED
   --  Autor    : Douglas Pagel
-  --  Data     : Outubro/2013.                   Ultima atualizacao: 31/03/2017
+  --  Data     : Outubro/2013.                   Ultima atualizacao: 15/05/2017
   --
   -- Dados referentes ao programa:
   --
@@ -437,6 +437,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --                          padrão 'HH24:MI:SS - nome_programa' (Carlos)
   --
   --             31/03/2017 - Incluir PREVISC para fazer como faz a SULAMERICA (Lucas Ranghetti #637882)
+  --
+  --             15/05/2017 - Adicionar tratamento para o convenio CERSAD 9 posicoes na procedure pc_gerandb
+  --                          (Lucas Ranghetti #622377)
   ---------------------------------------------------------------------------------------------------------------
 
 
@@ -1584,7 +1587,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Odair
-  --  Data     : Agosto/98.                  Ultima atualizacao: 31/03/2017
+  --  Data     : Agosto/98.                  Ultima atualizacao: 15/05/2017
   --
   -- Dados referentes ao programa:
   --
@@ -1678,6 +1681,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --                          ex: 40151016407- (Lucas Ranghetti #560620/453337)
   --
   --             31/03/2017 - Incluir PREVISC para fazer como faz a SULAMERICA (Lucas Ranghetti #637882)
+  --
+  --             15/05/2017 - Adicionar tratamento para o convenio CERSAD 9 posicoes
+  --                          (Lucas Ranghetti #622377)
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -1828,6 +1834,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
           vr_dstexarq := vr_dstexarq || gene0002.fn_mask(pr_cdrefere,'99999999999') || RPAD(' ',14,' ');
         ELSIF pr_cdhistor = 900 THEN -- Samae Rio Negrinho
           vr_dstexarq := vr_dstexarq || gene0002.fn_mask(pr_cdrefere,'999999') || RPAD(' ',19,' ');
+        ELSIF pr_cdhistor = 2291 THEN -- CERSAD
+          vr_dstexarq := vr_dstexarq || gene0002.fn_mask(pr_cdrefere,'999999999') || RPAD(' ',16,' ');
         ELSIF vr_flgsicre = 0 THEN -- RECEBIMENTO SAMAE BLUMENAU AUTOMATICO
           vr_dstexarq := vr_dstexarq || pr_cdrefere || RPAD(' ',25 - LENGTH(pr_cdrefere),' ');
         END IF;

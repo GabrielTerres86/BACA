@@ -9,7 +9,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autora  : Mirtes
-  Data    : Abril/2004                          Ultima atualizacao: 29/03/2017
+  Data    : Abril/2004                          Ultima atualizacao: 15/05/2017
 
   Dados referentes ao programa:
 
@@ -234,6 +234,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
 
               29/03/2017 - Conversão Progress para PLSQL (Jonata-MOUTs)
 
+              15/05/2017 - Adicionar tratamento para o convenio CERSAD 9 posicoes
+                           (Lucas Ranghetti #622377)
   ..............................................................................*/
 
   ----------------------------- ESTRUTURAS de MEMORIA -----------------------------
@@ -1096,7 +1098,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
         -- Enviar informações para o arquivo conforme especificidades do convênio
         /* 30 - Celesc Distribuicao */
         /* 45 - Aguas Pres.Getulio  */
-        IF rw_gnconve.cdconven IN(30,45) THEN    
+        /* 51 - CERSAD */
+        IF rw_gnconve.cdconven IN(30,45,51) THEN    
           -- Enviar linha ao arquivo 
           vr_dslinreg := 'F'
                       ||to_char(rw_crapatr.cdrefere,'fm000000000')

@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Abril/2004                          Ultima atualizacao: 19/01/2017
+   Data    : Abril/2004                          Ultima atualizacao: 15/05/2017
 
    Dados referentes ao programa:
 
@@ -206,27 +206,29 @@
                             retirado os logs do proc_message que eram gerados
                             com linhas em branco (Lucas Ranghetti #366033)
 
-			   04/04/2016 - Incluido a regra Caso a data de inicio da
-				        	 autorização seja maior que 01/09/2013 ira gravar a 
-							 agencia com formato novo. 
+			         04/04/2016 - Incluido a regra Caso a data de inicio da
+				                    autorização seja maior que 01/09/2013 ira gravar a 
+							              agencia com formato novo. 
 
                15/06/2016 - Adicnioar ux2dos para a Van E-sales (Lucas Ranghetti #469980)
 
                23/06/2016 - P333.1 - Devolução de arquivos com tipo de envio 
-			                6 - WebService (Marcos)
+			                      6 - WebService (Marcos)
                
                15/08/2016 - Alterado ordem da leitura da crapatr (Lucas Ranghetti #499449)
 
-			   05/10/2016 - Incluir tratamento para a CASAN enviar a angecia 1294 para autorizacoes
-							mais antigas (Lucas Ranghetti ##534110)
+			         05/10/2016 - Incluir tratamento para a CASAN enviar a angecia 1294 para autorizacoes
+							              mais antigas (Lucas Ranghetti ##534110)
               
-              28/12/2016 - Ajustes para incorporaçao da Transulcred (SD585459 Tiago/Elton) 
+               28/12/2016 - Ajustes para incorporaçao da Transulcred (SD585459 Tiago/Elton) 
 
-			  17/01/2016 - Ajustes para incorporação da Transulcred (SD593672 Tiago/Elton)
-               
+			         17/01/2016 - Ajustes para incorporação da Transulcred (SD593672 Tiago/Elton)
                
                19/01/2017 - Validar se referencia existe atraves do campo nrcrcard da craplau com a
                             tabela crapatr (Lucas Ranghetti #533520)
+                            
+               15/05/2017 - Adicionar tratamento para o convenio CERSAD 9 posicoes
+                            (Lucas Ranghetti #622377)
 ............................................................................. */
  
 { includes/var_batch.i {1} }
@@ -817,7 +819,8 @@ FOR EACH gncvcop NO-LOCK WHERE
             DOWN STREAM str_1 WITH FRAME f_lancto.
 
             IF  gnconve.cdconven = 30 OR     /* Celesc Distribuicao*/
-                gnconve.cdconven = 45 THEN   /* Aguas Pres.Getulio */
+                gnconve.cdconven = 45 OR     /* Aguas Pres.Getulio */
+                gnconve.cdconven = 51 THEN   /* CERSAD */
                 
                 aux_dslinreg = "F" +
                                STRING(aux_cdrefori,"999999999") +
