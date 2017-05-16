@@ -4227,7 +4227,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
         -- Se NAO encontrar
         IF NOT vr_blnfound THEN
           vr_nmcheque := 'NAO CADASTRADO';
-          vr_nrcpfcgc := 'NAO CADASTRADO';
+          vr_nrcpfcgc := 0; --'NAO CADASTRADO';
         ELSE
           -- Pessoa Física
           IF rw_crapass.inpessoa = 1 THEN
@@ -4239,7 +4239,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
             -- Se NAO encontrar
             IF NOT vr_blnfound THEN
               vr_nmcheque := 'NAO CADASTRADO';
-              vr_nrcpfcgc := 'NAO CADASTRADO';
+              vr_nrcpfcgc := 0; -- 'NAO CADASTRADO';
             ELSE
               vr_nmcheque := rw_crapttl.nmtalttl;
               vr_nrcpfcgc := rw_crapttl.nrcpfcgc;
@@ -4253,7 +4253,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
             -- Se NAO encontrar
             IF NOT vr_blnfound THEN
               vr_nmcheque := 'NAO CADASTRADO';
-              vr_nrcpfcgc := 'NAO CADASTRADO';
+              vr_nrcpfcgc := 0; --'NAO CADASTRADO';
             ELSE
               vr_nmcheque := rw_crapjur.nmtalttl;
               vr_nrcpfcgc := rw_crapass.nrcpfcgc;
@@ -4274,7 +4274,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
         -- Se NAO encontrar
         IF NOT vr_blnfound THEN
           vr_nmcheque := 'NAO CADASTRADO';
-          vr_nrcpfcgc := 'NAO CADASTRADO';
+          vr_nrcpfcgc := 0; -- 'NAO CADASTRADO';
         ELSE
           -- Validar CPF/CNPJ
           gene0005.pc_valida_cpf_cnpj(pr_nrcalcul => rw_crapcec.nrcpfcgc, 
@@ -4666,6 +4666,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 	vr_vlrendim NUMBER;               -- Valor de rendimento do cooperado
 	vr_przmxcmp NUMBER;               -- Data prazo máximo
 	
+  vr_nrcpfcgc NUMBER;
+	
 	-- Buscar todas as ocorrencias cadastradas
 	CURSOR cr_ocorrencias IS
 	  SELECT oco.flgbloqueio
@@ -4718,7 +4720,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 										 pr_cdcmpchq IN crapcec.cdcmpchq%TYPE, 
 										 pr_cdbanchq IN crapcec.cdbanchq%TYPE,
 										 pr_cdagechq IN crapcec.cdagechq%TYPE,
-										 pr_nrctachq IN crapcec.nrctachq%TYPE)IS
+										 pr_nrctachq IN crapcec.nrctachq%TYPE,
+                     pr_nrcpfcgc IN crapcec.nrcpfcgc%TYPE)IS
 		SELECT cec.nrcpfcgc
           ,substr(to_char(cec.nrcpfcgc),1,LENGTH(cec.nrcpfcgc)-6) raizcnpj
 			FROM crapcec cec
@@ -4727,7 +4730,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			 AND cec.cdbanchq = pr_cdbanchq
 			 AND cec.cdagechq = pr_cdagechq
 			 AND cec.nrctachq = pr_nrctachq
-			 AND cec.nrdconta = 0;
+			 AND cec.nrdconta = 0
+       AND cec.nrcpfcgc = pr_nrcpfcgc;
 	rw_crapcec  cr_crapcec%ROWTYPE;
 
   -- Verificar se o emitente é titular da conta
@@ -5296,26 +5300,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			-- Fechar cursor
 			CLOSE cr_crapcdb;
 			
+      IF pr_tab_cheques(vr_index).cdbanchq <> 85 THEN
+			
 			-- Buscar emitente do cheque
 			OPEN cr_crapcec(pr_cdcooper => pr_cdcooper
 			               ,pr_cdcmpchq => pr_tab_cheques(vr_index).cdcmpchq
 										 ,pr_cdbanchq => pr_tab_cheques(vr_index).cdbanchq
 										 ,pr_cdagechq => pr_tab_cheques(vr_index).cdagechq
-										 ,pr_nrctachq => pr_tab_cheques(vr_index).nrctachq);
+                       ,pr_nrctachq => pr_tab_cheques(vr_index).nrctachq
+                       ,pr_nrcpfcgc => pr_tab_cheques(vr_index).nrcpfcgc);
 			FETCH cr_crapcec INTO rw_crapcec;
 			
 			-- Se não encontrar emitente
-			IF cr_crapcec%NOTFOUND AND
-         pr_tab_cheques(vr_index).cdbanchq <> 85 THEN
+        IF cr_crapcec%NOTFOUND THEN
+          
+          -- Fechar cursor
+			    CLOSE cr_crapcec;
+          
+          -- Variavel auxiliar
+          vr_nrcpfcgc := 0;
+          
 			  -- Gerar ocorrencia 22 - Emitente não cadastrado
 				pc_gerar_ocorrencia_chq(pr_tab_cheques => pr_tab_cheques
 															 ,pr_idx_cheques => vr_index
 															 ,pr_cdocorre => 22
 															 ,pr_dsrestri => NULL
 															 ,pr_dsdetres => NULL);
-			END IF;
+        ELSE
+          
 			-- Fechar cursor
 			CLOSE cr_crapcec;
+          
+          -- Variavel auxiliar
+          vr_nrcpfcgc := rw_crapcec.nrcpfcgc; 
+			    
 			-- CPF/CNPJ do emitente é o mesmo do cooperado
 	    IF rw_crapcec.nrcpfcgc = rw_crapass.nrcpfcgc THEN
 				-- Gerar ocorrencia 23 - Cheque possui CPF/CNPJ do cooperado
@@ -5325,6 +5343,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 															 ,pr_dsrestri => NULL
 															 ,pr_dsdetres => NULL);
 			END IF;		
+          	
       -- Se não for pf
 			IF rw_crapass.inpessoa <> 1 THEN
 				-- Verificar se a raiz do CNPJ do cheque é o mesmo do cooperado
@@ -5404,6 +5423,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 				END IF;
 			END IF;
 			
+        END IF;  
+          
+      END IF;    
+			
 			-- Se é necessário verificar prejuizo de emitente na cooperativa
 			IF vr_tab_lim_desconto(vr_inpessoa).Flpjzemi = 1 THEN
 				-- Se for cheque da CECRED
@@ -5478,7 +5501,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
       IF vr_tab_lim_desconto(vr_inpessoa).qtdevchq > 0 THEN
 				-- Verificar quantidade de cheques devolvidos do emitente
 				OPEN cr_qtchqdev_emi(pr_cdcooper => pr_cdcooper
-				                    ,pr_nrcpfcgc => rw_crapcec.nrcpfcgc);
+				                    ,pr_nrcpfcgc => vr_nrcpfcgc);
 				FETCH cr_qtchqdev_emi INTO vr_qtdevchq;
 				-- Fechar cursor
 				CLOSE cr_qtchqdev_emi;
