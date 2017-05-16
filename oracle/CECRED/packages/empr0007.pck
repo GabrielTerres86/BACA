@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0007 IS
   --  Sistema  : Rotinas referentes a Portabilidade de Credito
   --  Sigla    : EMPR
   --  Autor    : Lucas Reinert
-  --  Data     : Julho - 2015.                   Ultima atualizacao: 27/09/2016
+  --  Data     : Julho - 2015.                   Ultima atualizacao: 30/03/2017
   --
   -- Dados referentes ao programa:
   --
@@ -1053,7 +1053,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       Sistema : CECRED
       Sigla   : EMPR
       Autor   : Carlos Rafael Tanholi
-      Data    : Agosto/15.                    Ultima atualizacao: 11/07/2016
+      Data    : Agosto/15.                    Ultima atualizacao: 24/04/2017
 
       Dados referentes ao programa:
 
@@ -3933,7 +3933,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       Sistema : CECRED
       Sigla   : EMPR
       Autor   : Lucas Reinert
-      Data    : Agosto/15.                    Ultima atualizacao: 02/03/2017
+      Data    : Agosto/15.                    Ultima atualizacao: 30/03/2017
 
       Dados referentes ao programa:
 
@@ -4917,7 +4917,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       Sistema : CECRED
       Sigla   : TELA
       Autor   : Lucas Reinert
-      Data    : Agosto/15.                    Ultima atualizacao: 07/03/2017
+      Data    : Agosto/15.                    Ultima atualizacao: 30/03/2017
 
       Dados referentes ao programa:
 
