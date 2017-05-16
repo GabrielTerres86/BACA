@@ -34,6 +34,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps525
       -- Código do programa
       vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'CRPS525';
 
+	  -- Data de Corte Liberação do Projeto 300
+	  vr_dtacorte DATE := TO_DATE('23/05/2017','DD/MM/RRRR');
+
       -- Tratamento de erros
       vr_exc_saida  EXCEPTION;
       vr_exc_fimprg EXCEPTION;
@@ -66,6 +69,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps525
           AND cst.nrdconta = ass.nrdconta
           AND cst.cdcooper = pr_cdcooper
           AND cst.dtmvtolt = pr_dtmvtolt
+		  AND cst.dtmvtolt > vr_dtacorte
           AND cst.dtdevolu IS NULL
           AND cst.cdbccxlt = 600
         GROUP BY cst.cdcooper
