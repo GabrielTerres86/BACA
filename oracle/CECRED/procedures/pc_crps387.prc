@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Abril/2004                        Ultima atualizacao: 11/04/2017
+   Data    : Abril/2004                        Ultima atualizacao: 16/05/2017
 
    Dados referentes ao programa:
 
@@ -394,7 +394,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
 	           30/01/2017 - Implementado join no cursor que verifica coop migrada (Tiago/Facricio)
                
                02/03/2017 - Adicionar dtmvtopg no filtro do cursor cr_craplau_dup (Lucas Ranghetti #618379)
-			   
+
                08/03/2017 - Ajustes para quando vier caracter especial na posicao do arquivo
                             que se refere a numero de conta criticar apenas para a cooperativa
                             correspondente (Tiago/Fabricio SD620952)
@@ -411,9 +411,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
 			   
 			   04/04/2017 - Ajuste para integracao de arquivos com layout na versao 5
 				            (Jonata - RKAM M311).
-                            
+
                11/04/2017 - Fechar cursor da craptco quando estiver aberto, tambem verificar
                             se estiver aberto e caso estiver, fechar (Lucas Ranghetti/Fabricio)
+             16/05/2017 - Ajuste para alterar o format da variável vr_nrconta_cancel
+				                  (Jonata - RKAM M311).
+
 ............................................................................ */
 
 
@@ -744,7 +747,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
           FROM crapcop
          WHERE crapcop.cdagectl = pr_cdagectl;         
       rw_cdcooper cr_cdcooper%ROWTYPE;
-
+      
       CURSOR cr_crapttl(pr_cdcooper IN crapttl.cdcooper%TYPE
                        ,pr_nrdconta IN crapttl.nrdconta%TYPE
                        ,pr_nrcpfcgc IN crapttl.nrcpfcgc%TYPE) IS
@@ -884,7 +887,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
       vr_dtultdia DATE;                                               --> ira conter a data de ref ou prox dia util se for 31/12/2xxx
       vr_semmovto BOOLEAN;                                            --> Flag para caso nenhuma singular tenha processado
       vr_ind_debcancel VARCHAR2(1);                                   --> Indicador para validar se tem cancelamento debito em conta ou não.
-      vr_nrconta_cancel  craptco.nrdconta%TYPE;                       --> Numero da conta para registro debito em conta cacelado
+      vr_nrconta_cancel NUMBER(15);                                   --> Numero da conta para registro debito em conta cacelado
       vr_dsrefere_cancel VARCHAR2(25);                                --> Registro de referencia dentro do arquivo para registro de debito em conta cancelado
       vr_nrdocmto_cancel craplau.nrdocmto%TYPE;                       --> Numero do documento para debito em conta cancelado
       vr_dtrefere_cancel DATE;                                        --> Data de referencia
@@ -915,7 +918,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
       vr_tot_vlfatint NUMBER(17,2):= 0;                               --> Valor total de faturas integradas
       vr_tot_vlfatrej NUMBER(17,2):= 0;                               --> Valor total de faturas rejeitadas
       vr_stsnrcal     BOOLEAN;                                        -->Validação de CPF/CNPJ
-
+      
       --Variaveis de controle usa agencia NAO
       vr_cdagestr      VARCHAR2(4);
       vr_nrctastr      VARCHAR2(10);
@@ -2733,9 +2736,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                       vr_tab_relato(vr_ind).descrica := SUBSTR(vr_setlinha,110,20);
                       vr_flgrejei     := TRUE;                          
                       continue;    
-                  ELSE
-                    vr_cdrefere := 0;
-                  END IF;  
+                    ELSE
+                      vr_cdrefere := 0;
+                    END IF;  
                   END IF;  
 
                   -- Verifica se o convenio usa agencias no arquivo enviado
@@ -3178,8 +3181,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                         continue;
                       END IF;
                     END IF;
-                  END IF;             
-
+                  END IF;
+                  
                   IF vr_tpregist = 'E' THEN
                     
                     /*** Tratamento para codigo de referencia zerado ***/
@@ -3398,10 +3401,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                                      
                                vr_cpfvalido := FALSE;
                                        
-                    END IF;
+                             END IF;
                                        
-                  END IF;
-                                    
+                          END IF;
+                                
                           /*** Se o cpf for devergen a conta  ***/
                           IF NOT vr_cpfvalido THEN
                                   
@@ -3853,7 +3856,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                         vr_flgrejei     := FALSE;
 
                         continue; -- Vai para a proxima linha do arquivo
-
+                          
                       END IF;
                       
                     END IF;
@@ -4400,7 +4403,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                                 vr_dscritic := 'Erro ao inserir na CRAPLAU: '||SQLERRM;
                                 RAISE vr_exc_saida;
                             END;
-
+                            
                             -- Atualiza a capa do lote
                             BEGIN
                               UPDATE craplot
