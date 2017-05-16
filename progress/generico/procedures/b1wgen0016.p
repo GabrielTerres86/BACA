@@ -37,7 +37,7 @@
 
     Programa: b1wgen0016.p
     Autor   : Evandro/David
-    Data    : Abril/2006                     Ultima Atualizacao: 14/04/2017
+    Data    : Abril/2006                     Ultima Atualizacao: 12/04/2017
     
     Dados referentes ao programa:
 
@@ -478,8 +478,8 @@
 			  22/02/2017 - Ajustes para correçao de crítica de 
                            pagamento DARF/DAS (Lucas Lunelli - P.349.2)  
 
-              12/04/2017 - Incluido tratamento de transaçoes pendent
-              
+              12/04/2017 - Incluido tratamento de transaçoes pendentes 13. 
+                           PRJ319 - Recarga de Celular (Lombardi)              
  .............................................................................*/
 { sistema/internet/includes/var_ibank.i }
 
