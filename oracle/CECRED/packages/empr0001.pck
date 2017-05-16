@@ -468,6 +468,7 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
                                  ,pr_nrparepr IN INTEGER --> Número parcelas empréstimo
                                  ,pr_nrctremp IN crapepr.nrctremp%TYPE --> Número do contrato de empréstimo
                                  ,pr_nrseqava IN NUMBER DEFAULT 0 --> Pagamento: Sequencia do avalista
+                                 ,pr_idlautom IN NUMBER DEFAULT 0 --> sequencia criada pela craplau
                                  ,pr_des_reto OUT VARCHAR --> Retorno OK / NOK
                                  ,pr_tab_erro OUT gene0001.typ_tab_erro);                             
 
@@ -809,7 +810,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
   --  Sistema  : Rotinas genéricas focando nas funcionalidades de empréstimos
   --  Sigla    : EMPR
   --  Autor    : Marcos Ernani Martini
-  --  Data     : Fevereiro/2013.                   Ultima atualizacao: 25/04/2017
+  --  Data     : Fevereiro/2013.                   Ultima atualizacao: 05/05/2017
   --
   -- Dados referentes ao programa:
   --
@@ -864,6 +865,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
   --             25/04/2017 - na rotina pc_efetiva_pagto_parc_lem retornar valor pro rowtype da crapepr na hora 
   --                          do update qdo cai na validacao do vr_ehmensal pois qdo ia atualizar o valor novamente 
   --                          a crapepr estava ficando com valor incorreto (Tiago/Thiago SD644598)
+  --
+  --             05/05/2017 - Ajuste para gravar o idlautom (Lucas Ranghetti M338.1)
+
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tratamento de erro */
@@ -7032,6 +7036,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                  ,pr_nrparepr IN INTEGER --> Número parcelas empréstimo
                                  ,pr_nrctremp IN crapepr.nrctremp%TYPE --> Número do contrato de empréstimo
                                  ,pr_nrseqava IN NUMBER DEFAULT 0 --> Pagamento: Sequencia do avalista
+                                 ,pr_idlautom IN NUMBER DEFAULT 0 --> sequencia criada pela craplau
                                  ,pr_des_reto OUT VARCHAR --> Retorno OK / NOK
                                  ,pr_tab_erro OUT gene0001.typ_tab_erro) IS --> Tabela com possíves erros
   BEGIN
@@ -7041,7 +7046,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Alisson
-       Data    : Fevereiro/2014                        Ultima atualizacao: 13/08/2014
+       Data    : Fevereiro/2014                        Ultima atualizacao: 05/05/2017
     
        Dados referentes ao programa:
     
@@ -7053,6 +7058,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                    16/06/2014 - Ajuste para atualizar o campo nrseqava. (James)
     
                    13/08/2014 - Ajuste para gravar o operador e a hora da transacao. (James)
+                   
+                   05/05/2017 - Ajuste para gravar o idlautom (Lucas Ranghetti M338.1)
     ............................................................................. */
   
     DECLARE
@@ -7115,7 +7122,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             ,craplcm.cdpesqbb
             ,craplcm.nrseqava
             ,craplcm.cdoperad
-            ,craplcm.hrtransa)
+            ,craplcm.hrtransa
+            ,craplcm.idlautom)
           VALUES
             (pr_dtmvtolt
             ,pr_cdpactra
@@ -7133,7 +7141,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             ,gene0002.fn_mask(pr_nrctremp, 'zz.zzz.zz9')
             ,pr_nrseqava
             ,pr_cdoperad
-            ,gene0002.fn_busca_time);
+            ,gene0002.fn_busca_time
+            ,pr_idlautom);
         EXCEPTION
           WHEN OTHERS THEN
             vr_cdcritic := 0;
