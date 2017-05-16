@@ -382,11 +382,13 @@ function formataResultado() {
 
     var arrayLargura = new Array();
 
-    arrayLargura[0] = '200px';
-    arrayLargura[1] = '100px';
-    arrayLargura[2] = '100px';
-    arrayLargura[3] = '190px';
-    
+    arrayLargura[0] = '80px';
+    arrayLargura[1] = '70px';
+    arrayLargura[2] = '54px';
+    arrayLargura[3] = '75px';
+    arrayLargura[4] = '200px';
+    arrayLargura[5] = '80px';
+    arrayLargura[6] = '80px';    
 
     var arrayAlinha = new Array();
     arrayAlinha[0] = 'center';
@@ -394,6 +396,9 @@ function formataResultado() {
     arrayAlinha[2] = 'center';
     arrayAlinha[3] = 'center';
     arrayAlinha[4] = 'center';
+    arrayAlinha[5] = 'center';
+    arrayAlinha[6] = 'center';
+    arrayAlinha[7] = 'center';
 
     var metodoTabela = '';
 

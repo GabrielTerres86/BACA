@@ -460,7 +460,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
 																				 pr_cdacesso => 'QTD_MES_HIST_ESTOUROS') qtmesest,																				 
                GENE0001.fn_param_sistema(pr_nmsistem => 'CRED',
 																				 pr_cdcooper => cop.cdcooper,
-																				 pr_cdacesso => 'QTD_MES_HIST_ESTOUROS') qtmesemp,
+																				 pr_cdacesso => 'QTD_MES_HIST_EMPREST') qtmesemp,
                cdcooper,
                nmrescop
         

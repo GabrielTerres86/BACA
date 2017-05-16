@@ -142,7 +142,9 @@ CREATE OR REPLACE PACKAGE CECRED.rati0001 is
   --            01/02/2017 - Incluir busca na central de risco tambem para os limites rotativos.
   --                         Ajustada a rotina pc_verifica_atualizacao, que nao estava retornando a mensagem de erro
   --                         corretamente para a tela ATURAT. Heitor (Mouts)
-  --
+	--
+  --            15/05/2017 - Tornado procedure pc_nivel_comprometimento publica. (Reinert)
+	--
   ---------------------------------------------------------------------------------------------------------------
   -- Tipo de Tabela para dados provisao CL
   TYPE typ_tab_dsdrisco IS TABLE OF VARCHAR2(5) INDEX BY PLS_INTEGER;
@@ -260,6 +262,9 @@ CREATE OR REPLACE PACKAGE CECRED.rati0001 is
               nrseqite NUMBER);
   TYPE typ_tab_crapras IS TABLE OF typ_reg_crapras
     INDEX BY varchar2(15); --nrtopico(5) + nritetop(5) +nrseqite(5)
+		
+  /* Tipo para retornar uma lista de contrados a liquidar */
+  TYPE typ_vet_nrctrliq IS VARRAY(10) OF PLS_INTEGER;		
 
   /* Rotina responsavel por buscar a descrição da operacao do tipo de contrato */
   FUNCTION fn_busca_descricao_operacao (pr_tpctrrat IN INTEGER) --Tipo Contrato Rating
@@ -528,6 +533,22 @@ CREATE OR REPLACE PACKAGE CECRED.rati0001 is
                                ,pr_tab_impress_risco_cl OUT rati0001.typ_tab_impress_risco --> Registro Nota e risco do cooperado naquele Rating - PROVISAOCL
                                ,pr_tab_impress_risco_tl OUT rati0001.typ_tab_impress_risco --> Registro Nota e risco do cooperado naquele Rating - PROVISAOTL
                                ,pr_des_reto             OUT VARCHAR2);          --> Indicador erro IS
+															 
+  /* Item 3_1 (Pessoa Fisica) e  5_2 (Pessoa juridica) do Rating */
+  PROCEDURE pc_nivel_comprometimento(pr_cdcooper     IN crapcop.cdcooper%TYPE --> Cooperativa conectada
+                                    ,pr_cdoperad     IN crapnrc.cdoperad%TYPE --> Código do operador
+                                    ,pr_idseqttl     IN crapttl.idseqttl%TYPE --> Sq do titular da conta
+                                    ,pr_idorigem     IN pls_integer           --> Indicador da origem da chamada
+                                    ,pr_nrdconta     IN crapass.nrdconta%TYPE --> Conta do associado
+                                    ,pr_tpctrato     IN crapnrc.tpctrrat%TYPE --> Tipo do Rating
+                                    ,pr_nrctrato     IN crapnrc.nrctrrat%TYPE --> Número do contrato de Rating
+                                    ,pr_vet_nrctrliq IN typ_vet_nrctrliq      --> Vetor de contratos a liquidar
+                                    ,pr_vlpreemp     IN crapepr.vlpreemp%TYPE --> Valor da parcela
+                                    ,pr_rw_crapdat   IN btch0001.cr_crapdat%rowtype --> Calendário do movimento atual
+                                    ,pr_flgdcalc     IN PLS_INTEGER           --> Flag para calcular sim ou não
+                                    ,pr_inusatab     IN BOOLEAN               --> Indicador de utilização da tabela de juros
+                                    ,pr_vltotpre    OUT NUMBER                --> Valor calculado da prestação
+                                    ,pr_dscritic    OUT VARCHAR2);            --> Descrição de erro															 
 END RATI0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
@@ -571,9 +592,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       INDEX BY BINARY_INTEGER;
   vr_tab_provisao_cl typ_tab_provisao;
   vr_tab_provisao_tl typ_tab_provisao;
-
-  /* Tipo para retornar uma lista de contrados a liquidar */
-  TYPE typ_vet_nrctrliq IS VARRAY(10) OF PLS_INTEGER;
 
   -- Tipos para Vetores para armazenar valores das notas
   TYPE typ_vet_nota3 IS VARRAY(3) OF NUMBER;
