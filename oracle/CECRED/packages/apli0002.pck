@@ -1071,6 +1071,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0002 AS
                             ,pr_cdcritic OUT crapcri.cdcritic%TYPE   --> Codigo de Critica
                             ,pr_dscritic OUT crapcri.dscritic%TYPE); --> Descricao de Critica                           
 														
+
 END APLI0002;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
@@ -1080,7 +1081,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
    Programa: APLI0002                Antigo: sistema/generico/procedures/b1wgen0081.p
    Sigla   : APLI
    Autor   : Adriano.
-   Data    : 29/11/2010                        Ultima atualizacao: 22/09/2016
+   Data    : 29/11/2010                        Ultima atualizacao: 16/05/2017
 
    Dados referentes ao programa:
 
@@ -1273,6 +1274,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                              procedure pc_cad_resgate_aplica, pois estava validando o bloqueio 
                              judicial antes de validar se o valor a ser resgatado é superior 
                              a disponivel (Lucas Ranghetti #492125)        
+                             
+               16/05/2017 - Validacao na data de vencimento de agendamentos de aplicacoes calculando a 
+                            mesma caso necessario na pc_incluir_novo_agendmto SD 670255. (Carlos Rafael Tanholi)
   ............................................................................*/
   
   --Cursor para buscar os lancamentos de aplicacoes RDCA
@@ -4511,8 +4515,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       FETCH cr_crapttx INTO vr_qtdiafim;
       CLOSE cr_crapttx;
       IF  vr_qtdiaapl > vr_qtdiafim THEN --verifica se periodo tem mais  dias e busca data util anterior                      
-        -- eh passado agora a data do paramentro e nao a variavel temp pois se fosse dia util nao era 
-        -- buscado a data anterior
+       -- eh passado agora a data do paramentro e nao a variavel temp pois se fosse dia util nao era 
+       -- buscado a data anterior
 
         --SD#543149 inicio
         -- RDCPRE
@@ -4520,9 +4524,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
           -- retorna data venc verificada
           vr_dtfimper := pr_dtresgat;
         ELSE
-          vr_dtfimper := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
-                                                    ,pr_dtmvtolt => pr_dtresgat
-                                                    ,pr_tipo     => 'A' );
+        vr_dtfimper := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
+                                                  ,pr_dtmvtolt => pr_dtresgat
+                                                  ,pr_tipo     => 'A' );       
         END IF;
         --SD#543149 fim
         vr_qtdiaapl := vr_dtfimper - pr_dtmvtolt; -- calcula qt dias com base no novo vencimento
@@ -4717,8 +4721,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
      
       END IF;                             
 
-      vr_nrdolote := 4000 + rw_crapass.cdagenci;
-
+      vr_nrdolote := 4000 + rw_crapass.cdagenci;                         
+      
       --Buscar o lote
       OPEN cr_craplot(pr_cdcooper         
                      ,pr_dtmvtolt
@@ -17473,7 +17477,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
      Sistema : Novos Produtos de Captação
      Sigla   : APLI
      Autor   : Tiago
-     Data    : agosto/14.                    Ultima atualizacao: 17/11/2014
+     Data    : agosto/14.                    Ultima atualizacao: 16/05/2017
 
      Dados referentes ao programa:
 
@@ -17494,6 +17498,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                               devera jogar a data do primeiro agendamento para
                               o proximo mês
                               (Adriano).
+                 16/05/2017 - Validacao na data de vencimento de agendamentos de 
+                              aplicacoes calculando a mesma caso necessario.
+                              SD 670255. (Carlos Rafael Tanholi)             
     ..............................................................................*/
     DECLARE
 
@@ -17695,7 +17702,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
            
            /*Soma qtda de dias padrao para obter dara de vencimento
            vr_dtvencto := pr_dtiniaar + 1440; */        
-           
+
+           -- Valida a data de vencimento nula executando um recalculo da data caso seja
+           -- Executando assim o mesmo procedimento que a tela faz no momento do cadastro de um agendamento
+           IF pr_dtvencto IS NULL THEN
+             -- retorna o campo vr_dtvencto com a data correta
+             pc_soma_data_vencto(pr_cdcooper => pr_cdcooper, pr_qtdiacar => pr_qtdiacar, pr_dtiniaar => pr_dtiniaar, 
+                                 pr_dtvencto => vr_dtvencto, pr_cdcritic => vr_cdcritic, pr_dscritic => vr_dscritic);
+                                                
+             IF NOT vr_dscritic IS NULL THEN
+               -- Gera exceção
+               RAISE vr_exc_saida;                                   
+             END IF;
+               
+           END IF; 
+
         ELSE /*tratamentos referentes a agendamentos de resgate*/
            
            vr_nrdolote := 32002;  /*lote agendamento resgate*/ 
@@ -20556,10 +20577,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       CURSOR cr_crapope(pr_cdcooper IN crapope.cdcooper%TYPE
                        ,pr_cdoperad IN crapope.cdoperad%TYPE) IS
         SELECT crapope.cdagenci
-              ,crapope.dsdepart
-        FROM crapope crapope
-        WHERE crapope.cdcooper = pr_cdcooper
-        AND   UPPER(crapope.cdoperad) = UPPER(pr_cdoperad);
+             , crapdpo.dsdepart
+          FROM crapdpo
+             , crapope
+         WHERE crapdpo.cddepart(+) = crapope.cddepart
+           AND crapdpo.cdcooper(+) = crapope.cdcooper
+           AND crapope.cdcooper    = pr_cdcooper
+           AND UPPER(crapope.cdoperad) = UPPER(pr_cdoperad);
       rw_crapope cr_crapope%ROWTYPE; 
       -- Busca do tipo de captacao
       CURSOR cr_crapdtc(pr_cdcooper IN crapdtc.cdcooper%TYPE

@@ -223,7 +223,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
   --  Sistema  : Rotinas auxiliares para busca de informacões do negocio
   --  Sigla    : GENE
   --  Autor    : Marcos Ernani Martini - Supero
-  --  Data     : Maio/2013.                   Ultima atualizacao: 16/12/2016
+  --  Data     : Maio/2013.                   Ultima atualizacao: 15/05/2017
   --
   -- Dados referentes ao programa:
   --
@@ -241,12 +241,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
   --                          crapass em campos de indice que possuem UPPER
   --                          (Adriano - SD 463762).
   --
-  --			 16/12/2016 - Alterações Referentes ao projeto 300. (Reinert)
+  --			       16/12/2016 - Alterações Referentes ao projeto 300. (Reinert)
   --
   --             20/03/2017 - Ajuste para disponibilizar as rotinas de validação de cpf e cnpj como públicas
   --                          (Adriano - SD 620221).
   --
   --             23/03/2017 - Criado procedure para verificar departamento do operador. (Reinert)
+  --
+  --             15/05/2017 - Correcao na fn_valida_dia_util para abortar execucao quando for passada uma data nula.
+  --                          SD 670255.(Carlos Rafael Tanholi)
   ---------------------------------------------------------------------------------------------------------------
 
    -- Variaveis utilizadas na PC_CONSULTA_ITG_DIGITO_X
@@ -1383,12 +1386,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
     --                            - Alterado para tratar o ultimo dia util do ano ao invez do ultimo dia do ano
     --                              devido a compe financeira utlizar o ultimo dia util do ano para o fechamento anual
     --                              SD 240181 (Odirlei-AMcom)
+    --
+    --                 15/05/2017 - Correcao para abortar execucao quando for passada uma data nula, evitando
+    --                              que a rotina caia no loop infinito gerando atraso no processo. SD 670255.
+    --                              (Carlos Rafael Tanholi)    
     -- .............................................................................
     DECLARE
       -- Data auxiliar
       vr_dtmvtolt  crapdat.dtmvtolt%TYPE;
       vr_excultdia INTEGER;
       vr_dtultano  crapdat.dtmvtolt%TYPE;
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;      
       
       -- Buscar informacoes dos feriados
       CURSOR cr_crapfer (pr_excultdia IN INTEGER) IS
@@ -1398,6 +1407,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
       -- Indica pra tabela de feriados
       vr_index BINARY_INTEGER;
     BEGIN
+      -- valida data nula  
+      IF pr_dtmvtolt IS NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+    
       -- Iniciar com a data passada removendo as horas
       vr_dtmvtolt := TRUNC(pr_dtmvtolt);
       
@@ -1458,13 +1472,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
       -- Retornar a data calculada
       RETURN vr_dtmvtolt;
     EXCEPTION
+			WHEN vr_exc_saida THEN
+        BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                  ,pr_ind_tipo_log => 1 -- Processo normal
+                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' --> Coop. --> '||pr_cdcooper||' --> Data inválida (NULL)');
+        RETURN NULL;
       WHEN OTHERS THEN
         -- Iniciar LOG de execucão
         BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                   ,pr_ind_tipo_log => 1 -- Processo normal
                                   ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' --> Coop. --> '||pr_cdcooper||' --> Não foi possivel verificar data util para o dia --> '||vr_dtmvtolt);
         RETURN null;
-    END;
+      END;
   END fn_valida_dia_util;
   
   /* Procedimento para validar se o dia e util e, se não for, retornar o proximo ou o anterior 
