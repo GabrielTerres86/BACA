@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Tiago     
-   Data    : Fevereiro/2014.                    Ultima atualizacao: 13/01/2017
+   Data    : Fevereiro/2014.                    Ultima atualizacao: 09/03/2017
 
    Dados referentes ao programa:
 
@@ -73,8 +73,11 @@
                              DEBSIC, DEBCNS, DEBNET - Melhoria349 (Tiago/Elton).
                              
                 03/01/2017 - Ajuste incorporacao no envio de arquivos (Diego).
-
+                
 				13/01/2017 - Transposul - Incluido envio DEVDOC (Diego). 
+                
+                09/03/2017 - Ajuste envio de arquivos devolucao da cobranca
+                             sua remessa 085 Cecred - 2*.DVS (Rafael).
                 
 .............................................................................*/
 
@@ -2893,7 +2896,7 @@ PROCEDURE carrega_tabela_envio.
                        
                     RUN verifica_arquivos.
 					
-					/*** Procura arquivos DEVOLU ***/
+                    /*** Procura arquivos DEVOLU ***/
                     ASSIGN aux_nmarquiv = "/micros/"   + crabcop.dsdircop + 
                                           "/abbc/1" + STRING(b-crapcop.cdagectl,"9999") +
                                           "*.DV*"
@@ -3002,6 +3005,17 @@ PROCEDURE carrega_tabela_envio.
            par_cdcooper = 0.
            
     RUN verifica_arquivos. 
+
+    /*** ARQUIVOS DEVOLUCAO - SUA REMESSA 085 ***/
+    ASSIGN par_cdcooper = 3.
+
+    FIND crabcop WHERE crabcop.cdcooper = INT(par_cdcooper) NO-LOCK NO-ERROR.
+
+    ASSIGN aux_nmarquiv = "/micros/cecred/abbc/2*.DVS"
+           aux_tparquiv = "DEVSR085" /* devolucao boletos sua remessa 085 */
+           par_cdcooper = 0.
+           
+    RUN verifica_arquivos.     
         
     ASSIGN aux_tparquiv = "".
 
@@ -3050,6 +3064,10 @@ PROCEDURE carrega_tabela_envio.
                  IF   crawarq.tparquiv = "ICFJUD-606" THEN
                       ASSIGN aux_tparquiv = crawarq.tparquiv
                              aux_dsarquiv = "ICFJUD - RESPOSTA INFORMACOES".
+                 ELSE
+                 IF   crawarq.tparquiv = "DEVSR085" THEN
+                      ASSIGN aux_tparquiv = crawarq.tparquiv
+                             aux_dsarquiv = "DEV COBRANCA - SUA REMESSA 085".                 
                  
                  CREATE w-arquivos.
                  ASSIGN w-arquivos.tparquiv = aux_tparquiv
