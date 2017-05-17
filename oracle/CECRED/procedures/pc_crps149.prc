@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Coop conectada
+CREATE OR REPLACE PROCEDURE pc_crps149(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Coop conectada
                                       ,pr_flgresta IN PLS_INTEGER            --> Indicador para utilização de restart
                                       ,pr_stprogra OUT PLS_INTEGER           --> Saída de termino da execução
                                       ,pr_infimsol OUT PLS_INTEGER           --> Saída de termino da solicitação
@@ -226,7 +226,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
                29/03/2017 - Estava sendo utilizado variavel rw_craplot.dtmvtolt indevidamente
                             na abertura do cursor cr_craplot.(AJFink-SD#641111)
 
-               01/04/2017 - Ajuste no calculo do IOF. (James)             
+               01/04/2017 - Ajuste no calculo do IOF. (James)   
+               
+               07/04/2017 - Ajuste no calculo do IOF para empréstimos do tipo TR ( Renato Darosci )
+               
   ............................................................................. */
   
   ------------------------------- CURSORES ---------------------------------
@@ -261,6 +264,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
     SELECT epr.cdcooper
           ,epr.cdlcremp  
           ,epr.nrdconta
+          ,epr.tpemprst
           ,epr.vlemprst
           ,epr.vlpreemp
           ,epr.nrctremp
@@ -533,6 +537,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
   vr_totliqui NUMBER := 0;
   vr_vlrsaldo NUMBER := 0;
   vr_vlmultip NUMBER := 0;
+  vr_vlemprst NUMBER := 0;
   vr_dtultdia DATE;
   vr_dtliblan DATE;
   
@@ -2722,6 +2727,16 @@ BEGIN
     /*  Cobranca do IOF de emprestimo  */
     IF vr_flgtaiof = 1 THEN -- TRUE
       
+      -- Valor do empréstimo
+      vr_vlemprst := rw_crabepr.vlemprst;
+    
+      -- Se o tipo do empréstimo for TR e for empréstimo de refinanciamento, deve
+      -- passar como valor para a rotina de IOF, o valor do emprestimo decrementando 
+      -- o valor de refinanciado
+      IF NVL(vr_totliqui,0) > 0 AND rw_crabepr.tpemprst = 0 THEN
+        vr_vlemprst := GREATEST(rw_crabepr.vlemprst - vr_totliqui, 0);
+      END IF;
+    
       EMPR0001.pc_calcula_iof_epr(pr_cdcooper => pr_cdcooper
                                  ,pr_nrdconta => rw_crabepr.nrdconta
                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
@@ -2729,9 +2744,10 @@ BEGIN
                                  ,pr_cdlcremp => rw_crabepr.cdlcremp
                                  ,pr_qtpreemp => rw_crabepr.qtpreemp
                                  ,pr_vlpreemp => rw_crabepr.vlpreemp
-                                 ,pr_vlemprst => rw_crabepr.vlemprst
+                                 ,pr_vlemprst => vr_vlemprst
                                  ,pr_dtdpagto => rw_crabepr.dtdpagto
                                  ,pr_dtlibera => rw_crapdat.dtmvtolt
+                                 ,pr_tpemprst => rw_crabepr.tpemprst
                                  ,pr_valoriof => vr_vliofaux
                                  ,pr_dscritic => vr_dscritic);
                                 
@@ -2739,20 +2755,9 @@ BEGIN
         RAISE vr_exc_saida;
       END IF;
       
-      -- Verificar a imunidade tributária
-      IMUT0001.pc_verifica_imunidade_trib(pr_cdcooper => pr_cdcooper
-                                         ,pr_nrdconta => rw_crabepr.nrdconta
-                                         ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                         ,pr_flgrvvlr => TRUE
-                                         ,pr_cdinsenc => 1
-                                         ,pr_vlinsenc => vr_vliofaux
-                                         ,pr_flgimune => vr_flgimune
-                                         ,pr_dsreturn => vr_dsreturn
-                                         ,pr_tab_erro => vr_tab_erro);
-      
       -- 05/04/2017 - Renato Darosci - Quando for refinanciamento devera ajustar os valores de IOF
-      -- Se há valor de liquidação de contratos
-      IF NVL(vr_totliqui,0) > 0 THEN
+      -- Se há valor de liquidação de contratos e o empréstimo for PP ( TR é calculado antes )
+      IF NVL(vr_totliqui,0) > 0 AND rw_crabepr.tpemprst = 1 THEN
         -- Calcular o multiplo de ajuste para o IOF
         vr_vlmultip := (1 - (vr_totliqui / rw_crabepr.vlemprst));
         
@@ -2765,6 +2770,17 @@ BEGIN
           vr_vliofaux := ROUND((vr_vliofaux * vr_vlmultip),2);
         END IF;
       END IF;
+      
+      -- Verificar a imunidade tributária
+      IMUT0001.pc_verifica_imunidade_trib(pr_cdcooper => pr_cdcooper
+                                         ,pr_nrdconta => rw_crabepr.nrdconta
+                                         ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                         ,pr_flgrvvlr => TRUE
+                                         ,pr_cdinsenc => 1
+                                         ,pr_vlinsenc => vr_vliofaux
+                                         ,pr_flgimune => vr_flgimune
+                                         ,pr_dsreturn => vr_dsreturn
+                                         ,pr_tab_erro => vr_tab_erro);
       
       --  Cobranca do IOF de emprestimo
       IF NOT vr_flgimune AND vr_flgtaiof = 1 AND vr_vliofaux > 0 THEN
