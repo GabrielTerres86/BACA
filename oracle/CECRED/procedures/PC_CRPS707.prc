@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro Guaranha - RKAM
-   Data    : Setembro/2016                        Ultima atualizacao: 24/11/2016
+   Data    : Setembro/2016                        Ultima atualizacao: 12/01/2017
 
    Dados referentes ao programa:
 
@@ -26,6 +26,11 @@ BEGIN
 							              lançamento de créditos na conta do cooperado
 							              (Adriano - SD 563707).
 
+               01/12/2016 - Ajuste para incluir mais informações no e-mail de rejeições
+                            (Adriano - SD 568539).             
+
+               12/01/2017 - Ajuste para verificar se cooperado é migrado 
+                            (Adriano - SD 592406).
    ............................................................................. */
 
    DECLARE
@@ -132,6 +137,15 @@ BEGIN
           AND craplot.nrdolote = pr_nrdolote;
     rw_craplot cr_craplot%ROWTYPE;
 
+     CURSOR cr_craptco(pr_cdcopant IN craptco.cdcopant%TYPE
+                      ,pr_nrctaant IN craptco.nrctaant%TYPE)IS
+     SELECT craptco.cdcooper
+           ,craptco.nrdconta
+       FROM craptco
+      WHERE craptco.cdcopant = pr_cdcopant
+        AND craptco.nrctaant = pr_nrctaant;
+     rw_craptco cr_craptco%ROWTYPE;                     
+
      --Variaveis Locais
     vr_cdcritic INTEGER;
     vr_cdprogra VARCHAR2(10);
@@ -180,6 +194,7 @@ BEGIN
      -- Linha a LInha
      vr_nrcpfcgc    NUMBER;
      vr_nrdconta    NUMBER;
+     vr_nrdconta_new NUMBER;
      vr_nmprimtl    VARCHAR2(60);
      vr_flgexis_cpf BOOLEAN;
      vr_flgexis_cta BOOLEAN;
@@ -789,6 +804,25 @@ BEGIN
                  RAISE vr_exc_saida;
                END IF;
 
+               --Verificar se é um cooperado migrado
+               OPEN cr_craptco(pr_cdcopant => vr_cdcooper 
+                              ,pr_nrctaant => vr_nrdconta);
+                              
+               FETCH cr_craptco INTO rw_craptco;
+               
+               IF cr_craptco%FOUND THEN
+                 
+                 vr_cdcooper     := rw_craptco.cdcooper;
+                 vr_nrdconta_new := rw_craptco.nrdconta;
+                 
+               ELSE
+                 
+                 vr_nrdconta_new := vr_nrdconta;
+                 
+               END IF;
+               
+               CLOSE cr_craptco;
+
                -- Busca dados da origem da TED
                BEGIN
                  -- Separar conforme tipo da mensagem
@@ -913,9 +947,9 @@ BEGIN
                                     ,1
                                     ,100
                                     ,8482
-                                    ,vr_nrdconta
-                                    ,vr_nrdconta
-                                    ,gene0002.fn_mask(vr_nrdconta,'99999999') -- nrdctitg
+                                    ,vr_nrdconta_new
+                                    ,vr_nrdconta_new
+                                    ,gene0002.fn_mask(vr_nrdconta_new,'99999999') -- nrdctitg
                                     ,rw_craplot.nrseqdig -- atualizado da LOTE acima
                                     ,1787
                                     ,vr_vloperac
@@ -941,7 +975,7 @@ BEGIN
                                         ,pr_vldocmto => vr_vloperac
                                         ,pr_cdbanctl => rw_crapcop.cdbcoctl
                                         ,pr_cdagectl => rw_crapcop.cdagectl
-                                        ,pr_nrdconta => vr_nrdconta
+                                        ,pr_nrdconta => vr_nrdconta_new
                                         ,pr_nmcopcta => vr_nmprimtl
                                         ,pr_nrcpfcop => vr_nrcpfcgc
                                         ,pr_cdbandif => vr_cdbandif
@@ -977,7 +1011,7 @@ BEGIN
                                         ,pr_vldocmto => vr_vloperac
                                         ,pr_cdbanctl => rw_crapcop.cdbcoctl
                                         ,pr_cdagectl => rw_crapcop.cdagectl
-                                        ,pr_nrdconta => vr_nrdconta
+                                        ,pr_nrdconta => vr_nrdconta_new
                                         ,pr_nmcopcta => vr_nmprimtl
                                         ,pr_nrcpfcop => vr_nrcpfcgc
                                         ,pr_cdbandif => vr_cdbandif
@@ -1004,7 +1038,7 @@ BEGIN
                btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                           pr_ind_tipo_log => 2, --> erro tratado
                                           pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                             ' - '|| vr_cdprogra ||' --> TED para Conta '||vr_nrdconta||' no valor de '
+                                                             ' - '|| vr_cdprogra ||' --> TED para Conta '||vr_nrdconta_new||' no valor de '
                                                              || to_char(vr_vloperac,'fm999g999g990d00') || ' efetuada com sucesso.',
                                           pr_nmarqlog     => vr_nmarqlog);                
 
@@ -1031,6 +1065,12 @@ BEGIN
                                                             '<thead align="center" style="background-color: #DCDCDC;">' ||
                                                               '<td width="100px">' ||
                                                                 '<b>Tipo Trans.</b>' ||
+                                                              '</td>' ||
+                                                              '<td width="100px">' ||
+                                                                '<b>Nr. Operação</b>' ||
+                                                              '</td>' ||
+                                                              '<td width="100px">' ||
+                                                                '<b>Valor</b>' ||
                                                               '</td>' ||
                                                               '<td width="100px">' ||
                                                                 '<b>Dt.Arquivo</b>' ||
@@ -1064,6 +1104,12 @@ BEGIN
                                         ,pr_texto_novo => '<tr>' ||
                                                             '<td>' ||
                                                               vr_nmevehead ||
+                                                            '</td>' ||
+                                                            '<td>' ||
+                                                              vr_nrctrlif ||
+                                                            '</td>' ||
+                                                            '<td>' ||
+                                                              to_char(vr_vloperac,'fm999g999g999g990d00','NLS_NUMERIC_CHARACTERS='',.''') || 
                                                             '</td>' ||
                                                             '<td>' ||
                                                               to_char(vr_dtarquiv,'DD/MM/RRRR') ||
