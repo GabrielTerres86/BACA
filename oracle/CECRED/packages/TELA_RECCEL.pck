@@ -466,7 +466,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_RECCEL AS
              to_char(tope.nrcelular,'fm00000g0000','nls_numeric_characters=.-')) nrtelefo
 						,toper.nmoperadora
 						,tope.dsnsu_operadora
-						,tope.dtdebito
+						,to_char(tope.dtdebito, 'DD/MM/RRRR') dtdebito
 			  FROM tbrecarga_operacao tope
 				    ,tbrecarga_operadora toper
 			 WHERE tope.idoperacao = pr_idoperacao
