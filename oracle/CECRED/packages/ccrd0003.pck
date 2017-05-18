@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --  Sistema  : Rotinas genericas referente a tela de Cartões
   --  Sigla    : CCRD
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Abril - 2014.                   Ultima atualizacao: 15/05/2017
+  --  Data     : Abril - 2014.                   Ultima atualizacao: 18/05/2017
   --
   -- Dados referentes ao programa:
   --
@@ -56,6 +56,10 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --                          das críticas na tabela crapcri (Carlos)
   --
   --             08/05/2017 - Incluido parenteses no IF que valida se deve terminar o repique (Tiago/Fabricio)
+  --
+  --             18/05/2017 - Ajuste na busca do sequencial do arquivo CEXT em virtude da
+  --                          informacao de data acrescentada ao nome do arquivo pelo Bancoob.
+  --                          (Fabricio)
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -1906,7 +1910,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
     Sistema : Cartoes de Credito - Cooperativa de Credito
     Sigla   : CRRD
     Autor   : Lucas Lunelli
-    Data    : Maio/14.                    Ultima atualizacao: 09/03/2017
+    Data    : Maio/14.                    Ultima atualizacao: 18/05/2017
 
     Dados referentes ao programa:
 
@@ -2004,6 +2008,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 09/03/2017 - Ao verificar se ja existe a 0200 na dcb, olhar tambem com o historico
                              offline da transacao, caso nao encontre com o historico online.
                              (problemas com chave duplicada no indice #1). (Fabricio)
+                             
+                18/05/2017 - Ajuste na busca do sequencial do arquivo CEXT em virtude da
+                             informacao de data acrescentada ao nome do arquivo pelo Bancoob.
+                             (Fabricio)
+                             
     ....................................................................................................*/
     DECLARE
       ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
@@ -3003,7 +3012,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
           --vr_tab_relat_critic.DELETE;
 
           -- adquire sequencial do arquivo
-          vr_nrseqarq  := to_number(substr(vr_vet_nmarquiv(i),14,7));
+          vr_nrseqarq  := to_number(substr(vr_vet_nmarquiv(i),23,7));
 
           -- Verificar se sequencial já foi importado
           IF nvl(rw_crapscb.nrseqarq,0) >= nvl(vr_nrseqarq,0) THEN
@@ -7467,13 +7476,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         ELSE
           vr_dstpdreg:= 'Nao definido';
         END IF;
-      
+
         -- Texto para utilizar na abertura do chamado e no email enviado
         vr_dstexto:= to_char(sysdate,'hh24:mi:ss') || ' - ' || vr_cdprogra || ' --> ' ||
                      'Erro no tipo de registro ' || nvl(vr_dstpdreg,' ') || '. ' || 
                      gene0001.fn_busca_critica(pr_cdcritic => pr_cdmensagem) || ' Linha '  ||
                      nvl(pr_nrdlinha,0) ||', arquivo: ' || pr_nmdarqui || ', Critica: ' || nvl(pr_dscritic,' ');
-         
+
         -- Parte inicial do texto do chamado e do email        
         vr_titulo:= '<b>Abaixo os erros encontrados no processo de importacao do arquivo de retorno'||
                     ' da Solicitacao de Cartao Bancoob CABAL</b><br><br>';
@@ -7481,26 +7490,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         -- Buscar e-mails dos destinatarios do produto cartoes
         vr_destinatario_email:= gene0001.fn_param_sistema('CRED',vr_cdcooper_ori,'CRD_RESPONSAVEL');
                  
-       cecred.pc_log_programa(PR_DSTIPLOG      => 'E'           --> Tipo do log: I - início; F - fim; O - ocorrência
-                             ,PR_CDPROGRAMA    => vr_cdprogra   --> Codigo do programa ou do job
-                             ,pr_tpexecucao    => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                              -- Parametros para Ocorrencia
-                             ,pr_tpocorrencia  => 2             --> tp ocorrencia (1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem)
-                             ,pr_cdcriticidade => 2             --> Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+        cecred.pc_log_programa(PR_DSTIPLOG      => 'E'           --> Tipo do log: I - início; F - fim; O - ocorrência
+                              ,PR_CDPROGRAMA    => vr_cdprogra   --> Codigo do programa ou do job
+                              ,pr_tpexecucao    => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                               -- Parametros para Ocorrencia
+                              ,pr_tpocorrencia  => 2             --> tp ocorrencia (1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem)
+                              ,pr_cdcriticidade => 2             --> Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
                               ,pr_cdmensagem    => pr_cdmensagem
-                             ,pr_dsmensagem    => vr_dstexto    --> dscritic       
-                             ,pr_flgsucesso    => 0             --> Indicador de sucesso da execução
-                             ,pr_flabrechamado => 1             --> Abrir chamado (Sim=1/Nao=0)
-                             ,pr_texto_chamado => vr_titulo
-                             ,pr_destinatario_email => vr_destinatario_email
+                              ,pr_dsmensagem    => vr_dstexto    --> dscritic       
+                              ,pr_flgsucesso    => 0             --> Indicador de sucesso da execução
+                              ,pr_flabrechamado => 1             --> Abrir chamado (Sim=1/Nao=0)
+                              ,pr_texto_chamado => vr_titulo
+                              ,pr_destinatario_email => vr_destinatario_email
                               ,pr_flreincidente => 1             --> Erro pode ocorrer em dias diferentes, devendo abrir chamado
-                             ,PR_IDPRGLOG      => vr_idprglog); --> Identificador unico da tabela (sequence)
+                              ,PR_IDPRGLOG      => vr_idprglog); --> Identificador unico da tabela (sequence)
 
-       cecred.pc_log_programa(PR_DSTIPLOG   => 'F'           --> Tipo do log: I - início; F - fim; O - ocorrência
-                             ,PR_CDPROGRAMA => vr_cdprogra   --> Codigo do programa ou do job
-                             ,pr_tpexecucao => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                              -- Parametros para Ocorrencia
-                             ,PR_IDPRGLOG   => vr_idprglog); --> Identificador unico da tabela (sequence)  
+        cecred.pc_log_programa(PR_DSTIPLOG   => 'F'           --> Tipo do log: I - início; F - fim; O - ocorrência
+                              ,PR_CDPROGRAMA => vr_cdprogra   --> Codigo do programa ou do job
+                              ,pr_tpexecucao => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                               -- Parametros para Ocorrencia
+                              ,PR_IDPRGLOG   => vr_idprglog); --> Identificador unico da tabela (sequence)  
         
         vr_dscritic := vr_dstexto;
         
