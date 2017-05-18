@@ -31,6 +31,10 @@ BEGIN
 
                12/01/2017 - Ajuste para verificar se cooperado é migrado 
                             (Adriano - SD 592406).
+
+               17/05/2017 - Ajuste para não incluir a validação "3 - Ausencia ou Divergencia na Indicacao do CPF/CNPJ"
+                            no proc_message
+                            (Ana - SD 660364).
    ............................................................................. */
 
    DECLARE
@@ -151,6 +155,8 @@ BEGIN
     vr_cdprogra VARCHAR2(10);
     vr_dscritic VARCHAR2(4000);
     vr_nmarqlog VARCHAR2(400) := 'prcctl_' || to_char(SYSDATE, 'RRRR') || to_char(SYSDATE,'MM') || to_char(SYSDATE,'DD') || '.log';
+    --17/05/2017 - Ana - não incluir mensagem no log - chamado 660364
+    vr_insere_log VARCHAR2(1); 
       
      --Variaveis de Excecao
     vr_exc_saida  EXCEPTION;
@@ -198,7 +204,7 @@ BEGIN
      vr_nmprimtl    VARCHAR2(60);
      vr_flgexis_cpf BOOLEAN;
      vr_flgexis_cta BOOLEAN;
-    vr_segundo_ttl BOOLEAN;
+     vr_segundo_ttl BOOLEAN;
      vr_cdcooper    NUMBER;
      vr_cdmotivo    varchar2(100);
      vr_nrispbif    NUMBER;
@@ -215,7 +221,7 @@ BEGIN
      vr_fltxterr BOOLEAN;
      vr_dstxterr VARCHAR2(32767);
      vr_cltxterr CLOB;
-    vr_hasfound BOOLEAN;
+     vr_hasfound BOOLEAN;
    
    FUNCTION fn_mes(pr_data IN DATE) RETURN VARCHAR2 IS
    BEGIN
@@ -314,6 +320,11 @@ BEGIN
    -- Inicio Bloco Principal pc_crps707
    ---------------------------------------
    BEGIN
+dbms_output.put_line('begin');
+
+     --17/05/2017 - Ana - não incluir mensagem no log - chamado 660364
+     --Por default insere --> vr_insere_log = 'S'
+     vr_insere_log := 'S';
 
      --Atribuir o nome do programa que está executando
      vr_cdprogra:= 'CRPS707';
@@ -341,12 +352,12 @@ BEGIN
                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                      || vr_cdprogra || ' --> '
                                                      || vr_dscritic );
-                                                     
+
        --Sair do programa
        RAISE vr_exc_saida;
        
      END IF;
-     
+
      --> Gerar log
      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                 pr_ind_tipo_log => 2, --> erro tratado
@@ -358,19 +369,30 @@ BEGIN
      vr_dir_sicredi_teds := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DIR_SICREDI_TEDS');
      
      -- Busca remetente de email
-     vr_dsremete := gene0001.fn_param_sistema('CRED',pr_cdcooper,'EMAIL_SICREDI_TEDS');
+--     vr_dsremete := gene0001.fn_param_sistema('CRED',pr_cdcooper,'EMAIL_SICREDI_TEDS');
+     vr_dsremete := 'ana@envolti.coop.br';
+     --teste ana - descomentar
      
      -- Data para processamento
      vr_datatual := trunc(SYSDATE);
 
+--teste Ana de
      -- Efetuar leitura dos arquivos do diretorio
-     gene0001.pc_lista_arquivos(pr_path     => vr_dir_sicredi_teds
+     gene0001.pc_lista_arquivos(pr_path     => '/usr/coop/cecred/arq/'
+                               ,pr_pesq     => 'ERRO_re171401.274'
+                               ,pr_listarq  => vr_listaarq
+                               ,pr_des_erro => vr_dscritic);
+
+--teste Ana ate
+/*
+     gene0001.pc_lista_arquivos(pr_path     => vr_dir_sicredi_teds  
                                ,pr_pesq     => 're1714%.'||to_char(vr_datatual,'dd')||fn_mes(vr_datatual)
                                ,pr_listarq  => vr_listaarq
                                ,pr_des_erro => vr_dscritic);
+*/
+
      -- Se houver erro
      IF vr_dscritic IS NOT NULL THEN
-       
        -- Envio centralizado de log de erro
        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                  ,pr_ind_tipo_log => 2 -- Erro tratato
@@ -379,9 +401,8 @@ BEGIN
                                                      || vr_dscritic );
                                                      
        RAISE vr_exc_saida;
-       
      END IF;
-
+       
      -- Se possuir arquivos para serem processados
      IF vr_listaarq IS NOT NULL THEN
        
@@ -421,6 +442,9 @@ BEGIN
            FETCH cr_nmarquiv INTO vr_flgexis;
            
            CLOSE cr_nmarquiv;
+
+--teste ana - retirar
+vr_flgexis := 0;
            
            -- Se o arquivo já foi processado
            IF vr_flgexis = 1 THEN
@@ -443,12 +467,25 @@ BEGIN
            vr_dstxterr := null;
            vr_cltxterr := ' ';
 
+--teste Ana
+dbms_output.put_line('teste 1');
+           -- Efetuar leitura do conteudo do arquivo --
+           gene0001.pc_abre_arquivo(pr_nmdireto => '/usr/coop/cecred/arq/'
+                                   ,pr_nmarquiv => 'ERRO_re171401.274'
+                                   ,pr_tipabert => 'R'
+                                   ,pr_utlfileh => vr_arqhandle
+                                   ,pr_des_erro => vr_dscritic);
+
+dbms_output.put_line('teste 2');
+
+/*
            -- Efetuar leitura do conteudo do arquivo --
            gene0001.pc_abre_arquivo(pr_nmdireto => vr_dir_sicredi_teds
                                    ,pr_nmarquiv => vr_idxtexto
                                    ,pr_tipabert => 'R'
                                    ,pr_utlfileh => vr_arqhandle
                                    ,pr_des_erro => vr_dscritic);
+*/
 
            -- Leitura do header
            gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_arqhandle
@@ -493,6 +530,8 @@ BEGIN
                RAISE vr_exc_email;
                
            END;
+--teste ana-retirar
+vr_dtarquiv := trunc(sysdate);
 
            -- Verificar se a data presente no header corresponde a data informada no nome do arquivo
            IF vr_datatual <> vr_dtarquiv THEN           
@@ -520,8 +559,10 @@ BEGIN
                
            END;
 
+dbms_output.put_line('substr(vr_idxtexto,7,2):'||substr(vr_idxtexto,7,2)||' - vr_nrseqhead:'||vr_nrseqhead);
            --Verifica se o sequencial no header corresponde ao informado no nome do arquivo
-           IF substr(vr_idxtexto,7,2) <> vr_nrseqhead THEN
+--teste ana - descoomentar
+/*           IF substr(vr_idxtexto,7,2) <> vr_nrseqhead THEN
              
              vr_dsassunt := 'TEDs SICREDI - ARQUIVO COM SEQUENCIA INVALIDA';
              vr_dscorpoe := 'Arquivo '||vr_idxtexto||' com problema Header - Sequencia --> '||substr(vr_dslinharq,12,2);
@@ -530,7 +571,7 @@ BEGIN
              RAISE vr_exc_email; 
                          
            END IF;
-
+*/
            -- Somente validar se o arquivo atual não é o primeiro
            IF vr_nrseqhead <> 1 THEN           
              -- Sequencia do arquivo deve ser imediamente posterior a ultima processada para a data
@@ -546,6 +587,7 @@ BEGIN
                
                vr_dsassunt := 'TEDs SICREDI - ARQUIVO COM SEQUENCIA INVALIDA';
                vr_dscorpoe := 'Arquivo '||vr_idxtexto||' com problema Header - Sequencia recebida --> '||vr_nrseqhead||', Sequencia esperada --> '||(vr_nrseqhead-1);
+dbms_output.put_line('teste 3');
                
                -- Gerar email ao Financeiro
                gene0003.pc_solicita_email(pr_cdcooper       => pr_cdcooper
@@ -560,6 +602,7 @@ BEGIN
                                         ,pr_des_erro        => vr_dscritic);
              END IF;
            END IF;  
+dbms_output.put_line('teste 4');
 
            -- Processamento para cada registro
            LOOP
@@ -741,10 +784,13 @@ BEGIN
                  END IF;
                  
                END LOOP;
-
+dbms_output.put_line('testa cpf');
                -- Se chegou neste ponto e não encontrou pelo CPF
                IF not vr_flgexis_cpf THEN
                  -- Gerar critica
+                 --17/05/2017 - Ana - não incluir mensagem abaixo no log - chamado 660364  -- início
+                 vr_insere_log := 'N';
+                 --17/05/2017 - Ana - não incluir mensagem abaixo no log - chamado 660364 -- fim
                  vr_cdmotivo := '3 - Ausencia ou Divergencia na Indicacao do CPF/CNPJ.';
                  RAISE vr_exc_saida;
                END IF;
@@ -1165,12 +1211,19 @@ BEGIN
                                           ,pr_cdcritic => vr_cdcritic
                                           ,pr_dscritic => vr_dscritic);
                                           
-                 --> Gerar log
-                 btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                            pr_ind_tipo_log => 2, --> erro tratado
-                                            pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                               ' - '|| vr_cdprogra ||' --> TED para conta '||vr_nrdconta||' com erro --> '||vr_cdmotivo,
-                                            pr_nmarqlog     => vr_nmarqlog);                                
+                 --17/05/2017 - Ana - não incluir mensagem no log - chamado 660364  -- início
+                 IF NVL(vr_insere_log,'S') <> 'N' THEN
+dbms_output.put_line('gerar log');
+
+                   --> Gerar log
+                   btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
+                                              pr_ind_tipo_log => 2, --> erro tratado
+                                              pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                                 ' - '|| vr_cdprogra ||' --> TED para conta '||vr_nrdconta||' com erro --> '||vr_cdmotivo,
+                                              pr_nmarqlog     => vr_nmarqlog);                                
+
+                 END IF;
+                 --17/05/2017 - Ana - não incluir mensagem no log - chamado 660364 -- fim
                                           
                  IF NOT fn_move_arquivo(pr_nmarquiv => vr_idxtexto
                                        ,pr_dtarquiv => vr_dtarquiv
