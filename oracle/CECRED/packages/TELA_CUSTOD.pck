@@ -298,6 +298,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSTOD IS
 			
       -- Variaveis de controle de calendario
       rw_crapdat      BTCH0001.cr_crapdat%ROWTYPE;
+
+	  -- Busca cheques descontado		
+		  CURSOR cr_crapcdb(pr_cdcooper IN crapcop.cdcooper%TYPE
+			                 ,pr_dsdocmc7 IN VARCHAR2) IS
+			  SELECT cdb.nrborder
+				  FROM crapcdb cdb
+				 WHERE cdb.cdcooper = pr_cdcooper
+				   AND cdb.nrdconta = pr_nrdconta
+				   AND UPPER(cdb.dsdocmc7) = UPPER(pr_dsdocmc7)
+				   AND cdb.dtlibera IS NOT NULL
+				   AND cdb.dtdevolu IS NULL;
+			rw_crapcdb cr_crapcdb%ROWTYPE;
 			
 		  -- Busca cheques custodiados ainda não resgatados			
 		  CURSOR cr_crapcst(pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -480,6 +492,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSTOD IS
 				-- Fecha cursor
 				CLOSE cr_crapcst;
       END LOOP;
+
+	  -- Verifica se cheque foi custodiado e não foi resgatado			
+      OPEN cr_crapcdb(pr_cdcooper => vr_cdcooper
+                     ,pr_dsdocmc7 => vr_dsdocmc7_formatado);
+      FETCH cr_crapcdb INTO rw_crapcdb;
+				
+      -- Se não encontrou
+      IF cr_crapcdb%FOUND THEN
+        
+          -- Gera crítica	
+          vr_index_erro := vr_tab_resgate_erro.count + 1;  
+          vr_tab_resgate_erro(vr_index_erro).dsdocmc7 := vr_dsdocmc7;
+          vr_tab_resgate_erro(vr_index_erro).dscritic := 'Cheque em Desconto';	
+      END IF;    
+      
+      -- Fecha cursor
+	  CLOSE cr_crapcdb;
 
       -- Cria xml de retorno
       vr_clob := '<?xml version="1.0" encoding="ISO-8859-1" ?><Root>';

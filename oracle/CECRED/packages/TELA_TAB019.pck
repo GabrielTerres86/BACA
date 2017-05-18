@@ -29,62 +29,62 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_TAB019 IS
                            ,pr_des_erro OUT VARCHAR2);
 
   PROCEDURE pc_alterar_tab019(pr_inpessoa    IN NUMBER
-                             ,pr_vllimite    IN VARCHAR2
-                             ,pr_vllimite_c  IN VARCHAR2
-                             ,pr_qtdiavig    IN VARCHAR2
-                             ,pr_qtdiavig_c  IN VARCHAR2
-                             ,pr_qtprzmin    IN VARCHAR2
-                             ,pr_qtprzmin_c  IN VARCHAR2
-                             ,pr_qtprzmax    IN VARCHAR2
-                             ,pr_qtprzmax_c  IN VARCHAR2
-                             ,pr_txdmulta    IN VARCHAR2
-                             ,pr_txdmulta_c  IN VARCHAR2
-                             ,pr_vlconchq    IN VARCHAR2
-                             ,pr_vlconchq_c  IN VARCHAR2
-                             ,pr_vlmaxemi    IN VARCHAR2
-                             ,pr_vlmaxemi_c  IN VARCHAR2
-                             ,pr_pcchqloc    IN VARCHAR2
-                             ,pr_pcchqloc_c  IN VARCHAR2
-                             ,pr_pcchqemi    IN VARCHAR2
-                             ,pr_pcchqemi_c  IN VARCHAR2
-                             ,pr_qtdiasoc    IN VARCHAR2
-                             ,pr_qtdiasoc_c  IN VARCHAR2
-                             ,pr_qtdevchq    IN VARCHAR2
-                             ,pr_qtdevchq_c  IN VARCHAR2
-                             ,pr_pctollim    IN VARCHAR2
-                             ,pr_pctollim_c  IN VARCHAR2
-                             ,pr_qtdiasli    IN VARCHAR2
-                             ,pr_qtdiasli_c  IN VARCHAR2
-                             ,pr_horalimt    IN VARCHAR2
-                             ,pr_horalimt_c  IN VARCHAR2
-                             ,pr_minlimit    IN VARCHAR2
-                             ,pr_minlimit_c  IN VARCHAR2
-                             ,pr_Flemipar    IN VARCHAR2  -- Verificar se Emitente é Conjugue do Cooperado
-                             ,pr_Flemipar_c  IN VARCHAR2  -- Verificar se Emitente é Conjugue do Cooperado
-                             ,pr_Przmxcmp    IN VARCHAR2  -- Prazo Máximo de Compensação
-                             ,pr_Przmxcmp_c  IN VARCHAR2  -- Prazo Máximo de Compensação
-                             ,pr_Flpjzemi    IN VARCHAR2  -- Verificar Prejuízo do Emitente
-                             ,pr_Flpjzemi_c  IN VARCHAR2  -- Verificar Prejuízo do Emitente
-                             ,pr_Flemisol    IN VARCHAR2  -- Verificar Emitente x Conta Solicitante
-                             ,pr_Flemisol_c  IN VARCHAR2  -- Verificar Emitente x Conta Solicitante
-                             ,pr_Prcliqui    IN VARCHAR2  -- Percentual de Liquidez
-                             ,pr_Prcliqui_c  IN VARCHAR2  -- Percentual de Liquidez
-                             ,pr_Qtmesliq    IN VARCHAR2  -- Qtd. Meses Cálculo Percentual de Liquidez
-                             ,pr_Qtmesliq_c  IN VARCHAR2  -- Qtd. Meses Cálculo Percentual de Liquidez                  
-                             ,pr_Vlrenlim    IN VARCHAR2  -- Renda x Limite Desconto
-                             ,pr_Vlrenlim_c  IN VARCHAR2  -- Renda x Limite Desconto
-                             ,pr_Qtmxrede    IN VARCHAR2  -- Qtd. Máxima Redesconto
-                             ,pr_Qtmxrede_c  IN VARCHAR2  -- Qtd. Máxima Redesconto
-                             ,pr_Fldchqdv    IN VARCHAR2  -- Permitir Desconto Cheque Devolvido
-                             ,pr_Fldchqdv_c  IN VARCHAR2  -- Permitir Desconto Cheque Devolvido
-                             ,pr_Vlmxassi    IN VARCHAR2  -- Valor Máximo Dispensa Assinatura
-                             ,pr_Vlmxassi_c  IN VARCHAR2  -- Valor Máximo Dispensa Assinatura
+                             ,pr_vllimite    IN NUMBER
+                             ,pr_vllimite_c  IN NUMBER
+                             ,pr_qtdiavig    IN NUMBER
+                             ,pr_qtdiavig_c  IN NUMBER
+                             ,pr_qtprzmin    IN NUMBER
+                             ,pr_qtprzmin_c  IN NUMBER
+                             ,pr_qtprzmax    IN NUMBER
+                             ,pr_qtprzmax_c  IN NUMBER
+                             ,pr_txdmulta    IN NUMBER
+                             ,pr_txdmulta_c  IN NUMBER
+                             ,pr_vlconchq    IN NUMBER
+                             ,pr_vlconchq_c  IN NUMBER
+                             ,pr_vlmaxemi    IN NUMBER
+                             ,pr_vlmaxemi_c  IN NUMBER
+                             ,pr_pcchqloc    IN NUMBER
+                             ,pr_pcchqloc_c  IN NUMBER
+                             ,pr_pcchqemi    IN NUMBER
+                             ,pr_pcchqemi_c  IN NUMBER
+                             ,pr_qtdiasoc    IN NUMBER
+                             ,pr_qtdiasoc_c  IN NUMBER
+                             ,pr_qtdevchq    IN NUMBER
+                             ,pr_qtdevchq_c  IN NUMBER
+                             ,pr_pctollim    IN NUMBER
+                             ,pr_pctollim_c  IN NUMBER
+                             ,pr_qtdiasli    IN NUMBER
+                             ,pr_qtdiasli_c  IN NUMBER
+                             ,pr_horalimt    IN NUMBER
+                             ,pr_horalimt_c  IN NUMBER
+                             ,pr_minlimit    IN NUMBER
+                             ,pr_minlimit_c  IN NUMBER
+                             ,pr_Flemipar    IN NUMBER    -- Verificar se Emitente é Conjugue do Cooperado
+                             ,pr_Flemipar_c  IN NUMBER    -- Verificar se Emitente é Conjugue do Cooperado
+                             ,pr_Przmxcmp    IN NUMBER    -- Prazo Máximo de Compensação
+                             ,pr_Przmxcmp_c  IN NUMBER    -- Prazo Máximo de Compensação
+                             ,pr_Flpjzemi    IN NUMBER    -- Verificar Prejuízo do Emitente
+                             ,pr_Flpjzemi_c  IN NUMBER    -- Verificar Prejuízo do Emitente
+                             ,pr_Flemisol    IN NUMBER    -- Verificar Emitente x Conta Solicitante
+                             ,pr_Flemisol_c  IN NUMBER    -- Verificar Emitente x Conta Solicitante
+                             ,pr_Prcliqui    IN NUMBER    -- Percentual de Liquidez
+                             ,pr_Prcliqui_c  IN NUMBER    -- Percentual de Liquidez
+                             ,pr_Qtmesliq    IN NUMBER    -- Qtd. Meses Cálculo Percentual de Liquidez
+                             ,pr_Qtmesliq_c  IN NUMBER    -- Qtd. Meses Cálculo Percentual de Liquidez                   
+                             ,pr_Vlrenlim    IN NUMBER    -- Renda x Limite Desconto
+                             ,pr_Vlrenlim_c  IN NUMBER    -- Renda x Limite Desconto
+                             ,pr_Qtmxrede    IN NUMBER    -- Qtd. Máxima Redesconto
+                             ,pr_Qtmxrede_c  IN NUMBER    -- Qtd. Máxima Redesconto
+                             ,pr_Fldchqdv    IN NUMBER    -- Permitir Desconto Cheque Devolvido
+                             ,pr_Fldchqdv_c  IN NUMBER    -- Permitir Desconto Cheque Devolvido
+                             ,pr_Vlmxassi    IN NUMBER    -- Valor Máximo Dispensa Assinatura
+                             ,pr_Vlmxassi_c  IN NUMBER    -- Valor Máximo Dispensa Assinatura
                              ,pr_xmllog      IN VARCHAR2  --> XML com informações de LOG
                              ,pr_cdcritic   OUT PLS_INTEGER --> Código da crítica
                              ,pr_dscritic   OUT VARCHAR2 --> Descrição da crítica
                              ,pr_retxml     IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
                              ,pr_nmdcampo   OUT VARCHAR2 --> Nome do campo com erro
-                             ,pr_des_erro   OUT VARCHAR2);
+                             ,pr_des_erro   OUT VARCHAR2); --> Erros do processo
 
 END TELA_TAB019;
 /
@@ -639,56 +639,56 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB019 IS
   END pc_consulta_web;
 
   PROCEDURE pc_alterar_tab019(pr_inpessoa    IN NUMBER
-                             ,pr_vllimite    IN VARCHAR2
-                             ,pr_vllimite_c  IN VARCHAR2
-                             ,pr_qtdiavig    IN VARCHAR2
-                             ,pr_qtdiavig_c  IN VARCHAR2
-                             ,pr_qtprzmin    IN VARCHAR2
-                             ,pr_qtprzmin_c  IN VARCHAR2
-                             ,pr_qtprzmax    IN VARCHAR2
-                             ,pr_qtprzmax_c  IN VARCHAR2
-                             ,pr_txdmulta    IN VARCHAR2
-                             ,pr_txdmulta_c  IN VARCHAR2
-                             ,pr_vlconchq    IN VARCHAR2
-                             ,pr_vlconchq_c  IN VARCHAR2
-                             ,pr_vlmaxemi    IN VARCHAR2
-                             ,pr_vlmaxemi_c  IN VARCHAR2
-                             ,pr_pcchqloc    IN VARCHAR2
-                             ,pr_pcchqloc_c  IN VARCHAR2
-                             ,pr_pcchqemi    IN VARCHAR2
-                             ,pr_pcchqemi_c  IN VARCHAR2
-                             ,pr_qtdiasoc    IN VARCHAR2
-                             ,pr_qtdiasoc_c  IN VARCHAR2
-                             ,pr_qtdevchq    IN VARCHAR2
-                             ,pr_qtdevchq_c  IN VARCHAR2
-                             ,pr_pctollim    IN VARCHAR2
-                             ,pr_pctollim_c  IN VARCHAR2
-                             ,pr_qtdiasli    IN VARCHAR2
-                             ,pr_qtdiasli_c  IN VARCHAR2
-                             ,pr_horalimt    IN VARCHAR2
-                             ,pr_horalimt_c  IN VARCHAR2
-                             ,pr_minlimit    IN VARCHAR2
-                             ,pr_minlimit_c  IN VARCHAR2
-                             ,pr_Flemipar    IN VARCHAR2  -- Verificar se Emitente é Conjugue do Cooperado
-                             ,pr_Flemipar_c  IN VARCHAR2  -- Verificar se Emitente é Conjugue do Cooperado
-                             ,pr_Przmxcmp    IN VARCHAR2   -- Prazo Máximo de Compensação
-                             ,pr_Przmxcmp_c  IN VARCHAR2   -- Prazo Máximo de Compensação
-                             ,pr_Flpjzemi    IN VARCHAR2  -- Verificar Prejuízo do Emitente
-                             ,pr_Flpjzemi_c  IN VARCHAR2  -- Verificar Prejuízo do Emitente
-                             ,pr_Flemisol    IN VARCHAR2  -- Verificar Emitente x Conta Solicitante
-                             ,pr_Flemisol_c  IN VARCHAR2  -- Verificar Emitente x Conta Solicitante
-                             ,pr_Prcliqui    IN VARCHAR2  -- Percentual de Liquidez
-                             ,pr_Prcliqui_c  IN VARCHAR2  -- Percentual de Liquidez
-                             ,pr_Qtmesliq    IN VARCHAR2  -- Qtd. Meses Cálculo Percentual de Liquidez
-                             ,pr_Qtmesliq_c  IN VARCHAR2  -- Qtd. Meses Cálculo Percentual de Liquidez                  
-                             ,pr_Vlrenlim    IN VARCHAR2   -- Renda x Limite Desconto
-                             ,pr_Vlrenlim_c  IN VARCHAR2   -- Renda x Limite Desconto
-                             ,pr_Qtmxrede    IN VARCHAR2  -- Qtd. Máxima Redesconto
-                             ,pr_Qtmxrede_c  IN VARCHAR2  -- Qtd. Máxima Redesconto
-                             ,pr_Fldchqdv    IN VARCHAR2  -- Permitir Desconto Cheque Devolvido
-                             ,pr_Fldchqdv_c  IN VARCHAR2  -- Permitir Desconto Cheque Devolvido
-                             ,pr_Vlmxassi    IN VARCHAR2   -- Valor Máximo Dispensa Assinatura
-                             ,pr_Vlmxassi_c  IN VARCHAR2   -- Valor Máximo Dispensa Assinatura
+                             ,pr_vllimite    IN NUMBER
+                             ,pr_vllimite_c  IN NUMBER
+                             ,pr_qtdiavig    IN NUMBER
+                             ,pr_qtdiavig_c  IN NUMBER
+                             ,pr_qtprzmin    IN NUMBER
+                             ,pr_qtprzmin_c  IN NUMBER
+                             ,pr_qtprzmax    IN NUMBER
+                             ,pr_qtprzmax_c  IN NUMBER
+                             ,pr_txdmulta    IN NUMBER
+                             ,pr_txdmulta_c  IN NUMBER
+                             ,pr_vlconchq    IN NUMBER
+                             ,pr_vlconchq_c  IN NUMBER
+                             ,pr_vlmaxemi    IN NUMBER
+                             ,pr_vlmaxemi_c  IN NUMBER
+                             ,pr_pcchqloc    IN NUMBER
+                             ,pr_pcchqloc_c  IN NUMBER
+                             ,pr_pcchqemi    IN NUMBER
+                             ,pr_pcchqemi_c  IN NUMBER
+                             ,pr_qtdiasoc    IN NUMBER
+                             ,pr_qtdiasoc_c  IN NUMBER
+                             ,pr_qtdevchq    IN NUMBER
+                             ,pr_qtdevchq_c  IN NUMBER
+                             ,pr_pctollim    IN NUMBER
+                             ,pr_pctollim_c  IN NUMBER
+                             ,pr_qtdiasli    IN NUMBER
+                             ,pr_qtdiasli_c  IN NUMBER
+                             ,pr_horalimt    IN NUMBER
+                             ,pr_horalimt_c  IN NUMBER
+                             ,pr_minlimit    IN NUMBER
+                             ,pr_minlimit_c  IN NUMBER
+                             ,pr_Flemipar    IN NUMBER    -- Verificar se Emitente é Conjugue do Cooperado
+                             ,pr_Flemipar_c  IN NUMBER    -- Verificar se Emitente é Conjugue do Cooperado
+                             ,pr_Przmxcmp    IN NUMBER    -- Prazo Máximo de Compensação
+                             ,pr_Przmxcmp_c  IN NUMBER    -- Prazo Máximo de Compensação
+                             ,pr_Flpjzemi    IN NUMBER    -- Verificar Prejuízo do Emitente
+                             ,pr_Flpjzemi_c  IN NUMBER    -- Verificar Prejuízo do Emitente
+                             ,pr_Flemisol    IN NUMBER    -- Verificar Emitente x Conta Solicitante
+                             ,pr_Flemisol_c  IN NUMBER    -- Verificar Emitente x Conta Solicitante
+                             ,pr_Prcliqui    IN NUMBER    -- Percentual de Liquidez
+                             ,pr_Prcliqui_c  IN NUMBER    -- Percentual de Liquidez
+                             ,pr_Qtmesliq    IN NUMBER    -- Qtd. Meses Cálculo Percentual de Liquidez
+                             ,pr_Qtmesliq_c  IN NUMBER    -- Qtd. Meses Cálculo Percentual de Liquidez                  
+                             ,pr_Vlrenlim    IN NUMBER    -- Renda x Limite Desconto
+                             ,pr_Vlrenlim_c  IN NUMBER    -- Renda x Limite Desconto
+                             ,pr_Qtmxrede    IN NUMBER    -- Qtd. Máxima Redesconto
+                             ,pr_Qtmxrede_c  IN NUMBER    -- Qtd. Máxima Redesconto
+                             ,pr_Fldchqdv    IN NUMBER    -- Permitir Desconto Cheque Devolvido
+                             ,pr_Fldchqdv_c  IN NUMBER    -- Permitir Desconto Cheque Devolvido
+                             ,pr_Vlmxassi    IN NUMBER    -- Valor Máximo Dispensa Assinatura
+                             ,pr_Vlmxassi_c  IN NUMBER    -- Valor Máximo Dispensa Assinatura
                              ,pr_xmllog      IN VARCHAR2 --> XML com informações de LOG
                              ,pr_cdcritic   OUT PLS_INTEGER --> Código da crítica
                              ,pr_dscritic   OUT VARCHAR2 --> Descrição da crítica

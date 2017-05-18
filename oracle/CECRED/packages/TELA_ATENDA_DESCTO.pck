@@ -2404,6 +2404,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 						,cdb.dtemissa
 						,cdb.dtmvtolt
 						,cdb.nrremret
+						,cdb.nrcpfcgc
 			 FROM crapcdb cdb
 			WHERE cdb.cdcooper = pr_cdcooper
 			  AND cdb.nrdconta = pr_nrdconta
@@ -2504,6 +2505,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 				vr_tab_cheques(vr_index_cheque).nrcheque := vr_nrcheque;
 				vr_tab_cheques(vr_index_cheque).nrremret := rw_crapcdb.nrremret;
 				vr_tab_cheques(vr_index_cheque).flgaprov := vr_flgaprov;
+				vr_tab_cheques(vr_index_cheque).nrcpfcgc := rw_crapcdb.nrcpfcgc;
 
 			END LOOP;	
 			
