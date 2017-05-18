@@ -1191,6 +1191,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0002 IS
               ,hcc.insithcc
               ,dcc.cdbccxlt
               ,dcc.cdagenci
+              ,dcc.dsdocmc7
           FROM crapdcc dcc
               ,craphcc hcc
          WHERE dcc.cdcooper = pr_cdcooper
@@ -1220,6 +1221,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0002 IS
            AND dcc.intipmvt = pr_intipmvt
            AND dcc.nrremret = pr_nrremret;
       rw_craphcc cr_craphcc%ROWTYPE;
+      
+      -- Busca cheques descontado		
+		  CURSOR cr_crapcdb(pr_cdcooper IN crapcop.cdcooper%TYPE
+			                 ,pr_dsdocmc7 IN VARCHAR2) IS
+			  SELECT cdb.nrborder
+				  FROM crapcdb cdb
+				 WHERE cdb.cdcooper = pr_cdcooper
+				   AND cdb.nrdconta = pr_nrdconta
+				   AND UPPER(cdb.dsdocmc7) = UPPER(pr_dsdocmc7)
+				   AND cdb.dtdevolu IS NULL;
+			rw_crapcdb cr_crapcdb%ROWTYPE; 
       
       --------- Variaveis ---------
       -- Tratamento de erros
@@ -1260,6 +1272,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0002 IS
         
         IF rw_crapdcc.insithcc <> 1 THEN
           vr_dscritic := 'Remessa deve estar com Status Pendente.';
+          RAISE vr_exc_erro;
+        END IF;
+        
+        -- Verifica se cheque foi custodiado e não foi resgatado			
+        OPEN cr_crapcdb(pr_cdcooper => pr_cdcooper
+                       ,pr_dsdocmc7 => rw_crapdcc.dsdocmc7);
+        FETCH cr_crapcdb INTO rw_crapcdb;
+  			
+        -- Se não encontrou
+        IF cr_crapcdb%FOUND THEN
+          vr_dscritic := 'Cheque em Desconto.';
           RAISE vr_exc_erro;
         END IF;
         
