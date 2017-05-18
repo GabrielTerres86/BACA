@@ -398,15 +398,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
                 ,cdb.nrcheque
                 ,to_char(cdb.vlcheque,'fm999g999g999g990D00') vlcheque
                 ,cdb.insitana
-                ,(SELECT nvl(dcc.inconcil,0)
+                ,NVL((SELECT 0
                     FROM crapdcc dcc
+                       ,craphcc hcc
                    WHERE dcc.cdcooper = cdb.cdcooper
                      AND dcc.nrdconta = cdb.nrdconta
                      AND dcc.cdbanchq = cdb.cdbanchq
                      AND dcc.cdagechq = cdb.cdagechq
                      AND dcc.nrctachq = cdb.nrctachq
                      AND dcc.nrcheque = cdb.nrcheque
-                     AND dcc.nrremret = cdb.nrremret) inconcil 
+                    AND dcc.nrremret = cdb.nrremret
+                    AND dcc.intipmvt IN (1,3)
+                    AND dcc.cdtipmvt = 1
+                    AND hcc.cdcooper = dcc.cdcooper
+                    AND hcc.nrdconta = dcc.nrdconta
+                    AND hcc.nrremret = dcc.nrremret
+                    AND hcc.intipmvt = dcc.intipmvt
+                    AND (dcc.inconcil = 0
+                     OR  hcc.dtcustod IS NULL)),1) inconcil 
                 ,translate(cdb.dsdocmc7
                           ,'[0-9]<>:'
                           ,'[0-9]') dsdocmc7
