@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --  Sistema  : Rotinas genericas referente a tela de Cartões
   --  Sigla    : CCRD
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Abril - 2014.                   Ultima atualizacao: 08/05/2017
+  --  Data     : Abril - 2014.                   Ultima atualizacao: 18/05/2017
   --
   -- Dados referentes ao programa:
   --
@@ -56,6 +56,10 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --                          das críticas na tabela crapcri (Carlos)
   --
   --             08/05/2017 - Incluido parenteses no IF que valida se deve terminar o repique (Tiago/Fabricio)
+  --
+  --             18/05/2017 - Ajuste na busca do sequencial do arquivo CEXT em virtude da
+  --                          informacao de data acrescentada ao nome do arquivo pelo Bancoob.
+  --                          (Fabricio)
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -1906,7 +1910,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
     Sistema : Cartoes de Credito - Cooperativa de Credito
     Sigla   : CRRD
     Autor   : Lucas Lunelli
-    Data    : Maio/14.                    Ultima atualizacao: 09/03/2017
+    Data    : Maio/14.                    Ultima atualizacao: 18/05/2017
 
     Dados referentes ao programa:
 
@@ -2004,6 +2008,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 09/03/2017 - Ao verificar se ja existe a 0200 na dcb, olhar tambem com o historico
                              offline da transacao, caso nao encontre com o historico online.
                              (problemas com chave duplicada no indice #1). (Fabricio)
+                             
+                18/05/2017 - Ajuste na busca do sequencial do arquivo CEXT em virtude da
+                             informacao de data acrescentada ao nome do arquivo pelo Bancoob.
+                             (Fabricio)
+                             
     ....................................................................................................*/
     DECLARE
       ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
@@ -3003,7 +3012,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
           --vr_tab_relat_critic.DELETE;
 
           -- adquire sequencial do arquivo
-          vr_nrseqarq  := to_number(substr(vr_vet_nmarquiv(i),14,7));
+          vr_nrseqarq  := to_number(substr(vr_vet_nmarquiv(i),23,7));
 
           -- Verificar se sequencial já foi importado
           IF nvl(rw_crapscb.nrseqarq,0) >= nvl(vr_nrseqarq,0) THEN
