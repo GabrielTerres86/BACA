@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Guilherme/Supero
-    Data    : Fevereiro/2010                   Ultima atualizacao: 13/01/2017
+    Data    : Fevereiro/2010                   Ultima atualizacao: 17/05/2017
 
     Dados referentes ao programa:
 
@@ -165,8 +165,12 @@
                06/12/2016 - Alterado campo dsdepart para cddepart.
                             PRJ341 - BANCENJUD (Odirlei-AMcom)
 
-			   13/01/2017 - Tratamento incorporacao Transposul (Diego).
+               13/01/2017 - Tratamento incorporacao Transposul (Diego).
 
+               17/05/2017 - Remover a procedure proc_verifica_pac_internet e suas chamadas,
+                            pois a mensagem de erro do LOOP está comentada desde a 
+                            alteracao de "28/11/2014", como nao existe mais validacao do 
+                            erro o LOOP nao é mais necessário (Douglas - Chamado 666540)
 ..............................................................................*/
 
 { includes/var_online.i }
@@ -869,43 +873,6 @@ DO WHILE TRUE:
              ELSE
                   ASSIGN aux_pacfinal = tel_cdagenci.
 
-
-             /*   Verifica se os titulos e faturas pagos tiveram os seus 
-                  devidos debitos efetuados nas contas   */
-
-             IF   tel_cdagenci = 90 THEN
-                  DO:
-                      IF   INT(tel_cdcooper) = 0 THEN  /* TODAS */
-                           DO:
-                                FOR EACH crapcop 
-                                   WHERE crapcop.cdcooper <> 3
-                                     AND crapcop.flgativo = TRUE
-                                     NO-LOCK:
-                                    
-                                    glb_cdcritic = 0.
-
-                                    RUN proc_verifica_pac_internet(
-                                                     INPUT crapcop.cdcooper).
-              
-                                    IF   glb_cdcritic <> 0   THEN
-                                         LEAVE.
-                                END.                       
-                                
-                                IF   glb_cdcritic <> 0   THEN
-                                     NEXT.
-                           END.
-                      ELSE
-                           DO:
-                               glb_cdcritic = 0.
-
-                               RUN proc_verifica_pac_internet(
-                                                    INPUT tel_cdcooper).
-
-                               IF   glb_cdcritic <> 0   THEN
-                                    NEXT.
-                           END.
-                  END.
-                  
              MESSAGE "Aguarde... Gerando arquivo(s)...".
 
              /* Criar solicitacao para estes tipos de programas */
@@ -3425,102 +3392,6 @@ PROCEDURE gera_relatorios:
       END.
 
 END PROCEDURE.
-
-
-
-PROCEDURE proc_verifica_pac_internet:
-    
-    /* Verifica se os titulos e faturas pagos tiveram os seus devidos debitos
-       efetuados nas contas */
-      
-    DEF INPUT PARAM par_cdcooper AS INTEGER                          NO-UNDO.
-
-    DEF         VAR aux_qtlanmto AS INTEGER                          NO-UNDO.
-    DEF         VAR aux_vllanmto AS DECIMAL                          NO-UNDO.
-    
-    DEF         VAR lcm_qtlanmto AS INTEGER                          NO-UNDO.
-    DEF         VAR lcm_vllanmto AS DECIMAL                          NO-UNDO.
-
-    DEF         VAR aux_contador AS INTEGER                          NO-UNDO.
-
-    FOR EACH craplcm WHERE craplcm.cdcooper = par_cdcooper   AND
-                           craplcm.dtmvtolt = tel_dtrefere   AND
-                           craplcm.cdagenci = 90             AND
-                           craplcm.cdbccxlt = 11             AND
-                           craplcm.nrdolote = 11000 + 900    AND
-                           craplcm.cdhistor = 508            NO-LOCK
-                           BREAK BY craplcm.nrdconta
-                                   BY SUBSTRING(craplcm.cdpesqbb,1,36):
-
-        IF   FIRST-OF(SUBSTRING(craplcm.cdpesqbb,1,36))   THEN
-             ASSIGN aux_qtlanmto = 0 
-                    aux_vllanmto = 0
-                    lcm_qtlanmto = 0
-                    lcm_vllanmto = 0.
-        
-        ASSIGN lcm_qtlanmto = lcm_qtlanmto + 1
-               lcm_vllanmto = lcm_vllanmto + craplcm.vllanmto
-               aux_contador = aux_contador + 1.
-
-        MESSAGE "Verificando debitos de titulos e faturas (" + 
-                 STRING(aux_contador) + ")... Cooperativa: " + 
-                 STRING(par_cdcooper).
-       
-        IF   LAST-OF(SUBSTRING(craplcm.cdpesqbb,1,36))   THEN
-             DO:
-                 /* Titulos */
-                 IF   craplcm.cdpesqbb BEGINS
-                      "INTERNET - PAGAMENTO ON-LINE - BANCO"   THEN
-                      DO:
-                          /* Desconsidera estornos */
-                          FOR EACH crablcm WHERE
-                                   crablcm.cdcooper = par_cdcooper       AND
-                                   crablcm.dtmvtolt = tel_dtrefere       AND
-                                   crablcm.cdagenci = 90                 AND
-                                   crablcm.cdbccxlt = 11                 AND
-                                   crablcm.nrdolote = 11000 + 900        AND
-                                   crablcm.cdhistor = 570                AND
-                                   crablcm.nrdconta = craplcm.nrdconta
-                                   NO-LOCK:
-                          
-                              IF   crablcm.cdpesqbb BEGINS
-                                   "INTERNET - ESTORNO PAGAMENTO " +
-                                   "ON-LINE - BANCO"    THEN
-                                   ASSIGN lcm_qtlanmto = lcm_qtlanmto - 1
-                                          lcm_vllanmto = lcm_vllanmto -
-                                                             crablcm.vllanmto.
-                          END.
-                          
-                          FOR EACH craptit WHERE
-                                   craptit.cdcooper = par_cdcooper   AND
-                                   craptit.dtmvtolt = tel_dtrefere   AND
-                                   craptit.cdagenci = 90             AND
-                                   craptit.cdbccxlt = 11             AND
-                                   craptit.nrdolote = 16000 + 900    AND
-                                   craptit.nrdconta = craplcm.nrdconta
-                                   NO-LOCK:
-                          
-                              ASSIGN aux_qtlanmto = aux_qtlanmto + 1
-                                     aux_vllanmto = aux_vllanmto +
-                                                    craptit.vldpagto.
-                          END.
-                   /*     IF   aux_qtlanmto <> lcm_qtlanmto   THEN
-                               DO:
-                                  MESSAGE "Titulos nao conferem com"
-                                           "lancamentos - Conta/DV: "
-                                           craplcm.nrdconta.
-                                  glb_cdcritic = 139.
-                                  RETURN.
-                               END.    */
-                      
-                      END.
-             END. /* Fim LAST-OF */
-
-        HIDE MESSAGE NO-PAUSE.
-   END.                          
-
-END PROCEDURE. /* Fim proc_verifica_pac_internet */
-
 
 /* .......................................................................... */
 
