@@ -163,7 +163,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
   --  Sistema : Processos Batch
   --  Sigla   : BTCH
   --  Autor   : Marcos E. Martini - Supero
-  --  Data    : Novembro/2012.                   Ultima atualizacao: 10/04/2017
+  --  Data    : Novembro/2012.                   Ultima atualizacao: 18/05/2017
   --
   -- Dados referentes ao programa:
   --
@@ -184,6 +184,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
                Inclusão do parâmetro pr_nmarlog na chamada da rotina pc_log_programa e melhoria na
                extração do CDPROGRAMA da mensagem (Carlos)
   
+  18/05/2017 - No procedimento pc_gera_log_batch, simplificada a lógica de extração do nome do programa da
+               mensagem enviada. Se não encontrar a seta '-->' o programa ficará vazio; Mensagem irá
+               acrescida de module e action (read_module) para melhorar o rastreio do mesmo (Carlos)  
   --------------------------------------------------------------------------------------------------------------- */
 
   -- Tratamento de erros
@@ -538,6 +541,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
       
       vr_tab_erro gene0002.typ_split;
       vr_des_log VARCHAR2(4000);
+      
+      vr_modulo VARCHAR2(100);
+      vr_acao   VARCHAR2(100);
     BEGIN
       
     CASE pr_ind_tipo_log
@@ -556,7 +562,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
       END CASE;   
 
       vr_nmarqlog := TRIM(lower(pr_nmarqlog));
+
+      IF vr_nmarqlog IS NULL THEN
+        vr_nmarqlog := NVL(gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_BATCH'),'proc_batch.log');
+      END IF;
       
+      -- Extrair apenas a mensagem depois da seta
       IF INSTR(pr_des_log, '-->', 1, 1) > 0 THEN
         vr_des_log := TRIM(substr(pr_des_log, (INSTR(pr_des_log, '-->', 1, 1)) + 3));
       ELSE 
@@ -565,34 +576,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
 
       IF TRIM(pr_cdprograma) IS NOT NULL THEN
         vr_cdprograma := TRIM(pr_cdprograma);
-        -- Se o arquivo for proc_batch ou proc_message, split por 
-        --spc da desc do log até a seta '-->' e pegar ult pos como nome do programa
-      ELSIF ((vr_nmarqlog IS NULL) OR
-             (INSTR(lower(vr_nmarqlog), 'proc_batch', 1, 1) > 0) OR
-             (INSTR(lower(vr_nmarqlog), 'proc_message', 1, 1) > 0)) THEN
+      ELSE 
         -- Extrair CDPROGRAMA da mensagem
         -- 23/03/2017 11:30:00 - CRPS123 --> erro qualquer
         IF INSTR(pr_des_log, '-->', 1, 1) > 0 THEN
           vr_tab_erro := gene0002.fn_quebra_string(
-                        pr_string => TRIM(SUBSTR(pr_des_log, 1, INSTR(pr_des_log, '-->', 1, 1) -1)),
-                        pr_delimit => ' ');
-          vr_cdprograma := vr_tab_erro(vr_tab_erro.count());
-        ELSIF vr_nmarqlog IS NOT NULL THEN
-          -- Foi passada uma msg para o proc_batch/message sem a seta:
-          vr_cdprograma := vr_nmarqlog;
-        ELSE          
-          vr_cdprograma := NVL(gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_BATCH'),'proc_batch.log');
-        END IF;
-      ELSE 
-        IF INSTR(pr_des_log, '-->', 1, 1) > 0 THEN
-          vr_tab_erro := gene0002.fn_quebra_string(
-                        pr_string => TRIM(SUBSTR(pr_des_log, 1, INSTR(pr_des_log, '-->', 1, 1) -1)),
-                        pr_delimit => ' ');
+                         pr_string => TRIM(SUBSTR(pr_des_log, 1, INSTR(pr_des_log, '-->', 1, 1) -1)),
+                         pr_delimit => ' ');
           vr_cdprograma := vr_tab_erro(vr_tab_erro.count());     
         ELSE          
           vr_cdprograma := '';
         END IF;
+        
       END IF;
+      
+      DBMS_APPLICATION_INFO.read_module(module_name => vr_modulo, action_name => vr_acao);
+      vr_des_log := vr_des_log || ' - Module: ' || vr_modulo ||
+                                  ' - Action: ' || vr_acao;
 
       cecred.pc_log_programa(PR_DSTIPLOG   => pr_dstiplog,      -- tbgen_prglog
                              PR_CDPROGRAMA => vr_cdprograma,    -- tbgen_prglog
