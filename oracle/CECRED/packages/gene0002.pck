@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.gene0002 AS
     Sistema  : Rotinas genéricas para mascaras e relatórios
     Sigla    : GENE
     Autor    : Marcos E. Martini - Supero
-    Data     : Novembro/2012.                   Ultima atualizacao: 05/02/2016
+    Data     : Novembro/2012.                   Ultima atualizacao: 12/05/2017
   
    Dados referentes ao programa:
   
@@ -333,7 +333,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   --  Sistema  : Rotinas genéricas para mascaras e relatórios
   --  Sigla    : GENE
   --  Autor    : Marcos E. Martini - Supero
-  --  Data     : Novembro/2012.                   Ultima atualizacao: 26/10/2016
+  --  Data     : Novembro/2012.                   Ultima atualizacao: 12/05/2017
   --
   -- Dados referentes ao programa:
   --
@@ -363,7 +363,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   --
   --             26/10/2016 - Gravado em log a execução da rotina procedimento pc_controle_filas_relato apenas
   --                          apenas quando tiverem relatórios pendentes para execução (Carlos)
-  ---------------------------------------------------------------------------------------------------------------
+  --  
+  --             12/05/2017 - Rotina pc_gera_relato:
+  --                          Tratamento da descrição para eliminar os caracteres especiais do xml.
+  --                          Inclusão do parametro pr_nrseqsol na mensagem de erro.
+  --                          Gravar o erro na tabela TBGEN_ERRO_SISTEMA.
+  --                          SD660322 (Ana//Belli-Envolti)   
+  --
+  --------------------------------------------------------------------------------------------------------------
 
   /* Lista de variáveis para armazenar as mascaras parametrizadas */
   vr_des_mask_conta    VARCHAR2(10);
@@ -2451,6 +2458,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --              08/12/2016 - Ajuste para incrementar nomenclatura qnd realizar
     --                           append, para garantir processo.
     --                           SD572620 (Odirlei-AMcom)         
+    --
+    --              12/05/2017 - Tratamento da descrição para eliminar os caracteres especiais do xml.
+    --                           Inclusão do parametro pr_nrseqsol na mensagem de erro.
+    --                           Gravar o erro na tabela TBGEN_ERRO_SISTEMA.
+    --                           SD660322 (Ana//Belli-Envolti)          
     -- ...........................................................................
     DECLARE
       -- Buscar dados da solicitação
@@ -2667,6 +2679,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                        || nvl(gene0001.fn_param_sistema('CRED',rw_crapslr.cdcooper,'ROOT_IREPORT'), '/usr/coop/ireport/') || rw_crapslr.dsjasper
                        || '" "' || vr_dsparams || '" "' || vr_nom_arqsai || '" '
                        || rw_crapslr.qtcoluna|| ' ' ||vr_flsemqueb;
+                           
+        BEGIN
+          SELECT gene0007.fn_caract_acento( vr_des_comando,1 ) 
+          INTO   vr_des_comando
+          FROM   DUAL; 
+        EXCEPTION
+          WHEN OTHERS THEN 
+            vr_des_saida := 'gene0007.fn_caract_acento, des=' || vr_des_comando;
+            RAISE vr_exc_erro;
+        END;    
 
         -- Executa comando via Shell
         GENE0001.pc_OScommand(pr_typ_comando => 'S'
@@ -2775,8 +2797,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     EXCEPTION
       WHEN vr_exc_erro THEN
         pr_des_erro := 'GENE0002.pc_gera_relato--> '||vr_des_saida;
+        btch0001.pc_gera_log_batch(pr_cdcooper   => rw_crapslr.cdcooper,
+                                 pr_ind_tipo_log => 2, --> erro tratado
+                                 pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                    ' - GENE0002.pc_gera_relato --> ' || pr_des_erro,
+                                 pr_nmarqlog     => gene0001.fn_param_sistema('CRED',rw_crapslr.cdcooper,'NOME_ARQ_LOG_MESSAGE'));
+      
       WHEN OTHERS THEN
-        pr_des_erro := 'GENE0002.pc_gera_relato --> Erro não tratado ao processar a solicitação. Erro: '||sqlerrm;
+       pr_des_erro := 
+          'GENE0002.pc_gera_relato --> Erro não tratado ao processar a solicitação. Erro: '|| sqlerrm || 
+          ' ,seqsol=' || pr_nrseqsol;			 
+
+	   CECRED.pc_internal_exception( pr_compleme => pr_des_erro ); 
     END;
   END pc_gera_relato;
 
