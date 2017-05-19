@@ -6418,7 +6418,8 @@ PROCEDURE verifica_comprovantes:
 
                   xDoc:CREATE-NODE(xText,"","TEXT").
                   xText:NODE-VALUE = aux_dsnsuope.
-                  xField:APPEND-CHILD(xText).                         
+                  xField:APPEND-CHILD(xText).         
+	           END.                
     END.
 
     RETURN "OK".
