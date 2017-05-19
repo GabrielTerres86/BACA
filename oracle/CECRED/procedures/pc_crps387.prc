@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Abril/2004                        Ultima atualizacao: 15/05/2017
+   Data    : Abril/2004                        Ultima atualizacao: 19/05/2017
 
    Dados referentes ao programa:
 
@@ -413,6 +413,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                             
                15/05/2017 - Incluir tratamento para validar a ultima linha do arquivo 
                             (Lucas Ranghetti #669962)
+                            
+               19/05/2017 - Tratamento para cooperado demitido (Lucas Ranghetti #656251)
 ............................................................................ */
 
 
@@ -577,7 +579,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                nrdconta,
                nmprimtl,
                cdsecext,
-               cdagenci
+               cdagenci,
+               dtdemiss
           FROM crapass
          WHERE crapass.cdcooper = pr_cdcooper
            AND crapass.nrdconta = pr_nrdconta
@@ -3173,7 +3176,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                   IF cr_crapass%ISOPEN THEN
                     CLOSE cr_crapass;
                   END IF;
-                  OPEN cr_crapass(vr_cdcooper, vr_nrdconta, 1);
+                  OPEN cr_crapass(vr_cdcooper, vr_nrdconta, 0);
                   FETCH cr_crapass INTO rw_crapass;
 
                   -- Se a linha for referente ao corpo do arquivo
@@ -3260,14 +3263,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                   FETCH cr_crapatr INTO rw_crapatr;
 
                   IF ((cr_crapatr%FOUND AND rw_crapatr.dtfimatr IS NOT NULL) OR
-                      (cr_crapatr%NOTFOUND)                                  OR
-                      (cr_crapass%NOTFOUND))                                 AND
+                      (cr_crapatr%NOTFOUND))                                 AND
                       vr_tpregist <> 'B'                                     THEN
                     IF rw_gnconve.flgindeb = 1 AND
                        vr_tpregist     = 'E'   AND
-                       cr_crapass%FOUND           AND
-                       cr_crapatr%NOTFOUND        THEN
-
+                       cr_crapass%FOUND        AND                       
+                       cr_crapatr%NOTFOUND     AND 
+                       rw_crapass.dtdemiss IS NULL THEN -- Somente cooperados ativos
                          -- Insere no Cadastro das autorizacoes de debito em conta
                          BEGIN
                             INSERT INTO crapatr
@@ -3345,8 +3347,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                       END IF;
 
                       vr_dstexarq_tmp := '30';
-                      IF cr_crapass%NOTFOUND THEN  /** Conta encerrada. **/
-                        vr_cdcritic_tmp := 64;
+                      IF cr_crapass%NOTFOUND  THEN  
+                        vr_cdcritic_tmp := 127; -- Conta Errada
+                        vr_dstexarq_tmp := '15';
+                      ELSIF cr_crapass%FOUND AND rw_crapass.dtdemiss IS NOT NULL THEN
+                        vr_cdcritic_tmp := 64; -- Conta Encerrada
                         vr_dstexarq_tmp := '15';
                       ELSIF cr_crapatr%NOTFOUND THEN /*Autoriz.nao encontrada*/
                         vr_cdcritic_tmp := 453;
@@ -4716,7 +4721,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                            ,pr_qtcoluna  => 132                 --> 132 colunas
                            ,pr_sqcabrel  => 1                   --> Sequencia do Relatorio {includes/cabrel132_1.i}
                            ,pr_flg_impri => 'S'                 --> Chamar a impressão (Imprim.p)
-                           ,pr_flg_gerar => 'N'                 --> Geraçao na hora
+                           ,pr_flg_gerar => 'S'                 --> Geraçao na hora
                            ,pr_nrcopias  => 1                   --> Número de cópias
                            ,pr_des_erro  => vr_dscritic);       --> Saída com erro
 
