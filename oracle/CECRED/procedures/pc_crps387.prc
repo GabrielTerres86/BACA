@@ -4721,7 +4721,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                            ,pr_qtcoluna  => 132                 --> 132 colunas
                            ,pr_sqcabrel  => 1                   --> Sequencia do Relatorio {includes/cabrel132_1.i}
                            ,pr_flg_impri => 'S'                 --> Chamar a impressão (Imprim.p)
-                           ,pr_flg_gerar => 'S'                 --> Geraçao na hora
+                           ,pr_flg_gerar => 'N'                 --> Geraçao na hora
                            ,pr_nrcopias  => 1                   --> Número de cópias
                            ,pr_des_erro  => vr_dscritic);       --> Saída com erro
 
