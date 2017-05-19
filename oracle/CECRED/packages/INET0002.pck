@@ -1204,7 +1204,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
   -- Frequencia: -----
   -- Objetivo  : Procedure para excluir transacoes pendentes
   --
-  -- Alteração : 
+  -- Alteração : 19/05/2017 - Inclusão de tratativa para quando for tipo 13 - Recarga de celular
+  --                          pois o controle é feito pela tbrecarga_trans_pend. Projeto 321. (Lombardi)
   --
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
@@ -1263,10 +1264,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       CURSOR cr_tbgen_trans_pend( pr_cddoitem IN tbgen_trans_pend.cdtransacao_pendente%TYPE) IS  
         SELECT tbgen_trans_pend.nrcpf_operador,
                tbgen_trans_pend.idsituacao_transacao,
-               tbgen_trans_pend.cdtransacao_pendente
+               tbgen_trans_pend.cdtransacao_pendente,
+               tbgen_trans_pend.tptransacao
         FROM   tbgen_trans_pend 
         WHERE  tbgen_trans_pend.cdtransacao_pendente = pr_cddoitem;
       rw_tbgen_trans_pend cr_tbgen_trans_pend%ROWTYPE;
+      
+      CURSOR cr_tbrecarga_trans_pend(pr_cddoitem IN tbgen_trans_pend.cdtransacao_pendente%TYPE) IS  
+        SELECT tbrecarga_trans_pend.idoperacao
+          FROM tbrecarga_trans_pend
+         WHERE tbrecarga_trans_pend.cdtransacao_pendente = pr_cddoitem;
+      rw_tbrecarga_trans_pend cr_tbrecarga_trans_pend%ROWTYPE;
     ------------------------------------------------------
     -------------- INICIO BLOCO PRINCIPAL ----------------
     ------------------------------------------------------      
@@ -1398,6 +1406,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                 UPDATE tbgen_trans_pend SET 
                        tbgen_trans_pend.nrcpf_representante  = vr_nrcpfcgc
                  WHERE tbgen_trans_pend.cdtransacao_pendente = vr_cddoitem;
+            END IF;
+            
+            IF rw_tbgen_trans_pend.tptransacao = 13 THEN
+              
+              OPEN cr_tbrecarga_trans_pend(pr_cddoitem => vr_cddoitem);
+              FETCH cr_tbrecarga_trans_pend INTO  rw_tbrecarga_trans_pend;
+              
+              IF cr_tbrecarga_trans_pend%FOUND THEN
+                
+                CLOSE cr_tbrecarga_trans_pend;
+                
+                UPDATE tbrecarga_operacao
+                   SET insit_operacao = 4 /* cancelada transação pendente */ 
+                 WHERE idoperacao =  rw_tbrecarga_trans_pend.idoperacao;
+         ELSE
+                CLOSE cr_tbrecarga_trans_pend;
+              END IF;
             END IF;
          ELSE
             CLOSE cr_tbgen_trans_pend;
@@ -1869,7 +1894,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
          GROUP BY dscc.cdtransacao_pendente;
       rw_tbdscc_trans_pend cr_tbdscc_trans_pend%ROWTYPE;
 
-	  --Tipo transacao 13 (Recarga de celular)
+			--Tipo transacao 13 (Recarga de celular)
 			CURSOR cr_tbrecarga_trans_pend(pr_cddoitem IN tbgen_trans_pend.cdtransacao_pendente%TYPE) IS  
       SELECT tope.nrddd
 			      ,tope.nrcelular
@@ -2471,8 +2496,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 			  				  '<b>Borderô de desconto</b> no valor total de <b>R$ ' ||
                               TO_CHAR(rw_tbdscc_trans_pend.vltotchq,'fm999g999g990d00') || 
                               '</b> com <b>' || rw_tbdscc_trans_pend.qtcheque || '</b> cheques.<br>';			
-			
-			WHEN pr_tptransa = 13 THEN -- Recarga de celular
+															
+				WHEN pr_tptransa = 13 THEN -- Recarga de celular
 					OPEN cr_tbrecarga_trans_pend(pr_cddoitem => pr_cdtranpe);
 					FETCH cr_tbrecarga_trans_pend INTO rw_tbrecarga_trans_pend;
 					
@@ -2501,7 +2526,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 											TO_CHAR(rw_tbrecarga_trans_pend.vlrecarga,'fm9g999g990d00') || 
 											'</b>.<br>';
 											
-		WHEN pr_tptransa = 16 THEN -- SMS cobrança          
+			  WHEN pr_tptransa = 16 THEN -- SMS cobrança          
           pr_dsdmensg := pr_dsdmensg || 'Adesão ao serviço de SMS de Cobrança';
         WHEN pr_tptransa = 17 THEN -- Cancelamento SMS cobrança          
           pr_dsdmensg := pr_dsdmensg || 'Cancelamento de serviço de SMS de Cobrança';  
@@ -2556,7 +2581,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
   -- Frequencia: -----
   -- Objetivo  : Procedure para reprovar transacao pendente
   --
-  -- Alteração : 
+  -- Alteração :  19/05/2017 - Inclusão de tratativa para quando for tipo 13 - Recarga de celular
+  --                          pois o controle é feito pela tbrecarga_trans_pend. Projeto 321. (Lombardi)
   --
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
@@ -2659,6 +2685,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
     AND    ((pr_inoutros = 0 AND tbgen_aprova_trans_pend.nrcpf_responsavel_aprov = pr_nrcpfcgc) OR
             (pr_inoutros = 1 AND tbgen_aprova_trans_pend.nrcpf_responsavel_aprov <> pr_nrcpfcgc));
     rw_tbgen_aprova_trans_pend cr_tbgen_aprova_trans_pend%ROWTYPE;
+	      	  
+    --Cursor de transação pendente exclusivo de recarga de celular
+    CURSOR cr_tbrecarga_trans_pend(pr_cddoitem IN tbgen_trans_pend.cdtransacao_pendente%TYPE) IS  
+    SELECT tbrecarga_trans_pend.idoperacao
+    FROM   tbrecarga_trans_pend
+    WHERE  tbrecarga_trans_pend.cdtransacao_pendente = pr_cddoitem;
+    rw_tbrecarga_trans_pend cr_tbrecarga_trans_pend%ROWTYPE;
 	      	  
 	  ------------------------------------------------------
 	
@@ -2827,6 +2860,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                     --Levantar Excecao
                     RAISE vr_exc_erro;
             END;
+			      
+            IF rw_tbgen_trans_pend.tptransacao = 13 THEN
+              
+              OPEN cr_tbrecarga_trans_pend(pr_cddoitem => vr_cddoitem);
+              FETCH cr_tbrecarga_trans_pend INTO  rw_tbrecarga_trans_pend;
+              
+              IF cr_tbrecarga_trans_pend%FOUND THEN
+                
+                CLOSE cr_tbrecarga_trans_pend;
+                
+                BEGIN
+                  UPDATE tbrecarga_operacao
+                     SET insit_operacao = 6 /* não aprovada transação pendente */ 
+                   WHERE idoperacao =  rw_tbrecarga_trans_pend.idoperacao;
+                 EXCEPTION
+                   WHEN OTHERS THEN
+                        pr_cdcritic:= 0;
+                        pr_dscritic:= 'Erro na rotina INET0002.pc_verifica_rep_assinatura. '||SQLERRM;
+                        --Levantar Excecao
+                        RAISE vr_exc_erro;
+                 END;
+              ELSE 
+                CLOSE cr_tbrecarga_trans_pend;
+              END IF;
+            END IF;
 			
 			      FOR rw_tbgen_aprova_trans_pend IN cr_tbgen_aprova_trans_pend (pr_cddoitem  => vr_cddoitem
                                                                          ,pr_nrcpfcgc  => vr_nrcpfcgc
@@ -5794,7 +5852,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       vr_vltotchq VARCHAR2(100);
       vr_qtcheque INTEGER := 0;
 
-	  --Recarga de Celular
+      --Recarga de Celular
       vr_telefone  VARCHAR2(200);
       vr_vlrecarga VARCHAR2(200);
       vr_dtrecarga VARCHAR2(200);
@@ -7024,8 +7082,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
               vr_dttransa := to_char(rw_tbrecarga_trans_pend.dttransa,'DD/MM/RRRR');
               vr_nmproduto := rw_tbrecarga_trans_pend.nmproduto;
               vr_vlasomar := rw_tbrecarga_trans_pend.vlrecarga;
-			
-			--> CONTRATO DE SMS
+              
+            --> CONTRATO DE SMS
             WHEN vr_tptranpe IN (16,17) THEN
             
               --> Contrato de SMS - Transacao 16
@@ -7310,8 +7368,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
             || '<dados_campo><label>DDD/Telefone</label><valor>'            ||vr_telefone ||'</valor></dados_campo>'
             || '<dados_campo><label>Data da Recarga</label><valor>'         ||vr_dtrecarga||'</valor></dados_campo>'
             || '<dados_campo><label>Indicador de Agendamento</label><valor>'||vr_dsagenda ||'</valor></dados_campo>';
-            		 
-		 ELSIF vr_tptranpe IN (16,17) THEN --> Contrato de SMS
+            
+         ELSIF vr_tptranpe IN (16,17) THEN --> Contrato de SMS
             vr_xml_auxi := vr_xml_auxi            
             || '<dados_campo><label>Serviço</label><valor>'  || rw_sms_trans_pend.dspacote ||'</valor></dados_campo>'
             || '<dados_campo><label>Início</label><valor>'   || to_char(rw_sms_trans_pend.dtassinatura,'DD/MM/RRRR')      ||'</valor></dados_campo>';
