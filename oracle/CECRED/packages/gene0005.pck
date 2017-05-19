@@ -1475,7 +1475,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
 			WHEN vr_exc_saida THEN
         BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                   ,pr_ind_tipo_log => 1 -- Processo normal
-                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' --> Coop. --> '||pr_cdcooper||' --> Data inválida (NULL)');
+                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - GENE0005 --> fn_valida_dia_util: Data inválida (NULL) Coop.: '||pr_cdcooper);
         RETURN NULL;
       WHEN OTHERS THEN
         -- Iniciar LOG de execucão
