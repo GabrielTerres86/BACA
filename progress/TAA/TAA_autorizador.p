@@ -282,14 +282,8 @@ Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
 			08/11/2016 - Alteracoes referentes a melhoria 165 - Lancamentos Futuros. 
                          Lenilson (Mouts)		   
 
-            22/11/2016 - Inclusao do parametro pr_iptransa na chamada da rotina 
-                         pc_cadastrar_agendamento.
-                         PRJ335 - Analise de Fraude (Odirlei-AMcom ) 
-                         
             19/01/2017 - Ajuste na validação de agendamentos/pagamentos no último
                          dia do ano (Rodrigo - SD 587328)
-            02/02/2017 - #566765 Mudanca do tipo da variavel xml_resp de char para 
-                         longchar (Carlos)
                          
             03/03/2017 - Alterado para tratar Projeto 321 - Recarga de celular.
                          (Reinert)
@@ -1022,8 +1016,7 @@ DELETE OBJECT xText.
 /* Gera a resposta */
 RESPOSTA:
 DO:
-/*  Usada apenas para o log (desabilitado) */
-/*  DEFINE VARIABLE xml_resp     AS LONGCHAR   NO-UNDO. */
+    DEFINE VARIABLE xml_resp     AS CHARACTER   NO-UNDO.
 
     CREATE X-DOCUMENT xDoc.
     CREATE X-NODEREF  xRoot.
@@ -1673,17 +1666,16 @@ DO:
 
     /* log -> nao usa quebra de linha */
     xDoc:SAVE("MEMPTR",ponteiro_xml).
-/*  Usada apenas para o log (desabilitado) */
-/*  xml_resp = GET-STRING(ponteiro_xml,1) NO-ERROR. */
-/*  COPY-LOB FROM ponteiro_xml TO xml_resp CONVERT SOURCE CODEPAGE "UTF-8" NO-ERROR. */
+
+    xml_resp = GET-STRING(ponteiro_xml,1) NO-ERROR.
 
     /* verifica se o XML é muito extenso, e importa somente 32K */
-/*  IF  ERROR-STATUS:ERROR  THEN
+    IF  ERROR-STATUS:ERROR  THEN
         xml_resp = GET-STRING(ponteiro_xml,32000).
 
     ASSIGN xml_resp = REPLACE(xml_resp,CHR(10),"")
            xml_resp = REPLACE(xml_resp,CHR(13),"").
-*/
+
     SET-SIZE(ponteiro_xml) = 0.
 
     /* log desabilitado
@@ -3867,7 +3859,6 @@ PROCEDURE efetua_transferencia:
                                  INPUT 0,   /* cdfinali */
                                  INPUT ' ', /* dstransf */
                                  INPUT ' ', /* dshistor */
-                                 INPUT "",  /* pr_iptransa */
                                 OUTPUT "",  /* pr_dstransa */
                                 OUTPUT "",
                                 OUTPUT 0,
@@ -4749,7 +4740,6 @@ PROCEDURE paga_titulo:
                                                    INPUT 0,   /* cdfinali */
                                                    INPUT ' ', /* dstransf */
                                                    INPUT ' ', /* dshistor */
-                                                   INPUT "",   /* pr_iptransa */
                                                    OUTPUT "",  /* pr_dstransa */
                                                    OUTPUT "",
                                                    OUTPUT 0,
@@ -5278,7 +5268,6 @@ PROCEDURE paga_convenio:
                                                   INPUT 0,   /* cdfinali */
                                                   INPUT ' ', /* dstransf */
                                                   INPUT ' ', /* dshistor */
-                                                  INPUT '',  /* pr_iptransa */
                                                  OUTPUT "",  /* pr_dstransa */
                                                  OUTPUT "",
                                                  OUTPUT 0,
@@ -5769,7 +5758,6 @@ PROCEDURE efetua_agendamento_mensal:
                                     INPUT 0,   /* cdfinali */
                                     INPUT ' ', /* dstransf */
                                     INPUT ' ', /* dshistor */
-                                    INPUT '',  /* iptransa */
                                     OUTPUT "",  /* pr_dstransa */
                                     OUTPUT "",  /* pr_cdcritic */
                                     OUTPUT ""). /* pr_dscritic */
@@ -6178,7 +6166,6 @@ PROCEDURE verifica_comprovantes:
                                       INPUT aux_nrdconta,
                                       INPUT aux_dtinipro,
                                       INPUT aux_dtfimpro,
-                                      INPUT "",
                                       INPUT 0,
                                       INPUT 50, /* Ate 50 registros */
                                       INPUT 1,  /* Tipo Transferencia*/
@@ -6201,7 +6188,6 @@ PROCEDURE verifica_comprovantes:
                                       INPUT aux_nrdconta,
                                       INPUT aux_dtinipro,
                                       INPUT aux_dtfimpro,
-                                      INPUT "",
                                       INPUT 0,
                                       INPUT 50, /* Ate 50 registros */
                                       INPUT 6,  /* Tipo Pagamento */
@@ -6216,6 +6202,29 @@ PROCEDURE verifica_comprovantes:
     /* Copiar para a tt-cratpro */
     TEMP-TABLE tt-cratpro:COPY-TEMP-TABLE (TEMP-TABLE cratpro:HANDLE,TRUE).
 
+    RUN sistema/generico/procedures/bo_algoritmo_seguranca.p 
+        PERSISTENT SET h-bo_algoritmo_seguranca.
+
+    /* Trazer os Tipos 'Recarga de celular' */
+    RUN lista_protocolos IN h-bo_algoritmo_seguranca
+                                     (INPUT aux_cdcooper,
+                                      INPUT aux_nrdconta,
+                                      INPUT aux_dtinipro,
+                                      INPUT aux_dtfimpro,
+                                      INPUT 0,
+                                      INPUT 50, /* Ate 50 registros */
+                                      INPUT 20, /* Recarga de celular*/
+                                      INPUT 4,  /* TAA */
+                                     OUTPUT aux_dstransa,
+                                     OUTPUT aux_dscritic,
+                                     OUTPUT aux_qttotreg,
+                                     OUTPUT TABLE cratpro).
+
+    DELETE PROCEDURE h-bo_algoritmo_seguranca.
+
+    /* Copiar para a tt-cratpro */
+    TEMP-TABLE tt-cratpro:COPY-TEMP-TABLE (TEMP-TABLE cratpro:HANDLE,TRUE).
+                      
     FOR EACH tt-cratpro NO-LOCK:
 
         /* CHAVE DO COMPROVANTE */
@@ -10052,3 +10061,4 @@ PROCEDURE exclui_agendamentos_recarga:
 
 END PROCEDURE.
 /* .......................................................................... */
+
