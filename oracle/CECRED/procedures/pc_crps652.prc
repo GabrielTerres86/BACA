@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : CYBER - GERACAO DE ARQUIVO
    Sigla   : CRED
    Autor   : Lucas Reinert
-   Data    : AGOSTO/2013                      Ultima atualizacao: 28/04/2017
+   Data    : AGOSTO/2013                      Ultima atualizacao: 06/03/2017
 
    Dados referentes ao programa:
 
@@ -192,10 +192,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
 
 			   26/04/2017 - Prj 432 - Melhorias envio Cyber - adequação da geração do arquivo de baixas / pagamentos,
 			                                                  não está atualizando corretamente se o contrato for VIP (Jean/Mout´S)
-               28/04/2017 - Ajuste nas regras para enviar as baixas dos contratos. (James)             
 
 		 02/05/2017 - Prj 432 - retirar regra de não enviar baixa se contrato VIP, está gerando conflitos no Cyber 
 		                        e esta regra será revista na melhoria 302. (Jean / Mout´s)
+
 
      ............................................................................. */
 
@@ -578,7 +578,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
            FROM   crawepr
            WHERE  crawepr.cdcooper = pr_cdcooper
            AND    crawepr.nrdconta = pr_nrdconta
-       AND    crawepr.insitapr = 1 -- aprovado
+           AND    crawepr.insitapr = 1 -- aprovado
            AND   pr_nrctremp IN (crawepr.nrctrliq##1 ,
                    crawepr.nrctrliq##2 ,
                    crawepr.nrctrliq##3 , 
@@ -589,9 +589,27 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                    crawepr.nrctrliq##8 ,
                    crawepr.nrctrliq##9 ,
                    crawepr.nrctrliq##10 );
+        -- Jean Calao - Melhoria 432 - Envio informacoes CYBER
         
+        CURSOR cr_crapcyc1 (pr_cdcooper IN crapcop.cdcooper%type,
+                            pr_nrdconta in crapcyc.nrdconta%type,
+                            pr_cdorigem in crapcyc.cdorigem%type,
+                            pr_nrctremp in crapcyc.nrctremp%type) IS  
+                            
+           select flextjud
+           ,      flgjudic
+           ,      flgehvip
+           from   crapcyc
+           where  cdcooper = pr_cdcooper
+           and    cdorigem = pr_cdorigem
+           and    nrdconta = pr_nrdconta
+           and    nrctremp = pr_nrctremp;
+           
+         rw_crapcyc1 cr_crapcyc1%rowtype;
+         
          vr_cdtrscyb VARCHAR2(6);
                                 
+
        --Constantes
        vr_cdprogra CONSTANT crapprg.cdprogra%TYPE:= 'CRPS652';
 
@@ -1777,20 +1795,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
            vr_cdcritic INTEGER;
            vr_dscritic VARCHAR2(4000);
            vr_cdindice VARCHAR2(40) := '';
-           
-           --Selecionar Cadastro Cyber
-           CURSOR cr_crapcyc1 (pr_cdcooper IN crapcyc.cdcooper%type
-                              ,pr_cdorigem IN crapcyc.cdorigem%type
-                              ,pr_nrdconta IN crapcyc.nrdconta%type
-                              ,pr_nrctremp IN crapcyc.nrctremp%type) IS
-             SELECT crapcyc.flgjudic
-               FROM crapcyc
-              WHERE cdcooper = pr_cdcooper
-                AND nrdconta = pr_nrdconta
-                AND nrctremp = pr_nrctremp
-                AND DECODE(cdorigem,2,3,cdorigem) = pr_cdorigem;
-           rw_crapcyc1 cr_crapcyc1%ROWTYPE;         
-           
          BEGIN
            --Limpar parametros erro
            pr_cdcritic:= NULL;
@@ -1801,23 +1805,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
 
            IF vr_tab_acordo.EXISTS(vr_cdindice) THEN
              RETURN;
-           END IF;
-           
-           -- Buscar os dados cadastrado na tela CADCYB
-           OPEN cr_crapcyc1(pr_cdcooper => pr_rw_crapcyb.cdcooper
-                           ,pr_cdorigem => pr_rw_crapcyb.cdorigem
-                           ,pr_nrdconta => pr_rw_crapcyb.nrdconta
-                           ,pr_nrctremp => pr_rw_crapcyb.nrctremp);
-                           
-           FETCH cr_crapcyc1 INTO rw_crapcyc1;           
-           IF cr_crapcyc1%FOUND THEN
-             CLOSE cr_crapcyc1;             
-             -- Caso o contrato estiver em Cobrança Judicial nao será enviado a baixa para o CYBER
-             IF NVL(rw_crapcyc1.flgjudic,0) = 1 THEN
-               RETURN;
-           END IF;
-           ELSE
-             CLOSE cr_crapcyc1;
            END IF;
 
            --Se a origem = Conta
@@ -5017,8 +5004,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                      --Se ocorreu erro
                      IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
                       RAISE vr_exc_saida;
-                 END IF;
+                 end IF;
                  
+--                END IF;
                ELSE
                  -- Quando for normal verificar o saldo a regulalizar para ver se houve pagamento
                  -- Buscar o valor do lançamento dos históricos parametrizados para cálculo de conta corrente
@@ -5068,6 +5056,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                  -- Verifica se o saldo a regularizar e o saldo do prejuizo estao liquidados para gerar a baixa,
                  -- ou se for residuo o saldo devedor deve estar liquidado para gerar uma baixa
                  IF Nvl(rw_crapcyb.vlpreapg,0) <= 0 THEN
+
                        --Gerar carga de Baixa
                        pc_gera_carga_baixa (pr_rw_crapcyb => rw_crapcyb             --Registro Cyber
                                        ,pr_dtmvtolt   => vr_dtatual      --Data Movimento
@@ -5078,7 +5067,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                        IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
                           RAISE vr_exc_saida;
                        END IF;
-
+                   
                  END IF;
                END IF;
              END IF;
