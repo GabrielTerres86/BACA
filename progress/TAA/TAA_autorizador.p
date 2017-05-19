@@ -7,7 +7,7 @@
    
      Autor: Evandro
     
-      Data: Janeiro/2010                        Ultima alteracao: 03/03/2017
+      Data: Janeiro/2010                        Ultima alteracao: 19/05/2017
     
 Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
 
@@ -293,6 +293,10 @@ Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
 
             03/03/2017 - Alterado para tratar Projeto 321 - Recarga de celular.
                          (Reinert)
+
+			19/05/2017 - Necessaria inclusao de novo parametro na chamada da
+			             procedure lista_protocolos para Recarga de Celular
+						 (Diego).
 ............................................................................. */
 
 CREATE WIDGET-POOL.
@@ -6225,6 +6229,7 @@ PROCEDURE verifica_comprovantes:
                                       INPUT aux_nrdconta,
                                       INPUT aux_dtinipro,
                                       INPUT aux_dtfimpro,
+									  INPUT "",
                                       INPUT 0,
                                       INPUT 50, /* Ate 50 registros */
                                       INPUT 20, /* Recarga de celular*/
