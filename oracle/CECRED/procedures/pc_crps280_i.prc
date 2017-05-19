@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I_odirlei(pr_cdcooper   IN crapcop.cdcooper%TYPE --> Coop. conectada
+CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcooper%TYPE --> Coop. conectada
                                                ,pr_rw_crapdat IN btch0001.cr_crapdat%ROWTYPE --> Dados da crapdat
                                                ,pr_dtrefere   IN DATE                  --> Data de referência para o cálculo
                                                ,pr_cdprogra   IN crapprg.cdprogra%TYPE --> Codigo programa conectado
@@ -1017,6 +1017,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I_odirlei(pr_cdcooper   IN crapcop
             vr_tab_contab(vr_vladtdep)(vr_divida)(idx).vladtdep := 0;
             vr_tab_contab(vr_vlchqesp)(vr_divida)(idx).vlchqesp := 0;
          END LOOP;
+		 vr_tab_contab_cessao(vr_vleprces)(vr_provis)(1).vlempres_pf := 0;
+         vr_tab_contab_cessao(vr_vleprces)(vr_provis)(2).vlempres_pj := 0;
+         vr_tab_contab_cessao(vr_vleprces)(vr_divida)(1).vlempres_pf := 0;
+         vr_tab_contab_cessao(vr_vleprces)(vr_divida)(2).vlempres_pj := 0;
       END;
 
       /* Processar conta de migração entre cooperativas */
@@ -2907,10 +2911,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I_odirlei(pr_cdcooper   IN crapcop
                          ,pr_des_contab => 'Avais e Garantias Prestadas'
                          ,pr_num_valor1 => vr_vet_contabi.rel1760
                          ,pr_num_valor2 => vr_vet_contabi.rel1760_v
-                         ,pr_num_vlpvpf => vr_tab_contab_cessao(vr_vleprces)(vr_provis)(1).vlfinanc_pf
-                         ,pr_num_vlprpj => vr_tab_contab_cessao(vr_vleprces)(vr_provis)(2).vlfinanc_pj
-                         ,pr_num_vldvpf => vr_tab_contab_cessao(vr_vleprces)(vr_divida)(1).vlfinanc_pf
-                         ,pr_num_vldvpj => vr_tab_contab_cessao(vr_vleprces)(vr_divida)(2).vlfinanc_pj
+                         ,pr_num_vlpvpf => vr_tab_contab_cessao(vr_vleprces)(vr_provis)(1).vlempres_pf
+                         ,pr_num_vlprpj => vr_tab_contab_cessao(vr_vleprces)(vr_provis)(2).vlempres_pj
+                         ,pr_num_vldvpf => vr_tab_contab_cessao(vr_vleprces)(vr_divida)(1).vlempres_pf
+                         ,pr_num_vldvpj => vr_tab_contab_cessao(vr_vleprces)(vr_divida)(2).vlempres_pj
                          ,pr_flcessao   => 1);
                          
       -- FEchar a tag de contabilização

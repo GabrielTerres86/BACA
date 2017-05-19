@@ -622,7 +622,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
         END IF;
 
-      ELSIF rw_crapris_jur.tpemprst = 0 THEN  -- Pre-Fixado
+      ELSIF rw_crapris_jur.tpemprst = 1 THEN  -- Pre-Fixado
         
         vr_fleprces := 0; 
         --> Verificar se é um emprestimo de cessao de credito
@@ -634,18 +634,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
        
         IF vr_fleprces = 1 THEN
           
-          -- Por PA
-          IF pr_tabvljur5.exists(rw_crapris_jur.cdagenci) THEN
-            pr_tabvljur5(rw_crapris_jur.cdagenci).valorpf := NVL(pr_tabvljur5(rw_crapris_jur.cdagenci).valorpf,0) + rw_crapris_jur.vljura60;
-          ELSE
-            pr_tabvljur5(rw_crapris_jur.cdagenci).valorpf := NVL(rw_crapris_jur.vljura60,0);
-          END IF;
-          
           -- Por tipo de pessoa
           IF rw_crapris_jur.inpessoa = 1 THEN -- PF
+
             pr_vlrjuros3.valorpf := pr_vlrjuros3.valorpf + NVL(rw_crapris_jur.vljura60,0);
+          
+            -- Por PA
+            IF pr_tabvljur5.exists(rw_crapris_jur.cdagenci) THEN
+              pr_tabvljur5(rw_crapris_jur.cdagenci).valorpf := NVL(pr_tabvljur5(rw_crapris_jur.cdagenci).valorpf,0) + rw_crapris_jur.vljura60;
+            ELSE
+              pr_tabvljur5(rw_crapris_jur.cdagenci).valorpf := NVL(rw_crapris_jur.vljura60,0);
+            END IF;
           ELSE -- PJ
             pr_vlrjuros3.valorpj := pr_vlrjuros3.valorpj + NVL(rw_crapris_jur.vljura60,0);
+            
+            -- Por PA
+            IF pr_tabvljur5.exists(rw_crapris_jur.cdagenci) THEN
+              pr_tabvljur5(rw_crapris_jur.cdagenci).valorpj := NVL(pr_tabvljur5(rw_crapris_jur.cdagenci).valorpj,0) + rw_crapris_jur.vljura60;
+            ELSE
+              pr_tabvljur5(rw_crapris_jur.cdagenci).valorpj := NVL(rw_crapris_jur.vljura60,0);
+            END IF;
           END IF;
         
         ELSIF par_cdmodali = 299 THEN
@@ -2708,7 +2716,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     IF vr_vldjuros3.valorpf <> 0 THEN
 
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',5576,1756,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',5532,1756,' ||
                      TRIM(to_char(vr_vldjuros3.valorpf, '99999999999990.00')) ||
                      ',5210,' ||
                      '"(Cessao) RENDAS A APROPRIAR CESSÃO CARTAO PESSOA FISICA."';
@@ -2737,7 +2745,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- Reversão
       vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1756,5576,' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1756,5532,' ||
                      TRIM(to_char(vr_vldjuros3.valorpf, '99999999999990.00')) ||
                      ',5210,' ||
                      '"(Cessao) REVERSAO RENDAS A APROPRIAR CESSAO CARTAO PESSOA FISICA."';
@@ -2770,7 +2778,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     IF vr_vldjuros3.valorpj <> 0 THEN
 
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',5577,1757,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',5533,1757,' ||
                      TRIM(to_char(vr_vldjuros3.valorpj, '99999999999990.00')) ||
                      ',5210,' ||
                      '"(Cessao) RENDAS A APROPRIAR CESSAO CARTAO PESSOA JURIDICA."';
@@ -2799,7 +2807,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- Reversão
       vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1757,5577,' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1757,5533,' ||
                      TRIM(to_char(vr_vldjuros3.valorpj, '99999999999990.00')) ||
                      ',5210,' ||
                      '"(Cessao) REVERSAO RENDAS A APROPRIAR CESSAO CARTAO PESSOA JURIDICA."';
@@ -4191,10 +4199,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       vr_ttlanmto := vr_ttlanmto + vr_vllanmto;
 
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',5596,1760,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',5586,1760,' ||
                      TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                      ',5210,' ||
-                     '"((Cessao) PROVISAO DE CESSAO CARTAO PESSOA FISICA."';
+                     '"(Cessao) PROVISAO DE CESSAO CARTAO PESSOA FISICA."';
       pc_gravar_linha(vr_linhadet);
 
       FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
@@ -4217,7 +4225,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- REVERSÃO
       vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1760,5596,' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1760,5586,' ||
                      TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                      ',5210,' ||
                      '"(Cessao) REVERSAO PROVISAO DE CESSAO CARTAO PESSOA FISICA."';
@@ -4250,10 +4258,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       vr_ttlanmto := vr_ttlanmto + vr_vllanmto;
 
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',5597,1761,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',5587,1761,' ||
                      TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                      ',5210,' ||
-                     '"((Cessao) PROVISAO DE CESSAO CARTAO PESSOA JURIDICA."';
+                     '"(Cessao) PROVISAO DE CESSAO CARTAO PESSOA JURIDICA."';
       pc_gravar_linha(vr_linhadet);
 
       FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
@@ -4276,7 +4284,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- REVERSÃO
       vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1761,5597,' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1761,5587,' ||
                      TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                      ',5210,' ||
                      '"(Cessao) REVERSAO PROVISAO DE CESSAO CARTAO PESSOA JURIDICA."';

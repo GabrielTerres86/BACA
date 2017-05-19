@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps714 (pr_cdcooper IN crapcop.cdcooper%T
      Dados referentes ao programa:
 
      Frequencia: Executado via Job
-     Objetivo  : Realizar importação do arquivo de Cessao de fatura de cartçao
+     Objetivo  : Realizar importação do arquivo de Cessao de fatura de cartao
 
      Alteracoes: 
 
@@ -21,6 +21,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps714 (pr_cdcooper IN crapcop.cdcooper%T
   -- Código do programa
   vr_cdprogra   CONSTANT crapprg.cdprogra%TYPE := 'CRPS714';
   vr_cdcooper   NUMBER  := 3;
+  vr_qtlinha    PLS_INTEGER;
+  vr_vltotal    NUMBER(14,2);
 
   -- Tratamento de erros
   vr_exc_saida  EXCEPTION;
@@ -90,13 +92,19 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps714 (pr_cdcooper IN crapcop.cdcooper%T
   CURSOR cr_cessao (pr_cdcooper tbcrd_cessao_credito.cdcooper%TYPE,
                     pr_nrdconta tbcrd_cessao_credito.nrdconta%TYPE,      
                     pr_nrcartao tbcrd_cessao_credito.nrconta_cartao%TYPE,
-                    pr_dtvencto tbcrd_cessao_credito.dtvencto%TYPE)IS
-    SELECT nrctremp
+                    pr_dtvencto tbcrd_cessao_credito.dtvencto%TYPE,
+                    pr_dtmvtolt crapepr.dtmvtolt%TYPE)IS
+    SELECT epr.vlemprst
       FROM tbcrd_cessao_credito ces
+      JOIN crapepr epr
+        ON epr.cdcooper       = ces.cdcooper
+       AND epr.nrdconta       = ces.nrdconta
+       AND epr.nrctremp       = ces.nrctremp
      WHERE ces.cdcooper       = pr_cdcooper
        AND ces.nrdconta       = pr_nrdconta
        AND ces.nrconta_cartao = pr_nrcartao
-       AND ces.dtvencto       = pr_dtvencto;
+       AND ces.dtvencto       = pr_dtvencto
+       and epr.dtmvtolt       = pr_dtmvtolt;
   rw_cessao cr_cessao%ROWTYPE;
   
   rw_crapdat btch0001.cr_crapdat%ROWTYPE;
@@ -216,7 +224,7 @@ BEGIN
     RAISE vr_exc_saida;
   END IF;
   
-  pc_gera_log(pr_dscritic => 'Inicio da importação do arquivo '||vr_nmarqimp);
+  pc_gera_log(pr_dscritic => 'Inicio da importação do arquivo '||vr_nmarqimp||'.csv');
   
   --> Importar o arquivo texto
   gene0009.pc_importa_arq_layout(pr_nmlayout   => 'CESSAO_CARTAO', 
@@ -244,7 +252,10 @@ BEGIN
   vr_dsscript := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', 
                                            pr_cdcooper => pr_cdcooper,
                                            pr_cdacesso => 'SHELL_CRPS714');                                           
-  
+
+  --> Inicializa variaveis totalizadoras
+  vr_qtlinha := 0;
+  vr_vltotal := 0;  
   
   --> ler linhas do arquivo
   FOR vr_idx IN vr_tab_linhas.first..vr_tab_linhas.last LOOP
@@ -322,6 +333,12 @@ BEGIN
       ELSE
         CLOSE btch0001.cr_crapdat;
       END IF;
+
+      --> Ignorar se o processo estiver rodando
+      IF rw_crapdat.inproces > 1 THEN
+        vr_dscritic := 'Cooperativa '|| rw_crapcop.cdcooper ||' está com o processo em execução.';
+        RAISE vr_exc_prox;
+      END IF;
             
       --> Definir data de vencimento do emprestimo
       vr_dtvencto := rw_crapdat.dtmvtolt + 1;
@@ -380,11 +397,15 @@ BEGIN
       OPEN cr_cessao (pr_cdcooper => rw_crapcop.cdcooper,
                       pr_nrdconta => rw_crapass.nrdconta,
                       pr_nrcartao => vr_nrcartao,
-                      pr_dtvencto => vr_dtvencto_ori);
+                      pr_dtvencto => vr_dtvencto_ori,
+                      pr_dtmvtolt => rw_crapdat.dtmvtolt);
       FETCH cr_cessao INTO rw_cessao;
       IF cr_cessao%NOTFOUND THEN
-        vr_dscritic := 'Contrado de cessão de credito não foi criado';
-        pc_gera_log(pr_dscritic => 'linha: '||vr_idx||' -> '||vr_dscritic);      
+        vr_dscritic := 'Contrato de cessão de credito não foi criado';
+        pc_gera_log(pr_dscritic => 'linha: '||vr_idx||' -> '||vr_dscritic);
+      ELSE
+        vr_qtlinha := vr_qtlinha + 1;
+        vr_vltotal := vr_vltotal + rw_cessao.vlemprst;
       END IF;
       CLOSE cr_cessao;
             
@@ -400,7 +421,7 @@ BEGIN
   
   -- Montar Comando para mover o arquivo lido para o diretório importados
   vr_dscomand:= 'mv '|| vr_dsdirarq || '/Importar/' || vr_nmarqimp || '.csv ' ||
-                 vr_dsdirarq || '/Importados/' || vr_nmarqimp || gene0002.fn_busca_time||'.csv ';
+                 vr_dsdirarq || '/Importados/' || vr_nmarqimp || '_' || to_char(SYSDATE, 'hh24miss') ||'.csv ';
                                    
   -- Executar o comando no unix
   GENE0001.pc_OScommand(pr_typ_comando => 'S'
@@ -416,7 +437,9 @@ BEGIN
   
   
   
-  pc_gera_log(pr_dscritic => 'Final da importação do arquivo '||vr_nmarqimp);
+  pc_gera_log(pr_dscritic => 'Final da importação do arquivo '||vr_nmarqimp||'.csv -'||
+                             ' Quantidade de Empréstimos criados: '|| to_char(vr_qtlinha,'fm000') || 
+                             ' Valor Total: ' || to_char(vr_vltotal,'fm999g999g990d00') ););
   
   
   ----------------- ENCERRAMENTO DO PROGRAMA -------------------
