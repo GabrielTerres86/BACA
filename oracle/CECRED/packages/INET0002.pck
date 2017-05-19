@@ -1184,7 +1184,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
   -- Frequencia: -----
   -- Objetivo  : Procedure para excluir transacoes pendentes
   --
-  -- Alteração : 
+  -- Alteração : 19/05/2017 - Inclusão de tratativa para quando for tipo 13 - Recarga de celular
+  --                          pois o controle é feito pela tbrecarga_trans_pend. Projeto 321. (Lombardi)
   --
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
@@ -1243,10 +1244,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       CURSOR cr_tbgen_trans_pend( pr_cddoitem IN tbgen_trans_pend.cdtransacao_pendente%TYPE) IS  
         SELECT tbgen_trans_pend.nrcpf_operador,
                tbgen_trans_pend.idsituacao_transacao,
-               tbgen_trans_pend.cdtransacao_pendente
+               tbgen_trans_pend.cdtransacao_pendente,
+               tbgen_trans_pend.tptransacao
         FROM   tbgen_trans_pend 
         WHERE  tbgen_trans_pend.cdtransacao_pendente = pr_cddoitem;
       rw_tbgen_trans_pend cr_tbgen_trans_pend%ROWTYPE;
+      
+      CURSOR cr_tbrecarga_trans_pend(pr_cddoitem IN tbgen_trans_pend.cdtransacao_pendente%TYPE) IS  
+        SELECT tbrecarga_trans_pend.idoperacao
+          FROM tbrecarga_trans_pend
+         WHERE tbrecarga_trans_pend.cdtransacao_pendente = pr_cddoitem;
+      rw_tbrecarga_trans_pend cr_tbrecarga_trans_pend%ROWTYPE;
     ------------------------------------------------------
     -------------- INICIO BLOCO PRINCIPAL ----------------
     ------------------------------------------------------      
@@ -1378,6 +1386,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                 UPDATE tbgen_trans_pend SET 
                        tbgen_trans_pend.nrcpf_representante  = vr_nrcpfcgc
                  WHERE tbgen_trans_pend.cdtransacao_pendente = vr_cddoitem;
+            END IF;
+            
+            IF rw_tbgen_trans_pend.tptransacao = 13 THEN
+              
+              OPEN cr_tbrecarga_trans_pend(pr_cddoitem => vr_cddoitem);
+              FETCH cr_tbrecarga_trans_pend INTO  rw_tbrecarga_trans_pend;
+              
+              IF cr_tbrecarga_trans_pend%FOUND THEN
+                
+                CLOSE cr_tbrecarga_trans_pend;
+                
+                UPDATE tbrecarga_operacao
+                   SET insit_operacao = 4 /* cancelada transação pendente */ 
+                 WHERE idoperacao =  rw_tbrecarga_trans_pend.idoperacao;
+         ELSE
+                CLOSE cr_tbrecarga_trans_pend;
+              END IF;
             END IF;
          ELSE
             CLOSE cr_tbgen_trans_pend;
@@ -2507,7 +2532,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
   -- Frequencia: -----
   -- Objetivo  : Procedure para reprovar transacao pendente
   --
-  -- Alteração : 
+  -- Alteração :  19/05/2017 - Inclusão de tratativa para quando for tipo 13 - Recarga de celular
+  --                          pois o controle é feito pela tbrecarga_trans_pend. Projeto 321. (Lombardi)
   --
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
@@ -2610,6 +2636,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
     AND    ((pr_inoutros = 0 AND tbgen_aprova_trans_pend.nrcpf_responsavel_aprov = pr_nrcpfcgc) OR
             (pr_inoutros = 1 AND tbgen_aprova_trans_pend.nrcpf_responsavel_aprov <> pr_nrcpfcgc));
     rw_tbgen_aprova_trans_pend cr_tbgen_aprova_trans_pend%ROWTYPE;
+	      	  
+    --Cursor de transação pendente exclusivo de recarga de celular
+    CURSOR cr_tbrecarga_trans_pend(pr_cddoitem IN tbgen_trans_pend.cdtransacao_pendente%TYPE) IS  
+    SELECT tbrecarga_trans_pend.idoperacao
+    FROM   tbrecarga_trans_pend
+    WHERE  tbrecarga_trans_pend.cdtransacao_pendente = pr_cddoitem;
+    rw_tbrecarga_trans_pend cr_tbrecarga_trans_pend%ROWTYPE;
 	      	  
 	  ------------------------------------------------------
 	
@@ -2778,6 +2811,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                     --Levantar Excecao
                     RAISE vr_exc_erro;
             END;
+			      
+            IF rw_tbgen_trans_pend.tptransacao = 13 THEN
+              
+              OPEN cr_tbrecarga_trans_pend(pr_cddoitem => vr_cddoitem);
+              FETCH cr_tbrecarga_trans_pend INTO  rw_tbrecarga_trans_pend;
+              
+              IF cr_tbrecarga_trans_pend%FOUND THEN
+                
+                CLOSE cr_tbrecarga_trans_pend;
+                
+                BEGIN
+                  UPDATE tbrecarga_operacao
+                     SET insit_operacao = 6 /* não aprovada transação pendente */ 
+                   WHERE idoperacao =  rw_tbrecarga_trans_pend.idoperacao;
+                 EXCEPTION
+                   WHEN OTHERS THEN
+                        pr_cdcritic:= 0;
+                        pr_dscritic:= 'Erro na rotina INET0002.pc_verifica_rep_assinatura. '||SQLERRM;
+                        --Levantar Excecao
+                        RAISE vr_exc_erro;
+                 END;
+              ELSE 
+                CLOSE cr_tbrecarga_trans_pend;
+              END IF;
+            END IF;
 			
 			      FOR rw_tbgen_aprova_trans_pend IN cr_tbgen_aprova_trans_pend (pr_cddoitem  => vr_cddoitem
                                                                          ,pr_nrcpfcgc  => vr_nrcpfcgc
