@@ -1160,7 +1160,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 22/02/2017
+  --  Data     : Junho/2013.                   Ultima atualizacao: 22/05/2017
   --
   -- Dados referentes ao programa:
   --
@@ -1488,6 +1488,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 
        22/02/2017 - Ajustes para correçao de crítica de pagamento DARF/DAS (Lucas Lunelli - P.349.2)      
 
+       22/05/2017 - Incluido validacao para nao agendar faturas vencidas
+                    para PM.TROMBUDO CENTRAL e FMS.TROMBUDO CENTRAL
+                    (Tiago/Fabricio #653830)
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Cursores da Package */
@@ -9578,7 +9581,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --  Sistema  : Rotinas Internet
     --  Sigla    : AGEN
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Junho/2013.                   Ultima atualizacao: 03/09/2014
+    --  Data     : Junho/2013.                   Ultima atualizacao: 22/05/2017
     --
     --  Dados referentes ao programa:
     --
@@ -9587,6 +9590,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --
     --   Alterações: 03/09/2014 - Incluido tratamento para migracao Credimilsul -> Scrcred,
     --                            Concredi -> Viacredi (Jean Michel).
+    --
+    --               22/05/2017 - Incluido validacao para nao agendar faturas vencidas
+    --                            para PM.TROMBUDO CENTRAL e FMS.TROMBUDO CENTRAL
+    --                            (Tiago/Fabricio #653830)
     -- ..........................................................................
 
   BEGIN
@@ -10026,6 +10033,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
       END IF;
 
       IF pr_idagenda = 2 THEN /** Agendamento **/
+        
+        -- Validar se fatura esta vencida
+        IF ((rw_crapcon.cdempcon = 2044 AND rw_crapcon.cdsegmto = 1)  OR  -- P.M. ITAJAI 
+            (rw_crapcon.cdempcon = 3493 AND rw_crapcon.cdsegmto = 1)  OR  --P.M. PRES GETULIO 
+            (rw_crapcon.cdempcon = 1756 AND rw_crapcon.cdsegmto = 1)  OR  -- P.M. GUARAMIRIM 
+            (rw_crapcon.cdempcon = 4539 AND rw_crapcon.cdsegmto = 1)  OR  -- P.M. TIMBO 
+            (rw_crapcon.cdempcon = 0040 AND rw_crapcon.cdsegmto = 1)  OR  -- P.M. AGROLANDIA
+            (rw_crapcon.cdempcon = 4594 AND rw_crapcon.cdsegmto = 1)  OR  -- P.M. TROMBUDO CENTRAL
+            (rw_crapcon.cdempcon = 0562 AND rw_crapcon.cdsegmto = 5)  OR  -- DEFESA CIVIL TIMBO 
+            (rw_crapcon.cdempcon = 0563 AND rw_crapcon.cdsegmto = 5)  OR  -- MEIO AMBIENTE DE TIMBO 
+            (rw_crapcon.cdempcon = 0564 AND rw_crapcon.cdsegmto = 5)  OR  -- TRANSITO DE TIMBO 
+            (rw_crapcon.cdempcon = 0524 AND rw_crapcon.cdsegmto = 5)  OR  -- F.M.S. TROMBUDO CENTRAL
+            ) THEN 
+
+          IF To_Number(SUBSTR(pr_cdbarras,20,8)) < To_Number(To_Char(pr_dtagenda,'YYYYMMDD')) THEN            
+             vr_cdcritic:= 0;
+             vr_dscritic:= 'Agendamento nao permitido apos o vencimento.';
+             --Levantar Excecao
+             RAISE vr_exc_erro;
+          END IF;
+        END IF;
+
+        -- SANEPAR
+        IF rw_crapcon.cdempcon = 0109 AND rw_crapcon.cdsegmto = 2 THEN
+          -- Validar vencimento - 25 dias
+          IF To_Number(SUBSTR(pr_cdbarras,20,8)) < To_Number(To_Char(pr_dtagenda - 25,'YYYYMMDD')) THEN
+            vr_cdcritic:= 0;
+            vr_dscritic:= 'Agendamento nao permitido apos o vencimento.';
+            --Levantar Excecao
+            RAISE vr_exc_erro;            
+          END IF;
+        END IF;
+      
         --Selecionar lancamentos automaticos
         OPEN cr_craplau (pr_cdcooper => pr_cdcooper
                         ,pr_nrdconta => pr_nrdconta

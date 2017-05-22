@@ -210,6 +210,9 @@
                            
              20/03/2017 - Ajuste para verificar vencimento da P.M. TIMBO, DEFESA CIVIL TIMBO  
                           MEIO AMBIENTE DE TIMBO, TRANSITO DE TIMBO (Lucas Ranghetti #630176)
+                          
+             07/02/2017 - Ajustes para verificar vencimento da P.M. TROMBUDO CENTRAL 
+                          e FMS TROMBUDO CENTRAL (Tiago/Fabricio SD653830)
 ............................................................................ */
 
 {dbo/bo-erro1.i}
@@ -623,9 +626,12 @@ PROCEDURE retorna-valores-fatura.
 	      (crapcon.cdempcon = 3493 AND crapcon.cdsegmto = 1)  OR    /* P.M. PRES GETULIO */
 	      (crapcon.cdempcon = 1756 AND crapcon.cdsegmto = 1)  OR    /* P.M. GUARAMIRIM */
         (crapcon.cdempcon = 4539 AND crapcon.cdsegmto = 1)  OR    /* P.M. TIMBO */
+        (crapcon.cdempcon = 4594 AND crapcon.cdsegmto = 1)  OR    /* P.M. TROMBUDO CENTRAL */
         (crapcon.cdempcon = 0562 AND crapcon.cdsegmto = 5)  OR    /* DEFESA CIVIL TIMBO */
         (crapcon.cdempcon = 0563 AND crapcon.cdsegmto = 5)  OR    /* MEIO AMBIENTE DE TIMBO */
-        (crapcon.cdempcon = 0564 AND crapcon.cdsegmto = 5)) THEN  /* TRANSITO DE TIMBO */
+        (crapcon.cdempcon = 0564 AND crapcon.cdsegmto = 5)  OR    /* TRANSITO DE TIMBO */
+        (crapcon.cdempcon = 0524 AND crapcon.cdsegmto = 5)        /* F.M.S TROMBUDO CENTRAL */ 
+        ) THEN  
          DO:
              aux_dtmvtoan = STRING(YEAR(crapdat.dtmvtoan),"9999") +
                             STRING(MONTH(crapdat.dtmvtoan),"99")  +
