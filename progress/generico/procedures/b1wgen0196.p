@@ -260,8 +260,6 @@ PROCEDURE grava_dados:
                                              INPUT 30,   /* par_inconfi2 */
                                              INPUT 0,
                                              INPUT "", /* cdmodali */
-                                             INPUT 0,  /* par_idcarenc */
-                                             INPUT ?,  /* par_dtcarenc */
                                              OUTPUT TABLE tt-erro,
                                              OUTPUT TABLE tt-msg-confirma,
                                              OUTPUT TABLE tt-ge-epr,
@@ -479,8 +477,6 @@ PROCEDURE grava_dados:
                         INPUT "",           /* par_dsctrliq */
                         INPUT 0,            /* par_nrctaava */
                         INPUT 0,            /* par_nrctaav2 */
-                        INPUT 0,            /* par_idcarenc */
-                        INPUT ?,            /* par_dtcarenc */
                         /*-------Rating------ */
                         INPUT tt-dados-analise.nrgarope, /* par_nrgarope INTE */
                         INPUT tt-dados-analise.nrperger, /* par_nrperger INTE */

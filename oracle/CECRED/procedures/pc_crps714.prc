@@ -220,9 +220,14 @@ BEGIN
   END IF;
   
   IF vr_listdarq IS NULL THEN
-    vr_dscritic := 'Arquivo '||vr_nmarqimp||' não encontrado.';
-    RAISE vr_exc_saida;
+    --> Caso nao encontr o arquivo, apenas sai do processo
+    --> arquivo poderá ser processado posteriormente
+    --vr_dscritic := 'Arquivo '||vr_nmarqimp||' não encontrado.';
+    RETURN;
   END IF;
+  
+  -- Log de inicio da execução
+  pc_controla_log_batch('I');
   
   pc_gera_log(pr_dscritic => 'Inicio da importação do arquivo '||vr_nmarqimp||'.csv');
   
