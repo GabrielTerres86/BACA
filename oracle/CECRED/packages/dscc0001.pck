@@ -359,6 +359,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCC0001 AS
 																			 ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Código do Operador
 																			 ,pr_nrborder IN crapabc.nrborder%TYPE  --> numero do bordero
 																			 ,pr_tab_cheques IN OUT typ_tab_cheques --> PlTable com dados dos cheques
+																			 ,pr_flganali IN INTEGER DEFAULT 1      --> Flag deve atualizar o status para analisado
 																			 ,pr_cdcritic OUT PLS_INTEGER           --> Cód. da crítica
 																			 ,pr_dscritic OUT VARCHAR2);            --> Descrição da crítica																		
 
@@ -4274,7 +4275,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
         -- Se NAO encontrar
         IF NOT vr_blnfound THEN
           vr_nmcheque := 'NAO CADASTRADO';
-          vr_nrcpfcgc := 0; -- 'NAO CADASTRADO';
+          vr_nrcpfcgc := rw_crapcdb.nrcpfcgc; -- 'NAO CADASTRADO';
         ELSE
           -- Validar CPF/CNPJ
           gene0005.pc_valida_cpf_cnpj(pr_nrcalcul => rw_crapcec.nrcpfcgc, 
@@ -4624,6 +4625,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 																			 ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Código do Operador
 																			 ,pr_nrborder IN crapabc.nrborder%TYPE  --> numero do bordero
 																			 ,pr_tab_cheques IN OUT typ_tab_cheques --> PlTable com dados dos cheques
+																			 ,pr_flganali IN INTEGER DEFAULT 1      --> Flag deve atualizar o status para analisado
 																			 ,pr_cdcritic OUT PLS_INTEGER           --> Cód. da crítica
 																			 ,pr_dscritic OUT VARCHAR2) IS          --> Descrição da crítica
   /* .............................................................................
@@ -4665,7 +4667,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 	vr_vlperliq NUMBER;               -- Valor percentual de liquidez
 	vr_vlrendim NUMBER;               -- Valor de rendimento do cooperado
 	vr_przmxcmp NUMBER;               -- Data prazo máximo
-  
+	
     vr_nrcpfcgc NUMBER;
 	
 	-- Buscar todas as ocorrencias cadastradas
@@ -4721,7 +4723,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 										 pr_cdbanchq IN crapcec.cdbanchq%TYPE,
 										 pr_cdagechq IN crapcec.cdagechq%TYPE,
 										 pr_nrctachq IN crapcec.nrctachq%TYPE,
-                                         pr_nrcpfcgc IN crapcec.nrcpfcgc%TYPE)IS
+										 pr_nrcpfcgc IN crapcec.nrcpfcgc%TYPE)IS
 		SELECT cec.nrcpfcgc
           ,substr(to_char(cec.nrcpfcgc),1,LENGTH(cec.nrcpfcgc)-6) raizcnpj
 			FROM crapcec cec
@@ -4731,7 +4733,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			 AND cec.cdagechq = pr_cdagechq
 			 AND cec.nrctachq = pr_nrctachq
 			 AND cec.nrdconta = 0
-             AND cec.nrcpfcgc = pr_nrcpfcgc;
+			 AND cec.nrcpfcgc = pr_nrcpfcgc;
 	rw_crapcec  cr_crapcec%ROWTYPE;
 
   -- Verificar se o emitente é titular da conta
@@ -5299,134 +5301,133 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			END IF;
 			-- Fechar cursor
 			CLOSE cr_crapcdb;
-      
+			
       IF pr_tab_cheques(vr_index).cdbanchq <> 85 THEN
 			
-        -- Buscar emitente do cheque
-        OPEN cr_crapcec(pr_cdcooper => pr_cdcooper
-                       ,pr_cdcmpchq => pr_tab_cheques(vr_index).cdcmpchq
-                       ,pr_cdbanchq => pr_tab_cheques(vr_index).cdbanchq
-                       ,pr_cdagechq => pr_tab_cheques(vr_index).cdagechq
-                       ,pr_nrctachq => pr_tab_cheques(vr_index).nrctachq
-                       ,pr_nrcpfcgc => pr_tab_cheques(vr_index).nrcpfcgc);
-        FETCH cr_crapcec INTO rw_crapcec;
+			-- Buscar emitente do cheque
+			OPEN cr_crapcec(pr_cdcooper => pr_cdcooper
+			               ,pr_cdcmpchq => pr_tab_cheques(vr_index).cdcmpchq
+						   ,pr_cdbanchq => pr_tab_cheques(vr_index).cdbanchq
+						   ,pr_cdagechq => pr_tab_cheques(vr_index).cdagechq
+						   ,pr_nrctachq => pr_tab_cheques(vr_index).nrctachq
+						   ,pr_nrcpfcgc => pr_tab_cheques(vr_index).nrcpfcgc);
+			FETCH cr_crapcec INTO rw_crapcec;
 			
-        -- Se não encontrar emitente
+			-- Se não encontrar emitente
         IF cr_crapcec%NOTFOUND THEN
           
-          -- Fechar cursor
-		  CLOSE cr_crapcec;
-          
-          -- Variavel auxiliar
-          vr_nrcpfcgc := 0;
-           
-          -- Gerar ocorrencia 22 - Emitente não cadastrado
-          pc_gerar_ocorrencia_chq(pr_tab_cheques => pr_tab_cheques
-                                 ,pr_idx_cheques => vr_index
-                                 ,pr_cdocorre => 22
-                                 ,pr_dsrestri => NULL
-                                 ,pr_dsdetres => NULL);
-        ELSE
-        
           -- Fechar cursor
 			    CLOSE cr_crapcec;
           
           -- Variavel auxiliar
+          vr_nrcpfcgc := 0;
+          
+			  -- Gerar ocorrencia 22 - Emitente não cadastrado
+				pc_gerar_ocorrencia_chq(pr_tab_cheques => pr_tab_cheques
+															 ,pr_idx_cheques => vr_index
+															 ,pr_cdocorre => 22
+															 ,pr_dsrestri => NULL
+															 ,pr_dsdetres => NULL);
+        ELSE
+          
+			-- Fechar cursor
+			CLOSE cr_crapcec;
+          
+          -- Variavel auxiliar
           vr_nrcpfcgc := rw_crapcec.nrcpfcgc; 
-			
-      
-          -- CPF/CNPJ do emitente é o mesmo do cooperado
-          IF rw_crapcec.nrcpfcgc = rw_crapass.nrcpfcgc THEN
-            -- Gerar ocorrencia 23 - Cheque possui CPF/CNPJ do cooperado
+			    
+			-- CPF/CNPJ do emitente é o mesmo do cooperado
+	    IF rw_crapcec.nrcpfcgc = rw_crapass.nrcpfcgc THEN
+				-- Gerar ocorrencia 23 - Cheque possui CPF/CNPJ do cooperado
+				pc_gerar_ocorrencia_chq(pr_tab_cheques => pr_tab_cheques
+															 ,pr_idx_cheques => vr_index
+															 ,pr_cdocorre => 23
+															 ,pr_dsrestri => NULL
+															 ,pr_dsdetres => NULL);
+			END IF;		
+          	
+      -- Se não for pf
+			IF rw_crapass.inpessoa <> 1 THEN
+				-- Verificar se a raiz do CNPJ do cheque é o mesmo do cooperado
+				IF rw_crapass.raizcnpj = rw_crapcec.raizcnpj THEN
+					-- Gerar ocorrencia 23 - Cheque possui CPF/CNPJ do cooperado
+					pc_gerar_ocorrencia_chq(pr_tab_cheques => pr_tab_cheques
+																 ,pr_idx_cheques => vr_index
+																 ,pr_cdocorre => 23
+																 ,pr_dsrestri => NULL
+																 ,pr_dsdetres => NULL);
+					
+				END IF;
+        
+        -- Verificar se Emitente é Conjugue do Cooperado
+        IF vr_tab_lim_desconto(vr_inpessoa).flemipar = 1 THEN
+          -- Verificar se o emitente é conjuge de algum titular da conta
+          OPEN cr_crapavt(pr_cdcooper => pr_cdcooper
+                         ,pr_nrdconta => pr_nrdconta
+                         ,pr_nrdctato => pr_tab_cheques(vr_index).nrctachq
+                         ,pr_nrcpfcgc => rw_crapcec.nrcpfcgc);
+          FETCH cr_crapavt INTO rw_crapavt;
+  					
+          -- Se encontrou
+          IF cr_crapavt%FOUND THEN
+            -- Gerar ocorrencia 11 - Emitente é sócio do cooperado
             pc_gerar_ocorrencia_chq(pr_tab_cheques => pr_tab_cheques
                                    ,pr_idx_cheques => vr_index
-                                   ,pr_cdocorre => 23
+                                   ,pr_cdocorre => 11
                                    ,pr_dsrestri => NULL
                                    ,pr_dsdetres => NULL);
-          END IF;	
-          	
-          -- Se não for pf
-          IF rw_crapass.inpessoa <> 1 THEN
-            -- Verificar se a raiz do CNPJ do cheque é o mesmo do cooperado
-            IF rw_crapass.raizcnpj = rw_crapcec.raizcnpj THEN
-              -- Gerar ocorrencia 23 - Cheque possui CPF/CNPJ do cooperado
-              pc_gerar_ocorrencia_chq(pr_tab_cheques => pr_tab_cheques
-                                     ,pr_idx_cheques => vr_index
-                                     ,pr_cdocorre => 23
-                                     ,pr_dsrestri => NULL
-                                     ,pr_dsdetres => NULL);
-    					
-            END IF;
-            
-            -- Verificar se Emitente é Conjugue do Cooperado
-            IF vr_tab_lim_desconto(vr_inpessoa).flemipar = 1 THEN
-              -- Verificar se o emitente é conjuge de algum titular da conta
-              OPEN cr_crapavt(pr_cdcooper => pr_cdcooper
-                             ,pr_nrdconta => pr_nrdconta
-                             ,pr_nrdctato => pr_tab_cheques(vr_index).nrctachq
-                             ,pr_nrcpfcgc => rw_crapcec.nrcpfcgc);
-              FETCH cr_crapavt INTO rw_crapavt;
-      					
-              -- Se encontrou
-              IF cr_crapavt%FOUND THEN
-                -- Gerar ocorrencia 11 - Emitente é sócio do cooperado
-                pc_gerar_ocorrencia_chq(pr_tab_cheques => pr_tab_cheques
-                                       ,pr_idx_cheques => vr_index
-                                       ,pr_cdocorre => 11
-                                       ,pr_dsrestri => NULL
-                                       ,pr_dsdetres => NULL);
 
-              END IF;
-              -- Fechar cursor
-              CLOSE cr_crapavt;
-            END IF;
-            
-          ELSE
-            -- Verificar CPF/CNPJ se o emitente é algum titular da conta
-            OPEN cr_crapttl(pr_cdcooper => pr_cdcooper
-                           ,pr_nrdconta => pr_nrdconta
-                           ,pr_nrcpfcgc => rw_crapcec.nrcpfcgc);
-            FETCH cr_crapttl INTO rw_crapttl;
-    				
-            -- Se encontrou
-            IF cr_crapttl%FOUND THEN
-              -- Gerar ocorrencia 24 - Emitente é segundo/terceiro titular
-              pc_gerar_ocorrencia_chq(pr_tab_cheques => pr_tab_cheques
-                                     ,pr_idx_cheques => vr_index
-                                     ,pr_cdocorre => 24
-                                     ,pr_dsrestri => NULL
-                                     ,pr_dsdetres => NULL);
-
-            END IF;
-            -- Fechar cursor
-            CLOSE cr_crapttl;
-            -- Verificar se Emitente é Conjugue do Cooperado
-            IF vr_tab_lim_desconto(vr_inpessoa).flemipar = 1 THEN
-              -- Verificar se o emitente é conjuge de algum titular da conta
-              OPEN cr_crapcje(pr_cdcooper => pr_cdcooper
-                             ,pr_nrdconta => pr_nrdconta
-                             ,pr_nrctacje => pr_tab_cheques(vr_index).nrctachq
-                             ,pr_nrcpfcgc => rw_crapcec.nrcpfcgc);
-              FETCH cr_crapcje INTO rw_crapcje;
-    					
-              -- Se encontrou
-              IF cr_crapcje%FOUND THEN
-                -- Gerar ocorrencia 25 - Emitente é conjuge
-                pc_gerar_ocorrencia_chq(pr_tab_cheques => pr_tab_cheques
-                                       ,pr_idx_cheques => vr_index
-                                       ,pr_cdocorre => 25
-                                       ,pr_dsrestri => NULL
-                                       ,pr_dsdetres => NULL);
-
-              END IF;
-              -- Fechar cursor
-              CLOSE cr_crapcje;
-            END IF;
           END IF;
-          
+          -- Fechar cursor
+          CLOSE cr_crapavt;
+        END IF;
+        
+			ELSE
+        -- Verificar CPF/CNPJ se o emitente é algum titular da conta
+				OPEN cr_crapttl(pr_cdcooper => pr_cdcooper
+				               ,pr_nrdconta => pr_nrdconta
+											 ,pr_nrcpfcgc => rw_crapcec.nrcpfcgc);
+				FETCH cr_crapttl INTO rw_crapttl;
+				
+				-- Se encontrou
+				IF cr_crapttl%FOUND THEN
+					-- Gerar ocorrencia 24 - Emitente é segundo/terceiro titular
+					pc_gerar_ocorrencia_chq(pr_tab_cheques => pr_tab_cheques
+																 ,pr_idx_cheques => vr_index
+																 ,pr_cdocorre => 24
+																 ,pr_dsrestri => NULL
+																 ,pr_dsdetres => NULL);
+
+				END IF;
+				-- Fechar cursor
+				CLOSE cr_crapttl;
+				-- Verificar se Emitente é Conjugue do Cooperado
+				IF vr_tab_lim_desconto(vr_inpessoa).flemipar = 1 THEN
+					-- Verificar se o emitente é conjuge de algum titular da conta
+					OPEN cr_crapcje(pr_cdcooper => pr_cdcooper
+												 ,pr_nrdconta => pr_nrdconta
+                         ,pr_nrctacje => pr_tab_cheques(vr_index).nrctachq
+												 ,pr_nrcpfcgc => rw_crapcec.nrcpfcgc);
+					FETCH cr_crapcje INTO rw_crapcje;
+					
+					-- Se encontrou
+					IF cr_crapcje%FOUND THEN
+						-- Gerar ocorrencia 25 - Emitente é conjuge
+						pc_gerar_ocorrencia_chq(pr_tab_cheques => pr_tab_cheques
+																	 ,pr_idx_cheques => vr_index
+																	 ,pr_cdocorre => 25
+																	 ,pr_dsrestri => NULL
+																	 ,pr_dsdetres => NULL);
+
+					END IF;
+					-- Fechar cursor
+					CLOSE cr_crapcje;
+				END IF;
+			END IF;
+			
         END IF;  
           
-      END IF;    
+			END IF;
 			
 			-- Se é necessário verificar prejuizo de emitente na cooperativa
 			IF vr_tab_lim_desconto(vr_inpessoa).Flpjzemi = 1 THEN
@@ -5776,14 +5777,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 		END IF;
 		-- Fechar cursor
 		CLOSE cr_crapbdc;
-		
+		IF pr_flganali = 1 THEN
 		-- atualizar o status do borderô para "Em análise";
 		UPDATE crapbdc SET insitbdc = 2
 		 WHERE cdcooper = pr_cdcooper
 			 AND nrdconta = pr_nrdconta
 			 AND nrborder = pr_nrborder
 			 AND insitbdc = 1;
-				
+		END IF;
 		-- Efetuar commit
 		COMMIT;
 		
