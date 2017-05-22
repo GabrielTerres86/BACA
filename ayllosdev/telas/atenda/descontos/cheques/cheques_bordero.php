@@ -152,16 +152,16 @@
 
 <div id="divBotoes" >
 	<a href="#" class="botao" id="btVoltar" onclick="voltaDiv(2,1,4,'DESCONTO DE CHEQUES','DSC CHQS');carregaCheques();return false;">Voltar</a>
-	<a href="#" class="botao" id="btIncluir" style="<? $dispI ?>" onclick="mostraFormIABordero('I');">Incluir</a>
-	<a href="#" class="botao" id="btConsultar" style="<? $dispC ?>" onClick="mostraDadosBorderoDscChq('C');return false;">Consultar</a>
-	<a href="#" class="botao" id="btAlterar" style="<? $dispA ?>" onclick="mostraFormIABordero('A');">Alterar</a>
-	<a href="#" class="botao" id="btExcluir" style="<? $dispE ?>" onClick="mostraDadosBorderoDscChq('E');return false;">Excluir</a>
-	<a href="#" class="botao" id="btAnalisar" style="<? $dispN ?>" onclick="mostraFormAnaliseBordero();return false;">Analisar</a>
+	<a href="#" class="botao" id="btIncluir" style="<? echo $dispI ?>" onclick="mostraFormIABordero('I');">Incluir</a>
+	<a href="#" class="botao" id="btConsultar" style="<? echo $dispC ?>" onClick="mostraDadosBorderoDscChq('C');return false;">Consultar</a>
+	<a href="#" class="botao" id="btAlterar" style="<? echo $dispA ?>" onclick="mostraFormIABordero('A');">Alterar</a>
+	<a href="#" class="botao" id="btExcluir" style="<? echo $dispE ?>" onClick="mostraDadosBorderoDscChq('E');return false;">Excluir</a>
+	<a href="#" class="botao" id="btAnalisar" style="<? echo $dispN ?>" onclick="mostraFormAnaliseBordero();return false;">Analisar</a>
 	<div style="margin-top: 3px" />
-	<a href="#" class="botao" id="btImprimir" style="<? $dispM ?>" onClick="mostraImprimirBordero();return false;">Imprimir</a>
-	<a href="#" class="botao" id="btLiberar" style="<? $dispL ?>" onclick="verificaAssinaturaBordero(); return false;">Liberar</a>
-	<a href="#" class="botao" id="btResgatar" style="<? $dispG ?>" onclick="mostraFormResgate(); return false;">Resgatar</a>
-	<a href="#" class="botao" id="btRejeitar" style="<? $dispR ?>" onClick="confirmaRejeitaBordero();return false;">Rejeitar</a>
+	<a href="#" class="botao" id="btImprimir" style="<? echo $dispM ?>" onClick="mostraImprimirBordero();return false;">Imprimir</a>
+	<a href="#" class="botao" id="btLiberar" style="<? echo $dispL ?>" onclick="verificaAssinaturaBordero(); return false;">Liberar</a>
+	<a href="#" class="botao" id="btResgatar" style="<? echo $dispG ?>" onclick="mostraFormResgate(); return false;">Resgatar</a>
+	<a href="#" class="botao" id="btRejeitar" style="<? echo $dispR ?>" onClick="confirmaRejeitaBordero();return false;">Rejeitar</a>
 </div>
 
 <script type="text/javascript">
