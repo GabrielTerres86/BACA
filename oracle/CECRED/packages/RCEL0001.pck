@@ -4605,6 +4605,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
           END LOOP;
         END LOOP;
         
+        -- Se tiver valor do repasse
+        IF vr_vlrepass > 0 THEN
+          
         OPEN cr_crapcop;
         FETCH cr_crapcop INTO rw_crapcop;
         IF cr_crapcop%NOTFOUND THEN
@@ -4893,6 +4896,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
         dbms_lob.close(vr_des_xml);
         dbms_lob.freetemporary(vr_des_xml);
         
+      END IF;
+
       END IF;
 
       pc_log_programa(PR_DSTIPLOG   => 'F'           --> Tipo do log: I - início; F - fim; O - ocorrência
