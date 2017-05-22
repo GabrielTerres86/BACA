@@ -16,6 +16,15 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0001 is
 
   ---------------------------------------------------------------------------------------------------------------*/
   
+	  --> Funcao para formatar o numero em decimal conforme padrao da IBRATAN
+  FUNCTION fn_decimal_ibra (pr_numero IN number) RETURN NUMBER;
+  
+  --> Funcao para formatar data hora conforme padrao da IBRATAN
+  FUNCTION fn_DataTempo_ibra (pr_data IN DATE) RETURN VARCHAR2;
+  
+  --> Funcao para formatar data hora conforme padrao da IBRATAN
+  FUNCTION fn_Data_ibra (pr_data IN DATE) RETURN VARCHAR2;
+	
   --> Rotina responsavel por gerar o objeto Json da proposta
   PROCEDURE pc_gera_json_proposta(pr_cdcooper  IN crawepr.cdcooper%TYPE,  --> Codigo da cooperativa
                                   pr_cdagenci  IN crapage.cdagenci%TYPE,  --> Codigo da agencia                                            
@@ -957,28 +966,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     IF TRIM(vr_dscritic) IS NOT NULL THEN
       RAISE vr_exc_erro;
     END IF;
-    
-		IF pr_tpenvest = 'M' AND pr_dsmetodo = 'POST' THEN
-	    --> Transformar texto em objeto json
-			BEGIN
-				vr_obj_retorno := json(vr_response.content);
-				--> buscar content
-				IF vr_obj_retorno.exist('Content') THEN
-					-- converter content em objeto
-					vr_obj_content := json(vr_obj_retorno.get('Content').to_char());
-					--> Extrair o atributo Location
-          vr_location := trim(replace(vr_obj_content.get('Location').to_char(),'"'));
-					--> Extrair o final do atributo
-					pr_dsprotocolo := gene0002.fn_busca_entrada(pr_postext => 2
-					                                           ,pr_dstext => vr_location
-																										 ,pr_delimitador => '#');
-				END IF;
-			EXCEPTION
-				WHEN OTHERS THEN   
-					vr_dscritic := 'Nao foi possivel retornar Protocolo de Analise Automatica!';
-					RAISE vr_exc_erro;
-			END;  
-		END IF;
 		
     --> Gravar dados log acionamento
     pc_grava_acionamento(pr_cdcooper              => pr_cdcooper,         
@@ -995,7 +982,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                          pr_dsconteudo_requisicao => pr_conteudo,
                          pr_dsresposta_requisicao => '{"Content":'||vr_response.content||
                                                      ',"StatusMessage":"'||vr_response.status_message||'"}',
-												 pr_dsprotocolo           => pr_dsprotocolo,
                          pr_idacionamento         => vr_idacionamento,
                          pr_dscritic              => vr_dscritic);
                          
@@ -1036,6 +1022,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       END IF;                       
       
     END IF;
+		
+		IF pr_tpenvest = 'M' AND pr_dsmetodo = 'POST' THEN
+	    --> Transformar texto em objeto json
+			BEGIN
+				vr_obj_retorno := json(vr_response.content);
+				--> buscar content
+				IF vr_obj_retorno.exist('Content') THEN
+					-- converter content em objeto
+					vr_obj_content := json(vr_obj_retorno.get('Content').to_char());
+					--> Extrair o atributo Location
+          vr_location := trim(replace(vr_obj_content.get('Location').to_char(),'"'));
+					--> Extrair o final do atributo
+					pr_dsprotocolo := gene0002.fn_busca_entrada(pr_postext => 2
+					                                           ,pr_dstext => vr_location
+																										 ,pr_delimitador => '#');
+		      -- Atualizar acionamento																										 
+					UPDATE tbepr_acionamento
+						 SET dsprotocolo = pr_dsprotocolo
+					 WHERE idacionamento = vr_idacionamento;
+																										 
+				END IF;
+			EXCEPTION
+				WHEN OTHERS THEN   
+					vr_dscritic := 'Nao foi possivel retornar Protocolo de Analise Automatica!';
+					RAISE vr_exc_erro;
+			END;  
+		END IF;
+		
   EXCEPTION
     WHEN vr_exc_erro THEN      
       pr_dscritic := vr_dscritic;
@@ -1619,7 +1633,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
 			END;
 		ELSE
       --> Gerar informações no padrao JSON da proposta de emprestimo
-			pc_gera_json_analise(pr_cdcooper  => pr_cdcooper,  --> Codigo da cooperativa
+			ESTE0002.pc_gera_json_analise(pr_cdcooper  => pr_cdcooper,  --> Codigo da cooperativa
 													 pr_cdagenci  => rw_crawepr.cdagenci, --> Agência da Proposta
 													 pr_nrdconta  => pr_nrdconta,  --> Numero da conta do cooperado
 													 pr_nrctremp  => pr_nrctremp,  --> Numero da proposta de emprestimo
@@ -3151,7 +3165,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
 				END IF;
 				
 				-- Gravar o retorno e proceder com o restante do processo pós análise automática
-				WEBS0001.pc_retorno_analise_proposta(pr_dsprotocolo => rw_crawepr.dsprotoc
+				WEBS0001.pc_retorno_analise_proposta(pr_cdorigem => 5 /*Ayllos*/
+				                                    ,pr_dsprotocolo => rw_crawepr.dsprotoc
 																						,pr_dsresana => vr_dsresana
 																						,pr_indrisco => vr_indrisco
 																						,pr_nrnotrat => vr_nrnotrat
