@@ -8153,7 +8153,12 @@ PROCEDURE busca_operacoes:
                     IF xField:SUBTYPE <> "ELEMENT" THEN 
                         NEXT. 
 
-                    xField:GET-CHILD(xText,1).
+                    xField:GET-CHILD(xText,1) NO-ERROR. 
+
+                    /* Se nao vier conteudo na TAG */ 
+                    IF ERROR-STATUS:ERROR             OR  
+                       ERROR-STATUS:NUM-MESSAGES > 0  THEN
+                                     NEXT.
 
                     ASSIGN w-co-responsavel.nrdconta = INT(xText:NODE-VALUE) WHEN xField:NAME = "nrdconta". 
                     ASSIGN w-co-responsavel.nrctremp = INT(xText:NODE-VALUE) WHEN xField:NAME = "nrctremp". 
@@ -8214,11 +8219,10 @@ PROCEDURE gera_co_responsavel:
    DEF VAR aux_cont_raiz AS INTEGER                                     NO-UNDO. 
    DEF VAR aux_cont      AS INTEGER                                     NO-UNDO. 
 
-
  { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
     /* Efetuar a chamada a rotina Oracle */ 
-    RUN STORED-PROCEDURE pc_gera_co_responsavel_prog
+    RUN STORED-PROCEDURE pc_gera_co_responsavel_prog 
      aux_handproc = PROC-HANDLE NO-ERROR 
                  ( INPUT par_cdcooper /* pr_cdcooper -> Codigo da cooperativa */
                   ,INPUT par_cdagenci /* pr_cdagenci -> Codigo de agencia */
@@ -8231,10 +8235,10 @@ PROCEDURE gera_co_responsavel:
                   ,INPUT par_idseqttl /* pr_idseqttl -> Sequencial do titular */
                   ,INPUT par_dtcalcul /* pr_dtcalcul -> Data do calculo       */                                                    
                   ,INPUT (IF par_flgerlog THEN  "S" ELSE "N") /* pr_flgerlog -> identificador se deve gerar log S-Sim e N-Nao */
-                  ,INPUT par_vldscchq /* pr_vldscchq -> Valor de cheque */
-                  ,INPUT par_vlutlchq /* pr_vlutlchq -> Valor do ultimo cheque                        */
-                  ,INPUT par_vldctitu /* pr_vldctitu -> Valor de titulo de descont */ 
-                  ,INPUT par_vlutitit /* pr_vlutitit -> Valor do ultimo titulo de desconto */                  
+                  ,INPUT-OUTPUT par_vldscchq /* pr_vldscchq -> Valor de cheque */
+                  ,INPUT-OUTPUT par_vlutlchq /* pr_vlutlchq -> Valor do ultimo cheque                        */
+                  ,INPUT-OUTPUT par_vldctitu /* pr_vldctitu -> Valor de titulo de descont */ 
+                  ,INPUT-OUTPUT par_vlutitit /* pr_vlutitit -> Valor do ultimo titulo de desconto */                  
                   /* --------- OUT --------- */
                   ,OUTPUT ""       /* pr_xml      --> Retorna dados        */
                   ,OUTPUT ""       /* pr_dscritic --> Descriçao da critica */
@@ -8263,20 +8267,20 @@ PROCEDURE gera_co_responsavel:
           RETURN "NOK".
       END.   
       
-     ASSIGN par_vldscchq = pc_busca_operacoes_prog.pr_vldscchq
-                             WHEN pc_busca_operacoes_prog.pr_vldscchq <> ?
-            par_vlutlchq = pc_busca_operacoes_prog.pr_vlutlchq
-                             WHEN pc_busca_operacoes_prog.pr_vlutlchq <> ?
-            par_vldctitu = pc_busca_operacoes_prog.pr_vldctitu
-                             WHEN pc_busca_operacoes_prog.pr_vldctitu <> ?
-            par_vlutitit = pc_busca_operacoes_prog.pr_vlutitit
-                             WHEN pc_busca_operacoes_prog.pr_vlutitit <> ?. 
+     ASSIGN par_vldscchq = pc_gera_co_responsavel_prog.pr_vldscchq
+                             WHEN pc_gera_co_responsavel_prog.pr_vldscchq <> ?
+            par_vlutlchq = pc_gera_co_responsavel_prog.pr_vlutlchq
+                             WHEN pc_gera_co_responsavel_prog.pr_vlutlchq <> ?
+            par_vldctitu = pc_gera_co_responsavel_prog.pr_vldctitu
+                             WHEN pc_gera_co_responsavel_prog.pr_vldctitu <> ?
+            par_vlutitit = pc_gera_co_responsavel_prog.pr_vlutitit
+                             WHEN pc_gera_co_responsavel_prog.pr_vlutitit <> ?. 
+
 
     /*Leitura do XML de retorno da proc e criacao dos registros na w-co-responsavel */
-
     /* Buscar o XML na tabela de retorno da procedure Progress */ 
     ASSIGN xml_req = pc_gera_co_responsavel_prog.pr_xml_co_responsavel. 
-
+    
     /* Efetuar a leitura do XML*/ 
     SET-SIZE(ponteiro_xml) = LENGTH(xml_req) + 1. 
     PUT-STRING(ponteiro_xml,1) = xml_req. 
@@ -8290,7 +8294,9 @@ PROCEDURE gera_co_responsavel:
 
     IF ponteiro_xml <> ? THEN
         DO:
+
             xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE). 
+
             xDoc:GET-DOCUMENT-ELEMENT(xRoot).
 
             DO aux_cont_raiz = 1 TO xRoot:NUM-CHILDREN: 
@@ -8310,7 +8316,11 @@ PROCEDURE gera_co_responsavel:
                     IF xField:SUBTYPE <> "ELEMENT" THEN 
                         NEXT. 
 
-                    xField:GET-CHILD(xText,1).
+                    xField:GET-CHILD(xText,1) NO-ERROR. 
+                    /* Se nao vier conteudo na TAG */ 
+                    IF ERROR-STATUS:ERROR             OR  
+                       ERROR-STATUS:NUM-MESSAGES > 0  THEN
+                                     NEXT.
 
                     ASSIGN w-co-responsavel.nrdconta = INT(xText:NODE-VALUE) WHEN xField:NAME = "nrdconta". 
                     ASSIGN w-co-responsavel.nrctremp = INT(xText:NODE-VALUE) WHEN xField:NAME = "nrctremp". 

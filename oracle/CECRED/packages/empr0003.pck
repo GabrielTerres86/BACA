@@ -180,7 +180,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0003 AS
                               ,pr_vldctitu IN OUT craptdb.vltitulo%TYPE  --> Valor de titulo de descont0
                               ,pr_vlutitit IN OUT craptdb.vltitulo%TYPE  --> Valor do ultimo titulo de desconto                                                                 
                               ------ OUT ------                                      
-                              ,pr_xml_co_responsavel IN OUT CLOB     --> Retorna dados
+                              ,pr_xml_co_responsavel OUT CLOB     --> Retorna dados
                               ,pr_dscritic     OUT VARCHAR2          --> Descrição da critica
                               ,pr_cdcritic     OUT INTEGER);         --> Codigo da critica                              
 END EMPR0003;
@@ -2391,7 +2391,7 @@ BEGIN
       -- Insere o cabeçalho do XML 
       gene0002.pc_escreve_xml(pr_xml            => pr_xml_co_responsavel 
                              ,pr_texto_completo => vr_dstexto 
-                             ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><root>');
+                             ,pr_texto_novo     => '<root>');
          
       --Buscar Primeiro beneficiario
       vr_index := vr_tab_co_responsavel.FIRST;
@@ -2404,7 +2404,7 @@ BEGIN
                          '<vlsdeved>'|| vr_tab_co_responsavel(vr_index).vlsdeved  ||'</vlsdeved>'||
                          '<dsfinemp>'|| vr_tab_co_responsavel(vr_index).dsfinemp  ||'</dsfinemp>'||
                          '<dslcremp>'|| vr_tab_co_responsavel(vr_index).dslcremp  ||'</dslcremp>'||
-                     '<responsavel>';
+                     '</responsavel>';
         
         -- Escrever no XML
         gene0002.pc_escreve_xml(pr_xml            => pr_xml_co_responsavel 
@@ -2599,7 +2599,7 @@ BEGIN
                              ,pr_cdoperad       => pr_cdoperad           --> Código do operador
                              ,pr_nmdatela       => pr_nmdatela           --> Nome datela conectada
                              ,pr_idorigem       => pr_idorigem           --> Indicador da origem da chamada
-                             ,pr_nrdconta       => pr_nrdconta           --> Conta do associado
+                             ,pr_nrdconta       => rw_crapepr.nrdconta   --> Conta do associado
                              ,pr_idseqttl       => pr_idseqttl           --> Sequencia de titularidade da conta
                              ,pr_rw_crapdat     => rw_crapdat            --> Vetor com dados de parâmetro (CRAPDAT)
                              ,pr_dtcalcul       => pr_dtcalcul           --> Data solicitada do calculo
@@ -2630,8 +2630,6 @@ BEGIN
         
       END IF;
     
-    END LOOP;   
-    
     vr_idx := vr_tab_dados_epr.first;
     
     WHILE vr_idx IS NOT NULL LOOP
@@ -2656,6 +2654,10 @@ BEGIN
     
       vr_idx := vr_tab_dados_epr.next(vr_idx);  
     END LOOP;
+    
+    
+    END LOOP;   
+    
     
     --> Verifica se tem desconto de cheque ou titulo                            
     pc_busca_operacoes ( pr_cdcooper => pr_cdcooper  --> Codigo da cooperativa
@@ -2710,7 +2712,7 @@ BEGIN
                               ,pr_vldctitu IN OUT craptdb.vltitulo%TYPE  --> Valor de titulo de descont0
                               ,pr_vlutitit IN OUT craptdb.vltitulo%TYPE  --> Valor do ultimo titulo de desconto                                                                 
                               ------ OUT ------                                      
-                              ,pr_xml_co_responsavel IN OUT CLOB --> Retorna dados
+                              ,pr_xml_co_responsavel OUT CLOB --> Retorna dados
                               ,pr_dscritic     OUT VARCHAR2          --> Descrição da critica
                               ,pr_cdcritic     OUT INTEGER) IS       --> Codigo da critica
      
@@ -2772,17 +2774,19 @@ BEGIN
       RAISE vr_exc_erro ;
     END IF;   
     
+    -- Criar documento XML
+    dbms_lob.createtemporary(pr_xml_co_responsavel, TRUE); 
+    dbms_lob.open(pr_xml_co_responsavel, dbms_lob.lob_readwrite);
+        
+    -- Insere o cabeçalho do XML 
+    gene0002.pc_escreve_xml(pr_xml            => pr_xml_co_responsavel 
+                           ,pr_texto_completo => vr_dstexto 
+                           ,pr_texto_novo     => '<root>');
+    
     --Montar CLOB
     IF vr_tab_co_responsavel.COUNT > 0 THEN
         
-      -- Criar documento XML
-      dbms_lob.createtemporary(pr_xml_co_responsavel, TRUE); 
-      dbms_lob.open(pr_xml_co_responsavel, dbms_lob.lob_readwrite);
-        
-      -- Insere o cabeçalho do XML 
-      gene0002.pc_escreve_xml(pr_xml            => pr_xml_co_responsavel 
-                             ,pr_texto_completo => vr_dstexto 
-                             ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><root>');
+      
          
       --Buscar Primeiro beneficiario
       vr_index := vr_tab_co_responsavel.FIRST;
@@ -2795,7 +2799,7 @@ BEGIN
                          '<vlsdeved>'|| vr_tab_co_responsavel(vr_index).vlsdeved  ||'</vlsdeved>'||
                          '<dsfinemp>'|| vr_tab_co_responsavel(vr_index).dsfinemp  ||'</dsfinemp>'||
                          '<dslcremp>'|| vr_tab_co_responsavel(vr_index).dslcremp  ||'</dslcremp>'||
-                     '<responsavel>';
+                     '</responsavel>';
         
         -- Escrever no XML
         gene0002.pc_escreve_xml(pr_xml            => pr_xml_co_responsavel 
@@ -2806,12 +2810,13 @@ BEGIN
         vr_index := vr_tab_co_responsavel.next(vr_index);
       END LOOP;
       
-      -- Encerrar a tag raiz 
-      gene0002.pc_escreve_xml(pr_xml            => pr_xml_co_responsavel 
-                             ,pr_texto_completo => vr_dstexto 
-                             ,pr_texto_novo     => '</root>' 
-                             ,pr_fecha_xml      => TRUE);
     END IF;
+    
+    -- Encerrar a tag raiz 
+    gene0002.pc_escreve_xml(pr_xml            => pr_xml_co_responsavel 
+                           ,pr_texto_completo => vr_dstexto 
+                           ,pr_texto_novo     => '</root>' 
+                           ,pr_fecha_xml      => TRUE);
       
   EXCEPTION 
     WHEN vr_exc_erro THEN

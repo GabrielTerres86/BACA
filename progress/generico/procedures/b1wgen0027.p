@@ -223,14 +223,19 @@ PROCEDURE lista_ocorren:
                     IF xField:SUBTYPE <> "ELEMENT" THEN 
                         NEXT. 
 
-                    xField:GET-CHILD(xText,1).
+                    xField:GET-CHILD(xText,1) NO-ERROR. 
 
+                    /* Se nao vier conteudo na TAG */ 
+                    IF ERROR-STATUS:ERROR             OR  
+                       ERROR-STATUS:NUM-MESSAGES > 0  THEN
+                                     NEXT.
+                    
                     ASSIGN tt-ocorren.qtctrord = INT(xText:NODE-VALUE) WHEN xField:NAME = "qtctrord". 
                     ASSIGN tt-ocorren.qtdevolu = INT(xText:NODE-VALUE) WHEN xField:NAME = "qtdevolu". 
-                    ASSIGN tt-ocorren.dtcnsspc = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtcnsspc". 
-                    ASSIGN tt-ocorren.dtdsdsps = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtdsdsps". 
+                    ASSIGN tt-ocorren.dtcnsspc = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtcnsspc" AND xText:NODE-VALUE <> ?. 
+                    ASSIGN tt-ocorren.dtdsdsps = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtdsdsps" AND xText:NODE-VALUE <> ?. 
                     ASSIGN tt-ocorren.qtddsdev = INT(xText:NODE-VALUE) WHEN xField:NAME = "qtddsdev". 
-                    ASSIGN tt-ocorren.dtdsdclq = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtdsdclq". 
+                    ASSIGN tt-ocorren.dtdsdclq = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtdsdclq" AND xText:NODE-VALUE <> ?. 
                     ASSIGN tt-ocorren.qtddtdev = INT(xText:NODE-VALUE) WHEN xField:NAME = "qtddtdev". 
                     
                     IF xField:NAME = "flginadi" AND INT(xText:NODE-VALUE) = 1 THEN
@@ -265,10 +270,11 @@ PROCEDURE lista_ocorren:
                       ASSIGN tt-ocorren.flgocorr = TRUE. 
                     ELSE
                       ASSIGN tt-ocorren.flgocorr = FALSE.  
-                    ASSIGN tt-ocorren.dtdrisco = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtdrisco". 
+                      
+                    ASSIGN tt-ocorren.dtdrisco = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtdrisco" AND xText:NODE-VALUE <> ?. 
                     ASSIGN tt-ocorren.qtdiaris = INT(xText:NODE-VALUE) WHEN xField:NAME = "qtdiaris". 
                     ASSIGN tt-ocorren.inrisctl = xText:NODE-VALUE WHEN xField:NAME = "inrisctl". 
-                    ASSIGN tt-ocorren.dtrisctl = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtrisctl". 
+                    ASSIGN tt-ocorren.dtrisctl = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtrisctl" AND xText:NODE-VALUE <> ?. 
                     ASSIGN tt-ocorren.dsdrisgp = xText:NODE-VALUE WHEN xField:NAME = "dsdrisgp". 
                     ASSIGN tt-ocorren.innivris = INT(xText:NODE-VALUE) WHEN xField:NAME = "innivris". 
 

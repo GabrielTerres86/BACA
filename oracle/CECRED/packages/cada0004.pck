@@ -2716,7 +2716,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       -- Insere o cabeçalho do XML 
       gene0002.pc_escreve_xml(pr_xml            => pr_xml_ocorren 
                              ,pr_texto_completo => vr_dstexto 
-                             ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><root>');
+                             ,pr_texto_novo     => '<root>');
          
       --Buscar Primeiro beneficiario
       vr_index := vr_tab_ocorren.FIRST;
@@ -2726,10 +2726,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
         vr_string := '<ocorren>'||
                          '<qtctrord>'|| vr_tab_ocorren(vr_index).qtctrord  ||'</qtctrord>'||
                          '<qtdevolu>'|| vr_tab_ocorren(vr_index).qtdevolu  ||'</qtdevolu>'||
-                         '<dtcnsspc>'|| to_char(vr_tab_ocorren(vr_index).dtcnsspc,'MM/DD/RRRR')  ||'</dtcnsspc>'||
-                         '<dtdsdsps>'|| to_char(vr_tab_ocorren(vr_index).dtdsdsps,'MM/DD/RRRR')  ||'</dtdsdsps>'||
+                         '<dtcnsspc>'|| to_char(vr_tab_ocorren(vr_index).dtcnsspc,'DD/MM/RRRR')  ||'</dtcnsspc>'||
+                         '<dtdsdsps>'|| to_char(vr_tab_ocorren(vr_index).dtdsdsps,'DD/MM/RRRR')  ||'</dtdsdsps>'||
                          '<qtddsdev>'|| vr_tab_ocorren(vr_index).qtddsdev  ||'</qtddsdev>'||
-                         '<dtdsdclq>'|| to_char(vr_tab_ocorren(vr_index).dtdsdclq,'MM/DD/RRRR')  ||'</dtdsdclq>'||
+                         '<dtdsdclq>'|| to_char(vr_tab_ocorren(vr_index).dtdsdclq,'DD/MM/RRRR')  ||'</dtdsdclq>'||
                          '<qtddtdev>'|| vr_tab_ocorren(vr_index).qtddtdev  ||'</qtddtdev>'||
                          '<flginadi>'|| vr_tab_ocorren(vr_index).flginadi  ||'</flginadi>'||
                          '<flglbace>'|| vr_tab_ocorren(vr_index).flglbace  ||'</flglbace>'||
@@ -2739,13 +2739,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                          '<flgpreju>'|| vr_tab_ocorren(vr_index).flgpreju  ||'</flgpreju>'||
                          '<flgjucta>'|| vr_tab_ocorren(vr_index).flgjucta  ||'</flgjucta>'||
                          '<flgocorr>'|| vr_tab_ocorren(vr_index).flgocorr  ||'</flgocorr>'||
-                         '<dtdrisco>'|| to_char(vr_tab_ocorren(vr_index).dtdrisco,'MM/DD/RRRR')  ||'</dtdrisco>'||
+                         '<dtdrisco>'|| to_char(vr_tab_ocorren(vr_index).dtdrisco,'DD/MM/RRRR')  ||'</dtdrisco>'||
                          '<qtdiaris>'|| vr_tab_ocorren(vr_index).qtdiaris  ||'</qtdiaris>'||
                          '<inrisctl>'|| vr_tab_ocorren(vr_index).inrisctl  ||'</inrisctl>'||
-                         '<dtrisctl>'|| to_char(vr_tab_ocorren(vr_index).dtrisctl,'MM/DD/RRRR')  ||'</dtrisctl>'||
+                         '<dtrisctl>'|| to_char(vr_tab_ocorren(vr_index).dtrisctl,'DD/MM/RRRR')  ||'</dtrisctl>'||
                          '<dsdrisgp>'|| vr_tab_ocorren(vr_index).dsdrisgp  ||'</dsdrisgp>'||
                          '<innivris>'|| vr_tab_ocorren(vr_index).innivris  ||'</innivris>'||
-                     '<ocorren>';
+                     '</ocorren>';
         
         -- Escrever no XML
         gene0002.pc_escreve_xml(pr_xml            => pr_xml_ocorren 
