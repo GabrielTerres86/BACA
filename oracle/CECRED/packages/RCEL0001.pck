@@ -4605,293 +4605,298 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
           END LOOP;
         END LOOP;
         
-        OPEN cr_crapcop;
-        FETCH cr_crapcop INTO rw_crapcop;
-        IF cr_crapcop%NOTFOUND THEN
-          CLOSE cr_crapcop;
-          vr_cdcritic := 651;
-          RAISE vr_exc_saida;
-        END IF;
-        
-        -- Busca a proxima sequencia do campo CRAPMAT.NRSEQTED
-        vr_nrdocmto := fn_sequence(pr_nmtabela => 'CRAPMAT'
-                                  ,pr_nmdcampo => 'NRSEQTED'
-                                  ,pr_dsdchave => 3
-                                  ,pr_flgdecre => 'N');
-        
-        -- Número ISPB
-        vr_nrispbif := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
-                                                ,pr_cdcooper => 3
-                                                ,pr_cdacesso => 'RECCEL_ISPB_REPASSE'); 
-        -- Agência
-        vr_cdageban := nvl(GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
-																										,pr_cdcooper => 3
-																										,pr_cdacesso => 'RECCEL_AGENCIA_REPASSE'),0);
-        -- Número do CNPJ
-        vr_nrdocnpj := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
-                                                ,pr_cdcooper => 3
-                                                ,pr_cdacesso => 'RECCEL_CNPJ_REPASSE');
-        -- Nome
-        vr_dsdonome := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
-                                                ,pr_cdcooper => 3
-                                                ,pr_cdacesso => 'RECCEL_NOME_REPASSE');
-        -- Número da conta
-        vr_nrdconta := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
-                                                ,pr_cdcooper => 3
-                                                ,pr_cdacesso => 'RECCEL_CONTA_REPASSE');
-  			
-        -- retornar numero do documento
-        vr_nrctrlif := '1'||to_char(rw_crapdat.dtmvtocd,'RRMMDD')
-                          ||to_char(rw_crapcop.cdagectl,'fm0000')
-                          ||to_char(vr_nrdocmto,'fm00000000')
-                          || 'A';
-        
-        -- Verifica se lançamento ja existe
-        OPEN cr_crapban (pr_nrispbif => vr_nrispbif);
-        FETCH cr_crapban INTO vr_cdbccxlt;
-        
-        -- Verifica se lançamento ja existe
-        OPEN cr_craptvl (pr_cdcooper => rw_crapcop.cdcooper 
-                        ,pr_dtmvtolt => rw_crapdat.dtmvtocd
-                        ,pr_nrdocmto => vr_nrdocmto);
-        FETCH cr_craptvl into rw_craptvl;
-        IF cr_craptvl%FOUND THEN
-          vr_dscritic := 'Lançamento CRAPTVL já existe. IDOPETRF =' || rw_craptvl.idopetrf;
-          RAISE vr_exc_saida;
-        END IF;
+        -- Se tiver valor do repasse
+        IF vr_vlrepass > 0 THEN
+          
+          OPEN cr_crapcop;
+          FETCH cr_crapcop INTO rw_crapcop;
+          IF cr_crapcop%NOTFOUND THEN
+            CLOSE cr_crapcop;
+            vr_cdcritic := 651;
+            RAISE vr_exc_saida;
+          END IF;
+          
+          -- Busca a proxima sequencia do campo CRAPMAT.NRSEQTED
+          vr_nrdocmto := fn_sequence(pr_nmtabela => 'CRAPMAT'
+                                    ,pr_nmdcampo => 'NRSEQTED'
+                                    ,pr_dsdchave => 3
+                                    ,pr_flgdecre => 'N');
+          
+          -- Número ISPB
+          vr_nrispbif := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                  ,pr_cdcooper => 3
+                                                  ,pr_cdacesso => 'RECCEL_ISPB_REPASSE'); 
+          -- Agência
+          vr_cdageban := nvl(GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                      ,pr_cdcooper => 3
+                                                      ,pr_cdacesso => 'RECCEL_AGENCIA_REPASSE'),0);
+          -- Número do CNPJ
+          vr_nrdocnpj := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                  ,pr_cdcooper => 3
+                                                  ,pr_cdacesso => 'RECCEL_CNPJ_REPASSE');
+          -- Nome
+          vr_dsdonome := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                  ,pr_cdcooper => 3
+                                                  ,pr_cdacesso => 'RECCEL_NOME_REPASSE');
+          -- Número da conta
+          vr_nrdconta := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                  ,pr_cdcooper => 3
+                                                  ,pr_cdacesso => 'RECCEL_CONTA_REPASSE');
+    			
+          -- retornar numero do documento
+          vr_nrctrlif := '1'||to_char(rw_crapdat.dtmvtocd,'RRMMDD')
+                            ||to_char(rw_crapcop.cdagectl,'fm0000')
+                            ||to_char(vr_nrdocmto,'fm00000000')
+                            || 'A';
+          
+          -- Verifica se lançamento ja existe
+          OPEN cr_crapban (pr_nrispbif => vr_nrispbif);
+          FETCH cr_crapban INTO vr_cdbccxlt;
+          
+          -- Verifica se lançamento ja existe
+          OPEN cr_craptvl (pr_cdcooper => rw_crapcop.cdcooper 
+                          ,pr_dtmvtolt => rw_crapdat.dtmvtocd
+                          ,pr_nrdocmto => vr_nrdocmto);
+          FETCH cr_craptvl into rw_craptvl;
+          IF cr_craptvl%FOUND THEN
+            vr_dscritic := 'Lançamento CRAPTVL já existe. IDOPETRF =' || rw_craptvl.idopetrf;
+            RAISE vr_exc_saida;
+          END IF;
+              
+          BEGIN
+            INSERT INTO craptvl (cdcooper
+                                ,tpdoctrf
+                                ,idopetrf
+                                ,nrdconta
+                                ,cpfcgemi
+                                ,nmpesemi
+                                ,nrdctitg
+                                ,cdbccrcb
+                                ,cdagercb
+                                ,cpfcgrcb
+                                ,nmpesrcb
+                                ,nrcctrcb
+                                ,cdbcoenv
+                                ,vldocrcb
+                                ,dtmvtolt
+                                ,hrtransa
+                                ,nrdolote
+                                ,cdagenci
+                                ,cdbccxlt
+                                ,nrdocmto
+                                ,nrseqdig
+                                ,cdfinrcb
+                                ,tpdctacr
+                                ,tpdctadb
+                                ,dshistor
+                                ,cdoperad
+                                ,cdopeaut
+                                ,flgespec
+                                ,flgtitul
+                                ,flgenvio
+                                ,flgpesdb
+                                ,flgpescr)
+                         VALUES (rw_crapcop.cdcooper
+                                ,3
+                                ,vr_nrctrlif
+                                ,0 -- Não ocorrerá débito em conta corrente
+                                ,rw_crapcop.nrdocnpj/*CECRED*/ 
+                                ,rw_crapcop.nmrescop/*CECRED*/ 
+                                ,0
+                                ,vr_cdbccxlt
+                                ,vr_cdageban
+                                ,to_number(REGEXP_REPLACE(vr_nrdocnpj, '[^[:digit:]]'))
+                                ,vr_dsdonome
+                                ,vr_nrdconta
+                                ,rw_crapcop.cdbcoctl --CECRED
+                                ,vr_vlrepass
+                                ,rw_crapdat.dtmvtocd
+                                ,to_char(SYSDATE,'SSSSS')
+                                ,600037
+                                ,1
+                                ,85
+                                ,vr_nrdocmto
+                                ,vr_nrdocmto
+                                ,5
+                                ,1 -- CC - Conta Corrente
+                                ,0 -- Não ocorrerá débito em conta corrente
+                                ,'pc_job_efetua_repasse'
+                                ,''
+                                ,''
+                                ,0 -- Movimentacao Especie
+                                ,0 -- Conta de mesma titularidade
+                                ,1
+                                ,0 --Não ocorrerá débito em conta corrente
+                                ,0)
+                      RETURNING flgtitul
+                               ,vldocrcb
+                               ,idopetrf
+                               ,cdbccrcb
+                               ,cdagercb
+                               ,nrcctrcb
+                               ,cdfinrcb
+                               ,tpdctadb
+                               ,tpdctacr
+                               ,cpfcgemi
+                               ,nmpesrcb
+                               ,cpfcgrcb
+                           INTO rw_flgtitul
+                               ,rw_vldocrcb
+                               ,rw_idopetrf
+                               ,rw_cdbccrcb
+                               ,rw_cdagercb
+                               ,rw_nrcctrcb
+                               ,rw_cdfinrcb
+                               ,rw_tpdctadb
+                               ,rw_tpdctacr
+                               ,rw_cpfcgemi
+                               ,rw_nmpesrcb
+                               ,rw_cpfcgrcb;
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_dscritic := 'Erro ao criar registro na tabela craptvl: ' || SQLERRM;
+          END;
+             
+          SSPB0001.pc_proc_envia_tec_ted (pr_cdcooper => rw_crapcop.cdcooper --> Cooperativa                            
+                                         ,pr_cdagenci => '1'                 --> Cod. Agencia 
+                                         ,pr_nrdcaixa => 0                   --> Numero Caixa 
+                                         ,pr_cdoperad => '1'                 --> Operador 
+                                         ,pr_titulari => (rw_flgtitul = 1)   --> Mesmo Titular
+                                         ,pr_vldocmto => rw_vldocrcb         --> Vlr. DOCMTO 
+                                         ,pr_nrctrlif => rw_idopetrf         --> NumCtrlIF 
+                                         -- Informar apenas para nao cair na condicao        
+                                         -- ELSIF nvl(pr_nrdconta,0) = 0
+                                         ,pr_nrdconta => 05463212            --> Nro Conta
+                                         ,pr_cdbccxlt => rw_cdbccrcb         --> Codigo Banco 
+                                         ,pr_cdagenbc => rw_cdagercb         --> Cod Agencia 
+                                         ,pr_nrcctrcb => rw_nrcctrcb         --> Nr.Ct.destino 
+                                         ,pr_cdfinrcb => rw_cdfinrcb         --> Finalidade 
+                                         ,pr_tpdctadb => rw_tpdctadb         --> Tp. conta deb 
+                                         ,pr_tpdctacr => rw_tpdctacr         --> Tp conta cred 
+                                         ,pr_nmpesemi => 'CECRED-RECARGA'    --> Nome Do titular 
+                                         ,pr_nmpesde1 =>  NULL               --> Nome De 2TTT 
+                                         ,pr_cpfcgemi => rw_cpfcgemi         --> CPF/CNPJ Do titular 
+                                         ,pr_cpfcgdel =>  0                  --> CPF sec TTL
+                                         ,pr_nmpesrcb => rw_nmpesrcb         --> Nome Para 
+                                         ,pr_nmstlrcb =>  NULL               --> Nome Para 2TTL
+                                         ,pr_cpfcgrcb => rw_cpfcgrcb         --> CPF/CNPJ Para
+                                         ,pr_cpstlrcb => 0                   --> CPF Para 2TTL
+                                         ,pr_tppesemi => 2                   --> Tp. pessoa De 
+                                         ,pr_tppesrec => 2                   --> Tp. pessoa Para 
+                                         ,pr_flgctsal =>  FALSE              --> CC Sal
+                                         ,pr_cdidtran => rw_crapcop.nrdocnpj --> tipo de transferencia
+                                         ,pr_cdorigem => 1                   --> Cod. Origem 
+                                         ,pr_dtagendt =>  NULL               --> data egendamento
+                                         ,pr_nrseqarq =>  0                  --> nr. seq arq.
+                                         -- Mesmo não se tratando de operação com convênio, deverá
+                                         -- informar algum valor neste parâmetro, pois a mensagem a ser
+                                         -- gerada será a mesma: STR0007
+                                         ,pr_cdconven =>  99999              --> Cod. Convenio
+                                         ,pr_dshistor => rw_dshistor         --> Dsc do Hist. 
+                                         ,pr_hrtransa => to_char(SYSDATE,'SSSSS') --> Hora transacao 
+                                         ,pr_cdispbif => vr_nrispbif            --> ISPB Banco
+                                         --------- SAIDA --------
+                                         ,pr_cdcritic => vr_cdcritic         --> Codigo do erro
+                                         ,pr_dscritic => vr_dscritic );      --> Descricao do erro
+          
+          -- Se houver erros
+          IF vr_cdcritic > 0 OR
+             vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_saida;
+          END IF;
+          
+          --***** Relatorio *****
+          vr_nom_arquivo := 'crrl732';
             
-        BEGIN
-          INSERT INTO craptvl (cdcooper
-                              ,tpdoctrf
-                              ,idopetrf
-                              ,nrdconta
-                              ,cpfcgemi
-                              ,nmpesemi
-                              ,nrdctitg
-                              ,cdbccrcb
-                              ,cdagercb
-                              ,cpfcgrcb
-                              ,nmpesrcb
-                              ,nrcctrcb
-                              ,cdbcoenv
-                              ,vldocrcb
-                              ,dtmvtolt
-                              ,hrtransa
-                              ,nrdolote
-                              ,cdagenci
-                              ,cdbccxlt
-                              ,nrdocmto
-                              ,nrseqdig
-                              ,cdfinrcb
-                              ,tpdctacr
-                              ,tpdctadb
-                              ,dshistor
-                              ,cdoperad
-                              ,cdopeaut
-                              ,flgespec
-                              ,flgtitul
-                              ,flgenvio
-                              ,flgpesdb
-                              ,flgpescr)
-                       VALUES (rw_crapcop.cdcooper
-                              ,3
-                              ,vr_nrctrlif
-                              ,0 -- Não ocorrerá débito em conta corrente
-                              ,rw_crapcop.nrdocnpj/*CECRED*/ 
-                              ,rw_crapcop.nmrescop/*CECRED*/ 
-                              ,0
-                              ,vr_cdbccxlt
-                              ,vr_cdageban
-                              ,to_number(REGEXP_REPLACE(vr_nrdocnpj, '[^[:digit:]]'))
-                              ,vr_dsdonome
-                              ,vr_nrdconta
-                              ,rw_crapcop.cdbcoctl --CECRED
-                              ,vr_vlrepass
-                              ,rw_crapdat.dtmvtocd
-                              ,to_char(SYSDATE,'SSSSS')
-                              ,600037
-                              ,1
-                              ,85
-                              ,vr_nrdocmto
-                              ,vr_nrdocmto
-                              ,5
-                              ,1 -- CC - Conta Corrente
-                              ,0 -- Não ocorrerá débito em conta corrente
-                              ,'pc_job_efetua_repasse'
-                              ,''
-                              ,''
-                              ,0 -- Movimentacao Especie
-                              ,0 -- Conta de mesma titularidade
-                              ,1
-                              ,0 --Não ocorrerá débito em conta corrente
-                              ,0)
-                    RETURNING flgtitul
-                             ,vldocrcb
-                             ,idopetrf
-                             ,cdbccrcb
-                             ,cdagercb
-                             ,nrcctrcb
-                             ,cdfinrcb
-                             ,tpdctadb
-                             ,tpdctacr
-                             ,cpfcgemi
-                             ,nmpesrcb
-                             ,cpfcgrcb
-                         INTO rw_flgtitul
-                             ,rw_vldocrcb
-                             ,rw_idopetrf
-                             ,rw_cdbccrcb
-                             ,rw_cdagercb
-                             ,rw_nrcctrcb
-                             ,rw_cdfinrcb
-                             ,rw_tpdctadb
-                             ,rw_tpdctacr
-                             ,rw_cpfcgemi
-                             ,rw_nmpesrcb
-                             ,rw_cpfcgrcb;
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao criar registro na tabela craptvl: ' || SQLERRM;
-        END;
-           
-        SSPB0001.pc_proc_envia_tec_ted (pr_cdcooper => rw_crapcop.cdcooper --> Cooperativa                            
-                                       ,pr_cdagenci => '1'                 --> Cod. Agencia 
-                                       ,pr_nrdcaixa => 0                   --> Numero Caixa 
-                                       ,pr_cdoperad => '1'                 --> Operador 
-                                       ,pr_titulari => (rw_flgtitul = 1)   --> Mesmo Titular
-                                       ,pr_vldocmto => rw_vldocrcb         --> Vlr. DOCMTO 
-                                       ,pr_nrctrlif => rw_idopetrf         --> NumCtrlIF 
-                                       -- Informar apenas para nao cair na condicao        
-                                       -- ELSIF nvl(pr_nrdconta,0) = 0
-                                       ,pr_nrdconta => 05463212            --> Nro Conta
-                                       ,pr_cdbccxlt => rw_cdbccrcb         --> Codigo Banco 
-                                       ,pr_cdagenbc => rw_cdagercb         --> Cod Agencia 
-                                       ,pr_nrcctrcb => rw_nrcctrcb         --> Nr.Ct.destino 
-                                       ,pr_cdfinrcb => rw_cdfinrcb         --> Finalidade 
-                                       ,pr_tpdctadb => rw_tpdctadb         --> Tp. conta deb 
-                                       ,pr_tpdctacr => rw_tpdctacr         --> Tp conta cred 
-                                       ,pr_nmpesemi => 'CECRED-RECARGA'    --> Nome Do titular 
-                                       ,pr_nmpesde1 =>  NULL               --> Nome De 2TTT 
-                                       ,pr_cpfcgemi => rw_cpfcgemi         --> CPF/CNPJ Do titular 
-                                       ,pr_cpfcgdel =>  0                  --> CPF sec TTL
-                                       ,pr_nmpesrcb => rw_nmpesrcb         --> Nome Para 
-                                       ,pr_nmstlrcb =>  NULL               --> Nome Para 2TTL
-                                       ,pr_cpfcgrcb => rw_cpfcgrcb         --> CPF/CNPJ Para
-                                       ,pr_cpstlrcb => 0                   --> CPF Para 2TTL
-                                       ,pr_tppesemi => 2                   --> Tp. pessoa De 
-                                       ,pr_tppesrec => 2                   --> Tp. pessoa Para 
-                                       ,pr_flgctsal =>  FALSE              --> CC Sal
-                                       ,pr_cdidtran => rw_crapcop.nrdocnpj --> tipo de transferencia
-                                       ,pr_cdorigem => 1                   --> Cod. Origem 
-                                       ,pr_dtagendt =>  NULL               --> data egendamento
-                                       ,pr_nrseqarq =>  0                  --> nr. seq arq.
-                                       -- Mesmo não se tratando de operação com convênio, deverá
-                                       -- informar algum valor neste parâmetro, pois a mensagem a ser
-                                       -- gerada será a mesma: STR0007
-                                       ,pr_cdconven =>  99999              --> Cod. Convenio
-                                       ,pr_dshistor => rw_dshistor         --> Dsc do Hist. 
-                                       ,pr_hrtransa => to_char(SYSDATE,'SSSSS') --> Hora transacao 
-                                       ,pr_cdispbif => vr_nrispbif            --> ISPB Banco
-                                       --------- SAIDA --------
-                                       ,pr_cdcritic => vr_cdcritic         --> Codigo do erro
-                                       ,pr_dscritic => vr_dscritic );      --> Descricao do erro
-        
-        -- Se houver erros
-        IF vr_cdcritic > 0 OR
-           vr_dscritic IS NOT NULL THEN
-          RAISE vr_exc_saida;
+          -- Inicializar o CLOB
+          dbms_lob.createtemporary(vr_des_xml, TRUE);
+          dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+          -- Inicilizar as informacoes do XML
+          pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><crrl732><contas' ||
+                                                    ' dtpagmto="' || to_char(rw_crapdat.dtmvtocd,'DD/MM/RRRR') || '"' ||
+                                                    ' nrispbif="' || vr_nrispbif || '"' ||
+                                                    ' cdbccxlt="' || vr_cdbccxlt || '"' ||
+                                                    ' nrdocnpj="' || vr_nrdocnpj || '"' ||
+                                                    ' dsdonome="' || vr_dsdonome || '"' ||
+                                                    ' cdageban="' || vr_cdageban || '"' ||
+                                                    ' nrdconta="' || vr_nrdconta || '"' ||
+                                                    ' vlrepass="' || to_char(vr_vlrepass,'fm999g999g999g990d00') || '"' ||
+                                                    ' inperiod="' || vr_inperiod || '"' ||
+                                                    ' fiperiod="' || vr_fiperiod || '"' ||
+                                                    ' >');
+          
+          IF vr_tab_repasse.Count > 0 THEN
+            
+            vr_index := vr_tab_repasse.FIRST;
+            -- Percorre registros
+            WHILE vr_index IS NOT NULL LOOP
+              
+              IF vr_index = vr_tab_repasse.FIRST OR
+                 vr_tab_repasse(vr_index).cdcooper <> vr_tab_repasse(vr_tab_repasse.PRIOR(vr_index)).cdcooper THEN
+                -- Adicionar o no de origem
+                pc_escreve_xml('<coop nmrescop="'|| vr_tab_repasse(vr_index).nmrescop  ||'">');
+              END IF;
+              
+              pc_escreve_xml('<conta>' ||
+                               '<cdcooper>'  || vr_tab_repasse(vr_index).cdcooper  || '</cdcooper>' ||
+                               '<nmrescop>'  || vr_tab_repasse(vr_index).nmrescop  || '</nmrescop>' ||
+                               '<operadora>' || vr_tab_repasse(vr_index).operadora || '</operadora>' ||
+                               '<qtrecarga>' || vr_tab_repasse(vr_index).qtrecarga || '</qtrecarga>' ||
+                               '<vlrecarga>' || to_char(vr_tab_repasse(vr_index).vlregarga,'fm99g999g999g990d00') || '</vlrecarga>' ||
+                               '<vlreceita>' || to_char(vr_tab_repasse(vr_index).vlreceita,'fm99g999g999g990d00') || '</vlreceita>' ||
+                               '<vlapagar>'  || to_char(vr_tab_repasse(vr_index).vlapagar,'fm99g999g999g990d00')  || '</vlapagar>' ||
+                             '</conta>');
+              
+              --Se mudou a origem ou chegou ao final do vetor
+              IF vr_index = vr_tab_repasse.LAST OR
+                 vr_tab_repasse(vr_index).cdcooper <> vr_tab_repasse(vr_tab_repasse.NEXT(vr_index)).cdcooper THEN
+                -- Finalizar o agrupador da origem
+                pc_escreve_xml('</coop>');
+              END IF;
+              --Proximo registro do vetor
+              vr_index:= vr_tab_repasse.NEXT(vr_index);
+            END LOOP;
+          
+          END IF; -- vr_tab_repasse.Count > 0
+            
+          --Finalizar tag detalhe
+          pc_escreve_xml('</contas></crrl732>');
+            
+          -- Busca do diretório base da cooperativa
+          vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C' -- /usr/coop
+                                                ,pr_cdcooper => 3 -- CECRED
+                                                ,pr_nmsubdir => '/rl'); --> Utilizaremos o rl
+            
+          -- Efetuar solicitacao de geracao de relatorio --
+          gene0002.pc_solicita_relato (pr_cdcooper  => 3                   --> Cooperativa conectada
+                                      ,pr_cdprogra  => 'JBRCEL_REP'          --> Programa chamador
+                                      ,pr_dtmvtolt  => rw_crapdat.dtmvtolt --> Data do movimento atual
+                                      ,pr_dsxml     => vr_des_xml          --> Arquivo XML de dados
+                                      ,pr_dsxmlnode => '/crrl732/contas/coop/conta'       --> No base do XML para leitura dos dados
+                                      ,pr_dsjasper  => 'crrl732.jasper'    --> Arquivo de layout do iReport
+                                      ,pr_dsparams  => NULL                --> Titulo do relatório
+                                      ,pr_dsarqsaid => vr_nom_direto||'/'||vr_nom_arquivo||'.lst' --> Arquivo final
+                                      ,pr_qtcoluna  => 132                 --> 132 colunas
+                                      ,pr_sqcabrel  => 1                   --> Sequencia do Relatorio {includes/cabrel132_2.i}
+                                      ,pr_flg_impri => 'N'                 --> Chamar a impressão (Imprim.p)
+                                      ,pr_nmformul  => NULL                --> Nome do formulário para impressão
+                                      ,pr_nrcopias  => 1                   --> Número de cópias
+                                      ,pr_flg_gerar => 'S'                 --> gerar PDF
+                                      ,pr_nrvergrl  => 1                   --> JasperSoft Studio
+                                      ,pr_dspathcop => ''                  --> Copiar arquivo para diretorio
+                                      ,pr_flgremarq => 'N'                 --> Remover arquivo apos copia
+                                      ,pr_des_erro  => vr_dscritic);       --> Saída com erro
+          -- Testar se houve erro
+          IF vr_dscritic IS NOT NULL THEN
+            -- Gerar excecao
+            RAISE vr_exc_saida;
+          END IF;
+            
+          -- Liberando a memoria alocada pro CLOB
+          dbms_lob.close(vr_des_xml);
+          dbms_lob.freetemporary(vr_des_xml);
+            
         END IF;
-        
-        --***** Relatorio *****
-        vr_nom_arquivo := 'crrl732';
-          
-        -- Inicializar o CLOB
-        dbms_lob.createtemporary(vr_des_xml, TRUE);
-        dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
-        -- Inicilizar as informacoes do XML
-        pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><crrl732><contas' ||
-                                                  ' dtpagmto="' || to_char(rw_crapdat.dtmvtocd,'DD/MM/RRRR') || '"' ||
-                                                  ' nrispbif="' || vr_nrispbif || '"' ||
-                                                  ' cdbccxlt="' || vr_cdbccxlt || '"' ||
-                                                  ' nrdocnpj="' || vr_nrdocnpj || '"' ||
-                                                  ' dsdonome="' || vr_dsdonome || '"' ||
-                                                  ' cdageban="' || vr_cdageban || '"' ||
-                                                  ' nrdconta="' || vr_nrdconta || '"' ||
-                                                  ' vlrepass="' || to_char(vr_vlrepass,'fm999g999g999g990d00') || '"' ||
-                                                  ' inperiod="' || vr_inperiod || '"' ||
-                                                  ' fiperiod="' || vr_fiperiod || '"' ||
-                                                  ' >');
-        
-        IF vr_tab_repasse.Count > 0 THEN
-          
-          vr_index := vr_tab_repasse.FIRST;
-          -- Percorre registros
-          WHILE vr_index IS NOT NULL LOOP
-            
-            IF vr_index = vr_tab_repasse.FIRST OR
-               vr_tab_repasse(vr_index).cdcooper <> vr_tab_repasse(vr_tab_repasse.PRIOR(vr_index)).cdcooper THEN
-              -- Adicionar o no de origem
-              pc_escreve_xml('<coop nmrescop="'|| vr_tab_repasse(vr_index).nmrescop  ||'">');
-            END IF;
-            
-            pc_escreve_xml('<conta>' ||
-                             '<cdcooper>'  || vr_tab_repasse(vr_index).cdcooper  || '</cdcooper>' ||
-                             '<nmrescop>'  || vr_tab_repasse(vr_index).nmrescop  || '</nmrescop>' ||
-                             '<operadora>' || vr_tab_repasse(vr_index).operadora || '</operadora>' ||
-                             '<qtrecarga>' || vr_tab_repasse(vr_index).qtrecarga || '</qtrecarga>' ||
-                             '<vlrecarga>' || to_char(vr_tab_repasse(vr_index).vlregarga,'fm99g999g999g990d00') || '</vlrecarga>' ||
-                             '<vlreceita>' || to_char(vr_tab_repasse(vr_index).vlreceita,'fm99g999g999g990d00') || '</vlreceita>' ||
-                             '<vlapagar>'  || to_char(vr_tab_repasse(vr_index).vlapagar,'fm99g999g999g990d00')  || '</vlapagar>' ||
-                           '</conta>');
-            
-            --Se mudou a origem ou chegou ao final do vetor
-            IF vr_index = vr_tab_repasse.LAST OR
-               vr_tab_repasse(vr_index).cdcooper <> vr_tab_repasse(vr_tab_repasse.NEXT(vr_index)).cdcooper THEN
-              -- Finalizar o agrupador da origem
-              pc_escreve_xml('</coop>');
-            END IF;
-            --Proximo registro do vetor
-            vr_index:= vr_tab_repasse.NEXT(vr_index);
-          END LOOP;
-        
-        END IF; -- vr_tab_repasse.Count > 0
-          
-        --Finalizar tag detalhe
-        pc_escreve_xml('</contas></crrl732>');
-          
-        -- Busca do diretório base da cooperativa
-        vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C' -- /usr/coop
-                                              ,pr_cdcooper => 3 -- CECRED
-                                              ,pr_nmsubdir => '/rl'); --> Utilizaremos o rl
-          
-        -- Efetuar solicitacao de geracao de relatorio --
-        gene0002.pc_solicita_relato (pr_cdcooper  => 3                   --> Cooperativa conectada
-                                    ,pr_cdprogra  => 'JBRCEL_REP'          --> Programa chamador
-                                    ,pr_dtmvtolt  => rw_crapdat.dtmvtolt --> Data do movimento atual
-                                    ,pr_dsxml     => vr_des_xml          --> Arquivo XML de dados
-                                    ,pr_dsxmlnode => '/crrl732/contas/coop/conta'       --> No base do XML para leitura dos dados
-                                    ,pr_dsjasper  => 'crrl732.jasper'    --> Arquivo de layout do iReport
-                                    ,pr_dsparams  => NULL                --> Titulo do relatório
-                                    ,pr_dsarqsaid => vr_nom_direto||'/'||vr_nom_arquivo||'.lst' --> Arquivo final
-                                    ,pr_qtcoluna  => 132                 --> 132 colunas
-                                    ,pr_sqcabrel  => 1                   --> Sequencia do Relatorio {includes/cabrel132_2.i}
-                                    ,pr_flg_impri => 'N'                 --> Chamar a impressão (Imprim.p)
-                                    ,pr_nmformul  => NULL                --> Nome do formulário para impressão
-                                    ,pr_nrcopias  => 1                   --> Número de cópias
-                                    ,pr_flg_gerar => 'S'                 --> gerar PDF
-                                    ,pr_nrvergrl  => 1                   --> JasperSoft Studio
-                                    ,pr_dspathcop => ''                  --> Copiar arquivo para diretorio
-                                    ,pr_flgremarq => 'N'                 --> Remover arquivo apos copia
-                                    ,pr_des_erro  => vr_dscritic);       --> Saída com erro
-        -- Testar se houve erro
-        IF vr_dscritic IS NOT NULL THEN
-          -- Gerar excecao
-          RAISE vr_exc_saida;
-        END IF;
-          
-        -- Liberando a memoria alocada pro CLOB
-        dbms_lob.close(vr_des_xml);
-        dbms_lob.freetemporary(vr_des_xml);
         
       END IF;
 
