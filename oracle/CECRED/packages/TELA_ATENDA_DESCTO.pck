@@ -1501,6 +1501,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 																					,pr_cdoperad => vr_cdoperad
 																					,pr_nrborder => pr_nrborder
 																					,pr_tab_cheques => vr_tab_cheques
+																					,pr_flganali => 0
 																					,pr_cdcritic => vr_cdcritic
 																					,pr_dscritic => vr_dscritic);
 

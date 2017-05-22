@@ -153,6 +153,7 @@
 	</form>
 </div>
 <div id="divBotoes">
+	<a href="#" class="botao" id="btVoltar" onclick="voltaDiv(3,2,4,'DESCONTO DE CHEQUES - BORDERÔS'); carregaBorderosCheques(); return false;">Voltar</a>
 	<a href="#" class="botao" id="btConcluir" onclick="concluirAnaliseBordero(); return false;" >Concluir</a>
 </div>
 

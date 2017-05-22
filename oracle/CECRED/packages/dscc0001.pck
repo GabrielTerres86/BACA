@@ -359,6 +359,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCC0001 AS
 																			 ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Código do Operador
 																			 ,pr_nrborder IN crapabc.nrborder%TYPE  --> numero do bordero
 																			 ,pr_tab_cheques IN OUT typ_tab_cheques --> PlTable com dados dos cheques
+																			 ,pr_flganali IN INTEGER DEFAULT 1      --> Flag deve atualizar o status para analisado
 																			 ,pr_cdcritic OUT PLS_INTEGER           --> Cód. da crítica
 																			 ,pr_dscritic OUT VARCHAR2);            --> Descrição da crítica																		
 
@@ -4274,7 +4275,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
         -- Se NAO encontrar
         IF NOT vr_blnfound THEN
           vr_nmcheque := 'NAO CADASTRADO';
-          vr_nrcpfcgc := 0; -- 'NAO CADASTRADO';
+          vr_nrcpfcgc := rw_crapcdb.nrcpfcgc; -- 'NAO CADASTRADO';
         ELSE
           -- Validar CPF/CNPJ
           gene0005.pc_valida_cpf_cnpj(pr_nrcalcul => rw_crapcec.nrcpfcgc, 
@@ -4624,6 +4625,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 																			 ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Código do Operador
 																			 ,pr_nrborder IN crapabc.nrborder%TYPE  --> numero do bordero
 																			 ,pr_tab_cheques IN OUT typ_tab_cheques --> PlTable com dados dos cheques
+																			 ,pr_flganali IN INTEGER DEFAULT 1      --> Flag deve atualizar o status para analisado
 																			 ,pr_cdcritic OUT PLS_INTEGER           --> Cód. da crítica
 																			 ,pr_dscritic OUT VARCHAR2) IS          --> Descrição da crítica
   /* .............................................................................
@@ -5775,14 +5777,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 		END IF;
 		-- Fechar cursor
 		CLOSE cr_crapbdc;
-		
+		IF pr_flganali = 1 THEN
 		-- atualizar o status do borderô para "Em análise";
 		UPDATE crapbdc SET insitbdc = 2
 		 WHERE cdcooper = pr_cdcooper
 			 AND nrdconta = pr_nrdconta
 			 AND nrborder = pr_nrborder
 			 AND insitbdc = 1;
-				
+		END IF;
 		-- Efetuar commit
 		COMMIT;
 		
