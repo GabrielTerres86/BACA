@@ -92,6 +92,9 @@
                              carga ativa mais atual. Projeto 299/3 Pre aprovado fase 3 (Lombardi).
 
                 12/05/2017 - Passagem de 0 para a nacionalidade. (Jaison/Andrino)
+                
+                22/05/2017 - Ajuste para validar requisições no mesmo dia 
+                            (Ricardo Linhares) - Chamado 670727/601973                
 
 ..............................................................................*/
 
@@ -640,6 +643,7 @@ PROCEDURE grava_dados:
     DEF VAR aux_flmudfai AS CHAR                                    NO-UNDO.
     DEF VAR aux_nivrisco AS CHAR                                    NO-UNDO.
     DEF VAR aux_idcarga  AS INTE                                    NO-UNDO.
+    DEF VAR aux_solmsmdia AS LOG                                    NO-UNDO.
 
     DEF VAR h-b1wgen0043 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0084 AS HANDLE                                  NO-UNDO.
@@ -663,7 +667,8 @@ PROCEDURE grava_dados:
            aux_flgerlog = TRUE
            aux_flgtrans = FALSE
            aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
-           aux_dstransa = "Gravacao pre-aprovado".
+           aux_dstransa = "Gravacao pre-aprovado"
+           aux_solmsmdia = FALSE.
 
     GRAVA: DO TRANSACTION ON ERROR  UNDO GRAVA, LEAVE GRAVA
                           ON ENDKEY UNDO GRAVA, LEAVE GRAVA:
@@ -848,6 +853,19 @@ PROCEDURE grava_dados:
                      aux_vlrpreju = tt-dados-analise.vlrpreju
                      aux_vlsfnout = tt-dados-analise.vlsfnout.
           END.
+          
+       RUN verifica_solitacao_mesmo_dia IN h-b1wgen0002(INPUT par_cdcooper,
+                                                        INPUT par_nrdconta,
+                                                        INPUT par_dtmvtolt,
+                                                        INPUT par_vlemprst,
+                                                        INPUT par_qtpreemp,
+                                                        OUTPUT aux_dscritic).
+       
+       IF RETURN-VALUE <> "OK" THEN
+       DO:
+         ASSIGN aux_solmsmdia = TRUE.
+         UNDO GRAVA, LEAVE GRAVA.          
+       END.
     
        RUN valida-dados-gerais IN h-b1wgen0002(INPUT par_cdcooper,
                                                INPUT par_cdagenci,
@@ -1182,10 +1200,16 @@ PROCEDURE grava_dados:
                                INPUT par_nrdconta,
                               OUTPUT aux_nrdrowid).
            
-           ASSIGN tt-erro.cdcritic = 0
-                  tt-erro.dscritic = "Nao foi possivel concluir sua "     +
-                                     "solicitacao. Dirija-se a um Posto " +
-                                     "de Atendimento".
+           IF NOT aux_solmsmdia THEN
+             ASSIGN tt-erro.cdcritic = 0
+                    tt-erro.dscritic = "Nao foi possivel concluir sua "     +
+                                       "solicitacao. Dirija-se a um Posto " +
+                                       "de Atendimento".
+           ELSE
+           
+             ASSIGN tt-erro.dscritic = aux_dscritic.
+           
+           END.
 
        END. /* END IF AVAIL tt-erro THEN */
 

@@ -676,6 +676,9 @@
                             PRJ343 - Cessao de credito (Odirlei-AMcom)
 
               02/05/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
+              
+              22/05/2017 - Ajuste para validar requisições no mesmo dia 
+                          (Ricardo Linhares) - Chamado 670727/601973
 
  ..............................................................................*/
 
@@ -12586,4 +12589,33 @@ PROCEDURE leitura_lem:
 
     RETURN "OK".
     
+END PROCEDURE.
+
+/* valida se foram requisiçoes repetidas */
+PROCEDURE verifica_solitacao_mesmo_dia:
+
+  DEF INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
+  DEF INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
+  DEF INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
+  DEF INPUT PARAM par_vlemprst AS DECI                           NO-UNDO.
+  DEF INPUT PARAM par_qtpreemp AS INTE                           NO-UNDO.
+  DEF OUTPUT PARAM par_dscritic AS CHAR                          NO-UNDO.
+  
+  FIND FIRST crapepr WHERE crapepr.cdcooper = par_cdcooper  
+                       AND crapepr.nrdconta = par_nrdconta
+                       AND crapepr.iddcarga > 0
+                       AND crapepr.dtmvtolt = par_dtmvtolt
+                       AND crapepr.vlemprst = par_vlemprst
+                       AND crapepr.qtpreemp = par_qtpreemp
+                       NO-LOCK NO-ERROR.
+  
+   /* Ja efetuada solicitacao de pre-aprovado */
+  IF AVAIL crapepr THEN
+   DO:
+    ASSIGN par_dscritic = "Já existe movimentacao para este dia no mesmo valor".
+    RETURN "NOK".
+  END.
+    
+  RETURN "OK".
+  
 END PROCEDURE.
