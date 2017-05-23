@@ -1962,7 +1962,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
         pr_retxml := vr_retxml;
   		END IF;	
       -- Commita as alterações;
-      --COMMIT;
+      COMMIT;
   
     EXCEPTION
       WHEN vr_exc_erro THEN

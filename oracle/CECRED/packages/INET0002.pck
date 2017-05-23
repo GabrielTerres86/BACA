@@ -4715,7 +4715,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                            ,pr_tab_cheques(idx).dtlibera
                            ,pr_tab_cheques(idx).dtdcaptu
                            ,pr_tab_cheques(idx).dsdocmc7
-                           ,pr_tab_cheques(idx).nrremret);
+                           ,nvl(pr_tab_cheques(idx).nrremret,0));
       EXCEPTION
         WHEN OTHERS THEN
           vr_cdcritic := 0;
