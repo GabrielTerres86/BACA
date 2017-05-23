@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --  Sistema  : Rotinas genericas referente a tela de Cartões
   --  Sigla    : CCRD
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Abril - 2014.                   Ultima atualizacao: 18/05/2017
+  --  Data     : Abril - 2014.                   Ultima atualizacao: 23/05/2017
   --
   -- Dados referentes ao programa:
   --
@@ -61,6 +61,8 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --                          informacao de data acrescentada ao nome do arquivo pelo Bancoob.
   --                          (Fabricio)
   --
+  --             23/05/2017 - Invertido a condição para pegar a data anterior para buscar as faturas em aberto
+  --                         (Tiago/Fabricio)
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de Registro para as faturas pendentes
@@ -152,7 +154,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
 											,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
 											,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
 											,pr_des_erro OUT VARCHAR2);           --> Erros do processo
-                      
+
   /* Procedimento para o CRPS672 */
   PROCEDURE pc_crps672(pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
 											,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
@@ -9693,7 +9695,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
    Programa: CCDR0003
    Sigla   : APLI
    Autor   : Tiago
-   Data    : Junho/2015                          Ultima atualizacao: 15/05/2017
+   Data    : Junho/2015                          Ultima atualizacao: 23/05/2017
 
    Dados referentes ao programa:
 
@@ -9719,6 +9721,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
    
    15/05/2017 - Correções para repique contando 1 dia util para repique ao inves de dias corridos
                 (Tiago/Fabricio).
+                
+   23/05/2017 - Invertido a condição para pegar a data anterior para buscar as faturas em aberto
+                (Tiago/Fabricio)
   .......................................................................................*/
   PROCEDURE pc_debita_fatura(pr_cdcooper  IN crapcop.cdcooper%TYPE
                             ,pr_cdprogra  IN crapprg.cdprogra%TYPE
@@ -9996,10 +10001,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       -- Pegar a data de referencia do periodo    
       vr_dtmvante:= pr_dtmvtolt - vr_qtddiapg;
       
-      IF (vr_dtmvante - 1) = gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,pr_dtmvtolt => vr_dtmvante - 1, pr_tipo => 'A') THEN
+      IF (vr_dtmvante - 1) <> gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,pr_dtmvtolt => vr_dtmvante - 1, pr_tipo => 'A') THEN
           vr_dtmvante:= gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,pr_dtmvtolt => vr_dtmvante, pr_tipo => 'A');
       ELSE
-      vr_dtmvante:= gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,pr_dtmvtolt => vr_dtmvante - 1, pr_tipo => 'A') + 1;
+          vr_dtmvante:= gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,pr_dtmvtolt => vr_dtmvante - 1, pr_tipo => 'A') + 1;
       END IF;
 
       -- Leitura do calendario da cooperativa
