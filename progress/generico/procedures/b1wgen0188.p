@@ -858,7 +858,6 @@ PROCEDURE grava_dados:
                                                         INPUT par_nrdconta,
                                                         INPUT par_dtmvtolt,
                                                         INPUT par_vlemprst,
-                                                        INPUT par_qtpreemp,
                                                         OUTPUT aux_dscritic).
        
        IF RETURN-VALUE <> "OK" THEN
@@ -1206,10 +1205,7 @@ PROCEDURE grava_dados:
                                        "solicitacao. Dirija-se a um Posto " +
                                        "de Atendimento".
            ELSE
-           
              ASSIGN tt-erro.dscritic = aux_dscritic.
-           
-           END.
 
        END. /* END IF AVAIL tt-erro THEN */
 
@@ -1470,6 +1466,7 @@ PROCEDURE grava_dados_conta PRIVATE:
                craplcm.nrdctitg = STRING(par_nrdconta,"99999999")
                craplcm.nrdocmto = par_nrctremp
                craplcm.cdhistor = 15
+               craplcm.hrtransa = TIME
                craplcm.nrseqdig = craplot.nrseqdig + 1
                craplcm.cdpesqbb = STRING(par_nrctremp,"99999999")
                craplcm.cdcooper = par_cdcooper
