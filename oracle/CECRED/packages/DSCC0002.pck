@@ -1805,7 +1805,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
                           ,pr_dtlibera => vr_dtlibera
                           ,pr_dtdcaptu => vr_dtdcaptu
                           ,pr_vlcheque => vr_vlcheque
-                          ,pr_dsdocmc7 => gene0002.fn_mask(pr_dsdocmc7,'<99999999<9999999999>999999999999:'));
+                          ,pr_dsdocmc7 => gene0002.fn_mask(vr_dsdocmc7,'<99999999<9999999999>999999999999:'));
           FETCH cr_crapdcc INTO rw_crapdcc;
           IF cr_crapdcc%FOUND THEN --Tipo de cheque (1 - Novo, 2 - Selecionado)
             vr_intipchq := 2;
