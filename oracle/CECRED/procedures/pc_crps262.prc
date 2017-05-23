@@ -85,23 +85,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps262 (pr_cdcooper IN crapcop.cdcooper%T
       -- Cursor genérico de calendário
       rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 
-      /* Tabela de parametros */			
-			CURSOR cr_craptab (pr_cdcooper IN craptab.cdcooper%TYPE
-			                  ,pr_nmsistem IN craptab.nmsistem%TYPE
-												,pr_tptabela IN craptab.tptabela%TYPE
-												,pr_cdempres IN craptab.cdempres%TYPE
-												,pr_cdacesso IN craptab.cdacesso%TYPE
-												,pr_tpregist IN craptab.tpregist%TYPE)IS
-        SELECT tab.dstextab
-				  FROM craptab tab
-				 WHERE tab.cdcooper        = pr_cdcooper
-				   AND UPPER(tab.nmsistem) = pr_nmsistem
-					 AND UPPER(tab.tptabela) = pr_tptabela
-					 AND tab.cdempres        = pr_cdempres
-					 AND UPPER(tab.cdacesso) = pr_cdacesso
-					 AND tab.tpregist        = pr_tpregist;
-			rw_craptab cr_craptab%ROWTYPE;
-      
 			/* Contratos de limite de credito */
 			CURSOR cr_craplim (pr_cdcooper IN craplim.cdcooper%TYPE
 			                  ,pr_dtfimvig IN craplim.dtfimvig%TYPE)IS
@@ -128,8 +111,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps262 (pr_cdcooper IN crapcop.cdcooper%T
       ---------------------------- ESTRUTURAS DE REGISTRO ---------------------		
       
       ------------------------------- VARIAVEIS -------------------------------
-      -- Variaveis da tabela de parametros     
-      vr_qtrenova NUMBER;
             
 			-- Variaveis para geração do relatório
 			vr_des_xml     CLOB;            --> Buffer de dados para gerar XML de dados
@@ -200,23 +181,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps262 (pr_cdcooper IN crapcop.cdcooper%T
 																				 ,pr_cdcooper => pr_cdcooper
 																				 ,pr_nmsubdir => '/rl'); --> Utilizaremos o rl
 			
-      -- Busca tabela de parametros
-      OPEN cr_craptab (pr_cdcooper => pr_cdcooper,
-			                 pr_nmsistem => 'CRED',
-											 pr_tptabela => 'USUARI',
-											 pr_cdempres => 11,
-											 pr_cdacesso => 'LIMDESCONT',
-											 pr_tpregist => 0);
-			FETCH cr_craptab INTO rw_craptab;
-            
-			-- Atribui valor parametrizado
-			IF cr_craptab%FOUND THEN
-				vr_qtrenova := to_number(substr(rw_craptab.dstextab, 19,2));
-			ELSE
-				vr_qtrenova := 0;
-			END IF;
-			CLOSE cr_craptab;
-            
 			-- Inicializar o CLOB do relatório
 			dbms_lob.createtemporary(vr_des_xml, TRUE, dbms_lob.CALL);
 			dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
@@ -233,12 +197,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps262 (pr_cdcooper IN crapcop.cdcooper%T
 						 -- Busca próximo registro do cursor
 						 CONTINUE;
 					END IF;
-          
-					IF rw_craplim.tpctrlim = 2 AND
-						 rw_craplim.dtinivig + (rw_craplim.qtdiavig * vr_qtrenova) > rw_crapdat.dtmvtolt THEN
-						 -- Busca próximo registro do cursor
-						 CONTINUE;
-					END IF;	 		
           
           vr_flggerou := TRUE;	
 						
