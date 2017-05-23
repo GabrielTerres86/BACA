@@ -2892,9 +2892,12 @@ PROCEDURE valida_dados_desconto:
            tab_qtprzmin = DECIMAL(ENTRY(4,craptab.dstextab," "))
            tab_qtprzmax = DECIMAL(ENTRY(5,craptab.dstextab," "))
            aux_dtminima = par_dtmvtolt + tab_qtprzmin
-           aux_dtmaxima = par_dtmvtolt + tab_qtprzmax
-           aux_dtlimite = craplim.dtinivig +
-                          (craplim.qtdiavig * tab_qtrenova).
+           aux_dtmaxima = par_dtmvtolt + tab_qtprzmax.
+
+    IF craplim.dtfimvig <> ? THEN
+	  ASSIGN aux_dtlimite = craplim.dtfimvig.
+    ELSE
+	  ASSIGN aux_dtlimite = craplim.dtinivig + craplim.qtdiavig.
                           
     IF   par_dtlibera >= aux_dtlimite   THEN
          DO:
@@ -2911,7 +2914,7 @@ PROCEDURE valida_dados_desconto:
 
              RETURN "NOK".
  
-                 END.
+         END.
 
     IF   par_dtlibera <= aux_dtminima    THEN
              DO:

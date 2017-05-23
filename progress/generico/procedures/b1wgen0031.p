@@ -607,9 +607,16 @@ PROCEDURE obtem-mensagens-alerta:
 
     IF AVAILABLE craplim  THEN
        DO:
-           IF par_dtmvtolt >= (craplim.dtinivig + (craplim.qtdiavig * craprli.qtmaxren ))THEN
-              RUN cria-registro-msg ("Contrato de Desconto de Cheques " +
-                                     "Vencido.").
+           IF craplim.dtfimvig <> ? THEN
+              DO:
+                  IF craplim.dtfimvig <= par_dtmvtolt THEN
+                     RUN cria-registro-msg ("Contrato de Desconto de Cheques" +
+                                            " Vencido.").
+              END.
+           ELSE
+           IF (craplim.dtinivig + craplim.qtdiavig) <= par_dtmvtolt  THEN
+              RUN cria-registro-msg ("Contrato de Desconto de Cheques" +
+                                     " Vencido.").
        END.
 
     ASSIGN aux_flgpreju = FALSE

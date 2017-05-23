@@ -53,9 +53,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps262 (pr_cdcooper IN crapcop.cdcooper%T
 	                            
 								 18/03/2015 - Conversao Progress >> Oracle. (Reinert)
                  
-								 22/06/2016 - Correcao para o uso da function fn_busca_dstextab 
-								  			  da TABE0001. (Carlos Rafael Tanholi).  
-											                   
 								 22/09/2016 - Alterado para buscar o qtd dias de renovacao da tabela craprli
 								  			      PRJ300 - Desconto de cheque (Odirlei-AMcom)
 	............................................................................. */
@@ -101,18 +98,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps262 (pr_cdcooper IN crapcop.cdcooper%T
 							,ass.nrdconta
 							,ass.nmprimtl
 							,ass.cdagenci
-              ,rli.qtmaxren
 					FROM craplim lim
 					    ,crapass ass
-              ,craprli rli
 				 WHERE lim.cdcooper = pr_cdcooper
 				   AND lim.dtfimvig = pr_dtfimvig
 					 AND lim.cdmotcan NOT IN(1,4)
 					 AND ass.cdcooper = lim.cdcooper
 					 AND ass.nrdconta = lim.nrdconta
-           AND lim.cdcooper = rli.cdcooper
-           AND lim.tpctrlim = rli.tplimite
-           AND rli.inpessoa = ass.inpessoa 
 				 ORDER BY ass.cdagenci;
 			rw_craplim cr_craplim%ROWTYPE;
 					 
@@ -188,7 +180,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps262 (pr_cdcooper IN crapcop.cdcooper%T
       vr_nom_dir := gene0001.fn_diretorio(pr_tpdireto => 'C' -- /usr/coop
 																				 ,pr_cdcooper => pr_cdcooper
 																				 ,pr_nmsubdir => '/rl'); --> Utilizaremos o rl
-
+			
 			-- Inicializar o CLOB do relatório
 			dbms_lob.createtemporary(vr_des_xml, TRUE, dbms_lob.CALL);
 			dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
@@ -200,16 +192,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps262 (pr_cdcooper IN crapcop.cdcooper%T
       FOR rw_craplim IN cr_craplim(pr_cdcooper => pr_cdcooper
 										              ,pr_dtfimvig => rw_crapdat.dtmvtolt) LOOP       
           
-          IF rw_craplim.tpctrlim = 1 AND
+          IF rw_craplim.tpctrlim IN (1,2) AND
 						 rw_craplim.insitlim = 2 THEN /* Situação do Ativo */
 						 -- Busca próximo registro do cursor
 						 CONTINUE;
 					END IF;
-					IF rw_craplim.tpctrlim = 2 AND
-						 rw_craplim.dtinivig + (rw_craplim.qtdiavig * rw_craplim.qtmaxren) > rw_crapdat.dtmvtolt THEN
-						 -- Busca próximo registro do cursor
-						 CONTINUE;
-					END IF;	 		
+ 		
           
           vr_flggerou := TRUE;	
 						
