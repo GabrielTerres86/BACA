@@ -2,7 +2,7 @@
 
    Programa: b1wgen0092.p                  
    Autora  : André - DB1
-   Data    : 04/05/2011                        Ultima atualizacao: 17/01/2017
+   Data    : 04/05/2011                        Ultima atualizacao: 22/05/2017
     
    Dados referentes ao programa:
    
@@ -168,6 +168,9 @@
                            
               17/01/2017 - Retirar validacao para a TIM, historico 834, par_cdrefere < 1000000000
                            (Lucas Ranghetti #581878)
+                           
+              22/05/2017 - Caso ultrapasse o horario parametrizado efetuar tratamento conforme a
+                           inclusao ja faz (Lucas Ranghetti #669864)
 .............................................................................*/
 
 /*............................... DEFINICOES ................................*/
@@ -1612,7 +1615,7 @@ PROCEDURE grava-dados:
     DEF VAR aux_nmdcampo AS CHAR                                    NO-UNDO.   
     DEF VAR aux_dsnomcnv AS CHAR                                    NO-UNDO.    
     DEF VAR aux_tpoperac AS INTE                                    NO-UNDO.
-    DEF VAR aux_dtiniatr AS DATE                                    NO-UNDO. 
+    DEF VAR aux_dtiniatr AS DATE                                    NO-UNDO.     
     DEF VAR aux_nrctacns AS INTE                                    NO-UNDO. 
     DEF VAR aux_nrdrowid AS ROWID                                   NO-UNDO.
     
@@ -1691,7 +1694,7 @@ PROCEDURE grava-dados:
                                 ASSIGN aux_dscritic = "Tabela de limites nao encontrada.".
                                 UNDO Grava, LEAVE Grava.
                             END.
-                
+                            
                         /** Validar horario **/
                         IF  tt-limite.idesthor = 1 THEN /** Estourou horario   **/
                             DO:
@@ -2688,6 +2691,7 @@ PROCEDURE exclui_autorizacao:
     DEF VAR aux_cdhistor AS INTE                                   NO-UNDO.
     DEF VAR aux_cdempcon AS INTE                                   NO-UNDO.
     DEF VAR aux_cdsegmto AS INTE                                   NO-UNDO.
+    DEF VAR aux_dtiniatr AS DATE                                   NO-UNDO.
 
     ASSIGN aux_dscritic = ""
            aux_cdcritic = 0
@@ -2695,8 +2699,26 @@ PROCEDURE exclui_autorizacao:
            aux_dstransa = "Exclui autorizacao de debito em conta".
 
     EMPTY TEMP-TABLE tt-erro.
-    
+        
     Exclui: DO WHILE TRUE TRANSACTION ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
+
+        FIND crapdat WHERE crapdat.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
+    
+        IF  NOT AVAILABLE crapdat   THEN
+            DO:
+                ASSIGN aux_cdcritic = 1.
+                UNDO Exclui, LEAVE Exclui.      
+            END.
+
+        FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
+                           crapass.nrdconta = par_nrdconta 
+                           NO-LOCK NO-ERROR.
+
+        IF  NOT AVAILABLE crapass  THEN
+            DO:
+                ASSIGN aux_cdcritic = 9.
+                UNDO Exclui, LEAVE Exclui.
+            END.
 
         FIND crapatr WHERE crapatr.cdcooper = par_cdcooper AND
                            crapatr.nrdconta = par_nrdconta AND
@@ -2846,6 +2868,47 @@ PROCEDURE exclui_autorizacao:
                 END.
             /* FIM  Criar registro de motivo da exclusao */  
             
+            ASSIGN aux_dtiniatr = par_dtmvtolt.
+            
+            IF  par_idorigem = 3 THEN /* IBANK */
+                DO:
+                    /** Verifica o horario inicial e final para a operacao **/
+                    RUN sistema/generico/procedures/b1wgen0015.p 
+                        PERSISTENT SET h-b1wgen0015.
+            
+                    IF  VALID-HANDLE(h-b1wgen0015) THEN
+                        DO:
+                            RUN horario_operacao IN h-b1wgen0015 (INPUT par_cdcooper,
+                                                                  INPUT par_cdagenci,
+                                                                  INPUT 13,
+                                                                  INPUT crapass.inpessoa,
+                                                                 OUTPUT aux_dscritic,
+                                                                 OUTPUT TABLE tt-limite).
+                
+                            DELETE PROCEDURE h-b1wgen0015.
+                
+                            IF  RETURN-VALUE = "NOK" THEN
+                                UNDO Exclui, LEAVE Exclui.    
+                    
+                            FIND FIRST tt-limite NO-LOCK NO-ERROR.
+                                
+                            IF  NOT AVAILABLE tt-limite THEN
+                                DO:
+                                    ASSIGN aux_dscritic = "Tabela de limites nao encontrada.".
+                                    UNDO Exclui, LEAVE Exclui.    
+                                END.
+                           
+                            /** Validar horario **/
+                            IF  tt-limite.idesthor = 1 THEN /** Estourou horario   **/
+                                DO:   
+                                     /* Se for dia util deve gerar o registro para o proximo dia util
+                                        ja que o arquivo ja foi transmitido, do contrario mantem o dtmvtolt */
+                                    IF  tt-limite.iddiauti = 1 THEN /* eh dia util */
+                                        ASSIGN aux_dtiniatr = crapdat.dtmvtopr.
+                                END.
+                        END.
+                END.
+                
             ASSIGN aux_cdrefere = crapatr.cdrefere
                    aux_vlmaxdeb = crapatr.vlrmaxdb
                    aux_dshisext = crapatr.dshisext
@@ -2854,7 +2917,7 @@ PROCEDURE exclui_autorizacao:
                    aux_cdsegmto = crapatr.cdsegmto.
 
            /* Verifica a data da autorizaçao */
-           IF  crapatr.dtiniatr <> par_dtmvtolt THEN
+           IF  crapatr.dtiniatr <> aux_dtiniatr THEN
                DO:
                   ASSIGN crapatr.dtfimatr = par_dtmvtolt. /* Cancela */
                   
@@ -2877,15 +2940,6 @@ PROCEDURE exclui_autorizacao:
 
             IF VALID-HANDLE(h-bo_algoritmo_seguranca) THEN
             DO:
-                FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
-                                   crapass.nrdconta = par_nrdconta 
-                                   NO-LOCK NO-ERROR.
-
-                IF  NOT AVAILABLE crapass  THEN
-                DO:
-                    ASSIGN aux_cdcritic = 9.
-                    UNDO Exclui, LEAVE Exclui.
-                END.
 
                 /** Verifica o horario inicial e final para a operacao **/
                 RUN sistema/generico/procedures/b1wgen0015.p PERSISTENT SET
