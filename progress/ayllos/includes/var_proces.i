@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Margarete
-   Data    : Junho/2004.                     Ultima atualizacao:  06/12/2011
+   Data    : Junho/2004.                     Ultima atualizacao:  01/02/2017
 
    Dados referentes ao programa:
 
@@ -29,6 +29,9 @@
                             TEMP-TABLE w_criticas (Fernando).
                             
                06/12/2011 - Novas variaveis para verificar taxas CDI e TR (Ze).
+               
+               01/02/2017 - Ajustes para consultar dados da tela PROCES de todas as cooperativas
+                            (Lucas Ranghetti #491624)
 ............................................................................ */
 
 
@@ -41,8 +44,8 @@ DEF VAR aux_nmendter AS CHAR                                         NO-UNDO.
 
 DEF {1} SHARED VAR user-prog    AS CHAR    FORMAT "x(60)"            NO-UNDO.
 DEF {1} SHARED VAR choice       AS INT     INIT 1                    NO-UNDO.
-DEF {1} SHARED VAR cmdcount     AS INT     INIT 3                    NO-UNDO.
-DEF {1} SHARED VAR cmd          AS CHAR    FORMAT "x(45)" EXTENT 3   NO-UNDO.
+DEF {1} SHARED VAR cmdcount     AS INT     INIT 4                    NO-UNDO.
+DEF {1} SHARED VAR cmd          AS CHAR    FORMAT "x(65)" EXTENT 4   NO-UNDO.
 DEF {1} SHARED VAR cmdlist      AS CHAR    INIT "12"                 NO-UNDO.
 DEF {1} SHARED VAR lastchoice   AS INT     INIT 1                    NO-UNDO.
 DEF {1} SHARED VAR qgo          AS LOGICAL INIT FALSE                NO-UNDO.
@@ -136,15 +139,18 @@ DEF    TEMP-TABLE w_criticas                                         NO-UNDO
        FIELD nrsequen  AS  INT  FORMAT "99999"
        FIELD dscritic  AS  CHAR FORMAT "x(70)"
        FIELD cdsitexc  AS  INT
-       FIELD cdagenci  AS  INT  FORMAT "z99".
+       FIELD cdagenci  AS  INT  FORMAT "z99"
+       FIELD cdcooper  AS  INT.
                                  
 FORM SKIP(5)
-     cmd[1] AT 21
+     cmd[1] AT 11
      SKIP(1)
-     cmd[2] AT 21
+     cmd[2] AT 11
      SKIP(1)
-     cmd[3] AT 21
-     SKIP(6)
+     cmd[3] AT 11
+     SKIP(1)
+     cmd[4] AT 11
+     SKIP(4)
      WITH OVERLAY WIDTH 80 TITLE glb_tldatela FRAME f-cmd NO-LABELS.
                                    
 /* variaveis para a opcao visualizar */

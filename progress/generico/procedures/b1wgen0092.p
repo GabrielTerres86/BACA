@@ -168,6 +168,10 @@
                            
               17/01/2017 - Retirar validacao para a TIM, historico 834, par_cdrefere < 1000000000
                            (Lucas Ranghetti #581878)
+
+              09/05/2017 - Ajuste na procedure valida_senha_cooperado para considerar os zeros a 
+                           esquerda no campo de senha informada pelo usuário
+                           Rafael (Mouts) - Chamado 657038
 .............................................................................*/
 
 /*............................... DEFINICOES ................................*/
@@ -2272,10 +2276,10 @@ PROCEDURE busca_convenios_codbarras:
                 IF  NOT AVAIL crapscn THEN
                     NEXT.
                 ELSE
-                    ASSIGN aux_nmempcon = crapscn.dsnomcnv.
+                      ASSIGN aux_nmempcon = crapscn.dsnomcnv.
             END.
         ELSE
-            DO:      
+            DO:                
                 /* Iremos buscar tambem o convenio aguas de schroeder(87) pois possui dois codigos e a 
                    buasca anterior nao funciona */
                 FIND FIRST gnconve WHERE 
@@ -2289,14 +2293,14 @@ PROCEDURE busca_convenios_codbarras:
                            gnconve.cdhisdeb <> 0                AND 
                            crapcon.cdempcon = 1058)
                            NO-LOCK NO-ERROR.
-                                         
+
                 IF  NOT AVAILABLE gnconve THEN
                     NEXT.
                 ELSE 
                     IF gnconve.cdconven <> 87 THEN
-                       ASSIGN aux_nmempcon = gnconve.nmempres.
+						ASSIGN aux_nmempcon = gnconve.nmempres.
             END.
-
+            
         IF (INDEX(aux_nmempcon, "FEBR") > 0) THEN 
             ASSIGN aux_nmempcon = SUBSTRING(aux_nmempcon, 1, (R-INDEX(aux_nmempcon, "-") - 1))
                    aux_nmempcon = REPLACE(aux_nmempcon, "FEBRABAN", "").
@@ -5506,7 +5510,7 @@ PROCEDURE valida_senha_cooperado:
                           crapcrm.nrdconta = par_nrdconta     
                           NO-LOCK:
 
-       IF  CAPS(ENCODE(STRING(par_cddsenha))) = CAPS(crapcrm.dssencar) THEN
+       IF  CAPS(ENCODE(STRING(par_cddsenha,"999999"))) = CAPS(crapcrm.dssencar) THEN
            DO:
                ASSIGN aux_flgsevld = TRUE.
                LEAVE.
@@ -5520,7 +5524,7 @@ PROCEDURE valida_senha_cooperado:
                              AND  crapcrd.nrdconta = par_nrdconta
                              NO-LOCK:                
                       
-              IF  CAPS(ENCODE(STRING(par_cddsenha))) = CAPS(crapcrd.dssentaa) THEN
+              IF  CAPS(ENCODE(STRING(par_cddsenha,"999999"))) = CAPS(crapcrd.dssentaa) THEN
                   DO:
                       ASSIGN aux_flgsevld = TRUE.
                       LEAVE.

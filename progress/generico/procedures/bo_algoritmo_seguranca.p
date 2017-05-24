@@ -41,7 +41,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Agosto/2006                   Ultima Atualizacao: 22/02/2017
+   Data    : Agosto/2006                   Ultima Atualizacao: 23/03/2017
    Dados referentes ao programa:
 
    Frequencia: Diario (internet)
@@ -96,6 +96,9 @@
                      
                 22/02/2017 - Alteraçoes para compor comprovantes DARF/DAS 
                              Modelo Sicredi (Lucas Lunelli)
+
+				23/03/2017 - Adicionado tratamento para o protocolo 20 - Recarga
+							 de celular. (PRJ321 - Reinert)
 
 				24/03/2017 - Adicionado parametro na lista_protocolos para que posssa
                              ser filtrado por uma lista fixa de protocolos. PR354.1
@@ -428,7 +431,7 @@ PROCEDURE lista_protocolos:
     /*Validaçao removida em 31/08/2016 - PRJ386.5 - CECRED MOBILE (Dionathan)
     IF  par_dtfimpro > aux_datdodia  THEN
         ASSIGN par_dtfimpro = aux_datdodia.*/
-
+                  
     FIND FIRST crapdat
 	     WHERE crapdat.cdcooper = par_cdcooper
 		 NO-LOCK NO-ERROR.
@@ -480,7 +483,7 @@ PROCEDURE lista_protocolos:
         IF  par_cdtippro <> 8     AND 
             crappro.cdtippro = 8  THEN /** Protocolo Favorecido **/
             NEXT.
-
+                           
           /* Registra os dados do associado */
           RUN lista_protocolo
               (INPUT par_cdcooper,
@@ -545,6 +548,15 @@ PROCEDURE lista_protocolo:
        SUBSTR(crabpro.dsinform[3],1,3) <> "TAA" THEN
            NEXT.
                
+        IF par_cdorigem = 3 AND /* InternetBank */
+           crabpro.cdtippro = 20 AND
+           SUBSTR(crabpro.dsinform[3],1,3) = "TAA" THEN
+           NEXT.
+        IF par_cdorigem = 4 AND /* TAA */
+           crabpro.cdtippro = 20 AND
+           SUBSTR(crabpro.dsinform[3],1,3) <> "TAA" THEN
+           NEXT.           
+               
         ASSIGN aux_nmoperad = "".
         FIND FIRST crapopi WHERE crapopi.cdcooper = par_cdcooper 
                              AND crapopi.nrdconta = par_nrdconta
@@ -583,6 +595,7 @@ PROCEDURE lista_protocolo:
                                                         OR crabpro.cdtippro = 17
                                                         OR crabpro.cdtippro = 18
                                                         OR crabpro.cdtippro = 19
+														OR crabpro.cdtippro = 20
                cratpro.cdagectl    = crapcop.cdagectl WHEN (crabpro.cdtippro = 1 AND par_cdorigem = 3)
                                                         OR crabpro.cdtippro = 2
                                                         OR crabpro.cdtippro = 6
@@ -593,6 +606,7 @@ PROCEDURE lista_protocolo:
                                                         OR crabpro.cdtippro = 17
                                                         OR crabpro.cdtippro = 18
                                                         OR crabpro.cdtippro = 19
+														OR crabpro.cdtippro = 20
                cratpro.cdagesic    = crapcop.cdagesic.
 
         IF   par_cdorigem = 4   THEN /* TAA */
@@ -602,7 +616,14 @@ PROCEDURE lista_protocolo:
                       ASSIGN cratpro.dscedent  = 
                      SUBSTR(ENTRY(2,crabpro.dsinform[2],"#"),19) NO-ERROR.
                  ELSE
-                  ASSIGN cratpro.dscedent = IF   crabpro.dscedent = ""   THEN 
+                 IF   cratpro.cdtippro = 20   THEN
+                      ASSIGN cratpro.dscedent = IF   crabpro.dscedent = ""   THEN 
+                                                     ENTRY(2,cratpro.dsinform[2],"#") + " - " + 
+                                                     ENTRY(1,cratpro.dsinform[2],"#") /* Telefone - Operadora */
+                                                ELSE
+                                                     crabpro.dscedent.  
+                 ELSE
+                      ASSIGN cratpro.dscedent = IF   crabpro.dscedent = ""   THEN 
                                                      "PAGAMENTO TAA"
                                                 ELSE
                                                  crabpro.dscedent.  

@@ -9,14 +9,13 @@
 
     Frequencia: Diario.
 
-    Objetivo  : Gerar relatorio de limites de desconto de cheques vencidos.
+    Objetivo  : Criar tarifas de custodia de cheques custodiados no dia.
 ..............................................................................*/
 
-{ includes/var_batch.i "NEW" } 
+{ includes/var_batch.i } 
 { sistema/generico/includes/var_oracle.i }
 
   ASSIGN glb_cdprogra = "crps525"
-         glb_flgbatch = FALSE
          glb_cdcritic = 0
          glb_dscritic = "".
        
@@ -27,7 +26,7 @@ IF  glb_cdcritic > 0 THEN DO:
                       " - " + glb_cdprogra + "' --> '"  +
                       "Erro ao rodar: " + STRING(glb_cdcritic) + " " + 
                       "'" + glb_dscritic + "'" + " >> log/proc_batch.log").
-    QUIT.
+    RETURN.
 END.
 
 ETIME(TRUE).
@@ -52,7 +51,7 @@ IF  ERROR-STATUS:ERROR  THEN DO:
                       " - " + glb_cdprogra + "' --> '"  +
                       "Erro ao executar Stored Procedure: '" +
                       aux_msgerora + "' >> log/proc_batch.log").
-    QUIT.
+    RETURN.
 END.
 
 CLOSE STORED-PROCEDURE pc_crps525 WHERE PROC-HANDLE = aux_handproc.
@@ -74,7 +73,7 @@ IF  glb_cdcritic <> 0   OR
                           " - " + glb_cdprogra + "' --> '"  +
                           "Erro ao rodar: " + STRING(glb_cdcritic) + " " + 
                           "'" + glb_dscritic + "'" + " >> log/proc_batch.log").
-        QUIT.
+        RETURN.
     END.                          
 
 UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS")    + 

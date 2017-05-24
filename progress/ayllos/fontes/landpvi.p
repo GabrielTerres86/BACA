@@ -493,6 +493,9 @@
                10/03/2017 - Incluir buffer craxlcm para efetuar busca do recid e armazenar na variavel
                             global glb_nrdrecid (Lucas Ranghetti #601012)
                             
+               24/04/2017 - Nao considerar valores bloqueados na composicao do saldo disponivel
+                            Heitor (Mouts) - Melhoria 440
+
 ............................................................................. */
 /*** Historico 351 aceita nossos cheques e de outros bancos ***/
 
@@ -2644,9 +2647,6 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                  DO:
                      ASSIGN aux_vlsddisp = tt-saldos.vlsddisp +
                                            tt-saldos.vlsdchsl + 
-                                           tt-saldos.vlsdbloq + 
-                                           tt-saldos.vlsdblpr +
-                                           tt-saldos.vlsdblfp + 
                                            tt-saldos.vllimcre.
                  END.
                  

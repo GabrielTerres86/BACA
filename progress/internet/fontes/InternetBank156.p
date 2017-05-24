@@ -46,6 +46,7 @@ DEF  INPUT PARAM par_nrcpfope AS DECI                                  NO-UNDO.
 DEF  INPUT PARAM par_nrctremp AS INTE                                  NO-UNDO. 
 DEF  INPUT PARAM par_dtmvtolt AS DATE                                  NO-UNDO.
 DEF  INPUT PARAM par_dtmvtoan AS DATE                                  NO-UNDO.
+DEF  INPUT PARAM par_dtmvtocd AS DATE                                  NO-UNDO.
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
 
@@ -173,6 +174,7 @@ IF VALID-HANDLE(h-b1wgen0084a) THEN
                    + "<vlpreemp>" + TRIM(STRING(crapepr.vlpreemp * parcelas ,"zzz,zzz,zzz,zz9.99")) + "</vlpreemp>"
                    + "<exibir>" + aux_exibir +  "</exibir>"
                    + "<declaracao>" + aux_declaracao + "</declaracao>" 
+                   + "<dtmvtdeb>" + STRING(par_dtmvtocd) + "</dtmvtdeb>" 
                    + "</VALORES>". 
 
        IF  VALID-HANDLE(h-b1wgen0084a) THEN

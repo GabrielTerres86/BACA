@@ -27,6 +27,8 @@
               26/10/2016 - Alterações para Prj. 229-Melhorias, Inclusao da imagem 
                            de assinatura (Jean Michel)
 
+              13/04/2017 - Alterado para nao exibir assinatura de algumas coops. pois a assinatura
+                           estara na propria imagem de fundo SD624455 (Odirlei-Amcom)
 ............................................................................. */
 
 { sistema/generico/includes/var_log_progrid.i }
@@ -124,7 +126,7 @@ FUNCTION montaTela RETURNS LOGICAL ().
   '   .a3            ~{ font-family: DIN-BLACK, sans-serif; color:#2d5495;font-size: 40px; font-weight: bold;}' SKIP
   '   .a4            ~{ font-family: DIN-REGULAR, sans-serif; color:#2d5495;font-size: 23px; font-weight: bold;}' SKIP
   '   .a5            ~{ font-family: DIN-REGULAR, sans-serif; color:#2d5495;font-size: 40px; font-weight: bold;}' SKIP
-  '   .data          ~{ font-family: DIN-REGULAR, sans-serif; color:#2d5495;font-size: 32px; font-weight: bold;}' SKIP
+  '   .data          ~{ font-family: DIN-REGULAR, sans-serif; color:#2d5495;font-size: 28px; font-weight: bold;}' SKIP
   '   .assinatura    ~{ font-family: DIN-REGULAR, sans-serif; color:#2d5495;font-size: 32px; font-weight: bold;}' SKIP
     '</style><style type="text/css" media="print">@page ~{size: landscape;    }    body ~{         writing-mode: tb-rl;    }</style' SKIP.
 
@@ -240,8 +242,11 @@ FUNCTION montaTela RETURNS LOGICAL ().
                            
             {&out} '<div style="clear:both"></div>' SKIP. /* DIV DE LIMPEZA */
                                          
+            /* apenas exibir assinatura para determinadas as coops */
+            IF CAN-DO("3,17",STRING(cdCooper)) THEN
+              DO:
             /* DIV DE ASSINATURA */
-            {&out} '<div id="assinatura" style="border: 0px solid orange; position:relative; padding-left: 280px; padding-top: 580px; float:left; z-index:6;">' SKIP.
+                {&out} '<div id="assinatura" style="border: 0px solid orange; position:relative; padding-left: 280px; padding-top: 580px; float:left; z-index:6; width: 100%;">' SKIP.
             /* DIV IMAGEM ASSINATURA */
             {&out} '<div id="assinatura_imagem" name="assinatura_imagem" style="border: 0px solid blue; position: absolute; float:left; margin-left:350; z-index:7;">' SKIP.
             {&out} '<img style=" height:400px;" src="/cecred/images/assinaturas/moacir_krambeck.png"/>' SKIP.
@@ -256,6 +261,11 @@ FUNCTION montaTela RETURNS LOGICAL ().
             /* FIM DIV NOME PRESIDENTE */
             {&out} '</div>' SKIP.
             /* FIM DIV DE ASSINATURA */              
+              END.
+            ELSE
+              DO:
+                {&out} '<div id="assinatura" style="border: 0px solid orange; position:relative; padding-left: 280px; padding-top: 600px; float:left; z-index:6; width: 100%; height: 20%;"></div>' SKIP.
+              END.
 
             /* DIV DATA */  
             {&out} '<div style="clear:both"></div>' SKIP. /* DIV DE LIMPEZA */

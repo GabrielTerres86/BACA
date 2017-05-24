@@ -34,7 +34,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Mirtes
-   Data    : Outubro/2003                      Ultima atualizacao: 22/02/2017
+   Data    : Outubro/2003                      Ultima atualizacao: 03/05/2017
 
    Dados referentes ao programa:
 
@@ -170,7 +170,10 @@
                             Corvu (Douglas Pagel).
                             
                22/02/2017 - #601794 Inclusão de log de início e fim das 
-			                execuções (Carlos)
+			                      execuções (Carlos)
+                      
+               03/05/2017 - #601794 Inclusao dos parametros de criacao de 
+                            chamado (Carlos)
                             
 ............................................................................. */
 
@@ -883,13 +886,19 @@ PROCEDURE proc_roda_exclusivo:
                     (INPUT "PI",
                      INPUT SUBSTRING(aux_nmdobjet, 8),
                      input glb_cdcooper,
-                     input 1,
-                     input 4,
-                     input 0,
-                     input 0,
-                     input "PI exclusivo noturno",
-                     input 1,
-                     INPUT 0).
+                     input 1, /* tpexecucao */
+                     input 4, /* tpocorrencia */
+                     input 0, /* cdcriticidade */
+                     input 0, /* cdmensagem */
+                     input "PI exclusivo noturno", /* dsmensagem */                                          
+                     input 1,  /* flgsucesso */
+                     INPUT "", /* nmarqlog */
+                     input 0,  /* flabrechamado */
+                     input "", /* texto_chamado */
+                     input "", /* destinatario_email */
+                     input 0,  /* flreincidente */
+                     INPUT 0   /* idprglog */                     
+                     ).
                 CLOSE STORED-PROCEDURE pc_log_programa WHERE PROC-HANDLE = aux_handproc.
                 { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
 
@@ -905,8 +914,13 @@ PROCEDURE proc_roda_exclusivo:
                      input 4,
                      input 0,
                      input 0,
-                     input "PF exclusivo noturno",
-                     input 1,
+                     input "PF exclusivo noturno",                     
+                     input 1,  /* flgsucesso */
+                     INPUT "", /* nmarqlog */
+                     input 0,  /* flabrechamado */
+                     input "", /* texto_chamado */
+                     input "", /* destinatario_email */
+                     input 0,  /* flreincidente */
                      INPUT 0).
                 CLOSE STORED-PROCEDURE pc_log_programa WHERE PROC-HANDLE = aux_handproc.
                 { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
@@ -1011,7 +1025,7 @@ PROCEDURE proc_roda_paralelo:
                 NEXT.          /*  Executa proximo da lista  */
             END.
 
-       { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+       { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }       
        RUN STORED-PROCEDURE pc_log_programa aux_handproc = PROC-HANDLE
            (INPUT "PI",
             INPUT SUBSTRING(aux_nmdobjet, 8),
@@ -1022,6 +1036,11 @@ PROCEDURE proc_roda_paralelo:
             input 0,
             input "PI paralelo noturno",
             input 1,
+            INPUT "", /* nmarqlog */
+            input 0,  /* flabrechamado */
+            input "", /* texto_chamado */
+            input "", /* destinatario_email */
+            input 0,  /* flreincidente */
             INPUT 0).
        CLOSE STORED-PROCEDURE pc_log_programa WHERE PROC-HANDLE = aux_handproc.
        { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
@@ -1047,6 +1066,11 @@ PROCEDURE proc_roda_paralelo:
             input 0,
             input "PF paralelo noturno",
             input 1,
+            INPUT "", /* nmarqlog */
+            input 0,  /* flabrechamado */
+            input "", /* texto_chamado */
+            input "", /* destinatario_email */
+            input 0,  /* flreincidente */
             INPUT 0).
        CLOSE STORED-PROCEDURE pc_log_programa WHERE PROC-HANDLE = aux_handproc.
        { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }

@@ -81,6 +81,9 @@ DEF VAR aux_nrregist AS INTE                                        NO-UNDO.
 DEF VAR aux_nriniseq AS INTE                                        NO-UNDO.
 DEF VAR aux_qtregist AS INTE                                        NO-UNDO.
 DEF VAR aux_dtmvtolx AS DATE                                        NO-UNDO.
+DEF VAR aux_dtcusini AS DATE                                        NO-UNDO.
+DEF VAR aux_dtcusfim AS DATE                                        NO-UNDO.
+DEF VAR aux_dsdocmc7 AS CHAR                                        NO-UNDO.
 
 
 { sistema/generico/includes/b1wgen0018tt.i }
@@ -114,7 +117,6 @@ PROCEDURE valores_entrada:
             WHEN "cddepart" THEN aux_cddepart = INTE(tt-param.valorCampo).
             WHEN "cdprogra" THEN aux_cdprogra = tt-param.valorCampo.
             WHEN "dtmvtolx" THEN aux_dtmvtolx = DATE(tt-param.valorCampo).    
-
             WHEN "dtperini" THEN aux_dtperini = DATE(tt-param.valorCampo).  
             WHEN "dtperfim" THEN aux_dtperfim = DATE(tt-param.valorCampo).  
             WHEN "nrpacori" THEN aux_nrpacori = INTE(tt-param.valorCampo).
@@ -155,7 +157,10 @@ PROCEDURE valores_entrada:
             WHEN "tpcheque" THEN aux_tpcheque = INTE(tt-param.valorCampo).
             WHEN "nrregist" THEN aux_nrregist = INTE(tt-param.valorCampo).
             WHEN "nriniseq" THEN aux_nriniseq = INTE(tt-param.valorCampo).
-
+            WHEN "dtcusini" THEN aux_dtcusini = DATE(tt-param.valorCampo).
+            WHEN "dtcusfim" THEN aux_dtcusfim = DATE(tt-param.valorCampo).
+            WHEN "dsdocmc7" THEN aux_dsdocmc7 = tt-param.valorCampo.
+                
                 
                 
                 
@@ -894,10 +899,17 @@ PROCEDURE consulta_cheques_custodia:
                                   INPUT aux_cdagenci,
                                   INPUT aux_nrdcaixa,
                                   INPUT aux_nrdconta,
-                                  INPUT aux_tpcheque,
                                   INPUT aux_dtmvtoan,
+                                  INPUT aux_dtcusini,
+                                  INPUT aux_dtcusfim,
+                                  INPUT aux_tpcheque,
+                                  INPUT aux_nrdolote,
                                   INPUT aux_dtlibini,
                                   INPUT aux_dtlibfim,
+                                  INPUT aux_dsdocmc7,
+                                  INPUT aux_nriniseq,
+                                  INPUT aux_nrregist,
+                                 OUTPUT aux_qtregist,
                                  OUTPUT TABLE tt-erro,
                                  OUTPUT TABLE tt-crapcst).
 
@@ -923,6 +935,7 @@ PROCEDURE consulta_cheques_custodia:
             RUN piXmlNew.
             RUN piXmlExport (INPUT TEMP-TABLE tt-crapcst:HANDLE,
                              INPUT "Cheques").
+            RUN piXmlAtributo (INPUT "qtregist",INPUT aux_qtregist).                             
             RUN piXmlSave.
         END.
 

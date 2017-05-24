@@ -2,7 +2,7 @@
 
    Programa: b1wnet0002.p                  
    Autor   : David
-   Data    : 03/10/2006                        Ultima atualizacao: 17/10/2016
+   Data    : 03/10/2006                        Ultima atualizacao: 24/01/2017
 
    Dados referentes ao programa:
 
@@ -137,7 +137,7 @@
                             permissoes do menu do Mobile. Projeto 286/3 - Mobile (Lombardi)
                
                11/05/2016 - Remocao de logica para somente mostrar Comprovantes Salariais
-			                quanto houver. Esta busca estava honerando o processo (Marcos-Supero)
+			                      quanto houver. Esta busca estava honerando o processo (Marcos-Supero)	
                
                18/08/2016 - Adicionada a propriedade qtdiaace na carrega-tutulares
                             PRJ286.5 - Cecred Mobile (Dionathan)
@@ -149,11 +149,16 @@
 							              (Andrey - RKAM)
                
                09/09/2016 - Alterado procedure Busca_Dados, retorno do parametro
-                                                    aux_qtminast referente a quantidade minima de assinatura
-                                                    conjunta, procedure carrega_titulares SD 514239 (Jean Michel).
+						    aux_qtminast referente a quantidade minima de assinatura
+						    conjunta, procedure carrega_titulares SD 514239 (Jean Michel).
                
 			   17/10/2016 - Ajuste feito para que possa visualizar as opcoes de transacoes para
 							contas com inpessoa = 3 ao criar um novo operador. (SD 538293 - Kelvin)
+               
+               24/01/2017 - Ajuste na procedure "permissoes-menu" para somente mostrar a 
+                            opcao Desconto de Cheques quando possuir contrato de limite de
+                            desconto de cheque. Projeto 300 (Lombardi)
+               
 ..............................................................................*/
 
 
@@ -366,7 +371,7 @@ PROCEDURE carrega-titulares.
     DEF VAR aux_inbloque AS INTE INIT 0                             NO-UNDO.
     DEF VAR aux_incadsen AS INTE INIT 0                             NO-UNDO.
     DEF VAR aux_qtdiaace AS INTE                                    NO-UNDO.
-    DEF VAR aux_qtminast AS INTE                                                                        NO-UNDO.
+    DEF VAR aux_qtminast AS INTE									NO-UNDO.
     
     DEF VAR h-b1wgen0058 AS HANDLE                                  NO-UNDO.
 
@@ -619,7 +624,7 @@ PROCEDURE carrega-titulares.
                                                  INPUT ?,     /* par_nrdrowid */
                                                 OUTPUT TABLE tt-crapavt,
                                                 OUTPUT TABLE tt-bens,
-                                                                                                OUTPUT aux_qtminast,
+												OUTPUT aux_qtminast,
                                                 OUTPUT TABLE tt-erro) NO-ERROR.
 
                 DELETE PROCEDURE h-b1wgen0058.
@@ -2790,6 +2795,7 @@ PROCEDURE permissoes-menu:
     DEF VAR aux_flgprepo AS LOGI                                    NO-UNDO.
     DEF VAR aux_flgblque AS LOGI                                    NO-UNDO.
     DEF VAR aux_flgaprov AS LOGI                                    NO-UNDO.
+    DEF VAR aux_flgdesct AS LOGI                                    NO-UNDO.
 
     DEF VAR h-b1wgen0016 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0079 AS HANDLE                                  NO-UNDO.
@@ -2851,6 +2857,7 @@ PROCEDURE permissoes-menu:
            aux_flgconve = FALSE
            aux_flgpagto = FALSE
            aux_flgaprov = FALSE
+           aux_flgdesct = FALSE
            /** DDA nao sera validado no momento - 12/07/2011 (David) **/
            aux_flgpgdda = TRUE 
            aux_flgtbdda = TRUE.
@@ -2905,7 +2912,18 @@ PROCEDURE permissoes-menu:
             IF AVAIL tt-dados-cpa AND tt-dados-cpa.vldiscrd > 0 THEN
                ASSIGN aux_flgaprov = TRUE.
         END.
-
+    
+    /* Verifica se possui limite de desconto de cheque */
+    FIND FIRST craplim WHERE craplim.cdcooper = par_cdcooper AND
+                             craplim.nrdconta = par_nrdconta AND
+                             craplim.tpctrlim = 2            AND
+                             craplim.insitlim > 1
+                             NO-LOCK NO-ERROR.
+    IF AVAILABLE craplim THEN
+       DO:
+         ASSIGN aux_flgdesct = TRUE.
+       END.
+        
     /** DDA nao sera validado no momento - 12/07/2011 (David) **
     RUN sistema/generico/procedures/b1wgen0079.p PERSISTENT SET h-b1wgen0079.
      
@@ -3225,7 +3243,12 @@ PROCEDURE permissoes-menu:
                     IF crabmni.cditemmn = 4 AND crabmni.cdsubitm = 2 AND
                        NOT aux_flgaprov THEN
                        NEXT.
-
+                    
+                    /* Verifica permissao para custodia de cheque */
+                    IF crabmni.cditemmn = 4 AND crabmni.cdsubitm = 5 AND
+                       NOT aux_flgdesct THEN
+                       NEXT.
+                    
                     CREATE tt-itens-menu.
                     ASSIGN tt-itens-menu.cditemmn = crabmni.cditemmn
                            tt-itens-menu.cdsubitm = crabmni.cdsubitm

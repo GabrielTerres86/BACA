@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro   
-   Data    : Julho/2005.                     Ultima atualizacao: 05/07/2016
+   Data    : Julho/2005.                     Ultima atualizacao: 10/04/2017
 
    Dados referentes ao programa:
 
@@ -84,6 +84,13 @@
                
 			   05/07/2016 - Incluir verificacao da crapass antes da leitura dos
 							registros (Lucas Ranghetti #480462)
+
+			   10/04/2017 - Ajuste no relatorio 396_999 para buscar contas com
+							até 4 meses em relação a data retorno do arquivo, tabela
+							crapeca.dtretarq. E feito o ajuste para que não trouxesse
+							contas migradas de outras cooperativas. (SD: 592825, 
+							Andrey Formigari - Mouts).
+
 ............................................................................. */
 
 DEF   VAR b1wgen0011   AS HANDLE                                     NO-UNDO.
@@ -476,21 +483,30 @@ DO:
                             crapeca.tparquiv = 552)           NO-LOCK:
     
         FIND crapass WHERE crapass.cdcooper = glb_cdcooper      AND
-                           crapass.nrdconta = crapeca.nrdconta  NO-LOCK NO-ERROR.
+                           crapass.nrdconta = crapeca.nrdconta  AND
+						   crapass.dtdemiss = ? NO-LOCK NO-ERROR.
+
+		/* 
+			Verifica se existe registro e se esta dentro de um prazo 
+			de 4 meses em relação a data da cooperativa
+		*/
+		IF AVAIL crapass AND crapeca.dtretarq > (glb_dtmvtolt - 120) THEN
+		 DO:
                            
-        CREATE w-erros.
-        ASSIGN w-erros.cdagenci = IF AVAIL crapass  THEN
-                                     crapass.cdagenci  
-                                  ELSE 0
-               w-erros.tparquiv = crapeca.tparquiv
-               w-erros.nrdconta = IF AVAIL crapass  THEN
-                                     crapass.nrdconta
-                                  ELSE 0
-               w-erros.nmprimtl = IF AVAIL crapass  THEN
-                                     crapass.nmprimtl
-                                  ELSE "****************************************"
-               w-erros.dscritic = crapeca.dscritic
-               w-erros.dtretarq = crapeca.dtretarq.
+			CREATE w-erros.
+			ASSIGN w-erros.cdagenci = IF AVAIL crapass  THEN
+										 crapass.cdagenci  
+									  ELSE 0
+				   w-erros.tparquiv = crapeca.tparquiv
+				   w-erros.nrdconta = IF AVAIL crapass  THEN
+										 crapass.nrdconta
+									  ELSE 0
+				   w-erros.nmprimtl = IF AVAIL crapass  THEN
+										 crapass.nmprimtl
+									  ELSE "****************************************"
+				   w-erros.dscritic = crapeca.dscritic
+				   w-erros.dtretarq = crapeca.dtretarq.
+		END.
     END.           
     
     FOR EACH w-erros NO-LOCK BREAK BY w-erros.cdagenci

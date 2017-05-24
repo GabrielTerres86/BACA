@@ -2,7 +2,7 @@
 
     Programa: xb1wgen0059.p
     Autor   : Jose Luis
-    Data    : Marco/2010                   Ultima atualizacao: 22/02/2017
+    Data    : Marco/2010                   Ultima atualizacao: 23/03/2017
 
     Objetivo  : BO de Comunicacao XML x BO Generica de Buscas (b1wgen0059.p)
 
@@ -62,7 +62,9 @@
 							
 				22/02/2017 - Removido as rotinas busca_nat_ocupacao, busca_ocupacao devido a conversao 
 				             da busca_gncdnto e da busca-gncdocp
-							 (Adriano - SD 614408).
+							 (Adriano - SD 614408).	
+
+				23/03/2017 - Adicionado tratamento na procedure Busca-Agencia. (PRJ321 - Reinert)
 .............................................................................*/
 
                                                                              
@@ -245,7 +247,7 @@ PROCEDURE valores_entrada:
             WHEN "nmrmativ" OR WHEN "dsrmativ" THEN 
                 aux_nmrmativ = tt-param.valorCampo.
             WHEN "cddbanco" THEN aux_cddbanco = INTE(tt-param.valorCampo).
-            WHEN "nmdbanco" OR WHEN "dsdbanco" OR WHEN "nmextbcc" THEN 
+            WHEN "nmdbanco" OR WHEN "dsdbanco" OR WHEN "nmextbcc" OR WHEN "nmresbcc" THEN 
                 aux_nmdbanco = tt-param.valorCampo.
             WHEN "cdageban" THEN aux_cdageban = INTE(tt-param.valorCampo).
             WHEN "nmageban" THEN aux_nmageban = tt-param.valorCampo.
@@ -830,6 +832,10 @@ END PROCEDURE.
 PROCEDURE Busca_Agencia:
 
     RUN carrega-objeto.
+
+	IF aux_cddbanco = 0 AND
+	   aux_cdbccxlt > 0 then
+	   ASSIGN aux_cddbanco = aux_cdbccxlt.
 
     RUN busca-crapagb IN h-b1wgen0059
         ( INPUT aux_cddbanco,

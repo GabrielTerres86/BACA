@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson 
-   Data    : Maio/2001.                         Ultima atualizacao: 22/05/2014
+   Data    : Maio/2001.                         Ultima atualizacao: 23/01/2017
 
    Dados referentes ao programa:
 
@@ -52,6 +52,10 @@
                22/05/2014 - Atualiza a situacao previa da tabela crapchd
                             com a mesma da crapcst.insitprv 
                             (Tiago/Rodrigo SD158725).
+                            
+               04/11/2016 - Cheques custodiados deverao ter o numero do bordero
+                            igual a zero. (Projeto 300 - Rafael)
+                            
 ............................................................................. */
 
 DEF STREAM str_1.
@@ -140,6 +144,7 @@ FOR EACH crapcst WHERE crapcst.cdcooper  = glb_cdcooper     AND
                        crapcst.dtlibera <= glb_dtmvtopr     AND
                        crapcst.insitchq  = 2                AND
                        crapcst.dtdevolu  = ?                AND
+                       crapcst.nrborder  = 0                AND 
                        RECID(crapcst)    > glb_nrctares
                        USE-INDEX crapcst3 TRANSACTION
                        BY RECID(crapcst):

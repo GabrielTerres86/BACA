@@ -185,11 +185,15 @@
                 22/01/2016 - Adicionada verificacao de comprovacao de vida na 
                              procedure obtem-mensagens-alerta-contas.
                              Projeto 255 - INSS (Lombardi).
-
+                
 				09/09/2016 - Alterado procedure Busca_Dados, retorno do parametro
 						     aux_qtminast referente a quantidade minima de assinatura
 						     conjunta na procedure obtem-mensagens-alerta,
 						     SD 514239 (Jean Michel).
+                
+                22/09/2016 - Alterado rotina obtem-mensagens-alerta 
+                             para buscar o qtd dias de renovacao da tabela craprli
+								  			     PRJ300 - Desconto de cheque (Odirlei-AMcom)             
                 
 .............................................................................*/
 
@@ -583,18 +587,16 @@ PROCEDURE obtem-mensagens-alerta:
               RUN cria-registro-msg ("Contrato de limite de credito" +
                                      " vencido.").
        END.
-         
-    /** Tabela de limite de desconto de cheques **/
-    FIND craptab WHERE craptab.cdcooper = par_cdcooper AND
-                       craptab.nmsistem = "CRED"       AND
-                       craptab.tptabela = "USUARI"     AND
-                       craptab.cdempres = 11           AND
-                       craptab.cdacesso = "LIMDESCONT" AND
-                       craptab.tpregist = 0            
-                       NO-LOCK NO-ERROR.
 
-    IF NOT AVAILABLE craptab  THEN
-       RUN cria-registro-msg ("Tabela LIMDESCONT nao cadastrada.").
+    /** Buscar regra para renovaçao **/
+    FIND FIRST craprli 
+         WHERE craprli.cdcooper = par_cdcooper
+           AND craprli.tplimite = 2
+           AND craprli.inpessoa = crapass.inpessoa
+           NO-LOCK NO-ERROR.
+
+    IF NOT AVAILABLE craprli  THEN
+       RUN cria-registro-msg ("Tabela Regra de limite nao cadastrada.").
 
     /** Verifica se ja excedeu a vigencia do limite de desconto de cheques **/
     FIND FIRST craplim WHERE craplim.cdcooper = par_cdcooper AND
@@ -605,10 +607,16 @@ PROCEDURE obtem-mensagens-alerta:
 
     IF AVAILABLE craplim  THEN
        DO:
-           IF par_dtmvtolt >= (craplim.dtinivig + (craplim.qtdiavig * 
-              INTEGER(SUBSTRING(craptab.dstextab,19,02))))             THEN
-              RUN cria-registro-msg ("Contrato de Desconto de Cheques " +
-                                     "Vencido.").
+           IF craplim.dtfimvig <> ? THEN
+              DO:
+                  IF craplim.dtfimvig <= par_dtmvtolt THEN
+                     RUN cria-registro-msg ("Contrato de Desconto de Cheques" +
+                                            " Vencido.").
+              END.
+           ELSE
+           IF (craplim.dtinivig + craplim.qtdiavig) <= par_dtmvtolt  THEN
+              RUN cria-registro-msg ("Contrato de Desconto de Cheques" +
+                                     " Vencido.").
        END.
 
     ASSIGN aux_flgpreju = FALSE

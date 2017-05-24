@@ -44,6 +44,15 @@
                             campos flaprcoo e dsdetres na tt-dscchq_bordero_restricoes
                             e dsopecoo na tt-dados_chqs_bordero. (Jaison/James)
 
+               05/09/2016 - Criacao do campo perrenov na tt-desconto_cheques.
+                            Projeto 300. (Lombardi)
+                            
+               09/09/2016 - Criacao do campo insitblq na tt-desconto_cheques.
+                            Projeto 300. (Lombardi)
+                            
+               12/09/2016 - Criacao do campo insitlim na tt-limite_chq
+                            Projeto 300. (Lombardi)
+
 ..............................................................................*/
 
 DEF TEMP-TABLE tt-desconto_cheques NO-UNDO
@@ -55,7 +64,9 @@ DEF TEMP-TABLE tt-desconto_cheques NO-UNDO
     FIELD dsdlinha AS CHAR
     FIELD vldscchq AS DECI
     FIELD qtdscchq AS INTE
-    FIELD cddopcao AS INTE.
+    FIELD cddopcao AS INTE
+    FIELD perrenov AS INTE
+    FIELD insitblq AS INTE.
     
 DEF TEMP-TABLE tt-limite_chq NO-UNDO
     FIELD dtpropos LIKE craplim.dtpropos
@@ -67,7 +78,8 @@ DEF TEMP-TABLE tt-limite_chq NO-UNDO
     FIELD dssitlim AS CHARACTER
     FIELD cddopcao AS INTEGER
     FIELD nrdrecid AS RECID
-    FIELD flgenvio AS CHAR.
+    FIELD flgenvio AS CHAR
+    FIELD insitlim AS INTE.
 
 /* TAB019 */
 DEF TEMP-TABLE tt-dados_dscchq NO-UNDO
@@ -244,7 +256,9 @@ DEF TEMP-TABLE tt-bordero_chq NO-UNDO
     FIELD qtcompln AS INTE
     FIELD vlcompcr AS DECI
     FIELD dssitbdc AS CHAR
-    FIELD nrrecid  AS INTE.    
+    FIELD nrrecid  AS INTE
+    FIELD nrdolote LIKE crapbdc.nrdolote
+    FIELD dtlibbdc LIKE crapbdc.dtlibbdc.    
     
 DEF TEMP-TABLE tt-dscchq_dados_bordero NO-UNDO
     FIELD nrborder AS INTE

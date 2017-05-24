@@ -31,11 +31,11 @@
                18/12/2015 - Inclusao de nova temp-table tt-vlrdat, Prj.
                             Assinatura Conjunta (Jean Michel).
 
-			   04/05/2016 - Incluido novo campo na tabela tt-dados-agendamento
-							(Adriano - M117).
+               04/05/2016 - Incluido novo campo na tabela tt-dados-agendamento
+							              (Adriano - M117).
               
-         24/05/2016 - Incluido o campo flmntage na tabela tt-parmon (Carlos)
-
+               24/05/2016 - Incluido o campo flmntage na tabela tt-parmon (Carlos)
+               
                21/07/2016 - Incluso da TEMP-TABLE tt-tbpagto_darf_das_trans_pend (Jean Michel).
                
                27/07/2016 - Inclusao de novos campos na TEMP-TABLE tt-dados-agendamento, Prj.338
@@ -43,6 +43,9 @@
 
                19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS pelo 
                             InternetBanking (Projeto 338 - Lucas Lunelli)
+
+               06/03/2017 - Adicionados campos nrddd, nrcelular e nmoperadora em 
+                            tt-dados-agendamento (Projeto 321 - Lombardi).
 
 ..............................................................................*/
 
@@ -93,7 +96,11 @@ DEF TEMP-TABLE tt-dados-agendamento NO-UNDO
     FIELD vlrjuros AS DECIMAL /* Prj. 338 */
     FIELD vlrtotal AS DECIMAL /* Prj. 338 */
     FIELD vlrrecbr AS DECIMAL /* Prj. 338 */
-    FIELD vlrperce AS DECIMAL.    /* Prj. 338 */
+    FIELD vlrperce AS DECIMAL /* Prj. 338 */
+    FIELD nrddd    AS INT     /* Prj. 321 */
+    FIELD nrcelular AS CHAR   /* Prj. 321 */
+    FIELD nmoperadora AS CHAR. /* Prj. 321 */
+    
 
 DEF TEMP-TABLE tt-transacoes_operadores NO-UNDO
     FIELD dtmvtolt AS DATE
@@ -161,7 +168,7 @@ DEF TEMP-TABLE tt-parmon
 DEF TEMP-TABLE tt-vlrdat NO-UNDO
     FIELD dattrans AS DATE
     FIELD vlronlin AS DEC.
-                       
+
 DEF TEMP-TABLE tt-tbpagto_darf_das_trans_pend NO-UNDO
   FIELD cdtransacao_pendente AS DECIMAL
   FIELD cdcooper             AS DECIMAL

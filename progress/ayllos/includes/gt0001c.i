@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Marco/2004                    Ultima Atualizacao: 18/09/2015
+   Data    : Marco/2004                    Ultima Atualizacao: 29/03/2017
 
    Dados referentes ao programa:
 
@@ -66,6 +66,10 @@
                             (PRJ Melhoria - Chamado 229249) - (Fabricio)
                
                18/09/2015 - Inclusão do campo tel_nrctdbfl PRJ 214 (Vanessa)
+
+			   29/03/2017 - Ajutes devido ao tratamento da versao do layout FEBRABAN
+							(Jonata RKAM M311)
+
 ............................................................................. */
 
 ON RETURN OF bgnconve-b DO:
@@ -130,6 +134,7 @@ IF   tel_cdconven <> 0   THEN
                         tel_dsemail4   = ENTRY(1, gnconve.dsenddeb)
                         tel_dsemail5   = ENTRY(2, gnconve.dsenddeb)
                         tel_dsemail6   = ENTRY(3, gnconve.dsenddeb)
+						tel_nrlayout   = gnconve.nrlayout
                         tel_flgativo   = gnconve.flgativo
                         tel_flgcvuni   = gnconve.flgcvuni
                         tel_flgdecla   = gnconve.flgdecla
@@ -173,6 +178,7 @@ IF   tel_cdconven <> 0   THEN
                         tel_nmarqdeb 
                         tel_tpdenvio  
                         tel_dsdiracc
+						tel_nrlayout
                         tel_flgativo
                         tel_flgcvuni
                         tel_flgdecla
@@ -241,6 +247,7 @@ ELSE
                 " " @  tel_nmarqdeb 
                 " " @  tel_tpdenvio  
                 " " @  tel_dsdiracc
+				" " @  tel_nrlayout
                 " " @  tel_flgativo
                 " " @  tel_flgcvuni
                 " " @  tel_flgdecla

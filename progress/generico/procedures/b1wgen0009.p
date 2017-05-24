@@ -243,9 +243,25 @@
 
 	       25/10/2016 - Verificar CNAE restrito Melhoria 310 (Tiago/Thiago)
 
+           05/09/2016 - Criacao do campo perrenov na tt-desconto_cheques.
+                        Projeto 300. (Lombardi)
+                        
 
           07/11/2016 - Ajuste na procedure imprime_cet para enviar novos parametros (Daniel)  
 
+           09/09/2016 - Criacao do campo insitblq na tt-desconto_cheques.
+                        Projeto 300. (Lombardi)
+                            
+           12/09/2016 - Criacao do campo insitlim na tt-limite_chq.
+                        Projeto 300. (Lombardi)
+
+           23/09/2016 - Alterado busca_parametros_dscchq para leitura
+                        da nova TAB de desconto segmentada por tipo de pessoa.
+                        PRJ-300 - Desconto de cheque(Odirlei-AMcom)              
+          
+		   09/11/2016 - Alterado campo crapabc.nrseqdig para crapabc.cdocorre.
+		                PRJ-300 - Desconto de cheque(Odirlei-AMcom)              
+					      
 ............................................................................. */
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -335,9 +351,12 @@ PROCEDURE busca_parametros_dscchq:
     DEFINE INPUT  PARAMETER par_cdoperad AS CHARACTER   NO-UNDO.
     DEFINE INPUT  PARAMETER par_dtmvtolt AS DATE        NO-UNDO.
     DEFINE INPUT  PARAMETER par_idorigem AS INTEGER     NO-UNDO. 
+    DEFINE INPUT  PARAMETER par_inpessoa AS INTEGER     NO-UNDO.      
 
     DEFINE OUTPUT PARAMETER TABLE FOR tt-erro.
     DEFINE OUTPUT PARAMETER TABLE FOR tt-dados_dscchq.
+    
+    DEFINE VAR aux_cdacesso AS CHAR                     NO-UNDO.
     
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-dados_dscchq.
@@ -345,17 +364,34 @@ PROCEDURE busca_parametros_dscchq:
     ASSIGN aux_cdcritic = 0
            aux_dscritic = "".
 
+    IF par_inpessoa = 1 THEN
+      DO:
+         ASSIGN aux_cdacesso = "LIMDESCONTPF".
+      END.
+    ELSE
+      DO: 
+         ASSIGN aux_cdacesso = "LIMDESCONTPJ".
+      END.
+      
     FIND craptab WHERE craptab.cdcooper = par_cdcooper    AND
                        craptab.nmsistem = "CRED"          AND
                        craptab.tptabela = "USUARI"        AND
                        craptab.cdempres = 11              AND
-                       craptab.cdacesso = "LIMDESCONT"    AND
+                       craptab.cdacesso = aux_cdacesso    AND
                        craptab.tpregist = 0 NO-LOCK NO-ERROR.
 
     IF  AVAIL craptab THEN
     DO:
+       /** Buscar regra para renovaçao **/
+       FIND FIRST craprli 
+            WHERE craprli.cdcooper = par_cdcooper
+              AND craprli.tplimite = 2
+              AND craprli.inpessoa = par_inpessoa
+               NO-LOCK NO-ERROR.
+       
+    
        CREATE tt-dados_dscchq.
-       ASSIGN tt-dados_dscchq.vllimite = DECIMAL(SUBSTRING(craptab.dstextab,01,12))
+       /*ASSIGN tt-dados_dscchq.vllimite = DECIMAL(SUBSTRING(craptab.dstextab,01,12))
               tt-dados_dscchq.qtdiavig = INTEGER(SUBSTRING(craptab.dstextab,14,04))
               tt-dados_dscchq.qtrenova = DECIMAL(SUBSTRING(craptab.dstextab,19,02))
               tt-dados_dscchq.qtprzmin = DECIMAL(SUBSTRING(craptab.dstextab,22,03))
@@ -368,7 +404,23 @@ PROCEDURE busca_parametros_dscchq:
               tt-dados_dscchq.qtdiasoc = INTEGER(SUBSTRING(craptab.dstextab,75,03))
               tt-dados_dscchq.qtdevchq = INTEGER(SUBSTRING(craptab.dstextab,79,03))
               tt-dados_dscchq.pctolera = INTEGER(SUBSTRING(craptab.dstextab,83,03)).
+         */     
               
+       ASSIGN tt-dados_dscchq.vllimite = DECIMAL(ENTRY(1,craptab.dstextab," "))
+              tt-dados_dscchq.qtdiavig = INTEGER(ENTRY(3,craptab.dstextab," ")) 
+
+              tt-dados_dscchq.qtrenova = craprli.qtmaxren
+              
+              tt-dados_dscchq.qtprzmin = DECIMAL(ENTRY( 4,craptab.dstextab," "))
+              tt-dados_dscchq.qtprzmax = DECIMAL(ENTRY( 5,craptab.dstextab," "))
+              tt-dados_dscchq.pcdmulta = DECIMAL(ENTRY( 7,craptab.dstextab," "))
+              tt-dados_dscchq.vlconchq = DECIMAL(ENTRY( 8,craptab.dstextab," "))
+              tt-dados_dscchq.vlmaxemi = DECIMAL(ENTRY( 9,craptab.dstextab," "))
+              tt-dados_dscchq.pcchqloc = DECIMAL(ENTRY(11,craptab.dstextab," "))
+              tt-dados_dscchq.pcchqemi = DECIMAL(ENTRY(12,craptab.dstextab," "))
+              tt-dados_dscchq.qtdiasoc = INTEGER(ENTRY(13,craptab.dstextab," "))
+              tt-dados_dscchq.qtdevchq = INTEGER(ENTRY(14,craptab.dstextab," "))
+              tt-dados_dscchq.pctolera = INTEGER(ENTRY(15,craptab.dstextab," ")).
     END.
     ELSE
     DO:
@@ -414,6 +466,8 @@ PROCEDURE busca_dados_dscchq:
     DEFINE VARIABLE aux_qtdiavig AS INTEGER     NO-UNDO.
     DEFINE VARIABLE aux_vllimite AS DECIMAL     NO-UNDO.
     DEFINE VARIABLE aux_qtrenova AS INTEGER     NO-UNDO.
+    DEFINE VARIABLE aux_perrenov AS INTEGER     NO-UNDO.
+    DEFINE VARIABLE aux_insitblq AS INTEGER     NO-UNDO.
     DEFINE VARIABLE aux_dsdlinha AS CHARACTER   NO-UNDO.
     DEFINE VARIABLE aux_vlutiliz AS DECIMAL     NO-UNDO.
     DEFINE VARIABLE aux_qtutiliz AS INTEGER     NO-UNDO.
@@ -512,6 +566,8 @@ PROCEDURE busca_dados_dscchq:
                aux_qtdiavig = 0
                aux_vllimite = 0
                aux_qtrenova = 0
+               aux_perrenov = 0
+               aux_insitblq = 0
                aux_dsdlinha = ""
                aux_vlutiliz = 0
                aux_qtutiliz = 0
@@ -534,6 +590,8 @@ PROCEDURE busca_dados_dscchq:
                aux_qtdiavig = craplim.qtdiavig
                aux_vllimite = craplim.vllimite
                aux_qtrenova = craplim.qtrenova
+               aux_perrenov = IF (craplim.dtfimvig < par_dtmvtolt) THEN 1 ELSE 0
+               aux_insitblq = craplim.insitblq
                opcao        = 1.
     END.
 
@@ -553,6 +611,8 @@ PROCEDURE busca_dados_dscchq:
            tt-desconto_cheques.qtdiavig = aux_qtdiavig 
            tt-desconto_cheques.vllimite = aux_vllimite
            tt-desconto_cheques.qtrenova = aux_qtrenova
+           tt-desconto_cheques.perrenov = aux_perrenov
+           tt-desconto_cheques.insitblq = aux_insitblq
            tt-desconto_cheques.dsdlinha = aux_dsdlinha
            tt-desconto_cheques.vldscchq = aux_vldscchq
            tt-desconto_cheques.qtdscchq = aux_qtdscchq
@@ -846,6 +906,7 @@ PROCEDURE busca_dados_limite_incluir:
                                  INPUT par_cdoperad,
                                  INPUT par_dtmvtolt,
                                  INPUT par_idorigem,
+                                 INPUT crapass.inpessoa,
                                  OUTPUT TABLE tt-erro,
                                  OUTPUT TABLE tt-dados_dscchq).
 
@@ -1156,6 +1217,7 @@ PROCEDURE valida_proposta_dados:
                                  INPUT par_cdoperad,
                                  INPUT par_dtmvtolt,
                                  INPUT par_idorigem,
+                                 INPUT crapass.inpessoa,
                                  OUTPUT TABLE tt-erro,
                                  OUTPUT TABLE tt-dados_dscchq).
 
@@ -1887,12 +1949,48 @@ PROCEDURE efetua_inclusao_limite:
                aux_dstransa = "Efetuar inclusao de limite de desconto " +
                               "de cheque".
 
+    FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
+                       crapass.nrdconta = par_nrdconta 
+                       NO-LOCK NO-ERROR.
+                       
+    IF NOT AVAIL(crapass)  THEN
+       DO:
+           ASSIGN aux_cdcritic = 9
+                  aux_dscritic = "".
+
+           RUN gera_erro (INPUT par_cdcooper,
+                          INPUT par_cdagenci,
+                          INPUT par_nrdcaixa,
+                          INPUT 1,            /** Sequencia **/
+                          INPUT aux_cdcritic,
+                          INPUT-OUTPUT aux_dscritic).
+                          
+           IF par_flgerlog  THEN
+              DO:
+                  RUN proc_gerar_log (INPUT par_cdcooper,
+                                      INPUT par_cdoperad,
+                                      INPUT aux_dscritic,
+                                      INPUT aux_dsorigem,
+                                      INPUT aux_dstransa,
+                                      INPUT FALSE,
+                                      INPUT par_idseqttl,
+                                      INPUT par_nmdatela,
+                                      INPUT par_nrdconta,
+                                      OUTPUT aux_nrdrowid). 
+              
+              END.
+     
+           RETURN "NOK".        
+
+       END.
+       
     RUN busca_parametros_dscchq (INPUT par_cdcooper,
                                  INPUT par_cdagenci,
                                  INPUT par_nrdcaixa,
                                  INPUT par_cdoperad,
                                  INPUT par_dtmvtolt,
                                  INPUT par_idorigem,
+                                 INPUT crapass.inpessoa,
                                  OUTPUT TABLE tt-erro,
                                  OUTPUT TABLE tt-dados_dscchq).
 
@@ -2371,7 +2469,8 @@ PROCEDURE busca_limites:
                                             ELSE
                                                  "NAO"
                                        ELSE
-                                            "NAO".
+                                            "NAO"
+              tt-limite_chq.insitlim = craplim.insitlim.
 
 
     END.  /*  Fim da leitura do craplim  */
@@ -2650,12 +2749,52 @@ PROCEDURE busca_dados_limite:
             RETURN "NOK".
         END.
         
+    FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
+                       crapass.nrdconta = par_nrdconta 
+                       NO-LOCK NO-ERROR.
+    
+    IF NOT AVAILABLE crapass  THEN
+      DO:
+         ASSIGN aux_cdcritic = 9
+                aux_dscritic = "".
+                
+         RUN gera_erro (INPUT par_cdcooper,
+                        INPUT par_cdagenci,
+                        INPUT par_nrdcaixa,
+                        INPUT 1,            /** Sequencia **/
+                        INPUT aux_cdcritic,
+                        INPUT-OUTPUT aux_dscritic).
+
+         IF  par_flgerlog  THEN
+         DO:
+             RUN proc_gerar_log (INPUT par_cdcooper,
+                                 INPUT par_cdoperad,
+                                 INPUT aux_dscritic,
+                                 INPUT aux_dsorigem,
+                                 INPUT aux_dstransa,
+                                 INPUT FALSE,
+                                 INPUT par_idseqttl,
+                                 INPUT par_nmdatela,
+                                 INPUT par_nrdconta,
+                                OUTPUT aux_nrdrowid). 
+             
+             RUN proc_gerar_log_item(INPUT aux_nrdrowid,
+                                     INPUT "nrctrlim",
+                                     INPUT "",
+                                     INPUT par_nrctrlim).
+
+         END.             
+         
+         RETURN "NOK".
+      END.
+    
     RUN busca_parametros_dscchq (INPUT par_cdcooper,
                                  INPUT par_cdagenci,
                                  INPUT par_nrdcaixa,
                                  INPUT par_cdoperad,
                                  INPUT par_dtmvtolt,
                                  INPUT par_idorigem,
+                                 INPUT crapass.inpessoa,
                                  OUTPUT TABLE tt-erro,
                                  OUTPUT TABLE tt-dados_dscchq).
 
@@ -9215,16 +9354,21 @@ PROCEDURE busca_borderos:
                tt-bordero_chq.nrctrlim = crapbdc.nrctrlim
                tt-bordero_chq.qtcompln = aux_qtcompln 
                tt-bordero_chq.vlcompcr = aux_vlcompcr
-               tt-bordero_chq.dssitbdc = IF crapbdc.insitbdc = 1 THEN
+               tt-bordero_chq.dssitbdc = IF crapbdc.dtrejeit <> ? THEN
+                                            "REJEITADO"
+                                         ELSE
+                                         IF crapbdc.insitbdc = 1 THEN
                                             "EM ESTUDO"
                                          ELSE 
                                          IF crapbdc.insitbdc = 2 THEN
-                                            "ANALISADO"
+                                            "ANALISE"
                                          ELSE 
                                          IF crapbdc.insitbdc = 3 THEN
                                             "LIBERADO"
                                          ELSE
-                                            STRING(crapbdc.insitbdc) + "DEVOLVIDO".
+                                            STRING(crapbdc.insitbdc) + "DEVOLVIDO"
+               tt-bordero_chq.nrdolote = crapbdc.nrdolote
+               tt-bordero_chq.dtlibbdc = crapbdc.dtlibbdc.
     
     END.  /*  Fim da leitura do crapbdc  */
     
@@ -9366,7 +9510,7 @@ PROCEDURE busca_dados_bordero:
         IF  crapbdc.insitbdc > 2   THEN
         DO:
             ASSIGN aux_cdcritic = 0.
-                   aux_dscritic = "O bordero deve estar na situacao EM ESTUDO ou ANALISADO.".
+                   aux_dscritic = "O bordero deve estar na situacao EM ESTUDO ou ANALISE.".
 
             RUN gera_erro (INPUT par_cdcooper,
                            INPUT par_cdagenci,
@@ -9434,7 +9578,7 @@ PROCEDURE busca_dados_bordero:
     IF  crapbdc.insitbdc = 1  THEN  /* EM ESTUDO */ 
         DO:
             ASSIGN aux_cdcritic = 0.
-                   aux_dscritic = "O bordero deve estar na situacao ANALISADO ou LIBERADO.".
+                   aux_dscritic = "O bordero deve estar na situacao ANALISE ou LIBERADO.".
             
             RUN gera_erro (INPUT par_cdcooper,
                            INPUT par_cdagenci,
@@ -9701,7 +9845,49 @@ PROCEDURE busca_cheques_bordero:
                                             BY crapcdb.cdagechq
                                                BY crapcdb.nrctachq 
                                                   BY crapcdb.nrcheque:
-        
+        IF crapcdb.cdbanchq = 85 THEN
+          DO:
+            FIND FIRST crapcop WHERE crapcop.cdagectl = crapcdb.cdagechq NO-LOCK NO-ERROR.
+            
+            IF  NOT AVAILABLE crapcop  THEN
+              ASSIGN rel_dscpfcgc = "NAO CADASTRADO"
+                     rel_nmcheque = "NAO CADASTRADO".
+            ELSE
+              DO:
+                FIND FIRST crapass WHERE crapass.cdcooper = crapcop.cdcooper AND
+                                         crapass.nrdconta = crapcdb.nrctachq 
+                                         NO-LOCK NO-ERROR.
+             
+                IF  NOT AVAILABLE crapass  THEN
+                    ASSIGN rel_dscpfcgc = "NAO CADASTRADO"
+                           rel_nmcheque = "NAO CADASTRADO".
+                ELSE
+                  DO:
+                      IF  crapass.inpessoa = 1  THEN
+                        DO:
+                            FIND FIRST crapttl WHERE crapttl.cdcooper = crapcop.cdcooper AND
+                                                     crapttl.nrdconta = crapcdb.nrctachq
+                                                     NO-LOCK NO-ERROR.
+                            
+                            ASSIGN rel_nmcheque = TRIM(crapttl.nmtalttl)
+                                   rel_dscpfcgc = STRING(crapttl.nrcpfcgc,"99999999999")
+                                   rel_dscpfcgc = STRING(rel_dscpfcgc,"xxx.xxx.xxx-xx").
+                        END.
+                      ELSE 
+                        DO:
+                            FIND FIRST crapjur WHERE crapjur.cdcooper = crapcop.cdcooper AND
+                                                     crapjur.nrdconta = crapcdb.nrctachq
+                                                     NO-LOCK NO-ERROR.
+                            
+                            ASSIGN rel_nmcheque = TRIM(crapjur.nmtalttl)
+                                   rel_dscpfcgc = STRING(crapass.nrcpfcgc,"99999999999999")
+                                   rel_dscpfcgc = STRING(rel_dscpfcgc,"xx.xxx.xxx/xxxx-xx").
+                        END.
+                  END.
+              END.
+          END.
+        ELSE
+          DO:
         FIND FIRST crapcec WHERE crapcec.cdcooper = par_cdcooper     AND
                                  crapcec.cdcmpchq = crapcdb.cdcmpchq AND
                                  crapcec.cdbanchq = crapcdb.cdbanchq AND
@@ -9728,6 +9914,7 @@ PROCEDURE busca_cheques_bordero:
                 ASSIGN rel_dscpfcgc = STRING(crapcec.nrcpfcgc,"99999999999")
                        rel_dscpfcgc = STRING(rel_dscpfcgc,"xxx.xxx.xxx-xx").
 
+        END.
         END.
        
         CREATE tt-chqs_do_bordero.
@@ -9829,6 +10016,36 @@ PROCEDURE efetua_exclusao_bordero:
     TRANS_EXCLUSAO:
     DO TRANSACTION ON ERROR UNDO TRANS_EXCLUSAO, LEAVE TRANS_EXCLUSAO:
     
+        /*Atualizar o numero do borderô do cheque para zero*/
+        FOR EACH crapdcc EXCLUSIVE-LOCK
+           WHERE crapdcc.cdcooper = par_cdcooper
+             AND crapdcc.nrdconta = par_nrdconta
+             AND crapdcc.nrborder = par_nrborder
+             AND CAN-DO ('1,3', STRING(crapdcc.intipmvt))
+             AND crapdcc.cdtipmvt = 1:
+          
+          ASSIGN crapdcc.nrborder = 0.
+        END.
+        
+        /*Se o cheque estiver em custódia (crapcst), atualizar o numero do borderô para zero*/
+        FOR EACH crapcst EXCLUSIVE-LOCK
+           WHERE crapcst.cdcooper = par_cdcooper
+             AND crapcst.nrdconta = par_nrdconta
+             AND crapcst.nrborder = par_nrborder
+             AND CAN-DO ('0,2', STRING(crapcst.insitchq)):
+          
+          ASSIGN crapcst.nrborder = 0.
+        END.
+        
+        /* Apagar registro do cálculo de juros do cheque no borderô; */
+        FOR EACH crapljd EXCLUSIVE-LOCK
+           WHERE crapljd.cdcooper = par_cdcooper
+             AND crapljd.nrdconta = par_nrdconta
+             AND crapljd.nrborder = par_nrborder:
+             
+          DELETE crapljd.
+        END.
+        
         DO aux_contador = 1 TO 10:
          
             FIND crapbdc WHERE crapbdc.cdcooper = par_cdcooper   AND
@@ -9850,6 +10067,13 @@ PROCEDURE efetua_exclusao_bordero:
                     LEAVE.
                 END.
                   
+            IF crapbdc.dtrejeit <> ? THEN
+            DO:
+                ASSIGN aux_dscritic = "Operacao nao permitida. Bordero Rejeitado."
+                       aux_cdcritic = 0.
+                LEAVE.
+            END.
+            
             IF  crapbdc.insitbdc > 2  THEN 
             DO:
                 ASSIGN aux_dscritic = "Bordero ja LIBERADO."
@@ -10010,9 +10234,14 @@ PROCEDURE efetua_exclusao_bordero:
                            OUTPUT aux_nrdrowid).
                            
         RUN proc_gerar_log_item(INPUT aux_nrdrowid,
-                                INPUT "nrborder",
+                                INPUT "Nr bordero",
                                 INPUT "",
                                 INPUT par_nrborder).
+                                
+        RUN proc_gerar_log_item(INPUT aux_nrdrowid,
+                                INPUT "Operador",
+                                INPUT "",
+                                INPUT par_cdoperad).
     END.    
     
     RETURN "OK".
@@ -10115,7 +10344,7 @@ PROCEDURE efetua_liber_anali_bordero:
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-risco.
     EMPTY TEMP-TABLE tt-msg-confirma.
-
+    
     DEFINE VARIABLE aux_qtdiaiof AS INTEGER NO-UNDO.
     DEFINE VARIABLE aux_periofop AS DECIMAL NO-UNDO.
     DEFINE VARIABLE aux_vliofcal AS DECIMAL NO-UNDO.
@@ -10304,6 +10533,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                     INPUT par_cdoperad,
                                     INPUT par_dtmvtolt,
                                     INPUT par_idorigem,
+                                    INPUT crapass.inpessoa,
                                     OUTPUT TABLE tt-erro,
                                     OUTPUT TABLE tt-dados_dscchq).
       
@@ -10409,7 +10639,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                             crapabc.cdcmpchq = crabcdb.cdcmpchq   AND
                                             crapabc.nrctachq = crabcdb.nrctachq   AND
                                             crapabc.nrcheque = crabcdb.nrcheque   AND
-                                            crapabc.nrseqdig = 1
+                                            crapabc.cdocorre = 1
                                             EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
                          
                          IF NOT AVAILABLE crapabc  THEN
@@ -10429,7 +10659,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                              crapabc.cdbanchq = crabcdb.cdbanchq
                                              crapabc.nrctachq = crabcdb.nrctachq
                                              crapabc.nrcheque = crabcdb.nrcheque
-                                             crapabc.nrseqdig = 1
+                                             crapabc.cdocorre = 1
                                              crapabc.cdcooper = par_cdcooper.
                                    END.           
                             END.
@@ -10467,7 +10697,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                             crapabc.cdcmpchq = crabcdb.cdcmpchq   AND
                                             crapabc.nrctachq = crabcdb.nrctachq   AND
                                             crapabc.nrcheque = crabcdb.nrcheque   AND
-                                            crapabc.nrseqdig = 1
+                                            crapabc.cdocorre = 1
                                             EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
                       
                          IF AVAILABLE crapabc  THEN
@@ -10503,7 +10733,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                             crapabc.cdcmpchq = crabcdb.cdcmpchq   AND
                                             crapabc.nrctachq = crabcdb.nrctachq   AND
                                             crapabc.nrcheque = crabcdb.nrcheque   AND
-                                            crapabc.nrseqdig = 6
+                                            crapabc.cdocorre = 6
                                             EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
                 
                          IF NOT AVAILABLE crapabc  THEN
@@ -10524,7 +10754,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                             crapabc.cdbanchq = crabcdb.cdbanchq
                                             crapabc.nrctachq = crabcdb.nrctachq
                                             crapabc.nrcheque = crabcdb.nrcheque
-                                            crapabc.nrseqdig = 6
+                                            crapabc.cdocorre = 6
                                             crapabc.cdcooper = par_cdcooper.
                                   END.           
 
@@ -10564,7 +10794,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                             crapabc.cdcmpchq = crabcdb.cdcmpchq   AND
                                             crapabc.nrctachq = crabcdb.nrctachq   AND
                                             crapabc.nrcheque = crabcdb.nrcheque   AND
-                                            crapabc.nrseqdig = 6
+                                            crapabc.cdocorre = 6
                                             EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
                       
                          IF AVAILABLE crapabc  THEN
@@ -10601,7 +10831,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                             crapabc.cdcmpchq = crabcdb.cdcmpchq   AND
                                             crapabc.nrctachq = crabcdb.nrctachq   AND
                                             crapabc.nrcheque = crabcdb.nrcheque   AND
-                                            crapabc.nrseqdig = 2
+                                            crapabc.cdocorre = 2
                                             EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
                          
                          IF NOT AVAILABLE crapabc   THEN
@@ -10621,7 +10851,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                             crapabc.cdbanchq = crabcdb.cdbanchq
                                             crapabc.nrctachq = crabcdb.nrctachq
                                             crapabc.nrcheque = crabcdb.nrcheque
-                                            crapabc.nrseqdig = 2
+                                            crapabc.cdocorre = 2
                                             crapabc.cdcooper = par_cdcooper.
                                   END.           
 
@@ -10659,7 +10889,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                             crapabc.cdcmpchq = crabcdb.cdcmpchq   AND
                                             crapabc.nrctachq = crabcdb.nrctachq   AND
                                             crapabc.nrcheque = crabcdb.nrcheque   AND
-                                            crapabc.nrseqdig = 2
+                                            crapabc.cdocorre = 2
                                             EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
                        
                          IF AVAILABLE crapabc  THEN
@@ -10701,7 +10931,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                       crapabc.cdcmpchq = crabcdb.cdcmpchq   AND
                                       crapabc.nrctachq = crabcdb.nrctachq   AND
                                       crapabc.nrcheque = crabcdb.nrcheque   AND
-                                      crapabc.nrseqdig = 3
+                                      crapabc.cdocorre = 3
                                       EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
                    
                    IF NOT AVAILABLE crapabc  THEN
@@ -10722,7 +10952,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                        crapabc.cdbanchq = crabcdb.cdbanchq
                                        crapabc.nrctachq = crabcdb.nrctachq
                                        crapabc.nrcheque = crabcdb.nrcheque
-                                       crapabc.nrseqdig = 3
+                                       crapabc.cdocorre = 3
                                        crapabc.cdcooper = par_cdcooper.
                             END.
 
@@ -10760,7 +10990,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                       crapabc.cdcmpchq = crabcdb.cdcmpchq AND
                                       crapabc.nrctachq = crabcdb.nrctachq AND
                                       crapabc.nrcheque = crabcdb.nrcheque AND
-                                      crapabc.nrseqdig = 3
+                                      crapabc.cdocorre = 3
                                       EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
                  
                    IF AVAILABLE crapabc  THEN
@@ -10799,7 +11029,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                       crapabc.cdcmpchq = crabcdb.cdcmpchq   AND
                                       crapabc.nrctachq = crabcdb.nrctachq   AND
                                       crapabc.nrcheque = crabcdb.nrcheque   AND
-                                      crapabc.nrseqdig = 4
+                                      crapabc.cdocorre = 4
                                       EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
                    
                    IF NOT AVAILABLE crapabc  THEN
@@ -10820,7 +11050,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                        crapabc.cdbanchq = crabcdb.cdbanchq
                                        crapabc.nrctachq = crabcdb.nrctachq
                                        crapabc.nrcheque = crabcdb.nrcheque
-                                       crapabc.nrseqdig = 4
+                                       crapabc.cdocorre = 4
                                        crapabc.cdcooper = par_cdcooper.
                              END.           
                       END.
@@ -10857,7 +11087,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                       crapabc.cdcmpchq = crabcdb.cdcmpchq AND
                                       crapabc.nrctachq = crabcdb.nrctachq AND
                                       crapabc.nrcheque = crabcdb.nrcheque AND
-                                      crapabc.nrseqdig = 4
+                                      crapabc.cdocorre = 4
                                       EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
                  
                    IF AVAILABLE crapabc  THEN
@@ -10900,7 +11130,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                        crapabc.cdcmpchq = crabcdb.cdcmpchq AND
                                        crapabc.nrctachq = crabcdb.nrctachq AND
                                        crapabc.nrcheque = crabcdb.nrcheque AND
-                                       crapabc.nrseqdig = 5
+                                       crapabc.cdocorre = 5
                                        EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
                   
                     IF NOT AVAILABLE crapabc   THEN
@@ -10921,7 +11151,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                          crapabc.cdbanchq = crabcdb.cdbanchq
                                          crapabc.nrctachq = crabcdb.nrctachq
                                          crapabc.nrcheque = crabcdb.nrcheque
-                                         crapabc.nrseqdig = 5
+                                         crapabc.cdocorre = 5
                                          crapabc.cdcooper = par_cdcooper.
                               END.
 
@@ -10959,7 +11189,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                        crapabc.cdcmpchq = crabcdb.cdcmpchq AND
                                        crapabc.nrctachq = crabcdb.nrctachq AND
                                        crapabc.nrcheque = crabcdb.nrcheque AND
-                                       crapabc.nrseqdig = 5
+                                       crapabc.cdocorre = 5
                                        EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
                  
                     IF AVAILABLE crapabc  THEN
@@ -11003,7 +11233,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                    crapabc.cdcmpchq = crabcdb.cdcmpchq  AND
                                    crapabc.nrctachq = crabcdb.nrctachq  AND
                                    crapabc.nrcheque = crabcdb.nrcheque  AND
-                                   crapabc.nrseqdig = 7
+                                   crapabc.cdocorre = 7
                                    EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
                   
                         IF NOT AVAILABLE crapabc   THEN
@@ -11024,7 +11254,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                             crapabc.cdbanchq = crabcdb.cdbanchq
                                             crapabc.nrctachq = crabcdb.nrctachq
                                             crapabc.nrcheque = crabcdb.nrcheque
-                                            crapabc.nrseqdig = 7
+                                            crapabc.cdocorre = 7
                                             crapabc.cdcooper = par_cdcooper.
                                  END.
 
@@ -11063,7 +11293,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                    crapabc.cdcmpchq = crabcdb.cdcmpchq  AND
                                    crapabc.nrctachq = crabcdb.nrctachq  AND
                                    crapabc.nrcheque = crabcdb.nrcheque  AND
-                                   crapabc.nrseqdig = 7
+                                   crapabc.cdocorre = 7
                                    EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
                        
                         IF AVAILABLE crapabc   THEN
@@ -11119,7 +11349,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                    crapabc.cdbanchq = 888                AND
                                    crapabc.nrctachq = 8888888888         AND
                                    crapabc.nrcheque = 888888             AND
-                                   crapabc.nrseqdig = 88
+                                   crapabc.cdocorre = 88
                                    EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
          
                 IF NOT AVAILABLE crapabc   THEN
@@ -11140,7 +11370,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                      crapabc.cdbanchq = 888
                                      crapabc.nrctachq = 8888888888
                                      crapabc.nrcheque = 888888
-                                     crapabc.nrseqdig = 88
+                                     crapabc.cdocorre = 88
                                      crapabc.cdcooper = par_cdcooper.
                           END.
 
@@ -11178,7 +11408,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                    crapabc.cdbanchq = 888                AND
                                    crapabc.nrctachq = 8888888888         AND
                                    crapabc.nrcheque = 888888             AND
-                                   crapabc.nrseqdig = 88
+                                   crapabc.cdocorre = 88
                                    EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
                 
                 IF AVAILABLE crapabc   THEN
@@ -11729,7 +11959,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                         THEN crapcdb.insitchq
                                         ELSE 2 /*  Processado  */
                   aux_vlborder     = aux_vlborder + crapcdb.vlliquid.
-                  
+                           
            /* Daniel */
            IF par_cddopcao = "L" THEN 
            DO:
@@ -11817,7 +12047,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                                  INPUT ROUND(aux_vlborder *
                                                        tt-iof.txccdiof,2),
                                                 OUTPUT aux_flgimune,
-                                                OUTPUT TABLE tt-erro).  
+                                                OUTPUT TABLE tt-erro).
                                                 
                     DELETE PROCEDURE h-b1wgen0159.
 
