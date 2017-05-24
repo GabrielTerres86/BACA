@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --  Sistema  : Rotinas genericas referente a tela de Cartões
   --  Sigla    : CCRD
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Abril - 2014.                   Ultima atualizacao: 18/05/2017
+  --  Data     : Abril - 2014.                   Ultima atualizacao: 24/05/2017
   --
   -- Dados referentes ao programa:
   --
@@ -61,6 +61,8 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --                          informacao de data acrescentada ao nome do arquivo pelo Bancoob.
   --                          (Fabricio)
   --
+  --             24/05/2017 - Ajustar para o tipo de operacao '02' validar os tipos
+  --                          aceitos antes de buscar as demais informacoes (Lucas Ranghetti #678334)
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de Registro para as faturas pendentes
@@ -8125,20 +8127,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
               -- se for DADOS DO CARTÃO
               IF substr(vr_des_text,5,2) = '02'  THEN
-
-                -- Guardar contas do arquivo para verificação                
-                BEGIN 
-                  vr_nrctatp2 := to_number(TRIM(substr(vr_des_text,337,12)));
-                EXCEPTION 
-                  WHEN OTHERS THEN
-                   pc_log_dados_arquivo( pr_tipodreg => 2 -- Dados do cartao
-                                        ,pr_nmdarqui => vr_vet_nmarquiv(i) -- Arquivo                   
-                                        ,pr_nrdlinha => vr_linha
-                                        ,pr_cdmensagem => 1019
-                                        ,pr_dscritic => SQLERRM);
-                   --Levantar Excecao
-                   RAISE vr_exc_saida;
-                END;
                 
                 BEGIN 
                   vr_tipooper := to_number(substr(vr_des_text,7,2));
@@ -8148,6 +8136,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                         ,pr_nmdarqui => vr_vet_nmarquiv(i) -- Arquivo                   
                                         ,pr_nrdlinha => vr_linha
                                         ,pr_cdmensagem => 1004
+                                        ,pr_dscritic => SQLERRM);
+                   --Levantar Excecao
+                   RAISE vr_exc_saida;
+                END;
+                
+                 /*
+                1 - Inclusao de Cartao
+                3 - Cancelamento de Cartao
+                4 - Inclusao de Adicional
+                7 - Reativacao de Contas
+                10 - Desbloqueio (exclusivo p/ tratamento de reposicao)
+                12 - Alteracao de Estado
+                13 - Alteracao de Estado Conta
+                25 - Reativar Cartao do Adicional                
+                */                
+                IF vr_tipooper NOT IN (1,3,4,7,10,12,13,25) THEN
+                   CONTINUE;
+                END IF;
+                
+                -- Guardar contas do arquivo para verificação                
+                BEGIN 
+                  vr_nrctatp2 := to_number(TRIM(substr(vr_des_text,337,12)));
+                EXCEPTION 
+                  WHEN OTHERS THEN
+                   pc_log_dados_arquivo( pr_tipodreg => 2 -- Dados do cartao
+                                        ,pr_nmdarqui => vr_vet_nmarquiv(i) -- Arquivo                   
+                                        ,pr_nrdlinha => vr_linha
+                                        ,pr_cdmensagem => 1019
                                         ,pr_dscritic => SQLERRM);
                    --Levantar Excecao
                    RAISE vr_exc_saida;
@@ -8274,20 +8290,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                         ,pr_dscritic => SQLERRM);
                    --Levantar Excecao
                    RAISE vr_exc_saida;
-                END;
-
-                BEGIN 
-                  vr_nrcpfcgc:= TO_NUMBER(substr(vr_des_text,95,15));
-                EXCEPTION 
-                  WHEN OTHERS THEN
-                   pc_log_dados_arquivo( pr_tipodreg => 2 -- Dados do cartao
-                                        ,pr_nmdarqui => vr_vet_nmarquiv(i) -- Arquivo                   
-                                        ,pr_nrdlinha => vr_linha
-                                        ,pr_cdmensagem => 1025
-                                        ,pr_dscritic => SQLERRM);
-                   --Levantar Excecao
-                   RAISE vr_exc_saida;
-                END;               
+                END;                            
 
                 BEGIN 
                   vr_dtdonasc := TO_DATE(substr(vr_des_text,80,8), 'DDMMYYYY');
@@ -8302,19 +8305,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                    RAISE vr_exc_saida;
                 END;  
                 
-                /*
-                1 - Inclusao de Cartao
-                3 - Cancelamento de Cartao
-                4 - Inclusao de Adicional
-                7 - Reativacao de Contas
-                10 - Desbloqueio (exclusivo p/ tratamento de reposicao)
-                12 - Alteracao de Estado
-                13 - Alteracao de Estado Conta
-                25 - Reativar Cartao do Adicional                
-                */                
-                IF vr_tipooper NOT IN (1,3,4,7,10,12,13,25) THEN
-                   CONTINUE;
-                END IF;
+               
                 
                 -- busca a cooperativa com base no cod. da agencia central do arquivo
                 OPEN cr_crapcop_cdagebcb(pr_cdagebcb => vr_cdagebcb);
@@ -8403,7 +8394,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                     continue;
                   END IF;
                   
-                  vr_nmtitcrd := to_char(vr_nrcrcard)||substr(vr_des_text,250,23)||vr_tipooper;
+                  vr_nmtitcrd := substr(vr_des_text,38,19)||substr(vr_des_text,250,23)||substr(vr_des_text,7,2);
                   
                   -- Verifica se houve rejeição do Tipo de Registro 2
                   IF vr_codrejei <> '000'  THEN                    
@@ -8470,7 +8461,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                    informacao que vem no arquivo informa que o cartao esta sendo REPOSTO (deve cancelar).
                    Fabricio - chamado 559710 */
                 IF vr_tipooper = 10 THEN
-                  IF vr_sitcarta = 10 THEN /*reposicao*/
+                  IF vr_sitcarta = 10 THEN --reposicao
                     -- Atualiza os dados da situacao do cartao
                     atualiza_situacao_cartao(pr_cdcooper => vr_cdcooper,
                                              pr_nrdconta => vr_nrdconta,
@@ -8486,7 +8477,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                       pc_log_message;
                       vr_des_erro := '';
                     END IF;
-                  END IF;
+                  END IF; 
 
                   -- tipo de operacao 10 (desbloqueio) nao deve fazer mais nada alem disto (Fabricio).
                   CONTINUE;
@@ -8518,6 +8509,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
                   CONTINUE;
                 END IF;                                
+                
+                -- Validar se CPF está valido
+                BEGIN 
+                  vr_nrcpfcgc:= TO_NUMBER(substr(vr_des_text,95,15));
+                EXCEPTION 
+                  WHEN OTHERS THEN
+                   pc_log_dados_arquivo( pr_tipodreg => 2 -- Dados do cartao
+                                        ,pr_nmdarqui => vr_vet_nmarquiv(i) -- Arquivo                   
+                                        ,pr_nrdlinha => vr_linha
+                                        ,pr_cdmensagem => 1025
+                                        ,pr_dscritic => SQLERRM);
+                   --Levantar Excecao
+                   RAISE vr_exc_saida;
+                END;   
                 
                 -- Verifica se a operação é de inclusão de adicional, ou seja,
                 -- verifica se a linha anterior processada refere-se a linha atual
@@ -8696,7 +8701,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   END IF;
                   
                   BEGIN                  
-                    vr_nmtitcrd := vr_nrcrcard||substr(vr_des_text,57,23)||vr_tipooper;
+                    vr_nmtitcrd := substr(vr_des_text,38,19)||substr(vr_des_text,57,23)||substr(vr_des_text,7,2);
                     INSERT INTO craprej
                        (cdcooper,
                         cdagenci,
