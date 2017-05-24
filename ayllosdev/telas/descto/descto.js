@@ -8,6 +8,7 @@
  * --------------
  * [29/03/2012] Rogérius Militão   (DB1) : Ajuste no layout padrão
  * [29/06/2012] Jorge Hamaguchi (CECRED) : AJuste para novo esquema de impressao em funcao Gera_Impressao()
+ * [21/09/2016] Jaison (CECRED)          : Projeto 300 - Inclusao das opcoes L e N.
  */
 
 //Formulários e Tabela
@@ -43,7 +44,7 @@ function estadoInicial() {
     $('#divBotoes').remove();
     $('#divPesquisaRodape', '#divTela').remove();
 
-    cCddopcao.val(cddopcao);
+    cCddopcao.val('C');
     cCddopcao.focus();
 
     removeOpacidade('divTela');
@@ -106,6 +107,7 @@ function controlaOperacao(operacao, nriniseq, nrregist) {
             hideMsgAguardo();
             if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
                 try {
+                    hideMsgAguardo();
                     $('#divTela').html(response);
                     return false;
                 } catch (error) {
@@ -114,6 +116,7 @@ function controlaOperacao(operacao, nriniseq, nrregist) {
                 }
             } else {
                 try {
+                    hideMsgAguardo();
                     eval(response);
                 } catch (error) {
                     hideMsgAguardo();
@@ -327,6 +330,12 @@ function formataOpcao() {
         cDtlibera.val(dtmvtolt);
         cDtlibera.habilitaCampo().focus();
         trocaBotao('');
+    } else if (cddopcao == 'L') {
+        formataOpcaoL();
+        cDtiniper.focus();
+    } else if (cddopcao == 'N') {
+        formataOpcaoN();
+        cDtiniper.focus();
     }
 
     controlaPesquisas();
@@ -1641,6 +1650,220 @@ function formataOpcaoS() {
     controlaPesquisas();
     return false;
 
+        }
+
+// opcao L
+function formataOpcaoL() {
+
+    // label
+    rDtiniper = $('label[for="dtiniper"]', '#' + frmOpcao);
+    rDtfimper = $('label[for="dtfimper"]', '#' + frmOpcao);
+    rCdagenci = $('label[for="cdagenci"]', '#' + frmOpcao);
+    rNrdconta = $('label[for="nrdconta"]', '#' + frmOpcao);
+    rNrborder = $('label[for="nrborder"]', '#' + frmOpcao);
+
+    rDtiniper.css({'width': '110px'}).addClass('rotulo');
+    rDtfimper.css({'width': '25px'}).addClass('rotulo-linha');
+    rCdagenci.css({'width': '25px'}).addClass('rotulo-linha');
+    rNrdconta.css({'width': '45px'}).addClass('rotulo-linha');
+    rNrborder.css({'width': '55px'}).addClass('rotulo-linha');
+
+    // input
+    cDtiniper = $('#dtiniper', '#' + frmOpcao);
+    cDtfimper = $('#dtfimper', '#' + frmOpcao);
+    cCdagenci = $('#cdagenci', '#' + frmOpcao);
+    cNrdconta = $('#nrdconta', '#' + frmOpcao);
+    cNrborder = $('#nrborder', '#' + frmOpcao);
+
+    cDtiniper.css({'width': '75px'}).addClass('data');
+    cDtfimper.css({'width': '75px'}).addClass('data');
+    cCdagenci.css({'width': '75px'}).addClass('inteiro').attr('maxlength', '3');
+    cNrdconta.css({'width': '75px'}).addClass('conta');
+    cNrborder.css({'width': '75px'}).addClass('inteiro');
+
+    // Outros	
+    cTodosOpcao.habilitaCampo();
+
+    // de
+    cDtiniper.unbind('keydown').bind('keydown', function(e) {
+        if (divError.css('display') == 'block') {
+            return false;
+        }
+
+        // Se é a tecla TAB ou ENTER, 
+        if ((e.keyCode == 9 || e.keyCode == 13)) {
+            cDtfimper.focus();
+            return false;
+        }
+
+    });
+
+    // ate
+    cDtfimper.unbind('keydown').bind('keydown', function(e) {
+        if (divError.css('display') == 'block') {
+            return false;
+        }
+
+        // Se é a tecla TAB ou ENTER, 
+        if ((e.keyCode == 9 || e.keyCode == 13)) {
+            cCdagenci.focus();
+            return false;
+        }
+
+    });
+
+    // PA
+    cCdagenci.unbind('keydown').bind('keydown', function(e) {
+        if (divError.css('display') == 'block') {
+            return false;
+        }
+
+        // Se é a tecla TAB ou ENTER, 
+        if ((e.keyCode == 9 || e.keyCode == 13)) {
+            cNrdconta.focus();
+            return false;
+        }
+
+    });
+
+    // conta
+    cNrdconta.unbind('keydown').bind('keydown', function(e) {
+        if (divError.css('display') == 'block') {
+            return false;
+        }
+
+        // Se é a tecla TAB ou ENTER, 
+        if ((e.keyCode == 9 || e.keyCode == 13)) {
+            cNrborder.focus();
+            return false;
+        }
+
+    });
+
+    // bordero
+    cNrborder.unbind('keydown').bind('keydown', function(e) {
+        if (divError.css('display') == 'block') {
+            return false;
+        }
+
+        // Se TAB ou ENTER
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            btnContinuar();
+            return false;
+        }
+    });
+
+    layoutPadrao();
+    controlaPesquisas();
+    return false;
+
+}
+
+// opcao N
+function formataOpcaoN() {
+
+    // label
+    rDtiniper = $('label[for="dtiniper"]', '#' + frmOpcao);
+    rDtfimper = $('label[for="dtfimper"]', '#' + frmOpcao);
+    rCdagenci = $('label[for="cdagenci"]', '#' + frmOpcao);
+    rNrdconta = $('label[for="nrdconta"]', '#' + frmOpcao);
+    rNrctrlim = $('label[for="nrctrlim"]', '#' + frmOpcao);
+
+    rDtiniper.css({'width': '110px'}).addClass('rotulo');
+    rDtfimper.css({'width': '25px'}).addClass('rotulo-linha');
+    rCdagenci.css({'width': '25px'}).addClass('rotulo-linha');
+    rNrdconta.css({'width': '45px'}).addClass('rotulo-linha');
+    rNrctrlim.css({'width': '55px'}).addClass('rotulo-linha');
+
+    // input
+    cDtiniper = $('#dtiniper', '#' + frmOpcao);
+    cDtfimper = $('#dtfimper', '#' + frmOpcao);
+    cCdagenci = $('#cdagenci', '#' + frmOpcao);
+    cNrdconta = $('#nrdconta', '#' + frmOpcao);
+    cNrctrlim = $('#nrctrlim', '#' + frmOpcao);
+
+    cDtiniper.css({'width': '75px'}).addClass('data');
+    cDtfimper.css({'width': '75px'}).addClass('data');
+    cCdagenci.css({'width': '75px'}).addClass('inteiro').attr('maxlength', '3');
+    cNrdconta.css({'width': '75px'}).addClass('conta');
+    cNrctrlim.css({'width': '75px'}).addClass('inteiro');
+
+    // Outros	
+    cTodosOpcao.habilitaCampo();
+
+    // de
+    cDtiniper.unbind('keydown').bind('keydown', function(e) {
+        if (divError.css('display') == 'block') {
+            return false;
+        }
+
+        // Se é a tecla TAB ou ENTER, 
+        if ((e.keyCode == 9 || e.keyCode == 13)) {
+            cDtfimper.focus();
+            return false;
+        }
+
+    });
+
+    // ate
+    cDtfimper.unbind('keydown').bind('keydown', function(e) {
+        if (divError.css('display') == 'block') {
+            return false;
+        }
+
+        // Se é a tecla TAB ou ENTER, 
+        if ((e.keyCode == 9 || e.keyCode == 13)) {
+            cCdagenci.focus();
+            return false;
+        }
+
+    });
+
+    // PA
+    cCdagenci.unbind('keydown').bind('keydown', function(e) {
+        if (divError.css('display') == 'block') {
+            return false;
+        }
+
+        // Se é a tecla TAB ou ENTER, 
+        if ((e.keyCode == 9 || e.keyCode == 13)) {
+            cNrdconta.focus();
+            return false;
+        }
+
+    });
+
+    // conta
+    cNrdconta.unbind('keydown').bind('keydown', function(e) {
+        if (divError.css('display') == 'block') {
+            return false;
+        }
+
+        // Se é a tecla TAB ou ENTER, 
+        if ((e.keyCode == 9 || e.keyCode == 13)) {
+            cNrctrlim.focus();
+            return false;
+        }
+
+    });
+
+    // contrato
+    cNrctrlim.unbind('keydown').bind('keydown', function(e) {
+        if (divError.css('display') == 'block') {
+            return false;
+        }
+
+        // Se TAB ou ENTER
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            btnContinuar();
+            return false;
+        }
+    });
+
+    layoutPadrao();
+    controlaPesquisas();
+    return false;
+
 }
 
 
@@ -1649,7 +1872,7 @@ function Gera_Impressao(inresgat) {
 
     $('#cddopcao', '#' + frmOpcao).val(cddopcao);
     $('#inresgat', '#' + frmOpcao).val(inresgat);
-
+	
     var action = UrlSite + 'telas/descto/imprimir_dados.php';
 
     cTodosOpcao.habilitaCampo();
@@ -1822,12 +2045,62 @@ function btnContinuar() {
 
     } else if (cddopcao == 'T') {
         controlaOperacao('BT', nriniseq, nrregist);
+
+    } else if (cddopcao == 'L') {
+        if (cDtiniper.val() == '') {
+			hideMsgAguardo();
+            showError("error","Período de Digita&ccedil;&atilde;o deve ser informado.","Alerta - Ayllos","cDtiniper.focus()");
+        } else if (cDtfimper.val() == '') {
+			hideMsgAguardo();
+            showError("error","Período de Digita&ccedil;&atilde;o deve ser informado.","Alerta - Ayllos","cDtfimper.focus()");
+        } else if (days_between(cDtfimper.val(), cDtiniper.val()) > 60) {
+			hideMsgAguardo();
+            showError("error","Informe um intervalo de até 60 dias.","Alerta - Ayllos","cDtfimper.focus()");
+        } else {
+            Gera_Impressao('');
+        }
+
+    } else if (cddopcao == 'N') {
+        var dtdehoje = dtmvtolt.split('/');
+        var dtdigita = cDtfimper.val().split('/');
+        if (cDtiniper.val() == '') {
+            showError("error","Período de Digita&ccedil;&atilde;o deve ser informado.","Alerta - Ayllos","cDtiniper.focus()");
+        } else if (cDtfimper.val() == '') {
+            showError("error","Período de Digita&ccedil;&atilde;o deve ser informado.","Alerta - Ayllos","cDtfimper.focus()");
+        } else if (days_between(cDtfimper.val(), cDtiniper.val()) > 30) {
+            showError("error","Informe um intervalo de até 30 dias.","Alerta - Ayllos","cDtfimper.focus()");
+        } else if (new Date(dtdigita[2], dtdigita[1] - 1, dtdigita[0]) >= new Date(dtdehoje[2], dtdehoje[1] - 1, dtdehoje[0])) {
+            showError("error","Informe uma data inferior ao dia atual.","Alerta - Ayllos","cDtfimper.focus()");
+        } else {
+            Gera_Impressao('');
+        }
+
     }
 
     controlaPesquisas();
-    hideMsgAguardo();
+    //hideMsgAguardo();
     
     return false;
+}
+
+function days_between(date1, date2) {
+
+    date1 = new Date(date1.substr(6,4), date1.substr(3,2) - 1, date1.substr(0,2));
+    date2 = new Date(date2.substr(6,4), date2.substr(3,2) - 1, date2.substr(0,2));
+
+    // The number of milliseconds in one day
+    var ONE_DAY = 1000 * 60 * 60 * 24;
+
+    // Convert both dates to milliseconds
+    var date1_ms = date1.getTime();
+    var date2_ms = date2.getTime();
+
+    // Calculate the difference in milliseconds
+    var difference_ms = Math.abs(date1_ms - date2_ms);
+
+    // Convert back to days and return
+    return Math.round(difference_ms/ONE_DAY);
+
 }
 
 function trocaBotao(botao) {

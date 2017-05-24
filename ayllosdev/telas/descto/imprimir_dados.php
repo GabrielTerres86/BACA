@@ -6,6 +6,8 @@
  * OBJETIVO     : Faz as impressões da tela DESCTO	
  * --------------
  * ALTERAÇÕES   : 11/05/2016 - Adicionar a variavel dtmvtolx na requisicao (Douglas - Chamado 445477)
+ *
+ *                21/09/2016 - Projeto 300: Inclusao das opcoes L e N. (Jaison/Daniel)
  * -------------- 
  */
 
@@ -42,62 +44,99 @@ $dsdvalor = $_POST['dsdvalor'];
 $dschqcop = $_POST['dschqcop'];
 $dtmvtolt = $cddopcao == 'R' ? $_POST['dtmvtolt'] : $glbvars['dtmvtolt'];
 $cdagenci = $_POST['cdagenci'];
+$nrborder = $_POST['nrborder'];
+$nrctrlim = $_POST['nrctrlim'];
 
-$procedure = '';
+if ($cddopcao == 'L' || $cddopcao == 'N') {
+    
+    // Monta o xml de requisicao
+    $xml  = "";
+    $xml .= "<Root>";
+    $xml .= " <Dados>";		
+    $xml .= "   <dtiniper>".$dtiniper."</dtiniper>";
+    $xml .= "   <dtfimper>".$dtfimper."</dtfimper>";
+    $xml .= "   <cdagenci>".$cdagenci."</cdagenci>";
+    $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+    $xml .= "   <nrborder>".$nrborder."</nrborder>";
+    $xml .= "   <nrctrlim>".$nrctrlim."</nrctrlim>";
+    $xml .= " </Dados>";
+    $xml .= "</Root>";
 
-if ($cddopcao == 'M' and $nrdconta > 0) {
-    $procedure = 'gera-cheques-resgatados';
-} else if ($cddopcao == 'M') {
-    $procedure = 'gera-cheques-resgatados-geral';
-} else if ($cddopcao == 'R') {
-    $procedure = 'gera-relatorio-lotes';
-} else if ($cddopcao == 'O') {
-    $procedure = "gera-conferencia-cheques";
+	if ($cddopcao == 'L') {
+        $nmdeacao = 'DESCTO_OPCAO_L';
+	} else {
+        $nmdeacao = 'DESCTO_OPCAO_N';
+    }
+
+    $xmlResult = mensageria($xml, "TELA_DESCTO", $nmdeacao, $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+    $xmlObject = getObjectXML($xmlResult);
+
+    if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
+        $msg = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
+        ?><script language="javascript">alert('<?php echo $msg; ?>');</script><?php
+        exit();
+    }
+
+    // Obtém nome do arquivo PDF copiado do Servidor PROGRESS para o Servidor Web
+    $nmarqpdf = $xmlObject->roottag->tags[0]->tags[0]->cdata;
+
+} else {
+    $procedure = '';
+
+    if ($cddopcao == 'M' and $nrdconta > 0) {
+        $procedure = 'gera-cheques-resgatados';
+    } else if ($cddopcao == 'M') {
+        $procedure = 'gera-cheques-resgatados-geral';
+    } else if ($cddopcao == 'R') {
+        $procedure = 'gera-relatorio-lotes';
+    } else if ($cddopcao == 'O') {
+        $procedure = "gera-conferencia-cheques";
 }
 
-// Monta o xml de requisição
-$xml = '';
-$xml .= '<Root>';
-$xml .= '	<Cabecalho>';
-$xml .= '           <Bo>b1wgen0018i.p</Bo>';
-$xml .= '           <Proc>' . $procedure . '</Proc>';
-$xml .= '	</Cabecalho>';
-$xml .= '	<Dados>';
-$xml .= '           <cdcooper>' . $glbvars['cdcooper'] . '</cdcooper>';
-$xml .= '           <cdagenci>' . $glbvars['cdagenci'] . '</cdagenci>';
-$xml .= '           <nrdcaixa>' . $glbvars['nrdcaixa'] . '</nrdcaixa>';
-$xml .= '           <idorigem>' . $glbvars['idorigem'] . '</idorigem>';
-$xml .= '           <nmdatela>' . $glbvars['nmdatela'] . '</nmdatela>';
-$xml .= '           <cdprogra>DESCTO</cdprogra>';
-$xml .= '           <dtmvtolt>' . $dtmvtolt . '</dtmvtolt>';
-$xml .= '           <dtmvtolx>' . $dtmvtolt . '</dtmvtolx>';
-$xml .= '           <dsiduser>' . $dsiduser . '</dsiduser>';
-$xml .= '           <nrdconta>' . $nrdconta . '</nrdconta>';
-$xml .= '           <inresgat>' . $inresgat . '</inresgat>';
-$xml .= '           <dtiniper>' . $dtiniper . '</dtiniper>';
-$xml .= '           <dtfimper>' . $dtfimper . '</dtfimper>';
-$xml .= '           <cdctalis>' . $dsdopcao . '</cdctalis>';
-$xml .= '           <vlsupinf>' . $dsdvalor . '</vlsupinf>';
-$xml .= '           <inchqcop>' . $dschqcop . '</inchqcop>';
-$xml .= '           <cdagencx>' . $cdagenci . '</cdagencx>';
-$xml .= '	</Dados>';
-$xml .= '</Root>';
+    // Monta o xml de requisição
+    $xml = '';
+    $xml .= '<Root>';
+    $xml .= '	<Cabecalho>';
+    $xml .= '           <Bo>b1wgen0018i.p</Bo>';
+    $xml .= '           <Proc>' . $procedure . '</Proc>';
+    $xml .= '	</Cabecalho>';
+    $xml .= '	<Dados>';
+    $xml .= '           <cdcooper>' . $glbvars['cdcooper'] . '</cdcooper>';
+    $xml .= '           <cdagenci>' . $glbvars['cdagenci'] . '</cdagenci>';
+    $xml .= '           <nrdcaixa>' . $glbvars['nrdcaixa'] . '</nrdcaixa>';
+    $xml .= '           <idorigem>' . $glbvars['idorigem'] . '</idorigem>';
+    $xml .= '           <nmdatela>' . $glbvars['nmdatela'] . '</nmdatela>';
+    $xml .= '           <cdprogra>DESCTO</cdprogra>';
+    $xml .= '           <dtmvtolt>' . $dtmvtolt . '</dtmvtolt>';
+    $xml .= '           <dtmvtolx>' . $dtmvtolt . '</dtmvtolx>';
+    $xml .= '           <dsiduser>' . $dsiduser . '</dsiduser>';
+    $xml .= '           <nrdconta>' . $nrdconta . '</nrdconta>';
+    $xml .= '           <inresgat>' . $inresgat . '</inresgat>';
+    $xml .= '           <dtiniper>' . $dtiniper . '</dtiniper>';
+    $xml .= '           <dtfimper>' . $dtfimper . '</dtfimper>';
+    $xml .= '           <cdctalis>' . $dsdopcao . '</cdctalis>';
+    $xml .= '           <vlsupinf>' . $dsdvalor . '</vlsupinf>';
+    $xml .= '           <inchqcop>' . $dschqcop . '</inchqcop>';
+    $xml .= '           <cdagencx>' . $cdagenci . '</cdagencx>';
+    $xml .= '	</Dados>';
+    $xml .= '</Root>';
 
-// Executa script para envio do XML
-$xmlResult = getDataXML($xml);
+    // Executa script para envio do XML
+    $xmlResult = getDataXML($xml);
 
-// Cria objeto para classe de tratamento de XML
-$xmlObjDados = getObjectXML($xmlResult);
+    // Cria objeto para classe de tratamento de XML
+    $xmlObjDados = getObjectXML($xmlResult);
 
-// Se ocorrer um erro, mostra crítica
-if (strtoupper($xmlObjDados->roottag->tags[0]->name) == "ERRO") {
-    $msg = $xmlObjDados->roottag->tags[0]->tags[0]->tags[4]->cdata;
-    ?><script language="javascript">alert('<?php echo $msg; ?>');</script><?php
-    exit();
+    // Se ocorrer um erro, mostra crítica
+    if (strtoupper($xmlObjDados->roottag->tags[0]->name) == "ERRO") {
+        $msg = $xmlObjDados->roottag->tags[0]->tags[0]->tags[4]->cdata;
+        ?><script language="javascript">alert('<?php echo $msg; ?>');</script><?php
+        exit();
+    }
+
+    // Obtém nome do arquivo PDF copiado do Servidor PROGRESS para o Servidor Web
+    $nmarqpdf = $xmlObjDados->roottag->tags[0]->attributes["NMARQPDF"];
 }
-
-// Obtém nome do arquivo PDF copiado do Servidor PROGRESS para o Servidor Web
-$nmarqpdf = $xmlObjDados->roottag->tags[0]->attributes["NMARQPDF"];
 
 // Chama função para mostrar PDF do impresso gerado no browser
 visualizaPDF($nmarqpdf);

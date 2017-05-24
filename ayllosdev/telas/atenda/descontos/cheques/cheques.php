@@ -10,6 +10,13 @@
 	 Alterações: 11/07/2011 - Alterado para layout padrão (Gabriel Capoia - DB1)
 					
 				 18/11/2011 - Ajustes para nao mostrar botao quando nao tiver permissao (Jorge)
+			
+				 06/09/2016 - Inclusao do botão "Renovação" para renovação do limite 
+							  de desconto de cheque. Projeto 300. (Lombardi)
+			
+				 09/09/2016 - Inclusao do botão "Desbloquear Inclusao de Bordero" para desbloquear
+							  inclusao de desconto de cheque. Projeto 300. (Lombardi)
+				
 	***************************************************************************/
 	
 	session_start();
@@ -86,6 +93,9 @@
 	<fieldset>
 		<legend><? echo utf8ToHtml('Cheques') ?></legend>
 		
+		<input type="hidden" name="hd_perrenov" id="hd_perrenov" value="<?php echo $dados[9]->cdata; ?>" />
+		<input type="hidden" name="hd_insitblq" id="hd_insitblq" value="<?php echo $dados[10]->cdata; ?>" />
+		
 		<label for="nrctrlim"><? echo utf8ToHtml('Contrato:') ?></label>
 		<input type="text" name="nrctrlim" id="nrctrlim" value="<?php echo formataNumericos('zzz.zzz.zz9',$dados[0]->cdata,'.'); ?>" />
 		
@@ -102,7 +112,6 @@
 		<label for="qtrenova"><? echo utf8ToHtml('Renovado por:') ?></label>
 		<input type="text" name="qtrenova" id="qtrenova" value="<?php echo $dados[4]->cdata; if ($dados[4]->cdata > 1) { echo " vezes"; } else { echo " vez"; } ?>" />
 		<br />
-		
 		<label for="dsdlinha"><? echo utf8ToHtml('Linha de descontos:') ?></label>
 		<input type="text" name="dsdlinha" id="dsdlinha" value="<?php echo $dados[5]->cdata; ?>" />
 		<br />
@@ -111,12 +120,19 @@
 		<input type="text" name="vlutiliz" id="vlutiliz" value="<?php echo number_format(str_replace(",",".",$dados[6]->cdata),2,",",".") . " (". $dados[7]->cdata; if ($dados[7]->cdata > 1) { echo " cheques)"; } else { echo " cheque)"; } ?>" />
 		<br />
 		
+		<label for="insitblq"><? echo utf8ToHtml('Inclus&atilde;o de Border&ocirc;:') ?></label>
+		<input type="text" name="insitblq" id="insitblq" value="<?php echo $dados[10]->cdata == 1 ? "BLOQUEADA" : "LIBERADA"; ?>" />
+		<br />
+		
 	</fieldset>
 </form>
 <div id="divBotoes" >
-	<input type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="voltaDiv(1,0,4,'DESCONTOS','DESCONTOS');return false;" />
-	<input type="image" name="btnbordero" id="btnbordero" src="<?php echo $UrlImagens; ?>botoes/borderos.gif" <?php if (!in_array("DSC CHQS - BORDERO",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } else { echo 'onClick="carregaBorderosCheques();return false;"'; } ?> />
-	<input type="image" name="btnlimite" id="btnlimite" src="<?php echo $UrlImagens; ?>botoes/limite.gif" <?php if (!in_array("DSC CHQS - LIMITE",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } else { echo 'onClick="carregaLimitesCheques();return false;"'; } ?> />
+	<a href="#" class="botao" id="btnvoltar" name="btnvoltar" onClick="voltaDiv(1,0,4,'DESCONTOS','DESCONTOS');return false;">Voltar</a>
+	<a href="#" class="botao" id="btnbordero" name="btnbordero"  <?php if (!in_array("DSC CHQS - BORDERO",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } else { echo 'onClick="carregaBorderosCheques();return false;"'; } ?>>Border&ocirc;s</a>
+	<a href="#" class="botao" id="btnlimite" name="btnlimite" <?php if (!in_array("DSC CHQS - LIMITE",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } else { echo 'onClick="carregaLimitesCheques();return false;"'; } ?>>Limite</a>
+	<a href="#" class="botao" id="btnrenovacao" name="btnrenovacao">Renova&ccedil;&atilde;o</a>
+	<div style="height: 3px;"></div>
+	<a href="#" class="botao" id="btndesinbord" name="btndesinbord">Desbloquear Inclus&atilde;o de Border&ocirc;</a>
 </div>
 
 <script type="text/javascript">

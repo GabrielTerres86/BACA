@@ -4,7 +4,8 @@
  * DATA CRIAÇÃO : 15/12/2014
  * OBJETIVO     : Biblioteca de funções da tela CADLIM
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 21/09/2016 - Inclusão do filtro "Tipo de Limite" no cabecalho. Inclusão dos campos
+ *                             "pcliqdez" e "qtdialiq" no formulario de regras. Projeto 300. (Lombardi)
  * --------------
  */
 $(document).ready(function() {
@@ -64,6 +65,17 @@ function controlaFoco() {
 	});
 	
 	
+	$('#tplimite','#frmCab').unbind('keypress').bind('keypress', function(e) {
+	
+		if ( divError.css('display') == 'block' ) { return false; }
+	
+		if ( e.keyCode == 13 || e.keyCode == 9 || e.keyCode == 118 ) {	
+			$('#inpessoa','#frmCab').focus();
+			return false;
+		}
+
+	});
+	
 	$('#inpessoa','#frmCab').unbind('keypress').bind('keypress', function(e) {
 	
 		if ( divError.css('display') == 'block' ) { return false; }
@@ -81,8 +93,9 @@ function controlaFoco() {
 
 function eventTipoOpcao(){
 	$('#cddopcao','#frmCab').desabilitaCampo();
+	$('#tplimite','#frmCab').habilitaCampo();
 	$('#inpessoa','#frmCab').habilitaCampo();
-	$('#inpessoa','#frmCab').focus();	
+	$('#tplimite','#frmCab').focus();	
 	trocaBotao('btnContinuar()','estadoInicial()');	
 	return false;
 }
@@ -97,19 +110,27 @@ function formataCabecalho() {
 	cTodosCabecalho.limpaFormulario();
 
 	// cabecalho
-	rCddopcao			= $('label[for="cddopcao"]','#frmCab'); 
-	rInpessoa			= $('label[for="inpessoa"]','#frmCab');  
+	rCddopcao = $('label[for="cddopcao"]','#frmCab');
+	rTplimite = $('label[for="tplimite"]','#frmCab');
+	rInpessoa = $('label[for="inpessoa"]','#frmCab');
 
-	cCddopcao			= $('#cddopcao','#frmCab'); 
-	cInpessoa			= $('#inpessoa','#frmCab'); 
+	cCddopcao = $('#cddopcao','#frmCab'); 
+	cTplimite = $('#tplimite','#frmCab'); 
+	cInpessoa = $('#inpessoa','#frmCab'); 
 
 	//Rótulos
 	rCddopcao.css('width','44px');
-	rInpessoa.addClass('rotulo-linha');
+	rTplimite.addClass('rotulo-linha').css('width','102px');
+	rInpessoa.addClass('rotulo-linha').css('width','102px');
 
 	//Campos	
 	cCddopcao.css({'width':'496px'}).habilitaCampo().focus();
+	cTplimite.addClass('inteiro').css({'width':'437px'}).desabilitaCampo();
 	cInpessoa.addClass('inteiro').css({'width':'437px'}).desabilitaCampo();
+	
+	cCddopcao.val('C');
+	cTplimite.val(0);
+	cInpessoa.val(0);
 	
 	controlaFoco();
 	layoutPadrao();
@@ -137,7 +158,9 @@ function formataRegra(){
 		var rDsrisopt = $('label[for="risA"], label[for="risB"], label[for="risC"], label[for="risD"], label[for="risE"], label[for="risF"], label[for="risG"], label[for="risH"]');
 		var rQtmincta = $('label[for="qtmincta"]');
 		var rNrrevcad = $('label[for="nrrevcad"]');
-	
+		var rPcliqdez = $('label[for="pcliqdez"]');
+		var rQtdialiq = $('label[for="qtdialiq"]');
+
 		rVlmaxren.css({width:'200px'});
 		rQtdiaren.css({width:'200px'});
 		rQtmaxren.css({width:'200px'});
@@ -149,7 +172,9 @@ function formataRegra(){
 		rDsrisopt.css({width:'19px'});		
 		rQtmincta.css({width:'200px'});
 		rNrrevcad.css({width:'200px'});
-		
+		rPcliqdez.css({width:'200px'});
+		rQtdialiq.css({width:'200px'});
+
 		// Campos
 		var cVlmaxren = $('#vlmaxren');	
 		var cQtdiaren = $('#qtdiaren');	
@@ -161,7 +186,9 @@ function formataRegra(){
 		var cDsrisopt = $("input[type=checkbox][name='dsriscop']",'#frmRegra');
 		var cQtmincta = $('#qtmincta');
 		var cNrrevcad = $('#nrrevcad');	
-		
+		var cPcliqdez = $('#pcliqdez');	
+		var cQtdialiq = $('#qtdialiq');	
+
 		cVlmaxren.addClass('campo').setMask('DECIMAL','zzz.zzz.zzz.zz9,99','.','');
 		cQtdiaren.addClass('campo').setMask('INTEGER','zzz9');
 		cQtmaxren.addClass('campo').setMask('INTEGER','zz9');
@@ -172,13 +199,22 @@ function formataRegra(){
 		cDsrisopt.css({border:'0px'});		
 		cQtmincta.css({width:'70px'});
 		cNrrevcad.css({width:'70px'});
+		cPcliqdez.css({width:'40px'}).addClass('campo').setMask('INTEGER','zz9');
+		cQtdialiq.css({width:'40px'}).addClass('campo').setMask('INTEGER','zzz9');		
 
 		highlightObjFocus($('#frmRegra'));
 		cTodosCampos = $('input[type="text"], select, input[type="checkbox"]','#frmRegra');
 		cTodosCampos.desabilitaCampo();
 
+		$('#tplimite','#frmCab').desabilitaCampo();
 		$('#inpessoa','#frmCab').desabilitaCampo();
 		$('#cddopcao','#frmCab').desabilitaCampo();
+		
+		cPcliqdez.keyup(function(e) {
+			if (cPcliqdez.val() > 100)
+				cPcliqdez.val(100);
+			return false;
+		});
 		
 		cVlmaxren.unbind('keypress').bind('keypress', function(e) {
 
@@ -405,6 +441,26 @@ function formataRegra(){
 			if ( divError.css('display') == 'block' ) { return false; }
 
 			if ( e.keyCode == 13 || e.keyCode == 9 ) {	
+				cPcliqdez.focus();
+				return false;
+			}	
+		});
+		
+		cPcliqdez.unbind('keypress').bind('keypress', function(e) {
+
+			if ( divError.css('display') == 'block' ) { return false; }
+
+			if ( e.keyCode == 13 || e.keyCode == 9 ) {	
+				cQtdialiq.focus();
+				return false;
+			}	
+		});
+		
+		cQtdialiq.unbind('keypress').bind('keypress', function(e) {
+
+			if ( divError.css('display') == 'block' ) { return false; }
+
+			if ( e.keyCode == 13 || e.keyCode == 9 ) {	
 				$('#btSalvar','#divBotoes').click();
 				return false;
 			}	
@@ -416,7 +472,7 @@ function formataRegra(){
 	return false;
 }
 
-function controlaCampos(op) {
+function controlaCampos(op, tplimite) {
 
     var cTodosCabecalho	= $('input[type="text"],select','#frmCab');	
 	cTodosCabecalho.desabilitaCampo();
@@ -434,6 +490,8 @@ function controlaCampos(op) {
 			$("input[type=checkbox][name='dsriscop']",'#frmRegra').habilitaCampo();
 			$('#qtmincta','#frmRegra').habilitaCampo();
 			$('#nrrevcad','#frmRegra').habilitaCampo();
+			$('#pcliqdez','#frmRegra').habilitaCampo();
+			$('#qtdialiq','#frmRegra').habilitaCampo();
 			$('#vlmaxren','#frmRegra').focus();
 			trocaBotao('showConfirmacao(\'Confirma a operação?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'alteraRegra();\',\'btnVoltar();\',\'sim.gif\',\'nao.gif\')','btnVoltar()');
 		break;
@@ -442,21 +500,37 @@ function controlaCampos(op) {
 			trocaBotao('','btnVoltar()');
 			$('#btSalvar','#divBotoes').css('display','none');			
 		break;		
-	}	
+	}
+	
+	if (tplimite == 1)
+		$('.cmpstlim','#frmRegra').css({'display':'none'});
+	
 	return false;	
 }
 
 function btnVoltar(){
 	$('#frmRegra').css('display','none');
-	$('#inpessoa','#frmCab').habilitaCampo().focus().val(0);
+	$('#tplimite','#frmCab').habilitaCampo().focus().val(0);
+	$('#inpessoa','#frmCab').habilitaCampo().val(0);
 	trocaBotao('btnContinuar()','estadoInicial()');
 	return false;
 }
 
 function btnContinuar() {
+    tplimite = $('#tplimite','#frmCab').val();
     inpessoa = $('#inpessoa','#frmCab').val();
 	cddopcao = $('#cddopcao','#frmCab').val();
-		
+	
+	if (tplimite == 0) {
+		showError('error','Tipo de Limite deve ser Selecionado.','Alerta - Ayllos','unblockBackground()');
+		return false;
+	}
+	
+	if (inpessoa == 0) {
+		showError('error','Tipo de Cadastro deve ser Selecionado.','Alerta - Ayllos','unblockBackground()');
+		return false;
+	}
+	
 	if (inpessoa > 0 ) {
 		buscaRegra(cddopcao);
 	}	
@@ -474,6 +548,7 @@ function buscaRegra(op) {
 
 	showMsgAguardo("Aguarde...");
 	
+	$('#tplimite','#frmCab').removeClass('campoErro');
 	$('#inpessoa','#frmCab').removeClass('campoErro');
 	
 	// Executa script de bloqueio através de ajax
@@ -481,6 +556,7 @@ function buscaRegra(op) {
 		type: "POST",
 		url: UrlSite + "telas/cadlim/busca_regra.php", 
 		data: {
+			tplimite: tplimite,
 			inpessoa: inpessoa,
 			cddopcao: cddopcao,
 			redirect: "script_ajax"
@@ -518,6 +594,7 @@ function alteraRegra() {
 	showMsgAguardo("Aguarde, alterando dados...");
 
 	var cddopcao = $('#cddopcao','#frmCab').val();
+    var tplimite = $('#tplimite','#frmCab').val();
     var inpessoa = $('#inpessoa','#frmCab').val();
 	var vlmaxren = $('#vlmaxren','#frmRegra').val();
 	var qtdiaren = $('#qtdiaren','#frmRegra').val();
@@ -526,6 +603,8 @@ function alteraRegra() {
 	var qtatracc = $('#qtatracc','#frmRegra').val();
 	var qtmincta = $('#qtmincta','#frmRegra').val();
 	var nrrevcad = $('#nrrevcad','#frmRegra').val();
+	var pcliqdez = $('#pcliqdez','#frmRegra').val();
+	var qtdialiq = $('#qtdialiq','#frmRegra').val();
 	
 	var dssitdop = $("input[type=checkbox][name='dssitdop']:checked");
     var vlsitdop = '';
@@ -545,6 +624,7 @@ function alteraRegra() {
 		url: UrlSite + "telas/cadlim/manter_rotina.php", 
 		data: {
 		    cddopcao: cddopcao,
+			tplimite: tplimite,
 			inpessoa: inpessoa,
 			vlmaxren: vlmaxren,
 			qtdiaren: qtdiaren,
@@ -553,6 +633,8 @@ function alteraRegra() {
 			qtatracc: qtatracc,
 			qtmincta: qtmincta,
 			nrrevcad: nrrevcad,
+			pcliqdez: pcliqdez,
+			qtdialiq: qtdialiq,
 			vlsitdop: vlsitdop,			
 			vlriscop: vlriscop,
 			redirect: "script_ajax"

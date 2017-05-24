@@ -7,12 +7,13 @@
  * --------------
  * ALTERAÇÕES   : 05/01/2016 - Adicionar campo para Liberar credito pre-aprovado, flgcrdpa (Anderson)
  *				  27/07/2016 - Adicionados novos campos para a fase 3 do projeto pre aprovado (Lombardi)
+ *                03/05/2017 - Ajuste na label do campo flgrenli para o projeto 300. (Lombardi)
  * --------------
  */	
 ?>
 <form name="frmLiberarBloquear" id="frmLiberarBloquear" class="formulario" >
 
-    <label for="flgrenli"><? echo utf8ToHtml(' Renova Limite Cr&eacute;dito Autom&aacute;tico:') ?></label>
+    <label for="flgrenli"><? echo utf8ToHtml(' Renova Limite Cr&eacute;dito/Desconto Cheque Autom&aacute;tico:') ?></label>
 	<select id="flgrenli" name="flgrenli" >
         <option value="yes">Sim</option>
 		<option value="no">Não</option>

@@ -10,6 +10,8 @@
  *                22/08/2016 - #456682 Inclusão dos tipos de fraude TED PF e PJ (Carlos)
  *                16/09/2016 - Melhoria nas mensagens, de "Código" para "Registro", para ficar genérico, 
  *                             conforme solicitado pelo Maicon (Carlos)
+ *                15/02/2016 - Inclusão do tipo  Telefone Celular. Melhoria nas mensagens. 
+ *                             Projeto 321 - Recarga de Celular. (Lombardi)
  * --------------
  */
 	session_start();
@@ -97,6 +99,7 @@
 																						<option value='1'>Boleto</option>
 																						<option value='2'>TED - Pessoa física</option>
 																						<option value='3'>TED - Pessoa jurídica</option>
+																						<option value='4'>Telefone Celular</option>
 																					</select>
 																				</div>
 																				
@@ -115,6 +118,13 @@
 																					<input type="text" class="campo cnpj" id="nrcnpj" name="nrcnpj" maxlength="20" value=""
 																						   onblur="validaCpfCnpj(this.form,this,2);"																						    
 																						   alt="Informe o nro. do CNPJ." />
+																				</div>
+																				<div id="divTelefoneCelular" style="clear:both">
+																					<label id="lblTelCel" for="dddcel">DDD / Telefone:</label>
+																					<input type="text" class="campo dddcel" id="nrdddcel" name="nrdddcel" maxlength="2" value=""
+																						   alt="Informe o ddd do celular." />
+																					<input type="text" class="campo telcel" id="nrtelcel" name="nrtelcel" maxlength="10" value=""
+																						   alt="Informe o nro. do celular." />
 																				</div>
 
 																				<br style="clear:both" />

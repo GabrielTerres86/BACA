@@ -44,18 +44,18 @@
 	}
 	
 ?>
+<!--style="clear: both; border: 1px solid #bbb; margin: 3px; padding: 0px 3px 5px 3px; padding-bottom: 10px;"-->
 
-<div id="divBotoes">
-	<form class="formulario">
-		<fieldset>
-			<legend><? echo utf8ToHtml('Impressão') ?></legend>
+<div id="divBotoes" style="width: 500px;">
+	<fieldset style="clear: both; border: 1px solid #bbb; margin: 3px; padding: 0px 3px 5px 3px; padding-bottom: 10px;">
+		<legend style="font-size: 11px; color: #333; margin-left: 5px; padding: 0px 2px;"><? echo utf8ToHtml('Impressão') ?></legend>
 			
-			<input type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="carregaBorderosCheques();return false;" />
-			<input type="image" src="<?php echo $UrlImagens; ?>botoes/cheques.gif" onClick="gerarImpressao(7,2,'no');return false;" />
-			<input type="image" src="<?php echo $UrlImagens; ?>botoes/proposta.gif" onClick="gerarImpressao(6,2,'no');return false;" />
+			<a href="#" class="botao" id="btVoltar" onClick="carregaBorderosCheques();return false;">Voltar</a>
+			<a href="#" class="botao" id="btCheques" onClick="gerarImpressao(7,2,'no','',0);return false;">Border&ocirc; Cooperado</a>
+			<a href="#" class="botao" id="btCheques" onClick="gerarImpressao(7,2,'no','',1);return false;">Border&ocirc; Cooperativa</a>
+			<a href="#" class="botao" id="btProposta" onClick="gerarImpressao(6,2,'no');return false;">Proposta</a>
 			
 		</fieldset>
-	</form>
 </div>
 
 <?php 

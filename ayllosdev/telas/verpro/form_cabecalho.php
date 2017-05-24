@@ -3,7 +3,7 @@
  * FONTE        : form_cabecalho.php
  * CRIAÇÃO      : Rogerius Militão (DB1)
  * DATA CRIAÇÃO : 25/10/2011
- * OBJETIVO     : Cabeçalho para a tela VERPRO              Última alteração: 05/07/2016
+ * OBJETIVO     : Cabeçalho para a tela VERPRO              Última alteração: 23/03/2017
  * --------------
  * ALTERAÇÕES   :
  *                  16/01/2013 - Daniel (CECRED) : Implantacao novo layout.
@@ -19,6 +19,7 @@
 								 
 					05/07/2016 - Inclusão protocolo 16, 17, 18, 19 (PRJ338 - Lucas Lunelli)
 					
+					23/03/2017 - Inclusão protocolo 20. (PRJ321 - Reinert)
  *********************************************************************************************/
 ?>
 <form id="frmCab" name="frmCab" class="formulario cabecalho" onSubmit="return false;" style="display:none" >
@@ -54,6 +55,7 @@
     <option value="17" <?php echo $cdtippro == '17' ? 'selected' : '' ?>>17 - DAS</option>
     <option value="18" <?php echo $cdtippro == '18' ? 'selected' : '' ?>>18 - Agendamento DARF</option>
     <option value="19" <?php echo $cdtippro == '19' ? 'selected' : '' ?>>19 - Agendamento DAS</option>
+    <option value="20" <?php echo $cdtippro == '20' ? 'selected' : '' ?>>20 - Recarga de celular</option>
     </select>
 
     <br />

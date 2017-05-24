@@ -8,6 +8,7 @@
  
  22/08/2016 - #456682 Inclusão dos tipos de fraude TED PF e PJ (Carlos)
  16/09/2016 - Melhoria nas mensagens, de "Código" para "Registro", para ficar genérico, conforme solicitado pelo Maicon (Carlos)
+ 15/02/2016 - Inclusão do tipo  Telefone Celular. Melhoria nas mensagens. Projeto 321 - Recarga de Celular. (Lombardi)
  
  ***********************************************************************************************/
 
@@ -51,12 +52,15 @@ function estadoInicial() {
 	$('#nrdcodigo').val('');
 	$('#nrcpf').val('');
 	$('#nrcnpj').val('');
+	$('#nrdddcel').val('');
+	$('#nrtelcel').val('');
 	
 	$('#nmdatainicial').val('');
 	$('#nmdatafinal').val('');
 	
 	$('#divTED1').hide();
 	$('#divTED2').hide();
+	$('#divTelefoneCelular').hide();
 	$('#divBoleto').show();
 	$('#tipo').val('1');	
 	
@@ -93,7 +97,7 @@ function estadoInicial() {
 	var strDate = date.getDate() + "/" + (dia) + "/" + date.getFullYear();
 	
 	$('#nmdata').val(strDate);
-
+	$('#nmdata').desabilitaCampo();
 }
 
 function formataLayout() {
@@ -109,12 +113,12 @@ function formataLayout() {
 	cCddopcao.css({'width':'440px'});
 	rCddopcao.css('width','44px');
 	
-	$('#lblTipo, #lblCodigo, #lblCpf, #lblCnpj, #lblDataini, #lblData').css({'width':'75px'});	
+	$('#lblTipo, #lblCodigo, #lblCpf, #lblCnpj, #lblTelCel, #lblDataini, #lblData').css({'width':'90px'});	
 	
-	$("#nrdcodigo").css({'width':'455px'});
-	$(".clsdata").css({'width':'153px'});
+	$("#nrdcodigo").css({'width':'450px'});
+	$(".clsdata").css({'width':'75px'});
 	$(".clspadding").css({'padding-left':'10px'});
-	$(".clsbotao").css({'margin-left':'20px'});
+	$(".clsbotao").css({'right':'0'});
 	
 	$('#tipo').css({'width':'140px'});
 
@@ -122,8 +126,10 @@ function formataLayout() {
 
 	layoutPadrao();
 
-	$("#nrcpf").css({'width':'455px', 'text-align':'left'});
-	$("#nrcnpj").css({'width':'455px','text-align':'left'});
+	$("#nrcpf").css({'width':'450px', 'text-align':'left'});
+	$("#nrcnpj").css({'width':'450px','text-align':'left'});
+	$("#nrdddcel").css({'width':'25px','text-align':'left'}).setMask('INTEGER','zz','','');
+	$("#nrtelcel").css({'width':'125px','text-align':'left'}).setMask("INTEGER","zzzzz-zzzz",".-","");
 
 	return false;	
 }
@@ -150,7 +156,7 @@ function controlaFoco() {
 				$("#nmdatainicial").focus();
 			}
 			else {
-				$("#nmdata").focus();
+				confirma('I');
 			}
 			return false;
 		}
@@ -164,8 +170,10 @@ function controlaFoco() {
 			else if ($("#tipo").val() == '2') {
 				$("#nrcpf").focus();
 			}
-			else {
+			else if ($("#tipo").val() == '3') {
 				$("#nrcpfcnpj").focus();
+			} else {
+				$("#nrdddcel").focus();
 			}
 				
 			return false;
@@ -179,7 +187,7 @@ function controlaFoco() {
 				$("#nmdatainicial").focus();
 			}
 			else {
-				$("#nmdata").focus();
+				confirma('I');
 			}
 			return false;
 		}
@@ -191,7 +199,26 @@ function controlaFoco() {
 				$("#nmdatainicial").focus();
 			}
 			else {
-				$("#nmdata").focus();
+				confirma('I');
+			}
+			return false;
+		}
+	});
+	
+	$("#nrdddcel").unbind('keypress').bind('keypress', function(e) {
+		if ( e.keyCode == 9 || e.keyCode == 13) {	
+			$("#nrtelcel").focus();
+			return false;
+		}
+	});
+	
+	$("#nrtelcel").unbind('keypress').bind('keypress', function(e) {
+		if ( e.keyCode == 9 || e.keyCode == 13 ) {	
+			if (cCddopcao.val() == "C" || cCddopcao.val() == "E" ) {
+				$("#nmdatainicial").focus();
+			}
+			else {
+				confirma('I');
 			}
 			return false;
 		}
@@ -211,27 +238,28 @@ function controlaFoco() {
 		}
 	});
 	
-	$("#nmdata").unbind('keypress').bind('keypress', function(e) {
-		if ( e.keyCode == 9 || e.keyCode == 13 ) {	
-			confirma('I');
-			return false;
-		}
-	});
-	
 }
 function atualizaTipo() {
 	if ($("#tipo").val() == '1') {
 	    $('#divTED1').hide();
 	    $('#divTED2').hide();
+		$('#divTelefoneCelular').hide();
 	    $('#divBoleto').show();
 	} else if ($("#tipo").val() == '2') {		
 	    $('#divBoleto').hide();
 		$('#divTED2').hide();
+		$('#divTelefoneCelular').hide();
 		$('#divTED1').show();
 	} else if ($("#tipo").val() == '3') {		
 		$('#divBoleto').hide();
 		$('#divTED1').hide();
+		$('#divTelefoneCelular').hide();
 		$('#divTED2').show();
+	} else if ($("#tipo").val() == '4') {		
+		$('#divBoleto').hide();
+		$('#divTED1').hide();
+		$('#divTED2').hide();
+		$('#divTelefoneCelular').show();
 	}
 }
 
@@ -303,26 +331,63 @@ function confirma(cddopcao) {
 	else if ($("#tipo").val() == '2') {
 		strCodigo = $("#nrcpf").val();
 	}
-	else {
+	else if ($("#tipo").val() == '3') {
 		strCodigo = $("#nrcpfcnpj").val();
 	}
-	
-	if(cddopcao == 'I' && (strCodigo == '' || strdata == '') ){
-	    showError("error","Todos os campos devem ser prenchidos.","Alerta - Ayllos","");
-		return false;
+	else {
+		strCodigo = $("#nrdddcel").val() + $("#nrtelcel").val();
 	}
+		
+	if(cddopcao == 'I') {
+		if ((strCodigo == '' || strdata == '')){
+			showError("error","Todos os campos devem ser prenchidos.","Alerta - Ayllos","");
+			return false;
+		}
+		
+		//TELEFONE CELULAR
+		if ($("#tipo").val() == 4) { 
+			
+			if ($("#nrdddcel").val() == '' || $("#nrtelcel").val() == '') {
+				showError("error","Todos os campos devem ser prenchidos.","Alerta - Ayllos","$(\"#nrdddcel\").focus();");
+				return false;
+			}
+			
+			if ($("#nrdddcel").val().length < 2) {
+				showError("error","DDD inv&aacute;lido.","Alerta - Ayllos","$(\"#nrdddcel\").focus();");
+				return false;
+			}
+			
+			if ($("#nrtelcel").val().length < 10) {
+				showError("error","Telefone inv&aacute;lido.","Alerta - Ayllos","$(\"#nrtelcel\").focus();");
+				return false;
+			}
+		}
+	}
+	
 	var mensagem;
 	
-	// Mostra mensagem de aguardo
+	// Monta mensagem de confirmacao
+	if ($("#tipo").val() == '1') {		
+		mensagem = 'Código';
+	}
+	else if ($("#tipo").val() == '2') {
+		mensagem = 'CPF';
+	}
+	else if ($("#tipo").val() == '3') {
+		mensagem = 'CNPJ';
+	}
+	else {
+		mensagem = 'Telefone Celular';
+	}
+	
 	if (cddopcao == "I"){ 
-		mensagem = 'Deseja incluir Código/CPF/CNPJ com Fraude?'; 
+		mensagem = 'Deseja incluir ' + mensagem + ' com Fraude?';
 	}
 	else if (cddopcao == "E"){ 	
-		mensagem = 'Deseja excluir Código/CPF/CNPJ com Fraude?';  
-	/*	$("#nrdcodigo").val('');
-		$("#nrcpf").val('');
-		$("#nrcnpj").val('');*/
+		mensagem = 'Deseja excluir ' + mensagem + ' com Fraude?';
 	}	
+	
+	// Mostra mensagem de confirmacao
 	showConfirmacao(mensagem,
 	'Confirma&ccedil;&atilde;o - Ayllos',
 	'realizaOperacao("' + cddopcao + '" , "1" , "30");',
@@ -333,28 +398,67 @@ function confirma(cddopcao) {
 
 function realizaOperacao(cddopcao, nriniseq , nrregist) {
 	
-	var strcodbarra  = $("#nrdcodigo").val();
+	var dsfraude;
 	var stropcao     = $("#cddopcao").val();
 	var tipo         = $("#tipo").val();
-	var strCpf       = $("#nrcpf").val();
-	var strCnpj      = $("#nrcnpj").val();
 	var datinclusao  = $("#nmdata").val();
 	var datinicio    = $("#nmdatainicial").val();
 	var datfim       = $("#nmdatafinal").val();
 	var codbarexc    = $("#hdncodbarexc").val();
 
+	switch (tipo) {
+		case '1':
+			dsfraude = $("#nrdcodigo").val();
+			break;
+		case '2':
+			dsfraude = $("#nrcpf").val();
+			break;
+		case '3':
+			dsfraude = $("#nrcnpj").val();
+			break;
+		case '4':
+				dsfraude = $("#nrdddcel").val() + $("#nrtelcel").val();
+			break;
+		default:
+			dsfraude = $("#nrdcodigo").val();
+			break;
+	}
+	
+	if(cddopcao == 'C' || cddopcao == 'E') {
+		
+		if ($("#nmdatainicial").val() != '' && $("#nmdatafinal").val() != '') {
+			var date1 = $("#nmdatainicial").val();
+			var date2 = $("#nmdatafinal").val();
+			var newDate1 = new Date();
+			var newDate2 = new Date();
+			newDate1.setFullYear(date1.substr(6,4),(date1.substr(3,2) - 1),date1.substr(0,2));
+			newDate2.setFullYear(date2.substr(6,4),(date2.substr(3,2) - 1),date2.substr(0,2));
+
+			if (newDate2 < newDate1) {
+				showError("error","Data final deve ser maior ou igual a Data inicial.","Alerta - Ayllos","");
+				return false;
+			}
+		}
+	}
 	// Mostra mensagem de aguardo
 	if (cddopcao == "C"){  		
 		showMsgAguardo("Aguarde, consultando registro de fraude..."); 
 	} 
 	else if (cddopcao == "I"){ 
 		showMsgAguardo("Aguarde, incluindo registro de fraude...");
-		$("#nrdcodigo").val('');	
 	}
 	else { 
 		showMsgAguardo("Aguarde, excluindo registros de fraude...");  
 	}
 
+	if (cddopcao == "I" || cddopcao == "E"){
+		$("#nrdcodigo").val('');
+		$("#nrcpf").val('');
+		$("#nrcnpj").val('');
+		$("#nrdddcel").val('')
+		$("#nrtelcel").val('');
+	}
+	
 	// Executa script de bloqueio através de ajax
 	$.ajax({		
 		type: "POST",
@@ -364,9 +468,7 @@ function realizaOperacao(cddopcao, nriniseq , nrregist) {
 			cddopcao      : cddopcao,
 			stropcao      : stropcao,
 			tipo          : tipo,
-			nrdcodigo     : strcodbarra,
-			nrcpf         : strCpf,
-			nrcnpj        : strCnpj,
+			dsfraude      : dsfraude,
 			nmdata        : datinclusao,
 			nmdatainicial : datinicio,
 			nmdatafinal   : datfim,
@@ -386,6 +488,7 @@ function realizaOperacao(cddopcao, nriniseq , nrregist) {
 
 				try {
 					eval(response);
+					$("#tipo").focus();
 				} catch (err) {
 					$("#divTabela").html(response);
 				}
@@ -424,4 +527,3 @@ function somenteCaracteresNumericos(intWhich) {
         return true;
     }
 }
-

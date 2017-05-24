@@ -8,6 +8,7 @@
  * --------------
  * ALTERAÇÕES   : 02/12/2016 - P341-Automatização BACENJUD - Removido passagem do departamento como parametros
  *                             pois a BO não utiliza o mesmo (Renato Darosci)
+ *                16/12/2016 - Alterações referentes ao projeto 300. (Reinert)
  * -------------- 
  */
 
@@ -22,6 +23,15 @@ isPostMethod();
 $procedure = '';
 $retornoAposErro = '';
 
+// Variáveis globais
+$glb_cdcooper = (isset($glbvars['cdcooper'])) ? $glbvars['cdcooper'] : 0;
+$glb_cdagenci = (isset($glbvars['cdagenci'])) ? $glbvars['cdagenci'] : 0;
+$glb_nrdcaixa = (isset($glbvars['nrdcaixa'])) ? $glbvars['nrdcaixa'] : 0;
+$glb_cdoperad = (isset($glbvars['cdoperad'])) ? $glbvars['cdoperad'] : '';
+$glb_nmdatela = (isset($glbvars['nmdatela'])) ? $glbvars['nmdatela'] : '';
+$glb_idorigem = (isset($glbvars['idorigem'])) ? $glbvars['idorigem'] : 0;
+$glb_dtmvtolt = (isset($glbvars['dtmvtolt'])) ? $glbvars['dtmvtolt'] : '';
+
 // Recebe a operação que está sendo realizada
 $operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '';
 $cddopcao = (isset($_POST['cddopcao'])) ? $_POST['cddopcao'] : '';
@@ -32,22 +42,35 @@ $cdbanchq = (isset($_POST['cdbanchq'])) ? $_POST['cdbanchq'] : 0;
 $cdagechq = (isset($_POST['cdagechq'])) ? $_POST['cdagechq'] : 0;
 $nrctachq = (isset($_POST['nrctachq'])) ? $_POST['nrctachq'] : 0;
 $nrcheque = (isset($_POST['nrcheque'])) ? $_POST['nrcheque'] : 0;
-$dtmvtini = (validaData($_POST['dtmvtini'])) ? $_POST['dtmvtini'] : '';
-$dtmvtfim = (validaData($_POST['dtmvtfim'])) ? $_POST['dtmvtfim'] : '';
+$dtmvtini = (isset($_POST['dtmvtini'])) ? $_POST['dtmvtini'] : '';
+$dtmvtini = (validaData($dtmvtini)) ? $dtmvtini : '';
+$dtmvtfim = (isset($_POST['dtmvtfim'])) ? $_POST['dtmvtfim'] : '';
+$dtmvtfim = (validaData($dtmvtfim)) ? $dtmvtfim : '';
 $cdagenci = (isset($_POST['cdagenci'])) ? $_POST['cdagenci'] : 0;
 $flgrelat = (isset($_POST['flgrelat'])) ? $_POST['flgrelat'] : '';
 $nmdopcao = (isset($_POST['nmdopcao'])) ? $_POST['nmdopcao'] : '';
 $nmdireto = (isset($_POST['nmdireto'])) ? $_POST['nmdireto'] : '';
 $dsiduser = $nmdireto;
-$dtlibera = (validaData($_POST['dtlibera'])) ? $_POST['dtlibera'] : '';
-$dtmvtolx = (validaData($_POST['dtmvtolt'])) ? $_POST['dtmvtolt'] : '';
+$dtlibera = (isset($_POST['dtlibera'])) ? $_POST['dtlibera'] : '';
+$dtlibera = (validaData($dtlibera)) ? $dtlibera : '';
+$dtmvtolx =(isset($_POST['dtmvtolt'])) ? $_POST['dtmvtolt'] : '';
+$dtmvtolx = (validaData($dtmvtolx)) ? $dtmvtolx : '';
 $nrdolote = (isset($_POST['nrdolote'])) ? $_POST['nrdolote'] : '';
 $cdagelot = (isset($_POST['cdagelot'])) ? $_POST['cdagelot'] : '';
 $protocolo = (!empty($_POST['protocolo'])) ? unserialize($_POST['protocolo']) : array();
-
+$nrcpfcgc = (isset($nrcpfcgc)) ? $nrcpfcgc : 0;
+$nmcheque = (isset($nmcheque)) ? $nmcheque : '';
+$auxnrcpf = (isset($auxnrcpf)) ? $auxnrcpf : 0;
+$auxnmchq = (isset($auxnmchq)) ? $auxnmchq : '';
 
 if (($msgError = validaPermissao($glbvars['nmdatela'], $glbvars['nmrotina'], $cddopcao)) <> '') {
     exibirErro('error', $msgError, 'Alerta - Ayllos', '', false);
+}
+
+if ($nrdconta == '0' && $cddopcao == 'I'){
+	$retornoAposErro = "focaCampoErro('nrdconta','frmOpcao')";
+	$msgErro = 'Informe o n&uacute;mero da conta.';
+	exibirErro('error', $msgErro, 'Alerta - Ayllos', $retornoAposErro, false);
 }
 
 $BO = 'b1wgen0018.p';
@@ -60,10 +83,6 @@ switch ($operacao) {
         break;
     case 'VLD': $procedure = 'valida_limites_desconto';
         $retornoAposErro = 'estadoInicial()';
-        break;
-    case 'VDD': $procedure = 'valida_dados_desconto';
-        break;
-    case 'VLE': $procedure = 'valida_lote_desconto';
         break;
 }
 

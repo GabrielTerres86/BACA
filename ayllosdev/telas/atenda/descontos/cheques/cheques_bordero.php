@@ -1,55 +1,59 @@
-<?php 
+<?php
 
 	/************************************************************************
-	 Fonte: cheques_bordero.php                                       
-	 Autor: Guilherme                                                 
-	 Data : Novembro/2008                Última Alteração: 02/01/2015
-	                                                                  
-	 Objetivo  : Mostrar opcao Borderos de descontos de cheques        
-	                                                                  	 
-	 Alterações: 11/07/2011 - Alterado para layout padrão (Gabriel Capoia - DB1)
-				
+	 Fonte: cheques_bordero.php
+	 Autor: Guilherme
+	 Data : Novembro/2008                Ãšltima AlteraÃ§Ã£o: 16/12/2016 
+
+	 Objetivo  : Mostrar opcao Borderos de descontos de cheques
+
+	 AlteraÃ§Ãµes: 11/07/2011 - Alterado para layout padrÃ£o (Gabriel Capoia - DB1)
+
 				 18/11/2011 - Ajustes para nao mostrar botao quando nao tiver permissao (Jorge)
-				 
-				 10/08/2012 - Substituição do botão ANALISE por PRE-ANALISE (Lucas)
-				 
+
+				 10/08/2012 - SubstituiÃ§Ã£o do botÃ£o ANALISE por PRE-ANALISE (Lucas)
+
 				 02/01/2015 - Ajuste format nrborder. (Chamado 181988) - (Fabricio)
-				 
+
+				 16/12/2016 - AlteraÃ§Ãµes Referentes ao projeto 300. (Reinert)
+
+				 23/03/2017 - Inclusao de botÃ£o Rejeitar.  Projeto 300 (Lombardi)
+
 	************************************************************************/
-	
+
 	session_start();
-	
-	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções	
+
+	// Includes para controle da session, variÃ¡veis globais de controle, e biblioteca de funÃ§Ãµes	
 	require_once("../../../../includes/config.php");
 	require_once("../../../../includes/funcoes.php");
 	require_once("../../../../includes/controla_secao.php");
 
-	// Verifica se tela foi chamada pelo método POST
-	isPostMethod();	
-		
+	// Verifica se tela foi chamada pelo mÃ©todo POST
+	isPostMethod();
+
 	// Classe para leitura do xml de retorno
 	require_once("../../../../class/xmlfile.php");
-	
+
 	setVarSession("nmrotina","DSC CHQS - BORDERO");
-	
-	// Carrega permissões do operador
+
+	// Carrega permissÃµes do operador
 	include("../../../../includes/carrega_permissoes.php");
-	
+
 	setVarSession("opcoesTela",$opcoesTela);
-	
-	// Verifica se o número da conta foi informado
+
+	// Verifica se o nÃºmero da conta foi informado
 	if (!isset($_POST["nrdconta"])) {
 		exibeErro("Par&acirc;metros incorretos.");
-	}	
+	}
 
 	$nrdconta = $_POST["nrdconta"];
 
-	// Verifica se o número da conta é um inteiro válido
+	// Verifica se o nÃºmero da conta Ã© um inteiro vÃ¡lido
 	if (!validaInteiro($nrdconta)) {
 		exibeErro("Conta/dv inv&aacute;lida.");
 	}
-	
-	// Monta o xml de requisição
+
+	// Monta o xml de requisiÃ§Ã£o
 	$xmlGetBorderos  = "";
 	$xmlGetBorderos .= "<Root>";
 	$xmlGetBorderos .= "	<Cabecalho>";
@@ -62,30 +66,30 @@
 	$xmlGetBorderos .= "		<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
 	$xmlGetBorderos .= "	</Dados>";
 	$xmlGetBorderos .= "</Root>";
-		
+
 	// Executa script para envio do XML
 	$xmlResult = getDataXML($xmlGetBorderos);
-	
+
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjBorderos = getObjectXML($xmlResult);
-	
-	// Se ocorrer um erro, mostra crítica
+
+	// Se ocorrer um erro, mostra crÃ­tica
 	if (strtoupper($xmlObjBorderos->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjBorderos->roottag->tags[0]->tags[0]->tags[4]->cdata);
-	} 
-	
+	}
+
 	$borderos   = $xmlObjBorderos->roottag->tags[0]->tags;
 	$qtBorderos = count($borderos);
-	
-	// Função para exibir erros na tela através de javascript
-	function exibeErro($msgErro) { 
+
+	// FunÃ§Ã£o para exibir erros na tela atravÃ©s de javascript
+	function exibeErro($msgErro) {
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
 		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		echo '</script>';
 		exit();
 	}
-	
+
 ?>
 
 <div id="divBorderos">
@@ -99,33 +103,35 @@
 					<th>Qt.Chqs</th>
 					<th>Valor</th>
 					<th>Situa&ccedil;&atilde;o</th>
-				</tr>			
+					<th>Data Libera&ccedil;&atilde;o</th>
+				</tr>
 			</thead>
 			<tbody>
-				<?  for ($i = 0; $i < $qtBorderos; $i++) { 								
+				<?  for ($i = 0; $i < $qtBorderos; $i++) {
 						$cor = "";
-						
-						$mtdClick = "selecionaBorderoCheques('".($i + 1)."','".$qtBorderos."','".$borderos[$i]->tags[1]->cdata."','".$borderos[$i]->tags[2]->cdata."');";
+
+						$mtdClick = "selecionaBorderoCheques('".($i + 1)."','".$qtBorderos."','".$borderos[$i]->tags[1]->cdata."','".$borderos[$i]->tags[2]->cdata."','".$borderos[$i]->tags[7]->cdata."','".(trim($borderos[$i]->tags[5]->cdata) == "REJEITADO" ? 1 : 0)."');";
 					?>
 					<tr id="trBordero<? echo $i + 1; ?>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>">
-					
+
 						<td><? echo $borderos[$i]->tags[0]->cdata; ?></td>
-						
+
 						<td><span><? echo $borderos[$i]->tags[1]->cdata ?></span>
 							<? echo formataNumericos('z.zzz.zzz',$borderos[$i]->tags[1]->cdata,'.'); ?></td>
-						
+
 						<td><span><? echo $borderos[$i]->tags[2]->cdata ?></span>
 							<? echo formataNumericos('z.zzz.zzz',$borderos[$i]->tags[2]->cdata,'.'); ?></td>
-						
+
 						<td><span><? echo $borderos[$i]->tags[3]->cdata ?></span>
 							<? echo formataNumericos('zzz.zzz',$borderos[$i]->tags[3]->cdata,'.'); ?></td>
-						
+
 						<td><span><? echo $borderos[$i]->tags[4]->cdata ?></span>
 							<? echo number_format(str_replace(",",".",$borderos[$i]->tags[4]->cdata),2,",","."); ?></td>
-						
+
 						<td><? echo $borderos[$i]->tags[5]->cdata; ?></td>
-					</tr>							
-				<?} // Fim do for ?>			
+						<td><? echo $borderos[$i]->tags[8]->cdata; ?></td>
+					</tr>
+				<?} // Fim do for ?>
 			</tbody>
 		</table>
 	</div>
@@ -137,21 +143,31 @@
 	$dispE = (!in_array("E",$glbvars["opcoesTela"])) ? 'display:none;' : '';
 	$dispM = (!in_array("M",$glbvars["opcoesTela"])) ? 'display:none;' : '';
 	$dispL = (!in_array("L",$glbvars["opcoesTela"])) ? 'display:none;' : '';
+
+	$dispR = (!in_array("R",$glbvars["opcoesTela"])) ? 'display:none;' : '';
+	$dispG = (!in_array("G",$glbvars["opcoesTela"])) ? 'display:none;' : '';
+	$dispA = (!in_array("A",$glbvars["opcoesTela"])) ? 'display:none;' : '';
+	$dispI = (!in_array("I",$glbvars["opcoesTela"])) ? 'display:none;' : '';
 ?>
 
 <div id="divBotoes" >
-	<input type="image" src="<? echo $UrlImagens; ?>botoes/voltar.gif" onClick="voltaDiv(2,1,4,'DESCONTO DE CHEQUES','DSC CHQS');carregaCheques();return false;" />
-	<input type="image" src="<? echo $UrlImagens; ?>botoes/pre-analise.gif"  <? if ($qtBorderos == 0) { echo 'style="cursor:default;'.$dispN.'" onClick="return false;"'; } else { echo 'style="'.$dispN.'" onClick="mostraDadosBorderoDscChq(\'N\');return false;"'; } ?> />
-	<input type="image" src="<? echo $UrlImagens; ?>botoes/consultar.gif" <? if ($qtBorderos == 0) { echo 'style="cursor:default;'.$dispC.'" onClick="return false;"'; } else { echo 'style="'.$dispC.'" onClick="mostraDadosBorderoDscChq(\'C\');return false;"'; } ?> />
-	<input type="image" src="<? echo $UrlImagens; ?>botoes/excluir.gif"   <? if ($qtBorderos == 0) { echo 'style="cursor:default;'.$dispE.'" onClick="return false;"'; } else { echo 'style="'.$dispE.'" onClick="mostraDadosBorderoDscChq(\'E\');return false;"'; } ?> />
-	<input type="image" src="<? echo $UrlImagens; ?>botoes/imprimir.gif"  <? if ($qtBorderos == 0) { echo 'style="cursor:default;'.$dispM.'" onClick="return false;"'; } else { echo 'style="'.$dispM.'" onClick="mostraImprimirBordero();return false;"'; } ?> />
-	<input type="image" src="<? echo $UrlImagens; ?>botoes/liberar.gif"   <? if ($qtBorderos == 0) { echo 'style="cursor:default;'.$dispL.'" onClick="return false;"'; } else { echo 'style="'.$dispL.'" onClick="mostraDadosBorderoDscChq(\'L\');return false;"'; } ?> />
+	<a href="#" class="botao" id="btVoltar" onclick="voltaDiv(2,1,4,'DESCONTO DE CHEQUES','DSC CHQS');carregaCheques();return false;">Voltar</a>
+	<a href="#" class="botao" id="btIncluir" style="<? echo $dispI ?>" onclick="mostraFormIABordero('I');">Incluir</a>
+	<a href="#" class="botao" id="btConsultar" style="<? echo $dispC ?>" onClick="mostraDadosBorderoDscChq('C');return false;">Consultar</a>
+	<a href="#" class="botao" id="btAlterar" style="<? echo $dispA ?>" onclick="mostraFormIABordero('A');">Alterar</a>
+	<a href="#" class="botao" id="btExcluir" style="<? echo $dispE ?>" onClick="mostraDadosBorderoDscChq('E');return false;">Excluir</a>
+	<a href="#" class="botao" id="btAnalisar" style="<? echo $dispN ?>" onclick="mostraFormAnaliseBordero();return false;">Analisar</a>
+	<div style="margin-top: 3px" />
+	<a href="#" class="botao" id="btImprimir" style="<? echo $dispM ?>" onClick="mostraImprimirBordero();return false;">Imprimir</a>
+	<a href="#" class="botao" id="btLiberar" style="<? echo $dispL ?>" onclick="verificaAssinaturaBordero(); return false;">Liberar</a>
+	<a href="#" class="botao" id="btResgatar" style="<? echo $dispG ?>" onclick="mostraFormResgate(); return false;">Resgatar</a>
+	<a href="#" class="botao" id="btRejeitar" style="<? echo $dispR ?>" onClick="confirmaRejeitaBordero();return false;">Rejeitar</a>
 </div>
 
 <script type="text/javascript">
 dscShowHideDiv("divOpcoesDaOpcao2","divOpcoesDaOpcao1;divOpcoesDaOpcao3");
 
-// Muda o título da tela
+// Muda o tÃ­tulo da tela
 $("#tdTitRotina").html("DESCONTO DE CHEQUES - BORDER&Ocirc;S");
 
 formataLayout('divBorderos');
@@ -159,6 +175,6 @@ formataLayout('divBorderos');
 // Esconde mensagem de aguardo
 hideMsgAguardo();
 
-// Bloqueia conteúdo que está átras do div da rotina
+// Bloqueia conteÃºdo que estÃ¡ Ã¡tras do div da rotina
 blockBackground(parseInt($("#divRotina").css("z-index")));
 </script>

@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 26/12/2011
  * OBJETIVO     : Cabeçalho para a tela DESCTO
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : 21/09/2016 - Projeto 300: Inclusao das opcoes L e N. (Jaison/Daniel)
  * --------------
  */
 
@@ -16,7 +16,6 @@ require_once('../../includes/controla_secao.php');
 require_once('../../class/xmlfile.php');
 isPostMethod();
 ?>
-
 
 <form id="frmCab" name="frmCab" class="formulario cabecalho" onSubmit="return false;">
 
@@ -32,12 +31,11 @@ isPostMethod();
         <option value="S" <?php echo $cddopcao == 'S' ? 'selected' : '' ?>>S - Pesquisar dados para conciliacao contabil.</option>
         <option value="T" <?php echo $cddopcao == 'T' ? 'selected' : '' ?>>T - Pesquisar datas de liberacao e loteamento de cheques.</option>
         <option value="O" <?php echo $cddopcao == 'O' ? 'selected' : '' ?>>O - Imprimir relatorio para conferencia de cheques a serem liberados.</option>
+        <option value="L" <?php echo $cddopcao == 'L' ? 'selected' : '' ?>>L - Imprimir relatorio de borderos nao liberados.</option>
+        <option value="N" <?php echo $cddopcao == 'N' ? 'selected' : '' ?>>N - Imprimir relatorio de limites nao renovados.</option>
     </select>
-
 
     <a href="#" class="botao" id="btnOk1">Ok</a>
     <br style="clear:both" />	
 
 </form>
-
-
