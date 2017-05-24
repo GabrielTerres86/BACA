@@ -3029,6 +3029,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     -- Variáveis locais
 		vr_nrdolote        NUMBER;
 		vr_nrborder        NUMBER;
+    vr_cdagenci        crapass.cdagenci%TYPE;
 		vr_flg_criou_lot   BOOLEAN;
 	
 	  -- Busca registro de associado
@@ -3037,6 +3038,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			SELECT ass.dtdemiss
 						,ass.dtelimin
 						,ass.cdsitdtl
+            ,ass.cdagenci
 				FROM crapass ass
 			 WHERE ass.cdcooper = pr_cdcooper
 				 AND ass.nrdconta = pr_nrdconta;
@@ -3107,7 +3109,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 		END IF;
 		-- Fecha cursor
 		CLOSE cr_crapass;
-
+    
     -- Verificar se cooperado foi demitido
     IF rw_crapass.dtdemiss IS NOT NULL THEN
 			-- Gerar crítica
@@ -3131,6 +3133,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			vr_dscritic := '';
 		END IF;
 		
+    vr_cdagenci := NVL(pr_cdagenci,0);
+    IF NVL(pr_cdagenci,0) = 0 THEN
+      vr_cdagenci := NVL(rw_crapass.cdagenci,0);
+    END IF;    
+    
 		-- Verificar se a conta está bloqueada (95) ou transferida de número (156)
 		IF rw_crapass.cdsitdtl IN ('2','4','6','8') THEN
 		   OPEN cr_craptrf(pr_cdcooper => pr_cdcooper
@@ -3282,7 +3289,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                 ,pr_nmdcampo => 'NRDOLOTE'
                                 ,pr_dsdchave => TO_CHAR(pr_cdcooper)|| ';' 
                                              || TO_CHAR(rw_crapdat.dtmvtolt, 'DD/MM/RRRR')|| ';'
-                                             || TO_CHAR(pr_cdagenci)|| ';'
+                                             || TO_CHAR(vr_cdagenci)|| ';'
                                              || '700') + 260000;
   			
       -- Rotina para criar número de bordero por cooperativa
@@ -3312,7 +3319,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                             ,qtinfocs
                             ,vlinfocs)
                       VALUES(rw_crapdat.dtmvtolt
-                            ,pr_cdagenci
+                            ,vr_cdagenci
                             ,700
                             ,vr_nrdolote
                             ,0
@@ -3367,7 +3374,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 													,cdageori
 													,dtinsori)
 								    VALUES(rw_crapdat.dtmvtolt
-										      ,pr_cdagenci
+										      ,vr_cdagenci
 													,700
 													,vr_nrdolote
 													,vr_nrborder
@@ -3383,7 +3390,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 													,to_char(SYSDATE, 'SSSSS')
 													,pr_cdcooper
 													,pr_cdoperad
-													,pr_cdagenci
+													,vr_cdagenci
 													,trunc(SYSDATE));
 		EXCEPTION
 			WHEN OTHERS THEN
