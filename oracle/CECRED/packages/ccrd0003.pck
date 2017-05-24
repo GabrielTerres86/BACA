@@ -8240,18 +8240,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                    RAISE vr_exc_saida;
                 END;
 
-                BEGIN 
-                  vr_tpdocmto := TO_NUMBER(substr(vr_des_text,93,02));     
-                EXCEPTION 
-                  WHEN OTHERS THEN
-                   pc_log_dados_arquivo( pr_tipodreg => 2 -- Dados do cartao
-                                        ,pr_nmdarqui => vr_vet_nmarquiv(i) -- Arquivo                   
-                                        ,pr_nrdlinha => vr_linha
-                                        ,pr_cdmensagem => 1023
-                                        ,pr_dscritic => SQLERRM);
-                   --Levantar Excecao
-                   RAISE vr_exc_saida;
-                END;
+               
                 
                 BEGIN 
                   vr_codrejei := TO_NUMBER(substr(vr_des_text,211,3));
@@ -8292,18 +8281,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                    RAISE vr_exc_saida;
                 END;                            
 
-                BEGIN 
-                  vr_dtdonasc := TO_DATE(substr(vr_des_text,80,8), 'DDMMYYYY');
-                EXCEPTION 
-                  WHEN OTHERS THEN
-                   pc_log_dados_arquivo( pr_tipodreg => 2 -- Dados do cartao
-                                        ,pr_nmdarqui => vr_vet_nmarquiv(i) -- Arquivo
-                                        ,pr_nrdlinha => vr_linha
-                                        ,pr_cdmensagem => 1026
-                                        ,pr_dscritic => SQLERRM);
-                   --Levantar Excecao
-                   RAISE vr_exc_saida;
-                END;  
+
                 
                
                 
@@ -8387,7 +8365,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 CLOSE cr_crapass;
                 
                 -- Se for dados do cartão, e os dados forem de um CNPJ (pos93 = 3)
-                IF vr_tpdocmto = '03' THEN                  
+                IF substr(vr_des_text,93,02) = '03' THEN                  
                   /* nao deve solicitar cartao novamente caso retorne critica 080
                      (pessoa ja tem cartao nesta conta) */
                   IF substr(vr_des_text, 211, 3) = '080' THEN
@@ -8510,6 +8488,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   CONTINUE;
                 END IF;                                
                 
+                BEGIN 
+                  vr_tpdocmto := TO_NUMBER(substr(vr_des_text,93,02));     
+                EXCEPTION 
+                  WHEN OTHERS THEN
+                   pc_log_dados_arquivo( pr_tipodreg => 2 -- Dados do cartao
+                                        ,pr_nmdarqui => vr_vet_nmarquiv(i) -- Arquivo                   
+                                        ,pr_nrdlinha => vr_linha
+                                        ,pr_cdmensagem => 1023
+                                        ,pr_dscritic => SQLERRM);
+                   --Levantar Excecao
+                   RAISE vr_exc_saida;
+                END;
+                
                 -- Validar se CPF está valido
                 BEGIN 
                   vr_nrcpfcgc:= TO_NUMBER(substr(vr_des_text,95,15));
@@ -8523,6 +8514,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                    --Levantar Excecao
                    RAISE vr_exc_saida;
                 END;   
+                
+                BEGIN 
+                  vr_dtdonasc := TO_DATE(substr(vr_des_text,80,8), 'DDMMYYYY');
+                EXCEPTION 
+                  WHEN OTHERS THEN
+                   pc_log_dados_arquivo( pr_tipodreg => 2 -- Dados do cartao
+                                        ,pr_nmdarqui => vr_vet_nmarquiv(i) -- Arquivo
+                                        ,pr_nrdlinha => vr_linha
+                                        ,pr_cdmensagem => 1026
+                                        ,pr_dscritic => SQLERRM);
+                   --Levantar Excecao
+                   RAISE vr_exc_saida;
+                END;  
+                
+
                 
                 -- Verifica se a operação é de inclusão de adicional, ou seja,
                 -- verifica se a linha anterior processada refere-se a linha atual
