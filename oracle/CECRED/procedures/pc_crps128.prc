@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : 18/07/95                            Ultima alteracao: 23/05/2016
+   Data    : 18/07/95                            Ultima alteracao: 04/04/2017
 
    Dados referentes ao programa:
 
@@ -96,6 +96,9 @@ BEGIN
 						    pois foi ajustado o número de solicitação deste programa de 2 para 70.
 							(Adriano - SD 454658).
 
+         04/04/2017 - #455742 Melhorias de performance. Ajuste de passagem dos parâmetros inpessoa e 
+                      nrcpfcgc para não consultar novamente o associado no pkg apli0001 (Carlos)
+
 ............................................................................. */
   DECLARE
     -- Codigo do programa
@@ -148,15 +151,18 @@ BEGIN
     -- Buscar Cadastro de aplicacoes RDCA.
     CURSOR cr_craprda (pr_cdcooper IN craptab.cdcooper%TYPE,
                        pr_nrdconta IN crapass.nrdconta%TYPE) IS
-      SELECT /*+ INDEX (craprda CRAPRDA##CRAPRDA2)*/
-             tpaplica,
+      SELECT tpaplica,
              nraplica,
-             nrdconta,
-             vlsdrdca
-        FROM craprda
+             craprda.nrdconta,
+             vlsdrdca,
+             crapass.inpessoa,
+             crapass.nrcpfcgc
+        FROM craprda, crapass
        WHERE craprda.cdcooper = pr_cdcooper
          AND craprda.nrdconta = pr_nrdconta
-         AND craprda.insaqtot = 0;
+         AND craprda.insaqtot = 0
+         AND craprda.cdcooper = crapass.cdcooper
+         AND craprda.nrdconta = crapass.nrdconta;
 				 
 		-- Buscar cadastro de aplicações de captação
 		CURSOR cr_craprac (pr_cdcooper IN craprac.cdcooper%TYPE,
@@ -181,10 +187,14 @@ BEGIN
     -- Buscar Cadastro de poupanca programada.
     CURSOR cr_craprpp (pr_cdcooper IN craptab.cdcooper%TYPE,
                        pr_nrdconta IN crapass.nrdconta%TYPE) IS
-      SELECT rowid
-        FROM craprpp
+      SELECT craprpp.rowid,
+             crapass.inpessoa,
+             crapass.nrcpfcgc
+        FROM craprpp, crapass
        WHERE craprpp.cdcooper = pr_cdcooper
-         AND craprpp.nrdconta = pr_nrdconta;
+         AND craprpp.nrdconta = pr_nrdconta
+         AND craprpp.cdcooper = crapass.cdcooper
+         AND craprpp.nrdconta = crapass.nrdconta;
 
     -- Buscar titulares da conta
     CURSOR cr_crapttl (pr_cdcooper IN craptab.cdcooper%TYPE) IS
@@ -606,6 +616,8 @@ BEGIN
                                            ,pr_flggrvir    => FALSE               --> Identificador se deve gravar valor insento
                                            ,pr_dtinitax    => vr_dtinitax         --> Data Inicial da Utilizacao da taxa da poupanca
                                            ,pr_dtfimtax    => vr_dtfimtax         --> Data Final da Utilizacao da taxa da poupanca
+                                           ,pr_inpessoa    => rw_craprda.inpessoa
+                                           ,pr_nrcpfcgc    => rw_craprda.nrcpfcgc
                                            --OUT
                                            ,pr_vlsddrgt    => vr_sldpresg         --> Valor do resgate total sem irrf ou o solicitado
                                            ,pr_vlrenrgt    => vr_vlrenrgt         --> Rendimento total a ser pago quando resgate total
@@ -666,6 +678,8 @@ BEGIN
                                   pr_dtmvtolt  => rw_crapdat.dtmvtolt,--> Data do processo
                                   pr_dtmvtopr  => rw_crapdat.dtmvtopr,--> Proximo dia util
                                   pr_rpp_rowid => rw_craprpp.rowid,   --> Identificador do registro da tabela CRAPRPP em processamento
+                                  pr_inpessoa  => rw_craprpp.inpessoa,
+                                  pr_nrcpfcgc  => rw_craprpp.nrcpfcgc,
                                   pr_vlsdrdpp  => vr_vlsdrdppe,       --> Saldo da poupanca programada
                                   pr_cdcritic  => vr_cdcritic,        --> Codigo da critica de erro
                                   pr_des_erro  => vr_dscritic);       --> Descric?o do erro encontrado
@@ -914,4 +928,3 @@ BEGIN
   END;
 END;
 /
-

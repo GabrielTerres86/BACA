@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps405 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Agosto/2004                       Ultima atualizacao: 23/06/2016
+   Data    : Agosto/2004                       Ultima atualizacao: 16/05/2017
 
    Dados referentes ao programa:
 
@@ -84,8 +84,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps405 (pr_cdcooper IN crapcop.cdcooper%T
                22/07/2016 - Correcao para exibicao correta das operacoes.
                             SoftDesk 481860 (Gil - RKAM)             
 
-              03/04/2017 - Chamado 598515 - Ao emitir relatório 368 não está desconsiderando valores de risco abaixo de 50000 
-			                (Jean / Mout´S)
+               03/04/2017 - Chamado 598515 - Ao emitir relatório 368 não está desconsiderando valores de risco abaixo de 50000 
+                            (Jean / Mout´S)
+                
+               16/05/2017 - Melhorias de performance (Rodrigo)
      ............................................................................. */
 
      DECLARE
@@ -96,6 +98,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps405 (pr_cdcooper IN crapcop.cdcooper%T
        TYPE typ_reg_atualiz IS
          RECORD (nrcpfcgc crapass.nrcpfcgc%TYPE
                 ,nrdconta crapass.nrdconta%TYPE
+                ,inpessoa crapass.inpessoa%TYPE
+                ,nmprimtl crapass.nmprimtl%TYPE
+                ,cdagenci crapass.cdagenci%TYPE
                 ,nrnotrat crapnrc.nrnotrat%TYPE
                 ,indrisco crapnrc.indrisco%TYPE
                 ,dtmvtolt crapnrc.dtmvtolt%TYPE
@@ -130,19 +135,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps405 (pr_cdcooper IN crapcop.cdcooper%T
                 ,tpctrrat crapnrc.tpctrrat%TYPE
                 ,dtmvtolt crapnrc.dtmvtolt%TYPE);
 
-       --Definicao do tipo de tabela crapass
-       TYPE typ_reg_crapass IS
-         RECORD (cdagenci crapass.cdagenci%TYPE
-                ,nrcpfcgc crapass.nrcpfcgc%TYPE
-                ,nmprimtl crapass.nmprimtl%TYPE
-                ,inpessoa crapass.inpessoa%TYPE);
-
        --Definicao dos tipos de tabelas de memoria
        TYPE typ_tab_atualiz  IS TABLE OF typ_reg_atualiz  INDEX BY PLS_INTEGER;
        TYPE typ_tab_desprez  IS TABLE OF crapass.nrcpfcgc%TYPE INDEX BY VARCHAR2(25);
        TYPE typ_tab_conta    IS TABLE OF typ_reg_conta    INDEX BY VARCHAR2(200);
        TYPE typ_tab_crapnrc  IS TABLE OF typ_reg_crapnrc  INDEX BY PLS_INTEGER;
-       TYPE typ_tab_crapass  IS TABLE OF typ_reg_crapass  INDEX BY PLS_INTEGER;
        TYPE typ_tab_nivrisco IS TABLE OF INTEGER          INDEX BY VARCHAR2(3);
 
 
@@ -151,10 +148,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps405 (pr_cdcooper IN crapcop.cdcooper%T
        vr_tab_desprez      typ_tab_desprez;
        vr_tab_conta        typ_tab_conta;
        vr_tab_crapnrc      typ_tab_crapnrc;
-       vr_tab_crapass      typ_tab_crapass;
        vr_tab_dsdrisco     RATI0001.typ_tab_dsdrisco;
        vr_tab_nivrisco     typ_tab_nivrisco;
-
 
        --Cursores da rotina crps405
 
@@ -207,6 +202,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps405 (pr_cdcooper IN crapcop.cdcooper%T
                ,crapass.nrdconta
                ,crapass.nrcpfcgc
                ,crapass.inpessoa
+               ,crapass.nmprimtl
                ,Count(1) OVER (PARTITION BY crapass.nrcpfcgc) qtdreg
                ,Row_Number() OVER (PARTITION BY crapass.nrcpfcgc
                                    ORDER BY crapass.nrcpfcgc) nrseqreg
@@ -215,18 +211,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps405 (pr_cdcooper IN crapcop.cdcooper%T
          AND   crapass.dtelimin IS NULL
          AND   crapass.inpessoa <> 3;
 
-       --Selecionar os associados da cooperativa para loop final
-       CURSOR cr_crapass_final (pr_cdcooper IN crapcop.cdcooper%TYPE) IS
-         SELECT /* INDEX (crapass crapass##crapass6) */
-                crapass.cdagenci
-               ,crapass.nrdconta
-               ,crapass.nrcpfcgc
-               ,crapass.nmprimtl
-               ,crapass.inpessoa
-         FROM crapass crapass
-         WHERE crapass.cdcooper = pr_cdcooper;
-
        --Variaveis Locais
+
        vr_inusatab     BOOLEAN;
        vr_vlrisco      NUMBER;
        vr_diarating    INTEGER;
@@ -259,7 +245,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps405 (pr_cdcooper IN crapcop.cdcooper%T
        --Variaveis da Crapdat
        vr_dtmvtolt     DATE;
 
-	   -- Variável para armazenar as informações em XML
+	     -- Variável para armazenar as informações em XML
        vr_des_xml     CLOB;
 
        --Variaveis para retorno de erro
@@ -276,7 +262,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps405 (pr_cdcooper IN crapcop.cdcooper%T
          vr_tab_desprez.DELETE;
          vr_tab_conta.DELETE;
          vr_tab_crapnrc.DELETE;
-         vr_tab_crapass.DELETE;
          vr_tab_dsdrisco.DELETE;
          vr_tab_nivrisco.DELETE;
        EXCEPTION
@@ -320,8 +305,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps405 (pr_cdcooper IN crapcop.cdcooper%T
          vr_nom_arquivo    VARCHAR2(100);
 
 	   BEGIN
-	     --Inicializar variavel de erro
-		 vr_dscritic:= NULL;
+         --Inicializar variavel de erro
+         vr_dscritic:= NULL;
 
          -- Busca do diretório base da cooperativa para PDF
          vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C' -- /usr/coop
@@ -456,8 +441,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps405 (pr_cdcooper IN crapcop.cdcooper%T
 
 	     EXCEPTION
 	       WHEN vr_exc_erro THEN
-		     pr_des_erro:= vr_dscritic;
-           WHEN OTHERS THEN
+             pr_des_erro:= vr_dscritic;
+         WHEN OTHERS THEN
              pr_des_erro:= 'Erro ao imprimir relatório crrl368. '||sqlerrm;
 	   END;
      ---------------------------------------
@@ -529,15 +514,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps405 (pr_cdcooper IN crapcop.cdcooper%T
          vr_tab_crapnrc(rw_crapnrc.nrdconta).indrisco:= rw_crapnrc.indrisco;
          vr_tab_crapnrc(rw_crapnrc.nrdconta).nrctrrat:= rw_crapnrc.nrctrrat;
          vr_tab_crapnrc(rw_crapnrc.nrdconta).tpctrrat:= rw_crapnrc.tpctrrat;
-       END LOOP;
-
-       --Carregar tabela de notas do rating por contrato
-       FOR rw_crapass IN cr_crapass_final (pr_cdcooper => pr_cdcooper) LOOP
-         --Popular vetor de memoria
-         vr_tab_crapass(rw_crapass.nrdconta).cdagenci:= rw_crapass.cdagenci;
-         vr_tab_crapass(rw_crapass.nrdconta).nrcpfcgc:= rw_crapass.nrcpfcgc;
-         vr_tab_crapass(rw_crapass.nrdconta).nmprimtl:= rw_crapass.nmprimtl;
-         vr_tab_crapass(rw_crapass.nrdconta).inpessoa:= rw_crapass.inpessoa;
        END LOOP;
 
        --selecionar informacoes do risco na tabela generica
@@ -652,6 +628,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps405 (pr_cdcooper IN crapcop.cdcooper%T
                  vr_index_atualiz:= vr_tab_atualiz.Count+1;
                  vr_tab_atualiz(vr_index_atualiz).nrcpfcgc:= rw_crapass.nrcpfcgc;
                  vr_tab_atualiz(vr_index_atualiz).nrdconta:= rw_crapass.nrdconta;
+                 vr_tab_atualiz(vr_index_atualiz).cdagenci:= rw_crapass.cdagenci;
+                 vr_tab_atualiz(vr_index_atualiz).inpessoa:= rw_crapass.inpessoa;
+                 vr_tab_atualiz(vr_index_atualiz).nmprimtl:= rw_crapass.nmprimtl;
                  vr_tab_atualiz(vr_index_atualiz).nrnotrat:= vr_tab_crapnrc(rw_crapass.nrdconta).nrnotrat;
                  vr_tab_atualiz(vr_index_atualiz).indrisco:= vr_tab_crapnrc(rw_crapass.nrdconta).indrisco;
                  vr_tab_atualiz(vr_index_atualiz).dtmvtolt:= vr_tab_crapnrc(rw_crapass.nrdconta).dtmvtolt;
@@ -713,6 +692,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps405 (pr_cdcooper IN crapcop.cdcooper%T
              vr_index_atualiz:= vr_tab_atualiz.Count+1;
              vr_tab_atualiz(vr_index_atualiz).nrcpfcgc:= rw_crapass.nrcpfcgc;
              vr_tab_atualiz(vr_index_atualiz).nrdconta:= rw_crapass.nrdconta;
+             vr_tab_atualiz(vr_index_atualiz).cdagenci:= rw_crapass.cdagenci;
+             vr_tab_atualiz(vr_index_atualiz).inpessoa:= rw_crapass.inpessoa;
+             vr_tab_atualiz(vr_index_atualiz).nmprimtl:= rw_crapass.nmprimtl;
              vr_tab_atualiz(vr_index_atualiz).nrnotrat:= vr_nrc_nrnotrat;
              vr_tab_atualiz(vr_index_atualiz).indrisco:= vr_nrc_indrisco;
              vr_tab_atualiz(vr_index_atualiz).dtmvtolt:= vr_nrc_dtmvtolt;
@@ -785,19 +767,19 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps405 (pr_cdcooper IN crapcop.cdcooper%T
            IF vr_nivrisco IS NOT NULL THEN
 
              --Inserir registro tabela conta
-             vr_index_conta:= LPad(vr_tab_crapass(vr_nrdconta).cdagenci,10,'0')||
+             vr_index_conta:= LPad(vr_tab_atualiz(vr_index_atualiz).cdagenci,10,'0')||
                               LPad(99999999999999999999 - (Round(vr_tab_atualiz(vr_index_atualiz).vlutiliz,2) * 100),20,'0')||
-                              LPad(vr_tab_crapass(vr_nrdconta).nrcpfcgc,25,'0')||
+                              LPad(vr_tab_atualiz(vr_index_atualiz).nrcpfcgc,25,'0')||
                               LPad(999 - vr_tab_nivrisco(NVL(vr_tab_atualiz(vr_index_atualiz).indrisco,' ')),3,'0')||
                               LPad(vr_tab_atualiz(vr_index_atualiz).nrnotrat,25,'0')||
                               To_Char(vr_tab_atualiz(vr_index_atualiz).dtmvtolt,'DDMMYYYY')||
                               LPad(vr_nrdconta,10,'0');
 
-             vr_tab_conta(vr_index_conta).cdagenci:= vr_tab_crapass(vr_nrdconta).cdagenci;
-             vr_tab_conta(vr_index_conta).nrcpfcgc:= vr_tab_crapass(vr_nrdconta).nrcpfcgc;
-             vr_tab_conta(vr_index_conta).inpessoa:= vr_tab_crapass(vr_nrdconta).inpessoa;
+             vr_tab_conta(vr_index_conta).cdagenci:= vr_tab_atualiz(vr_index_atualiz).cdagenci;
+             vr_tab_conta(vr_index_conta).nrcpfcgc:= vr_tab_atualiz(vr_index_atualiz).nrcpfcgc;
+             vr_tab_conta(vr_index_conta).inpessoa:= vr_tab_atualiz(vr_index_atualiz).inpessoa;
              vr_tab_conta(vr_index_conta).nrdconta:= vr_nrdconta;
-             vr_tab_conta(vr_index_conta).nmprimtl:= vr_tab_crapass(vr_nrdconta).nmprimtl;
+             vr_tab_conta(vr_index_conta).nmprimtl:= vr_tab_atualiz(vr_index_atualiz).nmprimtl;
              vr_tab_conta(vr_index_conta).dtaturat:= vr_tab_atualiz(vr_index_atualiz).dtmvtolt;
              vr_tab_conta(vr_index_conta).indrisco:= vr_tab_atualiz(vr_index_atualiz).indrisco;
              vr_tab_conta(vr_index_conta).vlrdnota:= vr_tab_atualiz(vr_index_atualiz).nrnotrat; 
@@ -806,7 +788,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps405 (pr_cdcooper IN crapcop.cdcooper%T
              vr_tab_conta(vr_index_conta).dsoperac:= vr_tab_atualiz(vr_index_atualiz).dsdopera; /* Corrigido (Gil Rkam) */
              vr_tab_conta(vr_index_conta).nivrisco:= vr_nivrisco;
              vr_tab_conta(vr_index_conta).dtvencto:= vr_tab_atualiz(vr_index_atualiz).dtvencto;
-             vr_tab_conta(vr_index_conta).dscpfcgc:= GENE0002.fn_mask_cpf_cnpj(vr_tab_crapass(vr_nrdconta).nrcpfcgc,vr_tab_crapass(vr_nrdconta).inpessoa);
+             vr_tab_conta(vr_index_conta).dscpfcgc:= GENE0002.fn_mask_cpf_cnpj(vr_tab_atualiz(vr_index_atualiz).nrcpfcgc,vr_tab_atualiz(vr_index_atualiz).inpessoa);
            END IF;
 
            --Encontrar o proximo registro do vetor

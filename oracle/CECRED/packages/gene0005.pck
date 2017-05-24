@@ -1,6 +1,6 @@
 CREATE OR REPLACE PACKAGE CECRED.gene0005 IS
   /*---------------------------------------------------------------------------------------------------------------
-  
+
     Programa : GENE0005
     Sistema  : Rotinas auxiliares para busca de informacõees do negocio
     Sigla    : GENE
@@ -195,16 +195,35 @@ CREATE OR REPLACE PACKAGE CECRED.gene0005 IS
                              ,pr_des_erro  OUT VARCHAR2                    --> Status erro
                              ,pr_dscritic  OUT VARCHAR2);
 
+  PROCEDURE pc_gera_inconsistencia(pr_cdcooper IN tbgen_inconsist.cdcooper%TYPE --> Codigo Cooperativa
+                                  ,pr_iddgrupo IN tbgen_inconsist.idinconsist_grp%TYPE --> Codigo do Grupo
+                                  ,pr_tpincons IN tbgen_inconsist.tpinconsist%TYPE --> Tipo (1-Aviso, 2-Erro)
+                                  ,pr_dsregist IN tbgen_inconsist.dsregistro_referencia%TYPE --> Desc. do registro de referencia
+                                  ,pr_dsincons IN tbgen_inconsist.dsinconsist%TYPE --> Descricao da inconsistencia
+                                  ,pr_des_erro OUT VARCHAR2 --> Status erro
+                                  ,pr_dscritic OUT VARCHAR2); --> Retorno de erro	
+
+  FUNCTION fn_calc_qtd_dias_uteis(pr_cdcooper IN crapcop.cdcooper%TYPE
+ 		                         ,pr_dtinical IN DATE  --> Data de inicio do cálculo
+ 		                         ,pr_dtfimcal IN DATE) --> Data final do cálculo
+ 							      RETURN INTEGER;
+								 
+  FUNCTION fn_valida_depart_operad(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cooperativa
+	                              ,pr_cdoperad IN crapope.cdoperad%TYPE --> Operador
+		                          ,pr_dsdepart IN VARCHAR2              --> Lista de departamentos separados por ;
+		                          ,pr_flgnegac IN INTEGER DEFAULT 0)    --> Flag de negação dos departamentos parametrizados (NOT IN pr_dsdepart)
+								  RETURN INTEGER;
+																	
   END GENE0005;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
   /*---------------------------------------------------------------------------------------------------------------
-  
+
     Programa : GENE0005
     Sistema  : Rotinas auxiliares para busca de informacões do negocio
     Sigla    : GENE
     Autor    : Marcos Ernani Martini - Supero
-    Data     : Maio/2013.                   Ultima atualizacao: 20/03/2017
+    Data     : Maio/2013.                   Ultima atualizacao: 16/05/2017
   
    Dados referentes ao programa:
   
@@ -221,9 +240,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
                10/06/2016 - Ajuste para inlcuir UPPER na leitura da tabela
                             crapass em campos de indice que possuem UPPER
                             (Adriano - SD 463762).
-  
+
+               16/12/2016 - Alterações Referentes ao projeto 300. (Reinert)
+
                20/03/2017 - Ajuste para disponibilizar as rotinas de validação de cpf e cnpj como públicas
                             (Adriano - SD 620221).
+  
+               23/03/2017 - Criado procedure para verificar departamento do operador. (Reinert)
+
+               16/05/2017 - Alterada a rotina pc_saldo_utiliza para quando chamada pelo crps405 não efetuar 
+                            novo cálculo pois o saldo do contrato já foi calculado anteriormente (Rodrigo)
                             
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -938,7 +964,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
 
        -- Selecionar informacoes dos emprestimos
        CURSOR cr_crapepr(pr_nrdconta IN crapepr.nrdconta%TYPE) IS
-         SELECT nrctremp
+         SELECT nrctremp,
+                vlsdeved,
+                vlsdevat
            FROM crapepr
           WHERE cdcooper = pr_cdcooper
             AND nrdconta = pr_nrdconta
@@ -1083,24 +1111,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
              -- Calcular o saldo devedor do emprestimo cfme o tipo da chamada:
              -- PAra chamadas do tipo 1 (Proveniente da conversão da fontes/saldo_utiliza.p)
              IF pr_tpdecons = 1 THEN
-               -- Utilizar a pc_calc_saldo_epr
-               EMPR0001.pc_calc_saldo_epr(pr_cdcooper   => pr_cdcooper         --> Codigo da Cooperativa
-                                         ,pr_rw_crapdat => pr_tab_crapdat      --> Vetor com dados de parametro (CRAPDAT)
-                                         ,pr_cdprogra   => pr_cdprogra         --> Programa que solicitou o calculo
-                                         ,pr_nrdconta   => vr_index_conta      --> Numero da conta do emprestimo
-                                         ,pr_nrctremp   => rw_crapepr.nrctremp --> Numero do contrato do emprestimo
-                                         ,pr_inusatab   => pr_inusatab         --> Indicador de utilizacão da tabela de juros
-                                         ,pr_vlsdeved   => vr_vlsdeved         --> Saldo devedor do emprestimo
-                                         ,pr_qtprecal   => vr_qtprecal_retorno --> Quantidade de parcelas do emprestimo
-                                         ,pr_cdcritic   => vr_cdcritic         --> Codigo de critica encontrada
-                                         ,pr_des_erro   => vr_des_erro);       --> Retorno de Erro
+               IF UPPER(pr_cdprogra) = 'CRPS405' THEN
+                  vr_vlsdeved := rw_crapepr.vlsdevat;
+               ELSE
+                 -- Utilizar a pc_calc_saldo_epr
+                 EMPR0001.pc_calc_saldo_epr(pr_cdcooper   => pr_cdcooper         --> Codigo da Cooperativa
+                                           ,pr_rw_crapdat => pr_tab_crapdat      --> Vetor com dados de parametro (CRAPDAT)
+                                           ,pr_cdprogra   => pr_cdprogra         --> Programa que solicitou o calculo
+                                           ,pr_nrdconta   => vr_index_conta      --> Numero da conta do emprestimo
+                                           ,pr_nrctremp   => rw_crapepr.nrctremp --> Numero do contrato do emprestimo
+                                           ,pr_inusatab   => pr_inusatab         --> Indicador de utilizacão da tabela de juros
+                                           ,pr_vlsdeved   => vr_vlsdeved         --> Saldo devedor do emprestimo
+                                           ,pr_qtprecal   => vr_qtprecal_retorno --> Quantidade de parcelas do emprestimo
+                                           ,pr_cdcritic   => vr_cdcritic         --> Codigo de critica encontrada
+                                           ,pr_des_erro   => vr_des_erro);       --> Retorno de Erro
 
-               -- Se ocorreu erro, gerar critica
-               IF vr_cdcritic IS NOT NULL OR vr_des_erro IS NOT NULL THEN
-                 -- Zerar saldo devedor
-                 vr_vlsdeved := 0;
-                 -- Gerar critica
-                 RAISE vr_exc_erro;
+                 -- Se ocorreu erro, gerar critica
+                 IF vr_cdcritic IS NOT NULL OR vr_des_erro IS NOT NULL THEN
+                   -- Zerar saldo devedor
+                   vr_vlsdeved := 0;
+                   -- Gerar critica
+                   RAISE vr_exc_erro;
+                 END IF;
+
                END IF;
              ELSE --> E uma chamada provenitente da bo b1wgen9999, procedure saldo_utiliza
                -- Utilizaremos a pc_saldo_devedor_epr
@@ -1482,198 +1515,198 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
                                
   END pc_valida_dia_util;  
   
-  --Validar o cpf
+      --Validar o cpf
   PROCEDURE pc_valida_cpf (pr_nrcalcul IN NUMBER --Numero a ser verificado
                           ,pr_stsnrcal OUT BOOLEAN) IS --Situacao
-  BEGIN
-    DECLARE
-      --Variaveis Locais
-      vr_nrdigito INTEGER:= 0;
-      vr_nrposica INTEGER:= 0;
-      vr_vlrdpeso INTEGER:= 2;
-      vr_vlcalcul INTEGER:= 0;
-      vr_vldresto INTEGER:= 0;
-      vr_vlresult INTEGER:= 0;
-    BEGIN
-      IF LENGTH(pr_nrcalcul) < 5 OR
-         pr_nrcalcul IN (11111111111,22222222222,33333333333,44444444444,55555555555,
-                         66666666666,77777777777,88888888888,99999999999) THEN
-        --Retornar com erro
+      BEGIN
+        DECLARE
+          --Variaveis Locais
+          vr_nrdigito INTEGER:= 0;
+          vr_nrposica INTEGER:= 0;
+          vr_vlrdpeso INTEGER:= 2;
+          vr_vlcalcul INTEGER:= 0;
+          vr_vldresto INTEGER:= 0;
+          vr_vlresult INTEGER:= 0;
+        BEGIN
+          IF LENGTH(pr_nrcalcul) < 5 OR
+             pr_nrcalcul IN (11111111111,22222222222,33333333333,44444444444,55555555555,
+                             66666666666,77777777777,88888888888,99999999999) THEN
+            --Retornar com erro
         pr_stsnrcal := FALSE;
-      ELSE
-        --Inicializar variaveis calculo
-        vr_vlrdpeso:= 9;
-        vr_nrposica:= 0;
-        vr_vlcalcul:= 0;
+          ELSE
+            --Inicializar variaveis calculo
+            vr_vlrdpeso:= 9;
+            vr_nrposica:= 0;
+            vr_vlcalcul:= 0;
         
-        --Calcular digito
-        FOR vr_nrposica IN REVERSE 1..LENGTH(pr_nrcalcul) - 2 LOOP
-          vr_vlcalcul:= vr_vlcalcul + (TO_NUMBER(SUBSTR(pr_nrcalcul,vr_nrposica,1)) * vr_vlrdpeso);
-          --Diminuir peso
-          vr_vlrdpeso:= vr_vlrdpeso-1;
-        END LOOP;
+            --Calcular digito
+            FOR vr_nrposica IN REVERSE 1..LENGTH(pr_nrcalcul) - 2 LOOP
+              vr_vlcalcul:= vr_vlcalcul + (TO_NUMBER(SUBSTR(pr_nrcalcul,vr_nrposica,1)) * vr_vlrdpeso);
+              --Diminuir peso
+              vr_vlrdpeso:= vr_vlrdpeso-1;
+            END LOOP;
         
-        --Calcular resto modulo 11
-        vr_vldresto:= Mod(vr_vlcalcul,11);
+            --Calcular resto modulo 11
+            vr_vldresto:= Mod(vr_vlcalcul,11);
         
-        IF  vr_vldresto = 10 THEN
-          --Digito recebe zero
-          vr_nrdigito:= 0;
-        ELSE
-          --Digito recebe resto
-          vr_nrdigito:= vr_vldresto;
-        END IF;
+            IF  vr_vldresto = 10 THEN
+              --Digito recebe zero
+              vr_nrdigito:= 0;
+            ELSE
+              --Digito recebe resto
+              vr_nrdigito:= vr_vldresto;
+            END IF;
 
-        vr_vlrdpeso:= 8;
-        vr_vlcalcul:= vr_nrdigito * 9;
+            vr_vlrdpeso:= 8;
+            vr_vlcalcul:= vr_nrdigito * 9;
 
-        --Calcular digito
-        FOR vr_nrposica IN REVERSE 1..LENGTH(pr_nrcalcul) - 2 LOOP
-          vr_vlcalcul:= vr_vlcalcul + (TO_NUMBER(SUBSTR(pr_nrcalcul,vr_nrposica,1)) * vr_vlrdpeso);
-          --Diminuir peso
-          vr_vlrdpeso:= vr_vlrdpeso-1;
-        END LOOP;
+            --Calcular digito
+            FOR vr_nrposica IN REVERSE 1..LENGTH(pr_nrcalcul) - 2 LOOP
+              vr_vlcalcul:= vr_vlcalcul + (TO_NUMBER(SUBSTR(pr_nrcalcul,vr_nrposica,1)) * vr_vlrdpeso);
+              --Diminuir peso
+              vr_vlrdpeso:= vr_vlrdpeso-1;
+            END LOOP;
         
-        --Calcular resto modulo 11
-        vr_vldresto:= Mod(vr_vlcalcul,11);
+            --Calcular resto modulo 11
+            vr_vldresto:= Mod(vr_vlcalcul,11);
         
-        IF  vr_vldresto = 10 THEN
-          --Digito multiplicado 10
-          vr_nrdigito:= vr_nrdigito * 10;
-        ELSE
-          --Digito recebe digito * 10 + resto
-          vr_nrdigito:= (vr_nrdigito * 10) + vr_vldresto;
-        END IF;
+            IF  vr_vldresto = 10 THEN
+              --Digito multiplicado 10
+              vr_nrdigito:= vr_nrdigito * 10;
+            ELSE
+              --Digito recebe digito * 10 + resto
+              vr_nrdigito:= (vr_nrdigito * 10) + vr_vldresto;
+            END IF;
 
-        --Comparar digito calculado com informado
-        IF TO_NUMBER(SUBSTR(pr_nrcalcul,LENGTH(pr_nrcalcul) - 1,2)) <> vr_nrdigito  THEN
+            --Comparar digito calculado com informado
+            IF TO_NUMBER(SUBSTR(pr_nrcalcul,LENGTH(pr_nrcalcul) - 1,2)) <> vr_nrdigito  THEN
           pr_stsnrcal := FALSE;
-        ELSE
+            ELSE
           pr_stsnrcal := TRUE;
-        END IF;
+            END IF;
         
-      END IF;
-    END;
+          END IF;
+        END;
   END pc_valida_cpf;
 
-  --Validar o cnpj
+      --Validar o cnpj
   PROCEDURE pc_valida_cnpj (pr_nrcalcul IN NUMBER  --Numero a ser verificado
                            ,pr_stsnrcal OUT BOOLEAN) IS --Situacao
-  BEGIN
-    DECLARE
-      --Variaveis Locais
-      vr_nrdigito INTEGER:= 0;
-      vr_nrposica INTEGER:= 0;
-      vr_vlrdpeso INTEGER:= 2;
-      vr_vlcalcul INTEGER:= 0;
-      vr_vldresto INTEGER:= 0;
-      vr_vlresult INTEGER:= 0;
-    BEGIN
-      IF LENGTH(pr_nrcalcul) < 3 THEN
-        --Retornar com erro
+      BEGIN
+        DECLARE
+          --Variaveis Locais
+          vr_nrdigito INTEGER:= 0;
+          vr_nrposica INTEGER:= 0;
+          vr_vlrdpeso INTEGER:= 2;
+          vr_vlcalcul INTEGER:= 0;
+          vr_vldresto INTEGER:= 0;
+          vr_vlresult INTEGER:= 0;
+        BEGIN
+          IF LENGTH(pr_nrcalcul) < 3 THEN
+            --Retornar com erro
         pr_stsnrcal := FALSE;
-      ELSE
-        vr_vlcalcul:= TO_NUMBER(SUBSTR(TO_CHAR(pr_nrcalcul,'fm00000000000000'),1,1)) * 2;
-        vr_vlresult:= TO_NUMBER(SUBSTR(TO_CHAR(pr_nrcalcul,'fm00000000000000'),2,1)) +
-                      TO_NUMBER(SUBSTR(TO_CHAR(pr_nrcalcul,'fm00000000000000'),4,1)) +
-                      TO_NUMBER(SUBSTR(TO_CHAR(pr_nrcalcul,'fm00000000000000'),6,1)) +
-                      TO_NUMBER(SUBSTR(TO_CHAR(vr_vlcalcul),1,1)) +
-                      TO_NUMBER(SUBSTR(TO_CHAR(vr_vlcalcul),2,1));
-        vr_vlcalcul:= TO_NUMBER(SUBSTR(TO_CHAR(pr_nrcalcul,'fm00000000000000'),3,1)) * 2;
-        vr_vlresult:= vr_vlresult +
-                      TO_NUMBER(SUBSTR(TO_CHAR(vr_vlcalcul),1,1)) +
-                      TO_NUMBER(SUBSTR(TO_CHAR(vr_vlcalcul),2,1));
-        vr_vlcalcul:= TO_NUMBER(SUBSTR(TO_CHAR(pr_nrcalcul,'fm00000000000000'),5,1)) * 2;
-        vr_vlresult:= vr_vlresult +
-                      TO_NUMBER(SUBSTR(TO_CHAR(vr_vlcalcul),1,1)) +
-                      TO_NUMBER(SUBSTR(TO_CHAR(vr_vlcalcul),2,1));
-        vr_vlcalcul:= TO_NUMBER(SUBSTR(TO_CHAR(pr_nrcalcul,'fm00000000000000'),7,1)) * 2;
-        vr_vlresult:= vr_vlresult +
-                      TO_NUMBER(SUBSTR(TO_CHAR(vr_vlcalcul),1,1)) +
-                      TO_NUMBER(SUBSTR(TO_CHAR(vr_vlcalcul),2,1));
-        vr_vldresto:= Mod(vr_vlresult,10);
+          ELSE
+            vr_vlcalcul:= TO_NUMBER(SUBSTR(TO_CHAR(pr_nrcalcul,'fm00000000000000'),1,1)) * 2;
+            vr_vlresult:= TO_NUMBER(SUBSTR(TO_CHAR(pr_nrcalcul,'fm00000000000000'),2,1)) +
+                          TO_NUMBER(SUBSTR(TO_CHAR(pr_nrcalcul,'fm00000000000000'),4,1)) +
+                          TO_NUMBER(SUBSTR(TO_CHAR(pr_nrcalcul,'fm00000000000000'),6,1)) +
+                          TO_NUMBER(SUBSTR(TO_CHAR(vr_vlcalcul),1,1)) +
+                          TO_NUMBER(SUBSTR(TO_CHAR(vr_vlcalcul),2,1));
+            vr_vlcalcul:= TO_NUMBER(SUBSTR(TO_CHAR(pr_nrcalcul,'fm00000000000000'),3,1)) * 2;
+            vr_vlresult:= vr_vlresult +
+                          TO_NUMBER(SUBSTR(TO_CHAR(vr_vlcalcul),1,1)) +
+                          TO_NUMBER(SUBSTR(TO_CHAR(vr_vlcalcul),2,1));
+            vr_vlcalcul:= TO_NUMBER(SUBSTR(TO_CHAR(pr_nrcalcul,'fm00000000000000'),5,1)) * 2;
+            vr_vlresult:= vr_vlresult +
+                          TO_NUMBER(SUBSTR(TO_CHAR(vr_vlcalcul),1,1)) +
+                          TO_NUMBER(SUBSTR(TO_CHAR(vr_vlcalcul),2,1));
+            vr_vlcalcul:= TO_NUMBER(SUBSTR(TO_CHAR(pr_nrcalcul,'fm00000000000000'),7,1)) * 2;
+            vr_vlresult:= vr_vlresult +
+                          TO_NUMBER(SUBSTR(TO_CHAR(vr_vlcalcul),1,1)) +
+                          TO_NUMBER(SUBSTR(TO_CHAR(vr_vlcalcul),2,1));
+            vr_vldresto:= Mod(vr_vlresult,10);
 
-        --Se valor resto for zero
-        IF vr_vldresto = 0  THEN
-          --Digito recebe resto
-          vr_nrdigito:= vr_vldresto;
-        ELSE
-          vr_nrdigito:= 10 - vr_vldresto;
-        END IF;
-        --Zerar valor calculado
-        vr_vlcalcul:= 0;
+            --Se valor resto for zero
+            IF vr_vldresto = 0  THEN
+              --Digito recebe resto
+              vr_nrdigito:= vr_vldresto;
+            ELSE
+              vr_nrdigito:= 10 - vr_vldresto;
+            END IF;
+            --Zerar valor calculado
+            vr_vlcalcul:= 0;
 
-        --Calcular digito
-        FOR vr_nrposica IN REVERSE 1..LENGTH(pr_nrcalcul) - 2 LOOP
-          vr_vlcalcul:= vr_vlcalcul + (TO_NUMBER(SUBSTR(pr_nrcalcul,vr_nrposica,1)) * vr_vlrdpeso);
-          --Incrementar peso
-          vr_vlrdpeso:= vr_vlrdpeso+1;
-          --Se peso > 9
-          IF vr_vlrdpeso > 9 THEN
-            vr_vlrdpeso:= 2;
-          END IF;
-        END LOOP;
+            --Calcular digito
+            FOR vr_nrposica IN REVERSE 1..LENGTH(pr_nrcalcul) - 2 LOOP
+              vr_vlcalcul:= vr_vlcalcul + (TO_NUMBER(SUBSTR(pr_nrcalcul,vr_nrposica,1)) * vr_vlrdpeso);
+              --Incrementar peso
+              vr_vlrdpeso:= vr_vlrdpeso+1;
+              --Se peso > 9
+              IF vr_vlrdpeso > 9 THEN
+                vr_vlrdpeso:= 2;
+              END IF;
+            END LOOP;
         
-        --Calcular resto modulo 11
-        vr_vldresto:= Mod(vr_vlcalcul,11);
+            --Calcular resto modulo 11
+            vr_vldresto:= Mod(vr_vlcalcul,11);
         
-        IF  vr_vldresto < 2  THEN
-          --Digito recebe zero
-          vr_nrdigito:= 0;
-        ELSE
-          --Digito recebe 11 menos resto
-          vr_nrdigito:= 11 - vr_vldresto;
-        END IF;
+            IF  vr_vldresto < 2  THEN
+              --Digito recebe zero
+              vr_nrdigito:= 0;
+            ELSE
+              --Digito recebe 11 menos resto
+              vr_nrdigito:= 11 - vr_vldresto;
+            END IF;
         
-        --Comparar digito calculado com informado
-        IF TO_NUMBER(SUBSTR(pr_nrcalcul,LENGTH(pr_nrcalcul) - 1,1)) <> vr_nrdigito  THEN
+            --Comparar digito calculado com informado
+            IF TO_NUMBER(SUBSTR(pr_nrcalcul,LENGTH(pr_nrcalcul) - 1,1)) <> vr_nrdigito  THEN
           pr_stsnrcal := FALSE;
-        END IF;
+            END IF;
 
-        vr_vlrdpeso:= 2;
-        vr_vlcalcul:= 0;
-        
-        --Calcular digito
-        FOR vr_nrposica IN REVERSE 1..LENGTH(pr_nrcalcul) - 1 LOOP
-          vr_vlcalcul:= vr_vlcalcul + (TO_NUMBER(SUBSTR(pr_nrcalcul,vr_nrposica,1)) * vr_vlrdpeso);
-          --Incrementar peso
-          vr_vlrdpeso:= vr_vlrdpeso+1;
-          --Se peso > 9
-          IF vr_vlrdpeso > 9 THEN
             vr_vlrdpeso:= 2;
-          END IF;
-        END LOOP;
+            vr_vlcalcul:= 0;
         
-        --Calcular resto modulo 11
-        vr_vldresto:= Mod(vr_vlcalcul,11);
+            --Calcular digito
+            FOR vr_nrposica IN REVERSE 1..LENGTH(pr_nrcalcul) - 1 LOOP
+              vr_vlcalcul:= vr_vlcalcul + (TO_NUMBER(SUBSTR(pr_nrcalcul,vr_nrposica,1)) * vr_vlrdpeso);
+              --Incrementar peso
+              vr_vlrdpeso:= vr_vlrdpeso+1;
+              --Se peso > 9
+              IF vr_vlrdpeso > 9 THEN
+                vr_vlrdpeso:= 2;
+              END IF;
+            END LOOP;
         
-        IF  vr_vldresto < 2  THEN
-          --Digito recebe zero
-          vr_nrdigito:= 0;
-        ELSE
-          --Digito recebe 11 menos resto
-          vr_nrdigito:= 11 - vr_vldresto;
-        END IF;
+            --Calcular resto modulo 11
+            vr_vldresto:= Mod(vr_vlcalcul,11);
         
-        --Comparar digito calculado com informado
-        IF TO_NUMBER(SUBSTR(pr_nrcalcul,LENGTH(pr_nrcalcul),1)) <> vr_nrdigito  THEN
+            IF  vr_vldresto < 2  THEN
+              --Digito recebe zero
+              vr_nrdigito:= 0;
+            ELSE
+              --Digito recebe 11 menos resto
+              vr_nrdigito:= 11 - vr_vldresto;
+            END IF;
+        
+            --Comparar digito calculado com informado
+            IF TO_NUMBER(SUBSTR(pr_nrcalcul,LENGTH(pr_nrcalcul),1)) <> vr_nrdigito  THEN
           pr_stsnrcal := FALSE;
-        ELSE
-          --Retornar Verdadeiro
+            ELSE
+              --Retornar Verdadeiro
           pr_stsnrcal := TRUE;
-        END IF;
+            END IF;
         
-      END IF;
+          END IF;
       
-    END;
-    
+        END;
+
   END pc_valida_cnpj;
       
   /* Procedure para validar cpf ou cnpj */
   PROCEDURE pc_valida_cpf_cnpj (pr_nrcalcul IN NUMBER       --Numero a ser verificado
                                ,pr_stsnrcal OUT BOOLEAN     --Situacao
                                ,pr_inpessoa OUT INTEGER) IS --Tipo Inscricao Cedente
-  BEGIN
+    BEGIN
     /* ..........................................................................
     
       Programa : pc_valida_cpf_cnpj            Antigo: b1wgen9999.p/valida-cpf-cnpj
@@ -2516,5 +2549,300 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
     END;
   END pc_busca_motivos;
 
+
+  PROCEDURE pc_gera_inconsistencia(pr_cdcooper IN tbgen_inconsist.cdcooper%TYPE --> Codigo Cooperativa
+                                  ,pr_iddgrupo IN tbgen_inconsist.idinconsist_grp%TYPE --> Codigo do Grupo
+                                  ,pr_tpincons IN tbgen_inconsist.tpinconsist%TYPE --> Tipo (1-Aviso, 2-Erro)
+                                  ,pr_dsregist IN tbgen_inconsist.dsregistro_referencia%TYPE --> Desc. do registro de referencia
+                                  ,pr_dsincons IN tbgen_inconsist.dsinconsist%TYPE --> Descricao da inconsistencia
+                                  ,pr_des_erro OUT VARCHAR2 --> Status erro
+                                  ,pr_dscritic OUT VARCHAR2) IS --> Retorno de erro
+  BEGIN
+    -- ..........................................................................
+    --
+    --  Programa : pc_gera_inconsistencia
+    --   Sistema : Conta-Corrente - Cooperativa de Credito
+    --   Sigla   : CRED
+    --   Autor   : Jaison Fernando
+    --   Data    : Novembro/2016                      Ultima atualizacao:           
+    --
+    --   Dados referentes ao programa:
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Procedimento para cadastrar as inconsistencias.
+    --
+    --   Alteracoes:                                                                     
+    -- .............................................................................
+    DECLARE
+
+      -- Cursor para verificar se deve enviar email online
+      CURSOR cr_inconsist_grp IS
+        SELECT decode(pr_tpincons,1,'Alerta: ', 'Erro: ') || a.nminconsist_grp dscabecalho
+          FROM tbgen_inconsist_grp a
+         WHERE a.idinconsist_grp = pr_iddgrupo
+           AND a.tpconfig_email <> 0 -- Deve ser diferente de NAO ENVIAR EMAIL
+           AND a.tpconfig_email = decode(pr_tpincons,1, 2, -- Se o erro for de alerta, enviar somente se estiver configurado para ERROS E ALERTAS
+                                                        a.tpperiodicidade_email)
+           AND a.tpperiodicidade_email = 1; -- Enviar email Online
+      rw_inconsist_grp cr_inconsist_grp%ROWTYPE;
+      
+      -- Cursor para buscar o grupo de pessoas para recebimento do email
+      CURSOR cr_inconsist_email IS
+        SELECT a.dsendereco_email
+          FROM tbgen_inconsist_email_grp a
+         WHERE a.idinconsist_grp = pr_iddgrupo
+           AND a.cdcooper = pr_cdcooper;
+      
+		  -- Cursor da data
+      rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+
+      -- Variavel de criticas
+      vr_dscritic crapcri.dscritic%TYPE;
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+
+      -- Variaveis Gerais
+      vr_idincons tbgen_inconsist_grp.idinconsist_grp%TYPE;
+      vr_dsdesti VARCHAR2(4000);
+      vr_dscorpo VARCHAR2(4000);
+
+    BEGIN
+      -- Busca a data do sistema
+      OPEN  BTCH0001.cr_crapdat(pr_cdcooper);
+      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+      CLOSE BTCH0001.cr_crapdat;
+
+      -- Busca o proximo ID
+      vr_idincons := fn_sequence(pr_nmtabela => 'tbgen_inconsist'
+                                ,pr_nmdcampo => 'idinconsist'
+                                ,pr_dsdchave => '0');
+
+      BEGIN
+        INSERT INTO tbgen_inconsist
+                   (idinconsist
+                   ,cdcooper
+                   ,idinconsist_grp
+                   ,tpinconsist
+                   ,dhinconsist
+                   ,dtmvtolt
+                   ,dsregistro_referencia
+                   ,tbgen_inconsist.dsinconsist)
+             VALUES(vr_idincons
+                   ,pr_cdcooper
+                   ,pr_iddgrupo
+                   ,pr_tpincons
+                   ,SYSDATE
+                   ,rw_crapdat.dtmvtolt
+                   ,pr_dsregist
+                   ,pr_dsincons);
+      EXCEPTION
+        WHEN OTHERS THEN
+        vr_dscritic := 'Problema ao incluir inconsistencia: ' || SQLERRM;
+        RAISE vr_exc_saida;
+      END;
+
+      -- Rotina para verificacao de envio de email
+      OPEN cr_inconsist_grp;
+      FETCH cr_inconsist_grp INTO rw_inconsist_grp;
+      IF cr_inconsist_grp%FOUND THEN
+        
+        -- Busca as pessoas para envio do email
+        FOR rw_inconsist_email IN cr_inconsist_email LOOP
+          IF vr_dsdesti IS NULL THEN
+            vr_dsdesti := rw_inconsist_email.dsendereco_email;
+          ELSE
+            vr_dsdesti := vr_dsdesti ||';'||rw_inconsist_email.dsendereco_email;
+          END IF;
+        END LOOP;
+
+        -- Se possuir destinatario deve enviar email
+        IF vr_dsdesti IS NOT NULL THEN    
+          -- Monta o corpo do email
+          vr_dscorpo := '<html><body>'||
+                        '<b>Inconsistencia:</b> '|| pr_dsincons||'<br>'||
+                        '<b>Registro de Referencia:</b> '||pr_dsregist||'<br>'||
+                        '<b>Data/Hora Ocorrencia:</b> '||to_char(SYSDATE,'DD/MM/YYYY HH24:MI:SS')||
+                        '</body></html>';
+          
+          -- Chama rotina para envio do e-mail
+          gene0003.pc_solicita_email(pr_cdprogra        => 'GENE0005'
+                                    ,pr_des_destino     => vr_dsdesti
+                                    ,pr_des_assunto     => rw_inconsist_grp.dscabecalho
+                                    ,pr_des_corpo       => vr_dscorpo
+                                    ,pr_des_anexo       => NULL
+                                    ,pr_flg_enviar      => 'N'
+                                    ,pr_des_erro        => vr_dscritic);
+          
+          IF vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_saida;
+          END IF;
+        END IF; -- Fim da verificacao se possui destinatario
+      END IF;
+      CLOSE cr_inconsist_grp;
+
+			pr_des_erro := 'OK';
+
+    EXCEPTION
+			WHEN vr_exc_saida THEN
+        pr_des_erro := 'NOK';
+        pr_dscritic := vr_dscritic;
+      WHEN OTHERS THEN
+        pr_des_erro := 'NOK';
+        pr_dscritic := 'Erro na GENE0005.pc_gera_inconsistencia: ' || SQLERRM;
+    END;
+
+  END pc_gera_inconsistencia;  
+
+  FUNCTION fn_calc_qtd_dias_uteis(pr_cdcooper IN crapcop.cdcooper%TYPE
+		                             ,pr_dtinical IN DATE  --> Data de inicio do cálculo
+		                             ,pr_dtfimcal IN DATE) --> Data final do cálculo
+																 RETURN INTEGER IS
+	BEGIN
+		/* .............................................................................
+   Programa: fn_calc_qtd_dias_uteis       Antigo B1wgen0009.p/calc_qtd_dias_uteis
+   Sistema : Conta-Corrente - Cooperativa de Credito
+   Sigla   : CRED
+   Autor   : Lucas Reinert
+   Data    : Dezembro/2016                       Ultima Atualizacao:
+
+   Dados referentes ao programa:
+
+   Frequencia: Diario (on-line)
+   Objetivo  : Calcular a quantidade de dias úteis entre a data inicial e final
+
+   Alteracoes: 
+
+
+   ............................................................................. */
+    DECLARE
+		  -- Quantidade de dias úteis
+		  vr_qtdiasut NUMBER := -1; -- Consideramos a data atual D-0
+			vr_dtrefere DATE;
+		
+		  -- Verificar se a data é um feriado
+			CURSOR cr_crapfer(pr_cdcooper IN crapfer.cdcooper%TYPE
+			                 ,pr_dtrefere IN crapdat.dtmvtolt%TYPE) IS
+        SELECT 1
+				  FROM crapfer fer
+				 WHERE fer.cdcooper = pr_cdcooper
+				   AND fer.dtferiad = pr_dtrefere;
+			rw_crapfer cr_crapfer%ROWTYPE;
+    BEGIN
+			-- Atribuir data de referência
+			vr_dtrefere := pr_dtinical;
+		  LOOP
+			  EXIT WHEN vr_dtrefere > pr_dtfimcal;
+			
+				-- Se for sábado ou domingo
+				IF to_char(vr_dtrefere, 'D') = 1 OR
+					 to_char(vr_dtrefere, 'D') = 7 THEN
+				  vr_dtrefere := vr_dtrefere + 1; -- Busca próxima data
+					CONTINUE;
+			  END IF;
+				
+				-- Verificar se a data é um feriado
+				OPEN cr_crapfer(pr_cdcooper => pr_cdcooper
+				               ,pr_dtrefere => vr_dtrefere);
+				FETCH cr_crapfer INTO rw_crapfer;
+				
+			  IF cr_crapfer%FOUND THEN
+					-- Fechar cursor
+					CLOSE cr_crapfer;
+				  vr_dtrefere := vr_dtrefere + 1; -- Busca próxima data
+					CONTINUE;					
+				END IF;
+				-- Fechar cursor
+				CLOSE cr_crapfer;				
+				
+				vr_qtdiasut := vr_qtdiasut + 1; -- Incrementa quantidade de dias úteis
+			  vr_dtrefere := vr_dtrefere + 1; -- Busca próxima data
+				
+			END LOOP;
+			
+			RETURN vr_qtdiasut;
+		
+		END;																 
+  END fn_calc_qtd_dias_uteis;
+
+  FUNCTION fn_valida_depart_operad(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cooperativa
+		                              ,pr_cdoperad IN crapope.cdoperad%TYPE --> Operador
+		                              ,pr_dsdepart IN VARCHAR2              --> Lista de departamentos separados por ;
+																	,pr_flgnegac IN INTEGER DEFAULT 0)    --> Flag de negação dos departamentos parametrizados (NOT IN pr_dsdepart)
+																  RETURN INTEGER IS
+	BEGIN
+		/* .............................................................................
+   Programa: fn_valida_depart_operad      
+   Sistema : Conta-Corrente - Cooperativa de Credito
+   Sigla   : CRED
+   Autor   : Lucas Reinert
+   Data    : Fevereiro/2017                       Ultima Atualizacao:
+
+   Dados referentes ao programa:
+
+   Frequencia: Diario (on-line)
+   Objetivo  : Verificar se operador pertence a algum departamento parametrizado
+
+   Alteracoes: 
+
+
+   ............................................................................. */
+    DECLARE
+		  -- Retorno do cursor
+      vr_result NUMBER;
+
+      -- Cursor para verificar se o operador está em algum dos departamentos parametrizados
+			CURSOR cr_crapope(pr_cdcooper IN crapope.cdcooper%TYPE
+											 ,pr_cdoperad IN crapope.cdoperad%TYPE
+											 ,pr_dsdepart IN crapdpo.dsdepart%TYPE) IS
+				SELECT 1
+				FROM crapope ope
+						,crapdpo dpo
+				WHERE ope.cdcooper = pr_cdcooper
+					AND upper(ope.cdoperad) = upper(pr_cdoperad)
+					AND dpo.cdcooper = ope.cdcooper
+					AND dpo.cddepart = ope.cddepart
+					AND upper(dpo.dsdepart) IN (SELECT regexp_substr(upper(pr_dsdepart),'[^;]+', 1, LEVEL) FROM dual
+													 CONNECT BY regexp_substr(upper(pr_dsdepart), '[^;]+', 1, LEVEL) IS NOT NULL);
+
+      -- Cursor para verificar se o operador não está em algum dos departamentos parametrizados
+			CURSOR cr_crapope_neg(pr_cdcooper IN crapope.cdcooper%TYPE
+													 ,pr_cdoperad IN crapope.cdoperad%TYPE
+													 ,pr_dsdepart IN crapdpo.dsdepart%TYPE) IS
+				SELECT 1
+				FROM crapope ope
+						,crapdpo dpo
+				WHERE ope.cdcooper = pr_cdcooper
+					AND upper(ope.cdoperad) = upper(pr_cdoperad)
+					AND dpo.cdcooper = ope.cdcooper
+					AND dpo.cddepart = ope.cddepart
+					AND upper(dpo.dsdepart) NOT IN (SELECT regexp_substr(upper(pr_dsdepart),'[^;]+', 1, LEVEL) FROM dual
+													 CONNECT BY regexp_substr(upper(pr_dsdepart), '[^;]+', 1, LEVEL) IS NOT NULL);
+
+
+    BEGIN
+			-- Buscar por departamentos listados
+      IF pr_flgnegac = 0 THEN
+				-- Se retornou algum registro, operador está em algum departamento listado
+				OPEN cr_crapope(pr_cdcooper => pr_cdcooper
+											 ,pr_cdoperad => pr_cdoperad
+											 ,pr_dsdepart => pr_dsdepart);
+				FETCH cr_crapope INTO vr_result;
+				-- Fechar cursor
+				CLOSE cr_crapope;
+				
+			ELSE -- Buscar por departamentos NÃO listados
+				-- Se retornou algum registro, operador NÃO está nos departamentos listados
+				OPEN cr_crapope_neg(pr_cdcooper => pr_cdcooper
+													 ,pr_cdoperad => pr_cdoperad
+													 ,pr_dsdepart => pr_dsdepart);
+				FETCH cr_crapope_neg INTO vr_result;
+				-- Fechar cursor
+				CLOSE cr_crapope_neg;
+			END IF;
+      
+      RETURN NVL(vr_result, 0);
+		END;																 
+  END fn_valida_depart_operad;
+  
 END GENE0005;
 /

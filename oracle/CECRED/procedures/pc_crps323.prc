@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps323 (pr_cdcooper  IN crapcop.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Junior
-   Data    : Marco/2002                        Ultima atualizacao: 25/08/2014
+   Data    : Marco/2002                        Ultima atualizacao: 05/04/2017
 
    Dados referentes ao programa:
 
@@ -59,6 +59,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps323 (pr_cdcooper  IN crapcop.cdcooper%
 							              colunas de DEP. A PRAZO e TOTAL DE DEPOSITOS do crrl274.
 														(Reinert)
 
+               05/04/2017 - #455742 Melhorias de performance. Ajuste de passagem dos parâmetros inpessoa
+                            e nrcpfcgc para não consultar novamente o associado no pkg apli0001 (Carlos)
      ............................................................................. */
 
      DECLARE
@@ -176,10 +178,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps323 (pr_cdcooper  IN crapcop.cdcooper%
        --Selecionar informacoes das poupancas
        CURSOR cr_craprpp (pr_cdcooper IN craprpp.cdcooper%TYPE
                          ,pr_nrdconta IN craprpp.nrdconta%TYPE) IS
-         SELECT craprpp.rowid
-         FROM craprpp craprpp
+         SELECT craprpp.rowid,
+                crapass.inpessoa,
+                crapass.nrcpfcgc
+         FROM craprpp, crapass
          WHERE craprpp.cdcooper = pr_cdcooper
-         AND   craprpp.nrdconta = pr_nrdconta;
+         AND   craprpp.nrdconta = pr_nrdconta
+         AND   craprpp.cdcooper = crapass.cdcooper
+         AND   craprpp.nrdconta = crapass.nrdconta;
 
        --Selecionar informacoes do saldo das aplicacoes
        CURSOR cr_crapsld (pr_cdcooper IN crapsld.cdcooper%TYPE) IS
@@ -605,6 +611,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps323 (pr_cdcooper  IN crapcop.cdcooper%
                                      ,pr_dtmvtolt  => vr_dtmvtolt          --> Data do processo
                                      ,pr_dtmvtopr  => vr_dtmvtopr          --> Próximo dia útil
                                      ,pr_rpp_rowid => rw_craprpp.rowid     --> Identificador do registro da tabela CRAPRPP em processamento
+                                     ,pr_inpessoa  => rw_craprpp.inpessoa
+                                     ,pr_nrcpfcgc  => rw_craprpp.nrcpfcgc
                                      ,pr_vlsdrdpp  => vr_vlsdrdpp          --> Saldo da poupança programada
                                      ,pr_cdcritic  => vr_cdcritic          --> Codigo da Critica
                                      ,pr_des_erro  => vr_dscritic);        --> Retorno do erro
@@ -690,11 +698,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps323 (pr_cdcooper  IN crapcop.cdcooper%
        COMMIT;
      EXCEPTION
        WHEN vr_exc_fimprg THEN
-         -- Se foi retornado apenas código
-         IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-           -- Buscar a descrição
-           vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-         END IF;
+
+         -- Buscar a descrição
+         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
+
          -- Se foi gerada critica para envio ao log
          IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
            -- Envio centralizado de log de erro
@@ -734,4 +741,3 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps323 (pr_cdcooper  IN crapcop.cdcooper%
      END;
    END pc_crps323;
 /
-

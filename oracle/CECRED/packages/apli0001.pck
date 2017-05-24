@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0001 AS
   --  Sistema  : Rotinas genericas focando nas funcionalidades das aplicacoes
   --  Sigla    : APLI
   --  Autor    : Alisson C. Berrido - AMcom
-  --  Data     : Dezembro/2012.                   Ultima atualizacao: 25/11/2016
+  --  Data     : Dezembro/2012.                   Ultima atualizacao: 03/04/2017
   --
   -- Dados referentes ao programa:
   --
@@ -77,7 +77,10 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0001 AS
   --              proc_message na procedure pc_calc_poupanca (Lucas Ranghetti #314905)
   --
   -- 25/11/2016 - Incluir CRPS005 nas excessoes da procedure - Melhoria 69 
-  --              (Lucas Ranghetti/Elton)                             
+  --              (Lucas Ranghetti/Elton)           
+  --
+  -- 03/04/2017 - #455742 Melhorias de performance. Ajuste de passagem dos parâmetros inpessoa e 
+  --              nrcpfcgc para não consultar novamente o associado no pkg apli0001 (Carlos) 
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tabela com o mes e a aliquota para desconto de IR nas aplicacoes
@@ -107,6 +110,28 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0001 AS
     INDEX BY BINARY_INTEGER;
   /* Vetor com as informacoes de faixas*/
   vr_faixa_ir_rdc typ_tab_faixa_ir_rdc;
+
+  /* Tabela a aplicações e sua respectiva taxa*/
+  TYPE typ_reg_craprda IS
+      RECORD (dtvencto craprda.dtvencto%TYPE
+             ,dtmvtolt craprda.dtmvtolt%TYPE
+             ,vlsdrdca craprda.vlsdrdca%TYPE
+             ,qtdiauti craprda.qtdiauti%TYPE
+             ,vlsltxmm craprda.vlsltxmm%TYPE
+             ,dtatslmm craprda.dtatslmm%TYPE
+             ,vlsltxmx craprda.vlsltxmx%TYPE
+             ,dtatslmx craprda.dtatslmx%TYPE
+             ,tpaplica craprda.tpaplica%TYPE
+             ,txaplica craplap.txaplica%TYPE
+             ,txaplmes craplap.txaplmes%TYPE
+             ,inpessoa crapass.inpessoa%TYPE
+             ,nrcpfcgc crapass.nrcpfcgc%TYPE);
+  /* Definicao de tabela que compreende os registros acima declarados */
+  TYPE typ_tab_craprda IS
+    TABLE OF typ_reg_craprda
+    INDEX BY PLS_INTEGER;
+  /* Vetor com as informacoes de aplicações*/
+  vr_craprda typ_tab_craprda; 
 
   -- Definicao de TEMP TABLE para gerar extrato RDC.
   TYPE typ_reg_extr_rdc IS
@@ -243,6 +268,59 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0001 AS
     TABLE OF typ_reg_saldo_rdca
     INDEX BY VARCHAR2(25);
 
+
+  --Definicao do tipo de registro para lançamentos poupanca-programada
+  TYPE typ_reg_craplpp IS  
+    RECORD (nrdconta craplpp.nrdconta%TYPE
+           ,nrctrrpp craplpp.nrctrrpp%TYPE
+           ,vllan150 NUMBER(25,2)
+           ,vllan152 NUMBER(25,2)
+           ,vllan158 NUMBER(25,2)
+           ,vllan925 NUMBER(25,2));
+
+  CURSOR cr_bulk_craplpp (pr_cdcooper craplpp.cdcooper%TYPE,
+                          pr_dtcalcul craplpp.dtmvtolt%TYPE,
+                          pr_dtmvtolt craplpp.dtmvtolt%TYPE) IS
+      SELECT craprpp.nrdconta
+            ,craprpp.nrctrrpp
+            ,NVL(SUM(DECODE(craplpp.cdhistor, 150, vllanmto, 0)), 0) vllan150
+            ,NVL(SUM(DECODE(craplpp.cdhistor
+                           ,152,vllanmto
+                           ,154,vllanmto
+                           ,155,vllanmto * -1
+                           ,0)),0)                                   vllan152
+            ,NVL(SUM(DECODE(craplpp.cdhistor
+                           ,158, vllanmto
+                           ,496, vllanmto
+                           ,0)),0)                                   vllan158
+            ,NVL(SUM(DECODE(craplpp.cdhistor
+                           ,925,vllanmto
+                           ,1115,vllanmto
+                           ,0)),0)                                   vllan925
+       FROM craprpp 
+         LEFT JOIN craplpp ON craprpp.cdcooper = craplpp.cdcooper 
+         AND craprpp.nrdconta = craplpp.nrdconta
+         AND craprpp.nrctrrpp = craplpp.nrctrrpp
+         AND craplpp.dtmvtolt >= add_months(craprpp.dtiniper, -1)
+         AND craplpp.dtmvtolt <= pr_dtmvtolt
+         AND craplpp.dtrefere = craprpp.dtfimper
+         AND craplpp.cdhistor IN (150, 152, 154, 155, 158, 496, 925, 1115)
+       WHERE craprpp.cdcooper = pr_cdcooper
+       GROUP BY craprpp.nrdconta
+               ,craprpp.nrctrrpp;
+  rw_bulk_craplpp cr_bulk_craplpp%ROWTYPE;
+
+  TYPE typ_tb_craplpp_bulk IS
+    TABLE OF cr_bulk_craplpp%ROWTYPE
+    INDEX BY PLS_INTEGER;
+
+  --Definicao do tipo de tabela para lançamentos de poupanca programada
+  TYPE typ_tb_craplpp IS
+    TABLE OF cr_bulk_craplpp%ROWTYPE
+    INDEX BY VARCHAR(20); -- NRDCONTA VARCHAR2(10), NRCTRRPP  VARCHAR2(10)  
+
+  vr_tb_craplpp      typ_tb_craplpp;
+  
   /* Funcao para arredondamento de valores em calculos de aplicacoes */
   FUNCTION fn_round(pr_vlorigem IN NUMBER
                    ,pr_qtarredo IN INTEGER) RETURN NUMBER;
@@ -373,6 +451,8 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0001 AS
                             ,pr_txaplica IN NUMBER                       --> Taxa aplicada
                             ,pr_flggrvir IN BOOLEAN DEFAULT FALSE        --> Identificador se deve gravar valor insento
                             ,pr_tab_crapdat IN BTCH0001.cr_crapdat%ROWTYPE  --> Dados da tabela de datas
+                            ,pr_inpessoa IN crapass.inpessoa%TYPE DEFAULT 0 --> Tipo de pessoa
+                            ,pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE DEFAULT 0 --> Número do CPF/CNPJ
                             ,pr_vlsdrdca IN OUT NUMBER                   --> Saldo da aplicacao pos calculo
                             ,pr_vlrdirrf OUT craplap.vllanmto%TYPE       --> Valor de IR
                             ,pr_perirrgt OUT NUMBER                      --> Percentual de IR resgatado
@@ -384,13 +464,16 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0001 AS
                             ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE        --> Data movimento atual
                             ,pr_dtmvtopr IN crapdat.dtmvtopr%TYPE        --> Data do movimento do proximo dia
                             ,pr_nrdconta IN craprda.nrdconta%TYPE        --> Nro da conta da aplicacao RDCA
-                            ,pr_nraplica IN craprda.nraplica%TYPE        --> Nro da aplicacao RDCA
+                            ,pr_craprda  IN APLI0001.typ_tab_craprda     --> Contem informações da aplicação
                             ,pr_dtmvtpap IN crapdat.dtmvtolt%TYPE        --> Data do processo (Não necessariamente da CRAPDAT)
                             ,pr_dtcalsld IN craprda.dtmvtolt%TYPE        --> Data para calculo do saldo
                             ,pr_flantven IN BOOLEAN                      --> Flag antecede vencimento
                             ,pr_flggrvir IN BOOLEAN DEFAULT FALSE        --> Identificador se deve gravar valor insento
                             ,pr_dtinitax IN DATE                         --> Data de inicio da utilizacao da taxa de poupanca.
                             ,pr_dtfimtax IN DATE                         --> Data de fim da utilizacao da taxa de poupanca.
+                            ,pr_cdprogra IN VARCHAR2                     --> Código do programa
+                            ,pr_inpessoa  IN  crapass.inpessoa%TYPE DEFAULT 0 --> Tipo de pessoa
+                            ,pr_nrcpfcgc  IN  crapass.nrcpfcgc%TYPE DEFAULT 0 --> Número do CPF/CNPJ
                             ,pr_vlsdrdca OUT NUMBER                      --> Saldo da aplicacao pos calculo
                             ,pr_vlrentot OUT NUMBER                      --> Valor de rendimento total
                             ,pr_vlrdirrf OUT craplap.vllanmto%TYPE       --> Valor de IR
@@ -416,16 +499,18 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0001 AS
                           ,pr_tab_erro OUT GENE0001.typ_tab_erro);     --> Tabela com erros
 
   /* Rotina de calculo do saldo da aplicacao ate a data do movimento */
-  procedure pc_calc_poupanca (pr_cdcooper in crapcop.cdcooper%type,     --> Cooperativa
-                              pr_dstextab in craptab.dstextab%type,     --> Percentual de IR da aplicacao
-                              pr_cdprogra in crapprg.cdprogra%type,     --> Programa chamador
-                              pr_inproces in crapdat.inproces%type,     --> Indicador do processo
-                              pr_dtmvtolt in crapdat.dtmvtolt%type,     --> Data do processo
-                              pr_dtmvtopr in crapdat.dtmvtopr%type,     --> Proximo dia util
-                              pr_rpp_rowid in varchar2,                 --> Identificador do registro da tabela CRAPRPP em processamento
-                              pr_vlsdrdpp in out craprpp.vlsdrdpp%type, --> Saldo da poupanca programada
-                              pr_cdcritic out crapcri.cdcritic%type,    --> Codigo da critica de erro
-                              pr_des_erro out varchar2);                --> Descricao do erro encontrado
+  procedure pc_calc_poupanca (pr_cdcooper  IN crapcop.cdcooper%TYPE            --> Cooperativa
+                             ,pr_dstextab  IN craptab.dstextab%TYPE            --> Percentual de IR da aplicacao
+                             ,pr_cdprogra  IN crapprg.cdprogra%TYPE            --> Programa chamador
+                             ,pr_inproces  IN crapdat.inproces%TYPE            --> Indicador do processo
+                             ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE            --> Data do processo
+                             ,pr_dtmvtopr  IN crapdat.dtmvtopr%TYPE            --> Proximo dia util
+                             ,pr_rpp_rowid IN VARCHAR2                         --> Identificador do registro da tabela CRAPRPP em processamento
+                             ,pr_inpessoa  IN  crapass.inpessoa%TYPE DEFAULT 0 --> Tipo de pessoa
+                             ,pr_nrcpfcgc  IN  crapass.nrcpfcgc%TYPE DEFAULT 0 --> Número do CPF/CNPJ
+                             ,pr_vlsdrdpp  IN OUT craprpp.vlsdrdpp%TYPE        --> Saldo da poupanca programada
+                             ,pr_cdcritic  OUT crapcri.cdcritic%TYPE           --> Codigo da critica de erro
+                             ,pr_des_erro  OUT VARCHAR2);                      --> Descricao do erro encontrado
 
   /* Rotina de calculo do ajuste da provisao a estornar nos casos de resgate antes do vencimento. */
   PROCEDURE pc_ajuste_provisao_rdc_pre (pr_cdcooper   IN crapcop.cdcooper%TYPE        --> Cooperativa
@@ -479,6 +564,8 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0001 AS
                                  ,pr_flggrvir    IN BOOLEAN DEFAULT FALSE        --> Identificador se deve gravar valor insento
                                  ,pr_dtinitax    IN craprda.dtmvtolt%TYPE        --> Data Inicial da Utilizacao da taxa da poupanca
                                  ,pr_dtfimtax    IN craprda.dtmvtolt%TYPE        --> Data Final da Utilizacao da taxa da poupanca
+                                 ,pr_inpessoa    IN crapass.inpessoa%TYPE DEFAULT 0 --> Tipo de pessoa
+                                 ,pr_nrcpfcgc    IN crapass.nrcpfcgc%TYPE DEFAULT 0 --> Número do CPF/CNPJ
                                  ,pr_vlsddrgt    OUT NUMBER                      --> Valor do resgate total sem irrf ou o solicitado
                                  ,pr_vlrenrgt    OUT NUMBER                      --> Rendimento total a ser pago quando resgate total
                                  ,pr_vlrdirrf    OUT NUMBER                      --> IRRF do que foi solicitado
@@ -501,6 +588,8 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0001 AS
                                        ,pr_perirrgt   IN NUMBER                        --> Percentual aplicado
                                        ,pr_dtinitax   IN craprda.dtmvtolt%TYPE         --> Data Inicial da Utilizacao da taxa da poupanca
                                        ,pr_dtfimtax   IN craprda.dtmvtolt%TYPE         --> Data Final da Utilizacao da taxa da poupanca
+                                       ,pr_inpessoa   IN crapass.inpessoa%TYPE DEFAULT 0 --> Tipo de pessoa
+                                       ,pr_nrcpfcgc   IN crapass.nrcpfcgc%TYPE DEFAULT 0 --> Número do CPF/CNPJ
                                        ,pr_vlbasrgt   OUT NUMBER                       --> Valor resgatado
                                        ,pr_des_reto   OUT VARCHAR                      --> Indicador de saida com erro (OK/NOK)
                                        ,pr_tab_erro   OUT GENE0001.typ_tab_erro);      --> Tabela com erros
@@ -544,16 +633,18 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0001 AS
                                ,pr_tab_erro  OUT GENE0001.typ_tab_erro);     --> Tabela com erros
 
   /* Gerar extrato RDC */
-  PROCEDURE pc_extrato_rdc (pr_cdcooper          IN crapcop.cdcooper%TYPE                   --> Codigo cooperativa
-                           ,pr_cdagenci          IN crapass.cdagenci%TYPE                   --> Codigo da agencia
-                           ,pr_nrdcaixa          IN craperr.nrdcaixa%TYPE                   --> Numero do caixa
-                           ,pr_nrctaapl          IN craprda.nrdconta%TYPE                   --> Numero de conta
-                           ,pr_nraplres          IN craprda.nraplica%TYPE                   --> Numero da aplicacao
-                           ,pr_dtiniper          IN craprda.dtiniper%TYPE                   --> Data inicial do periodo
-                           ,pr_dtfimper          IN craprda.dtfimper%TYPE                   --> Data final do periodo
-                           ,pr_typ_tab_extr_rdc  OUT typ_tab_extr_rdc                    --> TEMP TABLE de extrato
-                           ,pr_des_reto          OUT VARCHAR                                --> Indicador de saida com erro (OK/NOK)
-                           ,pr_tab_erro          OUT GENE0001.typ_tab_erro );               --> Tabela com erros
+  PROCEDURE pc_extrato_rdc (pr_cdcooper          IN crapcop.cdcooper%TYPE           --> Codigo cooperativa
+                           ,pr_cdagenci          IN crapass.cdagenci%TYPE           --> Codigo da agencia
+                           ,pr_nrdcaixa          IN craperr.nrdcaixa%TYPE           --> Numero do caixa
+                           ,pr_nrctaapl          IN craprda.nrdconta%TYPE           --> Numero de conta
+                           ,pr_nraplres          IN craprda.nraplica%TYPE           --> Numero da aplicacao
+                           ,pr_dtiniper          IN craprda.dtiniper%TYPE           --> Data inicial do periodo
+                           ,pr_dtfimper          IN craprda.dtfimper%TYPE           --> Data final do periodo
+                           ,pr_inpessoa          IN crapass.inpessoa%TYPE DEFAULT 0 --> Tipo de pessoa
+                           ,pr_nrcpfcgc          IN crapass.nrcpfcgc%TYPE DEFAULT 0 --> Número do CPF/CNPJ
+                           ,pr_typ_tab_extr_rdc  OUT typ_tab_extr_rdc               --> TEMP TABLE de extrato
+                           ,pr_des_reto          OUT VARCHAR                        --> Indicador de saida com erro (OK/NOK)
+                           ,pr_tab_erro          OUT GENE0001.typ_tab_erro );       --> Tabela com erros
 
   /* Calcular Provisao Mensal RDCA2 */
   PROCEDURE pc_calc_provisao_mensal_rdca2 (pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cooperativa
@@ -4089,6 +4180,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                             ,pr_txaplica IN NUMBER                       --> Taxa aplicada
                             ,pr_flggrvir    IN BOOLEAN DEFAULT FALSE        --> Identificador se deve gravar valor insento
                             ,pr_tab_crapdat IN BTCH0001.cr_crapdat%ROWTYPE  --> Dados da tabela de datas
+                            ,pr_inpessoa IN crapass.inpessoa%TYPE DEFAULT 0 --> Tipo de pessoa
+                            ,pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE DEFAULT 0 --> Número do CPF/CNPJ
                             ,pr_vlsdrdca IN OUT NUMBER                   --> Saldo da aplicacao pos calculo
                             ,pr_vlrdirrf OUT craplap.vllanmto%TYPE       --> Valor de IR
                             ,pr_perirrgt OUT NUMBER                      --> Percentual de IR resgatado
@@ -4323,6 +4416,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                                            ,pr_cdinsenc  => 5            --> Codigo da insenção
                                            ,pr_vlinsenc  => TRUNC((vr_vlrentot *
                                                                    vr_perirapl / 100),2)--> Valor insento
+                                           ,pr_inpessoa  => pr_inpessoa
+                                           ,pr_nrcpfcgc  => pr_nrcpfcgc
                                            ,pr_flgimune  => vr_flgimune  --> Identificador se é imune
                                            ,pr_dsreturn  => pr_des_reto  --> Descricao Critica
                                            ,pr_tab_erro  => pr_tab_erro);--> Tabela erros
@@ -4371,13 +4466,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                             ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE        --> Data movimento atual
                             ,pr_dtmvtopr IN crapdat.dtmvtopr%TYPE        --> Data do movimento do proximo dia
                             ,pr_nrdconta IN craprda.nrdconta%TYPE        --> Nro da conta da aplicacao RDCA
-                            ,pr_nraplica IN craprda.nraplica%TYPE        --> Nro da aplicacao RDCA
+                            ,pr_craprda  IN APLI0001.typ_tab_craprda      --> Contem informações da aplicação
                             ,pr_dtmvtpap IN crapdat.dtmvtolt%TYPE        --> Data do processo (não necessariamente da CRAPDAT)
                             ,pr_dtcalsld IN craprda.dtmvtolt%TYPE        --> Data para calculo do saldo
                             ,pr_flantven IN BOOLEAN                      --> Flag antecede vencimento
                             ,pr_flggrvir IN BOOLEAN DEFAULT FALSE        --> Identificador se deve gravar valor insento
                             ,pr_dtinitax IN DATE                         --> Data de inicio da utilizacao da taxa de poupanca.
                             ,pr_dtfimtax IN DATE                         --> Data de fim da utilizacao da taxa de poupanca.
+                            ,pr_cdprogra IN VARCHAR2                     --> Código do programa
+                            ,pr_inpessoa IN crapass.inpessoa%TYPE DEFAULT 0 --> Tipo de pessoa
+                            ,pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE DEFAULT 0 --> Número do CPF/CNPJ
                             ,pr_vlsdrdca OUT NUMBER                      --> Saldo da aplicacao pos calculo
                             ,pr_vlrentot OUT NUMBER                      --> Valor de rendimento total
                             ,pr_vlrdirrf OUT craplap.vllanmto%TYPE       --> Valor de IR
@@ -4423,21 +4521,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
   ............................................................................. */
     DECLARE
 
-      -- Busca dos dados da aplicacao RDC
-      CURSOR cr_craprda IS
-        SELECT rda.dtvencto
-              ,rda.dtmvtolt
-              ,rda.vlsdrdca
-              ,rda.qtdiauti
-              ,rda.vlsltxmm
-              ,rda.dtatslmm
-              ,rda.vlsltxmx
-              ,rda.dtatslmx
-          FROM craprda rda
-         WHERE rda.cdcooper = pr_cdcooper
-           AND rda.nrdconta = pr_nrdconta
-           AND rda.nraplica = pr_nraplica;
-      rw_craprda cr_craprda%ROWTYPE;
       -- Saida antecipada Ok
       vr_exc_ok EXCEPTION;
       -- Variaveis para o calculo da aplicacao
@@ -4456,43 +4539,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       vr_vlsdrdca NUMBER(18,4); --> Valor dos rendimentos
       vr_flgimune boolean;
       vr_datlibpr DATE; --> Data de liberacao de projeto sobre novo indexador de poupanca
-      rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+      vr_index PLS_INTEGER;
       
-      -- Buscar as taxas contratadas
-      CURSOR cr_craplap IS
-        SELECT /*+ Index (cp CRAPLAP##CRAPLAP5) */
-               lap.txaplica
-              ,lap.txaplmes
-          FROM craplap lap
-         WHERE lap.cdcooper = pr_cdcooper
-           AND lap.nrdconta = pr_nrdconta
-           AND lap.nraplica = pr_nraplica
-           AND lap.dtmvtolt = rw_craprda.dtmvtolt
-         ORDER BY lap.cdcooper
-                 ,lap.nrdconta
-                 ,lap.nraplica
-                 ,lap.dtmvtolt
-                 ,lap.dtrefere
-                 ,lap.cdhistor
-                 ,lap.progress_recid ASC; --> Retornar a primeira encontrada
-      rw_craplap cr_craplap%ROWTYPE;
+      
       -- Variaveis para busca das informacoes de moeda
       vr_idx_moeda VARCHAR2(10) := '';
       vr_vlmoefix  crapmfx.vlmoefix%TYPE;
+
+	  --Registro do tipo calendario
+      rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
+
       -- Buscar todos os registros das moedas do tipo 6 e 8
-      CURSOR cr_crapmfx(pr_cdcooper IN crapmfx.cdcooper%TYPE) IS
+      CURSOR cr_crapmfx(pr_cdcooper IN crapmfx.cdcooper%TYPE
+                       ,pr_dtmvtolt IN crapmfx.dtmvtolt%TYPE
+                       ,pr_prcbatch IN INTEGER)IS
         SELECT crapmfx.dtmvtolt
               ,crapmfx.tpmoefix
               ,crapmfx.vlmoefix
           FROM crapmfx crapmfx
          WHERE crapmfx.cdcooper = pr_cdcooper
-           AND crapmfx.tpmoefix IN(6,8,20);
+         AND crapmfx.tpmoefix IN (6,8,20)
+         AND (pr_prcbatch = 1 OR crapmfx.dtmvtolt >= pr_dtmvtolt);
+
       -- Buscar a qtde dias uteis na tabela de taxas
-      CURSOR cr_craptrd(pr_dtiniper IN DATE) IS
+      CURSOR cr_craptrd(pr_cdcooper IN craptrd.cdcooper%TYPE
+                       ,pr_dtiniper IN craptrd.dtiniper%TYPE
+                       ,pr_tptaxrda IN craptrd.tptaxrda%TYPE) IS
         SELECT trd.qtdiaute
           FROM craptrd trd
-         WHERE cdcooper = pr_cdcooper
-           AND dtiniper = pr_dtiniper
+         WHERE trd.cdcooper = pr_cdcooper
+           AND trd.dtiniper = pr_dtiniper
+           AND trd.tptaxrda = pr_tptaxrda
+           AND trd.incarenc = 0 
+           AND trd.cdperapl = 1
+           AND trd.vlfaixas = 0
          ORDER BY progress_recid;
       vr_qtdiaute craptrd.qtdiaute%TYPE;
 
@@ -4502,16 +4582,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       vr_perirapl := 0;
       vr_vlsdrdca := 0;
       vr_vlrentot := 0;
-      -- Rotina que busca as informacoes de IR parametrizadas para aplicacoes RDC
-      pc_busca_faixa_ir_rdc(pr_cdcooper => pr_cdcooper);
-      -- Buscar os dados da aplicacao RDC
-      OPEN cr_craprda;
-      FETCH cr_craprda
-       INTO rw_craprda;
+      vr_index:= pr_craprda.first;
+     
       -- Se não encontrar
-      IF cr_craprda%NOTFOUND THEN
-        -- Fechar o cursor e dar raise
-        CLOSE cr_craprda;
+      IF vr_index IS NULL THEN
+        
         -- Chamar rotina de gravacao de erro
         gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                              ,pr_cdagenci => 0   --> Fixo pois e irrelevante
@@ -4522,12 +4597,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                              ,pr_tab_erro => pr_tab_erro);
         -- Levantar excecao
         RAISE vr_exc_erro;
-      ELSE
-        -- Apenas fechar o cursor e continuar
-        CLOSE cr_craprda;
       END IF;
+      
+      -- Verifica se a cooperativa esta cadastrada
+      OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+
+      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+
+      -- Se não encontrar
+      IF BTCH0001.cr_crapdat%NOTFOUND THEN
+        
+        -- Fechar o cursor pois haverá raise
+        CLOSE BTCH0001.cr_crapdat;
+        
+        -- Chamar rotina de gravacao de erro
+        gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                             ,pr_cdagenci => 0   --> Fixo pois e irrelevante
+                             ,pr_nrdcaixa => 999 --> Fixo pois e irrelevante
+                             ,pr_nrsequen => 1 --> Fixo
+                             ,pr_cdcritic => 1 --> Critica 1
+                             ,pr_dscritic => vr_dscritic
+                             ,pr_tab_erro => pr_tab_erro);
+        -- Levantar excecao
+        RAISE vr_exc_erro;
+      ELSE
+        -- Apenas fechar o cursor
+        CLOSE BTCH0001.cr_crapdat;
+      END IF;
+
+	    -- Rotina que busca as informacoes de IR parametrizadas para aplicacoes RDC
+      pc_busca_faixa_ir_rdc(pr_cdcooper => pr_cdcooper);
+
       -- Calcular a quantidade de dias (Vcto - Mvto atual)
-      vr_nrdias := rw_craprda.dtvencto - rw_craprda.dtmvtolt;
+      vr_nrdias := pr_craprda(vr_index).dtvencto - pr_craprda(vr_index).dtmvtolt;
+
       -- Gerar erro 840 em caso de não houver diferenca
       IF NVL(vr_nrdias,0) = 0 THEN
         -- Gerar erro
@@ -4573,14 +4676,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       -- Data final e baseada na data passada
       vr_dtfimper := pr_dtcalsld;
       -- Saldo RDCA baseado no valor da tabela
-      vr_vlsdrdca := rw_craprda.vlsdrdca;
+      vr_vlsdrdca := pr_craprda(vr_index).vlsdrdca;
       pr_vlsdrdca := vr_vlsdrdca;
       -- Percentual IR baseado no percentual achado acima
       pr_perirrgt := vr_perirapl;
       -- Garantir que a aplicacao não esteja em carencia
-      IF NOT(rw_craprda.dtvencto >= pr_dtmvtolt AND rw_craprda.dtvencto <= pr_dtmvtopr) THEN
+      IF NOT(pr_craprda(vr_index).dtvencto >= pr_dtmvtolt AND pr_craprda(vr_index).dtvencto <= pr_dtmvtopr) THEN
         -- Se a data enviada - a data do movimento atual, for inferior a quantidade de dias uteis
-        IF pr_dtmvtpap - rw_craprda.dtmvtolt < rw_craprda.qtdiauti THEN
+        IF pr_dtmvtpap - pr_craprda(vr_index).dtmvtolt < pr_craprda(vr_index).qtdiauti THEN
           -- Ja retornar e ignorar o restante
           RAISE vr_exc_ok;
         END IF;
@@ -4588,43 +4691,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       -- Taxa minima
       IF pr_flantven THEN
         -- Utilizar taxa minima
-        vr_vlsdrdca := rw_craprda.vlsltxmm;
+        vr_vlsdrdca := pr_craprda(vr_index).vlsltxmm;
         pr_vlsdrdca := vr_vlsdrdca;
-        vr_dtiniper := rw_craprda.dtatslmm;
+        vr_dtiniper := pr_craprda(vr_index).dtatslmm;
       ELSE
         -- Utilizar taxa maxima
-        vr_vlsdrdca := rw_craprda.vlsltxmx;
+        vr_vlsdrdca := pr_craprda(vr_index).vlsltxmx;
         pr_vlsdrdca := vr_vlsdrdca;
-        vr_dtiniper := rw_craprda.dtatslmx;
+        vr_dtiniper := pr_craprda(vr_index).dtatslmx;
       END IF;
-      -- Buscar as taxas contratadas
-      OPEN cr_craplap;
-      FETCH cr_craplap
-       INTO rw_craplap;
-      -- Se não encontrar
-      IF cr_craplap%NOTFOUND THEN
-        -- Fechar o cursor
-        CLOSE cr_craplap;
-        -- Gerar erro
-        gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
-                             ,pr_cdagenci => 0   --> Fixo pois e irrelevante
-                             ,pr_nrdcaixa => 999 --> Fixo pois e irrelevante
-                             ,pr_nrsequen => 1 --> Fixo
-                             ,pr_cdcritic => 90 --> Critica 90
-                             ,pr_dscritic => vr_dscritic
-                             ,pr_tab_erro => pr_tab_erro);
-        -- Levantar excecao
-        RAISE vr_exc_erro;
-      ELSE
-        -- Fechar o cursor e continuar
-        CLOSE cr_craplap;
-      END IF;
-
-
-      OPEN  btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
-      FETCH btch0001.cr_crapdat INTO rw_crapdat;
-      CLOSE btch0001.cr_crapdat;
-      IF rw_crapdat.inproces > 1 THEN
+      
+	    -- Se estivermos processando o Batch e o programa
+      -- chamador for um crps 
+      IF rw_crapdat.inproces > 2   AND 
+         pr_cdprogra LIKE '%CRPS%' THEN
+      
       -- Se o vetor de dias uteis ainda não possuir informacoes
       IF vr_tab_qtdiaute.COUNT = 0 THEN
         -- Buscar os dias uteis
@@ -4634,7 +4715,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                                          ,count(*) over (partition by craptrd.dtiniper
                                                          order by craptrd.progress_recid) registro
                                      FROM craptrd
-                                     WHERE craptrd.cdcooper = pr_cdcooper)
+                                         WHERE craptrd.cdcooper = pr_cdcooper)
                             WHERE registro = 1) LOOP
           -- Atribuir o valor selecionado ao vetor somente para a primeira data encontrada (mais antiga)
           IF rw_craptrd.registro = 1 THEN
@@ -4646,7 +4727,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       -- Se o vetor de moedas ainda não possuir informacoes
       IF vr_tab_moedatx.COUNT = 0 THEN
         -- Buscar todos os registros das moedas do tipo 6 e 8
-        FOR rw_crapmfx IN cr_crapmfx(pr_cdcooper => pr_cdcooper) LOOP
+          FOR rw_crapmfx IN cr_crapmfx(pr_cdcooper => pr_cdcooper
+                                      ,pr_dtmvtolt => pr_craprda(vr_index).dtmvtolt
+                                      ,pr_prcbatch => 1) LOOP
+              
           -- MOntar a chave do registro com o tipo + data
           vr_idx_moeda := LPAD(rw_crapmfx.tpmoefix,2,'0')||To_Char(rw_crapmfx.dtmvtolt,'YYYYMMDD');
           -- Atribuir o valor selecionado ao vetor
@@ -4659,19 +4743,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         END LOOP;
       END IF;
       ELSE
-        -- Buscar os dias uteis
-        FOR rw_craptrd IN (SELECT craptrd.dtiniper
-                                 ,craptrd.qtdiaute
-                                 ,count(*) over (partition by craptrd.dtiniper
-                                                     order by craptrd.progress_recid) registro
-                             FROM craptrd
-                            WHERE craptrd.cdcooper = pr_cdcooper
-                              AND craptrd.dtiniper > vr_dtiniper -1) LOOP
-          -- Atribuir o valor selecionado ao vetor somente para a primeira data encontrada (mais antiga)
-          IF rw_craptrd.registro = 1 THEN
-            vr_tab_qtdiaute(to_char(rw_craptrd.dtiniper,'YYYYMMDD')):= rw_craptrd.qtdiaute;
-          END IF;
-        END LOOP;
+        
 
         -- Buscar todos os registros das moedas do tipo 6 e 8
         FOR rw_crapmfx IN (SELECT CRAPMFX.DTMVTOLT
@@ -4727,41 +4799,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         -- Guardar taxa aplicada ao mes ja calculada no vetor
         vr_txaplmes := vr_tab_moedatx(vr_idx_moeda).txaplmes;
         -- Calcula o saldo com a taxa minina se for antes do vencimento
-        IF pr_flantven AND rw_craplap.txaplica <> rw_craplap.txaplmes THEN
+        IF pr_flantven AND pr_craprda(vr_index).txaplica <> pr_craprda(vr_index).txaplmes THEN
           -- Utilizar taxa cadastrada
-          vr_txaplica := fn_round((vr_txaplmes * rw_craplap.txaplmes / 100 ) / 100 ,8);
+          vr_txaplica := fn_round((vr_txaplmes * pr_craprda(vr_index).txaplmes / 100 ) / 100 ,8);
         ELSE
           -- Utilizar taxa cadastrada inicial
-          vr_txaplica := fn_round((vr_txaplmes * rw_craplap.txaplica / 100 ) / 100 ,8);
+          vr_txaplica := fn_round((vr_txaplmes * pr_craprda(vr_index).txaplica / 100 ) / 100 ,8);
           -- Se a data de inicio encontrada estiver dentre o periodo de datas das taxas
-          IF vr_dtiniper > pr_dtinitax AND rw_craprda.dtmvtolt < pr_dtfimtax THEN
-            -- Usar poupanca de um mes atras  --
-            DECLARE
-              vr_dia NUMBER;
-              vr_mes NUMBER;
-              vr_ano NUMBER;
-            BEGIN
-              -- Guardar dia, mes e ano separadamente
-              vr_dia := to_char(vr_dtiniper,'dd');
-              vr_mes := to_char(vr_dtiniper,'mm');
-              vr_ano := to_char(vr_dtiniper,'yyyy');
-              -- Se o mes for janeiro
-              IF vr_mes = 1 THEN
-                -- Utilizar dezembro e diminuir 1 ano
-                vr_mes := 12;
-                vr_ano := vr_ano - 1;
-              ELSE
-                -- Utilizar mesmo dia e ano, e diminuir 1 mes
-                vr_mes := vr_mes - 1;
-              END IF;
-              -- Tenta montar data formada
-              vr_dtinipop := to_date(to_char(vr_dia,'fm00')||to_char(vr_mes,'fm00')||to_char(vr_ano,'fm0000'),'dd/mm/yyyy');
-            EXCEPTION
-              WHEN OTHERS THEN
-                -- Se ocorreu erro, e pq o dia encontrado não existe no mes proposto
-                -- então devemos pegar o primeiro dia do mes
-                vr_dtinipop := TRUNC(vr_dtiniper,'mm');
-            END;
+          IF vr_dtiniper > pr_dtinitax AND pr_craprda(vr_index).dtmvtolt < pr_dtfimtax THEN
+            -- Usar poupanca de um mes atras             
+            vr_dtinipop := add_months(vr_dtiniper,-1);
+             
             -- Limpar auxiliar de moeda
             vr_vlmoefix := NULL;
 
@@ -4775,7 +4823,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
             /** foi remunerado e contabilizado. 							                 **/
             /********************************************************************/
 
-           IF rw_craprda.dtmvtolt >= to_date('04/05/2012','dd/mm/yyyy') AND
+           IF pr_craprda(vr_index).dtmvtolt >= to_date('04/05/2012','dd/mm/yyyy') AND
               vr_dtiniper >= vr_datlibpr THEN
              -- Montar chave de procura de moeda 8 + data poupanca
             vr_idx_moeda := '20'||To_Char(vr_dtinipop,'YYYYMMDD');
@@ -4803,9 +4851,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
             -- Verificar se esta data não existe no vetor
             IF NOT vr_tab_qtdiaute.EXISTS(to_char(vr_dtinipop,'yyyymmdd')) THEN
               -- Buscar a data na tabela
-              OPEN cr_craptrd(pr_dtiniper => vr_dtinipop);
-              FETCH cr_craptrd
-               INTO vr_qtdiaute;
+              OPEN cr_craptrd(pr_cdcooper => pr_cdcooper
+                             ,pr_dtiniper => vr_dtinipop
+                             ,pr_tptaxrda => pr_craprda(vr_index).tpaplica);
+                
+              FETCH cr_craptrd INTO vr_qtdiaute;
+              
               CLOSE cr_craptrd;
               -- Adiciona-la ao vetor para evitar nova leitura na tabela
               vr_tab_qtdiaute(to_char(vr_dtinipop,'yyyymmdd')) := vr_qtdiaute;
@@ -4852,6 +4903,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                                            ,pr_cdinsenc  => 5            --> Codigo da insenção
                                            ,pr_vlinsenc  => TRUNC((vr_vlrentot *
                                                                    vr_perirapl / 100),2)--> Valor insento
+                                           ,pr_inpessoa  => pr_inpessoa
+                                           ,pr_nrcpfcgc  => pr_nrcpfcgc
                                            ,pr_flgimune  => vr_flgimune  --> Identificador se é imune
                                            ,pr_dsreturn  => pr_des_reto  --> Descricao Critica
                                            ,pr_tab_erro  => pr_tab_erro);--> Tabela erros
@@ -4971,7 +5024,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
     ............................................................................. */
     DECLARE
       -- Busca das aplicacoes RDCA ativas da conta passada
-      CURSOR cr_craprda IS
+      CURSOR cr_craprda (pr_cdcooper IN crapcop.cdcooper%TYPE
+                        ,pr_nrdconta IN crapass.nrdconta%TYPE)IS
         SELECT rda.tpaplica
               ,rda.nrdconta
               ,rda.nraplica
@@ -4980,10 +5034,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
               ,rda.dtfimper
               ,rda.dtmvtolt
               ,rda.vlaplica
+              ,lap.txaplica
+              ,lap.txaplmes
+              ,rda.dtvencto
+              ,rda.qtdiauti
+              ,rda.vlsltxmm
+              ,rda.dtatslmm
+              ,rda.vlsltxmx
+              ,rda.dtatslmx              
           FROM craprda rda
+              ,craplap lap
          WHERE rda.cdcooper = pr_cdcooper
            AND rda.nrdconta = pr_nrdconta
-           AND rda.insaqtot = 0; --> não sacado totalmente
+           AND rda.insaqtot = 0 --> não sacado totalmente
+           AND lap.cdcooper = rda.cdcooper 
+           AND lap.dtmvtolt = rda.dtmvtolt
+           AND lap.cdagenci = rda.cdagenci
+           AND lap.cdbccxlt = rda.cdbccxlt
+           AND lap.nrdolote = rda.nrdolote
+           AND lap.nrdconta = rda.nrdconta 
+           AND lap.nrdocmto = rda.nraplica; 
+           
+      TYPE typ_rec_craprda IS TABLE OF cr_craprda%ROWTYPE
+      INDEX BY PLS_INTEGER;
+      vr_tab_craprda typ_rec_craprda;
+
       -- Busca do tipo de captacao
       CURSOR cr_crapdtc(pr_tpaplica craprda.tpaplica%TYPE) IS
         SELECT dtc.tpaplrdc
@@ -5013,6 +5088,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       vr_dup_vlsdrdca craplap.vllanmto%TYPE; --> Acumulo do saldo da aplicacao RDCA
       vr_dstextab     craptab.dstextab%TYPE; --> Descricao da craptab
       
+	  vr_craprda apli0001.typ_tab_craprda;
+
       -- Excetion para ignorar a aplicacao
       vr_exc_ignora EXCEPTION;
            
@@ -5040,10 +5117,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         vr_dtfimtax := TO_DATE(gene0002.fn_busca_entrada(2,vr_dstextab,';'),'DD/MM/YYYY');
       END IF;
       -- Busca das aplicacoes RDCA ativas da conta passada
-      FOR rw_craprda IN cr_craprda LOOP
+      -- Carregar PL Table com dados da tabela CRAPRDA
+      OPEN cr_craprda(pr_cdcooper => pr_cdcooper
+                     ,pr_nrdconta => pr_nrdconta);
+                     
+      LOOP
+        FETCH cr_craprda BULK COLLECT INTO vr_tab_craprda LIMIT 100000;
+            
+        EXIT WHEN vr_tab_craprda.COUNT = 0;
+
+        FOR idx IN vr_tab_craprda.first..vr_tab_craprda.last LOOP
+              
+          --Limpa a tabela
+          vr_craprda.delete;
+              
+          --Alimenta PLTABLE com as informações da aplicação
+          vr_craprda(1).dtvencto:= vr_tab_craprda(idx).dtvencto;
+          vr_craprda(1).dtmvtolt:= vr_tab_craprda(idx).dtmvtolt;
+          vr_craprda(1).vlsdrdca:= vr_tab_craprda(idx).vlsdrdca;
+          vr_craprda(1).qtdiauti:= vr_tab_craprda(idx).qtdiauti;
+          vr_craprda(1).vlsltxmm:= vr_tab_craprda(idx).vlsltxmm;
+          vr_craprda(1).dtatslmm:= vr_tab_craprda(idx).dtatslmm;
+          vr_craprda(1).vlsltxmx:= vr_tab_craprda(idx).vlsltxmx;
+          vr_craprda(1).dtatslmx:= vr_tab_craprda(idx).dtatslmx;
+          vr_craprda(1).txaplica:= vr_tab_craprda(idx).txaplica;
+          vr_craprda(1).txaplmes:= vr_tab_craprda(idx).txaplmes;
         BEGIN
           -- Para aplicacao 3 - RDCA
-          IF rw_craprda.tpaplica = 3 THEN
+          IF vr_tab_craprda(idx).tpaplica = 3 THEN
             -- Chamar rotina de consulta do saldo RDCA30
             APLI0001.pc_consul_saldo_aplic_rdca30(pr_cdcooper => pr_cdcooper         --> Cooperativa
                                                  ,pr_cdoperad => pr_cdoperad         --> Operador
@@ -5053,8 +5154,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                                                  ,pr_cdprogra => pr_cdprogra         --> Programa em execucao
                                                  ,pr_cdagenci => pr_cdagenci         --> Codigo da agencia
                                                  ,pr_nrdcaixa => pr_nrdcaixa         --> Numero do caixa
-                                                 ,pr_nrdconta => rw_craprda.nrdconta --> Nro da conta da aplicacao RDCA
-                                                 ,pr_nraplica => rw_craprda.nraplica --> Nro da aplicacao RDCA
+                                                 ,pr_nrdconta => vr_tab_craprda(idx).nrdconta --> Nro da conta da aplicacao RDCA
+                                                 ,pr_nraplica => vr_tab_craprda(idx).nraplica --> Nro da aplicacao RDCA
                                                  ,pr_vlsdrdca => vr_vlsdrdca         --> Saldo da aplicacao
                                                  ,pr_vlsldapl => vr_vlsldapl         --> Saldo da aplicacao RDCA
                                                  ,pr_vldperda => vr_vldperda         --> Valor calculado da perda
@@ -5071,7 +5172,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
             -- Acumular o valor calculado
             vr_sldpresg := vr_vlsdrdca;
           -- Para aplicacao 5 - RDCA II
-          ELSIF rw_craprda.tpaplica = 5 THEN
+          ELSIF vr_tab_craprda(idx).tpaplica = 5 THEN
             -- Consulta saldo aplicacao RDCA60 (Antiga includes/b1wgen0004a.i)
             APLI0001.pc_consul_saldo_aplic_rdca60(pr_cdcooper => pr_cdcooper         --> Cooperativa
                                                  ,pr_dtmvtolt => pr_dtmvtolt         --> Data do movto atual
@@ -5079,8 +5180,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                                                  ,pr_cdprogra => pr_cdprogra         --> Programa em execucao
                                                  ,pr_cdagenci => pr_cdagenci         --> Codigo da agencia
                                                  ,pr_nrdcaixa => pr_nrdcaixa         --> Numero do caixa
-                                                 ,pr_nrdconta => rw_craprda.nrdconta --> Nro da conta da aplicacao RDCA
-                                                 ,pr_nraplica => rw_craprda.nraplica --> Nro da aplicacao RDCA
+                                                 ,pr_nrdconta => vr_tab_craprda(idx).nrdconta --> Nro da conta da aplicacao RDCA
+                                                 ,pr_nraplica => vr_tab_craprda(idx).nraplica --> Nro da aplicacao RDCA
                                                  ,pr_vlsdrdca => vr_vlsdrdca         --> Saldo da aplicacao
                                                  ,pr_sldpresg => vr_sldpresg         --> Saldo para resgate
                                                  ,pr_des_reto => pr_des_reto         --> OK ou NOK
@@ -5094,7 +5195,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
             vr_sldpresg := vr_vlsdrdca;
           ELSE --> Todas outras aplicacoes
             -- Busca do tipo de captacao
-            OPEN cr_crapdtc(pr_tpaplica => rw_craprda.tpaplica);
+            OPEN cr_crapdtc(pr_tpaplica => vr_tab_craprda(idx).tpaplica);
             FETCH cr_crapdtc
              INTO rw_crapdtc;
             -- Somente continuar se encontrar
@@ -5105,8 +5206,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
               IF rw_crapdtc.tpaplrdc = 1 THEN
                 -- Calcular saldo atualizado da aplicacao
                 APLI0001.pc_saldo_rdc_pre(pr_cdcooper => pr_cdcooper         --> Cooperativa
-                                         ,pr_nrdconta => rw_craprda.nrdconta --> Nro da conta da aplicacao RDC
-                                         ,pr_nraplica => rw_craprda.nraplica --> Nro da aplicacao RDC
+                                         ,pr_nrdconta => vr_tab_craprda(idx).nrdconta --> Nro da conta da aplicacao RDC
+                                         ,pr_nraplica => vr_tab_craprda(idx).nraplica --> Nro da aplicacao RDC
                                          ,pr_dtmvtolt => pr_dtmvtolt         --> Data do movimento atual passado
                                          ,pr_dtiniper => NULL                --> Data de inicio da aplicacao
                                          ,pr_dtfimper => NULL                --> Data de termino da aplicacao
@@ -5131,14 +5232,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                 APLI0001.pc_saldo_rdc_pos(pr_cdcooper => pr_cdcooper         --> Cooperativa
                                          ,pr_dtmvtolt => pr_dtmvtolt         --> Movimento atual
                                          ,pr_dtmvtopr => pr_dtmvtopr         --> Proximo dia util
-                                         ,pr_nrdconta => rw_craprda.nrdconta --> Nro da conta da aplicacao RDC
-                                         ,pr_nraplica => rw_craprda.nraplica --> Nro da aplicacao RDC
+                                         ,pr_nrdconta => vr_tab_craprda(idx).nrdconta --Numero da conta
+                                         ,pr_craprda  => vr_craprda          --> Contem informações da aplicação
                                          ,pr_dtmvtpap => pr_dtmvtolt         --> Data do movimento atual passado
                                          ,pr_dtcalsld => pr_dtmvtolt         --> Data do movimento atual passado
                                          ,pr_flantven => FALSE               --> Flag antecede vencimento
                                          ,pr_flggrvir => FALSE               --> Identificador se deve gravar valor insento
                                          ,pr_dtinitax => vr_dtinitax         --> Data de inicio da utilizacao da taxa de poupanca.
                                          ,pr_dtfimtax => vr_dtfimtax         --> Data de fim da utilizacao da taxa de poupanca.
+                                         ,pr_cdprogra => pr_cdprogra         --> Código do programa
                                          ,pr_vlsdrdca => vr_vlsldrdc         --> Saldo da aplicacao pos calculo
                                          ,pr_vlrentot => vr_vlrentot         --> Saldo da aplicacao pos calculo
                                          ,pr_vlrdirrf => vr_vlrdirrf         --> Valor de IR
@@ -5154,8 +5256,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                 APLI0001.pc_saldo_rgt_rdc_pos(pr_cdcooper => pr_cdcooper         --> Cooperativa
                                              ,pr_cdagenci => pr_cdagenci         --> Codigo da agencia
                                              ,pr_nrdcaixa => pr_nrdcaixa         --> Numero do caixa
-                                             ,pr_nrctaapl => rw_craprda.nrdconta --> Nro da conta da aplicacao RDC
-                                             ,pr_nraplres => rw_craprda.nraplica --> Nro da aplicacao RDC
+                                             ,pr_nrctaapl => vr_tab_craprda(idx).nrdconta --> Nro da conta da aplicacao RDC
+                                             ,pr_nraplres => vr_tab_craprda(idx).nraplica --> Nro da aplicacao RDC
                                              ,pr_dtmvtolt => pr_dtmvtolt         --> Data do movimento atual passado
                                              ,pr_dtaplrgt => pr_dtmvtolt         --> Data do movimento atual passado
                                              ,pr_vlsdorgt => 0                   --> Valor RDC
@@ -5183,7 +5285,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                   vr_sldpresg := vr_vlrrgtot;
                 ELSE
                   -- Utilizar o saldo da aplicacao
-                  vr_sldpresg := rw_craprda.vlsdrdca;
+                  vr_sldpresg := vr_tab_craprda(idx).vlsdrdca;
                 END IF;
               END IF;
             ELSE
@@ -5211,6 +5313,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
             NULL;
         END;
       END LOOP; --> Fim das aplicacoes RDCA
+	  
+	  END LOOP; --> Fim da leitura da pltable
+      
+      CLOSE cr_craprda;
+
+      vr_tab_craprda.delete; -- limpa dados do bulk ja armazenado em outra pl table
+        
+
       -- Se foi solicitado extrato e estivernos no processo on-line
       IF pr_flgextra AND pr_inproces = 1 THEN
         -- Trecho de codigo abaixo não convertido pois durante a
@@ -5241,16 +5351,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
   END pc_calc_sldrda;
 
   /* Rotina de calculo do saldo da aplicação ate a data do movimento */
-  procedure pc_calc_poupanca (pr_cdcooper in crapcop.cdcooper%type,     --> Cooperativa
-                              pr_dstextab in craptab.dstextab%type,     --> Percentual de IR da aplicação
-                              pr_cdprogra in crapprg.cdprogra%type,     --> Programa chamador
-                              pr_inproces in crapdat.inproces%type,     --> Indicador do processo
-                              pr_dtmvtolt in crapdat.dtmvtolt%type,     --> Data do processo
-                              pr_dtmvtopr in crapdat.dtmvtopr%type,     --> Próximo dia útil
-                              pr_rpp_rowid in varchar2,                 --> Identificador do registro da tabela CRAPRPP em processamento
-                              pr_vlsdrdpp in out craprpp.vlsdrdpp%type, --> Saldo da poupança programada
-                              pr_cdcritic out crapcri.cdcritic%type,    --> Codigo da crítica de erro
-                              pr_des_erro out varchar2) is              --> Descrição do erro encontrado
+  procedure pc_calc_poupanca (pr_cdcooper  IN crapcop.cdcooper%TYPE            --> Cooperativa
+                             ,pr_dstextab  IN craptab.dstextab%TYPE            --> Percentual de IR da aplicacao
+                             ,pr_cdprogra  IN crapprg.cdprogra%TYPE            --> Programa chamador
+                             ,pr_inproces  IN crapdat.inproces%TYPE            --> Indicador do processo
+                             ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE            --> Data do processo
+                             ,pr_dtmvtopr  IN crapdat.dtmvtopr%TYPE            --> Proximo dia util
+                             ,pr_rpp_rowid IN VARCHAR2                         --> Identificador do registro da tabela CRAPRPP em processamento                              
+                             ,pr_inpessoa  IN  crapass.inpessoa%TYPE DEFAULT 0 --> Tipo de pessoa
+                             ,pr_nrcpfcgc  IN  crapass.nrcpfcgc%TYPE DEFAULT 0 --> Número do CPF/CNPJ
+                             ,pr_vlsdrdpp  IN OUT craprpp.vlsdrdpp%TYPE        --> Saldo da poupanca programada
+                             ,pr_cdcritic  OUT crapcri.cdcritic%TYPE           --> Codigo da critica de erro
+                             ,pr_des_erro  OUT VARCHAR2) IS                    --> Descricao do erro encontrado
 /* ...........................................................................
 
    Programa: APLI0001.PC_CALC_POUPANCA (Antigo Includes/poupanca.i)
@@ -5369,6 +5481,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
     vr_flggrvir         boolean;
     vr_des_reto         varchar2(10);
     vr_tptaxrda         craptrd.tptaxrda%type;
+
+    -- Tabela de registro de lançamentos de poupança programada
+    vr_tb_craplpp_bulk typ_tb_craplpp_bulk;
+    vr_idx_tblpp       VARCHAR2(20);
 
     -- Informações da poupança programada
     cursor cr_craprpp (pr_rowid in varchar2) is
@@ -5503,16 +5619,63 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       end if;
     end if;
 
-    -- Leitura dos lançamentos da aplicação
-    OPEN cr_craplpp;
-    FETCH cr_craplpp INTO rw_craplpp;
-    IF cr_craplpp%FOUND THEN
-      vr_vllan150 := vr_vllan150 + rw_craplpp.vllan150;
-      vr_vllan152 := vr_vllan152 + rw_craplpp.vllan152;
-      vr_vllan158 := vr_vllan158 + rw_craplpp.vllan158;
-      vr_vllan925 := vr_vllan925 + rw_craplpp.vllan925;
-    END IF;
-    CLOSE cr_craplpp;
+ 
+    IF pr_inproces > 2 THEN -- BATCH 
+
+      vr_dtcalcul := add_months(vr_dtmvtolt, -1);
+
+      -- Popula a pl table apenas na primeira chamada desta rotina (pc_calc_poupanca)       
+      IF vr_tb_craplpp.COUNT = 0 THEN 
+
+        OPEN cr_bulk_craplpp(pr_cdcooper => pr_cdcooper,
+                             pr_dtcalcul => vr_dtcalcul,
+                             pr_dtmvtolt => vr_dtmvtolt);
+        FETCH cr_bulk_craplpp BULK COLLECT INTO vr_tb_craplpp_bulk;
+        CLOSE cr_bulk_craplpp;
+
+        --Montar o indice por conta + contrato a partir do bulk collect
+        IF vr_tb_craplpp_bulk.COUNT > 0 THEN
+          FOR idx IN vr_tb_craplpp_bulk.FIRST..vr_tb_craplpp_bulk.LAST LOOP
+            
+            vr_idx_tblpp := LPAD(vr_tb_craplpp_bulk(idx).nrdconta,10,'0') || 
+                            LPAD(vr_tb_craplpp_bulk(idx).nrctrrpp,10,'0');
+
+            vr_tb_craplpp(vr_idx_tblpp).vllan150 := vr_tb_craplpp_bulk(idx).vllan150;
+            vr_tb_craplpp(vr_idx_tblpp).vllan152 := vr_tb_craplpp_bulk(idx).vllan152;
+            vr_tb_craplpp(vr_idx_tblpp).vllan158 := vr_tb_craplpp_bulk(idx).vllan158;
+            vr_tb_craplpp(vr_idx_tblpp).vllan925 := vr_tb_craplpp_bulk(idx).vllan925;          
+          END LOOP;
+        END IF;
+
+        vr_tb_craplpp_bulk.delete;
+        
+      END IF;
+      
+      vr_idx_tblpp := LPAD(rw_craprpp.nrdconta,10,'0') ||
+                      LPAD(rw_craprpp.nrctrrpp,10,'0');
+
+      IF vr_tb_craplpp.exists(vr_idx_tblpp) THEN
+
+        vr_vllan150 := vr_tb_craplpp(vr_idx_tblpp).vllan150;
+        vr_vllan152 := vr_tb_craplpp(vr_idx_tblpp).vllan152;
+        vr_vllan158 := vr_tb_craplpp(vr_idx_tblpp).vllan158;
+        vr_vllan925 := vr_tb_craplpp(vr_idx_tblpp).vllan925;
+      END IF;
+      
+    ELSE
+
+      -- Leitura dos lançamentos da aplicação
+      OPEN cr_craplpp;
+      FETCH cr_craplpp INTO rw_craplpp;
+      IF cr_craplpp%FOUND THEN
+        vr_vllan150 := vr_vllan150 + rw_craplpp.vllan150;
+        vr_vllan152 := vr_vllan152 + rw_craplpp.vllan152;
+        vr_vllan158 := vr_vllan158 + rw_craplpp.vllan158;
+        vr_vllan925 := vr_vllan925 + rw_craplpp.vllan925;
+      END IF;
+      CLOSE cr_craplpp;
+    
+    END IF; 
 
     -- Calcula o saldo da poupança programada
     vr_vlsdrdpp := vr_vlsdrdpp + vr_vllan150 - vr_vllan158 - vr_vllan925;
@@ -5627,6 +5790,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                                          ,pr_cdinsenc  => 5            --> Codigo da insenção
                                          ,pr_vlinsenc  => TRUNC((vr_vlrentot *
                                                                  vr_percenir / 100),2)--> Valor insento
+                                         ,pr_inpessoa  => pr_inpessoa  --> Tipo de pessoa da conta
+                                         ,pr_nrcpfcgc  => pr_nrcpfcgc  --> Número do CPF/CNPJ
                                          ,pr_flgimune  => vr_flgimune  --> Identificador se é imune
                                          ,pr_dsreturn  => vr_des_reto  --> Descricao Critica
                                          ,pr_tab_erro  => vr_tab_erro);--> Tabela erros
@@ -6493,7 +6658,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
     when vr_exc_erro THEN
       pr_cdcritic := nvl(pr_cdcritic,0);
       pr_des_erro := vr_des_erro;
-    when others then
+    when others THEN
+
+      pc_internal_exception(3);
+
       pr_cdcritic := 0;
       pr_des_erro := 'Erro ao fazer o cálculo da poupança para a conta '||rw_craprpp.nrdconta||': '||sqlerrm;
   end pc_calc_poupanca;
@@ -6849,6 +7017,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                                  ,pr_flggrvir    IN BOOLEAN DEFAULT FALSE        --> Identificador se deve gravar valor insento
                                  ,pr_dtinitax    IN craprda.dtmvtolt%TYPE        --> Data Inicial da Utilizacao da taxa da poupanca
                                  ,pr_dtfimtax    IN craprda.dtmvtolt%TYPE        --> Data Final da Utilizacao da taxa da poupanca
+                                 ,pr_inpessoa    IN crapass.inpessoa%TYPE DEFAULT 0 --> Tipo de pessoa
+                                 ,pr_nrcpfcgc    IN crapass.nrcpfcgc%TYPE DEFAULT 0 --> Número do CPF/CNPJ
                                  ,pr_vlsddrgt    OUT NUMBER                      --> Valor do resgate total sem irrf ou o solicitado
                                  ,pr_vlrenrgt    OUT NUMBER                      --> Rendimento total a ser pago quando resgate total
                                  ,pr_vlrdirrf    OUT NUMBER                      --> IRRF do que foi solicitado
@@ -7311,6 +7481,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                                             ,pr_cdinsenc  => 5            --> Codigo da insenção
                                             ,pr_vlinsenc  => TRUNC((pr_vlrenrgt *
                                                                     pr_perirrgt / 100),2)--> Valor insento
+                                            ,pr_inpessoa  => pr_inpessoa
+                                            ,pr_nrcpfcgc  => pr_nrcpfcgc
                                             ,pr_flgimune  => vr_flgimune  --> Identificador se é imune
                                             ,pr_dsreturn  => pr_des_reto  --> Descricao Critica
                                             ,pr_tab_erro  => pr_tab_erro);--> Tabela erros
@@ -7380,6 +7552,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                                        ,pr_perirrgt   IN NUMBER                        --> Percentual aplicado
                                        ,pr_dtinitax   IN craprda.dtmvtolt%TYPE         --> Data Inicial da Utilizacao da taxa da poupanca
                                        ,pr_dtfimtax   IN craprda.dtmvtolt%TYPE         --> Data Final da Utilizacao da taxa da poupanca
+                                       ,pr_inpessoa   IN crapass.inpessoa%TYPE DEFAULT 0 --> Tipo de pessoa
+                                       ,pr_nrcpfcgc   IN crapass.nrcpfcgc%TYPE DEFAULT 0 --> Número do CPF/CNPJ
                                        ,pr_vlbasrgt   OUT NUMBER                       --> Valor resgatado
                                        ,pr_des_reto   OUT VARCHAR                      --> Indicador de saida com erro (OK/NOK)
                                        ,pr_tab_erro   OUT GENE0001.typ_tab_erro ) IS   --> Tabela com erros
@@ -7753,6 +7927,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                                            ,pr_flgrvvlr  => FALSE          --> Identificador se deve gravar valor
                                            ,pr_cdinsenc  => 0              --> Codigo da insenção
                                            ,pr_vlinsenc  => 0              --> Valor insento
+                                           ,pr_inpessoa  => pr_inpessoa
+                                           ,pr_nrcpfcgc  => pr_nrcpfcgc
                                            ,pr_flgimune  => vr_flgimune    --> Identificador se é imune
                                            ,pr_dsreturn  => pr_des_reto    --> Descricao Critica
                                            ,pr_tab_erro  => pr_tab_erro);  --> Tabela erros
@@ -8523,16 +8699,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
   END pc_provisao_rdc_pos;
 
   /* Gerar extrato RDC */
-  PROCEDURE pc_extrato_rdc (pr_cdcooper          IN crapcop.cdcooper%TYPE                   --> Codigo cooperativa
-                           ,pr_cdagenci          IN crapass.cdagenci%TYPE                   --> Codigo da agencia
-                           ,pr_nrdcaixa          IN craperr.nrdcaixa%TYPE                   --> Numero do caixa
-                           ,pr_nrctaapl          IN craprda.nrdconta%TYPE                   --> Numero de conta
-                           ,pr_nraplres          IN craprda.nraplica%TYPE                   --> Numero da aplicacao
-                           ,pr_dtiniper          IN craprda.dtiniper%TYPE                   --> Data inicial do periodo
-                           ,pr_dtfimper          IN craprda.dtfimper%TYPE                   --> Data final do periodo
-                           ,pr_typ_tab_extr_rdc  OUT typ_tab_extr_rdc                       --> TEMP TABLE de extrato
-                           ,pr_des_reto          OUT VARCHAR                                --> Indicador de saida com erro (OK/NOK)
-                           ,pr_tab_erro          OUT GENE0001.typ_tab_erro ) IS             --> Tabela com erros
+  PROCEDURE pc_extrato_rdc (pr_cdcooper          IN crapcop.cdcooper%TYPE           --> Codigo cooperativa
+                           ,pr_cdagenci          IN crapass.cdagenci%TYPE           --> Codigo da agencia
+                           ,pr_nrdcaixa          IN craperr.nrdcaixa%TYPE           --> Numero do caixa
+                           ,pr_nrctaapl          IN craprda.nrdconta%TYPE           --> Numero de conta
+                           ,pr_nraplres          IN craprda.nraplica%TYPE           --> Numero da aplicacao
+                           ,pr_dtiniper          IN craprda.dtiniper%TYPE           --> Data inicial do periodo
+                           ,pr_dtfimper          IN craprda.dtfimper%TYPE           --> Data final do periodo
+                           ,pr_inpessoa          IN crapass.inpessoa%TYPE DEFAULT 0 --> Tipo de pessoa
+                           ,pr_nrcpfcgc          IN crapass.nrcpfcgc%TYPE DEFAULT 0 --> Número do CPF/CNPJ
+                           ,pr_typ_tab_extr_rdc  OUT typ_tab_extr_rdc               --> TEMP TABLE de extrato
+                           ,pr_des_reto          OUT VARCHAR                        --> Indicador de saida com erro (OK/NOK)
+                           ,pr_tab_erro          OUT GENE0001.typ_tab_erro ) IS     --> Tabela com erros
   --  .......................................................................................
   --
   -- Programa: pc_extrato_rdc - Antiga b1wgen0004.extrato_rdc
@@ -8623,6 +8801,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       /* Procedure para verificar periodo de imunidade tributaria */
       IMUT0001.pc_verifica_periodo_imune( pr_cdcooper => pr_cdcooper  --> Codigo Cooperativa
                                          ,pr_nrdconta => pr_nrctaapl  --> Numero da Conta
+                                         ,pr_inpessoa => pr_inpessoa
+                                         ,pr_nrcpfcgc => pr_nrcpfcgc
                                          ,pr_flgimune => vr_flgimune  --> Identificador se é imune
                                          ,pr_dtinicio => vr_dtiniimu  --> Data de inicio da imunidade
                                          ,pr_dttermin => vr_dtfimimu  --> Data termino da imunidadeValor insento
@@ -12264,30 +12444,50 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                                       
      .............................................................................*/
 
-    -- Cursor sobre o cadastro de aplicacoes RDCA.
-    CURSOR cr_craprda IS
-      SELECT insaqtot,
-             nraplica,
-             tpaplica,
-             vlsdrdca,
-             dtmvtolt,
-             cdagenci,
-             cdbccxlt,
-             nrdolote,
-             inaniver,
-             dtfimper,
-             qtdiauti,
-             tpnomapl,
-             vlaplica,
-             cdoperad,
-             qtdiaapl,
-             dtvencto,
-             dtiniper
-        FROM craprda
+    CURSOR cr_craprda(pr_cdcooper IN crapcop.cdcooper%TYPE
+                     ,pr_nrdconta IN crapass.nrdconta%TYPE
+                     ,pr_nraplica IN craprda.nraplica%TYPE)IS
+      SELECT craprda.insaqtot,
+             craprda.nraplica,
+             craprda.tpaplica,
+             craprda.vlsdrdca,
+             craprda.dtmvtolt,
+             craprda.cdagenci,
+             craprda.cdbccxlt,
+             craprda.nrdolote,
+             craprda.inaniver,
+             craprda.dtfimper,
+             craprda.qtdiauti,
+             craprda.tpnomapl,
+             craprda.vlaplica,
+             craprda.cdoperad,
+             craprda.qtdiaapl,
+             craprda.dtvencto,
+             craprda.dtiniper,
+             craplap.txaplica,
+             craplap.txaplmes,
+             craprda.vlsltxmm,
+             craprda.dtatslmm,
+             craprda.vlsltxmx,
+             craprda.dtatslmx,
+             craprda.nrdconta
+        FROM craprda,
+             craplap
        WHERE craprda.cdcooper = pr_cdcooper
          AND craprda.nrdconta = pr_nrdconta
          AND craprda.nraplica = decode(pr_nraplica,0,craprda.nraplica,pr_nraplica) -- Se for informado aplicacao buscar somente esta
+         AND craplap.cdcooper = craprda.cdcooper 
+         AND craplap.dtmvtolt = craprda.dtmvtolt
+         AND craplap.cdagenci = craprda.cdagenci
+         AND craplap.cdbccxlt = craprda.cdbccxlt
+         AND craplap.nrdolote = craprda.nrdolote
+         AND craplap.nrdconta = craprda.nrdconta 
+         AND craplap.nrdocmto = craprda.nraplica
        ORDER BY dtmvtolt, nraplica;
+
+    TYPE typ_rec_craprda IS TABLE OF cr_craprda%ROWTYPE
+      INDEX BY PLS_INTEGER;
+    vr_tab_craprda typ_rec_craprda;
 
     -- Cursor sobre o cadastro dos lancamentos de aplicacoes RDCA.
     CURSOR cr_craplap_2(pr_nraplica craplap.nraplica%TYPE) IS
@@ -12310,25 +12510,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
          AND crapdtc.tpaplica = pr_tpaplica;
     rw_crapdtc cr_crapdtc%ROWTYPE;
 
-    -- Cursor sobre o cadastro dos lancamentos de aplicacoes RDCA.
-    CURSOR cr_craplap(pr_dtmvtolt craplap.dtmvtolt%TYPE,
-                      pr_cdagenci craplap.cdagenci%TYPE,
-                      pr_cdbccxlt craplap.cdbccxlt%TYPE,
-                      pr_nrdolote craplap.nrdolote%TYPE,
-                      pr_nrdconta craplap.nrdconta%TYPE,
-                      pr_nraplica craplap.nraplica%TYPE) IS
-      SELECT txaplica,
-             txaplmes
-        FROM craplap
-       WHERE craplap.cdcooper = pr_cdcooper
-         AND craplap.dtmvtolt = pr_dtmvtolt
-         AND craplap.cdagenci = pr_cdagenci
-         AND craplap.cdbccxlt = pr_cdbccxlt
-         AND craplap.nrdolote = pr_nrdolote
-         AND craplap.nrdconta = pr_nrdconta
-         AND craplap.nraplica = pr_nraplica
-       ORDER BY cdcooper, dtmvtolt, cdagenci, cdbccxlt, nrdolote, nrdconta, nrdocmto;
-    rw_craplap cr_craplap%ROWTYPE;
+
 
     -- Cursor sobre o cadastro dos lancamentos de resgates solicitados.
     CURSOR cr_craplrg(pr_nraplica craplrg.nraplica%TYPE,
@@ -12384,6 +12566,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
 
     -- Definicao do tipo para a tabela de datas
     rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+
+	-- Definicao do tipo para a tabela de aplicações
+    vr_craprda apli0001.typ_tab_craprda;
 
     -- Variaveis gerais
     vr_dtinitax DATE;
@@ -12471,8 +12656,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                               ,pr_nrdconta => pr_nrdconta
                               ,pr_tab_cta_bloq => vr_tab_craptab);
 
-    FOR rw_craprda IN cr_craprda LOOP
-      IF UPPER(pr_cdprogra) NOT IN ('EXTRDA','IMPRES','ADITIV') AND rw_craprda.insaqtot <> 0 THEN
+    -- Carregar PL Table com dados da tabela CRAPRDA
+    OPEN cr_craprda(pr_cdcooper => pr_cdcooper
+                   ,pr_nrdconta => pr_nrdconta 
+                   ,pr_nraplica => pr_nraplica);
+    LOOP
+      FETCH cr_craprda BULK COLLECT INTO vr_tab_craprda LIMIT 100000;
+            
+      EXIT WHEN vr_tab_craprda.COUNT = 0;
+
+      FOR idx IN vr_tab_craprda.first..vr_tab_craprda.last LOOP
+              
+        --Limpa a tabela
+        vr_craprda.delete;
+              
+        --Alimenta PLTABLE com as informações da aplicação
+        vr_craprda(1).dtvencto:= vr_tab_craprda(idx).dtvencto;
+        vr_craprda(1).dtmvtolt:= vr_tab_craprda(idx).dtmvtolt;
+        vr_craprda(1).vlsdrdca:= vr_tab_craprda(idx).vlsdrdca;
+        vr_craprda(1).qtdiauti:= vr_tab_craprda(idx).qtdiauti;
+        vr_craprda(1).vlsltxmm:= vr_tab_craprda(idx).vlsltxmm;
+        vr_craprda(1).dtatslmm:= vr_tab_craprda(idx).dtatslmm;
+        vr_craprda(1).vlsltxmx:= vr_tab_craprda(idx).vlsltxmx;
+        vr_craprda(1).dtatslmx:= vr_tab_craprda(idx).dtatslmx;
+        vr_craprda(1).txaplica:= vr_tab_craprda(idx).txaplica;
+        vr_craprda(1).txaplmes:= vr_tab_craprda(idx).txaplmes;
+        
+        IF UPPER(pr_cdprogra) NOT IN ('EXTRDA','IMPRES','ADITIV') AND vr_tab_craprda(idx).insaqtot <> 0 THEN
         continue; -- Vai para o proximo registro
       END IF;
 
@@ -12483,7 +12693,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
          pr_dtinicio IS NOT NULL AND
          pr_dtfim    IS NOT NULL THEN
         -- Busca sobre o cadastro dos lancamentos de aplicacoes RDCA.
-        OPEN cr_craplap_2(rw_craprda.nraplica);
+        OPEN cr_craplap_2(vr_tab_craprda(idx).nraplica);
         FETCH cr_craplap_2 INTO rw_craplap_2;
 
         IF cr_craplap_2%NOTFOUND THEN -- Se nao encontrou registro
@@ -12497,7 +12707,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       vr_txaplmax := '';
       vr_txaplmin := '';
 
-      IF rw_craprda.tpaplica = 3  AND  -- RDCA30
+     IF vr_tab_craprda(idx).tpaplica = 3  AND  -- RDCA30
          pr_tpaplica IN (0,1) THEN  /** RDCA **/
         -- Consulta saldo aplicacao RDCA30
         APLI0001.pc_consul_saldo_aplic_rdca30(pr_cdcooper => pr_cdcooper,     --> Cooperativa
@@ -12509,7 +12719,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                                               pr_cdagenci     => pr_cdagenci,         --> Codigo da agencia
                                               pr_nrdcaixa     => pr_nrdcaixa,         --> Numero do caixa
                                               pr_nrdconta     => pr_nrdconta,         --> Nro da conta da aplicacao RDCA
-                                              pr_nraplica     => rw_craprda.nraplica, --> Nro da aplicacao RDCA
+                                              pr_nraplica     => vr_tab_craprda(idx).nraplica, --> Nro da aplicacao RDCA
                                               pr_vlsdrdca     => vr_vlsdrdca,         --> Saldo da aplicacao
                                               pr_dup_vlsdrdca => vr_dup_vlsdrdca,     --> Acumulo do saldo da aplicacao RDCA
                                               pr_vlsldapl => vr_vlsldapl,             --> Saldo da aplicacao RDCA
@@ -12522,7 +12732,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         IF pr_des_reto = 'NOK' THEN
           RAISE vr_exc_erro;
         END IF;
-      ELSIF rw_craprda.tpaplica = 5  AND -- RDCA60
+      ELSIF vr_tab_craprda(idx).tpaplica = 5  AND -- RDCA60
             pr_tpaplica IN (0, 1) THEN /** RDCA **/
         -- Consulta saldo aplicacao RDCA60
         pc_consul_saldo_aplic_rdca60(pr_cdcooper => pr_cdcooper,
@@ -12532,7 +12742,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                                      pr_cdagenci => pr_cdagenci,
                                      pr_nrdcaixa => pr_nrdcaixa,
                                      pr_nrdconta => pr_nrdconta,
-                                     pr_nraplica => rw_craprda.nraplica,
+                                     pr_nraplica => vr_tab_craprda(idx).nraplica,
                                      pr_vlsdrdca => vr_vlsdrdca,  --> Saida
                                      pr_sldpresg => vr_sldpresg,  --> Saida
                                      pr_des_reto => pr_des_reto,  --> Saida
@@ -12542,7 +12752,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         END IF;
       ELSIF pr_tpaplica IN (0, 2)THEN  /** RDC **/
         -- Busca a descricao dos varios tipos de captacao oferecidas para o cooperado.
-        OPEN cr_crapdtc(rw_craprda.tpaplica);
+        OPEN cr_crapdtc(vr_tab_craprda(idx).tpaplica);
         FETCH cr_crapdtc INTO rw_crapdtc;
 
         IF cr_crapdtc%NOTFOUND THEN -- Se nao encontrou registro
@@ -12561,7 +12771,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
           -- Rotina de calculo do saldo das aplicacoes RDC PRE para resgate
           pc_saldo_rdc_pre(pr_cdcooper => pr_cdcooper,
                            pr_nrdconta => pr_nrdconta,
-                           pr_nraplica => rw_craprda.nraplica,
+                           pr_nraplica => vr_tab_craprda(idx).nraplica,
                            pr_dtmvtolt => vr_dtmvtolt,
                            pr_dtiniper => NULL,
                            pr_dtfimper => NULL,
@@ -12576,21 +12786,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
           IF pr_des_reto = 'NOK' THEN
             RAISE vr_exc_erro;
           END IF;
-          vr_sldpresg := rw_craprda.vlsdrdca;
+          vr_sldpresg := vr_tab_craprda(idx).vlsdrdca;
 
         ELSIF rw_crapdtc.tpaplrdc = 2 THEN
           -- Rotina de calculo do saldo das aplicacoes RDC POS
           pc_saldo_rdc_pos(pr_cdcooper => pr_cdcooper,         --> Cooperativa
                            pr_dtmvtolt => rw_crapdat.dtmvtolt, --> Movimento atual
                            pr_dtmvtopr => rw_crapdat.dtmvtopr, --> Proximo dia util
-                           pr_nrdconta => pr_nrdconta,         --> Nro da conta da aplicacao RDC
-                           pr_nraplica => rw_craprda.nraplica, --> Nro da aplicacao RDC
+                           pr_nrdconta => vr_tab_craprda(idx).nrdconta, --> Numero da conta da aplicação
+                           pr_craprda  => vr_craprda,          --> Contem informações da aplicação
                            pr_dtmvtpap => vr_dtmvtolt,         --> Data do movimento atual passado
                            pr_dtcalsld => vr_dtmvtolt,         --> Data do movimento atual passado
                            pr_flantven => FALSE,               --> Flag antecede vencimento
                            pr_flggrvir => FALSE,               --> Identificador se deve gravar valor insento
                            pr_dtinitax => vr_dtinitax,         --> Data de inicio da utilizacao da taxa de poupanca.
                            pr_dtfimtax => vr_dtfimtax,         --> Data de fim da utilizacao da taxa de poupanca.
+                           pr_cdprogra => pr_cdprogra,          --> Código do programa
                            pr_vlsdrdca => vr_vlsdrdca,         --> Saldo da aplicacao pos calculo
                            pr_vlrentot => vr_vlrentot,         --> Saldo da aplicacao pos calculo
                            pr_vlrdirrf => vr_vlrdirrf,         --> Valor de IR
@@ -12606,7 +12817,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                                        ,pr_cdagenci => pr_cdagenci         --> Codigo da agencia
                                        ,pr_nrdcaixa => pr_nrdcaixa         --> Numero do caixa
                                        ,pr_nrctaapl => pr_nrdconta         --> Nro da conta da aplicacao RDC
-                                       ,pr_nraplres => rw_craprda.nraplica --> Nro da aplicacao RDC
+                                       ,pr_nraplres => vr_tab_craprda(idx).nraplica --> Nro da aplicacao RDC
                                        ,pr_dtmvtolt => vr_dtmvtolt         --> Data do movimento atual passado
                                        ,pr_dtaplrgt => vr_dtmvtolt         --> Data do movimento atual passado
                                        ,pr_vlsdorgt => 0                   --> Valor RDC
@@ -12630,53 +12841,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
           IF vr_vlrrgtot > 0 THEN
             vr_sldpresg := vr_vlrrgtot;
           ELSE
-            vr_sldpresg := rw_craprda.vlsdrdca;
+            vr_sldpresg := vr_tab_craprda(idx).vlsdrdca;
           END IF;
 
-          /** Procurar taxas da aplicacao **/
-          OPEN cr_craplap(rw_craprda.dtmvtolt,
-                          rw_craprda.cdagenci,
-                          rw_craprda.cdbccxlt,
-                          rw_craprda.nrdolote,
-                          pr_nrdconta,
-                          rw_craprda.nraplica);
-          FETCH cr_craplap INTO rw_craplap;
+          vr_txaplmax := lpad(to_char(NVL(vr_tab_craprda(idx).txaplica, '0'), 'fm990D000000'), 10, ' ');
+          vr_txaplmin := lpad(to_char(NVL(vr_tab_craprda(idx).txaplmes, '0'), 'fm990D000000'), 10, ' ');
 
-          IF cr_craplap%NOTFOUND THEN
-            CLOSE cr_craplap;
-            -- Chamar rotina de gravacao de erro
-            gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
-                                 ,pr_cdagenci => pr_cdagenci
-                                 ,pr_nrdcaixa => pr_nrdcaixa
-                                 ,pr_nrsequen => 1 --> Fixo
-                                 ,pr_cdcritic => 90 --> Critica 90 - Lancamento inexistente
-                                 ,pr_dscritic => vr_dscritic
-                                 ,pr_tab_erro => pr_tab_erro);
-            RAISE vr_exc_erro;
-          END IF;
-          CLOSE cr_craplap;
-
-          vr_txaplmax := lpad(to_char(NVL(rw_craplap.txaplica, '0'), 'fm990D000000'), 10, ' ');
-          vr_txaplmin := lpad(to_char(NVL(rw_craplap.txaplmes, '0'), 'fm990D000000'), 10, ' ');
+          
         END IF;
       ELSIF UPPER(pr_cdprogra) <> 'EXTRDA' THEN
         continue;
       END IF;
 
       IF UPPER(pr_cdprogra) NOT IN ('EXTRDA', 'IMPRES', 'ADITIV') AND
-          ((vr_vlsdrdca <= 0 AND rw_craprda.tpaplica = 5) OR -- RDCA60
-           (vr_vlsdrdca <= 0 AND rw_craprda.tpaplica = 3) OR     -- RDCA30
-           (vr_vlsdrdca <= 0 AND rw_craprda.tpaplica <> 3 AND
-            rw_craprda.tpaplica <> 5))                     THEN
+          ((vr_vlsdrdca <= 0 AND vr_tab_craprda(idx).tpaplica = 5) OR -- RDCA60
+           (vr_vlsdrdca <= 0 AND vr_tab_craprda(idx).tpaplica = 3) OR     -- RDCA30
+           (vr_vlsdrdca <= 0 AND vr_tab_craprda(idx).tpaplica <> 3 AND
+            vr_tab_craprda(idx).tpaplica <> 5))                     THEN
          CONTINUE;
       END IF;                
 
 
       IF UPPER(pr_cdprogra) NOT IN ('EXTRDA', 'IMPRES', 'ADITIV') AND
-         (vr_vlsdrdca <= 0 AND rw_craprda.tpaplica = 3)    THEN --RDCA30
+         (vr_vlsdrdca <= 0 AND vr_tab_craprda(idx).tpaplica = 3)    THEN --RDCA30
 
         /** Nao foi resgatado no dia **/
-        OPEN cr_craplrg(rw_craprda.nraplica, rw_crapdat.dtmvtolt);
+        OPEN cr_craplrg(vr_tab_craprda(idx).nraplica, rw_crapdat.dtmvtolt);
         FETCH cr_craplrg INTO rw_craplrg;
 
         IF cr_craplrg%NOTFOUND THEN -- Se nao encontrou registro
@@ -12692,21 +12882,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
 
       -- Vefificar se a situacao da aplicacao esta bloqueada
       -- Indice composto por "Numero da conta com 12" + "Numero da aplicacao com 8"
-      IF vr_tab_craptab.exists(LPAD(pr_nrdconta,12,'0') || LPAD(rw_craprda.nraplica, 8,'0')) THEN
+      IF vr_tab_craptab.exists(LPAD(pr_nrdconta,12,'0') || LPAD(vr_tab_craprda(idx).nraplica, 8,'0')) THEN
         vr_indebcre := 'B';  -- Bloqueada
       ELSE
-        IF rw_craprda.tpaplica = 3 THEN -- RDCA30
-          IF rw_craprda.inaniver = 1 OR -- Completou 1 mes
-            (rw_craprda.inaniver  = 0 AND -- Nao completou 1 mes
-             rw_craprda.dtfimper <= rw_crapdat.dtmvtolt) THEN
+        IF vr_tab_craprda(idx).tpaplica = 3 THEN -- RDCA30
+           IF vr_tab_craprda(idx).inaniver = 1 OR -- Completou 1 mes
+             (vr_tab_craprda(idx).inaniver  = 0 AND -- Nao completou 1 mes
+              vr_tab_craprda(idx).dtfimper <= rw_crapdat.dtmvtolt) THEN
             vr_indebcre := 'D';  -- Disponivel
           ELSE
             vr_indebcre := ' ';
           END IF;
-        ELSIF rw_craprda.tpaplica = 5 THEN -- RDCA60
-          IF  rw_craprda.inaniver  = 1                      OR -- Completou 60 dias
-            ((rw_craprda.dtfimper <= rw_crapdat.dtmvtolt)      AND
-             (rw_craprda.dtfimper -  rw_craprda.dtmvtolt) > 50) THEN
+         ELSIF vr_tab_craprda(idx).tpaplica = 5 THEN -- RDCA60
+           IF  vr_tab_craprda(idx).inaniver  = 1                      OR -- Completou 60 dias
+             ((vr_tab_craprda(idx).dtfimper <= rw_crapdat.dtmvtolt)      AND
+              (vr_tab_craprda(idx).dtfimper -  vr_tab_craprda(idx).dtmvtolt) > 50) THEN
             vr_indebcre := 'D';
           ELSE
             vr_indebcre := ' ';
@@ -12720,39 +12910,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       vr_dtresgat := NULL;
 
       -- busca o cadastro dos lancamentos de resgates solicitados.
-      OPEN cr_craplrg_2(rw_craprda.tpaplica, rw_craprda.nraplica, rw_crapdat.dtmvtolt);
+      OPEN cr_craplrg_2(vr_tab_craprda(idx).tpaplica, vr_tab_craprda(idx).nraplica, rw_crapdat.dtmvtolt);
       FETCH cr_craplrg_2 INTO vr_cddresga, vr_dtresgat;
       CLOSE cr_craplrg_2;
 
       -- Variavel com valor default de dias de aplicacao
-      vr_qtdiauti := rw_craprda.qtdiauti;
+      vr_qtdiauti := vr_tab_craprda(idx).qtdiauti;
       
       IF pr_nrorigem IN (1,5,3) THEN  /** Ayllos e InternetBank**/
         IF UPPER(pr_cdprogra) = 'ATENDA' OR 
            UPPER(pr_cdprogra) = 'IMPRES' OR 
            UPPER(pr_cdprogra) = 'INTERNETBANK'  THEN
           -- Verifica tipo aplicacao
-          IF rw_craprda.tpaplica IN (3,5,8) THEN
+          IF vr_tab_craprda(idx).tpaplica IN (3,5,8) THEN
             -- Quantidade de dias uteis da aplicacao 
-            vr_qtdiauti := rw_craprda.qtdiauti;
+            vr_qtdiauti := vr_tab_craprda(idx).qtdiauti;
           ELSE
             -- Se for RDCPRE alimenta os dias corridos da aplicacao
-            vr_qtdiauti := rw_craprda.qtdiaapl;
+            vr_qtdiauti := vr_tab_craprda(idx).qtdiaapl;
           END IF;
         END IF;
-        IF rw_craprda.tpaplica = 3  THEN -- RDCA30
+        IF vr_tab_craprda(idx).tpaplica = 3  THEN -- RDCA30
           vr_dshistor := 'RDCA   ';
           vr_dsaplica := vr_dshistor;
-        ELSIF rw_craprda.tpaplica = 5 THEN -- RDCA60
+        ELSIF vr_tab_craprda(idx).tpaplica = 5 THEN -- RDCA60
           vr_dshistor := 'RDCA60 ';
           vr_dsaplica := vr_dshistor;
         ELSIF rw_crapdtc.tpaplrdc = 2  THEN /** RDCPOS **/
-          vr_dshistor := 'RDC' || to_char(rw_craprda.qtdiauti,'fm0000');
+          vr_dshistor := 'RDC' || to_char(vr_tab_craprda(idx).qtdiauti,'fm0000');
           vr_dsaplica := rw_crapdtc.dsaplica;
 
           IF UPPER(pr_cdprogra) = 'ATENDA' THEN
             -- Abre o cursor que contem a descricao dos varios tipos de captacao oferecidas para o cooperado.
-            OPEN cr_crapdtc_2(rw_craprda.tpnomapl);
+            OPEN cr_crapdtc_2(vr_tab_craprda(idx).tpnomapl);
             FETCH cr_crapdtc_2 INTO rw_crapdtc_2;
 
             IF cr_crapdtc_2%FOUND THEN
@@ -12766,10 +12956,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         END IF;
 
       ELSE
-        IF rw_craprda.tpaplica = 3  THEN -- RDCA30
+        IF vr_tab_craprda(idx).tpaplica = 3  THEN -- RDCA30
           vr_dshistor := 'Apl. RDCA  :';
           vr_dsaplica := 'RDCA';
-        ELSIF rw_craprda.tpaplica = 5  THEN -- RDCA60
+        ELSIF vr_tab_craprda(idx).tpaplica = 5  THEN -- RDCA60
           vr_dshistor := 'Apl. RDCA60:';
           vr_dsaplica := 'RDCA60';
         ELSIF rw_crapdtc.dsaplica = 'RDCPOS' THEN
@@ -12782,12 +12972,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
 
       END IF;
 
-      IF trim(rw_craprda.cdoperad) IS NULL THEN
+      IF trim(vr_tab_craprda(idx).cdoperad) IS NULL THEN
         -- Busca as capas de lote
-        OPEN cr_craplot(rw_craprda.dtmvtolt,
-                        rw_craprda.cdagenci,
-                        rw_craprda.cdbccxlt,
-                        rw_craprda.nrdolote);
+        OPEN cr_craplot(vr_tab_craprda(idx).dtmvtolt,
+                        vr_tab_craprda(idx).cdagenci,
+                        vr_tab_craprda(idx).cdbccxlt,
+                        vr_tab_craprda(idx).nrdolote);
         FETCH cr_craplot INTO rw_craplot;
         IF cr_craplot%FOUND THEN
           vr_cdoperad := trim(rw_craplot.cdoperad);
@@ -12796,7 +12986,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         END IF;
         CLOSE cr_craplot;
       ELSE
-         vr_cdoperad := rw_craprda.cdoperad;
+         vr_cdoperad := vr_tab_craprda(idx).cdoperad;
       END IF;
 
       vr_ind := vr_ind + 1;
@@ -12804,23 +12994,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       pr_saldo_rdca(vr_ind).idtipapl := 'A';
       pr_saldo_rdca(vr_ind).idtippro := rw_crapdtc.tpaplrdc;
       -- Insere a aplicacao na temp-table de retorno
-      pr_saldo_rdca(vr_ind).dtmvtolt := rw_craprda.dtmvtolt;
-      pr_saldo_rdca(vr_ind).nraplica := rw_craprda.nraplica;
-      pr_saldo_rdca(vr_ind).qtdiaapl := rw_craprda.qtdiaapl;
-      --pr_saldo_rdca(vr_ind).qtdiauti := rw_craprda.qtdiauti;
+      pr_saldo_rdca(vr_ind).dtmvtolt := vr_tab_craprda(idx).dtmvtolt;
+      pr_saldo_rdca(vr_ind).nraplica := vr_tab_craprda(idx).nraplica;
+      pr_saldo_rdca(vr_ind).qtdiaapl := vr_tab_craprda(idx).qtdiaapl;
+      --pr_saldo_rdca(vr_ind).qtdiauti := vr_tab_craprda(idx).qtdiauti;
       pr_saldo_rdca(vr_ind).qtdiauti := vr_qtdiauti;
-      pr_saldo_rdca(vr_ind).vlaplica := rw_craprda.vlaplica;
+      pr_saldo_rdca(vr_ind).vlaplica := vr_tab_craprda(idx).vlaplica;
       pr_saldo_rdca(vr_ind).dsaplica := vr_dsaplica;
       pr_saldo_rdca(vr_ind).cdoperad := vr_cdoperad;
       pr_saldo_rdca(vr_ind).dshistor := vr_dshistor;
-      pr_saldo_rdca(vr_ind).dtvencto := rw_craprda.dtvencto;
-      pr_saldo_rdca(vr_ind).dtcarenc := rw_craprda.dtiniper + vr_qtdiauti; 
+      pr_saldo_rdca(vr_ind).dtvencto := vr_tab_craprda(idx).dtvencto;
+      pr_saldo_rdca(vr_ind).dtcarenc := vr_tab_craprda(idx).dtiniper + vr_qtdiauti; 
 
       -- Define a mascara do numedo do documento
       IF pr_nrorigem = 1 THEN /** Ayllos **/
-        pr_saldo_rdca(vr_ind).nrdocmto := lpad(to_char(rw_craprda.nraplica,'fm999990'),6,' ');
+        pr_saldo_rdca(vr_ind).nrdocmto := lpad(to_char(vr_tab_craprda(idx).nraplica,'fm999990'),6,' ');
       ELSE
-        pr_saldo_rdca(vr_ind).nrdocmto := lpad(to_char(rw_craprda.nraplica,'fm999G990'),7,' ');
+        pr_saldo_rdca(vr_ind).nrdocmto := lpad(to_char(vr_tab_craprda(idx).nraplica,'fm999G990'),7,' ');
       END IF;
 
       -- Define a situacao da aplicacao
@@ -12834,7 +13024,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
 
       pr_saldo_rdca(vr_ind).vllanmto := vr_vlsdrdca;
 
-      IF rw_craprda.tpaplica = 3 THEN -- RDCA30
+      IF vr_tab_craprda(idx).tpaplica = 3 THEN -- RDCA30
         pr_saldo_rdca(vr_ind).vlsdrdad := vr_dup_vlsdrdca;
       ELSE
         pr_saldo_rdca(vr_ind).vlsdrdad := vr_vlsdrdca;
@@ -12845,7 +13035,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       pr_saldo_rdca(vr_ind).dtresgat := vr_dtresgat;
       pr_saldo_rdca(vr_ind).txaplmax := vr_txaplmax;
       pr_saldo_rdca(vr_ind).txaplmin := vr_txaplmin;
-      pr_saldo_rdca(vr_ind).tpaplica := rw_craprda.tpaplica;
+      pr_saldo_rdca(vr_ind).tpaplica := vr_tab_craprda(idx).tpaplica;
 
       pr_saldo_rdca(vr_ind).tpaplrdc := nvl(rw_crapdtc.tpaplrdc,0);
 
@@ -12868,6 +13058,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       END IF;
 
     END LOOP; /*** Fim do LOOP craprda ***/
+
+	END LOOP;
+          
+    CLOSE cr_craprda;
+
+    vr_tab_craprda.delete; -- limpa dados do bulk ja armazenado em outra pl table
 
     pr_des_reto := 'OK';
   EXCEPTION

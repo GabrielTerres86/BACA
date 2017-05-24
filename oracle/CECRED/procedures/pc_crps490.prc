@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps490(pr_cdcooper IN crapcop.cdcooper%TY
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : David
-       Data    : Julho/2007                      Ultima atualizacao: 05/09/2014
+       Data    : Julho/2007                      Ultima atualizacao: 22/03/2017
 
        Dados referentes ao programa:
 
@@ -53,6 +53,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps490(pr_cdcooper IN crapcop.cdcooper%TY
 
                    05/09/2014 - #187032 Correção da verificação de feriados e
                                 geração do relatório para a última agência (Carlos)
+
+                   22/03/2017 - #455742 Ajuste de passagem dos parâmetros inpessoa e nrcpfcgc para não
+                                consultar novamente o associado no pkg apli0001 (Carlos)
 
     ............................................................................ */
 
@@ -103,6 +106,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps490(pr_cdcooper IN crapcop.cdcooper%TY
       vr_clobtam        PLS_INTEGER;
       vr_contador       PLS_INTEGER := 0;
 
+	  -- Definicao do tipo para a tabela de aplicações
+      vr_craprda apli0001.typ_tab_craprda;
+
       ------------------------------- CURSORES ---------------------------------
       -- Buscar dados da cooperativa
       CURSOR cr_crapcop IS
@@ -130,11 +136,23 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps490(pr_cdcooper IN crapcop.cdcooper%TY
               ,ass.cdagenci
               ,ass.inpessoa
               ,ass.nmprimtl
+              ,ass.nrcpfcgc
               ,row_number() over (partition by ass.cdagenci order by ass.cdagenci) nrseqreg
               ,count(1)     over (partition by ass.cdagenci) nrtotreg
               ,LAG(ass.cdagenci) OVER(ORDER BY ass.cdagenci) prev_cdagenci
               ,LEAD(ass.cdagenci) OVER(ORDER BY ass.cdagenci) post_cdagenci
-        FROM crapdtc dtc, craprda rda, crapass ass
+              ,lap.txaplica
+              ,lap.txaplmes
+              ,rda.vlsdrdca
+              ,rda.qtdiauti
+              ,rda.vlsltxmm
+              ,rda.dtatslmm
+              ,rda.vlsltxmx
+              ,rda.dtatslmx
+        FROM crapdtc dtc
+            ,craprda rda
+            ,crapass ass
+            ,craplap lap
         WHERE dtc.cdcooper = pr_cdcooper
           AND dtc.tpaplrdc IN (1, 2)
           AND rda.cdcooper = dtc.cdcooper
@@ -144,10 +162,21 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps490(pr_cdcooper IN crapcop.cdcooper%TY
           AND rda.tpaplica = dtc.tpaplica
           AND ass.cdcooper = dtc.cdcooper
           AND ass.nrdconta = rda.nrdconta
+          AND lap.cdcooper = rda.cdcooper 
+          AND lap.dtmvtolt = rda.dtmvtolt
+          AND lap.cdagenci = rda.cdagenci
+          AND lap.cdbccxlt = rda.cdbccxlt
+          AND lap.nrdolote = rda.nrdolote
+          AND lap.nrdconta = rda.nrdconta 
+          AND lap.nrdocmto = rda.nraplica
         ORDER BY ass.cdagenci
                 ,dtc.tpaplrdc
                 ,rda.nrdconta
                 ,rda.nraplica;
+
+      TYPE typ_rec_craprda IS TABLE OF cr_capta%ROWTYPE
+           INDEX BY PLS_INTEGER;
+      vr_tab_craprda typ_rec_craprda;
 
       -- Busca dados das agencias
       CURSOR cr_crapage(pr_cdcooper IN crapage.cdcooper%TYPE) IS
@@ -155,19 +184,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps490(pr_cdcooper IN crapcop.cdcooper%TY
               ,age.cdagenci
         FROM crapage age
         WHERE age.cdcooper = pr_cdcooper;
-
-      -- Busca dados das aplicações RDCA
-      CURSOR cr_craplap(pr_cdcooper IN craplap.cdcooper%TYPE
-                       ,pr_nrdconta IN craplap.nrdconta%TYPE
-                       ,pr_nraplica IN craplap.nraplica%TYPE
-                       ,pr_dtmvtolt IN craplap.dtmvtolt%TYPE) IS
-        SELECT lap.nrdconta
-        FROM craplap lap
-        WHERE lap.cdcooper = pr_cdcooper
-          AND lap.nrdconta = pr_nrdconta
-          AND lap.nraplica = pr_nraplica
-          AND lap.dtmvtolt = pr_dtmvtolt;
-      rw_craplap cr_craplap%ROWTYPE;
 
       -- Busca dados do número de telefone de cada titular de conta e o tipo de telefone cadastrado (residencial e/ou comercial)
       CURSOR cr_craptfc(pr_cdcooper IN craptfc.cdcooper%TYPE) IS
@@ -338,43 +354,46 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps490(pr_cdcooper IN crapcop.cdcooper%TY
                                          ,pr_nmsubdir => '/rl');
 
       -- Buscar tipos de captação por associado
-      FOR rw_capta IN cr_capta(pr_cdcooper, vr_dtvenini, vr_dtvenfim) LOOP
+     -- Carregar PL Table com dados da tabela CRAPRDA
+      OPEN cr_capta(pr_cdcooper, vr_dtvenini, vr_dtvenfim);
+      LOOP
+        FETCH cr_capta BULK COLLECT INTO vr_tab_craprda LIMIT 100000;
+              
+        EXIT WHEN vr_tab_craprda.COUNT = 0;
+
+        FOR idx IN vr_tab_craprda.first..vr_tab_craprda.last LOOP
+                
+          --Limpa a tabela
+          vr_craprda.delete;
+                
+          --Alimenta PLTABLE com as informações da aplicação
+          vr_craprda(1).dtvencto:= vr_tab_craprda(idx).dtvencto;
+          vr_craprda(1).dtmvtolt:= vr_tab_craprda(idx).dtmvtolt;
+          vr_craprda(1).vlsdrdca:= vr_tab_craprda(idx).vlsdrdca;
+          vr_craprda(1).qtdiauti:= vr_tab_craprda(idx).qtdiauti;
+          vr_craprda(1).vlsltxmm:= vr_tab_craprda(idx).vlsltxmm;
+          vr_craprda(1).dtatslmm:= vr_tab_craprda(idx).dtatslmm;
+          vr_craprda(1).vlsltxmx:= vr_tab_craprda(idx).vlsltxmx;
+          vr_craprda(1).dtatslmx:= vr_tab_craprda(idx).dtatslmx;
+          vr_craprda(1).tpaplica:= vr_tab_craprda(idx).tpaplica;          
+          vr_craprda(1).txaplica:= vr_tab_craprda(idx).txaplica;
+          vr_craprda(1).txaplmes:= vr_tab_craprda(idx).txaplmes;
+
         -- Contador de iterações
         vr_contador := vr_contador + 1;
 
         -- Verifica se é o primeiro registro de agencia
-        IF rw_capta.cdagenci <> rw_capta.prev_cdagenci OR vr_contador = 1 THEN
+        IF vr_tab_craprda(idx).cdagenci <> vr_tab_craprda(idx).prev_cdagenci OR vr_contador = 1 THEN
           -- Verifica se existe no cadastro de agencias
-          IF vr_tab_crapage.exists(LPAD(rw_capta.cdagenci, 15, '0')) THEN
-            vr_dsagenci := rw_capta.cdagenci || ' - ' || vr_tab_crapage(LPAD(rw_capta.cdagenci, 15, '0')).nmresage;
+          IF vr_tab_crapage.exists(LPAD(vr_tab_craprda(idx).cdagenci, 15, '0')) THEN
+              vr_dsagenci := vr_tab_craprda(idx).cdagenci || ' - ' || vr_tab_crapage(LPAD(vr_tab_craprda(idx).cdagenci, 15, '0')).nmresage;
           ELSE
-            vr_dsagenci := rw_capta.cdagenci;
+            vr_dsagenci := vr_tab_craprda(idx).cdagenci;
           END IF;
 
           vr_xmlb := vr_xmlb || '<tipo><agencia>' || vr_dsagenci || '</agencia>';
-          vr_xmlb := vr_xmlb || '<texto>--> APLICACOES TIPO ' || rw_capta.tpaplica || ' - ' || rw_capta.dsaplica || '</texto></tipo><regs>';
+          vr_xmlb := vr_xmlb || '<texto>--> APLICACOES TIPO ' || vr_tab_craprda(idx).tpaplica || ' - ' || vr_tab_craprda(idx).dsaplica || '</texto></tipo><regs>';
           gene0002.pc_clob_buffer(pr_dados => vr_xmlb, pr_gravfim => FALSE, pr_clob => vr_xmlc);
-        END IF;
-
-        -- Verificar cadastro das aplicações RDCA
-        OPEN cr_craplap(pr_cdcooper, rw_capta.nrdconta, rw_capta.nraplica, rw_capta.dtmvtolt);
-        FETCH cr_craplap INTO rw_craplap;
-
-        -- Verifica se a tupla retornou erro
-        IF cr_craplap%NOTFOUND THEN
-          CLOSE cr_craplap;
-
-          vr_cdcritic := 90;
-          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-
-          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 2
-                                    ,pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' - ' || vr_cdprogra || ' --> ' || vr_dscritic || ' ' ||
-                                                        TO_CHAR(rw_capta.nrdconta, 'FM9999G999G9') || ' ' || TO_CHAR(rw_capta.nraplica, 'FM999G999')
-                                    ,pr_nmarqlog     => 'PROC_BATCH');
-          CONTINUE;
-        ELSE
-          CLOSE cr_craplap;
         END IF;
 
         -- Apagar PL Table de erros
@@ -384,17 +403,19 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps490(pr_cdcooper IN crapcop.cdcooper%TY
         vr_vlsldrdc := 0;
 
         -- Verificar tipo da conta
-        IF rw_capta.tpaplrdc = 1 THEN
+        IF vr_tab_craprda(idx).tpaplrdc = 1 THEN
           -- Calcular saldo RDC PRE
           apli0001.pc_saldo_rdc_pre(pr_cdcooper => pr_cdcooper
-                                   ,pr_nrdconta => rw_capta.nrdconta
-                                   ,pr_nraplica => rw_capta.nraplica
-                                   ,pr_dtmvtolt => rw_capta.dtvencto
+                                   ,pr_nrdconta => vr_tab_craprda(idx).nrdconta
+                                   ,pr_nraplica => vr_tab_craprda(idx).nraplica
+                                   ,pr_dtmvtolt => vr_tab_craprda(idx).dtvencto
                                    ,pr_dtiniper => NULL
                                    ,pr_dtfimper => NULL
                                    ,pr_txaplica => 0
                                    ,pr_flggrvir => FALSE
                                    ,pr_tab_crapdat => rw_crapdat
+                                   ,pr_inpessoa => vr_tab_craprda(idx).inpessoa
+                                   ,pr_nrcpfcgc => vr_tab_craprda(idx).nrcpfcgc
                                    ,pr_vlsdrdca => vr_vlsldrdc
                                    ,pr_vlrdirrf => vr_vlrdirrf
                                    ,pr_perirrgt => vr_perirrgt
@@ -415,23 +436,26 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps490(pr_cdcooper IN crapcop.cdcooper%TY
             btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                       ,pr_ind_tipo_log => 2
                                       ,pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' - ' || vr_cdprogra || ' --> ' || vr_dscritic || ' ' ||
-                                                          TO_CHAR(rw_capta.nrdconta, 'FM9999G999G9') || ' ' || TO_CHAR(rw_capta.nraplica, 'FM999G999')
+                                                          TO_CHAR(vr_tab_craprda(idx).nrdconta, 'FM9999G999G9') || ' ' || TO_CHAR(vr_tab_craprda(idx).nraplica, 'FM999G999')
                                       ,pr_nmarqlog     => 'PROC_BATCH');
             CONTINUE;
           END IF;
-        ELSIF rw_capta.tpaplrdc = 2 THEN
+        ELSIF vr_tab_craprda(idx).tpaplrdc = 2 THEN
           -- Calcular saldo RDC POS
           apli0001.pc_saldo_rdc_pos(pr_cdcooper => pr_cdcooper
                                    ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                    ,pr_dtmvtopr => rw_crapdat.dtmvtopr
-                                   ,pr_nrdconta => rw_capta.nrdconta
-                                   ,pr_nraplica => rw_capta.nraplica
+                                   ,pr_nrdconta => vr_tab_craprda(idx).nrdconta
+                                   ,pr_craprda  => vr_craprda
                                    ,pr_dtmvtpap => rw_crapdat.dtmvtolt
                                    ,pr_dtcalsld => rw_crapdat.dtmvtolt
                                    ,pr_flantven => FALSE
                                    ,pr_flggrvir => FALSE
                                    ,pr_dtinitax => vr_dtinitax
                                    ,pr_dtfimtax => vr_dtfimtax
+                                   ,pr_cdprogra => vr_cdprogra
+                                   ,pr_inpessoa => vr_tab_craprda(idx).inpessoa
+                                   ,pr_nrcpfcgc => vr_tab_craprda(idx).nrcpfcgc
                                    ,pr_vlsdrdca => vr_vlsldrdc
                                    ,pr_vlrentot => vr_vlrentot
                                    ,pr_vlrdirrf => vr_vlrdirrf
@@ -453,14 +477,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps490(pr_cdcooper IN crapcop.cdcooper%TY
             btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                       ,pr_ind_tipo_log => 2
                                       ,pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' - ' || vr_cdprogra || ' --> ' || vr_dscritic || ' ' ||
-                                                          TO_CHAR(rw_capta.nrdconta, 'FM9999G999G9') || ' ' || TO_CHAR(rw_capta.nraplica, 'FM999G999')
+                                                          TO_CHAR(vr_tab_craprda(idx).nrdconta, 'FM9999G999G9') || ' ' || TO_CHAR(vr_tab_craprda(idx).nraplica, 'FM999G999')
                                       ,pr_nmarqlog     => 'PROC_BATCH');
             CONTINUE;
           END IF;
         END IF;
 
         -- Controlar pelo tipo
-        IF rw_capta.inpessoa = 1 THEN
+        IF vr_tab_craprda(idx).inpessoa = 1 THEN
           vr_tptelefo := 1;
         ELSE
           vr_tptelefo := 3;
@@ -469,31 +493,31 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps490(pr_cdcooper IN crapcop.cdcooper%TY
         -- Limpar conteúdo da variável
         vr_nrramfon := NULL;
 
-        -- Verificar se existe número telefonico
-        IF vr_tab_craptfc.exists(LPAD(rw_capta.nrdconta, 15, '0') || LPAD(vr_tptelefo, 3, '0')) THEN
-          vr_nrramfon := vr_tab_craptfc(LPAD(rw_capta.nrdconta, 15, '0') || LPAD(vr_tptelefo, 3, '0')).nrdddtfc ||
-                         vr_tab_craptfc(LPAD(rw_capta.nrdconta, 15, '0') || LPAD(vr_tptelefo, 3, '0')).nrtelefo;
+        IF vr_tab_craptfc.exists(LPAD(vr_tab_craprda(idx).nrdconta, 15, '0') || LPAD(vr_tptelefo, 3, '0')) THEN
+           vr_nrramfon := vr_tab_craptfc(LPAD(vr_tab_craprda(idx).nrdconta, 15, '0') || LPAD(vr_tptelefo, 3, '0')).nrdddtfc ||
+                          vr_tab_craptfc(LPAD(vr_tab_craprda(idx).nrdconta, 15, '0') || LPAD(vr_tptelefo, 3, '0')).nrtelefo;
         END IF;
 
         -- Gerar registros para relatório
-        vr_xmlb := vr_xmlb || '<reg><cdagenci>' || rw_capta.cdagenci || '</cdagenci>';
-        vr_xmlb := vr_xmlb || '<nrdconta>' || TO_CHAR(rw_capta.nrdconta, 'FM9999G999G9') || '</nrdconta>';
+        vr_xmlb := vr_xmlb || '<reg><cdagenci>' || vr_tab_craprda(idx).cdagenci || '</cdagenci>';
+        vr_xmlb := vr_xmlb || '<nrdconta>' || TO_CHAR(vr_tab_craprda(idx).nrdconta, 'FM9999G999G9') || '</nrdconta>';
         gene0002.pc_clob_buffer(pr_dados => vr_xmlb, pr_gravfim => FALSE, pr_clob => vr_xmlc);
-        vr_xmlb := vr_xmlb || '<nmprimtl>' || rw_capta.nmprimtl || '</nmprimtl>';
-        vr_xmlb := vr_xmlb || '<nraplica>' || TO_CHAR(rw_capta.nraplica, 'FM999G999') || '</nraplica>';
+        vr_xmlb := vr_xmlb || '<nmprimtl>' || vr_tab_craprda(idx).nmprimtl || '</nmprimtl>';
+        vr_xmlb := vr_xmlb || '<nraplica>' || TO_CHAR(vr_tab_craprda(idx).nraplica, 'FM999G999') || '</nraplica>';
         gene0002.pc_clob_buffer(pr_dados => vr_xmlb, pr_gravfim => FALSE, pr_clob => vr_xmlc);
-        vr_xmlb := vr_xmlb || '<dtmvtolt>' || TO_CHAR(rw_capta.dtmvtolt, 'DD/MM/RR') || '</dtmvtolt>';
-        vr_xmlb := vr_xmlb || '<vlaplica>' || TO_CHAR(rw_capta.vlaplica, 'FM999G999G999G990D00') || '</vlaplica>';
+        vr_xmlb := vr_xmlb || '<dtmvtolt>' || TO_CHAR(vr_tab_craprda(idx).dtmvtolt, 'DD/MM/RR') || '</dtmvtolt>';
+        vr_xmlb := vr_xmlb || '<vlaplica>' || TO_CHAR(vr_tab_craprda(idx).vlaplica, 'FM999G999G999G990D00') || '</vlaplica>';
         gene0002.pc_clob_buffer(pr_dados => vr_xmlb, pr_gravfim => FALSE, pr_clob => vr_xmlc);
-        vr_xmlb := vr_xmlb || '<dtvencto>' || TO_CHAR(rw_capta.dtvencto, 'DD/MM/RR') || '</dtvencto>';
+        vr_xmlb := vr_xmlb || '<dtvencto>' || TO_CHAR(vr_tab_craprda(idx).dtvencto, 'DD/MM/RR') || '</dtvencto>';
         vr_xmlb := vr_xmlb || '<vlsldrdc>' || TO_CHAR(vr_vlsldrdc, 'FM999G999G999G990D00') || '</vlsldrdc>';
         gene0002.pc_clob_buffer(pr_dados => vr_xmlb, pr_gravfim => FALSE, pr_clob => vr_xmlc);
         vr_xmlb := vr_xmlb || '<nrramfon>' || vr_nrramfon || '</nrramfon></reg>';
 
         -- Gerar relatório no último registro da agência
-          IF rw_capta.nrseqreg = rw_capta.nrtotreg THEN
+        IF vr_tab_craprda(idx).nrseqreg = vr_tab_craprda(idx).nrtotreg THEN
           -- Gerar nome do relatório segmentado por agencia
-          vr_nmarqrel := 'crrl458_' || LPAD(rw_capta.cdagenci, 3, '0') || '.lst';
+          vr_nmarqrel := 'crrl458_' || LPAD(vr_tab_craprda(idx).cdagenci, 3, '0') || '.lst';
+
 
           -- Finalizar buffer do CLOB
           vr_xmlb := vr_xmlb || '</regs></root>';
@@ -539,6 +563,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps490(pr_cdcooper IN crapcop.cdcooper%TY
         END IF;
       END LOOP;
 
+	  END LOOP;
+
+      CLOSE cr_capta;
+
+      vr_tab_craprda.delete; -- limpa dados do bulk ja armazenado em outra pl table   
+
       -- Finalizar XML
       dbms_lob.freetemporary(vr_xmlc);
 
@@ -553,11 +583,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps490(pr_cdcooper IN crapcop.cdcooper%TY
       COMMIT;
     EXCEPTION
       WHEN vr_exc_fimprg THEN
-        -- Se foi retornado apenas código
-        IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-          -- Buscar a descrição
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-        END IF;
+
+        -- Buscar a descrição
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
 
         -- Envio centralizado de log de erro
         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
@@ -573,11 +601,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps490(pr_cdcooper IN crapcop.cdcooper%TY
         -- Efetuar commit
         COMMIT;
       WHEN vr_exc_saida THEN
-        -- Se foi retornado apenas código
-        IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-          -- Buscar a descrição
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-        END IF;
+
+        -- Buscar a descrição
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
 
         -- Devolvemos código e critica encontradas das variaveis locais
         pr_cdcritic := NVL(vr_cdcritic,0);
@@ -586,6 +612,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps490(pr_cdcooper IN crapcop.cdcooper%TY
         -- Efetuar rollback
         ROLLBACK;
       WHEN OTHERS THEN
+        
+        cecred.pc_internal_exception(pr_cdcooper);
+      
         -- Efetuar retorno do erro não tratado
         pr_cdcritic := 0;
         pr_dscritic := SQLERRM;
@@ -595,4 +624,3 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps490(pr_cdcooper IN crapcop.cdcooper%TY
     END;
   END pc_crps490;
 /
-

@@ -12,7 +12,7 @@ BEGIN
  Sistema : Conta-Corrente - Cooperativa de Credito
  Sigla   : CRED
  Autor   : Odair
- Data    : Janeiro/95                      Ultima Alteracao: 21/08/2014
+ Data    : Janeiro/95                      Ultima Alteracao: 04/04/2017
 
  Dados referentes ao programa:
 
@@ -80,6 +80,9 @@ BEGIN
 						 21/08/2014 - Adicionado resumo das aplicações com vencimento nos
 						              próximos 30 dias para craprac no relatório crrl090.
 													(Reinert)
+
+             04/04/2017 - #455742 Melhorias de performance. Ajuste de passagem dos parâmetros inpessoa e 
+                          nrcpfcgc para não consultar novamente o associado no pkg apli0001 (Carlos)
 
    ............................................................................. */
 
@@ -177,11 +180,15 @@ BEGIN
              ,Count(*) OVER (PARTITION BY craprda.cdageass,craprda.dtfimper) qtregdata
              ,ROW_NUMBER () OVER (PARTITION BY craprda.cdageass,craprda.dtfimper
                                   ORDER BY craprda.cdageass,craprda.dtfimper ASC, craprda.nrdconta) nrseqreg
-       FROM craprda craprda
+             ,crapass.inpessoa
+             ,crapass.nrcpfcgc
+       FROM craprda, crapass
        WHERE craprda.cdcooper = pr_cdcooper
        AND   craprda.insaqtot = pr_insaqtot
 			 AND   craprda.cdageass = pr_cdagenci
-       AND   craprda.dtfimper BETWEEN pr_dtiniper AND pr_dtfimper;
+       AND   craprda.dtfimper BETWEEN pr_dtiniper AND pr_dtfimper
+       AND   craprda.cdcooper = crapass.cdcooper
+       AND   craprda.nrdconta = crapass.nrdconta;
 
      --Selecionar as formas de captacao de recursos
      CURSOR cr_crapdtc (pr_cdcooper IN crapdtc.cdcooper%TYPE) IS
@@ -721,6 +728,8 @@ BEGIN
 																				,pr_txaplica => 0                    --> Taxa aplicada
 																				,pr_flggrvir => FALSE                --> Identificador se deve gravar valor insento
 																				,pr_tab_crapdat => rw_crapdat        --> Controle de Datas
+                                        ,pr_inpessoa => rw_craprda.inpessoa
+                                        ,pr_nrcpfcgc => rw_craprda.nrcpfcgc
 																				,pr_vlsdrdca => vr_ger_vlsdrdca      --> Saldo da aplicação pós cálculo
 																				,pr_vlrdirrf => vr_vlrdirrf          --> Valor de IR
 																				,pr_perirrgt => vr_perirrgt          --> Percentual de IR resgatado
@@ -755,6 +764,8 @@ BEGIN
 																						,pr_flggrvir => FALSE               --> Identificador se deve gravar valor insento
 																						,pr_dtinitax => vr_dtinitax         --> Data Inicial da Utilizacao da taxa da poupanca
 																						,pr_dtfimtax => vr_dtfimtax         --> Data Final da Utilizacao da taxa da poupanca
+                                            ,pr_inpessoa => rw_craprda.inpessoa
+                                            ,pr_nrcpfcgc => rw_craprda.nrcpfcgc
 																						,pr_vlsddrgt => vr_sldpresg         --> Valor do resgate total sem irrf ou o solicitado
 																						,pr_vlrenrgt => vr_vlrenrgt         --> Rendimento total a ser pago quando resgate total
 																						,pr_vlrdirrf => vr_vlrdirrf         --> IRRF do que foi solicitado
@@ -1146,4 +1157,3 @@ BEGIN
    END;
  END pc_crps110;
 /
-
