@@ -277,13 +277,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Odirlei Busana(Amcom)
-      Data     : Novembro/2016.                   Ultima atualizacao: 10/11/2016
+      Data     : Novembro/2016.                   Ultima atualizacao: 17/05/2017
     
       Dados referentes ao programa:
     
       Frequencia: Sempre que for chamado
       Objetivo  : Rotina responsavel pelo envio da TED para analise de fraude
-      Alteração : 
+      
+      Alteração : 17/05/2017 - Ajustado rotina para incluir hora no campo Trxn_Date(Odirlei-AMcom)
         
     ..........................................................................*/
     -----------> CURSORES <-----------
@@ -500,7 +501,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     vr_ted.put('Trxn_Channel'        , rw_craptvl.dsdcanal);
     vr_ted.put('Trxn_MessageCode'    , rw_craptvl.dscodmsg);
     vr_ted.put('Trxn_ControlNumber'  , rw_craptvl.idopetrf);
-    vr_ted.put('Trxn_Date'           , to_char(SYSDATE,vr_dsformat_data));
+    vr_ted.put('Trxn_Date'           , to_char(SYSDATE,vr_dsformat_dthora));
     vr_ted.put('Trxn_Value'          , fn_format_number('Trxn_Value',rw_craptvl.vldocrcb));
     vr_ted.put('Trxn_Purpose'        , to_char(rw_craptvl.cdfinrcb) );
     vr_ted.put('Trxn_TransferIdentifier', '');
@@ -597,7 +598,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Odirlei Busana(Amcom)
-      Data     : Novembro/2016.                   Ultima atualizacao: 10/11/2016
+      Data     : Novembro/2016.                   Ultima atualizacao: 17/05/2017
     
       Dados referentes ao programa:
     
@@ -605,7 +606,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       Objetivo  : Rotina responsavel pelo envio dos agendamentos de TED 
                   para analise de fraude
                   
-      Alteração : 
+      Alteração : 17/05/2017 - Ajustado rotina para incluir hora no campo Trxn_Date(Odirlei-AMcom)
         
     ..........................................................................*/
     -----------> CURSORES <-----------
@@ -882,7 +883,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     
     
     vr_ted.put('Trxn_ControlNumber'  , vr_nrctrlif);
-    vr_ted.put('Trxn_Date'           , to_char(SYSDATE,vr_dsformat_data));
+    vr_ted.put('Trxn_Date'           , to_char(SYSDATE,vr_dsformat_dthora));
     vr_ted.put('Trxn_Value'          , fn_format_number('Trxn_Value',rw_craplau.vllanaut));
     vr_ted.put('Trxn_Purpose'        , '10');
     vr_ted.put('Trxn_TransferIdentifier', '');

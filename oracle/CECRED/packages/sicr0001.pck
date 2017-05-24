@@ -223,7 +223,7 @@ create or replace package body cecred.SICR0001 is
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Lucas Lunelli
-     Data    : Abril/2013                       Ultima atualizacao: 21/11/2016
+     Data    : Abril/2013                       Ultima atualizacao: 04/04/2017
 
      Dados referentes ao programa:
 
@@ -305,6 +305,9 @@ create or replace package body cecred.SICR0001 is
                               
                  19/01/2017 - Incluir validacao em casos que a DEBNET chamar a procedure
                               pc_identifica_crapatr (Lucas Ranghetti #533520)
+
+				 04/04/2017 - Ajuste para integracao de arquivos com layout na versao 5
+				              (Jonata - RKAM M311).
   ..............................................................................*/
 
   /* Procedimento para buscar os lançamentos automáticos efetuados pela Internet e TAA*/
@@ -1156,7 +1159,7 @@ create or replace package body cecred.SICR0001 is
     --   Sistema : Conta-Corrente - Cooperativa de Credito
     --   Sigla   : CRED
     --   Autor   : Lucas Ranghetti
-    --   Data    : Maio/2014                       Ultima atualizacao: 24/08/2016
+    --   Data    : Maio/2014                       Ultima atualizacao: 04/04/2017
     --
     -- Dados referentes ao programa:
     --
@@ -1194,6 +1197,10 @@ create or replace package body cecred.SICR0001 is
     --             08/09/2016 - Remover condicao temporaria de criacao de protocolo. Agora todos os debitos
     --                          podem ter seu comprovante gerado normalmente, devido ao ajuste na estrutura
     --                          da tabela crapaut. (Anderson #511078)
+	--
+	--             04/04/2017 - Ajuste para integracao de arquivos com layout na versao 5
+	--			               (Jonata - RKAM M311).
+	--
     --------------------------------------------------------------------------------------------------------------------
   BEGIN
   
@@ -1303,6 +1310,7 @@ create or replace package body cecred.SICR0001 is
               ,lau.nrcpfpre
               ,lau.nmprepos
               ,lau.idseqttl
+              ,lau.idlancto
           FROM craplau lau
               ,crapass ass
          WHERE lau.cdcooper = pr_cdcooper
@@ -1629,6 +1637,7 @@ create or replace package body cecred.SICR0001 is
                              ,pr_nrctacns => rw_craplau.nrctacns -- CONTA DO CONSÓRCIO
                              ,pr_cdagenci => rw_craplau.cdagenci_ass -- CODIGO DO PA
                              ,pr_cdempres => rw_craplau.cdempres -- CODIGO EMPRESA SICREDI
+                             ,pr_idlancto => rw_craplau.idlancto -- CÓDIGO DO LANCAMENTO
                              ,pr_codcriti => vr_cdcritic -- CÓDIGO DO ERRO
                              ,pr_cdcritic => vr_aux_cdcritic -- CÓDIGO DO ERRO
                              ,pr_dscritic => vr_dscritic); -- DESCRICAO DO ERRO
@@ -1733,6 +1742,7 @@ create or replace package body cecred.SICR0001 is
                                  ,pr_nrctacns => rw_craplau.nrctacns -- CONTA DO CONSÓRCIO
                                  ,pr_cdagenci => rw_craplau.cdagenci_ass -- CODIGO DO PA
                                  ,pr_cdempres => rw_craplau.cdempres -- CODIGO EMPRESA SICREDI
+                                 ,pr_idlancto => rw_craplau.idlancto -- CÓDIGO DO LANCAMENTO
                                  ,pr_codcriti => vr_cdcritic         -- CÓDIGO DO ERRO
                                  ,pr_cdcritic => vr_aux_cdcritic     -- CÓDIGO DO ERRO
                                  ,pr_dscritic => vr_dscritic);       -- DESCRICAO DO ERRO

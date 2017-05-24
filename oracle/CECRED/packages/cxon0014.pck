@@ -517,7 +517,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
   --  Sistema  : Procedimentos e funcoes das transacoes do caixa online
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 20/03/2017
+  --  Data     : Julho/2013.                   Ultima atualizacao: 12/04/2017
   --
   -- Dados referentes ao programa:
   --
@@ -582,6 +582,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
   --
   --              20/03/2017 - Ajuste para verificar vencimento da P.M. TIMBO, DEFESA CIVIL TIMBO 
   --                           MEIO AMBIENTE DE TIMBO, TRANSITO DE TIMBO (Lucas Ranghetti #630176)
+  --
+  --              12/04/2017 - Ajuste para verificar vencimento da P.M. AGROLANDIA (Tiago #647174)  
   ---------------------------------------------------------------------------------------------------------------
 
   /* Busca dos dados da cooperativa */
@@ -7460,7 +7462,7 @@ END pc_gera_titulos_iptu_prog;
   --  Sistema  : Procedure para retornar valores fatura
   --  Sigla    : CXON
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 20/03/2017
+  --  Data     : Julho/2013.                   Ultima atualizacao: 12/04/2017
   --
   -- Dados referentes ao programa:
   --
@@ -7472,6 +7474,8 @@ END pc_gera_titulos_iptu_prog;
   --
   --             20/03/2017 - Ajuste para verificar vencimento da P.M. TIMBO, DEFESA CIVIL TIMBO 
   --                          MEIO AMBIENTE DE TIMBO, TRANSITO DE TIMBO (Lucas Ranghetti #630176)
+  --
+  --             12/04/2017 - Ajuste para verificar vencimento da P.M. AGROLANDIA (Tiago #647174)  
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -7794,6 +7798,7 @@ END pc_gera_titulos_iptu_prog;
           (rw_crapcon.cdempcon = 3493 AND rw_crapcon.cdsegmto = 1)  OR   /* P.M. PRES GETULIO */
           (rw_crapcon.cdempcon = 1756 AND rw_crapcon.cdsegmto = 1)  OR   /* P.M. GUARAMIRIM */
           (rw_crapcon.cdempcon = 4539 AND rw_crapcon.cdsegmto = 1)  OR   /* P.M. TIMBO */
+          (rw_crapcon.cdempcon = 0040 AND rw_crapcon.cdsegmto = 1)  OR   /* P.M. AGROLANDIA */
           (rw_crapcon.cdempcon = 0562 AND rw_crapcon.cdsegmto = 5)  OR   /* DEFESA CIVIL TIMBO */
           (rw_crapcon.cdempcon = 0563 AND rw_crapcon.cdsegmto = 5)  OR   /* MEIO AMBIENTE DE TIMBO */
           (rw_crapcon.cdempcon = 0564 AND rw_crapcon.cdsegmto = 5)) THEN /* TRANSITO DE TIMBO */
@@ -9315,7 +9320,7 @@ END pc_gera_titulos_iptu_prog;
   --  Sistema  : Procedure para identificar titulo cooperativa
   --  Sigla    : CXON
   --  Autor    : Rafael Cechet
-  --  Data     : Agosto/2014.                   Ultima atualizacao: 24/07/2015
+  --  Data     : Agosto/2014.                   Ultima atualizacao: 07/04/2017
   --
   -- Dados referentes ao programa:
   --
@@ -9337,6 +9342,10 @@ END pc_gera_titulos_iptu_prog;
   --
   --               13/05/2016 - Inclusao da critica '980 - Convenio do cooperado bloqueado'
   --                            PRJ318 - Nova Plataforma de cobrança (Odirlei-AMcom)             
+  --
+  --               07/04/2017 - Ajustado para quando nao encontrar CEB e TCO rejeitar o pagamento com a 
+  --                            mensagem "911 - Beneficiario nao cadastrado.", ao invés de aceitar o 
+  --                            pagamento como sendo "Liquidação Interbancária" (Douglas - Chamado 619274)
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -10146,8 +10155,25 @@ END pc_gera_titulos_iptu_prog;
                    CLOSE cr_crapceb1;
                 END IF;
 
-                /* liq interbancaria (nesse caso, de outra cooperativa) */
-                RAISE vr_exc_saida;
+                -- Se nao encontrou CEB e TCO, então a conta não existe
+                CXON0000.pc_cria_erro(pr_cdcooper => pr_cooper
+                                     ,pr_cdagenci => pr_cod_agencia
+                                     ,pr_nrdcaixa => vr_nrdcaixa
+                                     ,pr_cod_erro => 911
+                                     ,pr_dsc_erro => NULL
+                                     ,pr_flg_erro => TRUE
+                                     ,pr_cdcritic => vr_cdcritic
+                                     ,pr_dscritic => vr_dscritic);
+                --Se ocorreu erro
+                IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+                  --Levantar Excecao
+                  RAISE vr_exc_erro;
+                ELSE
+                  vr_cdcritic:= 911;
+                  vr_dscritic:= gene0001.fn_busca_critica(vr_cdcritic);
+                  --Levantar Excecao
+                  RAISE vr_exc_erro;
+                END IF;
 
              END IF; -- craptco%FOUND
           END IF; -- cr_crapceb1%FOUND

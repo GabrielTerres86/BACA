@@ -21,6 +21,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_LAUTOM IS
                                     ,pr_nrctremp  IN crapepr.nrctremp%TYPE --> Numero do contrato de emprestimo
                                     ,pr_nrseqdig  IN craplau.nrseqdig%TYPE --> Sequencia de digitacao
                                     ,pr_vllanmto  IN NUMBER                --> Valor do lancamento
+                                    ,pr_idlautom  IN NUMBER DEFAULT 0      --> Sequencial da craplau
                                     ,pr_cdcritic OUT PLS_INTEGER           --> Codigo da critica
                                     ,pr_dscritic OUT VARCHAR2);            --> Descricao da critica
 
@@ -41,7 +42,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
   --  Programa : TELA_LAUTOM
   --  Sistema  : Ayllos Web
   --  Autor    : Jaison Fernando
-  --  Data     : Maio - 2016                 Ultima atualizacao: 01/03/2017
+  --  Data     : Maio - 2016                 Ultima atualizacao: 05/05/2017
   --
   -- Dados referentes ao programa:
   --
@@ -52,6 +53,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
   --                          Adicionar origem ADIOFJUROS para podermos efetuar o 
   --                          debito do registro na procedure pc_valida_lancamento 
   --                          (Lucas Ranghetti M338.1)
+  --
+  --             24/04/2017 - Nao considerar valores bloqueados na composicao de saldo disponivel
+  --                          Heitor (Mouts) - Melhoria 440
+  --
+  --             05/05/2017 - Ajuste para gravar o idlautom (Lucas Ranghetti M338.1)
   ---------------------------------------------------------------------------
 
 	PROCEDURE pc_valida_lancamento(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cooperativa conectada
@@ -228,9 +234,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
         -- Saldo Disponivel
         vr_vlsldisp := ROUND(NVL(vr_tab_saldos(vr_index).vlsddisp, 0) +
                              NVL(vr_tab_saldos(vr_index).vlsdchsl, 0) +
-                             NVL(vr_tab_saldos(vr_index).vlsdbloq, 0) +
-                             NVL(vr_tab_saldos(vr_index).vlsdblpr, 0) +
-                             NVL(vr_tab_saldos(vr_index).vlsdblfp, 0) +
                              NVL(vr_tab_saldos(vr_index).vllimcre, 0),2);
       END IF;
 
@@ -415,6 +418,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
                                     ,pr_nrctremp  IN crapepr.nrctremp%TYPE --> Numero do contrato de emprestimo
                                     ,pr_nrseqdig  IN craplau.nrseqdig%TYPE --> Sequencia de digitacao
                                     ,pr_vllanmto  IN NUMBER                --> Valor do lancamento
+                                    ,pr_idlautom  IN NUMBER DEFAULT 0      --> Sequencial da craplau
                                     ,pr_cdcritic OUT PLS_INTEGER           --> Codigo da critica
                                     ,pr_dscritic OUT VARCHAR2) IS          --> Descricao da critica
   BEGIN
@@ -424,7 +428,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
     Programa: pc_efetiva_lcto_pendente
     Sistema : Ayllos Web
     Autor   : Jaison Fernando
-    Data    : Maio/2016                 Ultima atualizacao: 
+    Data    : Maio/2016                 Ultima atualizacao: 05/05/2017
 
     Dados referentes ao programa:
 
@@ -432,7 +436,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
 
     Objetivo  : Rotina para efetivar o lancamento na conta.
 
-    Alteracoes: 
+    Alteracoes: 05/05/2017 - Ajuste para gravar o idlautom (Lucas Ranghetti M338.1)
     ..............................................................................*/
     DECLARE
 
@@ -461,6 +465,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
                                     ,pr_nrparepr => 0             --> Numero parcelas emprestimo
                                     ,pr_nrctremp => pr_nrctremp   --> Numero do contrato de emprestimo
                                     ,pr_nrseqava => 0             --> Pagamento: Sequencia do avalista
+                                    ,pr_idlautom => pr_idlautom   --> Sequencial da craplau
                                     ,pr_des_reto => vr_des_reto   --> Retorno OK / NOK
                                     ,pr_tab_erro => vr_tab_erro); --> Tabela de erros
       -- Se ocorreu erro
@@ -523,7 +528,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
     Programa: pc_efetua_lancamento
     Sistema : Ayllos Web
     Autor   : Jaison Fernando
-    Data    : Maio/2016                 Ultima atualizacao: 01/03/2017
+    Data    : Maio/2016                 Ultima atualizacao: 05/05/2017
 
     Dados referentes ao programa:
 
@@ -532,6 +537,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
     Objetivo  : Rotina para efetuar os lancamentos selecionados.
 
     Alteracoes: 01/03/2017 - Adicionar update da tbcc_lautom_controle (Lucas Ranghetti M338.1)
+    
+                05/05/2017 - Ajuste para gravar o idlautom (Lucas Ranghetti M338.1)
     ..............................................................................*/
     DECLARE
 
@@ -674,6 +681,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
                                 ,pr_nrctremp => rw_craplau.nrctremp
                                 ,pr_nrseqdig => rw_craplau.nrseqdig
                                 ,pr_vllanmto => rw_craplau.vllanaut
+                                ,pr_idlautom => rw_craplau.idlancto
                                 ,pr_cdcritic => vr_cdcritic
                                 ,pr_dscritic => vr_dscritic);
         -- Se ocorreu erro

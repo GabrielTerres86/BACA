@@ -23,6 +23,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps692 (pr_cdcooper  IN crapcop.cdcooper%
                    
                    17/08/2015 - Ajuste para buscar o pior Risco, Projeto de Provisao. (James)
                    
+                   11/08/2016 - Adicionado novo filtro por tipo de limite de crédito (Linhares)
+
                    01/12/2016 - Fazer tratamento para incorporação. (Oscar)
     ............................................................................ */
 
@@ -38,6 +40,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps692 (pr_cdcooper  IN crapcop.cdcooper%
       vr_dscritic   VARCHAR2(4000);     
       
       -- Regras            
+      vr_dtrenini   DATE;           --> Data de tentativas de renovacoes
       vr_dtaltera   DATE;           --> Data de revisao cadastral
       vr_dtmincta   DATE;           --> Data do Tempo Minimo de Conta
       vr_dstextab   VARCHAR2(1000); --> Campo da tabela generica
@@ -108,7 +111,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps692 (pr_cdcooper  IN crapcop.cdcooper%
            AND craplim.nrdconta = crapass.nrdconta
            AND craplim.cdcooper = pr_cdcooper
            AND craplim.insitlim = 2
-           AND craplim.tpctrlim = 1
+           AND craplim.tpctrlim = 1 -- Limite de Credito
            AND crapass.inpessoa = pr_inpessoa
            -- Vencimento no Final de Semana
            AND ((nvl(craplim.dtfimvig, craplim.dtinivig + craplim.qtdiavig) > pr_dtmvtoan   AND
@@ -138,7 +141,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps692 (pr_cdcooper  IN crapcop.cdcooper%
                craprli.dssitdop,
                craprli.dsrisdop
           FROM craprli
-         WHERE craprli.cdcooper = pr_cdcooper;
+         WHERE craprli.cdcooper = pr_cdcooper
+           AND craprli.tplimite = 1; --Limite Credito
       
       -- Risco com divida (Valor Arrasto)
       CURSOR cr_ris_comdiv(pr_cdcooper IN crapris.cdcooper%TYPE
@@ -697,7 +701,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps692 (pr_cdcooper  IN crapcop.cdcooper%
           END IF;          
           ELSE
              CLOSE cr_craptco;
-          END IF;        
+          END IF;          
           
           -- Risco com divida (Valor Arrasto)
           OPEN cr_ris_comdiv(pr_cdcooper => rw_craplim_crapass.cdcooper

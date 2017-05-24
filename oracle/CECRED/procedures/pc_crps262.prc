@@ -1,10 +1,9 @@
-CREATE OR REPLACE PROCEDURE CECRED.
-         pc_crps262 (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
-                    ,pr_flgresta  IN PLS_INTEGER            --> Flag padrão para utilização de restart
-                    ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
-                    ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação
-                    ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Critica encontrada
-                    ,pr_dscritic OUT VARCHAR2) IS           --> Texto de erro/critica encontrada
+CREATE OR REPLACE PROCEDURE CECRED.pc_crps262 (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
+                                              ,pr_flgresta  IN PLS_INTEGER            --> Flag padrão para utilização de restart
+                                              ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
+                                              ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação
+                                              ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Critica encontrada
+                                              ,pr_dscritic OUT VARCHAR2) IS           --> Texto de erro/critica encontrada
   BEGIN
 	/* ..........................................................................
 
@@ -12,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
 		 Sistema : Conta-Corrente - Cooperativa de Credito
 		 Sigla   : CRED
 		 Autor   : Odair
-		 Data    : Maio/99.                            Ultima atualizacao: 18/03/2015
+		 Data    : Maio/99.                            Ultima atualizacao: 22/09/2016
 
 		 Dados referentes ao programa:
 
@@ -53,6 +52,9 @@ CREATE OR REPLACE PROCEDURE CECRED.
 															e nao somente a craplim.dtfimvig. (James)
 	                            
 								 18/03/2015 - Conversao Progress >> Oracle. (Reinert)
+                 
+								 22/09/2016 - Alterado para buscar o qtd dias de renovacao da tabela craprli
+								  			      PRJ300 - Desconto de cheque (Odirlei-AMcom)
 	............................................................................. */
 
     DECLARE
@@ -83,23 +85,6 @@ CREATE OR REPLACE PROCEDURE CECRED.
       -- Cursor genérico de calendário
       rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 
-      /* Tabela de parametros */			
-			CURSOR cr_craptab (pr_cdcooper IN craptab.cdcooper%TYPE
-			                  ,pr_nmsistem IN craptab.nmsistem%TYPE
-												,pr_tptabela IN craptab.tptabela%TYPE
-												,pr_cdempres IN craptab.cdempres%TYPE
-												,pr_cdacesso IN craptab.cdacesso%TYPE
-												,pr_tpregist IN craptab.tpregist%TYPE)IS
-        SELECT tab.dstextab
-				  FROM craptab tab
-				 WHERE tab.cdcooper = pr_cdcooper
-				   AND tab.nmsistem = pr_nmsistem
-					 AND tab.tptabela = pr_tptabela
-					 AND tab.cdempres = pr_cdempres
-					 AND tab.cdacesso = pr_cdacesso
-					 AND tab.tpregist = pr_tpregist;
-			rw_craptab cr_craptab%ROWTYPE;
-			
 			/* Contratos de limite de credito */
 			CURSOR cr_craplim (pr_cdcooper IN craplim.cdcooper%TYPE
 			                  ,pr_dtfimvig IN craplim.dtfimvig%TYPE)IS
@@ -117,17 +102,15 @@ CREATE OR REPLACE PROCEDURE CECRED.
 					    ,crapass ass
 				 WHERE lim.cdcooper = pr_cdcooper
 				   AND lim.dtfimvig = pr_dtfimvig
-					  AND lim.cdmotcan NOT IN(1,4)
+					 AND lim.cdmotcan NOT IN(1,4)
 					 AND ass.cdcooper = lim.cdcooper
 					 AND ass.nrdconta = lim.nrdconta
 				 ORDER BY ass.cdagenci;
 			rw_craplim cr_craplim%ROWTYPE;
 					 
       ---------------------------- ESTRUTURAS DE REGISTRO ---------------------		
-
+      
       ------------------------------- VARIAVEIS -------------------------------
-      -- Variaveis da tabela de parametros     
-      vr_qtrenova NUMBER;
             
 			-- Variaveis para geração do relatório
 			vr_des_xml     CLOB;            --> Buffer de dados para gerar XML de dados
@@ -197,25 +180,6 @@ CREATE OR REPLACE PROCEDURE CECRED.
       vr_nom_dir := gene0001.fn_diretorio(pr_tpdireto => 'C' -- /usr/coop
 																				 ,pr_cdcooper => pr_cdcooper
 																				 ,pr_nmsubdir => '/rl'); --> Utilizaremos o rl
-
-      		
-						
-      -- Busca tabela de parametros
-      OPEN cr_craptab (pr_cdcooper => pr_cdcooper,
-			                 pr_nmsistem => 'CRED',
-											 pr_tptabela => 'USUARI',
-											 pr_cdempres => 11,
-											 pr_cdacesso => 'LIMDESCONT',
-											 pr_tpregist => 0);
-			FETCH cr_craptab INTO rw_craptab;
-            
-			-- Atribui valor parametrizado
-			IF cr_craptab%FOUND THEN
-				vr_qtrenova := to_number(substr(rw_craptab.dstextab, 19,2));
-			ELSE
-				vr_qtrenova := 0;
-			END IF;
-			CLOSE cr_craptab;
 			
 			-- Inicializar o CLOB do relatório
 			dbms_lob.createtemporary(vr_des_xml, TRUE, dbms_lob.CALL);
@@ -226,18 +190,14 @@ CREATE OR REPLACE PROCEDURE CECRED.
 			
 			/* Contratos de limite de credito */
       FOR rw_craplim IN cr_craplim(pr_cdcooper => pr_cdcooper
-										              ,pr_dtfimvig => rw_crapdat.dtmvtolt) LOOP 
-      
-					IF rw_craplim.tpctrlim = 1 AND
+										              ,pr_dtfimvig => rw_crapdat.dtmvtolt) LOOP       
+          
+          IF rw_craplim.tpctrlim IN (1,2) AND
 						 rw_craplim.insitlim = 2 THEN /* Situação do Ativo */
 						 -- Busca próximo registro do cursor
 						 CONTINUE;
 					END IF;
-					IF rw_craplim.tpctrlim = 2 AND
-						 rw_craplim.dtinivig + (rw_craplim.qtdiavig * vr_qtrenova) > rw_crapdat.dtmvtolt THEN
-						 -- Busca próximo registro do cursor
-						 CONTINUE;
-					END IF;	 		
+ 		
           
           vr_flggerou := TRUE;	
 						
@@ -340,4 +300,3 @@ CREATE OR REPLACE PROCEDURE CECRED.
 
   END pc_crps262;
 /
-

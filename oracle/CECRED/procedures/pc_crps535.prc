@@ -121,6 +121,8 @@ create or replace procedure cecred.pc_crps535(pr_cdcooper  in craptab.cdcooper%t
                25/08/2016 - Permite integrar arquivos de cheques DVA615 devido
                             aos cheques VLB (Elton - SD 476261)
 
+			   04/11/2016 - Ajustar cursor de custodia de cheques - Projeto 300 (Rafael)                            
+
                02/12/2016 - Incorporação Transulcred (Guilherme/SUPERO)
 
 ............................................................................. */
@@ -354,6 +356,7 @@ create or replace procedure cecred.pc_crps535(pr_cdcooper  in craptab.cdcooper%t
       FROM crapcst
      WHERE crapcst.cdcooper        = pr_cdcooper
        AND upper(crapcst.dsdocmc7) = upper(pr_dsdocmc7)
+       AND crapcst.nrborder        = 0
       ORDER BY PROGRESS_RECID DESC;
   rw_crapcst cr_crapcst%ROWTYPE;
 

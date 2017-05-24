@@ -295,7 +295,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   --
   --  Programa: CYBE0002
   --  Autor   : Andre Santos - SUPERO
-  --  Data    : Outubro/2013                     Ultima Atualizacao: 17/02/2017
+  --  Data    : Outubro/2013                     Ultima Atualizacao: 27/04/2017
   --
   --  Dados referentes ao programa:
   --
@@ -317,7 +317,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   --
   --              17/02/2017 - #551213 Log de início, erros e fim de execução do procedimento
   --                           pc_gra_arquivo_reafor (jbcybe_arquivo_reafor) (Carlos)
-  --
+  --  
+  --              27/04/2017 - #654523 Retirada do vr_cdprogra pois o procedimento do job não é 
+  --                           um programa da crapprg, utilizada para crps (Carlos)
   ---------------------------------------------------------------------------------------------------------------
 
   -- Tratamento de erros
@@ -7193,7 +7195,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       -- Dia anterior
       vr_dtprocan    DATE;
 
-      vr_cdprogra    VARCHAR2(40) := 'PC_CONTROLE_REMESSAS';
       vr_nomdojob    VARCHAR2(40) := 'JBCYBER_CONTROLE_REMESSAS';
       vr_flgerlog    BOOLEAN := FALSE;
 
@@ -7203,7 +7204,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
     BEGIN
         --> Controlar geração de log de execução dos jobs 
         BTCH0001.pc_log_exec_job( pr_cdcooper  => 3    --> Cooperativa
-                                 ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
+                                 ,pr_cdprogra  => ''             --> Codigo do programa
                                  ,pr_nomdojob  => vr_nomdojob    --> Nome do job
                                  ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
                                  ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
@@ -7647,8 +7648,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   vr_dscritic        VARCHAR2(32767);
   vr_exc_saida EXCEPTION;
 
-  vr_cdprogra  CONSTANT crapprg.cdprogra%TYPE := 'pc_grava_arquivo_reafor';
-  vr_nomdojob  CONSTANT VARCHAR2(100)         := 'jbcybe_arquivo_reafor';
+  vr_nomdojob  CONSTANT VARCHAR2(100) := 'jbcyb_arquivo_reafor';
   vr_flgerlog  BOOLEAN := FALSE;
 
   --Funcao para retornar cpf/cnpj
@@ -8041,13 +8041,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                                     pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
     BEGIN
       --> Controlar geração de log de execução dos jobs 
-      BTCH0001.pc_log_exec_job( pr_cdcooper  => 3              --> Cooperativa
-                               ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
-
-                               ,pr_nomdojob  => vr_nomdojob    --> Nome do job
-                               ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
-                               ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
-                               ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
+      BTCH0001.pc_log_exec_job( pr_cdcooper  => 3             --> Cooperativa
+                               ,pr_cdprogra  => ''            --> Codigo do programa
+                               ,pr_nomdojob  => vr_nomdojob   --> Nome do job
+                               ,pr_dstiplog  => pr_dstiplog   --> Tipo de log(I-inicio,F-Fim,E-Erro)
+                               ,pr_dscritic  => pr_dscritic   --> Critica a ser apresentada em caso de erro
+                               ,pr_flgerlog  => vr_flgerlog); --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
     END pc_controla_log_batch;
 
   -- INICIO DA PROCEDURE

@@ -47,7 +47,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009 IS
   -- Objetivo  : Centralizar rotinas para calcular multa e juros de mora 
   --             para os contratos de emprestimo TR.
   --
-  -- Alteracoes: 
+  -- Alteracoes: 24/04/2017 - Nao considerar valores bloqueados na composicao de saldo disponivel
+  --                          Heitor (Mouts) - Melhoria 440
   --
   ---------------------------------------------------------------------------
 
@@ -824,9 +825,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009 IS
           -- Saldo Disponivel
           vr_vlsldisp := ROUND(NVL(vr_tab_saldos(vr_index).vlsddisp, 0) +
                                NVL(vr_tab_saldos(vr_index).vlsdchsl, 0) +
-                               NVL(vr_tab_saldos(vr_index).vlsdbloq, 0) +
-                               NVL(vr_tab_saldos(vr_index).vlsdblpr, 0) +
-                               NVL(vr_tab_saldos(vr_index).vlsdblfp, 0) +
                                NVL(vr_tab_saldos(vr_index).vllimcre, 0),2);
         END IF;
       END IF;
@@ -1326,9 +1324,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009 IS
               -- Saldo Disponivel
               vr_vlsldisp := ROUND(NVL(vr_tab_saldos(vr_index).vlsddisp, 0) +
                                    NVL(vr_tab_saldos(vr_index).vlsdchsl, 0) +
-                                   NVL(vr_tab_saldos(vr_index).vlsdbloq, 0) +
-                                   NVL(vr_tab_saldos(vr_index).vlsdblpr, 0) +
-                                   NVL(vr_tab_saldos(vr_index).vlsdblfp, 0) +
                                    NVL(vr_tab_saldos(vr_index).vllimcre, 0),2);
             END IF;
       		

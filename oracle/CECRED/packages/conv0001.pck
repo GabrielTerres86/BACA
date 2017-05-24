@@ -70,8 +70,8 @@ CREATE OR REPLACE PACKAGE CECRED.CONV0001 AS
                             relatorio crrl709 - Repasses Convenio DPVAT 
                             Sicredi. (Jaison/Marcos-Supero)
 
-               30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])														
-
+               30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])		
+               
                14/09/2016 - Incluir nova procedure pc_pula_seq_gt0001, irá criar registro de
                             controle na gncontr caso seja alterado o sequencial (Lucas Ranghetti #484556)
 
@@ -265,6 +265,7 @@ CREATE OR REPLACE PACKAGE CECRED.CONV0001 AS
                        ,pr_nrctacns IN crapass.nrctacns%TYPE  -- Conta do Consórcio
                        ,pr_cdagenci IN crapass.cdagenci%TYPE  -- Codigo do PA
                        ,pr_cdempres IN craplau.cdempres%TYPE  -- Codigo empresa sicredi
+                       ,pr_idlancto IN craplau.idlancto%TYPE  -- Código do lançamento        
                        ,pr_codcriti IN INTEGER                -- Código do erro
                        ,pr_cdcritic OUT INTEGER               -- Código do erro
                        ,pr_dscritic OUT VARCHAR2);            -- Descricao do erro
@@ -358,7 +359,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --  Sistema  : Procedimentos para Convenios
   --  Sigla    : CRED
   --  Autor    : Douglas Pagel
-  --  Data     : Outubro/2013.                   Ultima atualizacao: 31/03/2017
+  --  Data     : Outubro/2013.                   Ultima atualizacao: 04/04/2017
   --
   -- Dados referentes ao programa:
   --
@@ -437,6 +438,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --                          padrão 'HH24:MI:SS - nome_programa' (Carlos)
   --
   --             31/03/2017 - Incluir PREVISC para fazer como faz a SULAMERICA (Lucas Ranghetti #637882)
+  --
+  --             04/04/2017 - Ajuste para integracao de arquivos com layout na versao 5
+  --			             (Jonata - RKAM M311).
+  --
   ---------------------------------------------------------------------------------------------------------------
 
 
@@ -1575,6 +1580,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
                        ,pr_nrctacns IN crapass.nrctacns%TYPE  -- Conta do Consórcio
                        ,pr_cdagenci IN crapass.cdagenci%TYPE  -- Codigo do PA
                        ,pr_cdempres IN craplau.cdempres%TYPE  -- Empresa sicredi
+                       ,pr_idlancto IN craplau.idlancto%TYPE  -- Código lancamento                      
                        ,pr_codcriti IN INTEGER                -- Código do erro
                        ,pr_cdcritic OUT INTEGER               -- Código do erro
                        ,pr_dscritic OUT VARCHAR2) IS          -- Descricao do erro
@@ -1584,7 +1590,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Odair
-  --  Data     : Agosto/98.                  Ultima atualizacao: 31/03/2017
+  --  Data     : Agosto/98.                  Ultima atualizacao: 04/04/2017
   --
   -- Dados referentes ao programa:
   --
@@ -1678,6 +1684,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --                          ex: 40151016407- (Lucas Ranghetti #560620/453337)
   --
   --             31/03/2017 - Incluir PREVISC para fazer como faz a SULAMERICA (Lucas Ranghetti #637882)
+  --
+  --             04/04/2017 - Ajuste para integracao de arquivos com layout na versao 5
+  --			              (Jonata - RKAM M311).
+  --
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -1714,6 +1724,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
           FROM crapscn scn
          WHERE scn.cdempres = pr_cdempres;
        rw_crapscn cr_crapscn%ROWTYPE;
+
+       CURSOR cr_tbconv_det_agendamento(pr_idlancto IN craplau.idlancto%TYPE) IS
+       SELECT t.cdlayout
+             ,t.tppessoa_dest
+             ,t.nrcpfcgc_dest
+        FROM tbconv_det_agendamento t
+       WHERE t.idlancto = pr_idlancto;
+       rw_tbconv_det_agendamento cr_tbconv_det_agendamento%ROWTYPE;  
 
       /*PROCEDIMENTOS E FUNCOES INTERNAS*/
       FUNCTION fn_verifica_ult_dia(pr_cdcooper crapcop.cdcooper%TYPE, pr_dtrefere  IN DATE) RETURN DATE IS
@@ -1774,7 +1792,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
       vr_cdcritic := pr_codcriti;
 
       IF pr_cdhistor IN(1230,1231,1232,1233,1234,1019) THEN
+        
         vr_flgsicre := 1; -- HISTORICOS DO CONSORCIO SICREDI E DEB. AUTOMATICO
+      
+      ELSE
+        -- LEITURA PARA ENCONTRAR DETALHE DO AGENDAMENTO
+        OPEN cr_tbconv_det_agendamento(pr_idlancto => pr_idlancto);
+        
+        FETCH cr_tbconv_det_agendamento INTO rw_tbconv_det_agendamento;
+        
+        -- SE NÃO ENCONTRAR
+        IF cr_tbconv_det_agendamento%NOTFOUND THEN
+          -- FECHAR O CURSOR POIS EFETUAREMOS RAISE
+          CLOSE cr_tbconv_det_agendamento;
+          -- MONTAR MENSAGEM DE CRITICA
+          vr_cdcritic := 597;
+          RAISE vr_exc_erro;
+        ELSE
+          -- APENAS FECHAR O CURSOR
+          CLOSE cr_tbconv_det_agendamento;
+        END IF;
+        
       END IF;
 
       vr_auxcdcri := vr_cdcritic;
@@ -1841,6 +1879,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
           vr_auxcdcri := '15'; -- Conta corrente invalida
 		ELSIF vr_cdcritic = '964' THEN -- Lançamento bloqueado
           vr_auxcdcri := '04'; -- Outros
+        ELSIF rw_tbconv_det_agendamento.cdlayout = 5 AND (vr_cdcritic = '1001' OR vr_cdcritic = '1002' OR vr_cdcritic = '1003') THEN 
+          vr_auxcdcri := '19'; -- Outros
         ELSE
           vr_auxcdcri := '01'; -- INSUFICIENCIAS DE FUNDOS
         END IF;
@@ -1919,6 +1959,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
                          RPAD(' ',16) || gene0002.fn_mask(vr_cdagenci,'99') ||
                          TRIM(rw_crapscn.cdempres) ||
                          RPAD(' ',10 - length(TRIM(rw_crapscn.cdempres))) || '0';
+                         
+        ELSIF rw_tbconv_det_agendamento.cdlayout = 5 THEN
+          
+          vr_dstexarq := vr_dstexarq ||
+                         gene0002.fn_mask(vr_cdagenci,'9999') ||
+                         vr_nrdconta ||
+                         RPAD(' ', 14 - LENGTH(vr_nrdconta), ' ') ||
+                         TO_CHAR(vr_dtmvtolt,'yyyy') ||
+                         TO_CHAR(vr_dtmvtolt,'mm') ||
+                         TO_CHAR(vr_dtmvtolt,'dd') ||
+                         gene0002.fn_mask((pr_vllanaut * 100),'999999999999999') ||
+                         vr_auxcdcri ||                          
+                         RPAD(pr_cdseqtel,60) ||
+                         rw_tbconv_det_agendamento.tppessoa_dest ||
+                         LPAD(rw_tbconv_det_agendamento.nrcpfcgc_dest,15,'0') ||
+                         RPAD(' ',4)                         
+                         || '0';
+                                                    
         ELSE
 
           vr_dstexarq := vr_dstexarq ||
@@ -2055,6 +2113,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
 
      Objetivo  : Conectar-se ao FTP da Transabbc e efetuar download de três
                  arquivos diariamente.
+
+     Observacao: -----
+
+     Alteracoes:
      ..............................................................................*/
 
     DECLARE

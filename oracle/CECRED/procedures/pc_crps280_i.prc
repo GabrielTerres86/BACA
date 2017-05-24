@@ -1074,6 +1074,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
       vr_dtmvtolt_yymmdd    VARCHAR2(6);
       vr_nom_diretorio      VARCHAR2(200); 
       vr_nom_dir_copia      VARCHAR2(200);
+      
+      -- P307 Calculo de Compensação de Microcrédito
+      vr_tot_vltttlcr_dim        NUMBER := 0;
+      vr_tot_vltttlcr_dim_outros NUMBER := 0;       
+      vr_totatraso59_dim         NUMBER := 0;
+      vr_totatraso59_dim_outros  NUMBER := 0;
 
 
       -- Retorna linha cabeçalho arquivo Radar ou Matera
@@ -1182,6 +1188,161 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
             vr_tab_contab(vr_vlchqesp)(vr_divida)(idx).vlchqesp := 0;
          END LOOP;
       END;
+      
+      PROCEDURE pc_gera_arq_compe_mic(pr_dscritic OUT VARCHAR2) IS
+
+         vr_txt_compmicro VARCHAR2(500);
+         vr_nmarquiv   VARCHAR2(200);
+         vr_dscritic   VARCHAR2(4000);
+         vr_input_file UTL_FILE.file_type;  
+         vr_typ_said         VARCHAR2(4);
+          
+      BEGIN
+        
+        IF  (nvl(vr_tot_vltttlcr_dim,0) + 
+                   nvl(vr_tot_vltttlcr_dim_outros,0) +       
+                   nvl(vr_totatraso59_dim,0) + 
+                   nvl(vr_totatraso59_dim_outros,0)) > 0 THEN
+        
+          -- Nome do arquivo a ser gerado
+          vr_nmarquiv := vr_dtmvtolt_yymmdd||'_'||lpad(pr_cdcooper,2,0)||'_MICROCREDITO_COMPENSACAO.txt';
+
+          -- Tenta abrir o arquivo de log em modo gravacao
+          gene0001.pc_abre_arquivo(pr_nmdireto => vr_nom_diretorio     --> Diretório do arquivo
+                                  ,pr_nmarquiv => vr_nmarquiv          --> Nome do arquivo
+                                  ,pr_tipabert => 'W'                  --> Modo de abertura (R,W,A)
+                                  ,pr_utlfileh => vr_input_file        --> Handle do arquivo aberto
+                                  ,pr_des_erro => vr_dscritic);        --> Erro
+          IF vr_dscritic IS NOT NULL THEN
+             -- Levantar Excecao
+             RAISE vr_exc_erro;
+          END IF;      
+           
+          -- 1ª linha
+          vr_txt_compmicro := fn_set_cabecalho('50'
+                                              ,pr_rw_crapdat.dtmvtolt
+                                              ,pr_rw_crapdat.dtmvtolt
+                                              ,'3967'
+                                              ,'9264'
+                                              ,vr_tot_vltttlcr_dim
+                                              ,'"TOTAL DIM SALDO DAS OPERACOES DE MICROCREDITO APLICADOS AOS COOPERADOS COM RECURSOS ORIUNDOS DE DIM - VENCIDOS ATE 59 DIAS"');
+            
+          GENE0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file
+                                        ,pr_des_text => vr_txt_compmicro);
+                                          
+                              
+          -- 2ª linha 
+          vr_txt_compmicro := fn_set_cabecalho('50'
+                                              ,pr_rw_crapdat.dtmvtolt
+                                              ,pr_rw_crapdat.dtmvtolt
+                                              ,'3972'
+                                              ,'9264'
+                                              ,vr_totatraso59_dim
+                                              ,'"TOTAL DIM SALDO DAS OPERACOES DE MICROCREDITO APLICADOS AOS COOPERADOS COM RECURSOS ORIUNDOS DE DIM - VENCIDOS A MAIS DE 59 DIAS"');
+                                           
+          GENE0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file
+                                        ,pr_des_text => vr_txt_compmicro);
+                              
+          -- 3ª linha
+          vr_txt_compmicro := fn_set_cabecalho('50'
+                                              ,pr_rw_crapdat.dtmvtopr
+                                              ,pr_rw_crapdat.dtmvtopr
+                                              ,'9264'
+                                              ,'3967'
+                                              ,vr_tot_vltttlcr_dim
+                                              ,'"REVERSAO SALDO DAS OPERACOES DE MICROCREDITO APLICADOS AOS COOPERADOS COM RECURSOS ORIUNDOS DE DIM - VENCIDOS ATE 59 DIAS"');
+          
+          GENE0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file
+                                        ,pr_des_text => vr_txt_compmicro);
+                             
+          -- 4ª linha 
+          vr_txt_compmicro := fn_set_cabecalho('50'
+                                              ,pr_rw_crapdat.dtmvtopr
+                                              ,pr_rw_crapdat.dtmvtopr
+                                              ,'9264'
+                                              ,'3972'
+                                              ,vr_totatraso59_dim
+                                              ,'"REVERSAO SALDO DAS OPERACOES DE MICROCREDITO APLICADOS AOS COOPERADOS COM RECURSOS ORIUNDOS DE DIM - VENCIDOS A MAIS DE 59 DIAS"');
+                                           
+          GENE0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file
+                                        ,pr_des_text => vr_txt_compmicro);
+           
+          --Linhas PNMPO DIM E CAIXA                             
+          -- 1ª linha
+          vr_txt_compmicro := fn_set_cabecalho('50'
+                                              ,pr_rw_crapdat.dtmvtolt
+                                              ,pr_rw_crapdat.dtmvtolt
+                                              ,'3965'
+                                              ,'9264'
+                                              ,vr_tot_vltttlcr_dim_outros
+                                              ,'"SALDO DAS OPERACOES DE MICROCREDITO APLICADOS AOS COOPERADOS COM RECURSOS ORIUNDOS DE DIM PNMPO E DIM PNMPO CAIXA – VENCIDOS ATE 59 DIAS"');
+          
+          GENE0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file
+                                        ,pr_des_text => vr_txt_compmicro);
+                            
+                            
+          -- 2ª linha
+          vr_txt_compmicro := fn_set_cabecalho('50'
+                                              ,pr_rw_crapdat.dtmvtolt
+                                              ,pr_rw_crapdat.dtmvtolt
+                                              ,'3968'
+                                              ,'9264'
+                                              ,vr_totatraso59_dim_outros
+                                              ,'"SALDO DAS OPERACOES DE MICROCREDITO APLICADOS AOS COOPERADOS COM RECURSOS ORIUNDOS DE DIM PNMPO E DIM PNMPO CAIXA – VENCIDOS A MAIS DE 59 DIAS"');
+
+          GENE0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file
+                                        ,pr_des_text => vr_txt_compmicro);
+
+                                         
+          -- 3ª linha
+          vr_txt_compmicro := fn_set_cabecalho('50'
+                                              ,pr_rw_crapdat.dtmvtopr
+                                              ,pr_rw_crapdat.dtmvtopr
+                                              ,'9264'
+                                              ,'3965'
+                                              ,vr_tot_vltttlcr_dim_outros
+                                              ,'"REVERSAO DO SALDO DAS OPERACOES DE MICROCREDITO APLICADOS AOS COOPERADOS COM RECURSOS ORIUNDOS DE DIM PNMPO E DIM PNMPO CAIXA – VENCIDOS ATE 59 DIAS"');
+
+          GENE0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file
+                                        ,pr_des_text => vr_txt_compmicro);
+                              
+                            
+          -- 4ª linha
+          vr_txt_compmicro := fn_set_cabecalho('50'
+                                              ,pr_rw_crapdat.dtmvtopr
+                                              ,pr_rw_crapdat.dtmvtopr
+                                              ,'9264'
+                                              ,'3968'
+                                              ,vr_totatraso59_dim_outros
+                                              ,'"REVERSAO DO SALDO DAS OPERACOES DE MICROCREDITO APLICADOS AOS COOPERADOS COM RECURSOS ORIUNDOS DE DIM PNMPO E DIM PNMPO CAIXA – VENCIDOS A MAIS DE 59 DIAS"');
+
+          GENE0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file
+                                        ,pr_des_text => vr_txt_compmicro);
+                                          
+          -- Fechar Arquivo
+          BEGIN
+             gene0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file); --> Handle do arquivo aberto;
+          EXCEPTION
+             WHEN OTHERS THEN
+             -- Apenas imprimir na DMBS_OUTPUT e ignorar o log
+             vr_dscritic := 'Problema ao fechar o arquivo <'||vr_nom_diretorio||'/'||vr_nmarquiv||'>: ' || SQLERRM;
+             RAISE vr_exc_erro;
+          END;
+          
+          -- Copia o arquivo gerado para o diretório final convertendo para DOS
+          gene0001.pc_oscommand_shell(pr_des_comando => 'ux2dos '||vr_nom_diretorio||'/'||vr_nmarquiv||' > '||vr_nom_dir_copia||'/'||vr_nmarquiv||' 2>/dev/null',
+                                      pr_typ_saida   => vr_typ_said,
+                                      pr_des_saida   => vr_dscritic);
+          -- Testar erro
+          if vr_typ_said = 'ERR' then
+             vr_dscritic := 'Erro ao copiar o arquivo '||vr_nmarquiv||': '||vr_dscritic;
+             raise vr_exc_erro;
+          end if;
+        
+        END IF;
+                                         
+      END pc_gera_arq_compe_mic;
+      --
       
       PROCEDURE pc_gera_arq_finame(pr_dscritic OUT VARCHAR2) IS
         
@@ -2564,10 +2725,24 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                         -- Acumular no período até 59 
                         vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).vlate59d 
                            := vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).vlate59d + vr_vldivida;
+                           
+                        IF vr_tab_dados_epr(vr_indice).dsorgrec = 'MICROCREDITO DIM' THEN
+                           vr_tot_vltttlcr_dim := vr_tot_vltttlcr_dim + vr_vldivida; -- Acumulo total da linha
+                        ELSIF vr_tab_dados_epr(vr_indice).dsorgrec IN ('MICROCREDITO PNMPO CAIXA','MICROCREDITO PNMPO DIM') THEN
+                           vr_tot_vltttlcr_dim_outros := vr_tot_vltttlcr_dim_outros + vr_vldivida; -- Acumulo total da linha 
+                        END IF;
+                           
                      ELSE
                         -- Acumular no restante
                         vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).vlaci59d 
                            := vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).vlaci59d + vr_vldivida;
+                           
+                        IF vr_tab_dados_epr(vr_indice).dsorgrec = 'MICROCREDITO DIM' THEN
+                           vr_totatraso59_dim := vr_totatraso59_dim + vr_vldivida;
+                        ELSIF vr_tab_dados_epr(vr_indice).dsorgrec IN ('MICROCREDITO PNMPO CAIXA','MICROCREDITO PNMPO DIM') THEN
+                           vr_totatraso59_dim_outros := vr_totatraso59_dim_outros + vr_vldivida;
+                        END IF;                           
+                           
                      END IF;
                   END IF;
                END IF;
@@ -3414,13 +3589,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                END IF;
               
                --Agupar valores microcrédito das filiadas por nível de risco
-               IF vr_tab_crapris(vr_des_chave_crapris).cdlcremp in (1,2,5) THEN
-                 IF vr_tab_miccred_nivris.exists(vr_dsnivris) THEN
-                    vr_tab_miccred_nivris(vr_dsnivris).vlslddev := vr_tab_miccred_nivris(vr_dsnivris).vlslddev + vr_vldivida;
-                 ELSE
-                   vr_tab_miccred_nivris(vr_dsnivris).vlslddev := vr_vldivida;
-                 END IF;
+               IF vr_tab_miccred_nivris.exists(vr_dsnivris) THEN
+                  vr_tab_miccred_nivris(vr_dsnivris).vlslddev := vr_tab_miccred_nivris(vr_dsnivris).vlslddev + vr_vldivida;
+               ELSE
+                 vr_tab_miccred_nivris(vr_dsnivris).vlslddev := vr_vldivida;
                END IF;
+               
             END IF;
             
             --Agrupar informações operação finame
@@ -3458,8 +3632,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
       END LOOP;
       
       --Gerar arquivo de operações de micro crédito e finame das filiadas
-      --Apenas para cecred e apenas no último dia do mês
-      IF pr_cdcooper = 3 and (TRUNC(pr_rw_crapdat.dtmvtolt,'mm') <> TRUNC(pr_rw_crapdat.dtmvtopr,'mm')) THEN
+      IF (TRUNC(pr_rw_crapdat.dtmvtolt,'mm') <> TRUNC(pr_rw_crapdat.dtmvtopr,'mm')) THEN
          
          -- Formata a data para criar o nome do arquivo
          vr_dtmvtolt_yymmdd := to_char(pr_rw_crapdat.dtmvtolt, 'yymmdd');
@@ -3473,20 +3646,26 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
          vr_nom_dir_copia := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
                                                     ,pr_cdcooper => 0
                                                     ,pr_cdacesso => 'DIR_ARQ_CONTAB_X');
-         
-         --Gera arquivo de operação de microcrédito
-         pc_gera_arq_miccred(pr_dscritic);
-        
-         IF pr_dscritic IS NOT NULL THEN
-            RAISE vr_exc_erro;
-         END IF;
+
+         --Apenas para cecred e apenas no último dia do mês
+         IF pr_cdcooper = 3 THEN
+           --Gera arquivo de operação de microcrédito
+           pc_gera_arq_miccred(pr_dscritic);
+          
+           IF pr_dscritic IS NOT NULL THEN
+              RAISE vr_exc_erro;
+           END IF;
+           --
+           --Gera arquivo de operação de finame
+           pc_gera_arq_finame(pr_dscritic);
+          
+           IF pr_dscritic IS NOT NULL THEN
+              RAISE vr_exc_erro;
+           END IF;   
+         END IF; 
          --
-         --Gera arquivo de operação de finame
-         pc_gera_arq_finame(pr_dscritic);
-        
-         IF pr_dscritic IS NOT NULL THEN
-            RAISE vr_exc_erro;
-         END IF;         
+         --Gera arquivo de compensação de microcredito
+         pc_gera_arq_compe_mic(pr_dscritic);     
          --
       END IF;
 

@@ -3870,9 +3870,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --                           Dessa forma permite que as demais condições (else e elsif) sejam validadas
     --                           #487823 (AJFink)
     --
+    --              22/09/2016 - Alterado para buscar a qtd de dias da renovacao do limite de cheque
+    --                           da tabela craprli e nao mais da craptab.
+    --                           PRJ-300 - Desconto de Cheque (Odirlei-AMcom) 
     --                          
     --              29/09/2019 - Inclusao de verificacao de contratos de acordos de
-    --                           empréstimos, Prj. 302 (Jean Michel).
+    --                           empréstimos, Prj. 302 (Jean Michel).	
+    --
+    --              03/03/2017 - Ajustado geração da mensagem de limite de desconto vencido.
+    --                           PRJ-300 Desconto de Cheque (Daniel)
     --
     -- ..........................................................................*/
     
@@ -4065,6 +4071,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
          AND craplim.tpctrlim = pr_tpctrlim
          AND craplim.insitlim = pr_insitlim;
     rw_craplim cr_craplim%ROWTYPE;     
+    
+    --> Buscar Contratos de Limite de Desconto de Cheque e regras
+    CURSOR cr_craprli (pr_cdcooper craplim.cdcooper%TYPE,
+                       pr_nrdconta craplim.nrdconta%TYPE,
+                       pr_tpctrlim craplim.tpctrlim%TYPE,
+                       pr_insitlim craplim.insitlim%TYPE,
+                       pr_inpessoa craprli.inpessoa%TYPE)IS 
+      SELECT /*+index_asc (craplim CRAPLIM##CRAPLIM1)*/
+             lim.dtfimvig
+            ,lim.dtinivig
+            ,lim.qtdiavig
+            ,rli.qtmaxren
+        FROM craplim lim,
+             craprli rli  
+       WHERE lim.cdcooper = rli.cdcooper
+         AND lim.tpctrlim = rli.tplimite
+         AND rli.inpessoa = pr_inpessoa
+         AND lim.cdcooper = pr_cdcooper
+         AND lim.nrdconta = pr_nrdconta
+         AND lim.tpctrlim = pr_tpctrlim
+         AND lim.insitlim = pr_insitlim;
+    rw_craprli cr_craprli%ROWTYPE; 
     
     --> Buscar emprestimos do cooperado
     CURSOR cr_crapepr IS
@@ -4584,20 +4612,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     END IF;
     
     --> Verifica se ja excedeu a vigencia do limite de desconto de cheques
-    OPEN cr_craplim( pr_cdcooper => pr_cdcooper,
+    OPEN cr_craprli( pr_cdcooper => pr_cdcooper,
                      pr_nrdconta => pr_nrdconta,
                      pr_tpctrlim => 2,
-                     pr_insitlim => 2);
-    FETCH cr_craplim INTO rw_craplim;
-    IF cr_craplim%FOUND THEN
-      IF pr_rw_crapdat.dtmvtolt >= (rw_craplim.dtinivig + (rw_craplim.qtdiavig * nvl(vr_dstextab,0))) THEN
+                     pr_insitlim => 2,
+                     pr_inpessoa => rw_crapass.inpessoa);
+    FETCH cr_craprli INTO rw_craprli;
+    IF cr_craprli%FOUND THEN
+      
+      IF rw_craprli.dtfimvig IS NOT NULL THEN
+          IF rw_craprli.dtfimvig < pr_rw_crapdat.dtmvtolt THEN
         -- Incluir na temptable
         pc_cria_registro_msg(pr_dsmensag             => 'Contrato de Desconto de Cheques Vencido.',
                              pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
       END IF;        
+      ELSIF (rw_craprli.dtinivig + rw_craprli.qtdiavig) < pr_rw_crapdat.dtmvtolt  THEN
+        -- Incluir na temptable
+        pc_cria_registro_msg(pr_dsmensag             => 'Contrato de Desconto de Cheques Vencido.',
+                             pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
+    END IF;
     
     END IF;
-    CLOSE cr_craplim;
+    CLOSE cr_craprli;
     
     vr_flgpreju := FALSE;
     vr_dsprejuz := ' - liquidado';

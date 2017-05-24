@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   --  Sistema  : Rotinas genéricas
   --  Sigla    : GENE
   --  Autor    : Marcos E. Martini - Supero
-  --  Data     : Novembro/2012.                   Ultima atualizacao: 24/01/2016
+  --  Data     : Novembro/2012.                   Ultima atualizacao: 09/05/2017
   --
   -- Dados referentes ao programa:
   --
@@ -343,7 +343,7 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
 
   /* Rotina para submeter um Job ao Banco */
   PROCEDURE pc_submit_job(pr_cdcooper  IN crapcop.cdcooper%TYPE          --> Código da cooperativa
-                         ,pr_cdprogra  IN crapprg.cdprogra%TYPE          --> Código do programa
+                         ,pr_cdprogra  IN VARCHAR2                       --> Código do programa
                          ,pr_dsplsql   IN VARCHAR2                       --> Bloco PLSQL a executar
                          ,pr_dthrexe   IN TIMESTAMP WITH TIME ZONE DEFAULT SYSTIMESTAMP --> Data/Hora de execução
                          ,pr_interva   IN VARCHAR2 DEFAULT NULL          --> Função para calculo da próxima execução, ex: 'sysdate+1'
@@ -370,7 +370,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   --  Sistema  : Rotinas genéricas
   --  Sigla    : GENE
   --  Autor    : Marcos E. Martini - Supero
-  --  Data     : Novembro/2012.                   Ultima atualizacao: 12/01/2017
+  --  Data     : Novembro/2012.                   Ultima atualizacao: 09/05/2017
   --
   -- Dados referentes ao programa:
   --
@@ -387,6 +387,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   --
   --             12/01/2017 - #551192 Na função fn_busca_critica, mudança para parâmetros opcionais cd e 
   --                          dscritic para centralizar a lógica de captura dos erros (Carlos) 
+  --
+  --             09/05/2017 - #660297 Alterado o tipo do parâmetro pr_cdprogra de crapprg.cdprogra para 
+  --                          VARCHAR2 na rotina pc_submit_job (Carlos)
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   -- Busca do diretório conforme a cooperativa conectada
@@ -2532,7 +2536,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 
   /* Rotina para submeter um Job ao Banco */
   PROCEDURE pc_submit_job(pr_cdcooper  IN crapcop.cdcooper%TYPE          --> Código da cooperativa
-                         ,pr_cdprogra  IN crapprg.cdprogra%TYPE          --> Código do programa
+                         ,pr_cdprogra  IN VARCHAR2                       --> Código do programa
                          ,pr_dsplsql   IN VARCHAR2                       --> Bloco PLSQL a executar
                          ,pr_dthrexe   IN TIMESTAMP WITH TIME ZONE DEFAULT SYSTIMESTAMP --> Data/Hora de execução
                          ,pr_interva   IN VARCHAR2 DEFAULT NULL          --> Função para calculo da próxima execução, ex: 'sysdate+1'

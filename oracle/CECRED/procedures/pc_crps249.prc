@@ -541,6 +541,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
 			                de juros e IOF de Limite de Crédito e Adiantamento a Depositante - Somente Lautom
 							(Adriano - SD 632569).
 
+							 21/03/2017 - Adicionado tratamento de recarga de celular no arquivo 
+														contábil - PRJ321. (Reinert)
+              
+               08/05/2017 - Detalhado no arquivo os registros de LIMITES CONCEDIDOS
+                            PARA DESCONTO DE CHEQUES/TITULOS (Tiago/Thiago #611703).            
 ............................................................................ */
 
   -- Buscar os dados da cooperativa
@@ -1368,6 +1373,52 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
        AND craplcm.cdhistor = pr_cdhistor
      GROUP BY cdcooper; 	 
 
+	-- Buscar operadoras ativas
+	CURSOR cr_operadora (pr_cdcooper IN craplcm.cdcooper%TYPE
+	                    ,pr_dtmvtolt IN craplcm.dtmvtolt%TYPE) IS
+	  SELECT tope.cdoperadora
+		      ,topr.nmoperadora
+					,topr.perreceita
+		      ,SUM(tope.vlrecarga) totrecarga
+		  FROM tbrecarga_operacao tope
+			    ,tbrecarga_operadora topr
+		 WHERE tope.cdcooper = pr_cdcooper
+		   AND tope.insit_operacao = 2
+			 AND tope.dtdebito = pr_dtmvtolt
+			 AND topr.cdoperadora = tope.cdoperadora
+			GROUP BY tope.cdoperadora
+		          ,topr.nmoperadora
+					    ,topr.perreceita;
+		 		 
+	-- Recarga de celular
+  CURSOR cr_recargas (pr_cdcooper IN craplcm.cdcooper%TYPE
+	                   ,pr_dtmvtolt IN craplcm.dtmvtolt%TYPE
+										 ,pr_cdoperadora IN tbrecarga_operadora.cdoperadora%TYPE) IS
+    SELECT ass.cdagenci
+		      ,SUM(nvl(tope.vlrecarga, 0)) totrecpa
+		  FROM tbrecarga_operacao tope
+			    ,crapass ass
+		 WHERE tope.cdcooper = pr_cdcooper
+		   AND tope.insit_operacao = 2
+			 AND tope.dtdebito = pr_dtmvtolt			 
+			 AND tope.cdoperadora = pr_cdoperadora
+			 AND ass.cdcooper = tope.cdcooper
+			 AND ass.nrdconta = tope.nrdconta
+  GROUP BY ass.cdagenci;
+	
+	-- Repasse recarga de celular
+	CURSOR cr_craptvl_recarg (pr_cdcooper IN crapcop.cdcooper%TYPE
+	                         ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS
+	  SELECT tvl.vldocrcb
+		  FROM craptvl tvl
+		 WHERE tvl.cdcooper = pr_cdcooper
+		   AND tvl.dtmvtolt = pr_dtmvtolt
+			 AND tvl.nrdolote = 600037
+			 AND tvl.cdagenci = 1
+			 AND tvl.cdbccxlt = 85
+			 AND tvl.tpdoctrf = 3;
+	rw_craptvl_recarg cr_craptvl_recarg%ROWTYPE;
+	
   cursor cr_crapcon (pr_cdcooper in crapcon.cdcooper%type) is
     select crapcon.cdempcon,
            crapcon.cdsegmto,
@@ -1907,6 +1958,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
   type tyb_hist_cob is record (cdhistor number(10),
                                nrdctabb number(10),
                                flgregis number(1));
+
+  TYPE typ_reg_limchq IS
+    RECORD(cdagenci crapris.cdagenci%TYPE
+          ,valor NUMBER(25,2));
+
+  TYPE typ_tab_limchq IS
+    TABLE OF typ_reg_limchq
+      INDEX BY PLS_INTEGER;    
+
+  vr_tab_limcon           typ_tab_limchq;
 
   -- Definição da tabela para armazenar os registros das agências
   type typ_tab_agencia is table of typ_agencia index by binary_integer;
@@ -2510,11 +2571,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     cursor cr_craplim (pr_cdcooper in craplim.cdcooper%type,
                        pr_tpctrlim in craplim.tpctrlim%type,
                        pr_insitlim in craplim.insitlim%type) is
-      select vllimite
-        from craplim
-       where craplim.cdcooper = pr_cdcooper
-         and craplim.tpctrlim = pr_tpctrlim
-         and craplim.insitlim = pr_insitlim;
+      SELECT ass.cdagenci, lim.vllimite
+        FROM craplim lim, crapass ass
+       WHERE lim.cdcooper = ass.cdcooper
+         AND lim.nrdconta = ass.nrdconta
+         AND lim.cdcooper = pr_cdcooper
+         AND lim.tpctrlim = pr_tpctrlim
+         AND lim.insitlim = pr_insitlim
+       ORDER BY lim.cdcooper, ass.cdagenci;
+       
     -- Títulos de borderô
     cursor cr_craptdb6 (pr_cdcooper in craptdb.cdcooper%type,
                         pr_nrdconta in craptdb.nrdconta%type,
@@ -2949,11 +3014,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     end if;
     -- Contabilizacao do saldo de limite de descontos de cheques ...........
     vr_tab_agencia(1).vr_vlaprjur := 0;
+    vr_tab_limcon.DELETE;
     for rw_craplim in cr_craplim (pr_cdcooper,
                                   2, -- tpctrlim
                                   2  -- insitlim
                                    ) loop
       vr_tab_agencia(1).vr_vlaprjur := vr_tab_agencia(1).vr_vlaprjur + rw_craplim.vllimite;
+      vr_tab_limcon(rw_craplim.cdagenci).cdagenci := rw_craplim.cdagenci;
+      vr_tab_limcon(rw_craplim.cdagenci).valor := NVL(vr_tab_limcon(rw_craplim.cdagenci).valor,0) + rw_craplim.vllimite;      
     end loop;
     --
     if vr_tab_agencia(1).vr_vlaprjur > 0 then
@@ -2967,6 +3035,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                      '5210,'||
                      '"(crps249) LIMITES CONCEDIDOS PARA DESCONTO DE CHEQUES."';
       gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+      
+      -- Percorre todas as agencias e grava no arquivo
+      vr_indice := vr_tab_limcon.first;
+      WHILE vr_indice IS NOT NULL LOOP
+        vr_linhadet := TRIM(to_char(vr_tab_limcon(vr_indice).cdagenci, '009')) || ',' ||
+                       TRIM(to_char(vr_tab_limcon(vr_indice).valor, '99999999999990.00'));                       
+        -- Grava a linha no arquivo
+        gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);        -- Proximo registro               
+        
+        vr_indice := vr_tab_limcon.next(vr_indice);               
+      END LOOP;
+      
       -- Reversao
       vr_linhadet := trim(vr_cdestrut)||
                      trim(vr_dtmvtolt_yymmdd)||','||
@@ -2977,6 +3057,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                      '5210,'||
                      '"(crps249) LIMITES CONCEDIDOS PARA DESCONTO DE CHEQUES."';
       gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+      
+      -- Percorre todas as agencias e grava no arquivo
+      vr_indice := vr_tab_limcon.first;
+      WHILE vr_indice IS NOT NULL LOOP
+        vr_linhadet := TRIM(to_char(vr_tab_limcon(vr_indice).cdagenci, '009')) || ',' ||
+                       TRIM(to_char(vr_tab_limcon(vr_indice).valor, '99999999999990.00'));                       
+        -- Grava a linha no arquivo
+        gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);        -- Proximo registro               
+        
+        vr_indice := vr_tab_limcon.next(vr_indice);               
+      END LOOP;
+      
     end if;
     -- Apropriacao da receita de desconto de titulos ..................
     vr_tab_agencia.delete;
@@ -3199,12 +3291,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     end if;
     -- Contabilizacao do saldo de limite de descontos de titulos ...........
     vr_tab_agencia(1).vr_vlaprjur := 0;
+    vr_tab_limcon.DELETE;    
     -- Buscar limites ativos
     for rw_craplim in cr_craplim (pr_cdcooper,
                                   3, -- tpctrlim
                                   2  -- insitlim
                                    ) loop
       vr_tab_agencia(1).vr_vlaprjur := vr_tab_agencia(1).vr_vlaprjur + rw_craplim.vllimite;
+      vr_tab_limcon(rw_craplim.cdagenci).cdagenci := rw_craplim.cdagenci;
+      vr_tab_limcon(rw_craplim.cdagenci).valor := NVL(vr_tab_limcon(rw_craplim.cdagenci).valor,0) + rw_craplim.vllimite;            
     end loop;
     --
     if vr_tab_agencia(1).vr_vlaprjur > 0 then
@@ -3218,6 +3313,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                      '5210,'||
                      '"(crps249) LIMITES CONCEDIDOS PARA DESCONTO DE TITULOS."';
       gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+
+      -- Percorre todas as agencias e grava no arquivo
+      vr_indice := vr_tab_limcon.first;
+      WHILE vr_indice IS NOT NULL LOOP
+        vr_linhadet := TRIM(to_char(vr_tab_limcon(vr_indice).cdagenci, '009')) || ',' ||
+                       TRIM(to_char(vr_tab_limcon(vr_indice).valor, '99999999999990.00'));                       
+        -- Grava a linha no arquivo
+        gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);        -- Proximo registro               
+        
+        vr_indice := vr_tab_limcon.next(vr_indice);               
+      END LOOP;
+      
       -- Reversao
       vr_linhadet := trim(vr_cdestrut)||
                      trim(vr_dtmvtolt_yymmdd)||','||
@@ -3228,6 +3335,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                      '5210,'||
                      '"(crps249) LIMITES CONCEDIDOS PARA DESCONTO DE TITULOS."';
       gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+      
+      -- Percorre todas as agencias e grava no arquivo
+      vr_indice := vr_tab_limcon.first;
+      WHILE vr_indice IS NOT NULL LOOP
+        vr_linhadet := TRIM(to_char(vr_tab_limcon(vr_indice).cdagenci, '009')) || ',' ||
+                       TRIM(to_char(vr_tab_limcon(vr_indice).valor, '99999999999990.00'));                       
+        -- Grava a linha no arquivo
+        gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);        -- Proximo registro               
+        
+        vr_indice := vr_tab_limcon.next(vr_indice);               
+      END LOOP;
+      
     end if;
     -- Baixa do saldo do capital dos inativos ..............................
     vr_vlcompel := 0;
@@ -10241,6 +10360,61 @@ BEGIN
   END LOOP;
   
   --  Fim da contabilizacao da COMP. ELETRONICA ...............................
+
+	-- RECEITA RECARGA DE CELULAR ..............................................
+
+  FOR rw_operadora IN cr_operadora(pr_cdcooper => pr_cdcooper
+		                              ,pr_dtmvtolt => vr_dtmvtolt) LOOP
+																	
+    IF rw_operadora.totrecarga > 0 AND rw_operadora.perreceita > 0 THEN																	
+			/* Linha 1 - Cabecalho*/
+			vr_cdestrut := '55';
+			vr_linhadet := trim(vr_cdestrut)||
+										 trim(vr_dtmvtolt_yymmdd)||','||
+										 trim(to_char(vr_dtmvtolt,'ddmmyy'))||','||
+										 '4340,'|| 
+										 '7543,'||
+										 trim(to_char((rw_operadora.totrecarga * (rw_operadora.perreceita / 100)), '999999990.00'))||','||
+										 '5210,'||
+										 '"(crps249) RECEITA RECARGA DE CELULAR - ' ||
+										 rw_operadora.nmoperadora || '"';
+			gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);																	
+			
+			-- Listar o total de recargas por pa
+			FOR rw_recargas_pa IN cr_recargas(pr_cdcooper => pr_cdcooper
+																			 ,pr_dtmvtolt => vr_dtmvtolt
+																			 ,pr_cdoperadora => rw_operadora.cdoperadora) LOOP
+				vr_linhadet := to_char(rw_recargas_pa.cdagenci, 'fm000')|| ',' ||
+												trim(to_char((rw_recargas_pa.totrecpa * (rw_operadora.perreceita / 100)),
+												'999999990.00'));
+				gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+			END LOOP;
+		END IF;
+	END LOOP;
+	
+  -- Fim RECEITA RECARGA DE CELULAR ...........................................	
+
+  IF pr_cdcooper = 3 THEN
+		-- REPASSE RECARGA DE CELULAR .............................................
+		OPEN cr_craptvl_recarg(pr_cdcooper => pr_cdcooper
+		                      ,pr_dtmvtolt => vr_dtmvtolt);
+	  FETCH cr_craptvl_recarg INTO rw_craptvl_recarg;
+
+    IF cr_craptvl_recarg%FOUND THEN		
+			vr_cdestrut := 50;
+			vr_linhadet := trim(vr_cdestrut)||
+										 trim(vr_dtmvtolt_yymmdd)||','||
+										 trim(to_char(vr_dtmvtolt,'ddmmyy'))||','||
+										 '4340,'|| 
+										 '1425,'|| 
+										 TRIM(TO_CHAR(nvl(rw_craptvl_recarg.vldocrcb, 0),'99999999999990.00')) || ','||
+										 '5210,'||
+										 '"(crps249) REPASSE RECARGA DE CELULAR"';
+			gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+		END IF;
+		-- Fechar cursor
+		CLOSE cr_craptvl_recarg;
+  END IF;
 
   --  Contabilizacao mensal ...................................................
   if to_char(vr_dtmvtolt, 'mm') <> to_char(vr_dtmvtopr, 'mm') then

@@ -4,7 +4,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTEDSICREDI(pr_cdcooper in crapc
    JOB: PC_JOB_AGENDEBTEDSICRED
    Sistema : Conta-Corrente - Cooperativa de Credito
    Autor   : Evandro Guaranha - RKAM 
-   Data    : Setembro/2016.                     Ultima atualizacao: 
+   Data    : Setembro/2016.                     Ultima atualizacao: 12/04/2017
 
    Dados referentes ao programa:
 
@@ -17,9 +17,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTEDSICREDI(pr_cdcooper in crapc
               
    Alteracoes:
    
+   12/04/2017 - #633306 Criação de log de controle de início, erros e fim de execução do job (Carlos)
+   
   ..........................................................................*/
       ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
     vr_cdprogra    VARCHAR2(40) := 'PC_JOB_AGENDEBTEDSICREDI';
+    vr_nomdojob    VARCHAR2(40) := 'JBCOMPE_TED_SICREDI';
+    vr_flgerlog    BOOLEAN := FALSE;
     vr_infimsol    PLS_INTEGER;                     
     vr_stprogra    PLS_INTEGER;
     
@@ -29,75 +33,51 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTEDSICREDI(pr_cdcooper in crapc
 
     vr_email_dest  VARCHAR2(1000); 
     vr_conteudo    VARCHAR2(4000);
-    vr_tempo       NUMBER;
     
     -- Variáveis de controle de calendário
     rw_crapdat     BTCH0001.cr_crapdat%ROWTYPE;    
     
-    -- Arquivo de LOG
-    vr_nmarqlog VARCHAR2(500) := 'prcctl_' || to_char(SYSDATE, 'RRRR') || to_char(SYSDATE,'MM') || to_char(SYSDATE,'DD');
-    
-    --> LOG de execução dos programas prcctl
-    PROCEDURE pc_gera_log_execucao(pr_indexecu  IN VARCHAR2,
-                                   pr_cdcooper  IN INTEGER, 
-                                   pr_tpexecuc  IN VARCHAR2,
-                                   pr_idtiplog  IN VARCHAR2) IS -- I - inicio, E - erro ou F - Fim
+    --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
+    PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
+                                    pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
+      vr_nmarqlog VARCHAR2(500);
       vr_desdolog VARCHAR2(2000);
     BEGIN    
 
-      --> Definir descrição do log
-      vr_desdolog := 'Automatizado - '||to_char(SYSDATE,'HH24:MI:SS')||
-                     ' --> Coop.:'|| pr_cdcooper ||' '|| 
-                     pr_tpexecuc ||' - '||vr_cdprogra|| ': '|| pr_indexecu;
+      IF pr_dstiplog = 'I' OR pr_dstiplog = 'F' THEN
+        --> Definir nome do log
+        vr_nmarqlog := 'prcctl_'||to_char(SYSDATE,'RRRRMMDD')||'.log';
       
-        
-      btch0001.pc_gera_log_batch(pr_cdcooper     => 3, 
-                                 pr_ind_tipo_log => 1, 
-                                 pr_des_log      => vr_desdolog, 
-                                 pr_nmarqlog     => vr_nmarqlog);
-      
-                                
-      -- Incluir log no proc_batch.log
-      IF pr_idtiplog = 'I' THEN --> Inicio
-        -- inicializar o tempo
-        vr_tempo := to_char(SYSDATE,'SSSSS'); 
-        
-        vr_desdolog := to_char(SYSDATE,'HH24:MI:SS')||' - '|| vr_cdprogra ||
-                       ' --> Inicio da execucao.';
-        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper, 
-                                   pr_ind_tipo_log => 1, 
-                                   pr_des_log      => vr_desdolog); 
-                                   
-      ELSIF pr_idtiplog = 'E' THEN --> ERRO             
-        vr_desdolog := to_char(SYSDATE,'HH24:MI:SS')||' - '|| vr_cdprogra ||
-                       ' --> ERRO:'||pr_indexecu;
-        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper, 
-                                   pr_ind_tipo_log => 1, 
-                                   pr_des_log      => vr_desdolog);
-                                   
-      ELSIF pr_idtiplog = 'F' THEN --> Fim         
-        vr_desdolog := to_char(SYSDATE,'HH24:MI:SS')||' - '|| vr_cdprogra ||
-                       ' --> Stored Procedure rodou em '|| 
-                       -- calcular tempo de execução
-                       to_char(to_date(to_char(SYSDATE,'SSSSS') - vr_tempo,'SSSSS'),'HH24:MI:SS');
-        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper, 
-                                   pr_ind_tipo_log => 1, 
-                                   pr_des_log      => vr_desdolog); 
+        vr_desdolog := --to_char(SYSDATE,'HH24:MI:SS') ||
+                       ' --> Coop.: ' || pr_cdcooper ||
+                       ' - Automatizado - ' || pr_dstiplog;
+        --> Controlar geração de log de execução dos jobs 
+        BTCH0001.pc_log_exec_job( pr_cdcooper  => 3             --> Cooperativa
+                                 ,pr_cdprogra  => vr_cdprogra   --> Codigo do programa
+                                 ,pr_nomdojob  => vr_nomdojob   --> Nome do job
+                                 ,pr_dstiplog  => pr_dstiplog   --> Tipo de log(I-inicio,F-Fim,E-Erro)
+                                 ,pr_dscritic  => vr_desdolog   --> Critica/mensagem a ser apresentada
+                                 ,pr_flgerlog  => vr_flgerlog   --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
+                                 ,pr_nmarqlog  => vr_nmarqlog);  
+      ELSE
+        --> Controlar geração de log de execução dos jobs 
+        BTCH0001.pc_log_exec_job( pr_cdcooper  => 3              --> Cooperativa
+                                 ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
+                                 ,pr_nomdojob  => vr_nomdojob    --> Nome do job
+                                 ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
+                                 ,pr_dscritic  => pr_dscritic    --> Critica/mensagem a ser apresentada
+                                 ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
       END IF; 
                                                                            
-    END pc_gera_log_execucao;
-    
+    END pc_controla_log_batch;
          
   BEGIN
     
     --> Se for coop 3, deve criar o job para cada coop
     IF pr_cdcooper = 3 THEN
           
-      --> Log de fim de execucao
-      pc_gera_log_execucao(pr_indexecu  => 'Inicio execucao',
-                           pr_cdcooper  => pr_cdcooper, 
-                           pr_tpexecuc  => NULL,
-                           pr_idtiplog  => 'I');
+      --> Log de início de execucao      
+      pc_controla_log_batch('I');
       
       -- Verificação do calendário
       OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
@@ -129,10 +109,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTEDSICREDI(pr_cdcooper in crapc
         --> Tratamento de erro                                 
         IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN 
                
-          pc_gera_log_execucao(pr_indexecu  => 'Fim execucao com critica: '||vr_dscritic ,
-                               pr_cdcooper  => pr_cdcooper, 
-                               pr_tpexecuc  => NULL,
-                               pr_idtiplog  => 'E');
+          pc_controla_log_batch('E', vr_dscritic);
                                 
           RAISE vr_exc_email;    
                     
@@ -141,11 +118,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTEDSICREDI(pr_cdcooper in crapc
       END IF;  
           
       --> Log de fim de execucao
-      pc_gera_log_execucao(pr_indexecu  => 'Fim execucao',
-                           pr_cdcooper  => pr_cdcooper, 
-                           pr_tpexecuc  => NULL,
-                           pr_idtiplog  => 'F');
-        
+      pc_controla_log_batch('F');
         
     END IF; -- fim IF coop = 3
     
@@ -188,6 +161,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTEDSICREDI(pr_cdcooper in crapc
                          
     WHEN OTHERS THEN
 
+      cecred.pc_internal_exception(3);
+    
       vr_dscritic := SQLERRM;      
       -- Efetuar rollback
       ROLLBACK;
