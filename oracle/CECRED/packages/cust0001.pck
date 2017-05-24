@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.CUST0001 IS
 --  Sistema  : Rotinas genericas focando nas funcionalidades da custodia de cheque
 --  Sigla    : CUST
 --  Autor    : Daniel Zimmermann
---  Data     : Abril/2014.                   Ultima atualizacao: 01/09/2015
+--  Data     : Abril/2014.                   Ultima atualizacao: 16/12/2016
 --
 -- Dados referentes ao programa:
 --
@@ -37,14 +37,72 @@ CREATE OR REPLACE PACKAGE CECRED.CUST0001 IS
 --
 --             01/09/2015 - Adicionado cursor na pc_validar_cheque para utilizar a data 
 --                          da craphcc na validação de 8 dias úteis quando recebido por
---                          arquivo (Douglas - Chamado 324178)     
+--                          arquivo (Douglas - Chamado 324178)             
+--			  
+--	           19/12/2016 - Ajuste incorporação Transulcred (Daniel)
 --
---	           19/12/2016 - Ajuste incorporação Transulcred (Daniel)        
+--			   16/12/2016 - Alterações referentes ao projeto 300. (Reinert)        
 ---------------------------------------------------------------------------------------------------------------
+
+  -- Estruturas de registro
+	TYPE typ_reg_erro_custodia IS
+		RECORD(dsdocmc7 crapdcc.dsdocmc7%TYPE
+					,dscritic VARCHAR2(4000));
+	TYPE typ_erro_custodia IS
+		TABLE OF typ_reg_erro_custodia
+		INDEX BY BINARY_INTEGER;
+	TYPE typ_reg_cheque_custodia IS
+		RECORD(dsdocmc7 crapdcc.dsdocmc7%TYPE
+					,cdcmpchq crapdcc.cdcmpchq%TYPE
+					,cdbanchq crapdcc.cdbanchq%TYPE
+					,cdagechq crapdcc.cdagechq%TYPE
+					,nrctachq crapdcc.nrctachq%TYPE
+					,nrcheque crapdcc.nrcheque%TYPE
+					,vlcheque crapdcc.vlcheque%TYPE
+					,dtlibera crapdcc.dtlibera%TYPE
+					,inchqcop crapdcc.inchqcop%TYPE
+					,inemiten INTEGER
+					,dtdcaptu crapdcc.dtdcaptu%TYPE
+					,nrinsemi crapdcc.nrinsemi%TYPE
+					,nmcheque crapcec.nmcheque%TYPE
+					,cdtipemi crapdcc.cdtipemi%TYPE);
+	TYPE typ_cheque_custodia IS
+		TABLE OF typ_reg_cheque_custodia
+		INDEX BY BINARY_INTEGER;
+
+-- Criar tipo de PLTable para armazenar as informações de erro
+	TYPE typ_reg_erro_resgate IS
+		RECORD(dsdocmc7 crapdcc.dsdocmc7%TYPE
+					,dscritic VARCHAR2(4000));
+	TYPE typ_erro_resgate IS
+		TABLE OF typ_reg_erro_resgate
+		INDEX BY BINARY_INTEGER;					
 
   -- Função para converter ocorrencia para padrão CNAB
   FUNCTION fn_ocorrencia_cnab(pr_cdocorre IN NUMBER)
                                    RETURN NUMBER; 
+
+  -- Validação do Cheque para saber se ele pode ser custodiado
+  PROCEDURE pc_validar_cheque(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cooperativa
+                             ,pr_nrdconta  IN crapass.nrdconta%TYPE --> Codigo do Indexador
+                             ,pr_dsdocmc7  IN crapdcc.dsdocmc7%TYPE --> CMC-7 do Cheque
+                             ,pr_cdbanchq  IN NUMBER                --> Banco do Cheque
+                             ,pr_cdagechq  IN NUMBER                --> Agência do Cheque
+                             ,pr_cdcmpchq  IN NUMBER                --> COMPE do Cheque
+                             ,pr_nrctachq  IN NUMBER                --> Conta do Cheque
+                             ,pr_nrcheque  IN NUMBER                --> Número do Cheque
+                             ,pr_dtlibera  IN DATE                  --> Data de Liberação do Cheque
+                             ,pr_vlcheque  IN NUMBER                --> Valor do Cheque
+                             ,pr_nrremret  IN crapdcc.nrremret%TYPE --> Número da Remessa
+                             ,pr_dtmvtolt  IN DATE                  --> Data de Movimentação
+                             ,pr_intipmvt  IN craphcc.intipmvt%TYPE --> Tipo de Movimento (1-remessa/2-retorno/3-manual)
+														 ,pr_dtdcaptu  IN DATE DEFAULT NULL     --> Data de emissão
+                             ,pr_inchqcop OUT NUMBER                --> Tipo de cheque recebido (0=Outros bancos, 1=Cooperativa)
+                             ,pr_cdtipmvt OUT wt_custod_arq.cdtipmvt%TYPE --> Codigo do Tipo de Movimento
+                             ,pr_cdocorre OUT wt_custod_arq.cdocorre%TYPE --> Codigo da Ocorrencia
+                             ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                             ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                             ,pr_tab_erro OUT GENE0001.typ_tab_erro);  --Tabela de erros
 
   -- Procedure para validar arquivo de custodia de cheque
   PROCEDURE pc_validar_arquivo  (pr_cdcooper      IN crapcop.cdcooper%TYPE  -- Código da cooperativa
@@ -166,15 +224,44 @@ CREATE OR REPLACE PACKAGE CECRED.CUST0001 IS
                               ,pr_cdcritic     OUT INTEGER            -- Código do erro
                               ,pr_dscritic     OUT VARCHAR2);
                               
-    PROCEDURE pc_custodia_cheque_manual(pr_nrdconta  IN crapass.nrdconta%TYPE --> Codigo do Indexador
-                                       ,pr_dscheque  IN VARCHAR2              --> Codigo do Indexador 
-                                       ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
-                                       ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
-                                       ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
-                                       ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
-                                       ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
-                                       ,pr_des_erro OUT VARCHAR2);            --> Erros do processo
+	PROCEDURE pc_valida_custodia_manual_web(pr_nrdconta  IN crapass.nrdconta%TYPE --> Codigo do Indexador
+																				 ,pr_dscheque  IN VARCHAR2              --> Codigo do Indexador 
+																				 ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
+																				 ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+																				 ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+																				 ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
+																				 ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
+																				 ,pr_des_erro OUT VARCHAR2);            --> Erros do processo															
+															
+	PROCEDURE pc_valida_custodia_manual(pr_cdcooper  IN crapass.cdcooper%TYPE       --> Cooperativa
+		                                 ,pr_nrdconta  IN crapass.nrdconta%TYPE       --> Número da conta
+																		 ,pr_dscheque  IN VARCHAR2                    --> Codigo do Indexador 
+																		 ,pr_tab_cust_cheq OUT typ_cheque_custodia    --> Tabela com cheques para custódia
+																		 ,pr_tab_erro_cust OUT typ_erro_custodia      --> Tabela de cheques com erros
+																		 ,pr_cdcritic OUT PLS_INTEGER                 --> Código da crítica
+																		 ,pr_dscritic OUT VARCHAR2);                  --> Descrição da crítica
+															                              
+  PROCEDURE pc_custodia_cheque_manual(pr_cdcooper  IN crapass.cdcooper%TYPE  --> Cooperativa
+		                                 ,pr_nrdconta  IN crapass.nrdconta%TYPE  --> Codigo do Indexador
+																		 ,pr_dscheque  IN VARCHAR2               --> Codigo do Indexador
+																		 ,pr_cdoperad  IN VARCHAR2               --> Operador 
+																		 ,pr_nrborder  IN crapbdc.nrborder%TYPE  DEFAULT 0 --> Número bordero
+																		 ,pr_nrseqarq  IN crapdcc.nrseqarq%TYPE  DEFAULT 0 --> Número Seq. Arquivo
+																		 ,pr_nrremret IN OUT craphcc.nrremret%TYPE  --> Número remessa
+																		 ,pr_tab_erro_cust OUT typ_erro_custodia --> PlTable com erros de custodia de cada cheque
+																		 ,pr_cdcritic OUT PLS_INTEGER            --> Código da crítica
+																		 ,pr_dscritic OUT VARCHAR2);           --> Descrição da crítica
 
+	
+	PROCEDURE pc_custodia_cheque_manual_web(pr_nrdconta  IN crapass.nrdconta%TYPE --> Codigo do Indexador
+																				 ,pr_dscheque  IN VARCHAR2              --> Codigo do Indexador 
+																				 ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
+																				 ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+																				 ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+																				 ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
+																				 ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
+																				 ,pr_des_erro OUT VARCHAR2);            --> Erros do processo															
+															
     PROCEDURE pc_valida_conta_custodiar(pr_nrdconta  IN crapass.nrdconta%TYPE --> Codigo do Indexador
                                        ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
                                        ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
@@ -191,6 +278,68 @@ CREATE OR REPLACE PACKAGE CECRED.CUST0001 IS
                                            ,pr_cdcritic OUT INTEGER                -- Codigo do erro
                                            ,pr_dscritic OUT VARCHAR2);             -- Descricao erro
                                        
+    --> Rotina para geração do relatorio de acompanhamento de cheques custodiados
+    PROCEDURE pc_gera_relat_acomp_custod( pr_cdcooper   IN crapcop.cdcooper%TYPE  -- Cooperativa
+                                         ,pr_nrdconta   IN crapass.nrdconta%TYPE  -- Conta do cooperado
+                                         ,pr_nrremret   IN craphcc.nrremret%TYPE  -- Numero da remessa
+                                         ,pr_idorigem   IN INTEGER                --> Identificador de Origem
+                                         ,pr_dsiduser   IN VARCHAR2               --> id do usuario
+                                         --------> OUT <--------
+                                         ,pr_nmarqpdf  OUT VARCHAR2               --> Retornar quantidad de registros                           
+                                         ,pr_cdcritic  OUT INTEGER                -- Codigo do erro
+                                         ,pr_dscritic  OUT VARCHAR2);             -- Descricao erro                                    
+
+  --> Rotina para geração do relatorio de acompanhamento de cheques custodiados
+  PROCEDURE pc_gera_relat_acomp_custod_web( pr_nrdconta   IN crapass.nrdconta%TYPE  --> Número da Conta                                           
+                                           ,pr_nrremret   IN craphcc.nrremret%TYPE  --> Numero da remessa
+                                           ,pr_dsiduser   IN VARCHAR2               --> id do usuario
+                                           ,pr_xmllog     IN VARCHAR2               --> XML com informacoes de LOG
+                                           ,pr_cdcritic  OUT PLS_INTEGER            --> Codigo da critica
+                                           ,pr_dscritic  OUT VARCHAR2               --> Descricao da critica
+                                           ,pr_retxml IN OUT NOCOPY xmltype         --> Arquivo de retorno do XML
+                                           ,pr_nmdcampo  OUT VARCHAR2               --> Nome do campo com erro
+                                           ,pr_des_erro  OUT VARCHAR2);             --> Erros do processo
+																					 
+-- Cadastrar emitente de cheque	
+	PROCEDURE pc_validar_emitente(pr_cdcooper IN crapcec.cdcooper%TYPE --> Cooperativa
+															 ,pr_cdcmpchq IN crapcec.cdcmpchq%TYPE --> Cód. da compe
+														 	 ,pr_cdbanchq IN crapcec.cdbanchq%TYPE --> Cód. do banco
+															 ,pr_cdagechq IN crapcec.cdagechq%TYPE --> Cód. da agência
+															 ,pr_nrctachq IN crapcec.nrctachq%TYPE --> Número da conta do cheque
+															 ,pr_nrcpfcgc IN crapcec.nrcpfcgc%TYPE --> Número do cpf do emitente
+															 ,pr_nmcheque IN crapcec.nmcheque%TYPE --> Nome do emitente
+															 ,pr_cdcritic OUT PLS_INTEGER          --> Cód da crítica
+															 ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+															 ,pr_des_erro OUT VARCHAR2);           --> Retorno "OK"/"NOK"																					 
+																					 																					 
+    --> Rotina para geração do relatorio de acompanhamento de cheques custodiados
+  PROCEDURE pc_cadastra_emitente_web( pr_dscheque  IN VARCHAR2              --> Codigo do Indexador 
+																		 ,pr_xmllog    IN VARCHAR2               --> XML com informacoes de LOG
+																		 ,pr_cdcritic  OUT PLS_INTEGER            --> Codigo da critica
+																		 ,pr_dscritic  OUT VARCHAR2               --> Descricao da critica
+																		 ,pr_retxml IN OUT NOCOPY xmltype         --> Arquivo de retorno do XML
+																		 ,pr_nmdcampo  OUT VARCHAR2               --> Nome do campo com erro
+																		 ,pr_des_erro  OUT VARCHAR2);             --> Erros do processo
+																					 
+  -- Cadastrar emitente de cheque	
+	PROCEDURE pc_cadastra_emitente(pr_cdcooper IN crapcec.cdcooper%TYPE --> Cooperativa
+																,pr_cdcmpchq IN crapcec.cdcmpchq%TYPE --> Cód. da compe
+																,pr_cdbanchq IN crapcec.cdbanchq%TYPE --> Cód. do banco
+																,pr_cdagechq IN crapcec.cdagechq%TYPE --> Cód. da agência
+																,pr_nrctachq IN crapcec.nrctachq%TYPE --> Número da conta do cheque
+																,pr_nrcpfcgc IN crapcec.nrcpfcgc%TYPE --> Número do cpf do emitente
+																,pr_nmcheque IN crapcec.nmcheque%TYPE --> Nome do emitente
+																,pr_cdcritic OUT PLS_INTEGER          --> Cód da crítica
+																,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+																,pr_des_erro OUT VARCHAR2);           --> Retorno "OK"/"NOK"																					 
+																
+	PROCEDURE pc_efetua_resgate_custodia(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cooperativa
+		                                  ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Nr. da conta
+																			,pr_dscheque IN VARCHAR2               --> Lista de CMC7s
+																			,pr_cdoperad IN crapope.cdoperad%TYPE  --> Operador
+																			,pr_tab_erro_resg OUT typ_erro_resgate --> Erros do resgate
+																			,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+																			,pr_dscritic OUT VARCHAR2);            --> Descrição da crítica																
 END CUST0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
@@ -201,7 +350,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
 --  Sistema  : Rotinas genericas focando nas funcionalidades da custodia de cheque
 --  Sigla    : CUST
 --  Autor    : Daniel Zimmermann
---  Data     : Abril/2014.                   Ultima atualizacao: 25/04/2016
+--  Data     : Abril/2014.                   Ultima atualizacao: 23/03/2017
 --
 -- Dados referentes ao programa:
 --
@@ -267,6 +416,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
 --              25/04/2016 - Incluido chamada à procedure TARI0001.pc_verifica_tarifa_operacao em 
 --                           pc_custodias_cheques, alteração feita para o Projeto de Tarifas - 218 fase 2 
 --                           (Reinert).
+--
+--              23/03/2017 - Incluir cdcopant na leitura do cursor craptco_chq da procedure 
+--                           pc_ver_cheque (Lucas Ranghetti #600109)
 ---------------------------------------------------------------------------------------------------------------
 
   -- Descricao e codigo da critica 
@@ -337,6 +489,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
                              ,pr_nrremret  IN crapdcc.nrremret%TYPE --> Número da Remessa
                              ,pr_dtmvtolt  IN DATE                  --> Data de Movimentação
                              ,pr_intipmvt  IN craphcc.intipmvt%TYPE --> Tipo de Movimento (1-remessa/2-retorno/3-manual)
+														 ,pr_dtdcaptu  IN DATE DEFAULT NULL     --> Data de emissão
                              ,pr_inchqcop OUT NUMBER                --> Tipo de cheque recebido (0=Outros bancos, 1=Cooperativa)
                              ,pr_cdtipmvt OUT wt_custod_arq.cdtipmvt%TYPE --> Codigo do Tipo de Movimento
                              ,pr_cdocorre OUT wt_custod_arq.cdocorre%TYPE --> Codigo da Ocorrencia
@@ -445,7 +598,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
            AND crapcdb.cdagechq = pr_cdagechq 
            AND crapcdb.nrctachq = pr_nrctachq 
            AND crapcdb.nrcheque = pr_nrcheque 
-           AND crapcdb.dtdevolu IS NULL       
+           AND crapcdb.dtdevolu IS NULL
+           AND crapcdb.dtlibbdc IS NOT NULL
            AND crapcdb.dtlibera >= pr_dtmvtolt     
            AND (crapcdb.insitchq = 0
              OR crapcdb.insitchq = 2);
@@ -641,6 +795,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
           -- Executa RAISE para sair das validações
           RAISE vr_exc_saida;
         END IF;
+				
+				-- Se data de emissão foi enviada por parametro efetua validação
+				IF pr_dtdcaptu IS NOT NULL THEN
+					-- Se data de emissão for maior que data atual
+					IF pr_dtdcaptu > pr_dtmvtolt THEN
+						-- Data da captura no cliente inválida
+	          pr_cdtipmvt := nvl(pr_cdtipmvt,21);
+            pr_cdocorre := nvl(pr_cdocorre,'13');
+						-- Se possui critica de Tipo de Movimentação e Ocorrencia
+						-- Executa RAISE para sair das validações
+						RAISE vr_exc_saida;						
+      END IF;
+				END IF;
       END IF;
       
       -- Buscar o ultimo dia do ANO
@@ -705,7 +872,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
           CLOSE cr_crapfdc;
           -- (21,17) Conta do Cheque Invalida
           pr_cdtipmvt := nvl(pr_cdtipmvt,21);
-          pr_cdocorre := nvl(pr_cdocorre,'17');
+          pr_cdocorre := nvl(pr_cdocorre,'85');
           -- Se possui critica de Tipo de Movimentação e Ocorrencia
           -- Executa RAISE para sair das validações
           RAISE vr_exc_saida;
@@ -809,10 +976,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
             -- Executa RAISE para sair das validações
             RAISE vr_exc_saida;
           END IF;
+				ELSE
+	        -- Apenas fecha o cursor
+          CLOSE cr_crapdcc;
         END IF; 
-        
-        -- Fecha o cursor
-        CLOSE cr_crapdcc;
       
     EXCEPTION
       WHEN vr_exc_saida THEN
@@ -2966,7 +3133,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
       Sistema : Conta-Corrente - Cooperativa de Credito
       Sigla   : CRED
       Autor   : 
-      Data    :                                   Ultima atualizacao: 27/04/2016
+      Data    :                                   Ultima atualizacao: 26/09/2016
 
       Dados referentes ao programa:
 
@@ -2985,6 +3152,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
                   27/04/2016 - Adicionado o parametro de tipo de movimento (1-Arquivo/3-Manual)
                                e ajustado para utilizar o parametro (Douglas - Chamado 441428)
                   
+                  26/09/2016 - Removido criação da tarifa de custodia do momento de criação da 
+                               custodia, tarifa será criada no processo batch, para permitir
+                               resgatar o cheque no mesmo dia sem cobrar a tarifa.
+                               PRJ300-Desconto de cheque(Odirlei-AMcom)
       ............................................................................. */
     
      BEGIN
@@ -3069,6 +3240,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
                            ,pr_dtlibera IN crapdcc.dtlibera%TYPE
                            ,pr_intipmvt IN crapdcc.intipmvt%TYPE) IS
          SELECT crapdcc.dtlibera
+               ,crapdcc.dtdcaptu
                ,crapdcc.cdcmpchq
                ,crapdcc.cdbanchq
                ,crapdcc.cdagechq
@@ -3083,6 +3255,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
                ,crapdcc.nrremret
                ,crapdcc.intipmvt
                ,crapdcc.inchqcop
+               ,crapdcc.nrborder
          FROM crapdcc crapdcc
          WHERE crapdcc.cdcooper = pr_cdcooper
          AND   crapdcc.nrdconta = pr_nrdconta
@@ -3148,15 +3321,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
            WHERE crapope.cdcooper = pr_cdcooper
              AND crapope.cdoperad = pr_cdoperad;
        rw_crapope cr_crapope%ROWTYPE;
-
-       -- Cursor para tipo de pessoa
-       CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE
-                        ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
-          SELECT crapass.inpessoa
-            FROM crapass crapass
-           WHERE crapass.cdcooper = pr_cdcooper
-             AND crapass.nrdconta = pr_nrdconta;
-
+       
+       CURSOR cr_crapcst (pr_cdcooper IN crapcst.cdcooper%TYPE
+                         ,pr_cdagenci IN crapcst.cdagenci%TYPE
+                         ,pr_cdbccxlt IN crapcst.cdbccxlt%TYPE
+                         ,pr_cdcmpchq IN crapcst.cdcmpchq%TYPE
+                         ,pr_cdbanchq IN crapcst.cdbanchq%TYPE
+                         ,pr_cdagechq IN crapcst.cdagechq%TYPE
+                         ,pr_nrctachq IN crapcst.nrctachq%TYPE
+                         ,pr_nrcheque IN crapcst.nrcheque%TYPE) IS
+         SELECT 1
+           FROM crapcst cst
+          WHERE cst.cdcooper = pr_cdcooper
+            AND cst.cdagenci = pr_cdagenci
+            AND cst.cdbccxlt = pr_cdbccxlt
+            AND cst.cdcmpchq = pr_cdcmpchq
+            AND cst.cdbanchq = pr_cdbanchq
+            AND cst.cdagechq = pr_cdagechq
+            AND cst.nrctachq = pr_nrctachq
+            AND cst.nrcheque = pr_nrcheque
+            AND cst.dtdevolu IS NULL;
+       rw_crapcst cr_crapcst%ROWTYPE;
+       
        -- typ_tab_erro Generica
        vr_tab_erro GENE0001.typ_tab_erro;                     
        
@@ -3216,20 +3402,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
        vr_nrdconta_ver_cheque NUMBER;
        vr_dsdaviso VARCHAR2(4000);       
        
-       vr_inpessoa crapass.inpessoa%TYPE;
-       vr_cdbattar VARCHAR2(100);
-       vr_cdhistor INTEGER;
-       vr_cdhisest INTEGER;
-       vr_vltarifa NUMBER;
-       vr_dtdivulg DATE;
-       vr_dtvigenc DATE;
-       vr_cdfvlcop INTEGER;
-       vr_vltottar NUMBER := 0;
        vr_nrqtddcc INTEGER := 0;
-       vr_rowid    ROWID;
-     
-			 vr_qtacobra INTEGER;
-       vr_fliseope INTEGER;
 			 
        BEGIN
          -- Leitura do calendario da cooperativa
@@ -3475,9 +3648,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
              vr_flgdigok3 := GENE0005.fn_calc_digito (pr_nrcalcul => vr_nrcalcul);
                   
              vr_nrddigc3 := to_number(SUBSTR(to_char(vr_nrcalcul),LENGTH(to_char(vr_nrcalcul))));  
-                                                  
-             -- Insere registro na tabela CRAPCST
-             BEGIN
+             
+             
+             OPEN cr_crapcst (pr_cdcooper => pr_cdcooper
+                             ,pr_cdagenci => rw_crapope.cdagenci
+                             ,pr_cdbccxlt => 600
+                             ,pr_cdcmpchq => rw_crapdcc_2.cdcmpchq
+                             ,pr_cdbanchq => rw_crapdcc_2.cdbanchq
+                             ,pr_cdagechq => rw_crapdcc_2.cdagechq
+                             ,pr_nrctachq => rw_crapdcc_2.nrctachq
+                             ,pr_nrcheque => rw_crapdcc_2.nrcheque);
+             
+             FETCH cr_crapcst INTO rw_crapcst;
+             IF cr_crapcst%FOUND THEN
+                CLOSE cr_crapcst;
+                vr_dscritic := 'Cheque nr: '   || rw_crapdcc_2.nrcheque || 
+                                  ' banco: '   || rw_crapdcc_2.cdbanchq ||
+                                  ' agencia: ' || rw_crapdcc_2.cdagechq ||
+                                  ' conta: '   || rw_crapdcc_2.nrctachq ||
+                                  ' já encontra-se custodiado.';
+                RAISE vr_exc_erro;
+             END IF;
+             
+             CLOSE cr_crapcst;
+                                                          
+             -- Insere registro na tabela CRAPCST         
+             BEGIN                                        
                INSERT INTO crapcst
                  (cdcooper,
                   dtmvtolt,
@@ -3494,6 +3690,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
                   dsdocmc7,
                   dtdevolu,
                   dtlibera,
+                  dtemissa,
                   insitchq,
                   nrdconta,
                   nrddigc1,
@@ -3505,7 +3702,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
                   cdopeori,
                   cdageori,
                   dtinsori,
-                  flcstarq)
+                  flcstarq,
+                  nrborder)
                VALUES
                  (pr_cdcooper
                  ,pr_dtmvtolt
@@ -3522,6 +3720,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
                  ,rw_crapdcc_2.dsdocmc7
                  ,NULL
                  ,rw_crapdcc_2.dtlibera
+                 ,rw_crapdcc_2.dtdcaptu
                  ,0
                  ,rw_crapdcc_2.nrdconta -- Custodiante
                  ,vr_nrddigc1
@@ -3533,7 +3732,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
                  ,pr_cdoperad -- INICIO - Alteracoes referentes a M181 - Rafael Maciel (RKAM)"
                  ,NVL(rw_crapope.cdagenci, 0)
                  ,SYSDATE -- FIM - Alteracoes referentes a M181 - Rafael Maciel (RKAM)"
-                 ,1); -- Flag para Informar que o Cheque foi Custodiado por Arquivo (TRUE)
+                 ,1 -- Flag para Informar que o Cheque foi Custodiado por Arquivo (TRUE)
+                 ,rw_crapdcc_2.nrborder);
              EXCEPTION
              WHEN OTHERS THEN
                vr_dscritic := 'Erro ao inserir CRAPCST(CUST0001.pc_custodiar_cheques): '||SQLERRM;
@@ -3754,124 +3954,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
                                   
          END LOOP; -- Fim LOOP rw_crapdcc_1   
 
-         -- Selecionar o tipo de pessoa
-         OPEN cr_crapass (pr_cdcooper => pr_cdcooper
-                         ,pr_nrdconta => pr_nrdconta);
-         FETCH cr_crapass INTO vr_inpessoa;
-         CLOSE cr_crapass;
-
-         -- Codigo da tarifa
-         IF vr_inpessoa = 1 THEN
-           vr_cdbattar := 'CUSTDCTOPF';
-         ELSE
-           vr_cdbattar := 'CUSTDCTOPJ';
-         END IF;
-
-         -- Busca o valor da tarifa
-         TARI0001.pc_carrega_dados_tar_vigente (pr_cdcooper  => pr_cdcooper   -- Codigo Cooperativa
-                                               ,pr_cdbattar  => vr_cdbattar   -- Codigo Tarifa
-                                               ,pr_vllanmto  => 0             -- Valor Lancamento
-                                               ,pr_cdprogra  => 'CUST0001'    -- Codigo Programa
-                                               ,pr_cdhistor  => vr_cdhistor   -- Codigo Historico
-                                               ,pr_cdhisest  => vr_cdhisest   -- Historico Estorno
-                                               ,pr_vltarifa  => vr_vltarifa   -- Valor tarifa
-                                               ,pr_dtdivulg  => vr_dtdivulg   -- Data Divulgacao
-                                               ,pr_dtvigenc  => vr_dtvigenc   -- Data Vigencia
-                                               ,pr_cdfvlcop  => vr_cdfvlcop   -- Codigo faixa valor cooperativa
-                                               ,pr_cdcritic  => vr_cdcritic   -- Codigo Critica
-                                               ,pr_dscritic  => vr_dscritic   -- Descricao Critica
-                                               ,pr_tab_erro  => vr_tab_erro); -- Tabela erros
-         -- Se ocorreu erro
-         IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-           -- Se possui erro no vetor
-           IF vr_tab_erro.Count > 0 THEN
-             vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-             vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-           ELSE
-             vr_cdcritic := 0;
-             vr_dscritic := 'Nao foi possivel carregar a tarifa.';
-           END IF;
-           -- Levantar Excecao
-           RAISE vr_exc_erro;
-         END IF;
-         
-         -- O valor sera baseado na quantidade(crapdcc) de cheques, multiplicado pelo valor da tarifa
-         vr_vltottar := vr_vltarifa * vr_nrqtddcc;
-
-				 /* Efetua verificacao para cobrancas de tarifas sobre operacoes */
-				 tari0001.pc_verifica_tarifa_operacao(pr_cdcooper => pr_cdcooper              --> Codigo da Cooperativa
-																						 ,pr_cdoperad => '1'                      --> Codigo Operador
-																						 ,pr_cdagenci => 1                        --> Codigo Agencia
-																						 ,pr_cdbccxlt => 100                      --> Codigo banco caixa
-																						 ,pr_dtmvtolt => rw_crapdat.dtmvtolt      --> Data Lancamento
-																						 ,pr_cdprogra => 'CUST0001'               --> Nome do Programa que chama a rotina
-																						 ,pr_idorigem => pr_idorigem              --> Identificador Origem(1-AYLLOS,2-CAIXA,3-INTERNET,4-TAA,5-AYLLOS WEB,6-URA)
-																						 ,pr_nrdconta => pr_nrdconta              --> Numero da Conta
-																						 ,pr_tipotari => 3                        --> Tipo de Tarifa(1-Saque,2-Consulta)
-																						 ,pr_tipostaa => 0                        --> Tipo de TAA que foi efetuado a operacao(1-BB, 2-Banco 24h, 3-Banco 24h compartilhado, 4-Rede Cirrus)
-																						 ,pr_qtoperac => vr_nrqtddcc              --> Quantidade de registros da operação (Custódia, contra-ordem, folhas de cheque)
-																						 ,pr_qtacobra => vr_qtacobra              --> Quantidade de registros a cobrar tarifa na operação
-																						 ,pr_fliseope => vr_fliseope              --> Flag indica se ira isentar tarifa:0-Não isenta,1-Isenta
-																						 ,pr_cdcritic => vr_cdcritic              --> Codigo da critica
-																						 ,pr_dscritic => vr_dscritic);            --> Descricao da critica
-																										 
-				 -- Se ocorreu erro
-				 IF vr_cdcritic <> 0 OR vr_dscritic IS NOT NULL THEN
-					 -- Levantar Excecao
-					 RAISE vr_exc_erro;
-				 END IF;
-																										 
-         -- Se não isenta tarifa
-         IF vr_fliseope <> 1 THEN
-		
-		       -- Se a quantidade de registros a cobrar tarifa na operação for maior que 0
-		       IF vr_qtacobra > 0 THEN
-						  -- Atribui novo valor total a cobrar
-							vr_vltottar := vr_qtacobra * vr_vltarifa;
-					 END IF;																
-					 						 
-         -- Criar Lancamento automatico tarifa
-         TARI0001.pc_cria_lan_auto_tarifa(pr_cdcooper      => pr_cdcooper
-                                         ,pr_nrdconta      => pr_nrdconta
-                                         ,pr_dtmvtolt      => rw_crapdat.dtmvtolt
-                                         ,pr_cdhistor      => vr_cdhistor
-                                         ,pr_vllanaut      => vr_vltottar
-                                         ,pr_cdoperad      => '1'
-                                         ,pr_cdagenci      => 1
-                                         ,pr_cdbccxlt      => 100
-                                         ,pr_nrdolote      => 10133
-                                         ,pr_tpdolote      => 1
-                                         ,pr_nrdocmto      => 0
-                                         ,pr_nrdctabb      => pr_nrdconta
-                                         ,pr_nrdctitg      => GENE0002.fn_mask(pr_nrdconta,'99999999')
-                                         ,pr_cdpesqbb      => ' '
-                                         ,pr_cdbanchq      => 0
-                                         ,pr_cdagechq      => 0
-                                         ,pr_nrctachq      => 0
-                                         ,pr_flgaviso      => FALSE
-                                         ,pr_tpdaviso      => 0
-                                         ,pr_cdfvlcop      => vr_cdfvlcop
-                                         ,pr_inproces      => rw_crapdat.inproces
-                                         ,pr_rowid_craplat => vr_rowid
-                                         ,pr_tab_erro      => vr_tab_erro
-                                         ,pr_cdcritic      => vr_cdcritic
-                                         ,pr_dscritic      => vr_dscritic);
-         -- Se ocorreu erro
-         IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-           -- Se possui erro no vetor
-           IF vr_tab_erro.Count > 0 THEN
-             vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-             vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-           ELSE
-             vr_cdcritic := 0;
-             vr_dscritic := 'Erro no lancamento tarifa de custodia de cheque.';
-           END IF;
-           -- Levantar Excecao
-           RAISE vr_exc_erro;
-         END IF;
-
-         END IF;
-					
          -- Inicializar variaveis
          vr_qtdconfi := 0;
          vr_qtdrejei := 0;	
@@ -4363,6 +4445,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
                            ,pr_cdagectl IN crapcop.cdagectl%TYPE
                            ,pr_nrctaant IN crapcst.nrctachq%TYPE) IS
       SELECT tco.nrdconta
+            ,tco.cdcopant
         FROM crapcop cop, craptco tco
        WHERE cop.cdagectl = pr_cdagectl
          AND tco.cdcooper = pr_cdcooper
@@ -4424,7 +4507,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
                                       ,pr_cdcritic => vr_cdcritic
                                       ,pr_dscritic => vr_dscritic);
                              
-         IF vr_stsnrcal = 1 THEN                
+         IF vr_stsnrcal = 0 THEN                
            vr_cdcritic := 8; -- Digito Invalido
            RAISE vr_exc_saida;
          END IF;                    
@@ -4749,7 +4832,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
          
          IF (pr_cdcooper = 1 AND pr_cdagechq = 102)  OR    /* migracao */
             pr_cdcooper = 16 THEN
-             OPEN cr_crapfdc(pr_cdcooper => rw_craptco.cdcopant,
+             OPEN cr_crapfdc(pr_cdcooper => rw_craptco_chq.cdcopant,
                              pr_cdbanchq => pr_cdbanchq,
                              pr_cdagechq => pr_cdagechq,
                              pr_nrctachq => pr_nrctachq,
@@ -4758,7 +4841,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
               INTO rw_crapfdc;                                                                
          ELSIF (pr_cdcooper = 1  AND pr_cdagechq = 103) OR  /* incorporacao */              
                (pr_cdcooper = 9  AND pr_cdagechq = 116 AND ( SYSDATE > to_date('30/12/2016','DD/MM/YYYY') )) OR
-			   (pr_cdcooper = 13 AND pr_cdagechq = 114) THEN
+               (pr_cdcooper = 13 AND pr_cdagechq = 114) THEN
 
              OPEN cr_crapfdc(pr_cdcooper => pr_cdcooper,
                              pr_cdbanchq => pr_cdbanchq,
@@ -5040,7 +5123,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
 
   END pc_ver_associado;    
   
-  PROCEDURE pc_custodia_cheque_manual(pr_nrdconta  IN crapass.nrdconta%TYPE --> Codigo do Indexador
+	PROCEDURE pc_valida_custodia_manual_web(pr_nrdconta  IN crapass.nrdconta%TYPE --> Codigo do Indexador
                                      ,pr_dscheque  IN VARCHAR2              --> Codigo do Indexador 
                                      ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
                                      ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
@@ -5051,40 +5134,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
 
   BEGIN
     /* .............................................................................
-    Programa: pc_custodia_cheque_manual
+    Programa: pc_valida_custodia_manual
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
-    Autor   : Douglas Quisinski
-    Data    : 12/05/2015                        Ultima atualizacao: 11/01/2016
+    Autor   : Lucas Reinert
+    Data    : 13/10/2016                        Ultima atualizacao:
 
     Dados referentes ao programa:
 
     Frequencia: Sempre que for chamado
-    Objetivo  : Rotina para cadastrar os cheques para a custódia
-
-    Alteracoes: 09/07/2015 - Ajustar a identificação da conta do cheque quando desmontar o CMC-7
-                             pois para o banco do brasil são 8 posições e os demais são 10
-                             (Douglas - Chamado 306393)
-                             
-                04/01/2016 - Ajuste na leitura da tabela crapocc para utilizar UPPER nos campos VARCHAR
-                             pois será incluido o UPPER no indice desta tabela - SD 375854
-                             (Adriano).    
-                             
-                11/01/2016 - Ajuste na leitura da tabela crapocc para utilizar UPPER nos campos VARCHAR
-                             pois será incluido o UPPER no indice desta tabela - SD 375854
-                             (Adriano).    
+    Objetivo  : Rotina para validar os cheques para a custódia
                                                      
+    Alteracoes: 
     ............................................................................. */
     DECLARE
+		
       vr_exc_saida EXCEPTION;
       vr_exc_erro  EXCEPTION;
+      vr_exc_emiten EXCEPTION;
 
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic crapcri.dscritic%TYPE;
-      vr_erro_custodia VARCHAR2(4000);
-  
-      vr_cdtipmvt wt_custod_arq.cdtipmvt%TYPE;
-      vr_cdocorre wt_custod_arq.cdocorre%TYPE;
 
       -- Variaveis de log
       vr_cdcooper NUMBER;
@@ -5095,16 +5165,193 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
       vr_nrdcaixa VARCHAR2(100);
       vr_idorigem VARCHAR2(100);
 
-      vr_ret_all_cheques gene0002.typ_split;
-      vr_ret_cheque      gene0002.typ_split;
+      /* Vetor para armazenar as informac?es de erro */
+      vr_tab_custodia_erro typ_erro_custodia;
+      vr_index_erro INTEGER;
+      vr_xml_erro_custodia VARCHAR2(32726);
+      vr_xml_emitentes VARCHAR2(32726);
+			vr_xml_inf_emitentes VARCHAR2(32726);
+			
+      /* Vetor para armazenar as informacoes dos cheques que estao sendo custodiados */
+      vr_tab_cheque_custodia typ_cheque_custodia;
+			
+			-- Variáveis auxiliares
+			vr_idcheque VARCHAR2(30);
+			vr_dsdocmc7 VARCHAR2(40);
+
+    BEGIN
+
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+      -- Validar cheques
+      pc_valida_custodia_manual(pr_cdcooper => vr_cdcooper                  --> Cooperativa
+															 ,pr_nrdconta => pr_nrdconta                  --> Número da conta
+															 ,pr_dscheque => pr_dscheque                  --> Codigo do Indexador 
+															 ,pr_tab_cust_cheq => vr_tab_cheque_custodia  --> Tabela com cheques para custódia
+															 ,pr_tab_erro_cust => vr_tab_custodia_erro    --> Tabela de cheques com erros
+															 ,pr_cdcritic => vr_cdcritic                  --> Código da crítica
+															 ,pr_dscritic => vr_dscritic);                --> Descrição da crítica      
+			
+			-- Se retornou erro												 
+		  IF vr_cdcritic > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+			  --Levantar Excecao
+			  RAISE vr_exc_erro;
+		  END IF;
+															 															 
+      -- Verifica se foram encontrados erros durante o processamento
+      IF vr_tab_custodia_erro.count > 0 THEN
+        vr_xml_erro_custodia := '';
+        FOR vr_index_erro IN 1..vr_tab_custodia_erro.count LOOP
+          -- Gera o XML com os erros
+          vr_xml_erro_custodia := vr_xml_erro_custodia || 
+                                  '<erro'|| vr_index_erro || '>' ||
+                                  '  <dsdocmc7>' || vr_tab_custodia_erro(vr_index_erro).dsdocmc7 || '</dsdocmc7>' ||
+                                  '  <dscritic>' || vr_tab_custodia_erro(vr_index_erro).dscritic || '</dscritic>' ||
+                                  '</erro'|| vr_index_erro || '>';
+        END LOOP;
+        RAISE vr_exc_saida;
+      END IF;
+			
+			-- Verificar se possui algum emitente não cadastrado
+			IF vr_tab_cheque_custodia.count > 0 THEN
+				vr_xml_emitentes := '';
+				FOR vr_index_cheque IN 1..vr_tab_cheque_custodia.count LOOP
+					-- Se exister algum cheque sem emitente
+					IF vr_tab_cheque_custodia(vr_index_cheque).inemiten = 0 AND
+             vr_tab_cheque_custodia(vr_index_cheque).cdbanchq <> 85 THEN
+						-- Passar flag de falta de cadastro de emitente
+						vr_xml_emitentes := vr_xml_emitentes ||
+						                    '<emitente'|| vr_index_cheque || '>' ||
+																'   <cdcmpchq>' || vr_tab_cheque_custodia(vr_index_cheque).cdcmpchq || '</cdcmpchq>' ||
+																'   <cdbanchq>' || vr_tab_cheque_custodia(vr_index_cheque).cdbanchq || '</cdbanchq>' ||
+																'   <cdagechq>' || vr_tab_cheque_custodia(vr_index_cheque).cdagechq || '</cdagechq>' ||
+																'   <nrctachq>' || vr_tab_cheque_custodia(vr_index_cheque).nrctachq || '</nrctachq>' ||
+						                    '</emitente'|| vr_index_cheque || '>';
+					ELSE
+						vr_dsdocmc7 := regexp_replace(vr_tab_cheque_custodia(vr_index_cheque).dsdocmc7, '[^0-9]');
+						
+						vr_idcheque := to_char(to_number(substr(vr_dsdocmc7, 1, 3))) ||
+						               to_char(to_number(substr(vr_dsdocmc7, 4, 4))) ||
+													 to_char(to_number(substr(vr_dsdocmc7, 9, 3))) ||
+													 to_char(to_number(substr(vr_dsdocmc7, 12, 6)));
+													 
+						IF (to_number(substr(vr_dsdocmc7, 1, 3)) = 1) THEN
+							vr_idcheque := vr_idcheque ||
+						                 to_char(to_number(substr(vr_dsdocmc7, 22, 8)));
+						ELSE
+							vr_idcheque := vr_idcheque ||
+						                 to_char(to_number(substr(vr_dsdocmc7, 20, 10)));
+						END IF;
+						-- Emitentes cadastrados, retornar nome e cpf/cnpj
+				    vr_xml_inf_emitentes := vr_xml_inf_emitentes ||
+						                       '<emitente'|| vr_index_cheque || '>' ||
+																	 '   <nrcpfcgc>' || gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_tab_cheque_custodia(vr_index_cheque).nrinsemi
+				                                                                       ,pr_inpessoa => vr_tab_cheque_custodia(vr_index_cheque).cdtipemi) || '</nrcpfcgc>' ||
+																	 '   <nmcheque>' || vr_tab_cheque_custodia(vr_index_cheque).nmcheque || '</nmcheque>' ||
+																	 '   <idcheque>' || vr_idcheque || '</idcheque>' ||
+																	 '</emitente'|| vr_index_cheque || '>';
+					END IF;
+				END LOOP;
+				IF trim(vr_xml_emitentes) IS NOT NULL THEN
+					RAISE vr_exc_emiten;
+				END IF;
+			END IF;
+
+		IF trim(vr_xml_inf_emitentes) IS NOT NULL THEN
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Inf_Emitentes>' || vr_xml_inf_emitentes || '</Inf_Emitentes></Root>');							
+		END IF;
+						
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        pr_cdcritic := 0;
+        pr_dscritic := '';
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Validar_CMC7>' || vr_xml_erro_custodia || '</Validar_CMC7></Root>');
+        ROLLBACK;
+			WHEN vr_exc_emiten THEN
+        pr_cdcritic := 0;
+        pr_dscritic := '';
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Emitentes>' || vr_xml_emitentes || '</Emitentes></Root>');				
+      WHEN vr_exc_erro THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || pr_dscritic || '</Erro></Root>');
+        ROLLBACK;
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral em pc_valida_custodia_manual_web: ' || SQLERRM;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || pr_dscritic || '</Erro></Root>');
+        ROLLBACK;
+    END;
+
+  END pc_valida_custodia_manual_web;
+
+	PROCEDURE pc_valida_custodia_manual(pr_cdcooper  IN crapass.cdcooper%TYPE       --> Cooperativa
+		                                 ,pr_nrdconta  IN crapass.nrdconta%TYPE       --> Número da conta
+																		 ,pr_dscheque  IN VARCHAR2                    --> Codigo do Indexador 
+																		 ,pr_tab_cust_cheq OUT typ_cheque_custodia    --> Tabela com cheques para custódia
+																		 ,pr_tab_erro_cust OUT typ_erro_custodia      --> Tabela de cheques com erros
+																		 ,pr_cdcritic OUT PLS_INTEGER                 --> Código da crítica
+																		 ,pr_dscritic OUT VARCHAR2) IS                --> Descrição da crítica
+
+  BEGIN
+    /* .............................................................................
+    Programa: pc_valida_custodia_manual
+    Sistema : Conta-Corrente - Cooperativa de Credito
+    Sigla   : CRED
+    Autor   : Lucas Reinert
+    Data    : 13/10/2016                        Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+    Objetivo  : Rotina para validar os cheques para a custódia
       
+    Alteracoes: 
+    ............................................................................. */
+    DECLARE
+		  -- Tratamento de erros
+      vr_exc_erro  EXCEPTION;
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic crapcri.dscritic%TYPE;
+      vr_erro_custodia VARCHAR2(4000);
+      
+			-- Variáveis auxiliares
+      vr_cdtipmvt wt_custod_arq.cdtipmvt%TYPE;
+      vr_cdocorre wt_custod_arq.cdocorre%TYPE;
       vr_auxcont  INTEGER := 0;
       vr_inchqcop NUMBER;
       
+      vr_ret_all_cheques gene0002.typ_split;
+      vr_ret_cheque      gene0002.typ_split;
+						
       -- Informações do Cheque
       vr_dtchqbom DATE;
+			vr_dtemissa DATE;
       vr_vlcheque NUMBER(25,2);
       vr_dsdocmc7 crapdcc.dsdocmc7%TYPE;
+			-- Informações do emitente
+			vr_inemiten INTEGER;
+			vr_nmcheque VARCHAR2(50);
+			vr_nrinsemi crapdcc.nrinsemi%TYPE;
+			vr_cdtipemi crapdcc.cdtipemi%TYPE;
+			vr_stsnrcal BOOLEAN;
       -- Campos do CMC7
       vr_dsdocmc7_formatado VARCHAR2(40);
       vr_cdbanchq NUMBER; 
@@ -5112,8 +5359,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
       vr_cdcmpchq NUMBER;
       vr_nrctachq NUMBER;
       vr_nrcheque NUMBER;
-
-      vr_nrremret craphcc.nrremret%TYPE;
 
       -- typ_tab_erro Generica
       pr_tab_erro GENE0001.typ_tab_erro;
@@ -5153,67 +5398,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
            AND UPPER(crapocc.cdocorre) = UPPER(pr_cdocorre);
       rw_crapocc cr_crapocc%ROWTYPE;
       
-      -- Header do Arquivo de Custódia de Cheques
-      CURSOR cr_craphcc(pr_cdcooper IN craphcc.cdcooper%TYPE     --> Código da cooperativa
-                       ,pr_nrdconta IN craphcc.nrdconta%TYPE) IS --> Numero da Conta
-        SELECT NVL(MAX(nrremret),0) nrremret
-          FROM craphcc
-         WHERE craphcc.cdcooper = pr_cdcooper 
-           AND craphcc.nrdconta = pr_nrdconta
-           AND craphcc.nrconven = 1 -- Fixo
-           AND craphcc.intipmvt = 3 -- Manual
-         ORDER BY craphcc.cdcooper,
-                  craphcc.nrdconta,
-                  craphcc.nrconven,
-                  craphcc.intipmvt;              
-      rw_craphcc cr_craphcc%ROWTYPE;
-       
+			-- Busca informações do emitente
+			CURSOR cr_crapcec (pr_cdcooper IN crapcec.cdcooper%TYPE
+												,pr_cdcmpchq IN crapcec.cdcmpchq%TYPE
+			                  ,pr_cdbanchq IN crapcec.cdbanchq%TYPE
+			                  ,pr_cdagechq IN crapcec.cdagechq%TYPE
+												,pr_nrctachq IN crapcec.nrctachq%TYPE) IS
+        SELECT cec.nrcpfcgc
+				      ,cec.nmcheque
+				  FROM crapcec cec
+				 WHERE cec.cdcooper = pr_cdcooper
+					 AND cec.cdcmpchq = pr_cdcmpchq
+				   AND cec.cdbanchq = pr_cdbanchq
+				   AND cec.cdagechq = pr_cdagechq
+					 AND cec.nrctachq = pr_nrctachq
+					 AND cec.nrdconta = 0;
+			rw_crapcec cr_crapcec%ROWTYPE;
       -- Variaveis de controle de calendario
       rw_crapdat      BTCH0001.cr_crapdat%ROWTYPE;
 
-      TYPE typ_reg_erro_custodia IS
-        RECORD(dsdocmc7 crapdcc.dsdocmc7%TYPE
-              ,dscritic VARCHAR2(4000));
-      TYPE typ_erro_custodia IS
-        TABLE OF typ_reg_erro_custodia
-        INDEX BY BINARY_INTEGER;
       /* Vetor para armazenar as informac?es de erro */
       vr_tab_custodia_erro typ_erro_custodia;
       vr_index_erro INTEGER;
-      vr_xml_erro_custodia VARCHAR2(32726);
 
-      TYPE typ_reg_cheque_custodia IS
-        RECORD(dsdocmc7 crapdcc.dsdocmc7%TYPE
-              ,cdcmpchq crapdcc.cdcmpchq%TYPE
-              ,cdbanchq crapdcc.cdbanchq%TYPE
-              ,cdagechq crapdcc.cdagechq%TYPE
-              ,nrctachq crapdcc.nrctachq%TYPE
-              ,nrcheque crapdcc.nrcheque%TYPE
-              ,vlcheque crapdcc.vlcheque%TYPE
-              ,dtlibera crapdcc.dtlibera%TYPE
-              ,inchqcop crapdcc.inchqcop%TYPE);
-      TYPE typ_cheque_custodia IS
-        TABLE OF typ_reg_cheque_custodia
-        INDEX BY BINARY_INTEGER;
       /* Vetor para armazenar as informacoes dos cheques que estao sendo custodiados */
       vr_tab_cheque_custodia typ_cheque_custodia;
       vr_index_cheque INTEGER;
 
     BEGIN
-
-      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
-                              ,pr_cdcooper => vr_cdcooper
-                              ,pr_nmdatela => vr_nmdatela
-                              ,pr_nmeacao  => vr_nmeacao
-                              ,pr_cdagenci => vr_cdagenci
-                              ,pr_nrdcaixa => vr_nrdcaixa
-                              ,pr_idorigem => vr_idorigem
-                              ,pr_cdoperad => vr_cdoperad
-                              ,pr_dscritic => vr_dscritic);
-
-
       -- Verifica se a cooperativa esta cadastrada
-      OPEN cr_crapcop( pr_cdcooper => vr_cdcooper);
+      OPEN cr_crapcop( pr_cdcooper => pr_cdcooper);
       FETCH cr_crapcop INTO rw_crapcop;
 	  
       -- Se não encontrar
@@ -5229,7 +5443,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
       END IF;
 
       -- Leitura do calendário da cooperativa
-      OPEN btch0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
+      OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
       FETCH btch0001.cr_crapdat INTO rw_crapdat;
       -- Se não encontrar
       IF btch0001.cr_crapdat%NOTFOUND THEN
@@ -5245,7 +5459,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
       END IF;
       
       -- Verifica se a cooperativa esta cadastrada
-      OPEN cr_crapass( pr_cdcooper => vr_cdcooper
+      OPEN cr_crapass( pr_cdcooper => pr_cdcooper
                      , pr_nrdconta => pr_nrdconta);
       FETCH cr_crapass INTO rw_crapass;
       -- Se não encontrar
@@ -5274,8 +5488,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
         vr_ret_cheque := gene0002.fn_quebra_string(vr_ret_all_cheques(vr_auxcont), ';');
 
         vr_dtchqbom := to_date(vr_ret_cheque(1),'dd/mm/RRRR');
-        vr_vlcheque := to_number(vr_ret_cheque(2));
-        vr_dsdocmc7 := vr_ret_cheque(3);
+				vr_dtemissa := to_date(vr_ret_cheque(2),'dd/mm/RRRR');
+        vr_vlcheque := to_number(vr_ret_cheque(3));
+        vr_dsdocmc7 := vr_ret_cheque(4);
         
         -- Formatar o CMC-7
         vr_dsdocmc7_formatado := gene0002.fn_mask(vr_dsdocmc7,'<99999999<9999999999>999999999999:');
@@ -5296,7 +5511,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
         END IF;
         
         -- Utiliza a validação padrão para saber a situação do cheque
-        pc_validar_cheque(pr_cdcooper => vr_cdcooper
+        pc_validar_cheque(pr_cdcooper => pr_cdcooper
                          ,pr_nrdconta => pr_nrdconta
                          ,pr_dsdocmc7 => vr_dsdocmc7_formatado
                          ,pr_cdbanchq => vr_cdbanchq
@@ -5337,8 +5552,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
           vr_index_erro := vr_tab_custodia_erro.count + 1;  
           vr_tab_custodia_erro(vr_index_erro).dsdocmc7 := vr_dsdocmc7;
           vr_tab_custodia_erro(vr_index_erro).dscritic := vr_erro_custodia;
-        END IF;
+        ELSIF vr_vlcheque <= 0 THEN
+          vr_index_erro := vr_tab_custodia_erro.count + 1;  
+          vr_tab_custodia_erro(vr_index_erro).dsdocmc7 := vr_dsdocmc7;
+          vr_tab_custodia_erro(vr_index_erro).dscritic := 'Cheque com valor zerado';
+				END IF;
         
+				-- Verificar se possui emitente cadastrado
+				OPEN cr_crapcec(pr_cdcooper => pr_cdcooper
+											 ,pr_cdcmpchq => vr_cdcmpchq
+											 ,pr_cdbanchq => vr_cdbanchq
+											 ,pr_cdagechq => vr_cdagechq
+											 ,pr_nrctachq => vr_nrctachq);
+				FETCH cr_crapcec INTO rw_crapcec;
+				
+				-- Se não encontrou emitente 
+				IF cr_crapcec%NOTFOUND THEN
+					-- Atribui valor 0 - Emitente não cadastrado
+          vr_inemiten := 0;
+					vr_nrinsemi := 0;
+					vr_nmcheque := '';
+					vr_cdtipemi := 0;
+				ELSE
+          vr_inemiten := 1;					
+					vr_nrinsemi := rw_crapcec.nrcpfcgc;
+					vr_nmcheque := rw_crapcec.nmcheque;
+					-- Busca indicador de pessoa baseando-se no CPF/CNPJ do Emitente
+					gene0005.pc_valida_cpf_cnpj(pr_nrcalcul => vr_nrinsemi
+					                           ,pr_stsnrcal => vr_stsnrcal
+																		 ,pr_inpessoa => vr_cdtipemi);
+				END IF;
+				-- Fecha cursor
+				CLOSE cr_crapcec;
+				
         -- Carrega as informações do cheque para custodiar
         vr_index_cheque := vr_tab_cheque_custodia.count + 1;  
         vr_tab_cheque_custodia(vr_index_cheque).dsdocmc7 := vr_dsdocmc7_formatado;
@@ -5350,40 +5596,163 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
         vr_tab_cheque_custodia(vr_index_cheque).vlcheque := vr_vlcheque;
         vr_tab_cheque_custodia(vr_index_cheque).dtlibera := vr_dtchqbom;
         vr_tab_cheque_custodia(vr_index_cheque).inchqcop := vr_inchqcop;
-        
+        vr_tab_cheque_custodia(vr_index_cheque).dtdcaptu := vr_dtemissa;				
+        vr_tab_cheque_custodia(vr_index_cheque).inemiten := vr_inemiten;				
+        vr_tab_cheque_custodia(vr_index_cheque).nrinsemi := vr_nrinsemi;
+				vr_tab_cheque_custodia(vr_index_cheque).nmcheque := vr_nmcheque;
+        vr_tab_cheque_custodia(vr_index_cheque).cdtipemi := vr_cdtipemi;
       END LOOP;
+			
+			-- Atribui PlTables para os parametros
+			pr_tab_cust_cheq := vr_tab_cheque_custodia;
+			pr_tab_erro_cust := vr_tab_custodia_erro;
+      			
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+				-- Se não preencheu dscritic
+				IF vr_cdcritic > 0 AND trim(vr_dscritic) IS NULL THEN
+					vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        END IF;
+				-- Atribui críticas
+        pr_cdcritic := vr_cdcritic;
+				pr_dscritic := vr_dscritic;
 
+        ROLLBACK;
+      WHEN OTHERS THEN
+				-- Atribui críticas
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral em pc_valida_custodia_manual: ' || SQLERRM;
+
+        ROLLBACK;
+    END;
+
+  END pc_valida_custodia_manual;
+
+  PROCEDURE pc_custodia_cheque_manual(pr_cdcooper  IN crapass.cdcooper%TYPE  --> Cooperativa
+		                                 ,pr_nrdconta  IN crapass.nrdconta%TYPE  --> Codigo do Indexador
+																		 ,pr_dscheque  IN VARCHAR2               --> Codigo do Indexador
+																		 ,pr_cdoperad  IN VARCHAR2               --> Operador 
+																		 ,pr_nrborder  IN crapbdc.nrborder%TYPE  DEFAULT 0 --> Número bordero
+																		 ,pr_nrseqarq  IN crapdcc.nrseqarq%TYPE  DEFAULT 0 --> Número Seq. Arquivo																 
+																		 ,pr_nrremret IN OUT craphcc.nrremret%TYPE  --> Número remessa
+																		 ,pr_tab_erro_cust OUT typ_erro_custodia --> PlTable com erros de custodia de cada cheque
+																		 ,pr_cdcritic OUT PLS_INTEGER            --> Código da crítica
+																		 ,pr_dscritic OUT VARCHAR2) IS           --> Descrição da crítica
+
+  BEGIN
+    /* .............................................................................
+    Programa: pc_custodia_cheque_manual
+    Sistema : Conta-Corrente - Cooperativa de Credito
+    Sigla   : CRED
+    Autor   : Lucas Reinert
+    Data    : 08/11/2016                        Ultima atualizacao: 
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+    Objetivo  : Rotina para cadastrar os cheques para a custódia
+
+    Alteracoes: 
+		
+    ............................................................................. */
+    DECLARE
+      vr_exc_saida EXCEPTION;
+      vr_exc_erro  EXCEPTION;
+
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic crapcri.dscritic%TYPE;
+              
+      vr_nrremret craphcc.nrremret%TYPE;
+			vr_nrseqarq crapdcc.nrseqarq%TYPE;
+      
+      -- Header do Arquivo de Custódia de Cheques
+      CURSOR cr_craphcc(pr_cdcooper IN craphcc.cdcooper%TYPE     --> Código da cooperativa
+                       ,pr_nrdconta IN craphcc.nrdconta%TYPE) IS --> Numero da Conta
+        SELECT NVL(MAX(nrremret),0) nrremret
+          FROM craphcc
+         WHERE craphcc.cdcooper = pr_cdcooper 
+           AND craphcc.nrdconta = pr_nrdconta
+           AND craphcc.nrconven = 1 -- Fixo
+           AND craphcc.intipmvt = 3 -- Manual
+         ORDER BY craphcc.cdcooper,
+                  craphcc.nrdconta,
+                  craphcc.nrconven,
+                  craphcc.intipmvt;              
+      rw_craphcc cr_craphcc%ROWTYPE;
+       
+      -- Variaveis de controle de calendario
+      rw_crapdat      BTCH0001.cr_crapdat%ROWTYPE;
+
+      /* Vetor para armazenar as informac?es de erro */
+      vr_tab_custodia_erro typ_erro_custodia;
+      vr_index_erro INTEGER;
+      vr_xml_erro_custodia VARCHAR2(32726);
+
+      /* Vetor para armazenar as informacoes dos cheques que estao sendo custodiados */
+      vr_tab_cheque_custodia typ_cheque_custodia;
+      vr_index_cheque INTEGER;
+
+    BEGIN
+      -- Leitura do calendário da cooperativa
+      OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH btch0001.cr_crapdat INTO rw_crapdat;
+      -- Se não encontrar
+      IF btch0001.cr_crapdat%NOTFOUND THEN
+        -- Fechar o cursor pois efetuaremos raise
+        CLOSE btch0001.cr_crapdat;
+        -- Montar mensagem de critica
+        vr_cdcritic := 1;
+        -- gera excecao
+        RAISE vr_exc_erro;
+      ELSE
+        -- Apenas fechar o cursor
+        CLOSE btch0001.cr_crapdat;
+      END IF;
+
+      -- Validar cheques
+      pc_valida_custodia_manual(pr_cdcooper => pr_cdcooper                  --> Cooperativa
+															 ,pr_nrdconta => pr_nrdconta                  --> Número da conta
+															 ,pr_dscheque => pr_dscheque                  --> Codigo do Indexador 
+															 ,pr_tab_cust_cheq => vr_tab_cheque_custodia  --> Tabela com cheques para custódia
+															 ,pr_tab_erro_cust => vr_tab_custodia_erro    --> Tabela de cheques com erros
+															 ,pr_cdcritic => vr_cdcritic                  --> Código da crítica
+															 ,pr_dscritic => vr_dscritic);                --> Descrição da crítica      
+        
+			-- Se retornou erro												 
+		  IF vr_cdcritic > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+			  --Levantar Excecao
+			  RAISE vr_exc_erro;
+		  END IF;
+			
       -- Verifica se foram encontrados erros durante o processamento
       IF vr_tab_custodia_erro.count > 0 THEN
-        vr_xml_erro_custodia := '';
-        FOR vr_index_erro IN 1..vr_tab_custodia_erro.count LOOP
-          -- Gera o XML com os erros
-          vr_xml_erro_custodia := vr_xml_erro_custodia || 
-                                  '<erro'|| vr_index_erro || '>' ||
-                                  '  <dsdocmc7>' || vr_tab_custodia_erro(vr_index_erro).dsdocmc7 || '</dsdocmc7>' ||
-                                  '  <dscritic>' || vr_tab_custodia_erro(vr_index_erro).dscritic || '</dscritic>' ||
-                                  '</erro'|| vr_index_erro || '>';
-        END LOOP;
         RAISE vr_exc_saida;
       END IF;
       
       -- Se não possuir nenhuma crítica, insere os dados na craphcc e crapdcc
       -- Buscar o Último Lote de Retorno do Cooperado
-      OPEN cr_craphcc(pr_cdcooper => vr_cdcooper
+      OPEN cr_craphcc(pr_cdcooper => pr_cdcooper
                      ,pr_nrdconta => pr_nrdconta);
       FETCH cr_craphcc INTO rw_craphcc;
 
       -- Verifica se a retornou registro
       IF cr_craphcc%NOTFOUND THEN
-        CLOSE cr_craphcc;
         -- Numero de Retorno
         vr_nrremret := 1; 
       ELSE
-        CLOSE cr_craphcc;
+				IF pr_nrremret <> 0 THEN
+        -- Numero de Retorno
+          vr_nrremret := pr_nrremret;
+				ELSE
         -- Numero de Retorno
         vr_nrremret := rw_craphcc.nrremret + 1;
       END IF;
+      END IF;
+      -- Fechar cursor
+			CLOSE cr_craphcc;
       
+			-- Se foi informado um número de remessa não devemos criar outro registro na hcc
+			IF pr_nrremret = 0 THEN
       -- Insere na tabela craphcc os dados do Header do Arquivo
       -- Criar Lote de Informações de Retorno (craphcc) 
       BEGIN
@@ -5401,7 +5770,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
            insithcc,
            cdoperad)
         VALUES
-          (vr_cdcooper,
+						(pr_cdcooper,
            pr_nrdconta,
            1, -- nrconven -> Fixo 1
            3, -- Manual
@@ -5412,16 +5781,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
            rw_crapdat.dtmvtolt,
            to_char(SYSDATE,'HH24MISS'),
            1, -- insithcc -> Pendente
-           vr_cdoperad);
+						 pr_cdoperad);
       EXCEPTION
         WHEN OTHERS THEN
           vr_cdcritic := 0;
           vr_dscritic := 'Erro ao inserir CRAPHCC: '||SQLERRM;
           RAISE vr_exc_erro;
       END;
-      
+				-- Retorna o número da remessa
+				pr_nrremret := vr_nrremret;
+      END IF;      
       -- Percorre todos os cheques para inserir na crapdcc
       FOR vr_index_cheque IN 1..vr_tab_cheque_custodia.count LOOP
+				IF pr_nrseqarq <> 0 THEN
+					vr_nrseqarq := pr_nrseqarq;
+				ELSE
+					vr_nrseqarq := vr_index_cheque;
+				END IF;
         -- Insere dados na tabela crapdcc
         BEGIN
           INSERT INTO crapdcc
@@ -5444,14 +5820,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
              dtlibera,
              cdocorre,
              inconcil,
-             inchqcop)
+             inchqcop,
+						 dtdcaptu,
+						 nrinsemi,
+						 cdtipemi,
+						 nrborder)
           VALUES
-            (vr_cdcooper,
+            (pr_cdcooper,
              pr_nrdconta,
              1, -- nrconven -> Fixo 1
              3, -- intipmvt -> 3 - Retorno
              vr_nrremret,
-             vr_index_cheque, -- nrseqarq -> Contador
+             vr_nrseqarq, -- nrseqarq -> Contador
              1, -- cdtipmvt -> 1 - Inclusão
              1, -- cdfinmvt -> 1 - Custódia Simples,
              1, -- cdentdad -> 1 - CMC-7
@@ -5465,7 +5845,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
              vr_tab_cheque_custodia(vr_index_cheque).dtlibera, 
              ' ', -- cdocorre-> Vazio, pois não é gerado enquanto possuir erros
              0,   -- inconcil -> Fixo 0,
-             vr_tab_cheque_custodia(vr_index_cheque).inchqcop);
+             vr_tab_cheque_custodia(vr_index_cheque).inchqcop,
+						 vr_tab_cheque_custodia(vr_index_cheque).dtdcaptu,
+ 						 vr_tab_cheque_custodia(vr_index_cheque).nrinsemi,
+ 						 vr_tab_cheque_custodia(vr_index_cheque).cdtipemi,
+						 pr_nrborder);
         EXCEPTION
           WHEN OTHERS THEN
             vr_cdcritic := 0;
@@ -5474,6 +5858,136 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
         END;
       END LOOP; 
       
+			-- Efetuar commit
+			COMMIT;
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+				-- Erro na validação dos cheques em custódia
+        pr_cdcritic := 0;
+        pr_dscritic := '';
+				-- Passamos apenas os erros no retorno da PlTable
+				pr_tab_erro_cust := vr_tab_custodia_erro;
+				-- Efetuar rollback
+        ROLLBACK;
+      WHEN vr_exc_erro THEN
+				IF vr_cdcritic > 0 AND TRIM(vr_dscritic) IS NULL THEN
+					-- Busca descrição da crítica
+					vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+				END IF;
+				-- Apenas retornar crítcas
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+				-- Efetuar rollback
+        ROLLBACK;
+      WHEN OTHERS THEN
+				-- Erro não tratado
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral em pc_custodia_cheque_manual: ' || SQLERRM;
+        -- Efetuar rollback
+        ROLLBACK;
+    END;
+  END pc_custodia_cheque_manual;
+  
+  PROCEDURE pc_custodia_cheque_manual_web(pr_nrdconta  IN crapass.nrdconta%TYPE --> Codigo do Indexador
+																				 ,pr_dscheque  IN VARCHAR2              --> Codigo do Indexador 
+																				 ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
+																				 ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+																				 ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+																				 ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
+																				 ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
+																				 ,pr_des_erro OUT VARCHAR2) IS          --> Erros do processo
+
+  BEGIN
+    /* .............................................................................
+    Programa: pc_custodia_cheque_manual_web
+    Sistema : Conta-Corrente - Cooperativa de Credito
+    Sigla   : CRED
+    Autor   : Douglas Quisinski
+    Data    : 12/05/2015                        Ultima atualizacao: 11/01/2016
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+    Objetivo  : Rotina para cadastrar os cheques para a custódia
+
+    Alteracoes: 09/07/2015 - Ajustar a identificação da conta do cheque quando desmontar o CMC-7
+                             pois para o banco do brasil são 8 posições e os demais são 10
+                             (Douglas - Chamado 306393)
+                             
+                04/01/2016 - Ajuste na leitura da tabela crapocc para utilizar UPPER nos campos VARCHAR
+                             pois será incluido o UPPER no indice desta tabela - SD 375854
+                             (Adriano).    
+                             
+                11/01/2016 - Ajuste na leitura da tabela crapocc para utilizar UPPER nos campos VARCHAR
+                             pois será incluido o UPPER no indice desta tabela - SD 375854
+                             (Adriano).    
+                                                     
+								08/11/2016 - Alterado rotina para ser chamada apenas pela web. (Reinert)
+    ............................................................................. */
+    DECLARE
+      vr_exc_saida EXCEPTION;
+      vr_exc_erro  EXCEPTION;
+
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic crapcri.dscritic%TYPE;
+  
+      -- Variaveis de log
+      vr_cdcooper NUMBER;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+			vr_nrremret NUMBER := 0;
+            
+      /* Vetor para armazenar as informac?es de erro */
+      vr_tab_custodia_erro typ_erro_custodia;
+      vr_index_erro INTEGER;
+      vr_xml_erro_custodia VARCHAR2(32726);
+
+    BEGIN
+
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+      -- Efetuar custódia
+      pc_custodia_cheque_manual(pr_cdcooper => vr_cdcooper
+			                         ,pr_nrdconta => pr_nrdconta
+															 ,pr_dscheque => pr_dscheque
+															 ,pr_cdoperad => vr_cdoperad
+															 ,pr_nrremret => vr_nrremret
+															 ,pr_tab_erro_cust => vr_tab_custodia_erro
+															 ,pr_cdcritic => vr_cdcritic
+															 ,pr_dscritic => vr_dscritic);
+															 
+			-- Se retornou erro												 
+		  IF vr_cdcritic > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+			  --Levantar Excecao
+			  RAISE vr_exc_erro;
+		  END IF;
+															 
+      -- Verifica se foram encontrados erros durante o processamento
+      IF vr_tab_custodia_erro.count > 0 THEN
+        vr_xml_erro_custodia := '';
+        FOR vr_index_erro IN 1..vr_tab_custodia_erro.count LOOP
+          -- Gera o XML com os erros
+          vr_xml_erro_custodia := vr_xml_erro_custodia || 
+                                  '<erro'|| vr_index_erro || '>' ||
+                                  '  <dsdocmc7>' || vr_tab_custodia_erro(vr_index_erro).dsdocmc7 || '</dsdocmc7>' ||
+                                  '  <dscritic>' || vr_tab_custodia_erro(vr_index_erro).dscritic || '</dscritic>' ||
+                                  '</erro'|| vr_index_erro || '>';
+        END LOOP;
+        RAISE vr_exc_saida;
+      END IF;      
+			
     EXCEPTION
       WHEN vr_exc_saida THEN
         pr_cdcritic := 0;
@@ -5491,7 +6005,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
         ROLLBACK;
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral em pc_custodia_cheque_manual: ' || SQLERRM;
+        pr_dscritic := 'Erro geral em pc_custodia_cheque_manual_web: ' || SQLERRM;
 
         -- Carregar XML padrão para variável de retorno não utilizada.
         -- Existe para satisfazer exigência da interface.
@@ -5499,7 +6013,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
         ROLLBACK;
     END;
 
-  END pc_custodia_cheque_manual;
+  END pc_custodia_cheque_manual_web;
   
   
   PROCEDURE pc_valida_conta_custodiar(pr_nrdconta  IN crapass.nrdconta%TYPE --> Codigo do Indexador
@@ -5717,7 +6231,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
                                       ,pr_cdbccxlt      => 100
                                       ,pr_nrdolote      => 10134
                                       ,pr_tpdolote      => 1
-                                      ,pr_nrdocmto      => 0
+                                      ,pr_nrdocmto      => pr_nrcheque
                                       ,pr_nrdctabb      => pr_nrdconta
                                       ,pr_nrdctitg      => GENE0002.fn_mask(pr_nrdconta,'99999999')
                                       ,pr_cdpesqbb      => 'Fato gerador tarifa:' || TO_CHAR(pr_nrcheque)
@@ -5762,6 +6276,1092 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
 
   END pc_tarifa_resgate_cheq_custod;
   
+  --> Rotina para geração do relatorio de acompanhamento de cheques custodiados
+  PROCEDURE pc_gera_relat_acomp_custod( pr_cdcooper   IN crapcop.cdcooper%TYPE  --> Cooperativa
+                                       ,pr_nrdconta   IN crapass.nrdconta%TYPE  --> Conta do cooperado
+                                       ,pr_nrremret   IN craphcc.nrremret%TYPE  --> Numero da remessa
+                                       ,pr_idorigem   IN INTEGER                --> Identificador de Origem
+                                       ,pr_dsiduser   IN VARCHAR2               --> id do usuario
+                                       --------> OUT <--------
+                                       ,pr_nmarqpdf  OUT VARCHAR2               --> Retornar quantidad de registros                           
+                                       ,pr_cdcritic  OUT INTEGER                --> Codigo do erro
+                                       ,pr_dscritic  OUT VARCHAR2) IS           --> Descricao erro
+
+    /* .............................................................................
+    Programa: pc_gera_relat_acomp_custod
+    Sistema : Conta-Corrente - Cooperativa de Credito
+    Sigla   : CRED
+    Autor   : Odirlei Busana - AMcom
+    Data    : 29/09/2016                        Ultima atualizacao: 29/09/2016
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+    Objetivo  : Rotina para geração do relatorio de acompanhamento de cheques custodiados
+
+    Alteracoes: 
+    ............................................................................. */
+
+    ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
+
+    -- Tratamento de erros
+    vr_exc_erro   EXCEPTION;
+    vr_cdcritic   PLS_INTEGER;
+    vr_dscritic   VARCHAR2(4000);
+
+    ------------------------------- CURSORES ---------------------------------
+    -- Cursor genérico de calendário
+    rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+    
+    --Selecionar os dados da tabela de Associados
+     CURSOR cr_crapass (pr_cdcooper IN crapass.cdcooper%TYPE
+                       ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+       SELECT crapass.nrdconta
+             ,crapass.nmprimtl
+             ,crapass.nrcpfcgc
+             ,crapass.inpessoa
+       FROM crapass crapass
+       WHERE crapass.cdcooper = pr_cdcooper
+       AND   crapass.nrdconta = pr_nrdconta;
+     rw_crapass cr_crapass%ROWTYPE;
+     
+    --> buscar cheques custodiados da remessa informada
+    CURSOR cr_crapcst IS
+      SELECT /*+rule */
+             cst.dtlibera, --> AS "Data boa", 
+             cst.vlcheque, --> AS "Valor", 
+             cst.cdbanchq, --> AS "banco", 
+             cst.cdagechq, --> AS "Agência", 
+             cst.nrcheque, --> AS "Número do Cheque", 
+             cst.nrctachq, --> AS "Conta corrente", 
+             cst.dsdocmc7, --> AS "CMC-7",
+             hcc.idorigem, --> AS "Canal"
+             cst.nrdolote  --> AS "Lote"
+        FROM craphcc hcc,
+             crapdcc dcc,
+             crapcst cst
+        WHERE hcc.cdcooper = dcc.cdcooper
+          AND hcc.nrdconta = dcc.nrdconta
+          AND hcc.nrconven = dcc.nrconven
+          AND hcc.intipmvt = dcc.intipmvt
+          AND hcc.nrremret = dcc.nrremret
+          AND dcc.cdcooper = cst.cdcooper
+          AND dcc.nrdconta = cst.nrdconta
+          AND dcc.dtlibera = cst.dtlibera
+          AND dcc.nrdolote = cst.nrdolote
+          AND dcc.cdcmpchq = cst.cdcmpchq
+          AND dcc.cdbanchq = cst.cdbanchq
+          AND dcc.cdagechq = cst.cdagechq
+          AND dcc.nrctachq = cst.nrctachq
+          AND dcc.nrcheque = cst.nrcheque    
+          AND hcc.cdcooper = pr_cdcooper
+          AND hcc.nrdconta = pr_nrdconta
+          AND hcc.nrremret = pr_nrremret
+		  AND hcc.intipmvt = 1
+          ORDER BY cst.dtlibera,
+                   cst.cdbanchq,
+                   cst.cdagechq,
+                   cst.nrctachq;
+    
+
+    ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
+
+    ------------------------------- VARIAVEIS -------------------------------
+    
+    vr_dsdireto        VARCHAR2(4000);
+    vr_dscomand        VARCHAR2(4000);
+    vr_typsaida        VARCHAR2(100); 
+    
+    vr_des_reto        VARCHAR2(100);
+    vr_tab_erro        GENE0001.typ_tab_erro;    
+    
+    vr_flexscst        BOOLEAN;
+    
+    -- Variáveis para armazenar as informações em XML
+    vr_des_xml   CLOB;
+    vr_txtcompl  VARCHAR2(32600);
+    
+    --------------------------- SUBROTINAS INTERNAS --------------------------
+    -- Subrotina para escrever texto na variável CLOB do XML
+    PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2,
+                             pr_fecha_xml IN BOOLEAN DEFAULT FALSE) IS
+    BEGIN
+      gene0002.pc_escreve_xml(vr_des_xml, vr_txtcompl, pr_des_dados, pr_fecha_xml);
+    END;
+    
+  BEGIN
+  
+    -- Inicializar o CLOB
+    vr_des_xml := NULL;
+    dbms_lob.createtemporary(vr_des_xml, TRUE);
+    dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);    
+    vr_txtcompl := NULL;
+    
+    -- Leitura do calendario da cooperativa
+    OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+    FETCH btch0001.cr_crapdat INTO rw_crapdat;
+    -- Fechar o cursor
+    CLOSE btch0001.cr_crapdat;
+    
+    --> Buscar associado
+    OPEN cr_crapass(pr_cdcooper => pr_cdcooper
+                   ,pr_nrdconta => pr_nrdconta );
+    FETCH cr_crapass
+     INTO rw_crapass;
+
+    IF cr_crapass%NOTFOUND  THEN
+      vr_cdcritic := 9; -- Associado Não Cadastrado
+      CLOSE cr_crapass;
+      RAISE vr_exc_erro;
+    END IF;
+    CLOSE cr_crapass;
+    
+    --> INICIO
+    pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><raiz><remessa
+                     nrdconta="'||TRIM(gene0002.fn_mask_conta(pr_nrdconta)) ||'"
+                     nmprintl="'|| rw_crapass.nmprimtl ||'"
+                     nrremret="'||pr_nrremret ||'"
+    
+                     >');    
+    vr_flexscst := FALSE;
+    
+    --> Buscar cheques custodiados da remessa informada
+    FOR rw_crapcst IN cr_crapcst LOOP
+      vr_flexscst := TRUE;
+      pc_escreve_xml('<cheque>
+                        <dtlibera>'||  to_char(rw_crapcst.dtlibera,'DD/MM/RRRR') || ' (' || to_char(rw_crapcst.nrdolote) || ')' ||'</dtlibera>
+                        <vlcheque>'||  rw_crapcst.vlcheque    ||'</vlcheque>
+                        <cdbanchq>'||  rw_crapcst.cdbanchq    ||'</cdbanchq>
+                        <cdagechq>'||  rw_crapcst.cdagechq    ||'</cdagechq>
+                        <nrcheque>'||  rw_crapcst.nrcheque    ||'</nrcheque>
+                        <nrctachq>'||  gene0002.fn_mask_conta(rw_crapcst.nrctachq)  ||'</nrctachq>
+                        <dsdocmc7><![CDATA['||  rw_crapcst.dsdocmc7                 ||']]></dsdocmc7>
+                        <canal>'|| gene0001.vr_vet_des_origens(rw_crapcst.idorigem) ||'</canal>
+                      </cheque>');
+    END LOOP; 
+    
+    IF vr_flexscst = FALSE THEN
+      vr_dscritic := 'Não foi encontrado nenhum cheque custodiado para essa remessa.';
+      RAISE vr_exc_erro;
+    END IF;
+    
+    pc_escreve_xml('</remessa></raiz>',TRUE);
+    
+    
+    --Buscar diretorio da cooperativa
+    vr_dsdireto := gene0001.fn_diretorio(pr_tpdireto => 'C', --> cooper 
+                                         pr_cdcooper => pr_cdcooper,
+                                         pr_nmsubdir => '/rl');
+    
+    vr_dscomand := 'rm '||vr_dsdireto ||'/crrl727_'||pr_dsiduser||'* 2>/dev/null';
+    
+    --Executar o comando no unix
+    GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                         ,pr_des_comando => vr_dscomand
+                         ,pr_typ_saida   => vr_typsaida
+                         ,pr_des_saida   => vr_dscritic);
+    --Se ocorreu erro dar RAISE
+    IF vr_typsaida = 'ERR' THEN
+      vr_dscritic:= 'Nao foi possivel remover arquivos: '||vr_dscomand||'. Erro: '||vr_dscritic;
+      RAISE vr_exc_erro;
+    END IF; 
+    
+    --> Montar nome do arquivo
+    pr_nmarqpdf := 'crrl727_'||pr_dsiduser || gene0002.fn_busca_time || '.pdf';
+    
+    --> Solicita geracao do PDF
+    gene0002.pc_solicita_relato(pr_cdcooper   => pr_cdcooper
+                               , pr_cdprogra  => 'ATENDA'--pr_cdprogra
+                               , pr_dtmvtolt  => rw_crapdat.dtmvtolt
+                               , pr_dsxml     => vr_des_xml
+                               , pr_dsxmlnode => '/raiz/remessa'
+                               , pr_dsjasper  => 'crrl727.jasper'
+                               , pr_dsparams  => null
+                               , pr_dsarqsaid => vr_dsdireto ||'/'||pr_nmarqpdf
+                               , pr_flg_gerar => 'S'
+                               , pr_qtcoluna  => 132
+                               , pr_cdrelato  => 727
+                               , pr_sqcabrel  => 1
+                               , pr_flg_impri => 'N'
+                               , pr_nmformul  => ' '
+                               , pr_nrcopias  => 1
+                               , pr_nrvergrl  => 1
+                               , pr_des_erro  => vr_dscritic);
+    
+    IF vr_dscritic IS NOT NULL THEN -- verifica retorno se houve erro
+      RAISE vr_exc_erro; -- encerra programa
+    END IF;  
+    
+    IF pr_idorigem = 5 THEN
+      -- Copia contrato PDF do diretorio da cooperativa para servidor WEB
+      GENE0002.pc_efetua_copia_pdf(pr_cdcooper => pr_cdcooper
+                                  ,pr_cdagenci => NULL
+                                  ,pr_nrdcaixa => NULL
+                                  ,pr_nmarqpdf => vr_dsdireto ||'/'||pr_nmarqpdf
+                                  ,pr_des_reto => vr_des_reto
+                                  ,pr_tab_erro => vr_tab_erro);
+      -- Se retornou erro
+      IF NVL(vr_des_reto,'OK') <> 'OK' THEN
+        IF vr_tab_erro.COUNT > 0 THEN -- verifica pl-table se existe erros
+          vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic; -- busca primeira critica
+          vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic; -- busca primeira descricao da critica
+          RAISE vr_exc_erro; -- encerra programa
+        END IF;
+      END IF;
+
+      -- Remover relatorio do diretorio padrao da cooperativa
+      gene0001.pc_OScommand(pr_typ_comando => 'S'
+                           ,pr_des_comando => 'rm '||vr_dsdireto ||'/'||pr_nmarqpdf
+                           ,pr_typ_saida   => vr_typsaida
+                           ,pr_des_saida   => vr_dscritic);
+      -- Se retornou erro
+      IF vr_typsaida = 'ERR' OR vr_dscritic IS NOT NULL THEN
+        -- Concatena o erro que veio
+        vr_dscritic := 'Erro ao remover arquivo: '||vr_dscritic;
+        RAISE vr_exc_erro; -- encerra programa
+      END IF;
+    END IF;  
+        
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      pr_cdcritic := NVL(vr_cdcritic,0) ;
+      pr_dscritic := vr_dscritic;
+      ROLLBACK;
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro ao gerar relatorio de cheques custodiados(pc_gera_relat_acomp_custod): ' || SQLERRM;
+      ROLLBACK;
+  END pc_gera_relat_acomp_custod; 
+  
+  --> Rotina para geração do relatorio de acompanhamento de cheques custodiados
+  PROCEDURE pc_gera_relat_acomp_custod_web( pr_nrdconta   IN crapass.nrdconta%TYPE  --> Número da Conta                                           
+                                           ,pr_nrremret   IN craphcc.nrremret%TYPE  --> Numero da remessa
+                                           ,pr_dsiduser   IN VARCHAR2               --> id do usuario
+                                           ,pr_xmllog     IN VARCHAR2               --> XML com informacoes de LOG
+                                           ,pr_cdcritic  OUT PLS_INTEGER            --> Codigo da critica
+                                           ,pr_dscritic  OUT VARCHAR2               --> Descricao da critica
+                                           ,pr_retxml IN OUT NOCOPY xmltype         --> Arquivo de retorno do XML
+                                           ,pr_nmdcampo  OUT VARCHAR2               --> Nome do campo com erro
+                                           ,pr_des_erro  OUT VARCHAR2) IS           --> Erros do processo
+
+    /* .............................................................................
+
+    Programa: pc_gera_relat_acomp_custod_web
+    Sistema : Ayllos Web
+    Autor   : Odirlei - AMcom
+    Data    : Setembro/2016                 Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Rotina para geração do relatorio de acompanhamento de cheques custodiados pelo Ayllos Web
+
+    Alteracoes: -----
+    ..............................................................................*/
+    -- Variavel de criticas
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(10000);
+
+    -- Tratamento de erros
+    vr_exc_erro EXCEPTION;
+
+    -- Variaveis de log
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+
+    -- Variaveis gerais
+    vr_nmarqpdf VARCHAR2(1000);
+
+  BEGIN
+      
+    -- Extrai os dados vindos do XML
+    GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscritic);
+
+    -- Incluir nome do modulo logado
+    GENE0001.pc_informa_acesso(pr_module => 'pc_gera_relat_acomp_custod_web'
+                               ,pr_action => NULL);
+    
+    --> Rotina para geração do relatorio de acompanhamento de cheques custodiados
+    pc_gera_relat_acomp_custod( pr_cdcooper   => vr_cdcooper  --> Cooperativa
+                               ,pr_nrdconta   => pr_nrdconta  --> Conta do cooperado
+                               ,pr_nrremret   => pr_nrremret  --> Numero da remessa
+                               ,pr_idorigem   => vr_idorigem  --> Identificador de Origem
+                               ,pr_dsiduser   => pr_dsiduser  --> id do usuario
+                               --------> OUT <--------
+                               ,pr_nmarqpdf   => vr_nmarqpdf  --> Retornar quantidad de registros                           
+                               ,pr_cdcritic   => vr_cdcritic  --> Codigo do erro
+                               ,pr_dscritic   => vr_dscritic);--> Descricao erro
+
+    -- Se retornou erro
+    IF NVL(vr_cdcritic,0) > 0 OR 
+       TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+
+    -- Criar cabecalho do XML
+    pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+
+    GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                          ,pr_tag_pai  => 'Root'
+                          ,pr_posicao  => 0
+                          ,pr_tag_nova => 'Dados'
+                          ,pr_tag_cont => NULL
+                          ,pr_des_erro => vr_dscritic);
+
+    GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                          ,pr_tag_pai  => 'Dados'
+                          ,pr_posicao  => 0
+                          ,pr_tag_nova => 'nmarqpdf'
+                          ,pr_tag_cont => vr_nmarqpdf
+                          ,pr_des_erro => vr_dscritic);
+
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      IF vr_cdcritic <> 0 THEN
+        vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      END IF;
+
+      vr_dscritic := '<![CDATA['||vr_dscritic||']]>';
+      pr_dscritic := REPLACE(REPLACE(REPLACE(vr_dscritic,chr(13),' '),chr(10),' '),'''','´');
+
+      -- Carregar XML padrao para variavel de retorno
+      pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    WHEN OTHERS THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro geral na rotina da tela pc_gera_relat_acomp_custod_web: ' || SQLERRM;
+      pr_dscritic := '<![CDATA['||pr_dscritic||']]>';
+      pr_dscritic := REPLACE(REPLACE(REPLACE(pr_dscritic,chr(13),' '),chr(10),' '),'''','´');
+      
+      -- Carregar XML padrao para variavel de retorno
+      pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+
+  END pc_gera_relat_acomp_custod_web;
+
+  -- Cadastrar emitente de cheque	
+	PROCEDURE pc_validar_emitente(pr_cdcooper IN crapcec.cdcooper%TYPE --> Cooperativa
+															 ,pr_cdcmpchq IN crapcec.cdcmpchq%TYPE --> Cód. da compe
+														 	 ,pr_cdbanchq IN crapcec.cdbanchq%TYPE --> Cód. do banco
+															 ,pr_cdagechq IN crapcec.cdagechq%TYPE --> Cód. da agência
+															 ,pr_nrctachq IN crapcec.nrctachq%TYPE --> Número da conta do cheque
+															 ,pr_nrcpfcgc IN crapcec.nrcpfcgc%TYPE --> Número do cpf do emitente
+															 ,pr_nmcheque IN crapcec.nmcheque%TYPE --> Nome do emitente
+															 ,pr_cdcritic OUT PLS_INTEGER          --> Cód da crítica
+															 ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+															 ,pr_des_erro OUT VARCHAR2) IS         --> Retorno "OK"/"NOK"
+  BEGIN
+    /* .............................................................................
+    Programa: pc_validar_emitente
+    Sistema : Conta-Corrente - Cooperativa de Credito
+    Sigla   : CRED
+    Autor   : Lucas Reinert
+    Data    : 19/10/2016                        Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+    Objetivo  : Rotina para validar emitente de cheque
+
+    Alteracoes: 
+    ............................................................................. */
+    DECLARE
+		  -- Tratamento de erros
+      vr_exc_erro EXCEPTION;
+			vr_exc_null EXCEPTION;
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic crapcri.dscritic%TYPE;
+      -- Variaveis auxiliares		      
+			vr_stsnrcal BOOLEAN;
+      vr_inemiten INTEGER;			
+			vr_inpessoa INTEGER;
+      -- typ_tab_erro Generica
+      pr_tab_erro GENE0001.typ_tab_erro;
+      
+      -- CURSORES			
+			CURSOR cr_crapcec (pr_cdcooper IN crapcec.cdcooper%TYPE
+												,pr_cdcmpchq IN crapcec.cdcmpchq%TYPE
+			                  ,pr_cdbanchq IN crapcec.cdbanchq%TYPE
+			                  ,pr_cdagechq IN crapcec.cdagechq%TYPE
+												,pr_nrctachq IN crapcec.nrctachq%TYPE) IS
+        SELECT 1
+				  FROM crapcec cec
+				 WHERE cec.cdcooper = pr_cdcooper
+					 AND cec.cdcmpchq = pr_cdcmpchq
+				   AND cec.cdbanchq = pr_cdbanchq
+				   AND cec.cdagechq = pr_cdagechq
+					 AND cec.nrctachq = pr_nrctachq
+					 AND cec.nrdconta = 0;
+			
+    BEGIN      
+			-- Verificar se possui emitente cadastrado
+			OPEN cr_crapcec(pr_cdcooper => pr_cdcooper
+										 ,pr_cdcmpchq => pr_cdcmpchq
+										 ,pr_cdbanchq => pr_cdbanchq
+										 ,pr_cdagechq => pr_cdagechq
+										 ,pr_nrctachq => pr_nrctachq);
+			FETCH cr_crapcec INTO vr_inemiten;
+			
+			-- Se já existe emitente
+			IF cr_crapcec%FOUND THEN
+				-- Fecha cursor
+				CLOSE cr_crapcec;
+				-- Emitente já cadastrado
+				RAISE vr_exc_null;
+			END IF;
+			-- Fecha cursor
+			CLOSE cr_crapcec;
+
+      -- Validar CPF/CNPJ
+      gene0005.pc_valida_cpf_cnpj(pr_nrcalcul => pr_nrcpfcgc, 
+                                  pr_stsnrcal => vr_stsnrcal, 
+                                  pr_inpessoa => vr_inpessoa);
+
+      -- CPF ou CNPJ inválido
+      IF NOT vr_stsnrcal THEN
+				-- Atribui crítica
+				vr_cdcritic := 27; -- 27 - CPF/CNPJ com erro
+				vr_dscritic := '';
+				-- Levanta exceção
+				RAISE vr_exc_erro;
+			END IF;
+						
+			-- Retorno OK
+			pr_des_erro := 'OK';										
+
+    EXCEPTION
+			WHEN vr_exc_null THEN
+				-- Retorno OK
+        pr_des_erro := 'OK';				
+				-- Apenas finaliza a procedure
+				NULL;
+      WHEN vr_exc_erro THEN
+				-- Se não preencheu dscritic
+				IF vr_cdcritic > 0 AND trim(vr_dscritic) IS NULL THEN
+					vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        END IF;
+				-- Atribui críticas
+        pr_cdcritic := vr_cdcritic;
+				pr_dscritic := vr_dscritic;
+				-- Retorno OK				
+        pr_des_erro := 'OK';
+        ROLLBACK;
+      WHEN OTHERS THEN
+				-- Atribui críticas
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral em pc_cadastra_emitente: ' || SQLERRM;
+				-- Retorno NOK				
+        pr_des_erro := 'NOK';
+        ROLLBACK;
+    END;																
+  END pc_validar_emitente;
+  
+  --> Rotina para geração do relatorio de acompanhamento de cheques custodiados
+  PROCEDURE pc_cadastra_emitente_web( pr_dscheque  IN VARCHAR2              --> Codigo do Indexador 
+																		 ,pr_xmllog    IN VARCHAR2               --> XML com informacoes de LOG
+																		 ,pr_cdcritic  OUT PLS_INTEGER            --> Codigo da critica
+																		 ,pr_dscritic  OUT VARCHAR2               --> Descricao da critica
+																		 ,pr_retxml IN OUT NOCOPY xmltype         --> Arquivo de retorno do XML
+																		 ,pr_nmdcampo  OUT VARCHAR2               --> Nome do campo com erro
+																		 ,pr_des_erro  OUT VARCHAR2) IS           --> Erros do processo
+
+    /* .............................................................................
+
+    Programa: pc_cadastra_emitente_web
+    Sistema : Ayllos Web
+    Autor   : Lucas Reinert
+    Data    : Outubro/2016                 Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Rotina para cadastro dos emitentes da tela Custod "I" para o Ayllos Web
+
+    Alteracoes: -----
+    ..............................................................................*/
+    -- Variavel de criticas
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(10000);
+		vr_des_erro VARCHAR2(3);
+
+    -- Tratamento de erros
+    vr_exc_erro  EXCEPTION;
+		vr_exc_saida EXCEPTION;
+
+    -- Variaveis de log
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+		
+    vr_ret_all_cheques gene0002.typ_split;
+		vr_ret_cheque gene0002.typ_split;
+		vr_index_erro INTEGER;
+		vr_xml_erro_emitente VARCHAR2(32726);
+
+    -- Variáveis utilizadas para passar os parametros da rotina		
+		vr_cdbanchq crapcec.cdbanchq%TYPE; 
+		vr_cdagechq crapcec.cdagechq%TYPE;
+		vr_cdcmpchq crapcec.cdcmpchq%TYPE;
+		vr_nrctachq crapcec.nrctachq%TYPE;
+    vr_nrcpfcgc crapcec.nrcpfcgc%TYPE;
+		vr_nmcheque crapcec.nmcheque%TYPE;
+		
+	  -- Criar registro de erro de emitente
+		TYPE typ_reg_erro_emitente IS
+		RECORD(idemiten VARCHAR2(100)
+					,dscritic VARCHAR2(4000));
+		TYPE typ_erro_emitente IS
+			TABLE OF typ_reg_erro_emitente
+			INDEX BY BINARY_INTEGER;
+    vr_tab_erro_emitente typ_erro_emitente;
+  BEGIN
+      
+    -- Extrai os dados vindos do XML
+    GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscritic);
+
+		-- Criando um Array com todos os cheques que vieram como parametro
+		vr_ret_all_cheques := gene0002.fn_quebra_string(pr_dscheque, '|');
+      			
+		-- Percorre todos os cheques para processá-los
+		FOR vr_auxcont IN 1..vr_ret_all_cheques.count LOOP
+			-- Criando um array com todas as informações do cheque
+			vr_ret_cheque := gene0002.fn_quebra_string(vr_ret_all_cheques(vr_auxcont), ';');
+
+			vr_cdcmpchq := to_number(vr_ret_cheque(1));			-- Compe
+			vr_cdbanchq := to_number(vr_ret_cheque(2));			-- Banco
+			vr_cdagechq := to_number(vr_ret_cheque(3));			-- Agencia
+			vr_nrctachq := to_number(vr_ret_cheque(4));			-- Conta do Cheque
+			vr_nrcpfcgc := vr_ret_cheque(5);                -- CPF/CNPJ Emitente
+			vr_nmcheque := vr_ret_cheque(6);                -- Nome do emitente
+    
+      -- Validar Emitente
+			pc_validar_emitente(pr_cdcooper => vr_cdcooper --> Cooperativa
+												 ,pr_cdcmpchq => vr_cdcmpchq --> Cód. da compe
+												 ,pr_cdbanchq => vr_cdbanchq --> Cód. do banco
+												 ,pr_cdagechq => vr_cdagechq --> Cód. da agência
+												 ,pr_nrctachq => vr_nrctachq --> Número da conta do cheque
+												 ,pr_nrcpfcgc => vr_nrcpfcgc --> Número do cpf do emitente
+												 ,pr_nmcheque => vr_nmcheque --> Nome do emitente
+												 ,pr_cdcritic => vr_cdcritic --> Cód da crítica
+												 ,pr_dscritic => vr_dscritic --> Descrição da crítica
+												 ,pr_des_erro => vr_des_erro); --> Retorno "OK"/"NOK"
+		
+	    -- Se retornou erro
+			IF NVL(vr_cdcritic,0) > 0 OR 
+				 TRIM(vr_dscritic) IS NOT NULL THEN
+				-- Se não foi erro tratado
+				IF vr_des_erro <> 'OK' THEN
+					-- Levanta exceção
+				  RAISE vr_exc_erro;	
+				ELSE
+					-- Incrementa indice
+					vr_index_erro := vr_tab_erro_emitente.count + 1;
+					-- Cria registro de erro
+					vr_tab_erro_emitente(vr_index_erro).idemiten := to_char(vr_cdcmpchq)
+																											 || to_char(vr_cdbanchq)
+																											 || to_char(vr_cdagechq)
+																											 || to_char(vr_nrctachq);
+					vr_tab_erro_emitente(vr_index_erro).dscritic := vr_dscritic;
+        END IF;
+			END IF;
+		    
+    END LOOP;
+		
+		-- Verifica se foram encontrados erros durante o processamento
+		IF vr_tab_erro_emitente.count > 0 THEN
+			vr_xml_erro_emitente := '';
+			FOR vr_index_erro IN 1..vr_tab_erro_emitente.count LOOP
+				-- Gera o XML com os erros
+				vr_xml_erro_emitente := vr_xml_erro_emitente || 
+																'<erro'|| vr_index_erro || '>' ||
+																'  <idemiten>' || vr_tab_erro_emitente(vr_index_erro).idemiten || '</idemiten>' ||
+																'  <dscritic>' || vr_tab_erro_emitente(vr_index_erro).dscritic || '</dscritic>' ||
+																'</erro'|| vr_index_erro || '>';
+			END LOOP;
+			RAISE vr_exc_saida;
+			
+		ELSE
+			-- Percorre todos os cheques para processá-los
+			FOR vr_auxcont IN 1..vr_ret_all_cheques.count LOOP
+				-- Criando um array com todas as informações do cheque
+				vr_ret_cheque := gene0002.fn_quebra_string(vr_ret_all_cheques(vr_auxcont), ';');
+
+				vr_cdcmpchq := to_number(vr_ret_cheque(1));			-- Compe
+				vr_cdbanchq := to_number(vr_ret_cheque(2));			-- Banco
+				vr_cdagechq := to_number(vr_ret_cheque(3));			-- Agencia
+				vr_nrctachq := to_number(vr_ret_cheque(4));			-- Conta do Cheque
+				vr_nrcpfcgc := vr_ret_cheque(5);                -- CPF/CNPJ Emitente
+				vr_nmcheque := vr_ret_cheque(6);                -- Nome do emitente
+
+				-- Cadastrar emitente
+				pc_cadastra_emitente(pr_cdcooper => vr_cdcooper
+														,pr_cdcmpchq => vr_cdcmpchq
+														,pr_cdbanchq => vr_cdbanchq
+														,pr_cdagechq => vr_cdagechq
+														,pr_nrctachq => vr_nrctachq
+														,pr_nrcpfcgc => vr_nrcpfcgc
+														,pr_nmcheque => vr_nmcheque
+														,pr_cdcritic => vr_cdcritic
+														,pr_dscritic => vr_dscritic
+														,pr_des_erro => vr_des_erro);
+														
+				-- Se retornou erro
+				IF NVL(vr_cdcritic,0) > 0 OR 
+					 TRIM(vr_dscritic) IS NOT NULL THEN
+					 vr_dscritic := 'Erro ao cadastrar emitente: ' || vr_dscritic;
+				  RAISE vr_exc_erro;	 
+				END IF;														
+			END LOOP;
+		END IF;
+
+		
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+        pr_cdcritic := 0;
+        pr_dscritic := '';
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Validar_Emiten>' || vr_xml_erro_emitente || '</Validar_Emiten></Root>');
+        ROLLBACK;
+
+    WHEN vr_exc_erro THEN
+      IF vr_cdcritic <> 0 AND trim(vr_dscritic) IS NULL THEN
+        vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      END IF;
+
+      vr_dscritic := '<![CDATA['||vr_dscritic||']]>';
+      pr_dscritic := REPLACE(REPLACE(REPLACE(vr_dscritic,chr(13),' '),chr(10),' '),'''','´');
+
+      -- Carregar XML padrao para variavel de retorno
+      pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    WHEN OTHERS THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro geral na rotina da tela pc_cadastra_emitente_web: ' || SQLERRM;
+      pr_dscritic := '<![CDATA['||pr_dscritic||']]>';
+      pr_dscritic := REPLACE(REPLACE(REPLACE(pr_dscritic,chr(13),' '),chr(10),' '),'''','´');
+      
+      -- Carregar XML padrao para variavel de retorno
+      pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+
+  END pc_cadastra_emitente_web;
+
+  -- Cadastrar emitente de cheque	
+	PROCEDURE pc_cadastra_emitente(pr_cdcooper IN crapcec.cdcooper%TYPE --> Cooperativa
+																,pr_cdcmpchq IN crapcec.cdcmpchq%TYPE --> Cód. da compe
+																,pr_cdbanchq IN crapcec.cdbanchq%TYPE --> Cód. do banco
+																,pr_cdagechq IN crapcec.cdagechq%TYPE --> Cód. da agência
+																,pr_nrctachq IN crapcec.nrctachq%TYPE --> Número da conta do cheque
+																,pr_nrcpfcgc IN crapcec.nrcpfcgc%TYPE --> Número do cpf do emitente
+																,pr_nmcheque IN crapcec.nmcheque%TYPE --> Nome do emitente
+																,pr_cdcritic OUT PLS_INTEGER          --> Cód da crítica
+																,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+																,pr_des_erro OUT VARCHAR2) IS         --> Retorno "OK"/"NOK"
+  BEGIN
+    /* .............................................................................
+    Programa: pc_cadastra_emitente
+    Sistema : Conta-Corrente - Cooperativa de Credito
+    Sigla   : CRED
+    Autor   : Lucas Reinert
+    Data    : 18/10/2016                        Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+    Objetivo  : Rotina para cadastrar emitente de cheque
+
+    Alteracoes: 
+    ............................................................................. */
+    DECLARE
+		  -- Tratamento de erros
+      vr_exc_erro EXCEPTION;
+			vr_exc_null EXCEPTION;
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic crapcri.dscritic%TYPE;
+			vr_des_erro VARCHAR2(3);
+      -- Variaveis auxiliares		      
+			vr_stsnrcal BOOLEAN;
+      vr_inemiten INTEGER;			
+			vr_inpessoa INTEGER;
+      			
+			-- Verificar se existe emitente
+			CURSOR cr_crapcec (pr_cdcooper IN crapcec.cdcooper%TYPE
+												,pr_cdcmpchq IN crapcec.cdcmpchq%TYPE
+			                  ,pr_cdbanchq IN crapcec.cdbanchq%TYPE
+			                  ,pr_cdagechq IN crapcec.cdagechq%TYPE
+												,pr_nrctachq IN crapcec.nrctachq%TYPE) IS
+        SELECT 1
+				  FROM crapcec cec
+				 WHERE cec.cdcooper = pr_cdcooper
+					 AND cec.cdcmpchq = pr_cdcmpchq
+				   AND cec.cdbanchq = pr_cdbanchq
+				   AND cec.cdagechq = pr_cdagechq
+					 AND cec.nrctachq = pr_nrctachq
+					 AND cec.nrdconta = 0;
+			
+    BEGIN      
+			-- Verificar se possui emitente cadastrado
+			OPEN cr_crapcec(pr_cdcooper => pr_cdcooper
+										 ,pr_cdcmpchq => pr_cdcmpchq
+										 ,pr_cdbanchq => pr_cdbanchq
+										 ,pr_cdagechq => pr_cdagechq
+										 ,pr_nrctachq => pr_nrctachq);
+			FETCH cr_crapcec INTO vr_inemiten;
+			
+			-- Se já existe emitente
+			IF cr_crapcec%FOUND THEN
+				-- Fecha cursor
+				CLOSE cr_crapcec;
+				-- Emitente já cadastrado
+				RAISE vr_exc_null;
+			END IF;
+			-- Fecha cursor
+			CLOSE cr_crapcec;
+
+      -- Validar Emitente
+			pc_validar_emitente(pr_cdcooper => pr_cdcooper --> Cooperativa
+												 ,pr_cdcmpchq => pr_cdcmpchq --> Cód. da compe
+												 ,pr_cdbanchq => pr_cdbanchq --> Cód. do banco
+												 ,pr_cdagechq => pr_cdagechq --> Cód. da agência
+												 ,pr_nrctachq => pr_nrctachq --> Número da conta do cheque
+												 ,pr_nrcpfcgc => pr_nrcpfcgc --> Número do cpf do emitente
+												 ,pr_nmcheque => pr_nmcheque --> Nome do emitente
+												 ,pr_cdcritic => vr_cdcritic --> Cód da crítica												 
+												 ,pr_dscritic => vr_dscritic --> Descrição da crítica
+												 ,pr_des_erro => vr_des_erro); --> Retorno "OK"/"NOK"
+
+      -- Se aconteceu erro
+      IF vr_cdcritic > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+				-- Levanta exceção
+				RAISE vr_exc_erro;
+			END IF;
+
+      -- Insere registro de emitente
+      INSERT INTO crapcec
+			       (nrcpfcgc
+						 ,nmcheque
+						 ,nrctachq
+						 ,cdagechq
+						 ,cdbanchq
+						 ,cdcmpchq
+						 ,nrdconta
+						 ,cdcooper)
+      VALUES(pr_nrcpfcgc
+			      ,pr_nmcheque
+						,pr_nrctachq
+						,pr_cdagechq
+						,pr_cdbanchq
+						,pr_cdcmpchq
+						,0
+						,pr_cdcooper);
+						
+			-- Retorno OK
+			pr_des_erro := 'OK';										
+			-- Efetuar commit
+			COMMIT;
+
+    EXCEPTION
+			WHEN vr_exc_null THEN
+				-- Retorno OK
+        pr_des_erro := 'OK';				
+				-- Apenas finaliza a procedure
+				NULL;
+      WHEN vr_exc_erro THEN
+				-- Se não preencheu dscritic
+				IF vr_cdcritic > 0 AND trim(vr_dscritic) IS NULL THEN
+					vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        END IF;
+				-- Atribui críticas
+        pr_cdcritic := vr_cdcritic;
+				pr_dscritic := vr_dscritic;
+				-- Retorno OK				
+        pr_des_erro := 'OK';
+        ROLLBACK;
+      WHEN OTHERS THEN
+				-- Atribui críticas
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral em pc_cadastra_emitente: ' || SQLERRM;
+				-- Retorno NOK				
+        pr_des_erro := 'NOK';
+        ROLLBACK;
+    END;																
+  END pc_cadastra_emitente;
+	
+	PROCEDURE pc_efetua_resgate_custodia(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cooperativa
+		                                  ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Nr. da conta
+																			,pr_dscheque IN VARCHAR2               --> Lista de CMC7s
+																			,pr_cdoperad IN crapope.cdoperad%TYPE  --> Operador
+																			,pr_tab_erro_resg OUT typ_erro_resgate --> Erros do resgate
+																			,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+																			,pr_dscritic OUT VARCHAR2) IS          --> Descrição da crítica
+  BEGIN
+  /* .............................................................................
+    Programa: pc_efetua_resgate_custodia
+    Sistema : Conta-Corrente - Cooperativa de Credito
+    Sigla   : CRED
+    Autor   : Lucas Reinert
+    Data    : 06/09/2016                        Ultima atualizacao: --/--/----
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+    Objetivo  : Rotina para efetuar resgate dos cheques em custódia
+
+    Alteracoes: 
+                                                     
+  ............................................................................. */
+  	DECLARE
+ 		  -- Tratamento de críticas		                                                                           
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic crapcri.dscritic%TYPE;
+			vr_exc_erro EXCEPTION;			
+      -- PLTABLE de erro generica
+      vr_tab_erro GENE0001.typ_tab_erro;
+
+      -- Variáveis locais
+      vr_ret_all_cheques gene0002.typ_split;
+			vr_dsdocmc7 VARCHAR2(4000);
+      vr_dsdocmc7_formatado VARCHAR2(40);
+			vr_nrdocmto crapcst.nrdocmto%TYPE;      
+      vr_cdbattar VARCHAR2(100);
+      vr_cdhistor INTEGER;
+      vr_cdhisest INTEGER;
+      vr_vltarifa NUMBER;
+      vr_dtdivulg DATE;
+      vr_dtvigenc DATE;
+      vr_cdfvlcop INTEGER;
+
+			-- PlTable para armazenar informações de erro
+      vr_tab_resgate_erro typ_erro_resgate;
+      vr_index_erro INTEGER;
+      vr_xml_erro_resgate VARCHAR2(32726);
+			
+      -- Variaveis de controle de calendario
+      rw_crapdat      BTCH0001.cr_crapdat%ROWTYPE;					
+			
+		  -- Busca cheques custodiados ainda não resgatados			
+		  CURSOR cr_crapcst(pr_cdcooper IN crapcop.cdcooper%TYPE
+			                 ,pr_dsdocmc7 IN VARCHAR2) IS
+			  SELECT cst.vlcheque
+				      ,cst.dtlibera
+							,cst.insitchq
+							,cst.nrddigc3
+							,cst.nrcheque
+							,cst.nrctachq
+							,cst.cdbccxlt
+							,cst.cdagenci
+							,cst.nrdolote
+							,cst.dtmvtolt
+							,cst.rowid
+				  FROM crapcst cst
+				 WHERE cst.cdcooper = pr_cdcooper
+				   AND cst.nrdconta = pr_nrdconta
+				   AND UPPER(cst.dsdocmc7) = UPPER(pr_dsdocmc7)
+					 AND cst.dtdevolu IS NULL
+					 AND cst.insitchq = 0;
+			rw_crapcst cr_crapcst%ROWTYPE;
+
+			--Selecionar os dados da tabela de Associados
+      CURSOR cr_crapass (pr_cdcooper IN crapass.cdcooper%TYPE
+                        ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+        SELECT ass.inpessoa
+          FROM crapass ass
+         WHERE ass.cdcooper = pr_cdcooper
+           AND ass.nrdconta = pr_nrdconta;
+      rw_crapass cr_crapass%ROWTYPE; 
+
+	  BEGIN
+      -- Leitura do calendário da cooperativa
+      OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH btch0001.cr_crapdat INTO rw_crapdat;
+      -- Se não encontrar
+      IF btch0001.cr_crapdat%NOTFOUND THEN
+        -- Fechar o cursor pois efetuaremos raise
+        CLOSE btch0001.cr_crapdat;
+        -- Montar mensagem de critica
+        vr_cdcritic := 1;
+        -- gera excecao
+        RAISE vr_exc_erro;
+      ELSE
+        -- Apenas fechar o cursor
+        CLOSE btch0001.cr_crapdat;
+      END IF;
+
+      -- Verifica se a cooperativa esta cadastrada
+      OPEN cr_crapass( pr_cdcooper => pr_cdcooper
+                     , pr_nrdconta => pr_nrdconta);
+      FETCH cr_crapass INTO rw_crapass;
+      -- Se não encontrar
+      IF cr_crapass%NOTFOUND THEN
+        -- Fechar o cursor pois haverá raise
+        CLOSE cr_crapass;
+        -- Monta critica
+        vr_cdcritic := 9;
+        RAISE vr_exc_erro;
+      ELSE
+        -- Apenas fechar o cursor
+        CLOSE cr_crapass;
+      END IF;
+
+	    -- Criando um Array com todos os cheques que vieram como parametro
+      vr_ret_all_cheques := gene0002.fn_quebra_string(pr_dscheque, '|');
+
+      -- Carrega dados da tarifa caso necessite estorno
+			-- Codigo da tarifa
+			IF rw_crapass.inpessoa = 1 THEN
+				vr_cdbattar := 'RESGCUSTPF';
+			ELSE
+				vr_cdbattar := 'RESGCUSTPJ';
+			END IF;
+				
+			-- Busca o valor da tarifa
+			TARI0001.pc_carrega_dados_tar_vigente (pr_cdcooper  => pr_cdcooper   -- Codigo Cooperativa
+																						,pr_cdbattar  => vr_cdbattar   -- Codigo Tarifa
+																						,pr_vllanmto  => 0             -- Valor Lancamento
+																						,pr_cdprogra  => 'CUST0001'    -- Codigo Programa
+																						,pr_cdhistor  => vr_cdhistor   -- Codigo Historico
+																						,pr_cdhisest  => vr_cdhisest   -- Historico Estorno
+																						,pr_vltarifa  => vr_vltarifa   -- Valor tarifa
+																						,pr_dtdivulg  => vr_dtdivulg   -- Data Divulgacao
+																						,pr_dtvigenc  => vr_dtvigenc   -- Data Vigencia
+																						,pr_cdfvlcop  => vr_cdfvlcop   -- Codigo faixa valor cooperativa
+																						,pr_cdcritic  => vr_cdcritic   -- Codigo Critica
+																						,pr_dscritic  => vr_dscritic   -- Descricao Critica
+																						,pr_tab_erro  => vr_tab_erro); -- Tabela erros
+			-- Se ocorreu erro
+			IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+				-- Se possui erro no vetor
+				IF vr_tab_erro.Count > 0 THEN
+					vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+					vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+				ELSE
+					vr_cdcritic := 0;
+					vr_dscritic := 'Nao foi possivel carregar a tarifa.';
+				END IF;
+				-- Levantar Excecao
+				RAISE vr_exc_erro;
+			END IF;
+      
+      -- Percorre todos os cheques para processá-los
+      FOR vr_auxcont IN 1..vr_ret_all_cheques.count LOOP
+
+        -- Pega o cmc7 do cheque
+        vr_dsdocmc7 := regexp_replace(vr_ret_all_cheques(vr_auxcont), '[^0-9]');
+        -- Formatar o CMC-7
+        vr_dsdocmc7_formatado := gene0002.fn_mask(vr_dsdocmc7,'<99999999<9999999999>999999999999:');
+					
+				-- Verifica se cheque foi custodiado e não foi resgatado			
+        OPEN cr_crapcst(pr_cdcooper => pr_cdcooper
+				               ,pr_dsdocmc7 => vr_dsdocmc7_formatado);
+				FETCH cr_crapcst INTO rw_crapcst;
+
+        -- Se não encontrou cheque
+        IF cr_crapcst%NOTFOUND THEN
+						-- Gera crítica	
+						vr_cdcritic := 0;
+						vr_dscritic := 'Erro ao efetuar resgate. Cheque não localizado.';
+						-- Fecha cursor
+						CLOSE cr_crapcst;
+						-- Levanta exceção
+						RAISE vr_exc_erro;
+        ELSE
+					-- Fecha cursor
+					CLOSE cr_crapcst;
+          -- Monta nr. do doc
+					vr_nrdocmto := to_number(to_char(rw_crapcst.nrcheque, '000000') +
+																	 to_char(rw_crapcst.nrddigc3, '0'));
+
+          -- Se for resgatado no mesmo dia da custódia não tarifa
+          IF (rw_crapcst.dtmvtolt <> rw_crapdat.dtmvtolt) THEN
+							
+						-- Tarifa custódia de cheque
+						cust0001.pc_tarifa_resgate_cheq_custod(pr_cdcooper => pr_cdcooper
+																									,pr_nrdconta => pr_nrdconta
+																									,pr_inpessoa => rw_crapass.inpessoa
+																									,pr_nrcheque => vr_nrdocmto
+																									,pr_cdcritic => vr_cdcritic
+																									,pr_dscritic => vr_dscritic);
+																									 
+						IF	vr_cdcritic > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+							-- Gera crítica	
+							vr_index_erro := vr_tab_resgate_erro.count + 1;  
+							vr_tab_resgate_erro(vr_index_erro).dsdocmc7 := vr_dsdocmc7;
+							vr_tab_resgate_erro(vr_index_erro).dscritic := vr_dscritic;
+							CONTINUE;
+						END IF;
+          END IF;						
+					
+					-- Atualiza lançamento automatico
+					UPDATE craplau lau
+					   SET lau.dtdebito = rw_crapdat.dtmvtolt
+						    ,lau.insitlau = 3
+					 WHERE lau.cdcooper = pr_cdcooper
+					   AND lau.dtmvtolt = rw_crapcst.dtmvtolt
+						 AND lau.cdagenci = rw_crapcst.cdagenci
+						 AND lau.cdbccxlt = rw_crapcst.cdbccxlt 
+						 AND lau.nrdolote = rw_crapcst.nrdolote
+						 AND lau.nrdctabb = rw_crapcst.nrctachq
+						 AND lau.nrdocmto = vr_nrdocmto;
+							
+					-- Atualiza situação da custódia
+					UPDATE crapcst cst
+					   SET cst.dtdevolu = rw_crapdat.dtmvtolt
+						    ,cst.cdopedev = pr_cdoperad
+								,cst.insitchq = 1
+					 WHERE cst.rowid = rw_crapcst.rowid;
+				END IF;
+			END LOOP;
+
+      pr_tab_erro_resg := vr_tab_resgate_erro;
+      -- Efetuar commit
+			COMMIT;
+			
+		EXCEPTION
+      WHEN vr_exc_erro THEN
+				IF vr_cdcritic > 0 AND trim(vr_dscritic) IS NULL THEN
+          pr_cdcritic := vr_cdcritic;
+					pr_dscritic	:= gene0001.fn_busca_critica(vr_cdcritic);
+				ELSE					
+					pr_cdcritic := vr_cdcritic;
+					pr_dscritic := vr_dscritic;
+				END IF;
+        -- Efetuar rollback
+        ROLLBACK;
+			WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral em pc_efetua_resgate: ' || SQLERRM;
+        --Efetuar rollback
+        ROLLBACK;		
+		END;
+	END pc_efetua_resgate_custodia;
   
 END CUST0001;
 /
