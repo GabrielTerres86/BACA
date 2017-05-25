@@ -638,6 +638,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
         vr_cdcritic := 22;
         RAISE vr_exc_saida;
       END IF;
+      
+      IF NVL(vr_cdagenci,0) = 0 THEN
+        vr_cdagenci := rw_crapass.cdagenci;
+      END IF;
         
       -- Verifica se ja existe lancamento
       OPEN cr_crapcdc (vr_cdcooper, pr_nrdconta, pr_nrctrlim);
@@ -866,6 +870,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
                               ,tplotmov
                               ,nrseqdig
                               ,qtcompln
+                              ,qtinfoln
                               ,vlcompcr
                               ,vlinfocr
                               ,cdoperad)
@@ -875,6 +880,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
                               ,700
                               ,vr_nrdolote
                               ,27
+                              ,1
                               ,1
                               ,1
                               ,pr_vllimite

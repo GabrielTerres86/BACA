@@ -1289,6 +1289,7 @@ function acessaValorLimite() {
 		    $('#divUsoGenerico').html(response);
             layoutPadrao();
             formataValorLimite();
+            $('#vllimite','#frmReLimite').desabilitaCampo();
             hideMsgAguardo();
             bloqueiaFundo($('#divUsoGenerico'));
         }
@@ -1302,7 +1303,7 @@ function confirmaNovoLimite(cddopera) {
 	if (cd_situacao_lim != 1)
 		return false;
 
-	showMsgAguardo('Aguarde, efetuando renovacao...');
+	showMsgAguardo('Aguarde, Confirmando novo Limite...');
 
 	// Carrega conteúdo da opção através de ajax
 	$.ajax({

@@ -148,6 +148,7 @@
 	$dispC = (!in_array("C",$glbvars["opcoesTela"])) ? 'display:none;' : '';
 	$dispE = (!in_array("E",$glbvars["opcoesTela"])) ? 'display:none;' : '';
 	$dispM = (!in_array("M",$glbvars["opcoesTela"])) ? 'display:none;' : '';
+	$dispN = (!in_array("N",$glbvars["opcoesTela"])) ? 'display:none;' : '';
 ?>
 
 <div id="divBotoes">
@@ -159,7 +160,7 @@
 	<div style="height: 3px;"></div>
 	<a href="#" class="botao" name="btnIncluir" id="btnIncluir" <?php if (!in_array("I",$glbvars["opcoesTela"])) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } else { echo 'onClick="carregaDadosInclusaoLimiteDscChq(1);return false;"'; } ?> >Incluir</a>
 	<a href="#" class="botao" name="btnImprimir" id="btnImprimir" <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispM.'" onClick="return false;"'; } else { echo 'style="'.$dispM.'" onClick="mostraImprimirLimite();return false;"'; } ?> >Imprimir</a>
-	<a href="#" class="botao" name="btnConfNovLimite" id="btnConfNovLimite" onClick="confirmaNovoLimite();">Confirmar Novo Limite</a>
+	<a href="#" class="botao" name="btnConfNovLimite" id="btnConfNovLimite" style="<? echo $dispN ?>" onClick="confirmaNovoLimite();">Confirmar Novo Limite</a>
 </div>
 
 <script type="text/javascript">
