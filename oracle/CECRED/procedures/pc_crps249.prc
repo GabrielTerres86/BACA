@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/98                     Ultima atualizacao: 23/03/2017
+   Data    : Novembro/98                     Ultima atualizacao: 24/05/2017
 
    Dados referentes ao programa:
 
@@ -514,35 +514,38 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                22/06/2016 - Inclusão dos históricos 1755, 1758 e 1937 referente
                             as recusas de TEC salário outros IF (Marcos-Supero)             
                             
-			   23/08/2016 - Inclusão dos históricos de portabilidade (1915 e 1916) 
-			                na leitura do cursor cr_crapepr. (Reinert)
+			         23/08/2016 - Inclusão dos históricos de portabilidade (1915 e 1916) 
+			                      na leitura do cursor cr_crapepr. (Reinert)
 							
-			   28/09/2016 - Alteração do diretório para geração de arquivo contábil.
+      			   28/09/2016 - Alteração do diretório para geração de arquivo contábil.
                             P308 (Ricardo Linhares).   
 
                13/10/2016 - Ajuste leitura CRAPTAB, incluso UPPER para utilizar index principal
-			                (Daniel)
+			                     (Daniel)
                             
                28/10/2016 - SD 489677 - Inclusao do flgativo na CRAPLGP (Guilherme/SUPERO)
 
-			   09/11/2016 - Correcao para ganho em performance em cursores deste CRPS. 
-							SD 549917 (Carlos Rafael Tanholi)
+      			   09/11/2016 - Correcao para ganho em performance em cursores deste CRPS. 
+			              				SD 549917 (Carlos Rafael Tanholi)
 
                16/11/2016 - Ajustar cursor cr_craplcm6 para efetuar a busca correta das 
                             Despesas Sicredi (Lucas Ranghetti #508130)
                      
-			   30/11/2016 - Correção para buscar corretamente registro da crapstn
-			                de acordo com o tipo de arrecadação (Lucas Lunelli - Projeto 338)
+      			   30/11/2016 - Correção para buscar corretamente registro da crapstn
+			                      de acordo com o tipo de arrecadação (Lucas Lunelli - Projeto 338)
                      
                06/03/2017 - Alterações Projeto 307 - Automatização Arquivos Contábeis Ayllos
                             Inclusão de novos históricos e retirada de lançamentos de reversão (Jontas-Supero)
-         23/03/2017 - Ajustes PRJ343 - Emprestimo cessao de credito(Odirlei-AMcom)
-                      
-............................................................................ */
-
+                            
                17/03/2017 - Ajustes referente ao projeto M338.1, não estourar a conta corrente com cobrança 
-			                de juros e IOF de Limite de Crédito e Adiantamento a Depositante - Somente Lautom
-							(Adriano - SD 632569).
+			                      de juros e IOF de Limite de Crédito e Adiantamento a Depositante - Somente Lautom
+              							(Adriano - SD 632569).
+              
+               23/03/2017 - Ajustes PRJ343 - Emprestimo cessao de credito(Odirlei-AMcom)
+      
+               24/05/2017 - Ajuste para apresentar valores de provisão juros CH. especial de pessoa
+                            juridica apenas se encontrar algum valor
+                           (Adriano - SD 675239).
 
 ............................................................................ */
 
@@ -10087,7 +10090,7 @@ BEGIN
 
    END IF;
 
-   IF vr_arq_op_cred(14)(999)(1) > 0 THEN
+   IF vr_arq_op_cred(14)(999)(2) > 0 THEN
       -- Monta cabacalho - Arq 14 - PROVISAO JUROS CH. ESPECIAL - PESSOA JURIDICA
       vr_linhadet := fn_set_cabecalho(btch0001.rw_crapdat.dtmvtoan,btch0001.rw_crapdat.dtmvtoan,7118,7015,vr_arq_op_cred(14)(999)(2),'"PROVISAO JUROS CH. ESPECIAL - PESSOA JURIDICA"');
       gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_arquivo_txt --> Handle do arquivo aberto
