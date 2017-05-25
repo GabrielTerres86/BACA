@@ -304,14 +304,14 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0002 AS
                                    ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                    ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
 
-END inss0002;
+END INSS0002;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
 
   /*---------------------------------------------------------------------------------------------------------------
    Programa : INSS0002
    Autor    : Dionathan
-   Data     : 27/08/2015                        Ultima atualizacao: 25/04/2016
+   Data     : 27/08/2015                        Ultima atualizacao: 06/03/2017
 
    Dados referentes ao programa:
 
@@ -330,6 +330,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                05/09/2016 - SD 490844 - Removido o código que limpava a variável
                             vr_cdlindig quando o agendamento era feito pelo código
                             de barras (procedure pc_gps_agmto_novo). (Carlos)
+                            
+               02/02/2017 - Incluir chamada da procedure pc_insere_movimento_internet para
+                            gravar registro na tabela crapmvi, para somar as movimentacoes
+                            de GPS junto com as outras. (Lucas Ranghetti #556489)
+                            
+               06/03/2017 - Ajustado no cursor da craplgp na procedure pc_gps_agmto_novo para
+                            converter cddidenti para numero antes de realizar a clausula where
+                            pois a autoconversao do oracle nao convertia de forma adequada
+                            (Tiago/Fabricio SD616352).             
   ---------------------------------------------------------------------------------------------------------------*/
 
   --Buscar informacoes de lote
@@ -515,7 +524,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
          AND lgp.mmaacomp  = TO_NUMBER(p_mmaacomp)
          AND lgp.vlrtotal  = p_vlrtotal
          AND lgp.cddpagto  = p_cddpagto
-         AND lgp.flgpagto  = 1; --TRUE
+         AND lgp.flgpagto  = 1 --TRUE
+         AND lgp.flgativo  = 1;
 
     -- Cursor CRAPLGP para identificar Agendamento
     CURSOR cr_lgp_agp(p_cdcooper IN craplgp.cdcooper%TYPE
@@ -764,7 +774,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                ,inpesgps
                ,dtvencto
                ,dstiparr
-               ,nrseqagp)
+               ,nrseqagp
+               ,flgativo)
         VALUES (pr_cdcooper
                ,pr_craplot.dtmvtolt
                ,pr_craplot.cdagenci
@@ -793,6 +804,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                ,pr_dtvencto
                ,pr_dstiparr
                ,pr_nrseqagp
+               ,1 -- flgativo
                )
              RETURNING ROWID
              INTO pr_craplgp_rowid;
@@ -803,7 +815,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
       RAISE vr_exc_saida;
     END IF;
 
-    
+
     -- atualiza os valores da lote
     BEGIN
       UPDATE craplot SET craplot.qtcompln = NVL(craplot.qtcompln, 0) + 1
@@ -832,7 +844,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
 
       --Monta mensagem de critica
       pr_cdcritic := 0;
-      pr_dscritic := 'Erro na inss0002.pc_atualiza_pagamento --> ' ||
+      pr_dscritic := 'Erro na INSS0002.pc_atualiza_pagamento --> ' ||
                      SQLERRM;
 
   END pc_atualiza_pagamento;
@@ -1366,7 +1378,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
 
       --Monta mensagem de critica
       pr_cdcritic := 0;
-      pr_dscritic := 'Erro na inss0002.pc_gps_validar_sicredi --> ' || SQLERRM;
+      pr_dscritic := 'Erro na INSS0002.pc_gps_validar_sicredi --> ' || SQLERRM;
 
   END pc_gps_validar_sicredi;
 
@@ -1437,10 +1449,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
     vr_dstiparr VARCHAR2(255);
     vr_mmaacomp VARCHAR2(6);
     vr_vlsldisp NUMBER(25, 2);
-    vr_cddpagto VARCHAR2(50) := pr_cddpagto;
-    vr_cdidenti VARCHAR2(20) := pr_cdidenti;
-    vr_idarrgps NUMBER(10) := 0;
-    vr_dsorigem VARCHAR2(100) := gene0001.vr_vet_des_origens(pr_idorigem);
+    vr_cddpagto VARCHAR2(50)    := pr_cddpagto;
+    vr_cdidenti VARCHAR2(20)    := pr_cdidenti;
+    vr_idarrgps NUMBER(10)      := 0;
+    vr_dsorigem VARCHAR2(100)   := gene0001.vr_vet_des_origens(pr_idorigem);
     vr_dsmsglog VARCHAR2(32767) := '';
     vr_nrautsic NUMBER(5)       :=0; -- Numero Sequencial para enviar ao Sicredi
     vr_busca    VARCHAR2(50);
@@ -1807,9 +1819,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
           RAISE vr_exc_saida;
       END;
 
+      -- Atualiza o registro de movimento da internet
+      paga0001.pc_insere_movimento_internet(pr_cdcooper => pr_cdcooper
+                                           ,pr_nrdconta => pr_nrdconta
+                                           ,pr_idseqttl => pr_idseqttl
+                                           ,pr_dtmvtolt => rw_craplot.dtmvtolt
+                                           ,pr_cdoperad => vr_cdoperad
+                                           ,pr_inpessoa => rw_crapass.inpessoa
+                                           ,pr_tpoperac => 2 -- Pagamento
+                                           ,pr_vllanmto => pr_vlrtotal
+                                           ,pr_dscritic => pr_dscritic);
+                                           
+       IF TRIM(pr_dscritic) IS NOT NULL THEN
+         RAISE vr_exc_saida;
     END IF;
 
-
+    END IF;
 
     -- Gerar cabeçalho do envelope SOAP
     inss0001.pc_gera_cabecalho_soap(pr_idservic => 5 -- idservic
@@ -2138,6 +2163,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
        WHERE lgp.cdcooper = gps.cdcooper
          AND lgp.nrctapag = gps.nrdconta
          AND lgp.nrseqagp = gps.nrseqagp
+         AND lgp.flgativo = 1 -- Guia Ativa
          AND gps.nrdconta = pr_nrdconta
          AND gps.cdcooper = pr_cdcooper
          AND gps.insituacao = 0 -- ATIVA
@@ -2624,10 +2650,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
            AND craplgp.cdagenci  = p_cdagenci
            AND craplgp.cdbccxlt  = 100    /* Fixo */
            AND craplgp.nrdolote  = p_nrdolote
-           AND craplgp.cdidenti2 = p_cdidenti
+           AND craplgp.cdidenti2 = TO_NUMBER(p_cdidenti)
            AND craplgp.mmaacomp  = to_number(p_dtcompet)
            AND craplgp.vlrtotal  = p_vlrtotal
-           AND craplgp.cddpagto  = p_cddpagto;
+           AND craplgp.cddpagto  = p_cddpagto
+           AND craplgp.flgativo  = 1;
      rw_craplgp cr_craplgp%ROWTYPE;
 
      -- Buscar os dados do lote
@@ -2846,18 +2873,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
               /* Verifica o Digito Verificador */
               vr_lindigi1 := SUBSTR(vr_cdbarras, 1,11);
               CXON0014.pc_verifica_digito(pr_nrcalcul => vr_lindigi1
+							             ,pr_poslimit => 0            --Utilizado para validação de dígito adicional de DAS
                                          ,pr_nrdigito => vr_validig1);
               /* Verifica o Digito Verificador */
               vr_lindigi2 := SUBSTR(vr_cdbarras, 12,11);
               CXON0014.pc_verifica_digito(pr_nrcalcul => vr_lindigi2
+							             ,pr_poslimit => 0            --Utilizado para validação de dígito adicional de DAS
                                          ,pr_nrdigito => vr_validig2);
               /* Verifica o Digito Verificador */
               vr_lindigi3 := SUBSTR(vr_cdbarras, 23,11);
               CXON0014.pc_verifica_digito(pr_nrcalcul => vr_lindigi3
+							             ,pr_poslimit => 0            --Utilizado para validação de dígito adicional de DAS
                                          ,pr_nrdigito => vr_validig3);
               /* Verifica o Digito Verificador */
               vr_lindigi4 := SUBSTR(vr_cdbarras, 34,11);
               CXON0014.pc_verifica_digito(pr_nrcalcul => vr_lindigi4
+							             ,pr_poslimit => 0            --Utilizado para validação de dígito adicional de DAS
                                          ,pr_nrdigito => vr_validig4);
 
               /* Montando a linha digitavel para CRAPLAU*/
@@ -3219,6 +3250,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                          ,tpleitur
                          ,dstiparr
                          ,nrseqagp
+                         ,flgativo
                          )
                   VALUES (pr_cdcooper             -- cdcooper
                          ,rw_crapdat.dtmvtocd     -- dtmvtolt
@@ -3249,6 +3281,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                          ,pr_idleitur             -- idleitur
                          ,vr_dstiparr             -- dstiparr
                          ,vr_nrseqagp             -- nrseqagp
+                         ,1                       -- flgativo
                          );
 
     EXCEPTION
@@ -4109,7 +4142,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
         END IF;
         RAISE vr_exc_saida;
      END IF;
-     
+
 
      IF pr_idorigem = 2 THEN -- Apenas CAIXA ON-LINE
        -- Retornar valores
@@ -4233,18 +4266,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
               /* Verifica o Digito Verificador */
               vr_lindigi1 := SUBSTR(vr_cdbarras, 1,11);
               CXON0014.pc_verifica_digito(pr_nrcalcul => vr_lindigi1
+							             ,pr_poslimit => 0            --Utilizado para validação de dígito adicional de DAS
                                          ,pr_nrdigito => vr_validig1);
               /* Verifica o Digito Verificador */
               vr_lindigi2 := SUBSTR(vr_cdbarras, 12,11);
               CXON0014.pc_verifica_digito(pr_nrcalcul => vr_lindigi2
+							             ,pr_poslimit => 0            --Utilizado para validação de dígito adicional de DAS
                                          ,pr_nrdigito => vr_validig2);
               /* Verifica o Digito Verificador */
               vr_lindigi3 := SUBSTR(vr_cdbarras, 23,11);
               CXON0014.pc_verifica_digito(pr_nrcalcul => vr_lindigi3
+							             ,pr_poslimit => 0            --Utilizado para validação de dígito adicional de DAS
                                          ,pr_nrdigito => vr_validig3);
               /* Verifica o Digito Verificador */
               vr_lindigi4 := SUBSTR(vr_cdbarras, 34,11);
               CXON0014.pc_verifica_digito(pr_nrcalcul => vr_lindigi4
+							             ,pr_poslimit => 0            --Utilizado para validação de dígito adicional de DAS
                                          ,pr_nrdigito => vr_validig4);
 
               /* Montando a linha digitavel */
@@ -4435,7 +4472,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
   EXCEPTION
       WHEN OTHERS THEN
         --Monta mensagem de critica
-        pr_dscritic := 'Erro na inss0002.pc_gps_cooperativa --> '|| SQLERRM;
+        pr_dscritic := 'Erro na INSS0002.pc_gps_cooperativa --> '|| SQLERRM;
   END pc_gps_cooperativa;
 
   /*---------------------------------------------------------------------------------------------------------------
@@ -4665,7 +4702,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
             OR  p_cdagenci = 0)
            AND (lgp.nrdcaixa = p_nrdcaixa
             OR p_nrdcaixa = 0)
-           AND lgp.flgpagto  = 1;
+           AND lgp.flgpagto  = 1
+           AND lgp.flgativo  = 1;
      rw_craplgp cr_craplgp%ROWTYPE;
 
 
@@ -4859,7 +4897,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                OR p_nrdcaixa = 0)
            AND (lgp.cdidenti2 = p_cdidenti OR
                    p_cdidenti = 0)
-           AND lgp.flgpagto = 1
+           AND lgp.flgpagto  = 1
+           AND lgp.flgativo  = 1
            AND ope.cdcooper  = lgp.cdcooper
            AND UPPER(ope.cdoperad)  = UPPER(lgp.cdopecxa)
            ORDER BY lgp.cdagenci
@@ -5480,7 +5519,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
     vr_cdcompet := TRIM(TO_CHAR(gene0002.fn_mask(rw_craplgp.mmaacomp,'999999'))); -- Fica 092015
 
     -- Chamar a rotina para validação do pagamento
-    inss0002.pc_gps_pagamento(pr_cdcooper => pr_cdcooper             -- pr_cdcooper
+    INSS0002.pc_gps_pagamento(pr_cdcooper => pr_cdcooper             -- pr_cdcooper
                              ,pr_nrdconta => pr_nrdconta             -- pr_nrdconta
                              ,pr_cdagenci => 90  --fixo, para aparecer LISGPS rw_craplgp.cdagenci     -- pr_cdagenci
                              ,pr_nrdcaixa => 900 --fixo, rw_craplgp.nrdcaixa     -- pr_nrdcaixa
@@ -5976,6 +6015,5 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                                      '<Root><Erro>Rotina com erros</Erro></Root>');
   END pc_gps_arquivo_download;
 
-
-END inss0002;
+END INSS0002;
 /
