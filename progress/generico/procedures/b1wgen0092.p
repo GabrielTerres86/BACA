@@ -2,7 +2,7 @@
 
    Programa: b1wgen0092.p                  
    Autora  : André - DB1
-   Data    : 04/05/2011                        Ultima atualizacao: 22/05/2017
+   Data    : 04/05/2011                        Ultima atualizacao: 25/05/2017
     
    Dados referentes ao programa:
    
@@ -171,6 +171,9 @@
                            
               22/05/2017 - Caso ultrapasse o horario parametrizado efetuar tratamento conforme a
                            inclusao ja faz (Lucas Ranghetti #669864)
+                           
+              25/05/2017 - Incluir vr_dstransa atualizada apos a chamada do bloqueia_lancamento
+                           (Lucas Ranghetti #671626).
 .............................................................................*/
 
 /*............................... DEFINICOES ................................*/
@@ -2805,6 +2808,8 @@ PROCEDURE exclui_autorizacao:
                              END.
                     END.
             END.
+            
+            ASSIGN aux_dstransa = "Exclui autorizacao de debito em conta".
                 
             FIND CURRENT crapatr EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
             
