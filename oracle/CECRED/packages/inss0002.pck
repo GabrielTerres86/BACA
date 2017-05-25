@@ -311,7 +311,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
   /*---------------------------------------------------------------------------------------------------------------
    Programa : INSS0002
    Autor    : Dionathan
-   Data     : 27/08/2015                        Ultima atualizacao: 06/03/2017
+   Data     : 27/08/2015                        Ultima atualizacao: 25/05/2017
 
    Dados referentes ao programa:
 
@@ -338,7 +338,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                06/03/2017 - Ajustado no cursor da craplgp na procedure pc_gps_agmto_novo para
                             converter cddidenti para numero antes de realizar a clausula where
                             pois a autoconversao do oracle nao convertia de forma adequada
-                            (Tiago/Fabricio SD616352).             
+                            (Tiago/Fabricio SD616352).       
+                            
+              25/05/2017 - Se DEBSIC ja rodou, nao aceitamos mais agendamento para agendamentos 
+                           em que o dia que antecede o final de semana ou feriado nacional
+                           (Lucas Ranghetti #671126)      
   ---------------------------------------------------------------------------------------------------------------*/
 
   --Buscar informacoes de lote
@@ -2673,6 +2677,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
            FOR UPDATE; -- Lock do registro, para preservar sequencia de NRSEQDIG
      rw_craplot    cr_craplot%ROWTYPE;
 
+     CURSOR cr_craphec(pr_cdcooper IN crapcop.cdcooper%TYPE
+                      ,pr_cdprogra IN craphec.cdprogra%TYPE) IS
+     SELECT MAX(hec.hriniexe) hriniexe
+       FROM craphec hec
+      WHERE upper(hec.cdprogra) = upper(pr_cdprogra)
+        AND hec.cdcooper = pr_cdcooper;
+     rw_craphec cr_craphec%ROWTYPE;
+
      -- Variáveis
      rw_crapdat    btch0001.cr_crapdat%ROWTYPE;
 
@@ -2719,6 +2731,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
      vr_dspesgps   VARCHAR2(15);
      vr_dsprotoc   VARCHAR2(1000);
      vr_dsretorn   VARCHAR2(500) := '';
+     vr_hriniexe   craphec.hriniexe%TYPE;
 
      vr_dslitera   VARCHAR2(500);
      vr_sequenci   NUMBER;
@@ -2728,7 +2741,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
 
      FUNCTION fn_centraliza(pr_frase IN VARCHAR2, pr_tamlinha IN PLS_INTEGER) RETURN VARCHAR2 IS 
        vr_contastr PLS_INTEGER;
-  BEGIN
+     BEGIN
        vr_contastr := TRUNC( (pr_tamlinha - LENGTH(TRIM(pr_frase))) / 2 ,0);
        RETURN LPAD(NVL(' ',' '),vr_contastr,' ')||TRIM(pr_frase);
      END fn_centraliza;          
@@ -2805,7 +2818,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
         -- Apenas fechar o cursor
         CLOSE btch0001.cr_crapdat;
      END IF;
-
+      
      -- Verificar parametro de tipo de pagamento ( 1 -> Com código de barras / 2 -> Sem código de barras )
      IF pr_tpdpagto NOT IN (1,2) THEN
         -- Gerar excecao
@@ -3106,6 +3119,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
     END LOOP;
     /******* FIM - BUSCAR DATA EM DIA UTIL *********/
 
+    -- busca ultimo horario da debsic
+    OPEN cr_craphec(pr_cdcooper => pr_cdcooper
+                   ,pr_cdprogra => 'DEBSIC');
+    FETCH cr_craphec INTO rw_craphec;
+
+    IF cr_craphec%NOTFOUND THEN
+      CLOSE cr_craphec;
+      vr_hriniexe:= 0;
+    ELSE
+      CLOSE cr_craphec;
+      vr_hriniexe:= rw_craphec.hriniexe;
+    END IF;
+
+    -- Se DEBSIC ja rodou, nao aceitamos mais agendamento para agendamentos em que o dia
+    -- que antecede o final de semana ou feriado nacional
+    IF to_char(SYSDATE,'sssss') >= vr_hriniexe  AND 
+       rw_crapdat.dtmvtolt = vr_dtdebito THEN
+      pr_dscritic := 'Agendamento de GPS permitido apenas para o proximo dia util.';
+      RAISE vr_exc_saida;     
+    END IF;
 
     vr_sequen_pro := fn_sequence('TBINSS_AGENDAMENTO_GPS','NRSEQAGP',pr_cdcooper||';'||pr_nrdconta);
 
