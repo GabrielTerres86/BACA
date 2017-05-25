@@ -6357,6 +6357,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
           AND hcc.cdcooper = pr_cdcooper
           AND hcc.nrdconta = pr_nrdconta
           AND hcc.nrremret = pr_nrremret
+		  AND hcc.intipmvt = 1
           ORDER BY cst.dtlibera,
                    cst.cdbanchq,
                    cst.cdagechq,

@@ -22,7 +22,7 @@ BEGIN
   Programa : pc_log_programa
   Sistema : Todos
   Autor   : Carlos Henrique/CECRED
-  Data    : Março/2017                   Ultima atualizacao: 04/05/2017  
+  Data    : Março/2017                   Ultima atualizacao: 24/05/2017  
 
   Objetivo  : Logar execuções, ocorrências, erros ou mensagens dos programas.
               Abrir chamado e enviar e-mail quando necessário.
@@ -35,6 +35,9 @@ BEGIN
                            
               04/05/2017 - Verificação para não abrir vários chamados. Parametrização da quantidade
                            de dias para pesquisa de ocorrência de erro com chamado aberto (Carlos)
+                           
+              24/05/2017 - Incluir validacao para nao dar erro ao armazenar o numero do chamado
+                           (Lucas Ranghetti #678334)
   .......................................................................................... */
   DECLARE 
   
@@ -250,7 +253,7 @@ BEGIN
             
           -- Buscar caminho do softdesk (homol ou prod)
           IF gene0001.fn_database_name = 'AYLLOSP' THEN
-            vr_link_softdesk:= 'http://softdesk.cecred.coop.br';
+            vr_link_softdesk:= 'https://softdesk.cecred.coop.br';
           ELSE
             vr_link_softdesk:= 'http://softdesktreina.cecred.coop.br';
           END IF;  
@@ -260,13 +263,13 @@ BEGIN
           vr_texto_chamado1:= gene0007.fn_caract_acento(pr_texto_chamado);
           
           -- Usar o utl.escape para substituir caracteres de html para o comando entender
-            vr_texto_chamado:= utl_url.escape(vr_texto_chamado1) || '<br><br>' || 
+          vr_texto_chamado:= utl_url.escape(vr_texto_chamado1) || '<br><br>' || 
                                utl_url.escape(vr_mensagem_chamado);
           vr_titulo_chamado:= utl_url.escape('Evento Monitoracao');
           vr_usuario_sd:= utl_url.escape('monitor sistemas');
           
           -- Comando para abrir chamado no softdesk
-          vr_comando:= 'curl ' || '"'||vr_link_softdesk||'/modulos/incidente/'
+          vr_comando:= 'curl -k ' || '"'||vr_link_softdesk||'/modulos/incidente/'
                     || 'api.php?cd_area=2&cd_usuario='||vr_usuario_sd||'&tt_chamado='
                     ||vr_titulo_chamado|| '&ds_chamado='|| vr_texto_chamado 
                     || '&cd_categoria=586'||'&cd_grupo_solucao=128&cd_servico=57&cd_tipo_chamado=5"'  
@@ -277,10 +280,15 @@ BEGIN
                                ,pr_des_comando => vr_comando
                                ,pr_typ_saida   => vr_typ_saida
                                ,pr_des_saida   => vr_chamado);
-                               
-          -- Irá sempre retornar a saida como: Chamado no Soft desk: numero
-          vr_nrchamado:= substr(TRIM(REPLACE(REPLACE(vr_chamado,chr(13),NULL),chr(10),NULL)),23,10);
-          
+              
+          BEGIN                  
+            -- Irá sempre retornar a saida como: Chamado no Soft desk: numero
+            vr_nrchamado:= substr(TRIM(REPLACE(REPLACE(vr_chamado,chr(13),NULL),chr(10),NULL)),23,10);
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_nrchamado:= 0; -- Ocorreu erro ao abrir o chamado
+          END;     
+         
           -- Texto do chamado + o chamado aberto
           vr_texto_email:= pr_texto_chamado || pr_dsmensagem ||'<br><br><b>'||'Chamado no Softdesk: '||
                            vr_nrchamado||'.</b>';                   
