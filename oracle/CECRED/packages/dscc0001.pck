@@ -3688,7 +3688,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 							 ,dtsitana
 							 ,nrremret)
 				 VALUES(pr_nrdconta
-				       ,pr_nrdolote
+				       ,rw_crapbdc.nrdolote
 				       ,rw_crapbdc.dtmvtolt
 				       ,pr_tab_cheques(idx).dtlibera
                ,pr_tab_cheques(idx).dtdcaptu
@@ -6982,6 +6982,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 					,bdc.dhdassin
 					,bdc.cdopeasi
           ,bdc.cdagenci
+          ,bdc.nrdolote
 		  FROM crapbdc bdc
 		 WHERE bdc.cdcooper = pr_cdcooper
 		   AND bdc.nrdconta = pr_nrdconta
@@ -7387,7 +7388,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 					 VALUES(rw_crapdat.dtmvtolt
 					       ,rw_crapbdc.cdagenci
 								 ,700 -- vr_tab_cheques(vr_idx_cheque).cdbccxlt
-								 ,vr_tab_cheques(vr_idx_cheque).nrdolote
+								 ,rw_crapbdc.nrdolote -- vr_tab_cheques(vr_idx_cheque).nrdolote
 								 ,vr_nrdconta_ver_cheque -- pr_nrdconta
 								 ,vr_nrdocmto
 								 ,vr_tab_cheques(vr_idx_cheque).vlcheque
