@@ -4586,7 +4586,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     
     --> INICIO
     pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><raiz>
-                    <idimpres>'|| pr_idimpres ||'</idimpres>');
+                    <idimpres>'|| pr_idimpres ||'</idimpres>' ||
+                   '<tpctrlim>'|| pr_tpctrlim ||'</tpctrlim>');
       
     --> Contrato do CET 
     IF pr_idimpres = 9 THEN
@@ -4762,7 +4763,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                          '<localpag>'|| rw_crapage.nmcidade||'/'||rw_crapage.cdufdcop||'</localpag>'||
                          '<dtcontra>'|| to_char(rw_craplim.dtinivig, 'DD/MM/RRRR') || '</dtcontra>');
       
-      IF pr_nrctrlim = 3 THEN
+      IF pr_tpctrlim = 2 THEN
       pc_escreve_xml('<avalistas>'||
                          '<aval1>'||
                            '<nrsequen>1</nrsequen>'||
@@ -4804,6 +4805,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                            '<nrcpfcjg>'|| vr_tab_contrato_limite(vr_idxctlim).dscfcav2 ||'</nrcpfcjg>'|| 
                          '</aval>
                       </avalistas>');
+        
       END IF;
     
       --> Gerar XML para dados do relatorio de CET   
@@ -4969,7 +4971,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
       vr_dsassmail := NULL;
     END IF;
     
-    IF pr_tpctrlim = 2 THEN
+    IF pr_tpctrlim = 2 AND pr_idimpres = 2 THEN
       vr_nmjasper := 'crrl519_contrato_limite_cheque.jasper';
       vr_dsxmlnode := '/raiz/Contrato';
     ELSE
