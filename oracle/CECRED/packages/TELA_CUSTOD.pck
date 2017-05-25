@@ -1784,7 +1784,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSTOD IS
 																	
 			vr_dstexto :='<Dados>' ||
 											'<nrinsemi>' || rw_crapdcc.nrinsemi || '</nrinsemi>' ||
-											'<nmcheque>' || rw_crapdcc.nmcheque || '</nmcheque>' ||
+											'<nmcheque><![CDATA[' || rw_crapdcc.nmcheque || ']]></nmcheque>' ||
 											'<cdagenci>' || rw_crapdcc.cdagenci || '</cdagenci>' ||
 											'<cdbccxlt>' || rw_crapdcc.cdbccxlt || '</cdbccxlt>' ||
 											'<nrdolote>' || rw_crapdcc.nrdolote || '</nrdolote>' ||

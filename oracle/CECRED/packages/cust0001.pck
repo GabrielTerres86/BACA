@@ -5251,7 +5251,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
 						                       '<emitente'|| vr_index_cheque || '>' ||
 																	 '   <nrcpfcgc>' || gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_tab_cheque_custodia(vr_index_cheque).nrinsemi
 				                                                                       ,pr_inpessoa => vr_tab_cheque_custodia(vr_index_cheque).cdtipemi) || '</nrcpfcgc>' ||
-																	 '   <nmcheque>' || vr_tab_cheque_custodia(vr_index_cheque).nmcheque || '</nmcheque>' ||
+																	 '   <nmcheque><![CDATA[' || vr_tab_cheque_custodia(vr_index_cheque).nmcheque || ']]></nmcheque>' ||
 																	 '   <idcheque>' || vr_idcheque || '</idcheque>' ||
 																	 '</emitente'|| vr_index_cheque || '>';
 					END IF;
