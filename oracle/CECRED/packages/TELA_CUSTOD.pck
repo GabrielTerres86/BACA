@@ -298,7 +298,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSTOD IS
 			
       -- Variaveis de controle de calendario
       rw_crapdat      BTCH0001.cr_crapdat%ROWTYPE;
-
+			
 	  -- Busca cheques descontado		
 		  CURSOR cr_crapcdb(pr_cdcooper IN crapcop.cdcooper%TYPE
 			                 ,pr_dsdocmc7 IN VARCHAR2) IS
@@ -1813,7 +1813,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSTOD IS
 																	
 			vr_dstexto :='<Dados>' ||
 											'<nrinsemi>' || rw_crapdcc.nrinsemi || '</nrinsemi>' ||
-											'<nmcheque>' || rw_crapdcc.nmcheque || '</nmcheque>' ||
+											'<nmcheque><![CDATA[' || rw_crapdcc.nmcheque || ']]></nmcheque>' ||
 											'<cdagenci>' || rw_crapdcc.cdagenci || '</cdagenci>' ||
 											'<cdbccxlt>' || rw_crapdcc.cdbccxlt || '</cdbccxlt>' ||
 											'<nrdolote>' || rw_crapdcc.nrdolote || '</nrdolote>' ||

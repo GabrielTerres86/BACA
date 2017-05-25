@@ -1102,10 +1102,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
     vr_tab_cheques DSCC0001.typ_tab_cheques;
 		vr_idx_ocorre PLS_INTEGER;
 
-    vr_clob CLOB;
-	
     vr_nmcheque VARCHAR2(150);
     vr_nrcpfcgc VARCHAR2(25);
+	
+    -- Variáveis para armazenar as informações em XML
+    vr_des_xml         CLOB;
+    -- Variável para armazenar os dados do XML antes de incluir no CLOB
+    vr_texto_completo  VARCHAR2(32600);
+    
 	
 	  -- Buscar informações do bordero
 		CURSOR cr_crapbdc(pr_cdcooper IN crapcdb.cdcooper%TYPE
@@ -1292,6 +1296,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
          AND ass.nrdconta = pr_nrdconta;
     rw_crapass_2  cr_crapass_2%ROWTYPE;
 		
+    --------------------------- SUBROTINAS INTERNAS --------------------------
+    -- Subrotina para escrever texto na variável CLOB do XML
+    PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2,
+                             pr_fecha_xml IN BOOLEAN DEFAULT FALSE) IS
+	BEGIN
+      gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo, pr_des_dados, pr_fecha_xml);
+    END;
+    
+    
+		
 	BEGIN
     -- Incluir nome do modulo logado
     GENE0001.pc_informa_acesso(pr_module => 'TELA_ATENDA_DESCTO'
@@ -1378,9 +1392,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 				RAISE vr_exc_erro;
 			END IF;
       
-		  vr_clob := '<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+      -- Leitura da PL/Table e geração do arquivo XML
+      -- Inicializar o CLOB
+      vr_des_xml := NULL;
+      dbms_lob.createtemporary(vr_des_xml, TRUE);
+      dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+      -- Inicilizar as informações do XML
+      vr_texto_completo := NULL;
+      pc_escreve_xml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Dados><nrctrlim>' || rw_craplim.nrctrlim || '</nrctrlim>' ||
-																		 '<vllimdsp>' || rw_craplim.vllimdis || '</vllimdsp><Cheques>';
+																		 '<vllimdsp>' || rw_craplim.vllimdis || '</vllimdsp><Cheques>');      
 		
 	    FOR rw_crapcdb IN cr_crapcdb(pr_cdcooper => vr_cdcooper
 				                          ,pr_nrdconta => pr_nrdconta
@@ -1418,11 +1439,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
         END IF;                          
                                   
                                   
-																	
-																					
-																	
-				vr_clob := vr_clob
-				        || '<Cheque>'
+				pc_escreve_xml(
+				           '<Cheque>'
 								|| '<dtlibera>' || to_char(rw_crapcdb.dtlibera, 'DD/MM/RRRR') ||'</dtlibera>'
 								|| '<cdcmpchq>' || rw_crapcdb.cdcmpchq || '</cdcmpchq>'
 								|| '<cdbanchq>' || rw_crapcdb.cdbanchq || '</cdbanchq>'
@@ -1435,17 +1453,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 
 								|| '<nrcheque>' || rw_crapcdb.nrcheque || '</nrcheque>'
 								|| '<vlcheque>' || to_char(rw_crapcdb.vlcheque, 'fm999g999g999g990d00') || '</vlcheque>'								
-								|| '<nmcheque>' || nvl(vr_nmcheque,' ') || '</nmcheque>'								
+								|| '<nmcheque><![CDATA[' || nvl(vr_nmcheque,' ') || ']]></nmcheque>'								
 							  || '<nrcpfcgc>' || vr_nrcpfcgc || '</nrcpfcgc>'
 								|| '<dssitchq>' || rw_crapcdb.dssitchq || '</dssitchq>'								
                 || '<dsdocmc7>' || regexp_replace(rw_crapcdb.dsdocmc7, '[^0-9]') || '</dsdocmc7>'								
-								|| '</Cheque>';
+								|| '</Cheque>');
 			END LOOP;
 			
-			vr_clob := vr_clob
-			        || '</Cheques></Dados></Root>';
+			pc_escreve_xml( '</Cheques></Dados></Root>',TRUE);
 										
-			pr_retxml := XMLTYPE.CREATEXML(vr_clob);
+			pr_retxml := XMLTYPE.CREATEXML(vr_des_xml);
+     
+      -- Liberando a memória alocada pro CLOB
+      dbms_lob.close(vr_des_xml);
+      dbms_lob.freetemporary(vr_des_xml);
+        
 		-- Analisar
 		ELSIF pr_cddopcao = 'N' THEN
 			
@@ -1518,9 +1540,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 			END IF;
 			
 			IF vr_tab_cheques.count > 0 THEN
-				vr_clob := '<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+        -- Leitura da PL/Table e geração do arquivo XML
+        -- Inicializar o CLOB
+        vr_des_xml := NULL;
+        dbms_lob.createtemporary(vr_des_xml, TRUE);
+        dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+        -- Inicilizar as informações do XML
+        vr_texto_completo := NULL;
+        
+				pc_escreve_xml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
 									 '<Root><Dados><nrctrlim>' || rw_craplim.nrctrlim || '</nrctrlim>' ||
-									 '<vllimdsp>' || rw_craplim.vllimdis || '</vllimdsp><Cheques>';
+                       '<vllimdsp>' || rw_craplim.vllimdis || '</vllimdsp><Cheques>');
 
 				FOR idx IN vr_tab_cheques.first..vr_tab_cheques.last LOOP
 					-- Buscar inpessoa do cpf/cnpj
@@ -1528,8 +1558,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 																		 ,pr_stsnrcal => vr_stsnrcal
 																		 ,pr_inpessoa => vr_inpessoa);																	
 																		
-					vr_clob := vr_clob
-									|| '<Cheque>'
+					pc_escreve_xml( '<Cheque>'
 									|| '<dtlibera>' || to_char(vr_tab_cheques(idx).dtlibera, 'DD/MM/RRRR') ||'</dtlibera>'
 									|| '<cdcmpchq>' || vr_tab_cheques(idx).cdcmpchq || '</cdcmpchq>'
 									|| '<cdbanchq>' || vr_tab_cheques(idx).cdbanchq || '</cdbanchq>'
@@ -1541,14 +1570,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 																	 END                   || '</nrctachq>'
 
 									|| '<nrcheque>' || vr_tab_cheques(idx).nrcheque || '</nrcheque>'
-									|| '<nmcheque>' || nvl(vr_tab_cheques(idx).nmcheque,' ') || '</nmcheque>'								
+									|| '<nmcheque><![CDATA[' || nvl(vr_tab_cheques(idx).nmcheque,' ') || ']]></nmcheque>'								
 									|| '<nrcpfcgc>' || CASE WHEN trim(vr_tab_cheques(idx).nrcpfcgc) <> 0 THEN 
 																				gene0002.fn_mask_cpf_cnpj(vr_tab_cheques(idx).nrcpfcgc
 																																 ,vr_inpessoa)
 																	   END
 																												 || '</nrcpfcgc>'
 									|| '<vlcheque>' || to_char(vr_tab_cheques(idx).vlcheque, 'fm999g999g999g990d00') || '</vlcheque>'																																				 
-									|| '<dscritic>';
+									|| '<dscritic>');
 									
           -- Inicializa o bloqueio
           vr_flbloque := 0;
@@ -1560,10 +1589,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
             LOOP
 							EXIT WHEN vr_idx_ocorre IS NULL;
 							
-							vr_clob := vr_clob						
-											|| '<![CDATA['
+							pc_escreve_xml( '<![CDATA['
 											|| vr_tab_cheques(idx).ocorrencias(vr_idx_ocorre).cdocorre || ' - '
-											|| vr_tab_cheques(idx).ocorrencias(vr_idx_ocorre).dsrestri ||' </br>]]>';
+                              || vr_tab_cheques(idx).ocorrencias(vr_idx_ocorre).dsrestri ||' </br>]]>');
 
               -- Se alguma ocorrência bloqueia a operação
               IF vr_tab_cheques(idx).ocorrencias(vr_idx_ocorre).flbloque = 1 THEN
@@ -1573,18 +1601,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
               vr_idx_ocorre := vr_tab_cheques(idx).ocorrencias.next(vr_idx_ocorre);
 						END LOOP;
 					END IF;
-					vr_clob := vr_clob
-					        || '</dscritic>'								
+					pc_escreve_xml(  '</dscritic>'								
 									|| '<insitana>' || vr_tab_cheques(idx).insitana || '</insitana>'								
                   || '<dsdocmc7>' || regexp_replace(vr_tab_cheques(idx).dsdocmc7, '[^0-9]') || '</dsdocmc7>'																	
 									|| '<flbloque>' || vr_flbloque || '</flbloque>'									
-									|| '</Cheque>';
+                        || '</Cheque>');
 					
 				END LOOP;
-				vr_clob := vr_clob
-                || '</Cheques></Dados></Root>';
+				pc_escreve_xml('</Cheques></Dados></Root>',TRUE);
+			  pr_retxml := XMLTYPE.CREATEXML(vr_des_xml);
 										
-			  pr_retxml := XMLTYPE.CREATEXML(vr_clob);
+        -- Liberando a memória alocada pro CLOB
+        dbms_lob.close(vr_des_xml);
+        dbms_lob.freetemporary(vr_des_xml);
 				
 			ELSE
 				-- Gerar crítica
@@ -1630,9 +1659,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 													 ,pr_dtmvtolt => rw_crapdat.dtmvtolt);
 		  FETCH cr_crapcdb_total INTO rw_crapcdb_total;
 			
-		  vr_clob := '<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+      -- Leitura da PL/Table e geração do arquivo XML
+      -- Inicializar o CLOB
+      vr_des_xml := NULL;
+      dbms_lob.createtemporary(vr_des_xml, TRUE);
+      dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+      -- Inicilizar as informações do XML
+      vr_texto_completo := NULL;
+      
+		  pc_escreve_xml( '<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
 								 '<Root><Dados><nrctrlim>' || rw_crapbdc.nrctrlim || '</nrctrlim>' ||
-								 '<vlborder>' || rw_crapcdb_total.vlborder || '</vlborder><Cheques>';
+                     '<vlborder>' || rw_crapcdb_total.vlborder || '</vlborder><Cheques>');
 
 	    FOR rw_crapcdb_rsg IN cr_crapcdb_rsg(pr_cdcooper => vr_cdcooper
 																					,pr_nrdconta => pr_nrdconta
@@ -1644,8 +1681,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 																	 ,pr_stsnrcal => vr_stsnrcal
 																	 ,pr_inpessoa => vr_inpessoa);																	
 																	
-				vr_clob := vr_clob
-				        || '<Cheque>'
+				pc_escreve_xml(  '<Cheque>'
 								|| '<dtlibera>' || to_char(rw_crapcdb_rsg.dtlibera, 'DD/MM/RRRR') ||'</dtlibera>'
 								|| '<cdcmpchq>' || rw_crapcdb_rsg.cdcmpchq || '</cdcmpchq>'
 								|| '<cdbanchq>' || rw_crapcdb_rsg.cdbanchq || '</cdbanchq>'
@@ -1657,7 +1693,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
   															 END                   || '</nrctachq>'
 
 								|| '<nrcheque>' || rw_crapcdb_rsg.nrcheque || '</nrcheque>'
-								|| '<nmcheque>' || nvl(rw_crapcdb_rsg.nmcheque,' ') || '</nmcheque>'								
+								|| '<nmcheque><![CDATA[' || nvl(rw_crapcdb_rsg.nmcheque,' ') || ']]></nmcheque>'								
 							  || '<nrcpfcgc>' || CASE WHEN trim(rw_crapcdb_rsg.nrcpfcgc) IS NOT NULL THEN 
 							                        gene0002.fn_mask_cpf_cnpj(rw_crapcdb_rsg.nrcpfcgc
 							                                                 ,vr_inpessoa)
@@ -1665,13 +1701,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 							                                         || '</nrcpfcgc>'
 								|| '<vlcheque>' || to_char(rw_crapcdb_rsg.vlcheque, 'fm999g999g999g990d00') || '</vlcheque>'																																			 
                 || '<dsdocmc7>' || regexp_replace(rw_crapcdb_rsg.dsdocmc7, '[^0-9]') || '</dsdocmc7>'								
-								|| '</Cheque>';
+                      || '</Cheque>');
 			END LOOP;
 			
-			vr_clob := vr_clob
-			        || '</Cheques></Dados></Root>';
+			pc_escreve_xml( '</Cheques></Dados></Root>',TRUE);
 										
-			pr_retxml := XMLTYPE.CREATEXML(vr_clob);
+			pr_retxml := XMLTYPE.CREATEXML(vr_des_xml);
 
 		END IF;
 		
@@ -1834,7 +1869,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 																 ELSE 
 																	    'Pendente de entrega' 
 																 END                                                         || '</inconcil>'
-							|| '<nmcheque>' || vr_tab_cstdsc(idx).nmcheque                                 || '</nmcheque>'
+							|| '<nmcheque><![CDATA[' || vr_tab_cstdsc(idx).nmcheque                        || ']]></nmcheque>'
 							|| '<nrcpfcgc>' || CASE WHEN trim(vr_tab_cstdsc(idx).nrcpfcgc) IS NOT NULL THEN 
 							                        gene0002.fn_mask_cpf_cnpj(vr_tab_cstdsc(idx).nrcpfcgc
 							                                                 ,vr_inpessoa)

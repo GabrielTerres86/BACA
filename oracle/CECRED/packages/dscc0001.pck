@@ -2144,7 +2144,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                  '<vlcheque>'|| TO_CHAR(vr_tab_chq_bordero(idx).vlcheque,'fm999G999G999G990D00') ||'</vlcheque>'||
                                  '<vlliquid>'|| TO_CHAR(vr_tab_chq_bordero(idx).vlliquid,'fm999G999G999G990D00') ||'</vlliquid>'||
                                  '<qtdiaprz>'|| vr_qtdiaprz ||'</qtdiaprz>'||
-                                 '<nmcheque>'|| gene0007.fn_caract_controle(SUBSTR(vr_tab_chq_bordero(idx).nmcheque,0,23)) ||'</nmcheque>'||
+                                 '<nmcheque><![CDATA['|| gene0007.fn_caract_controle(SUBSTR(vr_tab_chq_bordero(idx).nmcheque,0,23)) ||']]></nmcheque>'||
                                  '<dscpfcgc>'|| vr_tab_chq_bordero(idx).dscpfcgc ||'</dscpfcgc>'||
                                  '<restricoes>');
           IF pr_idorigem <> 3 AND pr_flgrestr = 1 THEN
@@ -3109,7 +3109,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 		END IF;
 		-- Fecha cursor
 		CLOSE cr_crapass;
-    
+
     -- Verificar se cooperado foi demitido
     IF rw_crapass.dtdemiss IS NOT NULL THEN
 			-- Gerar crítica
@@ -4681,7 +4681,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 	vr_vlrendim NUMBER;               -- Valor de rendimento do cooperado
 	vr_przmxcmp NUMBER;               -- Data prazo máximo
 	
-    vr_nrcpfcgc NUMBER;
+  vr_nrcpfcgc NUMBER;
 	
 	-- Buscar todas as ocorrencias cadastradas
 	CURSOR cr_ocorrencias IS
@@ -4736,7 +4736,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 										 pr_cdbanchq IN crapcec.cdbanchq%TYPE,
 										 pr_cdagechq IN crapcec.cdagechq%TYPE,
 										 pr_nrctachq IN crapcec.nrctachq%TYPE,
-										 pr_nrcpfcgc IN crapcec.nrcpfcgc%TYPE)IS
+                     pr_nrcpfcgc IN crapcec.nrcpfcgc%TYPE)IS
 		SELECT cec.nrcpfcgc
           ,substr(to_char(cec.nrcpfcgc),1,LENGTH(cec.nrcpfcgc)-6) raizcnpj
 			FROM crapcec cec
@@ -4746,7 +4746,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			 AND cec.cdagechq = pr_cdagechq
 			 AND cec.nrctachq = pr_nrctachq
 			 AND cec.nrdconta = 0
-			 AND cec.nrcpfcgc = pr_nrcpfcgc;
+       AND cec.nrcpfcgc = pr_nrcpfcgc;
 	rw_crapcec  cr_crapcec%ROWTYPE;
 
   -- Verificar se o emitente é titular da conta
@@ -5320,10 +5320,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			-- Buscar emitente do cheque
 			OPEN cr_crapcec(pr_cdcooper => pr_cdcooper
 			               ,pr_cdcmpchq => pr_tab_cheques(vr_index).cdcmpchq
-						   ,pr_cdbanchq => pr_tab_cheques(vr_index).cdbanchq
-						   ,pr_cdagechq => pr_tab_cheques(vr_index).cdagechq
-						   ,pr_nrctachq => pr_tab_cheques(vr_index).nrctachq
-						   ,pr_nrcpfcgc => pr_tab_cheques(vr_index).nrcpfcgc);
+										 ,pr_cdbanchq => pr_tab_cheques(vr_index).cdbanchq
+										 ,pr_cdagechq => pr_tab_cheques(vr_index).cdagechq
+                       ,pr_nrctachq => pr_tab_cheques(vr_index).nrctachq
+                       ,pr_nrcpfcgc => pr_tab_cheques(vr_index).nrcpfcgc);
 			FETCH cr_crapcec INTO rw_crapcec;
 			
 			-- Se não encontrar emitente
@@ -5440,7 +5440,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			
         END IF;  
           
-			END IF;
+      END IF;    
 			
 			-- Se é necessário verificar prejuizo de emitente na cooperativa
 			IF vr_tab_lim_desconto(vr_inpessoa).Flpjzemi = 1 THEN
