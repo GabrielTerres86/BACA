@@ -3814,6 +3814,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			    ,lot.vlcompdb = lot.vlcompdb + vr_vlcompdb
 					,lot.vlcompcr = lot.vlcompcr + vr_vlcompcr
 			    ,lot.nrseqdig = vr_nrseqdig
+          ,lot.vlinfodb = lot.vlinfodb + vr_vlcompdb
+          ,lot.vlinfocr = lot.vlinfocr + vr_vlcompcr
+          ,lot.qtinfoln = lot.qtinfoln + vr_qtcompln
 		 WHERE lot.cdcooper = pr_cdcooper
  			 AND lot.dtmvtolt = rw_crapbdc.dtmvtolt
 		   AND lot.nrdolote = rw_crapbdc.nrdolote
@@ -4021,6 +4024,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 		   SET lot.qtcompln = lot.qtcompln - vr_qtcompln
 			    ,lot.vlcompdb = lot.vlcompdb - vr_vlcompdb
 					,lot.vlcompcr = lot.vlcompcr - vr_vlcompcr
+          ,lot.vlinfodb = lot.vlinfodb - vr_vlcompdb
+          ,lot.vlinfocr = lot.vlinfocr - vr_vlcompcr
+          ,lot.qtinfoln = lot.qtinfoln - vr_qtcompln
 		 WHERE lot.cdcooper = pr_cdcooper
  			 AND lot.dtmvtolt = rw_crapbdc.dtmvtolt
 		   AND lot.nrdolote = rw_crapbdc.nrdolote

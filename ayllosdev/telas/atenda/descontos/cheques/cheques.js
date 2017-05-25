@@ -1289,6 +1289,7 @@ function acessaValorLimite() {
 		    $('#divUsoGenerico').html(response);
             layoutPadrao();
             formataValorLimite();
+            $('#vllimite','#frmReLimite').desabilitaCampo();
             hideMsgAguardo();
             bloqueiaFundo($('#divUsoGenerico'));
         }
