@@ -3689,7 +3689,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 							 ,nrremret)
 				 VALUES(pr_nrdconta
 				       ,pr_nrdolote
-				       ,pr_tab_cheques(idx).dtmvtolt
+				       ,rw_crapbdc.dtmvtolt
 				       ,pr_tab_cheques(idx).dtlibera
                ,pr_tab_cheques(idx).dtdcaptu
 							 ,pr_tab_cheques(idx).cdcmpchq
@@ -3706,8 +3706,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 							 ,vr_nrddigc1
 							 ,vr_nrddigc2
 							 ,vr_nrddigc3
-							 ,pr_tab_cheques(idx).cdagenci
-							 ,pr_tab_cheques(idx).cdbccxlt
+							 ,rw_crapbdc.cdagenci
+							 ,rw_crapbdc.cdbccxlt
 							 ,pr_cdoperad
 							 ,vr_inchqcop
 							 ,rw_crapbdc.nrctrlim
@@ -6945,6 +6945,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 	-- Tratamento de erros
 	vr_exc_erro        EXCEPTION;    
 																			 
+  vr_nrdconta_ver_cheque crapass.nrdconta%TYPE;
+	vr_dsdaviso VARCHAR2(1000); 
+																			 
 	-- Variáveis auxiliares
 	vr_index_cheque     PLS_INTEGER;
 	vr_tab_cheques      typ_tab_cheques;
@@ -6978,6 +6981,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 		      ,bdc.flgassin
 					,bdc.dhdassin
 					,bdc.cdopeasi
+          ,bdc.cdagenci
 		  FROM crapbdc bdc
 		 WHERE bdc.cdcooper = pr_cdcooper
 		   AND bdc.nrdconta = pr_nrdconta
@@ -7333,6 +7337,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 	      vr_nrdocmto := to_number(to_char(vr_tab_cheques(vr_idx_cheque).nrcheque,'fm000000') ||
 					             to_char(vr_tab_cheques(vr_idx_cheque).nrddigc3,'fm0'));
 				
+                       
+       vr_dsdaviso := NULL;               
+       vr_nrdconta_ver_cheque := 0;               
+               
+       -- Verificar Cheque
+       CUST0001.pc_ver_cheque(pr_cdcooper => pr_cdcooper 
+                             ,pr_nrcustod => pr_nrdconta
+                             ,pr_cdbanchq => vr_tab_cheques(vr_idx_cheque).cdbanchq
+                             ,pr_cdagechq => vr_tab_cheques(vr_idx_cheque).cdagechq
+                             ,pr_nrctachq => vr_tab_cheques(vr_idx_cheque).nrctachq
+                             ,pr_nrcheque => vr_tab_cheques(vr_idx_cheque).nrcheque
+                             ,pr_nrddigc3 => 1
+                             ,pr_vlcheque => vr_tab_cheques(vr_idx_cheque).vlcheque
+                             ,pr_nrdconta => vr_nrdconta_ver_cheque
+                             ,pr_dsdaviso => vr_dsdaviso
+                             ,pr_cdcritic => vr_cdcritic
+                             ,pr_dscritic => vr_dscritic);               
+                                     
+       -- Verifica se ocorreu erro na execucao
+       IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+         RAISE vr_exc_erro;
+       END IF;               
+                       
+                       
+				
 				BEGIN
 					-- Inserir lançamento automatico
 					INSERT INTO craplau
@@ -7355,11 +7384,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 								 ,nrseqlan
 								 ,cdcooper
 								 ,cdseqtel)
-					 VALUES(vr_tab_cheques(vr_idx_cheque).dtmvtolt
-					       ,vr_tab_cheques(vr_idx_cheque).cdagenci
-								 ,vr_tab_cheques(vr_idx_cheque).cdbccxlt
+					 VALUES(rw_crapdat.dtmvtolt
+					       ,rw_crapbdc.cdagenci
+								 ,700 -- vr_tab_cheques(vr_idx_cheque).cdbccxlt
 								 ,vr_tab_cheques(vr_idx_cheque).nrdolote
-								 ,pr_nrdconta
+								 ,vr_nrdconta_ver_cheque -- pr_nrdconta
 								 ,vr_nrdocmto
 								 ,vr_tab_cheques(vr_idx_cheque).vlcheque
 								 ,521
@@ -7373,9 +7402,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 								 ,0
 								 ,0
 								 ,pr_cdcooper
-								 ,(to_char(vr_tab_cheques(vr_idx_cheque).dtmvtolt, 'DD/MM/RRRR') || ' ' ||
-									to_char(vr_tab_cheques(vr_idx_cheque).cdagenci, 'fm000') 		  || ' ' ||
-									to_char(vr_tab_cheques(vr_idx_cheque).cdbccxlt, 'fm000') 		  || ' ' ||
+								 ,(to_char(rw_crapdat.dtmvtolt, 'DD/MM/RRRR') || ' ' ||
+									to_char(rw_crapbdc.cdagenci, 'fm000') 		  || ' ' ||
+									to_char(700, 'fm000') 		  || ' ' ||
 									to_char(vr_tab_cheques(vr_idx_cheque).nrdolote, 'fm000000')   || ' ' ||
 									to_char(vr_tab_cheques(vr_idx_cheque).cdcmpchq, 'fm000') 		  || ' ' ||
 									to_char(vr_tab_cheques(vr_idx_cheque).cdbanchq, 'fm000') 		  || ' ' ||

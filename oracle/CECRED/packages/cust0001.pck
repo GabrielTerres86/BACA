@@ -5576,7 +5576,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
 				ELSE
           vr_inemiten := 1;					
 					vr_nrinsemi := rw_crapcec.nrcpfcgc;
-					vr_nmcheque := rw_crapcec.nmcheque;
+					vr_nmcheque := SUBSTR(rw_crapcec.nmcheque,1,50);
 					-- Busca indicador de pessoa baseando-se no CPF/CNPJ do Emitente
 					gene0005.pc_valida_cpf_cnpj(pr_nrcalcul => vr_nrinsemi
 					                           ,pr_stsnrcal => vr_stsnrcal
@@ -6357,7 +6357,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
           AND hcc.cdcooper = pr_cdcooper
           AND hcc.nrdconta = pr_nrdconta
           AND hcc.nrremret = pr_nrremret
-		  AND hcc.intipmvt = 1
+		  AND hcc.intipmvt IN ( 1, 3 )
           ORDER BY cst.dtlibera,
                    cst.cdbanchq,
                    cst.cdagechq,
