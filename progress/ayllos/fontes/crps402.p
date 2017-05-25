@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Agosto/2004.                    Ultima atualizacao: 05/03/2015
+   Data    : Agosto/2004.                    Ultima atualizacao: 25/05/2017
 
    Dados referentes ao programa:
 
@@ -61,12 +61,16 @@
                             
                05/03/2015 - Ajuste no estouro do format do campo nrdocmto (Daniel).  
                             
+               25/05/2017 - Ajustar busca da procedure saldo_atual (Lucas Ranghetti #591631)
 ..............................................................................*/
 { includes/var_batch.i "NEW" } 
 { includes/var_cnab.i "NEW" }  
+{ sistema/generico/includes/var_internet.i }
+{ sistema/generico/includes/b1wgen0001tt.i }
 
-DEF   VAR b1wgen0011   AS HANDLE                                     NO-UNDO.
 
+DEF   VAR b1wgen0011   AS HANDLE                                  NO-UNDO.
+DEF   VAR h-b1wgen0001 AS HANDLE                                  NO-UNDO.
 DEF    VAR  aux_nmarqimp     AS CHAR                              NO-UNDO.
 DEF    VAR  aux_hrtransa     AS CHAR                              NO-UNDO.
 DEF    VAR  aux_lshistor     AS CHAR                              NO-UNDO.
@@ -524,58 +528,44 @@ RUN fontes/fimprg.p.
 
 PROCEDURE saldo_atual.
 
-    aux_vlstotal = crapsld.vlsdmesa.
-    aux_dtlimite = aux_dtinicio - DAY(aux_dtinicio).
+   RUN sistema/generico/procedures/b1wgen0001.p
+       PERSISTENT SET h-b1wgen0001.
 
-    /*  Verifica se deve compor saldo anterior  */
-    IF   DAY(aux_dtinicio) > 1   THEN
-         DO:
-             FOR EACH craplcm WHERE craplcm.cdcooper = glb_cdcooper       AND
-                                    craplcm.nrdconta = crapsld.nrdconta   AND
-                                    craplcm.dtmvtolt > aux_dtlimite       AND
-                                    craplcm.dtmvtolt < aux_dtinicio       AND
-                                    craplcm.cdhistor <> 289               AND
-                                    MONTH(craplcm.dtmvtolt) =
-                                    MONTH(aux_dtinicio)              
-                                    USE-INDEX craplcm2 NO-LOCK:
-
-                 FIND craphis NO-LOCK WHERE
-                                   craphis.cdcooper = craplcm.cdcooper AND 
-                                   craphis.cdhistor = craplcm.cdhistor NO-ERROR.        
-                 IF   NOT AVAILABLE craphis   THEN
-                      DO:
-                          glb_cdcritic = 80.
-                          RUN fontes/critic.p.
-                          UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
-                                            " - " + glb_cdprogra + "' --> '" + 
-                                            glb_dscritic + " CONTA = " + 
-                                            STRING(craplcm.nrdconta) +
-                                            ">> log/proc_batch.log").
-                          glb_cdcritic = 0.
-                          LEAVE.
-                      END.
-
-                 IF   craphis.inhistor >= 1  AND  craphis.inhistor <= 5   THEN
-                      aux_vlstotal = aux_vlstotal + craplcm.vllanmto.
-                 ELSE
-                 IF   craphis.inhistor >= 11  AND  craphis.inhistor <= 15  THEN
-                      aux_vlstotal = aux_vlstotal - craplcm.vllanmto.
-                 ELSE
-                      DO:
-                          glb_cdcritic = 83.
-                          RUN fontes/critic.p.
-                          UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + 
-                                            " - " + glb_cdprogra + "' --> '" + 
-                                            glb_dscritic + " CONTA = " + 
-                                            STRING(craplcm.nrdconta) +
-                                            ">> log/proc_batch.log").
-                          glb_cdcritic = 0.
-                          LEAVE.
-                      END.
-
-             END.  /*  Fim do FOR EACH*/
-         END.
-
+   RUN obtem-saldo IN h-b1wgen0001 (INPUT glb_cdcooper,
+                                    INPUT 1,
+                                    INPUT 999,
+                                    INPUT "996",
+                                    INPUT crapsld.nrdconta,
+                                    INPUT aux_dtinicio,
+                                    INPUT 1,
+                                    OUTPUT TABLE tt-erro,
+                                    OUTPUT TABLE tt-saldos).
+                    
+   IF   VALID-HANDLE(h-b1wgen0001) THEN
+        DELETE PROCEDURE h-b1wgen0001.        
+        
+   FIND tt-erro NO-LOCK NO-ERROR.
+   
+   IF  AVAILABLE tt-erro THEN
+       DO:
+            UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+                              " - " + glb_cdprogra + "' --> '" + 
+                              tt-erro.dscritic + " CONTA = " + 
+                              STRING(crapsld.nrdconta) +
+                            ">> log/proc_batch.log").
+            glb_cdcritic = 0.
+            LEAVE.
+       END.
+   
+   FIND FIRST tt-saldos WHERE tt-saldos.cdcooper = crapsld.cdcooper
+                          AND tt-saldos.nrdconta = crapsld.nrdconta
+                          NO-LOCK NO-ERROR.
+   
+   IF  AVAILABLE tt-saldos THEN       
+       ASSIGN aux_vlstotal = tt-saldos.vlsddisp + 
+                             tt-saldos.vlsdblpr + 
+                             tt-saldos.vlsdblfp.
+                             
 END PROCEDURE.
 
 /*............................................................................*/
