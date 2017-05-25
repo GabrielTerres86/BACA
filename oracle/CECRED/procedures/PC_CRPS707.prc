@@ -35,6 +35,10 @@ BEGIN
                17/05/2017 - Ajuste para não incluir a validação "3 - Ausencia ou Divergencia na Indicacao do CPF/CNPJ"
                             no proc_message
                             (Ana - SD 660364).
+
+               25/05/2017 - Ajuste para incluir a validação "3 - Ausencia ou Divergencia na Indicacao do CPF/CNPJ"
+                            no proc_message, porém, substituir o tempo "ERRO" por "ALERTA"
+                            (Ana - SD 660364).
    ............................................................................. */
 
    DECLARE
@@ -155,8 +159,6 @@ BEGIN
     vr_cdprogra VARCHAR2(10);
     vr_dscritic VARCHAR2(4000);
     vr_nmarqlog VARCHAR2(400) := 'prcctl_' || to_char(SYSDATE, 'RRRR') || to_char(SYSDATE,'MM') || to_char(SYSDATE,'DD') || '.log';
-    --17/05/2017 - Ana - não incluir mensagem no log - chamado 660364
-    vr_insere_log VARCHAR2(1); 
       
      --Variaveis de Excecao
     vr_exc_saida  EXCEPTION;
@@ -320,10 +322,6 @@ BEGIN
    -- Inicio Bloco Principal pc_crps707
    ---------------------------------------
    BEGIN
-     --17/05/2017 - Ana - não incluir mensagem no log - chamado 660364
-     --Por default, a rotina insere na tabela de logs --> vr_insere_log = 'S'
-     vr_insere_log := 'S';
-
      --Atribuir o nome do programa que está executando
      vr_cdprogra:= 'CRPS707';
 
@@ -365,18 +363,29 @@ BEGIN
      
      -- Busca diretorio das TEDs para processamento
      vr_dir_sicredi_teds := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DIR_SICREDI_TEDS');
+--teste ana
+     vr_dir_sicredi_teds := '/usr/coop/cecred/arquivos/';
      
      -- Busca remetente de email
-     vr_dsremete := gene0001.fn_param_sistema('CRED',pr_cdcooper,'EMAIL_SICREDI_TEDS');
-     
+--     vr_dsremete := gene0001.fn_param_sistema('CRED',pr_cdcooper,'EMAIL_SICREDI_TEDS');
+  --teste ana --retirar
+       vr_dsremete := 'envolti-ana.volles@cecred.coop.br';
+       
+   
      -- Data para processamento
      vr_datatual := trunc(SYSDATE);
 
+     gene0001.pc_lista_arquivos(pr_path     => '/usr/coop/cecred/arquivos/'  
+                               ,pr_pesq     => 'ERRO_re171401.274'
+                               ,pr_listarq  => vr_listaarq
+                               ,pr_des_erro => vr_dscritic);
+
+/* --teste ana
      gene0001.pc_lista_arquivos(pr_path     => vr_dir_sicredi_teds  
                                ,pr_pesq     => 're1714%.'||to_char(vr_datatual,'dd')||fn_mes(vr_datatual)
                                ,pr_listarq  => vr_listaarq
                                ,pr_des_erro => vr_dscritic);
-
+*/
 
      -- Se houver erro
      IF vr_dscritic IS NOT NULL THEN
@@ -390,9 +399,10 @@ BEGIN
        RAISE vr_exc_saida;
      END IF;
        
+dbms_output.put_line('vr_listaarq:'||vr_listaarq);
      -- Se possuir arquivos para serem processados
      IF vr_listaarq IS NOT NULL THEN
-       
+
        -- Carregar a lista de arquivos txt na pl/table
        vr_tbarqlst := gene0002.fn_quebra_string(pr_string => vr_listaarq);
        
@@ -423,12 +433,13 @@ BEGIN
 
            -- Verificar se o arquivo já não foi processado (existe na tabela mesmo nome)
            vr_flgexis := 0;
-           
-           OPEN cr_nmarquiv(pr_nmarquiv => vr_idxtexto);
+--teste ana descomentar           
+/*           OPEN cr_nmarquiv(pr_nmarquiv => vr_idxtexto);
            
            FETCH cr_nmarquiv INTO vr_flgexis;
            
            CLOSE cr_nmarquiv;
+*/
 
            -- Se o arquivo já foi processado
            IF vr_flgexis = 1 THEN
@@ -457,7 +468,6 @@ BEGIN
                                    ,pr_tipabert => 'R'
                                    ,pr_utlfileh => vr_arqhandle
                                    ,pr_des_erro => vr_dscritic);
-
 
            -- Leitura do header
            gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_arqhandle
@@ -502,7 +512,8 @@ BEGIN
                RAISE vr_exc_email;
                
            END;
-
+--teste ana
+vr_dtarquiv := trunc(sysdate);
            -- Verificar se a data presente no header corresponde a data informada no nome do arquivo
            IF vr_datatual <> vr_dtarquiv THEN           
              
@@ -528,7 +539,9 @@ BEGIN
                RAISE vr_exc_email;
                
            END;
-
+           
+--teste ana - descomentar
+/*
            --Verifica se o sequencial no header corresponde ao informado no nome do arquivo
            IF substr(vr_idxtexto,7,2) <> vr_nrseqhead THEN
              
@@ -539,6 +552,7 @@ BEGIN
              RAISE vr_exc_email; 
                          
            END IF;
+           */
 
            -- Somente validar se o arquivo atual não é o primeiro
            IF vr_nrseqhead <> 1 THEN           
@@ -754,10 +768,6 @@ BEGIN
                -- Se chegou neste ponto e não encontrou pelo CPF
                IF not vr_flgexis_cpf THEN
                  -- Gerar critica
-                 --17/05/2017 - Ana - não incluir mensagem abaixo no log - chamado 660364  -- início
-                 --Indica que não deve ser gravado na tabela de log
-                 vr_insere_log := 'N';
-                 --17/05/2017 - Ana - não incluir mensagem abaixo no log - chamado 660364 -- fim
                  vr_cdmotivo := '3 - Ausencia ou Divergencia na Indicacao do CPF/CNPJ.';
                  RAISE vr_exc_saida;
                END IF;
@@ -971,7 +981,7 @@ BEGIN
                                     ,to_char(SYSDATE,'sssss'));
                EXCEPTION
                  WHEN OTHERS THEN
-                   vr_cdmotivo := 'Erro ao criar Trasnferencia em C/C: '||SQLERRM;
+                   vr_cdmotivo := 'Erro ao criar Transferencia em C/C: '||SQLERRM;
                    RAISE vr_exc_saida;
                END;
 
@@ -1178,17 +1188,16 @@ BEGIN
                                           ,pr_cdcritic => vr_cdcritic
                                           ,pr_dscritic => vr_dscritic);
                                           
-                 --17/05/2017 - Ana - não incluir mensagem no log - chamado 660364  -- início
-                 IF NVL(vr_insere_log,'S') <> 'N' THEN
                    --> Gerar log
+                   --Indica que é mensagem e não erro
+                   --Chamado 660364 - Ana - 25/05/2017
                    btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                              pr_ind_tipo_log => 2, --> erro tratado
+                                              pr_ind_tipo_log => 1, --> Mensagem
                                               pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                                 ' - '|| vr_cdprogra ||' --> TED para conta '||vr_nrdconta||' com erro --> '||vr_cdmotivo,
+                                                                 ' - '|| vr_cdprogra ||' --> '||
+                                                                 'ALERTA: TED para conta '||vr_nrdconta||' com crítica --> '||vr_cdmotivo,
                                               pr_nmarqlog     => vr_nmarqlog);                                
 
-                 END IF;
-                 --17/05/2017 - Ana - não incluir mensagem no log - chamado 660364 -- fim
                                           
                  IF NOT fn_move_arquivo(pr_nmarquiv => vr_idxtexto
                                        ,pr_dtarquiv => vr_dtarquiv
