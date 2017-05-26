@@ -37,7 +37,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 20/03/2017
+   Data    : Marco/2001                      Ultima atualizacao: 26/05/2017
 
    Dados referentes ao programa:
 
@@ -213,6 +213,8 @@
                           
              07/02/2017 - Ajustes para verificar vencimento da P.M. TROMBUDO CENTRAL 
                           e FMS TROMBUDO CENTRAL (Tiago/Fabricio SD653830)
+
+	         26/05/2017 - Ajustes para verificar vencimento da P.M. AGROLANDIA (Tiago/Fabricio #647174)
 ............................................................................ */
 
 {dbo/bo-erro1.i}
@@ -627,6 +629,7 @@ PROCEDURE retorna-valores-fatura.
 	      (crapcon.cdempcon = 1756 AND crapcon.cdsegmto = 1)  OR    /* P.M. GUARAMIRIM */
         (crapcon.cdempcon = 4539 AND crapcon.cdsegmto = 1)  OR    /* P.M. TIMBO */
         (crapcon.cdempcon = 4594 AND crapcon.cdsegmto = 1)  OR    /* P.M. TROMBUDO CENTRAL */
+		(crapcon.cdempcon = 0040 AND crapcon.cdsegmto = 1)  OR    /* P.M. AGROLANDIA */
         (crapcon.cdempcon = 0562 AND crapcon.cdsegmto = 5)  OR    /* DEFESA CIVIL TIMBO */
         (crapcon.cdempcon = 0563 AND crapcon.cdsegmto = 5)  OR    /* MEIO AMBIENTE DE TIMBO */
         (crapcon.cdempcon = 0564 AND crapcon.cdsegmto = 5)  OR    /* TRANSITO DE TIMBO */

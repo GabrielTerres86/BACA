@@ -1160,7 +1160,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 22/05/2017
+  --  Data     : Junho/2013.                   Ultima atualizacao: 26/05/2017
   --
   -- Dados referentes ao programa:
   --
@@ -1491,6 +1491,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
        22/05/2017 - Incluido validacao para nao agendar faturas vencidas
                     para PM.TROMBUDO CENTRAL e FMS.TROMBUDO CENTRAL
                     (Tiago/Fabricio #653830)
+                    
+       26/05/2017 - Incluido validacao para nao agendar faturas vencidas
+                    para PM.AGROLANDIA (Tiago/Fabricio #647174)                        
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Cursores da Package */
@@ -9581,7 +9584,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --  Sistema  : Rotinas Internet
     --  Sigla    : AGEN
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Junho/2013.                   Ultima atualizacao: 22/05/2017
+    --  Data     : Junho/2013.                   Ultima atualizacao: 26/05/2017
     --
     --  Dados referentes ao programa:
     --
@@ -9594,6 +9597,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --               22/05/2017 - Incluido validacao para nao agendar faturas vencidas
     --                            para PM.TROMBUDO CENTRAL e FMS.TROMBUDO CENTRAL
     --                            (Tiago/Fabricio #653830)
+    --
+    --               26/05/2017 - Incluido validacao para nao agendar faturas vencidas
+    --                            para PM.AGROLANDIA (Tiago/Fabricio #647174)    
     -- ..........................................................................
 
   BEGIN
@@ -10041,6 +10047,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
             (rw_crapcon.cdempcon = 4539 AND rw_crapcon.cdsegmto = 1)  OR  -- P.M. TIMBO 
             (rw_crapcon.cdempcon = 0040 AND rw_crapcon.cdsegmto = 1)  OR  -- P.M. AGROLANDIA
             (rw_crapcon.cdempcon = 4594 AND rw_crapcon.cdsegmto = 1)  OR  -- P.M. TROMBUDO CENTRAL
+            (rw_crapcon.cdempcon = 0040 AND rw_crapcon.cdsegmto = 1)  OR  -- P.M. AGROLANDIA
             (rw_crapcon.cdempcon = 0562 AND rw_crapcon.cdsegmto = 5)  OR  -- DEFESA CIVIL TIMBO 
             (rw_crapcon.cdempcon = 0563 AND rw_crapcon.cdsegmto = 5)  OR  -- MEIO AMBIENTE DE TIMBO 
             (rw_crapcon.cdempcon = 0564 AND rw_crapcon.cdsegmto = 5)  OR  -- TRANSITO DE TIMBO 
