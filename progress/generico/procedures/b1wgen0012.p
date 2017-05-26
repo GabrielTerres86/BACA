@@ -197,7 +197,7 @@
 			   20/07/2016 - Alteracao do caminho onde serao salvos os arquivos
 							de truncagem com nomes("caixa-*", "desc-*" e "custodia-*"). 
 							SD 476097. Carlos Rafael Tanholi.
-              
+
                04/11/2016 - Cheques custodiados deverao ter o numero do bordero
                             igual a zero. (Projeto 300 - Rafael) 
 							
@@ -3220,7 +3220,6 @@ PROCEDURE gerar_compel_custodia:
                               crapcst.cdagenci  = par_cdagenci AND
                               crapcst.insitprv  = 0            AND
                               crapcst.nrdolote  = par_nrdolote AND
-                              crapcst.nrborder  = 0            AND
                              (crapcst.insitchq  = 0            OR
                               crapcst.insitchq  = 2)
                               NO-LOCK BREAK BY crapcst.dtmvtolt:
@@ -3467,7 +3466,6 @@ PROCEDURE gerar_compel_custodia:
                                crapcst.cdagenci = par_cdagenci AND
                                crapcst.insitprv = 0            AND
                                crapcst.nrdolote = par_nrdolote AND
-                               crapcst.nrborder = 0            AND
                               (crapcst.insitchq = 0            OR
                                crapcst.insitchq = 2)
                                NO-LOCK:
