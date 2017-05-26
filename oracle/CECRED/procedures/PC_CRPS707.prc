@@ -356,36 +356,24 @@ BEGIN
 
      --> Gerar log
      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                pr_ind_tipo_log => 2, --> erro tratado
+                                pr_ind_tipo_log => 1, --> Mensagem
                                 pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                    ' - '|| vr_cdprogra ||' --> Iniciando processo de TEDs Sicredi',
                                 pr_nmarqlog     => vr_nmarqlog);                                
      
      -- Busca diretorio das TEDs para processamento
      vr_dir_sicredi_teds := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DIR_SICREDI_TEDS');
---teste ana
-     vr_dir_sicredi_teds := '/usr/coop/cecred/arquivos/';
      
      -- Busca remetente de email
---     vr_dsremete := gene0001.fn_param_sistema('CRED',pr_cdcooper,'EMAIL_SICREDI_TEDS');
-  --teste ana --retirar
-       vr_dsremete := 'envolti-ana.volles@cecred.coop.br';
-       
+     vr_dsremete := gene0001.fn_param_sistema('CRED',pr_cdcooper,'EMAIL_SICREDI_TEDS');
    
      -- Data para processamento
      vr_datatual := trunc(SYSDATE);
 
-     gene0001.pc_lista_arquivos(pr_path     => '/usr/coop/cecred/arquivos/'  
-                               ,pr_pesq     => 'ERRO_re171401.274'
-                               ,pr_listarq  => vr_listaarq
-                               ,pr_des_erro => vr_dscritic);
-
-/* --teste ana
      gene0001.pc_lista_arquivos(pr_path     => vr_dir_sicredi_teds  
                                ,pr_pesq     => 're1714%.'||to_char(vr_datatual,'dd')||fn_mes(vr_datatual)
                                ,pr_listarq  => vr_listaarq
                                ,pr_des_erro => vr_dscritic);
-*/
 
      -- Se houver erro
      IF vr_dscritic IS NOT NULL THEN
@@ -399,7 +387,6 @@ BEGIN
        RAISE vr_exc_saida;
      END IF;
        
-dbms_output.put_line('vr_listaarq:'||vr_listaarq);
      -- Se possuir arquivos para serem processados
      IF vr_listaarq IS NOT NULL THEN
 
@@ -426,20 +413,19 @@ dbms_output.put_line('vr_listaarq:'||vr_listaarq);
          BEGIN
            --> Gerar log
            btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                      pr_ind_tipo_log => 2, --> erro tratado
+                                      pr_ind_tipo_log => 1, --> Mensagem
                                       pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                          ' - '|| vr_cdprogra ||' --> Iniciando integracao do arquivo '||vr_idxtexto,
                                       pr_nmarqlog     => vr_nmarqlog); 
 
            -- Verificar se o arquivo já não foi processado (existe na tabela mesmo nome)
            vr_flgexis := 0;
---teste ana descomentar           
-/*           OPEN cr_nmarquiv(pr_nmarquiv => vr_idxtexto);
+
+           OPEN cr_nmarquiv(pr_nmarquiv => vr_idxtexto);
            
            FETCH cr_nmarquiv INTO vr_flgexis;
            
            CLOSE cr_nmarquiv;
-*/
 
            -- Se o arquivo já foi processado
            IF vr_flgexis = 1 THEN
@@ -512,8 +498,7 @@ dbms_output.put_line('vr_listaarq:'||vr_listaarq);
                RAISE vr_exc_email;
                
            END;
---teste ana
-vr_dtarquiv := trunc(sysdate);
+
            -- Verificar se a data presente no header corresponde a data informada no nome do arquivo
            IF vr_datatual <> vr_dtarquiv THEN           
              
@@ -540,8 +525,6 @@ vr_dtarquiv := trunc(sysdate);
                
            END;
            
---teste ana - descomentar
-/*
            --Verifica se o sequencial no header corresponde ao informado no nome do arquivo
            IF substr(vr_idxtexto,7,2) <> vr_nrseqhead THEN
              
@@ -552,7 +535,6 @@ vr_dtarquiv := trunc(sysdate);
              RAISE vr_exc_email; 
                          
            END IF;
-           */
 
            -- Somente validar se o arquivo atual não é o primeiro
            IF vr_nrseqhead <> 1 THEN           
@@ -819,7 +801,7 @@ vr_dtarquiv := trunc(sysdate);
                CLOSE cr_crapass2;
                
                END IF;
-                              
+                        
                -- Se não achou nenhuma conta ativa
                IF vr_cdcooper = 0 THEN
                  -- Gerar critica
@@ -1059,7 +1041,7 @@ vr_dtarquiv := trunc(sysdate);
                
                --> Gerar log
                btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                          pr_ind_tipo_log => 2, --> erro tratado
+                                          pr_ind_tipo_log => 1, --> Mensagem -- não é erro tratado
                                           pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                              ' - '|| vr_cdprogra ||' --> TED para Conta '||vr_nrdconta_new||' no valor de '
                                                              || to_char(vr_vloperac,'fm999g999g990d00') || ' efetuada com sucesso.',
@@ -1302,7 +1284,7 @@ vr_dtarquiv := trunc(sysdate);
              
            --> Gerar log
            btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                      pr_ind_tipo_log => 2, --> erro tratado
+                                      pr_ind_tipo_log => 1, --> Mensagem
                                       pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                          ' - '|| vr_cdprogra ||' --> Encerramento do processo do arquivo '||vr_idxtexto,
                                       pr_nmarqlog     => vr_nmarqlog);                                 
@@ -1446,7 +1428,7 @@ vr_dtarquiv := trunc(sysdate);
 
      --> Gerar log
      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                pr_ind_tipo_log => 2, --> erro tratado
+                                pr_ind_tipo_log => 1, --> Mensagem
                                 pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                    ' - '|| vr_cdprogra ||' --> Encerramento do processo de TEDs Sicredi',
                                 pr_nmarqlog     => vr_nmarqlog);                                
