@@ -2680,16 +2680,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                        || '" "' || vr_dsparams || '" "' || vr_nom_arqsai || '" '
                        || rw_crapslr.qtcoluna|| ' ' ||vr_flsemqueb;
                            
-        BEGIN
-          SELECT gene0007.fn_caract_acento( vr_des_comando,1 ) 
-          INTO   vr_des_comando
-          FROM   DUAL; 
-        EXCEPTION
-          WHEN OTHERS THEN 
-            vr_des_saida := 'gene0007.fn_caract_acento, des=' || vr_des_comando;
-            RAISE vr_exc_erro;
-        END;    
-
+       
         -- Executa comando via Shell
         GENE0001.pc_OScommand(pr_typ_comando => 'S'
                              ,pr_des_comando => vr_des_comando
@@ -2796,19 +2787,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       END IF;
     EXCEPTION
       WHEN vr_exc_erro THEN
-        pr_des_erro := 'GENE0002.pc_gera_relato--> '||vr_des_saida;
+        
+        pr_des_erro := 
+         to_char(SYSDATE,'hh24:mi:ss') || ' - ' || 'GENE0002' || ' --> ' || 
+        ' PROCEDURE pc_gera_relato - Seqsol:' || pr_nrseqsol || ' - ' ||  vr_des_saida;
+        
         btch0001.pc_gera_log_batch(pr_cdcooper   => rw_crapslr.cdcooper,
                                  pr_ind_tipo_log => 2, --> erro tratado
-                                 pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                    ' - GENE0002.pc_gera_relato --> ' || pr_des_erro,
+                                 pr_des_log      => pr_des_erro,
                                  pr_nmarqlog     => gene0001.fn_param_sistema('CRED',rw_crapslr.cdcooper,'NOME_ARQ_LOG_MESSAGE'));
       
       WHEN OTHERS THEN
+        
        pr_des_erro := 
-          'GENE0002.pc_gera_relato --> Erro não tratado ao processar a solicitação. Erro: '|| sqlerrm || 
-          ' ,seqsol=' || pr_nrseqsol;			 
+          'GENE0002.pc_gera_relato --> Erro não tratado ao processar a solicitação.' ||
+          ' - Seqsol:' || pr_nrseqsol ||
+          ' - Erro:'   || sqlerrm;			 
 
-	   CECRED.pc_internal_exception( pr_compleme => pr_des_erro ); 
+	     CECRED.pc_internal_exception( pr_compleme => pr_des_erro );
     END;
   END pc_gera_relato;
 
@@ -3606,7 +3602,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       END;
       -- Guardar extensões pada copia/email
       vr_dsextmail := fn_replace_extensao(pr_dsextmail);
-      vr_dsextcop  := fn_replace_extensao(pr_dsextcop);
+      vr_dsextcop  := fn_replace_extensao(pr_dsextcop);     
+      
       -- Novo bloco para tratar o insert
       BEGIN
         -- Por fim, cria o registro guardando seu Rowid
