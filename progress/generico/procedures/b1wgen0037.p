@@ -2,7 +2,7 @@
 
     Programa  : b1wgen0037.p
     Autor     : David
-    Data      : Janeiro/2009                  Ultima Atualizacao: 20/12/2013
+    Data      : Janeiro/2009                  Ultima Atualizacao:25/05/2017
     
     Dados referentes ao programa:
 
@@ -16,6 +16,11 @@
                              senha de tele-atendimento/URA. (Reinert)
 
                 20/12/2013 - Adicionado validate para tabela crapcra (Tiago).
+
+				25/05/2017 - Removi das procedures obtem-grupos-informativos e 
+							 obtem-informativos o carregamento de opcoes 
+							 relacionadas ao extrado de conta. 
+							 (SD 678836 - Carlos Rafael Tanholi)
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0037tt.i }
@@ -901,51 +906,14 @@ PROCEDURE obtem-grupos-informativos:
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = "Obter Grupos de Informativos".
 
-    FOR EACH crapifc WHERE crapifc.cdcooper = par_cdcooper NO-LOCK
+	/* busca grupos diferentes de extrato de conta corrente. SD 678836 */
+    FOR EACH crapifc WHERE crapifc.cdcooper = par_cdcooper AND 
+						   crapifc.cdrelato <> 171 AND 
+						   crapifc.cdprogra <> 21 NO-LOCK
                            BREAK BY crapifc.cdprogra:
                                             
         IF  FIRST-OF(crapifc.cdprogra)  THEN
             DO:
-                IF  crapifc.cdprogra = 217 AND crapifc.cdrelato = 171  THEN
-                    DO:
-                        IF  crapifc.envcpttl = 1 AND par_idseqttl <> 1  THEN   
-                            NEXT.
-                            
-                        FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
-                                           crapass.nrdconta = par_nrdconta
-                                           NO-LOCK NO-ERROR.
-                                                                               
-                        IF  NOT AVAILABLE crapass  THEN
-                            DO:
-                                ASSIGN aux_cdcritic = 9
-                                       aux_dscritic = "".
-                                       
-                                RUN gera_erro (INPUT par_cdcooper,
-                                               INPUT par_cdagenci,
-                                               INPUT par_nrdcaixa,
-                                               INPUT 1,       /** Sequencia **/
-                                               INPUT aux_cdcritic,
-                                               INPUT-OUTPUT aux_dscritic).
-                                   
-                                IF  par_flgerlog  THEN
-                                    RUN proc_gerar_log (INPUT par_cdcooper,
-                                                        INPUT par_cdoperad,
-                                                        INPUT aux_dscritic,
-                                                        INPUT aux_dsorigem,
-                                                        INPUT aux_dstransa,
-                                                        INPUT FALSE,
-                                                        INPUT par_idseqttl,
-                                                        INPUT par_nmdatela,
-                                                        INPUT par_nrdconta,
-                                                       OUTPUT aux_nrdrowid).
-                                       
-                                RETURN "NOK".
-                            END.
-                            
-                        IF  CAN-DO("5,6,7,17,18",STRING(crapass.cdtipcta))  THEN
-                            NEXT.
-                    END. 
-
                 IF  CAN-DO(aux_lsgrprel,STRING(aux_cdgrprel))  THEN
                     NEXT.
                                 
@@ -1150,49 +1118,15 @@ PROCEDURE obtem-informativos:
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = "Obter Informativos".
 
-    FOR EACH crapifc WHERE crapifc.cdcooper = par_cdcooper NO-LOCK
+	/* busca grupos diferentes de extrato de conta corrente. SD 678836 */
+    FOR EACH crapifc WHERE crapifc.cdcooper = par_cdcooper AND 
+						   crapifc.cdrelato <> 171 AND 
+						   crapifc.cdprogra <> 21 NO-LOCK
                            BREAK BY crapifc.cdrelato:
                         
         IF  crapifc.envcpttl = 1 AND par_idseqttl <> 1  THEN   
             NEXT.
-                                                                    
-        IF  crapifc.cdprogra = 217 AND crapifc.cdrelato = 171  THEN
-            DO:
-                FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
-                                   crapass.nrdconta = par_nrdconta
-                                   NO-LOCK NO-ERROR.
-                                                                               
-                IF  NOT AVAILABLE crapass  THEN
-                    DO:
-                        ASSIGN aux_cdcritic = 9
-                               aux_dscritic = "".
-                                       
-                        RUN gera_erro (INPUT par_cdcooper,
-                                       INPUT par_cdagenci,
-                                       INPUT par_nrdcaixa,
-                                       INPUT 1,       /** Sequencia **/
-                                       INPUT aux_cdcritic,
-                                       INPUT-OUTPUT aux_dscritic).
-                                  
-                        IF  par_flgerlog  THEN
-                            RUN proc_gerar_log (INPUT par_cdcooper,
-                                                INPUT par_cdoperad,
-                                                INPUT aux_dscritic,
-                                                INPUT aux_dsorigem,
-                                                INPUT aux_dstransa,
-                                                INPUT FALSE,
-                                                INPUT par_idseqttl,
-                                                INPUT par_nmdatela,
-                                                INPUT par_nrdconta,
-                                               OUTPUT aux_nrdrowid).
-                                       
-                        RETURN "NOK".
-                    END.
-                            
-                IF  CAN-DO("5,6,7,17,18",STRING(crapass.cdtipcta))  THEN
-                    NEXT.
-            END.
-            
+                                                                                
         RUN sistema/generico/procedures/b1wgen9999.p PERSISTENT 
             SET h-b1wgen9999.
                           
