@@ -2144,7 +2144,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                  '<vlcheque>'|| TO_CHAR(vr_tab_chq_bordero(idx).vlcheque,'fm999G999G999G990D00') ||'</vlcheque>'||
                                  '<vlliquid>'|| TO_CHAR(vr_tab_chq_bordero(idx).vlliquid,'fm999G999G999G990D00') ||'</vlliquid>'||
                                  '<qtdiaprz>'|| vr_qtdiaprz ||'</qtdiaprz>'||
-                                 '<nmcheque>'|| gene0007.fn_caract_controle(SUBSTR(vr_tab_chq_bordero(idx).nmcheque,0,23)) ||'</nmcheque>'||
+                                 '<nmcheque><![CDATA['|| gene0007.fn_caract_controle(SUBSTR(vr_tab_chq_bordero(idx).nmcheque,0,23)) ||']]></nmcheque>'||
                                  '<dscpfcgc>'|| vr_tab_chq_bordero(idx).dscpfcgc ||'</dscpfcgc>'||
                                  '<restricoes>');
           IF pr_idorigem <> 3 AND pr_flgrestr = 1 THEN
@@ -3688,8 +3688,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 							 ,dtsitana
 							 ,nrremret)
 				 VALUES(pr_nrdconta
-				       ,pr_nrdolote
-				       ,pr_tab_cheques(idx).dtmvtolt
+				       ,rw_crapbdc.nrdolote
+				       ,rw_crapbdc.dtmvtolt
 				       ,pr_tab_cheques(idx).dtlibera
                ,pr_tab_cheques(idx).dtdcaptu
 							 ,pr_tab_cheques(idx).cdcmpchq
@@ -3706,8 +3706,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 							 ,vr_nrddigc1
 							 ,vr_nrddigc2
 							 ,vr_nrddigc3
-							 ,pr_tab_cheques(idx).cdagenci
-							 ,pr_tab_cheques(idx).cdbccxlt
+							 ,rw_crapbdc.cdagenci
+							 ,rw_crapbdc.cdbccxlt
 							 ,pr_cdoperad
 							 ,vr_inchqcop
 							 ,rw_crapbdc.nrctrlim
@@ -4681,7 +4681,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 	vr_vlrendim NUMBER;               -- Valor de rendimento do cooperado
 	vr_przmxcmp NUMBER;               -- Data prazo máximo
 	
-    vr_nrcpfcgc NUMBER;
+  vr_nrcpfcgc NUMBER;
 	
 	-- Buscar todas as ocorrencias cadastradas
 	CURSOR cr_ocorrencias IS
@@ -4736,7 +4736,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 										 pr_cdbanchq IN crapcec.cdbanchq%TYPE,
 										 pr_cdagechq IN crapcec.cdagechq%TYPE,
 										 pr_nrctachq IN crapcec.nrctachq%TYPE,
-										 pr_nrcpfcgc IN crapcec.nrcpfcgc%TYPE)IS
+                     pr_nrcpfcgc IN crapcec.nrcpfcgc%TYPE)IS
 		SELECT cec.nrcpfcgc
           ,substr(to_char(cec.nrcpfcgc),1,LENGTH(cec.nrcpfcgc)-6) raizcnpj
 			FROM crapcec cec
@@ -4746,7 +4746,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			 AND cec.cdagechq = pr_cdagechq
 			 AND cec.nrctachq = pr_nrctachq
 			 AND cec.nrdconta = 0
-			 AND cec.nrcpfcgc = pr_nrcpfcgc;
+       AND cec.nrcpfcgc = pr_nrcpfcgc;
 	rw_crapcec  cr_crapcec%ROWTYPE;
 
   -- Verificar se o emitente é titular da conta
@@ -5320,10 +5320,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			-- Buscar emitente do cheque
 			OPEN cr_crapcec(pr_cdcooper => pr_cdcooper
 			               ,pr_cdcmpchq => pr_tab_cheques(vr_index).cdcmpchq
-						   ,pr_cdbanchq => pr_tab_cheques(vr_index).cdbanchq
-						   ,pr_cdagechq => pr_tab_cheques(vr_index).cdagechq
-						   ,pr_nrctachq => pr_tab_cheques(vr_index).nrctachq
-						   ,pr_nrcpfcgc => pr_tab_cheques(vr_index).nrcpfcgc);
+										 ,pr_cdbanchq => pr_tab_cheques(vr_index).cdbanchq
+										 ,pr_cdagechq => pr_tab_cheques(vr_index).cdagechq
+                       ,pr_nrctachq => pr_tab_cheques(vr_index).nrctachq
+                       ,pr_nrcpfcgc => pr_tab_cheques(vr_index).nrcpfcgc);
 			FETCH cr_crapcec INTO rw_crapcec;
 			
 			-- Se não encontrar emitente
@@ -5440,7 +5440,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			
         END IF;  
           
-			END IF;
+      END IF;    
 			
 			-- Se é necessário verificar prejuizo de emitente na cooperativa
 			IF vr_tab_lim_desconto(vr_inpessoa).Flpjzemi = 1 THEN
@@ -6945,6 +6945,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 	-- Tratamento de erros
 	vr_exc_erro        EXCEPTION;    
 																			 
+  vr_nrdconta_ver_cheque crapass.nrdconta%TYPE;
+	vr_dsdaviso VARCHAR2(1000); 
+																			 
 	-- Variáveis auxiliares
 	vr_index_cheque     PLS_INTEGER;
 	vr_tab_cheques      typ_tab_cheques;
@@ -6978,6 +6981,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 		      ,bdc.flgassin
 					,bdc.dhdassin
 					,bdc.cdopeasi
+          ,bdc.cdagenci
+          ,bdc.nrdolote
 		  FROM crapbdc bdc
 		 WHERE bdc.cdcooper = pr_cdcooper
 		   AND bdc.nrdconta = pr_nrdconta
@@ -7333,6 +7338,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 	      vr_nrdocmto := to_number(to_char(vr_tab_cheques(vr_idx_cheque).nrcheque,'fm000000') ||
 					             to_char(vr_tab_cheques(vr_idx_cheque).nrddigc3,'fm0'));
 				
+                       
+       vr_dsdaviso := NULL;               
+       vr_nrdconta_ver_cheque := 0;               
+               
+       -- Verificar Cheque
+       CUST0001.pc_ver_cheque(pr_cdcooper => pr_cdcooper 
+                             ,pr_nrcustod => pr_nrdconta
+                             ,pr_cdbanchq => vr_tab_cheques(vr_idx_cheque).cdbanchq
+                             ,pr_cdagechq => vr_tab_cheques(vr_idx_cheque).cdagechq
+                             ,pr_nrctachq => vr_tab_cheques(vr_idx_cheque).nrctachq
+                             ,pr_nrcheque => vr_tab_cheques(vr_idx_cheque).nrcheque
+                             ,pr_nrddigc3 => 1
+                             ,pr_vlcheque => vr_tab_cheques(vr_idx_cheque).vlcheque
+                             ,pr_nrdconta => vr_nrdconta_ver_cheque
+                             ,pr_dsdaviso => vr_dsdaviso
+                             ,pr_cdcritic => vr_cdcritic
+                             ,pr_dscritic => vr_dscritic);               
+                                     
+       -- Verifica se ocorreu erro na execucao
+       IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+         RAISE vr_exc_erro;
+       END IF;               
+                       
+                       
+				
 				BEGIN
 					-- Inserir lançamento automatico
 					INSERT INTO craplau
@@ -7355,11 +7385,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 								 ,nrseqlan
 								 ,cdcooper
 								 ,cdseqtel)
-					 VALUES(vr_tab_cheques(vr_idx_cheque).dtmvtolt
-					       ,vr_tab_cheques(vr_idx_cheque).cdagenci
-								 ,vr_tab_cheques(vr_idx_cheque).cdbccxlt
-								 ,vr_tab_cheques(vr_idx_cheque).nrdolote
-								 ,pr_nrdconta
+					 VALUES(rw_crapdat.dtmvtolt
+					       ,rw_crapbdc.cdagenci
+								 ,700 -- vr_tab_cheques(vr_idx_cheque).cdbccxlt
+								 ,rw_crapbdc.nrdolote -- vr_tab_cheques(vr_idx_cheque).nrdolote
+								 ,vr_nrdconta_ver_cheque -- pr_nrdconta
 								 ,vr_nrdocmto
 								 ,vr_tab_cheques(vr_idx_cheque).vlcheque
 								 ,521
@@ -7373,9 +7403,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 								 ,0
 								 ,0
 								 ,pr_cdcooper
-								 ,(to_char(vr_tab_cheques(vr_idx_cheque).dtmvtolt, 'DD/MM/RRRR') || ' ' ||
-									to_char(vr_tab_cheques(vr_idx_cheque).cdagenci, 'fm000') 		  || ' ' ||
-									to_char(vr_tab_cheques(vr_idx_cheque).cdbccxlt, 'fm000') 		  || ' ' ||
+								 ,(to_char(rw_crapdat.dtmvtolt, 'DD/MM/RRRR') || ' ' ||
+									to_char(rw_crapbdc.cdagenci, 'fm000') 		  || ' ' ||
+									to_char(700, 'fm000') 		  || ' ' ||
 									to_char(vr_tab_cheques(vr_idx_cheque).nrdolote, 'fm000000')   || ' ' ||
 									to_char(vr_tab_cheques(vr_idx_cheque).cdcmpchq, 'fm000') 		  || ' ' ||
 									to_char(vr_tab_cheques(vr_idx_cheque).cdbanchq, 'fm000') 		  || ' ' ||
