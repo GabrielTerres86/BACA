@@ -3877,7 +3877,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                                     ,pr_dsarqsaid => vr_nom_direto||'/'||vr_nom_arquivo||'.lst' --> Arquivo final
                                     ,pr_qtcoluna  => 234                 --> 234 colunas
                                     ,pr_sqcabrel  => 1                   --> Sequencia do Relatorio {includes/cabrel132_2.i}
-                                    ,pr_flg_impri => 'N'                 --> Chamar a impressão (Imprim.p)
+                                    ,pr_flg_impri => 'S'                 --> Chamar a impressão (Imprim.p)
                                     ,pr_nmformul  => '234col'            --> Nome do formulário para impressão
                                     ,pr_nrcopias  => 1                   --> Número de cópias
                                     ,pr_flg_gerar => 'S'                 --> gerar PDF
@@ -4148,7 +4148,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
           
           vr_tab_critic(vr_index).situacao   := 0;
           vr_tab_critic(vr_index).cdcritic   := nvl(vr_cdcritic,0);
-          vr_tab_critic(vr_index).dscritic   := nvl(vr_dscritic,'');
+          vr_tab_critic(vr_index).dscritic   := gene0007.fn_caract_acento(nvl(vr_dscritic,''));
         
           -- Se for critica de saldo insuficiente
           IF vr_dscritic = 'Não há saldo suficiente para a operação.' THEN
