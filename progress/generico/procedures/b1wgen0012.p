@@ -2,7 +2,7 @@
 
    Programa: b1wgen0012.p                  
    Autora  : Ze Eduardo
-   Data    : 20/11/2006                        Ultima atualizacao: 12/12/2016
+   Data    : 20/11/2006                        Ultima atualizacao: 23/01/2017
 
    Dados referentes ao programa:
 
@@ -197,6 +197,11 @@
 			   20/07/2016 - Alteracao do caminho onde serao salvos os arquivos
 							de truncagem com nomes("caixa-*", "desc-*" e "custodia-*"). 
 							SD 476097. Carlos Rafael Tanholi.
+
+               04/11/2016 - Cheques custodiados deverao ter o numero do bordero
+                            igual a zero. (Projeto 300 - Rafael) 
+							
+               23/01/2017 - Realizado merge com a PROD ref ao projeto 300 (Rafael)             
 
                12/12/2016 - Ajuste gerar_titulo Nova Plataforma de Cobrana. PRJ340 - NPC (Odirlei-AMcom)
 ............................................................................. */
@@ -1266,7 +1271,7 @@ PROCEDURE gerar_titulo:
    DEF VAR aux_contador AS INT                                        NO-UNDO.
    DEF VAR aux_nrispbif_rem AS INT                                    NO-UNDO.
    DEF VAR aux_nrispbif AS INT                                        NO-UNDO.   
-   
+
    
 
    ASSIGN aux_qttitcxa = 0
@@ -1416,7 +1421,7 @@ PROCEDURE gerar_titulo:
                   aux_nrseqarq         FORMAT "9999999999"  /* SEQUENCIAL 1 */
                   SKIP.
                   */
-                  
+
 
           END.
 
@@ -1574,7 +1579,7 @@ PROCEDURE gerar_titulo:
               aux_nrispbif_rem       FORMAT "99999999"   /* ISPB recebedor   */
               aux_nrispbif           FORMAT "99999999"    /* ISPB favorecido  */                          
               aux_tpdocmto           FORMAT "x(3)"
-              aux_nrseqarq           FORMAT "9999999999"
+			  aux_nrseqarq           FORMAT "9999999999"
               SKIP.
               
           
@@ -2546,6 +2551,7 @@ PROCEDURE gerar_digita:
                                       crapcst.dtlibera > aux_dtliber1  AND
                                       crapcst.dtlibera <= aux_dtliber2 AND
                                       crapcst.insitprv = 0             AND
+                                      crapcst.nrborder = 0             AND                                      
                                     ((par_cdagenci <> 0                AND
                                       crapcst.cdagenci = par_cdagenci) OR
                                       par_cdagenci = 0)                AND
@@ -4762,7 +4768,8 @@ PROCEDURE gerar_tic604:
 
     /* Cheques - Custodia - Nao Enviados e Situacao 0 ou 2  - Inclusao */
     FOR EACH crapcst WHERE crapcst.cdcooper = par_cdcooper     AND
-                           crapcst.dtmvtolt = crapdat.dtmvtoan
+                           crapcst.dtmvtolt = crapdat.dtmvtoan AND
+                           crapcst.nrborder = 0                
                            NO-LOCK:
         
         DO aux_contador2 = 1 TO 10:
@@ -4845,7 +4852,8 @@ PROCEDURE gerar_tic604:
 
     /* Cheques - Custodia - Ja Enviados e Situacao 1  - Exclusao */
     FOR EACH crapcst WHERE crapcst.cdcooper = par_cdcooper     AND
-                           crapcst.dtdevolu = crapdat.dtmvtoan
+                           crapcst.dtdevolu = crapdat.dtmvtoan AND
+                           crapcst.nrborder = 0
                             NO-LOCK:
          
         DO aux_contador2 = 1 TO 10:
@@ -5997,7 +6005,8 @@ PROCEDURE reativar_tic604:
    /* Cheques - Custodia - Nao Enviados e Situacao 0 ou 2  - Inclusao */
    FOR EACH crapcst WHERE crapcst.cdcooper = par_cdcooper      AND
                           crapcst.dtmvtolt = crapdat.dtmvtoan  AND
-                          crapcst.dtenvtic = crapdat.dtmvtolt
+                          crapcst.dtenvtic = crapdat.dtmvtolt  AND
+                          crapcst.nrborder = 0
                           NO-LOCK:
       
        DO aux_contador2 = 1 TO 10:

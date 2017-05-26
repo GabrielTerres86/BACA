@@ -1258,7 +1258,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
         vr_blnfound := cr_crapass_2%FOUND;
         CLOSE cr_crapass_2;
         -- Se NAO encontrar
-        IF vr_blnfound THEN
+        IF vr_blnfound = FALSE THEN
           -- Pessoa Física
           IF rw_crapass_2.inpessoa = 1 THEN
             OPEN cr_crapttl (pr_cdcooper => pr_cdcooper
@@ -1266,7 +1266,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
             FETCH cr_crapttl INTO rw_crapttl;
             vr_blnfound := cr_crapttl%FOUND;
             CLOSE cr_crapttl;
-            -- Se NAO encontrar
+            -- Se encontrar
             IF vr_blnfound THEN
               vr_rel_nmcheque := rw_crapttl.nmtalttl;
               vr_rel_dscpfcgc := GENE0002.fn_mask_cpf_cnpj(pr_nrcpfcgc =>rw_crapttl.nrcpfcgc,
@@ -1281,7 +1281,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
             FETCH cr_crapjur INTO rw_crapjur;
             vr_blnfound := cr_crapjur%FOUND;
             CLOSE cr_crapjur;
-            -- Se NAO encontrar
+            -- Se encontrar
             IF vr_blnfound THEN
               vr_rel_nmcheque := rw_crapjur.nmtalttl;
               vr_rel_dscpfcgc := GENE0002.fn_mask_cpf_cnpj(pr_nrcpfcgc =>rw_crapass_2.nrcpfcgc,
@@ -8130,7 +8130,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 				END IF;
 				 
 				IF pr_tab_cheques(vr_index).dtlibera > rw_crapdat.dtmvtolt THEN
-          IF vr_dtjurtab >= rw_crapbdc.dtlibbdc THEN
+          IF rw_crapbdc.dtlibbdc >= vr_dtjurtab THEN
 						-- Utilizar o modo de cálculo novo (juros simples)
 		        pc_calcular_bordero_simples(pr_cdcooper => pr_cdcooper --> Cooperativa
 																			 ,pr_nrdconta => pr_nrdconta --> Número da conta

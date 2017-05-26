@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Novembro/2010                      Ultima atualizacao: 26/03/2012.
+   Data    : Novembro/2010                      Ultima atualizacao: 05/04/2017.
 
    Dados referentes ao programa:
 
@@ -24,6 +24,14 @@
                             
                26/03/2012 - Faz primeiro a verificacao dos cheques da crapcdb e 
                             depois a verificacao dos cheques da crapcst (Elton).
+
+			   20/07/2016 - Alteracao do caminho onde serao salvos os arquivos
+							de truncagem de cheque. SD 476097. Carlos R.	
+
+               
+               05/04/2017 - Incluir dtdevolu na leitura da crapcdb e crapcst (Lucas Ranghetti #621301)
+
+			   26/05/2017 - Alterado ordem de atualizacao tabela cst e cdb (Daniel).
 ..............................................................................*/
 
 { includes/var_batch.i "NEW" }
@@ -261,17 +269,18 @@ PROCEDURE pi_processa_registros:
                                         IF    aux_cdbanchq = 1    THEN
                                               aux_nrctachq = DEC(SUBSTR(aux_setlinha,16,08)).
 
-                                        FIND LAST crapcdb WHERE 
-                                             crapcdb.cdcooper = crapcop.cdcooper AND
-                                             crapcdb.cdcmpchq = aux_cdcmpchq     AND
-                                             crapcdb.cdbanchq = aux_cdbanchq     AND
-                                             crapcdb.cdagechq = aux_cdagechq     AND 
-                                             crapcdb.nrctachq = aux_nrctachq     AND
-                                             crapcdb.nrcheque = aux_nrcheque
-                                             EXCLUSIVE-LOCK NO-ERROR.
+                                        FIND LAST crapcst WHERE 
+                                                  crapcst.cdcooper = crapcop.cdcooper AND
+                                                  crapcst.cdcmpchq = aux_cdcmpchq     AND
+                                                  crapcst.cdbanchq = aux_cdbanchq     AND
+                                                  crapcst.cdagechq = aux_cdagechq     AND 
+                                                  crapcst.nrctachq = aux_nrctachq     AND
+                                                  crapcst.nrcheque = aux_nrcheque     AND
+                                                  crapcst.dtdevolu = ?
+                                                  EXCLUSIVE-LOCK NO-ERROR.
                                         
-                                        IF AVAIL crapcdb THEN
-                                            crapcdb.insitprv = 3.
+                                        IF AVAIL crapcst THEN
+                                            crapcst.insitprv = 3.
                                         ELSE
                                             DO:
                                                 IF  aux_cdbanchq = 1 THEN
@@ -279,33 +288,35 @@ PROCEDURE pi_processa_registros:
                                                 ELSE
                                                     aux_nrctachq = DEC(SUBSTR(aux_setlinha,12,12)).
 
-                                                FIND LAST crapcdb WHERE 
-                                                     crapcdb.cdcooper = crapcop.cdcooper AND
-                                                     crapcdb.cdcmpchq = aux_cdcmpchq     AND
-                                                     crapcdb.cdbanchq = aux_cdbanchq     AND
-                                                     crapcdb.cdagechq = aux_cdagechq     AND 
-                                                     crapcdb.nrctachq = aux_nrctachq     AND
-                                                     crapcdb.nrcheque = aux_nrcheque
-                                                     EXCLUSIVE-LOCK NO-ERROR.
+                                                FIND LAST crapcst WHERE 
+                                                          crapcst.cdcooper = crapcop.cdcooper AND
+                                                          crapcst.cdcmpchq = aux_cdcmpchq     AND
+                                                          crapcst.cdbanchq = aux_cdbanchq     AND
+                                                          crapcst.cdagechq = aux_cdagechq     AND 
+                                                          crapcst.nrctachq = aux_nrctachq     AND
+                                                          crapcst.nrcheque = aux_nrcheque     AND
+                                                          crapcst.dtdevolu = ?
+                                                          EXCLUSIVE-LOCK NO-ERROR.
                                                   
-                                                IF   AVAILABLE crapcdb THEN
-                                                     crapcdb.insitprv = 3.
+                                                IF   AVAILABLE crapcst THEN
+                                                     crapcst.insitprv = 3.
                                                 ELSE 
                                                     DO:  
                                                         IF    aux_cdbanchq = 1    THEN
                                                               ASSIGN aux_nrctachq = DEC(SUBSTR(aux_setlinha,16,08)).
                 
-                                                        FIND  LAST   crapcst WHERE
-                                                                     crapcst.cdcooper = crapcop.cdcooper AND
-                                                                     crapcst.cdcmpchq = aux_cdcmpchq     AND
-                                                                     crapcst.cdbanchq = aux_cdbanchq     AND
-                                                                     crapcst.cdagechq = aux_cdagechq     AND
-                                                                     crapcst.nrctachq = aux_nrctachq     AND
-                                                                     crapcst.nrcheque = aux_nrcheque
+                                                        FIND  LAST   crapcdb WHERE
+                                                                     crapcdb.cdcooper = crapcop.cdcooper AND
+                                                                     crapcdb.cdcmpchq = aux_cdcmpchq     AND
+                                                                     crapcdb.cdbanchq = aux_cdbanchq     AND
+                                                                     crapcdb.cdagechq = aux_cdagechq     AND
+                                                                     crapcdb.nrctachq = aux_nrctachq     AND
+                                                                     crapcdb.nrcheque = aux_nrcheque     AND
+                                                                     crapcdb.dtdevolu = ?
                                                                      EXCLUSIVE-LOCK NO-ERROR.
                                                         
-                                                        IF   AVAILABLE crapcst THEN
-                                                             ASSIGN crapcst.insitprv = 3.
+                                                        IF   AVAILABLE crapcdb THEN
+                                                             ASSIGN crapcdb.insitprv = 3.
                                                         ELSE
                                                              DO:
                                                                 IF   aux_cdbanchq = 1 THEN
@@ -313,17 +324,18 @@ PROCEDURE pi_processa_registros:
                                                                 ELSE
                                                                     aux_nrctachq =  DEC(SUBSTR(aux_setlinha,12,12)).
                                             
-                                                                FIND LAST crapcst WHERE
-                                                                          crapcst.cdcooper = crapcop.cdcooper AND
-                                                                          crapcst.cdcmpchq = aux_cdcmpchq     AND
-                                                                          crapcst.cdbanchq = aux_cdbanchq     AND
-                                                                          crapcst.cdagechq = aux_cdagechq     AND
-                                                                          crapcst.nrctachq = aux_nrctachq     AND
-                                                                          crapcst.nrcheque = aux_nrcheque
+                                                                FIND LAST crapcdb WHERE
+                                                                          crapcdb.cdcooper = crapcop.cdcooper AND
+                                                                          crapcdb.cdcmpchq = aux_cdcmpchq     AND
+                                                                          crapcdb.cdbanchq = aux_cdbanchq     AND
+                                                                          crapcdb.cdagechq = aux_cdagechq     AND
+                                                                          crapcdb.nrctachq = aux_nrctachq     AND
+                                                                          crapcdb.nrcheque = aux_nrcheque     AND
+                                                                          crapcdb.dtdevolu = ?
                                                                           EXCLUSIVE-LOCK NO-ERROR.
                                                                                          
-                                                                IF   AVAILABLE crapcst THEN
-                                                                     ASSIGN crapcst.insitprv = 3.
+                                                                IF   AVAILABLE crapcdb THEN
+                                                                     ASSIGN crapcdb.insitprv = 3.
                                                              END.     
                                                     END.
                                             END.
@@ -336,7 +348,7 @@ PROCEDURE pi_processa_registros:
         INPUT STREAM str_2 CLOSE.
 
         UNIX SILENT VALUE("mv " + crawarq.nmarquiv + " " +
-                           aux_dscooper + "salvar").
+                           aux_dscooper + "salvar/truncagem").
 
     END. /* END do FOR EACH crawarq */
 
