@@ -1,11 +1,14 @@
-//*********************************************************************************************//
-//*** Fonte: cadseg.js                                       			                    ***//
-//*** Autor: Cristian Filipe                                                                ***//
-//*** Data : Novembro/2013                                                                  ***//
-//*** Alterações:                                          Ultima Alteracao: 23/01/2014     ***//	 
-/*	  																						   */
-/*	  23/01/2014 - Ajustes gerais para liberacao. (Jorge)									   */
-//*********************************************************************************************//
+/*********************************************************************************************
+ Fonte: cadseg.js                                       			                   
+ Autor: Cristian Filipe                                                                
+ Data : Novembro/2013                                                                  
+ Alterações:                                          Ultima Alteracao: 26/05/2017
+ 																					
+ 23/01/2014 - Ajustes gerais para liberacao. (Jorge)	
+ 
+ 26/05/2017 - Alteracao no contrato conforme solicitado no chamado 655583. (Kelvin)
+
+*********************************************************************************************/
 
 // Definição de algumas variáveis globais 
 var cddopcao, cTodosCabecalho;
@@ -649,7 +652,7 @@ function formataSeguradoras()
     rCdsegura.css({width:'125px'});
     rNmsegura.css({width:'60px'});
 	//altera o layout do rotulo para o Campo Seguradora Ativa se o brownser for IE
-	$.browser.msie?rFlgativo.css({width:'217px'}):rFlgativo.css({width:'225px'});
+	$.browser.msie?rFlgativo.css({width:'217px'}):rFlgativo.css({width:'180px'});
 	
     rNmresseg.css({width:'125px'});
     rNrcgcseg.css({width:'125px'});
@@ -674,7 +677,7 @@ function formataSeguradoras()
 	
     cCdsegura.css({width:'70px'}).prop({'maxlength':'11'}).addClass('campo').setMask('INTEGER','zzz.zzz.zz9','.','');
     cNmsegura.css({width:'240px'}).prop({'maxlength':'40'}).addClass('campo');
-    cNmresseg.css({width:'150px'}).prop({'maxlength':'20'}).addClass('campo');
+    cNmresseg.css({width:'195px'}).prop({'maxlength':'30'}).addClass('campo');
     cNrcgcseg.css({width:'150px'}).addClass('cnpj').addClass('campo');
     cNrctrato.css({width:'80px'}).prop({'maxlength':'10'}).addClass('campo').setMask('INTEGER','zz.zzz.zz9','.','');	 //Mascara Setada desta forma pois o input.contrato do layout padrão estava com um digito a menos
     cNrultpra.css({width:'80px'}).prop({'maxlength':'11'}).addClass('campo').addClass('propCadseg');

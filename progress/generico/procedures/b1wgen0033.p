@@ -16,6 +16,7 @@
   | buscar_plano_seguro                    | SEGU0001.pc_buscar_plano_seguro                  |
   | calcular_data_debito                   | SEGU0001.pc_calcular_data_debito                 |
   | buscar_motivo_can                      | SEGU0001.pc_buscar_motivo_can                    |
+  | cria-tabela-depara                     | SEGU0001.pc_cria_tabela_depara                   |
   +----------------------------------------+--------------------------------------------------+
 
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
@@ -32,7 +33,7 @@
 
     Programa: b1wgen0033.p
     Autor   : Guilherme
-    Data    : Agosto/2008                     Ultima Atualizacao: 07/06/2016
+    Data    : Agosto/2008                     Ultima Atualizacao: 26/05/2017
            
     Dados referentes ao programa:
                 
@@ -213,6 +214,10 @@
 
                 17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
 
+				09/11/2016 - Corrigido Problemas na impressao da proposta, nao limitar mais os 
+				             resultados a 1 ano SD553284 (Tiago/Thiago).
+								
+				26/05/2017 - Alteracao no contrato conforme solicitado no chamado 655583. (Kelvin)
 ..............................................................................*/
                     
 { sistema/generico/includes/b1wgen0038tt.i }
@@ -292,6 +297,7 @@ DEF VAR aux_premitot    AS DECIMAL                                    NO-UNDO.
 DEF VAR aux_comprela    AS CHAR                                       NO-UNDO.
 DEF VAR rel_prestami    AS CHAR                                       NO-UNDO.
 DEF VAR aux_vlmorada    AS DECI                                       NO-UNDO.
+DEF VAR aux_dscgcseg    AS CHAR FORMAT "99.999.999/9999-99"			  NO-UNDO.
 
 DEF VAR aux_casa3325    AS CHAR FORMAT "x(76)"                        NO-UNDO.
 DEF VAR aux_casa0401    AS CHAR FORMAT "x(76)"                        NO-UNDO.
@@ -324,7 +330,7 @@ FORM
     "\033\1230                PROPOSTA DE SEGURO RESIDENCIAL" AT 20
     SKIP
     "CNPJ -" AT 22
-    tt-seguradora.nrcgcseg 
+    aux_dscgcseg
     SKIP
     "   Processo SUSEP - 15414.000146/2005-83" AT 13 
     SKIP
@@ -463,9 +469,9 @@ FORM
     SKIP
     "domicilio apos alta hospitalar, assessoria administrativa.  SERVICOS" 
     SKIP
-    "EMERGENCIAIS - SEM VINCULO AO EVENTO: indicacao  medico  hospitalar,"
+    "EMERGENCIAIS - SEM VINCULO AO EVENTO: organizacao e envio de flores,"
     SKIP
-    "organizacao  e  envio  de   flores,   indicacao   de   profissional."
+    "indicacao   de   profissional."
     WITH NO-BOX COLUMN 5 NO-ATTR-SPACE NO-LABELS WIDTH 150 FRAME f_autori_casa_3_2.
 
 FORM 
@@ -479,46 +485,62 @@ FORM
     SKIP(2)
     "\033\107Declaracao do Segurado"
     SKIP(2)
-    "Declaro para todos os fins e efeitos: 1)  ter  prestado  informacoes"
+	"1) ter recebido e lido as condicoes contratuais  em  versao integral"
+	SKIP
+	"deste  seguro e estou de acordo; 2) que  as  informacoes  fornecidas"  
     SKIP
-    "completas e  veridicas;  2)  ter  recebido  as  Condicoes  Gerais  e" 
+	"nesta proposta de seguro estao corretas, e que estou ciente de que a" 
     SKIP
-    "Especiais do Seguro e estou de acordo com seu conteudo; 3) estar  de"
-    SKIP
-    "acordo para que o Estipulante acima forneca meus  dados cadastrais e" 
-    SKIP
-    "patrimoniais a Corretora e  que  essa  disponibilize  a  Seguradora;" 
-    SKIP
-    "4) que perderei o direito  a  uma  eventual  indenizacao  caso  seja" 
-    SKIP
-    "constatada a falsidade de qualquer informacao conforme  determina  o"  
-    SKIP
-    "Codigo Civil;  5)  estou  ciente  que  a  Seguradora  dispora,  para"  
-    SKIP
-    "aceitacao ou recusa, de 15(quinze) dias da data do recebimento desta" 
-    SKIP
-    "proposta em suas filiais. Em  caso  de  recusa  da  aceitacao  desta" 
-    SKIP
-    "proposta, o  premio  pago  sera  devolvido  com  correcao  monetaria" 
-    SKIP
-    "estabelecida nas Condicoes Gerais do Seguro. 6) estar ciente  e  que"
-    SKIP
-    "expressamente autorizo a inclusao de todos os  dados  e  informacoes"
-    SKIP
-    "relacionadas ao presente seguro assim como  de  todos  os  eventuais"
-    SKIP
-    "sinistros e ocorrencias referentes ao mesmo, em banco de dados,  aos"
-    SKIP
-    "quais a seguradora podera recorrer para analise de riscos  atuais  e"
-    SKIP
-    "futuros e na liquidacao de processos de  sinistros. 7) a  Seguradora"
-    SKIP
-    "podera  enviar  proposta  de  renovacao  automatica   ao   Segurado,"
-    SKIP
-    "juntamente com as condicoes para renovacao do contrato e nao havendo"   
-    SKIP
-    "manifestacao das partes contratantes, o  seguro  sera  renovado. Por"
-    SKIP
+	"veracidade das respostas prestadas neste documento  sao fundamentais" 
+	SKIP
+	"e  determinantes  para  a  precificacao  e  aceitacao  do  risco.  A"
+	SKIP
+	"inexatidao e/ou  omissao acarretam a perda do direito a indenizacao,"
+	SKIP
+	"conforme Art. 766 do Codigo Civil Brasileiro. 3) que comprometo-me a"
+	SKIP
+	"comunicar  por  escrito a Corretora e Seguradora, qualquer alteracao"
+	SKIP
+	"realizada  em  relacao  a  essa  proposta  ou qualquer alteracao nas"
+	SKIP
+	"condicoes  do  risco;  4) estar  de  acordo que o Estipulante  acima" 
+	SKIP
+	"forneca meus dados cadastrais e patrimoniais a Corretora e que  essa" 
+	SKIP
+	"disponibilize  a  Seguradora; 5) estar ciente  e  que  expressamente"  
+	SKIP
+	"autorizo  a  inclusao  de  todos  os  meus   dados   e   informacoes"   
+	SKIP
+	"relacionadas  ao  presente  seguro, assim como de todos os eventuais"   	
+	SKIP
+	"sinistros e ocorrencias  referentes ao mesmo, em banco de dados, aos" 
+	SKIP
+	"quais  a  seguradora podera recorrer para analise de riscos atuais e"
+	SKIP
+	"futuros  e na  liquidacao de processos de sinistros; 6) estou ciente"
+	SKIP
+	"que  a  Seguradora  dispora, para aceitacao ou recusa, de 15(quinze)"
+	SKIP	
+	"dias da data do recebimento desta  proposta em suas filiais. Em caso"
+	SKIP
+	"de  recusa da aceitacao desta proposta, o premio pago sera devolvido"
+	SKIP
+	"com correcao  monetaria estabelecida nas Condicoes Gerais do Seguro;"
+	SKIP
+	"7) que  estou  ciente de que o risco ora proposto sera aceito apenas"
+	SKIP
+	"se estiver de acordo com  as  regras de aceitacao da Seguradora e de"
+	SKIP
+	"que o nao pagamento da primeira parcela do seguro ate seu vencimento"
+	SKIP
+	"acarretara  o  cancelamento  do  seguro;  8)  a  Seguradora   podera"
+	SKIP
+	"enviar proposta  de renovacao   automatica  ao  Segurado, juntamente"
+	SKIP
+	"com  as  condicoes  para   renovacao  do   contrato  e  nao  havendo" 
+	SKIP
+	"manifestacao das  partes contratantes, o seguro  sera  renovado. Por"
+    SKIP	
     aux_casa3325
     SKIP
     WITH NO-BOX COLUMN 5 NO-ATTR-SPACE NO-LABELS WIDTH 150 FRAME f_autori_casa_3_3.
@@ -545,7 +567,9 @@ FORM
 FORM
     "\033\107Principais Exclusoes do Seguro Residencial                  "  
     SKIP(2) 
-    "* Local de risco que nao seja o especificado na apolice de seguro;  "
+    "* Local de risco que nao seja o especificado no Certificado de      "
+	SKIP
+	"Seguro;"
     SKIP  
     "* Imovel de veraneio ou fim de semana, chacaras, sitios, fazendas;  "
     SKIP
@@ -556,19 +580,7 @@ FORM
     "residencial,  mesmo  que  no  imovel  funcione  atividade  comercial"
     SKIP
     "informal;" 
-    SKIP
-    "* A  seguradora  aceitara,  no  entanto,  imoveis  residenciais  com"
-    SKIP
-    "pequena atividade informal (exclusivamente  costura),  desde  que  a"
-    SKIP
-    "caracteristica principal do risco nao seja alterada. Neste caso  nao"
-    SKIP
-    "serao  garantidos  quaisquer  bens  relacionados  a   esta   pequena"
-    SKIP
-    "atividade comercial, exceto para maquinas de costura, limitado  a  4"
-    SKIP
-    "(quatro) maquinas por vigencia de apolice;                          "
-    SKIP
+    SKIP    
     "* Manutencao e utilizacao inadequada dos padroes  recomendados  pelo"
     SKIP
     "fabricante, deterioracao gradativa,  desarranjo  mecanico,  desgaste"
@@ -659,7 +671,48 @@ FORM
     SKIP
     'registro na SUSEP, nome completo, CNPJ ou CPF."'
     SKIP(2)
-    "PELA  PRESENTE,  AUTORIZO  A  DEBITAR  MENSALMENTE  EM  MINHA  CONTA"
+	"Telefones Uteis" 
+	SKIP
+	"Assistencia 24 Horas: 0800 725 2064"
+	
+	SKIP
+	"Central de Atendimento a Sinistros Capitais e Regioes Metropolitanas" 
+	SKIP
+	"0800 7252064 (2° a 6º feira das 8h00 as 20h00)"
+	SKIP
+	"Central de Atendimento do Estipulante"
+	SKIP
+	"(47)3231-4646 (2º a 6º feira das 8h00 as 20h00)"
+	SKIP
+	"Central de Atendimento a Clientes com deficiencia auditiva ou de fala"
+	SKIP
+	"0800 724 5084 (24h00 por dia 7 dias por semana)"
+	SKIP
+	"Ouvidoria - ouvidoria@chubb.com"
+	SKIP
+	"0800 722 5059 (2º a 6º feira das 8h00 as 18h00)"
+	SKIP
+	"Caixa Postal 310, Agencia 72300019, CEP: 01031-970"
+	SKIP
+	"A Ouvidoria e um canal de comunicacao, imparcial e  independente, que"
+	SKIP
+	"as  Companhias  do  Grupo Chunn  disponibilizaram  para seus clientes"
+	SKIP
+	"e  colaboradores. E dever  desta  area  atuar de acordo com as normas" 
+	SKIP
+	"relativas  aos  direitos  dos  consumidores  e  a mediar,  esclarecer"
+	SKIP
+	",prevenir  e/ou  solucionar   possiveis   conflitos.  Este  canal  de"
+	SKIP
+	"comunicacao so pode ser utilizado quando clientes e colaboradores nao" 
+    SKIP
+	"encontrarem  uma  solucao  satisfatoria  para  suas  reclamacoes, nos" 
+    SKIP
+	"meios  tradicionais  de  atendimento das Companhias(SAC - Servicos de"
+	SKIP
+	"Atendimento  ao  Consumidor;  Fale Conosco; Sinistros; entre outros)."
+	SKIP(2)
+	"PELA  PRESENTE,  AUTORIZO  A  DEBITAR  MENSALMENTE  EM  MINHA  CONTA"
     SKIP
     "CORRENTE DE NUMERO " rel_nrdconta2 " , O  VALOR  DAS  PARCELAS  DO SEGURO" 
     SKIP
@@ -3649,9 +3702,11 @@ PROCEDURE imprimir_proposta_seguro:
         ASSIGN aux_dsendres = TRIM(tt-prop-seguros.dsendres) +
                        ", " + TRIM(STRING(tt-prop-seguros.nrendres)).
                  
-        /*Primeira via*/
+        ASSIGN aux_dscgcseg = STRING(tt-seguradora.nrcgcseg).
+		
+		/*Primeira via*/
         DISPLAY STREAM str_1 
-                tt-seguradora.nrcgcseg 
+                aux_dscgcseg 
                 tt-seguradora.nmresseg
                 tt-seguros.nrctrseg
                 WITH FRAME f_autori_casa_c.                     
@@ -3822,7 +3877,7 @@ PROCEDURE imprimir_proposta_seguro:
         
         /*Segunda via*/
         DISPLAY STREAM str_1 
-                tt-seguradora.nrcgcseg 
+                aux_dscgcseg 
                 tt-seguradora.nmresseg
                 tt-seguros.nrctrseg
                 WITH FRAME f_autori_casa_c.                     
@@ -5818,12 +5873,17 @@ PROCEDURE busca_seguros:
                  crapseg.cdcooper = par_cdcooper AND 
                  crapseg.nrdconta = par_nrdconta:
             
+			/* Problemas na impressao da proposta,
+			   nao limitar mais os resultados a 1 ano SD553284 Tiago/Thiago
+
             IF   (crapseg.cdsitseg = 2 AND
                  crapseg.dtcancel < (par_dtmvtolt - 365)) OR
                  (crapseg.cdsitseg = 4 AND
                  crapseg.dtfimvig < (par_dtmvtolt - 365)) THEN
                  NEXT.
-              
+
+              */
+
             CREATE tt-seguros.
             ASSIGN tt-seguros.cdcooper      = crapseg.cdcooper
                    tt-seguros.cdagenci      = crapseg.cdagenci
@@ -5953,12 +6013,6 @@ PROCEDURE busca_seguros:
     
             IF (crapseg.nrdconta <> par_nrdconta AND par_nrdconta <> 0) THEN NEXT.
             
-            IF   (crapseg.cdsitseg = 2 AND
-                 crapseg.dtcancel < (par_dtmvtolt - 365)) OR
-                 (crapseg.cdsitseg = 4 AND
-                 crapseg.dtfimvig < (par_dtmvtolt - 365)) THEN
-                 NEXT.
-              
             CREATE tt-seguros.
             ASSIGN tt-seguros.cdcooper      = crapseg.cdcooper
                    tt-seguros.cdagenci      = crapseg.cdagenci
@@ -6431,7 +6485,7 @@ PROCEDURE cria_seguro:
 	  a solicitacao vier de alguma tela*/
 	IF  TRIM(par_nmdatela) <> "" THEN 
 		DO: 
-    RUN cria-tabela-depara(OUTPUT TABLE tt-pldepara).
+			RUN cria-tabela-depara(OUTPUT TABLE tt-pldepara).
 		END.
     
     EMPTY TEMP-TABLE tt-erro.
