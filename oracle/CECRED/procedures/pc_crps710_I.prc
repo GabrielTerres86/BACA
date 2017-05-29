@@ -8,14 +8,17 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Lombardi
-    Data    : Setembro/2016                      Ultima Atualizacao: --/--/----
+    Data    : Setembro/2016                      Ultima Atualizacao: 25/05/2017
     Dados referente ao programa:
 
     Frequencia: Diario.
     Objetivo  : Renovacao automatica do limite de desconto de cheque.
     
     Alteração : 17/04/2017 - Alterar datas pois rotina será executada via Job.
-                             PRJ300-Desconto de Cheque (Odirlei-AMcom)  
+                             PRJ300-Desconto de Cheque (Odirlei-AMcom)  	  
+       
+                25/05/2017 - Retirado processo de bloqueio de inclusao de bordero
+                             conforme solicitado area de negocio Gilmar (Daniel)  
        
     ............................................................................ */
 
@@ -1052,7 +1055,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
       --> Rotina para cobrança das tarifas de renovação de contrato
       pc_gera_tarifa_renova (pr_cdcooper => pr_cdcooper,
                              pr_crapdat  => rw_crapdat);
-      
+      /*
       -- Rotina para bloqueio e desbloqueio da inclusao de cordero
       pc_blq_lib_inclusao_bord(pr_cdcooper => pr_cdcooper
                               ,pr_dscritic => vr_dscritic);
@@ -1060,7 +1063,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
       IF pr_dscritic IS NOT NULL THEN
         RAISE vr_exc_saida;
       END IF;
-      
+      */
+
 
       -- Salvar informações atualizadas
       COMMIT;

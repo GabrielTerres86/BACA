@@ -41,7 +41,7 @@ CREATE OR REPLACE PACKAGE CECRED.CUST0001 IS
 --			  
 --	           19/12/2016 - Ajuste incorporação Transulcred (Daniel)
 --
---			   16/12/2016 - Alterações referentes ao projeto 300. (Reinert)        
+--			   16/12/2016 - Alterações referentes ao projeto 300. (Reinert)
 ---------------------------------------------------------------------------------------------------------------
 
   -- Estruturas de registro
@@ -254,14 +254,14 @@ CREATE OR REPLACE PACKAGE CECRED.CUST0001 IS
 
 	
 	PROCEDURE pc_custodia_cheque_manual_web(pr_nrdconta  IN crapass.nrdconta%TYPE --> Codigo do Indexador
-																				 ,pr_dscheque  IN VARCHAR2              --> Codigo do Indexador 
-																				 ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
-																				 ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
-																				 ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
-																				 ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
-																				 ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
-																				 ,pr_des_erro OUT VARCHAR2);            --> Erros do processo															
-															
+                                       ,pr_dscheque  IN VARCHAR2              --> Codigo do Indexador 
+                                       ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
+                                       ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                       ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                                       ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
+                                       ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
+                                       ,pr_des_erro OUT VARCHAR2);            --> Erros do processo
+
     PROCEDURE pc_valida_conta_custodiar(pr_nrdconta  IN crapass.nrdconta%TYPE --> Codigo do Indexador
                                        ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
                                        ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
@@ -980,7 +980,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
 	        -- Apenas fecha o cursor
           CLOSE cr_crapdcc;
         END IF; 
-      
+        
     EXCEPTION
       WHEN vr_exc_saida THEN
         -- Não existe crítica, apenas para a execução das validações
@@ -5255,7 +5255,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
 						                       '<emitente'|| vr_index_cheque || '>' ||
 																	 '   <nrcpfcgc>' || gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_tab_cheque_custodia(vr_index_cheque).nrinsemi
 				                                                                       ,pr_inpessoa => vr_tab_cheque_custodia(vr_index_cheque).cdtipemi) || '</nrcpfcgc>' ||
-																	 '   <nmcheque>' || vr_tab_cheque_custodia(vr_index_cheque).nmcheque || '</nmcheque>' ||
+																	 '   <nmcheque><![CDATA[' || vr_tab_cheque_custodia(vr_index_cheque).nmcheque || ']]></nmcheque>' ||
 																	 '   <idcheque>' || vr_idcheque || '</idcheque>' ||
 																	 '</emitente'|| vr_index_cheque || '>';
 					END IF;
@@ -5339,8 +5339,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
       vr_inchqcop NUMBER;
       
       vr_ret_all_cheques gene0002.typ_split;
-      vr_ret_cheque      gene0002.typ_split;
-						
+      vr_ret_cheque      gene0002.typ_split;     
+      
       -- Informações do Cheque
       vr_dtchqbom DATE;
 			vr_dtemissa DATE;
@@ -5556,7 +5556,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
           vr_index_erro := vr_tab_custodia_erro.count + 1;  
           vr_tab_custodia_erro(vr_index_erro).dsdocmc7 := vr_dsdocmc7;
           vr_tab_custodia_erro(vr_index_erro).dscritic := 'Cheque com valor zerado';
-				END IF;
+        END IF;
         
 				-- Verificar se possui emitente cadastrado
 				OPEN cr_crapcec(pr_cdcooper => pr_cdcooper
@@ -5576,7 +5576,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
 				ELSE
           vr_inemiten := 1;					
 					vr_nrinsemi := rw_crapcec.nrcpfcgc;
-					vr_nmcheque := rw_crapcec.nmcheque;
+					vr_nmcheque := SUBSTR(rw_crapcec.nmcheque,1,50);
 					-- Busca indicador de pessoa baseando-se no CPF/CNPJ do Emitente
 					gene0005.pc_valida_cpf_cnpj(pr_nrcalcul => vr_nrinsemi
 					                           ,pr_stsnrcal => vr_stsnrcal
@@ -5723,7 +5723,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
 			  --Levantar Excecao
 			  RAISE vr_exc_erro;
 		  END IF;
-			
+
       -- Verifica se foram encontrados erros durante o processamento
       IF vr_tab_custodia_erro.count > 0 THEN
         RAISE vr_exc_saida;
@@ -5744,7 +5744,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
         -- Numero de Retorno
           vr_nrremret := pr_nrremret;
 				ELSE
-        -- Numero de Retorno
+					-- Numero de Retorno
         vr_nrremret := rw_craphcc.nrremret + 1;
       END IF;
       END IF;
@@ -5887,7 +5887,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
         ROLLBACK;
     END;
   END pc_custodia_cheque_manual;
-  
+
   PROCEDURE pc_custodia_cheque_manual_web(pr_nrdconta  IN crapass.nrdconta%TYPE --> Codigo do Indexador
 																				 ,pr_dscheque  IN VARCHAR2              --> Codigo do Indexador 
 																				 ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
@@ -6357,6 +6357,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
           AND hcc.cdcooper = pr_cdcooper
           AND hcc.nrdconta = pr_nrdconta
           AND hcc.nrremret = pr_nrremret
+		  AND hcc.intipmvt IN ( 1, 3 )
           ORDER BY cst.dtlibera,
                    cst.cdbanchq,
                    cst.cdagechq,

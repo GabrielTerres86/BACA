@@ -132,7 +132,7 @@
 	<a href="#" class="botao" id="btnlimite" name="btnlimite" <?php if (!in_array("DSC CHQS - LIMITE",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } else { echo 'onClick="carregaLimitesCheques();return false;"'; } ?>>Limite</a>
 	<a href="#" class="botao" id="btnrenovacao" name="btnrenovacao">Renova&ccedil;&atilde;o</a>
 	<div style="height: 3px;"></div>
-	<a href="#" class="botao" id="btndesinbord" name="btndesinbord">Desbloquear Inclus&atilde;o de Border&ocirc;</a>
+	<a href="#" class="botao" id="btndesinbord" style="display:none;" name="btndesinbord">Desbloquear Inclus&atilde;o de Border&ocirc;</a>
 </div>
 
 <script type="text/javascript">

@@ -322,8 +322,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0001 IS
 	-- Frequencia: Sempre que for chamada
 	-- Objetivo  : Rotina para gerar arquivo de prévia de custódia
 
-	-- Alteracoes:
-	--
+	-- Alteracoes: 26/05/2017 - Alterar o caracter de fim de linha (13), para o 
+	--                          caracter (10), de forma que o programa gere o arquivo
+	--                          igual ao Progress.   (Renato Darosci - Supero)
 	-- .............................................................................		
 		DECLARE
 		  vr_exc_erro EXCEPTION;
@@ -538,7 +539,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0001 IS
 									 || to_char(pr_dtmvtolt, 'DD')             -- Dia										 
 									 || rpad(' ',77,' ')
 									 || to_char(vr_nrseqarq, 'fm0000000000')
-									 || CHR(13);
+									 || CHR(10);
 				 END IF;
 					 
 				 -- Identificar se o cheque é da COOPER
@@ -623,7 +624,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0001 IS
 					
 				vr_clob := vr_clob
 								|| to_char(vr_nrseqarq,'fm0000000000')	-- Sequência
-								|| chr(13);
+								|| chr(10);
 
 				-- Último registro
 				IF rw_crapcst.seq = rw_crapcst.qtdreg THEN
@@ -646,7 +647,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0001 IS
 									|| to_char(vr_vltotcst * 100, 'fm00000000000000000')
 									|| RPAD(' ',60,' ')              -- Filler
 									|| to_char(vr_nrseqarq,'fm0000000000') -- SEQ
-									|| chr(13);
+									|| chr(10);
 							
 					-- Tratamento para verificar se o operador está na força tarefa da viacredi			
 					IF pr_cdcooper = 1 THEN
