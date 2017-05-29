@@ -2,7 +2,7 @@
 
    Programa: b1wgen0009.p
    Autor   : Guilherme
-   Data    : Marco/2009                     Última atualizacao: 25/10/2016
+   Data    : Marco/2009                     Última atualizacao: 26/05/2017
    
    Dados referentes ao programa:
 
@@ -262,6 +262,8 @@
 		   09/11/2016 - Alterado campo crapabc.nrseqdig para crapabc.cdocorre.
 		                PRJ-300 - Desconto de cheque(Odirlei-AMcom)              
 					      
+           26/05/2017 - Alterado efetua_inclusao_limite para gerar o numero do 
+                       contrato de limite.  PRJ-300 - Desconto de cheque(Odirlei-AMcom)              
 ............................................................................. */
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -1876,7 +1878,6 @@ PROCEDURE efetua_inclusao_limite:
     DEFINE INPUT  PARAMETER par_vlsalcon AS DECIMAL     NO-UNDO.
     DEFINE INPUT  PARAMETER par_dsdbens1 AS CHARACTER   NO-UNDO.
     DEFINE INPUT  PARAMETER par_dsdbens2 AS CHARACTER   NO-UNDO.
-    DEFINE INPUT  PARAMETER par_nrctrlim AS INTEGER     NO-UNDO.
     DEFINE INPUT  PARAMETER par_cddlinha AS INTEGER     NO-UNDO.
     DEFINE INPUT  PARAMETER par_dsobserv AS CHARACTER   NO-UNDO.   
     DEFINE INPUT  PARAMETER par_qtdiavig AS INTEGER     NO-UNDO. 
@@ -1931,6 +1932,7 @@ PROCEDURE efetua_inclusao_limite:
     DEFINE INPUT  PARAMETER par_nrperger AS INTEGER     NO-UNDO.
     DEFINE INPUT  PARAMETER par_flgerlog AS LOGICAL     NO-UNDO.
     
+    DEFINE OUTPUT PARAMETER par_nrctrlim AS INTEGER     NO-UNDO.
     DEFINE OUTPUT PARAMETER TABLE FOR tt-erro.
         
     DEFINE VARIABLE h-b1wgen0021 AS HANDLE      NO-UNDO.
@@ -1938,6 +1940,9 @@ PROCEDURE efetua_inclusao_limite:
     DEFINE VARIABLE aux_contador AS INTEGER     NO-UNDO.
     DEFINE VARIABLE aux_flgderro AS LOGICAL     NO-UNDO.
     DEFINE VARIABLE aux_lscontas AS CHARACTER   NO-UNDO.
+    DEFINE VARIABLE aux_nrctrlim AS INTEGER     NO-UNDO.
+    DEFINE VARIABLE aux_nrseqcar AS INTEGER     NO-UNDO.
+    
     
     EMPTY TEMP-TABLE tt-erro.
 
@@ -2034,6 +2039,47 @@ PROCEDURE efetua_inclusao_limite:
     TRANS_INCLUI:    
     DO  TRANSACTION ON ERROR UNDO TRANS_INCLUI, LEAVE TRANS_INCLUI:
     
+        DO WHILE TRUE:
+          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+          /* Busca a proxima sequencia do campo crapldt.nrsequen */
+          RUN STORED-PROCEDURE pc_sequence_progress
+          aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLIM"
+                                              ,INPUT "NRCTRLIM"
+                                              ,STRING(par_cdcooper) + STRING(par_dtmvtolt, '99/99/9999')
+                                              ,INPUT "N"
+                                              ,"").
+
+          CLOSE STORED-PROC pc_sequence_progress
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+          ASSIGN aux_nrseqcar = INTE(pc_sequence_progress.pr_sequence)
+                                WHEN pc_sequence_progress.pr_sequence <> ?.
+          
+          ASSIGN aux_nrctrlim = INT(STRING(YEAR(par_dtmvtolt),"9999") +
+                                    STRING(MONTH(par_dtmvtolt),"99" ) +
+                                    STRING(DAY(par_dtmvtolt),"99" )   +
+                                    STRING(aux_nrseqcar)).
+                            
+          
+          
+          FIND FIRST craplim 
+               WHERE craplim.cdcooper = par_cdcooper
+                 AND craplim.nrdconta = par_nrdconta
+                 AND craplim.tpctrlim = 2
+                 AND craplim.nrctrlim = aux_nrctrlim
+                 NO-LOCK NO-ERROR.
+          IF NOT AVAILABLE craplim THEN       
+          DO:
+            LEAVE.
+          END.
+                 
+        END.       
+        
+        ASSIGN par_nrctrlim = aux_nrctrlim.
+    
         RUN cria-tabelas-avalistas IN h-b1wgen9999 (INPUT par_cdcooper,
                                                     INPUT par_cdoperad,
                                                     INPUT par_idorigem,
@@ -2104,29 +2150,6 @@ PROCEDURE efetua_inclusao_limite:
             aux_flgderro = TRUE.
             UNDO TRANS_INCLUI, LEAVE TRANS_INCLUI.
         END.
-
-        FIND FIRST craplim WHERE craplim.cdcooper = par_cdcooper AND
-                                 craplim.nrdconta = par_nrdconta AND
-                                 craplim.tpctrlim = 2            AND
-                                 craplim.nrctrlim = par_nrctrlim 
-                                 NO-LOCK NO-ERROR.
-         
-        IF  AVAILABLE craplim   THEN 
-            DO:
-                ASSIGN aux_cdcritic = 0
-                       aux_dscritic = "Registro de contrato ja existe.".
-
-                RUN gera_erro (INPUT par_cdcooper,
-                               INPUT par_cdagenci,
-                               INPUT par_nrdcaixa,
-                               INPUT 1,            /** Sequencia **/
-                               INPUT aux_cdcritic,
-                               INPUT-OUTPUT aux_dscritic).
-                               
-                aux_flgderro = TRUE.
-                
-                UNDO TRANS_INCLUI, LEAVE TRANS_INCLUI.  
-            END.
 
         RUN sistema/generico/procedures/b1wgen0021.p PERSISTENT
             SET h-b1wgen0021.

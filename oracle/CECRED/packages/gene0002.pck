@@ -363,6 +363,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   --
   --             26/10/2016 - Gravado em log a execução da rotina procedimento pc_controle_filas_relato apenas
   --                          apenas quando tiverem relatórios pendentes para execução (Carlos)
+  --
+  --             26/05/2017 - Aumentado o campo vr_des_mask_contrato, para permitir numero de contrato maior
+  --                          PRJ300 - Desconto de cheque(Odirlei-Amcom)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Lista de variáveis para armazenar as mascaras parametrizadas */
@@ -372,7 +375,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   vr_des_mask_cnpj     VARCHAR2(20);
   vr_des_mask_cep      VARCHAR2(10);
   vr_des_mask_matric   VARCHAR2(7);
-  vr_des_mask_contrato VARCHAR2(9);
+  vr_des_mask_contrato VARCHAR2(20);
 
   /* Saída com erro */
   vr_des_erro VARCHAR2(4000);

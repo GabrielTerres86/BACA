@@ -3108,7 +3108,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     --  Sistema  : Cred
     --  Sigla    : DSCT0002
     --  Autor    : Odirlei Busana - AMcom
-    --  Data     : Agosto/2016.                   Ultima atualizacao: 26/12/2016
+    --  Data     : Agosto/2016.                   Ultima atualizacao: 26/05/2017
     --
     --  Dados referentes ao programa:
     --
@@ -3122,6 +3122,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     --               26/12/2016 - Adicionados novos campos para impressao do contrato
     --                            de limite de desconto de cheques. Projeto 300 (Lombardi)
     --
+    --               26/05/2017 - Alterado para tipo de impressao 10 - Analise
+    --                            PRJ300 - Desconto de cheque (Odirlei-AMcom) 
     -- .........................................................................*/
     
     ---------->> CURSORES <<--------   
@@ -3371,9 +3373,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
         WHEN 6 THEN
           vr_dstransa := 'Carregar dados para impressao da proposta de bordero de desconto de '||vr_dstpctrl||'.';
         WHEN 7 THEN
-          vr_dstransa := 'Carregar dados para impressao dos titulos de bordero de desconto de '||vr_dstpctrl||'.';
+          vr_dstransa := 'Carregar dados para impressao dos '||vr_dstpctrl||' de bordero de desconto de '||vr_dstpctrl||'.';
         WHEN 9 THEN
           vr_dstransa := 'Carregar dados para impressao dos contratos do CET.';
+        WHEN 10 THEN
+          vr_dstransa := 'Carregar dados para impressao dos '||vr_dstpctrl||' de bordero de desconto de '||vr_dstpctrl||'.';  
         ELSE
           vr_dscritic := 'Tipo de impressao invalida.';
           RAISE vr_exc_erro;
@@ -3806,6 +3810,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                                          ,pr_dtmvtolt => pr_dtmvtolt  --> Data de movimento
                                          ,pr_nrborder => pr_nrborder  --> numero do bordero
                                          ,pr_nrdconta => pr_nrdconta  --> Número da Conta
+                                         ,pr_idimpres => pr_idimpres  --> Indicador de impressao
                                          --------> OUT <--------                                   
                                          ,pr_tab_chq_bordero    => vr_tab_chq_bordero    --> retorna titulos do bordero
                                          ,pr_tab_bordero_restri => vr_tab_bordero_restri --> retorna restrições do titulos do bordero
@@ -4090,8 +4095,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
       vr_dscritic := 'Tipo invalido - Rotina nao convertida oracle';
       RAISE vr_exc_erro; 
       
-    --> Impressao dos titulos do bordero
-    ELSIF pr_idimpres = 7 THEN 
+    -->  7 - Impressao dos titulos do bordero
+    --> 10 - Impressao dos cheques para analise
+    ELSIF pr_idimpres IN (7,10) THEN 
       
       --> Bordero Cheque
       IF pr_tpctrlim = 2 THEN
@@ -4116,6 +4122,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                                 ,pr_nmcidade => rw_crapcop.nmcidade   --> Nome da cidade
                                 ,pr_nmoperad => rw_crapope.nmoperad   --> Nome do operador                                         
                                 ,pr_dsopecoo => vr_rel_dsopecoo       --> Descricao operador coordenador 
+                                ,pr_idimpres => pr_idimpres  --> Indicador de impressao
                                  --------> OUT <--------                                   
                                  ,pr_tab_dados_itens_bordero => vr_tab_dados_itens_bordero --> retorna dados do bordero
                                  ,pr_tab_chq_bordero         => vr_tab_chq_bordero        --> retorna cheque do bordero
@@ -5361,8 +5368,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     dbms_lob.createtemporary(vr_des_xml, TRUE);
     dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
     
-    --> Bordero titulos
-    IF pr_idimpres = 7 THEN
+    -->  7 - Bordero titulos
+    --> 10 - Cheques do bordero para analise
+    IF pr_idimpres IN (7,10) THEN
       --Buscar indice do primeiro registro
       vr_idxborde := vr_tab_dados_itens_bordero.FIRST;
       IF vr_idxborde IS NULL THEN

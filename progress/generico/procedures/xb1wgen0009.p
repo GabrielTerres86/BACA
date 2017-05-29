@@ -2,7 +2,7 @@
 
    Programa: xb1wgen0009.p
    Autor   : Guilherme
-   Data    : Março/2009                     Ultima atualizacao: 20/06/2016
+   Data    : Março/2009                     Ultima atualizacao: 26/05/2017
 
    Dados referentes ao programa:
 
@@ -38,6 +38,9 @@
                20/06/2016 - Criacao dos parametros inconfi6, cdopcoan e cdopcolb na
                             efetua_liber_anali_bordero. (Jaison/James)
 
+               
+               26/05/2017 - Alterado efetua_inclusao_limite para gerar o numero do 
+                           contrato de limite.  PRJ-300 - Desconto de cheque(Odirlei-AMcom)              
 ............................................................................ */
 
 
@@ -719,7 +722,6 @@ PROCEDURE efetua_inclusao_limite:
                                        INPUT aux_vlsalcon,
                                        INPUT aux_dsdbens1,
                                        INPUT aux_dsdbens2,
-                                       INPUT aux_nrctrlim,
                                        INPUT aux_cddlinha,
                                        INPUT aux_dsobserv,
                                        INPUT aux_qtdiavig,
@@ -773,6 +775,7 @@ PROCEDURE efetua_inclusao_limite:
                                        INPUT aux_perfatcl,
                                        INPUT aux_nrperger,
                                        INPUT TRUE, /* LOG */
+                                      OUTPUT aux_nrctrlim, 
                                       OUTPUT TABLE tt-erro).
                                     
     IF  RETURN-VALUE = "NOK"  THEN
@@ -791,9 +794,12 @@ PROCEDURE efetua_inclusao_limite:
         END.
     ELSE 
         DO:
+            
             RUN piXmlNew.
+            RUN piXmlAtributo (INPUT "nrctrlim", INPUT STRING(aux_nrctrlim)).            
             RUN piXmlSave.
         END.
+            
         
 END PROCEDURE.
 
