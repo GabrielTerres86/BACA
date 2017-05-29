@@ -167,7 +167,6 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0004 AS
                                  ,pr_des_erro OUT VARCHAR2);
 END APLI0004;
 /
-
 CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
 
   ---------------------------------------------------------------------------------------------------------------
@@ -1879,7 +1878,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Jean Michel
-    Data    : 25/06/2014                        Ultima atualizacao: 25/05/2015
+    Data    : 25/06/2014                        Ultima atualizacao: 29/05/2017
 
     Dados referentes ao programa:
 
@@ -1889,6 +1888,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
     Alteracoes: 25/05/2015 - Inclusao do tratamento de cadastro para tipo de taxa
                              mensal sendo o IPCA, agora pode-se cadastrar esta taxa
                              em outro mes.
+                
+                29/05/2017 - Realizado ajuste para que ao alterar ou cadastrar tarifas
+								             do tipo "TR" seja possível atribuir o valor 0(ZERO), conforme
+								             solicitado no chamado 615474 (Kelvin)
     ............................................................................. */
     DECLARE
       vr_exc_saida EXCEPTION;
@@ -2003,11 +2006,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
         -- Apenas fechar o cursor
         CLOSE cr_crapdat;
       END IF;
-
-      -- Valida valor de taxa
-      IF pr_vlrdtaxa <= 0 THEN
-        vr_dscritic := 'Valor da taxa que nao pode ser menor ou igual a zero.';
-        RAISE vr_exc_saida;
+      
+      --TR (Caso for TR deixar passar valor zerado SD 615474)
+      IF pr_cddindex = 2 THEN
+        -- Valida valor de taxa
+        IF pr_vlrdtaxa IS NULL THEN
+          vr_dscritic := 'Valor da taxa que nao pode ser menor ou igual a zero.';
+          RAISE vr_exc_saida;          
+        END IF;
+      ELSE
+        -- Valida valor de taxa
+        IF pr_vlrdtaxa <= 0 OR
+           pr_vlrdtaxa IS NULL THEN
+          vr_dscritic := 'Valor da taxa que nao pode ser menor ou igual a zero.';
+          RAISE vr_exc_saida;          
+        END IF;
       END IF;
 
       -- Consulta de taxas de indexadores
@@ -4937,4 +4950,3 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
 
 END APLI0004;
 /
-
