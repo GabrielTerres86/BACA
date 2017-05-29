@@ -281,7 +281,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
   --
   --  Programa: GRVM0001                        Antiga: b1wgen0171.p
   --  Autor   : Douglas Pagel
-  --  Data    : Dezembro/2013                     Ultima Atualizacao: 24/05/2017
+  --  Data    : Dezembro/2013                     Ultima Atualizacao: 29/05/2017
   --
   --  Dados referentes ao programa:
   --
@@ -327,6 +327,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
   --                         - Padronização das mensagens para a tabela tbgen_prglog,
   --                         - Chamada da rotina CECRED.pc_internal_exception para inclusão do erro da exception OTHERS
   --                           (Ana - Envolti) - SD: 660319
+  --
+  --              29/05/2017 - Alteração para não apresentar os parâmetros nas mensagens exibidas em tela.
+  --                         - Apresentar apenas nas exceptions (e na gravação da tabela TBGEN_PRGLOG)
+  --                         (Ana - Envolti) - SD: 660319
   ---------------------------------------------------------------------------------------------------------------
   
   /* Funcao para validacao dos caracteres */
@@ -4134,7 +4138,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Andrei - RKAM
-    Data     : Maio/2016                         Ultima atualizacao: 24/05/2017
+    Data     : Maio/2016                         Ultima atualizacao: 29/05/2017
     
     Dados referentes ao programa:
     
@@ -4145,6 +4149,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                            - Substituição do termo "ERRO" por "ALERTA",
                            - Padronização das mensagens para a tabela tbgen_prglog,
                            - Chamada da rotina CECRED.pc_internal_exception para inclusão do erro da exception OTHERS
+                           (Ana - Envolti) - SD: 660319
+
+                29/05/2017 - Alteração para não apresentar os parâmetros nas mensagens exibidas em tela.
+                           - Apresentar apenas nas exceptions (e na gravação da tabela TBGEN_PRGLOG)
                            (Ana - Envolti) - SD: 660319
     -----------------------------------------------------------------------------------------------------------------*/                               
   
@@ -4257,8 +4265,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
         vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
       ELSIF trim(vr_dscritic) IS NULL THEN 
         vr_cdcritic:= 0;
-        vr_dscritic:= 'Nao foi possivel validar alienacao feduciaria. Coop:'||vr_cdcooper||
-                      ',Cta:'||pr_nrdconta||',Ctremp:'||pr_nrctrpro;
+        vr_dscritic:= 'Nao foi possivel validar alienacao feduciaria.';
       END IF;
         
       --Levantar Excecao  
@@ -4279,8 +4286,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       CLOSE cr_crapbpr;
       
       vr_cdcritic:= 0;
-      vr_dscritic:= 'Registro do bem nao encontrado. Coop:'||vr_cdcooper||',Cta:'||pr_nrdconta||
-                    ',Ctremp:'||pr_nrctrpro||',Tpctr:'||pr_tpctrpro||',Seqbem:'||pr_idseqbem;
+      vr_dscritic:= 'Registro do bem nao encontrado.';
 
       --Levantar Excecao  
       RAISE vr_exc_erro;   
@@ -4304,8 +4310,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       CLOSE cr_crapepr;
         
       vr_cdcritic:= 0;
-      vr_dscritic:= 'Situacao do Bem invalida! Gravame nao OK! Coop:'||vr_cdcooper||',Cta:'||pr_nrdconta||
-                    ',Ctremp:'||pr_nrctrpro;
+      vr_dscritic:= 'Situacao do Bem invalida! Gravame nao OK!';
       
       --Levantar Excecao  
       RAISE vr_exc_erro;  
@@ -4322,8 +4327,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
        rw_crapbpr.cdsitgrv <> 3 THEN
          
       vr_cdcritic:= 0;
-      vr_dscritic:= 'Situacao do Bem invalida! Gravame nao OK! Coop:'||vr_cdcooper||',Cta:'||pr_nrdconta||
-                    ',Ctremp:'||pr_nrctrpro||',Sitgrv:'||rw_crapbpr.cdsitgrv;
+      vr_dscritic:= 'Situacao do Bem invalida! Gravame nao OK!';
       
       --Levantar Excecao  
       RAISE vr_exc_erro;   
@@ -4340,8 +4344,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     EXCEPTION
       WHEN OTHERS THEN
         vr_cdcritic:= 0;
-        vr_dscritic:= 'Nao foi possivel alterar o bem. Coop:'||vr_cdcooper||',Cta:'||pr_nrdconta||
-                      ',Ctremp:'||pr_nrctrpro||',Tpctr:'||pr_tpctrpro||',Seqbem:'||pr_idseqbem;
+        vr_dscritic:= 'Nao foi possivel alterar o bem.';
         --Levantar Excecao  
         RAISE vr_exc_erro; 
     END;
@@ -4361,14 +4364,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');                                                            
                                      
-      -- Gera log
+      --Inclusão dos parâmetros apenas na exception, para não mostrar na tela
+      --Ana - 29/05/2017
+      --Gera log
       btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                                 ,pr_ind_tipo_log => 1 -- Mensagem
                                 ,pr_nmarqlog     => 'gravam.log'
                                 ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                     ' - '||vr_cdprogra||' --> '|| 
-                                                    'ALERTA: '|| pr_dscritic ||',Ope:'||vr_cdoperad||
-                                                     ' [gravames_baixa_manual].');
+                                                    'ALERTA: '|| pr_dscritic ||',Cdoperad:'||vr_cdoperad||
+                                                    ',Cdcooper:'||vr_cdcooper||',Nrdconta:'||pr_nrdconta||
+                                                    ',Nrctrpro:'||pr_nrctrpro||',Tpctrpro:'||pr_tpctrpro||
+                                                    ',Idseqbem:'||pr_idseqbem||',Cdsitgrv:'||rw_crapbpr.cdsitgrv||
+                                                    ' [gravames_baixa_manual].');
 
     WHEN OTHERS THEN   
       
@@ -4388,10 +4396,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                 ,pr_nmarqlog     => 'gravam.log'
                                 ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                     ' - '||vr_cdprogra||' --> '|| 
-                                                    'ERRO: ' || pr_dscritic ||',Coop:'||vr_cdcooper||
-                                                    ',Cta:'||pr_nrdconta||',Ctremp:'||pr_nrctrpro||
-                                                    ',Tpctr:'||pr_tpctrpro||',Seqbem:'||pr_idseqbem||
-                                                    ',Ope:'||vr_cdoperad||' [gravames_baixa_manual].');
+                                                    'ERRO: ' || pr_dscritic  ||',Cdoperad:'||vr_cdoperad||
+                                                    ',Cdcooper:'||vr_cdcooper||',Nrdconta:'||pr_nrdconta||
+                                                    ',Nrctrpro:'||pr_nrctrpro||',Tpctrpro:'||pr_tpctrpro||
+                                                    ',Idseqbem:'||pr_idseqbem||',Cdsitgrv:'||rw_crapbpr.cdsitgrv||
+                                                    ' [gravames_baixa_manual].');
 
       CECRED.pc_internal_exception( pr_compleme => pr_dscritic );
                        
