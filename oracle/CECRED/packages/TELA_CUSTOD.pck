@@ -307,7 +307,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSTOD IS
 				 WHERE cdb.cdcooper = pr_cdcooper
 				   AND cdb.nrdconta = pr_nrdconta
 				   AND UPPER(cdb.dsdocmc7) = UPPER(pr_dsdocmc7)
-				   AND cdb.dtlibera IS NOT NULL
+				   AND cdb.dtlibbdc IS NOT NULL
 				   AND cdb.dtdevolu IS NULL;
 			rw_crapcdb cr_crapcdb%ROWTYPE;
 			
