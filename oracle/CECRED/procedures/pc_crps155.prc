@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS155(pr_cdcooper in craptab.cdcooper%ty
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Janeiro/95.                     Ultima atualizacao: 05/04/2017
+   Data    : Janeiro/95.                     Ultima atualizacao: 26/05/2014
 
    Dados referentes ao programa:
 
@@ -85,8 +85,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS155(pr_cdcooper in craptab.cdcooper%ty
                14/11/2014 - Foi retirada a procedure interna que gerava o XML. A geração ocorre
                             através da gene0002.pc_escreve_xml. (Alisson - AMcom)
 
-               05/04/2017 - #455742 Melhorias de performance. Ajuste de passagem dos parâmetros inpessoa e 
-                            nrcpfcgc para não consultar novamente o associado no pkg apli0001 (Carlos)
+
 
 ............................................................................. */
 /****** Decisoes sobre o VAR ************************************************
@@ -134,13 +133,9 @@ Poupanca programada sera mensal com taxa provisoria senao houver mensal
            craprpp.dtdebito,
            craprpp.vlprerpp,
            craprpp.qtprepag,
-           craprpp.dtfimper,
-           crapass.inpessoa,
-           crapass.nrcpfcgc
-      from craprpp, crapass
-     where craprpp.cdcooper = pr_cdcooper
-     AND craprpp.cdcooper = crapass.cdcooper
-     AND craprpp.nrdconta = crapass.nrdconta;
+           craprpp.dtfimper
+      from craprpp
+     where craprpp.cdcooper = pr_cdcooper;
   -- Informações do associado
   cursor cr_crapass(pr_cdcooper in craptab.cdcooper%TYPE) is
     select crapage.cdagenci,
@@ -345,8 +340,6 @@ begin
                                pr_dtmvtolt => vr_dtmvtolt,
                                pr_dtmvtopr => vr_dtmvtopr,
                                pr_rpp_rowid => rw_craprpp.rowid,
-                               pr_inpessoa => rw_craprpp.inpessoa,
-                               pr_nrcpfcgc => rw_craprpp.nrcpfcgc,
                                pr_vlsdrdpp => vr_vlsdrdpp,
                                pr_cdcritic => vr_cdcritic,
                                pr_des_erro => vr_dscritic);
@@ -594,3 +587,4 @@ exception
     ROLLBACK;
 end PC_CRPS155;
 /
+

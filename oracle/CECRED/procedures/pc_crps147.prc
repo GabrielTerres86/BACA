@@ -10,7 +10,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Abril/96.                       Ultima atualizacao: 05/04/2017
+   Data    : Abril/96.                       Ultima atualizacao: 05/07/2016
 
    Dados referentes ao programa:
 
@@ -91,11 +91,7 @@ BEGIN
 			  05/07/2016 - Ajuste para incrementar corretamente o index utilziado para carregar a tabela
 						   com os registros de poupança programada
 						   (Adriano).
-               28/09/2016 - Alteração do diretório para geração de arquivo contábil.
-                            P308 (Ricardo Linhares).
 
-               05/04/2017 - #455742 Melhorias de performance. Ajuste de passagem dos parâmetros inpessoa e 
-                            nrcpfcgc para não consultar novamente o associado no pkg apli0001 (Carlos)
                             
 ............................................................................. */
   DECLARE
@@ -180,6 +176,7 @@ BEGIN
     vr_texto          VARCHAR2(200);                  --> Texto da mensagem dinamica
     vr_nom_dirs       VARCHAR2(400);                  --> Nome da pasta para arquivo de dados
     vr_nom_direto     VARCHAR2(400);                  --> Nome da pasta para arquivo de dados
+    vr_nom_micros     VARCHAR2(400);                  --> Nome da pasta micros
     vr_nmarqtxt       VARCHAR2(100);                  --> Nome do arquivo TXT
     vr_input_file     UTL_FILE.file_type;             --> Handle Utl File
     vr_setlinha       VARCHAR2(400);                  --> Linhas do arquivo
@@ -192,13 +189,6 @@ BEGIN
     vr_typ_saida      VARCHAR2(400);                  --> Verificar erro na execução do Script UNIX
     vr_index          PLS_INTEGER;                    --> Controla index 
     
-    -- Variaveis para diretórios de arquivos contábeis
-    vr_dircon VARCHAR2(200);
- 	  vr_arqcon VARCHAR2(200);
-    vc_dircon CONSTANT VARCHAR2(30) := 'arquivos_contabeis/ayllos'; 
-    vc_cdacesso CONSTANT VARCHAR2(24) := 'ROOT_SISTEMAS';
-    vc_cdtodascooperativas INTEGER := 0;  
-
     -- Busca dos dados da cooperativa
     CURSOR cr_crapcop(pr_cdcooper IN craptab.cdcooper%TYPE) IS   --> Código da cooperativa
       SELECT cop.nmrescop
@@ -229,8 +219,7 @@ BEGIN
             ,cp.dtslfmes
             ,cp.vlslfmes
             ,cp.vlabcpmf
-            ,cp.dtvctopp            
-            ,ass.nrcpfcgc
+            ,cp.dtvctopp
       FROM craprpp cp
           ,crapass ass
       WHERE cp.cdcooper = ass.cdcooper
@@ -628,8 +617,6 @@ BEGIN
                                        ,pr_dtmvtolt  => rw_crapdat.dtmvtolt
                                        ,pr_dtmvtopr  => rw_crapdat.dtmvtopr
                                        ,pr_rpp_rowid => vr_craprpp.rowid
-                                       ,pr_inpessoa  => vr_craprpp.inpessoa
-                                       ,pr_nrcpfcgc  => vr_craprpp.nrcpfcgc
                                        ,pr_vlsdrdpp  => vr_rpp_vlsdrdpp
                                        ,pr_cdcritic  => vr_cdcritic
                                        ,pr_des_erro  => vr_dscritic);
@@ -1610,14 +1597,14 @@ BEGIN
           RAISE vr_exc_erro;
        END;
 
-       -- Busca o diretório para contabilidade
-       vr_dircon := gene0001.fn_param_sistema('CRED', vc_cdtodascooperativas, vc_cdacesso);
-       vr_dircon := vr_dircon || vc_dircon;
-       vr_arqcon := TO_CHAR(rw_crapdat.dtmvtolt,'YYMMDD')||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_POUP.txt';       
+       -- Buscar o diretório micros
+       vr_nom_micros := gene0001.fn_diretorio(pr_tpdireto => 'M'   
+                                             ,pr_cdcooper => pr_cdcooper
+                                             ,pr_nmsubdir => '/contab'); 
        
        -- Executa comando UNIX para converter arq para Dos
-       vr_dscomand := 'ux2dos '||vr_nom_direto||'/'||vr_nmarqtxt||' > '||
-                                  vr_dircon||'/'||vr_arqcon||' 2>/dev/null';
+       vr_dscomand := 'ux2dos ' || vr_nom_direto ||'/'||vr_nmarqtxt||' > '
+                                || vr_nom_micros ||'/'||vr_nmarqtxt || ' 2>/dev/null';
 
        -- Executar o comando no unix
        GENE0001.pc_OScommand(pr_typ_comando => 'S'

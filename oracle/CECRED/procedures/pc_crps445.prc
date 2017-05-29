@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS445" (pr_cdcooper IN crapcop.cdcooper
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Abril/2004.                     Ultima atualizacao: 22/03/2017
+   Data    : Abril/2004.                     Ultima atualizacao: 04/01/2016
 
    Dados referentes ao programa:
 
@@ -115,9 +115,6 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS445" (pr_cdcooper IN crapcop.cdcooper
                             para 30000, nao deve gerar problemas de memoria pois foi
                             ampliada a memoria da maquina.
                             (Heitor - RKAM)
-                            
-               22/03/2017 - #455742 Ajuste de passagem dos parâmetros inpessoa e nrcpfcgc para não
-                            consultar novamente o associado no pkg apli0001 (Carlos)
 ............................................................................. */
 
 /******************************************************************************
@@ -672,31 +669,15 @@ BEGIN
 
     -- Buscar dados do cadastro das aplicações RDCA
     CURSOR cr_craprda(pr_cdcooper  IN crapcob.cdcooper%TYPE ) IS    --> Código da cooperativa
-       SELECT craprda.tpaplica
+       SELECT
+              craprda.tpaplica
              ,craprda.cdageass
              ,craprda.nrdconta
              ,craprda.nraplica
              ,craprda.dtmvtolt
-             ,craprda.dtvencto
-             ,craprda.vlsdrdca
-             ,craprda.qtdiauti
-             ,craprda.vlsltxmm
-             ,craprda.dtatslmm
-             ,craprda.vlsltxmx
-             ,craprda.dtatslmx
-             ,craplap.txaplica
-             ,craplap.txaplmes
-       FROM craprda
-           ,craplap
+       FROM craprda craprda
        WHERE craprda.cdcooper = pr_cdcooper
-         AND craprda.insaqtot = 0
-         AND craplap.cdcooper = craprda.cdcooper 
-         AND craplap.dtmvtolt = craprda.dtmvtolt
-         AND craplap.cdagenci = craprda.cdagenci
-         AND craplap.cdbccxlt = craprda.cdbccxlt
-         AND craplap.nrdolote = craprda.nrdolote
-         AND craplap.nrdconta = craprda.nrdconta 
-         AND craplap.nrdocmto = craprda.nraplica;
+         AND craprda.insaqtot = 0;
 
     rw_craprda cr_craprda%ROWTYPE;
 
@@ -767,10 +748,6 @@ BEGIN
 
     -- Constantes da procedure crps445
     vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'CRPS445';  --> Nome do programa
-
-	-- Definicao do tipo para a tabela de aplicações
-    vr_craprda apli0001.typ_tab_craprda;
-
 
     -- Variaveis locais da procedure crps445
     vr_exc_erro     EXCEPTION;                           --> Variável para exceção personalizada
@@ -1833,21 +1810,7 @@ BEGIN
                FOR idx IN nvl(vr_tab_craprda(vr_index_rdacta).first,0)..nvl(vr_tab_craprda(vr_index_rdacta).last,-1) LOOP
                  rw_craprda := vr_tab_craprda(vr_index_rdacta)(idx);
 
-				         --Limpa a tabela
-                 vr_craprda.delete;
 
-                 --Alimenta PLTABLE com as informações da aplicação
-                 vr_craprda(1).dtvencto:= vr_tab_craprda(vr_index_rdacta)(idx).dtvencto;
-                 vr_craprda(1).dtmvtolt:= vr_tab_craprda(vr_index_rdacta)(idx).dtmvtolt;
-                 vr_craprda(1).vlsdrdca:= vr_tab_craprda(vr_index_rdacta)(idx).vlsdrdca;
-                 vr_craprda(1).qtdiauti:= vr_tab_craprda(vr_index_rdacta)(idx).qtdiauti;
-                 vr_craprda(1).vlsltxmm:= vr_tab_craprda(vr_index_rdacta)(idx).vlsltxmm;
-                 vr_craprda(1).dtatslmm:= vr_tab_craprda(vr_index_rdacta)(idx).dtatslmm;
-                 vr_craprda(1).vlsltxmx:= vr_tab_craprda(vr_index_rdacta)(idx).vlsltxmx;
-                 vr_craprda(1).dtatslmx:= vr_tab_craprda(vr_index_rdacta)(idx).dtatslmx;
-                 vr_craprda(1).tpaplica:= vr_tab_craprda(vr_index_rdacta)(idx).tpaplica;                 
-                 vr_craprda(1).txaplica:= vr_tab_craprda(vr_index_rdacta)(idx).txaplica;
-                 vr_craprda(1).txaplmes:= vr_tab_craprda(vr_index_rdacta)(idx).txaplmes;
 
                  --Zerar variaveis
                  vr_vlsdrdca:= 0;
@@ -1951,8 +1914,6 @@ BEGIN
                                                 ,pr_txaplica => 0
                                                 ,pr_flggrvir => FALSE
                                                 ,pr_tab_crapdat => rw_crapdat
-                                                ,pr_inpessoa => rw_crapass.inpessoa
-                                                ,pr_nrcpfcgc => rw_crapass.nrcpfcgc
                                                 ,pr_vlsdrdca => vr_vlsldrdc
                                                 ,pr_vlrdirrf => vr_vlrdirrf
                                                 ,pr_perirrgt => vr_perirrgt
@@ -1984,16 +1945,13 @@ BEGIN
                                                 ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                                 ,pr_dtmvtopr => rw_crapdat.dtmvtopr
                                                 ,pr_nrdconta => rw_craprda.nrdconta
-                                                ,pr_craprda  => vr_craprda
+                                                ,pr_nraplica => rw_craprda.nraplica
                                                 ,pr_dtmvtpap => rw_crapdat.dtmvtolt
                                                 ,pr_dtcalsld => rw_crapdat.dtmvtolt
                                                 ,pr_flantven => FALSE
                                                 ,pr_flggrvir => FALSE
                                                 ,pr_dtinitax => vr_dtinitax
                                                 ,pr_dtfimtax => vr_dtfimtax
-                                                ,pr_cdprogra => vr_cdprogra
-                                                ,pr_inpessoa => rw_crapass.inpessoa
-                                                ,pr_nrcpfcgc => rw_crapass.nrcpfcgc                                                
                                                 ,pr_vlsdrdca => vr_vlsldrdc
                                                 ,pr_vlrentot => vr_vlrentot
                                                 ,pr_vlrdirrf => vr_vlrdirrf
@@ -2124,8 +2082,6 @@ BEGIN
                                           ,pr_dtmvtolt  => rw_crapdat.dtmvtolt
                                           ,pr_dtmvtopr  => rw_crapdat.dtmvtopr
                                           ,pr_rpp_rowid => rw_craprpp.rowid
-                                          ,pr_inpessoa  => rw_crapass.inpessoa
-                                          ,pr_nrcpfcgc  => rw_crapass.nrcpfcgc
                                           ,pr_vlsdrdpp  => vr_rpp_vlsdrdpp
                                           ,pr_cdcritic  => vr_cdcritic
                                           ,pr_des_erro  => vr_dscritic);
@@ -3120,12 +3076,13 @@ BEGIN
 
   EXCEPTION
     WHEN vr_exc_fimprg THEN
-
-      -- Buscar a descrição
-      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
-
+      -- Se foi retornado apenas código
+      IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
+        -- Buscar a descrição
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+      END IF;
       -- Se foi gerada critica para envio ao log
-      IF vr_dscritic IS NOT NULL THEN
+      IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
         -- Envio centralizado de log de erro
         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                   ,pr_ind_tipo_log => 2 -- Erro tratato
@@ -3151,10 +3108,11 @@ BEGIN
       COMMIT;
 
     WHEN vr_exc_erro THEN
-
-      -- Buscar a descrição
-      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
-
+      -- Se foi retornado apenas código
+      IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
+        -- Buscar a descrição
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+      END IF;
       -- Devolvemos código e critica encontradas
       pr_cdcritic := NVL(vr_cdcritic,0);
       pr_dscritic := vr_dscritic;
@@ -3166,9 +3124,6 @@ BEGIN
       ROLLBACK;
 
     WHEN OTHERS THEN
-      
-      cecred.pc_internal_exception(pr_cdcooper);
-
       -- Efetuar retorno do erro nao tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
