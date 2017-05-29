@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Outubro/91.                     Ultima atualizacao: 14/02/2017
+   Data    : Outubro/91.                     Ultima atualizacao: 18/04/2017
 
    Dados referentes ao programa:
 
@@ -304,14 +304,11 @@
                14/02/2017 - Alteracao para chamar pc_verifica_situacao_acordo. 
                             (Jaison/James - PRJ302)
 
-			   09/02/2017 - Chamado 605092 - não permitir estorno ou exclusão se
-                            a conta esta vinculada a um contrato de alienação de 
-                            veículo cujo gravame está em uma das situações abaixo:
-                            1 - Em processamento
-                            3 - Baixado
-                            5 - Cancelado
-                            Jean ( Mout´S)
+			   29/03/2017 - Ajutes para utilizar rotina a rotina pc_gerandb
+							(Jonata RKAM M311)
                             
+               18/04/2017 - Incluir chamada da rotina do Oracle pc_gerandb ao inves
+                            de chamar a include do PROGRESS (Lucas Ranghetti #652806)
 ............................................................................. */
 
 { includes/var_online.i }
@@ -336,7 +333,7 @@ DEF VAR aux_nrctatco         AS INT                                  NO-UNDO.
 DEF VAR aux_sldesblo         AS DECI                                 NO-UNDO.
 DEF VAR aux_flgretativo      AS INT                                  NO-UNDO.
 DEF VAR aux_flgretquitado    AS INT                                  NO-UNDO.
-
+DEF VAR aux_cdrefere         LIKE crapatr.cdrefere                   NO-UNDO.
 DEF BUFFER crabdev FOR crapdev.
 
 DEF VAR par_nsenhaok         AS LOGI INIT FALSE                      NO-UNDO.
@@ -1177,7 +1174,8 @@ DO WHILE TRUE:
            craplcm.cdhistor = 1233 OR
            craplcm.cdhistor = 1234) THEN /* historicos de consorcios */
            DO:
-               aux_flgerros = FALSE.
+               ASSIGN aux_flgerros = FALSE
+			          aux_cdrefere = 0.
                
                FIND crapcop WHERE crapcop.cdcooper = glb_cdcooper 
                                   NO-LOCK NO-ERROR.
@@ -1229,6 +1227,9 @@ DO WHILE TRUE:
                        IF   NOT AVAILABLE crapatr THEN
                             ASSIGN aux_flgerros = TRUE
                                     glb_cdcritic = 598.
+
+					   ASSIGN aux_cdrefere = crapatr.cdrefere WHEN AVAIL crapatr.
+
                     END.
 
                IF   aux_flgerros  THEN
@@ -1239,11 +1240,38 @@ DO WHILE TRUE:
                         NEXT.
                     END.
 
-               { includes/gerandb.i } 
+                /* Verifica se possui contrato de acordo */
+              { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }              
+
+                /* Verifica se ha contratos de acordo */
+              RUN STORED-PROCEDURE pc_gerandb
+                aux_handproc = PROC-HANDLE NO-ERROR (INPUT glb_cdcooper
+                                                    ,INPUT craplau.cdhistor
+                                                    ,INPUT craplcm.nrdconta
+													,INPUT aux_cdrefere
+                                                    ,INPUT craplau.vllanaut                                                    
+                                                    ,INPUT craplau.cdseqtel
+                                                    ,INPUT craplau.nrdocmto
+                                                    ,INPUT crapcop.cdagesic
+                                                    ,INPUT crapass.nrctacns
+													,INPUT crapass.cdagenci
+                                                    ,INPUT craplau.cdempres
+													,INPUT craplau.idlancto
+                                                    ,INPUT glb_cdcritic
+                                                    ,OUTPUT 0
+                                                    ,OUTPUT "").
+
+              CLOSE STORED-PROC pc_gerandb
+                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+              { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+              
+              ASSIGN glb_cdcritic = 0
+                     glb_dscritic = ""
+                     glb_cdcritic = INT(pc_gerandb.pr_cdcritic) WHEN pc_gerandb.pr_cdcritic <> ?
+                     glb_dscritic = TRIM(pc_gerandb.pr_dscritic) WHEN pc_gerandb.pr_dscritic <> ?.
                
-               RUN p_desconectagener.
-               
-               IF   glb_cdcritic <> 0 THEN
+                IF glb_cdcritic > 0 THEN
                     DO:
                         RUN fontes/critic.p.
                         MESSAGE glb_dscritic.
@@ -1251,6 +1279,14 @@ DO WHILE TRUE:
                         glb_cdcritic = 0.
                         NEXT.
                     END.
+                ELSE IF glb_dscritic <> ? AND glb_dscritic <> "" THEN
+                   DO:
+                      MESSAGE glb_dscritic.
+                      BELL.
+                      glb_cdcritic = 0.
+                      NEXT.
+                   END. 
+               
            END.
       
       IF   craphis.indebcre = "D"   THEN
