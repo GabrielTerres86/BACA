@@ -12,6 +12,7 @@
  * 002: [31/03/2010] Rodolpho Telmo  (DB1): Alterada função "buscaDescricao" acrescentando o parâmetro "nomeFormulario"
  * 003: [22/10/2020] David       (CECRED) : Incluir novo parametro para a funcao getDataXML (David).
  * 004: [17/07/2015] Gabriel        (RKAM): Suporte para chamar rotinas Oracle.
+ * 005: [08/05/2017] Jonata        (Mouts): Ajuste para inclusão da busca de dominios - P408.
  */	
 ?>
 
@@ -128,6 +129,10 @@
 	if (count($descricao) == 0) {		
 		// Atribui descrição ao respectivo campo
 		echo '$("input[name=\''.$campoDescricao.'\']").val("");';
+
+		if( $nomeProcedure == 'BUSCADESCDOMINIOS' ){
+			echo '$("input[id=\'iddominio_'.$campoCodigo.'\']").val("");';
+		}
 			
 		if ( $nomeFormulario != '' ) {				
 			echo '$("#'.$campoCodigo.'","#'.$nomeFormulario.'").addClass("campoErro");';
@@ -142,18 +147,30 @@
 	echo '$("input[name=\''.$campoCodigo.'\']").removeClass("campoErro");';
 	// Atribui descrição ao respectivo campo
 	echo '$("input[name=\''.$campoDescricao.'\']").val("'.getByTagName($descricao,$campoRetorno).'");';
-       
-        
-        if ( $campoCodigo == 'cdfinemp' ) {
-            echo '$(\'input[name="tpfinali"]\').val("'.getByTagName($descricao,'tpfinali').'");';
-        }
-        
-        if ( $nomeFormulario == 'frmSimulacao' ) {            
-            echo 'habilitaModalidade("'.getByTagName($descricao,'tpfinali').'");';
-        }
-        
+    	
+	if( $nomeProcedure == 'BUSCADESCDOMINIOS' ){
+		echo '$("input[id=\'iddominio_'.$campoCodigo.'\']").val("'.getByTagName($descricao,"iddominio").'");';
+	}
+	
+	if( $nomeProcedure == 'BUSCADESCASSOCIADO' ){
+		echo 'if($("select[id=\'cdclassifica_operacao\']","#'.$nomeFormulario.'").prop(\'selected\',true).val() != "AA"){ $("select[id=\'cdclassifica_operacao\']","#'.$nomeFormulario.'").prop(\'selected\',true).val("'.getByTagName($descricao,"dsnivris").'");}';
+		echo '$("#nrcpfcgc","#'.$nomeFormulario.'").val("'.getByTagName($descricao,"nrcpfcgc").'");';
+		
+	}
+	
+	if ( $campoCodigo == 'cdfinemp' ) {
+		echo '$(\'input[name="tpfinali"]\').val("'.getByTagName($descricao,'tpfinali').'");';
+	}
+	
+	if ( $nomeFormulario == 'frmSimulacao' ) {            
+		echo 'habilitaModalidade("'.getByTagName($descricao,'tpfinali').'");';
+	}
+	
 	// Esconde mensagem de aguardo
 	echo 'hideMsgAguardo();';
 	echo 'bloqueiaFundo(divRotina);';
 	echo 'if( $(\'#divMatric\').css(\'display\') == \'block\' || $(\'#divTela\').css(\'display\') == \'block\' ) { unblockBackground(); }';
 ?>	
+
+
+		

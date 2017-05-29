@@ -2,7 +2,7 @@
 
     Programa: b1wgen0059tt.i
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Marco/2010                   Ultima atualizacao: 23/09/2016
+    Data    : Marco/2010                   Ultima atualizacao: 22/05/2017
 
     Objetivo  : Definicao das Temp-Tables para telas de PESQUISA/ZOOM
                 
@@ -84,6 +84,9 @@
                              Correçao nas TEMP-TABLES colocar NO-UNDO, tt-relacionamento2 (Oscar).                
                              
                 17/08/2016 - Incluido campo txmensal na table tt-craplcr (Lombardi)
+
+				22/05/2017 - Auste para inclusao do campo dsnivris na tabela tt-titular
+				             (Jonata - RKAM / R408).
                              
 ............................................................................*/
 
@@ -235,7 +238,8 @@ DEFINE TEMP-TABLE tt-titular NO-UNDO
     FIELD cdempres LIKE crapttl.cdempres
     FIELD dtdemiss LIKE crapass.dtdemiss
     FIELD nrdocttl AS CHAR
-    FIELD dsagenci AS CHAR.
+    FIELD dsagenci AS CHAR
+	FIELD dsnivris LIKE crapass.dsnivris.
     
 DEFINE TEMP-TABLE tt-oper-tel NO-UNDO
     FIELD cdopetfn AS INTE
