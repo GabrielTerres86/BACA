@@ -195,7 +195,6 @@ CREATE OR REPLACE PACKAGE CECRED.DSCC0001 AS
                                     ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> Data atual
                                     ,pr_nrborder IN crapbdc.nrborder%TYPE  --> numero do bordero
                                     ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Número da Conta
-                                    ,pr_idimpres IN INTEGER DEFAULT 0      --> Indicador de impressao
                                     --------> OUT <--------                                   
                                     ,pr_tab_chq_bordero        OUT DSCT0002.typ_tab_chq_bordero    --> retorna cheques do bordero
                                     ,pr_tab_bordero_restri     OUT DSCT0002.typ_tab_bordero_restri --> retorna restricoes do cheques do bordero
@@ -222,7 +221,6 @@ CREATE OR REPLACE PACKAGE CECRED.DSCC0001 AS
                                         ,pr_nmcidade IN crapcop.nmcidade%TYPE  --> Nome da cidade
                                         ,pr_nmoperad IN crapope.nmoperad%TYPE  --> Nome do operador
                                         ,pr_dsopecoo IN VARCHAR2               --> Descricao operador coordenador
-                                        ,pr_idimpres IN INTEGER DEFAULT 0      --> Indicador de impressao
                                         --------> OUT <--------                                   
                                         ,pr_tab_dados_itens_bordero OUT DSCT0002.typ_tab_dados_itens_bordero --> retorna dados do bordero
                                         ,pr_tab_chq_bordero         OUT DSCT0002.typ_tab_chq_bordero         --> retorna cheques do bordero
@@ -391,18 +389,6 @@ CREATE OR REPLACE PACKAGE CECRED.DSCC0001 AS
 																	    ,pr_tab_cheques IN typ_tab_cheques     --> PlTable com dados dos cheques
                                       ,pr_cdcritic OUT PLS_INTEGER           --> Crítica
                                       ,pr_dscritic OUT VARCHAR2);            --> Desc. da crítica
-
-  --> Rotina para retornar o valor da liquidação do cheque
-  PROCEDURE pc_calcular_vlliquid_chq   (pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cooperativa
-																			 ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Número da conta
-																			 ,pr_nrborder IN crapabc.nrborder%TYPE  --> numero do bordero		
-                                       ,pr_dtmvtolt IN crapbdc.dtmvtolt%TYPE  --> data de criação do bordero																	 
-                                       ,pr_txmensal IN crapbdc.txmensal%TYPE  --> Taxa mensal do bordero	
-                                       ,pr_vlcheque IN crapcdb.vlcheque%TYPE  --> Taxa mensal do bordero	
-                                       ,pr_dtlibera IN DATE                   --> Data para liberação do bordero                                       
-                                       ,pr_vlliquid OUT crapcdb.vlliquid%TYPE --> Retorna valor liquidacao do cheque													 
-																			 ,pr_cdcritic OUT PLS_INTEGER           --> Cód. da crítica
-																			 ,pr_dscritic OUT VARCHAR2);            --> Descrição da crítica
 
 END DSCC0001;
 /
@@ -1126,7 +1112,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                     ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> Data atual
                                     ,pr_nrborder IN crapbdc.nrborder%TYPE  --> numero do bordero
                                     ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Número da Conta
-                                    ,pr_idimpres IN INTEGER DEFAULT 0      --> Indicador de impressao
                                     --------> OUT <--------                                   
                                     ,pr_tab_chq_bordero     OUT DSCT0002.typ_tab_chq_bordero    --> retorna cheques do bordero
                                     ,pr_tab_bordero_restri  OUT DSCT0002.typ_tab_bordero_restri --> retorna restricoes do cheques do bordero
@@ -1138,7 +1123,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     --  Sistema  : CRED
     --  Sigla    : DSCC0001
     --  Autor    : Jaison
-    --  Data     : Agosto/2016                        Ultima atualizacao: 26/05/2017
+    --  Data     : Agosto/2016                        Ultima atualizacao: 30/08/2016
     --
     --  Dados referentes ao programa:
     --
@@ -1146,9 +1131,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     --   Objetivo  : Buscar cheques de um determinado bordero a partir da crapcdb
     --
     --   Alteração : 30/08/2016 - Conversao Progress -> Oracle (Jaison/Daniel)
-    --
-    --               26/05/2017 - Alterado para tipo de impressao 10 - Analise
-    --                            PRJ300 - Desconto de cheque (Odirlei-AMcom) 
     -- .........................................................................*/
     
     ---------->>> CURSORES <<<---------- 
@@ -1169,21 +1151,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
              cdb.vlliquid,
              cdb.dtlibbdc,
              cdb.nrcpfcgc,
-						 cdb.insitana,
-             bdc.dtmvtolt,
-             bdc.dtrejeit,
-             bdc.txmensal
-        FROM crapcdb cdb,
-             crapbdc bdc
-       WHERE cdb.cdcooper = bdc.cdcooper
-         AND cdb.nrborder = bdc.nrborder
-         AND cdb.nrdconta = bdc.nrdconta
-         AND cdb.cdcooper = pr_cdcooper
+						 cdb.insitana
+        FROM crapcdb cdb
+       WHERE cdb.cdcooper = pr_cdcooper
          AND cdb.nrborder = pr_nrborder
          AND cdb.nrdconta = pr_nrdconta
-         -- Listar apenas os aprovados para a opção de relatorio de analise
-         AND ((pr_idimpres = 10 AND cdb.insitana = 1) OR 
-               pr_idimpres <> 10)
     ORDER BY cdb.dtlibera,
              cdb.cdbanchq,
              cdb.cdagechq,
@@ -1268,24 +1240,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     vr_rel_nmcheque    VARCHAR2(200);
 		vr_stsnrcal        BOOLEAN;
 		vr_inpessoa        NUMBER;
-    vr_dtjurtab        DATE;
-    vr_vlliquid        NUMBER;
     
   BEGIN
     -- Limpa a PLTABLE
     pr_tab_chq_bordero.DELETE;
     pr_tab_bordero_restri.DELETE;
-    
-    BEGIN
-      -- Buscar data parametro de referencia para calculo de juros
-      vr_dtjurtab :=	to_date(GENE0001.fn_param_sistema (pr_cdcooper => 0
-                                                       ,pr_nmsistem => 'CRED'
-                                                       ,pr_cdacesso => 'DT_BLOQ_ARQ_DSC_CHQ')
-                             ,'DD/MM/RRRR');
-		EXCEPTION
-      WHEN OTHERS THEN
-        vr_dtjurtab := NULL;
-    END;
 
     --> Cheques contidos no bordero
     FOR rw_crapcdb IN cr_crapcdb LOOP
@@ -1301,8 +1260,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
         -- Se encontrou
         IF vr_blnfound THEN
           vr_rel_nmcheque := rw_crapass_2.nmprimtl; 
-          vr_rel_dscpfcgc := GENE0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapass.nrcpfcgc,
-                                                       pr_inpessoa => rw_crapass.inpessoa);
+          vr_rel_dscpfcgc := GENE0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapass_2.nrcpfcgc,
+                                                       pr_inpessoa => rw_crapass_2.inpessoa);
         -- Se NAO encontrar
         ELSE
           -- Pessoa Física
@@ -1366,7 +1325,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
         END IF;
       END IF;
       
-      
       vr_idxchequ := pr_tab_chq_bordero.COUNT + 1;
       pr_tab_chq_bordero(vr_idxchequ).cdcmpchq := rw_crapcdb.cdcmpchq;
       pr_tab_chq_bordero(vr_idxchequ).cdbanchq := rw_crapcdb.cdbanchq;
@@ -1380,44 +1338,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
       pr_tab_chq_bordero(vr_idxchequ).dscpfcgc := vr_rel_dscpfcgc;
       pr_tab_chq_bordero(vr_idxchequ).dtlibera := rw_crapcdb.dtlibera;
       pr_tab_chq_bordero(vr_idxchequ).nmcheque := vr_rel_nmcheque;
+      pr_tab_chq_bordero(vr_idxchequ).vlliquid := rw_crapcdb.vlliquid;
       pr_tab_chq_bordero(vr_idxchequ).dtlibbdc := rw_crapcdb.dtlibbdc;
       pr_tab_chq_bordero(vr_idxchequ).dtmvtolt := pr_dtmvtolt;
 			pr_tab_chq_bordero(vr_idxchequ).insitana := rw_crapcdb.insitana;
-
-      --> //odirlei
-      --> Para impressoes do tipo 10 - impressao para analise
-      --> caso bordero da data maior que a data de corte
-      IF pr_idimpres = 10  AND        
-         vr_dtjurtab < rw_crapcdb.dtmvtolt AND 
-         --> Nao estiver rejeitado
-         rw_crapcdb.dtrejeit IS NULL  AND   
-         --> e ainda nao foi liberado
-         rw_crapcdb.dtlibbdc IS NULL  THEN 
-         
-        --> Deve calcular o valor de liquidação
-        pc_calcular_vlliquid_chq   (pr_cdcooper => pr_cdcooper         --> Cooperativa
-                                   ,pr_nrdconta => pr_nrdconta         --> Número da conta
-                                   ,pr_nrborder => pr_nrborder         --> Numero do bordero			
-                                   ,pr_dtmvtolt => pr_dtmvtolt         --> data de criação do bordero																 
-                                   ,pr_txmensal => rw_crapcdb.txmensal --> Taxa mensal do bordero	
-                                   ,pr_vlcheque => rw_crapcdb.vlcheque --> Taxa mensal do bordero	
-                                   ,pr_dtlibera => rw_crapcdb.dtlibera --> Data para liberação do bordero                                       
-                                   ,pr_vlliquid => vr_vlliquid         --> Retorna valor liquidacao do cheque													 
-                                   ,pr_cdcritic => vr_cdcritic         --> Cód. da crítica
-                                   ,pr_dscritic => vr_dscritic);       --> Descrição da crítica
-         
-        IF nvl(vr_cdcritic,0) > 0 OR
-           TRIM(vr_dscritic) IS NOT NULL THEN 
-          RAISE vr_exc_erro; 
-        END IF;          
-      ELSE
-        -- Senao utilizar o proprio valor da tabela
-        vr_vlliquid := rw_crapcdb.vlliquid;
-      END IF;  
-
-
-
-      pr_tab_chq_bordero(vr_idxchequ).vlliquid := vr_vlliquid;
 
       -->  Buscar restricoes de um determinado bordero ou cheque  
       pc_busca_restricoes(pr_cdcooper => pr_cdcooper          --> Código da Cooperativa
@@ -1495,7 +1419,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                         ,pr_nmcidade IN crapcop.nmcidade%TYPE  --> Nome da cidade
                                         ,pr_nmoperad IN crapope.nmoperad%TYPE  --> Nome do operador
                                         ,pr_dsopecoo IN VARCHAR2               --> Descricao operador coordenador
-                                        ,pr_idimpres IN INTEGER DEFAULT 0      --> Indicador de impressao
                                         --------> OUT <--------                                   
                                         ,pr_tab_dados_itens_bordero OUT DSCT0002.typ_tab_dados_itens_bordero --> retorna dados do bordero
                                         ,pr_tab_chq_bordero         OUT DSCT0002.typ_tab_chq_bordero         --> retorna cheques do bordero
@@ -1508,7 +1431,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     --  Sistema  : CRED
     --  Sigla    : DSCC0001
     --  Autor    : Jaison
-    --  Data     : Agosto/2016                        Ultima atualizacao: 26/05/2017
+    --  Data     : Agosto/2016                        Ultima atualizacao: 31/08/2016
     --
     --  Dados referentes ao programa:
     --
@@ -1516,9 +1439,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     --   Objetivo  : Carrega dados com os cheques do bordero
     --
     --   Alteração : 31/08/2016 - Conversao Progress -> Oracle (Jaison/Daniel)
-    --
-    --               26/05/2017 - Alterado para tipo de impressao 10 - Analise
-    --                            PRJ300 - Desconto de cheque (Odirlei-AMcom) 
     -- .........................................................................*/
     
     ---------->>> CURSORES <<<----------
@@ -1544,7 +1464,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                             ,pr_dtmvtolt => pr_dtmvtolt  --> Data atual
                             ,pr_nrborder => pr_nrborder  --> numero do bordero
                             ,pr_nrdconta => pr_nrdconta  --> Número da Conta
-                            ,pr_idimpres => pr_idimpres  --> Indicador de impressao                      
                             --------> OUT <--------                                   
                             ,pr_tab_chq_bordero    => pr_tab_chq_bordero    --> retorna titulos do bordero
                             ,pr_tab_bordero_restri => pr_tab_bordero_restri --> retorna restrições do cheques do bordero
@@ -1790,7 +1709,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     --  Sistema  : CRED
     --  Sigla    : DSCC0001
     --  Autor    : Jaison
-    --  Data     : Setembro/2016                       Ultima atualizacao: 26/05/2017
+    --  Data     : Setembro/2016                       Ultima atualizacao: 06/09/2016
     --
     --  Dados referentes ao programa:
     --
@@ -1805,8 +1724,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     --               22/12/2016 - Alteracao no relatorio de desconto de cheque.
     --                            Projeto 300 (Lombardi)
     --               
-    --               26/05/2017 - Alterado para tipo de impressao 10 - Analise
-    --                            PRJ300 - Desconto de cheque (Odirlei-AMcom) 
     -- .........................................................................*/
 
     ----------->>> CURSORES  <<<--------
@@ -2035,9 +1952,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     dbms_lob.createtemporary(vr_des_xml, TRUE);
     dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
     
-    --> 7 - Bordero cheques
-    --> 10 - Bordero cheques analise
-    IF pr_idimpres IN (7,10) THEN
+    --> Bordero cheques
+    IF pr_idimpres = 7 THEN
       --Buscar indice do primeiro registro
       vr_idxborde := vr_tab_dados_itens_bordero.FIRST;
       IF vr_idxborde IS NULL THEN
@@ -2469,8 +2385,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 
     Objetivo  : Rotina para chamar as impressoes.
 
-    Alteracoes: 26/05/2017 - Alterado para tipo de impressao 10 - Analise
-                             PRJ300 - Desconto de cheque (Odirlei-AMcom) 
+    Alteracoes: -----
     ..............................................................................*/
     DECLARE
       -- Cursor da data
@@ -2516,9 +2431,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
       FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
       CLOSE BTCH0001.cr_crapdat;
 
-      -->  7 - BORDERO DE CHEQUES
-      --> 10 - Bordero cheques analise
-      IF pr_idimpres IN (7,10) THEN
+      --> BORDERO DE CHEQUES
+      IF pr_idimpres = 7 THEN
 
         -- Se for cheque
         IF pr_tpctrlim = 2 THEN
@@ -8334,123 +8248,5 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			-- Efetuar Rollback
 			ROLLBACK;				 																			 		
 	END pc_resgata_cheques_bordero;
-  
-  --> Rotina para retornar o valor da liquidação do cheque
-  PROCEDURE pc_calcular_vlliquid_chq   (pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cooperativa
-																			 ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Número da conta
-																			 ,pr_nrborder IN crapabc.nrborder%TYPE  --> numero do bordero																			 
-                                       ,pr_dtmvtolt IN crapbdc.dtmvtolt%TYPE  --> data de criação do bordero
-                                       ,pr_txmensal IN crapbdc.txmensal%TYPE  --> Taxa mensal do bordero	
-                                       ,pr_vlcheque IN crapcdb.vlcheque%TYPE  --> Taxa mensal do bordero	
-                                       ,pr_dtlibera IN DATE                   --> Data para liberação do bordero                                       
-                                       ,pr_vlliquid OUT crapcdb.vlliquid%TYPE --> Retorna valor liquidacao do cheque													 
-																			 ,pr_cdcritic OUT PLS_INTEGER           --> Cód. da crítica
-																			 ,pr_dscritic OUT VARCHAR2) IS          --> Descrição da crítica
-  /* .............................................................................
-    Programa: pc_calcular_vlliquid_chq
-    Sistema : CECRED
-    Autor   : Odirlei Busana - AMcom
-    Data    : Maio/2017                 Ultima atualizacao:
-
-    Dados referentes ao programa:
-
-    Frequencia: Sempre que for chamado
-
-    Objetivo  : Rotina para retornar o valor da liquidação do cheque
-
-    Alteracoes: -----
-  ..............................................................................*/																			 
-	-- Variável de críticas
-	vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
-	vr_dscritic        VARCHAR2(1000);        --> Desc. Erro        
-	-- Tratamento de erros
-	vr_exc_erro        EXCEPTION;    
-	
-	-- Variáveis auxiliares
-	vr_txmensal crapbdc.txmensal%TYPE;
-  vr_dtresgat DATE;
-	vr_dtauxili DATE;
-	vr_dtrefjur DATE;
-	vr_vlcheque NUMBER;
-	vr_vltotjur NUMBER;
-	vr_vldjuros NUMBER;
-	vr_qtdiares NUMBER;
-	vr_vlliquid NUMBER;
-	vr_nrseqdig NUMBER;
-	vr_vllanmto NUMBER;
-	
-  -- Cursor da data
-  rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
-
-	
-	BEGIN
-		
-		-- Busca a data do sistema
-		OPEN  BTCH0001.cr_crapdat(pr_cdcooper);
-		FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
-		CLOSE BTCH0001.cr_crapdat;
-		
-    -- Atribuir taxa mensal do borderô
-		vr_txmensal := pr_txmensal;
-					
-		vr_vlcheque := pr_vlcheque;
-		vr_dtresgat := pr_dtlibera;
-		vr_dtauxili := last_day(pr_dtmvtolt); --last_day(rw_crapdat.dtmvtolt);
-		vr_vltotjur := 0;
-			
-		LOOP
-			vr_qtdiares := 0;
-				
-			-- Se data auxliar for maior que a de liberação do cheque
-			IF vr_dtauxili >= vr_dtresgat THEN
-				-- Verificar se mês da data de liberação é o mesmo da data auxiliar
-				IF TRUNC(vr_dtauxili, 'MM') = TRUNC(pr_dtmvtolt, 'MM') THEN
-					vr_qtdiares := vr_dtresgat - pr_dtmvtolt;
-				ELSE 
-					vr_qtdiares := vr_dtresgat - trunc(vr_dtauxili,'MM') + 1;
-				END IF;
-			ELSE
-				-- Verificar se mês da data atual é o mesmo da data auxiliar
-				IF TRUNC(vr_dtauxili, 'MM') = TRUNC(pr_dtmvtolt, 'MM') THEN
-					vr_qtdiares := vr_dtauxili - pr_dtmvtolt;
-				ELSE 
-					vr_qtdiares := vr_dtauxili - TRUNC(vr_dtauxili,'MM') + 1;
-				END IF;
-			END IF;
-				
-			vr_vldjuros := vr_vlcheque * vr_qtdiares * ((vr_txmensal / 100) / 30);
-			vr_vltotjur := nvl(vr_vltotjur,0) + vr_vldjuros;
-			
-			-- O cálculo é proporcional mês a mês
-			vr_dtauxili := add_months(vr_dtauxili, 1);
-			vr_dtrefjur := last_day(vr_dtauxili);
-			
-			EXIT WHEN TRUNC(vr_dtauxili, 'MM') > vr_dtresgat;
-				
-		END LOOP;
-			
-		-- No final do cálculo, atualizar o valor líquido do cheque
-    pr_vlliquid := vr_vlcheque - vr_vltotjur;
-			
-		
-	EXCEPTION    
-    WHEN vr_exc_erro THEN      
-      IF NVL(vr_cdcritic,0) <> 0 AND 
-         TRIM(vr_dscritic) IS NULL THEN
-        pr_cdcritic := vr_cdcritic;
-        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-			ELSE
-        pr_cdcritic := vr_cdcritic;
-        pr_dscritic := REPLACE(REPLACE(vr_dscritic,chr(13)),chr(10));
-      END IF;
-      -- Efetuar rollback
-      ROLLBACK;      
-    WHEN OTHERS THEN      
-      pr_cdcritic := vr_cdcritic;
-      pr_dscritic := REPLACE(REPLACE('Nao foi possivel calcular valor liquidacao do cheque: ' || SQLERRM, chr(13)),chr(10));																			
-			-- Efetuar Rollback
-			ROLLBACK;				 																			 
-	END pc_calcular_vlliquid_chq;
-  
 END DSCC0001;
 /
