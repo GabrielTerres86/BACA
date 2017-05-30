@@ -3,6 +3,7 @@
 	<property name="ireport.zoom" value="2.657341500000001"/>
 	<property name="ireport.x" value="0"/>
 	<property name="ireport.y" value="0"/>
+	<subDataset name="crrl494" uuid="5d92eb0a-802a-4097-b446-7559f19ea8f4"/>
 	<parameter name="PR_NMRESCOP" class="java.lang.String">
 		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
 	</parameter>
@@ -143,6 +144,36 @@
 				</subreportParameter>
 				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//agencias/agencia/conta")]]></dataSourceExpression>
 				<subreportExpression><![CDATA["crrl494_conta.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+		<band height="8">
+			<subreport>
+				<reportElement uuid="e3495700-9446-4307-8108-33a1556a98ae" x="0" y="0" width="842" height="8"/>
+				<subreportParameter name="PR_NMMODULO">
+					<subreportParameterExpression><![CDATA[$P{PR_NMMODULO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//resumo_dsc_tit/total_pf")]]></dataSourceExpression>
+				<subreportExpression><![CDATA["crrl494_resumo_pf.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+		<band height="8">
+			<subreport>
+				<reportElement uuid="e3495700-9446-4307-8108-33a1556a98ae" x="0" y="0" width="842" height="8"/>
+				<subreportParameter name="PR_NMMODULO">
+					<subreportParameterExpression><![CDATA[$P{PR_NMMODULO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//resumo_dsc_tit/total_pj")]]></dataSourceExpression>
+				<subreportExpression><![CDATA["crrl494_resumo_pj.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+		<band height="8">
+			<subreport>
+				<reportElement uuid="e3495700-9446-4307-8108-33a1556a98ae" x="0" y="0" width="842" height="8"/>
+				<subreportParameter name="PR_NMMODULO">
+					<subreportParameterExpression><![CDATA[$P{PR_NMMODULO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//resumo_dsc_tit/total_geral")]]></dataSourceExpression>
+				<subreportExpression><![CDATA["crrl494_resumo_geral.jasper"]]></subreportExpression>
 			</subreport>
 		</band>
 		<band height="8">
