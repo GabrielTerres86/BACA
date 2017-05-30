@@ -2784,6 +2784,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 																				 ,vr_vlmaximo
 																				 ,rw_xmlProduto.tpoperacao);
 					ELSE -- Valor pré-fixado
+            
+            IF rw_xmlProduto.nmproduto <> 'SERCOMTEL FIXO' THEN
+              
 						-- Criar novo produto
 						INSERT INTO tbrecarga_produto(cdoperadora
 																				 ,nmproduto
@@ -2809,6 +2812,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 																				 ,rw_xmlValor.vlrecarga
 																				 ,trunc(SYSDATE));
 						END LOOP;																				 
+              
+					END IF;
 					END IF;
 				ELSE
 					-- Se produto mudou o tipo ou operação
