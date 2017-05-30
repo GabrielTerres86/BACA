@@ -2046,7 +2046,7 @@ PROCEDURE efetua_inclusao_limite:
           RUN STORED-PROCEDURE pc_sequence_progress
           aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLIM"
                                               ,INPUT "NRCTRLIM"
-                                              ,STRING(par_cdcooper) + STRING(par_dtmvtolt, '99/99/9999')
+                                              ,STRING(par_cdcooper) + ";" + "2" /* tpctrlim */
                                               ,INPUT "N"
                                               ,"").
 
@@ -2058,16 +2058,12 @@ PROCEDURE efetua_inclusao_limite:
           ASSIGN aux_nrseqcar = INTE(pc_sequence_progress.pr_sequence)
                                 WHEN pc_sequence_progress.pr_sequence <> ?.
           
-          ASSIGN aux_nrctrlim = INT(STRING(YEAR(par_dtmvtolt),"9999") +
-                                    STRING(MONTH(par_dtmvtolt),"99" ) +
-                                    STRING(DAY(par_dtmvtolt),"99" )   +
-                                    STRING(aux_nrseqcar)).
+          ASSIGN aux_nrctrlim = aux_nrseqcar.
                             
           
           
           FIND FIRST craplim 
                WHERE craplim.cdcooper = par_cdcooper
-                 AND craplim.nrdconta = par_nrdconta
                  AND craplim.tpctrlim = 2
                  AND craplim.nrctrlim = aux_nrctrlim
                  NO-LOCK NO-ERROR.
