@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.CONV0001 AS
 
     Programa: CONV0001 (Antigo b1wgen0045.p)
     Autor   : Guilherme - Precise
-    Data    : Outubro/2009                       Ultima Atualizacao: 14/09/2016
+    Data    : Outubro/2009                       Ultima Atualizacao: 29/05/2017
 
     Dados referentes ao programa:
 
@@ -75,6 +75,8 @@ CREATE OR REPLACE PACKAGE CECRED.CONV0001 AS
                14/09/2016 - Incluir nova procedure pc_pula_seq_gt0001, irá criar registro de
                             controle na gncontr caso seja alterado o sequencial (Lucas Ranghetti #484556)
 
+               29/05/2017 - Incluir nova procedure pc_gerandb_car para chamar a pc_gerandb
+                            (Lucas Ranghetti #681579)
 ..............................................................................*/
 
   --Tipo de Registro para convenios
@@ -269,6 +271,23 @@ CREATE OR REPLACE PACKAGE CECRED.CONV0001 AS
                        ,pr_codcriti IN INTEGER                -- Código do erro
                        ,pr_cdcritic OUT INTEGER               -- Código do erro
                        ,pr_dscritic OUT VARCHAR2);            -- Descricao do erro
+
+ /* Gerar registros na crapndb para devolucao de debitos automaticos. */
+  PROCEDURE pc_gerandb_car (pr_cdcooper IN crapcop.cdcooper%TYPE  -- Código da Cooperativa
+                           ,pr_cdhistor IN craphis.cdhistor%TYPE  -- Código do Histórico
+                           ,pr_nrdconta IN crapass.nrdconta%TYPE  -- Numero da Conta
+                           ,pr_cdrefere IN VARCHAR2               -- Código de Referência
+                           ,pr_vllanaut IN craplau.vllanaut%TYPE  -- Valor Lancamento
+                           ,pr_cdseqtel IN craplau.cdseqtel%TYPE  -- Código Sequencial
+                           ,pr_nrdocmto IN VARCHAR2               -- Número do Documento
+                           ,pr_cdagesic IN crapcop.cdagesic%TYPE  -- Agência Sicredi
+                           ,pr_nrctacns IN crapass.nrctacns%TYPE  -- Conta do Consórcio
+                           ,pr_cdagenci IN crapass.cdagenci%TYPE  -- Codigo do PA
+                           ,pr_cdempres IN craplau.cdempres%TYPE  -- Codigo empresa sicredi
+                           ,pr_idlancto IN craplau.idlancto%TYPE  -- Código do lançamento        
+                           ,pr_codcriti IN INTEGER                -- Código do erro
+                           ,pr_cdcritic OUT INTEGER               -- Código do erro
+                           ,pr_dscritic OUT VARCHAR2); 
 
   -- Conectar-se ao FTP da Transabbc e efetuar download de três arquivos diariamente.
   PROCEDURE pc_busca_concilia_transabbc;
@@ -1590,7 +1609,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Odair
-  --  Data     : Agosto/98.                  Ultima atualizacao: 04/04/2017
+  --  Data     : Agosto/98.                  Ultima atualizacao: 29/05/2017
   --
   -- Dados referentes ao programa:
   --
@@ -1686,8 +1705,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --             31/03/2017 - Incluir PREVISC para fazer como faz a SULAMERICA (Lucas Ranghetti #637882)
   --
   --             04/04/2017 - Ajuste para integracao de arquivos com layout na versao 5
-  --			              (Jonata - RKAM M311).
+  --			                    (Jonata - RKAM M311).
   --
+  --             29/05/2017 - Incluir nova procedure pc_gerandb_car para chamar a pc_gerandb
+  --                          (Lucas Ranghetti #681579)
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -2028,6 +2049,77 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
          pr_dscritic:= 'Erro na rotina CONV0001.pc_gerandb. ' || sqlerrm;
     END;
   END pc_gerandb;
+
+  /* Gerar registros na crapndb para devolucao de debitos automaticos. */
+  PROCEDURE pc_gerandb_car (pr_cdcooper IN crapcop.cdcooper%TYPE  -- Código da Cooperativa
+                           ,pr_cdhistor IN craphis.cdhistor%TYPE  -- Código do Histórico
+                           ,pr_nrdconta IN crapass.nrdconta%TYPE  -- Numero da Conta
+                           ,pr_cdrefere IN VARCHAR2               -- Código de Referência
+                           ,pr_vllanaut IN craplau.vllanaut%TYPE  -- Valor Lancamento
+                           ,pr_cdseqtel IN craplau.cdseqtel%TYPE  -- Código Sequencial
+                           ,pr_nrdocmto IN VARCHAR2               -- Número do Documento
+                           ,pr_cdagesic IN crapcop.cdagesic%TYPE  -- Agência Sicredi
+                           ,pr_nrctacns IN crapass.nrctacns%TYPE  -- Conta do Consórcio
+                           ,pr_cdagenci IN crapass.cdagenci%TYPE  -- Codigo do PA
+                           ,pr_cdempres IN craplau.cdempres%TYPE  -- Codigo empresa sicredi
+                           ,pr_idlancto IN craplau.idlancto%TYPE  -- Código do lançamento        
+                           ,pr_codcriti IN INTEGER                -- Código do erro
+                           ,pr_cdcritic OUT INTEGER               -- Código do erro
+                           ,pr_dscritic OUT VARCHAR2) IS
+  BEGIN
+    /* .............................................................................
+
+    Programa: pc_gerandb_car
+    Sistema : Chamar a pc_gerandb.
+    Sigla   : CRED
+    Autor   : Lucas Ranghetti
+    Data    : Maio/2017.                    Ultima atualizacao: --/--/----
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+    Objetivo  : Chamar a pc_gerandb.
+
+    Alteracoes:
+    ..............................................................................*/
+    DECLARE
+      vr_exc_saida  EXCEPTION;
+      vr_cdcritic NUMBER;
+      vr_dscritic VARCHAR2(500);
+    BEGIN
+      
+      conv0001.pc_gerandb(pr_cdcooper => pr_cdcooper
+                         ,pr_cdhistor => pr_cdhistor
+                         ,pr_nrdconta => pr_nrdconta
+                         ,pr_cdrefere => pr_cdrefere
+                         ,pr_vllanaut => pr_vllanaut
+                         ,pr_cdseqtel => pr_cdseqtel
+                         ,pr_nrdocmto => pr_nrdocmto
+                         ,pr_cdagesic => pr_cdagesic
+                         ,pr_nrctacns => pr_nrctacns
+                         ,pr_cdagenci => pr_cdagenci                         
+                         ,pr_cdempres => pr_cdempres
+                         ,pr_idlancto => pr_idlancto
+                         ,pr_codcriti => pr_codcriti
+                         ,pr_cdcritic => vr_cdcritic
+                         ,pr_dscritic => vr_dscritic);
+    
+      -- Se ocorrer algum erro
+      IF vr_dscritic IS NOT NULL OR nvl(vr_cdcritic,0) <> 0 THEN
+         RAISE vr_exc_saida;
+      END IF;
+    
+    -- VERIFICA SE HOUVE EXCECAO
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+         pr_cdcritic:= vr_cdcritic;
+         pr_dscritic:= vr_dscritic;
+       WHEN OTHERS THEN
+         pr_cdcritic:= 0;
+         pr_dscritic:= 'Erro na rotina CONV0001.pc_gerandb_car. ' || sqlerrm;
+    END;
+  END pc_gerandb_car;
+
 
   -- Faz download de arquivo em um servidor FTP
   PROCEDURE pc_download_ftp(pr_serv_ftp   IN VARCHAR2     --> Servidor FTP
