@@ -20,6 +20,9 @@
                 
                 23/02/2016 - Alteraçao na rotina de alteraçao de senha 
                             (Lucas Lunelli - [PROJ290])
+							
+				30/05/2017 - Ajuste para remover a instrucao nrsencar solicitado no 
+							 chamado 654467. (Kelvin)
                 
 
                                                                            */ 
@@ -508,11 +511,13 @@ DEF OUTPUT PARAM p-sen-antiga AS LOG   NO-UNDO.
 FIND crapcrm WHERE
      ROWID(crapcrm) = p-rwcrapcrm NO-LOCK NO-ERROR.
 
-    IF crapcrm.nrsencar > 999999 THEN
+    /*IF crapcrm.nrsencar > 999999 THEN
         ASSIGN p-sen-antiga = NO.
     ELSE
-        ASSIGN p-sen-antiga = YES.
-
+        ASSIGN p-sen-antiga = YES.*/
+	
+	ASSIGN p-sen-antiga = NO.
+	  
 END PROCEDURE.
 
 /* b2crap004.p */        
