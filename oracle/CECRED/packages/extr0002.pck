@@ -5351,6 +5351,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                                              ,pr_flgrvvlr  => FALSE                --> Identificador se deve gravar valor
                                              ,pr_cdinsenc  => 0                    --> Codigo da isenção
                                              ,pr_vlinsenc  => 0                    --> Valor insento
+                                             ,pr_inpessoa  => rw_crapass.inpessoa  --> Tipo de pessoa
+                                             ,pr_nrcpfcgc  => rw_crapass.nrcpfcgc  --> CPF/CNPJ
                                              ,pr_flgimune  => vr_flgimune          --> Identificador se é imune
                                              ,pr_dsreturn  => vr_des_reto          --> Descricao Critica
                                              ,pr_tab_erro  => pr_tab_erro);        --> Tabela erros
