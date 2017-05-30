@@ -2252,7 +2252,7 @@ DO WHILE TRUE:
                         " Valor: " + TRIM(STRING(craplcm.vllanmto,
                                                  "zzzzzz,zzz,zz9.99")) +
 
-                        " Contrato: " + STRING(INTE(craplcm.cdpesqbb)) +
+                        " Contrato: " + craplcm.cdpesqbb +
                         " >> log/landpv.log").
     
       /* Trazer nome do supervisor */
