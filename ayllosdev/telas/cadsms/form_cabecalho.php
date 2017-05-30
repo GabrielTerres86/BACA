@@ -47,12 +47,15 @@ function exibeErroNew($msgErro) {
 	<input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>">
 		
 	<label for="cddopcao"><? echo utf8ToHtml('Opção:') ?></label>
-	<select id="cddopcao" name="cddopcao" >
+	<select id="cddopcao" name="cddopcao" onchange="Cabecalho.onChangeOpcao(this);" >
+		<option value="A" <? echo $cddopcao == 'A' ? 'selected' : '' ?> > A - Alterar Pacotes de SMS</option>
+		<option value="C" <? echo $cddopcao == 'C' ? 'selected' : '' ?> > C - Consultar Pacotes de SMS</option>
+		<option value="I" <? echo $cddopcao == 'I' ? 'selected' : '' ?> > I - Incluir Pacotes de SMS</option>
 		<option value="M" <? echo $cddopcao == 'M' ? 'selected' : '' ?> > M - Manuten&ccedil;&atilde;o de Mensagens para SMS</option> 		
         <option value="P" <? echo $cddopcao == 'P' ? 'selected' : '' ?> > P - Cadastrar Par&acirc;metros</option> 		
-        <!-- Apenas será liberado na fase 2
+
         <option value="O" <? echo $cddopcao == 'O' ? 'selected' : '' ?> > O - Ofertar Servi&ccedil;o</option> 
-        -->
+
         <option value="Z" <? echo $cddopcao == 'Z' ? 'selected' : '' ?> > Z - Envio de Remessa para a Zenvia - Conting&ecirc;ncia.</option> 		
 	</select>
     

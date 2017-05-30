@@ -1,11 +1,11 @@
 <? 
 /*!
  * FONTE        : cadsms.php
- * CRIAÇÃO      : Odirlei Busana - AMcom
- * DATA CRIAÇÃO : 04/10/2016
+ * CRIAÃ‡ÃƒO      : Odirlei Busana - AMcom
+ * DATA CRIAÃ‡ÃƒO : 04/10/2016
  * OBJETIVO     : Mostrar tela CADSMS
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÃ‡Ã•ES   : 
  *
  *				  
  * --------------
@@ -114,8 +114,12 @@
                                                                             <? include('form_cadsms_opM.php'); ?>
                                                                             <? include('form_cadsms_opP.php'); ?>
                                                                             <? include('form_cadsms_opZ.php'); ?>
+																			<? include('form_cadsms_opI.php'); ?>
+																			<? include('form_filtro_grid_pacotes.php'); ?>
+
+																			<div id="divGrid" style="display:none;width:500px;padding-left:83px"></div>
+
 																		</div>
-																		
 																	</td>
 																</tr>
 															</table>					
