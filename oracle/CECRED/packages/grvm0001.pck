@@ -32,7 +32,10 @@ CREATE OR REPLACE PACKAGE CECRED.GRVM0001 AS
   --                           (Andrei - RKAM).
   --  
   --              11/10/2016 - M172 - Ajuste no formato do telefone para novo digito 9. 
-  --                           (Ricardo Linhares) 
+  --                           (Ricardo Linhares)
+  -- 
+  --              17/05/2017 - SD660300 - Ajuste nos parâmetros dos logs referente
+  --						   ao GRAVAM. (Andrey Formigari - Mouts)
   ---------------------------------------------------------------------------------------------------------------
 
   -- Definicação de tipo e tabela para o arquivo do GRAVAMES
@@ -5403,11 +5406,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                   ,pr_nmarqlog     => 'gravam.log'
                                   ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                       ' -->  GRAVAM - ERRO: 0 - Erro na localizacao do Bem [' || 
-                                                      'Cop:' || to_char(rw_crapbpr.cdcooper) || 
-                                                      'Cta:' || to_char(rw_crapbpr.nrdconta) || 
-                                                      'Tip:' || to_char(rw_crapbpr.tpctrpro) || 
-                                                      'Ctr:' || to_char(rw_crapbpr.nrctrpro) || 
-                                                      'Chassi:' || to_char(rw_crapbpr.dschassi) || 
+                                                      'Cop:' || to_char(rw_crapgrv_sem_retorno.cdcooper) || 
+                                                      'Cta:' || to_char(rw_crapgrv_sem_retorno.nrdconta) || 
+                                                      'Tip:' || to_char(rw_crapgrv_sem_retorno.tpctrpro) || 
+                                                      'Ctr:' || to_char(rw_crapgrv_sem_retorno.nrctrpro) || 
+                                                      'Chassi:' || to_char(rw_crapgrv_sem_retorno.dschassi) || 
                                                       '][BPR_1] [pc_imprimir_relatorio_criticas]');  
           
       END IF;                  
@@ -5474,11 +5477,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                   ,pr_nmarqlog     => 'gravam.log'
                                   ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                       ' -->  GRAVAM - ERRO: 0 - Erro na localizacao do Bem [' || 
-                                                      'Cop:' || to_char(rw_crapbpr.cdcooper) || 
-                                                      'Cta:' || to_char(rw_crapbpr.nrdconta) || 
-                                                      'Tip:' || to_char(rw_crapbpr.tpctrpro) || 
-                                                      'Ctr:' || to_char(rw_crapbpr.nrctrpro) || 
-                                                      'Chassi:' || to_char(rw_crapbpr.dschassi) || 
+                                                      'Cop:' || to_char(rw_crapgrv_sucesso.cdcooper) || 
+                                                      'Cta:' || to_char(rw_crapgrv_sucesso.nrdconta) || 
+                                                      'Tip:' || to_char(rw_crapgrv_sucesso.tpctrpro) || 
+                                                      'Ctr:' || to_char(rw_crapgrv_sucesso.nrctrpro) || 
+                                                      'Chassi:' || to_char(rw_crapgrv_sucesso.dschassi) || 
                                                       '][BPR_2] [pc_imprimir_relatorio_criticas]');  
           
       END IF;                   
@@ -5549,11 +5552,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                   ,pr_nmarqlog     => 'gravam.log'
                                   ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                       ' -->  GRAVAM - ERRO: 0 - Erro na localizacao do Bem [' || 
-                                                      'Cop:' || to_char(rw_crapbpr.cdcooper) || 
-                                                      'Cta:' || to_char(rw_crapbpr.nrdconta) || 
-                                                      'Tip:' || to_char(rw_crapbpr.tpctrpro) || 
-                                                      'Ctr:' || to_char(rw_crapbpr.nrctrpro) || 
-                                                      'Chassi:' || to_char(rw_crapbpr.dschassi) || 
+                                                      'Cop:' || to_char(rw_crapgrv_erro.cdcooper) || 
+                                                      'Cta:' || to_char(rw_crapgrv_erro.nrdconta) || 
+                                                      'Tip:' || to_char(rw_crapgrv_erro.tpctrpro) || 
+                                                      'Ctr:' || to_char(rw_crapgrv_erro.nrctrpro) || 
+                                                      'Chassi:' || to_char(rw_crapgrv_erro.dschassi) || 
                                                       '][BPR_3] [pc_imprimir_relatorio_criticas]');  
           
       END IF;                  
