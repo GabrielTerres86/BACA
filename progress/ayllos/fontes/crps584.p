@@ -149,14 +149,39 @@ PROCEDURE pi_processa_registros:
         
         IF   SUBSTR(aux_setlinha,01,10) <> "9999999999" THEN
              DO:
-                 glb_cdcritic = 258.
-                 RUN fontes/critic.p.
-                 UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + " - " +
-                                   glb_cdprogra + "' --> '" + glb_dscritic +
-                                   " - Arquivo: " + crawarq.nmarquiv +
-                                   " >> log/proc_batch.log").
-                 glb_cdcritic = 0.
-                 NEXT.
+                 
+                 INPUT STREAM str_1 CLOSE.
+                 
+                 UNIX SILENT VALUE ("strings " + 
+                                    crawarq.nmarquiv + " > " +
+                                    crawarq.nmarquiv + ".OK").
+                                    
+                 UNIX SILENT VALUE ("cp " +
+                                    crawarq.nmarquiv + " ./tmp").
+                                    
+                 UNIX SILENT VALUE ("mv " +
+                                    crawarq.nmarquiv + ".OK " +
+                                    crawarq.nmarquiv).
+                   
+
+                 /* Verificar se o arquivo esta completo - inicio */
+                 INPUT STREAM str_1 THROUGH VALUE("tail -1 " + crawarq.nmarquiv)
+                           NO-ECHO.
+
+                 IMPORT STREAM str_1 UNFORMATTED aux_setlinha.
+                
+                 IF   SUBSTR(aux_setlinha,01,10) <> "9999999999" THEN
+                 DO:
+                                    
+					 glb_cdcritic = 258.
+					 RUN fontes/critic.p.
+					 UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + " - " +
+									   glb_cdprogra + "' --> '" + glb_dscritic +
+									   " - Arquivo: " + crawarq.nmarquiv +
+									   " >> log/proc_batch.log").
+					 glb_cdcritic = 0.
+					 NEXT.
+                 END.
              END.
 
         INPUT STREAM str_1 CLOSE.

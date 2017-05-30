@@ -1257,8 +1257,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
         FETCH cr_crapass_2 INTO rw_crapass_2;
         vr_blnfound := cr_crapass_2%FOUND;
         CLOSE cr_crapass_2;
+        -- Se encontrou
+        IF vr_blnfound THEN
+          vr_rel_nmcheque := rw_crapass_2.nmprimtl; 
+          vr_rel_dscpfcgc := GENE0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapass_2.nrcpfcgc,
+                                                       pr_inpessoa => rw_crapass_2.inpessoa);
         -- Se NAO encontrar
-        IF vr_blnfound = FALSE THEN
+        ELSE
           -- Pessoa Física
           IF rw_crapass_2.inpessoa = 1 THEN
             OPEN cr_crapttl (pr_cdcooper => pr_cdcooper
@@ -4129,7 +4134,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 					,dcc.nrremret
 			FROM crapcdb cdb
 				  ,crapbdc bdc
-				  ,craplim lim
 					,crapdcc dcc
 		 WHERE cdb.cdcooper = pr_cdcooper
 			 AND cdb.nrdconta = pr_nrdconta
@@ -4137,9 +4141,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			 AND bdc.cdcooper = cdb.cdcooper
 			 AND bdc.nrdconta = cdb.nrdconta
 			 AND bdc.nrborder = cdb.nrborder
-			 AND lim.cdcooper = bdc.cdcooper
-			 AND lim.nrdconta = bdc.nrdconta
-			 AND lim.nrctrlim = bdc.nrctrlim
 			 AND dcc.cdcooper = cdb.cdcooper
 			 AND dcc.nrdconta = cdb.nrdconta
 			 AND dcc.cdcmpchq = cdb.cdcmpchq
@@ -4147,7 +4148,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			 AND dcc.cdagechq = cdb.cdagechq
 			 AND dcc.nrctachq = cdb.nrctachq
 			 AND dcc.nrcheque = cdb.nrcheque
-			 AND dcc.nrborder = cdb.nrborder;
+			 AND dcc.nrborder = cdb.nrborder
+       AND dcc.intipmvt IN (1,3);
        
   --> Buscar cadastro do cooperado emitente
   CURSOR cr_crapass (pr_cdagectl IN crapcop.cdagectl%TYPE,
