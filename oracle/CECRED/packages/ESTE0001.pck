@@ -498,7 +498,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                                   pr_recurso_este  OUT VARCHAR2,               -- URI da esteira
                                   pr_contige_este  OUT VARCHAR2,               -- Verificar se esta em contigencia
                                   pr_dsdirlog      OUT VARCHAR2,               -- Diretorio de log dos arquivos 
-                                  pr_chave_este    OUT VARCHAR2,               -- Chave de acesso
+                                  pr_autori_este   OUT VARCHAR2,               -- Chave de acesso
+                                  pr_chave_aplica  OUT VARCHAR2,               -- App Key
                                   pr_dscritic      OUT VARCHAR2) IS
   
     
@@ -560,14 +561,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
 			END IF;  
 	    
 			--> Buscar chave de acesso do motor
-			pr_chave_este := gene0001.fn_param_sistema (pr_nmsistem => 'CRED', 
+			pr_autori_este := gene0001.fn_param_sistema (pr_nmsistem => 'CRED', 
+																									pr_cdcooper => pr_cdcooper, 
+																									pr_cdacesso => 'AUTH_WEBSRV_MOTOR_IBRA');
+	  
+			IF pr_autori_este IS NULL THEN      
+				vr_dscritic := 'Parametro AUTH_WEBSRV_MOTOR_IBRA não encontrado.';
+				RAISE vr_exc_erro;      
+			END IF;  
+      
+			--> Buscar chave de aplicação do motor
+			pr_chave_aplica := gene0001.fn_param_sistema (pr_nmsistem => 'CRED', 
 																									pr_cdcooper => pr_cdcooper, 
 																									pr_cdacesso => 'KEY_WEBSRV_MOTOR_IBRA');
 	  
-			IF pr_chave_este IS NULL THEN      
+			IF pr_chave_aplica IS NULL THEN      
 				vr_dscritic := 'Parametro KEY_WEBSRV_MOTOR_IBRA não encontrado.';
 				RAISE vr_exc_erro;      
-			END IF;   
+			END IF;         
 			
 		ELSE
 			--> Buscar hots so webservice da esteira
@@ -590,11 +601,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
 			END IF;  
 	    
 			--> Buscar chave de acesso da esteira
-			pr_chave_este := gene0001.fn_param_sistema (pr_nmsistem => 'CRED', 
-																									pr_cdcooper => pr_cdcooper, 
-																									pr_cdacesso => 'KEYWEBSRVCE_ESTEIRA_IBRA');                                             
+			pr_autori_este := gene0001.fn_param_sistema (pr_nmsistem => 'CRED', 
+																								 	pr_cdcooper => pr_cdcooper, 
+																								 	pr_cdacesso => 'KEYWEBSRVCE_ESTEIRA_IBRA');                                             
 	  
-			IF pr_chave_este IS NULL THEN      
+			IF pr_autori_este IS NULL THEN      
 				vr_dscritic := 'Parametro KEYWEBSRVCE_ESTEIRA_IBRA não encontrado.';
 				RAISE vr_exc_erro;      
 			END IF;  
@@ -908,7 +919,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     vr_recurso_este  VARCHAR2(4000);
     vr_contige_este  VARCHAR2(4000);
     vr_dsdirlog      VARCHAR2(500);
-    vr_chave_este    VARCHAR2(500);
+    vr_autori_este   VARCHAR2(500);
+    vr_chave_aplica  VARCHAR2(500);
     
     vr_dscritic      VARCHAR2(4000);
     vr_dscritic_aux  VARCHAR2(4000);
@@ -921,10 +933,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
 		
     vr_obj_content   json := json();
     vr_obj_retorno   json := json();
-    vr_auxctrl       BOOLEAN := FALSE;
-
-    vr_json          BOOLEAN;
-		vr_location      VARCHAR2(1000);
+    
+    vr_location      VARCHAR2(1000);
     
   BEGIN
     
@@ -937,7 +947,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                           pr_recurso_este  => vr_recurso_este,               -- URI da esteira
                           pr_contige_este  => vr_contige_este,               -- Verificar se esta em contigencia
                           pr_dsdirlog      => vr_dsdirlog    ,               -- Diretorio de log dos arquivos 
-                          pr_chave_este    => vr_chave_este  ,               -- Chave de acesso
+                          pr_autori_este   => vr_autori_este  ,              -- Authorization 
+                          pr_chave_aplica  => vr_chave_aplica ,              -- Chave de acesso
                           pr_dscritic      => vr_dscritic    );
     
     IF vr_dscritic  IS NOT NULL THEN
@@ -949,10 +960,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     vr_request.api_route := vr_recurso_este||pr_comprecu;
     vr_request.method := pr_dsmetodo;
     vr_request.timeout := 1000;
-  --  vr_request.useproxy := TRUE;
     
     vr_request.headers('Content-Type') := 'application/json; charset=UTF-8';
-    vr_request.headers('Authorization') := vr_chave_este;
+    vr_request.headers('Authorization') := vr_autori_este;
+    
+    -- Se houver ApplicationKey
+    IF vr_chave_aplica IS NOT NULL THEN 
+      vr_request.headers('ApplicationKey') := vr_chave_aplica;
+    END IF;
         
     vr_request.content := pr_conteudo;
     
@@ -1554,18 +1569,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
 		vr_dsprotoc VARCHAR2(1000);
 		vr_comprecu VARCHAR2(1000);
 		
+    -- Buscar informações da Proposta
 		CURSOR cr_crawepr IS
-			SELECT insitest, 
-			       insitapr, 
-						 cdopeapr,
-						 cdagenci,
-						 nrctaav1,
-						 nrctaav2,
-						 inconcje
-				FROM crawepr
-			 WHERE cdcooper = pr_cdcooper
-				 AND nrdconta = pr_nrdconta
-				 AND nrctremp = pr_nrctremp;
+			SELECT wpr.insitest
+            ,wpr.insitapr
+            ,wpr.cdopeapr
+            ,wpr.cdagenci
+            ,wpr.nrctaav1
+            ,wpr.nrctaav2
+            ,ass.inpessoa
+				FROM crawepr wpr
+            ,crapass ass
+			 WHERE wpr.cdcooper = ass.cdcooper
+         AND wpr.nrdconta = ass.nrdconta
+         AND wpr.cdcooper = pr_cdcooper
+				 AND wpr.nrdconta = pr_nrdconta
+				 AND wpr.nrctremp = pr_nrctremp;
     rw_crawepr cr_crawepr%ROWTYPE;
 		
   BEGIN    
@@ -1575,26 +1594,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
 		FETCH cr_crawepr INTO rw_crawepr;
 		CLOSE cr_crawepr;
     
-    --> Gerar informações no padrao JSON da proposta de emprestimo
-    pc_gera_json_proposta(pr_cdcooper  => pr_cdcooper,  --> Codigo da cooperativa
-                          pr_cdagenci  => pr_cdagenci,  --> Codigo da agencia                                            
-                          pr_cdoperad  => pr_cdoperad,  --> codigo do operado
-                          pr_cdorigem  => pr_cdorigem,  --> Origem da operacao
-                          pr_nrdconta  => pr_nrdconta,  --> Numero da conta do cooperado
-                          pr_nrctremp  => pr_nrctremp,  --> Numero da proposta de emprestimo
-                          pr_nmarquiv  => pr_nmarquiv,  --> Diretorio e nome do arquivo pdf da proposta de emprestimo
-                          ---- OUT ----
-                          pr_proposta  => vr_obj_proposta,  --> Retorno do clob em modelo json da proposta de emprestimo
-                          pr_cdcritic  => vr_cdcritic,  --> Codigo da critica
-                          pr_dscritic  => vr_dscritic); --> Descricao da critica
-    
-    IF nvl(vr_cdcritic,0) > 0 OR
-       TRIM(vr_dscritic) IS NOT NULL THEN
-      RAISE vr_exc_erro;        
-    END IF;           
-    
     IF rw_crawepr.insitest = 1 THEN			
-			--> Enviar dados para Esteira
+	
+      --> Gerar informações no padrao JSON da proposta de emprestimo
+      pc_gera_json_proposta(pr_cdcooper  => pr_cdcooper,  --> Codigo da cooperativa
+                            pr_cdagenci  => pr_cdagenci,  --> Codigo da agencia                                            
+                            pr_cdoperad  => pr_cdoperad,  --> codigo do operado
+                            pr_cdorigem  => pr_cdorigem,  --> Origem da operacao
+                            pr_nrdconta  => pr_nrdconta,  --> Numero da conta do cooperado
+                            pr_nrctremp  => pr_nrctremp,  --> Numero da proposta de emprestimo
+                            pr_nmarquiv  => pr_nmarquiv,  --> Diretorio e nome do arquivo pdf da proposta de emprestimo
+                            ---- OUT ----
+                            pr_proposta  => vr_obj_proposta,  --> Retorno do clob em modelo json da proposta de emprestimo
+                            pr_cdcritic  => vr_cdcritic,  --> Codigo da critica
+                            pr_dscritic  => vr_dscritic); --> Descricao da critica
+      
+      IF nvl(vr_cdcritic,0) > 0 OR
+         TRIM(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_erro;        
+      END IF;  
+  
+  		--> Enviar dados para Esteira
 			pc_enviar_esteira ( pr_cdcooper    => pr_cdcooper,          --> Codigo da cooperativa
 													pr_cdagenci    => pr_cdagenci,          --> Codigo da agencia                                          
 													pr_cdoperad    => pr_cdoperad,          --> codigo do operador
@@ -1634,26 +1654,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
 		ELSE
       --> Gerar informações no padrao JSON da proposta de emprestimo
 			ESTE0002.pc_gera_json_analise(pr_cdcooper  => pr_cdcooper,  --> Codigo da cooperativa
-													 pr_cdagenci  => rw_crawepr.cdagenci, --> Agência da Proposta
-													 pr_nrdconta  => pr_nrdconta,  --> Numero da conta do cooperado
-													 pr_nrctremp  => pr_nrctremp,  --> Numero da proposta de emprestimo
-													 pr_inconcje  => rw_crawepr.inconcje, --> Indicador de Conjuge Co-responsável
-													 pr_nrctaav1  => rw_crawepr.nrctaav1, --> Avalista 01
-													 pr_nrctaav2  => rw_crawepr.nrctaav2, --> Avalista 02
-													 ---- OUT ----
-													 pr_dsjsonan  => vr_obj_proposta,  --> Retorno do clob em modelo json das informações
-													 pr_cdcritic  => vr_cdcritic,  --> Codigo da critica
-													 pr_dscritic  => vr_dscritic); --> Descricao da critica
+													          pr_cdagenci  => rw_crawepr.cdagenci, --> Agência da Proposta
+													          pr_nrdconta  => pr_nrdconta,  --> Numero da conta do cooperado
+													          pr_nrctremp  => pr_nrctremp,  --> Numero da proposta de emprestimo
+													          pr_nrctaav1  => rw_crawepr.nrctaav1, --> Avalista 01
+													          pr_nrctaav2  => rw_crawepr.nrctaav2, --> Avalista 02
+													          ---- OUT ----
+													          pr_dsjsonan  => vr_obj_proposta,  --> Retorno do clob em modelo json das informações
+													          pr_cdcritic  => vr_cdcritic,  --> Codigo da critica
+													          pr_dscritic  => vr_dscritic); --> Descricao da critica
 	    
 			IF nvl(vr_cdcritic,0) > 0 OR
 				 TRIM(vr_dscritic) IS NOT NULL THEN
 				RAISE vr_exc_erro;        
 			END IF;           
 			
-	    --> Efetuar montage do recurso a ser consumido 
-			vr_comprecu := '/definition/#'|| gene0001.fn_param_sistema('CRED'
-																																,pr_cdcooper
-																																,'REGRA_ANALISE_MOTOR_IBRA')||'/start';    
+	    --> Efetuar montagem do nome do Fluxo de Análise Automatica conforme o tipo de pessoa da Proposta
+      IF rw_crawepr.inpessoa = 1 THEN 
+  			vr_comprecu := '/definition/'|| gene0001.fn_param_sistema('CRED'
+	  																															,pr_cdcooper
+		  																														,'REGRA_ANL_MOTOR_IBRA_PF')||'/start';    
+      ELSE
+      	vr_comprecu := '/definition/'|| gene0001.fn_param_sistema('CRED'
+	  																															,pr_cdcooper
+		  																														,'REGRA_ANL_MOTOR_IBRA_PJ')||'/start';            
+      END IF;                                                            
 			--> Enviar dados para Esteira
 			pc_enviar_esteira(pr_cdcooper    => pr_cdcooper,          --> Codigo da cooperativa
 											  pr_cdagenci    => pr_cdagenci,          --> Codigo da agencia                                          
@@ -2616,7 +2641,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     vr_recurso_este  VARCHAR2(4000);
     vr_contige_este  VARCHAR2(4000);
     vr_dsdirlog      VARCHAR2(500);
-    vr_chave_este    VARCHAR2(500);
+    vr_autori_este   VARCHAR2(500);
+    vr_chave_aplica  VARCHAR2(500);
     
     vr_obj_proposta  json := json();
     vr_obj_retorno   json := json();
@@ -2643,7 +2669,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                           pr_recurso_este  => vr_recurso_este,               -- URI da esteira
                           pr_contige_este  => vr_contige_este,               -- Verificar se esta em contigencia
                           pr_dsdirlog      => vr_dsdirlog    ,               -- Diretorio de log dos arquivos 
-                          pr_chave_este    => vr_chave_este  ,               -- Chave de acesso
+                          pr_autori_este   => vr_autori_este  ,              -- Authorization 
+                          pr_chave_aplica  => vr_chave_aplica ,              -- Chave de acesso
                           pr_dscritic      => vr_dscritic    );
     
     IF vr_dscritic  IS NOT NULL THEN
@@ -2670,7 +2697,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     vr_request.timeout := 1000;
     
     vr_request.headers('Content-Type') := 'application/json; charset=UTF-8';
-    vr_request.headers('Authorization') := vr_chave_este;
+    vr_request.headers('Authorization') := vr_autori_este;
+    
+    -- Se houver ApplicationKey
+    IF vr_chave_aplica IS NOT NULL THEN 
+      vr_request.headers('ApplicationKey') := vr_chave_aplica;
+    END IF;
+   
     
     vr_request.parameters('numero') := pr_nrctremp; 
     -- Nr. conta sem o digito
@@ -2953,7 +2986,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     vr_recurso_este  VARCHAR2(4000);
     vr_contige_este  VARCHAR2(4000);
     vr_dsdirlog      VARCHAR2(500);
-    vr_chave_este    VARCHAR2(500);
+    vr_chave_aplica  VARCHAR2(500);
+    vr_autori_este   VARCHAR2(500);
 		vr_idacionamento tbepr_acionamento.idacionamento%TYPE;
 	  vr_nrdrowid ROWID;
 		vr_dsresana VARCHAR2(100);
@@ -3023,8 +3057,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
 														pr_recurso_este  => vr_recurso_este, -- URI da esteira
 														pr_contige_este  => vr_contige_este, -- Verificar se esta em contigencia
 														pr_dsdirlog      => vr_dsdirlog    , -- Diretorio de log dos arquivos 
-														pr_chave_este    => vr_chave_este  , -- Chave de acesso
-														pr_dscritic      => vr_dscritic    );
+														pr_autori_este   => vr_autori_este  ,              -- Authorization 
+                            pr_chave_aplica  => vr_chave_aplica ,              -- Chave de acesso
+                            pr_dscritic      => vr_dscritic    );
 	    
 			-- Se retornou crítica
 			IF trim(vr_dscritic)  IS NOT NULL THEN
@@ -3040,8 +3075,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
 			vr_request.timeout     := 1000;
 	    
 			vr_request.headers('Content-Type') := 'application/json; charset=UTF-8';
-			vr_request.headers('Authorization') := vr_chave_este;
+			vr_request.headers('Authorization') := vr_autori_este;
 			
+      -- Se houver ApplicationKey
+      IF vr_chave_aplica IS NOT NULL THEN 
+        vr_request.headers('ApplicationKey') := vr_chave_aplica;
+      END IF;
+      
+      
 	    -- Disparo do REQUEST
 			json0001.pc_executa_ws_json(pr_request           => vr_request
 																 ,pr_response          => vr_response

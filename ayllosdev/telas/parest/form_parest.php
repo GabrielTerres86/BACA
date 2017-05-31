@@ -32,8 +32,13 @@
 
             <br style="clear:both" />	
 			
-            <label for="nmregmot">Regra An&aacute;lise Autom&aacute;tica:</label>
-			<input type="text" id="nmregmot" name="nmregmot" title="Somente letras, n&uacute;meros e '_' neste campo">
+            <label for="nmregmpf">Regra An&aacute;lise Autom&aacute;tica PF:</label>
+			<input type="text" id="nmregmpf" name="nmregmpf" title="Somente letras, n&uacute;meros e '_' neste campo">
+      
+      <br style="clear:both" />	
+			
+            <label for="nmregmpj">Regra An&aacute;lise Autom&aacute;tica PJ:</label>
+			<input type="text" id="nmregmpj" name="nmregmpj" title="Somente letras, n&uacute;meros e '_' neste campo">
 			
             <br style="clear:both" />	
 			

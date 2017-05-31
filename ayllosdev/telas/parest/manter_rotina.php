@@ -26,7 +26,8 @@ $cddopcao = (isset($_POST['cddopcao'])) ? $_POST['cddopcao'] : '';
 $tlcooper = (isset($_POST['tlcooper'])) ? $_POST['tlcooper'] : 0;
 $contigen = (isset($_POST['contigen'])) ? $_POST['contigen'] : 0;
 $incomite = (isset($_POST['incomite'])) ? $_POST['incomite'] : 0;
-$nmregmot = (isset($_POST['nmregmot'])) ? $_POST['nmregmot'] : '';
+$nmregmpf = (isset($_POST['nmregmpf'])) ? $_POST['nmregmpf'] : '';
+$nmregmpj = (isset($_POST['nmregmpj'])) ? $_POST['nmregmpj'] : '';
 $qtsstime = (isset($_POST['qtsstime'])) ? $_POST['qtsstime'] : 0;
 $qtmeschq = (isset($_POST['qtmeschq'])) ? $_POST['qtmeschq'] : 0;
 $qtmesest = (isset($_POST['qtmesest'])) ? $_POST['qtmesest'] : 0;
@@ -41,9 +42,15 @@ if ( $cddopcao == 'X' ) {
 }
 
 if ($cdopcao == 'A'){
-	if ((!isset($_POST['nmregmot'])) || $_POST['nmregmot'] == ''){
+	if ((!isset($_POST['nmregmpf'])) || $_POST['nmregmpf'] == ''){
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","Regra An&aacute;lise Autom&aacute;tica &eacute; obrigat&oacute;ria! Favor preench&ecirc;-la","Alerta - Ayllos","$(\'#nmregmot\', \'#frmParest\').focus()");';
+		echo 'showError("error","Regra An&aacute;lise Autom&aacute;tica PF &eacute; obrigat&oacute;ria! Favor preench&ecirc;-la","Alerta - Ayllos","$(\'#nmregmpf\', \'#frmParest\').focus()");';
+		exit();
+	}
+  
+  if ((!isset($_POST['nmregmpj'])) || $_POST['nmregmpj'] == ''){
+		echo 'hideMsgAguardo();';
+		echo 'showError("error","Regra An&aacute;lise Autom&aacute;tica PJ &eacute; obrigat&oacute;ria! Favor preench&ecirc;-la","Alerta - Ayllos","$(\'#nmregmpj\', \'#frmParest\').focus()");';
 		exit();
 	}
 
@@ -69,9 +76,15 @@ if ($cdopcao == 'A'){
 		exit();
 	}
 
-	if (preg_match('/[^a-zA-Z0-9_]/',$nmregmot) == 1){
+	if (preg_match('/[^a-zA-Z0-9_]/',$nmregmpf) == 1){
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","Informe somente letras, n&uacute;meros e \'_\' neste campo! O preenchimento de \"Espa&ccedil;os\" n&atilde;o &eacute; permitido!","Alerta - Ayllos","$(\'#nmregmot\', \'#frmParest\').focus()");';
+		echo 'showError("error","Informe somente letras, n&uacute;meros e \'_\' neste campo! O preenchimento de \"Espa&ccedil;os\" n&atilde;o &eacute; permitido!","Alerta - Ayllos","$(\'#nmregmpf\', \'#frmParest\').focus()");';
+		exit();
+	}
+  
+  if (preg_match('/[^a-zA-Z0-9_]/',$nmregmpj) == 1){
+		echo 'hideMsgAguardo();';
+		echo 'showError("error","Informe somente letras, n&uacute;meros e \'_\' neste campo! O preenchimento de \"Espa&ccedil;os\" n&atilde;o &eacute; permitido!","Alerta - Ayllos","$(\'#nmregmpj\', \'#frmParest\').focus()");';
 		exit();
 	}
 }
@@ -100,7 +113,8 @@ if ( $cdopcao == 'C') {
 	$xml .= "   <flgativo>1</flgativo>";
 	$xml .= "   <incomite>" . $incomite . "</incomite>";
 	$xml .= "   <contigen>" . $contigen . "</contigen>";
-	$xml .= "   <nmregmot>" . $nmregmot . "</nmregmot>";
+	$xml .= "   <nmregmpf>" . $nmregmpf . "</nmregmpf>";
+  $xml .= "   <nmregmpj>" . $nmregmpj . "</nmregmpj>";
 	$xml .= "   <qtsstime>" . $qtsstime . "</qtsstime>";
 	$xml .= "   <qtmeschq>" . $qtmeschq . "</qtmeschq>";
 	$xml .= "   <qtmesest>" . $qtmesest . "</qtmesest>";
@@ -144,7 +158,8 @@ if ( $cddopcao == 'C') {
 			} else {
 				echo '$("#incomite", "#divAlteracao").val("0");';
 			}
-			echo '$("#nmregmot", "#divAlteracao").val("'.getByTagName($r->tags, 'nmregmot').'");';
+			echo '$("#nmregmpf", "#divAlteracao").val("'.getByTagName($r->tags, 'nmregmpf').'");';
+      echo '$("#nmregmpj", "#divAlteracao").val("'.getByTagName($r->tags, 'nmregmpj').'");';
 			echo '$("#qtsstime", "#divAlteracao").val("'.getByTagName($r->tags, 'qtsstime').'");';
 			echo '$("#qtmeschq", "#divAlteracao").val("'.getByTagName($r->tags, 'qtmeschq').'");';
 			echo '$("#qtmesest", "#divAlteracao").val("'.getByTagName($r->tags, 'qtmesest').'");';

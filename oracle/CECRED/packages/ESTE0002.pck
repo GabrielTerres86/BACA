@@ -35,7 +35,6 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0002 is
                                   ,pr_cdagenci   IN crapass.cdagenci%TYPE   --> Codigo da cooperativa
                                   ,pr_nrdconta   IN crapass.nrdconta%TYPE   --> Codigo da cooperativa
                                   ,pr_nrctremp   IN crapepr.nrctremp%TYPE   --> Codigo da cooperativa
-                                  ,pr_inconcje   IN crapepr.inconcje%TYPE   --> Codigo da cooperativa
                                   ,pr_nrctaav1   IN crapepr.nrctaav1%TYPE   --> Codigo da cooperativa
                                   ,pr_nrctaav2   IN crapepr.nrctaav2%TYPE   --> Codigo da cooperativa
                                   ---- OUT ----
@@ -876,7 +875,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
               ,ass.cdsitdct
               ,ass.dtcnsscr
               ,ass.inlbacen
-              ,ass.incadpos
+              ,decode(ass.incadpos,1,'Nao Autorizado',2,'Autorizado','Cancelado') incadpos
               ,ass.dtelimin
               ,ass.inccfcop
               ,ass.dtcnsspc
@@ -1803,14 +1802,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     
       -- Está no SPC(cooperativa)
       vr_obj_generic2.put('SPCpelaCoop'
-                         ,rw_crapass.inadimpl);
+                         ,rw_crapass.inadimpl=1);
     
       -- Está no SPC(outras IFs)
       vr_obj_generic2.put('SPCoutrasIFs'
-                         ,rw_crapass.inlbacen);
+                         ,rw_crapass.inlbacen=1);
     
       -- CCF
-      vr_obj_generic2.put('ccf', rw_crapass.inccfcop);
+      vr_obj_generic2.put('ccf', rw_crapass.inccfcop=1);
     
       -- Cadastro Positivo
       vr_obj_generic2.put('cadastroPositivo'
@@ -2404,7 +2403,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     
       vr_obj_generic2.put('ratingAtivoConta', vr_tab_ocorren(vr_tab_ocorren.first).indrisco);
       vr_obj_generic2.put('ratingConta', vr_tab_ocorren(vr_tab_ocorren.first).nivrisco);
-      vr_obj_generic2.put('riscoCooperado', vr_tab_ocorren(vr_tab_ocorren.first).innivris);
+      vr_obj_generic2.put('riscoCooperado', vr_tab_ocorren(vr_tab_ocorren.first).inrisctl);
     
       -- Buscar risco do grupo econômico (se existir)
       geco0001.pc_busca_grupo_associado(pr_cdcooper => pr_cdcooper
@@ -3455,7 +3454,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
                                   ,pr_cdagenci   IN crapass.cdagenci%TYPE   --> Codigo da cooperativa
                                   ,pr_nrdconta   IN crapass.nrdconta%TYPE   --> Codigo da cooperativa
                                   ,pr_nrctremp   IN crapepr.nrctremp%TYPE   --> Codigo da cooperativa
-                                  ,pr_inconcje   IN crapepr.inconcje%TYPE   --> Codigo da cooperativa
                                   ,pr_nrctaav1   IN crapepr.nrctaav1%TYPE   --> Codigo da cooperativa
                                   ,pr_nrctaav2   IN crapepr.nrctaav2%TYPE   --> Codigo da cooperativa
                                   ---- OUT ----
@@ -3703,7 +3701,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
                        pr_nrdconta crapass.nrdconta%TYPE,
                        pr_nrctremp crawepr.nrctremp%TYPE ) IS       
       SELECT crapbpr.dscatbem
-            ,crapbpr.vlrdobem
+            ,crapbpr.vlmerbem
             ,crapbpr.nranobem
             ,crapbpr.nrcpfbem
         FROM crapbpr 
@@ -3711,7 +3709,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
          AND crapbpr.nrdconta = pr_nrdconta
          AND crapbpr.nrctrpro = pr_nrctremp   
          AND crapbpr.tpctrpro = 90
-         AND crapbpr.vlrdobem > 0;
+         AND trim(crapbpr.dscatbem) is not NULL;
     
     
     --> Buscar se a conta é de Colaborador Cecred
@@ -3860,7 +3858,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     vr_obj_generico.put('tipoGarantiaCodigo'    ,rw_crawepr.tpctrato );
     
     --> Buscar descrição do tipo de garantia
-    vr_dstpgara := NULL;
     vr_dstpgara  := tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper,
                                                pr_nmsistem => 'CRED',
                                                pr_tptabela => 'GENERI', 
@@ -3907,7 +3904,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 			OPEN cr_crapprp;
 			FETCH cr_crapprp INTO rw_crapprp;
 			CLOSE cr_crapprp;
-      vr_obj_generico.put('conjugeCoResponv',nvl(rw_crapprp.flgdocje,0));
+      vr_obj_generico.put('conjugeCoResponv',nvl(rw_crapprp.flgdocje,0)=1);
 
     END IF;
     
@@ -3921,7 +3918,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       vr_obj_generic2 := json();
       vr_obj_generic2.put('categoriaBem',     rw_crapbpr.dscatbem);
       vr_obj_generic2.put('anoGarantia',      rw_crapbpr.nranobem);
-      vr_obj_generic2.put('valorGarantia',    ESTE0001.fn_decimal_ibra(rw_crapbpr.vlrdobem));
+      vr_obj_generic2.put('valorGarantia',    ESTE0001.fn_decimal_ibra(rw_crapbpr.vlmerbem));
       vr_obj_generic2.put('bemInterveniente', rw_crapbpr.nrcpfbem <> 0);
 
 
@@ -3967,123 +3964,131 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     END IF;
     CLOSE cr_crapass;
     
-    --> Verificar se o conjuge é co-responsável (somente para pessoa Fisica)
-    IF rw_crapass.inpessoa = 1 AND pr_inconcje = 1 THEN 
+    --> Para Pessoa Fisica iremos buscar seu Conjuge
+    IF rw_crapass.inpessoa = 1 THEN 
     
       --> Buscar cadastro do Conjuge
       rw_crapcje := NULL;
       OPEN cr_crapcje( pr_cdcooper => pr_cdcooper,
                        pr_nrdconta => pr_nrdconta);
       FETCH cr_crapcje INTO rw_crapcje;
-      CLOSE cr_crapcje;
-      
-      --> Se Conjuge for associado:
-      IF rw_crapcje.nrctacje <> 0 THEN 
+     
+      -- Se não encontrar 
+      IF cr_crapcje%NOTFOUND THEN
+        -- apenas fechamos o cursor
+        CLOSE cr_crapcje;
+      ELSE   
+        -- Fechar o cursor e enviar 
+        CLOSE cr_crapcje;
+        --> Se Conjuge for associado:
+        IF rw_crapcje.nrctacje <> 0 THEN 
 
-        -- Passaremos a conta para montagem dos dados:
-        pc_gera_json_pessoa_ass(pr_cdcooper => pr_cdcooper
-                               ,pr_nrdconta => rw_crapcje.nrctacje
-                               ,pr_nrctremp => pr_nrctremp
-                               ,pr_dsjsonan => vr_obj_conjuge
-                               ,pr_cdcritic => vr_cdcritic 
-                               ,pr_dscritic => vr_dscritic);
+          -- Passaremos a conta para montagem dos dados:
+          pc_gera_json_pessoa_ass(pr_cdcooper => pr_cdcooper
+                                 ,pr_nrdconta => rw_crapcje.nrctacje
+                                 ,pr_nrctremp => pr_nrctremp
+                                 ,pr_dsjsonan => vr_obj_conjuge
+                                 ,pr_cdcritic => vr_cdcritic 
+                                 ,pr_dscritic => vr_dscritic);
 
-        -- Testar possíveis erros na rotina:
-        IF nvl(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN 
-          RAISE vr_exc_erro;
-        END IF; 
+          -- Testar possíveis erros na rotina:
+          IF nvl(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN 
+            RAISE vr_exc_erro;
+          END IF; 
+            
+          -- Adicionar o JSON montado do Proponente no objeto principal
+          vr_obj_analise.put('conjuge',vr_obj_conjuge);
+
+        ELSE
+          -- Enviaremos os dados básicos encontrados na tabela de conjugue
+          vr_obj_conjuge.put('documento'      ,rw_crapcje.nrcpfcjg);
+          vr_obj_conjuge.put('tipoPessoa'     ,'FISICA');
+          vr_obj_conjuge.put('nome'           ,rw_crapcje.nmconjug);
+          vr_obj_conjuge.put('dataNascimento' ,ESTE0001.fn_Data_ibra(rw_crapcje.dtnasccj));
           
-        -- Adicionar o JSON montado do Proponente no objeto principal
-        vr_obj_analise.put('conjuge',vr_obj_conjuge);
-
-      ELSE
-        -- Enviaremos os dados básicos encontrados na tabela de conjugue
-        vr_obj_conjuge.put('documento'      ,rw_crapcje.nrcpfcjg);
-        vr_obj_conjuge.put('tipoPessoa'     ,'FISICA');
-        vr_obj_conjuge.put('nome'           ,rw_crapcje.nmconjug);
-        vr_obj_conjuge.put('dataNascimento' ,ESTE0001.fn_Data_ibra(rw_crapcje.dtnasccj));
-        
-        -- Se o Documento for RG
-        IF rw_crapcje.tpdoccje = 'CI' THEN
-          vr_obj_conjuge.put('rg', rw_crapcje.nrdoccje);
-          vr_obj_conjuge.put('ufRg', rw_crapcje.cdufdcje);
-        END IF;
-        
-        -- Montar objeto Telefone para Telefone Comercial      
-        IF rw_crapcje.nrfonemp <> ' ' THEN 
-          vr_lst_generic2 := json_list();
-          -- Criar objeto só para este telefone
-          vr_obj_generico := json();
-          vr_obj_generico.put('especie', 'COMERCIAL');
-          IF SUBSTR(rw_crapcje.nrfonemp,1,1) < 8 THEN 
-            vr_obj_generico.put('tipo', 'FIXO');
-          ELSE
-            vr_obj_generico.put('tipo', 'MOVEL');
+          -- Se o Documento for RG
+          IF rw_crapcje.tpdoccje = 'CI' THEN
+            vr_obj_conjuge.put('rg', rw_crapcje.nrdoccje);
+            vr_obj_conjuge.put('ufRg', rw_crapcje.cdufdcje);
           END IF;
           
-          vr_obj_generico.put('numero', replace(replace(rw_crapcje.nrfonemp,'-',''),'.',''));
-          -- Adicionar telefone na lista
-          vr_lst_generic2.append(vr_obj_generico.to_json_value());
-          -- Adicionar o array telefone no objeto Conjuge
-          vr_obj_conjuge.put('telefones', vr_lst_generic2);
+          -- Montar objeto Telefone para Telefone Comercial      
+          IF rw_crapcje.nrfonemp <> ' ' THEN 
+            vr_lst_generic2 := json_list();
+            -- Criar objeto só para este telefone
+            vr_obj_generico := json();
+            vr_obj_generico.put('especie', 'COMERCIAL');
+            IF SUBSTR(rw_crapcje.nrfonemp,1,1) < 8 THEN 
+              vr_obj_generico.put('tipo', 'FIXO');
+            ELSE
+              vr_obj_generico.put('tipo', 'MOVEL');
+            END IF;
             
-        END IF;     
+            vr_obj_generico.put('numero', replace(replace(rw_crapcje.nrfonemp,'-',''),'.',''));
+            -- Adicionar telefone na lista
+            vr_lst_generic2.append(vr_obj_generico.to_json_value());
+            -- Adicionar o array telefone no objeto Conjuge
+            vr_obj_conjuge.put('telefones', vr_lst_generic2);
+              
+          END IF;     
 
-        -- Montar objeto profissao       
-        IF rw_crapcje.dsproftl <> ' ' THEN 
+          -- Montar objeto profissao       
+          IF rw_crapcje.dsproftl <> ' ' THEN 
+            vr_obj_generico := json();
+            vr_obj_generico.put('titulo'   , rw_crapcje.dsproftl);
+            vr_obj_conjuge.put ('profissao', vr_obj_generico);
+          END IF;     
+          
+          -- Montar informações Adicionais
           vr_obj_generico := json();
-          vr_obj_generico.put('titulo'   , rw_crapcje.dsproftl);
-          vr_obj_conjuge.put ('profissao', vr_obj_generico);
-        END IF;     
+          -- Escolaridade
+          IF rw_crapcje.grescola <> 0 THEN 
+            vr_obj_generico.put('escolaridade', fn_des_grescola(rw_crapcje.grescola));
+          END IF;
+          -- Curso Superior
+          IF rw_crapcje.cdfrmttl <> 0 THEN 
+            vr_obj_generico.put('cursoSuperior', fn_des_cdfrmttl(rw_crapcje.cdfrmttl));
+          END IF;
+          -- Natureza Ocupação
+          IF rw_crapcje.cdnatopc <> 0 THEN 
+            vr_obj_generico.put('naturezaOcupacao', fn_des_cdnatopc(rw_crapcje.cdnatopc));
+          END IF;
+          -- Ocupação
+          IF rw_crapcje.cdocpcje <> 0 THEN 
+            vr_obj_generico.put('ocupacao', fn_des_cdocupa(rw_crapcje.cdocpcje));
+          END IF;
+          -- Tipo Contrato de Trabalho
+          IF rw_crapcje.tpcttrab <> 0 THEN 
+            vr_obj_generico.put('tipoContratoTrabalho', fn_des_tpcttrab(rw_crapcje.cdocpcje));
+          END IF;
+          -- Nivel Cargo
+          IF rw_crapcje.cdnvlcgo <> 0 THEN 
+            vr_obj_generico.put('nivelCargo', fn_des_cdnvlcgo(rw_crapcje.cdnvlcgo));
+          END IF;
+          -- Turno
+          IF rw_crapcje.cdturnos <> 0 THEN 
+            vr_obj_generico.put('turno', fn_des_cdturnos(rw_crapcje.cdturnos));
+          END IF;
+          -- Data Admissão
+          IF rw_crapcje.dtadmemp IS NOT NULL THEN 
+            vr_obj_generico.put('dataAdmissao', ESTE0001.fn_Data_ibra(rw_crapcje.dtadmemp));
+          END IF;
+          -- Salario
+          IF rw_crapcje.vlsalari <> 0 THEN 
+            vr_obj_generico.put('valorSalario', ESTE0001.fn_decimal_ibra(rw_crapcje.vlsalari));
+          END IF;
+          -- CNPJ Empresa
+          IF rw_crapcje.nrdocnpj <> 0 THEN 
+            vr_obj_generico.put('codCNPJEmpresa', rw_crapcje.nrdocnpj);
+          END IF;
+          -- Enviar informações adicionais ao JSON Conjuge
+          vr_obj_conjuge.put('informacoesAdicionais' ,vr_obj_generico);        
+              
+          -- Ao final adicionamos o json montado ao principal
+          vr_obj_analise.put('conjuge' ,vr_obj_conjuge);        
+        END IF; 
         
-        -- Montar informações Adicionais
-        vr_obj_generico := json();
-        -- Escolaridade
-        IF rw_crapcje.grescola <> 0 THEN 
-          vr_obj_generico.put('escolaridade', fn_des_grescola(rw_crapcje.grescola));
-        END IF;
-        -- Curso Superior
-        IF rw_crapcje.cdfrmttl <> 0 THEN 
-          vr_obj_generico.put('cursoSuperior', fn_des_cdfrmttl(rw_crapcje.cdfrmttl));
-        END IF;
-        -- Natureza Ocupação
-        IF rw_crapcje.cdnatopc <> 0 THEN 
-          vr_obj_generico.put('naturezaOcupacao', fn_des_cdnatopc(rw_crapcje.cdnatopc));
-        END IF;
-        -- Ocupação
-        IF rw_crapcje.cdocpcje <> 0 THEN 
-          vr_obj_generico.put('ocupacao', fn_des_cdocupa(rw_crapcje.cdocpcje));
-        END IF;
-        -- Tipo Contrato de Trabalho
-        IF rw_crapcje.tpcttrab <> 0 THEN 
-          vr_obj_generico.put('tipoContratoTrabalho', fn_des_tpcttrab(rw_crapcje.cdocpcje));
-        END IF;
-        -- Nivel Cargo
-        IF rw_crapcje.cdnvlcgo <> 0 THEN 
-          vr_obj_generico.put('nivelCargo', fn_des_cdnvlcgo(rw_crapcje.cdnvlcgo));
-        END IF;
-        -- Turno
-        IF rw_crapcje.cdturnos <> 0 THEN 
-          vr_obj_generico.put('turno', fn_des_cdturnos(rw_crapcje.cdturnos));
-        END IF;
-        -- Data Admissão
-        IF rw_crapcje.dtadmemp IS NOT NULL THEN 
-          vr_obj_generico.put('dataAdmissao', ESTE0001.fn_Data_ibra(rw_crapcje.dtadmemp));
-        END IF;
-        -- Salario
-        IF rw_crapcje.vlsalari <> 0 THEN 
-          vr_obj_generico.put('valorSalario', ESTE0001.fn_decimal_ibra(rw_crapcje.vlsalari));
-        END IF;
-        -- CNPJ Empresa
-        IF rw_crapcje.nrdocnpj <> 0 THEN 
-          vr_obj_generico.put('codCNPJEmpresa', rw_crapcje.nrdocnpj);
-        END IF;
-        -- Enviar informações adicionais ao JSON Conjuge
-        vr_obj_conjuge.put('informacoesAdicionais' ,vr_obj_generico);        
-            
-        -- Ao final adicionamos o json montado ao principal
-        vr_obj_analise.put('conjuge' ,vr_obj_conjuge);        
-      END IF; 
+      END IF;  
       
     END IF;
     

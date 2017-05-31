@@ -22,7 +22,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_PAREST IS
     cdcooper crapcop.cdcooper%TYPE,
     contigen VARCHAR2(10),
     incomite VARCHAR2(10),
-		nmregmot VARCHAR2(250),
+		nmregmpf VARCHAR2(250),
+    nmregmpj VARCHAR2(250),
 		qtsstime NUMBER(3),
 		qtmeschq NUMBER(2),
 		qtmesest NUMBER(2),
@@ -61,7 +62,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_PAREST IS
                                ,pr_flgativo IN crapcop.flgativo%TYPE --> Flag Ativo  
                                ,pr_incomite IN NUMBER
                                ,pr_contigen IN NUMBER
-															 ,pr_nmregmot IN VARCHAR2
+															 ,pr_nmregmpf IN VARCHAR2
+                               ,pr_nmregmpj IN VARCHAR2
 															 ,pr_qtsstime IN NUMBER
 															 ,pr_qtmeschq IN NUMBER
                                ,pr_qtmesest IN NUMBER
@@ -312,9 +314,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
             gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                    pr_tag_pai  => 'inf',
                                    pr_posicao  => vr_auxconta,
-                                   pr_tag_nova => 'nmregmot',
-                                   pr_tag_cont => vr_tab_crapcop(vr_ind_crapcop).nmregmot,
+                                   pr_tag_nova => 'nmregmpf',
+                                   pr_tag_cont => vr_tab_crapcop(vr_ind_crapcop).nmregmpf,
                                    pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                                   pr_tag_pai  => 'inf',
+                                   pr_posicao  => vr_auxconta,
+                                   pr_tag_nova => 'nmregmpj',
+                                   pr_tag_cont => vr_tab_crapcop(vr_ind_crapcop).nmregmpj,
+                                   pr_des_erro => vr_dscritic);                                   
             gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                    pr_tag_pai  => 'inf',
                                    pr_posicao  => vr_auxconta,
@@ -448,7 +456,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
                       0,'NAO') comite,
                GENE0001.fn_param_sistema(pr_nmsistem => 'CRED',
 																				 pr_cdcooper => cop.cdcooper,
-																				 pr_cdacesso => 'REGRA_ANALISE_MOTOR_IBRA') nmregmot,
+																				 pr_cdacesso => 'REGRA_ANL_MOTOR_IBRA_PF') nmregmpf,
+               GENE0001.fn_param_sistema(pr_nmsistem => 'CRED',
+																				 pr_cdcooper => cop.cdcooper,
+																				 pr_cdacesso => 'REGRA_ANL_MOTOR_IBRA_PJ') nmregmpj,
                GENE0001.fn_param_sistema(pr_nmsistem => 'CRED',
 																				 pr_cdcooper => cop.cdcooper,
 																				 pr_cdacesso => 'TIME_RESP_MOTOR_IBRA') qtsstime,
@@ -462,7 +473,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
 																				 pr_cdcooper => cop.cdcooper,
 																				 pr_cdacesso => 'QTD_MES_HIST_EMPREST') qtmesemp,
                cdcooper,
-               nmrescop
+               Initcap(nmrescop) nmrescop
         
           FROM crapcop cop
          WHERE (NVL(pr_cdcooper, 0) = 0 OR cop.cdcooper = pr_cdcooper)
@@ -488,7 +499,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
         pr_tab_crapcop(vr_ind_crapcop).nmrescop := rw_crapcop.nmrescop;
         pr_tab_crapcop(vr_ind_crapcop).incomite := rw_crapcop.comite;
         pr_tab_crapcop(vr_ind_crapcop).contigen := rw_crapcop.contigencia;
-        pr_tab_crapcop(vr_ind_crapcop).nmregmot := rw_crapcop.nmregmot;
+        pr_tab_crapcop(vr_ind_crapcop).nmregmpf := rw_crapcop.nmregmpf;
+        pr_tab_crapcop(vr_ind_crapcop).nmregmpj := rw_crapcop.nmregmpj;
         pr_tab_crapcop(vr_ind_crapcop).qtsstime := rw_crapcop.qtsstime;								
         pr_tab_crapcop(vr_ind_crapcop).qtmeschq := rw_crapcop.qtmeschq;								
         pr_tab_crapcop(vr_ind_crapcop).qtmesest := rw_crapcop.qtmesest;								
@@ -521,7 +533,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
                                ,pr_flgativo IN crapcop.flgativo%TYPE --> Flag Ativo  
                                ,pr_incomite IN NUMBER
                                ,pr_contigen IN NUMBER
-															 ,pr_nmregmot IN VARCHAR2
+															 ,pr_nmregmpf IN VARCHAR2
+                               ,pr_nmregmpj IN VARCHAR2
 															 ,pr_qtsstime IN NUMBER
 															 ,pr_qtmeschq IN NUMBER
                                ,pr_qtmesest IN NUMBER
@@ -610,13 +623,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
 				
 				BEGIN
           UPDATE crapprm prm
-             SET prm.dsvlrprm = pr_nmregmot
+             SET prm.dsvlrprm = pr_nmregmpf
            WHERE prm.nmsistem = 'CRED'
              AND prm.cdcooper = rw_crapcop.cdcooper
-             AND prm.cdacesso = 'REGRA_ANALISE_MOTOR_IBRA';
+             AND prm.cdacesso = 'REGRA_ANL_MOTOR_IBRA_PF';
         EXCEPTION
           WHEN OTHERS THEN
             vr_dscritic := 'Erro ao atualizar tabela crapprm (3). ' || SQLERRM;
+            --Sair do programa
+            RAISE vr_exc_saida;
+        END;
+        
+        BEGIN
+          UPDATE crapprm prm
+             SET prm.dsvlrprm = pr_nmregmpj
+           WHERE prm.nmsistem = 'CRED'
+             AND prm.cdcooper = rw_crapcop.cdcooper
+             AND prm.cdacesso = 'REGRA_ANL_MOTOR_IBRA_PJ';
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao atualizar tabela crapprm (4). ' || SQLERRM;
             --Sair do programa
             RAISE vr_exc_saida;
         END;
@@ -629,7 +655,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
              AND prm.cdacesso = 'TIME_RESP_MOTOR_IBRA';
         EXCEPTION
           WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao atualizar tabela crapprm (4). ' || SQLERRM;
+            vr_dscritic := 'Erro ao atualizar tabela crapprm (5). ' || SQLERRM;
             --Sair do programa
             RAISE vr_exc_saida;
         END;
@@ -642,7 +668,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
              AND prm.cdacesso = 'QTD_MES_HIST_DEV_CHEQUES';
         EXCEPTION
           WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao atualizar tabela crapprm (5). ' || SQLERRM;
+            vr_dscritic := 'Erro ao atualizar tabela crapprm (6). ' || SQLERRM;
             --Sair do programa
             RAISE vr_exc_saida;
         END;
@@ -655,7 +681,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
              AND prm.cdacesso = 'QTD_MES_HIST_ESTOUROS';
         EXCEPTION
           WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao atualizar tabela crapprm (6). ' || SQLERRM;
+            vr_dscritic := 'Erro ao atualizar tabela crapprm (7). ' || SQLERRM;
             --Sair do programa
             RAISE vr_exc_saida;
         END;
@@ -668,7 +694,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
              AND prm.cdacesso = 'QTD_MES_HIST_EMPREST';
         EXCEPTION
           WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao atualizar tabela crapprm (7). ' || SQLERRM;
+            vr_dscritic := 'Erro ao atualizar tabela crapprm (8). ' || SQLERRM;
             --Sair do programa
             RAISE vr_exc_saida;
         END;
