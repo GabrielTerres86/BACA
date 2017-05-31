@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2017-05-30T10:53:35 -->
+<!-- 2017-05-30T15:45:28 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl519_contrato_limite_cheque" language="groovy" pageWidth="595" pageHeight="842" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="0.9558924531310722"/>
 	<property name="ireport.x" value="0"/>
@@ -732,7 +732,7 @@ Endereço:]]></text>
 			</textField>
 			<staticText>
 				<reportElement x="298" y="22" width="198" height="11" isRemoveLineWhenBlank="true" uuid="04da8319-8945-4edb-9b78-230ab03ef440">
-					<printWhenExpression><![CDATA[$F{nmconjug1}.length()>0]]></printWhenExpression>
+					<printWhenExpression><![CDATA[($F{nmconjug1}.length()>0) || ($F{nmconjug2}.length()>0)]]></printWhenExpression>
 				</reportElement>
 				<textElement>
 					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
@@ -1387,7 +1387,7 @@ Endereço:]]></text>
 			</textField>
 			<staticText>
 				<reportElement x="298" y="686" width="198" height="11" isRemoveLineWhenBlank="true" uuid="963b593b-ad23-4c0f-8e47-4f37e9d1f1f3">
-					<printWhenExpression><![CDATA[$F{nmdavali1}.length()>0]]></printWhenExpression>
+					<printWhenExpression><![CDATA[($F{nmconjug1}.length()>0) || ($F{nmconjug2}.length()>0)]]></printWhenExpression>
 				</reportElement>
 				<textElement>
 					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
@@ -1396,12 +1396,12 @@ Endereço:]]></text>
 			</staticText>
 			<line>
 				<reportElement x="314" y="723" width="211" height="1" isRemoveLineWhenBlank="true" uuid="1f2ba0f0-5974-42d9-b06b-c89f5b893a94">
-					<printWhenExpression><![CDATA[$F{nmdavali1}.length()>0]]></printWhenExpression>
+					<printWhenExpression><![CDATA[$F{nmconjug1}.length()>0]]></printWhenExpression>
 				</reportElement>
 			</line>
 			<staticText>
 				<reportElement x="298" y="713" width="13" height="11" isRemoveLineWhenBlank="true" uuid="0c348e95-ae72-4424-87be-39d91a05e057">
-					<printWhenExpression><![CDATA[$F{nmdavali1}.length()>0]]></printWhenExpression>
+					<printWhenExpression><![CDATA[$F{nmconjug1}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
 					<font fontName="Courier New" size="9" pdfFontName="Courier"/>
@@ -1410,7 +1410,7 @@ Endereço:]]></text>
 			</staticText>
 			<staticText>
 				<reportElement x="299" y="724" width="59" height="30" isRemoveLineWhenBlank="true" uuid="5a2f69fd-870a-4579-af09-31bd0275ca95">
-					<printWhenExpression><![CDATA[$F{nmdavali1}.length()>0]]></printWhenExpression>
+					<printWhenExpression><![CDATA[$F{nmconjug1}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
 					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
@@ -1421,7 +1421,7 @@ Endereço]]></text>
 			</staticText>
 			<textField isBlankWhenNull="true">
 				<reportElement x="332" y="724" width="193" height="11" isRemoveLineWhenBlank="true" uuid="6888c4a5-1cce-4eb1-a6be-f598d014ba7c">
-					<printWhenExpression><![CDATA[$F{nmdavali1}.length()>0]]></printWhenExpression>
+					<printWhenExpression><![CDATA[$F{nmconjug1}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
 					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
@@ -1430,7 +1430,7 @@ Endereço]]></text>
 			</textField>
 			<textField isBlankWhenNull="true">
 				<reportElement x="332" y="734" width="161" height="11" isRemoveLineWhenBlank="true" uuid="dbb82b97-f38e-4a72-ab29-cbfd09cbb854">
-					<printWhenExpression><![CDATA[$F{nmdavali1}.length()>0]]></printWhenExpression>
+					<printWhenExpression><![CDATA[$F{nmconjug1}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
 					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
@@ -1439,7 +1439,7 @@ Endereço]]></text>
 			</textField>
 			<textField isBlankWhenNull="true">
 				<reportElement x="348" y="744" width="178" height="20" isRemoveLineWhenBlank="true" uuid="494f0208-59be-44b8-82da-f06b5b0d77cc">
-					<printWhenExpression><![CDATA[$F{nmdavali1}.length()>0]]></printWhenExpression>
+					<printWhenExpression><![CDATA[$F{nmconjug1}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
 					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
@@ -1448,7 +1448,7 @@ Endereço]]></text>
 			</textField>
 			<textField isBlankWhenNull="true">
 				<reportElement x="348" y="764" width="171" height="11" isRemoveLineWhenBlank="true" uuid="9218a773-40be-4ca7-96b3-bff4cfa67f12">
-					<printWhenExpression><![CDATA[$F{nmdavali1}.length()>0]]></printWhenExpression>
+					<printWhenExpression><![CDATA[$F{nmconjug1}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
 					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
@@ -1466,7 +1466,7 @@ Endereço]]></text>
 			</staticText>
 			<staticText>
 				<reportElement x="297" y="764" width="51" height="11" isRemoveLineWhenBlank="true" uuid="1364dc9d-6dc4-42b8-b08a-b3d9db159e79">
-					<printWhenExpression><![CDATA[$F{nmdavali1}.length()>0]]></printWhenExpression>
+					<printWhenExpression><![CDATA[$F{nmconjug1}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
 					<font fontName="Courier New" size="9" pdfFontName="Courier"/>
@@ -1511,7 +1511,7 @@ Endereço]]></text>
 			</break>
 		</band>
 		<band height="119">
-			<printWhenExpression><![CDATA[$F{nmconjug2}.length()>0]]></printWhenExpression>
+			<printWhenExpression><![CDATA[$F{nmdavali2}.length()>0]]></printWhenExpression>
 			<textField isBlankWhenNull="true">
 				<reportElement x="92" y="49" width="193" height="10" isRemoveLineWhenBlank="true" uuid="f3813872-360c-46f5-b4ab-db95fa3f6378">
 					<printWhenExpression><![CDATA[$F{nmdavali2}.length()>0]]></printWhenExpression>
