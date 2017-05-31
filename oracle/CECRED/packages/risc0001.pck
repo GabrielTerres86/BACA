@@ -99,8 +99,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
   ---------------------------------------------------------------------------------------------------------------
 
   -- constantes para geracao de arquivos contabeis
-  vc_dircon CONSTANT VARCHAR2(30) := 'arquivos_contabeis/ayllos';
-  vc_cdacesso CONSTANT VARCHAR2(24) := 'ROOT_SISTEMAS';
+  vc_cdacesso CONSTANT VARCHAR2(24) := 'DIR_ARQ_CONTAB_X';
   vc_cdtodascooperativas INTEGER := 0;
 
   vr_dtrefris DATE;
@@ -143,6 +142,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     IS TABLE OF typ_decimal_pfpj
       INDEX BY BINARY_INTEGER;
 
+  --Armezenar Informações de Juros de contratos microcrédito por linha
+  TYPE typ_jur_microcredito IS TABLE OF NUMBER INDEX BY VARCHAR2(200);
+  vr_tab_jur_microcredito_pf typ_jur_microcredito;
+  vr_tab_jur_microcredito_pj typ_jur_microcredito;  
+
+  TYPE typ_jur_microcredito_age IS TABLE OF typ_jur_microcredito INDEX BY VARCHAR2(200);  
+  vr_tab_jur_mic_age_pf      typ_jur_microcredito_age;
+  vr_tab_jur_mic_age_pj      typ_jur_microcredito_age;   
 
   -- Relatorio
   vr_nom_arquivo VARCHAR2(100);
@@ -476,7 +483,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
          AND epr.nrctremp = ris.nrctremp
        ORDER BY ris.cdagenci,
                 ris.nrdconta;
-    
+
     --> Verificar se é um emprestimo de cessao de credito
     CURSOR cr_cessao (pr_cdcooper crapepr.cdcooper%TYPE,
                       pr_nrdconta crapepr.nrdconta%TYPE,
@@ -486,7 +493,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
        WHERE ces.cdcooper = pr_cdcooper
          AND ces.nrdconta = pr_nrdconta
          AND ces.nrctremp = pr_nrctremp;
-        
+
     vr_vljurctr          NUMBER;
     vr_crapvri_jur_found BOOLEAN := FALSE;
     vr_diascalc          INTEGER := 0;
@@ -655,7 +662,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
               pr_tabvljur5(rw_crapris_jur.cdagenci).valorpj := NVL(rw_crapris_jur.vljura60,0);
             END IF;
           END IF;
-        
+
         ELSIF par_cdmodali = 299 THEN
 
           IF rw_crapris_jur.inpessoa = 1 THEN -- PF
@@ -707,6 +714,260 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
 
   END pc_calcula_juros_60k;
+
+
+  PROCEDURE pc_calcula_juros_mic(par_cdcooper IN crapris.cdcooper%TYPE
+                                ,par_dtrefere IN crapris.dtrefere%TYPE
+                                ,par_dtinicio IN crapris.dtinictr%TYPE) IS
+  -- ..........................................................................
+  --
+  --  Programa : pc_calcula_juros_mic          
+
+  --  Sistema  : Rotinas genericas para RISCO
+  --  Sigla    : RISC
+  --  Autor    : Jonatas Jaqmam Pereira
+  --  Data     : 14/04/2017                      Ultima atualizacao: 14/04/2017
+  --
+  --  Dados referentes ao programa:
+  --
+  --   Objetivo  : Clacular juros de contratos de financimaneto microcredito por
+  --               tipo de linha de crédito
+  --
+  -- .............................................................................
+
+    CURSOR cr_crapvri_jur(pr_cdcooper IN crapris.cdcooper%TYPE
+                         ,pr_nrdconta IN crapris.nrdconta%TYPE
+                         ,pr_dtrefere IN crapris.dtrefere%TYPE
+                         ,pr_innivris IN crapris.innivris%TYPE
+                         ,pr_cdmodali IN crapris.cdmodali%TYPE
+                         ,pr_nrctremp IN crapris.nrctremp%TYPE
+                         ,pr_nrseqctr IN crapris.nrseqctr%TYPE) IS
+      SELECT /*+ INDEX_DESC(crapvri CRAPVRI##CRAPVRI1) */
+             crapvri.innivris
+            ,crapvri.cdvencto
+            ,crapvri.cdcooper
+            ,crapvri.vldivida
+        FROM crapvri
+       WHERE crapvri.cdcooper = pr_cdcooper
+         AND crapvri.dtrefere = pr_dtrefere
+         AND crapvri.nrdconta = pr_nrdconta
+         AND crapvri.innivris = pr_innivris
+         AND crapvri.cdmodali = pr_cdmodali
+         AND crapvri.nrctremp = pr_nrctremp
+         AND crapvri.nrseqctr = pr_nrseqctr
+         AND crapvri.cdvencto >= 230
+         AND crapvri.cdvencto <= 290;
+    rw_crapvri_jur cr_crapvri_jur%ROWTYPE;
+
+    CURSOR cr_craplem(pr_cdcooper     IN crapris.cdcooper%TYPE
+                     ,pr_nrdconta     IN crapris.nrdconta%TYPE
+                     ,vr_diascalc     IN INTEGER
+                     ,pr_tel_dtrefere craplem.dtmvtolt%TYPE
+                     ,par_dtinicio    IN craplem.dtmvtolt%TYPE
+                     ,pr_nrctremp     IN crapris.nrctremp%TYPE) IS
+      SELECT craplem.vllanmto
+        FROM craplem
+       WHERE craplem.cdcooper = pr_cdcooper
+         AND craplem.nrdconta = pr_nrdconta
+         AND craplem.dtmvtolt >= pr_tel_dtrefere - vr_diascalc
+         AND craplem.dtmvtolt >= par_dtinicio
+         AND craplem.dtmvtolt <= pr_tel_dtrefere
+         AND craplem.cdhistor = 98
+         AND craplem.nrdocmto = pr_nrctremp;
+
+
+    CURSOR cr_crapris_jur(par_cdcooper IN crapris.cdcooper%TYPE
+                         ,par_dtrefere IN crapris.dtrefere%TYPE) IS
+      SELECT ris.cdcooper
+            ,ris.nrdconta
+            ,ris.nrctremp
+            ,ris.nrseqctr
+            ,ris.dtrefere
+            ,ris.inpessoa
+            ,epr.tpemprst
+            ,ris.innivris
+            ,ris.cdmodali
+            ,ris.cdagenci
+            ,ris.qtdiaatr
+            ,ris.vljura60
+            ,decode(epr.tpemprst,0,'PR','TR')||lcr.dsorgrec dsorgrec
+        FROM crapris ris
+            ,crapepr epr
+            ,craplcr lcr
+       WHERE ris.cdcooper = par_cdcooper
+         AND ris.dtrefere = par_dtrefere
+         AND ris.cdmodali = 499
+         AND ris.inddocto = 1
+         AND epr.cdcooper = ris.cdcooper
+         AND epr.nrdconta = ris.nrdconta
+         AND epr.nrctremp = ris.nrctremp
+         AND epr.cdlcremp = lcr.cdlcremp
+         and epr.cdcooper = lcr.cdcooper
+         and lcr.cdusolcr = 1
+         and lcr.dsorgrec <> ' '
+       ORDER BY decode(epr.tpemprst,0,'PR','TR')||lcr.dsorgrec
+               ,ris.cdagenci;
+
+
+    vr_vljurctr          NUMBER;
+    vr_crapvri_jur_found BOOLEAN := FALSE;
+    vr_diascalc          INTEGER := 0;
+    contador             INTEGER := 0;
+
+  BEGIN
+
+
+    FOR rw_crapris_jur IN cr_crapris_jur(par_cdcooper,
+                                         par_dtrefere) LOOP
+
+      IF par_cdcooper IN ( 1, 13 ,16, 09) THEN
+        IF NOT fn_verifica_conta_migracao(rw_crapris_jur.cdcooper,
+                                          rw_crapris_jur.nrdconta,
+                                          rw_crapris_jur.dtrefere) THEN
+          CONTINUE;
+        END IF;
+      END IF;
+
+      IF rw_crapris_jur.tpemprst = 0 THEN
+
+        OPEN cr_crapvri_jur(rw_crapris_jur.cdcooper,
+                            rw_crapris_jur.nrdconta,
+                            rw_crapris_jur.dtrefere,
+                            rw_crapris_jur.innivris,
+                            rw_crapris_jur.cdmodali,
+                            rw_crapris_jur.nrctremp,
+                            rw_crapris_jur.nrseqctr);
+        FETCH cr_crapvri_jur
+          INTO rw_crapvri_jur;
+        vr_crapvri_jur_found := cr_crapvri_jur%FOUND;
+        CLOSE cr_crapvri_jur;
+
+        IF NOT vr_crapvri_jur_found THEN
+          CONTINUE;
+        END IF;
+
+
+        contador := contador + 1;
+
+
+        IF rw_crapvri_jur.cdvencto = 290 THEN
+          vr_diascalc := rw_crapris_jur.qtdiaatr - 60;
+
+        ELSE
+
+          IF vr_vencto(rw_crapvri_jur.cdvencto).dias < rw_crapris_jur.qtdiaatr THEN
+            vr_diascalc := vr_vencto(rw_crapvri_jur.cdvencto).dias - 60;
+          ELSE
+            vr_diascalc := rw_crapris_jur.qtdiaatr - 60;
+          END IF;
+
+        END IF;
+
+        vr_vljurctr := 0;
+
+        FOR rw_craplem IN cr_craplem(rw_crapris_jur.cdcooper,
+                                     rw_crapris_jur.nrdconta,
+                                     vr_diascalc,
+                                     par_dtrefere,
+                                     par_dtinicio,
+                                     rw_crapris_jur.nrctremp) LOOP
+
+          vr_vljurctr := vr_vljurctr + nvl(rw_craplem.vllanmto, 0);
+
+        END LOOP;
+
+        -- Normaliza Juros
+        vr_vljurctr := fn_normaliza_jurosa60(rw_crapris_jur.cdcooper,
+                                             rw_crapris_jur.nrdconta,
+                                             rw_crapris_jur.dtrefere,
+                                             rw_crapris_jur.innivris,
+                                             rw_crapris_jur.cdmodali,
+                                             rw_crapris_jur.nrctremp,
+                                             rw_crapris_jur.nrseqctr,
+                                             vr_vljurctr);
+
+          IF rw_crapris_jur.inpessoa = 1 THEN -- PF
+
+            IF vr_tab_jur_microcredito_pf.exists(rw_crapris_jur.dsorgrec) then
+               vr_tab_jur_microcredito_pf(rw_crapris_jur.dsorgrec) := vr_tab_jur_microcredito_pf(rw_crapris_jur.dsorgrec) + vr_vljurctr;
+            ELSE
+              vr_tab_jur_microcredito_pf(rw_crapris_jur.dsorgrec) := vr_vljurctr;
+            END IF;
+
+            IF vr_tab_jur_mic_age_pf.exists(rw_crapris_jur.dsorgrec) THEN
+              IF vr_tab_jur_mic_age_pf(rw_crapris_jur.dsorgrec).exists(rw_crapris_jur.cdagenci) THEN
+                vr_tab_jur_mic_age_pf(rw_crapris_jur.dsorgrec)(rw_crapris_jur.cdagenci) := vr_tab_jur_mic_age_pf(rw_crapris_jur.dsorgrec)(rw_crapris_jur.cdagenci) + vr_vljurctr;
+              ELSE
+                vr_tab_jur_mic_age_pf(rw_crapris_jur.dsorgrec)(rw_crapris_jur.cdagenci) := vr_vljurctr;
+              END IF; 
+            ELSE
+              vr_tab_jur_mic_age_pf(rw_crapris_jur.dsorgrec)(rw_crapris_jur.cdagenci) := vr_vljurctr;
+            END IF;
+
+          ELSE -- PJ
+
+            IF vr_tab_jur_microcredito_pj.exists(rw_crapris_jur.dsorgrec) then
+               vr_tab_jur_microcredito_pj(rw_crapris_jur.dsorgrec) := vr_tab_jur_microcredito_pj(rw_crapris_jur.dsorgrec) + vr_vljurctr;
+            ELSE
+              vr_tab_jur_microcredito_pj(rw_crapris_jur.dsorgrec) := vr_vljurctr;
+            END IF;
+
+            IF vr_tab_jur_mic_age_pj.exists(rw_crapris_jur.dsorgrec) THEN
+              IF vr_tab_jur_mic_age_pj(rw_crapris_jur.dsorgrec).exists(rw_crapris_jur.cdagenci) THEN
+                vr_tab_jur_mic_age_pj(rw_crapris_jur.dsorgrec)(rw_crapris_jur.cdagenci) := vr_tab_jur_mic_age_pj(rw_crapris_jur.dsorgrec)(rw_crapris_jur.cdagenci) + vr_vljurctr;
+              ELSE
+                vr_tab_jur_mic_age_pj(rw_crapris_jur.dsorgrec)(rw_crapris_jur.cdagenci) := vr_vljurctr;
+              END IF; 
+            ELSE
+              vr_tab_jur_mic_age_pj(rw_crapris_jur.dsorgrec)(rw_crapris_jur.cdagenci) := vr_vljurctr;
+            END IF;
+          END IF;
+
+      ELSE  -- Pre-Fixado
+
+          IF rw_crapris_jur.inpessoa = 1 THEN -- PF
+
+            IF vr_tab_jur_microcredito_pf.exists(rw_crapris_jur.dsorgrec) then
+              vr_tab_jur_microcredito_pf(rw_crapris_jur.dsorgrec) := vr_tab_jur_microcredito_pf(rw_crapris_jur.dsorgrec) + NVL(rw_crapris_jur.vljura60,0);
+            ELSE
+              vr_tab_jur_microcredito_pf(rw_crapris_jur.dsorgrec) := NVL(rw_crapris_jur.vljura60,0);
+            END IF;
+
+            IF vr_tab_jur_mic_age_pf.exists(rw_crapris_jur.dsorgrec) THEN
+              IF vr_tab_jur_mic_age_pf(rw_crapris_jur.dsorgrec).exists(rw_crapris_jur.cdagenci) THEN
+                vr_tab_jur_mic_age_pf(rw_crapris_jur.dsorgrec)(rw_crapris_jur.cdagenci) := vr_tab_jur_mic_age_pf(rw_crapris_jur.dsorgrec)(rw_crapris_jur.cdagenci) + NVL(rw_crapris_jur.vljura60,0);
+              ELSE
+                vr_tab_jur_mic_age_pf(rw_crapris_jur.dsorgrec)(rw_crapris_jur.cdagenci) := NVL(rw_crapris_jur.vljura60,0);
+              END IF; 
+            ELSE
+              vr_tab_jur_mic_age_pf(rw_crapris_jur.dsorgrec)(rw_crapris_jur.cdagenci) := NVL(rw_crapris_jur.vljura60,0);
+            END IF;
+
+          ELSE -- PJ
+
+            IF vr_tab_jur_microcredito_pj.exists(rw_crapris_jur.dsorgrec) then
+               vr_tab_jur_microcredito_pj(rw_crapris_jur.dsorgrec) := vr_tab_jur_microcredito_pj(rw_crapris_jur.dsorgrec) + NVL(rw_crapris_jur.vljura60,0);
+            ELSE
+              vr_tab_jur_microcredito_pj(rw_crapris_jur.dsorgrec) := NVL(rw_crapris_jur.vljura60,0);
+            END IF;
+
+            IF vr_tab_jur_mic_age_pj.exists(rw_crapris_jur.dsorgrec) THEN
+              IF vr_tab_jur_mic_age_pj(rw_crapris_jur.dsorgrec).exists(rw_crapris_jur.cdagenci) THEN
+                vr_tab_jur_mic_age_pj(rw_crapris_jur.dsorgrec)(rw_crapris_jur.cdagenci) := vr_tab_jur_mic_age_pj(rw_crapris_jur.dsorgrec)(rw_crapris_jur.cdagenci) + NVL(rw_crapris_jur.vljura60,0);
+              ELSE
+                vr_tab_jur_mic_age_pj(rw_crapris_jur.dsorgrec)(rw_crapris_jur.cdagenci) := NVL(rw_crapris_jur.vljura60,0);
+              END IF; 
+            ELSE
+              vr_tab_jur_mic_age_pj(rw_crapris_jur.dsorgrec)(rw_crapris_jur.cdagenci) := NVL(rw_crapris_jur.vljura60,0);
+            END IF;
+          END IF;
+                    
+      END IF;
+
+    END LOOP;
+
+
+  END pc_calcula_juros_mic;
 
 
 
@@ -1061,7 +1322,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     vr_rel1723           NUMBER := 0;
     vr_rel1731_1         NUMBER := 0;
     vr_rel1731_2         NUMBER := 0;
-    
+
     --CESSAO
     vr_rel1760_pre       NUMBER := 0;
     vr_rel1761_pre       NUMBER := 0;
@@ -1138,7 +1399,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     vr_ttlanmto          NUMBER := 0;
     vr_ttlanmto_risco    NUMBER := 0;
     vr_ttlanmto_divida   NUMBER := 0;
-    
+
     vr_fleprces          INTEGER := 0;
 
     -- Variaveis para tratamento de erros
@@ -1161,6 +1422,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     -- Cooperativas incorporadas
     vr_dtincorp crapdat.dtmvtolt%TYPE;
     vr_cdcopant craptco.cdcopant%TYPE;
+
+    --Váriveis juros microcredito
+    vr_chave VARCHAR2(200);
+    vr_tpemprst VARCHAR2(2);
+    vr_nrctadst NUMBER;
+    vr_nrctaori NUMBER;
+    vr_descricao VARCHAR2(200);
+    vr_chave2 varchar2(10);
 
     -- Escrever linha no arquivo
     PROCEDURE pc_gravar_linha(pr_linha IN VARCHAR2) IS
@@ -1592,199 +1861,199 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
               vr_vlag1761_pre(rw_crapris.cdagenci).valor := vr_vlag1761_pre(rw_crapris.cdagenci).valor + vr_vlpreatr;
             ELSE
               vr_vlag1761_pre(rw_crapris.cdagenci).valor := vr_vlpreatr;
+      END IF;
+          END IF;
+        END IF;
+
+      ELSE  -- FIM - CESSAO
+
+      -- EMPRESTIMOS
+      IF  rw_crapris.cdorigem = 3 AND rw_crapris.cdmodali = 0299 THEN
+        -- Se pessoa Física
+        IF rw_crapris.inpessoa = 1 THEN
+          -- Verifica o tipo do empréstimo
+          IF rw_crapepr.tpemprst = 0 THEN
+
+            vr_rel1721   := vr_rel1721   + vr_vlpreatr;
+            vr_rel1721_v := vr_rel1721_v + vr_vldivida;
+
+            IF vr_vlag1721.exists(rw_crapris.cdagenci) THEN
+              vr_vlag1721(rw_crapris.cdagenci).valor := vr_vlag1721(rw_crapris.cdagenci).valor + vr_vlpreatr;
+            ELSE
+              vr_vlag1721(rw_crapris.cdagenci).valor := vr_vlpreatr;
+            END IF;
+
+          ELSE
+
+            vr_rel1721_pre   := vr_rel1721_pre   + vr_vlpreatr;
+            vr_rel1721_v_pre := vr_rel1721_v_pre + vr_vldivida;
+
+            IF vr_vlag1721_pre.exists(rw_crapris.cdagenci) THEN
+              vr_vlag1721_pre(rw_crapris.cdagenci).valor := vr_vlag1721_pre(rw_crapris.cdagenci).valor + vr_vlpreatr;
+            ELSE
+              vr_vlag1721_pre(rw_crapris.cdagenci).valor := vr_vlpreatr;
+            END IF;
+
+          END IF;
+
+        ELSE -- Se pessoa Juridica
+          -- Verifica o tipo do empréstimo
+          IF rw_crapepr.tpemprst = 0 THEN
+
+            vr_rel1723   := vr_rel1723   + vr_vlpreatr;
+            vr_rel1723_v := vr_rel1723_v + vr_vldivida;
+
+            IF vr_vlag1723.exists(rw_crapris.cdagenci) THEN
+              vr_vlag1723(rw_crapris.cdagenci).valor := vr_vlag1723(rw_crapris.cdagenci).valor + vr_vlpreatr;
+            ELSE
+              vr_vlag1723(rw_crapris.cdagenci).valor := vr_vlpreatr;
+            END IF;
+
+          ELSE
+
+            vr_rel1723_pre   := vr_rel1723_pre + vr_vlpreatr;
+            vr_rel1723_v_pre := vr_rel1723_v_pre + vr_vldivida;
+
+            IF vr_vlag1723_pre.exists(rw_crapris.cdagenci) THEN
+              vr_vlag1723_pre(rw_crapris.cdagenci).valor := vr_vlag1723_pre(rw_crapris.cdagenci).valor + vr_vlpreatr;
+            ELSE
+              vr_vlag1723_pre(rw_crapris.cdagenci).valor := vr_vlpreatr;
             END IF;
           END IF;
         END IF;
-        
-      ELSE  -- FIM - CESSAO
+      END IF;  -- FIM - EMPRESTIMOS
 
-        -- EMPRESTIMOS
-        IF  rw_crapris.cdorigem = 3 AND rw_crapris.cdmodali = 0299 THEN
-          -- Se pessoa Física
-          IF rw_crapris.inpessoa = 1 THEN
-            -- Verifica o tipo do empréstimo
-            IF rw_crapepr.tpemprst = 0 THEN
+      -- FINANCIAMENTOS
+      IF  rw_crapris.cdorigem = 3 AND rw_crapris.cdmodali = 0499 THEN
 
-              vr_rel1721   := vr_rel1721   + vr_vlpreatr;
-              vr_rel1721_v := vr_rel1721_v + vr_vldivida;
+        -- Verifica se é microcrédito
+        OPEN cr_craplcr(rw_crapris.cdcooper,
+                        rw_crapris.nrdconta,
+                        rw_crapris.nrctremp);
+        FETCH cr_craplcr INTO rw_craplcr;
+        CLOSE cr_craplcr;
 
-              IF vr_vlag1721.exists(rw_crapris.cdagenci) THEN
-                vr_vlag1721(rw_crapris.cdagenci).valor := vr_vlag1721(rw_crapris.cdagenci).valor + vr_vlpreatr;
-              ELSE
-                vr_vlag1721(rw_crapris.cdagenci).valor := vr_vlpreatr;
-              END IF;
 
+        -- Se pessoa física
+        IF rw_crapris.inpessoa = 1 THEN  -- Pessoa fisica
+          -- Verifica o tipo do empréstimo
+          IF rw_crapepr.tpemprst = 0 THEN
+
+            vr_rel1731_1   := vr_rel1731_1   + vr_vlpreatr;
+            vr_rel1731_1_v := vr_rel1731_1_v + vr_vldivida;
+
+            IF vr_vlag1731_1.exists(rw_crapris.cdagenci) THEN
+              vr_vlag1731_1(rw_crapris.cdagenci).valor := vr_vlag1731_1(rw_crapris.cdagenci).valor + vr_vlpreatr;
             ELSE
+              vr_vlag1731_1(rw_crapris.cdagenci).valor := vr_vlpreatr;
+            END IF;
 
-              vr_rel1721_pre   := vr_rel1721_pre   + vr_vlpreatr;
-              vr_rel1721_v_pre := vr_rel1721_v_pre + vr_vldivida;
-
-              IF vr_vlag1721_pre.exists(rw_crapris.cdagenci) THEN
-                vr_vlag1721_pre(rw_crapris.cdagenci).valor := vr_vlag1721_pre(rw_crapris.cdagenci).valor + vr_vlpreatr;
-              ELSE
-                vr_vlag1721_pre(rw_crapris.cdagenci).valor := vr_vlpreatr;
-              END IF;
+            --Microcrédito
+            IF rw_craplcr.cdusolcr = 1 AND rw_craplcr.dsorgrec <> ' ' THEN
+               vr_arrchave1 := vr_price_atr||vr_price_pf;
+               vr_arrchave2 := (LPAD(rw_craplcr.dsorgrec,40,' ')||LPAD(rw_crapris.cdagenci,3,0));
+               --Acumulador de TR Pessoa fisica
+               vr_tab_microcredito(vr_arrchave1)(LPAD(rw_craplcr.dsorgrec,40,' ')||'999').valor := vr_tab_microcredito(vr_arrchave1)(LPAD(rw_craplcr.dsorgrec,40,' ')||'999').valor + vr_vldivida;
+               vr_tab_microcredito(vr_arrchave1)(vr_arrchave2).valor := vr_tab_microcredito(vr_arrchave1)(vr_arrchave2).valor + vr_vldivida;
 
             END IF;
 
-          ELSE -- Se pessoa Juridica
-            -- Verifica o tipo do empréstimo
-            IF rw_crapepr.tpemprst = 0 THEN
+          ELSE
 
-              vr_rel1723   := vr_rel1723   + vr_vlpreatr;
-              vr_rel1723_v := vr_rel1723_v + vr_vldivida;
+            vr_rel1731_1_pre   := vr_rel1731_1_pre   + vr_vlpreatr;
+            vr_rel1731_1_v_pre := vr_rel1731_1_v_pre + vr_vldivida;
 
-              IF vr_vlag1723.exists(rw_crapris.cdagenci) THEN
-                vr_vlag1723(rw_crapris.cdagenci).valor := vr_vlag1723(rw_crapris.cdagenci).valor + vr_vlpreatr;
-              ELSE
-                vr_vlag1723(rw_crapris.cdagenci).valor := vr_vlpreatr;
-              END IF;
-
+            IF vr_vlag1731_1_pre.exists(rw_crapris.cdagenci) THEN
+              vr_vlag1731_1_pre(rw_crapris.cdagenci).valor := vr_vlag1731_1_pre(rw_crapris.cdagenci).valor + vr_vlpreatr;
             ELSE
-
-              vr_rel1723_pre   := vr_rel1723_pre + vr_vlpreatr;
-              vr_rel1723_v_pre := vr_rel1723_v_pre + vr_vldivida;
-
-              IF vr_vlag1723_pre.exists(rw_crapris.cdagenci) THEN
-                vr_vlag1723_pre(rw_crapris.cdagenci).valor := vr_vlag1723_pre(rw_crapris.cdagenci).valor + vr_vlpreatr;
-              ELSE
-                vr_vlag1723_pre(rw_crapris.cdagenci).valor := vr_vlpreatr;
-              END IF;
+              vr_vlag1731_1_pre(rw_crapris.cdagenci).valor := vr_vlpreatr;
             END IF;
+
+            --Microcrédito
+            IF rw_craplcr.cdusolcr = 1 AND rw_craplcr.dsorgrec <> ' ' THEN
+               vr_arrchave1 := vr_price_pre||vr_price_pf;
+               vr_arrchave2 := (LPAD(rw_craplcr.dsorgrec,40,' ')||LPAD(rw_crapris.cdagenci,3,0));
+               -- Acumulador PRE Pessoa Fisica
+               vr_tab_microcredito(vr_arrchave1)(LPAD(rw_craplcr.dsorgrec,40,' ')||'999').valor := vr_tab_microcredito(vr_arrchave1)(LPAD(rw_craplcr.dsorgrec,40,' ')||'999').valor + vr_vldivida;
+               vr_tab_microcredito(vr_arrchave1)(vr_arrchave2).valor := vr_tab_microcredito(vr_arrchave1)(vr_arrchave2).valor + vr_vldivida;
+
+            END IF;
+
           END IF;
-        END IF;  -- FIM - EMPRESTIMOS
 
-        -- FINANCIAMENTOS
-        IF  rw_crapris.cdorigem = 3 AND rw_crapris.cdmodali = 0499 THEN
+        ELSE  -- Pessoa Juridica
 
-          -- Verifica se é microcrédito
-          OPEN cr_craplcr(rw_crapris.cdcooper,
+          --verifica se eh uma operacao do BNDES
+          OPEN cr_crapebn(rw_crapris.cdcooper,
                           rw_crapris.nrdconta,
                           rw_crapris.nrctremp);
-          FETCH cr_craplcr INTO rw_craplcr;
-          CLOSE cr_craplcr;
+                          
+          FETCH cr_crapebn INTO rw_crapebn;
+          
+          -- Se nao for do BNDES e nao existir na crapepr, continua
+          IF cr_crapebn%NOTFOUND THEN
+            CLOSE cr_crapebn;
 
+          -- Verifica o tipo do empréstimo
+          IF rw_crapepr.tpemprst = 0 THEN
 
-          -- Se pessoa física
-          IF rw_crapris.inpessoa = 1 THEN  -- Pessoa fisica
-            -- Verifica o tipo do empréstimo
-            IF rw_crapepr.tpemprst = 0 THEN
+            vr_rel1731_2   := vr_rel1731_2   + vr_vlpreatr;
+            vr_rel1731_2_v := vr_rel1731_2_v + vr_vldivida;
 
-              vr_rel1731_1   := vr_rel1731_1   + vr_vlpreatr;
-              vr_rel1731_1_v := vr_rel1731_1_v + vr_vldivida;
-
-              IF vr_vlag1731_1.exists(rw_crapris.cdagenci) THEN
-                vr_vlag1731_1(rw_crapris.cdagenci).valor := vr_vlag1731_1(rw_crapris.cdagenci).valor + vr_vlpreatr;
-              ELSE
-                vr_vlag1731_1(rw_crapris.cdagenci).valor := vr_vlpreatr;
-              END IF;
-
-              --Microcrédito
-              IF rw_craplcr.cdusolcr = 1 AND rw_craplcr.dsorgrec <> ' ' THEN
-                 vr_arrchave1 := vr_price_atr||vr_price_pf;
-                 vr_arrchave2 := (LPAD(rw_craplcr.dsorgrec,40,' ')||LPAD(rw_crapris.cdagenci,3,0));
-                 --Acumulador de TR Pessoa fisica
-                 vr_tab_microcredito(vr_arrchave1)(LPAD(rw_craplcr.dsorgrec,40,' ')||'999').valor := vr_tab_microcredito(vr_arrchave1)(LPAD(rw_craplcr.dsorgrec,40,' ')||'999').valor + vr_vldivida;
-                 vr_tab_microcredito(vr_arrchave1)(vr_arrchave2).valor := vr_tab_microcredito(vr_arrchave1)(vr_arrchave2).valor + vr_vldivida;
-
-              END IF;
-
+            IF vr_vlag1731_2.exists(rw_crapris.cdagenci) THEN
+              vr_vlag1731_2(rw_crapris.cdagenci).valor := vr_vlag1731_2(rw_crapris.cdagenci).valor + vr_vlpreatr;
             ELSE
+              vr_vlag1731_2(rw_crapris.cdagenci).valor := vr_vlpreatr;
+            END IF;
 
-              vr_rel1731_1_pre   := vr_rel1731_1_pre   + vr_vlpreatr;
-              vr_rel1731_1_v_pre := vr_rel1731_1_v_pre + vr_vldivida;
-
-              IF vr_vlag1731_1_pre.exists(rw_crapris.cdagenci) THEN
-                vr_vlag1731_1_pre(rw_crapris.cdagenci).valor := vr_vlag1731_1_pre(rw_crapris.cdagenci).valor + vr_vlpreatr;
-              ELSE
-                vr_vlag1731_1_pre(rw_crapris.cdagenci).valor := vr_vlpreatr;
-              END IF;
-
-              --Microcrédito
-              IF rw_craplcr.cdusolcr = 1 AND rw_craplcr.dsorgrec <> ' ' THEN
-                 vr_arrchave1 := vr_price_pre||vr_price_pf;
-                 vr_arrchave2 := (LPAD(rw_craplcr.dsorgrec,40,' ')||LPAD(rw_crapris.cdagenci,3,0));
-                 -- Acumulador PRE Pessoa Fisica
-                 vr_tab_microcredito(vr_arrchave1)(LPAD(rw_craplcr.dsorgrec,40,' ')||'999').valor := vr_tab_microcredito(vr_arrchave1)(LPAD(rw_craplcr.dsorgrec,40,' ')||'999').valor + vr_vldivida;
-                 vr_tab_microcredito(vr_arrchave1)(vr_arrchave2).valor := vr_tab_microcredito(vr_arrchave1)(vr_arrchave2).valor + vr_vldivida;
-
-              END IF;
+            --Microcrédito
+            IF rw_craplcr.cdusolcr = 1 AND rw_craplcr.dsorgrec <> ' ' THEN
+               vr_arrchave1 := vr_price_atr||vr_price_pj;
+               vr_arrchave2 := (LPAD(rw_craplcr.dsorgrec,40,' ')||LPAD(rw_crapris.cdagenci,3,0));
+               -- Acumulador PRE Pessoa Fisica
+               vr_tab_microcredito(vr_arrchave1)(LPAD(rw_craplcr.dsorgrec,40,' ')||'999').valor := vr_tab_microcredito(vr_arrchave1)(LPAD(rw_craplcr.dsorgrec,40,' ')||'999').valor + vr_vldivida;
+               vr_tab_microcredito(vr_arrchave1)(vr_arrchave2).valor := vr_tab_microcredito(vr_arrchave1)(vr_arrchave2).valor + vr_vldivida;
 
             END IF;
 
-          ELSE  -- Pessoa Juridica
+            ELSE -- tipo de emprestimo
 
-            --verifica se eh uma operacao do BNDES
-            OPEN cr_crapebn(rw_crapris.cdcooper,
-                            rw_crapris.nrdconta,
-                            rw_crapris.nrctremp);
-                            
-            FETCH cr_crapebn INTO rw_crapebn;
-            
-            -- Se nao for do BNDES e nao existir na crapepr, continua
-            IF cr_crapebn%NOTFOUND THEN
-              CLOSE cr_crapebn;
+            vr_rel1731_2_pre   := vr_rel1731_2_pre   + vr_vlpreatr;
+            vr_rel1731_2_v_pre := vr_rel1731_2_v_pre + vr_vldivida;
 
-            -- Verifica o tipo do empréstimo
-            IF rw_crapepr.tpemprst = 0 THEN
+            IF vr_vlag1731_2_pre.exists(rw_crapris.cdagenci) THEN
+              vr_vlag1731_2_pre(rw_crapris.cdagenci).valor := vr_vlag1731_2_pre(rw_crapris.cdagenci).valor + vr_vlpreatr;
+            ELSE
+              vr_vlag1731_2_pre(rw_crapris.cdagenci).valor := vr_vlpreatr;
+            END IF;
 
-              vr_rel1731_2   := vr_rel1731_2   + vr_vlpreatr;
-              vr_rel1731_2_v := vr_rel1731_2_v + vr_vldivida;
-
-              IF vr_vlag1731_2.exists(rw_crapris.cdagenci) THEN
-                vr_vlag1731_2(rw_crapris.cdagenci).valor := vr_vlag1731_2(rw_crapris.cdagenci).valor + vr_vlpreatr;
-              ELSE
-                vr_vlag1731_2(rw_crapris.cdagenci).valor := vr_vlpreatr;
-              END IF;
-
-              --Microcrédito
-              IF rw_craplcr.cdusolcr = 1 AND rw_craplcr.dsorgrec <> ' ' THEN
-                 vr_arrchave1 := vr_price_atr||vr_price_pj;
-                 vr_arrchave2 := (LPAD(rw_craplcr.dsorgrec,40,' ')||LPAD(rw_crapris.cdagenci,3,0));
-                 -- Acumulador PRE Pessoa Fisica
-                 vr_tab_microcredito(vr_arrchave1)(LPAD(rw_craplcr.dsorgrec,40,' ')||'999').valor := vr_tab_microcredito(vr_arrchave1)(LPAD(rw_craplcr.dsorgrec,40,' ')||'999').valor + vr_vldivida;
-                 vr_tab_microcredito(vr_arrchave1)(vr_arrchave2).valor := vr_tab_microcredito(vr_arrchave1)(vr_arrchave2).valor + vr_vldivida;
-
-              END IF;
-
-              ELSE -- tipo de emprestimo
-
-              vr_rel1731_2_pre   := vr_rel1731_2_pre   + vr_vlpreatr;
-              vr_rel1731_2_v_pre := vr_rel1731_2_v_pre + vr_vldivida;
-
-              IF vr_vlag1731_2_pre.exists(rw_crapris.cdagenci) THEN
-                vr_vlag1731_2_pre(rw_crapris.cdagenci).valor := vr_vlag1731_2_pre(rw_crapris.cdagenci).valor + vr_vlpreatr;
-              ELSE
-                vr_vlag1731_2_pre(rw_crapris.cdagenci).valor := vr_vlpreatr;
-              END IF;
-
-              --Microcrédito
-              IF rw_craplcr.cdusolcr = 1 AND rw_craplcr.dsorgrec <> ' ' THEN
-                 vr_arrchave1 := vr_price_pre||vr_price_pj;
-                 vr_arrchave2 := (LPAD(rw_craplcr.dsorgrec,40,' ')||LPAD(rw_crapris.cdagenci,3,0));
-                 -- Acumulador PRE Pessoa Fisica
-                 vr_tab_microcredito(vr_arrchave1)(LPAD(rw_craplcr.dsorgrec,40,' ')||'999').valor := vr_tab_microcredito(vr_arrchave1)(LPAD(rw_craplcr.dsorgrec,40,' ')||'999').valor + vr_vldivida;
-                 vr_tab_microcredito(vr_arrchave1)(vr_arrchave2).valor := vr_tab_microcredito(vr_arrchave1)(vr_arrchave2).valor + vr_vldivida;
-
-              END IF;
+            --Microcrédito
+            IF rw_craplcr.cdusolcr = 1 AND rw_craplcr.dsorgrec <> ' ' THEN
+               vr_arrchave1 := vr_price_pre||vr_price_pj;
+               vr_arrchave2 := (LPAD(rw_craplcr.dsorgrec,40,' ')||LPAD(rw_crapris.cdagenci,3,0));
+               -- Acumulador PRE Pessoa Fisica
+               vr_tab_microcredito(vr_arrchave1)(LPAD(rw_craplcr.dsorgrec,40,' ')||'999').valor := vr_tab_microcredito(vr_arrchave1)(LPAD(rw_craplcr.dsorgrec,40,' ')||'999').valor + vr_vldivida;
+               vr_tab_microcredito(vr_arrchave1)(vr_arrchave2).valor := vr_tab_microcredito(vr_arrchave1)(vr_arrchave2).valor + vr_vldivida;
 
             END IF;
-            
-            ELSE -- Se for operacao do BNDES
-              CLOSE cr_crapebn;
-              -- totalizar em uma nova variável o valor do empréstimo em atraso(vr_vlpreatr).  
-              vr_vlempatr_bndes_2 := vr_vlempatr_bndes_2 + vr_vlpreatr;
-              
-              -- armazena também o valor em atraso por agência
-              IF vr_vlatrage_bndes_2.exists(rw_crapris.cdagenci) THEN
-                vr_vlatrage_bndes_2(rw_crapris.cdagenci).valor := vr_vlatrage_bndes_2(rw_crapris.cdagenci).valor + vr_vlpreatr;
-              ELSE
-                vr_vlatrage_bndes_2(rw_crapris.cdagenci).valor := vr_vlpreatr;
+
           END IF;
-                        
-            END IF; -- FIM - Validacao do BNDES 
-          END IF; -- FIM - Pessoa Juridica
-        END IF;  -- FIM - FINANCIAMENTOS
+          
+          ELSE -- Se for operacao do BNDES
+            CLOSE cr_crapebn;
+            -- totalizar em uma nova variável o valor do empréstimo em atraso(vr_vlpreatr).  
+            vr_vlempatr_bndes_2 := vr_vlempatr_bndes_2 + vr_vlpreatr;
+            
+            -- armazena também o valor em atraso por agência
+            IF vr_vlatrage_bndes_2.exists(rw_crapris.cdagenci) THEN
+              vr_vlatrage_bndes_2(rw_crapris.cdagenci).valor := vr_vlatrage_bndes_2(rw_crapris.cdagenci).valor + vr_vlpreatr;
+            ELSE
+              vr_vlatrage_bndes_2(rw_crapris.cdagenci).valor := vr_vlpreatr;
+        END IF;
+                      
+          END IF; -- FIM - Validacao do BNDES 
+        END IF; -- FIM - Pessoa Juridica
+      END IF;  -- FIM - FINANCIAMENTOS
 
       END IF; -- FIM - CESSAO
       -- DESCONTOS
@@ -1942,6 +2211,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
           END IF;
         END IF;
       END IF;
+      
+      
     END LOOP; -- FIM LOOP crapris
 
     -- TOTALIZAR  LIMITE NAO UTILIZADO
@@ -2011,7 +2282,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     vr_finjuros.valorpj  := vr_finjuros.valorpj  + vr_finjur_calc.valorpj;
     vr_finjuros2.valorpf := vr_finjuros2.valorpf + vr_finjur_calc2.valorpf;
     vr_finjuros2.valorpj := vr_finjuros2.valorpj + vr_finjur_calc2.valorpj;
-    
+
     --Cessao credito
     vr_vldjuros3.valorpf := vr_vldjuros3.valorpf + vr_vldjur_calc3.valorpf;
     vr_vldjuros3.valorpj := vr_vldjuros3.valorpj + vr_vldjur_calc3.valorpj;
@@ -2040,12 +2311,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     vr_finjuros.valorpj  := vr_finjuros.valorpj  + vr_finjur_calc.valorpj;
     vr_finjuros2.valorpf := vr_finjuros2.valorpf + vr_finjur_calc2.valorpf;
     vr_finjuros2.valorpj := vr_finjuros2.valorpj + vr_finjur_calc2.valorpj;
-    
+
     --Cessao credito
     vr_vldjuros3.valorpf := vr_vldjuros3.valorpf + vr_vldjur_calc3.valorpf;
     vr_vldjuros3.valorpj := vr_vldjuros3.valorpj + vr_vldjur_calc3.valorpj;
     
 
+    --Calculo e agrupamento de juros contrato  financiamento microcredito
+    pc_calcula_juros_mic(pr_cdcooper,
+                         vr_dtrefere,
+                         vr_dtinicio);
+    
+    
     vr_contador := 1;
     WHILE vr_contador <= 16 LOOP
 
@@ -2104,7 +2381,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     vr_vldevedo(31) := vr_rel1731_2_v_pre;
     vr_vldespes(31) := vr_rel1731_2_pre;
     vr_vldespes(32) := vr_vlempatr_bndes_2;
-    
+
     --Cessao
     vr_vldevedo(33) := vr_rel1760_v_pre;
     vr_vldespes(33) := vr_rel1760_pre;
@@ -2955,12 +3232,178 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
                          TRIM(to_char(vr_pacvljur_5(vr_contador).valorpj, '99999999999990.00'));
           -- Gravar Linha
           pc_gravar_linha(vr_linhadet);
-        END IF;
+    END IF;
       END LOOP;
 
     END IF; 
     --> FIM CESSAO
-    
+    --juros microcredito PRICE TR
+    vr_chave := vr_tab_jur_microcredito_pf.first;
+    WHILE vr_chave IS NOT NULL LOOP
+
+      vr_tpemprst := substr(vr_chave,1,2);
+      
+      if vr_tpemprst = 'PR' then
+        vr_nrctadst := 7026;
+        vr_nrctaori := 7071; 
+        vr_descricao := 'Ajuste de saldo ref. (risco) juros a apropriar MICROCREDITO EM ATRASO PRICE TR ('||
+                        LTRIM(REPLACE(vr_chave,'PRMICROCREDITO',''))||') - PESSOA FISICA';
+      else
+        vr_nrctadst := 7028;
+        vr_nrctaori := 7080;  
+        vr_descricao := 'Ajuste de saldo ref. (risco) juros a apropriar MICROCREDITO EM ATRASO PREFIXADO ('||
+                        LTRIM(REPLACE(vr_chave,'TRMICROCREDITO',''))||') - PESSOA FISICA';        
+      end if;
+      
+      IF vr_tab_jur_microcredito_pf(vr_chave) > 0 THEN
+        
+        vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
+                       TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) ||','|| 
+                       vr_nrctaori||','||
+                       vr_nrctadst||','||
+                       TRIM(to_char(vr_tab_jur_microcredito_pf(vr_chave), '99999999999990.00')) ||
+                       ',5210,' ||
+                       '"'||vr_descricao||'"';
+        -- Gravar Linha
+        pc_gravar_linha(vr_linhadet);      
+      
+        FOR repete IN 1..2 LOOP
+          vr_chave2 := vr_tab_jur_mic_age_pf(vr_chave).first;
+          WHILE vr_chave2 IS NOT NULL LOOP
+            IF vr_tab_jur_mic_age_pf(vr_chave)(vr_chave2) > 0 THEN
+              vr_linhadet := TRIM(LPAD(vr_chave2,3,0)) || ',' ||
+                             TRIM(to_char(vr_tab_jur_mic_age_pf(vr_chave)(vr_chave2), '99999999999990.00'));
+              -- Gravar Linha
+              pc_gravar_linha(vr_linhadet);  
+            END IF;
+            vr_chave2 := vr_tab_jur_mic_age_pf(vr_chave).next(vr_chave2);       
+          END LOOP; 
+        END LOOP;
+      END IF;
+      
+      --REVERSAO
+      if vr_tpemprst = 'PR' then
+        vr_nrctadst := 7071;
+        vr_nrctaori := 7026; 
+        vr_descricao := 'Ajuste de saldo ref. (risco) juros a apropriar MICROCREDITO EM ATRASO PRICE TR ('||
+                        LTRIM(REPLACE(vr_chave,'PRMICROCREDITO',''))||') - PESSOA FISICA';
+      else
+        vr_nrctadst := 7080;
+        vr_nrctaori := 7028;  
+        vr_descricao := 'Ajuste de saldo ref. (risco) juros a apropriar MICROCREDITO EM ATRASO PREFIXADO ('||
+                        TRIM(REPLACE(vr_chave,'TRMICROCREDITO',''))||') - PESSOA FISICA';        
+      end if;
+      
+      IF vr_tab_jur_microcredito_pf(vr_chave) > 0 THEN
+        vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
+                       TRIM(to_char(vr_dtmovime, 'ddmmyy')) ||','|| 
+                       vr_nrctaori||','||
+                       vr_nrctadst||','||
+                       TRIM(to_char(vr_tab_jur_microcredito_pf(vr_chave), '99999999999990.00')) ||
+                       ',5210,' ||
+                       '"'||vr_descricao||'"';
+        -- Gravar Linha
+        pc_gravar_linha(vr_linhadet);      
+        
+        FOR repete IN 1..2 LOOP
+          vr_chave2 := vr_tab_jur_mic_age_pf(vr_chave).first;
+          WHILE vr_chave2 IS NOT NULL LOOP
+            IF vr_tab_jur_mic_age_pf(vr_chave)(vr_chave2) > 0 THEN
+              vr_linhadet := TRIM(LPAD(vr_chave2,3,0)) || ',' ||
+                             TRIM(to_char(vr_tab_jur_mic_age_pf(vr_chave)(vr_chave2), '99999999999990.00'));
+              -- Gravar Linha
+              pc_gravar_linha(vr_linhadet);  
+            END IF;
+            vr_chave2 := vr_tab_jur_mic_age_pf(vr_chave).next(vr_chave2);        
+          END LOOP; 
+        END LOOP;
+      END IF;
+      vr_chave := vr_tab_jur_microcredito_pf.next(vr_chave);
+    END LOOP;
+
+    --
+    --Juros microcredito PREFIXADO
+    vr_chave := vr_tab_jur_microcredito_pj.first;
+    WHILE vr_chave IS NOT NULL LOOP
+      
+      vr_tpemprst := substr(vr_chave,1,2);
+      
+      if vr_tpemprst = 'PR' then
+        vr_nrctadst := 7027;
+        vr_nrctaori := 7072; 
+        vr_descricao := 'Ajuste de saldo ref. (risco) juros a apropriar MICROCREDITO EM ATRASO PRICE TR ('||
+                        LTRIM(REPLACE(vr_chave,'PRMICROCREDITO',''))||') - PESSOA JURIDICA';
+      else
+        vr_nrctadst := 7029;
+        vr_nrctaori := 7081;  
+        vr_descricao := 'Ajuste de saldo ref. (risco) juros a apropriar MICROCREDITO EM ATRASO PREFIXADO ('||
+                        LTRIM(REPLACE(vr_chave,'TRMICROCREDITO',''))||') - PESSOA JURIDICA';        
+      end if;
+      
+      IF vr_tab_jur_microcredito_pj(vr_chave) > 0 THEN 
+        vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
+                       TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) ||','|| 
+                       vr_nrctaori||','||
+                       vr_nrctadst||','||
+                       TRIM(to_char(vr_tab_jur_microcredito_pj(vr_chave), '99999999999990.00')) ||
+                       ',5210,' ||
+                       '"'||vr_descricao||'"';
+        -- Gravar Linha
+        pc_gravar_linha(vr_linhadet);      
+        
+        FOR repete IN 1..2 LOOP
+          vr_chave2 := vr_tab_jur_mic_age_pj(vr_chave).first;
+          WHILE vr_chave2 IS NOT NULL LOOP
+            IF vr_tab_jur_mic_age_pj(vr_chave)(vr_chave2) > 0 THEN 
+              vr_linhadet := TRIM(LPAD(vr_chave2,3,0)) || ',' ||
+                             TRIM(to_char(vr_tab_jur_mic_age_pj(vr_chave)(vr_chave2), '99999999999990.00'));
+              -- Gravar Linha
+              pc_gravar_linha(vr_linhadet);  
+            END IF;
+            vr_chave2 := vr_tab_jur_mic_age_pj(vr_chave).next(vr_chave2);          
+          END LOOP; 
+        END LOOP;
+      END IF;
+      --REVERSAO
+      if vr_tpemprst = 'PR' then
+        vr_nrctadst := 7072;
+        vr_nrctaori := 7027; 
+        vr_descricao := 'Ajuste de saldo ref. (risco) juros a apropriar MICROCREDITO EM ATRASO PRICE TR ('||
+                        LTRIM(REPLACE(vr_chave,'PRMICROCREDITO',''))||') - PESSOA JURIDICA';
+      else
+        vr_nrctadst := 7081;
+        vr_nrctaori := 7029;  
+        vr_descricao := 'Ajuste de saldo ref. (risco) juros a apropriar MICROCREDITO EM ATRASO PREFIXADO ('||
+                        LTRIM(REPLACE(vr_chave,'TRMICROCREDITO',''))||') - PESSOA JURIDICA';        
+      end if;
+      
+      IF vr_tab_jur_microcredito_pj(vr_chave) > 0 THEN
+        vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
+                       TRIM(to_char(vr_dtmovime, 'ddmmyy')) ||','|| 
+                       vr_nrctaori||','||
+                       vr_nrctadst||','||
+                       TRIM(to_char(vr_tab_jur_microcredito_pj(vr_chave), '99999999999990.00')) ||
+                       ',5210,' ||
+                       '"'||vr_descricao||'"';
+        -- Gravar Linha
+        pc_gravar_linha(vr_linhadet);      
+        
+        FOR repete IN 1..2 LOOP
+          vr_chave2 := vr_tab_jur_mic_age_pj(vr_chave).first;
+          WHILE vr_chave2 IS NOT NULL LOOP
+            IF vr_tab_jur_mic_age_pj(vr_chave)(vr_chave2) > 0 THEN
+              vr_linhadet := TRIM(LPAD(vr_chave2,3,0)) || ',' ||
+                             TRIM(to_char(vr_tab_jur_mic_age_pj(vr_chave)(vr_chave2), '99999999999990.00'));
+              -- Gravar Linha
+              pc_gravar_linha(vr_linhadet);  
+            END IF;
+            vr_chave2 := vr_tab_jur_mic_age_pj(vr_chave).next(vr_chave2);       
+          END LOOP; 
+        END LOOP;
+      END IF;
+
+      vr_chave := vr_tab_jur_microcredito_pj.next(vr_chave);
+    END LOOP;
 
     -- TOTAL CHEQUE ESPECIAL UTILIZADO - PESSOA FISICA
     IF vr_rel1722_0201_v.valorpf <> 0 THEN
@@ -4190,7 +4633,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       END LOOP;
 
     END IF;
-    
+
 
     -- PROVISAO DE CESSAO CARTAO - PESSOA FISICA
     IF vr_vldespes(33) <> 0 THEN
@@ -5042,8 +5485,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     END IF;
 
     -- Busca o diretório para contabilidade
-     vr_dircon := gene0001.fn_param_sistema('CRED', vc_cdtodascooperativas, vc_cdacesso);
-     vr_dircon := vr_dircon || vc_dircon;
+     vr_dircon := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                           ,pr_cdcooper => vc_cdtodascooperativas
+                                           ,pr_cdacesso => vc_cdacesso);
      vr_arqcon := to_char(vr_dtmvtolt, 'yy') ||
                   to_char(vr_dtmvtolt, 'mm') ||
                   to_char(vr_dtmvtolt, 'dd') ||
@@ -5417,8 +5861,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
                                                     ,pr_tipo      => 'P');           -- Próximo ou anterior
                                                      
      -- Define o diretório do arquivo
-     vr_utlfileh := gene0001.fn_param_sistema('CRED', vc_cdtodascooperativas, vc_cdacesso);
-     vr_utlfileh := vr_utlfileh || vc_dircon;
+     vr_utlfileh := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                             ,pr_cdcooper => vc_cdtodascooperativas
+                                             ,pr_cdacesso => vc_cdacesso);
 
 
       -- Define Nome do Arquivo
