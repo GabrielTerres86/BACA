@@ -2626,7 +2626,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 	Objetivo  : Rotina para receber a requisição do Aymaru efetuada pela 
               pc_solicita_produtos_recarga e atualizar os produtos e valores de 
 							recarga de celular
-	Alteracoes: -----
+	Alteracoes: 30/05/2017 - Ajuste para desprezar o produto "SERCOMTEL FIXO".
+                           Projeto 321 - Recarga de Celular (Lombardi)
 	..............................................................................*/
 	
 	-- Variavel de criticas
@@ -3731,7 +3732,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
     Objetivo  :  Rotina para gerar relatorio de criticas
                  atravez do idoperacao
 
-    Alteracoes: -----
+    Alteracoes: 30/05/2017 - alterado flag pr_flg_impri para 'S' na chamada da 
+                             pc_solicita_relato. PRJ321 - Recarga de Celular (Lombardi)
     ..............................................................................*/
     DECLARE
       
@@ -3933,7 +3935,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 
     Objetivo  :  Rotina para processar agendamentos de recarga de celular
 
-    Alteracoes: -----
+    Alteracoes: 30/05/2017 - Retirado acentuação das criticas na efetuação da recarga.
+                             PRJ321 - Recarga de Celular (Lombardi)
     ..............................................................................*/
     DECLARE
       
