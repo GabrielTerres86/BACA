@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Elton/Ze Eduardo
-    Data    : Marco/07.                       Ultima atualizacao: 03/02/2017
+    Data    : Marco/07.                       Ultima atualizacao: 30/03/2017
     
     Dados referentes ao programa:
 
@@ -165,8 +165,8 @@
 
                29/10/2015 - Inclusao do indicador estado de crise. (Jaison/Andrino)
 							
-			   16/11/2015 - Incluido Fato Gerador no parametro cdpesqbb na procedure
-							cria_lan_auto_tarifa, Projeto Tarifas (Jean Michel).
+			         16/11/2015 - Incluido Fato Gerador no parametro cdpesqbb na procedure
+							              cria_lan_auto_tarifa, Projeto Tarifas (Jean Michel).
                             
                25/11/2015 - Alterar e-mail "juliana.carla@viacredialtovale.coop.br" 
                             para "suporte@viacredialtovale.coop.br" (Lucas Ranghetti #359073)
@@ -206,6 +206,10 @@
                            
               03/02/2017 - Incluir dtlibera para as consultas de cheques em custodia/desconto
                            (Lucas Ranghetti #600012)
+						   
+	            30/03/2017 - Gerar lançamentos de cheques descontados ou custodiados de 
+			                     operações entre cooperados no arquivo AAMMDD_CRITICAS.txt
+						               P307 - (Jonatas - Supero)
 ..............................................................................*/
 
 DEF INPUT  PARAM p-cdcooper AS INT                                   NO-UNDO.
@@ -225,6 +229,8 @@ DEF INPUT  PARAM p-cddevolu AS INT                                   NO-UNDO.
 
 DEF STREAM str_1. /* Relatorios */
 DEF STREAM str_2. /* Arquivos   */
+DEF STREAM str_3. /* Arquivo Contábil */
+
 
 DEF        VAR rel_nmempres AS CHAR    FORMAT "x(15)"                NO-UNDO.
 DEF        VAR rel_nmresemp AS CHAR    FORMAT "x(15)"                NO-UNDO.
@@ -297,6 +303,11 @@ DEF        VAR aux_cdcopant AS INTE                                  NO-UNDO.
 DEF        VAR vr_nrdconta  AS INTE                                  NO-UNDO. 
 DEF        VAR vr_cdcooper  AS INTE                                  NO-UNDO. 
 DEF        VAR vr_cdagectl  AS INTE                                  NO-UNDO. 
+
+/*variaveis da arquivo contábil AAMMDD_CRITICAS.txt*/
+DEF        VAR aux_nmarqcri AS CHAR                                  NO-UNDO.
+DEF        VAR aux_nmarqcop AS CHAR                                  NO-UNDO.
+DEF        VAR aux_linhaarq AS CHAR                                  NO-UNDO.
 
 DEF BUFFER crabcop FOR crapcop.
 
@@ -2434,7 +2445,11 @@ PROCEDURE gera_arquivo_cecred:
        DO:
            IF aux_primeira = TRUE  THEN
            DO:
-               /* Não executa*/
+               ASSIGN aux_nmarqcri = SUBSTRING(STRING(YEAR(glb_dtmvtolt),'9999'),3,2) + 
+                                     STRING(MONTH(glb_dtmvtolt),'99')   +
+                                     STRING(DAY(glb_dtmvtolt),'99') + '_CRITICAS.txt'.
+               
+               OUTPUT STREAM str_3 TO VALUE("/usr/coop/" + crapcop.dsdircop + "/contab/" + aux_nmarqcri) APPEND.
            END.
            ELSE
            DO:
@@ -2888,7 +2903,23 @@ PROCEDURE gera_arquivo_cecred:
                               ELSE
                                   ASSIGN tt-relchdv.benefici = " ".
                            END.                                 
-                    END.       
+                    END. 
+                    
+                    ASSIGN aux_linhaarq = "20" + SUBSTRING(STRING(YEAR(glb_dtmvtolt),"9999"),3,2) + 
+                                          STRING(MONTH(glb_dtmvtolt),"99")   +
+                                          STRING(DAY(glb_dtmvtolt),"99")     + "," +
+                                          STRING(DAY(glb_dtmvtolt),"99") +
+                                          STRING(MONTH(glb_dtmvtolt),"99")  +
+                                          SUBSTRING(STRING(YEAR(glb_dtmvtolt),"9999"),3,2) + "," +
+                                          "1411,4958," +
+                                          TRIM(REPLACE(STRING(tt-relchdv.vllanmto,"zzzzzzzzzzzzz9.99"),",",".")) +
+                                          ",5210," +
+                                          '"' + "ACERTO ENTRE CONTAS DEVIDO A DEVOLUCAO DE CHEQUE " + STRING(crapdev.nrcheque,"9999999") + 
+                                          " DO COOPERADO DE C/C " + TRIM(REPLACE(STRING(crapdev.nrctachq,"zzzz,zzz,9"),",",".")) + 
+                                          " CUSTODIADO/DESCONTADO PELO COOPERADO DE C/C " + TRIM(REPLACE(STRING(tt-relchdv.nrdconta,"zzzz,zzz,9"),",",".")) +
+                                          " (CONFORME CRITICA NO RELATORIO 219)" + '"'.
+                                          
+                    PUT STREAM str_3 aux_linhaarq FORMAT "x(250)" SKIP.
                    
                NEXT.
            END.           
@@ -3050,6 +3081,17 @@ PROCEDURE gera_arquivo_cecred:
                               
             END.
    END.
+   
+   OUTPUT STREAM str_3 CLOSE.
+   
+   ASSIGN aux_nmarqcop = SUBSTRING(STRING(YEAR(glb_dtmvtolt),'9999'),3,2) + 
+                         STRING(MONTH(glb_dtmvtolt),'99')   +
+                         STRING(DAY(glb_dtmvtolt),'99') + '_' + 
+						             STRING(p-cdcooper,'99') +
+						             '_CRITICAS.txt'.   
+   
+   UNIX SILENT VALUE("ux2dos " + "/usr/coop/" + crapcop.dsdircop + "/contab/" + aux_nmarqcri + " > " +
+                     "/usr/sistemas/arquivos_contabeis/ayllos/" + aux_nmarqcop + " 2>/dev/null").
    
    IF   flg_devolbcb = TRUE THEN
         DO:
