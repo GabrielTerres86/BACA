@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Guilherme
-       Data    : Agosto/2010                       Ultima atualizacao: 06/01/2017
+       Data    : Agosto/2010                       Ultima atualizacao: 18/05/2017
 
        Dados referentes ao programa:
 
@@ -295,8 +295,17 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                  cadastradas com rendimento igual a 0.01 estavam sendo enviadas com código de porte igual
                                  a 2 - ATÉ 1 SALÁRIO MÍNIMO. (Renato Darosci - Supero)
                                  
-                    06/01/2016 - Ajuste para desprezar contas migradas da Transulcred para Transpocred antes da incorporação.
+                    06/01/2017 - Ajuste para desprezar contas migradas da Transulcred para Transpocred antes da incorporação.
                                  PRJ342 - Incorporação Transulcred (Odirlei-AMcom)
+                                 
+					24/02/2017 - Ajuste na tratativa do campo Ident, o qual estava verificando campos incorretos para
+					             informar a baixa do gravames (Daniel - Chamado: 615103) 
+
+                    13/04/2016 - Ajustes PRJ343 - Cessao de Credito (Odirlei-AMcom)
+
+                    18/05/2017 - P408 - Inclusão dos contratos inddocto=5 - Provisão de Garantias Prestas
+                                 Andrei - Mouts
+                                 
 .............................................................................................................................*/
 
     DECLARE
@@ -329,6 +338,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
          WHERE cop.cdcooper = pr_cdcooper;
       rw_crapcop   cr_crapcop%ROWTYPE;
       rw_crapcop_2 cr_crapcop%ROWTYPE;
+      rw_crapcop_3 cr_crapcop%ROWTYPE; -- Para central
       -- Cursor genérico de calendário
       rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 
@@ -639,7 +649,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                  vlmerbem,
                  dschassi,
                  flgbaixa,
-                 flcancel
+                 flcancel,
+                 cdsitgrv,
+                 dtdbaixa,
+                 dtcancel,
+                 dtatugrv,
+                 dtmvtolt
             FROM crapbpr
            WHERE crapbpr.cdcooper = pr_cdcooper
              AND crapbpr.nrdconta = pr_nrdconta
@@ -647,7 +662,37 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
              AND crapbpr.tpctrpro = pr_tpctrpro             
              AND crapbpr.flgalien = 1;
 
-
+      --> Verificar se é emprestimo de cessao de credito
+      CURSOR cr_cessao (pr_cdcooper crapepr.cdcooper%TYPE,
+                        pr_nrdconta crapepr.nrdconta%TYPE,
+                        pr_nrctremp crapepr.nrctremp%TYPE)  IS
+        SELECT 1 flcessao
+          FROM tbcrd_cessao_credito ces
+         WHERE ces.cdcooper = pr_cdcooper 
+           AND ces.nrdconta = pr_nrdconta
+           AND ces.nrctremp = pr_nrctremp;
+      rw_cessao cr_cessao%ROWTYPE;
+      
+      --> Busca os movimentos digitados manualmente para os contratos inddocto=5
+      CURSOR cr_movtos_garprest(pr_cdcooper crapcop.cdcooper%TYPE
+                               ,pr_dtrefere DATE) IS
+        SELECT idmovto_risco
+              ,risc0003.fn_valor_opcao_dominio(mvt.idorigem_recurso) dsorigem
+              ,risc0003.fn_valor_opcao_dominio(mvt.idindexador) dsindexa
+              ,mvt.perindexador prindexa
+              ,risc0003.fn_valor_opcao_dominio(mvt.idnat_operacao) dsnature
+              ,mvt.vltaxa_juros vltaxajr
+              ,risc0003.fn_valor_opcao_dominio(prd.idconta_cosif) dsccosif
+              ,risc0003.fn_valor_opcao_dominio(prd.idvariacao_cambial) dsvarcam
+              ,risc0003.fn_valor_opcao_dominio(prd.idcaract_especial) dscarces
+              ,prd.idorigem_cep idorgcep
+              ,mvt.vloperacao vloperac
+          FROM tbrisco_provisgarant_prodt prd
+              ,tbrisco_provisgarant_movto mvt
+         WHERE mvt.idproduto = prd.idproduto
+           AND mvt.cdcooper  = pr_cdcooper
+           AND mvt.dtbase    = pr_dtrefere;
+      
       ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
 
       
@@ -726,12 +771,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
               qtdriclq crapris.qtdriclq%TYPE,
               vljura60 crapris.vljura60%TYPE,
               inddocto crapris.inddocto%TYPE,
+              cdinfadi crapris.cdinfadi%TYPE,
               dsinfaux crapris.dsinfaux%TYPE,
               dtprxpar crapris.dtprxpar%TYPE,
               vlprxpar crapris.vlprxpar%TYPE,
               qtparcel crapris.qtparcel%TYPE,
               nrdgrupo crapris.nrdgrupo%TYPE,
-              dtvencop crapris.dtvencop%TYPE);
+              dtvencop crapris.dtvencop%TYPE,
+              flcessao INTEGER);
       TYPE typ_tab_individ IS
         TABLE OF typ_reg_individ
           INDEX BY VARCHAR2(34); --> CPF/CNPJ(14) + Contrato(10) + Sequencial(10)
@@ -925,7 +972,27 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
           INDEX BY PLS_INTEGER; --> A modalidade será a chave
       vr_tab_totmodali typ_tab_totmodali;    
       vr_idx_totmodali PLS_INTEGER;
-
+      
+      -- Estrutura para armazenar as informações digitadas nos 
+      -- movimentos de origem dos contratos inddocto=5
+      TYPE typ_reg_movto_garant_prestad IS
+        RECORD(idmovto_risco NUMBER
+              ,dsorigem VARCHAR2(100)
+              ,dsindexa VARCHAR2(100)
+              ,prindexa NUMBER
+              ,dsnature VARCHAR2(100)
+              ,vltaxajr NUMBER
+              ,dsccosif VARCHAR2(100)
+              ,dsvarcam VARCHAR2(100)
+              ,dscarces VARCHAR2(100)
+              ,idorgcep VARCHAR2(1)
+              ,vloperac NUMBER);
+      TYPE typ_tab_movto_garant_prestad IS
+        TABLE OF typ_reg_movto_garant_prestad
+          INDEX BY PLS_INTEGER;
+      vr_tab_mvto_garant_prest typ_tab_movto_garant_prestad;    
+        
+      
       ------------------------------- VARIAVEIS -------------------------------
       -- Variaveis de nomenclatura de arquivos
       vr_dtrefere DATE;
@@ -1169,11 +1236,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
       END fn_busca_dias_vencimento;
 
       -- Busca a origem do recurso
-      FUNCTION fn_busca_dsorgrec(pr_cdmodali      IN PLS_INTEGER,
-                                  pr_nrdconta      IN crapepr.nrdconta%TYPE,
-                                  pr_nrctremp      IN crapepr.nrctremp%TYPE,
-                                  pr_cdorigem      IN crapris.cdorigem%TYPE,
-                                  pr_dsinfaux      IN crapris.dsinfaux%TYPE) RETURN VARCHAR2 IS
+      FUNCTION fn_busca_dsorgrec(pr_cdmodali      IN PLS_INTEGER
+                                ,pr_nrdconta      IN crapepr.nrdconta%TYPE
+                                ,pr_nrctremp      IN crapepr.nrctremp%TYPE
+                                ,pr_cdorigem      IN crapris.cdorigem%TYPE
+                                ,pr_dsinfaux      IN crapris.dsinfaux%TYPE) RETURN VARCHAR2 IS
         vr_dsorgrec_out VARCHAR2(4);
       BEGIN
         -- Apenas uma condicao altera pr_dsorgrec_out
@@ -1192,9 +1259,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
               END IF;
             END IF;
 		      ELSE --se for BNDES - SD 426476
-               vr_dsorgrec_out := '0203'; 			
+            vr_dsorgrec_out := '0203'; 			
           END IF;
-        END IF;        
+        -- Para Contratos de Garantias Prestadas
+        ELSIF pr_cdorigem = 7 THEN
+          -- Verificar se existe o movimento na tabela de origem das informações
+          IF vr_tab_mvto_garant_prest.exists(pr_dsinfaux) THEN 
+            -- Usaremos a origem de recurso gravada
+            vr_dsorgrec_out := vr_tab_mvto_garant_prest(pr_dsinfaux).dsorigem;
+          END IF;  
+        END IF;
         -- Retornar
         RETURN vr_dsorgrec_out;
       END fn_busca_dsorgrec;
@@ -1213,20 +1287,100 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         -- Retornar
         RETURN vr_nrmodalidade;
         
-      END fn_formata_numero_contrato;      
-
+      END fn_formata_numero_contrato;   
+      
+      -- Buscar variacao cambial
+      FUNCTION fn_varcambial(pr_inddocto IN crapris.inddocto%TYPE
+                            ,pr_dsinfaux IN crapris.dsinfaux%TYPE) RETURN NUMBER IS
+      BEGIN
+        -- Para indocto = 5 a variação cambial está em cadastro
+        IF pr_inddocto = 5 THEN
+          -- Buscar a natureza no cadastro do movimento
+          IF vr_tab_mvto_garant_prest.exists(pr_dsinfaux) THEN 
+            RETURN vr_tab_mvto_garant_prest(pr_dsinfaux).dsvarcam;
+          END IF;
+        ELSE
+          -- Outros casos é fixo
+          RETURN '790';
+        END IF;
+      END;     
+      
+      -- Buscar CEP
+      FUNCTION fn_cepende(pr_inddocto IN crapris.inddocto%TYPE
+                         ,pr_dsinfaux IN crapris.dsinfaux%TYPE) RETURN NUMBER IS
+      BEGIN
+        -- Para indocto = 5 temos de ver como está definido o CEP 
+        IF pr_inddocto = 5 THEN
+          -- Buscar o tipo de CEP 
+          IF vr_tab_mvto_garant_prest.exists(pr_dsinfaux) THEN 
+            IF vr_tab_mvto_garant_prest(pr_dsinfaux).idorgcep = 'C' THEN 
+              -- Usar cep da central
+              RETURN rw_crapcop_3.nrcepend;
+            ELSE
+              -- Usar da Singular
+              RETURN rw_crapcop.nrcepend;
+            END IF;
+          END IF;
+        ELSE
+          -- Outros Usar da Singular
+          RETURN rw_crapcop.nrcepend;
+        END IF;
+      END;     
+      
       -- Carregar a base de risco, separando os contratos em individuais e agregados 
       PROCEDURE pc_carrega_base_risco(pr_dtrefere DATE) IS
         -- Busca informacoes da central de risco
         CURSOR cr_crapris_geral(pr_dtrefere DATE) IS
-          SELECT *
+          SELECT crapris.nrdconta,
+                 crapris.dtrefere,
+                 crapris.innivris,
+                 crapris.qtdiaatr,
+                 crapris.vldivida,
+                 crapris.vlvec180,
+                 crapris.vlvec360,
+                 crapris.vlvec999,
+                 crapris.vldiv060,
+                 crapris.vldiv180,
+                 crapris.vldiv360,
+                 crapris.vldiv999,
+                 crapris.vlprjano,
+                 crapris.vlprjaan,
+                 crapris.inpessoa,
+                 crapris.nrcpfcgc,
+                 crapris.vlprjant,
+                 crapris.inddocto,
+                 crapris.cdmodali,
+                 crapris.nrctremp,
+                 crapris.nrseqctr,
+                 crapris.dtinictr,
+                 crapris.cdorigem,
+                 crapris.cdagenci,
+                 crapris.innivori,
+                 crapris.cdcooper,
+                 crapris.vlprjm60,
+                 crapris.dtdrisco,
+                 crapris.qtdriclq,
+                 crapris.nrdgrupo,
+                 crapris.vljura60,
+                 crapris.inindris,
+                 crapris.cdinfadi,
+                 crapris.nrctrnov,
+                 crapris.flgindiv,
+                 crapris.progress_recid,
+                 crapris.dsinfaux,
+                 crapris.dtprxpar,
+                 crapris.vlprxpar,
+                 crapris.qtparcel,
+                 crapris.dtvencop,
+                 0 flcessao
             FROM crapris
            WHERE crapris.cdcooper = pr_cdcooper
              AND crapris.dtrefere = pr_dtrefere
-             AND crapris.inddocto IN(1,3,4) -- Operações Ativas, Limite Não Utilizado e Cartão de Crédito
+             AND crapris.inddocto IN(1,3,4,5) -- Operações Ativas, Limite Não Utilizado, Cartão de Crédito e Garantias Prestadas
              AND crapris.cdmodali <> 0301 -- Dsc Tit 
              AND crapris.inpessoa IN (1,2)-- Deve ser CPF ou CNPJ
              AND crapris.vldivida <> 0    -- Com divida
+             AND nvl(crapris.cdinfadi,' ') <> '0301' -- Remover saidas para Inddocto=5
             ORDER BY DECODE(inddocto,3,1,0) desc,nrcpfcgc, nrctremp, cdmodali; --> IndDocto 3 virão primeiro... 
 
         -- Busca informacoes da central de risco de Dsc Titulo
@@ -1240,11 +1394,57 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
              AND crapris.inddocto = 1     -- documento 3020
              AND crapris.cdmodali = 0301  -- Dsc Tit 
              AND crapris.cdorigem IN(4,5) -- 4 - Desconto Titulos
-             AND crapris.inpessoa IN (1,2)        -- Deve ser CPF ou CNPJ
+             AND crapris.inpessoa IN (1,2)        -- Deve ser CPF ou CNPJ             
              AND vldivida <> 0;
+        
+        --> temptable dos dados dados da tabela de risco
+        TYPE typ_rec_ris IS RECORD
+            (nrdconta   crapris.nrdconta%TYPE, 
+             dtrefere   crapris.dtrefere%TYPE, 
+             innivris   crapris.innivris%TYPE, 
+             qtdiaatr   crapris.qtdiaatr%TYPE, 
+             vldivida   crapris.vldivida%TYPE, 
+             vlvec180   crapris.vlvec180%TYPE, 
+             vlvec360   crapris.vlvec360%TYPE, 
+             vlvec999   crapris.vlvec999%TYPE, 
+             vldiv060   crapris.vldiv060%TYPE, 
+             vldiv180   crapris.vldiv180%TYPE, 
+             vldiv360   crapris.vldiv360%TYPE, 
+             vldiv999   crapris.vldiv999%TYPE, 
+             vlprjano   crapris.vlprjano%TYPE, 
+             vlprjaan   crapris.vlprjaan%TYPE, 
+             inpessoa   crapris.inpessoa%TYPE, 
+             nrcpfcgc   crapris.nrcpfcgc%TYPE, 
+             vlprjant   crapris.vlprjant%TYPE, 
+             inddocto   crapris.inddocto%TYPE, 
+             cdmodali   crapris.cdmodali%TYPE, 
+             nrctremp   crapris.nrctremp%TYPE, 
+             nrseqctr   crapris.nrseqctr%TYPE, 
+             dtinictr   crapris.dtinictr%TYPE, 
+             cdorigem   crapris.cdorigem%TYPE, 
+             cdagenci   crapris.cdagenci%TYPE, 
+             innivori   crapris.innivori%TYPE, 
+             cdcooper   crapris.cdcooper%TYPE, 
+             vlprjm60   crapris.vlprjm60%TYPE, 
+             dtdrisco   crapris.dtdrisco%TYPE, 
+             qtdriclq   crapris.qtdriclq%TYPE, 
+             nrdgrupo   crapris.nrdgrupo%TYPE, 
+             vljura60   crapris.vljura60%TYPE, 
+             inindris   crapris.inindris%TYPE, 
+             cdinfadi   crapris.cdinfadi%TYPE, 
+             nrctrnov   crapris.nrctrnov%TYPE, 
+             flgindiv   crapris.flgindiv%TYPE, 
+             progress_recid crapris.progress_recid%TYPE, 
+             dsinfaux   crapris.dsinfaux%TYPE, 
+             dtprxpar   crapris.dtprxpar%TYPE, 
+             vlprxpar   crapris.vlprxpar%TYPE, 
+             qtparcel   crapris.qtparcel%TYPE,              
+             dtvencop   crapris.dtvencop%TYPE,
+             flcessao   INTEGER);
+        
         -- Definicao do tipo da tabela de central de risco
         TYPE typ_tab_ris IS
-          TABLE OF crapris%ROWTYPE
+          TABLE OF typ_rec_ris ---> crapris%ROWTYPE
             INDEX BY VARCHAR2(24); -- CPF/CNPJ(14) || Sequencial (10)
         -- Vetor para armazenar os dados da central de risco
         vr_tab_ris typ_tab_ris;
@@ -1289,11 +1489,27 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
               continue; -- Volta para o inicio do for
             END IF;
           END IF;
+          
           -- Incrementar contador
           vr_vlcont_ris := vr_vlcont_ris + 1;
           vr_indice_ris := lpad(rw_crapris.nrcpfcgc,14,'0')||lpad(vr_vlcont_ris,10,'0');
           -- Adicionar a tabela
           vr_tab_ris(vr_indice_ris) := rw_crapris;        
+          
+          IF rw_crapris.inddocto = 1 AND 
+             rw_crapris.cdmodali IN(0299,0499) THEN -- Contratos de Emprestimo/Financiamento
+          
+            rw_cessao := NULL;
+            --> Verificar se é emprestimo de cessao de credito
+            OPEN cr_cessao (pr_cdcooper => pr_cdcooper,
+                            pr_nrdconta => rw_crapris.nrdconta,
+                            pr_nrctremp => rw_crapris.nrctremp);
+            FETCH cr_cessao INTO rw_cessao;
+            CLOSE cr_cessao;
+            
+            vr_tab_ris(vr_indice_ris).flcessao := rw_cessao.flcessao;
+            
+          END IF;
           
         END LOOP; -- Fim do loop sobre a tabela crapris
         
@@ -1427,12 +1643,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
           vr_tab_individ_copy(vr_indice_copy).qtdriclq := vr_tab_ris(vr_indice_ris).qtdriclq;
           vr_tab_individ_copy(vr_indice_copy).vljura60 := vr_tab_ris(vr_indice_ris).vljura60;
           vr_tab_individ_copy(vr_indice_copy).inddocto := vr_tab_ris(vr_indice_ris).inddocto;
+          vr_tab_individ_copy(vr_indice_copy).cdinfadi := vr_tab_ris(vr_indice_ris).cdinfadi;
           vr_tab_individ_copy(vr_indice_copy).dsinfaux := vr_tab_ris(vr_indice_ris).dsinfaux;
           vr_tab_individ_copy(vr_indice_copy).dtprxpar := vr_tab_ris(vr_indice_ris).dtprxpar;
           vr_tab_individ_copy(vr_indice_copy).vlprxpar := vr_tab_ris(vr_indice_ris).vlprxpar;
           vr_tab_individ_copy(vr_indice_copy).qtparcel := vr_tab_ris(vr_indice_ris).qtparcel;
           vr_tab_individ_copy(vr_indice_copy).nrdgrupo := vr_tab_ris(vr_indice_ris).nrdgrupo;
           vr_tab_individ_copy(vr_indice_copy).dtvencop := vr_tab_ris(vr_indice_ris).dtvencop;
+          vr_tab_individ_copy(vr_indice_copy).flcessao := vr_tab_ris(vr_indice_ris).flcessao;
           
           -- Verifica se eh o ultimo registro ou se o proximo registro possui o CNPJ / CPF do registro atual
           IF vr_tab_ris.next(vr_indice_ris) IS NULL OR
@@ -1487,7 +1705,21 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                     END IF;
                   END IF;
                   CLOSE cr_craptco;
-                END IF;
+                END IF;      
+                
+                --> Verificar se é cessao de credito
+                IF vr_tab_crapris_temp(vr_indice_temp).flcessao = 1 THEN
+                  vr_cdnatuop := '02';
+                END IF;                        
+                
+                -- Verificar se é Garantia Prestada
+                IF vr_tab_crapris_temp(vr_indice_temp).inddocto = 5 THEN
+                  -- Buscar a natureza no cadastro do movimento
+                  IF vr_tab_mvto_garant_prest.exists(vr_tab_crapris_temp(vr_indice_temp).dsinfaux) THEN 
+                    vr_cdnatuop := vr_tab_mvto_garant_prest(vr_tab_crapris_temp(vr_indice_temp).dsinfaux).dsnature;
+                  END IF;
+                END IF;    
+                
                 -- Encontrar a faixa de valor conforme tabela
                 --   Anexo 14: Faixa de valor da operação - FaixaVlr	
                 --   Domínio   Descrição
@@ -1557,7 +1789,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                                         ,vr_tab_crapris_temp(vr_indice_temp).inpessoa
                                                         ,vr_tab_crapris_temp(vr_indice_temp).cdorigem
                                                         ,vr_tab_crapris_temp(vr_indice_temp).dsinfaux);
-                -- Busca a organização
+                -- Busca a origem recurso
                 vr_dsorgrec := fn_busca_dsorgrec(vr_tab_crapris_temp(vr_indice_temp).cdmodali
                                                 ,vr_tab_crapris_temp(vr_indice_temp).nrdconta
                                                 ,vr_tab_crapris_temp(vr_indice_temp).nrctremp
@@ -1725,7 +1957,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
             FROM crapris
            WHERE cdcooper = pr_cdcooper
              AND dtrefere = pr_dtrefere
-             AND inddocto = 2
+             AND inddocto IN(2,5) -- Saida ou Garantias Prestadas com Saida
+             AND nvl(cdinfadi,' ') <> ' '
              AND cdmodali <> 0301; -- Dsc Tit
 
         -- Cursor sobre a tabela de risco com modalidade igual a 301
@@ -1960,13 +2193,19 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         rw_crapldc cr_crapldc%ROWTYPE;
         
         -- Armazenamento da taxa
-        vr_txeanual NUMBER(10,4);
+        vr_txeanual NUMBER(10,4) := 0;
         
         -- Tipo de contrato de limite para busca
         vr_tpctrlim craplim.tpctrlim%TYPE;
       BEGIN
+        -- Para Garantias Prestadas
+        IF pr_cdorigem = 7 THEN 
+          -- Buscar a taxa no cadastro do movimento
+          IF vr_tab_mvto_garant_prest.exists(pr_dsinfaux) THEN 
+            vr_txeanual := vr_tab_mvto_garant_prest(pr_dsinfaux).vltaxajr;
+          END IF;
         -- Para Cheque especial e Limite não utilizado 
-        IF pr_cdmodali IN(0201,1901,0302,0301) THEN
+        ELSIF pr_cdmodali IN(0201,1901,0302,0301) THEN
           -- PAra Cheq Esp e Limite não Utilizado, já temos o contrato
           IF pr_cdmodali IN(0201,1901) THEN
             vr_nrctrlim := pr_nrctremp;
@@ -2064,8 +2303,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                                             ,pr_cdcooper => pr_cdcooper
                                                             ,pr_cdacesso => 'TAXA_ROTATIVA_MENSAL'));
           vr_txeanual := ROUND((POWER(1 + (NVL(vr_txeanual,0) /100),12) - 1) * 100,2);
-        ELSE
-          vr_txeanual := 0;
         END IF;
         -- Efetuar o retorno
         RETURN vr_txeanual;
@@ -2447,15 +2684,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                 -- Somente se encontrar Linha de Credito e a linha for Financiamento (Mod=4)
                 -- e (Sub=01) Aquis de bens – veic automotores
                 IF vr_tab_craplcr.EXISTS(vr_tab_crapepr(vr_ind_epr).cdlcremp) AND vr_tab_craplcr(vr_tab_crapepr(vr_ind_epr).cdlcremp).cdmodali = '04' AND vr_tab_craplcr(vr_tab_crapepr(vr_ind_epr).cdlcremp).cdsubmod = '01' THEN
-                   -- Condicao para verificar se o bem estah baixado ou cancelado
-                   IF rw_crapbpr.flgbaixa = 0 AND rw_crapbpr.flcancel = 0 THEN
-                     -- Informação do Empréstimo
-                     gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
-                                            ,pr_texto_completo => vr_xml_3040_temp
-                                            ,pr_texto_novo     => '            <Inf Tp="0401" Cd="'  
-                                                               || rw_crapbpr.dschassi || '" />' || chr(10));
-                   ELSE
-                     
+                   
+                   IF (rw_crapbpr.cdsitgrv = 4 AND rw_crapbpr.dtdbaixa <= vr_dtrefere ) OR 
+                      (rw_crapbpr.cdsitgrv = 5 AND rw_crapbpr.dtcancel <= vr_dtrefere) THEN
                      /*********************************************************************************
                      ** Alterado o Ident de 1 para 2 conforme solicitação realizada no chamado 541753
                      ** Renato Darosci - Supero
@@ -2466,6 +2697,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                      gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
                                             ,pr_texto_completo => vr_xml_3040_temp
                                             ,pr_texto_novo     => '            <Inf Tp="0401" Ident="2" />' || chr(10));
+                     
+                   ELSE
+                   
+                     IF rw_crapbpr.dtmvtolt <= vr_dtrefere THEN
+                       -- Informação do Empréstimo
+                       gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                              ,pr_texto_completo => vr_xml_3040_temp
+                                              ,pr_texto_novo     => '            <Inf Tp="0401" Cd="'  
+                                                                 || rw_crapbpr.dschassi || '" />' || chr(10));
+                     END IF;
+                       
+                     
                    END IF;
                 END IF;
               END IF;  
@@ -2476,46 +2719,59 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
 
       -- Com base na modaliade retorna o Cosif (Plano Contábil das Instituições do Sistema Financeiro Nacional)
       FUNCTION fn_busca_cosif(pr_cdmodali IN VARCHAR2
-                             ,pr_inpessoa IN NUMBER) RETURN VARCHAR2 IS
+                             ,pr_inpessoa IN NUMBER
+                             ,pr_cdorigem IN NUMBER
+                             ,pr_dsinfaux IN VARCHAR2) RETURN VARCHAR2 IS
         vr_cdmodali VARCHAR2(4);
       BEGIN
-        -- Garantir 4 posições
-        vr_cdmodali := to_char(pr_cdmodali,'fm0000');
-        -- Adiantamento Depositante
-        IF vr_cdmodali LIKE '01%' THEN
-          RETURN '1611000';
-        -- Cheque especial ou Empréstimos
-        ELSIF vr_cdmodali LIKE '02%' THEN 
-          RETURN '1612000';
-        -- Dsc Chq ou Dsc Tit
-        ELSIF vr_cdmodali LIKE '03%' THEN
-          RETURN '1613000';
-        -- Financiamentos 
-        ELSIF vr_cdmodali LIKE '04%' THEN
-          RETURN '1621000';
-        -- Repasse
-        ELSIF vr_cdmodali LIKE '14%' THEN
-          RETURN '1439000';
-        -- Coobrigacao  
-        ELSIF vr_cdmodali LIKE '15%' THEN
-          RETURN '3013090';  
-        -- Limite Não Utilizado PF
-        ELSIF pr_cdmodali = 1901 AND pr_inpessoa = 1 THEN
-          RETURN '3098620';
-        -- Limite Não Utilizado PJ  
-        ELSIF pr_cdmodali = 1901 AND pr_inpessoa = 2 THEN
-          -- PJ
-          RETURN '3098610';
-        ELSE
-          RETURN '';
-        END IF;
+        -- Para Garantia de Operacao
+        IF pr_cdorigem = 7 THEN
+          -- Buscar a Conta COSIF no cadastro do movimento
+          IF vr_tab_mvto_garant_prest.exists(pr_dsinfaux) THEN 
+            RETURN vr_tab_mvto_garant_prest(pr_dsinfaux).dsccosif;
+          END IF;
+        ELSE 
+          -- Garantir 4 posições
+          vr_cdmodali := to_char(pr_cdmodali,'fm0000');
+          -- Adiantamento Depositante
+          IF vr_cdmodali LIKE '01%' THEN
+            RETURN '1611000';
+          -- Cheque especial ou Empréstimos
+          ELSIF vr_cdmodali LIKE '02%' THEN 
+            RETURN '1612000';
+          -- Dsc Chq ou Dsc Tit
+          ELSIF vr_cdmodali LIKE '03%' THEN
+            RETURN '1613000';
+          -- Financiamentos 
+          ELSIF vr_cdmodali LIKE '04%' THEN
+            RETURN '1621000';
+          -- Repasse
+          ELSIF vr_cdmodali LIKE '14%' THEN
+            RETURN '1439000';
+          -- Coobrigacao  
+          ELSIF vr_cdmodali LIKE '15%' THEN
+            RETURN '3013090';  
+          -- Limite Não Utilizado PF
+          ELSIF pr_cdmodali = 1901 AND pr_inpessoa = 1 THEN
+            RETURN '3098620';
+          -- Limite Não Utilizado PJ  
+          ELSIF pr_cdmodali = 1901 AND pr_inpessoa = 2 THEN
+            -- PJ
+            RETURN '3098610';
+          -- Cessao de credito  
+          ELSIF pr_cdmodali = 1301 THEN
+            RETURN '1811000';
+          END IF;
+        END IF;  
+        RETURN '';
       END fn_busca_cosif;
       
       -- Incluir informações do fluxo financeiro
       PROCEDURE pc_gera_fluxo_financeiro(pr_nrdconta IN crapris.nrdconta%type
                                         ,pr_dtrefere IN crapris.dtrefere%type
                                         ,pr_innivris IN crapris.innivris%type
-                                        ,pr_inddocto IN crapris.inddocto%type
+                                        ,pr_inddocto IN crapris.inddocto%TYPE
+                                        ,pr_cdinfadi IN crapris.cdinfadi%TYPE
                                         ,pr_cdmodali IN crapris.cdmodali%type
                                         ,pr_nrctremp IN crapris.nrctremp%type
                                         ,pr_nrseqctr IN crapris.nrseqctr%type
@@ -2583,44 +2839,47 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         END IF;
         -- As informações de fluxo financeiro devem ser omitidas quando
         -- a operação possuir informação adicional de saída (indocto = 2)
-        IF pr_inddocto = 2 THEN
+        IF pr_inddocto = 2 OR (pr_inddocto = 5 AND pr_cdinfadi = '0301' ) THEN
           -- Sair
           RETURN;
         END IF;
-        -- Somente contemplaremos as modalides Cecred:
+        -- Somente contemplaremos as modalides Cecred ou Inddocto=5 onde qualquer modalidade é aceita
         --   >> 302 - Dsc Chq 
         --   >> 301 - Dsc Tit
         --   >> 299 - Empréstimo
         --   >> 499 - Financiamento
-        IF pr_cdmodali NOT IN(299,301,302,499) THEN
+        IF pr_cdmodali NOT IN(299,301,302,499) OR pr_inddocto = 5 THEN
           -- Sair
           RETURN;
         END IF;
-        -- Buscar se a operação possui pelo menos um vertice de vencimento a vencer
-        OPEN cr_crapvri_vencer;
-        FETCH cr_crapvri_vencer
-         INTO vr_qtvencer;
-          CLOSE cr_crapvri_vencer;
-        -- As informações de Fluxo Financeiro referem-se a parcelas a vencer
-        -- e se a operação possuir 0 vencimentos a vencer, não devemos enviá-las
-        IF vr_qtvencer = 0 THEN
-          -- Sair
-          RETURN;
-        END IF;
-        -- Para Emprst(299) ou Financ(499)
-        IF pr_cdmodali IN(299,499) THEN
-          -- Tratar § 1º : Os campos não deverão ser preenchidos no caso de 
-          -- operações baixadas como prejuízo, e de avais e fianças prestadas ao cliente.
-          OPEN cr_crapvri_prejuz;
-          FETCH cr_crapvri_prejuz
-           INTO vr_inprejuz;
-          CLOSE cr_crapvri_prejuz; 
-          -- Somente continuar em caso de não houver prejuizo
-          IF vr_inprejuz > 0 THEN
+        -- Validações abaixo não se aplicam a inddocto=5
+        IF pr_inddocto <> 5 THEN 
+          -- Buscar se a operação possui pelo menos um vertice de vencimento a vencer
+          OPEN cr_crapvri_vencer;
+          FETCH cr_crapvri_vencer
+           INTO vr_qtvencer;
+            CLOSE cr_crapvri_vencer;
+          -- As informações de Fluxo Financeiro referem-se a parcelas a vencer
+          -- e se a operação possuir 0 vencimentos a vencer, não devemos enviá-las
+          IF vr_qtvencer = 0 THEN
             -- Sair
             RETURN;
           END IF;
-        END IF;
+          -- Para Emprst(299) ou Financ(499)
+          IF pr_cdmodali IN(299,499) THEN
+            -- Tratar § 1º : Os campos não deverão ser preenchidos no caso de 
+            -- operações baixadas como prejuízo, e de avais e fianças prestadas ao cliente.
+            OPEN cr_crapvri_prejuz;
+            FETCH cr_crapvri_prejuz
+             INTO vr_inprejuz;
+            CLOSE cr_crapvri_prejuz; 
+            -- Somente continuar em caso de não houver prejuizo
+            IF vr_inprejuz > 0 THEN
+              -- Sair
+              RETURN;
+            END IF;
+          END IF;
+        END IF;  
         -- Se chegamos até este pont, então todas as condições foram
         -- aceitas e utilizaremos as informações já preenchidas no risco
         -- para enviarmos ao Fluxo Financeiro - Desde que existam
@@ -2724,20 +2983,31 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
       END;    
       
       -- Com base na modalidade retorna o codigo indexador e o percentual de indexacao
-      PROCEDURE pc_busca_coddindx(pr_cdmodali IN  crapris.cdmodali%TYPE,
-                                  pr_coddindx OUT PLS_INTEGER,
-                                  pr_stperidx OUT VARCHAR2) IS
+      PROCEDURE pc_busca_coddindx(pr_cdmodali IN crapris.cdmodali%TYPE
+                                 ,pr_inddocto IN crapris.inddocto%TYPE
+                                 ,pr_dsinfaux IN crapris.dsinfaux%TYPE
+                                 ,pr_coddindx OUT PLS_INTEGER
+                                 ,pr_stperidx OUT VARCHAR2) IS
       BEGIN
         pr_coddindx := 0;
         pr_stperidx := '';
         
-        -- Para 0201 - Cheq Especial / 0101 - Adiant. Deposit / 1901 - Limite não Utilizado
-        IF pr_cdmodali IN (0201,0101,1901) THEN
-          pr_coddindx := 21;
-          pr_stperidx := ' PercIndx="100"';
-        ELSE -- Todas outras
-          pr_coddindx := 11;
-          pr_stperidx := ' PercIndx="0"';
+        -- Para Garantias PRestadas 
+        IF pr_inddocto = 5 THEN 
+          -- Buscar indexador e percentual do cadastro de movimento
+          IF vr_tab_mvto_garant_prest.exists(pr_dsinfaux) THEN 
+            pr_coddindx := vr_tab_mvto_garant_prest(pr_dsinfaux).dsindexa;
+            pr_stperidx := ' PercIndx="'||replace(to_char(vr_tab_mvto_garant_prest(pr_dsinfaux).prindexa,'9990D0000000'),',','.')||'"';
+          END IF;
+        ELSE 
+          -- Para 0201 - Cheq Especial / 0101 - Adiant. Deposit / 1901 - Limite não Utilizado
+          IF pr_cdmodali IN (0201,0101,1901) THEN
+            pr_coddindx := 21;
+            pr_stperidx := ' PercIndx="100"';
+          ELSE -- Todas outras
+            pr_coddindx := 11;
+            pr_stperidx := ' PercIndx="0"';
+          END IF;
         END IF;
       END pc_busca_coddindx;
 
@@ -2796,9 +3066,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         vr_innivris := pr_innivris;
 
         -- Com base na modalidade retorna o codigo indexador e o percentual de indexacao
-        pc_busca_coddindx(vr_tab_saida(pr_idxsaida).cdmodali,
-                          vr_coddindx,
-                          vr_stperidx);
+        pc_busca_coddindx(vr_tab_saida(pr_idxsaida).cdmodali
+                         ,vr_tab_saida(pr_idxsaida).inddocto
+                         ,vr_tab_saida(pr_idxsaida).dsinfaux
+                         ,vr_coddindx
+                         ,vr_stperidx);
 
         -- Com base no indicador de risco, eh retornardo a classe de operacao de risco
         vr_cloperis := fn_classifica_risco(pr_innivris => vr_innivris);
@@ -2819,15 +3091,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                         ,vr_tab_saida(pr_idxsaida).dsinfaux);
                               
         -- Com base na modalidade encontrada retornar o Cosif
-        vr_ctacosif := fn_busca_cosif(vr_cdmodali,vr_tab_saida(pr_idxsaida).inpessoa);     
+        vr_ctacosif := fn_busca_cosif(vr_cdmodali
+                                     ,vr_tab_saida(pr_idxsaida).inpessoa
+                                     ,vr_tab_saida(pr_idxsaida).cdorigem
+                                     ,vr_tab_saida(pr_idxsaida).dsinfaux);     
         
-        -- Para Adiantamento Depositante, Limite não Utilizado, Cheque Especial, Desconto de Titulos, Desconto de Cheques, Emprestimo
-        IF vr_tab_saida(pr_idxsaida).cdmodali IN(0101,1901,0201,0301,0302,0499,0299) THEN
+        -- Para Adiantamento Depositante, Limite não Utilizado, Cheque Especial, Desconto de Titulos, Desconto de Cheques, Emprestimo OU Inddocto=5
+        IF vr_tab_saida(pr_idxsaida).cdmodali IN(0101,1901,0201,0301,0302,0499,0299) OR vr_tab_saida(pr_idxsaida).inddocto=5 THEN
           vr_dtvencop := vr_tab_saida(pr_idxsaida).dtvencop;
         END IF; -- modalidade
         
         -- 0101 - Para adiantamento depositante, utilizar o CL no calculo 
-        IF vr_tab_saida(pr_idxsaida).cdmodali = 0101  THEN
+        IF vr_tab_saida(pr_idxsaida).cdmodali = 0101 AND vr_tab_saida(pr_idxsaida).inddocto <> 5 THEN
           -- Usar Taxa Efetiva Anual - TAB0004
           vr_txeanual := vr_txeanual_tab;
         
@@ -2838,7 +3113,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
           -- 1901 - Lim Não Utzd
           -- 0299 - Empréstimos
           -- 0499 - Financiamentos
-        ELSIF vr_tab_saida(pr_idxsaida).cdmodali IN(0302,0301,0201,1901,0299,0499) THEN 
+          -- OU Indocto=5
+        ELSIF vr_tab_saida(pr_idxsaida).cdmodali IN(0302,0301,0201,1901,0299,0499) OR vr_tab_saida(pr_idxsaida).inddocto=5  THEN 
           -- Buscar Taxa Efetiva
           vr_txeanual := fn_busca_taxeft(vr_tab_saida(pr_idxsaida).cdmodali
                                         ,vr_tab_saida(pr_idxsaida).nrdconta
@@ -2865,6 +3141,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                                         ,pr_nrdconta => vr_tab_saida(pr_idxsaida).nrdconta
                                                         ,pr_nrctremp => vr_tab_saida(pr_idxsaida).nrctremp
                                                         ,pr_cdmodali => vr_cdmodali);
+        -- Para inddocto=5 
+        IF vr_tab_saida(pr_idxsaida).inddocto = 5 THEN
+          -- Buscar a natureza e caracteristica no cadastro do movimento
+          IF vr_tab_mvto_garant_prest.exists(vr_tab_saida(pr_idxsaida).dsinfaux) THEN 
+            vr_cdnatuop := vr_tab_mvto_garant_prest(vr_tab_saida(pr_idxsaida).dsinfaux).dsnature;
+            vr_caracesp := vr_tab_mvto_garant_prest(vr_tab_saida(pr_idxsaida).dsinfaux).dscarces;
+          END IF;
+        ELSE
+          vr_cdnatuop := '01';  
+          vr_caracesp := '';
+        END IF;
+        
         
         -- Enviar detalhes do contrato
         gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
@@ -2875,20 +3163,21 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                                   || ' OrigemRec="' || vr_dsorgrec || '"' -- Era fixo '0199', agora, retorna do pc_busca_modalidade
                                                   || ' Indx="' || vr_coddindx || '"' 
                                                   || vr_stperidx 
-                                                  || ' VarCamb="790"' 
-                                                  || ' CEP="' || rw_crapcop.nrcepend || '"' 
+                                                  || ' VarCamb="'||fn_varcambial(vr_tab_saida(pr_idxsaida).inddocto,vr_tab_saida(pr_idxsaida).dsinfaux)||'"' 
+                                                  || ' CEP="' || fn_cepende(vr_tab_saida(pr_idxsaida).inddocto,vr_tab_saida(pr_idxsaida).dsinfaux) || '"' 
                                                   || ' VlrContr="' || replace(to_char(vr_tab_saida(pr_idxsaida).vldivida,'fm99999999999999990D00'),',','.') || '"' 
                                                   || ' TaxEft="' || replace(to_char(vr_txeanual,'fm990D00'),',','.') || '"' 
                                                   || ' DtContr="' || to_char(vr_tab_saida(pr_idxsaida).dtinictr,'yyyy-mm-dd') || '"' 
-                                                  || ' NatuOp="01"'
+                                                  || ' NatuOp="'||vr_cdnatuop||'"'
                                                   || vr_stdtvenc
                                                   || ' ClassOp="' || vr_cloperis || '"' 
                                                   || ' CaracEspecial="' || vr_caracesp ||'"');
         -- Tratar campos do Fluxo Financeiro
         pc_gera_fluxo_financeiro(pr_nrdconta => vr_tab_saida(pr_idxsaida).nrdconta
                                 ,pr_dtrefere => vr_dtrefere
-                                ,pr_inddocto => vr_tab_saida(pr_idxsaida).inddocto
                                 ,pr_innivris => vr_tab_saida(pr_idxsaida).innivris
+                                ,pr_inddocto => vr_tab_saida(pr_idxsaida).inddocto
+                                ,pr_cdinfadi => vr_tab_saida(pr_idxsaida).cdinfadi
                                 ,pr_cdmodali => vr_tab_saida(pr_idxsaida).cdmodali
                                 ,pr_nrctremp => vr_tab_saida(pr_idxsaida).nrctremp
                                 ,pr_nrseqctr => vr_tab_saida(pr_idxsaida).nrseqctr
@@ -3227,9 +3516,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                            ,pr_cdprogra  => pr_cdprogra
                                            ,pr_dtmvtolt  => pr_dtmvtolt
                                            ,pr_dsxml     => vr_xml_rel_parte
-                                           ,pr_dsarqsaid => pr_nom_direto || '/' || vr_nmarqsai
+/*andrei*/,pr_dsarqsaid => /*pr_nom_direto || */'/usr/coop/sistema/equipe/andrei/' || vr_nmarqsai
                                            ,pr_cdrelato  => null
-                                           ,pr_flg_gerar => 'N'              --> Apenas submeter
+/*andrei*/,pr_flg_gerar => 'S'              --> Apenas submeter
                                            ,pr_dspathcop => pr_nom_dirmic    --> Copiar para a Micros
                                            ,pr_fldoscop  => 'S'              --> Efetuar cópia com Ux2Dos
                                            ,pr_dscmaxcop => '| tr -d "\032"'
@@ -3280,6 +3569,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         -- Apenas fechar o cursor
         CLOSE cr_crapcop;
       END IF;
+      -- Buscar dados da Central
+      OPEN cr_crapcop(3);
+      FETCH cr_crapcop
+       INTO rw_crapcop_3;
+      CLOSE cr_crapcop;
       -- Leitura do calendário da cooperativa
       OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
       FETCH btch0001.cr_crapdat
@@ -3308,7 +3602,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
       END IF;
       --------------- REGRA DE NEGOCIO DO PROGRAMA -----------------
       -- Buscar data da solicitação
-      BEGIN
+    /*  BEGIN
         OPEN cr_crapsol;
         FETCH cr_crapsol 
          INTO vr_dtrefere;
@@ -3325,7 +3619,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         WHEN others THEN  
           vr_dscritic := 'Problema ao retornar a data da solicitacao (CRAPSOL).';
           RAISE vr_exc_saida;
-      END;  
+      END;  */
+-- Andrei      
+ vr_dtrefere := to_date('30/04/2017','DD/MM/YYYY');
       
       --Verificar se o programa deve ser executado
       vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
@@ -3335,8 +3631,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                                ,pr_cdacesso => 'RISCOBACEN'
                                                ,pr_tpregist => 0);
       IF substr(vr_dstextab,1,1) <> '1' THEN
-        vr_cdcritic := 411; --Tabela de execucao nao liberada
-        RAISE vr_exc_saida;
+        --vr_cdcritic := 411; --Tabela de execucao nao liberada
+       -- RAISE vr_exc_saida;
+-- Andrei 
+NULL;
       ELSE
         -- Busca o valor do salario minimo
         vr_vlsalmin := GENE0002.fn_char_para_number(SUBSTR(vr_dstextab,13,11));
@@ -3460,6 +3758,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
       -- De acordo com o BCB, no arquivo 3040 o prejuizo deve ser provisionado 100% igual risco H (9) 
       vr_tab_percentual(10).percentual := vr_tab_percentual(9).percentual;
       
+      -- Busca os movimentos digitados manualmente para os contratos inddocto=5
+      FOR rw_movtos IN cr_movtos_garprest(pr_cdcooper => pr_cdcooper
+                                         ,pr_dtrefere => vr_dtrefere) LOOP
+        -- Alimentar pltable
+        vr_tab_mvto_garant_prest(rw_movtos.idmovto_risco) := rw_movtos;
+      END LOOP;
+      
       -- Acessar primeiro registro da tabela de memoria
       vr_idx_individ := vr_tab_individ.FIRST;
       -- Varre a tabela de memoria dos contratos individualizados
@@ -3570,7 +3875,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         vr_vlrctado := 0;
         vr_stperidx := '';
         vr_ctacosif := '';
-        vr_cdnatuop := '01';
+        
+        -- Para inddocto=5 
+        IF vr_tab_individ(vr_idx_individ).inddocto =5 THEN
+          -- Buscar a natureza no cadastro do movimento e já aproveitamos 
+          -- a leitura para busca da data de vencimento da operação
+          IF vr_tab_mvto_garant_prest.exists(vr_tab_individ(vr_idx_individ).dsinfaux) THEN 
+            vr_cdnatuop := vr_tab_mvto_garant_prest(vr_tab_individ(vr_idx_individ).dsinfaux).dsnature;
+          END IF;
+        ELSE
+          vr_cdnatuop := '01';  
+        END IF;
+        
         -- Efetua um loop sobre os vencimentos do risco
         FOR rw_crapvri_venct IN cr_crapvri_venct(vr_tab_individ(vr_idx_individ).nrdconta,
                                                  vr_dtrefere,
@@ -3587,12 +3903,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
             vr_cloperis := fn_classifica_risco(pr_innivris => vr_innivris);
             -- Com base na modalidade retorna o codigo indexador e o percentual de indexacao
             pc_busca_coddindx(pr_cdmodali => vr_tab_individ(vr_idx_individ).cdmodali
+                             ,pr_inddocto => vr_tab_individ(vr_idx_individ).inddocto
+                             ,pr_dsinfaux => vr_tab_individ(vr_idx_individ).dsinfaux
                              ,pr_coddindx => vr_coddindx
                              ,pr_stperidx => vr_stperidx);
             -- Busca os dias de vencimento
             vr_diasvenc := fn_busca_dias_vencimento(rw_crapvri_venct.cdvencto);
-            -- 0101 - Para adiantamento depositante
-            IF vr_tab_individ(vr_idx_individ).cdmodali = 0101  THEN
+            -- 0101 - Para adiantamento depositante ou INDDOCTO=5
+            IF vr_tab_individ(vr_idx_individ).cdmodali = 0101 OR vr_tab_individ(vr_idx_individ).inddocto = 5 THEN
               vr_vlrctado := vr_tab_individ(vr_idx_individ).vldivida;
               vr_dtfimctr := vr_tab_individ(vr_idx_individ).dtvencop;
             -- Para Limite não Utilizado, Cheque Especial, Desconto de Titulos e Desconto de Cheques
@@ -3603,7 +3921,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
               vr_dtfimctr := vr_tab_individ(vr_idx_individ).dtvencop;
               -- Valor contratado
               vr_ind_crd  := LPAD(vr_tab_individ(vr_idx_individ).nrdconta,10,'0') || LPAD(vr_tab_individ(vr_idx_individ).nrctremp,10,'0');
-              vr_vlrctado := vr_tab_tbcrd_risco(vr_ind_crd).vlropcrd;
+              IF vr_tab_tbcrd_risco.exists(vr_ind_crd) THEN 
+                vr_vlrctado := vr_tab_tbcrd_risco(vr_ind_crd).vlropcrd;
+              END IF;  
             -- 0299=Emprst,  0499=Financ e Origem 3  
             ELSIF vr_tab_individ(vr_idx_individ).cdmodali IN(0499,0299) AND vr_tab_individ(vr_idx_individ).cdorigem = 3 THEN  
               vr_cdvencto := 0;
@@ -3649,6 +3969,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                   END IF;
                   CLOSE cr_craptco_b;
                 END IF;
+                
+                --> Verificar se é cessao de credito
+                IF vr_tab_individ(vr_idx_individ).flcessao = 1 THEN
+                  vr_cdnatuop := '02';
+                  vr_vlrdivid := vr_tab_crapepr(vr_ind_epr).vlemprst;
+                END IF;
+                
               END IF; -- Crapebn%notfound
             END IF; -- modalidade
             
@@ -3661,7 +3988,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
             -- 0299 - Empréstimos
             -- 0499 - Financiamentos
             -- 1513 - Coobrigacao
-            IF vr_tab_individ(vr_idx_individ).cdmodali IN(0302,0301,0201,1901,0299,0499,1513) THEN 
+            -- OU Inddocto=5
+            IF vr_tab_individ(vr_idx_individ).cdmodali IN(0302,0301,0201,1901,0299,0499,1513) OR vr_tab_individ(vr_idx_individ).inddocto=5 THEN 
               -- Buscar Taxa Efetiva
               vr_txeanual := fn_busca_taxeft(vr_tab_individ(vr_idx_individ).cdmodali
                                             ,vr_tab_individ(vr_idx_individ).nrdconta
@@ -3732,8 +4060,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
             -- Calculo da qtde de dias da parcela mais atrasada 
             -- Traz o intervalo válido para a parcela em atrazo 
             vr_flgatras := 1;
-            -- Para empréstimo / financiamentos
-            IF vr_tab_individ(vr_idx_individ).cdmodali IN(0299,0499,301,302) THEN
+            -- Para empréstimo / financiamentos ou Inddocto=5
+            IF vr_tab_individ(vr_idx_individ).cdmodali IN(0299,0499,301,302) OR vr_tab_individ(vr_idx_individ).inddocto=5 THEN
               vr_stdiasat := ' DiaAtraso = "' || vr_tab_individ(vr_idx_individ).qtdiaatr || '"';
 
               IF vr_tab_venc(vr_indice_venc).cdvencto = 205 AND (vr_tab_individ(vr_idx_individ).qtdiaatr < 1  OR
@@ -3795,10 +4123,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
           -- Limpar dias em atraso
           vr_stdiasat := '';
         END IF;
-        -- Diferente de Cheque Especial / Conta Garantida / Limite não Utilizado
-        IF vr_tab_individ(vr_idx_individ).cdmodali NOT IN(0201,1901) THEN
-          -- Para empréstimos / financiamentos 
-          IF vr_tab_individ(vr_idx_individ).cdmodali IN(0299,0499) THEN
+        -- Diferente de Cheque Especial / Conta Garantida / Limite não Utilizado ou INDDOCTO=5
+        IF vr_tab_individ(vr_idx_individ).cdmodali NOT IN(0201,1901) OR vr_tab_individ(vr_idx_individ).inddocto=5 THEN
+          -- Para empréstimos / financiamentos OU inddocto=5
+          IF vr_tab_individ(vr_idx_individ).cdmodali IN(0299,0499) OR vr_tab_individ(vr_idx_individ).inddocto=5 THEN
             -- Busca a modalidade com base nos emprestimos
             vr_cdmodali := fn_busca_modalidade_bacen(vr_tab_individ(vr_idx_individ).cdmodali
                                                     ,pr_cdcooper
@@ -3814,6 +4142,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                             ,vr_tab_individ(vr_idx_individ).cdorigem
                                             ,vr_tab_individ(vr_idx_individ).dsinfaux);
                                 
+            -- Buscar valor do contrato para inddocto = 5
+            IF vr_tab_individ(vr_idx_individ).inddocto = 5 THEN
+              -- Verificar se existe o movimento na tabela de origem das informações
+              IF vr_tab_mvto_garant_prest.exists(vr_tab_individ(vr_idx_individ).dsinfaux) THEN 
+                -- Buscar valor contratado
+                vr_vlrctado := vr_tab_mvto_garant_prest(vr_tab_individ(vr_idx_individ).dsinfaux).vloperac;
+              END IF;               
+            END IF;
+            
             -- Somente para emprestimos que não são do BNDES e origem 3
             IF vr_tab_individ(vr_idx_individ).dsinfaux <> 'BNDES' AND vr_tab_individ(vr_idx_individ).cdorigem = 3 THEN              
               -- Se existir CrapEpr
@@ -3821,11 +4158,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                          || lpad(vr_tab_individ(vr_idx_individ).nrctremp,10,'0');
               -- Se o contrato for uma liquidação de outro contrato
               IF vr_tab_crapepr(vr_ind_epr).qtctrliq > 0 THEN
-                IF vr_caracesp IS NULL THEN
-                  vr_caracesp := '01';
-                ELSE
-                  vr_caracesp := vr_caracesp || ';01';
+                IF vr_caracesp IS NOT NULL THEN
+                  vr_caracesp := vr_caracesp||';';
                 END IF;
+                vr_caracesp := vr_caracesp || '01';
               END IF;
             END IF; --Não BNDES
           ELSE
@@ -3852,9 +4188,24 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
           -- Não existe valor contratado
           vr_dsvlrctd := ' ';
         END IF;
+        
+        -- Incluir caracteristica especial para inddocto=5
+        IF vr_tab_individ(vr_idx_individ).inddocto = 5 THEN
+          -- Buscar a caracteris no cadastro do movimento
+          IF vr_tab_mvto_garant_prest.exists(vr_tab_individ(vr_idx_individ).dsinfaux) THEN 
+            -- Se já existir algo
+            IF vr_caracesp IS NOT NULL THEN
+              vr_caracesp := vr_caracesp||';';
+            END IF;
+            vr_caracesp := vr_caracesp||vr_tab_mvto_garant_prest(vr_tab_individ(vr_idx_individ).dsinfaux).dscarces;
+          END IF;
+        END IF;
 
         -- Com base na modalidade encontrada retorna o Cosif (Plano Contábil das Instituições do Sistema Financeiro Nacional)
-        vr_ctacosif := fn_busca_cosif(vr_cdmodali,vr_tab_individ(vr_idx_individ).inpessoa);
+        vr_ctacosif := fn_busca_cosif(vr_cdmodali
+                                     ,vr_tab_individ(vr_idx_individ).inpessoa
+                                     ,vr_tab_individ(vr_idx_individ).cdorigem
+                                     ,vr_tab_individ(vr_idx_individ).dsinfaux);
         
         -- Numero do contrato formatado para o arquivo 3040
         vr_nrcontrato_3040 := fn_formata_numero_contrato(pr_cdcooper => pr_cdcooper
@@ -3871,8 +4222,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                                   || ' OrigemRec="' || vr_dsorgrec || '"'  -- Era fixo '0199', agora, retorna do pc_busca_modalidade
                                                   || ' Indx="' || vr_coddindx || '"' 
                                                   || vr_stperidx 
-                                                  || ' VarCamb="790"' 
-                                                  || ' CEP="' || rw_crapcop.nrcepend || '"' 
+                                                  || ' VarCamb="'||fn_varcambial(vr_tab_individ(vr_idx_individ).inddocto,vr_tab_individ(vr_idx_individ).dsinfaux)||'"' 
+                                                  || ' CEP="' || fn_cepende(vr_tab_individ(vr_idx_individ).inddocto,vr_tab_individ(vr_idx_individ).dsinfaux) || '"' 
                                                   || ' TaxEft="' || replace(to_char(vr_txeanual,'fm990D00'),',','.') || '"' 
                                                   || ' DtContr="' || to_char(vr_tab_individ(vr_idx_individ).dtinictr,'yyyy-mm-dd') || '"' 
                                                   || vr_dsvlrctd
@@ -3885,7 +4236,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         -- Tratar campos do Fluxo Financeiro
         pc_gera_fluxo_financeiro(pr_nrdconta => vr_tab_individ(vr_idx_individ).nrdconta
                                 ,pr_dtrefere => vr_dtrefere
-                                ,pr_inddocto => vr_tab_individ(vr_idx_individ).inddocto
+                                ,pr_inddocto => vr_tab_individ(vr_idx_individ).inddocto                                
+                                ,pr_cdinfadi => vr_tab_individ(vr_idx_individ).cdinfadi
                                 ,pr_innivris => vr_tab_individ(vr_idx_individ).innivris
                                 ,pr_cdmodali => vr_tab_individ(vr_idx_individ).cdmodali
                                 ,pr_nrctremp => vr_tab_individ(vr_idx_individ).nrctremp
@@ -4018,12 +4370,24 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
             CLOSE cr_crapcop;
             vr_idcpfcgc := substr(lpad(rw_crapcop_2.nrdocnpj,14,'0'),1,8);
           END IF;
-          -- Enviar informação adicional da operação
-          gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
-                                 ,pr_texto_completo => vr_xml_3040_temp
-                                 ,pr_texto_novo     => '            <Inf Tp="1001" Cd="2013-01-02" Ident="'||vr_idcpfcgc||'" '
-                                                    || 'Valor="' || replace(to_char(vr_vlrdivid,'fm99999999999999990D00'),',','.')
-                                                    || '"/>' || chr(10));
+          
+          IF vr_tab_individ(vr_idx_individ).flcessao = 1 THEN
+            -- Enviar informação adicional da operação
+            gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                   ,pr_texto_completo => vr_xml_3040_temp
+                                   ,pr_texto_novo     => '            <Inf Tp="1001" Cd="'|| to_char(vr_tab_individ(vr_idx_individ).dtinictr,'RRRR-MM-DD')
+                                                      || '" Ident="02038232" '
+                                                      || 'Valor="' || replace(to_char(vr_tab_crapepr(vr_ind_epr).vlemprst,'fm99999999999999990D00'),',','.')
+                                                      || '"/>' || chr(10));
+          ELSE          
+            -- Enviar informação adicional da operação
+            gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                   ,pr_texto_completo => vr_xml_3040_temp
+                                   ,pr_texto_novo     => '            <Inf Tp="1001" Cd="2013-01-02" Ident="'||vr_idcpfcgc||'" '
+                                                      || 'Valor="' || replace(to_char(vr_vlrdivid,'fm99999999999999990D00'),',','.')
+                                                      || '"/>' || chr(10));
+          
+          END IF;
         END IF;
         -- Verificação do Ente Consignante
         pc_inf_ente_consignante(pr_nrdconta => vr_tab_individ(vr_idx_individ).nrdconta
@@ -4593,8 +4957,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                   pr_dsxmlnode => '/crrl566',                     --> No base do XML para leitura dos dados
                                   pr_dsjasper  => 'crrl566.jasper',               --> Arquivo de layout do iReport
                                   pr_dsparams  => null,                           --> Nao enviar parametro
-                                  pr_dsarqsaid => vr_nom_direto||'/crrl566.lst',  --> Arquivo final
-                                  pr_flg_gerar => 'N',                            --> Nao gerar o arquivo na hora
+/*Andrei*/pr_dsarqsaid => /*vr_nom_direto||*/'/usr/coop/sistema/equipe/andrei/crrl566.lst',  --> Arquivo final
+/*Andrei*/pr_flg_gerar => 'S',                            --> Nao gerar o arquivo na hora
                                   pr_qtcoluna  => 234,                            --> Quantidade de colunas
                                   pr_nmformul  => '234dh',                        --> Nome do formulario
                                   pr_sqcabrel  => 1,                              --> Sequencia do cabecalho
@@ -4689,8 +5053,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                   pr_dsxmlnode => '/crrl567',                     --> No base do XML para leitura dos dados
                                   pr_dsjasper  => 'crrl567.jasper',               --> Arquivo de layout do iReport
                                   pr_dsparams  => null,                           --> Nao enviar parametro
-                                  pr_dsarqsaid => vr_nom_direto||'/crrl567.lst',  --> Arquivo final
-                                  pr_flg_gerar => 'N',                            --> Nao gerar o arquivo na hora
+/*andrei*/pr_dsarqsaid => /*vr_nom_direto||*/'/usr/coop/sistema/equipe/andrei/crrl567.lst',  --> Arquivo final
+/*andrei*/pr_flg_gerar => 'S',                            --> Nao gerar o arquivo na hora
                                   pr_qtcoluna  => 80,                             --> Quantidade de colunas
                                   pr_nmformul  => '80col',                        --> Nome do formulario
                                   pr_sqcabrel  => 3,                              --> Sequencia do cabecalho
@@ -4715,10 +5079,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         UPDATE craptab
            SET dstextab = '2'||SUBSTR(dstextab,2,4000)
          WHERE craptab.cdcooper = pr_cdcooper
-           AND craptab.nmsistem = 'CRED'
-           AND craptab.tptabela = 'USUARI'
+           AND upper(craptab.nmsistem) = 'CRED'
+           AND upper(craptab.tptabela) = 'USUARI'
            AND craptab.cdempres = 11
-           AND craptab.cdacesso = 'RISCOBACEN'
+           AND upper(craptab.cdacesso) = 'RISCOBACEN'
            AND craptab.tpregist = 000;
       EXCEPTION
         WHEN OTHERS THEN
