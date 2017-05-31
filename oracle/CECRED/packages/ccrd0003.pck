@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --  Sistema  : Rotinas genericas referente a tela de Cartões
   --  Sigla    : CCRD
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Abril - 2014.                   Ultima atualizacao: 24/05/2017
+  --  Data     : Abril - 2014.                   Ultima atualizacao: 26/05/2017
   --
   -- Dados referentes ao programa:
   --
@@ -63,6 +63,9 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --
   --             24/05/2017 - Ajustar para o tipo de operacao '02' validar os tipos
   --                          aceitos antes de buscar as demais informacoes (Lucas Ranghetti #678334)
+  --
+  --             26/05/2017 - ajustes na pc_debita_fatura pra pegar corretamente a data de referencia para 
+  --                          buscar as faturas (Tiago/Fabricio #677702)
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de Registro para as faturas pendentes
@@ -9704,7 +9707,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
    Programa: CCDR0003
    Sigla   : APLI
    Autor   : Tiago
-   Data    : Junho/2015                          Ultima atualizacao: 15/05/2017
+   Data    : Junho/2015                          Ultima atualizacao: 26/05/2017
 
    Dados referentes ao programa:
 
@@ -9730,6 +9733,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
    
    15/05/2017 - Correções para repique contando 1 dia util para repique ao inves de dias corridos
                 (Tiago/Fabricio).
+                
+   26/05/2017 - Tratado para pegar uma data de referencia que sirva para todas as situações de
+                vencimento de fatura contando que os dias de repique agora são dias uteis
+                (Tiago/Fabricio #677702)
   .......................................................................................*/
   PROCEDURE pc_debita_fatura(pr_cdcooper  IN crapcop.cdcooper%TYPE
                             ,pr_cdprogra  IN crapprg.cdprogra%TYPE
@@ -10005,13 +10012,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       END IF;
 
       -- Pegar a data de referencia do periodo    
-      vr_dtmvante:= pr_dtmvtolt - vr_qtddiapg;
-      
-      IF (vr_dtmvante - 1) = gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,pr_dtmvtolt => vr_dtmvante - 1, pr_tipo => 'A') THEN
-          vr_dtmvante:= gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,pr_dtmvtolt => vr_dtmvante, pr_tipo => 'A');
-      ELSE
-          vr_dtmvante:= gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,pr_dtmvtolt => vr_dtmvante - 1, pr_tipo => 'A') + 1;
-      END IF;
+      vr_dtmvante:= gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,pr_dtmvtolt => pr_dtmvtolt - vr_qtddiapg, pr_tipo => 'A');
+      vr_dtmvante:= gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,pr_dtmvtolt => vr_dtmvante - 1, pr_tipo => 'A');
 
       -- Leitura do calendario da cooperativa
       OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
@@ -10372,13 +10374,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                      tbcrd_fatura.dtref_pagodia = decode(vr_flmuddia,1,vr_dtultsld,tbcrd_fatura.dtref_pagodia),
                      tbcrd_fatura.vlpagodia = decode(vr_flmuddia,1,vr_vlsomsld,tbcrd_fatura.vlpagodia + vr_vlsomsld)
                WHERE tbcrd_fatura.idfatura    = rw_tbcrd_fatura.idfatura;
-               
-               IF pr_cdprogra = 'CRPS674' AND
-                  vr_dtmvante = rw_tbcrd_fatura.dtvencimento THEN
-                 UPDATE tbcrd_fatura
-                   SET  tbcrd_fatura.insituacao = 4
-                 WHERE  tbcrd_fatura.idfatura    = rw_tbcrd_fatura.idfatura;
-               END IF;
                
             EXCEPTION
               WHEN OTHERS THEN
