@@ -1009,6 +1009,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
      Objetivo  : Procedure para validação de pagamento de DARF/DAS
 
      Alteracoes: 08/05/2017 - Validar tributo através da tabela crapstb (Lucas Ranghetti #654763)
+
+     --          31/05/2017 - Regra para alertar o usuário quando tentar pagar um GPS na modalidade de 
+     --                       DARF apresentando a seguinte mensagem: GPS deve ser paga na opção 
+     --                       Transações - GPS do menu de serviços. (Rafael Monteiro - Mouts)     
     ..............................................................................*/
     
     --Selecionar contas migradas
@@ -1295,27 +1299,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       -- Obtém o convênio a partir do código de barras
       vr_cdempcon := SUBSTR(pr_cdbarras, 16, 4);
       vr_cdsegmto := SUBSTR(pr_cdbarras, 2, 1);
-            
-      -- Busca o convênio na CRAPCON
-      OPEN cr_crapcon(pr_cdcooper => pr_cdcooper
-                     ,pr_cdempcon => vr_cdempcon
-                     ,pr_cdsegmto => vr_cdsegmto);
-      FETCH cr_crapcon
-        INTO rw_crapcon;
-      CLOSE cr_crapcon;
-    
-      --Verifica se o convênio existe
-      IF rw_crapcon.cdempcon IS NULL THEN
-        vr_dscritic := 'Convênio não cadastrado. Procure seu Posto de Atendimento para mais informações.';
-        RAISE vr_exc_erro;
-      END IF;
-    
-      --Verifica se o convênio está liberado para pagamento via internet
-      IF pr_idorigem = 3 AND rw_crapcon.flginter <> 1 THEN
-        vr_dscritic := 'Este convênio não está habilitado para pagamento via internet.';
-        RAISE vr_exc_erro;
-      END IF;
-      
+
       -- Se não for uma DARF/DAS válida
       IF vr_cdempcon NOT IN (64, 153, 154, 328, 385) OR vr_cdsegmto NOT IN (5) THEN
       
@@ -1337,6 +1321,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         END IF;
       
         --Levantar Excecao
+        RAISE vr_exc_erro;
+      END IF;
+            
+      -- Busca o convênio na CRAPCON
+      OPEN cr_crapcon(pr_cdcooper => pr_cdcooper
+                     ,pr_cdempcon => vr_cdempcon
+                     ,pr_cdsegmto => vr_cdsegmto);
+      FETCH cr_crapcon
+        INTO rw_crapcon;
+      CLOSE cr_crapcon;
+    
+      --Verifica se o convênio existe
+      IF rw_crapcon.cdempcon IS NULL THEN
+        vr_dscritic := 'Convênio não cadastrado. Procure seu Posto de Atendimento para mais informações.';
+        RAISE vr_exc_erro;
+      END IF;
+    
+      --Verifica se o convênio está liberado para pagamento via internet
+      IF pr_idorigem = 3 AND rw_crapcon.flginter <> 1 THEN
+        vr_dscritic := 'Este convênio não está habilitado para pagamento via internet.';
         RAISE vr_exc_erro;
       END IF;
       
