@@ -226,19 +226,6 @@
 			}
 		}
 		
-    $msg = array();
-	
-		// Se não retornou erro, então pegar a mensagem de retorno do Progress na variável msgRetorno, para ser utilizada posteriormente
-		$msgRetorno = ( isset($xmlObjeto->roottag->tags[0]->attributes['MSGRETOR']) ) ? $xmlObjeto->roottag->tags[0]->attributes['MSGRETOR'] : '';	
-		$msgAlerta    = ( isset($xmlObjeto->roottag->tags[0]->attributes['MSGALERT']) ) ? $xmlObjeto->roottag->tags[0]->attributes['MSGALERT'] : '';
-		$msgRvcad   = (isset($xmlObjeto->roottag->tags[0]->attributes['MSGRVCAD']) ) ? $xmlObjeto->roottag->tags[0]->attributes['MSGRVCAD'] : '';
-		
-		if ($msgRetorno!='') $msg[] = $msgRetorno;
-		if ($msgAlerta!='' ) $msg[] = $msgAlerta;
-		if ($msgRvcad!='' )  $msg[] = $msgRvcad;
-		
-		$stringArrayMsg = implode( "|", $msg);
-		
 		// Verificação da revisão Cadastral
 		$msgAtCad = ( isset($xmlObjeto->roottag->tags[0]->attributes['MSGATCAD']) ) ? $xmlObjeto->roottag->tags[0]->attributes['MSGATCAD'] : '';
 		$chaveAlt = ( isset($xmlObjeto->roottag->tags[0]->attributes['CHAVEALT']) ) ? $xmlObjeto->roottag->tags[0]->attributes['CHAVEALT'] : '';
@@ -358,13 +345,13 @@
 				exibirErro('error',$msgErro,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);								
 			} 			
 			//Fim melhoria 69
-			
+      
+			$stringArrayMsg = "";
 			// Verificar se existe "Verificacaoo de Revisão Cadastral"
 			if ($msgAtCad != '' && $flgcadas != 'M') {
 				exibirConfirmacao($msgAtCad,'Confirma&ccedil;&atilde;o - Ayllos','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0074.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"OC\")\')',false);
-			} else {
-				// Se não é validar, então é alteração, portanto mostrar mensagem de sucesso e retornar para página principal
-				echo 'exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"OC\")\')';
+			}else{
+				echo 'controlaOperacao(\''.$opeconfi.'\')';
 			} 
 		} 
 	}
