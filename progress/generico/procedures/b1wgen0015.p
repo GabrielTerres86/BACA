@@ -396,7 +396,7 @@
               
               31/01/2017 - Alteraçao dos termos na rotina gera-termo-responsabilidade.
                            Alteracao na rotina executa-envio-ted, incluido param de ip e dstransa
-                           PRJ335 - Analise de fraude. (Odirlei-AMcom)
+                           PRJ335 - Analise de fraude. (Odirlei-AMcom).
               
 
 ..............................................................................*/
