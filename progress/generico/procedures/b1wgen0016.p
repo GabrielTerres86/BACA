@@ -5625,7 +5625,7 @@ PROCEDURE gera_arquivo_log_ted:
            ", nrcpfope: " + STRING(par_nrcpfope)                  +
            ", cddbanco: " + STRING(par_cddbanco,"zzzz9")          +
            ", cdageban: " + STRING(par_cdageban,"zzzzz9")         +
-           ", nrctadst: " + STRING(par_nrctadst,"zzzzzzzzzz,zz9,9") +
+           ", nrctadst: " + STRING(par_nrctadst,"zzzzzzzzzzzzzzzz,zz9,9") +
            ", nmtitula: " + STRING(par_nmtitula)                  +
            ", nrcpfcgc: " + STRING(par_nrcpfcgc)                  +
            ", inpessoa: " + STRING(par_inpessoa)                  +

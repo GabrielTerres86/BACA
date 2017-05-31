@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Setembro/2009.                     Ultima atualizacao: 17/01/2017
+   Data    : Setembro/2009.                     Ultima atualizacao: 15/02/2017
    
    Dados referentes ao programa: Fonte extraido e adaptado para execucao em
                                  paralelo. Fonte original crps531.p.
@@ -178,6 +178,9 @@
 			   17/01/2017 - Ajuste para retirada de caracterer especiais
 							(Adriano - SD 594482)
 			   
+			   15/02/2017 - Ajuste para devolver mensagem STR00010 para mensagens
+							STR0006R2, PAG0142R2
+							(Adriano - SD 553778).
 							
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento, 
@@ -667,6 +670,26 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
              IF   RETURN-VALUE <> "OK"   THEN
                   NEXT.
 
+			 /*Mensagem nao tratada pelo sistema CECRED e devemos enviar uma mensagem
+			   STR0010 como resposta. SD 553778 */	  
+			 IF CAN-DO("STR0006R2,PAG0142R2",aux_CodMsg) THEN
+			    DO:
+					/* Busca cooperativa de destino */ 
+                    FIND crabcop WHERE crabcop.cdagectl = INT(aux_AgCredtd)
+							           NO-LOCK NO-ERROR.
+
+					/* Mensagem Invalida para o Tipo de Transacao ou Finalidade*/  
+                    ASSIGN aux_codierro = 4
+                           aux_dsdehist = "Mensagem Invalida para o Tipo de Transacao ou Finalidade.".
+
+                    RUN gera_erro_xml (INPUT aux_dsdehist).
+				    RUN salva_arquivo.                   
+                    RUN deleta_objetos.
+
+				    NEXT.
+
+			    END.
+				
              /* CECRED */
              RUN trata_cecred (INPUT "").
              RUN salva_arquivo.                   
@@ -1539,8 +1562,7 @@ PROCEDURE gera_erro_xml:
          aux_textoxml[8] = "</SEGCAB>".
                                                 
   
-  IF   CAN-DO("STR0005R2,STR0007R2,STR0008R2,STR0026R2,STR0037R2",aux_CodMsg)
-         THEN
+  IF   CAN-DO("STR0005R2,STR0007R2,STR0008R2,STR0026R2,STR0037R2,STR0006R2,PAG0142R2",aux_CodMsg) THEN
        ASSIGN aux_textoxml[9]  = "<STR0010>"
               aux_textoxml[10] = "<CodMsg>STR0010</CodMsg>"
               aux_textoxml[11] = "<NumCtrlIF>" + aux_NumCtrlIF + "</NumCtrlIF>"

@@ -939,18 +939,64 @@ PROCEDURE valida-valores:
 
         END.
 
-	IF  p-cod-agencia-banco = 0 THEN 
+    IF  p-tipo-doc = 'D' OR p-tipo-doc = 'C' THEN
+        DO:        
+           IF  p-cod-agencia-banco = 0 THEN 
+               DO:
+                   ASSIGN i-cod-erro  = 0
+                          c-desc-erro = 
+                               "Agencia deve ser informada.". 
+                   RUN cria-erro (INPUT p-cooper,
+                                  INPUT p-cod-agencia,
+                                  INPUT p-nro-caixa,
+                                  INPUT i-cod-erro,
+                                  INPUT c-desc-erro,
+                                  INPUT YES).            
+               END. 
+        END.
+    ELSE  /* TED */
         DO:
-            ASSIGN i-cod-erro  = 0
-                   c-desc-erro = 
-                        "Agencia deve ser informada.". 
-            RUN cria-erro (INPUT p-cooper,
-                           INPUT p-cod-agencia,
-                           INPUT p-nro-caixa,
-                           INPUT i-cod-erro,
-                           INPUT c-desc-erro,
-                           INPUT YES).            
-        END. 
+            IF  p-cod-agencia-banco = 0 AND 
+               (p-tipo-conta-cr = 1  OR 
+                p-tipo-conta-cr = 2) THEN
+                DO:
+                    IF  p-tipo-conta-cr = 1 THEN
+                        ASSIGN i-cod-erro  = 0
+                               c-desc-erro = 
+                                     "Preenchimento do campo agencia obrigatorio para o " +
+                                     "tipo de conta: Conta Corrente.". 
+                    ELSE
+                        ASSIGN i-cod-erro  = 0
+                               c-desc-erro = 
+                                     "Preenchimento do campo agencia obrigatorio para o " +
+                                     "tipo de conta: Conta Poupanca.". 
+                           
+                    RUN cria-erro (INPUT p-cooper,
+                                   INPUT p-cod-agencia,
+                                   INPUT p-nro-caixa,
+                                   INPUT i-cod-erro,
+                                   INPUT c-desc-erro,
+                                   INPUT YES).                           
+                END.
+            ELSE
+                DO:
+                    IF  p-cod-agencia-banco <> 0 AND
+                        p-tipo-conta-cr = 3 THEN
+                        DO:
+                            ASSIGN i-cod-erro  = 0
+                                   c-desc-erro = 
+                                         "Preenchimento do campo agencia nao e permitido para o " +
+                                         "tipo de conta: Conta de Pagamento.". 
+                             
+                            RUN cria-erro (INPUT p-cooper,
+                                           INPUT p-cod-agencia,
+                                           INPUT p-nro-caixa,
+                                           INPUT i-cod-erro,
+                                           INPUT c-desc-erro,
+                                           INPUT YES).            
+                        END.
+                END.
+        END.
 
     IF  p-nro-conta-para = 0  THEN 
         DO:
@@ -964,6 +1010,20 @@ PROCEDURE valida-valores:
                            INPUT YES).
         END. 
                                                            
+    IF ((p-tipo-conta-cr = 1  OR /* Conta Corrente */
+        p-tipo-conta-cr = 2) AND /* Conta Poupanca */
+        LENGTH(STRING(p-nro-conta-para)) > 13 ) THEN
+        DO:
+            ASSIGN i-cod-erro  = 0
+                   c-desc-erro = "Informe o numero da conta com ate 13 caracteres." .
+                   
+            RUN cria-erro (INPUT p-cooper,
+                           INPUT p-cod-agencia,
+                           INPUT p-nro-caixa,
+                           INPUT i-cod-erro,
+                           INPUT c-desc-erro,
+                           INPUT YES).            
+        END.
 
     IF  p-nome-para = ""  THEN  
         DO:
@@ -975,7 +1035,7 @@ PROCEDURE valida-valores:
                            INPUT p-nro-caixa,
                            INPUT i-cod-erro,
                            INPUT c-desc-erro,
-                           INPUT YES).
+                           INPUT YES). 
         END.                           
 
     in01  = 1.
@@ -2455,7 +2515,7 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
                                 TRIM(c-desc-agencia)              
            iLnAut = iLnAut + 1  c-literal[iLnAut] = ""       
            iLnAut = iLnAut + 1  c-literal[iLnAut] = "CONTA...: " + 
-                                TRIM(STRING(craptvl.nrcctrcb,"ZZZZZZZZZZZZZ9"))  
+                                TRIM(STRING(craptvl.nrcctrcb,"ZZZZZZZZZZZZZZZZZZZ9"))  
                                 + " TIPO DE PESSOA: " + 
                                 TRIM(c-tipo-pessoa-para)
            iLnAut = iLnAut + 1  c-literal[iLnAut] = "TITULAR1: " + 
@@ -2730,9 +2790,9 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
                    crattem.cdagenci = craptvl.cdagenci
                    crattem.cdbantrf = craptvl.cdbccrcb
                    crattem.cdagetrf = craptvl.cdagercb
-                   crattem.nrctatrf = DEC(SUBSTR(STRING(craptvl.nrcctrcb,"9999999999999"),1,12))
-                   crattem.nrdigtrf = SUBSTR(STRING(craptvl.nrcctrcb,"9999999999999"), 
-                                             LENGTH(STRING(craptvl.nrcctrcb,"9999999999999")),1)
+                   crattem.nrctatrf = DEC(SUBSTR(STRING(craptvl.nrcctrcb,"99999999999999999999"),1,20))
+                   crattem.nrdigtrf = SUBSTR(STRING(craptvl.nrcctrcb,"99999999999999999999"), 
+                                             LENGTH(STRING(craptvl.nrcctrcb,"99999999999999999999"),1)
                    crattem.nmfuncio = craptvl.nmpesrcb
                    crattem.nrcpfcgc = craptvl.cpfcgrcb
                    crattem.nrdocmto = craptvl.nrdocmto
