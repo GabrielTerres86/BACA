@@ -22,6 +22,9 @@
                  
           23/11/2016 - Alterado para atribuir variavel $dsiduser ao carregar variavel
                        PRJ314 - Indexacao Centralizada (Odirlei-Amcom)       
+
+                  26/05/2017 - Alterado para tipo de impressao 10 - Analise bordero - PRJ300 - Desconto de cheque 
+                              (Odirlei-AMcom)          
 	************************************************************************/ 
 
 	session_cache_limiter("private");
@@ -106,7 +109,8 @@
     if ($idimpres == 1 || // COMPLETA
         $idimpres == 2 || // CONTRATO
         $idimpres == 4 || // NOTA PROMISSORIA
-        $idimpres == 7) { // BORDERO DE CHEQUES
+        $idimpres == 7 ||  // BORDERO DE CHEQUES
+        $idimpres == 10) { // BORDERO DE CHEQUES PARA ANALISE
         $xml  = "<Root>";
         $xml .= "  <Dados>";
         $xml .= "    <nrdconta>".$nrdconta."</nrdconta>";

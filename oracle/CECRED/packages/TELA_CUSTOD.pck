@@ -421,13 +421,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSTOD IS
         -- Formatar o CMC-7
         vr_dsdocmc7_formatado := gene0002.fn_mask(vr_dsdocmc7,'<99999999<9999999999>999999999999:');
 					
-				-- Verifica se cheque foi custodiado e não foi resgatado			
-        OPEN cr_crapcst(pr_cdcooper => vr_cdcooper
-				               ,pr_dsdocmc7 => vr_dsdocmc7_formatado);
-				FETCH cr_crapcst INTO rw_crapcst;
-				
-				-- Se não encontrou
-				IF cr_crapcst%NOTFOUND THEN
 				  -- Verificar se cheque foi resgatado hoje
 					OPEN cr_crapcst_resg_hoje(pr_cdcooper => vr_cdcooper
 																	 ,pr_dsdocmc7 => vr_dsdocmc7_formatado
@@ -439,7 +432,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSTOD IS
 						vr_index_erro := vr_tab_resgate_erro.count + 1;  
 						vr_tab_resgate_erro(vr_index_erro).dsdocmc7 := vr_dsdocmc7;
 						vr_tab_resgate_erro(vr_index_erro).dscritic := gene0001.fn_busca_critica(pr_cdcritic => 673);												
+          		
+          -- Fecha Cursor
+          CLOSE cr_crapcst_resg_hoje;									
 					ELSE				
+          
+          -- Fecha Cursor
+          CLOSE cr_crapcst_resg_hoje; 
+					
+          -- Verifica se cheque foi custodiado e não foi resgatado			
+          OPEN cr_crapcst(pr_cdcooper => vr_cdcooper
+                         ,pr_dsdocmc7 => vr_dsdocmc7_formatado);
+          FETCH cr_crapcst INTO rw_crapcst;
+    				
+          -- Se não encontrou
+          IF cr_crapcst%NOTFOUND THEN
+    				  				
 						-- Verifica se cheque já foi resgatado
 						OPEN cr_crapcst_resg(pr_cdcooper => vr_cdcooper
 																,pr_dsdocmc7 => vr_dsdocmc7_formatado);
@@ -457,9 +465,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSTOD IS
 							vr_tab_resgate_erro(vr_index_erro).dsdocmc7 := vr_dsdocmc7;
 							vr_tab_resgate_erro(vr_index_erro).dscritic := 'Cheque não localizado';
 						END IF;
+              
+              -- Fecha Cursor
 						CLOSE cr_crapcst_resg;
-					END IF;	
-					CLOSE cr_crapcst_resg_hoje;
+            
 				ELSE						
 					-- Processado em dias anteriores
 					IF rw_crapcst.insitchq = 2 AND 
@@ -491,6 +500,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSTOD IS
 				END IF;
 				-- Fecha cursor
 				CLOSE cr_crapcst;
+          
+        END IF;  
+          
       END LOOP;
 
 	  -- Verifica se cheque foi custodiado e não foi resgatado			
@@ -2863,6 +2875,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSTOD IS
 					 AND hcc.insithcc = 1;
       rw_craphcc cr_craphcc%ROWTYPE;		
 					
+      -- Verificar se possui cheque conciliado
+			CURSOR cr_crapdcc(pr_cdcooper IN craphcc.cdcooper%TYPE
+			                 ,pr_nrdconta IN craphcc.nrdconta%TYPE
+											 ,pr_nrconven IN craphcc.nrconven%TYPE
+											 ,pr_nrremret IN craphcc.nrremret%TYPE
+											 ,pr_intipmvt IN craphcc.intipmvt%TYPE) IS
+			  SELECT 1
+				  FROM crapdcc dcc
+				 WHERE dcc.cdcooper = pr_cdcooper
+				   AND dcc.nrdconta = pr_nrdconta
+					 AND dcc.nrconven = pr_nrconven
+					 AND dcc.nrremret = pr_nrremret
+           AND dcc.intipmvt = pr_intipmvt
+           AND dcc.inconcil = 1;
+      rw_crapdcc cr_crapdcc%ROWTYPE;	
+      
 
 	  BEGIN
 		  -- Incluir nome do módulo logado
@@ -2932,6 +2960,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSTOD IS
 			END IF;
 			-- Fecha cursor
 			CLOSE cr_craphcc;				
+      
+      -- Buscar remessa de cheque para verificar se ainda não foi processada
+			OPEN cr_crapdcc(pr_cdcooper => vr_cdcooper
+										 ,pr_nrdconta => pr_nrdconta
+										 ,pr_nrconven => pr_nrconven
+										 ,pr_nrremret => pr_nrremret
+										 ,pr_intipmvt => pr_intipmvt);
+			FETCH cr_crapdcc INTO rw_crapdcc;
+
+			-- Se não encontrou
+			IF cr_crapdcc%NOTFOUND THEN
+				-- Fecha cursor
+				CLOSE cr_crapdcc;
+				-- Data para Deposito invalida
+				vr_cdcritic := 0;
+				vr_dscritic := 'Remessa não possui cheque conciliados. Operação Cancelada.';
+				-- Executa RAISE para sair das validações
+				RAISE vr_exc_erro;				
+			END IF;
+			-- Fecha cursor
+			CLOSE cr_crapdcc;				
 
       -- Custodiar cheques da remessa
       cust0001.pc_custodiar_cheques(pr_cdcooper => vr_cdcooper

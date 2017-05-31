@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/98                     Ultima atualizacao: 17/03/2017
+   Data    : Novembro/98                     Ultima atualizacao: 29/05/2017
 
    Dados referentes ao programa:
 
@@ -546,6 +546,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
               
                08/05/2017 - Detalhado no arquivo os registros de LIMITES CONCEDIDOS
                             PARA DESCONTO DE CHEQUES/TITULOS (Tiago/Thiago #611703).            
+                            
+               29/05/2017 - Alterado tamanho da variavel vr_indice para suportar
+                            3 numeros (Tiago/Thiago).             
 ............................................................................ */
 
   -- Buscar os dados da cooperativa
@@ -2949,7 +2952,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     -- Instância da tabela.
     vr_tab_acumltit        typ_tab_acumltit;
     -- Índice da PL/Table
-    vr_indice              number(2);
+    vr_indice              number(3);
     -- Data de referência
     vr_dtrefere            date;
 

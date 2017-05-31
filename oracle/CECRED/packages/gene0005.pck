@@ -217,37 +217,41 @@ CREATE OR REPLACE PACKAGE CECRED.gene0005 IS
   END GENE0005;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
-  ---------------------------------------------------------------------------------------------------------------
-  --
-  --  Programa : GENE0005
-  --  Sistema  : Rotinas auxiliares para busca de informacões do negocio
-  --  Sigla    : GENE
-  --  Autor    : Marcos Ernani Martini - Supero
-  --  Data     : Maio/2013.                   Ultima atualizacao: 16/12/2016
-  --
-  -- Dados referentes ao programa:
-  --
-  -- Frequencia: -----
-  -- Objetivo  : Centralizar rotinas auxiliares para buscas de informacões do negocio
-  -- Alteracoes: 
-  --             04/01/2016 - Alteração na chamada da rotina extr0001.pc_obtem_saldo_dia
-  --                          para passagem do parâmetro pr_tipo_busca, para melhoria
-  --                          de performance.
-  --                          Chamado 291693 (Heitor - RKAM)
-  --
-  --             30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
-  --
-  --             10/06/2016 - Ajuste para inlcuir UPPER na leitura da tabela
-  --                          crapass em campos de indice que possuem UPPER
-  --                          (Adriano - SD 463762).
-  --
-  --			 16/12/2016 - Alterações Referentes ao projeto 300. (Reinert)
-  --
-  --             20/03/2017 - Ajuste para disponibilizar as rotinas de validação de cpf e cnpj como públicas
-  --                          (Adriano - SD 620221).
-  --
-  --             23/03/2017 - Criado procedure para verificar departamento do operador. (Reinert)
-  ---------------------------------------------------------------------------------------------------------------
+  /*---------------------------------------------------------------------------------------------------------------
+
+    Programa : GENE0005
+    Sistema  : Rotinas auxiliares para busca de informacões do negocio
+    Sigla    : GENE
+    Autor    : Marcos Ernani Martini - Supero
+    Data     : Maio/2013.                   Ultima atualizacao: 16/05/2017
+  
+   Dados referentes ao programa:
+  
+   Frequencia: -----
+   Objetivo  : Centralizar rotinas auxiliares para buscas de informacões do negocio
+   Alteracoes: 
+               04/01/2016 - Alteração na chamada da rotina extr0001.pc_obtem_saldo_dia
+                            para passagem do parâmetro pr_tipo_busca, para melhoria
+                            de performance.
+                            Chamado 291693 (Heitor - RKAM)
+  
+               30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
+  
+               10/06/2016 - Ajuste para inlcuir UPPER na leitura da tabela
+                            crapass em campos de indice que possuem UPPER
+                            (Adriano - SD 463762).
+
+               16/12/2016 - Alterações Referentes ao projeto 300. (Reinert)
+
+               20/03/2017 - Ajuste para disponibilizar as rotinas de validação de cpf e cnpj como públicas
+                            (Adriano - SD 620221).
+  
+               23/03/2017 - Criado procedure para verificar departamento do operador. (Reinert)
+
+               16/05/2017 - Alterada a rotina pc_saldo_utiliza para quando chamada pelo crps405 não efetuar 
+                            novo cálculo pois o saldo do contrato já foi calculado anteriormente (Rodrigo)
+                            
+  ---------------------------------------------------------------------------------------------------------------*/
 
    -- Variaveis utilizadas na PC_CONSULTA_ITG_DIGITO_X
    vr_nrctacef       crapprm.dsvlrprm%TYPE;
@@ -960,7 +964,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
 
        -- Selecionar informacoes dos emprestimos
        CURSOR cr_crapepr(pr_nrdconta IN crapepr.nrdconta%TYPE) IS
-         SELECT nrctremp
+         SELECT nrctremp,
+                vlsdeved,
+                vlsdevat
            FROM crapepr
           WHERE cdcooper = pr_cdcooper
             AND nrdconta = pr_nrdconta
@@ -1105,24 +1111,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
              -- Calcular o saldo devedor do emprestimo cfme o tipo da chamada:
              -- PAra chamadas do tipo 1 (Proveniente da conversão da fontes/saldo_utiliza.p)
              IF pr_tpdecons = 1 THEN
-               -- Utilizar a pc_calc_saldo_epr
-               EMPR0001.pc_calc_saldo_epr(pr_cdcooper   => pr_cdcooper         --> Codigo da Cooperativa
-                                         ,pr_rw_crapdat => pr_tab_crapdat      --> Vetor com dados de parametro (CRAPDAT)
-                                         ,pr_cdprogra   => pr_cdprogra         --> Programa que solicitou o calculo
-                                         ,pr_nrdconta   => vr_index_conta      --> Numero da conta do emprestimo
-                                         ,pr_nrctremp   => rw_crapepr.nrctremp --> Numero do contrato do emprestimo
-                                         ,pr_inusatab   => pr_inusatab         --> Indicador de utilizacão da tabela de juros
-                                         ,pr_vlsdeved   => vr_vlsdeved         --> Saldo devedor do emprestimo
-                                         ,pr_qtprecal   => vr_qtprecal_retorno --> Quantidade de parcelas do emprestimo
-                                         ,pr_cdcritic   => vr_cdcritic         --> Codigo de critica encontrada
-                                         ,pr_des_erro   => vr_des_erro);       --> Retorno de Erro
+               IF UPPER(pr_cdprogra) = 'CRPS405' THEN
+                  vr_vlsdeved := rw_crapepr.vlsdevat;
+               ELSE
+                 -- Utilizar a pc_calc_saldo_epr
+                 EMPR0001.pc_calc_saldo_epr(pr_cdcooper   => pr_cdcooper         --> Codigo da Cooperativa
+                                           ,pr_rw_crapdat => pr_tab_crapdat      --> Vetor com dados de parametro (CRAPDAT)
+                                           ,pr_cdprogra   => pr_cdprogra         --> Programa que solicitou o calculo
+                                           ,pr_nrdconta   => vr_index_conta      --> Numero da conta do emprestimo
+                                           ,pr_nrctremp   => rw_crapepr.nrctremp --> Numero do contrato do emprestimo
+                                           ,pr_inusatab   => pr_inusatab         --> Indicador de utilizacão da tabela de juros
+                                           ,pr_vlsdeved   => vr_vlsdeved         --> Saldo devedor do emprestimo
+                                           ,pr_qtprecal   => vr_qtprecal_retorno --> Quantidade de parcelas do emprestimo
+                                           ,pr_cdcritic   => vr_cdcritic         --> Codigo de critica encontrada
+                                           ,pr_des_erro   => vr_des_erro);       --> Retorno de Erro
 
-               -- Se ocorreu erro, gerar critica
-               IF vr_cdcritic IS NOT NULL OR vr_des_erro IS NOT NULL THEN
-                 -- Zerar saldo devedor
-                 vr_vlsdeved := 0;
-                 -- Gerar critica
-                 RAISE vr_exc_erro;
+                 -- Se ocorreu erro, gerar critica
+                 IF vr_cdcritic IS NOT NULL OR vr_des_erro IS NOT NULL THEN
+                   -- Zerar saldo devedor
+                   vr_vlsdeved := 0;
+                   -- Gerar critica
+                   RAISE vr_exc_erro;
+                 END IF;
+
                END IF;
              ELSE --> E uma chamada provenitente da bo b1wgen9999, procedure saldo_utiliza
                -- Utilizaremos a pc_saldo_devedor_epr

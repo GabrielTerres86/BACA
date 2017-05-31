@@ -8,6 +8,7 @@
  * ALTERAÇÕES   :
  * --------------
  * 001: [06/05/2011] Rogerius Militao      (DB1) : Adaptação no formulário de avalista genérico
+ * 002: [26/05/2017] Odirlei Busana      (AMcom) : Incluido retorno do nrctrlim. PRJ300 - Desconto de cheque
  */
 ?>
 
@@ -228,6 +229,9 @@
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjDadosLimIncluir->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjDadosLimIncluir->roottag->tags[0]->tags[0]->tags[4]->cdata);
+	}else {
+        // Buscar numer do contrato gerado 
+        $nrctrlim = $xmlObjLimite->roottag->tags[0]->attributes["NRCTRLIM"];
 	} 	
 
 	// Esconde mensagem de aguardo

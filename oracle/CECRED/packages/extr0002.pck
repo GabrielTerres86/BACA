@@ -74,7 +74,7 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0002 AS
       ,dtrefere craplau.dtmvtolt%TYPE);
       
     TYPE typ_tab_lancamento_futuro IS TABLE OF typ_reg_lancamento_futuro INDEX BY PLS_INTEGER;
-    
+
 
     --Tipo de Registro para Extrato de investimento  (b1wgen0020tt.i/tt-extrato_inv) 
     TYPE typ_reg_extrato_inv IS RECORD   
@@ -338,8 +338,8 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0002 AS
                                 ,pr_nmarqpdf OUT VARCHAR2              --Nome Arquivo PDF
                                 ,pr_tab_erro OUT GENE0001.typ_tab_erro -- Tabela de Erros
                                 ,pr_des_reto OUT VARCHAR2 );           --Descricao OK/NOK
-    
-    
+
+
 
     PROCEDURE pc_gera_impressao_car( pr_cdcooper IN crapcop.cdcooper%TYPE  --Codigo Cooperativa
                                     ,pr_cdagenci IN crapass.cdagenci%TYPE  --Codigo Agencia
@@ -520,7 +520,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
 
     Programa: EXTR0002                           Antigo: sistema/generico/procedures/b1wgen0112.p
     Autor   : Gabriel Capoia dos Santos (DB1)
-    Data    : Agosto/2011                        Ultima atualizacao: 01/03/2017
+    Data    : Agosto/2011                        Ultima atualizacao: 05/04/2017
 
     Objetivo  : Tranformacao BO tela IMPRES
 
@@ -637,7 +637,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                 14/04/2014 - Ajuste para mostrar Aplicacao de Renda Fixa em
                              Inf. Rend. de PJ e bloquear impressao de Inf. Rend.
                              de PF quando for PJ.(Jorge)
-                             
+
                 10/09/2014 - Conversao Progress -> Oracle (Alisson - AMcom) 
 
                 30/10/2014 - Alterado a procedure pc_consulta_lancamento para incluir 
@@ -662,7 +662,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
 														 
                 26/12/2014 - Alterada procedure pc_gera_impextrda para tratar novos
 								             produtos de captacao. (Reinert)  
-                                                         														 
+
                 06/01/2015 - Alterada procedure pc_gera_impextepr.  Ajuste na chamada do cursor 
                              cr_craplem pra usar o numero do contrato corrente. ( Jean - RKAM )  
 
@@ -762,6 +762,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
 					 
 		22/03/2017 - Adicionado tratamento na pc_consulta_lancamento para listar
 				     reacarga de celular. (PRJ321 Reinert)                   
+
+        05/04/2017 - #455742 Melhorias de performance. Ajuste de passagem dos parâmetros inpessoa
+                     e nrcpfcgc para não consultar novamente o associado nos packages 
+                     apli0001 e imut0001 (Carlos)
   ---------------------------------------------------------------------------------------------------------------
 ..............................................................................*/
 
@@ -1924,10 +1928,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                         ,pr_nrdconta IN craprpp.nrdconta%TYPE
                         ,pr_nrctrrpp IN craprpp.nrctrrpp%TYPE) IS
         SELECT craprpp.nrctrrpp
-        FROM craprpp craprpp
-        WHERE craprpp.cdcooper  = pr_cdcooper
-        AND   craprpp.nrdconta  = pr_nrdconta
-        AND   craprpp.nrctrrpp  = pr_nrctrrpp;
+              ,crapass.inpessoa
+              ,crapass.nrcpfcgc
+          FROM craprpp
+              ,crapass
+         WHERE craprpp.cdcooper = pr_cdcooper
+           AND craprpp.nrdconta = pr_nrdconta
+           AND craprpp.nrctrrpp = pr_nrctrrpp
+           AND craprpp.cdcooper = crapass.cdcooper
+           AND craprpp.nrdconta = crapass.nrdconta;
       rw_craprpp cr_craprpp%ROWTYPE;
       -- Cursor Operador
       CURSOR cr_crapope(pr_cdcooper IN crapope.cdcooper%TYPE
@@ -2059,6 +2068,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       /* Procedure para verificar periodo de imunidade tributaria */
       IMUT0001.pc_verifica_periodo_imune(pr_cdcooper => pr_cdcooper  --> Codigo Cooperativa
                                         ,pr_nrdconta => pr_nrdconta  --> Numero da Conta
+                                        ,pr_inpessoa => rw_craprpp.inpessoa
+                                        ,pr_nrcpfcgc => rw_craprpp.nrcpfcgc
                                         ,pr_flgimune => vr_flgimune  --> Identificador se é imune
                                         ,pr_dtinicio => vr_dtiniimu  --> Data de inicio da imunidade
                                         ,pr_dttermin => vr_dtfimimu  --> Data termino da imunidadeValor insento
@@ -3637,6 +3648,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   -- 
   --              21/02/2017 - Ajuste na listagem de titulos em bordero de desconto, para considerar
   --                           a data de vencimento util do titulo. (Douglas - Chamado 587261)
+  --
   --              01/03/2017 - Adicionar origem ADIOFJUROS para podermos debitar estes agendamentos
   --                           (Lucas Ranghetti M338.1)
   ---------------------------------------------------------------------------------------------------------------
@@ -5339,6 +5351,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                                              ,pr_flgrvvlr  => FALSE                --> Identificador se deve gravar valor
                                              ,pr_cdinsenc  => 0                    --> Codigo da isenção
                                              ,pr_vlinsenc  => 0                    --> Valor insento
+                                             ,pr_inpessoa  => rw_crapass.inpessoa  --> Tipo de pessoa
+                                             ,pr_nrcpfcgc  => rw_crapass.nrcpfcgc  --> CPF/CNPJ
                                              ,pr_flgimune  => vr_flgimune          --> Identificador se é imune
                                              ,pr_dsreturn  => vr_des_reto          --> Descricao Critica
                                              ,pr_tab_erro  => pr_tab_erro);        --> Tabela erros
