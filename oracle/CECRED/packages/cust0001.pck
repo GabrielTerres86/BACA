@@ -6299,7 +6299,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
     Frequencia: Sempre que for chamado
     Objetivo  : Rotina para geração do relatorio de acompanhamento de cheques custodiados
 
-    Alteracoes: 
+    Alteracoes: 30/05/2017 - Incluido relatorio CRRL680.
+                             PRJ300 - Desconto de Cheque(Odirlei-AMcom)    
     ............................................................................. */
 
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -6324,6 +6325,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
        WHERE crapass.cdcooper = pr_cdcooper
        AND   crapass.nrdconta = pr_nrdconta;
      rw_crapass cr_crapass%ROWTYPE;
+     
+    --> buscar header da remessa
+    CURSOR cr_craphcc IS
+      SELECT hcc.nmarquiv,
+             hcc.nrremret
+        FROM craphcc hcc
+        WHERE hcc.cdcooper = pr_cdcooper
+          AND hcc.nrdconta = pr_nrdconta
+          AND hcc.nrremret = pr_nrremret;
+    rw_craphcc cr_craphcc%ROWTYPE;
      
     --> buscar cheques custodiados da remessa informada
     CURSOR cr_crapcst IS
@@ -6362,6 +6373,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
                    cst.cdbanchq,
                    cst.cdagechq,
                    cst.nrctachq;
+    
+    --> buscar lotes dos cheques custodiados
+    CURSOR cr_craplot IS
+      SELECT *
+        FROM (SELECT lot.dtmvtolt,
+                     lot.cdagenci,
+                     lot.cdbccxlt,
+                     lot.nrdolote,
+                     lot.qtinfocc,
+                     lot.vlinfocc,
+                     lot.qtinfoci,
+                     lot.vlinfoci,
+                     lot.qtinfocs,
+                     lot.vlinfocs,
+                     lot.qtinfoln,
+                     lot.vlinfocr,
+                     lot.dtmvtopg,
+                     row_number() over (PARTITION BY lot.nrdolote ORDER BY lot.nrdolote ) seq
+                FROM craphcc hcc,
+                     crapdcc dcc,
+                     craplot lot 
+                WHERE hcc.cdcooper = dcc.cdcooper
+                  AND hcc.nrdconta = dcc.nrdconta
+                  AND hcc.nrconven = dcc.nrconven
+                  AND hcc.intipmvt = dcc.intipmvt
+                  AND hcc.nrremret = dcc.nrremret  
+                  AND hcc.cdcooper = pr_cdcooper
+                  AND hcc.nrdconta = pr_nrdconta
+                  AND hcc.nrremret = pr_nrremret
+                  AND lot.cdcooper = dcc.cdcooper 
+                  AND lot.dtmvtolt = hcc.dtmvtolt
+                  AND lot.cdagenci = dcc.cdagenci 
+                  AND lot.cdbccxlt = dcc.cdbccxlt 
+                  AND lot.nrdolote = dcc.nrdolote          
+                  ORDER BY lot.nrdolote) t
+       WHERE t.seq = 1;
     
 
     ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
@@ -6416,37 +6463,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
     END IF;
     CLOSE cr_crapass;
     
-    --> INICIO
-    pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><raiz><remessa
-                     nrdconta="'||TRIM(gene0002.fn_mask_conta(pr_nrdconta)) ||'"
-                     nmprintl="'|| rw_crapass.nmprimtl ||'"
-                     nrremret="'||pr_nrremret ||'"
-    
-                     >');    
-    vr_flexscst := FALSE;
-    
-    --> Buscar cheques custodiados da remessa informada
-    FOR rw_crapcst IN cr_crapcst LOOP
-      vr_flexscst := TRUE;
-      pc_escreve_xml('<cheque>
-                        <dtlibera>'||  to_char(rw_crapcst.dtlibera,'DD/MM/RRRR') || ' (' || to_char(rw_crapcst.nrdolote) || ')' ||'</dtlibera>
-                        <vlcheque>'||  rw_crapcst.vlcheque    ||'</vlcheque>
-                        <cdbanchq>'||  rw_crapcst.cdbanchq    ||'</cdbanchq>
-                        <cdagechq>'||  rw_crapcst.cdagechq    ||'</cdagechq>
-                        <nrcheque>'||  rw_crapcst.nrcheque    ||'</nrcheque>
-                        <nrctachq>'||  gene0002.fn_mask_conta(rw_crapcst.nrctachq)  ||'</nrctachq>
-                        <dsdocmc7><![CDATA['||  rw_crapcst.dsdocmc7                 ||']]></dsdocmc7>
-                        <canal>'|| gene0001.vr_vet_des_origens(rw_crapcst.idorigem) ||'</canal>
-                      </cheque>');
-    END LOOP; 
-    
-    IF vr_flexscst = FALSE THEN
-      vr_dscritic := 'Não foi encontrado nenhum cheque custodiado para essa remessa.';
+    OPEN cr_craphcc;
+    FETCH cr_craphcc INTO rw_craphcc;
+    IF cr_craphcc%NOTFOUND THEN
+      vr_dscritic := 'Remessa nao encontrada.';
+      CLOSE cr_craphcc;
       RAISE vr_exc_erro;
     END IF;
     
-    pc_escreve_xml('</remessa></raiz>',TRUE);
-    
+    CLOSE cr_craphcc;
     
     --Buscar diretorio da cooperativa
     vr_dsdireto := gene0001.fn_diretorio(pr_tpdireto => 'C', --> cooper 
@@ -6469,28 +6494,127 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
     --> Montar nome do arquivo
     pr_nmarqpdf := 'crrl727_'||pr_dsiduser || gene0002.fn_busca_time || '.pdf';
     
-    --> Solicita geracao do PDF
-    gene0002.pc_solicita_relato(pr_cdcooper   => pr_cdcooper
-                               , pr_cdprogra  => 'ATENDA'--pr_cdprogra
-                               , pr_dtmvtolt  => rw_crapdat.dtmvtolt
-                               , pr_dsxml     => vr_des_xml
-                               , pr_dsxmlnode => '/raiz/remessa'
-                               , pr_dsjasper  => 'crrl727.jasper'
-                               , pr_dsparams  => null
-                               , pr_dsarqsaid => vr_dsdireto ||'/'||pr_nmarqpdf
-                               , pr_flg_gerar => 'S'
-                               , pr_qtcoluna  => 132
-                               , pr_cdrelato  => 727
-                               , pr_sqcabrel  => 1
-                               , pr_flg_impri => 'N'
-                               , pr_nmformul  => ' '
-                               , pr_nrcopias  => 1
-                               , pr_nrvergrl  => 1
-                               , pr_des_erro  => vr_dscritic);
     
-    IF vr_dscritic IS NOT NULL THEN -- verifica retorno se houve erro
-      RAISE vr_exc_erro; -- encerra programa
-    END IF;  
+    
+    --> Se nao for remessa por arquivo
+    IF TRIM(rw_craphcc.nmarquiv) IS NULL THEN
+    
+      --> INICIO
+      pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><raiz><remessa
+                       nrdconta="'||TRIM(gene0002.fn_mask_conta(pr_nrdconta)) ||'"
+                       nmprintl="'|| rw_crapass.nmprimtl ||'"
+                       nrremret="'||pr_nrremret ||'">');    
+      vr_flexscst := FALSE;
+    
+      --> Buscar cheques custodiados da remessa informada
+      FOR rw_crapcst IN cr_crapcst LOOP
+        vr_flexscst := TRUE;
+        pc_escreve_xml('<cheque>
+                          <dtlibera>'||  to_char(rw_crapcst.dtlibera,'DD/MM/RRRR') || ' (' || to_char(rw_crapcst.nrdolote) || ')' ||'</dtlibera>
+                          <vlcheque>'||  rw_crapcst.vlcheque    ||'</vlcheque>
+                          <cdbanchq>'||  rw_crapcst.cdbanchq    ||'</cdbanchq>
+                          <cdagechq>'||  rw_crapcst.cdagechq    ||'</cdagechq>
+                          <nrcheque>'||  rw_crapcst.nrcheque    ||'</nrcheque>
+                          <nrctachq>'||  gene0002.fn_mask_conta(rw_crapcst.nrctachq)  ||'</nrctachq>
+                          <dsdocmc7><![CDATA['||  rw_crapcst.dsdocmc7                 ||']]></dsdocmc7>
+                          <canal>'|| gene0001.vr_vet_des_origens(rw_crapcst.idorigem) ||'</canal>
+                        </cheque>');
+      END LOOP; 
+    
+      IF vr_flexscst = FALSE THEN
+        vr_dscritic := 'Não foi encontrado nenhum cheque custodiado para essa remessa.';
+        RAISE vr_exc_erro;
+      END IF;
+    
+      pc_escreve_xml('</remessa></raiz>',TRUE);
+    
+      --> Solicita geracao do PDF
+      gene0002.pc_solicita_relato(pr_cdcooper   => pr_cdcooper
+                                 , pr_cdprogra  => 'ATENDA'--pr_cdprogra
+                                 , pr_dtmvtolt  => rw_crapdat.dtmvtolt
+                                 , pr_dsxml     => vr_des_xml
+                                 , pr_dsxmlnode => '/raiz/remessa'
+                                 , pr_dsjasper  => 'crrl727.jasper'
+                                 , pr_dsparams  => null
+                                 , pr_dsarqsaid => vr_dsdireto ||'/'||pr_nmarqpdf
+                                 , pr_flg_gerar => 'S'
+                                 , pr_qtcoluna  => 132
+                                 , pr_cdrelato  => 727
+                                 , pr_sqcabrel  => 1
+                                 , pr_flg_impri => 'N'
+                                 , pr_nmformul  => ' '
+                                 , pr_nrcopias  => 1
+                                 , pr_nrvergrl  => 1
+                                 , pr_des_erro  => vr_dscritic);
+    
+      IF vr_dscritic IS NOT NULL THEN -- verifica retorno se houve erro
+        RAISE vr_exc_erro; -- encerra programa
+      END IF;  
+      
+    ELSE --> LOTE
+      -- Senao, é remessa por arquivo,
+      -- Gerar relatorio com base no lote
+      
+      pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><raiz>');    
+      vr_flexscst := FALSE;
+      
+      --> Buscar lotes da remessa informada
+      FOR rw_craplot IN cr_craplot LOOP
+        vr_flexscst := TRUE;
+        pc_escreve_xml('<lote>
+                           <nrdconta>'||gene0002.fn_mask_conta(pr_nrdconta) ||'</nrdconta>'||
+                           '<nmprintl>'|| rw_crapass.nmprimtl  ||'</nmprintl>'||
+                           '<nrremret>'|| rw_craphcc.nrremret  ||'</nrremret>'||
+                           '<dtmvtolt>'|| to_char(rw_craplot.dtmvtolt,'DD/MM/RRRR') ||'</dtmvtolt>'||
+                           '<cdagenci>'|| rw_craplot.cdagenci  ||'</cdagenci>'||
+                           '<cdbccxlt>'|| rw_craplot.cdbccxlt  ||'</cdbccxlt>'||
+                           '<nrdolote>'|| rw_craplot.nrdolote  ||'</nrdolote>'||
+                           '<qtinfocc>'|| rw_craplot.qtinfocc  ||'</qtinfocc>'||
+                           '<vlinfocc>'|| rw_craplot.vlinfocc  ||'</vlinfocc>'||
+                           '<qtinfoci>'|| rw_craplot.qtinfoci  ||'</qtinfoci>'||
+                           '<vlinfoci>'|| rw_craplot.vlinfoci  ||'</vlinfoci>'||
+                           '<qtinfocs>'|| rw_craplot.qtinfocs  ||'</qtinfocs>'||
+                           '<vlinfocs>'|| rw_craplot.vlinfocs  ||'</vlinfocs>'||
+                           '<qtinfoln>'|| rw_craplot.qtinfoln  ||'</qtinfoln>'||
+                           '<vlinfocr>'|| rw_craplot.vlinfocr  ||'</vlinfocr>'||
+                           '<dtmvtopg>'|| to_char(rw_craplot.dtmvtopg,'DD/MM/RRRR')   ||'</dtmvtopg>
+                        </lote>');
+      END LOOP; 
+      
+      IF vr_flexscst = FALSE THEN
+        vr_dscritic := 'Não foi encontrado nenhum cheque custodiado para essa remessa.';
+        RAISE vr_exc_erro;
+      END IF;
+      
+      pc_escreve_xml('</raiz>',TRUE);
+      
+      --> Solicita geracao do PDF
+      gene0002.pc_solicita_relato(pr_cdcooper   => pr_cdcooper
+                                 , pr_cdprogra  => 'ATENDA'--pr_cdprogra
+                                 , pr_dtmvtolt  => rw_crapdat.dtmvtolt
+                                 , pr_dsxml     => vr_des_xml
+                                 , pr_dsxmlnode => '/raiz/lote'
+                                 , pr_dsjasper  => 'crrl680.jasper'
+                                 , pr_dsparams  => null
+                                 , pr_dsarqsaid => vr_dsdireto ||'/'||pr_nmarqpdf
+                                 , pr_flg_gerar => 'S'
+                                 , pr_qtcoluna  => 80
+                                 , pr_cdrelato  => 680
+                                 , pr_sqcabrel  => 1
+                                 , pr_flg_impri => 'N'
+                                 , pr_nmformul  => ' '
+                                 , pr_nrcopias  => 1
+                                 , pr_nrvergrl  => 1
+                                 , pr_des_erro  => vr_dscritic);
+      
+      IF vr_dscritic IS NOT NULL THEN -- verifica retorno se houve erro
+        RAISE vr_exc_erro; -- encerra programa
+      END IF; 
+      
+    
+    END IF;
+    
+     
     
     IF pr_idorigem = 5 THEN
       -- Copia contrato PDF do diretorio da cooperativa para servidor WEB
