@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Ze Eduardo        
-   Data    : Dezembro/2003                     Ultima atualizacao: 21/01/2014
+   Data    : Dezembro/2003                     Ultima atualizacao: 03/05/2017
 
    Dados referentes ao programa:
 
@@ -40,7 +40,8 @@
                06/08/2009 - Diferenciar do lanctos BB e Bancoob atraves do
                             campo craplcm.dsidenti  (Ze).
                             
-               08/09/2009 - Retirar msg impressa no LOG - critica 244 - Cheque                             inexistente (Ze).
+               08/09/2009 - Retirar msg impressa no LOG - critica 244 - Cheque
+                            inexistente (Ze).
                
                05/08/2013 - Alterado para pegar o telefone da tabela 
                             craptfc ao invés da crapass (James).
@@ -49,6 +50,9 @@
                             a escrita será PA (André Euzébio - Supero).       
                             
                21/01/2014 - Incluir VALIDATE craplot, craplcm (Lucas R.)      
+               
+               03/05/2017 - #643531 Correcao de criticas; Script para retirar 
+                            o programa da cadeia da CECRED. (Carlos)
 ............................................................................. */
 
 DEF STREAM str_1.   /*  Para relatorio - 310        */
@@ -58,6 +62,8 @@ DEF STREAM str_4.   /*  Para arquivo                */
 DEF STREAM str_5.   /*  Para arquivo                */
 
 { includes/var_batch.i }   
+{ sistema/generico/includes/var_oracle.i }
+{ includes/gera_log_batch.i }
 
 DEF TEMP-TABLE crawrel                                               NO-UNDO
     FIELD cdagenci LIKE crapass.cdagenci
@@ -364,19 +370,6 @@ IF   NOT AVAILABLE crapcop THEN
          RETURN.
      END.
 
-
-IF   glb_cdcooper = 3 THEN
-     DO:
-         glb_cdcritic = 258.
-         RUN fontes/critic.p.
-         UNIX SILENT VALUE ("echo " + STRING(TIME,"HH:MM:SS") +
-                            " - " + glb_cdprogra + "' --> '" + glb_dscritic +
-                            " >> log/proc_batch.log").
-         RUN fontes/fimprg.p.
-         RETURN.                
-     END.
-
-
 /* Tabela que contem as dados sobre a compensacao cheques do Banco do Brasil */
 
 FIND craptab WHERE craptab.cdcooper = glb_cdcooper  AND
@@ -388,7 +381,7 @@ FIND craptab WHERE craptab.cdcooper = glb_cdcooper  AND
 
 IF   NOT AVAILABLE craptab   THEN
      DO:
-         glb_cdcritic = 258.
+         glb_cdcritic = 55.
          RUN fontes/critic.p.
          BELL.
          MESSAGE glb_dscritic.
@@ -429,10 +422,11 @@ DO WHILE TRUE ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
         DO:
             glb_cdcritic = 013.
             RUN fontes/critic.p.
-            UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
-                              " - " + glb_cdprogra + "' --> '" +
-                              glb_dscritic + "' --> '" + aux_nmarquiv +
-                              " >> log/proc_batch.log").
+            
+            RUN gera_log_batch_prog("E", 2, /* 2 - erro */
+                               STRING(TIME,"HH:MM:SS") + 
+                               " - " + glb_cdprogra + " --> " +
+                               glb_dscritic + " --> " + aux_nmarquiv).
             
             UNIX SILENT VALUE("rm " + aux_nmarquiv + ".q").
             NEXT.    
@@ -449,11 +443,13 @@ INPUT STREAM str_4 CLOSE.
 
 IF   aux_contador = 0 THEN
      DO:
-         glb_cdcritic = 258.
+         glb_cdcritic = 258. /* nao ha arquivo para integrar */
          RUN fontes/critic.p.
-         UNIX SILENT VALUE ("echo " + STRING(TIME,"HH:MM:SS") +
-                            " - " + glb_cdprogra + "' --> '" + glb_dscritic +
-                            " >> log/proc_batch.log").
+
+         RUN gera_log_batch_prog("E", 1, /* 1 - mensagem */
+                            STRING(TIME,"HH:MM:SS") + 
+                            " - " + glb_cdprogra + " --> " + glb_dscritic).
+
          RUN fontes/fimprg.p.
          RETURN.                
      END.
@@ -466,11 +462,11 @@ DO  i = 1 TO aux_contador:
     glb_cdcritic = 219.
     RUN fontes/critic.p.
 
-    UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
-                      " - " + glb_cdprogra + "' --> '" +
-                       glb_dscritic + "' --> '" + tab_nmarquiv[i] +
-                      " >> log/proc_batch.log").
-    
+    RUN gera_log_batch_prog("E", 1, /* 1 - mensagem */
+                      STRING(TIME,"HH:MM:SS") +
+                      " - " + glb_cdprogra + " --> " +
+                      glb_dscritic + " --> " + tab_nmarquiv[i]).
+                       
     glb_cdcritic = 0.
 
     INPUT STREAM str_5 FROM VALUE(tab_nmarquiv[i] + ".q") NO-ECHO.
@@ -486,11 +482,13 @@ DO  i = 1 TO aux_contador:
               aux_nmarquiv = "compbb/err" + SUBSTR(tab_nmarquiv[i],12,29).
               UNIX SILENT VALUE("rm " + tab_nmarquiv[i] + ".q 2> /dev/null").
               UNIX SILENT VALUE("mv " + tab_nmarquiv[i] + " " + aux_nmarquiv).
-              UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+
+              RUN gera_log_batch_prog("E", 2, /* 2 - erro */ 
+                                STRING(TIME,"HH:MM:SS") +
                                 " - " + glb_cdprogra + "' --> '" +
                                 glb_dscritic + " " + tab_nmarquiv[i] + " Seq." +
-                                STRING(aux_contareg, "9999") +
-                                " >> log/proc_batch.log").
+                                STRING(aux_contareg, "9999")).
+
               glb_cdcritic = 0.
               NEXT.
           END.
@@ -624,12 +622,13 @@ DO  i = 1 TO aux_contador:
             IF   glb_cdcritic <> 0 THEN
                  DO:
                      RUN fontes/critic.p.
-                     UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+
+                     RUN gera_log_batch_prog("E", 2,
+                                       STRING(TIME,"HH:MM:SS") +
                                        " - " + glb_cdprogra + "' --> '" +
                                        glb_dscritic + " " + tab_nmarquiv[i] +
-                                       " Seq." +  STRING(aux_contareg, "9999")
-                                       + " >> log/proc_batch.log").
-                                   
+                                       " Seq." +  STRING(aux_contareg, "9999")).
+
                      ASSIGN glb_cdcritic = 0
                             aux_flgrejei = TRUE.
                  
@@ -845,11 +844,11 @@ DO  i = 1 TO aux_contador:
                         190.
  
     RUN fontes/critic.p.
-    
-    UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+
+    RUN gera_log_batch_prog("E", 1,
+                      STRING(TIME,"HH:MM:SS") +
                       " - " + glb_cdprogra + "' --> '" +
-                      glb_dscritic + "' --> '" +  tab_nmarquiv[i] +
-                      " >> log/proc_batch.log").
+                      glb_dscritic + "' --> '" +  tab_nmarquiv[i]).                      
 
 END.   /*   Fim  do DO TO   */
 
@@ -1093,11 +1092,13 @@ FOR EACH crawrel USE-INDEX crawrel2 BREAK BY crawrel.cdagenci
                   DO:
                       glb_cdcritic = 015.
                       RUN fontes/critic.p.
-                      UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
-                                        " - " + glb_cdprogra + "' --> '" +
+                                        
+                      RUN gera_log_batch_prog("E", 2,
+                                        STRING(TIME,"HH:MM:SS") +
+                                        " - " + glb_cdprogra + " --> " +
                                         glb_dscritic + "  " + 
-                                        aux_nmarqrl2 + " " +
-                                        " >> log/proc_batch.log").
+                                        aux_nmarqrl2).
+                                        
                       glb_cdcritic = 0.
                       NEXT.
                   END.
@@ -1166,4 +1167,3 @@ IF   tot_qtdecheq > 0 THEN
 RUN fontes/fimprg.p.
 
 /* .......................................................................... */
-

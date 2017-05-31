@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Dezembro/2009.                  Ultima atualizacao: 31/08/2015
+   Data    : Dezembro/2009.                  Ultima atualizacao: 05/12/2016
    Dados referentes ao programa:
 
    Frequencia: Diario (Batch).
@@ -105,7 +105,17 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                31/08/2015 - Projeto para tratamento dos programas que geram 
                             criticas que necessitam de lancamentos manuais 
                             pela contabilidade. (Jaison/Marcos-Supero)
-                            
+
+               31/08/2016 - Adicionar validação para o campo de CPF recebido no arquivo ser
+                            diferente do CPF do titular da conta (Douglas - Chamado 476269)
+                
+               06/10/2016 - Ajuste na leitura do CPF do destintario quando processar a linha
+                            do arquivo (Douglas - Chamado 533206)
+
+			   10/10/2016 - Alteração do diretório para geração de arquivo contábil.
+                            P308 (Ricardo Linhares).
+
+			   02/12/2016 - Incorporação Transulcred (Guilherme/SUPERO)
   ............................................................................ */
 
 
@@ -271,7 +281,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
   vr_nmarquiv        VARCHAR2(100);
   vr_nmarquiv_incorp VARCHAR2(100);
   vr_dsdireto        VARCHAR2(100);
-  vr_nom_dirmic      VARCHAR2(200);
   vr_dsdirarq        VARCHAR2(200);
   vr_dsdirrel        VARCHAR2(200);
   vr_listaarq        VARCHAR2(30000);
@@ -287,6 +296,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
   vr_cdcritic     PLS_INTEGER;
   vr_dscritic     VARCHAR2(4000);
   vr_dsobserv     VARCHAR2(100);
+  
+  -- variáveis para controle de arquivos
+   vr_dircon VARCHAR2(200);
+   vr_arqcon VARCHAR2(200);
+   vc_dircon CONSTANT VARCHAR2(30) := 'arquivos_contabeis/ayllos'; 
+   vc_cdacesso CONSTANT VARCHAR2(24) := 'ROOT_SISTEMAS';
+   vc_cdtodascooperativas INTEGER := 0;        
   
   --------------------------- ROTINAS INTERNAS ----------------------------
   
@@ -311,7 +327,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
   END fn_tipo_documento;
   
   -- Procedure para verificar conta integrada
-  PROCEDURE pc_verifica_conta_integra(pr_out_inctaint OUT BOOLEAN
+  PROCEDURE pc_verifica_conta_integra(pr_out_fgeratco OUT BOOLEAN
+                                     ,pr_out_inctaint OUT BOOLEAN
                                      ,pr_out_cdcooper OUT NUMBER
                                      ,pr_out_nrdconta OUT NUMBER)  IS
 
@@ -325,6 +342,20 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
          AND craptco.tpctatrf = 1
          AND craptco.flgativo = 1; -- TRUE.
 
+    CURSOR cr_crapass (pr_cdcooper IN NUMBER
+                      ,pr_nrdconta IN NUMBER) IS
+      SELECT ass.cdcooper
+           , ass.nrdconta
+           , ass.nrcpfcgc
+           , ass.nrcpfstl
+           , ass.nrcpfttl
+        FROM crapass ass
+       WHERE ass.cdcooper = pr_cdcooper
+         AND ass.nrdconta = pr_nrdconta;
+    rw_ass cr_crapass%ROWTYPE;
+
+    vr_cdcrirej NUMBER;
+
   BEGIN
 
     -- Verifica se a cooperativa é a 1 ou a 2
@@ -337,13 +368,28 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
       -- Verificar se foram retornado registros
       IF cr_craptco%FOUND THEN
 
-        -- Verificar histórico
-        IF vr_cdcritic = 301 THEN
+        -- Validar o CPF da conta
+        OPEN cr_crapass (pr_cdcooper => pr_out_cdcooper
+                        ,pr_nrdconta => pr_out_nrdconta);
+        FETCH cr_crapass INTO rw_ass;
+        CLOSE cr_crapass;
+        
+        -- Verifica o cpf
+        IF NOT ((vr_cpfdesti = rw_ass.nrcpfcgc)   OR
+                (vr_cpfdesti = rw_ass.nrcpfstl)   OR
+                (vr_cpfdesti = rw_ass.nrcpfttl))  THEN
+
+          vr_cdcrirej := 301; -- 301 - DADOS NAO CONFEREM!                
           vr_dshistor := RPAD(vr_nmdestin,40,' ')||
                          'CPF Remetente '|| vr_cpfremet ||
                          ' CPF Destinatario '|| vr_cpfdesti;
+          -- Se o CPF está incorreto nao cria o lancamento da TCO
+          pr_out_fgeratco := FALSE;
         ELSE
+          vr_cdcrirej := 999;
           vr_dshistor := vr_nmdestin;
+          -- Se o CPF pertence ao titular lancao o valor da TCO
+          pr_out_fgeratco := TRUE;
         END IF;
 
         -- Verificar indicador conforme o tipo de documento
@@ -363,7 +409,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                              ,vldaviso
                              ,cdcooper
                              ,nrdctitg)
-                      VALUES (999         -- cdcritic
+                      VALUES (vr_cdcrirej -- cdcritic
                              ,vr_nrdconta -- nrdconta
                              ,vr_vllanmto -- vllanmto
                              ,vr_cdpesqbb -- cdpesqbb
@@ -388,15 +434,17 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                                                        || vr_cdprogra || ' --> '
                                                        || vr_dscritic);
         END;
-
-        -- Retorno
-        pr_out_inctaint := TRUE;
+        
+        -- Se o CPF pertence ao titular lancao o valor da TCO
+        pr_out_inctaint := TRUE;          
       ELSE
         -- Retorno
         pr_out_inctaint := FALSE;
+        pr_out_fgeratco := FALSE;
       END IF; -- cr_craptco%FOUND
     ELSE
       pr_out_inctaint := FALSE;
+      pr_out_fgeratco := FALSE;
     END IF; --pr_cdcooper IN (1,2)
 
   END pc_verifica_conta_integra;
@@ -1631,6 +1679,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
             -- Variáveis
             vr_dslinha       CONSTANT VARCHAR2(500) := vr_arquivo(vr_indlinha); -- Linha a ser processada
             vr_dstextab      craptab.dstextab%TYPE;
+            vr_fgeratco      BOOLEAN;
             vr_inctaint      BOOLEAN;
             vr_aux_cdcooper  NUMBER;
             vr_aux_nrdconta  NUMBER;
@@ -1732,7 +1781,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
             -- Ler as informações e tratar possíveis excessões de leitura
             BEGIN
               
-
               vr_cdagearq := to_number(SUBSTR(vr_dslinha,7,4));
               vr_nrcpfemi := to_number(SUBSTR(vr_dslinha,182,14));
               vr_nrdconta := to_number(SUBSTR(vr_dslinha,17,08));
@@ -1749,6 +1797,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
               vr_cdagedoc := to_number(SUBSTR(vr_dslinha,124,4));
               vr_nrctadoc := to_number(SUBSTR(vr_dslinha,129,13));
               vr_dsrelcpf := SUBSTR(vr_dslinha,89,14);     
+              -- Leitura do CPF de destino
+              vr_cpfdesti := to_number(SUBSTR(vr_dslinha,89,14));
               
               -- Se o arquivo vem de cooperativa incorporada
               IF vr_flgincorp THEN
@@ -1845,35 +1895,39 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
               IF vr_critiass = 64 AND NOT vr_flgincorp THEN
 
                 -- Verificar conta integrada
-                pc_verifica_conta_integra(pr_out_inctaint => vr_inctaint
+                pc_verifica_conta_integra(pr_out_fgeratco => vr_fgeratco
+                                         ,pr_out_inctaint => vr_inctaint
                                          ,pr_out_cdcooper => vr_aux_cdcooper
                                          ,pr_out_nrdconta => vr_aux_nrdconta);
 
                 -- Verificar conta integrada
                 IF vr_inctaint THEN
-                  -- Cria documento TCO
-                  pc_cria_doctos_tco(pr_cdcooper => vr_aux_cdcooper
-                                    ,pr_nrdconta => vr_aux_nrdconta
-                                    ,pr_nrdctabb => vr_aux_nrdconta
-                                    ,pr_dslinha  => vr_dslinha);
-                  
-                  -- Eliminar Tabela devolucao DOC da Compensacao.
-                  BEGIN
-                    DELETE 
-                      FROM crapddc 
-                     WHERE ROWID = vr_dsdrowid;
-                  EXCEPTION
-                    WHEN OTHERS THEN
-                      -- Crítica: Erro Oracle
-                      vr_cdcritic := 0;
-                      vr_dscritic := 'Erro ao deletar registro na CRAPDDC: '||SQLERRM;
-                      -- Envio centralizado de log de erro
-                      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                                ,pr_ind_tipo_log => 2 -- Erro tratado
-                                                ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
-                                                                 || vr_cdprogra || ' --> '
-                                                                 || vr_dscritic);                      
-                  END;       
+                  -- Verifica se gera lancamento da TCO
+                  IF vr_fgeratco THEN
+                    -- Cria documento TCO
+                    pc_cria_doctos_tco(pr_cdcooper => vr_aux_cdcooper
+                                      ,pr_nrdconta => vr_aux_nrdconta
+                                      ,pr_nrdctabb => vr_aux_nrdconta
+                                      ,pr_dslinha  => vr_dslinha);
+                    
+                    -- Eliminar Tabela devolucao DOC da Compensacao.
+                    BEGIN
+                      DELETE 
+                        FROM crapddc 
+                       WHERE ROWID = vr_dsdrowid;
+                    EXCEPTION
+                      WHEN OTHERS THEN
+                        -- Crítica: Erro Oracle
+                        vr_cdcritic := 0;
+                        vr_dscritic := 'Erro ao deletar registro na CRAPDDC: '||SQLERRM;
+                        -- Envio centralizado de log de erro
+                        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                                  ,pr_ind_tipo_log => 2 -- Erro tratado
+                                                  ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
+                                                                   || vr_cdprogra || ' --> '
+                                                                   || vr_dscritic);                      
+                    END;
+                  END IF;
                   
                   -- Próximo registro
                   CONTINUE;
@@ -2006,17 +2060,21 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
               -- Se não é incorporação
               IF NOT vr_flgincorp THEN
                 -- Verificar a conta migrada
-                pc_verifica_conta_integra(pr_out_inctaint => vr_inctaint
+                pc_verifica_conta_integra(pr_out_fgeratco => vr_fgeratco
+                                         ,pr_out_inctaint => vr_inctaint
                                          ,pr_out_cdcooper => vr_aux_cdcooper
                                          ,pr_out_nrdconta => vr_aux_nrdconta);
 
                 -- Verificar conta integrada
                 IF vr_inctaint THEN
-                  -- Cria documento TCO
-                  pc_cria_doctos_tco(pr_cdcooper => vr_aux_cdcooper
-                                    ,pr_nrdconta => vr_aux_nrdconta
-                                    ,pr_nrdctabb => vr_aux_nrdconta
-                                    ,pr_dslinha  => vr_dslinha);
+                  -- Verifica se gera a TCO
+                  IF vr_fgeratco THEN
+                    -- Cria documento TCO
+                    pc_cria_doctos_tco(pr_cdcooper => vr_aux_cdcooper
+                                      ,pr_nrdconta => vr_aux_nrdconta
+                                      ,pr_nrdctabb => vr_aux_nrdconta
+                                      ,pr_dslinha  => vr_dslinha);
+                  END IF;
                   -- Próximo registro
                   CONTINUE;
                 END IF;
@@ -2122,18 +2180,22 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
               vr_aux_nrdconta := NULL;
 
               -- Verificar a conta migrada
-              pc_verifica_conta_integra(pr_out_inctaint => vr_inctaint
+              pc_verifica_conta_integra(pr_out_fgeratco => vr_fgeratco
+                                       ,pr_out_inctaint => vr_inctaint
                                        ,pr_out_cdcooper => vr_aux_cdcooper
                                        ,pr_out_nrdconta => vr_aux_nrdconta);
 
               -- Valida a conta migrada
               IF vr_inctaint THEN
-                -- Criar o registro do doc
-                pc_cria_doctos_tco(vr_aux_cdcooper
-                                  ,vr_aux_nrdconta
-                                  ,vr_aux_nrdconta
-                                  ,vr_dslinha);
-
+                
+                IF vr_fgeratco THEN
+                  -- Criar o registro do doc
+                  pc_cria_doctos_tco(vr_aux_cdcooper
+                                    ,vr_aux_nrdconta
+                                    ,vr_aux_nrdconta
+                                    ,vr_dslinha);
+                END IF;
+                
                 -- Próximo registro
                 CONTINUE;
               END IF;
@@ -2526,7 +2588,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
         vr_inpessoa    NUMBER;
         vr_dspathcop   VARCHAR2(80);
         vr_nmrelato    VARCHAR2(80);
-        vr_nmarquiv_cri VARCHAR2(4000);
         -- Informações envio de e-mail
         vr_dsmailcop   crapprm.dstexprm%TYPE;
         vr_dsassmail   VARCHAR2(100);
@@ -2632,13 +2693,19 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
             -- Se há critica dif TCO
             IF vr_cdcritic <> 999 THEN
               -- Para arquivo de incorporação
-              IF rw_crapcop_incorp.cdcooper IS NOT NULL AND pr_tbarquiv(vr_nrindice) LIKE '3'|| TO_CHAR(rw_crapcop_incorp.cdagectl,'FM0009') || '%.RET' THEN
+              IF  rw_crapcop_incorp.cdcooper IS NOT NULL
+              AND pr_tbarquiv(vr_nrindice) LIKE '3'|| TO_CHAR(rw_crapcop_incorp.cdagectl,'FM0009') || '%.RET' THEN
+
                 -- Adicionar a descrição cfme coop integrada
-                IF rw_crapcop_incorp.cdcooper = 4 THEN
+                CASE rw_crapcop_incorp.cdcooper
+                  WHEN 4  THEN 
                   vr_dsobserv := 'Ass. Concredi';
-                ELSE
+                  WHEN 15 THEN
                   vr_dsobserv := 'Ass. Credimilsul';  
-                END IF;
+                  WHEN 17 THEN
+                    vr_dsobserv := 'Ass. Transulcred';
+                END CASE;
+
               -- PAra transferências entre Cooperativas
               ELSIF pr_cdcooper IN (1,2) THEN
                 -- Busca informações de contas transferidas
@@ -2771,26 +2838,25 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
 
         -- Se possuir conteudo de critica no CLOB
         IF LENGTH(vr_clobcri) > 0 THEN
-          -- Arquivo de saida
-          vr_nmarquiv_cri := TO_CHAR(vr_dtmvtolt,'RRMMDD') || '_CRITICAS.txt';
-
-          -- busca o diretorio micros contab
-          vr_nom_dirmic := gene0001.fn_diretorio(pr_tpdireto => 'M' --> /micros
-                                                ,pr_cdcooper => pr_cdcooper
-                                                ,pr_nmsubdir => 'contab');
+          -- Busca o diretório para contabilidade
+          vr_dircon := gene0001.fn_param_sistema('CRED', vc_cdtodascooperativas, vc_cdacesso);
+          vr_dircon := vr_dircon || vc_dircon;
+          vr_arqcon := TO_CHAR(vr_dtmvtolt,'RRMMDD')||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_CRITICAS.txt';
 
           -- Chama a geracao do TXT
           GENE0002.pc_solicita_relato_arquivo(pr_cdcooper  => pr_cdcooper              --> Cooperativa conectada
                                              ,pr_cdprogra  => vr_cdprogra              --> Programa chamador
                                              ,pr_dtmvtolt  => vr_dtmvtolt              --> Data do movimento atual
                                              ,pr_dsxml     => vr_clobcri               --> Arquivo XML de dados
-                                             ,pr_dsarqsaid => vr_dsdireto || '/contab/' || vr_nmarquiv_cri    --> Arquivo final com o path
+                                             ,pr_dsarqsaid => vr_dsdireto || '/contab/' || vr_arqcon    --> Arquivo final com o path
                                              ,pr_cdrelato  => NULL                     --> Código fixo para o relatório
                                              ,pr_flg_gerar => 'N'                      --> Apenas submeter
-                                             ,pr_dspathcop => vr_nom_dirmic            --> Copiar para a Micros
+                                             ,pr_dspathcop => vr_dircon            --> Copiar para a Micros
                                              ,pr_fldoscop  => 'S'                      --> Efetuar cópia com Ux2Dos
                                              ,pr_flappend  => 'S'                      --> Indica que a solicitação irá incrementar o arquivo
                                              ,pr_des_erro  => vr_des_erro);            --> Saída com erro
+                                     
+                                             
         END IF;
 
         -- Liberando a memória alocada pro CLOB
@@ -2803,7 +2869,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
           btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                     ,pr_ind_tipo_log => 2 -- Erro tratato
                                     ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                     || vr_cdprogra || ' --> ERRO NA GERACAO DO ' || vr_nmarquiv_cri || ': '
+                                                     || vr_cdprogra || ' --> ERRO NA GERACAO DO ' || vr_arqcon || ': '
                                                      || vr_des_erro );
         END IF;
 
@@ -3076,14 +3142,18 @@ BEGIN -- Principal
   END IF;
   
   -- Buscar informações das Cooperativas Incorporadas a 
-  -- Viacredi (Concredi) e ScrCred (Credimilsul)
-  IF pr_cdcooper IN(1,13) THEN
+  -- Viacredi (Concredi) e ScrCred (Credimilsul) e Transpocred (Transulcred)
+  IF pr_cdcooper IN(1,9,13) THEN
     -- Buscar informações da cooperativa Incorporada
-    IF pr_cdcooper = 1 THEN
+    CASE pr_cdcooper
+      WHEN  1 THEN
       OPEN cr_crapcop(pr_cdcooper => 4); --> Incorporação Concredi
-    ELSE 
+      WHEN 13 THEN
       OPEN cr_crapcop(pr_cdcooper => 15); --> Incorporação CredimilSul
-    END IF;  
+      WHEN  9 THEN
+        OPEN cr_crapcop(pr_cdcooper => 17);  -- TRANSPOCRED --> TRANSULCRED
+    END CASE;
+
     -- Buscar informações da mesma
     FETCH cr_crapcop INTO rw_crapcop_incorp;
     CLOSE cr_crapcop;
@@ -3280,4 +3350,3 @@ EXCEPTION
     ROLLBACK;
 END pc_crps534;
 /
-

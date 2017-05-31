@@ -363,7 +363,7 @@
                              (Douglas - Chamado 285228)
                 
                 10/12/2015 - Ajustes na gera_extrato_tarifas (Dionathan)              
-
+				
                 13/05/2016 - Ajuste na carrega_medias para leitura da crapsda utilizando a 
                              chave primaria, pois devida mah interpretacao da query pelo 
                              DataServer a leitura esta sendo feita sem o filtro de data 
@@ -372,7 +372,7 @@
                 27/05/2016 - Incluido verificacao de origem na procedure valida-impressao-extrato
 							 antes da chamada da procedure pc_verifica_pacote_tarifas,
 							 para verificacao do tipo de servico, Prj. Tarifas Fase 2 (Jean Michel).
-                             
+				
 				29/07/2016 - Ajuste na leitura da tabela craptex para utilizar o 
 				             index craptex1 (Daniel)   
 
@@ -397,13 +397,15 @@
                 03/10/2016 - Correcao no carregamento da TEMP TABLE da procedure obtem-saldo
 							 com formato invalido. (Carlos Rafael Tanholi - SD 531031)
 
+				06/10/2016 - Incluido a chamada da procedure pc_ret_vlr_bloq_acordo na
+							 procedure carrega_dep_vista, Prj. 302 (Jean Michel).
+
                 07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
                              departamento passando a considerar o código (Renato Darosci)
-
+ 
                 20/12/2016 - obtem-cheques-deposito - Exibir cheque no extrato somente quando
                              cheque da própria cooperativa estiver com agencia destino e
 							 conta destino igual a zero (AJFink) (SD#572650)
-							 
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -454,6 +456,8 @@ DEF VAR dt-inipesq   AS DATE                                           NO-UNDO.
 
 DEF VAR aux_vlblqjud AS DECI                                           NO-UNDO.
 DEF VAR aux_vlresblq AS DECI                                           NO-UNDO.
+
+DEF VAR aux_vlblqaco AS DECI INIT 0    								   NO-UNDO.
 
 DEF VAR h-b1wgen0155 AS HANDLE                                         NO-UNDO.
 DEF VAR h-b1wgen0192 AS HANDLE                                         NO-UNDO.
@@ -843,7 +847,7 @@ PROCEDURE obtem-cheques-deposito:
                            crapchd.nrdocmto >  0            AND
 						   crapchd.cdagedst  = 0            AND
 						   crapchd.nrctadst  = 0            
-						   NO-LOCK BREAK BY crapchd.dtmvtolt
+                           NO-LOCK BREAK BY crapchd.dtmvtolt
                                             BY crapchd.nrdocmto
                                                BY crapchd.cdbanchq
                                                   BY crapchd.cdagechq
@@ -1469,7 +1473,7 @@ PROCEDURE gera-tarifa-extrato:
 
                         IF crapass.inpessoa = 1 THEN /* Fisica */
                             ASSIGN aux_cdbattar = "EXTPEPREPF".
-                        ELSE
+            ELSE
                             ASSIGN aux_cdbattar = "EXTPEPREPJ".
                     END. 
             END.
@@ -1573,7 +1577,7 @@ PROCEDURE gera-tarifa-extrato:
                           ASSIGN aux_cdbattar = "EXTMETAAPF".
                       ELSE
                           ASSIGN aux_cdbattar = "EXTMETAAPJ".
-        END.
+                  END.
               ELSE
                   DO:
 					  ASSIGN aux_tipotari = 6. 
@@ -1705,7 +1709,7 @@ PROCEDURE gera-tarifa-extrato:
             /*FIM VERIFICACAO TARIFAS DE OPERACAO*/
 
             DO TRANSACTION ON ERROR UNDO, LEAVE:
-    
+                            
                             
                 CREATE crapext.
                 ASSIGN crapext.cdcooper = par_cdcooper
@@ -1926,7 +1930,6 @@ PROCEDURE valida-impressao-extrato:
             RETURN "NOK".
         END.
     
-    /*JMD*/
     /* Verifica o tipo do serviço a ser validado no pacote de tarifas, com base na origem, se mensal ou por periodo */
     /* Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA */
     IF par_dtiniper < ( par_dtmvtolt - 30 ) THEN /* Periodo */
@@ -1984,7 +1987,6 @@ PROCEDURE valida-impressao-extrato:
 
     IF aux_qtopdisp > 0 THEN
       RETURN "OK".
-    /*JMD*/
 
     /* Quando o cooperado NAO possuir o servico "extrato" contemplado no pacote de tarifas,
        devera validar a qtd. de extratos isentos oferecidos pela cooperativa(parametro). 
@@ -2745,12 +2747,12 @@ PROCEDURE obtem-saldo:
         ASSIGN tt-erro.dscritic = aux_dscritic.
             
             RETURN "NOK".
-        END.
+        END. 
     ELSE
         DO:
 
       CREATE tt-saldos.
-   
+
       EMPTY TEMP-TABLE tt-saldos.
 
       /*Leitura do XML de retorno da proc e criacao dos registros na tt-extrato_conta
@@ -2771,27 +2773,27 @@ PROCEDURE obtem-saldo:
       CREATE X-NODEREF  xText.   /* Vai conter o texto que existe dentro da tag xField */ 
 
       IF ponteiro_xml <> ? THEN
-        DO: 
+        DO:
               xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE). 
               xDoc:GET-DOCUMENT-ELEMENT(xRoot).
             
               DO aux_cont_raiz = 1 TO xRoot:NUM-CHILDREN: 
 
                   xRoot:GET-CHILD(xRoot2,aux_cont_raiz).
-        
+
                   IF xRoot2:SUBTYPE <> "ELEMENT" THEN 
                       NEXT. 
-
+   
                   IF xRoot2:NUM-CHILDREN > 0 THEN
                       CREATE tt-saldos.
 
                   DO aux_cont = 1 TO xRoot2:NUM-CHILDREN:
-
+            
                       xRoot2:GET-CHILD(xField,aux_cont).
 
                       IF xField:SUBTYPE <> "ELEMENT" THEN 
                           NEXT. 
-
+        
                       xField:GET-CHILD(xText,1).
         
                       ASSIGN tt-saldos.nrdconta = INT(xText:NODE-VALUE) WHEN xField:NAME 	= "nrdconta".
@@ -3413,6 +3415,41 @@ PROCEDURE carrega_dep_vista:
     DELETE PROCEDURE h-b1wgen0155.
     /*** Fim Busca Saldo Bloqueado Judicial ***/
 
+	{ includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+
+    /* Verifica se ha contratos de acordo */
+    RUN STORED-PROCEDURE pc_ret_vlr_bloq_acordo
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                            ,INPUT par_nrdconta
+                                            ,OUTPUT 0
+                                            ,OUTPUT 0
+                                            ,OUTPUT "").
+
+    CLOSE STORED-PROC pc_ret_vlr_bloq_acordo
+                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+    { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+
+    ASSIGN aux_cdcritic = 0
+            aux_dscritic = ""
+            aux_cdcritic = INT(pc_ret_vlr_bloq_acordo.pr_cdcritic) WHEN pc_ret_vlr_bloq_acordo.pr_cdcritic <> ?
+            aux_dscritic = pc_ret_vlr_bloq_acordo.pr_dscritic WHEN pc_ret_vlr_bloq_acordo.pr_dscritic <> ?
+            aux_vlblqaco = DECIMAL(pc_ret_vlr_bloq_acordo.pr_vlblqaco).
+			
+	IF aux_cdcritic > 0 OR (aux_dscritic <> ? AND aux_dscritic <> "") THEN
+      DO:
+	    
+		RUN gera_erro (INPUT par_cdcooper,
+						INPUT par_cdagenci,
+						INPUT par_nrdcaixa,
+						INPUT 1,            /** Sequencia **/
+						INPUT aux_cdcritic,
+						INPUT-OUTPUT aux_dscritic).      
+                   
+		RETURN "NOK".
+	  END.			
+    
+
     CREATE tt-saldos.
     ASSIGN tt-saldos.vlsddisp = aux_vlsddisp          
            tt-saldos.vlsdbloq = aux_vlsdbloq
@@ -3433,7 +3470,8 @@ PROCEDURE carrega_dep_vista:
                                     ""
            tt-saldos.dtultlcr = crapass.dtultlcr
            tt-saldos.vlipmfpg = crapsld.vlipmfpg
-           tt-saldos.vlblqjud = aux_vlblqjud.
+           tt-saldos.vlblqjud = aux_vlblqjud
+		   tt-saldos.vlblqaco = aux_vlblqaco.
 
     FOR EACH crapdpb WHERE crapdpb.cdcooper = par_cdcooper AND
                            crapdpb.nrdconta = par_nrdconta AND

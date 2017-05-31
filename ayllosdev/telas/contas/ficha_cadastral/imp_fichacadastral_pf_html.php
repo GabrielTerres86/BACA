@@ -1,6 +1,6 @@
 <?
 /*!
- * FONTE        : imp_fichacadastral_pf_html.php
+ * FONTE        : imp_fichacadastral_pf_html.php						Última alteração: 15/03/2017
  * CRIAÇÃO      : Rodolpho Telmo (DB1)
  * DATA CRIAÇÃO : 06/04/2010 
  * OBJETIVO     : Responsável por buscar as informações que serão apresentadas no PDF da Ficha Cadastral 
@@ -27,7 +27,7 @@
 				  05/09/2013 - Alteração da sigla PAC para PA (Carlos)
 				  
 				  03/10/2013 - Alteração p/ exibição de poderes "Em Conjunto" (Jean Michel).
-					
+
 				  19/12/2013 - Alterada linha da ficha cadastral de "CPF/CGC" para 
 							   "CPF/CNPJ". (Reinert)
 							   
@@ -42,6 +42,14 @@
                   05/11/2015 - Inclusão de novo Poder, PRJ. 131 - Ass. Conjunta (Jean Michel)
 				  
 				  23/12/2015 - Inclusão de impressão de PEP (Carlos)
+
+				  01/12/2016 - Definir a não obrigatoriedade do PEP (Tiago/Thiago SD532690)
+
+				  08/03/2017 - Ajuste para apresentar novas informações para o PEP (Adriano - SD 614408).
+
+				  15/03/2017 - Ajuste para corrigir quebra de página devido aos ajustes realizados
+				               para a inclusão de novas informações na declaração PEP
+							   (Adriano - SD 614408).
  */	 
 ?>
 <?
@@ -805,13 +813,13 @@
 	//********************** Pessoa exposta politicamente **********************************
 	if ($fichaCadastralComDeclaracaoPEP == true) {	
 	
-		if (getByTagName($pfisica,'inpolexp') <> 2) {
+		if (getByTagName($pfisica,'inpolexp') == 1) {
+			
 			$GLOBALS['numLinha']	= 70;
 			pulaLinha(2);
 			escreve('               DECLARACAO DE PESSOA EXPOSTA POLITICAMENTE – PEP');
 			pulaLinha(3);
-		}
-		if (getByTagName($pfisica,'inpolexp') == 1) {
+			
 			if (getByTagName($comercial,'tpexposto') == 1) {
 				
 				$qtdLinhas = escreveJustificado('    Declaro que eu, ' . getByTagName($comercial,'nmextttl') . ', portador ' . 
@@ -824,7 +832,11 @@
 				escreve('Data Início do Exercício: ' . getByTagName($comercial,'dtinicio'));			
 				escreve('Data Fim do Exercício: '    . getByTagName($comercial,'dttermino'));			
 				escreve('Empresa/Órgão Público: '    . getByTagName($comercial,'nmempresa'));			
-				escreve('CNPJ: '                     . formatar(getByTagName($comercial,'nrcnpj_empresa'),'cnpj',true));			
+				
+				if(getByTagName($comercial,'nrcnpj_empresa') != "0"){
+					escreve('CNPJ: '                     . formatar(getByTagName($comercial,'nrcnpj_empresa'),'cnpj',true));			
+				}
+				
 				pulaLinha(4);
 				escreveCidadeData(getByTagName($registros,'dscidade')); // Blumenau, 20 de janeiro de 2016.
 				pulaLinha(4);
@@ -855,6 +867,7 @@
 				escreve('Nome do Relacionado: ' . getByTagName($comercial,'nmpolitico'));			
 				escreve('CPF: ' . formatar(getByTagName($comercial,'nrcpf_politico'),'cpf',true));			
 				escreve('Cargo ou Função: ' . getByTagName($comercial,'dsdocupa'));			
+				escreve('Empresa: '    . getByTagName($comercial,'nmempresa'));	
 				escreve('Tipo de Relacionamento/Ligação: ' . getByTagName($comercial,'dsrelacionamento'));			
 
 				pulaLinha(4);
@@ -863,31 +876,10 @@
 				escreve('                      ________________________________                      ');			
 				escreveLinha(preencheString(getByTagName($comercial,'nmextttl'), 76, ' ', 'C'));
 				
-				pulaLinha(38 - $qtdLinhas);
+				pulaLinha(37 - $qtdLinhas);
 				escreveRodape();
 			}
 
-		} else if (getByTagName($pfisica,'inpolexp') == 0) {
-			
-			//	Declaro que eu, PDTNX UFSMMZRR IV URTPS, portador 
-			//do CPF 030.320.949-68, não sou uma pessoa exposta politicamente, nos termos 
-			//dos normativos em vigor.
-			//	Declaro, ainda, que comunicarei a Cooperativa qualquer alteração da 
-			//presente condição.
-			
-			$qtdLinhas = escreveJustificado('    Declaro que eu, ' . getByTagName($comercial,'nmextttl') . ', portador do CPF ' . getByTagName($pfisica,'nrcpfcgc') . ', titular da conta ' . getByTagName($registros,'nrdconta') . 
-											', não sou uma pessoa exposta politicamente, nos termos dos normativos em vigor.');
-			pulaLinha(2);
-			$qtdLinhas+= escreveJustificado('    Declaro, ainda, que comunicarei a Cooperativa qualquer alteração da presente condição.');
-			pulaLinha(4);
-			escreveCidadeData(getByTagName($registros,'dscidade'));
-			pulaLinha(4);
-			escreve('                      ________________________________                      ');
-			escreveLinha(preencheString(getByTagName($comercial,'nmextttl'), 76, ' ', 'C'));
-			
-			pulaLinha(44 - $qtdLinhas);
-			
-			escreveRodape();
 		}
 	}
 	//********************** FIM Pessoa exposta politicamente **********************************
