@@ -394,6 +394,11 @@
 					        caso o mesmo possua algum agendamento cadastrado
 							(Adriano - SD 593235).
 
+              31/01/2017 - Alteraçao dos termos na rotina gera-termo-responsabilidade.
+                           Alteracao na rotina executa-envio-ted, incluido param de ip e dstransa
+                           PRJ335 - Analise de fraude. (Odirlei-AMcom)
+              
+
 ..............................................................................*/
 
 { sistema/internet/includes/b1wnet0002tt.i }
@@ -2552,6 +2557,8 @@ PROCEDURE executa-envio-ted:
     DEF  INPUT PARAM par_cdispbif LIKE crapcti.nrispbif             NO-UNDO. 
     DEF  INPUT PARAM par_flmobile AS LOGICAL                        NO-UNDO.
     DEF  INPUT PARAM par_idagenda AS INTEGER                        NO-UNDO.
+    DEF  INPUT PARAM par_iptransa AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_dstransa AS CHAR                           NO-UNDO.
     
     DEF OUTPUT PARAM par_dsprotoc LIKE crappro.dsprotoc             NO-UNDO.
     DEF OUTPUT PARAM par_dscritic AS CHAR                           NO-UNDO.
@@ -2609,6 +2616,10 @@ PROCEDURE executa-envio-ted:
                                          INPUT par_cdispbif,
      INPUT aux_flmobile,
      INPUT par_idagenda,
+     INPUT par_iptransa,  /* pr_iptransa */
+     INPUT par_dstransa,  /* pr_dstransa */
+
+     
     OUTPUT "",  /*pr_dsprotoc*/
     OUTPUT "",  /*pr_tab_protocolo_ted CLOB --> dados do protocolo */
     OUTPUT 0,   /*pr_cdcritic               --> Codigo do erro*/
