@@ -7484,6 +7484,10 @@ END pc_gera_titulos_iptu_prog;
   
   --             26/05/2017 - Ajustes para verificar vencimento da P.M. AGROLANDIA
   --                          (Tiago/Fabricio #647174) 
+
+  --             31/05/2017 - Regra para alertar o usuário quando tentar pagar um GPS na modalidade de 
+  --                          pagamento apresentando a seguinte mensagem: GPS deve ser paga na opção 
+  --                          Transações - GPS do menu de serviços. (Rafael Monteiro - Mouts)
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -7630,7 +7634,36 @@ END pc_gera_titulos_iptu_prog;
                      RAISE vr_exc_erro;
                  END IF;
             END IF;
-
+    -- Validar se eh GPS      
+      IF to_number(SUBSTR(pr_codigo_barras,16,4)) = 270 AND
+         to_number(SUBSTR(pr_codigo_barras,2,1)) = 5 THEN
+        BEGIN
+          --Criar Erro
+          CXON0000.pc_cria_erro(pr_cdcooper => pr_cdcooper
+                               ,pr_cdagenci => pr_cod_agencia
+                               ,pr_nrdcaixa => vr_nrdcaixa
+                               ,pr_cod_erro => 0
+                               ,pr_dsc_erro => 'GPS deve ser paga na opção Transações - GPS do menu de serviços.'
+                               ,pr_flg_erro => TRUE
+                               ,pr_cdcritic => vr_cdcritic
+                               ,pr_dscritic => vr_dscritic);
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_cdcritic:= 0;
+            vr_dscritic:= 'Erro chamada Oracle CXON0000 '||sqlerrm;
+            RAISE vr_exc_erro;
+        END;
+        IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+          --Levantar Excecao
+          RAISE vr_exc_erro;
+        ELSE
+          vr_cdcritic:= 0;
+          vr_dscritic:= 'GPS deve ser paga na opção Transações - GPS do menu de serviços.';
+          --Levantar Excecao
+          RAISE vr_exc_erro;
+        END IF;         
+      END IF;
+      --
       --Selecionar cadastro empresas conveniadas
       OPEN cr_crapcon (pr_cdcooper => rw_crapcop.cdcooper
                       ,pr_cdempcon => to_number(SUBSTR(pr_codigo_barras,16,4))
