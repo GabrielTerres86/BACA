@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Dezembro/2009                   Ultima atualizacao: 16/02/2017
+   Data    : Dezembro/2009                   Ultima atualizacao: 30/03/2017
 
    Dados referentes ao programa:
 
@@ -259,6 +259,11 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                             
                16/02/2017 - Adicionar cooperativa migrada na verificacao do saldo
                             (Lucas Ranghetti #609838)
+                            
+               30/03/2017 - Alteração na geração do arquivo AAMMDD_CRITICAS.txt para gerar 
+                            lançamentos da crítica de código 96 (Cheques com Contraordem).
+                            P307 - (Jonatas - Supero)
+ 
 ............................................................................. */
 
      DECLARE
@@ -266,9 +271,6 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
       -- variáveis para controle de arquivos
        vr_dircon VARCHAR2(200);
        vr_arqcon VARCHAR2(200);
-       vc_dircon CONSTANT VARCHAR2(30) := 'arquivos_contabeis/ayllos';
-       vc_cdacesso CONSTANT VARCHAR2(24) := 'ROOT_SISTEMAS';
-       vc_cdtodascooperativas INTEGER := 0;
 
        /* Declaracao dos registros e vetores */
 
@@ -4888,7 +4890,7 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                           -- Monta a mensagem
                           vr_desdados := '50' || TO_CHAR(rw_crapdat.dtmvtolt,'DDMMRR') || ',' || TO_CHAR(rw_crapdat.dtmvtolt,'DDMMRR') ||
                                          ',1773,1455,' || TO_CHAR(rw_craprej.vllanmto,'fm9999999990d00','NLS_NUMERIC_CHARACTERS=.,') ||
-                                         ',157,"' || GENE0007.fn_caract_acento(UPPER(LTRIM(vr_dscritic,lpad(vr_cdcritic,3,0) || ' - '))) || 
+                                         ',5210,"' || GENE0007.fn_caract_acento(UPPER(LTRIM(vr_dscritic,lpad(vr_cdcritic,3,0) || ' - '))) || 
                                          ' CHEQUE ' || GENE0002.fn_mask(rw_craprej.nrdocmto,'zzz.zzz.z') || 
                                          ' COOPERADO C/C ' || GENE0002.fn_mask_conta(rw_craprej.nrdconta) ||
                                          ' (CONFORME CRITICA RELATORIO 526)"' || chr(10);
@@ -4897,6 +4899,22 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                         END IF;
                       END IF;
                     END IF;
+                    
+                    IF vr_cdcritic = 96 THEN
+                      -- Monta a mensagem
+                      vr_desdados := '50' || 
+                                     TO_CHAR(rw_crapdat.dtmvtolt,'DDMMRR') || ',' || 
+                                     TO_CHAR(rw_crapdat.dtmvtopr,'DDMMRR') || --Entra no próximo dia útil
+                                     ',4958,1413,' ||               
+                                     TO_CHAR(rw_craprej.vllanmto,'fm9999999990d00','NLS_NUMERIC_CHARACTERS=.,') ||
+                                     ',5210,"' || 
+                                     ' DEVOLUCAO DO CHEQUE COM CONTRA-ORDEM ' || GENE0002.fn_mask(rw_craprej.nrdocmto,'zzz.zzz.z') || 
+                                     ' DO COOPERADO C/C ' || GENE0002.fn_mask_conta(rw_craprej.nrdconta) ||
+                                     ' (CONFORME CRITICA RELATORIO 526)"' || chr(10);
+                      -- Adiciona a linha ao arquivo de criticas
+                      dbms_lob.writeappend(vr_clobcri, length(vr_desdados),vr_desdados);
+                    END IF;
+
 
                     IF vr_cdcritic <> 999 THEN
                       -- Lógica para adição de sufixo para cooperativas incorporadas / migradas
@@ -5049,7 +5067,7 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                            ,pr_dsarqsaid => vr_dircop_imp||'/'||vr_nmarqimp --> Arquivo final com codigo da agencia
                                            ,pr_qtcoluna  => 132                 --> 132 colunas
                                            ,pr_flg_impri => 'S'                 --> Chamar a impress?o (Imprim.p)
-                                           ,pr_flg_gerar => 'N'                 -- Gerar na hora
+                                           ,pr_flg_gerar => 'S'                 -- Gerar na hora
                                            ,pr_nmformul  => '132dh'             --> Nome do formulario para impress?o
                                            ,pr_sqcabrel  => 1
                                            ,pr_dspathcop => vr_dircop_rlnsv     --> gerar copia no diretorio
@@ -5066,8 +5084,9 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                 IF LENGTH(vr_clobcri) > 0 THEN
 
                   -- Busca o diretório para contabilidade
-                  vr_dircon := gene0001.fn_param_sistema('CRED', vc_cdtodascooperativas, vc_cdacesso);
-                  vr_dircon := vr_dircon || vc_dircon;
+                  vr_dircon := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                        ,pr_cdcooper => 0
+                                                        ,pr_cdacesso => 'DIR_ARQ_CONTAB_X');
                   vr_arqcon := TO_CHAR(rw_crapdat.dtmvtolt,'RRMMDD')||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_CRITICAS.txt';
                   
                   -- Chama a geracao do TXT

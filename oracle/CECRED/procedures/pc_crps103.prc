@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps103(pr_cdcooper  in craptab.cdcooper%t
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Dezembro/94.                    Ultima atualizacao: 10/04/2015
+   Data    : Dezembro/94.                    Ultima atualizacao: 15/03/2017
 
    Dados referentes ao programa:
 
@@ -118,6 +118,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps103(pr_cdcooper  in craptab.cdcooper%t
                            
               03/08/2015 - Não exibir no arquivo informações de agencias com valor 
                            zero. Conforme chamado 315716. ( Renato - Supero )
+                           
+	            28/09/2016 - Alteração do diretório para geração de arquivo contábil.
+                           P308 (Ricardo Linhares). 
+                           
+              15/03/2017 - Remover lançamentos de reversão das contas de resultado
+                           para envio ao Radar ou Matera P307. (Jonatas - Supero) 
+                                                     
+                           
+                           
 ............................................................................. */
 
   -- Leituras para include da BO de Aplicacao
@@ -338,7 +347,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps103(pr_cdcooper  in craptab.cdcooper%t
   vr_sldpresg_tmp  craplap.vllanmto%TYPE; --> Valor saldo de resgate
   vr_dup_vlsdrdca  craplap.vllanmto%TYPE; --> Acumulo do saldo da aplicacao RDCA
   vr_nom_direto     VARCHAR2(400);        --> Nome da pasta para arquivo de dados
-  vr_nom_micros     VARCHAR2(400);        --> Nome da pasta do diretorio micros
   vr_nmarqtxt       VARCHAR2(100);        --> Nome do arquivo TXT
   vr_input_file     UTL_FILE.file_type;   --> Handle Utl File
   vr_setlinha       VARCHAR2(400);        --> Linhas do arquivo
@@ -347,6 +355,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps103(pr_cdcooper  in craptab.cdcooper%t
   vr_tot_prvmesfis      craplap.vllanmto%TYPE := 0;
   vr_tot_prvmesjur      craplap.vllanmto%TYPE := 0;  
    
+  vr_dircon VARCHAR2(200);
+  vr_arqcon VARCHAR2(200);
  
   aux_ttslfmes     NUMBER(16,2) := 0;
   aux_dtinimes     DATE;
@@ -1229,7 +1239,7 @@ BEGIN
                       gene0002.fn_mask(4232, pr_dsforma => '9999')||','||                                         --> Conta Origem
                       gene0002.fn_mask(4269, pr_dsforma => '9999')||','||                                         --> Conta Destino
                       TRIM(TO_CHAR(vr_tot_rdcagefis, 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','|| --> Total Valor PF
-                      gene0002.fn_mask(1434, pr_dsforma => '9999')||','||                                         --> Fixo
+                      gene0002.fn_mask(5210, pr_dsforma => '9999')||','||                                         --> Fixo
                       '"SALDO TOTAL DE TITULOS ATIVOS RDCA 30 - COOPERADOS PESSOA FISICA"';                       --> Descricao
 
        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
@@ -1266,7 +1276,7 @@ BEGIN
                       gene0002.fn_mask(4269, pr_dsforma => '9999')||','||                                        --> Conta Destino
                       gene0002.fn_mask(4232, pr_dsforma => '9999')||','||                                        --> Conta Origem
                       TRIM(TO_CHAR(vr_tot_rdcagefis,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','|| --> Total Valor PF
-                      gene0002.fn_mask(1434, pr_dsforma => '9999')||','||                              	         --> Fixo
+                      gene0002.fn_mask(5210, pr_dsforma => '9999')||','||                              	         --> Fixo
                       '"'||vr_dsprefix||'SALDO TOTAL DE TITULOS ATIVOS RDCA 30 - COOPERADOS PESSOA FISICA"';                      --> Descricao
 
        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
@@ -1306,7 +1316,7 @@ BEGIN
                       gene0002.fn_mask(4232, pr_dsforma => '9999')||','||                                         --> Conta Origem
                       gene0002.fn_mask(4270, pr_dsforma => '9999')||','||                                         --> Conta Destino
                       TRIM(TO_CHAR(vr_tot_rdcagejur, 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','|| --> Total Valor PJ
-                      gene0002.fn_mask(1434, pr_dsforma => '9999')||','||                                         --> Fixo
+                      gene0002.fn_mask(5210, pr_dsforma => '9999')||','||                                         --> Fixo
                       '"SALDO TOTAL DE TITULOS ATIVOS RDCA 30 - COOPERADOS PESSOA JURIDICA"';                     --> Descricao
 
        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
@@ -1343,7 +1353,7 @@ BEGIN
                       gene0002.fn_mask(4270, pr_dsforma => '9999')||','||                                         --> Conta Destino
                       gene0002.fn_mask(4232, pr_dsforma => '9999')||','||                                         --> Conta Origem
                       TRIM(TO_CHAR(vr_tot_rdcagejur, 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','|| --> Total Valor PJ
-                      gene0002.fn_mask(1434, pr_dsforma => '9999')||','||                                         --> Fixo
+                      gene0002.fn_mask(5210, pr_dsforma => '9999')||','||                                         --> Fixo
                       '"'||vr_dsprefix||'SALDO TOTAL DE TITULOS ATIVOS RDCA 30 - COOPERADOS PESSOA JURIDICA"';                     --> Descricao
                       
        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
@@ -1383,7 +1393,7 @@ BEGIN
                       gene0002.fn_mask(8051, pr_dsforma => '9999')||','||                                         --> Conta Origem
                       gene0002.fn_mask(8112, pr_dsforma => '9999')||','||                                         --> Conta Destino
                       TRIM(TO_CHAR(vr_tot_prvmesfis, 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','|| --> Total Valor PF
-                      gene0002.fn_mask(1434, pr_dsforma => '9999')||','||                                         --> Fixo
+                      gene0002.fn_mask(5210, pr_dsforma => '9999')||','||                                         --> Fixo
                       '"PROVISAO DO MES - RDCA 30 COOPERADOS PESSOA FISICA"';                                     --> Descricao
 
        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
@@ -1411,43 +1421,6 @@ BEGIN
            END LOOP;
          END LOOP;
        END IF;
-       
-       -- Montando o cabecalho para fazer a reversao das
-       -- conta para estornar os valores caso necessario
-       vr_setlinha := '70'||                                                                                     --> Informacao inicial
-                      TO_CHAR(rw_crapdat.dtmvtopr,'YYMMDD')||','||                                               --> Data AAMMDD do Arquivo
-                      TO_CHAR(rw_crapdat.dtmvtopr,'DDMMYY')||','||                                               --> Data DDMMAA
-                      gene0002.fn_mask(8112, pr_dsforma => '9999')||','||                                        --> Conta Destino
-                      gene0002.fn_mask(8051, pr_dsforma => '9999')||','||                                        --> Conta Origem
-                      TRIM(TO_CHAR(vr_tot_prvmesfis,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','|| --> Total Valor PF
-                      gene0002.fn_mask(1434, pr_dsforma => '9999')||','||                              	         --> Fixo
-                      '"'||vr_dsprefix||'PROVISAO DO MES - RDCA 30 COOPERADOS PESSOA FISICA"';                                    --> Descricao
-
-       gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                     ,pr_des_text => vr_setlinha); --> Texto para escrita
-                                     
-       -- Verifica se existe valores       
-       IF vr_tab_vlpvrmes_fis.COUNT > 0 THEN
-         -- Duplicar a listagem de agencia
-         FOR repete IN 1..2 LOOP
-           -- Gravas as informacoes de valores por agencia
-           FOR vr_idx_agencia IN vr_tab_vlpvrmes_fis.FIRST()..vr_tab_vlpvrmes_fis.LAST() LOOP
-             -- Verifica se existe a informacao
-             IF vr_tab_vlpvrmes_fis.EXISTS(vr_idx_agencia) THEN
-               -- Verifica se existe a informacao
-               IF vr_tab_vlpvrmes_fis(vr_idx_agencia) > 0 THEN
-                 -- Montar linha para gravar no arquivo
-                 vr_setlinha := to_char(vr_idx_agencia,'FM009')||','||TRIM(TO_CHAR(vr_tab_vlpvrmes_fis(vr_idx_agencia), 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'));
-                 -- Escrever linha no arquivo
-                 gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                               ,pr_des_text => vr_setlinha); --> Texto para escrita
-               END IF;
-             END IF;
-             -- Limpa variavel
-             vr_setlinha := '';       
-           END LOOP;
-         END LOOP; -- fim repete
-       END IF;
      END IF; -- Se maior que zero
      
      -- Se o valor total é maior que zero
@@ -1460,49 +1433,12 @@ BEGIN
                       gene0002.fn_mask(8052, pr_dsforma => '9999')||','||                                         --> Conta Origem
                       gene0002.fn_mask(8112, pr_dsforma => '9999')||','||                                         --> Conta Destino
                       TRIM(TO_CHAR(vr_tot_prvmesjur, 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','|| --> Total Valor PJ
-                      gene0002.fn_mask(1434, pr_dsforma => '9999')||','||                                         --> Fixo
+                      gene0002.fn_mask(5210, pr_dsforma => '9999')||','||                                         --> Fixo
                       '"PROVISAO DO MES - RDCA 30 COOPERADOS PESSOA JURIDICA"';                                   --> Descricao
 
        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
 
-       -- Verifica se existe valores
-       IF vr_tab_vlpvrmes_jur.COUNT > 0 THEN
-         -- Duplicar a listagem de agencia
-         FOR repete IN 1..2 LOOP
-           -- Gravas as informacoes de valores por agencia
-           FOR vr_idx_agencia IN vr_tab_vlpvrmes_jur.FIRST()..vr_tab_vlpvrmes_jur.LAST() LOOP
-             -- Verifica se existe a informacao
-             IF vr_tab_vlpvrmes_jur.EXISTS(vr_idx_agencia) THEN
-               -- Verifica se existe a informacao
-               IF vr_tab_vlpvrmes_jur(vr_idx_agencia) > 0 THEN
-                 -- Montar linha para gravar no arquivo
-                 vr_setlinha := to_char(vr_idx_agencia,'FM009')||','||TRIM(TO_CHAR(vr_tab_vlpvrmes_jur(vr_idx_agencia), 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'));
-                 --Escrever linha no arquivo
-                 gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                               ,pr_des_text => vr_setlinha); --> Texto para escrita
-               END IF;
-             END IF;
-             -- Limpa variavel
-             vr_setlinha := '';
-           END LOOP;
-         END LOOP; -- fim repete
-       END IF;
-
-       -- Montando o cabecalho para fazer a reversao das
-       -- conta para estornar os valores caso necessario
-       vr_setlinha := '70'||                                                                                      --> Informacao inicial
-                      TO_CHAR(rw_crapdat.dtmvtopr,'YYMMDD')||','||                                                --> Data AAMMDD do Arquivo
-                      TO_CHAR(rw_crapdat.dtmvtopr,'DDMMYY')||','||                                                --> Data DDMMAA
-                      gene0002.fn_mask(8112, pr_dsforma => '9999')||','||                                         --> Conta Destino
-                      gene0002.fn_mask(8052, pr_dsforma => '9999')||','||                                         --> Conta Origem
-                      TRIM(TO_CHAR(vr_tot_prvmesjur, 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','|| --> Total Valor PJ
-                      gene0002.fn_mask(1434, pr_dsforma => '9999')||','||                                         --> Fixo
-                      '"'||vr_dsprefix||'PROVISAO DO MES - RDCA 30 COOPERADOS PESSOA JURIDICA"';                                   --> Descricao
-                      
-       gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                     ,pr_des_text => vr_setlinha); --> Texto para escrita
-                                     
        -- Verifica se existe valores
        IF vr_tab_vlpvrmes_jur.COUNT > 0 THEN
          -- Duplicar a listagem de agencia
@@ -1537,14 +1473,16 @@ BEGIN
         RAISE vr_exc_saida;
      END;
 
-     -- Buscar o diretório MICROS
-     vr_nom_micros := gene0001.fn_diretorio(pr_tpdireto => 'M'   
-                                           ,pr_cdcooper => pr_cdcooper
-                                           ,pr_nmsubdir => '/contab'); 
+     -- Busca o diretório para contabilidade
+     vr_dircon := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                           ,pr_cdcooper => 0
+                                           ,pr_cdacesso => 'DIR_ARQ_CONTAB_X');
+                                           
+     vr_arqcon := TO_CHAR(rw_crapdat.dtmvtolt,'YYMMDD')||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_RDCA30.txt';
      
      -- Executa comando UNIX para converter arq para Dos
-     vr_dscomand := 'ux2dos ' || vr_nom_direto ||'/'||vr_nmarqtxt||' > '
-                              || vr_nom_micros ||'/'||vr_nmarqtxt || ' 2>/dev/null';
+     vr_dscomand := 'ux2dos '||vr_nom_direto||'/'||vr_nmarqtxt||' > '||
+                                vr_dircon||'/'||vr_arqcon||' 2>/dev/null';
 
      -- Executar o comando no unix
      GENE0001.pc_OScommand(pr_typ_comando => 'S'
@@ -1618,4 +1556,3 @@ EXCEPTION
     ROLLBACK;
 END;
 /
-

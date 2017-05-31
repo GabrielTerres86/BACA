@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS536(
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Novembro/2009                     Ultima atualizacao: 31/08/2015.
+   Data    : Novembro/2009                     Ultima atualizacao: 27/03/2017.
 
    Dados referentes ao programa:
 
@@ -57,7 +57,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS536(
                             
                04/07/2014 - Inserido tratamento na busca dos dados da captit
                             para nao pegar contas zeradas (nrdconta > 0)
-                            Projeto automatiza compe (Tiago/Aline).			   
+                            Projeto automatiza compe (Tiago/Aline).         
 
                14/07/2014 - Correção na lógica da coluna Lancador (Marcos-Supero)
 
@@ -65,6 +65,15 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS536(
                             criticas que necessitam de lancamentos manuais 
                             pela contabilidade. (Jaison/Marcos-Supero)
 
+               10/10/2016 - Alteração do diretório para geração de arquivo contábil.
+                            P308 (Ricardo Linhares). 
+
+			         13/10/2016 - Alterada leitura da tabela de parâmetros para utilização
+							              da rotina padrão. (Rodrigo)
+              
+               27/03/2017 - Alterar a geração do arquivo AAMMDD_CRITICAS.txt para considerar valores 
+                            de devolução de recebimento de cobrança que já foram lançados na conta do associado
+                            P307 (Jonatas - Supero).               
 .............................................................................*/
 
   -- CURSORES
@@ -159,7 +168,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS536(
 
   -- REGISTROS
   rw_crapcop      cr_crapcop%ROWTYPE;
-  rw_craptab      TABE0001.cr_craptab%ROWTYPE;
   rw_gncptit      cr_gncptit%ROWTYPE;
 
   -- TIPOS
@@ -180,7 +188,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS536(
                             ,tpcaptur   NUMBER      -- "Tipo de Captura" (1 - titulo liquidado no caixa, 3 - liquidado via internet)
                             ,tpdocmto   NUMBER      -- "Tipo do Documento"
                             ,nrseqarq   NUMBER      -- "Seq. Arq."
-							,flglanca   VARCHAR2(3));-- Lançado (SIM/NAO)
+              ,flglanca   VARCHAR2(3));-- Lançado (SIM/NAO)
   -- Registro para guardar os valores processados
   TYPE typ_relato IS TABLE OF rec_relato INDEX BY BINARY_INTEGER;
   
@@ -196,7 +204,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS536(
   vr_diretori      VARCHAR2(200);
   vr_dircop_rlnsv  VARCHAR2(200);
   vr_nom_direto    VARCHAR2(200);
-  vr_nom_dirmic    VARCHAR2(200);
   -- Validação de erros
   vr_typ_saida     VARCHAR2(100);
   vr_des_saida     VARCHAR2(2000);
@@ -225,6 +232,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS536(
   vr_exc_saida     EXCEPTION;
   vr_exc_fimprg    EXCEPTION;
 
+  --variaveis para controle de arquivos
+  vr_dircon VARCHAR2(200);
+  vr_arqcon VARCHAR2(200);
+  
+  vr_dstextab craptab.dstextab%TYPE;   
 
 BEGIN
   -- Código do programa
@@ -292,22 +304,18 @@ BEGIN
   CLOSE cr_crapcop;
 
   -- Verifica se a Cooperativa esta preparada para executa COMPE 85 - ABBC
-  OPEN  TABE0001.cr_craptab(pr_cdcooper   -- pr_cdcooper
-                           ,'CRED'        -- pr_nmsistem
-                           ,'GENERI'      -- pr_tptabela
-                           ,0             -- pr_cdempres
-                           ,'EXECUTAABBC' -- pr_cdacesso
-                           ,0);           -- pr_tpregist
-  FETCH TABE0001.cr_craptab INTO rw_craptab;
+  vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+									       ,pr_nmsistem => 'CRED'
+										   ,pr_tptabela => 'GENERI'
+										   ,pr_cdempres => 0
+										   ,pr_cdacesso => 'EXECUTAABBC'
+										   ,pr_tpregist => 0);
 
   -- Se não encontrar registros ou o registro encontrado está com
   -- indicador igual a SIM, sai do programa
-  IF TABE0001.cr_craptab%NOTFOUND OR NVL(rw_craptab.dstextab,'N') <> 'SIM' THEN
+  IF NVL(vr_dstextab,'N') <> 'SIM' THEN
     RAISE vr_exc_fimprg;
   END IF;
-
-  -- Fecha o cursor
-  CLOSE TABE0001.cr_craptab;
 
   -- Busca do diretório base da cooperativa para a geração de relatórios
   vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/coop
@@ -316,11 +324,6 @@ BEGIN
   vr_diretori := gene0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/coop
                                         ,pr_cdcooper => pr_cdcooper
                                         ,pr_nmsubdir => '/integra/') ;
-
-  -- busca o diretorio micros contab
-  vr_nom_dirmic := gene0001.fn_diretorio(pr_tpdireto => 'M' --> /micros
-                                        ,pr_cdcooper => pr_cdcooper
-                                        ,pr_nmsubdir => 'contab');
 
   -- Define o nome do arquivo
   vr_nmarquiv := vr_diretori||'/'||'2*.DVN';
@@ -835,7 +838,7 @@ BEGIN
               CLOSE cr_craplcm;
             END IF;  
             -- Registro lançado
-            vr_relato(vr_indice).flglanca := 'SIM';	
+            vr_relato(vr_indice).flglanca := 'SIM';  
                 
           ELSE
             --Fecha cursor     
@@ -950,11 +953,11 @@ BEGIN
                                  ||'</titulo>');
         
         -- Se NAO foi lancado corretamente
-        IF vr_relato(ind).flglanca = 'NAO' THEN
-          pc_escreve_clob(vr_clobcri,'50' || TO_CHAR(vr_dtmvtolt,'DDMMRR') || ',' || TO_CHAR(vr_dtmvtolt,'DDMMRR') ||
-                                     ',1455,4894,' || TO_CHAR(vr_relato(ind).vltitulo,'fm9999999990d00','NLS_NUMERIC_CHARACTERS=.,') ||
-                                     ',157,"DEVOLUCAO RECEBIMENTO COBRANCA (CONFORME CRITICA RELATORIO 521)"' || chr(10));
-        END IF;
+        --IF vr_relato(ind).flglanca = 'NAO' THEN
+        pc_escreve_clob(vr_clobcri,'50' || TO_CHAR(vr_dtmvtolt,'DDMMRR') || ',' || TO_CHAR(vr_dtmvtolt,'DDMMRR') ||
+                                   ',1455,4894,' || TO_CHAR(vr_relato(ind).vltitulo,'fm9999999990d00','NLS_NUMERIC_CHARACTERS=.,') ||
+                                   ',157,"DEVOLUCAO RECEBIMENTO COBRANCA (CONFORME CRITICA RELATORIO 521)"' || chr(10));
+        --END IF;
 
       END LOOP;
 
@@ -997,33 +1000,42 @@ BEGIN
         -- Arquivo de saida
         vr_nmarquiv := TO_CHAR(vr_dtmvtolt,'RRMMDD') || '_CRITICAS.txt';
 
+    -- Busca o diretório para contabilidade
+        vr_dircon := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                              ,pr_cdcooper => 0
+                                              ,pr_cdacesso => 'DIR_ARQ_CONTAB_X');
+        vr_arqcon := TO_CHAR(vr_dtmvtolt,'RRMMDD')||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_CRITICAS.txt';
+
         -- Chama a geracao do TXT
         GENE0002.pc_solicita_relato_arquivo(pr_cdcooper  => pr_cdcooper              --> Cooperativa conectada
                                            ,pr_cdprogra  => vr_cdprogra              --> Programa chamador
                                            ,pr_dtmvtolt  => vr_dtmvtolt              --> Data do movimento atual
                                            ,pr_dsxml     => vr_clobcri               --> Arquivo XML de dados
-                                           ,pr_dsarqsaid => vr_nom_direto || '/contab/' || vr_nmarquiv    --> Arquivo final com o path
+                                           ,pr_dsarqsaid => vr_nom_direto || '/contab/' || vr_arqcon    --> Arquivo final com o path
                                            ,pr_cdrelato  => NULL                     --> Código fixo para o relatório
                                            ,pr_flg_gerar => 'N'                      --> Apenas submeter
-                                           ,pr_dspathcop => vr_nom_dirmic            --> Copiar para a Micros
-                                           ,pr_fldoscop  => 'S'                      --> Efetuar cópia com Ux2Dos
+                                           ,pr_dspathcop => vr_dircon
+                                           ,pr_fldoscop  => 'S'                                           
                                            ,pr_flappend  => 'S'                      --> Indica que a solicitação irá incrementar o arquivo
-                                           ,pr_des_erro  => vr_des_erro);            --> Saída com erro
+                                           ,pr_des_erro  => vr_des_erro);
+                                   --> Saída com erro
+                                   
+          -- Verifica se ocorreram erros na geracao do TXT
+          IF vr_des_erro IS NOT NULL THEN
+            -- Envio centralizado de log de erro
+            btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                      ,pr_ind_tipo_log => 2 -- Erro tratato
+                                      ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                       || vr_cdprogra || ' --> ERRO NA GERACAO DO ' || vr_arqcon || ': '
+                                                       || vr_des_erro );
+             END IF;           
+
       END IF;
 
       -- Liberando a memória alocada pro CLOB
       dbms_lob.close(vr_clobcri);
       dbms_lob.freetemporary(vr_clobcri);
 
-      -- Verifica se ocorreram erros na geracao do TXT
-      IF vr_des_erro IS NOT NULL THEN
-        -- Envio centralizado de log de erro
-        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                  ,pr_ind_tipo_log => 2 -- Erro tratato
-                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                   || vr_cdprogra || ' --> ERRO NA GERACAO DO ' || vr_nmarquiv || ': '
-                                                   || vr_des_erro );
-      END IF;
 
     END;
   END IF; -- vr_relato.COUNT() > 0
@@ -1061,7 +1073,7 @@ EXCEPTION
                              ,pr_infimsol => pr_infimsol
                              ,pr_stprogra => pr_stprogra);
     -- Efetuar commit pois gravaremos o que foi processo até então
-    COMMIT;
+    COMMIT; 
     
   WHEN vr_exc_saida THEN
     -- Se foi retornado apenas código
@@ -1079,4 +1091,3 @@ EXCEPTION
     ROLLBACK;
 END PC_CRPS536;
 /
-

@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : David
-     Data    : Maio/2007                       Ultima atualizacao: 11/10/2016
+     Data    : Maio/2007                       Ultima atualizacao: 20/03/2017
 
      Dados referentes ao programa:
 
@@ -141,8 +141,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
                  28/09/2016 - Alteração do diretório para geração de arquivo contábil.
                               P308 (Ricardo Linhares).                                    
 
-               11/10/2016 - Limpeza e inclusao de valor acumulado, na tabela
-                            TBFIN_FLUXO_CONTAS_SYSPHERA. (Jaison/Marcos SUPERO)
+                 11/10/2016 - Limpeza e inclusao de valor acumulado, na tabela
+                              TBFIN_FLUXO_CONTAS_SYSPHERA. (Jaison/Marcos SUPERO)
+                            
+                 20/03/2017 - Remover linhas de reversão das contas de resultado e incluir
+                              lançamentos de novos históricos para o arquivo Radar ou Matera (Jonatas - Supero)                            
 
   ..............................................................................*/
 
@@ -350,6 +353,22 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
       type typ_tab_reg_crapass is table of typ_reg_crapass
                              index by Binary_Integer; --cta(10)
       vr_tab_crapass typ_tab_reg_crapass;
+      
+      -- PL/Table contendo informações por pessoa fisica e juridica
+      TYPE typ_pf_pj_rdc IS TABLE OF NUMBER INDEX BY PLS_INTEGER;
+      
+      -- PL/Table contendo informações por histórico, aplicação e pessoa fisica e juridica      
+      TYPE typ_val_his_tipo_pessoa is table of typ_pf_pj_rdc index by PLS_INTEGER; 
+      
+      vr_val_his_tipo_pessoa typ_val_his_tipo_pessoa;     
+           
+      -- PL/Table contendo informações por agencia e pessoa fisica e juridica
+      TYPE typ_agencia_rdc is table of typ_pf_pj_rdc INDEX BY PLS_INTEGER;
+      
+      -- PL/Table principal para gravar valores por histórico , ageência e PF e PJ por agência
+      TYPE typ_val_pf_pj_rdc is table of typ_agencia_rdc INDEX BY PLS_INTEGER;    
+      
+      vr_tab_val_pf_pj_rdc typ_val_pf_pj_rdc;                                  
 
       ---------------- Cursores específicos ----------------
 
@@ -634,12 +653,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
   
       vr_Bufdes_xml varchar2(32000);
       
-     vr_dircon VARCHAR2(200);
-     vr_arqcon VARCHAR2(200);
-     vc_dircon CONSTANT VARCHAR2(30) := 'arquivos_contabeis/ayllos'; 
-     vc_cdacesso CONSTANT VARCHAR2(24) := 'ROOT_SISTEMAS';
-     vc_cdtodascooperativas INTEGER := 0;  
-      
+      vr_dircon VARCHAR2(200);
+      vr_arqcon VARCHAR2(200);
 
       -------- SubRotinas para reaproveitamento de código --------------
 
@@ -765,6 +780,30 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
           END IF;
         END IF;
       END;
+      
+      --Inicia vetores de totalização por histório e tipo de pessoa e agência.
+      PROCEDURE pc_inicia_totalizadores(pr_cdhistor in number,
+                                        pr_cdagenci in number) IS
+        
+      BEGIN
+        
+        IF NOT vr_val_his_tipo_pessoa.exists(pr_cdhistor) THEN
+          vr_val_his_tipo_pessoa(pr_cdhistor)(1) := 0; -- Pessoa Fisica
+          vr_val_his_tipo_pessoa(pr_cdhistor)(2) := 0; -- Pessoa Fisica
+        END IF;
+        
+        
+        IF NOT vr_tab_val_pf_pj_rdc.EXISTS(pr_cdhistor) THEN
+          vr_tab_val_pf_pj_rdc(pr_cdhistor)(pr_cdagenci)(1) := 0; -- Pessoa Fisica
+          vr_tab_val_pf_pj_rdc(pr_cdhistor)(pr_cdagenci)(2) := 0; -- Pessoa Juridica
+        END IF;
+       
+        IF NOT vr_tab_val_pf_pj_rdc(pr_cdhistor).EXISTS(pr_cdagenci) THEN
+          vr_tab_val_pf_pj_rdc(pr_cdhistor)(pr_cdagenci)(1) := 0; -- Pessoa Fisica
+          vr_tab_val_pf_pj_rdc(pr_cdhistor)(pr_cdagenci)(2) := 0; -- Pessoa Juridica
+        END IF;
+                                                       
+      END pc_inicia_totalizadores;
 
     BEGIN
 
@@ -1626,6 +1665,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
       END IF;
       -- Busca dos lançamentos do mês com aplicaçao do tipo RDC Pré e Pós
       -- para criação dos registros de resumo
+      
       FOR rw_craplap IN cr_craplap_mes LOOP
         -- Verificar se já existe o registro para relatório detalhado
         IF rw_craplap.insaqtot = 0 THEN
@@ -1894,6 +1934,24 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
             WHEN no_data_found THEN
               vr_tab_fisjur(vr_tab_crapass(rw_craplap.nrdconta).inpessoa)(rw_craplap.tpaplica).vlrtirrf := rw_craplap.vllanmto;
           END;
+        END IF;
+        
+        --Agrupamento de valores para Lançamentos para o arquivo AAMMDD_RCD.txt - P307 
+        IF rw_craplap.cdhistor IN (463,475,531,532) THEN
+          
+          --Inicia PL Tables
+          pc_inicia_totalizadores(pr_cdhistor => rw_craplap.cdhistor,
+                                  pr_cdagenci => vr_tab_crapass(rw_craplap.nrdconta).cdagenci);
+        
+
+          vr_val_his_tipo_pessoa(rw_craplap.cdhistor)(vr_tab_crapass(rw_craplap.nrdconta).inpessoa) := 
+            vr_val_his_tipo_pessoa(rw_craplap.cdhistor)(vr_tab_crapass(rw_craplap.nrdconta).inpessoa) + rw_craplap.vllanmto; 
+          
+          --Totaliza valores dos históricos por agencia e tipo de pessoa                        
+          vr_tab_val_pf_pj_rdc(rw_craplap.cdhistor)(vr_tab_crapass(rw_craplap.nrdconta).cdagenci)(vr_tab_crapass(rw_craplap.nrdconta).inpessoa) := 
+            vr_tab_val_pf_pj_rdc(rw_craplap.cdhistor)(vr_tab_crapass(rw_craplap.nrdconta).cdagenci)(vr_tab_crapass(rw_craplap.nrdconta).inpessoa) + rw_craplap.vllanmto;
+          
+        
         END IF;
       END LOOP;
 
@@ -2244,7 +2302,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
                 vr_dslinarq := '70'||to_char(vr_dtmvtolt,'YYMMDD')
                             || ',' ||to_char(vr_dtmvtolt,'DDMMYY') || ','||vr_nrctaori||','||vr_nrctades||',' 
                             || to_char(vr_vllinarq,'FM99999999999990D00','NLS_NUMERIC_CHARACTERS=.,') 
-                            || ',1434,"'|| vr_dsmsgarq ||'"'
+                            || ',5210,"'|| vr_dsmsgarq ||'"'
                             || CHR(10);
         
                 -- Escrever CLOB
@@ -2323,88 +2381,324 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
               end if;
             END IF;
           
-            -- Para cada cada modalidade 1=Normal e 2=Reversão
-            FOR indmod IN 1..2 LOOP
+            vr_dtmvtolt := rw_crapdat.dtmvtolt;
+            -- 
+            vr_dsmsgarq := vr_dsmensag;
               
-              -- Se modo normal
-              IF indmod = 1 THEN
-                vr_dtmvtolt := rw_crapdat.dtmvtolt;
-                -- 
-                vr_dsmsgarq := vr_dsmensag;
-              ELSE
-                -- Inversão das contas
-                vr_nrctaaux := vr_nrctaori;
-                vr_nrctaori := vr_nrctades;
-                vr_nrctades := vr_nrctaaux;
-          
-                vr_dtmvtolt := rw_crapdat.dtmvtopr;
-                
-                -- Incluir a palavra REVERSAO
-                vr_dsmsgarq := vr_dsprefix||vr_dsmensag;
-              END IF;
-              
-              -- Verifica se o valor existe
-              IF vr_tab_totpro.EXISTS(indapl) THEN
-                IF vr_tab_totpro(indapl).EXISTS(indpes) THEN
-                  vr_vllinarq := vr_tab_totpro(indapl)(indpes);
-                ELSE
-                  vr_vllinarq := 0; -- Quando não existir atribui zero
-                END IF;
+            -- Verifica se o valor existe
+            IF vr_tab_totpro.EXISTS(indapl) THEN
+              IF vr_tab_totpro(indapl).EXISTS(indpes) THEN
+                vr_vllinarq := vr_tab_totpro(indapl)(indpes);
               ELSE
                 vr_vllinarq := 0; -- Quando não existir atribui zero
               END IF;
+            ELSE
+              vr_vllinarq := 0; -- Quando não existir atribui zero
+            END IF;
               
-              -- Se o valor for maior que zero
-              IF vr_vllinarq > 0 THEN
+            -- Se o valor for maior que zero
+            IF vr_vllinarq > 0 THEN
                   
+              /* Imprimir dados de pessoa FISICA */
+              vr_dslinarq := '70'||to_char(vr_dtmvtolt,'YYMMDD')
+                          || ',' ||to_char(vr_dtmvtolt,'DDMMYY') || ','||vr_nrctaori||','||vr_nrctades||',' 
+                          || to_char(vr_vllinarq,'FM99999999999990D00','NLS_NUMERIC_CHARACTERS=.,') 
+                          || ',5210,"'|| vr_dsmsgarq ||'"'
+                          || CHR(10);
+        
+              -- Escrever CLOB
+              dbms_lob.writeappend(vr_dsxmldad_arq,length(vr_dslinarq),vr_dslinarq);   
+        
+              -- Repetir as informações da agencia 
+              FOR repete IN 1..2 LOOP
+                    
+                -- Agencia 
+                vr_cdagenci := vr_tab_proage(indapl).FIRST;
+                
+                -- Percorrer para todas as agencias todos os dados de pessoa fisica e juridica
+                LOOP
+                    
+                  -- Verifica se o valor existe
+                  IF vr_tab_proage.EXISTS(indapl) THEN
+                    IF vr_tab_proage(indapl).EXISTS(vr_cdagenci) THEN
+                      IF vr_tab_proage(indapl)(vr_cdagenci).EXISTS(indpes) THEN
+                      
+                        -- Monta a linha para o arquivo
+                        vr_dslinarq := to_char(vr_cdagenci,'FM000')||','||
+                                       to_char(vr_tab_proage(indapl)(vr_cdagenci)(indpes),'fm99999999990D00','NLS_NUMERIC_CHARACTERS=.,')||
+                                       CHR(10);
+                    
+                        -- Escrever a linha no CLOB 
+                        dbms_lob.writeappend(vr_dsxmldad_arq,length(vr_dslinarq),vr_dslinarq);   
+                      END IF; -- Testa tipo pessoa
+                    END IF; -- Testa agencia
+                  END IF; -- Testa aplicação
+                    
+                  EXIT WHEN vr_cdagenci = vr_tab_proage(indapl).LAST;
+                  vr_cdagenci := vr_tab_proage(indapl).NEXT(vr_cdagenci);
+                END LOOP;
+              END LOOP; -- fim repete
+            END IF; -- Se valor total maior que zero
+          END LOOP; -- Pessoas 1 e 2
+        END LOOP; -- Tipo de aplicação
+        
+        -------------------------------------------------
+        /***** VALOR ESTORNOS E RENDIMENTOS DO MÊS *****/
+        ------------------------------------------------- 
+        FOR indpes IN 1..2 LOOP
+          IF vr_val_his_tipo_pessoa.EXISTS(463) THEN
+            IF vr_val_his_tipo_pessoa(463).exists(indpes) THEN      
+              IF vr_val_his_tipo_pessoa(463)(indpes) > 0 THEN
+                IF indpes = 1 THEN
+                  -- pessoa fisica
+                  vr_nrctaori := 8114;
+                  vr_nrctades := 8057;
+                  vr_dsmensag := '"ESTORNO DA PROVISAO RDC PRE - PESSOA FISICA"';
+                ELSIF indpes = 2 THEN
+                  -- pessoa juridica
+                  vr_nrctaori := 8114;
+                  vr_nrctades := 8058;
+                  vr_dsmensag := '"ESTORNO DA PROVISAO RDC PRE - PESSOA JURIDICA"';
+                END IF;      
+                
                 /* Imprimir dados de pessoa FISICA */
                 vr_dslinarq := '70'||to_char(vr_dtmvtolt,'YYMMDD')
-                            || ',' ||to_char(vr_dtmvtolt,'DDMMYY') || ','||vr_nrctaori||','||vr_nrctades||',' 
-                            || to_char(vr_vllinarq,'FM99999999999990D00','NLS_NUMERIC_CHARACTERS=.,') 
-                            || ',1434,"'|| vr_dsmsgarq ||'"'
+                            || ',' ||to_char(vr_dtmvtolt,'DDMMYY') 
+                            || ',' ||vr_nrctaori   --Débito
+                            || ',' ||vr_nrctades   --Crédito
+                            || ',' ||to_char(vr_val_his_tipo_pessoa(463)(indpes),'FM99999999999990D00','NLS_NUMERIC_CHARACTERS=.,') 
+                            || ',5210,'
+                            || vr_dsmensag
                             || CHR(10);
-        
+                  
                 -- Escrever CLOB
-                dbms_lob.writeappend(vr_dsxmldad_arq,length(vr_dslinarq),vr_dslinarq);   
-        
+                dbms_lob.writeappend(vr_dsxmldad_arq,length(vr_dslinarq),vr_dslinarq);
+                
                 -- Repetir as informações da agencia 
                 FOR repete IN 1..2 LOOP
-                    
                   -- Agencia 
-                  vr_cdagenci := vr_tab_proage(indapl).FIRST;
-                
+                  vr_cdagenci := vr_tab_val_pf_pj_rdc(463).FIRST;
+                    
                   -- Percorrer para todas as agencias todos os dados de pessoa fisica e juridica
                   LOOP
-                    
+                        
                     -- Verifica se o valor existe
-                    IF vr_tab_proage.EXISTS(indapl) THEN
-                      IF vr_tab_proage(indapl).EXISTS(vr_cdagenci) THEN
-                        IF vr_tab_proage(indapl)(vr_cdagenci).EXISTS(indpes) THEN
-                      
-                          -- Monta a linha para o arquivo
-                          vr_dslinarq := to_char(vr_cdagenci,'FM000')||','||
-                                         to_char(vr_tab_proage(indapl)(vr_cdagenci)(indpes),'fm99999999990D00','NLS_NUMERIC_CHARACTERS=.,')||
-                                         CHR(10);
-                    
-                          -- Escrever a linha no CLOB 
-                          dbms_lob.writeappend(vr_dsxmldad_arq,length(vr_dslinarq),vr_dslinarq);   
+                    IF vr_tab_val_pf_pj_rdc.EXISTS(463) THEN
+                      IF vr_tab_val_pf_pj_rdc(463).EXISTS(vr_cdagenci) THEN
+                        IF vr_tab_val_pf_pj_rdc(463)(vr_cdagenci).EXISTS(indpes) THEN
+                          IF vr_tab_val_pf_pj_rdc(463)(vr_cdagenci)(indpes) > 0 THEN                          
+                            -- Monta a linha para o arquivo
+                            vr_dslinarq := to_char(vr_cdagenci,'FM000')||','||
+                                           to_char(vr_tab_val_pf_pj_rdc(463)(vr_cdagenci)(indpes),'fm99999999990D00','NLS_NUMERIC_CHARACTERS=.,')||
+                                           CHR(10);
+                          
+                            -- Escrever a linha no CLOB 
+                            dbms_lob.writeappend(vr_dsxmldad_arq,length(vr_dslinarq),vr_dslinarq); 
+                          END IF;  
                         END IF; -- Testa tipo pessoa
                       END IF; -- Testa agencia
                     END IF; -- Testa aplicação
-                    
-                    EXIT WHEN vr_cdagenci = vr_tab_proage(indapl).LAST;
-                    vr_cdagenci := vr_tab_proage(indapl).NEXT(vr_cdagenci);
+                        
+                    EXIT WHEN vr_cdagenci = vr_tab_val_pf_pj_rdc(463).LAST;
+                    vr_cdagenci := vr_tab_val_pf_pj_rdc(463).NEXT(vr_cdagenci);
                   END LOOP;
                 END LOOP; -- fim repete
-              END IF; -- Se valor total maior que zero
-            END LOOP; -- Normal e reversão
-          END LOOP; -- Pessoas 1 e 2
-        END LOOP; -- Tipo de aplicação
-    
+              END IF;
+            END IF;
+          END IF;
+          
+          
+          --Histórico 475
+          IF vr_val_his_tipo_pessoa.EXISTS(475) THEN          
+            IF vr_val_his_tipo_pessoa(475).exists(indpes) THEN 
+              IF vr_val_his_tipo_pessoa(475)(indpes) > 0 THEN
+                IF indpes = 1 THEN
+                  -- pessoa fisica
+                  vr_nrctaori := 8057;
+                  vr_nrctades := 8114;
+                  vr_dsmensag := '"RENDIMENTO RDC PRE - PESSOA FISICA"';
+                ELSIF indpes = 2 THEN
+                  -- pessoa juridica
+                  vr_nrctaori := 8058;
+                  vr_nrctades := 8114;
+                  vr_dsmensag := '"RENDIMENTO RDC PRE - PESSOA JURIDICA"';
+                END IF;      
+                
+                /* Imprimir dados de pessoa FISICA */
+                vr_dslinarq := '70'||to_char(vr_dtmvtolt,'YYMMDD')
+                            || ',' ||to_char(vr_dtmvtolt,'DDMMYY') 
+                            || ',' ||vr_nrctaori   --Débito
+                            || ',' ||vr_nrctades   --Crédito
+                            || ',' ||to_char(vr_val_his_tipo_pessoa(475)(indpes),'FM99999999999990D00','NLS_NUMERIC_CHARACTERS=.,') 
+                            || ',5210,'
+                            || vr_dsmensag
+                            || CHR(10);
+                  
+                -- Escrever CLOB
+                dbms_lob.writeappend(vr_dsxmldad_arq,length(vr_dslinarq),vr_dslinarq);
+                
+                -- Repetir as informações da agencia 
+                FOR repete IN 1..2 LOOP
+                  -- Agencia 
+                  vr_cdagenci := vr_tab_val_pf_pj_rdc(475).FIRST;
+                    
+                  -- Percorrer para todas as agencias todos os dados de pessoa fisica e juridica
+                  LOOP
+                        
+                    -- Verifica se o valor existe
+                    IF vr_tab_val_pf_pj_rdc.EXISTS(475) THEN
+                      IF vr_tab_val_pf_pj_rdc(475).EXISTS(vr_cdagenci) THEN
+                        IF vr_tab_val_pf_pj_rdc(475)(vr_cdagenci).EXISTS(indpes) THEN
+                          IF vr_tab_val_pf_pj_rdc(475)(vr_cdagenci)(indpes) > 0 THEN                          
+                            -- Monta a linha para o arquivo
+                            vr_dslinarq := to_char(vr_cdagenci,'FM000')||','||
+                                           to_char(vr_tab_val_pf_pj_rdc(475)(vr_cdagenci)(indpes),'fm99999999990D00','NLS_NUMERIC_CHARACTERS=.,')||
+                                           CHR(10);
+                          
+                            -- Escrever a linha no CLOB 
+                            dbms_lob.writeappend(vr_dsxmldad_arq,length(vr_dslinarq),vr_dslinarq); 
+                          END IF;  
+                        END IF; -- Testa tipo pessoa
+                      END IF; -- Testa agencia
+                    END IF; -- Testa aplicação
+                        
+                    EXIT WHEN vr_cdagenci = vr_tab_val_pf_pj_rdc(475).LAST;
+                    vr_cdagenci := vr_tab_val_pf_pj_rdc(475).NEXT(vr_cdagenci);
+                  END LOOP;
+                END LOOP; -- fim repete
+              END IF;
+            END IF;
+          END IF; 
+          
+          --Histórico 531
+          IF vr_val_his_tipo_pessoa.EXISTS(531) THEN          
+            IF vr_val_his_tipo_pessoa(531).exists(indpes) THEN 
+              IF vr_val_his_tipo_pessoa(531)(indpes) > 0 THEN
+                IF indpes = 1 THEN
+                  -- pessoa fisica
+                  vr_nrctaori := 8118;
+                  vr_nrctades := 8060;
+                  vr_dsmensag := '"ESTORNO DA PROVISAO RDC POS - PESSOA FISICA"';
+                ELSIF indpes = 2 THEN
+                  -- pessoa juridica
+                  vr_nrctaori := 8118;
+                  vr_nrctades := 8061;
+                  vr_dsmensag := '"ESTORNO DA PROVISAO RDC POS - PESSOA JURIDICA"';
+                END IF;      
+                
+                /* Imprimir dados de pessoa FISICA */
+                vr_dslinarq := '70'||to_char(vr_dtmvtolt,'YYMMDD')
+                            || ',' ||to_char(vr_dtmvtolt,'DDMMYY') 
+                            || ',' ||vr_nrctaori   --Débito
+                            || ',' ||vr_nrctades   --Crédito
+                            || ',' ||to_char(vr_val_his_tipo_pessoa(531)(indpes),'FM99999999999990D00','NLS_NUMERIC_CHARACTERS=.,') 
+                            || ',5210,'
+                            || vr_dsmensag
+                            || CHR(10);
+                  
+                -- Escrever CLOB
+                dbms_lob.writeappend(vr_dsxmldad_arq,length(vr_dslinarq),vr_dslinarq);
+                
+                -- Repetir as informações da agencia 
+                FOR repete IN 1..2 LOOP
+                  -- Agencia 
+                  vr_cdagenci := vr_tab_val_pf_pj_rdc(531).FIRST;
+                    
+                  -- Percorrer para todas as agencias todos os dados de pessoa fisica e juridica
+                  LOOP
+                        
+                    -- Verifica se o valor existe
+                    IF vr_tab_val_pf_pj_rdc.EXISTS(531) THEN
+                      IF vr_tab_val_pf_pj_rdc(531).EXISTS(vr_cdagenci) THEN
+                        IF vr_tab_val_pf_pj_rdc(531)(vr_cdagenci).EXISTS(indpes) THEN
+                          IF vr_tab_val_pf_pj_rdc(531)(vr_cdagenci)(indpes) > 0 THEN                          
+                            -- Monta a linha para o arquivo
+                            vr_dslinarq := to_char(vr_cdagenci,'FM000')||','||
+                                           to_char(vr_tab_val_pf_pj_rdc(531)(vr_cdagenci)(indpes),'fm99999999990D00','NLS_NUMERIC_CHARACTERS=.,')||
+                                           CHR(10);
+                          
+                            -- Escrever a linha no CLOB 
+                            dbms_lob.writeappend(vr_dsxmldad_arq,length(vr_dslinarq),vr_dslinarq);  
+                          END IF; 
+                        END IF; -- Testa tipo pessoa
+                      END IF; -- Testa agencia
+                    END IF; -- Testa aplicação
+                        
+                    EXIT WHEN vr_cdagenci = vr_tab_val_pf_pj_rdc(531).LAST;
+                    vr_cdagenci := vr_tab_val_pf_pj_rdc(531).NEXT(vr_cdagenci);
+                  END LOOP;
+                END LOOP; -- fim repete
+              END IF; 
+            END IF; 
+          END IF;
+          
+          --Histórico 532
+          IF vr_val_his_tipo_pessoa.EXISTS(532) THEN          
+            IF vr_val_his_tipo_pessoa(532).exists(indpes) THEN           
+              IF vr_val_his_tipo_pessoa(532)(indpes) > 0 THEN
+                IF indpes = 1 THEN
+                  -- pessoa fisica
+                  vr_nrctaori := 8060;
+                  vr_nrctades := 8118;
+                  vr_dsmensag := '"RENDIMENTO RDC POS - PESSOA FISICA"';
+                ELSIF indpes = 2 THEN
+                  -- pessoa juridica
+                  vr_nrctaori := 8061;
+                  vr_nrctades := 8118;
+                  vr_dsmensag := '"RENDIMENTO RDC POS - PESSOA JURIDICA"';
+                END IF;      
+                
+                /* Imprimir dados de pessoa FISICA */
+                vr_dslinarq := '70'||to_char(vr_dtmvtolt,'YYMMDD')
+                            || ',' ||to_char(vr_dtmvtolt,'DDMMYY') 
+                            || ',' ||vr_nrctaori   --Débito
+                            || ',' ||vr_nrctades   --Crédito
+                            || ',' ||to_char(vr_val_his_tipo_pessoa(532)(indpes),'FM99999999999990D00','NLS_NUMERIC_CHARACTERS=.,') 
+                            || ',5210,'
+                            || vr_dsmensag
+                            || CHR(10);
+                  
+                -- Escrever CLOB
+                dbms_lob.writeappend(vr_dsxmldad_arq,length(vr_dslinarq),vr_dslinarq);
+                
+                -- Repetir as informações da agencia 
+                FOR repete IN 1..2 LOOP
+                  -- Agencia 
+                  vr_cdagenci := vr_tab_val_pf_pj_rdc(532).FIRST;
+                    
+                  -- Percorrer para todas as agencias todos os dados de pessoa fisica e juridica
+                  LOOP
+                        
+                    -- Verifica se o valor existe
+                    IF vr_tab_val_pf_pj_rdc.EXISTS(532) THEN
+                      IF vr_tab_val_pf_pj_rdc(532).EXISTS(vr_cdagenci) THEN
+                        IF vr_tab_val_pf_pj_rdc(532)(vr_cdagenci).EXISTS(indpes) THEN
+                          IF vr_tab_val_pf_pj_rdc(532)(vr_cdagenci)(indpes) > 0 THEN
+                            -- Monta a linha para o arquivo
+                            vr_dslinarq := to_char(vr_cdagenci,'FM000')||','||
+                                           to_char(vr_tab_val_pf_pj_rdc(532)(vr_cdagenci)(indpes),'fm99999999990D00','NLS_NUMERIC_CHARACTERS=.,')||
+                                           CHR(10);
+                        
+                            -- Escrever a linha no CLOB 
+                            dbms_lob.writeappend(vr_dsxmldad_arq,length(vr_dslinarq),vr_dslinarq);   
+                          END IF;
+                        END IF; -- Testa tipo pessoa
+                      END IF; -- Testa agencia
+                    END IF; -- Testa aplicação
+                        
+                    EXIT WHEN vr_cdagenci = vr_tab_val_pf_pj_rdc(532).LAST;
+                    vr_cdagenci := vr_tab_val_pf_pj_rdc(532).NEXT(vr_cdagenci);
+                  END LOOP;
+                END LOOP; -- fim repete
+              END IF; 
+            END IF; 
+          END IF;                
+        END LOOP;
+        
         -- Buscar os diretórios
         vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C'   
                                               ,pr_cdcooper => pr_cdcooper
-                                              ,pr_nmsubdir => '/contab'); 
+                                              ,pr_nmsubdir => 'contab'); 
 
         -- Define o nome do arquivo
         vr_nmarqrdc := to_char(rw_crapdat.dtmvtolt,'YYMMDD')||'_RDC.txt';
@@ -2425,9 +2719,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
           RAISE vr_exc_erro;
         END IF; 
         
-         -- Busca o diretório para contabilidade
-        vr_dircon := gene0001.fn_param_sistema('CRED', vc_cdtodascooperativas, vc_cdacesso);
-        vr_dircon := vr_dircon || vc_dircon;
+        -- Busca o diretório para contabilidade
+        vr_dircon := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                              ,pr_cdcooper => 0
+                                              ,pr_cdacesso => 'DIR_ARQ_CONTAB_X');
+                                              
         vr_arqcon := to_char(rw_crapdat.dtmvtolt,'YYMMDD')||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_RDC.txt';
 
         -- Executa comando UNIX para converter arq para Dos

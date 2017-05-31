@@ -13,7 +13,7 @@ BEGIN
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Ze Eduardo
-     Data    : Marco/2005.                     Ultima atualizacao: 12/07/2016
+     Data    : Marco/2005.                     Ultima atualizacao: 29/03/2017
 
      Dados referentes ao programa:
 
@@ -323,14 +323,26 @@ BEGIN
                               e processo de devolucao de cheque (Douglas - Melhoria 100)
 
 
-				 31/03/2016 - Ajuste para nao deixar alinea zerada na validação de historicos
-				              (Adriano - SD 426308).
+				         31/03/2016 - Ajuste para nao deixar alinea zerada na validação de historicos
+							                (Adriano - SD 426308).
 				           
                  15/06/2016 - Ajustes para realizar debito de devolucao de cheque(0114 BB)
-				                      na hora (Tiago/Elton SD 464916).
+				              na hora (Tiago/Elton SD 464916).
+                      
+                 23/06/2016 - Correcao para o uso correto do indice da CRAPTAB nesta rotina.
+                              (Carlos Rafael Tanholi).
 
                  12/07/2016 - Ajustes para realizar debito de devolucao de cheque
 				              apenas (0114 BB) na hora (Tiago/Thiago SD 480694).
+
+				         01/11/2016 - inclusão do historico 0144TRANSF PERIODIC (Tiago sd 505237)
+                              
+                 05/12/2016 - Tratamento para lancamentos das contas migradas 
+                              (Incorporacao Transposul). (Fabricio)
+                              
+                 29/03/2017 - Realizar geração de arquivo AAMMDD_XX_CRITICAITG.txt para envio dos 
+                              lançamentos contábeis de críticas de integração de contas do BB
+                              P307 - (Jonatas Supero)
      ............................................................................. */
 
   DECLARE
@@ -365,26 +377,34 @@ BEGIN
               ,cdcritic craprej.cdcritic%type
               ,cdpesqbb craprej.cdpesqbb%type
               ,dscritic VARCHAR2(4000));
-
+              
+     TYPE typ_reg_historico IS 
+       RECORD (nrctaori NUMBER          
+              ,nrctades NUMBER          
+              ,dsrefere VARCHAR2(500));               
+              
      --Definicao dos tipos de tabelas
-     TYPE typ_tab_crawdpb  IS TABLE OF typ_reg_crawdpb INDEX BY PLS_INTEGER;
-     TYPE typ_tab_crawtot  IS TABLE OF typ_reg_crawtot INDEX BY VARCHAR2(30);
-     TYPE typ_tab_nmarqint IS TABLE OF VARCHAR2(100)   INDEX BY PLS_INTEGER;
-     TYPE typ_tab_crapass  IS TABLE OF typ_reg_crapass INDEX BY VARCHAR2(10);
-     TYPE typ_tab_craprej  IS TABLE OF typ_reg_craprej INDEX BY PLS_INTEGER;
-     TYPE typ_tab_craphis  IS TABLE OF VARCHAR2(1)     INDEX BY PLS_INTEGER;
-     TYPE typ_tab_craplcm  IS TABLE OF NUMBER          INDEX BY VARCHAR2(30);
+     TYPE typ_tab_crawdpb   IS TABLE OF typ_reg_crawdpb   INDEX BY PLS_INTEGER;
+     TYPE typ_tab_crawtot   IS TABLE OF typ_reg_crawtot   INDEX BY VARCHAR2(30);
+     TYPE typ_tab_nmarqint  IS TABLE OF VARCHAR2(100)     INDEX BY PLS_INTEGER;
+     TYPE typ_tab_crapass   IS TABLE OF typ_reg_crapass   INDEX BY VARCHAR2(10);
+     TYPE typ_tab_craprej   IS TABLE OF typ_reg_craprej   INDEX BY PLS_INTEGER;
+     TYPE typ_tab_craphis   IS TABLE OF VARCHAR2(1)       INDEX BY PLS_INTEGER;
+     TYPE typ_tab_craplcm   IS TABLE OF NUMBER            INDEX BY VARCHAR2(30);
+     TYPE typ_tab_historico IS TABLE OF typ_reg_historico INDEX BY VARCHAR2(50);
+     
 
      --Definicao das tabelas de memoria
-     vr_tab_crawdpb  typ_tab_crawdpb;
-     vr_tab_crawtot  typ_tab_crawtot;
-     vr_tab_nmarqint typ_tab_nmarqint;
-     vr_tab_nmarqimp typ_tab_nmarqint;
-     vr_tab_nrdconta typ_tab_crapass;
-     vr_tab_nrdctitg typ_tab_crapass;
-     vr_tab_craprej  typ_tab_craprej;
-     vr_tab_craphis  typ_tab_craphis;
-     vr_tab_craplcm  typ_tab_craplcm;
+     vr_tab_crawdpb   typ_tab_crawdpb;
+     vr_tab_crawtot   typ_tab_crawtot;
+     vr_tab_nmarqint  typ_tab_nmarqint;
+     vr_tab_nmarqimp  typ_tab_nmarqint;
+     vr_tab_nrdconta  typ_tab_crapass;
+     vr_tab_nrdctitg  typ_tab_crapass;
+     vr_tab_craprej   typ_tab_craprej;
+     vr_tab_craphis   typ_tab_craphis;
+     vr_tab_craplcm   typ_tab_craplcm;
+     vr_tab_historico typ_tab_historico;
 
      /* Cursores da rotina crps444 */
 
@@ -508,10 +528,10 @@ BEGIN
        SELECT craptab.dstextab, craptab.rowid
          FROM craptab
         WHERE craptab.cdcooper = pr_cdcooper
-          AND craptab.nmsistem = pr_nmsistem
-          AND craptab.tptabela = pr_tptabela
+          AND UPPER(craptab.nmsistem) = pr_nmsistem
+          AND UPPER(craptab.tptabela) = pr_tptabela
           AND craptab.cdempres = pr_cdempres
-          AND craptab.cdacesso = pr_cdacesso
+          AND UPPER(craptab.cdacesso) = pr_cdacesso
           AND craptab.tpregist = pr_tpregist;
      rw_craptab cr_craptab%ROWTYPE;
 
@@ -721,8 +741,8 @@ BEGIN
                                  ORDER BY craptab.cdacesso,craptab.tpregist) seqreg
        FROM craptab
        WHERE craptab.cdcooper = pr_cdcooper
-       AND  craptab.nmsistem  = pr_nmsistem
-       AND  craptab.tptabela  = pr_tptabela
+       AND  UPPER(craptab.nmsistem)  = pr_nmsistem
+       AND  UPPER(craptab.tptabela)  = pr_tptabela
        AND  craptab.cdempres  = pr_cdempres;
      rw_craptab_tot cr_craptab_tot%ROWTYPE;
 
@@ -828,6 +848,19 @@ BEGIN
                ,craprej.nrdocmto;
      --Registro do tipo calendario
      rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
+     
+     --Lista todas as agencias ativas
+     CURSOR cr_crapage IS
+       SELECT cdagenci,
+              qt_agencia,
+              ROWNUM linha
+       FROM (SELECT cdagenci,
+                    COUNT(*) OVER() qt_agencia
+               FROM crapage age
+              WHERE age.cdcooper = pr_cdcooper
+                AND age.insitage = 1
+                AND age.cdagenci NOT IN (90,91,999)
+             ORDER BY cdagenci);
 
      --Variaveis Locais
 
@@ -891,6 +924,7 @@ BEGIN
      vr_cdconven            INTEGER;
      vr_cdconven_04         INTEGER;
      vr_cdconven_15         INTEGER;
+     vr_cdconven_17         INTEGER;
      vr_nrdocmt2            INTEGER;
      vr_flgfinal            BOOLEAN;
      vr_flgcraplcm          BOOLEAN;
@@ -975,6 +1009,16 @@ BEGIN
 
      --Variaveis de Arquivo
      vr_input_file  utl_file.file_type;
+     
+     --Variáveis arquivo contábil
+     vr_nom_diretorio      VARCHAR2(200); 
+     vr_nom_dir_copia      VARCHAR2(200);
+     vr_input_filectb      utl_file.file_type;  
+     vr_nmarquiv           VARCHAR2(200);   
+     vr_setlinha_ctb       VARCHAR2(4000); 
+     vr_vllctacm           NUMBER;   
+     vr_vllctage           NUMBER; 
+     vr_typ_said           VARCHAR2(4);  
 
      --Procedure para limpar os dados das tabelas de memoria
      PROCEDURE pc_limpa_tabela IS
@@ -1007,6 +1051,117 @@ BEGIN
        ELSIF pr_tipo = 2 THEN -- XML para o arquivo
          dbms_lob.writeappend(vr_des_rej,length(pr_des_dados),pr_des_dados);
        END IF;
+     END;
+     
+     -- Inicializa tabela de Historicos
+     PROCEDURE pc_inicia_historico IS
+     BEGIN
+        vr_tab_historico.DELETE;
+
+        vr_tab_historico('0231TAR MANUT C').nrctaori := 8306;
+        vr_tab_historico('0231TAR MANUT C').nrctades := 1179;
+        vr_tab_historico('0231TAR MANUT C').dsrefere := '"DEBITO C/C pr_nrdctabb B.BRASIL REF. TARIFA DE MANUTENCAO DE C/C"';
+
+        vr_tab_historico('0110REBLOQUEIO').nrctaori := 1173;
+        vr_tab_historico('0110REBLOQUEIO').nrctades := 1179;
+        vr_tab_historico('0110REBLOQUEIO').dsrefere := '"DEBITO C/C pr_nrdctabb B.BRASIL REF. REBLOQUEIO NAO INTEGRADO NA C/C ITG pr_nrctaitg - A REGULARIZAR"';
+
+        vr_tab_historico('0114DEV CH DEPO').nrctaori := 1411;
+        vr_tab_historico('0114DEV CH DEPO').nrctades := 1179;
+        vr_tab_historico('0114DEV CH DEPO').dsrefere := '"DEBITO C/C pr_nrdctabb B.BRASIL REF. DEVOLUCAO DE CHEQUES DE TERCEIROS DEPOSITADOS NA C/C pr_nrctaitg - A REGULARIZAR"';
+
+        vr_tab_historico('0144TRANSF AGEN').nrctaori := 1773;
+        vr_tab_historico('0144TRANSF AGEN').nrctades := 1179;
+        vr_tab_historico('0144TRANSF AGEN').dsrefere := '"DEBITO C/C pr_nrdctabb B.BRASIL REF. TRANSFERENCIA AGENDADA NAO INTEGRADO NA C/C ITG pr_nrctaitg - A REGULARIZAR"';
+
+        vr_tab_historico('0189PGTO CRED V').nrctaori := 1773;
+        vr_tab_historico('0189PGTO CRED V').nrctades := 1179;
+        vr_tab_historico('0189PGTO CRED V').dsrefere := '"DEBITO C/C pr_nrdctabb B.BRASIL REF. PGTO CRED V NAO INTEGRADO NA C/C ITG pr_nrctaitg - A REGULARIZAR"';
+
+        vr_tab_historico('0199MONTREAL TU').nrctaori := 1773;
+        vr_tab_historico('0199MONTREAL TU').nrctades := 1179;
+        vr_tab_historico('0199MONTREAL TU').dsrefere := '"DEBITO C/C pr_nrdctabb B.BRASIL REF. MONTREAL TU NAO INTEGRADO NA C/C ITG pr_nrctaitg - A REGULARIZAR"';
+
+        vr_tab_historico('0328PGTO CARTAO').nrctaori := 1773;
+        vr_tab_historico('0328PGTO CARTAO').nrctades := 1179;
+        vr_tab_historico('0328PGTO CARTAO').dsrefere := '"DEBITO C/C pr_nrdctabb B.BRASIL REF. PAGAMENTO DE CARTAO NAO INTEGRADO NA C/C ITG pr_nrctaitg - A REGULARIZAR"';
+
+        vr_tab_historico('0331SAQUE NO TA').nrctaori := 1773;
+        vr_tab_historico('0331SAQUE NO TA').nrctades := 1179;
+        vr_tab_historico('0331SAQUE NO TA').dsrefere := '"DEBITO C/C pr_nrdctabb B.BRASIL REF. SAQUE NO TAA NAO INTEGRADO NA C/C ITG pr_nrctaitg - A REGULARIZAR"';
+
+        vr_tab_historico('0364BB CONSORCI').nrctaori := 1773;
+        vr_tab_historico('0364BB CONSORCI').nrctades := 1179;
+        vr_tab_historico('0364BB CONSORCI').dsrefere := '"DEBITO C/C pr_nrdctabb B.BRASIL REF. CONSORCIO BB NAO INTEGRADO NA C/C ITG pr_nrctaitg - A REGULARIZAR"';
+
+        vr_tab_historico('0500FIES JRS/AM').nrctaori := 1773;
+        vr_tab_historico('0500FIES JRS/AM').nrctades := 1179;
+        vr_tab_historico('0500FIES JRS/AM').dsrefere := '"DEBITO C/C pr_nrdctabb B.BRASIL REF. JUROS/AMORT. FIES NAO INTEGRADO NA C/C ITG pr_nrctaitg - A REGULARIZAR"';
+
+        vr_tab_historico('0500MOVIM. DO D').nrctaori := 1773;
+        vr_tab_historico('0500MOVIM. DO D').nrctades := 1179;
+        vr_tab_historico('0500MOVIM. DO D').dsrefere := '"DEBITO C/C pr_nrdctabb B.BRASIL REF. MOVIMENTO DO DIA NAO INTEGRADO NA C/C ITG pr_nrctaitg - A REGULARIZAR"';
+
+        vr_tab_historico('0603CHQ SEM FUN').nrctaori := 1179;
+        vr_tab_historico('0603CHQ SEM FUN').nrctades := 1894;
+        vr_tab_historico('0603CHQ SEM FUN').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. CHEQUE SEM FUNDOS NAO INTEGRADO NA C/C ITG pr_nrctaitg - A REGULARIZAR"';
+
+        vr_tab_historico('0612RECEB FORNE').nrctaori := 1179;
+        vr_tab_historico('0612RECEB FORNE').nrctades := 4894;
+        vr_tab_historico('0612RECEB FORNE').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. RECEBIMENTO FORNECEDORES NAO INTEGRADA NA C/C ITG pr_nrctaitg - A REGULARIZAR"';
+
+        vr_tab_historico('0623DOC-CRED CO').nrctaori := 1179;
+        vr_tab_historico('0623DOC-CRED CO').nrctades := 4894;
+        vr_tab_historico('0623DOC-CRED CO').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. DOC - CRED CO NAO INTEGRADA NA C/C ITG pr_nrctaitg - A REGULARIZAR"';                                                                                                        
+
+        vr_tab_historico('0632OB 12 STN').nrctaori := 1773;
+        vr_tab_historico('0632OB 12 STN').nrctades := 1179;
+        vr_tab_historico('0632OB 12 STN').dsrefere := '"DEBITO C/C pr_nrdctabb B.BRASIL REF. OB 12 STN NAO INTEGRADO NA C/C ITG pr_nrctaitg - A REGULARIZAR"';                                                                                                        
+
+        vr_tab_historico('0633SEGURO').nrctaori := 1179;
+        vr_tab_historico('0633SEGURO').nrctades := 4894;
+        vr_tab_historico('0633SEGURO').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. SEGURO NAO INTEGRADA NA C/C ITG pr_nrctaitg - A REGULARIZAR"';                                                                                                        
+
+        vr_tab_historico('0729TRANSF.CTA.').nrctaori := 1179;
+        vr_tab_historico('0729TRANSF.CTA.').nrctades := 4894;
+        vr_tab_historico('0729TRANSF.CTA.').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. TEC SALÁRIO NAO INTEGRADA NA C/C ITG pr_nrctaitg - A REGULARIZAR"';                                                                                                        
+
+        vr_tab_historico('0729TRANSFERENC').nrctaori := 1179;
+        vr_tab_historico('0729TRANSFERENC').nrctades := 4894;
+        vr_tab_historico('0729TRANSFERENC').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. TRANSFERENCIA NAO INTEGRADA NA C/C ITG pr_nrctaitg - A REGULARIZAR"';                                                                                                        
+
+        vr_tab_historico('0732CIELO DEBIT').nrctaori := 1179;
+        vr_tab_historico('0732CIELO DEBIT').nrctades := 4894;
+        vr_tab_historico('0732CIELO DEBIT').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. CIELO DEBITO NAO INTEGRADO NA C/C ITG pr_nrctaitg - A REGULARIZARL"';                                                                                                        
+
+        vr_tab_historico('0749BRASILCAP').nrctaori := 1179;
+        vr_tab_historico('0749BRASILCAP').nrctades := 4894;
+        vr_tab_historico('0749BRASILCAP').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. BRASIL CAP NAO INTEGRADO NA C/C ITG pr_nrctaitg - A REGULARIZAR"';                                                                                                        
+
+        vr_tab_historico('0752CREDITO CDA').nrctaori := 1179;
+        vr_tab_historico('0752CREDITO CDA').nrctades := 4894;
+        vr_tab_historico('0752CREDITO CDA').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. CREDITO CDA NAO INTEGRADO NA C/C ITG pr_nrctaitg - A REGULARIZAR"';                                                                                                        
+
+        vr_tab_historico('0796ESTORN-DBT').nrctaori := 1179;
+        vr_tab_historico('0796ESTORN-DBT').nrctades := 4894;
+        vr_tab_historico('0796ESTORN-DBT').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. ESTORNO DE DEBITO NÃO INTEGRADO NA C/C ITG pr_nrctaitg - A REGULARIZAR"';                                                                                                        
+
+        vr_tab_historico('0830DEPOS.ONLIN').nrctaori := 1179;
+        vr_tab_historico('0830DEPOS.ONLIN').nrctades := 4894;
+        vr_tab_historico('0830DEPOS.ONLIN').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. DEPOSITO ON LINE NAO INTEGRADA NA C/C ITG pr_nrctaitg - A REGULARIZAR"';                                                                                                        
+
+        vr_tab_historico('0870TRANSF.ON L').nrctaori := 1179;
+        vr_tab_historico('0870TRANSF.ON L').nrctades := 4894;
+        vr_tab_historico('0870TRANSF.ON L').dsrefere := '"DEBITO C/C pr_nrdctabb B.BRASIL REF. TRANSFERENCIA ON LINE NAO INTEGRADO NA C/C ITG pr_nrctaitg - A REGULARIZAR"';                                                                                                        
+
+        vr_tab_historico('0900REDE HIPER').nrctaori := 1179;
+        vr_tab_historico('0900REDE HIPER').nrctades := 4894;
+        vr_tab_historico('0900REDE HIPER').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. REDE HIPER NAO INTEGRADA NA C/C ITG pr_nrctaitg - A REGULARIZAR"';                                                                                                        
+
+        vr_tab_historico('795CONTR CDC I').nrctaori := 1179;
+        vr_tab_historico('795CONTR CDC I').nrctades := 4894;
+        vr_tab_historico('795CONTR CDC I').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. CREDITO CDA NAO INTEGRADO NA C/C ITG pr_nrctaitg - A REGULARIZAR"';                                                                                                        
+        
      END;
 
      --Funcao para verificar conta integracao
@@ -1057,6 +1212,36 @@ BEGIN
          --Sair do programa
          RAISE vr_exc_saida;
      END;
+     
+     -- Retorna linha cabeçalho arquivo Radar ou Matera
+     FUNCTION fn_set_cabecalho(pr_inilinha IN VARCHAR2
+                              ,pr_dtarqmv  IN DATE
+                              ,pr_dtarqui  IN DATE
+                              ,pr_origem   IN NUMBER      --> Conta Origem
+                              ,pr_destino  IN NUMBER      --> Conta Destino
+                              ,pr_vltotal  IN NUMBER      --> Soma total de todas as agencias
+                              ,pr_dsconta  IN VARCHAR2)   --> Descricao da conta
+                              RETURN VARCHAR2 IS
+     BEGIN
+       RETURN pr_inilinha --> Identificacao inicial da linha
+            ||TO_CHAR(pr_dtarqmv,'YYMMDD')||',' --> Data AAMMDD do Arquivo
+            ||TO_CHAR(pr_dtarqui,'DDMMYY')||',' --> Data DDMMAA
+            ||pr_origem||','                    --> Conta Origem
+            ||pr_destino||','                   --> Conta Destino
+            ||TRIM(TO_CHAR(pr_vltotal,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','
+            ||'5210'||','
+            ||pr_dsconta;
+     END fn_set_cabecalho;
+      
+     -- Retorna linha gerencial arquivo Radar ou Matera
+     FUNCTION fn_set_gerencial(pr_cdagenci in number
+                              ,pr_vlagenci in number)  
+                              RETURN VARCHAR2 IS
+     BEGIN
+       RETURN lpad(pr_cdagenci,3,0)||',' 
+            ||TRIM(TO_CHAR(pr_vlagenci,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'));
+     END fn_set_gerencial;      
+
 
      --Procedure para enviar email
      PROCEDURE pc_envia_email (pr_cdcooper IN crapcop.cdcooper%type
@@ -1272,7 +1457,7 @@ BEGIN
 
          IF vr_nrdctabb = vr_rel_nrdctabb    AND
             INSTR(vr_dshsttrf,SUBSTR(vr_dshistor,01,04)) = 0 AND
-            vr_dshistor not in ('0144TRANSF AGENDADA','0144TRANSFERENCIA','0729TRANSFERENCIA') THEN
+            vr_dshistor not in ('0144TRANSF AGENDADA','0144TRANSFERENCIA','0729TRANSFERENCIA','0144TRANSF PERIODIC') THEN
            NULL;
          ELSIF INSTR(vr_dshstdep,SUBSTR(vr_dshistor,01,04)) > 0 THEN  /* Deposito */
            IF INSTR(vr_dshstblq,SUBSTR(vr_dshistor,01,04)) > 0 THEN /* Deposito Bloqueado */
@@ -1369,7 +1554,7 @@ BEGIN
            END CASE;
          ELSIF SUBSTR(vr_dshistor,01,04) = '0114' THEN /* Devolucoes recebidas */              
               vr_cdhistor := 351;
-         END IF;
+           END IF;
 
          IF gene0002.fn_existe_valor(vr_dshstdeb,SUBSTR(vr_dshistor,01,04),',') = 'S' OR
             gene0002.fn_existe_valor(vr_dshstest,SUBSTR(vr_dshistor,01,04),',') = 'S' THEN
@@ -1409,6 +1594,33 @@ BEGIN
            IF pr_cdcooper in (1,13) AND
              (rw_crapdat.dtmvtolt >= to_date('11/18/2014','MM/DD/RRRR')   AND
               rw_crapdat.dtmvtolt <= to_date('11/30/2014','MM/DD/RRRR'))  THEN
+             -- montar arquivo de rejeitados
+             vr_dslinha :=  to_char(rw_rej.dtmvtolt,'MM/DD/RRRR')          ||';'||
+                            nvl(to_char(rw_rej.dtrefere,'MM/DD/RRRR'),' ') ||';'||
+                            rw_rej.cdagenci ||';'||
+                            rw_rej.cdbccxlt ||';'||
+                            rw_rej.nrdolote ||';'||
+                            rw_rej.nrdconta ||';'||
+                            rw_rej.nrdctabb ||';'||
+                            rw_rej.nrdctitg ||';'||
+                            rw_rej.nrdocmto ||';'||
+                            vr_cdhistor     ||';'||
+                            rw_rej.vllanmto ||';'||
+                            rw_rej.cdpesqbb ||';'||
+                            rw_rej.cdcooper ||';'||
+                            rw_rej.nrseqdig ||';'||
+                            rw_rej.indebcre ||';'||
+                            nvl(vr_dsliblan,' ') ||';';
+             -- incluir no clob
+             gene0002.pc_escreve_xml(vr_clob_rej,vr_char_rej,vr_dslinha||chr(13)||chr(10));
+           END IF;
+
+           
+           /* Gerar arquivo da incorporacao da Transulcred para Transpocred
+              somente no perido que as duas ctas estao ativas */
+           IF pr_cdcooper = 9 AND
+             (rw_crapdat.dtmvtolt >= to_date('12/12/2016','MM/DD/RRRR')   AND
+              rw_crapdat.dtmvtolt <= to_date('12/31/2016','MM/DD/RRRR'))  THEN
              -- montar arquivo de rejeitados
              vr_dslinha :=  to_char(rw_rej.dtmvtolt,'MM/DD/RRRR')          ||';'||
                             nvl(to_char(rw_rej.dtrefere,'MM/DD/RRRR'),' ') ||';'||
@@ -1532,6 +1744,25 @@ BEGIN
 
          END IF;
 
+         /* Gerar arquivo da incorporacao da Transulcred para Transpocred
+              somente no perido que as duas ctas estao ativas */
+         IF pr_cdcooper = 9 AND
+           (rw_crapdat.dtmvtolt >= to_date('12/12/2016','MM/DD/RRRR')   AND
+            rw_crapdat.dtmvtolt <= to_date('12/31/2016','MM/DD/RRRR'))  THEN
+
+           -- descarregar buffer
+           gene0002.pc_escreve_xml(vr_clob_rej,vr_char_rej,'',TRUE);
+
+           /*geração temporaria do arquivo devido a migração da transulcred */
+           gene0002.pc_clob_para_arquivo(pr_clob    => vr_clob_rej,
+                                         pr_caminho => gene0001.fn_diretorio(pr_tpdireto => 'M' --> Micros
+                                                                            ,pr_cdcooper => 3 --> cecred
+                                                                            ,pr_nmsubdir => 'lan444'),
+                                         pr_arquivo => 'RegistrosRejeitadosMigracao_'||lpad(pr_cdcooper,2,'0')||'.lst',
+                                         pr_des_erro=> vr_dscritic);
+
+         END IF;
+
          -- Liberando a mem?ria alocada pro CLOB
          dbms_lob.close(vr_des_xml);
          dbms_lob.freetemporary(vr_des_xml);
@@ -1561,7 +1792,7 @@ BEGIN
      pr_cdcritic:= NULL;
      pr_dscritic:= NULL;
 
-     --Atribuir o nome do programa que esta¡ executando
+     --Atribuir o nome do programa que esta executando
      vr_cdprogra:= 'CRPS444';
 
      -- Incluir nome do modulo logado
@@ -1571,9 +1802,9 @@ BEGIN
      -- Verifica se a cooperativa esta cadastrada
      OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
      FETCH cr_crapcop INTO rw_crapcop;
-     -- Se nÃo encontrar
+     -- Se não encontrar
      IF cr_crapcop%NOTFOUND THEN
-       -- Fechar o cursor pois havera¡ raise
+       -- Fechar o cursor pois havera raise
        CLOSE cr_crapcop;
        -- Montar mensagem de critica
        vr_cdcritic:= 651;
@@ -1729,6 +1960,31 @@ BEGIN
        END IF;
      END IF;
 
+     /* para a cooperativa TRANSPOCRED, é necessario importar também os arquivos
+        da cooperativa 17, incorporada */
+     IF pr_cdcooper = 9 THEN
+       /*  Le tabela com as codigo do convenio do Banco do Brasil com a Coop.  */
+       vr_dstextab:= TABE0001.fn_busca_dstextab(pr_cdcooper => 17
+                                               ,pr_nmsistem => 'CRED'
+                                               ,pr_tptabela => 'GENERI'
+                                               ,pr_cdempres => 0
+                                               ,pr_cdacesso => 'COMPEARQBB'
+                                               ,pr_tpregist => 444);
+
+       --Se nao encontrou
+       IF trim(vr_dstextab) IS NULL THEN
+         vr_cdcritic:= 55;
+         vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+         --Complementar mensagem
+         vr_dscritic := vr_dscritic||' (COMPEARQBB)';
+         --Levantar Excecao
+         RAISE vr_exc_saida;
+       ELSE
+         --Codigo Convenio da Transulcred
+         vr_cdconven_17:= gene0002.fn_char_para_number(SUBSTR(vr_dstextab,1,9));
+       END IF;
+     END IF;
+
      --Carregar lancamentos
      FOR rw_craplcm_carga IN cr_craplcm_carga (pr_cdcooper => pr_cdcooper
                                               ,pr_dtmvtolt => rw_crapdat.dtmvtolt
@@ -1802,9 +2058,9 @@ BEGIN
                      gene0002.fn_mask(vr_cdconven,'999999999')||'%';
 
        --Listar arquivos
-       gene0001.pc_lista_arquivos(pr_path    => vr_caminho_compbb
-                                 ,pr_pesq    => vr_nomedarq
-                                 ,pr_listarq => vr_listadir
+       gene0001.pc_lista_arquivos(pr_path     => vr_caminho_compbb
+                                 ,pr_pesq     => vr_nomedarq
+                                 ,pr_listarq  => vr_listadir
                                  ,pr_des_erro => vr_dscritic);
        -- Se houve erro
        IF vr_dscritic IS NOT NULL THEN
@@ -2030,6 +2286,84 @@ BEGIN
            END LOOP;
          END IF; --vr_tab_arquivo.count
        END IF; --  fim verificação arquivos credimilsul
+
+       
+       -----------------------------------------------------------
+       ------------- VERIFICAR ARQUIVO TRANSULCRED ---------------
+       -----------------------------------------------------------
+       IF pr_cdcooper = 9 THEN
+         --Nome filtro pesquisa
+         vr_nomedarq:= 'deb558.bco%' ||to_char(vr_dtleiarq,'DDMMYY')||'%'||
+                       gene0002.fn_mask(vr_cdconven_17,'999999999')||'%';
+
+         --Listar arquivos
+         gene0001.pc_lista_arquivos(pr_path    => vr_caminho_compbb
+                                   ,pr_pesq    => vr_nomedarq
+                                   ,pr_listarq => vr_listadir
+                                   ,pr_des_erro => vr_dscritic);
+         -- Se houve erro
+         IF vr_dscritic IS NOT NULL THEN
+           -- Apenas enviar ao log
+           btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                     ,pr_ind_tipo_log => 2 -- Erro tratato
+                                     ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                      || vr_cdprogra || ' --> '
+                                                      || vr_dscritic );
+           -- Limpar a critica
+           vr_dscritic := null;
+         END IF;
+
+         -- limpar temptable de arquivos
+         vr_tab_arquivo.delete;
+
+         --Carregar a lista de arquivos na temp table
+         vr_tab_arquivo:= GENE0002.fn_quebra_string(pr_string => vr_listadir);
+
+         --Nome arquivo destino (consolidado)
+         vr_nomedarq:= 'deb558_444_'||to_char(vr_dtleiarq,'YYYYMMDD')||'_TRANSULCRED.bb';
+
+         --Se encontrou arquivos
+         IF vr_tab_arquivo.Count > 0 THEN
+           --Percorrer todos os arquivos encontrados para gerar um unico arquivo deb558_444
+           -- para a transulcred.
+           FOR idx IN vr_tab_arquivo.FIRST..vr_tab_arquivo.LAST LOOP
+             --Verificar se o arquivo existe
+             IF GENE0001.fn_exis_arquivo(vr_caminho_compbb||'/'||vr_tab_arquivo(idx)) THEN
+               --Concatenar o conteudo do arquivo lido no arquivo de destino
+               vr_comando:= 'cat '||vr_caminho_compbb||'/'||vr_tab_arquivo(idx)||' >> '||
+                            vr_caminho_integra||'/'||vr_nomedarq||' 2> /dev/null';
+
+               --Executar o comando no unix
+               GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                                    ,pr_des_comando => vr_comando
+                                    ,pr_typ_saida   => vr_typ_saida
+                                    ,pr_des_saida   => vr_dscritic);
+               --Se ocorreu erro dar RAISE
+               IF vr_typ_saida = 'ERR' THEN
+                 vr_dscritic:= 'Não foi possivel executar comando unix. '||vr_comando;
+                 RAISE vr_exc_saida;
+               END IF;
+             END IF;
+
+             -- Comando para remover o arquivo movido do diretorio compbb
+             vr_comando:= 'rm '||vr_caminho_compbb||'/'||vr_tab_arquivo(idx)||' 2> /dev/null';
+
+             --Executar o comando no unix
+             GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                                  ,pr_des_comando => vr_comando
+                                  ,pr_typ_saida   => vr_typ_saida
+                                  ,pr_des_saida   => vr_dscritic);
+             --Se ocorreu erro dar RAISE
+             IF vr_typ_saida = 'ERR' THEN
+               vr_dscritic:= 'Não foi possível executar comando unix. '||vr_comando;
+               RAISE vr_exc_saida;
+             END IF;
+
+             -- encontrou arquivo
+             vr_existe_arq := TRUE;
+           END LOOP;
+         END IF; --vr_tab_arquivo.count
+       END IF; --  fim verificação arquivos transulcred
 
        -- Senão encontrou nenhum arquivo, deve abortar programa
        IF NOT vr_existe_arq THEN
@@ -2394,7 +2728,7 @@ BEGIN
          vr_nrdctitg_arq := SUBSTR(vr_setlinha,34,8);
 
          -- se for processo da scrcred e o
-         -- arquivo importado for ca concredi
+         -- arquivo importado for da  credimilsul
          IF pr_cdcooper = 13 AND
             vr_tab_nmarqint(vr_contaarq) like '%_CREDIMILSUL%' THEN
 
@@ -2404,6 +2738,31 @@ BEGIN
            OPEN cr_craptco_itg (pr_cdcooper => pr_cdcooper
                                ,pr_nrdctitg => vr_nrdctitg_arq
                                ,pr_cdcopant => 15);
+           FETCH cr_craptco_itg INTO rw_craptco_itg;
+
+           -- se encontrar é necessario buscar a nova conta itg da conta
+           -- na nova cooperativa
+           IF cr_craptco_itg%FOUND THEN
+             vr_fcraptco_itg := TRUE;
+             IF vr_tab_nrdconta.exists(lpad(rw_craptco_itg.nrdconta,10,'0')) THEN
+               vr_nrdctitg_arq := vr_tab_nrdconta(lpad(rw_craptco_itg.nrdconta,10,'0')).nrdctitg;
+             END IF;
+           END IF;
+           CLOSE cr_craptco_itg;
+         END IF;
+
+         
+         -- se for processo da transpocred e o
+         -- arquivo importado for da transulcred
+         IF pr_cdcooper = 9 AND
+            vr_tab_nmarqint(vr_contaarq) like '%_TRANSULCRED%' THEN
+
+           vr_nrdctitg_arq := SUBSTR(vr_setlinha,34,8);
+
+           -- Verificar se é uma conta migrada
+           OPEN cr_craptco_itg (pr_cdcooper => pr_cdcooper
+                               ,pr_nrdctitg => vr_nrdctitg_arq
+                               ,pr_cdcopant => 17);
            FETCH cr_craptco_itg INTO rw_craptco_itg;
 
            -- se encontrar é necessario buscar a nova conta itg da conta
@@ -2458,7 +2817,8 @@ BEGIN
                IF SUBSTR(vr_setlinha,123,1) <> '*' AND
                   vr_dshistor NOT IN ('0144TRANSF AGENDADA',
                                       '0144TRANSFERENCIA',
-                                      '0729TRANSFERENCIA') THEN
+                                      '0729TRANSFERENCIA',
+                                      '0144TRANSF PERIODIC') THEN
                    CONTINUE;
                END IF;
              END IF;
@@ -2519,7 +2879,8 @@ BEGIN
              IF vr_dshistor <> '0144TRF SEM CPMF'    AND
                vr_dshistor <> '0144TRANSF AGENDADA' AND
                vr_dshistor <> '0144TRANSFERENCIA'   AND
-               vr_dshistor <> '0729TRANSFERENCIA'   THEN
+               vr_dshistor <> '0729TRANSFERENCIA'   AND
+               vr_dshistor <> '0144TRANSF PERIODIC' THEN
 
                 /* B.Brasil modificou historico TEC SALARIO*/
                IF vr_dshistor = '0729TRANSF.CTA.CENT' AND SUBSTR(vr_nrdctabb, 1, length(vr_nrdocmto)) = vr_nrdocmto THEN
@@ -2590,7 +2951,7 @@ BEGIN
          /*   Outros Historicos Lancados na conta Centralizadora  */
          IF vr_nrdctabb = vr_rel_nrdctabb AND
             INSTR(vr_dshsttrf,SUBSTR(vr_dshistor,01,04)) = 0 AND
-            vr_dshistor NOT IN ('0144TRANSF AGENDADA','0144TRANSFERENCIA','0729TRANSFERENCIA') THEN
+            vr_dshistor NOT IN ('0144TRANSF AGENDADA','0144TRANSFERENCIA','0729TRANSFERENCIA','0144TRANSF PERIODIC') THEN
            vr_cdcritic:= 245;
          ELSIF INSTR(vr_dshstdep,SUBSTR(vr_dshistor,01,04)) > 0 THEN /* Deposito */
            vr_flgdepos:= TRUE;
@@ -2795,6 +3156,81 @@ BEGIN
              END IF;
            END IF; -- Fim vr_tab_nrdctitg
          END IF; -- Fim pr_cdcooper = 1
+
+         
+         /* tratar migração da 17-transulcred para 9-transpocred*/
+         IF pr_cdcooper = 9 AND
+           (rw_crapdat.dtmvtolt >= to_date('12/12/2016','MM/DD/RRRR')   AND
+            rw_crapdat.dtmvtolt <= to_date('12/31/2016','MM/DD/RRRR'))  THEN
+           --Localizar assosiado pelo numero integraçaõ
+           IF vr_tab_nrdctitg.EXISTS(lpad(vr_nrdctitg_arq,10,'0'))  THEN
+
+             --Selecionar transferencias entre cooperativas inativas
+             OPEN cr_craptco_i (pr_cdcooper => pr_cdcooper
+                               ,pr_nrdconta => vr_tab_nrdctitg(lpad(vr_nrdctitg_arq,10,'0')).nrdconta);
+             --Posicionar primeiro registro
+             FETCH cr_craptco_i INTO rw_craptco_i;
+             --Se encontrou
+             IF cr_craptco_i%NOTFOUND THEN
+               close cr_craptco_i;
+             ELSE
+               close cr_craptco_i;
+               --Gravar rejeitado
+               BEGIN
+                 --Montar data aviso
+                 IF trim(vr_dtrefere) IS NOT NULL THEN
+                   --Recebe data referencia
+                   vr_dtdaviso:= to_date(SUBSTR(vr_dtrefere,1,10),'DD/MM/YYYY');
+                 ELSE
+                   --Recebe data movimento
+                   vr_dtdaviso:= rw_crapdat.dtmvtolt;
+                 END IF;
+
+                 INSERT INTO CRAPREJ
+                             ( craprej.dtmvtolt,
+                               craprej.nrdconta,
+                               craprej.cdagenci,
+                               craprej.nrdctabb,
+                               craprej.cdbccxlt,
+                               craprej.nrdctitg,
+                               craprej.nrseqdig,
+                               craprej.dshistor,
+                               craprej.cdpesqbb,
+                               craprej.nrdocmto,
+                               craprej.vllanmto,
+                               craprej.indebcre,
+                               craprej.dtrefere,
+                               craprej.cdcritic,
+                               craprej.dtdaviso,
+                               craprej.tpintegr,
+                               craprej.cdcooper,
+                               craprej.cdempres )
+                       VALUES( rw_crapdat.dtmvtolt,    -- craprej.dtmvtolt
+                               nvl(rw_craptco_i.nrctaant,0),  -- craprej.nrdconta
+                               nvl(rw_craptco_i.cdageant,0),  -- craprej.cdagenci
+                               nvl(rw_craptco_i.nrctaant,0),  -- craprej.nrdctabb
+                               1,                      -- craprej.cdbccxlt
+                               rw_craptco_i.nrdctitg,  -- craprej.nrdctitg
+                               nvl(vr_nrseqint,0),            -- craprej.nrseqdig
+                               RPad(vr_dshistor,30,' ')||vr_dsageori,   -- craprej.dshistor
+                               nvl(vr_cdpesqbb,''),            -- craprej.cdpesqbb
+                               nvl(vr_nrdocmto,0),            -- craprej.nrdocmto
+                               nvl(vr_vllanmto,0),            -- craprej.vllanmto
+                               vr_indebcre,            -- craprej.indebcre
+                               vr_dtrefere,            -- craprej.dtrefere
+                               999,                    -- craprej.cdcritic
+                               vr_dtdaviso,            -- craprej.dtdaviso
+                               vr_contaarq,            -- craprej.tpintegr
+                               pr_cdcooper,            -- craprej.cdcooper
+                               -- usado o campo cdempres para passar o cdcopant
+                               nvl(rw_craptco_i.cdcopant,0)); --craprej.cdempres
+               END;
+
+               continue; -- proximo registro
+
+             END IF;
+           END IF; -- Fim vr_tab_nrdctitg
+         END IF; -- Fim pr_cdcooper = 9
 
          --Se nao ocorreu erro e for cheque
          IF vr_cdcritic = 0 AND vr_flgchequ THEN
@@ -3269,9 +3705,9 @@ BEGIN
            END IF;
 
            /* Devolucoes recebidas 0114*/
-           IF vr_cdcritic = 0 AND vr_flgdevol THEN                          
-             vr_cdhistor:= 351;
-             vr_cdpesqbb:= ' '; /*Limpo o cdpesqbb para que qdo for este historico ele nao apareca no extrato*/
+           IF vr_cdcritic = 0 AND vr_flgdevol THEN             
+                vr_cdhistor:= 351;
+                vr_cdpesqbb:= ' '; /*Limpo o cdpesqbb para que qdo for este historico ele nao apareca no extrato*/
 
              vr_nrdocmt2:= vr_nrdocmto;
              WHILE TRUE LOOP
@@ -4630,6 +5066,34 @@ BEGIN
            END IF;
            --Se for o primeiro
            IF vr_flgfirst THEN
+             
+             -- Busca do diretório onde ficará o arquivo
+             vr_nom_diretorio := gene0001.fn_diretorio(pr_tpdireto => 'C', -- /usr/coop
+                                                       pr_cdcooper => pr_cdcooper,
+                                                       pr_nmsubdir => 'contab');
+         
+             -- Busca do diretório onde o Radar ou Matera pegará o arquivo                                          
+             vr_nom_dir_copia := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                          ,pr_cdcooper => 0
+                                                          ,pr_cdacesso => 'DIR_ARQ_CONTAB_X');
+                                                          
+             
+             vr_nmarquiv := to_char(rw_crapdat.dtmvtolt,'YYMMDD')||'_'||LPAD(pr_cdcooper,2,0)||'_CRITICAITG.txt';
+             -- Tenta abrir o arquivo de log em modo gravacao
+             gene0001.pc_abre_arquivo(pr_nmdireto => vr_nom_diretorio     --> Diretório do arquivo
+                                     ,pr_nmarquiv => vr_nmarquiv          --> Nome do arquivo
+                                     ,pr_tipabert => 'W'                  --> Modo de abertura (R,W,A)
+                                     ,pr_utlfileh => vr_input_filectb     --> Handle do arquivo aberto
+                                     ,pr_des_erro => vr_dscritic);        --> Erro
+             
+             IF vr_dscritic IS NOT NULL THEN
+               vr_cdcritic := 0; 
+               RAISE vr_exc_saida;
+             END IF;
+             
+             --Inicia PL Table com lista de histórios e informações para cada um deles
+             pc_inicia_historico;                                                          
+           
              vr_flgfirst:= FALSE;
              vr_flgerros:= TRUE;
            END IF;
@@ -4708,7 +5172,86 @@ BEGIN
                   <dscritic>'||substr(vr_dscritic,1,29)||'</dscritic>
                   <contareg>'||vr_tot_contareg||'</contareg>
                </rejeitado>');
+           
+           --Se histórico está na PL Table gera linha no arquivo para Radar/Matera    
+           IF vr_tab_historico.exists(vr_dshistor) THEN   
+           
+             vr_setlinha_ctb := fn_set_cabecalho('20'
+                                                ,rw_crapdat.dtmvtolt
+                                                ,rw_crapdat.dtmvtolt
+                                                ,vr_tab_historico(vr_dshistor).nrctaori
+                                                ,vr_tab_historico(vr_dshistor).nrctades
+                                                ,rw_craprej_tot.vllanmto
+                                                ,replace(replace(vr_tab_historico(vr_dshistor).dsrefere,
+                                                                'pr_nrdctabb',
+                                                                 TRIM(gene0002.fn_mask_conta(vr_rel_nrdctabb))),
+                                                         'pr_nrctaitg',
+                                                         TRIM(gene0002.fn_mask_conta(rw_craprej_tot.nrdctabb))));
+                                               
+             gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_filectb --> Handle do arquivo aberto
+                                           ,pr_des_text => vr_setlinha_ctb); --> Texto para escrita
+             
+             --Criar linha gerencial para cada Agencia
+             IF vr_dshistor = '0231TAR MANUT C'THEN
+               
+               --Ratear valor igualmente para cada agencia para gera linha gerencial
+               FOR rw_crapage IN cr_crapage LOOP
+                 --Calcula Rateio
+                 IF rw_crapage.linha = 1 THEN  
+                   vr_vllctage := ROUND((rw_craprej_tot.vllanmto / rw_crapage.qt_agencia),2);  
+                 END IF; 
+                 
+                 --Verifica se valor rateado acumulado não fica maior ou menor que total do lançamento
+                 --Caso haja diferença acerta no último PA
+                 IF rw_crapage.qt_agencia = rw_crapage.linha THEN
+                   IF (vr_vllctacm + vr_vllctage) <> rw_craprej_tot.vllanmto THEN
+                     vr_vllctage := rw_craprej_tot.vllanmto - vr_vllctacm;
+                   END IF; 
+                 END IF; 
+                 
+                 --Gera linha gerencial
+                 vr_setlinha_ctb := fn_set_gerencial(pr_cdagenci => rw_crapage.cdagenci
+                                                    ,pr_vlagenci => vr_vllctage);
+                                                    
+                 gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_filectb --> Handle do arquivo aberto
+                                               ,pr_des_text => vr_setlinha_ctb); --> Texto para escrita                                                    
+                 
+                 
+                 vr_vllctacm := vr_vllctacm + vr_vllctage;
+                 
+               END LOOP;  
+               
+             END IF;
+                     
+           END IF;           
+           
          END LOOP;
+         
+         IF NOT vr_flgfirst THEN
+           -- Fechar Arquivo
+           BEGIN
+              gene0001.pc_fecha_arquivo(pr_utlfileh => vr_input_filectb); --> Handle do arquivo aberto;
+           EXCEPTION
+              WHEN OTHERS THEN
+              -- Apenas imprimir na DMBS_OUTPUT e ignorar o log
+              vr_cdcritic := 0;
+              vr_dscritic := 'Problema ao fechar o arquivo <'||vr_nom_diretorio||'/'||vr_nmarquiv||'>: ' || SQLERRM;
+              RAISE vr_exc_saida;
+           END;
+           
+          -- Copia o arquivo gerado para o diretório final convertendo para DOS
+          gene0001.pc_oscommand_shell(pr_des_comando => 'ux2dos '||vr_nom_diretorio||'/'||vr_nmarquiv||' > '||vr_nom_dir_copia||'/'||vr_nmarquiv||' 2>/dev/null',
+                                      pr_typ_saida   => vr_typ_said,
+                                      pr_des_saida   => vr_dscritic);
+          -- Testar erro
+          if vr_typ_said = 'ERR' then
+             vr_dscritic := 'Erro ao copiar o arquivo '||vr_nmarquiv||': '||vr_dscritic;
+             raise vr_exc_saida;
+          end if;
+           
+           
+         END IF;
+         
          -- Inicilizar as informacoes do XML
          pc_escreve_xml('</rejeitados>');
 
@@ -4924,8 +5467,8 @@ BEGIN
 
      END LOOP; /*  Fim do DO .. TO  --  Arquivos a integrar  */
 
-     /* Gera relatorio somente para Viacredi e SCRCRED */
-     IF pr_cdcooper in (1,13) THEN
+     /* Gera relatorio somente para Viacredi, SCRCRED e Transpocred */
+     IF pr_cdcooper in (1,13,9) THEN
        --Executar relatorio
        pc_imprime_rel_414_99 (pr_cdcooper => pr_cdcooper
                              ,pr_dtmvtolt => rw_crapdat.dtmvtolt
