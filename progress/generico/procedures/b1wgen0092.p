@@ -169,6 +169,10 @@
               17/01/2017 - Retirar validacao para a TIM, historico 834, par_cdrefere < 1000000000
                            (Lucas Ranghetti #581878)
                            
+              10/05/2017 - Na busca onde o convenio tem dois codigos na procedure 
+                           busca_convenios_codbarras foi incluido para verificar tbem
+                           AGUAS DE GUARAMIRIM (Tiago #640336).
+                           
               22/05/2017 - Caso ultrapasse o horario parametrizado efetuar tratamento conforme a
                            inclusao ja faz (Lucas Ranghetti #669864)
                            
@@ -1618,7 +1622,7 @@ PROCEDURE grava-dados:
     DEF VAR aux_nmdcampo AS CHAR                                    NO-UNDO.   
     DEF VAR aux_dsnomcnv AS CHAR                                    NO-UNDO.    
     DEF VAR aux_tpoperac AS INTE                                    NO-UNDO.
-    DEF VAR aux_dtiniatr AS DATE                                    NO-UNDO.     
+    DEF VAR aux_dtiniatr AS DATE                                    NO-UNDO. 
     DEF VAR aux_nrctacns AS INTE                                    NO-UNDO. 
     DEF VAR aux_nrdrowid AS ROWID                                   NO-UNDO.
     
@@ -1697,7 +1701,7 @@ PROCEDURE grava-dados:
                                 ASSIGN aux_dscritic = "Tabela de limites nao encontrada.".
                                 UNDO Grava, LEAVE Grava.
                             END.
-                            
+                
                         /** Validar horario **/
                         IF  tt-limite.idesthor = 1 THEN /** Estourou horario   **/
                             DO:
@@ -2283,23 +2287,25 @@ PROCEDURE busca_convenios_codbarras:
         ELSE
             DO:      
                 /* Iremos buscar tambem o convenio aguas de schroeder(87) pois possui dois codigos e a 
-                   buasca anterior nao funciona */
+                   busca anterior nao funciona */
+                /*Incluido AGUAS DE GUARAMIRIM cdconven: 108 , cdempcon: 1085*/
                 FIND FIRST gnconve WHERE 
                            (gnconve.cdhiscxa = crapcon.cdhistor AND
                            gnconve.flgativo = TRUE              AND
                            gnconve.nmarqatu <> ""               AND
                            gnconve.cdhisdeb <> 0)               OR 
-                           (gnconve.cdconven = 87               AND
+                           ((gnconve.cdconven = 87  OR gnconve.cdconven = 108) AND
                            gnconve.flgativo = TRUE              AND
                            gnconve.nmarqatu <> ""               AND
                            gnconve.cdhisdeb <> 0                AND 
-                           crapcon.cdempcon = 1058)
+                           (crapcon.cdempcon = 1058 OR crapcon.cdempcon = 1085))
                            NO-LOCK NO-ERROR.
                                          
                 IF  NOT AVAILABLE gnconve THEN
                     NEXT.
                 ELSE 
-                    IF gnconve.cdconven <> 87 THEN
+                    IF gnconve.cdconven <> 87  AND
+					   gnconve.cdconven <> 108 THEN
                        ASSIGN aux_nmempcon = gnconve.nmempres.
             END.
 
@@ -2702,7 +2708,7 @@ PROCEDURE exclui_autorizacao:
            aux_dstransa = "Exclui autorizacao de debito em conta".
 
     EMPTY TEMP-TABLE tt-erro.
-        
+    
     Exclui: DO WHILE TRUE TRANSACTION ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
 
         FIND crapdat WHERE crapdat.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
@@ -2808,7 +2814,7 @@ PROCEDURE exclui_autorizacao:
                              END.
                     END.
             END.
-            
+                
             ASSIGN aux_dstransa = "Exclui autorizacao de debito em conta".
                 
             FIND CURRENT crapatr EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
