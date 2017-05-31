@@ -19,11 +19,6 @@
  *                05/01/2016 - Chamado 375708 - Estava permitindo selecionar o tipo de conta '-', gerando erro ao consultar a conta posteriormente.
  *
  *                07/01/2016 - Remover campo de Libera Credito Pre Aprovado (Anderson).
- *
- *			      15/07/2016 - Incluir rotina para atualizar o flg de devolução automatica - Melhoria 69(Lucas Ranghetti #484923)
- *
- *                01/12/2016 - P341-Automatização BACENJUD - Removido passagem do departamento como parametros
- *                             pois a BO não utiliza o mesmo (Renato Darosci)
  */
     session_start();
 	require_once('../../../includes/config.php');
@@ -64,9 +59,6 @@
     $idastcjt = (isset($_POST['idastcjt'])) ? $_POST['idastcjt'] : '' ;
 	$cdconsul = (isset($_POST['cdconsul'])) ? $_POST['cdconsul'] : '' ; //Melhoria 126
 	$cdageant = (isset($_POST['cdageant'])) ? $_POST['cdageant'] : '' ; //Melhoria 147
-
-	$cdopecor        = (isset($_POST['cdopecor'])) ? $_POST['cdopecor'] : '' ; //Melhoria 69
-	$flgdevolu_autom = (isset($_POST['flgdevolu_autom'])) ? $_POST['flgdevolu_autom'] : '' ; //Melhoria 69
 
 	if( $operacao == 'AV' ) validaDados();
 	
@@ -165,6 +157,7 @@
 		$xml .= '		<cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
 		$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';
 		$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';
+		$xml .= '		<dsdepart>'.$glbvars['dsdepart'].'</dsdepart>';		
 		$xml .= '		<nrdconta>'.$nrdconta.'</nrdconta>';
 		$xml .= '		<idseqttl>'.$idseqttl.'</idseqttl>';
 		$xml .= '		<cdagepac>'.$cdagepac.'</cdagepac>';
@@ -217,8 +210,8 @@
 		
 		// Verificação da revisão Cadastral
 		$msgAtCad = ( isset($xmlObjeto->roottag->tags[0]->attributes['MSGATCAD']) ) ? $xmlObjeto->roottag->tags[0]->attributes['MSGATCAD'] : '';
-		$chaveAlt = ( isset($xmlObjeto->roottag->tags[0]->attributes['CHAVEALT']) ) ? $xmlObjeto->roottag->tags[0]->attributes['CHAVEALT'] : '';
-		$tpAtlCad = ( isset($xmlObjeto->roottag->tags[0]->attributes['TPATLCAD']) ) ? $xmlObjeto->roottag->tags[0]->attributes['TPATLCAD'] : '';
+		$chaveAlt     = ( isset($xmlObjeto->roottag->tags[0]->attributes['CHAVEALT']) ) ? $xmlObjeto->roottag->tags[0]->attributes['CHAVEALT'] : '';
+		$tpAtlCad    = ( isset($xmlObjeto->roottag->tags[0]->attributes['TPATLCAD']) ) ? $xmlObjeto->roottag->tags[0]->attributes['TPATLCAD'] : '';
 
 		// Se é Validação
 		if( in_array($operacao,array('AV','VT','VG','VS','VE')) ) {
@@ -273,7 +266,7 @@
 		}
 		else { // Se é Inclusão	
 			// Melhoria 126
-		
+			if ($cdconsul != 0) {
 				$nmdeacao = "CADCON_TRANSFERE_CONTA";
 
 				$xml  = "";
@@ -299,43 +292,11 @@
 				if ($xmlObjeto->Erro->Registro->dscritic != "") {
 					$msgErro = $xmlObjeto->Erro->Registro->dscritic;
 					exibirErro("error",$msgErro,"Alerta - Ayllos","",false);
-				
+				}
 			}
 			//Fim Melhoria 126
 
-	        // Melhoria 69
-			$xml  = "";
-			$xml .= "<Root>";
-			$xml .= "  <Dados>";
-			$xml .= '       <cddopcao>A</cddopcao>';
-			$xml .= '       <cdcooper>'.$glbvars['cdcooper'].'</cdcooper>';
-			$xml .= '		<nrdconta>'.$nrdconta.'</nrdconta>';
-			$xml .= '       <flgdevolu_autom>'.$flgdevolu_autom.'</flgdevolu_autom>';
-			$xml .= '       <cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
-			$xml .= '       <cdopecor>'.$cdopecor.'</cdopecor>';
-			$xml .= "  </Dados>";
-			$xml .= "</Root>";
-
-			// Executa script para envio do XML
-			$xmlResult = mensageria($xml, "GRAVA_DEVOLU_AUTOM", 'GRAVA_DEVOLU_AUTOM_XML', $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"],  "</Root>");
-			$xmlObjeto1 = getObjectXML($xmlResult); 
-			
-			//-----------------------------------------------------------------------------------------------
-			// Controle de Erros
-			//-----------------------------------------------------------------------------------------------
-			if(strtoupper($xmlObjeto1->roottag->tags[0]->name == 'ERRO')){	
-			
-				$msgErro = $xmlObjeto1->roottag->tags[0]->cdata;
-				$nmdcampo = $xmlObjeto1->roottag->tags[0]->attributes["NMDCAMPO"];					
-				
-				if($msgErro == null || $msgErro == ''){
-					$msgErro = $xmlObjeto1->roottag->tags[0]->tags[0]->tags[4]->cdata;
-				}								
-				exibirErro('error',$msgErro,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);								
-			} 			
-			//Fim melhoria 69
-			
-			// Verificar se existe "Verificacaoo de Revisão Cadastral"
+			// Verificar se existe "Verificação de Revisão Cadastral"
 			if($msgAtCad!='' && $flgcadas != 'M') {		
 				exibirConfirmacao($msgAtCad,'Confirmação - Ayllos','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0074.p\',\'\',controlaOperacao(\'OC\'))','controlaOperacao(\'OC\')',false);
 			
