@@ -1,5 +1,4 @@
-CREATE OR REPLACE PROCEDURE CECRED.
-         pc_crps593 (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
+CREATE OR REPLACE PROCEDURE CECRED.pc_crps593 (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
                     ,pr_flgresta  IN PLS_INTEGER            --> Flag padrão para utilização de restart
                     ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
                     ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação
@@ -220,6 +219,9 @@ CREATE OR REPLACE PROCEDURE CECRED.
     -- controle se inseriu cheque no resumo
     vr_flgregis        BOOLEAN := FALSE;
       
+    -- Data Liberacao Projeto 300
+    vr_dtlibprj DATE;
+      
     --------------------------- SUBROTINAS INTERNAS --------------------------
       
     -- Subrotina para escrever texto na variável CLOB do XML
@@ -320,6 +322,14 @@ CREATE OR REPLACE PROCEDURE CECRED.
       END LOOP;-- fim loop
     END IF;  
       
+
+    -- Buscar data parametro de referencia liberacao projeto
+    vr_dtlibprj :=	to_date(GENE0001.fn_param_sistema (pr_cdcooper => 0
+                                                      ,pr_nmsistem => 'CRED'
+                                                      ,pr_cdacesso => 'DT_BLOQ_ARQ_DSC_CHQ')
+                                                      ,'DD/MM/RRRR');
+
+      
     -- Buscar cheques em custodia
     FOR rw_crapcst in cr_crapcst ( pr_cdcooper => pr_cdcooper,
                                    pr_dtmvtolt => rw_crapdat.dtmvtolt,
@@ -379,7 +389,10 @@ CREATE OR REPLACE PROCEDURE CECRED.
                                    pr_dtmvtolt => rw_crapdat.dtmvtolt,
                                    pr_dtlimite => vr_dtlimite ) LOOP
                                      
-        
+      IF rw_crapcdb.dtlibbdc >= vr_dtlibprj THEN
+        CONTINUE;
+      END IF;
+
       IF rw_crapcdb.dtlibera <= rw_crapdat.dtmvtopr THEN
         -- definir index do registro
         vr_index := lpad(rw_crapcdb.cdagenci,5,'0') ||'1'/*tpcheque*/||2/*tptabela*/|| 

@@ -9,6 +9,7 @@
 				 de cheque
 	                                                                  	 
 	 Alterações: 
+    * 001: [26/05/2017] Odirlei   (AMcom)  : Alterado para tipo de impressao 10 - Analise bordero - PRJ300 - Desconto de cheque
 	************************************************************************/
 	
 	session_start();
@@ -67,6 +68,9 @@
 		exit();
 	}
 
+    // Form com os dados para fazer a chamada da geração de PDF	
+    include("impressao_form_dscchq.php"); 
+    
 ?>
 
 <div id="divBorderosAnalise">

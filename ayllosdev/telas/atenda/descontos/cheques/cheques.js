@@ -28,6 +28,9 @@
  * 013: [09/09/2016] Lombardi  (CECRED) : Inclusao do botão "Desbloquear Inclusao de Bordero" para desbloquear inclusao de desconto de cheque. Projeto 300.
  * 014: [12/09/2016] Lombardi  (CECRED) : Inclusao do botão "Confirmar Novo Limite" para confirmar o novo limite que esta em estudo(Antiga LANCDC). Projeto 300.
  * 015: [16/12/2016] Reinert   (CECRED) : Alterações referentes ao projeto 300.
+ * 016: [26/05/2017] Odirlei   (AMcom)  : Alterado para tipo de impressao 10 - Analise bordero.
+ *                                        Desabilitado o campo nrctrlim na inclusao de limite. - PRJ300 - Desconto de cheque
+ 
  */
 
 var contWin    = 0;  // Variável para contagem do número de janelas abertas para impressos
@@ -289,6 +292,11 @@ function gerarImpressao(idimpres,limorbor,flgemail,fnfinish,flgrestr) {
 	var action = $("#frmImprimir").attr("action");
 	var callafter = "blockBackground(parseInt($('#divRotina').css('z-index')));";
 
+    //incluir no after para carregar os borderos
+    if (idimpres == 10) {
+       var callafter = callafter + "carregaBorderosCheques();";
+    }
+    
 	carregaImpressaoAyllos("frmImprimir",action,callafter);
 
 }
@@ -852,6 +860,7 @@ function validaNrContrato() {
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, validando n&uacute;mero do contrato ...");
 
+    /* Campo para confirmar numero removido	 
 	var antnrctr = $("#antnrctr","#frmDadosLimiteDscChq").val().replace(/\./g,"");
 
 	// Valida número do contrato
@@ -860,14 +869,13 @@ function validaNrContrato() {
 		showError("error","Confirme o n&uacute;mero do contrato.","Alerta - Ayllos","$('#antnrctr','#frmDadosLimiteDscChq').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
 	}
-
+	*/
 	$.ajax({
 		type: "POST",
 		url: UrlSite + "telas/atenda/descontos/cheques/cheques_limite_incluir_validaconfirma.php",
 		data: {
 			nrdconta: nrdconta,
             nrctrlim: $("#nrctrlim","#frmDadosLimiteDscChq").val().replace(/\./g,""),
-			antnrctr: antnrctr,
 			nrctaav1: 0,
 			nrctaav2: 0,
 			redirect: "script_ajax"
