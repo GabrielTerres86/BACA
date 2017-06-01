@@ -179,14 +179,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
    Sigla   : CRED
 
    Autor   : Jonata - RKAM
-   Data    : Maio/2017                       Ultima atualizacao: 
+   Data    : Maio/2017                       Ultima atualizacao: 01/06/2017
 
    Dados referentes ao programa:
 
    Frequencia: Diario (on-line).
    Objetivo  : Mostrar a tela MOVGRP para permitir o lançamento manual de contratos para geração das informações do Doc3040.
 
-   Alteracoes: 
+   Alteracoes: 01/06/2017 - Ajuste para retirar validação de valor do percentaul, poderá ser enviado valor zerado
+                            (Jonata - RKAM).
+           
   ---------------------------------------------------------------------------------------------------------------*/
   CURSOR cr_crapcop(pr_cdcooper IN crapcop.cdcooper%TYPE)IS
   SELECT crapcop.cdcooper
@@ -1519,14 +1521,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Jonata - RKAM
-    Data     : Maio/2017                           Ultima atualizacao:
+    Data     : Maio/2017                           Ultima atualizacao: 01/06/2017
     
     Dados referentes ao programa:
     
     Frequencia: -----
     Objetivo   : Realiza a alteração de moviemtnos da tela MOVRGP
     
-    Alterações : 
+    Alterações : 01/06/2017 - Ajuste para retirar validação de valor do percentaul, poderá ser enviado valor zerado
+                            (Jonata - RKAM).
+                            
     -------------------------------------------------------------------------------------------------------------*/                                
       
     CURSOR cr_movto_1(pr_cdcooper  IN tbrisco_provisgarant_movto.cdcooper%TYPE
@@ -1751,15 +1755,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
         
     END IF;
       
-    IF NVL(pr_perindexador,0) = 0 THEN
-        
-      -- Montar mensagem de critica
-      pr_nmdcampo := 'perindexador';
-      vr_dscritic := 'Percentual do indexador inválido.';
-      RAISE vr_exc_erro;
-        
-    END IF;
-    
     IF NVL(pr_vltaxa_juros,0) = 0 THEN
         
       -- Montar mensagem de critica
@@ -1970,7 +1965,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
             ,tbrisco_provisgarant_movto.nrcpfcgc = pr_nrcpfcgc
             ,tbrisco_provisgarant_movto.idorigem_recurso = pr_idorigem_recurso 
             ,tbrisco_provisgarant_movto.idindexador = pr_idindexador
-            ,tbrisco_provisgarant_movto.perindexador = pr_perindexador
+            ,tbrisco_provisgarant_movto.perindexador = nvl(pr_perindexador,0)
             ,tbrisco_provisgarant_movto.idgarantia = pr_idgarantia
             ,tbrisco_provisgarant_movto.vltaxa_juros = pr_vltaxa_juros
             ,tbrisco_provisgarant_movto.dtlib_operacao = vr_dtlib_operacao
@@ -2381,14 +2376,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Jonata - RKAM
-    Data     : Maio/2017                           Ultima atualizacao:
+    Data     : Maio/2017                           Ultima atualizacao: 01/06/2017
     
     Dados referentes ao programa:
     
     Frequencia: -----
     Objetivo   : Realiza a inclusão de moviemtnos da tela MOVRGP
     
-    Alterações : 
+    Alterações : 01/06/2017 - Ajuste para retirar validação de valor do percentaul, poderá ser enviado valor zerado
+                             (Jonata - RKAM).
+                            
     -------------------------------------------------------------------------------------------------------------*/                                
       
     CURSOR cr_movto_1(pr_cdcooper  IN tbrisco_provisgarant_movto.cdcooper%TYPE
@@ -2596,15 +2593,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
         
     END IF;
       
-    IF NVL(pr_perindexador,0) = 0 THEN
-        
-      -- Montar mensagem de critica
-      pr_nmdcampo := 'perindexador';
-      vr_dscritic := 'Percentual do indexador inválido.';
-      RAISE vr_exc_erro;
-        
-    END IF;
-    
     IF NVL(pr_vltaxa_juros,0) = 0 THEN
         
       -- Montar mensagem de critica
@@ -2836,7 +2824,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
                 ,pr_nrcpfcgc
                 ,pr_idorigem_recurso
                 ,pr_idindexador
-                ,pr_perindexador
+                ,nvl(pr_perindexador,0)
                 ,pr_idgarantia
                 ,pr_vltaxa_juros
                 ,vr_dtlib_operacao

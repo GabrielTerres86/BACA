@@ -1,11 +1,12 @@
 <?php
 /*!
- * FONTE        : alterar_movimento.php                    Última alteração:
- * CRIAÇÃO      : Jonata (RKAM)
- * DATA CRIAÇÃO : Maio/2017
- * OBJETIVO     : Rotina para alteração de movimentos da tela MOVRGP
+ * FONTE        : alterar_movimento.php                    Ãšltima alteraÃ§Ã£o: 01/06/2017
+ * CRIAÃ‡ÃƒO      : Jonata (RKAM)
+ * DATA CRIAÃ‡ÃƒO : Maio/2017
+ * OBJETIVO     : Rotina para alteraÃ§Ã£o de movimentos da tela MOVRGP
  * --------------
- * ALTERAÇÕES   :  
+ * ALTERAÃ‡Ã•ES   :  01/06/2017 - Ajuste para retirar validaÃ§Ã£o do valor pencentual, poderÃ¡ ser enviado valor zerado
+                                (Jonata - RKAM).
  *
  */
 ?>
@@ -19,7 +20,7 @@
     require_once('../../class/xmlfile.php');
     isPostMethod();
 
-    // Carrega permissões do operador
+    // Carrega permissÃµes do operador
     require_once('../../includes/carrega_permissoes.php');
 
     $cddopcao = (isset($_POST["cddopcao"])) ? $_POST["cddopcao"] : '';
@@ -88,7 +89,7 @@
 	
 	$xmlObjAlterar = getObjectXML($xmlResult);
 	
-	// Se ocorrer um erro, mostra crítica
+	// Se ocorrer um erro, mostra crÃ­tica
 	if (strtoupper($xmlObjAlterar->roottag->tags[0]->name) == "ERRO") {
 	
 		$msgErro  = $xmlObjAlterar->roottag->tags[0]->tags[0]->tags[4]->cdata;
@@ -107,23 +108,23 @@
 		
     function validaDados(){
 		
-		//Código da cooperativa selecionado
+		//CÃ³digo da cooperativa selecionado
         if (  $GLOBALS["cdcopsel"] == 0 ){
             exibirErro('error','C&oacute;digo da cooperativa inv&aacute;lido.','Alerta - Ayllos','$(\'input, select\',\'#frmDetalhes\').removeClass(\'campoErro\');focaCampoErro(\'nrcpfcgc\',\'frmDetalhes\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
         }
 		
-		//Data de referência
+		//Data de referÃªncia
         if (  $GLOBALS["dtrefere"] == '' ){
             exibirErro('error','Data de refer&ecirc;ncia inv&aacute;lido.','Alerta - Ayllos','$(\'input, select\',\'#frmDetalhes\').removeClass(\'campoErro\');focaCampoErro(\'nrcpfcgc\',\'frmDetalhes\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
         }
 		
 		
-		//Código do movimento
+		//CÃ³digo do movimento
         if (  $GLOBALS["idmovto_risco"] == 0 ){
             exibirErro('error','C&oacute;digo do movimento inv&aacute;lido.','Alerta - Ayllos','$(\'input, select\',\'#frmDetalhes\').removeClass(\'campoErro\');focaCampoErro(\'nrcpfcgc\',\'frmDetalhes\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
         }
 		
-		//Código do produto
+		//CÃ³digo do produto
         if (  $GLOBALS["idproduto"] == 0 ){
             exibirErro('error','C&oacute;digo do produto inv&aacute;lido.','Alerta - Ayllos','$(\'input, select\',\'#frmDetalhes\').removeClass(\'campoErro\');focaCampoErro(\'nrcpfcgc\',\'frmDetalhes\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
         }
@@ -133,62 +134,57 @@
             exibirErro('error','CPF/CNPJ inv&aacute;lido.','Alerta - Ayllos','$(\'input, select\',\'#frmDetalhes\').removeClass(\'campoErro\');focaCampoErro(\'nrcpfcgc\',\'frmDetalhes\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
         }
 
-		//Número da conta
+		//NÃºmero da conta
         if (  $GLOBALS["nrdconta"] == 0 ){
             exibirErro('error','Conta inv&aacute;lida.','Alerta - Ayllos','$(\'input, select\',\'#frmDetalhes\').removeClass(\'campoErro\');focaCampoErro(\'nrdconta\',\'frmDetalhes\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
         }
 		
-		//Número do contrato
+		//NÃºmero do contrato
         if (  $GLOBALS["nrctremp"] == 0 ){
             exibirErro('error','Contrato inv&aacute;lido.','Alerta - Ayllos','$(\'input, select\',\'#frmDetalhes\').removeClass(\'campoErro\');focaCampoErro(\'nrctremp\',\'frmDetalhes\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
         }
 		
-		//Código da garantia
+		//CÃ³digo da garantia
         if (  $GLOBALS["idgarantia"] == 0 ){
             exibirErro('error','C&oacute;digo da garantia inv&aacute;lida.','Alerta - Ayllos','$(\'input, select\',\'#frmDetalhes\').removeClass(\'campoErro\');focaCampoErro(\'idgarantia\',\'frmDetalhes\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
         }
 		
-		//Código de origem do recurso
+		//CÃ³digo de origem do recurso
         if (  $GLOBALS["idorigem_recurso"] == 0 ){
             exibirErro('error','C&oacute;digo de origem do recurso inv&aacute;lido.','Alerta - Ayllos','$(\'input, select\',\'#frmDetalhes\').removeClass(\'campoErro\');focaCampoErro(\'idorigem_recurso\',\'frmDetalhes\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
         }
 		
-		//Código de indexador
+		//CÃ³digo de indexador
         if (  $GLOBALS["idindexador"] == 0 ){
             exibirErro('error','C&oacute;digo do indexador inv&aacute;lido.','Alerta - Ayllos','$(\'input, select\',\'#frmDetalhes\').removeClass(\'campoErro\');focaCampoErro(\'idindexador\',\'frmDetalhes\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
         }
 		
-		//Percentual do indexador
-        if (  $GLOBALS["perindexador"] == 0 ){
-            exibirErro('error','Percentual do indexador inv&aacute;lido.','Alerta - Ayllos','$(\'input, select\',\'#frmDetalhes\').removeClass(\'campoErro\');focaCampoErro(\'perindexador\',\'frmDetalhes\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
-        }
-
 		//Valor da taxa de juros
         if (  $GLOBALS["vltaxa_juros"] == 0 ){
             exibirErro('error','Valor da taxa de juros inv&aacute;lida.','Alerta - Ayllos','$(\'input, select\',\'#frmDetalhes\').removeClass(\'campoErro\');focaCampoErro(\'vltaxa_juros\',\'frmDetalhes\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
         }
 		
-		//Data de liberação da operação
+		//Data de liberaÃ§Ã£o da operaÃ§Ã£o
         if (  $GLOBALS["dtlib_operacao"] == '' ){
             exibirErro('error','Data de libera&ccedil;&atilde;o da opera&ccedil;&atilde;o inv&aacute;lida.','Alerta - Ayllos','$(\'input, select\',\'#frmDetalhes\').removeClass(\'campoErro\');focaCampoErro(\'dtlib_operacao\',\'frmDetalhes\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
         }
 		
-		//Valor da operação
+		//Valor da operaÃ§Ã£o
         if (  $GLOBALS["vloperacao"] == 0 ){
             exibirErro('error','Valor da opera&ccedil;&atilde;o inv&aacute;lida.','Alerta - Ayllos','$(\'input, select\',\'#frmDetalhes\').removeClass(\'campoErro\');focaCampoErro(\'vloperacao\',\'frmDetalhes\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
         }
 		
-		//Código de natureza da operação
+		//CÃ³digo de natureza da operaÃ§Ã£o
         if (  $GLOBALS["idnat_operacao"] == 0){
             exibirErro('error','C&oacute;digo da natureza de opera&ccedil;&atilde;o inv&aacute;lida.','Alerta - Ayllos','$(\'input, select\',\'#frmDetalhes\').removeClass(\'campoErro\');focaCampoErro(\'idnat_operacao\',\'frmDetalhes\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
         }
 		
-		//Data de vencimento da operação
+		//Data de vencimento da operaÃ§Ã£o
         if (  $GLOBALS["dtvenc_operacao"] == '' ){
             exibirErro('error','Data de vencimento da opera&ccedil;&atilde;o inv&aacute;lida.','Alerta - Ayllos','$(\'input, select\',\'#frmDetalhes\').removeClass(\'campoErro\');focaCampoErro(\'dtvenc_operacao\',\'frmDetalhes\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
         }
 		
-		//Classificação da operação
+		//ClassificaÃ§Ã£o da operaÃ§Ã£o
         if (  $GLOBALS["cdclassifica_operacao"] == '' ){
             exibirErro('error','Classifica&ccedil;&atilde;o da opera&ccedil;&atilde;o inv&aacute;lida.','Alerta - Ayllos','$(\'input, select\',\'#frmDetalhes\').removeClass(\'campoErro\');focaCampoErro(\'cdclassifica_operacao\',\'frmDetalhes\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
         }		
