@@ -1275,7 +1275,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     -- Limpa a PLTABLE
     pr_tab_chq_bordero.DELETE;
     pr_tab_bordero_restri.DELETE;
-
+    
     BEGIN
       -- Buscar data parametro de referencia para calculo de juros
       vr_dtjurtab :=	to_date(GENE0001.fn_param_sistema (pr_cdcooper => 0
@@ -2274,7 +2274,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                         '<nmcheque></nmcheque>'||
                         '<dscpfcgc></dscpfcgc>');
         pc_escreve_xml( '</cheque>');
-
+        
         
       END IF;
 
@@ -4785,7 +4785,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 	vr_vlrendim NUMBER;               -- Valor de rendimento do cooperado
 	vr_przmxcmp NUMBER;               -- Data prazo máximo
 	
-    vr_nrcpfcgc NUMBER;
+  vr_nrcpfcgc NUMBER;
 	
 	-- Buscar todas as ocorrencias cadastradas
 	CURSOR cr_ocorrencias IS
@@ -4840,7 +4840,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 										 pr_cdbanchq IN crapcec.cdbanchq%TYPE,
 										 pr_cdagechq IN crapcec.cdagechq%TYPE,
 										 pr_nrctachq IN crapcec.nrctachq%TYPE,
-										 pr_nrcpfcgc IN crapcec.nrcpfcgc%TYPE)IS
+                     pr_nrcpfcgc IN crapcec.nrcpfcgc%TYPE)IS
 		SELECT cec.nrcpfcgc
           ,substr(to_char(cec.nrcpfcgc),1,LENGTH(cec.nrcpfcgc)-6) raizcnpj
 			FROM crapcec cec
@@ -4850,7 +4850,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			 AND cec.cdagechq = pr_cdagechq
 			 AND cec.nrctachq = pr_nrctachq
 			 AND cec.nrdconta = 0
-			 AND cec.nrcpfcgc = pr_nrcpfcgc;
+       AND cec.nrcpfcgc = pr_nrcpfcgc;
 	rw_crapcec  cr_crapcec%ROWTYPE;
 
   -- Verificar se o emitente é titular da conta
@@ -5424,10 +5424,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			-- Buscar emitente do cheque
 			OPEN cr_crapcec(pr_cdcooper => pr_cdcooper
 			               ,pr_cdcmpchq => pr_tab_cheques(vr_index).cdcmpchq
-						   ,pr_cdbanchq => pr_tab_cheques(vr_index).cdbanchq
-						   ,pr_cdagechq => pr_tab_cheques(vr_index).cdagechq
-						   ,pr_nrctachq => pr_tab_cheques(vr_index).nrctachq
-						   ,pr_nrcpfcgc => pr_tab_cheques(vr_index).nrcpfcgc);
+										 ,pr_cdbanchq => pr_tab_cheques(vr_index).cdbanchq
+										 ,pr_cdagechq => pr_tab_cheques(vr_index).cdagechq
+                       ,pr_nrctachq => pr_tab_cheques(vr_index).nrctachq
+                       ,pr_nrcpfcgc => pr_tab_cheques(vr_index).nrcpfcgc);
 			FETCH cr_crapcec INTO rw_crapcec;
 			
 			-- Se não encontrar emitente
@@ -5544,7 +5544,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			
         END IF;  
           
-			END IF;
+      END IF;    
 			
 			-- Se é necessário verificar prejuizo de emitente na cooperativa
 			IF vr_tab_lim_desconto(vr_inpessoa).Flpjzemi = 1 THEN
@@ -6268,7 +6268,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 					
 			FOR vr_contador IN 1..vr_qtdprazo LOOP
 				-- Efetuar cálculos de juros diários
-				vr_vldjuros := round(pr_tab_cheques.vlcheque * vr_txdiaria);
+				vr_vldjuros := round(vr_vlcheque * vr_txdiaria,2);
 				vr_vltotjur := vr_vltotjur + vr_vldjuros;					
 				vr_vlcheque := vr_vlcheque + vr_vldjuros;
 				vr_dtperiod := vr_dtperiod + 1;
@@ -8234,7 +8234,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 				END IF;
 				 
 				IF pr_tab_cheques(vr_index).dtlibera > rw_crapdat.dtmvtolt THEN
-          IF rw_crapbdc.dtlibbdc >= vr_dtjurtab THEN
+          IF rw_crapbdc.dtlibbdc > vr_dtjurtab THEN
 						-- Utilizar o modo de cálculo novo (juros simples)
 		        pc_calcular_bordero_simples(pr_cdcooper => pr_cdcooper --> Cooperativa
 																			 ,pr_nrdconta => pr_nrdconta --> Número da conta
