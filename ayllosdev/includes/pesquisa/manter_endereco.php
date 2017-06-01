@@ -6,6 +6,9 @@
  * OBJETIVO     : Rotina para validar/incluir os dados do ENDERECO
  *
  * ALTERAÇÕES   : 01/08/2011 - Adicionado campo de retorno caso ocorra erro, para se dar focus() no mesmo.
+
+                  25/05/2017 - Ajuste para retirar acentução das informações a serem enviadas para gravação do endereço
+				               (Adriano - SD 676347).
  */
 ?> 
 <?
@@ -19,12 +22,12 @@
 	// Guardo os parâmetos do POST em variáveis
 	$operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '' ;		
 	$nrcepend = (isset($_POST['nrcepend'])) ? $_POST['nrcepend'] : '';
-	$dstiplog = (isset($_POST['dstiplog'])) ? trim($_POST['dstiplog']) : '';
-	$nmreslog = (isset($_POST['nmreslog'])) ? trim($_POST['nmreslog']) : '';	
-	$nmresbai = (isset($_POST['nmresbai'])) ? trim($_POST['nmresbai']) : '';	
-	$nmrescid = (isset($_POST['nmrescid'])) ? trim($_POST['nmrescid']) : '';
+	$dstiplog = (isset($_POST['dstiplog'])) ? retiraAcentos(utf8_decode(trim($_POST['dstiplog']))) : '';
+	$nmreslog = (isset($_POST['nmreslog'])) ? retiraAcentos(utf8_decode(trim($_POST['nmreslog']))) : '';	
+	$nmresbai = (isset($_POST['nmresbai'])) ? retiraAcentos(utf8_decode(trim($_POST['nmresbai']))) : '';	
+	$nmrescid = (isset($_POST['nmrescid'])) ? retiraAcentos(utf8_decode(trim($_POST['nmrescid']))) : '';
 	$cdufende = (isset($_POST['cdufende'])) ? trim($_POST['cdufende']) : '';
-	$dscmplog = (isset($_POST['dscmplog'])) ? trim($_POST['dscmplog']) : '';
+	$dscmplog = (isset($_POST['dscmplog'])) ? retiraAcentos(utf8_decode(trim($_POST['dscmplog']))) : '';
 	
 	// Verifica os valores permitidos para operação
 	if(!in_array($operacao,array('S','V'))) exibirErro('error','O parâmetro operação inválido. Valor informado '.$operacao.'.','Alerta - Ayllos','bloqueiaFundo($(\'#divFormularioEndereco\'))',false);
@@ -35,7 +38,7 @@
 	$procedure = '';
 	if ( $operacao == 'V' ) {$procedure = 'valida-endereco-cep'; }
 	if ( $operacao == 'S' ) {$procedure = 'gravar-endereco-cep'; }
-	
+		
 	// Monta o xml dinâmico de acordo com a operação
 	$xml  = '';
 	$xml .= '<Root>';
