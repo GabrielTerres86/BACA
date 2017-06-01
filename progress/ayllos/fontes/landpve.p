@@ -304,8 +304,8 @@
                14/02/2017 - Alteracao para chamar pc_verifica_situacao_acordo. 
                             (Jaison/James - PRJ302)
 
-			   29/03/2017 - Ajutes para utilizar rotina a rotina pc_gerandb
-							(Jonata RKAM M311)
+			         29/03/2017 - Ajutes para utilizar rotina a rotina pc_gerandb
+							              (Jonata RKAM M311)
                             
                18/04/2017 - Incluir chamada da rotina do Oracle pc_gerandb ao inves
                             de chamar a include do PROGRESS (Lucas Ranghetti #652806)
@@ -1231,7 +1231,7 @@ DO WHILE TRUE:
                             ASSIGN aux_flgerros = TRUE
                                     glb_cdcritic = 598.
 
-					   ASSIGN aux_cdrefere = crapatr.cdrefere WHEN AVAIL crapatr.
+					             ASSIGN aux_cdrefere = crapatr.cdrefere WHEN AVAIL crapatr.
 
                     END.
 
@@ -1257,9 +1257,9 @@ DO WHILE TRUE:
                                                     ,INPUT STRING(craplau.nrdocmto)
                                                     ,INPUT crapcop.cdagesic
                                                     ,INPUT crapass.nrctacns
-													,INPUT crapass.cdagenci
+												                          	,INPUT crapass.cdagenci
                                                     ,INPUT craplau.cdempres
-													,INPUT craplau.idlancto
+											                          		,INPUT craplau.idlancto
                                                     ,INPUT glb_cdcritic
                                                     ,OUTPUT 0
                                                     ,OUTPUT "").
@@ -2252,7 +2252,7 @@ DO WHILE TRUE:
                         " Valor: " + TRIM(STRING(craplcm.vllanmto,
                                                  "zzzzzz,zzz,zz9.99")) +
 
-                        " Contrato: " + STRING(INTE(craplcm.cdpesqbb)) +
+                        " Contrato: " + craplcm.cdpesqbb +
                         " >> log/landpv.log").
     
       /* Trazer nome do supervisor */
