@@ -2,7 +2,7 @@
 
    Programa: b1wgen0009.p
    Autor   : Guilherme
-   Data    : Marco/2009                     Última atualizacao: 26/05/2017
+   Data    : Marco/2009                     Última atualizacao: 30/05/2017
    
    Dados referentes ao programa:
 
@@ -263,7 +263,11 @@
 		                PRJ-300 - Desconto de cheque(Odirlei-AMcom)              
 					      
            26/05/2017 - Alterado efetua_inclusao_limite para gerar o numero do 
-                       contrato de limite.  PRJ-300 - Desconto de cheque(Odirlei-AMcom)              
+                       contrato de limite.  PRJ-300 - Desconto de cheque(Odirlei-AMcom)         
+                            
+           30/05/2017 - Criacao dos campos qtdaprov e vlraprov na tt-bordero_chq
+                        Projeto 300. (Lombardi)       
+					                
 ............................................................................. */
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -9326,6 +9330,8 @@ PROCEDURE busca_borderos:
     DEFINE VARIABLE aux_flglibch AS LOGICAL     NO-UNDO.
     DEFINE VARIABLE aux_qtcompln AS INTEGER     NO-UNDO.
     DEFINE VARIABLE aux_vlcompcr AS DECIMAL     NO-UNDO.
+    DEFINE VARIABLE aux_qtdaprov AS INTEGER     NO-UNDO.
+    DEFINE VARIABLE aux_vlraprov AS DECIMAL     NO-UNDO.
     
     EMPTY TEMP-TABLE tt-bordero_chq.
 
@@ -9354,6 +9360,19 @@ PROCEDURE busca_borderos:
                        NEXT. 
                 END.
     
+        ASSIGN aux_vlraprov = 0
+               aux_qtdaprov = 0.
+        
+        FOR EACH crapcdb WHERE crapcdb.cdcooper = par_cdcooper       AND
+                               crapcdb.nrdconta = crapbdc.nrdconta   AND
+                               crapcdb.nrborder = crapbdc.nrborder   AND
+                               crapcdb.insitana = 1 NO-LOCK:
+          
+          ASSIGN aux_vlraprov = aux_vlraprov + crapcdb.vlcheque
+                 aux_qtdaprov = aux_qtdaprov + 1.
+          
+        END.
+        
         FIND craplot WHERE craplot.cdcooper = par_cdcooper       AND
                            craplot.dtmvtolt = crapbdc.dtmvtolt   AND
                            craplot.cdagenci = crapbdc.cdagenci   AND
@@ -9387,7 +9406,9 @@ PROCEDURE busca_borderos:
                                          ELSE
                                             STRING(crapbdc.insitbdc) + "DEVOLVIDO"
                tt-bordero_chq.nrdolote = crapbdc.nrdolote
-               tt-bordero_chq.dtlibbdc = crapbdc.dtlibbdc.
+               tt-bordero_chq.dtlibbdc = crapbdc.dtlibbdc
+               tt-bordero_chq.qtdaprov = aux_qtdaprov
+               tt-bordero_chq.vlraprov = aux_vlraprov.
     
     END.  /*  Fim da leitura do crapbdc  */
     
