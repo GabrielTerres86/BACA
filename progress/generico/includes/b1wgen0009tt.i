@@ -2,7 +2,7 @@
 
    Programa: b1wgen0009tt.i                  
    Autor   : Guilherme
-   Data    : Março/2009                  Ultima atualizacao: 12/08/2015
+   Data    : Março/2009                  Ultima atualizacao: 30/05/2017
    Dados referentes ao programa:
 
    Objetivo  : Temp-tables utlizadas na BO b1wgen0009.p - Desconto de Cheques
@@ -39,6 +39,23 @@
                             
                12/08/2015 - Projeto Reformulacao cadastral
                             Eliminado o campo nmdsecao (Tiago Castro - RKAM).
+
+               21/06/2016 - Criacao do campo dsopecoo na tt-dscchq_dados_bordero,
+                            campos flaprcoo e dsdetres na tt-dscchq_bordero_restricoes
+                            e dsopecoo na tt-dados_chqs_bordero. (Jaison/James)
+
+               05/09/2016 - Criacao do campo perrenov na tt-desconto_cheques.
+                            Projeto 300. (Lombardi)
+                            
+               09/09/2016 - Criacao do campo insitblq na tt-desconto_cheques.
+                            Projeto 300. (Lombardi)
+                            
+               12/09/2016 - Criacao do campo insitlim na tt-limite_chq
+                            Projeto 300. (Lombardi)
+
+               30/05/2017 - Criacao dos campos qtdaprov e vlraprov na tt-bordero_chq
+                            Projeto 300. (Lombardi)
+                            
 ..............................................................................*/
 
 DEF TEMP-TABLE tt-desconto_cheques NO-UNDO
@@ -50,7 +67,9 @@ DEF TEMP-TABLE tt-desconto_cheques NO-UNDO
     FIELD dsdlinha AS CHAR
     FIELD vldscchq AS DECI
     FIELD qtdscchq AS INTE
-    FIELD cddopcao AS INTE.
+    FIELD cddopcao AS INTE
+    FIELD perrenov AS INTE
+    FIELD insitblq AS INTE.
     
 DEF TEMP-TABLE tt-limite_chq NO-UNDO
     FIELD dtpropos LIKE craplim.dtpropos
@@ -62,7 +81,8 @@ DEF TEMP-TABLE tt-limite_chq NO-UNDO
     FIELD dssitlim AS CHARACTER
     FIELD cddopcao AS INTEGER
     FIELD nrdrecid AS RECID
-    FIELD flgenvio AS CHAR.
+    FIELD flgenvio AS CHAR
+    FIELD insitlim AS INTE.
 
 /* TAB019 */
 DEF TEMP-TABLE tt-dados_dscchq NO-UNDO
@@ -239,7 +259,11 @@ DEF TEMP-TABLE tt-bordero_chq NO-UNDO
     FIELD qtcompln AS INTE
     FIELD vlcompcr AS DECI
     FIELD dssitbdc AS CHAR
-    FIELD nrrecid  AS INTE.    
+    FIELD nrrecid  AS INTE
+    FIELD nrdolote LIKE crapbdc.nrdolote
+    FIELD dtlibbdc LIKE crapbdc.dtlibbdc
+    FIELD qtdaprov AS INTE
+    FIELD vlraprov AS DECI.
     
 DEF TEMP-TABLE tt-dscchq_dados_bordero NO-UNDO
     FIELD nrborder AS INTE
@@ -256,7 +280,8 @@ DEF TEMP-TABLE tt-dscchq_dados_bordero NO-UNDO
     FIELD dsopelib AS CHAR
     FIELD dsopedig AS CHAR
     FIELD flgdigit LIKE crapbdc.flgdigit
-    FIELD cdtipdoc AS INTEGER.
+    FIELD cdtipdoc AS INTEGER
+    FIELD dsopecoo AS CHAR.
     
 DEF TEMP-TABLE tt-abc_dscchq NO-UNDO
     FIELD nrrecabc AS RECID
@@ -287,7 +312,9 @@ DEF TEMP-TABLE tt-dscchq_bordero_restricoes NO-UNDO
     FIELD nrborder LIKE crapcdb.nrborder
     FIELD nrcheque LIKE crapcdb.nrcheque
     FIELD dsrestri LIKE crapabc.dsrestri
-    FIELD tprestri AS INTE.
+    FIELD tprestri AS INTE
+    FIELD flaprcoo LIKE crapabc.flaprcoo
+    FIELD dsdetres LIKE crapabc.dsdetres.
 
 DEF TEMP-TABLE tt-proposta_bordero_dscchq NO-UNDO
     FIELD dsagenci AS CHAR
@@ -355,7 +382,8 @@ DEF TEMP-TABLE tt-dados_chqs_bordero NO-UNDO
     FIELD nmresco1 AS CHAR 
     FIELD nmresco2 AS CHAR 
     FIELD nmcidade AS CHAR
-    FIELD nmoperad AS CHAR.
+    FIELD nmoperad AS CHAR
+    FIELD dsopecoo AS CHAR.
 
 DEF TEMP-TABLE tt-linhas-desc-chq NO-UNDO
     FIELD cddlinha LIKE crapldc.cddlinha
