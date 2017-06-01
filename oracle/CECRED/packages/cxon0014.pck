@@ -517,7 +517,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
   --  Sistema  : Procedimentos e funcoes das transacoes do caixa online
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 12/04/2017
+  --  Data     : Julho/2013.                   Ultima atualizacao: 26/05/2017
   --
   -- Dados referentes ao programa:
   --
@@ -531,11 +531,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
   --
   --             18/06/2014 - Removido as validacoes para GNRE - SEFAZ (1065).
   --                         (Douglas - Chamado 128278)
-    --
-    --             25/01/2015 - Adicionada validação por meio de arrecadação pelo
+  --
+  --             25/01/2015 - Adicionada validação por meio de arrecadação pelo
   --                          campo crapscn.dsoparre para Conv. Sicredi (Lunelli SD 234418)
   --
-    --             11/03/2015 - Adicionada verificação pelo dígito 8 no início do cdbarra
+  --             11/03/2015 - Adicionada verificação pelo dígito 8 no início do cdbarra
   --                          de faturas na rotina 'pc_retorna_valores_fatura' (Lunelli SD 245425).
   --
   --             12/03/2015 - #202833 Tratamento para não aceitar títulos do Banco Boavista (231) (Carlos)
@@ -583,7 +583,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
   --              20/03/2017 - Ajuste para verificar vencimento da P.M. TIMBO, DEFESA CIVIL TIMBO 
   --                           MEIO AMBIENTE DE TIMBO, TRANSITO DE TIMBO (Lucas Ranghetti #630176)
   --
-  --              12/04/2017 - Ajuste para verificar vencimento da P.M. AGROLANDIA (Tiago #647174)  
+  --              22/05/2017 - Ajustes para verificar vencimento da P.M. TROMBUDO CENTRAL 
+  --                           e FMS TROMBUDO CENTRAL (Tiago/Fabricio #653830)
+  --
+  --              26/05/2017 - Ajustes para verificar vencimento da P.M. AGROLANDIA
+  --                           (Tiago/Fabricio #647174)   
   ---------------------------------------------------------------------------------------------------------------
 
   /* Busca dos dados da cooperativa */
@@ -7462,7 +7466,7 @@ END pc_gera_titulos_iptu_prog;
   --  Sistema  : Procedure para retornar valores fatura
   --  Sigla    : CXON
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 12/04/2017
+  --  Data     : Julho/2013.                   Ultima atualizacao: 26/05/2017
   --
   -- Dados referentes ao programa:
   --
@@ -7474,8 +7478,12 @@ END pc_gera_titulos_iptu_prog;
   --
   --             20/03/2017 - Ajuste para verificar vencimento da P.M. TIMBO, DEFESA CIVIL TIMBO 
   --                          MEIO AMBIENTE DE TIMBO, TRANSITO DE TIMBO (Lucas Ranghetti #630176)
-  --
-  --             12/04/2017 - Ajuste para verificar vencimento da P.M. AGROLANDIA (Tiago #647174)  
+  --            
+  --             22/05/2017 - Ajustes para verificar vencimento da P.M. TROMBUDO CENTRAL 
+  --                          e FMS TROMBUDO CENTRAL (Tiago/Fabricio #653830)
+  
+  --             26/05/2017 - Ajustes para verificar vencimento da P.M. AGROLANDIA
+  --                          (Tiago/Fabricio #647174) 
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -7798,6 +7806,7 @@ END pc_gera_titulos_iptu_prog;
           (rw_crapcon.cdempcon = 3493 AND rw_crapcon.cdsegmto = 1)  OR   /* P.M. PRES GETULIO */
           (rw_crapcon.cdempcon = 1756 AND rw_crapcon.cdsegmto = 1)  OR   /* P.M. GUARAMIRIM */
           (rw_crapcon.cdempcon = 4539 AND rw_crapcon.cdsegmto = 1)  OR   /* P.M. TIMBO */
+          (rw_crapcon.cdempcon = 4594 AND rw_crapcon.cdsegmto = 1)  OR   /* P.M. TROMBUDO CENTRAL */
           (rw_crapcon.cdempcon = 0040 AND rw_crapcon.cdsegmto = 1)  OR   /* P.M. AGROLANDIA */
           (rw_crapcon.cdempcon = 0562 AND rw_crapcon.cdsegmto = 5)  OR   /* DEFESA CIVIL TIMBO */
           (rw_crapcon.cdempcon = 0563 AND rw_crapcon.cdsegmto = 5)  OR   /* MEIO AMBIENTE DE TIMBO */
