@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS540" (pr_cdcooper  IN craptab.cdcooper%TYPE
+CREATE OR REPLACE PROCEDURE "PC_CRPS540" (pr_cdcooper  IN craptab.cdcooper%TYPE
                                       ,pr_cdoperad  IN gncpdev.cdoperad%TYPE
                                       ,pr_nmtelant  IN VARCHAR2 DEFAULT NULL
                                       ,pr_flgresta  IN PLS_INTEGER            --> Indicador para utilização de restart
@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS540" (pr_cdcooper  IN craptab.cdcoope
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/SUPERO
-   Data    : Dezembro/2009.                      Ultima atualizacao: 02/12/2016
+   Data    : Dezembro/2009.                      Ultima atualizacao: 29/05/2017
 
    Dados referentes ao programa:
 
@@ -68,6 +68,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS540" (pr_cdcooper  IN craptab.cdcoope
 							da rotina padrão. (Rodrigo)
 
                02/12/2016 - Incorporação Transulcred (Guilherme/SUPERO)
+
+			   29/05/2017 - Incluso filtro para buscar apenas arquivos .DV% (Daniel)
 
 ............................................................................. */
 
@@ -314,6 +316,7 @@ BEGIN
 
   -- Retorna um array com todos os arquivos do diretório
   gene0001.pc_lista_arquivos(pr_path      => vr_diretori
+                            ,pr_pesq      => '%.DV%'    
                             ,pr_listarq   => vr_listarq
                             ,pr_des_erro  => pr_dscritic);
 
