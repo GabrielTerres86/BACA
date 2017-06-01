@@ -6269,7 +6269,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 					
 			FOR vr_contador IN 1..vr_qtdprazo LOOP
 				-- Efetuar cálculos de juros diários
-				vr_vldjuros := round(pr_tab_cheques.vlcheque * vr_txdiaria);
+				vr_vldjuros := round(vr_vlcheque * vr_txdiaria,2);
 				vr_vltotjur := vr_vltotjur + vr_vldjuros;					
 				vr_vlcheque := vr_vlcheque + vr_vldjuros;
 				vr_dtperiod := vr_dtperiod + 1;
@@ -7087,7 +7087,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 					,bdc.dhdassin
 					,bdc.cdopeasi
           ,bdc.cdagenci
-          ,bdc.nrdolote
+          ,bdc.nrdolote          
 		  FROM crapbdc bdc
 		 WHERE bdc.cdcooper = pr_cdcooper
 		   AND bdc.nrdconta = pr_nrdconta
@@ -8235,7 +8235,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 				END IF;
 				 
 				IF pr_tab_cheques(vr_index).dtlibera > rw_crapdat.dtmvtolt THEN
-          IF rw_crapbdc.dtlibbdc >= vr_dtjurtab THEN
+          IF rw_crapbdc.dtlibbdc > vr_dtjurtab THEN
 						-- Utilizar o modo de cálculo novo (juros simples)
 		        pc_calcular_bordero_simples(pr_cdcooper => pr_cdcooper --> Cooperativa
 																			 ,pr_nrdconta => pr_nrdconta --> Número da conta
