@@ -4,7 +4,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_job_paga_adiofjuros IS
    JOB: PC_JOB_PAGA_ADIOFJUROS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Autor   : Tiago Machado Flor - CECRED
-   Data    : Março/2017.                     Ultima atualizacao: 02/03/2017
+   Data    : Março/2017.                     Ultima atualizacao: 01/06/2017
 
    Dados referentes ao programa:
 
@@ -17,6 +17,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_job_paga_adiofjuros IS
                              *adicionado commit na ultima linha do programa;
                              *retirado +1 do nrseqdig antes de inserir a craplcm;
                              (Tiago/Thiago).
+                             
+               01/06/2017 - Alterado numero do documento de 999999 para 888888
+                            pq o crps008 lançava com o mesmo numero de documento
+                            (Tiago/Thiago).
   ..........................................................................*/
 
 BEGIN
@@ -277,7 +281,7 @@ BEGIN
       FETCH cr_craplcm INTO rw_craplcm;
       CLOSE cr_craplcm;
       
-      vr_qtdlan := 999999 - rw_craplcm.qtdlan;    
+      vr_qtdlan := 888888 - rw_craplcm.qtdlan;    
       vr_qtdlan := TO_NUMBER(vr_qtdlan||pr_cdhistor);
       
       pc_insere_lote (pr_cdcooper => pr_cdcooper
