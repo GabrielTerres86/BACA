@@ -177,6 +177,38 @@ ELSE IF par_operacao = 4 THEN
 
   END.
 
+
+ELSE IF par_operacao = 5 THEN
+  DO:
+
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    
+    RUN STORED-PROCEDURE pc_cadastra_favorito aux_handproc = PROC-HANDLE NO-ERROR
+                         (INPUT par_cdcooper
+                         ,INPUT par_nrdconta
+                         ,INPUT par_nrddd
+                         ,INPUT par_nrcelular
+						 ,INPUT par_nmcontato
+                         ,OUTPUT 0
+                         ,OUTPUT "").
+
+    CLOSE STORED-PROC pc_cadastra_favorito aux_statproc = PROC-STATUS 
+         WHERE PROC-HANDLE = aux_handproc.
+    
+    ASSIGN aux_dsxmlout = ""
+           aux_dscritic = ""
+           aux_dscritic = pc_cadastra_favorito.pr_dscritic 
+                          WHEN pc_cadastra_favorito.pr_dscritic <> ?.
+    
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+    IF  aux_dscritic <> "" THEN DO:
+        ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
+        RETURN "NOK".
+    END.
+
+  END.
+
 ELSE IF par_operacao = 6 THEN
   DO:
 
@@ -214,7 +246,7 @@ ELSE IF par_operacao = 6 THEN
            aux_msgretor = pc_confirma_regarca_ib.pr_msg_retor 
                           WHEN pc_confirma_regarca_ib.pr_msg_retor <> ?.
     
-    xml_req = "<msgretor>" + STRING(aux_msgretor) + "</msgretor>".
+    xml_req = STRING(aux_msgretor).
     
     { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
@@ -225,7 +257,43 @@ ELSE IF par_operacao = 6 THEN
     
     CREATE xml_operacao.
     ASSIGN xml_operacao.dslinxml = xml_req.
-    
+  
   END.
+ELSE IF par_operacao = 7 THEN
+  DO:
+
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    
+    RUN STORED-PROCEDURE pc_valida_recarga aux_handproc = PROC-HANDLE NO-ERROR
+                         (INPUT par_cdcooper
+						 ,INPUT par_nrdconta
+						 ,INPUT par_idseqttl
+						 ,INPUT par_nrcpfope
+						 ,INPUT par_vlrecarga
+						 ,INPUT par_nrddd
+						 ,INPUT par_nrcelular
+						 ,INPUT par_dtrecarga
+						 ,INPUT par_qtmesagd 
+						 ,INPUT aux_cdopcaodt 
+						 ,INPUT 3
+						 ,OUTPUT ""
+						 ,OUTPUT 0
+						 ,OUTPUT "").
+    
+    CLOSE STORED-PROC pc_valida_recarga aux_statproc = PROC-STATUS 
+         WHERE PROC-HANDLE = aux_handproc.
+    
+    ASSIGN aux_dsxmlout = ""
+           aux_dscritic = ""
+           aux_dscritic = pc_valida_recarga.pr_dscritic 
+                          WHEN pc_valida_recarga.pr_dscritic <> ?.
+    
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+    IF  aux_dscritic <> "" THEN DO:
+        ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
+        RETURN "NOK".
+    END.
+END.
 
 /*............................................................................*/

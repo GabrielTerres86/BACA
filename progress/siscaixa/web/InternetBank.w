@@ -1563,6 +1563,10 @@ PROCEDURE process-web-request :
                (
                   /** Nao utiliza criptografia se for contratacao de pre-aprovado **/
                   CAN-DO("100",STRING(aux_operacao))
+               )OR
+               (
+                  /** Nao utiliza criptografia se for confirmação de recarga de celular **/
+                  CAN-DO("181",STRING(aux_operacao)) AND INT(GET-VALUE("aux_operacao")) = 6
                )
            )
              THEN 
