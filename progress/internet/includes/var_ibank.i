@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Junior
-   Data    : Julho/2004.                       Ultima atualizacao: 22/02/2017
+   Data    : Julho/2004.                       Ultima atualizacao: 12/05/2017
 
    Dados referentes ao programa:
 
@@ -137,6 +137,8 @@
                            
               22/02/2017 - Alteraçoes para compor comprovantes DARF/DAS 
                            Modelo Sicredi (Lucas Lunelli)
+						   
+			  12/05/2017 - Segunda fase da melhoria 342 (Kelvin).
                            
 ..............................................................................*/
 
@@ -471,4 +473,8 @@ DEF TEMP-TABLE xml_operacao141                                           NO-UNDO
     FIELD dsrowlfp AS CHAR
     FIELD nmprimtl AS CHAR
     FIELD idtpcont AS CHAR.
+
+DEF TEMP-TABLE tt-arq-folha												 NO-UNDO
+	FIELD cdseqlin AS INT
+	FIELD dsdlinha AS CHAR.	
 /*............................................................................*/

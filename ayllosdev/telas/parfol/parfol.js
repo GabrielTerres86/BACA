@@ -2,7 +2,7 @@
 /***********************************************************************
  Fonte: parfol.js                                                  
  Autor: Renato Darosci - Supero                                                    
- Data : Mai/2015                Última Alteração: 23/11/2015
+ Data : Mai/2015                Última Alteração: 12/05/2017
                                                                    
  Objetivo  : Biblioteca de funções da tela PARFOL
                                                                    	 
@@ -14,7 +14,9 @@
 						(Andre Santos - SUPERO)	  						  
 							 
 			19/01/2017 - Adicionado novo limite de horario para pagamento no dia
-                         para contas da cooperativa. (M342 - Kelvin)			
+                         para contas da cooperativa. (M342 - Kelvin)
+			
+			12/05/2017 - Segunda fase da melhoria 342 (Kelvin).
 ************************************************************************/
 
 var qtfolind;
@@ -43,6 +45,9 @@ var Cdsvlrprm19;
 var Cdsvlrprm20;
 var Cdsvlrprm21;
 var Cdsvlrprm22;
+var Cdsvlrprm23;
+var Cdsvlrprm24;
+var Cdsvlrprm25;
 
 // Array com os labels da tela
 var dslabels = ["Qtde meses cancelamento automático"
@@ -66,7 +71,10 @@ var dslabels = ["Qtde meses cancelamento automático"
                ,"Lote TRF"
                ,"Histórico Débito TRF"
                ,"Histórico Crédito TRF"
-			   ,"E-mails para alerta ao Financeiro"];
+			   ,"E-mails para alerta ao Financeiro"
+			   ,"Habilita Transferência"
+			   ,"Horário Limite (Transf no Dia)"
+			   ,"Tarifa"];
 
 $(document).ready(function() {	
 
@@ -101,6 +109,9 @@ $(document).ready(function() {
 	Cdsvlrprm20= $('#dsvlrprm_20','#frmPARFOL');
 	Cdsvlrprm21= $('#dsvlrprm_21','#frmPARFOL');
 	Cdsvlrprm22= $('#dsvlrprm_22','#frmPARFOL');
+	Cdsvlrprm23= $('#dsvlrprm_23','#frmPARFOL');
+	Cdsvlrprm24= $('#dsvlrprm_24','#frmPARFOL');
+	Cdsvlrprm25= $('#dsvlrprm_25','#frmPARFOL');
 	
 	Cdsvlrprm1.setMask('INTEGER' ,'zz'     	,'','');
 	Cdsvlrprm2.setMask('INTEGER' ,'zz'		,'','');
@@ -134,6 +145,9 @@ $(document).ready(function() {
 	Cdsvlrprm22.mask('00:00');
 	Cdsvlrprm22.setMask('STRING','99:99',':','');
 	
+	Cdsvlrprm24.mask('00:00');
+	Cdsvlrprm24.setMask('STRING','99:99',':','');
+	
 	formataMsgAjuda('');
 	
 	$("#divBotoes").css('display','block'); 
@@ -162,6 +176,9 @@ $(document).ready(function() {
 	Cdsvlrprm20.unbind('paste').bind('paste', function(e) { return false; });
 	Cdsvlrprm21.unbind('paste').bind('paste', function(e) { return false; });
 	Cdsvlrprm22.unbind('paste').bind('paste', function(e) { return false; });
+	Cdsvlrprm23.unbind('paste').bind('paste', function(e) { return false; });
+	Cdsvlrprm24.unbind('paste').bind('paste', function(e) { return false; });
+	Cdsvlrprm25.unbind('paste').bind('paste', function(e) { return false; });
 	
 	$('.campo','#frmPARFOL').unbind('keypress').bind('keypress', function(e) {
 		if ( e.keyCode == 9 || e.keyCode == 13 ) {	
@@ -194,11 +211,27 @@ $(document).ready(function() {
 		}
 	});	
 	
+	Cdsvlrprm23.change(function() {
+		if (Cdsvlrprm23.val() == "0"){
+			Cdsvlrprm25.prop('disabled', true);
+			Cdsvlrprm25.val("0");
+			Cdsvlrprm24.prop('disabled', true);	
+		} else {
+			Cdsvlrprm25.prop('disabled', false);						
+			Cdsvlrprm24.prop('disabled', false);	
+		}
+		
+			
+	});
+	
+	
 	var nomeForm    = 'frmPARFOL';
 	highlightObjFocus( $('#'+nomeForm) );
 	
 	nomeForm    = 'frmCabPARFOL';
 	highlightObjFocus( $('#'+nomeForm) );
+	
+	
 	
 });
 
@@ -254,23 +287,22 @@ function altera_parfol() {
 		if (dsvlrprm[i].value.length == 0 ) {
 
 			// Nao considerar a posicao quando estiver vazia
-			if (dslabels[i]=="") { continue; }
-			
+			if (dslabels[i]=="") { continue; }			
 			/*Foi realizado esse tratamento pois a forma como a tela foi construida estava
 			  impossibilitando adicionar um novo campo sem ter que mexer na estrutura inteira
-			  sendo muito perigoso */
+			  sendo muito perigoso */		
 			if(i == 11){
 				showError("error","Favor informar " + dslabels[i] + ".","Alerta - Ayllos","focaCampoErro('dsvlrprm_" + (22) + "','frmPARFOL')");
 				return false;
 			}else{
-				if(i > 11){
+				if(i > 11 && i < 22){
 					showError("error","Favor informar " + dslabels[i] + ".","Alerta - Ayllos","focaCampoErro('dsvlrprm_" + (i) + "','frmPARFOL')");
 					return false;
 				}else{
-		    showError("error","Favor informar " + dslabels[i] + ".","Alerta - Ayllos","focaCampoErro('dsvlrprm_" + (i+1) + "','frmPARFOL')");
-			return false; 
-		}
-	}
+				showError("error","Favor informar " + dslabels[i] + ".","Alerta - Ayllos","focaCampoErro('dsvlrprm_" + (i+1) + "','frmPARFOL')");
+				return false; 
+				}
+			}
 		}
 	}
 	
@@ -338,6 +370,9 @@ function altera_parfol() {
 			dsvlrprm20: dsvlrprm[20].value,
 			dsvlrprm21: dsSemQuebra2,
 			dsvlrprm22: dsvlrprm[11].value,
+			dsvlrprm23: dsvlrprm[22].value,
+			dsvlrprm24: dsvlrprm[23].value,
+			dsvlrprm25: dsvlrprm[24].value,
 			redirect: "html_ajax" // Tipo de retorno do ajax
 		},
 		error: function(objAjax,responseError,objExcept) {

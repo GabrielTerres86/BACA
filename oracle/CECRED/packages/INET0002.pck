@@ -581,7 +581,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
   --  Sistema  : Procedimentos Multiplas Assinaturas PJ
   --  Sigla    : CRED
   --  Autor    : Jorge Hamaguchi / Jean Deschamps
-  --  Data     : Novembro/2015.                   Ultima atualizacao: 02/09/2016
+  --  Data     : Novembro/2015.                   Ultima atualizacao: 12/05/2017
   --
   -- Dados referentes ao programa:
   --
@@ -613,6 +613,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
   --
   --             28/11/2016 - Criaçao pc_cria_trans_pend_sms_cobran e inclusao dos transaçoes pendentes
   --                          16 e 17. PRJ319 - SMS Cobrança (Odirlei-AMcom) 
+  --
+  --             12/05/2017 - Segunda fase da melhoria 342 (Kelvin).
   ---------------------------------------------------------------------------------------------------------------
 
   
@@ -4707,6 +4709,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                  ,pr_cdagenci => pr_cdagenci  --Agencia do Associado
                                  ,pr_tpoperac => 0            --Tipo de Operacao (0=todos)
                                  ,pr_inpessoa => 2            --Tipo de Pessoa
+                                 ,pr_idagenda => 0            --Tipo de agendamento
+                                 ,pr_cdtiptra => 0            --Tipo de transferencia
                                  ,pr_tab_limite => vr_tab_limite --Tabelas de retorno de horarios limite
                                  ,pr_cdcritic => vr_cdcritic    --Código do erro
                                  ,pr_dscritic => vr_dscritic);  --Descricao do erro

@@ -3,7 +3,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Andre Santos - SUPERO
-   Data    : Junho/2015                        Ultima atualizacao: 27/01/2016
+   Data    : Junho/2015                        Ultima atualizacao: 12/05/2017
    
    Dados referentes ao programa:
    Frequencia: Sempre que for chamado (On-Line)
@@ -19,6 +19,8 @@
                27/01/2016 - Ajustes nas chamadas a rotinas com novo parâmetro contendo o CPF
                             do operador conectado e também troca de tags da quantidade de pagamento
                             no pagamento por arquivo (Marcos-Supero)
+							
+			   12/05/2017 - Segunda fase da melhoria 342 (Kelvin).
 ................................................................................................*/
 
 { sistema/internet/includes/var_ibank.i    }
@@ -980,7 +982,101 @@ ELSE IF  par_tpoperac = 13 THEN DO: /* Excluir lancamento permanentemente */
     ASSIGN xml_operacao.dslinxml = xml_req.
 
 END.
+ELSE IF  par_tpoperac = 14 THEN DO: /* Gerar arquivo de retorno */	
+  { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    RUN STORED-PROCEDURE pc_gera_retorno_cooperado aux_handproc = PROC-HANDLE NO-ERROR
+                         (INPUT par_cdcooper,
+						  INPUT par_lisrowid,
+                          OUTPUT "",
+                          OUTPUT 0,
+                          OUTPUT "").
 
+    CLOSE STORED-PROC pc_gera_retorno_cooperado aux_statproc = PROC-STATUS
+          WHERE PROC-HANDLE = aux_handproc.
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+	
+	ASSIGN aux_cdcritic = 0
+           aux_dscritic = ""		   
+           aux_cdcritic = pc_gera_retorno_cooperado.pr_cdcritic
+                          WHEN pc_gera_retorno_cooperado.pr_cdcritic <> ?
+           aux_dscritic = pc_gera_retorno_cooperado.pr_dscritic
+                          WHEN pc_gera_retorno_cooperado.pr_dscritic <> ?.
+	
+    IF aux_cdcritic <> 0 OR aux_dscritic <> "" THEN DO:
+        ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
+        RETURN "NOK".
+    END.
+	
+	EMPTY TEMP-TABLE tt-arq-folha.
+	
+	/* Buscar o XML na tabela de retorno da procedure Progress */ 
+    ASSIGN xml_req = pc_gera_retorno_cooperado.pr_clob_ret. 
+	
+	/* Efetuar a leitura do XML*/ 
+	SET-SIZE(ponteiro_xml) = LENGTH(xml_req) + 1. 
+	PUT-STRING(ponteiro_xml,1) = xml_req. 
+	  
+    /* Inicializando objetos para leitura do XML */ 
+    CREATE X-DOCUMENT xDoc.    /* Vai conter o XML completo */ 
+    CREATE X-NODEREF  xRoot.   /* Vai conter a tag DADOS em diante */ 
+    CREATE X-NODEREF  xRoot2.  /* Vai conter a tag INF em diante */ 
+    CREATE X-NODEREF  xField.  /* Vai conter os campos dentro da tag INF */ 
+    CREATE X-NODEREF  xText.   /* Vai conter o texto que existe dentro da tag xField */ 
+	
+	IF ponteiro_xml <> ? THEN
+		DO:
+			xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE). 
+			xDoc:GET-DOCUMENT-ELEMENT(xRoot).
+		
+			DO aux_cont_raiz = 1 TO xRoot:NUM-CHILDREN: 
+		
+			   xRoot:GET-CHILD(xRoot2,aux_cont_raiz).
+		
+			   IF xRoot2:SUBTYPE <> "ELEMENT" THEN 
+				  NEXT. 
+			   
+			   IF xRoot2:NUM-CHILDREN > 0 THEN
+				 CREATE tt-arq-folha.
+		
+			   DO aux_cont = 1 TO xRoot2:NUM-CHILDREN:
+				   
+				  xRoot2:GET-CHILD(xField,aux_cont).
+					  
+				  IF xField:SUBTYPE <> "ELEMENT" THEN 
+					 NEXT. 
+				  
+				  xField:GET-CHILD(xText,1).
+				  
+				  ASSIGN tt-arq-folha.cdseqlin = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdseqlin"
+				         tt-arq-folha.dsdlinha = xText:NODE-VALUE WHEN xField:NAME = "dsdlinha".
+													 
+			   END. 
+				
+			END.
+		
+		SET-SIZE(ponteiro_xml) = 0. 
+  
+	END.
+	
+	/*Elimina os objetos criados*/
+	DELETE OBJECT xDoc. 
+	DELETE OBJECT xRoot. 
+	DELETE OBJECT xRoot2. 
+	DELETE OBJECT xField. 
+	DELETE OBJECT xText.
+	
+	FOR EACH tt-arq-folha NO-LOCK BY tt-arq-folha.cdseqlin:
+      	
+		CREATE xml_operacao.
+			 
+		ASSIGN xml_operacao.dslinxml = "<dados>" +
+										  "<cdseqlin>" + STRING(tt-arq-folha.cdseqlin)+ "</cdseqlin>" +										
+										  "<dsdlinha>" + tt-arq-folha.dsdlinha +  "</dsdlinha>" +
+										"</dados>".		 
+	END.                  
+	
+END.
 
 RETURN "OK".
  
