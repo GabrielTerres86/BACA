@@ -2071,6 +2071,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
               
               IF vr_cdcritic <> 999 THEN
                 vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+              ELSE
+                vr_dscritic:= 'Arquivo incompleto.';
               END IF;
               
               vr_nmarquiv := vr_nmdirdeb||'/err' || vr_tab_nmarquiv(i);
