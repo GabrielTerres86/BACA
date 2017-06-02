@@ -2,7 +2,7 @@
 
    Programa: b1wgen0009tt.i                  
    Autor   : Guilherme
-   Data    : Março/2009                  Ultima atualizacao: 21/06/2016
+   Data    : Março/2009                  Ultima atualizacao: 30/05/2017
    Dados referentes ao programa:
 
    Objetivo  : Temp-tables utlizadas na BO b1wgen0009.p - Desconto de Cheques
@@ -53,6 +53,9 @@
                12/09/2016 - Criacao do campo insitlim na tt-limite_chq
                             Projeto 300. (Lombardi)
 
+               30/05/2017 - Criacao dos campos qtdaprov e vlraprov na tt-bordero_chq
+                            Projeto 300. (Lombardi)
+                            
 ..............................................................................*/
 
 DEF TEMP-TABLE tt-desconto_cheques NO-UNDO
@@ -258,7 +261,9 @@ DEF TEMP-TABLE tt-bordero_chq NO-UNDO
     FIELD dssitbdc AS CHAR
     FIELD nrrecid  AS INTE
     FIELD nrdolote LIKE crapbdc.nrdolote
-    FIELD dtlibbdc LIKE crapbdc.dtlibbdc.    
+    FIELD dtlibbdc LIKE crapbdc.dtlibbdc
+    FIELD qtdaprov AS INTE
+    FIELD vlraprov AS DECI.
     
 DEF TEMP-TABLE tt-dscchq_dados_bordero NO-UNDO
     FIELD nrborder AS INTE

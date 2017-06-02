@@ -19,7 +19,7 @@
 
              20/06/2016 - Inclusao da divRestricoes/divRestricoesTit para
                           formatacao da tabela. (Jaison/James)
-			
+
              25/07/2016 - Adicionado função controlaFoco.(Evandro - RKAM).			 
 
 			 06/09/2016 - Inclusao do botão "Renovação" para renovação do limite 
@@ -259,10 +259,10 @@ function formataLayout(nomeForm){
 			showConfirmacao("Confirma Desbloqueio da Inclus&atilde;o de Border&ocirc;?", "Confirma&ccedil;&atilde;o - Ayllos", "desbloqueiaInclusaoBordero();", "blockBackground(parseInt($('#divRotina').css('z-index')));", "sim.gif", "nao.gif");
 			return false;			
 		});
-			
+				
 	}else if ( nomeForm == 'divBorderos' ){
 	
-		$('#'+nomeForm).css('width','610px');
+		$('#'+nomeForm).css('width','785px');
 	
 		var divRegistro = $('div.divRegistros','#'+nomeForm);		
 		var tabela      = $('table', divRegistro );
@@ -277,7 +277,9 @@ function formataLayout(nomeForm){
 		arrayLargura[2] = '60px';
 		arrayLargura[3] = '55px';
 		arrayLargura[4] = '100px';
-		arrayLargura[5] = '90px';
+		arrayLargura[5] = '55px';
+		arrayLargura[6] = '100px';
+		arrayLargura[7] = '90px';
 				
 		var arrayAlinha = new Array();
 		arrayAlinha[0] = 'center';
@@ -285,8 +287,10 @@ function formataLayout(nomeForm){
 		arrayAlinha[2] = 'right';
 		arrayAlinha[3] = 'right';
 		arrayAlinha[4] = 'right';
-		arrayAlinha[5] = 'left';
-		arrayAlinha[6] = 'center';
+		arrayAlinha[5] = 'right';
+		arrayAlinha[6] = 'right';
+		arrayAlinha[7] = 'left';
+		arrayAlinha[8] = 'center';
 						
 		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
 		
@@ -826,8 +830,8 @@ function formataLayout(nomeForm){
 			// Se é a tecla TAB ou ENTER, 
 			if (e.keyCode == 9 || e.keyCode == 13 ) {
 				cDtdcaptu.focus();
-				return false;
-			}
+	return false;
+}
 		});
 		cDtdcaptu.unbind('keydown').bind('keydown', function(e) {
 			// Se é a tecla TAB ou ENTER, 
