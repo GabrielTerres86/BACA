@@ -2793,7 +2793,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         ' PROCEDURE pc_gera_relato - Seqsol:' || pr_nrseqsol || ' - ' ||  vr_des_saida;
         
         btch0001.pc_gera_log_batch(pr_cdcooper   => rw_crapslr.cdcooper,
-                                 pr_ind_tipo_log => 2, --> erro tratado
+                                 pr_ind_tipo_log => 1, --> erro tratado
                                  pr_des_log      => pr_des_erro,
                                  pr_nmarqlog     => gene0001.fn_param_sistema('CRED',rw_crapslr.cdcooper,'NOME_ARQ_LOG_MESSAGE'));
       
@@ -2802,7 +2802,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
        pr_des_erro := 
           'GENE0002.pc_gera_relato --> Erro não tratado ao processar a solicitação.' ||
           ' - Seqsol:' || pr_nrseqsol ||
-          ' - Erro:'   || sqlerrm;			 
+          ' - Erro:'   || sqlerrm;	
+        -- Belli 02/06
+        btch0001.pc_gera_log_batch(pr_cdcooper   => rw_crapslr.cdcooper,
+                                 pr_ind_tipo_log => 2, --> erro tratado
+                                 pr_des_log      => pr_des_erro,
+                                 pr_nmarqlog     => gene0001.fn_param_sistema('CRED',rw_crapslr.cdcooper,'NOME_ARQ_LOG_MESSAGE'));
+      			 		 
 
 	     CECRED.pc_internal_exception( pr_compleme => pr_des_erro );
     END;
