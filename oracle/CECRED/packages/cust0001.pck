@@ -6402,8 +6402,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
                   AND hcc.cdcooper = pr_cdcooper
                   AND hcc.nrdconta = pr_nrdconta
                   AND hcc.nrremret = pr_nrremret
+                  AND hcc.intipmvt in (1,3)
                   AND lot.cdcooper = dcc.cdcooper 
-                  AND lot.dtmvtolt = hcc.dtmvtolt
+                  AND lot.dtmvtolt = hcc.dtcustod
                   AND lot.cdagenci = dcc.cdagenci 
                   AND lot.cdbccxlt = dcc.cdbccxlt 
                   AND lot.nrdolote = dcc.nrdolote          
