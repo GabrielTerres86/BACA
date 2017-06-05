@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0020 AS
    Sistema : Caixa On-line
    Sigla   : CRED
    Autor   : Elton
-   Data    : Outubro/2011                      Ultima atualizacao: 21/11/2016
+   Data    : Outubro/2011                      Ultima atualizacao: 12/12/2016
 
    Dados referentes ao programa:
 
@@ -119,6 +119,10 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0020 AS
                21/11/2016 - Rotina pc_executa_envio_ted - Inclusao de parametros.
                                    pc_envio_ted - Tratamento para gerar registro de analise de fraude
                             PRJ335 - Analise de fraudes (Odirlei-AMcom) 
+							
+               12/12/2016 - Nao cobrar tarifa de TED quando a origem for do 
+                            BacenJud (Andrino - Mouts). Projeto 341-Bacenjud
+							
 ..............................................................................*/
   --  antigo tt-protocolo-ted 
   TYPE typ_reg_protocolo_ted 
@@ -1703,6 +1707,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     
     IF pr_flmobile = 1 THEN /* Canal Mobile */
       vr_nrctrlif := vr_nrctrlif ||'M';
+    ELSIF pr_idorigem = 1 THEN /* Origem BacenJud - Ayllos */
+      vr_nrctrlif := vr_nrctrlif ||'A';
     ELSE /* Canal InternetBank */
       vr_nrctrlif := vr_nrctrlif ||'I';
     END IF;
@@ -1934,8 +1940,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       RAISE vr_exc_erro;
     END IF;
     
-    -- definir historico de ted
-    vr_cdhisted := 555;
+    -- Se for bloqueio judicial (bacenjud), utiliza o historico 1406-TR.BLOQ.JUD
+    IF pr_tpctafav = 3 THEN
+      vr_cdhisted := 1406;
+    ELSE
+      -- definir historico de ted
+      vr_cdhisted := 555;
+    END IF;
     
     /* Grava uma autenticacao */
     CXON0000.pc_grava_autenticacao_internet 
@@ -2149,8 +2160,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
 
       END IF;
 
-	    -- Se não isenta cobrança da tarifa
-      IF vr_fliseope <> 1 THEN
+      IF pr_tpctafav = 3 THEN -- Se for BacenJud nao deve cobrar tarifa
+        NULL;
+      -- Se não isenta cobrança da tarifa
+      ELSIF vr_fliseope <> 1 THEN
 
         IF pr_idagenda = 1 OR
            vr_debtarifa    THEN 
@@ -3066,7 +3079,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     
     --> Formata dados do favorecido para Protocolo
     vr_dsinfor2 := vr_dsinfor2||
-                  TRIM(gene0002.fn_mask(pr_nrctatrf,'zzzzzzzzzzzzzz.9'))||
+                  TRIM(gene0002.fn_mask(pr_nrctatrf,'zzzzzzzzzzzzzzzzzzzzz.9'))||
                   '#'||gene0002.fn_mask(pr_cdispbif,'zzzzzzzzz9');
     vr_dscpfcgc := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc,pr_inpessoa);
     vr_dsinfor3 := TRIM(pr_nmtitula) ||'#'|| vr_dscpfcgc ||'#';
