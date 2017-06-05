@@ -112,7 +112,7 @@
 				exibeErro("Situa&ccedil;&atilde;o inv&aacute;lida.");
             }
         /* opcao Estorno so podera ser utilizado para Enviadas ou Todos */    
-		} if ($cdsitlog == "E") {
+		}else if ($cdsitlog == "E") {
             if ($numedlog <> "1"  && $numedlog <> "4"){
 				exibeErro("Situa&ccedil;&atilde;o inv&aacute;lida.");
             }
