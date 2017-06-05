@@ -12,13 +12,13 @@ Alteraçoes:  27/11/2007 - Incluidas atribuiçoes dos campos "cratidp.nrdconta" e
 
              10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro).
 			 
-			 13/05/2010 - Gravar nos historicos dos eventos (craphep) quando
-						  evento for encerrado.
-						  Gravar a data e operador quando a situacao da inscricao 
-						  mudar (Gabriel).
+             13/05/2010 - Gravar nos historicos dos eventos (craphep) quando
+                          evento for encerrado.
+                          Gravar a data e operador quando a situacao da inscricao 
+                          mudar (Gabriel).
 						  
              05/06/2012 - Adaptaçao dos fontes para projeto Oracle. Alterado
-						  busca na gnapses de CONTAINS para MATCHES (Guilherme Maba).
+                          busca na gnapses de CONTAINS para MATCHES (Guilherme Maba).
                           
              08/01/2013 - Alterado os "FIND craptfc" para "FIND FIRST craptfc" 
                           na procedure NomeCooperado (Adriano).
@@ -49,19 +49,19 @@ Alteraçoes:  27/11/2007 - Incluidas atribuiçoes dos campos "cratidp.nrdconta" e
                           somente um evento por vez dentro do for each 
                           (Lucas R. #245866 )
              
-             23/02/2015 - Incluir busca da crapjur na procedure NomeCooperado validar 
+             23/02/2015 - Incluir busca da crapjur na procedure NomeCooperado validar
                           se existe conta juridica (Lucas R. #251850)
                           
              05/10/2015 - Incluido atribuicao para qtd max de participantes da table
                           crapeap.qtmaxtur (Jean Michel).
 						  
-			 14/01/2016 - Alterado procedure AtualizaConfirm para que caso a situacao 
-                         selecionada for igual a anterior nao deve atualizar os registros 
-                         e somente atualizar a data de confirmacao se  situacao for 2 
-                         (Lucas Ranghetti #379258)	
+             14/01/2016 - Alterado procedure AtualizaConfirm para que caso a situacao 
+                          selecionada for igual a anterior nao deve atualizar os registros 
+                          e somente atualizar a data de confirmacao se  situacao for 2 
+                          (Lucas Ranghetti #379258)
              
              15/01/2016 - Incluido filtro por nome do inscrito. (Lombardi #386129)
-             
+             							 
              26/01/2016 - Incluido filtro por conta do inscrito. (Lombardi #392513)
 
              02/02/2016 - Ajustes para Prj. 229. (Jean Michel)
@@ -76,9 +76,9 @@ Alteraçoes:  27/11/2007 - Incluidas atribuiçoes dos campos "cratidp.nrdconta" e
              06/05/2016 - Correcao no cadastro de inscricoes de pessoas da comunidade 
                           para os eventos do Progrid. (Carlos Rafael Tanholi).
                           
-			 19/05/2016 - Correcao na validacao de contas inscritas no evento, assim como
-						  a regra de carregamento do cooperado a partir do numero da conta
-						  (Carlos Rafael Tanholi).
+             19/05/2016 - Correcao na validacao de contas inscritas no evento, assim como
+                          a regra de carregamento do cooperado a partir do numero da conta
+                          (Carlos Rafael Tanholi).
                           
              27/05/2016 - Ajustado a rotina CriaListaInscritos para garantir
                           que nao ocorre estouro da variavel da rodascript 
@@ -88,10 +88,10 @@ Alteraçoes:  27/11/2007 - Incluidas atribuiçoes dos campos "cratidp.nrdconta" e
 
              24/08/2016 - Correção para permitir salvar somente um inscrito(Jean Michel)             
 
-			 09/11/2016 - inclusao de LOG. (Jean Michel)
+             09/11/2016 - inclusao de LOG. (Jean Michel)
 
-			 16/11/2016 - Ajustes de atulizacao de registros crapidp, SD 558224 (Jean Michel)
-
+             16/11/2016 - Ajustes de atulizacao de registros crapidp, SD 558224 (Jean Michel)
+             
              18/01/2017 - Inclusao de novo filtro e conversao da listagem
                           de inscritos para PLSQL (Jean Michel).
 
@@ -117,52 +117,52 @@ Alteraçoes:  27/11/2007 - Incluidas atribuiçoes dos campos "cratidp.nrdconta" e
 
 /* Temp-Table and Buffer definitions */
 DEFINE TEMP-TABLE ab_unmap
-       FIELD aux_cdagenci AS CHARACTER 
-       FIELD aux_cdcooper AS CHARACTER 
-       FIELD aux_cddopcao AS CHARACTER FORMAT "X(256)":U 
-       FIELD aux_cdgraupr AS CHARACTER 
-       FIELD aux_dsendurl AS CHARACTER FORMAT "X(256)":U 
-       FIELD aux_dsretorn AS CHARACTER FORMAT "X(256)":U 
-       FIELD aux_dtanoage AS CHARACTER FORMAT "X(256)":U 
-       FIELD aux_flgcompr AS CHARACTER FORMAT "X(256)":U 
-       FIELD aux_flgrest  AS CHARACTER FORMAT "X(256)":U 
-       FIELD aux_idevento AS CHARACTER FORMAT "X(256)":U 
-       FIELD aux_idstaeve AS CHARACTER FORMAT "X(256)":U 
-       FIELD aux_lscoment AS CHARACTER FORMAT "X(256)":U 
-       FIELD aux_lsfaleve AS CHARACTER FORMAT "X(256)":U 
-       FIELD aux_lsconfir AS CHARACTER FORMAT "X(256)":U 
-       FIELD aux_lspermis AS CHARACTER FORMAT "X(256)":U 
-       FIELD aux_lsseqdig AS CHARACTER FORMAT "X(256)":U 
-       FIELD aux_nminseve AS CHARACTER FORMAT "X(256)":U 
-       FIELD aux_nrconfir AS CHARACTER FORMAT "X(256)":U 
-       FIELD aux_nrcompar AS CHARACTER FORMAT "X(256)":U 
-       FIELD aux_nrdrowid AS CHARACTER FORMAT "X(256)":U 
-       FIELD aux_excrowid AS CHARACTER FORMAT "X(256)":U 
-       FIELD aux_nrinscri AS CHARACTER FORMAT "X(256)":U 
-       FIELD aux_nrseqeve AS CHARACTER 
-       FIELD aux_qtmaxtur AS CHARACTER FORMAT "X(256)":U 
-       FIELD aux_stdopcao AS CHARACTER FORMAT "X(256)":U 
-       FIELD aux_tpinseve AS CHARACTER FORMAT "X(256)":U 
-       FIELD aux_tppartic AS CHARACTER FORMAT "X(256)":U 
-       FIELD aux_idademin AS CHARACTER FORMAT "X(256)":U 
-       FIELD aux_nmcooper AS CHARACTER FORMAT "X(256)":U 
-       FIELD nmresage     AS CHARACTER
-       FIELD origem       AS CHARACTER FORMAT "X(256)":U 
-       FIELD pagina       AS CHARACTER FORMAT "X(256)":U 
-       FIELD cdageins     AS CHARACTER 
-       FIELD nrseqeve     AS CHARACTER 
-       FIELD aux_carregar AS CHARACTER
-       FIELD aux_reginils AS CHARACTER
-       FIELD aux_regfimls AS CHARACTER
-       FIELD aba          AS CHARACTER
-       FIELD aux_flgalter AS CHARACTER
-       FIELD aux_flginscr AS CHARACTER
-       FIELD aux_dsinscri AS CHARACTER FORMAT "X(2000)":U 
-	   FIELD aux_fechamen AS CHARACTER FORMAT "X(256)":U
-       FIELD aux_nminscri AS CHARACTER FORMAT "X(256)":U
-       FIELD aux_tpfiltro AS CHARACTER
-       FIELD aux_nrcpfcgc AS CHARACTER
-       FIELD aux_nrcpfcgc_fil AS CHARACTER
+  FIELD aux_cdagenci AS CHARACTER 
+  FIELD aux_cdcooper AS CHARACTER 
+  FIELD aux_cddopcao AS CHARACTER FORMAT "X(256)":U 
+  FIELD aux_cdgraupr AS CHARACTER 
+  FIELD aux_dsendurl AS CHARACTER FORMAT "X(256)":U 
+  FIELD aux_dsretorn AS CHARACTER FORMAT "X(256)":U 
+  FIELD aux_dtanoage AS CHARACTER FORMAT "X(256)":U 
+  FIELD aux_flgcompr AS CHARACTER FORMAT "X(256)":U 
+  FIELD aux_flgrest  AS CHARACTER FORMAT "X(256)":U 
+  FIELD aux_idevento AS CHARACTER FORMAT "X(256)":U 
+  FIELD aux_idstaeve AS CHARACTER FORMAT "X(256)":U 
+  FIELD aux_lscoment AS CHARACTER FORMAT "X(256)":U 
+  FIELD aux_lsfaleve AS CHARACTER FORMAT "X(256)":U 
+  FIELD aux_lsconfir AS CHARACTER FORMAT "X(256)":U 
+  FIELD aux_lspermis AS CHARACTER FORMAT "X(256)":U 
+  FIELD aux_lsseqdig AS CHARACTER FORMAT "X(256)":U 
+  FIELD aux_nminseve AS CHARACTER FORMAT "X(256)":U 
+  FIELD aux_nrconfir AS CHARACTER FORMAT "X(256)":U 
+  FIELD aux_nrcompar AS CHARACTER FORMAT "X(256)":U 
+  FIELD aux_nrdrowid AS CHARACTER FORMAT "X(256)":U 
+  FIELD aux_excrowid AS CHARACTER FORMAT "X(256)":U 
+  FIELD aux_nrinscri AS CHARACTER FORMAT "X(256)":U 
+  FIELD aux_nrseqeve AS CHARACTER 
+  FIELD aux_qtmaxtur AS CHARACTER FORMAT "X(256)":U 
+  FIELD aux_stdopcao AS CHARACTER FORMAT "X(256)":U 
+  FIELD aux_tpinseve AS CHARACTER FORMAT "X(256)":U 
+  FIELD aux_tppartic AS CHARACTER FORMAT "X(256)":U 
+  FIELD aux_idademin AS CHARACTER FORMAT "X(256)":U 
+  FIELD aux_nmcooper AS CHARACTER FORMAT "X(256)":U 
+  FIELD nmresage     AS CHARACTER
+  FIELD origem       AS CHARACTER FORMAT "X(256)":U 
+  FIELD pagina       AS CHARACTER FORMAT "X(256)":U 
+  FIELD cdageins     AS CHARACTER 
+  FIELD nrseqeve     AS CHARACTER 
+  FIELD aux_carregar AS CHARACTER
+  FIELD aux_reginils AS CHARACTER
+  FIELD aux_regfimls AS CHARACTER
+  FIELD aba          AS CHARACTER
+  FIELD aux_flgalter AS CHARACTER
+  FIELD aux_flginscr AS CHARACTER
+  FIELD aux_dsinscri AS CHARACTER FORMAT "X(2000)":U
+  FIELD aux_fechamen AS CHARACTER FORMAT "X(256)":U
+  FIELD aux_nminscri AS CHARACTER FORMAT "X(256)":U
+  FIELD aux_tpfiltro AS CHARACTER
+  FIELD aux_nrcpfcgc AS CHARACTER
+  FIELD aux_nrcpfcgc_fil AS CHARACTER
   FIELD aux_nrdconta_cpfcgc AS CHARACTER
   FIELD aux_prfreque AS CHARACTER
   FIELD aux_pesqorde AS CHARACTER
@@ -173,7 +173,7 @@ DEFINE TEMP-TABLE ab_unmap
 DEFINE TEMP-TABLE tt-status
   FIELD cdstatus AS INTEGER
   FIELD dsstatus AS CHARACTER.
-
+  
 /* Temp-Table and Buffer definitions */
 DEFINE TEMP-TABLE tt-inscritos
   FIELD nminseve AS CHARACTER
@@ -198,7 +198,7 @@ DEFINE TEMP-TABLE tt-inscritos
   FIELD dtpreins AS CHARACTER 
   FIELD qtfaleve AS CHARACTER 
   FIELD flginsin AS CHARACTER.
-
+  
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS w-html 
 
 CREATE WIDGET-POOL.
@@ -814,15 +814,15 @@ PROCEDURE AtualizaConfirm :
      
 				/* Grava data de confirmaçao somente se for 2 - Confirmacao */
                 IF  cratidp.idstains = 2 THEN
-                    DO:
-                      /* Caso a situacao selecionada for igual a anterior nao deve atualizar os registros */
+					DO:
+						/* Caso a situacao selecionada for igual a anterior nao deve atualizar os registros */
 						if INT(ENTRY(i, ab_unmap.aux_lsconfir)) <> bf1-crapidp.idstains then
-                         cratidp.dtconins = TODAY.					
-                    END.
+						   cratidp.dtconins = TODAY.					
+					END.
                 ELSE
 					do:
-                        IF  cratidp.idstains = 1 THEN
-                            cratidp.dtconins = ?.
+						IF  cratidp.idstains = 1 THEN
+							cratidp.dtconins = ?.
 					end.                
         
                 RUN altera-registro IN h-b1wpgd0009(INPUT TABLE cratidp, OUTPUT aux_msg-erro).
@@ -860,7 +860,7 @@ PROCEDURE CriaListaEventos:
            INITIAL ["Janeiro","Fevereiro","Março","Abril","Maio","Junho",
                     "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"].
     DEFINE VARIABLE aux_fechamen AS CHAR NO-UNDO.
-    
+        
     DEFINE VARIABLE aux_prfreque AS CHAR NO-UNDO.
             
     DEFINE VARIABLE aux_idstaeve AS INTEGER NO-UNDO.       
@@ -883,8 +883,8 @@ PROCEDURE CriaListaEventos:
     /* Lucas R. */
     ASSIGN vetorevento = "".
     RUN RodaJavaScript("var mevento=new Array();"). 
-
-                             /* PROGRID */
+                          
+    /* PROGRID */
     FOR EACH  crapeap WHERE (crapeap.idevento = INT(ab_unmap.aux_idevento)   AND
                              crapeap.cdcooper = INT(ab_unmap.aux_cdcooper)   AND
                              crapeap.cdagenci = INT(ab_unmap.cdageins)       AND
@@ -949,8 +949,8 @@ PROCEDURE CriaListaEventos:
                                  crapagp.idstagen = 5                           NO-LOCK NO-ERROR.
      
         IF NOT AVAIL crapagp AND ab_unmap.aux_idevento = "1" THEN NEXT. 
-            
-		IF INT(ab_unmap.aux_idevento) = 1 THEN
+                
+        IF INT(ab_unmap.aux_idevento) = 1 THEN
           DO:
             IF AVAILABLE craptab   THEN
               ASSIGN aux_tppartic = ENTRY(LOOKUP(STRING(crapedp.tppartic), craptab.dstextab) - 1, craptab.dstextab).
@@ -981,15 +981,15 @@ PROCEDURE CriaListaEventos:
         DO:
           IF crapedp.qtmaxtur <> ?   THEN
             ASSIGN aux_qtmaxtur = STRING(crapedp.qtmaxtur).
-        ELSE
+          ELSE
             ASSIGN aux_qtmaxtur = "0".
         END.*/
-
+        
 		IF crapeap.idevento = 1 THEN
           DO:
         IF   crapedp.nridamin <> 0   THEN
               ASSIGN aux_idademin = "IDADE MÍNIMA DE " + STRING(crapedp.nridamin) + " ANOS".
-            ELSE
+        ELSE
               ASSIGN aux_idademin = "SEM RESTRIÇAO DE IDADE".
           END.
         ELSE
@@ -1055,13 +1055,13 @@ PROCEDURE CriaListaEventos:
             END.
 
                       END.
-                      END.
+            END.
         
         IF crapadp.dtfineve < TODAY AND crapadp.idstaeve <> 2  THEN
         DO:   
           ASSIGN aux_nrcompar = aux_nrconfir - aux_nrfaltan.
-            END.
-
+        END.
+        
         ASSIGN aux_nrseqeve = IF crapadp.nrseqdig <> ? THEN
                                  crapadp.nrseqdig
                               ELSE 0
@@ -1086,9 +1086,9 @@ PROCEDURE CriaListaEventos:
 	              LEAVE.
 	           END.
        END.              
-       
+      
       ASSIGN aux_idstaeve = crapadp.idstaeve.
-       
+      
 			IF AVAILABLE gnpapgd THEN
 				DO:
 					IF CAN-DO(STRING(gnpapgd.lsmesctb),STRING(crapadp.nrmeseve)) THEN
@@ -1098,28 +1098,28 @@ PROCEDURE CriaListaEventos:
 				END.
              
        ASSIGN vetorevento = "~{cdagenci:'" +  STRING(crapeap.cdagenci) + "'," + 
-                     "cdcooper:'" +  STRING(crapeap.cdcooper) + "'," +
-                     "cdevento:'" +  STRING(crapeap.cdevento) + "'," +
-                     "nmevento:'" +  STRING(aux_nmevento)     + "'," + 
+                            "cdcooper:'" +  STRING(crapeap.cdcooper) + "'," +
+                            "cdevento:'" +  STRING(crapeap.cdevento) + "'," +
+                            "nmevento:'" +  STRING(aux_nmevento)     + "'," + 
                             "idstaeve:'" +  STRING(aux_idstaeve)     + "'," +
-                     "flgcompr:'" +  STRING(aux_flgcompr)     + "'," +
+                            "flgcompr:'" +  STRING(aux_flgcompr)     + "'," +
                             "prfreque:'" +  STRING(aux_prfreque)     + "'," +
-                     "flgrest:'"  +  STRING(aux_flgrest)      + "'," +
-                     "qtmaxtur:'" +  STRING(aux_qtmaxtur)     + "'," +
-                     "nrinscri:'" +  STRING(aux_nrinscri)     + "'," +
-                     "nrconfir:'" +  STRING(aux_nrconfir)     + "'," +
-                     "nrcompar:'" +  STRING(aux_nrcompar)     + "'," +
-                     "nrfaltan:'" +  STRING(aux_nrfaltan)     + "'," +
-                     "nrseqeve:'" +  STRING(aux_nrseqeve)     + "'," +
-                     "idademin:'" +  STRING(aux_idademin)     + "'," +
-                     "tppartic:'" +  STRING(aux_tppartic)     + "'," +
+                            "flgrest:'"  +  STRING(aux_flgrest)      + "'," +
+                            "qtmaxtur:'" +  STRING(aux_qtmaxtur)     + "'," +
+                            "nrinscri:'" +  STRING(aux_nrinscri)     + "'," +
+                            "nrconfir:'" +  STRING(aux_nrconfir)     + "'," +
+                            "nrcompar:'" +  STRING(aux_nrcompar)     + "'," +
+                            "nrfaltan:'" +  STRING(aux_nrfaltan)     + "'," +
+                            "nrseqeve:'" +  STRING(aux_nrseqeve)     + "'," +
+                            "idademin:'" +  STRING(aux_idademin)     + "'," +
+                            "tppartic:'" +  STRING(aux_tppartic)     + "'," +
                             "dtfineve:'" + (IF  crapadp.dtfineve = ? THEN "" ELSE STRING(crapadp.dtfineve)) + "'," +    
-                     /* facilitar validacao no javascript, enviar
-                       S se ja finalizou o evento */                                         
+                            /* facilitar validacao no javascript, enviar
+                            S se ja finalizou o evento */                                         
                             "dsfineve:'" + (IF  crapadp.dtfineve <= TODAY THEN "N" ELSE "S" )               + "'," +                                          
-                     "dtmvtolt:'" +  STRING(TODAY)            + "'," + 
-                     "fechamen:'" +  STRING(aux_fechamen)     +  "'"  + "~}".
-				
+                            "dtmvtolt:'" +  STRING(TODAY)            + "'," + 
+                            "fechamen:'" +  STRING(aux_fechamen)     +  "'"  + "~}".				
+						
            RUN RodaJavaScript("mevento.push("  + vetorevento + ");").    
 
            ASSIGN vetorevento = "".
@@ -1150,7 +1150,7 @@ PROCEDURE CriaListaInscritos:
   DEF VAR ponteiro_xml  AS MEMPTR   NO-UNDO. 
   DEF VAR xml_status    AS LONGCHAR NO-UNDO. 
   DEF VAR xml_inscritos AS LONGCHAR NO-UNDO. 
-
+  
   DEF VAR aux_cont_status AS INTEGER NO-UNDO.
   DEF VAR aux_cont_inscri AS INTEGER NO-UNDO.
 
@@ -1158,9 +1158,9 @@ PROCEDURE CriaListaInscritos:
   DEF VAR aux_cdcritic AS DECIMAL   NO-UNDO.    
   DEF VAR aux_dscritic AS CHARACTER NO-UNDO.
   DEF VAR aux_nminscri AS CHARACTER NO-UNDO.
-
+    
   DEF VAR aux_qtdregis AS DECIMAL NO-UNDO.
-
+  
   /* Inicializando objetos para leitura do XML */ 
   CREATE X-DOCUMENT xDoc.    /* Vai conter o XML completo */ 
   CREATE X-NODEREF  xRoot.   /* Vai conter a tag DADOS em diante */ 
@@ -1171,13 +1171,13 @@ PROCEDURE CriaListaInscritos:
   CREATE X-NODEREF  xText.   /* Vai conter o texto que existe dentro da tag xField */ 
   CREATE X-NODEREF  hTextTag. /* Vai conter o texto que existe dentro da tag xField */ 
    
-    RUN RodaJavaScript("var minscri = new Array();").
+  RUN RodaJavaScript("var minscri = new Array();").
   RUN RodaJavaScript("var mstatus = new Array();"). 
-    
+  
   ASSIGN aux_nminscri = IF TRIM(ab_unmap.aux_nminscri) <> ? THEN ab_unmap.aux_nminscri ELSE "".
-
+  
   { sistema/ayllos/includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-
+  
   RUN STORED-PROCEDURE pc_lista_inscritos_car
     aux_handproc = PROC-HANDLE NO-ERROR (INPUT DECIMAL(ab_unmap.aux_cdcooper) /* Codigo da Cooperativa      */
                                         ,INPUT DECIMAL(ab_unmap.cdageins)     /* Codigo do PA               */
@@ -1192,7 +1192,7 @@ PROCEDURE CriaListaInscritos:
                                        ,OUTPUT ?                              /* XML com informaçoes de LOG */
                                        ,OUTPUT 0                              /* Código da crítica          */
                                        ,OUTPUT "").                           /* Descriçao da crítica       */
-
+  
   CLOSE STORED-PROC pc_lista_inscritos_car
           aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
   
@@ -1210,11 +1210,11 @@ PROCEDURE CriaListaInscritos:
        
   IF (TRIM(aux_dscritic) <> "" AND aux_dscritic <> ?) OR 
      (aux_cdcritic <> 0 AND aux_cdcritic <> ?) THEN
-         DO:
+    DO:
       RUN RodaJavaScript("alert('" + aux_dscritic + "');").
       RETURN "NOK".
-    END.  
-
+    END.
+  
   ASSIGN ab_unmap.aux_qtdregis = STRING(aux_qtdregis).
   
   EMPTY TEMP-TABLE tt-status.
@@ -1228,19 +1228,19 @@ PROCEDURE CriaListaInscritos:
   PUT-STRING(ponteiro_xml,1) = xml_req. 
   
   IF  ponteiro_xml <> ? THEN
-         DO:
+    DO: 
       xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE) NO-ERROR. 
       xDoc:GET-DOCUMENT-ELEMENT(xRoot) NO-ERROR.
-
+      
       DO aux_cont_raiz = 1 TO xRoot:NUM-CHILDREN: 
          
         xRoot:GET-CHILD(xRoot2,aux_cont_raiz) NO-ERROR. 
-            
+
         IF xRoot2:SUBTYPE <> "ELEMENT"   THEN 
           NEXT.            
 
         IF xRoot2:name = "status" THEN
-                 DO:
+          DO:
             
             DO aux_cont = 1 TO xRoot2:NUM-CHILDREN: 
 
@@ -1258,30 +1258,30 @@ PROCEDURE CriaListaInscritos:
       
                 IF xField2:SUBTYPE <> "ELEMENT" THEN 
                   NEXT. 
-         
-                DO aux_cont3 = 1 TO xField2:NUM-CHILDREN: 
 
+                DO aux_cont3 = 1 TO xField2:NUM-CHILDREN: 
+         
                   xField2:GET-CHILD(hTextTag,1) NO-ERROR.
-       
+             
                   /* Se nao vier conteudo na TAG */ 
                   IF ERROR-STATUS:ERROR             OR  
                     ERROR-STATUS:NUM-MESSAGES > 0  THEN
                     NEXT.
-
+             
                   ASSIGN tt-status.cdstatus =    INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "cdstatus".
                   ASSIGN tt-status.dsstatus = STRING(hTextTag:NODE-VALUE) WHEN xField2:NAME = "dsstatus".
-
+     
                   VALIDATE tt-status.
                 END. 
-
+         
               END. 
-    
+       
             END. 
-
-                         END.
+    
+          END. 
         ELSE IF xRoot2:name = "inscritos" THEN
-                        DO:
-                            
+          DO:
+            
             DO aux_cont = 1 TO xRoot2:NUM-CHILDREN: 
 
               xRoot2:GET-CHILD(xField,aux_cont). 
@@ -1291,23 +1291,23 @@ PROCEDURE CriaListaInscritos:
 
               IF xRoot2:NUM-CHILDREN > 0 THEN
                 CREATE tt-inscritos.
-    
+                  
               DO aux_cont2 = 1 TO xField:NUM-CHILDREN: 
-                                     
+                
                 xField:GET-CHILD(xField2,aux_cont2) no-error. 
-       
+      
                 IF xField2:SUBTYPE <> "ELEMENT" THEN 
                   NEXT.                
-
+                
                 DO aux_cont3 = 1 TO xField2:NUM-CHILDREN: 
-
+       
                   xField2:GET-CHILD(hTextTag,1) NO-ERROR.
-
+           
                   /* Se nao vier conteudo na TAG */ 
                   IF ERROR-STATUS:ERROR             OR  
                     ERROR-STATUS:NUM-MESSAGES > 0  THEN
                     NEXT.
-                 
+           
                   ASSIGN tt-inscritos.nminseve = hTextTag:NODE-VALUE WHEN xField2:NAME = "nminseve".
                   ASSIGN tt-inscritos.nmextttl = hTextTag:NODE-VALUE WHEN xField2:NAME = "nmextttl".
                   ASSIGN tt-inscritos.idseqttl = hTextTag:NODE-VALUE WHEN xField2:NAME = "idseqttl".
@@ -1330,21 +1330,21 @@ PROCEDURE CriaListaInscritos:
                   ASSIGN tt-inscritos.dtpreins = hTextTag:NODE-VALUE WHEN xField2:NAME = "dtpreins".
                   ASSIGN tt-inscritos.qtfaleve = hTextTag:NODE-VALUE WHEN xField2:NAME = "qtfaleve".
                   ASSIGN tt-inscritos.flginsin = hTextTag:NODE-VALUE WHEN xField2:NAME = "flginsin".
-                      
+                                    
                   VALIDATE tt-inscritos.
-                      
-                 END.
-                    
-         END.
-
+   
+                END. 
+         
+              END. 
+       
           END. /* INSCRITOS */
     
       END. /* DO aux_cont_raiz */
        
-         END.
-
+    END.    
+     
     SET-SIZE(ponteiro_xml) = 0.    
-    END.
+  END.           
 
   DELETE OBJECT xDoc. 
   DELETE OBJECT xRoot. 
@@ -1354,10 +1354,10 @@ PROCEDURE CriaListaInscritos:
   DELETE OBJECT xField2. 
   DELETE OBJECT xText.
   DELETE OBJECT hTextTag.
-    
+  
   /* Monta arrray de inscritos */
   FOR EACH tt-inscritos NO-LOCK:
-        
+  
     FOR FIRST crapidp WHERE crapidp.idevento = INT(ab_unmap.aux_idevento)
                         AND crapidp.cdcooper = INT(ab_unmap.aux_cdcooper)
                         AND crapidp.dtanoage = INT(ab_unmap.aux_dtanoage)
@@ -1389,15 +1389,15 @@ PROCEDURE CriaListaInscritos:
                                     '",qtfaleve:"' + STRING(tt-inscritos.qtfaleve) +
                                     '",flginsin:"' + STRING(tt-inscritos.flginsin) + '"~});').
   END.
-        
+    
   /* Monta arrray de status */
   FOR EACH tt-status NO-LOCK:
     RUN RodaJavaScript('mstatus.push(~{cdstatus:"' + STRING(tt-status.cdstatus) + 
                                     '",dsstatus:"' + STRING(tt-status.dsstatus) + '"~});').
-    END.
+  END.
     
   RETURN "OK".
-    
+     
 END PROCEDURE.
 
 /* _UIB-CODE-BLOCK-END */
@@ -1449,8 +1449,8 @@ PROCEDURE CriaListaPac :
 
                   IF AVAILABLE crapage THEN
 									 vetorpac = "~{cdcooper:"   + "'" + TRIM(STRING(crapage.cdcooper))
-                                       + "',cdagenci:" + "'" + TRIM(STRING(crapage.cdagenci))
-                                       + "',nmresage:" + "'" + crapage.nmresage + "'~}".
+															+ "',cdagenci:" + "'" + TRIM(STRING(crapage.cdagenci))
+															+ "',nmresage:" + "'" + crapage.nmresage + "'~}".
              END.
        END.
 
@@ -1515,12 +1515,12 @@ PROCEDURE EncerraMatricula:
 			 ASSIGN crapadp.idstaeve = 4. 
 			 
 			 CREATE craphep.
-             ASSIGN craphep.nrseqdig  = NEXT-VALUE(nrseqhep)
-		            craphep.cdagenci  = crapadp.nrseqdig
-                    craphep.dshiseve  = "Evento encerrado em " + STRING(TODAY,"99/99/9999") + " pelo usuário " + gnapses.cdoperad + "."
-                    craphep.dtmvtolt  = TODAY.  
-             VALIDATE craphep.                 
-	     END.     
+			 ASSIGN craphep.nrseqdig  = NEXT-VALUE(nrseqhep)
+							craphep.cdagenci  = crapadp.nrseqdig
+							craphep.dshiseve  = "Evento encerrado em " + STRING(TODAY,"99/99/9999") + " pelo usuário " + gnapses.cdoperad + "."
+							craphep.dtmvtolt  = TODAY.  
+			 VALIDATE craphep.                 
+	    END.     
     ELSE
          msg-erro = msg-erro + "Problemas para encerrar matrículas. ".
 
@@ -1542,7 +1542,7 @@ PROCEDURE ExcluirInscricao:
        DO:
            FOR EACH crapidp 
               WHERE ROWID(crapidp) = TO-ROWID(ab_unmap.aux_excrowid) NO-LOCK:
-
+           
                FOR EACH cratidp EXCLUSIVE-LOCK:
                    DELETE cratidp NO-ERROR.
                END.
@@ -1738,16 +1738,16 @@ PROCEDURE local-assign-record :
                     IF AVAILABLE crabidp THEN NEXT.
                       */  
                     ASSIGN tmp_cdevento = crapadp.cdevento.
-                    
+
+                    /* se evento estiver encerrado e nao tiver sido realizado a inscriçao sera pendente */
+                    IF crapadp.idstaeve = 4 AND crapadp.dtfineve > TODAY THEN
+                      ASSIGN aux_idstains = 1. /* pendente */
+                        
                     /* se campo dispensar confirmacao tiver checkado, status sera confirmado */
                     IF INPUT FRAME {&frame-name} crapidp.flgdispe THEN
                        ASSIGN aux_idstains = 2. /* confirmado */
                     ELSE
-                        ASSIGN aux_idstains = 1. /* pendente */ 
-
-                    /* se evento estiver encerrado e nao tiver sido realizado a inscriçao sera pendente */
-                    IF  crapadp.idstaeve = 4 AND crapadp.dtfineve > TODAY THEN
-                        ASSIGN aux_idstains = 1. /* pendente */  
+                       ASSIGN aux_idstains = 1. /* pendente */ 
 
                     FIND FIRST crapedp WHERE crapedp.cdevento = tmp_cdevento                AND
                                              crapedp.cdcooper = INT(ab_unmap.aux_cdcooper)  AND
@@ -1766,7 +1766,7 @@ PROCEDURE local-assign-record :
                       FOR FIRST crapass FIELDS(inpessoa) WHERE crapass.cdcooper = INT(ab_unmap.aux_cdcooper)
                                                            AND crapass.nrdconta = aux_nrdconta NO-LOCK. END.                    
                     END.
-                    
+                    /*message "Inclusao: " + string(INPUT crapidp.flgdispe).*/
                     CREATE cratidp.
                     ASSIGN cratidp.cdagenci = tmp_cdagenci
                            cratidp.cdageins = INT(ab_unmap.cdageins)
@@ -1792,10 +1792,10 @@ PROCEDURE local-assign-record :
                            cratidp.nrdddins = INPUT crapidp.nrdddins
                            cratidp.nrseqdig = 0
                            cratidp.cdopeori = gnapses.cdoperad
-                           cratidp.cdageori = 999
+                           cratidp.cdageori = 999 
                            cratidp.dtinsori = TODAY
                            cratidp.nrtelins = INPUT crapidp.nrtelins.
-
+                           
                      /* valida a execucao da consulta e o tipo da conta */
                     IF AVAILABLE crapass AND crapass.inpessoa = 2 THEN       
                       DO:
@@ -1835,11 +1835,12 @@ PROCEDURE local-assign-record :
                     IF  crapadp.idstaeve = 4 AND crapadp.dtfineve > TODAY THEN
                         ASSIGN aux_idstains = 1. /* pendente */ 
                     
-				    /* cria a temp-table e joga o novo valor digitado 
+                    /* cria a temp-table e joga o novo valor digitado 
                        para o campo */
-                 /*    CREATE cratidp.
+                    /*    CREATE cratidp.
                      BUFFER-COPY crapidp TO cratidp. */
      
+										/*message "Alteracao: " + string(INPUT crapidp.flgdispe).*/
                      ASSIGN 
                          cratidp.cdgraupr = IF INT(ab_unmap.aux_cdgraupr) = 0 THEN 9
                                                             ELSE INT(ab_unmap.aux_cdgraupr)
@@ -1854,8 +1855,8 @@ PROCEDURE local-assign-record :
                          cratidp.dtconins = IF cratidp.flgdispe THEN TODAY ELSE ? 
                          cratidp.idstains = aux_idstains
                          cratidp.dsobsins = INPUT crapidp.dsobsins
-     					 cratidp.nrdconta = aux_nrdconta
-     					 cratidp.idseqttl = aux_idseqttl
+                         cratidp.nrdconta = aux_nrdconta
+                         cratidp.idseqttl = aux_idseqttl
                          cratidp.nminseve = INPUT crapidp.nminseve
                          cratidp.nrdddins = INPUT crapidp.nrdddins
                          cratidp.nrseqdig = ?
@@ -1932,46 +1933,46 @@ PROCEDURE NomeCooperado :
     DEF VAR aux_dsdemail AS CHAR NO-UNDO.
     DEF VAR aux_nmprimtl AS CHAR NO-UNDO.
     DEF VAR aux_nmresage AS CHAR NO-UNDO.
-
+    
     ASSIGN vetorNome = "".
-
+        
     IF INT(aux_nrdconta) = 0 THEN
       RETURN "NOK".
-
+    		
     FOR FIRST crapass FIELDS(inpessoa dsdemail nmprimtl cdagenci) WHERE crapass.cdcooper = INT(ab_unmap.aux_cdcooper)
                                                                     AND crapass.nrdconta = INT(aux_nrdconta) NO-LOCK. END.
-
+    
     IF NOT AVAILABLE crapass THEN                    
-                       DO:
+      DO:
         ASSIGN msg-erro-aux = 11.
         RETURN "NOK".
-                       END.
-
+      END.
+    
     ASSIGN aux_nmprimtl = STRING(crapass.nmprimtl).
-
+    
     FOR FIRST crapage FIELDS(nmresage) WHERE crapage.cdcooper = crapass.cdcooper
                                          AND crapage.cdagenci = crapass.cdagenci NO-LOCK. END.
-                
+    
     /* Insere valor no campo de PA */
     IF NOT AVAILABLE crapass THEN                    
-                        DO:
+      DO:
         ASSIGN ab_unmap.nmresage = "SEM PA"
                     aux_nmresage = "SEM PA".
-                        END.
-            ELSE    
+      END.
+    ELSE
       DO:
         ASSIGN ab_unmap.nmresage = STRING(crapage.nmresage)
                     aux_nmresage = STRING(crapage.nmresage).
-        END.
-
+      END.
+    
     IF crapass.inpessoa = 1 THEN /* PESSOA FISICA */
-       DO:
+      DO:
         FOR EACH crapttl WHERE crapttl.cdcooper = INT(ab_unmap.aux_cdcooper) AND 
                                crapttl.nrdconta = INT(aux_nrdconta) NO-LOCK:
-        
+      
           ASSIGN aux_dsinscri = ''
                  aux_flginscr = ''.	
-
+              
           FOR EACH crapidp WHERE crapidp.idevento = INTEGER(ab_unmap.aux_idevento) 
                              AND crapidp.cdcooper = INTEGER(ab_unmap.aux_cdcooper)
                              AND crapidp.dtanoage = INTEGER(ab_unmap.aux_dtanoage)
@@ -1980,19 +1981,19 @@ PROCEDURE NomeCooperado :
                              AND crapidp.cdevento = INT(aux_cdevento) 		    
                              AND crapidp.nrseqeve = INT(ab_unmap.nrseqeve)
                              AND crapidp.cdageins = INT(ab_unmap.cdageins) NO-LOCK:
-
-		    ASSIGN aux_flginscr = "S".
-                 
+          
+            ASSIGN aux_flginscr = "S".
+          
             FIND FIRST crapage WHERE crapage.cdcooper = crapidp.cdcooper
                                  AND crapage.cdagenci = crapidp.cdageins NO-LOCK NO-ERROR.
-                 
+           
             IF AVAILABLE crapage THEN  
-				ASSIGN aux_dsinscri = aux_dsinscri + " Pa: " + crapage.nmresage + " Inscrito: " + crapidp.nminseve.
-                     ELSE /* para assembleias o pa = 0 */ 
-				ASSIGN aux_dsinscri = aux_dsinscri + "Inscrito: " + crapidp.nminseve.
-						
-                 END.   
-
+              ASSIGN aux_dsinscri = aux_dsinscri + " Pa: " + crapage.nmresage + " Inscrito: " + crapidp.nminseve.
+            ELSE /* para assembleias o pa = 0 */ 
+              ASSIGN aux_dsinscri = aux_dsinscri + "Inscrito: " + crapidp.nminseve.
+          
+          END.
+      
           ASSIGN aux_nrtelefo = ""
                  aux_dsdemail = "".
           
@@ -2000,11 +2001,11 @@ PROCEDURE NomeCooperado :
                                                         AND crapcem.nrdconta = INT(aux_nrdconta) 
                                                         AND crapcem.idseqttl = crapttl.idseqttl NO-LOCK. END.  
                                                       
-          IF AVAILABLE crapcem THEN                    
+          IF AVAILABLE crapcem THEN
             DO:
               ASSIGN aux_dsdemail = crapcem.dsdemail.
-             END.
-
+            END.
+      
           /* Busca algum dos telefones do titular */
           FIND FIRST craptfc WHERE craptfc.cdcooper = crapttl.cdcooper
                                AND craptfc.nrdconta = crapttl.nrdconta
@@ -2015,8 +2016,8 @@ PROCEDURE NomeCooperado :
              FIND FIRST craptfc WHERE craptfc.cdcooper = crapttl.cdcooper AND
                                       craptfc.nrdconta = crapttl.nrdconta AND
                                       craptfc.idseqttl = crapttl.idseqttl AND
-                                   craptfc.tptelefo = 1 /*Residencial*/ 
-                                   NO-LOCK NO-ERROR.
+                                      craptfc.tptelefo = 1 /*Residencial*/ 
+                                      NO-LOCK NO-ERROR.
 
           IF NOT AVAIL craptfc   THEN
              FIND FIRST craptfc WHERE craptfc.cdcooper = crapttl.cdcooper AND
@@ -2024,71 +2025,71 @@ PROCEDURE NomeCooperado :
                                       craptfc.idseqttl = crapttl.idseqttl AND
                                       craptfc.tptelefo = 3 /*Comercial*/  
                                       NO-LOCK NO-ERROR.
-
+                         
           IF AVAILABLE craptfc THEN
              ASSIGN aux_nrtelefo = STRING(craptfc.nrtelefo)
                     aux_nrdddtfc = STRING(craptfc.nrdddtfc).
-
+           
           IF TRIM(vetorNome) <> "" THEN
             ASSIGN vetorNome = vetorNome + ",".
               
            ASSIGN vetorNome = vetorNome + "~{nmextttl:" + "'" + TRIM(crapttl.nmextttl)
-                                 + "',idseqttl:" + "'" + STRING(crapttl.idseqttl)
-                                 + "',nrdddtfc:" + "'" + STRING(aux_nrdddtfc)
-                                 + "',nrtelefo:" + "'" + STRING(aux_nrtelefo)
-                                 + "',dsdemail:" + "'" + TRIM(aux_dsdemail)
-                                 + "',nmprimtl:" + "'" + STRING(aux_nmprimtl)
-                                 + "',tppessoa:" + "'F" 
-                                 + "',nmresage:" + "'" + STRING(aux_nmresage)                                 
-								 + "',flginscr:" + "'" + STRING(aux_flginscr)	
-								 + "',dsinscri:" + "'" + STRING(aux_dsinscri)	
-                                 + "',nrcpfcgc:" + "'" + STRING(crapttl.nrcpfcgc) + "'~}".
-     
+                                           + "',idseqttl:" + "'" + STRING(crapttl.idseqttl)
+                                           + "',nrdddtfc:" + "'" + STRING(aux_nrdddtfc)
+                                           + "',nrtelefo:" + "'" + STRING(aux_nrtelefo) 
+                                           + "',dsdemail:" + "'" + TRIM(aux_dsdemail)
+                                           + "',nmprimtl:" + "'" + STRING(aux_nmprimtl)
+                                           + "',tppessoa:" + "'F" 
+                                           + "',nmresage:" + "'" + STRING(aux_nmresage)                                           
+                                           + "',flginscr:" + "'" + STRING(aux_flginscr)										   
+                                           + "',dsinscri:" + "'" + STRING(aux_dsinscri)											   
+                                           + "',nrcpfcgc:" + "'" + STRING(crapttl.nrcpfcgc) + "'~}".
+                                           
         END. /* FIM FOR EACH CRAPTTL */
       END. /* FIM PESSOA FISICA */
     ELSE IF crapass.inpessoa = 2 THEN /* PESSOA JURIDICA */
-        DO:  
+      DO:
         FOR EACH crapavt WHERE crapavt.cdcooper = INT(ab_unmap.aux_cdcooper)
                            AND crapavt.nrdconta = INT(aux_nrdconta)
                            AND crapavt.tpctrato = 6
                            AND crapavt.nrctremp = 0 NO-LOCK:
-
+      
           IF crapavt.nrdctato <> 0 AND crapavt.nrdctato <> ? THEN
             DO:
-             
+            
               FOR EACH crapttl WHERE crapttl.cdcooper = crapavt.cdcooper AND 
                                      crapttl.nrdconta = crapavt.nrdctato NO-LOCK:
-             
+      
               ASSIGN aux_dsinscri = ''
                      aux_flginscr = ''.	
                                  
-                    
+                      
               FOR EACH crapidp WHERE crapidp.idevento = INTEGER(ab_unmap.aux_idevento) 
                                  AND crapidp.cdcooper = INTEGER(ab_unmap.aux_cdcooper)
                                  AND crapidp.dtanoage = INTEGER(ab_unmap.aux_dtanoage)
                                  AND crapidp.nrdconta = aux_nrdconta                  
-                             /* Alterado para validar atraves do CNPJ, pois como
-                                é gravado o idseqttl das contas do socio, ocorre de 
-                                apresentar dados do titular do outro socio */
+                                     /* Alterado para validar atraves do CNPJ, pois como
+                                        é gravado o idseqttl das contas do socio, ocorre de 
+                                        apresentar dados do titular do outro socio */
                                      /*crapidp.idseqttl = crapttl.idseqttl         */
                                  AND crapidp.nrcpfcgc = crapttl.nrcpfcgc               
                                  AND crapidp.cdevento = INT(aux_cdevento) /*crapadp.cdevento*/
                                  AND crapidp.nrseqeve = INT(ab_unmap.nrseqeve) 		     
                                  AND crapidp.cdageins = INT(ab_unmap.cdageins) NO-LOCK:
-                    
-					ASSIGN aux_flginscr = "S".
-                    
- 				    FIND FIRST crapage WHERE crapage.cdcooper = crapidp.cdcooper AND
-										     crapage.cdagenci = crapidp.cdageins 
-                                                 NO-LOCK NO-ERROR.
-                    
-                        IF  AVAIL crapage THEN  
-						ASSIGN aux_dsinscri = aux_dsinscri + " Pa: " + crapage.nmresage + " Inscrito: " + crapidp.nminseve.
-                        ELSE /* para assembleias o pa = 0 */ 
-					    ASSIGN aux_dsinscri = aux_dsinscri + "Inscrito: " + crapidp.nminseve.
-					
-                    END.   
-             
+                            
+                ASSIGN aux_flginscr = "S".
+                
+                  FIND FIRST crapage WHERE crapage.cdcooper = crapidp.cdcooper AND
+                               crapage.cdagenci = crapidp.cdageins 
+                             NO-LOCK NO-ERROR.
+               
+                IF  AVAIL crapage THEN  
+                  ASSIGN aux_dsinscri = aux_dsinscri + " Pa: " + crapage.nmresage + " Inscrito: " + crapidp.nminseve.
+                ELSE /* para assembleias o pa = 0 */ 
+                    ASSIGN aux_dsinscri = aux_dsinscri + "Inscrito: " + crapidp.nminseve.
+                
+              END.								  
+	  
                 ASSIGN aux_nrtelefo = ""
                        aux_dsdemail = "".
                 
@@ -2099,9 +2100,9 @@ PROCEDURE NomeCooperado :
                 IF AVAILABLE crapcem THEN                    
                   DO:
                     ASSIGN aux_dsdemail = crapcem.dsdemail.
-                END.
-             
-             /* Busca algum dos telefones do titular */
+                  END. 
+      
+                /* Busca algum dos telefones do titular */
                 FIND FIRST craptfc WHERE craptfc.cdcooper = crapttl.cdcooper AND
                                          craptfc.nrdconta = crapttl.nrdconta AND
                                          craptfc.idseqttl = crapttl.idseqttl AND
@@ -2112,57 +2113,57 @@ PROCEDURE NomeCooperado :
                    FIND FIRST craptfc WHERE craptfc.cdcooper = crapttl.cdcooper AND
                                             craptfc.nrdconta = crapttl.nrdconta AND
                                             craptfc.idseqttl = crapttl.idseqttl AND
-                                      craptfc.tptelefo = 1 /*Residencial*/ 
-                                      NO-LOCK NO-ERROR.
-             
-             IF NOT AVAIL craptfc   THEN
+                                            craptfc.tptelefo = 1 /*Residencial*/ 
+                                            NO-LOCK NO-ERROR.
+
+                IF NOT AVAIL craptfc   THEN
                    FIND FIRST craptfc WHERE craptfc.cdcooper = crapttl.cdcooper AND
                                             craptfc.nrdconta = crapttl.nrdconta AND
                                             craptfc.idseqttl = crapttl.idseqttl AND
-                                         craptfc.tptelefo = 3 /*Comercial*/  
-                                         NO-LOCK NO-ERROR.
-             
+                                            craptfc.tptelefo = 3 /*Comercial*/  
+                                            NO-LOCK NO-ERROR.
+                               
                 IF AVAILABLE craptfc THEN
                    ASSIGN aux_nrtelefo = STRING(craptfc.nrtelefo)
                           aux_nrdddtfc = STRING(craptfc.nrdddtfc).
-                            
+                          
                 IF TRIM(vetorNome) <> "" THEN
                   ASSIGN vetorNome = vetorNome + ",".
                 
                 ASSIGN vetorNome = vetorNome + "~{nmextttl:" + "'" + TRIM(STRING(crapttl.nmextttl))
-                                       + "',idseqttl:" + "'" + STRING(crapttl.idseqttl)
-                                       + "',nrdddtfc:" + "'" + STRING(aux_nrdddtfc)
-                                       + "',nrtelefo:" + "'" + STRING(aux_nrtelefo)
-                                       + "',dsdemail:" + "'" + STRING(aux_dsdemail)
-                                       + "',nmprimtl:" + "'" + STRING(aux_nmprimtl)
-                                       + "',tppessoa:" + "'J" 
-                                       + "',nmresage:" + "'" + STRING(aux_nmresage)                                       
-									   + "',flginscr:" + "'" + STRING(aux_flginscr)			
-								       + "',dsinscri:" + "'" + STRING(aux_dsinscri)										   
-                                       + "',nrcpfcgc:" + "'" + STRING(crapttl.nrcpfcgc) + "'~}".  
-               
+                                                 + "',idseqttl:" + "'" + STRING(crapttl.idseqttl)
+                                                 + "',nrdddtfc:" + "'" + STRING(aux_nrdddtfc)
+                                                 + "',nrtelefo:" + "'" + STRING(aux_nrtelefo) 
+                                                 + "',dsdemail:" + "'" + STRING(aux_dsdemail)
+                                                 + "',nmprimtl:" + "'" + STRING(aux_nmprimtl)
+                                                 + "',tppessoa:" + "'J" 
+                                                 + "',nmresage:" + "'" + STRING(aux_nmresage)                                                 
+                                                 + "',flginscr:" + "'" + STRING(aux_flginscr)      
+                                                 + "',dsinscri:" + "'" + STRING(aux_dsinscri)													 
+                                                 + "',nrcpfcgc:" + "'" + STRING(crapttl.nrcpfcgc) + "'~}".
+                  
                                                  
-        END.
+              END.
             END. /* FIM IF NRDCTATO THEN*/
           ELSE
             DO:
-
+            
               IF TRIM(vetorNome) <> "" THEN
                 ASSIGN vetorNome = vetorNome + ",".  
                   
               ASSIGN vetorNome = vetorNome + "~{" + "nmextttl:" + "'" + TRIM(STRING(crapavt.nmdavali))
-                                       + "',idseqttl:" + "'0" 
-                                       + "',nrdddtfc:" + "'"  
-                                       + "',nrtelefo:" + "'" + STRING(crapavt.nrfonres)
-                                       + "',dsdemail:" + "'" + STRING(crapavt.dsdemail)
-                                       + "',nmprimtl:" + "'" + STRING(aux_nmprimtl)
-                                       + "',tppessoa:" + "'J" 
-                                       + "',nmresage:" + "'" + STRING(aux_nmresage)                                       
-									   + "',flginscr:" + "'" + STRING(aux_flginscr)	
-									   + "',dsinscri:" + "'" + STRING(aux_dsinscri)										   
-                                       + "',nrcpfcgc:" + "'" + STRING(crapavt.nrcpfcgc) + "'~}".
+                                             + "',idseqttl:" + "'0" 
+                                             + "',nrdddtfc:" + "'"  
+                                             + "',nrtelefo:" + "'" + STRING(crapavt.nrfonres)
+                                             + "',dsdemail:" + "'" + STRING(crapavt.dsdemail)
+                                             + "',nmprimtl:" + "'" + STRING(aux_nmprimtl)
+                                             + "',tppessoa:" + "'J" 
+                                             + "',nmresage:" + "'" + STRING(aux_nmresage)                                             
+                                             + "',flginscr:" + "'" + STRING(aux_flginscr)		
+                                             + "',dsinscri:" + "'" + STRING(aux_dsinscri)												 
+                                             + "',nrcpfcgc:" + "'" + STRING(crapavt.nrcpfcgc) + "'~}".
                   
-                  END.
+            END.                                           
         END. /* FIM FOR EACH CRAPAVT PESSOA JURIDICA */
         
       END. /* FIM PESSOA JURIDICA */    
@@ -2177,7 +2178,7 @@ PROCEDURE BuscarCooperadoCPFCGC:
   DEF VAR vetCoopCpfCgc AS CHAR NO-UNDO INIT "".
   
   ASSIGN vetCoopCpfCgc = "".
-  
+    
   FOR EACH crapass 
      WHERE crapass.cdcooper = INT(ab_unmap.aux_cdcooper)
        AND crapass.nrcpfcgc = DEC(ab_unmap.aux_nrcpfcgc_fil)
@@ -2191,7 +2192,7 @@ PROCEDURE BuscarCooperadoCPFCGC:
                           + "~{" + "  nrdconta:" + "'" + STRING(crapass.nrdconta)
                                  + "',nmprimtl:" + "'" + crapass.nmprimtl
                           + "'~}".         
-                  END.
+  END.     
   
   /* Titulares */
   FOR EACH crapttl 
@@ -2212,7 +2213,7 @@ PROCEDURE BuscarCooperadoCPFCGC:
                           + "~{" + "  nrdconta:" + "'" + STRING(crapttl.nrdconta)
                                  + "',nmprimtl:" + "'" + crapass.nmprimtl
                           + "'~}".         
-        END.
+  END. 
   
   /* Avalistas */
   FOR EACH crapavt 
@@ -2234,10 +2235,10 @@ PROCEDURE BuscarCooperadoCPFCGC:
                                  + "',nmprimtl:" + "'" + crapass.nmprimtl
                           + "'~}".         
         
-        END. /* FIM FOR EACH CRAPAVT PESSOA JURIDICA */
-        
+    END. /* FIM FOR EACH CRAPAVT PESSOA JURIDICA */
+    	
   RUN RodaJavaScript("var vetCoopCpfCgc=new Array();vetCoopCpfCgc=["  + vetCoopCpfCgc + "]"). 
-	
+   
 END PROCEDURE.
 
 
@@ -2246,7 +2247,7 @@ END PROCEDURE.
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE outputHeader w-html 
 PROCEDURE outputHeader :
-  output-content-type ("text/html":U).
+  output-content-type ("text/html":U). 
 END PROCEDURE.
 
 /* _UIB-CODE-BLOCK-END */
@@ -2254,7 +2255,7 @@ END PROCEDURE.
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE PermissaoDeAcesso w-html 
 PROCEDURE PermissaoDeAcesso :
-{includes/wpgd0009.i}
+  {includes/wpgd0009.i}
 END PROCEDURE.
 
 /* _UIB-CODE-BLOCK-END */
@@ -2723,14 +2724,14 @@ IF REQUEST_METHOD = "POST":U THEN
       RUN CriaListaPac.
       RUN CriaListaEventos.
       RUN CriaListaInscritos.
-      
+    
       RUN RodaJavaScript("var vetNome = new Array();").
       
       IF aux_nrdconta <> 0 AND aux_nrdconta <> ? THEN
         DO:
-      RUN NomeCooperado.  
+          RUN NomeCooperado.
         END.
-	  
+      
       /* limpar variavel para nao apresentar critica ao carregar tela */  
       ab_unmap.aux_cdagenci = "".
       IF msg-erro-aux = 10 OR (opcao <> "sa" AND opcao <> "ex" AND opcao <> "in") THEN
@@ -2738,7 +2739,7 @@ IF REQUEST_METHOD = "POST":U THEN
  
       RUN enableFields.
       RUN outputFields.
-	  
+      
      CASE msg-erro-aux:
            WHEN 1 THEN
                 DO:
@@ -2796,7 +2797,7 @@ IF REQUEST_METHOD = "POST":U THEN
       DO:
          RUN RodaJavaScript("TravaTudo();").
          RUN RodaJavaScript("document.form.cdageins.value = '" + GET-VALUE('cdageins') + "'").
-         RUN RodaJavaScript("PosicionaPAC();").
+         RUN RodaJavaScript("PosicionaPAC();").         
       END.
      
       IF opcao = "bcc" THEN
@@ -2868,12 +2869,12 @@ ELSE /* Método GET */
                ELSE
                    RUN PosicionaNoPrimeiro.
 
-		   	   RUN CriaListaPac.
+               RUN CriaListaPac.
                RUN CriaListaEventos.
                RUN CriaListaInscritos.
 
                IF aux_nrdconta <> 0 AND aux_nrdconta <> ? THEN
-               RUN NomeCooperado.
+                  RUN NomeCooperado.
 		    		
                RUN displayFields.
                RUN enableFields.
@@ -2926,7 +2927,7 @@ END PROCEDURE.
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE RodaJavaScript w-html 
 PROCEDURE RodaJavaScript:
-    {includes/rodajava.i}
+  {includes/rodajava.i}
 END PROCEDURE.
 
 /* _UIB-CODE-BLOCK-END */
