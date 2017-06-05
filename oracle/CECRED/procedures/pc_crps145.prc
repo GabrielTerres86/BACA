@@ -98,6 +98,9 @@ CREATE OR REPLACE PROCEDURE CECRED.
                                 
                    20/03/2014 - Conversão Progress >> PLSQL (Edison-AMcom).
 
+				   24/04/2017 - Nao considerar valores bloqueados para composicao do saldo disponivel
+				                Heitor (Mouts) - Melhoria 440
+
     ............................................................................. */
 
     DECLARE
@@ -846,10 +849,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
           END IF;
           
           --acumulando o valor total do saldo
-          vr_vlsldtot := vr_tab_crapsld(rw_craprpp.nrdconta).vlsdblfp + 
-                         vr_tab_crapsld(rw_craprpp.nrdconta).vlsdbloq +
-                         vr_tab_crapsld(rw_craprpp.nrdconta).vlsdblpr + 
-                         vr_tab_crapsld(rw_craprpp.nrdconta).vlsddisp +
+          vr_vlsldtot := vr_tab_crapsld(rw_craprpp.nrdconta).vlsddisp +
                          vr_tab_crapass(rw_craprpp.nrdconta).vllimcre - 
                          vr_tab_crapsld(rw_craprpp.nrdconta).vlipmfap - 
                          vr_tab_crapsld(rw_craprpp.nrdconta).vlipmfpg;
@@ -909,8 +909,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
             END IF;
             
             --verifica o indicador de indicador de incidencia do IPMF  
-            IF vr_inhistor = 1 OR vr_inhistor = 3 OR
-               vr_inhistor = 4 OR vr_inhistor = 5 THEN
+            IF vr_inhistor = 1 THEN
               /* Inicia tratamento CPMF */
               IF vr_indoipmf = 2 THEN
                 --acumula o saldo
@@ -921,8 +920,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
               END IF;
             END IF;
              
-            IF vr_inhistor = 11 OR vr_inhistor = 13 OR
-               vr_inhistor = 14 OR vr_inhistor = 15 THEN
+            IF vr_inhistor = 11 THEN
               /* Inicia tratamento CPMF */
               IF vr_indoipmf = 2 THEN
                 --acumula o saldo
