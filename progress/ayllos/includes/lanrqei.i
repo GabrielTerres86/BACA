@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Margarete/Planner
-   Data    : Agosto/2000.                    Ultima alteracao: 12/12/2013
+   Data    : Agosto/2000.                    Ultima alteracao: 18/05/2017
 
    Dados referentes ao programa:
 
@@ -113,7 +113,9 @@
                12/12/2013 - Alteracao referente a integracao Progress X 
                             Dataserver Oracle 
                             Inclusao do VALIDATE ( André Euzébio / SUPERO)              
-                            
+               
+               18/05/2017 - Retirar glb_cddopcao do form f_lanrqe (Lucas Ranghetti #646559)
+               
 ............................................................................. */
 
 DEF VAR h-b1wgen0001 AS HANDLE                                        NO-UNDO.
@@ -406,8 +408,7 @@ DO WHILE TRUE:
              ELSE
                 MESSAGE glb_dscritic.
              
-             DISPLAY glb_cddopcao 
-                     tel_nrdctabb 
+             DISPLAY tel_nrdctabb 
                      tel_tprequis 
                      tel_qtreqtal
                      WITH FRAME f_lanrqe.
@@ -435,8 +436,7 @@ DO WHILE TRUE:
              BELL.
              CLEAR FRAME f_lanrqe.
              MESSAGE glb_dscritic.
-             DISPLAY glb_cddopcao 
-                     tel_nrdctabb 
+             DISPLAY tel_nrdctabb 
                      tel_tprequis 
                      tel_qtreqtal
                      tel_nrseqdig WITH FRAME f_lanrqe.
@@ -511,7 +511,7 @@ DO WHILE TRUE:
 
 
    IF KEYFUNCTION(LASTKEY) = "END-ERROR"   THEN     /*   F4 OU FIM   */
-      LEAVE.   /* Volta pedir a opcao para o operador */
+      RETURN.   /* Volta pedir a opcao para o operador */
 
    TRANS_1:
 
