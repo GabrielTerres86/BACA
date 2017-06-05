@@ -2570,7 +2570,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
          WHERE a.idinconsist_grp = pr_iddgrupo
            AND a.tpconfig_email <> 0 -- Deve ser diferente de NAO ENVIAR EMAIL
            AND a.tpconfig_email = decode(pr_tpincons,1, 2, -- Se o erro for de alerta, enviar somente se estiver configurado para ERROS E ALERTAS
-                                                        a.tpperiodicidade_email)
+                                                        a.tpconfig_email)
            AND a.tpperiodicidade_email = 1; -- Enviar email Online
       rw_inconsist_grp cr_inconsist_grp%ROWTYPE;
       

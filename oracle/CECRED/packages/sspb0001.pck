@@ -3,7 +3,7 @@
 /*
     Programa: sspb0001                        Antigo: b1wgen0046.p
     Autor   : David/Fernando/Guilherme
-    Data    : Outubro/2009                    Ultima Atualizacao: 18/10/2016
+    Data    : Outubro/2009                    Ultima Atualizacao: 30/11/2016
 
     Dados referentes ao programa:
 
@@ -72,6 +72,9 @@
                              
                 18/10/2016 - Ajustado Tags do STR0007 para ficarem de acordo com o 
                              catalogo 4.07 na procedure pc_gera_xml (Lucas Ranghetti #537580)
+
+    	          30/11/2016 - Incluido STR0025 e PAG0121 para processos de transferencias 
+                             judiciais (Andrino-Mouts / Projeto 341-Bacenjud)
 ..............................................................................*/
 
   --criação TempTable
@@ -347,7 +350,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
   --  Sistema  : Procedimentos e funcoes da BO b1wgen0046.p
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 09/11/2016
+  --  Data     : Julho/2013.                   Ultima atualizacao: 30/11/2016
   --
   -- Dados referentes ao programa:
   --
@@ -370,6 +373,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
   --                          (Adriano)
   --
   --           02/03/2017 - Ajustes PRJ335 - OFSSA (Odirlei-AMcom)   
+  --
+  --	         30/11/2016 - Incluido STR0025 e PAG0121 para processos de transferencias 
+  --                          judiciais (Andrino-Mouts / Projeto 341-Bacenjud)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Busca dos dados da cooperativa */
@@ -1168,7 +1174,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
              nrsequen,
              cdbandif,
              cdagedif,
-             nrctadif,
+             decode(greatest(LENGTH(nrctadif),14),14,nrctadif,0) nrctadif,
              nmtitdif,
              nrcpfdif,
              cdbanctl,
@@ -2711,6 +2717,47 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                       </'|| vr_nmmsgenv ||'>
                       </SISMSG>');
 
+    /* Descricao: IF requisita Transferencia de IF para conta de deposito identificado (Bacenjud) */
+    ELSIF vr_nmmsgenv = 'STR0025' THEN
+      pc_escreve_xml('<STR0025>
+                        <CodMsg>'||          vr_nmmsgenv ||'</CodMsg>
+                        <NumCtrlIF>'||       pr_nrctrlif ||'</NumCtrlIF>
+                        <ISPBIFDebtd>'||     pr_ispbdebt ||'</ISPBIFDebtd>
+                        <AgDebtd>'||         pr_cdagectl ||'</AgDebtd>
+                        <CtDebtd>'||         pr_nrdconta ||'</CtDebtd>
+                        <NomCliDebtd>'||     pr_nmpesemi ||'</NomCliDebtd>
+                        <TpPessoaDebtd>'||   pr_dspesemi ||'</TpPessoaDebtd>
+                        <CNPJ_CPFCliDebtd>'||pr_cpfcgemi ||'</CNPJ_CPFCliDebtd>
+                        <ISPBIFCredtd>'||    pr_ispbcred ||'</ISPBIFCredtd>
+                        <VlrLanc>'||         pr_vldocmto ||'</VlrLanc>
+                        <NivelPref></NivelPref>
+                        <IdentcDep>'||       lpad(pr_nrcctrcb,18,'0')||'</IdentcDep>
+                        <DtAgendt>'||        pr_dtagendt ||'</DtAgendt>
+                        <HrAgendt></HrAgendt>
+                        <DtMovto>'||         pr_dtmvtolt ||'</DtMovto>
+                      </STR0025>
+                      </SISMSG>');
+
+    /* Descricao: IF requisita Transferencia de IF para conta de deposito identificado (Bacenjud) */
+    ELSIF vr_nmmsgenv = 'PAG0121' THEN
+      pc_escreve_xml('<PAG0121>
+                        <CodMsg>'||          vr_nmmsgenv ||'</CodMsg>
+                        <NumCtrlIF>'||       pr_nrctrlif ||'</NumCtrlIF>
+                        <ISPBIFDebtd>'||     pr_ispbdebt ||'</ISPBIFDebtd>
+                        <AgDebtd>'||         pr_cdagectl ||'</AgDebtd>
+                        <CtDebtd>'||         pr_nrdconta ||'</CtDebtd>
+                        <NomCliDebtd>'||     pr_nmpesemi ||'</NomCliDebtd>
+                        <TpPessoaDebtd>'||   pr_dspesemi ||'</TpPessoaDebtd>
+                        <CNPJ_CPFCliDebtd>'||pr_cpfcgemi ||'</CNPJ_CPFCliDebtd>
+                        <ISPBIFCredtd>'||    pr_ispbcred ||'</ISPBIFCredtd>
+                        <VlrLanc>'||         pr_vldocmto ||'</VlrLanc>
+                        <NivelPrefPAG></NivelPrefPAG>
+                        <IdentcDep>'||       lpad(pr_nrcctrcb,18,'0')  ||'</IdentcDep>
+                        <DtMovto>'||         pr_dtmvtolt ||'</DtMovto>
+                        <DtAgendt>'||        pr_dtagendt ||'</DtAgendt>
+                      </PAG0121>
+                      </SISMSG>');
+
     /* STR0008 ,  PAG0108 , STR 0009 e PAG 0109
        - Descriçao: destinado a IF requisitar transferencia de recursos
                     entre pessoas físicas ou jurídicas em IFs distintas. */
@@ -3436,7 +3483,79 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     END IF;
 
     /*** MONTA O BODY ***/
-    IF pr_flgctsal THEN
+    IF pr_tpdctacr = 3 THEN
+      -- Deposito Judicial. Enviar com STR0025 e PAG0121
+
+      -- Se PAG Disponivel e se o Banco de destino estiver operando  com PAG
+      IF vr_flgutpag AND vr_flgbcpag = 1 THEN
+        vr_nmmsgenv := 'PAG0121';
+      ELSIF vr_flgutstr THEN /* Se STR Disponivel */        
+        vr_nmmsgenv := 'STR0025';
+		  ELSE
+        vr_dscritic := 0;
+        vr_dscritic := 'Operação indisponível para o banco favorecido.';
+					
+        --Gerar erro
+        GENE0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                             ,pr_cdagenci => pr_cdagenci
+                             ,pr_nrdcaixa => pr_nrdcaixa
+                             ,pr_nrsequen => 1
+                             ,pr_cdcritic => vr_cdcritic
+                             ,pr_dscritic => vr_dscritic
+                             ,pr_tab_erro => vr_tab_erro);
+        --Levantar Excecao
+        RAISE vr_exc_erro;					
+      END IF;
+
+      pc_gera_xml (pr_cdcooper => pr_cdcooper          --> Codigo da cooperativa
+                  ,pr_cdorigem => pr_cdorigem          --> Id de origem
+                  ,pr_crapdat  => rw_crapdat           --> rowtype da crapdat
+                   /* HEADER */
+                  ,pr_nmmsgenv   => vr_nmmsgenv        --> Cod. da Mensagem
+                  ,pr_cdlegago   => vr_cdlegado        --> Cod. Legado
+                  ,pr_tpmanut    => vr_tpmanut         --> Inclusao
+                  ,pr_cdstatus   => vr_cdstatus        --> Mensagem do tipo definitiva
+                  ,pr_nroperacao => vr_nroperacao      --> Numero de operacao
+                  ,pr_fldebcred  => vr_fldebcred       --> Debito
+                   /* BODY */
+                  ,pr_nrctrlif => pr_nrctrlif          --> Nr. controle da IF
+                  ,pr_ispbdebt => SUBSTR(to_char(vr_ispbdebt,'fm00000000000000'),1,8) --> Inscricao SPB
+                  ,pr_cdbcoctl => rw_crapcop.cdbcoctl  --> Banco da Coop.
+                  ,pr_cdagectl => rw_crapcop.cdagectl  --> Agencia da Coop.
+                  ,pr_dsdctadb => NULL                 --> Tp. Conta de Debito
+                  ,pr_nrdconta => pr_nrdconta          --> Nr.da Conta remeternte
+                  ,pr_dspesemi => vr_dspesemi          --> Tp. Pessoa Remetente
+                  ,pr_cpfcgemi => pr_cpfcgemi          --> CPF Remet
+                  ,pr_cpfcgdel => NULL                 --> CPF Remetente - Segundo ttl
+                  ,pr_nmpesemi => pr_nmpesemi          --> Nome Remetente - Primeiro ttl
+                  ,pr_nmpesde1 => NULL                 --> Nome Remetente - Segundo ttl
+                  ,pr_ispbcred => vr_ispbcred          --> IF de Credito
+                  ,pr_cdbccxlt => pr_cdbccxlt          --> Cd. Banco Destino
+                  ,pr_cdagenbc => pr_cdagenbc          --> Agencia IF de credito
+                  ,pr_nrcctrcb => pr_nrcctrcb          --> Conta de credito
+                  ,pr_dsdctacr => vr_dsdctacr          --> Tp. Conta de Debito
+                  ,pr_dspesrec => NULL                 --> Tp. Pessoa Destino
+                  ,pr_cpfcgrcb => pr_cpfcgrcb          --> CPF Pessoa Destino
+                  ,pr_nmpesrcb => pr_nmpesrcb          --> Nome Pessoa Destino
+                  ,pr_vldocmto => vr_vldocmto          --> Valor do Docmto
+                  ,pr_cdfinrcb => NULL                 --> Finalidade
+                  ,pr_dtmvtolt => vr_dtmvtolt          --> Data atual
+                  ,pr_dtmvtopr => vr_dtmvtopr          --> Data proximo dia
+                  ,pr_cdidtran => pr_cdidtran          --> Id transação
+                  ,pr_dshistor => NULL                 --> Historico
+
+                  ,pr_cdagenci => pr_cdagenci          --> agencia/pac
+                  ,pr_nrdcaixa => pr_nrdcaixa          --> nr. do caixa
+                  ,pr_cdoperad => pr_cdoperad          --> operador
+                  ,pr_dtagendt => NULL                 --> Data de agendamento
+                  ,pr_nrseqarq => 0                    --> Sequencial arq
+                  ,pr_cdconven => 0                    --> convenio
+                  ,pr_hrtransa => pr_hrtransa          --> Hora transacao
+                  --------- SAIDA ---------
+                  ,pr_cdcritic => vr_cdcritic
+                  ,pr_dscritic => vr_dscritic );
+      
+    ELSIF pr_flgctsal THEN
       -- Enviar com STR0037 ou PAG0137
 
       -- Se PAG Disponivel e se o Banco de destino estiver operando  com PAG
