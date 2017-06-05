@@ -2700,7 +2700,8 @@ PROCEDURE exclui_autorizacao:
     DEF VAR aux_cdhistor AS INTE                                   NO-UNDO.
     DEF VAR aux_cdempcon AS INTE                                   NO-UNDO.
     DEF VAR aux_cdsegmto AS INTE                                   NO-UNDO.
-    DEF VAR aux_dtiniatr AS DATE                                   NO-UNDO.
+    DEF VAR aux_dtfimatr AS DATE                                   NO-UNDO.
+    DEF VAR aux_tpoperac AS INT                                    NO-UNDO.
 
     ASSIGN aux_dscritic = ""
            aux_cdcritic = 0
@@ -2879,10 +2880,17 @@ PROCEDURE exclui_autorizacao:
                 END.
             /* FIM  Criar registro de motivo da exclusao */  
             
-            ASSIGN aux_dtiniatr = par_dtmvtolt.
+            ASSIGN aux_dtfimatr = par_dtmvtolt.
             
             IF  par_idorigem = 3 THEN /* IBANK */
                 DO:
+                     /* Definir tipo de operacao para busca 
+                       do limite de horario(hist 1019 - Sicredi) */
+                    IF  par_cdhistor = 1019 THEN
+                        ASSIGN aux_tpoperac = 13.
+                    ELSE
+                        ASSIGN aux_tpoperac = 11.
+                    
                     /** Verifica o horario inicial e final para a operacao **/
                     RUN sistema/generico/procedures/b1wgen0015.p 
                         PERSISTENT SET h-b1wgen0015.
@@ -2891,7 +2899,7 @@ PROCEDURE exclui_autorizacao:
                         DO:
                             RUN horario_operacao IN h-b1wgen0015 (INPUT par_cdcooper,
                                                                   INPUT par_cdagenci,
-                                                                  INPUT 13,
+                                                                  INPUT aux_tpoperac,
                                                                   INPUT crapass.inpessoa,
                                                                  OUTPUT aux_dscritic,
                                                                  OUTPUT TABLE tt-limite).
@@ -2915,7 +2923,7 @@ PROCEDURE exclui_autorizacao:
                                      /* Se for dia util deve gerar o registro para o proximo dia util
                                         ja que o arquivo ja foi transmitido, do contrario mantem o dtmvtolt */
                                     IF  tt-limite.iddiauti = 1 THEN /* eh dia util */
-                                        ASSIGN aux_dtiniatr = crapdat.dtmvtopr.
+                                        ASSIGN aux_dtfimatr = crapdat.dtmvtopr.
                                 END.
                         END.
                 END.
@@ -2928,7 +2936,7 @@ PROCEDURE exclui_autorizacao:
                    aux_cdsegmto = crapatr.cdsegmto.
 
            /* Verifica a data da autorizaçao */
-           IF  crapatr.dtiniatr <> aux_dtiniatr THEN
+           IF  crapatr.dtiniatr <> aux_dtfimatr THEN
                DO:
                   ASSIGN crapatr.dtfimatr = par_dtmvtolt. /* Cancela */
                   
