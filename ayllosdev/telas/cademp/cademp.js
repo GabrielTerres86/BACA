@@ -2284,7 +2284,7 @@ function dossieDigdoc(cdproduto){
 		url		: UrlSite + 'telas/digdoc.php',
 		data    :
 				{
-					nrdconta	: nrdconta,
+				    nrdconta    : $('#nrdconta', '#frmInfEmpresa').val(),
 					cdproduto   : cdproduto, // Codigo do produto
                     nmdatela    : 'CADEMP',
  					redirect	: 'script_ajax'
