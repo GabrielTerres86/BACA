@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Abril/2004                        Ultima atualizacao: 16/05/2017
+   Data    : Abril/2004                        Ultima atualizacao: 19/05/2017
 
    Dados referentes ao programa:
 
@@ -391,7 +391,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                              final seja verificado se cooperativa que esta rodando 
                              é igual ao que iremos crirar o registro (Lucas Ranghetti #591560)
     
-	           30/01/2017 - Implementado join no cursor que verifica coop migrada (Tiago/Facricio)
+	             30/01/2017 - Implementado join no cursor que verifica coop migrada (Tiago/Facricio)
                
                02/03/2017 - Adicionar dtmvtopg no filtro do cursor cr_craplau_dup (Lucas Ranghetti #618379)
 			   
@@ -399,15 +399,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                             que se refere a numero de conta criticar apenas para a cooperativa
                             correspondente (Tiago/Fabricio SD620952)
 
-			   29/03/2017 - Para casos em que a conta for migrada e a cooperativa ainda estiver
+			         29/03/2017 - Para casos em que a conta for migrada e a cooperativa ainda estiver
                             ativa e convenio usar agencia vamos dar um continue e somente irá 
                             ser agendado o pagamento uma vez na cooperativa em que a conta foi 
                             migrada (Lucas Ranghetti #640199)
-
+                            
                31/03/2017 - Ajustes para quando vier a conta > 9000000000 e usar agencia, gravar 
                             o numero da conta completo inclusive com o 900+coop a frente da conta
                             (Lucas Ranghetti #636973)
-			   
+                            
 			   04/04/2017 - Ajuste para integracao de arquivos com layout na versao 5
 				            (Jonata - RKAM M311).
 
@@ -419,6 +419,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
              16/05/2017 - Ajuste para alterar o format da variável vr_nrconta_cancel
 				                  (Jonata - RKAM M311).
 
+                            
+               19/05/2017 - Tratamento para cooperado demitido (Lucas Ranghetti #656251)
 ............................................................................ */
 
 
@@ -586,7 +588,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                cdsecext,
                cdagenci,
                nrcpfcgc,
-               inpessoa
+               inpessoa,
+               dtdemiss
           FROM crapass
          WHERE crapass.cdcooper = pr_cdcooper
            AND crapass.nrdconta = pr_nrdconta
@@ -2096,9 +2099,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
               END IF;
               
               IF vr_cdcritic <> 999 THEN
-              vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+                vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
               END IF;
-
+              
               vr_nmarquiv := vr_nmdirdeb||'/err' || vr_tab_nmarquiv(i);
 
               -- Acrescenta "err" no inicio do nome do arquivo
@@ -3203,7 +3206,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                   IF cr_crapass%ISOPEN THEN
                     CLOSE cr_crapass;
                   END IF;
-                  OPEN cr_crapass(vr_cdcooper, vr_nrdconta, 1);
+                  OPEN cr_crapass(vr_cdcooper, vr_nrdconta, 0);
                   FETCH cr_crapass INTO rw_crapass;
 
                   -- Se a linha for referente ao corpo do arquivo
@@ -3523,14 +3526,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                   FETCH cr_crapatr INTO rw_crapatr;
 
                   IF ((cr_crapatr%FOUND AND rw_crapatr.dtfimatr IS NOT NULL) OR
-                      (cr_crapatr%NOTFOUND)                                  OR
-                      (cr_crapass%NOTFOUND))                                 AND
+                      (cr_crapatr%NOTFOUND))                                 AND
                       vr_tpregist <> 'B'                                     THEN
                     IF rw_gnconve.flgindeb = 1 AND
                        vr_tpregist     = 'E'   AND
-                       cr_crapass%FOUND           AND
-                       cr_crapatr%NOTFOUND        THEN
-
+                       cr_crapass%FOUND        AND                       
+                       cr_crapatr%NOTFOUND     AND 
+                       rw_crapass.dtdemiss IS NULL THEN -- Somente cooperados ativos
                          -- Insere no Cadastro das autorizacoes de debito em conta
                          BEGIN
                             INSERT INTO crapatr
@@ -3608,8 +3610,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                       END IF;
 
                       vr_dstexarq_tmp := '30';
-                      IF cr_crapass%NOTFOUND THEN  /** Conta encerrada. **/
-                        vr_cdcritic_tmp := 64;
+                      IF cr_crapass%NOTFOUND  THEN  
+                        vr_cdcritic_tmp := 127; -- Conta Errada
+                        vr_dstexarq_tmp := '15';
+                      ELSIF cr_crapass%FOUND AND rw_crapass.dtdemiss IS NOT NULL THEN
+                        vr_cdcritic_tmp := 64; -- Conta Encerrada
                         vr_dstexarq_tmp := '15';
                       ELSIF cr_crapatr%NOTFOUND THEN /*Autoriz.nao encontrada*/
                         vr_cdcritic_tmp := 453;
