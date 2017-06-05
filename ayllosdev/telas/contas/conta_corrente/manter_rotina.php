@@ -36,6 +36,9 @@
  *                             pois a BO não utiliza o mesmo (Renato Darosci)
  *
  *                03/05/2017 - Ajuste na chamada de Revisão Cadastral. (SD: 654355, Andrey Formigari - Mouts).
+ *
+ *                05/06/2017 - Alteração nas chamadas AJAX da revisão cadastral e no processo de salvar (CONTA-CORRENTE).
+ *                             (Andrey Formigari - Mouts. SD 678767)
  */
     session_start();
 	require_once('../../../includes/config.php');
