@@ -2,6 +2,7 @@ CREATE OR REPLACE PACKAGE CECRED.DIGI0001 AS
 
   PROCEDURE pc_acessa_dossie(pr_nrdconta  IN crapass.nrdconta%TYPE --> Nr. da conta
   		                      ,pr_cdproduto IN INTEGER               --> Código do produto
+														,pr_nmdatela_log IN VARCHAR2              --> Nome da tela
 														,pr_xmllog    IN VARCHAR2              --> XML com informacoes de LOG
 														,pr_cdcritic  OUT PLS_INTEGER          --> Codigo da critica
 														,pr_dscritic  OUT VARCHAR2             --> Descricao da critica
@@ -29,6 +30,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DIGI0001 AS
   
   PROCEDURE pc_acessa_dossie(pr_nrdconta  IN crapass.nrdconta%TYPE --> Nr. da conta
   		                      ,pr_cdproduto IN INTEGER               --> Código do produto
+														,pr_nmdatela_log IN VARCHAR2              --> Nome da tela														
 														,pr_xmllog    IN VARCHAR2              --> XML com informacoes de LOG
 														,pr_cdcritic  OUT PLS_INTEGER          --> Codigo da critica
 														,pr_dscritic  OUT VARCHAR2             --> Descricao da critica
@@ -169,7 +171,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DIGI0001 AS
 														,pr_flgtrans => 1 --> TRUE
 														,pr_hrtransa => gene0002.fn_busca_time
 														,pr_idseqttl => 1
-														,pr_nmdatela => vr_nmdatela
+														,pr_nmdatela => pr_nmdatela_log
 														,pr_nrdconta => pr_nrdconta
 												    ,pr_nrdrowid => vr_rowid);
 			
@@ -194,7 +196,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DIGI0001 AS
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral na rotina da tela OPECEL: ' || SQLERRM;
+        pr_dscritic := 'Erro geral na rotina da tela ' || pr_nmdatela_log ||': ' || SQLERRM;
 
         -- Carregar XML padrao para variavel de retorno
         pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||

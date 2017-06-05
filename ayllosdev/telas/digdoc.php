@@ -19,15 +19,18 @@
 	
 	// Verifica parâmetros necessários
 	if ( !isset($_POST['nrdconta']) || 
-	     !isset($_POST['cdproduto']) ) exibirErro('error','Par&acirc;metros incorretos!','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+	     !isset($_POST['cdproduto']) ||
+		 !isset($_POST['nmdatela'])) exibirErro('error','Par&acirc;metros incorretos!','Alerta - Ayllos','bloqueiaFundo(divRotina)');
 	
 	// Guardo os parâmetos do POST em variáveis
 	$nrdconta  = (isset($_POST['nrdconta']))  ? $_POST['nrdconta'] : '' ;
 	$cdproduto = (isset($_POST['cdproduto'])) ? $_POST['cdproduto'] : '' ;
+	$nmdatela  = (isset($_POST['nmdatela'])) ? $_POST['nmdatela'] : '' ;
 	
 	$xmlimpres = new XmlMensageria();
 	$xmlimpres->add('nrdconta',$nrdconta)
-			  ->add('cdproduto',$cdproduto); 
+			  ->add('cdproduto',$cdproduto)
+			  ->add('nmdatela_log',$nmdatela); 
 
 	$xmlResult = mensageria($xmlimpres, "DIGI0001", "ACESSA_DOSSIE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	   $xmlObj = getObjectXML($xmlResult);	
