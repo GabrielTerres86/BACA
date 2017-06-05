@@ -21,6 +21,9 @@
                             Inclusao do VALIDATE ( Andre Euzebio / SUPERO) 
                             
               05/08/2014 - Alteração da Nomeclatura para PA (Vanessa).
+
+			  05/06/2016 - Incluso tratativa para que na leitura da crapcst 
+			               só gere critica para nrborder = 0 (Daniel)  
 ............................................................................. */
 
 DEF STREAM str_1.   /*  Para relatorio de criticas  */
@@ -345,6 +348,7 @@ DO  i = 1 TO aux_contador:
                           crapcst.cdagechq = aux_cdagechq AND /* Age dest  */
                           crapcst.nrctachq = aux_nrctachq AND /* Nr ctachq */
                           crapcst.nrcheque = aux_nrdocmto     /* Nro chq   */
+						  crapcst.nrborder = 0
                           EXCLUSIVE-LOCK NO-ERROR.
 
        IF   AVAIL crapcst THEN
