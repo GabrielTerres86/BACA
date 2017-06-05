@@ -11,7 +11,7 @@ AS
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Deborah/Edson
-    Data    : Janeiro/94.                       Ultima atualizacao: 14/10/2013
+    Data    : Janeiro/94.                       Ultima atualizacao: 22/06/2016
 
     Dados referentes ao programa:
 
@@ -48,6 +48,9 @@ AS
 
                14/10/2013 - Ajustes na rotina para prever a nova forma de retorno
                             das criticas e chamadas a fimprg.p (Douglas Pagel).
+                            
+               22/06/2016 - Correcao para o uso da function fn_busca_dstextab 
+                            da TABE0001. (Carlos Rafael Tanholi).
     ......................................................................... */
     DECLARE
       -- Identificacao do programa
@@ -59,22 +62,6 @@ AS
           FROM crapcop
          WHERE cdcooper = pr_cdcooper;
       rw_crapcop cr_crapcop%rowtype;
-
-      -- Cursor para tabela de controle de execucao
-      CURSOR cr_craptab (pr_nmsistem craptab.nmsistem%TYPE
-                        ,pr_tptabela craptab.tptabela%TYPE
-                        ,pr_cdempres craptab.cdempres%TYPE
-                        ,pr_cdacesso craptab.cdacesso%TYPE
-                        ,pr_tpregist craptab.tpregist%TYPE) IS
-        SELECT craptab.dstextab
-          FROM craptab  craptab
-         WHERE craptab.cdcooper = pr_cdcooper
-           AND craptab.nmsistem = pr_nmsistem
-           AND craptab.tptabela = pr_tptabela
-           AND craptab.cdempres = pr_cdempres
-           AND craptab.cdacesso = pr_cdacesso
-           AND craptab.tpregist = pr_tpregist;
-      rw_craptab cr_craptab%ROWTYPE;
 
       -- Cursor para listagem de PAs
       cursor cr_crapage is
@@ -285,6 +272,8 @@ AS
       vr_dsxmldad  CLOB;
       -- Diretorio da cooperativa
       vr_dircoop varchar2(300);
+      -- Guardar registro dstextab
+      vr_dstextab craptab.dstextab%TYPE;      
 
       -- Procedimento auxiliar para escrita no CLOB vr_dsxmldad
       PROCEDURE pc_escreve_clob(pr_des_dados IN VARCHAR2) IS
@@ -343,30 +332,29 @@ AS
 
       -- Inicio da regra de negocio
 
+      -- Buscar configuração na tabela
       -- Le a tabela de controle de execucao
-      OPEN cr_craptab(pr_nmsistem => 'CRED'
+      vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                                               ,pr_nmsistem => 'CRED'
                      ,pr_tptabela => 'GENERI'
                      ,pr_cdempres => 0
                      ,pr_cdacesso => 'EXEEMPATRA'
                      ,pr_tpregist => 1);
-      FETCH cr_craptab
-        into rw_craptab;
 
-      -- Validacao dos dados
-      if cr_craptab%notfound then
+      IF TRIM(vr_dstextab) IS NULL THEN 
         -- Se não encontrar o registro, gera log e sai do programa.
         vr_cdcritic := 55;
         vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic)
                        || ' CRED-GENERI-00-EXEEMPATRA-001';
         raise vr_exc_saida;
-      else
+      ELSE
         -- Se encontrar, mas o valor for diferente de 0 e 1
-        if rw_craptab.dstextab <> '0' and rw_craptab.dstextab <> '1' then
+        IF vr_dstextab <> '0' AND vr_dstextab <> '1' THEN
           -- Alimenta parametro de saida e sai do programa sem log.
           pr_infimsol := 1;
           raise vr_exc_fimprg;
-        end if;
-      end if;
+        END IF;
+      END IF;
 
       -- Monta data limite para emprestimos em atraso
       -- Se é mudanca de mes
@@ -779,4 +767,3 @@ AS
     END;
   END PC_CRPS088;
 /
-
