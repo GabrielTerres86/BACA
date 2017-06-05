@@ -41,7 +41,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Agosto/2006                   Ultima Atualizacao: 23/03/2017
+   Data    : Agosto/2006                   Ultima Atualizacao: 05/06/2017
    Dados referentes ao programa:
 
    Frequencia: Diario (internet)
@@ -103,6 +103,10 @@
 				24/03/2017 - Adicionado parametro na lista_protocolos para que posssa
                              ser filtrado por uma lista fixa de protocolos. PR354.1
                              (Dionathan)
+							 
+				05/06/2017 - Pesquisar comprovantes filtrando somente pela data 
+				             da transação (David).
+							 
 ............................................................................. */
 
 { sistema/generico/includes/var_internet.i }
@@ -468,8 +472,7 @@ PROCEDURE lista_protocolos:
     END.
     ELSE
     FOR EACH crappro WHERE crappro.cdcooper  = par_cdcooper  AND
-                           crappro.nrdconta  = par_nrdconta  AND
-                           crappro.dtmvtolt <= par_dtfimpro  AND
+                           crappro.nrdconta  = par_nrdconta  AND                           
                            crappro.dttransa >= par_dtinipro  AND
                            crappro.dttransa <= par_dtfimpro  AND
                           (par_cdtippro      = 0             OR
