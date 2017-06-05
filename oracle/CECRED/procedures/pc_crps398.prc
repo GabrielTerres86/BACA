@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS398 (pr_cdcooper  IN crapcop.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Mirtes
-   Data    : julho/2004                     Ultima atualizacao: 20/02/2014
+   Data    : julho/2004                     Ultima atualizacao: 22/06/2016
    Dados referentes ao programa:
 
    Frequencia:
@@ -107,6 +107,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS398 (pr_cdcooper  IN crapcop.cdcooper%
 
                20/02/2014 - Ajuste na ordenacao do relatorio para igualar
                             ao relatorio do Oracle (James)
+                            
+               22/06/2016 - Correcao para o uso correto do indice da CRAPTAB 
+                            nesta rotina.(Carlos Rafael Tanholi).
      ............................................................................. */
 
      DECLARE
@@ -416,10 +419,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS398 (pr_cdcooper  IN crapcop.cdcooper%
                ,craptab.dstextab
          FROM craptab
          WHERE craptab.cdcooper = pr_cdcooper
-         AND   craptab.nmsistem = pr_nmsistem
-         AND   craptab.tptabela = pr_tptabela
+         AND   UPPER(craptab.nmsistem) = pr_nmsistem
+         AND   UPPER(craptab.tptabela) = pr_tptabela
          AND   craptab.cdempres = pr_cdempres
-         AND   craptab.cdacesso = pr_cdacesso;
+         AND   UPPER(craptab.cdacesso) = pr_cdacesso;
 
        --Variaveis Locais
        vr_dia1cardve   INTEGER;
@@ -2622,4 +2625,3 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS398 (pr_cdcooper  IN crapcop.cdcooper%
      END;
 END pc_crps398;
 /
-

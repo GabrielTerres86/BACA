@@ -23,7 +23,7 @@
 
     Programa  : b1wgen0028.p
     Autor     : Guilherme
-    Data      : Marco/2008                    Ultima Atualizacao: 28/04/2016
+    Data      : Marco/2008                    Ultima Atualizacao: 06/04/2017
     
     Dados referentes ao programa:
 
@@ -500,6 +500,12 @@
 
 				07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
                              departamento passando a considerar o código (Renato Darosci)
+							 
+				23/03/2017 - Removendo a possibilidade de solicitar novo cartão com vencimento para o dia	
+						     27, conforme solicitado no chamado 636445. (Kelvin)
+							 
+				06/04/2017 - Ajuste realizado para resolver o problema de estouro de sequence, conforme
+							 solicitado no chamado 645013. (Kelvin)
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -3300,25 +3306,8 @@ PROCEDURE cadastra_novo_cartao:
 
         IF  crapass.inpessoa = 2  THEN
             DO:
-
-                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                ASSIGN aux_nrempcrd = 0.
     
-                /* Busca a proxima sequencia do campo crapldt.nrsequen */
-                RUN STORED-PROCEDURE pc_sequence_progress
-                aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPASS"
-                                                    ,INPUT "NREMPCRD"
-                                                    ,INPUT "1"
-                                                    ,INPUT "N"
-                                                    ,"").
-    
-                CLOSE STORED-PROC pc_sequence_progress
-                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-    
-                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-    
-                ASSIGN aux_nrempcrd = INTE(pc_sequence_progress.pr_sequence)
-                                      WHEN pc_sequence_progress.pr_sequence <> ?.
-
                 FOR FIRST crabass FIELDS(nrempcrd)
                                 WHERE crabass.cdcooper = crapass.cdcooper   AND
                                       crabass.nrdconta = crapass.nrdconta   AND
@@ -17867,7 +17856,8 @@ PROCEDURE busca_dddebito:
       DO:
         FOR EACH craptlc WHERE craptlc.cdcooper = par_cdcooper   AND
                          craptlc.cdadmcrd = par_cdadmcrd   AND
-                         craptlc.dddebito > 0 NO-LOCK:
+                         craptlc.dddebito > 0 AND
+						 craptlc.dddebito <> 27 /*Removido vencimento para o dia 27 SD: 636445*/ NO-LOCK:
 
             ASSIGN aux[craptlc.dddebito] = craptlc.dddebito.
           

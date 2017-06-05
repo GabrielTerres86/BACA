@@ -1858,6 +1858,18 @@ PROCEDURE verifica_transferencia:
                                   "transferencia.".
             RETURN "NOK".
         END.
+
+    /* Regra para impedir transferencia intercooperativa para 
+                contas Transulcred que serao migradas no dia 31/12/2016. */
+    IF  par_tpoperac     = 5           AND
+        crabcop.cdcooper = 17          AND /* Transulcred */
+        aux_datdodia    >= 12/31/2016  THEN
+        DO: 
+            ASSIGN par_dscritic = "Conta destino nao habilitada " +
+                                  "para receber valores da " +
+                                  "transferencia.".
+            RETURN "NOK".
+        END.
        
     IF  par_flagenda THEN
         DO:
@@ -2535,7 +2547,6 @@ PROCEDURE efetua_saque:
         aux_cdhisdeb = 316.  /* Saque Coop */
     ELSE
         aux_cdhisdeb = 918.  /* Saque Multicoop */
-
 
     /* para evitar saque simultaneo em mais de uma maquina, verifica
        novamente o saque */

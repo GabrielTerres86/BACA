@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0001 is
   --  Sistema  : Rotinas para cadastros Web
   --  Sigla    : CADA
   --  Autor    : Petter R. Villa Real  - Supero
-  --  Data     : Maio/2013.                   Ultima atualizacao: 10/11/2015
+  --  Data     : Maio/2013.                   Ultima atualizacao: 16/06/2016
   --
   -- Dados referentes ao programa:
   --
@@ -15,6 +15,9 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0001 is
   --             10/11/2015 - Incluido o campo tt-crapavt.idrspleg, e incluido verificacao
   --                          na procedure pc_busca_dados_58 para verificar se o representante
   --                          é responsável legal pelo acesso aos canais de autoatendimento e SAC (Jean Michel).	             
+  --
+  --             16/06/2016 - Correcao para o uso correto do indice da CRAPTAB em varias
+  --                          procedures desta package. (Carlos Rafael Tanholi).                    
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de Registro para os lançamentos
@@ -589,7 +592,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
   --  Sistema  : Rotinas para cadastros Web
   --  Sigla    : CADA
   --  Autor    : Petter R. Villa Real  - Supero
-  --  Data     : Maio/2013.                   Ultima atualizacao: 01/03/2016
+  --  Data     : Maio/2013.                   Ultima atualizacao: 16/06/2016
   --
   -- Dados referentes ao programa:
   --
@@ -611,6 +614,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
   --             01/03/2016 - Adicionado SUBSTR na procedure pc_busca_dados_cto_72 para os campos 
   --                          nmrespon, nmpairsp, nmmaersp que são carregados da crapttl, e que 
   --                          possuem tamanho de campos diferentes (Douglas - Chamado 410909)
+  --
+  --             16/06/2016 - Correcao para o uso correto do indice da CRAPTAB em varias
+  --                          procedures desta package. (Carlos Rafael Tanholi).        
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   -- Type para os motivos de demissões
@@ -909,15 +916,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
              , craptab.dstextab
         FROM craptab craptab
         WHERE craptab.cdcooper = pr_cdcooper
-        AND   craptab.nmsistem = pr_nmsistem
-        AND   craptab.tptabela = pr_tptabela
+        AND   UPPER(craptab.nmsistem) = pr_nmsistem
+        AND   UPPER(craptab.tptabela) = pr_tptabela
         AND   craptab.cdempres = pr_cdempres
-        AND   craptab.cdacesso = pr_cdacesso
+        AND   UPPER(craptab.cdacesso) = pr_cdacesso
         AND   (craptab.tpregist = pr_tpregist OR pr_tpregist IS NULL);
       rw_craptab cr_craptab%ROWTYPE;
 
       --Variaveis Locais
       vr_exc_erro     EXCEPTION;
+      -- Guardar registro dstextab
+      vr_dstextab craptab.dstextab%TYPE;      
 
     BEGIN
       --Inicializar variavel de erro
@@ -943,23 +952,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
       ELSIF NOT vr_tbmotdem.EXISTS(pr_cdmotdem) THEN
         --Se o codigo do motivo da demissao for zero ignora
         IF NVL(pr_cdmotdem,-1) <> 0 THEN
-          --Selecionar informacoes da tabela generica
-          OPEN cr_craptab (pr_cdcooper => pr_cdcooper
+
+          -- Buscar configuração na tabela
+          vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
                           ,pr_nmsistem => 'CRED'
                           ,pr_tptabela => 'GENERI'
                           ,pr_cdempres => 0
                           ,pr_cdacesso => 'MOTIVODEMI'
                           ,pr_tpregist => pr_cdmotdem);
-          --Posicionar no primeiro registro
-          FETCH cr_craptab INTO rw_craptab;
+
           --Se nao encontrou registro
-          IF cr_craptab%NOTFOUND THEN
+          IF TRIM(vr_dstextab) IS NULL THEN
             --Retornar que nao encontrou
             pr_cdcritic:= 848;
             pr_dsmotdem:= 'MOTIVO NAO CADASTRADO';
           ELSE
             --Retornar o motivo encontrado
-            pr_dsmotdem:= rw_craptab.dstextab;
+            pr_dsmotdem:= vr_dstextab;
           END IF;
           --Fechar Cursor
           CLOSE cr_craptab;
@@ -1852,16 +1861,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
         AND   crapepa.nrdocsoc = pr_nrdocsoc
         ORDER BY crapepa.progress_recid ASC;
       rw_crapepa cr_crapepa%ROWTYPE;
-      --Selecionar tabela parametros
-      CURSOR cr_craptab (pr_cdcooper IN craptab.cdcooper%type
-                        ,pr_cdacesso IN craptab.cdacesso%type
-                        ,pr_tpregist IN craptab.tpregist%type) IS
-        SELECT craptab.dstextab
-        FROM craptab
-        WHERE craptab.cdcooper = pr_cdcooper
-        AND   craptab.cdacesso = pr_cdacesso
-        AND   craptab.tpregist = pr_tpregist;
-      rw_craptab cr_craptab%ROWTYPE;
 
       --Variaveis Locais
       vr_gncdntj BOOLEAN;
@@ -1873,6 +1872,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
       vr_dscritic VARCHAR2(4000);
       --Variaveis de Excecao
       vr_exc_erro  EXCEPTION;
+      -- Guardar registro dstextab
+      vr_dstextab craptab.dstextab%TYPE;      
+      
     BEGIN
       --Inicializar variaveis erro
       pr_cdcritic:= NULL;
@@ -1942,19 +1944,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
 
       --Se possuir setor economico
       IF nvl(pr_tab_crapepa(vr_index).cdseteco,0) <> 0 THEN
-        --Selecionar tabela parametros
-        OPEN cr_craptab (pr_cdcooper => pr_cdcooper
+        -- Buscar configuração na tabela
+        vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                                                 ,pr_nmsistem => 'CRED'
+                                                 ,pr_tptabela => 'GENERI'
+                                                 ,pr_cdempres => 0
                         ,pr_cdacesso => 'SETORECONO'
                         ,pr_tpregist => pr_tab_crapepa(vr_index).cdseteco);
-        FETCH cr_craptab INTO rw_craptab;
+        
+        
         --Se Encontrou
-        IF cr_craptab%FOUND THEN
-          pr_tab_crapepa(vr_index).nmseteco:= rw_craptab.dstextab;
+        IF TRIM(vr_dstextab) IS NOT NULL THEN
+          pr_tab_crapepa(vr_index).nmseteco:= vr_dstextab;
         ELSE
           pr_tab_crapepa(vr_index).nmseteco:= 'Nao Cadastrado';
         END IF;
-        --Fechar Cursor
-        CLOSE cr_craptab;
+
       END IF;
       --Se possuir Codigo Rumo Atividade e Setor Economico
       IF nvl(pr_tab_crapepa(vr_index).cdrmativ,0) <> 0 AND
@@ -2073,16 +2078,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
         AND   crapass.nrdconta = pr_nrdconta
         AND   crapass.inpessoa > 1;
       rw_crapass cr_crapass%ROWTYPE;
-      --Selecionar tabela parametros
-      CURSOR cr_craptab (pr_cdcooper IN craptab.cdcooper%type
-                        ,pr_cdacesso IN craptab.cdacesso%type
-                        ,pr_tpregist IN craptab.tpregist%type) IS
-        SELECT craptab.dstextab
-        FROM craptab
-        WHERE craptab.cdcooper = pr_cdcooper
-        AND   craptab.cdacesso = pr_cdacesso
-        AND   craptab.tpregist = pr_tpregist;
-      rw_craptab cr_craptab%ROWTYPE;
+      
       --Variaveis Locais
       vr_crapass  BOOLEAN;
       vr_craeepa  BOOLEAN;
@@ -2096,6 +2092,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
       --Variaveis de Excecao
       vr_exc_erro    EXCEPTION;
       vr_exc_buscaid EXCEPTION;
+      -- Guardar registro dstextab
+      vr_dstextab craptab.dstextab%TYPE;      
+      
     BEGIN
       --Inicializar variaveis erro
       pr_cdcritic:= NULL;
@@ -2219,19 +2218,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
           CLOSE cr_gncdntj;
           --Se possuir setor economico
           IF nvl(pr_tab_crapepa(vr_index).cdseteco,0) <> 0 THEN
-            --Selecionar tabela parametros
-            OPEN cr_craptab (pr_cdcooper => pr_cdcooper
+
+            -- Buscar configuração na tabela
+            vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                                                     ,pr_nmsistem => 'CRED'
+                                                     ,pr_tptabela => 'GENERI'
+                                                     ,pr_cdempres => 0
                             ,pr_cdacesso => 'SETORECONO'
                             ,pr_tpregist => pr_tab_crapepa(vr_index).cdseteco);
-            FETCH cr_craptab INTO rw_craptab;
+            
+            
             --Se Encontrou
-            IF cr_craptab%FOUND THEN
-              pr_tab_crapepa(vr_index).nmseteco:= rw_craptab.dstextab;
+            IF TRIM(vr_dstextab) IS NOT NULL THEN
+              pr_tab_crapepa(vr_index).nmseteco:= vr_dstextab;
             ELSE
               pr_tab_crapepa(vr_index).nmseteco:= 'Nao Cadastrado';
             END IF;
-            --Fechar Cursor
-            CLOSE cr_craptab;
           END IF;
           --Se possuir Codigo Rumo Atividade e Setor Economico
           IF nvl(pr_tab_crapepa(vr_index).cdrmativ,0) <> 0 AND

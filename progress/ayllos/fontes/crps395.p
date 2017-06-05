@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Julio
-   Data    : Maio/2004                         Ultima atualizacao: 08/01/2016
+   Data    : Maio/2004                         Ultima atualizacao: 15/02/2017
 
    Dados referentes ao programa:
 
@@ -175,6 +175,9 @@
                
                08/01/2015 - Ajuste na restrição para não trazer os Cartões-Cecred
                             SD 250562 (Odirlei-AMcom) 
+
+				15/02/2017 - Ajustando o format do campo nrctrcrd nos relatórios que o utilizam.
+			     		     SD 594718 (Kelvin).
 ..............................................................................*/
 
 DEF STREAM str_1.
@@ -379,7 +382,7 @@ FORM tt-crawcrd.cdagenci AT 10  FORMAT "zz9"            LABEL "PA"
      tt-crawcrd.nmtitcrd        FORMAT "x(29)"          LABEL "NOME"
      tt-crawcrd.vllimite        FORMAT "zzz,zzz,zz9.99" LABEL "LIMITE"
      tt-crawcrd.dddebito        FORMAT "99"             LABEL "DEBITO"
-     tt-crawcrd.nrctrcrd        FORMAT "zzz,zz9"        LABEL "PROPOSTA"
+     tt-crawcrd.nrctrcrd        FORMAT "zzz,zzz,zz9"        LABEL "PROPOSTA"
      tt-crawcrd.dtpropos        FORMAT "99/99/99"       LABEL "DATA"
      tt-crawcrd.dddebito        FORMAT "99"             LABEL "DEBITO"
      aux_fill                   FORMAT "x(30)"          LABEL "OBSERVACAO"
