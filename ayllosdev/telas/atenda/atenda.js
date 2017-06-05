@@ -1,7 +1,7 @@
 //************************************************************************//
 //*** Fonte: atenda.js                                                 ***//
 //*** Autor: David                                                     ***//
-//*** Data : Agosto/2007                  Última Alteração: 20/01/2017 ***//
+//*** Data : Agosto/2007                  Última Alteração: 27/03/2017 ***//
 //***                                                                  ***//
 //*** Objetivo  : Biblioteca de funções da tela ATENDA                 ***//
 //***                                                                  ***//	 
@@ -73,7 +73,8 @@
 
 
 				  20/01/2017 - Adicionar parametro 'produtos', na chamada da function acessaRotina(Lucas Ranghetti #537087)
-				  
+
+				  27/03/2017 - Criado function dossieDigdoc. (Projeto 357 - Reinert)
 ***************************************************************************/
 
 var flgAcessoRotina = false; // Flag para validar acesso as rotinas da tela ATENDA
@@ -499,7 +500,7 @@ function obtemCabecalho() {
                 aux_nrdconta = $("#nrdconta", "#frmCabAtenda").val();
                 aux_nrdconta = aux_nrdconta.replace('-', '.');
                 if (flgdigit == "yes" || flgdigit == "S") {
-                    $("#divSemCartaoAss").html("<a tabindex='6' name='6' class='txtNormal SetFocus' href='http://" + dscsersm + "/smartshare/Clientes/ViewerExterno.aspx?pkey=8O3ky&conta=" + aux_nrdconta + "&cooperativa=" + cdcooper + "' target='_blank' >&nbsp;Cart&atilde;o Ass.</a>");
+                    $("#divSemCartaoAss").html("<a tabindex='6' name='6' class='txtNormal SetFocus' href='#' onclick='dossieDigdoc(9); return false;' >&nbsp;Cart&atilde;o Ass.</a>");
                 } else {
                     $("#divSemCartaoAss").html("<a tabindex='6' name='6' class='txtNormal SetFocus' style='margin-left: 1px; cursor:default' >&nbsp;Cart&atilde;o Ass.</a>");
                 }
@@ -707,4 +708,54 @@ function ajustarCentralizacao() {
     $('#divRotina').css({ 'width': x + 'px' });
     $('#divRotina').centralizaRotinaH();
     return false;
+}
+
+function dossieDigdoc(cdproduto){
+
+	var mensagem = 'Aguarde, acessando dossie...';
+	showMsgAguardo( mensagem );
+
+	// Carrega dados da conta através de ajax
+	$.ajax({
+		type	: 'POST',
+		dataType: 'html',
+		url		: UrlSite + 'telas/digdoc.php',
+		data    :
+				{
+					nrdconta	: nrdconta,
+					cdproduto	: cdproduto, // Codigo do produto
+ 					redirect	: 'script_ajax'
+				},
+		error   : function(objAjax,responseError,objExcept) {
+					hideMsgAguardo();
+					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
+				},
+		success : function(response) {
+					hideMsgAguardo();
+					// Portabilidade
+					if (cdproduto == 6){
+						bloqueiaFundo($('#divUsoGenerico'));
+					}else if (cdproduto != 9){
+						blockBackground(parseInt($('#divRotina').css('z-index')));
+					}
+					if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
+						try {
+							eval( response );
+							return false;
+						} catch(error) {
+							hideMsgAguardo();							
+							showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground()');
+						}
+					} else {
+						try {
+							eval( response );							
+						} catch(error) {
+							hideMsgAguardo();
+							showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground()');
+						}
+					}
+				}
+	});
+
+	return false;
 }

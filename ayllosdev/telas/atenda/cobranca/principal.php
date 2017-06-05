@@ -1,7 +1,7 @@
 <?php
 /*************************************************************************
 	Fonte: principal.php
-	Autor: Gabriel						Ultima atualizacao: 04/08/2016
+	Autor: Gabriel						Ultima atualizacao: 27/03/2017
 	Data : Dezembro/2010
 	
 	Objetivo: Listar os convenios de cobranca.
@@ -32,6 +32,8 @@
 							 e o retorno de erro do XML de dados.SD 479874 (Carlos R.)
 
 				04/08/2016 - Adicionado campo de forma de envio de arquivo de cobrança. (Reinert)
+
+				27/03/2017 - Adicionado botão "Dossiê DigiDOC". (Projeto 357 - Reinert)
 
 *************************************************************************/
 
@@ -292,9 +294,10 @@ function exibeErro($msgErro) {
     <?php //Habilitar botão apenas se possuir cobrança ativa
           // e se o serviço estiver ativo ou com algum tipo de alerta
           // que significa que serviço esta ativo para coop porém possui algum alerta para o cooperado          
-          if ($aux_insitceb == 1 && ($flsitsms == 1 || $dsalerta != "")) { ?>
-        <a href="#" class="botao" onclick="consultaServicoSMS('C'); return false;">Servi&ccedil;o SMS</a>
-    <?php  } ?>
+          if ($aux_insitceb == 1 && 
+              ($flsitsms == 1 || $dsalerta != "")) { ?>
+        		<a href="#" class="botao" onclick="consultaServicoSMS('C'); return false;">Servi&ccedil;o SMS</a>
+    		<?php  } ?>
     
     <a href="#" class="botao" <? if (in_array("X",$glbvars["opcoesTela"])) { ?> onClick="confirmaExclusao();return false;" <? } else { ?> style="cursor: default;" <? } ?>>Cancelamento</a>
     <a href="#" class="botao" <? if (in_array("C",$glbvars["opcoesTela"])) { ?> onClick="consulta('C','','','false','','');return false;" <? } else { ?> style="cursor: default;" <? } ?> >Consultar</a>
@@ -302,6 +305,7 @@ function exibeErro($msgErro) {
     <a href="#" class="botao" <? if (in_array("H",$glbvars["opcoesTela"])) { ?> onClick="consulta('A','','','false','','');return false;" <? } else { ?> style="cursor: default;" <? } ?> >Alterar</a>
     <a href="#" class="botao" onclick="confirmaImpressao('','1'); return false;">Impress&atilde;o</a>
     <a href="#" class="botao" onclick="carregaLogCeb(); return false;">Log</a>
+    <a href="#" class="botao" onclick="dossieDigdoc(2);return false;">Dossi&ecirc; DigiDOC</a>
 	<a href="#" class="botao" onclick="encerraRotina(true); return false;">Voltar</a>
 	
 	<input type="hidden" id= "flsercco"    name="flsercco">

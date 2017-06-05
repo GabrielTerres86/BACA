@@ -10,7 +10,8 @@
  
 				  22/06/2016 - Trazer os novos contratos de seguro adicionados a base de dados pela integração com o PROWEB.
 				               Criação de nova tela de consulta para os seguros de vida. Projeto 333_1. (Lombardi)
-							   
+
+				  27/03/2017 - Adicionado botão "Dossiê DigiDOC". (Projeto 357 - Reinert)							   							   
  */
 ?>
 <div id="divSeguro" class="divRegistros">
@@ -98,5 +99,6 @@
 	<input type="image" id="btAlterar"   src="<?php echo $UrlImagens; ?>botoes/alterar.gif"   <?php if (!in_array("A",$glbvars["opcoesTela"])) { echo 'style="cursor: default" onClick="return false;"'; } else { echo 'onClick="controlaOperacao(\'ALTERAR\');"'; } ?>  />
 	<input type="image" id="btConsultar" src="<?php echo $UrlImagens; ?>botoes/consultar.gif" <?php if (!in_array("C",$glbvars["opcoesTela"])) { echo 'style="cursor: default" onClick="return false;"'; } else { echo 'onClick="controlaOperacao(\'CONSULTAR\');"'; } ?>   />
     <input type="image" id="btCancelar"  src="<?php echo $UrlImagens; ?>botoes/cancelar.gif"  <?php if (!in_array("X",$glbvars["opcoesTela"])) { echo 'style="cursor: default" onClick="return false;"'; } else { echo 'onClick="controlaOperacao(\'C\');"'; } ?>   />
+	<input class="FluxoNavega" id="btndossie" onclick="dossieDigdoc(7);return false;" type="image" src="http://aylloshomol2.cecred.coop.br/imagens/botoes/dossie.gif">
 	<input type="image" id="btImprimir"  src="<?php echo $UrlImagens; ?>botoes/imprimir.gif"  <?php if (!in_array("M",$glbvars["opcoesTela"])) { echo 'style="cursor: default" onClick="return false;"'; } else { echo 'onClick="controlaOperacao(\'IMP\');"'; } ?>  />
 </div>
