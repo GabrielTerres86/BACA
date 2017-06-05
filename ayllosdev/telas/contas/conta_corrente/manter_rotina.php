@@ -1,24 +1,41 @@
 <?php
 /* FONTE        : manter_rotina.php
- * CRIAÇÃO      : Gabriel Capoia (DB1)
- * DATA CRIAÇÃO : 26/04/2010 
+ * CRIAÃ‡ÃƒO      : Gabriel Capoia (DB1)
+ * DATA CRIAÃ‡ÃƒO : 26/04/2010 
  * OBJETIVO     : Rotina para validar/alterar/excluir os dados da CONTA-CORRENTE da tela de CONTAS
  * 
  * ALTERACOES   : Adicionado confirmacao de impressao na chamada imprimeCritica(). (Jorge)
- *  			  08/02/2013 - Incluir campo flgrestr em procedure grava_dados (Lucas R.)
- *			  	  12/06/2013 - Consorcio (Gabriel).
- *			  	  14/08/2013 - Alteração da sigla PAC para PA (Carlos).
- *                28/05/2014 - Inclusao do campo Libera Credito Pre Aprovado 'flgcrdpa' (Jaison).
- *			  	  10/07/2014 - Alterações para criticar propostas de cart. cred. em aberto durante exclusão de titulares (Lucas Lunelli - Projeto Bancoob).
- *			  	  05/08/2015 - Reformulacao cadastral (Gabriel-RKAM).
- *                11/08/2015 - Projeto 218 - Melhorias Tarifas (Carlos Rafael Tanholi).
- *				  27/10/2015 - Projeto 131 - Inclusão do campo “Exige Assinatura Conjunta em Autoatendimento”
- *							   (Jean Michel).
- *				  02/11/2015 - Melhoria 126 - Encarteiramento de cooperados (Heitor - RKAM).
  *
- *                05/01/2016 - Chamado 375708 - Estava permitindo selecionar o tipo de conta '-', gerando erro ao consultar a conta posteriormente.
+ *  			        08/02/2013 - Incluir campo flgrestr em procedure grava_dados (Lucas R.)
+ *
+ *			  	      12/06/2013 - Consorcio (Gabriel).
+ *
+ *			  	      14/08/2013 - AlteraÃ§Ã£o da sigla PAC para PA (Carlos).
+ *
+ *                28/05/2014 - Inclusao do campo Libera Credito Pre Aprovado 'flgcrdpa' (Jaison).
+ *
+ *			  	      10/07/2014 - AlteraÃ§Ãµes para criticar propostas de cart. cred. em aberto durante exclusÃ£o de titulares 
+ *                             (Lucas Lunelli - Projeto Bancoob).
+ *
+ *			  	      05/08/2015 - Reformulacao cadastral (Gabriel-RKAM).
+ *
+ *                11/08/2015 - Projeto 218 - Melhorias Tarifas (Carlos Rafael Tanholi).
+ *
+ *				        27/10/2015 - Projeto 131 - InclusÃ£o do campo â€œExige Assinatura Conjunta em Autoatendimentoâ€ (Jean Michel).
+ *
+ *				        02/11/2015 - Melhoria 126 - Encarteiramento de cooperados (Heitor - RKAM).
+ *
+ *                05/01/2016 - Chamado 375708 - Estava permitindo selecionar o tipo de conta '-', gerando erro ao 
+ *                             consultar a conta posteriormente.
  *
  *                07/01/2016 - Remover campo de Libera Credito Pre Aprovado (Anderson).
+ *
+ *			          15/07/2016 - Incluir rotina para atualizar o flg de devoluÃ§Ã£o automatica - Melhoria 69(Lucas Ranghetti #484923)
+ *
+ *                01/12/2016 - P341-AutomatizaÃ§Ã£o BACENJUD - Removido passagem do departamento como parametros
+ *                             pois a BO nÃ£o utiliza o mesmo (Renato Darosci)
+ *
+ *                03/05/2017 - Ajuste na chamada de RevisÃ£o Cadastral. (SD: 654355, Andrey Formigari - Mouts).
  */
     session_start();
 	require_once('../../../includes/config.php');
@@ -27,7 +44,7 @@
 	require_once('../../../class/xmlfile.php');
 	isPostMethod();
 
-	// Guardo os parâmetos do POST em variáveis
+	// Guardo os parÃ¢metos do POST em variÃ¡veis
 	$operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '' ;		
 	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : '' ;
 	$idseqttl = (isset($_POST['idseqttl'])) ? $_POST['idseqttl'] : '' ;		
@@ -60,6 +77,9 @@
 	$cdconsul = (isset($_POST['cdconsul'])) ? $_POST['cdconsul'] : '' ; //Melhoria 126
 	$cdageant = (isset($_POST['cdageant'])) ? $_POST['cdageant'] : '' ; //Melhoria 147
 
+	$cdopecor        = (isset($_POST['cdopecor'])) ? $_POST['cdopecor'] : '' ; //Melhoria 69
+	$flgdevolu_autom = (isset($_POST['flgdevolu_autom'])) ? $_POST['flgdevolu_autom'] : '' ; //Melhoria 69
+
 	if( $operacao == 'AV' ) validaDados();
 	
 	if ( $operacao == 'VA' ) {
@@ -67,7 +87,7 @@
 		if ( $GLOBALS['cdtipcta'] == '' ) exibirErro('error','Tipo de conta deve ser selecionado.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdtipcta\',\'frmContaCorrente\')',false); 
 	}
 	
-	// Dependendo da operação, chamo uma procedure diferente
+	// Dependendo da operaÃ§Ã£o, chamo uma procedure diferente
 	$procedure = '';
 	switch ($operacao){
 		case 'AV': $procedure = 'valida_dados'; $cddopcao = 'A'; $tpevento = 'A'; break;
@@ -102,7 +122,7 @@
 		//$xmlObjeto = getObjectXML($xmlResult);
 		$xmlObjeto = simplexml_load_string($xmlResult);
 		
-		// Se ocorrer um erro, mostra crítica
+		// Se ocorrer um erro, mostra crÃ­tica
 		if ($xmlObjeto->Erro->Registro->dscritic != "") {
 			$msgErro = $xmlObjeto->Erro->Registro->dscritic;
 			exibirErro("error",$msgErro,"Alerta - Ayllos","",false);
@@ -132,7 +152,7 @@
 		//$xmlObjeto = getObjectXML($xmlResult);
 		$xmlObjeto = simplexml_load_string($xmlResult);
 		
-		// Se ocorrer um erro, mostra crítica
+		// Se ocorrer um erro, mostra crÃ­tica
 		if ($xmlObjeto->Erro->Registro->dscritic != "") {
 			$msgErro = $xmlObjeto->Erro->Registro->dscritic;
 			exibirErro("error",$msgErro,"Alerta - Ayllos","",false);
@@ -143,7 +163,7 @@
 	} else {
 		if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
 
-		// Monta o xml dinâmico de acordo com a operação
+		// Monta o xml dinÃ¢mico de acordo com a operaÃ§Ã£o
 		$xml  = '';
 		$xml .= '<Root>';
 		$xml .= '	<Cabecalho>';
@@ -157,7 +177,6 @@
 		$xml .= '		<cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
 		$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';
 		$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';
-		$xml .= '		<dsdepart>'.$glbvars['dsdepart'].'</dsdepart>';		
 		$xml .= '		<nrdconta>'.$nrdconta.'</nrdconta>';
 		$xml .= '		<idseqttl>'.$idseqttl.'</idseqttl>';
 		$xml .= '		<cdagepac>'.$cdagepac.'</cdagepac>';
@@ -196,7 +215,7 @@
 		// Cria objeto para classe de tratamento de XML
 		$xmlObjeto = getObjectXML($xmlResult);	
 		
-		// Se ocorrer um erro, mostra crítica
+		// Se ocorrer um erro, mostra crÃ­tica
 		if (isset($xmlObjeto->roottag->tags[0]->name) && strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') {
 			$nmdcampo = ( isset($xmlObjeto->roottag->tags[0]->attributes['NMDCAMPO']) ) ? $xmlObjeto->roottag->tags[0]->attributes['NMDCAMPO'] : '';
 
@@ -207,13 +226,12 @@
 			}
 		}
 		
-		
-		// Verificação da revisão Cadastral
+		// VerificaÃ§Ã£o da revisÃ£o Cadastral
 		$msgAtCad = ( isset($xmlObjeto->roottag->tags[0]->attributes['MSGATCAD']) ) ? $xmlObjeto->roottag->tags[0]->attributes['MSGATCAD'] : '';
-		$chaveAlt     = ( isset($xmlObjeto->roottag->tags[0]->attributes['CHAVEALT']) ) ? $xmlObjeto->roottag->tags[0]->attributes['CHAVEALT'] : '';
-		$tpAtlCad    = ( isset($xmlObjeto->roottag->tags[0]->attributes['TPATLCAD']) ) ? $xmlObjeto->roottag->tags[0]->attributes['TPATLCAD'] : '';
+		$chaveAlt = ( isset($xmlObjeto->roottag->tags[0]->attributes['CHAVEALT']) ) ? $xmlObjeto->roottag->tags[0]->attributes['CHAVEALT'] : '';
+		$tpAtlCad = ( isset($xmlObjeto->roottag->tags[0]->attributes['TPATLCAD']) ) ? $xmlObjeto->roottag->tags[0]->attributes['TPATLCAD'] : '';
 
-		// Se é Validação
+		// Se Ã© ValidaÃ§Ã£o
 		if( in_array($operacao,array('AV','VT','VG','VS','VE')) ) {
 			$tipconfi = $xmlObjeto->roottag->tags[0]->attributes['TIPCONFI'];
 			$msgconfi = $xmlObjeto->roottag->tags[0]->attributes['MSGCONFI'];
@@ -264,9 +282,9 @@
 			 echo 'bloqueiaFundo(divRotina);';
 
 		}
-		else { // Se é Inclusão	
+		else { // Se Ã© InclusÃ£o	
 			// Melhoria 126
-			if ($cdconsul != 0) {
+		
 				$nmdeacao = "CADCON_TRANSFERE_CONTA";
 
 				$xml  = "";
@@ -292,36 +310,67 @@
 				if ($xmlObjeto->Erro->Registro->dscritic != "") {
 					$msgErro = $xmlObjeto->Erro->Registro->dscritic;
 					exibirErro("error",$msgErro,"Alerta - Ayllos","",false);
-				}
+				
 			}
 			//Fim Melhoria 126
 
-			// Verificar se existe "Verificação de Revisão Cadastral"
-			if($msgAtCad!='' && $flgcadas != 'M') {		
-				exibirConfirmacao($msgAtCad,'Confirmação - Ayllos','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0074.p\',\'\',controlaOperacao(\'OC\'))','controlaOperacao(\'OC\')',false);
+	        // Melhoria 69
+			$xml  = "";
+			$xml .= "<Root>";
+			$xml .= "  <Dados>";
+			$xml .= '       <cddopcao>A</cddopcao>';
+			$xml .= '       <cdcooper>'.$glbvars['cdcooper'].'</cdcooper>';
+			$xml .= '		<nrdconta>'.$nrdconta.'</nrdconta>';
+			$xml .= '       <flgdevolu_autom>'.$flgdevolu_autom.'</flgdevolu_autom>';
+			$xml .= '       <cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
+			$xml .= '       <cdopecor>'.$cdopecor.'</cdopecor>';
+			$xml .= "  </Dados>";
+			$xml .= "</Root>";
+
+			// Executa script para envio do XML
+			$xmlResult = mensageria($xml, "GRAVA_DEVOLU_AUTOM", 'GRAVA_DEVOLU_AUTOM_XML', $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"],  "</Root>");
+			$xmlObjeto1 = getObjectXML($xmlResult); 
 			
-			// Se não existe necessidade de Revisão Cadastral
-			} else if ($flgcadas != 'M') {						
-				echo 'controlaOperacao(\'OC\');';			
-			} 
+			//-----------------------------------------------------------------------------------------------
+			// Controle de Erros
+			//-----------------------------------------------------------------------------------------------
+			if(strtoupper($xmlObjeto1->roottag->tags[0]->name == 'ERRO')){	
+			
+				$msgErro = $xmlObjeto1->roottag->tags[0]->cdata;
+				$nmdcampo = $xmlObjeto1->roottag->tags[0]->attributes["NMDCAMPO"];					
+				
+				if($msgErro == null || $msgErro == ''){
+					$msgErro = $xmlObjeto1->roottag->tags[0]->tags[0]->tags[4]->cdata;
+				}								
+				exibirErro('error',$msgErro,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);								
+			} 			
+			//Fim melhoria 69
+			
+			// Verificar se existe "Verificacaoo de RevisÃ£o Cadastral"
+			$stringArrayMsg = "";
+			if ($msgAtCad != '' && $flgcadas != 'M') {
+				exibirConfirmacao($msgAtCad,'Confirma&ccedil;&atilde;o - Ayllos','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0074.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"OC\")\')',false);
+			}else{
+				echo 'controlaOperacao(\''.$opeconfi.'\')';
+			}
 		} 
 	}
 	
 	function validaDados() {			
-		// No início das validações, primeiro remove a classe erro de todos os campos
+		// No inÃ­cio das validaÃ§Ãµes, primeiro remove a classe erro de todos os campos
 		echo '$("input","#frmContaCorrente").removeClass("campoErro");';
 	
 		// PA
 		if ( $GLOBALS['cdagepac'] == '' ) exibirErro('error','PA deve ser informado.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdagepac\',\'frmContaCorrente\')',false); 
 		
-		// Situação
-		if ( $GLOBALS['cdsitdct'] == '' ) exibirErro('error','Situação deve ser selecionada.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdsitdct\',\'frmContaCorrente\')',false); 
+		// SituaÃ§Ã£o
+		if ( $GLOBALS['cdsitdct'] == '' ) exibirErro('error','SituaÃ§Ã£o deve ser selecionada.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdsitdct\',\'frmContaCorrente\')',false); 
 		
 		// Tipo de Conta
 		if ( $GLOBALS['cdtipcta'] == '' ) exibirErro('error','Tipo de conta deve ser selecionado.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdtipcta\',\'frmContaCorrente\')',false); 
 		
 		// Banco emi. cheque
-		if ( ($GLOBALS['cdbcochq'] == '') ) exibirErro('error','Banco emissão do cheque deve ser informado.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdbcochq\',\'frmContaCorrente\')',false);
+		if ( ($GLOBALS['cdbcochq'] == '') ) exibirErro('error','Banco emissÃ£o do cheque deve ser informado.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdbcochq\',\'frmContaCorrente\')',false);
 		
 		// Destino extrato
 		if ( ($GLOBALS['cdsecext'] == '') ) exibirErro('error','Destino extrato deve ser informado.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdsecext\',\'frmContaCorrente\')',false);	
