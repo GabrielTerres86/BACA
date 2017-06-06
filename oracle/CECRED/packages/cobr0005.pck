@@ -398,8 +398,6 @@ PROCEDURE pc_ret_dados_serv_sms (pr_cdcooper      IN crapcop.cdcooper%TYPE  --> 
   PROCEDURE pc_cancel_contrato_sms_web (pr_nrdconta    IN crapass.nrdconta%TYPE  --> Conta do associado
                                        ,pr_idseqttl    IN crapttl.idseqttl%TYPE  --> Sequencial do titular 
                                        ,pr_idcontrato  IN tbcobran_sms_contrato.idcontrato%TYPE --> Numero do contrato de SMS                                       
-                                       ,pr_nrcpfope    IN crapopi.nrcpfope%TYPE  --> CPF do operador de conta juridica
-                                       ,pr_inaprpen    IN NUMBER                 --> Indicador de aprovação de transacao pendente
                                        ,pr_xmllog      IN VARCHAR2               --> XML com informacoes de LOG
                                        ,pr_cdcritic   OUT PLS_INTEGER            --> Codigo da critica
                                        ,pr_dscritic   OUT VARCHAR2               --> Descricao da critica

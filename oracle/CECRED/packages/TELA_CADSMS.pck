@@ -919,6 +919,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADSMS IS
       
     END IF;
 
+    -- Atualiza o parâmetro flgenvia_sms
+    FOR cooperativas IN cr_cooperativa(pr_cdcoptel) LOOP
       
         OPEN cr_param(pr_cdcooper => cooperativas.cdcooper);
         FETCH cr_param INTO rw_param;
