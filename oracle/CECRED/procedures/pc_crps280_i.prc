@@ -14,7 +14,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Evandro
-     Data    : Fevereiro/2006                  Ultima atualizacao: 22/02/2017
+     Data    : Fevereiro/2006                  Ultima atualizacao: 23/03/2017
 
      Dados referentes ao programa:
 
@@ -331,13 +331,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                               realizar a validação atráves do nível do risco.
                               
                  22/12/2016 - Alteracoes para melhorar a performance deste programa. SD 573847.
-                              (Carlos R. Tanholi)
+                              (Carlos R. Tanholi)                              
 
                  22/02/2017 - Ajustes referente ao Prj.307 Automatização Arquivos Contábeis Ayllos 
                               Inclusão de informações no crrl227 e criçãode novos arquivos para o
                               Radar e Matera (Jonatas-Supero)   
-
-                                                     
+                             
+                 23/03/2017 - Ajustes PRJ343 - Cessao de credito.
+                              (Odirlei-AMcom)                                         
   ............................................................................. */
 
    DECLARE
@@ -363,6 +364,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
       vr_vltitdes_sr CONSTANT VARCHAR2(10) := 'VLTITDESCR'; -- Valor Titulo Descontado Sem Registro
       vr_vladtdep    CONSTANT VARCHAR2(10) := 'VLADTDEP';   -- Valor Adiantamento Depositante
       vr_vlchqesp    CONSTANT VARCHAR2(10) := 'VLCHQESP';   -- Valor Cheque Especial
+      vr_vleprces    CONSTANT VARCHAR2(10) := 'VLEPRCES'; -- Valor Emprestimo PF
       -- Constante para usar em indice do segundo nivel
       vr_provis      CONSTANT VARCHAR2(10) := 'PROVIS';     -- Coluna de Provisao do relat 227
       vr_divida      CONSTANT VARCHAR2(10) := 'DIVIDA';     -- Coluna de Divida do relat 227
@@ -429,6 +431,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
       vr_tab_risco_aux typ_tab_risco;
       -- Vetor auxiliar para guardar uma posição a mais
       vr_tab_contab    typ_tab_contab;
+      -- Vetor auxiliar para guardar uma posição a mais
+      vr_tab_contab_cessao    typ_tab_contab;
+
 
       -- Registro para as informações copiadas da tabela crapris (Antigo w-crapris)
       TYPE typ_reg_crapris IS
@@ -456,7 +461,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
               ,tpemprst VARCHAR2(10)
               ,cdusolcr craplcr.cdusolcr%TYPE
               ,dsorgrec craplcr.dsorgrec%TYPE
-              ,dtinictr crapris.dtinictr%TYPE);
+              ,dtinictr crapris.dtinictr%TYPE
+			  ,fleprces INTEGER);
 
       -- Definição de um tipo de tabela com o registro acima
       TYPE typ_tab_crapris IS
@@ -509,7 +515,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
               ,rel1722_0101   NUMBER(14,2) DEFAULT 0  -- Adiant.Depositante [Provisao]
               ,rel1722_0101_v NUMBER(14,2) DEFAULT 0  -- Adiant.Depositante [Divida(S/Prejuizo)]
               ,rel1722_0201   NUMBER(14,2) DEFAULT 0  -- Cheque Especial [Provisao]
-              ,rel1722_0201_v NUMBER(14,2) DEFAULT 0);-- Cheque Especial [Divida(S/Prejuizo)]
+              ,rel1722_0201_v NUMBER(14,2) DEFAULT 0  -- Cheque Especial [Divida(S/Prejuizo)]
+              ,rel1760        NUMBER(14,2) DEFAULT 0  -- Emprestimos cessao [Provisao]
+              ,rel1760_v      NUMBER(14,2) DEFAULT 0  -- Emprestimos cessao [Divida(S/Prejuizo)]
+              );
 
       -- Criação de um vetor com base nesse registro
       vr_vet_contabi typ_reg_contabi;
@@ -519,8 +528,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
         IS TABLE OF crapass.nrdconta%TYPE
           INDEX BY PLS_INTEGER;
 
-      vr_tab_craptco typ_tab_craptco;  
-      
+      vr_tab_craptco typ_tab_craptco;      
+
       -- Definição de registro para totalização por origem de microcrédito
       TYPE typ_reg_microcredito IS
         RECORD(idgrumic INTEGER   -- Id do grupo para separação das informações - 1 - CECRED / 2 - BNDES
@@ -677,6 +686,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
               ,epr.tpdescto
               ,epr.vlppagat
               ,epr.vljurmes
+              ,(SELECT 1
+                  FROM tbcrd_cessao_credito ces
+                 WHERE ces.cdcooper = epr.cdcooper
+                   AND ces.nrdconta = epr.nrdconta
+                   AND ces.nrctremp = epr.nrctremp ) fleprces
           FROM crapepr epr
          WHERE epr.cdcooper = pr_cdcooper
            AND epr.nrdconta = pr_nrdconta
@@ -851,7 +865,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
         WHERE craplcr.cdcooper = pr_cdcooper
         AND   craplcr.cdlcremp = pr_cdlcremp;
       rw_craplcr cr_craplcr%ROWTYPE;
-      
+
       CURSOR cr_craplem(pr_nrdconta IN craplem.nrdconta%TYPE
                        ,pr_nrctremp IN craplem.nrctremp%TYPE) IS 
         SELECT NVL(SUM(lem.vllanmto),0) vllanmto
@@ -911,6 +925,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
       vr_vlsdeved_atual NUMBER(11,2); --> Saldo devedor pra calculo atual
       vr_inusatab       BOOLEAN;      --> Indicador S/N de utilização de tabela de juros
 
+      vr_fleprces       INTEGER;      --> Indicador se emprestimo de Cessao.
+      
       -- Variaveis temporárias para gravação da tabela crapris somente após processar
       vr_vlpreemp crapepr.vlpreemp%TYPE;
       vr_cdlcremp VARCHAR2(10);
@@ -1060,7 +1076,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
       -- Configuração para mês novo
       vr_tab_ddmesnov INTEGER;
       vr_flgconsg     INTEGER;
-      
+
       --microcredito
       vr_chave_microcredito craplcr.dsorgrec%TYPE;
       vr_cdusolcr           craplcr.cdusolcr%TYPE;
@@ -1074,7 +1090,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
       vr_dtmvtolt_yymmdd    VARCHAR2(6);
       vr_nom_diretorio      VARCHAR2(200); 
       vr_nom_dir_copia      VARCHAR2(200);
-      
+
       -- P307 Calculo de Compensação de Microcrédito
       vr_tot_vltttlcr_dim        NUMBER := 0;
       vr_tot_vltttlcr_dim_outros NUMBER := 0;       
@@ -1119,11 +1135,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                                    ,pr_num_vlpvpf IN NUMBER
                                    ,pr_num_vlprpj IN NUMBER
                                    ,pr_num_vldvpf IN NUMBER
-                                   ,pr_num_vldvpj IN NUMBER) IS
+                                   ,pr_num_vldvpj IN NUMBER
+                                   ,pr_flcessao   IN INTEGER DEFAULT 0
+                                   ) IS
       BEGIN
          -- Escreve no XML abrindo e fechando a tag de contab
          pr_des_xml := pr_des_xml
                       ||'<contab>'
+                      ||'  <idcessao>'||pr_flcessao  ||'</idcessao> '
                       ||'  <dscontab>'||pr_des_contab||'</dscontab>'
                       ||'  <vlprovis>'||to_char(pr_num_valor1,'fm999g999g999g990d00')||'</vlprovis>'
                       ||'  <vldivida>'||to_char(pr_num_valor2,'fm999g999g999g990d00')||'</vldivida>'
@@ -1188,7 +1207,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
             vr_tab_contab(vr_vlchqesp)(vr_divida)(idx).vlchqesp := 0;
          END LOOP;
       END;
-      
+
       PROCEDURE pc_gera_arq_compe_mic(pr_dscritic OUT VARCHAR2) IS
 
          vr_txt_compmicro VARCHAR2(500);
@@ -2090,6 +2109,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                CONTINUE;
             END IF;
           
+            vr_fleprces := 0;
+         
             -- Para Emprestimos/Financiamentos 
             IF rw_crapris.cdorigem = 3 THEN
                -- Para empréstimos BNDES
@@ -2135,6 +2156,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                   IF cr_crapepr%FOUND THEN
                      -- fechar o cursor e continuar o processo
                      CLOSE cr_crapepr;
+                     
+                     -- Indicador se é um emprestimo de cessao
+                     vr_fleprces := rw_crapepr.fleprces;
+                     
                      -- Inicializar qtde meses decorridos com o valor da tabela
                      vr_qtmesdec := rw_crapepr.qtmesdec;
                      
@@ -2248,7 +2273,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                      vr_tab_dados_epr(vr_indice).cdfinemp := rw_crapepr.cdfinemp;
                      vr_tab_dados_epr(vr_indice).dtmvtolt := rw_crapepr.dtmvtolt;
                      vr_tab_dados_epr(vr_indice).vlemprst := rw_crapepr.vlemprst;
-                     vr_tab_dados_epr(vr_indice).tpdescto := rw_crapepr.tpdescto; 
+                     vr_tab_dados_epr(vr_indice).tpdescto := rw_crapepr.tpdescto;                
                      vr_tab_dados_epr(vr_indice).vljurmes := rw_crapepr.vljurmes;
                      -- Para microcrédito
                      IF rw_craplcr.cdusolcr = 1 AND rw_craplcr.dsorgrec <> ' ' THEN
@@ -2455,6 +2480,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
             
             vr_tab_crapris(vr_des_chave_crapris).dsinfaux := rw_crapris.dsinfaux;
             vr_tab_crapris(vr_des_chave_crapris).tpemprst := vr_tpemprst;
+            vr_tab_crapris(vr_des_chave_crapris).fleprces := nvl(vr_fleprces,0);
+            
+            
+            
          EXCEPTION
             WHEN vr_exc_ignorar THEN
                -- Exceção criada apenas para desviar o fluxo
@@ -2747,8 +2776,33 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                   END IF;
                END IF;
                
+               -- Emprestimo de cessao de credito
+               IF vr_tab_crapris(vr_des_chave_crapris).fleprces = 1 THEN
+               
+                 -- Gravar Emprestimos conforme o tipo de pessoa
+                  IF vr_tab_crapris(vr_des_chave_crapris).inpessoa = 1 THEN
+                     -- Gravar campos
+                     vr_vet_contabi.rel1760   := vr_vet_contabi.rel1760 + vr_vlpreatr;
+                     vr_vet_contabi.rel1760_v := vr_vet_contabi.rel1760_v + vr_vldivida;
+
+                     -- Gravar inf de emprestimos por coluna separando por tipo de pessoa
+                     vr_tab_contab_cessao(vr_vleprces)(vr_provis)(1).vlempres_pf := vr_tab_contab_cessao(vr_vleprces)(vr_provis)(1).vlempres_pf + vr_vlpreatr;
+                     vr_tab_contab_cessao(vr_vleprces)(vr_divida)(1).vlempres_pf := vr_tab_contab_cessao(vr_vleprces)(vr_divida)(1).vlempres_pf + vr_vldivida;
+                     
+                  ELSE
+                     vr_vet_contabi.rel1760   := vr_vet_contabi.rel1760 + vr_vlpreatr;
+                     vr_vet_contabi.rel1760_v := vr_vet_contabi.rel1760_v + vr_vldivida;
+                     
+                     -- Gravar inf de emprestimos por coluna separando por tipo de pessoa
+                     vr_tab_contab_cessao(vr_vleprces)(vr_provis)(2).vlempres_pj := vr_tab_contab_cessao(vr_vleprces)(vr_provis)(2).vlempres_pj + vr_vlpreatr;
+                     vr_tab_contab_cessao(vr_vleprces)(vr_divida)(2).vlempres_pj := vr_tab_contab_cessao(vr_vleprces)(vr_divida)(2).vlempres_pj + vr_vldivida;
+                     
+                  END IF;
+               
+               
+               
                -- Para modalidade 299 -
-               IF vr_tab_crapris(vr_des_chave_crapris).cdmodali = 299 THEN
+               ELSIF vr_tab_crapris(vr_des_chave_crapris).cdmodali = 299 THEN
                   
                   -- Gravar Emprestimos conforme o tipo de pessoa
                   IF vr_tab_crapris(vr_des_chave_crapris).inpessoa = 1 THEN
@@ -3613,8 +3667,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                     
                     vr_tot_libctnfiname   := vr_tot_libctnfiname + vr_vldivida;
                     
-                  END IF;
-                  
+         END IF;
+        
                   vr_tot_prvperdafiname := vr_tot_prvperdafiname + vr_vlpreatr;
                   
                   --Agrupar valores de finame por nível de risco
@@ -3630,7 +3684,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
          -- Buscar o próximo registro
          vr_des_chave_crapris := vr_tab_crapris.NEXT(vr_des_chave_crapris);
       END LOOP;
-      
+
       --Gerar arquivo de operações de micro crédito e finame das filiadas
       IF (TRUNC(pr_rw_crapdat.dtmvtolt,'mm') <> TRUNC(pr_rw_crapdat.dtmvtopr,'mm')) THEN
          
@@ -3865,6 +3919,19 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                          ,pr_num_vldvpf => vr_tab_contab(vr_vlchqesp)(vr_divida)(1).vlchqesp
                          ,pr_num_vldvpj => vr_tab_contab(vr_vlchqesp)(vr_divida)(2).vlchqesp);
 
+      
+      -- Dados da cessao de credito
+      -- Para cada informação, efetuar a chamada que monta a tag completa
+      pc_cria_node_contab(pr_des_xml    => vr_des_xml_gene
+                         ,pr_des_contab => 'Avais e Garantias Prestadas'
+                         ,pr_num_valor1 => vr_vet_contabi.rel1760
+                         ,pr_num_valor2 => vr_vet_contabi.rel1760_v
+                         ,pr_num_vlpvpf => vr_tab_contab_cessao(vr_vleprces)(vr_provis)(1).vlfinanc_pf
+                         ,pr_num_vlprpj => vr_tab_contab_cessao(vr_vleprces)(vr_provis)(2).vlfinanc_pj
+                         ,pr_num_vldvpf => vr_tab_contab_cessao(vr_vleprces)(vr_divida)(1).vlfinanc_pf
+                         ,pr_num_vldvpj => vr_tab_contab_cessao(vr_vleprces)(vr_divida)(2).vlfinanc_pj
+                         ,pr_flcessao   => 1);
+                         
       -- FEchar a tag de contabilização
       vr_des_xml_gene := vr_des_xml_gene || '</tabcontab>';
       
@@ -4055,7 +4122,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
          -- Gerar exceção
          RAISE vr_exc_erro;
       END IF;
-      
+
       
       -- Solicitar a geração do relatório crrl227
       gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper                          --> Cooperativa conectada

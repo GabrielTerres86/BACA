@@ -15,7 +15,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Deborah/Margarete
-     Data    : Maio/2001                       Ultima atualizacao: 25/08/2016
+     Data    : Maio/2001                       Ultima atualizacao: 23/03/2017
      
      Dados referentes ao programa:
 
@@ -264,6 +264,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
 				 15/03/2017 - Ajuste na regra da classificação de qual nivel de risco do produto de Adiantamento a 
 				              Depositante (AD) se encontra, onde para o nível "A" o 15 dia de atraso estava sendo considerado, 
 							  sendo que o correto para este nível é até o 14 dia de atraso. (Rafael Monteiro).
+
+                 23/03/2017 - Ajustes PRJ343 - Cessão Cartão de Credito.
+                              (Odirlei-AMcom)
 
   ............................................................................ */
 
@@ -629,6 +632,19 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
          GROUP BY nrdconta
                  ,nrctremp;
                                                  
+      --> Buscar vencimentos daos emprestimos de cessao de cartao
+      CURSOR cr_cessao_carga IS
+        SELECT ces.nrdconta
+              ,ces.nrctremp
+              ,ces.dtvencto
+          FROM tbcrd_cessao_credito ces
+          JOIN crapepr epr
+            ON epr.cdcooper = ces.cdcooper
+           AND epr.nrdconta = ces.nrdconta
+           AND epr.nrctremp = ces.nrctremp
+         WHERE ces.cdcooper = pr_cdcooper
+           AND epr.inliquid = 0;
+                                                 
       -------- Tipos e registros genéricos ------------
 
       -- Vetor para armazenar os dados de riscos, dessa forma temos o valor
@@ -818,6 +834,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
       TYPE typ_tab_crappep_maior IS TABLE OF DATE
         INDEX BY VARCHAR2(50); -- cdcooper + nrdconta + nrctremp
       vr_tab_crappep_maior typ_tab_crappep_maior;
+      
+      -- Temp Table para armazenar se é emprestimos de cessao de credito
+      TYPE typ_tab_cessoes IS TABLE OF DATE
+        INDEX BY VARCHAR2(50); -- cdcooper + nrdconta + nrctremp
+      vr_tab_cessoes typ_tab_cessoes;
       
       --> TempTable para armazenar os emprestimos que devem ser processados
       TYPE typ_tab_rowid IS TABLE OF ROWID INDEX BY VARCHAR2(20);
@@ -2466,8 +2487,17 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
             END IF;          
           END IF;
         
+          vr_idxpep := lpad(pr_cdcooper,5,'0')||lpad(pr_rw_crapass.nrdconta,10,'0')||
+                       lpad(pr_rw_crapepr.nrctremp,10,'0');
+          
+          IF vr_tab_cessoes.exists(vr_idxpep) THEN    
           -- Calcular diferença de dias entre a parcela e o dia atual
+            vr_diasvenc := vr_tab_cessoes(vr_idxpep) - pr_rw_crapdat.dtmvtolt;
+          ELSE
+            -- Calcular diferença de dias entre a parcela e o dia atual
           vr_diasvenc := rw_crappep.dtvencto - pr_rw_crapdat.dtmvtolt;
+          END IF;
+          
           -- Buscar o código do vencimento a lançar
           vr_cdvencto := fn_calc_codigo_vcto(pr_diasvenc => vr_diasvenc
                                             ,pr_qtdiapre => vr_diasvenc -- Enviar a mesma informaçao
@@ -3556,6 +3586,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         vr_idxpep := lpad(pr_cdcooper,5,'0')||lpad(rw_crappep_maior.nrdconta,10,'0')||lpad(rw_crappep_maior.nrctremp,10,'0');
         vr_tab_crappep_maior(vr_idxpep) := rw_crappep_maior.dtvencto;
       END LOOP;
+      
+      --> Buscar vencimentos daos emprestimos de cessao de cartao
+      FOR rw_cessao_carga IN cr_cessao_carga LOOP
+        vr_idxpep := lpad(pr_cdcooper,5,'0')||lpad(rw_cessao_carga.nrdconta,10,'0')||lpad(rw_cessao_carga.nrctremp,10,'0');
+        vr_tab_crappep_maior(vr_idxpep) := rw_cessao_carga.dtvencto;
+        vr_tab_cessoes(vr_idxpep) := rw_cessao_carga.dtvencto;
+      END LOOP;
+      
       
       --> Carrega Temp-Table contendo as contas com risco soberano
  	    pc_cria_table_risco_soberano(pr_cdcooper                  => pr_cdcooper

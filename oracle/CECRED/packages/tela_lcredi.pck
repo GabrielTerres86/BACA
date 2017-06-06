@@ -3112,21 +3112,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Andrei - RKAM
-    Data     : Julho/2016                         Ultima atualizacao:
+    Data     : Julho/2016                         Ultima atualizacao: 29/03/2017
     
     Dados referentes ao programa:
     
     Frequencia: -----
     Objetivo   : Busca modalidades
     
-    Alterações : 
+    Alterações : 29/03/2017 - Alterado para exibir modalidade 13 - Outros creditos.
+                              PRJ343 - Cessao de credito (Odirlei-AMcom)
     -------------------------------------------------------------------------------------------------------------*/                               
   
     CURSOR cr_gnmodal IS
     SELECT gnmodal.cdmodali
           ,gnmodal.dsmodali
       FROM gnmodal
-     WHERE gnmodal.cdmodali IN ('02','04','14');          
+     WHERE gnmodal.cdmodali IN ('02','04','14','13');          
                        
     --Variaveis de Criticas
     vr_cdcritic INTEGER;

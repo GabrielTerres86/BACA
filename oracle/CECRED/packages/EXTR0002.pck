@@ -5941,7 +5941,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         END IF;                                                 
 
       END LOOP;
-
+                                                                                        
 			-- Buscar recargas pendentes
 			FOR rw_recarga IN cr_recargas(pr_cdcooper => pr_cdcooper
 				                           ,pr_nrdconta => pr_nrdconta
@@ -11793,7 +11793,7 @@ END pc_consulta_ir_pj_trim;
   --  Sistema  : 
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2014                           Ultima atualizacao: 08/10/2015
+  --  Data     : Julho/2014                           Ultima atualizacao: 11/04/2017
   --
   -- Dados referentes ao programa:
   --
@@ -11811,6 +11811,9 @@ END pc_consulta_ir_pj_trim;
   --                           (Jaison/Diego - SD: 290027)
   --
   --              08/10/2015 - Tratar os históricos de estorno do produto PP (Oscar)                     
+  --
+  --              11/04/2016 - Exibir numero de conta cartão para o emprestimos de cessao de credito.
+  --                           PRJ-343 - Cessao de Credito(Odirlei-AMcom)                   
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
         -- Busca dos dados da cooperativa
@@ -11915,6 +11918,19 @@ END pc_consulta_ir_pj_trim;
            WHERE gnsbmod.cdmodali = pr_cdmodali
              AND gnsbmod.cdsubmod = pr_cdsubmod;
         rw_gnsbmod cr_gnsbmod%ROWTYPE;
+        
+        --> Verificar se é emprestimo de cessao de credito
+        CURSOR cr_tbcessao (pr_cdcooper IN craplem.cdcooper%type
+                           ,pr_nrdconta IN craplem.nrdconta%type
+                           ,pr_nrctremp IN craplem.nrctremp%type) IS
+          SELECT ces.nrconta_cartao
+            FROM tbcrd_cessao_credito ces
+           WHERE ces.cdcooper = pr_cdcooper
+             AND ces.nrdconta = pr_nrdconta
+             AND ces.nrctremp = pr_nrctremp; 
+        rw_tbcessao cr_tbcessao%ROWTYPE;
+        
+        
         --Tipo de Tabela para Break-by do emprestimo
         TYPE typ_tab_extrato_epr_novo IS TABLE OF typ_reg_extrato_epr INDEX BY VARCHAR2(100);
         vr_tab_extrato_epr_novo typ_tab_extrato_epr_novo;
@@ -12217,6 +12233,15 @@ END pc_consulta_ir_pj_trim;
           --Fechar Cursor
           CLOSE cr_gnsbmod;
 
+          --> Verificar se é emprestimo de cessao de credito
+          rw_tbcessao := NULL;
+          OPEN cr_tbcessao (pr_cdcooper => pr_cdcooper
+                           ,pr_nrdconta => pr_nrdconta
+                           ,pr_nrctremp => rw_crapepr.nrctremp);
+          FETCH cr_tbcessao INTO rw_tbcessao;
+          CLOSE cr_tbcessao;
+          
+
           --Gravar Informacoes do cabecalho no XML
           vr_dstexto:= '<conta tpemprst="1" flgmensag="N" dscmensag=""'                             ||
                        '  nrdconta="' || to_char(pr_nrdconta,'fm9999g999g0')                        ||
@@ -12236,6 +12261,7 @@ END pc_consulta_ir_pj_trim;
                        '" dsmodali="' || rw_gnmodal.dsmodali                                        ||
                        '" cdsubmod="' || rw_gnsbmod.cdsubmod                                        ||
                        '" dssubmod="' || rw_gnsbmod.dssubmod                                        ||
+                       '" nrconta_cartao="' || rw_tbcessao.nrconta_cartao                           ||
                        '" txanual="'  || to_char(vr_txanual,'fm9999g999g990d00000')                 ||
                        '" txnominal="'|| to_char(vr_txnomina,'fm9999g999g990d00000')                ||
                        '" qtpreapg="' || to_char(pr_qtpreapg,'fm990d0000')                          ||
