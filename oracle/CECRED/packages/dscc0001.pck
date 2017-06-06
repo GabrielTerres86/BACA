@@ -1409,8 +1409,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
       pr_tab_chq_bordero(vr_idxchequ).dtlibbdc := rw_crapcdb.dtlibbdc;
       pr_tab_chq_bordero(vr_idxchequ).dtmvtolt := pr_dtmvtolt;
 			pr_tab_chq_bordero(vr_idxchequ).insitana := rw_crapcdb.insitana;
-      pr_tab_chq_bordero(vr_idxchequ).nrdolote := rw_crapcst.nrdolote;
-			pr_tab_chq_bordero(vr_idxchequ).insitprv := rw_crapcst.insitprv;
+      pr_tab_chq_bordero(vr_idxchequ).nrdolote := nvl(rw_crapcst.nrdolote,0);
+			pr_tab_chq_bordero(vr_idxchequ).insitprv := nvl(rw_crapcst.insitprv,0);
 
       --> Para impressoes do tipo 10 - impressao para analise
       --> caso bordero da data maior que a data de corte
