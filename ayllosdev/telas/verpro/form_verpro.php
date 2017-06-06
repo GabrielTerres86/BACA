@@ -3,7 +3,7 @@
  * FONTE        : form_verpro.php
  * CRIAÇÃO      : Rogérius Militão - DB1 Informatica
  * DATA CRIAÇÃO : 28/10/2011 
- * OBJETIVO     : Tela com o detalhes do protocolo		última alteração: 23/03/2017
+ * OBJETIVO     : Tela com o detalhes do protocolo		última alteração: 29/05/2017
  * --------------
  * ALTERAÇÕES   :
  * 001: [30/11/2012] David (CECRED) : Validar session
@@ -20,6 +20,7 @@
  * 011: [29/07/2016] - Corrigi o uso da funcao split depreciada. SD 480705 (Carlos R.)
  * 012: [19/09/2016] - Alteraçoes pagamento/agendamento de DARF/DAS pelo InternetBanking (Projeto 338 - Lucas Lunelli) 
  * 013: [23/03/2017] - Inclusão do protocolo de Recarga de celular (PRJ321 - Reinert)
+ * 014: [29/05/2017] - Ajuste para apresentar valores corretamente - Adriano SD 679022.
  */
 
 session_start();
@@ -318,13 +319,13 @@ if ($cdtippro >= 16 && $cdtippro <= 19) {
 															<?php } ?>
 															
 														<label for="vlprinci"><? echo utf8ToHtml('Valor Principal:') ?></label>
-														<input name="vlprinci" id="vlprinci" type="text" value="<? echo formataMoeda($vlprinci); ?>" />
+														<input name="vlprinci" id="vlprinci" type="text" value="<? echo $vlprinci; ?>" />
 														<label for="vlrmulta"><? echo utf8ToHtml('Valor Multa:') ?></label>
-														<input name="vlrmulta" id="vlrmulta" type="text" value="<? echo formataMoeda($vlrmulta); ?>" />
+														<input name="vlrmulta" id="vlrmulta" type="text" value="<? echo $vlrmulta; ?>" />
 														<label for="vlrjuros"><? echo utf8ToHtml('Valor Juros:') ?></label>
-														<input name="vlrjuros" id="vlrjuros" type="text" value="<? echo formataMoeda($vlrjuros); ?>" />
+														<input name="vlrjuros" id="vlrjuros" type="text" value="<? echo $vlrjuros; ?>" />
 														<label for="vltotfat"><? echo utf8ToHtml('Valor Total:') ?></label>
-														<input name="vltotfat" id="vltotfat" type="text" value="<? echo formataMoeda($vltotfat); ?>" />
+														<input name="vltotfat" id="vltotfat" type="text" value="<? echo $vltotfat; ?>" />
 													<?php } ?>
 													
 													<label for="dsidepag"><? echo utf8ToHtml('Descrição do Pagto.:') ?></label>

@@ -671,9 +671,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0001 IS
 							-- Para cada registro encontrado
 							FOR vr_pos IN 1..vr_vet_dados.COUNT LOOP
 								-- Guardar a informacao antes do |
-								vr_cdoperad := substr(gene0002.fn_busca_entrada(1,vr_vet_dados(vr_pos),'|'),1);
+								vr_cdoperad := substr(gene0002.fn_busca_entrada(1,vr_vet_dados(vr_pos),'|'),2);
 									
-								IF vr_cdoperad = pr_cdoperad THEN
+								IF vr_cdoperad = UPPER(pr_cdoperad) THEN
 									-- Guardar a informacao apos o # na aliquota
 									vr_dsdirmic := substr(gene0002.fn_busca_entrada(2,vr_vet_dados(vr_pos),'|'),3);
 									vr_flgfctar := TRUE;
