@@ -1,5 +1,5 @@
 begin
-  sys.dbms_scheduler.create_job(job_name            => 'CECRED.WEBJUD_TRANSFERENCIA',
+  sys.dbms_scheduler.create_job(job_name            => 'CECRED.JBBLQJ_TRANSF_BLOQUEIO_JUDICIAL',
                                 job_type            => 'PLSQL_BLOCK',
                                 job_action          => 'declare
           vr_cdcritic crapcri.cdcritic%type;
