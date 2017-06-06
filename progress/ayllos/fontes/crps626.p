@@ -347,7 +347,7 @@ DO  i = 1 TO aux_contador:
                           crapcst.cdbanchq = aux_cdbanchq AND /* Nro do Bco*/
                           crapcst.cdagechq = aux_cdagechq AND /* Age dest  */
                           crapcst.nrctachq = aux_nrctachq AND /* Nr ctachq */
-                          crapcst.nrcheque = aux_nrdocmto     /* Nro chq   */
+                          crapcst.nrcheque = aux_nrdocmto AND /* Nro chq   */
 						  crapcst.nrborder = 0
                           EXCLUSIVE-LOCK NO-ERROR.
 
