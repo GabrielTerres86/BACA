@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Margarete/Planner
-   Data    : Agosto/2000.                    Ultima atualizacao: 18/05/2017
+   Data    : Agosto/2000.                    Ultima atualizacao: 15/04/2017
 
    Dados referentes ao programa:
 
@@ -75,16 +75,13 @@
                                aux_lsconta4;
                              - Incluido a declaracao da variavel aux_dsoperac
                               (Adriano).         
-                            
+               
                09/11/2016 - #551764 A partir do dia 16/11 a area de suprimentos
                             nao produzira mais cheques avulsos. Opcao 5, formulario
-                            avulso, foi retirada (Carlos)
-
+                            avulso, foi retirada (Carlos)         
+               
                14/03/2017 - Aumentar para 1400 folhas por requisição no formulario  
                             3, conforme solicitado no chamado 627236. (Kelvin)
-                            
-               18/05/2017 - Ajustar tela para a nova opcao "P" (Lucas Ranghetti #646559)
-                            
 ............................................................................. */
 
 { includes/var_online.i }
@@ -92,14 +89,13 @@
 
 DEF        VAR tel_qtinforq AS INT     FORMAT "z,zz9"                NO-UNDO.
 DEF        VAR tel_qtcomprq AS INT     FORMAT "z,zz9"                NO-UNDO.
-DEF        VAR tel_qtinfotl AS INT     FORMAT "zz,zz9"               NO-UNDO.
-DEF        VAR tel_qtcomptl AS INT     FORMAT "zz,zz9"               NO-UNDO.
-DEF        VAR tel_qtreqtal AS INT     FORMAT "zzz9"                 NO-UNDO.
+DEF        VAR tel_qtinfotl AS INT     FORMAT "zz,zz9"                NO-UNDO.
+DEF        VAR tel_qtcomptl AS INT     FORMAT "zz,zz9"                NO-UNDO.
+DEF        VAR tel_qtreqtal AS INT     FORMAT "zzz9"                  NO-UNDO.
 DEF        VAR tel_tprequis AS INT     FORMAT "9"                    NO-UNDO.
 DEF        VAR tel_nrseqdig AS INT     FORMAT "zz,zz9"               NO-UNDO.
 DEF        VAR tel_nrdctabb AS INT     FORMAT "zzzz,zzz,9"           NO-UNDO.
 DEF        VAR tel_reganter AS CHAR    FORMAT "x(48)" EXTENT 6       NO-UNDO.
-DEF        VAR tel_dtsolici AS DATE    FORMAT "99/99/9999"           NO-UNDO.
 
 DEF        VAR aux_nrseqdig AS INT     FORMAT "zzzz9"                NO-UNDO.
 DEF        VAR aux_qtinforq AS INT     FORMAT "z,zz9"                NO-UNDO.
@@ -140,14 +136,11 @@ FORM    SPACE(1) WITH ROW 4 COLUMN 1 OVERLAY 16 DOWN WIDTH 80
             TITLE COLOR MESSAGE glb_tldatela FRAME f_moldura.
 
 FORM glb_cddopcao AT  5 LABEL "Opcao" AUTO-RETURN
-                        HELP "Informe a opcao desejada (A, C, E, I ou P)"
+                        HELP "Informe a opcao desejada (A, C, E ou I)"
                         VALIDATE (glb_cddopcao = "A" OR glb_cddopcao = "C" OR
-                                  glb_cddopcao = "E" OR glb_cddopcao = "I" OR 
-                                  glb_cddopcao = "P",
+                                  glb_cddopcao = "E" OR glb_cddopcao = "I",
                                   "014 - Opcao errada.")
-    WITH ROW 6 COLUMN 2 OVERLAY SIDE-LABELS NO-BOX FRAME f_opcao.
 
-FORM 
      "Informado   Computado            "  AT 39
      SKIP
      "Requisicoes       :"  AT 20
@@ -157,40 +150,25 @@ FORM
      "Folhas/bloq solic.:" AT 20
      tel_qtinfotl    AT 42 NO-LABEL
      tel_qtcomptl    AT 54 NO-LABEL
-     SKIP(1)
+     SKIP(2)
      "Conta/dv    Tipo Req.   Folhas/Bloq.    Seq." 
                   AT  14
-     SKIP
+     SKIP(1)
      tel_nrdctabb AT  12 NO-LABEL AUTO-RETURN
                          HELP "Informe o numero da conta do associado."
+     
      tel_tprequis AT  30 NO-LABEL AUTO-RETURN
-         HELP "3-Form.Continuo / 8-Bloquetos BB"
-                VALIDATE(tel_tprequis = 3 OR
+         HELP "2-Folhas TB / 3-Form.Continuo / 8-Bloquetos BB"
+                VALIDATE(tel_tprequis = 2 OR tel_tprequis = 3 OR
                          tel_tprequis = 8 OR tel_tprequis = 0,
                          "014 - Opcao Errada")
+                         
      tel_qtreqtal AT  43 NO-LABEL AUTO-RETURN
          HELP "Qtd.Max:TB=20/Cont=100-1500/Bloquet.BB=500"
+
      tel_nrseqdig AT  52 NO-LABEL
-     WITH ROW 7 COLUMN 2 OVERLAY NO-LABELS NO-BOX FRAME f_lanrqe.
      
-FORM 
-     "REQUISICOES PENDENTES"  AT 30    
-     SKIP(1)
-     "Conta/dv    Tipo Req.   Folhas/Bloq.    Seq.  Data Solicitacao" 
-                  AT  8
-     SKIP(1)
-     tel_nrdctabb AT  6 NO-LABEL AUTO-RETURN
-                         HELP "Informe o numero da conta do associado."     
-     tel_tprequis AT  24 NO-LABEL AUTO-RETURN
-         HELP "3-Form.Continuo / 8-Bloquetos BB"
-                VALIDATE(tel_tprequis = 3 OR
-                         tel_tprequis = 8 OR tel_tprequis = 0,
-                         "014 - Opcao Errada")
-     tel_qtreqtal AT  36 NO-LABEL AUTO-RETURN
-         HELP "Qtd.Max:TB=20/Cont=100-1500/Bloquet.BB=500"
-     tel_nrseqdig AT 46 NO-LABEL     
-     tel_dtsolici AT 60 NO-LABEL     
-     WITH ROW 7 COLUMN 2 OVERLAY NO-LABELS NO-BOX FRAME f_lanrqe_p.
+     WITH ROW 6 COLUMN 2 OVERLAY SIDE-LABELS NO-BOX FRAME f_lanrqe.
 
 FORM tel_reganter[1] AT 12 NO-LABEL  tel_reganter[2] AT 12 NO-LABEL
      tel_reganter[3] AT 12 NO-LABEL  tel_reganter[4] AT 12 NO-LABEL
@@ -201,17 +179,9 @@ FORM crapreq.nrdctabb  AT 12  crapreq.tprequis  AT 30
      crapreq.qtreqtal  AT 43  FORMAT "zzz9" crapreq.nrseqdig  AT 52
      WITH ROW 14 COLUMN 2 OVERLAY NO-LABEL NO-BOX 7 DOWN FRAME f_lanctos.
 
-FORM crapreq.nrdctabb  AT 6  
-     crapreq.tprequis  AT 24
-     crapreq.qtreqtal  AT 36  FORMAT "zzz9" 
-     crapreq.nrseqdig  AT 46
-     crapreq.dtmvtolt  AT 60
-     WITH ROW 11 COLUMN 2 OVERLAY NO-LABEL NO-BOX 7 DOWN FRAME f_lanctos_p.     
-
 VIEW FRAME f_moldura.
 
 FIND crapcop WHERE crapcop.cdcooper = glb_cdcooper NO-LOCK NO-ERROR.
-
 IF   NOT AVAILABLE crapcop THEN
      DO:
          glb_cdcritic = 794.
@@ -241,7 +211,9 @@ ASSIGN glb_cddopcao = "I"
        
 PAUSE(0).
 
-DISPLAY glb_cddopcao WITH FRAME f_opcao.
+DISPLAY glb_cddopcao tel_nrdctabb tel_tprequis
+        tel_qtreqtal tel_nrseqdig
+        WITH FRAME f_lanrqe.
 
 CLEAR FRAME f_regant NO-PAUSE.
 
@@ -251,26 +223,21 @@ DO WHILE TRUE:
 
    DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
 
-      SET glb_cddopcao WITH FRAME f_opcao.
+      SET glb_cddopcao WITH FRAME f_lanrqe.
 
       LEAVE.
 
    END.
   
-   DISPLAY glb_cddopcao WITH FRAME f_opcao.   
-   
    IF   KEYFUNCTION(LASTKEY) = "END-ERROR"   THEN     /*   F4 OU FIM   */
         DO:
             RUN fontes/novatela.p.
             IF   CAPS(glb_nmdatela) <> "lanrqe"   THEN
                  DO:
-                     HIDE FRAME f_opcao.
                      HIDE FRAME f_lanrqe.
                      HIDE FRAME f_regant.
                      HIDE FRAME f_lanctos.
                      HIDE FRAME f_moldura.
-                     HIDE FRAME f_lanrqe_p.
-                     HIDE FRAME f_lanctos_p.
                      RETURN.
                  END.
             ELSE
@@ -285,30 +252,25 @@ DO WHILE TRUE:
 
    ASSIGN aux_flgretor = TRUE.
 
-   IF  glb_cddopcao = "A" THEN
+   IF   INPUT glb_cddopcao = "A" THEN
         DO:
             { includes/lanrqea.i } 
         END.
    ELSE
-   IF  glb_cddopcao = "C" THEN
+        IF   INPUT glb_cddopcao = "C" THEN
              DO:
                  { includes/lanrqec.i }
              END.
         ELSE
-   IF  glb_cddopcao = "E"   THEN
+             IF   INPUT glb_cddopcao = "E"   THEN
                   DO:
                       { includes/lanrqee.i }
                   END.
              ELSE
-   IF  glb_cddopcao = "I"   THEN
+                  IF   INPUT glb_cddopcao = "I"   THEN
                        DO:
                            { includes/lanrqei.i }
                        END.
-   ELSE
-   IF  glb_cddopcao = "P" THEN
-       DO:
-            { includes/lanrqep.i }
-       END.
 END.
 
 /* .......................................................................... */

@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Margarete/Planner
-   Data    : Agosto/2000.                    Ultima alteracao: 18/05/2017
+   Data    : Agosto/2000.                    Ultima alteracao: 12/12/2017
 
    Dados referentes ao programa:
 
@@ -117,8 +117,6 @@
                14/03/2017 - Aumentar para 1500 folhas por requisição no formulario  
                             3, conforme solicitado no chamado 627236. (Kelvin)
                             
-               18/05/2017 - Retirar glb_cddopcao do form f_lanrqe (Lucas Ranghetti #646559)
-               
 ............................................................................. */
 
 DEF VAR h-b1wgen0001 AS HANDLE                                        NO-UNDO.
@@ -411,7 +409,8 @@ DO WHILE TRUE:
              ELSE
                 MESSAGE glb_dscritic.
              
-             DISPLAY tel_nrdctabb 
+             DISPLAY glb_cddopcao 
+                     tel_nrdctabb 
                      tel_tprequis 
                      tel_qtreqtal
                      WITH FRAME f_lanrqe.
@@ -439,7 +438,8 @@ DO WHILE TRUE:
              BELL.
              CLEAR FRAME f_lanrqe.
              MESSAGE glb_dscritic.
-             DISPLAY tel_nrdctabb 
+             DISPLAY glb_cddopcao 
+                     tel_nrdctabb 
                      tel_tprequis 
                      tel_qtreqtal
                      tel_nrseqdig WITH FRAME f_lanrqe.
@@ -514,7 +514,7 @@ DO WHILE TRUE:
 
 
    IF KEYFUNCTION(LASTKEY) = "END-ERROR"   THEN     /*   F4 OU FIM   */
-      RETURN.   /* Volta pedir a opcao para o operador */
+      LEAVE.   /* Volta pedir a opcao para o operador */
 
    TRANS_1:
 
