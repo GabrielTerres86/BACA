@@ -2886,6 +2886,41 @@ function formataTabelaL(){
 	glbTabNriniseq = $('table > tbody', divRegistro).find('#nriniseq').val();
 	glbTabNrregist = $('table > tbody', divRegistro).find('#nrregist').val();
 	
+	$('table.tituloRegistros > thead > tr', '#divRemessa').click( function() {
+		glbTabNrdconta = undefined;
+		glbTabNrctarem = undefined;
+		glbTabDtmvtolt = undefined;
+		glbTabNrremret = undefined;
+		glbTabVltotchq = undefined;
+		glbTabQtcheque = undefined;
+		glbTabQtconcil = undefined;
+		glbTabInsithcc = undefined;
+		glbTabDtcustod = undefined;
+		glbTabNmarquiv = undefined;
+		glbTabNrconven = undefined;
+		glbTabIntipmvt = undefined;
+		glbTabNmprimtl = undefined;
+		glbTabDsorigem = undefined;
+
+	// seleciona o registro que é clicado
+		$('table > tbody > tr', divRegistro).click( function() {
+			glbTabNrdconta = normalizaNumero($(this).find('#nrdconta > span').text());
+			glbTabNrctarem = $(this).find('#nrdconta > span').text() ;
+			glbTabDtmvtolt = $(this).find('#dtmvtolt > span').text() ;
+			glbTabNrremret = $(this).find('#nrremret > span').text() ;
+			glbTabVltotchq = $(this).find('#vltotchq > span').text() ;
+			glbTabQtcheque = $(this).find('#qtcheque > span').text() ;
+			glbTabQtconcil = $(this).find('#qtconcil > span').text() ;
+			glbTabInsithcc = $(this).find('#insithcc > span').text() ;
+			glbTabDtcustod = $(this).find('#dtcustod > span').text() ;
+			glbTabNmarquiv = $(this).find('#nmarquiv > span').text() ;
+			glbTabNrconven = $(this).find('#nrconven').val();
+			glbTabIntipmvt = $(this).find('#intipmvt').val();
+			glbTabNmprimtl = $(this).find('#nmprimtl').val();
+			glbTabDsorigem = $(this).find('#dsorigem').val();
+		});
+	});
+	
 	// seleciona o registro que é clicado
 	$('table > tbody > tr', divRegistro).click( function() {
 		glbTabNrdconta = normalizaNumero($(this).find('#nrdconta > span').text());
