@@ -1070,14 +1070,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
       END IF;
         
       --Gravar linha gerencial
-      IF rw_craplcm.cdhistor in (2057, 2058, 1919, 1810, 1837, 1838, 1028, 777, 1988, 1660, 1661, 2059) THEN
+      IF rw_craplcm.cdhistor in (909,910,913,914,915,916,945,946,1007,1008, 2057, 2058, 1919, 1810, 1837, 1838, 1028, 777, 1988, 1660, 1661, 2059) THEN
          
         vr_linhadet := '999'||','||TRIM(to_char(rw_craplcm.vllanmto, '99999999999990.00'));
           
         -- Gravar Linha
         pc_gravar_linha(vr_linhadet);           
         
-      ELSIF rw_craplcm.cdhistor in (909,910,913,914,915,916,945,946,1007,1008) THEN
+/*      ELSIF rw_craplcm.cdhistor in (909,910,913,914,915,916,945,946,1007,1008) THEN
          
         SELECT DECODE(rw_craplcm.cdhistor,910,909,914,913,916,915,946,945,1008,1007,rw_craplcm.cdhistor)
           INTO vr_cdhistor_deb
@@ -1173,7 +1173,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
            -- END LOOP;               
           END IF;                             
         END IF;
-        
+*/        
       END IF;
       
     END LOOP;
@@ -1481,7 +1481,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
 
       END IF;
       
-      IF rw_craplcm.cdhistor NOT IN (809,811,812,813) THEN
+      --IF rw_craplcm.cdhistor NOT IN (809,811,812,813) THEN
         vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
                        TRIM(to_char(pr_dtmvtolt, 'ddmmyy')) || ','|| 
                        vr_tab_historico(rw_craplcm.cdhistor).nrctaori||','||
@@ -1492,9 +1492,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
 
         -- Gravar Linha
         pc_gravar_linha(vr_linhadet); 
+--      END IF;
+      
+      IF rw_craplcm.cdhistor in (809,811,814,822,839,812,813) THEN
+         vr_linhadet := '999,'||TRIM(to_char(rw_craplcm.vllanmto, '99999999999990.00'));               
       END IF;
-        
-      IF rw_craplcm.cdhistor in (814,822,839) THEN
+       
+/*      IF rw_craplcm.cdhistor in (814,822,839) THEN
         FOR rw_gntarcp IN cr_gntarcp(rw_craplcm.cdhistor) LOOP
           vr_linhadet := LPAD(rw_gntarcp.cdagenci,3,0)||','||TRIM(to_char(rw_gntarcp.vldocmto, '99999999999990.00'));              
               
@@ -1679,7 +1683,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
           vr_index := vr_tab_lct_pos_neg.next(vr_index);        
         END LOOP;
         
-      END IF;        
+      END IF;     */   
       
     END LOOP;
     
