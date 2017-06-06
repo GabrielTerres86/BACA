@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autora  : Mirtes
-       Data    : Marco/2004.                        Ultima atualizacao: 29/02/2016
+       Data    : Marco/2004.                        Ultima atualizacao: 25/05/2017
 
        Dados referentes ao programa:
 
@@ -157,6 +157,11 @@ CREATE OR REPLACE PROCEDURE CECRED.
                                  
                     29/02/2016 - Alterado lpad do nrautdoc para 9 posicoes - Alteracao emergencial 
                                  (Lucas Ranghetti/Fabricio)
+                                 
+                    23/06/2016 - P333.1 - Devolução de arquivos com tipo de envio 6 - WebService (Marcos)
+                                 
+                    25/05/2017 - Ajustar as informações de log de operações (Rodrigo)
+                                 
     ............................................................................ */
 
     DECLARE
@@ -169,6 +174,8 @@ CREATE OR REPLACE PROCEDURE CECRED.
       -- Tratamento de erros
       vr_exc_saida  EXCEPTION;
       vr_exc_fimprg EXCEPTION;
+      vr_cdretorn   NUMBER;
+      vr_dsretorn   VARCHAR2(4000);
       vr_cdcritic   PLS_INTEGER;
       vr_dscritic   VARCHAR2(4000);
 
@@ -325,10 +332,10 @@ CREATE OR REPLACE PROCEDURE CECRED.
                                             ,pr_dtmvtolt IN DATE) IS
         -- Busca sequencial do convenio atualizado e
         -- deixar registro com lock, para o sequencial não ser utilizado por outra cooperativa
-        CURSOR cr_gbconve (pr_rowid rowid)is
+        CURSOR cr_gbconve (pr_rowid rowid) is
           SELECT nrseqcxa
             FROM gnconve
-           WHERE gnconve.rowid = rw_gnconve.rowid
+           WHERE gnconve.rowid = pr_rowid
            FOR UPDATE; 
         rw_gbconve cr_gbconve%rowtype;                    
         
@@ -609,27 +616,41 @@ CREATE OR REPLACE PROCEDURE CECRED.
              RAISE vr_exc_saida;
             END IF;
           END IF;
+          
+          IF rw_gnconve.tpdenvio = 6 THEN -- WebServices
+            --codigo da critica
+            vr_cdcritic := 982;
+            
+            CONV0002.pc_armazena_arquivo_conven (pr_cdconven => rw_gnconve.cdconven
+                                                ,pr_dtarquiv => rw_crapdat.dtmvtolt
+                                                ,pr_tparquiv => 'G' -- Arquivo Caixa -- 
+                                                ,pr_flproces => 0 -- Não retornado ainda
+                                                ,pr_dscaminh => vr_path_arquivo || '/salvar/'
+                                                ,pr_nmarquiv => vr_nmarqped
+                                                ,pr_cdretorn => vr_cdretorn   -- Tratar possível erro no retorno (Quando OK virá 202, qualquer outro código é erro) 
+                                                ,pr_dsmsgret => vr_dsretorn); -- Detalhe do erro
+          
+            IF vr_cdretorn <> 202 THEN
+              vr_dscritic:= vr_dsretorn;
+              -- retornando ao programa chamador
+              RAISE vr_exc_saida;
+            END IF;
+          
+          END IF;
 
-          -- Gerando linha em branco no log
-          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 2 -- Erro tratato
-                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                     || vr_cdprogra);
           --descricao da critica
           vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
 
           -- Internet
-          IF (rw_gnconve.tpdenvio > 1 AND rw_gnconve.tpdenvio < 4) OR
-              rw_gnconve.tpdenvio = 5 THEN
+          IF rw_gnconve.tpdenvio NOT IN(1,4) THEN
             -- Envio centralizado de log de erro
             btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                      ,pr_ind_tipo_log => 2 -- Erro tratato
+                                      ,pr_ind_tipo_log => 1 -- Mensagem
                                       ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                          || vr_cdprogra || ' --> '
                                                          || vr_dscritic || ' '
                                                          || vr_nmarqdat || ' -  Arrecadacao Cx. - '
-                                                         || rw_gnconve.nmempres
-                                                         || ': _________');
+                                                         || rw_gnconve.nmempres);
 
           ELSE
             --envia e-mail
@@ -650,12 +671,6 @@ CREATE OR REPLACE PROCEDURE CECRED.
               RAISE vr_exc_saida;
             END IF;
           END IF;
-
-          -- Gerando linha em branco no log
-          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 2 -- Erro tratato
-                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                     || vr_cdprogra);
         END;
       END pc_transmite_arquivo;
 
@@ -1186,11 +1201,11 @@ CREATE OR REPLACE PROCEDURE CECRED.
 
           ELSE
             --montando a critica de movimento
-            vr_dscritic := 'Sem movtos Convenio - ' || rw_gnconve.cdconven;
+            vr_dscritic := 'Sem movtos Convenio - ' || rw_gnconve.cdconven || '  - ' || rw_gnconve.nmempres;
 
             -- Gerando mensagem no log
             btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                      ,pr_ind_tipo_log => 2 -- Erro tratato
+                                      ,pr_ind_tipo_log => 1 -- Mensagem
                                       ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                        || vr_cdprogra || ' --> '
                                                        || vr_dscritic );
@@ -1345,15 +1360,6 @@ CREATE OR REPLACE PROCEDURE CECRED.
         --nome da empresa
         vr_nmempres := rw_gnconve.nmempres;
 
-        --gerando a mensagem a respeito do convenio que esta sendo processado
-        vr_dscritic := 'Executando Convenio - ' || rw_gnconve.cdconven || '  - ' || rw_gnconve.nmempres;
-
-        -- Envio centralizado de log de erro
-        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                  ,pr_ind_tipo_log => 2 -- Erro tratato
-                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                   || vr_cdprogra || ' --> '
-                                                   || vr_dscritic);
         --indica que é o primeiro convenio
         vr_flgfirst     := TRUE;
         vr_nrseqdig     := 0;
