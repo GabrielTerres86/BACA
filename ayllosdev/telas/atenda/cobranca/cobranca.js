@@ -1733,6 +1733,7 @@ function consultaServicoSMS(opcao){
         success: function (response) {
             $("#divHabilita_SMS").hide();
 			$("#divServSMS").html(response);
+			$("#divServSMS").css("display","block");
             hideMsgAguardo();
             blockBackground($("#divRotina"));
 		}

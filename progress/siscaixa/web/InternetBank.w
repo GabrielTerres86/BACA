@@ -656,7 +656,7 @@
                             - Criada op 180 (P.349.2)
                             - Alteraçoes para composiçao de comprovante DARF/DAS Modelo Sicredi
                             (Lucas Lunelli)
-                              
+                 
                  17/03/2017 - Ajustes operacao 189 - Servico de SMS de cobranca
                               PRJ319.2 - SMS Cobrança(Odirlei-AMcom)    
 				 13/03/2017 - Adicionando paginacao na tela de folha, conforme 
@@ -665,6 +665,10 @@
                             PRJ335 - OFSAA (Odirlei-AMcom)
 				 04/05/2017 - Alterado parametro dtmvtolt para dtmvtocd na operacao 176 - 
 							  Integralizacao de cotas. (Reinert)
+                              
+                              
+                 21/03/2017 - Segunda fase projeto Boleto SMS
+                              PRJ319.2 - SMS Cobrança(Ricardo Linhares)    
                               
 ------------------------------------------------------------------------------*/
 
@@ -1183,6 +1187,7 @@ DEF VAR aux_titulo3  AS DECI								           NO-UNDO.
 DEF VAR aux_titulo4  AS DECI								 		   NO-UNDO.
 DEF VAR aux_titulo5  AS DECI				 						   NO-UNDO.
 DEF VAR aux_codigo_barras AS CHAR      								   NO-UNDO.
+DEF VAR aux_tppacote AS INTE                                            NO-UNDO.
 
 /*  Operacao 176/177 */
 DEF VAR aux_vintegra AS DECIMAL										   NO-UNDO.
@@ -4287,7 +4292,8 @@ PROCEDURE proc_operacao59:
            aux_fimemiss = DATE(GET-VALUE("fimemiss"))
            aux_flgregis = INTE(GET-VALUE("flgregis"))
            aux_inserasa = INTE(GET-VALUE("inserasa"))
-           aux_instatussms = INTE(GET-VALUE("instatussms")).
+           aux_instatussms = INTE(GET-VALUE("instatussms"))
+           aux_tppacote = INTE(GET-VALUE("tppacote")).
 
     RUN sistema/internet/fontes/InternetBank59.p (INPUT aux_cdcooper,
                                                   INPUT aux_nrdconta,
@@ -4306,6 +4312,7 @@ PROCEDURE proc_operacao59:
                                                          THEN TRUE ELSE FALSE),
                                                   INPUT aux_inserasa,
                                                   INPUT aux_instatussms,
+                                                  INPUT aux_tppacote,
                                                  OUTPUT aux_dsmsgerr,
                                                  OUTPUT TABLE xml_operacao).
 
