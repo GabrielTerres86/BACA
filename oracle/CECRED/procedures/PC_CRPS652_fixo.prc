@@ -2656,7 +2656,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652_fixo (pr_cdcooper IN crapcop.cdcoo
                  ON tbrecup_acordo.nracordo = tbrecup_acordo_parcela.nracordo
               WHERE crapret.cdcooper = pr_cdcooper
                 AND crapret.nrcnvcob = pr_nrcnvcob
-                AND crapret.dtocorre in (pr_dtmvtolt,gene0005.fn_valida_dia_util(pr_cdcooper, to_date(pr_dtmvtolt,'DD/MM/YYYY')-1, 'A'))
+                AND crapret.dtocorre in (pr_dtmvtolt,gene0005.fn_valida_dia_util(pr_cdcooper, pr_dtmvtolt-1, 'A'))
                 AND crapret.cdocorre IN (6,76);       -- liquidacao normal COO/CEE
 
            vr_nrcnvcob crapprm.dsvlrprm%TYPE;
@@ -4684,7 +4684,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652_fixo (pr_cdcooper IN crapcop.cdcoo
            END IF;
 
            --Data Movimento Cyber igual atual
-           IF rw_crapcyb.dtmvtolt in (vr_dtatual,gene0005.fn_valida_dia_util(rw_crapcyb.cdcooper, to_date(vr_dtatual,'DD/MM/YYYY')-1, 'A')) THEN
+           IF rw_crapcyb.dtmvtolt in (vr_dtatual,gene0005.fn_valida_dia_util(rw_crapcyb.cdcooper, vr_dtatual-1, 'A')) THEN
              /* gera carga campos obrigatorios */
              pc_gera_campos_obrig (pr_idarquivo => 1 /*str_1*/             --Id do arquivo
                                   ,pr_cdcooper  => rw_crapcyb.cdcooper     --Cooperativa
@@ -4796,7 +4796,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652_fixo (pr_cdcooper IN crapcop.cdcoo
            ELSE
 
              --Data Manutencao Cadastro
-             IF rw_crapcyb.dtmancad in (vr_dtatual,gene0005.fn_valida_dia_util(rw_crapcyb.cdcooper, to_date(vr_dtatual,'DD/MM/YYYY')-1, 'A')) THEN
+             IF rw_crapcyb.dtmancad in (vr_dtatual,gene0005.fn_valida_dia_util(rw_crapcyb.cdcooper, vr_dtatual-1, 'A')) THEN
                /* gera carga campos obrigatorios */
                pc_gera_campos_obrig (pr_idarquivo => 2 /*str_2*/           --Id do arquivo
                                     ,pr_cdcooper  => rw_crapcyb.cdcooper   --Cooperativa
@@ -4845,7 +4845,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652_fixo (pr_cdcooper IN crapcop.cdcoo
 
              END IF;
              --Data Manutencao Avalista igual movimento atual
-             IF rw_crapcyb.dtmanavl in (vr_dtatual,gene0005.fn_valida_dia_util(rw_crapcyb.cdcooper, to_date(vr_dtatual,'DD/MM/YYYY')-1, 'A')) THEN
+             IF rw_crapcyb.dtmanavl in (vr_dtatual,gene0005.fn_valida_dia_util(rw_crapcyb.cdcooper, vr_dtatual-1, 'A')) THEN
                --Gera Avalista
                pc_gera_aval (pr_idarquivo  => 5                        --Id do arquivo
                             ,pr_opccarga   => 'R'  /* Relations */     --Tipo de Carga
@@ -4865,7 +4865,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652_fixo (pr_cdcooper IN crapcop.cdcoo
                END IF;
              END IF;
              --Data Manutencao Garantia igual movimento atual
-             IF rw_crapcyb.dtmangar in (vr_dtatual,gene0005.fn_valida_dia_util(rw_crapcyb.cdcooper, to_date(vr_dtatual,'DD/MM/YYYY')-1, 'A')) THEN
+             IF rw_crapcyb.dtmangar in (vr_dtatual,gene0005.fn_valida_dia_util(rw_crapcyb.cdcooper, vr_dtatual-1, 'A')) THEN
                pc_gera_carga_garantias (pr_cdcooper   => rw_crapcyb.cdcooper     --Cooperativa
                                        ,pr_nrdconta   => rw_crapcyb.nrdconta     --Numero Conta
                                        ,pr_nrctremp   => rw_crapcyb.nrctremp     --Contrato Emprestimo
@@ -4919,7 +4919,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652_fixo (pr_cdcooper IN crapcop.cdcoo
                FOR rw_valor_pago_emprestimo IN cr_valor_pago_emprestimo(pr_cdcooper => rw_crapcyb.cdcooper       -- Cooperativa
                                                                        ,pr_nrdconta => rw_crapcyb.nrdconta       -- Numero Conta
                                                                        ,pr_nrctremp => rw_crapcyb.nrctremp       -- Contrato Emprestimo
-                                                                       ,pr_dtmvtolt => gene0005.fn_valida_dia_util(rw_crapcyb.cdcooper, to_date(vr_dtatual,'DD/MM/YYYY')-1, 'A')) LOOP -- Data Movimento
+                                                                       ,pr_dtmvtolt => gene0005.fn_valida_dia_util(rw_crapcyb.cdcooper, vr_dtatual-1, 'A')) LOOP -- Data Movimento
 
                  -- Melhoria 432 - verifica se é refinanciamento - Jean / Mout´S
                  vr_cdtrscyb := NULL;
@@ -4940,7 +4940,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652_fixo (pr_cdcooper IN crapcop.cdcoo
                                           ,pr_nrdconta => rw_crapcyb.nrdconta    --Numero Conta
                                           ,pr_nrctremp => rw_crapcyb.nrctremp    --Numero Contrato Emprestimo
                                           ,pr_vlrpagto => rw_valor_pago_emprestimo.vllanmto -- Valor Lancamento
-                                          ,pr_dtmvtlt2 => TO_CHAR(gene0005.fn_valida_dia_util(rw_crapcyb.cdcooper, to_date(vr_dtatual,'DD/MM/YYYY')-1, 'A'),'MMDDYYYY') --Data Movimento
+                                          ,pr_dtmvtlt2 => TO_CHAR(gene0005.fn_valida_dia_util(rw_crapcyb.cdcooper, vr_dtatual-1, 'A'),'MMDDYYYY') --Data Movimento
                                           ,pr_cdhistor => vr_cdtrscyb -- Codigo Historico
                                           ,pr_dshistor => rw_valor_pago_emprestimo.dshistor --Descricao Historico
                                           ,pr_cdcritic => vr_cdcritic            --Codigo Erro
@@ -5089,13 +5089,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652_fixo (pr_cdcooper IN crapcop.cdcoo
                      RAISE vr_exc_saida;
                    END IF;
                  END IF;
-                 
+
                  --
-                 
+
                  vr_vllammto:= fn_valor_pago_conta_corrente(pr_cdcooper => rw_crapcyb.cdcooper   --Cooperativa
                                                            ,pr_nrdconta => rw_crapcyb.nrdconta   --Numero Conta
                                                            ,pr_nrctremp => rw_crapcyb.nrctremp   --Contrato Emprestimo
-                                                           ,pr_dtmvtolt => gene0005.fn_valida_dia_util(rw_crapcyb.cdcooper, to_date(vr_dtatual,'DD/MM/YYYY')-1, 'A')); -- Data Movimento
+                                                           ,pr_dtmvtolt => gene0005.fn_valida_dia_util(rw_crapcyb.cdcooper, vr_dtatual-1, 'A')); -- Data Movimento
 
                  --Valor a regularizar anterior menos valor a regularizar menos o valor parametrizado
                  vr_vlrpagto:= Nvl(rw_crapcyb.vlprapga,0) - Nvl(rw_crapcyb.vlpreapg,0) - Nvl(vr_vllammto,0);
@@ -5122,7 +5122,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652_fixo (pr_cdcooper IN crapcop.cdcoo
                                             ,pr_nrdconta => rw_crapcyb.nrdconta    --Numero Conta
                                             ,pr_nrctremp => rw_crapcyb.nrctremp    --Numero Contrato Emprestimo
                                             ,pr_vlrpagto => vr_vlrpagto            --Valor saldo a regularizar
-                                            ,pr_dtmvtlt2 => TO_CHAR(gene0005.fn_valida_dia_util(rw_crapcyb.cdcooper, to_date(vr_dtatual,'DD/MM/YYYY')-1, 'A'),'MMDDYYYY') --Data Movimento
+                                            ,pr_dtmvtlt2 => TO_CHAR(gene0005.fn_valida_dia_util(rw_crapcyb.cdcooper, vr_dtatual-1, 'A'),'MMDDYYYY') --Data Movimento
                                             -- 16/01/2017  - deve gerar historico parametrizado, se generico, gera "PA" (Jean/Mout´S)
                                             --,pr_cdhistor => 999999               --Codigo Historico (Genérico)
                                             ,pr_cdhistor => vr_cdtrscyb            --Codigo Historico (Genérico)
@@ -5135,7 +5135,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652_fixo (pr_cdcooper IN crapcop.cdcoo
                      RAISE vr_exc_saida;
                    END IF;
                  END IF;
-                 
+
                  -- Verifica se o saldo a regularizar e o saldo do prejuizo estao liquidados para gerar a baixa,
                  -- ou se for residuo o saldo devedor deve estar liquidado para gerar uma baixa
                  IF Nvl(rw_crapcyb.vlpreapg,0) <= 0 THEN
@@ -5406,4 +5406,3 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652_fixo (pr_cdcooper IN crapcop.cdcoo
          pc_limpa_tabela;
      END;
    END PC_CRPS652_fixo;
-/
