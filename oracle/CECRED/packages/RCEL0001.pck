@@ -253,9 +253,62 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
   --
   --    Objetivo  : Package para centralizar as rotinas de recarga de celular
   --
-  --    Alteracoes:                              
-  --    
+  --    Alteracoes: 06/06/2017 - Inclusão da função de calculo de repasse
+  --                           - Alteração para corrigir reagendamento de job  (Renato Darosci)
+  --                
   ---------------------------------------------------------------------------------------------------------------
+  
+  FUNCTION fn_calcula_proximo_repasse(pr_cdcooper IN NUMBER
+                                     ,pr_dtrefere IN DATE) RETURN DATE IS
+    /* .............................................................................
+    Programa: fn_calcula_proximo_repasse
+    Sistema : Ayllos Web
+    Autor   : Renato Darosci
+    Data    : Junho/2017                 Ultima atualizacao:
+
+    Objetivo  : Função para calcular a data do próximo repasse
+
+    Alteracoes: -----
+    ..............................................................................*/
+  
+    -- Variáveis
+    vr_nrdiasmn  NUMBER;
+    vr_dtdebase  DATE;
+
+  BEGIN
+    -- Extrai o dia da semana do parametro recebidos
+    vr_nrdiasmn := TO_CHAR(pr_dtrefere,'D','NLS_DATE_LANGUAGE=AMERICAN'); -- Fixado NLS para evitar erros
+    
+    -- Se o dia estiver entre segunda-feira e sábado
+    IF vr_nrdiasmn BETWEEN 2 AND 7 THEN
+      -- Utilizar o primeiro dia da proxima semana como data de base para buscar a data específica
+      vr_dtdebase := TRUNC(pr_dtrefere,'D') + 7; 
+    ELSE 
+      -- Utilizar como data base o primeiro dia da semana
+      vr_dtdebase := TRUNC(pr_dtrefere,'D'); 
+    END IF;
+
+    -- Percorre os dias da semana, até e
+    LOOP
+      -- Se o dia se refere à quinta-feira (utilizando NLS para evitar divergencia de calendários)
+      IF TO_CHAR(vr_dtdebase,'FMDAY','NLS_DATE_LANGUAGE=AMERICAN') = 'THURSDAY' THEN
+        -- Encerra o LOOP pois encontrou a data a ser retornada
+        EXIT; 
+      END IF;
+      
+      -- Utiliza o próximo dia para verificação
+      vr_dtdebase := vr_dtdebase + 1;
+    END LOOP;
+    
+    -- Depois de encontrar a data... verifica se é dia útil
+    vr_dtdebase := GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
+                                              ,pr_dtmvtolt => vr_dtdebase);
+    
+    -- Retorna a data encontrada
+    RETURN vr_dtdebase;
+  
+  END fn_calcula_proximo_repasse;
+  
   
   PROCEDURE pc_busca_operadora(pr_cdoperadora    IN  tbrecarga_operadora.cdoperadora%TYPE --> Código da Operadora
 		                          ,pr_tab_operadoras OUT tbrecarga_operadora%ROWTYPE          --> Record com as informações da operadora
@@ -1506,7 +1559,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 
     Objetivo  : Rotina para efetuar a recarga de celular
 
-    Alteracoes: -----
+    Alteracoes: 06/06/2017 - Incluir a gravação da data de repasse do valor para 
+                             a Rede Tendencia(dtrepasse) (Renato Darosci)
     ..............................................................................*/		
 	  DECLARE
 		  -- Variavel de criticas
@@ -1535,6 +1589,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
       vr_cdopetfn craptfn.cdoperad%TYPE;
 			vr_dstransa VARCHAR2(500);
 			vr_nrseqdig craplcm.nrseqdig%TYPE;
+      vr_dtrepasse tbrecarga_operacao.dtrepasse%TYPE;
 			
 			-- Variáveis para utilizar o Aymaru
 			vr_resposta AYMA0001.typ_http_response_aymaru;
@@ -1986,7 +2041,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 				-- Atribuir Nsu da operadora e RedeTendencia
 				vr_nsuoperadora := replace(vr_resposta.conteudo.get('IdFornecedor').to_char(), '"', '');
 				vr_nsutendencia  := replace(vr_resposta.conteudo.get('IdMidlware').to_char(), '"', '');
-				-- Buscar operacao
+				
+        -- Buscar a próxima data de repasse de valores para o fornecedor
+        vr_dtrepasse := fn_calcula_proximo_repasse(pr_cdcooper => pr_cdcooper
+                                                  ,pr_dtrefere => SYSDATE);
+        
+        -- Buscar operacao
 				OPEN cr_operacao(pr_idoperacao => pr_idoperac);
 				FETCH cr_operacao INTO rw_operacao;
 				-- Se encontrou
@@ -1995,8 +2055,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 					UPDATE tbrecarga_operacao
 						 SET dsnsu_operadora = vr_nsuoperadora
 								,dsnsu_tendencia = vr_nsutendencia
-								,insit_operacao = 2
-								,dtdebito = rw_crapdat.dtmvtocd
+								,insit_operacao  = 2
+								,dtdebito        = rw_crapdat.dtmvtocd
+                ,dtrepasse       = vr_dtrepasse 
 					 WHERE idoperacao = pr_idoperac;
 				ELSE
 					-- Cria operação de recarga
@@ -2013,7 +2074,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 																				,vlrecarga
 																				,insit_operacao
 																				,cdproduto
-																				,dtdebito)
+																				,dtdebito
+                                        ,dtrepasse)
 																 VALUES(pr_cdcooper
 																			 ,pr_nrdconta
 																			 ,pr_nrdddtel
@@ -2027,7 +2089,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 																			 ,pr_vlrecarga
 																			 ,2
 																			 ,pr_cdproduto
-																			 ,rw_crapdat.dtmvtocd)
+																			 ,rw_crapdat.dtmvtocd
+                                       ,vr_dtrepasse)
 															RETURNING idoperacao
 															         ,insit_operacao
 																	 INTO rw_operacao.idoperacao
@@ -4478,7 +4541,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                  todas as cooperativas para a rede Tendência, correspondente ao
                  período de apuração, e gerar relatório com a apuração dos valores.
 
-    Alteracoes: -----
+    Alteracoes: 05/06/2017 - Alteração para verificar se a data da próxima execução é 
+                             maior que a data atual e neste caso calciular o próximo
+                             dia útil, com base na data atual. (Renato Darosci - 05/06/2017)
     ..............................................................................*/
     DECLARE
       
@@ -4518,6 +4583,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
       vr_inperiod    DATE;
       vr_fiperiod    DATE;
       vr_dtmvtolt    DATE;
+      vr_dtmvtopr    DATE;
       
       -- Variaveis de critica
       vr_cdcritic crapcri.cdcritic%TYPE;
@@ -4635,6 +4701,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
         vr_dtmvtolt := rw_crapdat.dtmvtolt;
       END IF;
       
+      -- Verifica se a data da próxima execução é maior que a data atual. Isso acontece nas bases
+      -- de desenvolvimento e homologação onde se trabalha com datas retroativas. Este ajuste evita
+      -- problema de geração demasiada de Jobs.  ( Renato Darosci - 05/06/2017 )
+      IF rw_crapdat.dtmvtopr <= TRUNC(SYSDATE) THEN
+        -- Calcula o próximo dia útil, com base na data atual
+        vr_dtmvtopr := gene0005.fn_valida_dia_util(pr_cdcooper => 3
+																									,pr_dtmvtolt => (TRUNC(SYSDATE) + 1)
+																									,pr_tipo     => 'P'
+																									,pr_feriado  => TRUE);
+        
+      ELSE
+        -- Usa a próxima data de execução do sistema
+        vr_dtmvtopr := rw_crapdat.dtmvtopr;
+      END IF;
+      
       --> Verificar se a data do sistema eh o dia de hoje
       IF TRUNC(SYSDATE) <> vr_dtmvtolt THEN
         --> O JOB esta confirgurado para toda quinta-feira
@@ -4646,7 +4727,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
         gene0001.pc_submit_job(pr_cdcooper => 3                                           --> Código da cooperativa
                               ,pr_cdprogra => vr_cdprogra                                 --> Código do programa
                               ,pr_dsplsql  => 'begin RCEL0001.pc_job_efetua_repasse; end;'--> Bloco PLSQL a executar
-                              ,pr_dthrexe  => TO_TIMESTAMP_TZ(to_char(rw_crapdat.dtmvtopr, 'DD/MM/RRRR') || 
+                              ,pr_dthrexe  => TO_TIMESTAMP_TZ(to_char(vr_dtmvtopr, 'DD/MM/RRRR') || 
                                               ' 09:00 America/Sao_Paulo','DD/MM/RRRR HH24:MI TZR') --> Executar nesta hora
                               ,pr_interva  => NULL                                        --> apenas uma vez
                               ,pr_jobname  => vr_jobname                                  --> Nome randomico criado
