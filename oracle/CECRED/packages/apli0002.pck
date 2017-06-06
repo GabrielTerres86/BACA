@@ -1275,8 +1275,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                              judicial antes de validar se o valor a ser resgatado é superior 
                              a disponivel (Lucas Ranghetti #492125)        
                              
-               16/05/2017 - Validacao na data de vencimento de agendamentos de aplicacoes calculando a 
-                            mesma caso necessario na pc_incluir_novo_agendmto SD 670255. (Carlos Rafael Tanholi)
+                09/05/2017 - Implementei o tratamento de erro na pc_efetua_resgate_online para o retorno da rotina
+                             apli0001.pc_rendi_apl_pos_com_resgate. (Carlos Rafael Tanholi - SD 631979)                             
+                             
+                16/05/2017 - Validacao na data de vencimento de agendamentos de aplicacoes calculando a 
+                             mesma caso necessario na pc_incluir_novo_agendmto SD 670255. (Carlos Rafael Tanholi)
   ............................................................................*/
   
   --Cursor para buscar os lancamentos de aplicacoes RDCA
@@ -10504,7 +10507,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
    Programa: APLI0002                Antigo: sistema/generico/procedures/b1wgen0081.p
    Sigla   : APLI
    Autor   : Adriano.
-   Data    : Agosto/2014                          Ultima atualizacao: 06/06/2016
+   Data    : Agosto/2014                          Ultima atualizacao: 09/05/2017
 
    Dados referentes ao programa:
 
@@ -10545,6 +10548,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                 09/06/2016 - Removido a critica quando nao tiver cadastrado a MXRENDIPOS
                              Quando nao esta cadastrado eh utilizado data inicial e final padrao
                              (Douglas - Chamado 465207)
+                             
+                09/05/2017 - Implementei o tratamento de erro para o retorno da rotina
+                             apli0001.pc_rendi_apl_pos_com_resgate. (Carlos Rafael Tanholi - SD 631979)
   .......................................................................................*/
   PROCEDURE pc_efetua_resgate_online(pr_cdcooper IN crapcop.cdcooper%TYPE    --> Codigo Cooperativa
                                     ,pr_cdagenci IN crapass.cdagenci%TYPE    --> Codigo Agencia
@@ -14525,6 +14531,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                                                     ,pr_vlrenrgt => vr_vlrenapl
                                                     ,pr_des_reto => vr_retorno
                                                     ,pr_tab_erro => vr_tab_erro);
+
+
+             -- Verifica se ocorreram erros
+              IF vr_retorno = 'NOK' THEN
+                -- Se possuir erros, busca o primeiro e retorna a critica
+                vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+                vr_dscritic:= TO_CHAR(SYSDATE, 'HH24:MI:SS') || ' - ' || pr_cdprogra || ' --> ' || vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+
+                RAISE vr_exc_erro;                
+                
+              END IF;
 
               -- Quando gera o CRAPLAP com 531 que e reversão do que já foi
               -- provisionado preciso tirar também o quanto do minimo já foi
