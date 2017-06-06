@@ -1,13 +1,16 @@
 <?php
-	/*!
-	 * FONTE        : manter_taxa.php
-	 * CRIAÇÃO      : Jean Michel       
-	 * DATA CRIAÇÃO : 25/06/2014 
-	 * OBJETIVO     : Rotina para cadastrar ou alterar taxas da tela INDICE
-	 * --------------
-	 * ALTERAÇÕES   : 
-	 * -------------- 
-	 */		
+	/*
+	  FONTE        : manter_taxa.php
+	  CRIAÇÃO      : Jean Michel       
+	  DATA CRIAÇÃO : 25/06/2014 
+	  OBJETIVO     : Rotina para cadastrar ou alterar taxas da tela INDICE
+	  --------------
+	  ALTERAÇÕES   : 29/05/2017 - Realizado ajuste para que ao alterar ou cadastrar tarifas
+								  do tipo "TR" seja possível atribuir o valor 0(ZERO), conforme
+								  solicitado no chamado 615474 (Kelvin)
+	 
+	  -------------- 
+	*/		
 
     session_start();
 	require_once('../../includes/config.php');
@@ -35,10 +38,21 @@
 		$vlrdtaxa = str_replace(',','.',$vlrdtaxa);
 		if (!validaInteiro($cddindex)) exibirErro('error','Per&iacute;odo inv&aacute;lido.','Alerta - Ayllos',$funcaoAposErro,false);
 		
-		if ($vlrdtaxa == 0 || $vlrdtaxa ==  null){ 
-			$funcaoAposErro = 'cVlrdtaxa.focus()';
-			exibirErro('error','Valor de taxa inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro,false);
+		//TR (Caso for TR deixar passar valor zerado SD 615474)
+		if($cddindex == 2){
+			if ($vlrdtaxa ==  null){ 
+				$funcaoAposErro = 'cVlrdtaxa.focus()';
+				exibirErro('error','Valor de taxa inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro,false);
+			}
 		}
+		else{
+			if ($vlrdtaxa == 0 || $vlrdtaxa ==  null){ 
+				$funcaoAposErro = 'cVlrdtaxa.focus()';
+				exibirErro('error','Valor de taxa inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro,false);
+			}
+		}
+		
+		
 			
 	}
 	
