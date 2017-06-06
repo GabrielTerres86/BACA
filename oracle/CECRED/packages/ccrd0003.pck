@@ -6550,6 +6550,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                    06/02/2017 - Ajuste para nao atualizar a wcrd em cima de um cartao ja existente
                                 quando se trata de reposicao/2a via. (Fabricio)
                                 
+                   12/04/2017 - Ajustes para gravar tabela tbcrd_conta_cartao.
+                                PRJ343-Cessao de Credito (Odirlei-AMcom)
+                                
                    17/04/2017 - Tratamento para abrir chamado e enviar email caso ocorra
                                 algum erro na importacao do arquivo ccr3 (Lucas Ranghetti #630298)
     ............................................................................ */
@@ -9421,6 +9424,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                     vr_dscritic := 'Erro ao atualizar situacao da crawcrd: '||SQLERRM;
                     RAISE vr_exc_saida;
                 END;
+
+                --> Gravar registro de conta cartão
+                CCRD0003.pc_insere_conta_cartao(rw_crawcrd.cdcooper,                  --> cdcooper
+                                                rw_crawcrd.nrdconta,                  --> nrdconta
+                                                TO_NUMBER(substr(vr_des_text,25,13)), --> nrcctitg
+                                                vr_cdcritic,
+                                                vr_dscritic);
+                IF (nvl(vr_cdcritic,0) > 0) or
+                   (nvl(vr_dscritic,' ') <> ' ') THEN
+                   -- LOGA NO PROC_MESSAGE
+                   btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper_ori
+                                             ,pr_ind_tipo_log => 2 -- Erro tratato
+                                             ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                              || vr_cdprogra || ' --> '
+                                                              || 'Nao foi possivel gravar tabela relac. conta e conta cartao. '||' - '
+                                                              || 'COOP.: '   || rw_crawcrd.cdcooper || ' - '
+                                                              || 'CONTA: '   || rw_crawcrd.nrdconta || ' - '
+                                                              || 'Critica: ' || vr_dscritic || ' - '
+                                                              || ' ARQ.: '   || vr_nmarquiv
+                                             ,pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
+                   CONTINUE;
+                END IF;
 
               END IF;
             EXCEPTION

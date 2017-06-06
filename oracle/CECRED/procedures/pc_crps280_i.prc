@@ -686,11 +686,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
               ,epr.tpdescto
               ,epr.vlppagat
               ,epr.vljurmes
-              ,(SELECT 1
+              ,(SELECT ces.dtvencto
                   FROM tbcrd_cessao_credito ces
                  WHERE ces.cdcooper = epr.cdcooper
                    AND ces.nrdconta = epr.nrdconta
-                   AND ces.nrctremp = epr.nrctremp ) fleprces
+                   AND ces.nrctremp = epr.nrctremp ) dtvencto_original
           FROM crapepr epr
          WHERE epr.cdcooper = pr_cdcooper
            AND epr.nrdconta = pr_nrdconta
@@ -2162,7 +2162,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                      CLOSE cr_crapepr;
                      
                      -- Indicador se é um emprestimo de cessao
-                     vr_fleprces := rw_crapepr.fleprces;
+                     vr_fleprces := case when rw_crapepr.dtvencto_original is null then 0 else 1 end;
                      
                      -- Inicializar qtde meses decorridos com o valor da tabela
                      vr_qtmesdec := rw_crapepr.qtmesdec;
@@ -2285,7 +2285,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                        vr_tab_dados_epr(vr_indice).dsorgrec := rw_craplcr.dsorgrec;
                      END IF;
                      -- Armazenar a data de início do contrato
-                     vr_tab_dados_epr(vr_indice).dtinictr := rw_crapris.dtinictr;             
+                     vr_tab_dados_epr(vr_indice).dtinictr := rw_crapris.dtinictr;
+                     
+                     /* Caso for cessao de credito, a data da primeira parcela eh o vcto original da cessao */
+                     IF vr_fleprces = 1 THEN
+                        vr_tab_dados_epr(vr_indice).dtdpagto := rw_crapepr.dtvencto_original;
+                     END IF;
 
                      -- Para empréstimo pré-fixado
                      IF rw_crapepr.tpemprst = 1 THEN
@@ -2485,8 +2490,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
             vr_tab_crapris(vr_des_chave_crapris).dsinfaux := rw_crapris.dsinfaux;
             vr_tab_crapris(vr_des_chave_crapris).tpemprst := vr_tpemprst;
             vr_tab_crapris(vr_des_chave_crapris).fleprces := nvl(vr_fleprces,0);
-            
-            
+
+
             
          EXCEPTION
             WHEN vr_exc_ignorar THEN

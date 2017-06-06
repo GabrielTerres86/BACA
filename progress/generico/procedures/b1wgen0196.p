@@ -8,7 +8,7 @@
 
    Objetivo  : BO - Rotinas para geraçao de Cessao de Cartao de credito
 
-   Alteracoes: 12/05/2017 - Passagem de 0 para a nacionalidade. (Jaison/Andrino)
+   Alteracoes:
 
  ..............................................................................*/
 
@@ -530,7 +530,7 @@ PROCEDURE grava_dados:
                         INPUT "",                        /* par_nmcidav1 CHAR */
                         INPUT "",                        /* par_cdufava1 CHAR */
                         INPUT 0,                         /* par_nrcepav1 INTE */
-                        INPUT 0,                         /* par_cdnacio1 CHAR */
+                        INPUT "",                        /* par_dsnacio1 CHAR */
                         INPUT 0,                         /* par_vledvmt1 DECI */
                         INPUT 0,                         /* par_vlrenme1 DECI */
                         INPUT 0,                         /* par_nrender1 INTE */
@@ -555,7 +555,7 @@ PROCEDURE grava_dados:
                         INPUT "",                        /* par_nmcidav2 CHAR */
                         INPUT "",                        /* par_cdufava2 CHAR */
                         INPUT 0,                         /* par_nrcepav2 INTE */
-                        INPUT 0,                         /* par_cdnacio2 CHAR */
+                        INPUT "",                        /* par_dsnacio2 CHAR */
                         INPUT 0,                         /* par_vledvmt2 DECI */
                         INPUT 0,                         /* par_vlrenme2 DECI */
                         INPUT 0,                         /* par_nrender2 INTE */

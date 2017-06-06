@@ -1936,7 +1936,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                    crapepr.qtpreemp, -- Quantidade de parcelas no contrato
                    crapcyb.dtdbaixa,
                    crapcyb.flgpreju,
-                   crawepr.tpemprst
+                   crawepr.tpemprst,
+                   crapcyb.dtdpagto dtdpagto_cyb,
+                   (SELECT 1
+                      FROM tbcrd_cessao_credito ces
+                     WHERE ces.cdcooper     = crapcyb.cdcooper
+                       AND ces.nrdconta     = crapcyb.nrdconta
+                       AND ces.nrctremp     = crapcyb.nrctremp) fleprces
               FROM crawepr,
                    crapepr,
                    crapcyb
@@ -1990,6 +1996,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
              END IF;
            ELSE
              vr_dtcalcul:= NULL;
+           END IF;
+
+           /* Caso for cessao, utilizaremos a data da primeira parcela nao paga do crapcyb */
+           IF rw_crapcyb.fleprces = 1 THEN
+             vr_dtcalcul:= rw_crapcyb.dtdpagto_cyb;
            END IF;
 
            -- Retorna a data calculada
