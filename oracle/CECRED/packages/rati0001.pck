@@ -5294,6 +5294,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
           -- Usar valor do endividamento
           vr_vlendivi := nvl(vr_vlendivi,0) + nvl(vr_vlutiliz,0);
         END IF;
+	  END IF;
+      
+      RISC0001.pc_obtem_valores_central_risco( pr_cdcooper => pr_cdcooper  --> Codigo Cooperativa
+                                              ,pr_cdagenci => pr_cdagenci  --> Codigo Agencia
+                                              ,pr_nrdcaixa => pr_nrdcaixa  --> Numero Caixa
+                                              ,pr_nrdconta => pr_nrdconta  --> Numero da Conta
+                                              ,pr_nrcpfcgc => 0  -- CPF    --> CPF/CGC do associado
+                                              ,pr_tab_central_risco => vr_tab_central_risco --> Informações da Central de Risco
+                                              ,pr_tab_erro => pr_tab_erro  --> Tabela Erro
+                                              ,pr_des_reto => pr_des_reto);
+      IF pr_des_reto <> 'OK' THEN
+        RETURN;
+      END IF;
+
+      -- se possuir valor, somar valor valor
+      IF NVL(vr_tab_central_risco.vltotsfn,0) <> 0  THEN
+        vr_vlendivi := nvl(vr_vlendivi,0) + vr_tab_central_risco.vltotsfn;
       END IF;
       
       RISC0001.pc_obtem_valores_central_risco( pr_cdcooper => pr_cdcooper  --> Codigo Cooperativa
@@ -7457,6 +7474,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
         ELSE
           vr_vlendivi := nvl(vr_vlendivi,0) + nvl(vr_vlutiliz,0);
         END IF;
+	  END IF;
+      
+      RISC0001.pc_obtem_valores_central_risco( pr_cdcooper => pr_cdcooper  --> Codigo Cooperativa
+                                                ,pr_cdagenci => pr_cdagenci  --> Codigo Agencia
+                                                ,pr_nrdcaixa => pr_nrdcaixa  --> Numero Caixa
+                                                ,pr_nrdconta => pr_nrdconta  --> Numero da Conta
+                                                ,pr_nrcpfcgc => 0  -- CPF    --> CPF/CGC do associado
+                                                ,pr_tab_central_risco => vr_tab_central_risco --> Informações da Central de Risco
+                                                ,pr_tab_erro => pr_tab_erro  --> Tabela Erro
+                                                ,pr_des_reto => pr_des_reto);
+      IF pr_des_reto <> 'OK' THEN
+        RETURN;
+      END IF;
+        
+      -- se possuir valor, somar valor valor
+      IF NVL(vr_tab_central_risco.vltotsfn,0) <> 0  THEN
+        vr_vlendivi := nvl(vr_vlendivi,0) + vr_tab_central_risco.vltotsfn;
       END IF;
       
       RISC0001.pc_obtem_valores_central_risco( pr_cdcooper => pr_cdcooper  --> Codigo Cooperativa
