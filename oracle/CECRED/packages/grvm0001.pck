@@ -32,7 +32,7 @@ CREATE OR REPLACE PACKAGE CECRED.GRVM0001 AS
   --                           (Andrei - RKAM).
   --  
   --              11/10/2016 - M172 - Ajuste no formato do telefone para novo digito 9. 
-  --                           (Ricardo Linhares)
+  --                           (Ricardo Linhares) 
   -- 
   --              17/05/2017 - SD660300 - Ajuste nos parâmetros dos logs referente
   --						   ao GRAVAM. (Andrey Formigari - Mouts)
@@ -281,7 +281,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
   --
   --  Programa: GRVM0001                        Antiga: b1wgen0171.p
   --  Autor   : Douglas Pagel
-  --  Data    : Dezembro/2013                     Ultima Atualizacao: 11/10/2016
+  --  Data    : Dezembro/2013                     Ultima Atualizacao: 29/05/2017
   --
   --  Dados referentes ao programa:
   --
@@ -321,7 +321,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
   --
   --              11/10/2016 - M172 - Ajuste no formato do telefone para novo digito 9. 
   --                           (Ricardo Linhares)  
-  
+  --
+  --              24/05/2017 - pc_gravames_baixa_manual - Ajuste mensagens: neste rotina são todas consideradas tpocorrencia = 4,
+  --                         - Substituição do termo "ERRO" por "ALERTA",
+  --                         - Padronização das mensagens para a tabela tbgen_prglog,
+  --                         - Chamada da rotina CECRED.pc_internal_exception para inclusão do erro da exception OTHERS
+  --                           (Ana - Envolti) - SD: 660319
+  --
+  --              29/05/2017 - Alteração para não apresentar os parâmetros nas mensagens exibidas em tela.
+  --                         - Apresentar apenas nas exceptions (e na gravação da tabela TBGEN_PRGLOG)
+  --                         (Ana - Envolti) - SD: 660319
   ---------------------------------------------------------------------------------------------------------------
   
   /* Funcao para validacao dos caracteres */
@@ -4129,15 +4138,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Andrei - RKAM
-    Data     : Maio/2016                         Ultima atualizacao:
+    Data     : Maio/2016                         Ultima atualizacao: 29/05/2017
     
     Dados referentes ao programa:
     
     Frequencia: -----
     Objetivo   : Realizar a baixa manual do gravame
     
-    Alterações : 
-    -------------------------------------------------------------------------------------------------------------*/                               
+    Alteracoes: 24/05/2017 - Ajuste das mensagens: neste caso são todas consideradas tpocorrencia = 4,
+                           - Substituição do termo "ERRO" por "ALERTA",
+                           - Padronização das mensagens para a tabela tbgen_prglog,
+                           - Chamada da rotina CECRED.pc_internal_exception para inclusão do erro da exception OTHERS
+                           (Ana - Envolti) - SD: 660319
+  
+                29/05/2017 - Alteração para não apresentar os parâmetros nas mensagens exibidas em tela.
+                           - Apresentar apenas nas exceptions (e na gravação da tabela TBGEN_PRGLOG)
+                           (Ana - Envolti) - SD: 660319
+    -----------------------------------------------------------------------------------------------------------------*/                               
   
     -- Cursor para encontrar o bem
     CURSOR cr_crapbpr(pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -4245,7 +4262,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
         vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
       ELSIF trim(vr_dscritic) IS NULL THEN 
         vr_cdcritic:= 0;
-        vr_dscritic:= 'Nao foi possivel validar alienacao feduciaria.';
+        vr_dscritic:= 'Nao foi possivel validar alienacao fiduciaria.';
       END IF;
         
       --Levantar Excecao  
@@ -4347,14 +4364,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');                                                            
                                      
-      -- Gera log
+      --Inclusão dos parâmetros apenas na exception, para não mostrar na tela
+      --Ana - 29/05/2017
+      --Gera log
       btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
-                                ,pr_ind_tipo_log => 2 -- Erro tratato
+                                ,pr_ind_tipo_log => 1 -- Mensagem
                                 ,pr_nmarqlog     => 'gravam.log'
                                 ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                    ' -->  GRAVAM '|| vr_cdoperad || ' - ' ||
-                                                    'ERRO: ' || pr_dscritic || ' [gravames_baixa_manual].');
-                 
+                                                    ' - '||vr_cdprogra||' --> '|| 
+                                                    'ALERTA: '|| pr_dscritic ||',Cdoperad:'||vr_cdoperad||
+                                                    ',Cdcooper:'||vr_cdcooper||',Nrdconta:'||pr_nrdconta||
+                                                    ',Nrctrpro:'||pr_nrctrpro||',Tpctrpro:'||pr_tpctrpro||
+                                                    ',Idseqbem:'||pr_idseqbem||',Cdsitgrv:'||rw_crapbpr.cdsitgrv||
+                                                    ' [gravames_baixa_manual].');
                                            
     WHEN OTHERS THEN   
       
@@ -4373,8 +4395,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                 ,pr_ind_tipo_log => 2 -- Erro tratato
                                 ,pr_nmarqlog     => 'gravam.log'
                                 ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                    ' -->  GRAVAM '|| vr_cdoperad || ' - ' ||
-                                                    'ERRO: ' || pr_dscritic || ' [gravames_baixa_manual].');
+                                                    ' - '||vr_cdprogra||' --> '|| 
+                                                    'ERRO: ' || pr_dscritic  ||',Cdoperad:'||vr_cdoperad||
+                                                    ',Cdcooper:'||vr_cdcooper||',Nrdconta:'||pr_nrdconta||
+                                                    ',Nrctrpro:'||pr_nrctrpro||',Tpctrpro:'||pr_tpctrpro||
+                                                    ',Idseqbem:'||pr_idseqbem||',Cdsitgrv:'||rw_crapbpr.cdsitgrv||
+                                                    ' [gravames_baixa_manual].');
+
+      CECRED.pc_internal_exception( pr_compleme => pr_dscritic );
+                       
         
   END pc_gravames_baixa_manual;  
 

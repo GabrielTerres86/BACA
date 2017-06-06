@@ -420,7 +420,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     Sistema  : Procedimentos para  gerais da cobranca
     Sigla    : CRED
     Autor    : Odirlei Busana - AMcom
-    Data     : Novembro/2015.                   Ultima atualizacao: 13/02/2017
+    Data     : Novembro/2015.                   Ultima atualizacao: 30/05/2017
   
    Dados referentes ao programa:
   
@@ -495,6 +495,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                 17/03/2017 - Removido a validação que verificava se o CEP do pagador do boleto existe no Ayllos
                              Solicitado pelo Leomir e aprovado pelo Victor (cobrança)
                              (Douglas - Chamado 601436)
+                             
+                16/05/2017 - Implementado melhorias para nao ocorrer estouro de chave
+                             qdo inserir a crapsab na pc_processa_sacados (Tiago/Rodrigo #663284)
+                             
+                30/05/2017 - Feito tratamento para o campo NOSSO NUMERO qdo for nulo devolver a 
+                             critica correta na procedure pc_trata_segmento_p_240_85
+                             (Tiago/Rodrigo #664748)
+                             
+                30/05/2017 - Implementado ajustes para nao estourar a chave da crapcob na 
+                             pc_processa_titulos(Tiago/Rodrigo #663295)
   ---------------------------------------------------------------------------------------------------------------*/
   
   ------------------------------- CURSORES ---------------------------------    
@@ -823,11 +833,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         EXCEPTION
           WHEN OTHERS THEN
             btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
+                                       pr_cdprograma   => NVL(pr_cdprogra, 'COBR0006'),
                                        pr_ind_tipo_log => 2, --> erro tratado
                                        pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                          ' - '||pr_cdprogra ||' --> ' || 
-                                                          ' Erro tratado na cobr0006.pc_monitora_processo -'
-                                                          || ' ao inserir tbgen_resumo_processo: '|| sqlerrm ,
+                                                          ' - '|| NVL(pr_cdprogra, 'COBR0006') ||
+                                                          ' --> Erro tratado na COBR0006.pc_monitora_processo -'
+                                                          || ' ao inserir tbgen_resumo_processo: '|| SQLERRM ,
                                        pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
                                 
 
@@ -857,11 +868,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           EXCEPTION
             WHEN OTHERS THEN
               btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
+                                         pr_cdprograma   => NVL(pr_cdprogra, 'COBR0006'),
                                          pr_ind_tipo_log => 2, --> erro tratado
                                          pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                            ' - '||pr_cdprogra ||' --> ' || 
-                                                            ' Erro tratado na cobr0006.pc_monitora_processo -'
-                                                            || ' ao inserir tbgen_resumo_processo: '|| sqlerrm ,
+                                                            ' - '|| NVL(pr_cdprogra, 'COBR0006') ||
+                                                            ' --> Erro tratado na COBR0006.pc_monitora_processo -'
+                                                            || ' ao inserir tbgen_resumo_processo: '|| SQLERRM ,
                                          pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
                                   
 
@@ -904,11 +916,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         EXCEPTION
           WHEN OTHERS THEN
             btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
+                                       pr_cdprograma   => NVL(pr_cdprogra, 'COBR0006'),
                                        pr_ind_tipo_log => 2, --> erro tratado
                                        pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                          ' - '||pr_cdprogra ||' --> ' || 
-                                                          ' Erro tratado na cobr0006.pc_monitora_processo -'
-                                                          || ' ao atualizar tbgen_resumo_processo: '|| sqlerrm ,
+                                                          ' - '|| NVL(pr_cdprogra, 'COBR0006') ||
+                                                          ' --> Erro tratado na COBR0006.pc_monitora_processo -'
+                                                          || ' ao atualizar tbgen_resumo_processo: '|| SQLERRM ,
                                        pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
                                 
 
@@ -951,10 +964,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         EXCEPTION
           WHEN OTHERS THEN
               btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
+                                         pr_cdprograma   => NVL(pr_cdprogra, 'COBR0006'),
                                          pr_ind_tipo_log => 2, --> erro tratado
                                          pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                            ' - '||pr_cdprogra ||' --> ' || 
-                                                            ' Erro tratado na cobr0006.pc_monitora_processo -'
+                                                            ' - '|| NVL(pr_cdprogra, 'COBR0006') ||
+                                                            ' --> Erro tratado na COBR0006.pc_monitora_processo -'
                                                             || ' ao atualizar tbgen_item_resumo_processo: '|| sqlerrm ,
                                          pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
                                   
@@ -969,22 +983,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       WHEN vr_exc_erro THEN
         /* Se aconteceu erro, gera o log e envia o erro por e-mail */
         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
+                                   pr_cdprograma   => NVL(pr_cdprogra, 'COBR0006'),
                                            pr_ind_tipo_log => 2, --> erro tratado
                                            pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                              ' - '||pr_cdprogra ||' --> ' || 
-                                                              ' Erro nao tratado na cobr0006.pc_monitora_processo: '|| sqlerrm,
+                                                      ' - '|| NVL(pr_cdprogra, 'COBR0006') ||
+                                                      '-->  Erro nao tratado na COBR0006.pc_monitora_processo: '|| sqlerrm,
                                            pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
                                    
         -- Efetuar commit para liberar a seção
         COMMIT;
         
-      WHEN others THEN
+      WHEN OTHERS THEN
         /* Se aconteceu erro, gera o log e envia o erro por e-mail */
         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
+                                   pr_cdprograma   => NVL(pr_cdprogra, 'COBR0006'),
                                            pr_ind_tipo_log => 2, --> erro tratado
                                            pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                              ' - '||pr_cdprogra ||' --> ' || 
-                                                              ' Erro nao tratado na cobr0006.pc_monitora_processo: '|| sqlerrm,
+                                                        ' - ' || NVL(pr_cdprogra, 'COBR0006') ||
+                                                        ' --> Erro nao tratado na COBR0006.pc_monitora_processo: '|| sqlerrm,
                                            pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
                                    
         -- Efetuar commit para liberar a seção
@@ -1621,6 +1637,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       RAISE vr_exc_saida;
     END IF;
     
+    --Caso NOSSO NUMERO nao exista na linha qdo passar aqui devolve uma critica
+    IF NOT pr_tab_linhas.exists('DSNOSNUM') THEN 
+       -- Nosso Numero Invalido
+       pr_cdmotivo := '08';
+       RAISE vr_exc_motivo;       
+    END IF;
+    
     -- Formatar nosso numero com 17 posicoes para separa o numero da conta e o numero do boleto
     vr_dsnosnum := to_char(TRIM(pr_tab_linhas('DSNOSNUM').texto),'fm00000000000000000');
     vr_nrdconta := to_number(SUBSTR(vr_dsnosnum,1,8));
@@ -1922,6 +1945,132 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       -- Contador para que seja comitado a cada 1000 registros
       vr_qtd_proc:= vr_qtd_proc + 1;
       
+      IF pr_tab_crapcob(vr_idx_cob).flgregis = 1 THEN
+        vr_insitpro := 1;
+      ELSE 
+        vr_insitpro := 0;
+      END IF;
+      
+      BEGIN        
+        -- Insere o registro de cobranca
+        INSERT INTO 
+          crapcob(cdcooper,
+                  dtmvtolt,
+                  incobran,
+                  nrdconta,
+                  nrdctabb,
+                  cdbandoc,
+                  nrdocmto,
+                  nrcnvcob,
+                  dtretcob,
+                  dsdoccop,
+                  vltitulo,
+                  vldescto,
+                  dtvencto,
+                  cdcartei,
+                  cddespec,
+                  cdtpinsc,
+                  nrinssac,
+                  nmdsacad,
+                  dsendsac,
+                  nmbaisac,
+                  nmcidsac,
+                  cdufsaca,
+                  nrcepsac,
+                  nmdavali,
+                  nrinsava,
+                  cdtpinav,
+                  dsinform, --dsdinstr --> Conforme chamado 564818, deve gravar a informacao no campo dsinform para correto envio a PG
+                  dsusoemp,
+                  nrremass,
+                  flgregis,
+                  cdimpcob,
+                  flgimpre,
+                  nrnosnum,
+                  dtdocmto,
+                  tpjurmor,
+                  vljurdia,
+                  tpdmulta,
+                  vlrmulta,
+                  inemiten,
+                  flgdprot,
+                  flgaceit,
+                  idseqttl,
+                  cdoperad,
+                  qtdiaprt,
+                  inemiexp,
+                  -- Campos com valor FIXO
+                  idopeleg,
+                  idtitleg,
+                  flgcbdda,
+                  insitpro,
+                  flserasa,
+                  qtdianeg,
+                  inserasa,
+                  inavisms,
+                  insmsant,
+                  insmsvct,
+                  insmspos
+                  )
+          VALUES (pr_tab_crapcob(vr_idx_cob).cdcooper,
+                  pr_tab_crapcob(vr_idx_cob).dtmvtolt,
+                  pr_tab_crapcob(vr_idx_cob).incobran,
+                  pr_tab_crapcob(vr_idx_cob).nrdconta,
+                  pr_tab_crapcob(vr_idx_cob).nrdctabb,
+                  pr_tab_crapcob(vr_idx_cob).cdbandoc,
+                  pr_tab_crapcob(vr_idx_cob).nrdocmto,
+                  pr_tab_crapcob(vr_idx_cob).nrcnvcob,
+                  pr_tab_crapcob(vr_idx_cob).dtretcob,
+                  pr_tab_crapcob(vr_idx_cob).dsdoccop,
+                  pr_tab_crapcob(vr_idx_cob).vltitulo,
+                  pr_tab_crapcob(vr_idx_cob).vldescto,
+                  pr_tab_crapcob(vr_idx_cob).dtvencto,
+                  pr_tab_crapcob(vr_idx_cob).cdcartei,
+                  pr_tab_crapcob(vr_idx_cob).cddespec,
+                  pr_tab_crapcob(vr_idx_cob).cdtpinsc,
+                  pr_tab_crapcob(vr_idx_cob).nrinssac,
+                  pr_tab_crapcob(vr_idx_cob).nmdsacad,
+                  pr_tab_crapcob(vr_idx_cob).dsendsac,
+                  nvl(trim(pr_tab_crapcob(vr_idx_cob).nmbaisac),' '),
+                  nvl(trim(pr_tab_crapcob(vr_idx_cob).nmcidsac),' '),
+                  nvl(trim(pr_tab_crapcob(vr_idx_cob).cdufsaca),' '),
+                  pr_tab_crapcob(vr_idx_cob).nrcepsac,
+                  nvl(trim(pr_tab_crapcob(vr_idx_cob).nmdavali),' '),
+                  nvl(pr_tab_crapcob(vr_idx_cob).nrinsava,0),
+                  nvl(pr_tab_crapcob(vr_idx_cob).cdtpinav,0),
+                  nvl(trim(pr_tab_crapcob(vr_idx_cob).dsdinstr),' '),
+                  pr_tab_crapcob(vr_idx_cob).dsusoemp,
+                  pr_tab_crapcob(vr_idx_cob).nrremass,
+                  pr_tab_crapcob(vr_idx_cob).flgregis,
+                  pr_tab_crapcob(vr_idx_cob).cdimpcob,
+                  pr_tab_crapcob(vr_idx_cob).flgimpre,
+                  pr_tab_crapcob(vr_idx_cob).nrnosnum,
+                  pr_tab_crapcob(vr_idx_cob).dtdocmto,
+                  nvl(pr_tab_crapcob(vr_idx_cob).tpjurmor,3),
+                  pr_tab_crapcob(vr_idx_cob).vljurdia,
+                  pr_tab_crapcob(vr_idx_cob).tpdmulta,
+                  pr_tab_crapcob(vr_idx_cob).vlrmulta,
+                  pr_tab_crapcob(vr_idx_cob).inemiten,
+                  pr_tab_crapcob(vr_idx_cob).flgdprot,
+                  pr_tab_crapcob(vr_idx_cob).flgaceit,
+                  pr_tab_crapcob(vr_idx_cob).idseqttl,
+                  pr_tab_crapcob(vr_idx_cob).cdoperad,
+                  nvl(pr_tab_crapcob(vr_idx_cob).qtdiaprt,0),
+                  nvl(pr_tab_crapcob(vr_idx_cob).inemiexp,0),
+                  0, -- idopeleg
+                  0, -- idtitleg
+                  0, -- flgcbdda (FALSE)
+                  vr_insitpro,
+                  pr_tab_crapcob(vr_idx_cob).flserasa,
+                  pr_tab_crapcob(vr_idx_cob).qtdianeg,
+                  pr_tab_crapcob(vr_idx_cob).inserasa,
+                  pr_tab_crapcob(vr_idx_cob).inavisms,
+                  pr_tab_crapcob(vr_idx_cob).insmsant,
+                  pr_tab_crapcob(vr_idx_cob).insmsvct,
+                  pr_tab_crapcob(vr_idx_cob).insmspos)
+          RETURNING ROWID INTO vr_new_rowid;
+      EXCEPTION
+        WHEN DUP_VAL_ON_INDEX THEN
       OPEN cr_crapcob(pr_cdcooper => pr_tab_crapcob(vr_idx_cob).cdcooper,
                       pr_nrdconta => pr_tab_crapcob(vr_idx_cob).nrdconta,
                       pr_cdbandoc => pr_tab_crapcob(vr_idx_cob).cdbandoc,
@@ -1937,51 +2086,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
            rw_crapcob.incobran = 0 THEN
           -- Pega o boleto atual e exclui para que seja criado novamente com as informacoes atualizadas
           DELETE FROM crapcob WHERE crapcob.rowid = rw_crapcob.rowid;
-        ELSE
-          COBR0006.pc_prep_retorno_cooper_90(pr_idregcob => rw_crapcob.rowid,
-                                             pr_cdocorre => 3,    -- Entrada Rejeitada
-                                             pr_cdmotivo => '63', -- Entrada para Titulo ja Cadastrado
-                                             pr_vltarifa => 0,
-                                             pr_cdbcoctl => pr_rec_header.cdbcoctl,
-                                             pr_cdagectl => pr_rec_header.cdagectl,
-                                             pr_dtmvtolt => pr_dtmvtolt,
-                                             pr_cdoperad => pr_cdoperad,
-                                             pr_nrremass => pr_rec_header.nrremass,
-                                             pr_cdcritic => vr_cdcritic,
-                                             pr_dscritic => vr_dscritic);
-
-          -- Se ocorreu critica escreve no proc_message.log
-          -- Não para o processo
-          IF vr_cdcritic <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-            btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                      ,pr_ind_tipo_log => 2 -- Erro tratato
-                                      ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                      ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                          ' - COBR0006.pc_processa_titulos -->' ||
-                                                          ' Coop: '      || pr_tab_crapcob(vr_idx_cob).cdcooper ||
-                                                          ' Conta: '     || pr_tab_crapcob(vr_idx_cob).nrdconta ||
-                                                          ' Remessa: '   || pr_rec_header.nrremass ||
-                                                          ' Convenio: '  || pr_rec_header.nrcnvcob ||
-                                                          ' Nosso Num.:' || pr_tab_crapcob(vr_idx_cob).nrnosnum ||
-                                                          ' ROWID: '     || rw_crapcob.rowid ||
-                                                          ' - ERRO: '    || NVL(vr_cdcritic,0) || 
-                                                          ' - ' || NVL(vr_dscritic,''));
-            vr_cdcritic:= NULL;
-            vr_dscritic:= NULL;
-          END IF;
                                              
-          CONTINUE;
-        END IF;
-      ELSE 
-        CLOSE cr_crapcob;
-      END IF;
-      
-      IF pr_tab_crapcob(vr_idx_cob).flgregis = 1 THEN
-        vr_insitpro := 1;
-      ELSE 
-        vr_insitpro := 0;
-      END IF;
-          
       -- Insere o registro de cobranca
       INSERT INTO 
         crapcob(cdcooper,
@@ -2100,6 +2205,46 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                 pr_tab_crapcob(vr_idx_cob).insmspos)
         RETURNING ROWID INTO vr_new_rowid;
       
+            ELSE
+              COBR0006.pc_prep_retorno_cooper_90(pr_idregcob => rw_crapcob.rowid,
+                                                 pr_cdocorre => 3,    -- Entrada Rejeitada
+                                                 pr_cdmotivo => '63', -- Entrada para Titulo ja Cadastrado
+                                                 pr_vltarifa => 0,
+                                                 pr_cdbcoctl => pr_rec_header.cdbcoctl,
+                                                 pr_cdagectl => pr_rec_header.cdagectl,
+                                                 pr_dtmvtolt => pr_dtmvtolt,
+                                                 pr_cdoperad => pr_cdoperad,
+                                                 pr_nrremass => pr_rec_header.nrremass,
+                                                 pr_cdcritic => vr_cdcritic,
+                                                 pr_dscritic => vr_dscritic);
+
+              -- Se ocorreu critica escreve no proc_message.log
+              -- Não para o processo
+              IF vr_cdcritic <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+                btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper                     
+                                          ,pr_ind_tipo_log => 2 -- Erro tratato
+                                          ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
+                                          ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                              ' - COBR0006 --> pc_processa_titulos' ||
+                                                              ' Coop: '      || pr_tab_crapcob(vr_idx_cob).cdcooper ||
+                                                              ' Conta: '     || pr_tab_crapcob(vr_idx_cob).nrdconta ||
+                                                              ' Remessa: '   || pr_rec_header.nrremass ||
+                                                              ' Convenio: '  || pr_rec_header.nrcnvcob ||
+                                                              ' Nosso Num.:' || pr_tab_crapcob(vr_idx_cob).nrnosnum ||
+                                                              ' ROWID: '     || rw_crapcob.rowid ||
+                                                              ' - ERRO: '    || NVL(vr_cdcritic,0) || 
+                                                              ' - ' || NVL(vr_dscritic,''));
+                vr_cdcritic:= NULL;
+                vr_dscritic:= NULL;
+              END IF;
+                                                 
+              CONTINUE;
+            END IF;
+          ELSE 
+            CLOSE cr_crapcob;
+          END IF;
+      END;
+      
       IF pr_tab_crapcob(vr_idx_cob).flgregis = 1 THEN      
         PAGA0001.pc_cria_log_cobranca(pr_idtabcob => vr_new_rowid,
                                       pr_cdoperad => pr_cdoperad,
@@ -2115,8 +2260,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                     ,pr_ind_tipo_log => 2 -- Erro tratato
                                     ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                    ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                        ' - COBR0006.pc_processa_titulos -->' ||
+                                    ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                        ' - COBR0006 --> pc_processa_titulos' ||
                                                         ' Coop: '      || pr_tab_crapcob(vr_idx_cob).cdcooper ||
                                                         ' Conta: '     || pr_tab_crapcob(vr_idx_cob).nrdconta ||
                                                         ' Remessa: '   || pr_rec_header.nrremass ||
@@ -2142,8 +2287,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
             btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                       ,pr_ind_tipo_log => 2 -- Erro tratato
                                       ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                      ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                          ' - COBR0006.pc_processa_titulos -->' ||
+                                      ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                          ' - COBR0006 --> pc_processa_titulos' ||
                                                           ' Coop: '      || pr_tab_crapcob(vr_idx_cob).cdcooper ||
                                                           ' Conta: '     || pr_tab_crapcob(vr_idx_cob).nrdconta ||
                                                           ' Remessa: '   || pr_rec_header.nrremass ||
@@ -2180,8 +2325,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
             btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                       ,pr_ind_tipo_log => 2 -- Erro tratato
                                       ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                      ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                          ' - COBR0006.pc_processa_titulos -->' ||
+                                      ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                          ' - COBR0006 --> pc_processa_titulos' ||
                                                           ' Coop: '      || pr_tab_crapcob(vr_idx_cob).cdcooper ||
                                                           ' Conta: '     || pr_tab_crapcob(vr_idx_cob).nrdconta ||
                                                           ' Remessa: '   || pr_rec_header.nrremass ||
@@ -2893,8 +3038,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                     ,pr_ind_tipo_log => 2 -- Erro tratato
                                     ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                    ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                        ' - COBR0006.pc_processa_instrucoes -->' ||
+                                    ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                        ' - COBR0006 --> pc_processa_instrucoes' ||
                                                         ' Coop: '      || vr_instrucao.cdcooper ||
                                                         ' Conta: '     || vr_instrucao.nrdconta ||
                                                         ' Remessa: '   || vr_instrucao.nrremass ||
@@ -2909,8 +3054,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                     ,pr_ind_tipo_log => 2 -- Erro tratato
                                     ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                    ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                        ' - COBR0006.pc_processa_instrucoes -->' ||
+                                    ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                        ' - COBR0006 --> pc_processa_instrucoes' ||
                                                         ' Coop: '      || vr_instrucao.cdcooper ||
                                                         ' Conta: '     || vr_instrucao.nrdconta ||
                                                         ' Remessa: '   || vr_instrucao.nrremass ||
@@ -3192,7 +3337,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Douglas Quisinski
-       Data    : Janeiro/2016                     Ultima atualizacao: 02/12/2016
+       Data    : Janeiro/2016                     Ultima atualizacao: 16/05/2017
 
        Dados referentes ao programa:
 
@@ -3206,6 +3351,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                    02/12/2016 - Ajuste para tratar nome da cidade, nome do bairro e uf nulos 
   						               		(Andrei - RKAM).     
           
+                   16/05/2017 - Implementado melhorias para nao ocorrer estouro de chave
+                                qdo inserir a crapsab (Tiago/Rodrigo #663284)
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -3235,20 +3382,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     -- Percorrer todos os registros rejeitados
     FOR vr_idx IN 1..pr_tab_sacado.COUNT() LOOP
       vr_sacado := pr_tab_sacado(vr_idx);
-      
-      -- Sacado possui registro
-      OPEN cr_crapsab (pr_cdcooper => vr_sacado.cdcooper
-                      ,pr_nrdconta =>  vr_sacado.nrdconta
-                      ,pr_nrinssac => vr_sacado.nrinssac);
-      FETCH cr_crapsab INTO rw_crapsab;
 	  -- Limpar Variavel vr_nmdsacad
       vr_nmdsacad := '';
       -- remover caracter especial vr_nmdsacad
       vr_nmdsacad := gene0007.fn_caract_acento(vr_sacado.nmdsacad, 1, '@#$&%¹²³ªº°*!?<>/\|€', '                    ');
-      -- Verifica se encontrou
-      IF cr_crapsab%NOTFOUND THEN
-        -- Fecha cursor
-        CLOSE cr_crapsab;
+      
+      BEGIN
         -- Se nao existe o sacado, vamos cadastrar
         INSERT INTO crapsab(cdcooper
                            ,nrdconta
@@ -3278,7 +3417,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                           ,vr_sacado.cdoperad
                           ,vr_sacado.dtmvtolt
                           ,nvl(vr_sacado.nrcepsac,0));
-      ELSE
+      EXCEPTION
+        WHEN DUP_VAL_ON_INDEX THEN
+          -- Sacado possui registro
+          OPEN cr_crapsab (pr_cdcooper => vr_sacado.cdcooper
+                          ,pr_nrdconta =>  vr_sacado.nrdconta
+                          ,pr_nrinssac => vr_sacado.nrinssac);
+          FETCH cr_crapsab INTO rw_crapsab;
+
         -- Fecha cursor
         CLOSE cr_crapsab;
         
@@ -3301,7 +3447,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
               ,crapsab.dtmvtolt = vr_sacado.dtmvtolt
               ,crapsab.nrcelsac = nvl(TRIM(vr_sacado.nrcelsac),rw_crapsab.nrcelsac)
          WHERE crapsab.rowid = rw_crapsab.rowid;
-      END IF;
+      END;
     END LOOP;
       
   EXCEPTION 
@@ -4811,6 +4957,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                            pr_rec_header   => pr_rec_header,    --> Dados do Header do Arquivo
                            pr_rec_cobranca => pr_rec_cobranca); --> Cobranca
     
+    --Tratamento para verificar se o NOSSO NUMERO é null
+    IF TRIM(pr_tab_linhas('DSNOSNUM').texto) IS NULL THEN
+       -- Nosso Numero Invalido
+       pr_rec_cobranca.dsnosnum := '';
+       vr_rej_cdmotivo := '08';
+       RAISE vr_exc_reje;
+    END IF;      
+    
     --SD#580867
     if nvl(length(TRIM(pr_tab_linhas('DSNOSNUM').texto)),0) > 17 then
       if substr(TRIM(pr_tab_linhas('DSNOSNUM').texto),1,3) <> '000' then
@@ -5236,8 +5390,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                 ,pr_ind_tipo_log => 2 -- Erro tratato
                                 ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                    ' - COBR0006.pc_trata_segmento_p_240_85 -->' ||
+                                ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') || ' - COBR0006' ||
+                                                    ' --> pc_trata_segmento_p_240_85' ||
                                                     ' Coop: '      || pr_cdcooper ||
                                                     ' Conta: '     || pr_nrdconta ||
                                                     ' Remessa: '   || pr_rec_header.nrremass ||
@@ -5647,8 +5801,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                 ,pr_ind_tipo_log => 2 -- Erro tratato
                                 ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                    ' - COBR0006.pc_trata_segmento_q_240_85 -->' ||
+                                ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                    ' - COBR0006 --> pc_trata_segmento_q_240_85' ||
                                                     ' Coop: '      || pr_cdcooper ||
                                                     ' Conta: '     || pr_nrdconta ||
                                                     ' Remessa: '   || pr_rec_header.nrremass ||
@@ -5801,8 +5955,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                 ,pr_ind_tipo_log => 2 -- Erro tratato
                                 ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                    ' - COBR0006.pc_trata_segmento_r_240_85 -->' ||
+                                ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                    ' - COBR0006 --> pc_trata_segmento_r_240_85' ||
                                                     ' Coop: '      || pr_cdcooper ||
                                                     ' Conta: '     || pr_nrdconta ||
                                                     ' Remessa: '   || pr_rec_header.nrremass ||
@@ -5912,8 +6066,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                 ,pr_ind_tipo_log => 2 -- Erro tratato
                                 ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                    ' - COBR0006.pc_trata_segmento_r -->' ||
+                                ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                    ' - COBR0006 --> pc_trata_segmento_r' ||
                                                     ' Coop: '      || pr_cdcooper ||
                                                     ' Conta: '     || pr_nrdconta ||
                                                     ' Remessa: '   || pr_rec_header.nrremass ||
@@ -6065,8 +6219,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                 ,pr_ind_tipo_log => 2 -- Erro tratato
                                 ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                    ' - COBR0006.pc_trata_segmento_y04_240_85 -->' ||
+                                ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                    ' - COBR0006 --> pc_trata_segmento_y04_240_85' ||
                                                     ' Coop: '      || pr_cdcooper ||
                                                     ' Conta: '     || pr_nrdconta ||
                                                     ' Remessa: '   || pr_rec_header.nrremass ||
@@ -6472,8 +6626,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                 ,pr_ind_tipo_log => 2 -- Erro tratato
                                 ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                    ' - COBR0006.pc_trata_segmento_p_240_01 -->' ||
+                                ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                    ' - COBR0006 --> pc_trata_segmento_p_240_01' ||
                                                     ' Coop: '      || pr_cdcooper ||
                                                     ' Conta: '     || pr_nrdconta ||
                                                     ' Remessa: '   || pr_rec_header.nrremass ||
@@ -8397,8 +8551,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                 ,pr_ind_tipo_log => 2 -- Erro tratato
                                 ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                    ' - COBR0006.pc_trata_detalhe_cnab400 -->' ||
+                                ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                    ' - COBR0006 --> pc_trata_detalhe_cnab400 ' ||
                                                     ' Coop: '      || pr_cdcooper ||
                                                     ' Conta: '     || pr_nrdconta ||
                                                     ' Remessa: '   || pr_rec_header.nrremass ||
@@ -8588,7 +8742,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                 ,pr_ind_tipo_log => 2 -- Erro tratato
                                 ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
                                 ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                    ' - COBR0006.pc_trata_multa_cnab400 -->' ||
+                                                    ' - COBR0006 --> pc_trata_multa_cnab400 ' ||
                                                     ' Coop: '      || pr_cdcooper ||
                                                     ' Conta: '     || pr_nrdconta ||
                                                     ' Remessa: '   || pr_rec_header.nrremass ||
@@ -9293,8 +9447,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                     ,pr_ind_tipo_log => 2 -- Erro tratato
                                     ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                    ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                        ' - ERRO no processamento dos titulos: ' || 
+                                    ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                        ' - ' || NVL(pr_nmdatela, 'COBR0006') ||
+                                                        ' --> COBR0006.pc_intarq_remes_cnab240_001 ' ||
+                                                        ' ERRO no processamento dos titulos: ' || 
                                                         vr_cdcritic || ' - ' || vr_dscritic);
           vr_cdcritic:= NULL;
           vr_dscritic:= NULL;
@@ -9317,8 +9473,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                     ,pr_ind_tipo_log => 2 -- Erro tratato
                                     ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                    ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                        ' - ERRO no processamento das instrucoes: ' || 
+                                    ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                        ' - ' || NVL(pr_nmdatela, 'COBR0006') || ' --> COBR0006.pc_intarq_remes_cnab240_001' ||
+                                                        ' ERRO no processamento das instrucoes: ' || 
                                                         vr_cdcritic || ' - ' || vr_dscritic);
           vr_cdcritic:= NULL;
           vr_dscritic:= NULL;
@@ -9335,8 +9492,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                     ,pr_ind_tipo_log => 2 -- Erro tratato
                                     ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                    ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                        ' - ERRO no processamento dos rejeitados: ' || 
+                                    ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                        ' - ' || NVL(pr_nmdatela, 'COBR0006') || ' --> COBR0006.pc_intarq_remes_cnab240_001' ||
+                                                        ' ERRO no processamento dos rejeitados: ' || 
                                                         vr_cdcritic || ' - ' || vr_dscritic);
           vr_cdcritic:= NULL;
           vr_dscritic:= NULL;
@@ -9353,8 +9511,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                     ,pr_ind_tipo_log => 2 -- Erro tratato
                                     ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                    ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                        ' - ERRO no processamento dos sacados: ' || 
+                                    ,pr_des_log      => to_char(SYSDATE,'DD/MM/RR hh24:mi:ss') ||
+                                                        ' - ' || NVL(pr_nmdatela, 'COBR0006') || ' --> COBR0006.pc_intarq_remes_cnab240_001' ||
+                                                        ' ERRO no processamento dos sacados: ' || 
                                                         vr_cdcritic || ' - ' || vr_dscritic);
           vr_cdcritic:= NULL;
           vr_dscritic:= NULL;
@@ -9371,8 +9530,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                     ,pr_ind_tipo_log => 2 -- Erro tratato
                                     ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                    ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                        ' - ERRO no lancamento de tarifas: ' || 
+                                    ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                        ' - ' || NVL(pr_nmdatela, 'COBR0006') || ' --> COBR0006.pc_intarq_remes_cnab240_001' ||
+                                                        ' ERRO no lancamento de tarifas: ' || 
                                                         vr_cdcritic || ' - ' || vr_dscritic);
           vr_cdcritic:= NULL;
           vr_dscritic:= NULL;
@@ -10252,8 +10412,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                     ,pr_ind_tipo_log => 2 -- Erro tratato
                                     ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                    ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                        ' - ERRO no processamento dos titulos: ' || 
+                                    ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                        ' - ' || NVL(pr_nmdatela, 'COBR0006') || ' --> COBR0006.pc_intarq_remes_cnab240_085' ||
+                                                        ' ERRO no processamento dos titulos: ' || 
                                                         vr_cdcritic || ' - ' || vr_dscritic);
           vr_cdcritic:= NULL;
           vr_dscritic:= NULL;
@@ -10276,8 +10437,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                     ,pr_ind_tipo_log => 2 -- Erro tratato
                                     ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                    ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                        ' - ERRO no processamento das instrucoes: ' || 
+                                    ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRR hh24:mi:ss') ||
+                                                        ' - ' || NVL(pr_nmdatela, 'COBR0006') || ' --> COBR0006.pc_intarq_remes_cnab240_085' ||
+                                                        ' --> ERRO no processamento das instrucoes: ' || 
                                                         vr_cdcritic || ' - ' || vr_dscritic);
           vr_cdcritic:= NULL;
           vr_dscritic:= NULL;
@@ -10295,8 +10457,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                     ,pr_ind_tipo_log => 2 -- Erro tratato
                                     ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                    ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                        ' - ERRO no processamento dos rejeitados: ' || 
+                                    ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                        ' - ' || NVL(pr_nmdatela, 'COBR0006') || ' --> COBR0006.pc_intarq_remes_cnab240_085' ||
+                                                        ' ERRO no processamento dos rejeitados: ' || 
                                                         vr_cdcritic || ' - ' || vr_dscritic);
           vr_cdcritic:= NULL;
           vr_dscritic:= NULL;
@@ -10313,8 +10476,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                     ,pr_ind_tipo_log => 2 -- Erro tratato
                                     ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                    ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                        ' - ERRO no processamento dos sacados: ' || 
+                                    ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                        ' - ' || NVL(pr_nmdatela, 'COBR0006') || ' --> COBR0006.pc_intarq_remes_cnab240_085' ||
+                                                        ' ERRO no processamento dos sacados: ' || 
                                                         vr_cdcritic || ' - ' || vr_dscritic);
           vr_cdcritic:= NULL;
           vr_dscritic:= NULL;
@@ -10332,8 +10496,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                     ,pr_ind_tipo_log => 2 -- Erro tratato
                                     ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                    ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                        ' - ERRO no lancamento de tarifas: ' || 
+                                    ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                        ' - ' || NVL(pr_nmdatela, 'COBR0006') || ' --> COBR0006.pc_intarq_remes_cnab240_085' ||
+                                                        ' ERRO no lancamento de tarifas: ' || 
                                                         vr_cdcritic || ' - ' || vr_dscritic);
           vr_cdcritic:= NULL;
           vr_dscritic:= NULL;
@@ -11137,8 +11302,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                     ,pr_ind_tipo_log => 2 -- Erro tratato
                                     ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                    ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                        ' - ERRO no processamento dos titulos: ' || 
+                                    ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                        ' - ' || NVL(pr_nmdatela, 'COBR0006') || ' --> COBR0006.pc_intarq_remes_cnab400_085' ||
+                                                        ' ERRO no processamento dos titulos: ' || 
                                                         vr_cdcritic || ' - ' || vr_dscritic);
                                                         
           vr_cdcritic:= NULL;
@@ -11163,8 +11329,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                     ,pr_ind_tipo_log => 2 -- Erro tratato
                                     ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                    ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                        ' - ERRO no processamento das instrucoes: ' || 
+                                    ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                        ' - ' || NVL(pr_nmdatela, 'COBR0006') || ' --> COBR0006.pc_intarq_remes_cnab400_085' ||
+                                                        ' ERRO no processamento das instrucoes: ' || 
                                                         vr_cdcritic || ' - ' || vr_dscritic);
                                                         
           vr_cdcritic:= NULL;
@@ -11184,8 +11351,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                     ,pr_ind_tipo_log => 2 -- Erro tratato
                                     ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                    ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                        ' - ERRO no processamento dos rejeitados: ' || 
+                                    ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                        ' - ' || NVL(pr_nmdatela, 'COBR0006') || ' --> COBR0006.pc_intarq_remes_cnab400_085' ||
+                                                        ' ERRO no processamento dos rejeitados: ' || 
                                                         vr_cdcritic || ' - ' || vr_dscritic);
                                                         
           vr_cdcritic:= NULL;
@@ -11205,8 +11373,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                     ,pr_ind_tipo_log => 2 -- Erro tratato
                                     ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                    ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                        ' - ERRO no processamento dos sacados: ' || 
+                                    ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                        ' - ' || NVL(pr_nmdatela, 'COBR0006') || ' --> COBR0006.pc_intarq_remes_cnab400_085' ||
+                                                        ' ERRO no processamento dos sacados: ' || 
                                                         vr_cdcritic || ' - ' || vr_dscritic);
                                                         
           vr_cdcritic:= NULL;
@@ -11226,8 +11395,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                     ,pr_ind_tipo_log => 2 -- Erro tratato
                                     ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                    ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                        ' - ERRO no lancamento de tarifas: ' || 
+                                    ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                        ' - ' || NVL(pr_nmdatela, 'COBR0006') || ' --> COBR0006.pc_intarq_remes_cnab400_085' ||
+                                                        ' ERRO no lancamento de tarifas: ' || 
                                                         vr_cdcritic || ' - ' || vr_dscritic);
                                                         
           vr_cdcritic:= NULL;
