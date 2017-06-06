@@ -901,7 +901,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     ELSE
       vr_tpfraude := 3;
     END IF;
-    
+
     vr_cpfcnpj := gene0002.fn_mask_cpf_cnpj(pr_nrcpffav, pr_inpesfav);
 
     -- Verifica se o cpf/cnpj eh fraudulento
@@ -1944,8 +1944,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     IF pr_tpctafav = 3 THEN
       vr_cdhisted := 1406;
     ELSE
-      -- definir historico de ted
-      vr_cdhisted := 555;
+    -- definir historico de ted
+    vr_cdhisted := 555;
     END IF;
     
     /* Grava uma autenticacao */
@@ -2162,7 +2162,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
 
       IF pr_tpctafav = 3 THEN -- Se for BacenJud nao deve cobrar tarifa
         NULL;
-      -- Se não isenta cobrança da tarifa
+	    -- Se não isenta cobrança da tarifa
       ELSIF vr_fliseope <> 1 THEN
 
         IF pr_idagenda = 1 OR
@@ -2357,7 +2357,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
         -- apensa jogar critica em log
         RAISE vr_exc_log;
     END;
-    
+                                                 
     -- verificar se lote esta lockado
     IF fn_verifica_lote_uso(pr_rowid => rw_craplot_lcm.rowid ) = 1 THEN
       vr_dscritic:= 'Registro de lote '||rw_craplot_lcm.nrdolote||' em uso. Tente novamente.';  
@@ -2398,8 +2398,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     IF TRIM(vr_dscritic) IS NOT NULL THEN
       --Levantar Excecao
       RAISE vr_exc_erro;
-    END IF;		  
-                          
+    END IF;
+    
     -- Atualizar lote para craplcm
     BEGIN
       UPDATE craplot

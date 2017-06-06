@@ -1498,6 +1498,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 	   04/04/2017 - Ajuste para integracao de arquivos com layout na versao 5
 				    (Jonata - RKAM M311).
 
+	   12/05/2017 - Segunda fase da melhoria 342 (Kelvin). 
+
+
        
 	       
        22/05/2017 - Incluido validacao para nao agendar faturas vencidas
@@ -2246,6 +2249,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     
     vr_xml_dsmsgerr VARCHAR2(1000);    
     vr_des_erro  VARCHAR2(10);  -- OK ou NOK  
+    --Tabela memoria de erros
+    vr_tab_erro  GENE0001.typ_tab_erro;
     
     vr_tab_limite             INET0001.typ_tab_limite;
     vr_tab_internet           INET0001.typ_tab_internet;
@@ -2265,6 +2270,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     
     vr_nmcooper VARCHAR2(400);
     vr_fltemban BOOLEAN := FALSE;
+    vr_cdhistor INTEGER;
+    vr_cdhisest INTEGER;
+    vr_vltarifa NUMBER;
+    vr_hrlimtrf crapprm.dsvlrprm%TYPE; --Transf no dia (tipo Crédito Salário)
+    vr_hrtrfini VARCHAR2(10); 
+    vr_hrtrffim VARCHAR2(10); 
+    vr_dtdivulg DATE;
+    vr_dtvigenc DATE;
+    vr_cdfvlcop INTEGER;
+    vr_flghbtrc NUMBER;
+    vr_flghbtrf NUMBER;
+    vr_dsmsgtar VARCHAR2(250);
+    vr_dsmsgtrf VARCHAR2(250);
     
     --Variaveis de Excecao
       vr_exc_erro EXCEPTION;
@@ -2315,6 +2333,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     
   BEGIN 
  
+    vr_flghbtrc := NULL;
+    vr_flghbtrf := NULL;
+
+    
     IF pr_flgpesqu = 1 THEN
       vr_dstransa := 'Consulta favorecidos';
     ELSIF pr_tpoperac = 1 THEN
@@ -2430,6 +2452,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     
     vr_index_contas_cad := vr_tab_contas_cadastradas.FIRST;
     
+    --Flag para identificar se transferência credito salário está ativo    
+    vr_flghbtrc := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                            ,pr_cdcooper => pr_cdcooper
+                                            ,pr_cdacesso => 'FOLHAIB_HABILITA_TRANSF');
+    
     WHILE vr_index_contas_cad IS NOT NULL LOOP      
       
       gene0002.pc_escreve_xml(pr_xml            => pr_xml_operacao23
@@ -2452,11 +2479,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                                 ||   '<dsageban>'||TO_CHAR(vr_tab_contas_cadastradas(vr_index_contas_cad).dsageban)    ||'</dsageban>'
                                                 ||   '<nmageban>'||TO_CHAR(vr_tab_contas_cadastradas(vr_index_contas_cad).nmageban)    ||'</nmageban>'
                                                 ||   '<nmsegntl>'||TO_CHAR(vr_tab_contas_cadastradas(vr_index_contas_cad).nmtitul2)    ||'</nmsegntl>'
+                                                ||   '<flghbtrf>'||TO_CHAR(vr_flghbtrc)                                                ||'</flghbtrf>'                                                
                                                 || '</DADOS>');   
                            
       vr_index_contas_cad := vr_tab_contas_cadastradas.NEXT(vr_index_contas_cad);
       
     END LOOP;
+
 
     gene0002.pc_escreve_xml(pr_xml            => pr_xml_operacao23
                            ,pr_texto_completo => vr_xml_temp
@@ -2562,6 +2591,91 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                            ,pr_texto_novo     => '</BANCOS>');
 
     pr_dsretorn := 'OK';
+    
+    --Flag para identificar se há tarifa ou não
+    vr_flghbtrf := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                            ,pr_cdcooper => pr_cdcooper
+                                            ,pr_cdacesso => 'FOLHAIB_TARI_TRF_TPSAL');
+
+    -- Insere o cabeçalho do XML 
+    gene0002.pc_escreve_xml(pr_xml            => pr_xml_operacao23
+                           ,pr_texto_completo => vr_xml_temp
+                           ,pr_texto_novo     => '<TRANSFERENCIA>');                             
+
+    --Se transferencia tipo salário está ativo        
+    IF vr_flghbtrc = 1 THEN    
+      
+      --Se há tarifas
+      IF vr_flghbtrf = 1 THEN
+        -- Busca o valor da tarifa
+        TARI0001.pc_carrega_dados_tar_vigente(pr_cdcooper  => pr_cdcooper       --Codigo Cooperativa
+                                             ,pr_cdbattar  => 'TRANSTPSAL'      -- Codigo Tarifa 
+                                             ,pr_vllanmto  => 0                 -- Valor Lancamento
+                                             ,pr_cdprogra  => 'INTERNETBANK23'  -- Codigo Programa  
+                                             ,pr_cdhistor  => vr_cdhistor       -- Codigo Historico
+                                             ,pr_cdhisest  => vr_cdhisest       -- Historico Estorno
+                                             ,pr_vltarifa  => vr_vltarifa       -- Valor tarifa
+                                             ,pr_dtdivulg  => vr_dtdivulg       -- Data Divulgacao
+                                             ,pr_dtvigenc  => vr_dtvigenc       -- Data Vigencia
+                                             ,pr_cdfvlcop  => vr_cdfvlcop       -- Codigo faixa valor cooperativa
+                                             ,pr_cdcritic  => vr_cdcritic       -- Codigo Critica
+                                             ,pr_dscritic  => vr_dscritic       -- Descricao Critica
+                                             ,pr_tab_erro  => vr_tab_erro);     -- Tabela erros
+
+        -- Se ocorreu erro
+        IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+                  
+          -- Se possui erro no vetor
+          IF vr_tab_erro.Count >  0   THEN
+            vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+            vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+          ELSE
+            vr_cdcritic := 0 ;
+            vr_dscritic := 'Nao foi possivel carregar a tarifa.';
+          END IF;
+          
+          -- Levantar Excecao
+          RAISE vr_exc_erro;
+          
+        END IF; 
+        
+        vr_dsmsgtar := 'A transferência de Crédito Salário é tarifada em R$ ' || 
+                       to_char(vr_vltarifa, 'FM999G999G990D90')  || ' por lançamento.';
+                       
+        gene0002.pc_escreve_xml(pr_xml            => pr_xml_operacao23
+                               ,pr_texto_completo => vr_xml_temp 
+                               ,pr_texto_novo     =>  '<TARIFA>'
+                                                   || '<dsmsgtar>'|| vr_dsmsgtar ||'</dsmsgtar>'                                             
+                                                   || '</TARIFA>');
+        
+      END IF;
+      
+      --horário de início transferência CADPAC PA 90
+      folh0001.pc_hrtransfer_internet(pr_cdcooper => pr_cdcooper
+                                     ,pr_hrtrfini => vr_hrtrfini
+                                     ,pr_hrtrffim => vr_hrtrffim);
+      
+      --Horario Transf no dia (tipo Crédito Salário)
+      vr_hrlimtrf := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                            	,pr_cdcooper => pr_cdcooper
+                                              ,pr_cdacesso => 'FOLHAIB_HR_LIM_TRF_TPSAL');
+      
+      --Mensagem que aparecera na tela de transferencia
+      vr_dsmsgtrf := 'Horário permitido para transf. de salário não agendada – das ' || vr_hrtrfini ||' às ' || vr_hrlimtrf || ' (Horário de Brasília).';
+      
+      gene0002.pc_escreve_xml(pr_xml            => pr_xml_operacao23
+                             ,pr_texto_completo => vr_xml_temp 
+                             ,pr_texto_novo     =>  '<HORATRANS>'
+                                                 || '<dsmsgtrf>'|| vr_dsmsgtrf ||'</dsmsgtrf>'                                             
+                                                 || '</HORATRANS>');
+      
+    END IF;
+                                                    
+    gene0002.pc_escreve_xml(pr_xml            => pr_xml_operacao23
+                           ,pr_texto_completo => vr_xml_temp 
+                           ,pr_fecha_xml      => TRUE
+                           ,pr_texto_novo     => '</TRANSFERENCIA>');  
+       
     
   EXCEPTION
     WHEN vr_exc_erro THEN
@@ -3794,12 +3908,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 	  vr_cdorigem INTEGER;
       vr_datdodia DATE;
       vr_rowid    ROWID;
+      vr_cdhistor INTEGER;
+      vr_cdhisest INTEGER;
+      vr_vltarifa NUMBER;
+      vr_dtdivulg DATE;
+      vr_dtvigenc DATE;
+      vr_cdfvlcop INTEGER;
+      vr_flghbtrf NUMBER;
+      
       --Variaveis de Erro
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic VARCHAR2(4000);
       vr_des_erro VARCHAR2(4000);
+      vr_tab_erro  GENE0001.typ_tab_erro;
+      
       --Variaveis de Excecao
       vr_exc_erro EXCEPTION;
+      
       --Variavel registro tipo associado
       rw_crabass cr_crapass%ROWTYPE;
       rw_cra2ass cr_crapass%ROWTYPE;
@@ -4720,6 +4845,87 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
           END LOOP;  
 
         END IF;
+        --Flag para identificar se há tarifa ou não
+        vr_flghbtrf := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                ,pr_cdcooper => pr_cdcooper
+                                                ,pr_cdacesso => 'FOLHAIB_TARI_TRF_TPSAL');
+
+      	--Se há tarifas
+        IF vr_flghbtrf = 1 AND    --Credito Salario 
+           pr_cdhisdeb = 771 THEN --Tarifa = Sim
+          -- Busca o valor davr_cdhistor tarifa
+          TARI0001.pc_carrega_dados_tar_vigente(pr_cdcooper  => pr_cdcooper    --Codigo Cooperativa
+                                               ,pr_cdbattar  => 'TRANSTPSAL'   -- Codigo Tarifa 
+                                               ,pr_vllanmto  => pr_vllanmto    -- Valor Lancamento
+                                               ,pr_cdprogra  => 'PAGA0001'     -- Codigo Programa  
+                                               ,pr_cdhistor  => vr_cdhistor    -- Codigo Historico
+                                               ,pr_cdhisest  => vr_cdhisest    -- Historico Estorno
+                                               ,pr_vltarifa  => vr_vltarifa    -- Valor tarifa
+                                               ,pr_dtdivulg  => vr_dtdivulg    -- Data Divulgacao
+                                               ,pr_dtvigenc  => vr_dtvigenc    -- Data Vigencia
+                                               ,pr_cdfvlcop  => vr_cdfvlcop    -- Codigo faixa valor cooperativa
+                                               ,pr_cdcritic  => vr_cdcritic    -- Codigo Critica
+                                               ,pr_dscritic  => vr_dscritic    -- Descricao Critica
+                                               ,pr_tab_erro  => vr_tab_erro);  -- Tabela erros
+
+          -- Se ocorreu erro
+          IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+                    
+            -- Se possui erro no vetor
+            IF vr_tab_erro.Count >  0   THEN
+              vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+              vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+            ELSE
+              vr_cdcritic := 0 ;
+              vr_dscritic := 'Nao foi possivel carregar a tarifa.';
+        END IF;
+
+            -- Levantar Excecao
+            RAISE vr_exc_erro;
+      END IF;
+
+          -- Criar Lancamento automatico tarifa
+          TARI0001.pc_cria_lan_auto_tarifa(pr_cdcooper      => pr_cdcooper
+                                          ,pr_nrdconta      => pr_nrdconta
+                                          ,pr_dtmvtolt      => pr_dtmvtocd
+                                          ,pr_cdhistor      => vr_cdhistor
+                                          ,pr_vllanaut      => vr_vltarifa
+                                          ,pr_cdoperad      => '1'
+                                          ,pr_cdagenci      => 1
+                                          ,pr_cdbccxlt      => 100
+                                          ,pr_nrdolote      => 10299
+                                          ,pr_tpdolote      => 18
+                                          ,pr_nrdocmto      => rw_craplot.nrseqdig
+                                          ,pr_nrdctabb      => pr_nrdconta
+                                          ,pr_nrdctitg      => GENE0002.fn_mask(pr_nrdconta,'99999999')
+                                          ,pr_cdpesqbb      => 'Fato gerador tarifa:' || TO_CHAR(rw_craplot.nrseqdig)
+                                          ,pr_cdbanchq      => 0
+                                          ,pr_cdagechq      => 0
+                                          ,pr_nrctachq      => 0
+                                          ,pr_flgaviso      => FALSE
+                                          ,pr_tpdaviso      => 0
+                                          ,pr_cdfvlcop      => vr_cdfvlcop
+                                          ,pr_inproces      => rw_crapdat.inproces
+                                          ,pr_rowid_craplat => vr_rowid
+                                          ,pr_tab_erro      => vr_tab_erro
+                                          ,pr_cdcritic      => vr_cdcritic
+                                          ,pr_dscritic      => vr_dscritic);
+                                          
+          -- Se ocorreu erro
+          IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+            -- Se possui erro no vetor
+            IF vr_tab_erro.Count > 0 THEN
+              vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+              vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+            ELSE
+              vr_cdcritic := 0;
+              vr_dscritic := 'Erro no lancamento tarifa de transferencia do tipo credito salario.';
+        END IF;
+            -- Levantar Excecao
+            RAISE vr_exc_erro;
+          END IF;  
+
+      END IF;
 
       END IF;
 
@@ -9609,8 +9815,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --               30/03/2017 - Incluir validacao para faturas vencidas para agendamentos conforme
     --                            ja faz a rotina de pagamento (Lucas Ranghetti #637996)
     --
-    
-	    
+    --               12/04/2017 - Incluir validacao para faturas vencidas para agendamentos conforme
+    --                            ja faz a rotina de pagamento PM.AGROLANDIA (Tiago #647174)    
+    --
     --               22/05/2017 - Incluido validacao para nao agendar faturas vencidas
     --                            para PM.TROMBUDO CENTRAL e FMS.TROMBUDO CENTRAL
     --                            (Tiago/Fabricio #653830)
@@ -10064,6 +10271,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
             (rw_crapcon.cdempcon = 4539 AND rw_crapcon.cdsegmto = 1)  OR  -- P.M. TIMBO 
             (rw_crapcon.cdempcon = 0040 AND rw_crapcon.cdsegmto = 1)  OR  -- P.M. AGROLANDIA
             (rw_crapcon.cdempcon = 4594 AND rw_crapcon.cdsegmto = 1)  OR  -- P.M. TROMBUDO CENTRAL
+            (rw_crapcon.cdempcon = 0040 AND rw_crapcon.cdsegmto = 1)  OR  -- P.M. AGROLANDIA
             (rw_crapcon.cdempcon = 0562 AND rw_crapcon.cdsegmto = 5)  OR  -- DEFESA CIVIL TIMBO 
             (rw_crapcon.cdempcon = 0563 AND rw_crapcon.cdsegmto = 5)  OR  -- MEIO AMBIENTE DE TIMBO 
             (rw_crapcon.cdempcon = 0564 AND rw_crapcon.cdsegmto = 5)  OR  -- TRANSITO DE TIMBO 

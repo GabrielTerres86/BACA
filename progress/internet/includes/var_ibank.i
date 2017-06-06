@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Junior
-   Data    : Julho/2004.                       Ultima atualizacao: 06/03/2017
+   Data    : Julho/2004.                       Ultima atualizacao: 12/05/2017
 
    Dados referentes ao programa:
 
@@ -140,6 +140,8 @@
                            
               06/03/2017 - Adicionados campos nrddd, nrcelular e nmoperadora em 
                            xml_operacao38 (Projeto 321 - Lombardi).
+                           
+			  12/05/2017 - Segunda fase da melhoria 342 (Kelvin).
                            
 ..............................................................................*/
 
@@ -477,4 +479,8 @@ DEF TEMP-TABLE xml_operacao141                                           NO-UNDO
     FIELD dsrowlfp AS CHAR
     FIELD nmprimtl AS CHAR
     FIELD idtpcont AS CHAR.
+
+DEF TEMP-TABLE tt-arq-folha												 NO-UNDO
+	FIELD cdseqlin AS INT
+	FIELD dsdlinha AS CHAR.	
 /*............................................................................*/

@@ -20,7 +20,7 @@ CREATE OR REPLACE PACKAGE CECRED.INET0002 AS
                             (Lucas Lunelli - PROJ290 Cartao CECRED no CaixaOnline)
     
                 20/06/2016 - Correcao para o uso da function fn_busca_dstextab da TABE0001 em 
-                             varias procedures desta package.(Carlos Rafael Tanholi). 
+                             varias procedures desta package.(Carlos Rafael Tanholi).     
                 
                 18/07/2016 - Criação da procedure pc_cria_trans_pend_darf_das para o
                              Prj. 338, Pagamento de DARF e DAS (Jean Michel) 
@@ -484,7 +484,7 @@ CREATE OR REPLACE PACKAGE CECRED.INET0002 AS
                                ,pr_clobxmlc OUT CLOB                  --> XML com informações
                                ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
                                ,pr_dscritic OUT VARCHAR2);            --> Descricao da crítica
-
+   
   --> Rotina responsavel pela criacao de transacoes pendentes de DARF/DAS
   PROCEDURE pc_cria_trans_pend_darf_das(pr_cdcooper  IN crapcop.cdcooper%TYPE                 --> Código da cooperativa
                                        ,pr_nrdcaixa  IN craplot.nrdcaixa%TYPE                 --> Numero do Caixa
@@ -526,7 +526,7 @@ CREATE OR REPLACE PACKAGE CECRED.INET0002 AS
                                        ,pr_tpleitur  IN NUMBER                                --> Tipo da leitura do documento (1 – Leitora de Código de Barras / 2 - Manual)
                                        ,pr_cdcritic OUT INTEGER 						                  --> Código do erro
                                        ,pr_dscritic OUT VARCHAR2);      	                    --> Descriçao do erro
-
+                                 
   /******************************************************************************/
   /**     Procedure para carregar titulares/operadores para acesso a conta     **/
   /******************************************************************************/
@@ -626,7 +626,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
   --  Sistema  : Procedimentos Multiplas Assinaturas PJ
   --  Sigla    : CRED
   --  Autor    : Jorge Hamaguchi / Jean Deschamps
-  --  Data     : Novembro/2015.                   Ultima atualizacao: 02/09/2016
+  --  Data     : Novembro/2015.                   Ultima atualizacao: 12/05/2017
   --
   -- Dados referentes ao programa:
   --
@@ -658,6 +658,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
   --
   --             28/11/2016 - Criaçao pc_cria_trans_pend_sms_cobran e inclusao dos transaçoes pendentes
   --                          16 e 17. PRJ319 - SMS Cobrança (Odirlei-AMcom) 
+  --
+  --             12/05/2017 - Segunda fase da melhoria 342 (Kelvin).
   ---------------------------------------------------------------------------------------------------------------
 
   
@@ -1884,7 +1886,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       FROM   tbpagto_darf_das_trans_pend
       WHERE  tbpagto_darf_das_trans_pend.cdtransacao_pendente = pr_cddoitem;
       rw_tbpagto_darf_das_trans_pend cr_tbpagto_darf_das_trans_pend%ROWTYPE;
-			
+
       --Tipo Transacao 12 (Desconto de Cheque)
       CURSOR cr_tbdscc_trans_pend(pr_cddoitem IN tbgen_trans_pend.cdtransacao_pendente%TYPE) IS  
         SELECT SUM(dscc.vlcheque) vltotchq
@@ -2434,7 +2436,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 															TO_CHAR(rw_tbfolha_trans_pend.vlfolha,'fm999g999g990d00') || 
 															'</b> com débito programado para <b>' || 
 															TO_CHAR(rw_tbfolha_trans_pend.dtdebito,'DD/MM/RRRR') || '</b>.<br>';
-          WHEN pr_tptransa = 10 THEN --Pacote de tarifas
+			    WHEN pr_tptransa = 10 THEN --Pacote de tarifas
 						OPEN cr_pactar;
 						FETCH cr_pactar INTO rw_pactar;
 								 
@@ -2525,7 +2527,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 											'</b> no valor de <b>R$ '||
 											TO_CHAR(rw_tbrecarga_trans_pend.vlrecarga,'fm9g999g990d00') || 
 											'</b>.<br>';
-											
+					
 			  WHEN pr_tptransa = 16 THEN -- SMS cobrança          
           pr_dsdmensg := pr_dsdmensg || 'Adesão ao serviço de SMS de Cobrança';
         WHEN pr_tptransa = 17 THEN -- Cancelamento SMS cobrança          
@@ -2609,7 +2611,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
     vr_auxditem gene0002.typ_split;
     -- Rowid tabela de log
     vr_nrdrowid ROWID;
-	  
+
     --Variaveis de Erro
     vr_cdcritic crapcri.cdcritic%TYPE;
     vr_dscritic VARCHAR2(4000);
@@ -2860,7 +2862,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                     --Levantar Excecao
                     RAISE vr_exc_erro;
             END;
-			      
+			
             IF rw_tbgen_trans_pend.tptransacao = 13 THEN
               
               OPEN cr_tbrecarga_trans_pend(pr_cddoitem => vr_cddoitem);
@@ -3273,13 +3275,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
     --
     ---------------------------------------------------------------------------------------------------------------
     BEGIN
-      DECLARE
-      -- Variáveis
-      vr_cdcritic crapcri.cdcritic%TYPE := 0;
-      vr_dscritic crapcri.dscritic%TYPE := '';
-      vr_exec_saida EXCEPTION;
-      vr_cdtranpe tbgen_trans_pend.cdtransacao_pendente%TYPE;
-      vr_tab_crapavt CADA0001.typ_tab_crapavt_58; --Tabela Avalistas    
+    DECLARE
+    -- Variáveis
+    vr_cdcritic crapcri.cdcritic%TYPE := 0;
+    vr_dscritic crapcri.dscritic%TYPE := '';
+    vr_exec_saida EXCEPTION;
+    vr_cdtranpe tbgen_trans_pend.cdtransacao_pendente%TYPE;
+    vr_tab_crapavt CADA0001.typ_tab_crapavt_58; --Tabela Avalistas    
 
     BEGIN
     
@@ -4497,7 +4499,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       ROLLBACK; 
   END pc_cria_trans_pend_folha;
 
-   PROCEDURE pc_cria_trans_pend_pacote_tar (pr_cdagenci  IN crapage.cdagenci%TYPE                      --> Codigo do PA
+  PROCEDURE pc_cria_trans_pend_pacote_tar (pr_cdagenci  IN crapage.cdagenci%TYPE                      --> Codigo do PA
 																					,pr_nrdcaixa  IN craplot.nrdcaixa%TYPE                      --> Numero do Caixa
 																					,pr_cdoperad  IN crapope.cdoperad%TYPE                      --> Codigo do Operados
 																					,pr_nmdatela  IN craptel.nmdatela%TYPE                      --> Nome da Tela
@@ -5032,6 +5034,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                  ,pr_cdagenci => pr_cdagenci  --Agencia do Associado
                                  ,pr_tpoperac => 0            --Tipo de Operacao (0=todos)
                                  ,pr_inpessoa => 2            --Tipo de Pessoa
+                                 ,pr_idagenda => 0            --Tipo de agendamento
+                                 ,pr_cdtiptra => 0            --Tipo de transferencia
                                  ,pr_tab_limite => vr_tab_limite --Tabelas de retorno de horarios limite
                                  ,pr_cdcritic => vr_cdcritic    --Código do erro
                                  ,pr_dscritic => vr_dscritic);  --Descricao do erro
@@ -5217,7 +5221,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
      WHEN OTHERS THEN
        pr_dscritic := 'Erro no procedimento INET0002.pc_obtem_rowid_folha: ' || SQLERRM;      
    END pc_obtem_rowid_folha; 
-         
+      
    PROCEDURE pc_busca_trans_pend(pr_cdcooper IN  crapcop.cdcooper%TYPE --> Código da Cooperativa
                                 ,pr_nrdconta IN  crapass.nrdconta%TYPE --> Numero conta
                                 ,pr_idseqttl IN  crapsnh.idseqttl%TYPE --> Sequencia de Titularidade
@@ -5258,12 +5262,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 							               (Adriano).
                              
                  29/06/2016 - Utilizar rotina generico para busca registro na craptab
-                              (Adriano).             
-
+                              (Adriano).
+                 
                  19/07/2016 - Ajustes para o Prj. 338 - Pagamento de DARF/DAS (Jean Michel).             
 
-	               04/08/2016 - Ajustes realizado na tela conforme solicitado no chamado
-                              442860 (Kelvin).
+                 04/08/2016 - Ajustes realizado na tela conforme solicitado no chamado
+                              442860 (Kelvin).             
 
                  02/09/2016 - Ajustada para retornar os aprovadores da transação que
                               está sendo consultada., SD 514239 (Jean Michel).                          
@@ -5517,7 +5521,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       WHERE  tbfolha_trans_pend.cdtransacao_pendente = pr_cddoitem
         AND  tbfolha_trans_pend.dtdebito BETWEEN pr_dtiniper AND pr_dtfimper;
       rw_tbfolha_trans_pend cr_tbfolha_trans_pend%ROWTYPE;
-
+           
       --Tipo Transacao 10 - Cursor para buscar a transação de adesão de pacote de tarifa pendente
 			CURSOR cr_pactar (pr_cdtranpe IN tbtarif_pacote_trans_pend.cdtransacao_pendente%TYPE)IS
 			  SELECT tpend.vlpacote
@@ -5668,7 +5672,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
          WHERE cdtransacao_pendente = pr_cdtransa;
 
       rw_tbaprova_rep cr_tbaprova_rep%ROWTYPE;
-
+		
       --> Contrato de SMS - Transacao 16
       CURSOR cr_sms_trans_pend (pr_cdtransa IN tbcobran_sms_trans_pend.cdtransacao_pendente%TYPE) IS
         SELECT pen.vlservico
@@ -5824,13 +5828,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       --Folha de Pagamento
       vr_nrqtlnac VARCHAR2(100);
       vr_solestou VARCHAR2(100);
-
-      -- Pacote de tarifas
+			
+			-- Pacote de tarifas
 			vr_dspacote VARCHAR2(100);
 			vr_vlpacote VARCHAR2(100);
 			vr_dtdiadeb VARCHAR2(100);
 			vr_dtinivig VARCHAR2(100);
-
+        
       --DARF/DAS
       vr_tpcaptura INTEGER := 0;
       vr_dstipcapt VARCHAR2(50);
@@ -5847,7 +5851,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       vr_vlreceita_bruta tbpagto_darf_das_trans_pend.vlreceita_bruta%TYPE; -- Receita Bruta Acumulada  (retornar se estiver preenchido)
       vr_vlpercentual tbpagto_darf_das_trans_pend.vlpercentual%TYPE;       -- Percentual (retornar se estiver preenchido)
       vr_idagendamento tbpagto_darf_das_trans_pend.idagendamento%TYPE;     -- Indicador de Agendamento     
-      
+
       -- Desconto de Cheques
       vr_vltotchq VARCHAR2(100);
       vr_qtcheque INTEGER := 0;
@@ -6195,7 +6199,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                                      ,pr_dtiniper => pr_dtiniper
                                                      ,pr_dtfimper => pr_dtfimper
                                                      ,pr_insittra => pr_insittra) LOOP
-                  
+      
          --Zerando Variaveis
          vr_indiacao := 0;   vr_cddbanco := 0;   vr_vlasomar := 0;   vr_vlaplica := 0;   vr_vllanaut := 0;
          vr_cdcopdes := ' '; vr_nrcondes := ' '; vr_dtdebito := ' '; vr_nmcednte := ' '; vr_nrcodbar := ' ';
@@ -6214,7 +6218,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
          vr_tpcaptura := 0; vr_dstipcapt := ''; vr_dsnomfone := ''; vr_dscod_barras := ''; vr_dslinha_digitavel := '';
          vr_dtapuracao := null; vr_cdtributo := '0'; vr_nrrefere := 0; vr_vlprincipal := 0; vr_vlmulta := 0; vr_vljuros := 0;
          vr_vlrtotal := 0; vr_vlreceita_bruta := 0; vr_vlpercentual := 0; vr_idagendamento := 0; 
-
+         
          --Atribuicao de variaveis genericas
          vr_tptranpe := rw_tbgen_trans_pend.tptransacao;
          vr_cdtranpe := rw_tbgen_trans_pend.cdtransacao_pendente;
@@ -6324,7 +6328,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                     END IF;
 
                  END IF;
-                 
+
                  OPEN cr_crapcop (pr_cdagectl => rw_tbtransf_trans_pend.cdagencia_coop_destino);
                  FETCH cr_crapcop INTO rw_crapcop;
 
@@ -6573,7 +6577,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                        CONTINUE;
                     END IF;
                  END IF;
-                 
+                
                  vr_tpopeapl := rw_tbcapt_trans_pend.tpoperacao; -- Tipo de Operacao (da Aplicacao)
                  vr_nraplica := rw_tbcapt_trans_pend.nraplicacao; --Número da Aplicacao
                  vr_tpagenda := rw_tbcapt_trans_pend.tpagendamento; --Tipo do Agendamento: 
@@ -6700,7 +6704,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                vr_dsdtefet := TO_CHAR(TO_DATE(LPAD(NVL(rw_tbcapt_trans_pend.nrdia_agendamento,1),2,0) || '/' || to_CHAR(ADD_MONTHS(pr_dtmvtolt,1),'mm/RRRR'),'dd/mm/RRRR'),'DD/MM/RRRR');
                             END IF;                    
                           END IF;
-
+                          
                           IF to_date(vr_dsdtefet,'dd/mm/rrrr') NOT BETWEEN pr_dtiniper AND pr_dtfimper THEN
                             CONTINUE;                                                               
                           END IF;
@@ -6743,7 +6747,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                               
                               EXIT;
                           END LOOP; 
-
+                          
                           IF to_date(vr_dsdtefet,'dd/mm/rrrr') NOT BETWEEN pr_dtiniper AND pr_dtfimper THEN
                             CONTINUE;                                                               
                           END IF;                    
@@ -6797,7 +6801,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                              vr_dsdtefet := TO_CHAR(vr_tab_agen_det(vr_nrindice).dtmvtopg,'DD/MM/RRRR'); -- Data efetivacao                               
                              
                              EXIT;
-                          END LOOP;  
+                          END LOOP;
                           
                           IF to_date(vr_dsdtefet,'dd/mm/rrrr') NOT BETWEEN pr_dtiniper AND pr_dtfimper THEN
                             CONTINUE;                                                               
@@ -6824,7 +6828,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                        CONTINUE;
                     END IF;
                  END IF;
-                 
+                
                  vr_tpopconv := rw_tbconv_trans_pend.tpoperacao;
                  
                  IF rw_tbconv_trans_pend.tpoperacao = 1 THEN --Autorizacao Debito Automatico
@@ -6922,7 +6926,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                  vr_solestou := CASE WHEN rw_tbfolha_trans_pend.idestouro = 0 THEN 'NÃO' ELSE 'SIM' END; --Solicitado Estouro
                  vr_vltarifa := TO_CHAR(rw_tbfolha_trans_pend.vltarifa,'fm999g999g990d00'); --Valor da Tarifa
 
-            WHEN vr_tptranpe = 10 THEN --Pacote de tarifas
+						WHEN vr_tptranpe = 10 THEN --Pacote de tarifas
 							
 						     OPEN cr_pactar(vr_cdtranpe);
 								 FETCH cr_pactar INTO rw_pactar;
@@ -6953,7 +6957,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 								 vr_vlpacote := to_char(rw_pactar.vlpacote,'fm999g999g990d00');
 								 vr_dspacote := rw_pactar.dspacote;
 								 vr_dtinivig := to_char(rw_pactar.dtinivig, 'dd/mm/rrrr');
-								 vr_dtdiadeb := rw_pactar.dtdiadeb;     
+								 vr_dtdiadeb := rw_pactar.dtdiadeb;
             
             WHEN vr_tptranpe = 11 THEN -- DARF/DAS                 
                OPEN cr_tbpagto_darf_das_trans_pend (pr_cddoitem => vr_cdtranpe);
@@ -6962,7 +6966,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                   --Fechar Cursor
                   CLOSE cr_tbpagto_darf_das_trans_pend;
                   CONTINUE;
-               ELSE
+            ELSE
                   --Fechar Cursor
                   CLOSE cr_tbpagto_darf_das_trans_pend;
 				          --Controle de paginação
@@ -7011,7 +7015,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                vr_dtdebito        := TO_CHAR(rw_tbpagto_darf_das_trans_pend.dtdebito,'DD/MM/RRRR');
                vr_idagendamento   := NVL(rw_tbpagto_darf_das_trans_pend.idagendamento,0); 
                vr_vlasomar        := vr_vlrtotal;            
-            
+
 			WHEN vr_tptranpe = 12 THEN --Desconto de cheque
 							
 			 OPEN cr_tbdscc_trans_pend(vr_cdtranpe);
@@ -7093,7 +7097,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                 --Fechar Cursor
                 CLOSE cr_sms_trans_pend;
                 CONTINUE;            
-            ELSE
+              ELSE
                 CLOSE cr_sms_trans_pend;
               END IF;
               
@@ -7306,7 +7310,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
             || '<dados_campo><label>Solicitado Estouro</label><valor>'       ||vr_solestou||'</valor></dados_campo>'
             || '<dados_campo><label>Data de Débito</label><valor>'           ||vr_dsdtefet||'</valor></dados_campo>'
             || '<dados_campo><label>Valor da Tarifa</label><valor>'          ||vr_vltarifa||'</valor></dados_campo>';
-		     ELSIF vr_tptranpe = 10 THEN --Pacote de Tarifas
+				ELSIF vr_tptranpe = 10 THEN --Pacote de Tarifas
             vr_xml_auxi := vr_xml_auxi
             || '<dados_campo><label>Serviço</label><valor>'           ||vr_dspacote||'</valor></dados_campo>'
             || '<dados_campo><label>Valor</label><valor>'             ||vr_vlpacote||'</valor></dados_campo>'
@@ -7317,9 +7321,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
             vr_xml_auxi := vr_xml_auxi || '<dados_campo><label>Tipo de Captura</label><valor>'||vr_dstipcapt||'</valor></dados_campo>';
             
             IF TRIM(vr_dsdescri) IS NOT NULL THEN
-              vr_xml_auxi := vr_xml_auxi || '<dados_campo><label>Identificação do Pagamento</label><valor>'||vr_dsdescri||'</valor></dados_campo>';
+              vr_xml_auxi := vr_xml_auxi || '<dados_campo><label>Identificação do Pagamento</label><valor>'||vr_dsdescri||'</valor></dados_campo>';         
             END IF;
-            
+         
             IF TRIM(vr_dsnomfone) IS NOT NULL THEN
               vr_xml_auxi := vr_xml_auxi|| '<dados_campo><label>Nome e Telefone</label><valor>'||vr_dsnomfone||'</valor></dados_campo>';
             END IF;
@@ -7360,7 +7364,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
             vr_xml_auxi := vr_xml_auxi
             || '<dados_campo><label>Valor Total</label><valor>'          ||vr_vltotchq||'</valor></dados_campo>'
             || '<dados_campo><label>Quantidade de Cheques</label><valor>'||vr_qtcheque||'</valor></dados_campo>';
-            
+         
          ELSIF vr_tptranpe = 13 THEN -- Recarga de Celular
             vr_xml_auxi := vr_xml_auxi
             || '<dados_campo><label>Valor</label><valor>'                   ||vr_vlrecarga||'</valor></dados_campo>'
@@ -7373,11 +7377,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
             vr_xml_auxi := vr_xml_auxi            
             || '<dados_campo><label>Serviço</label><valor>'  || rw_sms_trans_pend.dspacote ||'</valor></dados_campo>'
             || '<dados_campo><label>Início</label><valor>'   || to_char(rw_sms_trans_pend.dtassinatura,'DD/MM/RRRR')      ||'</valor></dados_campo>';
-         END IF;
+		 END IF;
          
          vr_xml_auxi := vr_xml_auxi || '</dados_detalhe>';
          
-				 vr_xml_auxi := vr_xml_auxi || '<aprovadores>';
+         vr_xml_auxi := vr_xml_auxi || '<aprovadores>';
          vr_nmagenda := '';
 
          FOR rw_tbaprova_rep IN cr_tbaprova_rep (pr_cdtransa  => vr_cdtranpe) LOOP
@@ -7388,7 +7392,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
              IF vr_tab_crapavt(vr_ind).nrcpfcgc = rw_tbaprova_rep.cpf_responsavel THEN
                vr_nmagenda := vr_tab_crapavt(vr_ind).nmdavali;
                EXIT;
-             END IF;
+         END IF;
              vr_ind := vr_tab_crapavt.NEXT(vr_ind);
            END LOOP;
 
@@ -7399,7 +7403,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
          END LOOP;
          
          vr_xml_auxi := vr_xml_auxi || '</aprovadores><bordero>';	
-
+         
          IF vr_tptranpe = 12 THEN -- Desconto de Cheques
            FOR rw_tbdscc_cheques IN cr_tbdscc_cheques(vr_cdtranpe) LOOP
              vr_xml_auxi := vr_xml_auxi || '<cheque>' ||
@@ -7420,8 +7424,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
          gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
                                 ,pr_texto_completo => vr_xml_temp 
                                 ,pr_texto_novo     => vr_xml_auxi);
-                           
-			END LOOP;
+         
+      END LOOP;
       --Fim loop de transacoes
       
       --Montar Tag de fechamento das transacoes pendentes
@@ -8703,7 +8707,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');                                                   
   END pc_carrega_ttl_internet_web; 
-
+    
   PROCEDURE pc_cria_trans_pend_recarga(pr_cdagenci  IN crapage.cdagenci%TYPE -- Cód. Agência
 																		  ,pr_nrdcaixa  IN craplot.nrdcaixa%TYPE -- Nr. do caixa
 																			,pr_cdoperad  IN crapope.cdoperad%TYPE -- Cód. operador

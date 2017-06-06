@@ -3,7 +3,7 @@
 	
 	  Fonte: form.php                                               
 	  Autor: Renato Darosci                                                  
-	  Data : Mai/2015                       Última Alteração: 19/01/2017
+	  Data : Mai/2015                       Última Alteração: 12/05/2017
 
 	  Objetivo  : Mostrar os campos do formulario
 
@@ -12,6 +12,8 @@
 
 				  19/01/2017 - Adicionado novo limite de horario para pagamento no dia
 							   para contas da cooperativa. (M342 - Kelvin)
+							   
+				  12/05/2017 - Segunda fase da melhoria 342 (Kelvin). 
 	***********************************************************************/	
 	?>
 	
@@ -170,6 +172,43 @@
 						</table>
 					</fieldset>
 				</td>
+			</tr>
+			<tr>
+				<td style="width:95%;" align="center">
+					<fieldset style="width:95%;" >
+						<legend align="left"><? echo 'Transferência Tipo Salário' ?></legend>
+						<table style="width:95%;" >							
+							<tr>
+								<td class="txtNormalBold" style="width:40%;text-align:right;">
+									<label for="dsvlrprm_23" align="right" style="width:100%;">Habilita Transferência:</label>
+								</td>
+								<td>
+									<select name="dsvlrprm" id="dsvlrprm_23" class="campo" style="width:57px">
+										<option value="1">Sim</option>
+										<option value="0">Não</option>				
+									</select>
+								</td>								
+							</tr>
+							<tr>
+								<td class="txtNormalBold" style="text-align:right;"> 
+									<label for="dsvlrprm_24" align = "right" style="width:100%;">Horário Limite (transf no dia)</label>
+								</td>
+								<td>
+									<input type="text" class="campo" id="dsvlrprm_24" name="dsvlrprm" size="4" maxlength = "5" style="text-align:center;"/>
+								</td>
+								<td class="txtNormalBold" style="width:40%;text-align:right;">
+									<label for="dsvlrprm_25" align="right" style="width:100%;">Tarifa:</label>
+								</td>
+								<td>
+									<select name="dsvlrprm" id="dsvlrprm_25" class="campo">
+										<option value="1">Sim</option>
+										<option value="0">Isento</option>				
+									</select>
+								</td>
+							</tr>
+						</table>
+					</fieldset>					
+				</td>				
 			</tr>
 		</table>
 	<!--/fieldset-->

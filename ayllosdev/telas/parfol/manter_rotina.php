@@ -2,7 +2,7 @@
 	/*********************************************************************
 	 Fonte: manter_rotina.php                                                 
 	 Autor: Renato Darosci                                                   
-	 Data : Mai/2015                Última Alteração: 19/01/2017
+	 Data : Mai/2015                Última Alteração: 12/05/2017
 	                                                                  
 	 Objetivo  : Tratar as requisicoes da tela PARFOL                                 
 	                                                                  
@@ -16,6 +16,8 @@
 				
 				 19/01/2017 - Adicionado novo limite de horario para pagamento no dia
 							   para contas da cooperativa. (M342 - Kelvin)
+				 
+				 12/05/2017 - Segunda fase da melhoria 342 (Kelvin).
 	**********************************************************************/
 	
 	session_start();
@@ -53,6 +55,9 @@
 	$dsvlrprm20= $_POST["dsvlrprm20"];
 	$dsvlrprm21= $_POST["dsvlrprm21"];
 	$dsvlrprm22= $_POST["dsvlrprm22"];
+	$dsvlrprm23= $_POST["dsvlrprm23"];
+	$dsvlrprm24= $_POST["dsvlrprm24"];
+	$dsvlrprm25= $_POST["dsvlrprm25"];
 	
     // Verifica Permissão
 	if (($msgError = validaPermissao($glbvars["nmdatela"],"","A")) <> "") {
@@ -91,6 +96,9 @@
 	$xml .= "    <dsvlrprm20>".$dsvlrprm20."</dsvlrprm20>"; 
 	$xml .= "    <dsvlrprm21>".$dsvlrprm21."</dsvlrprm21>"; 
 	$xml .= "    <dsvlrprm22>".$dsvlrprm22."</dsvlrprm22>"; 
+	$xml .= "    <dsvlrprm23>".$dsvlrprm23."</dsvlrprm23>";
+	$xml .= "    <dsvlrprm24>".$dsvlrprm24."</dsvlrprm24>";
+	$xml .= "    <dsvlrprm25>".$dsvlrprm25."</dsvlrprm25>";
 	$xml .= "  </Dados>";
 	$xml .= "</Root>";
 		
@@ -125,6 +133,10 @@
 				case 22:
 					$dsComand = 'Cdsvlrprm22.focus();Cdsvlrprm22.addClass(\'campoErro\');';
 					$msgErro  = 'Hora de Pagto no dia (contas cooperativa) informada &eacute; inv&aacute;lida!';
+					break;
+				case 24:
+					$dsComand = 'Cdsvlrprm24.focus();Cdsvlrprm24.addClass(\'campoErro\');';
+					$msgErro  = 'Hora de Limite (transf no dia) informada &eacute; inv&aacute;lida!';
 					break;
 				case 51:
 					$dsComand = 'Cdsvlrprm5.focus();Cdsvlrprm5.addClass(\'campoErro\');';
@@ -224,6 +236,10 @@
 					break;
 				case 115:
 					$dsComand = 'Cdsvlrprm22.focus();Cdsvlrprm22.addClass(\'campoErro\');';
+					$msgErro  = 'Hor&aacute;rio informado deve estar dentro do hor&aacute;rio limite de transfer&ecirc;ncia para Internet.';
+					break;
+				case 116:
+					$dsComand = 'Cdsvlrprm24.focus();Cdsvlrprm24.addClass(\'campoErro\');';
 					$msgErro  = 'Hor&aacute;rio informado deve estar dentro do hor&aacute;rio limite de transfer&ecirc;ncia para Internet.';
 					break;
 				default:
