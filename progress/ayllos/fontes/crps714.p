@@ -158,7 +158,7 @@ DO:
     
     UNIX SILENT VALUE("echo " + STRING(today,"99/99/9999") +
               " " +  STRING(TIME,"HH:MM:SS") +
-              "' --> ' Conta Cartao: " + string(aux_nrcartao) + 
+              "' --> 'Conta: " + string(aux_nrdconta) + " - Conta Cartao: " + string(aux_nrcartao) + 
               ": '" + aux_dscritic + "'" +
               " >> " + aux_nmarqlog ).      
     RETURN "NOK". 

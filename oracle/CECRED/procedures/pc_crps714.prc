@@ -69,31 +69,25 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps714 (pr_cdcooper IN crapcop.cdcooper%T
      WHERE wcrd.cdcooper = pr_cdcooper
        AND wcrd.nrdconta = pr_nrdconta
        AND wcrd.nrcctitg = pr_nrcartao /* Conta Cartão */
-       AND wcrd.cdadmcrd BETWEEN 10 AND 80 /* Bancoob */
-    UNION 
+       AND wcrd.cdadmcrd BETWEEN 10 AND 80; /* Bancoob */
+       
+  --> Verificar se existe cartao cadastrado - tabela relacionamento
+  CURSOR cr_tbcrd_conta_cartao (pr_cdcooper crapass.cdcooper%TYPE,
+                                pr_nrdconta crapass.nrdconta%TYPE,
+                                pr_nrcartao NUMBER)  IS  
     SELECT 1
       FROM tbcrd_conta_cartao crd
      WHERE crd.cdcooper = pr_cdcooper
        AND crd.nrdconta = pr_nrdconta
-       AND crd.nrconta_cartao = pr_nrcartao;
-  
-  --> Buscar codigo da adm do cartao
-  CURSOR cr_crapadc (pr_cdcooper crapadc.cdcooper%TYPE, 
-                     pr_nmadmcrd crapadc.nmadmcrd%TYPE )IS    
-    SELECT adc.cdadmcrd
-      FROM crapadc adc
-     WHERE adc.cdcooper = pr_cdcooper
-       AND upper(adc.nmadmcrd) LIKE '%'||pr_nmadmcrd||'%'
-       AND upper(nmadmcrd) not like '%DEBITO%';
-  rw_crapadc cr_crapadc%rowtype;
-  
+       AND crd.nrconta_cartao = pr_nrcartao;  
   
   --> Verificar se cessão foi criada
   CURSOR cr_cessao (pr_cdcooper tbcrd_cessao_credito.cdcooper%TYPE,
                     pr_nrdconta tbcrd_cessao_credito.nrdconta%TYPE,      
                     pr_nrcartao tbcrd_cessao_credito.nrconta_cartao%TYPE,
                     pr_dtvencto tbcrd_cessao_credito.dtvencto%TYPE,
-                    pr_dtmvtolt crapepr.dtmvtolt%TYPE)IS
+                    pr_dtmvtolt crapepr.dtmvtolt%TYPE,
+                    pr_vlemprst crapepr.vlemprst%TYPE)IS
     SELECT epr.vlemprst
       FROM tbcrd_cessao_credito ces
       JOIN crapepr epr
@@ -104,7 +98,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps714 (pr_cdcooper IN crapcop.cdcooper%T
        AND ces.nrdconta       = pr_nrdconta
        AND ces.nrconta_cartao = pr_nrcartao
        AND ces.dtvencto       = pr_dtvencto
-       and epr.dtmvtolt       = pr_dtmvtolt;
+       AND epr.dtmvtolt       = pr_dtmvtolt
+       AND epr.vlemprst       = pr_vlemprst;
   rw_cessao cr_cessao%ROWTYPE;
   
   rw_crapdat btch0001.cr_crapdat%ROWTYPE;
@@ -120,6 +115,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps714 (pr_cdcooper IN crapcop.cdcooper%T
   vr_dscomand     VARCHAR2(2000);
   vr_typ_saida    VARCHAR2(4000); 
   
+  -- Nome do arquivo de log
+  vr_nmarqlog     VARCHAR2(500);
+  vr_nmlogtmp     VARCHAR2(500);
+  
   -- Nome do diretorio da cooperativa  
   vr_dsdirarq     VARCHAR2(500);
   
@@ -132,8 +131,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps714 (pr_cdcooper IN crapcop.cdcooper%T
   vr_nrexiste     INTEGER;
   vr_dtvencto     DATE;
   vr_dtvencto_ori DATE;
-  vr_nrctremp     crapepr.nrctremp%TYPE;
-  vr_nmadmcrd     VARCHAR2(100);
+  vr_cdadmcrd     NUMBER;
+  vr_cdadmcrd_bcb NUMBER;
   vr_lsdparam     VARCHAR2(4000);
   vr_dsscript     VARCHAR2(4000);
   
@@ -166,13 +165,35 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps714 (pr_cdcooper IN crapcop.cdcooper%T
     btch0001.pc_gera_log_batch (pr_cdcooper     => pr_cdcooper, 
                                 pr_ind_tipo_log => 1, 
                                 pr_des_log      => vr_dscritic, 
-                                pr_nmarqlog     => vr_nmarqimp,                                 
+                                pr_nmarqlog     => vr_nmlogtmp,                                 
                                 pr_flfinmsg     => 'N', 
                                 pr_dsdirlog     => vr_dsdirarq);
   
   
   END pc_gera_log;
   
+  /* Procedimento para o DE-PARA dos codigos de tipo de cartao.
+     Avaliar possibilidade de inclusao desses codigos na tela ADMCRD */
+  PROCEDURE pc_tipo_cartao(pr_cdtipocartao IN NUMBER
+                          ,pr_cdadmcrd    OUT crawcrd.cdadmcrd%TYPE) IS
+    vr_cdcartao NUMBER;
+  BEGIN    
+    --> O codigo do tipo do cartao esta nas 3 primeiras posicoes.
+    vr_cdcartao := substr(pr_cdtipocartao,0,3);
+    pr_cdadmcrd := case vr_cdcartao      
+                      when 950 then 16 --> CECRED MASTERCARD DEBITO BANCOOB 
+                      when 951 then 12 --> CECRED MASTERCARD CLASSICO BANCOOB
+                      when 952 then 13 --> CECRED MASTERCARD GOLD BANCOOB
+                      when 953 then 15 --> CECRED MASTERCARD EMPRESAS BANCOOB
+                      when 954 then 17 --> CECRED MASTERCARD EMPRESAS DEBITO BANCOOB      
+                      when 955 then 14 --> CECRED MASTERCARD PLATINUM BANCOOB
+                      when 756 then 11 --> CECRED CABAL ESSENCIAL BANCOOB
+                      else 0
+                    end;
+  EXCEPTION
+    WHEN OTHERS THEN
+        pr_cdadmcrd := 0;
+  END pc_tipo_cartao;    
   
 BEGIN
 
@@ -208,7 +229,12 @@ BEGIN
     RAISE vr_exc_saida;  
   END IF;
   
-  vr_nmarqimp := to_char(SYSDATE,'RRRRMMDD');
+  --> Nome do arquivo csv para importacao
+  vr_nmarqimp := to_char(SYSDATE,'RRRRMMDD');  
+  --> Nome do arquivo de log temporario
+  vr_nmlogtmp := to_char(SYSDATE,'RRRRMMDD')||'temp';  
+  --> Nome do arquivo de log oficial
+  vr_nmarqlog := to_char(SYSDATE,'RRRRMMDD')||'_'||to_char(SYSDATE, 'hh24miss');
   
   gene0001.pc_lista_arquivos(pr_path     => vr_dsdirarq||'/Importar/', 
                              pr_pesq     => vr_nmarqimp||'.csv', 
@@ -260,11 +286,13 @@ BEGIN
 
   --> Inicializa variaveis totalizadoras
   vr_qtlinha := 0;
-  vr_vltotal := 0;  
+  vr_vltotal := 0;
+  vr_nrdconta := 0;
   
   --> ler linhas do arquivo
   FOR vr_idx IN vr_tab_linhas.first..vr_tab_linhas.last LOOP
     BEGIN
+      vr_nrdconta := 0;
       --> Ignorar Header 
       IF vr_idx = 1 THEN
         continue;
@@ -281,13 +309,24 @@ BEGIN
       vr_nrdconta := vr_tab_linhas(vr_idx)('NRDCONTA').NUMERO;
       vr_nrcartao := vr_tab_linhas(vr_idx)('NRCARTAO').NUMERO;
       vr_vldevido := vr_tab_linhas(vr_idx)('VLDEVIDO').NUMERO;
-      vr_nmadmcrd := vr_tab_linhas(vr_idx)('TPCARTAO').TEXTO;
+      vr_cdadmcrd_bcb := vr_tab_linhas(vr_idx)('TPCARTAO').NUMERO;
       vr_dtvencto_ori := vr_tab_linhas(vr_idx)('DTVENCTO').DATA;
-      
       
       -- Caso valor for negativo
       IF vr_vldevido < 0 THEN
         vr_dscritic := 'Valor negativo não permitido.';
+        RAISE vr_exc_prox;
+      END IF;
+      
+      -- Caso valor estiver zerado
+      IF vr_vldevido = 0 THEN
+        vr_dscritic := 'Valor zerado não permitido.';
+        RAISE vr_exc_prox;
+      END IF;
+      
+      -- Caso a data de vencimento esteja vazia
+      IF vr_dtvencto_ori IS NULL THEN
+        vr_dscritic := 'Data de Vencimento nula não permitido.';
         RAISE vr_exc_prox;
       END IF;
       
@@ -307,7 +346,7 @@ BEGIN
       FETCH cr_crapass INTO rw_crapass;
       IF cr_crapass%NOTFOUND THEN
         CLOSE cr_crapass;
-        vr_dscritic := 'Cooperado não encontrado nrdconta: '||vr_nrdconta;
+        vr_dscritic := 'Cooperado não encontrado';
         RAISE vr_exc_prox;
       END IF;
       CLOSE cr_crapass;
@@ -319,11 +358,22 @@ BEGIN
       FETCH cr_crawcrd INTO vr_nrexiste;
       IF cr_crawcrd%NOTFOUND THEN
         CLOSE cr_crawcrd;
-        vr_dscritic := 'Cartão '||vr_nrcartao||' não encontrado para o cooperado '||vr_nrdconta;
+        vr_dscritic := 'Conta Cartão '||vr_nrcartao||' não encontrada';
         RAISE vr_exc_prox;
       END IF;
       CLOSE cr_crawcrd;            
       
+      --> Verificar se existe cartao cadastrado - tabela relacionamento
+      OPEN cr_tbcrd_conta_cartao (pr_cdcooper => rw_crapcop.cdcooper,
+                                  pr_nrdconta => rw_crapass.nrdconta,
+                                  pr_nrcartao => vr_nrcartao); 
+      FETCH cr_tbcrd_conta_cartao INTO vr_nrexiste;
+      IF cr_tbcrd_conta_cartao%NOTFOUND THEN
+        CLOSE cr_tbcrd_conta_cartao;
+        vr_dscritic := 'Relacionamento Conta Cartão '||vr_nrcartao||' não encontrada';
+        RAISE vr_exc_prox;
+      END IF;
+      CLOSE cr_tbcrd_conta_cartao;
       
       -- Leitura do calendário da cooperativa
       OPEN btch0001.cr_crapdat(pr_cdcooper => rw_crapcop.cdcooper);
@@ -349,23 +399,13 @@ BEGIN
       vr_dtvencto := rw_crapdat.dtmvtolt + 1;
       IF to_char(vr_dtvencto,'DD') >= 28 THEN
         vr_dtvencto := trunc(add_months(vr_dtvencto,1),'MM');
-      END IF; 
+      END IF;
       
-      vr_nmadmcrd := REPLACE(REPLACE(vr_nmadmcrd,chr(10)),chr(13));
-      vr_nmadmcrd := upper(gene0007.fn_caract_acento(vr_nmadmcrd));      
-      
-      rw_crapadc := NULL;
-      --> Buscar codigo da adm do cartao
-      OPEN cr_crapadc (pr_cdcooper => rw_crapcop.cdcooper,
-                       pr_nmadmcrd => vr_nmadmcrd);
-      FETCH cr_crapadc INTO rw_crapadc;
-      IF cr_crapadc%NOTFOUND THEN
-        CLOSE cr_crapadc;
-        vr_dscritic := 'Administradora de Cartão '||vr_nmadmcrd||' não encontrado.';
+      pc_tipo_cartao(vr_cdadmcrd_bcb, vr_cdadmcrd);
+      IF vr_cdadmcrd = 0 THEN
+        vr_dscritic := 'Administradora de Cartão '||vr_cdadmcrd_bcb||' não encontrada.';
         RAISE vr_exc_prox;
       END IF;
-      CLOSE cr_crapadc;
-      
       
       ----------------->> CHAMADA ROTINA PROGRESS <<----------------
       vr_lsdparam :=  rw_crapcop.cdcooper ||';'|| --> 'par_cdcooper' 
@@ -377,8 +417,8 @@ BEGIN
                       vr_cdfinali         ||';'|| --> 'par_cdfinemp' 
                       vr_nrcartao         ||';'|| 
                       to_char(vr_dtvencto_ori,'MMDDRRRR')     ||';'|| 
-                      rw_crapadc.cdadmcrd ||';'|| 
-                      vr_dsdirarq||'/'||vr_nmarqimp||'.log';
+                      vr_cdadmcrd         ||';'|| 
+                      vr_dsdirarq||'/'||vr_nmlogtmp||'.log';
       
       
       
@@ -393,8 +433,8 @@ BEGIN
       -- Se ocorreu erro dar RAISE
       IF vr_typ_saida = 'ERR' THEN        
         vr_dscritic:= 'Erro ao gerar cessao: '|| vr_dscritic;
-        pc_gera_log(pr_dscritic => 'linha: '||vr_idx||' -> '||vr_dscritic);
-      END IF; 
+        RAISE vr_exc_prox;
+      END IF;
   
       ----------------->> FIM CHAMADA ROTINA PROGRESS <<----------------
       
@@ -403,12 +443,14 @@ BEGIN
                       pr_nrdconta => rw_crapass.nrdconta,
                       pr_nrcartao => vr_nrcartao,
                       pr_dtvencto => vr_dtvencto_ori,
-                      pr_dtmvtolt => rw_crapdat.dtmvtolt);
+                      pr_dtmvtolt => rw_crapdat.dtmvtolt,
+                      pr_vlemprst => vr_vldevido);
       FETCH cr_cessao INTO rw_cessao;
       IF cr_cessao%NOTFOUND THEN
         vr_dscritic := 'Contrato de cessão de credito não foi criado';
-        pc_gera_log(pr_dscritic => 'linha: '||vr_idx||' -> '||vr_dscritic);
+        pc_gera_log(pr_dscritic => 'Linha: '||vr_idx||' Conta: '||vr_nrdconta||' -> '||vr_dscritic);
       ELSE
+        pc_gera_log(pr_dscritic => 'Linha: '||vr_idx||' Conta: '||vr_nrdconta||' -> Importada com sucesso!');
         vr_qtlinha := vr_qtlinha + 1;
         vr_vltotal := vr_vltotal + rw_cessao.vlemprst;
       END IF;
@@ -417,13 +459,17 @@ BEGIN
       
     EXCEPTION  
       WHEN vr_exc_prox THEN
-        pc_gera_log(pr_dscritic => 'linha: '||vr_idx||' -> '||vr_dscritic);
+        IF vr_nrdconta > 0 THEN
+          pc_gera_log(pr_dscritic => 'Linha: '||vr_idx||' Conta: '||vr_nrdconta||' -> '||vr_dscritic);
+        ELSE
+          pc_gera_log(pr_dscritic => 'Linha: '||vr_idx||' -> '||vr_dscritic);
+        END IF;
       WHEN OTHERS THEN
         vr_dscritic := 'Erro ao processar a linha '|| vr_idx ||': '||SQLERRM;
         pc_gera_log(pr_dscritic => vr_dscritic);
     END;
   END LOOP;
-  
+
   -- Montar Comando para mover o arquivo lido para o diretório importados
   vr_dscomand:= 'mv '|| vr_dsdirarq || '/Importar/' || vr_nmarqimp || '.csv ' ||
                  vr_dsdirarq || '/Importados/' || vr_nmarqimp || '_' || to_char(SYSDATE, 'hh24miss') ||'.csv ';
@@ -438,19 +484,42 @@ BEGIN
   IF vr_typ_saida = 'ERR' THEN        
     vr_dscritic:= 'Erro ao mover arquivo: '|| vr_dscritic;
     RAISE vr_exc_saida;
-  END IF;   
-  
-  
+  END IF;
   
   pc_gera_log(pr_dscritic => 'Final da importação do arquivo '||vr_nmarqimp||'.csv -'||
                              ' Quantidade de Empréstimos criados: '|| to_char(vr_qtlinha,'fm000') || 
-                             ' Valor Total: ' || to_char(vr_vltotal,'fm999g999g990d00') ););
-  
-  
-  ----------------- ENCERRAMENTO DO PROGRAMA -------------------
-  
-  -- Log de fim da execução
+                             ' Valor Total: ' || to_char(vr_vltotal,'fm999g999g990d00') );
+
+  --> Log de fim da execução
   pc_controla_log_batch('F');
+
+  --> Converte log temporario para log oficial (DOS)
+  vr_dscomand := 'ux2dos '|| vr_dsdirarq || '/' || vr_nmlogtmp || '.log > '
+                          || vr_dsdirarq || '/' || vr_nmarqlog || '.log';
+
+  -- Converter de UNIX para DOS o arquivo
+  GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                       ,pr_des_comando => vr_dscomand
+                       ,pr_typ_saida   => vr_typ_saida
+                       ,pr_des_saida   => vr_dscritic);
+
+  IF vr_typ_saida = 'ERR' THEN
+     -- O comando shell executou com erro, gerar log e sair do processo
+     vr_dscritic := 'Erro ao converter arquivo de log: ' || vr_dscritic;
+     RAISE vr_exc_saida;
+  END IF;
+  
+  --> Remove arquivo de log temporario
+  GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                       ,pr_des_comando => 'rm -f '|| vr_dsdirarq || '/' || vr_nmlogtmp || '.log'
+                       ,pr_typ_saida   => vr_typ_saida
+                       ,pr_des_saida   => vr_dscritic);
+
+  IF vr_typ_saida = 'ERR' THEN
+     -- O comando shell executou com erro, gerar log e sair do processo
+     vr_dscritic := 'Erro ao remover arquivo de log: ' || vr_dscritic;
+     RAISE vr_exc_saida;
+  END IF;
                  
   -- Salvar informações atualizadas
   COMMIT;
