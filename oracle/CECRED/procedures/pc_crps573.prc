@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Guilherme
-       Data    : Agosto/2010                       Ultima atualizacao: 06/01/2017
+       Data    : Agosto/2010                       Ultima atualizacao: 11/05/2017
 
        Dados referentes ao programa:
 
@@ -301,7 +301,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
 					24/02/2017 - Ajuste na tratativa do campo Ident, o qual estava verificando campos incorretos para
 					             informar a baixa do gravames (Daniel - Chamado: 615103) 
 
-                    13/04/2016 - Ajustes PRJ343 - Cessao de Credito (Odirlei-AMcom)
+				    08/03/2017 - Alteracao na regra de porte cliente juridico (Daniel - Chamado: 626161) 
+
+                    13/04/2016 - Ajustes PRJ343 - Cessao de Credito (Odirlei-AMcom)	 
+
+					11/05/2017 - Incluso tratativa para caracteristica especial 17 (Daniel - Chamado: 639510) 
 .............................................................................................................................*/
 
     DECLARE
@@ -536,6 +540,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                 ,cdsubmod
                 ,txjurfix
                 ,dsorgrec
+                ,cdusolcr
             FROM craplcr
            WHERE craplcr.cdcooper = pr_cdcooper;
 
@@ -932,7 +937,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
        RECORD(cdmodali craplcr.cdmodali%TYPE,
               cdsubmod craplcr.cdsubmod%TYPE,
               txjurfix craplcr.txjurfix%TYPE,
-              dsorgrec craplcr.dsorgrec%TYPE);	
+              dsorgrec craplcr.dsorgrec%TYPE,
+              cdusolcr craplcr.cdusolcr%TYPE);	
       TYPE typ_tab_craplcr IS
         TABLE OF typ_reg_craplcr
           INDEX BY PLS_INTEGER; -- Codigo da Linha
@@ -3277,9 +3283,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
       BEGIN  
         IF pr_fatanual <= 360000 THEN
           RETURN 1;
-        ELSIF pr_fatanual > 360000 AND pr_fatanual <= 3600000 THEN
+        ELSIF pr_fatanual > 360000 AND pr_fatanual <= 4800000 THEN
           RETURN 2;
-        ELSIF pr_fatanual > 3600000 AND pr_fatanual <= 300000000 THEN
+        ELSIF pr_fatanual > 4800000 AND pr_fatanual <= 300000000 THEN
           RETURN 3;
         ELSIF pr_fatanual > 300000000 THEN
           RETURN 4;
@@ -3579,6 +3585,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         vr_tab_craplcr(rw_craplcr.cdlcremp).cdsubmod := rw_craplcr.cdsubmod;
         vr_tab_craplcr(rw_craplcr.cdlcremp).txjurfix := rw_craplcr.txjurfix;
         vr_tab_craplcr(rw_craplcr.cdlcremp).dsorgrec := rw_craplcr.dsorgrec;
+        vr_tab_craplcr(rw_craplcr.cdlcremp).cdusolcr := rw_craplcr.cdusolcr;
       END LOOP;
       
       -- Processo responsavel em efetuar carga dos vencimentos inddocto = 1
@@ -3974,6 +3981,41 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                 END IF;
               END IF;
             END IF; --Não BNDES
+                        
+          IF vr_tab_individ(vr_idx_individ).dsinfaux = 'BNDES' THEN
+              
+              vr_ind_epr := lpad(vr_tab_individ(vr_idx_individ).nrdconta,10,'0')
+                         || lpad(vr_tab_individ(vr_idx_individ).nrctremp,10,'0');
+                         
+              
+			  IF vr_tab_crapebn.exists(vr_ind_epr) THEN
+			    IF vr_caracesp IS NULL THEN
+				  vr_caracesp := '17';
+          ELSE
+				  vr_caracesp := vr_caracesp || ';17';
+			    END IF;
+			  END IF;
+              
+            ELSE
+              -- Se existir crapepr
+              vr_ind_epr := lpad(vr_tab_individ(vr_idx_individ).nrdconta,10,'0')
+                         || lpad(vr_tab_individ(vr_idx_individ).nrctremp,10,'0');
+                           
+              -- Verifica se linha de microcredito
+              IF vr_tab_craplcr(vr_tab_crapepr(vr_ind_epr).cdlcremp).dsorgrec <> ' '
+                AND vr_tab_craplcr(vr_tab_crapepr(vr_ind_epr).cdlcremp).cdusolcr = 1  THEN
+                
+                IF vr_caracesp IS NULL THEN
+                  vr_caracesp := '17';
+                ELSE
+                  vr_caracesp := vr_caracesp || ';17';
+                END IF;
+                
+              END IF;  
+              
+            END IF;
+            
+            
           ELSE
             vr_cdmodali := vr_tab_individ(vr_idx_individ).cdmodali;
             vr_dsorgrec := '0199';
@@ -4174,10 +4216,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                                       || 'Valor="' || replace(to_char(vr_tab_crapepr(vr_ind_epr).vlemprst,'fm99999999999999990D00'),',','.')
                                                       || '"/>' || chr(10));
           ELSE          
-            -- Enviar informação adicional da operação
-            gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
-                                   ,pr_texto_completo => vr_xml_3040_temp
-                                   ,pr_texto_novo     => '            <Inf Tp="1001" Cd="2013-01-02" Ident="'||vr_idcpfcgc||'" '
+          -- Enviar informação adicional da operação
+          gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                 ,pr_texto_completo => vr_xml_3040_temp
+                                 ,pr_texto_novo     => '            <Inf Tp="1001" Cd="2013-01-02" Ident="'||vr_idcpfcgc||'" '
                                                     || 'Valor="' || replace(to_char(vr_vlrdivid,'fm99999999999999990D00'),',','.')
                                                     || '"/>' || chr(10));
           
