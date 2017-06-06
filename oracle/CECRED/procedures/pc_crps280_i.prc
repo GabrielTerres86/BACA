@@ -331,8 +331,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                               realizar a validação atráves do nível do risco.
                               
                  22/12/2016 - Alteracoes para melhorar a performance deste programa. SD 573847.
-                              (Carlos R. Tanholi)                              
-
+                              (Carlos R. Tanholi)  
+                              
                  22/02/2017 - Ajustes referente ao Prj.307 Automatização Arquivos Contábeis Ayllos 
                               Inclusão de informações no crrl227 e criçãode novos arquivos para o
                               Radar e Matera (Jonatas-Supero)   
@@ -433,7 +433,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
       vr_tab_contab    typ_tab_contab;
       -- Vetor auxiliar para guardar uma posição a mais
       vr_tab_contab_cessao    typ_tab_contab;
-
+      
 
       -- Registro para as informações copiadas da tabela crapris (Antigo w-crapris)
       TYPE typ_reg_crapris IS
@@ -462,7 +462,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
               ,cdusolcr craplcr.cdusolcr%TYPE
               ,dsorgrec craplcr.dsorgrec%TYPE
               ,dtinictr crapris.dtinictr%TYPE
-			  ,fleprces INTEGER);
+              ,fleprces INTEGER);
 
       -- Definição de um tipo de tabela com o registro acima
       TYPE typ_tab_crapris IS
@@ -1206,6 +1206,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
             vr_tab_contab(vr_vladtdep)(vr_divida)(idx).vladtdep := 0;
             vr_tab_contab(vr_vlchqesp)(vr_divida)(idx).vlchqesp := 0;
          END LOOP;
+		 vr_tab_contab_cessao(vr_vleprces)(vr_provis)(1).vlempres_pf := 0;
+         vr_tab_contab_cessao(vr_vleprces)(vr_provis)(2).vlempres_pj := 0;
+         vr_tab_contab_cessao(vr_vleprces)(vr_divida)(1).vlempres_pf := 0;
+         vr_tab_contab_cessao(vr_vleprces)(vr_divida)(2).vlempres_pj := 0;
       END;
 
       PROCEDURE pc_gera_arq_compe_mic(pr_dscritic OUT VARCHAR2) IS
@@ -3918,7 +3922,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                          ,pr_num_vlprpj => vr_tab_contab(vr_vlchqesp)(vr_provis)(2).vlchqesp
                          ,pr_num_vldvpf => vr_tab_contab(vr_vlchqesp)(vr_divida)(1).vlchqesp
                          ,pr_num_vldvpj => vr_tab_contab(vr_vlchqesp)(vr_divida)(2).vlchqesp);
-
+      
       
       -- Dados da cessao de credito
       -- Para cada informação, efetuar a chamada que monta a tag completa
@@ -3926,10 +3930,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                          ,pr_des_contab => 'Avais e Garantias Prestadas'
                          ,pr_num_valor1 => vr_vet_contabi.rel1760
                          ,pr_num_valor2 => vr_vet_contabi.rel1760_v
-                         ,pr_num_vlpvpf => vr_tab_contab_cessao(vr_vleprces)(vr_provis)(1).vlfinanc_pf
-                         ,pr_num_vlprpj => vr_tab_contab_cessao(vr_vleprces)(vr_provis)(2).vlfinanc_pj
-                         ,pr_num_vldvpf => vr_tab_contab_cessao(vr_vleprces)(vr_divida)(1).vlfinanc_pf
-                         ,pr_num_vldvpj => vr_tab_contab_cessao(vr_vleprces)(vr_divida)(2).vlfinanc_pj
+                         ,pr_num_vlpvpf => vr_tab_contab_cessao(vr_vleprces)(vr_provis)(1).vlempres_pf
+                         ,pr_num_vlprpj => vr_tab_contab_cessao(vr_vleprces)(vr_provis)(2).vlempres_pj
+                         ,pr_num_vldvpf => vr_tab_contab_cessao(vr_vleprces)(vr_divida)(1).vlempres_pf
+                         ,pr_num_vldvpj => vr_tab_contab_cessao(vr_vleprces)(vr_divida)(2).vlempres_pj
                          ,pr_flcessao   => 1);
                          
       -- FEchar a tag de contabilização
@@ -3981,7 +3985,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                             ||'  <vlsdeved_caixa>'||to_char(rw_reccaixa.vlsdeved,'fm999g999g999g990d00')||'</vlsdeved_caixa>'
                             ||'</reccaixa>';     
         END LOOP;
-        
+      
         vr_des_xml_gene := vr_des_xml_gene || '</tabreccaixa>';   
       END IF;
       

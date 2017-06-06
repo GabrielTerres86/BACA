@@ -97,7 +97,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps715 (pr_cdcooper IN crapcop.cdcooper%T
   --> Listar valore das cessoes por agencia, pessoa
   CURSOR cr_cessao (pr_cdcooper crapass.cdcooper%TYPE,
                     pr_dtultdma crapdat.dtultdma%TYPE) IS
-    SELECT lem.cdagenci
+    SELECT ass.cdagenci
           ,ass.inpessoa
           ,SUM(lem.vllanmto) vltotdiv
           ,row_number() OVER (PARTITION BY ass.inpessoa ORDER BY ass.inpessoa ) seqdreg
@@ -114,9 +114,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps715 (pr_cdcooper IN crapcop.cdcooper%T
        AND lem.dtmvtolt BETWEEN trunc(pr_dtultdma,'MM') AND pr_dtultdma  --mês do dtultdma
        AND lem.cdhistor IN (1038, 1037) --> Historicos de juros emprest. efinanc.
       --> Gerar linha com o somatorios
-      GROUP BY ROLLUP  (ass.inpessoa, lem.cdagenci) 
+      GROUP BY ROLLUP  (ass.inpessoa, ass.cdagenci) 
       --> Ordenar para linha de somatorio ser apresentada primeiro
-      ORDER BY ass.inpessoa, lem.cdagenci DESC; 
+      ORDER BY ass.inpessoa, ass.cdagenci DESC; 
       
       
   -- Cursor genérico de calendário
@@ -150,9 +150,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps715 (pr_cdcooper IN crapcop.cdcooper%T
   vr_dtvencto_ori DATE;
   vr_cdadmcrd     crapcrd.cdadmcrd%TYPE;
   vr_nrctremp     crapepr.nrctremp%TYPE;
-  
-  -- Data do movimento no formato yymmdd
-  vr_dtmvtolt_yymmdd     varchar2(6);
+
+  -- Data do movimento no formato texto
+  vr_dtultdma_util_yymmdd  varchar2(6);
+  vr_dtultdma_util_ddmmyy  varchar2(6);
+  vr_dtultdia_util_ddmmyy  varchar2(6);
     
   vr_lshistor     VARCHAR2(600);
   vr_dshistor     VARCHAR2(600);
@@ -171,7 +173,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps715 (pr_cdcooper IN crapcop.cdcooper%T
 
   --------------------------- SUBROTINAS INTERNAS --------------------------
 
-  vr_nomdojob    VARCHAR2(40) := 'JBEPR_CANCELA_PROPOSTA';
+  vr_nomdojob    VARCHAR2(40) := 'JBEPR_CONTABILIZA_CESSAO';
   vr_flgerlog    BOOLEAN := FALSE;
 
   --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
@@ -259,8 +261,11 @@ BEGIN
       END IF;
       
       -- Formata a data para criar o nome do arquivo
-      vr_dtmvtolt_yymmdd := to_char(rw_crapdat.dtmvtolt, 'yymmdd');
-      
+      vr_dtultdma_util_yymmdd  := to_char(gene0005.fn_valida_dia_util(pr_cdcooper,
+                                                                      rw_crapdat.dtultdma,
+                                                                      'A'), 'yymmdd');
+      vr_dtultdma_util_ddmmyy  := to_char(to_date(vr_dtultdma_util_yymmdd, 'yymmdd'),'DDMMRR');
+      vr_dtultdia_util_ddmmyy  := to_char(rw_crapdat.dtultdia, 'DDMMRR');
       --> Buscar valore da central de risco
       FOR rw_crapris IN cr_crapris (pr_cdcooper => rw_crapcop.cdcooper,
                                     pr_dtultdma => rw_crapdat.dtultdma) LOOP
@@ -273,24 +278,24 @@ BEGIN
         ELSIF rw_crapris.cdagenci IS NULL THEN
           
           IF rw_crapris.inpessoa = 1 THEN
-            vr_lshistor := '1753,5562';
+            vr_lshistor := '1753,5516';
             vr_dshistor := '"(Cessao) SALDO CESSÃO CARTÃO PESSOA FISICA."';
             
-            vr_lshistor_rev := '5562,1753';
+            vr_lshistor_rev := '5516,1753';
             vr_dshistor_rev := '"(Cessao) REVERSÃO SALDO CESSÃO CARTÃO PESSOA FISICA."';
             
           ELSIF rw_crapris.inpessoa = 2 THEN
-            vr_lshistor := '1754,5563';
-            vr_dshistor := '"(Cessao) SALDO CESSÃO CARTÃO PESSOA FISICA."';
+            vr_lshistor := '1754,5517';
+            vr_dshistor := '"(Cessao) SALDO CESSÃO CARTÃO PESSOA JURIDICA."';
             
-            vr_lshistor_rev := '5563,1754';
-            vr_dshistor_rev := '"(Cessao) REVERSÃO SALDO CESSÃO CARTÃO PESSOA FISICA."';
+            vr_lshistor_rev := '5517,1754';
+            vr_dshistor_rev := '"(Cessao) REVERSÃO SALDO CESSÃO CARTÃO PESSOA JURIDICA."';
             
           END IF;         
         
           --> gerar linha cabeçalho
-          vr_dsdlinha := '99'||TRIM(vr_dtmvtolt_yymmdd)             ||','||
-                         TRIM(to_char(rw_crapdat.dtultdma,'DDMMRR'))||','||
+          vr_dsdlinha := '99'||TRIM(vr_dtultdma_util_yymmdd)        ||','||
+                         TRIM(vr_dtultdma_util_ddmmyy)              ||','||
                          vr_lshistor                                ||','||
                          to_char(rw_crapris.vltotdiv,'FM9999999999990D00','NLS_NUMERIC_CHARACTERS=''.,''') ||','||
                          '5210'                                     ||','||
@@ -301,8 +306,8 @@ BEGIN
           vr_dsdlinha := NULL;
           
           --> REVERSÃO gerar linha cabeçalho 
-          vr_dsdlinha := '99'||TRIM(vr_dtmvtolt_yymmdd)             ||','||
-                         TRIM(to_char(rw_crapdat.dtultdma,'DDMMRR'))||','||
+          vr_dsdlinha := '99'||TRIM(vr_dtultdma_util_yymmdd)        ||','||
+                         TRIM(vr_dtultdia_util_ddmmyy)              ||','||
                          vr_lshistor_rev                            ||','||
                          to_char(rw_crapris.vltotdiv,'FM9999999999990D00','NLS_NUMERIC_CHARACTERS=''.,''') ||','||
                          '5210'                                     ||','||
@@ -363,8 +368,8 @@ BEGIN
           END IF;         
         
           --> gerar linha cabeçalho
-          vr_dsdlinha := '99'||TRIM(vr_dtmvtolt_yymmdd)             ||','||
-                         TRIM(to_char(rw_crapdat.dtultdma,'DDMMRR'))||','||
+          vr_dsdlinha := '99'||TRIM(vr_dtultdma_util_yymmdd)        ||','||
+                         TRIM(vr_dtultdma_util_ddmmyy)              ||','||
                          vr_lshistor                                ||','||
                          to_char(rw_cessao.vltotdiv,'FM9999999999990D00','NLS_NUMERIC_CHARACTERS=''.,''') ||','||
                          '5210'                                     ||','||
@@ -398,7 +403,7 @@ BEGIN
                                            pr_cdcooper => rw_crapcop.cdcooper,
                                            pr_nmsubdir => '/contab');
       -- Nome do arquivo a ser gerado
-      vr_nmarqdat := vr_dtmvtolt_yymmdd||'_cessao.txt';
+      vr_nmarqdat := vr_dtultdma_util_yymmdd||'_CESSAO.txt';
       
       gene0002.pc_solicita_relato_arquivo(pr_cdcooper  => rw_crapcop.cdcooper, 
                                           pr_cdprogra  => 'CRPS715', 
