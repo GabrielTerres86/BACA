@@ -1175,7 +1175,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
     --  Sistema  : Processos Genéricos
     --  Sigla    : GENE
     --  Autor    : Petter Rafael - Supero
-    --  Data     : Junho/2013.                   Ultima atualização: 05/10/2016
+    --  Data     : Junho/2013.                   Ultima atualização: 05/06/2017
     --
     --  Dados referentes ao programa:
     --
@@ -1199,6 +1199,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
     --
     --              05/10/2016 - Correcao no tratamento de erros retornados pela procedure. 
     --                           SD 535051 (Carlos Rafael Tanholi).
+    --
+    --              05/06/2017 - Pesquisar comprovantes filtrando somente pela data 
+		--            	             da transação (David).
     -- .............................................................................
   BEGIN
     DECLARE
@@ -1242,7 +1245,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
         FROM crappro co
         WHERE co.cdcooper  = pr_cdcooper
           AND co.nrdconta  = pr_nrdconta
-          AND co.dtmvtolt <= pr_dtfimpro
           AND trunc(co.dttransa) >= pr_dtinipro
           AND trunc(co.dttransa) <= pr_dtfimpro
           AND (pr_cdtippro = 0 OR co.cdtippro = pr_cdtippro)
