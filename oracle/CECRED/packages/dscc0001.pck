@@ -1259,7 +1259,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                      ,pr_cdbanchq IN crapcst.cdbanchq%TYPE
                      ,pr_cdagechq IN crapcst.cdagechq%TYPE
                      ,pr_nrctachq IN crapcst.nrctachq%TYPE
-                     ,pr_nrcheque IN crapcst.nrcheque%TYPE) IS
+                     ,pr_nrcheque IN crapcst.nrcheque%TYPE
+                     ,pr_nrborder IN crapcst.nrborder%TYPE) IS
       SELECT NVL(cst.nrdolote,0) nrdolote
             ,NVL(cst.insitprv,0) insitprv
         FROM crapcst cst
@@ -1268,7 +1269,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
          AND cst.cdbanchq = pr_cdbanchq
          AND cst.cdagechq = pr_cdagechq
          AND cst.nrctachq = pr_nrctachq
-         AND cst.nrcheque = pr_nrcheque;
+         AND cst.nrcheque = pr_nrcheque
+         AND cst.nrborder = pr_nrborder;
     rw_crapcst cr_crapcst%ROWTYPE;
     
     ----------->>> VARIAVEIS <<<--------   
@@ -1389,7 +1391,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                       ,pr_cdbanchq => rw_crapcdb.cdbanchq
                       ,pr_cdagechq => rw_crapcdb.cdagechq
                       ,pr_nrctachq => rw_crapcdb.nrctachq
-                      ,pr_nrcheque => rw_crapcdb.nrcheque);
+                      ,pr_nrcheque => rw_crapcdb.nrcheque
+                      ,pr_nrborder => pr_nrborder);
       FETCH cr_crapcst INTO rw_crapcst;
       CLOSE cr_crapcst;
       
