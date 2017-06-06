@@ -84,7 +84,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
   --  Sistema  : Rotinas para Calculos de Risco
   --  Sigla    : RISC
   --  Autor    : Marcos Ernani Martini - Supero
-  --  Data     : Agosto/2014.                   Ultima atualizacao: 20/06/2016
+  --  Data     : Agosto/2014.                   Ultima atualizacao: 27/04/2017
   --
   -- Dados referentes ao programa:
   --
@@ -96,6 +96,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
   --
   --             20/06/2016 - Correcao para o uso correto do indice da CRAPTAB em varias procedures 
   --                          desta package.(Carlos Rafael Tanholi).     
+  --
+  --             27/04/2017 - Nas linhas de reversao verificar se é uma data util,(pc_risco_k, pc_risco_t)
+  --                          (Tiago/Thiago SD 589074).  
   ---------------------------------------------------------------------------------------------------------------
 
   -- constantes para geracao de arquivos contabeis
@@ -981,7 +984,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Felipe Oliveira
-  Data    : Dezembro/2014                       Ultima Alteracao: 02/01/2017
+  Data    : Dezembro/2014                       Ultima Alteracao: 27/04/2017
 
   Dados referentes ao programa:
 
@@ -1020,6 +1023,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
                   tratado a incorporação, estava somando a incorporação na nova cooperativa
                   no fechamento do mes. (Oscar).
 
+     27/04/2017 - Nas linhas de reversao verificar se é uma data util 
+                  (Tiago/Thiago SD 589074).
   ............................................................................. */
 
 
@@ -2465,7 +2470,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
                                                 ' --> ' || vr_dscritic);
     ELSE
       -- Guarda a data
-      vr_dtmovime := rw_crapdat.dtultdia;
+      vr_dtmovime := GENE0005.fn_valida_dia_util(pr_cdcooper  => pr_cdcooper
+                                                ,pr_dtmvtolt  => rw_crapdat.dtultdia
+                                                ,pr_tipo      => 'A'
+                                                ,pr_excultdia => TRUE);
     END IF;
 
     vr_con_dtmovime := '70' ||
@@ -5685,7 +5693,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : James Prust Junior
-    Data    : Marco/2016                       Ultima Alteracao: 06/10/2016
+    Data    : Marco/2016                       Ultima Alteracao: 27/04/2017
 
     Dados referentes ao programa:
 
@@ -5698,6 +5706,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
                   04/01/2016 - Ajustes para desprezar as contas migradas antes da
                                incorporação.
                                PRJ342 - Incorporação Transulcred(Odirlei-AMcom)             
+                               
+                  27/04/2017 - Nas linhas de reversao verificar se é uma data util 
+                               (Tiago/Thiago SD 589074).                                          
   ............................................................................. */
     DECLARE
       -- Buscar todos os percentual de cada nivel de risco
@@ -5981,7 +5992,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       --  INICIO PARA MONTAR O REGISTRO DE REVERSAO
       -----------------------------------------------------------------------------------------------------------
       vr_linhadet := TRIM(vr_linhadet_dtultdia) || ',' ||
-                     TRIM(to_char(rw_crapdat.dtultdia, 'ddmmyy')) || ',4914,8453,' ||
+                     TRIM(to_char(GENE0005.fn_valida_dia_util(pr_cdcooper  => pr_cdcooper
+                                                             ,pr_dtmvtolt  => rw_crapdat.dtultdia
+                                                             ,pr_tipo      => 'A'
+                                                             ,pr_excultdia => TRUE), 'ddmmyy')) || ',4914,8453,' ||
                      TRIM(to_char(vr_total_vlpreatr_fis, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) REVERSAO PROVISAO AVAIS E FIANCAS E GARANTIAS PRESTADAS CARTAO PESSOA FISICA"';
@@ -6033,7 +6047,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       --  INICIO PARA MONTAR O REGISTRO DE REVERSAO
       -----------------------------------------------------------------------------------------------------------
       vr_linhadet := TRIM(vr_linhadet_dtultdia) || ',' ||
-                     TRIM(to_char(rw_crapdat.dtultdia, 'ddmmyy')) || ',4914,8454,' ||
+                     TRIM(to_char(GENE0005.fn_valida_dia_util(pr_cdcooper  => pr_cdcooper
+                                                             ,pr_dtmvtolt  => rw_crapdat.dtultdia
+                                                             ,pr_tipo      => 'A'
+                                                             ,pr_excultdia => TRUE), 'ddmmyy')) || ',4914,8454,' ||
                      TRIM(to_char(vr_total_vlpreatr_jur, '99999999999990.00')) ||
                      ',1434,' ||
                      '"(risco) REVERSAO PROVISAO AVAIS E FIANCAS E GARANTIAS PRESTADAS CARTAO PESSOA JURIDICA"';
@@ -6077,7 +6094,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
                        TO_CHAR(vr_dtmvtopr_arq, 'yy') ||
                        TO_CHAR(vr_dtmvtopr_arq, 'mm') ||
                        TO_CHAR(vr_dtmvtopr_arq, 'dd') || ',' ||
-                       TRIM(to_char(vr_dtmvtopr_arq, 'ddmmyy')) || ',9131,3133,' ||
+                       TRIM(to_char(GENE0005.fn_valida_dia_util(pr_cdcooper  => pr_cdcooper
+                                                               ,pr_dtmvtolt  => vr_dtmvtopr_arq
+                                                               ,pr_tipo      => 'A'
+                                                               ,pr_excultdia => TRUE), 'ddmmyy')) || ',9131,3133,' ||
                        TRIM(to_char(vr_total_limite, '99999999999990.00')) ||
                        ',1434,' ||
                        '"(risco) REVERSAO LIMITE CONCEDIDO CARTAO"';
