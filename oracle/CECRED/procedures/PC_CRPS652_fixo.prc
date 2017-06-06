@@ -2717,7 +2717,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652_fixo (pr_cdcooper IN crapcop.cdcoo
                 AND craphis.cdhistor = craplcm.cdhistor
                 AND craplcm.cdcooper = pr_cdcooper
                 AND craplcm.nrdconta = pr_nrdconta
-                AND craplcm.dtmvtolt IN (pr_dtmvtolt,gene0005.fn_valida_dia_util(pr_cdcooper, to_date(pr_dtmvtolt,'DD/MM/YYYY')-1, 'A'))
+                AND craplcm.dtmvtolt = pr_dtmvtolt
                AND craphis.indcalcc = 'S';
            --Variaveis Locais
            vr_vllanmto NUMBER:= 0;
