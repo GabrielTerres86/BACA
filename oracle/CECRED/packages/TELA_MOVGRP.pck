@@ -3472,6 +3472,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'detalhe', pr_posicao => 0, pr_tag_nova => 'vlsaldo_pendente', pr_tag_cont => to_char(rw_movimentos.vlsaldo_pendente,'fm999g999g990d00','NLS_NUMERIC_CHARACTERS='',.'''), pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'detalhe', pr_posicao => 0, pr_tag_nova => 'flsaida_operacao', pr_tag_cont => rw_movimentos.flsaida_operacao, pr_des_erro => vr_dscritic);            
      
+      -- Insere atributo na tag Dados com a quantidade de registros
+      gene0007.pc_gera_atributo(pr_xml   => pr_retxml             --> XML que irá receber o novo atributo
+                               ,pr_tag   => 'detalhe'             --> Nome da TAG XML
+                               ,pr_atrib => 'cdclassificacao_produto' --> Nome do atributo
+                               ,pr_atval => rw_movimentos.cdclassificacao_produto  --> Valor do atributo
+                               ,pr_numva => 0                   --> Número da localização da TAG na árvore XML
+                               ,pr_des_erro => vr_dscritic);    --> Descrição de erros
+                                     
+      --Se ocorreu erro
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF; 
+      
     ELSE
       
       -- Criar cabeçalho do XML
@@ -3493,6 +3506,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'detalhe', pr_posicao => 0, pr_tag_nova => 'idnat_operacao', pr_tag_cont => RISC0003.fn_valor_opcao_dominio(rw_risco_prodt.idnat_operacao), pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'detalhe', pr_posicao => 0, pr_tag_nova => 'dsnat_operacao', pr_tag_cont => RISC0003.fn_descri_opcao_dominio(rw_risco_prodt.idnat_operacao), pr_des_erro => vr_dscritic);
               
+      -- Insere atributo na tag Dados com a quantidade de registros
+      gene0007.pc_gera_atributo(pr_xml   => pr_retxml             --> XML que irá receber o novo atributo
+                               ,pr_tag   => 'detalhe'             --> Nome da TAG XML
+                               ,pr_atrib => 'cdclassificacao_produto' --> Nome do atributo
+                               ,pr_atval => rw_risco_prodt.cdclassifica_operacao  --> Valor do atributo
+                               ,pr_numva => 0                   --> Número da localização da TAG na árvore XML
+                               ,pr_des_erro => vr_dscritic);    --> Descrição de erros
+                                     
+      --Se ocorreu erro
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+      
     END IF;
       
     -- Insere atributo na tag Dados com a quantidade de registros
@@ -3521,19 +3547,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
       RAISE vr_exc_erro;
     END IF; 
     
-    -- Insere atributo na tag Dados com a quantidade de registros
-    gene0007.pc_gera_atributo(pr_xml   => pr_retxml             --> XML que irá receber o novo atributo
-                             ,pr_tag   => 'detalhe'             --> Nome da TAG XML
-                             ,pr_atrib => 'cdclassificacao_produto' --> Nome do atributo
-                             ,pr_atval => rw_movimentos.cdclassificacao_produto  --> Valor do atributo
-                             ,pr_numva => 0                   --> Número da localização da TAG na árvore XML
-                             ,pr_des_erro => vr_dscritic);    --> Descrição de erros
-                                   
-    --Se ocorreu erro
-    IF vr_dscritic IS NOT NULL THEN
-      RAISE vr_exc_erro;
-    END IF; 
-               
     pr_des_erro := 'OK';
   
   EXCEPTION

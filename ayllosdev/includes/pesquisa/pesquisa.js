@@ -34,7 +34,8 @@
  * 038: [02/06/2015] Jorge 			  (CECRED): Ajuste de tratamento de parametro em funcao mostraPesquisa.
  * 039: [11/07/2016] Evandro            (RKAM): Adicionado função controlafoco.
  * 040: [06/02/2017] Lucas Ranghetti  (CECRED): Alterado funcao buscaCEP apra keydown e adicionado a funcao do tab.  #562253
- * 041: [08/05/2017] Jonata            (Mouts): Ajuste para inclusão da busca de dominios - P408.
+ * 041: [06/06/2017] Jonata            (Mouts): Ajuste para inclusão da busca de dominios - P408.
+ 
  */
 
 var vg_formRetorno  = '';
@@ -1247,7 +1248,7 @@ function selecionaAssociado(conta,nmprimtl,dsnivris,nrcpfcgc) {
 	// Atribui conta consultada para campo e formulários contidos nas respectivas variáveis globais 
 	$('#'+vg_campoRetorno[0],'#'+vg_formRetorno).val(conta).formataDado('INTEGER','zzzz.zzz-z','',false);
 	$('#'+vg_campoRetorno[1],'#'+vg_formRetorno).val(nmprimtl);
-	if( $('#'+vg_campoRetorno[2],'#'+vg_formRetorno).prop('selected',true).val() != "AA"){ $('#'+vg_campoRetorno[2],'#'+vg_formRetorno).prop('selected',true).val(dsnivris);}
+	if ($('#cdclassificacao_produto', '#' + vg_formRetorno).val() != "AA") { $('#' + vg_campoRetorno[2], '#' + vg_formRetorno).prop('selected', true).val(dsnivris); }
 	$('#'+vg_campoRetorno[3],'#'+vg_formRetorno).val(nrcpfcgc);
 					
 	// Chamar função obtemCabecalho somente quando estivermos na tela CONTAS e não existir alguma rotina da tela aberta

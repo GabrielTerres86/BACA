@@ -28,6 +28,7 @@
 		<input type="hidden" id="idmovto_risco" name="idmovto_risco" value="<?echo getByTagName($registro->tags,'idmovto_risco');?>"/>
 		<input type="hidden" id="flpermite_fluxo_financeiro" name="flpermite_fluxo_financeiro" value="<?echo $flpermite_fluxo_financeiro;?>" />
 		<input type="hidden" id="flpermite_saida_operacao" name="flpermite_saida_operacao" value="<?echo $flpermite_saida_operacao;?>"/>
+		<input type="hidden" id="cdclassificacao_produto" name="cdclassificacao_produto" value="<?echo $cdclassificacao_produto;?>"/>
 		
 		
 		<label for="cdcopsel"><? echo utf8ToHtml('Coop.:') ?></label>

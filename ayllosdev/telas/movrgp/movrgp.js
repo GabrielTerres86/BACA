@@ -1173,9 +1173,10 @@ function formataDetalhes(){
 			
 		}
 		
-		if($('#cdclassifica_operacao','#fsetDetalhes').prop('selected',true).val() == 'AA'){
+		if ($('#cdclassificacao_produto', '#fsetDetalhes').val() == 'AA') {
 			
-			$('#cdclassifica_operacao','#fsetDetalhes').desabilitaCampo();
+		    $('#cdclassifica_operacao', '#fsetDetalhes').prop('selected', true).val($('#cdclassificacao_produto', '#fsetDetalhes').val());
+            $('#cdclassifica_operacao','#fsetDetalhes').desabilitaCampo();
 			
 		}
 					
