@@ -14,6 +14,8 @@ CREATE OR REPLACE PACKAGE CECRED.cobr0004 IS
   --
   --  Alteracoes: 
   ---------------------------------------------------------------------------------------------------------------
+  --Procedure para segurar execucao de programa por determinados segundos
+  PROCEDURE pc_espera_segundo(pr_qtsegund number);
   --Abre conexão com o WebService e faz o upload do arquivo de remessa
   PROCEDURE pc_upload_webservice_pg(pr_nmarcnab IN VARCHAR2 -- Nome do arquivo CNAB de remessa
                                    ,pr_dscritic OUT VARCHAR2);
@@ -25,11 +27,32 @@ CREATE OR REPLACE PACKAGE CECRED.cobr0004 IS
                                      ,pr_dscritic OUT VARCHAR2);
 END cobr0004;
 /
-
 CREATE OR REPLACE PACKAGE BODY CECRED.cobr0004 IS
 
   vr_iso8601_format VARCHAR2(50) := 'YYYY-MM-DD"T"HH24:MI:SS'; -- Formato ISO8601
   vr_horaatua VARCHAR2(15); -- Data e hora atual para concatenar nos nomes dos arquivos
+  
+  procedure pc_espera_segundo(pr_qtsegund number) is
+    /* .............................................................................
+
+    Programa: pc_espera_segundo
+    Sistema : Procedimentos para  gerais da cobranca
+    Sigla   : CRED
+    Autor   : Ademir José Fink
+    Data    : 06/06/2017                        Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+    Objetivo  : Gerar tempo de espera em segundos na execução de pl-sql
+
+    Alteracoes:
+    ............................................................................. */
+  begin
+    --
+    sys.dbms_lock.sleep(nvl(pr_qtsegund,0));
+    --
+  end pc_espera_segundo;
   
   --Executa perl que chama o webservice enviando um arquivo no request
   --Parâmetro pr_nrservic:
@@ -877,7 +900,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0004 IS
   --Abre conexão com o WebService e faz o upload do arquivo de remessa
   PROCEDURE pc_upload_webservice_pg(pr_nmarcnab IN VARCHAR2 -- Nome do arquivo CNAB de remessa
                                    ,pr_dscritic OUT VARCHAR2) IS
-  
+
     vr_nrdtoken VARCHAR2(100); -- Token de conexão com o WS da PG
     vr_idsessao VARCHAR2(100); -- Id da Sessão no WS da PG
   
@@ -964,19 +987,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0004 IS
                                      ,pr_dtjobfim IN DATE -- Data de abertura do Job - Final
                                      ,pr_nmarqret OUT VARCHAR2 -- Nome do arquivo baixado do webservice
                                      ,pr_dscritic OUT VARCHAR2) IS
+
+    ---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_download_webservice_pg
+    --  Sistema  : Procedimentos para  gerais da cobranca
+    --  Sigla    : CRED
+    --  Autor    : Dionathan Henchel
+    --  Data     : Abril/2015.                   Ultima atualizacao: 06/06/2017
+    --
+    --  Alteracoes: 06/06/2017 - Inclusão de espera de tempo em segundos entre cada
+    --                           comando que acessa o WS da PG para evitar o erro
+    --                           "Referência de objeto não definida para uma instância de um objeto."
+    ---------------------------------------------------------------------------------------------------------------
   
     vr_nrdtoken VARCHAR2(100); -- Token de conexão com o WS da PG
     vr_idsessao VARCHAR2(100); -- Id da Sessão no WS da PG
   
     vr_nrrepete NUMBER(2) := 10; -- Número das tentativas para busca do status do arquivo para download no webservice
     vr_finaliza BOOLEAN := FALSE; -- Indicador se pode iniciar o download
-  
+    
+    vr_qtsegund number(1);
+    
     vr_exc_saida EXCEPTION;
+
   BEGIN
     
     -- Busca a hora atual para concatenar no nome dos arquivos
     vr_horaatua := to_char(SYSDATE, 'yymmddhh24miss');
-    
+
+    vr_qtsegund := nvl(gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                ,pr_cdacesso => 'PAINELWEBPG_DELAY'),'0');
+
     -- Autenticação
     pc_ws_pg_autenticacao(pr_nrdtoken => vr_nrdtoken
                          ,pr_dscritic => pr_dscritic);
@@ -984,7 +1026,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0004 IS
     IF pr_dscritic IS NOT NULL THEN
       RAISE vr_exc_saida;
     END IF;
-  
+    
+    pc_espera_segundo(pr_qtsegund => vr_qtsegund);
+    
     -- Gera o arquivo para download
     pc_ws_pg_corrige_devolve(pr_nrdtoken => vr_nrdtoken -- Token de conexão com o WS da PG
                             ,pr_dtjobini => pr_dtjobini -- Data de abertura do Job - Inicial
@@ -996,6 +1040,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0004 IS
     IF pr_dscritic IS NOT NULL THEN
       RAISE vr_exc_saida;
     END IF;
+  
+    pc_espera_segundo(pr_qtsegund => vr_qtsegund);
   
     IF NOT vr_finaliza THEN
     
@@ -1023,6 +1069,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0004 IS
       END LOOP;
     END IF;
   
+    pc_espera_segundo(pr_qtsegund => vr_qtsegund);
+  
     -- Download do arquivo
     pc_ws_pg_download(pr_idsessao => vr_idsessao -- Id da Sessão no WS da PG
                      ,pr_nmarqret => pr_nmarqret -- Nome do arquivo de retorno
@@ -1031,6 +1079,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0004 IS
     IF pr_dscritic IS NOT NULL THEN
       RAISE vr_exc_saida;
     END IF;
+  
+    pc_espera_segundo(pr_qtsegund => vr_qtsegund);
   
     --Logoff
     pc_ws_pg_logoff(pr_nrdtoken => vr_nrdtoken -- Token de conexão com o WS da PG
@@ -1048,4 +1098,3 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0004 IS
 
 END cobr0004;
 /
-
