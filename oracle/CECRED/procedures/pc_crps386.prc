@@ -216,7 +216,7 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
            crapcop,
            gnconve,
            gncvcop
-     where gncvcop.cdcooper = pr_cdcooper
+     where gncvcop.cdcooper = pr_cdcooper     
        and gnconve.cdconven = gncvcop.cdconven
        and gnconve.flgativo = 1
        and gnconve.cdhisdeb > 0 -- Somente arq.integracao
@@ -572,13 +572,13 @@ begin
 
       IF rw_gnconve.cdconven = 4 AND 
          (rw_crapatr.dtiniatr < to_date('05/10/2016','dd/mm/yyyy')) THEN -- casan
-        vr_nragenci := 1294;
+          vr_nragenci := 1294;
         -- Para validacao da forma antiga e nova(cooperativa) para a CASAN, vamos
         -- continuar fazendo da forma antiga. conforme o comentario abaixo no ELSE da CASAN
         IF (pr_cdcooper = 1 AND rw_crapatr.dtiniatr < to_date('01/09/2013','dd/mm/yyyy') OR
           pr_cdcooper <> 1 AND rw_crapatr.dtiniatr < to_date('26/07/2016','dd/mm/yyyy')) THEN
-          vr_cdcooperativa := '9'||to_char(pr_cdcooper,'fm000');      
-        ELSE   
+        vr_cdcooperativa := '9'||to_char(pr_cdcooper,'fm000');
+      ELSE             
           vr_cdcooperativa := ' ';
         END IF;
       ELSE             

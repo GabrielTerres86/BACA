@@ -9,7 +9,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS675 (pr_cdcooper IN crapcop.cdcooper%T
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Lucas Lunelli
-       Data    : Março/2014.                     Ultima atualizacao: 31/03/2017
+       Data    : Março/2014.                     Ultima atualizacao: 01/06/2017
 
        Dados referentes ao programa:
 
@@ -38,10 +38,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS675 (pr_cdcooper IN crapcop.cdcooper%T
                    30/07/2015 - Retirado cursor da lcm e incluida o cr_paga_fatura para o loop
                                 principal do programa (Tiago/Rodrigo).
                                 
-                   31/03/2017 -  #633147 Retirar o programa da cadeia da CECRED e colocá-lo em job as 11h 
-                                 (JBCRD_BANCOOB_ENVIA_DEB_FAT).
-                                 Verificar o inproces da CECRED para definir a data de referência da execução.
-                                 (Carlos)
+                   31/03/2017 - #633147 Retirar o programa da cadeia da CECRED e colocá-lo em job as 11h 
+                                (JBCRD_BANCOOB_ENVIA_DEB_FAT).
+                                Verificar o inproces da CECRED para definir a data de referência da execução.
+                                (Carlos)
+
+                   01/06/2017 - #633147 Envio de e-mail usando a rotina pc_log_programa.
+                                Atenção para o aumento do campo crapsle.cdprogra para 30 chars (Carlos)
     ............................................................................ */
 
     DECLARE
@@ -410,28 +413,17 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS675 (pr_cdcooper IN crapcop.cdcooper%T
                               pr_flgsucesso    => 0,
                               pr_tpocorrencia  => 2, -- erro não tratado
                               pr_tpexecucao    => 1, -- batch
+                              pr_flabrechamado => 1, -- Abrir chamado (Sim=1/Nao=0)
+                              pr_texto_chamado => ' Verificar execução do job ' || vr_nomdojob || 
+                                                  ': Gerar arquivo de retorno de Débito em conta das faturas (Bancoob/CABAL). ',
+                              pr_destinatario_email => gene0001.fn_param_sistema('CRED',pr_cdcooper,'CRD_RESPONSAVEL'),
+                              pr_flreincidente => 1, --> Erro pode ocorrer em dias diferentes, devendo abrir chamado
                               PR_IDPRGLOG      => vr_idprglog);
 
        cecred.pc_log_programa(PR_DSTIPLOG   => 'F', 
                               PR_CDPROGRAMA => vr_nomdojob,
                               pr_flgsucesso => 0,
                               PR_IDPRGLOG   => vr_idprglog);
-
-       --Enviar Email
-       GENE0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper    --> Cooperativa conectada
-                                 ,pr_cdprogra        => vr_cdprogra    --> Programa conectado
-                                 ,pr_des_destino     => 'fabricio@cecred.coop.br,douglas.quisinski.@cecred.coop.br,' --> Um ou mais detinatários separados por ';' ou ','
-                                 ,pr_des_assunto     => 'Erro no job' || vr_nomdojob --> Assunto do e-mail
-                                 ,pr_des_corpo       => 'Verificar execução do job ' || vr_nomdojob || ': Gerar arquivo de retorno de Débito em conta das faturas (Bancoob/CABAL).' --> Corpo (conteudo) do e-mail
-                                 ,pr_des_anexo       => NULL           --> Um ou mais anexos separados por ';' ou ','
-                                 ,pr_flg_remove_anex => 'N'            --> Remover os anexos passados
-                                 ,pr_flg_remete_coop => 'N'            --> Se o envio será do e-mail da Cooperativa
-                                 ,pr_des_nome_reply  => NULL           --> Nome para resposta ao e-mail
-                                 ,pr_des_email_reply => NULL           --> Endereço para resposta ao e-mail
-                                 ,pr_flg_enviar      => 'S'            --> Enviar o e-mail na hora
-                                 ,pr_flg_log_batch   => 'N'            --> Incluir inf. no log
-                                 ,pr_des_erro        => pr_dscritic);  --> Descricao Erro
-
     END;
 		
 END PC_CRPS675;

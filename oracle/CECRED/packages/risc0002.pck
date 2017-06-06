@@ -11,6 +11,10 @@ CREATE OR REPLACE PACKAGE CECRED.RISC0002 is
   --
   -- Frequencia: -----
   -- Objetivo  : Rotinas genericas para a importacao dos dados para a central de risco
+  --
+  -- Alteracoes: 06/06/2017 - Inclusao do novo tipo de saldo (7 - PAR (parcelado rotativo)).
+  --                          Procedure pc_import_arq_risco_cartao.
+  --                          (Chamado 687323) - (Fabricio)
   ---------------------------------------------------------------------------------------------------------------
   -- Registro para as informações do arquivo CB117 de controle
   TYPE typ_tab_linhas_controle IS
@@ -123,7 +127,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0002 IS
   -- Frequencia: -----
   -- Objetivo  : Rotinas genericas para a importacao dos dados para a central de risco
   --
-  -- Alterações: 
+  -- Alterações: 06/06/2017 - Inclusao do novo tipo de saldo (7 - PAR (parcelado rotativo)).
+  --                          Procedure pc_import_arq_risco_cartao.
+  --                          (Chamado 687323) - (Fabricio)
   ---------------------------------------------------------------------------------------------------------------  
   PROCEDURE pc_verifica_envio_email(pr_tab_crapcop IN RISC0002.typ_tab_crapcop --> Temp-Table Cooperativas
                                    ,pr_dtrefere    IN DATE                     --> Data de Referencia
@@ -537,6 +543,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0002 IS
     -- Objetivo  : Importa o arquivo de layout
     --
     -- Alterações: 03/01/2016 - Incluido tratamento para fechar arquivo ao fim da importação(Odirlei-AMcom)
+    --
+    --             06/06/2017 - Inclusao do novo tipo de saldo (7 - PAR (parcelado rotativo)).
+    --                          (Chamado 687323) - (Fabricio)
     ---------------------------------------------------------------------------------------------------------------
     DECLARE
       CURSOR cr_tbcrd_arq_risco (pr_cdcooper   IN tbcrd_arq_risco.cdcooper%TYPE
@@ -640,15 +649,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0002 IS
           pr_tab_linhas_arquivo(vr_ind_arq_importado).vlcet           := TO_NUMBER(SUBSTR(vr_setlinha,88,6)) / 100;
           
           /*
-          Somente sera feito o provisionamento quando o cartao de credito possuir os saldos 1,2,3,4.
+          Somente sera feito o provisionamento quando o cartao de credito possuir os saldos 1,2,3,4,7.
           1 - Saldo à vista  financiado (rotativo + saques à vista).
           2 - Saldo à vista não financiado.
           3 - Saldo parcelado sem juros.
           4 - Saldo parcelado com juros.
           5 - LImite disponível à vista.
-          6 - LImite disponível parcelado.        
+          6 - LImite disponível parcelado. 
+          7 - PAR (parcelado rotativo)
           */
-          IF pr_tab_linhas_arquivo(vr_ind_arq_importado).cdtipo_saldo IN (1,2,3,4) THEN
+          IF pr_tab_linhas_arquivo(vr_ind_arq_importado).cdtipo_saldo IN (1,2,3,4,7) THEN
             vr_ind_arq_importado := LPAD(vr_nrdconta_cartao,20,'0') || LPAD(vr_nrcpfcnpj,20,'0');
             -- Controle para informar que o registro sera provisionado
             pr_tab_linhas_controle(vr_ind_arq_importado) := 1;
@@ -909,7 +919,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0002 IS
     -- Frequencia: -----
     -- Objetivo  : Procedure para gravar os dados na crapris temporaria
     --
-    -- Alterações
+    -- Alterações: 06/06/2017 - Inclusao do novo tipo de saldo (7 - PAR (parcelado rotativo)).
+    --                          (Chamado 687323) - (Fabricio)
     ---------------------------------------------------------------------------------------------------------------
     DECLARE
       vr_ind_risco          VARCHAR2(50);
@@ -986,8 +997,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0002 IS
         
       END IF;
       
-      -- 1 - Rotativo, 2 - Saldo a vista nao financiado, 3 - Saldo parcelado sem juros, 4 - Saldo parcelado com juros
-      IF (pr_cdtipo_saldo IN (1,2,3,4)) THEN
+      -- 1 - Rotativo, 2 - Saldo a vista nao financiado, 3 - Saldo parcelado sem juros, 4 - Saldo parcelado com juros, 7 - PAR (parcelado rotativo)
+      IF (pr_cdtipo_saldo IN (1,2,3,4,7)) THEN
         pr_tab_risco_cartao(vr_ind_risco).vldivida := pr_tab_risco_cartao(vr_ind_risco).vldivida + NVL(pr_vlsaldo_devedor,0);
       END IF;
         
@@ -1041,7 +1052,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0002 IS
     -- Frequencia: -----
     -- Objetivo  : Procedure para gravar os dados na crapris temporaria
     --
-    -- Alterações
+    -- Alterações: 06/06/2017 - Inclusao do novo tipo de saldo (7 - PAR (parcelado rotativo)).
+    --                          (Chamado 687323) - (Fabricio)
     ---------------------------------------------------------------------------------------------------------------
     DECLARE
       vr_ind_risco          VARCHAR2(50);
@@ -1113,8 +1125,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0002 IS
         END IF;
       END;
     BEGIN
-      -- 1 - Rotativo, 2 - Saldo a vista nao financiado, 3 - Saldo parcelado sem juros, 4 - Saldo parcelado com juros
-      IF (pr_cdtipo_saldo NOT IN (1,2,3,4)) THEN
+      -- 1 - Rotativo, 2 - Saldo a vista nao financiado, 3 - Saldo parcelado sem juros, 4 - Saldo parcelado com juros, 7 - PAR (parcelado rotativo)
+      IF (pr_cdtipo_saldo NOT IN (1,2,3,4,7)) THEN
         RETURN;        
       END IF;
       
@@ -1176,7 +1188,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0002 IS
     -- Frequencia: -----
     -- Objetivo  : Importar os arquivos de risco de cartao de credito CB117
     --
-    -- Alterações
+    -- Alterações: 06/06/2017 - Inclusao do novo tipo de saldo (7 - PAR (parcelado rotativo)).
+    --                          (Chamado 687323) - (Fabricio)
     ---------------------------------------------------------------------------------------------------------------
     DECLARE
       -- Busca as cooperativas

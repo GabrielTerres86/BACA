@@ -179,6 +179,9 @@
                            
               22/05/2017 - Caso ultrapasse o horario parametrizado efetuar tratamento conforme a
                            inclusao ja faz (Lucas Ranghetti #669864)
+                           
+              25/05/2017 - Incluir vr_dstransa atualizada apos a chamada do bloqueia_lancamento
+                           (Lucas Ranghetti #671626).
 .............................................................................*/
 
 /*............................... DEFINICOES ................................*/
@@ -1623,7 +1626,7 @@ PROCEDURE grava-dados:
     DEF VAR aux_nmdcampo AS CHAR                                    NO-UNDO.   
     DEF VAR aux_dsnomcnv AS CHAR                                    NO-UNDO.    
     DEF VAR aux_tpoperac AS INTE                                    NO-UNDO.
-    DEF VAR aux_dtiniatr AS DATE                                    NO-UNDO. 
+    DEF VAR aux_dtiniatr AS DATE                                    NO-UNDO.     
     DEF VAR aux_nrctacns AS INTE                                    NO-UNDO. 
     DEF VAR aux_nrdrowid AS ROWID                                   NO-UNDO.
     
@@ -1702,7 +1705,7 @@ PROCEDURE grava-dados:
                                 ASSIGN aux_dscritic = "Tabela de limites nao encontrada.".
                                 UNDO Grava, LEAVE Grava.
                             END.
-                
+                            
                         /** Validar horario **/
                         IF  tt-limite.idesthor = 1 THEN /** Estourou horario   **/
                             DO:
@@ -2710,7 +2713,7 @@ PROCEDURE exclui_autorizacao:
            aux_dstransa = "Exclui autorizacao de debito em conta".
 
     EMPTY TEMP-TABLE tt-erro.
-    
+        
     Exclui: DO WHILE TRUE TRANSACTION ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
 
         FIND crapdat WHERE crapdat.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
@@ -2816,6 +2819,8 @@ PROCEDURE exclui_autorizacao:
                              END.
                     END.
             END.
+                
+            ASSIGN aux_dstransa = "Exclui autorizacao de debito em conta".
                 
             FIND CURRENT crapatr EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
             
