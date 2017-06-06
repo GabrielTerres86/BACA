@@ -264,10 +264,16 @@ BEGIN
       vr_cdagebcb := vr_tab_linhas(vr_idx)('CDAGEBCB').NUMERO;
       vr_nrdconta := vr_tab_linhas(vr_idx)('NRDCONTA').NUMERO;
       vr_nrcartao := vr_tab_linhas(vr_idx)('NRCARTAO').NUMERO;
-      --> Retornar valor positivo, pois pode ocorrer de enviarem o valor negativo
-      vr_vldevido := abs(vr_tab_linhas(vr_idx)('VLDEVIDO').NUMERO);
+      vr_vldevido := vr_tab_linhas(vr_idx)('VLDEVIDO').NUMERO;
       vr_nmadmcrd := vr_tab_linhas(vr_idx)('TPCARTAO').TEXTO;
       vr_dtvencto_ori := vr_tab_linhas(vr_idx)('DTVENCTO').DATA;
+      
+      
+      -- Caso valor for negativo
+      IF vr_vldevido < 0 THEN
+        vr_dscritic := 'Valor negativo não permitido.';
+        RAISE vr_exc_prox;
+      END IF;
       
       -- Busca dos dados da cooperativa
       OPEN cr_crapcop(pr_cdagebcb => vr_cdagebcb);
@@ -331,6 +337,11 @@ BEGIN
       OPEN cr_crapadc (pr_cdcooper => rw_crapcop.cdcooper,
                        pr_nmadmcrd => vr_nmadmcrd);
       FETCH cr_crapadc INTO rw_crapadc;
+      IF cr_crapadc%NOTFOUND THEN
+        CLOSE cr_crapadc;
+        vr_dscritic := 'Administradora de Cartão '||vr_nmadmcrd||' não encontrado.';
+        RAISE vr_exc_prox;
+      END IF;
       CLOSE cr_crapadc;
       
       
@@ -388,7 +399,7 @@ BEGIN
   END LOOP;
   
   -- Montar Comando para mover o arquivo lido para o diretório importados
-  vr_dscomand:= 'mv '|| vr_dsdirarq || '/' || vr_nmarqimp || '.csv ' ||
+  vr_dscomand:= 'mv '|| vr_dsdirarq || '/Importar/' || vr_nmarqimp || '.csv ' ||
                  vr_dsdirarq || '/Importados/' || vr_nmarqimp || gene0002.fn_busca_time||'.csv ';
                                    
   -- Executar o comando no unix
