@@ -152,33 +152,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
              l.dtmvtolt,
              l.nrdconta,
              substr(l.nrdconta,1,length(l.nrdconta) -1)||'-'||substr(l.nrdconta,-1,1) nrctafmt,
-             l.nrdocmto,
+             case when l.cdhistor IN (440,446,544,545,1024,1069,1160,1161,1024,1069,841,842,1802,1538) then
+                    l.nrdocmto
+                  else
+                    null
+             end nrdocmto,
              SUM(l.vllanmto) vllanmto
         FROM craplcm l,
              crapcop c 
        WHERE l.nrdconta = c.nrctactl
-         AND l.cdhistor IN (440,446,544,545,1024,1069,1160,1161,1024,1069,841,842,1802,1538)
-         AND l.cdcooper = 3   --Apenas lançamentos realizados na central para a filiada
-         AND l.dtmvtolt = pr_dtmvtolt 
-         AND c.cdcooper = pr_cdcooper
-      GROUP BY l.cdhistor,
-               l.nrdocmto,
-               l.dtmvtolt,
-               l.nrdconta,
-               substr(l.nrdconta,1,length(l.nrdconta) -1)||'-'||substr(l.nrdconta,-1,1)
-      ORDER BY l.cdhistor;
-
-    -- Buscar informações de lançamentos das filiadas na central
-    CURSOR cr_craplcm2 IS
-      SELECT l.cdhistor,
-             l.dtmvtolt,
-             l.nrdconta,
-             substr(l.nrdconta,1,length(l.nrdconta) -1)||'-'||substr(l.nrdconta,-1,1) nrctafmt,
-             SUM(l.vllanmto) vllanmto
-        FROM craplcm l,
-             crapcop c 
-       WHERE l.nrdconta = c.nrctactl
-         AND l.cdhistor IN (1623,1624,1625,1626,1627,1628,1684,527,530,1119,1120,1123,1124,1125,1126,1136,
+         AND l.cdhistor IN (440,446,544,545,1024,1069,1160,1161,1024,1069,841,842,1802,1538,
+                            1623,1624,1625,1626,1627,1628,1684,527,530,1119,1120,1123,1124,1125,1126,1136,
                             1137,2057,2058,51,135,1917,1919,1148,1810,1837,1838,1028,777,851,1988,1660,1661,
                             2059,909,910,913,914,915,916,945,946,1007,1008,1148,2227,2237,2238,2239,2240,2249,
                             2250,2251,2252)
@@ -186,11 +170,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
          AND l.dtmvtolt = pr_dtmvtolt 
          AND c.cdcooper = pr_cdcooper
       GROUP BY l.cdhistor,
+               case when l.cdhistor IN (440,446,544,545,1024,1069,1160,1161,1024,1069,841,842,1802,1538) then
+                      l.nrdocmto
+                    else
+                      null
+               end,
                l.dtmvtolt,
                l.nrdconta,
                substr(l.nrdconta,1,length(l.nrdconta) -1)||'-'||substr(l.nrdconta,-1,1)
       ORDER BY l.cdhistor;
 
+    -- Buscar informações de lançamentos das filiadas na central
     -- Cursor ler parâmetros por número de documento
     CURSOR cr_crapprm(p_cdacesso IN VARCHAR2) IS
       SELECT substr(dsvlrprm,1,instr(dsvlrprm,';')-1) nrctacrt,
@@ -199,348 +189,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
        WHERE nmsistem = 'CRED' 
          AND CDCOOPER   = 0 
          AND CDACESSO = p_cdacesso;
-
-
-    -- Busca as tarifas do historico de debito
-    CURSOR cr_crapthi(pr_cdhisdeb IN NUMBER) IS
-      SELECT vltarifa
-        FROM crapthi
-       WHERE crapthi.cdcooper = 3 /* Sempre pela cooper 3 */
-         AND crapthi.cdhistor = pr_cdhisdeb
-         AND crapthi.dsorigem = 'CASH';
-
-    --Busca informações do extrato para gerar gerencial por PA
-    CURSOR cr_crapext IS  
-      SELECT cdcooper, 
-             cdagenci,
-             COUNT(*) qtdmovto
-        FROM crapext  ext
-       WHERE tpextrat     = 1
-         and ext.cdcooper = pr_cdcooper
-         and ext.insitext = 5
-         AND ext.cdcooper <> ext.cdcoptfn
-         AND ext.dtreffim >= to_date(to_char(pr_dtmvtolt,'mm/rrrr'),'mm/rrrr') 
-         AND ext.dtreffim <= pr_dtmvtolt
-      GROUP BY cdcooper, 
-               cdagenci
-      ORDER BY cdagenci;
-
-    --Busca informações do extrato para gerar gerencial por PA
-    CURSOR cr_crapext_2 IS          
-      SELECT cdcoptfn,
-             cdagetfn,
-             COUNT(*) qtdmovto
-        FROM CRAPEXT  ext
-       WHERE TPEXTRAT     = 1
-         AND ext.cdcoptfn = pr_cdcooper
-         AND ext.insitext = 5
-         AND ext.cdcooper <> ext.cdcoptfn
-         AND ext.dtreffim >= to_date(to_char(pr_dtmvtolt,'mm/rrrr'),'mm/rrrr')
-         AND ext.dtreffim <= pr_dtmvtolt
-      GROUP BY cdcoptfn,
-               cdagetfn
-      ORDER BY cdagetfn;
-               
-    --Busca informações da craplft para gerar gerencial por PA               
-    CURSOR cr_crapldt IS          
-      SELECT crapcop.cdcooper,
-             crapass.cdagenci,
-             COUNT(*) qtdmovto
-        FROM crapldt,
-             crapcop,
-             crapass  
-       WHERE crapldt.cdagerem <> crapldt.cdagedst
-         AND crapcop.cdagectl = crapldt.cdagedst
-         AND crapldt.dttransa >= to_date(to_char(pr_dtmvtolt,'mm/rrrr'),'mm/rrrr')
-         AND crapldt.dttransa <= pr_dtmvtolt
-         AND crapass.cdcooper = crapcop.cdcooper
-         AND crapass.nrdconta = crapldt.nrctadst
-         AND crapldt.tpoperac IN (1,5)
-         AND crapldt.cdpacrem = 91 -- Apenas TAA
-         AND crapcop.cdcooper = pr_cdcooper   
-      GROUP BY crapcop.cdcooper,
-               crapass.cdagenci
-      ORDER BY crapass.cdagenci;  
-            
-    --Busca informações da crapldt para gerar gerencial por PA         
-    CURSOR cr_crapldt2 IS
-      SELECT crapldt.cdcooper,
-             crapldt.cdpacrem,
-             COUNT(*) qtdmovto
-        FROM crapldt  
-       WHERE crapldt.cdagerem <> crapldt.cdagedst
-         AND crapldt.dttransa >= to_date(to_char(pr_dtmvtolt,'mm/rrrr'),'mm/rrrr')
-         AND crapldt.dttransa <= pr_dtmvtolt
-         AND crapldt.tpoperac IN (1,5)
-         AND crapldt.cdpacrem = 91 -- Apenas TAA
-         AND crapldt.cdcooper = pr_cdcooper
-      GROUP BY crapldt.cdcooper,
-               crapldt.cdpacrem
-      ORDER BY crapldt.cdpacrem;                  
-
-  --Busca informações da da craplcm para gerar gerencial por PA 
-  CURSOR cr_craplcm3 IS       
-    SELECT cdcooper,
-           cdagenci,
-           SUM(qtd) qtdmovto
-      FROM(SELECT craplcm.cdcooper,
-                  crapass.cdagenci,
-                  COUNT(*) qtd
-             FROM craplcm,
-                  crapass
-            WHERE craplcm.cdcooper  = pr_cdcooper
-              AND craplcm.cdhistor  = 918
-              AND craplcm.dtmvtolt >= to_date(to_char(pr_dtmvtolt,'mm/rrrr'),'mm/rrrr')
-              AND craplcm.dtmvtolt <= pr_dtmvtolt   
-              AND craplcm.cdcooper <> craplcm.cdcoptfn
-              AND craplcm.nrdconta  = crapass.nrdconta
-              AND craplcm.cdcooper  = crapass.cdcooper 
-              AND craplcm.cdcoptfn <> 0                               
-           GROUP BY craplcm.cdcooper,
-                    crapass.cdagenci
-           UNION ALL
-           SELECT craplcm.cdcooper,
-                  crapass.cdagenci,
-                  COUNT(*) * -1 qtd
-             FROM craplcm,
-                  crapass
-            WHERE craplcm.cdcooper  = pr_cdcooper
-              AND craplcm.cdhistor  = 920
-              AND craplcm.dtmvtolt >= to_date(to_char(pr_dtmvtolt,'mm/rrrr'),'mm/rrrr')
-              AND craplcm.dtmvtolt <= pr_dtmvtolt   
-              AND craplcm.cdcooper <> craplcm.cdcoptfn
-              AND craplcm.nrdconta  = crapass.nrdconta
-              AND craplcm.cdcooper  = crapass.cdcooper 
-              AND craplcm.cdcoptfn <> 0             
-           GROUP BY craplcm.cdcooper,
-                    crapass.cdagenci)    
-    GROUP BY cdcooper,
-             cdagenci
-    ORDER BY cdagenci;  
-
-  --Busca informações da da craplcm para gerar gerencial por PA                
-  CURSOR cr_craplcm4 IS
-    SELECT cdcoptfn,
-           cdagetfn,
-           SUM(qtd) qtdmovto
-      FROM (SELECT cdcoptfn,
-                   cdagetfn,
-                   COUNT(*) qtd
-              FROM craplcm
-             WHERE craplcm.cdcoptfn = pr_cdcooper
-               AND craplcm.cdhistor = 918
-               AND craplcm.dtmvtolt >= to_date(to_char(pr_dtmvtolt,'mm/rrrr'),'mm/rrrr')
-               AND craplcm.dtmvtolt <= pr_dtmvtolt
-               AND craplcm.cdcooper <> craplcm.cdcoptfn
-            GROUP BY cdcoptfn,
-                     cdagetfn
-            UNION
-            SELECT cdcoptfn,
-                   cdagetfn,
-                   COUNT(*) * -1 qtd
-              FROM craplcm
-             WHERE craplcm.cdcoptfn = pr_cdcooper
-               AND craplcm.cdhistor = 920
-               AND craplcm.dtmvtolt >= to_date(to_char(pr_dtmvtolt,'mm/rrrr'),'mm/rrrr')
-               AND craplcm.dtmvtolt <= pr_dtmvtolt
-               AND craplcm.cdcooper <> craplcm.cdcoptfn
-            GROUP BY cdcoptfn,
-                     cdagetfn)    
-    GROUP BY cdcoptfn,
-             cdagetfn
-    ORDER BY cdagetfn;        
-
-  --Busca informações de pagamento de títulos para gerar gerencial por PA            
-  CURSOR cr_tfapagtit IS
-    SELECT cdcooper,
-           cdagenci,
-           SUM(qtdmovto) qtdmovto      
-      FROM (SELECT craptit.cdcooper,
-                   crapass.cdagenci,
-                   COUNT(*) qtdmovto
-              FROM craptit, 
-                   crapass 
-             WHERE craptit.cdcooper  = pr_cdcooper
-               AND craptit.cdagenci  = 91 -- PAC TRANSACOES TAA
-               AND craptit.dtdpagto >= to_date(to_char(pr_dtmvtolt,'mm/rrrr'),'mm/rrrr')
-               AND craptit.dtdpagto <= pr_dtmvtolt
-               AND craptit.cdcooper <> craptit.cdcoptfn
-               AND craptit.cdcoptfn <> 0     
-               AND craptit.nrdconta = crapass.nrdconta
-               AND craptit.cdcooper = crapass.cdcooper              
-           GROUP BY craptit.cdcooper,
-                    crapass.cdagenci
-           UNION ALL
-           SELECT craplft.cdcooper,
-                  crapass.cdagenci,
-                  COUNT(*) qtdmovto
-             FROM craplft, 
-                  crapass
-            WHERE craplft.cdcooper  = pr_cdcooper
-              AND craplft.cdagenci  = 91 -- PAC TRANSACOES TAA
-              AND craplft.dtmvtolt >= to_date(to_char(pr_dtmvtolt,'mm/rrrr'),'mm/rrrr')
-              AND craplft.dtmvtolt <= pr_dtmvtolt
-              AND craplft.cdcooper <> craplft.cdcoptfn
-              AND craplft.cdcoptfn <> 0   
-              AND craplft.nrdconta = crapass.nrdconta
-              AND craplft.cdcooper = crapass.cdcooper               
-           GROUP BY craplft.cdcooper,
-                    crapass.cdagenci
-          UNION ALL
-          SELECT tbgen_trans_pend.cdcooper
-                ,crapass.cdagenci
-                ,COUNT(*) qtdmovto
-           FROM tbgen_trans_pend, 
-                tbpagto_trans_pend, 
-                crapass 
-          WHERE tbgen_trans_pend.cdcooper               = pr_cdcooper
-            AND tbgen_trans_pend.dtmvtolt              >= to_date(to_char(pr_dtmvtolt,'mm/rrrr'),'mm/rrrr')
-            AND tbgen_trans_pend.dtmvtolt              <= pr_dtmvtolt
-            AND tbgen_trans_pend.cdcooper              <> tbgen_trans_pend.cdcoptfn
-            AND tbgen_trans_pend.nrdconta               = crapass.nrdconta
-            AND tbgen_trans_pend.cdcooper               = crapass.cdcooper
-            AND tbpagto_trans_pend.cdtransacao_pendente = tbgen_trans_pend.cdtransacao_pendente
-            AND tbgen_trans_pend.idorigem_transacao     = 4 /* TAA */
-            AND tbgen_trans_pend.tptransacao            = 2 /* Pagamento */
-            AND tbpagto_trans_pend.idagendamento        = 1 /* Nesta Data */
-            AND tbgen_trans_pend.cdcoptfn              <> 0
-       GROUP BY tbgen_trans_pend.cdcooper
-               ,crapass.cdagenci)
-    GROUP BY cdcooper,
-             cdagenci
-    ORDER BY cdagenci;    
-
-  --Busca informações de pagamento de títulos para gerar gerencial por PA                
-  CURSOR cr_tfapagtit2 IS
-    SELECT cdcoptfn,
-           cdagetfn,
-           SUM(qtdmovto) qtdmovto
-      FROM (SELECT cdcoptfn,
-                   cdagetfn,
-                   COUNT(*) qtdmovto
-              FROM craptit
-             WHERE craptit.cdcoptfn  = pr_cdcooper
-               AND craptit.cdagenci  = 91 -- PAC TRANSACOES TAA
-               AND craptit.dtmvtolt >= to_date(to_char(pr_dtmvtolt,'mm/rrrr'),'mm/rrrr')
-               AND craptit.dtmvtolt <= pr_dtmvtolt
-               AND craptit.cdcooper <> craptit.cdcoptfn
-           GROUP BY cdcoptfn,
-                    cdagetfn
-           UNION ALL
-           SELECT cdcoptfn,
-                  cdagetfn,
-                  COUNT(*) qtdmovto
-             FROM craplft
-            WHERE craplft.cdcoptfn  = pr_cdcooper
-              AND craplft.cdagenci  = 91 -- PAC TRANSACOES TAA
-              AND craplft.dtmvtolt >= to_date(to_char(pr_dtmvtolt,'mm/rrrr'),'mm/rrrr')
-              AND craplft.dtmvtolt <= pr_dtmvtolt
-              AND craplft.cdcooper <> craplft.cdcoptfn
-            GROUP BY cdcoptfn,
-                     cdagetfn
-          UNION ALL
-          SELECT tbgen_trans_pend.cdcoptfn
-                ,tbgen_trans_pend.cdagetfn
-                ,COUNT(*) qtdmovto
-           FROM tbgen_trans_pend, 
-                tbpagto_trans_pend
-          WHERE tbgen_trans_pend.cdcoptfn               = pr_cdcooper
-            AND tbgen_trans_pend.dtmvtolt               >= to_date(to_char(pr_dtmvtolt,'mm/rrrr'),'mm/rrrr')
-            AND tbgen_trans_pend.dtmvtolt               <= pr_dtmvtolt
-            AND tbgen_trans_pend.cdcooper               <> tbgen_trans_pend.cdcoptfn
-            AND tbpagto_trans_pend.cdtransacao_pendente = tbgen_trans_pend.cdtransacao_pendente        
-            AND tbgen_trans_pend.idorigem_transacao     = 4 /* TAA */
-            AND tbgen_trans_pend.tptransacao            = 2 /* Pagamento */
-            AND tbpagto_trans_pend.idagendamento        = 1 /* Nesta Data */
-       GROUP BY tbgen_trans_pend.cdcoptfn
-               ,tbgen_trans_pend.cdagetfn)
-    GROUP BY cdcoptfn,
-             cdagetfn
-    ORDER BY cdagetfn; 
-
-  --Busca informações de lançamentos para gerar gerencial por PA                
-  CURSOR cr_tfatrftaa IS
-    SELECT cdcooper,
-           cdagenci,
-           SUM(qtdmovto) qtdmovto
-      FROM (SELECT craplcm.cdcooper,
-                   crapass.cdagenci,
-                   COUNT(*) qtdmovto
-              FROM craplcm,
-                   crapass
-             WHERE craplcm.cdcooper   = pr_cdcooper
-               AND craplcm.dtmvtolt  >= to_date(to_char(pr_dtmvtolt,'mm/rrrr'),'mm/rrrr')
-               AND craplcm.dtmvtolt  <= pr_dtmvtolt
-               AND  craplcm.cdcooper <> craplcm.cdcoptfn
-               AND (craplcm.cdhistor  in (375,376)
-                OR (craplcm.cdhistor  = 1009
-               AND  craplcm.cdagenci  = 91))
-               AND  craplcm.nrdconta  = crapass.nrdconta
-               AND  craplcm.cdcooper  = crapass.cdcooper
-               AND craplcm.cdcoptfn  <> 0
-             GROUP BY craplcm.cdcooper,
-                      crapass.cdagenci
-            UNION ALL
-            SELECT tbgen_trans_pend.cdcoptfn,
-                   crapass.cdagenci,
-                   COUNT(*) qtdmovto
-             FROM tbgen_trans_pend, 
-                  tbtransf_trans_pend,
-                  crapass 
-            WHERE tbgen_trans_pend.cdcooper                = pr_cdcooper 
-              AND tbgen_trans_pend.dtmvtolt               >= to_date(to_char(pr_dtmvtolt,'mm/rrrr'),'mm/rrrr')
-              AND tbgen_trans_pend.dtmvtolt               <= pr_dtmvtolt
-              AND tbgen_trans_pend.cdcooper               <> tbgen_trans_pend.cdcoptfn
-              AND tbgen_trans_pend.idorigem_transacao      = 4 /* TAA */
-              AND tbgen_trans_pend.tptransacao            IN (1,5) /* Transferencias */
-              AND tbtransf_trans_pend.cdtransacao_pendente = tbgen_trans_pend.cdtransacao_pendente
-              AND tbtransf_trans_pend.idagendamento        = 1 /* Nesta Data */
-              AND tbgen_trans_pend.nrdconta                = crapass.nrdconta
-              AND tbgen_trans_pend.cdcooper                = crapass.cdcooper 
-              AND tbgen_trans_pend.cdcoptfn               <> 0         
-            GROUP BY tbgen_trans_pend.cdcoptfn,
-                     crapass.cdagenci)     
-    GROUP BY cdcooper,
-             cdagenci
-    ORDER BY cdagenci;  
-
-  --Busca informações de lançamentos para gerar gerencial por PA                             
-  CURSOR cr_tfatrftaa2 IS
-    SELECT cdcoptfn,
-           cdagetfn,
-           SUM(qtdmovto) qtdmovto
-      FROM (SELECT cdcoptfn,
-                   cdagetfn,
-                   COUNT(*) qtdmovto
-              FROM craplcm
-             WHERE craplcm.cdcoptfn   = pr_cdcooper
-               AND craplcm.dtmvtolt  >= to_date(to_char(pr_dtmvtolt,'mm/rrrr'),'mm/rrrr')
-               AND craplcm.dtmvtolt  <= pr_dtmvtolt
-               AND  craplcm.cdcooper <> craplcm.cdcoptfn
-               AND (craplcm.cdhistor  in (375,376)
-                OR (craplcm.cdhistor  = 1009
-               AND  craplcm.cdagenci  = 91))
-             GROUP BY cdcoptfn,
-                      cdagetfn
-            UNION ALL
-            SELECT tbgen_trans_pend.cdcoptfn,
-                   tbgen_trans_pend.cdagetfn,
-                   COUNT(*) qtdmovto
-             FROM tbgen_trans_pend, 
-                  tbtransf_trans_pend 
-            WHERE tbgen_trans_pend.cdcoptfn                = pr_cdcooper 
-              AND tbgen_trans_pend.dtmvtolt               >= to_date(to_char(pr_dtmvtolt,'mm/rrrr'),'mm/rrrr')
-              AND tbgen_trans_pend.dtmvtolt               <= pr_dtmvtolt
-              AND tbgen_trans_pend.cdcooper               <> tbgen_trans_pend.cdcoptfn
-              AND tbgen_trans_pend.idorigem_transacao      = 4 /* TAA */
-              AND tbgen_trans_pend.tptransacao            IN (1,5) /* Transferencias */
-              AND tbtransf_trans_pend.cdtransacao_pendente = tbgen_trans_pend.cdtransacao_pendente
-              AND tbtransf_trans_pend.idagendamento        = 1 /* Nesta Data */
-            GROUP BY tbgen_trans_pend.cdcoptfn,
-                     tbgen_trans_pend.cdagetfn)
-    GROUP BY cdcoptfn,
-             cdagetfn
-    ORDER BY cdagetfn;    
              
   --Busca lançamentos de pagamentos de emprestimos para geração de lançamentos             
   CURSOR cr_craplem IS     
@@ -578,8 +226,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
     vr_decendio          VARCHAR2(2);
     vr_dtdecendio        VARCHAR2(6);
     vr_tppessoa          VARCHAR2(2);
-    vr_cdhistor_deb      NUMBER;
-    vr_vltarifa          NUMBER;
     vr_descricao         VARCHAR2(500);
     vr_nrctaori          NUMBER;
 
@@ -878,7 +524,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
         END IF;
         
       END IF; 
-	    
+      
       --Insere no arquivo conforme tipos de históricos
       IF rw_craplcm.cdhistor = 544 THEN
 
@@ -1036,24 +682,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
 
       END IF;
       
-    END LOOP;
-    
-    --
-    FOR rw_craplcm IN cr_craplcm2 LOOP
 
-      vr_contador := vr_contador + 1;
-    
-      IF vr_contador = 1 THEN
-         
-        cont0001.pc_abre_arquivo(pr_cdcooper,pr_dtmvtolt,'LCTOSCENTRALIZACAO',pr_retfile);
-
-
-        IF vr_dscritic IS NOT NULL THEN
-          RAISE vr_file_erro;
-        END IF;
-
-      END IF;      
-      
       IF vr_tab_historico.exists(rw_craplcm.cdhistor) THEN
   
         vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
@@ -1077,103 +706,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
         -- Gravar Linha
         pc_gravar_linha(vr_linhadet);           
         
-/*      ELSIF rw_craplcm.cdhistor in (909,910,913,914,915,916,945,946,1007,1008) THEN
-         
-        SELECT DECODE(rw_craplcm.cdhistor,910,909,914,913,916,915,946,945,1008,1007,rw_craplcm.cdhistor)
-          INTO vr_cdhistor_deb
-          FROM DUAL;
-      
-        OPEN cr_crapthi(vr_cdhistor_deb);
-        FETCH cr_crapthi into vr_vltarifa;
-        CLOSE cr_crapthi;
-        
-        IF rw_craplcm.cdhistor IN (909,910) THEN
-
-          IF rw_craplcm.cdhistor = 909 THEN
-            FOR rw_crapext IN cr_crapext LOOP
-              vr_linhadet := LPAD(rw_crapext.cdagenci,3,0)||','||TRIM(to_char(rw_crapext.qtdmovto * vr_vltarifa, '99999999999990.00'));              
-              
-              -- Gravar Linha
-              pc_gravar_linha(vr_linhadet);                               
-            END LOOP;
-          ELSE
-            FOR rw_crapext IN cr_crapext_2 LOOP
-              vr_linhadet := LPAD(rw_crapext.cdagetfn,3,0)||','||TRIM(to_char(rw_crapext.qtdmovto * vr_vltarifa, '99999999999990.00'));              
-              
-              -- Gravar Linha
-              pc_gravar_linha(vr_linhadet);                               
-            END LOOP;            
-          END IF;
-          
-        ELSIF rw_craplcm.cdhistor IN (913,914) THEN
-          IF rw_craplcm.cdhistor = 913 THEN
-            FOR rw_craplcm IN cr_craplcm3 LOOP
-              vr_linhadet := LPAD(rw_craplcm.cdagenci,3,0)||','||TRIM(to_char(rw_craplcm.qtdmovto * vr_vltarifa, '99999999999990.00'));              
-              
-              -- Gravar Linha
-              pc_gravar_linha(vr_linhadet);                               
-            END LOOP;            
-          ELSE
-            FOR rw_craplcm IN cr_craplcm4 LOOP
-              vr_linhadet := LPAD(rw_craplcm.cdagetfn,3,0)||','||TRIM(to_char(rw_craplcm.qtdmovto * vr_vltarifa, '99999999999990.00'));              
-              
-              -- Gravar Linha
-              pc_gravar_linha(vr_linhadet);                               
-            END LOOP;               
-          END IF;
-          
-        ELSIF rw_craplcm.cdhistor IN (915,916) THEN
-          IF rw_craplcm.cdhistor = 915 THEN
-            FOR rw_tfapagtit IN cr_tfapagtit LOOP
-              vr_linhadet := LPAD(rw_tfapagtit.cdagenci,3,0)||','||TRIM(to_char(rw_tfapagtit.qtdmovto * vr_vltarifa, '99999999999990.00'));              
-              
-              -- Gravar Linha
-              pc_gravar_linha(vr_linhadet);                               
-            END LOOP;            
-          ELSE
-            FOR rw_tfapagtit IN cr_tfapagtit2 LOOP
-              vr_linhadet := LPAD(rw_tfapagtit.cdagetfn,3,0)||','||TRIM(to_char(rw_tfapagtit.qtdmovto * vr_vltarifa, '99999999999990.00'));              
-              
-              -- Gravar Linha
-              pc_gravar_linha(vr_linhadet);                               
-            END LOOP;               
-          END IF; 
-          
-        ELSIF rw_craplcm.cdhistor IN (945,946) THEN
-          IF rw_craplcm.cdhistor = 945 THEN
-            FOR rw_tfatrftaa IN cr_tfatrftaa LOOP
-              vr_linhadet := LPAD(rw_tfatrftaa.cdagenci,3,0)||','||TRIM(to_char(rw_tfatrftaa.qtdmovto * vr_vltarifa, '99999999999990.00'));              
-              
-              -- Gravar Linha
-              pc_gravar_linha(vr_linhadet);                               
-            END LOOP;            
-          ELSE
-            FOR rw_tfatrftaa IN cr_tfatrftaa2 LOOP
-              vr_linhadet := LPAD(rw_tfatrftaa.cdagetfn,3,0)||','||TRIM(to_char(rw_tfatrftaa.qtdmovto * vr_vltarifa, '99999999999990.00'));              
-              
-              -- Gravar Linha
-              pc_gravar_linha(vr_linhadet);                               
-            END LOOP;               
-          END IF;  
-          
-        ELSIF rw_craplcm.cdhistor IN (1007,1008) THEN
-          IF rw_craplcm.cdhistor = 1007 THEN
-            FOR rw_crapldt IN cr_crapldt LOOP
-              vr_linhadet := LPAD(rw_crapldt.cdagenci,3,0)||','||TRIM(to_char(rw_crapldt.qtdmovto * vr_vltarifa, '99999999999990.00'));              
-              
-              -- Gravar Linha
-              pc_gravar_linha(vr_linhadet);                               
-            END LOOP;            
-          ELSE
-           -- FOR rw_crapldt IN cr_crapldt2 LOOP
-              vr_linhadet := '999,'||TRIM(to_char(rw_craplcm.vllanmto, '99999999999990.00'));              
-              
-              -- Gravar Linha
-              pc_gravar_linha(vr_linhadet);                 
-           -- END LOOP;               
-          END IF;                             
-        END IF;
-*/        
       END IF;
       
     END LOOP;
@@ -1308,22 +840,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
   
   
     vr_file_erro     EXCEPTION;
-    vr_vldocmto      NUMBER := 0;
-    vr_vldocmto_age  NUMBER := 0;    
-    vr_aux_vldocmto  NUMBER := 0; 
-    vr_index         NUMBER;
-    vr_aux_index     NUMBER;    
-    vr_cdagenci      NUMBER;
-    vr_nrctaori      NUMBER;
-    vr_nrctades      NUMBER;
-    
-    TYPE typ_lct_pos_neg IS TABLE OF NUMBER INDEX BY PLS_INTEGER;    
-    TYPE typ_lct_age_pos_neg IS TABLE OF NUMBER INDEX BY PLS_INTEGER;
-    
-    
-    vr_tab_lct_pos_neg typ_lct_pos_neg;
-    vr_tab_lct_age_pos_neg typ_lct_age_pos_neg;
-
     
     --Busca lançamentos a serem enviados para o radar.    
     CURSOR cr_craplcm IS
@@ -1342,55 +858,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
              TRIM(to_char(l.nrdconta,'999g999g999g9'))
       ORDER BY DECODE(l.cdhistor,788,787,790,789,l.cdhistor);
 
-  --Busca valores por PA para gerar lançamentos do gerencial             
-  CURSOR cr_gntarcp(pr_cdhistor IN NUMBER) IS
-    SELECT cdcooper, 
-           decode(cdagenci,0,999,cdagenci) cdagenci, 
-           SUM(vldocmto) vldocmto
-      FROM gntarcp  
-     WHERE dtmvtolt >= add_months(to_date(to_char(pr_dtmvtolt,'mm/yyyy'),'mm/yyyy'),-1)
-       AND dtmvtolt  <= last_day(add_months(pr_dtmvtolt,-1))
-       AND cdcooper = pr_cdcooper
-       AND ((pr_cdhistor = 814 AND cdtipdoc in (9,10)) OR
-            (pr_cdhistor = 822 AND cdtipdoc = 13) OR
-            (pr_cdhistor = 839 AND cdtipdoc = 18))
-    GROUP BY cdcooper, 
-             decode(cdagenci,0,999,cdagenci)
-    ORDER BY cdcooper, 
-             decode(cdagenci,0,999,cdagenci);             
-
-  --Busca valores por PA para gerar lançamentos do gerencial
-  CURSOR cr_gntarcp2(pr_cdtipdoc_pos IN NUMBER,
-                     pr_cdtipdoc_neg IN NUMBER,
-                     pr_dtmvtolt_ini IN DATE,
-                     pr_dtmvtolt_fim IN DATE) IS
-    SELECT SUM(decode(cdagenci,0,decode(cdtipdoc,pr_cdtipdoc_pos,vldocmto,0),0)) - SUM(decode(cdagenci,0,decode(cdtipdoc,pr_cdtipdoc_neg,vldocmto,0),0)) vldocmto_pa_zero,
-           SUM(decode(cdagenci,0,0,decode(cdtipdoc,pr_cdtipdoc_pos,vldocmto,0))) - SUM(decode(cdagenci,0,0,decode(cdtipdoc,pr_cdtipdoc_neg,vldocmto,0))) vldocmto_demais_pa           
-      FROM gntarcp  
-     WHERE dtmvtolt >= pr_dtmvtolt_ini
-       AND dtmvtolt <= pr_dtmvtolt_fim
-       AND cdcooper = pr_cdcooper
-       AND cdtipdoc IN (pr_cdtipdoc_pos,pr_cdtipdoc_neg); 
-
-  --Busca valores por PA para gerar lançamentos do gerencial       
-  CURSOR cr_gntarcp3(pr_cdtipdoc_pos IN NUMBER,
-                     pr_cdtipdoc_neg IN NUMBER,
-                     pr_dtmvtolt_ini IN DATE,
-                     pr_dtmvtolt_fim IN DATE) IS
-    SELECT cdcooper, 
-           cdagenci,
-           SUM(decode(cdtipdoc,pr_cdtipdoc_pos,vldocmto,0)) - SUM(decode(cdtipdoc,pr_cdtipdoc_neg,vldocmto,0)) vldocmto
-      FROM gntarcp  
-     WHERE dtmvtolt >= pr_dtmvtolt_ini
-       AND dtmvtolt <= pr_dtmvtolt_fim
-       AND cdcooper = pr_cdcooper
-       AND cdtipdoc in (pr_cdtipdoc_neg,pr_cdtipdoc_pos)
-       AND cdagenci > 0
-    GROUP BY cdcooper, 
-             cdagenci
-    ORDER BY cdcooper, 
-             cdagenci;                   
-             
              
      -- Inicializa tabela de Historicos
      PROCEDURE pc_inicia_historico IS
@@ -1498,193 +965,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
          vr_linhadet := '999,'||TRIM(to_char(rw_craplcm.vllanmto, '99999999999990.00'));               
       END IF;
        
-/*      IF rw_craplcm.cdhistor in (814,822,839) THEN
-        FOR rw_gntarcp IN cr_gntarcp(rw_craplcm.cdhistor) LOOP
-          vr_linhadet := LPAD(rw_gntarcp.cdagenci,3,0)||','||TRIM(to_char(rw_gntarcp.vldocmto, '99999999999990.00'));              
-              
-          -- Gravar Linha
-          pc_gravar_linha(vr_linhadet);           
-        END LOOP; 
-        
-      ELSIF rw_craplcm.cdhistor in (809,811) THEN
-      
-        vr_tab_lct_pos_neg.DELETE;        
-      
-        FOR rw_gntarcp IN cr_gntarcp2(12,
-                                      11,
-                                      add_months(to_date(to_char(pr_dtmvtolt,'mm/rrrr'),'dd/mm/rrrr'),-1),
-                                      last_day(add_months(pr_dtmvtolt,-1))) LOOP 
-                                      
-          
-          FOR rw_gntarcp3 IN cr_gntarcp3(12,
-                                         11,
-                                         add_months(to_date(to_char(pr_dtmvtolt,'mm/rrrr'),'dd/mm/rrrr'),-1),
-                                         last_day(add_months(pr_dtmvtolt,-1))) LOOP 
-          
-            vr_vldocmto := rw_gntarcp3.vldocmto + ((rw_gntarcp3.vldocmto  / rw_gntarcp.vldocmto_demais_pa) * rw_gntarcp.vldocmto_pa_zero);
-
-            IF vr_vldocmto > 0 THEN
-              vr_index := 1;
-            ELSE
-              vr_index := 2;
-            END IF;
-            
-            IF vr_tab_lct_pos_neg.EXISTS(vr_index) THEN
-              vr_tab_lct_pos_neg(vr_index) := vr_tab_lct_pos_neg(vr_index) + vr_vldocmto;
-            ELSE
-              vr_tab_lct_pos_neg(vr_index) := vr_vldocmto;   
-            END IF;
-            
-            vr_tab_lct_age_pos_neg(rw_gntarcp3.cdagenci) := vr_vldocmto;
-                                         
-          END LOOP;
-                                            
-          
-        END LOOP; 
-        
-        vr_index := vr_tab_lct_pos_neg.first;
-        WHILE vr_index IS NOT NULL LOOP
-         
-         IF vr_tab_lct_pos_neg(vr_index) < 0 THEN
-           vr_vldocmto := vr_tab_lct_pos_neg(vr_index) * -1;
-           vr_nrctaori := vr_tab_historico(rw_craplcm.cdhistor).nrctades;
-           vr_nrctades := vr_tab_historico(rw_craplcm.cdhistor).nrctaori;           
-         ELSE 
-           vr_vldocmto := vr_tab_lct_pos_neg(vr_index);
-           vr_nrctaori := vr_tab_historico(rw_craplcm.cdhistor).nrctaori;
-           vr_nrctades := vr_tab_historico(rw_craplcm.cdhistor).nrctades;            
-         END IF; 
-         
-         vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                         TRIM(to_char(pr_dtmvtolt, 'ddmmyy')) || ','|| 
-                         vr_nrctaori||','||
-                         vr_nrctades||','||                         
-                         TRIM(to_char(vr_vldocmto, '99999999999990.00')) ||
-                         ',5210,' ||
-                         '"'||REPLACE(REPLACE(vr_tab_historico(rw_craplcm.cdhistor).dsrefere,'pr_nrctafmt',rw_craplcm.nrctafmt),'MM/YYYY',to_char(pr_dtmvtolt, 'MM/YYYY'))||'"';
-
-          -- Gravar Linha
-          pc_gravar_linha(vr_linhadet);   
-          
-          vr_cdagenci := vr_tab_lct_age_pos_neg.first;
-          WHILE vr_cdagenci IS NOT NULL LOOP
-          
-            IF (vr_index = 1 AND vr_tab_lct_age_pos_neg(vr_cdagenci) > 0) OR 
-               (vr_index = 2 AND vr_tab_lct_age_pos_neg(vr_cdagenci) < 0) THEN
-
-            IF vr_tab_lct_age_pos_neg(vr_cdagenci) < 0 THEN
-              vr_vldocmto := vr_tab_lct_age_pos_neg(vr_cdagenci) * -1; 
-            ELSE 
-              vr_vldocmto := vr_tab_lct_age_pos_neg(vr_cdagenci);
-            END IF; 
-            
-            vr_linhadet := LPAD(vr_cdagenci,3,0)||','||TRIM(to_char(vr_vldocmto, '99999999999990.00')); 
-                
-            -- Gravar Linha
-            pc_gravar_linha(vr_linhadet);
-               
-            END IF;
-            vr_cdagenci := vr_tab_lct_age_pos_neg.next(vr_cdagenci);
-          END LOOP;   
-          vr_index := vr_tab_lct_pos_neg.next(vr_index);       
-        END LOOP;
-        
-      ELSIF rw_craplcm.cdhistor in (812,813) THEN
-        
-        vr_tab_lct_pos_neg.DELETE;
-      
-        FOR rw_gntarcp IN cr_gntarcp2(14,
-                                      15,
-                                      pr_dtmvtolt -8,
-                                      pr_dtmvtolt -2) LOOP 
-                                      
-          
-          FOR rw_gntarcp3 IN cr_gntarcp3(14,
-                                         15,
-                                         pr_dtmvtolt -8,
-                                         pr_dtmvtolt -2) LOOP 
-          
-            
-            vr_vldocmto := rw_gntarcp3.vldocmto + ((rw_gntarcp3.vldocmto  / rw_gntarcp.vldocmto_demais_pa) * rw_gntarcp.vldocmto_pa_zero);
-
-            IF vr_vldocmto > 0 THEN
-              vr_index := 1;
-            ELSE
-              vr_index := 2;
-            END IF;
-            
-            IF vr_tab_lct_pos_neg.EXISTS(vr_index) THEN
-              vr_tab_lct_pos_neg(vr_index) := vr_tab_lct_pos_neg(vr_index) + vr_vldocmto;
-            ELSE
-              vr_tab_lct_pos_neg(vr_index) := vr_vldocmto;   
-            END IF;
-            
-            vr_tab_lct_age_pos_neg(rw_gntarcp3.cdagenci) := vr_vldocmto;
-
-          END LOOP;
-
-        END LOOP; 
-        
-        vr_index := vr_tab_lct_pos_neg.first;
-        WHILE vr_index IS NOT NULL LOOP
-
-         IF vr_tab_lct_pos_neg(vr_index) < 0 THEN
-           vr_vldocmto := vr_tab_lct_pos_neg(vr_index) * -1;
-           vr_nrctaori := vr_tab_historico(rw_craplcm.cdhistor).nrctades;
-           vr_nrctades := vr_tab_historico(rw_craplcm.cdhistor).nrctaori;           
-         ELSE 
-           vr_vldocmto := vr_tab_lct_pos_neg(vr_index);
-           vr_nrctaori := vr_tab_historico(rw_craplcm.cdhistor).nrctaori;
-           vr_nrctades := vr_tab_historico(rw_craplcm.cdhistor).nrctades;            
-         END IF; 
-         
-         vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                         TRIM(to_char(pr_dtmvtolt, 'ddmmyy')) || ','|| 
-                         vr_nrctaori||','||
-                         vr_nrctades||','||                         
-                         TRIM(to_char(vr_vldocmto, '99999999999990.00')) ||
-                         ',5210,' ||
-                         '"'||REPLACE(REPLACE(vr_tab_historico(rw_craplcm.cdhistor).dsrefere,'pr_nrctafmt',rw_craplcm.nrctafmt),'MM/YYYY',to_char(pr_dtmvtolt, 'MM/YYYY'))||'"';
-
-          -- Gravar Linha
-          pc_gravar_linha(vr_linhadet);   
-          
-          vr_cdagenci := vr_tab_lct_age_pos_neg.first;
-          vr_aux_vldocmto := 0;
-          WHILE vr_cdagenci IS NOT NULL LOOP
-          
-            IF (vr_index = 1 AND vr_tab_lct_age_pos_neg(vr_cdagenci) > 0) OR 
-               (vr_index = 2 AND vr_tab_lct_age_pos_neg(vr_cdagenci) < 0) THEN
-            
-              IF vr_tab_lct_age_pos_neg(vr_cdagenci) < 0 THEN
-                vr_vldocmto_age := vr_tab_lct_age_pos_neg(vr_cdagenci) * -1; 
-              ELSE 
-                vr_vldocmto_age := vr_tab_lct_age_pos_neg(vr_cdagenci);
-              END IF;
-              
-              vr_aux_vldocmto := vr_aux_vldocmto + round(vr_vldocmto_age,2);
-              
-              vr_aux_index := vr_tab_lct_age_pos_neg.next(vr_cdagenci); 
-              
-              if vr_aux_index is null then
-                if vr_aux_vldocmto <> round(vr_vldocmto,2) then 
-                  vr_vldocmto_age := vr_vldocmto_age + (round(vr_vldocmto,2) - vr_aux_vldocmto); 
-                end if;
-              end if;
-              
-              vr_linhadet := LPAD(vr_cdagenci,3,0)||','||TRIM(to_char(vr_vldocmto_age, '99999999999990.00'));              
-                  
-              -- Gravar Linha
-              pc_gravar_linha(vr_linhadet);
-               
-            END IF;
-            vr_cdagenci := vr_tab_lct_age_pos_neg.next(vr_cdagenci);
-          END LOOP; 
-          vr_index := vr_tab_lct_pos_neg.next(vr_index);        
-        END LOOP;
-        
-      END IF;     */   
-      
     END LOOP;
     
     IF vr_contador > 0 THEN
