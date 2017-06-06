@@ -542,7 +542,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652_fixo (pr_cdcooper IN crapcop.cdcoo
             AND craplem.cdcooper = pr_cdcooper
             AND craplem.nrdconta = pr_nrdconta
             AND craplem.nrctremp = pr_nrctremp
-            AND craplem.dtmvtolt in (pr_dtmvtolt,gene0005.fn_valida_dia_util(pr_cdcooper, to_date(pr_dtmvtolt,'DD/MM/YYYY')-1, 'A')) 
+            AND craplem.dtmvtolt = pr_dtmvtolt
             AND craphis.indcalem = 'S'
          GROUP BY craplem.cdhistor,craphis.dshistor
          --Melhoria 155
@@ -560,7 +560,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652_fixo (pr_cdcooper IN crapcop.cdcoo
             AND craplcm.cdcooper = pr_cdcooper
             AND craplcm.nrdconta = pr_nrdconta
             AND crapepr.nrctremp = pr_nrctremp
-            AND craplcm.dtmvtolt IN (pr_dtmvtolt,gene0005.fn_valida_dia_util(pr_cdcooper, to_date(pr_dtmvtolt,'DD/MM/YYYY')-1, 'A'))
+            AND craplcm.dtmvtolt = pr_dtmvtolt
             --Multa e juros de mora
             AND craphis.cdhistor in (1070, 1060, 1071, 1072)
          GROUP BY craplcm.cdhistor,craphis.dshistor;
@@ -2656,7 +2656,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652_fixo (pr_cdcooper IN crapcop.cdcoo
                  ON tbrecup_acordo.nracordo = tbrecup_acordo_parcela.nracordo
               WHERE crapret.cdcooper = pr_cdcooper
                 AND crapret.nrcnvcob = pr_nrcnvcob
-                AND crapret.dtocorre in (pr_dtmvtolt,gene0005.fn_valida_dia_util(pr_cdcooper, to_date(pr_dtmvtolt,'DD/MM/YYYY')-1, 'A')) 
+                AND crapret.dtocorre in (pr_dtmvtolt,gene0005.fn_valida_dia_util(pr_cdcooper, to_date(pr_dtmvtolt,'DD/MM/YYYY')-1, 'A'))
                 AND crapret.cdocorre IN (6,76);       -- liquidacao normal COO/CEE
 
            vr_nrcnvcob crapprm.dsvlrprm%TYPE;
@@ -4915,6 +4915,42 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652_fixo (pr_cdcooper IN crapcop.cdcoo
                    RAISE vr_exc_saida;
                  END IF;
                END LOOP;
+
+               FOR rw_valor_pago_emprestimo IN cr_valor_pago_emprestimo(pr_cdcooper => rw_crapcyb.cdcooper       -- Cooperativa
+                                                                       ,pr_nrdconta => rw_crapcyb.nrdconta       -- Numero Conta
+                                                                       ,pr_nrctremp => rw_crapcyb.nrctremp       -- Contrato Emprestimo
+                                                                       ,pr_dtmvtolt => gene0005.fn_valida_dia_util(rw_crapcyb.cdcooper, to_date(vr_dtatual,'DD/MM/YYYY')-1, 'A')) LOOP -- Data Movimento
+
+                 -- Melhoria 432 - verifica se é refinanciamento - Jean / Mout´S
+                 vr_cdtrscyb := NULL;
+
+                 OPEN c_refinanciamento(pr_cdcooper => rw_crapcyb.cdcooper       -- Cooperativa
+                                       ,pr_nrdconta => rw_crapcyb.nrdconta       -- Numero Conta
+                                       ,pr_nrctremp => rw_crapcyb.nrctremp);       -- Contrato Emprestimo
+                 FETCH c_refinanciamento INTO vr_cdtrscyb;
+                 CLOSE c_refinanciamento;
+
+                 IF vr_cdtrscyb IS NULL THEN
+                    vr_cdtrscyb := 'PA'; --rw_valor_pago_emprestimo.cdhistor;
+                 END IF;
+
+                 --Gerar Carga Pagamentos
+                 pc_gera_carga_pagamentos (pr_cdcooper => rw_crapcyb.cdcooper    --Codigo Cooperativa
+                                          ,pr_cdorigem => rw_crapcyb.cdorigem    --Codigo Origem
+                                          ,pr_nrdconta => rw_crapcyb.nrdconta    --Numero Conta
+                                          ,pr_nrctremp => rw_crapcyb.nrctremp    --Numero Contrato Emprestimo
+                                          ,pr_vlrpagto => rw_valor_pago_emprestimo.vllanmto -- Valor Lancamento
+                                          ,pr_dtmvtlt2 => TO_CHAR(gene0005.fn_valida_dia_util(rw_crapcyb.cdcooper, to_date(vr_dtatual,'DD/MM/YYYY')-1, 'A'),'MMDDYYYY') --Data Movimento
+                                          ,pr_cdhistor => vr_cdtrscyb -- Codigo Historico
+                                          ,pr_dshistor => rw_valor_pago_emprestimo.dshistor --Descricao Historico
+                                          ,pr_cdcritic => vr_cdcritic            --Codigo Erro
+                                          ,pr_dscritic => vr_dscritic);          --Descricao Erro
+                 --Se ocorreu erro
+                 IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+                   RAISE vr_exc_saida;
+                 END IF;
+               END LOOP;
+
                -- Precisamos gerar arquivo de pagamento e baixa para os registros que nao fizeram
                -- atualizacao financeira no crps280.i (Foram liquidados)
                IF rw_crapcyb.dtmvtolt < vr_dtatual AND
@@ -5053,6 +5089,53 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652_fixo (pr_cdcooper IN crapcop.cdcoo
                      RAISE vr_exc_saida;
                    END IF;
                  END IF;
+                 
+                 --
+                 
+                 vr_vllammto:= fn_valor_pago_conta_corrente(pr_cdcooper => rw_crapcyb.cdcooper   --Cooperativa
+                                                           ,pr_nrdconta => rw_crapcyb.nrdconta   --Numero Conta
+                                                           ,pr_nrctremp => rw_crapcyb.nrctremp   --Contrato Emprestimo
+                                                           ,pr_dtmvtolt => gene0005.fn_valida_dia_util(rw_crapcyb.cdcooper, to_date(vr_dtatual,'DD/MM/YYYY')-1, 'A')); -- Data Movimento
+
+                 --Valor a regularizar anterior menos valor a regularizar menos o valor parametrizado
+                 vr_vlrpagto:= Nvl(rw_crapcyb.vlprapga,0) - Nvl(rw_crapcyb.vlpreapg,0) - Nvl(vr_vllammto,0);
+
+                 IF nvl(vr_vlrpagto,0) > 0 THEN
+
+
+                   -- Melhoria 432 - verifica se é refinanciamento - Jean / Mout´S
+                   vr_cdtrscyb := NULL;
+
+                   OPEN c_refinanciamento(pr_cdcooper => rw_crapcyb.cdcooper       -- Cooperativa
+                                         ,pr_nrdconta => rw_crapcyb.nrdconta       -- Numero Conta
+                                         ,pr_nrctremp => rw_crapcyb.nrctremp);       -- Contrato Emprestimo
+                   FETCH c_refinanciamento INTO vr_cdtrscyb;
+                   CLOSE c_refinanciamento;
+
+                   IF vr_cdtrscyb IS NULL THEN
+                      vr_cdtrscyb := 'PA';
+                   END IF;
+
+                    --Gerar Carga Pagamentos
+                   pc_gera_carga_pagamentos (pr_cdcooper => rw_crapcyb.cdcooper    --Codigo Cooperativa
+                                            ,pr_cdorigem => rw_crapcyb.cdorigem    --Codigo Origem
+                                            ,pr_nrdconta => rw_crapcyb.nrdconta    --Numero Conta
+                                            ,pr_nrctremp => rw_crapcyb.nrctremp    --Numero Contrato Emprestimo
+                                            ,pr_vlrpagto => vr_vlrpagto            --Valor saldo a regularizar
+                                            ,pr_dtmvtlt2 => TO_CHAR(gene0005.fn_valida_dia_util(rw_crapcyb.cdcooper, to_date(vr_dtatual,'DD/MM/YYYY')-1, 'A'),'MMDDYYYY') --Data Movimento
+                                            -- 16/01/2017  - deve gerar historico parametrizado, se generico, gera "PA" (Jean/Mout´S)
+                                            --,pr_cdhistor => 999999               --Codigo Historico (Genérico)
+                                            ,pr_cdhistor => vr_cdtrscyb            --Codigo Historico (Genérico)
+
+                                            ,pr_dshistor => NULL                   --Descricao Historico
+                                            ,pr_cdcritic => vr_cdcritic            --Codigo Erro
+                                            ,pr_dscritic => vr_dscritic);          --Descricao Erro
+                   --Se ocorreu erro
+                   IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+                     RAISE vr_exc_saida;
+                   END IF;
+                 END IF;
+                 
                  -- Verifica se o saldo a regularizar e o saldo do prejuizo estao liquidados para gerar a baixa,
                  -- ou se for residuo o saldo devedor deve estar liquidado para gerar uma baixa
                  IF Nvl(rw_crapcyb.vlpreapg,0) <= 0 THEN
