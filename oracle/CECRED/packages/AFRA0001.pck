@@ -1628,13 +1628,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Odirlei Busana(Amcom)
-      Data     : Novembro/2016.                   Ultima atualizacao: 10/11/2016
+      Data     : Novembro/2016.                   Ultima atualizacao: 06/06/2017
     
       Dados referentes ao programa:
     
       Frequencia: Sempre que for chamado
       Objetivo  : Excecutar rotinas referentes a reprovação da analise de fraude
-      Alteração : 
+      
+      Alteração : 06/06/2017 - Ajustado para usar a data dtmvtocd para estornar a TED.
+                               PRJ335- Analise de fraude(Odirlei-AMcom)
         
     ..........................................................................*/
     -----------> CURSORES <-----------
@@ -1697,7 +1699,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     
       --> Rotina para estornar TED reprovada pela analise de frude
       pc_estornar_ted_analise (pr_idanalis  => rw_fraude.idanalise_fraude, -->Id da análise de fraude
-                               pr_dtmvtolt  => rw_crapdat.dtmvtolt,  --> Data do sistema
+                               pr_dtmvtolt  => rw_crapdat.dtmvtocd,  --> Data do sistema
                                pr_inproces  => rw_crapdat.inproces,  --> Indicar de execução do processo batch
                                pr_cdcritic  => vr_cdcritic,  --> Retorno de critica
                                pr_dscritic  => vr_dscritic);          
@@ -2650,7 +2652,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       Dados referentes ao programa:
     
       Frequencia: Sempre que for chamado
-      Objetivo  : Rotina responsavel por estornar TED reprovada pela analise de frude
+      Objetivo  : Rotina responsavel por estornar TED reprovada pela analise de fraude
+      
       Alteração : 
         
     ..........................................................................*/
