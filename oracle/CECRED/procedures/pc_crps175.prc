@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS175(pr_cdcooper IN crapcop.cdcooper%TY
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/96.                    Ultima atualizacao: 28/09/2016
+   Data    : Novembro/96.                    Ultima atualizacao: 17/03/2017
 
    Dados referentes ao programa:
 
@@ -128,7 +128,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS175(pr_cdcooper IN crapcop.cdcooper%TY
                            (Douglas - Chamado 454248)
                            
              28/09/2016 - Alteração do diretório para geração de arquivo contábil.
-                          P308 (Ricardo Linhares).                            
+                          P308 (Ricardo Linhares).    
+                          
+             17/03/2017 - Remover linhas de reversão das contas de resultado e incluir
+                          lançamentos de novos históricos para o arquivo Radar ou Matera (Jonatas - Supero)                
+                                                  
                            
      ............................................................................. */
 
@@ -189,6 +193,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS175(pr_cdcooper IN crapcop.cdcooper%TY
        -- Instancia e indexa por agencia as previsoes mensais de pessoa juridica
        TYPE typ_tab_tot_vlprvjur IS TABLE OF NUMBER INDEX BY PLS_INTEGER;
        vr_tab_tot_vlprvjur typ_tab_tot_vlprvjur;
+       
+       -- Instancia e indexa por agencia os ajustes de previsoes mensais de pessoa fisica
+       TYPE typ_tab_tot_vlajusprv_fis IS TABLE OF NUMBER INDEX BY PLS_INTEGER;
+       vr_tab_tot_vlajusprv_fis typ_tab_tot_vlajusprv_fis;
+       
+       -- Instancia e indexa por agencia os ajustes de previsoes mensais de pessoa juridica
+       TYPE typ_tab_tot_vlajusprv_jur IS TABLE OF NUMBER INDEX BY PLS_INTEGER;
+       vr_tab_tot_vlajusprv_jur typ_tab_tot_vlajusprv_jur;       
        
        --Definicao das tabelas de memoria
        vr_tab_bndes      typ_tab_bndes;
@@ -464,13 +476,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS175(pr_cdcooper IN crapcop.cdcooper%TY
        -- Controle de arquivos
        vr_dircon VARCHAR2(200);
        vr_arqcon VARCHAR2(200);
-       vc_dircon CONSTANT VARCHAR2(30) := 'arquivos_contabeis/ayllos'; 
-       vc_cdacesso CONSTANT VARCHAR2(24) := 'ROOT_SISTEMAS';
-       vc_cdtodascooperativas INTEGER := 0;  
+
 
        -- Valores utilizados para contabilidade
-       vr_tot_vlprvfis   NUMBER:= 0;
-       vr_tot_vlprvjur   NUMBER:= 0;
+       vr_tot_vlprvfis        NUMBER:= 0;
+       vr_tot_vlprvjur        NUMBER:= 0;
+       vr_tot_vlajusprv_fis   NUMBER:= 0;
+       vr_tot_vlajusprv_jur   NUMBER:= 0;       
 
        vr_cdprogra       CONSTANT crapprg.cdprogra%TYPE := 'CRPS175'; -- Codigo do programa
        vr_retorno        VARCHAR2(3);
@@ -1615,6 +1627,29 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS175(pr_cdcooper IN crapcop.cdcooper%TY
                      vr_res_vlajuprv:= Nvl(vr_res_vlajuprv,0) - Nvl(rw_craplap.vllanmto,0);
                      -- Atribuir valores para Pl-Table separando por PF e PJ
                      vr_tab_total(rw_craprda_histor.inpessoa).vlajuprv := vr_tab_total(rw_craprda_histor.inpessoa).vlajuprv - Nvl(rw_craplap.vllanmto,0);
+                     
+                     IF rw_craprda_histor.inpessoa = 1 THEN
+                        
+                        IF vr_tab_tot_vlajusprv_fis.EXISTS(rw_craprda_histor.cdagenci) THEN
+                           vr_tab_tot_vlajusprv_fis(rw_craprda_histor.cdagenci) := vr_tab_tot_vlajusprv_fis(rw_craprda_histor.cdagenci) + Nvl(rw_craplap.vllanmto,0);
+                        ELSE
+                           vr_tab_tot_vlajusprv_fis(rw_craprda_histor.cdagenci) := Nvl(rw_craplap.vllanmto,0);
+                        END IF;
+
+                        vr_tot_vlajusprv_fis := vr_tot_vlajusprv_fis + Nvl(rw_craplap.vllanmto,0);
+
+                     ELSE
+
+                        IF vr_tab_tot_vlajusprv_jur.EXISTS(rw_craprda_histor.cdagenci) THEN
+                           vr_tab_tot_vlajusprv_jur(rw_craprda_histor.cdagenci) := vr_tab_tot_vlajusprv_jur(rw_craprda_histor.cdagenci) + Nvl(rw_craplap.vllanmto,0);
+                        ELSE
+                           vr_tab_tot_vlajusprv_jur(rw_craprda_histor.cdagenci) := Nvl(rw_craplap.vllanmto,0);
+                        END IF;
+
+                        vr_tot_vlajusprv_jur := vr_tot_vlajusprv_jur + Nvl(rw_craplap.vllanmto,0);
+                     END IF;
+                     
+                     
                    WHEN 183 THEN  --SAQ.S/REND.60
                      --Acumular valores de saque
                      vr_res_vlsaques:= Nvl(vr_res_vlsaques,0) + Nvl(rw_craplap.vllanmto,0);
@@ -1718,7 +1753,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS175(pr_cdcooper IN crapcop.cdcooper%TY
                            gene0002.fn_mask(4237, pr_dsforma => '9999')||','||                                         --> Conta Origem
                            gene0002.fn_mask(4271, pr_dsforma => '9999')||','||                                         --> Conta Destino
                            TRIM(TO_CHAR(vr_tot_rdcagefis, 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','|| --> Total Valor PF
-                           gene0002.fn_mask(1434, pr_dsforma => '9999')||','||                                         --> Fixo
+                           gene0002.fn_mask(5210, pr_dsforma => '9999')||','||                                         --> Fixo
                            '"SALDO TOTAL DE TITULOS ATIVOS RDCA 60 - COOPERADOS PESSOA FISICA"';                     --> Descricao
 
             gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
@@ -1755,7 +1790,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS175(pr_cdcooper IN crapcop.cdcooper%TY
                            gene0002.fn_mask(4271, pr_dsforma => '9999')||','||                                        --> Conta Destino
                            gene0002.fn_mask(4237, pr_dsforma => '9999')||','||                                        --> Conta Origem
                            TRIM(TO_CHAR(vr_tot_rdcagefis,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','|| --> Total Valor
-                           gene0002.fn_mask(1434, pr_dsforma => '9999')||','||                                        --> Fixo
+                           gene0002.fn_mask(5210, pr_dsforma => '9999')||','||                                        --> Fixo
                            '"'||vr_dsprefix||'SALDO TOTAL DE TITULOS ATIVOS RDCA 60 - COOPERADOS PESSOA FISICA"';                    --> Descricao
 
             gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
@@ -1796,7 +1831,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS175(pr_cdcooper IN crapcop.cdcooper%TY
                            gene0002.fn_mask(4237, pr_dsforma => '9999')||','||                                         --> Conta Origem
                            gene0002.fn_mask(4272, pr_dsforma => '9999')||','||                                         --> Conta Destino
                            TRIM(TO_CHAR(vr_tot_rdcagejur, 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','|| --> Total Valor PJ
-                           gene0002.fn_mask(1434, pr_dsforma => '9999')||','||                                         --> Fixo
+                           gene0002.fn_mask(5210, pr_dsforma => '9999')||','||                                         --> Fixo
                            '"SALDO TOTAL DE TITULOS ATIVOS RDCA 60 - COOPERADOS PESSOA JURIDICA"';                     --> Descricao
 
             gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
@@ -1833,7 +1868,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS175(pr_cdcooper IN crapcop.cdcooper%TY
                            gene0002.fn_mask(4272, pr_dsforma => '9999')||','||                                         --> Conta Destino
                            gene0002.fn_mask(4237, pr_dsforma => '9999')||','||                                         --> Conta Origem
                            TRIM(TO_CHAR(vr_tot_rdcagejur, 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','|| --> Total Valor PJ
-                           gene0002.fn_mask(1434, pr_dsforma => '9999')||','||                                         --> Fixo
+                           gene0002.fn_mask(5210, pr_dsforma => '9999')||','||                                         --> Fixo
                            '"'||vr_dsprefix||'SALDO TOTAL DE TITULOS ATIVOS RDCA 60 - COOPERADOS PESSOA JURIDICA"';                     --> Descricao
 
             gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
@@ -1874,7 +1909,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS175(pr_cdcooper IN crapcop.cdcooper%TY
                            gene0002.fn_mask(8054, pr_dsforma => '9999')||','||                                        --> Conta Origem
                            gene0002.fn_mask(8116, pr_dsforma => '9999')||','||                                        --> Conta Destino
                            TRIM(TO_CHAR(vr_tot_vlprvfis, 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','|| --> Total Valor PF
-                           gene0002.fn_mask(1434, pr_dsforma => '9999')||','||                                        --> Fixo
+                           gene0002.fn_mask(5210, pr_dsforma => '9999')||','||                                        --> Fixo
                            '"PROVISAO DO MES - RDCA 60 COOPERADOS PESSOA FISICA"';                                    --> Descricao
 
             gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
@@ -1902,43 +1937,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS175(pr_cdcooper IN crapcop.cdcooper%TY
                 END LOOP;
               END LOOP; -- fim repete
             END IF;
-
-            -- Montando o cabecalho para fazer a reversao das
-            -- conta para estornar os valores caso necessario
-            vr_setlinha := '70'||                                                                                    --> Informacao inicial
-                           TO_CHAR(rw_crapdat.dtmvtopr,'YYMMDD')||','||                                              --> Data AAMMDD do Arquivo
-                           TO_CHAR(rw_crapdat.dtmvtopr,'DDMMYY')||','||                                              --> Data DDMMAA
-                           gene0002.fn_mask(8116, pr_dsforma => '9999')||','||                                       --> Conta Destino
-                           gene0002.fn_mask(8054, pr_dsforma => '9999')||','||                                       --> Conta Origem
-                           TRIM(TO_CHAR(vr_tot_vlprvfis,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','|| --> Total Valor
-                           gene0002.fn_mask(1434, pr_dsforma => '9999')||','||                                       --> Fixo
-                           '"'||vr_dsprefix||'PROVISAO DO MES - RDCA 60 COOPERADOS PESSOA FISICA"';                                  --> Descricao
-
-            gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                          ,pr_des_text => vr_setlinha); --> Texto para escrita
-            
-            -- Verifica se existe valores       
-            IF vr_tab_tot_vlprvfis.COUNT > 0 THEN
-              -- imprimir os valores para cada conta, ou seja, em duplicidade
-              FOR repete IN 1..2 LOOP 
-                -- Gravas as informacoes de valores por agencia
-                FOR vr_idx_agencia IN vr_tab_tot_vlprvfis.FIRST()..vr_tab_tot_vlprvfis.LAST() LOOP
-                  -- Verifica se existe a informacao
-                  IF vr_tab_tot_vlprvfis.EXISTS(vr_idx_agencia) THEN
-                    -- Verifica se o valor maior que zero
-                    IF vr_tab_tot_vlprvfis(vr_idx_agencia) > 0 THEN
-                      -- Montar linha para gravar no arquivo
-                      vr_setlinha := TO_CHAR(vr_idx_agencia, 'FM009')||','||TRIM(TO_CHAR(vr_tab_tot_vlprvfis(vr_idx_agencia), 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'));
-                      -- Escrever linha no arquivo
-                      gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                                    ,pr_des_text => vr_setlinha); --> Texto para escrita
-                   END IF;
-                 END IF;
-                  -- Limpa variavel
-                  vr_setlinha := '';       
-                END LOOP;
-              END LOOP; -- fim repete
-            END IF;   
           END IF; -- Se valor maior que zero       
           
           
@@ -1953,7 +1951,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS175(pr_cdcooper IN crapcop.cdcooper%TY
                            gene0002.fn_mask(8055, pr_dsforma => '9999')||','||                                        --> Conta Origem
                            gene0002.fn_mask(8116, pr_dsforma => '9999')||','||                                        --> Conta Destino
                            TRIM(TO_CHAR(vr_tot_vlprvjur, 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','|| --> Total Valor PJ
-                           gene0002.fn_mask(1434, pr_dsforma => '9999')||','||                                        --> Fixo
+                           gene0002.fn_mask(5210, pr_dsforma => '9999')||','||                                        --> Fixo
                            '"PROVISAO DO MES - RDCA 60 COOPERADOS PESSOA JURIDICA"';                                  --> Descricao
 
             gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
@@ -1981,33 +1979,78 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS175(pr_cdcooper IN crapcop.cdcooper%TY
                 END LOOP;
               END LOOP; -- fim repete
             END IF;
-
-            -- Montando o cabecalho para fazer a reversao das
-            -- conta para estornar os valores caso necessario
+          END IF; -- Se valor maior que zero
+          
+          --Histórico 182
+          -- Se valor total maior que zero
+          IF NVL(vr_tot_vlajusprv_fis,0) > 0 THEN
+            -- Montando o cabecalho das contas do dia atual
             vr_setlinha := '70'||                                                                                     --> Informacao inicial
-                           TO_CHAR(rw_crapdat.dtmvtopr,'YYMMDD')||','||                                               --> Data AAMMDD do Arquivo
-                           TO_CHAR(rw_crapdat.dtmvtopr,'DDMMYY')||','||                                               --> Data DDMMAA
-                           gene0002.fn_mask(8116, pr_dsforma => '9999')||','||                                        --> Conta Destino
-                           gene0002.fn_mask(8055, pr_dsforma => '9999')||','||                                        --> Conta Origem
-                           TRIM(TO_CHAR(vr_tot_vlprvjur, 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','|| --> Total Valor PJ
-                           gene0002.fn_mask(1434, pr_dsforma => '9999')||','||                                        --> Fixo
-                           '"'||vr_dsprefix||'PROVISAO DO MES - RDCA 60 COOPERADOS PESSOA JURIDICA"';                                  --> Descricao
+                           TO_CHAR(rw_crapdat.dtmvtolt,'YYMMDD')||','||                                               --> Data AAMMDD do Arquivo
+                           TO_CHAR(rw_crapdat.dtmvtolt,'DDMMYY')||','||                                               --> Data DDMMAA
+                           gene0002.fn_mask(8116, pr_dsforma => '9999')||','||                                        --> Conta Origem
+                           gene0002.fn_mask(8054, pr_dsforma => '9999')||','||                                        --> Conta Destino
+                           TRIM(TO_CHAR(vr_tot_vlajusprv_fis, 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','|| --> Total Valor PF
+                           gene0002.fn_mask(5210, pr_dsforma => '9999')||','||                                        --> Fixo
+                           '"AJUSTE DE PROVISAO RDCA60 – PESSOA FISICA"';                                    --> Descricao
 
             gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                           ,pr_des_text => vr_setlinha); --> Texto para escrita
-            
+
+            -- Verifica se existe valores       
+            IF vr_tab_tot_vlajusprv_fis.COUNT > 0 THEN
+              -- imprimir os valores para cada conta, ou seja, em duplicidade
+              FOR repete IN 1..2 LOOP 
+                -- Gravas as informacoes de valores por agencia
+                FOR vr_idx_agencia IN vr_tab_tot_vlajusprv_fis.FIRST()..vr_tab_tot_vlajusprv_fis.LAST() LOOP
+                  -- Verifica se existe a informacao
+                  IF vr_tab_tot_vlajusprv_fis.EXISTS(vr_idx_agencia) THEN
+                    -- Verifica se o valor maior que zero
+                    IF vr_tab_tot_vlajusprv_fis(vr_idx_agencia) > 0 THEN
+                      -- Montar linha para gravar no arquivo
+                      vr_setlinha := TO_CHAR(vr_idx_agencia, 'FM009')||','||TRIM(TO_CHAR(vr_tab_tot_vlajusprv_fis(vr_idx_agencia), 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'));
+                      -- Escrever linha no arquivo
+                      gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                                    ,pr_des_text => vr_setlinha); --> Texto para escrita
+                    END IF;
+                  END IF;
+                  -- Limpa variavel
+                  vr_setlinha := '';       
+                END LOOP;
+              END LOOP; -- fim repete
+            END IF;
+          END IF; -- Se valor maior que zero       
+          
+          
+          /*** Montando as informacoes de PESSOA JURIDICA ***/
+
+          -- Se valor total maior que zero
+          IF NVL(vr_tot_vlajusprv_jur,0) > 0 THEN
+            -- Montando o cabecalho das contas do dia atual
+            vr_setlinha := '70'||                                                                                     --> Informacao inicial
+                           TO_CHAR(rw_crapdat.dtmvtolt,'YYMMDD')||','||                                               --> Data AAMMDD do Arquivo
+                           TO_CHAR(rw_crapdat.dtmvtolt,'DDMMYY')||','||                                               --> Data DDMMAA
+                           gene0002.fn_mask(8116, pr_dsforma => '9999')||','||                                        --> Conta Origem
+                           gene0002.fn_mask(8055, pr_dsforma => '9999')||','||                                        --> Conta Destino
+                           TRIM(TO_CHAR(vr_tot_vlajusprv_jur, 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','|| --> Total Valor PJ
+                           gene0002.fn_mask(5210, pr_dsforma => '9999')||','||                                        --> Fixo
+                           '"AJUSTE DE PROVISAO RDCA60 – PESSOA JURIDICA"';                                  --> Descricao
+
+            gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                          ,pr_des_text => vr_setlinha); --> Texto para escrita
+
             -- Verifica se existe valores
-            IF vr_tab_tot_vlprvjur.COUNT > 0 THEN
+            IF vr_tab_tot_vlajusprv_jur.COUNT > 0 THEN
               -- imprimir os valores para cada conta, ou seja, em duplicidade
               FOR repete IN 1..2 LOOP  
                 -- Gravas as informacoes de valores por agencia
-                FOR vr_idx_agencia IN vr_tab_tot_vlprvjur.FIRST()..vr_tab_tot_vlprvjur.LAST() LOOP
+                FOR vr_idx_agencia IN vr_tab_tot_vlajusprv_jur.FIRST()..vr_tab_tot_vlajusprv_jur.LAST() LOOP
                   -- Verifica se existe a informacao
-                  IF vr_tab_tot_vlprvjur.EXISTS(vr_idx_agencia) THEN
-                    -- Verifica se o valor é maior que zero
-                    IF vr_tab_tot_vlprvjur(vr_idx_agencia) > 0 THEN
+                  IF vr_tab_tot_vlajusprv_jur.EXISTS(vr_idx_agencia) THEN
+                    -- Verifica se valor maior que zero
+                    IF vr_tab_tot_vlajusprv_jur(vr_idx_agencia) > 0 THEN
                       -- Montar linha para gravar no arquivo
-                      vr_setlinha := TO_CHAR(vr_idx_agencia, 'FM009')||','||TRIM(TO_CHAR(vr_tab_tot_vlprvjur(vr_idx_agencia), 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'));
+                      vr_setlinha := TO_CHAR(vr_idx_agencia, 'FM009')||','||TRIM(TO_CHAR(vr_tab_tot_vlajusprv_jur(vr_idx_agencia), 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'));
                       --Escrever linha no arquivo
                       gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                                     ,pr_des_text => vr_setlinha); --> Texto para escrita
@@ -2020,6 +2063,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS175(pr_cdcooper IN crapcop.cdcooper%TY
             END IF;
           END IF; -- Se valor maior que zero
 
+
           --Fechar Arquivo
           BEGIN
              gene0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file); --> Handle do arquivo aberto;
@@ -2030,9 +2074,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS175(pr_cdcooper IN crapcop.cdcooper%TY
              RAISE vr_exc_erro;
           END;
           
-         -- Busca o diretório para contabilidade
-          vr_dircon := gene0001.fn_param_sistema('CRED', vc_cdtodascooperativas, vc_cdacesso);
-          vr_dircon := vr_dircon || vc_dircon;
+          -- Busca o diretório para contabilidade
+          vr_dircon := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                ,pr_cdcooper => 0
+                                                ,pr_cdacesso => 'DIR_ARQ_CONTAB_X');
           vr_arqcon:=  TO_CHAR(rw_crapdat.dtmvtolt,'YYMMDD')||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_RDCA60.txt';
           
           -- Executa comando UNIX para converter arq para Dos

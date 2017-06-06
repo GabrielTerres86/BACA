@@ -103,6 +103,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
 
                  13/02/2017 - Conversão Progress para PLSQL (Jonata-MOUTs)
                  
+                 31/03/2017 - Inclusão de novas colunas no reltório crrl635 e geração 
+                              do arquivo AAMMDD_XX_DESPESASICREDI para o Radar/Martera
+                              P307 - (Jonatas - Supero)
+
                  05/04/2017 - Inclusão do código da Cooperativa no arquivo Contab (Jonata-Mouts)
   ..............................................................................*/
 
@@ -110,21 +114,23 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
 
   -- Para relatorio 634/635
   TYPE tt_rel63X IS
-    RECORD (cdempres varchar2(10)
-           ,tpmeiarr char(1)
-           ,nmconven varchar2(100)
-           ,dsmeiarr varchar2(100)
-           ,qtfatura number(18)
-           ,vltotfat number(15,2)
-           ,vlrecliq number(15,2)
-           ,vlrliqpf number(15,2) -- Divisao PF/PJ
-           ,vlrliqpj number(15,2) -- Divisao PF/PJ
-           ,vltottar number(15,2)
-           ,vltrfsic number(15,2)
-           ,vlrtrfpf number(15,2)-- Divisao PF/PJ
-           ,vlrtrfpj number(15,2)-- Divisao PF/PJ
-           ,dsdianor crapscn.dsdianor%TYPE
-           ,nrrenorm crapscn.nrrenorm%TYPE);
+    RECORD (cdempres    varchar2(10)
+           ,tpmeiarr    char(1)
+           ,nmconven    varchar2(100)
+           ,dsmeiarr    varchar2(100)
+           ,qtfatura    number(18)
+           ,vltotfat    number(15,2)
+           ,vlrecliq    number(15,2)
+           ,vlrliqpf    number(15,2) -- Divisao PF/PJ
+           ,vlrliqpj    number(15,2) -- Divisao PF/PJ
+           ,vltottar    number(15,2)
+           ,vltrfsic    number(15,2)
+           ,vltrfsic_pf number(15,2)-- Divisao PF/PJ 
+           ,vltrfsic_pj number(15,2)-- Divisao PF/PJ                      
+           ,vlrtrfpf    number(15,2)-- Divisao PF/PJ
+           ,vlrtrfpj    number(15,2)-- Divisao PF/PJ
+           ,dsdianor    crapscn.dsdianor%TYPE
+           ,nrrenorm    crapscn.nrrenorm%TYPE);
   -- Definicao do tipo de tabela que armazena registros do tipo acima detalhado
   TYPE tt_tab_rel63X IS
     TABLE OF tt_rel63X
@@ -161,7 +167,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
   TYPE typ_tab_crapass IS
     TABLE OF typ_reg_crapass
       INDEX BY BINARY_INTEGER;
-  vr_tab_crapass  typ_tab_crapass;       
+  vr_tab_crapass  typ_tab_crapass; 
+  
+  -- Vetor para armazenar valores por agencia para o arquivo contabil 
+  TYPE vr_vltrfsic_pf IS TABLE OF NUMBER INDEX BY PLS_INTEGER; -- define o tipo do vetor
+  TYPE vr_vltrfsic_pj IS TABLE OF NUMBER INDEX BY PLS_INTEGER; -- define o tipo do vetor
+  -- Vetores Relatorios
+  vr_tab_vltrfsic_pf vr_vltrfsic_pf;
+  vr_tab_vltrfsic_pj vr_vltrfsic_pj; 
+         
   
   ------------------------------- VARIAVEIS -------------------------------
 
@@ -181,67 +195,77 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
   ---------------- Acumuladores ---------------------
 
   -- TOTAIS INTERNET
-  vr_tpmeiarr_int crapstn.tpmeiarr%type;
-  vr_vltrfuni_int crapstn.vltrfuni%type;
-  vr_int_qttotfat NUMBER;
-  vr_int_vltotfat number(15,2);
-  vr_int_vlrecliq number(15,2);
-  vr_int_vltrfuni number(15,2);
-  vr_int_vltrfsic number(15,2);
-  vr_int_vlrliqpf number(15,2);
-  vr_int_vlrliqpj number(15,2);
-  vr_int_vlrtrfpf number(15,2);
-  vr_int_vlrtrfpj number(15,2);
+  vr_tpmeiarr_int    crapstn.tpmeiarr%type;
+  vr_vltrfuni_int    crapstn.vltrfuni%type;
+  vr_int_qttotfat    NUMBER;
+  vr_int_vltotfat    number(15,2);
+  vr_int_vlrecliq    number(15,2);
+  vr_int_vltrfuni    number(15,2);
+  vr_int_vltrfsic    number(15,2);
+  vr_int_vlrliqpf    number(15,2);
+  vr_int_vlrliqpj    number(15,2);
+  vr_int_vlrtrfpf    number(15,2);
+  vr_int_vlrtrfpj    number(15,2);
+  vr_int_vltrfsic_pf number(15,2);
+  vr_int_vltrfsic_pj number(15,2);
 
   -- TOTAIS CAIXA
-  vr_tpmeiarr_cxa crapstn.tpmeiarr%type;
-  vr_vltrfuni_cxa crapstn.vltrfuni%type;
-  vr_cax_qttotfat NUMBER;
-  vr_cax_vltotfat number(15,2);
-  vr_cax_vlrecliq number(15,2);
-  vr_cax_vltrfuni number(15,2);
-  vr_cax_vltrfsic number(15,2);
-  vr_cax_vlrliqpf number(15,2);
-  vr_cax_vlrliqpj number(15,2);
-  vr_cax_vlrtrfpf number(15,2);
-  vr_cax_vlrtrfpj number(15,2);
+  vr_tpmeiarr_cxa    crapstn.tpmeiarr%type;
+  vr_vltrfuni_cxa    crapstn.vltrfuni%type;
+  vr_cax_qttotfat    NUMBER;
+  vr_cax_vltotfat    number(15,2);
+  vr_cax_vlrecliq    number(15,2);
+  vr_cax_vltrfuni    number(15,2);
+  vr_cax_vltrfsic    number(15,2);
+  vr_cax_vlrliqpf    number(15,2);
+  vr_cax_vlrliqpj    number(15,2);
+  vr_cax_vlrtrfpf    number(15,2);
+  vr_cax_vlrtrfpj    number(15,2);
+  vr_cax_vltrfsic_pf number(15,2);
+  vr_cax_vltrfsic_pj number(15,2);  
 
   -- TOTAIS TAA
-  vr_tpmeiarr_taa crapstn.tpmeiarr%type;
-  vr_vltrfuni_taa crapstn.vltrfuni%type;
-  vr_taa_qttotfat NUMBER;
-  vr_taa_vltotfat number(15,2);
-  vr_taa_vlrecliq number(15,2);
-  vr_taa_vltrfuni number(15,2);
-  vr_taa_vltrfsic number(15,2);
-  vr_taa_vlrliqpf number(15,2);
-  vr_taa_vlrliqpj number(15,2);
-  vr_taa_vlrtrfpf number(15,2);
-  vr_taa_vlrtrfpj number(15,2);
+  vr_tpmeiarr_taa    crapstn.tpmeiarr%type;
+  vr_vltrfuni_taa    crapstn.vltrfuni%type;
+  vr_taa_qttotfat    NUMBER;
+  vr_taa_vltotfat    number(15,2);
+  vr_taa_vlrecliq    number(15,2);
+  vr_taa_vltrfuni    number(15,2);
+  vr_taa_vltrfsic    number(15,2);
+  vr_taa_vlrliqpf    number(15,2);
+  vr_taa_vlrliqpj    number(15,2);
+  vr_taa_vlrtrfpf    number(15,2);
+  vr_taa_vlrtrfpj    number(15,2);
+  vr_taa_vltrfsic_pf number(15,2);
+  vr_taa_vltrfsic_pj number(15,2);  
 
   -- TOTAIS DEB AUTOMATICO
-  vr_deb_qttotfat NUMBER;
-  vr_deb_vltotfat number(15,2);
-  vr_deb_vlrecliq number(15,2);
-  vr_deb_vltrfuni number(15,2);
-  vr_deb_vltrfsic number(15,2);
-  vr_deb_vlrliqpf number(15,2);
-  vr_deb_vlrliqpj number(15,2);
-  vr_deb_vlrtrfpf number(15,2);
-  vr_deb_vlrtrfpj number(15,2);
+  vr_deb_qttotfat    NUMBER;
+  vr_deb_vltotfat    number(15,2);
+  vr_deb_vlrecliq    number(15,2);
+  vr_deb_vltrfuni    number(15,2);
+  vr_deb_vltrfsic    number(15,2);
+  vr_deb_vlrliqpf    number(15,2);
+  vr_deb_vlrliqpj    number(15,2);
+  vr_deb_vlrtrfpf    number(15,2);
+  vr_deb_vlrtrfpj    number(15,2);
+  vr_deb_vltrfsic_pf number(15,2);
+  vr_deb_vltrfsic_pj number(15,2);  
 
   -- Outras variaveis
-  vr_tot_qttotfat NUMBER;
-  vr_tot_vltrfuni number(15,2);
-  vr_tot_vltotfat number(15,2);
-  vr_tot_vlrecliq number(15,2);
-  vr_tot_vlrtrfpf number(15,2);
+  vr_tot_qttotfat        NUMBER;
+  vr_tot_vltrfuni        number(15,2);
+  vr_tot_vltotfat        number(15,2);
+  vr_tot_vlrecliq        number(15,2);
+  vr_tot_vlrtrfpf        number(15,2);
   vr_tot_vlrtrfpf_semgps number(15,2);
-  vr_tot_vlrliqpf number(15,2);
-  vr_tot_vlrtrfpj number(15,2);
+  vr_tot_vlrliqpf        number(15,2);
+  vr_tot_vlrtrfpj        number(15,2);
   vr_tot_vlrtrfpj_semgps number(15,2);
-  vr_tot_vlrliqpj number(15,2);
-  vr_tot_vltrfsic number(15,2);
+  vr_tot_vlrliqpj        number(15,2);
+  vr_tot_vltrfsic        number(15,2);
+  vr_tot_vltrfsic_pf     number(15,2);
+  vr_tot_vltrfsic_pj     number(15,2);  
 
 
   -- GPS
@@ -519,6 +543,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
           vr_tab_rel635(vr_ind_rel63X).vlrliqpf := 0; 
           vr_tab_rel635(vr_ind_rel63X).vlrliqpj := 0; 
           vr_tab_rel635(vr_ind_rel63X).dsmeiarr := pr_dsmeiarr;
+          vr_tab_rel635(vr_ind_rel63X).vltrfsic_pf := 0;
+          vr_tab_rel635(vr_ind_rel63X).vltrfsic_pj := 0;
         END IF;
         -- Tarifa Sicredi 
         IF vr_tab_rel635(vr_ind_rel63X).vlrecliq < 0 THEN  
@@ -553,6 +579,33 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
           -- Gravar nos campos de PF         
           vr_tab_rel635(vr_ind_rel63X).vlrtrfpf := vr_tab_rel635(vr_ind_rel63X).vlrtrfpf + (pr_vltrfuni * pr_qtfatura);
           vr_tab_rel635(vr_ind_rel63X).vlrliqpf := vr_tab_rel635(vr_ind_rel63X).vlrliqpf + (pr_vltrfuni * pr_qtfatura) - (pr_qtfatura * pr_vltarifa);
+          
+          IF vr_tab_rel635(vr_ind_rel63X).vlrliqpf < 0 THEN  
+            vr_tab_rel635(vr_ind_rel63X).vltrfsic_pf := vr_tab_rel635(vr_ind_rel63X).vlrtrfpf;
+          ELSE 
+            vr_tab_rel635(vr_ind_rel63X).vltrfsic_pf := vr_tab_rel635(vr_ind_rel63X).vlrtrfpf - vr_tab_rel635(vr_ind_rel63X).vlrliqpf;
+          END IF;  
+                   
+          
+          --Acumular valor tarifa sicredi por pessoa fisica
+          IF ((pr_vltrfuni * pr_qtfatura) - (pr_qtfatura * pr_vltarifa)) < 0 THEN
+          
+            IF NOT vr_tab_vltrfsic_pf.exists(vr_aux_cdagenci) THEN
+              vr_tab_vltrfsic_pf(vr_aux_cdagenci) := pr_vltrfuni * pr_qtfatura;
+            ELSE 
+              vr_tab_vltrfsic_pf(vr_aux_cdagenci) := vr_tab_vltrfsic_pf(vr_aux_cdagenci) + (pr_vltrfuni * pr_qtfatura);
+            END IF;
+            
+          ELSE
+            
+            IF NOT vr_tab_vltrfsic_pf.exists(vr_aux_cdagenci) THEN
+              vr_tab_vltrfsic_pf(vr_aux_cdagenci) := (pr_vltrfuni * pr_qtfatura) - (((pr_vltrfuni * pr_qtfatura) - (pr_qtfatura * pr_vltarifa)));
+            ELSE 
+              vr_tab_vltrfsic_pf(vr_aux_cdagenci) := vr_tab_vltrfsic_pf(vr_aux_cdagenci) + ((pr_vltrfuni * pr_qtfatura) - (((pr_vltrfuni * pr_qtfatura) - (pr_qtfatura * pr_vltarifa))));
+            END IF;
+
+          END IF;          
+          
           -- Tratar informações para o arquivo contabil quando não for GPS 
           IF SUBSTR(pr_nmconven,1,3) <> 'GPS' THEN           
             IF NOT vr_relvltrpapf.exists(vr_aux_cdagenci) THEN 
@@ -567,6 +620,32 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
           -- Gravar nos campos de PJ         
           vr_tab_rel635(vr_ind_rel63X).vlrtrfpj := vr_tab_rel635(vr_ind_rel63X).vlrtrfpj + (pr_vltrfuni * pr_qtfatura);
           vr_tab_rel635(vr_ind_rel63X).vlrliqpj := vr_tab_rel635(vr_ind_rel63X).vlrliqpj + (pr_vltrfuni * pr_qtfatura) - (pr_qtfatura * pr_vltarifa);
+
+          IF vr_tab_rel635(vr_ind_rel63X).vlrliqpj < 0 THEN  
+            vr_tab_rel635(vr_ind_rel63X).vltrfsic_pj := vr_tab_rel635(vr_ind_rel63X).vlrtrfpj;
+          ELSE 
+            vr_tab_rel635(vr_ind_rel63X).vltrfsic_pj := vr_tab_rel635(vr_ind_rel63X).vlrtrfpj - vr_tab_rel635(vr_ind_rel63X).vlrliqpj;
+          END IF; 
+          
+          --Acumular valor tarifa sicredi por pessoa fisica
+          IF ((pr_vltrfuni * pr_qtfatura) - (pr_qtfatura * pr_vltarifa)) < 0 THEN
+          
+            IF NOT vr_tab_vltrfsic_pj.exists(vr_aux_cdagenci) THEN
+              vr_tab_vltrfsic_pj(vr_aux_cdagenci) := pr_vltrfuni * pr_qtfatura;
+            ELSE 
+              vr_tab_vltrfsic_pj(vr_aux_cdagenci) := vr_tab_vltrfsic_pj(vr_aux_cdagenci) + (pr_vltrfuni * pr_qtfatura);
+            END IF;
+            
+          ELSE
+            
+            IF NOT vr_tab_vltrfsic_pj.exists(vr_aux_cdagenci) THEN
+              vr_tab_vltrfsic_pj(vr_aux_cdagenci) := (pr_vltrfuni * pr_qtfatura) - (((pr_vltrfuni * pr_qtfatura) - (pr_qtfatura * pr_vltarifa)));
+            ELSE 
+              vr_tab_vltrfsic_pj(vr_aux_cdagenci) := vr_tab_vltrfsic_pj(vr_aux_cdagenci) + ((pr_vltrfuni * pr_qtfatura) - (((pr_vltrfuni * pr_qtfatura) - (pr_qtfatura * pr_vltarifa))));
+            END IF;
+
+          END IF; 
+          
           -- Tratar informações para o arquivo contabil quando não for GPS 
           IF SUBSTR(pr_nmconven,1,3) <> 'GPS' THEN           
             IF NOT vr_relvltrpapj.exists(vr_aux_cdagenci) THEN 
@@ -1149,31 +1228,31 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
       gene0002.pc_escreve_xml(vr_des_clb
                              ,vr_des_txt
                              , '<totais>' ||
-                                 '<int_vltrfuni>'||  to_char(nvl(vr_int_vltrfuni,0),'fm999G999G999G999G990d00')                                              ||'</int_vltrfuni>'||
-                                 '<int_vltotfat>'||  to_char(nvl(vr_int_vltotfat,0),'fm999G999G999G999G990d00')                                              ||'</int_vltotfat>'||
-                                 '<int_qttotfat>'||  nvl(vr_int_qttotfat,0)                                                                                  ||'</int_qttotfat>'||
-                                 '<int_vlrecliq>'||  to_char(nvl(vr_int_vlrecliq,0),'fm999G999G999G999G990d00')                                              ||'</int_vlrecliq>'||
-                                 '<int_vltrfsic>'||  to_char(nvl(vr_int_vltrfsic,0),'fm999G999G999G999G990d00')                                              ||'</int_vltrfsic>'||
-                                 '<cax_vltrfuni>'||  to_char(nvl(vr_cax_vltrfuni,0),'fm999G999G999G999G990d00')                                              ||'</cax_vltrfuni>'||
-                                 '<cax_vltotfat>'||  to_char(nvl(vr_cax_vltotfat,0),'fm999G999G999G999G990d00')                                              ||'</cax_vltotfat>'||
-                                 '<cax_qttotfat>'||  nvl(vr_cax_qttotfat,0)                                                                                  ||'</cax_qttotfat>'||
-                                 '<cax_vlrecliq>'||  to_char(nvl(vr_cax_vlrecliq,0),'fm999G999G999G999G990d00')                                              ||'</cax_vlrecliq>'||
-                                 '<cax_vltrfsic>'||  to_char(nvl(vr_cax_vltrfsic,0),'fm999G999G999G999G990d00')                                              ||'</cax_vltrfsic>'||
-                                 '<taa_vltrfuni>'||  to_char(nvl(vr_taa_vltrfuni,0),'fm999G999G999G999G990d00')                                              ||'</taa_vltrfuni>'||
-                                 '<taa_vltotfat>'||  to_char(nvl(vr_taa_vltotfat,0),'fm999G999G999G999G990d00')                                              ||'</taa_vltotfat>'||
-                                 '<taa_qttotfat>'||  nvl(vr_taa_qttotfat,0)                                                                                  ||'</taa_qttotfat>'||
-                                 '<taa_vlrecliq>'||  to_char(nvl(vr_taa_vlrecliq,0),'fm999G999G999G999G990d00')                                              ||'</taa_vlrecliq>'||
-                                 '<taa_vltrfsic>'||  to_char(nvl(vr_taa_vltrfsic,0),'fm999G999G999G999G990d00')                                              ||'</taa_vltrfsic>'||
-                                 '<deb_vltrfuni>'||  to_char(nvl(vr_deb_vltrfuni,0),'fm999G999G999G999G990d00')                                              ||'</deb_vltrfuni>'||
-                                 '<deb_vltotfat>'||  to_char(nvl(vr_deb_vltotfat,0),'fm999G999G999G999G990d00')                                              ||'</deb_vltotfat>'||
-                                 '<deb_qttotfat>'||  nvl(vr_deb_qttotfat,0)                                                                                  ||'</deb_qttotfat>'||
-                                 '<deb_vlrecliq>'||  to_char(nvl(vr_deb_vlrecliq,0),'fm999G999G999G999G990d00')                                              ||'</deb_vlrecliq>'||
-                                 '<deb_vltrfsic>'||  to_char(nvl(vr_deb_vltrfsic,0),'fm999G999G999G999G990d00')                                              ||'</deb_vltrfsic>'||
-                                 '<tot_vltrfuni>'||  to_char(nvl(vr_tot_vltrfuni,0),'fm999G999G999G999G990d00')                                              ||'</tot_vltrfuni>'||
-                                 '<tot_vltotfat>'||  to_char(nvl(vr_tot_vltotfat,0),'fm999G999G999G999G990d00')                                              ||'</tot_vltotfat>'||
-                                 '<tot_qttotfat>'||  nvl(vr_tot_qttotfat,0)                                                                                  ||'</tot_qttotfat>'||
-                                 '<tot_vlrecliq>'||  to_char(nvl(vr_tot_vlrecliq,0),'fm999G999G999G999G990d00')                                              ||'</tot_vlrecliq>'||
-                                 '<tot_vltrfsic>'||  to_char(nvl(vr_tot_vltrfsic,0),'fm999G999G999G999G990d00')                                              ||'</tot_vltrfsic>'||
+                                 '<int_vltrfuni>'   ||  to_char(nvl(vr_int_vltrfuni,0),'fm999G999G999G999G990d00')                                              ||'</int_vltrfuni>'||
+                                 '<int_vltotfat>'   ||  to_char(nvl(vr_int_vltotfat,0),'fm999G999G999G999G990d00')                                              ||'</int_vltotfat>'||
+                                 '<int_qttotfat>'   ||  nvl(vr_int_qttotfat,0)                                                                                  ||'</int_qttotfat>'||
+                                 '<int_vlrecliq>'   ||  to_char(nvl(vr_int_vlrecliq,0),'fm999G999G999G999G990d00')                                              ||'</int_vlrecliq>'||
+                                 '<int_vltrfsic>'   ||  to_char(nvl(vr_int_vltrfsic,0),'fm999G999G999G999G990d00')                                              ||'</int_vltrfsic>'||
+                                 '<cax_vltrfuni>'   ||  to_char(nvl(vr_cax_vltrfuni,0),'fm999G999G999G999G990d00')                                              ||'</cax_vltrfuni>'||
+                                 '<cax_vltotfat>'   ||  to_char(nvl(vr_cax_vltotfat,0),'fm999G999G999G999G990d00')                                              ||'</cax_vltotfat>'||
+                                 '<cax_qttotfat>'   ||  nvl(vr_cax_qttotfat,0)                                                                                  ||'</cax_qttotfat>'||
+                                 '<cax_vlrecliq>'   ||  to_char(nvl(vr_cax_vlrecliq,0),'fm999G999G999G999G990d00')                                              ||'</cax_vlrecliq>'||
+                                 '<cax_vltrfsic>'   ||  to_char(nvl(vr_cax_vltrfsic,0),'fm999G999G999G999G990d00')                                              ||'</cax_vltrfsic>'||
+                                 '<taa_vltrfuni>'   ||  to_char(nvl(vr_taa_vltrfuni,0),'fm999G999G999G999G990d00')                                              ||'</taa_vltrfuni>'||
+                                 '<taa_vltotfat>'   ||  to_char(nvl(vr_taa_vltotfat,0),'fm999G999G999G999G990d00')                                              ||'</taa_vltotfat>'||
+                                 '<taa_qttotfat>'   ||  nvl(vr_taa_qttotfat,0)                                                                                  ||'</taa_qttotfat>'||
+                                 '<taa_vlrecliq>'   ||  to_char(nvl(vr_taa_vlrecliq,0),'fm999G999G999G999G990d00')                                              ||'</taa_vlrecliq>'||
+                                 '<taa_vltrfsic>'   ||  to_char(nvl(vr_taa_vltrfsic,0),'fm999G999G999G999G990d00')                                              ||'</taa_vltrfsic>'||
+                                 '<deb_vltrfuni>'   ||  to_char(nvl(vr_deb_vltrfuni,0),'fm999G999G999G999G990d00')                                              ||'</deb_vltrfuni>'||
+                                 '<deb_vltotfat>'   ||  to_char(nvl(vr_deb_vltotfat,0),'fm999G999G999G999G990d00')                                              ||'</deb_vltotfat>'||
+                                 '<deb_qttotfat>'   ||  nvl(vr_deb_qttotfat,0)                                                                                  ||'</deb_qttotfat>'||
+                                 '<deb_vlrecliq>'   ||  to_char(nvl(vr_deb_vlrecliq,0),'fm999G999G999G999G990d00')                                              ||'</deb_vlrecliq>'||
+                                 '<deb_vltrfsic>'   ||  to_char(nvl(vr_deb_vltrfsic,0),'fm999G999G999G999G990d00')                                              ||'</deb_vltrfsic>'||
+                                 '<tot_vltrfuni>'   ||  to_char(nvl(vr_tot_vltrfuni,0),'fm999G999G999G999G990d00')                                              ||'</tot_vltrfuni>'||
+                                 '<tot_vltotfat>'   ||  to_char(nvl(vr_tot_vltotfat,0),'fm999G999G999G999G990d00')                                              ||'</tot_vltotfat>'||
+                                 '<tot_qttotfat>'   ||  nvl(vr_tot_qttotfat,0)                                                                                  ||'</tot_qttotfat>'||
+                                 '<tot_vlrecliq>'   ||  to_char(nvl(vr_tot_vlrecliq,0),'fm999G999G999G999G990d00')                                              ||'</tot_vlrecliq>'||
+                                 '<tot_vltrfsic>'   ||  to_char(nvl(vr_tot_vltrfsic,0),'fm999G999G999G999G990d00')                                              ||'</tot_vltrfsic>'||
                                '</totais>');
       -- Encerrar o XML
       gene0002.pc_escreve_xml(vr_des_clb
@@ -1221,57 +1300,67 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
         -- Gera relatorio mensal, com base nos dados da pltable 635 se houver informações
         IF vr_tab_rel635.COUNT() > 0 THEN 
           -- Zerar totalizadores
-          vr_tot_vltotfat := 0;
-          vr_tot_vltrfuni := 0;
-          vr_tot_qttotfat := 0;
-          vr_tot_vlrecliq := 0;
-          vr_tot_vltrfsic := 0;
-          vr_tot_vlrtrfpf := 0;
+          vr_tot_vltotfat        := 0;
+          vr_tot_vltrfuni        := 0;
+          vr_tot_qttotfat        := 0;
+          vr_tot_vlrecliq        := 0;
+          vr_tot_vltrfsic        := 0;
+          vr_tot_vlrtrfpf        := 0;
           vr_tot_vlrtrfpf_semgps := 0;          
-          vr_tot_vlrliqpf := 0;
-          vr_tot_vlrtrfpj := 0;
+          vr_tot_vlrliqpf        := 0;
+          vr_tot_vlrtrfpj        := 0;
           vr_tot_vlrtrfpj_semgps := 0;
-          vr_tot_vlrliqpj := 0;
+          vr_tot_vlrliqpj        := 0;
+          vr_tot_vltrfsic_pf     := 0;
+          vr_tot_vltrfsic_pj     := 0;          
           -- internet
-          vr_int_qttotfat := 0;
-          vr_int_vltotfat := 0;
-          vr_int_vlrecliq := 0;
-          vr_int_vltrfsic := 0;
-          vr_int_vltrfuni := 0;
-          vr_int_vlrliqpf := 0;
-          vr_int_vlrliqpj := 0;
-          vr_int_vlrtrfpf := 0;
-          vr_int_vlrtrfpj := 0;
+          vr_int_qttotfat    := 0;
+          vr_int_vltotfat    := 0;
+          vr_int_vlrecliq    := 0;
+          vr_int_vltrfsic    := 0;
+          vr_int_vltrfuni    := 0;
+          vr_int_vlrliqpf    := 0;
+          vr_int_vlrliqpj    := 0;
+          vr_int_vlrtrfpf    := 0;
+          vr_int_vlrtrfpj    := 0;
+          vr_int_vltrfsic_pf := 0;
+          vr_int_vltrfsic_pj := 0;
           -- caixa
-          vr_cax_qttotfat := 0;
-          vr_cax_vltotfat := 0;
-          vr_cax_vlrecliq := 0;
-          vr_cax_vltrfsic := 0;
-          vr_cax_vltrfuni := 0;
-          vr_cax_vlrliqpf := 0;
-          vr_cax_vlrliqpj := 0;
-          vr_cax_vlrtrfpf := 0;
-          vr_cax_vlrtrfpj := 0;
+          vr_cax_qttotfat    := 0;
+          vr_cax_vltotfat    := 0;
+          vr_cax_vlrecliq    := 0;
+          vr_cax_vltrfsic    := 0;
+          vr_cax_vltrfuni    := 0;
+          vr_cax_vlrliqpf    := 0;
+          vr_cax_vlrliqpj    := 0;
+          vr_cax_vlrtrfpf    := 0;
+          vr_cax_vlrtrfpj    := 0;
+          vr_cax_vltrfsic_pf := 0;
+          vr_cax_vltrfsic_pj := 0;          
           -- taa
-          vr_taa_qttotfat := 0;
-          vr_taa_vltotfat := 0;
-          vr_taa_vlrecliq := 0;
-          vr_taa_vltrfsic := 0;
-          vr_taa_vltrfuni := 0;
-          vr_taa_vlrliqpf := 0;
-          vr_taa_vlrliqpj := 0;
-          vr_taa_vlrtrfpf := 0;
-          vr_taa_vlrtrfpj := 0;
+          vr_taa_qttotfat    := 0;
+          vr_taa_vltotfat    := 0;
+          vr_taa_vlrecliq    := 0;
+          vr_taa_vltrfsic    := 0;
+          vr_taa_vltrfuni    := 0;
+          vr_taa_vlrliqpf    := 0;
+          vr_taa_vlrliqpj    := 0;
+          vr_taa_vlrtrfpf    := 0;
+          vr_taa_vlrtrfpj    := 0;
+          vr_taa_vltrfsic_pf := 0;
+          vr_taa_vltrfsic_pj := 0;          
           -- deb automatico
-          vr_deb_qttotfat := 0;
-          vr_deb_vltotfat := 0;
-          vr_deb_vlrecliq := 0;
-          vr_deb_vltrfsic := 0;
-          vr_deb_vltrfuni := 0;
-          vr_deb_vlrliqpf := 0;
-          vr_deb_vlrliqpj := 0;
-          vr_deb_vlrtrfpf := 0;
-          vr_deb_vlrtrfpj := 0;
+          vr_deb_qttotfat    := 0;
+          vr_deb_vltotfat    := 0;
+          vr_deb_vlrecliq    := 0;
+          vr_deb_vltrfsic    := 0;
+          vr_deb_vltrfuni    := 0;
+          vr_deb_vlrliqpf    := 0;
+          vr_deb_vlrliqpj    := 0;
+          vr_deb_vlrtrfpf    := 0;
+          vr_deb_vlrtrfpj    := 0;
+          vr_deb_vltrfsic_pf := 0;
+          vr_deb_vltrfsic_pj := 0;          
 
           -- Busca o primeiro registro da temp-table
           vr_ind_rel63X := vr_tab_rel635.first;
@@ -1324,10 +1413,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
               vr_int_vlrecliq := vr_int_vlrecliq + vr_tab_rel635(vr_ind_rel63X).vlrecliq;
               vr_int_vltrfsic := vr_int_vltrfsic + vr_tab_rel635(vr_ind_rel63X).vltrfsic;
               -- Divisao PF/PJ
-              vr_int_vlrtrfpf := vr_int_vlrtrfpf + vr_tab_rel635(vr_ind_rel63X).vlrtrfpf;
-              vr_int_vlrliqpf := vr_int_vlrliqpf + vr_tab_rel635(vr_ind_rel63X).vlrliqpf;
-              vr_int_vlrtrfpj := vr_int_vlrtrfpj + vr_tab_rel635(vr_ind_rel63X).vlrtrfpj;
-              vr_int_vlrliqpj := vr_int_vlrliqpj + vr_tab_rel635(vr_ind_rel63X).vlrliqpj;
+              vr_int_vlrtrfpf    := vr_int_vlrtrfpf    + vr_tab_rel635(vr_ind_rel63X).vlrtrfpf;
+              vr_int_vlrliqpf    := vr_int_vlrliqpf    + vr_tab_rel635(vr_ind_rel63X).vlrliqpf;
+              vr_int_vlrtrfpj    := vr_int_vlrtrfpj    + vr_tab_rel635(vr_ind_rel63X).vlrtrfpj;
+              vr_int_vlrliqpj    := vr_int_vlrliqpj    + vr_tab_rel635(vr_ind_rel63X).vlrliqpj;
+              vr_int_vltrfsic_pf := vr_int_vltrfsic_pf + vr_tab_rel635(vr_ind_rel63X).vltrfsic_pf; 
+              vr_int_vltrfsic_pj := vr_int_vltrfsic_pj + vr_tab_rel635(vr_ind_rel63X).vltrfsic_pj;                                         
             END IF;
             -- TOTAIS CAIXA
             IF vr_tab_rel635(vr_ind_rel63X).tpmeiarr = 'C' THEN
@@ -1337,10 +1428,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
               vr_cax_vlrecliq := vr_cax_vlrecliq + vr_tab_rel635(vr_ind_rel63X).vlrecliq;
               vr_cax_vltrfsic := vr_cax_vltrfsic + vr_tab_rel635(vr_ind_rel63X).vltrfsic;
               -- Divisao PF/PJ
-              vr_cax_vlrtrfpf := vr_cax_vlrtrfpf + vr_tab_rel635(vr_ind_rel63X).vlrtrfpf;
-              vr_cax_vlrliqpf := vr_cax_vlrliqpf + vr_tab_rel635(vr_ind_rel63X).vlrliqpf;
-              vr_cax_vlrtrfpj := vr_cax_vlrtrfpj + vr_tab_rel635(vr_ind_rel63X).vlrtrfpj;
-              vr_cax_vlrliqpj := vr_cax_vlrliqpj + vr_tab_rel635(vr_ind_rel63X).vlrliqpj;
+              vr_cax_vlrtrfpf    := vr_cax_vlrtrfpf    + vr_tab_rel635(vr_ind_rel63X).vlrtrfpf;
+              vr_cax_vlrliqpf    := vr_cax_vlrliqpf    + vr_tab_rel635(vr_ind_rel63X).vlrliqpf;
+              vr_cax_vlrtrfpj    := vr_cax_vlrtrfpj    + vr_tab_rel635(vr_ind_rel63X).vlrtrfpj;
+              vr_cax_vlrliqpj    := vr_cax_vlrliqpj    + vr_tab_rel635(vr_ind_rel63X).vlrliqpj;
+              vr_cax_vltrfsic_pf := vr_cax_vltrfsic_pf + vr_tab_rel635(vr_ind_rel63X).vltrfsic_pf; 
+              vr_cax_vltrfsic_pj := vr_cax_vltrfsic_pj + vr_tab_rel635(vr_ind_rel63X).vltrfsic_pj;               
             END IF;
             -- TOTAIS TAA
             IF vr_tab_rel635(vr_ind_rel63X).tpmeiarr = 'A' THEN
@@ -1350,10 +1443,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
               vr_taa_vlrecliq := vr_taa_vlrecliq + vr_tab_rel635(vr_ind_rel63X).vlrecliq;
               vr_taa_vltrfsic := vr_taa_vltrfsic + vr_tab_rel635(vr_ind_rel63X).vltrfsic;
               -- Divisao PF/PJ
-              vr_taa_vlrtrfpf := vr_taa_vlrtrfpf + vr_tab_rel635(vr_ind_rel63X).vlrtrfpf;
-              vr_taa_vlrliqpf := vr_taa_vlrliqpf + vr_tab_rel635(vr_ind_rel63X).vlrliqpf;
-              vr_taa_vlrtrfpj := vr_taa_vlrtrfpj + vr_tab_rel635(vr_ind_rel63X).vlrtrfpj;
-              vr_taa_vlrliqpj := vr_taa_vlrliqpj + vr_tab_rel635(vr_ind_rel63X).vlrliqpj;
+              vr_taa_vlrtrfpf    := vr_taa_vlrtrfpf    + vr_tab_rel635(vr_ind_rel63X).vlrtrfpf;
+              vr_taa_vlrliqpf    := vr_taa_vlrliqpf    + vr_tab_rel635(vr_ind_rel63X).vlrliqpf;
+              vr_taa_vlrtrfpj    := vr_taa_vlrtrfpj    + vr_tab_rel635(vr_ind_rel63X).vlrtrfpj;
+              vr_taa_vlrliqpj    := vr_taa_vlrliqpj    + vr_tab_rel635(vr_ind_rel63X).vlrliqpj;
+              vr_taa_vltrfsic_pf := vr_taa_vltrfsic_pf + vr_tab_rel635(vr_ind_rel63X).vltrfsic_pf; 
+              vr_taa_vltrfsic_pj := vr_taa_vltrfsic_pj + vr_tab_rel635(vr_ind_rel63X).vltrfsic_pj;              
             END IF;
             -- TOTAIS DEB AUTOMATICO
             IF vr_tab_rel635(vr_ind_rel63X).tpmeiarr = 'E' THEN
@@ -1363,10 +1458,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
               vr_deb_vlrecliq := vr_deb_vlrecliq + vr_tab_rel635(vr_ind_rel63X).vlrecliq;
               vr_deb_vltrfsic := vr_deb_vltrfsic + vr_tab_rel635(vr_ind_rel63X).vltrfsic;
               -- Divisao PF/PJ
-              vr_deb_vlrtrfpf := vr_deb_vlrtrfpf + vr_tab_rel635(vr_ind_rel63X).vlrtrfpf;
-              vr_deb_vlrliqpf := vr_deb_vlrliqpf + vr_tab_rel635(vr_ind_rel63X).vlrliqpf;
-              vr_deb_vlrtrfpj := vr_deb_vlrtrfpj + vr_tab_rel635(vr_ind_rel63X).vlrtrfpj;
-              vr_deb_vlrliqpj := vr_deb_vlrliqpj + vr_tab_rel635(vr_ind_rel63X).vlrliqpj;
+              vr_deb_vlrtrfpf    := vr_deb_vlrtrfpf    + vr_tab_rel635(vr_ind_rel63X).vlrtrfpf;
+              vr_deb_vlrliqpf    := vr_deb_vlrliqpf    + vr_tab_rel635(vr_ind_rel63X).vlrliqpf;
+              vr_deb_vlrtrfpj    := vr_deb_vlrtrfpj    + vr_tab_rel635(vr_ind_rel63X).vlrtrfpj;
+              vr_deb_vlrliqpj    := vr_deb_vlrliqpj    + vr_tab_rel635(vr_ind_rel63X).vlrliqpj;
+              vr_deb_vltrfsic_pf := vr_deb_vltrfsic_pf + vr_tab_rel635(vr_ind_rel63X).vltrfsic_pf; 
+              vr_deb_vltrfsic_pj := vr_deb_vltrfsic_pj + vr_tab_rel635(vr_ind_rel63X).vltrfsic_pj;              
             END IF;
             
             -- Acumulo do TOTAL GERAL
@@ -1376,10 +1473,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
             vr_tot_vlrecliq := vr_tot_vlrecliq + vr_tab_rel635(vr_ind_rel63X).vlrecliq;
             vr_tot_vltrfsic := vr_tot_vltrfsic + vr_tab_rel635(vr_ind_rel63X).vltrfsic;
             -- Divisão PF/PJ 
-            vr_tot_vlrtrfpf := vr_tot_vlrtrfpf + vr_tab_rel635(vr_ind_rel63X).vlrtrfpf;
-            vr_tot_vlrliqpf := vr_tot_vlrliqpf + vr_tab_rel635(vr_ind_rel63X).vlrliqpf;
-            vr_tot_vlrtrfpj := vr_tot_vlrtrfpj + vr_tab_rel635(vr_ind_rel63X).vlrtrfpj;
-            vr_tot_vlrliqpj := vr_tot_vlrliqpj + vr_tab_rel635(vr_ind_rel63X).vlrliqpj;
+            vr_tot_vlrtrfpf    := vr_tot_vlrtrfpf    + vr_tab_rel635(vr_ind_rel63X).vlrtrfpf;
+            vr_tot_vlrliqpf    := vr_tot_vlrliqpf    + vr_tab_rel635(vr_ind_rel63X).vlrliqpf;
+            vr_tot_vlrtrfpj    := vr_tot_vlrtrfpj    + vr_tab_rel635(vr_ind_rel63X).vlrtrfpj;
+            vr_tot_vlrliqpj    := vr_tot_vlrliqpj    + vr_tab_rel635(vr_ind_rel63X).vlrliqpj;
+            vr_tot_vltrfsic_pf := vr_tot_vltrfsic_pf + vr_tab_rel635(vr_ind_rel63X).vltrfsic_pf; 
+            vr_tot_vltrfsic_pj := vr_tot_vltrfsic_pj + vr_tab_rel635(vr_ind_rel63X).vltrfsic_pj;            
             -- Valores sem GPS
             IF SUBSTR(vr_tab_rel635(vr_ind_rel63X).nmconven,1,3) <> 'GPS' THEN 
               vr_tot_vlrtrfpf_semgps := vr_tot_vlrtrfpf_semgps + vr_tab_rel635(vr_ind_rel63X).vlrtrfpf;
@@ -1389,20 +1488,22 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
             -- Enviar o registro para o XML
             gene0002.pc_escreve_xml(vr_des_clb
                                    ,vr_des_txt
-                                   ,'<coluna>' ||
-                                      '<nmconven>'||  vr_tab_rel635(vr_ind_rel63X).nmconven                                   ||'</nmconven>'||
-                                      '<dsmeiarr>'||  vr_tab_rel635(vr_ind_rel63X).dsmeiarr                                   ||'</dsmeiarr>'||
-                                      '<qttotfat>'||  nvl(vr_tab_rel635(vr_ind_rel63X).qtfatura,0)                                  ||'</qttotfat>'||
-                                      '<vltotfat>'||to_char(nvl(vr_tab_rel635(vr_ind_rel63X).vltotfat,0),'fm999G999G999G999G990d00') ||'</vltotfat>'||
-                                      '<vlrecliq>'||to_char(nvl(vr_tab_rel635(vr_ind_rel63X).vlrecliq,0),'fm999G999G999G999G990d00') ||'</vlrecliq>'||
-                                      '<vltrfuni>'||to_char(nvl(vr_tab_rel635(vr_ind_rel63X).vltottar,0),'fm999G999G999G999G990d00') ||'</vltrfuni>'||
-                                      '<vlrecliq_pf>'||to_char(nvl(vr_tab_rel635(vr_ind_rel63X).vlrliqpf,0),'fm999G999G999G999G990d00') ||'</vlrecliq_pf>'||
-                                      '<vltrfuni_pf>'||to_char(nvl(vr_tab_rel635(vr_ind_rel63X).vlrtrfpf,0),'fm999G999G999G999G990d00') ||'</vltrfuni_pf>'||
-                                      '<vlrecliq_pj>'||to_char(nvl(vr_tab_rel635(vr_ind_rel63X).vlrliqpj,0),'fm999G999G999G999G990d00') ||'</vlrecliq_pj>'||
-                                      '<vltrfuni_pj>'||to_char(nvl(vr_tab_rel635(vr_ind_rel63X).vlrtrfpj,0),'fm999G999G999G999G990d00') ||'</vltrfuni_pj>'||
-                                      '<vltrfsic>'||to_char(nvl(vr_tab_rel635(vr_ind_rel63X).vltrfsic,0),'fm999G999G999G999G990d00') ||'</vltrfsic>'||
-                                      '<nrrenorm>'||  nvl(vr_tab_rel635(vr_ind_rel63X).nrrenorm,0)                                   ||'</nrrenorm>'||
-                                      '<dsdianor>'||  vr_tab_rel635(vr_ind_rel63X).dsdianor                                   ||'</dsdianor>'||
+                                   ,'<coluna>'       ||
+                                      '<nmconven>'   || vr_tab_rel635(vr_ind_rel63X).nmconven                                               ||'</nmconven>'||
+                                      '<dsmeiarr>'   || vr_tab_rel635(vr_ind_rel63X).dsmeiarr                                               ||'</dsmeiarr>'||
+                                      '<qttotfat>'   || nvl(vr_tab_rel635(vr_ind_rel63X).qtfatura,0)                                        ||'</qttotfat>'||
+                                      '<vltotfat>'   || to_char(nvl(vr_tab_rel635(vr_ind_rel63X).vltotfat,0),'fm999G999G999G999G990d00')    ||'</vltotfat>'||
+                                      '<vlrecliq>'   || to_char(nvl(vr_tab_rel635(vr_ind_rel63X).vlrecliq,0),'fm999G999G999G999G990d00')    ||'</vlrecliq>'||
+                                      '<vltrfuni>'   || to_char(nvl(vr_tab_rel635(vr_ind_rel63X).vltottar,0),'fm999G999G999G999G990d00')    ||'</vltrfuni>'||
+                                      '<vlrecliq_pf>'|| to_char(nvl(vr_tab_rel635(vr_ind_rel63X).vlrliqpf,0),'fm999G999G999G999G990d00')    ||'</vlrecliq_pf>'||
+                                      '<vltrfuni_pf>'|| to_char(nvl(vr_tab_rel635(vr_ind_rel63X).vlrtrfpf,0),'fm999G999G999G999G990d00')    ||'</vltrfuni_pf>'||
+                                      '<vlrecliq_pj>'|| to_char(nvl(vr_tab_rel635(vr_ind_rel63X).vlrliqpj,0),'fm999G999G999G999G990d00')    ||'</vlrecliq_pj>'||
+                                      '<vltrfuni_pj>'|| to_char(nvl(vr_tab_rel635(vr_ind_rel63X).vlrtrfpj,0),'fm999G999G999G999G990d00')    ||'</vltrfuni_pj>'||
+                                      '<vltrfsic>'   || to_char(nvl(vr_tab_rel635(vr_ind_rel63X).vltrfsic,0),'fm999G999G999G999G990d00')    ||'</vltrfsic>'||
+                                      '<vltrfsic_pf>'|| to_char(nvl(vr_tab_rel635(vr_ind_rel63X).vltrfsic_pf,0),'fm999G999G999G999G990d00') ||'</vltrfsic_pf>'||
+                                      '<vltrfsic_pj>'|| to_char(nvl(vr_tab_rel635(vr_ind_rel63X).vltrfsic_pj,0),'fm999G999G999G999G990d00') ||'</vltrfsic_pj>'||                                                                            
+                                      '<nrrenorm>'   || nvl(vr_tab_rel635(vr_ind_rel63X).nrrenorm,0)                                        ||'</nrrenorm>'||
+                                      '<dsdianor>'   || vr_tab_rel635(vr_ind_rel63X).dsdianor                                               ||'</dsdianor>'||
                                     '</coluna>');
 
             -- Posicionar proximo registro da pltable
@@ -1412,52 +1513,62 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
           -- Enviar os totais para o XML
           gene0002.pc_escreve_xml(vr_des_clb
                                  ,vr_des_txt
-                                 , '<totais>' ||
-                                     '<int_vltrfuni>'||  to_char(nvl(vr_int_vltrfuni,0),'fm999G999G999G999G990d00')                                              ||'</int_vltrfuni>'||
-                                     '<int_vltotfat>'||  to_char(nvl(vr_int_vltotfat,0),'fm999G999G999G999G990d00')                                              ||'</int_vltotfat>'||
-                                     '<int_qttotfat>'||  nvl(vr_int_qttotfat,0)                                                                                  ||'</int_qttotfat>'||
-                                     '<int_vlrecliq>'||  to_char(nvl(vr_int_vlrecliq,0),'fm999G999G999G999G990d00')                                              ||'</int_vlrecliq>'||
-                                     '<int_vlrecliq_pf>'||  to_char(nvl(vr_int_vlrliqpf,0),'fm999G999G999G999G990d00')                                              ||'</int_vlrecliq_pf>'||
-                                     '<int_vlrecliq_pj>'||  to_char(nvl(vr_int_vlrliqpj,0),'fm999G999G999G999G990d00')                                              ||'</int_vlrecliq_pj>'||
-                                     '<int_vltrfuni_pf>'||  to_char(nvl(vr_int_vlrtrfpf,0),'fm999G999G999G999G990d00')                                              ||'</int_vltrfuni_pf>'||
-                                     '<int_vltrfuni_pj>'||  to_char(nvl(vr_int_vlrtrfpj,0),'fm999G999G999G999G990d00')                                              ||'</int_vltrfuni_pj>'||
-                                     '<int_vltrfsic>'||  to_char(nvl(vr_int_vltrfsic,0),'fm999G999G999G999G990d00')                                              ||'</int_vltrfsic>'||
-                                     '<cax_vltrfuni>'||  to_char(nvl(vr_cax_vltrfuni,0),'fm999G999G999G999G990d00')                                              ||'</cax_vltrfuni>'||
-                                     '<cax_vltotfat>'||  to_char(nvl(vr_cax_vltotfat,0),'fm999G999G999G999G990d00')                                              ||'</cax_vltotfat>'||
-                                     '<cax_qttotfat>'||  nvl(vr_cax_qttotfat,0)                                                                                  ||'</cax_qttotfat>'||
-                                     '<cax_vlrecliq>'||  to_char(nvl(vr_cax_vlrecliq,0),'fm999G999G999G999G990d00')                                              ||'</cax_vlrecliq>'||
-                                     '<cax_vlrecliq_pf>'||  to_char(nvl(vr_cax_vlrliqpf,0),'fm999G999G999G999G990d00')                                              ||'</cax_vlrecliq_pf>'||
-                                     '<cax_vlrecliq_pj>'||  to_char(nvl(vr_cax_vlrliqpj,0),'fm999G999G999G999G990d00')                                              ||'</cax_vlrecliq_pj>'||
-                                     '<cax_vltrfuni_pf>'||  to_char(nvl(vr_cax_vlrtrfpf,0),'fm999G999G999G999G990d00')                                              ||'</cax_vltrfuni_pf>'||
-                                     '<cax_vltrfuni_pj>'||  to_char(nvl(vr_cax_vlrtrfpj,0),'fm999G999G999G999G990d00')                                              ||'</cax_vltrfuni_pj>'||
-                                     '<cax_vltrfsic>'||  to_char(nvl(vr_cax_vltrfsic,0),'fm999G999G999G999G990d00')                                              ||'</cax_vltrfsic>'||
-                                     '<taa_vltrfuni>'||  to_char(nvl(vr_taa_vltrfuni,0),'fm999G999G999G999G990d00')                                              ||'</taa_vltrfuni>'||
-                                     '<taa_vltotfat>'||  to_char(nvl(vr_taa_vltotfat,0),'fm999G999G999G999G990d00')                                              ||'</taa_vltotfat>'||
-                                     '<taa_qttotfat>'||  nvl(vr_taa_qttotfat,0)                                                                                  ||'</taa_qttotfat>'||
-                                     '<taa_vlrecliq>'||  to_char(nvl(vr_taa_vlrecliq,0),'fm999G999G999G999G990d00')                                              ||'</taa_vlrecliq>'||
-                                     '<taa_vlrecliq_pf>'||  to_char(nvl(vr_taa_vlrliqpf,0),'fm999G999G999G999G990d00')                                              ||'</taa_vlrecliq_pf>'||
-                                     '<taa_vlrecliq_pj>'||  to_char(nvl(vr_taa_vlrliqpj,0),'fm999G999G999G999G990d00')                                              ||'</taa_vlrecliq_pj>'||
-                                     '<taa_vltrfuni_pf>'||  to_char(nvl(vr_taa_vlrtrfpf,0),'fm999G999G999G999G990d00')                                              ||'</taa_vltrfuni_pf>'||
-                                     '<taa_vltrfuni_pj>'||  to_char(nvl(vr_taa_vlrtrfpj,0),'fm999G999G999G999G990d00')                                              ||'</taa_vltrfuni_pj>'||
-                                     '<taa_vltrfsic>'||  to_char(nvl(vr_taa_vltrfsic,0),'fm999G999G999G999G990d00')                                              ||'</taa_vltrfsic>'||
-                                     '<deb_vltrfuni>'||  to_char(nvl(vr_deb_vltrfuni,0),'fm999G999G999G999G990d00')                                              ||'</deb_vltrfuni>'||
-                                     '<deb_vltotfat>'||  to_char(nvl(vr_deb_vltotfat,0),'fm999G999G999G999G990d00')                                              ||'</deb_vltotfat>'||
-                                     '<deb_qttotfat>'||  nvl(vr_deb_qttotfat,0)                                                                                  ||'</deb_qttotfat>'||
-                                     '<deb_vlrecliq>'||  to_char(nvl(vr_deb_vlrecliq,0),'fm999G999G999G999G990d00')                                              ||'</deb_vlrecliq>'||
-                                     '<deb_vlrecliq_pf>'||  to_char(nvl(vr_deb_vlrliqpf,0),'fm999G999G999G999G990d00')                                              ||'</deb_vlrecliq_pf>'||
-                                     '<deb_vlrecliq_pj>'||  to_char(nvl(vr_deb_vlrliqpj,0),'fm999G999G999G999G990d00')                                              ||'</deb_vlrecliq_pj>'||
-                                     '<deb_vltrfuni_pf>'||  to_char(nvl(vr_deb_vlrtrfpf,0),'fm999G999G999G999G990d00')                                              ||'</deb_vltrfuni_pf>'||
-                                     '<deb_vltrfuni_pj>'||  to_char(nvl(vr_deb_vlrtrfpj,0),'fm999G999G999G999G990d00')                                              ||'</deb_vltrfuni_pj>'||
-                                     '<deb_vltrfsic>'||  to_char(nvl(vr_deb_vltrfsic,0),'fm999G999G999G999G990d00')                                              ||'</deb_vltrfsic>'||
-                                     '<tot_vltrfuni>'||  to_char(nvl(vr_tot_vltrfuni,0),'fm999G999G999G999G990d00')                                              ||'</tot_vltrfuni>'||
-                                     '<tot_vltotfat>'||  to_char(nvl(vr_tot_vltotfat,0),'fm999G999G999G999G990d00')                                              ||'</tot_vltotfat>'||
-                                     '<tot_qttotfat>'||  nvl(vr_tot_qttotfat,0)                                                                                  ||'</tot_qttotfat>'||
-                                     '<tot_vlrecliq>'||  to_char(nvl(vr_tot_vlrecliq,0),'fm999G999G999G999G990d00')                                              ||'</tot_vlrecliq>'||
-                                     '<tot_vlrecliq_pf>'||  to_char(nvl(vr_tot_vlrliqpf,0),'fm999G999G999G999G990d00')                                              ||'</tot_vlrecliq_pf>'||
-                                     '<tot_vlrecliq_pj>'||  to_char(nvl(vr_tot_vlrliqpj,0),'fm999G999G999G999G990d00')                                              ||'</tot_vlrecliq_pj>'||
-                                     '<tot_vltrfuni_pf>'||  to_char(nvl(vr_tot_vlrtrfpf,0),'fm999G999G999G999G990d00')                                              ||'</tot_vltrfuni_pf>'||
-                                     '<tot_vltrfuni_pj>'||  to_char(nvl(vr_tot_vlrtrfpj,0),'fm999G999G999G999G990d00')                                              ||'</tot_vltrfuni_pj>'||
-                                     '<tot_vltrfsic>'||  to_char(nvl(vr_tot_vltrfsic,0),'fm999G999G999G999G990d00')                                              ||'</tot_vltrfsic>'||
+                                 , '<totais>'            ||
+                                     '<int_vltrfuni>'    ||  to_char(nvl(vr_int_vltrfuni,0),'fm999G999G999G999G990d00')            || '</int_vltrfuni>'    ||
+                                     '<int_vltotfat>'    ||  to_char(nvl(vr_int_vltotfat,0),'fm999G999G999G999G990d00')            || '</int_vltotfat>'    ||
+                                     '<int_qttotfat>'    ||  nvl(vr_int_qttotfat,0)                                                || '</int_qttotfat>'    ||
+                                     '<int_vlrecliq>'    ||  to_char(nvl(vr_int_vlrecliq,0),'fm999G999G999G999G990d00')            || '</int_vlrecliq>'    ||
+                                     '<int_vlrecliq_pf>' ||  to_char(nvl(vr_int_vlrliqpf,0),'fm999G999G999G999G990d00')            || '</int_vlrecliq_pf>' ||
+                                     '<int_vlrecliq_pj>' ||  to_char(nvl(vr_int_vlrliqpj,0),'fm999G999G999G999G990d00')            || '</int_vlrecliq_pj>' ||
+                                     '<int_vltrfuni_pf>' ||  to_char(nvl(vr_int_vlrtrfpf,0),'fm999G999G999G999G990d00')            || '</int_vltrfuni_pf>' ||
+                                     '<int_vltrfuni_pj>' ||  to_char(nvl(vr_int_vlrtrfpj,0),'fm999G999G999G999G990d00')            || '</int_vltrfuni_pj>' ||
+                                     '<int_vltrfsic>'    ||  to_char(nvl(vr_int_vltrfsic,0),'fm999G999G999G999G990d00')            || '</int_vltrfsic>'    ||
+                                     '<int_vltrfsic_pf>' ||  to_char(nvl(vr_int_vltrfsic_pf,0),'fm999G999G999G999G990d00')         || '</int_vltrfsic_pf>' ||
+                                     '<int_vltrfsic_pj>' ||  to_char(nvl(vr_int_vltrfsic_pj,0),'fm999G999G999G999G990d00')         || '</int_vltrfsic_pj>' ||                                                                          
+                                     '<cax_vltrfuni>'    ||  to_char(nvl(vr_cax_vltrfuni,0),'fm999G999G999G999G990d00')            || '</cax_vltrfuni>'    ||
+                                     '<cax_vltotfat>'    ||  to_char(nvl(vr_cax_vltotfat,0),'fm999G999G999G999G990d00')            || '</cax_vltotfat>'    ||
+                                     '<cax_qttotfat>'    ||  nvl(vr_cax_qttotfat,0)                                                || '</cax_qttotfat>'    ||
+                                     '<cax_vlrecliq>'    ||  to_char(nvl(vr_cax_vlrecliq,0),'fm999G999G999G999G990d00')            || '</cax_vlrecliq>'    ||
+                                     '<cax_vlrecliq_pf>' ||  to_char(nvl(vr_cax_vlrliqpf,0),'fm999G999G999G999G990d00')            || '</cax_vlrecliq_pf>' ||
+                                     '<cax_vlrecliq_pj>' ||  to_char(nvl(vr_cax_vlrliqpj,0),'fm999G999G999G999G990d00')            || '</cax_vlrecliq_pj>' ||
+                                     '<cax_vltrfuni_pf>' ||  to_char(nvl(vr_cax_vlrtrfpf,0),'fm999G999G999G999G990d00')            || '</cax_vltrfuni_pf>' ||
+                                     '<cax_vltrfuni_pj>' ||  to_char(nvl(vr_cax_vlrtrfpj,0),'fm999G999G999G999G990d00')            || '</cax_vltrfuni_pj>' ||
+                                     '<cax_vltrfsic>'    ||  to_char(nvl(vr_cax_vltrfsic,0),'fm999G999G999G999G990d00')            || '</cax_vltrfsic>'    ||
+                                     '<cax_vltrfsic_pf>' ||  to_char(nvl(vr_cax_vltrfsic_pf,0),'fm999G999G999G999G990d00')         || '</cax_vltrfsic_pf>' ||                                     
+                                     '<cax_vltrfsic_pj>' ||  to_char(nvl(vr_cax_vltrfsic_pj,0),'fm999G999G999G999G990d00')         || '</cax_vltrfsic_pj>' ||                                     
+                                     '<taa_vltrfuni>'    ||  to_char(nvl(vr_taa_vltrfuni,0),'fm999G999G999G999G990d00')            || '</taa_vltrfuni>'    ||
+                                     '<taa_vltotfat>'    ||  to_char(nvl(vr_taa_vltotfat,0),'fm999G999G999G999G990d00')            || '</taa_vltotfat>'    ||
+                                     '<taa_qttotfat>'    ||  nvl(vr_taa_qttotfat,0)                                                || '</taa_qttotfat>'    ||
+                                     '<taa_vlrecliq>'    ||  to_char(nvl(vr_taa_vlrecliq,0),'fm999G999G999G999G990d00')            || '</taa_vlrecliq>'    ||
+                                     '<taa_vlrecliq_pf>' ||  to_char(nvl(vr_taa_vlrliqpf,0),'fm999G999G999G999G990d00')            || '</taa_vlrecliq_pf>' ||
+                                     '<taa_vlrecliq_pj>' ||  to_char(nvl(vr_taa_vlrliqpj,0),'fm999G999G999G999G990d00')            || '</taa_vlrecliq_pj>' ||
+                                     '<taa_vltrfuni_pf>' ||  to_char(nvl(vr_taa_vlrtrfpf,0),'fm999G999G999G999G990d00')            || '</taa_vltrfuni_pf>' ||
+                                     '<taa_vltrfuni_pj>' ||  to_char(nvl(vr_taa_vlrtrfpj,0),'fm999G999G999G999G990d00')            || '</taa_vltrfuni_pj>' ||
+                                     '<taa_vltrfsic>'    ||  to_char(nvl(vr_taa_vltrfsic,0),'fm999G999G999G999G990d00')            || '</taa_vltrfsic>'    ||
+                                     '<taa_vltrfsic_pf>' ||  to_char(nvl(vr_taa_vltrfsic_pf,0),'fm999G999G999G999G990d00')         || '</taa_vltrfsic_pf>' ||                                     
+                                     '<taa_vltrfsic_pj>' ||  to_char(nvl(vr_taa_vltrfsic_pj,0),'fm999G999G999G999G990d00')         || '</taa_vltrfsic_pj>' ||                                     
+                                     '<deb_vltrfuni>'    ||  to_char(nvl(vr_deb_vltrfuni,0),'fm999G999G999G999G990d00')            || '</deb_vltrfuni>'    ||
+                                     '<deb_vltotfat>'    ||  to_char(nvl(vr_deb_vltotfat,0),'fm999G999G999G999G990d00')            || '</deb_vltotfat>'    ||
+                                     '<deb_qttotfat>'    ||  nvl(vr_deb_qttotfat,0)                                                || '</deb_qttotfat>'    ||
+                                     '<deb_vlrecliq>'    ||  to_char(nvl(vr_deb_vlrecliq,0),'fm999G999G999G999G990d00')            || '</deb_vlrecliq>'    ||
+                                     '<deb_vlrecliq_pf>' ||  to_char(nvl(vr_deb_vlrliqpf,0),'fm999G999G999G999G990d00')            || '</deb_vlrecliq_pf>' ||
+                                     '<deb_vlrecliq_pj>' ||  to_char(nvl(vr_deb_vlrliqpj,0),'fm999G999G999G999G990d00')            || '</deb_vlrecliq_pj>' ||
+                                     '<deb_vltrfuni_pf>' ||  to_char(nvl(vr_deb_vlrtrfpf,0),'fm999G999G999G999G990d00')            || '</deb_vltrfuni_pf>' ||
+                                     '<deb_vltrfuni_pj>' ||  to_char(nvl(vr_deb_vlrtrfpj,0),'fm999G999G999G999G990d00')            || '</deb_vltrfuni_pj>' ||
+                                     '<deb_vltrfsic>'    ||  to_char(nvl(vr_deb_vltrfsic,0),'fm999G999G999G999G990d00')            || '</deb_vltrfsic>'    ||
+                                     '<deb_vltrfsic_pf>' ||  to_char(nvl(vr_deb_vltrfsic_pf,0),'fm999G999G999G999G990d00')         || '</deb_vltrfsic_pf>' ||                                     
+                                     '<deb_vltrfsic_pj>' ||  to_char(nvl(vr_deb_vltrfsic_pj,0),'fm999G999G999G999G990d00')         || '</deb_vltrfsic_pj>' ||                                     
+                                     '<tot_vltrfuni>'    ||  to_char(nvl(vr_tot_vltrfuni,0),'fm999G999G999G999G990d00')            || '</tot_vltrfuni>'    ||
+                                     '<tot_vltotfat>'    ||  to_char(nvl(vr_tot_vltotfat,0),'fm999G999G999G999G990d00')            || '</tot_vltotfat>'    ||
+                                     '<tot_qttotfat>'    ||  nvl(vr_tot_qttotfat,0)                                                || '</tot_qttotfat>'    ||
+                                     '<tot_vlrecliq>'    ||  to_char(nvl(vr_tot_vlrecliq,0),'fm999G999G999G999G990d00')            || '</tot_vlrecliq>'    ||
+                                     '<tot_vlrecliq_pf>' ||  to_char(nvl(vr_tot_vlrliqpf,0),'fm999G999G999G999G990d00')            || '</tot_vlrecliq_pf>' ||
+                                     '<tot_vlrecliq_pj>' ||  to_char(nvl(vr_tot_vlrliqpj,0),'fm999G999G999G999G990d00')            || '</tot_vlrecliq_pj>' ||
+                                     '<tot_vltrfuni_pf>' ||  to_char(nvl(vr_tot_vlrtrfpf,0),'fm999G999G999G999G990d00')            || '</tot_vltrfuni_pf>' ||
+                                     '<tot_vltrfuni_pj>' ||  to_char(nvl(vr_tot_vlrtrfpj,0),'fm999G999G999G999G990d00')            || '</tot_vltrfuni_pj>' ||
+                                     '<tot_vltrfsic>'    ||  to_char(nvl(vr_tot_vltrfsic,0),'fm999G999G999G999G990d00')            || '</tot_vltrfsic>'    ||
+                                     '<tot_vltrfsic_pf>' ||  to_char(nvl(vr_tot_vltrfsic_pf,0),'fm999G999G999G999G990d00')         || '</tot_vltrfsic_pf>' ||                                     
+                                     '<tot_vltrfsic_pj>' ||  to_char(nvl(vr_tot_vltrfsic_pj,0),'fm999G999G999G999G990d00')         || '</tot_vltrfsic_pj>' ||                                     
                                    '</totais>');
           -- Encerrar o XML
           gene0002.pc_escreve_xml(vr_des_clb
@@ -1501,22 +1612,22 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
           -------- Arquivo conciliacao Convenios "AAMMDD_CONVEN_SIC.txt" ------------------
 
           /* MODELO
-                    70141128,281114,7255,7367,692.36,1434,"TARIFAS CONVENIO SICREDI  - COOPERADOS PESSOA FISICA"
+                    70141128,281114,7255,7367,692.36,5210,"TARIFAS CONVENIO SICREDI  - COOPERADOS PESSOA FISICA"
                     001,482.44
                     002,64.19
                     090,120.27
                     091,25.46
-                    70141201,011214,7367,7255,692.36,1434,"TARIFAS CONVENIO SICREDI  - COOPERADOS PESSOA FISICA"
+                    70141201,011214,7367,7255,692.36,5210,"TARIFAS CONVENIO SICREDI  - COOPERADOS PESSOA FISICA"
                     001,482.44
                     002,64.19
                     090,120.27
                     091,25.46
-                    70141128,281114,7255,7368,863.26,1434,"TARIFAS CONVENIO SICREDI - COOPERADOS PESSOA JURIDICA"
+                    70141128,281114,7255,7368,863.26,5210,"TARIFAS CONVENIO SICREDI - COOPERADOS PESSOA JURIDICA"
                     001,441.43
                     002,80.77
                     090,320.95
                     091,20.11
-                    70141201,011214,7368,7255,863.26,1434,"TARIFAS CONVENIO SICREDI - COOPERADOS PESSOA JURIDICA"
+                    70141201,011214,7368,7255,863.26,5210,"TARIFAS CONVENIO SICREDI - COOPERADOS PESSOA JURIDICA"
                     001,441.43
                     002,80.77
                     090,320.95
@@ -1550,7 +1661,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
               vr_aux_linhadet := vr_con_dtmvtolt || ','
                               || to_char(rw_crapdat.dtmvtolt,'DDMMYY') || ',7268,7376,'
                               || replace(TO_CHAR(vr_tot_vlrtrfpf_semgps,'fm999999999999990D00'),',','.')
-                              || ',1434,' || '"TARIFAS CONVENIO SICREDI - COOPERADOS PESSOA FISICA"'
+                              || ',5210,' || '"TARIFAS CONVENIO SICREDI - COOPERADOS PESSOA FISICA"'
                               || chr(10);
 
               -- Enviar para o clob
@@ -1580,7 +1691,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
               vr_aux_linhadet := vr_con_dtmvtolt || ','
                               || to_char(rw_crapdat.dtmvtolt,'DDMMYY') || ',7268,7377,' 
                               || replace(TO_CHAR(vr_tot_vlrtrfpj_semgps,'fm999999999999990D00'),',','.')
-                              || ',1434,' || '"TARIFAS CONVENIO SICREDI - COOPERADOS PESSOA JURIDICA"'
+                              || ',5210,' || '"TARIFAS CONVENIO SICREDI - COOPERADOS PESSOA JURIDICA"'
                               || chr(10);
 
               -- Enviar para o clob
@@ -1630,6 +1741,116 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
               RAISE vr_exc_saida;
             END IF;
 
+          END IF;
+          
+          
+          --Geração do arquivo contábil AAMMDD_XX_DESPESASICREDI.txt
+          --Apenas gera o arquivo se possuir valores de tarifas sicredi
+          IF NVL(vr_tot_vltrfsic_pf,0) + NVL(vr_tot_vltrfsic_pj,0) <> 0 THEN
+
+            vr_con_dtmvtolt := '20'||to_char(rw_crapdat.dtmvtolt,'RRMMDD')||','||
+                               to_char(rw_crapdat.dtmvtolt,'DDMMRR');
+
+            vr_aux_nmarqdat := '/contab/'||to_char(rw_crapdat.dtmvtolt,'RRMMDD')||'_'||LPAD(pr_cdcooper,2,0)||'_DESPESASICREDI.txt';
+
+            -- Buscare diretorio X
+            vr_caminho_dirX := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                        ,pr_cdcooper => pr_cdcooper
+                                                        ,pr_cdacesso => 'DIR_ARQ_CONTAB_X');
+
+            -- Iniciar CLOB com os dados do arquivo
+            vr_des_clb := NULL;
+            dbms_lob.createtemporary(vr_des_clb, TRUE);
+            dbms_lob.open(vr_des_clb, dbms_lob.lob_readwrite);
+
+            -- Se há valor tarifa PF
+            IF nvl(vr_tot_vltrfsic_pf,0) <> 0 THEN
+
+              -- Montar cabeçalho do dia atual
+              vr_aux_linhadet := vr_con_dtmvtolt 
+                              ||',8504,8535,'
+                              || replace(TO_CHAR(vr_tot_vltrfsic_pf,'fm999999999999990D00'),',','.')
+                              || ',5210,' || '"DESPESA ARRECADACAO SICREDI - PESSOA FISICA"'
+                              || chr(10);
+
+              -- Enviar para o clob
+              gene0002.pc_escreve_xml(vr_des_clb,vr_des_txt,vr_aux_linhadet);
+
+              -- Enviar os dados dos PAs para o arquivo, duas vezes 
+              FOR vr_i IN 1..2 LOOP
+                FOR vr_idx IN vr_tab_vltrfsic_pf.first..vr_tab_vltrfsic_pf.last LOOP
+                  -- Se existir o registro na tabela
+                  IF vr_tab_vltrfsic_pf.exists(vr_idx) THEN
+                    -- Gerar a linha
+                    vr_aux_linhadet := to_char(vr_idx,'fm000')|| ','
+                                    || replace(to_char((vr_tab_vltrfsic_pf(vr_idx)),'fm99999999990D00'),',','.')
+                                    || chr(10);
+
+                    -- Enviar para o clob
+                    gene0002.pc_escreve_xml(vr_des_clb,vr_des_txt,vr_aux_linhadet);
+                  END IF;
+                END LOOP;
+              END LOOP;
+            END IF;
+
+            -- Se há valor tarifa PJ
+            IF nvl(vr_tot_vltrfsic_pj,0) <> 0 THEN
+
+              -- Montar cabeçalho do dia atual
+              vr_aux_linhadet := vr_con_dtmvtolt 
+                              || ',8508,8535,' 
+                              || replace(TO_CHAR(vr_tot_vltrfsic_pj,'fm999999999999990D00'),',','.')
+                              || ',5210,' || '"DESPESA ARRECADACAO SICREDI - PESSOA JURIDICA"'
+                              || chr(10);
+
+              -- Enviar para o clob
+              gene0002.pc_escreve_xml(vr_des_clb,vr_des_txt,vr_aux_linhadet);
+
+              -- Enviar os dados dos PAs para o arquivo, duas vezes 
+              FOR vr_i IN 1..2 LOOP
+                FOR vr_idx IN vr_tab_vltrfsic_pj.first..vr_tab_vltrfsic_pj.last LOOP
+                  -- Se existir o registro na tabela
+                  IF vr_tab_vltrfsic_pj.exists(vr_idx) THEN
+                    -- Gerar a linha
+                    vr_aux_linhadet := to_char(vr_idx,'fm000')|| ','
+                                    || replace(to_char((vr_tab_vltrfsic_pj(vr_idx)),'fm99999999990D00'),',','.')
+                                    || chr(10);
+
+                    -- Enviar para o clob
+                    gene0002.pc_escreve_xml(vr_des_clb,vr_des_txt,vr_aux_linhadet);
+                  END IF;
+                END LOOP;
+              END LOOP;  
+              
+            END IF;
+
+            -- Mandar comando para copiar do CLOB todo o char pendente
+            gene0002.pc_escreve_xml(vr_des_clb,vr_des_txt,' ',true);
+
+            -- Ao final, solicita a geracao do arquivo
+            GENE0002.pc_solicita_relato_arquivo(pr_cdcooper  => pr_cdcooper             --> Cooperativa conectada
+                                               ,pr_cdprogra  => vr_cdprogra          --> Programa chamador
+                                               ,pr_dtmvtolt  => rw_crapdat.dtmvtolt  --> Data do movimento atual
+                                               ,pr_dsxml     => vr_des_clb          --> Arquivo XML de dados
+                                               ,pr_dsarqsaid => vr_caminho_coop||vr_aux_nmarqdat  --> Path/Nome do arquivo PDF gerado
+                                               ,pr_flg_impri => 'N'                  --> Chamar a impressão (Imprim.p)
+                                               ,pr_flg_gerar => 'N'                  --> Gerar o arquivo na hora
+                                               ,pr_nmformul  => '234dh'              --> Nome do formulário para impressão
+                                               ,pr_nrcopias  => 1                    --> Número de cópias para impressão
+                                               ,pr_dspathcop => vr_caminho_dirX      --> Lista sep. por ';' de diretórios a copiar o arquivo
+                                               ,pr_fldoscop  => 'S'                  --> Flag para converter o arquivo gerado em DOS antes da cópia
+                                               ,pr_des_erro  => vr_dscritic);        --> Retorno de Erro
+            -- Liberando a memória alocada pro CLOB
+            dbms_lob.close(vr_des_clb);
+            dbms_lob.freetemporary(vr_des_clb);
+
+            --Se ocorreu erro
+            IF vr_dscritic IS NOT NULL THEN
+              --Levantar Excecao
+              RAISE vr_exc_saida;
+            END IF;
+
+            
           END IF;
         END IF;  
       ELSE 
