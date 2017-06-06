@@ -531,11 +531,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
   --
   --             18/06/2014 - Removido as validacoes para GNRE - SEFAZ (1065).
   --                         (Douglas - Chamado 128278)
-  --
-  --             25/01/2015 - Adicionada validação por meio de arrecadação pelo
+    --
+    --             25/01/2015 - Adicionada validação por meio de arrecadação pelo
   --                          campo crapscn.dsoparre para Conv. Sicredi (Lunelli SD 234418)
   --
-  --             11/03/2015 - Adicionada verificação pelo dígito 8 no início do cdbarra
+    --             11/03/2015 - Adicionada verificação pelo dígito 8 no início do cdbarra
   --                          de faturas na rotina 'pc_retorna_valores_fatura' (Lunelli SD 245425).
   --
   --             12/03/2015 - #202833 Tratamento para não aceitar títulos do Banco Boavista (231) (Carlos)
@@ -7810,7 +7810,9 @@ END pc_gera_titulos_iptu_prog;
           (rw_crapcon.cdempcon = 0040 AND rw_crapcon.cdsegmto = 1)  OR   /* P.M. AGROLANDIA */
           (rw_crapcon.cdempcon = 0562 AND rw_crapcon.cdsegmto = 5)  OR   /* DEFESA CIVIL TIMBO */
           (rw_crapcon.cdempcon = 0563 AND rw_crapcon.cdsegmto = 5)  OR   /* MEIO AMBIENTE DE TIMBO */
-          (rw_crapcon.cdempcon = 0564 AND rw_crapcon.cdsegmto = 5)) THEN /* TRANSITO DE TIMBO */
+          (rw_crapcon.cdempcon = 0564 AND rw_crapcon.cdsegmto = 5)  OR   /* TRANSITO DE TIMBO */
+          (rw_crapcon.cdempcon = 0524 AND rw_crapcon.cdsegmto = 5)       /* F.M.S TROMBUDO CENTRAL */
+         ) THEN 
         --Data movimento anterior
         vr_dtmvtoan:= To_Char(rw_crapdat.dtmvtoan,'YYYYMMDD');
         IF To_Number(SUBSTR(pr_codigo_barras,20,8)) <= To_Number(vr_dtmvtoan) THEN

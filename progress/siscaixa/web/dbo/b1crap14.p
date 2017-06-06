@@ -632,7 +632,9 @@ PROCEDURE retorna-valores-fatura.
 		(crapcon.cdempcon = 0040 AND crapcon.cdsegmto = 1)  OR    /* P.M. AGROLANDIA */
         (crapcon.cdempcon = 0562 AND crapcon.cdsegmto = 5)  OR    /* DEFESA CIVIL TIMBO */
         (crapcon.cdempcon = 0563 AND crapcon.cdsegmto = 5)  OR    /* MEIO AMBIENTE DE TIMBO */
-        (crapcon.cdempcon = 0564 AND crapcon.cdsegmto = 5)) THEN  /* TRANSITO DE TIMBO */
+        (crapcon.cdempcon = 0564 AND crapcon.cdsegmto = 5)  OR    /* TRANSITO DE TIMBO */
+        (crapcon.cdempcon = 0524 AND crapcon.cdsegmto = 5)        /* F.M.S TROMBUDO CENTRAL */ 
+        ) THEN  
          DO:
              aux_dtmvtoan = STRING(YEAR(crapdat.dtmvtoan),"9999") +
                             STRING(MONTH(crapdat.dtmvtoan),"99")  +

@@ -418,7 +418,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                             (Lucas Ranghetti #669962)
              16/05/2017 - Ajuste para alterar o format da variável vr_nrconta_cancel
 				                  (Jonata - RKAM M311).
-
+                            
                             
                19/05/2017 - Tratamento para cooperado demitido (Lucas Ranghetti #656251)
 ............................................................................ */
@@ -2100,6 +2100,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
               
               IF vr_cdcritic <> 999 THEN
                 vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+              ELSE
+                vr_dscritic:= 'Arquivo incompleto.';
               END IF;
               
               vr_nmarquiv := vr_nmdirdeb||'/err' || vr_tab_nmarquiv(i);

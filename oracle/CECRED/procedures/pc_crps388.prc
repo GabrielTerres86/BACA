@@ -9,7 +9,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autora  : Mirtes
-  Data    : Abril/2004                          Ultima atualizacao: 18/05/2017
+  Data    : Abril/2004                          Ultima atualizacao: 26/05/2017
 
   Dados referentes ao programa:
 
@@ -239,6 +239,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
 
               18/05/2017 - Ajustes após validação Fabrício (Andrei-MOUTs)
 
+              15/05/2017 - Adicionar tratamento para o convenio CERSAD 9 posicoes
+                           (Lucas Ranghetti #622377)
+                           
+              26/05/2017 - Incluido tratamento para cdrefere da linha F para
+                           AGUAS DE GUARAMIRIM (Tiago/Fabricio #640336)
   ..............................................................................*/
 
   ----------------------------- ESTRUTURAS de MEMORIA -----------------------------
@@ -942,22 +947,22 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
             -- Se não encontrar 
             IF cr_craplau%NOTFOUND THEN 
               CLOSE cr_craplau;
-              -- Gerar critica 501 no proc_message
-              btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                        ,pr_ind_tipo_log => 2 -- Erro tratato
-                                        ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                        ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                         || vr_cdprogra || ' --> ' || gene0001.fn_busca_critica(501) 
-                                                         || ' Conta = '|| gene0002.fn_mask_conta(rw_craplcm.nrdconta)
-                                                         || ' Documento = ' || rw_craplcm.nrdocmto);
-              -- Ir ao próximo registro (Ignorar LCM)
+            -- Gerar critica 501 no proc_message
+            btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                      ,pr_ind_tipo_log => 2 -- Erro tratato
+                                      ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
+                                      ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                       || vr_cdprogra || ' --> ' || gene0001.fn_busca_critica(501) 
+                                                       || ' Conta = '|| gene0002.fn_mask_conta(rw_craplcm.nrdconta)
+                                                       || ' Documento = ' || rw_craplcm.nrdocmto);
+            -- Ir ao próximo registro (Ignorar LCM)
               CONTINUE;   
 
             ELSE
               CLOSE cr_craplau;
-            END IF;
+          END IF;
 
-          ELSE
+        ELSE 
 
             -- Gerar critica 501 no proc_message
             btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
@@ -1135,7 +1140,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
     	
           /* Celesc Distribuicao */  
           /* Aguas Pres.Getulio  */
-          IF rw_gnconve.cdconven IN (30,45) THEN   
+		  /* 51 - CERSAD */
+          IF rw_gnconve.cdconven IN (30,45,51) THEN   
     						
             vr_dslinreg := 'F' 
                     || to_char(rw_crapatr.cdrefere,'fm000000000')
@@ -1157,7 +1163,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
           /* SEMASA ITAJAI */           
           /* Foz do Brasil */           
           /* AGUAS DE MASSARANDUBA */ 
-          ELSIF rw_gnconve.cdconven IN (4,24,31,33,34,53,54) THEN  
+		  /* 108 - AGUAS DE GUARAMIRIM */
+          ELSIF rw_gnconve.cdconven IN (4,24,31,33,34,53,54,108) THEN  
 
             vr_dslinreg := 'F' 
                     || to_char(rw_crapatr.cdrefere,'fm00000000')
@@ -1324,7 +1331,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
           -- Enviar informações para o arquivo conforme especificidades do convênio
           /* 30 - Celesc Distribuicao */
           /* 45 - Aguas Pres.Getulio  */
-          IF rw_gnconve.cdconven IN(30,45) THEN    
+		  /* 51 - CERSAD */
+          IF rw_gnconve.cdconven IN(30,45,51) THEN    
             -- Enviar linha ao arquivo 
             vr_dslinreg := 'F'
                         ||to_char(rw_crapatr.cdrefere,'fm000000000')
@@ -1343,7 +1351,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
           /* 34 - SEMASA ITAJAI */
           /* 53 - Foz do Brasil */
           /* 54 - AGUAS DE MASSARANDUBA */  
-          ELSIF rw_gnconve.cdconven IN(4,24,31,33,34,53,54) THEN        
+		  /* 108 - AGUAS DE GUARAMIRIM */
+          ELSIF rw_gnconve.cdconven IN(4,24,31,33,34,53,54,108) THEN        
             -- Enviar linha ao arquivo 
             vr_dslinreg := 'F'
                         ||to_char(rw_crapatr.cdrefere,'fm00000000')

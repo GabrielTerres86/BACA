@@ -10,7 +10,7 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Julio/Mirtes
-   Data    : Abril/2004                    Ultima atualizacao: 07/03/2017
+   Data    : Abril/2004                    Ultima atualizacao: 26/05/2017
 
    Dados referentes ao programa:
 
@@ -176,6 +176,13 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
                07/03/2017 - Tratamento para evitar que cancelamentos de convênios antigos
                             nao desloquem as linhas do arquivo, conforme problema relatado
                             no chamado 619304. (Kelvin)  
+                            
+               02/05/2017 - Incluir mesmo tratamento que é efetuado para convenios não casan
+                            para a verificacao de autorizacoes antigas e novas 
+                            (Lucas Ranghetti #647814)
+                            
+               26/05/2017 - Incluir tratamento para aguas de guaramirim qto a identificaçao
+                            do cliente no arquivo (Tiago/Fabricio #640336)             
 ............................................................................. */
   -- Buscar os dados da cooperativa
   cursor cr_crapcop (pr_cdcooper in craptab.cdcooper%type) is
@@ -207,7 +214,7 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
            crapcop,
            gnconve,
            gncvcop
-     where gncvcop.cdcooper = pr_cdcooper     
+     where gncvcop.cdcooper = pr_cdcooper
        and gnconve.cdconven = gncvcop.cdconven
        and gnconve.flgativo = 1
        and gnconve.cdhisdeb > 0 -- Somente arq.integracao
@@ -570,8 +577,15 @@ begin
 
       IF rw_gnconve.cdconven = 4 AND 
          (rw_crapatr.dtiniatr < to_date('05/10/2016','dd/mm/yyyy')) THEN -- casan
-          vr_nragenci := 1294;
-        vr_cdcooperativa := '9'||to_char(pr_cdcooper,'fm000');
+        vr_nragenci := 1294;
+        -- Para validacao da forma antiga e nova(cooperativa) para a CASAN, vamos
+        -- continuar fazendo da forma antiga. conforme o comentario abaixo no ELSE da CASAN
+        IF (pr_cdcooper = 1 AND rw_crapatr.dtiniatr < to_date('01/09/2013','dd/mm/yyyy') OR
+          pr_cdcooper <> 1 AND rw_crapatr.dtiniatr < to_date('26/07/2016','dd/mm/yyyy')) THEN
+          vr_cdcooperativa := '9'||to_char(pr_cdcooper,'fm000');      
+        ELSE   
+          vr_cdcooperativa := ' ';
+        END IF;
       ELSE             
         -- Caso a data de inicio da autorização seja menor que 01/09/2013 e for um cancelamento 
         -- de debito ira gravar a agencia com formato antigo. Ex: "0001"            
@@ -607,7 +621,7 @@ begin
       --
       if rw_gnconve.cdconven in (8, 16, 19, 20, 25, 26, 11, 49) then
         vr_cdidenti := to_char(rw_crapatr.cdrefere, 'fm000000')||lpad(' ', 19, ' ');
-      elsif rw_gnconve.cdconven in (4, 24, 31, 33, 53, 54) then
+      elsif rw_gnconve.cdconven in (4, 24, 31, 33, 53, 54, 108) then
         vr_cdidenti := to_char(rw_crapatr.cdrefere, 'fm00000000')||lpad(' ', 17, ' ');
       elsif rw_gnconve.cdconven in (2, 10, 5, 30, 14, 45, 51) then
         vr_cdidenti := to_char(rw_crapatr.cdrefere, 'fm000000000')||lpad(' ', 16, ' ');
