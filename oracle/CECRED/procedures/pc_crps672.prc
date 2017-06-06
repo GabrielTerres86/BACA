@@ -2571,24 +2571,27 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                 END;
                 
                 --> Gravar registro de conta cartão
-                BEGIN
-                  INSERT INTO tbcrd_conta_cartao
-                              (cdcooper, 
-                               nrdconta, 
-                               nrconta_cartao)
-                       VALUES (rw_crawcrd.cdcooper, --> cdcooper
-                               rw_crawcrd.nrdconta, --> nrdconta
-                               vr_nrdctitg);        --> nrconta_cartao
-                EXCEPTION
-                  WHEN dup_val_on_index THEN
-                    NULL; --> Caso ja exista não deve apresentar critica
-                  WHEN OTHERS THEN
-                    vr_dscritic := 'Erro ao inserir tbcrd_conta_cartao: '||SQLERRM;
-                    RAISE vr_exc_saida;
-                  
-                END;
+                CCRD0003.pc_insere_conta_cartao(rw_crawcrd.cdcooper,                  --> cdcooper
+                                                rw_crawcrd.nrdconta,                  --> nrdconta
+                                                TO_NUMBER(substr(vr_des_text,25,13)), --> nrcctitg
+                                                vr_cdcritic,
+                                                vr_dscritic);
+                IF (nvl(vr_cdcritic,0) > 0) or
+                   (nvl(vr_dscritic,' ') <> ' ') THEN
+                   -- LOGA NO PROC_MESSAGE
+                   btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                             ,pr_ind_tipo_log => 2 -- Erro tratato
+                                             ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                              || vr_cdprogra || ' --> '
+                                                              || 'Nao foi possivel gravar tabela relac. conta e conta cartao. '||' - '
+                                                              || 'COOP.: '   || rw_crawcrd.cdcooper || ' - '
+                                                              || 'CONTA: '   || rw_crawcrd.nrdconta || ' - '
+                                                              || 'Critica: ' || vr_dscritic || ' - '
+                                                              || ' ARQ.: '   || vr_nmarquiv
+                                             ,pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
+                   CONTINUE;
+                END IF;
                 
-
               END IF;
             EXCEPTION
               WHEN no_data_found THEN -- não encontrar mais linhas

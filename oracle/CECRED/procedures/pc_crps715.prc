@@ -361,11 +361,11 @@ BEGIN
           
           IF rw_cessao.inpessoa = 1 THEN
             vr_lshistor := '7016,7537';
-            vr_dshistor := '"(Cessao) RENDAS A APRORIAR CESSAO CARTAO PESSOA FISICA."';
+            vr_dshistor := '"(Cessao) AJUSTE RENDAS CONTRATO CESSAO CARTAO PESSOA FISICA."';
             
           ELSIF rw_cessao.inpessoa = 2 THEN          
             vr_lshistor := '7017,7538';
-            vr_dshistor := '"(Cessao) RENDAS A APRORIAR CESSAO CARTAO PESSOA JURIDICA."';            
+            vr_dshistor := '"(Cessao) AJUSTE RENDAS CONTRATO CESSAO CARTAO PESSOA JURIDICA."';            
           END IF;         
         
           --> gerar linha cabeçalho
@@ -404,7 +404,7 @@ BEGIN
                                            pr_cdcooper => rw_crapcop.cdcooper,
                                            pr_nmsubdir => '/contab');
       -- Nome do arquivo a ser gerado
-      vr_nmarqdat := vr_dtmvtolt_yymmdd||'_'||lpad(rw_crapcop.cdcooper,2,'0')||'_cessao.txt';
+      vr_nmarqdat := vr_dtultdma_util_yymmdd||'_'||lpad(rw_crapcop.cdcooper,2,'0')||'_cessao.txt';
       
       --> Buscar diretorio de copia
       gene0001.pc_param_sistema(pr_nmsistem => 'CRED', 

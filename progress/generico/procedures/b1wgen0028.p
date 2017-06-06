@@ -508,6 +508,9 @@
 							 solicitado no chamado 645013. (Kelvin)
 
                 12/05/2017 - Passagem de 0 para a nacionalidade. (Jaison/Andrino)
+                
+                31/05/2017 - Adicao de funcionalidade para armazenagem da tabela de relacionamento
+                             entre conta x conta cartao (Anderson).
 
 ..............................................................................*/
 
@@ -6559,6 +6562,42 @@ PROCEDURE grava_dados_cartao_nao_gerado:
               UNDO GRAVA_DADOS, RETURN "NOK".
 
           END.
+
+       
+       /* Mantem relacionamento conta x conta cartao */
+       { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+
+       /* Efetuar a chamada a rotina Oracle */ 
+       RUN STORED-PROCEDURE pc_insere_conta_cartao
+          aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper,
+                                               INPUT par_nrdconta,
+                                               INPUT par_nrcctitg,
+                                              OUTPUT 0,
+                                              OUTPUT "").
+         
+         /* Fechar o procedimento para buscarmos o resultado */ 
+       CLOSE STORED-PROC pc_insere_conta_cartao
+            aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+       { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+
+       ASSIGN aux_cdcritic = pc_insere_conta_cartao.pr_cdcritic
+                                WHEN pc_insere_conta_cartao.pr_cdcritic <> ?           
+              aux_dscritic = pc_insere_conta_cartao.pr_dscritic
+                                WHEN pc_insere_conta_cartao.pr_dscritic <> ?.       
+       IF aux_cdcritic <> 0   OR
+          aux_dscritic <> ""  THEN
+          DO:
+              RUN gera_erro (INPUT par_cdcooper,
+                             INPUT par_cdagenci,
+                             INPUT par_nrdcaixa,
+                             INPUT 1,
+                             INPUT aux_cdcritic,
+                             INPUT-OUTPUT aux_dscritic).
+                                                     
+              UNDO GRAVA_DADOS, RETURN "NOK".
+          END.
+          
 
        CREATE crapcrd.
 
