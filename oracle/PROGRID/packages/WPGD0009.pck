@@ -159,6 +159,7 @@ FROM (
          AND idp.dtanoage = pr_dtanoage
          AND idp.cdevento = pr_cdevento
          AND idp.nrseqeve = pr_nrseqeve
+         AND idp.cdageins = pr_cdageins
          AND ((
              ((pr_tpfiltro = 1
          AND UPPER(idp.nminseve) LIKE '%' || UPPER(pr_nminscri) || '%')
