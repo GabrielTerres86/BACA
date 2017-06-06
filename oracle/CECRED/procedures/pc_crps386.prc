@@ -183,6 +183,8 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
                             
                26/05/2017 - Incluir tratamento para aguas de guaramirim qto a identificaçao
                             do cliente no arquivo (Tiago/Fabricio #640336)             
+                            
+               25/05/2017 - Ajuste na geração de mensagens no log (Rodrigo)
 ............................................................................. */
   -- Buscar os dados da cooperativa
   cursor cr_crapcop (pr_cdcooper in craptab.cdcooper%type) is
@@ -400,14 +402,6 @@ begin
   vr_concvuni := 0;
   -- Leitura dos convênios ativos para a cooperativa
   for rw_gnconve in cr_gnconve (pr_cdcooper) loop
-    -- Inclui mensagem no log
-    btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                               pr_ind_tipo_log => 2, -- Erro tratato
-                               pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                               || vr_cdprogra || ' --> '
-                                               || 'Executando Integracao Arq. Convenio - '
-                                               || to_char(rw_gnconve.cdconven) || '  - '
-                                               || rw_gnconve.nmempres );
     -- Verifica se o convênio possui movimento
     -- Se não tem movimento, não precisa gerar os arquivos
     open cr_crapatr (pr_cdcooper,
@@ -418,11 +412,12 @@ begin
       if cr_crapatr%notfound then
         -- Inclui mensagem no log
         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                   pr_ind_tipo_log => 2, -- Erro tratato
+                                   pr_ind_tipo_log => 1, -- Mensagem
                                    pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                    || vr_cdprogra || ' --> '
                                                    || 'Sem movtos Convenio - '
-                                                   || to_char(rw_gnconve.cdconven));
+                                                   || to_char(rw_gnconve.cdconven) ||' - '
+                                                   || rw_gnconve.nmempres);
         -- Fecha o cursor e passa para o próximo convênio
         close cr_crapatr;
         continue;
@@ -862,19 +857,15 @@ begin
       END IF;
       
       vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                 pr_ind_tipo_log => 2, -- Erro tratato
-                                 pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                 || vr_cdprogra );
       --
       if rw_gnconve.tpdenvio <> 1 then -- Internet
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                 pr_ind_tipo_log => 2, -- Erro tratato
+                                 pr_ind_tipo_log => 1, -- Mensagem
                                  pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                  || vr_cdprogra || ' --> '
                                                  || vr_dscritic || ' '
                                                  || vr_nmarqdat || ' - Debito Automatico - '
-                                                 || rw_gnconve.nmempres || ': _________');
+                                                 || rw_gnconve.nmempres);
       else
         -- Carregar a lista de destinatários na pl/table
         vr_destinatarios := gene0002.fn_quebra_string(pr_string => rw_gnconve.dsenddeb); 
@@ -913,17 +904,14 @@ begin
       end if;
     else -- gnconve.flgcvuni = 1
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                 pr_ind_tipo_log => 2, -- Erro tratato
+                                 pr_ind_tipo_log => 1, -- Mensagem
                                  pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                  || vr_cdprogra 
                                                  || ' --> Geracao de arquivo para unificacao - '
                                                  || vr_nmarqdat );
     end if;
     --
-    btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                               pr_ind_tipo_log => 2, -- Erro tratato
-                               pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                               || vr_cdprogra );
+    
     -- Atualizar Arquivo de Controle
     begin
       update gncontr
