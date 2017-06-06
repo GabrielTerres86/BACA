@@ -14,7 +14,7 @@ BEGIN
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Jean
-  Data    : Abril/2017                      Ultima atualizacao: 11/04/2017
+  Data    : Abril/2017                      Ultima atualizacao: 06/06/2017
 
   Dados referentes ao programa:
 
