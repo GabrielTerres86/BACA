@@ -304,7 +304,9 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                   nmcheque VARCHAR2(200),
                   dtlibbdc crapcdb.dtlibbdc%TYPE,
                   dtmvtolt crapdat.dtmvtolt%TYPE,
-                  insitana crapcdb.insitana%TYPE);
+                  insitana crapcdb.insitana%TYPE,
+                  nrdolote crapcst.nrdolote%TYPE,
+                  insitprv crapcst.insitprv%TYPE);
 
   TYPE typ_tab_chq_bordero IS TABLE OF typ_rec_chq_bordero
        INDEX BY PLS_INTEGER;
