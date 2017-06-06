@@ -79,6 +79,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps716 (pr_cdcooper IN crapcop.cdcooper%T
   vr_vlsldfat     crapepr.vlemprst%TYPE;  
   vr_qtdiaatr     INTEGER;  
   vr_nrcartao     NUMBER;
+  vr_dtdatual     DATE;
   
   --------------------------- SUBROTINAS INTERNAS --------------------------
 
@@ -135,10 +136,33 @@ BEGIN
   FETCH cr_crapprg INTO rw_crapprg;
   CLOSE cr_crapprg;
 
+  vr_dtdatual := trunc(SYSDATE);
+
   --------------- REGRA DE NEGOCIO DO PROGRAMA -----------------
   FOR rw_crapcop IN cr_crapcop LOOP
     BEGIN
       vr_flgerlog   := FALSE;
+      
+      
+      -- Leitura do calendário da cooperativa
+      OPEN btch0001.cr_crapdat(pr_cdcooper => rw_crapcop.cdcooper);
+      FETCH btch0001.cr_crapdat INTO rw_crapdat;
+
+      -- Se não encontrar
+      IF btch0001.cr_crapdat%NOTFOUND THEN
+
+        CLOSE btch0001.cr_crapdat;
+        vr_cdcritic := 1;
+        RAISE vr_exc_erro;
+      ELSE
+        CLOSE btch0001.cr_crapdat;
+      END IF;
+      
+      --Rodar apenas em dias uteis
+      IF rw_crapdat.dtmvtolt <> vr_dtdatual THEN
+        continue;
+      END IF;
+      
       
       -- Log de fim da execução
       pc_controla_log_batch(pr_cdcooper => rw_crapcop.cdcooper,
@@ -154,20 +178,6 @@ BEGIN
           RAISE vr_exc_erro;
       END;
       
-      -- Leitura do calendário da cooperativa
-      OPEN btch0001.cr_crapdat(pr_cdcooper => rw_crapcop.cdcooper);
-
-      FETCH btch0001.cr_crapdat INTO rw_crapdat;
-
-      -- Se não encontrar
-      IF btch0001.cr_crapdat%NOTFOUND THEN
-
-        CLOSE btch0001.cr_crapdat;
-        vr_cdcritic := 1;
-        RAISE vr_exc_erro;
-      ELSE
-        CLOSE btch0001.cr_crapdat;
-      END IF;
       
       -- Busca do diretório do arquivo
       vr_nmdireto := gene0001.fn_diretorio(pr_tpdireto => 'M', --> micros

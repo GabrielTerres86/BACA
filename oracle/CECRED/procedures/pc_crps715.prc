@@ -36,7 +36,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps715 (pr_cdcooper IN crapcop.cdcooper%T
     SELECT cop.nmrescop
           ,cop.cdcooper
       FROM crapcop cop
-     WHERE cop.cdcooper = decode(pr_cdcooper,3,cop.cdcooper,pr_cdcooper)
+     WHERE cop.cdcooper = decode(pr_cdcooper,0,cop.cdcooper,pr_cdcooper)
        AND cop.cdcooper <> 3
        AND cop.flgativo = 1;
   rw_crapcop cr_crapcop%ROWTYPE;
@@ -138,6 +138,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps715 (pr_cdcooper IN crapcop.cdcooper%T
   vr_nmdireto     VARCHAR2(500);
   vr_dsdirarq     VARCHAR2(500);
   vr_nmarqdat     VARCHAR2(500);
+  vr_dircopia     VARCHAR2(500);
 
   vr_cdfinali     crapepr.cdfinemp%TYPE;
   vr_cdlcremp     crapepr.cdlcremp%TYPE;
@@ -403,7 +404,14 @@ BEGIN
                                            pr_cdcooper => rw_crapcop.cdcooper,
                                            pr_nmsubdir => '/contab');
       -- Nome do arquivo a ser gerado
-      vr_nmarqdat := vr_dtultdma_util_yymmdd||'_CESSAO.txt';
+      vr_nmarqdat := vr_dtmvtolt_yymmdd||'_'||lpad(rw_crapcop.cdcooper,2,'0')||'_cessao.txt';
+      
+      --> Buscar diretorio de copia
+      gene0001.pc_param_sistema(pr_nmsistem => 'CRED', 
+                                pr_cdcooper => rw_crapcop.cdcooper, 
+                                pr_cdacesso => 'DIR_ARQ_CONTAB_X', 
+                                pr_dsvlrprm => vr_dircopia);
+      
       
       gene0002.pc_solicita_relato_arquivo(pr_cdcooper  => rw_crapcop.cdcooper, 
                                           pr_cdprogra  => 'CRPS715', 
@@ -411,6 +419,8 @@ BEGIN
                                           pr_dsxml     => vr_desclob, 
                                           pr_dsarqsaid => vr_nmdireto||'/'||vr_nmarqdat, 
                                           pr_cdrelato  => 0, 
+                                          pr_dspathcop => vr_dircopia,
+                                          pr_fldoscop  => 'S',  
                                           pr_flg_gerar => 'S',
                                           pr_des_erro  => vr_dscritic);
       IF TRIM(vr_dscritic) IS NOT NULL THEN
