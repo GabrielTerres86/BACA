@@ -679,6 +679,9 @@
               
               22/05/2017 - Ajuste para validar requisições no mesmo dia 
                           (Ricardo Linhares) - Chamado 670727/601973
+                          
+              06/06/2017 - Alteraçao na rotina proc_qualif_operacao, pois nao estava considerando as prestacoes 
+                           calculadas nos meses anteriores, apenas do mes atual.
 
  ..............................................................................*/
 
@@ -3909,7 +3912,7 @@ PROCEDURE proc_qualif_operacao:
         IF  NOT CAN-DO(par_dsctrliq, aux_nrctremp)   THEN
             NEXT.
 
-        aux_qtprecal = 0.
+        aux_qtprecal = crabepr.qtprecal.
 
         RUN saldo-devedor-epr (INPUT par_cdcooper,
                                INPUT par_cdagenci,
@@ -3931,8 +3934,13 @@ PROCEDURE proc_qualif_operacao:
                                OUTPUT TABLE tt-erro).
 
         /* Prestacoes restantes */
-        ASSIGN aux_qtprecal = aux_qtprecal + par_qtprecal
-               aux_qtpreapg = IF   crabepr.qtpreemp < aux_qtprecal   THEN
+
+        IF   crabepr.tpemprst = 0   THEN
+         DO:
+             ASSIGN aux_qtprecal = aux_qtprecal + par_qtprecal.
+         END.
+
+        ASSIGN aux_qtpreapg = IF   crabepr.qtpreemp < aux_qtprecal   THEN
                                    0
                               ELSE
                                    crabepr.qtpreemp - aux_qtprecal
