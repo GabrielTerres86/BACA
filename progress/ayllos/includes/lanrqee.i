@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Margarete/Planner
-   Data    : Agosto/2000.                       Ultima atualizacao: 15/04/2017
+   Data    : Agosto/2000.                       Ultima atualizacao: 18/05/2017
 
    Dados referentes ao programa:
 
@@ -22,6 +22,7 @@
                             
                14/03/2017 - Aumentar para 1500 folhas por requisição no formulario  
                             3, conforme solicitado no chamado 627236. (Kelvin)
+               18/05/2017 - Retirar glb_cddopcao do form f_lanrqe (Lucas Ranghetti #646559)
 ............................................................................. */
 
 INICIO:
@@ -34,8 +35,7 @@ DO WHILE TRUE:
           tel_tprequis 
           WITH FRAME f_lanrqe.
 
-      ASSIGN aux_cddopcao = glb_cddopcao
-             aux_nrdctabb = tel_nrdctabb
+      ASSIGN aux_nrdctabb = tel_nrdctabb
              aux_tprequis = tel_tprequis
              glb_nrcalcul = tel_nrdctabb
              glb_cdcritic = 0.
@@ -67,13 +67,11 @@ DO WHILE TRUE:
              RUN fontes/critic.p.
              BELL.
              CLEAR FRAME f_lanrqe.
-             ASSIGN glb_cddopcao = aux_cddopcao
-                    tel_nrdctabb = aux_nrdctabb
+             ASSIGN tel_nrdctabb = aux_nrdctabb
                     tel_tprequis = aux_tprequis.
 
              MESSAGE glb_dscritic.
-             DISPLAY glb_cddopcao 
-                     tel_nrdctabb 
+             DISPLAY tel_nrdctabb 
                      tel_tprequis
                      WITH FRAME f_lanrqe.
 
@@ -86,7 +84,7 @@ DO WHILE TRUE:
    END.
 
    IF KEYFUNCTION(LASTKEY) = "END-ERROR"   THEN     /*   F4 OU FIM   */
-      LEAVE.   /* Volta pedir a opcao para o operador */
+      RETURN.   /* Volta pedir a opcao para o operador */
 
    TRANS_1:
 
@@ -122,13 +120,11 @@ DO WHILE TRUE:
              RUN fontes/critic.p.
              BELL.
              CLEAR FRAME f_lanrqe.
-             ASSIGN glb_cddopcao = aux_cddopcao
-                    tel_nrdctabb = aux_nrdctabb
+             ASSIGN tel_nrdctabb = aux_nrdctabb
                     tel_tprequis = aux_tprequis.
 
              MESSAGE glb_dscritic.
-             DISPLAY glb_cddopcao 
-                     tel_nrdctabb 
+             DISPLAY tel_nrdctabb 
                      tel_tprequis
                      WITH FRAME f_lanrqe.
 
@@ -172,13 +168,11 @@ DO WHILE TRUE:
              RUN fontes/critic.p.
              BELL.
              CLEAR FRAME f_lanrqe.
-             ASSIGN glb_cddopcao = aux_cddopcao
-                    tel_nrdctabb = aux_nrdctabb
+             ASSIGN tel_nrdctabb = aux_nrdctabb
                     tel_tprequis = aux_tprequis.
 
              MESSAGE glb_dscritic.
-             DISPLAY glb_cddopcao 
-                     tel_nrdctabb 
+             DISPLAY tel_nrdctabb 
                      tel_tprequis
                      WITH FRAME f_lanrqe.
 
