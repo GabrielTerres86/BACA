@@ -909,7 +909,7 @@ PROCEDURE obtem-grupos-informativos:
 	/* busca grupos diferentes de extrato de conta corrente. SD 678836 */
     FOR EACH crapifc WHERE crapifc.cdcooper = par_cdcooper AND 
 						   crapifc.cdrelato <> 171 AND 
-						   crapifc.cdprogra <> 21 NO-LOCK
+						   crapifc.cdprogra <> 217 NO-LOCK
                            BREAK BY crapifc.cdprogra:
                                             
         IF  FIRST-OF(crapifc.cdprogra)  THEN
