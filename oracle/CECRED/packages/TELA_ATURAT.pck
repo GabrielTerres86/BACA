@@ -2613,14 +2613,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATURAT AS
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Andrei
-    Data    : Maio/2016                       Ultima atualizacao: 
+    Data    : Maio/2016                       Ultima atualizacao: 06/06/2017
 
     Dados referentes ao programa:
 
     Frequencia: Sempre que for chamado
     Objetivo  : Rotina para carregar o rating da singular
 
-    Alteracoes:   
+    Alteracoes:   06/06/2017 - Ordenação da tela ATURAT (Andrey Formigari - Mouts)
     ............................................................................. */
       
       -- Busca dos dados do associado
@@ -2650,7 +2650,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATURAT AS
            ,craprad.nrseqite           
            ,craprad.pesosequ    
            ,row_number() over (partition by craprat.nrtopico, craprai.nritetop
-                               order by craprat.nrtopico, craprai.nritetop ) nrreg 
+                               order by craprat.nrtopico, craprai.nritetop, craprad.nrseqite ) nrreg 
            ,(SELECT COUNT(*) 
                FROM craprad 
               WHERE craprad.cdcooper = craprai.cdcooper
