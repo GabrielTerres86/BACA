@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2016-12-12T15:07:53 -->
+<!-- 2017-06-02T15:07:16 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl519_bordero" language="groovy" pageWidth="595" pageHeight="672" whenNoDataType="AllSectionsNoDetail" columnWidth="440" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.0"/>
 	<property name="ireport.x" value="0"/>
@@ -93,6 +93,9 @@
 	</field>
 	<field name="idorigem" class="java.lang.String">
 		<fieldDescription><![CDATA[idorigem]]></fieldDescription>
+	</field>
+	<field name="nrdlotes" class="java.lang.String">
+		<fieldDescription><![CDATA[nrdlotes]]></fieldDescription>
 	</field>
 	<background>
 		<band splitType="Stretch"/>
@@ -319,7 +322,7 @@
 		</band>
 	</pageHeader>
 	<detail>
-		<band height="104">
+		<band height="124">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<subreport>
 				<reportElement x="40" y="0" width="544" height="8" isRemoveLineWhenBlank="true" uuid="a16713e5-049e-4b44-92c6-d10f75551bcf">
@@ -365,7 +368,7 @@
 				<subreportExpression><![CDATA["crrl519_bordero_restri_coordenador.jasper"]]></subreportExpression>
 			</subreport>
 			<textField isStretchWithOverflow="true">
-				<reportElement positionType="Float" x="40" y="95" width="354" height="8" uuid="8155010d-4a20-4df8-90e2-f2d6511dfe76">
+				<reportElement positionType="Float" x="40" y="115" width="354" height="8" uuid="8155010d-4a20-4df8-90e2-f2d6511dfe76">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
@@ -374,6 +377,18 @@
 					<font fontName="Courier New" size="7" pdfFontName="Courier"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{dsmvtolt}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" x="40" y="58" width="548" height="12" uuid="75e1c39f-9345-4ef3-891b-fc2d74439515">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Left" markup="html">
+					<font fontName="Courier New" size="7" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["LOTES CUSTODIA: " + $F{nrdlotes}]]></textFieldExpression>
 			</textField>
 		</band>
 		<band height="160">

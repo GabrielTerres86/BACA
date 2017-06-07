@@ -1333,7 +1333,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSTOD IS
                  AND ass.cdcooper = hcc.cdcooper
                  AND ass.nrdconta = hcc.nrdconta
                  AND (ass.cdagenci = pr_cdagenci OR nvl(pr_cdagenci, 0) = 0)
-           ORDER BY hcc.nrremret DESC)
+           ORDER BY HCC.DTMVTOLT DESC /*, HCC.NRREMRET */)
 					 WHERE rnum >= pr_nriniseq;
 
       -- Buscar quantidade total de registros					 
