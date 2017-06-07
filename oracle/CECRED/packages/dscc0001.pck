@@ -7138,6 +7138,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 					,bdc.cdopeasi
           ,bdc.cdagenci
           ,bdc.nrdolote          
+		  ,bdc.dtmvtolt        
 		  FROM crapbdc bdc
 		 WHERE bdc.cdcooper = pr_cdcooper
 		   AND bdc.nrdconta = pr_nrdconta
@@ -7540,7 +7541,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 								 ,nrseqlan
 								 ,cdcooper
 								 ,cdseqtel)
-					 VALUES(rw_crapdat.dtmvtolt
+					       VALUES(rw_crapbdc.dtmvtolt
 					       ,rw_crapbdc.cdagenci
 								 ,700 -- vr_tab_cheques(vr_idx_cheque).cdbccxlt
 								 ,rw_crapbdc.nrdolote -- vr_tab_cheques(vr_idx_cheque).nrdolote
@@ -8089,6 +8090,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 	vr_dtjurtab DATE;
 	vr_tab_resgate_erro cust0001.typ_erro_resgate;
 	
+    vr_nrdconta_ver_cheque crapass.nrdconta%TYPE;
+	vr_dsdaviso VARCHAR2(1000);
+	
 	rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 	
 	-- Buscar borderô
@@ -8097,6 +8101,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 									 ,pr_nrborder IN crapbdc.nrborder%TYPE) IS 
 	  SELECT bdc.insitbdc
 		      ,bdc.dtlibbdc
+            ,bdc.nrdolote
+            ,bdc.cdagenci
+            ,bdc.dtmvtolt
 		  FROM crapbdc bdc
 		 WHERE bdc.cdcooper = pr_cdcooper
 		   AND bdc.nrdconta = pr_nrdconta
@@ -8316,18 +8323,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 					END IF;
 					-- Se for cheque da cooperativa
 					IF pr_tab_cheques(vr_index).inchqcop = 1 THEN
+            
+            -- Verificar Cheque
+            CUST0001.pc_ver_cheque(pr_cdcooper => pr_cdcooper
+                                  ,pr_nrcustod => pr_nrdconta
+                                  ,pr_cdbanchq => pr_tab_cheques(vr_index).cdbanchq
+                                  ,pr_cdagechq => pr_tab_cheques(vr_index).cdagechq
+                                  ,pr_nrctachq => pr_tab_cheques(vr_index).nrctachq
+                                  ,pr_nrcheque => pr_tab_cheques(vr_index).nrcheque
+                                  ,pr_nrddigc3 => 1
+                                  ,pr_vlcheque => pr_tab_cheques(vr_index).vlcheque
+                                  ,pr_nrdconta => vr_nrdconta_ver_cheque
+                                  ,pr_dsdaviso => vr_dsdaviso
+                                  ,pr_cdcritic => vr_cdcritic
+                                  ,pr_dscritic => vr_dscritic);
+          
 						BEGIN
 							-- Atualiza lançamento automatico
 							UPDATE craplau lau
 								 SET lau.dtdebito = rw_crapdat.dtmvtolt
 										,lau.insitlau = 3
 							 WHERE lau.cdcooper = pr_cdcooper
-								 AND lau.dtmvtolt = pr_tab_cheques(vr_index).dtmvtolt
-								 AND lau.cdagenci = pr_tab_cheques(vr_index).cdagenci
-								 AND lau.cdbccxlt = pr_tab_cheques(vr_index).cdbccxlt 
-								 AND lau.nrdolote = pr_tab_cheques(vr_index).nrdolote
-								 AND lau.nrdctabb = pr_tab_cheques(vr_index).nrctachq
-								 AND lau.nrdocmto = vr_nrdocmto;
+								 AND lau.dtmvtolt = rw_crapbdc.dtmvtolt
+								 AND lau.cdagenci = rw_crapbdc.cdagenci
+								 AND lau.cdbccxlt = 700
+								 AND lau.nrdolote = rw_crapbdc.nrdolote
+								 AND lau.nrdconta = vr_nrdconta_ver_cheque
+								 AND lau.nrdocmto = vr_nrdocmto
+                                 AND lau.cdhistor = 521; -- Debito Desconto Cheque
             EXCEPTION
 							WHEN OTHERS THEN
 								-- Gerar crítica
