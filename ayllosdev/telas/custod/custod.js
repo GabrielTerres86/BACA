@@ -1,18 +1,18 @@
 /*!
  * FONTE        : custod.js
- * CRIAÃ‡ÃƒO      : Rogerius MilitÃ£o (DB1) 
- * DATA CRIAÃ‡ÃƒO : 18/01/2012
- * OBJETIVO     : Biblioteca de funÃ§Ãµes da tela custod
+ * CRIAÇÃO      : Rogerius Militão (DB1) 
+ * DATA CRIAÇÃO : 18/01/2012
+ * OBJETIVO     : Biblioteca de funções da tela custod
  * --------------
- * ALTERAÃ‡Ã•ES   :
+ * ALTERAÇÕES   :
  * --------------
- * [29/03/2012] RogÃ©rius MilitÃ£o   (DB1) : Ajuste no layout padrÃ£o
+ * [29/03/2012] Rogérius Militão   (DB1) : Ajuste no layout padrão
  * [29/06/2012] Jorge Hamaguchi (CEBRED) : Ajuste para novo esquema de impressao em  imprimeFichaCadastralCF(), e confirmacao para impressao na chamada da funcao Gera_Impressao() 
  * [30/09/2016] Odirlei Busana   (AMcom) : Inclusao relatorio de detalhamento de remessa custodia.
- * [16/12/2016] Lucas Reinert (CECRED)   : AlteraÃ§Ãµes referentes ao projeto 300.
+ * [16/12/2016] Lucas Reinert (CECRED)   : Alterações referentes ao projeto 300.
  */
 
-//FormulÃ¡rios e Tabela
+//Formulários e Tabela
 var frmCab = 'frmCab';
 var frmOpcao = 'frmOpcao';
 
@@ -72,7 +72,7 @@ function controlaOperacao(operacao, nriniseq, nrregist) {
     var dtcusfim = $('#dtcusfim', '#' + frmOpcao).val();
     var nrdolote = $('#nrdolote', '#' + frmOpcao).val();
     var dsdocmc7 = $('#dsdocmc7', '#' + frmOpcao).val();
-    var nmprimtl = $('#nmprimtl', '#' + frmOpcao).val();	
+    var nmprimtl = $('#nmprimtl', '#' + frmOpcao).val();
     var dtlibera = $('#dtlibera', '#' + frmOpcao).val();
     var nrborder = normalizaNumero($('#nrborder', '#' + frmOpcao).val());
     var cdcmpchq = normalizaNumero($('#cdcmpchq', '#' + frmOpcao).val());
@@ -86,13 +86,13 @@ function controlaOperacao(operacao, nriniseq, nrregist) {
 	
 	if (dsdocmc7 !== undefined)
 		dsdocmc7 = $('#dsdocmc7', '#' + frmOpcao).val().toString().replace(/[^0-9]/g, "").substr(0,30);
-	
-	var mensagem = 'Aguarde, buscando dados ...';
+
+    var mensagem = 'Aguarde, buscando dados ...';
     showMsgAguardo(mensagem);
 
     cTodosOpcao.removeClass('campoErro');
-	
-    // Carrega dados da conta atravÃ©s de ajax
+
+    // Carrega dados da conta através de ajax
     $.ajax({
         type: 'POST',
         dataType: 'html',
@@ -274,7 +274,7 @@ function buscaOpcao() {
 
     showMsgAguardo('Aguarde, buscando dados ...');
 
-    // Executa script de confirmaÃ§Ã£o atravÃ©s de ajax
+    // Executa script de confirmação através de ajax
     $.ajax({
         type: 'POST',
         dataType: 'html',
@@ -385,7 +385,7 @@ function formataOpcao() {
 		formataOpcaoI();
         $('#divCustch').css({'display': 'none'});        
 		cNrdconta.habilitaCampo().focus();
-	}
+    }
 
     controlaPesquisas();
     return false;
@@ -459,7 +459,7 @@ function formataAssociado() {
 
         var auxconta = normalizaNumero(cNrdconta.val());
 
-        // Se Ã© a tecla TAB ou ENTER, 
+        // Se é a tecla TAB ou ENTER, 
         if ((e.keyCode === 9 || e.keyCode === 13 || typeof e.keyCode == 'undefined') && (auxconta === 0 || validaCampo('nrdconta', auxconta))) {
             manterRotina('BIA');
             return false;
@@ -486,7 +486,7 @@ function controlaAssociado() {
         cDtlibini.habilitaCampo();
         cDtlibfim.habilitaCampo();
 		cDsdocmc7.habilitaCampo();
-		
+
     } else if (cddopcao == 'D') {
         manterRotina('VLD');
 
@@ -533,7 +533,7 @@ function controlaAssociado() {
 		cVlcheque.habilitaCampo();
 		cDsdocmc7.habilitaCampo();
 		trocaBotoesI();
-	} 
+    }
 
     controlaPesquisas();
     return false;
@@ -750,7 +750,7 @@ function formataOpcaoC() {
     cDtlibini.css({'width': '75px'}).addClass('data');
     cDtlibfim.css({'width': '75px'}).addClass('data');
 	cDsdocmc7.css({'width':'290px'}).attr('maxlength','34');
-	
+
     //
     if ($.browser.msie) {
         rTpcheque.css({'width': '42px'});
@@ -807,7 +807,7 @@ function formataOpcaoC() {
 
         var auxconta = normalizaNumero(cNrdconta.val());
 
-        // Se Ã© a tecla TAB ou ENTER, 
+        // Se é a tecla TAB ou ENTER, 
         if ((e.keyCode == 9 || e.keyCode == 13 || typeof e.keyCode == 'undefined') && (auxconta === 0 || validaCampo('nrdconta', auxconta))) {
             manterRotina('BIA');
             return false;
@@ -818,13 +818,13 @@ function formataOpcaoC() {
 
     });
 
-	// Data Inicio CustÃ³dia
+	// Data Inicio Custódia
     cDtcusini.unbind('keydown').bind('keydown', function(e) {
         if (divError.css('display') == 'block') {
             return false;
         }
 
-        // Se Ã© a tecla TAB ou ENTER, 
+        // Se é a tecla TAB ou ENTER, 
         if ((e.keyCode == 9 || e.keyCode == 13)) {
             cDtcusfim.focus();
             return false;
@@ -832,13 +832,13 @@ function formataOpcaoC() {
 
     });
 
-	// Data Fim CustÃ³dia
+	// Data Fim Custódia
     cDtcusfim.unbind('keydown').bind('keydown', function(e) {
         if (divError.css('display') == 'block') {
-            return false;
+    return false;
         }
 
-        // Se Ã© a tecla TAB ou ENTER, 
+        // Se é a tecla TAB ou ENTER, 
         if ((e.keyCode == 9 || e.keyCode == 13)) {
             cTpcheque.focus();
             return false;
@@ -846,41 +846,41 @@ function formataOpcaoC() {
 
     });
 	
-	// SituaÃ§Ã£o Cheque
+	// Situação Cheque
     cTpcheque.unbind('keydown').bind('keydown', function(e) {
         if (divError.css('display') == 'block') {
             return false;
         }
 
-        // Se Ã© a tecla TAB ou ENTER, 
+        // Se é a tecla TAB ou ENTER, 
         if ((e.keyCode == 9 || e.keyCode == 13)) {
             cCdagenci.focus();
             return false;
         }
 
     });
-	
+
 	// PA
     cCdagenci.unbind('keydown').bind('keydown', function(e) {
         if (divError.css('display') == 'block') {
             return false;
         }
 
-        // Se Ã© a tecla TAB ou ENTER, 
+        // Se é a tecla TAB ou ENTER, 
         if ((e.keyCode == 9 || e.keyCode == 13)) {
             cNrdolote.focus();
             return false;
         }
 
     });
-	
+
 	// Lote
     cNrdolote.unbind('keydown').bind('keydown', function(e) {
         if (divError.css('display') == 'block') {
             return false;
         }
 
-        // Se Ã© a tecla TAB ou ENTER, 
+        // Se é a tecla TAB ou ENTER, 
         if ((e.keyCode == 9 || e.keyCode == 13)) {
             cDtlibini.focus();
             return false;
@@ -888,13 +888,13 @@ function formataOpcaoC() {
 
     });
 	
-	// Data Inicio LiberaÃ§Ã£o
+	// Data Inicio Liberação
     cDtlibini.unbind('keydown').bind('keydown', function(e) {
         if (divError.css('display') == 'block') {
             return false;
         }
 
-        // Se Ã© a tecla TAB ou ENTER, 
+        // Se é a tecla TAB ou ENTER, 
         if ((e.keyCode == 9 || e.keyCode == 13)) {
             cDtlibfim.focus();
             return false;
@@ -902,13 +902,13 @@ function formataOpcaoC() {
 
     });
 	
-    // Data Fim LiberaÃ§Ã£o
+    // Data Fim Liberação
     cDtlibfim.unbind('keydown').bind('keydown', function(e) {
         if (divError.css('display') == 'block') {
             return false;
         }
 
-        // Se Ã© a tecla TAB ou ENTER, 
+        // Se é a tecla TAB ou ENTER, 
         if ((e.keyCode == 9 || e.keyCode == 13)) {
             cDsdocmc7.focus();
             return false;
@@ -927,13 +927,13 @@ function formataOpcaoC() {
 	cDsdocmc7.unbind('keypress').bind('keypress', function(e) {
 		if ( divError.css('display') == 'block' ) { return false; }		
 
-		// Se Ã© a tecla ENTER, 
+		// Se é a tecla ENTER, 
 		if ( e.keyCode == 13 ) {
-			btnContinuar();
-			return false;
+            btnContinuar();
+            return false;
 
-		}
-	});	
+        }
+    });
 	$('#divPesquisaRodape', '#divTela').formataRodapePesquisa();
     layoutPadrao();
     controlaPesquisas();
@@ -1121,7 +1121,7 @@ function formataOpcaoM() {
 
         var auxconta = normalizaNumero(cNrdconta.val());
 
-        // Se Ã© a tecla TAB, 
+        // Se é a tecla TAB, 
         if ((e.keyCode == 9 || e.keyCode == 13 || typeof e.keyCode == 'undefined') && (auxconta === 0 || validaCampo('nrdconta', auxconta))) {
             manterRotina('BIA');
             return false;
@@ -1136,7 +1136,7 @@ function formataOpcaoM() {
             return false;
         }
 
-        // Se Ã© a tecla TAB ou ENTER, 
+        // Se é a tecla TAB ou ENTER, 
         if (e.keyCode == 9 || e.keyCode == 13) {
             btnContinuar();
             return false;
@@ -1200,7 +1200,7 @@ function formataOpcaoO() {
             return false;
         }
 
-        // Se Ã© a tecla TAB ou ENTER, 
+        // Se é a tecla TAB ou ENTER, 
         if (e.keyCode == 9 || e.keyCode == 13) {
             if (!validaData($(this).val())) {
                 $(this).val('');
@@ -1217,7 +1217,7 @@ function formataOpcaoO() {
             return false;
         }
 
-        // Se Ã© a tecla TAB ou ENTER, 
+        // Se é a tecla TAB ou ENTER, 
         if (e.keyCode == 9 || e.keyCode == 13) {
             if (!validaData($(this).val())) {
                 $(this).val('');
@@ -1239,7 +1239,7 @@ function formataOpcaoO() {
         if (typeof e.keyCode == 'undefined' && (auxconta === 0 || validaCampo('nrdconta', auxconta))) {
             Gera_Impressao();
 
-            // Se Ã© a tecla TAB, 	
+            // Se é a tecla TAB, 	
         } else if ((e.keyCode == 9 || e.keyCode == 13) && (auxconta === 0 || validaCampo('nrdconta', auxconta))) {
             cCdagenci.focus();
             return false;
@@ -1421,12 +1421,12 @@ function formataOpcaoP() {
     /********************
      EVENTO COMPLEMENTO	
      *********************/
-    // seleciona o registro que Ã© clicado
+    // seleciona o registro que é clicado
     $('table > tbody > tr', divRegistro).click(function() {
         selecionaOpcaoP($(this));
     });
 
-    // seleciona o registro que Ã© focado
+    // seleciona o registro que é focado
     $('table > tbody > tr', divRegistro).focus(function() {
         selecionaOpcaoP($(this));
     });
@@ -1727,7 +1727,7 @@ function formataOpcaoS() {
 
         var auxconta = normalizaNumero(cNrdconta.val());
 
-        // Clica no botao prosseguir e Se Ã© a tecla TAB, 	
+        // Clica no botao prosseguir e Se é a tecla TAB, 	
         if ((e.keyCode === 9 || e.keyCode === 13 || typeof e.keyCode == 'undefined') && validaCampo('nrdconta', auxconta)) {
             $(this).desabilitaCampo();
             manterRotina('BIA');
@@ -2021,7 +2021,7 @@ function mostraSenha() {
 
     showMsgAguardo('Aguarde, abrindo ...');
 
-    // Executa script de confirmaÃ§Ã£o atravÃ©s de ajax
+    // Executa script de confirmação através de ajax
     $.ajax({
         type: 'POST',
         dataType: 'html',
@@ -2306,7 +2306,7 @@ function btnVoltar() {
 		limpaTabCustch();
 		atualizaMensagemQtdRegistros();
 		trocaBotoesI();
-	}else {
+    } else {
         estadoInicial();
     }
 
@@ -2330,7 +2330,7 @@ function btnContinuar() {
     if (divError.css('display') == 'block') {
         return false;
     }
-	
+
     if (cddopcao == 'C' && !cNrdconta.hasClass('campoTelaSemBorda')) {
         cNrdconta.keydown();
 
@@ -2403,7 +2403,7 @@ function btnContinuar() {
 		
 	} else if (cddopcao == 'I' && !cDtchqbom.hasClass('campoTelaSemBorda')) {
 		finalizarCustodia();
-	}
+    }
 	
 
     controlaPesquisas();
@@ -2438,12 +2438,12 @@ function formataCampoCmc7(exitCampo){
 		showError('error','Valor do CMC-7 inv&aacute;lido.','Alerta - Ayllos','cDsdocmc7.focus();');
 	}
 	
-	//remover os caracteres de formataÃ§Ã£o
+	//remover os caracteres de formatação
 	valorAtual = valorAtual.replace(/[^0-9]/g, "").substr(0,30);
 	
 	for ( var x = 0;  x < valorAtual.length; x++ ) {
 				
-		//verifica se Ã© um separador da mÃ¡scara
+		//verifica se é um separador da máscara
 		if (mask.charAt(indice) != 'z'){
 			valorNovo = valorNovo.concat(mask.charAt(indice));
 			indice++;
@@ -2452,9 +2452,9 @@ function formataCampoCmc7(exitCampo){
 		indice++;
 	}
 	
-	// verifica se o valor digitado possui 30 caracteres sem formataÃ§Ã£o
+	// verifica se o valor digitado possui 30 caracteres sem formatação
 	if ( valorAtual.length == 30 ){
-		// Adiciona o ultimo caracter da mÃ¡scara
+		// Adiciona o ultimo caracter da máscara
 		valorNovo = valorNovo.concat(':');
 	}
 	
@@ -2526,7 +2526,7 @@ function formataOpcaoH() {
 
         var auxconta = normalizaNumero(cNrdconta.val());
 
-        // Se Ã© a tecla TAB ou ENTER, 
+        // Se é a tecla TAB ou ENTER, 
         if ((e.keyCode == 9 || e.keyCode == 13 || typeof e.keyCode == 'undefined') && (auxconta === 0 || validaCampo('nrdconta', auxconta))) {
             manterRotina('BIA');
             return false;
@@ -2548,7 +2548,7 @@ function formataOpcaoH() {
 	cDsdocmc7.unbind('keypress').bind('keypress', function(e) {
 		if ( divError.css('display') == 'block' ) { return false; }		
 	
-		// Se Ã© a tecla ENTER, 
+		// Se é a tecla ENTER, 
 		if ( e.keyCode == 13 ) {
 			btnAdd.click();
 			return false;
@@ -2628,7 +2628,7 @@ function formataOpcaoX() {
 
         var auxconta = normalizaNumero(cNrdconta.val());
 
-        // Se Ã© a tecla TAB ou ENTER, 
+        // Se é a tecla TAB ou ENTER, 
         if ((e.keyCode == 9 || e.keyCode == 13 || typeof e.keyCode == 'undefined') && (auxconta === 0 || validaCampo('nrdconta', auxconta))) {
             manterRotina('BIA');
             return false;
@@ -2650,7 +2650,7 @@ function formataOpcaoX() {
 	cDsdocmc7.unbind('keypress').bind('keypress', function(e) {
 		if ( divError.css('display') == 'block' ) { return false; }		
 	
-		// Se Ã© a tecla ENTER, 
+		// Se é a tecla ENTER, 
 		if ( e.keyCode == 13 ) {
 			btnAdd.click();
 			return false;
@@ -2736,7 +2736,7 @@ function formataOpcaoL() {
 
         var auxconta = normalizaNumero(cNrdconta.val());
 
-        // Se Ã© a tecla TAB ou ENTER, 
+        // Se é a tecla TAB ou ENTER, 
         if ((e.keyCode == 9 || e.keyCode == 13 || typeof e.keyCode == 'undefined') && (auxconta === 0 || validaCampo('nrdconta', auxconta))) {
             manterRotina('BIA');
             return false;
@@ -2747,13 +2747,13 @@ function formataOpcaoL() {
 
     });
 
-	// Data Inicio Remessa de CustÃ³dia
+	// Data Inicio Remessa de Custódia
     cDtinicst.unbind('keydown').bind('keydown', function(e) {
         if (divError.css('display') == 'block') {
             return false;
         }
 
-        // Se Ã© a tecla TAB ou ENTER, 
+        // Se é a tecla TAB ou ENTER, 
         if (e.keyCode == 13) {
             cDtfimcst.focus();
             return false;
@@ -2761,13 +2761,13 @@ function formataOpcaoL() {
 
     });
 
-	// Data Fim Remessa de CustÃ³dia
+	// Data Fim Remessa de Custódia
     cDtfimcst.unbind('keydown').bind('keydown', function(e) {
         if (divError.css('display') == 'block') {
             return false;
         }
 
-        // Se Ã© a tecla TAB ou ENTER, 
+        // Se é a tecla TAB ou ENTER, 
         if (e.keyCode == 13) {
             cCdagenci.focus();
             return false;
@@ -2775,13 +2775,13 @@ function formataOpcaoL() {
 
     });
 
-	// Data Fim Remessa de CustÃ³dia
+	// Data Fim Remessa de Custódia
     cCdagenci.unbind('keydown').bind('keydown', function(e) {
         if (divError.css('display') == 'block') {
             return false;
         }
 
-        // Se Ã© a tecla TAB ou ENTER,
+        // Se é a tecla TAB ou ENTER,
         if (e.keyCode == 13) {
             cInsithcc.focus();
             return false;
@@ -2795,7 +2795,7 @@ function formataOpcaoL() {
             return false;
         }
 
-        // Se Ã© a tecla TAB ou ENTER, 
+        // Se é a tecla TAB ou ENTER, 
         if ( e.keyCode == 13) {
             btnContinuar();
             return false;
@@ -2814,7 +2814,7 @@ function formataOpcaoL() {
 	cDsdocmc7.unbind('keypress').bind('keypress', function(e) {
 		if ( divError.css('display') == 'block' ) { return false; }		
 	
-		// Se Ã© a tecla ENTER, 
+		// Se é a tecla ENTER, 
 		if ( e.keyCode == 13 ) {
 			conciliaChequeGrid();
 			return false;
@@ -2886,7 +2886,42 @@ function formataTabelaL(){
 	glbTabNriniseq = $('table > tbody', divRegistro).find('#nriniseq').val();
 	glbTabNrregist = $('table > tbody', divRegistro).find('#nrregist').val();
 	
-	// seleciona o registro que Ã© clicado
+	$('table.tituloRegistros > thead > tr', '#divRemessa').click( function() {
+		glbTabNrdconta = undefined;
+		glbTabNrctarem = undefined;
+		glbTabDtmvtolt = undefined;
+		glbTabNrremret = undefined;
+		glbTabVltotchq = undefined;
+		glbTabQtcheque = undefined;
+		glbTabQtconcil = undefined;
+		glbTabInsithcc = undefined;
+		glbTabDtcustod = undefined;
+		glbTabNmarquiv = undefined;
+		glbTabNrconven = undefined;
+		glbTabIntipmvt = undefined;
+		glbTabNmprimtl = undefined;
+		glbTabDsorigem = undefined;
+
+	// seleciona o registro que é clicado
+		$('table > tbody > tr', divRegistro).click( function() {
+			glbTabNrdconta = normalizaNumero($(this).find('#nrdconta > span').text());
+			glbTabNrctarem = $(this).find('#nrdconta > span').text() ;
+			glbTabDtmvtolt = $(this).find('#dtmvtolt > span').text() ;
+			glbTabNrremret = $(this).find('#nrremret > span').text() ;
+			glbTabVltotchq = $(this).find('#vltotchq > span').text() ;
+			glbTabQtcheque = $(this).find('#qtcheque > span').text() ;
+			glbTabQtconcil = $(this).find('#qtconcil > span').text() ;
+			glbTabInsithcc = $(this).find('#insithcc > span').text() ;
+			glbTabDtcustod = $(this).find('#dtcustod > span').text() ;
+			glbTabNmarquiv = $(this).find('#nmarquiv > span').text() ;
+			glbTabNrconven = $(this).find('#nrconven').val();
+			glbTabIntipmvt = $(this).find('#intipmvt').val();
+			glbTabNmprimtl = $(this).find('#nmprimtl').val();
+			glbTabDsorigem = $(this).find('#dsorigem').val();
+		});
+	});
+	
+	// seleciona o registro que é clicado
 	$('table > tbody > tr', divRegistro).click( function() {
 		glbTabNrdconta = normalizaNumero($(this).find('#nrdconta > span').text());
 		glbTabNrctarem = $(this).find('#nrdconta > span').text() ;
@@ -2968,7 +3003,7 @@ function adicionaChequeGrid(){
 						.attr('value',banco)
 					)
 				)
-				.append($('<td>')  // Coluna: AgÃªncia
+				.append($('<td>')  // Coluna: Agência
 					.attr('style','width: 50px; text-align:right')
 					.text(agencia)
 					.append($('<input>')
@@ -2978,7 +3013,7 @@ function adicionaChequeGrid(){
 						.attr('value',agencia)
 					)
 				)
-				.append($('<td>') // Coluna: NÃºmero da Conta
+				.append($('<td>') // Coluna: Número da Conta
 					.attr('style','width: 79px; text-align:right')
 					.text(conta)
 					.append($('<input>')
@@ -2988,7 +3023,7 @@ function adicionaChequeGrid(){
 						.attr('value',conta)
 					)
 				)
-				.append($('<td>') // Coluna: NÃºmero do Cheque
+				.append($('<td>') // Coluna: Número do Cheque
 					.attr('style','width: 59px; text-align:right')
 					.text(cheque)
 					.append($('<input>')
@@ -3026,7 +3061,7 @@ function adicionaChequeGrid(){
 						.attr('value',cmc7)
 					)
 				)
-				.append($('<td>') // Coluna: BotÃ£o para REMOVER
+				.append($('<td>') // Coluna: Botão para REMOVER
 					.attr('style','width: 15px; text-align:center')
 					.append($('<img>')
 						.attr('src', UrlImagens + 'geral/panel-delete_16x16.gif')
@@ -3039,7 +3074,7 @@ function adicionaChequeGrid(){
 						})
 					)
 				)
-				.append($('<td>') // Coluna: CrÃ­tica
+				.append($('<td>') // Coluna: Crítica
 				    .attr('style','text-align:left')
 					.attr('name','aux_dscritic')
 					.attr('id','aux_dscritic')
@@ -3076,7 +3111,7 @@ function validarResgate(){
 			
 			dscheque += $("#aux_dsdocmc7",this).val(); // CMC-7
 			
-			// Limpar a crÃ­tica
+			// Limpar a crítica
 			$("#aux_dscritic",this).text('');
 			$(this).css('background', '');
 			// Adiciona a cor Zebrado na Tabela de Cheques
@@ -3106,7 +3141,7 @@ function validarResgate(){
 				data: {
 					nrdconta: nrdconta,
 					dscheque: dscheque,
-					inresgte: 2, // ValidaÃ§Ã£o
+					inresgte: 2, // Validação
 					redirect: 'html_ajax'           
 					}, 
 				error: function(objAjax,responseError,objExcept) {
@@ -3184,7 +3219,7 @@ function validarCancelarResgate(){
 			
 			dscheque += $("#aux_dsdocmc7",this).val(); // CMC-7
 			
-			// Limpar a crÃ­tica
+			// Limpar a crítica
 			$("#aux_dscritic",this).text('');
 			$(this).css('background', '');
 			// Adiciona a cor Zebrado na Tabela de Cheques
@@ -3214,7 +3249,7 @@ function validarCancelarResgate(){
 				data: {
 					nrdconta: nrdconta,
 					dscheque: dscheque,
-					inresgte: 2, // ValidaÃ§Ã£o
+					inresgte: 2, // Validação
 					redirect: 'html_ajax'           
 					}, 
 				error: function(objAjax,responseError,objExcept) {
@@ -3444,7 +3479,7 @@ function formataTabelaChequesL(){
 
     tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, 'mostraDetalhamentoCheque()');
 	
-	// seleciona o registro que Ã© clicado
+	// seleciona o registro que é clicado
 	$('table > tbody > tr', divRegistro).click( function() {
 		glbTabCompcheq = $(this).find('#compcheq > span').text() ;
 		glbTabCddbanco = $(this).find('#cddbanco > span').text() ;
@@ -3480,7 +3515,7 @@ function mostraChequesRemessa(){
 	// Formata tabela de cheques da remessa
 	formataTabelaChequesL();
 	
-	// Mostra/esconde botÃµes
+	// Mostra/esconde botões
 	btnConciliar.css({'display': 'none'});
 	btnConciliarT.css({'display': 'none'});
 	btnCustodiar.css({'display': 'none'});
@@ -3543,7 +3578,7 @@ function mostraDetalhamentoCheque() {
 	
 	showMsgAguardo('Aguarde, buscando detalhamento do cheque...');
 
-	// Executa script atravÃ©s de ajax
+	// Executa script através de ajax
 	$.ajax({		
 		type: 'POST',
 		dataType: 'html',
@@ -3569,7 +3604,7 @@ function mostraDetalhamentoCheque() {
 
 function buscaDetalheCheque(){
 	
-	// Executa script atravÃ©s de ajax
+	// Executa script através de ajax
 	$.ajax({		
 		type: 'POST',
 		dataType: 'html',
@@ -3703,13 +3738,13 @@ function formataDetalheCheque(){
 		cVlcheque_det.habilitaCampo();
 	}
 
-	// Data EmissÃ£o
+	// Data Emissão
     cDtemissa_det.unbind('keydown').bind('keydown', function(e) {
         if (divError.css('display') == 'block') {
             return false;
         }
 
-        // Se Ã© a tecla TAB ou ENTER, 
+        // Se é a tecla TAB ou ENTER, 
         if (e.keyCode == 13) {
             cDtlibera_det.focus();
             return false;
@@ -3723,7 +3758,7 @@ function formataDetalheCheque(){
             return false;
         }
 
-        // Se Ã© a tecla TAB ou ENTER, 
+        // Se é a tecla TAB ou ENTER, 
         if (e.keyCode == 13) {
             cVlcheque_det.focus();
             return false;
@@ -3760,7 +3795,7 @@ function alteraDetalheCheque(){
 	vlcheque = normalizaNumero($('#vlcheque', '#frmDetalheCheque').val());
 	vlcheque = vlcheque.replace(',', '.');
 	
-	// Executa script atravÃ©s de ajax
+	// Executa script através de ajax
 	$.ajax({		
 		type: 'POST',
 		dataType: 'html',
@@ -3801,7 +3836,7 @@ function excluiChequeRemessa(){
 	
 	showMsgAguardo('Aguarde, excluindo cheque da remessa...');
 	
-	// Executa script atravÃ©s de ajax
+	// Executa script através de ajax
 	$.ajax({		
 		type: 'POST',
 		dataType: 'html',
@@ -3852,7 +3887,7 @@ function conciliarCheques(){
 		}
 	});
 	
-	// Executa script atravÃ©s de ajax
+	// Executa script através de ajax
 	$.ajax({		
 		type: 'POST',
 		dataType: 'html',
@@ -3890,7 +3925,7 @@ function conciliarTodosCheques(){
 			
 	showMsgAguardo('Aguarde, conciliando cheque(s) da remessa...');
 		
-	// Executa script atravÃ©s de ajax
+	// Executa script através de ajax
 	$.ajax({		
 		type: 'POST',
 		dataType: 'html',
@@ -3932,7 +3967,7 @@ function ImprimirCustodL(){
 
 	$('#formImpres').html('');
 
-	// Insiro input do tipo hidden do formulÃ¡rio para enviÃ¡-los posteriormente
+	// Insiro input do tipo hidden do formulário para enviá-los posteriormente
 	$('#formImpres').append('<input type="hidden" id="cddopcao" name="cddopcao" />');
 	$('#formImpres').append('<input type="hidden" id="nrdconta" name="nrdconta" />');
 	$('#formImpres').append('<input type="hidden" id="nrremret" name="nrremret" />');
@@ -3959,7 +3994,7 @@ function verificaChqConc(){
 	
 	showMsgAguardo('Aguarde, verificando cheque(s) conciliado(s) da remessa...');
 		
-	// Executa script atravÃ©s de ajax
+	// Executa script através de ajax
 	$.ajax({		
 		type: 'POST',
 		dataType: 'html',
@@ -4016,7 +4051,7 @@ function custodiarRemessa(){
 	
 	showMsgAguardo('Aguarde, efetuando cust&oacute;dia da remessa...');
 		
-	// Executa script atravÃ©s de ajax
+	// Executa script através de ajax
 	$.ajax({		
 		type: 'POST',
 		dataType: 'html',
@@ -4058,7 +4093,7 @@ function excluirRemessa(){
 	
 	showMsgAguardo('Aguarde, excluindo remessa...');
 		
-	// Executa script atravÃ©s de ajax
+	// Executa script através de ajax
 	$.ajax({		
 		type: 'POST',
 		dataType: 'html',
@@ -4127,7 +4162,7 @@ function formataOpcaoI() {
 
         var auxconta = normalizaNumero(cNrdconta.val());
 
-        // Se Ã© a tecla TAB ou ENTER, 
+        // Se é a tecla TAB ou ENTER, 
         if ((e.keyCode == 9 || e.keyCode == 13 || typeof e.keyCode == 'undefined') && (auxconta === 0 || validaCampo('nrdconta', auxconta))) {
             manterRotina('BIA');
             return false;
@@ -4139,14 +4174,14 @@ function formataOpcaoI() {
     });
 	// Data boa
 	cDtchqbom.unbind('keydown').bind('keydown', function(e) {
-		// Se Ã© a tecla TAB ou ENTER, 
+		// Se é a tecla TAB ou ENTER, 
         if (e.keyCode == 9 || e.keyCode == 13 ) {
             cDtemissa.focus();
             return false;
         }
 	});
 	cDtemissa.unbind('keydown').bind('keydown', function(e) {
-		// Se Ã© a tecla TAB ou ENTER, 
+		// Se é a tecla TAB ou ENTER, 
         if (e.keyCode == 9 || e.keyCode == 13 ) {
             cVlcheque.focus();
             return false;
@@ -4154,7 +4189,7 @@ function formataOpcaoI() {
 	});
 	// Valor do cheque
 	cVlcheque.unbind('keydown').bind('keydown', function(e) {
-		// Se Ã© a tecla TAB ou ENTER, 
+		// Se é a tecla TAB ou ENTER, 
         if (e.keyCode == 9 || e.keyCode == 13 ) {
             cDsdocmc7.focus();
             return false;
@@ -4172,7 +4207,7 @@ function formataOpcaoI() {
 	cDsdocmc7.unbind('keypress').bind('keypress', function(e) {
 		if ( divError.css('display') == 'block' ) { return false; }		
 
-		// Se Ã© a tecla ENTER, 
+		// Se é a tecla ENTER, 
 		if ( e.keyCode == 13 ) {
 			btnAdd.click();
 			return false;
@@ -4345,7 +4380,7 @@ function adicionaChequeI(){
 						.attr('value',data)
 					)
 				)
-				.append($('<td>') // Coluna: Data de EmissÃ£o
+				.append($('<td>') // Coluna: Data de Emissão
 				    .attr('style','width: 67px; text-align:left')
 					.text(dataEmi)
 					.append($('<input>')
@@ -4375,7 +4410,7 @@ function adicionaChequeI(){
 						.attr('value',banco)
 					)
 				)
-				.append($('<td>')  // Coluna: AgÃªncia
+				.append($('<td>')  // Coluna: Agência
 					.attr('style','width: 50px; text-align:right')
 					.text(agencia)
 					.append($('<input>')
@@ -4385,7 +4420,7 @@ function adicionaChequeI(){
 						.attr('value',agencia)
 					)
 				)
-				.append($('<td>') // Coluna: NÃºmero do Cheque
+				.append($('<td>') // Coluna: Número do Cheque
 					.attr('style','width: 90px; text-align:right')
 					.text(cheque)
 					.append($('<input>')
@@ -4395,7 +4430,7 @@ function adicionaChequeI(){
 						.attr('value',cheque)
 					)
 				)
-				.append($('<td>') // Coluna: NÃºmero da Conta
+				.append($('<td>') // Coluna: Número da Conta
 					.attr('style','width: 90px; text-align:right')
 					.text(conta)
 					.append($('<input>')
@@ -4421,7 +4456,7 @@ function adicionaChequeI(){
 						.attr('value',cmc7)
 					)
 				)
-				.append($('<td>') // Coluna: BotÃ£o para REMOVER
+				.append($('<td>') // Coluna: Botão para REMOVER
 					.attr('style','width: 15px; text-align:center')
 					.append($('<img>')
 						.attr('src', UrlImagens + 'geral/panel-delete_16x16.gif')
@@ -4435,7 +4470,7 @@ function adicionaChequeI(){
 						})
 					)
 				)
-				.append($('<td>') // Coluna: CrÃ­tica
+				.append($('<td>') // Coluna: Crítica
 				    .attr('style','text-align:left')
 					.attr('name','aux_dscritic')
 					.attr('id','aux_dscritic')
@@ -4444,7 +4479,7 @@ function adicionaChequeI(){
 			);
 
 		atualizaMensagemQtdRegistros();
-		//Utiliza o BotÃ£o Novo apÃ³s incluir um cheque na custÃ³dia
+		//Utiliza o Botão Novo após incluir um cheque na custódia
 		novoCheque();
 	}
 }
@@ -4495,12 +4530,12 @@ function finalizaCustodiaCheque(){
 		}
 		
 		dscheque += $("#aux_dtchqbom",this).val() + ";" ; // Data Boa
-		dscheque += $("#aux_dtemissa",this).val() + ";" ; // Data EmissÃ£o
+		dscheque += $("#aux_dtemissa",this).val() + ";" ; // Data Emissão
 		dscheque += $("#aux_vlcheque",this).val().replace(/\./g,'').replace(',','.') + ";" ; // Valor
 		dscheque += $("#aux_dsdocmc7",this).val() + ";"; // CMC-7
 		
 		
-		// Limpar a crÃ­tica
+		// Limpar a crítica
 		$("#aux_dscritic",this).text('');
 		$(this).css('background', '');
 		// Adiciona a cor Zebrado na Tabela de Cheques
@@ -4556,11 +4591,11 @@ function validaCustodiaCheque(){
 		}
 		
 		dscheque += $("#aux_dtchqbom",this).val() + ";" ; // Data Boa
-		dscheque += $("#aux_dtemissa",this).val() + ";" ; // Data EmissÃ£o
+		dscheque += $("#aux_dtemissa",this).val() + ";" ; // Data Emissão
 		dscheque += $("#aux_vlcheque",this).val().replace(/\./g,'').replace(',','.') + ";" ; // Valor
 		dscheque += $("#aux_dsdocmc7",this).val(); // CMC-7
 		
-		// Limpar a crÃ­tica
+		// Limpar a crítica
 		$("#aux_dscritic",this).text('');
 		$(this).css('background', '');
 		// Adiciona a cor Zebrado na Tabela de Cheques
@@ -4620,9 +4655,9 @@ function geraImpressaoCustodia(){
 		dscheque += $("#aux_dtchqbom",this).val() + ";" ; // Data Boa
 		dscheque += $("#aux_vlcheque",this).val().replace(/\./g,'').replace(',','.') + ";" ; // Valor Cheque
 		dscheque += $("#aux_banco",   this).val() + ";" ; // Banco
-		dscheque += $("#aux_agencia", this).val() + ";" ; // AgÃªncia
-		dscheque += $("#aux_cheque",  this).val() + ";" ; // NÃºmero Cheque
-		dscheque += $("#aux_conta",   this).val() + ";" ; // NÃºmero Conta
+		dscheque += $("#aux_agencia", this).val() + ";" ; // Agência
+		dscheque += $("#aux_cheque",  this).val() + ";" ; // Número Cheque
+		dscheque += $("#aux_conta",   this).val() + ";" ; // Número Conta
 		dscheque += $("#aux_cmc7",    this).val();        // CMC-7
 	});
 
@@ -4673,7 +4708,7 @@ function criaEmitente(cdcmpchq, cdbanchq, cdagechq, nrctachq, nrsequen){
 						.attr('value',cdcmpchq)						
 					)
 				)
-				.append($('<td>')  // Coluna: AgÃªncia
+				.append($('<td>')  // Coluna: Agência
 					.attr('style','width: 50px; text-align:right')
 					.text(cdagechq)
 					.append($('<input>')
@@ -4683,7 +4718,7 @@ function criaEmitente(cdcmpchq, cdbanchq, cdagechq, nrctachq, nrsequen){
 						.attr('value',cdagechq)
 					)
 				)
-				.append($('<td>') // Coluna: NÃºmero da Conta
+				.append($('<td>') // Coluna: Número da Conta
 					.attr('style','width: 90px; text-align:right')
 					.text(nrctachq)
 					.append($('<input>')
@@ -4715,7 +4750,7 @@ function criaEmitente(cdcmpchq, cdbanchq, cdagechq, nrctachq, nrsequen){
 						.attr('class', 'campo alphanum')
 					)
 				)
-				.append($('<td>') // Coluna: CrÃ­tica
+				.append($('<td>') // Coluna: Crítica
 				    .attr('style','text-align:left')
 					.attr('name','dscritic')
 					.attr('id','dscritic')
@@ -4735,7 +4770,7 @@ function criaEmitente(cdcmpchq, cdbanchq, cdagechq, nrctachq, nrsequen){
             return false;
         }
 		
-		// Se Ã© a tecla TAB ou ENTER, 
+		// Se é a tecla TAB ou ENTER, 
         if (e.keyCode == 9 || e.keyCode == 13) {
             cDsemiten[nrsequen].focus();
             return false;
@@ -4750,7 +4785,7 @@ function criaEmitente(cdcmpchq, cdbanchq, cdagechq, nrctachq, nrsequen){
             return false;
         }
 		
-		// Se Ã© a tecla TAB ou ENTER, 
+		// Se é a tecla TAB ou ENTER, 
         if (e.keyCode == 9 || e.keyCode == 13) {
 			if (cNrcpfcnpj[nrsequen + 1] !== undefined){
 				cNrcpfcnpj[nrsequen + 1].focus();			
@@ -4827,7 +4862,7 @@ function cadastrarEmitentes(){
 		dscheque += $("input[name='nrcpfcnpj']",this).val().replace(/[^0-9]/g, '') + ";" ; // Nrcpfcnpj
 		dscheque += $("input[name='dsemiten']",this).val().toUpperCase(); // Emitente
 		
-		// Limpar a crÃ­tica
+		// Limpar a crítica
 		$("#dscritic",this).text('');
 		$(this).css('background', '');
 		// Adiciona a cor Zebrado na Tabela de Cheques
@@ -4992,7 +5027,7 @@ function validaChequeI(){
 	var cmc7    = cDsdocmc7.val();
 	var cmc7_sem_format  = cmc7.replace(/[^0-9]/g, "").substr(0,30);
 	
-	// Validar se os campos estÃ£o preenchidos
+	// Validar se os campos estão preenchidos
 	if ( data == '' ) {
 		showError('error','Data boa inv&aacute;lida.','Alerta - Ayllos','hideMsgAguardo();cDtchqbom.focus();');
 		return false;
@@ -5036,7 +5071,7 @@ function validaChequeI(){
 	}	
 	
 	dscheque += data + ";" ; // Data Boa
-	dscheque += dataEmi + ";" ; // Data EmissÃ£o
+	dscheque += dataEmi + ";" ; // Data Emissão
 	dscheque += valor.replace(/\./g,'').replace(',','.') + ";" ; // Valor
 	dscheque += cmc7_sem_format; // CMC-7
 	
@@ -5069,7 +5104,7 @@ function mostraFormEmitente(cdcmpchq, cdbanchq, cdagechq, nrctachq) {
 	
 	showMsgAguardo('Aguarde, carregando cadastro de emitente...');
 
-	// Executa script atravÃ©s de ajax
+	// Executa script através de ajax
 	$.ajax({		
 		type: 'POST',
 		dataType: 'html',
@@ -5101,7 +5136,7 @@ function buscaFormEmitente(cdcmpchq, cdbanchq, cdagechq, nrctachq){
 		nrctachq = mascara(normalizaNumero(nrctachq.toString()),'######.###-#');
 	}
 	
-	// Executa script atravÃ©s de ajax
+	// Executa script através de ajax
 	$.ajax({		
 		type: 'POST',
 		dataType: 'html',
@@ -5174,13 +5209,13 @@ function formataCadastroEmitente(){
 	
 	cNrcpfcgc_emi.focus();
 	
-	// Data EmissÃ£o
+	// Data Emissão
     cNrcpfcgc_emi.unbind('keydown').bind('keydown', function(e) {
         if (divError.css('display') == 'block') {
             return false;
         }
 
-        // Se Ã© a tecla TAB ou ENTER, 
+        // Se é a tecla TAB ou ENTER, 
         if (e.keyCode == 13) {
             cDsemiten_emi.focus();
             return false;
@@ -5196,7 +5231,7 @@ function formataCadastroEmitente(){
             return false;
         }
 
-        // Se Ã© a tecla TAB ou ENTER, 
+        // Se é a tecla TAB ou ENTER, 
         if (e.keyCode == 13) {
             confirmaIncluiEmitente();
             return false;

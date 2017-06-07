@@ -1254,6 +1254,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
          AND jur.nrdconta = pr_nrdconta;
     rw_crapjur  cr_crapjur%ROWTYPE;
     
+    CURSOR cr_crapcst(pr_cdcooper IN crapcst.cdcooper%TYPE
+                     ,pr_cdcmpchq IN crapcst.cdcmpchq%TYPE
+                     ,pr_cdbanchq IN crapcst.cdbanchq%TYPE
+                     ,pr_cdagechq IN crapcst.cdagechq%TYPE
+                     ,pr_nrctachq IN crapcst.nrctachq%TYPE
+                     ,pr_nrcheque IN crapcst.nrcheque%TYPE
+                     ,pr_nrborder IN crapcst.nrborder%TYPE) IS
+      SELECT NVL(cst.nrdolote,0) nrdolote
+            ,NVL(cst.insitprv,0) insitprv
+        FROM crapcst cst
+       WHERE cst.cdcooper = pr_cdcooper
+         AND cst.cdcmpchq = pr_cdcmpchq
+         AND cst.cdbanchq = pr_cdbanchq
+         AND cst.cdagechq = pr_cdagechq
+         AND cst.nrctachq = pr_nrctachq
+         AND cst.nrcheque = pr_nrcheque
+         AND cst.nrborder = pr_nrborder;
+    rw_crapcst cr_crapcst%ROWTYPE;
+    
     ----------->>> VARIAVEIS <<<--------   
     -- Variável de críticas
     vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
@@ -1366,6 +1385,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
         END IF;
       END IF;
       
+      -- Busca dados do lote e situacao da previa
+      OPEN cr_crapcst (pr_cdcooper => pr_cdcooper
+                      ,pr_cdcmpchq => rw_crapcdb.cdcmpchq
+                      ,pr_cdbanchq => rw_crapcdb.cdbanchq
+                      ,pr_cdagechq => rw_crapcdb.cdagechq
+                      ,pr_nrctachq => rw_crapcdb.nrctachq
+                      ,pr_nrcheque => rw_crapcdb.nrcheque
+                      ,pr_nrborder => pr_nrborder);
+      FETCH cr_crapcst INTO rw_crapcst;
+      CLOSE cr_crapcst;
+      
       vr_idxchequ := pr_tab_chq_bordero.COUNT + 1;
       pr_tab_chq_bordero(vr_idxchequ).cdcmpchq := rw_crapcdb.cdcmpchq;
       pr_tab_chq_bordero(vr_idxchequ).cdbanchq := rw_crapcdb.cdbanchq;
@@ -1382,6 +1412,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
       pr_tab_chq_bordero(vr_idxchequ).dtlibbdc := rw_crapcdb.dtlibbdc;
       pr_tab_chq_bordero(vr_idxchequ).dtmvtolt := pr_dtmvtolt;
 			pr_tab_chq_bordero(vr_idxchequ).insitana := rw_crapcdb.insitana;
+      pr_tab_chq_bordero(vr_idxchequ).nrdolote := nvl(rw_crapcst.nrdolote,0);
+			pr_tab_chq_bordero(vr_idxchequ).insitprv := nvl(rw_crapcst.insitprv,0);
 
       --> Para impressoes do tipo 10 - impressao para analise
       --> caso bordero da data maior que a data de corte
@@ -1913,6 +1945,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     vr_txcetano NUMBER;
     vr_txcetmes NUMBER;
     
+    vr_nrdlotes VARCHAR2(10000) := '';
+    
     -- Variáveis para armazenar as informações em XML
     vr_des_xml   CLOB;
     vr_txtcompl  VARCHAR2(32600);
@@ -2211,6 +2245,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
         IF rw_crapbdc.insitbdc >= 3 AND vr_tab_chq_bordero(idx).insitana = 1 OR
            rw_crapbdc.insitbdc < 3 THEN
            
+            -- 
+            IF pr_idorigem <> 3 AND pr_flgrestr = 1  AND -- Se for Relatório da Cooperativa
+               vr_tab_chq_bordero(idx).nrdolote <> 0 AND -- Se tiver lote
+               vr_tab_chq_bordero(idx).insitprv <> 3 AND -- Se a situação da previa não tiver processada
+               gene0002.fn_existe_valor(vr_nrdlotes, vr_tab_chq_bordero(idx).nrdolote,',') = 'N' THEN
+              
+              IF vr_nrdlotes IS NOT NULL THEN
+                vr_nrdlotes := vr_nrdlotes || ', ';
+              END IF;
+              
+              -- Popula os lotes                                                    
+              vr_nrdlotes := vr_nrdlotes || vr_tab_chq_bordero(idx).nrdolote;       
+                                                                                    
+            END IF;
+            
         -- Seta os totais
         vr_qttotchq := NVL(vr_qttotchq,0) + 1;
         vr_vltotchq := NVL(vr_vltotchq,0) + vr_tab_chq_bordero(idx).vlcheque;
@@ -2290,7 +2339,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                  '<vltotliq>'|| TO_CHAR(vr_vltotliq,'fm999G999G999G990D00') ||'</vltotliq>'||
                                  '<vlmedchq>'|| TO_CHAR(vr_vlmedchq,'fm999G999G999G990D00') ||'</vlmedchq>'||
                              '</total>'||
-                         '</totais>');
+                         '</totais>' ||                         
+                         '<nrdlotes>'|| vr_nrdlotes ||'</nrdlotes>');
+                         
       IF pr_idorigem <> 3 AND pr_flgrestr = 1 THEN
       -- Se possui restricoes aprovadas pelo coordenador
       IF vr_tab_restri_apr_coo.COUNT > 0 THEN
@@ -7086,7 +7137,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 					,bdc.dhdassin
 					,bdc.cdopeasi
           ,bdc.cdagenci
-          ,bdc.nrdolote
+          ,bdc.nrdolote          
 		  FROM crapbdc bdc
 		 WHERE bdc.cdcooper = pr_cdcooper
 		   AND bdc.nrdconta = pr_nrdconta

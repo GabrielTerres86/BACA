@@ -1333,7 +1333,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSTOD IS
                  AND ass.cdcooper = hcc.cdcooper
                  AND ass.nrdconta = hcc.nrdconta
                  AND (ass.cdagenci = pr_cdagenci OR nvl(pr_cdagenci, 0) = 0)
-           ORDER BY hcc.nrremret DESC)
+           ORDER BY HCC.DTMVTOLT DESC /*, HCC.NRREMRET */)
 					 WHERE rnum >= pr_nriniseq;
 
       -- Buscar quantidade total de registros					 
@@ -2890,7 +2890,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSTOD IS
            AND dcc.intipmvt = pr_intipmvt
            AND dcc.inconcil = 1;
       rw_crapdcc cr_crapdcc%ROWTYPE;	
-
+      
 	  BEGIN
 		  -- Incluir nome do módulo logado
       GENE0001.pc_informa_acesso(pr_module => 'TELA_CUSTOD'
@@ -2959,7 +2959,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSTOD IS
 			END IF;
 			-- Fecha cursor
 			CLOSE cr_craphcc;				
-
+      
       -- Buscar remessa de cheque para verificar se ainda não foi processada
 			OPEN cr_crapdcc(pr_cdcooper => vr_cdcooper
 										 ,pr_nrdconta => pr_nrdconta

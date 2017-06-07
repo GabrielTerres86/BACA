@@ -2907,11 +2907,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
     GENE0001.pc_informa_acesso(pr_module => 'TELA_ATENDA_DESCTO'
                               ,pr_action => NULL);	
 	
-	  -- Busca a data do sistema
-		OPEN  BTCH0001.cr_crapdat(vr_cdcooper);
-		FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
-		CLOSE BTCH0001.cr_crapdat;
-	
 		gene0004.pc_extrai_dados(pr_xml      => pr_retxml
 														,pr_cdcooper => vr_cdcooper
 														,pr_nmdatela => vr_nmdatela
@@ -2921,6 +2916,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 														,pr_idorigem => vr_idorigem
 														,pr_cdoperad => vr_cdoperad
 														,pr_dscritic => vr_dscritic);	  
+
+    -- Busca a data do sistema
+		OPEN  BTCH0001.cr_crapdat(vr_cdcooper);
+		FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+		CLOSE BTCH0001.cr_crapdat;    
 
 		IF trim(pr_dscheque) IS NOT NULL THEN
 			-- Criando um Array com todos os cheques que vieram como parametro
