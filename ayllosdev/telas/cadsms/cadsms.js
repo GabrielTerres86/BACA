@@ -822,9 +822,10 @@ function estadoInicial() {
     cDtiniofe.datepicker('disable');
     cDtfimofe.val("");
     cDtfimofe.datepicker('disable');
-	cddopcao = "M";
+    /*
+    cddopcao = "M";
     cCddopcao.val(cddopcao);
-   
+   */
 
     Cabecalho.inicializarComponenteOpcao($('#cddopcao', '#frmCab')[0]);
 
