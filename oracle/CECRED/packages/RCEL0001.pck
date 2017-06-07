@@ -1018,8 +1018,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 					-- Levanta exceção
 					RAISE vr_exc_erro;
 				END IF;
-      END IF;
-      
+      END IF;		
+			
 			-- Se for agendamento para data futura (2) ou recorrente (3)
 			IF pr_cddopcao IN (2,3) THEN
 				 -- Verificar se a quantidade de meses é maior que 24
@@ -1532,7 +1532,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 			vr_dstransa VARCHAR2(500);
 			vr_nrseqdig craplcm.nrseqdig%TYPE;
       vr_dtrepasse tbrecarga_operacao.dtrepasse%TYPE;
-			
+
 			-- Variáveis para utilizar o Aymaru
 			vr_resposta AYMA0001.typ_http_response_aymaru;
 			vr_parametros WRES0001.typ_tab_http_parametros;
@@ -2689,7 +2689,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 	Objetivo  : Rotina para receber a requisição do Aymaru efetuada pela 
               pc_solicita_produtos_recarga e atualizar os produtos e valores de 
 							recarga de celular
-	Alteracoes: -----
+	Alteracoes: 30/05/2017 - Ajuste para desprezar o produto "SERCOMTEL FIXO".
+                           Projeto 321 - Recarga de Celular (Lombardi)
 	..............................................................................*/
 	
 	-- Variavel de criticas
@@ -2847,6 +2848,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 																				 ,vr_vlmaximo
 																				 ,rw_xmlProduto.tpoperacao);
 					ELSE -- Valor pré-fixado
+            
+            IF rw_xmlProduto.nmproduto <> 'SERCOMTEL FIXO' THEN
+              
 						-- Criar novo produto
 						INSERT INTO tbrecarga_produto(cdoperadora
 																				 ,nmproduto
@@ -2872,6 +2876,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 																				 ,rw_xmlValor.vlrecarga
 																				 ,trunc(SYSDATE));
 						END LOOP;																				 
+					END IF;
 					END IF;
 				ELSE
 					-- Se produto mudou o tipo ou operação
@@ -3789,7 +3794,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
     Objetivo  :  Rotina para gerar relatorio de criticas
                  atravez do idoperacao
 
-    Alteracoes: -----
+    Alteracoes: 30/05/2017 - alterado flag pr_flg_impri para 'S' na chamada da 
+                             pc_solicita_relato. PRJ321 - Recarga de Celular (Lombardi)
     ..............................................................................*/
     DECLARE
       
@@ -3940,7 +3946,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                                     ,pr_dsarqsaid => vr_nom_direto||'/'||vr_nom_arquivo||'.lst' --> Arquivo final
                                     ,pr_qtcoluna  => 234                 --> 234 colunas
                                     ,pr_sqcabrel  => 1                   --> Sequencia do Relatorio {includes/cabrel132_2.i}
-                                    ,pr_flg_impri => 'N'                 --> Chamar a impressão (Imprim.p)
+                                    ,pr_flg_impri => 'S'                 --> Chamar a impressão (Imprim.p)
                                     ,pr_nmformul  => '234col'            --> Nome do formulário para impressão
                                     ,pr_nrcopias  => 1                   --> Número de cópias
                                     ,pr_flg_gerar => 'S'                 --> gerar PDF
@@ -3991,7 +3997,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 
     Objetivo  :  Rotina para processar agendamentos de recarga de celular
 
-    Alteracoes: -----
+    Alteracoes: 30/05/2017 - Retirado acentuação das criticas na efetuação da recarga.
+                             PRJ321 - Recarga de Celular (Lombardi)
     ..............................................................................*/
     DECLARE
       
@@ -4211,7 +4218,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
           
           vr_tab_critic(vr_index).situacao   := 0;
           vr_tab_critic(vr_index).cdcritic   := nvl(vr_cdcritic,0);
-          vr_tab_critic(vr_index).dscritic   := nvl(vr_dscritic,'');
+          vr_tab_critic(vr_index).dscritic   := gene0007.fn_caract_acento(nvl(vr_dscritic,''));
         
           -- Se for critica de saldo insuficiente
           IF vr_dscritic = 'Não há saldo suficiente para a operação.' THEN
