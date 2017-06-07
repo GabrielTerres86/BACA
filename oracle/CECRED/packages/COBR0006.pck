@@ -4881,9 +4881,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                 20 caracteres, deve gravar na cob somente 17.
                                 (AJFink - SD#580867)
 
-				   13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
-								(Andrei - Mouts).
-						
+                   13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
+                                (Andrei - Mouts).
+
+                   07/06/2017 - Inicializar pr_rec_cobranca.flserasa = 1 na validação
+                                da informação de negativação. (SD#686881 - AJFink)
+
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -4987,12 +4990,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     pr_rec_cobranca.inserasa := 0;
     pr_rec_cobranca.serasa := 0;
     
-    IF NOT pr_tab_linhas('CDDPROTE').numero IN (2,3) THEN     
-      pr_rec_cobranca.flgdprot := 1 ;
-    ELSE
-      pr_rec_cobranca.flgdprot := 0;
-    END IF;
-      
     --> tratar flag aceite enviada no arquivo motivo 23 - Aceite invalido, nao sera tratado
     --  para nao impactar nos cooperados que ignoravam essa informacao*/                   
     IF upper(pr_tab_linhas('FLGACEIT').texto) = 'A' THEN
@@ -5298,6 +5295,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       -- Codigo para Protesto Invalido
       vr_rej_cdmotivo := '37';
       RAISE vr_exc_reje;
+    ELSE
+      IF pr_tab_linhas('CDDPROTE').numero IN (2,3) THEN     
+        pr_rec_cobranca.flgdprot := 0;
+      ELSE
+        pr_rec_cobranca.flgdprot := 1;
+      END IF;
     END IF;
     
     IF pr_rec_cobranca.cdprotes = 9    AND  -- Cancel. do Protesto automatico
@@ -5316,7 +5319,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
     -- 37.3P Valida Prazo para Protesto
     IF pr_rec_cobranca.cdprotes = 1 THEN -- Protestar Dias Corridos
-      pr_rec_cobranca.qtdiaprt := pr_tab_linhas('QTDIAPRT').numero;
+      pr_rec_cobranca.qtdiaprt := nvl(pr_tab_linhas('QTDIAPRT').numero,0);
       -- Prazo para protesto valido de 5 a 15 dias
       IF pr_rec_cobranca.qtdiaprt < 5  OR 
          pr_rec_cobranca.qtdiaprt > 15 THEN
@@ -5324,16 +5327,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         vr_rej_cdmotivo := '38';
         RAISE vr_exc_reje;
       END IF;
+    ELSE
+      pr_rec_cobranca.qtdiaprt := 0;
     END IF;
   
     --Modificado para efetuar demais validação junto ao sacado
     pr_rec_cobranca.serasa := pr_rec_header.flserasa;
-  
+
     --Negativar Serasa e possui convenio serasa
-    IF pr_rec_cobranca.cdprotes = 2 AND  
-      pr_rec_header.flserasa    = 1   THEN  
-      pr_rec_cobranca.qtdianeg := pr_tab_linhas('QTDIAPRT').numero;
-      pr_rec_cobranca.qtdiaprt := 0;
+    IF pr_rec_cobranca.cdprotes = 2 AND pr_rec_header.flserasa = 1 THEN
+      pr_rec_cobranca.flserasa := 1;
+      pr_rec_cobranca.qtdianeg := nvl(pr_tab_linhas('QTDIAPRT').numero,0);
+    ELSE
+      pr_rec_cobranca.flserasa := 0;
+      pr_rec_cobranca.qtdianeg := 0;
     END IF;
     
     pr_des_reto := 'OK';
@@ -5448,6 +5455,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                    17/03/2017 - Removido a validação que verificava se o CEP do pagador do boleto existe no Ayllos. 
                                 Solicitado pelo Leomir e aprovado pelo Victor (cobrança)
                                (Douglas - Chamado 601436)
+
+                   07/06/2017 - Trocar na validação de Serasa qtdiaprt por qtdianeg. Somente
+                                quando pr_rec_cobranca.flserasa = 1. (SD#686881 - AJFink)
+
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -5514,7 +5525,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     pr_rec_cobranca.cdufsaca := pr_tab_linhas('CDUFSACA').texto;
     pr_rec_cobranca.nrcepsac := pr_tab_linhas('NRCEPSAC').numero;
     
-    IF pr_rec_cobranca.serasa = 1 THEN
+    IF pr_rec_cobranca.flserasa = 1 THEN
       
       vr_qtminimo := 0;  
       vr_qtmaximo := 0;
@@ -5528,36 +5539,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                      ,pr_vlminimo_boleto      => vr_vlminimo
                                      ,pr_dstexto_dias         => vr_dstexto_dias
                                      ,pr_dscritic             => vr_dscritic);
-    
+
       --Prazo valido
-      IF ((pr_rec_cobranca.qtdiaprt < vr_qtminimo  OR
-           pr_rec_cobranca.qtdiaprt > vr_qtmaximo) AND
-           pr_rec_cobranca.qtdiaprt <> 0)          THEN
+      IF (pr_rec_cobranca.qtdianeg < vr_qtminimo  OR
+          pr_rec_cobranca.qtdianeg > vr_qtmaximo) THEN
         -- Prazo para Negativacao Serasa Invalido
         vr_rej_cdmotivo := 'S3';
-        RAISE vr_exc_reje;     
+        RAISE vr_exc_reje;
       END IF;
       
-      IF pr_rec_cobranca.qtdiaprt > 0           AND
-         pr_rec_cobranca.vltitulo < vr_vlminimo THEN
+      IF pr_rec_cobranca.vltitulo < vr_vlminimo THEN
         --  Valor Inferior au Minimo Permitido para Negativacao Serasa Invalido
         vr_rej_cdmotivo := 'S4';
-        RAISE vr_exc_reje;     
+        RAISE vr_exc_reje;
       END IF;
-      
-      IF pr_rec_cobranca.qtdiaprt = 0           AND
-         pr_rec_cobranca.vltitulo < vr_vlminimo THEN
-         
-        pr_rec_cobranca.flserasa := 0;
-        pr_rec_cobranca.qtdianeg := 0;
-        pr_rec_cobranca.inserasa := 0; 
-        
-      ELSE
-        
-        pr_rec_cobranca.flserasa := 1;
-          
-      END IF;
-      
+
     END IF;
     
     -- 01.3Q Banco
