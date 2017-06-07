@@ -163,6 +163,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps714 (pr_cdcooper IN crapcop.cdcooper%T
                    pr_dscritic;
                    
     btch0001.pc_gera_log_batch (pr_cdcooper     => pr_cdcooper, 
+                                pr_cdprograma   => vr_nomdojob,
                                 pr_ind_tipo_log => 1, 
                                 pr_des_log      => vr_dscritic, 
                                 pr_nmarqlog     => vr_nmlogtmp,                                 

@@ -189,7 +189,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_MENSAL (pr_cdcooper IN crapcop.cdcoope
       ROLLBACK;
 
       --Não precisa gerar log de job reagendado
-      IF upper(vr_dscritic) LIKE '%JOB REAGENDADO PARA%' THEN
+      IF upper(vr_dscritic) NOT LIKE '%JOB REAGENDADO PARA%' THEN
       
         --> Se aconteceu erro, gera o log e envia o erro por e-mail 
         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
@@ -210,7 +210,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_MENSAL (pr_cdcooper IN crapcop.cdcoope
         vr_dscritic := NULL;
         --/* Envia e-mail para o Operador */
         gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
-                                  ,pr_cdprogra        => 'PC_JOB_AGENDEB'
+                                  ,pr_cdprogra        => vr_cdprogra
                                   ,pr_des_destino     => vr_email_dest
                                   ,pr_des_assunto     => 'ERRO NA EXECUCAO JOB:'|| pr_dsjobnam
                                   ,pr_des_corpo       => vr_conteudo
@@ -244,7 +244,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_MENSAL (pr_cdcooper IN crapcop.cdcoope
       vr_dscritic := NULL;
       --/* Envia e-mail para o Operador */
       gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
-                                ,pr_cdprogra        => 'PC_JOB_AGENDEB'
+                                ,pr_cdprogra        => vr_cdprogra
                                 ,pr_des_destino     => vr_email_dest
                                 ,pr_des_assunto     => 'ERRO NA EXECUCAO JOB:'|| pr_dsjobnam
                                 ,pr_des_corpo       => vr_conteudo
