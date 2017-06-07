@@ -1,11 +1,11 @@
 <? 
 /*!
- * FONTE        : tab_registros.php						Última alteração:  
+ * FONTE        : tab_registros.php						Última alteração:  06/06/2017
  * CRIAÇÃO      : Andrei - RKAM
  * DATA CRIAÇÃO : Maio/2016
  * OBJETIVO     : Tabela que apresenta os detalhes do rating
  * --------------
- * ALTERAÇÕES   :  
+ * ALTERAÇÕES   :  06/06/2017 - Corrigido a ordenação da tebela. (Andrey Formigari - Mouts)
                     
  * --------------
  */ 
@@ -39,7 +39,7 @@
 				</thead>
 				<tbody>
 					<? foreach( $registros as $result ) {    ?>
-						<tr>	
+						<tr onclick="selecionaRating(this);">	
 							<td><span><? echo getByTagName($result->tags,'cdagenci'); ?></span> <? echo getByTagName($result->tags,'cdagenci'); ?> </td>
 							<td><span><? echo getByTagName($result->tags,'nrdconta'); ?></span> <? echo getByTagName($result->tags,'nrdconta'); ?> </td>
 							<td><span><? echo str_replace(",",".",getByTagName($result->tags,'vloperac')); ?></span><? echo number_format(str_replace(",",".",getByTagName($result->tags,'vloperac')),2,",","."); ?> </td>
