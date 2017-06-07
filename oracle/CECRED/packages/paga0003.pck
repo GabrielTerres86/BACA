@@ -213,7 +213,7 @@ END paga0003;
   
    Programa: PAGA0003
    Autor   : Dionathan
-   Data    : 19/07/2016                        Ultima atualizacao: 22/02/2017
+   Data    : 19/07/2016                        Ultima atualizacao: 25/05/2017
   
    Dados referentes ao programa: 
   
@@ -222,8 +222,12 @@ END paga0003;
    Alteracoes: 
 	             
 		   22/02/2017 - Alteraçoes para composiçao de comprovante DARF/DAS Modelo Sicredi
-					  - Ajustes para correçao de crítica de pagamento DARF/DAS (P.349.2) (Lucas Lunelli)
+					        - Ajustes para correçao de crítica de pagamento DARF/DAS (P.349.2) (Lucas Lunelli)
+                  
+       08/05/2017 - Validar tributo através da tabela crapstb (Lucas Ranghetti #654763)
 							 								   
+       25/05/2017 - Se DEBSIC ja rodou, nao aceitamos mais agendamento para agendamentos em que o 
+                    dia que antecede o final de semana ou feriado nacional(Lucas Ranghetti #671126)
 ..............................................................................*/
 CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 
@@ -284,6 +288,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     WHERE crapcon.cdcooper = pr_cdcooper
     AND   crapcon.cdempcon = pr_cdempcon
     AND   crapcon.cdsegmto = pr_cdsegmto;
+    
+    --Selecionar Cadastro Convenios Sicredi
+    CURSOR cr_crapstb (pr_cdtribut IN crapstb.cdtribut%type) IS
+      SELECT crapstb.cdtribut
+      FROM crapstb
+      WHERE crapstb.cdtribut = pr_cdtribut;
+    rw_crapstb cr_crapstb%ROWTYPE;
   
   PROCEDURE pc_monitoracao_pagamento(pr_cdcooper crapcop.cdcooper%TYPE -- pr_cdcooper
                                     ,pr_nrdconta crapass.nrdconta%TYPE -- pr_nrdconta
@@ -993,11 +1004,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 
      Programa: pc_verifica_darf_das
      Autor   : Dionathan
-     Data    : Julho/2016.                    Ultima atualizacao: --/--/----
+     Data    : Julho/2016.                    Ultima atualizacao: 08/05/2017
 
      Objetivo  : Procedure para validação de pagamento de DARF/DAS
 
-     Alteracoes: 
+     Alteracoes: 08/05/2017 - Validar tributo através da tabela crapstb (Lucas Ranghetti #654763)
     ..............................................................................*/
     
     --Selecionar contas migradas
@@ -1350,6 +1361,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         RAISE vr_exc_erro;
       END IF;
       
+      /* DARF PRETO EUROPA */
+      IF rw_crapcon.cdempcon IN (64,153) AND rw_crapcon.cdsegmto = 5 THEN /* DARFC0064  ou DARFC0153*/
+        /* Validacao Cd. Tributo */
+        --Selecionar Cadastro Convenios Sicredi
+        OPEN cr_crapstb (pr_cdtribut => TO_NUMBER(SUBSTR(pr_cdbarras,37,4)));
+        --Posicionar no proximo registro
+        FETCH cr_crapstb INTO rw_crapstb;
+        --Se nao encontrar
+        IF cr_crapstb%NOTFOUND THEN
+          --Fechar Cursor
+          CLOSE cr_crapstb;
+          --Mensagem erro
+          vr_dscritic:= 'Tributo nao cadastrado.';          
+          RAISE vr_exc_erro;
+        END IF;
+        --Fechar Cursor
+        CLOSE cr_crapstb;
+      END IF;
       -- Validação referente aos dias de tolerancia
       cxon0014.pc_verifica_dtlimite_tributo(pr_cdcooper      => pr_cdcooper
                                            ,pr_cdagenci      => vr_cdagenci
@@ -2503,6 +2532,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
          AND ass.nrdconta = pr_nrdconta;
       rw_crapass cr_crapass%ROWTYPE;
 	
+    CURSOR cr_craphec(pr_cdcooper IN crapcop.cdcooper%TYPE
+                     ,pr_cdprogra IN craphec.cdprogra%TYPE) IS
+     SELECT MAX(hec.hriniexe) hriniexe
+       FROM craphec hec
+      WHERE upper(hec.cdprogra) = upper(pr_cdprogra)
+        AND hec.cdcooper = pr_cdcooper;
+     rw_craphec cr_craphec%ROWTYPE;
+  
 		--Tipo de registro de data
     rw_crapdat   BTCH0001.cr_crapdat%ROWTYPE;
   
@@ -2542,6 +2579,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 		vr_dsprotoc  VARCHAR2(500);
 		vr_dslindig  VARCHAR2(200);
 		vr_nrdrowid  ROWID;
+    vr_hriniexe  craphec.hriniexe%TYPE;
 		
 		-- Gerar log
     PROCEDURE pc_proc_geracao_log(pr_flgtrans IN INTEGER) IS
@@ -2857,6 +2895,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 		vr_dtmvtopg := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper, 
 																							 pr_dtmvtolt => pr_dtmvtopg, 
 																							 pr_tipo     => 'A');
+
+    -- busca ultimo horario da debsic
+    OPEN cr_craphec(pr_cdcooper => pr_cdcooper
+                   ,pr_cdprogra => 'DEBSIC');
+    FETCH cr_craphec INTO rw_craphec;
+
+    IF cr_craphec%NOTFOUND THEN
+      CLOSE cr_craphec;
+      vr_hriniexe:= 0;
+    ELSE
+      CLOSE cr_craphec;
+      vr_hriniexe:= rw_craphec.hriniexe;
+    END IF;
+    
+    -- Se DEBSIC ja rodou, nao aceitamos mais agendamento para agendamentos em que o dia
+    -- que antecede o final de semana ou feriado nacional
+    IF to_char(SYSDATE,'sssss') >= vr_hriniexe  AND 
+       rw_crapdat.dtmvtolt = vr_dtmvtopg THEN
+       
+      IF pr_tpdaguia = 1 THEN -- DARF
+        vr_dscritic := 'Agendamento de DARF permitido apenas para o proximo dia util.'; 
+      ELSE -- DAS
+        vr_dscritic := 'Agendamento de DAS permitido apenas para o proximo dia util.'; 
+      END IF;
+      
+      RAISE vr_exc_erro;     
+    END IF;
 
 		-- Procedure para validar limites para transacoes
     INET0001.pc_verifica_operacao (pr_cdcooper     => pr_cdcooper         --> Codigo Cooperativa
