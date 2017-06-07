@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.CONV0001 AS
 
     Programa: CONV0001 (Antigo b1wgen0045.p)
     Autor   : Guilherme - Precise
-    Data    : Outubro/2009                       Ultima Atualizacao: 14/09/2016
+    Data    : Outubro/2009                       Ultima Atualizacao: 29/05/2017
 
     Dados referentes ao programa:
 
@@ -75,6 +75,8 @@ CREATE OR REPLACE PACKAGE CECRED.CONV0001 AS
                14/09/2016 - Incluir nova procedure pc_pula_seq_gt0001, irá criar registro de
                             controle na gncontr caso seja alterado o sequencial (Lucas Ranghetti #484556)
 
+               29/05/2017 - Incluir nova procedure pc_gerandb_car para chamar a pc_gerandb
+                            (Lucas Ranghetti #681579)
 ..............................................................................*/
 
   --Tipo de Registro para convenios
@@ -265,9 +267,27 @@ CREATE OR REPLACE PACKAGE CECRED.CONV0001 AS
                        ,pr_nrctacns IN crapass.nrctacns%TYPE  -- Conta do Consórcio
                        ,pr_cdagenci IN crapass.cdagenci%TYPE  -- Codigo do PA
                        ,pr_cdempres IN craplau.cdempres%TYPE  -- Codigo empresa sicredi
+                       ,pr_idlancto IN craplau.idlancto%TYPE  -- Código do lançamento        
                        ,pr_codcriti IN INTEGER                -- Código do erro
                        ,pr_cdcritic OUT INTEGER               -- Código do erro
                        ,pr_dscritic OUT VARCHAR2);            -- Descricao do erro
+
+ /* Gerar registros na crapndb para devolucao de debitos automaticos. */
+  PROCEDURE pc_gerandb_car (pr_cdcooper IN crapcop.cdcooper%TYPE  -- Código da Cooperativa
+                           ,pr_cdhistor IN craphis.cdhistor%TYPE  -- Código do Histórico
+                           ,pr_nrdconta IN crapass.nrdconta%TYPE  -- Numero da Conta
+                           ,pr_cdrefere IN VARCHAR2               -- Código de Referência
+                           ,pr_vllanaut IN craplau.vllanaut%TYPE  -- Valor Lancamento
+                           ,pr_cdseqtel IN craplau.cdseqtel%TYPE  -- Código Sequencial
+                           ,pr_nrdocmto IN VARCHAR2               -- Número do Documento
+                           ,pr_cdagesic IN crapcop.cdagesic%TYPE  -- Agência Sicredi
+                           ,pr_nrctacns IN crapass.nrctacns%TYPE  -- Conta do Consórcio
+                           ,pr_cdagenci IN crapass.cdagenci%TYPE  -- Codigo do PA
+                           ,pr_cdempres IN craplau.cdempres%TYPE  -- Codigo empresa sicredi
+                           ,pr_idlancto IN craplau.idlancto%TYPE  -- Código do lançamento        
+                           ,pr_codcriti IN INTEGER                -- Código do erro
+                           ,pr_cdcritic OUT INTEGER               -- Código do erro
+                           ,pr_dscritic OUT VARCHAR2); 
 
   -- Conectar-se ao FTP da Transabbc e efetuar download de três arquivos diariamente.
   PROCEDURE pc_busca_concilia_transabbc;
@@ -358,7 +378,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --  Sistema  : Procedimentos para Convenios
   --  Sigla    : CRED
   --  Autor    : Douglas Pagel
-  --  Data     : Outubro/2013.                   Ultima atualizacao: 21/11/2016
+  --  Data     : Outubro/2013.                   Ultima atualizacao: 04/04/2017
   --
   -- Dados referentes ao programa:
   --
@@ -431,6 +451,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --             21/11/2016 - Se for o convenio 045, 14 BRT CELULAR - FEBRABAN e referencia conter 11 
   --                          posicoes, devemos incluir um hifen para completar 12 posicoes 
   --                          ex: 40151016407- na procedure pc_gerandb (Lucas Ranghetti #560620/453337)
+  --
+  --             20/02/2017 - #551216 Ajustes em pc_busca_concilia_transabbc para logar início, erros e
+  --                          fim da execução do programa e mudança nos logs dos erros para atenderem ao 
+  --                          padrão 'HH24:MI:SS - nome_programa' (Carlos)
+  --
+  --             31/03/2017 - Incluir PREVISC para fazer como faz a SULAMERICA (Lucas Ranghetti #637882)
+  --
+  --             04/04/2017 - Ajuste para integracao de arquivos com layout na versao 5
+  --			             (Jonata - RKAM M311).
+  --
   ---------------------------------------------------------------------------------------------------------------
 
 
@@ -1569,6 +1599,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
                        ,pr_nrctacns IN crapass.nrctacns%TYPE  -- Conta do Consórcio
                        ,pr_cdagenci IN crapass.cdagenci%TYPE  -- Codigo do PA
                        ,pr_cdempres IN craplau.cdempres%TYPE  -- Empresa sicredi
+                       ,pr_idlancto IN craplau.idlancto%TYPE  -- Código lancamento                      
                        ,pr_codcriti IN INTEGER                -- Código do erro
                        ,pr_cdcritic OUT INTEGER               -- Código do erro
                        ,pr_dscritic OUT VARCHAR2) IS          -- Descricao do erro
@@ -1578,7 +1609,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Odair
-  --  Data     : Agosto/98.                  Ultima atualizacao: 21/11/2016
+  --  Data     : Agosto/98.                  Ultima atualizacao: 29/05/2017
   --
   -- Dados referentes ao programa:
   --
@@ -1670,6 +1701,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --             21/11/2016 - Se for o convenio 045, 14 BRT CELULAR - FEBRABAN e referencia conter 11 
   --                          posicoes, devemos incluir um hifen para completar 12 posicoes 
   --                          ex: 40151016407- (Lucas Ranghetti #560620/453337)
+  --
+  --             31/03/2017 - Incluir PREVISC para fazer como faz a SULAMERICA (Lucas Ranghetti #637882)
+  --
+  --             04/04/2017 - Ajuste para integracao de arquivos com layout na versao 5
+  --			                    (Jonata - RKAM M311).
+  --
+  --             29/05/2017 - Incluir nova procedure pc_gerandb_car para chamar a pc_gerandb
+  --                          (Lucas Ranghetti #681579)
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -1706,6 +1745,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
           FROM crapscn scn
          WHERE scn.cdempres = pr_cdempres;
        rw_crapscn cr_crapscn%ROWTYPE;
+
+       CURSOR cr_tbconv_det_agendamento(pr_idlancto IN craplau.idlancto%TYPE) IS
+       SELECT t.cdlayout
+             ,t.tppessoa_dest
+             ,t.nrcpfcgc_dest
+        FROM tbconv_det_agendamento t
+       WHERE t.idlancto = pr_idlancto;
+       rw_tbconv_det_agendamento cr_tbconv_det_agendamento%ROWTYPE;  
 
       /*PROCEDIMENTOS E FUNCOES INTERNAS*/
       FUNCTION fn_verifica_ult_dia(pr_cdcooper crapcop.cdcooper%TYPE, pr_dtrefere  IN DATE) RETURN DATE IS
@@ -1766,7 +1813,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
       vr_cdcritic := pr_codcriti;
 
       IF pr_cdhistor IN(1230,1231,1232,1233,1234,1019) THEN
+        
         vr_flgsicre := 1; -- HISTORICOS DO CONSORCIO SICREDI E DEB. AUTOMATICO
+      
+      ELSE
+        -- LEITURA PARA ENCONTRAR DETALHE DO AGENDAMENTO
+        OPEN cr_tbconv_det_agendamento(pr_idlancto => pr_idlancto);
+        
+        FETCH cr_tbconv_det_agendamento INTO rw_tbconv_det_agendamento;
+        
+        -- SE NÃO ENCONTRAR
+        IF cr_tbconv_det_agendamento%NOTFOUND THEN
+          -- FECHAR O CURSOR POIS EFETUAREMOS RAISE
+          CLOSE cr_tbconv_det_agendamento;
+          -- MONTAR MENSAGEM DE CRITICA
+          vr_cdcritic := 597;
+          RAISE vr_exc_erro;
+        ELSE
+          -- APENAS FECHAR O CURSOR
+          CLOSE cr_tbconv_det_agendamento;
+      END IF;
+        
       END IF;
 
       vr_auxcdcri := vr_cdcritic;
@@ -1807,7 +1874,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
           vr_dstexarq := vr_dstexarq || gene0002.fn_mask(pr_cdrefere,'9999999999') || RPAD(' ',15,' ');
         ELSIF pr_cdhistor = 48 THEN -- RECEBIMENTO CASAN AUTOMATICO
           vr_dstexarq := vr_dstexarq || gene0002.fn_mask(pr_cdrefere,'99999999') || RPAD(' ',17,' ');
-        ELSIF pr_cdhistor = 1517 THEN -- SULAMERICA
+        ELSIF pr_cdhistor IN(2039 ,1517) THEN -- PREVISC, SULAMERICA
           vr_dstexarq := vr_dstexarq || gene0002.fn_mask(pr_cdrefere,'9999999999999999999999') ||
                                         RPAD(' ',3,' ');
         ELSIF pr_cdhistor IN(834,901,993,1061,1723) THEN -- TIM Celular,HDI,LIBERTY SEGUROS,PORTO SEGURO,PREVISUL
@@ -1833,6 +1900,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
           vr_auxcdcri := '15'; -- Conta corrente invalida
 		ELSIF vr_cdcritic = '964' THEN -- Lançamento bloqueado
           vr_auxcdcri := '04'; -- Outros
+        ELSIF rw_tbconv_det_agendamento.cdlayout = 5 AND (vr_cdcritic = '1001' OR vr_cdcritic = '1002' OR vr_cdcritic = '1003') THEN 
+          vr_auxcdcri := '19'; -- Outros
         ELSE
           vr_auxcdcri := '01'; -- INSUFICIENCIAS DE FUNDOS
         END IF;
@@ -1911,6 +1980,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
                          RPAD(' ',16) || gene0002.fn_mask(vr_cdagenci,'99') ||
                          TRIM(rw_crapscn.cdempres) ||
                          RPAD(' ',10 - length(TRIM(rw_crapscn.cdempres))) || '0';
+                         
+        ELSIF rw_tbconv_det_agendamento.cdlayout = 5 THEN
+          
+          vr_dstexarq := vr_dstexarq ||
+                         gene0002.fn_mask(vr_cdagenci,'9999') ||
+                         vr_nrdconta ||
+                         RPAD(' ', 14 - LENGTH(vr_nrdconta), ' ') ||
+                         TO_CHAR(vr_dtmvtolt,'yyyy') ||
+                         TO_CHAR(vr_dtmvtolt,'mm') ||
+                         TO_CHAR(vr_dtmvtolt,'dd') ||
+                         gene0002.fn_mask((pr_vllanaut * 100),'999999999999999') ||
+                         vr_auxcdcri ||                          
+                         RPAD(pr_cdseqtel,60) ||
+                         rw_tbconv_det_agendamento.tppessoa_dest ||
+                         LPAD(rw_tbconv_det_agendamento.nrcpfcgc_dest,15,'0') ||
+                         RPAD(' ',4)                         
+                         || '0';
+                                                    
         ELSE
 
           vr_dstexarq := vr_dstexarq ||
@@ -1962,6 +2049,77 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
          pr_dscritic:= 'Erro na rotina CONV0001.pc_gerandb. ' || sqlerrm;
     END;
   END pc_gerandb;
+
+  /* Gerar registros na crapndb para devolucao de debitos automaticos. */
+  PROCEDURE pc_gerandb_car (pr_cdcooper IN crapcop.cdcooper%TYPE  -- Código da Cooperativa
+                           ,pr_cdhistor IN craphis.cdhistor%TYPE  -- Código do Histórico
+                           ,pr_nrdconta IN crapass.nrdconta%TYPE  -- Numero da Conta
+                           ,pr_cdrefere IN VARCHAR2               -- Código de Referência
+                           ,pr_vllanaut IN craplau.vllanaut%TYPE  -- Valor Lancamento
+                           ,pr_cdseqtel IN craplau.cdseqtel%TYPE  -- Código Sequencial
+                           ,pr_nrdocmto IN VARCHAR2               -- Número do Documento
+                           ,pr_cdagesic IN crapcop.cdagesic%TYPE  -- Agência Sicredi
+                           ,pr_nrctacns IN crapass.nrctacns%TYPE  -- Conta do Consórcio
+                           ,pr_cdagenci IN crapass.cdagenci%TYPE  -- Codigo do PA
+                           ,pr_cdempres IN craplau.cdempres%TYPE  -- Codigo empresa sicredi
+                           ,pr_idlancto IN craplau.idlancto%TYPE  -- Código do lançamento        
+                           ,pr_codcriti IN INTEGER                -- Código do erro
+                           ,pr_cdcritic OUT INTEGER               -- Código do erro
+                           ,pr_dscritic OUT VARCHAR2) IS
+  BEGIN
+    /* .............................................................................
+
+    Programa: pc_gerandb_car
+    Sistema : Chamar a pc_gerandb.
+    Sigla   : CRED
+    Autor   : Lucas Ranghetti
+    Data    : Maio/2017.                    Ultima atualizacao: --/--/----
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+    Objetivo  : Chamar a pc_gerandb.
+
+    Alteracoes:
+    ..............................................................................*/
+    DECLARE
+      vr_exc_saida  EXCEPTION;
+      vr_cdcritic NUMBER;
+      vr_dscritic VARCHAR2(500);
+    BEGIN
+      
+      conv0001.pc_gerandb(pr_cdcooper => pr_cdcooper
+                         ,pr_cdhistor => pr_cdhistor
+                         ,pr_nrdconta => pr_nrdconta
+                         ,pr_cdrefere => pr_cdrefere
+                         ,pr_vllanaut => pr_vllanaut
+                         ,pr_cdseqtel => pr_cdseqtel
+                         ,pr_nrdocmto => pr_nrdocmto
+                         ,pr_cdagesic => pr_cdagesic
+                         ,pr_nrctacns => pr_nrctacns
+                         ,pr_cdagenci => pr_cdagenci                         
+                         ,pr_cdempres => pr_cdempres
+                         ,pr_idlancto => pr_idlancto
+                         ,pr_codcriti => pr_codcriti
+                         ,pr_cdcritic => vr_cdcritic
+                         ,pr_dscritic => vr_dscritic);
+    
+      -- Se ocorrer algum erro
+      IF vr_dscritic IS NOT NULL OR nvl(vr_cdcritic,0) <> 0 THEN
+         RAISE vr_exc_saida;
+      END IF;
+    
+    -- VERIFICA SE HOUVE EXCECAO
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+         pr_cdcritic:= vr_cdcritic;
+         pr_dscritic:= vr_dscritic;
+       WHEN OTHERS THEN
+         pr_cdcritic:= 0;
+         pr_dscritic:= 'Erro na rotina CONV0001.pc_gerandb_car. ' || sqlerrm;
+    END;
+  END pc_gerandb_car;
+
 
   -- Faz download de arquivo em um servidor FTP
   PROCEDURE pc_download_ftp(pr_serv_ftp   IN VARCHAR2     --> Servidor FTP
@@ -2076,6 +2234,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
       -- Cursor genérico de calendário
       rw_crapdat BTCH0001.CR_CRAPDAT%ROWTYPE;
 
+      vr_jobname  VARCHAR2(40) := 'jbconv_concilia_transabbc';
+      vr_idprglog PLS_INTEGER  := 0;
+
     BEGIN
       
       -- Somente executar a rotina de segunda a sexta... 
@@ -2083,6 +2244,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
         RETURN;
       END IF;
     
+      cecred.pc_log_programa(PR_DSTIPLOG   => 'I', 
+                             PR_CDPROGRAMA => vr_jobname, 
+                             PR_IDPRGLOG   => vr_idprglog);
+
       -- Buscar a data do movimento
       OPEN btch0001.cr_crapdat(3);
       FETCH btch0001.cr_crapdat
@@ -2194,18 +2359,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
       -- Gravar os comandos no banco
       COMMIT;
       
+      cecred.pc_log_programa(PR_DSTIPLOG   => 'F', 
+                             PR_CDPROGRAMA => vr_jobname, 
+                             PR_IDPRGLOG   => vr_idprglog);
+
     EXCEPTION
       WHEN vr_exc_saida THEN
+
         btch0001.pc_gera_log_batch(pr_cdcooper     => 3 --> Sempre na Cecred
                                   ,pr_ind_tipo_log => 1
-                                  ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || 
-                                                      ': CONV0001.PC_BUSCA_CONCILIA_TRANSABBC: Erro ao efetuar download dos arquivos: ' || vr_dscritic);
+                                  ,pr_des_log      => TO_CHAR(SYSDATE,'HH24:MI:SS') || 
+                                                      ' - CONV0001.PC_BUSCA_CONCILIA_TRANSABBC Erro ao efetuar download dos arquivos: ' || vr_dscritic
+                                  ,pr_dstiplog   => 'E'
+                                  ,pr_cdprograma => vr_jobname);
         ROLLBACK;
       WHEN OTHERS THEN
+
+        cecred.pc_internal_exception;
+      
         btch0001.pc_gera_log_batch(pr_cdcooper     => 3 --> Sempre na Cecred
                                   ,pr_ind_tipo_log => 1
-                                  ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || 
-                                                      ': CONV0001.PC_BUSCA_CONCILIA_TRANSABBC: Erro ao efetuar download dos arquivos: ' || SQLERRM);
+                                  ,pr_des_log      => TO_CHAR(SYSDATE,'HH24:MI:SS') || 
+                                                      ' - CONV0001.PC_BUSCA_CONCILIA_TRANSABBC Erro ao efetuar download dos arquivos: ' || SQLERRM
+                                  ,pr_dstiplog   => 'E'
+                                  ,pr_cdprograma => vr_jobname);
         ROLLBACK;
     END;
 
