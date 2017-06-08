@@ -2229,16 +2229,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                             
                             
     .................................................................................*/                           
-                               
-    CURSOR cr_crapban (pr_cdbcoctl IN crapcop.cdbcoctl%TYPE) IS
+    
+    --Cursor para obter os 10 bancos mais utilizados
+     CURSOR cr_crapban (pr_cdbcoctl IN crapcop.cdbcoctl%TYPE) IS
     SELECT REPLACE(UPPER(TRIM(b.nmresbcc)),'&','e') nmresbcc
           ,b.cdbccxlt
           ,b.nrispbif      
       FROM crapban b
      WHERE b.flgdispb = 1
        AND b.cdbccxlt <> pr_cdbcoctl
-       AND b.cdbccxlt IN (1,104,237,341,33,756,399,748,41,87);
+       AND b.cdbccxlt IN (1,104,237,341,33,756,399,748,41,136); --Lista dos bancos mais utilizados na TED
     rw_crapban cr_crapban%ROWTYPE;
+    
+    --Cursor para obter os tipos de conta para TED
+    CURSOR cr_tipcta IS
+    SELECT tab.tpregist cdtipcta
+          ,tab.dstextab dstipcta
+      FROM craptab tab
+     WHERE tab.cdcooper = pr_cdcooper
+       AND UPPER(tab.nmsistem) = 'CRED'
+       AND UPPER(tab.tptabela) = 'GENERI'
+       AND tab.cdempres = 0
+       AND UPPER(tab.cdacesso) = 'TPCTACRTED';
+    rw_tipcta cr_tipcta%ROWTYPE;
     
     ----------------> VARIAVEIS <---------------
     --Variaveis de Erro
@@ -2558,7 +2571,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
       CLOSE cr_crapcop;
     END IF;
 
-    -- Insere o cabeçalho do XML 
+    -- Insere a tag de BANCOS no XML
     gene0002.pc_escreve_xml(pr_xml            => pr_xml_operacao23
                            ,pr_texto_completo => vr_xml_temp
                            ,pr_texto_novo     => '<BANCOS>');
@@ -2584,9 +2597,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     END IF;
 
     gene0002.pc_escreve_xml(pr_xml            => pr_xml_operacao23
+                           ,pr_texto_completo => vr_xml_temp
+                           ,pr_texto_novo     => '</BANCOS>');
+    
+    
+    -- Insere a tag de TIPOS DE CONTA no XML
+    gene0002.pc_escreve_xml(pr_xml            => pr_xml_operacao23
+                           ,pr_texto_completo => vr_xml_temp
+                           ,pr_texto_novo     => '<TIPOSCONTA>');
+                           
+    FOR rw_tipcta IN cr_tipcta LOOP
+
+      gene0002.pc_escreve_xml(pr_xml            => pr_xml_operacao23
+                             ,pr_texto_completo => vr_xml_temp 
+                             ,pr_texto_novo     =>  '<TIPOCONTA>'
+                                                  ||   '<cdtipcta>'|| TO_CHAR(rw_tipcta.cdtipcta)    ||'</cdtipcta>'
+                                                  ||   '<dstipcta>'|| rw_tipcta.dstipcta ||'</dstipcta>'
+                                                  || '</TIPOCONTA>');
+      
+    END LOOP;
+
+    gene0002.pc_escreve_xml(pr_xml            => pr_xml_operacao23
                            ,pr_texto_completo => vr_xml_temp 
                            ,pr_fecha_xml      => TRUE
-                           ,pr_texto_novo     => '</BANCOS>');
+                           ,pr_texto_novo     => '</TIPOSCONTA>');
 
     pr_dsretorn := 'OK';
     
