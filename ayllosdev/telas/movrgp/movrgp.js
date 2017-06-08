@@ -776,15 +776,15 @@ function formataTabelaProdutos(){
 	var tabela      = $('table',divRegistro );	
 	var linha		= $('table > tbody > tr', divRegistro );
 									
-	divRegistro.css({'height':'150px'});
+	divRegistro.css({ 'height': '150px', 'width' : '100%'});
 			
 	var ordemInicial = new Array();
 					
 	var arrayLargura = new Array(); 
-		arrayLargura[0] = '150px';
-		arrayLargura[1] = '100px';
-		arrayLargura[2] = '120px';
-		arrayLargura[3] = '100px';
+		arrayLargura[0] = '30%';
+		arrayLargura[1] = '15%';
+		arrayLargura[2] = '15%';
+		arrayLargura[3] = '20%';
 							
 	var arrayAlinha = new Array();
 		arrayAlinha[0] = 'left';
@@ -1114,7 +1114,11 @@ function formataDetalhes(){
 		
 		var vlsaldoPendente = parseFloat($(this).val().replace(/\./g, "").replace(/\,/g, "."));
 		
+		if($('#flpermite_saida_operacao','#frmDetalhes').val() == '1'){
+			
 		(vlsaldoPendente > 0 ) ? $('#flsaida_operacao','#fsetDetalhes').prop("checked",false) : $('#flsaida_operacao','#fsetDetalhes').prop("checked",true); 
+			
+		}
 		
 		return false;
 										
@@ -1124,7 +1128,11 @@ function formataDetalhes(){
 
 		var vlsaldoPendente = parseFloat($(this).val().replace(/\./g, "").replace(/\,/g, "."));
 		
+		if($('#flpermite_saida_operacao','#frmDetalhes').val() == '1'){
+		
 		(vlsaldoPendente > 0 ) ? $('#flsaida_operacao','#fsetDetalhes').prop("checked",false) : $('#flsaida_operacao','#fsetDetalhes').prop("checked",true); 
+		
+		}
 		
 		return false;		
 		
@@ -1177,9 +1185,14 @@ function formataDetalhes(){
 			
 		    $('#cdclassifica_operacao', '#fsetDetalhes').prop('selected', true).val($('#cdclassificacao_produto', '#fsetDetalhes').val());
             $('#cdclassifica_operacao','#fsetDetalhes').desabilitaCampo();
-			
 		}
-					
+			   
+        if($('#cddopcao','#frmCabMovrgp').val() == 'I'){
+			
+		  cVlsaldo_pendente.change();
+			
+		}		
+	
 		cNrdconta.focus();
 		
 	}
