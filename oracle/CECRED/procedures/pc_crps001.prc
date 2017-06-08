@@ -1269,8 +1269,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                          RAISE vr_exc_saida;
                      END;
 
-                     --Incrementar a quantidade de lancamentos no mes
-                     rw_crapsld.qtlanmes:= Nvl(rw_crapsld.qtlanmes,0) + 1;
                      --Zerar valor iof no mes
                      rw_crapsld.vliofmes:= 0;
                      --Zerar valor base iof
@@ -1469,18 +1467,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                        CLOSE cr_tbcc_lautom_controle;
                      END IF;
                          
-                     --Incrementar a quantidade de lancamentos no mes
-                     rw_crapsld.qtlanmes:= Nvl(rw_crapsld.qtlanmes,0) + 1;
                      --Acumular o valor do lancamento nos juros
-                     vr_vldjuros:= Nvl(vr_vldjuros,0) + Nvl(rw_craplcm.vllanmto,0);
+                     vr_vldjuros:= Nvl(vr_vldjuros,0) + Nvl(rw_crapsld.vljuresp,0);
                      
-                     --Se cobrar cpmf
-                     IF vr_flgdcpmf THEN
-                       --Acumular o valor do lancamento no valor base ipmf
-                       vr_vlbasipm:= Nvl(vr_vlbasipm,0) + Nvl(rw_craplcm.vllanmto,0);
-                       --Acumular no valor do ipmf o valor do ipmf existente no lancamento
-                       vr_vldoipmf:= Nvl(vr_vldoipmf,0) + Nvl(rw_craplcm.vldoipmf,0);
-                     END IF;
                    ELSE -- Caso contrario segue criando registro na conta corrente
                    
                        --Verificar se o lote existe
