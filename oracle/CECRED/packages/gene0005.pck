@@ -1136,7 +1136,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
                  -- Gerar critica
                  RAISE vr_exc_erro;
                END IF;
-             ELSE --> E uma chamada provenitente da bo b1wgen9999, procedure saldo_utiliza
+			 END IF;
+           ELSE --> E uma chamada provenitente da bo b1wgen9999, procedure saldo_utiliza
                -- Utilizaremos a pc_saldo_devedor_epr
                EMPR0001.pc_saldo_devedor_epr(pr_cdcooper   => pr_cdcooper           --> Cooperativa conectada
                                             ,pr_cdagenci   => pr_cdagenci         --> Codigo da agencia
