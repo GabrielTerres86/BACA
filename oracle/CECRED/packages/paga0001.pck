@@ -1160,7 +1160,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 26/05/2017
+  --  Data     : Junho/2013.                   Ultima atualizacao: 08/06/2017
   --
   -- Dados referentes ao programa:
   --
@@ -1488,6 +1488,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 
        22/02/2017 - Ajustes para correçao de crítica de pagamento DARF/DAS (Lucas Lunelli - P.349.2)      
 
+       12/05/2017 - Segunda fase da melhoria 342 (Kelvin). 
 
        30/03/2017 - Incluir validacao para faturas vencidas para agendamentos conforme
                     ja faz a rotina de pagamento (Lucas Ranghetti #637996)
@@ -1498,17 +1499,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 	   04/04/2017 - Ajuste para integracao de arquivos com layout na versao 5
 				    (Jonata - RKAM M311).
 
-	   12/05/2017 - Segunda fase da melhoria 342 (Kelvin). 
-
-
-       
-	       
+       12/04/2017 - Incluir validacao para faturas vencidas para agendamentos conforme
+                    ja faz a rotina de pagamento PM.AGROLANDIA (Tiago #647174)			 
        22/05/2017 - Incluido validacao para nao agendar faturas vencidas
                     para PM.TROMBUDO CENTRAL e FMS.TROMBUDO CENTRAL
                     (Tiago/Fabricio #653830)
                     
        26/05/2017 - Incluido validacao para nao agendar faturas vencidas
                     para PM.AGROLANDIA (Tiago/Fabricio #647174)                        
+                    
+       08/06/2017 - Retirado "OR" por problemas na compilacao(Tiago).
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Cursores da Package */
@@ -2231,8 +2231,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                             
                             
     .................................................................................*/                           
-                               
-    CURSOR cr_crapban (pr_cdbcoctl IN crapcop.cdbcoctl%TYPE) IS
+    
+     CURSOR cr_crapban (pr_cdbcoctl IN crapcop.cdbcoctl%TYPE) IS
     SELECT REPLACE(UPPER(TRIM(b.nmresbcc)),'&','e') nmresbcc
           ,b.cdbccxlt
           ,b.nrispbif      
@@ -2586,7 +2586,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     END IF;
 
     gene0002.pc_escreve_xml(pr_xml            => pr_xml_operacao23
-                           ,pr_texto_completo => vr_xml_temp 
+                           ,pr_texto_completo => vr_xml_temp
                            ,pr_fecha_xml      => TRUE
                            ,pr_texto_novo     => '</BANCOS>');
 
@@ -4920,13 +4920,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
             ELSE
               vr_cdcritic := 0;
               vr_dscritic := 'Erro no lancamento tarifa de transferencia do tipo credito salario.';
-        END IF;
+            END IF;
             -- Levantar Excecao
             RAISE vr_exc_erro;
           END IF;  
-
-      END IF;
-
+          
+        END IF; 
+        
       END IF;
 
       -- Verificar se lote esta em lock
@@ -10275,7 +10275,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
             (rw_crapcon.cdempcon = 0562 AND rw_crapcon.cdsegmto = 5)  OR  -- DEFESA CIVIL TIMBO 
             (rw_crapcon.cdempcon = 0563 AND rw_crapcon.cdsegmto = 5)  OR  -- MEIO AMBIENTE DE TIMBO 
             (rw_crapcon.cdempcon = 0564 AND rw_crapcon.cdsegmto = 5)  OR  -- TRANSITO DE TIMBO 
-            (rw_crapcon.cdempcon = 0524 AND rw_crapcon.cdsegmto = 5)  OR  -- F.M.S. TROMBUDO CENTRAL
+            (rw_crapcon.cdempcon = 0524 AND rw_crapcon.cdsegmto = 5)      -- F.M.S. TROMBUDO CENTRAL
             ) THEN 
 
           IF To_Number(SUBSTR(pr_cdbarras,20,8)) < To_Number(To_Char(pr_dtagenda,'YYYYMMDD')) THEN            
