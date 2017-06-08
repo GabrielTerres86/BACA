@@ -4198,6 +4198,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     vr_cdagenci VARCHAR2(100);
     vr_nrdcaixa VARCHAR2(100);
     vr_idorigem VARCHAR2(100);
+
+	vr_cdprogra VARCHAR2(50);
     
     vr_tab_erro gene0001.typ_tab_erro;
         
@@ -4208,10 +4210,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     vr_exc_erro  EXCEPTION; 
   
   BEGIN
+	vr_cdprogra := 'GRAVAM';
     
     -- Incluir nome do módulo logado
-    GENE0001.pc_informa_acesso(pr_module => 'GRAVAM'
-                              ,pr_action => null); 
+    GENE0001.pc_informa_acesso(pr_module => vr_cdprogra
+                              ,pr_action => 'pc_gravames_baixa_manual'); 
     
     -- Recupera dados de log para consulta posterior
     gene0004.pc_extrai_dados(pr_xml      => pr_retxml
