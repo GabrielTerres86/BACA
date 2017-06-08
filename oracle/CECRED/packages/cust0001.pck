@@ -7260,7 +7260,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
     Frequencia: Sempre que for chamado
     Objetivo  : Rotina para efetuar resgate dos cheques em custódia
 
-    Alteracoes: 
+    Alteracoes: 08/06/2017 - Ajustado a montagem do numero do documento. (Daniel)
                                                      
   ............................................................................. */
   	DECLARE
@@ -7421,8 +7421,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
 					-- Fecha cursor
 					CLOSE cr_crapcst;
           -- Monta nr. do doc
-					vr_nrdocmto := to_number(to_char(rw_crapcst.nrcheque, '000000') +
-																	 to_char(rw_crapcst.nrddigc3, '0'));
+                         
+          vr_nrdocmto := to_number(to_char(rw_crapcst.nrcheque,'fm000000') ||
+					     to_char(rw_crapcst.nrddigc3,'fm0'));
 
           -- Se for resgatado no mesmo dia da custódia não tarifa
           IF (rw_crapcst.dtmvtolt <> rw_crapdat.dtmvtolt) THEN
