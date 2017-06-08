@@ -68,10 +68,11 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   /** -> Origem = 10 - MOBILE                                     **/
   /** -> Origem = 11 - ACORDO (WEBSERVICE DE ACORDOS)             **/
   /** -> Origem = 12 - ANTIFRAUDE (WEBSERVICE ANALISE ANTIFRAUDE) 	**/
+  /** -> Origem = 13 - COBRANCA (RENOVACAO AUTOMATICA) 	**/
   /** ---------------------------------------------------------**/
 
-  TYPE typ_des_dorigens IS VARRAY(12) OF VARCHAR2(13);
-  vr_vet_des_origens typ_des_dorigens := typ_des_dorigens('AYLLOS','CAIXA','INTERNET','CASH','AYLLOS WEB','URA','PROCESSO','MENSAGERIA','ESTEIRA','MOBILE','ACORDO','ANTIFRAUDE');
+  TYPE typ_des_dorigens IS VARRAY(13) OF VARCHAR2(13);
+  vr_vet_des_origens typ_des_dorigens := typ_des_dorigens('AYLLOS','CAIXA','INTERNET','CASH','AYLLOS WEB','URA','PROCESSO','MENSAGERIA','ESTEIRA','MOBILE','ACORDO','ANTIFRAUDE','COBRANCA');
 
 
   /** ---------------------------------------------------- **/

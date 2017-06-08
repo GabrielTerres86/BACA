@@ -4,14 +4,18 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odirlei Busana - AMcom
-   Data    : Outubro/2016.                       Ultima atualizacao:
+   Data    : Outubro/2016.                       Ultima atualizacao: 20/03/2017
    
    Dados referentes ao programa:
    Frequencia: Sempre que for chamado (On-Line)
    
    Objetivo  : Serviço de SMS de cobrança
    
-   Alteracoes: 
+   Alteracoes: 17/03/2017 - Incluido novas opcoes.
+                            PRJ319.2 - SMS Cobrança(Odirlei-AMcom) 
+                            
+               20/03/2017 - Alteraçao filtro relatório e adiçao de campo
+	                          PRJ319 - SMS Cobrança(Ricardo Linhares)                                
 ..............................................................................*/
  
 CREATE WIDGET-POOL.
@@ -38,6 +42,7 @@ DEF VAR aux_nmfansia        AS CHAR                                      NO-UNDO
 DEF VAR aux_tpnmemis        AS INT                                       NO-UNDO.
 DEF VAR aux_nmemisms        AS CHAR                                      NO-UNDO.
 DEF VAR aux_flgativo        AS INT                                       NO-UNDO.
+DEF VAR aux_idpacote        AS INT                                       NO-UNDO.
 DEF VAR aux_dspacote        AS CHAR                                      NO-UNDO.
 DEF VAR aux_dhadesao        AS DATE                                      NO-UNDO.
 DEF VAR aux_idcontra        AS INT                                       NO-UNDO.
@@ -45,6 +50,15 @@ DEF VAR aux_vltarifa        AS DEC                                       NO-UNDO
 DEF VAR aux_flposcob        AS INT                                       NO-UNDO.
 DEF VAR aux_idcontrato      AS INT                                       NO-UNDO.
 DEF VAR aux_nmarqpdf        AS CHAR                                      NO-UNDO.
+DEF VAR aux_qtsmspct        AS INT                                       NO-UNDO.
+DEF VAR aux_qtsmsusd        AS INT                                       NO-UNDO.
+DEF VAR aux_dsmensag        AS CHAR                                      NO-UNDO.
+DEF VAR aux_flofesms        AS INT                                       NO-UNDO.
+DEF VAR aux_flpospac        AS INT                                       NO-UNDO.
+DEF VAR aux_retxml          AS LONGCHAR                                  NO-UNDO.
+DEF VAR aux_dsmsgsemlinddig AS LONGCHAR                                  NO-UNDO.
+DEF VAR aux_dsmsgcomlinddig AS LONGCHAR                                  NO-UNDO.
+
 
 DEF INPUT  PARAM  par_cdcooper  LIKE crapcop.cdcooper                     NO-UNDO.
 DEF INPUT  PARAM  par_nrdconta  LIKE crapass.nrdconta                     NO-UNDO.
@@ -52,8 +66,11 @@ DEF INPUT  PARAM  par_idseqttl  LIKE crapttl.idseqttl                     NO-UND
 DEF INPUT  PARAM  par_nrcpfope  LIKE crapopi.nrcpfope                     NO-UNDO.
 DEF INPUT  PARAM  par_cddopcao  AS CHAR                                   NO-UNDO.
 DEF INPUT  PARAM  par_idcontrato AS INT                                   NO-UNDO.
+DEF INPUT  PARAM  par_idpacote  AS INT                                    NO-UNDO.
 DEF INPUT  PARAM  par_tpnommis  AS INT                                    NO-UNDO.
 DEF INPUT  PARAM  par_nmemisms  AS CHAR                                   NO-UNDO.
+DEF INPUT  PARAM  par_qtpagina  AS INT                                    NO-UNDO.
+DEF INPUT  PARAM  par_qtporpag  AS INT                                    NO-UNDO.
 
 DEF OUTPUT PARAM  xml_dsmsgerr  AS CHAR                                   NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
@@ -77,6 +94,12 @@ ELSE IF par_cddopcao = "CA"  THEN
 aux_dstransa = 'Cancelar Servico de SMS Cobranca'.
 ELSE IF par_cddopcao = "IC"  THEN
 aux_dstransa = 'Imprimir contrato de Servico SMS Cobranca'.
+
+FIND FIRST crapass 
+        WHERE crapass.cdcooper = par_cdcooper
+        AND crapass.nrdconta = par_nrdconta 
+        NO-LOCK NO-ERROR.
+
 
 /* Alterar remetente */
 IF par_cddopcao = "AR" THEN
@@ -117,7 +140,7 @@ ELSE IF par_cddopcao = "CA" THEN
       RUN STORED-PROCEDURE pc_cancel_contrato_sms
           aux_handproc = PROC-HANDLE NO-ERROR
                                   ( INPUT par_cdcooper     /* pr_cdcooper  */
-                                   ,INPUT par_nrdconta     /* pr_nrdconta  */
+                                   ,INPUT par_nrdconta     /* pr_nrdconta  */ 
                                    ,INPUT par_idseqttl     /* pr_idseqttl  */
                                    ,INPUT par_idcontrato   /* pr_idcontrato*/
                                    ,INPUT 3                /* pr_idorigem  */
@@ -168,6 +191,9 @@ ELSE IF par_cddopcao = "A" THEN
                                    ,INPUT 'INTERNETBANK'   /* pr_nmdatela  */
                                    ,INPUT par_nrcpfope     /* pr_nrcpfope  */
                                    ,INPUT 0                /* pr_inaprpen */
+                                   ,INPUT par_idpacote     /* pr_idpacote */
+                                   ,INPUT 1                /* pr_tpnmemis */
+                                   ,INPUT ""               /* pr_nmemissa */
                                   ,OUTPUT 0                /* pr_idcontrato */
                                   ,OUTPUT ""               /* pr_dsretorn */ 
                                   ,OUTPUT 0
@@ -239,7 +265,110 @@ ELSE IF par_cddopcao = "IC" THEN
                                    '</nmarqpdf></dados>'.
     
   END.
+/* Oferta de SMS */
+ELSE IF par_cddopcao = "OF" THEN
+  DO:
+    /* Rotina para geraçao da impressao do contrato de SMS */
+    { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }    
 
+    RUN STORED-PROCEDURE pc_verifar_oferta_sms
+        aux_handproc = PROC-HANDLE NO-ERROR
+                                ( INPUT par_cdcooper     /* pr_cdcooper  */
+                                 ,INPUT par_nrdconta     /* pr_nrdconta  */ 
+                                 ,OUTPUT 0               /* pr_flofesms */
+                                 ,OUTPUT ""              /* pr_dsmensag */
+                                 ,OUTPUT "").            /* par_dscritic */
+
+    CLOSE STORED-PROC pc_verifar_oferta_sms
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+    { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+
+    ASSIGN aux_dscritic = ""
+           aux_dsmensag = ""
+           aux_flofesms = 0
+           aux_dscritic = pc_verifar_oferta_sms.pr_dscritic
+                          WHEN pc_verifar_oferta_sms.pr_dscritic <> ?
+           aux_flofesms = pc_verifar_oferta_sms.pr_flofesms
+                          WHEN pc_verifar_oferta_sms.pr_flofesms <> ?
+           aux_dsmensag = pc_verifar_oferta_sms.pr_dsmensag
+                          WHEN pc_verifar_oferta_sms.pr_dsmensag <> ?.
+
+    IF aux_dscritic <> "" THEN
+    DO:
+        xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".  
+        RETURN "NOK".
+    END.
+    
+    CREATE xml_operacao.
+    ASSIGN xml_operacao.dslinxml = '<dados><flofesms>' + STRING(aux_flofesms) + 
+                                   '</flofesms><dsmensag>' + aux_dsmensag + 
+                                   '</dsmensag></dados>'.
+    
+  END.
+
+/* Listar pacotes */
+ELSE IF par_cddopcao = "LP" THEN
+  DO:
+    /* Rotina para geraçao da impressao do contrato de SMS */
+    { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }    
+
+    RUN STORED-PROCEDURE pc_listar_pacotes_prog
+        aux_handproc = PROC-HANDLE NO-ERROR
+                                ( INPUT par_cdcooper     /* pr_cdcooper  */
+								 ,INPUT crapass.inpessoa /* pr_inpessoa */
+                                 ,INPUT 1                /* pr_flgstatus */ 
+                                 ,INPUT par_qtpagina     /* pr_pagina     */   
+                                 ,INPUT par_qtporpag     /* pr_tamanho_pagina */
+                                 
+                                 ,OUTPUT ""              /* pr_retxml   */
+                                 ,OUTPUT 0               /* pr_cdcritic */
+                                 ,OUTPUT "" ).           /* pr_dscritic */                                 
+                                 
+                                 
+
+    CLOSE STORED-PROC pc_listar_pacotes_prog
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+    { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+
+    ASSIGN aux_dscritic = ""
+           aux_cdcritic = 0
+           aux_dsmensag = ""
+           aux_flofesms = 0
+           aux_dscritic = pc_listar_pacotes_prog.pr_dscritic
+                          WHEN pc_listar_pacotes_prog.pr_dscritic <> ?
+           aux_retxml = pc_listar_pacotes_prog.pr_retxml
+                          WHEN pc_listar_pacotes_prog.pr_retxml <> ?.
+
+    IF aux_dscritic <> "" THEN
+    DO:
+        xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".  
+        RETURN "NOK".
+    END.
+    
+    /* Atribuir xml de retorno a temptable */ 
+    IF  aux_retxml <> "" THEN
+        DO:
+            ASSIGN aux_iteracoes = roundUp(LENGTH(aux_retxml) / 31000)
+                   aux_posini    = 1.    
+
+            DO  aux_contador = 1 TO aux_iteracoes:
+                
+                CREATE xml_operacao.
+                ASSIGN xml_operacao.dslinxml = SUBSTRING(aux_retxml, aux_posini, 31000)
+                       aux_posini            = aux_posini + 31000.
+                           
+            END.
+        END.
+    
+    
+    CREATE xml_operacao.
+    ASSIGN xml_operacao.dslinxml = '<dados><flofesms>' + STRING(aux_flofesms) + 
+                                   '</flofesms><dsmensag>' + aux_dsmensag + 
+                                   '</dsmensag></dados>'.
+    
+  END. 
 /* Verificar servico de SMS para o cooperado */
 ELSE IF par_cddopcao = "V" THEN
   DO:   
@@ -395,6 +524,45 @@ ELSE IF par_cddopcao = "V" THEN
     
   
   END.
+/* Possui Pacotes */
+ELSE IF par_cddopcao = "PP" THEN
+ DO:
+ 
+    /* Rotina para verificar se possui pacote SMS para a cooperativa */
+    { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }    
+
+    RUN STORED-PROCEDURE pc_possui_pacotes_prog
+        aux_handproc = PROC-HANDLE NO-ERROR
+                                ( INPUT par_cdcooper     /* pr_cdcooper  */
+								 ,INPUT crapass.inpessoa /* pr_inpessoa	 */
+                                 ,OUTPUT 0               /* pr_flgpossui */
+                                 ,OUTPUT 0               /* pr_cdcritic */
+                                 ,OUTPUT "").            /* pr_dscritic */
+
+    CLOSE STORED-PROC pc_possui_pacotes_prog
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+    { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+
+    ASSIGN aux_dscritic = ""
+           aux_flpospac = 0
+           aux_dscritic = pc_possui_pacotes_prog.pr_dscritic
+                          WHEN pc_possui_pacotes_prog.pr_dscritic <> ?
+           aux_flpospac = pc_possui_pacotes_prog.pr_flgpossui
+                          WHEN pc_possui_pacotes_prog.pr_flgpossui <> ?.
+
+    IF aux_dscritic <> "" THEN
+    DO:
+        xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".  
+        RETURN "NOK".
+    END.
+    
+    CREATE xml_operacao.
+    ASSIGN xml_operacao.dslinxml = '<dados><flpospac>' + STRING(aux_flpospac) + 
+                                   '</flpospac></dados>'.
+    
+ 
+ END.
 /* Consultar Contrato */
 ELSE IF par_cddopcao = "C" THEN
   DO: 
@@ -415,12 +583,17 @@ ELSE IF par_cddopcao = "C" THEN
                                             ,OUTPUT 0            /* pr_tpnmemis */ 
                                             ,OUTPUT ""           /* pr_nmemisms */ 
                                             ,OUTPUT 0            /* pr_flgativo */ 
+                                            ,OUTPUT 0            /* pr_idpacote */
                                             ,OUTPUT ""           /* pr_dspacote */ 
                                             ,OUTPUT ?            /* pr_dhadesao */ 
                                             ,OUTPUT 0            /* pr_idcontrato */
                                             ,OUTPUT 0            /* pr_vltarifa */ 
                                             ,OUTPUT 0            /* pr_flsitsms */ 
                                             ,OUTPUT ""           /* pr_dsalerta */ 
+                                            ,OUTPUT 0            /* pr_qtsmspct */
+                                            ,OUTPUT 0            /* pr_qtsmsusd */
+                                            ,OUTPUT ""           /* pr_dsmsgsemlinddig */
+                                            ,OUTPUT ""           /* pr_dsmsgcomlinddig */
                                             ,OUTPUT 0            /* pr_cdcritic */ 
                                             ,OUTPUT "").         /* pr_dscritic */ 
 
@@ -474,10 +647,15 @@ ELSE IF par_cddopcao = "C" THEN
            aux_tpnmemis = 0
            aux_nmemisms = ""
            aux_flgativo = 0
+           aux_idpacote = 0
            aux_dspacote = ""
            aux_dhadesao = ?
            aux_idcontra = 0
-           aux_vltarifa = 0.
+           aux_vltarifa = 0
+           aux_qtsmspct = 0
+           aux_qtsmsusd = 0
+           aux_dsmsgsemlinddig = ""
+           aux_dsmsgcomlinddig = "".
 
     ASSIGN aux_nmprintl = pc_ret_dados_serv_sms.pr_nmprintl 
                           WHEN pc_ret_dados_serv_sms.pr_nmprintl <> ?
@@ -489,15 +667,25 @@ ELSE IF par_cddopcao = "C" THEN
                           WHEN pc_ret_dados_serv_sms.pr_nmemisms <> ?
            aux_flgativo = pc_ret_dados_serv_sms.pr_flgativo 
                           WHEN pc_ret_dados_serv_sms.pr_flgativo <> ?
+           aux_idpacote = pc_ret_dados_serv_sms.pr_idpacote 
+                          WHEN pc_ret_dados_serv_sms.pr_idpacote <> ?
            aux_dspacote = pc_ret_dados_serv_sms.pr_dspacote 
                           WHEN pc_ret_dados_serv_sms.pr_dspacote <> ?
            aux_dhadesao = pc_ret_dados_serv_sms.pr_dhadesao 
                           WHEN pc_ret_dados_serv_sms.pr_dhadesao <> ?
-           aux_idcontra = pc_ret_dados_serv_sms.pr_idcontra 
-                          WHEN pc_ret_dados_serv_sms.pr_idcontra <> ?
+           aux_idcontra = pc_ret_dados_serv_sms.pr_idcontrato 
+                          WHEN pc_ret_dados_serv_sms.pr_idcontrato <> ?
            aux_vltarifa = pc_ret_dados_serv_sms.pr_vltarifa 
-                          WHEN pc_ret_dados_serv_sms.pr_vltarifa <> ?.
-
+                          WHEN pc_ret_dados_serv_sms.pr_vltarifa <> ?
+           aux_qtsmspct = pc_ret_dados_serv_sms.pr_qtsmspct 
+                          WHEN pc_ret_dados_serv_sms.pr_qtsmspct <> ?
+           aux_qtsmsusd = pc_ret_dados_serv_sms.pr_qtsmsusd 
+                          WHEN pc_ret_dados_serv_sms.pr_qtsmsusd <> ?
+           aux_dsmsgsemlinddig = pc_ret_dados_serv_sms.pr_dsmsgsemlinddig
+                                 WHEN pc_ret_dados_serv_sms.pr_dsmsgsemlinddig <> ?
+           aux_dsmsgcomlinddig = pc_ret_dados_serv_sms.pr_dsmsgcomlinddig
+                                 WHEN pc_ret_dados_serv_sms.pr_dsmsgcomlinddig <> ?.                                 
+                        
     CREATE xml_operacao.
     ASSIGN xml_operacao.dslinxml = '<dados>' + 
                                    '<flposcob>' + STRING(aux_flposcob) + '</flposcob>' + 
@@ -509,10 +697,15 @@ ELSE IF par_cddopcao = "C" THEN
     CREATE xml_operacao.
     ASSIGN xml_operacao.dslinxml = '<nmemisms>' + STRING(aux_nmemisms) + '</nmemisms>' + 
                                    '<flgativo>' + STRING(aux_flgativo) + '</flgativo>' + 
+                                   '<idpacote>' + STRING(aux_idpacote) + '</idpacote>' + 
                                    '<dspacote>' + STRING(aux_dspacote) + '</dspacote>' + 
                                    '<dhadesao>' + STRING(aux_dhadesao,"99/99/9999") + '</dhadesao>' + 
                                    '<idcontra>' + STRING(aux_idcontra) + '</idcontra>' + 
-                                   '<vltarifa>' + STRING(aux_vltarifa,"zzz,zz9.99") + '</vltarifa>'.
+                                   '<vltarifa>' + STRING(aux_vltarifa,"zzz,zz9.99") + '</vltarifa>' +
+                                   '<qtsmspct>' + STRING(aux_qtsmspct) + '</qtsmspct>' + 
+                                   '<qtsmsusd>' + STRING(aux_qtsmsusd) + '</qtsmsusd>' +
+                                   '<dsmsgsemlinddig>' + STRING(aux_dsmsgsemlinddig) + '</dsmsgsemlinddig>' +
+                                   '<dsmsgcomlinddig>' + STRING(aux_dsmsgcomlinddig) + '</dsmsgcomlinddig>'.
 
     CREATE xml_operacao.
     ASSIGN xml_operacao.dslinxml = '</dados>'.

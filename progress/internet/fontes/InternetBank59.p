@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2009                        Ultima atualizacao: 17/10/2016
+   Data    : Marco/2009                        Ultima atualizacao: 20/03/2017
 
    Dados referentes ao programa:
 
@@ -55,6 +55,12 @@
                             
                17/10/2016 - Inclusao Relatorio de Envio de SMS.    
 	                          PRJ319 - SMS Cobrança(Odirlei-AMcom)   
+                            
+               17/03/2017 - Inclusao Relatorio de Resumo do serviço de SMS.    
+	                          PRJ319 - SMS Cobrança(Odirlei-AMcom)              
+                            
+               20/03/2017 - Alteraçao filtro relatório e adiçao de campo
+	                          PRJ319 - SMS Cobrança(Ricardo Linhares)                                          
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -98,6 +104,7 @@ DEF  INPUT PARAM par_fimemiss AS DATE                                  NO-UNDO.
 DEF  INPUT PARAM par_flgregis AS LOGI                                  NO-UNDO.
 DEF  INPUT PARAM par_inserasa AS INTE                                  NO-UNDO. 
 DEF  INPUT PARAM par_instatussms AS INTE                               NO-UNDO. 
+DEF  INPUT PARAM par_tppacote AS INTE                                  NO-UNDO. 
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 
@@ -648,6 +655,7 @@ ELSE IF par_idrelato = 6 THEN
                                    INPUT 3,                 /* pr_idorigem */
                                    INPUT aux_dsiduser,      /* pr_dsiduser */
                                    INPUT par_instatussms,   /* pr_instatus */
+                                   INPUT par_tppacote,       /* pr_tppacote */
                                    
                                   OUTPUT "",            /* pr_nmarqpdf */
                                   OUTPUT "",            /* pr_dsxmlrel */
@@ -689,6 +697,66 @@ ELSE IF par_idrelato = 6 THEN
         
       END.
     END.
+    
+/* Relatório Resumido do Serviço de SMS */ 
+ELSE IF par_idrelato = 7 THEN
+    DO:
+       
+      ASSIGN aux_dsiduser = STRING(par_nrdconta) + STRING(TIME).
+      
+      { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }    
+
+      RUN STORED-PROCEDURE pc_relat_resumo_envio_sms
+          aux_handproc = PROC-HANDLE NO-ERROR
+                                  (INPUT par_cdcooper,      /* pr_cdcooper */
+                                   INPUT par_nrdconta,      /* pr_nrdconta */
+                                   INPUT par_iniemiss,      /* pr_dtiniper */
+                                   INPUT par_fimemiss,      /* pr_dtfimper */
+                                   INPUT 3,                 /* pr_idorigem */
+                                   INPUT aux_dsiduser,      /* pr_dsiduser */
+                                   INPUT par_instatussms,   /* pr_instatus */
+                                   
+                                  OUTPUT "",            /* pr_nmarqpdf */
+                                  OUTPUT "",            /* pr_dsxmlrel */
+                                  OUTPUT 0,             /* pr_cdcritic */ 
+                                  OUTPUT "").           /* pr_dscritic */
+
+      CLOSE STORED-PROC pc_relat_resumo_envio_sms
+            aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+      { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+
+      ASSIGN aux_dscritic = ""
+             aux_cdcritic = 0
+             aux_nmarqpdf = ""
+             aux_cdcritic = pc_relat_resumo_envio_sms.pr_cdcritic
+                                WHEN pc_relat_resumo_envio_sms.pr_cdcritic <> ?
+             aux_dscritic = pc_relat_resumo_envio_sms.pr_dscritic
+                                WHEN pc_relat_resumo_envio_sms.pr_dscritic <> ?
+             aux_dsxmlrel = pc_relat_resumo_envio_sms.pr_dsxmlrel
+                                WHEN pc_relat_resumo_envio_sms.pr_dsxmlrel <> ?.
+      
+      IF aux_dscritic <> "" THEN
+        DO:
+            xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".  
+            RETURN "NOK".
+        END.  
+
+      /* Atribuir xml de retorno a temptable*/ 
+      IF aux_dsxmlrel <> "" THEN
+      DO:    
+        ASSIGN aux_iteracoes = roundUp(LENGTH(aux_dsxmlrel) / 31000)
+               aux_posini    = 1.    
+        
+        DO aux_contador = 1 TO aux_iteracoes:
+
+          CREATE xml_operacao.
+          ASSIGN xml_operacao.dslinxml = SUBSTRING(aux_dsxmlrel, aux_posini, 31000)
+                 aux_posini            = aux_posini + 31000.
+        END.
+        
+      END.
+    END.    
 
 RETURN "OK".
 

@@ -25,6 +25,7 @@ isPostMethod();
 $cddopcao = (isset($_POST['cddopcao'])) ? $_POST['cddopcao'] : '';
 $cdcoptel = (isset($_POST['cdcoptel'])) ? $_POST['cdcoptel'] : 0;
 $flofesms = (isset($_POST['flofesms'])) ? $_POST['flofesms'] : 0;
+$flgenvia_sms = (isset($_POST['flgenvia_sms'])) ? $_POST['flgenvia_sms'] : 0;
 $dtiniofe = (isset($_POST['dtiniofe'])) ? $_POST['dtiniofe'] : '';
 $dtfimofe = (isset($_POST['dtfimofe'])) ? $_POST['dtfimofe'] : '';
 $dsmensag = (isset($_POST['dsmensag'])) ? $_POST['dsmensag'] : '';
@@ -220,11 +221,11 @@ if ( $cddopcao == 'GO' or  // Gravar opcao O
     $xml->add('cddopcao'       ,$cddopcao);
     
     if ( $cddopcao == 'GO') {    
-        $xml->add('flgoferta_sms'  ,$flofesms);
-        $xml->add('dtini_oferta'   ,$dtiniofe);
-        $xml->add('dtfim_oferta'   ,$dtfimofe);                
-        $xml->add('json_mensagens' ,utf8_decode($json_mensagens));
-        
+        $xml->add('flgenvia_sms'  ,$flgenvia_sms);
+        $xml->add('flgoferta_sms' ,$flofesms);
+        $xml->add('dtini_oferta'  ,$dtiniofe);
+        $xml->add('dtfim_oferta'  ,$dtfimofe);                
+        $xml->add('json_mensagens',utf8_decode($json_mensagens));
         $nmdeacao = "ATUALIZAR_SMS_PARAM";
         
     }else if ( $cddopcao == 'GM') {    

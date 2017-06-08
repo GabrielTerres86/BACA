@@ -69,6 +69,9 @@
 			   11/11/2016 - Inclusao da origem MOBILE e ACORDO na lista de origens. 
 			                PRJ335 - Analise Fraudes(Odirlei-AMcom)
                             
+			   20/03/2017 - Incluido novo codigo de origem 13 -  COBRANCA (RENOVACAO AUTOMATICA) 
+			                PRJ319.2 - SMS Cobrança (Odirlei-AMcom)
+                            
 ..............................................................................*/
 
 DEF TEMP-TABLE tt-erro NO-UNDO LIKE craperr.
@@ -95,9 +98,11 @@ DEF VAR aux_srvintra AS CHAR                                           NO-UNDO.
 /** -> Origem = 10 - MOBILE                                   **/
 /** -> Origem = 11 - ACORDO (WEBSERVICE DE ACORDOS)           **/  
 /** -> Origem = 12 - ANTIFRAUDE (WEBSERVICE ANALISE ANTIFRAUDE) **/
+/** -> Origem = 13 - COBRANCA (RENOVACAO AUTOMATICA)          **/
 /** --------------------------------------------------------- **/
 
-ASSIGN des_dorigens = "AYLLOS,CAIXA,INTERNET,CASH,AYLLOS WEB,URA,PROCESSO,MENSAGERIA,ESTEIRA,MOBILE,ACORDO,ANTIFRAUDE".
+ASSIGN des_dorigens = "AYLLOS,CAIXA,INTERNET,CASH,AYLLOS WEB,URA,PROCESSO,MENSAGERIA,ESTEIRA,MOBILE,ACORDO,ANTIFRAUDE,COBRANCA".
+
 
 /** Armazenar data do servidor **/
 ASSIGN aux_datdodia = TODAY.

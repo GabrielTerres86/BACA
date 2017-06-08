@@ -1,27 +1,31 @@
 <?php
 /*!
  * FONTE        : form_cadsms.php
- * CRIAÇÃO      : Odirlei Busana - AMcom
- * DATA CRIAÇÃO : 04/10/2016
- * OBJETIVO     : Mostrar campos das opcões 
+ * CRIAÃ‡ÃƒO      : Odirlei Busana - AMcom
+ * DATA CRIAÃ‡ÃƒO : 04/10/2016
+ * OBJETIVO     : Mostrar campos das opcÃµes 
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÃ‡Ã•ES   : 
  * --------------
  */
 
 ?>
 
 <style>
-.ui-datepicker-trigger{
-    float:left;
-    margin-left:2px;
-    margin-top:5px;
-}
+	.ui-datepicker-trigger{
+		float:left;
+		margin-left:2px;
+		margin-top:5px;
+	}
 </style>
 
 <div id="divOpcaoO">
 <form id="frmOpcaoO" name="frmOpcaoO" class="formulario" style="display:block;">
 
+	<br style="clear:both" />	
+
+    <input id="flgenvia_sms" name="flgenvia_sms" type="checkbox" style="margin:0px;margin-top:3px" >
+    <label for="flgenvia_sms" class="rotulo-linha" style="padding-left: 5px;"><? echo utf8ToHtml('Cooperativa envia SMS') ?></label>
     
 	<br style="clear:both" />	
     
