@@ -31,6 +31,9 @@ create or replace procedure cecred.pc_crps626 (pr_cdcooper IN crapcop.cdcooper%T
                 05/08/2014 - Alteraçao da Nomeclatura para PA (Vanessa).
                
                 09/11/2017 - Conversão Progress para Oracle (Jonata-MOUTs)
+
+				        06/06/2017 - Incluso tratativa para efetuar leitura da crapcst de
+				                     apenas cheques que nao foram descontados. (Daniel) 
   ............................................................................. */
 
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -80,7 +83,8 @@ create or replace procedure cecred.pc_crps626 (pr_cdcooper IN crapcop.cdcooper%T
          and crapcst.cdbanchq = pr_cdbanchq  -- Nro do Bco
          and crapcst.cdagechq = pr_cdagechq  -- Age dest  
          and crapcst.nrctachq = pr_nrctachq  -- Nr ctachq 
-         and crapcst.nrcheque = pr_nrdocmto; -- Nro chq   
+         and crapcst.nrcheque = pr_nrdocmto  -- Nro chq   
+		     AND crapcst.nrborder = 0;
     RW_CRAPCST CR_CRAPCST%ROWTYPE;
    
     -- Retorno dos cheques contidos no Borderô da Custódia
