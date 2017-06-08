@@ -1,39 +1,40 @@
-CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_MENSAL (pr_cdcooper IN crapcop.cdcooper%TYPE,
-                                                  pr_dsjobnam IN VARCHAR2) IS
+CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_CONTAB_CESSAO (pr_cdcooper IN crapcop.cdcooper%TYPE,
+                                                         pr_dsjobnam IN VARCHAR2) IS
  /* ..........................................................................
 
-   JOB: PC_JOB_MENSAL
+   JOB: PC_JOB_CONTAB_CESSAO
    Sistema : Conta-Corrente - Cooperativa de Credito
    Autor   : Odirlei Busana - AMcom
    Data    : Maio/2017.                     Ultima atualizacao:
 
    Dados referentes ao programa:
 
-   Frequencia: Diário.
-   Objetivo  : Rodar procedimentos que devem ser rodados apenas na MENSAL.
-               Job rodará todos os dias apos o processo
+   Frequencia: Mensal.
+   Objetivo  : Chamar CRPS715 responsavel por gerar a contabilizacao das cessoes
+               de cartao de credito. O JOB executa no primeiro dia da semana de
+               cada mês, mesmo que ele for um feriado, o que nao representa nenhum
+               problema. O unico prerequisito do CRPS715 e o processo mensal ter
+               finalizado e a data da cooperativa estar no mes seguinte.
 
    Alteracoes:
 
   ..........................................................................*/
   ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
-    vr_cdprogra    VARCHAR2(40) := 'PC_JOB_MENSAL';
+    vr_cdprogra    VARCHAR2(40) := 'PC_JOB_CONTAB_CESSAO';
     
     vr_exc_email   EXCEPTION;
     vr_cdcritic    PLS_INTEGER;
     vr_dscritic    VARCHAR2(4000);
 
-    vr_dtdiahoje   DATE;
     vr_dsplsql     VARCHAR2(2000);
     vr_jobname     VARCHAR2(30);
 
-    vr_dtmvtolt    DATE;    
     vr_email_dest  VARCHAR2(1000);
     vr_conteudo    VARCHAR2(4000);
     
     vr_minuto      NUMBER;
 
-    vr_nomdojob  CONSTANT VARCHAR2(100) := 'JBGEN_MENSAL';
+    vr_nomdojob  CONSTANT VARCHAR2(100) := 'JBCRD_CBCESSAO';
     vr_flgerlog  BOOLEAN := FALSE;
 
     -- Variáveis de controle de calendário
@@ -66,8 +67,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_MENSAL (pr_cdcooper IN crapcop.cdcoope
 
   BEGIN
 
-    vr_dtdiahoje := TRUNC(SYSDATE);
-
     --> Se for coop 0 deve criar o job para cada coop
     IF pr_cdcooper = 0 THEN
 
@@ -75,39 +74,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_MENSAL (pr_cdcooper IN crapcop.cdcoope
       --> Buscar cooperativas ativas
       FOR rw_crapcop IN cr_crapcop LOOP
 
-        -- Verificação do calendário
-        OPEN BTCH0001.cr_crapdat(pr_cdcooper => rw_crapcop.cdcooper);
-        FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
-
-        IF BTCH0001.cr_crapdat%NOTFOUND THEN
-          CLOSE BTCH0001.cr_crapdat;
-          -- Montar mensagem de critica
-          vr_cdcritic:= 1;
-          vr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-          RAISE vr_exc_email;
-        ELSE
-          -- Apenas fechar o cursor
-          CLOSE BTCH0001.cr_crapdat;
-        END IF;
-
-        --> Se a coop ainda estiver no processo batch, usar proxima data util
-        IF rw_crapdat.inproces > 1 THEN
-          vr_dtmvtolt := rw_crapdat.dtmvtopr;
-        ELSE
-          vr_dtmvtolt := rw_crapdat.dtmvtolt;
-        END IF;
-
-        --> Verificar se a data do sistema eh o dia de hoje
-        IF vr_dtdiahoje <> vr_dtmvtolt THEN
-          --> O JOB esta confirgurado para rodar de Segunda a Sexta
-          -- Mas nao existe a necessidade de rodar nos feriados
-          -- Por isso que validamos se o dia de hoje eh o dia do sistema
-          continue;
-        END IF;
-
-        vr_jobname := vr_nomdojob||'_'||rw_crapcop.cdcooper||'_P$';
-        vr_dsplsql := 'begin cecred.PC_JOB_MENSAL(pr_cdcooper => '||rw_crapcop.cdcooper ||
-                                               ', pr_dsjobnam => '''||vr_jobname||'''); end;';
+        vr_jobname := vr_nomdojob||'_'||rw_crapcop.cdcooper||'$';
+        vr_dsplsql := 'begin cecred.PC_JOB_CONTAB_CESSAO(pr_cdcooper => '||rw_crapcop.cdcooper ||
+                                                      ', pr_dsjobnam => '''||vr_jobname||'''); end;';
 
       
         vr_minuto := (1/24/60); --> 1 - minuto
@@ -255,5 +224,5 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_MENSAL (pr_cdcooper IN crapcop.cdcoope
                                 ,pr_des_erro        => vr_dscritic);
       COMMIT;
 
- END PC_JOB_MENSAL;
+ END PC_JOB_CONTAB_CESSAO;
 /
