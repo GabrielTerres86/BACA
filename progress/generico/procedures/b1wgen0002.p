@@ -28,7 +28,7 @@
 
    Programa: b1wgen0002.p
    Autora  : Mirtes.
-   Data    : 14/09/2005                        Ultima atualizacao: 23/09/2016
+   Data    : 14/09/2005                        Ultima atualizacao: 12/04/2017
 
    Dados referentes ao programa:
 
@@ -650,6 +650,9 @@
               23/09/2016 - Correçao deletar o Handle da b1wgen0114 esta gerando erro na geraçao
                            do PDF para envio da esteira (Oscar).
 
+			  23/09/2016 - Inclusao de validacao de contratos de acordos,
+                           Prj. 302 (Jean Michel).
+
 			  25/10/2016 - Verificar CNAE restrito Melhoria 310 (Tiago/Thiago).
 
 			  19/10/2016 - Incluido registro de log sobre liberacao de alienacao de bens 10x maior que 
@@ -658,6 +661,22 @@
 			  26/10/2016 - Chamado 537058 - Correcao referente a linhas de creditos inativas.
 						   (Gil - MOUTS)
              
+			  20/02/2017 - Ajuste para validaçao de Capital de Giro na procedure valida-dados-gerais. 
+			               Nao permitir utilizacao de Capital de Giro por pessoa fisica. 
+						   (Daniel - Chamado 581906).
+               
+        22/03/2017 - Incluido tratamento para emprestimos PP quando a carencia da linha de credito for nula.
+                     Nesses casos ira seguir as mesmas regras de carencia = 0 dias.
+                     Hoje esta considerando fixo 60 dias nesses casos.
+                     Heitor (Mouts) - Chamado 629653.
+             
+			  12/04/2017 - Realizado ajuste onde não estava sendo possível lançar contratos 
+                           de emprestimos com a linha 70, conforme solicitado no chamado 644168. (Kelvin)
+				 
+			  08/06/2017 - Inicializacao do parâmetro par_nrctremp nas rotinas grava-proposta-completa,
+                     altera-valor-proposta, atualiza-dados-avalista-proposta
+                     Substituicao do 'LEAVE Grava' ou 'LEAVE Grava_valor' por 'RETURN NOK' em algumas situacoes
+                     Chamado 660371 - Ana (Envolti)
  ..............................................................................*/
 
 /*................................ DEFINICOES ................................*/
@@ -1297,6 +1316,7 @@ PROCEDURE valida-liquidacao-emprestimos:
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
     DEF VAR aux_returnvl AS CHAR                                    NO-UNDO.
+    DEF VAR aux_flgativo AS INT                                     NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
 
@@ -1337,6 +1357,44 @@ PROCEDURE valida-liquidacao-emprestimos:
                                LEAVE Valida.
                            END.
                     END.
+                    
+                /* Verifica se ha contratos de acordo */            
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                
+                RUN STORED-PROCEDURE pc_verifica_acordo_ativo
+                  aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                                      ,INPUT par_nrdconta
+                                                      ,INPUT par_nrctremp
+                                                      ,0
+                                                      ,0
+                                                      ,"").
+
+                CLOSE STORED-PROC pc_verifica_acordo_ativo
+                          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                ASSIGN aux_cdcritic = 0
+                       aux_dscritic = ""
+                       aux_cdcritic = pc_verifica_acordo_ativo.pr_cdcritic WHEN pc_verifica_acordo_ativo.pr_cdcritic <> ?
+                       aux_dscritic = pc_verifica_acordo_ativo.pr_dscritic WHEN pc_verifica_acordo_ativo.pr_dscritic <> ?
+                       aux_flgativo = INT(pc_verifica_acordo_ativo.pr_flgativo).
+                
+                IF aux_cdcritic > 0 THEN
+                  DO:
+                      RUN fontes/critic.p.
+                      LEAVE Valida.
+             END.
+                ELSE IF aux_dscritic <> ? AND aux_dscritic <> "" THEN
+                  DO:
+                    LEAVE Valida.
+                  END.
+
+                IF aux_flgativo = 1 THEN
+                  DO:
+                    ASSIGN aux_dscritic = "Nao e possivel marcar o contrato " + STRING(par_nrctremp) + " para liquidar, contrato esta em acordo.".
+                    LEAVE Valida.
+                  END.  
              END.
 
         /* Validar Data do Emprestimo */
@@ -3160,6 +3218,9 @@ PROCEDURE valida-dados-gerais:
     DEF   VAR        h-b1wgen0188 AS HANDLE                         NO-UNDO.
     DEF   VAR        h-b1wgen0043 AS HANDLE                         NO-UNDO.
 
+    DEF   VAR        aux_flgativo AS INTEGER                        NO-UNDO.
+    DEF   VAR        aux_contaliq AS INTEGER                        NO-UNDO.
+		
     ASSIGN aux_cdcritic = 0
            aux_dscritic = "".
 
@@ -3273,6 +3334,35 @@ PROCEDURE valida-dados-gerais:
                        "Linha de credito nao permitida para esta modalidade.".
                 LEAVE.
             END.        
+                
+		IF crapass.inpessoa = 1  THEN
+		DO:
+
+			IF CAN-FIND(craplcr WHERE
+						 craplcr.cdcooper = par_cdcooper AND
+						 craplcr.cdlcremp = par_cdlcremp AND
+						 craplcr.cdmodali = "02" AND 
+						 craplcr.cdsubmod = "15") THEN
+			DO:	   
+				ASSIGN aux_cdcritic = 0
+					   aux_dscritic = "Capital de giro apenas permito para conta pessoa juridica.".
+
+				LEAVE.
+			END.
+
+			IF CAN-FIND(craplcr WHERE
+						 craplcr.cdcooper = par_cdcooper AND
+						 craplcr.cdlcremp = par_cdlcremp AND
+						 craplcr.cdmodali = "02" AND 
+						 craplcr.cdsubmod = "16") THEN
+			DO:	   
+				ASSIGN aux_cdcritic = 0
+					   aux_dscritic = "Capital de giro apenas permito para conta pessoa juridica.".
+
+				LEAVE.
+			END.
+
+		END.	     
                 
 
         IF   par_vlemprst = 0   THEN
@@ -3413,17 +3503,75 @@ PROCEDURE valida-dados-gerais:
              END.
         ELSE /* Senao pegar data do emprestimo */
              DO:
-                 FIND crawepr WHERE
-                      crawepr.cdcooper = par_cdcooper   AND
-                      crawepr.nrdconta = par_nrdconta   AND
-                      crawepr.nrctremp = par_nrctremp
-                      NO-LOCK NO-ERROR.
+        ASSIGN aux_flgativo = 0.
 
-                 IF   AVAIL crawepr   THEN
+				FIND crawepr WHERE crawepr.cdcooper = par_cdcooper
+                       AND crawepr.nrdconta = par_nrdconta
+                       AND crawepr.nrctremp = par_nrctremp NO-LOCK NO-ERROR.
+
+        IF AVAILABLE crawepr   THEN
+          DO:
                       ASSIGN aux_dtmvtolt = crawepr.dtmvtolt.
+              
+            IF par_dsctrliq <> "Sem liquidacoes"   THEN
+					ASSIGN aux_contaliq = NUM-ENTRIES(par_dsctrliq).
+				ELSE
+          ASSIGN aux_contaliq = 0.               
+        
+          DO aux_contador = 1 TO aux_contaliq:
+
+            IF NUM-ENTRIES(par_dsctrliq) > 0 THEN
+              DO:
+
+              { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+              /* Verifica se ha contratos de acordo */
+              RUN STORED-PROCEDURE pc_verifica_acordo_ativo
+              aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                        ,INPUT par_nrdconta
+                        ,INPUT INTEGER(ENTRY(aux_contador,par_dsctrliq))
+                        ,0
+                        ,0
+                        ,"").
+
+              CLOSE STORED-PROC pc_verifica_acordo_ativo
+                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+              { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+              ASSIGN aux_cdcritic = 0
+                  aux_dscritic = ""
+                  aux_cdcritic = INT(pc_verifica_acordo_ativo.pr_cdcritic) WHEN pc_verifica_acordo_ativo.pr_cdcritic <> ?
+                  aux_dscritic = pc_verifica_acordo_ativo.pr_dscritic WHEN pc_verifica_acordo_ativo.pr_dscritic <> ?
+                  aux_flgativo = INT(pc_verifica_acordo_ativo.pr_flgativo) WHEN pc_verifica_acordo_ativo.pr_flgativo <> ?.
+                              
+              IF aux_cdcritic > 0 THEN
+              DO:
+                LEAVE.
+             END.
+              ELSE IF aux_dscritic <> ? AND aux_dscritic <> "" THEN
+              DO:
+                LEAVE.
+              END.
+                            
+              IF aux_flgativo = 1 THEN
+                DO:
+				ASSIGN aux_dscritic = "Nao e possivel marcar o contrato " + ENTRY(aux_contador,par_dsctrliq) + " para liquidar, contrato esta em acordo.".	
+                LEAVE.
+                END.
+              END.
+                                  
+          END. /* DO TO aux_contaliq */  
+          END.
+        
+				IF aux_flgativo = 1 THEN
+				  DO:
+            LEAVE.
+          END.
+
              END.
         
-        IF   par_tpemprst = 0 THEN
+        IF par_tpemprst = 0 THEN
              DO:
 
                  /* validar finalidade de portabilidade(crapfin.tpfinali=2) para produto "PRICE TR" */
@@ -3605,7 +3753,7 @@ PROCEDURE valida-dados-gerais:
                       aux_dscritic = pc_busca_linha_credito_prog.pr_dscritic
                                      WHEN pc_busca_linha_credito_prog.pr_dscritic <> ?.
                                      
-               IF INDEX (aux_lslcremp, STRING(par_cdlcremp)) > 0 THEN
+               IF INDEX (aux_lslcremp, ";" + STRING(par_cdlcremp) + ";") > 0 THEN
                  DO:
                      ASSIGN aux_dscritic = "Linha de credito nao permitida".
                      LEAVE.
@@ -5426,7 +5574,7 @@ PROCEDURE grava-proposta-completa:
     DEF  INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_inpessoa AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_nrctremp AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrctremp AS INTE INIT 0                    NO-UNDO. /*Inicializaçao = CH660371 - Ana (Envolti)*/
     DEF  INPUT PARAM par_tpemprst AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_flgcmtlc AS LOGI                           NO-UNDO.
     DEF  INPUT PARAM par_vlutiliz AS DECI                           NO-UNDO.
@@ -6073,7 +6221,7 @@ PROCEDURE grava-proposta-completa:
             OUTPUT TABLE tt-msg-confirma).
 
         IF   RETURN-VALUE <> "OK"   THEN
-             UNDO Grava, LEAVE Grava.
+             UNDO Grava, RETURN "NOK". /*LEAVE Grava.*/ /*teste ana*/
 
         RUN verifica_microcredito (INPUT par_cdcooper,
                                    INPUT par_cdlcremp,
@@ -6121,7 +6269,7 @@ PROCEDURE grava-proposta-completa:
                                   OUTPUT TABLE tt-msg-confirma).
 
         IF   RETURN-VALUE <> "OK"   THEN
-             UNDO Grava, LEAVE Grava.
+             UNDO Grava,RETURN "NOK". /*LEAVE Grava*/ /*teste ana*/
 
         /* Atualiza a data de liberacao */
         ASSIGN crawepr.dtlibera = par_dtlibera.
@@ -6257,6 +6405,12 @@ PROCEDURE grava-proposta-completa:
                                           OUTPUT TABLE tt-erro).
         DELETE PROCEDURE h-b1wgen0043.
 
+/*teste ana de*/
+        IF   RETURN-VALUE <> "OK"   THEN
+             UNDO Grava, RETURN "NOK".
+/*teste ana ate*/
+        
+
         IF  crawepr.tpemprst <> 1  THEN
             DO:
                 RUN sistema/generico/procedures/b1wgen0084.p
@@ -6385,7 +6539,7 @@ PROCEDURE altera-valor-proposta:
     DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
-    DEF  INPUT PARAM par_nrctremp AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrctremp AS INTE INIT 0                    NO-UNDO. /*Inicializaçao - Chamado 660371 - Ana (Envolti)*/
     DEF  INPUT PARAM par_flgcmtlc AS LOGI                           NO-UNDO.
     DEF  INPUT PARAM par_vlemprst AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_vlpreemp AS DECI                           NO-UNDO.
@@ -6852,7 +7006,7 @@ PROCEDURE altera-valor-proposta:
 
                         EMPTY TEMP-TABLE tt-erro.
 
-                        UNDO Grava_valor, LEAVE Grava_valor.
+                        UNDO Grava_valor, RETURN "NOK". /*LEAVE Grava_valor.*/ /*teste ana*/
                     END.
                 
                 /* Caso o valor da prestacao foi alterado, vamos mostrar mensagem */
@@ -6915,7 +7069,7 @@ PROCEDURE altera-valor-proposta:
 
                 EMPTY TEMP-TABLE tt-erro.
 
-                UNDO Grava_valor, LEAVE Grava_valor.
+                UNDO Grava_valor, RETURN "NOK". /*LEAVE Grava_valor.*/ /*teste ana*/
             END.
 
         ASSIGN crawepr.percetop = aux_percetop.
@@ -6959,7 +7113,9 @@ PROCEDURE altera-valor-proposta:
                                    "risco da proposta.".
 
                       EMPTY TEMP-TABLE tt-erro.                        
-                      UNDO Grava_valor, LEAVE Grava_valor.
+                      UNDO Grava_valor, RETURN "NOK". /* LEAVE Grava_valor.*/ /* teste ana*/
+                      
+                      
                   END.    
 
                ASSIGN crawepr.dsnivris = UPPER(aux_nivrisco).
@@ -8678,7 +8834,7 @@ PROCEDURE valida-dados-proposta-completa:
              DO:
                  ASSIGN aux_qtdiacar = craplcr.qtcarenc.
 
-                 IF   aux_qtdiacar <> 0   THEN
+                 IF   aux_qtdiacar <> 0 AND aux_qtdiacar <> ? THEN
                       DO:
                           IF   par_dtdpagto - par_dtlibera > aux_qtdiacar   THEN
                                DO:
@@ -12072,7 +12228,7 @@ PROCEDURE atualiza_dados_avalista_proposta:
     DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
-    DEF  INPUT PARAM par_nrctremp AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrctremp AS INTE INT 0                     NO-UNDO.
     DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
     DEF  INPUT PARAM par_dsdopcao AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrctaava AS INTE                           NO-UNDO.
