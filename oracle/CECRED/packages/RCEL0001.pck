@@ -4966,7 +4966,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                                       ,pr_dsarqsaid => vr_nom_direto||'/'||vr_nom_arquivo||'.lst' --> Arquivo final
                                       ,pr_qtcoluna  => 132                 --> 132 colunas
                                       ,pr_sqcabrel  => 1                   --> Sequencia do Relatorio {includes/cabrel132_2.i}
-                                      ,pr_flg_impri => 'N'                 --> Chamar a impressão (Imprim.p)
+                                      ,pr_flg_impri => 'S'                 --> Chamar a impressão (Imprim.p)
                                       ,pr_nmformul  => NULL                --> Nome do formulário para impressão
                                       ,pr_nrcopias  => 1                   --> Número de cópias
                                       ,pr_flg_gerar => 'S'                 --> gerar PDF
