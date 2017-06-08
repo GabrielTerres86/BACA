@@ -962,7 +962,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
 --      END IF;
       
       IF rw_craplcm.cdhistor in (809,811,814,822,839,812,813) THEN
-         vr_linhadet := '999,'||TRIM(to_char(rw_craplcm.vllanmto, '99999999999990.00'));               
+         vr_linhadet := '999,'||TRIM(to_char(rw_craplcm.vllanmto, '99999999999990.00')); 
+         pc_gravar_linha(vr_linhadet);              
       END IF;
        
     END LOOP;
