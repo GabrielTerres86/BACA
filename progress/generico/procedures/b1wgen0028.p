@@ -6563,7 +6563,7 @@ PROCEDURE grava_dados_cartao_nao_gerado:
 
        
        /* Mantem relacionamento conta x conta cartao */
-       { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+       { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
        /* Efetuar a chamada a rotina Oracle */ 
        RUN STORED-PROCEDURE pc_insere_conta_cartao
@@ -6577,7 +6577,7 @@ PROCEDURE grava_dados_cartao_nao_gerado:
        CLOSE STORED-PROC pc_insere_conta_cartao
             aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
 
-       { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+       { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
        ASSIGN aux_cdcritic = pc_insere_conta_cartao.pr_cdcritic
                                 WHEN pc_insere_conta_cartao.pr_cdcritic <> ?           
