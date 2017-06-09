@@ -7121,6 +7121,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 	vr_tab_lim_desconto typ_tab_lim_desconto;
   vr_dsdmensg         VARCHAR2(300);
   
+  -- IOF
+  vr_qtdiaiof         NUMBER;   
+  vr_periofop         NUMBER;
+  vr_vliofcal         NUMBER;
+  vr_vltotiof         NUMBER;
+  
   -- Buscar Cooperativa
   CURSOR cr_crapcop(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
     SELECT nmrescop
@@ -7486,6 +7492,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			RAISE vr_exc_erro;
 		END IF;
 						
+    -- IOF 
+    vr_vltotiof := 0;
+						
 		-- Iterar sobre os cheques aprovados						
 		FOR vr_idx_cheque IN vr_tab_cheques.first..vr_tab_cheques.last LOOP
 			-- Se o cheque for da cooperativa
@@ -7646,6 +7655,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			END;			
 			-- Guardar o valor total liquido do borderô para lançar na conta do cooperado
 			vr_vlborder := nvl(vr_vlborder,0) + vr_tab_cheques(vr_idx_cheque).vlliquid;
+      
+      
+      -- Novo IOF
+      vr_qtdiaiof := vr_tab_cheques(vr_idx_cheque).dtlibera - rw_crapdat.dtmvtolt;
+
+      IF vr_qtdiaiof > 365 THEN
+         vr_qtdiaiof := 365;
+      END IF;    
+             
+      IF rw_crapass.inpessoa = 1 THEN
+         -- IOF Operacacao PF
+         vr_periofop := vr_qtdiaiof * 0.0082;
+      ELSE
+         -- IOF Operacacao PJ
+         vr_periofop := vr_qtdiaiof * 0.0041;
+      END IF;   
+
+      -- Calculo IOF
+      vr_vliofcal := (vr_tab_cheques(vr_idx_cheque).vlliquid * vr_periofop) / 100;
+
+      -- Acumula Total IOF
+      vr_vltotiof := vr_vltotiof + vr_vliofcal;
+      
 		END LOOP;
 		
 		-- Tira vinculo da dcc e cst com o borderô
@@ -7943,7 +7975,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 													 ,324
 													 ,(vr_nrseqdig + 1)
 													 ,to_char(vr_vlborder, 'fm000g000g000d00')
-													 ,ROUND((vr_vlborder * vr_txccdiof), 2)
+													 ,ROUND( ( ROUND((vr_vlborder * vr_txccdiof), 2) + vr_vltotiof),2)
 													 ,pr_cdcooper)
 					RETURNING vllanmto INTO vr_vllanmto;
 				EXCEPTION
