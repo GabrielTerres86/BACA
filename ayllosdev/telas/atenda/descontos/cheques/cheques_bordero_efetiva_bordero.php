@@ -3,11 +3,13 @@
 	/************************************************************************
 	 Fonte: cheques_bordero_efetiva_bordero.php
 	 Autor: Lucas Reinert
-	 Data : Dezembro/2016                Última Alteração: 
+	 Data : Dezembro/2016                Última Alteração: 31/05/2017
 	                                                                  
 	 Objetivo  : Efetivar/liberar borderô de desconto de cheques
 	                                                                  	 
-	 Alterações: 
+	 Alterações: 31/05/2017 - Ajuste para verificar se possui cheque custodiado
+                              no dia de hoje. 
+                              PRJ300- Desconto de cheque. (Odirlei-AMcom)
 	************************************************************************/
 	
 	session_start();
@@ -30,6 +32,7 @@
 	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0;	
 	$nrborder = (isset($_POST['nrborder'])) ? $_POST['nrborder'] : 0;	
 	$cdopcolb = (isset($_POST['cdopcolb'])) ? $_POST['cdopcolb'] : ' ';	
+    $flresghj = (isset($_POST["flresghj"])) ? $_POST["flresghj"] : 0;
 	
 	// Montar o xml de Requisicao
 	$xml  = "<Root>";
@@ -37,6 +40,7 @@
 	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
 	$xml .= "   <nrborder>".$nrborder."</nrborder>";
 	$xml .= "   <cdopcolb>".$cdopcolb."</cdopcolb>";
+    $xml .= "   <flresghj>".$flresghj."</flresghj>";
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 	

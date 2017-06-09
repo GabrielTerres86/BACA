@@ -60,6 +60,7 @@ DEF VAR aux_nrctrant AS INTE                                           NO-UNDO.
 DEF VAR aux_antnrctr AS INTE                                           NO-UNDO.
 DEF VAR aux_nrborder AS INTE                                           NO-UNDO.
 DEF VAR aux_flgelote AS LOGI                                           NO-UNDO.
+DEF VAR aux_flresghj AS INTE                                           NO-UNDO.
 DEF VAR aux_cddopcao AS CHAR                                           NO-UNDO.
 DEF VAR aux_inconfir AS INTE                                           NO-UNDO.
 DEF VAR aux_inconfi2 AS INTE                                           NO-UNDO.
@@ -185,6 +186,7 @@ PROCEDURE valores_entrada:
             WHEN "flgelote" THEN aux_flgelote = IF tt-param.valorCampo = "1"
                                                 THEN TRUE
                                                 ELSE FALSE.
+            WHEN "flresghj" THEN aux_flresghj = INTE(tt-param.valorCampo).                                    
             WHEN "cddopcao" THEN aux_cddopcao = tt-param.valorCampo.
             WHEN "inconfir" THEN aux_inconfir = INTE(tt-param.valorCampo).
             WHEN "inconfi2" THEN aux_inconfi2 = INTE(tt-param.valorCampo).
@@ -447,6 +449,7 @@ PROCEDURE efetua_exclusao_bordero:
                                         INPUT aux_nrborder,
                                         INPUT aux_flgelote,
                                         INPUT TRUE,
+                                        INPUT aux_flresghj,
                                        OUTPUT TABLE tt-erro).
 
     IF  RETURN-VALUE = "NOK"  THEN

@@ -30,7 +30,7 @@
  * 015: [16/12/2016] Reinert   (CECRED) : Alterações referentes ao projeto 300.
  * 016: [26/05/2017] Odirlei   (AMcom)  : Alterado para tipo de impressao 10 - Analise bordero.
  *                                        Desabilitado o campo nrctrlim na inclusao de limite. - PRJ300 - Desconto de cheque
- 
+ * 017: [31/05/2017] Odirlei   (AMcom)  : Ajuste para verificar se possui cheque custodiado no dia de hoje. - PRJ300 - Desconto de cheque 
  */
 
 var contWin    = 0;  // Variável para contagem do número de janelas abertas para impressos
@@ -38,6 +38,8 @@ var nrcontrato = ""; // Variável para armazenar número do contrato de descto s
 var nrbordero = ""; // Variável para armazenar número do bordero de descto selecionado
 var nrdolote = ""; // Variável para armazenar número do lote de descto selecionado
 var flgrejei = 0; // Variável para armazenar se o descto selecionado está rejeitado
+var flcusthj = 0;    // Variável para armazenar se o bordero possui cheques custodiados no dia de hoje
+var flresghj = 0;    // Variável para armazenar se deseja resgatar os cheques custodiados no dia de hoje
 var situacao_limite = ""; // Variável para armazenar a situação do limite atualmente selecionado
 var cd_situacao_lim = 0; // Variável para armazenar o código da situação do limite atualmente selecionado
 var valor_limite = 0; // Variável para armazenar o valor limite do limite atualmente selecionado
@@ -98,7 +100,7 @@ function carregaBorderosCheques() {
 }
 
 // Função para seleção do bordero
-function selecionaBorderoCheques(id,qtBorderos,bordero,contrato,nrdolote, rejeitado) {
+function selecionaBorderoCheques(id,qtBorderos,bordero,contrato,nrdolote, rejeitado, custodiado_hj) {
 	var cor = "";
 
 	// Formata cor da linha da tabela que lista os borderos de descto cheques
@@ -121,6 +123,7 @@ function selecionaBorderoCheques(id,qtBorderos,bordero,contrato,nrdolote, rejeit
 			nrcontrato = retiraCaracteres(contrato,"0123456789",true);
 			nrdolote   = retiraCaracteres(nrdolote,"0123456789",true);
       flgrejei   = rejeitado;
+            flcusthj  = custodiado_hj; // Possui cheques custodiados no dia de hoje
 			idLinhaB   = id;
 		}
 
@@ -193,6 +196,19 @@ function carregaChequesBorderoDscChq() {
 	});
 }
 
+//Valida exclusao bordero de cheque
+function ValidExcluirBorderoDscChq() {
+    // Se possuir cheques custodiados no dia de hoje
+    // verificar se deseja resgatar estes cheques
+	if (flcusthj == 1){
+        confirmaResgateCustodiahj('excluirBorderoDscChq();','E');
+    }else{
+        excluirBorderoDscChq();
+    }
+       
+}
+
+
 // OPÇÃO EXCLUIR
 // Função para excluir um bordero de desconto de cheques
 function excluirBorderoDscChq() {
@@ -218,6 +234,7 @@ function excluirBorderoDscChq() {
 		data: {
 			nrdconta: nrdconta,
 			nrborder: nrbordero,
+            flresghj: flresghj,
 			redirect: "script_ajax"
 		},
 		error: function(objAjax,responseError,objExcept) {
@@ -2775,6 +2792,7 @@ function efetivaBordero(){
 		data: {
 			nrdconta: nrdconta,
 			nrborder: nrbordero,
+            flresghj: flresghj,
 			cdopcolb: ' ',
 			redirect: "html_ajax"
 		},
@@ -2861,9 +2879,16 @@ function confirmaRejeitaBordero() {
     hideMsgAguardo();
     showError("error","Border&ocirc; j&aacute; rejeitado.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
     return false;
+
+  
+  if (flcusthj == 1){
+      aux_acao = "confirmaResgateCustodiahj('rejeitaBorderoDscChq();','R')";      
+  }else {
+      aux_acao = "rejeitaBorderoDscChq();";
   }
 
-  showConfirmacao('Deseja rejeitar borderô?','Confirma&ccedil;&atilde;o - Ayllos','rejeitaBorderoDscChq();','','sim.gif','nao.gif');
+
+  showConfirmacao('Deseja rejeitar borderô?','Confirma&ccedil;&atilde;o - Ayllos',aux_acao,'','sim.gif','nao.gif');
   return false;
 }
 
@@ -2886,6 +2911,7 @@ function rejeitaBorderoDscChq(){
 		data: {
 			nrdconta: nrdconta,
 			nrborder: nrbordero,
+            flresghj: flresghj,
 			redirect: "html_ajax"
 		},
 		error: function(objAjax,responseError,objExcept) {
@@ -3022,4 +3048,17 @@ function efetuaResgate() {
 			}
 		}
 	});
+}
+
+// Apresentar confirmacao se gostaria de resgatar os cheques custodiados no dia de hoje
+function confirmaResgateCustodiahj(acao,tipoacao) {
+  if (tipoacao == 'L') {
+      msg = 'O border&ocirc; possui cheques reprovados custodiados na data de hoje, deseja realizar o resgate da cust&oacute;dia de cheque?'
+  }else{
+      msg = 'O border&ocirc; possui cheques custodiados na data de hoje, deseja realizar o resgate da cust&oacute;dia de cheque?';
+  }
+      
+  
+  showConfirmacao(msg,'Confirma&ccedil;&atilde;o - Ayllos','flresghj = 1; ' + acao,'flresghj = 0; ' + acao,'sim.gif','nao.gif');
+  return false;
 }
