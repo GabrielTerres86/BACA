@@ -1,4 +1,4 @@
-﻿/*.................................................................................................
+/*.................................................................................................
    Programa: sistema/internet/fontes/InternetBank141.p
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
@@ -16,11 +16,12 @@
                10/12/2015 - Adicionado chamada da procedure pc_valid_repre_legal_trans para as 
                             operacoes 2 e 4. (Reinert)
                             
-               27/01/2016 - Ajustes nas chamadas a rotinas com novo parâmetro contendo o CPF
-                            do operador conectado e também troca de tags da quantidade de pagamento
+               27/01/2016 - Ajustes nas chamadas a rotinas com novo parametro contendo o CPF
+                            do operador conectado e tambem troca de tags da quantidade de pagamento
                             no pagamento por arquivo (Marcos-Supero)
 							
-			   12/05/2017 - Segunda fase da melhoria 342 (Kelvin).
+			   12/05/2017 - Segunda fase da melhoria 342 (Kelvin). 
+         
 ................................................................................................*/
 
 { sistema/internet/includes/var_ibank.i    }
@@ -47,7 +48,7 @@ DEF INPUT  PARAM par_dssessao AS CHAR                                  NO-UNDO.
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
 
-/* Variáveis utilizadas para receber clob da rotina no oracle */
+/* Variaveis utilizadas para receber clob da rotina no oracle */
 DEF VAR xDoc          AS HANDLE   NO-UNDO.   
 DEF VAR xRoot         AS HANDLE   NO-UNDO.  
 DEF VAR xRoot2        AS HANDLE   NO-UNDO.
@@ -1052,7 +1053,7 @@ ELSE IF  par_tpoperac = 14 THEN DO: /* Gerar arquivo de retorno */
 				         tt-arq-folha.dsdlinha = xText:NODE-VALUE WHEN xField:NAME = "dsdlinha".
 													 
 			   END. 
-
+				
 			END.
 		
 		SET-SIZE(ponteiro_xml) = 0. 
@@ -1079,3 +1080,4 @@ ELSE IF  par_tpoperac = 14 THEN DO: /* Gerar arquivo de retorno */
 END.
 
 RETURN "OK".
+ 
