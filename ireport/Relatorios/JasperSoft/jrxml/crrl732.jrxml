@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2017-03-24T16:15:02 -->
+<!-- 2017-06-09T09:54:36 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl732" language="groovy" pageWidth="595" pageHeight="672" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="4.0"/>
 	<property name="ireport.x" value="1210"/>
@@ -168,7 +168,7 @@
 				<textElement>
 					<font fontName="Courier New" size="7" isBold="false"/>
 				</textElement>
-				<text><![CDATA[PERÍODO:]]></text>
+				<text><![CDATA[PERIODO:]]></text>
 			</staticText>
 			<textField>
 				<reportElement x="60" y="45" width="138" height="8" uuid="cf8cf07c-6fe0-4845-919b-5b774fb80b83"/>
@@ -184,7 +184,7 @@
 				<textElement>
 					<font fontName="Courier New" size="7" isBold="false"/>
 				</textElement>
-				<text><![CDATA[DADOS BANCÁRIOS ==>]]></text>
+				<text><![CDATA[DADOS BANCARIOS ==>]]></text>
 			</staticText>
 			<staticText>
 				<reportElement x="126" y="115" width="27" height="8" uuid="e57f5623-7e2f-4036-93db-477ef80fbaef">
@@ -220,7 +220,7 @@
 				<textElement>
 					<font fontName="Courier New" size="7" isBold="false"/>
 				</textElement>
-				<text><![CDATA[AGÊNCIA:]]></text>
+				<text><![CDATA[AGENCIA:]]></text>
 			</staticText>
 			<staticText>
 				<reportElement x="394" y="99" width="33" height="8" uuid="7f1462bd-0a2c-4a18-aba9-11bced5d75ba">

@@ -4444,6 +4444,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
     Alteracoes: 05/06/2017 - Alteração para verificar se a data da próxima execução é 
                              maior que a data atual e neste caso calciular o próximo
                              dia útil, com base na data atual. (Renato Darosci - 05/06/2017)
+
+                09/06/2017 - Retirado acentuacao do relatorio. (Lombardi)
     ..............................................................................*/
     DECLARE
       
@@ -4905,7 +4907,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                                                     ' nrispbif="' || vr_nrispbif || '"' ||
                                                     ' cdbccxlt="' || vr_cdbccxlt || '"' ||
                                                     ' nrdocnpj="' || vr_nrdocnpj || '"' ||
-                                                    ' dsdonome="' || vr_dsdonome || '"' ||
+                                                    ' dsdonome="' || gene0007.fn_caract_acento(nvl(vr_dsdonome,'')) || '"' ||
                                                     ' cdageban="' || vr_cdageban || '"' ||
                                                     ' nrdconta="' || vr_nrdconta || '"' ||
                                                     ' vlrepass="' || to_char(vr_vlrepass,'fm999g999g999g990d00') || '"' ||
