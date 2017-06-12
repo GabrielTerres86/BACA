@@ -298,6 +298,7 @@ DEF VAR aux_comprela    AS CHAR                                       NO-UNDO.
 DEF VAR rel_prestami    AS CHAR                                       NO-UNDO.
 DEF VAR aux_vlmorada    AS DECI                                       NO-UNDO.
 DEF VAR aux_dscgcseg    AS CHAR FORMAT "99.999.999/9999-99"			  NO-UNDO.
+DEF VAR aux_nmresseg    LIKE crapcsg.nmresseg FORMAT "x(30)"          NO-UNDO.
 
 DEF VAR aux_casa3325    AS CHAR FORMAT "x(76)"                        NO-UNDO.
 DEF VAR aux_casa0401    AS CHAR FORMAT "x(76)"                        NO-UNDO.
@@ -335,7 +336,7 @@ FORM
     "   Processo SUSEP - 15414.000146/2005-83" AT 13 
     SKIP
     "   Seguro garantido pela: " AT 12
-    tt-seguradora.nmresseg 
+    aux_nmresseg 
     SKIP(2)
     "Proposta: " AT 22
     tt-seguros.nrctrseg 
@@ -554,7 +555,7 @@ FORM
     SKIP
     WITH NO-BOX COLUMN 5 NO-ATTR-SPACE NO-LABELS WIDTH 150 FRAME f_autori_casa_3_3.
 
-FORM                                                                     
+FORM 
     SKIP
     "Todos  os  servicos  disponibilizados  pela  assistencia  24  horas,"
     SKIP
@@ -656,8 +657,8 @@ FORM
     "incrustacao, fadiga;                                                "  
     SKIP
     WITH NO-BOX COLUMN 5 NO-ATTR-SPACE NO-LABELS WIDTH 150 FRAME f_autori_casa_4_1.
-
-FORM
+	
+	FORM
     "\033\107Principais Exclusoes do Seguro Residencial                  "  
     SKIP(2) 
     "* Local de risco que nao seja o especificado na apolice de seguro;  "
@@ -827,7 +828,7 @@ FORM
     SKIP
     "PRESENTE SEGURO.\033\110"
     WITH NO-BOX COLUMN 5 NO-ATTR-SPACE NO-LABELS WIDTH 150 FRAME f_autori_casa_5.
-
+	
 FORM
     SKIP(3)
     "Observacoes Gerais"
@@ -3834,14 +3835,15 @@ PROCEDURE imprimir_proposta_seguro:
                                   tt-prop-seguros.qtparcel.
 
         ASSIGN aux_dsendres = TRIM(tt-prop-seguros.dsendres) +
-                       ", " + TRIM(STRING(tt-prop-seguros.nrendres)).
+                       ", " + TRIM(STRING(tt-prop-seguros.nrendres))
+			   aux_dscgcseg = STRING(tt-seguradora.nrcgcseg)
+			   aux_nmresseg = aux_nmresseg = TRIM(tt-seguradora.nmresseg).
                  
-        ASSIGN aux_dscgcseg = STRING(tt-seguradora.nrcgcseg).
 		
 		/*Primeira via*/
         DISPLAY STREAM str_1 
                 aux_dscgcseg 
-                tt-seguradora.nmresseg
+                aux_nmresseg
                 tt-seguros.nrctrseg
                 WITH FRAME f_autori_casa_c.                     
         
@@ -3964,38 +3966,38 @@ PROCEDURE imprimir_proposta_seguro:
 		/* Propostas com inicio de vigencia maior ou igual a 20/06/2016 */
         IF  rel_dtinivig > 06/20/2017 THEN 
 			DO:
-        DISP STREAM str_1 WITH FRAME f_autori_casa_3_2.
-
-        DISP STREAM str_1 
-             aux_casa3325
-             WITH FRAME f_autori_casa_3_3.
-
-        DISP STREAM str_1
-             aux_casa0401
-             aux_casa0402
-             aux_casa0403
-             aux_casa0404
-             aux_casa0405
-             aux_casa0406
-             aux_casa0407
-             aux_casa0408
-             WITH FRAME f_autori_casa_4.
-
-        DISP STREAM str_1 WITH FRAME f_autori_casa_4_1.
+				DISP STREAM str_1 WITH FRAME f_autori_casa_3_2.
 				
-        DISP STREAM str_1 WITH FRAME f_autori_casa_4_2.
+				DISP STREAM str_1 
+				 aux_casa3325
+				 WITH FRAME f_autori_casa_3_3.
+				 
+				DISP STREAM str_1
+ 					 aux_casa0401 
+					 aux_casa0402
+					 aux_casa0403
+					 aux_casa0404
+					 aux_casa0405
+					 aux_casa0406
+					 aux_casa0407
+					 aux_casa0408
+					 WITH FRAME f_autori_casa_4.
+				
+				DISP STREAM str_1 WITH FRAME f_autori_casa_4_1.
+				
+				DISP STREAM str_1 WITH FRAME f_autori_casa_4_2.
 
-        DISP STREAM str_1
-             aux_casa4307
-             aux_casa4308
-             aux_casa4309
-             WITH FRAME f_autori_casa_4_3.
+				DISP STREAM str_1
+					 aux_casa4307
+					 aux_casa4308
+					 aux_casa4309
+					 WITH FRAME f_autori_casa_4_3.
 
-        DISP STREAM str_1 WITH FRAME f_autori_casa_4_4.
-        
-        DISP STREAM str_1 
-             rel_nrdconta2
-             WITH FRAME f_autori_casa_5.
+				DISP STREAM str_1 WITH FRAME f_autori_casa_4_4.
+				
+				DISP STREAM str_1 
+					 rel_nrdconta2
+					 WITH FRAME f_autori_casa_5.
 			END.
 		ELSE
 			DO:
@@ -4020,7 +4022,7 @@ PROCEDURE imprimir_proposta_seguro:
 				
 				DISP STREAM str_1 WITH FRAME f_autori_casa_4_2.
 
-        DISP STREAM str_1
+				DISP STREAM str_1
 					 aux_casa4307
 					 aux_casa4308
 					 aux_casa4309
@@ -4053,7 +4055,7 @@ PROCEDURE imprimir_proposta_seguro:
         /*Segunda via*/
         DISPLAY STREAM str_1 
                 aux_dscgcseg 
-                tt-seguradora.nmresseg
+                aux_nmresseg
                 tt-seguros.nrctrseg
                 WITH FRAME f_autori_casa_c.                     
         
@@ -4176,38 +4178,38 @@ PROCEDURE imprimir_proposta_seguro:
 		/* Propostas com inicio de vigencia maior ou igual a 20/06/2017 */
         IF  rel_dtinivig > 06/20/2017 THEN 
 			DO:
-        DISP STREAM str_1 WITH FRAME f_autori_casa_3_2.
-
-        DISP STREAM str_1 
-             aux_casa3325
-             WITH FRAME f_autori_casa_3_3.
-
-        DISP STREAM str_1
-             aux_casa0401
-             aux_casa0402
-             aux_casa0403
-             aux_casa0404
-             aux_casa0405
-             aux_casa0406
-             aux_casa0407
-             aux_casa0408
-             WITH FRAME f_autori_casa_4.
-
-        DISP STREAM str_1 WITH FRAME f_autori_casa_4_1.
+				DISP STREAM str_1 WITH FRAME f_autori_casa_3_2.
 				
-        DISP STREAM str_1 WITH FRAME f_autori_casa_4_2.
+				DISP STREAM str_1 
+				 aux_casa3325
+				 WITH FRAME f_autori_casa_3_3.
+				 
+				DISP STREAM str_1
+ 					 aux_casa0401 
+					 aux_casa0402
+					 aux_casa0403
+					 aux_casa0404
+					 aux_casa0405
+					 aux_casa0406
+					 aux_casa0407
+					 aux_casa0408
+					 WITH FRAME f_autori_casa_4.
+				
+				DISP STREAM str_1 WITH FRAME f_autori_casa_4_1.
+				
+				DISP STREAM str_1 WITH FRAME f_autori_casa_4_2.
 
-        DISP STREAM str_1
-             aux_casa4307
-             aux_casa4308
-             aux_casa4309
-             WITH FRAME f_autori_casa_4_3.
+				DISP STREAM str_1
+					 aux_casa4307
+					 aux_casa4308
+					 aux_casa4309
+					 WITH FRAME f_autori_casa_4_3.
 
-        DISP STREAM str_1 WITH FRAME f_autori_casa_4_4.
-        
-        DISP STREAM str_1 
-             rel_nrdconta2
-             WITH FRAME f_autori_casa_5.
+				DISP STREAM str_1 WITH FRAME f_autori_casa_4_4.
+				
+				DISP STREAM str_1 
+					 rel_nrdconta2
+					 WITH FRAME f_autori_casa_5.
 			END.
 		ELSE
 			DO:
@@ -4244,7 +4246,7 @@ PROCEDURE imprimir_proposta_seguro:
 					 rel_nrdconta2
 					 WITH FRAME f_autori_casa_5_1_1.
 			END.
-
+       
         DISP STREAM str_1
             rel_nrctrseg 
             tt-prop-seguros.tpplaseg
