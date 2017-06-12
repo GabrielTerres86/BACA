@@ -2960,6 +2960,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   PROCEDURE pc_set_modulo    (pr_module IN VARCHAR2
                              ,pr_action IN VARCHAR2 DEFAULT NULL) IS
   BEGIN
+  /*---------------------------------------------------------------------------------------------------------------
+   Programa : GENE0001
+   Autor    : Cesar Belli
+   Data     : 09/06/2017                        Ultima atualizacao: Belli 09/06/2017   
+   Chamado  : 660327
+
+   Dados referentes ao programa:
+
+   Frequencia: Diario (on-line)
+   Objetivo  : Seta modulo e ação no banco de dados Oracle
+
+   Alteracoes: 
+      
+  ---------------------------------------------------------------------------------------------------------------*/
+
     -- Limpar qualquer informação anterior
     DBMS_APPLICATION_INFO.SET_MODULE('','');
     -- Inclui na sessão o modulo em execução
