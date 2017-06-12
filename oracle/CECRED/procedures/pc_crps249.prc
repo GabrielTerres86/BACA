@@ -2340,7 +2340,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
   --Váriaveis arquivo tarifas cobranca bb  
   vr_nmarqdat_tarifasbb     VARCHAR2(100);
   vr_nmarqdat_tarifasbb_nov VARCHAR2(100);
-  vr_jobname                VARCHAR2(100);
   vr_contador               NUMBER := 0;
   --
   function fn_calcula_data (pr_cdcooper in craptab.cdcooper%type,
@@ -7108,6 +7107,7 @@ BEGIN
   vr_tab_agencia2.delete;
   -- Busca informações no histórico
   for rw_craphis in cr_craphis (pr_cdcooper) LOOP
+    
     -- Busca a tarifa
     open cr_crapthi(pr_cdcooper,
                     rw_craphis.cdhistor,
@@ -11688,19 +11688,19 @@ BEGIN
   dbms_lob.close(vr_relatorio_epr);
   dbms_lob.freetemporary(vr_relatorio_epr);
   
+  --Gerar arquivos contábeis de lançamentos centralizados para cada filiada.
   IF pr_cdcooper = 3 then
+    
+    BEGIN
+      cont0001.pc_gera_arquivos_contabeis(to_date(to_char(vr_dtmvtolt,'dd/mm/rrrr'),'dd/mm/rrrr'),
+                                          to_date(to_char(vr_dtmvtopr,'dd/mm/rrrr'),'dd/mm/rrrr'));
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_cdcritic := 0;
+        vr_dscritic := 'Erro ao gerar arquivos contábeis de lançamentos centralizados para cada filiada: '||sqlerrm;
+        RAISE vr_exc_saida;        
+    END; 
 
-    --Cria JOB para geração de arquivos de lançamentos centralizados por filiadas para o Radar/Matera
-    vr_jobname := 'CONT0001_JOB_';
-    -- Faz a chamada ao programa paralelo atraves de JOB
-    gene0001.pc_submit_job(pr_cdcooper  => pr_cdcooper              --> Código da cooperativa
-                          ,pr_cdprogra  => 'CONT0001'       --> Código do programa
-                          ,pr_dsplsql   => 'BEGIN CONT0001.pc_gera_arquivos_contabeis('''||to_date(to_char(vr_dtmvtolt,'dd/mm/rrrr'),'dd/mm/rrrr')||''','''||to_date(to_char(vr_dtmvtopr,'dd/mm/rrrr'),'dd/mm/rrrr')||'''); END;'        --> Bloco PLSQL a executar
-                          ,pr_dthrexe   => TO_TIMESTAMP_tz(to_char(SYSDATE,'DD/MM/RRRR HH24:MI'),
-                                                                           'DD/MM/RRRR HH24:MI') --> Incrementar mais 1 hora
-                          ,pr_interva   => NULL                 --> apenas uma vez
-                          ,pr_jobname   => vr_jobname           --> Nome randomico criado
-                          ,pr_des_erro  => vr_dscritic);  
   END IF;                          
   
   -- Finalizar o programa
