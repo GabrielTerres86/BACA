@@ -6711,7 +6711,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 				END IF;
 			END IF;
 				
-			vr_vldjuros := vr_vlcheque * vr_qtdiares * ((vr_txmensal / 100) / 30);
+			vr_vldjuros := ROUND(vr_vlcheque * vr_qtdiares * ((vr_txmensal / 100) / 30),2);
 			vr_vltotjur := nvl(vr_vltotjur,0) + vr_vldjuros;
 								
 			-- Buscar registro da ljd
@@ -6899,7 +6899,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 		
 		BEGIN
 			UPDATE crapcdb cdb
-				 SET cdb.vlliqdev = vr_vlliquid
+				 SET cdb.vlliqdev = NVL(pr_tab_cheques.vlliquid,0) + NVL(vr_vltotjur,0)
 			 WHERE cdb.cdcooper = pr_cdcooper
 				 AND cdb.nrdconta = pr_nrdconta
 				 AND cdb.nrborder = pr_nrborder
