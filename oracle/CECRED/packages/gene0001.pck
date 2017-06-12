@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   --  Sistema  : Rotinas genéricas
   --  Sigla    : GENE
   --  Autor    : Marcos E. Martini - Supero
-  --  Data     : Novembro/2012.                   Ultima atualizacao: 02/02/2016
+  --  Data     : Novembro/2012.                   Ultima atualizacao: 09/05/2017
   --
   -- Dados referentes ao programa:
   --
@@ -19,7 +19,15 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   -- 28/07/2013 - Inclusão do Tipo CONVENIO no array para nome origem do módulo SD154496
   -- (Vanessa Klein)
   -- 02/02/2016 - Ajustado o TYPE typ_des_dorigens incluso duas novas origens (Daniel)
-
+  --
+  -- 11/11/2016 - Inclusao da origem MOBILE e ACORDO no type de origens. PRJ335 - Analise Fraudes(Odirlei-AMcom)
+  --  
+  -- 24/01/2016 - Incluido Origem ANTIFRAUDE. PRJ335 - Analise de fraude (Odirlei-AMcom) 
+  --
+  -- 08/06/2017 - #665812 Le cadastro de critica CRAPCRI (Belli-Envolti)
+  --
+  -- 09/06/2017 - #660327 Le informação do modulo  (Belli-Envolti)
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   /** ---------------------------------------------------- **/
@@ -50,7 +58,7 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
                                                       ,'CADASTROS'
                                                       ,'CONVENIOS');
 
-  /** ---------------------------------------------------------**/
+  /** ------------------------------------------------------------**/
   /** Variavel para geracao de log - Origem da Solicitacao     **/
   /**                                                          **/
   /** -> Origem = 1 - AYLLOS                                   **/
@@ -61,11 +69,15 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   /** -> Origem = 6 - URA                                      **/
   /** -> Origem = 7 - PROCESSO (PROCESSO BATCH)                **/
   /** -> Origem = 8 - MENSAGERIA (DEBITO ONLINE CARTAO BANCOOB)**/
-  /** -> Origem = 9 - ESTEIRA (ESTEIRA DE CREDITO IBRATAN)     **/
+  /** -> Origem = 9 - ESTEIRA (WEBSERVICE ESTEIRA DE CREDITO)     **/
+  /** -> Origem = 10 - MOBILE                                     **/
+  /** -> Origem = 11 - ACORDO (WEBSERVICE DE ACORDOS)             **/
+  /** -> Origem = 12 - ANTIFRAUDE (WEBSERVICE ANALISE ANTIFRAUDE) 	**/
+  /** -> Origem = 13 - COBRANCA (RENOVACAO AUTOMATICA) 	**/
   /** ---------------------------------------------------------**/
 
-  TYPE typ_des_dorigens IS VARRAY(9) OF VARCHAR2(10);
-  vr_vet_des_origens typ_des_dorigens := typ_des_dorigens('AYLLOS','CAIXA','INTERNET','CASH','INTRANET','URA','PROCESSO','MENSAGERIA','ESTEIRA');
+  TYPE typ_des_dorigens IS VARRAY(13) OF VARCHAR2(13);
+  vr_vet_des_origens typ_des_dorigens := typ_des_dorigens('AYLLOS','CAIXA','INTERNET','CASH','AYLLOS WEB','URA','PROCESSO','MENSAGERIA','ESTEIRA','MOBILE','ACORDO','ANTIFRAUDE','COBRANCA');
 
 
   /** ---------------------------------------------------- **/
@@ -119,7 +131,8 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
                             ,pr_dsvlrprm OUT crapprm.dsvlrprm%TYPE);
 
   /* Mostrar o texto das criticas na tela de acordo com o ocorrido. */
-  FUNCTION fn_busca_critica(pr_cdcritic IN crapcri.cdcritic%TYPE) RETURN VARCHAR2;
+  FUNCTION fn_busca_critica(pr_cdcritic IN crapcri.cdcritic%TYPE DEFAULT 0
+                           ,pr_dscritic IN crapcri.dscritic%TYPE DEFAULT NULL) RETURN VARCHAR2;
 
   /* Mostrar mensagem dbms_output.put_line */
   PROCEDURE pc_print(pr_des_mensag IN VARCHAR2);
@@ -336,7 +349,7 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
 
   /* Rotina para submeter um Job ao Banco */
   PROCEDURE pc_submit_job(pr_cdcooper  IN crapcop.cdcooper%TYPE          --> Código da cooperativa
-                         ,pr_cdprogra  IN crapprg.cdprogra%TYPE          --> Código do programa
+                         ,pr_cdprogra  IN VARCHAR2                       --> Código do programa
                          ,pr_dsplsql   IN VARCHAR2                       --> Bloco PLSQL a executar
                          ,pr_dthrexe   IN TIMESTAMP WITH TIME ZONE DEFAULT SYSTIMESTAMP --> Data/Hora de execução
                          ,pr_interva   IN VARCHAR2 DEFAULT NULL          --> Função para calculo da próxima execução, ex: 'sysdate+1'
@@ -353,6 +366,35 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   /* Listagem das cooperativas */
   PROCEDURE pc_lista_cooperativas (pr_des_lista OUT VARCHAR2);
 
+-- Definição de tabela de memória que compreende a mesma estrutura da crapcri
+-- Belli 0806/2017 chamado 665812
+--
+  TYPE typ_reg_crapcri IS
+    RECORD(
+     cdcritic        crapcri.cdcritic%TYPE
+    ,dscritic        crapcri.dscritic%TYPE
+    ,progress_recid  crapcri.progress_recid%TYPE
+    );
+  --      
+  TYPE typ_tab_crapcri IS
+    TABLE OF typ_reg_crapcri
+    INDEX BY BINARY_INTEGER;
+   -- Vetor para armazenar as informações de crapcri
+   
+  vr_tab_crapcri typ_tab_crapcri; 
+  
+/* Retorno do cadastro de critica crapcri */
+-- Belli 08/06/2017 chamado 665812
+  PROCEDURE pc_le_crapcri(pr_cdcritic     IN  crapcri.cdcritic%TYPE
+                         ,pr_tab_crapcri  OUT GENE0001.typ_tab_crapcri
+                         ,pr_dsretorno    OUT varchar2
+                         ,pr_cdretorno    OUT number);
+--
+  /* Informação do modulo em execução na sessão */
+-- Belli 08/06/2017 chamado 660327
+  PROCEDURE pc_set_modulo(pr_module IN VARCHAR2
+                         ,pr_action IN VARCHAR2 DEFAULT NULL);
+--           
 END GENE0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
@@ -363,7 +405,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   --  Sistema  : Rotinas genéricas
   --  Sigla    : GENE
   --  Autor    : Marcos E. Martini - Supero
-  --  Data     : Novembro/2012.                   Ultima atualizacao: 09/06/2016
+  --  Data     : Novembro/2012.                   Ultima atualizacao: 09/05/2017
   --
   -- Dados referentes ao programa:
   --
@@ -378,6 +420,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   --                          ao pegar o nome do JOB a ser criado
   --                         (Adriano - SD 464856).
   --
+  --             12/01/2017 - #551192 Na função fn_busca_critica, mudança para parâmetros opcionais cd e 
+  --                          dscritic para centralizar a lógica de captura dos erros (Carlos) 
+  --
+  --             09/05/2017 - #660297 Alterado o tipo do parâmetro pr_cdprogra de crapprg.cdprogra para 
+  --                          VARCHAR2 na rotina pc_submit_job (Carlos)
+  --
+  --             08/06/2017 - #665812 le cadastro de critica CRAPCRI (Belli-Envolti)
+  --
+  --             09/06/2017 - #660327 Le informação do modulo  (Belli-Envolti)
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -405,12 +456,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     --END IF;
     -- Setar configuração caracteres separadores cfme padrão
     EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_NUMERIC_CHARACTERS = '',.''';
-    -- Limpar qualquer informação anterior
-    DBMS_APPLICATION_INFO.SET_MODULE('','');
-    -- Inclui na sessão o modulo em execução
-    -- Isto facilita monitoramento posterior
-    DBMS_APPLICATION_INFO.SET_MODULE(module_name => pr_module
-                                    ,action_name => pr_action);
+    
+    -- Seta modulo
+    -- 09/06 Belli                                 
+		GENE0001.pc_set_modulo(pr_module => pr_module, pr_action => pr_action);      
+    
   END;
 
   /* Função que retorna o database name conectado */
@@ -630,7 +680,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   END pc_param_sistema;
 
   /* Mostrar o texto das criticas na tela de acordo com o ocorrido. */
-  FUNCTION fn_busca_critica(pr_cdcritic IN crapcri.cdcritic%TYPE) RETURN VARCHAR2 IS
+  FUNCTION fn_busca_critica(pr_cdcritic IN crapcri.cdcritic%TYPE DEFAULT 0,
+                            pr_dscritic IN crapcri.dscritic%TYPE DEFAULT NULL) RETURN VARCHAR2 IS
   BEGIN
     -- ..........................................................................
     --
@@ -638,7 +689,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Deborah/Edson
-    --  Data     : Setembro/1991.                   Ultima atualizacao: 13/11/2012
+    --  Data     : Setembro/1991.                   Ultima atualizacao: 12/01/2017
     --
     --  Dados referentes ao programa:
     --
@@ -651,6 +702,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     --                            do prefixo "banco" (Guilherme Maba).
     --
     --               13/11/2012 - Conversão Progress >> Oracle PLSQL
+    --
+    --               12/01/2017 - #551192 Mudança para parâmetros opcionais cd e dscritic para centralizar
+    --                            a lógica de captura dos erros (Carlos) 
     -- .............................................................................
 
     DECLARE
@@ -661,6 +715,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
          WHERE cri.cdcritic = pr_cdcritic;
       vr_dscritic crapcri.dscritic%TYPE;
     BEGIN
+      -- Se veio código de crítica e não veio descrição
+      IF pr_cdcritic > 0 AND pr_dscritic IS NULL THEN
+    
       -- Busca descrição da critica cfme parâmetro passado
       OPEN cr_crapcri;
       FETCH cr_crapcri
@@ -674,6 +731,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
       CLOSE cr_crapcri;
       -- Retornar a string montada
       RETURN vr_dscritic;
+
+      END IF;      
+      
+      -- Retorna apenas as descrição
+      RETURN pr_dscritic;
+      
     END;
   END fn_busca_critica;
 
@@ -2511,7 +2574,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 
   /* Rotina para submeter um Job ao Banco */
   PROCEDURE pc_submit_job(pr_cdcooper  IN crapcop.cdcooper%TYPE          --> Código da cooperativa
-                         ,pr_cdprogra  IN crapprg.cdprogra%TYPE          --> Código do programa
+                         ,pr_cdprogra  IN VARCHAR2                       --> Código do programa
                          ,pr_dsplsql   IN VARCHAR2                       --> Bloco PLSQL a executar
                          ,pr_dthrexe   IN TIMESTAMP WITH TIME ZONE DEFAULT SYSTIMESTAMP --> Data/Hora de execução
                          ,pr_interva   IN VARCHAR2 DEFAULT NULL          --> Função para calculo da próxima execução, ex: 'sysdate+1'
@@ -2795,5 +2858,116 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     END;
   END pc_lista_cooperativas;
 
+/* Retorno do cadastro de critica crapcri */
+-- Belli 08/06/2017
+  PROCEDURE pc_le_crapcri 
+    (pr_cdcritic     IN  crapcri.cdcritic%TYPE
+    ,pr_tab_crapcri  OUT GENE0001.typ_tab_crapcri
+    ,pr_dsretorno    OUT varchar2
+    ,pr_cdretorno    OUT number)
+  IS
+  BEGIN
+    /*..............................................................................
+
+       Programa: pc_le_crapcri
+       Autor   : Belli (Envolti)
+       Data    : Junho/2017                    Ultima atualizacao: 08/06/2017
+
+       Dados referentes ao programa:
+
+       Objetivo  : Rotina que retorna ás informações do cadastro de critica.
+
+       Alteracoes:
+    ..............................................................................*/
+    DECLARE
+  	  CURSOR cr_crapcri IS
+  	    SELECT dscritic
+              ,progress_recid
+  		  FROM crapcri
+  	     WHERE cdcritic = pr_cdcritic;
+         
+      vr_dscritic         crapcri.dscritic%TYPE := NULL;
+      vr_progress_recid   crapcri.progress_recid%TYPE := NULL;
+      vr_seq              BINARY_INTEGER;
+      teste               number (1) := 0;
+      
+    PROCEDURE MONTA_TYPE 
+      IS
+    BEGIN  
+      -- Guardar a próxima sequencia para gravação na tabela de erros
+      vr_seq := pr_tab_crapcri.COUNT;
+      -- Criar o registro de erro (Rowtype da CRAPERR)
+      pr_tab_crapcri(vr_seq).cdcritic       := pr_cdcritic;
+      pr_tab_crapcri(vr_seq).dscritic       := vr_dscritic;
+      pr_tab_crapcri(vr_seq).progress_recid := vr_progress_recid;
+    END;
+    --
+    --   INICIO  PROCESSO
+    BEGIN
+      
+      pr_cdretorno   := 0;
+      pr_dsretorno   := 'Inicio';
+      vr_seq         := 0;
+      
+      --teste := 0/0;
+            
+      IF pr_cdcritic is NULL THEN
+        
+          pr_cdretorno   := 3;
+          pr_dsretorno   := 'Paramêtro de entrada nulo';
+      
+      ELSE          
+            -- Busca cadastro da critica cfme parâmetro passado
+            OPEN cr_crapcri;
+            BEGIN
+              FETCH cr_crapcri
+              INTO 
+               vr_dscritic
+              ,vr_progress_recid; 
+           
+              --teste := 0/0;
+      
+              IF cr_crapcri%NOTFOUND THEN
+           
+                 -- Se não encontrou nenhum registro
+                 pr_cdretorno      := 2; 
+                 pr_dsretorno      := 'Cadastro crapcri não existe';
+              ELSE
+                 -- Se encontrou o registro
+                 MONTA_TYPE;      
+                 pr_cdretorno      := 1; 
+                 pr_dsretorno      := 'Sucesso';        
+              END IF;
+            EXCEPTION
+              WHEN OTHERS THEN
+                pr_cdretorno := 8;
+                pr_dsretorno := 'Erro na rotina GENE0001.pc_le_crapcri FETCH --> ' || SQLERRM;
+            END;
+         
+            -- Apenas fechar o cursor
+            CLOSE cr_crapcri;    
+      END IF; 
+      
+    EXCEPTION
+      WHEN OTHERS THEN
+        pr_cdretorno := 9;
+        pr_dsretorno := 'Erro na rotina GENE0001.pc_le_crapcri FINAL --> ' || SQLERRM;
+    END;
+  END pc_le_crapcri;
+--    
+  /* Informação do modulo em execução na sessão */
+-- Belli 08/06/2017 chamado 660327
+  PROCEDURE pc_set_modulo    (pr_module IN VARCHAR2
+                             ,pr_action IN VARCHAR2 DEFAULT NULL) IS
+  BEGIN
+    -- Limpar qualquer informação anterior
+    DBMS_APPLICATION_INFO.SET_MODULE('','');
+    -- Inclui na sessão o modulo em execução
+    -- Isto facilita monitoramento posterior
+    DBMS_APPLICATION_INFO.SET_MODULE(module_name => pr_module
+                                    ,action_name => pr_action);
+  END;
+
+--  
 END GENE0001;
 /
