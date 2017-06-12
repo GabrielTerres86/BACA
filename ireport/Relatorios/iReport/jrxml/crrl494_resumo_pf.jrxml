@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl494_resumo_pf" language="groovy" pageWidth="842" pageHeight="700" columnWidth="842" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.657341500000001"/>
-	<property name="ireport.x" value="0"/>
+	<property name="ireport.x" value="725"/>
 	<property name="ireport.y" value="0"/>
 	<parameter name="PR_NMRESCOP" class="java.lang.String">
 		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
@@ -184,7 +184,7 @@
 					<text><![CDATA[-------------------]]></text>
 				</staticText>
 				<staticText>
-					<reportElement uuid="920da02a-e22f-4235-a8a2-c41b01a535cd" positionType="Float" x="401" y="14" width="65" height="8"/>
+					<reportElement uuid="920da02a-e22f-4235-a8a2-c41b01a535cd" positionType="Float" x="410" y="33" width="65" height="8"/>
 					<textElement textAlignment="Right">
 						<font fontName="Courier New" size="6"/>
 					</textElement>
