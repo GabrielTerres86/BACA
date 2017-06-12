@@ -7249,9 +7249,9 @@ create or replace package body cecred.INSS0001 as
                                      ,pr_cdderror => vr_cdcritic   --Codigo Erro
                                      ,pr_dsderror => vr_dscritic   --Descricao Erro
                                      ,pr_nmarqlog => vr_nmarqlog   --Nome Arquivo LOG                                     
-                                     ,pr_cdtipofalha => 1          --Tipo 2 abre chamado, tipo 4 não abre chamado -- 19/05/2017 Belli
+                                     ,pr_cdtipofalha => 1          --tipo 4 não abre chamado -- 19/05/2017 Belli
                                      ,pr_des_reto => vr_des_reto   --Saida OK/NOK
-                                     ,pr_dscritic => vr_dscritic2   --Descricao erro
+                                     ,pr_dscritic => vr_dscritic2  --Descricao erro
                                      );
                                      
         --Se ocorreu erro
@@ -7786,7 +7786,7 @@ create or replace package body cecred.INSS0001 as
                                      ,pr_cdderror => vr_cdcritic   --Codigo Erro
                                      ,pr_dsderror => vr_dscritic   --Descricao Erro
                                      ,pr_nmarqlog => vr_nmarqlog   --Nome Arquivo LOG
-                                     ,pr_cdtipofalha => 1          --Tipo 2 abre chamado, tipo 4 não abre chamado -- 19/05/2017 Belli
+                                     ,pr_cdtipofalha => 1          --tipo 4 não abre chamado -- 19/05/2017 Belli
                                      ,pr_des_reto => vr_des_reto   --Saida OK/NOK
                                      ,pr_dscritic => vr_dscritic2); --Descricao erro
                                      
@@ -8316,7 +8316,7 @@ create or replace package body cecred.INSS0001 as
                                      ,pr_cdderror => vr_cdcritic   --Codigo Erro
                                      ,pr_dsderror => vr_dscritic   --Descricao Erro
                                      ,pr_nmarqlog => vr_nmarqlog   --Nome Arquivo LOG
-                                     ,pr_cdtipofalha => 3          --Tipo 2 abre chamado, tipo 4 não abre chamado -- 19/05/2017 Belli
+                                     ,pr_cdtipofalha => 3          --Tipo 2 abre chamado -- 19/05/2017 Belli
                                      ,pr_des_reto => vr_des_reto   --Saida OK/NOK
                                      ,pr_dscritic => vr_dscritic2); --Descricao erro 
                                      
@@ -11383,7 +11383,7 @@ create or replace package body cecred.INSS0001 as
                                      ,pr_cdderror => vr_cdcritic   --Codigo Erro
                                      ,pr_dsderror => vr_dscritic   --Descricao Erro
                                      ,pr_nmarqlog => vr_nmarqlog   --Nome Arquivo LOG
-                                     ,pr_cdtipofalha => 3          --Tipo 2 abre chamado, tipo 4 não abre chamado -- 19/05/2017 Belli
+                                     ,pr_cdtipofalha => 3          --Tipo 2 abre chamado -- 19/05/2017 Belli
                                      ,pr_des_reto => vr_des_reto   --Saida OK/NOK
                                      ,pr_dscritic => vr_dscritic2); --Descricao erro
         
@@ -12141,7 +12141,7 @@ create or replace package body cecred.INSS0001 as
                                      ,pr_cdderror => vr_cdcritic   --Codigo Erro
                                      ,pr_dsderror => vr_dscritic   --Descricao Erro
                                      ,pr_nmarqlog => vr_nmarqlog   --Nome Arquivo LOG
-                                     ,pr_cdtipofalha => 3          --Tipo 2 abre chamado, tipo 4 não abre chamado -- 19/05/2017 Belli
+                                     ,pr_cdtipofalha => 3          --Tipo 2 abre chamado -- 19/05/2017 Belli
                                      ,pr_des_reto => vr_des_reto   --Saida OK/NOK
                                      ,pr_dscritic => vr_dscritic2); --Descricao erro
                                      
@@ -12760,7 +12760,7 @@ create or replace package body cecred.INSS0001 as
                                      ,pr_cdderror => vr_cdcritic   --Codigo Erro
                                      ,pr_dsderror => vr_dscritic   --Descricao Erro
                                      ,pr_nmarqlog => vr_nmarqlog   --Nome Arquivo LOG
-                                     ,pr_cdtipofalha => 3          --Tipo 2 abre chamado, tipo 4 não abre chamado -- 19/05/2017 Belli
+                                     ,pr_cdtipofalha => 3          --Tipo 2 abre chamado -- 19/05/2017 Belli
                                      ,pr_des_reto => vr_des_reto   --Saida OK/NOK
                                      ,pr_dscritic => vr_dscritic2); --Descricao erro
         
@@ -13721,7 +13721,7 @@ create or replace package body cecred.INSS0001 as
                                      ,pr_cdderror => vr_cdcritic   --Codigo Erro
                                      ,pr_dsderror => vr_dscritic   --Descricao Erro
                                      ,pr_nmarqlog => vr_nmarqlog   --Nome Arquivo LOG
-                                     ,pr_cdtipofalha => 3          --Tipo 2 abre chamado, tipo 4 não abre chamado -- 19/05/2017 Belli
+                                     ,pr_cdtipofalha => 3          --Tipo 2 abre chamado -- 19/05/2017 Belli
                                      ,pr_des_reto => vr_des_reto   --Saida OK/NOK
                                      ,pr_dscritic => vr_dscritic2); --Descricao erro
                                      
@@ -14438,7 +14438,7 @@ create or replace package body cecred.INSS0001 as
                                      ,pr_cdderror => vr_cdcritic   --Codigo Erro
                                      ,pr_dsderror => vr_dscritic   --Descricao Erro
                                      ,pr_nmarqlog => vr_nmarqlog   --Nome Arquivo LOG
-                                     ,pr_cdtipofalha => 3          --Tipo 2 abre chamado, tipo 4 não abre chamado -- 19/05/2017 Belli
+                                     ,pr_cdtipofalha => 3          --Tipo 2 abre chamado -- 19/05/2017 Belli
                                      ,pr_des_reto => vr_des_reto   --Saida OK/NOK
                                      ,pr_dscritic => vr_dscritic2); --Descricao erro
                                      
@@ -15382,7 +15382,7 @@ create or replace package body cecred.INSS0001 as
                                      ,pr_cdderror => vr_cdcritic   --Codigo Erro
                                      ,pr_dsderror => vr_dscritic   --Descricao Erro
                                      ,pr_nmarqlog => vr_nmarqlog   --Nome Arquivo LOG
-                                     ,pr_cdtipofalha => 3          --Tipo 2 abre chamado, tipo 4 não abre chamado -- 19/05/2017 Belli
+                                     ,pr_cdtipofalha => 3          --Tipo 2 abre chamado -- 19/05/2017 Belli
                                      ,pr_des_reto => vr_des_reto   --Saida OK/NOK
                                      ,pr_dscritic => vr_dscritic2); --Descricao erro
                                      
@@ -16688,7 +16688,7 @@ create or replace package body cecred.INSS0001 as
                                      ,pr_cdderror => vr_cdcritic     --Codigo Erro
                                      ,pr_dsderror => vr_dscritic      --Descricao Erro
                                      ,pr_nmarqlog => vr_nmarqlog     --Nome Arquivo LOG
-                                     ,pr_cdtipofalha => 3            --Tipo 2 abre chamado, tipo 4 não abre chamado -- 19/05/2017 Belli
+                                     ,pr_cdtipofalha => 3            --Tipo 2 abre chamado -- 19/05/2017 Belli
                                      ,pr_des_reto => vr_des_reto     --Saida OK/NOK
                                      ,pr_dscritic => vr_dscritic2);  --Descricao erro
                      
