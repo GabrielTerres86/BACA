@@ -302,6 +302,11 @@
 
 			    11/11/2016 - Alterado titulo relatorio de Lic. Soc.Ambiental
 				             para Lic. Soc.Ambientais M310(Tiago/Thiago).
+                
+                09/06/2017 - Ajuste na rotina retorna_docs_liberados para nao gerar pendencia 
+                             para borderos efetuados no IB e com valor menor ou igual a 5 mil.
+                             PRJ300 - Desconto de Cheques (Lombardi/Daniel)
+                     
 .............................................................................*/
 
 
@@ -4715,6 +4720,10 @@ PROCEDURE retorna_docs_liberados:
 
                         aux_vlchqtot = aux_vlchqtot + crapcdb.vlcheque.
                     END.
+                    
+                    /* Nao deve gerar pendencia para borderos efetuados no IB e com valor menor ou igual a 5 mil */
+                    IF crapbdc.cdoperad = '996' AND aux_vlchqtot <= 5000 THEN
+                        NEXT. 
 
                     CREATE tt-documentos-liberados.
                     ASSIGN tt-documentos-liberados.tpdocmto = 87
