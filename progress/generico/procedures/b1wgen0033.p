@@ -298,6 +298,7 @@ DEF VAR aux_comprela    AS CHAR                                       NO-UNDO.
 DEF VAR rel_prestami    AS CHAR                                       NO-UNDO.
 DEF VAR aux_vlmorada    AS DECI                                       NO-UNDO.
 DEF VAR aux_dscgcseg    AS CHAR FORMAT "99.999.999/9999-99"			  NO-UNDO.
+DEF VAR aux_nmresseg    LIKE crapcsg.nmresseg FORMAT "x(30)"          NO-UNDO.
 
 DEF VAR aux_casa3325    AS CHAR FORMAT "x(76)"                        NO-UNDO.
 DEF VAR aux_casa0401    AS CHAR FORMAT "x(76)"                        NO-UNDO.
@@ -335,7 +336,7 @@ FORM
     "   Processo SUSEP - 15414.000146/2005-83" AT 13 
     SKIP
     "   Seguro garantido pela: " AT 12
-    tt-seguradora.nmresseg 
+    aux_nmresseg 
     SKIP(2)
     "Proposta: " AT 22
     tt-seguros.nrctrseg 
@@ -3834,14 +3835,15 @@ PROCEDURE imprimir_proposta_seguro:
                                   tt-prop-seguros.qtparcel.
 
         ASSIGN aux_dsendres = TRIM(tt-prop-seguros.dsendres) +
-                       ", " + TRIM(STRING(tt-prop-seguros.nrendres)).
-                 
-        ASSIGN aux_dscgcseg = STRING(tt-seguradora.nrcgcseg).
+                       ", " + TRIM(STRING(tt-prop-seguros.nrendres))
+			   aux_dscgcseg = STRING(tt-seguradora.nrcgcseg)
+			   aux_nmresseg = aux_nmresseg = TRIM(tt-seguradora.nmresseg).
+		
 		
 		/*Primeira via*/
         DISPLAY STREAM str_1 
                 aux_dscgcseg 
-                tt-seguradora.nmresseg
+                aux_nmresseg
                 tt-seguros.nrctrseg
                 WITH FRAME f_autori_casa_c.                     
         
@@ -4053,7 +4055,7 @@ PROCEDURE imprimir_proposta_seguro:
         /*Segunda via*/
         DISPLAY STREAM str_1 
                 aux_dscgcseg 
-                tt-seguradora.nmresseg
+                aux_nmresseg
                 tt-seguros.nrctrseg
                 WITH FRAME f_autori_casa_c.                     
         
