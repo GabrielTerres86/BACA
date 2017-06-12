@@ -45,6 +45,11 @@ BEGIN
                               as cooperativas ativas campo "flgativo". (Jaison)
                               
                  14/08/2015 - Projeto Provisao. (James)
+
+                 07/06/2017 - Ajuste da regra que define a origem a ser utilizada. Adequacao
+                              da regra para que fique igual a regra existente no pc_crps280_i.
+                              Heitor (Mouts) - Chamado 681595
+
   ............................................................................. */
 
   DECLARE
@@ -394,12 +399,25 @@ BEGIN
             CONTINUE;
           END IF;
 
-          -- Valida desconto e emprestimo identificando a origem
-          IF (((vr_tab_crapepr(vr_index).cdcooper = 2) AND
-               (vr_tab_crapepr(vr_index).cdlcremp = 850 OR vr_tab_crapepr(vr_index).cdlcremp = 900)) OR
-              ((vr_tab_crapepr(vr_index).cdcooper <> 2) AND
-               (vr_tab_crapepr(vr_index).cdlcremp = 800 OR vr_tab_crapepr(vr_index).cdlcremp = 900))) THEN
-            vr_cdorigem := 2;
+          IF ((vr_tab_crapepr(vr_index).cdcooper = 1) AND  /* 1 - Viacredi */
+              (vr_tab_crapepr(vr_index).cdlcremp = 800 OR
+               vr_tab_crapepr(vr_index).cdlcremp = 900 OR
+               vr_tab_crapepr(vr_index).cdlcremp = 907 OR
+               vr_tab_crapepr(vr_index).cdlcremp = 909)) THEN
+            vr_cdorigem := 2; -- Desconto
+          ELSIF ((vr_tab_crapepr(vr_index).cdcooper = 2)  AND /* 2 - Creditextil */
+                 (vr_tab_crapepr(vr_index).cdlcremp = 850 OR
+                  vr_tab_crapepr(vr_index).cdlcremp = 900)) THEN
+            vr_cdorigem := 2; -- Desconto
+          ELSIF ((vr_tab_crapepr(vr_index).cdcooper = 13) AND /* 13 - SCRCRED */
+                 (vr_tab_crapepr(vr_index).cdlcremp = 800 OR
+                  vr_tab_crapepr(vr_index).cdlcremp = 900 OR
+                  vr_tab_crapepr(vr_index).cdlcremp = 903)) THEN
+            vr_cdorigem := 2; -- Desconto
+          ELSIF (((vr_tab_crapepr(vr_index).cdcooper <> 1) AND (vr_tab_crapepr(vr_index).cdcooper <> 2) AND (vr_tab_crapepr(vr_index).cdcooper <> 13)) AND
+                  (vr_tab_crapepr(vr_index).cdlcremp = 800 OR
+                   vr_tab_crapepr(vr_index).cdlcremp = 900)) THEN
+            vr_cdorigem := 2; -- Desconto
           ELSE
             vr_cdorigem := 3;
           END IF;
@@ -808,4 +826,3 @@ BEGIN
   END;
 END pc_crps656;
 /
-
