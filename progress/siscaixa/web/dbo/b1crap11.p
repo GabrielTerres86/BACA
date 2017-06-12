@@ -42,6 +42,9 @@
                              no dia 28/11/2014. 
                              Procedure valida-existencia-boletim. (Reinert)
                 
+                12/06/2017 - Bloquear lancamento do historico 
+                             762 - Despesa de Falha Operacional na viacredi
+                             (Tiago/Fabricio #661260).
 -----------------------------------------------------------------------------*/
 
 {dbo/bo-erro1.i}
@@ -130,7 +133,23 @@ PROCEDURE valida-lancamento-boletim:
                            INPUT YES).
             RETURN "NOK".
         END.
-    
+   
+    /* 762 - Despesa de Falha Operacional */    
+    IF p-cod-histor     = 762       AND 
+       crapcop.cdcooper = 1         THEN
+       DO:
+            ASSIGN i-cod-erro  = 0
+                   c-desc-erro = "Historico nao permitido. Consulte a sede da cooperativa.". 
+            RUN cria-erro (INPUT p-cooper,
+                           INPUT p-cod-agencia,
+                           INPUT p-nro-caixa,
+                           INPUT i-cod-erro,
+                           INPUT c-desc-erro,
+                           INPUT YES).
+            RETURN "NOK".
+       END.
+   
+   
     IF  craphis.tplotmov <> 22  THEN 
         DO:
             ASSIGN i-cod-erro  = 100
@@ -270,7 +289,7 @@ PROCEDURE grava-lancamento-boletim:
         ASSIGN i-nro-docto = INTE(c-docto-salvo).
     ELSE
         ASSIGN i-nro-docto = p-docto.
-       
+    MESSAGE p-cod-histor.   
     RUN valida-permissao-historico IN THIS-PROCEDURE (INPUT p-cooper,
                                                       INPUT p-cod-agencia, 
                                                       INPUT p-nro-caixa, 
