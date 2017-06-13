@@ -2294,12 +2294,18 @@ PROCEDURE busca_convenios_codbarras:
                            gnconve.flgativo = TRUE              AND
                            gnconve.nmarqatu <> ""               AND
                            gnconve.cdhisdeb <> 0)               OR 
-                           ((gnconve.cdconven = 87  OR gnconve.cdconven = 108) AND
+                          (gnconve.cdconven = 87                AND
                            gnconve.flgativo = TRUE              AND
                            gnconve.nmarqatu <> ""               AND
                            gnconve.cdhisdeb <> 0                AND 
-                           (crapcon.cdempcon = 1058 OR crapcon.cdempcon = 1085))
-                           NO-LOCK NO-ERROR.
+                           crapcon.cdempcon = 1058)             OR
+                          (gnconve.cdconven = 108               AND
+                           gnconve.flgativo = TRUE              AND
+                           gnconve.nmarqatu <> ""               AND
+                           gnconve.cdhisdeb <> 0                AND 
+                           crapcon.cdempcon = 1085)                           
+                           NO-LOCK NO-ERROR.                           
+                           
                                          
                 IF  NOT AVAILABLE gnconve THEN
                     NEXT.
