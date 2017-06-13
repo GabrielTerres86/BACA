@@ -597,6 +597,7 @@ PROCEDURE grava_dados:
                             INPUT 0,
                             INPUT 0,
                             INPUT 1, /* par_qtpreemp */
+							INPUT aux_vlpreemp,
                             OUTPUT aux_vltarifa,
                             OUTPUT aux_vltaxiof,
                             OUTPUT aux_vltariof,
@@ -671,6 +672,7 @@ END PROCEDURE. /* END grava_dados */
     DEF  INPUT PARAM par_cdagetfn AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrterfin AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_qtpreemp AS INTE                           NO-UNDO.
+	DEF  INPUT PARAM par_vlpreemp AS DECI                           NO-UNDO.
 
     DEF OUTPUT PARAM par_vltottar AS DECI                           NO-UNDO.
     DEF OUTPUT PARAM par_vltaxiof AS DECI                           NO-UNDO.
@@ -823,6 +825,7 @@ END PROCEDURE. /* END grava_dados */
                          INPUT par_dtmvtolt,
                          INPUT par_qtpreemp,
                          INPUT par_dtdpagto,
+						 INPUT par_vlpreemp,
                          OUTPUT par_vltaxiof,
                          OUTPUT par_vltariof,
                          OUTPUT TABLE tt-erro).
