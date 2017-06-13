@@ -7260,8 +7260,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
     Frequencia: Sempre que for chamado
     Objetivo  : Rotina para efetuar resgate dos cheques em custódia
 
-    Alteracoes: 
-                                                     
+    Alteracoes: 08/06/2017 - Ajustado a montagem do numero do documento. (Daniel)
+                             
+                01/06/2017 - Removido Commit e rollback, rotinas chamadoras devem controlar isto.
+                             PRJ300 - Desconto de cheque (Odirlei-AMcom)
+                        
   ............................................................................. */
   	DECLARE
  		  -- Tratamento de críticas		                                                                           
@@ -7421,8 +7424,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
 					-- Fecha cursor
 					CLOSE cr_crapcst;
           -- Monta nr. do doc
-					vr_nrdocmto := to_number(to_char(rw_crapcst.nrcheque, '000000') +
-																	 to_char(rw_crapcst.nrddigc3, '0'));
+                         
+          vr_nrdocmto := to_number(to_char(rw_crapcst.nrcheque,'fm000000') ||
+					     to_char(rw_crapcst.nrddigc3,'fm0'));
 
           -- Se for resgatado no mesmo dia da custódia não tarifa
           IF (rw_crapcst.dtmvtolt <> rw_crapdat.dtmvtolt) THEN
@@ -7466,8 +7470,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
 			END LOOP;
 
       pr_tab_erro_resg := vr_tab_resgate_erro;
-      -- Efetuar commit
-			COMMIT;
 			
 		EXCEPTION
       WHEN vr_exc_erro THEN
@@ -7478,13 +7480,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
 					pr_cdcritic := vr_cdcritic;
 					pr_dscritic := vr_dscritic;
 				END IF;
-        -- Efetuar rollback
-        ROLLBACK;
+
 			WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral em pc_efetua_resgate: ' || SQLERRM;
-        --Efetuar rollback
-        ROLLBACK;		
+	
 		END;
 	END pc_efetua_resgate_custodia;
   

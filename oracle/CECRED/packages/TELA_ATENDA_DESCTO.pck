@@ -109,6 +109,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_DESCTO IS
 	PROCEDURE pc_efetiva_desconto_bordero(pr_nrdconta  IN craplim.nrdconta%TYPE  --> Conta
 																			 ,pr_nrborder  IN crapcdb.nrborder%TYPE  --> Bordero
 																			 ,pr_cdopcolb  IN crapbdc.cdopcolb%TYPE  --> Operador Liberação
+																			 ,pr_flresghj  IN INTEGER DEFAULT 0      --> Flag para resgatar cheques custodiados hoje
 																			 ,pr_xmllog    IN VARCHAR2               --> XML com informacoes de LOG
 																			 ,pr_cdcritic  OUT PLS_INTEGER           --> Codigo da critica
 																			 ,pr_dscritic  OUT VARCHAR2              --> Descricao da critica
@@ -128,6 +129,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_DESCTO IS
 	
   PROCEDURE pc_rejeitar_bordero(pr_nrdconta  IN crapcdb.nrdconta%TYPE  --> Conta
                                ,pr_nrborder  IN crapcdb.nrborder%TYPE  --> Bordero
+                               ,pr_flresghj  IN INTEGER DEFAULT 0      --> Flag para resgatar cheques custodiados hoje
 														   ,pr_xmllog    IN VARCHAR2               --> XML com informacoes de LOG
 														   ,pr_cdcritic  OUT PLS_INTEGER           --> Codigo da critica
 														   ,pr_dscritic  OUT VARCHAR2              --> Descricao da critica
@@ -2596,6 +2598,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 	PROCEDURE pc_efetiva_desconto_bordero(pr_nrdconta  IN craplim.nrdconta%TYPE  --> Conta
 																			 ,pr_nrborder  IN crapcdb.nrborder%TYPE  --> Bordero
 																			 ,pr_cdopcolb  IN crapbdc.cdopcolb%TYPE  --> Operador Liberação
+																			 ,pr_flresghj  IN INTEGER DEFAULT 0      --> Flag para resgatar cheques custodiados hoje
 																			 ,pr_xmllog    IN VARCHAR2               --> XML com informacoes de LOG
 																			 ,pr_cdcritic  OUT PLS_INTEGER           --> Codigo da critica
 																			 ,pr_dscritic  OUT VARCHAR2              --> Descricao da critica
@@ -2617,7 +2620,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 								cheque, onde é creditado o valor líquido da operação na conta do 
 								cooperado, como também os encargos (IOF e tarifa (se houver)).
 
-    Alteracoes: -----
+    Alteracoes: 02/06/2017 - Ajustes para resgatar cheques custodiados no dia de hoje
+                             que não foram aprovados.
+                             PRJ300 - Desconto de cheque(Odirlei-AMcom) 
   ..............................................................................*/
 	
     -- Variavel de criticas
@@ -2650,6 +2655,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 														,pr_idorigem => vr_idorigem
 														,pr_cdoperad => vr_cdoperad
 														,pr_dscritic => vr_dscritic);	  
+														
+		
+    IF pr_flresghj = 1 THEN
+      --> Resgatar cheques custodiados no dia de movimento
+      DSCC0001.pc_resgata_cheques_cust_hj
+                                (pr_cdcooper => vr_cdcooper  --> Cooperativa
+                                ,pr_cdagenci => vr_cdagenci  --> Agencia
+                                ,pr_nrdconta => pr_nrdconta  --> Nr. da Conta
+                                ,pr_nrborder => pr_nrborder  --> Nr. Borderô
+                                ,pr_cdoperad => vr_cdoperad  --> Cód. operador
+                                ,pr_flreprov => 1            --> Resgatar apenas os reprovados
+                                ,pr_cdcritic => vr_cdcritic  --> Crítica
+                                ,pr_dscritic => vr_dscritic);  --> Desc. da crítica
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+    END IF;
 														
 		-- Efetivar desconto do bordero
     DSCC0001.pc_efetiva_desconto_bordero(pr_cdcooper => vr_cdcooper
@@ -2731,6 +2753,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
     vr_nrdcaixa VARCHAR2(100);
     vr_idorigem VARCHAR2(100);
 		
+    rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
+    vr_dsxml    VARCHAR2(20000);
+    vr_flgassin INTEGER := 0;
+    vr_flcusthj INTEGER := 0;
+		
 		-- Buscar borderô de desconto
 		CURSOR cr_crapbdc(pr_cdcooper IN crapbdc.cdcooper%TYPE
 										 ,pr_nrdconta IN crapbdc.nrdconta%TYPE
@@ -2744,6 +2771,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 				 AND bdc.nrdconta = pr_nrdconta
 				 AND bdc.nrborder = pr_nrborder;
 		rw_crapbdc cr_crapbdc%ROWTYPE;
+
+    -- Buscar cheques custodiados na data de hoje
+    CURSOR cr_crapcdb(pr_cdcooper IN crapbdc.cdcooper%TYPE
+                     ,pr_nrdconta IN crapbdc.nrdconta%TYPE
+                     ,pr_nrborder IN crapbdc.nrborder%TYPE
+                     ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS
+      SELECT 1    
+        FROM crapcdb cdb,
+             crapcst cst
+       WHERE cdb.cdcooper = pr_cdcooper
+         AND cdb.nrdconta = pr_nrdconta
+         AND cdb.nrborder = pr_nrborder
+         AND cst.cdcooper = cdb.cdcooper
+         AND cst.nrdconta = cdb.nrdconta
+         AND cst.nrborder = cdb.nrborder
+         AND cst.cdcmpchq = cdb.cdcmpchq
+         AND cst.cdbanchq = cdb.cdbanchq
+         AND cst.cdagechq = cdb.cdagechq
+         AND cst.nrcheque = cdb.nrcheque
+         AND cst.nrctachq = cdb.nrctachq
+         AND cdb.insitana = 2 		       --> apenas cheques nao aprovados
+         AND cst.dtmvtolt = pr_dtmvtolt;
+    
 
 	BEGIN
 	  -- Incluir nome do modulo logado
@@ -2759,6 +2809,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 														,pr_idorigem => vr_idorigem
 														,pr_cdoperad => vr_cdoperad
 														,pr_dscritic => vr_dscritic);	  
+	  
+    -- Busca a data do sistema
+		OPEN  BTCH0001.cr_crapdat(vr_cdcooper);
+		FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+		CLOSE BTCH0001.cr_crapdat;
 	
 	  -- Buscar borderô de desconto
     OPEN cr_crapbdc(pr_cdcooper => vr_cdcooper
@@ -2786,13 +2841,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 			RAISE vr_exc_erro;
 		END IF;
 	
+    vr_dsxml := '<?xml version="1.0" encoding="ISO-8859-1" ?> <Root>';
+    
 	  -- Se borderô precisa de assinatura
+    vr_flgassin := 0;
 	  IF rw_crapbdc.flgassin = 1 THEN
 			IF trim(rw_crapbdc.dhdassin) IS NULL AND trim(rw_crapbdc.cdopeasi) IS NULL THEN
-	      pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                     '<Root><flgassin>1</flgassin></Root>');
+	      vr_flgassin := 1; 
 			END IF;
 		END IF;
+    
+    vr_dsxml := vr_dsxml || '<flgassin>'||vr_flgassin||'</flgassin>';
+    
+    -- Buscar cheques custodiados na data de hoje
+    vr_flcusthj := 0;
+    OPEN cr_crapcdb ( pr_cdcooper => vr_cdcooper
+                     ,pr_nrdconta => pr_nrdconta
+                     ,pr_nrborder => pr_nrborder
+                     ,pr_dtmvtolt => rw_crapdat.dtmvtolt);
+    FETCH cr_crapcdb INTO vr_flcusthj;
+    CLOSE cr_crapcdb;
+    
+    vr_dsxml := vr_dsxml || '<flcusthj>'||vr_flcusthj||'</flcusthj>';
+    vr_dsxml := vr_dsxml || '</Root>';
+    pr_retxml := XMLTYPE.CREATEXML(vr_dsxml);
+    
 		
 	EXCEPTION
     WHEN vr_exc_erro THEN
@@ -3037,6 +3110,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 
   PROCEDURE pc_rejeitar_bordero(pr_nrdconta  IN crapcdb.nrdconta%TYPE  --> Conta
                                ,pr_nrborder  IN crapcdb.nrborder%TYPE  --> Bordero
+                               ,pr_flresghj  IN INTEGER DEFAULT 0      --> Flag para resgatar cheques custodiados hoje
 														   ,pr_xmllog    IN VARCHAR2               --> XML com informacoes de LOG
 														   ,pr_cdcritic  OUT PLS_INTEGER           --> Codigo da critica
 														   ,pr_dscritic  OUT VARCHAR2              --> Descricao da critica
@@ -3124,6 +3198,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
       RAISE vr_exc_erro;
     END IF;
     CLOSE cr_crapbdc;
+	
+    IF pr_flresghj = 1 THEN
+      --> Resgatar cheques custodiados no dia de movimento
+      DSCC0001.pc_resgata_cheques_cust_hj
+                                (pr_cdcooper => vr_cdcooper  --> Cooperativa
+                                ,pr_cdagenci => vr_cdagenci  --> Agencia
+                                ,pr_nrdconta => pr_nrdconta  --> Nr. da Conta
+                                ,pr_nrborder => pr_nrborder  --> Nr. Borderô
+                                ,pr_cdoperad => vr_cdoperad  --> Cód. operador
+                                ,pr_flreprov => 0            --> Resgatar apenas os reprovados
+                                ,pr_cdcritic => vr_cdcritic  --> Crítica
+                                ,pr_dscritic => vr_dscritic);  --> Desc. da crítica
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+    END IF;
 	
     -- Rejeita bordero
 		BEGIN

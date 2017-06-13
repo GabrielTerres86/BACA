@@ -3,7 +3,7 @@
 	/************************************************************************
 	 Fonte: cheques_bordero.php                                       
 	 Autor: Guilherme                                                 
-	 Data : Novembro/2008                Última Alteração: 16/12/2016 
+	 Data : Novembro/2008                Última Alteração: 31/05/2017
 	                                                                  
 	 Objetivo  : Mostrar opcao Borderos de descontos de cheques        
 	                                                                  	 
@@ -19,6 +19,9 @@
 
 				 23/03/2017 - Inclusao de botão Rejeitar.  Projeto 300 (Lombardi)
 
+                 31/05/2017 - Ajuste para verificar se possui cheque custodiado
+                               no dia de hoje. 
+                               PRJ300- Desconto de cheque. (Odirlei-AMcom) 
 	************************************************************************/
 	
 	session_start();
@@ -106,13 +109,14 @@
 					<th>Valor Aprovado</th>
 					<th>Situa&ccedil;&atilde;o</th>
 					<th>Data Libera&ccedil;&atilde;o</th>
+                    <th style="display:none;" >Possui Cheque Custodiado hoje</th>
 				</tr>			
 			</thead>
 			<tbody>
 				<?  for ($i = 0; $i < $qtBorderos; $i++) { 								
 						$cor = "";
 						
-						$mtdClick = "selecionaBorderoCheques('".($i + 1)."','".$qtBorderos."','".$borderos[$i]->tags[1]->cdata."','".$borderos[$i]->tags[2]->cdata."','".$borderos[$i]->tags[7]->cdata."','".(trim($borderos[$i]->tags[5]->cdata) == "REJEITADO" ? 1 : 0)."');";
+						$mtdClick = "selecionaBorderoCheques('".($i + 1)."','".$qtBorderos."','".$borderos[$i]->tags[1]->cdata."','".$borderos[$i]->tags[2]->cdata."','".$borderos[$i]->tags[7]->cdata."','".(trim($borderos[$i]->tags[5]->cdata) == "REJEITADO" ? 1 : 0)."','".$borderos[$i]->tags[11]->cdata."');";
 					?>
 					<tr id="trBordero<? echo $i + 1; ?>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>">
 					
@@ -138,6 +142,7 @@
 							
 						<td><? echo $borderos[$i]->tags[5]->cdata; ?></td>
 						<td><? echo $borderos[$i]->tags[8]->cdata; ?></td>
+                        <td style="display:none;"> <? echo $borderos[$i]->tags[11]->cdata; ?></td>
 					</tr>							
 				<?} // Fim do for ?>			
 			</tbody>

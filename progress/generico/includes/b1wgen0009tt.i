@@ -2,7 +2,7 @@
 
    Programa: b1wgen0009tt.i                  
    Autor   : Guilherme
-   Data    : Março/2009                  Ultima atualizacao: 30/05/2017
+   Data    : Março/2009                  Ultima atualizacao: 21/06/2016
    Dados referentes ao programa:
 
    Objetivo  : Temp-tables utlizadas na BO b1wgen0009.p - Desconto de Cheques
@@ -54,8 +54,10 @@
                             Projeto 300. (Lombardi)
 
                30/05/2017 - Criacao dos campos qtdaprov e vlraprov na tt-bordero_chq
-                            Projeto 300. (Lombardi)
-                            
+                            Projeto 300. (Lombardi)								   
+
+               31/05/2017 - Inclusao campo flcusthj.               
+                            Projeto 300. (Odirlei-AMcom)
 ..............................................................................*/
 
 DEF TEMP-TABLE tt-desconto_cheques NO-UNDO
@@ -263,7 +265,8 @@ DEF TEMP-TABLE tt-bordero_chq NO-UNDO
     FIELD nrdolote LIKE crapbdc.nrdolote
     FIELD dtlibbdc LIKE crapbdc.dtlibbdc
     FIELD qtdaprov AS INTE
-    FIELD vlraprov AS DECI.
+    FIELD vlraprov AS DECI
+    FIELD flcusthj AS INTE. /* flag bordero possui cheques custodiados hj */
     
 DEF TEMP-TABLE tt-dscchq_dados_bordero NO-UNDO
     FIELD nrborder AS INTE

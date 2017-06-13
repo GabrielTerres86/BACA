@@ -2,7 +2,7 @@
 
    Programa: b1wgen0009.p
    Autor   : Guilherme
-   Data    : Marco/2009                     Última atualizacao: 30/05/2017
+   Data    : Marco/2009                     Última atualizacao: 02/06/2017
    
    Dados referentes ao programa:
 
@@ -267,6 +267,10 @@
                             
            30/05/2017 - Criacao dos campos qtdaprov e vlraprov na tt-bordero_chq
                         Projeto 300. (Lombardi)       
+
+           02/06/2017 - Ajuste para resgatar cheque custodiado no dia de hj
+                        quando excluir bordero.
+                        PRJ300 - Desconto de cheque(Odirlei-AMcom)            
 					                
 ............................................................................. */
 
@@ -9332,6 +9336,8 @@ PROCEDURE busca_borderos:
     DEFINE VARIABLE aux_vlcompcr AS DECIMAL     NO-UNDO.
     DEFINE VARIABLE aux_qtdaprov AS INTEGER     NO-UNDO.
     DEFINE VARIABLE aux_vlraprov AS DECIMAL     NO-UNDO.
+    DEFINE VARIABLE aux_flcusthj AS INTEGER     NO-UNDO.
+    
     
     EMPTY TEMP-TABLE tt-bordero_chq.
 
@@ -9386,6 +9392,31 @@ PROCEDURE busca_borderos:
              ASSIGN aux_qtcompln = craplot.qtcompln
                     aux_vlcompcr = craplot.vlcompcr.
     
+    
+        ASSIGN aux_flcusthj = 0.
+        IF crapbdc.insitbdc = 1 OR
+           crapbdc.insitbdc = 2 THEN
+          DO:   
+            /* Verificar se no bordero existe cheques custodiados hoje */
+            FOR EACH crapcdb WHERE crapcdb.cdcooper = par_cdcooper     
+                               AND crapcdb.nrdconta = crapbdc.nrdconta   
+                               AND crapcdb.nrborder = crapbdc.nrborder  NO-LOCK,
+                EACH crapcst WHERE crapcst.cdcooper = crapcdb.cdcooper
+                               AND crapcst.nrdconta = crapcdb.nrdconta
+                               AND crapcst.nrborder = crapcdb.nrborder
+                               AND crapcst.cdcmpchq = crapcdb.cdcmpchq
+                               AND crapcst.cdbanchq = crapcdb.cdbanchq
+                               AND crapcst.cdagechq = crapcdb.cdagechq
+                               AND crapcst.nrcheque = crapcdb.nrcheque
+                               AND crapcst.nrctachq = crapcdb.nrctachq
+                               AND crapcst.dtmvtolt = par_dtmvtolt      NO-LOCK:
+          
+              ASSIGN aux_flcusthj = 1.
+              LEAVE.
+          
+            END.
+          END.
+    
         CREATE tt-bordero_chq.
         ASSIGN tt-bordero_chq.dtmvtolt = crapbdc.dtmvtolt
                tt-bordero_chq.nrborder = crapbdc.nrborder
@@ -9408,7 +9439,8 @@ PROCEDURE busca_borderos:
                tt-bordero_chq.nrdolote = crapbdc.nrdolote
                tt-bordero_chq.dtlibbdc = crapbdc.dtlibbdc
                tt-bordero_chq.qtdaprov = aux_qtdaprov
-               tt-bordero_chq.vlraprov = aux_vlraprov.
+               tt-bordero_chq.vlraprov = aux_vlraprov
+               tt-bordero_chq.flcusthj = aux_flcusthj.
     
     END.  /*  Fim da leitura do crapbdc  */
     
@@ -10035,6 +10067,7 @@ PROCEDURE efetua_exclusao_bordero:
     DEFINE INPUT  PARAMETER par_nrborder AS INTEGER     NO-UNDO.
     DEFINE INPUT  PARAMETER par_flgelote AS LOGICAL     NO-UNDO.
     DEFINE INPUT  PARAMETER par_flgerlog AS LOGICAL     NO-UNDO.
+    DEFINE INPUT  PARAMETER par_flresghj AS INTEGER     NO-UNDO.
     
     DEFINE OUTPUT PARAMETER TABLE FOR tt-erro.
     
@@ -10056,6 +10089,53 @@ PROCEDURE efetua_exclusao_bordero:
     TRANS_EXCLUSAO:
     DO TRANSACTION ON ERROR UNDO TRANS_EXCLUSAO, LEAVE TRANS_EXCLUSAO:
     
+
+        /* Verificar se esta marcado para resgatar os cheques custodiados no dia de hoje */
+        IF par_flresghj = 1 THEN
+          DO: 
+                        
+            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+            /* Resgatar cheques custodiados hoje */
+            RUN STORED-PROCEDURE pc_resgata_cheques_cust_hj
+            aux_handproc = PROC-HANDLE NO-ERROR ( INPUT  par_cdcooper
+                                                 ,INPUT  par_cdagenci
+                                                 ,INPUT  par_nrdconta
+                                                 ,INPUT  par_nrborder
+                                                 ,INPUT  par_cdoperad
+                                                 ,INPUT  0 /* pr_flreprov -> apenas nao aprovados (1-sim,0-nao)*/
+                                                 ,OUTPUT 0
+                                                 ,OUTPUT "").
+ 
+            CLOSE STORED-PROC pc_resgata_cheques_cust_hj
+            aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+          
+          
+            ASSIGN aux_cdcritic = INTE(pc_resgata_cheques_cust_hj.pr_cdcritic)
+                                  WHEN pc_resgata_cheques_cust_hj.pr_cdcritic <> ?.
+          
+            ASSIGN aux_dscritic = pc_resgata_cheques_cust_hj.pr_dscritic
+                                  WHEN pc_resgata_cheques_cust_hj.pr_dscritic <> ?.
+                                            
+            IF  aux_dscritic <> "" OR aux_cdcritic > 0 THEN
+                DO:
+                    RUN gera_erro (INPUT par_cdcooper,
+                                   INPUT par_cdagenci,
+                                   INPUT par_nrdcaixa,
+                                   INPUT 1,            /** Sequencia **/
+                                   INPUT aux_cdcritic,
+                                   INPUT-OUTPUT aux_dscritic).
+
+                    aux_flgderro = TRUE.
+                    
+                    UNDO TRANS_EXCLUSAO, LEAVE TRANS_EXCLUSAO.
+                END.
+          
+          
+          END.	
+        
         /*Atualizar o numero do borderô do cheque para zero*/
         FOR EACH crapdcc EXCLUSIVE-LOCK
            WHERE crapdcc.cdcooper = par_cdcooper
