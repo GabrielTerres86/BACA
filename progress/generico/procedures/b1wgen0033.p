@@ -3837,8 +3837,8 @@ PROCEDURE imprimir_proposta_seguro:
         ASSIGN aux_dsendres = TRIM(tt-prop-seguros.dsendres) +
                        ", " + TRIM(STRING(tt-prop-seguros.nrendres))
 			   aux_dscgcseg = STRING(tt-seguradora.nrcgcseg)
-			   aux_nmresseg = aux_nmresseg = TRIM(tt-seguradora.nmresseg).
-                 
+			   aux_nmresseg = TRIM(tt-seguradora.nmresseg).
+		
 		
 		/*Primeira via*/
         DISPLAY STREAM str_1 
