@@ -1380,14 +1380,15 @@ create or replace package body cecred.INSS0001 as
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                  pr_ind_tipo_log => 1, -- somente mensagem
                                  pr_nmarqlog     => 'prprev', --gerar log no prprev,
-                                 pr_des_log      => to_char(pr_dtdehoje,'DD/MM/RRRR')||' '||
-                                                    to_char(sysdate,'hh24:mi:ss')||' --> '||
-                                                   'Operador: ' || pr_cdoperad  || ' - '||
-                                                   'Realizou o credito em conta para a '||
-                                                   'Conta: '  || gene0002.fn_mask_conta(rw_craplbi.nrdconta)||
-                                                   ', Coop.: '|| to_char(rw_craplbi.cdcooper) ||
-                                                   ', PA : '  || to_char(rw_craplbi.cdagenci) ||
-                                                   ', Valor: '|| to_char(rw_craplbi.vlliqcre) ||'.'
+                                 pr_des_log      => to_char(sysdate,'hh24:mi:ss') ||
+                                                    ' - ' || pr_cdprogra || ' --> ' || 
+                                                    'ALERTA: ' || pr_dscritic ||
+                                                    ' ,ope: '  || pr_cdoperad  || ' - ' ||
+                                                    'Realizou o credito em conta para a ' ||
+                                                    'Conta: '  || gene0002.fn_mask_conta(rw_craplbi.nrdconta)||
+                                                    ', Coop.: '|| to_char(rw_craplbi.cdcooper) ||
+                                                    ', PA : '  || to_char(rw_craplbi.cdagenci) ||
+                                                    ', Valor: '|| to_char(rw_craplbi.vlliqcre) ||'.'
                                 ,pr_cdprograma   => pr_cdprogra
                                                    );
     ELSE
@@ -1395,8 +1396,9 @@ create or replace package body cecred.INSS0001 as
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                  pr_ind_tipo_log => 1, -- somente mensagem
                                  pr_nmarqlog     => 'prprev', --gerar log no prprev,
-                                 pr_des_log      => to_char(pr_dtdehoje,'DD/MM/RRRR')||' '||
-                                                    to_char(sysdate,'hh24:mi:ss')||' --> '||
+                                 pr_des_log      =>  to_char(sysdate,'hh24:mi:ss') ||
+                                                    ' - ' || pr_cdprogra || ' --> ' || 
+                                                    'ALERTA: ' || pr_dscritic ||
                                                    'Realizado o credito em conta para a '||
                                                    'Conta: '  || gene0002.fn_mask_conta(rw_craplbi.nrdconta)||
                                                    ', Coop.: '|| to_char(rw_craplbi.cdcooper) ||
@@ -1684,9 +1686,10 @@ create or replace package body cecred.INSS0001 as
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                  pr_ind_tipo_log => 1, -- somente mensagem
                                  pr_nmarqlog     => 'prprev',--gerar log no prprev
-                                 pr_des_log      => to_char(pr_dtdehoje,'DD/MM/RRRR')||' '||
-                                                    to_char(sysdate,'hh24:mi:ss')||' --> '||
-                                                   'Operador: ' || pr_cdoperad  || ' - '||
+                                 pr_des_log      =>  to_char(sysdate,'hh24:mi:ss') ||
+                                                    ' - ' || pr_cdprogra || ' --> ' || 
+                                                    'ALERTA: ' || pr_dscritic ||
+                                                   ' ,ope: ' || pr_cdoperad  || ' - '||
                                                    'Realizou o credito em conta para a '||
                                                    'Conta: '  || gene0002.fn_mask_conta(rw_craplbi.nrdconta)||
                                                    ', Coop.: '|| to_char(rw_craplbi.cdcooper) ||
@@ -1699,8 +1702,9 @@ create or replace package body cecred.INSS0001 as
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                  pr_ind_tipo_log => 1, -- somente mensagem
                                  pr_nmarqlog     => 'prprev', --gerar log no prprev
-                                 pr_des_log      => to_char(pr_dtdehoje,'DD/MM/RRRR')||' '||
-                                                    to_char(sysdate,'hh24:mi:ss')||' --> '||
+                                 pr_des_log      =>  to_char(sysdate,'hh24:mi:ss') ||
+                                                    ' - ' || pr_cdprogra || ' --> ' || 
+                                                    'ALERTA: ' || pr_dscritic ||
                                                    'Realizado o credito em conta para a '||
                                                    'Conta: '  || gene0002.fn_mask_conta(rw_craplbi.nrdconta)||
                                                    ', Coop.: '|| to_char(rw_craplbi.cdcooper) ||
@@ -2028,9 +2032,9 @@ create or replace package body cecred.INSS0001 as
         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                   ,pr_ind_tipo_log => 2 -- Erro tratato
                                   ,pr_nmarqlog     => pr_nmarqlog
-                                  ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                    ' - ' || pr_cdprogra ||
-                                                    ' --> ' || vr_dscritic || ' X '
+                                  ,pr_des_log      =>  to_char(sysdate,'hh24:mi:ss') ||
+                                                    ' - ' || vr_cdprogra || ' --> ' || 
+                                                    'ERRO: ' || vr_dscritic 
                                   ,pr_cdprograma   => vr_cdprogra
                                                     );
                                                     
@@ -2252,9 +2256,9 @@ create or replace package body cecred.INSS0001 as
         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                   ,pr_ind_tipo_log => 2 -- Erro tratato
                                   ,pr_nmarqlog     => pr_nmarqlog
-                                  ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                    ' - ' || pr_cdprogra ||
-                                                    ' --> ' || vr_dscritic
+                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss') ||
+                                                    ' - ' || pr_cdprogra || ' --> ' || 
+                                                    'ERRO: ' || vr_dscritic 
                                   ,pr_cdprograma   => pr_cdprogra
                                                     );
       WHEN OTHERS THEN
@@ -2269,9 +2273,9 @@ create or replace package body cecred.INSS0001 as
         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                   ,pr_ind_tipo_log => 2 -- Erro tratato
                                   ,pr_nmarqlog     => pr_nmarqlog
-                                  ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                    ' - ' || pr_cdprogra ||
-                                                    ' --> ' || vr_dscritic
+                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss') ||
+                                                    ' - ' || pr_cdprogra || ' --> ' || 
+                                                    'ERRO: ' || vr_dscritic
                                   ,pr_cdprograma   => pr_cdprogra
                                                     );        
         
@@ -2946,10 +2950,9 @@ create or replace package body cecred.INSS0001 as
           btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                     ,pr_ind_tipo_log => 2 -- Erro tratato                                   
                                     ,pr_nmarqlog     => pr_nmarqlog
-                                    ,pr_des_log      => to_char(SYSDATE,
-                                                        'hh24:mi:ss') ||
-                                                        ' - ' || pr_cdprogra ||
-                                                        ' --> ' || vr_dscritic2
+                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss') ||
+                                                    ' - ' || pr_cdprogra || ' --> ' || 
+                                                    'ERRO: ' || vr_dscritic2
                                     ,pr_cdprograma   => pr_cdprogra
                                                         );
 
@@ -4813,11 +4816,10 @@ create or replace package body cecred.INSS0001 as
             btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                       ,pr_ind_tipo_log => 2 -- Erro tratato
                                       ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                      ,pr_des_log      => to_char(SYSDATE,
-                                                         'hh24:mi:ss') ||
-                                                         ' - ' || pr_cdprogra ||
-                                                         ' --> ' || vr_dscritic||
-                                                         ' Arquivo: '||pr_nmarquiv
+                                      ,pr_des_log      => to_char(sysdate,'hh24:mi:ss') ||
+                                                          ' - ' || pr_cdprogra || ' --> ' || 
+                                                          'ERRO: ' || vr_dscritic ||
+                                                          ' Arquivo: '||pr_nmarquiv
                                       ,pr_cdprograma   => pr_cdprogra
                                                          );
 
@@ -4923,10 +4925,9 @@ create or replace package body cecred.INSS0001 as
            btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                      ,pr_ind_tipo_log => 2 -- Erro tratato
                                      ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                     ,pr_des_log      => to_char(SYSDATE,
-                                                         'hh24:mi:ss') ||
-                                                         ' - ' || pr_cdprogra ||
-                                                         ' --> ' || vr_dscritic||
+                                     ,pr_des_log      => to_char(sysdate,'hh24:mi:ss') ||
+                                                         ' - ' || pr_cdprogra || ' --> ' || 
+                                                         'ERRO: ' || vr_dscritic ||
                                                          ' Arquivo: '||pr_nmarquiv
                                      ,pr_cdprograma   => pr_cdprogra
                                                          );
@@ -4961,10 +4962,9 @@ create or replace package body cecred.INSS0001 as
            btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                      ,pr_ind_tipo_log => 2 -- Erro tratato
                                      ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                     ,pr_des_log      => to_char(SYSDATE,
-                                                         'hh24:mi:ss') ||
-                                                         ' - ' || pr_cdprogra ||
-                                                         ' --> ' || vr_dscritic
+                                     ,pr_des_log      => to_char(sysdate,'hh24:mi:ss') ||
+                                                        ' - ' || pr_cdprogra || ' --> ' || 
+                                                        'ERRO: ' || vr_dscritic
                                      ,pr_cdprograma   => pr_cdprogra
                                                          );
         END IF; 
@@ -5316,9 +5316,9 @@ create or replace package body cecred.INSS0001 as
             btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
                                       ,pr_ind_tipo_log => 2 -- Erro tratato
                                       ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',rw_crapcop.cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                      ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                          ' - ' || pr_cdprogra ||
-                                                          ' --> ' || vr_dscritic
+                                      ,pr_des_log      => to_char(sysdate,'hh24:mi:ss') ||
+                                                           ' - ' || pr_cdprogra || ' --> ' || 
+                                                           'ERRO: ' || vr_dscritic
                                       ,pr_cdprograma   => pr_cdprogra
                                                           );
           END IF;          
@@ -5340,11 +5340,10 @@ create or replace package body cecred.INSS0001 as
           btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
                                     ,pr_ind_tipo_log => 2 -- Erro tratato
                                     ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',rw_crapcop.cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                    ,pr_des_log      => to_char(SYSDATE,
-                                                        'hh24:mi:ss') ||
-                                                        ' - ' || pr_cdprogra ||' --> ' || 
-                                                        'Erro ao processar arquivo '||vr_nmarqcri||' '||
-                                                        vr_dscritic
+                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss') ||
+                                                        ' - ' || pr_cdprogra || ' --> ' || 
+                                                        'ERRO: ' || vr_dscritic ||
+                                                        ' ,Erro ao processar arquivo '||vr_nmarqcri
                                     ,pr_cdprograma   => pr_cdprogra
                                                         ); 
           --Proximo Registro
@@ -5684,10 +5683,9 @@ create or replace package body cecred.INSS0001 as
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                 ,pr_ind_tipo_log => 2 -- Erro tratato
                                 ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                ,pr_des_log      => to_char(SYSDATE,
-                                                'hh24:mi:ss') ||
-                                                ' - ' || pr_cdprogra ||
-                                                ' --> ' || vr_dscritic
+                                ,pr_des_log      => to_char(sysdate,'hh24:mi:ss') ||
+                                                        ' - ' || pr_cdprogra || ' --> ' || 
+                                                        'ERRO: ' || vr_dscritic
                                 ,pr_cdprograma   => pr_cdprogra
                                                 );
                                                 
@@ -6313,7 +6311,9 @@ create or replace package body cecred.INSS0001 as
     vr_nrcpfcgc VARCHAR2(100);
     vr_dscritic VARCHAR2(4000);
     
-    vr_cdtipofalha NUMBER (2); -- 19/05/2017 Belli
+    -- 19/05/2017 Belli chamado 660327 
+    vr_cdtipofalha NUMBER (2); 
+    vr_dstipofalha VARCHAR2 (10); 
      
     BEGIN
       
@@ -6347,8 +6347,16 @@ create or replace package body cecred.INSS0001 as
       -- 19/05/2017 Belli
       IF pr_cdtipofalha IS NULL THEN
           vr_cdtipofalha := 3; -- Erro tratato
+          vr_dstipofalha := 'ERRO: ';
       ELSE
           vr_cdtipofalha := pr_cdtipofalha;
+          if pr_cdtipofalha = 1 then
+              vr_dstipofalha := 'ALERTA: ';
+          elsif pr_cdtipofalha = 3 then
+              vr_dstipofalha := 'ERRO: ';
+          else
+              vr_dstipofalha := 'ERRO: ';
+            end if;
       END IF;
       -- 19/05/2017 Belli - End
                       
@@ -6356,9 +6364,9 @@ create or replace package body cecred.INSS0001 as
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                 ,pr_ind_tipo_log => vr_cdtipofalha  -- 19/05/2017 Belli
                                 ,pr_nmarqlog     => pr_nmarqlog
-                                ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                    ' - ' || pr_cdprogra ||
-                                                    ' --> ' || vr_dscritic
+                                ,pr_des_log      => to_char(sysdate,'hh24:mi:ss') ||
+                                                        ' - ' || pr_cdprogra || ' --> ' || 
+                                                        vr_dstipofalha || vr_dscritic
                                 ,pr_cdprograma   => pr_cdprogra
                                                     );
 
@@ -7229,7 +7237,10 @@ create or replace package body cecred.INSS0001 as
         vr_dscritic:= vr_dscritic2;
         --Levantar Excecao
         RAISE vr_exc_erro;
-      END IF;     
+      END IF; 
+      
+      -- Teste Belli 13/06/2017 chamado 660327 forçado um erro  
+      ---vr_retornvl := 'NOK';
       
       IF vr_retornvl = 'NOK' THEN
         
@@ -7766,7 +7777,10 @@ create or replace package body cecred.INSS0001 as
         vr_dscritic:= vr_dscritic2;
         --Levantar Excecao
         RAISE vr_exc_erro;
-      END IF;     
+      END IF;  
+      
+      -- Teste Belli 13/06/2017 chamado 660327 forçado um erro  
+      ---vr_retornvl := 'NOK';   
       
       IF vr_retornvl = 'NOK' THEN
         
@@ -8292,10 +8306,9 @@ create or replace package body cecred.INSS0001 as
         RAISE vr_exc_erro;
         
       END IF;   
-      
-      -- Belli 12/06/2017 TESTE BELLI
-      -- forçado erro para teste
-      -- vr_retornvl := 'NOK';
+            
+      -- Teste Belli 13/06/2017 chamado 660327 forçado um erro  
+      ----vr_retornvl := 'NOK';         
       
       IF vr_retornvl = 'NOK' THEN
         
@@ -11397,8 +11410,7 @@ create or replace package body cecred.INSS0001 as
         
       END IF;
       
-      vr_des_log :=   pr_dtmvtolt                         || ' | ' ||
-        'Horario: '  || to_char(SYSDATE,'HH24:MI:SS')       || ' | ' ||
+      vr_des_log :=   
         'Conta: '    || gene0002.fn_mask(pr_nrdconta,'9999.999-9')  || ' | ' ||
         'Nome: '     || pr_nmextttl                         || ' | ' ||
         'NB: '       || to_char(pr_nrrecben)                || ' | ' ||
@@ -11407,7 +11419,9 @@ create or replace package body cecred.INSS0001 as
                                                  
         btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                                   ,pr_ind_tipo_log => 1
-                                  ,pr_des_log      => vr_des_log
+                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss') ||
+                                                    ' - ' || vr_nmdatela || ' --> ' || 
+                                                    'ALERTA: ' || vr_des_log
                                   ,pr_nmarqlog     => 'inss_historico.log'
                                   ,pr_flfinmsg     => 'N'
                                   ,pr_cdprograma   => vr_nmdatela
@@ -12736,6 +12750,9 @@ create or replace package body cecred.INSS0001 as
                                    
       END IF;  
       
+      -- Teste Belli 13/06/2017 chamado 660327 forçado um erro  
+      ----vr_retornvl := 'NOK';   
+      
       --Se saiu com erro
       IF vr_retornvl = 'NOK' THEN
         
@@ -12774,8 +12791,7 @@ create or replace package body cecred.INSS0001 as
                              
       END IF;
       
-      vr_des_log :=   pr_dtmvtolt                         || ' | ' ||
-      'Horario: '  || to_char(SYSDATE,'HH24:MI:SS')       || ' | ' ||
+      vr_des_log :=   
       'Conta: '    || gene0002.fn_mask(pr_nrdconta,'9999.999-9')  || ' | ' ||
       'Nome: '     || pr_nmextttl                         || ' | ' ||
       'NB: '       || to_char(pr_nrrecben)                || ' | ' ||
@@ -12784,7 +12800,9 @@ create or replace package body cecred.INSS0001 as
       
     btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                               ,pr_ind_tipo_log => 1
-                              ,pr_des_log      => vr_des_log
+                              ,pr_des_log      => to_char(sysdate,'hh24:mi:ss') ||
+                                                    ' - ' || vr_nmdatela || ' --> ' || 
+                                                    'ALERTA: ' || vr_des_log                               
                               ,pr_nmarqlog     => 'inss_historico.log'
                               ,pr_flfinmsg     => 'N'
                               ,pr_cdprograma   => vr_nmdatela
@@ -13735,8 +13753,7 @@ create or replace package body cecred.INSS0001 as
                           
       END IF;
       
-      vr_des_log :=   pr_dtmvtolt                         || ' | ' ||
-        'Horario: '  || to_char(SYSDATE,'HH24:MI:SS')       || ' | ' ||
+      vr_des_log :=   
         'Conta: '    || gene0002.fn_mask(pr_nrdconta,'9999.999-9')  || ' | ' ||
         'Nome: '     || pr_nmbenefi                         || ' | ' ||
         'NB: '       || to_char(pr_nrrecben)                || ' | ' ||
@@ -13747,7 +13764,9 @@ create or replace package body cecred.INSS0001 as
                                                  
         btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                                   ,pr_ind_tipo_log => 1
-                                  ,pr_des_log      => vr_des_log
+                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss') ||
+                                                    ' - ' || vr_nmdatela || ' --> ' || 
+                                                    'ALERTA: ' || vr_des_log   
                                   ,pr_nmarqlog     => 'inss_historico.log'
                                   ,pr_flfinmsg     => 'N'
                                   ,pr_cdprograma   => vr_nmdatela
@@ -14396,8 +14415,7 @@ create or replace package body cecred.INSS0001 as
                                                                   
         END IF;
         
-        vr_des_log :=   pr_dtmvtolt                         || ' | ' ||
-        'Horario: '  || to_char(SYSDATE,'HH24:MI:SS')       || ' | ' ||
+        vr_des_log :=   
         'Conta: '    || gene0002.fn_mask(pr_nrdconta,'9999.999-9')  || ' | ' ||
         'Nome: '     || pr_nmbenefi                         || ' | ' ||
         'NB: '       || to_char(pr_nrrecben)                || ' | ' ||
@@ -14408,7 +14426,9 @@ create or replace package body cecred.INSS0001 as
                 
         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                   ,pr_ind_tipo_log => 1
-                                  ,pr_des_log      => vr_des_log
+                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss') ||
+                                                    ' - ' || pr_nmdatela || ' --> ' || 
+                                                    'ALERTA: ' || vr_des_log   
                                   ,pr_nmarqlog     => 'inss_historico.log'
                                   ,pr_flfinmsg     => 'N'
                                   ,pr_cdprograma   => pr_nmdatela
@@ -15396,8 +15416,7 @@ create or replace package body cecred.INSS0001 as
                                      
       END IF;
       
-      vr_des_log :=   pr_dtmvtolt                         || ' | ' ||
-      'Horario: '  || to_char(SYSDATE,'HH24:MI:SS')       || ' | ' ||
+      vr_des_log :=   
       'Conta: '    || gene0002.fn_mask(pr_nrdconta,'9999.999-9')  || ' | ' ||
       'Nome: '     || pr_nmbenefi                         || ' | ' ||
       'NB: '       || to_char(pr_nrrecben)                || ' | ' ||
@@ -15407,7 +15426,9 @@ create or replace package body cecred.INSS0001 as
                                                  
       btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                                 ,pr_ind_tipo_log => 1
-                                ,pr_des_log      => vr_des_log
+                                ,pr_des_log      => to_char(sysdate,'hh24:mi:ss') ||
+                                                    ' - ' || vr_nmdatela || ' --> ' || 
+                                                    'ALERTA: ' || vr_des_log   
                                 ,pr_nmarqlog     => 'inss_historico.log'
                                 ,pr_flfinmsg     => 'N'
                                 ,pr_cdprograma   => vr_nmdatela
@@ -17195,8 +17216,7 @@ create or replace package body cecred.INSS0001 as
       END IF;
                                          
       IF pr_cddopcao = 'C' THEN
-        vr_des_log :=   pr_dtmvtolt                      || ' | ' ||
-          'Horario: '  || to_char(SYSDATE,'HH24:MI:SS')  || ' | ' ||
+        vr_des_log :=   
           'Conta: '    || gene0002.fn_mask(vr_nrdconta,'9999.999-9')  || ' | ' ||
           'Nome: '     || vr_nmbenefi                    || ' | ' ||
           'NB: '       || to_char(pr_nrrecben)           || ' | ' ||
@@ -17206,7 +17226,9 @@ create or replace package body cecred.INSS0001 as
                                                    
           btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                                     ,pr_ind_tipo_log => 1
-                                    ,pr_des_log      => vr_des_log
+                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss') ||
+                                                    ' - ' || vr_nmdatela || ' --> ' || 
+                                                    'ALERTA: ' || vr_des_log   
                                     ,pr_nmarqlog     => 'inss_historico.log'
                                     ,pr_flfinmsg     => 'N'
                                     ,pr_cdprograma   => vr_nmdatela
@@ -18084,10 +18106,9 @@ create or replace package body cecred.INSS0001 as
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                 ,pr_ind_tipo_log => 2 -- Erro tratato
                                 ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                ,pr_des_log      => to_char(SYSDATE,
-                                                'hh24:mi:ss') ||
-                                                ' - ' || pr_cdprogra ||
-                                                ' --> ' || vr_dscritic
+                                ,pr_des_log      => to_char(sysdate,'hh24:mi:ss') ||
+                                                    ' - ' || pr_cdprogra || ' --> ' || 
+                                                    'ERRO: ' || vr_dscritic 
                                 ,pr_cdprograma   => pr_cdprogra
                                                 );
       
@@ -18101,10 +18122,9 @@ create or replace package body cecred.INSS0001 as
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                 ,pr_ind_tipo_log => 2 -- Erro tratato
                                 ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                ,pr_des_log      => to_char(SYSDATE,
-                                                'hh24:mi:ss') ||
-                                                ' - ' || pr_cdprogra ||
-                                                ' --> ' || vr_dscritic
+                                ,pr_des_log      => to_char(sysdate,'hh24:mi:ss') ||
+                                                    ' - ' || pr_cdprogra || ' --> ' || 
+                                                    'ERRO: ' || vr_dscritic 
                                 ,pr_cdprograma   => pr_cdprogra
                                                 );
   END pc_exec_pagto_benef_plani;
@@ -18851,10 +18871,10 @@ create or replace package body cecred.INSS0001 as
           -- Envio centralizado de log de erro
           btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
                                     ,pr_ind_tipo_log => 2 -- Erro tratato
-                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                          || 'INSS0001' || ' --> '
-                                                          || vr_cdcritic || ' - '
-                                                          || vr_dscritic
+                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss') ||
+                                                    ' - ' || 'INSS0001' || ' --> ' || 
+                                                    'ERRO: ' || vr_dscritic ||
+                                                    ' - '    || vr_cdcritic
                                     ,pr_cdprograma   => 'INSS0001'
                                                            );
 
@@ -19091,10 +19111,11 @@ create or replace package body cecred.INSS0001 as
       -- Gerar critica no log
       btch0001.pc_gera_log_batch(pr_cdcooper     => 3
                                 ,pr_ind_tipo_log => 1
-                                ,pr_des_log      => to_char(SYSDATE,'DD/MM/YYYY HH24:MI:SS') ||
+                                ,pr_des_log      => to_char(sysdate,'hh24:mi:ss') ||
+                                                    ' - ' || 'INSS0001' || ' --> ' || 
+                                                    'ALERTA: ' || vr_dscritic ||
                                                     ' - pc_busca_demonst_sicredi - Erro ao gerar cabecalho. Conta: ' ||
                                                     pr_nrdconta|| ' Coop: '||pr_cdcooper
-                                                    || '. Erro: ' || vr_dscritic
                                 ,pr_nmarqlog     => vr_nmarqlog
                                 ,pr_cdprograma   => 'INSS0001'
                                 );
@@ -19135,10 +19156,11 @@ create or replace package body cecred.INSS0001 as
       -- Gerar critica no log
       btch0001.pc_gera_log_batch(pr_cdcooper     => 3
                                 ,pr_ind_tipo_log => 1
-                                ,pr_des_log      => to_char(SYSDATE,'DD/MM/YYYY HH24:MI:SS') ||
+                                ,pr_des_log      => to_char(sysdate,'hh24:mi:ss') ||
+                                                    ' - ' || 'INSS0001' || ' --> ' || 
+                                                    'ALERTA: ' || vr_dscritic ||
                                                     ' - pc_busca_demonst_sicredi - Erro ao efetuar requisicao. Conta: ' ||
                                                     pr_nrdconta || ' Coop: '||pr_cdcooper
-                                                    || '. Erro: ' || vr_dscritic
                                 ,pr_nmarqlog     => vr_nmarqlog
                                 ,pr_cdprograma   => 'INSS0001'
                                 );
@@ -19165,10 +19187,11 @@ create or replace package body cecred.INSS0001 as
       -- Gerar critica no log
       btch0001.pc_gera_log_batch(pr_cdcooper     => 3
                                 ,pr_ind_tipo_log => 1
-                                ,pr_des_log      => to_char(SYSDATE,'DD/MM/YYYY HH24:MI:SS') ||
+                                ,pr_des_log      => to_char(sysdate,'hh24:mi:ss') ||
+                                                    ' - ' || 'INSS0001' || ' --> ' || 
+                                                    'ALERTA: ' || vr_dscritic ||
                                                     ' - pc_busca_demonst_sicredi - Erro. Conta: ' ||
                                                     pr_nrdconta || ' Coop: '||pr_cdcooper
-                                                    || '. Erro: ' || vr_dscritic
                                 ,pr_nmarqlog     => vr_nmarqlog
                                 ,pr_cdprograma   => 'INSS0001'
                                 );
@@ -19187,10 +19210,11 @@ create or replace package body cecred.INSS0001 as
         -- Gerar critica no log
         btch0001.pc_gera_log_batch(pr_cdcooper     => 3
                                   ,pr_ind_tipo_log => 1
-                                  ,pr_des_log      => to_char(SYSDATE,'DD/MM/YYYY HH24:MI:SS') ||
+                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss') ||
+                                                    ' - ' || 'INSS0001' || ' --> ' || 
+                                                    'ALERTA: ' || vr_dscritic ||
                                                       ' - pc_busca_demonst_sicredi - Erro conversao do arquivo para xml. Conta: ' ||
                                                       pr_nrdconta || ' Coop: '||pr_cdcooper
-                                                      || '. Erro: ' || vr_dscritic
                                   ,pr_nmarqlog     => vr_nmarqlog
                                   ,pr_cdprograma   => 'INSS0001'
                                   );
@@ -19214,10 +19238,11 @@ create or replace package body cecred.INSS0001 as
         -- Gerar critica no log
         btch0001.pc_gera_log_batch(pr_cdcooper     => 3
                                   ,pr_ind_tipo_log => 1
-                                  ,pr_des_log      => to_char(SYSDATE,'DD/MM/YYYY HH24:MI:SS') ||
+                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss') ||
+                                                    ' - ' || 'INSS0001' || ' --> ' || 
+                                                    'ALERTA: ' || vr_dscritic ||
                                                       ' - pc_busca_demonst_sicredi - Erro. Conta: ' ||
                                                       pr_nrdconta||' Coop: '||pr_cdcooper
-                                                      || '. Erro: ' || vr_dscritic
                                   ,pr_nmarqlog     => vr_nmarqlog
                                   ,pr_cdprograma   => 'INSS0001'
                                   );
@@ -19398,11 +19423,11 @@ create or replace package body cecred.INSS0001 as
         -- Gerar critica no log
         btch0001.pc_gera_log_batch(pr_cdcooper     => 3
                                   ,pr_ind_tipo_log => 1
-                                  ,pr_des_log      => to_char(SYSDATE
-                                                     ,'DD/MM/YYYY HH24:MI:SS') ||
+                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss') ||
+                                                      ' - ' || 'INSS0001' || ' --> ' || 
+                                                      'ALERTA: ' || vr_dscritic ||
                                                       ' - pc_busca_demonst_sicredi - Erro. Conta: ' ||
                                                       pr_nrdconta||' Coop: '||pr_cdcooper
-                                                      || '. Erro: ' || vr_dscritic
                                   ,pr_nmarqlog     => vr_nmarqlog
                                   ,pr_cdprograma   => 'INSS0001'
                                   );
@@ -19508,11 +19533,11 @@ create or replace package body cecred.INSS0001 as
             -- Gerar critica no log
             btch0001.pc_gera_log_batch(pr_cdcooper     => 3
                                       ,pr_ind_tipo_log => 1
-                                      ,pr_des_log      => to_char(SYSDATE
-                                                         ,'DD/MM/YYYY HH24:MI:SS') ||
+                                      ,pr_des_log      => to_char(sysdate,'hh24:mi:ss') ||
+                                                          ' - ' || 'INSS0001' || ' --> ' || 
+                                                          'ALERTA: ' || vr_dscritic ||
                                                           ' - pc_busca_demonst_sicredi - Erro. Conta: ' ||
                                                           pr_nrdconta||' Coop: '||pr_cdcooper
-                                                          || '. Erro: ' || vr_dscritic
                                       ,pr_nmarqlog     => vr_nmarqlog
                                       ,pr_cdprograma   => 'INSS0001'
                                       );
