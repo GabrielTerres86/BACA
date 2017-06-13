@@ -1626,7 +1626,7 @@ PROCEDURE grava-dados:
     DEF VAR aux_nmdcampo AS CHAR                                    NO-UNDO.   
     DEF VAR aux_dsnomcnv AS CHAR                                    NO-UNDO.    
     DEF VAR aux_tpoperac AS INTE                                    NO-UNDO.
-    DEF VAR aux_dtiniatr AS DATE                                    NO-UNDO.     
+    DEF VAR aux_dtiniatr AS DATE                                    NO-UNDO. 
     DEF VAR aux_nrctacns AS INTE                                    NO-UNDO. 
     DEF VAR aux_nrdrowid AS ROWID                                   NO-UNDO.
     
@@ -1705,7 +1705,7 @@ PROCEDURE grava-dados:
                                 ASSIGN aux_dscritic = "Tabela de limites nao encontrada.".
                                 UNDO Grava, LEAVE Grava.
                             END.
-                            
+                
                         /** Validar horario **/
                         IF  tt-limite.idesthor = 1 THEN /** Estourou horario   **/
                             DO:
@@ -2298,12 +2298,18 @@ PROCEDURE busca_convenios_codbarras:
                            gnconve.flgativo = TRUE              AND
                            gnconve.nmarqatu <> ""               AND
                            gnconve.cdhisdeb <> 0)               OR 
-                           ((gnconve.cdconven = 87  OR gnconve.cdconven = 108) AND
+                          (gnconve.cdconven = 87                AND
                            gnconve.flgativo = TRUE              AND
                            gnconve.nmarqatu <> ""               AND
                            gnconve.cdhisdeb <> 0                AND 
-                           (crapcon.cdempcon = 1058 OR crapcon.cdempcon = 1085))
+                           crapcon.cdempcon = 1058)             OR
+                          (gnconve.cdconven = 108               AND
+                           gnconve.flgativo = TRUE              AND
+                           gnconve.nmarqatu <> ""               AND
+                           gnconve.cdhisdeb <> 0                AND 
+                           crapcon.cdempcon = 1085)                           
                            NO-LOCK NO-ERROR.
+                                         
                                          
                 IF  NOT AVAILABLE gnconve THEN
                     NEXT.
@@ -2713,7 +2719,7 @@ PROCEDURE exclui_autorizacao:
            aux_dstransa = "Exclui autorizacao de debito em conta".
 
     EMPTY TEMP-TABLE tt-erro.
-        
+    
     Exclui: DO WHILE TRUE TRANSACTION ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
 
         FIND crapdat WHERE crapdat.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
