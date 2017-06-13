@@ -10,7 +10,7 @@ create or replace procedure cecred.pc_crps616(pr_cdcooper  in craptab.cdcooper%t
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Gabriel
-   Data    : Agosto/2012                       Ultima atualizacao: 09/10/2015
+   Data    : Agosto/2012                       Ultima atualizacao: 13/06/2017
 
    Dados referentes ao programa:
 
@@ -51,7 +51,10 @@ create or replace procedure cecred.pc_crps616(pr_cdcooper  in craptab.cdcooper%t
                             
                21/05/2015 - Ajuste para verificar se Cobra Multa. (James)    
                
-               09/10/2015 - Incluir históricos de estorno. (Oscar)         
+               09/10/2015 - Incluir históricos de estorno. (Oscar)
+               
+               13/06/2017 - #660083 Alterações para ganho de performance: (Rodrigo)
+               
 ............................................................................. */
   -- Buscar os dados da cooperativa
   cursor cr_crapcop (pr_cdcooper in craptab.cdcooper%type) is
@@ -85,7 +88,7 @@ create or replace procedure cecred.pc_crps616(pr_cdcooper  in craptab.cdcooper%t
 
   -- Buscar os empréstimos pré-fixados e ainda não liquidados
   cursor cr_crapepr (pr_cdcooper in crapepr.cdcooper%type) is
-    select crapepr.cdcooper,
+    select /*+ PARALLEL (crapepr) */ crapepr.cdcooper,
            crapepr.nrdconta,
            crapepr.nrctremp,
            crapepr.vlemprst,
@@ -95,22 +98,23 @@ create or replace procedure cecred.pc_crps616(pr_cdcooper  in craptab.cdcooper%t
            crapepr.cdlcremp,
            crapepr.qtmesdec,
            crapepr.qtprecal,
-           crapepr.qttolatr,
+           crapepr.qttolatr,           
            crapepr.rowid
       from crapepr
      where crapepr.cdcooper = pr_cdcooper
        and crapepr.tpemprst = 1
        and crapepr.inliquid = 0;
+       
+
   -- Buscar informações complementares do empréstimo
-  cursor cr_crawepr (pr_cdcooper in crawepr.cdcooper%type,
-                     pr_nrdconta in crawepr.nrdconta%type,
-                     pr_nrctremp in crawepr.nrctremp%type) is
-    select crawepr.dtlibera
+  cursor cr_crawepr (pr_cdcooper in crawepr.cdcooper%TYPE) is
+    select /*+ PARALLEL (crawepr) */ 
+           crawepr.nrdconta,
+           crawepr.nrctremp,
+           crawepr.dtlibera
       from crawepr
      where crawepr.cdcooper = pr_cdcooper
-       and crawepr.nrdconta = pr_nrdconta
-       and crawepr.nrctremp = pr_nrctremp;
-  rw_crawepr     cr_crawepr%rowtype;
+       and crawepr.tpemprst = 1;
 
   -- Busca das linhas de crédito
   CURSOR cr_craplcr(pr_cdcooper IN craplcr.cdcooper%TYPE) IS
@@ -153,10 +157,12 @@ create or replace procedure cecred.pc_crps616(pr_cdcooper  in craptab.cdcooper%t
     
     
   -- Buscar parcelas não liquidadas
-  cursor cr_crappep (pr_cdcooper in crappep.cdcooper%type,
-                     pr_nrdconta in crappep.nrdconta%type,
-                     pr_nrctremp in crappep.nrctremp%type) is
-    select crappep.nrparepr,
+  cursor cr_crappep (pr_cdcooper in crappep.cdcooper%TYPE) is
+    SELECT /*+ PARALLEL (crappep) */
+           crappep.cdcooper,
+           crappep.nrdconta,
+           crappep.nrctremp,
+           crappep.nrparepr,
            crappep.dtvencto,
            crappep.vlsdvpar,
            crappep.dtultpag,
@@ -168,29 +174,110 @@ create or replace procedure cecred.pc_crps616(pr_cdcooper  in craptab.cdcooper%t
            crappep.rowid
       from crappep
      where crappep.cdcooper = pr_cdcooper
-       and crappep.nrdconta = pr_nrdconta
-       and crappep.nrctremp = pr_nrctremp
        and crappep.inliquid = 0;
   --
+  
+  -- Cursor global para carregar PL-Table 
+  CURSOR cr_craplem_his (pr_cdcooper craplem.cdcooper%TYPE) IS
+    SELECT /*+ PARALLEL (craplem) */
+           nrdconta,
+           nrctremp,
+           nrparepr,
+           dtmvtolt
+      FROM craplem
+     WHERE craplem.cdcooper = pr_cdcooper
+       AND craplem.cdhistor in (1078,1620,1077,1619)
+  ORDER BY craplem.nrdconta, craplem.nrctremp, craplem.nrparepr;
+  --
+  
   TYPE typ_reg_craplcr IS RECORD
     (perjurmo craplcr.perjurmo%type,
      flgcobmu craplcr.flgcobmu%type);
   TYPE typ_tab_craplcr IS TABLE OF typ_reg_craplcr INDEX BY PLS_INTEGER;
+  
   -- Array de Linhas Creditos
   vr_tab_craplcr typ_tab_craplcr;
+
+  -- Estrutura para carga das tabelas com BULK COLLECT
+   
+  TYPE typ_craplem_bulk IS TABLE OF cr_craplem_his%ROWTYPE INDEX BY PLS_INTEGER;
+  vr_craplem_bulk typ_craplem_bulk;  
+
+  TYPE typ_reg_craplem IS RECORD
+    (
+     nrdconta craplem.nrdconta%TYPE,
+     nrctremp craplem.nrctremp%TYPE,
+     nrparepr craplem.nrparepr%TYPE,
+     dtmvtolt craplem.dtmvtolt%TYPE
+    );
+  TYPE typ_tab_craplem_his IS TABLE OF typ_reg_craplem INDEX BY PLS_INTEGER;
   
-  --
+  
+  TYPE typ_crappep_bulk IS TABLE OF cr_crappep%ROWTYPE INDEX BY PLS_INTEGER;
+  vr_crappep_bulk typ_crappep_bulk;  
+
   TYPE typ_reg_crappep IS RECORD
+    (nrparepr crappep.nrparepr%type,
+     dtvencto crappep.dtvencto%type,
+     vlsdvpar crappep.vlsdvpar%type,
+     dtultpag crappep.dtultpag%type,
+     vlsdvsji crappep.vlsdvsji%type,
+     vlparepr crappep.vlparepr%type,
+     vlpagmta crappep.vlpagmta%type,
+     vlpagmra crappep.vlpagmra%type,
+     vlsdvatu crappep.vlsdvatu%type,
+     vljura60 crappep.vljura60%type,
+     vlmrapar crappep.vlmrapar%type,
+     vlmtapar crappep.vlmtapar%type,
+     vr_rowid ROWID,
+     tab_craplem typ_tab_craplem_his);
+  TYPE typ_tab_crappep IS TABLE OF typ_reg_crappep INDEX BY PLS_INTEGER;
+
+
+  TYPE typ_crapepr_bulk IS TABLE OF cr_crapepr%ROWTYPE INDEX BY PLS_INTEGER;
+  vr_crapepr_bulk typ_crapepr_bulk;    
+  
+  TYPE typ_reg_crapepr IS RECORD
+    (cdcooper crapepr.cdcooper%TYPE,
+     nrdconta crapepr.nrdconta%TYPE,
+     nrctremp crapepr.nrctremp%TYPE,
+     vlemprst crapepr.vlemprst%TYPE,
+     qtpreemp crapepr.qtpreemp%TYPE,
+     dtdpagto crapepr.dtdpagto%TYPE,
+     txmensal crapepr.txmensal%TYPE,
+     cdlcremp crapepr.cdlcremp%TYPE,
+     qtmesdec crapepr.qtmesdec%TYPE,
+     qtprecal crapepr.qtprecal%TYPE,
+     qttolatr crapepr.qttolatr%TYPE,
+     vr_rowid ROWID,
+     tab_crappep typ_tab_crappep
+    );
+  TYPE typ_tab_crapepr IS TABLE OF typ_reg_crapepr INDEX BY VARCHAR2(20);
+
+  vr_tab_crapepr typ_tab_crapepr;
+
+  
+  TYPE typ_crawepr_bulk IS TABLE OF cr_crawepr%ROWTYPE INDEX BY PLS_INTEGER;
+  vr_crawepr_bulk typ_crawepr_bulk;  
+
+  TYPE typ_reg_crawepr IS RECORD
+    (dtlibera crawepr.dtlibera%TYPE);
+  TYPE typ_tab_crawepr IS TABLE OF typ_reg_crawepr INDEX BY VARCHAR2(20);
+     
+  vr_tab_crawepr typ_tab_crawepr;
+  -- ----------------
+
+  -- Estrutura para atualização das tabelas com FORALL
+  TYPE typ_reg_atu_crappep IS RECORD
     (vlsdvatu crappep.vlsdvatu%type,
      vljura60 crappep.vljura60%type,
      vlmrapar crappep.vlmrapar%type,
      vlmtapar crappep.vlmtapar%type,
-     vr_rowid rowid);
-  TYPE typ_tab_crappep IS TABLE OF typ_reg_crappep INDEX BY PLS_INTEGER;
-  vr_tab_crappep typ_tab_crappep;   
-    
-  --
-  TYPE typ_reg_crapepr IS RECORD
+     vr_rowid ROWID);
+  TYPE typ_tab_atu_crappep IS TABLE OF typ_reg_atu_crappep INDEX BY PLS_INTEGER;
+  vr_tab_atu_crappep typ_tab_atu_crappep;
+  
+   TYPE typ_reg_atu_crapepr IS RECORD
     (dtdpagto crapepr.dtdpagto%type,
      vlsdvctr crapepr.vlsdvctr%type,
      qtlcalat crapepr.qtlcalat%type,
@@ -199,11 +286,11 @@ create or replace procedure cecred.pc_crps616(pr_cdcooper  in craptab.cdcooper%t
      vlpapgat crapepr.vlpapgat%type,
      vlppagat crapepr.vlppagat%type,
      qtmdecat crapepr.qtmdecat%type,
-     vr_rowid rowid);
-  TYPE typ_tab_crapepr IS TABLE OF typ_reg_crapepr INDEX BY PLS_INTEGER;
-  vr_tab_crapepr typ_tab_crapepr;   
+     vr_rowid ROWID);
+  TYPE typ_tab_atu_crapepr IS TABLE OF typ_reg_atu_crapepr INDEX BY PLS_INTEGER;
+  vr_tab_atu_crapepr typ_tab_atu_crapepr;   
+  -- ----------------
 
-  -- 
   TYPE typ_tab_craplem IS TABLE OF NUMBER INDEX BY VARCHAR2(20);
   vr_tab_craplem typ_tab_craplem;
   
@@ -236,13 +323,18 @@ create or replace procedure cecred.pc_crps616(pr_cdcooper  in craptab.cdcooper%t
   vr_dtdpagto      DATE; -- Data de pagamento
   vr_qtmesdec      crapepr.qtmesdec%type;
   vr_index         PLS_INTEGER;
+  vr_idxepr        PLS_INTEGER;
   vr_index_craplem VARCHAR2(20);
+  
+  -- Variáveis carga de empréstimos para tabela em memória 
+  vr_index_crapepr VARCHAR2(20);
+  vr_index_crawepr VARCHAR2(20);
+  vr_index_crappep PLS_INTEGER;
+  vr_idx VARCHAR2(20);
+  vr_idxpep PLS_INTEGER;
   
   -- Calcula o valor da parcela em atraso
   PROCEDURE pc_calc_atraso_parcela(pr_dtmvtolt in crapdat.dtmvtolt%type,--> Data atual do sistema
-                                   pr_cdcooper in crapepr.cdcooper%type,--> Cooperativa conectada
-                                   pr_nrdconta in crapepr.nrdconta%type,--> Número da conta
-                                   pr_nrctremp in crapepr.nrctremp%type,--> Número do contrato de empréstimo
                                    pr_nrparepr in crappep.nrparepr%type,--> Parcela
                                    pr_dtdpagto in crapepr.dtdpagto%type,--> Data de pagamento
                                    pr_txmensal in crapepr.txmensal%type,--> Taxa mensal
@@ -262,19 +354,6 @@ create or replace procedure cecred.pc_crps616(pr_cdcooper  in craptab.cdcooper%t
 
   BEGIN
     DECLARE
-      CURSOR cr_craplem_his (pr_cdcooper craplem.cdcooper%type,
-                             pr_nrdconta craplem.nrdconta%type,
-                             pr_nrctremp craplem.nrctremp%type,
-                             pr_nrparepr craplem.nrparepr%type) is
-      SELECT dtmvtolt
-        FROM craplem
-       WHERE craplem.cdcooper = pr_cdcooper
-         AND craplem.nrdconta = pr_nrdconta
-         AND craplem.nrctremp = pr_nrctremp
-         AND craplem.nrparepr = pr_nrparepr
-         AND craplem.cdhistor in (1078,1620,1077,1619);
-      rw_craplem cr_craplem_his%ROWTYPE;
-      
       vr_dtmvtolt DATE;    --> Data de pagamento
       vr_diavtolt INTEGER; --> Dia do pagamento
       vr_mesvtolt INTEGER; --> Mes do pagamento
@@ -285,7 +364,7 @@ create or replace procedure cecred.pc_crps616(pr_cdcooper  in craptab.cdcooper%t
       vr_percmult NUMBER;  --> % de multa para o calculo
       vr_txdiaria NUMBER(18,10); --> Taxa para calculo de mora
       vr_vljinpar crappep.vlsdvatu%type; -- 10 decimais
-
+      
     BEGIN
       -- Se ainda nao pagou nada da parcela, pegar a data de vencimento dela
       IF pr_dtultpag IS NULL OR pr_dtultpag < pr_dtvencto  THEN
@@ -316,21 +395,19 @@ create or replace procedure cecred.pc_crps616(pr_cdcooper  in craptab.cdcooper%t
       -- Se já houve pagamento
       IF pr_dtultpag IS NOT NULL OR pr_vlpagmra > 0 THEN        
         /* Obter ultimo lancamento de juro do contrato */
-        FOR rw_craplem IN cr_craplem_his(pr_cdcooper => pr_cdcooper,
-                                         pr_nrdconta => pr_nrdconta,
-                                         pr_nrctremp => pr_nrctremp,
-                                         pr_nrparepr => pr_nrparepr) LOOP
-
-          IF rw_craplem.dtmvtolt > vr_dtmvtolt OR vr_dtmvtolt IS NULL THEN
-            vr_dtmvtolt := rw_craplem.dtmvtolt;
-          END IF;
-
-        END LOOP; /* END FOR rw_craplem */
-                  
+        IF vr_tab_crapepr(vr_idx).tab_crappep(pr_nrparepr).tab_craplem.COUNT > 0 THEN
+          
+          FOR idx IN vr_tab_crapepr(vr_idx).tab_crappep(pr_nrparepr).tab_craplem.FIRST..vr_tab_crapepr(vr_idx).tab_crappep(pr_nrparepr).tab_craplem.LAST LOOP
+            IF vr_tab_crapepr(vr_idx).tab_crappep(pr_nrparepr).tab_craplem(idx).dtmvtolt > vr_dtmvtolt OR vr_dtmvtolt IS NULL THEN
+              vr_dtmvtolt := vr_tab_crapepr(vr_idx).tab_crappep(pr_nrparepr).tab_craplem(idx).dtmvtolt;
+            END IF;
+          END LOOP;
+          
+        END IF;                
       END IF;
 
-      /* Calcular quantidade de dias para o juros de mora desde
-         o ultima ocorrência de juros de mora/vencimento até o par_dtmvtolt */
+      /* Calcular quantidade de dias para o juros de mora desde a ultima 
+         ocorrência de juros de mora/vencimento até o par_dtmvtolt */
       vr_qtdiamor := pr_dtmvtolt - vr_dtmvtolt;
 
       -- Se a quantidade de dias está dentro da tolerancia
@@ -493,9 +570,135 @@ begin
     vr_index_craplem := lpad(rw_craplem.nrdconta,10,'0')||lpad(rw_craplem.nrctremp,10,'0');                                  
     vr_tab_craplem(vr_index_craplem):= rw_craplem.vllanmto;    
   END LOOP;                                 
-  
+
+  -- carrega a PLTABLE dos empréstimos
+  OPEN cr_crapepr (pr_cdcooper);
+
+  LOOP 
+    FETCH cr_crapepr BULK COLLECT INTO vr_crapepr_bulk LIMIT 100000; -- carrega de 100 em 100 mil registros
+
+    EXIT WHEN vr_crapepr_bulk.COUNT = 0;
+        
+    IF vr_crapepr_bulk.COUNT > 0 THEN
+      -- percorre a PLTABLE refazendo o indice com a composicao dos campos
+      FOR idx IN vr_crapepr_bulk.FIRST..vr_crapepr_bulk.LAST LOOP
+        -- monta o indice
+        vr_index_crapepr := lpad(vr_crapepr_bulk(idx).nrdconta,10,'0')||lpad(vr_crapepr_bulk(idx).nrctremp,10,'0');
+
+        vr_tab_crapepr(vr_index_crapepr).cdcooper := vr_crapepr_bulk(idx).cdcooper;
+        vr_tab_crapepr(vr_index_crapepr).nrdconta := vr_crapepr_bulk(idx).nrdconta;
+        vr_tab_crapepr(vr_index_crapepr).nrctremp := vr_crapepr_bulk(idx).nrctremp;
+        vr_tab_crapepr(vr_index_crapepr).vlemprst := vr_crapepr_bulk(idx).vlemprst;
+        vr_tab_crapepr(vr_index_crapepr).qtpreemp := vr_crapepr_bulk(idx).qtpreemp;
+        vr_tab_crapepr(vr_index_crapepr).dtdpagto := vr_crapepr_bulk(idx).dtdpagto;
+        vr_tab_crapepr(vr_index_crapepr).txmensal := vr_crapepr_bulk(idx).txmensal;
+        vr_tab_crapepr(vr_index_crapepr).cdlcremp := vr_crapepr_bulk(idx).cdlcremp;
+        vr_tab_crapepr(vr_index_crapepr).qtmesdec := vr_crapepr_bulk(idx).qtmesdec;
+        vr_tab_crapepr(vr_index_crapepr).qtprecal := vr_crapepr_bulk(idx).qtprecal;
+        vr_tab_crapepr(vr_index_crapepr).qttolatr := vr_crapepr_bulk(idx).qttolatr;
+        vr_tab_crapepr(vr_index_crapepr).vr_rowid := vr_crapepr_bulk(idx).rowid;
+      END LOOP;
+    END IF;
+        
+    vr_crapepr_bulk.DELETE;
+  END LOOP;
+  CLOSE cr_crapepr;
+
+  -- carrega a PLTABLE dos empréstimos
+  OPEN cr_crawepr (pr_cdcooper);
+
+  LOOP 
+    FETCH cr_crawepr BULK COLLECT INTO vr_crawepr_bulk LIMIT 100000; -- carrega de 100 em 100 mil registros
+
+    EXIT WHEN vr_crawepr_bulk.COUNT = 0;
+        
+    IF vr_crawepr_bulk.COUNT > 0 THEN
+      -- percorre a PLTABLE refazendo o indice com a composicao dos campos
+      FOR idx IN vr_crawepr_bulk.FIRST..vr_crawepr_bulk.LAST LOOP
+        -- monta o indice
+        vr_index_crawepr := lpad(vr_crawepr_bulk(idx).nrdconta,10,'0')||lpad(vr_crawepr_bulk(idx).nrctremp,10,'0');
+
+        IF vr_tab_crapepr.exists(vr_index_crawepr) THEN
+          vr_tab_crawepr(vr_index_crawepr).dtlibera := vr_crawepr_bulk(idx).dtlibera;
+        END IF;
+      END LOOP;
+    END IF;
+        
+    vr_crawepr_bulk.DELETE;
+  END LOOP;
+  CLOSE cr_crawepr;
+
+  -- carrega a PLTABLE das prestações de empréstimo
+  OPEN cr_crappep (pr_cdcooper);
+
+  LOOP 
+    FETCH cr_crappep BULK COLLECT INTO vr_crappep_bulk LIMIT 200000; -- carrega de 200 em 200 mil registros
+
+    EXIT WHEN vr_crappep_bulk.COUNT = 0;
+        
+    IF vr_crappep_bulk.COUNT > 0 THEN
+      -- percorre a PLTABLE refazendo o indice com a composicao dos campos
+      FOR idx IN vr_crappep_bulk.FIRST..vr_crappep_bulk.LAST LOOP       
+       
+        -- monta o indice
+        vr_index_crapepr := lpad(vr_crappep_bulk(idx).nrdconta,10,'0')||lpad(vr_crappep_bulk(idx).nrctremp,10,'0');
+        vr_index_crappep := vr_crappep_bulk(idx).nrparepr;
+                
+        IF vr_tab_crapepr.exists(vr_index_crapepr) THEN
+          vr_tab_crapepr(vr_index_crapepr).tab_crappep(vr_index_crappep).nrparepr := vr_crappep_bulk(idx).nrparepr;
+          vr_tab_crapepr(vr_index_crapepr).tab_crappep(vr_index_crappep).dtvencto := vr_crappep_bulk(idx).dtvencto;
+          vr_tab_crapepr(vr_index_crapepr).tab_crappep(vr_index_crappep).vlsdvpar := vr_crappep_bulk(idx).vlsdvpar;
+          vr_tab_crapepr(vr_index_crapepr).tab_crappep(vr_index_crappep).dtultpag := vr_crappep_bulk(idx).dtultpag;
+          vr_tab_crapepr(vr_index_crapepr).tab_crappep(vr_index_crappep).vlsdvsji := vr_crappep_bulk(idx).vlsdvsji;
+          vr_tab_crapepr(vr_index_crapepr).tab_crappep(vr_index_crappep).vlparepr := vr_crappep_bulk(idx).vlparepr;
+          vr_tab_crapepr(vr_index_crapepr).tab_crappep(vr_index_crappep).vlpagmta := vr_crappep_bulk(idx).vlpagmta;
+          vr_tab_crapepr(vr_index_crapepr).tab_crappep(vr_index_crappep).vlpagmra := vr_crappep_bulk(idx).vlpagmra;
+          vr_tab_crapepr(vr_index_crapepr).tab_crappep(vr_index_crappep).vlsdvatu := vr_crappep_bulk(idx).vlsdvatu;
+          vr_tab_crapepr(vr_index_crapepr).tab_crappep(vr_index_crappep).vr_rowid := vr_crappep_bulk(idx).rowid;
+        END IF;        
+
+      END LOOP;
+    END IF;
+        
+    vr_crappep_bulk.DELETE;
+
+  END LOOP;
+  CLOSE cr_crappep;
+
+  -- carrega a PLTABLE das prestações de empréstimo
+  OPEN cr_craplem_his (pr_cdcooper);
+
+  LOOP 
+    FETCH cr_craplem_his BULK COLLECT INTO vr_craplem_bulk LIMIT 300000; -- carrega de 300 em 300 mil registros
+
+    EXIT WHEN vr_craplem_bulk.COUNT = 0;
+        
+    IF vr_craplem_bulk.COUNT > 0 THEN
+      -- percorre a PLTABLE refazendo o indice com a composicao dos campos
+      FOR idx IN vr_craplem_bulk.FIRST..vr_craplem_bulk.LAST LOOP
+        -- monta o indice
+        vr_index_crapepr := lpad(vr_craplem_bulk(idx).nrdconta,10,'0')||lpad(vr_craplem_bulk(idx).nrctremp,10,'0');
+        vr_index_crappep := vr_craplem_bulk(idx).nrparepr;
+        
+        IF vr_tab_crapepr.exists(vr_index_crapepr) AND 
+           vr_tab_crapepr(vr_index_crapepr).tab_crappep.exists(vr_index_crappep) THEN
+          vr_tab_crapepr(vr_index_crapepr).tab_crappep(vr_index_crappep).tab_craplem(idx).dtmvtolt := vr_craplem_bulk(idx).dtmvtolt;
+        END IF;        
+
+      END LOOP;
+    END IF;
+        
+    vr_craplem_bulk.DELETE;
+
+  END LOOP;
+  CLOSE cr_craplem_his;
+
+
   -- Leitura dos empréstimos pré-fixados e não liquidados
-  for rw_crapepr in cr_crapepr (pr_cdcooper) loop
+  vr_idx := vr_tab_crapepr.FIRST;
+  
+  WHILE vr_idx IS NOT NULL LOOP
+    -- Inicializar variáveis
     vr_cdcritic := 0;
     vr_vlsdevat := 0;
     vr_vlpreapg := 0;
@@ -504,25 +707,14 @@ begin
     vr_vlatupar := 0;
     vr_fldtpgto := false;
     vr_flgtrans := false;
-    vr_nrdiatol := nvl(rw_crapepr.qttolatr,0);
+    vr_nrdiatol := nvl(vr_tab_crapepr(vr_idx).qttolatr, 0);
+    
     -- Atualização do saldo das parcelas de todos os contratos de empréstimo
     begin
-      -- Leitura das informações complementares do empréstimo
-      open cr_crawepr (rw_crapepr.cdcooper,
-                       rw_crapepr.nrdconta,
-                       rw_crapepr.nrctremp);
-        fetch cr_crawepr into rw_crawepr;
-        if cr_crawepr%notfound then
-          close cr_crawepr;
-          vr_cdcritic := 535;
-          raise leave_busca;
-        end if;
-      close cr_crawepr;
-
       -- Buscar informações da linha de crédito
-      IF vr_tab_craplcr.EXISTS(rw_crapepr.cdlcremp) THEN
-        rw_craplcr.perjurmo := vr_tab_craplcr(rw_crapepr.cdlcremp).perjurmo;
-        rw_craplcr.flgcobmu := vr_tab_craplcr(rw_crapepr.cdlcremp).flgcobmu;
+      IF vr_tab_craplcr.EXISTS(vr_tab_crapepr(vr_idx).cdlcremp) THEN
+        rw_craplcr.perjurmo := vr_tab_craplcr(vr_tab_crapepr(vr_idx).cdlcremp).perjurmo;
+        rw_craplcr.flgcobmu := vr_tab_craplcr(vr_tab_crapepr(vr_idx).cdlcremp).flgcobmu;
       ELSE  
         -- Gerar erro
         vr_cdcritic := 535;
@@ -538,42 +730,43 @@ begin
           
       END IF;
 
+      IF vr_tab_crapepr(vr_idx).tab_crappep.COUNT = 0 THEN
+        vr_idx := vr_tab_crapepr.next(vr_idx);
+        CONTINUE;
+      END IF;
+
       -- Leitura das parcelas em aberto
-      for rw_crappep in cr_crappep (rw_crapepr.cdcooper,
-                                    rw_crapepr.nrdconta,
-                                    rw_crapepr.nrctremp) loop
+      FOR vr_idxpep IN vr_tab_crapepr(vr_idx).tab_crappep.FIRST..vr_tab_crapepr(vr_idx).tab_crappep.LAST LOOP
+        -- Inicializar variáveis
         vr_vlmrapar := 0;
         vr_vlmtapar := 0;
 
-        if rw_crapdat.dtmvtolt <= rw_crawepr.dtlibera then
+        if rw_crapdat.dtmvtolt <=  vr_tab_crawepr(vr_idx).dtlibera then
           -- Nao liberado
-          vr_vlatupar := rw_crapepr.vlemprst / rw_crapepr.qtpreemp;
-          vr_vlsdvctr := vr_vlsdvctr + rw_crappep.vlsdvpar;
+          vr_vlatupar := vr_tab_crapepr(vr_idx).vlemprst / vr_tab_crapepr(vr_idx).qtpreemp;
+          vr_vlsdvctr := vr_vlsdvctr + vr_tab_crapepr(vr_idx).tab_crappep(vr_idxpep).vlsdvpar;
 
-        elsif rw_crappep.dtvencto >  rw_crapdat.dtmvtoan and
-              rw_crappep.dtvencto <= rw_crapdat.dtmvtolt then
+        elsif vr_tab_crapepr(vr_idx).tab_crappep(vr_idxpep).dtvencto >  rw_crapdat.dtmvtoan and
+              vr_tab_crapepr(vr_idx).tab_crappep(vr_idxpep).dtvencto <= rw_crapdat.dtmvtolt then
           -- Parcela em dia
-          vr_vlatupar := rw_crappep.vlsdvpar;
-          vr_vlsdvctr := vr_vlsdvctr + rw_crappep.vlsdvpar;
+          vr_vlatupar := vr_tab_crapepr(vr_idx).tab_crappep(vr_idxpep).vlsdvpar;
+          vr_vlsdvctr := vr_vlsdvctr + vr_tab_crapepr(vr_idx).tab_crappep(vr_idxpep).vlsdvpar;
           /* A regularizar */
           vr_vlpreapg := vr_vlpreapg + vr_vlatupar;
 
-        elsif rw_crappep.dtvencto < rw_crapdat.dtmvtolt then
+        elsif vr_tab_crapepr(vr_idx).tab_crappep(vr_idxpep).dtvencto < rw_crapdat.dtmvtolt then
           -- Calculo do valor da parcela em atraso
           pc_calc_atraso_parcela(pr_dtmvtolt => rw_crapdat.dtmvtolt,
-                                 pr_cdcooper => rw_crapepr.cdcooper,
-                                 pr_nrdconta => rw_crapepr.nrdconta,
-                                 pr_nrctremp => rw_crapepr.nrctremp,
-                                 pr_nrparepr => rw_crappep.nrparepr,
-                                 pr_dtdpagto => rw_crapepr.dtdpagto,
-                                 pr_txmensal => rw_crapepr.txmensal,
-                                 pr_dtultpag => rw_crappep.dtultpag,
-                                 pr_dtvencto => rw_crappep.dtvencto,
-                                 pr_vlsdvpar => rw_crappep.vlsdvpar,
-                                 pr_vlsdvsji => rw_crappep.vlsdvsji,
-                                 pr_vlparepr => rw_crappep.vlparepr,
-                                 pr_vlpagmta => rw_crappep.vlpagmta,
-                                 pr_vlpagmra => rw_crappep.vlpagmra,
+                                 pr_nrparepr => vr_tab_crapepr(vr_idx).tab_crappep(vr_idxpep).nrparepr,
+                                 pr_dtdpagto => vr_tab_crapepr(vr_idx).dtdpagto,
+                                 pr_txmensal => vr_tab_crapepr(vr_idx).txmensal,
+                                 pr_dtultpag => vr_tab_crapepr(vr_idx).tab_crappep(vr_idxpep).dtultpag,
+                                 pr_dtvencto => vr_tab_crapepr(vr_idx).tab_crappep(vr_idxpep).dtvencto,
+                                 pr_vlsdvpar => vr_tab_crapepr(vr_idx).tab_crappep(vr_idxpep).vlsdvpar,
+                                 pr_vlsdvsji => vr_tab_crapepr(vr_idx).tab_crappep(vr_idxpep).vlsdvsji,
+                                 pr_vlparepr => vr_tab_crapepr(vr_idx).tab_crappep(vr_idxpep).vlparepr,
+                                 pr_vlpagmta => vr_tab_crapepr(vr_idx).tab_crappep(vr_idxpep).vlpagmta,
+                                 pr_vlpagmra => vr_tab_crapepr(vr_idx).tab_crappep(vr_idxpep).vlpagmra,
                                  pr_perjurmo => rw_craplcr.perjurmo,
                                  pr_percmult => vr_percmultab_calc,
                                  pr_nrdiatol => vr_nrdiatol,
@@ -586,76 +779,76 @@ begin
           -- Saldo Contratado
           vr_vlsdvctr := vr_vlsdvctr + vr_vlatupar;
 
-        elsif rw_crappep.dtvencto > rw_crapdat.dtmvtolt then
+        elsif vr_tab_crapepr(vr_idx).tab_crappep(vr_idxpep).dtvencto > rw_crapdat.dtmvtolt then
           -- Parcela a Vencer
           -- Procedure para calcular valor antecipado de parcelas de empréstimo
-          pc_calc_antecipa_parcela(pr_dtvencto => rw_crappep.dtvencto,
-                                   pr_vlsdvpar => rw_crappep.vlsdvpar,
-                                   pr_txmensal => rw_crapepr.txmensal,
+          pc_calc_antecipa_parcela(pr_dtvencto => vr_tab_crapepr(vr_idx).tab_crappep(vr_idxpep).dtvencto,
+                                   pr_vlsdvpar => vr_tab_crapepr(vr_idx).tab_crappep(vr_idxpep).vlsdvpar,
+                                   pr_txmensal => vr_tab_crapepr(vr_idx).txmensal,
                                    pr_dtmvtolt => rw_crapdat.dtmvtolt,
-                                   pr_dtdpagto => rw_crapepr.dtdpagto,
+                                   pr_dtdpagto => vr_tab_crapepr(vr_idx).dtdpagto,
                                    pr_vlatupar => vr_vlatupar,
                                    pr_vldespar => vr_vldespar);
 
           -- Saldo Contratado
-          vr_vlsdvctr := vr_vlsdvctr + rw_crappep.vlsdvpar;
+          vr_vlsdvctr := vr_vlsdvctr + vr_tab_crapepr(vr_idx).tab_crappep(vr_idxpep).vlsdvpar;
 
         end if;
 
         if not vr_fldtpgto then
           -- Armazena a data de pagamento da primeira parcela
-          vr_dtdpagto := rw_crappep.dtvencto;
+          vr_dtdpagto := vr_tab_crapepr(vr_idx).tab_crappep(vr_idxpep).dtvencto;
           vr_fldtpgto := true;
         end if;
 
         /* Se liberado */
-        IF NOT rw_crapdat.dtmvtolt <= rw_crawepr.dtlibera THEN
+        IF NOT rw_crapdat.dtmvtolt <= vr_tab_crawepr(vr_idx).dtlibera THEN
           vr_vlsdevat := vr_vlsdevat + vr_vlatupar;
         END IF;
 
         -- atualiza_valores_crappep
-        vr_index:= vr_tab_crappep.count+1;
-        vr_tab_crappep(vr_index).vlsdvatu:= vr_vlatupar;
-        vr_tab_crappep(vr_index).vljura60:= 0;
-        vr_tab_crappep(vr_index).vlmrapar:= vr_vlmrapar;
-        vr_tab_crappep(vr_index).vlmtapar:= vr_vlmtapar;
-        vr_tab_crappep(vr_index).vr_rowid:= rw_crappep.rowid;
-      end loop;
+        vr_index:= vr_tab_atu_crappep.count+1;
+        vr_tab_atu_crappep(vr_index).vlsdvatu:= vr_vlatupar;
+        vr_tab_atu_crappep(vr_index).vljura60:= 0;
+        vr_tab_atu_crappep(vr_index).vlmrapar:= vr_vlmrapar;
+        vr_tab_atu_crappep(vr_index).vlmtapar:= vr_vlmtapar;
+        vr_tab_atu_crappep(vr_index).vr_rowid:= vr_tab_crapepr(vr_idx).tab_crappep(vr_idxpep).vr_rowid;
+      END LOOP;
 
       -- Montar Indice Lancamentos
-      vr_index_craplem := lpad(rw_crapepr.nrdconta,10,'0')||lpad(rw_crapepr.nrctremp,10,'0');
+      vr_index_craplem := lpad(vr_tab_crapepr(vr_idx).nrdconta,10,'0')||lpad(vr_tab_crapepr(vr_idx).nrctremp,10,'0');
       
       IF vr_tab_craplem.EXISTS(vr_index_craplem) THEN
         vr_vlprepag := NVL(vr_vlprepag,0) + NVL(vr_tab_craplem(vr_index_craplem),0);
       END IF;  
       
       -- Vamos verificar se o emprestimo jah foi liberado
-      IF rw_crapdat.dtmvtolt <= rw_crawepr.dtlibera THEN
+      IF rw_crapdat.dtmvtolt <= vr_tab_crawepr(vr_idx).dtlibera THEN
         -- Valor do saldo contratado
-        vr_vlsdvctr := rw_crapepr.vlemprst;
+        vr_vlsdvctr := vr_tab_crapepr(vr_idx).vlemprst;
         -- Saldo devedor
-        vr_vlsdevat := rw_crapepr.vlemprst;
+        vr_vlsdevat := vr_tab_crapepr(vr_idx).vlemprst;
         -- Valor a regularizar
         vr_vlpreapg := 0;
       END IF;
 
       -- Verificar se os meses decorrentes esta negativo
-      vr_qtmesdec := rw_crapepr.qtmesdec;
+      vr_qtmesdec := vr_tab_crapepr(vr_idx).qtmesdec;
       IF vr_qtmesdec < 0 THEN
          vr_qtmesdec := 0;
       END IF;
 
       -- Alterar data de pagamento do empréstimo
-      vr_index:= vr_tab_crapepr.count+1;
-      vr_tab_crapepr(vr_index).dtdpagto:= vr_dtdpagto;
-      vr_tab_crapepr(vr_index).vlsdvctr:= vr_vlsdvctr;
-      vr_tab_crapepr(vr_index).qtlcalat:= 0;
-      vr_tab_crapepr(vr_index).qtpcalat:= rw_crapepr.qtprecal;
-      vr_tab_crapepr(vr_index).vlsdevat:= vr_vlsdevat;
-      vr_tab_crapepr(vr_index).vlpapgat:= vr_vlpreapg;
-      vr_tab_crapepr(vr_index).vlppagat:= vr_vlprepag;
-      vr_tab_crapepr(vr_index).qtmdecat:= vr_qtmesdec;
-      vr_tab_crapepr(vr_index).vr_rowid:= rw_crapepr.rowid;
+      vr_idxepr := vr_tab_atu_crapepr.count+1;
+      vr_tab_atu_crapepr(vr_idxepr).dtdpagto:= vr_dtdpagto;
+      vr_tab_atu_crapepr(vr_idxepr).vlsdvctr:= vr_vlsdvctr;
+      vr_tab_atu_crapepr(vr_idxepr).qtlcalat:= 0;
+      vr_tab_atu_crapepr(vr_idxepr).qtpcalat:= vr_tab_crapepr(vr_idx).qtprecal;
+      vr_tab_atu_crapepr(vr_idxepr).vlsdevat:= vr_vlsdevat;
+      vr_tab_atu_crapepr(vr_idxepr).vlpapgat:= vr_vlpreapg;
+      vr_tab_atu_crapepr(vr_idxepr).vlppagat:= vr_vlprepag;
+      vr_tab_atu_crapepr(vr_idxepr).qtmdecat:= vr_qtmesdec;
+      vr_tab_atu_crapepr(vr_idxepr).vr_rowid:= vr_tab_crapepr(vr_idx).vr_rowid;
 
       vr_flgtrans := true;
     exception
@@ -665,53 +858,56 @@ begin
     -- Se houve erro na atualização do contrato, aborta a execução
     if not vr_flgtrans and vr_cdcritic > 0 then
       raise vr_exc_saida;
-    end if;
-  end loop; --rw_crapepr
-
+    END IF;
+    
+    vr_idx := vr_tab_crapepr.next(vr_idx);
+  END LOOP; -- vr_tab_crapepr
+  
   -- Atualizar Parcela Emprestimo
   BEGIN
-    FORALL idx IN INDICES OF vr_tab_crappep SAVE EXCEPTIONS
-      update crappep
-         set vlsdvatu = vr_tab_crappep(idx).vlsdvatu,
-             vljura60 = vr_tab_crappep(idx).vljura60,
-             vlmrapar = vr_tab_crappep(idx).vlmrapar,
-             vlmtapar = vr_tab_crappep(idx).vlmtapar
-      where rowid = vr_tab_crappep(idx).vr_rowid;
+    FORALL idx IN INDICES OF vr_tab_atu_crappep SAVE EXCEPTIONS
+      update /*+ PARALLEL (crappep) */ crappep
+         set vlsdvatu = vr_tab_atu_crappep(idx).vlsdvatu,
+             vljura60 = vr_tab_atu_crappep(idx).vljura60,
+             vlmrapar = vr_tab_atu_crappep(idx).vlmrapar,
+             vlmtapar = vr_tab_atu_crappep(idx).vlmtapar
+      where rowid = vr_tab_atu_crappep(idx).vr_rowid;
   EXCEPTION
     when others then
       vr_cdcritic := 0;
       vr_dscritic := 'Erro ao atualizar crappep: '||SQLERRM(-SQL%BULK_EXCEPTIONS(1).ERROR_CODE);
       raise vr_exc_saida;
-  END;    
-  
+  END;
+
   -- Atualizar Emprestimo
   BEGIN
-    FORALL idx IN INDICES OF vr_tab_crapepr SAVE EXCEPTIONS
-      update crapepr
-         set dtdpagto = vr_tab_crapepr(idx).dtdpagto,
-             vlsdvctr = vr_tab_crapepr(idx).vlsdvctr,
-             qtlcalat = vr_tab_crapepr(idx).qtlcalat,
-             qtpcalat = vr_tab_crapepr(idx).qtpcalat,
-             vlsdevat = vr_tab_crapepr(idx).vlsdevat,
-             vlpapgat = vr_tab_crapepr(idx).vlpapgat,
-             vlppagat = vr_tab_crapepr(idx).vlppagat,
-             qtmdecat = vr_tab_crapepr(idx).qtmdecat
-      where rowid = vr_tab_crapepr(idx).vr_rowid;
+    FORALL idx IN INDICES OF vr_tab_atu_crapepr SAVE EXCEPTIONS
+      update /*+ PARALLEL (crapepr) */ crapepr
+         set dtdpagto = vr_tab_atu_crapepr(idx).dtdpagto,
+             vlsdvctr = vr_tab_atu_crapepr(idx).vlsdvctr,
+             qtlcalat = vr_tab_atu_crapepr(idx).qtlcalat,
+             qtpcalat = vr_tab_atu_crapepr(idx).qtpcalat,
+             vlsdevat = vr_tab_atu_crapepr(idx).vlsdevat,
+             vlpapgat = vr_tab_atu_crapepr(idx).vlpapgat,
+             vlppagat = vr_tab_atu_crapepr(idx).vlppagat,
+             qtmdecat = vr_tab_atu_crapepr(idx).qtmdecat
+      where rowid = vr_tab_atu_crapepr(idx).vr_rowid;
   EXCEPTION
     when others then
       vr_cdcritic := 0;
       vr_dscritic := 'Erro ao atualizar crapepr: '||SQLERRM(-SQL%BULK_EXCEPTIONS(1).ERROR_CODE);
       raise vr_exc_saida;
   END;
+
   -- Finaliza a execução com sucesso
   btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper,
                             pr_cdprogra => vr_cdprogra,
                             pr_infimsol => pr_infimsol,
                             pr_stprogra => pr_stprogra);
   --Salvar Informações                          
-  commit;
+  COMMIT;
   
-exception
+EXCEPTION
   when vr_exc_fimprg then
     -- Se foi retornado apenas código
     if vr_cdcritic > 0 and vr_dscritic is null then
@@ -733,7 +929,8 @@ exception
                              ,pr_infimsol => pr_infimsol
                              ,pr_stprogra => pr_stprogra);
     -- Efetuar commit pois gravaremos o que foi processo até então
-    commit;
+    COMMIT;
+
   when vr_exc_saida then
     -- Se foi retornado apenas código
     if vr_cdcritic > 0 and vr_dscritic is null then
@@ -746,11 +943,13 @@ exception
     -- Efetuar rollback
     rollback;
   when others then
+
+    cecred.pc_internal_exception(pr_cdcooper);
+
     -- Efetuar retorno do erro não tratado
     pr_cdcritic := 0;
     pr_dscritic := sqlerrm;
     -- Efetuar rollback
-    rollback;
+    ROLLBACK;
 end;
 /
-
