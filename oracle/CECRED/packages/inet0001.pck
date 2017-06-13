@@ -2095,6 +2095,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
 
               10/03/2017 - Ajustes para liberar agendamento de TED para o ultimo dia util
                            do ano (Tiago/Elton SD586106)
+              
+			  13/06/2017 - Alteração na mensagem de "Conta destino nao habilitada para receber valores da transferencia."
+			               para "Antes de realizar essa transferencia, e necessario ativar a conta do favorecido pela Conta Online"
+						   (Rafael Monteiro - Mouts - 690752)
   ---------------------------------------------------------------------------------------------------------------*/
   BEGIN
     DECLARE
@@ -2610,7 +2614,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           IF pr_tpoperac IN (5) AND vr_datdodia >= to_date('31/12/2016','dd/mm/RRRR') AND
              vr_cdcopctl = 17 THEN						  
               vr_cdcritic := 0;
-              vr_dscritic := 'Conta destino nao habilitada para receber valores da transferencia.';
+              --vr_dscritic := 'Conta destino nao habilitada para receber valores da transferencia.';
+			  vr_dscritic := 'Antes de realizar essa transferencia, e necessario ativar a conta do favorecido pela Conta Online';
               --Levantar Excecao
               RAISE vr_exc_erro;
             END IF;
@@ -2629,7 +2634,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           --Se nao encontrou ou a conta naoesta ativa
           IF cr_crapcti%FOUND AND rw_crapcti.insitcta <> 2 THEN  /** Ativa **/
             vr_cdcritic:= 0;
-            vr_dscritic:= 'Conta destino nao habilitada para receber valores da transferencia.';
+            --vr_dscritic:= 'Conta destino nao habilitada para receber valores da transferencia.';
+			vr_dscritic := 'Antes de realizar essa transferencia, e necessario ativar a conta do favorecido pela Conta Online';
             
             --Fechar Cursor
             CLOSE cr_crapcti;
@@ -2677,7 +2683,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
             SD 563147 */
           IF cr_crapcti%FOUND AND pr_nmdatela <> 'CRPS705' AND rw_crapcti.insitcta <> 2 THEN  /** Ativa **/
             vr_cdcritic:= 0;
-            vr_dscritic:= 'Conta destino nao habilitada para receber valores da transferencia.';
+            --vr_dscritic:= 'Conta destino nao habilitada para receber valores da transferencia.';
+			vr_dscritic := 'Antes de realizar essa transferencia, e necessario ativar a conta do favorecido pela Conta Online';
             
             --Fechar Cursor
             CLOSE cr_crapcti;
