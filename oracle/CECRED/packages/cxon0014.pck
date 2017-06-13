@@ -584,6 +584,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
   --                           MEIO AMBIENTE DE TIMBO, TRANSITO DE TIMBO (Lucas Ranghetti #630176)
   --
   --              12/04/2017 - Ajuste para verificar vencimento da P.M. AGROLANDIA (Tiago #647174)  
+  --
+  --             13/06/2017 - Retirado validacao incorreta na procedure pc_retorna_vlr_titulo_iptu
+  --                          (Tiago/Elton #691470)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Busca dos dados da cooperativa */
@@ -4661,7 +4664,7 @@ END pc_gera_titulos_iptu_prog;
   --  Sistema  : Procedure para retornar valores dos titulos iptu
   --  Sigla    : CXON
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 22/06/2016
+  --  Data     : Julho/2013.                   Ultima atualizacao: 13/06/2017
   --
   -- Dados referentes ao programa:
   --
@@ -4724,6 +4727,9 @@ END pc_gera_titulos_iptu_prog;
   --
   --               25/08/2016 - Caso encontre o parâmetro pagadorvip permite pagar valor menor que o valor do
   --                            documento (M271 - Kelvin)
+  --
+  --               13/06/2017 - Retirado validacao que estava feita de forma incorreta olhando no valor
+  --                            do titulo para nao ocorrer critica 100 (Tiago/Elton #691470)
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -5433,13 +5439,24 @@ END pc_gera_titulos_iptu_prog;
           END IF;
         END IF;
       ELSE  /* Titulo */
-        IF (to_number(SUBSTR(pr_codigo_barras,16,4)) = 557) AND /* Prefeitura*/
-           (to_number(SUBSTR(pr_codigo_barras,02,1)) = 1)  THEN /* Cod.Segmto*/
+        --Selecionar informacoes titulos
+        OPEN cr_craptit3 (pr_cdcooper => rw_crapcop.cdcooper
+                         ,pr_dtmvtolt => rw_crapdat.dtmvtocd
+                         ,pr_cdagenci => pr_cod_agencia
+                         ,pr_cdbccxlt => 11
+                         ,pr_nrdolote => vr_nro_lote
+                         ,pr_dscodbar => pr_codigo_barras);
+        --Posicionar no proximo registro
+        FETCH cr_craptit3 INTO rw_craptit;
+        --Se nao encontrar
+        IF cr_craptit3%FOUND THEN
+          --Fechar Cursor
+          CLOSE cr_craptit3;
           --Criar erro
           CXON0000.pc_cria_erro(pr_cdcooper => pr_cooper
                                ,pr_cdagenci => pr_cod_agencia
                                ,pr_nrdcaixa => vr_nrdcaixa
-                               ,pr_cod_erro => 100
+                               ,pr_cod_erro => 92
                                ,pr_dsc_erro => NULL
                                ,pr_flg_erro => TRUE
                                ,pr_cdcritic => vr_cdcritic
@@ -5449,146 +5466,112 @@ END pc_gera_titulos_iptu_prog;
             --Levantar Excecao
             RAISE vr_exc_erro;
           ELSE
-            vr_cdcritic:= 100;
+            vr_cdcritic:= 92;
             vr_dscritic:= NULL;
             --Levantar Excecao
             RAISE vr_exc_erro;
           END IF;
-        ELSE
-          --Selecionar informacoes titulos
-          OPEN cr_craptit3 (pr_cdcooper => rw_crapcop.cdcooper
-                           ,pr_dtmvtolt => rw_crapdat.dtmvtocd
-                           ,pr_cdagenci => pr_cod_agencia
-                           ,pr_cdbccxlt => 11
-                           ,pr_nrdolote => vr_nro_lote
-                           ,pr_dscodbar => pr_codigo_barras);
-          --Posicionar no proximo registro
-          FETCH cr_craptit3 INTO rw_craptit;
-          --Se nao encontrar
-          IF cr_craptit3%FOUND THEN
-            --Fechar Cursor
-            CLOSE cr_craptit3;
-            --Criar erro
-            CXON0000.pc_cria_erro(pr_cdcooper => pr_cooper
-                                 ,pr_cdagenci => pr_cod_agencia
-                                 ,pr_nrdcaixa => vr_nrdcaixa
-                                 ,pr_cod_erro => 92
-                                 ,pr_dsc_erro => NULL
-                                 ,pr_flg_erro => TRUE
-                                 ,pr_cdcritic => vr_cdcritic
-                                 ,pr_dscritic => vr_dscritic);
-            --Se ocorreu erro
-            IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-              --Levantar Excecao
-              RAISE vr_exc_erro;
-            ELSE
-              vr_cdcritic:= 92;
-              vr_dscritic:= NULL;
-              --Levantar Excecao
-              RAISE vr_exc_erro;
-            END IF;
-          END IF;
-          --Fechar Cursor
-          CLOSE cr_craptit3;
+        END IF;
+        --Fechar Cursor
+        CLOSE cr_craptit3;
 
-          --Selecionar informacoes titulos
-          OPEN cr_craptit2 (pr_cdcooper => rw_crapcop.cdcooper
-                           ,pr_dtmvtolt => rw_crapdat.dtmvtocd
-                           ,pr_dscodbar => pr_codigo_barras);
-          --Posicionar no proximo registro
-          FETCH cr_craptit2 INTO rw_craptit;
-          --Se nao encontrar
-          IF cr_craptit2%FOUND THEN
-            --Fechar Cursor
-            CLOSE cr_craptit2;
-            --Criar erro
-            CXON0000.pc_cria_erro(pr_cdcooper => pr_cooper
-                                 ,pr_cdagenci => pr_cod_agencia
-                                 ,pr_nrdcaixa => vr_nrdcaixa
-                                 ,pr_cod_erro => 456
-                                 ,pr_dsc_erro => NULL
-                                 ,pr_flg_erro => TRUE
-                                 ,pr_cdcritic => vr_cdcritic
-                                 ,pr_dscritic => vr_dscritic);
-            --Se ocorreu erro
-            IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-              --Levantar Excecao
-              RAISE vr_exc_erro;
-            ELSE
-              vr_cdcritic:= 456;
-              vr_dscritic:= NULL;
-              --Levantar Excecao
-              RAISE vr_exc_erro;
-            END IF;
-          END IF;
+        --Selecionar informacoes titulos
+        OPEN cr_craptit2 (pr_cdcooper => rw_crapcop.cdcooper
+                         ,pr_dtmvtolt => rw_crapdat.dtmvtocd
+                         ,pr_dscodbar => pr_codigo_barras);
+        --Posicionar no proximo registro
+        FETCH cr_craptit2 INTO rw_craptit;
+        --Se nao encontrar
+        IF cr_craptit2%FOUND THEN
           --Fechar Cursor
           CLOSE cr_craptit2;
-
-          BEGIN
-            SELECT /*+ INDEX (craptit craptit##craptit3) */ Count(1)
-            INTO vr_contador
-            FROM craptit
-            WHERE craptit.cdcooper = rw_crapcop.cdcooper
-            AND   upper(craptit.dscodbar) = upper(pr_codigo_barras);
-          EXCEPTION
-            WHEN OTHERS THEN
-              vr_cdcritic:= 0;
-              vr_dscritic:= 'Erro ao selecionar titulo.';
-              RAISE vr_exc_erro;
-          END;
-          --Se Encontrou TRUE, senao FALSE
-          IF vr_contador > 0 THEN
-            pr_outra_data := 1;
+          --Criar erro
+          CXON0000.pc_cria_erro(pr_cdcooper => pr_cooper
+                               ,pr_cdagenci => pr_cod_agencia
+                               ,pr_nrdcaixa => vr_nrdcaixa
+                               ,pr_cod_erro => 456
+                               ,pr_dsc_erro => NULL
+                               ,pr_flg_erro => TRUE
+                               ,pr_cdcritic => vr_cdcritic
+                               ,pr_dscritic => vr_dscritic);
+          --Se ocorreu erro
+          IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+            --Levantar Excecao
+            RAISE vr_exc_erro;
           ELSE
-            pr_outra_data := 0;
+            vr_cdcritic:= 456;
+            vr_dscritic:= NULL;
+            --Levantar Excecao
+            RAISE vr_exc_erro;
           END IF;
+        END IF;
+        --Fechar Cursor
+        CLOSE cr_craptit2;
 
-          /*  Verifica a hora somente para a arrecadacao caixa  */
-          IF GENE0002.fn_busca_time >= vr_tab_hrlimite AND pr_cod_agencia NOT IN (90,91) THEN
-            --Criar erro
-            CXON0000.pc_cria_erro(pr_cdcooper => pr_cooper
-                                 ,pr_cdagenci => pr_cod_agencia
-                                 ,pr_nrdcaixa => vr_nrdcaixa
-                                 ,pr_cod_erro => 676
-                                 ,pr_dsc_erro => NULL
-                                 ,pr_flg_erro => TRUE
-                                 ,pr_cdcritic => vr_cdcritic
-                                 ,pr_dscritic => vr_dscritic);
-            --Se ocorreu erro
-            IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-              --Levantar Excecao
-              RAISE vr_exc_erro;
-            ELSE
-              vr_cdcritic:= 676;
-              vr_dscritic:= NULL;
-              --Levantar Excecao
-              RAISE vr_exc_erro;
-            END IF;
+        BEGIN
+          SELECT /*+ INDEX (craptit craptit##craptit3) */ Count(1)
+          INTO vr_contador
+          FROM craptit
+          WHERE craptit.cdcooper = rw_crapcop.cdcooper
+          AND   upper(craptit.dscodbar) = upper(pr_codigo_barras);
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_cdcritic:= 0;
+            vr_dscritic:= 'Erro ao selecionar titulo.';
+            RAISE vr_exc_erro;
+        END;
+        --Se Encontrou TRUE, senao FALSE
+        IF vr_contador > 0 THEN
+          pr_outra_data := 1;
+        ELSE
+          pr_outra_data := 0;
+        END IF;
+
+        /*  Verifica a hora somente para a arrecadacao caixa  */
+        IF GENE0002.fn_busca_time >= vr_tab_hrlimite AND pr_cod_agencia NOT IN (90,91) THEN
+          --Criar erro
+          CXON0000.pc_cria_erro(pr_cdcooper => pr_cooper
+                               ,pr_cdagenci => pr_cod_agencia
+                               ,pr_nrdcaixa => vr_nrdcaixa
+                               ,pr_cod_erro => 676
+                               ,pr_dsc_erro => NULL
+                               ,pr_flg_erro => TRUE
+                               ,pr_cdcritic => vr_cdcritic
+                               ,pr_dscritic => vr_dscritic);
+          --Se ocorreu erro
+          IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+          ELSE
+            vr_cdcritic:= 676;
+            vr_dscritic:= NULL;
+            --Levantar Excecao
+            RAISE vr_exc_erro;
           END IF;
+        END IF;
 
-          /* Valida transmissao do arquivo de titulos somente se  */
-          /* nao for um agendamento de pagamento                 */
-          IF pr_dt_agendamento IS NULL AND vr_tab_intransm > 0 THEN
-            --Criar erro
-            CXON0000.pc_cria_erro(pr_cdcooper => pr_cooper
-                                 ,pr_cdagenci => pr_cod_agencia
-                                 ,pr_nrdcaixa => vr_nrdcaixa
-                                 ,pr_cod_erro => 677
-                                 ,pr_dsc_erro => NULL
-                                 ,pr_flg_erro => TRUE
-                                 ,pr_cdcritic => vr_cdcritic
-                                 ,pr_dscritic => vr_dscritic);
+        /* Valida transmissao do arquivo de titulos somente se  */
+        /* nao for um agendamento de pagamento                 */
+        IF pr_dt_agendamento IS NULL AND vr_tab_intransm > 0 THEN
+          --Criar erro
+          CXON0000.pc_cria_erro(pr_cdcooper => pr_cooper
+                               ,pr_cdagenci => pr_cod_agencia
+                               ,pr_nrdcaixa => vr_nrdcaixa
+                               ,pr_cod_erro => 677
+                               ,pr_dsc_erro => NULL
+                               ,pr_flg_erro => TRUE
+                               ,pr_cdcritic => vr_cdcritic
+                               ,pr_dscritic => vr_dscritic);
 
-            --Se ocorreu erro
-            IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-              --Levantar Excecao
-              RAISE vr_exc_erro;
-            ELSE
-              vr_cdcritic:= 677;
-              vr_dscritic:= NULL;
-              --Levantar Excecao
-              RAISE vr_exc_erro;
-            END IF;
+          --Se ocorreu erro
+          IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+          ELSE
+            vr_cdcritic:= 677;
+            vr_dscritic:= NULL;
+            --Levantar Excecao
+            RAISE vr_exc_erro;
           END IF;
         END IF;
       END IF;
