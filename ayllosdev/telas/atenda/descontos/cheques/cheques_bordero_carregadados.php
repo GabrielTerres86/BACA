@@ -3,7 +3,7 @@
 	/************************************************************************
 	 Fonte: cheques_bordero_carregadados.php                          
 	 Autor: Guilherme                                                 
-	 Data : Novembro/2008                Última Alteração: 10/10/2016
+	 Data : Novembro/2008                Última Alteração: 31/05/2017
 	                                                                  
 	 Objetivo  : Mostrar os dados do bordero para fazer a liberação   
 	             ou análise				        				   
@@ -38,6 +38,10 @@
 
                  10/10/2016 - Remover verificacao de digitalizaco para o botao de 
 							  consultar imagem (Lucas Ranghetti #510032)
+                              
+                 31/05/2017 - Ajuste para verificar se possui cheque custodiado
+                              no dia de hoje. 
+                              PRJ300- Desconto de cheque. (Odirlei-AMcom)             
 	************************************************************************/
 	
 	session_start();
@@ -222,6 +226,6 @@ blockBackground(parseInt($("#divRotina").css("z-index")));
 			aux_inconfi6 = 51;
 			showConfirmacao("Deseja liberar o border&ocirc; de desconto de cheques?","Confirma&ccedil;&atilde;o - Ayllos","liberaAnalisaBorderoDscChq('L','1','11','21','71','30','51','1','0')","metodoBlock()","sim.gif","nao.gif");
 <?php } elseif ($cddopcao == "E") { ?>
-			showConfirmacao("Deseja excluir o border&ocirc; de desconto de cheques?","Confirma&ccedil;&atilde;o - Ayllos","excluirBorderoDscChq()","metodoBlock()","sim.gif","nao.gif");
+			showConfirmacao("Deseja excluir o border&ocirc; de desconto de cheques?","Confirma&ccedil;&atilde;o - Ayllos","ValidExcluirBorderoDscChq()","metodoBlock()","sim.gif","nao.gif");
 <?php } ?>
 </script>

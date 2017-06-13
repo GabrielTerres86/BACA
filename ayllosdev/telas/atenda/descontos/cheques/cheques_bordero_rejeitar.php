@@ -5,7 +5,9 @@
  * DATA CRIAÇÃO : 23/03/2017
  * OBJETIVO     : Form de exibição dos cheques para resgate do borderô
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : 31/05/2017 - Ajuste para verificar se possui cheque custodiado
+                               no dia de hoje. 
+                               PRJ300- Desconto de cheque. (Odirlei-AMcom)
  */
 	session_start();
 
@@ -28,6 +30,7 @@
 
 	$nrdconta = (isset($_POST["nrdconta"])) ? $_POST["nrdconta"] : 0;
 	$nrborder = (isset($_POST["nrborder"])) ? $_POST["nrborder"] : 0;
+    $flresghj = (isset($_POST["flresghj"])) ? $_POST["flresghj"] : 0;
 
 	// Verifica se o número do bordero é um inteiro válido
 	if (!validaInteiro($nrborder)) {
@@ -43,6 +46,7 @@
 	$xml .= " <Dados>";
 	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
 	$xml .= "   <nrborder>".$nrborder."</nrborder>";
+    $xml .= "   <flresghj>".$flresghj."</flresghj>";
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 

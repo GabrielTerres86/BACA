@@ -6411,6 +6411,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
                   ORDER BY lot.nrdolote) t
        WHERE t.seq = 1;
     
+
     ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
 
     ------------------------------- VARIAVEIS -------------------------------
@@ -6472,7 +6473,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
     END IF;
     
     CLOSE cr_craphcc;
-    
     
     --Buscar diretorio da cooperativa
     vr_dsdireto := gene0001.fn_diretorio(pr_tpdireto => 'C', --> cooper 
@@ -7262,6 +7262,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
 
     Alteracoes: 08/06/2017 - Ajustado a montagem do numero do documento. (Daniel)
                                                      
+                01/06/2017 - Removido Commit e rollback, rotinas chamadoras devem controlar isto.
+                             PRJ300 - Desconto de cheque (Odirlei-AMcom)
+                        
   ............................................................................. */
   	DECLARE
  		  -- Tratamento de críticas		                                                                           
@@ -7467,8 +7470,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
 			END LOOP;
 
       pr_tab_erro_resg := vr_tab_resgate_erro;
-      -- Efetuar commit
-			COMMIT;
 			
 		EXCEPTION
       WHEN vr_exc_erro THEN
@@ -7479,13 +7480,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
 					pr_cdcritic := vr_cdcritic;
 					pr_dscritic := vr_dscritic;
 				END IF;
-        -- Efetuar rollback
-        ROLLBACK;
+
 			WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral em pc_efetua_resgate: ' || SQLERRM;
-        --Efetuar rollback
-        ROLLBACK;		
+	
 		END;
 	END pc_efetua_resgate_custodia;
   

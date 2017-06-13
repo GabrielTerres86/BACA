@@ -404,6 +404,16 @@ CREATE OR REPLACE PACKAGE CECRED.DSCC0001 AS
 																			 ,pr_cdcritic OUT PLS_INTEGER           --> Cód. da crítica
 																			 ,pr_dscritic OUT VARCHAR2);            --> Descrição da crítica
 
+  --> Resgatar cheques custodiados no dia de movimento
+	PROCEDURE pc_resgata_cheques_cust_hj(pr_cdcooper IN crapcdb.cdcooper%TYPE  --> Cooperativa
+                                      ,Pr_cdagenci IN crapage.cdagenci%TYPE  --> Agencia
+                                      ,pr_nrdconta IN crapcdb.nrdconta%TYPE  --> Nr. da Conta
+                                      ,pr_nrborder IN crapcdb.nrborder%TYPE  --> Nr. Borderô
+                                      ,pr_cdoperad IN crapcdb.cdopeana%TYPE  --> Cód. operador
+                                      ,pr_flreprov IN INTEGER                --> Resgatar apenas os reprovados
+                                      ,pr_cdcritic OUT PLS_INTEGER           --> Crítica
+                                      ,pr_dscritic OUT VARCHAR2);            --> Desc. da crítica
+                                      
 END DSCC0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
@@ -1416,8 +1426,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			pr_tab_chq_bordero(vr_idxchequ).insitprv := nvl(rw_crapcst.insitprv,0);
 
       --> Para impressoes do tipo 10 - impressao para analise
+      --> 7 - Impressao bordero da cooperativa
       --> caso bordero da data maior que a data de corte
-      IF pr_idimpres = 10  AND        
+      IF pr_idimpres IN( 7, 10)  AND        
          vr_dtjurtab < rw_crapcdb.dtmvtolt AND 
          --> Nao estiver rejeitado
          rw_crapcdb.dtrejeit IS NULL  AND   
@@ -6700,7 +6711,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 				END IF;
 			END IF;
 				
-			vr_vldjuros := vr_vlcheque * vr_qtdiares * ((vr_txmensal / 100) / 30);
+			vr_vldjuros := ROUND(vr_vlcheque * vr_qtdiares * ((vr_txmensal / 100) / 30),2);
 			vr_vltotjur := nvl(vr_vltotjur,0) + vr_vldjuros;
 								
 			-- Buscar registro da ljd
@@ -6888,7 +6899,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 		
 		BEGIN
 			UPDATE crapcdb cdb
-				 SET cdb.vlliqdev = vr_vlliquid
+				 SET cdb.vlliqdev = NVL(pr_tab_cheques.vlliquid,0) + NVL(vr_vltotjur,0)
 			 WHERE cdb.cdcooper = pr_cdcooper
 				 AND cdb.nrdconta = pr_nrdconta
 				 AND cdb.nrborder = pr_nrborder
@@ -8215,8 +8226,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 		
 		-- Se não estiver liberado
 		IF rw_crapbdc.insitbdc <> 3 THEN
-			-- Fechar cursor
-			CLOSE cr_crapbdc;
 			-- Gerar crítica
 			vr_cdcritic := 0;
 			vr_dscritic := 'Borderô deve estar liberado.';
@@ -8573,6 +8582,180 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			-- Efetuar Rollback
 			ROLLBACK;				 																			 
 	END pc_calcular_vlliquid_chq;
+  
+  
+  --> Resgatar cheques custodiados no dia de movimento
+	PROCEDURE pc_resgata_cheques_cust_hj(pr_cdcooper IN crapcdb.cdcooper%TYPE  --> Cooperativa
+                                      ,Pr_cdagenci IN crapage.cdagenci%TYPE  --> Agencia
+                                      ,pr_nrdconta IN crapcdb.nrdconta%TYPE  --> Nr. da Conta
+                                      ,pr_nrborder IN crapcdb.nrborder%TYPE  --> Nr. Borderô
+                                      ,pr_cdoperad IN crapcdb.cdopeana%TYPE  --> Cód. operador
+                                      ,pr_flreprov IN INTEGER                --> Resgatar apenas os reprovados
+                                      ,pr_cdcritic OUT PLS_INTEGER           --> Crítica
+                                      ,pr_dscritic OUT VARCHAR2) IS          --> Desc. da crítica
+  /* .............................................................................
+    Programa: pc_resgata_cheques_cust_hj
+    Sistema : CECRED
+    Autor   : Odirlei Busana - AMcom
+    Data    : Maio/2017                 Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Resgatar cheques custodiados no dia de movimento
+
+    Alteracoes: -----
+  ..............................................................................*/																			 
+	-- Variável de críticas
+	vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
+	vr_dscritic        VARCHAR2(1000);        --> Desc. Erro        
+	-- Tratamento de erros
+	vr_exc_erro        EXCEPTION;    
+	
+	-- Variáveis auxiliares
+	vr_dstextab craptab.dstextab%TYPE;
+	vr_qtdiasut INTEGER;
+	vr_qtdiasli INTEGER;
+	vr_hrlimite INTEGER;
+	vr_nrdocmto NUMBER;
+	vr_dtjurtab DATE;
+	vr_tab_resgate_erro cust0001.typ_erro_resgate;
+	
+	rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+  
+  vr_tab_cheques dscc0001.typ_tab_cheques;
+	vr_index_cheque NUMBER;
+  vr_flgaprov NUMBER;
+  
+	
+	-- Buscar cheques custodiados na data de hoje
+	CURSOR cr_crapcdb(pr_cdcooper IN crapbdc.cdcooper%TYPE
+	                 ,pr_nrdconta IN crapbdc.nrdconta%TYPE
+									 ,pr_nrborder IN crapbdc.nrborder%TYPE
+                   ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS
+		SELECT cdb.dtmvtolt,
+           cdb.dtlibera,
+           cdb.dtemissa,
+           cdb.vlcheque,
+           cdb.dsdocmc7,
+           cdb.cdcmpchq,
+           cdb.cdbanchq,
+           cdb.cdagechq,
+           cdb.nrctachq,
+           cdb.nrcheque,
+           cdb.nrremret,
+           cdb.insitchq,
+           cdb.nrddigc3,
+           cdb.inchqcop,
+           cdb.vlliquid,
+           cdb.rowid rowid_cdb
+		  FROM crapcdb cdb,
+           crapcst cst
+		 WHERE cdb.cdcooper = pr_cdcooper
+		   AND cdb.nrdconta = pr_nrdconta
+			 AND cdb.nrborder = pr_nrborder
+       AND cst.cdcooper = cdb.cdcooper
+       AND cst.nrdconta = cdb.nrdconta
+       AND cst.nrborder = cdb.nrborder
+       AND cst.cdcmpchq = cdb.cdcmpchq
+       AND cst.cdbanchq = cdb.cdbanchq
+       AND cst.cdagechq = cdb.cdagechq
+       AND cst.nrcheque = cdb.nrcheque
+       AND cst.nrctachq = cdb.nrctachq
+       --> Cheques ainda nao resgatados
+       AND cst.dtdevolu IS NULL
+			 AND cst.insitchq = 0
+       --> Caso a flag estiver como 1, deve buscar apenas os que não
+       --> foram aprovados
+       AND ((pr_flreprov = 1 AND cdb.insitana = 2) OR
+             pr_flreprov = 0) 		
+       AND cst.dtmvtolt = pr_dtmvtolt;
+		
+    -- Verificar se cheque foi resgatado na data de hoje
+    CURSOR cr_crapcst_resg_hoje (pr_cdcooper IN crapcop.cdcooper%TYPE
+                                ,pr_dsdocmc7 IN VARCHAR2
+                                ,pr_dtmvtolt IN DATE) IS
+      SELECT cst.vlcheque
+            ,cst.dtlibera
+            ,cst.insitchq
+        FROM crapcst cst
+       WHERE cst.cdcooper = pr_cdcooper
+         AND UPPER(cst.dsdocmc7) = UPPER(pr_dsdocmc7)
+         AND cst.dtdevolu = pr_dtmvtolt;
+    rw_crapcst_resg_hoje cr_crapcst_resg_hoje%ROWTYPE;
+
+	BEGIN
+  
+		-- Busca a data do sistema
+		OPEN  BTCH0001.cr_crapdat(pr_cdcooper);
+		FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+		CLOSE BTCH0001.cr_crapdat;
+	
+    --> Buscar cheques do bosrdero custodiados do dia atual
+    FOR rw_crapcdb IN cr_crapcdb (pr_cdcooper => pr_cdcooper
+                                 ,pr_nrdconta => pr_nrdconta
+                                 ,pr_nrborder => pr_nrborder
+                                 ,pr_dtmvtolt => rw_crapdat.dtmvtolt) LOOP
+    
+      -- Verificar se cheque foi resgatado hoje
+      OPEN cr_crapcst_resg_hoje(pr_cdcooper => pr_cdcooper
+                               ,pr_dsdocmc7 => rw_crapcdb.dsdocmc7
+                               ,pr_dtmvtolt => rw_crapdat.dtmvtolt);
+      FETCH cr_crapcst_resg_hoje INTO rw_crapcst_resg_hoje;
+
+      IF cr_crapcst_resg_hoje%FOUND THEN
+        -- Gera crítica
+        vr_cdcritic := 673;
+        -- Fecha Cursor
+        CLOSE cr_crapcst_resg_hoje;
+        -- Levantar exceção
+        RAISE vr_exc_erro;
+      ELSE
+        -- Fecha Cursor
+        CLOSE cr_crapcst_resg_hoje;
+      END IF;
+      
+      -- Atualizar informações do cheque no borderô
+      UPDATE crapcdb cdb
+         SET cdb.dtdevolu = rw_crapdat.dtmvtolt
+            ,cdb.cdopedev = pr_cdoperad
+            ,cdb.insitchq = 1
+       WHERE cdb.rowid = rw_crapcdb.rowid_cdb;
+				 
+      
+      -- Resgatar cheque de custódia
+      cust0001.pc_efetua_resgate_custodia(pr_cdcooper => pr_cdcooper
+                                         ,pr_nrdconta => pr_nrdconta
+                                         ,pr_dscheque => rw_crapcdb.dsdocmc7
+                                         ,pr_cdoperad => pr_cdoperad
+                                         ,pr_tab_erro_resg => vr_tab_resgate_erro
+                                         ,pr_cdcritic => vr_cdcritic
+                                         ,pr_dscritic => vr_dscritic);
+      -- Se retornou alguma crítica
+      IF vr_cdcritic > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN      
+        -- Levantar exceção
+        RAISE vr_exc_erro;
+      END IF;
+          
+    END LOOP;
+    
+	EXCEPTION    
+    WHEN vr_exc_erro THEN      
+      IF NVL(vr_cdcritic,0) <> 0 AND 
+         TRIM(vr_dscritic) IS NULL THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+			ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := REPLACE(REPLACE(vr_dscritic,chr(13)),chr(10));
+      END IF;
+    WHEN OTHERS THEN      
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := REPLACE(REPLACE('Nao foi possivel resgatar cheques custodiados no dia de hoje: ' || SQLERRM, chr(13)),chr(10));																							 																			 		
+	END pc_resgata_cheques_cust_hj;
+  
+  
   
 END DSCC0001;
 /

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2017-06-02T15:07:16 -->
+<!-- 2017-06-12T14:11:20 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl519_bordero" language="groovy" pageWidth="595" pageHeight="672" whenNoDataType="AllSectionsNoDetail" columnWidth="440" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.0"/>
 	<property name="ireport.x" value="0"/>
@@ -108,6 +108,7 @@
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} == 1]]></printWhenExpression>
 				</reportElement>
 				<textElement textAlignment="Justified" markup="html">
 					<font fontName="Courier New" size="7" pdfFontName="Courier"/>
@@ -120,6 +121,7 @@
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} == 1]]></printWhenExpression>
 				</reportElement>
 				<box>
 					<topPen lineWidth="0.0"/>
@@ -146,6 +148,7 @@
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} == 1]]></printWhenExpression>
 				</reportElement>
 				<textElement textAlignment="Justified" markup="html">
 					<font fontName="Courier New" size="7" pdfFontName="Courier"/>
@@ -158,6 +161,7 @@
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} == 1]]></printWhenExpression>
 				</reportElement>
 				<textElement textAlignment="Justified" markup="html">
 					<font fontName="Courier New" size="7" pdfFontName="Courier"/>
@@ -165,11 +169,12 @@
 				<textFieldExpression><![CDATA["Cooperado: " + $F{nmprimtl}]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
-				<reportElement positionType="Float" x="40" y="112" width="239" height="8" uuid="34c5ed91-eceb-451a-bc9d-dee0cb65ab07">
+				<reportElement positionType="Float" x="40" y="112" width="239" height="8" isRemoveLineWhenBlank="true" uuid="34c5ed91-eceb-451a-bc9d-dee0cb65ab07">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} == 1]]></printWhenExpression>
 				</reportElement>
 				<textElement textAlignment="Justified" markup="html">
 					<font fontName="Courier New" size="7" pdfFontName="Courier"/>
@@ -177,11 +182,12 @@
 				<textFieldExpression><![CDATA["Valor Descontado: "+$F{vltotchq}]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
-				<reportElement positionType="Float" x="291" y="112" width="211" height="8" uuid="80b0ef15-513a-4644-af01-553f6a552572">
+				<reportElement positionType="Float" x="291" y="112" width="211" height="8" isRemoveLineWhenBlank="true" uuid="80b0ef15-513a-4644-af01-553f6a552572">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} == 1]]></printWhenExpression>
 				</reportElement>
 				<textElement textAlignment="Justified" markup="html">
 					<font fontName="Courier New" size="7" pdfFontName="Courier"/>
@@ -189,11 +195,12 @@
 				<textFieldExpression><![CDATA["Tarifa do Contrato de Desconto: "+$F{vltarctr}]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
-				<reportElement positionType="Float" x="40" y="144" width="239" height="8" uuid="b199d0c4-187a-4889-ab7e-f6fc165aad92">
+				<reportElement positionType="Float" x="40" y="144" width="239" height="8" isRemoveLineWhenBlank="true" uuid="b199d0c4-187a-4889-ab7e-f6fc165aad92">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} == 1]]></printWhenExpression>
 				</reportElement>
 				<textElement textAlignment="Justified" markup="html">
 					<font fontName="Courier New" size="7" pdfFontName="Courier"/>
@@ -201,11 +208,12 @@
 				<textFieldExpression><![CDATA["Taxa Juros Remuneratórios: "]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
-				<reportElement positionType="Float" x="121" y="152" width="80" height="8" uuid="6c2ae157-cfca-41dd-8f2d-fde09e5b1e89">
+				<reportElement positionType="Float" x="121" y="152" width="80" height="8" isRemoveLineWhenBlank="true" uuid="6c2ae157-cfca-41dd-8f2d-fde09e5b1e89">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} == 1]]></printWhenExpression>
 				</reportElement>
 				<textElement textAlignment="Justified" markup="html">
 					<font fontName="Courier New" size="7" pdfFontName="Courier"/>
@@ -213,11 +221,12 @@
 				<textFieldExpression><![CDATA[$F{txmensal} + " % a.m."]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
-				<reportElement positionType="Float" x="201" y="152" width="80" height="8" uuid="d7e23d8b-a9dc-4cb8-bd21-d7bef0a2ee85">
+				<reportElement positionType="Float" x="201" y="152" width="80" height="8" isRemoveLineWhenBlank="true" uuid="d7e23d8b-a9dc-4cb8-bd21-d7bef0a2ee85">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} == 1]]></printWhenExpression>
 				</reportElement>
 				<textElement textAlignment="Justified" markup="html">
 					<font fontName="Courier New" size="7" pdfFontName="Courier"/>
@@ -229,6 +238,7 @@
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} == 1]]></printWhenExpression>
 				</reportElement>
 				<textElement textAlignment="Justified" markup="html">
 					<font fontName="Courier New" size="7" pdfFontName="Courier"/>
@@ -236,11 +246,12 @@
 				<textFieldExpression><![CDATA[$F{dstitulo} + " No." + $F{nrborder}]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
-				<reportElement positionType="Float" x="40" y="80" width="240" height="8" uuid="a8d2d933-d4be-4d24-bca4-736912e495c6">
+				<reportElement positionType="Float" x="40" y="80" width="240" height="8" isRemoveLineWhenBlank="true" uuid="a8d2d933-d4be-4d24-bca4-736912e495c6">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} == 1]]></printWhenExpression>
 				</reportElement>
 				<textElement textAlignment="Justified" markup="html">
 					<font fontName="Courier New" size="7" pdfFontName="Courier"/>
@@ -248,11 +259,12 @@
 				<textFieldExpression><![CDATA["Linha de Crédito: "+$F{cddlinha}+" - "+$F{dsdlinha}]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
-				<reportElement positionType="Float" x="40" y="96" width="240" height="8" uuid="d1dde6a6-b895-4444-8aee-cf2b9f2093f6">
+				<reportElement positionType="Float" x="40" y="96" width="240" height="8" isRemoveLineWhenBlank="true" uuid="d1dde6a6-b895-4444-8aee-cf2b9f2093f6">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} == 1]]></printWhenExpression>
 				</reportElement>
 				<textElement textAlignment="Justified" markup="html">
 					<font fontName="Courier New" size="7" pdfFontName="Courier"/>
@@ -260,11 +272,12 @@
 				<textFieldExpression><![CDATA["Número da Cédula: "+$F{nrctrlim}]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
-				<reportElement positionType="Float" x="291" y="96" width="211" height="8" uuid="270bff80-52e0-4046-b529-a715302d54b8">
+				<reportElement positionType="Float" x="291" y="96" width="211" height="8" isRemoveLineWhenBlank="true" uuid="270bff80-52e0-4046-b529-a715302d54b8">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} == 1]]></printWhenExpression>
 				</reportElement>
 				<textElement textAlignment="Justified" markup="html">
 					<font fontName="Courier New" size="7" pdfFontName="Courier"/>
@@ -272,11 +285,12 @@
 				<textFieldExpression><![CDATA["Custo Efetivo Total (CET): "+$F{taxadcet}+"%"]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
-				<reportElement positionType="Float" x="40" y="152" width="80" height="8" uuid="fcb1b0bf-55da-487d-a332-a359dd809270">
+				<reportElement positionType="Float" x="40" y="152" width="80" height="8" isRemoveLineWhenBlank="true" uuid="fcb1b0bf-55da-487d-a332-a359dd809270">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} == 1]]></printWhenExpression>
 				</reportElement>
 				<textElement textAlignment="Justified" markup="html">
 					<font fontName="Courier New" size="7" pdfFontName="Courier"/>
@@ -284,11 +298,12 @@
 				<textFieldExpression><![CDATA[$F{txdanual} + " % a.a."]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
-				<reportElement positionType="Float" x="40" y="128" width="239" height="8" uuid="27243d38-4e61-4594-9280-5f72e0aafc31">
+				<reportElement positionType="Float" x="40" y="128" width="239" height="8" isRemoveLineWhenBlank="true" uuid="27243d38-4e61-4594-9280-5f72e0aafc31">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} == 1]]></printWhenExpression>
 				</reportElement>
 				<textElement textAlignment="Justified" markup="html">
 					<font fontName="Courier New" size="7" pdfFontName="Courier"/>
@@ -296,11 +311,12 @@
 				<textFieldExpression><![CDATA["Tarifa Inclusão Borderô: "+$F{vltarbor}]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
-				<reportElement positionType="Float" x="291" y="128" width="198" height="8" uuid="1bd3c951-f8b7-43ee-a8a1-7bab24591651">
+				<reportElement positionType="Float" x="291" y="128" width="198" height="8" isRemoveLineWhenBlank="true" uuid="1bd3c951-f8b7-43ee-a8a1-7bab24591651">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} == 1]]></printWhenExpression>
 				</reportElement>
 				<textElement textAlignment="Justified" markup="html">
 					<font fontName="Courier New" size="7" pdfFontName="Courier"/>
@@ -308,11 +324,12 @@
 				<textFieldExpression><![CDATA["Tarifa Custódia: "+$F{vltarcus}]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
-				<reportElement positionType="Float" x="291" y="144" width="198" height="8" uuid="ae0d5e0d-c407-4419-b204-fb9ba1f3e274">
+				<reportElement positionType="Float" x="291" y="144" width="198" height="8" isRemoveLineWhenBlank="true" uuid="ae0d5e0d-c407-4419-b204-fb9ba1f3e274">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} == 1]]></printWhenExpression>
 				</reportElement>
 				<textElement textAlignment="Justified" markup="html">
 					<font fontName="Courier New" size="7" pdfFontName="Courier"/>
@@ -322,7 +339,7 @@
 		</band>
 	</pageHeader>
 	<detail>
-		<band height="124">
+		<band height="79">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<subreport>
 				<reportElement x="40" y="0" width="544" height="8" isRemoveLineWhenBlank="true" uuid="a16713e5-049e-4b44-92c6-d10f75551bcf">
@@ -368,17 +385,6 @@
 				<subreportExpression><![CDATA["crrl519_bordero_restri_coordenador.jasper"]]></subreportExpression>
 			</subreport>
 			<textField isStretchWithOverflow="true">
-				<reportElement positionType="Float" x="40" y="115" width="354" height="8" uuid="8155010d-4a20-4df8-90e2-f2d6511dfe76">
-					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
-					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
-					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
-				</reportElement>
-				<textElement textAlignment="Justified" markup="html">
-					<font fontName="Courier New" size="7" pdfFontName="Courier"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$F{dsmvtolt}]]></textFieldExpression>
-			</textField>
-			<textField isStretchWithOverflow="true">
 				<reportElement positionType="Float" x="40" y="58" width="548" height="12" uuid="75e1c39f-9345-4ef3-891b-fc2d74439515">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
@@ -391,11 +397,11 @@
 				<textFieldExpression><![CDATA["LOTES CUSTODIA: " + $F{nrdlotes}]]></textFieldExpression>
 			</textField>
 		</band>
-		<band height="160">
+		<band height="142" splitType="Prevent">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<printWhenExpression><![CDATA[!$F{idorigem}.equals("3")]]></printWhenExpression>
 			<line>
-				<reportElement positionType="Float" x="40" y="137" width="250" height="1" uuid="547b67dd-fe3a-47b1-b474-6e6f75f77daa">
+				<reportElement positionType="Float" x="40" y="132" width="250" height="1" uuid="547b67dd-fe3a-47b1-b474-6e6f75f77daa">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
@@ -406,7 +412,7 @@
 				</graphicElement>
 			</line>
 			<textField isStretchWithOverflow="true">
-				<reportElement positionType="Float" x="40" y="139" width="180" height="8" uuid="85a8169a-e148-4098-9f5d-1de158416ffa">
+				<reportElement positionType="Float" x="40" y="134" width="180" height="8" uuid="85a8169a-e148-4098-9f5d-1de158416ffa">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
@@ -417,7 +423,7 @@
 				<textFieldExpression><![CDATA["Testemunha"]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
-				<reportElement positionType="Float" x="321" y="139" width="180" height="8" uuid="a9f24e3b-f3ea-41da-a840-48e8cbafd91a">
+				<reportElement positionType="Float" x="321" y="134" width="180" height="8" uuid="a9f24e3b-f3ea-41da-a840-48e8cbafd91a">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
@@ -428,7 +434,7 @@
 				<textFieldExpression><![CDATA["Testemunha"]]></textFieldExpression>
 			</textField>
 			<line>
-				<reportElement positionType="Float" x="321" y="137" width="250" height="1" uuid="458e32ef-544b-4b0f-a5b0-7f1fbb1555a5">
+				<reportElement positionType="Float" x="321" y="132" width="250" height="1" uuid="458e32ef-544b-4b0f-a5b0-7f1fbb1555a5">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
@@ -439,14 +445,14 @@
 				</graphicElement>
 			</line>
 			<frame>
-				<reportElement x="40" y="42" width="531" height="16" uuid="6be44610-9e92-4c58-8017-43afa35abb7c">
+				<reportElement x="40" y="47" width="531" height="16" uuid="6be44610-9e92-4c58-8017-43afa35abb7c">
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 				</reportElement>
 				<line>
-					<reportElement positionType="Float" x="0" y="-8" width="250" height="1" uuid="a5214d1e-7006-4e36-a538-7b037d664315">
+					<reportElement positionType="Float" x="0" y="-3" width="250" height="1" uuid="a5214d1e-7006-4e36-a538-7b037d664315">
 						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
@@ -457,7 +463,7 @@
 					</graphicElement>
 				</line>
 				<textField isStretchWithOverflow="true">
-					<reportElement positionType="Float" x="0" y="-6" width="250" height="8" uuid="0b2a2c4e-375a-4fe8-aa6d-b276696988cd">
+					<reportElement positionType="Float" x="0" y="-1" width="250" height="8" uuid="0b2a2c4e-375a-4fe8-aa6d-b276696988cd">
 						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
@@ -469,7 +475,7 @@
 					<textFieldExpression><![CDATA["Operador: " + $F{nmoperad}]]></textFieldExpression>
 				</textField>
 				<line>
-					<reportElement positionType="Float" x="281" y="-8" width="250" height="1" uuid="7d4d2de2-8c22-45b6-8b46-3acd6ba24439">
+					<reportElement positionType="Float" x="281" y="-3" width="250" height="1" uuid="7d4d2de2-8c22-45b6-8b46-3acd6ba24439">
 						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
@@ -480,7 +486,7 @@
 					</graphicElement>
 				</line>
 				<textField isStretchWithOverflow="true">
-					<reportElement positionType="Float" x="281" y="-6" width="250" height="8" uuid="fdd23d6d-a5bb-4b75-831f-9b6645324b3f">
+					<reportElement positionType="Float" x="281" y="-1" width="250" height="8" uuid="fdd23d6d-a5bb-4b75-831f-9b6645324b3f">
 						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
@@ -493,13 +499,13 @@
 				</textField>
 			</frame>
 			<frame>
-				<reportElement x="40" y="98" width="470" height="15" uuid="bc372d8d-4af8-458f-a9ef-e95caba37d53">
+				<reportElement x="40" y="93" width="470" height="15" uuid="bc372d8d-4af8-458f-a9ef-e95caba37d53">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 				</reportElement>
 				<textField isStretchWithOverflow="true">
-					<reportElement positionType="Float" x="0" y="2" width="250" height="8" uuid="f4e0028b-c7b0-40b0-82d3-e59be25948c5">
+					<reportElement positionType="Float" x="0" y="-3" width="250" height="8" uuid="f4e0028b-c7b0-40b0-82d3-e59be25948c5">
 						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
@@ -511,7 +517,7 @@
 					<textFieldExpression><![CDATA[$F{nmprimtl}]]></textFieldExpression>
 				</textField>
 				<line>
-					<reportElement positionType="Float" x="0" y="0" width="250" height="1" uuid="fd0c1724-80d0-448b-96b6-35ba6a53de15">
+					<reportElement positionType="Float" x="0" y="-5" width="250" height="1" uuid="fd0c1724-80d0-448b-96b6-35ba6a53de15">
 						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
@@ -522,6 +528,33 @@
 					</graphicElement>
 				</line>
 			</frame>
+			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" x="40" y="0" width="354" height="8" uuid="8155010d-4a20-4df8-90e2-f2d6511dfe76">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Justified" markup="html">
+					<font fontName="Courier New" size="7" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dsmvtolt}]]></textFieldExpression>
+			</textField>
 		</band>
 	</detail>
+	<lastPageFooter>
+		<band height="11">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<printWhenExpression><![CDATA[$V{PAGE_NUMBER} != 1]]></printWhenExpression>
+			<textField>
+				<reportElement positionType="FixRelativeToBottom" x="0" y="0" width="595" height="11" isRemoveLineWhenBlank="true" uuid="c2eaf332-8578-4974-8644-ae3769ae2cd0">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} != 1]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Center" markup="html">
+					<font fontName="Courier New" size="9" isBold="false" isItalic="false" pdfFontName="Courier-Bold"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Esta folha é parte integrante do Borderô de Desconto de Cheques nº " +  $F{nrborder} + "."]]></textFieldExpression>
+			</textField>
+		</band>
+	</lastPageFooter>
 </jasperReport>
