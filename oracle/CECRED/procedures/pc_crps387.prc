@@ -3255,7 +3255,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                       continue; -- Vai para a proxima linha do arquivo
                     END IF;
                   END IF;
-                                    
+                                  
                   -- Cadastro das autorizacoes de debito em conta
                   IF cr_crapatr%ISOPEN THEN
                     CLOSE cr_crapatr;
@@ -3265,7 +3265,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                   FETCH cr_crapatr INTO rw_crapatr;
 
                   IF ((cr_crapatr%FOUND AND rw_crapatr.dtfimatr IS NOT NULL) OR
-                      (cr_crapatr%NOTFOUND))                                 AND
+                      (cr_crapatr%NOTFOUND)                                  OR
+                      (cr_crapass%FOUND AND rw_crapass.dtdemiss IS NOT NULL) OR
+                      (cr_crapass%NOTFOUND))                                 AND
                       vr_tpregist <> 'B'                                     THEN
                     IF rw_gnconve.flgindeb = 1 AND
                        vr_tpregist     = 'E'   AND
