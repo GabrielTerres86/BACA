@@ -2308,8 +2308,8 @@ PROCEDURE busca_convenios_codbarras:
                            gnconve.nmarqatu <> ""               AND
                            gnconve.cdhisdeb <> 0                AND 
                            crapcon.cdempcon = 1085)                           
-                           NO-LOCK NO-ERROR.
-                                         
+                           NO-LOCK NO-ERROR.                           
+                           
                                          
                 IF  NOT AVAILABLE gnconve THEN
                     NEXT.
@@ -2948,7 +2948,7 @@ PROCEDURE exclui_autorizacao:
            /* Verifica a data da autorizaçao */
            IF  crapatr.dtiniatr <> aux_dtfimatr THEN
                DO:
-                  ASSIGN crapatr.dtfimatr = par_dtmvtolt. /* Cancela */
+                  ASSIGN crapatr.dtfimatr = aux_dtfimatr. /* Cancela */
                   
                   CREATE tt-autori-atl.
                   BUFFER-COPY crapatr TO tt-autori-atl.
