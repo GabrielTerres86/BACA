@@ -142,7 +142,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
 
                26/04/2017 - Nao considerar valores bloqueados na composicao de saldo disponivel.
                             Heitor (Mouts) - Melhoria 440
-                                                
+
                05/06/2017 - Ajustes para incrementar/zerar variaveis quando craplau também
                             (Lucas Ranghetti/Thiago Rodrigues)                            
      ............................................................................. */
@@ -1401,19 +1401,9 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
                  ELSE
                    CLOSE cr_tbcc_lautom_controle;
                  END IF;
-                     
-                 --Incrementar a quantidade de lancamentos no mes
-                 rw_crapsld.qtlanmes:= Nvl(rw_crapsld.qtlanmes,0) + 1;                     
+                 
                  --Diminuir o valor do lancamento nos juros
-                 vr_vldjuros:= Nvl(vr_vldjuros,0) + Nvl(rw_craplcm.vllanmto,0);
-
-                 --Se cobrar cpmf
-                 IF vr_flgdcpmf THEN
-                   --Acumular o valor do lancamento no valor base ipmf
-                   vr_vlbasipm:= vr_vlbasipm + Nvl(rw_craplcm.vllanmto,0);
-                   --Acumular no valor do ipmf o valor do ipmf existente no lancamento
-                   vr_vldoipmf:= vr_vldoipmf + Nvl(rw_craplcm.vldoipmf,0);
-                 END IF;
+                 vr_vldjuros:= Nvl(vr_vldjuros,0) + Nvl(rw_crapsld.vljurmes,0);
                ELSE -- Caso contrario segue criando registro na conta corrente  
              
                --Inserir lancamento retornando o valor do rowid e do lançamento para uso posterior

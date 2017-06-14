@@ -201,8 +201,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
 
                           - Adicionar Round 2 para o valor vliofmes (Lucas Ranghetti M338.1)
 
-			   26/04/2017 - Nao considerar mais valores bloqueados para composicao de saldo disponivel
-			                Heitor (Mouts) - Melhoria 440
+			         26/04/2017 - Nao considerar mais valores bloqueados para composicao de saldo disponivel
+			                      Heitor (Mouts) - Melhoria 440
 
                05/06/2017 - Ajustes para incrementar/zerar variaveis quando craplau também
                             (Lucas Ranghetti/Thiago Rodrigues)
@@ -784,7 +784,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
          --Atribuir a proxima data do movimento
          vr_dtmvtopr:= rw_crapdat.dtmvtopr;
          --Atribuir a data do movimento anterior
-         vr_dtmvtoan:= rw_crapdat.dtmvtoan;
+         vr_dtmvtoan:= rw_crapdat.dtmvtoan;        
          --Atribuir a quantidade de dias uteis
          vr_qtdiaute:= rw_crapdat.qtdiaute;
        END IF;
@@ -1469,18 +1469,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                        CLOSE cr_tbcc_lautom_controle;
                      END IF;
                          
-                     --Incrementar a quantidade de lancamentos no mes
-                     rw_crapsld.qtlanmes:= Nvl(rw_crapsld.qtlanmes,0) + 1;
                      --Acumular o valor do lancamento nos juros
-                     vr_vldjuros:= Nvl(vr_vldjuros,0) + Nvl(rw_craplcm.vllanmto,0);
+                     vr_vldjuros:= Nvl(vr_vldjuros,0) + Nvl(rw_crapsld.vljuresp,0);
                      
-                     --Se cobrar cpmf
-                     IF vr_flgdcpmf THEN
-                       --Acumular o valor do lancamento no valor base ipmf
-                       vr_vlbasipm:= Nvl(vr_vlbasipm,0) + Nvl(rw_craplcm.vllanmto,0);
-                       --Acumular no valor do ipmf o valor do ipmf existente no lancamento
-                       vr_vldoipmf:= Nvl(vr_vldoipmf,0) + Nvl(rw_craplcm.vldoipmf,0);
-                     END IF;
                    ELSE -- Caso contrario segue criando registro na conta corrente
                    
                        --Verificar se o lote existe
