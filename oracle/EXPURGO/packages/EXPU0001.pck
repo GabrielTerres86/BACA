@@ -227,7 +227,7 @@ CREATE OR REPLACE PACKAGE BODY EXPURGO.EXPU0001  is
         --> Está irá fazer carga total da tabela
         vr_dsdwhere := NULL;
         IF rw_tbhstctl.tpoperacao <> 1 THEN
-          vr_dsdwhere := 'TRUNC('||rw_tbhstctl.nmtabela||'.'||rw_tbhstctl.nmcampo_refere||') < '||
+          vr_dsdwhere := ''||rw_tbhstctl.nmtabela||'.'||rw_tbhstctl.nmcampo_refere||' < '||
                          'TO_DATE('''|| to_char(vr_dtdiaatu - rw_tbhstctl.nrdias_refere,'DD/MM/RRRR')||''',''DD/MM/RRRR'')';
         END IF;  
         --> Realizar expurgo dos dados
@@ -536,7 +536,7 @@ CREATE OR REPLACE PACKAGE BODY EXPURGO.EXPU0001  is
       -- Exclusao da tabela dependente por referencia do nome do campo
       ELSIF rw_tbexpdep.tpcontrole = 2 THEN
 
-        vr_dsdwhere := ' TRUNC('||rw_tbexpdep.nmtabela||'.'||rw_tbexpdep.nmcampo_refere||') < '||                       
+        vr_dsdwhere := ' '||rw_tbexpdep.nmtabela||'.'||rw_tbexpdep.nmcampo_refere||' < '||
                        'TO_DATE('''|| to_char(vr_dtdiaatu - pr_nrdias_retencao,'DD/MM/RRRR')||''',''DD/MM/RRRR'')';
 
       
@@ -688,7 +688,7 @@ CREATE OR REPLACE PACKAGE BODY EXPURGO.EXPU0001  is
         
           vr_dsdwhere := ' WHERE not exists (SELECT 1 FROM '|| 
                          pr_nmowner||'.'||pr_nmtabela||'@'||vr_dblink_hist||
-                         ' WHERE ';
+                         ' hst WHERE ';
                           
         
           FOR i IN vr_tab_campos.first..vr_tab_campos.last LOOP
@@ -696,7 +696,7 @@ CREATE OR REPLACE PACKAGE BODY EXPURGO.EXPU0001  is
               vr_dsdwhere := vr_dsdwhere || ' AND ';
             END IF;
             
-            vr_dsdwhere := vr_dsdwhere || pr_nmowner||'.'||pr_nmtabela||'.'||vr_tab_campos(i)||'@'||vr_dblink_hist|| 
+            vr_dsdwhere := vr_dsdwhere || ' hst.'||vr_tab_campos(i)||
                           ' = '|| pr_nmowner||'.'||pr_nmtabela||'.' ||vr_tab_campos(i);          
           
           END LOOP;
@@ -1144,9 +1144,6 @@ CREATE OR REPLACE PACKAGE BODY EXPURGO.EXPU0001  is
       END;
     END LOOP;
     
-  
-  
-
   EXCEPTION
     WHEN vr_exc_erro THEN
       ROLLBACK;
@@ -1159,12 +1156,6 @@ CREATE OR REPLACE PACKAGE BODY EXPURGO.EXPU0001  is
       pr_dscritic := 'Não foi possivel realizar expurgo: '||SQLERRM;
       RAISE_application_error(-20501,pr_dscritic);
   END pc_processar_expurgo_outros; 
-  
-  
-  
-  
-  
-  
   
 END EXPU0001;
 /
