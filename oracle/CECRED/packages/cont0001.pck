@@ -56,7 +56,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
 
   -- constantes para geracao de arquivos contabeis
   vc_cdacesso CONSTANT VARCHAR2(24) := 'DIR_ARQ_CONTAB_X';
-  vc_cdtodascooperativas INTEGER := 0;
+  vc_cdtodascooperativas INTEGER    := 0;
 
   vr_con_dtmvtolt      VARCHAR2(20);
   vr_ind_arquivo       utl_file.file_type;  
