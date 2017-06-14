@@ -253,7 +253,7 @@ create or replace package cecred.PAGA0002 is
                                ,pr_cddbanco IN crapcti.cddbanco%TYPE   --> Codigo do banco
                                ,pr_cdispbif IN crapcti.nrispbif%TYPE   --> Numero inscrição SPB 
                                ,pr_cdageban IN crapcti.cdageban%TYPE   --> codigo da agencia bancaria. 
-                               ,pr_nrctatrf IN crapcti.nrctatrf%TYPE   --> conta que recebe a transferencia. 
+                               ,pr_nrctatrf IN VARCHAR2                --> conta que recebe a transferencia. 
                                ,pr_nmtitula IN crapcti.nmtitula%TYPE   --> nome do titular da conta. 
                                ,pr_nrcpfcgc IN crapcti.nrcpfcgc%TYPE   --> cpf/cnpj do titular da conta.  
                                ,pr_inpessoa IN crapcti.inpessoa%TYPE   --> tipo de pessoa da conta. 
@@ -692,7 +692,7 @@ create or replace package body cecred.PAGA0002 is
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Odirlei Busana - Amcom
-  --  Data     : Março/2014.                   Ultima atualizacao: 17/04/2017
+  --  Data     : Março/2014.                   Ultima atualizacao: 12/06/2017
   --
   -- Dados referentes ao programa:
   --
@@ -780,6 +780,8 @@ create or replace package body cecred.PAGA0002 is
 	--
 	--             22/02/2017 - Ajustes para correçao de crítica de pagamento DARF/DAS (Lucas Lunelli - P.349.2)
 	--
+  --             12/06/2017 - Alterar tipo do parametro pr_nrctatrf para varchar2 
+  --                          referentes ao Novo Catalogo do SPB (Lucas Ranghetti #668207)
   ---------------------------------------------------------------------------------------------------------------*/
   
   ----------------------> CURSORES <----------------------
@@ -828,7 +830,7 @@ create or replace package body cecred.PAGA0002 is
                                ,pr_cddbanco IN crapcti.cddbanco%TYPE   --> Codigo do banco
                                ,pr_cdispbif IN crapcti.nrispbif%TYPE   --> Numero inscrição SPB 
                                ,pr_cdageban IN crapcti.cdageban%TYPE   --> codigo da agencia bancaria. 
-                               ,pr_nrctatrf IN crapcti.nrctatrf%TYPE   --> conta que recebe a transferencia. 
+                               ,pr_nrctatrf IN VARCHAR2                --> conta que recebe a transferencia.
                                ,pr_nmtitula IN crapcti.nmtitula%TYPE   --> nome do titular da conta. 
                                ,pr_nrcpfcgc IN crapcti.nrcpfcgc%TYPE   --> cpf/cnpj do titular da conta.  
                                ,pr_inpessoa IN crapcti.inpessoa%TYPE   --> tipo de pessoa da conta. 
@@ -857,7 +859,7 @@ create or replace package body cecred.PAGA0002 is
       Sistema : Internet - Cooperativa de Credito
       Sigla   : CRED
       Autor   : David
-      Data    : Abril/2007.                       Ultima atualizacao: 18/01/2016
+      Data    : Abril/2007.                       Ultima atualizacao: 12/06/2016
    
       Dados referentes ao programa:
        
@@ -956,6 +958,8 @@ create or replace package body cecred.PAGA0002 is
                   18/01/2016 - Ajustes mensagens de sucesso para TED. 
                                PRJ335 - Analise de fraude (Odirlei-AMcom)
                                        
+                  12/06/2017 - Alterar tipo do parametro pr_nrctatrf para varchar2 
+                               referentes ao Novo Catalogo do SPB (Lucas Ranghetti #668207)
     .................................................................................*/
     ----------------> TEMPTABLE  <---------------
    
@@ -1080,7 +1084,7 @@ create or replace package body cecred.PAGA0002 is
                       ,pr_dsdadatu => to_char(pr_cdageban,'fm0000'));
         
         IF pr_tpoperac = 4 THEN
-          vr_nrctatrf := TRIM(gene0002.fn_mask(pr_nrctatrf,'zzzzzzzzzzzzzz.9'));
+          vr_nrctatrf := TRIM(gene0002.fn_mask(pr_nrctatrf,'zzzzzzzzzzzzzzzzzzz.9'));
         ELSE
           vr_nrctatrf := TRIM(gene0002.fn_mask(pr_nrctatrf,'zzzz.zzz.9'));
         END IF;

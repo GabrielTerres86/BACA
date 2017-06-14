@@ -44,7 +44,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
 --
 --    Programa: SSPB0002
 --    Autor   : Douglas Quisinski
---    Data    : Julho/2015                      Ultima Atualizacao: 12/12/2016
+--    Data    : Julho/2015                      Ultima Atualizacao: 08/06/2017
 --
 --    Dados referentes ao programa:
 --
@@ -64,6 +64,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
 --                12/12/2016 - Ajustar conciliação para que durante o periodo de 01/01/2017 até 21/03/2017
 --                             (mesmo período em que o DE->PARA ira ocorrer no crps531_1 que processa as 
 --                             mensagens de TED) (Douglas - Chamado 570148)
+--
+--                08/06/2017 - Adicionar mensagens 'PAG0142R2','STR0034R2','PAG0134R2' referentes ao
+--                             novo catalogo do SPB (Lucas Ranghetti #668207)
 ---------------------------------------------------------------------------------------------------------------
   -- Tipo de registro para conter as informações das linhas do arquivo
   TYPE typ_recdados IS RECORD (nrdlinha INTEGER
@@ -111,7 +114,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Douglas Quisinski
-    Data    : 04/08/2015                        Ultima atualizacao: 12/12/2016
+    Data    : 04/08/2015                        Ultima atualizacao: 08/06/2016
 
     Dados referentes ao programa:
 
@@ -156,7 +159,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
                 12/12/2016 - Ajustar conciliação para que durante o periodo de 
                              01/01/2017 até 21/03/2017 (mesmo período em que o DE->PARA 
                              ira ocorrer no crps531_1 que processa as  mensagens de TED) 
-                             (Douglas - Chamado 570148)                             
+                             (Douglas - Chamado 570148)      
+                             
+                08/06/2017 - Adicionar mensagens 'PAG0142R2','STR0034R2','PAG0134R2' referentes ao
+                             novo catalogo do SPB (Lucas Ranghetti #668207)
     ............................................................................. */
     DECLARE
       -- Exceção
@@ -309,7 +315,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
          WHERE spb.cdcooper > 0
            -- Apenas as mensagens de VR BOLETO
            AND spb.dsmensag in ('STR0026','PAG0122','STR0026R2','PAG0122R2',
-                                'STR0006','STR0006R2','STR0025','PAG0121')
+                                'STR0006','STR0006R2','STR0025','PAG0121',
+                                'PAG0142R2','STR0034R2','PAG0134R2')
            AND spb.dtmensag = pr_dtmensag;
       rw_gnmvspb cr_gnmvspb%ROWTYPE;
            
@@ -791,8 +798,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
               
               -- TED por esta finalidade não credita automaticamente a conta corrente. 
               -- Validar os campos: Agência, Conta Corrente, Valor
-              ELSIF vr_dsmensag IN('STR0006R2') THEN 
-                      
+              ELSIF vr_dsmensag IN('STR0006R2','PAG0142R2','STR0034R2','PAG0134R2') THEN 
+                                    
                 -- Conciliar essa mensagem
                 vr_conciliar    := 1;
                 -- Montar a chave de acordo com os campos que sao comparados para conciliar
@@ -1271,7 +1278,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
               
           -- TED por esta finalidade não credita automaticamente a conta corrente. 
           -- Validar os campos: Agência, Conta Corrente, Valor
-          ELSIF rw_gnmvspb.dsmensag IN('STR0006R2') THEN 
+          ELSIF rw_gnmvspb.dsmensag IN('STR0006R2','PAG0142R2','STR0034R2','PAG0134R2') THEN 
             -- Montar a chave de acordo com os campos que sao comparados para conciliar
             vr_chave_conciliar:= rw_gnmvspb.dsmensag || '_' ||
                                  TO_CHAR(TRIM(rw_gnmvspb.cdagencr)) || '_' || 

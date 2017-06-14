@@ -17,8 +17,8 @@
               21/01/2011 - Bloquear campo v_cdidtran para TED C em especie 
                            (Guilherme).
 						   
-			  25/08/2011 - Bloquear no destinatario, quando pessoa juridica, 
-						   o segundo titular (Gabriel).
+			        25/08/2011 - Bloquear no destinatario, quando pessoa juridica, 
+						               o segundo titular (Gabriel).
                            
               27/10/2011 - Limitado a 13 caracteres a conta destino (Gabriel)     
               
@@ -35,12 +35,14 @@
     
               05/02/2015 - Desabilitar botao de cancelar ao clicar no botao ok (Lucas Ranghetti #388683)                 
 
-			  29/02/2016 - Tratamentos para utilizaçao do Cartao CECRED e 
+			        29/02/2016 - Tratamentos para utilizaçao do Cartao CECRED e 
                            PinPad Novo (Lucas Lunelli - [PROJ290])			  
 						   
               12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM). 	
     					   
-			  22/09/2016 - Correção botão pinpad (Lucas Lunelli - [PROJ290])	
+			        22/09/2016 - Correção botão pinpad (Lucas Lunelli - [PROJ290])	
+                
+              02/06/2017 - Ajustes referentes ao Novo Catalogo do SPB(Lucas Ranghetti #668207)
 			  
 -->
 
@@ -708,7 +710,7 @@ function validaHistorico(obj,e,valid_value,replace){
                 </tr>
                 <tr>
                   <td align="right" class="linhaform">Conta:</td>
-                  <td><input type="text" name="v_nrocontapara" size="15" class="input" maxlength="13" onKeyDown="JavaScript:validaInteiro(event);" onChange="JavaScript:changeContaPara();" onBlur="JavaScript:leaveContaPara();" style="text-align: right"></td>
+                  <td><input type="text" name="v_nrocontapara" size="22" class="input" maxlength="20" onKeyDown="JavaScript:validaInteiro(event);" onChange="JavaScript:changeContaPara();" onBlur="JavaScript:leaveContaPara();" style="text-align: right"></td>
                 </tr>
                 <tr>
                   <td align="right" class="linhaform">Tit1:&nbsp;</td>

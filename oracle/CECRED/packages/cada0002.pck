@@ -207,7 +207,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
     Sistema  : Rotinas acessadas pelas telas de cadastros Web
     Sigla    : CADA
     Autor    : Renato Darosci - Supero
-    Data     : Julho/2014.                   Ultima atualizacao: 20/03/2017
+    Data     : Julho/2014.                   Ultima atualizacao: 08/06/2017
   
    Dados referentes ao programa:
   
@@ -256,6 +256,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
   
                20/03/2017 - Ajuste para validar o cpf/cnpj de acordo com o inpessoa informado             
                            (Adriano - SD 620221).
+                           
+               08/06/2017 - Ajustes referentes ao novo catalogo do SPB (Lucas Ranghetti #668207)
   ---------------------------------------------------------------------------------------------------------------------------*/
 
   /****************** OBJETOS COMUNS A SEREM UTILIZADOS PELAS ROTINAS DA PACKAGE *******************/
@@ -3435,7 +3437,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
       Sistema  : Rotinas para validacao de inclusao de contas para transferencia
       Sigla    : CRED
       Autor    : Jean Michel
-      Data     : Fevereiro/2016.                   Ultima atualizacao: 20/03/2017
+      Data     : Fevereiro/2016.                   Ultima atualizacao: 08/06/2017
     
       Dados referentes ao programa:
     
@@ -3449,6 +3451,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                                 
                    20/03/2017 - Ajuste para validar o cpf/cnpj de acordo com o inpessoa informado             
                                 (Adriano - SD 620221).
+                                
+                   08/06/2017 - Ajustes referentes ao novo catalogo do SPB (Lucas Ranghetti #668207)
      ...................................................................................*/
 
     -- CURSORES
@@ -3773,13 +3777,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
       -- Fecha cursor
       CLOSE cr_crapban;             
 
-      -- Verifica se conta para transferencia e valida
-      IF LENGTH(TRIM(TO_CHAR(pr_nrctatrf))) < 2  OR 
-         LENGTH(TRIM(TO_CHAR(pr_nrctatrf))) > 13 THEN
-        vr_cdcritic := 0;
-        vr_dscritic := 'Conta do favorecido invalida.';
-        pr_nmdcampo := 'nrctatrf';
-        RAISE vr_exc_saida;
+      -- 1 Conta Corrente / 2 Conta Poupanca
+      IF pr_intipcta IN(1,2) THEN
+        -- Verifica se conta para transferencia e valida
+        IF LENGTH(TRIM(TO_CHAR(pr_nrctatrf))) < 2  OR 
+           LENGTH(TRIM(TO_CHAR(pr_nrctatrf))) > 13 THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'Informe o numero da conta com ate 13 caracteres.';
+          pr_nmdcampo := 'nrctatrf';
+          RAISE vr_exc_saida;
+        END IF;
+      ELSE -- 3 Conta de Pagamento
+        IF LENGTH(TRIM(TO_CHAR(pr_nrctatrf))) < 2  OR 
+           LENGTH(TRIM(TO_CHAR(pr_nrctatrf))) > 20 THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'Conta do favorecido invalida.';
+          pr_nmdcampo := 'nrctatrf';
+          RAISE vr_exc_saida;
+        END IF;
       END IF;
 
       -- Verifica o tipo de pessoa
@@ -3814,6 +3829,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
         pr_nmdcampo := 'intipcta';
         RAISE vr_exc_saida;
       END IF;
+      
+      /*** Validação para que somente os tipos de contas "Conta Corrente" e "Poupança"
+          obriguem o preenchimento do campo Agencia. O tipo de conta "Conta de
+          Pagamento" não deve permitir preenhcimento do campo Agencia. ***/
+      IF pr_cdageban = 0 OR pr_cdageban IS NULL THEN
+        IF pr_intipcta IN(1,2) THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'Preenchimento de campo agencia obrigatorio para o' ||
+                         'tipo de conta: ' || vr_dstextab || ' - ' || pr_cdageban;
+          pr_nmdcampo := 'intipcta';
+          RAISE vr_exc_saida;
+        END IF;
+      ELSE
+        IF pr_intipcta = 3 THEN -- Conta de Pagamento
+          vr_cdcritic := 0;
+          vr_dscritic := 'Preenchimento de campo agencia nao e permitido para'
+                         ||'o tipo de conta: ' || vr_dstextab || ' - ' || pr_cdageban;
+          pr_nmdcampo := 'intipcta';
+          RAISE vr_exc_saida;
+        END IF;
+      END IF;
 
       IF pr_inpessoa = 1 THEN 
         
@@ -3821,12 +3857,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
         GENE0005.pc_valida_cpf(pr_nrcalcul => pr_nrcpfcgc   --Numero a ser verificado
                               ,pr_stsnrcal => vr_stsnrcal);   --Situacao
         
-      IF NOT vr_stsnrcal THEN
-        vr_cdcritic := 0;
-          vr_dscritic := 'CPF invalido.';
-        pr_nmdcampo := 'nrcpfcgc';
-        RAISE vr_exc_saida;
-      END IF;
+        IF NOT vr_stsnrcal THEN
+          vr_cdcritic := 0;
+            vr_dscritic := 'CPF invalido.';
+          pr_nmdcampo := 'nrcpfcgc';
+          RAISE vr_exc_saida;
+        END IF;
 
       ELSE
         

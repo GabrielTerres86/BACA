@@ -89,12 +89,12 @@
       RECORD (nrseqlog craplmt.nrsequen%type,
               cdbandst craplmt.cdbanctl%type,
               cdagedst craplmt.cdagectl%type,
-              nrctadst VARCHAR2(14),
+              nrctadst VARCHAR2(30),
               dsnomdst craplmt.nmcopcta%type,
               dscpfdst craplmt.nrcpfcop%type,
               cdbanrem craplmt.cdbanctl%type,
               cdagerem craplmt.cdagectl%type,
-              nrctarem VARCHAR2(14),
+              nrctarem VARCHAR2(30),
               dsnomrem craplmt.nmcopcta%type,
               dscpfrem craplmt.nrcpfcop%type,
               hrtransa Varchar2(10),
@@ -347,7 +347,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
   --  Sistema  : Procedimentos e funcoes da BO b1wgen0046.p
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 09/11/2016
+  --  Data     : Julho/2013.                   Ultima atualizacao: 08/06/2016
   --
   -- Dados referentes ao programa:
   --
@@ -370,6 +370,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
   --                          (Adriano)
   --
   --           02/03/2017 - Ajustes PRJ335 - OFSSA (Odirlei-AMcom)   
+  --
+  --           08/06/2017 - Ajustes referentes ao novo catalogo do SPB (Lucas Ranghetti #668207)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Busca dos dados da cooperativa */
@@ -1315,8 +1317,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
        Como pode haver digito X nas contas - adicionar 0 a frente
        PS: mesmo a conta do remetente pode ter, pois pode ser o
        remetente de outra instituicao financeira. */
-      pr_tab_logspb_detalhe(vr_idx).nrctarem := lpad(pr_tab_logspb_detalhe(vr_idx).nrctarem,14,'0');
-      pr_tab_logspb_detalhe(vr_idx).nrctadst := lpad(pr_tab_logspb_detalhe(vr_idx).nrctadst,14,'0');
+      pr_tab_logspb_detalhe(vr_idx).nrctarem := lpad(pr_tab_logspb_detalhe(vr_idx).nrctarem,20,'0');
+      pr_tab_logspb_detalhe(vr_idx).nrctadst := lpad(pr_tab_logspb_detalhe(vr_idx).nrctadst,20,'0');
 
     END LOOP;
   EXCEPTION
@@ -2574,7 +2576,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       Sistema  : Comunicação com SPB
       Sigla    : CRED
       Autor    : Odirlei Busana - Amcom
-      Data     : Junho/2015.                   Ultima atualizacao: 18/10/2016
+      Data     : Junho/2015.                   Ultima atualizacao: 08/06/2017
 
       Dados referentes ao programa:
 
@@ -2591,6 +2593,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 
                   18/10/2016 - Ajustado Tags do STR0007 para ficarem de acordo com o 
                                catalogo 4.07 (Lucas Ranghetti #537580)
+                           
+                  08/06/2017 - Ajustes referentes ao novo catalogo do SPB (Lucas Ranghetti #668207)                  
   ---------------------------------------------------------------------------------------------------------------*/
     -----------------> CURSORES <--------------------
     ------------> ESTRUTURAS DE REGISTRO <-----------
@@ -2602,6 +2606,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     --Variaveis de Excecao
     vr_exc_erro EXCEPTION;
 
+    vr_nrcctrcb1 VARCHAR2(20); -- Conta Corrente /Conta Poupanca
+    vr_nrcctrcb2 VARCHAR2(20); -- Conta de PGTO
+    vr_cdagenbc  VARCHAR2(10);
+    
     -- Variáveis para armazenar as informações em XML
     vr_des_xml         CLOB;
     -- Variável para armazenar os dados do XML antes de incluir no CLOB
@@ -2659,6 +2667,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                         '<FL_DEB_CRED>' || pr_fldebcred ||'</FL_DEB_CRED>'||
                       '</SEGCAB>');
 
+    IF pr_dsdctacr IN('CC','PP') THEN -- Conta Corrente / Conta Poupanca
+      vr_nrcctrcb1:= pr_nrcctrcb;
+      vr_cdagenbc := to_char(pr_cdagenbc);
+    ELSE  -- Conta de Pagamento
+      vr_nrcctrcb2:= pr_nrcctrcb;
+      vr_cdagenbc := '';
+    END IF;
+       
     /* BODY  - mensagens STR e PAG
        STR0005 e PAG0107
        Descriçao: destinado a IF requisitar transferencia de recursos por
@@ -2673,8 +2689,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                         <CNPJ_CPFRemet>'|| pr_cpfcgemi ||'</CNPJ_CPFRemet>
                         <NomRemet>'||      pr_nmpesemi ||'</NomRemet>
                         <ISPBIFCredtd>'||  pr_ispbcred ||'</ISPBIFCredtd>
-                        <AgCredtd>'||      pr_cdagenbc ||'</AgCredtd>
-                        <CtCredtd>'||      pr_nrcctrcb ||'</CtCredtd>
+                        <AgCredtd>'||      vr_cdagenbc ||'</AgCredtd>
+                        <CtCredtd>'||      vr_nrcctrcb1||'</CtCredtd>
+                        <CtPgtoCredtd>'||  vr_nrcctrcb2||'</CtPgtoCredtd>
                         <TpCtCredtd>'||    pr_dsdctacr ||'</TpCtCredtd>
                         <TpPessoaDestinatario>'|| pr_dspesrec ||'</TpPessoaDestinatario>
                         <CNPJ_CPFDestinatario>'|| pr_cpfcgrcb ||'</CNPJ_CPFDestinatario>
@@ -2693,9 +2710,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                         <NumCtrlIF>'||   pr_nrctrlif ||'</NumCtrlIF>
                         <ISPBIFDebtd>'|| pr_ispbdebt ||'</ISPBIFDebtd>
                         <ISPBIFCredtd>'||pr_ispbcred ||'</ISPBIFCredtd>
-                        <AgCredtd>'||    pr_cdagenbc ||'</AgCredtd>
+                        <AgCredtd>'||    vr_cdagenbc ||'</AgCredtd>
                         <TpCtCredtd>'||  pr_dsdctacr ||'</TpCtCredtd>
-                        <CtCredtd>'||    pr_nrcctrcb ||'</CtCredtd>
+                        <CtCredtd>'||      vr_nrcctrcb1||'</CtCredtd>
+                        <CtPgtoCredtd>'||  vr_nrcctrcb2||'</CtPgtoCredtd>
                         <TpPessoaCredtd>'||           pr_dspesrec||'</TpPessoaCredtd>
                         <CNPJ_CPFCliCredtd>'|| pr_cpfcgrcb ||'</CNPJ_CPFCliCredtd>
                         <NomCliCredtd>'||      pr_nmpesrcb ||'</NomCliCredtd>                        
@@ -2729,13 +2747,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                          '<AgDebtd>'||          pr_cdagectl ||'</AgDebtd>'||
                          '<TpCtDebtd>'||        pr_dsdctadb ||'</TpCtDebtd>'||
                          '<CtDebtd>'||          pr_nrdconta ||'</CtDebtd>'||
+                         '<CtPgtoDebtd>'||                    '</CtPgtoDebtd>'||
                          '<TpPessoaDebtd>'||    pr_dspesemi ||'</TpPessoaDebtd>'||
                          '<CNPJ_CPFCliDebtd>'|| pr_cpfcgemi ||'</CNPJ_CPFCliDebtd>'||
                          '<NomCliDebtd>'||      pr_nmpesemi ||'</NomCliDebtd>'||
                          '<ISPBIFCredtd>'||     pr_ispbcred ||'</ISPBIFCredtd>'||
-                         '<AgCredtd>'||         pr_cdagenbc ||'</AgCredtd>'||
+                         '<AgCredtd>'||         vr_cdagenbc ||'</AgCredtd>'||
                          '<TpCtCredtd>'||       pr_dsdctacr ||'</TpCtCredtd>'||
-                         '<CtCredtd>'||         pr_nrcctrcb ||'</CtCredtd>'||
+                         '<CtCredtd>'||         vr_nrcctrcb1||'</CtCredtd>'||
+                         '<CtPgtoCredtd>'||     vr_nrcctrcb2||'</CtPgtoCredtd>'||
                          '<TpPessoaCredtd>'||   pr_dspesrec ||'</TpPessoaCredtd>'||
                          '<CNPJ_CPFCliCredtd>'||pr_cpfcgrcb ||'</CNPJ_CPFCliCredtd>'||
                          '<NomCliCredtd>'||     pr_nmpesrcb ||'</NomCliCredtd>'||
@@ -2754,7 +2774,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                         <NumCtrlIF>'||   pr_nrctrlif ||'</NumCtrlIF>
                         <ISPBIFDebtd>'|| pr_ispbdebt ||'</ISPBIFDebtd>
                         <ISPBIFCredtd>'||pr_ispbcred ||'</ISPBIFCredtd>
-                        <AgCredtd>'||    pr_cdagenbc ||'</AgCredtd>
+                        <AgCredtd>'||    vr_cdagenbc ||'</AgCredtd>
                         <CtCredtd>'||    pr_nrcctrcb||'</CtCredtd>
                         <CodSEFAZ>24</CodSEFAZ>
                         <TpReceita>9</TpReceita>
@@ -2786,7 +2806,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                         <CPFCliDebtd>'|| pr_cpfcgemi ||'</CPFCliDebtd>
                         <NomCliDebtd>'|| pr_nmpesemi ||'</NomCliDebtd>
                         <ISPBIFCredtd>'||pr_ispbcred ||'</ISPBIFCredtd>
-                        <AgCredtd>'||    pr_cdagenbc ||'</AgCredtd>
+                        <AgCredtd>'||    vr_cdagenbc ||'</AgCredtd>
                         <TpCtCredtd>'||  pr_dsdctacr ||'</TpCtCredtd>
                         <CtCredtd>'||    pr_nrcctrcb ||'</CtCredtd>
                         <VlrLanc>'||     pr_vldocmto ||'</VlrLanc>
@@ -2974,7 +2994,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       Sistema  : Comunicação com SPB
       Sigla    : CRED
       Autor    : Odirlei Busana - Amcom
-      Data     : Junho/2015.                   Ultima atualizacao: 02/03/2017
+      Data     : Junho/2015.                   Ultima atualizacao: 08/06/2017
 
       Dados referentes ao programa:
 
@@ -2988,7 +3008,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                (Carlos Rafael Tanholi)      
                   
                   02/03/2017 - Incluir parametro para permitir não validar o horario de limite de TED.
-                               PRJ335 - OFSSA (Odirlei-AMcom)                 
+                               PRJ335 - OFSSA (Odirlei-AMcom)     
+                               
+                  08/06/2017 - Ajustes referentes ao novo catalogo do SPB (Lucas Ranghetti #668207)
   ---------------------------------------------------------------------------------------------------------------*/
     ---------------> CURSORES <-----------------
     -- Buscar dados do associado
@@ -3399,19 +3421,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     END IF;
 
     -- Tp. conta - Remetente
-    IF pr_tpdctadb = 2   THEN
-      vr_dsdctadb := 'PP';
-    ELSE
+    IF pr_tpdctadb = 1 THEN -- Conta Corrente
       vr_dsdctadb := 'CC';
+    ELSIF pr_tpdctadb = 2 THEN -- Poupança
+      vr_dsdctadb := 'PP';
+    ELSIF pr_tpdctadb = 3 THEN -- Conta de Pagamento
+      vr_dsdctadb := 'PG';
     END IF;
-
-    -- Tp. conta - Destinatario
-    IF pr_tpdctacr = 2   THEN
-      vr_dsdctacr := 'PP';
-    ELSE
+  
+    -- Tp. conta - Destinatário
+    IF pr_tpdctacr = 1 THEN -- Conta Corrente
       vr_dsdctacr := 'CC';
+    ELSIF pr_tpdctacr = 2 THEN -- Poupança
+      vr_dsdctacr := 'PP';
+    ELSIF pr_tpdctacr = 3 THEN -- Conta de Pagamento
+      vr_dsdctacr := 'PG';
     END IF;
-
+    
     -- Format da data deve ser AAAA-MM-DD
     vr_dtmvtolt := to_char(rw_crapdat.dtmvtocd,'RRRR-MM-DD');
 

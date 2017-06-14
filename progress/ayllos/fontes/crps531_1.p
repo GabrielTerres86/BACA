@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Setembro/2009.                     Ultima atualizacao: 15/02/2017
+   Data    : Setembro/2009.                     Ultima atualizacao: 02/06/2017
    
    Dados referentes ao programa: Fonte extraido e adaptado para execucao em
                                  paralelo. Fonte original crps531.p.
@@ -162,26 +162,27 @@
                30/05/2016 - Adicionar tipo de pessoa juridica na pesquisa de contas
                             da verifica_conta (Douglas - Chamado 406267)
                
-			   05/07/2016 - Ajuste para considerar inpessoa > 1 ao validar contas
-							juridicas (Adriano - SD 480514).
+			         05/07/2016 - Ajuste para considerar inpessoa > 1 ao validar contas
+							              juridicas (Adriano - SD 480514).
                
-               
-			   14/09/2016 - Ajuste para utilizar uma sequence na geracao do numero
-			                de controle, garantindo sua unicidade
-						   (Adriano - SD 518645).
+			         14/09/2016 - Ajuste para utilizar uma sequence na geracao do numero
+			                      de controle, garantindo sua unicidade
+						                (Adriano - SD 518645).
     
 	           01/12/2016 - Tratamento credito TED/TEC Transposul (Diego). 
 
-			   05/01/2017 - Ajuste para retirada de caracterer especiais
-							(Adriano - SD 556053)
+			       05/01/2017 - Ajuste para retirada de caracterer especiais
+							            (Adriano - SD 556053)
 
-			   17/01/2017 - Ajuste para retirada de caracterer especiais
-							(Adriano - SD 594482)
+			       17/01/2017 - Ajuste para retirada de caracterer especiais
+							            (Adriano - SD 594482)
 			   
-			   15/02/2017 - Ajuste para devolver mensagem STR00010 para mensagens
-							STR0006R2, PAG0142R2
-							(Adriano - SD 553778).
+			       15/02/2017 - Ajuste para devolver mensagem STR00010 para mensagens
+							            STR0006R2, PAG0142R2 (Adriano - SD 553778).
 							
+             02/06/2017 - Ajustes referentes ao Novo Catalogo do SPB (Lucas Ranghetti #668207)
+                        - Enviar e-mail interbancario para a mensagem STR0003R2 (Lucas Ranghetti #654769)
+             
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento, 
              lembrar de tratar a procedure gera_erro_xml.
@@ -267,7 +268,15 @@ DEF VAR aux_CNPJ_CPFCred2 AS CHAR                                   NO-UNDO.
 DEF VAR aux_NomCliCredtd  AS CHAR                                   NO-UNDO.
 DEF VAR aux_NumCodBarras  AS CHAR                                   NO-UNDO.
 DEF VAR aux_NUPortdd      AS CHAR                                   NO-UNDO.
-DEF VAR aux_CodProdt      AS CHAR                                   NO-UNDO.  
+DEF VAR aux_CodProdt      AS CHAR                                   NO-UNDO.
+DEF VAR aux_TpCtCredtd    AS CHAR                                   NO-UNDO.
+DEF VAR aux_CtPgtoCredtd  AS CHAR                                   NO-UNDO.
+DEF VAR aux_NumCtrlSTR    AS CHAR                                   NO-UNDO.
+DEF VAR aux_DtHRBC        AS CHAR                                   NO-UNDO.
+DEF VAR aux_CodMunicOrigem AS CHAR                                  NO-UNDO.
+DEF VAR aux_CodMunicDest  AS CHAR                                   NO-UNDO.
+DEF VAR aux_CtPgtoDebtd   AS CHAR                                   NO-UNDO.
+DEF VAR aux_TpCtDebtd    AS CHAR                                    NO-UNDO.
 
 DEF VAR aux_dtinispb      AS CHAR                                   NO-UNDO.                                              
 DEF VAR aux_TpPessoaCred  AS CHAR                                   NO-UNDO.
@@ -316,7 +325,6 @@ DEF VAR aux_nrridlfp    LIKE craplcs.nrridlfp                       NO-UNDO.
 DEF VAR aux_ponteiro    AS INT                                      NO-UNDO.
 DEF VAR aux_dsmensag    AS CHAR                                     NO-UNDO.
 DEF VAR aux_emaildes    AS CHAR                                     NO-UNDO.
-DEF VAR b1wgen0011      AS HANDLE                                   NO-UNDO.
 
 /* Variáveis utilizadas para receber clob da rotina no oracle */
 DEF VAR xDoc          AS HANDLE   NO-UNDO.   
@@ -368,6 +376,11 @@ DEF TEMP-TABLE tt-estado-crise                                      NO-UNDO
     FIELD cdcooper AS INTE
     FIELD dtintegr AS DATE
     FIELD inestcri AS INTE.
+    
+DEF TEMP-TABLE tt-numerario
+    FIELD cdcatego AS  INTEGER
+    FIELD vlrdenom AS  DECIMAL
+    FIELD qtddenom AS  INTEGER.
 
 ASSIGN glb_cdprogra = "crps531"
        glb_cdcooper = 3.  /*CECRED*/
@@ -539,6 +552,14 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
            aux_NomCliCredtd  = ""
            aux_TpPessoaCred  = ""
            aux_CodDevTransf  = ""
+           aux_TpCtCredtd    = ""
+           aux_CtPgtoCredtd  = ""
+           aux_NumCtrlSTR    = ""
+           aux_DtHRBC        = ""
+           aux_CtPgtoDebtd   = ""
+           aux_TpCtDebtd     = ""
+          aux_CodMunicOrigem = ""
+           aux_CodMunicDest  = ""           
            aux_VlrLanc       = ""
            aux_DtMovto       = ""
            aux_SitLanc       = ""
@@ -657,7 +678,7 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
          "STR0037R2,PAG0137R2," +     /* TEC */
          
          "STR0010R2,PAG0111R2," +     /* Devolucao TED/TEC enviado com erro */
-                   
+         "STR0003R2," +        /* Liquidacao de transferencia de numerarios */   
          "STR0004R1,STR0005R1,STR0008R1,STR0037R1," + 
          "PAG0107R1,PAG0108R1,PAG0137R1," + /* Confirma envio */
          "STR0010R1,PAG0111R1," + /*Confirma devolucao enviada*/
@@ -672,29 +693,29 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
 
 			 /*Mensagem nao tratada pelo sistema CECRED e devemos enviar uma mensagem
 			   STR0010 como resposta. SD 553778 */	  
-			 IF CAN-DO("STR0006R2,PAG0142R2",aux_CodMsg) THEN
-			    DO:
-					/* Busca cooperativa de destino */ 
-                    FIND crabcop WHERE crabcop.cdagectl = INT(aux_AgCredtd)
-							           NO-LOCK NO-ERROR.
+           IF CAN-DO("STR0006R2,PAG0142R2,STR0034R2,PAG0134R2",aux_CodMsg) THEN
+              DO:
+              /* Busca cooperativa de destino */ 
+                        FIND crabcop WHERE crabcop.cdagectl = INT(aux_AgCredtd)
+                             NO-LOCK NO-ERROR.
 
-					/* Mensagem Invalida para o Tipo de Transacao ou Finalidade*/  
-                    ASSIGN aux_codierro = 4
-                           aux_dsdehist = "Mensagem Invalida para o Tipo de Transacao ou Finalidade.".
+              /* Mensagem Invalida para o Tipo de Transacao ou Finalidade*/  
+                        ASSIGN aux_codierro = 4
+                               aux_dsdehist = "Mensagem Invalida para o Tipo de Transacao ou Finalidade.".
 
-                    RUN gera_erro_xml (INPUT aux_dsdehist).
-				    RUN salva_arquivo.                   
-                    RUN deleta_objetos.
+                        RUN gera_erro_xml (INPUT aux_dsdehist).
+                RUN salva_arquivo.                   
+                        RUN deleta_objetos.
 
-				    NEXT.
+                NEXT.
 
-			    END.
-				
-             /* CECRED */
-             RUN trata_cecred (INPUT "").
-             RUN salva_arquivo.                   
-             RUN deleta_objetos.
-             NEXT.         
+              END.
+            
+               /* CECRED */
+               RUN trata_cecred (INPUT "").
+               RUN salva_arquivo.                   
+               RUN deleta_objetos.
+               NEXT.         
          END.
 
     /* VR Boleto */
@@ -1164,20 +1185,20 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
                                      NO-LOCK NO-ERROR.
                                         
              IF   NOT AVAIL crabcop   THEN
-			      DO:
+              DO:
 				      /* Tratamento incorporacao TRANSULCRED */ 
-                      IF   INT(aux_AgCredtd) = 116 and
-					       TODAY < 03/21/2017 THEN   /* Data de corte */ 
-						   DO:
+                  IF   INT(aux_AgCredtd) = 116 and
+                       TODAY < 03/21/2017 THEN   /* Data de corte */ 
+                     DO:
                                ASSIGN aux_cdageinc = INT(aux_AgCredtd)
                                       aux_AgCredtd = "0108".
 
-							   /* Busca cooperativa de destino (nova) */ 
+                            /* Busca cooperativa de destino (nova) */ 
                                FIND crabcop WHERE crabcop.cdagectl = INT(aux_AgCredtd)
-							        NO-LOCK NO-ERROR.
-					       END.		    
-				      ELSE
-					       ASSIGN aux_flgderro = TRUE.
+                                NO-LOCK NO-ERROR.
+                   END.		    
+                ELSE
+                   ASSIGN aux_flgderro = TRUE.
 				  END.
              
              IF  aux_flestcri > 0  THEN
@@ -1562,7 +1583,7 @@ PROCEDURE gera_erro_xml:
          aux_textoxml[8] = "</SEGCAB>".
                                                 
   
-  IF   CAN-DO("STR0005R2,STR0007R2,STR0008R2,STR0026R2,STR0037R2,STR0006R2,PAG0142R2",aux_CodMsg) THEN
+  IF   CAN-DO("STR0005R2,STR0007R2,STR0008R2,STR0026R2,STR0037R2,STR0006R2,STR0034R2",aux_CodMsg) THEN
        ASSIGN aux_textoxml[9]  = "<STR0010>"
               aux_textoxml[10] = "<CodMsg>STR0010</CodMsg>"
               aux_textoxml[11] = "<NumCtrlIF>" + aux_NumCtrlIF + "</NumCtrlIF>"
@@ -1580,7 +1601,7 @@ PROCEDURE gera_erro_xml:
               aux_textoxml[18] = "<DtMovto>" + aux_DtMovto + "</DtMovto>"
               aux_textoxml[19] = "</STR0010>".
   ELSE
-  IF   CAN-DO("PAG0107R2,PAG0108R2,PAG0137R2,PAG0143R2",
+  IF   CAN-DO("PAG0107R2,PAG0108R2,PAG0137R2,PAG0143R2,PAG0142R2,PAG0134R2",
               aux_CodMsg)  THEN 
        ASSIGN aux_textoxml[9]  = "<PAG0111>"
               aux_textoxml[10] = "<CodMsg>PAG0111</CodMsg>"
@@ -1780,8 +1801,11 @@ PROCEDURE importa_xml.
       ELSE
       IF  hNode:NAME = "STR0047R2" THEN
           RUN trata_portabilidade.
-      ELSE
-          RUN trata_dados_transferencia.
+      ELSE      
+      IF  hNode:NAME = "STR0003R2" THEN
+          RUN trata_numerario.
+      ELSE 
+         RUN trata_dados_transferencia.
             
    END. /** Fim do DO ... TO **/    
                    
@@ -1888,6 +1912,8 @@ PROCEDURE verifica_conta.
    DEF VAR val_nrdconta AS DECI                                 NO-UNDO.
    DEF VAR val_tppessoa AS CHAR                                 NO-UNDO.
    DEF VAR val_nrcpfcgc AS DECI                                 NO-UNDO.
+   DEF VAR val_tpdconta AS CHAR                                 NO-UNDO.
+   DEF VAR val_nrdctapg AS CHAR                                 NO-UNDO.
 
    DEFINE BUFFER b-crapcop FOR crapcop.
    DEFINE BUFFER b-crapdat FOR crapdat. 
@@ -1899,7 +1925,13 @@ PROCEDURE verifica_conta.
           val_tppessoa = IF   aux_CodMsg = "STR0047R2"  THEN
                               "J" /* Conta das filiadas na CECRED */ 
                          ELSE aux_TpPessoaCred
-          val_nrcpfcgc = DEC(aux_CNPJ_CPFCred).
+          val_nrcpfcgc = DEC(aux_CNPJ_CPFCred)
+          val_tpdconta = aux_TpCtCredtd
+          val_nrdctapg = aux_CtPgtoCredtd.
+
+   /* Nao recebemos conta e nem cpf para esta mensagem */
+   IF  aux_CodMsg = "STR0003R2" THEN    
+       RETURN "OK".
 
    IF   LENGTH(STRING(DEC(val_nrdconta))) > 9  THEN
         ASSIGN aux_codierro = 2  /*Conta invalida*/
@@ -1929,6 +1961,15 @@ PROCEDURE verifica_conta.
                        
                END.
            *************************************************************/
+
+       IF  val_tpdconta = "PG" OR            
+           val_nrdctapg <> ?  THEN 
+          DO:
+             ASSIGN aux_codierro = 2 /* Conta invalida */
+                    aux_dsdehist = "Tipo de Conta Incorreto."
+                    aux_CtCredtd = val_nrdctapg.
+             RETURN "NOK".
+          END.
 
 		   /* Incorporada Transulcred */ 
 		   IF   aux_cdageinc > 0  THEN
@@ -2045,72 +2086,73 @@ PROCEDURE verifica_conta.
 				   /*-----  FIM CONTA MIGRADA -------*/
 				END.
                
-               /* Pessoa Fisica */
-           IF   val_tppessoa = "F" OR CAN-DO("STR0037R2,PAG0137R2",aux_CodMsg) THEN
-                DO:                                                   
-                    FIND FIRST crapttl WHERE crapttl.cdcooper = val_cdcooper AND
-                                             crapttl.nrdconta = val_nrdconta AND
-                                             crapttl.nrcpfcgc = val_nrcpfcgc
-                                             NO-LOCK NO-ERROR.
-               
-                    IF   NOT AVAIL crapttl  THEN
-                         DO:
-                             /* Verifica se o problema esta na conta ou CPF */
-                             FIND FIRST crapttl WHERE 
-                                        crapttl.cdcooper = val_cdcooper AND
-                                        crapttl.nrdconta = val_nrdconta
-                                        NO-LOCK NO-ERROR.
-                                       
-                             IF   NOT AVAIL crapttl  THEN
-                                  ASSIGN aux_codierro = 2 /*Conta invalida*/
-                                         aux_dsdehist = "Conta informada invalida.".  
-                             ELSE
-                                  ASSIGN aux_codierro = 3.  /*CPF divergente*/
-                         END.
-                    ELSE
-                         DO:
-                             FIND crapass WHERE 
-                                  crapass.cdcooper = val_cdcooper      AND
-                                  crapass.nrdconta = val_nrdconta 
-                                  NO-LOCK NO-ERROR.
-                                       
-                             IF   AVAIL crapass  AND  crapass.dtelimin <> ?  THEN 
-                                  ASSIGN aux_codierro = 1.  /* Conta encerrada */
-                         END.
+          /* Pessoa Fisica */
+         IF   val_tppessoa = "F" OR CAN-DO("STR0037R2,PAG0137R2",aux_CodMsg) THEN
+              DO:                                                   
+                  FIND FIRST crapttl WHERE crapttl.cdcooper = val_cdcooper AND
+                                           crapttl.nrdconta = val_nrdconta AND
+                                           crapttl.nrcpfcgc = val_nrcpfcgc
+                                           NO-LOCK NO-ERROR.
+             
+                  IF   NOT AVAIL crapttl  THEN
+                       DO:
+                           /* Verifica se o problema esta na conta ou CPF */
+                           FIND FIRST crapttl WHERE 
+                                      crapttl.cdcooper = val_cdcooper AND
+                                      crapttl.nrdconta = val_nrdconta
+                                      NO-LOCK NO-ERROR.
+                                     
+                           IF   NOT AVAIL crapttl  THEN
+                                ASSIGN aux_codierro = 2 /*Conta invalida*/
+                                       aux_dsdehist = "Conta informada invalida.".  
+                           ELSE
+                                ASSIGN aux_codierro = 3.  /*CPF divergente*/
+                       END.
+                  ELSE
+                       DO:
+                           FIND crapass WHERE 
+                                crapass.cdcooper = val_cdcooper      AND
+                                crapass.nrdconta = val_nrdconta 
+                                NO-LOCK NO-ERROR.
+                                     
+                           IF   AVAIL crapass  AND  crapass.dtelimin <> ?  THEN 
+                                ASSIGN aux_codierro = 1.  /* Conta encerrada */
+                       END.
+         
+              END.
+         ELSE       
+              DO: /* Pessoa Juridica */ 
+                  FIND crapass WHERE crapass.cdcooper = val_cdcooper AND
+                                     crapass.nrdconta = val_nrdconta AND
+                                     crapass.nrcpfcgc = val_nrcpfcgc AND
+                                     crapass.inpessoa > 1
+                                     NO-LOCK NO-ERROR.
+                                     
+                  IF   NOT AVAIL crapass  THEN 
+                       DO:
+                           /* Verifica se o problema esta na conta ou CNPJ */
+                           FIND crapass WHERE
+                                crapass.cdcooper = val_cdcooper AND
+                                crapass.nrdconta = val_nrdconta AND
+                                crapass.inpessoa > 1
+                                NO-LOCK NO-ERROR.
+         
+                           IF   NOT AVAIL crapass THEN
+                                ASSIGN aux_codierro = 2  /*Conta invalida*/
+                                       aux_dsdehist = "Conta informada invalida.".                       
+                           ELSE
+                                IF   aux_CodMsg = "STR0047R2"  THEN 
+                                     /* Portabilidade nao trata codigo de devolucao
+                                        por divergencia de CNPJ */
+                                     ASSIGN aux_codierro = 0. 
+                                ELSE
+                                     ASSIGN aux_codierro = 3.  /*CNPJ divergente*/
+                       END.
+                  ELSE
+                       IF   crapass.dtelimin <> ?  THEN
+                            ASSIGN aux_codierro = 1.  /* Conta encerrada */
+              END.
            
-                END.
-           ELSE       
-                DO: /* Pessoa Juridica */ 
-                    FIND crapass WHERE crapass.cdcooper = val_cdcooper AND
-                                       crapass.nrdconta = val_nrdconta AND
-                                       crapass.nrcpfcgc = val_nrcpfcgc AND
-                                       crapass.inpessoa > 1
-                                       NO-LOCK NO-ERROR.
-                                       
-                    IF   NOT AVAIL crapass  THEN 
-                         DO:
-                             /* Verifica se o problema esta na conta ou CNPJ */
-                             FIND crapass WHERE
-                                  crapass.cdcooper = val_cdcooper AND
-                                  crapass.nrdconta = val_nrdconta AND
-                                  crapass.inpessoa > 1
-                                  NO-LOCK NO-ERROR.
-           
-                             IF   NOT AVAIL crapass THEN
-                                  ASSIGN aux_codierro = 2  /*Conta invalida*/
-                                         aux_dsdehist = "Conta informada invalida.".                       
-                             ELSE
-                                  IF   aux_CodMsg = "STR0047R2"  THEN 
-                                       /* Portabilidade nao trata codigo de devolucao
-                                          por divergencia de CNPJ */
-                                       ASSIGN aux_codierro = 0. 
-                                  ELSE
-                                       ASSIGN aux_codierro = 3.  /*CNPJ divergente*/
-                         END.
-                    ELSE
-                         IF   crapass.dtelimin <> ?  THEN
-                              ASSIGN aux_codierro = 1.  /* Conta encerrada */
-                END.
         END.
 
     RETURN "OK".   
@@ -2237,7 +2279,7 @@ PROCEDURE gera_logspb_transferida.
                      ", Banco Remet.: " + STRING(aux_BancoDeb,"zz9") +
                      ", Agencia Remet.: " + STRING(aux_AgDebtd,"x(4)") + 
                      ", Conta Remet.: " + STRING(aux_CtDebtd,
-                                                 "xxxxxxxxxxxxxx") +
+                                                 "xxxxxxxxxxxxxxxxxxxx") +
                      ", Nome Remet.: " + STRING(aux_NomCliDebtd,"x(40)") + 
                      ", CPF/CNPJ Remet.: " + 
                      STRING(DEC(aux_CNPJ_CPFDeb),"zzzzzzzzzzzzz9") + 
@@ -2299,7 +2341,7 @@ PROCEDURE gera_logspb_transferida.
                     ", Banco Remet.: " + STRING(aux_BancoDeb,"zz9") +
                     ", Agencia Remet.: " + STRING(aux_AgDebtd,"x(4)") + 
                     ", Conta Remet.: " + STRING(aux_CtDebtd,
-                                                "xxxxxxxxxxxxxx") +
+                                                "xxxxxxxxxxxxxxxxxxxx") +
                     ", Nome Remet.: " + STRING(aux_NomCliDebtd,"x(40)") + 
                     ", CPF/CNPJ Remet.: " + 
                      STRING(DEC(aux_CNPJ_CPFDeb),"zzzzzzzzzzzzz9") +  
@@ -2730,7 +2772,7 @@ PROCEDURE gera_logspb.
                     ", Banco Remet.: " + STRING(aux_BancoDeb,"zz9") +
                     ", Agencia Remet.: " + STRING(aux_AgDebtd,"x(4)") + 
                     ", Conta Remet.: " + STRING(aux_CtDebtd,
-                                                "xxxxxxxxxxxxxx") +
+                                                "xxxxxxxxxxxxxxxxxxxx") +
                     ", Nome Remet.: " + STRING(aux_NomCliDebtd,"x(40)") + 
                     ", CPF/CNPJ Remet.: " + 
                     STRING(DEC(aux_CNPJ_CPFDeb),"zzzzzzzzzzzzz9") + 
@@ -2792,7 +2834,7 @@ PROCEDURE gera_logspb.
                    ", Banco Remet.: " + STRING(aux_BancoDeb,"zz9") +
                    ", Agencia Remet.: " + STRING(aux_AgDebtd,"x(4)") + 
                    ", Conta Remet.: " + STRING(aux_CtDebtd,
-                                               "xxxxxxxxxxxxxx") +
+                                               "xxxxxxxxxxxxxxxxxxxx") +
                    ", Nome Remet.: " + STRING(aux_NomCliDebtd,"x(40)") + 
                    ", CPF/CNPJ Remet.: " + 
                     STRING(DEC(aux_CNPJ_CPFDeb),"zzzzzzzzzzzzz9") +  
@@ -3000,6 +3042,87 @@ PROCEDURE trata_IFs.
 
 END PROCEDURE.
 
+PROCEDURE trata_numerario.
+       
+   DO  aux_contado1 = 1 TO hNode:NUM-CHILDREN:
+    
+       /** Obtem a TAG **/
+       hNode:GET-CHILD(hSubNode,aux_contado1).
+                                             
+       IF   hSubNode:SUBTYPE <> 'ELEMENT' THEN
+            NEXT.                     
+                             
+       
+       IF   hSubNode:NAME = "Grupo_STR0003R2_Den"  THEN    
+            DO:
+                ASSIGN aux_CodMsg = "STR0003R2".
+                                                                                                          
+                CREATE tt-numerario.
+                        
+                /** Busca os dados da IF Ativa **/
+                DO aux_contado2 = 1 TO hSubNode:NUM-CHILDREN:
+                         
+                   hSubNode:GET-CHILD(hNameTag,aux_contado2).
+                                         
+                   IF  hNameTag:SUBTYPE <> 'ELEMENT' THEN
+                       NEXT.         
+                               
+                   hNameTag:GET-CHILD(hTextTag,1).
+                        
+                   IF  hNameTag:NAME = "Catg" THEN
+                       ASSIGN tt-numerario.cdcatego = INT(hTextTag:NODE-VALUE).
+                   ELSE
+                   IF  hNameTag:Name = "VlrDen" THEN
+                       ASSIGN tt-numerario.vlrdenom = DEC(hTextTag:NODE-VALUE).
+                   ELSE
+                       ASSIGN tt-numerario.qtddenom = INT(hTextTag:NODE-VALUE).
+                                                                                                                                           
+                END.            
+            END.
+       ELSE
+            DO:
+                 /** Obtem conteudo da Tag **/
+                 hSubNode:GET-CHILD(hSubNode2,1) NO-ERROR.
+
+                 ASSIGN aux_descrica = hSubNode2:NODE-VALUE.
+                 
+                 IF hSubNode:NAME = "CodMsg" THEN
+                    ASSIGN aux_CodMsg = aux_descrica.
+                 ELSE
+                 IF hSubNode:NAME = "NumCtrlSTR" THEN
+                    ASSIGN aux_NumCtrlSTR = aux_descrica.
+                 ELSE
+                 IF hSubNode:NAME = "DtHrBC" THEN
+                    ASSIGN aux_DtHRBC = aux_descrica.
+                 ELSE
+                 IF hSubNode:NAME = "ISPBIFDebtd" THEN
+                    ASSIGN aux_ISPBIFDebtd = aux_descrica.
+                 ELSE
+                 IF hSubNode:NAME = "AgDebtd" THEN
+                    ASSIGN aux_AgDebtd = aux_descrica.
+                 ELSE
+                 IF hSubNode:NAME = "ISPBIFCredtd" THEN
+                    ASSIGN aux_ISPBIFCredtd = aux_descrica.
+                 ELSE
+                 IF hSubNode:NAME = "AgCredtd" THEN
+                    ASSIGN aux_AgCredtd = aux_descrica.
+                 ELSE
+                 IF hSubNode:NAME = "VlrLanc" THEN
+                    ASSIGN aux_VlrLanc = aux_descrica.
+                 ELSE
+                 IF hSubNode:NAME = "CodMunicOrigem" THEN
+                    ASSIGN aux_CodMunicOrigem = aux_descrica.
+                 ELSE
+                 IF hSubNode:NAME = "CodMunicDest" THEN
+                    ASSIGN aux_CodMunicDest = aux_descrica.
+                 ELSE
+                 IF hSubNode:NAME = "DtMovto" THEN
+                    ASSIGN aux_DtMovto = aux_descrica.
+
+            END.
+   END.
+
+END PROCEDURE.
 
 PROCEDURE trata_dados_transferencia.
 
@@ -3013,8 +3136,8 @@ PROCEDURE trata_dados_transferencia.
             NEXT.
                   
        /** Obtem conteudo da Tag  **/
-       hNameTag:GET-CHILD(hTextTag,1) NO-ERROR.
-              
+       hNameTag:GET-CHILD(hTextTag,1) NO-ERROR.              
+        
        ASSIGN aux_descrica = hTextTag:NODE-VALUE.
 
        IF   hNameTag:NAME = "CodMsg"  THEN
@@ -3042,7 +3165,7 @@ PROCEDURE trata_dados_transferencia.
             ASSIGN aux_ISPBIFDebtd = aux_descrica.
        ELSE
        IF   hNameTag:NAME = "AgDebtd"           OR
-            hNameTag:NAME = "CtDebtd"           OR
+            hNameTag:NAME = "CtDebtd"           OR           
             hNameTag:NAME = "CPFCliDebtd"       OR   /* esta nas TEC'S */ 
             hNameTag:NAME = "CNPJ_CPFCliDebtd"  OR 
             hNameTag:NAME = "CNPJ_CPFCliDebtdTitlar1"  OR
@@ -3054,7 +3177,7 @@ PROCEDURE trata_dados_transferencia.
                 ELSE
                 IF   hNameTag:NAME = "CtDebtd"  THEN
                      ASSIGN aux_CtDebtd = aux_descrica.
-                ELSE
+                ELSE               
                 IF   hNameTag:NAME = "CPFCliDebtd"  THEN
                      ASSIGN aux_CNPJ_CPFCred = aux_descrica
                             aux_CNPJ_CPFDeb  = aux_descrica. 
@@ -3075,6 +3198,12 @@ PROCEDURE trata_dados_transferencia.
                                            hNameTag:NAME + ":" +
                                            aux_descrica.
             END.
+       ELSE
+       IF  hNameTag:NAME = "TpCtDebtd"  THEN
+           ASSIGN aux_TpCtDebtd = aux_descrica.
+       ELSE 
+       IF  hNameTag:NAME = "CtPgtoDebtd"  THEN
+           ASSIGN aux_CtPgtoDebtd = aux_descrica.
        ELSE
        IF   hNameTag:NAME = "NomCliDebtd"  OR
             hNameTag:NAME = "NomCliDebtdTitlar1"  OR
@@ -3103,6 +3232,12 @@ PROCEDURE trata_dados_transferencia.
        ELSE
        IF   hNameTag:NAME = "AgCredtd"  THEN                            
             ASSIGN aux_AgCredtd = aux_descrica.
+       ELSE
+       IF  hNameTag:NAME = "TpCtCredtd" THEN
+           ASSIGN aux_TpCtCredtd = aux_descrica.
+       ELSE
+       IF  hNameTag:NAME = "CtPgtoCredtd" THEN
+           ASSIGN aux_CtPgtoCredtd = aux_descrica. 
        ELSE
        IF   hNameTag:NAME = "TpPessoaCredtd"  OR
             hNameTag:NAME = "TpPessoaDestinatario"  THEN  
@@ -3137,7 +3272,11 @@ PROCEDURE trata_dados_transferencia.
            ASSIGN aux_DtMovto = aux_descrica.
                    
    END.
-
+   
+   /* Se conta debitada for Conta de Pagamento */
+   IF  aux_TpCtDebtd = "PG" THEN
+       ASSIGN aux_CtDebtd = aux_CtPgtoDebtd.
+   
 END PROCEDURE.
 
 
@@ -3155,6 +3294,8 @@ PROCEDURE trata_lancamentos.
    ASSIGN aux_dtmvtolt = IF   aux_flestcri = 0
                          THEN crabdat.dtmvtolt
                          ELSE aux_dtintegr.
+
+   
 
    /* Agencia CECRED -  Banco CECRED */  
    DO aux_contlock = 1 TO 10:
@@ -3451,9 +3592,9 @@ PROCEDURE trata_lancamentos.
                                                         
                   /* Enviar e-mail informando para a empresa a falta de saldo. */
                   RUN sistema/generico/procedures/b1wgen0011.p
-                     PERSISTENT SET b1wgen0011.
+                      PERSISTENT SET h-b1wgen0011.
                   
-                  RUN solicita_email_oracle IN b1wgen0011
+                  RUN solicita_email_oracle IN h-b1wgen0011
                                  ( INPUT  crabcop.cdcooper    /* par_cdcooper         */
                                   ,INPUT  "FOLH0001"          /* par_cdprogra         */
                                   ,INPUT  TRIM(aux_emaildes)  /* par_des_destino      */
@@ -3469,16 +3610,16 @@ PROCEDURE trata_lancamentos.
                                   ,OUTPUT aux_dscritic        /* par_des_erro         */
                                    ).
                   
-                  DELETE PROCEDURE b1wgen0011. 
+                  DELETE PROCEDURE h-b1wgen0011. 
                 
-                  IF aux_dscritic <> "" THEN
-                  DO:
-                    UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
-                                            " - FOLH0001 ' --> '"  +
-                                            "Erro ao rodar: " + 
-                                            "'" + aux_dscritic + "'" + " >> log/proc_batch.log").
-                    aux_dscritic = "".
-                  END.
+                  IF  aux_dscritic <> "" THEN
+                      DO:
+                        UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+                                                " - FOLH0001 ' --> '"  +
+                                                "Erro ao rodar: " + 
+                                                "'" + aux_dscritic + "'" + " >> log/proc_batch.log").
+                        aux_dscritic = "".
+                      END.
 
                 END.                     
                 
@@ -3917,6 +4058,61 @@ PROCEDURE trata_lancamentos.
                 RUN deleta_objetos.
                 NEXT.
             END.
+            
+            IF   CAN-DO("STR0003R2",aux_CodMsg) THEN
+                 DO:
+                     ASSIGN aux_dsmensag = "Codigo Mensagem: " + aux_CodMsg + " <br>" +
+                                           "Numero controle STR: " + aux_NumCtrlSTR + " <br>" +
+                                           "Data Hora Bacen: " + aux_DtHrBC + " <br>" +
+                                           "ISPB IF Debitada: " + aux_ISPBIFDebtd + " <br>" +
+                                           "Agencia Debitada: " + aux_AgDebtd + " <br>" +
+                                           "ISPB IF Credidata: " + aux_ISPBIFCredtd + " <br>" +
+                                           "Agencia Creditada: " + aux_AgCredtd + " <br>" +
+                                           "Valor Lançamento: " + aux_VlrLanc + " <br>" +
+                                           "Codigo Municipio Origem: " + aux_CodMunicOrigem + " <br>" +
+                                           "Codigo Municipio Destino: " + aux_codMunicDest + " <br>" +
+                                           "Data Movimento: " + aux_DtMovto + " <br><br>".
+                                           
+                     FOR EACH tt-numerario NO-LOCK:
+                         aux_dsmensag = aux_dsmensag + "Categoria: " + STRING(tt-numerario.cdcatego) + " <br>" +
+                                                       "Valor Denominacao: " +  STRING(tt-numerario.vlrdenom) + " <br>" +
+                                                       "Quantidade Denominacao: " + STRING(tt-numerario.qtddenom) + " <br>".
+                         
+                     END.
+                    
+                     RUN sistema/generico/procedures/b1wgen0011.p
+                         PERSISTENT SET h-b1wgen0011.
+
+                     RUN solicita_email_oracle IN h-b1wgen0011
+                                             ( INPUT crabcop.cdcooper /* par_cdcooper */
+                                              ,INPUT "CRPS531" /* par_cdprogra */
+                                              ,INPUT "carroforte@cecred.coop.br, spb@cecred.coop.br" 
+                                              ,INPUT "Troca de numerarios - CECRED" /* par_des_assunto */
+                                              ,INPUT aux_dsmensag /* par_des_corpo */
+                                              ,INPUT "" /* par_des_anexo */
+                                              ,INPUT "N" /* par_flg_remove_anex */
+                                              ,INPUT "N" /* par_flg_remete_coop */
+                                              ,INPUT "" /* par_des_nome_reply */
+                                              ,INPUT "" /* par_des_email_reply */
+                                              ,INPUT "N" /* par_flg_log_batch */
+                                              ,INPUT "S" /* par_flg_enviar */
+                                              ,OUTPUT aux_dscritic). /* par_des_erro */
+
+                     DELETE PROCEDURE h-b1wgen0011.
+
+                     IF  aux_dscritic <> "" THEN
+                         DO:
+                             UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+                             " - CRPS531 ' --> '" +
+                             "Erro ao rodar: " +
+                             "'" + aux_dscritic + "'" +  " >> log/proc_batch.log").
+                             aux_dscritic = "".
+                         END.
+                    
+                    RUN salva_arquivo.
+                    RUN deleta_objetos.
+                    NEXT.
+                END.
 
             IF  CAN-DO("STR0010R2,PAG0111R2",aux_CodMsg) OR aux_tagCABInf  THEN
                 DO:

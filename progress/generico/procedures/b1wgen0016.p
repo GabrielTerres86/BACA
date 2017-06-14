@@ -37,7 +37,7 @@
 
     Programa: b1wgen0016.p
     Autor   : Evandro/David
-    Data    : Abril/2006                     Ultima Atualizacao: 22/02/2017
+    Data    : Abril/2006                     Ultima Atualizacao: 02/06/2017
     
     Dados referentes ao programa:
 
@@ -485,6 +485,7 @@
               20/04/2017 - Ajustes da NPC para o processo de pagamento com multiplas 
                            assitaturas (Renato Darosci - P340)  
               
+              02/06/2017 - Ajustes referentes ao Novo Catalogo do SPB(Lucas Ranghetti #668207)
  .....................................................................................................*/
 { sistema/internet/includes/var_ibank.i }
 
@@ -5625,7 +5626,7 @@ PROCEDURE gera_arquivo_log_ted:
            ", nrcpfope: " + STRING(par_nrcpfope)                  +
            ", cddbanco: " + STRING(par_cddbanco,"zzzz9")          +
            ", cdageban: " + STRING(par_cdageban,"zzzzz9")         +
-           ", nrctadst: " + STRING(par_nrctadst,"zzzzzzzzzz,zz9,9") +
+           ", nrctadst: " + STRING(par_nrctadst,"zzzzzzzzzzzzzzzz,zz9,9") +
            ", nmtitula: " + STRING(par_nmtitula)                  +
            ", nrcpfcgc: " + STRING(par_nrcpfcgc)                  +
            ", inpessoa: " + STRING(par_inpessoa)                  +
