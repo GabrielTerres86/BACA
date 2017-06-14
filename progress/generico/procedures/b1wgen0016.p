@@ -483,7 +483,12 @@ PRJ319 - SMS Cobrança (Odirlei - AMcom)
                            PRJ319.2 - SMS Cobrança (Odirlei - AMcom)             
               
               12/04/2017 - Incluido tratamento de transaçoes pendentes 13. 
-                           PRJ319 - Recarga de Celular (Lombardi)              
+                           PRJ319 - Recarga de Celular (Lombardi)
+
+              14/06/2017 - Incluido comando TRUNC para cortar o valor de iof em 2 casas
+                           decimais, estava falhando comparacao devido ao arredondamento.
+                           Heitor (Mouts) - Chamado 688338
+
  .............................................................................*/
 { sistema/internet/includes/var_ibank.i }
 
@@ -9597,7 +9602,7 @@ PROCEDURE aprova_trans_pend:
                                 IF VALID-HANDLE(h-b1wgen0188) THEN
                                     DELETE PROCEDURE h-b1wgen0188.
 
-                                ASSIGN aux_dscritic = "As condicoes do credito pre-aprovado nao estao mais disponiveis para contratacao.".
+                                ASSIGN aux_dscritic = "1 - As condicoes do credito pre-aprovado nao estao mais disponiveis para contratacao.".
 
                                 RUN gera_arquivo_log_ted(INPUT par_cdcooper,
                                                          INPUT "tt-dados-cpa",
@@ -9787,7 +9792,7 @@ PROCEDURE aprova_trans_pend:
                                 IF VALID-HANDLE(h-b1wgen0188) THEN
                                     DELETE PROCEDURE h-b1wgen0188.
 
-                                ASSIGN aux_dscritic = "As condicoes do credito pre-aprovado nao estao mais disponiveis para contratacao.".
+                                ASSIGN aux_dscritic = "2 - As condicoes do credito pre-aprovado nao estao mais disponiveis para contratacao.".
 
                                 RUN gera_arquivo_log_ted(INPUT par_cdcooper,
                                                          INPUT "tt-parcelas-cpa",
@@ -9907,12 +9912,12 @@ PROCEDURE aprova_trans_pend:
                         IF aux_vlrtarif <> tt-tbepr_trans_pend.vltarifa         OR
                            aux_percetop <> tt-tbepr_trans_pend.vlpercentual_cet OR
                            aux_vltaxiof <> tt-tbepr_trans_pend.vlpercentual_iof OR
-                           aux_vltariof <> tt-tbepr_trans_pend.vliof            THEN
+                           trunc(aux_vltariof,2) <> tt-tbepr_trans_pend.vliof   THEN
                             DO:
                                 IF VALID-HANDLE(h-b1wgen0188) THEN
                                     DELETE PROCEDURE h-b1wgen0188.
 
-                                ASSIGN aux_dscritic = "As condicoes do credito pre-aprovado nao estao mais disponiveis para contratacao.".
+                                ASSIGN aux_dscritic = "3 - As condicoes do credito pre-aprovado nao estao mais disponiveis para contratacao.".
 
                                 /* Gerar log das teds com erro */
                                 RUN gera_arquivo_log_ted(INPUT par_cdcooper,
