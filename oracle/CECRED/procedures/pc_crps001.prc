@@ -1150,8 +1150,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                        CLOSE cr_tbcc_lautom_controle;
                      END IF;
                      
-                     --Incrementar a quantidade de lancamentos no mes
-                     rw_crapsld.qtlanmes:= Nvl(rw_crapsld.qtlanmes,0) + 1;
                      --Zerar valor iof no mes
                      rw_crapsld.vliofmes:= 0;
                      --Zerar valor base iof
@@ -1269,6 +1267,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                          RAISE vr_exc_saida;
                      END;
 
+                     --Incrementar a quantidade de lancamentos no mes
+                     rw_crapsld.qtlanmes:= Nvl(rw_crapsld.qtlanmes,0) + 1;
                      --Zerar valor iof no mes
                      rw_crapsld.vliofmes:= 0;
                      --Zerar valor base iof
