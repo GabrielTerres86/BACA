@@ -1941,7 +1941,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     END IF;
     
     -- Se for bloqueio judicial (bacenjud), utiliza o historico 1406-TR.BLOQ.JUD
-    IF pr_tpctafav = 3 THEN
+    IF pr_tpctafav = 9 THEN
       vr_cdhisted := 1406;
     ELSE
     -- definir historico de ted
@@ -2160,7 +2160,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
 
       END IF;
 
-      IF pr_tpctafav = 3 THEN -- Se for BacenJud nao deve cobrar tarifa
+      IF pr_tpctafav = 9 THEN -- Se for BacenJud nao deve cobrar tarifa
         NULL;
 	    -- Se não isenta cobrança da tarifa
       ELSIF vr_fliseope <> 1 THEN

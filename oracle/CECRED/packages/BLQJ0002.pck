@@ -2440,7 +2440,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
                                 ,pr_nmtitula => rw_ted.nmfavorecido --> nome do titular destino
                                 ,pr_nrcpfcgc => nvl(rw_ted.nrcpfcnpj_favorecido,0)  --> CPF do titular destino
                                 ,pr_inpessoa => vr_inpessoa --> Tipo de pessoa
-                                ,pr_intipcta => 3 -- Deposito judicial --> Tipo de conta
+                                ,pr_intipcta => 9 -- Deposito judicial --> Tipo de conta
                                 ,pr_vllanmto => rw_ted.vllanmto --> Valor do lançamento
                                 ,pr_dstransf => 'Transferencia Judicial' --> Identificacao Transf.
                                 ,pr_cdfinali => 100 -- Deposito Judicial --> Finalidade TED

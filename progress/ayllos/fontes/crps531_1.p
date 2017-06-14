@@ -4142,7 +4142,7 @@ PROCEDURE trata_lancamentos.
 
             /* Se for bloqueio Judicial deve-se gerar email e encerrar o processo
                Nao deve creditar a conta */
-            IF  craptvl.tpdctacr = 3 THEN
+            IF  avail craptvl and craptvl.tpdctacr = 9 THEN
                 DO:
                     /* Gera log de estorno na cobine */
                     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 

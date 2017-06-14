@@ -3483,7 +3483,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     END IF;
 
     /*** MONTA O BODY ***/
-    IF pr_tpdctacr = 3 THEN
+    IF pr_tpdctacr = 9 THEN
       -- Deposito Judicial. Enviar com STR0025 e PAG0121
 
       -- Se PAG Disponivel e se o Banco de destino estiver operando  com PAG
