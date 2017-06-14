@@ -2,20 +2,22 @@
 
 Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro).
 
-			05/06/2012 - Adaptação dos fontes para projeto Oracle. Alterado
-						 busca na gnapses de CONTAINS para MATCHES (Guilherme Maba).
+			      05/06/2012 - Adaptação dos fontes para projeto Oracle. Alterado
+						             busca na gnapses de CONTAINS para MATCHES (Guilherme Maba).
             
             08/03/2016 - Alterado para que os eventos do tipo EAD 
                          e EAD Assemblear não sejam apresentados.
                          Projeto 229 - Melhorias OQS (Lombardi)
-
+                         
             21/06/2016 - Inclusao de Tipos de Relatorios, Prj. 229 RF 05
                          (Jean Michel).
-
+												 
 			09/09/2016 - Incluida a opcao de geração de todos relatórios
 						 quando o tipo for "TABULADA", Prj. 229. (Jean Michel).
-
+            
 			09/11/2016 - inclusao de LOG. (Jean Michel)
+			
+			14/06/2017 - Melhoria de performance no array mevento. SD-686895  (Jean Michel)
 
 ......................................................................... */
 
@@ -300,14 +302,15 @@ PROCEDURE CriaListaEventos :
   Parameters:  <none>
   Notes:       
 ------------------------------------------------------------------------------*/
-DEFINE VARIABLE aux_nrseqeve AS INT  NO-UNDO.
-DEFINE VARIABLE aux_nmevento AS CHAR NO-UNDO.
+	DEFINE VARIABLE aux_nrseqeve AS INT  NO-UNDO.
+	DEFINE VARIABLE aux_nmevento AS CHAR NO-UNDO.
     
-DEFINE VARIABLE vetormes     AS CHAR EXTENT 12
+	DEFINE VARIABLE vetormes     AS CHAR EXTENT 12
        INITIAL ["Janeiro","Fevereiro","Março","Abril","Maio","Junho",
                 "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"].
 
-
+  RUN RodaJavaScript("var mevento = new Array();").
+	
 /* se informado o pac, lista cada evento dele com todas as suas ocorrências e mais um como TODOS */  
 IF  int(ab_unmap.cdagenci) > 0  THEN
     DO: 
@@ -344,77 +347,66 @@ IF  int(ab_unmap.cdagenci) > 0  THEN
             IF  crapadp.dshroeve <> "" THEN
                 aux_nmevento = aux_nmevento + " - " + crapadp.dshroeve.
                    
-            IF vetorevento = "" THEN
-               vetorevento = "~{" +
-                   "cdagenci:'" +  STRING(crapeap.cdagenci) + "'," + 
-                   "cdcooper:'" +  STRING(crapeap.cdcooper) + "'," +
-                   "cdevento:'" +  STRING(crapeap.cdevento) + "'," +
-                   "nmevento:'" +  STRING(aux_nmevento)     + "'," +
-                   "nrseqeve:'" +  STRING(aux_nrseqeve)     + "'" + "~}".
-            ELSE
-                vetorevento = vetorevento + "," + "~{" +
-                    "cdagenci:'" +  STRING(crapeap.cdagenci) + "'," + 
-                    "cdcooper:'" +  STRING(crapeap.cdcooper) + "'," +
-                    "cdevento:'" +  STRING(crapeap.cdevento) + "'," +
-                    "nmevento:'" +  STRING(aux_nmevento)     + "'," +
-                    "idstaeve:'" +  STRING(crapadp.idstaeve) + "'," +
-                    "nrseqeve:'" +  STRING(aux_nrseqeve)     + "'" + "~}".
-
+						ASSIGN vetorevento = "~{cdagenci:'" + STRING(crapeap.cdagenci)
+															 + "',cdcooper:'" + STRING(crapeap.cdcooper)
+															 + "',cdevento:'" + STRING(crapeap.cdevento)
+															 + "',nmevento:'" + STRING(aux_nmevento)    
+															 + "',nrseqeve:'" + STRING(aux_nrseqeve) + "'~}".
+									 
+						RUN RodaJavaScript("mevento.push(" + TRIM(STRING(vetorevento)) + ");").
+                         
+						ASSIGN vetorevento = "".
+						
             /* Cria um evento com final "(TODOS)" quando houver mais de uma ocorrencia do evento */
-            IF   LAST-OF(crapedp.nmevento)        AND
-                 NOT FIRST-OF(crapedp.nmevento)   THEN
-                 vetorevento = vetorevento + "," + "~{" +
-                    "cdagenci:'" +  STRING(crapeap.cdagenci)              + "'," + 
-                    "cdcooper:'" +  STRING(crapeap.cdcooper)              + "'," +
-                    "cdevento:'" +  STRING(crapeap.cdevento)              + "'," +
-                    "nmevento:'" +  STRING(crapedp.nmevento + " (TODOS)") + "'," +
-                    "idstaeve:'" +  STRING(crapadp.idstaeve)              + "'," +
-                    "nrseqeve:'" +  STRING(0)                             + "'" + "~}".
+            IF LAST-OF(crapedp.nmevento) AND NOT FIRST-OF(crapedp.nmevento) THEN
+						  DO:
+							
+								ASSIGN vetorevento = "~{cdagenci:'" + STRING(crapeap.cdagenci)               
+														 			 + "',cdcooper:'" + STRING(crapeap.cdcooper)             
+													 				 + "',cdevento:'" + STRING(crapeap.cdevento)             
+												 					 + "',nmevento:'" + STRING(crapedp.nmevento + " (TODOS)")
+											 						 + "',idstaeve:'" + STRING(crapadp.idstaeve)             
+										 							 + "',nrseqeve:'" + STRING(0) + "'~}".
+										
+							  RUN RodaJavaScript("mevento.push(" + TRIM(STRING(vetorevento)) + ");").
+								ASSIGN vetorevento = "".
+								
+							END.
         END.
     END.
-ELSE
+  ELSE
     DO:
-        FOR EACH  crapadp WHERE crapadp.idevento  = int(ab_unmap.aux_idevento) AND
-                                crapadp.cdcooper  = int(ab_unmap.cdcooper)     AND
-                                crapadp.dtanoage  = int(ab_unmap.aux_dtanoage) NO-LOCK,
-            FIRST crapedp WHERE crapedp.cdevento  = crapadp.cdevento           AND
-                                crapedp.idevento  = crapadp.idevento           AND
-                                crapedp.cdcooper  = crapadp.cdcooper           AND
-                                crapedp.dtanoage  = crapadp.dtanoage           AND 
+        FOR EACH  crapadp WHERE crapadp.idevento = int(ab_unmap.aux_idevento) AND
+                                crapadp.cdcooper = int(ab_unmap.cdcooper)     AND
+                                crapadp.dtanoage = int(ab_unmap.aux_dtanoage) NO-LOCK,
+            FIRST crapedp WHERE crapedp.cdevento = crapadp.cdevento           AND
+                                crapedp.idevento = crapadp.idevento           AND
+                                crapedp.cdcooper = crapadp.cdcooper           AND
+                                crapedp.dtanoage = crapadp.dtanoage           AND 
                                 crapedp.tpevento <> 2 /*integrações*/          NO-LOCK
                                 BREAK BY crapedp.nmevento:
 
-            IF   FIRST-OF(crapedp.nmevento)   THEN
-                 DO:
-                     aux_nrseqeve = IF crapadp.nrseqdig <> ? THEN crapadp.nrseqdig ELSE 0.
+            IF FIRST-OF(crapedp.nmevento)   THEN
+							DO:
+                aux_nrseqeve = IF crapadp.nrseqdig <> ? THEN crapadp.nrseqdig ELSE 0.
                  
-                     ASSIGN aux_nrseqeve = IF crapadp.nrseqdig <> ? THEN crapadp.nrseqdig ELSE 0
-                            aux_nmevento = crapedp.nmevento.
+                ASSIGN aux_nrseqeve = IF crapadp.nrseqdig <> ? THEN crapadp.nrseqdig ELSE 0
+                       aux_nmevento = crapedp.nmevento.
                  
-                     IF crapadp.cdagenci > 0 THEN
-                        DO:
-                           IF vetorevento = "" THEN
-                               vetorevento = "~{" +
-                                   "cdagenci:'" +  STRING(crapadp.cdagenci) + "'," + 
-                                   "cdcooper:'" +  STRING(crapadp.cdcooper) + "'," +
-                                   "cdevento:'" +  STRING(crapadp.cdevento) + "'," +
-                                   "nmevento:'" +  STRING(aux_nmevento)     + "'," +
-                                   "nrseqeve:'" +  STRING(0)                + "'" + "~}".
-                           ELSE
-                               vetorevento = vetorevento + "," + "~{" +
-                                   "cdagenci:'" +  STRING(crapadp.cdagenci) + "'," + 
-                                   "cdcooper:'" +  STRING(crapadp.cdcooper) + "'," +
-                                   "cdevento:'" +  STRING(crapadp.cdevento) + "'," +
-                                   "nmevento:'" +  STRING(aux_nmevento)     + "'," +
-                                   "nrseqeve:'" +  STRING(0)                + "'" + "~}".
-                     
-                     END. 
-                 END.
+                IF crapadp.cdagenci > 0 THEN
+								  DO:
+                    ASSIGN vetorevento = "~{cdagenci:'" + STRING(crapadp.cdagenci)
+                                       + "',cdcooper:'" + STRING(crapadp.cdcooper) 
+																			 + "',cdevento:'" + STRING(crapadp.cdevento) 
+																			 + "',nmevento:'" + STRING(aux_nmevento)     
+																			 + "',nrseqeve:'" + STRING(0) + "'~}".
+																	 
+                    RUN RodaJavaScript("mevento.push(" + TRIM(STRING(vetorevento)) + ");").
+										ASSIGN vetorevento = "".
+                  END. 
+              END.
         END.
     END.
-
-RUN RodaJavaScript("var mevento=new Array();mevento=["  + vetorevento + "]").
-
 
 END PROCEDURE.
 
@@ -574,7 +566,7 @@ RUN CriaListaEventos.
 
 /* Tipos de avaliação */
 ASSIGN ab_unmap.aux_tpdavali:LIST-ITEM-PAIRS IN FRAME {&FRAME-NAME} = "Em Branco,1,Tabulada,2".
-   
+
 /* Tipos de Relatórios */
 ASSIGN ab_unmap.aux_tprelato:LIST-ITEM-PAIRS IN FRAME {&FRAME-NAME} = ",0,Todos,4,Cooperado,1,Cooperativa,2,Fornecedor,3".
 
