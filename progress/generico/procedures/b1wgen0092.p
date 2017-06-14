@@ -2944,7 +2944,7 @@ PROCEDURE exclui_autorizacao:
            /* Verifica a data da autorizaçao */
            IF  crapatr.dtiniatr <> aux_dtfimatr THEN
                DO:
-                  ASSIGN crapatr.dtfimatr = par_dtmvtolt. /* Cancela */
+                  ASSIGN crapatr.dtfimatr = aux_dtfimatr. /* Cancela */
                   
                   CREATE tt-autori-atl.
                   BUFFER-COPY crapatr TO tt-autori-atl.
